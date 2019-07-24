@@ -252,7 +252,6 @@ uint32_t time_inside_solver = sumConflicts - cl->stats.introduced_at_conflict;
 """
         @staticmethod
         def fix_feat_name(x):
-            print("x:" , x)
             x = re.sub(r"dump_no", r"dump_number", x)
             x = re.sub(r"^cl_", r"", x)
             x = re.sub(r"^rdb0_", r"", x)
@@ -591,10 +590,10 @@ votes += estimator_{funcname}_{est_num}({func_call}) < 1.0;
 
         best_features = [
             '((rdb0.sum_uip1_used/cl.time_inside_solver)/sqrt(rdb0.act_ranking_rel))',
-            # '(rdb0.sum_uip1_used/sqrt(cl.branch_depth_hist_queue))',
-            # '((rdb0.sum_uip1_used/cl.time_inside_solver)/sqrt((cl.num_total_lits_antecedents/cl.num_antecedents)))',
+            '(rdb0.sum_uip1_used/sqrt(cl.branch_depth_hist_queue))',
+            '((rdb0.sum_uip1_used/cl.time_inside_solver)/sqrt((cl.num_total_lits_antecedents/cl.num_antecedents)))',
             #'((rdb0.used_for_uip_creation+rdb1.used_for_uip_creation)/cl.glue)',
-            #'(rdb0.sum_uip1_used/sqrt(cl.old_glue))'
+            '(rdb0.sum_uip1_used/sqrt(cl.old_glue))'
             ]
         # TODO fill best_features here
         self.one_classifier(best_features, "x.class",

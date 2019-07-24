@@ -144,11 +144,13 @@ struct ClauseStats
     float       glue_hist_queue             = 0;
     float       glue_hist                   = 0;
     float       size_hist                   = 0;
+    uint32_t    old_glue                    = 0;
     uint32_t    num_overlap_literals        = 0;
     float       antec_overlap_hist          = 0;
-    uint32_t    num_total_lits_antecedents = 0;
-    uint32_t    rdb1_last_touched_diff;
-    uint32_t    num_antecedents         = 0;
+    uint32_t    num_total_lits_antecedents  = 0;
+    uint32_t    rdb1_last_touched_diff      = 0;
+    uint32_t    num_antecedents             = 0;
+    float       branch_depth_hist_queue     = 0;
 
 
     //for locking in for long

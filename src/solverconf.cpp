@@ -207,8 +207,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         #ifdef FINAL_PREDICTOR
         //Predict system
-        , pred_conf_short(0)
-        , pred_conf_long(0)
+        , pred_conf_short(2)
+        , pred_conf_long(2)
         #endif
 
         //Var-replacer

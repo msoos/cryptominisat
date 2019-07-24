@@ -1062,6 +1062,7 @@ void Main::parse_polarity_type()
 void Main::manually_parse_some_options()
 {
     #ifdef FINAL_PREDICTOR
+    fill_pred_funcs();
     if (!check_pred_conf_exists_short(conf.pred_conf_short)) {
         cout << "ERROR: The SHORT config for '--pred' that you gave does not exist. Generate it first then recompile. You gave: " << conf.pred_conf_short << endl;
         exit(-1);

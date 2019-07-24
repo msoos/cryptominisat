@@ -25,6 +25,9 @@ THE SOFTWARE.
 
 #include "clauseallocator.h"
 #include "clauseusagestats.h"
+#ifdef FINAL_PREDICTOR
+#include "clustering.h"
+#endif
 
 namespace CMSat {
 
@@ -34,6 +37,7 @@ class ReduceDB
 {
 public:
     ReduceDB(Solver* solver);
+    ~ReduceDB();
     double get_total_time() const {
         return total_time;
     }
@@ -48,6 +52,7 @@ private:
     Solver* solver;
     vector<ClOffset> delayed_clause_free;
     double total_time = 0.0;
+    ClusteringImp* clustering;
 
     unsigned cl_marked;
     unsigned cl_ttl;

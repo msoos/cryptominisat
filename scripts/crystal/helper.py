@@ -48,12 +48,20 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/\n\n""")
 
+def not_inside(not_these, inside_here):
+    for not_this in not_these:
+        if not_this in inside_here:
+            return False
+
+    return True
+
 def add_computed_features_clustering(df):
     print("Adding computed clustering features...")
 
     todiv = []
     for x in list(df):
-        if "szfeat_cur" in x and "std" not in x and "min" not in x and "mean" not in x and "_per_" not in x and x[-3:] != "var" and "binary" not in x:
+        not_these = ["std", "min", "mean", "_per_", "binary", "vcg", "pnr", "horn", "max"]
+        if "szfeat_cur" in x and x[-3:] != "var" and not_inside(not_these, x):
             todiv.append(x)
 
     # relative data

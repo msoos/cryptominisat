@@ -32,20 +32,21 @@ using std::vector;
 namespace CMSat {
 
 void fill_pred_funcs();
-const vector<keep_func_type>& get_short_pred_keep_funcs(size_t conf);
-const vector<keep_func_type>& get_long_pred_keep_funcs(size_t conf);
 
-const Clustering* get_short_cluster(size_t conf);
-const Clustering* get_long_cluster(size_t conf);
+//return value must be indexed by cluster
+const vector<keep_func_type>& get_short_pred_keep_funcs(size_t conf);
+
+//return value must be indexed by cluster
+const vector<keep_func_type>& get_long_pred_keep_funcs(size_t conf);
 
 inline bool check_pred_conf_exists_short(const size_t conf)
 {
-    return CMSat::get_short_cluster(conf) != NULL;
+    return CMSat::get_short_pred_keep_funcs(conf)[0] != NULL;
 }
 
 inline bool check_pred_conf_exists_long(const size_t conf)
 {
-    return CMSat::get_long_cluster(conf) != NULL;
+    return CMSat::get_long_pred_keep_funcs(conf)[0] != NULL;
 }
 
 }

@@ -65,53 +65,48 @@ class Clustering:
 
     def create_code_for_cluster_centers(self, clust, scaler, sz_feats):
         sz_feats_clean = self.clean_sz_feats(sz_feats)
-        f = open("{basedir}/clustering.h".format(basedir=options.basedir), 'w')
+        f = open("{basedir}/clustering_imp.cpp".format(basedir=options.basedir), 'w')
 
         helper.write_mit_header(f)
         f.write("""
-#ifndef CLUSTERING_H
-#define CLUSTERING_H
-
 #include "satzilla_features.h"
 #include "clustering.h"
 #include <cmath>
 
-namespace CMSat {{
-class Clustering: public Clustering {{
+using namespace CMSat;
 
-public:
-    Clustering() {{
-        set_up_centers();
-    }}
+ClusteringImp::ClusteringImp() {{
+    set_up_centers();
+}}
 
-    virtual ~Clustering() {{
-    }}
-
-    vector<map<std::string, std::double>>\ center[{clusters}];
-    std::vector<int> used_clusters;
+ClusteringImp::~ClusteringImp() {{
+}}
 
 """.format(clusters=options.clusters))
 
-        f.write("    virtual void set_up_centers() {\n")
+        f.write("void ClusteringImp::set_up_centers() {\n")
+        f.write("\n        centers.resize(%d);\n" % len(self.used_clusters))
         for i in self.used_clusters:
+
             f.write("\n        // Doing cluster center %d\n" % i)
+            f.write("\n        centers[%d].resize(%d);\n" % (i, len(sz_feats_clean)) )
             f.write("\n        used_clusters.push_back(%d);\n" % i)
             for i2 in range(len(sz_feats_clean)):
                 feat = sz_feats_clean[i2]
                 center = clust.cluster_centers_[i][i2]
-                f.write("        center[{num}][\"{feat}\"] = {center}L;\n".format(
-                    num=i, feat=feat.format(val="x"), center=center))
+                f.write("        centers[{num}][{feat}] = {center}L;\n".format(
+                    num=i, feat=i2, center=center))
 
         f.write("    }\n")
 
         f.write("""
-    double sq(double x) const {
-        return x*x;
-    }
+double sq(double x) {
+    return x*x;
+}
 
-    virtual double norm_dist(const SatZillaFeatures& a, const map<std::string, double>& center) const {
-        double dist = 0;
-        double tmp;
+double ClusteringImp::norm_dist(const SatZillaFeatures& a, const std::vector<double>& center) const {
+    double dist = 0;
+    double tmp;
 """)
         for feat, i in zip(sz_feats_clean, range(10000)):
             f.write("        tmp = ((double){feat}-{mean:3.9f})/{scale:3.9f};\n".format(
@@ -120,37 +115,27 @@ public:
                  scale=scaler.scale_[i]
                  ))
 
-            f.write("        dist+=sq(tmp-center[\"{feat}\"]);\n\n".format(
-                feat=feat.format(val="x")
+            f.write("    dist+=sq(tmp-center[{feat}]);\n\n".format(
+                feat=i
                 ))
 
         f.write("""
-        return dist;
-    }\n""")
+    return dist;
+}\n""")
 
         f.write("""
-    virtual int which_is_closest(const SatZillaFeatures& p) const {
-        double closest_dist = std::numeric_limits<double>::max();
-        int closest = -1;
-        for (int i: used_clusters) {
-            double dist = norm_dist(p, center[i]);
-            if (dist < closest_dist) {
-                closest_dist = dist;
-                closest = i;
-            }
+int ClusteringImp::which_is_closest(const SatZillaFeatures& p) const {
+    double closest_dist = std::numeric_limits<double>::max();
+    int closest = -1;
+    for (int i: used_clusters) {
+        double dist = norm_dist(p, centers[i]);
+        if (dist < closest_dist) {
+            closest_dist = dist;
+            closest = i;
         }
-        return closest;
     }
-""")
-
-        f.write("""
-};
-
-
-} //end namespace
-
-#endif //header guard
-""")
+    return closest;
+    }\n""")
 
     def write_all_predictors_file(self, fnames, functs, conf_num, longsh):
         f = open("{basedir}/all_predictors_{name}_conf{conf_num}.h".format(

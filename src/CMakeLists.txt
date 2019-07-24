@@ -136,6 +136,7 @@ if (FINAL_PREDICTOR)
     set(cryptoms_lib_files
         ${cryptoms_lib_files}
         all_predictors.cpp
+        predict/clustering_imp.cpp
     )
 endif()
 

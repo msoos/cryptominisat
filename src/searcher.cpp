@@ -1694,14 +1694,14 @@ void Searcher::dump_sql_clause_data(
 void Searcher::set_clause_data(
     Clause* cl
     , const uint32_t glue
+    , const uint32_t old_glue
     , const uint32_t old_decision_level
 ) {
 
 
-    uint32_t num_total_lits_antecedents = antec_data.sum_size();
     //definitely a BUG here I think -- should be 2*antec_data.num(), no?
     //however, it's the same as how it's dumped in sqlitestats.cpp
-    uint32_t num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-cl->size();
+    cl->stats.num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-cl->size();
 
 
     cl->stats.glue_hist = hist.glueHistLT.avg();
@@ -1710,9 +1710,10 @@ void Searcher::set_clause_data(
     cl->stats.glue_hist_long = hist.glueHist.avg_nocheck();
 
     cl->stats.num_antecedents = antec_data.num();
-    cl->stats.num_overlap_literals = num_overlap_literals;
     cl->stats.antec_overlap_hist = hist.overlapHistLT.avg();
-    cl->stats.num_total_lits_antecedents = num_total_lits_antecedents;
+    cl->stats.num_total_lits_antecedents = antec_data.sum_size();;
+    cl->stats.branch_depth_hist_queue =  hist.branchDepthHistQueue.avg_nocheck();
+    cl->stats.old_glue = old_glue;
 }
 #endif
 
@@ -1720,7 +1721,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     Clause* cl
     , const uint32_t glue
     , const uint32_t
-    #ifdef STATS_NEEDED
+    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     old_glue
     #endif
     , const uint32_t
@@ -1862,7 +1863,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
 
     #ifdef FINAL_PREDICTOR
     if (cl) {
-        set_clause_data(cl, glue, old_decision_level);
+        set_clause_data(cl, glue, old_glue, old_decision_level);
         cl->stats.dump_number = 0;
     }
     #endif

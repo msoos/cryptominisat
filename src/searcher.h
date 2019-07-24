@@ -437,6 +437,7 @@ class Searcher : public HyperEngine
         void set_clause_data(
             Clause* cl
             , const uint32_t glue
+            , const uint32_t old_glue
             , const uint32_t old_decision_level);
         #ifdef STATS_NEEDED
         void dump_restart_sql(rst_dat_type type);

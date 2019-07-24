@@ -26,7 +26,6 @@ THE SOFTWARE.
 #include "sqlstats.h"
 #ifdef FINAL_PREDICTOR
 #include "all_predictors.h"
-#include "clustering.h"
 #endif
 
 #include <functional>
@@ -84,7 +83,13 @@ ReduceDB::ReduceDB(Solver* _solver) :
 {
     #ifdef FINAL_PREDICTOR
     fill_pred_funcs();
+    clustering = new ClusteringImp;
     #endif
+}
+
+ReduceDB::~ReduceDB()
+{
+    delete clustering;
 }
 
 void ReduceDB::sort_red_cls(ClauseClean clean_type)
@@ -334,22 +339,9 @@ void ReduceDB::handle_lev3_final_predictor()
     std::sort(solver->longRedCls[3].begin(), solver->longRedCls[3].end(),
               SortRedClsAct(solver->cl_alloc));
 
-    const Clustering* long_clust = get_long_cluster(solver->conf.pred_conf_long);
-    if (long_clust == NULL) {
-        cout << "ERROR: You gave a config number in '--pred' that does not exist for LONG" << endl;
-        exit(-1);
-    }
-    int long_cluster = long_clust->which_is_closest(solver->last_solve_satzilla_feature);
-
-    const Clustering* short_clust = get_short_cluster(solver->conf.pred_conf_short);
-    if (short_clust == NULL) {
-        cout << "ERROR: You gave a config number in '--pred' that does not exist for SHORT" << endl;
-        exit(-1);
-    }
-    int short_cluster = short_clust->which_is_closest(solver->last_solve_satzilla_feature);
-
-    const keep_func_type short_pred_keep = get_short_pred_keep_funcs(solver->conf.pred_conf_short)[short_cluster];
-    const keep_func_type long_pred_keep = get_long_pred_keep_funcs(solver->conf.pred_conf_long)[long_cluster];
+    const uint32_t clust = clustering->which_is_closest(solver->last_solve_satzilla_feature);
+    const keep_func_type short_pred_keep = get_short_pred_keep_funcs(solver->conf.pred_conf_short)[clust];
+    const keep_func_type long_pred_keep = get_long_pred_keep_funcs(solver->conf.pred_conf_long)[clust];
 
     size_t j = 0;
     for(size_t i = 0
@@ -363,7 +355,8 @@ void ReduceDB::handle_lev3_final_predictor()
             solver->longRedCls[0].push_back(offset);
             moved_w0++;
         } else {
-            const uint32_t act_ranking_top_10 = std::ceil((double)i/((double)solver->longRedCls[3].size()/10.0));
+            const uint32_t act_ranking_top_10 = \
+                std::ceil((double)i/((double)solver->longRedCls[3].size()/10.0));
 
             uint32_t last_touched_diff;
             if (cl->stats.last_touched == 0) {
@@ -379,26 +372,23 @@ void ReduceDB::handle_lev3_final_predictor()
                 cl
                 , solver->sumConflicts
                 , last_touched_diff
-                , (double)i/(double)solver->longRedCls[3].size()
-                , act_ranking_top_10
+                , (double)i/(double)solver->longRedCls[3].size()+0.0001
+                , act_ranking_top_10+1
             )) {
                 marked_long_keep++;
                 cl->stats.locked_long = 5; //will be immediately decremented below
             }
 
-            const bool short_keep  = short_pred_keep(
-                cl
-                , solver->sumConflicts
-                , last_touched_diff
-                , (double)i/(double)solver->longRedCls[3].size()
-                , act_ranking_top_10
-            );
             const bool locked = solver->clause_locked(*cl, offset);
-            tot_short_keep += short_keep;
             if (cl->stats.locked_long == 0
                 && cl->stats.dump_number > 0 //don't delete 1st time around
                 && !locked
-                && !short_keep
+                && !short_pred_keep(
+                cl
+                , solver->sumConflicts
+                , last_touched_diff
+                , (double)i/(double)solver->longRedCls[3].size()+0.0001
+                , act_ranking_top_10+1)
             ) {
                 deleted++;
                 solver->watches.smudge((*cl)[0]);
@@ -418,7 +408,6 @@ void ReduceDB::handle_lev3_final_predictor()
                 } else if (cl->stats.dump_number == 0) {
                     kept_dump_no++;
                 } else {
-                    assert(short_keep);
                     kept_short++;
                 }
                 solver->longRedCls[3][j++] = offset;
@@ -455,8 +444,7 @@ void ReduceDB::handle_lev3_final_predictor()
 
         cout << "c [DBCL pred]"
         << " marked-long: "<< print_value_kilo_mega(marked_long_keep)
-        << " Sclust: " << short_cluster
-        << " Lclust: " << long_cluster
+        << " clust: " << clust
         << " conf-short: " << solver->conf.pred_conf_short
         << " conf-long: " << solver->conf.pred_conf_long
         << endl;
@@ -480,9 +468,6 @@ void ReduceDB::handle_lev3_final_predictor()
         );
     }
     total_time += cpuTime()-myTime;
-
-    delete long_clust;
-    delete short_clust;
 }
 #endif
 

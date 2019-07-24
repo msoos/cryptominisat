@@ -26,15 +26,22 @@ THE SOFTWARE.
 
 #include "satzilla_features.h"
 #include <cmath>
+#include <map>
+#include <vector>
 
 namespace CMSat {
-class Clustering {
+class ClusteringImp {
 
 public:
-    virtual ~Clustering() {}
-    virtual void set_up_centers() = 0;
-    virtual double norm_dist(const SatZillaFeatures& a, const SatZillaFeatures& b) const = 0;
-    virtual int which_is_closest(const SatZillaFeatures& p) const = 0;
+    ClusteringImp();
+    ~ClusteringImp();
+    void set_up_centers();
+    double norm_dist(const SatZillaFeatures& a, const std::vector<double>& center) const;
+    int which_is_closest(const SatZillaFeatures& p) const;
+
+private:
+    std::vector<std::vector<double>> centers;
+    std::vector<int> used_clusters;
 };
 
 

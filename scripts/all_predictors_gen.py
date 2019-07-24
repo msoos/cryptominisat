@@ -8,21 +8,6 @@ PY3 = sys.version_info.major == 3
 
 output_path = sys.argv[1]
 
-
-def write_cluster(clusters, out, name):
-    nums = []
-    for cl in clusters:
-        num = re.findall(r"clustering_{name}_conf([0-9]+).h".format(
-            name=name), cl)
-        if len(num) > 0:
-            nums.append(int(num[0]))
-
-    for num in sorted(nums):
-        out.write("""
-    if (conf == {num}) {{
-        return new Clustering_{name}_conf{num};
-    }}\n""".format(num=num, name=name))
-
 def write_predictors(predictors, out, name):
     nums = []
     for pred in predictors:
@@ -90,22 +75,6 @@ void fill_pred_funcs() {
     out.write("""\n""")
     write_predictors(predictors, out, "long")
     out.write("""
-}
-
-const Clustering* get_short_cluster(size_t conf) {
-    //automated""")
-
-    write_cluster(clusters, out, "short")
-
-    out.write("""    return NULL;
-}
-
-const Clustering* get_long_cluster(size_t conf) {
-    //automated""")
-
-    write_cluster(clusters, out, "long")
-
-    out.write("""    return NULL;
 }
 
 const vector<keep_func_type>& get_short_pred_keep_funcs(size_t conf) {
