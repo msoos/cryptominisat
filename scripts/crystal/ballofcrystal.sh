@@ -144,18 +144,20 @@ cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 # Denormalize the data into a Pandas Table, label it and sample it
 ########################
 ../gen_pandas.py "${FNAMEOUT}-min.db" --limit "$FIXED" --conf $CONF-$CONF ${EXTRA_GEN_PANDAS_OPTS}
-../clustering.py short-2-comb.dat --numconfs 4 --basedir ../src/predict/ --clusters 1 --scale
+../clustering.py short-2-comb.dat --numconfs 1 --basedir ../src/predict/ --clusters 1 --scale
 
 ########################
 # Create the classifiers
 ########################
 mkdir -p ../../src/predict
 rm -f ../../src/predict/*.h
-for CONF in {2..2}; do
-    ./predict.py short-2-comb.dat --name short --final --tree --basedir ../src/predict/ --conf 2
+for CONF in {0..2}; do
+    ./predict.py short-2-comb.dat --name short --final --tree --basedir ../src/predict/ --conf 0
+    ./predict.py long-2-comb.dat --name long --final --tree --basedir ../src/predict/ --conf 0
+
     #../predict.py "${FNAMEOUT}-min.db-short-conf-$CONF.dat" --name short --basedir "../../src/predict/" --final --forest --split 0.1 --conf $CONF
 
-    ../predict.py "${FNAMEOUT}-min.db-long-conf-$CONF.dat" --name long   --basedir "../../src/predict/" --final --forest --split 0.1 --conf $CONF
+    # ../predict.py "${FNAMEOUT}-min.db-long-conf-$CONF.dat" --name long   --basedir "../../src/predict/" --final --forest --split 0.1 --conf $CONF
 done
 )
 

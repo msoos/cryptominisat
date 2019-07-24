@@ -247,8 +247,8 @@ cl
 , act_ranking_rel
 , act_ranking_top_10
 """
-            self.node_defines = """
-uint32_t time_inside_solver = solver->sumConflicts - cl->introduced_at_conflict;
+            self.per_func_defines = """
+uint32_t time_inside_solver = sumConflicts - cl->stats.introduced_at_conflict;
 """
         @staticmethod
         def fix_feat_name(x):
@@ -287,7 +287,12 @@ namespace CMSat {
             if type(self.clf) is sklearn.tree.tree.DecisionTreeClassifier:
                 self.f.write("""
 static double estimator_{funcname}_0({func_signature}) {{\n
-""".format(funcname=self.func_name, func_signature=self.func_signature))
+{per_func_defines}
+""".format(
+    funcname=self.func_name,
+    func_signature=self.func_signature,
+    per_func_defines=self.per_func_defines
+    ))
                 if options.verbose:
                     print(self.clf)
                     print(self.clf.get_params())
@@ -298,7 +303,13 @@ static double estimator_{funcname}_0({func_signature}) {{\n
                 for tree, i in zip(self.clf.estimators_, range(1000)):
                     self.f.write("""
 static double estimator_{funcname}_{est_num}({func_signature}) {{\n
-""".format(est_num=i, funcname=self.func_name), func_signature=self.func_signature)
+{per_func_defines}
+""".format(
+    est_num=i,
+    funcname=self.func_name,
+    func_signature=self.func_signature,
+    per_func_defines=self.per_func_defines
+    ))
                     self.get_code(tree, 1)
                     self.f.write("}\n")
 
@@ -306,7 +317,9 @@ static double estimator_{funcname}_{est_num}({func_signature}) {{\n
             # Final tally
             self.f.write("""
 static bool {funcname}({func_signature}) {{
-""".format(funcname=self.func_name, func_signature=self.func_signature))
+""".format(funcname=self.func_name,
+           func_signature=self.func_signature))
+
             self.f.write("    int votes = 0;\n")
             for i in range(num_trees):
                 self.f.write("""
@@ -324,11 +337,16 @@ votes += estimator_{funcname}_{est_num}({func_call}) < 1.0;
                 feat_name = feat_name.replace(".", "_")
                 feat_name = ccg.to_source(ast.parse(feat_name), self.fix_feat_name)
 
-                self.f.write("{tabs}{defines}".format(
-                    tabs=tabsize,defines=self.node_defines))
-                self.f.write("{tabs}if ( {feat} <= {threshold}f ) {{\n".format(
-                tabs=tabsize,
-                feat=feat_name, threshold=str(threshold[node])))
+                # to fix binary (0/1) comparisons
+                threshold_val = str(threshold[node])
+                if threshold[node] == 1.0:
+                    threshold_val = "1.0"
+
+                self.f.write("{tabs}".format(
+                    tabs=tabsize))
+                self.f.write("{tabs}if ( {feat} <= {threshold} ) {{\n".format(
+                    tabs=tabsize,
+                    feat=feat_name,threshold=threshold_val))
 
                 # recruse left
                 if left[node] != -1:
