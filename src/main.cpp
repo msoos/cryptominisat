@@ -1061,18 +1061,6 @@ void Main::parse_polarity_type()
 
 void Main::manually_parse_some_options()
 {
-    #ifdef FINAL_PREDICTOR
-    fill_pred_funcs();
-    if (!check_pred_conf_exists_short(conf.pred_conf_short)) {
-        cout << "ERROR: The SHORT config for '--pred' that you gave does not exist. Generate it first then recompile. You gave: " << conf.pred_conf_short << endl;
-        exit(-1);
-    }
-    if (!check_pred_conf_exists_long(conf.pred_conf_long)) {
-        cout << "ERROR: The LONG config for '--pred' that you gave does not exist. Generate it first then recompile. You gave: " << conf.pred_conf_long << endl;
-        exit(-1);
-    }
-    #endif
-
     if (conf.yalsat_max_mems < 1) {
         cout << "ERROR: '--walkmems' must be at least 1" << endl;
         exit(-1);

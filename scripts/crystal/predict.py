@@ -33,13 +33,10 @@ import numpy as np
 import sklearn.metrics
 import time
 import itertools
-import math
 import matplotlib.pyplot as plt
 import sklearn.ensemble
 import os
-import ast
 import helper
-import crystalcodegen as ccg
 ver = sklearn.__version__.split(".")
 if int(ver[1]) < 20:
     from sklearn.cross_validation import train_test_split
@@ -225,168 +222,6 @@ class Learner:
         print("New size:", df2.shape)
         return df2
 
-    class CodeWriter:
-        def __init__(self, clf, features, funcname, code_file):
-            self.f = open(code_file, 'w')
-            self.code_file = code_file
-            helper.write_mit_header(self.f)
-            self.clf = clf
-            self.feat = features
-            self.func_name = funcname
-            self.func_signature = """
-const CMSat::Clause* cl
-, const uint64_t sumConflicts
-, const uint32_t last_touched_diff
-, const double   act_ranking_rel
-, const uint32_t act_ranking_top_10
-"""
-            self.func_call = """
-cl
-, sumConflicts
-, last_touched_diff
-, act_ranking_rel
-, act_ranking_top_10
-"""
-            self.per_func_defines = """
-uint32_t time_inside_solver = sumConflicts - cl->stats.introduced_at_conflict;
-"""
-        @staticmethod
-        def fix_feat_name(x):
-            x = re.sub(r"dump_no", r"dump_number", x)
-            x = re.sub(r"^cl_", r"", x)
-            x = re.sub(r"^rdb0_", r"", x)
-
-            if x == "dump_number":
-                pass
-            elif x == "last_touched_diff":
-                pass
-            elif x == "act_ranking_top_10":
-                pass
-            elif x == "act_ranking_rel":
-                pass
-            elif x == "time_inside_solver":
-                pass
-            elif x == "size":
-                x = "cl->" + x + "()"
-            else:
-                x = "cl->stats." + x
-
-            return x
-
-        def print_full_code(self):
-            self.f.write("""
-#include "clause.h"
-#include "reducedb.h"
-#include <cmath>
-
-namespace CMSat {
-""")
-
-            num_trees = 1
-            if type(self.clf) is sklearn.tree.tree.DecisionTreeClassifier:
-                self.f.write("""
-static double estimator_{funcname}_0({func_signature}) {{\n
-{per_func_defines}
-""".format(
-    funcname=self.func_name,
-    func_signature=self.func_signature,
-    per_func_defines=self.per_func_defines
-    ))
-                if options.verbose:
-                    print(self.clf)
-                    print(self.clf.get_params())
-                self.get_code(self.clf, 1)
-                self.f.write("}\n")
-            else:
-                num_trees = len(self.clf.estimators_)
-                for tree, i in zip(self.clf.estimators_, range(1000)):
-                    self.f.write("""
-static double estimator_{funcname}_{est_num}({func_signature}) {{\n
-{per_func_defines}
-""".format(
-    est_num=i,
-    funcname=self.func_name,
-    func_signature=self.func_signature,
-    per_func_defines=self.per_func_defines
-    ))
-                    self.get_code(tree, 1)
-                    self.f.write("}\n")
-
-            #######################
-            # Final tally
-            self.f.write("""
-static bool {funcname}({func_signature}) {{
-""".format(funcname=self.func_name,
-           func_signature=self.func_signature))
-
-            self.f.write("    int votes = 0;\n")
-            for i in range(num_trees):
-                self.f.write("""
-votes += estimator_{funcname}_{est_num}({func_call}) < 1.0;
-""".format(est_num=i, funcname=self.func_name, func_call=self.func_call))
-            self.f.write("    return votes >= %d;\n" % math.ceil(float(num_trees)/2.0))
-            self.f.write("}\n}\n")
-            print("Wrote code to: ", self.code_file)
-
-        def recurse(self, left, right, threshold, features, node, tabs):
-            tabsize = tabs*"    "
-            if (threshold[node] != -2):
-                # decision node
-                feat_name = features[node]
-                feat_name = feat_name.replace(".", "_")
-                feat_name = ccg.to_source(ast.parse(feat_name), self.fix_feat_name)
-
-                # to fix binary (0/1) comparisons
-                threshold_val = str(threshold[node])
-                if threshold[node] == 1.0:
-                    threshold_val = "1.0"
-
-                self.f.write("{tabs}".format(
-                    tabs=tabsize))
-                self.f.write("{tabs}if ( {feat} <= {threshold} ) {{\n".format(
-                    tabs=tabsize,
-                    feat=feat_name,threshold=threshold_val))
-
-                # recruse left
-                if left[node] != -1:
-                    self.recurse(left, right, threshold,
-                                 features, left[node], tabs+1)
-
-                self.f.write("{tabs}}} else {{\n".format(tabs=tabsize))
-
-                # recurse right
-                if right[node] != -1:
-                    self.recurse(left, right, threshold,
-                                 features, right[node], tabs+1)
-
-                self.f.write("{tabs}}}\n".format(tabs=tabsize))
-            else:
-                # leaf node
-                x = self.value[node][0][0]
-                y = self.value[node][0][1]
-                if y == 0:
-                    ratio = "1"
-                else:
-                    ratio = "%0.1f/%0.1f" % (x, y)
-
-                self.f.write("{tabs}return {ratio};\n".format(
-                    tabs=tabsize, ratio=ratio))
-
-        def get_code(self, clf, starttab=0):
-            left = clf.tree_.children_left
-            right = clf.tree_.children_right
-            threshold = clf.tree_.threshold
-            if options.verbose:
-                print("Node count:", clf.tree_.node_count)
-                print("Left: %s Right: %s Threshold: %s" %
-                      (left, right, threshold))
-                print("clf.tree_.feature:", clf.tree_.feature)
-            features = [self.feat[i % len(self.feat)]
-                        for i in clf.tree_.feature]
-            self.value = clf.tree_.value
-
-            self.recurse(left, right, threshold, features, 0, starttab)
-
     def filtered_conf_matrixes(self, dump_no, data, features, to_predict, clf, toprint="test"):
         # filter test data
         if dump_no is not None:
@@ -397,6 +232,29 @@ votes += estimator_{funcname}_{est_num}({func_call}) < 1.0;
             data2 = data
 
         return helper.conf_matrixes(data2, features, to_predict, clf, toprint)
+
+    @staticmethod
+    def fix_feat_name(x):
+        x = re.sub(r"dump_no", r"dump_number", x)
+        x = re.sub(r"^cl_", r"", x)
+        x = re.sub(r"^rdb0_", r"", x)
+
+        if x == "dump_number":
+            pass
+        elif x == "last_touched_diff":
+            pass
+        elif x == "act_ranking_top_10":
+            pass
+        elif x == "act_ranking_rel":
+            pass
+        elif x == "time_inside_solver":
+            pass
+        elif x == "size":
+            x = "cl->" + x + "()"
+        else:
+            x = "cl->stats." + x
+
+        return x
 
     def one_classifier(self, features, to_predict, final, write_code=False):
         print("-> Number of features  :", len(features))
@@ -521,7 +379,32 @@ votes += estimator_{funcname}_{est_num}({func_call}) < 1.0;
                     fname=options.dot + "-" + self.func_name)
 
             if options.basedir and write_code:
-                c = self.CodeWriter(clf, features, self.func_name, self.fname)
+                c = helper.CodeWriter(clf, features, self.func_name, self.fname, options.verbose)
+                c.func_signature = """
+                const CMSat::Clause* cl
+                , const uint64_t sumConflicts
+                , const uint32_t last_touched_diff
+                , const double   act_ranking_rel
+                , const uint32_t act_ranking_top_10
+                """
+                c.func_call = """
+                cl
+                , sumConflicts
+                , last_touched_diff
+                , act_ranking_rel
+                , act_ranking_top_10
+                """
+                c.per_func_defines = """
+                uint32_t time_inside_solver = sumConflicts - cl->stats.introduced_at_conflict;
+                """
+                c.file_header = """
+                #include "clause.h"
+                #include "reducedb.h"
+                #include <cmath>
+
+                namespace CMSat {
+                """
+                c.fix_feat_name = self.fix_feat_name
                 c.print_full_code()
 
         print("--------------------------")

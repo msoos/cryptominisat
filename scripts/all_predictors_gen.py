@@ -24,8 +24,14 @@ def write_predictors(predictors, out, name):
 
     out.write("""    should_keep_{name}_funcs.resize({num});\n""".format(
         num =max(nums)+1, name=name))
+
+    # NULL it out all
+    for num in range(max(nums)+1):
+        out.write("""    should_keep_{name}_funcs[{num}] = vector<keep_func_type>();\n""".format(num=num, name=name))
+
+    # set the correct value
     for num in sorted(nums):
-        out.write("""    should_keep_{name}_funcs[{num}] =should_keep_{name}_conf{num}_funcs;\n""".format(num=num, name=name))
+        out.write("""    should_keep_{name}_funcs[{num}] = should_keep_{name}_conf{num}_funcs;\n""".format(num=num, name=name))
 
 
 with open(output_path, 'w') as out:
@@ -77,11 +83,29 @@ void fill_pred_funcs() {
     out.write("""
 }
 
+//////////
+//Function exists checks
+//////////
+
+bool short_pred_func_exists(size_t conf) {
+    return should_keep_short_funcs.size() > conf && !should_keep_short_funcs[conf].empty();
+}
+
+bool long_pred_func_exists(size_t conf) {
+    return should_keep_long_funcs.size() > conf && !should_keep_long_funcs[conf].empty();
+}
+
+//////////
+//Function returns
+//////////
+
 const vector<keep_func_type>& get_short_pred_keep_funcs(size_t conf) {
+    assert(short_pred_func_exists(conf));
     return should_keep_short_funcs[conf];
 }
 
 const vector<keep_func_type>& get_long_pred_keep_funcs(size_t conf) {
+    assert(long_pred_func_exists(conf));
     return should_keep_long_funcs[conf];
 }
 

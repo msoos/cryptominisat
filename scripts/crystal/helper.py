@@ -23,7 +23,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sklearn
 import sklearn.metrics
-
+import re
+import crystalcodegen as ccg
+import ast
+import math
 
 def write_mit_header(f):
     f.write("""/******************************************
@@ -294,12 +297,12 @@ def print_feature_ranking(clf, X_train, top_num_features, features, plot=False):
 
     # Plot the feature importances of the clf
     if plot:
-        plot_feature_importances(importances, indices, myrange)
+        plot_feature_importances(importances, indices, myrange, std, features)
 
     return best_features
 
 
-def plot_feature_importances(importances):
+def plot_feature_importances(importances, indices, myrange, std, features):
         plt.figure()
         plt.title("Feature importances")
         plt.bar(range(myrange), importances[indices],
@@ -308,3 +311,122 @@ def plot_feature_importances(importances):
         plt.xticks(range(myrange), [features[x]
                                     for x in indices], rotation=45)
         plt.xlim([-1, myrange])
+
+
+class CodeWriter:
+    def __init__(self, clf, features, funcname, code_file, verbose):
+        self.f = open(code_file, 'w')
+        self.code_file = code_file
+        write_mit_header(self.f)
+        self.clf = clf
+        self.feat = features
+        self.func_name = funcname
+        self.verbose = verbose
+
+    def print_full_code(self):
+        self.f.write(self.file_header)
+
+        num_trees = 1
+        if type(self.clf) is sklearn.tree.tree.DecisionTreeClassifier:
+            self.f.write("""
+static double estimator_{funcname}_0({func_signature}) {{\n
+{per_func_defines}
+""".format(
+    funcname=self.func_name,
+    func_signature=self.func_signature,
+    per_func_defines=self.per_func_defines
+    ))
+            if self.verbose:
+                print(self.clf)
+                print(self.clf.get_params())
+            self.get_code(self.clf, 1)
+            self.f.write("}\n")
+        else:
+            num_trees = len(self.clf.estimators_)
+            for tree, i in zip(self.clf.estimators_, range(1000)):
+                self.f.write("""
+static double estimator_{funcname}_{est_num}({func_signature}) {{\n
+{per_func_defines}
+""".format(
+    est_num=i,
+    funcname=self.func_name,
+    func_signature=self.func_signature,
+    per_func_defines=self.per_func_defines
+    ))
+                self.get_code(tree, 1)
+                self.f.write("}\n")
+
+        #######################
+        # Final tally
+        self.f.write("""
+static bool {funcname}({func_signature}) {{
+""".format(funcname=self.func_name,
+           func_signature=self.func_signature))
+
+        self.f.write("    int votes = 0;\n")
+        for i in range(num_trees):
+            self.f.write("""
+votes += estimator_{funcname}_{est_num}({func_call}) < 1.0;
+""".format(est_num=i, funcname=self.func_name, func_call=self.func_call))
+        self.f.write("    return votes >= %d;\n" % math.ceil(float(num_trees)/2.0))
+        self.f.write("}\n}\n")
+        print("Wrote code to: ", self.code_file)
+
+    def recurse(self, left, right, threshold, features, node, tabs):
+        tabsize = tabs*"    "
+        if (threshold[node] != -2):
+            # decision node
+            feat_name = features[node]
+            feat_name = feat_name.replace(".", "_")
+            feat_name = ccg.to_source(ast.parse(feat_name), self.fix_feat_name)
+
+            # to fix binary (0/1) comparisons
+            threshold_val = str(threshold[node])
+            if threshold[node] == 1.0:
+                threshold_val = "1.0"
+
+            self.f.write("{tabs}".format(
+                tabs=tabsize))
+            self.f.write("{tabs}if ( {feat} <= {threshold} ) {{\n".format(
+                tabs=tabsize,
+                feat=feat_name,threshold=threshold_val))
+
+            # recruse left
+            if left[node] != -1:
+                self.recurse(left, right, threshold,
+                             features, left[node], tabs+1)
+
+            self.f.write("{tabs}}} else {{\n".format(tabs=tabsize))
+
+            # recurse right
+            if right[node] != -1:
+                self.recurse(left, right, threshold,
+                             features, right[node], tabs+1)
+
+            self.f.write("{tabs}}}\n".format(tabs=tabsize))
+        else:
+            # leaf node
+            x = self.value[node][0][0]
+            y = self.value[node][0][1]
+            if y == 0:
+                ratio = "1"
+            else:
+                ratio = "%0.1f/%0.1f" % (x, y)
+
+            self.f.write("{tabs}return {ratio};\n".format(
+                tabs=tabsize, ratio=ratio))
+
+    def get_code(self, clf, starttab=0):
+        left = clf.tree_.children_left
+        right = clf.tree_.children_right
+        threshold = clf.tree_.threshold
+        if self.verbose:
+            print("Node count:", clf.tree_.node_count)
+            print("Left: %s Right: %s Threshold: %s" %
+                  (left, right, threshold))
+            print("clf.tree_.feature:", clf.tree_.feature)
+        features = [self.feat[i % len(self.feat)]
+                    for i in clf.tree_.feature]
+        self.value = clf.tree_.value
+
+        self.recurse(left, right, threshold, features, 0, starttab)

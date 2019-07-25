@@ -115,6 +115,17 @@ void ClauseDumper::dump_irred_clauses_preprocessor(std::ostream *out) {
         << "p cnf " << solver->nVars()
         << " " << get_preprocessor_num_cls(false) << "\n";
 
+        if (solver->conf.sampling_vars) {
+            *out << "c ind ";
+            for(uint32_t outside_var: *solver->conf.sampling_vars) {
+                uint32_t outer_var = solver->map_to_with_bva(outside_var);
+                outer_var = solver->varReplacer->get_var_replaced_with_outer(outer_var);
+                uint32_t int_var = solver->map_outer_to_inter(outer_var);
+                *out << int_var+1 << " ";
+            }
+            *out << " 0\n";
+        }
+
         dump_irred_cls_for_preprocessor(out, false);
     }
 }

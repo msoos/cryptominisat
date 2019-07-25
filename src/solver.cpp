@@ -1407,6 +1407,10 @@ void Solver::check_config_parameters() const
     }
     #endif
 
+    #ifdef FINAL_PREDICTOR
+    reduceDB->check_config();
+    #endif
+
     check_xor_cut_config_sanity();
 }
 

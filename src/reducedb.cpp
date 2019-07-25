@@ -92,6 +92,20 @@ ReduceDB::~ReduceDB()
     delete clustering;
 }
 
+void ReduceDB::check_config()
+{
+    #ifdef FINAL_PREDICTOR
+    if (!short_pred_func_exists(solver->conf.pred_conf_short)) {
+        cout << "ERROR: The SHORT config for '--pred' that you gave does not exist. Generate it first then recompile. You gave: " << solver->conf.pred_conf_short << endl;
+        exit(-1);
+    }
+    if (!long_pred_func_exists(solver->conf.pred_conf_long)) {
+        cout << "ERROR: The LONG config for '--pred' that you gave does not exist. Generate it first then recompile. You gave: " << solver->conf.pred_conf_long << endl;
+        exit(-1);
+    }
+    #endif
+}
+
 void ReduceDB::sort_red_cls(ClauseClean clean_type)
 {
     switch (clean_type) {
