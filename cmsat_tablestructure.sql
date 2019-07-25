@@ -353,11 +353,6 @@ create table `varDataUse` (
     `conflicts` bigint(20) NOT NULL,
     `var` int(20) NOT NULL,
 
-    `decided_this_var_per_all_decisions` double NOT NULL,
-    `decided_this_var_pos_perc` double NOT NULL,
-    `prop_this_var_per_all_decisions` double NOT NULL,
-    `propagated_this_var_pos_perc` double NOT NULL,
-
     `cls_marked` int(2) DEFAULT NULL,
     `useful_clauses` int(20) DEFAULT NULL,
     `useful_clauses_used` int(20) DEFAULT NULL

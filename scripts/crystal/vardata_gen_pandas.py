@@ -18,7 +18,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
-import sklearn.ensemble
 from __future__ import print_function
 import sqlite3
 import argparse
@@ -29,12 +28,6 @@ import pandas as pd
 import numpy as np
 import os.path
 import sys
-import sklearn
-ver = sklearn.__version__.split(".")
-if int(ver[1]) < 20:
-    from sklearn.cross_validation import train_test_split
-else:
-    from sklearn.model_selection import train_test_split
 
 
 def dump_df(df):
@@ -131,23 +124,12 @@ class QueryVar (QueryHelper):
         (`var`
         , `conflicts`
 
-        , `decided_this_var_per_all_decisions`
-        , `decided_this_var_pos_perc`
-        , `prop_this_var_per_all_decisions`
-        , `propagated_this_var_pos_perc`
-
         , `cls_marked`
         , `useful_clauses_used`)
 
         select
         v.var
         , v.conflicts
-
-        -- data about var
-        , (v.decided*1.0)/(v.sumDecisions_at_fintime*1.0) as `decided_this_var_per_all_decisions`
-        , (v.decided_pos*1.0)/(v.decided*1.0) as `decided_this_var_pos_perc`
-        , (v.propagated*1.0)/(v.sumPropagations_at_fintime*1.0) as `prop_this_var_per_all_decisions`
-        , (v.propagated_pos*1.0)/(v.propagated*1.0) as `propagated_this_var_pos_perc`
 
         -- measures for good
         , count(cls.num_used) as cls_marked
