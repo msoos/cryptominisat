@@ -121,7 +121,9 @@ void ClauseDumper::dump_irred_clauses_preprocessor(std::ostream *out) {
                 uint32_t outer_var = solver->map_to_with_bva(outside_var);
                 outer_var = solver->varReplacer->get_var_replaced_with_outer(outer_var);
                 uint32_t int_var = solver->map_outer_to_inter(outer_var);
-                *out << int_var+1 << " ";
+                if (int_var < solver->nVars()) {
+                    *out << int_var+1 << " ";
+                }
             }
             *out << " 0\n";
         }
