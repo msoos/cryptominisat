@@ -405,7 +405,7 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
         watches.prefetch((~p).toInt());
     }
 
-    if (!update_bogoprops && !VSIDS && from != PropBy()) {
+    if (!update_bogoprops && !VSIDS) {
         varData[v].last_picked = sumConflicts;
         varData[v].conflicted = 0;
 
@@ -422,33 +422,37 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
     const bool sign = p.sign();
     assigns[v] = boolToLBool(!sign);
     varData[v].reason = from;
-    #ifdef STATS_NEEDED
+    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     if (!update_bogoprops) {
+        varData[v].sumDecisions_at_picktime = sumDecisions;
+        varData[v].sumConflicts_at_picktime = sumConflicts;
+        varData[v].sumAntecedents_at_picktime = sumAntecedents;
+        varData[v].sumAntecedentsLits_at_picktime = sumAntecedentsLits;
+        varData[v].sumConflictClauseLits_at_picktime = sumConflictClauseLits;
+        varData[v].sumPropagations_at_picktime = sumPropagations;
+        varData[v].sumDecisionBasedCl_at_picktime = sumDecisionBasedCl;
+        varData[v].sumConflictClauseLits_below_at_picktime = sumConflictClauseLits;
+        varData[v].sumClLBD_at_picktime = sumClLBD;
+        varData[v].sumClSize_at_picktime = sumClSize;
+
+        #ifdef STATS_NEEDED
+        varData[v].clid_at_picking = clauseID;
+        varData[v].inside_conflict_clause_glue_at_picktime = varData[v].inside_conflict_clause_glue;
+        varData[v].inside_conflict_clause_at_picktime = varData[v].inside_conflict_clause;
+        varData[v].inside_conflict_clause_antecedents_at_picktime = varData[v].inside_conflict_clause_antecedents;
+        #endif
+
         if (from == PropBy()) {
+            #ifdef STATS_NEEDED
             varData[v].num_decided++;
             if (!sign) varData[v].num_decided_pos++;
-
-            varData[v].sumDecisions_at_picktime = sumDecisions;
-            varData[v].sumConflicts_at_picktime = sumConflicts;
-            varData[v].sumAntecedents_at_picktime = sumAntecedents;
-            varData[v].sumAntecedentsLits_at_picktime = sumAntecedentsLits;
-            varData[v].sumConflictClauseLits_at_picktime = sumConflictClauseLits;
-            varData[v].sumPropagations_at_picktime = sumPropagations;
-            varData[v].sumDecisionBasedCl_at_picktime = sumDecisionBasedCl;
-            varData[v].sumConflictClauseLits_below_at_picktime = sumConflictClauseLits;
-            varData[v].sumClLBD_at_picktime = sumClLBD;
-            varData[v].sumClSize_at_picktime = sumClSize;
-
-            varData[v].inside_conflict_clause_glue_at_picktime = varData[v].inside_conflict_clause_glue;
-            varData[v].inside_conflict_clause_at_picktime = varData[v].inside_conflict_clause;
-            varData[v].inside_conflict_clause_antecedents_at_picktime = varData[v].inside_conflict_clause_antecedents;
-
-
-            varData[v].clid_at_picking = clauseID;
+            #endif
         } else {
             sumPropagations++;
+            #ifdef STATS_NEEDED
             varData[v].num_propagated++;
             if (!sign) varData[v].num_propagated_pos++;
+            #endif
         }
     }
     #endif

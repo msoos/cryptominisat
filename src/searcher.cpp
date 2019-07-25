@@ -45,6 +45,10 @@ THE SOFTWARE.
 #ifdef USE_GAUSS
 #include "gaussian.h"
 #endif
+
+#ifdef FINAL_PREDICTOR
+#include "predict/maple_predictor_conf0_cluster0.h"
+#endif
 //#define DEBUG_RESOLV
 //#define VERBOSE_DEBUG
 
@@ -3499,7 +3503,8 @@ void Searcher::cancelUntil(uint32_t level
             const uint32_t var = trail[sublevel].var();
             assert(value(var) != l_Undef);
 
-            #ifdef STATS_NEEDED
+            #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+            double reward = 0;
             if (!update_bogoprops) {
                 //WARNING We do not correctly count into the variable the decision clause
                 //WARNING in case it's made.
@@ -3507,21 +3512,43 @@ void Searcher::cancelUntil(uint32_t level
                 //WARNING but not a decision clause...
 
                 //we want to dump & this was a decision var
-                bool decision_var = varData[var].reason == PropBy();
-                uint64_t conflicts = sumConflicts - varData[var].sumConflicts_at_picktime;
-                uint64_t decisions = sumDecisions - varData[var].sumDecisions_at_picktime;
-                uint64_t antecedents = sumAntecedents - varData[var].sumAntecedents_at_picktime;
-                uint64_t antecedentsLits = sumAntecedentsLits - varData[var].sumAntecedentsLits_at_picktime;
-                uint64_t decisionCls = sumDecisionBasedCl - varData[var].sumDecisionBasedCl_at_picktime;
-                uint64_t conflictLits = sumConflictClauseLits - varData[var].sumConflictClauseLits_at_picktime;
-                uint64_t lbd = sumClLBD - varData[var].sumClLBD_at_picktime;
-                uint64_t size = sumClSize - varData[var].sumClSize_at_picktime;
+                uint64_t sumConflicts_during = sumConflicts - varData[var].sumConflicts_at_picktime;
+                uint64_t sumDecisions_during = sumDecisions - varData[var].sumDecisions_at_picktime;
+                uint64_t sumAntecedents_during = sumAntecedents - varData[var].sumAntecedents_at_picktime;
+                uint64_t sumAntecedentsLits_during = sumAntecedentsLits - varData[var].sumAntecedentsLits_at_picktime;
+                uint64_t sumConflictClauseLits_during = sumConflictClauseLits - varData[var].sumConflictClauseLits_at_picktime;
+                uint64_t sumDecisionBasedCl_during = sumDecisionBasedCl - varData[var].sumDecisionBasedCl_at_picktime;
+                uint64_t sumPropagations_during = sumPropagations - varData[var].sumPropagations_at_picktime;
+                uint64_t sumClLBD_during = sumClLBD - varData[var].sumClLBD_at_picktime;
+                uint64_t sumClSize_during = sumClSize - varData[var].sumClSize_at_picktime;
+                uint64_t cls_below = sumConflicts_during + sumDecisionBasedCl_during;
 
+                if (!VSIDS &&
+                    sumConflicts_during && sumDecisions_during && sumAntecedents_during
+                ) {
+                    reward = maple_reward_conf0_cluster0(
+                        solver
+                        , varData[var]
+                        , sumConflicts_during
+                        , sumDecisions_during
+                        , sumPropagations_during
+                        , sumAntecedents_during
+                        , sumAntecedentsLits_during
+                        , sumConflictClauseLits_during
+                        , sumDecisionBasedCl_during
+                        , sumClLBD_during
+                        , sumClSize_during
+                        , cls_below
+                    );
+                    //cout << "reward: " << reward << endl;
+                }
+
+                #ifdef STATS_NEEDED
+                bool decision_var = varData[var].reason == PropBy();
                 if (dump_this_canceluntil
                     && (rnd_num < conf.dump_individual_cldata_ratio*0.0008 ||
                         varData[var].reason == PropBy())
                 ) {
-                    uint64_t cls_below = conflicts + decisionCls;
                     uint64_t outer_var = map_inter_to_outer(var);
 
                     solver->sqlStats->var_data(
@@ -3533,13 +3560,20 @@ void Searcher::cancelUntil(uint32_t level
                         , decision_var
                     );
                 }
-                varData[var].sumAntecedents_below_at_picktime += antecedents;
-                varData[var].sumConflicts_below_at_picktime += conflicts;
-                varData[var].sumDecisions_below_at_picktime += decisions;
-                varData[var].sumAntecedentsLits_below_at_picktime += antecedentsLits;
-                varData[var].sumConflictClauseLits_below_at_picktime += conflictLits;
-                varData[var].sumClLBD_below_at_picktime += lbd;
-                varData[var].sumClSize_below_at_picktime += size;
+
+                //if STATS_NEEDED we only update for decisions, otherwise, all the time
+                if (varData[var].reason == PropBy())
+                #endif
+                {
+                    varData[var].sumConflicts_below_at_picktime += sumConflicts_during;
+                    varData[var].sumDecisions_below_at_picktime += sumDecisions_during;
+                    varData[var].sumAntecedents_below_at_picktime += sumAntecedents_during;
+                    varData[var].sumAntecedentsLits_below_at_picktime += sumAntecedentsLits_during;
+                    varData[var].sumConflictClauseLits_below_at_picktime += sumConflictClauseLits_during;
+                    varData[var].sumDecisionBasedCl_below_at_picktime += sumDecisionBasedCl_during;
+                    varData[var].sumClLBD_below_at_picktime += sumClLBD_during;
+                    varData[var].sumClSize_below_at_picktime += sumClSize_during;
+                }
             }
             #endif
 
@@ -3549,7 +3583,10 @@ void Searcher::cancelUntil(uint32_t level
                 uint32_t age = sumConflicts - varData[var].last_picked;
                 if (age > 0) {
                     //adjusted reward -> higher if conflicted more or quicker
-                    double adjusted_reward = ((double)(varData[var].conflicted)) / ((double)age);
+
+                    //Original MAPLE reward
+                    //reward = (double)varData[var].conflicted;
+                    double adjusted_reward = reward / ((double)age);
 
                     double old_activity = var_act_maple[var];
                     var_act_maple[var] = step_size * adjusted_reward + ((1.0 - step_size) * old_activity);

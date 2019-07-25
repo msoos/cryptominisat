@@ -27,6 +27,7 @@ import re
 import crystalcodegen as ccg
 import ast
 import math
+from pprint import pprint
 
 def write_mit_header(f):
     f.write("""/******************************************
@@ -322,16 +323,30 @@ class CodeWriter:
         self.feat = features
         self.func_name = funcname
         self.verbose = verbose
+        self.max_pred_val = 1
+
+    def clean_up(self):
+        x = [["file_header", 0], ["per_func_defines", 4], ["func_call", 8], ["func_signature", 4]]
+        for toclean, num_spaces in x:
+            cleaned = ""
+            for line in getattr(self, toclean).split("\n"):
+                if line.strip() == "":
+                    continue
+                cleaned += " "*num_spaces + line.strip() + "\n"
+
+            setattr(self, toclean, cleaned)
 
     def print_full_code(self):
+        self.f.write("""
+#ifndef {mydef}
+#define {mydef}\n""".format(mydef=self.func_name.upper()+"_H"))
         self.f.write(self.file_header)
 
         num_trees = 1
         if type(self.clf) is sklearn.tree.tree.DecisionTreeClassifier:
             self.f.write("""
-static double estimator_{funcname}_0({func_signature}) {{\n
-{per_func_defines}
-""".format(
+static int estimator_{funcname}_0(\n{func_signature}) {{\n
+{per_func_defines}""".format(
     funcname=self.func_name,
     func_signature=self.func_signature,
     per_func_defines=self.per_func_defines
@@ -345,9 +360,8 @@ static double estimator_{funcname}_0({func_signature}) {{\n
             num_trees = len(self.clf.estimators_)
             for tree, i in zip(self.clf.estimators_, range(1000)):
                 self.f.write("""
-static double estimator_{funcname}_{est_num}({func_signature}) {{\n
-{per_func_defines}
-""".format(
+static int estimator_{funcname}_{est_num}(\n{func_signature}) {{\n
+{per_func_defines}""".format(
     est_num=i,
     funcname=self.func_name,
     func_signature=self.func_signature,
@@ -359,17 +373,42 @@ static double estimator_{funcname}_{est_num}({func_signature}) {{\n
         #######################
         # Final tally
         self.f.write("""
-static bool {funcname}({func_signature}) {{
-""".format(funcname=self.func_name,
-           func_signature=self.func_signature))
+static int {funcname}(\n{func_signature}) {{
+    int votes[{max_pred_val}] = {{ {init0} }};
+    int est;
 
-        self.f.write("    int votes = 0;\n")
+""".format(
+    funcname=self.func_name,
+    func_signature=self.func_signature,
+    max_pred_val=self.max_pred_val,
+    init0=("0,"*self.max_pred_val).rstrip(",")
+    ))
+
         for i in range(num_trees):
             self.f.write("""
-votes += estimator_{funcname}_{est_num}({func_call}) < 1.0;
+    est = estimator_{funcname}_{est_num}(\n{func_call}\n    );
+    votes[est]++;
 """.format(est_num=i, funcname=self.func_name, func_call=self.func_call))
-        self.f.write("    return votes >= %d;\n" % math.ceil(float(num_trees)/2.0))
-        self.f.write("}\n}\n")
+        self.f.write("""
+
+    int best = 0;
+    int best_val = 0;
+    for(int i = 0; i < {max_pred_val}; i++) {{
+        if (votes[i] > best_val) {{
+            best = i;
+            best_val = votes[i];
+        }}
+    }}
+    return best;
+}}
+
+//namespace end
+}}
+
+//ifdef end
+#endif
+""".format(max_pred_val=self.max_pred_val))
+
         print("Wrote code to: ", self.code_file)
 
     def recurse(self, left, right, threshold, features, node, tabs):
@@ -380,16 +419,9 @@ votes += estimator_{funcname}_{est_num}({func_call}) < 1.0;
             feat_name = feat_name.replace(".", "_")
             feat_name = ccg.to_source(ast.parse(feat_name), self.fix_feat_name)
 
-            # to fix binary (0/1) comparisons
-            threshold_val = str(threshold[node])
-            if threshold[node] == 1.0:
-                threshold_val = "1.0"
-
-            self.f.write("{tabs}".format(
-                tabs=tabsize))
             self.f.write("{tabs}if ( {feat} <= {threshold} ) {{\n".format(
                 tabs=tabsize,
-                feat=feat_name,threshold=threshold_val))
+                feat=feat_name,threshold=str(threshold[node])))
 
             # recruse left
             if left[node] != -1:
@@ -406,15 +438,20 @@ votes += estimator_{funcname}_{est_num}({func_call}) < 1.0;
             self.f.write("{tabs}}}\n".format(tabs=tabsize))
         else:
             # leaf node
-            x = self.value[node][0][0]
-            y = self.value[node][0][1]
-            if y == 0:
-                ratio = "1"
-            else:
-                ratio = "%0.1f/%0.1f" % (x, y)
+            scores = self.value[node][0]
+            self.max_pred_val = max(self.max_pred_val, len(scores))
+            scores_sum = scores.sum()
 
-            self.f.write("{tabs}return {ratio};\n".format(
-                tabs=tabsize, ratio=ratio))
+            largest = 0
+            largest_score = 0
+            for score, i in zip(scores, range(10000)):
+                if score > largest_score:
+                    largest = i
+                    largest_score = score
+                    assert largest_score == scores[largest]
+
+            self.f.write("{tabs}return {winner};\n".format(
+                tabs=tabsize, winner=largest))
 
     def get_code(self, clf, starttab=0):
         left = clf.tree_.children_left

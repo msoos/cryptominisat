@@ -133,19 +133,30 @@ def rem_useless_features(df):
         del df["rst.restart_type"]
 
 
-class Predict:
-    def __init__(self, df):
+class Learner:
+    def __init__(self, df, funcname, fname, cluster_no):
         self.df = df
-        pass
+        self.func_name = funcname
+        self.fname = fname
+        self.cluster_no = cluster_no
 
     def cut_into_chunks(self):
-        df["x.class"] = pd.qcut(df["x.useful_times_per_marked"],
-                        q=options.quantiles,
-                        labels=False)
-        df["x.class"] = pd.cut(df["x.useful_times_per_marked"],
-                               bins=[-1000, 1, 5, 10, 20,
-                                     40, 100, 200, 10**20],
-                               labels=False)
+        df["x.class"] = pd.qcut(
+            df["x.useful_times_per_marked"],
+            q=options.quantiles,
+            labels=False)
+
+        df["x.class"] = pd.cut(
+            df["x.useful_times_per_marked"],
+            bins=[-1000, 1, 5, 10, 20, 40, 100, 200, 10**20],
+            #bins = [-1000, 20, 10**20],
+            labels=False)
+    @staticmethod
+    def fix_feat_name(x):
+        if "during" in x or "clauses_below" in x:
+            x = x.replace("var_data_", "")
+
+        return x
 
     def one_classifier(self, features, to_predict, final, write_code=False):
         print("-> Number of features  :", len(features))
@@ -186,7 +197,6 @@ class Predict:
         clf.fit(X_train, y_train)
         print("Training finished. T: %-3.2f" % (time.time() - t))
 
-
         if not final:
             best_features = helper.print_feature_ranking(
                 clf, X_train,
@@ -203,8 +213,47 @@ class Predict:
                     clf, features,
                     fname=options.dot + "-" + self.funcname)
 
-            if write_code and options.basedir:
-                c = self.CodeWriter(clf, features, self.funcname, self.fname)
+            if options.basedir and write_code:
+                c = helper.CodeWriter(clf, features, self.func_name, self.fname, options.verbose)
+                c.func_signature = """
+                const Solver*    solver
+                , const VarData& varData
+                , uint64_t       sumConflicts_during
+                , uint64_t       sumDecisions_during
+                , uint64_t       sumPropagations_during
+                , uint64_t       sumAntecedents_during
+                , uint64_t       sumAntecedentsLits_during
+                , uint64_t       sumConflictClauseLits_during
+                , uint64_t       sumDecisionBasedCl_during
+                , uint64_t       sumClLBD_during
+                , uint64_t       sumClSize_during
+                , uint64_t       clauses_below
+                """
+                c.func_call = """
+                solver
+                , varData
+                , sumConflicts_during
+                , sumDecisions_during
+                , sumPropagations_during
+                , sumAntecedents_during
+                , sumAntecedentsLits_during
+                , sumConflictClauseLits_during
+                , sumDecisionBasedCl_during
+                , sumClLBD_during
+                , sumClSize_during
+                , clauses_below
+                """
+                c.per_func_defines = """"""
+                c.file_header = """
+                #include "clause.h"
+                #include "vardata.h"
+                #include "solver.h"
+                #include <cmath>
+
+                namespace CMSat {
+                """
+                c.fix_feat_name = self.fix_feat_name
+                c.clean_up()
                 c.print_full_code()
 
         prec, recall, acc = helper.conf_matrixes(test, features, to_predict, clf, average="micro")
@@ -241,8 +290,14 @@ class Predict:
 
             return
 
-        best_features = []
-        # TODO fill best_features here
+        best_features =[
+            '(var_data.sumAntecedentsLits_during/var_data.sumAntecedents_during)',
+            '(var_data.sumClSize_during/var_data.sumPropagations_during)',
+            '(var_data.sumConflictClauseLits_during/var_data.sumAntecedents_during)',
+            '(var_data.sumDecisions_during/var_data.sumAntecedentsLits_during)',
+            '(var_data.sumPropagations_during/var_data.sumClLBD_during)',
+            '(var_data.clauses_below/var_data.sumAntecedentsLits_during)',
+            '(var_data.sumClLBD_during/var_data.sumPropagations_during)']
         self.one_classifier(best_features, "x.class",
                             final=True,
                             write_code=True)
@@ -277,6 +332,12 @@ if __name__ == "__main__":
                         dest="raw_data_plots", help="Display raw data plots")
     parser.add_argument("--dot", type=str, default=None,
                         dest="dot", help="Create DOT file")
+    parser.add_argument("--basedir", type=str,
+                        dest="basedir", help="The base directory of where the CryptoMiniSat source code is")
+    parser.add_argument("--clust", default=False, action="store_true",
+                        dest="use_clusters", help="Use clusters")
+    parser.add_argument("--conf", default=0, type=int,
+                        dest="conf_num", help="Which predict configuration this is")
 
     # tree/forest options
     parser.add_argument("--depth", default=None, type=int,
@@ -303,6 +364,33 @@ if __name__ == "__main__":
 
     rem_useless_features(df)
 
-    p = Predict(df)
-    features = p.cut_into_chunks()
-    p.learn()
+    # cluster setup
+    if options.use_clusters:
+        used_clusters = df.groupby("clust").nunique()
+        clusters = []
+        for clust, _ in used_clusters["clust"].iteritems():
+            clusters.append(clust)
+    else:
+        clusters = [0]
+        df["clust"] = 0
+
+    # generation
+    for clno in clusters:
+        funcname = "maple_reward_conf{conf_num}_cluster{clno}".format(
+                clno=clno, conf_num=options.conf_num)
+
+        fname = "maple_predictor_conf{conf_num}_cluster{clno}.h".format(
+            clno=clno, conf_num=options.conf_num)
+
+        if options.basedir is not None:
+            f = options.basedir+"/"+fname
+        else:
+            f = None
+
+        p = Learner(
+            df,
+            funcname=funcname,
+            fname=f,
+            cluster_no=clno)
+        features = p.cut_into_chunks()
+        p.learn()

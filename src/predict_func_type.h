@@ -26,7 +26,7 @@ THE SOFTWARE.
 
 namespace CMSat {
 
-typedef bool (*keep_func_type)(
+typedef int (*keep_func_type)(
 const CMSat::Clause*
 , const uint64_t
 , const uint32_t
