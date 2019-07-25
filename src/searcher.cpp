@@ -46,7 +46,7 @@ THE SOFTWARE.
 #include "gaussian.h"
 #endif
 
-#ifdef FINAL_PREDICTOR
+#ifdef FINAL_PREDICTOR_BRANCH
 #include "predict/maple_predictor_conf0_cluster0.h"
 #endif
 //#define DEBUG_RESOLV
@@ -3503,8 +3503,8 @@ void Searcher::cancelUntil(uint32_t level
             const uint32_t var = trail[sublevel].var();
             assert(value(var) != l_Undef);
 
-            #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             double reward = 0;
+            #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR_BRANCH)
             if (!update_bogoprops) {
                 //WARNING We do not correctly count into the variable the decision clause
                 //WARNING in case it's made.
@@ -3585,7 +3585,9 @@ void Searcher::cancelUntil(uint32_t level
                     //adjusted reward -> higher if conflicted more or quicker
 
                     //Original MAPLE reward
-                    //reward = (double)varData[var].conflicted;
+                    #ifndef FINAL_PREDICTOR_BRANCH
+                    reward = (double)varData[var].conflicted;
+                    #endif
                     double adjusted_reward = reward / ((double)age);
 
                     double old_activity = var_act_maple[var];

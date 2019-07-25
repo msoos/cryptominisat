@@ -422,7 +422,7 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
     const bool sign = p.sign();
     assigns[v] = boolToLBool(!sign);
     varData[v].reason = from;
-    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR_BRANCH)
     if (!update_bogoprops) {
         varData[v].sumDecisions_at_picktime = sumDecisions;
         varData[v].sumConflicts_at_picktime = sumConflicts;
