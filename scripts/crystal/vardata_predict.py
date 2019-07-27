@@ -129,7 +129,7 @@ class Learner:
             df["x.useful_times_per_marked"],
             bins=[-1000, 1, 5, 10, 20, 40, 100, 200, 10**20],
             #bins = [-1000, 20, 10**20],
-            labels=False)
+            labels=["%d" % x for x in range(8)])
 
     @staticmethod
     def fix_feat_name(x):
