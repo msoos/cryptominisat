@@ -1495,7 +1495,11 @@ lbool Solver::solve_with_assumptions(
     //Reset parameters
     max_confl_phase = conf.restart_first;
     max_confl_this_phase = max_confl_phase;
+    #ifndef FINAL_PREDICTOR_BRANCH
     VSIDS = true;
+    #else
+    VSIDS = false;
+    #endif
     var_decay_vsids = conf.var_decay_vsids_start;
     step_size = conf.orig_step_size;
     conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
@@ -1769,7 +1773,11 @@ long Solver::calc_num_confl_to_do_this_iter(const size_t iteration_num) const
 lbool Solver::iterate_until_solved()
 {
     size_t iteration_num = 0;
+    #ifndef FINAL_PREDICTOR_BRANCH
     VSIDS = true;
+    #else
+    VSIDS = false;
+    #endif
 
     lbool status = l_Undef;
     while (status == l_Undef
@@ -1821,6 +1829,7 @@ lbool Solver::iterate_until_solved()
         }
 
         //Iterate between VSIDS and Maple
+        #ifndef FINAL_PREDICTOR_BRANCH
         if (conf.maple) {
             //The 1st of every modulo N is VSIDS otherwise Maple
             long modulo = ((long)iteration_num-1) % conf.modulo_maple_iter;
@@ -1833,6 +1842,9 @@ lbool Solver::iterate_until_solved()
             //so that in case of reconfiguration, VSIDS is correctly set
             VSIDS = true;
         }
+        #else
+        assert(!VSIDS);
+        #endif
     }
     #ifdef USE_GAUSS
     clear_gauss_matrices();
