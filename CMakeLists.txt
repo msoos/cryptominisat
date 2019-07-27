@@ -431,8 +431,12 @@ if (NOT ONLY_SIMPLE)
 endif()
 
 option(FINAL_PREDICTOR "Use final predictor" OFF)
+option(FINAL_PREDICTOR_BRANCH "Use final predictor" OFF)
 if (FINAL_PREDICTOR)
     add_definitions( -DFINAL_PREDICTOR )
+endif()
+if (FINAL_PREDICTOR_BRANCH)
+    add_definitions( -DFINAL_PREDICTOR_BRANCH )
 endif()
 
 if (NOT NOSQLITE)
