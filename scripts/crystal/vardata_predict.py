@@ -298,10 +298,8 @@ if __name__ == "__main__":
                         dest="verbose", help="Print more output")
     parser.add_argument("--top", default=40, type=int, metavar="TOPN",
                         dest="top_num_features", help="Candidates are top N features for greedy selector")
-    parser.add_argument("-q", default=4, type=int, metavar="QUANTS",
-                        dest="quantiles", help="Number of quantiles we want")
-    parser.add_argument("--nocomputed", default=False, action="store_true",
-                        dest="no_computed", help="Don't add computed features")
+    parser.add_argument("--printfeat", action="store_true", default=False,
+                        dest="print_features", help="Print features")
     parser.add_argument("--check", action="store_true", default=False,
                         dest="check_row_data", help="Check row data for NaN or float overflow")
     parser.add_argument("--greedy", default=None, type=int, metavar="TOPN",
@@ -334,6 +332,10 @@ if __name__ == "__main__":
     # data filtering
     parser.add_argument("--only", default=0.99, type=float,
                         dest="only_pecr", help="Only use this percentage of data")
+    parser.add_argument("-q", default=4, type=int, metavar="QUANTS",
+                        dest="quantiles", help="Number of quantiles we want")
+    parser.add_argument("--nocomputed", default=False, action="store_true",
+                        dest="no_computed", help="Don't add computed features")
 
     # type of classifier
     parser.add_argument("--tree", default=False, action="store_true",
