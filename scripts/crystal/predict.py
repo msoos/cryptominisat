@@ -203,9 +203,9 @@ def check_long_short():
 
 
 class Learner:
-    def __init__(self, df, funcname, fname, cluster_no):
+    def __init__(self, df, func_name, fname, cluster_no):
         self.df = df
-        self.func_name = funcname
+        self.func_name = func_name
         self.fname = fname
         self.cluster_no = cluster_no
 
@@ -598,7 +598,7 @@ if __name__ == "__main__":
 
     # generation
     for clno in clusters:
-        funcname = "should_keep_{name}_conf{conf_num}_cluster{clno}".format(
+        func_name = "should_keep_{name}_conf{conf_num}_cluster{clno}".format(
             clno=clno, name=options.longsh, conf_num=options.conf_num)
 
         fname = "final_predictor_{name}_conf{conf_num}_cluster{clno}.h".format(
@@ -611,7 +611,7 @@ if __name__ == "__main__":
 
         learner = Learner(
             df[(df["clust"] == clno)],
-            funcname=funcname,
+            func_name=func_name,
             fname=f,
             cluster_no=clno)
 

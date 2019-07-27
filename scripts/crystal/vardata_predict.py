@@ -191,7 +191,7 @@ class Learner:
 
                 helper.output_to_classical_dot(
                     clf, features,
-                    fname=options.dot + "-" + self.funcname)
+                    fname=options.dot + "-" + self.func_name)
 
             if options.basedir and write_code:
                 c = helper.CodeWriter(clf, features, self.func_name, self.fname, options.verbose)
@@ -334,6 +334,18 @@ if __name__ == "__main__":
     # data filtering
     parser.add_argument("--only", default=0.99, type=float,
                         dest="only_pecr", help="Only use this percentage of data")
+
+    # type of classifier
+    parser.add_argument("--tree", default=False, action="store_true",
+                        dest="final_is_tree", help="Final classifier should be a tree")
+    parser.add_argument("--svm", default=False, action="store_true",
+                        dest="final_is_svm", help="Final classifier should be an svm")
+    parser.add_argument("--lreg", default=False, action="store_true",
+                        dest="final_is_logreg", help="Final classifier should be a logistic regression")
+    parser.add_argument("--forest", default=False, action="store_true",
+                        dest="final_is_forest", help="Final classifier should be a forest")
+    parser.add_argument("--voting", default=False, action="store_true",
+                        dest="final_is_voting", help="Final classifier should be a voting of all of: forest, svm, logreg")
 
     options = parser.parse_args()
 
