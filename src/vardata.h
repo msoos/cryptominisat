@@ -60,7 +60,7 @@ struct VarData
     //picktime data
     uint64_t clid_at_picking = std::numeric_limits<uint64_t>::max();
     #endif
-    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR_BRANCH)
     uint64_t sumDecisions_at_picktime = std::numeric_limits<uint64_t>::max();
     uint64_t sumPropagations_at_picktime = std::numeric_limits<uint64_t>::max();
     uint64_t sumConflicts_at_picktime = std::numeric_limits<uint64_t>::max();
