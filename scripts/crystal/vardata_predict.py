@@ -41,35 +41,50 @@ else:
 
 def add_computed_features(df):
     print("Relative data...")
-    cols = list(df)
-    for col in cols:
-        if "_at_fintime" in col:
-            during_name = col.replace("_at_fintime", "_during")
-            at_picktime_name = col.replace("_at_fintime", "_at_picktime")
-            if options.verbose:
-                print("fintime name: ", col)
-                print("picktime name: ", at_picktime_name)
-            df[during_name] = df[col]-df[at_picktime_name]
 
-    # remove stuff
+    # remove hidden data
     del df["var_data_use.useful_clauses_used"]
     del df["var_data_use.cls_marked"]
 
-    # more complicated
-    df["(var_data.propagated/var_data.sumConflicts_at_fintime)"] = df["var_data.propagated"] / \
-        df["var_data.sumConflicts_at_fintime"]
-    df["(var_data.propagated/var_data.sumPropagations_at_fintime)"] = df["var_data.propagated"] / \
-        df["var_data.sumPropagations_at_fintime"]
-
-    # remove picktime & fintime
     cols = list(df)
-    for c in cols:
-        if "at_picktime" in c or "at_fintime" in c:
-            del df[c]
+    if not options.picktime_only:
+        # create "during"
+        for col in cols:
+            if "_at_fintime" in col:
+                during_name = col.replace("_at_fintime", "_during")
+                at_picktime_name = col.replace("_at_fintime", "_at_picktime")
+                at_fintime_name = col
+                if options.verbose:
+                    print("fintime name: ", at_fintime_name)
+                    print("picktime name: ", at_picktime_name)
+                df[during_name] = df[at_fintime_name]-df[at_picktime_name]
+
+        # remove picktime & fintime, only use "during"
+        cols = list(df)
+        for c in cols:
+            if "at_picktime" in c or "at_fintime" in c:
+                del df[c]
+
+    else:
+        # remove everything to do with "during" and "fintime"
+        cols = list(df)
+        for c in cols:
+            if "clauses_below" in c or "rst" in c or "at_fintime" in c:
+                del df[c]
 
     # per-conflicts, per-decisions, per-lits
     names = [
-        "var_data.sumDecisions_during"
+        "var_data.sumConflicts_at_picktime"
+        , "var_data.sumClLBD_at_picktime"
+        , "var_data.sumClSize_at_picktime"
+        , "var_data.sumConflictClauseLits_at_picktime"
+        # neutral below
+        , "var_data.dec_depth"
+        # fintime below
+        , "var_data.sumConflicts_at_fintime"
+        , "var_data.sumPropagations_at_fintime"
+        # during below
+        , "var_data.sumDecisions_during"
         , "var_data.sumPropagations_during"
         , "var_data.sumConflicts_during"
         , "var_data.sumAntecedents_during"
@@ -77,60 +92,24 @@ def add_computed_features(df):
         , "var_data.sumAntecedentsLits_during"
         , "var_data.sumClSize_during"
         , "var_data.sumClLBD_during"
-        , "var_data.dec_depth"
         ]
 
     cols = list(df)
     for col in cols:
-        if "restart_type" not in col and "x." not in col and "useful_clauses" not in col:
+        if "restart_type" not in col and "x." not in col and "var_data_use" not in col:
             for name in names:
+                # cannot divide by it, feature not present
+                if name not in cols:
+                    continue
+
+                # divide
                 if options.verbose:
                     print("dividing col '%s' with '%s' " % (col, name))
-
-                df["(" + col + "/" + name + ")"] = df[col]/df[name]
-                pass
-
-    # remove sum
-    #cols = list(df)
-    # for c in cols:
-        # if c[0:3] == "sum":
-            #del df[c]
+                df["(" + col + "/" + name + ")"] = df[col].div(df[name]+0.000000001)
 
 
 def rem_useless_features(df):
-    if True:
-        # remove these
-        torem = [
-            "var_data.propagated"
-            , "var_data.decided"
-            , "var_data.clauses_below"
-            , "var_data.dec_depth"
-            , "var_data.sumDecisions_during"
-            , "var_data.sumPropagations_during"
-            , "var_data.sumConflicts_during"
-            , "var_data.sumAntecedents_during"
-            , "var_data.sumAntecedentsLits_during"
-            , "var_data.sumConflictClauseLits_during"
-            , "var_data.sumDecisionBasedCl_during"
-            , "var_data.sumClLBD_during"
-            , "var_data.sumClSize_during"
-            ]
-        cols = list(df)
-
-        # also remove rst
-        for col in cols:
-            if "rst." in col:
-                # torem.append(col)
-                pass
-
-        torem.append("rst.restart_type")
-
-        # actually remove
-        for x in torem:
-            if x in df:
-                del df[x]
-    else:
-        del df["rst.restart_type"]
+    del df["rst.restart_type"]
 
 
 class Learner:
@@ -151,6 +130,7 @@ class Learner:
             bins=[-1000, 1, 5, 10, 20, 40, 100, 200, 10**20],
             #bins = [-1000, 20, 10**20],
             labels=False)
+
     @staticmethod
     def fix_feat_name(x):
         if "during" in x or "clauses_below" in x:
@@ -270,6 +250,7 @@ class Learner:
     def learn(self):
         self.cut_into_chunks()
         features = list(self.df)
+        features.remove("clust")
         features.remove("x.class")
         features.remove("x.useful_times_per_marked")
 
@@ -290,7 +271,7 @@ class Learner:
 
             return
 
-        best_features =[
+        best_features = [
             '(var_data.sumAntecedentsLits_during/var_data.sumAntecedents_during)',
             '(var_data.sumClSize_during/var_data.sumPropagations_during)',
             '(var_data.sumConflictClauseLits_during/var_data.sumAntecedents_during)',
@@ -298,6 +279,7 @@ class Learner:
             '(var_data.sumPropagations_during/var_data.sumClLBD_during)',
             '(var_data.clauses_below/var_data.sumAntecedentsLits_during)',
             '(var_data.sumClLBD_during/var_data.sumPropagations_during)']
+
         self.one_classifier(best_features, "x.class",
                             final=True,
                             write_code=True)
@@ -338,6 +320,8 @@ if __name__ == "__main__":
                         dest="use_clusters", help="Use clusters")
     parser.add_argument("--conf", default=0, type=int,
                         dest="conf_num", help="Which predict configuration this is")
+    parser.add_argument("--picktimeonly", default=False, action="store_true",
+                        dest="picktime_only", help="Only use and generate pictime data")
 
     # tree/forest options
     parser.add_argument("--depth", default=None, type=int,
@@ -363,6 +347,7 @@ if __name__ == "__main__":
         add_computed_features(df)
 
     rem_useless_features(df)
+    print(list(df))
 
     # cluster setup
     if options.use_clusters:
@@ -392,5 +377,4 @@ if __name__ == "__main__":
             funcname=funcname,
             fname=f,
             cluster_no=clno)
-        features = p.cut_into_chunks()
         p.learn()
