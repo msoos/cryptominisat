@@ -405,6 +405,7 @@ class Learner:
                 namespace CMSat {
                 """
                 c.fix_feat_name = self.fix_feat_name
+                c.clean_up()
                 c.print_full_code()
 
         print("--------------------------")
