@@ -239,8 +239,8 @@ class QueryVar (QueryHelper):
         , restart_dat_for_var as rst
 
         WHERE
-        clauses_below > 10
-        and var_data_use.cls_marked > 10
+        clauses_below >= {min_cls_below}
+        and var_data_use.cls_marked >= {min_cls_below}
         and var_data.var = var_data_use.var
         and var_data.conflicts = var_data_use.conflicts
         and rst.conflicts = var_data_use.conflicts
@@ -250,7 +250,8 @@ class QueryVar (QueryHelper):
         """.format(
             rst=rst, var_data_use=var_data_use,
             var_data=var_data,
-            limit=options.limit)
+            limit=options.limit,
+            min_cls_below=options.min_cls_below)
 
         df = pd.read_sql_query(q, self.conn)
         print("DF dimensions:", df.shape)
@@ -268,6 +269,8 @@ if __name__ == "__main__":
                         dest="dump_csv", help="Dump CSV (for weka)")
     parser.add_argument("--limit", type=int, default=10000,
                         dest="limit", help="How many data points")
+    parser.add_argument("--minclsbelow", type=int, default=1,
+                        dest="min_cls_below", help="Minimum number of clauses below to generate data point")
 
     options = parser.parse_args()
 
