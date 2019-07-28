@@ -109,7 +109,12 @@ def add_computed_features(df):
 
 
 def rem_useless_features(df):
-    del df["rst.restart_type"]
+    col = list(df)
+    for c in col:
+        if "activity" not in c and "class" not in c and "useful_times" not in c:
+            del df[c]
+    del df["var_data.rel_activity_at_fintime"]
+    pass
 
 
 class Learner:
