@@ -128,7 +128,7 @@ class Learner:
         df["x.class"] = pd.qcut(
             df["x.useful_times_per_marked"],
             q=options.quantiles,
-            labels=False)
+            labels=["%d" % x for x in range(options.quantiles)])
 
         df["x.class"] = pd.cut(
             df["x.useful_times_per_marked"],
