@@ -157,6 +157,11 @@ class Learner:
             df = df_tmp.copy()
             print("-> Number of datapoints after applying '--only':", df.shape)
 
+        if options.dump_csv:
+            fname = "mydump.csv"
+            print("Dumping CSV data to:", fname)
+            df.to_csv(fname, index=False, columns=sorted(list(df)))
+
         if options.check_row_data:
             helper.check_too_large_or_nan_values(df, features+["x.class"])
             print("Checked, all good!")
@@ -285,6 +290,8 @@ class Learner:
             '(var_data.clauses_below/var_data.sumAntecedentsLits_during)',
             '(var_data.sumClLBD_during/var_data.sumPropagations_during)']
 
+        best_features = ["var_data.rel_activity_at_picktime"]
+
         self.one_classifier(best_features, "x.class",
                             final=True,
                             write_code=True)
@@ -341,6 +348,8 @@ if __name__ == "__main__":
                         dest="quantiles", help="Number of quantiles we want")
     parser.add_argument("--nocomputed", default=False, action="store_true",
                         dest="no_computed", help="Don't add computed features")
+    parser.add_argument("--csv", action="store_true", default=False,
+                        dest="dump_csv", help="Dump CSV (for weka)")
 
     # type of classifier
     parser.add_argument("--tree", default=False, action="store_true",
