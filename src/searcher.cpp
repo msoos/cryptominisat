@@ -3477,7 +3477,7 @@ void Searcher::cancelUntil(uint32_t level
         if (solver->sqlStats
             && !update_bogoprops
             //we need a lot less of this data
-            && rnd_num <= conf.dump_individual_cldata_ratio*0.01
+            && rnd_num <= conf.dump_individual_cldata_ratio*0.2
         ) {
             dump_this_canceluntil = true;
             solver->sqlStats->begin_transaction();
@@ -3513,7 +3513,7 @@ void Searcher::cancelUntil(uint32_t level
 
             double reward = 0;
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR_BRANCH)
-            if (!update_bogoprops) {
+            if (!update_bogoprops && varData[var].reason == PropBy()) {
                 //WARNING We do not correctly count into the variable the decision clause
                 //WARNING in case it's made.
                 //WARNING We assume a new clause will be created (hence the clid_plus_one),
@@ -3533,8 +3533,9 @@ void Searcher::cancelUntil(uint32_t level
                 varData[var].rel_activity_at_fintime =
                     std::log2(var_act_vsids[var]+10e-300)/std::log2(max_vsids_act+10e-300);
 
+                #ifdef FINAL_PREDICTOR_BRANCH
                 if (!VSIDS &&
-                    sumConflicts_during && sumDecisions_during && sumAntecedents_during
+                    sumConflicts_during && sumDecisions_during && sumAntecedents_during && cls_below >= 1
                 ) {
                     reward = maple_reward_conf0_cluster0(
                         solver
@@ -3551,12 +3552,14 @@ void Searcher::cancelUntil(uint32_t level
                         , cls_below
                     );
                     //cout << "reward: " << reward << endl;
+                    reward = 8-reward;
                 }
+                #endif
 
                 #ifdef STATS_NEEDED
                 bool decision_var = varData[var].reason == PropBy();
                 if (dump_this_canceluntil
-                    && (rnd_num < conf.dump_individual_cldata_ratio*0.0008 ||
+                    && (rnd_num < conf.dump_individual_cldata_ratio*0.0008 &&
                         varData[var].reason == PropBy())
                 ) {
                     uint64_t outer_var = map_inter_to_outer(var);
@@ -3596,7 +3599,7 @@ void Searcher::cancelUntil(uint32_t level
 
                     //Original MAPLE reward
                     #ifndef FINAL_PREDICTOR_BRANCH
-                    reward = (double)varData[var].conflicted;
+                    reward += (double)varData[var].conflicted;
                     #endif
                     double adjusted_reward = reward / ((double)age);
 

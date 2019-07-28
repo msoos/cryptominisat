@@ -459,7 +459,6 @@ class Searcher : public HyperEngine
         //Other
         void print_solution_type(const lbool status) const;
         uint64_t next_distill = 0;
-        bool DISTANCE = true;
 
         //Picking polarity when doing decision
         bool     pick_polarity(const uint32_t var);
@@ -622,12 +621,8 @@ inline void Searcher::bump_vsids_var_act(uint32_t var, double mult)
     if (var_act_vsids[var] > 1e100) {
         // Rescale:
 
-        min_vsids_act = 100e100;
         for (double& act : var_act_vsids) {
             act *= 1e-100;
-            if (act != 0.0 && act < min_vsids_act) {
-                min_vsids_act = act;
-            }
         }
         max_vsids_act *= 1e-100;
 
