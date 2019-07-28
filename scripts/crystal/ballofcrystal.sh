@@ -1,7 +1,7 @@
 #!/bin/bash
 
 FNAMEOUT="mydata"
-FIXED="8000"
+FIXED="20000"
 RATIO="0.99"
 CONF=2
 
