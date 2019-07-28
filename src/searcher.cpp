@@ -3522,6 +3522,8 @@ void Searcher::cancelUntil(uint32_t level
                 uint64_t sumClLBD_during = sumClLBD - varData[var].sumClLBD_at_picktime;
                 uint64_t sumClSize_during = sumClSize - varData[var].sumClSize_at_picktime;
                 uint64_t cls_below = sumConflicts_during + sumDecisionBasedCl_during;
+                varData[var].rel_activity_at_fintime =
+                    std::log2(var_act_vsids[var]+10e-300)/std::log2(max_vsids_act+10e-300);
 
                 if (!VSIDS &&
                     sumConflicts_during && sumDecisions_during && sumAntecedents_during

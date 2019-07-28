@@ -538,6 +538,11 @@ inline void Searcher::bump_cl_act(Clause* cl)
 
     double new_val = cla_inc + (double)cl->stats.activity;
     cl->stats.activity = (float)new_val;
+    if (max_cl_act < new_val) {
+        max_cl_act = new_val;
+    }
+
+
     if (cl->stats.activity > 1e20F ) {
         // Rescale. For STATS_NEEDED we rescale ALL
         #if !defined(STATS_NEEDED) && !defined (FINAL_PREDICTOR)
@@ -552,6 +557,7 @@ inline void Searcher::bump_cl_act(Clause* cl)
         }
         #endif
         cla_inc *= 1e-20;
+        max_cl_act *= 1e-20;
         assert(cla_inc != 0);
     }
 }
@@ -606,15 +612,25 @@ inline void Searcher::bump_vsids_var_act(uint32_t var, double mult)
     }
 
     var_act_vsids[var] += var_inc_vsids * mult;
+    if (max_vsids_act < var_act_vsids[var]) {
+        max_vsids_act = var_act_vsids[var];
+    }
 
     #ifdef SLOW_DEBUG
     bool rescaled = false;
     #endif
     if (var_act_vsids[var] > 1e100) {
         // Rescale:
+
+        min_vsids_act = 100e100;
         for (double& act : var_act_vsids) {
             act *= 1e-100;
+            if (act != 0.0 && act < min_vsids_act) {
+                min_vsids_act = act;
+            }
         }
+        max_vsids_act *= 1e-100;
+
         #ifdef SLOW_DEBUG
         rescaled = true;
         #endif

@@ -125,6 +125,8 @@ public:
     ///NOT VALID WHILE SIMPLIFYING
     Heap<VarOrderLt> order_heap_vsids;
     Heap<VarOrderLt> order_heap_maple;
+    double max_vsids_act = 0.0;
+    double max_cl_act = 0.0;
 
 protected:
     int64_t simpDB_props = 0;
@@ -434,8 +436,11 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
         varData[v].sumConflictClauseLits_below_at_picktime = sumConflictClauseLits;
         varData[v].sumClLBD_at_picktime = sumClLBD;
         varData[v].sumClSize_at_picktime = sumClSize;
+        varData[v].rel_activity_at_picktime =
+            std::log2(var_act_vsids[v]+10e-300)/std::log2(max_vsids_act+10e-300);
 
         #ifdef STATS_NEEDED
+        varData[v].last_time_set_was_dec = (from == PropBy());
         varData[v].clid_at_picking = clauseID;
         varData[v].inside_conflict_clause_glue_at_picktime = varData[v].inside_conflict_clause_glue;
         varData[v].inside_conflict_clause_at_picktime = varData[v].inside_conflict_clause;

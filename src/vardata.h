@@ -82,9 +82,12 @@ struct VarData
     #endif
 
     #ifdef STATS_NEEDED
+    bool     last_time_set_was_dec;
     uint64_t inside_conflict_clause = 0;
     uint64_t inside_conflict_clause_glue = 0;
     uint64_t inside_conflict_clause_antecedents = 0;
+    double   rel_activity_at_picktime = 0;
+    double   rel_activity_at_fintime = 0;
 
     uint64_t inside_conflict_clause_at_picktime;
     uint64_t inside_conflict_clause_glue_at_picktime;

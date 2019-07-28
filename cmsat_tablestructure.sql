@@ -320,6 +320,8 @@ create table `varData` (
     , `inside_conflict_clause_antecedents_at_picktime` bigint(20) NOT NULL
     , `inside_conflict_clause_glue_at_fintime` bigint(20) NOT NULL
     , `inside_conflict_clause_glue_at_picktime` bigint(20) NOT NULL
+    , `rel_activity_at_fintime` double NOT NULL
+    , `rel_activity_at_picktime` double NOT NULL
 
     , `sumDecisions_at_picktime` bigint(20) NOT NULL
     , `sumPropagations_at_picktime` bigint(20) NOT NULL

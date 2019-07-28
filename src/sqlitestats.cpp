@@ -1124,7 +1124,7 @@ void SQLiteStats::dump_clause_stats(
 
 void SQLiteStats::init_var_data_STMT()
 {
-    const size_t numElems = 36;
+    const size_t numElems = 38;
 
     std::stringstream ss;
     ss << "insert into `varData`"
@@ -1149,6 +1149,8 @@ void SQLiteStats::init_var_data_STMT()
     ", `inside_conflict_clause_antecedents_at_picktime`"
     ", `inside_conflict_clause_glue_at_fintime`"
     ", `inside_conflict_clause_glue_at_picktime`"
+    ", `rel_activity_at_fintime`"
+    ", `rel_activity_at_picktime`"
 
     ", `sumDecisions_at_picktime`"
     ", `sumPropagations_at_picktime`"
@@ -1224,6 +1226,8 @@ void SQLiteStats::var_data(
     sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.inside_conflict_clause_antecedents_at_picktime);
     sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.inside_conflict_clause_glue);
     sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.inside_conflict_clause_glue_at_picktime);
+    sqlite3_bind_double (stmt_var_data, bindAt++, vardata.rel_activity_at_fintime);
+    sqlite3_bind_double (stmt_var_data, bindAt++, vardata.rel_activity_at_picktime);
 
 
     sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.sumDecisions_at_picktime);
