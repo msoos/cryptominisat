@@ -2596,13 +2596,19 @@ Lit Searcher::pickBranchLit()
         double rand = mtrand.randDblExc();
         double frq = conf.random_var_freq;
         if (rand < frq && !order_heap.empty()) {
-            const uint32_t next_var = order_heap.random_element(mtrand);
-
-            if (value(next_var) == l_Undef
-                && solver->varData[next_var].removed == Removed::none
-            ) {
-                stats.decisionsRand++;
-                next = Lit(next_var, !pick_polarity(next_var));
+            uint32_t next_var = var_Undef;
+            uint32_t num_tried = 0;
+            while(next_var == var_Undef && num_tried < 10000) {
+                next_var = order_heap.random_element(mtrand);
+                if (value(next_var) == l_Undef
+                    && solver->varData[next_var].removed == Removed::none
+                ) {
+                    stats.decisionsRand++;
+                    next = Lit(next_var, !pick_polarity(next_var));
+                } else {
+                    next_var = var_Undef;
+                }
+                num_tried++;
             }
         }
     }
