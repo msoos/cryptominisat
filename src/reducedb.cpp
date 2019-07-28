@@ -89,7 +89,9 @@ ReduceDB::ReduceDB(Solver* _solver) :
 
 ReduceDB::~ReduceDB()
 {
+    #ifdef FINAL_PREDICTOR
     delete clustering;
+    #endif
 }
 
 void ReduceDB::check_config()

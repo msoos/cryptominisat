@@ -1848,7 +1848,9 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         && conf.dump_individual_restarts_and_clauses
         && to_dump
     ) {
-        cl->stats.dump_number = 0;
+        if (cl) {
+            cl->stats.dump_number = 0;
+        }
         dump_this_many_cldata_in_stream--;
         dump_sql_clause_data(
             glue
