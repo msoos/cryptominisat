@@ -950,6 +950,10 @@ std::string SATSolver::get_text_version_info()
     #endif
     ss << "c Using Yalsat by Armin Biere, see Balint et al. Improving implementation of SLS solvers [...], SAT'14" << endl;
     ss << "c Using WalkSAT by Henry Kautz, see Kautz and Selman Pushing the envelope: planning, propositional logic, and stochastic search, AAAI'96," << endl;
+    #ifdef USE_BREAKID
+    ss << "c Using BreakID by Devriendt, Bogaerts, Bruynooghe and Denecker" << endl;
+    ss << "c Using Bliss graph automorphism library (under LGPL) by Tommi Junttila" << endl;
+    #endif
 
     #ifdef USE_GAUSS
     ss << "c Using code from 'When Boolean Satisfiability Meets Gauss-E. in a Simplex Way'" << endl;
