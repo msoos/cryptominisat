@@ -28,6 +28,7 @@ import pandas as pd
 import numpy as np
 import os.path
 import sys
+import helper
 
 
 def dump_df(df):
@@ -113,13 +114,13 @@ class QueryVar (QueryHelper):
         print("Filling var data use...")
 
         t = time.time()
-        q = "delete from `varDataUse`;"
+        q = "delete from `var_data_use`;"
         self.c.execute(q)
-        print("varDataUse cleared T: %-3.2f s" % (time.time() - t))
+        print("var_data_use cleared T: %-3.2f s" % (time.time() - t))
 
         t = time.time()
         q = """
-        insert into varDataUse
+        insert into var_data_use
 
         (`var`
         , `conflicts`
@@ -152,43 +153,16 @@ class QueryVar (QueryHelper):
             print("query:", q)
         self.c.execute(q)
 
-        print("varDataUse filled T: %-3.2f s" % (time.time() - t))
+        print("var_data_use filled T: %-3.2f s" % (time.time() - t))
 
         t = time.time()
         q = """
-        UPDATE varDataUse SET useful_clauses_used = 0
+        UPDATE var_data_use SET useful_clauses_used = 0
         WHERE useful_clauses_used IS NULL
         """
         self.c.execute(q)
 
-        print("varDataUse updated T: %-3.2f s" % (time.time() - t))
-
-    def get_columns(self, tablename):
-        q = "pragma table_info(%s);" % tablename
-        self.c.execute(q)
-        rows = self.c.fetchall()
-        columns = []
-        for row in rows:
-            if options.verbose:
-                print("Using column in table {tablename}: {col}".format(
-                    tablename=tablename, col=row[1]))
-            columns.append(row[1])
-
-        return columns
-
-    def query_fragment(self, tablename, not_cols, short_name):
-        cols = self.get_columns(tablename)
-        filtered_cols = list(set(cols).difference(not_cols))
-        ret = ""
-        for col in filtered_cols:
-            ret += ", {short_name}.`{col}` as `{short_name}.{col}`\n".format(
-                col=col, short_name=short_name)
-
-        if options.verbose:
-            print("query for short name {short_name}: {ret}".format(
-                short_name=short_name, ret=ret))
-
-        return ret
+        print("var_data_use updated T: %-3.2f s" % (time.time() - t))
 
     def create_vardata_df(self):
         not_cols = [
@@ -202,7 +176,8 @@ class QueryVar (QueryHelper):
             , "useful_clauses_used"
             , "cls_marked"
             , "propagated_pos_perc"]
-        var_data = self.query_fragment("varData", not_cols, "var_data")
+        var_data = helper.query_fragment(
+            "varData", not_cols, "var_data", options.verbose, self.c)
 
         not_cols =[
             "simplifications"
@@ -218,13 +193,15 @@ class QueryVar (QueryHelper):
             , "set"
             , "clauseIDstartInclusive"
             , "clauseIDendExclusive"]
-        rst = self.query_fragment("restart_dat_for_var", not_cols, "rst")
+        rst = helper.query_fragment(
+            "restart_dat_for_var", not_cols, "rst", options.verbose, self.c)
 
         not_cols =[
             "useful_clauses"
             , "var"
             , "conflicts"]
-        var_data_use = self.query_fragment("varDataUse", not_cols, "var_data_use")
+        var_data_use = helper.query_fragment(
+            "var_data_use", not_cols, "var_data_use", options.verbose, self.c)
 
         q = """
         select
@@ -235,7 +212,7 @@ class QueryVar (QueryHelper):
 
         FROM
         varData as var_data
-        , varDataUse as var_data_use
+        , var_data_use as var_data_use
         , restart_dat_for_var as rst
 
         WHERE

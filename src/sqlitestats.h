@@ -107,13 +107,27 @@ public:
         , const bool ternary_resol_cl
     ) override;
 
-    void var_data(
+    void var_data_picktime(
+        const Solver* solver
+        , const uint32_t var
+        , const VarData& vardata
+        , const uint64_t start_clid_incl
+        , const double rel_activity
+    ) override;
+
+    void var_data_fintime(
         const Solver* solver
         , const uint32_t var
         , const VarData& vardata
         , const uint32_t cls_below
         , const uint64_t end_clid_notincl
-        , const bool decision_var
+        , const double rel_activity
+    ) override;
+
+    void dec_var_clid(
+        const uint32_t var
+        , const uint64_t sumConflicts_at_picktime
+        , const uint64_t clid
     ) override;
     #endif
 
@@ -125,6 +139,8 @@ private:
 
     bool connectServer(const Solver* solver);
     bool add_solverrun(const Solver* solver);
+    void init(const char* name, sqlite3_stmt** stmt);
+    vector<string> get_columns(const char* tablename);
 
     void addStartupData();
     void del_prepared_stmt(sqlite3_stmt* stmt);
@@ -133,8 +149,9 @@ private:
     void init_cl_last_in_solver_STMT();
     void initMemUsedSTMT();
     void init_clause_stats_STMT();
-    void init_satzilla_features();
-    void init_var_data_STMT();
+    void init_var_data_picktime_STMT();
+    void init_var_data_fintime_STMT();
+    void init_dec_var_clid_STMT();
     void run_sqlite_step(sqlite3_stmt* stmt, const char* name);
 
     void writeQuestionMarks(size_t num, std::stringstream& ss);
@@ -149,7 +166,9 @@ private:
     sqlite3_stmt *stmtFeat = NULL;
     sqlite3_stmt *stmt_clause_stats = NULL;
     sqlite3_stmt *stmt_delete_cl = NULL;
-    sqlite3_stmt *stmt_var_data = NULL;
+    sqlite3_stmt *stmt_var_data_fintime = NULL;
+    sqlite3_stmt *stmt_var_data_picktime = NULL;
+    sqlite3_stmt *stmt_dec_var_clid = NULL;
 
     sqlite3 *db = NULL;
     bool setup_ok = false;

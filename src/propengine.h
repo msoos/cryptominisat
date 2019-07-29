@@ -83,6 +83,7 @@ public:
     //
     PropEngine(
         const SolverConf* _conf
+        , Solver* solver
         , std::atomic<bool>* _must_interrupt_inter
     );
     ~PropEngine();
@@ -238,8 +239,10 @@ protected:
     }
 
 private:
+    Solver* solver;
     bool propagate_binary_clause_occur(const Watched& ws);
     bool propagate_long_clause_occur(const ClOffset offset);
+    void sql_dump_vardata_picktime(uint32_t v, PropBy from);
     template<bool update_bogoprops = true>
     bool prop_bin_cl(
         const Watched* i
@@ -426,28 +429,8 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
     varData[v].reason = from;
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR_BRANCH)
     if (!update_bogoprops) {
-        varData[v].sumDecisions_at_picktime = sumDecisions;
-        varData[v].sumConflicts_at_picktime = sumConflicts;
-        varData[v].sumAntecedents_at_picktime = sumAntecedents;
-        varData[v].sumAntecedentsLits_at_picktime = sumAntecedentsLits;
-        varData[v].sumConflictClauseLits_at_picktime = sumConflictClauseLits;
-        varData[v].sumPropagations_at_picktime = sumPropagations;
-        varData[v].sumDecisionBasedCl_at_picktime = sumDecisionBasedCl;
-        varData[v].sumConflictClauseLits_below_at_picktime = sumConflictClauseLits;
-        varData[v].sumClLBD_at_picktime = sumClLBD;
-        varData[v].sumClSize_at_picktime = sumClSize;
-        varData[v].rel_activity_at_picktime =
-            std::log2(var_act_vsids[v]+10e-300)/std::log2(max_vsids_act+10e-300);
-
-        #ifdef STATS_NEEDED
-        varData[v].last_time_set_was_dec = (from == PropBy());
-        varData[v].clid_at_picking = clauseID;
-        varData[v].inside_conflict_clause_glue_at_picktime = varData[v].inside_conflict_clause_glue;
-        varData[v].inside_conflict_clause_at_picktime = varData[v].inside_conflict_clause;
-        varData[v].inside_conflict_clause_antecedents_at_picktime = varData[v].inside_conflict_clause_antecedents;
-        #endif
-
         if (from == PropBy()) {
+            sql_dump_vardata_picktime(v, from);
             #ifdef STATS_NEEDED
             varData[v].num_decided++;
             if (!sign) varData[v].num_decided_pos++;

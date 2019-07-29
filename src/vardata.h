@@ -51,47 +51,47 @@ struct VarData
     bool polarity = false;
     bool is_bva = false;
     bool added_for_xor = false;
-    #ifdef STATS_NEEDED
+    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR_BRANCH)
     uint64_t num_propagated = 0;
     uint64_t num_propagated_pos = 0;
     uint64_t num_decided = 0;
     uint64_t num_decided_pos = 0;
-
-    //picktime data
-    uint64_t clid_at_picking = std::numeric_limits<uint64_t>::max();
-    #endif
-    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR_BRANCH)
-    uint64_t sumDecisions_at_picktime = std::numeric_limits<uint64_t>::max();
-    uint64_t sumPropagations_at_picktime = std::numeric_limits<uint64_t>::max();
-    uint64_t sumConflicts_at_picktime = std::numeric_limits<uint64_t>::max();
-    uint64_t sumAntecedents_at_picktime = std::numeric_limits<uint64_t>::max();
-    uint64_t sumAntecedentsLits_at_picktime = std::numeric_limits<uint64_t>::max();
-    uint64_t sumConflictClauseLits_at_picktime = std::numeric_limits<uint64_t>::max();
-    uint64_t sumDecisionBasedCl_at_picktime = std::numeric_limits<uint64_t>::max();
-    uint64_t sumClLBD_at_picktime = std::numeric_limits<uint64_t>::max();
-    uint64_t sumClSize_at_picktime = std::numeric_limits<uint64_t>::max();
-
-    uint64_t sumDecisions_below_at_picktime = 0;
-    uint64_t sumConflicts_below_at_picktime = 0;
-    uint64_t sumAntecedents_below_at_picktime = 0;
-    uint64_t sumAntecedentsLits_below_at_picktime = 0;
-    uint64_t sumConflictClauseLits_below_at_picktime = 0;
-    uint64_t sumDecisionBasedCl_below_at_picktime = 0;
-    uint64_t sumClLBD_below_at_picktime = 0;
-    uint64_t sumClSize_below_at_picktime = 0;
-    #endif
-
-    #ifdef STATS_NEEDED
     bool     last_time_set_was_dec;
+
+    //these are per-solver data
+    uint64_t sumDecisions_at_picktime = 0;
+    uint64_t sumConflicts_at_picktime = 0;
+    uint64_t sumPropagations_at_picktime = 0;
+    uint64_t sumAntecedents_at_picktime = 0;
+    uint64_t sumAntecedentsLits_at_picktime = 0;
+    uint64_t sumConflictClauseLits_at_picktime = 0;
+    uint64_t sumDecisionBasedCl_at_picktime = 0;
+    uint64_t sumClLBD_at_picktime = 0;
+    uint64_t sumClSize_at_picktime = 0;
+
+    uint64_t sumDecisions_below_during = 0;
+    uint64_t sumConflicts_below_during = 0;
+    uint64_t sumPropagations_below_during = 0;
+    uint64_t sumAntecedents_below_during = 0;
+    uint64_t sumAntecedentsLits_below_during = 0;
+    uint64_t sumConflictClauseLits_below_during = 0;
+    uint64_t sumDecisionBasedCl_below_during = 0;
+    uint64_t sumClLBD_below_during = 0;
+    uint64_t sumClSize_below_during = 0;
+
+    //these are per-variable data
     uint64_t inside_conflict_clause = 0;
     uint64_t inside_conflict_clause_glue = 0;
     uint64_t inside_conflict_clause_antecedents = 0;
-    double   rel_activity_at_picktime = 0;
-    double   rel_activity_at_fintime = 0;
 
-    uint64_t inside_conflict_clause_at_picktime;
-    uint64_t inside_conflict_clause_glue_at_picktime;
-    uint64_t inside_conflict_clause_antecedents_at_picktime;
+    uint64_t inside_conflict_clause_at_picktime = 0;
+    uint64_t inside_conflict_clause_glue_at_picktime = 0;
+    uint64_t inside_conflict_clause_antecedents_at_picktime = 0;
+
+    uint64_t inside_conflict_clause_during = 0;
+    uint64_t inside_conflict_clause_glue_during = 0;
+    uint64_t inside_conflict_clause_antecedents_during = 0;
+    bool dump;
     #endif
 };
 

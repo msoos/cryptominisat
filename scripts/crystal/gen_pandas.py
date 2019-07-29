@@ -28,7 +28,7 @@ import pandas as pd
 import numpy as np
 import os.path
 import sys
-
+import helper
 
 class QueryHelper:
     def __init__(self, dbfname):
@@ -94,8 +94,8 @@ class QueryFill (QueryHelper):
         create index `idxclid6-3` on `reduceDB` (`clauseID`, `conflicts`, `dump_no`);
         create index `idxclid6-4` on `reduceDB` (`clauseID`, `conflicts`)
         create index `idxclid7` on `satzilla_features` (`latest_satzilla_feature_calc`);
-        create index `idxclidUCLS-1` on `usedClauses` ( `clauseID`, `used_at`);
-        create index `idxclidUCLS-2` on `usedClauses` ( `used_at`);
+        create index `idxclidUCLS-1` on `used_clauses` ( `clauseID`, `used_at`);
+        create index `idxclidUCLS-2` on `used_clauses` ( `used_at`);
         create index `idxcl_last_in_solver-1` on `cl_last_in_solver` ( `clauseID`, `conflicts`);
 
         """
@@ -163,7 +163,7 @@ class QueryFill (QueryHelper):
         , count(ucl.used_at) as `useful_later`
         FROM
         reduceDB as rdb0
-        left join usedClauses as ucl
+        left join used_clauses as ucl
 
         -- for any point later than now
         -- reduceDB is always present, used_later may not be, hence left join
@@ -195,7 +195,7 @@ class QueryFill (QueryHelper):
 
         FROM
         reduceDB as rdb0
-        left join usedClauses as ucl
+        left join used_clauses as ucl
 
         -- reduceDB is always present, used_later may not be, hence left join
         on (ucl.clauseID = rdb0.clauseID
@@ -228,7 +228,7 @@ class QueryFill (QueryHelper):
 
         FROM
         reduceDB as rdb0
-        left join usedClauses as ucl
+        left join used_clauses as ucl
 
         -- reduceDB is always present, used_later may not be, hence left join
         on (ucl.clauseID = rdb0.clauseID
@@ -266,36 +266,10 @@ class QueryCls (QueryHelper):
         self.conf = conf
         self.fill_sql_query()
 
-    def get_columns(self, tablename):
-        q = "pragma table_info(%s);" % tablename
-        self.c.execute(q)
-        rows = self.c.fetchall()
-        columns = []
-        for row in rows:
-            if options.verbose:
-                print("Using column in table {tablename}: {col}".format(
-                    tablename=tablename, col=row[1]))
-            columns.append(row[1])
-
-        return columns
-
-    def query_fragment(self, tablename, not_cols, short_name):
-        cols = self.get_columns(tablename)
-        filtered_cols = list(set(cols).difference(not_cols))
-        ret = ""
-        for col in filtered_cols:
-            ret += ", {short_name}.`{col}` as `{short_name}.{col}`\n".format(
-                col=col, short_name=short_name)
-
-        if options.verbose:
-            print("query for short name {short_name}: {ret}".format(
-                short_name=short_name, ret=ret))
-
-        return ret
-
     def fill_sql_query(self):
         # sum_cl_use
-        self.sum_cl_use = self.query_fragment("sum_cl_use", [], "sum_cl_use")
+        self.sum_cl_use = helper.query_fragment(
+            "sum_cl_use", [], "sum_cl_use", options.verbose, self.c)
 
         # restart data
         not_cols = [
@@ -316,7 +290,8 @@ class QueryCls (QueryHelper):
             , "all_props"
             , "clauseIDstartInclusive"
             , "clauseIDendExclusive"]
-        self.rst_cur = self.query_fragment("restart_dat_for_cl", not_cols, "rst_cur")
+        self.rst_cur = self.query_fragment(
+            "restart_dat_for_cl", not_cols, "rst_cur", options.verbose, self.c)
 
         # RDB data
         not_cols = [
@@ -331,7 +306,8 @@ class QueryCls (QueryHelper):
             , "in_xor"
             , "locked"
             , "activity_rel"]
-        self.rdb0_dat = self.query_fragment("reduceDB", not_cols, "rdb0")
+        self.rdb0_dat = self.query_fragment(
+            "reduceDB", not_cols, "rdb0", options.verbose, self.c)
 
         # clause data
         not_cols = [
@@ -342,7 +318,8 @@ class QueryCls (QueryHelper):
             , "antecedents_long_red_age_max"
             , "antecedents_long_red_age_min"
             , "clauseID"]
-        self.clause_dat = self.query_fragment("clauseStats", not_cols, "cl")
+        self.clause_dat = self.query_fragment(
+            "clauseStats", not_cols, "cl", options.verbose, self.c)
 
         # satzilla data
         not_cols = [
@@ -352,7 +329,8 @@ class QueryCls (QueryHelper):
             , "latest_satzilla_feature_calc"
             , "irred_glue_distr_mean"
             , "irred_glue_distr_var"]
-        self.satzfeat_dat = self.query_fragment("satzilla_features", not_cols, "szfeat")
+        self.satzfeat_dat = self.query_fragment(
+            "satzilla_features", not_cols, "szfeat", options.verbose, self.c)
 
         self.common_limits = """
         order by random()

@@ -182,6 +182,10 @@ class Searcher : public HyperEngine
             bool True_confl
         );
 
+        #ifdef STATS_NEEDED
+        void dump_restart_sql(rst_dat_type type);
+        #endif
+
     protected:
         void new_var(const bool bva, const uint32_t orig_outer) override;
         void new_vars(const size_t n) override;
@@ -440,7 +444,6 @@ class Searcher : public HyperEngine
             , const uint32_t old_glue
             , const uint32_t old_decision_level);
         #ifdef STATS_NEEDED
-        void dump_restart_sql(rst_dat_type type);
         PropStats lastSQLPropStats;
         SearchStats lastSQLGlobalStats;
         void dump_sql_clause_data(

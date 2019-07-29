@@ -292,76 +292,83 @@ CREATE TABLE `satzilla_features` (
   `irred_activity_distr_var` double NOT NULL
 );
 
-DROP TABLE IF EXISTS `usedClauses`;
-create table `usedClauses` (
-    `clauseID` bigint(20) NOT NULL,
-    `used_at` bigint(20) NOT NULL
+DROP TABLE IF EXISTS `used_clauses`;
+create table `used_clauses` (
+    `clauseID` bigint(20) NOT NULL
+    , `used_at` bigint(20) NOT NULL
 );
 
-DROP TABLE IF EXISTS `varData`;
-create table `varData` (
-    `restarts` int(20) NOT NULL
-    , `conflicts` bigint(20) NOT NULL
+DROP TABLE IF EXISTS `var_data_fintime`;
+create table `var_data_fintime` (
+    `var`                                              int(20) NOT NULL
+    , `sumConflicts_at_picktime`                       int(20) NOT NULL
 
+    , `clauses_below`                                  int(20) NOT NULL
+    , `rel_activity_at_fintime`                        double NOT NULL
+
+    , `inside_conflict_clause_at_fintime`              int(20) NOT NULL
+    , `inside_conflict_clause_antecedents_at_fintime`  int(20) NOT NULL
+    , `inside_conflict_clause_glue_at_fintime`         int(20) NOT NULL
+
+    , `sumDecisions_at_fintime`                        int(20) NOT NULL
+    , `sumConflicts_at_fintime`                        int(20) NOT NULL
+    , `sumPropagations_at_fintime`                     int(20) NOT NULL
+    , `sumAntecedents_at_fintime`                      int(20) NOT NULL
+    , `sumAntecedentsLits_at_fintime`                  int(20) NOT NULL
+    , `sumConflictClauseLits_at_fintime`               int(20) NOT NULL
+    , `sumDecisionBasedCl_at_fintime`                  int(20) NOT NULL
+    , `sumClLBD_at_fintime`                            int(20) NOT NULL
+    , `sumClSize_at_fintime`                           int(20) NOT NULL
+
+    , `clid_end_notincl`                               int(20) NOT NULL
+);
+
+DROP TABLE IF EXISTS `var_data_picktime`;
+create table `var_data_picktime` (
+    `var`                                                       int(20) NOT NULL
+    , `dec_depth`                                               int(20) NOT NULL
+    , `rel_activity_at_picktime`                                double  NOT NULL
+
+    , `inside_conflict_clause_at_picktime`                      int(20) NOT NULL
+    , `inside_conflict_clause_antecedents_at_picktime`          int(20) NOT NULL
+    , `inside_conflict_clause_glue_at_picktime`                 int(20) NOT NULL
+
+    , `inside_conflict_clause_during_at_picktime`               int(20) NOT NULL
+    , `inside_conflict_clause_antecedents_during_at_picktime`   int(20) NOT NULL
+    , `inside_conflict_clause_glue_during_at_picktime`          int(20) NOT NULL
+
+    , `sumDecisions_at_picktime`                                int(20) NOT NULL
+    , `sumConflicts_at_picktime`                                int(20) NOT NULL
+    , `sumPropagations_at_picktime`                             int(20) NOT NULL
+    , `sumAntecedents_at_picktime`                              int(20) NOT NULL
+    , `sumAntecedentsLits_at_picktime`                          int(20) NOT NULL
+    , `sumConflictClauseLits_at_picktime`                       int(20) NOT NULL
+    , `sumDecisionBasedCl_at_picktime`                          int(20) NOT NULL
+    , `sumClLBD_at_picktime`                                    int(20) NOT NULL
+    , `sumClSize_at_picktime`                                   int(20) NOT NULL
+
+    , `clid_start_incl`                                         int(20) NOT NULL
+);
+
+DROP TABLE IF EXISTS `dec_var_clid`;
+create table `dec_var_clid` (
+    `sumConflicts_at_picktime` bigint(20) NOT NULL
     , `var` int(20) NOT NULL
-    , `dec_depth` int(20) NOT NULL
-    , `clauses_below` int(20) NOT NULL
-    , `decision_var` int(20) NOT NULL
-
-    -- these are both for pick and fintime  :)
-    , `decided` bigint(20) NOT NULL
-    , `decided_pos` bigint(20) NOT NULL
-    , `propagated` bigint(20) NOT NULL
-    , `propagated_pos` bigint(20) NOT NULL
-
-    , `inside_conflict_clause_at_fintime` bigint(20) NOT NULL
-    , `inside_conflict_clause_at_picktime` bigint(20) NOT NULL
-    , `inside_conflict_clause_antecedents_at_fintime` bigint(20) NOT NULL
-    , `inside_conflict_clause_antecedents_at_picktime` bigint(20) NOT NULL
-    , `inside_conflict_clause_glue_at_fintime` bigint(20) NOT NULL
-    , `inside_conflict_clause_glue_at_picktime` bigint(20) NOT NULL
-    , `rel_activity_at_fintime` double NOT NULL
-    , `rel_activity_at_picktime` double NOT NULL
-
-    , `sumDecisions_at_picktime` bigint(20) NOT NULL
-    , `sumPropagations_at_picktime` bigint(20) NOT NULL
-    , `sumConflicts_at_picktime` bigint(20) NOT NULL
-    , `sumAntecedents_at_picktime` bigint(20) NOT NULL
-    , `sumAntecedentsLits_at_picktime` bigint(20) NOT NULL
-    , `sumConflictClauseLits_at_picktime` bigint(20) NOT NULL
-    , `sumDecisionBasedCl_at_picktime` bigint(20) NOT NULL
-    , `sumClLBD_at_picktime` bigint(20) NOT NULL
-    , `sumClSize_at_picktime` bigint(20) NOT NULL
-
-    , `sumDecisions_at_fintime` bigint(20) NOT NULL
-    , `sumPropagations_at_fintime` bigint(20) NOT NULL
-    , `sumConflicts_at_fintime` bigint(20) NOT NULL
-    , `sumAntecedents_at_fintime` bigint(20) NOT NULL
-    , `sumAntecedentsLits_at_fintime` bigint(20) NOT NULL
-    , `sumConflictClauseLits_at_fintime` bigint(20) NOT NULL
-    , `sumDecisionBasedCl_at_fintime` bigint(20) NOT NULL
-    , `sumClLBD_at_fintime` bigint(20) NOT NULL
-    , `sumClSize_at_fintime` bigint(20) NOT NULL
-
-    , `clid_start_incl` bigint(20) NOT NULL
-    , `clid_end_notincl` bigint(20) NOT NULL
-
-    -- features when picked
-    --`activity` double NOT NULL
+    , `clauseID` int(2) DEFAULT NULL
 );
 
-DROP TABLE IF EXISTS `varDataUse`;
-create table `varDataUse` (
-    `conflicts` bigint(20) NOT NULL,
-    `var` int(20) NOT NULL,
+DROP TABLE IF EXISTS `var_data_use`;
+create table `var_data_use` (
+    `conflicts` bigint(20) NOT NULL
+    , `var` int(20) NOT NULL
 
-    `cls_marked` int(2) DEFAULT NULL,
-    `useful_clauses` int(20) DEFAULT NULL,
-    `useful_clauses_used` int(20) DEFAULT NULL
+    , `cls_marked` int(2) DEFAULT NULL
+    , `useful_clauses` int(20) DEFAULT NULL
+    , `useful_clauses_used` int(20) DEFAULT NULL
 );
 
 DROP TABLE IF EXISTS `cl_last_in_solver`;
 create table `cl_last_in_solver` (
-  `conflicts` bigint(20) NOT NULL,
-  `clauseID` bigint(20) NOT NULL
+  `conflicts` bigint(20) NOT NULL
+  , `clauseID` bigint(20) NOT NULL
 );

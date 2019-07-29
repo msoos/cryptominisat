@@ -407,7 +407,7 @@ vector<Xor> XorFinder::remove_xors_without_connecting_vars(const vector<Xor>& th
     vector<Xor> ret;
     assert(toClear.empty());
 
-    //Fill seen with vars used
+    //Fill "seen" with vars used
     uint32_t non_empty = 0;
     for(const Xor& x: this_xors) {
         if (x.size() != 0) {
@@ -425,12 +425,14 @@ vector<Xor> XorFinder::remove_xors_without_connecting_vars(const vector<Xor>& th
         }
     }
 
+    //has at least 1 var with occur of 2
     for(const Xor& x: this_xors) {
         if (xor_has_interesting_var(x)) {
             ret.push_back(x);
         }
     }
 
+    //clear "seen"
     for(Lit l: toClear) {
         solver->seen[l.var()] = 0;
     }

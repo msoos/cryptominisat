@@ -85,7 +85,7 @@ class QueryDatRem(QueryHelper):
         create index `idxclid31` on `clauseStats` (`clauseID`);
         create index `idxclid32` on `reduceDB` (`clauseID`);
         create index `idxclid33` on `sum_cl_use` (`clauseID`);
-        create index `idxclid34` on `usedClauses` (`clauseID`);
+        create index `idxclid34` on `used_clauses` (`clauseID`);
         create index `idxclid35` on `varData` (`conflicts`, `var`);
         """
 
@@ -231,7 +231,7 @@ class QueryDatRem(QueryHelper):
     def filter_tables_of_ids(self):
         self.print_idxs()
 
-        tables = ["clauseStats", "reduceDB", "sum_cl_use", "usedClauses"]
+        tables = ["clauseStats", "reduceDB", "sum_cl_use", "used_clauses"]
         q = """
         DELETE FROM {table} WHERE clauseID NOT IN
         (SELECT clauseID from used_cl_ids );"""
@@ -297,7 +297,7 @@ class QueryDatRem(QueryHelper):
         t = time.time()
         queries += """
         create index `idxclid6-4` on `reduceDB` (`clauseID`, `conflicts`);
-        create index `idxclidUCLS-1` on `usedClauses` ( `clauseID`, `used_at`);
+        create index `idxclidUCLS-1` on `used_clauses` ( `clauseID`, `used_at`);
         """
         for q in queries.split('\n'):
             t2 = time.time()
@@ -343,7 +343,7 @@ class QueryDatRem(QueryHelper):
         , count(ucl.used_at) as `useful_later`
         FROM
         reduceDB as rdb
-        left join usedClauses as ucl
+        left join used_clauses as ucl
 
         -- for any point later than now
         on (ucl.clauseID = rdb.clauseID

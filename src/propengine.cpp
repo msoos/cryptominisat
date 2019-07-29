@@ -35,6 +35,7 @@ THE SOFTWARE.
 #include "time_mem.h"
 #include "varupdatehelper.h"
 #include "watchalgos.h"
+#include "sqlstats.h"
 
 using namespace CMSat;
 using std::cout;
@@ -49,12 +50,15 @@ using std::endl;
 @brief Sets a sane default config and allocates handler classes
 */
 PropEngine::PropEngine(
-    const SolverConf* _conf, std::atomic<bool>* _must_interrupt_inter
+    const SolverConf* _conf
+    , Solver* _solver
+    , std::atomic<bool>* _must_interrupt_inter
 ) :
         CNF(_conf, _must_interrupt_inter)
         , order_heap_vsids(VarOrderLt(var_act_vsids))
         , order_heap_maple(VarOrderLt(var_act_maple))
         , qhead(0)
+        , solver(_solver)
 {
 }
 
@@ -586,4 +590,50 @@ void PropEngine::load_state(SimpleInFile& f)
     qhead = f.get_uint32_t();
 
     CNF::load_state(f);
+}
+
+void PropEngine::sql_dump_vardata_picktime(uint32_t v, PropBy from)
+{
+    if (!solver->sqlStats)
+        return;
+
+    bool dump = false;
+    double rnd_num = solver->mtrand.randDblExc();
+    if (rnd_num <= conf.dump_individual_cldata_ratio*0.3) {
+        dump = true;
+    }
+    varData[v].dump = dump;
+    if (!dump)
+        return;
+
+    solver->dump_restart_sql(rst_dat_type::var);
+
+    uint64_t outer_var = map_inter_to_outer(v);
+
+    varData[v].sumDecisions_at_picktime = sumDecisions;
+    varData[v].sumConflicts_at_picktime = sumConflicts;
+    varData[v].sumAntecedents_at_picktime = sumAntecedents;
+    varData[v].sumAntecedentsLits_at_picktime = sumAntecedentsLits;
+    varData[v].sumConflictClauseLits_at_picktime = sumConflictClauseLits;
+    varData[v].sumPropagations_at_picktime = sumPropagations;
+    varData[v].sumDecisionBasedCl_at_picktime = sumDecisionBasedCl;
+    varData[v].sumClLBD_at_picktime = sumClLBD;
+    varData[v].sumClSize_at_picktime = sumClSize;
+    double rel_activity_at_picktime =
+        std::log2(var_act_vsids[v]+10e-300)/std::log2(max_vsids_act+10e-300);
+
+    varData[v].last_time_set_was_dec = (from == PropBy());
+
+    //inside data
+    varData[v].inside_conflict_clause_glue_at_picktime = varData[v].inside_conflict_clause_glue;
+    varData[v].inside_conflict_clause_at_picktime = varData[v].inside_conflict_clause;
+    varData[v].inside_conflict_clause_antecedents_at_picktime = varData[v].inside_conflict_clause_antecedents;
+
+    solver->sqlStats->var_data_picktime(
+        solver
+        , outer_var
+        , varData[v]
+        , clauseID
+        , rel_activity_at_picktime
+    );
 }

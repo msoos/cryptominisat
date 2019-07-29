@@ -91,13 +91,21 @@ public:
         , const uint32_t tot_cls_in_db
     ) = 0;
 
-    virtual void var_data(
+    virtual void var_data_picktime(
         const Solver* solver
         , const uint32_t var
-        , const VarData& varData
+        , const VarData& vardata
+        , const uint64_t start_clid_incl
+        , const double rel_activity
+    ) = 0;
+
+    virtual void var_data_fintime(
+        const Solver* solver
+        , const uint32_t var
+        , const VarData& vardata
         , const uint32_t cls_below
         , const uint64_t end_clid_notincl
-        , const bool decision_var
+        , const double rel_activity
     ) = 0;
 
     virtual void cl_last_in_solver(
@@ -120,6 +128,12 @@ public:
         , const SearchHist& hist
         , const bool decision_cl
         , const bool ternary_resol_cl
+    ) = 0;
+
+    virtual void dec_var_clid(
+        const uint32_t var
+        , const uint64_t sumConflicts_at_picktime
+        , const uint64_t clid
     ) = 0;
     #endif
 

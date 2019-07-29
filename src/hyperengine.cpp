@@ -25,8 +25,11 @@ THE SOFTWARE.
 
 using namespace CMSat;
 
-HyperEngine::HyperEngine(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter) :
-    PropEngine(_conf, _must_interrupt_inter)
+HyperEngine::HyperEngine(
+    const SolverConf *_conf
+    , Solver* _solver
+    , std::atomic<bool>* _must_interrupt_inter) :
+    PropEngine(_conf, _solver, _must_interrupt_inter)
 {
 }
 

@@ -61,8 +61,8 @@ class QueryFill (QueryHelper):
         t = time.time()
         q += """
         create index `idxclid-del` on `cl_last_in_solver` (`clauseID`, `conflicts`);
-        create index `idxclid-del2` on `usedClauses` (`clauseID`);
-        create index `idxclid-del3` on `usedClauses` (`clauseID`, `used_at`);
+        create index `idxclid-del2` on `used_clauses` (`clauseID`);
+        create index `idxclid-del3` on `used_clauses` (`clauseID`, `used_at`);
         create index `idxclid1-2` on `clauseStats` (`clauseID`);
         """
 
@@ -122,7 +122,7 @@ class QueryFill (QueryHelper):
         , count()
         , min(used_at)
         , max(used_at)
-        from usedClauses as c group by clauseID;"""
+        from used_clauses as c group by clauseID;"""
         self.c.execute(q)
         print("sum_cl_use filled T: %-3.2f s" % (time.time() - t))
 
@@ -173,7 +173,7 @@ class QueryFill (QueryHelper):
         t = time.time()
         q += """
         drop table if exists `goodClauses`;
-        drop table if exists `idxusedClauses`;
+        drop table if exists `idxused_clauses`;
         """
 
         for l in q.split('\n'):

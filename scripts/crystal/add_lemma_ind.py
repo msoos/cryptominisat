@@ -44,7 +44,7 @@ class Query:
 
     def delete_tbls(self):
         queries = """
-        delete from usedClauses;
+        delete from used_clauses;
         drop table if exists goodClauses;
         DROP TABLE IF EXISTS `sum_cl_use`;
         DROP TABLE IF EXISTS `used_later`;
@@ -75,10 +75,10 @@ class Query:
 
         return last_good
 
-    def add_usedClauses(self, usedClFname):
+    def add_used_clauses(self, usedClFname):
         last_good = self.get_last_good(usedClFname)
         tfname = "%s-%d" % (usedClFname, last_good)
-        print("Adding data from usedClauses file ", tfname)
+        print("Adding data from used_clauses file ", tfname)
         t = time.time()
 
         self.cl_used = []
@@ -96,14 +96,14 @@ class Query:
                 self.cl_used_num += 1
                 self.cl_used_total += 1
                 if self.cl_used_num > 10000:
-                    self.dump_usedClauses()
+                    self.dump_used_clauses()
 
-        self.dump_usedClauses()
+        self.dump_used_clauses()
         print("Added use data: %d time: T: %-3.2f s" % (self.cl_used_total, time.time() - t))
 
-    def dump_usedClauses(self):
+    def dump_used_clauses(self):
         self.c.executemany("""
-        INSERT INTO usedClauses (
+        INSERT INTO used_clauses (
         `clauseID`
         , `used_at`)
         VALUES (?, ?);""", self.cl_used)
@@ -114,7 +114,7 @@ class Query:
 if __name__ == "__main__":
     usage = """usage: %(prog)s [options] sqlite_db usedCls
 
-Adds usedClauses to the SQLite database"""
+Adds used_clauses to the SQLite database"""
 
     parser = argparse.ArgumentParser(usage=usage)
 
@@ -137,11 +137,11 @@ Adds usedClauses to the SQLite database"""
         exit(-1)
 
     print("Using sqlite3db file %s" % options.sqlitedb)
-    print("Base usedClauses file is %s" % options.usedcls)
+    print("Base used_clauses file is %s" % options.usedcls)
 
     with Query(options.sqlitedb) as q:
         q.delete_tbls()
-        q.add_usedClauses(options.usedcls)
+        q.add_used_clauses(options.usedcls)
 
     print("Finished adding good lemma indicators to db %s" % options.sqlitedb)
 

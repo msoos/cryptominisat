@@ -68,6 +68,7 @@ using std::endl;
 Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* _must_interrupt_inter) :
         HyperEngine(
             _conf
+            , _solver
             , _must_interrupt_inter
         )
         , solver(_solver)
@@ -1645,35 +1646,21 @@ void Searcher::dump_sql_clause_data(
     , const bool decision_cl
     , const bool ternary_resol_cl
 ) {
-    vector<double> last_dec_var_act;
+    solver->sqlStats->begin_transaction();
     for(int i = (int)decisionLevel()-1; i >= 0; i--) {
         uint32_t at = trail_lim[i];
         if (at < trail.size()) {
             uint32_t v = trail[at].var();
-            double act_rel = var_act_vsids[v]/var_inc_vsids;
-            last_dec_var_act.push_back(act_rel);
-            if (last_dec_var_act.size() >= 2)
-                break;
+            if (varData[v].dump) {
+                uint64_t outer_var = map_inter_to_outer(v);
+                solver->sqlStats->dec_var_clid(
+                    outer_var
+                    , varData[v].sumConflicts_at_picktime
+                    , clid
+                );
+            }
         }
     }
-
-    while(last_dec_var_act.size() < 2)
-        last_dec_var_act.push_back(0);
-
-    vector<double> first_dec_var_act;
-    for(size_t i = 0; i < decisionLevel(); i++) {
-        uint32_t at = trail_lim[i];
-        if (at < trail.size()) {
-            uint32_t v = trail[at].var();
-            double act_rel = var_act_vsids[v]/var_inc_vsids;
-            first_dec_var_act.push_back(act_rel);
-            if (first_dec_var_act.size() >= 2)
-                break;
-        }
-    }
-
-    while(first_dec_var_act.size() < 2)
-        first_dec_var_act.push_back(0);
 
     solver->sqlStats->dump_clause_stats(
         solver
@@ -1691,6 +1678,7 @@ void Searcher::dump_sql_clause_data(
         , decision_cl
         , ternary_resol_cl
     );
+    solver->sqlStats->end_transaction();
 }
 #endif
 
@@ -3471,19 +3459,6 @@ void Searcher::cancelUntil(uint32_t level
     #endif
 
     if (decisionLevel() > level) {
-        #ifdef STATS_NEEDED
-        bool dump_this_canceluntil = false;
-        double rnd_num = mtrand.randDblExc();
-        if (solver->sqlStats
-            && !update_bogoprops
-            //we need a lot less of this data
-            && rnd_num <= conf.dump_individual_cldata_ratio*0.2
-        ) {
-            dump_this_canceluntil = true;
-            solver->sqlStats->begin_transaction();
-        }
-        #endif
-
         #ifdef USE_GAUSS
         for (EGaussian* gauss: gmatrices)
             if (gauss) {
@@ -3517,71 +3492,58 @@ void Searcher::cancelUntil(uint32_t level
                 //we want to dump & this was a decision var
                 uint64_t sumConflicts_during = sumConflicts - varData[var].sumConflicts_at_picktime;
                 uint64_t sumDecisions_during = sumDecisions - varData[var].sumDecisions_at_picktime;
+                uint64_t sumPropagations_during = sumPropagations - varData[var].sumPropagations_at_picktime;
                 uint64_t sumAntecedents_during = sumAntecedents - varData[var].sumAntecedents_at_picktime;
                 uint64_t sumAntecedentsLits_during = sumAntecedentsLits - varData[var].sumAntecedentsLits_at_picktime;
                 uint64_t sumConflictClauseLits_during = sumConflictClauseLits - varData[var].sumConflictClauseLits_at_picktime;
                 uint64_t sumDecisionBasedCl_during = sumDecisionBasedCl - varData[var].sumDecisionBasedCl_at_picktime;
-                uint64_t sumPropagations_during = sumPropagations - varData[var].sumPropagations_at_picktime;
                 uint64_t sumClLBD_during = sumClLBD - varData[var].sumClLBD_at_picktime;
                 uint64_t sumClSize_during = sumClSize - varData[var].sumClSize_at_picktime;
                 uint64_t cls_below = sumConflicts_during + sumDecisionBasedCl_during;
-                varData[var].rel_activity_at_fintime =
+                double rel_activity_at_fintime =
                     std::log2(var_act_vsids[var]+10e-300)/std::log2(max_vsids_act+10e-300);
 
-                #ifdef FINAL_PREDICTOR_BRANCH
-                if (!VSIDS &&
-                    sumConflicts_during && sumDecisions_during && sumAntecedents_during && cls_below >= 1
-                ) {
-                    reward = maple_reward_conf0_cluster0(
-                        solver
-                        , varData[var]
-                        , sumConflicts_during
-                        , sumDecisions_during
-                        , sumPropagations_during
-                        , sumAntecedents_during
-                        , sumAntecedentsLits_during
-                        , sumConflictClauseLits_during
-                        , sumDecisionBasedCl_during
-                        , sumClLBD_during
-                        , sumClSize_during
-                        , cls_below
-                    );
-                    //cout << "reward: " << reward << endl;
-                    reward = 8-reward;
-                }
-                #endif
+                uint64_t inside_conflict_clause_during =
+                varData[var].inside_conflict_clause - varData[var].inside_conflict_clause_at_picktime;
 
-                #ifdef STATS_NEEDED
-                bool decision_var = varData[var].reason == PropBy();
-                if (dump_this_canceluntil
-                    && (rnd_num < conf.dump_individual_cldata_ratio*0.0008 &&
-                        varData[var].reason == PropBy())
-                ) {
+                uint64_t inside_conflict_clause_glue_during =
+                varData[var].inside_conflict_clause_glue - varData[var].inside_conflict_clause_glue_at_picktime;
+
+                uint64_t inside_conflict_clause_antecedents_during =
+                varData[var].inside_conflict_clause_antecedents -
+                varData[var].inside_conflict_clause_antecedents_at_picktime;
+
+                if (varData[var].dump) {
                     uint64_t outer_var = map_inter_to_outer(var);
 
-                    solver->sqlStats->var_data(
+                    solver->sqlStats->var_data_fintime(
                         solver
                         , outer_var
                         , varData[var]
                         , cls_below
                         , clauseID+clid_plus
-                        , decision_var
+                        , rel_activity_at_fintime
                     );
                 }
 
                 //if STATS_NEEDED we only update for decisions, otherwise, all the time
-                if (varData[var].reason == PropBy())
-                #endif
-                {
-                    varData[var].sumConflicts_below_at_picktime += sumConflicts_during;
-                    varData[var].sumDecisions_below_at_picktime += sumDecisions_during;
-                    varData[var].sumAntecedents_below_at_picktime += sumAntecedents_during;
-                    varData[var].sumAntecedentsLits_below_at_picktime += sumAntecedentsLits_during;
-                    varData[var].sumConflictClauseLits_below_at_picktime += sumConflictClauseLits_during;
-                    varData[var].sumDecisionBasedCl_below_at_picktime += sumDecisionBasedCl_during;
-                    varData[var].sumClLBD_below_at_picktime += sumClLBD_during;
-                    varData[var].sumClSize_below_at_picktime += sumClSize_during;
-                }
+                varData[var].sumConflicts_below_during += sumConflicts_during;
+                varData[var].sumDecisions_below_during += sumDecisions_during;
+                varData[var].sumPropagations_below_during += sumPropagations_during;
+                varData[var].sumAntecedents_below_during += sumAntecedents_during;
+                varData[var].sumAntecedentsLits_below_during += sumAntecedentsLits_during;
+                varData[var].sumConflictClauseLits_below_during += sumConflictClauseLits_during;
+                varData[var].sumDecisionBasedCl_below_during += sumDecisionBasedCl_during;
+                varData[var].sumClLBD_below_during += sumClLBD_during;
+                varData[var].sumClSize_below_during += sumClSize_during;
+
+                varData[var].inside_conflict_clause_during +=
+                inside_conflict_clause_during;
+
+                varData[var].inside_conflict_clause_glue_during += inside_conflict_clause_glue_during;
+
+                varData[var].inside_conflict_clause_antecedents_during +=
+                inside_conflict_clause_antecedents_during;
             }
             #endif
 
@@ -3618,15 +3580,6 @@ void Searcher::cancelUntil(uint32_t level
         qhead = trail_lim[level];
         trail.resize(trail_lim[level]);
         trail_lim.resize(level);
-
-        #ifdef STATS_NEEDED
-        if (dump_this_canceluntil) {
-            solver->sqlStats->end_transaction();
-            if (sqlStats) {
-                dump_restart_sql(rst_dat_type::var);
-            }
-        }
-        #endif
     }
 
     #ifdef VERBOSE_DEBUG

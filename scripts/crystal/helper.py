@@ -52,6 +52,34 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/\n\n""")
 
+def get_columns(tablename, verbose, conn):
+    q = "pragma table_info(%s);" % tablename
+    conn.execute(q)
+    rows = conn.fetchall()
+    columns = []
+    for row in rows:
+        if verbose:
+            print("Using column in table {tablename}: {col}".format(
+                tablename=tablename, col=row[1]))
+        columns.append(row[1])
+
+    return columns
+
+def query_fragment(tablename, not_cols, short_name, verbose, conn):
+    cols = get_columns(tablename, verbose, conn)
+    filtered_cols = list(set(cols).difference(not_cols))
+    ret = ""
+    for col in filtered_cols:
+        ret += ", {short_name}.`{col}` as `{short_name}.{col}`\n".format(
+            col=col, short_name=short_name)
+
+    if verbose:
+        print("query for short name {short_name}: {ret}".format(
+            short_name=short_name, ret=ret))
+
+    return ret
+
+
 def not_inside(not_these, inside_here):
     for not_this in not_these:
         if not_this in inside_here:
