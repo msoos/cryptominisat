@@ -240,7 +240,21 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //validated with run 8114195.wlm01
         , simplify_schedule_nonstartup(
-            "scc-vrepl,cache-clean,cache-tryboth,sub-impl,intree-probe,probe,sub-str-cls-with-bin,distill-cls,scc-vrepl,sub-impl,str-impl,sub-impl,breakid,occ-backw-sub-str,occ-clean-implicit,occ-bve,occ-bva,occ-ternary-res,occ-xor,card-find,cl-consolidate,str-impl,cache-clean,sub-str-cls-with-bin,distill-cls,scc-vrepl,check-cache-size,renumber,sls"
+            "scc-vrepl,"
+            "cache-clean,cache-tryboth,"
+            "sub-impl,"
+            "intree-probe,probe,"
+            "sub-str-cls-with-bin,distill-cls,"
+            "scc-vrepl,sub-impl,str-impl,sub-impl,"
+            "breakid,"
+            //occurrence based
+            "occ-backw-sub-str,occ-clean-implicit,occ-bve,"
+            "occ-bva,occ-ternary-res,occ-xor,card-find,"
+            "cl-consolidate,"
+            "str-impl,cache-clean,sub-str-cls-with-bin,distill-cls,"
+            "scc-vrepl,check-cache-size,"
+            //renumber then it's time for SLS
+            "renumber,sls"
         )
         , simplify_schedule_preproc(
             "handle-comps,"
