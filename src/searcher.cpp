@@ -3514,11 +3514,6 @@ void Searcher::cancelUntil(uint32_t level
             double reward = 0;
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR_BRANCH)
             if (!update_bogoprops && varData[var].reason == PropBy()) {
-                //WARNING We do not correctly count into the variable the decision clause
-                //WARNING in case it's made.
-                //WARNING We assume a new clause will be created (hence the clid_plus_one),
-                //WARNING but not a decision clause...
-
                 //we want to dump & this was a decision var
                 uint64_t sumConflicts_during = sumConflicts - varData[var].sumConflicts_at_picktime;
                 uint64_t sumDecisions_during = sumDecisions - varData[var].sumDecisions_at_picktime;
