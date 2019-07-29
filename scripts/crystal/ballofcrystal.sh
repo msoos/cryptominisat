@@ -108,7 +108,7 @@ set -x
 ########################
 cd "$FNAME-dir"
 # removed: --decbased 0 --tern 0 --bva 0 --gluecut0 100
-../cryptominisat5 --maple 0 --scc 0 --freq 0.5 --dumpdecformodel dec_list --cldatadumpratio "$RATIO" --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
+../cryptominisat5 --breakid 0 --maple 0 --scc 0 --freq 0.5 --dumpdecformodel dec_list --cldatadumpratio "$RATIO" --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
 # --bva 0 --updateglueonanalysis 0 --otfsubsume 0
 grep "c conflicts" cms-pred-run.out
 
