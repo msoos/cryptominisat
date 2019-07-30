@@ -445,7 +445,6 @@ void Main::add_supported_options()
         , "Parse special comments to run solve/simplify during parsing of CNF")
     ;
 
-#ifdef USE_BREAKID
     po::options_description breakid_options("Breakid options");
     breakid_options.add_options()
     ("breakid", po::value(&conf.doBreakid)->default_value(conf.doBreakid)
@@ -467,7 +466,6 @@ void Main::add_supported_options()
         ->default_value(conf.breakid_matrix_detect)
         , "Detect matrix row interchangability")
     ;
-#endif
 
     po::options_description sls_options("Stochastic Local Search options");
     sls_options.add_options()
@@ -1061,6 +1059,13 @@ void Main::parse_polarity_type()
 
 void Main::manually_parse_some_options()
 {
+    #ifndef USE_BREAKID
+    if (conf.doBreakid) {
+        cout << "c BreakID not compiled in, disabling" << endl;
+        conf.doBreakid = false;
+    }
+    #endif
+
     if (conf.yalsat_max_mems < 1) {
         cout << "ERROR: '--walkmems' must be at least 1" << endl;
         exit(-1);
