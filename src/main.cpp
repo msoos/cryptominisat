@@ -441,6 +441,8 @@ void Main::add_supported_options()
     iterativeOptions.add_options()
     ("maxsol", po::value(&max_nr_of_solutions)->default_value(max_nr_of_solutions)
         , "Search for given amount of solutions. Thanks to Jannis Harder for the decision-based banning idea")
+    ("nobansol", po::bool_switch(&dont_ban_solutions)
+        , "Don't ban the solution once it's found")
     ("debuglib", po::value<string>(&debugLib)
         , "Parse special comments to run solve/simplify during parsing of CNF")
     ;
@@ -1504,33 +1506,39 @@ lbool Main::multi_solutions()
             solver->print_removed_vars();
             #endif
 
-            //Banning found solution
-            vector<Lit> lits;
-            if (sampling_vars.empty()) {
-                if (solver->get_decision_reaching_valid()) {
-                    //only decision vars
-                    for (Lit lit: solver->get_decisions_reaching_model()) {
-                      lits.push_back(~lit);
-                    }
-                } else {
-                    //all of the solution
-                    for (uint32_t var = 0; var < solver->nVars(); var++) {
-                        if (solver->get_model()[var] != l_Undef) {
-                            lits.push_back( Lit(var, (solver->get_model()[var] == l_True)? true : false) );
-                        }
-                    }
-                }
-            } else {
-              for (const uint32_t var: sampling_vars) {
-                  if (solver->get_model()[var] != l_Undef) {
-                      lits.push_back( Lit(var, (solver->get_model()[var] == l_True)? true : false) );
-                  }
-              }
+            if (!dont_ban_solutions) {
+                ban_found_solution();
             }
-            solver->add_clause(lits);
         }
     }
     return ret;
+}
+
+void Main::ban_found_solution()
+{
+    vector<Lit> lits;
+    if (sampling_vars.empty()) {
+        if (solver->get_decision_reaching_valid()) {
+            //only decision vars
+            for (Lit lit: solver->get_decisions_reaching_model()) {
+              lits.push_back(~lit);
+            }
+        } else {
+            //all of the solution
+            for (uint32_t var = 0; var < solver->nVars(); var++) {
+                if (solver->get_model()[var] != l_Undef) {
+                    lits.push_back( Lit(var, (solver->get_model()[var] == l_True)? true : false) );
+                }
+            }
+        }
+    } else {
+      for (const uint32_t var: sampling_vars) {
+          if (solver->get_model()[var] != l_Undef) {
+              lits.push_back( Lit(var, (solver->get_model()[var] == l_True)? true : false) );
+          }
+      }
+    }
+    solver->add_clause(lits);
 }
 
 ///////////

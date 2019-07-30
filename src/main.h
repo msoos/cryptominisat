@@ -101,6 +101,7 @@ class Main: public MainCommon
         int correctReturnValue(const lbool ret) const;
         lbool multi_solutions();
         void dump_red_file();
+        void ban_found_solution();
 
         //Config
         std::string resultFilename;
@@ -108,6 +109,7 @@ class Main: public MainCommon
         int printResult = true;
         string commandLine;
         uint32_t max_nr_of_solutions = 1;
+        bool dont_ban_solutions = false;
         int sql = 0;
         string sqlite_filename;
         string decisions_for_model_fname;
