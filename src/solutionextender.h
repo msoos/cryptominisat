@@ -50,6 +50,7 @@ class SolutionExtender
 
         size_t count_num_unset_model() const;
         bool satisfied(const vector<Lit>& lits) const;
+        lbool get_var_setting();
         bool contains_var(
             const vector<Lit>& lits
             , const uint32_t tocontain

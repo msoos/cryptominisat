@@ -75,31 +75,34 @@ void SolutionExtender::extend()
         if (solver->undef_must_set_vars[i]
             && solver->model_value(i) == l_Undef
         ) {
-            lbool val = l_Undef;
-            switch(solver->conf.polarity_mode) {
-                case PolarityMode::polarmode_automatic:
-                case PolarityMode::polarmode_neg:
-                    val = l_False;
-                    break;
-
-                case PolarityMode::polarmode_pos:
-                    val = l_True;
-                    break;
-
-                case PolarityMode::polarmode_rnd:
-                    val = (solver->mtrand.randInt(1) ? l_True: l_False);
-                    break;
-
-                default:
-                    assert(false);
-            }
-            solver->model[i] = val;
+            solver->model[i] = get_var_setting();
             solver->decisions_reaching_model.push_back(Lit(i, true));
         }
     }
 
     //All variables, not just those set
     solver->varReplacer->extend_model_set_undef();
+}
+
+lbool SolutionExtender::get_var_setting()
+{
+    switch(solver->conf.polarity_mode) {
+        case PolarityMode::polarmode_automatic:
+        case PolarityMode::polarmode_neg:
+            return l_False;
+
+        case PolarityMode::polarmode_pos:
+            return l_True;
+
+        case PolarityMode::polarmode_rnd:
+            return (solver->mtrand.randInt(1) ? l_True: l_False);
+
+        default:
+            assert(false);
+    }
+    assert(false);
+    exit(-1);
+    return l_Undef;
 }
 
 inline bool SolutionExtender::satisfied(const vector< Lit >& lits) const
@@ -130,8 +133,7 @@ void SolutionExtender::dummyBlocked(const uint32_t blockedOn)
     if (solver->model_value(blockedOn) != l_Undef)
         return;
 
-    //Picking l_False because MiniSat likes False solutions. Could pick anything.
-    solver->model[blockedOn] = l_False;
+    solver->model[blockedOn] = get_var_setting();
     solver->decisions_reaching_model.push_back(Lit(blockedOn, true));
 
     //If var is replacing something else, it MUST be set.
