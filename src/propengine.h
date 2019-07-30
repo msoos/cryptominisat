@@ -430,8 +430,8 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR_BRANCH)
     if (!update_bogoprops) {
         if (from == PropBy()) {
-            sql_dump_vardata_picktime(v, from);
             #ifdef STATS_NEEDED
+            sql_dump_vardata_picktime(v, from);
             varData[v].num_decided++;
             if (!sign) varData[v].num_decided_pos++;
             #endif

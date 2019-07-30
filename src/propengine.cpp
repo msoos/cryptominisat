@@ -592,6 +592,7 @@ void PropEngine::load_state(SimpleInFile& f)
     CNF::load_state(f);
 }
 
+#ifdef STATS_NEEDED
 void PropEngine::sql_dump_vardata_picktime(uint32_t v, PropBy from)
 {
     if (!solver->sqlStats)
@@ -637,3 +638,4 @@ void PropEngine::sql_dump_vardata_picktime(uint32_t v, PropBy from)
         , rel_activity_at_picktime
     );
 }
+#endif
