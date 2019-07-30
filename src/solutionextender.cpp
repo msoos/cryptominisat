@@ -75,8 +75,25 @@ void SolutionExtender::extend()
         if (solver->undef_must_set_vars[i]
             && solver->model_value(i) == l_Undef
         ) {
-            //any setting would work, let's set to l_False (MiniSat default)
-            solver->model[i] = l_False;
+            lbool val = l_Undef;
+            switch(solver->conf.polarity_mode) {
+                case PolarityMode::polarmode_automatic:
+                case PolarityMode::polarmode_neg:
+                    val = l_False;
+                    break;
+
+                case PolarityMode::polarmode_pos:
+                    val = l_True;
+                    break;
+
+                case PolarityMode::polarmode_rnd:
+                    val = (solver->mtrand.randInt(1) ? l_True: l_False);
+                    break;
+
+                default:
+                    assert(false);
+            }
+            solver->model[i] = val;
             solver->decisions_reaching_model.push_back(Lit(i, true));
         }
     }
