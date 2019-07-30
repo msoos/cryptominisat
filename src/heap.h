@@ -145,6 +145,11 @@ public:
         percolateUp(indices[n]);
     }
 
+    int inspectTop()
+    {
+        return heap[0];
+    }
+
 
     int  removeMin()
     {

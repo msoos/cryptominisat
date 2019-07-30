@@ -2580,13 +2580,16 @@ Lit Searcher::pickBranchLit()
 
     // Random decision:
     Heap<VarOrderLt> &order_heap = VSIDS ? order_heap_vsids : order_heap_maple;
+    vector<double>& var_act = VSIDS ? var_act_vsids : var_act_maple;
+
     if (conf.random_var_freq > 0) {
         double rand = mtrand.randDblExc();
         double frq = conf.random_var_freq;
         if (rand < frq && !order_heap.empty()) {
             uint32_t next_var = var_Undef;
-            uint32_t num_tried = 0;
-            while(next_var == var_Undef && num_tried < 10000) {
+            while(!order_heap.empty()
+                && next_var == var_Undef)
+            {
                 next_var = order_heap.random_element(mtrand);
                 if (value(next_var) == l_Undef
                     && solver->varData[next_var].removed == Removed::none
@@ -2594,9 +2597,16 @@ Lit Searcher::pickBranchLit()
                     stats.decisionsRand++;
                     next = Lit(next_var, !pick_polarity(next_var));
                 } else {
+                    //make this var the top, and remove it
+                    assert(var_act.size() > next_var);
+                    assert(order_heap.inHeap(next_var));
+                    var_act[next_var] = var_act[order_heap.inspectTop()]*2;
+                    order_heap.update(next_var);
+                    uint32_t removed_var = (uint32_t)order_heap.removeMin();
+                    assert(removed_var == next_var);
+
                     next_var = var_Undef;
                 }
-                num_tried++;
             }
         }
     }
