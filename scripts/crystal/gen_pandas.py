@@ -59,10 +59,10 @@ class QueryFill (QueryHelper):
         print("We have %d lines of RDB" % (rdb_rows))
 
         t = time.time()
-        ret = self.c.execute("select count() from clauseStats")
+        ret = self.c.execute("select count() from clause_stats")
         rows = self.c.fetchall()
         clss_rows = rows[0][0]
-        print("We have %d lines of clauseStats" % (clss_rows))
+        print("We have %d lines of clause_stats" % (clss_rows))
 
     def create_indexes(self):
         print("Deleting & recreating indexes...")
@@ -80,12 +80,12 @@ class QueryFill (QueryHelper):
 
         queries += """
         create index `idxclid33` on `sum_cl_use` (`clauseID`, `last_confl_used`);
-        create index `idxclid1` on `clauseStats` (`clauseID`, conflicts, restarts, latest_satzilla_feature_calc);
-        create index `idxclid1-2` on `clauseStats` (`clauseID`);
-        create index `idxclid1-3` on `clauseStats` (`clauseID`, restarts);
-        create index `idxclid1-4` on `clauseStats` (`clauseID`, restarts, prev_restart);
-        create index `idxclid1-5` on `clauseStats` (`clauseID`, prev_restart);
-        create index `idxclid2` on `clauseStats` (clauseID, `prev_restart`, conflicts, restarts, latest_satzilla_feature_calc);
+        create index `idxclid1` on `clause_stats` (`clauseID`, conflicts, restarts, latest_satzilla_feature_calc);
+        create index `idxclid1-2` on `clause_stats` (`clauseID`);
+        create index `idxclid1-3` on `clause_stats` (`clauseID`, restarts);
+        create index `idxclid1-4` on `clause_stats` (`clauseID`, restarts, prev_restart);
+        create index `idxclid1-5` on `clause_stats` (`clauseID`, prev_restart);
+        create index `idxclid2` on `clause_stats` (clauseID, `prev_restart`, conflicts, restarts, latest_satzilla_feature_calc);
         create index `idxclid4` on `restart` ( `restarts`);
         create index `idxclid88` on `restart_dat_for_cl` ( `conflicts`);
         create index `idxclid5` on `tags` ( `name`);
@@ -319,7 +319,7 @@ class QueryCls (QueryHelper):
             , "antecedents_long_red_age_min"
             , "clauseID"]
         self.clause_dat = self.query_fragment(
-            "clauseStats", not_cols, "cl", options.verbose, self.c)
+            "clause_stats", not_cols, "cl", options.verbose, self.c)
 
         # satzilla data
         not_cols = [
@@ -478,7 +478,7 @@ class QueryCls (QueryHelper):
         , {case_stmt}
 
         FROM
-        clauseStats as cl
+        clause_stats as cl
         , sum_cl_use as sum_cl_use
         , restart_dat_for_cl as rst_cur
         , satzilla_features as szfeat_cur

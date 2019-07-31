@@ -63,7 +63,7 @@ class QueryFill (QueryHelper):
         create index `idxclid-del` on `cl_last_in_solver` (`clauseID`, `conflicts`);
         create index `idxclid-del2` on `used_clauses` (`clauseID`);
         create index `idxclid-del3` on `used_clauses` (`clauseID`, `used_at`);
-        create index `idxclid1-2` on `clauseStats` (`clauseID`);
+        create index `idxclid1-2` on `clause_stats` (`clauseID`);
         """
 
         for l in q.split('\n'):
@@ -148,7 +148,7 @@ class QueryFill (QueryHelper):
         , 0     --  `num_used`,
         , NULL   --  `first_confl_used`
         , NULL   --  `last_confl_used`
-        from clauseStats as clstats left join sum_cl_use
+        from clause_stats as clstats left join sum_cl_use
         on clstats.clauseID = sum_cl_use.clauseID
         where
         sum_cl_use.clauseID is NULL

@@ -140,7 +140,7 @@ bool SQLiteStats::setup(const Solver* solver)
     init("timepassed", &stmtTimePassed);
     init("memused", &stmtMemUsed);
     init("satzilla_features", &stmtFeat);
-    init("clauseStats", &stmt_clause_stats);
+    init("clause_stats", &stmt_clause_stats);
     init("restart", &stmtRst);
     init("restart_dat_for_var", &stmtVarRst);
     init("restart_dat_for_cl", &stmtClRst);

@@ -147,8 +147,8 @@ CREATE TABLE `restart_dat_for_var` AS SELECT * FROM `restart` WHERE 0;
 CREATE TABLE `restart_dat_for_cl` AS SELECT * FROM `restart` WHERE 0;
 
 
-DROP TABLE IF EXISTS `clauseStats`;
-CREATE TABLE `clauseStats` (
+DROP TABLE IF EXISTS `clause_stats`;
+CREATE TABLE `clause_stats` (
   `simplifications` int(20) NOT NULL,
   `restarts` int(20) NOT NULL,
   `prev_restart` bigint(20) NOT NULL,
