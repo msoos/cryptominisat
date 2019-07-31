@@ -797,16 +797,6 @@ void SQLiteStats::var_data_fintime(
     sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, solver->sumClLBD);
     sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, solver->sumClSize);
 
-    sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, vardata.sumConflicts_below_during);
-    sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, vardata.sumDecisions_below_during);
-    sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, vardata.sumPropagations_below_during);
-    sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, vardata.sumAntecedents_below_during);
-    sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, vardata.sumAntecedentsLits_below_during);
-    sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, vardata.sumConflictClauseLits_below_during);
-    sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, vardata.sumDecisionBasedCl_below_during);
-    sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, vardata.sumClLBD_below_during);
-    sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, vardata.sumClSize_below_during);
-
     //to get usage data good cl/bad cl, etc.
     sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, end_clid_notincl);
 
@@ -850,6 +840,16 @@ void SQLiteStats::var_data_picktime(
     sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, solver->sumDecisionBasedCl);
     sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, solver->sumClLBD);
     sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, solver->sumClSize);
+
+    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.sumConflicts_below_during);
+    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.sumDecisions_below_during);
+    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.sumPropagations_below_during);
+    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.sumAntecedents_below_during);
+    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.sumAntecedentsLits_below_during);
+    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.sumConflictClauseLits_below_during);
+    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.sumDecisionBasedCl_below_during);
+    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.sumClLBD_below_during);
+    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.sumClSize_below_during);
 
     //to get usage data good cl/bad cl, etc.
     sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, start_clid_incl);
