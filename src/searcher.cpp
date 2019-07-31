@@ -1996,7 +1996,9 @@ void Searcher::resetStats()
 
 void Searcher::check_calc_satzilla_features()
 {
-    if (last_satzilla_feature_calc_confl == 0 || (last_satzilla_feature_calc_confl + 100000) < sumConflicts) {
+    if (last_satzilla_feature_calc_confl == 0
+        || (last_satzilla_feature_calc_confl + 100000) < sumConflicts
+    ) {
         last_satzilla_feature_calc_confl = sumConflicts+1;
         if (nVars() > 2
             && longIrredCls.size() > 1
