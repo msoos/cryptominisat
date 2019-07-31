@@ -484,7 +484,7 @@ static bool actually_add_clauses_to_threads(CMSatPrivateData* data)
 {
     DataForThread data_for_thread(data);
     if (data->solvers.size() == 1) {
-        OneThreadAddCls t(data_for_thread, 0));
+        OneThreadAddCls t(data_for_thread, 0);
         t.operator()();
     } else {
         std::vector<std::thread> thds;
