@@ -1651,6 +1651,7 @@ void Searcher::dump_sql_clause_data(
         uint32_t at = trail_lim[i];
         if (at < trail.size()) {
             uint32_t v = trail[at].var();
+            assert(varData[v].reason == PropBy());
             if (varData[v].dump) {
                 uint64_t outer_var = map_inter_to_outer(v);
                 solver->sqlStats->dec_var_clid(
