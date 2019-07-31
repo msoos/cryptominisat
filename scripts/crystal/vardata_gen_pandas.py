@@ -75,22 +75,11 @@ class QueryVar (QueryHelper):
         super(QueryVar, self).__init__(dbfname)
 
     def create_indexes(self):
-        t = time.time()
+        helper.drop_idxs(self.c)
 
         print("Recreating indexes...")
-        print("Getting indexes to drop...")
-        q = """
-        SELECT name FROM sqlite_master WHERE type == 'index'
-        """
-        self.c.execute(q)
-        rows = self.c.fetchall()
-        queries = ""
-        for row in rows:
-            print("Will delete index:", row[0])
-            queries += "drop index if exists `%s`;\n" % row[0]
-
         t = time.time()
-        queries += """
+        queries = """
         create index `idxclid8` on `varData` ( `var`, `conflicts`, `clid_start_incl`, `clid_end_notincl`);
 
         create index `idxclid-a1` on `varData` ( `clid_start_incl`, `clid_end_notincl`);

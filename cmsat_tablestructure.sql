@@ -352,8 +352,8 @@ create table `var_data_picktime` (
 
 DROP TABLE IF EXISTS `dec_var_clid`;
 create table `dec_var_clid` (
-    `sumConflicts_at_picktime` bigint(20) NOT NULL
-    , `var` int(20) NOT NULL
+    `var` int(20) NOT NULL
+    , `sumConflicts_at_picktime` bigint(20) NOT NULL
     , `clauseID` int(2) DEFAULT NULL
 );
 

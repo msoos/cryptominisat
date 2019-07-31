@@ -6,6 +6,7 @@ import sqlite3
 import optparse
 import operator
 import time
+import helper
 
 
 class Query:
@@ -20,20 +21,10 @@ class Query:
         self.conn.close()
 
     def create_indexes(self):
-        print("Deleting & recreating indexes...")
-        t = time.time()
-        q = """
-        SELECT name FROM sqlite_master WHERE type == 'index'
-        """
-        self.c.execute(q)
-        rows = self.c.fetchall()
-        queries = ""
-        for row in rows:
-            if options.verbose:
-                print("Will delete index:", row[0])
-            queries += "drop index if exists `%s`;\n" % row[0]
+        helper.drop_idxs(self.c)
 
-        queries += """
+        print("Recreating indexes...")
+        queries = """
         create index `idx1` on `tags` (`runid`, `name`);
         create index `idx2` on `timepassed` (`runid`, `elapsed`);
         create index `idx3` on `timepassed` (`runid`, `elapsed`, `name`);

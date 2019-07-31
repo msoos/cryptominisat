@@ -23,6 +23,7 @@ import sqlite3
 import optparse
 import time
 import os.path
+import helper
 
 class QueryHelper:
     def __init__(self, dbfname):
@@ -46,20 +47,11 @@ class QueryFill (QueryHelper):
         super(QueryFill, self).__init__(dbfname)
 
     def create_indexes(self):
-        print("Getting indexes to drop")
-        q = """
-        SELECT name FROM sqlite_master WHERE type == 'index'
-        """
-        self.c.execute(q)
-        rows = self.c.fetchall()
-        q = ""
-        for row in rows:
-            print("Will delete index:", row[0])
-            q += "drop index if exists `%s`;\n" % row[0]
+        helper.drop_idxs(self.c)
 
         print("Creating needed indexes...")
         t = time.time()
-        q += """
+        q = """
         create index `idxclid-del` on `cl_last_in_solver` (`clauseID`, `conflicts`);
         create index `idxclid-del2` on `used_clauses` (`clauseID`);
         create index `idxclid-del3` on `used_clauses` (`clauseID`, `used_at`);
@@ -158,20 +150,11 @@ class QueryFill (QueryHelper):
         print("sum_cl_use added bad claues T: %-3.2f s" % (time.time() - t))
 
     def drop_idxs_tables(self):
-        print("Dropping indexes/tables")
-        print("Getting indexes to drop...")
-        q = """
-        SELECT name FROM sqlite_master WHERE type == 'index'
-        """
-        self.c.execute(q)
-        rows = self.c.fetchall()
-        q = ""
-        for row in rows:
-            print("Will delete index:", row[0])
-            q += "drop index if exists `%s`;\n" % row[0]
+        helper.drop_idxs(self.c)
 
+        print("Dropping tables...")
         t = time.time()
-        q += """
+        q = """
         drop table if exists `goodClauses`;
         drop table if exists `idxused_clauses`;
         """
@@ -180,12 +163,12 @@ class QueryFill (QueryHelper):
             t2 = time.time()
 
             if options.verbose:
-                print("Dropping index/table: ", l)
+                print("Dropping table: ", l)
             self.c.execute(l)
             if options.verbose:
-                print("Dopping index/table T: %-3.2f s" % (time.time() - t2))
+                print("Dopped table T: %-3.2f s" % (time.time() - t2))
 
-        print("Indexes/tables dropped T: %-3.2f s" % (time.time() - t))
+        print("Tables dropped T: %-3.2f s" % (time.time() - t))
 
 if __name__ == "__main__":
     usage = "usage: %prog [options] sqlitedb"

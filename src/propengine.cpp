@@ -600,7 +600,7 @@ void PropEngine::sql_dump_vardata_picktime(uint32_t v, PropBy from)
 
     bool dump = false;
     double rnd_num = solver->mtrand.randDblExc();
-    if (rnd_num <= conf.dump_individual_cldata_ratio*0.3) {
+    if (rnd_num <= conf.dump_individual_cldata_ratio*0.1) {
         dump = true;
     }
     varData[v].dump = dump;

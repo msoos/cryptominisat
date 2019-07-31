@@ -27,6 +27,7 @@ import re
 import crystalcodegen as ccg
 import ast
 import math
+import time
 from pprint import pprint
 
 def write_mit_header(f):
@@ -51,6 +52,24 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/\n\n""")
+
+
+def drop_idxs(conn):
+    q = """
+    SELECT name FROM sqlite_master WHERE type == 'index'
+    """
+    conn.execute(q)
+    rows = conn.fetchall()
+    queries = ""
+    for row in rows:
+        print("Will delete index:", row[0])
+        queries += "drop index if exists `%s`;\n" % row[0]
+
+    t = time.time()
+    for q in queries.split("\n"):
+        conn.execute(q)
+
+    print("Removed indexes: T: %-3.2f s"% (time.time() - t))
 
 def get_columns(tablename, verbose, conn):
     q = "pragma table_info(%s);" % tablename

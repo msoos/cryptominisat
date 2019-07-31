@@ -23,6 +23,7 @@ import sqlite3
 import optparse
 import time
 import os.path
+import helper
 
 
 class QueryHelper:
@@ -51,7 +52,27 @@ class QueryDatRem(QueryHelper):
         self.c.execute("PRAGMA synchronous = OFF")
         pass
 
-    def create_used_ID_table_and_add_idxs(self):
+
+    def create_indexes1(self):
+        print("Recreating indexes...")
+        t = time.time()
+        queries = """
+        create index `idxclid31` on `clause_stats` (`clauseID`);
+        create index `idxclid32` on `reduceDB` (`clauseID`);
+        create index `idxclid33` on `sum_cl_use` (`clauseID`);
+        create index `idxclid34` on `used_clauses` (`clauseID`);
+        create index `idxclid35` on `var_data_fintime` (`var`, `sumConflicts_at_picktime`);
+        create index `idxclid36` on `var_data_picktime` (`var`, `sumConflicts_at_picktime`);
+        create index `idxclid37` on `dec_var_clid` (`var`, `sumConflicts_at_picktime`);
+        create index `idxclid40` on `restart_dat_for_var` (`conflicts`);
+        """
+
+        for q in queries.split("\n"):
+            self.c.execute(q)
+
+        print("Created indexes needed T: %-3.2f s"% (time.time() - t))
+
+    def recreate_used_ID_table(self):
         q = """
         DROP TABLE IF EXISTS `used_cl_ids`;
         """
@@ -64,50 +85,25 @@ class QueryDatRem(QueryHelper):
         """
         self.c.execute(q)
 
-        print("Recreated used_cl_ids table")
-
-        print("Creating needed indexes...")
-
-        print("Recreating indexes & dropping all others...")
         q = """
-        SELECT name FROM sqlite_master WHERE type == 'index'
+        create index `idxclid30` on `used_cl_ids` (`clauseID`);
         """
         self.c.execute(q)
-        rows = self.c.fetchall()
-        queries = ""
-        for row in rows:
-            print("Will delete index:", row[0])
-            queries += "drop index if exists `%s`;\n" % row[0]
-
-        t = time.time()
-        queries += """
-        create index `idxclid30` on `used_cl_ids` (`clauseID`);
-        create index `idxclid31` on `clause_stats` (`clauseID`);
-        create index `idxclid32` on `reduceDB` (`clauseID`);
-        create index `idxclid33` on `sum_cl_use` (`clauseID`);
-        create index `idxclid34` on `used_clauses` (`clauseID`);
-        create index `idxclid35` on `varData` (`conflicts`, `var`);
-        """
-
-        for q in queries.split("\n"):
-            self.c.execute(q)
-
-        print("Recreated indexes needed")
 
     def remove_too_many_vardata(self):
         t = time.time()
         q = """
         select count()
-        from varData
+        from var_data_picktime
         """
         ret = self.c.execute(q)
         rows = self.c.fetchall()
         assert len(rows) == 1
         num_vardata = rows[0][0]
-        print("Current number of elements in varData: %d" % num_vardata)
+        print("Current number of elements in var_data: %d" % num_vardata)
 
         if num_vardata < options.goal_vardata:
-            print("No too many in varData, skipping removal.")
+            print("Not too many in var_data, skipping removal.")
             return
 
         q = """
@@ -117,39 +113,84 @@ class QueryDatRem(QueryHelper):
 
         q = """
         CREATE TABLE `used_vardat` (
-          `myid` bigint(20) NOT NULL
+          `var` bigint(20) NOT NULL
+          , `sumConflicts_at_picktime` bigint(20) NOT NULL
         );
+        """
+        self.c.execute(q)
+
+        q = """
+        create index `idxclidxx` on `used_vardat`
+        (`var`, `sumConflicts_at_picktime`);
         """
         self.c.execute(q)
 
         q = """
         insert into `used_vardat`
         SELECT
-        rowid
-        FROM varData
+        var, sumConflicts_at_picktime
+        FROM var_data_picktime
         order by random()
         limit {limit}
         """.format(limit=options.goal_vardata)
         self.c.execute(q)
         print("Added {limit} to `used_vardat`".format(limit=options.goal_vardata))
+        print("--> T: %-3.2f s"% (time.time() - t))
 
+        t = time.time()
+        del_from = ["var_data_picktime", "var_data_fintime", "dec_var_clid"]
+        for table in del_from:
+
+            q = """
+            DROP TABLE IF EXISTS `myrows`;
+            """
+            self.c.execute(q)
+
+            q = """
+            CREATE TABLE `myrows` (
+              `myrowid` bigint(20) NOT NULL
+            );
+            """
+            self.c.execute(q)
+
+            q = """
+            INSERT INTO myrows
+            SELECT `rowid`
+            FROM `{table}` WHERE (`var`, sumConflicts_at_picktime)
+            in (SELECT `var`, sumConflicts_at_picktime from used_vardat);
+            """
+            self.c.execute(q.format(table=table))
+
+            q = """
+            create index `myidx111` on `myrows` (`myrowid`);
+            """
+
+            q = """
+            DELETE FROM `{table}` WHERE (rowid) NOT IN
+            (SELECT `myrowid` from `myrows` );"""
+            self.c.execute(q.format(table=table))
+            print("Deleted unused data from %s" % table)
+
+        # cleanup
         q = """
-        DELETE FROM varData WHERE rowid NOT IN
-        (SELECT `myid` from `used_vardat` );"""
+        DROP TABLE IF EXISTS `myrows`;
+        """
         self.c.execute(q)
-        print("Deleted unused data from varData")
 
+        # sample restart_dat_for_var
         q = """
         DELETE FROM restart_dat_for_var WHERE `conflicts` NOT IN
-        (SELECT `conflicts` from `varData` group by conflicts );"""
+        (SELECT `sumConflicts_at_picktime` from `used_vardat` group by sumConflicts_at_picktime);"""
         self.c.execute(q)
         print("Deleted unused data from restart_dat_for_var")
 
+        # cleanup
         q = """
         DROP TABLE IF EXISTS `used_vardat`;
         """
         self.c.execute(q)
-        print("T: %-3.2f s"% (time.time() - t))
+        print("Cleaned up var_data_x & restart_dat_for_var tables T: %-3.2f s"
+              % (time.time() - t))
 
     def insert_into_used_cls_ids(self, min_used, limit, max_used=None):
         min_used = int(min_used)
@@ -281,21 +322,12 @@ class QueryDatRem(QueryHelper):
 
         print("Tables seem OK")
 
-    def create_indexes(self):
-        print("Recreating indexes...")
-        print("Getting indexes to drop...")
-        q = """
-        SELECT name FROM sqlite_master WHERE type == 'index'
-        """
-        self.c.execute(q)
-        rows = self.c.fetchall()
-        queries = ""
-        for row in rows:
-            print("Will delete index:", row[0])
-            queries += "drop index if exists `%s`;\n" % row[0]
+    def create_indexes2(self):
+        helper.drop_idxs(self.c)
 
+        print("Recreating indexes...")
         t = time.time()
-        queries += """
+        queries = """
         create index `idxclid6-4` on `reduceDB` (`clauseID`, `conflicts`);
         create index `idxclidUCLS-1` on `used_clauses` ( `clauseID`, `used_at`);
         """
@@ -303,12 +335,12 @@ class QueryDatRem(QueryHelper):
             t2 = time.time()
 
             if options.verbose:
-                print("Creating/dropping index: ", q)
+                print("Creating index: ", q)
             self.c.execute(q)
             if options.verbose:
-                print("Index dropping&creation T: %-3.2f s" % (time.time() - t2))
+                print("Index creation T: %-3.2f s" % (time.time() - t2))
 
-        print("indexes dropped&created T: %-3.2f s" % (time.time() - t))
+        print("Indexes created T: %-3.2f s" % (time.time() - t))
 
     def fill_later_useful_data(self):
         t = time.time()
@@ -444,26 +476,17 @@ class QueryDatRem(QueryHelper):
 
 
     def del_table_and_vacuum(self):
+        helper.drop_idxs(self.c)
+
         t = time.time()
-
-        q = """
-        SELECT name FROM sqlite_master WHERE type == 'index'
-        """
-        self.c.execute(q)
-        rows = self.c.fetchall()
-        queries = ""
-        for row in rows:
-            print("Will delete index:", row[0])
-            queries += "drop index if exists `%s`;\n" % row[0]
-
-        queries += """
+        queries = """
         DROP TABLE IF EXISTS `used_later`;
         DROP TABLE IF EXISTS `only_keep_rdb`;
         DROP TABLE IF EXISTS `used_cl_ids`;
         """
         for q in queries.split("\n"):
             self.c.execute(q)
-        print("Deleted indexes and misc tables T: %-3.2f s" % (time.time() - t))
+        print("Deleted tables T: %-3.2f s" % (time.time() - t))
 
         q = """
         vacuum;
@@ -489,6 +512,8 @@ if __name__ == "__main__":
                       dest="goal_vardata", help="Number of varData points neeeded")
     parser.add_option("--verbose", "-v", action="store_true", default=False,
                       dest="verbose", help="Print more output")
+    parser.add_option("--noidx", action="store_true", default=False,
+                      dest="noidx", help="Don't recreate indexes")
     parser.add_option("--fair", "-f", action="store_true", default=False,
                       dest="fair", help="Fair sampling. NOT DEFAULT.")
 
@@ -509,7 +534,10 @@ if __name__ == "__main__":
         q.check_db_sanity()
 
         q.dangerous()
-        q.create_used_ID_table_and_add_idxs()
+        if not options.noidx:
+            helper.drop_idxs(q.c)
+            q.create_indexes1()
+        q.recreate_used_ID_table()
         q.remove_too_many_vardata()
         q.fill_used_cl_ids_table()
         q.filter_tables_of_ids()
@@ -518,7 +546,7 @@ if __name__ == "__main__":
         print("-------------")
 
         q.dangerous()
-        q.create_indexes()
+        q.create_indexes2()
         q.fill_later_useful_data()
         q.delete_too_many_rdb_rows()
 

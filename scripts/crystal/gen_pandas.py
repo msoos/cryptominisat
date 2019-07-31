@@ -65,20 +65,10 @@ class QueryFill (QueryHelper):
         print("We have %d lines of clause_stats" % (clss_rows))
 
     def create_indexes(self):
-        print("Deleting & recreating indexes...")
-        t = time.time()
-        q = """
-        SELECT name FROM sqlite_master WHERE type == 'index'
-        """
-        self.c.execute(q)
-        rows = self.c.fetchall()
-        queries = ""
-        for row in rows:
-            if options.verbose:
-                print("Will delete index:", row[0])
-            queries += "drop index if exists `%s`;\n" % row[0]
+        helper.drop_idxs(self.c)
 
-        queries += """
+        print("Recreating indexes...")
+        queries = """
         create index `idxclid33` on `sum_cl_use` (`clauseID`, `last_confl_used`);
         create index `idxclid1` on `clause_stats` (`clauseID`, conflicts, restarts, latest_satzilla_feature_calc);
         create index `idxclid1-2` on `clause_stats` (`clauseID`);
