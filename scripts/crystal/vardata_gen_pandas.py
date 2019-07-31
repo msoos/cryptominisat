@@ -115,30 +115,25 @@ class QueryVar (QueryHelper):
         insert into var_data_use
 
         (`var`
-        , `conflicts`
+        , `sumConflicts_at_picktime`
 
         , `cls_marked`
         , `useful_clauses_used`)
 
         select
-        v.var
-        , v.conflicts
+        dvclid.var
+        , dvclid.sumConflicts_at_picktime
 
         -- measures for good
         , count(cls.num_used) as cls_marked
         , sum(cls.num_used) as useful_clauses_used
 
-        FROM varData as v join sum_cl_use as cls
-        on cls.clauseID >= v.clid_start_incl
-        and cls.clauseID < v.clid_end_notincl
+        FROM dec_var_clid as dvclid join sum_cl_use as cls
+        on cls.clauseID = dvclid.clauseID
 
         -- avoid division by zero below
-        where
-        v.propagated > 0
-        and v.sumPropagations_at_picktime > 0
-        and v.decided > 0
-        and v.sumDecisions_at_picktime > 0
-        group by var, conflicts
+
+        group by dvclid.var, dvclid.sumConflicts_at_picktime
         ;
         """
         if options.verbose:
@@ -163,13 +158,13 @@ class QueryVar (QueryHelper):
             , "decided_pos"
             , "propagated_pos"
             , "restarts"
-            , "conflicts"
             , "var"
-            , "useful_clauses_used"
-            , "cls_marked"
-            , "propagated_pos_perc"]
-        var_data = helper.query_fragment(
-            "varData", not_cols, "var_data", options.verbose, self.c)
+            , "sumConflicts_at_picktime"
+            , "cls_marked"]
+        var_data_picktime = helper.query_fragment(
+            "var_data_picktime", not_cols, "var_data_picktime", options.verbose, self.c)
+        var_data_fintime = helper.query_fragment(
+            "var_data_fintime", not_cols, "var_data_fintime", options.verbose, self.c)
 
         not_cols =[
             "simplifications"
@@ -190,8 +185,7 @@ class QueryVar (QueryHelper):
 
         not_cols =[
             "useful_clauses"
-            , "var"
-            , "conflicts"]
+            , "var"]
         var_data_use = helper.query_fragment(
             "var_data_use", not_cols, "var_data_use", options.verbose, self.c)
 
@@ -200,25 +194,36 @@ class QueryVar (QueryHelper):
         (1.0*useful_clauses_used)/(1.0*cls_marked) as `x.useful_times_per_marked`
         {rst}
         {var_data_use}
-        {var_data}
+        {var_data_picktime}
+        {var_data_fintime}
 
         FROM
-        varData as var_data
-        , var_data_use as var_data_use
+        var_data_picktime
+        , var_data_fintime
+        , var_data_use
         , restart_dat_for_var as rst
 
         WHERE
-        clauses_below >= {min_cls_below}
+        var_data_fintime.clauses_below >= {min_cls_below}
         and var_data_use.cls_marked >= {min_cls_below}
-        and var_data.var = var_data_use.var
-        and var_data.conflicts = var_data_use.conflicts
-        and rst.conflicts = var_data_use.conflicts
+
+        and var_data_picktime.var = var_data_use.var
+        and var_data_picktime.sumConflicts_at_picktime = var_data_use.sumConflicts_at_picktime
+
+        and var_data_fintime.var = var_data_picktime.var
+        and var_data_fintime.sumConflicts_at_picktime = var_data_picktime.sumConflicts_at_picktime
+
+        and rst.conflicts = var_data_use.sumConflicts_at_picktime
+
+        -- only to make sure multiple restart etc. cannot interfere with the data
+        group by var_data_picktime.var, var_data_picktime.sumConflicts_at_picktime
 
         order by random()
         limit {limit}
         """.format(
             rst=rst, var_data_use=var_data_use,
-            var_data=var_data,
+            var_data_picktime=var_data_picktime,
+            var_data_fintime=var_data_fintime,
             limit=options.limit,
             min_cls_below=options.min_cls_below)
 
