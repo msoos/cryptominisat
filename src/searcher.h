@@ -79,8 +79,8 @@ class Searcher : public HyperEngine
         void finish_up_solve(lbool status);
         void reduce_db_if_needed();
         bool clean_clauses_if_needed();
-        void check_calc_satzilla_features();
-        void check_calc_vardist_features();
+        void check_calc_satzilla_features(bool force = false);
+        void check_calc_vardist_features(bool force = false);
         void dump_search_loop_stats(double myTime);
         bool must_abort(lbool status);
         uint64_t luby_loop_num = 0;

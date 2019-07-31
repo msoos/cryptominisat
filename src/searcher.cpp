@@ -1994,10 +1994,11 @@ void Searcher::resetStats()
     lastCleanZeroDepthAssigns = trail.size();
 }
 
-void Searcher::check_calc_satzilla_features()
+void Searcher::check_calc_satzilla_features(bool force)
 {
     if (last_satzilla_feature_calc_confl == 0
         || (last_satzilla_feature_calc_confl + 100000) < sumConflicts
+        || force
     ) {
         last_satzilla_feature_calc_confl = sumConflicts+1;
         if (nVars() > 2
@@ -2009,7 +2010,7 @@ void Searcher::check_calc_satzilla_features()
     }
 }
 
-void Searcher::check_calc_vardist_features()
+void Searcher::check_calc_vardist_features(bool force)
 {
     if (!solver->sqlStats) {
         return;
@@ -2017,6 +2018,7 @@ void Searcher::check_calc_vardist_features()
 
     if (last_vardist_feature_calc_confl == 0
         || (last_vardist_feature_calc_confl + 100000) < sumConflicts
+        || force
     ) {
         last_vardist_feature_calc_confl = sumConflicts+1;
         VarDistGen v(solver);

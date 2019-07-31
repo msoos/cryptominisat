@@ -1795,6 +1795,8 @@ lbool Solver::iterate_until_solved()
         if (num_confl <= 0) {
             break;
         }
+        check_calc_satzilla_features(true);
+        check_calc_vardist_features(true);
         status = Searcher::solve(num_confl);
 
         //Check for effectiveness
