@@ -226,6 +226,7 @@ class QueryVar (QueryHelper):
         WHERE
         var_data_fintime.clauses_below >= {min_cls_below}
         and var_data_use.cls_marked >= {min_cls_below}
+        and var_data_picktime.sumConflicts_at_picktime > 15000
 
         and var_data_picktime.var = var_data_use.var
         and var_data_picktime.sumConflicts_at_picktime = var_data_use.sumConflicts_at_picktime
