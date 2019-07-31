@@ -129,6 +129,12 @@ public:
         , const uint64_t sumConflicts_at_picktime
         , const uint64_t clid
     ) override;
+
+    void var_dist(
+        const uint32_t var
+        , const VarData2& data
+        , const Solver* solver
+    ) override;
     #endif
 
     bool setup(const Solver* solver) override;
@@ -169,6 +175,7 @@ private:
     sqlite3_stmt *stmt_var_data_fintime = NULL;
     sqlite3_stmt *stmt_var_data_picktime = NULL;
     sqlite3_stmt *stmt_dec_var_clid = NULL;
+    sqlite3_stmt *stmt_vardist = NULL;
 
     sqlite3 *db = NULL;
     bool setup_ok = false;

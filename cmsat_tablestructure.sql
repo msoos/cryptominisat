@@ -347,6 +347,7 @@ create table `var_data_picktime` (
     `var`                                                       int(20) NOT NULL
     , `dec_depth`                                               int(20) NOT NULL
     , `rel_activity_at_picktime`                                double  NOT NULL
+    , `latest_vardist_feature_calc`                             int(20) NOT NULL
 
     , `inside_conflict_clause_at_picktime`                      int(20) NOT NULL
     , `inside_conflict_clause_antecedents_at_picktime`          int(20) NOT NULL
@@ -395,4 +396,28 @@ DROP TABLE IF EXISTS `cl_last_in_solver`;
 create table `cl_last_in_solver` (
   `conflicts` bigint(20) NOT NULL
   , `clauseID` bigint(20) NOT NULL
+);
+
+
+DROP TABLE IF EXISTS `var_dist`;
+create table `var_dist` (
+  `var` bigint(20) NOT NULL
+  , `latest_vardist_feature_calc` bigint(20) NOT NULL
+  , `conflicts` bigint(20) NOT NULL
+
+  , `red_num_times_in_bin_clause`                     bigint(20) NOT NULL
+  , `red_num_times_in_long_clause`                    bigint(20) NOT NULL
+  , `red_satisfies_cl`                                bigint(20) NOT NULL
+  , `red_tot_num_lit_of_bin_it_appears_in`            bigint(20) NOT NULL
+  , `red_tot_num_lit_of_long_cls_it_appears_in`       bigint(20) NOT NULL
+  , `red_sum_var_act_of_cls`                          double NOT NULL
+
+  , `irred_num_times_in_bin_clause`                   bigint(20) NOT NULL
+  , `irred_num_times_in_long_clause`                  bigint(20) NOT NULL
+  , `irred_satisfies_cl`                              bigint(20) NOT NULL
+  , `irred_tot_num_lit_of_bin_it_appears_in`          bigint(20) NOT NULL
+  , `irred_tot_num_lit_of_long_cls_it_appears_in`     bigint(20) NOT NULL
+  , `irred_sum_var_act_of_cls`                        double NOT NULL
+
+  , `tot_act_long_red_cls`                            bigint(20) NOT NULL
 );

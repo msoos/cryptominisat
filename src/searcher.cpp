@@ -42,6 +42,7 @@ THE SOFTWARE.
 #include "distillerlong.h"
 #include "xorfinder.h"
 #include "matrixfinder.h"
+#include "vardistgen.h"
 #ifdef USE_GAUSS
 #include "gaussian.h"
 #endif
@@ -2006,6 +2007,20 @@ void Searcher::check_calc_satzilla_features()
     }
 }
 
+void Searcher::check_calc_vardist_features()
+{
+    if (last_vardist_feature_calc_confl == 0
+        || (last_vardist_feature_calc_confl + 100000) < sumConflicts
+    ) {
+        last_vardist_feature_calc_confl = sumConflicts+1;
+        VarDistGen v(solver);
+        v.calc();
+        latest_vardist_feature_calc++;
+        v.dump();
+    }
+
+}
+
 void Searcher::print_restart_header()
 {
     //Print restart output header
@@ -2231,6 +2246,7 @@ inline void Searcher::dump_search_loop_stats(double myTime)
 {
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     check_calc_satzilla_features();
+    check_calc_vardist_features();
     #endif
 
     print_restart_header();

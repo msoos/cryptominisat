@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include "satzilla_features.h"
 #include "searchstats.h"
 #include "vardata.h"
+#include "vardistgen.h"
 
 namespace CMSat {
 
@@ -134,6 +135,12 @@ public:
         const uint32_t var
         , const uint64_t sumConflicts_at_picktime
         , const uint64_t clid
+    ) = 0;
+
+    virtual void var_dist(
+        const uint32_t var
+        , const VarData2& data
+        , const Solver* solver
     ) = 0;
     #endif
 

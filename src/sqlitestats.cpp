@@ -115,6 +115,7 @@ SQLiteStats::~SQLiteStats()
     del_prepared_stmt(stmt_var_data_picktime);
     del_prepared_stmt(stmt_var_data_fintime);
     del_prepared_stmt(stmt_dec_var_clid);
+    del_prepared_stmt(stmt_vardist);
 
     //Close clonnection
     sqlite3_close(db);
@@ -150,6 +151,7 @@ bool SQLiteStats::setup(const Solver* solver)
     init("var_data_picktime", &stmt_var_data_picktime);
     init("dec_var_clid", &stmt_dec_var_clid);
     init("cl_last_in_solver", &stmt_delete_cl);
+    init("var_dist", &stmt_vardist);
     #endif
 
     return true;
@@ -812,6 +814,7 @@ void SQLiteStats::var_data_picktime(
     sqlite3_bind_int   (stmt_var_data_picktime, bindAt++, var);
     sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.level);
     sqlite3_bind_double(stmt_var_data_picktime, bindAt++, rel_activity);
+    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, solver->latest_vardist_feature_calc);
 
     sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.inside_conflict_clause);
     sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.inside_conflict_clause_antecedents);
@@ -842,6 +845,36 @@ void SQLiteStats::var_data_picktime(
     sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, start_clid_incl);
 
     run_sqlite_step(stmt_var_data_picktime, "var_data_picktime");
+}
+
+void SQLiteStats::var_dist(
+    const uint32_t var
+    , const VarData2& data
+    , const Solver* solver
+) {
+    int bindAt = 1;
+    sqlite3_bind_int(stmt_dec_var_clid, bindAt++, var);
+    sqlite3_bind_int64(stmt_dec_var_clid, bindAt++, solver->latest_vardist_feature_calc);
+    sqlite3_bind_int64(stmt_dec_var_clid, bindAt++, solver->sumConflicts);
+
+
+    sqlite3_bind_int64(stmt_dec_var_clid, bindAt++, data.red.num_times_in_bin_clause);
+    sqlite3_bind_int64(stmt_dec_var_clid, bindAt++, data.red.num_times_in_long_clause);
+    sqlite3_bind_int64(stmt_dec_var_clid, bindAt++, data.red.satisfies_cl);
+    sqlite3_bind_int64(stmt_dec_var_clid, bindAt++, data.red.tot_num_lit_of_bin_it_appears_in);
+    sqlite3_bind_int64(stmt_dec_var_clid, bindAt++, data.red.tot_num_lit_of_long_cls_it_appears_in);
+    sqlite3_bind_double(stmt_dec_var_clid, bindAt++, data.red.sum_var_act_of_cls);
+
+    sqlite3_bind_int64(stmt_dec_var_clid, bindAt++, data.irred.num_times_in_bin_clause);
+    sqlite3_bind_int64(stmt_dec_var_clid, bindAt++, data.irred.num_times_in_long_clause);
+    sqlite3_bind_int64(stmt_dec_var_clid, bindAt++, data.irred.satisfies_cl);
+    sqlite3_bind_int64(stmt_dec_var_clid, bindAt++, data.irred.tot_num_lit_of_bin_it_appears_in);
+    sqlite3_bind_int64(stmt_dec_var_clid, bindAt++, data.irred.tot_num_lit_of_long_cls_it_appears_in);
+    sqlite3_bind_double(stmt_dec_var_clid, bindAt++, data.irred.sum_var_act_of_cls);
+
+    sqlite3_bind_double(stmt_dec_var_clid, bindAt++, data.tot_act_long_red_cls);
+
+    run_sqlite_step(stmt_dec_var_clid, "dec_var_clid");
 }
 
 void SQLiteStats::dec_var_clid(

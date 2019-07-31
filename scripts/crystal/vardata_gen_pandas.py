@@ -81,6 +81,8 @@ class QueryVar (QueryHelper):
         t = time.time()
         queries = """
         create index `idxclid8` on `var_data_picktime` ( `var`, `sumConflicts_at_picktime`, `clid_start_incl`);
+        create index `idxclid81` on `var_data_picktime` ( `var`, `latest_vardist_feature_calc`);
+        create index `idxclid82` on `var_dist` ( `var`, `latest_vardist_feature_calc`);
         create index `idxclid9` on `var_data_fintime` ( `var`, `sumConflicts_at_picktime`, `clid_end_notincl`);
 
         create index `idxclid10` on `dec_var_clid` ( `var`, `sumConflicts_at_picktime`, `clauseID`);
@@ -167,6 +169,13 @@ class QueryVar (QueryHelper):
             "var_data_fintime", not_cols, "var_data_fintime", options.verbose, self.c)
 
         not_cols =[
+            "var"
+            , "latest_vardist_feature_calc"
+        ]
+        var_dist = helper.query_fragment(
+            "var_dist", not_cols, "var_dist", options.verbose, self.c)
+
+        not_cols =[
             "simplifications"
             , "restarts"
             , "conflicts"
@@ -194,6 +203,7 @@ class QueryVar (QueryHelper):
         (1.0*useful_clauses_used)/(1.0*cls_marked) as `x.useful_times_per_marked`
         {rst}
         {var_data_use}
+        {var_dist}
         {var_data_picktime}
         {var_data_fintime}
 
@@ -201,6 +211,7 @@ class QueryVar (QueryHelper):
         var_data_picktime
         , var_data_fintime
         , var_data_use
+        , var_dist
         , restart_dat_for_var as rst
 
         WHERE
@@ -213,6 +224,9 @@ class QueryVar (QueryHelper):
         and var_data_fintime.var = var_data_picktime.var
         and var_data_fintime.sumConflicts_at_picktime = var_data_picktime.sumConflicts_at_picktime
 
+        and var_dist.var = var_data_picktime.var
+        and var_dist.latest_vardist_feature_calc = var_data_picktime.latest_vardist_feature_calc
+
         and rst.conflicts = var_data_use.sumConflicts_at_picktime
 
         -- only to make sure multiple restart etc. cannot interfere with the data
@@ -224,6 +238,7 @@ class QueryVar (QueryHelper):
             rst=rst, var_data_use=var_data_use,
             var_data_picktime=var_data_picktime,
             var_data_fintime=var_data_fintime,
+            var_dist=var_dist,
             limit=options.limit,
             min_cls_below=options.min_cls_below)
 
