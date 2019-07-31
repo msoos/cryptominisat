@@ -372,6 +372,16 @@ create table `var_data_picktime` (
     , `sumClLBD_at_picktime`                                    int(20) NOT NULL
     , `sumClSize_at_picktime`                                   int(20) NOT NULL
 
+    , `sumConflicts_below_during`                               int(20) NOT NULL
+    , `sumDecisions_below_during`                               int(20) NOT NULL
+    , `sumPropagations_below_during`                            int(20) NOT NULL
+    , `sumAntecedents_below_during`                             int(20) NOT NULL
+    , `sumAntecedentsLits_below_during`                         int(20) NOT NULL
+    , `sumConflictClauseLits_below_during`                      int(20) NOT NULL
+    , `sumDecisionBasedCl_below_during`                         int(20) NOT NULL
+    , `sumClLBD_below_during`                                   int(20) NOT NULL
+    , `sumClSize_below_during`                                  int(20) NOT NULL
+
     , `clid_start_incl`                                         int(20) NOT NULL
 );
 

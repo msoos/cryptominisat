@@ -175,7 +175,7 @@ private:
     sqlite3_stmt *stmt_var_data_fintime = NULL;
     sqlite3_stmt *stmt_var_data_picktime = NULL;
     sqlite3_stmt *stmt_dec_var_clid = NULL;
-    sqlite3_stmt *stmt_vardist = NULL;
+    sqlite3_stmt *stmt_var_dist = NULL;
 
     sqlite3 *db = NULL;
     bool setup_ok = false;
