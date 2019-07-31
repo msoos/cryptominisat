@@ -78,58 +78,75 @@ CREATE TABLE `restart` (
   `conflicts` bigint(20) NOT NULL,
   `latest_satzilla_feature_calc` int(20) NOT NULL,
   `runtime` float NOT NULL,
+
   `numIrredBins` int(20) NOT NULL,
   `numIrredLongs` int(20) NOT NULL,
   `numRedBins` int(20) NOT NULL,
   `numRedLongs` int(20) NOT NULL,
+
   `numIrredLits` bigint(20) NOT NULL,
   `numredLits` bigint(20) NOT NULL,
+
+  -- conflict stats
   `restart_type` varchar(200) NOT NULL,
   `glue` float NOT NULL,
   `glueSD` float NOT NULL,
   `glueMin` int(20) NOT NULL,
   `glueMax` int(20) NOT NULL,
+
   `size` float NOT NULL,
   `sizeSD` float NOT NULL,
   `sizeMin` int(20) NOT NULL,
   `sizeMax` int(20) NOT NULL,
+
   `resolutions` float NOT NULL,
   `resolutionsSD` float NOT NULL,
   `resolutionsMin` int(20) NOT NULL,
   `resolutionsMax` int(20) NOT NULL,
+
+  -- search stats
   `branchDepth` float NOT NULL,
   `branchDepthSD` float NOT NULL,
   `branchDepthMin` int(20) NOT NULL,
   `branchDepthMax` int(20) NOT NULL,
+
   `branchDepthDelta` float NOT NULL,
   `branchDepthDeltaSD` float NOT NULL,
   `branchDepthDeltaMin` int(20) NOT NULL,
   `branchDepthDeltaMax` int(20) NOT NULL,
+
   `trailDepth` float NOT NULL,
   `trailDepthSD` float NOT NULL,
   `trailDepthMin` int(20) NOT NULL,
   `trailDepthMax` int(20) NOT NULL,
+
   `trailDepthDelta` float NOT NULL,
   `trailDepthDeltaSD` float NOT NULL,
   `trailDepthDeltaMin` int(20) NOT NULL,
   `trailDepthDeltaMax` int(20) NOT NULL,
+
   `propBinIrred` bigint(20) NOT NULL,
   `propBinRed` bigint(20) NOT NULL,
   `propLongIrred` bigint(20) NOT NULL,
   `propLongRed` bigint(20) NOT NULL,
+
   `conflBinIrred` bigint(20) NOT NULL,
   `conflBinRed` bigint(20) NOT NULL,
   `conflLongIrred` bigint(20) NOT NULL,
   `conflLongRed` bigint(20) NOT NULL,
+
   `learntUnits` int(20) NOT NULL,
   `learntBins` int(20) NOT NULL,
   `learntLongs` int(20) NOT NULL,
+
   `resolBinIrred` bigint(20) NOT NULL,
   `resolBinRed` bigint(20) NOT NULL,
   `resolLIrred` bigint(20) NOT NULL,
   `resolLRed` bigint(20) NOT NULL,
+
   `propagations` bigint(20) NOT NULL,
   `decisions` bigint(20) NOT NULL,
+
   `flipped` bigint(20) NOT NULL,
   `varSetPos` bigint(20) NOT NULL,
   `varSetNeg` bigint(20) NOT NULL,
@@ -137,6 +154,7 @@ CREATE TABLE `restart` (
   `replaced` int(20) NOT NULL,
   `eliminated` int(20) NOT NULL,
   `set` int(20) NOT NULL,
+
   `clauseIDstartInclusive` int(20) NOT NULL,
   `clauseIDendExclusive` int(20) NOT NULL
 );
@@ -194,6 +212,7 @@ CREATE TABLE `clause_stats` (
   `size_hist` float NOT NULL,
   `glue_hist` float NOT NULL,
   `num_antecedents_hist` float NOT NULL,
+
   `antec_sum_size_hist` float NOT NULL,
   `antec_overlap_hist` float NOT NULL,
 
@@ -337,6 +356,11 @@ create table `var_data_picktime` (
     , `inside_conflict_clause_antecedents_during_at_picktime`   int(20) NOT NULL
     , `inside_conflict_clause_glue_during_at_picktime`          int(20) NOT NULL
 
+    , `num_decided`                                             int(20) NOT NULL
+    , `num_decided_pos`                                         int(20) NOT NULL
+    , `num_propagated`                                          int(20) NOT NULL
+    , `num_propagated_pos`                                      int(20) NOT NULL
+
     , `sumDecisions_at_picktime`                                int(20) NOT NULL
     , `sumConflicts_at_picktime`                                int(20) NOT NULL
     , `sumPropagations_at_picktime`                             int(20) NOT NULL
@@ -359,8 +383,8 @@ create table `dec_var_clid` (
 
 DROP TABLE IF EXISTS `var_data_use`;
 create table `var_data_use` (
-    `conflicts` bigint(20) NOT NULL
-    , `var` int(20) NOT NULL
+    `var` int(20) NOT NULL
+    , `sumConflicts_at_picktime` bigint(20) NOT NULL
 
     , `cls_marked` int(2) DEFAULT NULL
     , `useful_clauses` int(20) DEFAULT NULL

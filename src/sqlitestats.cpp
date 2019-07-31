@@ -544,7 +544,6 @@ void SQLiteStats::restart(
 
     sqlite3_bind_int64(stmt, bindAt++, binTri.irredBins);
     sqlite3_bind_int64(stmt, bindAt++, solver->get_num_long_irred_cls());
-
     sqlite3_bind_int64(stmt, bindAt++, binTri.redBins);
     sqlite3_bind_int64(stmt, bindAt++, solver->get_num_long_red_cls());
 
@@ -776,23 +775,15 @@ void SQLiteStats::var_data_fintime(
     , const double rel_activity
 ) {
     int bindAt = 1;
-    sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, vardata.sumConflicts_at_picktime);
     sqlite3_bind_int   (stmt_var_data_fintime, bindAt++, var);
+    sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, vardata.sumConflicts_at_picktime);
 
-    sqlite3_bind_int (stmt_var_data_fintime, bindAt++, vardata.level);
     sqlite3_bind_int (stmt_var_data_fintime, bindAt++, cls_below);
     sqlite3_bind_double (stmt_var_data_fintime, bindAt++, rel_activity);
 
     sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, vardata.inside_conflict_clause);
     sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, vardata.inside_conflict_clause_antecedents);
     sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, vardata.inside_conflict_clause_glue);
-
-
-    sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, vardata.num_decided);
-    sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, vardata.num_decided_pos);
-    sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, vardata.num_propagated);
-    sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, vardata.num_propagated_pos);
-
 
     sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, solver->sumDecisions);
     sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, solver->sumConflicts);
@@ -819,7 +810,6 @@ void SQLiteStats::var_data_picktime(
 ) {
     int bindAt = 1;
     sqlite3_bind_int   (stmt_var_data_picktime, bindAt++, var);
-
     sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.level);
     sqlite3_bind_double(stmt_var_data_picktime, bindAt++, rel_activity);
 
@@ -862,7 +852,7 @@ void SQLiteStats::dec_var_clid(
     assert(clid != 0);
 
     int bindAt = 1;
-    sqlite3_bind_int64(stmt_dec_var_clid, bindAt++, var);
+    sqlite3_bind_int(stmt_dec_var_clid, bindAt++, var);
     sqlite3_bind_int64(stmt_dec_var_clid, bindAt++, sumConflicts_at_picktime);
     sqlite3_bind_int64(stmt_dec_var_clid, bindAt++, clid);
 
