@@ -28,6 +28,7 @@ static const unsigned chunk_limit = 148576;
 #include <limits>
 #include <string>
 #include <memory>
+#include <cmath>
 
 #ifdef USE_ZLIB
 #include <zlib.h>
@@ -152,10 +153,33 @@ public:
         exit(-1);
     }
 
-    inline bool parseInt(int32_t& ret, size_t lineNum, bool allow_eol = false)
+    inline bool parseDouble(double& ret, size_t lineNum)
     {
-        int32_t val = 0;
-        int32_t mult = 1;
+        int32_t head;
+        bool rc = parseInt(head, lineNum);
+        if (!rc) {
+            return false;
+        }
+        if (value() == '.') {
+            advance();
+            int64_t tail;
+            rc = parseInt<int64_t>(tail, lineNum);
+            if (!rc) {
+                return false;
+            }
+            uint32_t num_10s = std::floor(std::log10(tail));
+            ret = head + tail/std::pow(10, num_10s+1);
+        } else {
+            ret = head;
+        }
+        return true;
+    }
+
+    template<class T=int32_t>
+    inline bool parseInt(T& ret, size_t lineNum, bool allow_eol = false)
+    {
+        T val = 0;
+        T mult = 1;
         skipWhitespace();
         if (value() == '-') {
             mult = -1;
@@ -166,7 +190,7 @@ public:
 
         char c = value();
         if (allow_eol && c == '\n') {
-            ret = std::numeric_limits<int32_t>::max();
+            ret = std::numeric_limits<T>::max();
             return true;
         }
         if (c < '0' || c > '9') {
@@ -179,7 +203,7 @@ public:
         }
 
         while (c >= '0' && c <= '9') {
-            int32_t val2 = val*10 + (c - '0');
+            T val2 = val*10 + (c - '0');
             if (val2 < val) {
                 std::cerr << "PARSE ERROR! At line " << lineNum
                 << " the variable number is to high"

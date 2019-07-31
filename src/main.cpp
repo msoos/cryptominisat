@@ -178,6 +178,7 @@ void Main::readInAFile(SATSolver* solver2, const string& filename)
             cout << endl;
         }
     }
+
     call_after_parse();
 
     #ifndef USE_ZLIB
@@ -1055,6 +1056,7 @@ void Main::parse_polarity_type()
         else if (mode == "false") conf.polarity_mode = PolarityMode::polarmode_neg;
         else if (mode == "rnd") conf.polarity_mode = PolarityMode::polarmode_rnd;
         else if (mode == "auto") conf.polarity_mode = PolarityMode::polarmode_automatic;
+        else if (mode == "weight") conf.polarity_mode = PolarityMode::polarmode_weighted;
         else throw WrongParam(mode, "unknown polarity-mode");
     }
 }

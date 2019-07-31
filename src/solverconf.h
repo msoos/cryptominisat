@@ -58,6 +58,7 @@ enum class PolarityMode {
     , polarmode_neg
     , polarmode_rnd
     , polarmode_automatic
+    , polarmode_weighted
 };
 
 enum class Restart {

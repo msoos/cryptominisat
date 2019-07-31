@@ -186,6 +186,9 @@ class Searcher : public HyperEngine
         void dump_restart_sql(rst_dat_type type);
         #endif
 
+        //Picking polarity when doing decision
+        bool pick_polarity(const uint32_t var);
+
     protected:
         void new_var(const bool bva, const uint32_t orig_outer) override;
         void new_vars(const size_t n) override;
@@ -463,9 +466,6 @@ class Searcher : public HyperEngine
         void print_solution_type(const lbool status) const;
         uint64_t next_distill = 0;
 
-        //Picking polarity when doing decision
-        bool     pick_polarity(const uint32_t var);
-
         //Last time we clean()-ed the clauses, the number of zero-depth assigns was this many
         size_t   lastCleanZeroDepthAssigns;
 
@@ -587,6 +587,13 @@ inline bool Searcher::pick_polarity(const uint32_t var)
 
         case PolarityMode::polarmode_automatic:
             return varData[var].polarity;
+
+        #ifdef WEIGHTED_SAMPLING
+        case PolarityMode::polarmode_weighted: {
+            double rnd = mtrand.randDblExc();
+            return rnd < varData[var].weight;
+        }
+        #endif
 
         default:
             assert(false);

@@ -75,34 +75,13 @@ void SolutionExtender::extend()
         if (solver->undef_must_set_vars[i]
             && solver->model_value(i) == l_Undef
         ) {
-            solver->model[i] = get_var_setting();
+            solver->model[i] = boolToLBool(solver->pick_polarity(solver->map_outer_to_inter(i)));
             solver->decisions_reaching_model.push_back(Lit(i, true));
         }
     }
 
     //All variables, not just those set
     solver->varReplacer->extend_model_set_undef();
-}
-
-lbool SolutionExtender::get_var_setting()
-{
-    switch(solver->conf.polarity_mode) {
-        case PolarityMode::polarmode_automatic:
-        case PolarityMode::polarmode_neg:
-            return l_False;
-
-        case PolarityMode::polarmode_pos:
-            return l_True;
-
-        case PolarityMode::polarmode_rnd:
-            return (solver->mtrand.randInt(1) ? l_True: l_False);
-
-        default:
-            assert(false);
-    }
-    assert(false);
-    exit(-1);
-    return l_Undef;
 }
 
 inline bool SolutionExtender::satisfied(const vector< Lit >& lits) const
@@ -115,6 +94,7 @@ inline bool SolutionExtender::satisfied(const vector< Lit >& lits) const
     return false;
 }
 
+//called with _outer_ variable in "blockedOn"
 void SolutionExtender::dummyBlocked(const uint32_t blockedOn)
 {
     #ifdef VERBOSE_DEBUG_SOLUTIONEXTENDER
@@ -133,7 +113,8 @@ void SolutionExtender::dummyBlocked(const uint32_t blockedOn)
     if (solver->model_value(blockedOn) != l_Undef)
         return;
 
-    solver->model[blockedOn] = get_var_setting();
+    solver->model[blockedOn] =
+        boolToLBool(solver->pick_polarity(solver->map_outer_to_inter(blockedOn)));
     solver->decisions_reaching_model.push_back(Lit(blockedOn, true));
 
     //If var is replacing something else, it MUST be set.

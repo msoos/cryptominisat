@@ -38,6 +38,9 @@ struct VarData
     uint32_t cancelled = 0;
     uint32_t last_picked = 0;
     uint32_t conflicted = 0;
+    #ifdef WEIGHTED_SAMPLING
+    double weight = 0.5;
+    #endif
 
     //Reason this got propagated. NULL means decision/toplevel
     PropBy reason = PropBy();

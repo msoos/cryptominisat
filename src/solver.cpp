@@ -4084,6 +4084,60 @@ bool Solver::check_assumptions_contradict_foced_assignement() const
     return false;
 }
 
+
+void Solver::set_var_weight(
+#ifdef WEIGHTED_SAMPLING
+const Lit lit, const double weight
+#else
+const Lit, const double
+#endif
+) {
+    #ifdef WEIGHTED_SAMPLING
+    //cout << "set weight called lit: " << lit << " w: " << weight << endl;
+    assert(lit.var() < nVars());
+    if (weights_given.size() < solver->nVars()) {
+        weights_given.resize(solver->nVars(), GivenW());
+    }
+
+    if ((weights_given[lit.var()].pos && !lit.sign())
+        || (weights_given[lit.var()].neg && lit.sign())
+    ) {
+        cout << "ERROR: Giving weights twice for literal: " << lit << endl;
+        exit(-1);
+        return;
+    }
+
+    if (!weights_given[lit.var()].neg && !lit.sign()) {
+        weights_given[lit.var()].pos = true;
+        varData[lit.var()].weight = weight;
+        return;
+    }
+
+    if (!weights_given[lit.var()].pos && lit.sign()) {
+        weights_given[lit.var()].neg = true;
+        varData[lit.var()].weight = weight;
+        return;
+    }
+
+    if (!lit.sign()) {
+        //this is the pos
+        weights_given[lit.var()].pos = true;
+        double neg = varData[lit.var()].weight;
+        double pos = weight;
+        varData[lit.var()].weight = pos/(pos + neg);
+    } else {
+        //this is the neg
+        weights_given[lit.var()].neg = true;
+        double neg = weight;
+        double pos = varData[lit.var()].weight;
+        varData[lit.var()].weight = pos/(pos + neg);
+    }
+    #else
+    cout << "ERROR: set_var_weight() only supported if you compile with -DWEIGHTED_SAMPLING=ON" << endl;
+    exit(-1);
+    #endif
+}
+
 #ifdef STATS_NEEDED
 void Solver::stats_del_cl(Clause* cl)
 {

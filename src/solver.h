@@ -89,6 +89,7 @@ class Solver : public Searcher
         void new_external_vars(size_t n);
         bool add_clause_outer(const vector<Lit>& lits, bool red = false);
         bool add_xor_clause_outer(const vector<uint32_t>& vars, bool rhs);
+        void set_var_weight(Lit lit, double weight);
 
         lbool solve_with_assumptions(const vector<Lit>* _assumptions, bool only_indep_solution);
         lbool simplify_with_assumptions(const vector<Lit>* _assumptions = NULL);
@@ -387,6 +388,11 @@ class Solver : public Searcher
         /////////////////////
         // Data
         size_t               zeroLevAssignsByCNF = 0;
+        struct GivenW {
+            bool pos = false;
+            bool neg = false;
+        };
+        vector<GivenW> weights_given;
 
         /////////////////////
         // Clauses

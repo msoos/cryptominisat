@@ -555,6 +555,12 @@ if (HAVE__FPU_SETCW)
 endif()
 
 
+option(WEIGHTED_SAMPLING "Allow for weighted sampling" OFF)
+if (WEIGHTED_SAMPLING)
+    add_definitions( -DWEIGHTED_SAMPLING )
+endif()
+
+
 # -----------------------------------------------------------------------------
 # MIT option
 # -----------------------------------------------------------------------------

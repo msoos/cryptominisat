@@ -1231,3 +1231,11 @@ DLL_PUBLIC void SATSolver::set_single_run()
         s.conf.breakid_use_assump = false;
     }
 }
+DLL_PUBLIC void SATSolver::set_var_weight(Lit lit, double weight)
+{
+    actually_add_clauses_to_threads(data);
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.set_var_weight(lit, weight);
+    }
+}
