@@ -2585,8 +2585,7 @@ Lit Searcher::pickBranchLit()
 
     if (conf.random_var_freq > 0) {
         double rand = mtrand.randDblExc();
-        double frq = conf.random_var_freq;
-        if (rand < frq && !order_heap.empty()) {
+        if (rand < conf.random_var_freq && !order_heap.empty()) {
             uint32_t next_var = var_Undef;
             while(!order_heap.empty()
                 && next_var == var_Undef)
