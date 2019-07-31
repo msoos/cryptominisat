@@ -2618,10 +2618,12 @@ Lit Searcher::pickBranchLit()
                     //make this var the top, and remove it
                     assert(var_act.size() > next_var);
                     assert(order_heap.inHeap(next_var));
+                    double backup = var_act[order_heap.inspectTop()];
                     var_act[next_var] = var_act[order_heap.inspectTop()]*2+10e2;
                     order_heap.update(next_var);
                     uint32_t removed_var = (uint32_t)order_heap.removeMin();
                     assert(removed_var == next_var);
+                    var_act[next_var] = backup;
 
                     next_var = var_Undef;
                 }
