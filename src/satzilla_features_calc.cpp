@@ -25,6 +25,7 @@ THE SOFTWARE.
 #include <cmath>
 
 #include "solver.h"
+#include "sqlstats.h"
 #include "satzilla_features_calc.h"
 
 using std::vector;
@@ -384,10 +385,19 @@ SatZillaFeatures SatZillaFeaturesCalc::extract()
     }
     normalise_values();
 
-    if (solver->conf.verbosity > 5) {
-        cout << "c [szfeat] extracted"
-        << solver->conf.print_times(cpuTime() - start_time)
+    double time_used = cpuTime() - start_time;
+    if (solver->conf.verbosity) {
+        cout << "c [szfeat] satzilla features extracted "
+        << solver->conf.print_times(time_used)
         << endl;
+    }
+
+    if (solver->sqlStats) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "satzilla"
+            , time_used
+        );
     }
 
     return satzilla_feat;
