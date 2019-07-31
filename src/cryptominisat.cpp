@@ -483,12 +483,17 @@ struct OneThreadAddCls
 static bool actually_add_clauses_to_threads(CMSatPrivateData* data)
 {
     DataForThread data_for_thread(data);
-    std::vector<std::thread> thds;
-    for(size_t i = 0; i < data->solvers.size(); i++) {
-        thds.push_back(thread(OneThreadAddCls(data_for_thread, i)));
-    }
-    for(std::thread& thread : thds){
-        thread.join();
+    if (data->solvers.size() == 1) {
+        OneThreadAddCls t(data_for_thread, 0));
+        t.operator()();
+    } else {
+        std::vector<std::thread> thds;
+        for(size_t i = 0; i < data->solvers.size(); i++) {
+            thds.push_back(thread(OneThreadAddCls(data_for_thread, i)));
+        }
+        for(std::thread& thread : thds){
+            thread.join();
+        }
     }
     bool ret = (*data_for_thread.ret == l_True);
 
