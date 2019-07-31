@@ -80,11 +80,14 @@ class QueryVar (QueryHelper):
         print("Recreating indexes...")
         t = time.time()
         queries = """
-        create index `idxclid8` on `varData` ( `var`, `conflicts`, `clid_start_incl`, `clid_end_notincl`);
+        create index `idxclid8` on `var_data_picktime` ( `var`, `sumConflicts_at_picktime`, `clid_start_incl`);
+        create index `idxclid9` on `var_data_fintime` ( `var`, `sumConflicts_at_picktime`, `clid_end_notincl`);
 
-        create index `idxclid-a1` on `varData` ( `clid_start_incl`, `clid_end_notincl`);
-        create index `idxclid-s1` on `sum_cl_use` ( `clauseID`);
+        create index `idxclid10` on `dec_var_clid` ( `var`, `sumConflicts_at_picktime`, `clauseID`);
+
         create index `idxclid-s2` on `restart_dat_for_var` (`conflicts`);
+
+        create index `idxclid-s1` on `sum_cl_use` ( `clauseID`);
         """
 
         for l in queries.split('\n'):

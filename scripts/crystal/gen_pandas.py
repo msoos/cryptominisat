@@ -67,6 +67,7 @@ class QueryFill (QueryHelper):
     def create_indexes(self):
         helper.drop_idxs(self.c)
 
+        t = time.time()
         print("Recreating indexes...")
         queries = """
         create index `idxclid33` on `sum_cl_use` (`clauseID`, `last_confl_used`);
