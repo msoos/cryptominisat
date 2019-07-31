@@ -74,24 +74,21 @@ def add_computed_features(df):
 
     # per-conflicts, per-decisions, per-lits
     names = [
-        "var_data.sumConflicts_at_picktime"
-        , "var_data.sumClLBD_at_picktime"
-        , "var_data.sumClSize_at_picktime"
-        , "var_data.sumConflictClauseLits_at_picktime"
+        "var_data_picktime.sumConflicts_at_picktime"
+        , "var_data_picktime.sumClLBD_at_picktime"
+        , "var_data_picktime.sumClSize_at_picktime"
+        , "var_data_picktime.sumConflictClauseLits_at_picktime"
         # neutral below
-        , "var_data.dec_depth"
-        # fintime below
-        , "var_data.sumConflicts_at_fintime"
-        , "var_data.sumPropagations_at_fintime"
-        # during below
-        , "var_data.sumDecisions_during"
-        , "var_data.sumPropagations_during"
-        , "var_data.sumConflicts_during"
-        , "var_data.sumAntecedents_during"
-        , "var_data.sumConflictClauseLits_during"
-        , "var_data.sumAntecedentsLits_during"
-        , "var_data.sumClSize_during"
-        , "var_data.sumClLBD_during"
+        , "var_data_picktime.dec_depth"
+        # below during
+        , "var_data_picktime.sumDecisions_below_during"
+        , "var_data_picktime.sumPropagations_below_during"
+        , "var_data_picktime.sumConflicts_below_during"
+        , "var_data_picktime.sumAntecedents_below_during"
+        , "var_data_picktime.sumConflictClauseLits_below_during"
+        , "var_data_picktime.sumAntecedentsLits_below_during"
+        , "var_data_picktime.sumClSize_below_during"
+        , "var_data_picktime.sumClLBD_below_during"
         ]
 
     cols = list(df)
