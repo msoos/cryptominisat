@@ -779,8 +779,8 @@ void SQLiteStats::var_data_fintime(
     sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, vardata.sumConflicts_at_picktime);
     sqlite3_bind_int   (stmt_var_data_fintime, bindAt++, var);
 
-    sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, vardata.level);
-    sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, cls_below);
+    sqlite3_bind_int (stmt_var_data_fintime, bindAt++, vardata.level);
+    sqlite3_bind_int (stmt_var_data_fintime, bindAt++, cls_below);
     sqlite3_bind_double (stmt_var_data_fintime, bindAt++, rel_activity);
 
     sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, vardata.inside_conflict_clause);
