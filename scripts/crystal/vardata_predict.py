@@ -110,7 +110,7 @@ def rem_useless_features(df):
     for c in col:
         if "activity" not in c and "class" not in c and "useful_times" not in c:
             del df[c]
-    del df["var_data.rel_activity_at_fintime"]
+    del df["var_data_fintime.rel_activity_at_fintime"]
     pass
 
 
