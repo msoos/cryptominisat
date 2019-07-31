@@ -88,6 +88,8 @@ class QueryVar (QueryHelper):
         create index `idxclid10` on `dec_var_clid` ( `var`, `sumConflicts_at_picktime`, `clauseID`);
 
         create index `idxclid-s2` on `restart_dat_for_var` (`conflicts`);
+        create index `idxclid-s3` on `restart_dat_for_var` (`latest_satzilla_feature_calc`);
+        create index `idxclid-s4` on `satzilla_features` (`latest_satzilla_feature_calc`);
 
         create index `idxclid-s1` on `sum_cl_use` ( `clauseID`);
         """
@@ -193,6 +195,11 @@ class QueryVar (QueryHelper):
             "restart_dat_for_var", not_cols, "rst", options.verbose, self.c)
 
         not_cols =[
+            ""]
+        szfeat = helper.query_fragment(
+            "satzilla_features", not_cols, "szfeat", options.verbose, self.c)
+
+        not_cols =[
             "useful_clauses"
             , "var"]
         var_data_use = helper.query_fragment(
@@ -206,6 +213,7 @@ class QueryVar (QueryHelper):
         {var_dist}
         {var_data_picktime}
         {var_data_fintime}
+        {szfeat}
 
         FROM
         var_data_picktime
@@ -213,6 +221,7 @@ class QueryVar (QueryHelper):
         , var_data_use
         , var_dist
         , restart_dat_for_var as rst
+        , satzilla_features as szfeat
 
         WHERE
         var_data_fintime.clauses_below >= {min_cls_below}
@@ -228,6 +237,7 @@ class QueryVar (QueryHelper):
         and var_dist.latest_vardist_feature_calc = var_data_picktime.latest_vardist_feature_calc
 
         and rst.conflicts = var_data_use.sumConflicts_at_picktime
+        and rst.latest_satzilla_feature_calc = szfeat.latest_satzilla_feature_calc
 
         -- only to make sure multiple restart etc. cannot interfere with the data
         group by var_data_picktime.var, var_data_picktime.sumConflicts_at_picktime
@@ -239,6 +249,7 @@ class QueryVar (QueryHelper):
             var_data_picktime=var_data_picktime,
             var_data_fintime=var_data_fintime,
             var_dist=var_dist,
+            szfeat=szfeat,
             limit=options.limit,
             min_cls_below=options.min_cls_below)
 
