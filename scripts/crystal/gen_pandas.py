@@ -281,7 +281,7 @@ class QueryCls (QueryHelper):
             , "all_props"
             , "clauseIDstartInclusive"
             , "clauseIDendExclusive"]
-        self.rst_cur = self.query_fragment(
+        self.rst_cur = helper.query_fragment(
             "restart_dat_for_cl", not_cols, "rst_cur", options.verbose, self.c)
 
         # RDB data
@@ -297,7 +297,7 @@ class QueryCls (QueryHelper):
             , "in_xor"
             , "locked"
             , "activity_rel"]
-        self.rdb0_dat = self.query_fragment(
+        self.rdb0_dat = helper.query_fragment(
             "reduceDB", not_cols, "rdb0", options.verbose, self.c)
 
         # clause data
@@ -309,7 +309,7 @@ class QueryCls (QueryHelper):
             , "antecedents_long_red_age_max"
             , "antecedents_long_red_age_min"
             , "clauseID"]
-        self.clause_dat = self.query_fragment(
+        self.clause_dat = helper.query_fragment(
             "clause_stats", not_cols, "cl", options.verbose, self.c)
 
         # satzilla data
@@ -320,7 +320,7 @@ class QueryCls (QueryHelper):
             , "latest_satzilla_feature_calc"
             , "irred_glue_distr_mean"
             , "irred_glue_distr_var"]
-        self.satzfeat_dat = self.query_fragment(
+        self.satzfeat_dat = helper.query_fragment(
             "satzilla_features", not_cols, "szfeat", options.verbose, self.c)
 
         self.common_limits = """
