@@ -625,6 +625,7 @@ void SQLiteStats::restart(
     sqlite3_bind_int64(stmt, bindAt++, solver->varReplacer->get_num_replaced_vars());
     sqlite3_bind_int64(stmt, bindAt++, solver->get_num_vars_elimed());
     sqlite3_bind_int64(stmt, bindAt++, search->getTrailSize());
+    sqlite3_bind_double(stmt, bindAt++, search->conf.random_var_freq);
 
     //ClauseID
     sqlite3_bind_int64(stmt, bindAt++, thisStats.clauseID_at_start_inclusive);

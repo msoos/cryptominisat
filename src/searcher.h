@@ -476,6 +476,9 @@ class Searcher : public HyperEngine
 
         double   startTime; ///<When solve() was started
         SearchStats stats;
+
+        ///in case restart has full var random picking, we save old value here
+        double backup_random_var_freq = -1;
 };
 
 inline uint32_t Searcher::abstractLevel(const uint32_t x) const

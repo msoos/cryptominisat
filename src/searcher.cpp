@@ -84,6 +84,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     mtrand.seed(conf.origSeed);
     hist.setSize(conf.shortTermHistorySize, conf.blocking_restart_trail_hist_length);
     cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
+    backup_random_var_freq = conf.random_var_freq;
 }
 
 Searcher::~Searcher()
@@ -1173,6 +1174,16 @@ lbool Searcher::search()
     blocked_restart = false;
     PropBy confl;
     lbool dec_ret = l_Undef;
+
+    //is this restart full random?
+    if (conf.full_random_var_per_restart != 0) {
+        double rnd = mtrand.randDblExc();
+        if (rnd < conf.full_random_var_per_restart) {
+            conf.random_var_freq = 1.0;
+        } else {
+            conf.random_var_freq = backup_random_var_freq;
+        }
+    }
 
     while (!params.needToStopSearch
         || !confl.isNULL() //always finish the last conflict

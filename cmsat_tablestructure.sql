@@ -154,6 +154,7 @@ CREATE TABLE `restart` (
   `replaced` int(20) NOT NULL,
   `eliminated` int(20) NOT NULL,
   `set` int(20) NOT NULL,
+  `random_var_freq` double NOT NULL,
 
   `clauseIDstartInclusive` int(20) NOT NULL,
   `clauseIDendExclusive` int(20) NOT NULL
