@@ -1647,7 +1647,7 @@ void Searcher::dump_sql_clause_data(
     , const bool decision_cl
     , const bool ternary_resol_cl
 ) {
-    solver->sqlStats->begin_transaction();
+    //solver->sqlStats->begin_transaction();
     for(int i = (int)decisionLevel()-1; i >= 0; i--) {
         uint32_t at = trail_lim[i];
         if (at < trail.size()) {
@@ -1680,7 +1680,7 @@ void Searcher::dump_sql_clause_data(
         , decision_cl
         , ternary_resol_cl
     );
-    solver->sqlStats->end_transaction();
+    //solver->sqlStats->end_transaction();
 }
 #endif
 
