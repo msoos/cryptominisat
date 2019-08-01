@@ -27,7 +27,7 @@ THE SOFTWARE.
 // 4) build: g++ -std=c++11 readme_test.cpp -lcryptominisat5 -o readme_test
 // 5) run: ./readme_test
 
-#include <cryptominisat5/cryptominisat.h>
+#include "cryptominisat5/cryptominisat.h"
 #include <cassert>
 #include <vector>
 using std::vector;

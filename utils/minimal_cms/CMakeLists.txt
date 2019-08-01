@@ -19,7 +19,7 @@
 # THE SOFTWARE.
 
 include_directories(
-    ${PROJECT_SOURCE_DIR}
+    ${PROJECT_BINARY_DIR}/cmsat5-src
 )
 
 # Minimal DRAT-enabled CMS binary

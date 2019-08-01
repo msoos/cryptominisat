@@ -25,8 +25,7 @@ THE SOFTWARE.
 #include <iostream>
 #include <string>
 #include <vector>
-
-#include "cryptominisat5/cryptominisat.h"
+#include <cryptominisat5/cryptominisat.h>
 
 using namespace std;
 
