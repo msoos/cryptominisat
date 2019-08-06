@@ -838,7 +838,7 @@ size_t BVA::mem_used() const
     size_t mem = 0;
     mem += bva_tmp_lits.capacity()*sizeof(Lit);
     mem += m_cls_lits.capacity()*sizeof(m_cls_lits_and_red);
-    for(auto m: m_cls_lits) {
+    for(const auto& m: m_cls_lits) {
         mem += m.lits.capacity()*sizeof(Lit);
     }
     mem += to_remove.capacity()* sizeof(Lit);

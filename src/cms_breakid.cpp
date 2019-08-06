@@ -437,7 +437,7 @@ void BreakID::break_symms_in_cms()
     }
 
     auto brk = breakid->get_brk_cls();
-    for (auto cl: brk) {
+    for (const auto& cl: brk) {
         vector<Lit>* cl2 = (vector<Lit>*)&cl;
         if (solver->conf.breakid_use_assump) {
             cl2->push_back(Lit(symm_var, false));

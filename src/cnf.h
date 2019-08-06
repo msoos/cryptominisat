@@ -559,12 +559,12 @@ bool CNF::no_duplicate_lits(const T& lits) const
 
 inline void CNF::check_no_duplicate_lits_anywhere() const
 {
-    for(ClOffset offs: longIrredCls) {
+    for(const ClOffset offs: longIrredCls) {
         Clause * cl = cl_alloc.ptr(offs);
         assert(no_duplicate_lits((*cl)));
     }
-    for(auto l: longRedCls) {
-        for(ClOffset offs: l) {
+    for(const auto& l: longRedCls) {
+        for(const ClOffset offs: l) {
             Clause * cl = cl_alloc.ptr(offs);
             assert(no_duplicate_lits((*cl)));
         }

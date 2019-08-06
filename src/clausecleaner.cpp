@@ -291,7 +291,7 @@ void ClauseCleaner::remove_and_clean_all()
     //Once we have cleaned the watchlists
     //no watchlist whose lit is set may be non-empty
     size_t wsLit = 0;
-    for(watch_array::iterator
+    for(watch_array::const_iterator
         it = solver->watches.begin(), end = solver->watches.end()
         ; it != end
         ; ++it, wsLit++
