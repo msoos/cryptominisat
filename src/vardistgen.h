@@ -71,7 +71,9 @@ class VarDistGen {
 public:
     VarDistGen(Solver* solver);
     void calc();
+    #ifdef STATS_NEEDED
     void dump();
+    #endif
 
 private:
     double compute_tot_act_vsids(Clause* cl) const;
