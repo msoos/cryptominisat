@@ -126,94 +126,7 @@ void PropEngine::detach_modified_clause(
     removeWCl(watches[lit2], offset);
 }
 
-/**
-@brief Propagates a binary clause
-
-Need to be somewhat tricky if the clause indicates that current assignement
-is incorrect (i.e. both literals evaluate to FALSE). If conflict if found,
-sets failBinLit
-*/
 template<bool update_bogoprops>
-inline bool PropEngine::prop_bin_cl(
-    const Watched* i
-    , const Lit p
-    , PropBy& confl
-) {
-    const lbool val = value(i->lit2());
-    if (val == l_Undef) {
-        #ifdef STATS_NEEDED
-        if (i->red())
-            propStats.propsBinRed++;
-        else
-            propStats.propsBinIrred++;
-        #endif
-
-        enqueue<update_bogoprops>(i->lit2(), PropBy(~p, i->red()));
-    } else if (val == l_False) {
-        #ifdef STATS_NEEDED
-        if (i->red())
-            lastConflictCausedBy = ConflCausedBy::binred;
-        else
-            lastConflictCausedBy = ConflCausedBy::binirred;
-        #endif
-
-        confl = PropBy(~p, i->red());
-        failBinLit = i->lit2();
-        qhead = trail.size();
-        return false;
-    }
-
-    return true;
-}
-
-template<bool update_bogoprops>
-inline
-bool PropEngine::prop_long_cl_any_order(
-    Watched* i
-    , Watched*& j
-    , const Lit p
-    , PropBy& confl
-) {
-    //Blocked literal is satisfied, so clause is satisfied
-    if (value(i->getBlockedLit()) == l_True) {
-        *j++ = *i;
-        return true;
-    }
-    if (update_bogoprops) {
-        propStats.bogoProps += 4;
-    }
-    const ClOffset offset = i->get_offset();
-    Clause& c = *cl_alloc.ptr(offset);
-
-    #ifdef SLOW_DEBUG
-    assert(!c.getRemoved());
-    assert(!c.freed());
-    #endif
-
-    if (prop_normal_helper(c, offset, j, p) == PROP_NOTHING) {
-        return true;
-    }
-
-    // Did not find watch -- clause is unit under assignment:
-    *j++ = *i;
-    if (value(c[0]) == l_False) {
-        handle_normal_prop_fail(c, offset, confl);
-        return false;
-    } else {
-        #ifdef STATS_NEEDED
-        c.stats.propagations_made++;
-        if (c.red())
-            propStats.propsLongRed++;
-        else
-            propStats.propsLongIrred++;
-        #endif
-
-        enqueue<update_bogoprops>(c[0], PropBy(offset));
-    }
-
-    return true;
-}
-
 PropBy PropEngine::propagate_any_order_fast()
 {
     PropBy confl;
@@ -229,6 +142,9 @@ PropBy PropEngine::propagate_any_order_fast()
         Watched* i;
         Watched* j;
         Watched* end;
+        if (update_bogoprops) {
+            propStats.bogoProps += ws.size()/4 + 1;
+        }
         num_props++;
 
         for (i = j = ws.begin(), end = ws.end(); unlikely(i != end);) {
@@ -238,7 +154,13 @@ PropBy PropEngine::propagate_any_order_fast()
                 *j++ = *i;
                 const lbool val = value(i->lit2());
                 if (val == l_Undef) {
-                    enqueue<false>(i->lit2(), PropBy(~p, i->red()));
+                    #ifdef STATS_NEEDED
+                    if (i->red())
+                        propStats.propsBinRed++;
+                    else
+                        propStats.propsBinIrred++;
+                    #endif
+                    enqueue<update_bogoprops>(i->lit2(), PropBy(~p, i->red()));
                     i++;
                 } else if (val == l_False) {
                     confl = PropBy(~p, i->red());
@@ -266,6 +188,10 @@ PropBy PropEngine::propagate_any_order_fast()
             if (likely(value(blocked) == l_True)) {
                 *j++ = *i++;
                 continue;
+            }
+
+            if (update_bogoprops) {
+                propStats.bogoProps += 4;
             }
 
             const ClOffset offset = i->get_offset();
@@ -311,7 +237,14 @@ PropBy PropEngine::propagate_any_order_fast()
                 assert(j <= end);
                 qhead = trail.size();
             } else {
-                enqueue<false>(c[0], PropBy(offset));
+                #ifdef STATS_NEEDED
+                c.stats.propagations_made++;
+                if (c.red())
+                    propStats.propsLongRed++;
+                else
+                    propStats.propsLongIrred++;
+                #endif
+                enqueue<update_bogoprops>(c[0], PropBy(offset));
             }
 
             nextClause:;
@@ -323,64 +256,14 @@ PropBy PropEngine::propagate_any_order_fast()
     propStats.propagations += (uint64_t)num_props;
 
     #ifdef VERBOSE_DEBUG
-    cout << "Propagation (propagate_any_order) ended." << endl;
+    cout << "Propagation (propagate_any_order_fast) ended." << endl;
     #endif
 
     return confl;
 }
 
-template<bool update_bogoprops>
-PropBy PropEngine::propagate_any_order()
-{
-    PropBy confl;
-
-    #ifdef VERBOSE_DEBUG_PROP
-    cout << "Fast Propagation started" << endl;
-    #endif
-
-    while (qhead < trail.size() && confl.isNULL()) {
-        const Lit p = trail[qhead];     // 'p' is enqueued fact to propagate.
-        watch_subarray ws = watches[~p];
-        Watched* i = ws.begin();
-        Watched* j = i;
-        Watched* end = ws.end();
-        if (update_bogoprops) {
-            propStats.bogoProps += ws.size()/4 + 1;
-        }
-        propStats.propagations++;
-        for (; i != end; i++) {
-            if (likely(i->isBin())) {
-                *j++ = *i;
-                if (!prop_bin_cl<update_bogoprops>(i, p, confl)) {
-                    i++;
-                    break;
-                }
-                continue;
-            }
-
-            //propagate normal clause
-            if (!prop_long_cl_any_order<update_bogoprops>(i, j, p, confl)) {
-                i++;
-                break;
-            }
-            continue;
-        }
-        while (i != end) {
-            *j++ = *i++;
-        }
-        ws.shrink_(end-j);
-        qhead++;
-    }
-
-    #ifdef VERBOSE_DEBUG
-    cout << "Propagation (propagate_any_order) ended." << endl;
-    #endif
-
-    return confl;
-}
-template PropBy PropEngine::propagate_any_order<true>();
-template PropBy PropEngine::propagate_any_order<false>();
-
+template PropBy PropEngine::propagate_any_order_fast<true>();
+template PropBy PropEngine::propagate_any_order_fast<false>();
 
 void PropEngine::printWatchList(const Lit lit) const
 {
