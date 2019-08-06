@@ -50,7 +50,7 @@ THE SOFTWARE.
 #include "clauseallocator.h"
 #include "subsumeimplicit.h"
 #include "distillerlongwithimpl.h"
-#include "str_impl_w_impl_stamp.h"
+#include "str_impl_w_impl.h"
 #include "datasync.h"
 #include "reducedb.h"
 #include "clausedumper.h"
@@ -95,7 +95,7 @@ Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter
     }
     distill_long_cls = new DistillerLong(this);
     dist_long_with_impl = new DistillerLongWithImpl(this);
-    dist_impl_with_impl = new StrImplWImplStamp(this);
+    dist_impl_with_impl = new StrImplWImpl(this);
     clauseCleaner = new ClauseCleaner(this);
     varReplacer = new VarReplacer(this);
     if (conf.doCompHandler) {
@@ -925,15 +925,8 @@ bool Solver::renumber_variables(bool must_renumber)
     PropEngine::updateVars(outerToInter, interToOuter, interToOuter2);
     Searcher::updateVars(outerToInter, interToOuter);
 
-    if (conf.doStamp) {
-        stamp.updateVars(outerToInter, interToOuter2, seen);
-    }
-
     //Update sub-elements' vars
     varReplacer->updateVars(outerToInter, interToOuter);
-    if (conf.doCache) {
-        implCache.updateVars(seen, outerToInter, interToOuter2, numEffectiveVars);
-    }
     datasync->updateVars(outerToInter, interToOuter);
 
     //Tests
@@ -966,43 +959,12 @@ bool Solver::renumber_variables(bool must_renumber)
     return okay();
 }
 
-void Solver::check_switchoff_limits_newvar(size_t n)
-{
-    if (conf.doStamp
-        && nVars() + n > 15ULL*1000ULL*1000ULL*conf.var_and_mem_out_mult //~1 GB of RAM
-    ) {
-        conf.doStamp = false;
-        stamp.freeMem();
-        if (conf.verbosity) {
-            cout
-            << "c Switching off stamping due to excessive number of variables"
-            << " (it would take too much memory)"
-            << endl;
-        }
-    }
-
-    if (conf.doCache
-        && nVars() + n > 5ULL*1000ULL*1000ULL*conf.var_and_mem_out_mult
-    ) {
-        conf.doCache = false;
-        implCache.free();
-
-        if (conf.verbosity) {
-            cout
-            << "c Switching off caching due to excessive number of variables"
-            << " (it would take too much memory)"
-            << endl;
-        }
-    }
-}
-
 void Solver::new_vars(size_t n)
 {
     if (n == 0) {
         return;
     }
 
-    check_switchoff_limits_newvar(n);
     Searcher::new_vars(n);
     varReplacer->new_vars(n);
 
@@ -1018,7 +980,6 @@ void Solver::new_vars(size_t n)
 
 void Solver::new_var(const bool bva, const uint32_t orig_outer)
 {
-    check_switchoff_limits_newvar();
     Searcher::new_var(bva, orig_outer);
 
     varReplacer->new_var(orig_outer);
@@ -1183,7 +1144,6 @@ void Solver::check_minimization_effectiveness(const lbool status)
             }
         } else if (remPercent > 7.0) {
             more_red_minim_limit_binary_actual = 3*conf.more_red_minim_limit_binary;
-            more_red_minim_limit_cache_actual  = 3*conf.more_red_minim_limit_cache;
             if (conf.verbosity) {
                 cout
                 << "c more minimization effectiveness good: "
@@ -1193,7 +1153,6 @@ void Solver::check_minimization_effectiveness(const lbool status)
             }
         } else {
             more_red_minim_limit_binary_actual = conf.more_red_minim_limit_binary;
-            more_red_minim_limit_cache_actual  = conf.more_red_minim_limit_cache;
             if (conf.verbosity) {
                 cout
                 << "c more minimization effectiveness OK: "
@@ -1573,20 +1532,6 @@ void Solver::dump_memory_stats_to_sql()
 
     sqlStats->mem_used(
         this
-        , "stamp"
-        , my_time
-        , Searcher::mem_used_stamp()/(1024*1024)
-    );
-
-    sqlStats->mem_used(
-        this
-        , "cache"
-        , my_time
-        , implCache.mem_used()/(1024*1024)
-    );
-
-    sqlStats->mem_used(
-        this
         , "longclauses"
         , my_time
         , CNF::mem_used_longclauses()/(1024*1024)
@@ -1898,14 +1843,6 @@ lbool Solver::execute_inprocess_strategy(
                 varReplacer->replace_if_enough_is_found(
                     std::floor((double)get_num_free_vars()*0.001));
             }
-        } else if (token == "cache-clean") {
-            if (conf.doCache) {
-                implCache.clean(this);
-            }
-        } else if (token == "cache-tryboth") {
-            if (conf.doCache) {
-                implCache.tryBoth(this);
-            }
         } else if (token == "sub-impl") {
             //subsume BIN with BIN
             if (conf.doStrSubImplicit) {
@@ -1945,40 +1882,13 @@ lbool Solver::execute_inprocess_strategy(
                 distill_long_cls->distill(false);
             }
         } else if (token == "str-impl") {
-            //Strengthens BIN&TRI with BIN&TRI
             if (conf.doStrSubImplicit) {
-                dist_impl_with_impl->str_impl_w_impl_stamp();
-            }
-        } else if (token == "check-cache-size") {
-            //Delete and disable cache if too large
-            if (conf.doCache) {
-                const size_t memUsedMB = implCache.mem_used()/(1024UL*1024UL);
-                if (memUsedMB > conf.maxCacheSizeMB) {
-                    if (conf.verbosity) {
-                        cout
-                        << "c Turning off cache, memory used, "
-                        << memUsedMB << " MB"
-                        << " is over limit of " << conf.maxCacheSizeMB  << " MB"
-                        << endl;
-                    }
-                    implCache.free();
-                    conf.doCache = false;
-                }
+                dist_impl_with_impl->str_impl_w_impl();
             }
         } else if (token == "cl-consolidate") {
             cl_alloc.consolidate(this, false, true);
         } else if (token == "renumber" || token == "must-renumber") {
             if (conf.doRenumberVars) {
-                //Clean cache before renumber -- very important, otherwise
-                //we will be left with lits inside the cache that are out-of-bounds
-                if (conf.doCache) {
-                    bool setSomething = true;
-                    while(setSomething) {
-                        if (!implCache.clean(this, &setSomething))
-                            return l_False;
-                    }
-                }
-
                 if (!renumber_variables(token == "must-renumber" || conf.must_renumber)) {
                     return l_False;
                 }
@@ -2185,14 +2095,14 @@ void Solver::print_min_stats(const double cpu_time, const double cpu_time_total)
     );
     if (conf.do_print_times)
     print_stats_line("c strength cache-irred time"
-                    , dist_long_with_impl->get_stats().irredCacheBased.cpu_time
-                    , stats_line_percent(dist_long_with_impl->get_stats().irredCacheBased.cpu_time, cpu_time)
+                    , dist_long_with_impl->get_stats().irredWatchBased.cpu_time
+                    , stats_line_percent(dist_long_with_impl->get_stats().irredWatchBased.cpu_time, cpu_time)
                     , "% time"
     );
     if (conf.do_print_times)
     print_stats_line("c strength cache-red time"
-                    , dist_long_with_impl->get_stats().redCacheBased.cpu_time
-                    , stats_line_percent(dist_long_with_impl->get_stats().redCacheBased.cpu_time, cpu_time)
+                    , dist_long_with_impl->get_stats().redWatchBased.cpu_time
+                    , stats_line_percent(dist_long_with_impl->get_stats().redWatchBased.cpu_time, cpu_time)
                     , "% time"
     );
 
@@ -2288,18 +2198,15 @@ void Solver::print_norm_stats(const double cpu_time, const double cpu_time_total
                     , "% time"
     );
     print_stats_line("c strength cache-irred time"
-                    , dist_long_with_impl->get_stats().irredCacheBased.cpu_time
-                    , stats_line_percent(dist_long_with_impl->get_stats().irredCacheBased.cpu_time, cpu_time)
+                    , dist_long_with_impl->get_stats().irredWatchBased.cpu_time
+                    , stats_line_percent(dist_long_with_impl->get_stats().irredWatchBased.cpu_time, cpu_time)
                     , "% time"
     );
     print_stats_line("c strength cache-red time"
-                    , dist_long_with_impl->get_stats().redCacheBased.cpu_time
-                    , stats_line_percent(dist_long_with_impl->get_stats().redCacheBased.cpu_time, cpu_time)
+                    , dist_long_with_impl->get_stats().redWatchBased.cpu_time
+                    , stats_line_percent(dist_long_with_impl->get_stats().redWatchBased.cpu_time, cpu_time)
                     , "% time"
     );
-    if (conf.doCache) {
-        implCache.print_statsSort(this);
-    }
 
     if (conf.do_print_times) {
         print_stats_line("c Conflicts in UIP"
@@ -2394,22 +2301,18 @@ void Solver::print_full_restart_stat(const double cpu_time, const double cpu_tim
 
     if (conf.do_print_times)
     print_stats_line("c strength cache-irred time"
-                    , dist_long_with_impl->get_stats().irredCacheBased.cpu_time
-                    , stats_line_percent(dist_long_with_impl->get_stats().irredCacheBased.cpu_time, cpu_time)
+                    , dist_long_with_impl->get_stats().irredWatchBased.cpu_time
+                    , stats_line_percent(dist_long_with_impl->get_stats().irredWatchBased.cpu_time, cpu_time)
                     , "% time");
     if (conf.do_print_times)
     print_stats_line("c strength cache-red time"
-                    , dist_long_with_impl->get_stats().redCacheBased.cpu_time
-                    , stats_line_percent(dist_long_with_impl->get_stats().redCacheBased.cpu_time, cpu_time)
+                    , dist_long_with_impl->get_stats().redWatchBased.cpu_time
+                    , stats_line_percent(dist_long_with_impl->get_stats().redWatchBased.cpu_time, cpu_time)
                     , "% time");
     dist_long_with_impl->get_stats().print();
 
     if (conf.doStrSubImplicit) {
         subsumeImplicit->get_stats().print();
-    }
-
-    if (conf.doCache) {
-        implCache.print_stats(this);
     }
 
     //Other stats
@@ -2487,17 +2390,6 @@ void Solver::print_mem_stats() const
         , "%"
     );
     account += mem;
-
-    mem = implCache.mem_used();
-    print_stats_line("c Mem for implication cache"
-        , mem/(1024UL*1024UL)
-        , "MB"
-        , stats_line_percent(mem, rss_mem_used)
-        , "%"
-    );
-    account += mem;
-
-    account += print_stamp_mem(rss_mem_used);
 
     mem = mem_used();
     print_stats_line("c Mem for search&solve"
@@ -3343,7 +3235,6 @@ void Solver::reconfigure(int val)
             conf.global_multiplier_multiplier_max = 5;
 
             conf.num_conflicts_of_search_inc = 1.15;
-            conf.more_red_minim_limit_cache = 1200;
             conf.more_red_minim_limit_binary = 600;
             conf.max_num_lits_more_more_red_min = 20;
 

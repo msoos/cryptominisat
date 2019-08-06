@@ -272,13 +272,13 @@ class Tester:
 
     def rnd_schedule_all(self, preproc):
         sched_opts = "handle-comps,"
-        sched_opts += "scc-vrepl, cache-clean, cache-tryboth,"
+        sched_opts += "scc-vrepl,"
         sched_opts += "sub-impl, intree-probe, probe,"
         sched_opts += "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
         sched_opts += "sub-cls-with-bin,"
-        sched_opts += "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls, scc-vrepl,"
+        sched_opts += "str-impl, sub-str-cls-with-bin, distill-cls, scc-vrepl,"
         sched_opts += "occ-backw-sub-str, occ-xor, occ-clean-implicit, occ-bve, occ-bva,"
-        sched_opts += "check-cache-size, renumber, must-renumber"
+        sched_opts += "renumber, must-renumber"
         sched_opts += ", sls"
 
         # type of schedule
@@ -341,7 +341,6 @@ class Tester:
         if random.choice([True, False]) and "clid" in self.extra_opts_supported:
             cmd += "--varsperxorcut %d " % random.randint(4, 6)
             cmd += "--tern %d " % random.choice([0, 1])
-            cmd += "--xorcache %d " % random.choice([0, 1])
             if random.choice([True, True, True, False]):
                 self.clid_added = True
                 cmd += "--clid "
@@ -366,10 +365,7 @@ class Tester:
             # "prconf"])
             cmd += "--bothprop %s " % random.randint(0, 1)
             cmd += "--probemaxm %s " % random.choice([0, 10, 100, 1000])
-            cmd += "--cachesize %s " % random.randint(10, 100)
-            cmd += "--cachecutoff %s " % random.randint(0, 2000)
             cmd += "--occredmax %s " % random.randint(0, 100)
-            cmd += "--extscc %s " % random.randint(0, 1)
             cmd += "--distill %s " % random.randint(0, 1)
             cmd += "--recur %s " % random.randint(0, 1)
             cmd += "--compsfrom %d " % random.randint(0, 2)
@@ -387,8 +383,6 @@ class Tester:
 
             # more more minim
             cmd += "--moremoreminim %d " % random.choice([1, 1, 1, 0])
-            cmd += "--moremorecachelimit %d " % int(random.gammavariate(1, 6))
-            cmd += "--moremorestamp %d " % random.choice([1, 1, 1, 0])
             cmd += "--moremorealways %d " % random.choice([1, 1, 1, 0])
 
             if self.this_gauss_on:
@@ -422,7 +416,6 @@ class Tester:
         # the most buggy ones, don't turn them off much, please
         if random.choice([True, False]):
             opts = ["scc", "varelim", "comps", "strengthen", "probe", "intree",
-                    "stamp", "cache",
                     "renumber", "savemem", "moreminim", "gates",
                     "gorshort", "gandrem", "gateeqlit", "schedsimp"]
 

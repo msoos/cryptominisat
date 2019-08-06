@@ -199,8 +199,6 @@ class DLL_PUBLIC SolverConf
         unsigned  shortTermHistorySize; ///< Rolling avg. glue window size
         unsigned lower_bound_for_blocking_restart;
         double   ratio_glue_geom; //higher the number, the more glue will be done. 2 is 2x glue 1x geom
-        int more_more_with_cache;
-        int more_more_with_stamp;
         int doAlwaysFMinim;
 
         //Clause minimisation
@@ -209,7 +207,6 @@ class DLL_PUBLIC SolverConf
         int doMinimRedMoreMore;
         unsigned max_glue_more_minim;
         unsigned max_size_more_minim;
-        unsigned more_red_minim_limit_cache;
         unsigned more_red_minim_limit_binary;
         unsigned max_num_lits_more_more_red_min;
 
@@ -286,10 +283,6 @@ class DLL_PUBLIC SolverConf
         unsigned long long intree_scc_varreplace_time_limitM;
         int      doBothProp;
         int      doTransRed;   ///<Should carry out transitive reduction
-        int      doStamp;
-        int      doCache;
-        unsigned   cacheUpdateCutoff;
-        unsigned   maxCacheSizeMB;
         unsigned long long otf_hyper_time_limitM;
         double  otf_hyper_ratio_limit;
         double single_probe_time_limit_perc;
@@ -298,7 +291,6 @@ class DLL_PUBLIC SolverConf
         int      doFindXors;
         unsigned maxXorToFind;
         unsigned maxXorToFindSlow;
-        int      useCacheWhenFindingXors;
         uint64_t maxXORMatrix;
         uint64_t xor_finder_time_limitM;
         int      allow_elim_xor_vars;
@@ -306,7 +298,6 @@ class DLL_PUBLIC SolverConf
 
         //Var-replacement
         int doFindAndReplaceEqLits;
-        int doExtendedSCC;
         int max_scc_depth;
 
         //Iterative Alo Scheduling
@@ -343,7 +334,7 @@ class DLL_PUBLIC SolverConf
         //Distillation
         int      do_distill_clauses;
         unsigned long long distill_long_cls_time_limitM;
-        long watch_cache_stamp_based_str_time_limitM;
+        long watch_based_str_time_limitM;
         long long distill_time_limitM;
 
         //Memory savings

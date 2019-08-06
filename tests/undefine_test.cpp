@@ -34,7 +34,6 @@ struct undef : public ::testing::Test {
     {
         must_inter.store(false, std::memory_order_relaxed);
         SolverConf conf;
-        conf.doCache = false;
         s = new Solver(&conf, &must_inter);
         s->conf.greedy_undef = true;
         s->conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;

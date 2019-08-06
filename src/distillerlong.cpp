@@ -33,8 +33,6 @@ using namespace CMSat;
 using std::cout;
 using std::endl;
 
-//#define DEBUG_STAMPING
-
 #ifdef VERBOSE_DEBUG
 #define VERBOSE_SUBSUME_NONEXIST
 #endif

@@ -36,9 +36,7 @@ struct distill_long_with_impl : public ::testing::Test {
     {
         must_inter.store(false, std::memory_order_relaxed);
         SolverConf conf;
-        conf.doStamp = true;
-        conf.doCache = true;
-        conf.otfHyperbin - true;
+        conf.otfHyperbin = true;
         //conf.verbosity = 20;
         s = new Solver(&conf, &must_inter);
         distillwbin = s->dist_long_with_impl;
@@ -141,124 +139,6 @@ TEST_F(distill_long_with_impl, str_w_bin3)
     distillwbin->distill_long_with_implicit(true);
     check_irred_cls_contains(s, "-2, 4, 5");
     check_irred_cls_contains(s, "-1, -3, 4");
-}
-
-//Subsume with cache
-
-TEST_F(distill_long_with_impl, sub_w_cache)
-{
-    s->new_vars(5);
-    s->add_clause_outer(str_to_cl("-1, 2, -3, 4"));
-    add_to_cache_irred(s, "2, -3");
-
-    distillwbin->distill_long_with_implicit(false);
-    check_irred_cls_eq(s, "");
-}
-
-TEST_F(distill_long_with_impl, sub_w_cache2)
-{
-    s->new_vars(5);
-    s->add_clause_outer(str_to_cl("-1, 2, -3, 4"));
-    add_to_cache_irred(s, "2, 4");
-
-    distillwbin->distill_long_with_implicit(false);
-    check_irred_cls_eq(s, "");
-}
-
-//STR with cache
-
-TEST_F(distill_long_with_impl, str_w_cache)
-{
-    s->new_vars(5);
-    s->add_clause_outer(str_to_cl("-1, 2, -3, 4"));
-    add_to_cache_irred(s, "-1, -2");
-
-    distillwbin->distill_long_with_implicit(true);
-    check_irred_cls_eq(s, "-1, -3, 4");
-}
-
-TEST_F(distill_long_with_impl, str_w_cache2)
-{
-    s->new_vars(5);
-    s->add_clause_outer(str_to_cl("2, -3, 4, 5"));
-    add_to_cache_irred(s, "4, -5");
-
-    distillwbin->distill_long_with_implicit(true);
-    check_irred_cls_eq(s, "2, -3, 4");
-}
-
-TEST_F(distill_long_with_impl, str_w_cache_no)
-{
-    s->new_vars(5);
-    s->add_clause_outer(str_to_cl("2, -3, 4, 5"));
-    add_to_cache_irred(s, "4, -1");
-
-    distillwbin->distill_long_with_implicit(true);
-    check_irred_cls_eq(s, "2, -3, 4, 5");
-}
-
-//SUB with stamp
-
-TEST_F(distill_long_with_impl, sub_w_stamp)
-{
-    s->new_vars(5);
-    s->add_clause_outer(str_to_cl("-1, 2, -3, 4"));
-    add_to_stamp_irred(s, "-1, 2");
-
-    distillwbin->distill_long_with_implicit(false);
-    check_irred_cls_eq(s, "");
-}
-
-TEST_F(distill_long_with_impl, sub_w_stamp2)
-{
-    s->new_vars(5);
-    s->add_clause_outer(str_to_cl("-1, 3, 4, 5"));
-    add_to_stamp_irred(s, "3, -1");
-
-    distillwbin->distill_long_with_implicit(false);
-    check_irred_cls_eq(s, "");
-}
-
-TEST_F(distill_long_with_impl, sub_w_stamp_no)
-{
-    s->new_vars(5);
-    s->add_clause_outer(str_to_cl("-1, 2, -3, 4"));
-    add_to_stamp_irred(s, "-2, -1");
-
-    distillwbin->distill_long_with_implicit(false);
-    check_irred_cls_eq(s, "-1, 2, -3, 4");
-}
-
-// //STR with stamp
-
-TEST_F(distill_long_with_impl, str_w_stamp)
-{
-    s->new_vars(5);
-    s->add_clause_outer(str_to_cl("2, -3, 4, 5"));
-    add_to_stamp_irred(s, "2, 3");
-
-    distillwbin->distill_long_with_implicit(true);
-    check_irred_cls_eq(s, "2, 4, 5");
-}
-
-TEST_F(distill_long_with_impl, str_w_stamp2)
-{
-    s->new_vars(10);
-    s->add_clause_outer(str_to_cl("-1, 7, 8, -9"));
-    add_to_stamp_irred(s, "1, 7");
-
-    distillwbin->distill_long_with_implicit(true);
-    check_irred_cls_eq(s, "7, 8, -9");
-}
-
-TEST_F(distill_long_with_impl, str_w_stamp_no)
-{
-    s->new_vars(10);
-    s->add_clause_outer(str_to_cl("-3, 6, 7, -9"));
-    add_to_stamp_irred(s, "3, -6");
-
-    distillwbin->distill_long_with_implicit(true);
-    check_irred_cls_eq(s, "-3, 6, 7, -9");
 }
 
 int main(int argc, char **argv) {

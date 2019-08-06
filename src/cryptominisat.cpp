@@ -314,7 +314,6 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.doMinimRedMoreMore = 1;
             conf.orig_global_timeout_multiplier = 5;
             conf.num_conflicts_of_search_inc = 1.15;
-            conf.more_red_minim_limit_cache = 1200;
             conf.more_red_minim_limit_binary = 600;
             conf.max_num_lits_more_more_red_min = 20;
             //conf.max_temporary_learnt_clauses = 10000;
@@ -344,7 +343,6 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.doMinimRedMoreMore = 1;
             conf.orig_global_timeout_multiplier = 5;
             conf.num_conflicts_of_search_inc = 1.15;
-            conf.more_red_minim_limit_cache = 1200;
             conf.more_red_minim_limit_binary = 600;
             conf.max_num_lits_more_more_red_min = 20;
             //conf.max_temporary_learnt_clauses = 10000;

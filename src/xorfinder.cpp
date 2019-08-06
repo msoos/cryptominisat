@@ -369,32 +369,6 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
         }
         end:;
     }
-
-    if (solver->conf.doCache &&
-        solver->conf.useCacheWhenFindingXors &&
-        !poss_xor.foundAll()
-    ) {
-        const TransCache& cache1 = solver->implCache[wlit];
-        for (const LitExtra litExtra: cache1.lits) {
-            const Lit otherlit = litExtra.getLit();
-            if (!occcnt[otherlit.var()]) {
-                continue;
-            }
-
-            binvec.clear();
-            binvec.resize(2);
-            binvec[0] = otherlit;
-            binvec[1] = wlit;
-            if (binvec[0] > binvec[1]) {
-                std::swap(binvec[0], binvec[1]);
-            }
-
-            xor_find_time_limit -= 1;
-            poss_xor.add(binvec, std::numeric_limits<ClOffset>::max(), varsMissing);
-            if (poss_xor.foundAll())
-                break;
-        }
-    }
 }
 
 vector<Xor> XorFinder::remove_xors_without_connecting_vars(const vector<Xor>& this_xors)

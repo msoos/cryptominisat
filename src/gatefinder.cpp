@@ -333,31 +333,6 @@ void GateFinder::find_or_gates_in_sweep_mode(const Lit lit)
         }
     }
 
-    if (solver->conf.doCache && solver->conf.otfHyperbin) {
-        const vector<LitExtra>& cache = solver->implCache[lit].lits;
-        *simplifier->limit_to_decrease -= cache.size();
-        for(const LitExtra l: cache) {
-             if (l.getOnlyIrredBin()) {
-                seen[(~l.getLit()).toInt()] = 1;
-                toClear.push_back(~l.getLit());
-            }
-        }
-    }
-
-    watch_subarray_const ws2 = solver->watches[~lit];
-    *simplifier->limit_to_decrease -= ws2.size();
-    for(const Watched w: ws2) {
-        if (w.isTri()
-            && !w.red()
-            && (seen[w.lit2().toInt()]
-                || (solver->conf.doStamp && solver->conf.otfHyperbin && solver->find_with_stamp_a_or_b(~w.lit2(), lit)))
-            && (seen[w.lit3().toInt()]
-                || (solver->conf.doStamp && solver->conf.otfHyperbin && solver->find_with_stamp_a_or_b(~w.lit3(), lit)))
-        ) {
-            add_gate_if_not_already_inside(lit, w.lit2(), w.lit3());
-        }
-    }
-
     *simplifier->limit_to_decrease -= toClear.size();
     for(const Lit toclear: toClear) {
         seen[toclear.toInt()] = 0;

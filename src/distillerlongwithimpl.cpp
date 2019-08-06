@@ -33,8 +33,6 @@ using namespace CMSat;
 using std::cout;
 using std::endl;
 
-//#define DEBUG_STAMPING
-
 #ifdef VERBOSE_DEBUG
 #define VERBOSE_SUBSUME_NONEXIST
 #endif
@@ -55,24 +53,24 @@ bool DistillerLongWithImpl::distill_long_with_implicit(const bool alsoStrengthen
 
     solver->clauseCleaner->remove_and_clean_all();
 
-    runStats.redCacheBased.clear();
-    runStats.irredCacheBased.clear();
+    runStats.redWatchBased.clear();
+    runStats.irredWatchBased.clear();
 
-    if (!shorten_all_cl_with_cache_watch_stamp(solver->longIrredCls, false, false))
+    if (!shorten_all_cl_with_watch(solver->longIrredCls, false, false))
         goto end;
 
     if (solver->longRedCls[0].size() > 0
-        && !shorten_all_cl_with_cache_watch_stamp(solver->longRedCls[0], true, false)
+        && !shorten_all_cl_with_watch(solver->longRedCls[0], true, false)
     ) {
         goto end;
     }
 
     if (alsoStrengthen) {
-        if (!shorten_all_cl_with_cache_watch_stamp(solver->longIrredCls, false, true))
+        if (!shorten_all_cl_with_watch(solver->longIrredCls, false, true))
             goto end;
 
         if (solver->longRedCls[0].size() > 0
-            && !shorten_all_cl_with_cache_watch_stamp(solver->longRedCls[0], true, true)
+            && !shorten_all_cl_with_watch(solver->longRedCls[0], true, true)
         ) {
             goto end;
         }
@@ -123,7 +121,7 @@ bool DistillerLongWithImpl::subsume_clause_with_watch(
             solver->binTri.redBins--;
             solver->binTri.irredBins++;
         }
-        cache_based_data.subBin++;
+        watch_based_data.subBin++;
         isSubsumed = true;
         return true;
     }
@@ -138,35 +136,6 @@ bool DistillerLongWithImpl::subsume_clause_with_watch(
     }
 
     return false;
-}
-
-bool DistillerLongWithImpl::str_and_sub_clause_with_cache(const Lit lit, const bool alsoStrengthen)
-{
-    if (solver->conf.doCache
-        && seen[lit.toInt()] //We haven't yet removed this literal from the clause
-     ) {
-        timeAvailable -= (1+(int)alsoStrengthen)*(long)solver->implCache[lit].lits.size();
-        for (const LitExtra elit: solver->implCache[lit].lits) {
-             if (alsoStrengthen
-                && seen[(~(elit.getLit())).toInt()]
-            ) {
-                seen[(~(elit.getLit())).toInt()] = 0;
-                thisRemLitCache++;
-             }
-
-             if (seen2[elit.getLit().toInt()]
-                 && elit.getOnlyIrredBin()
-             ) {
-                 isSubsumed = true;
-                 cache_based_data.subCache++;
-                 return true;
-             }
-         }
-
-         return false;
-     }
-
-     return false;
 }
 
 void DistillerLongWithImpl::str_and_sub_using_watch(
@@ -197,42 +166,7 @@ void DistillerLongWithImpl::str_and_sub_using_watch(
     }
 }
 
-void DistillerLongWithImpl::try_subsuming_by_stamping(const bool red)
-{
-    if (solver->conf.doStamp
-        && solver->conf.otfHyperbin
-        && !isSubsumed
-        && !red
-    ) {
-        timeAvailable -= (long)lits2.size()*3 + 10;
-        if (solver->stamp.stampBasedClRem(lits2)) {
-            isSubsumed = true;
-            cache_based_data.subsumedStamp++;
-        }
-    }
-}
-
-void DistillerLongWithImpl::remove_lits_through_stamping_red()
-{
-    if (lits.size() > 1) {
-        timeAvailable -= (long)lits.size()*3 + 10;
-        std::pair<size_t, size_t> tmp = solver->stamp.stampBasedLitRem(lits, STAMP_RED);
-        cache_based_data.remLitTimeStampTotal += tmp.first;
-        cache_based_data.remLitTimeStampTotalInv += tmp.second;
-    }
-}
-
-void DistillerLongWithImpl::remove_lits_through_stamping_irred()
-{
-    if (lits.size() > 1) {
-        timeAvailable -= (long)lits.size()*3 + 10;
-        std::pair<size_t, size_t> tmp = solver->stamp.stampBasedLitRem(lits, STAMP_IRRED);
-        cache_based_data.remLitTimeStampTotal += tmp.first;
-        cache_based_data.remLitTimeStampTotalInv += tmp.second;
-    }
-}
-
-void DistillerLongWithImpl::strsub_with_cache_and_watch(
+void DistillerLongWithImpl::strsub_with_watch(
     bool alsoStrengthen
     , Clause& cl
 ) {
@@ -247,17 +181,12 @@ void DistillerLongWithImpl::strsub_with_cache_and_watch(
         if (lit2 < end) {
             solver->watches.prefetch(lit2->toInt());
         }
-
-        bool subsumed = str_and_sub_clause_with_cache(*lit, alsoStrengthen);
-        if (subsumed)
-            break;
-
         str_and_sub_using_watch(cl, *lit, alsoStrengthen);
     }
     assert(lits2.size() > 1);
 }
 
-bool DistillerLongWithImpl::sub_str_cl_with_cache_watch_stamp(
+bool DistillerLongWithImpl::sub_str_cl_with_watch(
     ClOffset& offset
     , bool red
     , const bool alsoStrengthen
@@ -273,7 +202,6 @@ bool DistillerLongWithImpl::sub_str_cl_with_cache_watch_stamp(
     tmpStats.totalLits += cl.size();
     tmpStats.triedCls++;
     isSubsumed = false;
-    thisRemLitCache = 0;
     thisremLitBin = 0;
 
     //Fill 'seen'
@@ -284,10 +212,7 @@ bool DistillerLongWithImpl::sub_str_cl_with_cache_watch_stamp(
         lits2.push_back(lit);
     }
 
-    strsub_with_cache_and_watch(alsoStrengthen, cl);
-    if (solver->stamp.stampingTime != 0) {
-        try_subsuming_by_stamping(red);
-    }
+    strsub_with_watch(alsoStrengthen, cl);
 
     //Clear 'seen2'
     timeAvailable -= (long)lits2.size()*3;
@@ -310,13 +235,6 @@ bool DistillerLongWithImpl::sub_str_cl_with_cache_watch_stamp(
     if (isSubsumed)
         return true;
 
-    if (alsoStrengthen
-        && solver->conf.doStamp
-    ) {
-        remove_lits_through_stamping_red();
-        remove_lits_through_stamping_irred();
-    }
-
     //Nothing to do
     if (lits.size() == cl.size()) {
         return false;
@@ -330,8 +248,7 @@ bool DistillerLongWithImpl::remove_or_shrink_clause(Clause& cl, ClOffset& offset
 {
     //Remove or shrink clause
     timeAvailable -= (long)cl.size()*10;
-    cache_based_data.remLitCache += thisRemLitCache;
-    cache_based_data.remLitBin += thisremLitBin;
+    watch_based_data.remLitBin += thisremLitBin;
     tmpStats.shrinked++;
     timeAvailable -= (long)lits.size()*2 + 50;
     Clause* c2 = solver->add_clause_int(lits, cl.red(), cl.stats);
@@ -366,15 +283,15 @@ uint64_t DistillerLongWithImpl::calc_time_available(
     , const bool red
 ) const {
     //If it hasn't been to successful until now, don't do it so much
-    const Stats::CacheBased* stats = NULL;
+    const Stats::WatchBased* stats = NULL;
     if (red) {
-        stats = &(globalStats.redCacheBased);
+        stats = &(globalStats.redWatchBased);
     } else {
-        stats = &(globalStats.irredCacheBased);
+        stats = &(globalStats.irredWatchBased);
     }
 
     uint64_t maxCountTime =
-        solver->conf.watch_cache_stamp_based_str_time_limitM*1000LL*1000LL
+        solver->conf.watch_based_str_time_limitM*1000LL*1000LL
         *solver->conf.global_timeout_multiplier;
     if (!alsoStrengthen) {
         maxCountTime *= 2;
@@ -391,7 +308,7 @@ uint64_t DistillerLongWithImpl::calc_time_available(
     return maxCountTime;
 }
 
-bool DistillerLongWithImpl::shorten_all_cl_with_cache_watch_stamp(
+bool DistillerLongWithImpl::shorten_all_cl_with_watch(
     vector<ClOffset>& clauses
     , bool red
     , bool alsoStrengthen
@@ -403,10 +320,10 @@ bool DistillerLongWithImpl::shorten_all_cl_with_cache_watch_stamp(
 
     const int64_t orig_time_available = calc_time_available(alsoStrengthen, red);
     timeAvailable = orig_time_available;
-    tmpStats = Stats::CacheBased();
+    tmpStats = Stats::WatchBased();
     tmpStats.totalCls = clauses.size();
     tmpStats.numCalled = 1;
-    cache_based_data.clear();
+    watch_based_data.clear();
     bool need_to_finish = false;
 
     //don't randomise if it's too large.
@@ -446,7 +363,7 @@ bool DistillerLongWithImpl::shorten_all_cl_with_cache_watch_stamp(
         }
         #endif
 
-        if (sub_str_cl_with_cache_watch_stamp(offset, red, alsoStrengthen)) {
+        if (sub_str_cl_with_watch(offset, red, alsoStrengthen)) {
             solver->detachClause(offset);
             solver->cl_alloc.clauseFree(offset);
             continue;
@@ -460,7 +377,7 @@ bool DistillerLongWithImpl::shorten_all_cl_with_cache_watch_stamp(
     solver->check_implicit_stats();
     #endif
 
-    dump_stats_for_shorten_all_cl_with_cache_stamp(red
+    dump_stats_for_shorten_all_cl_with_watch(red
         , alsoStrengthen
         , myTime
         , orig_time_available
@@ -469,7 +386,7 @@ bool DistillerLongWithImpl::shorten_all_cl_with_cache_watch_stamp(
     return solver->okay();
 }
 
-void DistillerLongWithImpl::dump_stats_for_shorten_all_cl_with_cache_stamp(
+void DistillerLongWithImpl::dump_stats_for_shorten_all_cl_with_watch(
     bool red
     , bool alsoStrengthen
     , double myTime
@@ -479,19 +396,19 @@ void DistillerLongWithImpl::dump_stats_for_shorten_all_cl_with_cache_stamp(
     const double time_used = cpuTime() - myTime;
     const bool time_out = timeAvailable < 0;
     const double time_remain = float_div(timeAvailable, orig_time_available);
-    tmpStats.numClSubsumed += cache_based_data.get_cl_subsumed();
-    tmpStats.numLitsRem += cache_based_data.get_lits_rem();
+    tmpStats.numClSubsumed += watch_based_data.get_cl_subsumed();
+    tmpStats.numLitsRem += watch_based_data.get_lits_rem();
     tmpStats.cpu_time = time_used;
     if (red) {
-        runStats.redCacheBased += tmpStats;
+        runStats.redWatchBased += tmpStats;
     } else {
-        runStats.irredCacheBased += tmpStats;
+        runStats.irredWatchBased += tmpStats;
     }
     if (solver->conf.verbosity >= 2) {
         if (solver->conf.verbosity >= 10) {
             cout << "red:" << red << " alsostrenghten:" << alsoStrengthen << endl;
         }
-        cache_based_data.print();
+        watch_based_data.print();
 
         cout << "c [distill-with-bin-ext]"
         << solver->conf.print_times(time_used, time_out, time_remain)
@@ -502,7 +419,7 @@ void DistillerLongWithImpl::dump_stats_for_shorten_all_cl_with_cache_stamp(
         ss << "shorten"
         << (alsoStrengthen ? " and str" : "")
         << (red ? " red" : " irred")
-        <<  " cls with cache and stamp"
+        <<  " cls"
         ;
         solver->sqlStats->time_passed(
             solver
@@ -514,73 +431,59 @@ void DistillerLongWithImpl::dump_stats_for_shorten_all_cl_with_cache_stamp(
     }
 }
 
-void DistillerLongWithImpl::CacheBasedData::clear()
+void DistillerLongWithImpl::WatchBasedData::clear()
 {
-    CacheBasedData tmp;
+    WatchBasedData tmp;
     *this = tmp;
 }
 
-size_t DistillerLongWithImpl::CacheBasedData::get_cl_subsumed() const
+size_t DistillerLongWithImpl::WatchBasedData::get_cl_subsumed() const
 {
-    return subBin + subsumedStamp + subCache;
+    return subBin;
 }
 
-size_t DistillerLongWithImpl::CacheBasedData::get_lits_rem() const
+size_t DistillerLongWithImpl::WatchBasedData::get_lits_rem() const
 {
-    return remLitBin + remLitCache
-        + remLitTimeStampTotal + remLitTimeStampTotalInv;
+    return remLitBin;
 }
 
-void DistillerLongWithImpl::CacheBasedData::print() const
+void DistillerLongWithImpl::WatchBasedData::print() const
 {
-    cout
-    << "c [distill-with-bin-ext] stamp-based"
-    << " lit-rem: " << remLitTimeStampTotal
-    << " inv-lit-rem: " << remLitTimeStampTotalInv
-    << " stamp-cl-rem: " << subsumedStamp
-    << endl;
-
     cout
     << "c [distill-with-bin-ext] bin-based"
     << " lit-rem: " << remLitBin
     << " cl-sub: " << subBin
     << endl;
-
-    cout
-    << "c [distill-with-bin-ext] cache-based"
-    << " lit-rem: " << remLitCache
-    << " cl-sub: " << subCache
-    << endl;
 }
 
 DistillerLongWithImpl::Stats& DistillerLongWithImpl::Stats::operator+=(const Stats& other)
 {
-    irredCacheBased += other.irredCacheBased;
-    redCacheBased += other.redCacheBased;
+    irredWatchBased += other.irredWatchBased;
+    redWatchBased += other.redWatchBased;
     return *this;
 }
 
 void DistillerLongWithImpl::Stats::print_short(const Solver* _solver) const
 {
-    irredCacheBased.print_short("irred", _solver);
-    redCacheBased.print_short("red", _solver);
+    irredWatchBased.print_short("irred", _solver);
+    redWatchBased.print_short("red", _solver);
 }
 
 void DistillerLongWithImpl::Stats::print() const
 {
     cout << "c -------- STRENGTHEN STATS --------" << endl;
-    cout << "c --> cache-based on irred cls" << endl;
-    irredCacheBased.print();
+    cout << "c --> watch-based on irred cls" << endl;
+    irredWatchBased.print();
 
-    cout << "c --> cache-based on red cls" << endl;
-    redCacheBased.print();
+    cout << "c --> watch-based on red cls" << endl;
+    redWatchBased.print();
     cout << "c -------- STRENGTHEN STATS END --------" << endl;
 }
 
 
-void DistillerLongWithImpl::Stats::CacheBased::print_short(const string type, const Solver* _solver) const
+void DistillerLongWithImpl::Stats::WatchBased::print_short(const string type, const Solver* _solver) const
 {
-    cout << "c [distill] cache-based "
+    cout << "c [distill] watch-based "
     << std::setw(5) << type
     << "-- "
     << " cl tried " << std::setw(8) << triedCls
@@ -591,7 +494,7 @@ void DistillerLongWithImpl::Stats::CacheBased::print_short(const string type, co
     << endl;
 }
 
-void DistillerLongWithImpl::Stats::CacheBased::print() const
+void DistillerLongWithImpl::Stats::WatchBased::print() const
 {
     print_stats_line("c time"
         , cpu_time

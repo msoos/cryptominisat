@@ -30,9 +30,7 @@ THE SOFTWARE.
 #include "vardata.h"
 #include "propby.h"
 #include "solverconf.h"
-#include "stamp.h"
 #include "solvertypes.h"
-#include "implcache.h"
 #include "watcharray.h"
 #include "drat.h"
 #include "clauseallocator.h"
@@ -100,8 +98,6 @@ public:
     vector<VarData> varData;
     bool VSIDS = true;
     vector<uint32_t> depth;
-    Stamp stamp;
-    ImplCache implCache;
     uint32_t minNumVars = 0;
     uint32_t sumConflicts = 0;
     uint32_t latest_feature_calc = 0;

@@ -34,7 +34,6 @@ using namespace CMSat;
 TEST(scc_test, find_1)
 {
     SolverConf conf;
-    conf.doCache = false;
 
     std::unique_ptr<std::atomic<bool>> tmp(new std::atomic<bool>(false));
     Solver s(&conf, tmp.get());
@@ -50,7 +49,6 @@ TEST(scc_test, find_1)
 TEST(scc_test, find_2)
 {
     SolverConf conf;
-    conf.doCache = false;
 
     std::unique_ptr<std::atomic<bool>> tmp(new std::atomic<bool>(false));
     Solver s(&conf, tmp.get());
@@ -69,7 +67,6 @@ TEST(scc_test, find_2)
 TEST(scc_test, find_circle_3)
 {
     SolverConf conf;
-    conf.doCache = false;
 
     std::unique_ptr<std::atomic<bool>> tmp(new std::atomic<bool>(false));
     Solver s(&conf, tmp.get());
@@ -86,7 +83,6 @@ TEST(scc_test, find_circle_3)
 TEST(scc_test, find_two_circle2_3)
 {
     SolverConf conf;
-    conf.doCache = false;
 
     std::unique_ptr<std::atomic<bool>> tmp(new std::atomic<bool>(false));
     Solver s(&conf, tmp.get());
@@ -107,7 +103,6 @@ TEST(scc_test, find_two_circle2_3)
 TEST(scc_test, find_1_diff)
 {
     SolverConf conf;
-    conf.doCache = false;
 
     std::unique_ptr<std::atomic<bool>> tmp(new std::atomic<bool>(false));
     Solver s(&conf, tmp.get());
@@ -124,7 +119,6 @@ TEST(scc_test, find_1_diff)
 TEST(scc_test, find_0)
 {
     SolverConf conf;
-    conf.doCache = false;
 
     std::unique_ptr<std::atomic<bool>> tmp(new std::atomic<bool>(false));
     Solver s(&conf, tmp.get());

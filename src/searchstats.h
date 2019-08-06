@@ -68,11 +68,7 @@ public:
 
     uint64_t furtherShrinkAttempt = 0;
     uint64_t binTriShrinkedClause = 0;
-    uint64_t cacheShrinkedClause = 0;
     uint64_t furtherShrinkedSuccess = 0;
-    uint64_t stampShrinkAttempt = 0;
-    uint64_t stampShrinkCl = 0;
-    uint64_t stampShrinkLit = 0;
     uint64_t moreMinimLitsStart = 0;
     uint64_t moreMinimLitsEnd = 0;
     uint64_t recMinimCost = 0;
@@ -86,7 +82,6 @@ public:
     uint64_t otfSubsumedLong = 0;
     uint64_t otfSubsumedRed = 0;
     uint64_t otfSubsumedLitsGained = 0;
-    uint64_t cache_hit = 0;
     uint64_t red_cl_in_which0 = 0;
 
     //Hyper-bin & transitive reduction

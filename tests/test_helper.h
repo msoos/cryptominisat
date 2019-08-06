@@ -41,7 +41,6 @@ THE SOFTWARE.
 #include <cassert>
 #include <algorithm>
 #include "src/solver.h"
-#include "src/stamp.h"
 #include "src/xor.h"
 #include "cryptominisat5/cryptominisat.h"
 
@@ -461,80 +460,6 @@ void check_xors_contains(const vector<Xor>& got_data, const std::string& expecte
         }
     }
     EXPECT_TRUE(found);
-}
-
-string print_cache(const vector<LitExtra>& c)
-{
-    std::stringstream ss;
-    for(LitExtra a: c) {
-        ss << a.getLit() << "(irred: " << a.getOnlyIrredBin() << " ), ";
-    }
-    return ss.str();
-}
-
-void check_impl_cache_contains(const Solver* s, const std::string& data)
-{
-    vector<Lit> lits = str_to_cl(data);
-    assert(lits.size() == 2);
-
-    const vector<LitExtra>& cache_lits = s->implCache[lits[0]].lits;
-    /*cout << "cache[0]: " << print_cache(s->implCache[Lit(0, false)].lits) << endl;
-    cout << "cache[1]: " << print_cache(s->implCache[Lit(1, false)].lits) << endl;
-    cout << "cache[2]: " << print_cache(s->implCache[Lit(2, false)].lits) << endl;
-
-    cout << "cache[~0]: " << print_cache(s->implCache[Lit(0, true)].lits) << endl;
-    cout << "cache[~1]: " << print_cache(s->implCache[Lit(1, true)].lits) << endl;
-    cout << "cache[~2]: " << print_cache(s->implCache[Lit(2, true)].lits) << endl;
-    */
-    bool inside = false;
-    for(LitExtra l: cache_lits) {
-        if (l.getLit() == lits[1])
-            inside = true;
-    }
-    EXPECT_TRUE(inside);
-}
-
-void add_to_cache_irred(Solver* s, const string& data)
-{
-    vector<Lit> lits = str_to_cl(data);
-    assert(lits.size() == 2);
-    assert(s->implCache.size() > lits[0].toInt());
-    assert(s->implCache.size() > lits[1].toInt());
-    s->implCache[lits[0]].lits.push_back(LitExtra(lits[1], true));
-    s->implCache[lits[1]].lits.push_back(LitExtra(lits[0], true));
-}
-
-void add_to_stamp_irred(Solver* s, const string& data)
-{
-    vector<Lit> lits = str_to_cl(data);
-    assert(lits.size() == 2);
-    assert(s->stamp.tstamp.size() > lits[0].toInt());
-    assert(s->stamp.tstamp.size() > lits[1].toInt());
-    s->stamp.tstamp[(~lits[0]).toInt()].start[STAMP_IRRED] = ++ s->stamp.stampingTime;
-    s->stamp.tstamp[(lits[1]).toInt()].start[STAMP_IRRED] = ++ s->stamp.stampingTime;
-    s->stamp.tstamp[(lits[1]).toInt()].end[STAMP_IRRED] = ++ s->stamp.stampingTime;
-    s->stamp.tstamp[(~lits[0]).toInt()].end[STAMP_IRRED] = ++ s->stamp.stampingTime;
-}
-
-void check_stamp_contains(Solver* s, const string& data, const StampType t)
-{
-    vector<Lit> lits = str_to_cl(data);
-    assert(lits.size() == 2);
-    assert(s->stamp.tstamp.size() > lits[0].toInt());
-    assert(s->stamp.tstamp.size() > lits[1].toInt());
-    uint64_t start1 = s->stamp.tstamp[(~lits[0]).toInt()].start[t];
-    uint64_t end1 = s->stamp.tstamp[(~lits[0]).toInt()].end[t];
-    uint64_t start2 = s->stamp.tstamp[lits[1].toInt()].start[t];
-    uint64_t end2 = s->stamp.tstamp[lits[1].toInt()].end[t];
-    /*cout
-    << "start1: " << start1
-    << "end1: " << end1
-    << "start2: " << start2
-    << "end2: " << end2
-    << endl;*/
-
-    EXPECT_TRUE(start1 < start2);
-    EXPECT_TRUE(end1 > end2);
 }
 
 void check_zero_assigned_lits_eq(Solver* s, const string& data)

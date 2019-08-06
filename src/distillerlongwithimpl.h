@@ -54,7 +54,7 @@ class DistillerLongWithImpl {
             void print_short(const Solver* solver) const;
             void print() const;
 
-            struct CacheBased
+            struct WatchBased
             {
                 double cpu_time = 0.0;
                 uint64_t numLitsRem = 0;
@@ -68,14 +68,14 @@ class DistillerLongWithImpl {
 
                 void clear()
                 {
-                    CacheBased tmp;
+                    WatchBased tmp;
                     *this = tmp;
                 }
 
                 void print_short(const string type, const Solver* solver) const;
                 void print() const;
 
-                CacheBased& operator+=(const CacheBased& other)
+                WatchBased& operator+=(const WatchBased& other)
                 {
                     cpu_time += other.cpu_time;
                     numLitsRem += other.numLitsRem;
@@ -91,8 +91,8 @@ class DistillerLongWithImpl {
                 }
             };
 
-            CacheBased irredCacheBased;
-            CacheBased redCacheBased;
+            WatchBased irredWatchBased;
+            WatchBased redWatchBased;
         };
 
         const Stats& get_stats() const;
@@ -101,35 +101,28 @@ class DistillerLongWithImpl {
     private:
 
         bool remove_or_shrink_clause(Clause& cl, ClOffset& offset);
-        void strsub_with_cache_and_watch(
+        void strsub_with_watch(
             bool alsoStrengthen
             , Clause& cl
         );
-        void dump_stats_for_shorten_all_cl_with_cache_stamp(
+        void dump_stats_for_shorten_all_cl_with_watch(
             bool red
             , bool alsoStrengthen
             , double myTime
             , double orig_time_available
         );
 
-        //Cache-based data
-        struct CacheBasedData
+        struct WatchBasedData
         {
-            size_t remLitTimeStampTotal = 0;
-            size_t remLitTimeStampTotalInv = 0;
-            size_t subsumedStamp = 0;
-            size_t remLitCache = 0;
             size_t remLitBin = 0;
             size_t subBin = 0;
-            size_t subCache = 0;
             void clear();
             size_t get_cl_subsumed() const;
             size_t get_lits_rem() const;
             void print() const;
         };
-        CacheBasedData cache_based_data;
+        WatchBasedData watch_based_data;
         bool isSubsumed;
-        size_t thisRemLitCache;
         size_t thisremLitBin;
         void str_and_sub_using_watch(
             Clause& cl
@@ -145,13 +138,9 @@ class DistillerLongWithImpl {
             , Watched* wit
             , const Clause& cl
         );
-        bool str_and_sub_clause_with_cache(const Lit lit, const bool alsoStrengthen);
-        void try_subsuming_by_stamping(const bool red);
-        void remove_lits_through_stamping_red();
-        void remove_lits_through_stamping_irred();
-        Stats::CacheBased tmpStats;
+        Stats::WatchBased tmpStats;
         //bool needToFinish;
-        bool sub_str_cl_with_cache_watch_stamp(
+        bool sub_str_cl_with_watch(
             ClOffset& offset
             , bool red
             , const bool alsoStrengthen
@@ -162,7 +151,7 @@ class DistillerLongWithImpl {
             , const bool red
         ) const;
 
-        bool shorten_all_cl_with_cache_watch_stamp(
+        bool shorten_all_cl_with_watch(
             vector<ClOffset>& clauses
             , bool red
             , bool alsoStrengthen

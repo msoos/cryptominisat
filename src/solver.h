@@ -32,7 +32,6 @@ THE SOFTWARE.
 
 #include "constants.h"
 #include "solvertypes.h"
-#include "implcache.h"
 #include "propengine.h"
 #include "searcher.h"
 #include "clauseusagestats.h"
@@ -55,10 +54,9 @@ class OccSimplifier;
 class SCCFinder;
 class DistillerLong;
 class DistillerLongWithImpl;
-class StrImplWImplStamp;
+class StrImplWImpl;
 class CalcDefPolars;
 class SolutionExtender;
-class ImplCache;
 class CompFinder;
 class CompHandler;
 class SubsumeStrengthen;
@@ -143,8 +141,6 @@ class Solver : public Searcher
 
         //Checks
         void check_implicit_propagated() const;
-        bool find_with_stamp_a_or_b(Lit a, Lit b) const;
-        bool find_with_cache_a_or_b(Lit a, Lit b, int64_t* limit) const;
         bool find_with_watchlist_a_or_b(Lit a, Lit b, int64_t* limit) const;
 
         //Systems that are used to accompilsh the tasks
@@ -158,7 +154,7 @@ class Solver : public Searcher
         OccSimplifier*         occsimplifier = NULL;
         DistillerLong*         distill_long_cls = NULL;
         DistillerLongWithImpl* dist_long_with_impl = NULL;
-        StrImplWImplStamp* dist_impl_with_impl = NULL;
+        StrImplWImpl* dist_impl_with_impl = NULL;
         CompHandler*           compHandler = NULL;
 
         SearchStats sumSearchStats;
@@ -316,7 +312,6 @@ class Solver : public Searcher
                 }
             }
         }
-        void check_switchoff_limits_newvar(size_t n = 1);
         vector<Lit> outside_assumptions;
 
         //Stats printing
@@ -504,54 +499,6 @@ inline lbool Solver::simplify_with_assumptions(
     fresh_solver = false;
     move_to_outside_assumps(_assumptions);
     return simplify_problem_outside();
-}
-
-inline bool Solver::find_with_stamp_a_or_b(Lit a, const Lit b) const
-{
-    //start STAMP of A < start STAMP of B
-    //end STAMP of A > start STAMP of B
-    //means: ~A V B is inside
-    //so, invert A
-    a = ~a;
-
-    const uint64_t start_inv_other = solver->stamp.tstamp[(a).toInt()].start[STAMP_IRRED];
-    const uint64_t start_eqLit = solver->stamp.tstamp[b.toInt()].end[STAMP_IRRED];
-    if (start_inv_other < start_eqLit) {
-        const uint64_t end_inv_other = solver->stamp.tstamp[(a).toInt()].end[STAMP_IRRED];
-        const uint64_t end_eqLit = solver->stamp.tstamp[b.toInt()].end[STAMP_IRRED];
-        if (end_inv_other > end_eqLit) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-inline bool Solver::find_with_cache_a_or_b(Lit a, Lit b, int64_t* limit) const
-{
-    const vector<LitExtra>& cache = solver->implCache[a].lits;
-    *limit -= cache.size();
-    for (LitExtra cacheLit: cache) {
-        if (cacheLit.getOnlyIrredBin()
-            && cacheLit.getLit() == b
-        ) {
-            return true;
-        }
-    }
-
-    std::swap(a,b);
-
-    const vector<LitExtra>& cache2 = solver->implCache[a].lits;
-    *limit -= cache2.size();
-    for (LitExtra cacheLit: cache) {
-        if (cacheLit.getOnlyIrredBin()
-            && cacheLit.getLit() == b
-        ) {
-            return true;
-        }
-    }
-
-    return false;
 }
 
 inline bool Solver::find_with_watchlist_a_or_b(Lit a, Lit b, int64_t* limit) const

@@ -113,16 +113,6 @@ void SCCFinder::tarjan(const uint32_t vertex)
     stack.push(vertex); // Push v on the stack
     stackIndicator[vertex] = true;
 
-    vector<LitExtra>* transCache = NULL;
-    if (solver->conf.doCache
-        && solver->conf.doExtendedSCC
-        && (!(solver->drat->enabled() || solver->conf.simulate_drat) ||
-            solver->conf.otfHyperbin)
-    ) {
-        transCache = &(solver->implCache[~vertLit].lits);
-        __builtin_prefetch(transCache->data());
-    }
-
     //Go through the watch
     watch_subarray_const ws = solver->watches[~vertLit];
     runStats.bogoprops += ws.size()/4;
@@ -136,19 +126,6 @@ void SCCFinder::tarjan(const uint32_t vertex)
             continue;
         }
         doit(lit, vertex);
-    }
-
-    if (transCache) {
-        runStats.bogoprops += transCache->size()/4;
-        for (const LitExtra& le: *transCache) {
-            Lit lit = le.getLit();
-            if (solver->value(lit) != l_Undef) {
-                continue;
-            }
-            if (lit != ~vertLit) {
-                doit(lit, vertex);
-            }
-        }
     }
 
     // Is v the root of an SCC?
