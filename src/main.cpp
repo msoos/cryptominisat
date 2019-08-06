@@ -1218,7 +1218,7 @@ void Main::manually_parse_some_options()
                 << vm["input"].as<vector<string> >().size()+vm.count("drat")
                 << endl;
 
-            for(string s: vm["input"].as<vector<string> >()) {
+            for(const string& s: vm["input"].as<vector<string> >()) {
                 cout << " --> " << s << endl;
             }
             if (vm.count("drat")) {
