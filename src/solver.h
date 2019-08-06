@@ -295,6 +295,7 @@ class Solver : public Searcher
         void reconfigure(int val);
         bool already_reconfigured = false;
         long calc_num_confl_to_do_this_iter(const size_t iteration_num) const;
+        void set_branch_strategy(const uint32_t iteration_num);
 
         vector<Lit> finalCl_tmp;
         bool sort_and_clean_clause(

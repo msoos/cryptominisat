@@ -1770,21 +1770,35 @@ long Solver::calc_num_confl_to_do_this_iter(const size_t iteration_num) const
     return num_conflicts_of_search;
 }
 
+void Solver::set_branch_strategy(const uint32_t iteration_num)
+{
+    //Iterate between VSIDS and Maple
+    if (conf.maple) {
+        //The 1st of every modulo N is VSIDS otherwise Maple
+        long modulo = ((long)iteration_num-1) % conf.modulo_maple_iter;
+        if (modulo < ((long)conf.modulo_maple_iter-1)) {
+            VSIDS = false;
+        } else {
+            VSIDS = true;
+        }
+    } else {
+        //so that in case of reconfiguration, VSIDS is correctly set
+        VSIDS = true;
+    }
+}
+
+
 lbool Solver::iterate_until_solved()
 {
     size_t iteration_num = 0;
-    #ifndef FINAL_PREDICTOR_BRANCH
-    VSIDS = true;
-    #else
-    VSIDS = false;
-    #endif
-
     lbool status = l_Undef;
     while (status == l_Undef
         && !must_interrupt_asap()
         && cpuTime() < conf.maxTime
         && sumConflicts < (uint64_t)conf.max_confl
     ) {
+        set_branch_strategy(iteration_num);
+
         iteration_num++;
         if (conf.verbosity && iteration_num >= 2) {
             print_clause_size_distrib();
@@ -1829,24 +1843,6 @@ lbool Solver::iterate_until_solved()
         if (status == l_Undef) {
             check_reconfigure();
         }
-
-        //Iterate between VSIDS and Maple
-        #ifndef FINAL_PREDICTOR_BRANCH
-        if (conf.maple) {
-            //The 1st of every modulo N is VSIDS otherwise Maple
-            long modulo = ((long)iteration_num-1) % conf.modulo_maple_iter;
-            if (modulo < ((long)conf.modulo_maple_iter-1)) {
-                VSIDS = false;
-            } else {
-                VSIDS = true;
-            }
-        } else {
-            //so that in case of reconfiguration, VSIDS is correctly set
-            VSIDS = true;
-        }
-        #else
-        assert(!VSIDS);
-        #endif
     }
     #ifdef USE_GAUSS
     clear_gauss_matrices();
