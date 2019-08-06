@@ -1407,9 +1407,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 solver->clean_occur_from_removed_clauses_only_smudged();
             }
         } /*else if (token == "occ-gates") {
-            if (solver->conf.doCache
-                && solver->conf.doGateFind
-            ) {
+            if (solver->conf.doGateFind) {
                 gateFinder->doAll();
             }
         }*/ else if (token == "") {
@@ -1906,20 +1904,14 @@ void OccSimplifier::remove_by_drat_recently_blocked_clauses(size_t origBlockedSi
     }
 
     for(size_t i = origBlockedSize; i < blockedClauses.size(); i++) {
-        //If doing stamping or caching, we cannot delete binary redundant
-        //clauses, because they are stored in the stamp/cache and so
-        //will be used -- and DRAT will complain when used
         vector<Lit> lits;
         size_t at = 1;
         while(at < blockedClauses[i].size()) {
             const Lit l = blockedClauses[i].at(at, blkcls);
             if (l == lit_Undef) {
-                if (
-                    !(lits.size() <= 2 && (solver->conf.doCache|| solver->conf.doStamp))
-                    //for the decision reaching we need it because otherwise we cannot prove
-                    //the SAT
-                    && !solver->conf.need_decisions_reaching
-                ) {
+                //for the decision reaching we need it because otherwise we cannot
+                //prove the SAT
+                if (!solver->conf.need_decisions_reaching) {
                     (*solver->drat) << del << lits << fin;
                 }
 
@@ -2221,9 +2213,7 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(
                 //so delete explicitly
 
                 //Drat
-                if (!solver->conf.doStamp && !solver->conf.doCache) {
-                   (*solver->drat) << del << lits[0] << lits[1] << fin;
-                }
+                (*solver->drat) << del << lits[0] << lits[1] << fin;
             }
 
             //Remove

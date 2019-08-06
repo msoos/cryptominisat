@@ -80,7 +80,6 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
 
     var_inc_vsids = conf.var_inc_vsids_start;
     more_red_minim_limit_binary_actual = conf.more_red_minim_limit_binary;
-    more_red_minim_limit_cache_actual = conf.more_red_minim_limit_cache;
     mtrand.seed(conf.origSeed);
     hist.setSize(conf.shortTermHistorySize, conf.blocking_restart_trail_hist_length);
     cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
@@ -2698,35 +2697,6 @@ Lit Searcher::pickBranchLit()
     return next;
 }
 
-void Searcher::cache_based_morem_minim(vector<Lit>& cl)
-{
-    int64_t limit = more_red_minim_limit_cache_actual;
-    const size_t first_n_lits_of_cl =
-        std::min<size_t>(conf.max_num_lits_more_more_red_min, cl.size());
-    for (size_t at_lit = 0; at_lit < first_n_lits_of_cl; at_lit++) {
-        Lit lit = cl[at_lit];
-
-        //Timeout
-        if (limit < 0)
-            break;
-
-        //Already removed this literal
-        if (seen[lit.toInt()] == 0)
-            continue;
-
-        assert(solver->implCache.size() > lit.toInt());
-        const TransCache& cache1 = solver->implCache[lit];
-        limit -= (int64_t)cache1.lits.size()/2;
-        for (const LitExtra litExtra: cache1.lits) {
-            assert(seen.size() > litExtra.getLit().toInt());
-            if (seen[(~(litExtra.getLit())).toInt()]) {
-                stats.cacheShrinkedClause++;
-                seen[(~(litExtra.getLit())).toInt()] = 0;
-            }
-        }
-    }
-}
-
 void Searcher::binary_based_morem_minim(vector<Lit>& cl)
 {
     int64_t limit  = more_red_minim_limit_binary_actual;
@@ -2759,17 +2729,9 @@ void Searcher::binary_based_morem_minim(vector<Lit>& cl)
 
 void Searcher::minimise_redundant_more_more(vector<Lit>& cl)
 {
-    /*if (conf.doStamp&& conf.more_more_with_stamp) {
-        stamp_based_morem_minim(learnt_clause);
-    }*/
-
     stats.furtherShrinkAttempt++;
     for (const Lit lit: cl) {
         seen[lit.toInt()] = 1;
-    }
-
-    if (conf.doCache && conf.more_more_with_cache) {
-        cache_based_morem_minim(cl);
     }
 
     binary_based_morem_minim(cl);
@@ -2794,45 +2756,6 @@ void Searcher::minimise_redundant_more_more(vector<Lit>& cl)
     }
     stats.furtherShrinkedSuccess += changedClause;
     cl.resize(cl.size() - (i-j));
-}
-
-void Searcher::stamp_based_morem_minim(vector<Lit>& cl)
-{
-    //Stamp-based minimization
-    stats.stampShrinkAttempt++;
-    const size_t origSize = cl.size();
-
-    Lit firstLit = cl[0];
-    std::pair<size_t, size_t> tmp;
-    tmp = stamp.stampBasedLitRem(cl, STAMP_RED);
-    if (tmp.first || tmp.second) {
-        //cout << "Rem RED: " << tmp.first + tmp.second << endl;
-    }
-    tmp = stamp.stampBasedLitRem(cl, STAMP_IRRED);
-    if (tmp.first || tmp.second) {
-        //cout << "Rem IRRED: " << tmp.first + tmp.second << endl;
-    }
-
-    //Handle removal or moving of the first literal
-    size_t at = std::numeric_limits<size_t>::max();
-    for(size_t i = 0; i < cl.size(); i++) {
-        if (cl[i] == firstLit) {
-            at = i;
-            break;
-        }
-    }
-    if (at != std::numeric_limits<size_t>::max()) {
-        //Make original first lit first in the final clause, too
-        std::swap(cl[0], cl[at]);
-    } else {
-        //Re-add first lit
-        cl.push_back(lit_Undef);
-        std::swap(cl[0], cl[cl.size()-1]);
-        cl[0] = firstLit;
-    }
-
-    stats.stampShrinkCl += ((origSize - cl.size()) > 0);
-    stats.stampShrinkLit += origSize - cl.size();
 }
 
 bool Searcher::VarFilter::operator()(uint32_t var) const

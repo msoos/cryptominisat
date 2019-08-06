@@ -352,7 +352,6 @@ class Searcher : public HyperEngine
 
 
         uint64_t more_red_minim_limit_binary_actual;
-        uint64_t more_red_minim_limit_cache_actual;
         const SearchStats& get_stats() const;
         size_t mem_used() const;
 
@@ -403,8 +402,6 @@ class Searcher : public HyperEngine
         // Transitive on-the-fly self-subsuming resolution
         void   minimise_redundant_more_more(vector<Lit>& cl);
         void   binary_based_morem_minim(vector<Lit>& cl);
-        void   cache_based_morem_minim(vector<Lit>& cl);
-        void   stamp_based_morem_minim(vector<Lit>& cl);
 
         //Variable activities
         struct VarFilter { ///Filter out vars that have been set or is not decision from heap

@@ -398,8 +398,6 @@ SolverConf CompHandler::configureNewSolver(
     conf.sampling_vars = NULL;
     if (numVars < 60) {
         conf.do_simplify_problem = false;
-        conf.doStamp = false;
-        conf.doCache = false;
         conf.doProbe = false;
         conf.otfHyperbin = false;
         conf.verbosity = std::min(solver->conf.verbosity, 0);

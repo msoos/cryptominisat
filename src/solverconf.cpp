@@ -78,8 +78,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , shortTermHistorySize (50)
         , lower_bound_for_blocking_restart(10000)
         , ratio_glue_geom(5)
-        , more_more_with_cache(false)
-        , more_more_with_stamp(false)
         , doAlwaysFMinim(false)
 
         //Clause minimisation
@@ -88,7 +86,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doMinimRedMoreMore(false)
         , max_glue_more_minim(6)
         , max_size_more_minim(30)
-        , more_red_minim_limit_cache(400)
         , more_red_minim_limit_binary(200)
         , max_num_lits_more_more_red_min(1)
 
@@ -181,10 +178,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , intree_scc_varreplace_time_limitM(30ULL)
         , doBothProp       (true)
         , doTransRed       (true)
-        , doStamp          (false)
-        , doCache          (false)
-        , cacheUpdateCutoff(2000)
-        , maxCacheSizeMB   (2048)
         , otf_hyper_time_limitM(340)
         , otf_hyper_ratio_limit(0.5) //if higher(closer to 1), we allow for less hyper-bin addition, i.e. we are stricter
         , single_probe_time_limit_perc(0.5)
@@ -193,7 +186,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doFindXors       (true)
         , maxXorToFind     (7)
         , maxXorToFindSlow (5)
-        , useCacheWhenFindingXors(false)
         , maxXORMatrix     (400ULL)
         #ifndef USE_GAUSS
         , xor_finder_time_limitM(50)
@@ -214,7 +206,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Var-replacer
         , doFindAndReplaceEqLits(true)
-        , doExtendedSCC         (true)
         , max_scc_depth (10000)
 
         //Iterative Alo Scheduling
@@ -243,7 +234,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , simplify_schedule_nonstartup(
             "handle-comps,"
             "scc-vrepl,"
-            "cache-clean,cache-tryboth,"
             "sub-impl,"
             "intree-probe,probe,"
             "sub-str-cls-with-bin,distill-cls,"
@@ -255,14 +245,14 @@ DLL_PUBLIC SolverConf::SolverConf() :
             //consolidate after OCC
             "cl-consolidate,"
             //strengthen again
-            "str-impl,cache-clean,sub-str-cls-with-bin,distill-cls,"
-            "scc-vrepl,check-cache-size,"
+            "str-impl,sub-str-cls-with-bin,distill-cls,"
+            "scc-vrepl,"
             //renumber then it's time for SLS
             "renumber,sls"
         )
         , simplify_schedule_preproc(
             "handle-comps,"
-            "scc-vrepl, cache-clean, cache-tryboth,"
+            "scc-vrepl,"
             "sub-impl,"
             "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
             "breakid, "
@@ -270,7 +260,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "occ-ternary-res, occ-xor,"
             //"occ-gates,"
             "cl-consolidate," //consolidate after OCC
-            "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
+            "str-impl, sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
             "str-impl, sub-impl, sub-str-cls-with-bin,"
             "intree-probe, probe,"
             "must-renumber"
@@ -296,7 +286,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Distillation
         , do_distill_clauses(true)
         , distill_long_cls_time_limitM(20ULL)
-        , watch_cache_stamp_based_str_time_limitM(30LL)
+        , watch_based_str_time_limitM(30LL)
         , distill_time_limitM(120LL)
 
         //Memory savings

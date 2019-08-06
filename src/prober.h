@@ -45,7 +45,6 @@ class Prober {
     public:
         explicit Prober(Solver* _solver);
         bool probe(vector<uint32_t>* probe_order = NULL);
-        int force_stamp = -1; // For testing. 1,2 = DFS (2=irred, 1=red), 0 = BFS, -1 = DONTCARE
 
         struct Stats
         {
@@ -73,11 +72,6 @@ class Prober {
                 //Propagation stats
                 propStats += other.propStats;
                 conflStats += other.conflStats;
-
-                //Binary clause
-                addedBin += other.addedBin;
-                removedIrredBin += other.removedIrredBin;
-                removedRedBin += other.removedRedBin;
 
                 //Compare against
                 origNumFreeVars += other.origNumFreeVars;
@@ -147,24 +141,6 @@ class Prober {
                     , "% of available lits"
                 );
 
-                print_stats_line("c bin add"
-                    , addedBin
-                    , stats_line_percent(addedBin, origNumBins)
-                    , "% of bins"
-                );
-
-                print_stats_line("c irred bin rem"
-                    , removedIrredBin
-                    , stats_line_percent(removedIrredBin, origNumBins)
-                    , "% of bins"
-                );
-
-                print_stats_line("c red bin rem"
-                    , removedRedBin
-                    , stats_line_percent(removedRedBin, origNumBins)
-                    , "% of bins"
-                );
-
                 print_stats_line("c time"
                     , cpu_time
                     , "s");
@@ -193,11 +169,6 @@ class Prober {
             PropStats propStats;
             ConflStats conflStats;
 
-            //Binary clause
-            uint64_t addedBin = 0;
-            uint64_t removedIrredBin = 0;
-            uint64_t removedRedBin = 0;
-
             //Compare against
             uint64_t origNumFreeVars = 0;
             uint64_t origNumBins = 0;
@@ -224,10 +195,8 @@ class Prober {
         uint64_t update_num_props_limit_based_on_prev_perf(uint64_t num_props_limit);
         void clean_clauses_after_probe();
         void check_if_must_disable_otf_hyperbin_and_tred(const uint64_t num_props_limit);
-        void check_if_must_disable_cache_update();
         vector<uint32_t> randomize_possible_choices();
         void update_and_print_stats(const double myTime, const uint64_t num_props_limit);
-        bool check_timeout_due_to_hyperbin();
 
         //For bothprop
         vector<uint32_t> propagatedBitSet;
@@ -237,9 +206,7 @@ class Prober {
         vector<Lit> tmp_lits;
         void clear_up_before_first_set();
 
-        void update_cache(Lit thisLit, Lit lit, size_t numElemsSet);
         void check_and_set_both_prop(Lit probed_lit, uint32_t var, bool first);
-        void add_rest_of_lits_to_cache(Lit lit);
 
         //For hyper-bin resolution
         #ifdef DEBUG_REMOVE_USELESS_BIN
@@ -257,7 +224,6 @@ class Prober {
 
         //Used to count extra time, must be cleared at every startup
         uint64_t extraTime;
-        uint64_t extraTimeCache;
 
         //Stats
         Stats runStats;

@@ -35,7 +35,6 @@ struct clause_clean_test : public ::testing::Test {
     {
         must_inter.store(false, std::memory_order_relaxed);
         SolverConf conf;
-        conf.doCache = false;
         s = new Solver(&conf, &must_inter);
         s->new_vars(20);
         cc = s->clauseCleaner;

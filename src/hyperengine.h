@@ -37,19 +37,13 @@ namespace CMSat {
 class HyperEngine : public PropEngine {
 public:
     HyperEngine(const SolverConf *_conf, Solver* solver, std::atomic<bool>* _must_interrupt_inter);
-    size_t print_stamp_mem(size_t totalMem) const;
     size_t mem_used() const;
-    size_t mem_used_stamp() const;
 
     bool use_depth_trick = true;
     bool perform_transitive_reduction = true;
     bool timedOutPropagateFull = false;
     Lit propagate_bfs(
         const uint64_t earlyAborTOut = std::numeric_limits<uint64_t>::max()
-    );
-    Lit propagate_dfs(
-        StampType stampType
-        , uint64_t earlyAborTOut = std::numeric_limits<uint64_t>::max()
     );
     set<BinaryClause> needToAddBinClause;       ///<We store here hyper-binary clauses to be added at the end of propagateFull()
     set<BinaryClause> uselessBin;
@@ -64,7 +58,6 @@ public:
 
 private:
     Lit   analyzeFail(PropBy propBy);
-    void  close_all_timestamps(const StampType stampType);
     Lit   remove_which_bin_due_to_trans_red(Lit conflict, Lit thisAncestor, const bool thisStepRed);
     void  remove_bin_clause(Lit lit);
     bool  is_ancestor_of(
@@ -90,34 +83,6 @@ private:
         , const Lit p
         , PropBy& confl
     );
-    Lit prop_red_bin_dfs(
-        StampType stampType
-        , PropBy& confl
-        , Lit& root
-        , bool& restart
-    );
-    Lit prop_irred_bin_dfs(
-       StampType stampType
-        , PropBy& confl
-        , const Lit root
-        , bool& restart
-    );
-    Lit prop_larger_than_bin_cl_dfs(
-        StampType stampType
-        , PropBy& confl
-        , Lit& root
-        , bool& restart
-    );
-    bool need_early_abort_dfs(
-        StampType stampType
-        , const size_t timeout
-    );
-
-    //For proiorty propagations
-    //
-    MyStack<Lit> toPropNorm;
-    MyStack<Lit> toPropBin;
-    MyStack<Lit> toPropRedBin;
 
     vector<Lit> currAncestors;
 };

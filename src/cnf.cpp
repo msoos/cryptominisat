@@ -42,13 +42,6 @@ void CNF::new_var(const bool bva, const uint32_t orig_outer)
 
     minNumVars++;
     enlarge_minimal_datastructs();
-    if (conf.doCache) {
-        implCache.new_var();
-    }
-    if (conf.doStamp) {
-        stamp.new_var();
-    }
-
     if (orig_outer == std::numeric_limits<uint32_t>::max()) {
         //completely new var
         enlarge_nonminimial_datastructs();
@@ -97,13 +90,6 @@ void CNF::new_vars(const size_t n)
     if (nVars() + n >= 1ULL<<28) {
         cout << "ERROR! Variable requested is far too large" << endl;
         std::exit(-1);
-    }
-
-    if (conf.doCache) {
-        implCache.new_vars(n);
-    }
-    if (conf.doStamp) {
-        stamp.new_vars(n);
     }
 
     minNumVars += n;
@@ -181,8 +167,6 @@ void CNF::save_on_var_memory()
     //gwatches.consolidate();
     #endif
 
-    implCache.save_on_var_memorys(nVars());
-    stamp.save_on_var_memory(nVars());
     for(auto& l: longRedCls) {
         l.shrink_to_fit();
     }
