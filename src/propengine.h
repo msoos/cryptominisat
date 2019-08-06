@@ -153,16 +153,7 @@ protected:
     friend class EGaussian;
 
     template<bool update_bogoprops>
-    PropBy propagate_any_order();
     PropBy propagate_any_order_fast();
-    PropBy propagate_strict_order();
-    /*template<bool update_bogoprops>
-    bool handle_xor_cl(
-        Watched*& i
-        , Watched*& &j
-        , const Lit p
-        , PropBy& confl
-    );*/
     PropResult prop_normal_helper(
         Clause& c
         , ClOffset offset
@@ -243,19 +234,6 @@ private:
     bool propagate_binary_clause_occur(const Watched& ws);
     bool propagate_long_clause_occur(const ClOffset offset);
     void sql_dump_vardata_picktime(uint32_t v, PropBy from);
-    template<bool update_bogoprops = true>
-    bool prop_bin_cl(
-        const Watched* i
-        , const Lit p
-        , PropBy& confl
-    ); ///<Propagate 2-long clause
-    template<bool update_bogoprops>
-    bool prop_long_cl_any_order(
-        Watched* i
-        , Watched*& j
-        , const Lit p
-        , PropBy& confl
-    );
 };
 
 

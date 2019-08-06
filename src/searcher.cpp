@@ -1191,7 +1191,7 @@ lbool Searcher::search()
         #ifdef USE_GAUSS
         gqhead = qhead;
         #endif
-        confl = propagate_any_order_fast();
+        confl = propagate_any_order_fast<false>();
 
         if (!confl.isNULL()) {
             //manipulate startup parameters
@@ -2215,7 +2215,7 @@ bool Searcher::clean_clauses_if_needed()
 {
     assert(decisionLevel() == 0);
 
-    if (!ok || !propagate_any_order_fast().isNULL()) {
+    if (!ok || !propagate_any_order_fast<false>().isNULL()) {
         return ok = false;
     }
 
@@ -3118,7 +3118,7 @@ PropBy Searcher::propagate() {
     const size_t origTrailSize = trail.size();
 
     PropBy ret;
-    ret = propagate_any_order<update_bogoprops>();
+    ret = propagate_any_order_fast<update_bogoprops>();
 
     //Drat -- If declevel 0 propagation, we have to add the unitaries
     if (decisionLevel() == 0 &&
