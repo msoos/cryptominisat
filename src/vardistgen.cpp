@@ -123,7 +123,9 @@ void VarDistGen::dump()
 {
     for(uint32_t i = 0; i < solver->nVars(); i++) {
         uint32_t outer_var = solver->map_inter_to_outer(i);
+        Lit lit_pos = Lit(i, true);
+        Lit lit_neg = Lit(i, false);
         solver->sqlStats->var_dist(
-            outer_var, data[i], solver);
+            outer_var, data[lit_pos.toInt()]+data[lit_neg.toInt()], solver);
     }
 }

@@ -80,10 +80,10 @@ class QueryVar (QueryHelper):
         print("Recreating indexes...")
         t = time.time()
         queries = """
-        create index `idxclid8` on `var_data_picktime` ( `var`, `sumConflicts_at_picktime`, `clid_start_incl`);
-        create index `idxclid81` on `var_data_picktime` ( `var`, `latest_vardist_feature_calc`);
+        create index `idxclid8` on `var_data_picktime` ( `var`, `sumConflicts_at_picktime`, `latest_vardist_feature_calc`);
+        create index `idxclid81` on `var_data_picktime` ( `var`, `sumConflicts_at_picktime`);
         create index `idxclid82` on `var_dist` ( `var`, `latest_vardist_feature_calc`);
-        create index `idxclid9` on `var_data_fintime` ( `var`, `sumConflicts_at_picktime`, `clid_end_notincl`);
+        create index `idxclid9` on `var_data_fintime` ( `var`, `sumConflicts_at_picktime`);
 
         create index `idxclid10` on `dec_var_clid` ( `var`, `sumConflicts_at_picktime`, `clauseID`);
 
@@ -91,7 +91,7 @@ class QueryVar (QueryHelper):
         create index `idxclid-s3` on `restart_dat_for_var` (`latest_satzilla_feature_calc`);
         create index `idxclid-s4` on `satzilla_features` (`latest_satzilla_feature_calc`);
 
-        create index `idxclid-s1` on `sum_cl_use` ( `clauseID`);
+        create index `idxclid-s1` on `sum_cl_use` ( `clauseID`, `num_used`);
         """
 
         for l in queries.split('\n'):
@@ -155,7 +155,7 @@ class QueryVar (QueryHelper):
 
         print("var_data_use updated T: %-3.2f s" % (time.time() - t))
 
-    def create_vardata_df(self):
+    def create_vardata_df(self, min_val, max_val):
         not_cols = [
             "clid_start_incl"
             , "clid_end_notincl"
@@ -173,6 +173,7 @@ class QueryVar (QueryHelper):
         not_cols =[
             "var"
             , "latest_vardist_feature_calc"
+            , "conflicts"
         ]
         var_dist = helper.query_fragment(
             "var_dist", not_cols, "var_dist", options.verbose, self.c)
@@ -201,35 +202,43 @@ class QueryVar (QueryHelper):
 
         not_cols =[
             "useful_clauses"
+            , "sumConflicts_at_picktime"
             , "var"]
         var_data_use = helper.query_fragment(
             "var_data_use", not_cols, "var_data_use", options.verbose, self.c)
 
+        not_cols =[
+            "clauseID"
+            , "first_confl_used"
+            , "last_confl_used"]
+        sum_cl_use = helper.query_fragment(
+            "sum_cl_use", not_cols, "sum_cl_use", options.verbose, self.c)
+
         q = """
         select
-        (1.0*useful_clauses_used)/(1.0*cls_marked) as `x.useful_times_per_marked`
+        sum_cl_use.num_used as `x.num_used`
         {rst}
-        {var_data_use}
         {var_dist}
         {var_data_picktime}
         {var_data_fintime}
         {szfeat}
+        {sum_cl_use}
 
         FROM
         var_data_picktime
         , var_data_fintime
-        , var_data_use
+        , sum_cl_use
+        , dec_var_clid
         , var_dist
         , restart_dat_for_var as rst
         , satzilla_features as szfeat
 
         WHERE
-        var_data_fintime.clauses_below >= {min_cls_below}
-        and var_data_use.cls_marked >= {min_cls_below}
-        and var_data_picktime.sumConflicts_at_picktime > 15000
+        var_data_picktime.sumConflicts_at_picktime > 15000
+        and dec_var_clid.clauseID = sum_cl_use.clauseID
 
-        and var_data_picktime.var = var_data_use.var
-        and var_data_picktime.sumConflicts_at_picktime = var_data_use.sumConflicts_at_picktime
+        and var_data_picktime.var = dec_var_clid.var
+        and var_data_picktime.sumConflicts_at_picktime = dec_var_clid.sumConflicts_at_picktime
 
         and var_data_fintime.var = var_data_picktime.var
         and var_data_fintime.sumConflicts_at_picktime = var_data_picktime.sumConflicts_at_picktime
@@ -237,21 +246,25 @@ class QueryVar (QueryHelper):
         and var_dist.var = var_data_picktime.var
         and var_dist.latest_vardist_feature_calc = var_data_picktime.latest_vardist_feature_calc
 
-        and rst.conflicts = var_data_use.sumConflicts_at_picktime
+        and rst.conflicts = var_data_picktime.sumConflicts_at_picktime
         and rst.latest_satzilla_feature_calc = szfeat.latest_satzilla_feature_calc
 
-        -- only to make sure multiple restart etc. cannot interfere with the data
-        group by var_data_picktime.var, var_data_picktime.sumConflicts_at_picktime
+        and sum_cl_use.num_used >= {min_val}
+        and sum_cl_use.num_used <= {max_val}
 
         order by random()
         limit {limit}
         """.format(
-            rst=rst, var_data_use=var_data_use,
+            rst=rst,
+            var_data_use=var_data_use,
             var_data_picktime=var_data_picktime,
             var_data_fintime=var_data_fintime,
             var_dist=var_dist,
+            sum_cl_use=sum_cl_use,
             szfeat=szfeat,
             limit=options.limit,
+            min_val=min_val,
+            max_val=max_val,
             min_cls_below=options.min_cls_below)
 
         df = pd.read_sql_query(q, self.conn)
@@ -283,5 +296,8 @@ if __name__ == "__main__":
     with QueryVar(options.fname) as q:
         q.create_indexes()
         q.fill_var_data_use()
-        df = q.create_vardata_df()
-        dump_df(df)
+        df1 = q.create_vardata_df(0,0)
+        df2 = q.create_vardata_df(1,2000)
+        df_full = pd.concat([df1, df2], sort=False)
+
+        dump_df(df_full)

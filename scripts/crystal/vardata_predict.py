@@ -39,12 +39,22 @@ else:
     from sklearn.model_selection import train_test_split
 
 
+def divide(col, name, df, cols):
+    # cannot divide by it, feature not present
+    if name not in cols:
+        return
+
+    # divide
+    if options.verbose:
+        print("dividing col '%s' with '%s' " % (col, name))
+    df["(" + col + "/" + name + ")"] = df[col].div(df[name]+0.000000001)
+
+
 def add_computed_features(df):
     print("Relative data...")
 
     # remove hidden data
-    del df["var_data_use.useful_clauses_used"]
-    del df["var_data_use.cls_marked"]
+    del df["sum_cl_use.num_used"]
 
     cols = list(df)
     if not options.picktime_only:
@@ -69,48 +79,114 @@ def add_computed_features(df):
         # remove everything to do with "during" and "fintime"
         cols = list(df)
         for c in cols:
-            if "clauses_below" in c or "rst" in c or "at_fintime" in c:
+            if "clauses_below" in c or "at_fintime" in c:
                 del df[c]
 
-    # per-conflicts, per-decisions, per-lits
-    names = [
-        "var_data_picktime.sumConflicts_at_picktime"
-        , "var_data_picktime.sumClLBD_at_picktime"
-        , "var_data_picktime.sumClSize_at_picktime"
-        , "var_data_picktime.sumConflictClauseLits_at_picktime"
-        # neutral below
-        , "var_data_picktime.dec_depth"
-        # below during
-        , "var_data_picktime.sumDecisions_below_during"
-        , "var_data_picktime.sumPropagations_below_during"
-        , "var_data_picktime.sumConflicts_below_during"
-        , "var_data_picktime.sumAntecedents_below_during"
-        , "var_data_picktime.sumConflictClauseLits_below_during"
-        , "var_data_picktime.sumAntecedentsLits_below_during"
-        , "var_data_picktime.sumClSize_below_during"
-        , "var_data_picktime.sumClLBD_below_during"
-        ]
+    if False:
+        # per-conflicts, per-decisions, per-lits
+        names = [
+            "var_data_picktime.sumConflicts_at_picktime"
+            , "var_data_picktime.sumClLBD_at_picktime"
+            , "var_data_picktime.sumClSize_at_picktime"
+            , "var_data_picktime.sumConflictClauseLits_at_picktime"
+            # neutral below
+            , "var_data_picktime.dec_depth"
+            # below during
+            , "var_data_picktime.inside_conflict_clause_antecedents_at_picktime"
+            , "var_data_picktime.sumDecisions_below_during"
+            , "var_data_picktime.sumPropagations_below_during"
+            , "var_data_picktime.sumConflicts_below_during"
+            , "var_data_picktime.sumAntecedents_below_during"
+            , "var_data_picktime.sumConflictClauseLits_below_during"
+            , "var_data_picktime.sumAntecedentsLits_below_during"
+            , "var_data_picktime.sumClSize_below_during"
+            , "var_data_picktime.sumClLBD_below_during"
+            ]
 
-    cols = list(df)
-    for col in cols:
-        if "restart_type" not in col and "x." not in col and "var_data_use" not in col:
-            for name in names:
-                # cannot divide by it, feature not present
-                if name not in cols:
-                    continue
+        cols = list(df)
+        for col in cols:
+            if "restart_type" not in col and "x." not in col and "var_data_use" not in col and "rst.random_var_freq" not in col:
+                for name in names:
+                    divide(col, name, df, cols)
 
-                # divide
-                if options.verbose:
-                    print("dividing col '%s' with '%s' " % (col, name))
-                df["(" + col + "/" + name + ")"] = df[col].div(df[name]+0.000000001)
+    # divide var_dist by szfeat, all-by-all
+    if False:
+        for c in cols:
+            if "szfeat" in c:
+                for c2 in cols:
+                    if "var_dist" in c2:
+                        divide(c2, c, df, cols)
+
+    divide("var_dist.red_num_times_in_bin_clause", "rst.numRedBins", df, cols)
+    divide("var_dist.red_num_times_in_long_clause", "rst.numRedLongs", df, cols)
+    df["rst.redcls"] = df["rst.numRedLongs"]+df["rst.numRedBins"]
+    divide("var_dist.red_satisfies_cl", "rst.redcls", df, cols)
+    divide("var_dist.red_tot_num_lit_of_bin_it_appears_in", "rst.numRedBins", df, cols)
+    divide("var_dist.red_tot_num_lit_of_long_cls_it_appears_in", "rst.numRedLongs", df, cols)
+    divide("var_dist.red_sum_var_act_of_cls", "rst.redcls", df, cols)
+
+
+    divide("var_dist.irred_num_times_in_bin_clause", "rst.numIrredBins", df, cols)
+    divide("var_dist.irred_num_times_in_long_clause", "rst.numIrredLongs", df, cols)
+    df["rst.irredcls"] = df["rst.numIrredLongs"]+df["rst.numIrredBins"]
+    divide("var_dist.irred_satisfies_cl", "rst.irredcls", df, cols)
+    divide("var_dist.irred_tot_num_lit_of_bin_it_appears_in", "rst.numIrredBins", df, cols)
+    divide("var_dist.irred_tot_num_lit_of_long_cls_it_appears_in", "rst.numIrredLongs", df, cols)
+    divide("var_dist.irred_sum_var_act_of_cls", "rst.irredcls", df, cols)
+
+    divide("var_data_picktime.inside_conflict_clause_antecedents_during_at_picktime",
+           "var_data_picktime.sumAntecedentsLits_at_picktime", df, cols)
+
+    divide("var_data_picktime.sumAntecedentsLits_below_during",
+           "var_data_picktime.sumAntecedentsLits_at_picktime", df, cols)
+
+    divide("var_data_picktime.inside_conflict_clause_antecedents_at_picktime",
+        "var_data_picktime.sumAntecedentsLits_at_picktime", df, cols)
+
+    divide("var_dist.red_satisfies_cl", "rst.redcls", df, cols)
+    divide("var_dist.irred_satisfies_cl", "rst.irredcls", df, cols)
+    df["rst.cls"] = df["rst.irredcls"] + df["rst.redcls"]
+
+    divide("var_data_picktime.inside_conflict_clause_during_at_picktime", "rst.cls", df, cols)
+
+    divide("var_data_picktime.num_decided", "var_data_picktime.sumDecisions_at_picktime", df, cols)
+    divide("var_data_picktime.num_decided_pos", "var_data_picktime.sumDecisions_at_picktime", df, cols)
+    divide("var_data_picktime.num_decided", "var_data_picktime.num_decided_pos", df, cols)
+
+    divide("var_data_picktime.num_propagated", "var_data_picktime.sumPropagations_at_picktime", df, cols)
+    divide("var_data_picktime.num_propagated_pos", "var_data_picktime.sumPropagations_at_picktime", df, cols)
+    divide("var_data_picktime.num_propagated", "var_data_picktime.num_propagated_pos", df, cols)
+
+    del df["rst.free"]
+    del df["var_data_picktime.num_decided"]
+    del df["var_data_picktime.num_decided_pos"]
+    del df["var_data_picktime.num_propagated"]
+    del df["var_data_picktime.num_propagated_pos"]
+    del df["var_dist.red_satisfies_cl"]
+    del df["var_dist.irred_satisfies_cl"]
+    del df["var_data_picktime.sumAntecedentsLits_below_during"]
+    del df["var_data_picktime.inside_conflict_clause_antecedents_at_picktime"]
+    del df["var_data_picktime.inside_conflict_clause_antecedents_during_at_picktime"]
+
+    del df["var_data_picktime.sumPropagations_at_picktime"]
+    del df["var_data_picktime.sumDecisions_at_picktime"]
+
+    del df["var_data_picktime.inside_conflict_clause_during_at_picktime"]
+
+    for c in cols:
+        if "rst." in c:
+            if c in list(df):
+                del df[c]
+    pass
+
+    # del df["rst.numredLits"]
 
 
 def rem_useless_features(df):
     col = list(df)
     for c in col:
-        if "activity" not in c and "class" not in c and "useful_times" not in c:
+        if "restart_type" in c or "szfeat" in c:
             del df[c]
-    del df["var_data_fintime.rel_activity_at_fintime"]
     pass
 
 
@@ -123,15 +199,15 @@ class Learner:
 
     def cut_into_chunks(self):
         df["x.class"] = pd.qcut(
-            df["x.useful_times_per_marked"],
+            df["x.num_used"],
             q=options.quantiles,
             labels=["%d" % x for x in range(options.quantiles)])
 
-        df["x.class"] = pd.cut(
-            df["x.useful_times_per_marked"],
-            bins=[-1000, 1, 5, 10, 20, 40, 100, 200, 10**20],
-            #bins = [-1000, 20, 10**20],
-            labels=["%d" % x for x in range(8)])
+        #df["x.class"] = pd.cut(
+            #df["x.num_used"],
+            #bins=[-1000, 1, 5, 10, 20, 40, 100, 200, 10**20],
+            ##bins = [-1000, 20, 10**20],
+            #labels=["%d" % x for x in range(8)])
 
     @staticmethod
     def fix_feat_name(x):
@@ -259,7 +335,7 @@ class Learner:
         features = list(self.df)
         features.remove("clust")
         features.remove("x.class")
-        features.remove("x.useful_times_per_marked")
+        features.remove("x.num_used")
 
         if options.raw_data_plots:
             pd.options.display.mpl_style = "default"
@@ -341,7 +417,7 @@ if __name__ == "__main__":
     # data filtering
     parser.add_argument("--only", default=0.99, type=float,
                         dest="only_pecr", help="Only use this percentage of data")
-    parser.add_argument("-q", default=4, type=int, metavar="QUANTS",
+    parser.add_argument("-q", default=2, type=int, metavar="QUANTS",
                         dest="quantiles", help="Number of quantiles we want")
     parser.add_argument("--nocomputed", default=False, action="store_true",
                         dest="no_computed", help="Don't add computed features")
@@ -368,10 +444,10 @@ if __name__ == "__main__":
 
     df = pd.read_pickle(options.fname)
 
+    rem_useless_features(df)
     if not options.no_computed:
         add_computed_features(df)
 
-    rem_useless_features(df)
     print(list(df))
 
     # cluster setup

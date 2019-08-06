@@ -42,10 +42,29 @@ struct VarData2
         uint32_t tot_num_lit_of_bin_it_appears_in =0;
         uint32_t tot_num_lit_of_long_cls_it_appears_in = 0;
         double sum_var_act_of_cls;
+
+        Dat& operator+=(const Dat& other) {
+            num_times_in_bin_clause += other.num_times_in_bin_clause;
+            num_times_in_long_clause += other.num_times_in_long_clause;
+            satisfies_cl += other.satisfies_cl;
+            tot_num_lit_of_bin_it_appears_in += other.tot_num_lit_of_bin_it_appears_in;
+            tot_num_lit_of_long_cls_it_appears_in += other.tot_num_lit_of_long_cls_it_appears_in;
+            sum_var_act_of_cls += other.sum_var_act_of_cls;
+            return *this;
+        }
     };
     Dat irred;
     Dat red;
     double tot_act_long_red_cls;
+
+    VarData2 operator+(const VarData2& other) {
+        VarData2 ret;
+        ret = *this;
+        ret.red += other.red;
+        ret.irred += other.irred;
+        ret.tot_act_long_red_cls += other.tot_act_long_red_cls;
+        return ret;
+    }
 };
 
 class VarDistGen {
