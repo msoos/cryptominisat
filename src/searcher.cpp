@@ -2128,6 +2128,14 @@ struct MyPolarData
 #ifdef STATS_NEEDED
 inline void Searcher::dump_restart_sql(rst_dat_type type)
 {
+    //don't dump twice for var
+    if (type == rst_dat_type::var) {
+        if (last_dumped_conflict_rst_data_for_var == solver->sumConflicts) {
+            return;
+        }
+        last_dumped_conflict_rst_data_for_var = solver->sumConflicts;
+    }
+
     //Propagation stats
     PropStats thisPropStats = propStats - lastSQLPropStats;
     SearchStats thisStats = stats - lastSQLGlobalStats;

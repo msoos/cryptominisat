@@ -185,6 +185,7 @@ class Searcher : public HyperEngine
 
         #ifdef STATS_NEEDED
         void dump_restart_sql(rst_dat_type type);
+        uint64_t last_dumped_conflict_rst_data_for_var = std::numeric_limits<uint64_t>::max();
         #endif
 
         //Picking polarity when doing decision
