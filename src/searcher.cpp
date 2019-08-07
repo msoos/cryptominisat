@@ -153,11 +153,13 @@ inline void Searcher::add_lit_to_learnt(
     seen[var] = 1;
 
     if (!update_bogoprops) {
-        if (VSIDS) {
+        if (branch_strategy == branch::vsids) {
             bump_vsids_var_act<update_bogoprops>(var, 0.5);
             implied_by_learnts.push_back(var);
-        } else {
+        } else if (branch_strategy == branch::maple) {
             varData[var].conflicted++;
+        } else {
+            assert(false);
         }
 
         if (conf.doOTFSubsume) {
@@ -873,9 +875,9 @@ Clause* Searcher::analyze_conflict(
 
     out_btlevel = find_backtrack_level_of_learnt();
     if (!update_bogoprops) {
-        if (VSIDS) {
+        if (branch_strategy == branch::vsids) {
             bump_var_activities_based_on_implied_by_learnts<update_bogoprops>(out_btlevel);
-        } else {
+        } else if (branch_strategy == branch::maple) {
             uint32_t bump_by = 2;
             assert(toClear.empty());
             const Lit p = learnt_clause[0];
@@ -912,6 +914,8 @@ Clause* Searcher::analyze_conflict(
                 seen[l.var()] = 0;
             }
             toClear.clear();
+        } else {
+            assert(false);
         }
     }
     sumConflictClauseLits += learnt_clause.size();
@@ -1196,16 +1200,7 @@ lbool Searcher::search()
         confl = propagate_any_order_fast<false>();
 
         if (!confl.isNULL()) {
-            //manipulate startup parameters
-            if (VSIDS &&
-                ((stats.conflStats.numConflicts & 0xfff) == 0xfff) &&
-                var_decay_vsids < conf.var_decay_vsids_max
-            ) {
-                var_decay_vsids += 0.01;
-            }
-            if (!VSIDS && step_size > solver->conf.min_step_size) {
-                step_size -= solver->conf.step_size_dec;
-            }
+            update_branch_params();
 
             #ifdef STATS_NEEDED
             stats.conflStats.update(lastConflictCausedBy);
@@ -1271,6 +1266,24 @@ lbool Searcher::search()
     dump_search_loop_stats(myTime);
 
     return l_Undef;
+}
+
+inline void Searcher::update_branch_params()
+{
+    if (branch_strategy == branch::vsids) {
+        if (
+            ((stats.conflStats.numConflicts & 0xfff) == 0xfff)
+            && var_decay_vsids < conf.var_decay_vsids_max
+        ) {
+            var_decay_vsids += 0.01;
+        }
+    } else if (branch_strategy == branch::maple) {
+        if (step_size > solver->conf.min_step_size) {
+            step_size -= solver->conf.step_size_dec;
+        }
+    } else {
+        assert(false);
+    }
 }
 
 void Searcher::dump_search_sql(const double myTime)
@@ -1981,7 +1994,7 @@ bool Searcher::handle_conflict(const PropBy confl)
     }
 
     if (!update_bogoprops) {
-        if (VSIDS) {
+        if (branch_strategy == branch::vsids) {
             varDecayActivity();
         }
         decayClauseAct<update_bogoprops>();
@@ -2053,7 +2066,7 @@ void Searcher::print_restart_header()
         cout
         << "c"
         << " " << std::setw(6) << "type"
-        << " " << std::setw(5) << "VSIDS"
+        << " " << std::setw(6) << "branch"
         << " " << std::setw(5) << "rest"
         << " " << std::setw(5) << "conf"
         << " " << std::setw(5) << "freevar"
@@ -2092,7 +2105,7 @@ void Searcher::print_restart_stats_base() const
 {
     cout << "c"
          << " " << std::setw(6) << restart_type_to_short_string(params.rest_type);
-    cout << " " << std::setw(5) << (int)VSIDS;
+    cout << " " << std::setw(6) << branch_type_to_string(branch_strategy);
     cout << " " << std::setw(5) << sumRestarts();
 
     if (sumConflicts >  20000) {
@@ -2354,31 +2367,7 @@ lbool Searcher::solve(
 
     resetStats();
     lbool status = l_Undef;
-    if (VSIDS) {
-        if (conf.restartType == Restart::geom) {
-            max_confl_phase = conf.restart_first;
-            max_confl_this_phase = conf.restart_first;
-            params.rest_type = Restart::geom;
-        }
-
-        if (conf.restartType == Restart::glue_geom) {
-            max_confl_phase = conf.restart_first;
-            max_confl_this_phase = conf.restart_first;
-            params.rest_type = Restart::glue;
-        }
-
-        if (conf.restartType == Restart::luby) {
-            max_confl_this_phase = conf.restart_first;
-            params.rest_type = Restart::luby;
-        }
-
-        if (conf.restartType == Restart::glue) {
-            params.rest_type = Restart::glue;
-        }
-    } else {
-        max_confl_this_phase = conf.restart_first;
-        params.rest_type = Restart::luby;
-    }
+    setup_restart_strategy();
 
     #ifdef USE_GAUSS
     clear_gauss_matrices();
@@ -2414,13 +2403,11 @@ lbool Searcher::solve(
         #endif
 
         assert(watches.get_smudged_list().empty());
-
-        lastRestartConfl = sumConflicts;
         params.clear();
         params.max_confl_to_do = max_confl_per_search_solve_call-stats.conflStats.numConflicts;
         status = search();
         if (status == l_Undef) {
-            adjust_phases_restarts();
+            adjust_restart_strategy();
         }
 
         if (must_abort(status)) {
@@ -2446,69 +2433,87 @@ lbool Searcher::solve(
     return status;
 }
 
-void Searcher::adjust_phases_restarts()
+void Searcher::setup_restart_strategy()
+{
+    if (conf.restartType == Restart::geom) {
+        max_confl_phase = conf.restart_first;
+        max_confl_this_phase = conf.restart_first;
+        params.rest_type = Restart::geom;
+    }
+
+    if (conf.restartType == Restart::glue_geom) {
+        max_confl_phase = conf.restart_first;
+        max_confl_this_phase = conf.restart_first;
+        params.rest_type = Restart::glue;
+    }
+
+    if (conf.restartType == Restart::luby) {
+        max_confl_this_phase = conf.restart_first;
+        params.rest_type = Restart::luby;
+    }
+
+    if (conf.restartType == Restart::glue) {
+        params.rest_type = Restart::glue;
+    }
+}
+
+void Searcher::adjust_restart_strategy()
 {
     //Haven't finished the phase. Keep rolling.
     if (max_confl_this_phase > 0)
         return;
 
     //Note that all of this will be overridden by params.max_confl_to_do
-    if (!VSIDS) {
-        assert(params.rest_type == Restart::luby);
-        max_confl_this_phase = luby(2, luby_loop_num) * (double)conf.restart_first;
+    if (conf.verbosity >= 3) {
+        cout << "c doing branch_strategy" << endl;
+    }
+    switch(conf.restartType) {
+    case Restart::never:
+    case Restart::glue:
+        assert(params.rest_type == Restart::glue);
+        //nothing special
+        break;
+    case Restart::geom:
+        assert(params.rest_type == Restart::geom);
+        max_confl_phase *= conf.restart_inc;
+        max_confl_this_phase = max_confl_phase;
+        break;
+
+    case Restart::luby:
+        max_confl_this_phase = luby(conf.restart_inc*1.5, luby_loop_num)
+            * (double)conf.restart_first/2.0;
+
         luby_loop_num++;
-    } else {
+        //cout << "luby_loop_num: " << luby_loop_num << endl;
+        //cout << "max_confl_this_phase:" << max_confl_this_phase << endl;
+        break;
+
+    case Restart::glue_geom:
+        if (params.rest_type == Restart::geom) {
+            params.rest_type = Restart::glue;
+        } else {
+            params.rest_type = Restart::geom;
+        }
+        switch (params.rest_type) {
+            case Restart::geom:
+                max_confl_phase = (double)max_confl_phase * conf.restart_inc;
+                max_confl_this_phase = max_confl_phase;
+                break;
+
+            case Restart::glue:
+                max_confl_this_phase = conf.ratio_glue_geom *max_confl_phase;
+                break;
+
+            default:
+                release_assert(false);
+        }
         if (conf.verbosity >= 3) {
-            cout << "c doing VSIDS" << endl;
+            cout << "Phase is now "
+            << std::setw(10) << getNameOfRestartType(params.rest_type)
+            << " this phase size: " << max_confl_this_phase
+            << " global phase size: " << max_confl_phase << endl;
         }
-        switch(conf.restartType) {
-        case Restart::never:
-        case Restart::glue:
-            assert(params.rest_type == Restart::glue);
-            //nothing special
-            break;
-        case Restart::geom:
-            assert(params.rest_type == Restart::geom);
-            max_confl_phase *= conf.restart_inc;
-            max_confl_this_phase = max_confl_phase;
-            break;
-
-        case Restart::luby:
-            max_confl_this_phase = luby(conf.restart_inc*1.5, luby_loop_num)
-                * (double)conf.restart_first/2.0;
-
-            luby_loop_num++;
-            //cout << "luby_loop_num: " << luby_loop_num << endl;
-            //cout << "max_confl_this_phase:" << max_confl_this_phase << endl;
-            break;
-
-        case Restart::glue_geom:
-            if (params.rest_type == Restart::geom) {
-                params.rest_type = Restart::glue;
-            } else {
-                params.rest_type = Restart::geom;
-            }
-            switch (params.rest_type) {
-                case Restart::geom:
-                    max_confl_phase = (double)max_confl_phase * conf.restart_inc;
-                    max_confl_this_phase = max_confl_phase;
-                    break;
-
-                case Restart::glue:
-                    max_confl_this_phase = conf.ratio_glue_geom *max_confl_phase;
-                    break;
-
-                default:
-                    release_assert(false);
-            }
-            if (conf.verbosity >= 3) {
-                cout << "Phase is now "
-                << std::setw(10) << getNameOfRestartType(params.rest_type)
-                << " this phase size: " << max_confl_this_phase
-                << " global phase size: " << max_confl_phase << endl;
-            }
-            break;
-        }
+        break;
     }
 }
 
@@ -2615,7 +2620,19 @@ void Searcher::print_iteration_solving_stats()
     }
 }
 
-Lit Searcher::pickBranchLit()
+inline Lit Searcher::pickBranchLit()
+{
+    Lit next;
+    if (branch_strategy == branch::vsids || branch_strategy == branch::maple) {
+        next = pickBranchLit_act();
+    } else {
+        assert(false);
+    }
+
+    return next;
+}
+
+Lit Searcher::pickBranchLit_act()
 {
     #ifdef VERBOSE_DEBUG
     cout << "picking decision variable, dec. level: " << decisionLevel()
@@ -2626,10 +2643,10 @@ Lit Searcher::pickBranchLit()
 
     Lit next = lit_Undef;
 
-    // Random decision:
-    Heap<VarOrderLt> &order_heap = VSIDS ? order_heap_vsids : order_heap_maple;
-    vector<double>& var_act = VSIDS ? var_act_vsids : var_act_maple;
+    Heap<VarOrderLt> &order_heap = (branch_strategy == branch::vsids) ? order_heap_vsids : order_heap_maple;
+    vector<double>& var_act = (branch_strategy == branch::vsids) ? var_act_vsids : var_act_maple;
 
+    // Random decision:
     if (conf.random_var_freq > 0) {
         double rand = mtrand.randDblExc();
         if (rand < conf.random_var_freq && !order_heap.empty()) {
@@ -2668,7 +2685,8 @@ Lit Searcher::pickBranchLit()
                 return lit_Undef;
             }
 
-            if (!VSIDS) {
+            //Adjust maple to account for time passed
+            if (branch_strategy == branch::maple) {
                 uint32_t v2 = order_heap_maple[0];
                 uint32_t age = sumConflicts - varData[v2].cancelled;
                 while (age > 0) {
@@ -2677,12 +2695,13 @@ Lit Searcher::pickBranchLit()
                     if (order_heap_maple.inHeap(v2)) {
                         order_heap_maple.increase(v2);
                     }
-
                     varData[v2].cancelled = sumConflicts;
+
                     v2 = order_heap_maple[0];
                     age = sumConflicts - varData[v2].cancelled;
                 }
             }
+
             v = order_heap.removeMin();
         }
         next = Lit(v, !pick_polarity(v));
@@ -3197,7 +3216,7 @@ void Searcher::unfill_assumptions_set()
 
 inline void Searcher::varDecayActivity()
 {
-    assert(VSIDS);
+    assert(branch_strategy == branch::vsids);
     var_inc_vsids *= (1.0 / var_decay_vsids);
 }
 
@@ -3506,16 +3525,12 @@ void Searcher::cancelUntil(uint32_t level
             #endif
 
 
-            if (!update_bogoprops && !VSIDS) {
+            if (!update_bogoprops && branch_strategy == branch::maple) {
                 assert(sumConflicts >= varData[var].last_picked);
                 uint32_t age = sumConflicts - varData[var].last_picked;
                 if (age > 0) {
                     //adjusted reward -> higher if conflicted more or quicker
-
-                    //Original MAPLE reward
-                    #ifndef FINAL_PREDICTOR_BRANCH
                     reward += (double)varData[var].conflicted;
-                    #endif
                     double adjusted_reward = reward / ((double)age);
 
                     double old_activity = var_act_maple[var];
@@ -3575,14 +3590,16 @@ inline bool Searcher::check_order_heap_sanity() const
             && value(i) == l_Undef)
         {
             if (!order_heap_vsids.inHeap(i)) {
-                cout << "ERROR var " << i+1 << " not in VSIDS heap."
+                cout
+                << "ERROR var " << i+1 << " not in vsids heap."
                 << " value: " << value(i)
                 << " removed: " << removed_type_to_string(varData[i].removed)
                 << endl;
                 return false;
             }
             if (!order_heap_maple.inHeap(i)) {
-                cout << "ERROR var " << i+1 << " not in !VSIDS heap."
+                cout
+                << "ERROR var " << i+1 << " not in maple heap."
                 << " value: " << value(i)
                 << " removed: " << removed_type_to_string(varData[i].removed)
                 << endl;

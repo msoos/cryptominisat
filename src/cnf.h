@@ -100,7 +100,7 @@ public:
     uint32_t gqhead;
     #endif
     vector<VarData> varData;
-    bool VSIDS = true;
+    branch branch_strategy = branch::none;
     vector<uint32_t> depth;
     uint32_t minNumVars = 0;
 

@@ -292,7 +292,9 @@ class Searcher : public HyperEngine
         template<bool update_bogoprops>
         lbool new_decision();  // Handles the case when decision must be made
         void  check_need_restart();     // Helper function to decide if we need to restart during search
-        Lit   pickBranchLit();
+        Lit pickBranchLit();
+        Lit pickBranchLit_act();
+        Lit pickBranchLit_vmtf();
 
         ///////////////
         // Conflicting
@@ -386,15 +388,16 @@ class Searcher : public HyperEngine
         void analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& out_conflict);
         size_t tmp_learnt_clause_size;
         cl_abst_type tmp_learnt_clause_abst;
+        void update_branch_params();
 
         //Restarts
         uint64_t max_confl_per_search_solve_call;
         bool blocked_restart = false;
         void check_blocking_restart();
         uint32_t num_search_called = 0;
-        uint64_t lastRestartConfl;
         double luby(double y, int x);
-        void adjust_phases_restarts();
+        void adjust_restart_strategy();
+        void setup_restart_strategy();
 
         void print_solution_varreplace_status() const;
 
@@ -501,14 +504,21 @@ inline void Searcher::add_in_partial_solving_stats()
 
 inline void Searcher::insert_var_order(const uint32_t x)
 {
-    Heap<VarOrderLt> &order_heap = VSIDS ? order_heap_vsids : order_heap_maple;
-    if (!order_heap.inHeap(x)) {
-        #ifdef SLOW_DEUG
-        assert(varData[x].removed == Removed::none
-            && "All variables should be decision vars unless removed");
-        #endif
+    #ifdef SLOW_DEUG
+    assert(varData[x].removed == Removed::none
+        && "All variables should be decision vars unless removed");
+    #endif
 
-        order_heap.insert(x);
+    if (branch_strategy == branch::vsids) {
+        if (!order_heap_vsids.inHeap(x)) {
+            order_heap_vsids.insert(x);
+        }
+    } else if (branch_strategy == branch::maple) {
+        if (!order_heap_maple.inHeap(x)) {
+            order_heap_maple.insert(x);
+        }
+    } else {
+        assert(false);
     }
 }
 

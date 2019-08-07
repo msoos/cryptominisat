@@ -749,8 +749,6 @@ void Main::add_supported_options()
         , "Treat all 'renumber' strategies as 'must-renumber'")
     ("fullwatchconseveryn", po::value(&conf.full_watch_consolidate_every_n_confl)->default_value(conf.full_watch_consolidate_every_n_confl)
         , "Consolidate watchlists fully once every N conflicts. Scheduled during simplification rounds.")
-    ("consolidatestaticorder", po::value(&conf.static_mem_consolidate_order)->default_value(conf.static_mem_consolidate_order)
-        , "Consolidate clause memory in static order. If set to 0, it's consolidated in activity order")
     ;
 
     po::options_description miscOptions("Misc options");

@@ -1454,11 +1454,6 @@ lbool Solver::solve_with_assumptions(
     //Reset parameters
     max_confl_phase = conf.restart_first;
     max_confl_this_phase = max_confl_phase;
-    #ifndef FINAL_PREDICTOR_BRANCH
-    VSIDS = true;
-    #else
-    VSIDS = false;
-    #endif
     var_decay_vsids = conf.var_decay_vsids_start;
     step_size = conf.orig_step_size;
     conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
@@ -1717,18 +1712,17 @@ long Solver::calc_num_confl_to_do_this_iter(const size_t iteration_num) const
 
 void Solver::set_branch_strategy(const uint32_t iteration_num)
 {
-    //Iterate between VSIDS and Maple
+    branch_strategy = branch::none;
+
     if (conf.maple) {
-        //The 1st of every modulo N is VSIDS otherwise Maple
-        long modulo = ((long)iteration_num-1) % conf.modulo_maple_iter;
-        if (modulo < ((long)conf.modulo_maple_iter-1)) {
-            VSIDS = false;
-        } else {
-            VSIDS = true;
+        long modulo = iteration_num % conf.modulo_maple_iter;
+        if (modulo == 1) {
+            branch_strategy = branch::none;
         }
-    } else {
-        //so that in case of reconfiguration, VSIDS is correctly set
-        VSIDS = true;
+    }
+
+    if (branch_strategy == branch::none) {
+        branch_strategy = branch::vsids;
     }
 }
 
@@ -3272,7 +3266,7 @@ void Solver::reconfigure(int val)
         case 3: {
             //Glue clause cleaning
             conf.maple = 0;
-            VSIDS = true;
+            branch_strategy = branch::vsids;
             conf.every_lev1_reduce = 0;
             conf.every_lev2_reduce = 0;
             conf.glue_put_lev1_if_below_or_eq = 0;
@@ -3288,7 +3282,7 @@ void Solver::reconfigure(int val)
 
         case 4: {
             conf.maple = 0;
-            VSIDS = true;
+            branch_strategy = branch::vsids;
             conf.every_lev1_reduce = 0;
             conf.every_lev2_reduce = 0;
             conf.glue_put_lev1_if_below_or_eq = 0;
@@ -3300,7 +3294,7 @@ void Solver::reconfigure(int val)
         case 6: {
             //No more simplifying
             conf.maple = 0;
-            VSIDS = true;
+            branch_strategy = branch::vsids;
             conf.never_stop_search = true;
             break;
         }
@@ -3308,7 +3302,7 @@ void Solver::reconfigure(int val)
         case 7: {
             //Geom restart, but keep low glue clauses
             conf.maple = 0;
-            VSIDS = true;
+            branch_strategy = branch::vsids;
             conf.varElimRatioPerIter = 0.2;
             conf.restartType = Restart::geom;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
@@ -3325,7 +3319,7 @@ void Solver::reconfigure(int val)
         case 12: {
             //Mix of keeping clauses
             conf.maple = 0;
-            VSIDS = true;
+            branch_strategy = branch::vsids;
             conf.do_bva = false;
             conf.varElimRatioPerIter = 1;
             conf.every_lev1_reduce = 0;
@@ -3346,7 +3340,7 @@ void Solver::reconfigure(int val)
 
         case 13: {
             conf.maple = 0;
-            VSIDS = true;
+            branch_strategy = branch::vsids;
             conf.orig_global_timeout_multiplier = 5;
             conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
             conf.global_multiplier_multiplier_max = 5;
@@ -3363,7 +3357,7 @@ void Solver::reconfigure(int val)
 
         case 14: {
             conf.maple = 0;
-            VSIDS = true;
+            branch_strategy = branch::vsids;
             conf.shortTermHistorySize = 600;
             conf.doAlwaysFMinim = true;
             break;
@@ -3371,7 +3365,7 @@ void Solver::reconfigure(int val)
 
         case 15: {
             conf.maple = 0;
-            VSIDS = true;
+            branch_strategy = branch::vsids;
             //Like OLD-OLD minisat
             conf.varElimRatioPerIter = 1;
             conf.restartType = Restart::geom;
@@ -3393,7 +3387,7 @@ void Solver::reconfigure(int val)
         case 16: {
             conf.maple = 1;
             conf.modulo_maple_iter = 100;
-            VSIDS = false;
+            branch_strategy = branch::maple;
             break;
         }
 

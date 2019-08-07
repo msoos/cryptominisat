@@ -291,28 +291,8 @@ void ClauseAllocator::consolidate(
     assert(sizeof(BASE_DATA_TYPE) % sizeof(Lit) == 0);
 
     vector<bool> visited(solver->watches.size(), 0);
-    Heap<Solver::VarOrderLt> &order_heap = solver->VSIDS ? solver->order_heap_vsids : solver->order_heap_maple;
-    if (solver->conf.static_mem_consolidate_order) {
-        for(auto& ws: solver->watches) {
-            move_one_watchlist(ws, newDataStart, new_ptr);
-        }
-    } else {
-        for(uint32_t i = 0; i < order_heap.size(); i++) {
-            for(uint32_t i2 = 0; i2 < 2; i2++) {
-                Lit lit = Lit(order_heap[i], i2);
-                assert(lit.toInt() < solver->watches.size());
-                move_one_watchlist(solver->watches[lit], newDataStart, new_ptr);
-                visited[lit.toInt()] = 1;
-            }
-        }
-        for(uint32_t i = 0; i < solver->watches.size(); i++) {
-            Lit lit = Lit::toLit(i);
-            watch_subarray ws = solver->watches[lit];
-            if (!visited[lit.toInt()]) {
-                move_one_watchlist(ws, newDataStart, new_ptr);
-                visited[lit.toInt()] = 1;
-            }
-        }
+    for(auto& ws: solver->watches) {
+        move_one_watchlist(ws, newDataStart, new_ptr);
     }
 
     #ifdef USE_GAUSS

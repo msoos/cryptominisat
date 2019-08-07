@@ -387,7 +387,7 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
         watches.prefetch((~p).toInt());
     }
 
-    if (!update_bogoprops && !VSIDS) {
+    if (!update_bogoprops && branch_strategy == branch::maple) {
         varData[v].last_picked = sumConflicts;
         varData[v].conflicted = 0;
 
