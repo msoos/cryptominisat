@@ -1140,25 +1140,6 @@ void Searcher::update_assump_conflict_to_orig_outside(vector<Lit>& out_conflict)
     out_conflict.resize(j);
 }
 
-void Searcher::check_blocking_restart()
-{
-    if (conf.do_blocking_restart
-        && sumConflicts > conf.lower_bound_for_blocking_restart
-        && hist.glueHist.isvalid()
-        && hist.trailDepthHistLonger.isvalid()
-        && decisionLevel() > 0
-        && trail_lim.size() > 0
-        && trail.size() > hist.trailDepthHistLonger.avg()*conf.blocking_restart_multip
-    ) {
-        hist.glueHist.clear();
-        if (!blocked_restart) {
-            stats.blocked_restart_same++;
-        }
-        blocked_restart = true;
-        stats.blocked_restart++;
-    }
-}
-
 lbool Searcher::search()
 {
     assert(ok);
@@ -1345,69 +1326,6 @@ lbool Searcher::new_decision()
     enqueue<update_bogoprops>(next);
 
     return l_Undef;
-}
-
-double Searcher::luby(double y, int x)
-{
-    int size = 1;
-    int seq;
-    for (seq = 0
-        ; size < x + 1
-        ; seq++
-    ) {
-        size = 2 * size + 1;
-    }
-
-    while (size - 1 != x) {
-        size = (size - 1) >> 1;
-        seq--;
-        x = x % size;
-    }
-
-    return std::pow(y, seq);
-}
-
-void Searcher::check_need_restart()
-{
-    if ((stats.conflStats.numConflicts & 0xff) == 0xff) {
-        //It's expensive to check the time the time
-        if (cpuTime() > conf.maxTime) {
-            params.needToStopSearch = true;
-        }
-
-        if (must_interrupt_asap())  {
-            if (conf.verbosity >= 3)
-                cout << "c must_interrupt_asap() is set, restartig as soon as possible!" << endl;
-            params.needToStopSearch = true;
-        }
-    }
-
-    assert(params.rest_type != Restart::glue_geom);
-    if (params.rest_type == Restart::glue) {
-        check_blocking_restart();
-        if (hist.glueHist.isvalid()
-            && conf.local_glue_multiplier * hist.glueHist.avg() > hist.glueHistLTLimited.avg()
-        ) {
-            params.needToStopSearch = true;
-        }
-    }
-    if ((params.rest_type == Restart::geom ||
-        params.rest_type == Restart::luby ||
-        (conf.broken_glue_restart && conf.restartType == Restart::glue_geom))
-        && (int64_t)params.conflictsDoneThisRestart > max_confl_this_phase
-    ) {
-        params.needToStopSearch = true;
-    }
-
-    //Conflict limit reached?
-    if (params.conflictsDoneThisRestart > params.max_confl_to_do) {
-        if (conf.verbosity >= 3) {
-            cout
-            << "c Over limit of conflicts for this restart"
-            << " -- restarting as soon as possible!" << endl;
-        }
-        params.needToStopSearch = true;
-    }
 }
 
 template<bool update_bogoprops>
@@ -2433,27 +2351,60 @@ lbool Searcher::solve(
     return status;
 }
 
+double Searcher::luby(double y, int x)
+{
+    int size = 1;
+    int seq;
+    for (seq = 0
+        ; size < x + 1
+        ; seq++
+    ) {
+        size = 2 * size + 1;
+    }
+
+    while (size - 1 != x) {
+        size = (size - 1) >> 1;
+        seq--;
+        x = x % size;
+    }
+
+    return std::pow(y, seq);
+}
+
 void Searcher::setup_restart_strategy()
 {
-    if (conf.restartType == Restart::geom) {
-        max_confl_phase = conf.restart_first;
-        max_confl_this_phase = conf.restart_first;
-        params.rest_type = Restart::geom;
+    if (solver->conf.verbosity) {
+        cout << "c [restart] strategy: "
+        << restart_type_to_string(conf.restartType)
+        << endl;
     }
 
-    if (conf.restartType == Restart::glue_geom) {
-        max_confl_phase = conf.restart_first;
-        max_confl_this_phase = conf.restart_first;
-        params.rest_type = Restart::glue;
-    }
+    max_confl_phase = conf.restart_first;
+    max_confl_this_phase = conf.restart_first;
+    switch(conf.restartType) {
+        case Restart::glue:
+            params.rest_type = Restart::glue;
+            break;
 
-    if (conf.restartType == Restart::luby) {
-        max_confl_this_phase = conf.restart_first;
-        params.rest_type = Restart::luby;
-    }
+        case Restart::geom:
+            params.rest_type = Restart::geom;
+            break;
 
-    if (conf.restartType == Restart::glue) {
-        params.rest_type = Restart::glue;
+        case Restart::glue_geom:
+            params.rest_type = Restart::glue;
+            break;
+
+        case Restart::glue_geom_luby:
+            params.rest_type = Restart::glue;
+            break;
+
+        case Restart::luby:
+            params.rest_type = Restart::luby;
+            break;
+
+        case Restart::never:
+            params.rest_type = Restart::never;
+            break;
     }
 }
 
@@ -2467,53 +2418,135 @@ void Searcher::adjust_restart_strategy()
     if (conf.verbosity >= 3) {
         cout << "c doing branch_strategy" << endl;
     }
+
     switch(conf.restartType) {
-    case Restart::never:
-    case Restart::glue:
-        assert(params.rest_type == Restart::glue);
-        //nothing special
-        break;
-    case Restart::geom:
-        assert(params.rest_type == Restart::geom);
-        max_confl_phase *= conf.restart_inc;
-        max_confl_this_phase = max_confl_phase;
-        break;
+        case Restart::never:
+            break;
 
-    case Restart::luby:
-        max_confl_this_phase = luby(conf.restart_inc*1.5, luby_loop_num)
-            * (double)conf.restart_first/2.0;
+        case Restart::glue:
+            assert(params.rest_type == Restart::glue);
+            break;
 
-        luby_loop_num++;
-        //cout << "luby_loop_num: " << luby_loop_num << endl;
-        //cout << "max_confl_this_phase:" << max_confl_this_phase << endl;
-        break;
+        case Restart::geom:
+            assert(params.rest_type == Restart::geom);
+            break;
 
-    case Restart::glue_geom:
-        if (params.rest_type == Restart::geom) {
-            params.rest_type = Restart::glue;
-        } else {
-            params.rest_type = Restart::geom;
+        case Restart::luby:
+            assert(params.rest_type == Restart::luby);
+            break;
+
+        case Restart::glue_geom_luby:
+            if (params.rest_type == Restart::glue) {
+                params.rest_type = Restart::geom;
+            } else if (params.rest_type == Restart::geom) {
+                params.rest_type = Restart::luby;
+            } else {
+                params.rest_type = Restart::glue;
+            }
+            break;
+
+        case Restart::glue_geom:
+            if (params.rest_type == Restart::glue) {
+                params.rest_type = Restart::geom;
+            } else {
+                params.rest_type = Restart::glue;
+            }
+            break;
+    }
+
+    switch (params.rest_type) {
+        case Restart::luby:
+            max_confl_this_phase = luby(conf.restart_inc*1.5, luby_loop_num)
+                * (double)conf.restart_first/2.0;
+            luby_loop_num++;
+            break;
+
+        case Restart::geom:
+            max_confl_phase = (double)max_confl_phase * conf.restart_inc;
+            max_confl_this_phase = max_confl_phase;
+            break;
+
+        case Restart::glue:
+            max_confl_this_phase = conf.ratio_glue_geom *max_confl_phase;
+            break;
+
+        default:
+            release_assert(false);
+    }
+
+    if (conf.verbosity >= 2) {
+        cout << "c [restart] local phase type: "
+        << std::setw(10) << getNameOfRestartType(params.rest_type)
+        << " size: " << std::setw(9) << max_confl_this_phase
+        << " global phase size: " << std::setw(9) <<  max_confl_phase
+        << endl;
+    }
+}
+
+void Searcher::check_need_restart()
+{
+    if ((stats.conflStats.numConflicts & 0xff) == 0xff) {
+        //It's expensive to check the time all the time
+        if (cpuTime() > conf.maxTime) {
+            params.needToStopSearch = true;
         }
-        switch (params.rest_type) {
-            case Restart::geom:
-                max_confl_phase = (double)max_confl_phase * conf.restart_inc;
-                max_confl_this_phase = max_confl_phase;
-                break;
 
-            case Restart::glue:
-                max_confl_this_phase = conf.ratio_glue_geom *max_confl_phase;
-                break;
-
-            default:
-                release_assert(false);
+        if (must_interrupt_asap())  {
+            if (conf.verbosity >= 3)
+                cout << "c must_interrupt_asap() is set, restartig as soon as possible!" << endl;
+            params.needToStopSearch = true;
         }
+    }
+
+    assert(params.rest_type != Restart::glue_geom);
+    assert(params.rest_type != Restart::glue_geom_luby);
+
+    //dynamic
+    if (params.rest_type == Restart::glue) {
+        check_blocking_restart();
+        if (hist.glueHist.isvalid()
+            && conf.local_glue_multiplier * hist.glueHist.avg() > hist.glueHistLTLimited.avg()
+        ) {
+            params.needToStopSearch = true;
+        }
+    }
+
+    //static
+    if ((params.rest_type == Restart::geom ||
+        params.rest_type == Restart::luby ||
+        (conf.broken_glue_restart && params.rest_type == Restart::glue))
+        && (int64_t)params.conflictsDoneThisRestart > max_confl_this_phase
+    ) {
+        params.needToStopSearch = true;
+    }
+
+    //Conflict limit reached?
+    if (params.conflictsDoneThisRestart > params.max_confl_to_do) {
         if (conf.verbosity >= 3) {
-            cout << "Phase is now "
-            << std::setw(10) << getNameOfRestartType(params.rest_type)
-            << " this phase size: " << max_confl_this_phase
-            << " global phase size: " << max_confl_phase << endl;
+            cout
+            << "c Over limit of conflicts for this restart"
+            << " -- restarting as soon as possible!" << endl;
         }
-        break;
+        params.needToStopSearch = true;
+    }
+}
+
+inline void Searcher::check_blocking_restart()
+{
+    if (conf.do_blocking_restart
+        && sumConflicts > conf.lower_bound_for_blocking_restart
+        && hist.glueHist.isvalid()
+        && hist.trailDepthHistLonger.isvalid()
+        && decisionLevel() > 0
+        && trail_lim.size() > 0
+        && trail.size() > hist.trailDepthHistLonger.avg()*conf.blocking_restart_multip
+    ) {
+        hist.glueHist.clear();
+        if (!blocked_restart) {
+            stats.blocked_restart_same++;
+        }
+        blocked_restart = true;
+        stats.blocked_restart++;
     }
 }
 

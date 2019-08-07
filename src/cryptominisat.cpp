@@ -333,7 +333,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.maple = 0;
             conf.restart_inc = 1.5;
             conf.restart_first = 100;
-            conf.restartType = CMSat::Restart::luby;
+            conf.restartType = Restart::luby;
             break;
         }
 

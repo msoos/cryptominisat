@@ -53,7 +53,7 @@ inline std::string restart_type_to_string(const Restart type)
 {
     switch(type) {
         case Restart::glue:
-            return "glue-based";
+            return "glue";
 
         case Restart::geom:
             return "geometric";
@@ -61,11 +61,14 @@ inline std::string restart_type_to_string(const Restart type)
         case Restart::luby:
             return "luby";
 
+        case Restart::glue_geom_luby:
+            return "glue-geom-luby";
+
         case Restart::glue_geom:
-            return "switch-glue-geom";
+            return "glue-geom";
 
         case Restart::never:
-            return "never restart";
+            return "never";
     }
 
     assert(false && "oops, one of the restart types has no string name");
