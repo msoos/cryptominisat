@@ -76,7 +76,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
         , cla_inc(1)
 {
     var_decay_vsids = conf.var_decay_vsids_start;
-    step_size = solver->conf.orig_step_size;
+    maple_step_size = solver->conf.orig_step_size;
 
     var_inc_vsids = conf.var_inc_vsids_start;
     more_red_minim_limit_binary_actual = conf.more_red_minim_limit_binary;
@@ -154,7 +154,7 @@ inline void Searcher::add_lit_to_learnt(
 
     if (!update_bogoprops) {
         if (branch_strategy == branch::vsids) {
-            bump_vsids_var_act<update_bogoprops>(var, 0.5);
+            vsids_bump_var_act<update_bogoprops>(var, 0.5);
             implied_by_learnts.push_back(var);
         } else if (branch_strategy == branch::maple) {
             varData[var].conflicted++;
@@ -1278,8 +1278,8 @@ inline void Searcher::update_branch_params()
             var_decay_vsids += 0.01;
         }
     } else if (branch_strategy == branch::maple) {
-        if (step_size > solver->conf.min_step_size) {
-            step_size -= solver->conf.step_size_dec;
+        if ( maple_step_size > solver->conf.min_step_size) {
+            maple_step_size -= solver->conf.step_size_dec;
         }
     } else {
         assert(false);
@@ -1995,7 +1995,7 @@ bool Searcher::handle_conflict(const PropBy confl)
 
     if (!update_bogoprops) {
         if (branch_strategy == branch::vsids) {
-            varDecayActivity();
+            vsids_decay_var_act();
         }
         decayClauseAct<update_bogoprops>();
     }
@@ -2777,11 +2777,6 @@ void Searcher::minimise_redundant_more_more(vector<Lit>& cl)
     cl.resize(cl.size() - (i-j));
 }
 
-bool Searcher::VarFilter::operator()(uint32_t var) const
-{
-    return (cc->value(var) == l_Undef && solver->varData[var].removed == Removed::none);
-}
-
 uint64_t Searcher::sumRestarts() const
 {
     return stats.numRestarts + solver->get_stats().numRestarts;
@@ -3214,7 +3209,7 @@ void Searcher::unfill_assumptions_set()
     #endif
 }
 
-inline void Searcher::varDecayActivity()
+inline void Searcher::vsids_decay_var_act()
 {
     assert(branch_strategy == branch::vsids);
     var_inc_vsids *= (1.0 / var_decay_vsids);
@@ -3534,7 +3529,7 @@ void Searcher::cancelUntil(uint32_t level
                     double adjusted_reward = reward / ((double)age);
 
                     double old_activity = var_act_maple[var];
-                    var_act_maple[var] = step_size * adjusted_reward + ((1.0 - step_size) * old_activity);
+                    var_act_maple[var] = maple_step_size * adjusted_reward + ((1.0 - maple_step_size ) * old_activity);
                     if (order_heap_maple.inHeap(var)) {
                         if (var_act_maple[var] > old_activity)
                             order_heap_maple.decrease(var);

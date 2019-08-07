@@ -192,14 +192,24 @@ class Searcher : public HyperEngine
         bool pick_polarity(const uint32_t var);
 
     protected:
+        Solver* solver;
+        lbool search();
+
+        ///////////////
+        // Variables
+        ///////////////
         void new_var(const bool bva, const uint32_t orig_outer) override;
         void new_vars(const size_t n) override;
         void save_on_var_memory();
-        void reset_temp_cl_num();
         void updateVars(
             const vector<uint32_t>& outerToInter
             , const vector<uint32_t>& interToOuter
         );
+
+
+        ///////////////
+        // Reading and writing simplified CNF file
+        ///////////////
         void save_state(SimpleOutFile& f, const lbool status) const;
         void load_state(SimpleInFile& f, const lbool status);
         void write_long_cls(
@@ -221,10 +231,12 @@ class Searcher : public HyperEngine
         ) const;
 
         //Misc
-        void update_var_decay_vsids();
         void add_in_partial_solving_stats();
 
 
+        ///////////////
+        // Assumptions
+        ///////////////
         struct AssumptionPair {
             AssumptionPair(const Lit _outer, const Lit _outside):
                 lit_outer(_outer)
@@ -247,6 +259,7 @@ class Searcher : public HyperEngine
             }
         };
         void fill_assumptions_set();
+        void update_assump_conflict_to_orig_outside(vector<Lit>& out_conflict);
 
         //Note that this array can have the same internal variable more than
         //once, in case one has been replaced with the other. So if var 1 =  var 2
@@ -254,23 +267,18 @@ class Searcher : public HyperEngine
         //insided this array twice, once it needs to be set to TRUE and once FALSE
         vector<AssumptionPair> assumptions;
 
-        void update_assump_conflict_to_orig_outside(vector<Lit>& out_conflict);
-
-
-        //For connection with Solver
-        void  resetStats();
-
-        SearchHist hist;
-
-        /////////////////
-        //Settings
-        Solver*   solver;          ///< Thread control class
-        double step_size;
-
-        /////////////////
-        // Searching
-        /// Search for a given number of conflicts.
-        lbool search();
+        /////////////////////
+        // Learning
+        /////////////////////
+        vector<Lit> learnt_clause;
+        vector<Lit> decision_clause;
+        template<bool update_bogoprops>
+        Clause* analyze_conflict(
+            PropBy confl //The conflict that we are investigating
+            , uint32_t& out_btlevel  //backtrack level
+            , uint32_t &glue         //glue of the learnt clause
+            , uint32_t &old_glue     //glue of the unminimised learnt clause
+        );
         template<bool update_bogoprops>
         bool  handle_conflict(PropBy confl);// Handles the conflict clause
         void  update_history_stats(size_t backtrack_level, uint32_t glue);
@@ -289,15 +297,67 @@ class Searcher : public HyperEngine
             , const uint32_t old_decision_level
             , const bool decision_cl
         );
+        void update_clause_glue_from_analysis(Clause* cl);
         template<bool update_bogoprops>
-        lbool new_decision();  // Handles the case when decision must be made
-        void  check_need_restart();     // Helper function to decide if we need to restart during search
+        void minimize_learnt_clause();
+        void watch_based_learnt_minim();
+        void minimize_using_permdiff();
+        void print_fully_minimized_learnt_clause() const;
+        size_t find_backtrack_level_of_learnt();
+        Clause* otf_subsume_last_resolved_clause(Clause* last_resolved_long_cl);
+        void print_debug_resolution_data(const PropBy confl);
+        template<bool update_bogoprops>
+        Clause* create_learnt_clause(PropBy confl);
+        int pathC;
+        uint64_t more_red_minim_limit_binary_actual;
+        #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+        AtecedentData<uint16_t> antec_data;
+        #endif
+
+        /////////////////////
+        // Branching
+        /////////////////////
+        double var_inc_vsids;
+        double var_decay_vsids;
+        void insert_var_order(const uint32_t x);  ///< Insert a variable in current heap
+        void insert_var_order_all(const uint32_t x);  ///< Insert a variable in all heaps
+        vector<uint32_t> implied_by_learnts; //for glue-based extra var activity bumping
+        template<bool update_bogoprops>
+        void bump_var_activities_based_on_implied_by_learnts(const uint32_t backtrack_level);
+        void update_branch_params();
+        template<bool update_bogoprops>
+        lbool new_decision();
         Lit pickBranchLit();
         Lit pickBranchLit_act();
         Lit pickBranchLit_vmtf();
+        double maple_step_size;
+        void vsids_decay_var_act();
+        template<bool update_bogoprops>
+        void vsids_bump_var_act(uint32_t v, double mult = 1.0);
+        void update_var_decay_vsids();
+        double backup_random_var_freq = -1; ///<if restart has full random var branch, we save old value here
+
+        /////////////////////
+        // Search Stats
+        /////////////////////
+        const SearchStats& get_stats() const;
+        size_t mem_used() const;
+        void reset_temp_cl_num();
+        void  resetStats(); //For connection with Solver
+        SearchHist hist;
+        double   startTime; ///<When solve() was started
+        SearchStats stats;
+
+        /////////////////////
+        // Clause database reduction
+        /////////////////////
+        uint64_t next_lev1_reduce;
+        uint64_t next_lev2_reduce;
+        uint64_t next_lev3_reduce;
 
         ///////////////
-        // Conflicting
+        // Restart parameters
+        ///////////////
         struct SearchParams
         {
             SearchParams()
@@ -317,53 +377,21 @@ class Searcher : public HyperEngine
             Restart rest_type = Restart::never;
         };
         SearchParams params;
-        vector<Lit> learnt_clause;
-        vector<Lit> decision_clause;
-        template<bool update_bogoprops>
-        Clause* analyze_conflict(
-            PropBy confl //The conflict that we are investigating
-            , uint32_t& out_btlevel  //backtrack level
-            , uint32_t &glue         //glue of the learnt clause
-            , uint32_t &old_glue     //glue of the unminimised learnt clause
-        );
-        void update_clause_glue_from_analysis(Clause* cl);
-        template<bool update_bogoprops>
-        void minimize_learnt_clause();
-        void watch_based_learnt_minim();
-        void minimize_using_permdiff();
-        void print_fully_minimized_learnt_clause() const;
-        size_t find_backtrack_level_of_learnt();
-        template<bool update_bogoprops>
-        void bump_var_activities_based_on_implied_by_learnts(const uint32_t backtrack_level);
-        Clause* otf_subsume_last_resolved_clause(Clause* last_resolved_long_cl);
-        void print_debug_resolution_data(const PropBy confl);
-        template<bool update_bogoprops>
-        Clause* create_learnt_clause(PropBy confl);
-        int pathC;
-        #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-        AtecedentData<uint16_t> antec_data;
-        #endif
-
-        vector<uint32_t> implied_by_learnts; //for glue-based extra var activity bumping
-
-        /////////////////
-        // Variable activity
-        double var_inc_vsids;
-        void insert_var_order(const uint32_t x);  ///< Insert a variable in current heap
-        void insert_var_order_all(const uint32_t x);  ///< Insert a variable in all heaps
-
-
-        uint64_t more_red_minim_limit_binary_actual;
-        const SearchStats& get_stats() const;
-        size_t mem_used() const;
-
         int64_t max_confl_phase;
         int64_t max_confl_this_phase;
+        void  check_need_restart();
+        uint64_t max_confl_per_search_solve_call;
+        bool blocked_restart = false;
+        void check_blocking_restart();
+        uint32_t num_search_called = 0;
+        double luby(double y, int x);
+        void adjust_restart_strategy();
+        void setup_restart_strategy();
 
-        uint64_t next_lev1_reduce;
-        uint64_t next_lev2_reduce;
-        uint64_t next_lev3_reduce;
-        double   var_decay_vsids;
+        //////////////
+        // Debug
+        //////////////
+        void print_solution_varreplace_status() const;
 
     private:
         //////////////
@@ -372,7 +400,7 @@ class Searcher : public HyperEngine
         void recursiveConfClauseMin();
         void normalClMinim();
         MyStack<Lit> analyze_stack;
-        uint32_t        abstractLevel(const uint32_t x) const;
+        uint32_t abstractLevel(const uint32_t x) const;
 
         //OTF subsumption during learning
         vector<ClOffset> otf_subsuming_long_cls;
@@ -388,34 +416,13 @@ class Searcher : public HyperEngine
         void analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& out_conflict);
         size_t tmp_learnt_clause_size;
         cl_abst_type tmp_learnt_clause_abst;
-        void update_branch_params();
-
-        //Restarts
-        uint64_t max_confl_per_search_solve_call;
-        bool blocked_restart = false;
-        void check_blocking_restart();
-        uint32_t num_search_called = 0;
-        double luby(double y, int x);
-        void adjust_restart_strategy();
-        void setup_restart_strategy();
-
-        void print_solution_varreplace_status() const;
 
         ////////////
         // Transitive on-the-fly self-subsuming resolution
         void   minimise_redundant_more_more(vector<Lit>& cl);
         void   binary_based_morem_minim(vector<Lit>& cl);
 
-        //Variable activities
-        struct VarFilter { ///Filter out vars that have been set or is not decision from heap
-            const Searcher* cc;
-            const Solver* solver;
-            VarFilter(const Searcher* _cc, Solver* _solver) :
-                cc(_cc)
-                ,solver(_solver)
-            {}
-            bool operator()(uint32_t var) const;
-        };
+
         friend class Gaussian;
         friend class DistillerLong;
         #ifdef CMS_TESTING_ENABLED
@@ -426,20 +433,9 @@ class Searcher : public HyperEngine
         FRIEND_TEST(SearcherTest, pickpolar_auto_not_changed_by_simp);
         #endif
 
-        ///Decay all variables with the specified factor. Implemented by increasing the 'bump' value instead.
-        void     varDecayActivity ();
-        ///Increase a variable with the current 'bump' value.
-        template<bool update_bogoprops>
-        void     bump_vsids_var_act(uint32_t v, double mult = 1.0);
-
         //Clause activites
         double cla_inc;
-
         template<bool update_bogoprops> void decayClauseAct();
-        unsigned guess_clause_array(
-            const ClauseStats& glue
-            , const uint32_t backtrack_lev
-        ) const;
 
         //SQL
         void dump_search_sql(const double myTime);
@@ -474,12 +470,6 @@ class Searcher : public HyperEngine
         //Used for on-the-fly subsumption. Does A subsume B?
         //Uses 'seen' to do its work
         bool subset(const vector<Lit>& A, const Clause& B);
-
-        double   startTime; ///<When solve() was started
-        SearchStats stats;
-
-        ///in case restart has full var random picking, we save old value here
-        double backup_random_var_freq = -1;
 };
 
 inline uint32_t Searcher::abstractLevel(const uint32_t x) const
@@ -620,13 +610,13 @@ void Searcher::bump_var_activities_based_on_implied_by_learnts(uint32_t backtrac
 
     for (const uint32_t var :implied_by_learnts) {
         if ((int32_t)varData[var].level >= (int32_t)backtrack_level-1L) {
-            bump_vsids_var_act<update_bogoprops>(var, 1.0);
+            vsids_bump_var_act<update_bogoprops>(var, 1.0);
         }
     }
 }
 
 template<bool update_bogoprops>
-inline void Searcher::bump_vsids_var_act(uint32_t var, double mult)
+inline void Searcher::vsids_bump_var_act(uint32_t var, double mult)
 {
     if (update_bogoprops) {
         return;

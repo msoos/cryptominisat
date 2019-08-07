@@ -1449,19 +1449,16 @@ lbool Solver::solve_with_assumptions(
 
     solveStats.num_solve_calls++;
     check_config_parameters();
-    luby_loop_num = 0;
 
     //Reset parameters
+    luby_loop_num = 0;
     max_confl_phase = conf.restart_first;
     max_confl_this_phase = max_confl_phase;
     var_decay_vsids = conf.var_decay_vsids_start;
-    step_size = conf.orig_step_size;
+    maple_step_size = conf.orig_step_size;
     conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
     solveStats.num_simplify_this_solve_call = 0;
     params.rest_type = conf.restartType;
-    if (params.rest_type == Restart::glue_geom) {
-        params.rest_type = Restart::geom;
-    }
     if (conf.verbosity >= 6) {
         cout << "c " << __func__ << " called" << endl;
     }
