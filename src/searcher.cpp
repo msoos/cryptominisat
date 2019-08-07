@@ -2476,10 +2476,10 @@ void Searcher::adjust_restart_strategy()
 
     if (conf.verbosity >= 2) {
         cout << "c [restart] local phase type: "
-        << std::setw(10) << getNameOfRestartType(params.rest_type)
+        << std::left << std::setw(10) << getNameOfRestartType(params.rest_type)
         << " size: " << std::setw(9) << max_confl_this_phase
         << " global phase size: " << std::setw(9) <<  max_confl_phase
-        << endl;
+        << std::right << endl;
     }
 }
 
