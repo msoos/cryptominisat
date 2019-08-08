@@ -1951,6 +1951,7 @@ void Searcher::resetStats()
 
 void Searcher::check_calc_satzilla_features(bool force)
 {
+    #ifdef STATS_NEEDED
     if (last_satzilla_feature_calc_confl == 0
         || (last_satzilla_feature_calc_confl + 10000) < sumConflicts
         || force
@@ -1963,6 +1964,7 @@ void Searcher::check_calc_satzilla_features(bool force)
             solver->last_solve_satzilla_feature = solver->calculate_satzilla_features();
         }
     }
+    #endif
 }
 
 void Searcher::check_calc_vardist_features(bool force)
