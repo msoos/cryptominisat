@@ -347,31 +347,31 @@ DROP TABLE IF EXISTS `var_data_picktime`;
 create table `var_data_picktime` (
     `var`                                                       int(20) NOT NULL
     , `dec_depth`                                               int(20) NOT NULL
-    , `rel_activity_at_picktime`                                double  NOT NULL
+    , `rel_activity`                                double  NOT NULL
     , `latest_vardist_feature_calc`                             int(20) NOT NULL
 
-    , `inside_conflict_clause_at_picktime`                      int(20) NOT NULL
-    , `inside_conflict_clause_antecedents_at_picktime`          int(20) NOT NULL
-    , `inside_conflict_clause_glue_at_picktime`                 int(20) NOT NULL
+    , `inside_conflict_clause`                      int(20) NOT NULL
+    , `inside_conflict_clause_antecedents`          int(20) NOT NULL
+    , `inside_conflict_clause_glue`                 int(20) NOT NULL
 
-    , `inside_conflict_clause_during_at_picktime`               int(20) NOT NULL
-    , `inside_conflict_clause_antecedents_during_at_picktime`   int(20) NOT NULL
-    , `inside_conflict_clause_glue_during_at_picktime`          int(20) NOT NULL
+    , `inside_conflict_clause_during`               int(20) NOT NULL
+    , `inside_conflict_clause_antecedents_during`   int(20) NOT NULL
+    , `inside_conflict_clause_glue_during`          int(20) NOT NULL
 
     , `num_decided`                                             int(20) NOT NULL
     , `num_decided_pos`                                         int(20) NOT NULL
     , `num_propagated`                                          int(20) NOT NULL
     , `num_propagated_pos`                                      int(20) NOT NULL
 
-    , `sumDecisions_at_picktime`                                int(20) NOT NULL
-    , `sumConflicts_at_picktime`                                int(20) NOT NULL
-    , `sumPropagations_at_picktime`                             int(20) NOT NULL
-    , `sumAntecedents_at_picktime`                              int(20) NOT NULL
-    , `sumAntecedentsLits_at_picktime`                          int(20) NOT NULL
-    , `sumConflictClauseLits_at_picktime`                       int(20) NOT NULL
-    , `sumDecisionBasedCl_at_picktime`                          int(20) NOT NULL
-    , `sumClLBD_at_picktime`                                    int(20) NOT NULL
-    , `sumClSize_at_picktime`                                   int(20) NOT NULL
+    , `sumDecisions`                                int(20) NOT NULL
+    , `sumConflicts`                                int(20) NOT NULL
+    , `sumPropagations`                             int(20) NOT NULL
+    , `sumAntecedents`                              int(20) NOT NULL
+    , `sumAntecedentsLits`                          int(20) NOT NULL
+    , `sumConflictClauseLits`                       int(20) NOT NULL
+    , `sumDecisionBasedCl`                          int(20) NOT NULL
+    , `sumClLBD`                                    int(20) NOT NULL
+    , `sumClSize`                                   int(20) NOT NULL
 
     , `sumConflicts_below_during`                               int(20) NOT NULL
     , `sumDecisions_below_during`                               int(20) NOT NULL
