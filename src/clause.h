@@ -111,18 +111,20 @@ struct ClauseStats
     ClauseStats()
     {
         glue = 1000;
-        is_decision_cl = false;
-        is_ternary_resol_cl = false;
+        marked_clause = false;
+        ttl = 0;
         #ifdef FINAL_PREDICTOR
         which_red_array = 3;
         #else
         which_red_array = 2;
         #endif
-        activity = 0.0;
-        ttl = 0;
-        marked_clause = false;
+        is_decision_cl = false;
+        is_ternary_resol_cl = false;
         drop_if_not_used = false;
         locked_for_data_gen = 0;
+
+        activity = 0.0;
+        last_touched = 0;
     }
 
     //Stored data
