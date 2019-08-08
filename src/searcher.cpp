@@ -2773,7 +2773,7 @@ uint32_t Searcher::pick_random_var()
 
 uint32_t Searcher::pick_var_vmtf()
 {
-    if (trail.size() == nVars()) {
+    if (trail.size() == nVarsOuter()) {
         return var_Undef;
     }
 
