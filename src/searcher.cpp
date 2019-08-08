@@ -2201,13 +2201,15 @@ void Searcher::clear_branch_strategy_setups()
     order_heap_maple.clear();
 
     //rnd
-    order_heap_rnd_inside.clear();
+    std::fill(order_heap_rnd_inside.begin(), order_heap_rnd_inside.end(), 0);
     order_heap_rnd.clear();
 
     //vmtf
-    vmtf_btab.clear();
-    vmtf_links.clear();
+    vmtf_bumped = 0;
+    std::fill(vmtf_btab.begin(), vmtf_btab.end(), 0);
+    std::fill(vmtf_links.begin(), vmtf_links.end(), Link());
     vmtf_queue = Queue();
+
 }
 
 void Searcher::build_branch_strategy_setups()
@@ -2238,9 +2240,6 @@ void Searcher::build_branch_strategy_setups()
             break;
 
         case branch::rnd:
-            assert(order_heap_rnd.empty());
-            assert(order_heap_rnd_inside.empty());
-            order_heap_rnd_inside.resize(nVars(), 0);
             for(uint32_t v: vs) {
                 order_heap_rnd_inside[v] = 1;
                 order_heap_rnd.push_back(v);
@@ -2248,13 +2247,9 @@ void Searcher::build_branch_strategy_setups()
             break;
 
         case branch::vmtf:
-            assert(vmtf_links.empty());
-            assert(vmtf_btab.empty());
             for(uint32_t v: vs) {
                 vmtf_init_enqueue(v);
             }
-            vmtf_btab.resize(nVars(), 0);
-            vmtf_bumped = 0;
             break;
     }
 }
