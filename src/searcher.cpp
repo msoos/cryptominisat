@@ -2255,7 +2255,8 @@ void Searcher::build_branch_strategy_setups()
             for(uint32_t v: vs) {
                 vmtf_init_enqueue(v);
             }
-            vmtf_btab.resize(nVars(), std::numeric_limits<uint64_t>::max());
+            vmtf_btab.resize(nVars(), 0);
+            vmtf_bumped = 0;
             break;
     }
 }
@@ -2772,7 +2773,11 @@ uint32_t Searcher::pick_random_var()
 
 uint32_t Searcher::pick_var_vmtf()
 {
-    int64_t searched = 0;
+    if (trail.size() == nVars()) {
+        return var_Undef;
+    }
+
+    uint64_t searched = 0;
     uint32_t res = vmtf_queue.unassigned;
     while (value(res) != l_Undef) {
         res = vmtf_link (res).prev;

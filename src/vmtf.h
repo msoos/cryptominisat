@@ -77,7 +77,7 @@ struct Queue {
   inline void enqueue (Links & vmtf_links, uint32_t idx) {
     Link & l = vmtf_links[idx];
     l.prev = last;
-    if (l.prev == std::numeric_limits<uint32_t>::max()) {
+    if (l.prev != std::numeric_limits<uint32_t>::max()) {
         vmtf_links[last].next = idx;
     } else {
         first = idx;
