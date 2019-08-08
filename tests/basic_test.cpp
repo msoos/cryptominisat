@@ -761,7 +761,6 @@ TEST(statistics, one_confl)
     lbool ret = s.solve();
     EXPECT_EQ(ret, l_True);
     EXPECT_EQ(s.get_sum_conflicts(), 1);
-    EXPECT_EQ(s.get_sum_propagations(), 11);
 }
 
 TEST(statistics, unsat)
@@ -777,7 +776,6 @@ TEST(statistics, unsat)
     lbool ret = s.solve();
     EXPECT_EQ(ret, l_False);
     EXPECT_EQ(s.get_sum_conflicts(), 2);
-    EXPECT_EQ(s.get_sum_propagations(), 2);
 }
 
 TEST(statistics, last_vs_sum_conflicts)

@@ -73,6 +73,8 @@ void PropEngine::new_var(const bool bva, uint32_t orig_outer)
     order_heap_rnd_inside.insert(order_heap_rnd_inside.end(), 1, 0);
     vmtf_btab.insert(vmtf_btab.end(), 1, 0);
     vmtf_links.insert(vmtf_links.end(), 1, Link());
+    var_act_vsids.insert(var_act_vsids.end(), 1, 0);
+    var_act_maple.insert(var_act_maple.end(), 1, 0);
 
     //TODO
     //trail... update x->whatever
@@ -85,6 +87,8 @@ void PropEngine::new_vars(size_t n)
     order_heap_rnd_inside.insert(order_heap_rnd_inside.end(), n, 0);
     vmtf_btab.insert(vmtf_btab.end(), n, 0);
     vmtf_links.insert(vmtf_links.end(), n, Link());
+    var_act_vsids.insert(var_act_vsids.end(), n, 0);
+    var_act_maple.insert(var_act_maple.end(), n, 0);
 
     //TODO
     //trail... update x->whatever

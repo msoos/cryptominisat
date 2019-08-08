@@ -120,11 +120,12 @@ TEST_F(comp_handle, check_solution_zero_lev_assign)
 
 TEST_F(comp_handle, check_solution_non_zero_lev_assign)
 {
+    s->conf.verbosity = 1;
     s->add_clause_outer(str_to_cl("1, 2"));
-    s->add_clause_outer(str_to_cl("-1, 2"));
+    s->add_clause_outer(str_to_cl("-1, -2"));
 
     s->add_clause_outer(str_to_cl("11, 12"));
-    s->add_clause_outer(str_to_cl("-11, 12"));
+    s->add_clause_outer(str_to_cl("-11, -12"));
 
     s->add_clause_outer(str_to_cl("20, 22"));
     s->add_clause_outer(str_to_cl("-24, 22"));
@@ -142,9 +143,9 @@ TEST_F(comp_handle, check_solution_non_zero_lev_assign)
     vector<Lit> decisions;
     chandle->addSavedState(solution, decisions);
     EXPECT_TRUE(clause_satisfied("1, 2", solution));
-    EXPECT_TRUE(clause_satisfied("-1, 2", solution));
+    EXPECT_TRUE(clause_satisfied("-1, -2", solution));
     EXPECT_TRUE(clause_satisfied("11, 12", solution));
-    EXPECT_TRUE(clause_satisfied("-11, 12", solution));
+    EXPECT_TRUE(clause_satisfied("-11, -12", solution));
     EXPECT_TRUE(clause_satisfied("20, 22", solution));
     EXPECT_TRUE(clause_satisfied("-24, 22", solution));
 }

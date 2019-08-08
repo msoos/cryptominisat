@@ -96,8 +96,6 @@ void Searcher::new_var(const bool bva, const uint32_t orig_outer)
 {
     PropEngine::new_var(bva, orig_outer);
 
-    var_act_vsids.push_back(0);
-    var_act_maple.push_back(0);
     insert_var_order((int)nVars()-1);
 }
 
@@ -105,8 +103,6 @@ void Searcher::new_vars(size_t n)
 {
     PropEngine::new_vars(n);
 
-    var_act_vsids.insert(var_act_vsids.end(), n, 0);
-    var_act_maple.insert(var_act_maple.end(), n, 0);
     for(int i = n-1; i >= 0; i--) {
         insert_var_order((int)nVars()-i-1);
     }
@@ -2652,7 +2648,6 @@ void Searcher::finish_up_solve(const lbool status)
     print_solution_type(status);
 
     if (status == l_True) {
-        assert(trail.size() == nVarsOuter());
         #ifdef SLOW_DEBUG
         check_order_heap_sanity();
         #endif
@@ -2776,15 +2771,17 @@ uint32_t Searcher::pick_random_var()
 
 uint32_t Searcher::pick_var_vmtf()
 {
-    if (trail.size() == nVarsOuter()) {
-        return var_Undef;
-    }
-
     uint64_t searched = 0;
     uint32_t res = vmtf_queue.unassigned;
-    while (value(res) != l_Undef) {
+    while (res != std::numeric_limits<uint32_t>::max()
+        && value(res) != l_Undef
+    ) {
         res = vmtf_link(res).prev;
         searched++;
+    }
+
+    if (res == std::numeric_limits<uint32_t>::max()) {
+        return var_Undef;
     }
 
     if (searched) {
