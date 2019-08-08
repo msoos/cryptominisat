@@ -33,6 +33,7 @@ THE SOFTWARE.
 
 #include "constants.h"
 #include "propby.h"
+#include "vmtf.h"
 
 #include "avgcalc.h"
 #include "propby.h"
@@ -105,10 +106,12 @@ public:
     template<bool update_bogoprops = true>
     void enqueue(const Lit p, const PropBy from = PropBy());
     void new_decision_level();
+
+    /////////////////////
+    // Branching
+    /////////////////////
     vector<double> var_act_vsids;
     vector<double> var_act_maple;
-
-    //Variable activities
     struct VarOrderLt { ///Order variables according to their activities
         const vector<double>&  activities;
         bool operator () (const uint32_t x, const uint32_t y) const
@@ -120,13 +123,22 @@ public:
             activities(_activities)
         {}
     };
-
     ///activity-ordered heap of decision variables.
     ///NOT VALID WHILE SIMPLIFYING
     Heap<VarOrderLt> order_heap_vsids;
     Heap<VarOrderLt> order_heap_maple;
+    vector<uint32_t> order_heap_rnd;
+    vector<unsigned char> order_heap_rnd_inside;
     double max_vsids_act = 0.0;
     double max_cl_act = 0.0;
+    Links vmtf_links; // table of vmtf_links for decision queue
+    Queue vmtf_queue;
+    vector<uint64_t> vmtf_btab; // enqueue time stamps for queue
+    uint64_t vmtf_bumped = 0;
+    void vmtf_update_queue_unassigned (uint32_t idx);
+    void vmtf_init_enqueue (uint32_t idx);
+    void vmtf_bump_queue (uint32_t var);
+    Link & vmtf_link (uint32_t var) { return vmtf_links[var]; }
 
 protected:
     int64_t simpDB_props = 0;
@@ -234,10 +246,6 @@ private:
     bool propagate_long_clause_occur(const ClOffset offset);
     void sql_dump_vardata_picktime(uint32_t v, PropBy from);
 };
-
-
-///////////////////////////////////////
-// Implementation of inline methods:
 
 inline void PropEngine::new_decision_level()
 {

@@ -63,7 +63,6 @@ using std::cout;
 using std::cerr;
 using std::endl;
 using boost::lexical_cast;
-using std::list;
 using std::map;
 
 struct WrongParam
@@ -412,9 +411,6 @@ void Main::add_supported_options()
         , "When dumping redundant clauses, only dump clauses with at most this large glue")
     ;
 
-    std::ostringstream s_random_var_freq;
-    s_random_var_freq << std::setprecision(5) << conf.random_var_freq;
-
     std::ostringstream s_var_decay_vsids_start;
     s_var_decay_vsids_start << std::setprecision(5) << conf.var_decay_vsids_start;
 
@@ -429,10 +425,6 @@ void Main::add_supported_options()
         , "variable activity increase divider (MUST be smaller than multiplier)")
     ("vincstart", po::value(&conf.var_inc_vsids_start)->default_value(conf.var_inc_vsids_start)
         , "variable activity increase starts with this value. Make sure that this multiplied by multiplier and divided by divider is larger than itself")
-    ("freq", po::value(&conf.random_var_freq)->default_value(conf.random_var_freq, s_random_var_freq.str())
-        , "[0 - 1] freq. of picking var at random")
-    ("freqrndpickrst", po::value(&conf.full_random_var_per_restart)->default_value(conf.full_random_var_per_restart, s_random_var_freq.str())
-        , "For this percentage of restarts, pick variables completely randomly")
     ("maple", po::value(&conf.maple)->default_value(conf.maple)
         , "Use maple-type variable picking sometimes")
     ("maplemod", po::value(&conf.modulo_maple_iter)->default_value(conf.modulo_maple_iter)
@@ -1081,10 +1073,6 @@ void Main::manually_parse_some_options()
 
     if (max_nr_of_solutions > 1) {
         conf.need_decisions_reaching = true;
-    }
-
-    if (conf.random_var_freq < 0 || conf.random_var_freq > 1) {
-        throw WrongParam(lexical_cast<string>(conf.random_var_freq), "Illegal random var frequency ");
     }
 
     if (conf.preprocess != 0) {

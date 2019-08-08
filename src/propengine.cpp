@@ -69,6 +69,11 @@ PropEngine::~PropEngine()
 void PropEngine::new_var(const bool bva, uint32_t orig_outer)
 {
     CNF::new_var(bva, orig_outer);
+
+    order_heap_rnd_inside.insert(order_heap_rnd_inside.end(), 1, 0);
+    vmtf_btab.insert(vmtf_btab.end(), 1, std::numeric_limits<uint64_t>::max());
+    vmtf_links.insert(vmtf_links.end(), 1, Link());
+
     //TODO
     //trail... update x->whatever
 }
@@ -76,6 +81,11 @@ void PropEngine::new_var(const bool bva, uint32_t orig_outer)
 void PropEngine::new_vars(size_t n)
 {
     CNF::new_vars(n);
+
+    order_heap_rnd_inside.insert(order_heap_rnd_inside.end(), n, 0);
+    vmtf_btab.insert(vmtf_btab.end(), n, std::numeric_limits<uint64_t>::max());
+    vmtf_links.insert(vmtf_links.end(), n, Link());
+
     //TODO
     //trail... update x->whatever
 }
@@ -521,4 +531,53 @@ void PropEngine::sql_dump_vardata_picktime(uint32_t v, PropBy from)
         , rel_activity_at_picktime
     );
 }
+
+// Update queue to point to last potentially still unassigned variable.
+// All variables after 'queue.unassigned' in bump order are assumed to be
+// assigned.  Then update the 'queue.vmtf_bumped' field and log it.  This is
+// inlined here since it occurs in several inner loops.
+//
+void PropEngine::vmtf_update_queue_unassigned (uint32_t idx) {
+    assert (idx != std::numeric_limits<uint32_t>::max());
+    vmtf_queue.unassigned = idx;
+    vmtf_queue.vmtf_bumped = vmtf_btab[idx];
+}
+
+void PropEngine::vmtf_init_enqueue (uint32_t var) {
+    Link & l = vmtf_links[var];
+    l.next = std::numeric_limits<uint32_t>::max();
+    if (vmtf_queue.last != std::numeric_limits<uint32_t>::max()) {
+        assert (vmtf_links[vmtf_queue.last].next != std::numeric_limits<uint32_t>::max());
+        vmtf_links[vmtf_queue.last].next = var;
+    } else {
+        assert ( vmtf_queue.first == std::numeric_limits<uint32_t>::max());
+        vmtf_queue.first = var;
+    }
+    vmtf_btab[var] = ++vmtf_bumped;
+    l.prev = vmtf_queue.last;
+    vmtf_queue.last = var;
+    vmtf_update_queue_unassigned ( vmtf_queue.last);
+}
+
+// Move vmtf_bumped variables to the front of the (VMTF) decision queue.  The
+// 'vmtf_bumped' time stamp is updated accordingly.  It is used to determine
+// whether the 'queue.assigned' pointer has to be moved in 'unassign'.
+
+void PropEngine::vmtf_bump_queue (uint32_t var) {
+    if (vmtf_links[var].next != std::numeric_limits<uint32_t>::max()) {
+        //already at the top
+        return;
+    }
+    //Remove from wherever it is, put to the top
+    vmtf_queue.dequeue (vmtf_links, var);
+    vmtf_queue.enqueue (vmtf_links, var);
+
+    assert (vmtf_bumped != std::numeric_limits<uint64_t>::max());
+    vmtf_btab[var] = ++vmtf_bumped;
+    //LOG ("moved to front variable %d and vmtf_bumped to %" PRId64 "", idx, vmtf_btab[idx]);
+    if (value(var) == l_Undef) {
+        vmtf_update_queue_unassigned (var);
+    }
+}
+
 #endif

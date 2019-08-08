@@ -47,7 +47,7 @@ using std::string;
 
 enum class gret      {confl, prop, unit_prop, nothing, nothing_fnewwatch};
 enum class gauss_res {none, long_confl, bin_confl, prop};
-enum class branch {none, vsids, maple, vmtf};
+enum class branch {vsids, maple, vmtf, rnd};
 
 inline std::string restart_type_to_string(const Restart type)
 {
@@ -88,8 +88,8 @@ inline std::string branch_type_to_string(const branch type)
         case branch::vmtf:
             return "vmtf";
 
-        case branch::none:
-            return "NONE";
+        case branch::rnd:
+            return "rnd";
     }
 
     assert(false && "oops, one of the branch types has no string name");
@@ -111,6 +111,9 @@ inline std::string restart_type_to_short_string(const Restart type)
 
         case Restart::glue_geom:
             return "gl/geo";
+
+        case Restart::glue_geom_luby:
+            return "gl/g/l";
 
         case Restart::never:
             return "never";

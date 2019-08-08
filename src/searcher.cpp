@@ -83,7 +83,6 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     mtrand.seed(conf.origSeed);
     hist.setSize(conf.shortTermHistorySize, conf.blocking_restart_trail_hist_length);
     cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
-    backup_random_var_freq = conf.random_var_freq;
 }
 
 Searcher::~Searcher()
@@ -99,7 +98,7 @@ void Searcher::new_var(const bool bva, const uint32_t orig_outer)
 
     var_act_vsids.push_back(0);
     var_act_maple.push_back(0);
-    insert_var_order_all((int)nVars()-1);
+    insert_var_order((int)nVars()-1);
 }
 
 void Searcher::new_vars(size_t n)
@@ -109,7 +108,7 @@ void Searcher::new_vars(size_t n)
     var_act_vsids.insert(var_act_vsids.end(), n, 0);
     var_act_maple.insert(var_act_maple.end(), n, 0);
     for(int i = n-1; i >= 0; i--) {
-        insert_var_order_all((int)nVars()-i-1);
+        insert_var_order((int)nVars()-i-1);
     }
 }
 
@@ -153,13 +152,22 @@ inline void Searcher::add_lit_to_learnt(
     seen[var] = 1;
 
     if (!update_bogoprops) {
-        if (branch_strategy == branch::vsids) {
-            vsids_bump_var_act<update_bogoprops>(var, 0.5);
-            implied_by_learnts.push_back(var);
-        } else if (branch_strategy == branch::maple) {
-            varData[var].conflicted++;
-        } else {
-            assert(false);
+        switch(branch_strategy) {
+            case branch::vsids:
+                vsids_bump_var_act<update_bogoprops>(var, 0.5);
+                implied_by_learnts.push_back(var);
+                break;
+
+            case branch::maple:
+                varData[var].conflicted++;
+                break;
+
+            case branch::vmtf:
+                vmtf_bump_queue(var);
+                break;
+
+            case branch::rnd:
+                break;
         }
 
         if (conf.doOTFSubsume) {
@@ -1161,16 +1169,6 @@ lbool Searcher::search()
     blocked_restart = false;
     PropBy confl;
     lbool dec_ret = l_Undef;
-
-    //is this restart full random?
-    if (conf.full_random_var_per_restart != 0) {
-        double rnd = mtrand.randDblExc();
-        if (rnd < conf.full_random_var_per_restart) {
-            conf.random_var_freq = 1.0;
-        } else {
-            conf.random_var_freq = backup_random_var_freq;
-        }
-    }
 
     while (!params.needToStopSearch
         || !confl.isNULL() //always finish the last conflict
@@ -2178,14 +2176,31 @@ bool Searcher::clean_clauses_if_needed()
         solver->clauseCleaner->remove_and_clean_all();
 
         cl_alloc.consolidate(solver);
-        rebuildOrderHeap(); //TODO only filter is needed!
         simpDB_props = (litStats.redLits + litStats.irredLits)<<5;
     }
 
     return true;
 }
 
-void Searcher::rebuildOrderHeap()
+void Searcher::clear_order_heap()
+{
+    //vsids
+    order_heap_vsids.clear();
+
+    //maple
+    order_heap_maple.clear();
+
+    //rnd
+    order_heap_rnd_inside.clear();
+    order_heap_rnd.clear();
+
+    //vmtf
+    vmtf_btab.clear();
+    vmtf_links.clear();
+    vmtf_queue = Queue();
+}
+
+void Searcher::rebuild_order_heap()
 {
     vector<uint32_t> vs;
     for (uint32_t v = 0; v < nVars(); v++) {
@@ -2200,8 +2215,35 @@ void Searcher::rebuildOrderHeap()
             vs.push_back(v);
         }
     }
-    order_heap_vsids.build(vs);
-    order_heap_maple.build(vs);
+
+    switch(branch_strategy) {
+        case branch::vsids:
+            order_heap_vsids.build(vs);
+            break;
+
+        case branch::maple:
+            order_heap_maple.build(vs);
+            break;
+
+        case branch::rnd:
+            assert(order_heap_rnd.empty());
+            assert(order_heap_rnd_inside.empty());
+            order_heap_rnd_inside.resize(nVars(), 0);
+            for(uint32_t v: vs) {
+                order_heap_rnd_inside[v] = 1;
+                order_heap_rnd.push_back(v);
+            }
+            break;
+
+        case branch::vmtf:
+            assert(vmtf_links.empty());
+            assert(vmtf_btab.empty());
+            for(uint32_t v: vs) {
+                vmtf_init_enqueue(v);
+            }
+            vmtf_btab.resize(nVars(), std::numeric_limits<uint64_t>::max());
+            break;
+    }
 }
 
 inline void Searcher::dump_search_loop_stats(double myTime)
@@ -2655,98 +2697,110 @@ void Searcher::print_iteration_solving_stats()
 
 inline Lit Searcher::pickBranchLit()
 {
-    Lit next;
-    if (branch_strategy == branch::vsids || branch_strategy == branch::maple) {
-        next = pickBranchLit_act();
-    } else {
-        assert(false);
-    }
-
-    return next;
-}
-
-Lit Searcher::pickBranchLit_act()
-{
     #ifdef VERBOSE_DEBUG
-    cout << "picking decision variable, dec. level: " << decisionLevel()
-    #ifdef STATS_NEEDED
-    << " clid: " << clauseID;
-    #endif
+    cout << "picking decision variable, dec. level: "
+    << decisionLevel() << endl;
     #endif
 
-    Lit next = lit_Undef;
-
-    Heap<VarOrderLt> &order_heap = (branch_strategy == branch::vsids) ? order_heap_vsids : order_heap_maple;
-    vector<double>& var_act = (branch_strategy == branch::vsids) ? var_act_vsids : var_act_maple;
-
-    // Random decision:
-    if (conf.random_var_freq > 0) {
-        double rand = mtrand.randDblExc();
-        if (rand < conf.random_var_freq && !order_heap.empty()) {
-            uint32_t next_var = var_Undef;
-            while(!order_heap.empty()
-                && next_var == var_Undef)
-            {
-                next_var = order_heap.random_element(mtrand);
-                if (value(next_var) == l_Undef
-                    && solver->varData[next_var].removed == Removed::none
-                ) {
-                    stats.decisionsRand++;
-                    next = Lit(next_var, !pick_polarity(next_var));
-                } else {
-                    //make this var the top, and remove it
-                    assert(var_act.size() > next_var);
-                    assert(order_heap.inHeap(next_var));
-                    double backup = var_act[order_heap.inspectTop()];
-                    var_act[next_var] = var_act[order_heap.inspectTop()]*2+10e2;
-                    order_heap.update(next_var);
-                    uint32_t removed_var = (uint32_t)order_heap.removeMin();
-                    assert(removed_var == next_var);
-                    var_act[next_var] = backup;
-
-                    next_var = var_Undef;
-                }
-            }
-        }
+    uint32_t v = var_Undef;
+    switch (branch_strategy) {
+        case branch::vsids:
+        case branch::maple:
+            v = pick_var_vsids_maple();
+            break;
+        case branch::vmtf:
+            v = pick_var_vmtf();
+            break;
+        case branch::rnd:
+            v = pick_random_var();
+            break;
     }
 
-    if (next == lit_Undef) {
-        uint32_t v = var_Undef;
-        while (v == var_Undef || value(v) != l_Undef) {
-            //There is no more to branch on. Satisfying assignment found.
-            if (order_heap.empty()) {
-                return lit_Undef;
-            }
-
-            //Adjust maple to account for time passed
-            if (branch_strategy == branch::maple) {
-                uint32_t v2 = order_heap_maple[0];
-                uint32_t age = sumConflicts - varData[v2].cancelled;
-                while (age > 0) {
-                    double decay = pow(0.95, age);
-                    var_act_maple[v2] *= decay;
-                    if (order_heap_maple.inHeap(v2)) {
-                        order_heap_maple.increase(v2);
-                    }
-                    varData[v2].cancelled = sumConflicts;
-
-                    v2 = order_heap_maple[0];
-                    age = sumConflicts - varData[v2].cancelled;
-                }
-            }
-
-            v = order_heap.removeMin();
-        }
-        next = Lit(v, !pick_polarity(v));
-    }
-
-    //No vars in heap: solution found
     #ifdef SLOW_DEBUG
     if (next != lit_Undef) {
         assert(solver->varData[next.var()].removed == Removed::none);
     }
     #endif
+
+    Lit next;
+    if (v != var_Undef) {
+        next = Lit(v, !pick_polarity(v));
+    } else {
+        next = lit_Undef;
+    }
+
     return next;
+}
+
+uint32_t Searcher::pick_random_var()
+{
+    uint32_t next_var = var_Undef;
+    while(!order_heap_rnd.empty()
+        && next_var == var_Undef)
+    {
+        uint32_t at = mtrand.randInt(order_heap_rnd.size()-1);
+        next_var = order_heap_rnd[at];
+        order_heap_rnd_inside[next_var] = 0;
+        std::swap(order_heap_rnd[at], order_heap_rnd[order_heap_rnd.size()-1]);
+        order_heap_rnd.pop_back();
+        if (value(next_var) == l_Undef
+            && solver->varData[next_var].removed == Removed::none
+        ) {
+            stats.decisionsRand++;
+        } else {
+            next_var = var_Undef;
+        }
+    }
+
+    return next_var;
+}
+
+uint32_t Searcher::pick_var_vmtf()
+{
+    int64_t searched = 0;
+    uint32_t res = vmtf_queue.unassigned;
+    while (value(res) != l_Undef) {
+        res = vmtf_link (res).prev;
+        searched++;
+    }
+
+    if (searched) {
+        vmtf_update_queue_unassigned (res);
+    }
+    //LOG ("next queue decision variable %d vmtf_bumped %" PRId64 "", res, vmtf_bumped (res));
+    return res;
+}
+
+uint32_t Searcher::pick_var_vsids_maple()
+{
+    Heap<VarOrderLt> &order_heap = (branch_strategy == branch::vsids) ? order_heap_vsids : order_heap_maple;
+    uint32_t v = var_Undef;
+    while (v == var_Undef || value(v) != l_Undef) {
+        //There is no more to branch on. Satisfying assignment found.
+        if (order_heap.empty()) {
+            return var_Undef;
+        }
+
+        //Adjust maple to account for time passed
+        if (branch_strategy == branch::maple) {
+            uint32_t v2 = order_heap_maple[0];
+            uint32_t age = sumConflicts - varData[v2].cancelled;
+            while (age > 0) {
+                double decay = pow(0.95, age);
+                var_act_maple[v2] *= decay;
+                if (order_heap_maple.inHeap(v2)) {
+                    order_heap_maple.increase(v2);
+                }
+                varData[v2].cancelled = sumConflicts;
+
+                v2 = order_heap_maple[0];
+                age = sumConflicts - varData[v2].cancelled;
+            }
+        }
+
+        v = order_heap.removeMin();
+    }
+    return v;
 }
 
 void Searcher::binary_based_morem_minim(vector<Lit>& cl)
@@ -3147,69 +3201,15 @@ size_t Searcher::mem_used() const
     mem += var_act_maple.capacity()*sizeof(uint32_t);
     mem += order_heap_vsids.mem_used();
     mem += order_heap_maple.mem_used();
+    mem += order_heap_rnd.capacity()*sizeof(uint32_t);
+    mem += order_heap_rnd_inside.capacity()*sizeof(unsigned char);
+    //TODO vmtf size
     mem += learnt_clause.capacity()*sizeof(Lit);
     mem += hist.mem_used();
     mem += conflict.capacity()*sizeof(Lit);
     mem += model.capacity()*sizeof(lbool);
     mem += analyze_stack.mem_used();
     mem += assumptions.capacity()*sizeof(Lit);
-
-    if (conf.verbosity >= 3) {
-        cout
-        << "c otfMustAttach bytes: "
-        << otf_subsuming_short_cls.capacity()*sizeof(OTFClause)
-        << endl;
-
-        cout
-        << "c toAttachLater bytes: "
-        << otf_subsuming_long_cls.capacity()*sizeof(ClOffset)
-        << endl;
-
-        cout
-        << "c toclear bytes: "
-        << toClear.capacity()*sizeof(Lit)
-        << endl;
-
-        cout
-        << "c trail bytes: "
-        << trail.capacity()*sizeof(Lit)
-        << endl;
-
-        cout
-        << "c trail_lim bytes: "
-        << trail_lim.capacity()*sizeof(Lit)
-        << endl;
-
-        cout
-        << "c order_heap_vsids bytes: "
-        << order_heap_vsids.mem_used()
-        << endl;
-
-        cout
-        << "c order_heap_maple bytes: "
-        << order_heap_maple.mem_used()
-        << endl;
-
-        cout
-        << "c learnt clause bytes: "
-        << learnt_clause.capacity()*sizeof(Lit)
-        << endl;
-
-        cout
-        << "c hist bytes: "
-        << hist.mem_used()
-        << endl;
-
-        cout
-        << "c conflict bytes: "
-        << conflict.capacity()*sizeof(Lit)
-        << endl;
-
-        cout
-        << "c Stack bytes: "
-        << analyze_stack.capacity()*sizeof(Lit)
-        << endl;
-    }
 
     return mem;
 }
@@ -3250,6 +3250,7 @@ inline void Searcher::vsids_decay_var_act()
 
 void Searcher::update_var_decay_vsids()
 {
+    assert(branch_strategy == branch::vsids);
     if (var_decay_vsids >= conf.var_decay_vsids_max) {
         var_decay_vsids = conf.var_decay_vsids_max;
     }
@@ -3424,7 +3425,7 @@ void Searcher::load_state(SimpleInFile& f, const lbool status)
         if (varData[i].removed == Removed::none
             && value(i) == l_Undef
         ) {
-            insert_var_order_all(i);
+            insert_var_order(i);
         }
     }
     f.get_vector(model);
@@ -3574,6 +3575,10 @@ void Searcher::cancelUntil(uint32_t level
             }
 
             assigns[var] = l_Undef;
+            if (vmtf_bumped < vmtf_btab[var]) {
+                vmtf_update_queue_unassigned (var);
+            }
+
             if (do_insert_var_order) {
                 insert_var_order(var);
             }

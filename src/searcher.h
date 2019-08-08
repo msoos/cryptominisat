@@ -166,13 +166,9 @@ class Searcher : public HyperEngine
         void check_assumptions_sanity();
         void unfill_assumptions_set();
 
-        //Needed for tests around renumbering
-        void rebuildOrderHeap();
-        void clear_order_heap()
-        {
-            order_heap_vsids.clear();
-            order_heap_maple.clear();
-        }
+
+        void rebuild_order_heap();
+        void clear_order_heap();
 
 
         template<bool update_bogoprops>
@@ -319,8 +315,8 @@ class Searcher : public HyperEngine
         /////////////////////
         double var_inc_vsids;
         double var_decay_vsids;
-        void insert_var_order(const uint32_t x);  ///< Insert a variable in current heap
-        void insert_var_order_all(const uint32_t x);  ///< Insert a variable in all heaps
+        void insert_var_order(const uint32_t x, branch type);
+        void insert_var_order(const uint32_t x);
         vector<uint32_t> implied_by_learnts; //for glue-based extra var activity bumping
         template<bool update_bogoprops>
         void bump_var_activities_based_on_implied_by_learnts(const uint32_t backtrack_level);
@@ -328,8 +324,9 @@ class Searcher : public HyperEngine
         template<bool update_bogoprops>
         lbool new_decision();
         Lit pickBranchLit();
-        Lit pickBranchLit_act();
-        Lit pickBranchLit_vmtf();
+        uint32_t pick_random_var();
+        uint32_t pick_var_vsids_maple();
+        uint32_t pick_var_vmtf();
         double maple_step_size;
         void vsids_decay_var_act();
         template<bool update_bogoprops>
@@ -494,41 +491,41 @@ inline void Searcher::add_in_partial_solving_stats()
 
 inline void Searcher::insert_var_order(const uint32_t x)
 {
+    insert_var_order(x, branch_strategy);
+}
+
+inline void Searcher::insert_var_order(const uint32_t x, branch type)
+{
     #ifdef SLOW_DEUG
     assert(varData[x].removed == Removed::none
         && "All variables should be decision vars unless removed");
     #endif
 
-    if (branch_strategy == branch::vsids) {
-        if (!order_heap_vsids.inHeap(x)) {
-            order_heap_vsids.insert(x);
-        }
-    } else if (branch_strategy == branch::maple) {
-        if (!order_heap_maple.inHeap(x)) {
-            order_heap_maple.insert(x);
-        }
-    } else {
-        assert(false);
-    }
-}
+    switch(type) {
+        case branch::vsids:
+            if (!order_heap_vsids.inHeap(x)) {
+                order_heap_vsids.insert(x);
+            }
+            break;
+        case branch::maple:
+            if (!order_heap_maple.inHeap(x)) {
+                order_heap_maple.insert(x);
+            }
+            break;
+        case branch::vmtf:
+            // For VMTF we need to update the 'queue.unassigned' pointer in case this
+            // variables sits after the variable to which 'queue.unassigned' currently
+            // points.  See our SAT'15 paper for more details on this aspect.
+            //
+            if ( vmtf_queue.vmtf_bumped < vmtf_btab[x]) vmtf_update_queue_unassigned (x);
+            break;
 
-inline void Searcher::insert_var_order_all(const uint32_t x)
-{
-    if (!order_heap_vsids.inHeap(x)) {
-        #ifdef SLOW_DEUG
-        assert(varData[x].removed == Removed::none
-            && "All variables should be decision vars unless removed");
-        #endif
-
-        order_heap_vsids.insert(x);
-    }
-    if (!order_heap_maple.inHeap(x)) {
-        #ifdef SLOW_DEUG
-        assert(varData[x].removed == Removed::none
-            && "All variables should be decision vars unless removed");
-        #endif
-
-        order_heap_maple.insert(x);
+        case branch::rnd:
+            if (order_heap_rnd_inside[x] == 0) {
+                order_heap_rnd_inside[x] = 1;
+                order_heap_rnd.push_back(x);
+            }
+            break;
     }
 }
 

@@ -1706,18 +1706,23 @@ long Solver::calc_num_confl_to_do_this_iter(const size_t iteration_num) const
 
 void Solver::set_branch_strategy(const uint32_t iteration_num)
 {
-    branch_strategy = branch::none;
-
-    if (conf.maple) {
-        long modulo = iteration_num % conf.modulo_maple_iter;
-        if (modulo == 1) {
-            branch_strategy = branch::none;
+    long modulo = iteration_num % 4;
+    if (modulo == 0) {
+        branch_strategy = branch::vsids;
+    } else if (modulo == 1) {
+        branch_strategy = branch::maple;
+    } else if (modulo == 2) {
+        branch_strategy = branch::vmtf;
+    } else if (modulo == 3) {
+        if (conf.do_full_random_branch) {
+            branch_strategy = branch::rnd;
+        } else {
+            branch_strategy = branch::vsids;
         }
     }
 
-    if (branch_strategy == branch::none) {
-        branch_strategy = branch::vsids;
-    }
+    clear_order_heap();
+    rebuild_order_heap();
 }
 
 
@@ -1731,9 +1736,9 @@ lbool Solver::iterate_until_solved()
         && sumConflicts < (uint64_t)conf.max_confl
     ) {
         set_branch_strategy(iteration_num);
-
         iteration_num++;
-        if (conf.verbosity && iteration_num >= 2) {
+
+        if (conf.verbosity) {
             print_clause_size_distrib();
         }
         dump_memory_stats_to_sql();
@@ -2081,7 +2086,6 @@ lbool Solver::simplify_problem(const bool startup)
     } else if (ret == l_Undef) {
         check_stats();
         check_implicit_propagated();
-        rebuildOrderHeap();
         #ifdef DEBUG_ATTACH_MORE
         find_all_attach();
         test_all_clause_attached();
@@ -2091,8 +2095,9 @@ lbool Solver::simplify_problem(const bool startup)
         return ret;
     } else {
         assert(ret == l_True);
-        rebuildOrderHeap();
         finish_up_solve(ret);
+        clear_order_heap();
+        rebuild_order_heap();
         return ret;
     }
 }
