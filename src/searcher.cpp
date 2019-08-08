@@ -2650,6 +2650,7 @@ void Searcher::finish_up_solve(const lbool status)
     print_solution_type(status);
 
     if (status == l_True) {
+        assert(trail.size() == nVarsOuter());
         #ifdef SLOW_DEBUG
         check_order_heap_sanity();
         #endif
