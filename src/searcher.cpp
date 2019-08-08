@@ -2192,27 +2192,32 @@ bool Searcher::clean_clauses_if_needed()
     return true;
 }
 
-void Searcher::clear_branch_strategy_setups()
+void Searcher::clear_branch_strategy_setup(branch which)
 {
-    //vsids
-    order_heap_vsids.clear();
+    switch(which) {
+        case branch::vsids:
+            order_heap_vsids.clear();
+            break;
 
-    //maple
-    order_heap_maple.clear();
+        case branch::maple:
+            order_heap_maple.clear();
+            break;
 
-    //rnd
-    std::fill(order_heap_rnd_inside.begin(), order_heap_rnd_inside.end(), 0);
-    order_heap_rnd.clear();
+        case branch::rnd:
+            std::fill(order_heap_rnd_inside.begin(), order_heap_rnd_inside.end(), 0);
+            order_heap_rnd.clear();
+            break;
 
-    //vmtf
-    vmtf_bumped = 0;
-    std::fill(vmtf_btab.begin(), vmtf_btab.end(), 0);
-    std::fill(vmtf_links.begin(), vmtf_links.end(), Link());
-    vmtf_queue = Queue();
-
+        case branch::vmtf:
+            vmtf_bumped = 0;
+            std::fill(vmtf_btab.begin(), vmtf_btab.end(), 0);
+            std::fill(vmtf_links.begin(), vmtf_links.end(), Link());
+            vmtf_queue = Queue();
+            break;
+    }
 }
 
-void Searcher::build_branch_strategy_setups()
+void Searcher::build_branch_strategy_setup(branch which)
 {
     vector<uint32_t> vs;
     for (uint32_t v = 0; v < nVars(); v++) {
@@ -2228,7 +2233,7 @@ void Searcher::build_branch_strategy_setups()
         }
     }
 
-    switch(branch_strategy) {
+    switch(which) {
         case branch::vsids:
             order_heap_vsids.growTo(nVars());
             order_heap_vsids.build(vs);
@@ -2251,6 +2256,46 @@ void Searcher::build_branch_strategy_setups()
                 vmtf_init_enqueue(v);
             }
             break;
+    }
+}
+
+void Searcher::rebuild_all_branch_strategy_setups()
+{
+    clear_branch_strategy_setup(branch::vsids);
+    clear_branch_strategy_setup(branch::maple);
+    clear_branch_strategy_setup(branch::vmtf);
+    clear_branch_strategy_setup(branch::rnd);
+
+    build_branch_strategy_setup(branch::vsids);
+    build_branch_strategy_setup(branch::maple);
+    build_branch_strategy_setup(branch::vmtf);
+    build_branch_strategy_setup(branch::rnd);
+}
+
+void Searcher::set_branch_strategy(const uint32_t iteration_num)
+{
+    long modulo = iteration_num % 4;
+    if (modulo == 0) {
+        branch_strategy = branch::vmtf;
+    } else if (modulo == 1) {
+        branch_strategy = branch::vsids;
+    } else if (modulo == 2) {
+        branch_strategy = branch::maple;
+    } else if (modulo == 3) {
+        branch_strategy = branch::rnd;
+    }
+
+    if (conf.verbosity) {
+        cout << "c [branch] strategy: "
+        << branch_type_to_string(branch_strategy) << endl;
+    }
+}
+
+void Searcher::adjust_branch_strategy()
+{
+    if (sumConflicts > next_change_branch_strategy) {
+        set_branch_strategy(branch_strategy_num++);
+        next_change_branch_strategy = sumConflicts + 10000;
     }
 }
 
@@ -2362,7 +2407,11 @@ lbool Searcher::solve(
 
     #endif //USE_GAUSS
 
-    assert(solver->check_order_heap_sanity());
+    rebuild_all_branch_strategy_setups();
+    set_branch_strategy(branch_strategy_num++);
+    next_change_branch_strategy = sumConflicts + 10000;
+    check_calc_satzilla_features(true);
+    check_calc_vardist_features(true);
     while(stats.conflStats.numConflicts < max_confl_per_search_solve_call
         && status == l_Undef
     ) {
@@ -2376,6 +2425,7 @@ lbool Searcher::solve(
         status = search();
         if (status == l_Undef) {
             adjust_restart_strategy();
+            adjust_branch_strategy();
         }
 
         if (must_abort(status)) {

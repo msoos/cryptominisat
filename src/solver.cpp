@@ -1704,28 +1704,6 @@ long Solver::calc_num_confl_to_do_this_iter(const size_t iteration_num) const
     return num_conflicts_of_search;
 }
 
-void Solver::set_branch_strategy(const uint32_t iteration_num)
-{
-    long modulo = iteration_num % 4;
-    if (modulo == 0) {
-        branch_strategy = branch::vmtf;
-    } else if (modulo == 1) {
-        branch_strategy = branch::vsids;
-    } else if (modulo == 2) {
-        branch_strategy = branch::maple;
-    } else if (modulo == 3) {
-        branch_strategy = branch::rnd;
-    }
-
-    clear_branch_strategy_setups();
-    build_branch_strategy_setups();
-
-    if (conf.verbosity) {
-        cout << "c [branch] strategy: "
-        << branch_type_to_string(branch_strategy) << endl;
-    }
-}
-
 
 lbool Solver::iterate_until_solved()
 {
@@ -1736,9 +1714,6 @@ lbool Solver::iterate_until_solved()
         && cpuTime() < conf.maxTime
         && sumConflicts < (uint64_t)conf.max_confl
     ) {
-        set_branch_strategy(iteration_num);
-        iteration_num++;
-
         if (conf.verbosity) {
             print_clause_size_distrib();
         }
@@ -1748,8 +1723,6 @@ lbool Solver::iterate_until_solved()
         if (num_confl <= 0) {
             break;
         }
-        check_calc_satzilla_features(true);
-        check_calc_vardist_features(true);
         status = Searcher::solve(num_confl);
 
         //Check for effectiveness
@@ -2045,7 +2018,6 @@ lbool Solver::simplify_problem(const bool startup)
         return l_Undef;
     }
 
-    clear_branch_strategy_setups();
     #ifdef USE_GAUSS
     clear_gauss_matrices();
     #endif
@@ -2097,8 +2069,6 @@ lbool Solver::simplify_problem(const bool startup)
     } else {
         assert(ret == l_True);
         finish_up_solve(ret);
-        clear_branch_strategy_setups();
-        build_branch_strategy_setups();
         return ret;
     }
 }

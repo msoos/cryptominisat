@@ -134,9 +134,6 @@ class Searcher : public HyperEngine
         template<bool do_insert_var_order = true, bool update_bogoprops = false>
         void cancelUntil(uint32_t level, uint32_t clid_plus = 0); ///<Backtrack until a certain level.
 
-        void check_var_in_branch_strategy(uint32_t var) const;
-        bool check_order_heap_sanity() const;
-
         SQLStats* sqlStats = NULL;
         void consolidate_watches(const bool full);
 
@@ -169,8 +166,7 @@ class Searcher : public HyperEngine
         void unfill_assumptions_set();
 
 
-        void build_branch_strategy_setups();
-        void clear_branch_strategy_setups();
+        bool check_order_heap_sanity() const;
 
 
         template<bool update_bogoprops>
@@ -333,6 +329,14 @@ class Searcher : public HyperEngine
         void vsids_bump_var_act(uint32_t v, double mult = 1.0);
         void update_var_decay_vsids();
         double backup_random_var_freq = -1; ///<if restart has full random var branch, we save old value here
+        void check_var_in_branch_strategy(uint32_t var) const;
+        void set_branch_strategy(const uint32_t iteration_num);
+        void build_branch_strategy_setup(branch which);
+        void clear_branch_strategy_setup(branch which);
+        void rebuild_all_branch_strategy_setups();
+        uint32_t branch_strategy_num = 0;
+        uint32_t next_change_branch_strategy = 0;
+        void adjust_branch_strategy();
 
         /////////////////////
         // Search Stats
