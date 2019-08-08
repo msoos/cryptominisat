@@ -133,6 +133,8 @@ class Searcher : public HyperEngine
         }
         template<bool do_insert_var_order = true, bool update_bogoprops = false>
         void cancelUntil(uint32_t level, uint32_t clid_plus = 0); ///<Backtrack until a certain level.
+
+        void check_var_in_branch_strategy(uint32_t var) const;
         bool check_order_heap_sanity() const;
 
         SQLStats* sqlStats = NULL;
@@ -167,8 +169,8 @@ class Searcher : public HyperEngine
         void unfill_assumptions_set();
 
 
-        void rebuild_order_heap();
-        void clear_order_heap();
+        void build_branch_strategy_setups();
+        void clear_branch_strategy_setups();
 
 
         template<bool update_bogoprops>

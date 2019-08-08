@@ -2182,7 +2182,7 @@ bool Searcher::clean_clauses_if_needed()
     return true;
 }
 
-void Searcher::clear_order_heap()
+void Searcher::clear_branch_strategy_setups()
 {
     //vsids
     order_heap_vsids.clear();
@@ -2200,7 +2200,7 @@ void Searcher::clear_order_heap()
     vmtf_queue = Queue();
 }
 
-void Searcher::rebuild_order_heap()
+void Searcher::build_branch_strategy_setups()
 {
     vector<uint32_t> vs;
     for (uint32_t v = 0; v < nVars(); v++) {
@@ -2218,10 +2218,12 @@ void Searcher::rebuild_order_heap()
 
     switch(branch_strategy) {
         case branch::vsids:
+            order_heap_vsids.growTo(nVars());
             order_heap_vsids.build(vs);
             break;
 
         case branch::maple:
+            order_heap_maple.growTo(nVars());
             order_heap_maple.build(vs);
             break;
 
@@ -3596,6 +3598,28 @@ void Searcher::cancelUntil(uint32_t level
     #endif
 }
 
+void Searcher::check_var_in_branch_strategy(uint32_t int_var) const
+{
+    switch(branch_strategy) {
+        case branch::vsids:
+            assert(order_heap_vsids.inHeap(int_var));
+            break;
+
+        case branch::maple:
+            assert(order_heap_maple.inHeap(int_var));
+            break;
+
+        case branch::rnd:
+            assert(order_heap_rnd_inside[int_var]);
+            break;
+
+        case branch::vmtf:
+            //vmtf_links[int_var].
+            //TODO
+            break;
+    }
+}
+
 inline bool Searcher::check_order_heap_sanity() const
 {
     if (conf.sampling_vars) {
@@ -3611,8 +3635,7 @@ inline bool Searcher::check_order_heap_sanity() const
                 varData[int_var].removed == Removed::none &&
                 value(int_var) == l_Undef
             ) {
-                assert(order_heap_vsids.inHeap(int_var));
-                assert(order_heap_maple.inHeap(int_var));
+                check_var_in_branch_strategy(int_var);
             }
         }
     }
@@ -3622,22 +3645,7 @@ inline bool Searcher::check_order_heap_sanity() const
         if (varData[i].removed == Removed::none
             && value(i) == l_Undef)
         {
-            if (!order_heap_vsids.inHeap(i)) {
-                cout
-                << "ERROR var " << i+1 << " not in vsids heap."
-                << " value: " << value(i)
-                << " removed: " << removed_type_to_string(varData[i].removed)
-                << endl;
-                return false;
-            }
-            if (!order_heap_maple.inHeap(i)) {
-                cout
-                << "ERROR var " << i+1 << " not in maple heap."
-                << " value: " << value(i)
-                << " removed: " << removed_type_to_string(varData[i].removed)
-                << endl;
-                return false;
-            }
+            check_var_in_branch_strategy(i);
         }
     }
     assert(order_heap_vsids.heap_property());

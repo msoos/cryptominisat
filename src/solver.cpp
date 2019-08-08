@@ -1721,8 +1721,13 @@ void Solver::set_branch_strategy(const uint32_t iteration_num)
         }
     }
 
-    clear_order_heap();
-    rebuild_order_heap();
+    clear_branch_strategy_setups();
+    build_branch_strategy_setups();
+
+    if (conf.verbosity) {
+        cout << "c [branch] strategy: "
+        << branch_type_to_string(branch_strategy) << endl;
+    }
 }
 
 
@@ -2044,7 +2049,7 @@ lbool Solver::simplify_problem(const bool startup)
         return l_Undef;
     }
 
-    clear_order_heap();
+    clear_branch_strategy_setups();
     #ifdef USE_GAUSS
     clear_gauss_matrices();
     #endif
@@ -2096,8 +2101,8 @@ lbool Solver::simplify_problem(const bool startup)
     } else {
         assert(ret == l_True);
         finish_up_solve(ret);
-        clear_order_heap();
-        rebuild_order_heap();
+        clear_branch_strategy_setups();
+        build_branch_strategy_setups();
         return ret;
     }
 }

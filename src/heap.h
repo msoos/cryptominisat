@@ -145,6 +145,10 @@ public:
         percolateUp(indices[n]);
     }
 
+    void growTo(uint32_t n) {
+        indices.growTo(n, -1);
+    }
+
     int inspectTop()
     {
         return heap[0];
