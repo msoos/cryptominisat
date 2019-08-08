@@ -3507,7 +3507,7 @@ void Searcher::cancelUntil(uint32_t level
             assert(value(var) != l_Undef);
 
             double reward = 0;
-            #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR_BRANCH)
+            #if defined(STATS_NEEDED)
             if (!update_bogoprops && varData[var].reason == PropBy()) {
                 //we want to dump & this was a decision var
                 uint64_t sumConflicts_during = sumConflicts - varData[var].sumConflicts_at_picktime;
