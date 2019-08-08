@@ -1706,7 +1706,7 @@ long Solver::calc_num_confl_to_do_this_iter(const size_t iteration_num) const
 
 void Solver::set_branch_strategy(const uint32_t iteration_num)
 {
-    long modulo = iteration_num % 4;
+    long modulo = iteration_num % 4+2;
     if (modulo == 0) {
         branch_strategy = branch::vsids;
     } else if (modulo == 1) {
