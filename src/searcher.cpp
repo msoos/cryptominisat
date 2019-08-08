@@ -883,47 +883,56 @@ Clause* Searcher::analyze_conflict(
 
     out_btlevel = find_backtrack_level_of_learnt();
     if (!update_bogoprops) {
-        if (branch_strategy == branch::vsids) {
-            bump_var_activities_based_on_implied_by_learnts<update_bogoprops>(out_btlevel);
-        } else if (branch_strategy == branch::maple) {
-            uint32_t bump_by = 2;
-            assert(toClear.empty());
-            const Lit p = learnt_clause[0];
-            seen[p.var()] = true;
-            toClear.push_back(p);
-            for (int i = learnt_clause.size() - 1; i >= 0; i--) {
-                const uint32_t v = learnt_clause[i].var();
-                if (varData[v].reason.isClause()) {
-                    ClOffset offs = varData[v].reason.get_offset();
-                    Clause* cl = cl_alloc.ptr(offs);
-                    for (const Lit l: *cl) {
+        switch(branch_strategy) {
+            case branch::vsids:
+                for (const uint32_t var :implied_by_learnts) {
+                    if ((int32_t)varData[var].level >= (int32_t)out_btlevel-1) {
+                        vsids_bump_var_act<update_bogoprops>(var, 1.0);
+                    }
+                }
+                implied_by_learnts.clear();
+                break;
+            case branch::maple: {
+                uint32_t bump_by = 2;
+                assert(toClear.empty());
+                const Lit p = learnt_clause[0];
+                seen[p.var()] = true;
+                toClear.push_back(p);
+                for (int i = learnt_clause.size() - 1; i >= 0; i--) {
+                    const uint32_t v = learnt_clause[i].var();
+                    if (varData[v].reason.isClause()) {
+                        ClOffset offs = varData[v].reason.get_offset();
+                        Clause* cl = cl_alloc.ptr(offs);
+                        for (const Lit l: *cl) {
+                            if (!seen[l.var()]) {
+                                seen[l.var()] = true;
+                                toClear.push_back(l);
+                                varData[l.var()].conflicted+=bump_by;
+                            }
+                        }
+                    } else if (varData[v].reason.getType() == binary_t) {
+                        Lit l = varData[v].reason.lit2();
+                        if (!seen[l.var()]) {
+                            seen[l.var()] = true;
+                            toClear.push_back(l);
+                            varData[l.var()].conflicted+=bump_by;
+                        }
+                        l = Lit(v, false);
                         if (!seen[l.var()]) {
                             seen[l.var()] = true;
                             toClear.push_back(l);
                             varData[l.var()].conflicted+=bump_by;
                         }
                     }
-                } else if (varData[v].reason.getType() == binary_t) {
-                    Lit l = varData[v].reason.lit2();
-                    if (!seen[l.var()]) {
-                        seen[l.var()] = true;
-                        toClear.push_back(l);
-                        varData[l.var()].conflicted+=bump_by;
-                    }
-                    l = Lit(v, false);
-                    if (!seen[l.var()]) {
-                        seen[l.var()] = true;
-                        toClear.push_back(l);
-                        varData[l.var()].conflicted+=bump_by;
-                    }
                 }
+                for (Lit l: toClear) {
+                    seen[l.var()] = 0;
+                }
+                toClear.clear();
+                break;
             }
-            for (Lit l: toClear) {
-                seen[l.var()] = 0;
-            }
-            toClear.clear();
-        } else {
-            assert(false);
+            default:
+                break;
         }
     }
     sumConflictClauseLits += learnt_clause.size();
@@ -1249,19 +1258,23 @@ lbool Searcher::search()
 
 inline void Searcher::update_branch_params()
 {
-    if (branch_strategy == branch::vsids) {
-        if (
-            ((stats.conflStats.numConflicts & 0xfff) == 0xfff)
-            && var_decay_vsids < conf.var_decay_vsids_max
-        ) {
-            var_decay_vsids += 0.01;
-        }
-    } else if (branch_strategy == branch::maple) {
-        if ( maple_step_size > solver->conf.min_step_size) {
-            maple_step_size -= solver->conf.step_size_dec;
-        }
-    } else {
-        assert(false);
+    switch(branch_strategy) {
+        case branch::vsids:
+            if (
+                ((stats.conflStats.numConflicts & 0xfff) == 0xfff)
+                && var_decay_vsids < conf.var_decay_vsids_max
+            ) {
+                var_decay_vsids += 0.01;
+            }
+            break;
+        case branch::maple:
+            if ( maple_step_size > solver->conf.min_step_size) {
+                maple_step_size -= solver->conf.step_size_dec;
+            }
+            break;
+
+        default:
+            break;
     }
 }
 

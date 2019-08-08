@@ -1714,11 +1714,7 @@ void Solver::set_branch_strategy(const uint32_t iteration_num)
     } else if (modulo == 2) {
         branch_strategy = branch::vmtf;
     } else if (modulo == 3) {
-        if (conf.do_full_random_branch) {
-            branch_strategy = branch::rnd;
-        } else {
-            branch_strategy = branch::vsids;
-        }
+        branch_strategy = branch::rnd;
     }
 
     clear_branch_strategy_setups();

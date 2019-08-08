@@ -320,8 +320,6 @@ class Searcher : public HyperEngine
         void insert_var_order(const uint32_t x, branch type);
         void insert_var_order(const uint32_t x);
         vector<uint32_t> implied_by_learnts; //for glue-based extra var activity bumping
-        template<bool update_bogoprops>
-        void bump_var_activities_based_on_implied_by_learnts(const uint32_t backtrack_level);
         void update_branch_params();
         template<bool update_bogoprops>
         lbool new_decision();
@@ -601,17 +599,6 @@ inline bool Searcher::pick_polarity(const uint32_t var)
     }
 
     return true;
-}
-
-template<bool update_bogoprops>
-void Searcher::bump_var_activities_based_on_implied_by_learnts(uint32_t backtrack_level) {
-    assert(!update_bogoprops);
-
-    for (const uint32_t var :implied_by_learnts) {
-        if ((int32_t)varData[var].level >= (int32_t)backtrack_level-1L) {
-            vsids_bump_var_act<update_bogoprops>(var, 1.0);
-        }
-    }
 }
 
 template<bool update_bogoprops>
