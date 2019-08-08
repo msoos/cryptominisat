@@ -32,6 +32,7 @@ import os.path
 import sys
 import helper
 import sklearn
+import functools
 ver = sklearn.__version__.split(".")
 if int(ver[1]) < 20:
     from sklearn.cross_validation import train_test_split
@@ -39,24 +40,11 @@ else:
     from sklearn.model_selection import train_test_split
 
 
-def divide(col, name, df, cols):
-    # cannot divide by it, feature not present
-    if name not in cols:
-        return
-
-    # divide
-    if options.verbose:
-        print("dividing col '%s' with '%s' " % (col, name))
-    df["(" + col + "/" + name + ")"] = df[col].div(df[name]+0.000000001)
-
-
 def add_computed_features(df):
     print("Relative data...")
-
-    # remove hidden data
-    del df["sum_cl_use.num_used"]
-
     cols = list(df)
+    divide = functools.partial(helper.divide, df=df, cols=cols, verb=options.verbose)
+
     if not options.picktime_only:
         # create "during"
         for col in cols:
@@ -107,7 +95,7 @@ def add_computed_features(df):
         for col in cols:
             if "restart_type" not in col and "x." not in col and "var_data_use" not in col and "rst.random_var_freq" not in col:
                 for name in names:
-                    divide(col, name, df, cols)
+                    divide(col, name)
 
     # divide var_dist by szfeat, all-by-all
     if False:
@@ -115,48 +103,56 @@ def add_computed_features(df):
             if "szfeat" in c:
                 for c2 in cols:
                     if "var_dist" in c2:
-                        divide(c2, c, df, cols)
+                        divide(c2, c)
 
-    divide("var_dist.red_num_times_in_bin_clause", "rst.numRedBins", df, cols)
-    divide("var_dist.red_num_times_in_long_clause", "rst.numRedLongs", df, cols)
+    divide("var_dist.red_num_times_in_bin_clause", "rst.numRedBins")
+    divide("var_dist.red_num_times_in_long_clause", "rst.numRedLongs")
     df["rst.redcls"] = df["rst.numRedLongs"]+df["rst.numRedBins"]
-    divide("var_dist.red_satisfies_cl", "rst.redcls", df, cols)
-    divide("var_dist.red_tot_num_lit_of_bin_it_appears_in", "rst.numRedBins", df, cols)
-    divide("var_dist.red_tot_num_lit_of_long_cls_it_appears_in", "rst.numRedLongs", df, cols)
-    divide("var_dist.red_sum_var_act_of_cls", "rst.redcls", df, cols)
+    divide("var_dist.red_satisfies_cl", "rst.redcls")
+    divide("var_dist.red_tot_num_lit_of_bin_it_appears_in", "rst.numRedBins")
+    divide("var_dist.red_tot_num_lit_of_long_cls_it_appears_in", "rst.numRedLongs")
+    divide("var_dist.red_sum_var_act_of_cls", "rst.redcls")
 
 
-    divide("var_dist.irred_num_times_in_bin_clause", "rst.numIrredBins", df, cols)
-    divide("var_dist.irred_num_times_in_long_clause", "rst.numIrredLongs", df, cols)
+    divide("var_dist.irred_num_times_in_bin_clause", "rst.numIrredBins")
+    divide("var_dist.irred_num_times_in_long_clause", "rst.numIrredLongs")
     df["rst.irredcls"] = df["rst.numIrredLongs"]+df["rst.numIrredBins"]
-    divide("var_dist.irred_satisfies_cl", "rst.irredcls", df, cols)
-    divide("var_dist.irred_tot_num_lit_of_bin_it_appears_in", "rst.numIrredBins", df, cols)
-    divide("var_dist.irred_tot_num_lit_of_long_cls_it_appears_in", "rst.numIrredLongs", df, cols)
-    divide("var_dist.irred_sum_var_act_of_cls", "rst.irredcls", df, cols)
+    divide("var_dist.irred_satisfies_cl", "rst.irredcls")
+    divide("var_dist.irred_tot_num_lit_of_bin_it_appears_in", "rst.numIrredBins")
+    divide("var_dist.irred_tot_num_lit_of_long_cls_it_appears_in", "rst.numIrredLongs")
+    divide("var_dist.irred_sum_var_act_of_cls", "rst.irredcls")
 
     divide("var_data_picktime.inside_conflict_clause_antecedents_during_at_picktime",
-           "var_data_picktime.sumAntecedentsLits_at_picktime", df, cols)
+           "var_data_picktime.sumAntecedentsLits_at_picktime")
 
     divide("var_data_picktime.sumAntecedentsLits_below_during",
-           "var_data_picktime.sumAntecedentsLits_at_picktime", df, cols)
+           "var_data_picktime.sumAntecedentsLits_at_picktime")
 
     divide("var_data_picktime.inside_conflict_clause_antecedents_at_picktime",
-        "var_data_picktime.sumAntecedentsLits_at_picktime", df, cols)
+        "var_data_picktime.sumAntecedentsLits_at_picktime")
 
-    divide("var_dist.red_satisfies_cl", "rst.redcls", df, cols)
-    divide("var_dist.irred_satisfies_cl", "rst.irredcls", df, cols)
+    divide("var_dist.red_satisfies_cl", "rst.redcls")
+    divide("var_dist.irred_satisfies_cl", "rst.irredcls")
     df["rst.cls"] = df["rst.irredcls"] + df["rst.redcls"]
 
-    divide("var_data_picktime.inside_conflict_clause_during_at_picktime", "rst.cls", df, cols)
+    divide("var_data_picktime.inside_conflict_clause_during_at_picktime", "rst.cls")
 
-    divide("var_data_picktime.num_decided", "var_data_picktime.sumDecisions_at_picktime", df, cols)
-    divide("var_data_picktime.num_decided_pos", "var_data_picktime.sumDecisions_at_picktime", df, cols)
-    divide("var_data_picktime.num_decided", "var_data_picktime.num_decided_pos", df, cols)
+    divide("var_data_picktime.num_decided", "var_data_picktime.sumDecisions_at_picktime")
+    divide("var_data_picktime.num_decided_pos", "var_data_picktime.sumDecisions_at_picktime")
+    divide("var_data_picktime.num_decided", "var_data_picktime.num_decided_pos")
 
-    divide("var_data_picktime.num_propagated", "var_data_picktime.sumPropagations_at_picktime", df, cols)
-    divide("var_data_picktime.num_propagated_pos", "var_data_picktime.sumPropagations_at_picktime", df, cols)
-    divide("var_data_picktime.num_propagated", "var_data_picktime.num_propagated_pos", df, cols)
+    divide("var_data_picktime.num_propagated", "var_data_picktime.sumPropagations_at_picktime")
+    divide("var_data_picktime.num_propagated_pos", "var_data_picktime.sumPropagations_at_picktime")
+    divide("var_data_picktime.num_propagated", "var_data_picktime.num_propagated_pos")
+    divide("var_data_picktime.sumClLBD_at_picktime", "var_data_picktime.num_decided")
+    divide("var_data_picktime.sumClLBD_at_picktime", "var_data_picktime.num_propagated")
+    divide("var_data_picktime.sumAntecedents_at_picktime", "var_data_picktime.num_decided")
+    divide("var_data_picktime.sumAntecedents_at_picktime", "var_data_picktime.num_propagated")
 
+    del df["var_data_picktime.sumAntecedents_at_picktime"]
+    del df["var_data_picktime.sumClLBD_at_picktime"]
+    del df["rst.cls"]
+    del df["rst.redcls"]
     del df["rst.free"]
     del df["var_data_picktime.num_decided"]
     del df["var_data_picktime.num_decided_pos"]
@@ -187,6 +183,9 @@ def rem_useless_features(df):
     for c in col:
         if "restart_type" in c or "szfeat" in c:
             del df[c]
+
+    # remove hidden data
+    del df["sum_cl_use.num_used"]
     pass
 
 

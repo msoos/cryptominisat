@@ -53,6 +53,22 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/\n\n""")
 
+def divide(col, name, df, cols, verb):
+    """
+    to be used like:
+    import functools
+    divide = functools.partial(helper.divide, df=df, cols=cols, verb=options.verbose)
+    """
+
+    # cannot divide by it, feature not present
+    if name not in cols:
+        return
+
+    # divide
+    if verb:
+        print("dividing col '%s' with '%s' " % (col, name))
+    df["(" + col + "/" + name + ")"] = df[col].div(df[name]+0.000000001)
+
 
 def drop_idxs(conn):
     q = """
