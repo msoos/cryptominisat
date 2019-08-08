@@ -1971,6 +1971,7 @@ void Searcher::check_calc_vardist_features(bool force)
         return;
     }
 
+    #ifdef STATS_NEEDED
     if (last_vardist_feature_calc_confl == 0
         || (last_vardist_feature_calc_confl + 10000) < sumConflicts
         || force
@@ -1979,11 +1980,9 @@ void Searcher::check_calc_vardist_features(bool force)
         VarDistGen v(solver);
         v.calc();
         latest_vardist_feature_calc++;
-        #ifdef STATS_NEEDED
         v.dump();
-        #endif
     }
-
+    #endif
 }
 
 void Searcher::print_restart_header()
