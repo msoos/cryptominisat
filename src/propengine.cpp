@@ -538,7 +538,7 @@ void PropEngine::sql_dump_vardata_picktime(uint32_t v, PropBy from)
 // inlined here since it occurs in several inner loops.
 //
 void PropEngine::vmtf_update_queue_unassigned (uint32_t idx) {
-    assert (idx != std::numeric_limits<uint32_t>::max());
+    assert(idx != std::numeric_limits<uint32_t>::max());
     vmtf_queue.unassigned = idx;
     vmtf_queue.vmtf_bumped = vmtf_btab[idx];
 }
@@ -550,13 +550,13 @@ void PropEngine::vmtf_init_enqueue (uint32_t var) {
         assert(vmtf_links[vmtf_queue.last].next == std::numeric_limits<uint32_t>::max());
         vmtf_links[vmtf_queue.last].next = var;
     } else {
-        assert ( vmtf_queue.first == std::numeric_limits<uint32_t>::max());
+        assert(vmtf_queue.first == std::numeric_limits<uint32_t>::max());
         vmtf_queue.first = var;
     }
     vmtf_btab[var] = ++vmtf_bumped;
     l.prev = vmtf_queue.last;
     vmtf_queue.last = var;
-    vmtf_update_queue_unassigned ( vmtf_queue.last);
+    vmtf_update_queue_unassigned(vmtf_queue.last);
 }
 
 // Move vmtf_bumped variables to the front of the (VMTF) decision queue.  The
@@ -575,7 +575,7 @@ void PropEngine::vmtf_bump_queue (uint32_t var) {
     vmtf_btab[var] = ++vmtf_bumped;
     //LOG ("moved to front variable %d and vmtf_bumped to %" PRId64 "", idx, vmtf_btab[idx]);
     if (value(var) == l_Undef) {
-        vmtf_update_queue_unassigned (var);
+        vmtf_update_queue_unassigned(var);
     }
 }
 

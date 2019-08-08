@@ -2780,12 +2780,12 @@ uint32_t Searcher::pick_var_vmtf()
     uint64_t searched = 0;
     uint32_t res = vmtf_queue.unassigned;
     while (value(res) != l_Undef) {
-        res = vmtf_link (res).prev;
+        res = vmtf_link(res).prev;
         searched++;
     }
 
     if (searched) {
-        vmtf_update_queue_unassigned (res);
+        vmtf_update_queue_unassigned(res);
     }
     //LOG ("next queue decision variable %d vmtf_bumped %" PRId64 "", res, vmtf_bumped (res));
     return res;
@@ -3596,7 +3596,7 @@ void Searcher::cancelUntil(uint32_t level
 
             assigns[var] = l_Undef;
             if (vmtf_bumped < vmtf_btab[var]) {
-                vmtf_update_queue_unassigned (var);
+                vmtf_update_queue_unassigned(var);
             }
 
             if (do_insert_var_order) {
