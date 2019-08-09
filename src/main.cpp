@@ -1033,7 +1033,9 @@ void Main::manually_parse_some_options()
 {
     #ifndef USE_BREAKID
     if (conf.doBreakid) {
-        cout << "c BreakID not compiled in, disabling" << endl;
+        if (conf.verbosity) {
+            cout << "c BreakID not compiled in, disabling" << endl;
+        }
         conf.doBreakid = false;
     }
     #endif
