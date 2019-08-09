@@ -159,7 +159,7 @@ inline void Searcher::add_lit_to_learnt(
                 break;
 
             case branch::vmtf:
-                vmtf_bump_queue(var);
+                implied_by_learnts.push_back(var);
                 break;
 
             case branch::rnd:
@@ -818,6 +818,25 @@ void Searcher::print_debug_resolution_data(const PropBy confl)
 #endif
 }
 
+struct analyze_bumped_rank {
+  Searcher * internal;
+  analyze_bumped_rank (Searcher * i) : internal (i) { }
+  uint64_t operator () (const int & a) const {
+    return internal->vmtf_btab[a];
+  }
+};
+
+
+struct analyze_bumped_smaller {
+  Searcher * internal;
+  analyze_bumped_smaller (Searcher * i) : internal (i) { }
+  bool operator () (const int & a, const int & b) const {
+    const auto s = analyze_bumped_rank (internal) (a);
+    const auto t = analyze_bumped_rank (internal) (b);
+    return s < t;
+  }
+};
+
 template<bool update_bogoprops>
 Clause* Searcher::analyze_conflict(
     const PropBy confl
@@ -927,6 +946,16 @@ Clause* Searcher::analyze_conflict(
                 toClear.clear();
                 break;
             }
+            case branch::vmtf:
+                std::sort(implied_by_learnts.begin(),
+                          implied_by_learnts.end(),
+                          analyze_bumped_smaller(this));
+
+                for (const uint32_t var :implied_by_learnts) {
+                    vmtf_bump_queue(var);
+                }
+                implied_by_learnts.clear();
+                break;
             default:
                 break;
         }
