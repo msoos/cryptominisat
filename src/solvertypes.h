@@ -97,6 +97,27 @@ inline std::string branch_type_to_string(const branch type)
     return "Ooops, undefined!";
 }
 
+inline int branch_type_to_int(const branch type)
+{
+    switch(type) {
+        case branch::vsids:
+            return 1;
+
+        case branch::maple:
+            return 2;
+
+        case branch::vmtf:
+            return 3;
+
+        case branch::rnd:
+            return 4;
+    }
+
+    assert(false && "oops, one of the branch types has no int name");
+
+    return 0;
+}
+
 inline std::string restart_type_to_short_string(const Restart type)
 {
     switch(type) {
@@ -122,6 +143,33 @@ inline std::string restart_type_to_short_string(const Restart type)
         assert(false && "oops, one of the restart types has no string name");
 
         return "ERR: undefined!";
+}
+
+inline int restart_type_to_int(const Restart type)
+{
+    switch(type) {
+        case Restart::glue:
+            return 1;
+
+        case Restart::geom:
+            return 2;
+
+        case Restart::luby:
+            return 3;
+
+        case Restart::glue_geom:
+            return 4;
+
+        case Restart::glue_geom_luby:
+            return 5;
+
+        case Restart::never:
+            return 6;
+    }
+
+        assert(false && "oops, one of the restart types has no string name");
+
+        return 0;
 }
 
 //Removed by which algorithm. NONE = not eliminated

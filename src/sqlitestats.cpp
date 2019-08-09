@@ -515,7 +515,7 @@ void SQLiteStats::satzilla_features(
 
 #ifdef STATS_NEEDED
 void SQLiteStats::restart(
-    const std::string& restart_type
+    const Restart rest_type
     , const PropStats& thisPropStats
     , const SearchStats& thisStats
     , const Solver* solver
@@ -553,7 +553,6 @@ void SQLiteStats::restart(
     sqlite3_bind_int64(stmt, bindAt++, solver->litStats.redLits);
 
     //Conflict stats
-    sqlite3_bind_text(stmt, bindAt++, restart_type.c_str(), -1, NULL);
     sqlite3_bind_double(stmt, bindAt++, searchHist.glueHist.getLongtTerm().avg());
     sqlite3_bind_double(stmt, bindAt++, std:: sqrt(searchHist.glueHist.getLongtTerm().var()));
     sqlite3_bind_double(stmt, bindAt++, searchHist.glueHist.getLongtTerm().getMin());
@@ -625,7 +624,10 @@ void SQLiteStats::restart(
     sqlite3_bind_int64(stmt, bindAt++, solver->varReplacer->get_num_replaced_vars());
     sqlite3_bind_int64(stmt, bindAt++, solver->get_num_vars_elimed());
     sqlite3_bind_int64(stmt, bindAt++, search->getTrailSize());
-    sqlite3_bind_double(stmt, bindAt++, search->conf.do_full_random_branch);
+
+    //strategy
+    sqlite3_bind_int(stmt, bindAt++, branch_type_to_int(solver->branch_strategy));
+    sqlite3_bind_int(stmt, bindAt++, restart_type_to_int(rest_type));
 
     //ClauseID
     sqlite3_bind_int64(stmt, bindAt++, thisStats.clauseID_at_start_inclusive);

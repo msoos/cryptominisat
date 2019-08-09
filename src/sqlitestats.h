@@ -67,7 +67,7 @@ public:
 
     #ifdef STATS_NEEDED
     void restart(
-        const std::string& restart_type
+        const Restart rest_type
         , const PropStats& thisPropStats
         , const SearchStats& thisStats
         , const Solver* solver

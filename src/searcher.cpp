@@ -2088,7 +2088,7 @@ inline void Searcher::dump_restart_sql(rst_dat_type type)
     }
 
     solver->sqlStats->restart(
-        restart_type_to_short_string(params.rest_type)
+        params.rest_type
         , thisPropStats
         , thisStats
         , solver
