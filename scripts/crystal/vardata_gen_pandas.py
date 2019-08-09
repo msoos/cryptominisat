@@ -154,7 +154,7 @@ class QueryVar (QueryHelper):
 
         print("var_data_use updated T: %-3.2f s" % (time.time() - t))
 
-    def create_vardata_df(self, min_val, max_val):
+    def create_vardata_df(self, min_val, max_val, branch_str):
         not_cols = [
             "clid_start_incl"
             , "clid_end_notincl"
@@ -251,6 +251,8 @@ class QueryVar (QueryHelper):
         and sum_cl_use.num_used >= {min_val}
         and sum_cl_use.num_used <= {max_val}
 
+        and rst.branch_strategy = {branch_str}
+
         order by random()
         limit {limit}
         """.format(
@@ -264,6 +266,7 @@ class QueryVar (QueryHelper):
             limit=options.limit,
             min_val=min_val,
             max_val=max_val,
+            branch_str=branch_str,
             min_cls_below=options.min_cls_below)
 
         df = pd.read_sql_query(q, self.conn)
@@ -295,8 +298,12 @@ if __name__ == "__main__":
     with QueryVar(options.fname) as q:
         q.create_indexes()
         q.fill_var_data_use()
-        df1 = q.create_vardata_df(0,0)
-        df2 = q.create_vardata_df(1,2000)
-        df_full = pd.concat([df1, df2], sort=False)
+
+        dfs = []
+        for branch_str in [1,2,3,4]:
+            dfs.append(q.create_vardata_df(0,0, branch_str))
+            dfs.append(q.create_vardata_df(1,2000, branch_str))
+            print("Finished branch_str: ", branch_str)
+        df_full = pd.concat(dfs, sort=False)
 
         dump_df(df_full)
