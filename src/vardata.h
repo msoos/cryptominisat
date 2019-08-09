@@ -94,6 +94,8 @@ struct VarData
     uint64_t inside_conflict_clause_during = 0;
     uint64_t inside_conflict_clause_glue_during = 0;
     uint64_t inside_conflict_clause_antecedents_during = 0;
+
+    uint64_t last_flipped = 0;
     bool dump;
     #endif
 };

@@ -409,26 +409,31 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
         }
     }
 
-    const bool sign = p.sign();
-    assigns[v] = boolToLBool(!sign);
-    varData[v].reason = from;
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR_BRANCH)
     if (!update_bogoprops) {
         if (from == PropBy()) {
             #ifdef STATS_NEEDED
             sql_dump_vardata_picktime(v, from);
             varData[v].num_decided++;
-            if (!sign) varData[v].num_decided_pos++;
+            if (!p.sign()) varData[v].num_decided_pos++;
             #endif
         } else {
             sumPropagations++;
             #ifdef STATS_NEEDED
+            bool flipped = (varData[v].polarity != !p.sign());
+            if (flipped) {
+                varData[v].last_flipped = sumConflicts;
+            }
             varData[v].num_propagated++;
-            if (!sign) varData[v].num_propagated_pos++;
+            if (!p.sign()) varData[v].num_propagated_pos++;
             #endif
         }
     }
     #endif
+
+    const bool sign = p.sign();
+    assigns[v] = boolToLBool(!sign);
+    varData[v].reason = from;
     varData[v].level = decisionLevel();
     if (!update_bogoprops) {
         varData[v].polarity = !sign;

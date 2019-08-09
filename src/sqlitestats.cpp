@@ -854,6 +854,8 @@ void SQLiteStats::var_data_picktime(
     sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.sumClLBD_below_during);
     sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.sumClSize_below_during);
 
+    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, solver->sumConflicts-vardata.last_flipped);
+
     //to get usage data good cl/bad cl, etc.
     sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, start_clid_incl);
 
@@ -870,10 +872,20 @@ void SQLiteStats::var_dist(
     sqlite3_bind_int64(stmt_var_dist, bindAt++, solver->latest_vardist_feature_calc);
     sqlite3_bind_int64(stmt_var_dist, bindAt++, solver->sumConflicts);
 
+    sqlite3_bind_int64(stmt_var_dist, bindAt++, solver->longIrredCls.size());
+    uint32_t num = 0;
+    for(auto& x: solver->longRedCls) {
+        num+=x.size();
+    }
+    sqlite3_bind_int64(stmt_var_dist, bindAt++, num);
+    sqlite3_bind_int64(stmt_var_dist, bindAt++, solver->binTri.irredBins);
+    sqlite3_bind_int64(stmt_var_dist, bindAt++, solver->binTri.redBins);
+
 
     sqlite3_bind_int64(stmt_var_dist, bindAt++, data.red.num_times_in_bin_clause);
     sqlite3_bind_int64(stmt_var_dist, bindAt++, data.red.num_times_in_long_clause);
     sqlite3_bind_int64(stmt_var_dist, bindAt++, data.red.satisfies_cl);
+    sqlite3_bind_int64(stmt_var_dist, bindAt++, data.red.falsifies_cl);
     sqlite3_bind_int64(stmt_var_dist, bindAt++, data.red.tot_num_lit_of_bin_it_appears_in);
     sqlite3_bind_int64(stmt_var_dist, bindAt++, data.red.tot_num_lit_of_long_cls_it_appears_in);
     sqlite3_bind_double(stmt_var_dist, bindAt++, data.red.sum_var_act_of_cls);
@@ -881,6 +893,7 @@ void SQLiteStats::var_dist(
     sqlite3_bind_int64(stmt_var_dist, bindAt++, data.irred.num_times_in_bin_clause);
     sqlite3_bind_int64(stmt_var_dist, bindAt++, data.irred.num_times_in_long_clause);
     sqlite3_bind_int64(stmt_var_dist, bindAt++, data.irred.satisfies_cl);
+    sqlite3_bind_int64(stmt_var_dist, bindAt++, data.irred.falsifies_cl);
     sqlite3_bind_int64(stmt_var_dist, bindAt++, data.irred.tot_num_lit_of_bin_it_appears_in);
     sqlite3_bind_int64(stmt_var_dist, bindAt++, data.irred.tot_num_lit_of_long_cls_it_appears_in);
     sqlite3_bind_double(stmt_var_dist, bindAt++, data.irred.sum_var_act_of_cls);

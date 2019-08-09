@@ -113,24 +113,24 @@ def add_computed_features(df):
                     if "during" in c2:
                         divide(c2, c)
 
-    df["rst.redcls"] = df["rst.numRedLongs"]+df["rst.numRedBins"]
-    df["rst.irredcls"] = df["rst.numIrredLongs"]+df["rst.numIrredBins"]
-    df["rst.bins"] = df["rst.numIrredBins"] + df["rst.numRedBins"]
-    df["rst.cls"] = df["rst.irredcls"] + df["rst.redcls"]
+    df["var_dist.num_irred_cls"] = df["var_dist.num_irred_long_cls"] + df["var_dist.num_irred_bin_cls"]
+    df["var_dist.num_red_cls"] = df["var_dist.num_red_long_cls"] + df["var_dist.num_red_bin_cls"]
 
-    divide("var_dist.red_num_times_in_bin_clause", "rst.numRedBins")
-    divide("var_dist.red_num_times_in_long_clause", "rst.numRedLongs")
-    divide("var_dist.red_satisfies_cl", "rst.redcls")
-    divide("var_dist.red_tot_num_lit_of_bin_it_appears_in", "rst.numRedBins")
-    divide("var_dist.red_tot_num_lit_of_long_cls_it_appears_in", "rst.numRedLongs")
-    divide("var_dist.red_sum_var_act_of_cls", "rst.redcls")
+    divide("var_dist.red_num_times_in_bin_clause", "var_dist.num_red_bin_cls")
+    divide("var_dist.red_num_times_in_long_clause", "var_dist.num_red_long_cls")
+    divide("var_dist.red_satisfies_cl", "var_dist.num_red_cls")
+    divide("var_dist.red_tot_num_lit_of_bin_it_appears_in", "var_dist.num_red_bin_cls")
+    divide("var_dist.red_tot_num_lit_of_long_cls_it_appears_in", "var_dist.num_red_long_cls")
+    divide("var_dist.red_sum_var_act_of_cls", "var_dist.num_red_long_cls")
+    divide("var_dist.red_satisfies_cl", "var_dist.num_red_cls")
 
-    divide("var_dist.irred_num_times_in_bin_clause", "rst.numIrredBins")
-    divide("var_dist.irred_num_times_in_long_clause", "rst.numIrredLongs")
+    divide("var_dist.irred_num_times_in_bin_clause", "var_dist.num_irred_bin_cls")
+    divide("var_dist.irred_num_times_in_long_clause", "var_dist.num_irred_long_cls")
     divide("var_dist.irred_satisfies_cl", "rst.irredcls")
-    divide("var_dist.irred_tot_num_lit_of_bin_it_appears_in", "rst.numIrredBins")
-    divide("var_dist.irred_tot_num_lit_of_long_cls_it_appears_in", "rst.numIrredLongs")
-    divide("var_dist.irred_sum_var_act_of_cls", "rst.irredcls")
+    divide("var_dist.irred_tot_num_lit_of_bin_it_appears_in", "var_dist.num_irred_bin_cls")
+    divide("var_dist.irred_tot_num_lit_of_long_cls_it_appears_in", "var_dist.num_irred_long_cls")
+    divide("var_dist.irred_sum_var_act_of_cls", "var_dist.num_irred_cls")
+    divide("var_dist.irred_satisfies_cl", "var_dist.num_irred_cls")
 
     divide("var_data_picktime.inside_conflict_clause_antecedents_during_at_picktime",
            "var_data_picktime.sumAntecedentsLits_at_picktime")
@@ -138,8 +138,13 @@ def add_computed_features(df):
     divide("var_data_picktime.sumAntecedentsLits_below_during",
            "var_data_picktime.sumAntecedentsLits_at_picktime")
 
-    divide("var_dist.red_satisfies_cl", "rst.redcls")
-    divide("var_dist.irred_satisfies_cl", "rst.irredcls")
+    divide("var_dist.red_satisfies_cl", "var_dist.num_red_cls")
+    divide("var_dist.irred_satisfies_cl", "var_dist.num_irred_cls")
+    divide("var_dist.irred_sum_var_act_of_cls", "var_dist.num_irred_long_cls")
+
+    divide("var_dist.tot_act_long_red_cls", "var_dist.num_red_long_cls")
+    divide("var_dist.red_tot_num_lit_of_long_cls_it_appears_in", "var_dist.num_red_long_cls")
+    divide("var_dist.red_sum_var_act_of_cls", "var_dist.num_red_long_cls")
 
     divide("var_data_picktime.inside_conflict_clause_during_at_picktime",
            "var_data_picktime.sumConflicts_at_picktime")
@@ -154,6 +159,12 @@ def add_computed_features(df):
     divide("var_data_picktime.num_propagated_pos", "var_data_picktime.sumPropagations_at_picktime")
     divide("var_data_picktime.num_propagated", "var_data_picktime.num_propagated_pos")
 
+
+    for c in cols:
+        if "var_dist.num_" in c:
+            del df[c]
+    del df["var_dist.num_irred_cls"]
+    del df["var_dist.num_red_cls"]
 
     xs = [
         "var_data_picktime.sumClSize_at_picktime",
@@ -176,14 +187,15 @@ def add_computed_features(df):
 
     todel = [
         "var_data_picktime.latest_vardist_feature_calc",
-        "rst.cls",
-        "rst.redcls",
-        "rst.free",
-        "rst.bins",
 
         "var_dist.red_satisfies_cl",
         "var_dist.irred_satisfies_cl",
         "var_dist.red_num_times_in_bin_clause",
+        "var_dist.irred_sum_var_act_of_cls",
+        "var_dist.tot_act_long_red_cls",
+        "var_dist.red_tot_num_lit_of_long_cls_it_appears_in",
+        "var_dist.red_sum_var_act_of_cls",
+        "rst.branch_strategy",
 
         "var_data_picktime.num_decided",
         "var_data_picktime.num_decided_pos",

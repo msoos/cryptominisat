@@ -384,6 +384,8 @@ create table `var_data_picktime` (
     , `sumClLBD_below_during`                                   int(20) NOT NULL
     , `sumClSize_below_during`                                  int(20) NOT NULL
 
+    , flipped_confs_ago                                         int(20) NOT NULL
+
     , `clid_start_incl`                                         int(20) NOT NULL
 );
 
@@ -417,9 +419,15 @@ create table `var_dist` (
   , `latest_vardist_feature_calc` bigint(20) NOT NULL
   , `conflicts` bigint(20) NOT NULL
 
+  , `num_irred_long_cls`                     bigint(20) NOT NULL
+  , `num_red_long_cls`                     bigint(20) NOT NULL
+  , `num_irred_bin_cls`                     bigint(20) NOT NULL
+  , `num_red_bin_cls`                     bigint(20) NOT NULL
+
   , `red_num_times_in_bin_clause`                     bigint(20) NOT NULL
   , `red_num_times_in_long_clause`                    bigint(20) NOT NULL
   , `red_satisfies_cl`                                bigint(20) NOT NULL
+  , `red_falsifies_cl`                                bigint(20) NOT NULL
   , `red_tot_num_lit_of_bin_it_appears_in`            bigint(20) NOT NULL
   , `red_tot_num_lit_of_long_cls_it_appears_in`       bigint(20) NOT NULL
   , `red_sum_var_act_of_cls`                          double NOT NULL
@@ -427,6 +435,7 @@ create table `var_dist` (
   , `irred_num_times_in_bin_clause`                   bigint(20) NOT NULL
   , `irred_num_times_in_long_clause`                  bigint(20) NOT NULL
   , `irred_satisfies_cl`                              bigint(20) NOT NULL
+  , `irred_falsifies_cl`                              bigint(20) NOT NULL
   , `irred_tot_num_lit_of_bin_it_appears_in`          bigint(20) NOT NULL
   , `irred_tot_num_lit_of_long_cls_it_appears_in`     bigint(20) NOT NULL
   , `irred_sum_var_act_of_cls`                        double NOT NULL

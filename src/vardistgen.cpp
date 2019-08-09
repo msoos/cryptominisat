@@ -47,19 +47,21 @@ void VarDistGen::calc()
 {
     double myTime = cpuTime();
     data.clear();
-    data.resize(solver->nVars()*2);
+    data.resize(solver->nVars());
 
     for(auto& off: solver->longIrredCls) {
         Clause* cl = solver->cl_alloc.ptr(off);
         double tot_var_acts = compute_tot_act_vsids(cl);
 
         for(Lit l: *cl) {
-            data[l.toInt()].irred.num_times_in_long_clause++;
-            data[l.toInt()].irred.tot_num_lit_of_long_cls_it_appears_in+=cl->size();
-            if (solver->varData[l.var()].polarity ^ l.sign()) {
-                data[l.toInt()].irred.satisfies_cl++;
+            data[l.var()].irred.num_times_in_long_clause++;
+            data[l.var()].irred.tot_num_lit_of_long_cls_it_appears_in+=cl->size();
+            if (solver->varData[l.var()].polarity ^ !l.sign()) {
+                data[l.var()].irred.satisfies_cl++;
+            } else {
+                data[l.var()].irred.falsifies_cl++;
             }
-            data[l.toInt()].irred.sum_var_act_of_cls += tot_var_acts;
+            data[l.var()].irred.sum_var_act_of_cls += tot_var_acts;
         }
     }
 
@@ -68,16 +70,18 @@ void VarDistGen::calc()
             Clause* cl = solver->cl_alloc.ptr(off);
             double tot_var_acts = compute_tot_act_vsids(cl);
             for(Lit l: *cl) {
-                data[l.toInt()].red.num_times_in_long_clause++;
-                data[l.toInt()].red.tot_num_lit_of_long_cls_it_appears_in+=cl->size();
-                data[l.toInt()].tot_act_long_red_cls +=
+                data[l.var()].red.num_times_in_long_clause++;
+                data[l.var()].red.tot_num_lit_of_long_cls_it_appears_in+=cl->size();
+                data[l.var()].tot_act_long_red_cls +=
                     std::log2((double)cl->stats.activity+10e-300)
                         /std::log2(solver->max_cl_act+10e-300);
 
-                if (solver->varData[l.var()].polarity ^ l.sign()) {
-                    data[l.toInt()].red.satisfies_cl++;
+                if (solver->varData[l.var()].polarity ^ !l.sign()) {
+                    data[l.var()].red.satisfies_cl++;
+                } else {
+                    data[l.var()].red.falsifies_cl++;
                 }
-                data[l.toInt()].red.sum_var_act_of_cls += tot_var_acts;
+                data[l.var()].red.sum_var_act_of_cls += tot_var_acts;
             }
         }
     }
@@ -87,16 +91,20 @@ void VarDistGen::calc()
         for(Watched& w: solver->watches[l]) {
             if (w.isBin() && l < w.lit2()) {
                 if (w.red()) {
-                    data[l.toInt()].red.num_times_in_bin_clause++;
-                    data[l.toInt()].red.tot_num_lit_of_bin_it_appears_in+=2;
-                    if (solver->varData[l.var()].polarity ^ l.sign()) {
-                        data[l.toInt()].red.satisfies_cl++;
+                    data[l.var()].red.num_times_in_bin_clause++;
+                    data[l.var()].red.tot_num_lit_of_bin_it_appears_in+=2;
+                    if (solver->varData[l.var()].polarity ^ !l.sign()) {
+                        data[l.var()].red.satisfies_cl++;
+                    } else {
+                        data[l.var()].red.falsifies_cl++;
                     }
                 } else {
-                    data[l.toInt()].irred.num_times_in_bin_clause++;
-                    data[l.toInt()].irred.tot_num_lit_of_bin_it_appears_in+=2;
-                    if (solver->varData[l.var()].polarity ^ l.sign()) {
-                        data[l.toInt()].irred.satisfies_cl++;
+                    data[l.var()].irred.num_times_in_bin_clause++;
+                    data[l.var()].irred.tot_num_lit_of_bin_it_appears_in+=2;
+                    if (solver->varData[l.var()].polarity ^ !l.sign()) {
+                        data[l.var()].irred.satisfies_cl++;
+                    } else {
+                        data[l.var()].irred.falsifies_cl++;
                     }
                 }
             }
@@ -124,10 +132,8 @@ void VarDistGen::dump()
 {
     for(uint32_t i = 0; i < solver->nVars(); i++) {
         uint32_t outer_var = solver->map_inter_to_outer(i);
-        Lit lit_pos = Lit(i, true);
-        Lit lit_neg = Lit(i, false);
         solver->sqlStats->var_dist(
-            outer_var, data[lit_pos.toInt()]+data[lit_neg.toInt()], solver);
+            outer_var, data[i], solver);
     }
 }
 #endif //STATS_NEEDED
