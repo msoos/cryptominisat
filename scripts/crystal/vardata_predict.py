@@ -174,7 +174,9 @@ def add_computed_features(df):
         "var_data_picktime.sumConflictClauseLits_at_picktime",
         "var_data_picktime.inside_conflict_clause_antecedents_at_picktime",
         "var_data_picktime.inside_conflict_clause_antecedents_during_at_picktime",
-        "var_data_picktime.sumAntecedentsLits_below_during"
+        "var_data_picktime.sumAntecedentsLits_below_during",
+        "var_data_picktime.inside_conflict_clause_glue_at_picktime"
+        "var_data_picktime.inside_conflict_clause_glue_during_at_picktime"
         ]
     ys = [
         "var_data_picktime.num_decided",
