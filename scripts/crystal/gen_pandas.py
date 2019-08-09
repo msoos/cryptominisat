@@ -121,25 +121,6 @@ class QueryFill (QueryHelper):
         self.c.execute(q)
         print("used_later recreated T: %-3.2f s" % (time.time() - t))
 
-        t = time.time()
-        q = """
-        create table `used_later_short` (
-            `clauseID` bigint(20) NOT NULL,
-            `rdb0conflicts` bigint(20) NOT NULL,
-            `used_later_short` bigint(20)
-        );"""
-        self.c.execute(q)
-        print("used_later_short recreated T: %-3.2f s" % (time.time() - t))
-
-        t = time.time()
-        q = """
-        create table `used_later_long` (
-            `clauseID` bigint(20) NOT NULL,
-            `rdb0conflicts` bigint(20) NOT NULL,
-            `used_later_long` bigint(20)
-        );"""
-        self.c.execute(q)
-        print("used_later_long recreated T: %-3.2f s" % (time.time() - t))
 
         t = time.time()
         q = """insert into used_later
@@ -171,18 +152,25 @@ class QueryFill (QueryHelper):
         self.c.execute(q)
         print("used_later filled T: %-3.2f s" % (time.time() - t))
 
-        t = time.time()
-        q = """
-        insert into used_later_short
+
+        q_create = """
+        create table `used_later_{name}` (
+            `clauseID` bigint(20) NOT NULL,
+            `rdb0conflicts` bigint(20) NOT NULL,
+            `used_later_{name}` bigint(20)
+        );"""
+
+        q_fill = """
+        insert into used_later_{name}
         (
         `clauseID`,
         `rdb0conflicts`,
-        `used_later_short`
+        `used_later_{name}`
         )
         SELECT
         rdb0.clauseID
         , rdb0.conflicts
-        , count(ucl.used_at) as `used_later_short`
+        , count(ucl.used_at) as `used_later_{name}`
 
         FROM
         reduceDB as rdb0
@@ -191,62 +179,35 @@ class QueryFill (QueryHelper):
         -- reduceDB is always present, used_later may not be, hence left join
         on (ucl.clauseID = rdb0.clauseID
             and ucl.used_at > rdb0.conflicts
-            and ucl.used_at <= (rdb0.conflicts+{short_duration}))
+            and ucl.used_at <= (rdb0.conflicts+{duration}))
         , cl_last_in_solver
 
         WHERE
         rdb0.clauseID != 0
         and cl_last_in_solver.clauseID = rdb0.clauseID
-        and cl_last_in_solver.conflicts >= rdb0.conflicts + {short_duration}
+        and cl_last_in_solver.conflicts >= rdb0.conflicts + {duration}
 
-        group by rdb0.clauseID, rdb0.conflicts;""".format(
-            short_duration=options.short_duration)
-        self.c.execute(q)
-        print("used_later_short filled T: %-3.2f s" % (time.time() - t))
+        group by rdb0.clauseID, rdb0.conflicts;"""
 
-        t = time.time()
-        q = """
-        insert into used_later_long
-        (
-        `clauseID`,
-        `rdb0conflicts`,
-        `used_later_long`
-        )
-        SELECT
-        rdb0.clauseID
-        , rdb0.conflicts
-        , count(ucl.used_at) as `used_later_long`
-
-        FROM
-        reduceDB as rdb0
-        left join used_clauses as ucl
-
-        -- reduceDB is always present, used_later may not be, hence left join
-        on (ucl.clauseID = rdb0.clauseID
-            and ucl.used_at > rdb0.conflicts
-            and ucl.used_at <= (rdb0.conflicts+{long_duration}))
-        , cl_last_in_solver
-
-        WHERE
-        rdb0.clauseID != 0
-        and cl_last_in_solver.clauseID = rdb0.clauseID
-        and cl_last_in_solver.conflicts >= rdb0.conflicts + {long_duration}
-
-        group by rdb0.clauseID, rdb0.conflicts;""".format(
-            long_duration=options.long_duration)
-        self.c.execute(q)
-        print("used_later_long filled T: %-3.2f s" % (time.time() - t))
+        idx = """
+        create index `used_later_{name}_idx1` on `used_later_{name}` (`clauseID`, rdb0conflicts);
+        create index `used_later_{name}_idx2` on `used_later_{name}` (`clauseID`, rdb0conflicts, used_later_{name});"""
 
         t = time.time()
-        q = """
+        idxs = ""
+        for name in ["short", "long"]:
+            self.c.execute(q_create.format(name=name))
+            self.c.execute(q_fill.format(name=name, duration=getattr(options, name)))
+            idxs += idx.format(name=name)
+        print("used_later recreated T: %-3.2f s" % (time.time() - t))
+
+
+        t = time.time()
+        idxs += """
         create index `used_later_idx1` on `used_later` (`clauseID`, rdb0conflicts);
         create index `used_later_idx2` on `used_later` (`clauseID`, rdb0conflicts, used_later);
-        create index `used_later_short_idx1` on `used_later_short` (`clauseID`, rdb0conflicts);
-        create index `used_later_short_idx2` on `used_later_short` (`clauseID`, rdb0conflicts, used_later_short);
-        create index `used_later_long_idx1` on `used_later_long` (`clauseID`, rdb0conflicts);
-        create index `used_later_long_idx2` on `used_later_long` (`clauseID`, rdb0conflicts, used_later_long);
         """
-        for l in q.split('\n'):
+        for l in idxs.split('\n'):
             self.c.execute(l)
         print("used_later indexes added T: %-3.2f s" % (time.time() - t))
 
@@ -528,7 +489,7 @@ class QueryCls (QueryHelper):
         and used_later > 0;
         """
         if long_or_short == "long":
-            q = q.replace("used_later_short", "used_later_long")
+            q = q.replace("short", "long")
         cur.execute(q)
         rows = cur.fetchall()
         assert len(rows) == 1
@@ -553,7 +514,7 @@ class QueryCls (QueryHelper):
             where used_later_short > 0
             ) / 2;"""
         if long_or_short == "long":
-            q = q.replace("used_later_short", "used_later_long")
+            q = q.replace("short", "long")
         cur.execute(q)
         rows = cur.fetchall()
         assert len(rows) <= 1
@@ -755,9 +716,9 @@ if __name__ == "__main__":
 
     # lengths of short/long
     parser.add_option("--short", default="10000", type=str,
-                      dest="short_duration", help="Short duration. Default: %default")
+                      dest="short", help="Short duration. Default: %default")
     parser.add_option("--long", default="50000", type=str,
-                      dest="long_duration", help="Long duration. Default: %default")
+                      dest="long", help="Long duration. Default: %default")
 
     (options, args) = parser.parse_args()
 

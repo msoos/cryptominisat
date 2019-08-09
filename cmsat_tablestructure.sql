@@ -88,7 +88,6 @@ CREATE TABLE `restart` (
   `numredLits` bigint(20) NOT NULL,
 
   -- conflict stats
-  `restart_type` varchar(200) NOT NULL,
   `glue` float NOT NULL,
   `glueSD` float NOT NULL,
   `glueMin` int(20) NOT NULL,
@@ -154,7 +153,9 @@ CREATE TABLE `restart` (
   `replaced` int(20) NOT NULL,
   `eliminated` int(20) NOT NULL,
   `set` int(20) NOT NULL,
-  `random_var_freq` double NOT NULL,
+
+  `branch_strategy` int NOT NULL,
+  `restart_type` int NOT NULL,
 
   `clauseIDstartInclusive` int(20) NOT NULL,
   `clauseIDendExclusive` int(20) NOT NULL
