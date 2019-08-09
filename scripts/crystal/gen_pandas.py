@@ -572,12 +572,12 @@ class QueryCls (QueryHelper):
         if long_or_short == "short":
             self.myformat["case_stmt"] = self.case_stmt_short.format(
                 **subformat)
-            self.myformat["del_at_least"] = options.short_duration
+            self.myformat["del_at_least"] = options.short
             fixed_mult = 1.0
         else:
             self.myformat["case_stmt"] = self.case_stmt_long.format(
                 **subformat)
-            self.myformat["del_at_least"] = options.long_duration
+            self.myformat["del_at_least"] = options.long
             fixed_mult = options.fixed_mult_long
 
         print("Fixed multiplier set to  %s " % fixed_mult)
