@@ -87,8 +87,7 @@ class QueryVar (QueryHelper):
 
         create index `idxclid10` on `dec_var_clid` ( `var`, `sumConflicts_at_picktime`, `clauseID`);
 
-        create index `idxclid-s2` on `restart_dat_for_var` (`conflicts`);
-        create index `idxclid-s3` on `restart_dat_for_var` (`latest_satzilla_feature_calc`);
+        create index `idxclid-s2` on `restart_dat_for_var` (`conflicts`, `latest_satzilla_feature_calc`, `branch_strategy`);
         create index `idxclid-s4` on `satzilla_features` (`latest_satzilla_feature_calc`);
 
         create index `idxclid-s1` on `sum_cl_use` ( `clauseID`, `num_used`);
