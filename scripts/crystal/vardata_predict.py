@@ -64,7 +64,7 @@ def add_computed_features(df):
                 del df[c]
 
     else:
-        # remove everything to do with "clauses_below" and "at_fintime"
+        # remove everything to do with "during" and "fintime"
         cols = list(df)
         for c in cols:
             if "clauses_below" in c or "at_fintime" in c:
@@ -74,13 +74,13 @@ def add_computed_features(df):
         # per-conflicts, per-decisions, per-lits
         names = [
             "var_data_picktime.sumConflicts_at_picktime"
-            , "var_data_picktime.sumClLBD"
-            , "var_data_picktime.sumClSize"
-            , "var_data_picktime.sumConflictClauseLits"
+            , "var_data_picktime.sumClLBD_at_picktime"
+            , "var_data_picktime.sumClSize_at_picktime"
+            , "var_data_picktime.sumConflictClauseLits_at_picktime"
             # neutral below
             , "var_data_picktime.dec_depth"
             # below during
-            , "var_data_picktime.inside_conflict_clause_antecedents"
+            , "var_data_picktime.inside_conflict_clause_antecedents_at_picktime"
             , "var_data_picktime.sumDecisions_below_during"
             , "var_data_picktime.sumPropagations_below_during"
             , "var_data_picktime.sumConflicts_below_during"
@@ -105,14 +105,6 @@ def add_computed_features(df):
                     if "var_dist" in c2:
                         divide(c2, c)
 
-    # divide during by during, all-by-all
-    if True:
-        for c in cols:
-            if "during" in c:
-                for c2 in cols:
-                    if "during" in c2:
-                        divide(c2, c)
-
     divide("var_dist.red_num_times_in_bin_clause", "rst.numRedBins")
     divide("var_dist.red_num_times_in_long_clause", "rst.numRedLongs")
     df["rst.redcls"] = df["rst.numRedLongs"]+df["rst.numRedBins"]
@@ -130,47 +122,35 @@ def add_computed_features(df):
     divide("var_dist.irred_tot_num_lit_of_long_cls_it_appears_in", "rst.numIrredLongs")
     divide("var_dist.irred_sum_var_act_of_cls", "rst.irredcls")
 
-    divide("var_data_picktime.inside_conflict_clause_antecedents_during",
-           "var_data_picktime.sumAntecedentsLits")
+    divide("var_data_picktime.inside_conflict_clause_antecedents_during_at_picktime",
+           "var_data_picktime.sumAntecedentsLits_at_picktime")
 
     divide("var_data_picktime.sumAntecedentsLits_below_during",
-           "var_data_picktime.sumAntecedentsLits")
+           "var_data_picktime.sumAntecedentsLits_at_picktime")
 
-    divide("var_data_picktime.inside_conflict_clause_antecedents",
-        "var_data_picktime.sumAntecedentsLits")
+    divide("var_data_picktime.inside_conflict_clause_antecedents_at_picktime",
+        "var_data_picktime.sumAntecedentsLits_at_picktime")
 
     divide("var_dist.red_satisfies_cl", "rst.redcls")
     divide("var_dist.irred_satisfies_cl", "rst.irredcls")
     df["rst.cls"] = df["rst.irredcls"] + df["rst.redcls"]
 
-    divide("var_data_picktime.inside_conflict_clause_during", "rst.cls")
+    divide("var_data_picktime.inside_conflict_clause_during_at_picktime", "rst.cls")
 
-    divide("var_data_picktime.num_decided", "var_data_picktime.sumDecisions")
-    divide("var_data_picktime.num_decided_pos", "var_data_picktime.sumDecisions")
+    divide("var_data_picktime.num_decided", "var_data_picktime.sumDecisions_at_picktime")
+    divide("var_data_picktime.num_decided_pos", "var_data_picktime.sumDecisions_at_picktime")
     divide("var_data_picktime.num_decided", "var_data_picktime.num_decided_pos")
 
-    divide("var_data_picktime.num_propagated", "var_data_picktime.sumPropagations")
-    divide("var_data_picktime.num_propagated_pos", "var_data_picktime.sumPropagations")
+    divide("var_data_picktime.num_propagated", "var_data_picktime.sumPropagations_at_picktime")
+    divide("var_data_picktime.num_propagated_pos", "var_data_picktime.sumPropagations_at_picktime")
     divide("var_data_picktime.num_propagated", "var_data_picktime.num_propagated_pos")
+    divide("var_data_picktime.sumClLBD_at_picktime", "var_data_picktime.num_decided")
+    divide("var_data_picktime.sumClLBD_at_picktime", "var_data_picktime.num_propagated")
+    divide("var_data_picktime.sumAntecedents_at_picktime", "var_data_picktime.num_decided")
+    divide("var_data_picktime.sumAntecedents_at_picktime", "var_data_picktime.num_propagated")
 
-    divide("var_data_picktime.sumClSize", "var_data_picktime.num_decided")
-    divide("var_data_picktime.sumClSize", "var_data_picktime.num_propagated")
-    divide("var_data_picktime.sumClLBD", "var_data_picktime.num_decided")
-    divide("var_data_picktime.sumClLBD", "var_data_picktime.num_propagated")
-    divide("var_data_picktime.sumAntecedents", "var_data_picktime.num_decided")
-    divide("var_data_picktime.sumAntecedents", "var_data_picktime.num_propagated")
-    divide("var_data_picktime.sumAntecedentsLits", "var_data_picktime.num_decided")
-    divide("var_data_picktime.sumAntecedentsLits", "var_data_picktime.num_propagated")
-    divide("var_data_picktime.sumConflictClauseLits", "var_data_picktime.num_decided")
-    divide("var_data_picktime.sumConflictClauseLits", "var_data_picktime.num_propagated")
-
-
-    del df["var_data_picktime.latest_vardist_feature_calc"]
-    del df["var_data_picktime.sumConflictClauseLits"]
-    del df["var_data_picktime.sumClSize"]
-    del df["var_data_picktime.sumAntecedentsLits"]
-    del df["var_data_picktime.sumAntecedents"]
-    del df["var_data_picktime.sumClLBD"]
+    del df["var_data_picktime.sumAntecedents_at_picktime"]
+    del df["var_data_picktime.sumClLBD_at_picktime"]
     del df["rst.cls"]
     del df["rst.redcls"]
     del df["rst.free"]
@@ -181,16 +161,16 @@ def add_computed_features(df):
     del df["var_dist.red_satisfies_cl"]
     del df["var_dist.irred_satisfies_cl"]
     del df["var_data_picktime.sumAntecedentsLits_below_during"]
-    del df["var_data_picktime.inside_conflict_clause_antecedents"]
-    del df["var_data_picktime.inside_conflict_clause_antecedents_during"]
+    del df["var_data_picktime.inside_conflict_clause_antecedents_at_picktime"]
+    del df["var_data_picktime.inside_conflict_clause_antecedents_during_at_picktime"]
 
-    del df["var_data_picktime.sumPropagations"]
-    del df["var_data_picktime.sumDecisions"]
+    del df["var_data_picktime.sumPropagations_at_picktime"]
+    del df["var_data_picktime.sumDecisions_at_picktime"]
 
-    del df["var_data_picktime.inside_conflict_clause_during"]
+    del df["var_data_picktime.inside_conflict_clause_during_at_picktime"]
 
     for c in cols:
-        if "rst." in c or "during" in c:
+        if "rst." in c:
             if c in list(df):
                 del df[c]
     pass
@@ -382,7 +362,7 @@ class Learner:
             '(var_data.clauses_below/var_data.sumAntecedentsLits_during)',
             '(var_data.sumClLBD_during/var_data.sumPropagations_during)']
 
-        best_features = ["var_data.rel_activity"]
+        best_features = ["var_data.rel_activity_at_picktime"]
 
         self.one_classifier(best_features, "x.class",
                             final=True,
