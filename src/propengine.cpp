@@ -535,6 +535,7 @@ void PropEngine::sql_dump_vardata_picktime(uint32_t v, PropBy from)
         , rel_activity_at_picktime
     );
 }
+#endif
 
 // Update queue to point to last potentially still unassigned variable.
 // All variables after 'queue.unassigned' in bump order are assumed to be
@@ -583,4 +584,3 @@ void PropEngine::vmtf_bump_queue (uint32_t var) {
     }
 }
 
-#endif
