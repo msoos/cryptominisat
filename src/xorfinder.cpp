@@ -791,14 +791,14 @@ uint32_t XorFinder::xor_two(Xor const* x1_p, Xor const* x2_p)
         if (seen[v] == 0) {
             tmp_vars_xor_two.push_back(v);
         } else {
-            clash_num++;
-            if (clash_num > 1 &&
+            if (clash_num > 0 &&
                 clash_num != i_x2 //not equivalent by chance
             ) {
                 //early abort, it's never gonna be good
                 early_abort = true;
                 break;
             }
+            clash_num++;
         }
         seen[v] = 2;
     }
@@ -830,11 +830,11 @@ uint32_t XorFinder::xor_two(Xor const* x1_p, Xor const* x2_p)
         seen[x2[i]] = 0;
     }
 
-    //#ifdef SLOW_DEBUG
+    #ifdef SLOW_DEBUG
     for(uint32_t v: x1) {
         assert(seen[v] == 0);
     }
-    //#endif
+    #endif
 
     return clash_num;
 }
