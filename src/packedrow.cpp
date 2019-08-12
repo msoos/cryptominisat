@@ -122,10 +122,10 @@ gret PackedRow::propGause(
                 const uint32_t var = col_to_var[at  + i2];
                 const lbool val = assigns[var];
 
-                // find non basic value
+                // found new non-basic variable, let's watch it
                 if (val == l_Undef && !is_basic[var]) {
                     nb_var = var;
-                    return gret::nothing_fnewwatch;   // nothing
+                    return gret::nothing_fnewwatch;
                 }
                 const bool val_bool = (val == l_True);
                 final ^= val_bool;
@@ -140,14 +140,14 @@ gret PackedRow::propGause(
         }
     }
 
-    if (assigns[tmp_clause[0].var()] == l_Undef) {    // propogate
+    if (assigns[tmp_clause[0].var()] == l_Undef) {
         tmp_clause[0] = tmp_clause[0].unsign()^final;
-        return gret::prop;  // propogate
+        return gret::prop;
     } else if (!final) {
-        return gret::confl;  // conflict
+        return gret::confl;
     }
-    // this row already true
-    return gret::nothing;  // nothing
+    // this row is already satisfied, all variables are set
+    return gret::nothing;
 
 }
 
