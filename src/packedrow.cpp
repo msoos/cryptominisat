@@ -114,10 +114,9 @@ gret PackedRow::propGause(
     nb_var = std::numeric_limits<uint32_t>::max();
     tmp_clause.clear();
 
-    uint32_t at = 0;
-    for (uint32_t i = 0; i != size; i++) if (mp[i]) {
+    for (uint32_t i = start_col; i != size; i++) if (mp[i]) {
         uint64_t tmp = mp[i];
-        at = i*64;
+        uint32_t at = i*64;
         for (uint32_t i2 = 0 ; i2 < 64; i2++) {
             if(tmp & 1){
                 const uint32_t var = col_to_var[at  + i2];
@@ -143,6 +142,25 @@ gret PackedRow::propGause(
             tmp >>= 1;
         }
     }
+
+    #ifdef SLOW_DEBUG
+    {
+        for (uint32_t i = 0; i != size; i++) if (mp[i]) {
+            uint64_t tmp = mp[i];
+            uint32_t at = i*64;
+            for (uint32_t i2 = 0 ; i2 < 64; i2++) {
+                if(tmp & 1){
+                    const uint32_t var = col_to_var[at  + i2];
+                    const lbool val = assigns[var];
+                    if (val == l_Undef && !is_basic[var]) {
+                        assert(false);
+                    }
+                }
+                tmp >>= 1;
+            }
+        }
+    }
+    #endif
 
     if (assigns[tmp_clause[0].var()] == l_Undef) {
         tmp_clause[0] = tmp_clause[0].unsign()^final;

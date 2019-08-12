@@ -557,7 +557,7 @@ bool EGaussian::find_truths2(
         matrix.col_to_var,
         is_basic,
         nb_var,
-        var_to_col[p]);
+        0);
 
     switch (ret) {
         case gret::confl: {
@@ -753,7 +753,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                     matrix.col_to_var,
                     is_basic,
                     nb_var,
-                    ori_nb_col);
+                    0); //std::min(e_col, ori_nb_col));
 
                 switch (ret) {
                     case gret::confl: {
