@@ -107,8 +107,7 @@ gret PackedRow::propGause(
     const vector<lbool>& assigns,
     const vector<uint32_t>& col_to_var,
     vec<bool> &is_basic,
-    uint32_t& nb_var,
-    uint32_t start_col
+    uint32_t& nb_var
 ) {
     bool final = !rhs_internal;
     nb_var = std::numeric_limits<uint32_t>::max();

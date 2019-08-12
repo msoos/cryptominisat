@@ -204,7 +204,7 @@ public:
     uint32_t find_watchVar(vector<Lit>& tmp_clause, const vector<uint32_t>& col_to_var,vec<bool> &is_basic , uint32_t& nb_var );
 
     // using find nonbasic value after watch list is enter
-    gret propGause(vector<Lit>& tmp_clause,const vector<lbool>& assigns, const vector<uint32_t>& col_to_var, vec<bool> &is_basic ,uint32_t& nb_var, uint32_t start_col);
+    gret propGause(vector<Lit>& tmp_clause,const vector<lbool>& assigns, const vector<uint32_t>& col_to_var, vec<bool> &is_basic ,uint32_t& nb_var);
 
     inline unsigned long int scan(const unsigned long int var) const
     {
