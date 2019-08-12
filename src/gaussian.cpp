@@ -556,7 +556,8 @@ bool EGaussian::find_truths2(
         solver->assigns,
         matrix.col_to_var,
         is_basic,
-        nb_var);
+        nb_var,
+        var_to_col[p]);
 
     switch (ret) {
         case gret::confl: {
@@ -751,7 +752,8 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                     solver->assigns,
                     matrix.col_to_var,
                     is_basic,
-                    nb_var);
+                    nb_var,
+                    ori_nb_col);
 
                 switch (ret) {
                     case gret::confl: {
