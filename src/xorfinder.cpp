@@ -795,6 +795,7 @@ uint32_t XorFinder::xor_two(Xor const* x1_p, Xor const* x2_p)
                 clash_num != i_x2 //not equivalent by chance
             ) {
                 //early abort, it's never gonna be good
+                clash_num++;
                 early_abort = true;
                 break;
             }
