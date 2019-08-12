@@ -422,6 +422,7 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
     const bool sign = p.sign();
     assigns[v] = boolToLBool(!sign);
     varData[v].reason = from;
+    varData[v].set++;
     #ifdef STATS_NEEDED
     if (!update_bogoprops) {
         if (from == PropBy()) {

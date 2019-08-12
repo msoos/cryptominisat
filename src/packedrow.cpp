@@ -122,6 +122,9 @@ gret PackedRow::propGause(
                 const uint32_t var = col_to_var[at  + i2];
                 const lbool val = assigns[var];
 
+                //TODO: let's put the most UNDEF variables
+                //TODO: at the beginning of the matrix
+
                 // found new non-basic variable, let's watch it
                 if (val == l_Undef && !is_basic[var]) {
                     nb_var = var;

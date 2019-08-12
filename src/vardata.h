@@ -51,6 +51,7 @@ struct VarData
     bool polarity = false;
     bool is_bva = false;
     bool added_for_xor = false;
+    uint32_t set = 0;
     #ifdef STATS_NEEDED
     uint64_t num_propagated = 0;
     uint64_t num_propagated_pos = 0;

@@ -90,16 +90,16 @@ void EGaussian::canceling(const uint32_t sublevel) {
     (*rowIt).setZero(); //forget state
 }
 
-struct HeapSorter {
-    explicit HeapSorter(vector<double>& _activities) : activities(_activities) {
+struct ColSorter {
+    explicit ColSorter(vector<VarData>& _dats) : dats(_dats) {
     }
 
     // higher activity first
     bool operator()(uint32_t a, uint32_t b) {
-        return activities[a] < activities[b];
+        return dats[a].set > dats[b].set;
     }
 
-    const vector<double>& activities;
+    const vector<VarData>& dats;
 };
 
 uint32_t EGaussian::select_columnorder(matrixset& origMat) {
@@ -135,7 +135,8 @@ uint32_t EGaussian::select_columnorder(matrixset& origMat) {
     var_to_col.resize(largest_used_var + 1);
 
     origMat.col_to_var.clear();
-    std::sort(vars_needed.begin(), vars_needed.end(), HeapSorter(solver->var_act_vsids));
+    std::sort(vars_needed.begin(), vars_needed.end(),
+              ColSorter(solver->varData));
 
     for (uint32_t v : vars_needed) {
         assert(var_to_col[v] == unassigned_col - 1);
@@ -661,7 +662,7 @@ bool EGaussian::find_truths2(
             // set basic variable
             is_basic[nb_var] = 1;
 
-            // store the eliminate valuable & row
+            // store the eliminate variable & row
             gqd.e_var = nb_var;
             gqd.e_row_n = row_n;
             break;
