@@ -478,6 +478,8 @@ void Main::add_supported_options()
         , "Run Yalsat with this many mems*million timeout. Limits time of yalsat run")
     ("walksatruns", po::value(&conf.walksat_max_runs)->default_value(conf.walksat_max_runs)
         , "Max 'runs' for WalkSAT. Limits time of WalkSAT run")
+    ("slsgetphase", po::value(&conf.sls_get_phase)->default_value(conf.sls_get_phase)
+        , "Get phase from SLS solver, set as new phase for CDCL")
     ;
 
     po::options_description probeOptions("Probing options");

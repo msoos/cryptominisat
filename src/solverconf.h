@@ -361,6 +361,7 @@ class DLL_PUBLIC SolverConf
         uint32_t yalsat_max_mems;
         uint32_t sls_memoutMB;
         uint32_t walksat_max_runs;
+        int      sls_get_phase;
         string   which_sls;
 
         //Distillation

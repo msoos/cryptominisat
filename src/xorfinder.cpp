@@ -40,6 +40,7 @@ XorFinder::XorFinder(OccSimplifier* _occsimplifier, Solver* _solver) :
     , toClear(_solver->toClear)
     , seen(_solver->seen)
 {
+    tmp_vars_xor_two.reserve(2000);
 }
 
 void XorFinder::find_xors_based_on_long_clauses()
@@ -497,6 +498,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
             }
             #endif
 
+            //Pop and check if it can be XOR-ed together
             const uint32_t v = interesting.back();
             interesting.resize(interesting.size()-1);
             if (occcnt[v] != 2)
@@ -508,6 +510,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
             assert(solver->watches.size() > Lit(v, false).toInt());
             watch_subarray ws = solver->watches[Lit(v, false)];
 
+            //Remove the 2 indexes from the watchlist
             for(size_t i = 0; i < ws.size(); i++) {
                 const Watched& w = ws[i];
                 if (!w.isIdx()) {
@@ -523,7 +526,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
 
             Xor& x1 = this_xors[idxes[0]];
             Xor& x2 = this_xors[idxes[1]];
-            uint32_t clash_num = xor_two(x1, x2);
+            uint32_t clash_num = xor_two(&x1, &x2);
 
             //If they are equivalent
             if (x1.size() == x2.size()
@@ -741,9 +744,14 @@ bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* ou
     return solver->okay();
 }
 
-uint32_t XorFinder::xor_two(Xor& x1, Xor& x2)
+uint32_t XorFinder::xor_two(Xor const* x1_p, Xor const* x2_p)
 {
     tmp_vars_xor_two.clear();
+    if (x1_p->size() > x2_p->size()) {
+        std::swap(x1_p, x2_p);
+    }
+    const Xor& x1 = *x1_p;
+    const Xor& x2 = *x2_p;
 
     uint32_t clash_num = 0;
     for(uint32_t v: x1) {
@@ -751,39 +759,59 @@ uint32_t XorFinder::xor_two(Xor& x1, Xor& x2)
         seen[v] = 1;
     }
 
-    for(uint32_t v: x2) {
+    uint32_t i_x2;
+    bool early_abort = false;
+    for(i_x2 = 0; i_x2 < x2.size(); i_x2++) {
+        uint32_t v = x2[i_x2];
         assert(seen[v] != 2);
         if (seen[v] == 0) {
             tmp_vars_xor_two.push_back(v);
         } else {
+            if (clash_num > 0 &&
+                clash_num != i_x2 //not equivalent by chance
+            ) {
+                //early abort, it's never gonna be good
+                clash_num++;
+                early_abort = true;
+                break;
+            }
             clash_num++;
         }
         seen[v] = 2;
     }
 
-#ifdef SLOW_DEBUG
-    uint32_t other_clash = 0;
-#endif
-    for(uint32_t v: x1) {
-        if (seen[v] != 2) {
-            tmp_vars_xor_two.push_back(v);
-        } else {
-#ifdef SLOW_DEBUG
-            other_clash++;
-#endif
+    if (!early_abort) {
+        #ifdef SLOW_DEBUG
+        uint32_t other_clash = 0;
+        #endif
+        for(uint32_t v: x1) {
+            if (seen[v] != 2) {
+                tmp_vars_xor_two.push_back(v);
+            } else {
+                #ifdef SLOW_DEBUG
+                other_clash++;
+                #endif
+            }
+            seen[v] = 0;
         }
-        seen[v] = 0;
+        #ifdef SLOW_DEBUG
+        assert(other_clash == clash_num);
+        #endif
+    } else {
+        for(uint32_t v: x1) {
+            seen[v] = 0;
+        }
     }
-#ifdef SLOW_DEBUG
-    assert(other_clash == clash_num);
-#endif
 
-    for(uint32_t v: x2) {
-        seen[v] = 0;
+    for(uint32_t i = 0; i < i_x2; i++) {
+        seen[x2[i]] = 0;
     }
+
+    #ifdef SLOW_DEBUG
     for(uint32_t v: x1) {
         assert(seen[v] == 0);
     }
+    #endif
 
     return clash_num;
 }

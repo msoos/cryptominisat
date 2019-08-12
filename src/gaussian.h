@@ -45,8 +45,6 @@ THE SOFTWARE.
 
 //#define VERBOSE_DEBUG
 //#define DEBUG_GAUSS
-#define basic_var true
-#define non_basic_var false
 
 using std::string;
 using std::pair;
@@ -71,7 +69,7 @@ class EGaussian {
     // basic    = TRUE  -- non-assigned var
     // non-basic= FALSE -- assigned var
     // we watch ONE basic(=unassigned) + ONE non-basic(=assigned) var
-    vec<bool>         var_state ;
+    vec<bool> is_basic;
 
     vector<uint32_t>  var_to_col;             // variable to column
     class matrixset { // matrix information

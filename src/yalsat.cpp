@@ -209,6 +209,16 @@ lbool Yalsat::deal_with_solution(int res)
         if (solver->conf.verbosity) {
             cout << "c [yalsat] ASSIGNMENT NOT FOUND" << endl;
         }
+
+        if (solver->conf.sls_get_phase) {
+            if (solver->conf.verbosity) {
+                cout << "c [yalsat] saving best assignement phase -- it had " << yals_minimum(yals) << " clauses unsatisfied" << endl;
+            }
+            for(size_t i = 0; i < solver->nVars(); i++) {
+                solver->varData[i].polarity = (yals_deref(yals, i+1) >= 0);
+            }
+        }
+
         return l_Undef;
     }
 
