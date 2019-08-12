@@ -74,7 +74,7 @@ bool PackedRow::fill(
 uint32_t PackedRow::find_watchVar(
     vector<Lit>& tmp_clause,
     const vector<uint32_t>& col_to_var,
-    vec<bool> &GasVar_state,
+    vec<bool> &is_basic,
     uint32_t& nb_var
 ) {
     uint32_t  tmp_var = 0;
@@ -83,15 +83,13 @@ uint32_t PackedRow::find_watchVar(
     uint32_t i;
     tmp_clause.clear();
 
-
-    for(i = 0; i < size*64; i++) {
+    for(i = 0; i < size*64 && popcnt < 3; i++) {
         if (this->operator[](i)){
             popcnt++;
             tmp_var = col_to_var[i];
             tmp_clause.push_back(Lit(tmp_var, false));
-            if( !GasVar_state[tmp_var] ){  //nobasic
+            if( !is_basic[tmp_var]){  //nobasic
                 nb_var = tmp_var;
-                break;
             }else{  // basic
                 Lit tmp(tmp_clause[0]);
                 tmp_clause[0] = tmp_clause.back();
@@ -99,77 +97,43 @@ uint32_t PackedRow::find_watchVar(
             }
         }
     }
-
-    for( i = i + 1 ; i <  size*64; i++) {
-        if (this->operator[](i)){
-            popcnt++;
-            tmp_var = col_to_var[i];
-            tmp_clause.push_back(Lit(tmp_var, false));
-            if( GasVar_state[tmp_var] ){  //basic
-                Lit tmp(tmp_clause[0]);
-                tmp_clause[0] = tmp_clause.back();
-                tmp_clause.back() = tmp;
-            }
-        }
-    }
     assert(tmp_clause.size() == popcnt);
-    assert( popcnt == 0 || GasVar_state[ tmp_clause[0].var() ]) ;
+    assert( popcnt == 0 || is_basic[ tmp_clause[0].var() ]) ;
     return popcnt;
-
 }
 
 gret PackedRow::propGause(
     vector<Lit>& tmp_clause,
     const vector<lbool>& assigns,
     const vector<uint32_t>& col_to_var,
-    vec<bool> &GasVar_state, // variable state  : basic or non-basic
+    vec<bool> &is_basic,
     uint32_t& nb_var,
-    uint32_t start
+    uint32_t start_col
 ) {
-
     bool final = !rhs_internal;
     nb_var = std::numeric_limits<uint32_t>::max();
     tmp_clause.clear();
 
-    for (uint32_t i = start/64; i != size; i++) if (mp[i]) {
+    uint32_t at = 0;
+    for (uint32_t i = 0; i != size; i++) if (mp[i]) {
         uint64_t tmp = mp[i];
+        at = i*64;
         for (uint32_t i2 = 0 ; i2 < 64; i2++) {
             if(tmp & 1){
-                const uint32_t var = col_to_var[i * 64  + i2];
+                const uint32_t var = col_to_var[at  + i2];
                 const lbool val = assigns[var];
 
                 // find non basic value
-                if (val == l_Undef && !GasVar_state[var]) {
+                if (val == l_Undef && !is_basic[var]) {
                     nb_var = var;
                     return gret::nothing_fnewwatch;   // nothing
                 }
                 const bool val_bool = (val == l_True);
                 final ^= val_bool;
                 tmp_clause.push_back(Lit(var, val_bool));
-                if (GasVar_state[var]) {
-                    std::swap(tmp_clause[0], tmp_clause.back());
-                }
-            }
-            tmp >>= 1;
-        }
-    }
 
-    for (uint32_t i =0; i != start/64; i++) if (mp[i]) {
-        uint64_t tmp = mp[i];
-        for (uint32_t i2 = 0 ; i2 < 64; i2++) {
-            if(tmp & 1){
-                const uint32_t var = col_to_var[i * 64  + i2];
-                const lbool val = assigns[var];
-
-                //find non basic value
-                if (val == l_Undef &&  !GasVar_state[var] ){
-                    nb_var = var;
-                    return gret::nothing_fnewwatch;   // nothing
-                }
-                const bool val_bool = (val == l_True);
-                final ^= val_bool;
-                tmp_clause.push_back(Lit(var, val_bool));
-                if (GasVar_state[var]) {
+                //if this is the basic variable, put it to the 0th position
+                if (is_basic[var]) {
                     std::swap(tmp_clause[0], tmp_clause.back());
                 }
             }

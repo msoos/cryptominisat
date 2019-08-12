@@ -187,8 +187,8 @@ void EGaussian::fill_matrix(matrixset& origMat) {
     assert(origMat.num_rows == matrix_row);
 
     // reset  gaussian matrixt condition
-    var_state.clear();                                // reset variable state
-    var_state.growTo(solver->nVars(), non_basic_var); // init varaible state
+    is_basic.clear();                                // reset variable state
+    is_basic.growTo(solver->nVars(), 0); // init varaible state
     origMat.row_to_nb_var.clear();                             // clear non-basic
 
     delete_gauss_watch_this_matrix();
@@ -338,7 +338,7 @@ void EGaussian::eliminate(matrixset& m) {
             }
             i++;
             ++rowIt;
-            var_state[m.col_to_var[j]] = basic_var; // this column is basic variable
+            is_basic[m.col_to_var[j]] = 1; // this column is basic variable
             // printf("basic var:%d    n",m.col_to_var[j] + 1);
         }
         j++;
@@ -357,7 +357,7 @@ gret EGaussian::adjust_matrix(matrixset& m) {
     uint32_t adjust_zero = 0; //  elimination row
 
     while (rowIt != end) {
-        const uint32_t popcnt = (*rowIt).find_watchVar(tmp_clause, matrix.col_to_var, var_state, nb_var);
+        const uint32_t popcnt = (*rowIt).find_watchVar(tmp_clause, matrix.col_to_var, is_basic, nb_var);
         switch (popcnt) {
 
             //Conflict potentially
@@ -384,7 +384,7 @@ gret EGaussian::adjust_matrix(matrixset& m) {
                 //adjusting
                 (*rowIt).setZero(); // reset this row all zero
                 m.row_to_nb_var.push(std::numeric_limits<uint32_t>::max()); // delete non basic value in this row
-                var_state[tmp_clause[0].var()] = non_basic_var; // delete basic value in this row
+                is_basic[tmp_clause[0].var()] = 0; // delete basic value in this row
                 return gret::unit_prop;
             }
 
@@ -400,7 +400,7 @@ gret EGaussian::adjust_matrix(matrixset& m) {
 
                 (*rowIt).setZero(); // reset this row all zero
                 m.row_to_nb_var.push(std::numeric_limits<uint32_t>::max()); // delete non basic value in this row
-                var_state[tmp_clause[0].var()] = non_basic_var; // delete basic value in this row
+                is_basic[tmp_clause[0].var()] = 0; // delete basic value in this row
                 break;
             }
 
@@ -544,15 +544,19 @@ bool EGaussian::find_truths2(
     }
 
     //swap basic and non_basic variable
-    if (var_state[p] == basic_var) {
+    if (is_basic[p] == 1) {
         orig_basic = true;
-        var_state[matrix.row_to_nb_var[row_n]] = basic_var;
-        var_state[p] = non_basic_var;
+        is_basic[matrix.row_to_nb_var[row_n]] = 1;
+        is_basic[p] = 0;
     }
 
     const gret ret = (*rowIt).propGause(
-        tmp_clause, solver->assigns, matrix.col_to_var, var_state,
-        nb_var, var_to_col[p]);
+        tmp_clause,
+        solver->assigns,
+        matrix.col_to_var,
+        is_basic,
+        nb_var,
+        var_to_col[p]);
 
     switch (ret) {
         case gret::confl: {
@@ -562,8 +566,8 @@ bool EGaussian::find_truths2(
                 //WARNING !!!! if orig_basic is FALSE, this will delete
                 delete_gausswatch(orig_basic, row_n, p);
 
-                var_state[tmp_clause[0].var()] = non_basic_var; // delete value state;
-                var_state[tmp_clause[1].var()] = non_basic_var;
+                is_basic[tmp_clause[0].var()] = 0; // delete value state;
+                is_basic[tmp_clause[1].var()] = 0;
                 matrix.row_to_nb_var[row_n] =
                     std::numeric_limits<uint32_t>::max(); // delete non basic value in this row
                 (*rowIt).setZero();
@@ -590,8 +594,8 @@ bool EGaussian::find_truths2(
             #endif
 
             if (orig_basic) { // recover
-                var_state[matrix.row_to_nb_var[row_n]] = non_basic_var;
-                var_state[p] = basic_var;
+                is_basic[matrix.row_to_nb_var[row_n]] = 0;
+                is_basic[p] = 1;
             }
 
             return false;
@@ -626,8 +630,8 @@ bool EGaussian::find_truths2(
             #endif
 
             if (orig_basic) { // recover
-                var_state[matrix.row_to_nb_var[row_n]] = non_basic_var;
-                var_state[p] = basic_var;
+                is_basic[matrix.row_to_nb_var[row_n]] = 0;
+                is_basic[p] = 1;
             }
 
             (*clauseIt).setBit(row_n); // this clause arleady sat
@@ -641,20 +645,25 @@ bool EGaussian::find_truths2(
             assert(nb_var != std::numeric_limits<uint32_t>::max());
             if (orig_basic) {
                 /// clear watchlist, because only one basic value in watchlist
-                assert(nb_var != p); //WARNING !!!
+                assert(nb_var != p);
                 clear_gwatches(nb_var);
             }
-            assert(nb_var != p); //WARNING !!!
+            assert(nb_var != p);
             solver->gwatches[nb_var].push(GaussWatched(row_n, matrix_no));
 
             if (!orig_basic) {
                 matrix.row_to_nb_var[row_n] = nb_var; // update in this row non_basic variable
                 return true;
             }
-            var_state[matrix.row_to_nb_var[row_n]] =
-                non_basic_var;                // recover non_basic variable
-            var_state[nb_var] = basic_var; // set basic variable
-            gqd.e_var = nb_var;                   // store the eliminate valuable
+
+            // recover non_basic variable
+            is_basic[matrix.row_to_nb_var[row_n]] = 0;
+
+            // set basic variable
+            is_basic[nb_var] = 1;
+
+            // store the eliminate valuable & row
+            gqd.e_var = nb_var;
             gqd.e_row_n = row_n;
             break;
 
@@ -663,8 +672,8 @@ bool EGaussian::find_truths2(
             // printf("%d:This row is nothing( maybe already true)     n",row_n);
             *j++ = *i;
             if (orig_basic) { // recover
-                var_state[matrix.row_to_nb_var[row_n]] = non_basic_var;
-                var_state[p] = basic_var;
+                is_basic[matrix.row_to_nb_var[row_n]] = 0;
+                is_basic[p] = 1;
             }
             (*clauseIt).setBit(row_n); // this clause arleady sat
             return true;
@@ -707,11 +716,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
     <<  endl;
     #endif
 
-    // assert(ret_gauss == 4);  // check this matrix is nothing
-    // assert(solver->qhead ==  solver->trail.size() ) ;
-
     while (rowI != end) {
-
         //Row has a '1' in eliminating column, and it's not the row responsible
         if ((*rowI)[e_col] && this_row != rowI) {
 
@@ -736,14 +741,18 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                 << "fixing up..."<< endl;
                 #endif
 
-                if (ori_nb != gqd.e_var) {  // delelte orignal non basic value in watch list
+                // Delelte orignal non basic value in watch list
+                if (ori_nb != gqd.e_var) {
                     delete_gausswatch(true, num_row);
                 }
 
                 const gret ret = (*rowI).propGause(
                     tmp_clause,
-                    solver->assigns, matrix.col_to_var,
-                                     var_state, nb_var, ori_nb_col);
+                    solver->assigns,
+                    matrix.col_to_var,
+                    is_basic,
+                    nb_var,
+                    ori_nb_col);
 
                 switch (ret) {
                     case gret::confl: {
@@ -755,11 +764,11 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
 
                         if (tmp_clause.size() == 2) {
                             delete_gausswatch(false, num_row);
-                            assert(var_state[tmp_clause[0].var()] == basic_var);
-                            assert(var_state[tmp_clause[1].var()] == non_basic_var);
+                            assert(is_basic[tmp_clause[0].var()] == 1);
+                            assert(is_basic[tmp_clause[1].var()] == 0);
 
                             // delete value state
-                            var_state[tmp_clause[0].var()] = non_basic_var;
+                            is_basic[tmp_clause[0].var()] = 0;
 
                             // delete non basic value in this row
                             matrix.row_to_nb_var[num_row] = std::numeric_limits<uint32_t>::max();
