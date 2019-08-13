@@ -1,5 +1,5 @@
 /******************************************
-Copyright (c) 2019, Mate Soos
+Copyright (c) 2018, Mate Soos <soos.mate@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -20,30 +20,50 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef SLS_H_
-#define SLS_H_
+#ifndef CMS_ccnr_H
+#define CMS_ccnr_H
 
+#include <cstdint>
+#include <cstdio>
 #include "solvertypes.h"
+
+namespace CCNR {
+    class ls_solver;
+}
 
 namespace CMSat {
 
 class Solver;
-
-class SLS {
+class CMS_ccnr {
 public:
-    SLS(Solver* solver);
-    ~SLS();
-    lbool run();
+    lbool main();
+    CMS_ccnr(Solver* _solver);
+    ~CMS_ccnr();
 
 private:
     Solver* solver;
 
-    lbool run_walksat();
-    lbool run_yalsat();
-    lbool run_ccnr();
-    uint64_t approx_mem_needed();
+    /************************************/
+    /* Main                             */
+    /************************************/
+    void flipvar(uint32_t toflip);
+
+    /************************************/
+    /* Initialization                   */
+    /************************************/
+    void parse_parameters();
+    void init_for_round();
+    bool init_problem();
+    lbool deal_with_solution(int res);
+    CCNR::ls_solver* ls_s;
+    uint32_t cl_num = 0;
+
+    enum class add_cl_ret {added_cl, skipped_cl, unsat};
+    template<class T>
+    add_cl_ret add_this_clause(const T& cl);
+    vector<int> yals_lits;
 };
 
-} //end namespace CMSat
+}
 
-#endif //SLS_H_
+#endif //CMS_WALKSAT_H

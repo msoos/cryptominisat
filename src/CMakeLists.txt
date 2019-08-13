@@ -115,6 +115,8 @@ set(cryptoms_lib_files
     walksat.cpp
     sls.cpp
     vardistgen.cpp
+    ccnr.cpp
+    ccnr_cms.cpp
 
 #    watcharray.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
