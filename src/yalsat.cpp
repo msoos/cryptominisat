@@ -1,5 +1,4 @@
 /******************************************
-Copyright (c) 2018, Henry Kautz <henry.kautz@gmail.com>
 Copyright (c) 2018, Mate Soos <soos.mate@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
