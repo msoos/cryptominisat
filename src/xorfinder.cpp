@@ -863,26 +863,6 @@ void XorFinder::Stats::print_short(const Solver* solver, double time_remain) con
     << endl;
 }
 
-void XorFinder::Stats::print() const
-{
-    cout << "c --------- XOR STATS ----------" << endl;
-    print_stats_line("c num XOR found on avg"
-        , float_div(foundXors, numCalls)
-        , "avg size"
-    );
-
-    print_stats_line("c XOR avg size"
-        , float_div(sumSizeXors, foundXors)
-    );
-
-    print_stats_line("c XOR finding time"
-        , findTime
-        , float_div(time_outs, numCalls)*100.0
-        , "time-out"
-    );
-    cout << "c --------- XOR STATS END ----------" << endl;
-}
-
 XorFinder::Stats& XorFinder::Stats::operator+=(const XorFinder::Stats& other)
 {
     //Time

@@ -430,29 +430,6 @@ void TopLevelGauss::Stats::print_short(const Solver* solver) const
     << endl;
 }
 
-void TopLevelGauss::Stats::print() const
-{
-    cout << "c --------- XOR STATS ----------" << endl;
-
-    print_stats_line("c XOR Num calls"
-        , numCalls
-    );
-
-    print_stats_line("c XOR 0-depth assings"
-        , zeroDepthAssigns
-    );
-
-    print_stats_line("c XOR unit found"
-        , newUnits
-    );
-
-    print_stats_line("c XOR bin found"
-        , newBins
-    );
-
-    cout << "c --------- XOR STATS END ----------" << endl;
-}
-
 TopLevelGauss::Stats& TopLevelGauss::Stats::operator+=(const TopLevelGauss::Stats& other)
 {
     numCalls += other.numCalls;
