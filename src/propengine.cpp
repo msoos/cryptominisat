@@ -97,6 +97,13 @@ void PropEngine::new_vars(size_t n)
 void PropEngine::save_on_var_memory()
 {
     CNF::save_on_var_memory();
+
+    var_act_vsids.resize(nVars());
+    var_act_maple.resize(nVars());
+
+    var_act_vsids.shrink_to_fit();
+    var_act_maple.shrink_to_fit();
+
 }
 
 /**
