@@ -154,7 +154,7 @@ class QueryVar (QueryHelper):
 
         print("var_data_use updated T: %-3.2f s" % (time.time() - t))
 
-    def create_vardata_df(self, min_val, max_val, branch_str):
+    def create_vardata_df(self, min_val, max_val, branch_str = None):
         not_cols = [
             "clid_start_incl"
             , "clid_end_notincl"
@@ -213,6 +213,12 @@ class QueryVar (QueryHelper):
         sum_cl_use = helper.query_fragment(
             "sum_cl_use", not_cols, "sum_cl_use", options.verbose, self.c)
 
+
+        my_branch_str = ""
+        if branch_str is not None:
+            my_branch_str = "and rst.branch_strategy = {branch_str}".format(
+                branch_str=branch_str)
+
         q = """
         select
         sum_cl_use.num_used as `x.num_used`
@@ -251,7 +257,7 @@ class QueryVar (QueryHelper):
         and sum_cl_use.num_used >= {min_val}
         and sum_cl_use.num_used <= {max_val}
 
-        and rst.branch_strategy = {branch_str}
+        {my_branch_str}
 
         order by random()
         limit {limit}
@@ -266,7 +272,7 @@ class QueryVar (QueryHelper):
             limit=options.limit,
             min_val=min_val,
             max_val=max_val,
-            branch_str=branch_str,
+            my_branch_str=my_branch_str,
             min_cls_below=options.min_cls_below)
 
         df = pd.read_sql_query(q, self.conn)
@@ -287,6 +293,8 @@ if __name__ == "__main__":
                         dest="limit", help="How many data points")
     parser.add_argument("--minclsbelow", type=int, default=1,
                         dest="min_cls_below", help="Minimum number of clauses below to generate data point")
+    parser.add_argument("--unbalanced", action="store_true",
+                        default=False, dest="unbalanced", help="Get unbalanced output")
 
     options = parser.parse_args()
 
@@ -299,11 +307,18 @@ if __name__ == "__main__":
         q.create_indexes()
         q.fill_var_data_use()
 
-        dfs = []
-        for branch_str in [1,2,3,4]:
-            dfs.append(q.create_vardata_df(0,0, branch_str))
-            dfs.append(q.create_vardata_df(1,2000, branch_str))
-            print("Finished branch_str: ", branch_str)
-        df_full = pd.concat(dfs, sort=False)
+        if not options.unbalanced:
+            dfs = []
+            for branch_str in [1,2,3,4]:
+                print("Doing == 0 use:")
+                dfs.append(q.create_vardata_df(0, 0, branch_str))
+                print("Doing >0 use:")
+                dfs.append(q.create_vardata_df(1, 200000, branch_str))
+                print("Finished branch_str: ", branch_str)
+            df_full = pd.concat(dfs, sort=False)
+        else:
+            df_full = q.create_vardata_df(0, 2000000000)
+
+        print("Final DF dimensions:", df_full.shape)
 
         dump_df(df_full)
