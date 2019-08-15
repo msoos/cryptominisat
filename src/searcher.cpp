@@ -97,8 +97,9 @@ void Searcher::new_var(const bool bva, const uint32_t orig_outer)
     PropEngine::new_var(bva, orig_outer);
 
     insert_var_order((int)nVars()-1);
-
+    #ifdef STATS_NEEDED
     level_used_for_cl_arr.insert(level_used_for_cl_arr.end(), 1, 0);
+    #endif
 }
 
 void Searcher::new_vars(size_t n)
@@ -108,14 +109,19 @@ void Searcher::new_vars(size_t n)
     for(int i = n-1; i >= 0; i--) {
         insert_var_order((int)nVars()-i-1);
     }
+
+    #ifdef STATS_NEEDED
     level_used_for_cl_arr.insert(level_used_for_cl_arr.end(), n, 0);
+    #endif
 }
 
 void Searcher::save_on_var_memory()
 {
     PropEngine::save_on_var_memory();
 
+    #ifdef STATS_NEEDED
     level_used_for_cl_arr.resize(nVars());
+    #endif
 }
 
 void Searcher::updateVars(
