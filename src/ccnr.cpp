@@ -250,7 +250,8 @@ bool ls_solver::local_search(const vector<bool> *init_solution)
         if (0 == _unsat_clauses.size()) {
             result = true;
             break;
-        } //1
+        }
+
         for (_step = 0; _step < _max_steps; _step++) {
             int flipv = pick_var();
             flip(flipv);
@@ -415,6 +416,7 @@ int ls_solver::pick_var()
 
     /**Diversification Mode**/
     update_clause_weights();
+
     /*focused random walk*/
     int c = _unsat_clauses[_random_gen.next(_unsat_clauses.size())];
     clause *cp = &(_clauses[c]);
