@@ -147,7 +147,9 @@ inline void Searcher::add_lit_to_learnt(
 
     if (!update_bogoprops) {
         #ifdef STATS_NEEDED
-        if (!level_used_for_cl_arr[varData[var].level]) {
+        if (varData[var].level != 0 &&
+            !level_used_for_cl_arr[varData[var].level]
+        ) {
             level_used_for_cl_arr[varData[var].level] = 1;
             level_used_for_cl.push_back(varData[var].level);
         }
@@ -855,6 +857,11 @@ Clause* Searcher::analyze_conflict(
     //Set up environment
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     assert(level_used_for_cl.empty());
+    #ifdef SLOW_DEBUG
+    for(auto& x: level_used_for_cl_arr) {
+        assert(x == 0);
+    }
+    #endif
     antec_data.clear();
     #endif
     learnt_clause.clear();
@@ -902,7 +909,8 @@ Clause* Searcher::analyze_conflict(
     }
     vars_used_for_cl.clear();
     for(auto& lev: level_used_for_cl) {
-        vars_used_for_cl.push_back(trail[trail_lim[lev]].var());
+        vars_used_for_cl.push_back(trail[trail_lim[lev-1]].var());
+        assert(varData[trail[trail_lim[lev-1]].var()].reason == PropBy());
         assert(level_used_for_cl_arr[lev] == 1);
         level_used_for_cl_arr[lev] = 0;
     }
