@@ -116,21 +116,21 @@ def add_computed_features(df):
     df["var_dist.num_irred_cls"] = df["var_dist.num_irred_long_cls"] + df["var_dist.num_irred_bin_cls"]
     df["var_dist.num_red_cls"] = df["var_dist.num_red_long_cls"] + df["var_dist.num_red_bin_cls"]
 
-    divide("var_dist.red_num_times_in_bin_clause", "var_dist.num_red_bin_cls")
-    divide("var_dist.red_num_times_in_long_clause", "var_dist.num_red_long_cls")
-    divide("var_dist.red_satisfies_cl", "var_dist.num_red_cls")
-    divide("var_dist.red_tot_num_lit_of_bin_it_appears_in", "var_dist.num_red_bin_cls")
-    divide("var_dist.red_tot_num_lit_of_long_cls_it_appears_in", "var_dist.num_red_long_cls")
-    divide("var_dist.red_sum_var_act_of_cls", "var_dist.num_red_long_cls")
-    divide("var_dist.red_satisfies_cl", "var_dist.num_red_cls")
+    for red in ["red", "irred"]:
+        divide("var_dist.{red}_num_times_in_bin_clause".format(red=red), "var_dist.num_{red}_bin_cls".format(red=red))
+        divide("var_dist.{red}_num_times_in_long_clause".format(red=red), "var_dist.num_{red}_long_cls".format(red=red))
+        divide("var_dist.{red}_satisfies_cl".format(red=red), "var_dist.num_{red}_cls".format(red=red))
+        divide("var_dist.{red}_tot_num_lit_of_bin_it_appears_in".format(red=red), "var_dist.num_{red}_bin_cls".format(red=red))
+        divide("var_dist.{red}_tot_num_lit_of_long_cls_it_appears_in".format(red=red), "var_dist.num_{red}_long_cls".format(red=red))
+        divide("var_dist.{red}_sum_var_act_of_cls".format(red=red), "var_dist.num_{red}_long_cls".format(red=red))
+        divide("var_dist.{red}_satisfies_cl".format(red=red), "var_dist.num_{red}_cls".format(red=red))
+        divide("var_dist.{red}_falsifies_cl".format(red=red), "var_dist.num_{red}_cls".format(red=red))
+        divide("var_dist.{red}_tot_num_lit_of_long_cls_it_appears_in".format(red=red), "var_dist.num_{red}_long_cls".format(red=red))
+        divide("var_dist.{red}_sum_var_act_of_cls".format(red=red), "var_dist.num_{red}_long_cls".format(red=red))
+        divide("var_dist.{red}_satisfies_cl".format(red=red), "var_dist.num_{red}_cls".format(red=red))
+        divide("var_dist.{red}_sum_var_act_of_cls".format(red=red), "var_dist.num_{red}_long_cls".format(red=red))
 
-    divide("var_dist.irred_num_times_in_bin_clause", "var_dist.num_irred_bin_cls")
-    divide("var_dist.irred_num_times_in_long_clause", "var_dist.num_irred_long_cls")
-    divide("var_dist.irred_satisfies_cl", "rst.irredcls")
-    divide("var_dist.irred_tot_num_lit_of_bin_it_appears_in", "var_dist.num_irred_bin_cls")
-    divide("var_dist.irred_tot_num_lit_of_long_cls_it_appears_in", "var_dist.num_irred_long_cls")
-    divide("var_dist.irred_sum_var_act_of_cls", "var_dist.num_irred_cls")
-    divide("var_dist.irred_satisfies_cl", "var_dist.num_irred_cls")
+    divide("var_dist.tot_act_long_red_cls", "var_dist.num_red_long_cls")
 
     divide("var_data_picktime.inside_conflict_clause_antecedents_during_at_picktime",
            "var_data_picktime.sumAntecedentsLits_at_picktime")
@@ -138,13 +138,10 @@ def add_computed_features(df):
     divide("var_data_picktime.sumAntecedentsLits_below_during",
            "var_data_picktime.sumAntecedentsLits_at_picktime")
 
-    divide("var_dist.red_satisfies_cl", "var_dist.num_red_cls")
-    divide("var_dist.irred_satisfies_cl", "var_dist.num_irred_cls")
-    divide("var_dist.irred_sum_var_act_of_cls", "var_dist.num_irred_long_cls")
 
-    divide("var_dist.tot_act_long_red_cls", "var_dist.num_red_long_cls")
-    divide("var_dist.red_tot_num_lit_of_long_cls_it_appears_in", "var_dist.num_red_long_cls")
-    divide("var_dist.red_sum_var_act_of_cls", "var_dist.num_red_long_cls")
+
+
+
 
     divide("var_data_picktime.inside_conflict_clause_during_at_picktime",
            "var_data_picktime.sumConflicts_at_picktime")
@@ -166,7 +163,10 @@ def add_computed_features(df):
     del df["var_dist.num_irred_cls"]
     del df["var_dist.num_red_cls"]
 
+    # we divide these and then delete
     xs = [
+        "var_dist.red_num_times_in_long_clause",
+        "var_data_picktime.inside_conflict_clause_at_picktime",
         "var_data_picktime.sumClSize_at_picktime",
         "var_data_picktime.sumClLBD_at_picktime",
         "var_data_picktime.sumAntecedents_at_picktime",
@@ -175,10 +175,11 @@ def add_computed_features(df):
         "var_data_picktime.inside_conflict_clause_antecedents_at_picktime",
         "var_data_picktime.inside_conflict_clause_antecedents_during_at_picktime",
         "var_data_picktime.sumAntecedentsLits_below_during",
-        "var_data_picktime.inside_conflict_clause_glue_at_picktime"
+        "var_data_picktime.inside_conflict_clause_glue_at_picktime",
         "var_data_picktime.inside_conflict_clause_glue_during_at_picktime"
         ]
     ys = [
+        "var_data_picktime.sumConflicts_at_picktime",
         "var_data_picktime.num_decided",
         "var_data_picktime.num_propagated"
     ]
@@ -187,17 +188,23 @@ def add_computed_features(df):
             divide(x, y)
         del df[x]
 
+
+
     todel = [
         "var_data_picktime.latest_vardist_feature_calc",
 
+        "var_dist.red_falsifies_cl",
+        "var_dist.irred_falsifies_cl",
         "var_dist.red_satisfies_cl",
         "var_dist.irred_satisfies_cl",
+
+        "var_data_picktime.dec_depth",
         "var_dist.red_num_times_in_bin_clause",
         "var_dist.irred_sum_var_act_of_cls",
         "var_dist.tot_act_long_red_cls",
         "var_dist.red_tot_num_lit_of_long_cls_it_appears_in",
         "var_dist.red_sum_var_act_of_cls",
-        "rst.branch_strategy",
+        #"rst.branch_strategy",
 
         "var_data_picktime.num_decided",
         "var_data_picktime.num_decided_pos",
