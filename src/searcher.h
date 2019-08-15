@@ -458,6 +458,10 @@ class Searcher : public HyperEngine
         );
         int dump_this_many_cldata_in_stream = 0;
         void sql_dump_last_in_solver();
+        vector<uint32_t> level_used_for_cl;
+        vector<uint32_t> vars_used_for_cl;
+        vector<unsigned char> level_used_for_cl_arr;
+        void dump_var_for_learnt_cl(uint32_t v, uint64_t clid);
         #endif
 
 

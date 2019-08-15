@@ -97,6 +97,8 @@ void Searcher::new_var(const bool bva, const uint32_t orig_outer)
     PropEngine::new_var(bva, orig_outer);
 
     insert_var_order((int)nVars()-1);
+
+    level_used_for_cl_arr.insert(level_used_for_cl_arr.end(), 1, 0);
 }
 
 void Searcher::new_vars(size_t n)
@@ -106,12 +108,14 @@ void Searcher::new_vars(size_t n)
     for(int i = n-1; i >= 0; i--) {
         insert_var_order((int)nVars()-i-1);
     }
+    level_used_for_cl_arr.insert(level_used_for_cl_arr.end(), n, 0);
 }
 
 void Searcher::save_on_var_memory()
 {
     PropEngine::save_on_var_memory();
 
+    level_used_for_cl_arr.resize(nVars());
 }
 
 void Searcher::updateVars(
@@ -142,6 +146,13 @@ inline void Searcher::add_lit_to_learnt(
     seen[var] = 1;
 
     if (!update_bogoprops) {
+        #ifdef STATS_NEEDED
+        if (!level_used_for_cl_arr[varData[var].level]) {
+            level_used_for_cl_arr[varData[var].level] = 1;
+            level_used_for_cl.push_back(varData[var].level);
+        }
+        #endif
+
         switch(branch_strategy) {
             case branch::vsids:
                 vsids_bump_var_act<update_bogoprops>(var, 0.5);
@@ -843,6 +854,7 @@ Clause* Searcher::analyze_conflict(
 ) {
     //Set up environment
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+    assert(level_used_for_cl.empty());
     antec_data.clear();
     #endif
     learnt_clause.clear();
@@ -888,6 +900,13 @@ Clause* Searcher::analyze_conflict(
         varData[l.var()].inside_conflict_clause++;
         varData[l.var()].inside_conflict_clause_glue += glue;
     }
+    vars_used_for_cl.clear();
+    for(auto& lev: level_used_for_cl) {
+        vars_used_for_cl.push_back(trail[trail_lim[lev]].var());
+        assert(level_used_for_cl_arr[lev] == 1);
+        level_used_for_cl_arr[lev] = 0;
+    }
+    level_used_for_cl.clear();
     #endif
 
     out_btlevel = find_backtrack_level_of_learnt();
@@ -1613,6 +1632,19 @@ void Searcher::sql_dump_last_in_solver()
     }
 }
 
+void Searcher::dump_var_for_learnt_cl(uint32_t v, uint64_t clid)
+{
+    assert(varData[v].reason == PropBy());
+    if (varData[v].dump) {
+        uint64_t outer_var = map_inter_to_outer(v);
+        solver->sqlStats->dec_var_clid(
+            outer_var
+            , varData[v].sumConflicts_at_picktime
+            , clid
+        );
+    }
+}
+
 void Searcher::dump_sql_clause_data(
     const uint32_t glue
     , const uint32_t old_glue
@@ -1622,19 +1654,13 @@ void Searcher::dump_sql_clause_data(
     , const bool ternary_resol_cl
 ) {
     //solver->sqlStats->begin_transaction();
-    for(int i = (int)decisionLevel()-1; i >= 0; i--) {
-        uint32_t at = trail_lim[i];
-        if (at < trail.size()) {
-            uint32_t v = trail[at].var();
-            assert(varData[v].reason == PropBy());
-            if (varData[v].dump) {
-                uint64_t outer_var = map_inter_to_outer(v);
-                solver->sqlStats->dec_var_clid(
-                    outer_var
-                    , varData[v].sumConflicts_at_picktime
-                    , clid
-                );
-            }
+    if (decision_cl) {
+        for(Lit l: learnt_clause) {
+            dump_var_for_learnt_cl(l.var(), clid);
+        }
+    } else {
+        for(uint32_t v: vars_used_for_cl) {
+            dump_var_for_learnt_cl(v, clid);
         }
     }
 
@@ -1692,6 +1718,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     old_glue
     #endif
+
     , const uint32_t
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     old_decision_level
