@@ -26,9 +26,6 @@ THE SOFTWARE.
 #include <string>
 #include <vector>
 
-//---------------------
-//files for unit propogation
-
 using std::vector;
 
 namespace CCNR {
@@ -139,7 +136,6 @@ class ls_solver
     //solution information
     vector<bool> _solution;
     int _best_found_cost;
-    double _best_cost_time;
     long long _step;
     long long _max_steps;
     int _max_tries;
@@ -189,8 +185,6 @@ class ls_solver
 
     long long up_times = 0;
     long long flip_numbers = 0;
-    double up_time_cost = 0.0;
-    double flip_time_cost = 0.0;
     int verbosity; // 0 print sat/unsat & infomation; 1 print everything;
                    //===================
 };

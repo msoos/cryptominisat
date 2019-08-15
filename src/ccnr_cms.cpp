@@ -176,7 +176,11 @@ bool CMS_ccnr::init_problem()
         }
     }
 
-    assert(ls_s->_num_clauses == (int)cl_num);
+    //Shrink the space if we have to
+    assert(ls_s->_num_clauses <= (int)cl_num);
+    ls_s->_num_clauses = (int)cl_num;
+    ls_s->make_space();
+
     for (int c=0; c < ls_s->_num_clauses; c++) {
         for(CCNR::lit item: ls_s->_clauses[c].literals) {
             int v = item.var_num;

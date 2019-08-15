@@ -180,14 +180,13 @@ int Mersenne::next(int bound)
     // Just using modulo doesn't lead to uniform distribution. This does.
     return (int)(value % bound);
 }
-//functions in ls.cpp & ls.h
-//-----------------------
+
 //constructor with default setting.
 ls_solver::ls_solver()
 {
     _additional_len = 10;
-    _max_tries = 1;
-    _max_steps = 5*100 * 1000;
+    _max_tries = 10;
+    _max_steps = 2*1000 * 1000;
     _random_seed = 1;
     _time_limit = 3000;
     _swt_threshold = 50;
@@ -197,12 +196,13 @@ ls_solver::ls_solver()
     _up_ratio = 0.3; //delete _up_ratio percents varibles
     verbosity = 0;
 }
-/******************************the top function******************************/
+
 /**********************************build instance*******************************/
 bool ls_solver::make_space()
 {
     if (0 == _num_vars || 0 == _num_clauses) {
-        cout << "The formula size is zero. You may forgot to read the formula." << endl;
+        cout << "c The formula size is zero."
+        "You may have forgotten to read the formula." << endl;
         return false;
     }
     _vars.resize(_num_vars + _additional_len);
@@ -213,18 +213,17 @@ bool ls_solver::make_space()
 
     return true;
 }
+
 void ls_solver::build_neighborhood()
 {
-    int v, c;
     vector<bool> neighbor_flag(_num_vars + _additional_len);
-    for (int j = 0; j < neighbor_flag.size(); ++j) {
+    for (uint32_t j = 0; j < neighbor_flag.size(); ++j) {
         neighbor_flag[j] = 0;
     }
-    for (v = 1; v <= _num_vars; ++v) {
+    for (int v = 1; v <= _num_vars; ++v) {
         variable *vp = &(_vars[v]);
-        //vector<lit>& vp2=_vars[v].literals;
         for (lit lv: vp->literals) {
-            c = lv.clause_num;
+            int c = lv.clause_num;
             for (lit lc: _clauses[c].literals) {
                 if (!neighbor_flag[lc.var_num] && lc.var_num != v) {
                     neighbor_flag[lc.var_num] = 1;
@@ -232,7 +231,7 @@ void ls_solver::build_neighborhood()
                 }
             }
         }
-        for (int j = 0; j < vp->neighbor_var_nums.size(); ++j) {
+        for (uint32_t j = 0; j < vp->neighbor_var_nums.size(); ++j) {
             neighbor_flag[vp->neighbor_var_nums[j]] = 0;
         }
     }
@@ -243,39 +242,35 @@ void ls_solver::build_neighborhood()
 bool ls_solver::local_search(const vector<bool> *init_solution)
 {
     bool result = false;
-    int flipv;
     _random_gen.seed(_random_seed);
     _best_found_cost = _num_clauses;
-    _best_cost_time = 0;
     for (int t = 0; t < _max_tries; t++) {
-        std::cout << " tries: " << t << std::endl;
+        cout << "c tries: " << t << endl;
         initialize(init_solution);
         if (0 == _unsat_clauses.size()) {
             result = true;
             break;
         } //1
         for (_step = 0; _step < _max_steps; _step++) {
-            flipv = pick_var();
+            int flipv = pick_var();
             flip(flipv);
-            if ((_step & 0xffff) == 0xfff) {
-                std::cout << " steps: " << _step << " best found: " << _best_found_cost
-                          << std::endl;
+            if ((_step & 0xffff) == 0xffff) {
+                cout << "c steps: " << _step
+                << " best found: " << _best_found_cost
+                << endl;
             }
             if (_unsat_clauses.size() < _best_found_cost) {
                 _best_found_cost = _unsat_clauses.size();
-                _best_cost_time = get_runtime();
             }
             if (0 == _unsat_clauses.size()) {
                 result = true;
                 break;
-            } //1
-              //if (get_runtime() > _time_limit) {result = false;break;} //0
+            }
         }
         if (0 == _unsat_clauses.size()) {
             result = true;
             break;
-        } //1
-          //if (get_runtime() > _time_limit) {result = false;break;}//0
+        }
     }
     _end_step = _step;
     return result;
@@ -297,31 +292,32 @@ void ls_solver::clear_prev_data()
 
 void ls_solver::initialize(const vector<bool> *init_solution)
 {
-    int v, c;
     clear_prev_data();
     if (!init_solution) {
         //default random generation
-        //cout<<"c using random initial solution"<<endl;
-        for (v = 1; v <= _num_vars; v++) {
+        for (int v = 1; v <= _num_vars; v++) {
             _solution[v] = (_random_gen.next(2) == 0 ? 0 : 1);
         }
     } else {
         if (init_solution->size() != _num_vars) {
-            cout << "c Error: the init solution's size is not equal to the number of variables."
-                 << endl;
-            exit(0);
+            cout
+            << "ERROR: the init solution's size"
+            " is not equal to the number of variables."
+            << endl;
+            exit(-1);
         }
-        for (v = 1; v <= _num_vars; v++) {
+        for (int v = 1; v <= _num_vars; v++) {
             _solution[v] = init_solution->at(v - 1);
         }
     }
 
     //unsat_appears, will be updated when calling unsat_a_clause function.
-    for (v = 1; v <= _num_vars; v++) {
+    for (int v = 1; v <= _num_vars; v++) {
         _vars[v].unsat_appear = 0;
     }
+
     //initialize data structure of clauses according to init solution
-    for (c = 0; c < _num_clauses; c++) {
+    for (int c = 0; c < _num_clauses; c++) {
         _clauses[c].sat_count = 0;
         _clauses[c].sat_var = -1;
         _clauses[c].weight = 1;
@@ -378,6 +374,7 @@ void ls_solver::initialize_variable_datas()
     vp->score = vp->cc_value = vp->is_in_ccd_vars = vp->last_flip_step = 0;
 }
 /*********************end initialize functions*********************************/
+
 /**********************pick variable*******************************************/
 int ls_solver::pick_var()
 {
@@ -397,7 +394,6 @@ int ls_solver::pick_var()
     }
 
     //Aspriation Mode
-
     //----------------------------------------
     if (aspiration) {
         _aspiration_score = _avg_clause_weight;
@@ -437,22 +433,11 @@ int ls_solver::pick_var()
         }
     }
     return best_var;
-
-    //do unit propagate and return -1;
-    //-------------------------------------
-    // unit_propogate();
-    // return -1;
 }
 
 /************************flip and update functions*****************************/
 void ls_solver::flip(int flipv)
 {
-    double begin, end;
-    begin = get_runtime();
-    int c, v;
-    lit *clause_c;
-    lit *p;
-    lit *q;
     _solution[flipv] = 1 - _solution[flipv];
     int org_flipv_score = _vars[flipv].score;
     for (lit l: _vars[flipv].literals) {
@@ -490,7 +475,6 @@ void ls_solver::flip(int flipv)
     _vars[flipv].last_flip_step = _step;
     //update cc_values
     update_cc_after_flip(flipv);
-    flip_time_cost += (end - begin);
 }
 void ls_solver::update_cc_after_flip(int flipv)
 {
@@ -516,6 +500,8 @@ void ls_solver::update_cc_after_flip(int flipv)
     }
 }
 /**********************end flip and update functions***************************/
+
+
 /*********************functions for basic operations***************************/
 void ls_solver::sat_a_clause(int the_clause)
 {
@@ -623,13 +609,12 @@ void ls_solver::print_solution(bool need_verify)
         cout << "s SATISFIABLE" << endl;
     else
         cout << "s UNKNOWN" << endl;
+
     bool sat_flag = false;
-    cout << "c CPU time: " << get_runtime() << " s\n";
-    cout << "c UP numbers: " << up_times << " times\n";
-    cout << "c flip numbers: " << flip_numbers << " times\n";
-    cout << "c UP avg flip number: " << (double)(flip_numbers + 0.0) / up_times << " s\n";
-    cout << "c UP time cost: " << up_time_cost << endl;
-    cout << "c Flip time cost: " << flip_time_cost << endl;
+    cout << "c UP numbers: " << up_times << " times" << endl;
+    cout << "c flip numbers: " << flip_numbers << " times" << endl;
+    cout << "c UP avg flip number: "
+        << (double)(flip_numbers + 0.0) / up_times << " s" << endl;
     if (need_verify) {
         for (int c = 0; c < _num_clauses; c++) {
             sat_flag = false;
@@ -657,22 +642,3 @@ void ls_solver::print_solution(bool need_verify)
         cout << endl;
     }
 }
-
-void ls_solver::simple_print()
-{
-    cout << '\t' << _best_found_cost << '\t' << _best_cost_time << endl;
-}
-
-void ls_solver::start_timing()
-{
-    gettimeofday(&_start_time, NULL);
-}
-float ls_solver::get_runtime()
-{
-    struct timeval stop;
-    gettimeofday(&stop, NULL);
-    return (stop.tv_sec - _start_time.tv_sec +
-            (stop.tv_usec - _start_time.tv_usec + 0.0) / 1000000);
-}
-
-//=========================
