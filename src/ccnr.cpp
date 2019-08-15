@@ -215,10 +215,9 @@ bool ls_solver::make_space()
 }
 void ls_solver::build_neighborhood()
 {
-    int i, j, count;
     int v, c;
     vector<bool> neighbor_flag(_num_vars + _additional_len);
-    for (j = 0; j < neighbor_flag.size(); ++j) {
+    for (int j = 0; j < neighbor_flag.size(); ++j) {
         neighbor_flag[j] = 0;
     }
     for (v = 1; v <= _num_vars; ++v) {
@@ -233,7 +232,7 @@ void ls_solver::build_neighborhood()
                 }
             }
         }
-        for (j = 0; j < vp->neighbor_var_nums.size(); ++j) {
+        for (int j = 0; j < vp->neighbor_var_nums.size(); ++j) {
             neighbor_flag[vp->neighbor_var_nums[j]] = 0;
         }
     }
@@ -383,8 +382,7 @@ void ls_solver::initialize_variable_datas()
 int ls_solver::pick_var()
 {
     int i, k, c, v;
-    int best_var = 0, best_score;
-    lit *clause_c;
+    int best_var = 0;
     if (_ccd_vars.size() > 0) {
         best_var = _ccd_vars[0];
         for (int v: _ccd_vars) {
@@ -492,7 +490,6 @@ void ls_solver::flip(int flipv)
     _vars[flipv].last_flip_step = _step;
     //update cc_values
     update_cc_after_flip(flipv);
-    end = get_runtime();
     flip_time_cost += (end - begin);
 }
 void ls_solver::update_cc_after_flip(int flipv)
