@@ -279,11 +279,8 @@ bool ls_solver::local_search(const vector<bool> *init_solution)
 void ls_solver::clear_prev_data()
 {
     _unsat_clauses.clear();
-    vector<int>().swap(_unsat_clauses);
     _ccd_vars.clear();
-    vector<int>().swap(_ccd_vars);
     _unsat_vars.clear();
-    vector<int>().swap(_unsat_vars);
     for (int &item: _index_in_unsat_clauses)
         item = 0;
     for (int &item: _index_in_unsat_vars)
@@ -338,14 +335,13 @@ void ls_solver::initialize(const vector<bool> *init_solution)
 }
 void ls_solver::initialize_variable_datas()
 {
-    int v, c, i;
     variable *vp;
     //scores
-    for (v = 1; v <= _num_vars; v++) {
+    for (int v = 1; v <= _num_vars; v++) {
         vp = &(_vars[v]);
         vp->score = 0;
         for (lit l: vp->literals) {
-            c = l.clause_num;
+            int c = l.clause_num;
             if (0 == _clauses[c].sat_count) {
                 vp->score += _clauses[c].weight;
             } else if (1 == _clauses[c].sat_count && l.sense == _solution[l.var_num]) {
@@ -354,11 +350,11 @@ void ls_solver::initialize_variable_datas()
         }
     }
     //last flip step
-    for (v = 1; v <= _num_vars; v++) {
+    for (int v = 1; v <= _num_vars; v++) {
         _vars[v].last_flip_step = 0;
     }
     //cc datas
-    for (v = 1; v <= _num_vars; v++) {
+    for (int v = 1; v <= _num_vars; v++) {
         vp = &(_vars[v]);
         vp->cc_value = 1;
         if (vp->score > 0) //&&_vars[v].cc_value==1
@@ -378,7 +374,6 @@ void ls_solver::initialize_variable_datas()
 /**********************pick variable*******************************************/
 int ls_solver::pick_var()
 {
-    int i, k, c, v;
     int best_var = 0;
     if (_ccd_vars.size() > 0) {
         best_var = _ccd_vars[0];
@@ -397,15 +392,16 @@ int ls_solver::pick_var()
     //----------------------------------------
     if (aspiration) {
         _aspiration_score = _avg_clause_weight;
+        int i;
         for (i = 0; i < _unsat_vars.size(); ++i) {
-            v = _unsat_vars[i];
+            int v = _unsat_vars[i];
             if (_vars[v].score > _aspiration_score) {
                 best_var = v;
                 break;
             }
         }
         for (++i; i < _unsat_vars.size(); ++i) {
-            v = _unsat_vars[i];
+            int v = _unsat_vars[i];
             if (_vars[v].score > _vars[best_var].score)
                 best_var = v;
             else if (_vars[v].score == _vars[best_var].score &&
@@ -420,11 +416,11 @@ int ls_solver::pick_var()
     /**Diversification Mode**/
     update_clause_weights();
     /*focused random walk*/
-    c = _unsat_clauses[_random_gen.next(_unsat_clauses.size())];
+    int c = _unsat_clauses[_random_gen.next(_unsat_clauses.size())];
     clause *cp = &(_clauses[c]);
     best_var = cp->literals[0].var_num;
-    for (k = 1; k < cp->literals.size(); k++) {
-        v = cp->literals[k].var_num;
+    for (int k = 1; k < cp->literals.size(); k++) {
+        int v = cp->literals[k].var_num;
         if (_vars[v].score > _vars[best_var].score) {
             best_var = v;
         } else if (_vars[v].score == _vars[best_var].score &&
@@ -478,11 +474,11 @@ void ls_solver::flip(int flipv)
 }
 void ls_solver::update_cc_after_flip(int flipv)
 {
-    int index, v, last_item;
+    int last_item;
     variable *vp = &(_vars[flipv]);
     vp->cc_value = 0;
-    for (index = _ccd_vars.size() - 1; index >= 0; index--) {
-        v = _ccd_vars[index];
+    for (int index = _ccd_vars.size() - 1; index >= 0; index--) {
+        int v = _ccd_vars[index];
         if (_vars[v].score <= 0) {
             last_item = _ccd_vars.back();
             _ccd_vars.pop_back();
@@ -505,11 +501,10 @@ void ls_solver::update_cc_after_flip(int flipv)
 /*********************functions for basic operations***************************/
 void ls_solver::sat_a_clause(int the_clause)
 {
-    int index, last_item;
     //use the position of the clause to store the last unsat clause in stack
-    last_item = _unsat_clauses.back();
+    int last_item = _unsat_clauses.back();
     _unsat_clauses.pop_back();
-    index = _index_in_unsat_clauses[the_clause];
+    int index = _index_in_unsat_clauses[the_clause];
     _unsat_clauses[index] = last_item;
     _index_in_unsat_clauses[last_item] = index;
     //update unsat_appear and unsat_vars
@@ -561,15 +556,14 @@ void ls_solver::update_clause_weights()
 }
 void ls_solver::smooth_clause_weights()
 {
-    int v, c;
-    for (v = 1; v <= _num_vars; v++) {
+    for (int v = 1; v <= _num_vars; v++) {
         _vars[v].score = 0;
     }
     int scale_avg = _avg_clause_weight * _swt_q;
     _avg_clause_weight = 0;
     _delta_total_clause_weight = 0;
     clause *cp;
-    for (c = 0; c < _num_clauses; ++c) {
+    for (int c = 0; c < _num_clauses; ++c) {
         cp = &(_clauses[c]);
         cp->weight = cp->weight * _swt_p + scale_avg;
         if (cp->weight < 1)
@@ -591,7 +585,7 @@ void ls_solver::smooth_clause_weights()
     _ccd_vars.clear();
     vector<int>().swap(_ccd_vars);
     variable *vp;
-    for (v = 1; v <= _num_vars; v++) {
+    for (int v = 1; v <= _num_vars; v++) {
         vp = &(_vars[v]);
         if (vp->score > 0 && 1 == vp->cc_value) {
             _ccd_vars.push_back(v);
