@@ -34,7 +34,6 @@ THE SOFTWARE.
 #include "solvertypes.h"
 #include "propengine.h"
 #include "searcher.h"
-#include "clauseusagestats.h"
 #include "satzilla_features.h"
 #include "searchstats.h"
 #ifdef CMS_TESTING_ENABLED
@@ -407,10 +406,6 @@ class Solver : public Searcher
 
         void print_watch_list(watch_subarray_const ws, const Lit lit) const;
         void print_clause_size_distrib();
-        void print_prop_confl_stats(
-            std::string name
-            , const vector<ClauseUsageStats>& stats
-        ) const;
         void check_model_for_assumptions() const;
 };
 

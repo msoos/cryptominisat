@@ -23,7 +23,6 @@ THE SOFTWARE.
 #ifndef __SQLSTATS_H__
 #define __SQLSTATS_H__
 
-#include "clauseusagestats.h"
 #include "satzilla_features.h"
 #include "searchstats.h"
 #include "vardata.h"

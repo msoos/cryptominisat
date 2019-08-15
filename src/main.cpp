@@ -86,16 +86,6 @@ struct WrongParam
     string msg;
 };
 
-bool fileExists(const string& filename)
-{
-    struct stat buf;
-    if (stat(filename.c_str(), &buf) != -1)
-    {
-        return true;
-    }
-    return false;
-}
-
 
 Main::Main(int _argc, char** _argv) :
     argc(_argc)

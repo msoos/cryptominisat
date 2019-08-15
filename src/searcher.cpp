@@ -1251,7 +1251,7 @@ lbool Searcher::search()
             hist.trailDepthHist.push(trail.size());
             #endif
             hist.trailDepthHistLonger.push(trail.size());
-            if (!handle_conflict<false>(confl)) {
+            if (!handle_conflict(confl)) {
                 dump_search_loop_stats(myTime);
                 return l_False;
             }
@@ -1446,6 +1446,9 @@ void Searcher::add_otf_subsume_long_clauses()
     otf_subsuming_long_cls.clear();
 }
 
+template void Searcher::add_otf_subsume_long_clauses<true>();
+template void Searcher::add_otf_subsume_long_clauses<false>();
+
 template<bool update_bogoprops>
 void Searcher::add_otf_subsume_implicit_clause()
 {
@@ -1521,6 +1524,9 @@ void Searcher::add_otf_subsume_implicit_clause()
     }
     otf_subsuming_short_cls.clear();
 }
+
+template void Searcher::add_otf_subsume_implicit_clause<true>();
+template void Searcher::add_otf_subsume_implicit_clause<false>();
 
 void Searcher::update_history_stats(size_t backtrack_level, uint32_t glue)
 {
@@ -1882,23 +1888,20 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     return cl;
 }
 
-template<bool update_bogoprops>
 bool Searcher::handle_conflict(const PropBy confl)
 {
-    if (!update_bogoprops) {
-        stats.conflStats.numConflicts++;
-        sumConflicts++;
+    stats.conflStats.numConflicts++;
+    sumConflicts++;
 
-        if (sumConflicts == 100000 && //TODO magic constant
-            longRedCls[0].size() < 100 &&
-            //so that in case of some "standard-minisat behavriour" config
-            //we don't override it
-            conf.glue_put_lev0_if_below_or_eq != 0
-        ) {
-            conf.glue_put_lev0_if_below_or_eq += 2; //TODO magic constant
-        }
-        params.conflictsDoneThisRestart++;
+    if (sumConflicts == 100000 && //TODO magic constant
+        longRedCls[0].size() < 100 &&
+        //so that in case of some "standard-minisat behavriour" config
+        //we don't override it
+        conf.glue_put_lev0_if_below_or_eq != 0
+    ) {
+        conf.glue_put_lev0_if_below_or_eq += 2; //TODO magic constant
     }
+    params.conflictsDoneThisRestart++;
 
     if (decisionLevel() == 0)
         return false;
@@ -1906,7 +1909,7 @@ bool Searcher::handle_conflict(const PropBy confl)
     uint32_t backtrack_level;
     uint32_t glue;
     uint32_t old_glue;
-    Clause* subsumed_cl = analyze_conflict<update_bogoprops>(
+    Clause* subsumed_cl = analyze_conflict<false>(
         confl
         , backtrack_level  //return backtrack level here
         , glue             //return glue here
@@ -1916,8 +1919,7 @@ bool Searcher::handle_conflict(const PropBy confl)
 
     //Add decision-based clause in case it's short
     decision_clause.clear();
-    if (!update_bogoprops
-        && conf.do_decision_based_cl
+    if (conf.do_decision_based_cl
         && learnt_clause.size() > conf.decision_based_cl_min_learned_size
         && decisionLevel() <= conf.decision_based_cl_max_levels
         && decisionLevel() >= 2
@@ -1934,16 +1936,15 @@ bool Searcher::handle_conflict(const PropBy confl)
         }
     }
 
-    if (!update_bogoprops) {
-        update_history_stats(backtrack_level, glue);
-    }
+
+    update_history_stats(backtrack_level, glue);
     uint32_t old_decision_level = decisionLevel();
     uint32_t plus = learnt_clause.size() > 2;
     plus += decision_clause.size() > 2;
-    cancelUntil<true, update_bogoprops>(backtrack_level, plus);
+    cancelUntil<true, false>(backtrack_level, plus);
 
-    add_otf_subsume_long_clauses<update_bogoprops>();
-    add_otf_subsume_implicit_clause<update_bogoprops>();
+    add_otf_subsume_long_clauses<false>();
+    add_otf_subsume_implicit_clause<false>();
     print_learning_debug_info();
     assert(value(learnt_clause[0]) == l_Undef);
     glue = std::min<uint32_t>(glue, std::numeric_limits<uint32_t>::max());
@@ -1955,12 +1956,10 @@ bool Searcher::handle_conflict(const PropBy confl)
         , false //decision clause?
     );
     assert(learnt_clause.size() <= 2 || cl != NULL);
-    attach_and_enqueue_learnt_clause<update_bogoprops>(cl);
+    attach_and_enqueue_learnt_clause<false>(cl);
 
     //Add decision-based clause
-    if (!update_bogoprops
-        && decision_clause.size() > 0
-    ) {
+    if (decision_clause.size() > 0) {
         int i = decision_clause.size();
         while(--i >= 0) {
             if (value(decision_clause[i]) == l_True
@@ -1979,20 +1978,17 @@ bool Searcher::handle_conflict(const PropBy confl)
             , old_decision_level
             , true //decision clause?
         );
-        attach_and_enqueue_learnt_clause<update_bogoprops>(cl, false);
+        attach_and_enqueue_learnt_clause<false>(cl, false);
     }
 
-    if (!update_bogoprops) {
-        if (branch_strategy == branch::vsids) {
-            vsids_decay_var_act();
-        }
-        decayClauseAct<update_bogoprops>();
+
+    if (branch_strategy == branch::vsids) {
+        vsids_decay_var_act();
     }
+    decayClauseAct<false>();
 
     return true;
 }
-template bool Searcher::handle_conflict<true>(const PropBy confl);
-template bool Searcher::handle_conflict<false>(const PropBy confl);
 
 void Searcher::resetStats()
 {

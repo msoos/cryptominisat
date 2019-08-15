@@ -273,7 +273,6 @@ class Searcher : public HyperEngine
             , uint32_t &glue         //glue of the learnt clause
             , uint32_t &old_glue     //glue of the unminimised learnt clause
         );
-        template<bool update_bogoprops>
         bool  handle_conflict(PropBy confl);// Handles the conflict clause
         void  update_history_stats(size_t backtrack_level, uint32_t glue);
         template<bool update_bogoprops>

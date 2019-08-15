@@ -24,7 +24,6 @@ THE SOFTWARE.
 #define __REDUCEDB_H__
 
 #include "clauseallocator.h"
-#include "clauseusagestats.h"
 #ifdef FINAL_PREDICTOR
 #include "clustering.h"
 #endif
