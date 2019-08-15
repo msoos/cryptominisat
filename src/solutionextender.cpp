@@ -68,8 +68,6 @@ void SolutionExtender::extend()
         simplifier->extend_model(this);
     }
 
-    //cout << "aft simp unset       : " << count_num_unset_model() << endl;
-
     //clause has been added with "lit, ~lit" so var must be set
     for(size_t i = 0; i < solver->undef_must_set_vars.size(); i++) {
         if (solver->undef_must_set_vars[i]
@@ -225,24 +223,4 @@ bool SolutionExtender::addClause(const vector<Lit>& lits, const uint32_t blocked
 
     //it's been set now
     return true;
-}
-
-size_t SolutionExtender::count_num_unset_model() const
-{
-    size_t num_unset = 0;
-    if (solver->conf.sampling_vars) {
-        for(size_t i = 0; i < solver->conf.sampling_vars->size(); i++) {
-            uint32_t var = (*solver->conf.sampling_vars)[i];
-            if (solver->model_value(var) == l_Undef) {
-                num_unset++;
-            }
-        }
-    } else {
-        for(size_t i = 0; i < solver->nVars(); i++) {
-            if (solver->model_value(i) == l_Undef) {
-                num_unset++;
-            }
-        }
-    }
-    return num_unset;
 }
