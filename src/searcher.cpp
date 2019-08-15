@@ -3145,7 +3145,7 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
         switch (gqd.ret) {
             case gauss_res::bin_confl :{
                 //assert(confl.getType() == PropByType::binary_t && "this should hold, right?");
-                bool ret = handle_conflict<false>(gqd.confl);
+                bool ret = handle_conflict(gqd.confl);
                 #ifdef VERBOSE_DEBUG
                 cout << "Handled binary GJ conflict"
                 << " conf level:" <<  varData[gqd.confl.lit2().var()].level
@@ -3188,7 +3188,7 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
                 gqd.confl = PropBy(solver->cl_alloc.get_offset(conflPtr));
                 gqhead = qhead = trail.size();
 
-                bool ret = handle_conflict<false>(gqd.confl);
+                bool ret = handle_conflict(gqd.confl);
                 #ifdef VERBOSE_DEBUG
                 cout << "Handled long GJ conflict" << endl;
                 #endif
