@@ -194,7 +194,7 @@ ls_solver::ls_solver()
 bool ls_solver::make_space()
 {
     if (0 == _num_vars || 0 == _num_clauses) {
-        cout << "c The formula size is zero."
+        cout << "c [ccnr] The formula size is zero."
         "You may have forgotten to read the formula." << endl;
         return false;
     }
@@ -284,6 +284,7 @@ bool ls_solver::local_search(
     _end_step = _step;
     return result;
 }
+
 /**********************************initialize*******************************/
 void ls_solver::clear_prev_data()
 {
@@ -378,7 +379,7 @@ void ls_solver::initialize_variable_datas()
     vp = &(_vars[0]);
     vp->score = vp->cc_value = vp->is_in_ccd_vars = vp->last_flip_step = 0;
 }
-/*********************end initialize functions*********************************/
+
 
 /**********************pick variable*******************************************/
 int ls_solver::pick_var()
@@ -510,8 +511,6 @@ void ls_solver::update_cc_after_flip(int flipv)
         }
     }
 }
-/**********************end flip and update functions***************************/
-
 
 /*********************functions for basic operations***************************/
 void ls_solver::sat_a_clause(int the_clause)
@@ -547,6 +546,7 @@ void ls_solver::unsat_a_clause(int the_clause)
         }
     }
 }
+
 /************************clause weighting********************************/
 void ls_solver::update_clause_weights()
 {
@@ -577,10 +577,9 @@ void ls_solver::smooth_clause_weights()
     int scale_avg = _avg_clause_weight * _swt_q;
     _avg_clause_weight = 0;
     _delta_total_clause_weight = 0;
-    clause *cp;
     _mems += _num_clauses;
     for (int c = 0; c < _num_clauses; ++c) {
-        cp = &(_clauses[c]);
+        clause *cp = &(_clauses[c]);
         cp->weight = cp->weight * _swt_p + scale_avg;
         if (cp->weight < 1)
             cp->weight = 1;
@@ -597,12 +596,11 @@ void ls_solver::smooth_clause_weights()
             _vars[cp->sat_var].score -= cp->weight;
         }
     }
+
     //reset ccd_vars
     _ccd_vars.clear();
-    vector<int>().swap(_ccd_vars);
-    variable *vp;
     for (int v = 1; v <= _num_vars; v++) {
-        vp = &(_vars[v]);
+        variable* vp = &(_vars[v]);
         if (vp->score > 0 && 1 == vp->cc_value) {
             _ccd_vars.push_back(v);
             vp->is_in_ccd_vars = 1;
@@ -612,7 +610,7 @@ void ls_solver::smooth_clause_weights()
     }
 }
 
-/*****print solutions*****************/
+/*****print solution*****************/
 void ls_solver::print_solution(bool need_verify)
 {
     if (0 == get_cost())
