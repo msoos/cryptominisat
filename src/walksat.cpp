@@ -717,7 +717,7 @@ void WalkSAT::print_statistics_final()
         solver->check_assigns_for_assumptions();
         #endif
     } else {
-        if (solver->conf.verbosity) {
+        if (solver->conf.verbosity >=2) {
             cout << "c [walksat] ASSIGNMENT NOT FOUND"  << endl;
         }
     }

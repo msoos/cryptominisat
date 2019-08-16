@@ -214,7 +214,7 @@ lbool Yalsat::deal_with_solution(int res)
     }
 
     if (res != 10) {
-        if (solver->conf.verbosity) {
+        if (solver->conf.verbosity >= 2) {
             cout << "c [yalsat] ASSIGNMENT NOT FOUND" << endl;
         }
         return l_Undef;

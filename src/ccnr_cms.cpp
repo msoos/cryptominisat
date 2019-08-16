@@ -222,7 +222,7 @@ lbool CMS_ccnr::deal_with_solution(int res)
     }
 
     if (!res) {
-        if (solver->conf.verbosity) {
+        if (solver->conf.verbosity >= 2) {
             cout << "c [ccnr] ASSIGNMENT NOT FOUND" << endl;
         }
         return l_Undef;
