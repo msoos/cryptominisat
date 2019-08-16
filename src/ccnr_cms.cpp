@@ -208,14 +208,14 @@ lbool CMS_ccnr::deal_with_solution(int res)
     }
 
     std::sort(ls_s->_clauses.begin(), ls_s->_clauses.end(), ClWeightSorter());
-    uint32_t top_num = 0;
+    uint32_t vars_bumped = 0;
     for(const auto& c: ls_s->_clauses) {
-        if (top_num > 5)
+        if (vars_bumped > 40)
             break;
-        top_num++;
         for(uint32_t i = 0; i < c.literals.size(); i++) {
             uint32_t v = c.literals[i].var_num-1;
             solver->bump_var_importance(v);
+            vars_bumped++;
         }
     }
 
