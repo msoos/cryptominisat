@@ -111,7 +111,10 @@ class ls_solver
     ls_solver();
     bool parse_arguments(int argc, char **argv);
     bool build_instance(std::string inst);
-    bool local_search(const vector<bool> *init_solution = 0);
+    bool local_search(
+        const vector<bool> *init_solution = 0
+        , long long int _mems_limit = 100*1000*1000
+    );
     void print_solution(bool need_verify = 0);
     void simple_print();
     int get_best_cost()
@@ -126,7 +129,6 @@ class ls_solver
     vector<clause> _clauses;
     int _num_vars;
     int _num_clauses;
-    int _additional_len;
     //data structure used
     vector<int> _unsat_clauses;
     vector<int> _index_in_unsat_clauses;
@@ -134,8 +136,10 @@ class ls_solver
     vector<int> _index_in_unsat_vars;
     vector<int> _ccd_vars;
     //solution information
-    vector<bool> _solution;
+    vector<uint8_t> _solution;
+    vector<uint8_t> _best_solution;
     int _best_found_cost;
+    long long _mems = 0;
     long long _step;
     long long _max_steps;
     int _max_tries;
@@ -145,7 +149,6 @@ class ls_solver
     int _random_seed;
     //algorithmic parameters
     ///////////////////////////
-    bool _aspiration_active;
     int _aspiration_score;
     //clause weighting
     int _swt_threshold;
@@ -153,7 +156,7 @@ class ls_solver
     float _swt_q;
     int _avg_clause_weight;
     //-------------------
-    bool aspiration;
+    bool _aspiration;
     float _up_ratio; //control how much variables need to be delete and assigned by up
     //=================
     long long _delta_total_clause_weight;

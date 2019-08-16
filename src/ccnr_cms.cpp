@@ -48,9 +48,11 @@ lbool CMS_ccnr::main()
 {
     //It might not work well with few number of variables
     //rnovelty could also die/exit(-1), etc.
-    if (solver->nVars() < 50) {
+    if (solver->nVars() < 50 ||
+        solver->binTri.irredBins + solver->longIrredCls.size() < 10
+    ) {
         if (solver->conf.verbosity) {
-            cout << "c [walksat] too few variables for walksat"
+            cout << "c [ccnr] too few variables & clauses"
             << endl;
         }
         return l_Undef;
@@ -61,27 +63,18 @@ lbool CMS_ccnr::main()
         //it's actually l_False under assumptions
         //but we'll set the real SAT solver deal with that
         if (solver->conf.verbosity) {
-            cout << "c [walksat] problem UNSAT under assumptions, returning to main solver"
+            cout << "c [ccnr] problem UNSAT under assumptions, returning to main solver"
             << endl;
         }
         return l_Undef;
     }
 
-    /*for(int i = 0; i < (int)solver->nVars(); i++) {
-        int v = i+1;
-        if (solver->value(i) != l_Undef) {
-            if (solver->value(i) == l_False) {
-                v *= -1;
-            }
-        } else {
-            if (!solver->varData[i].polarity) {
-                v *= -1;
-            }
-        }
-        yals_setphase(yals, v);
-    }*/
+    vector<bool> phases(solver->nVars()+1);
+    for(uint32_t i = 0; i < solver->nVars(); i++) {
+        phases[i+1] = solver->varData[i].polarity;
+    }
 
-    int res = ls_s->local_search();
+    int res = ls_s->local_search(&phases, 100*1000*1000);
     lbool ret = deal_with_solution(res);
 
     if (solver->conf.verbosity) {
@@ -207,7 +200,7 @@ lbool CMS_ccnr::deal_with_solution(int res)
             }
 
             for(size_t i = 0; i < solver->nVars(); i++) {
-                solver->varData[i].polarity = ls_s->_solution[i+1];
+                solver->varData[i].polarity = ls_s->_best_solution[i+1];
             }
         }
 

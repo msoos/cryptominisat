@@ -22,11 +22,11 @@ THE SOFTWARE.
 
 #include "ccnr.h"
 
-//heads
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
 #include <vector>
+#include <cassert>
 
 using namespace CCNR;
 
@@ -178,15 +178,14 @@ int Mersenne::next(int bound)
 //constructor with default setting.
 ls_solver::ls_solver()
 {
-    _additional_len = 10;
-    _max_tries = 10;
-    _max_steps = 2*1000 * 1000;
+    _max_tries = 100;
+    _max_steps = 1*1000 * 1000;
     _random_seed = 1;
     _time_limit = 3000;
     _swt_threshold = 50;
     _swt_p = 0.3;
     _swt_q = 0.7;
-    aspiration = true;
+    _aspiration = true;
     _up_ratio = 0.3; //delete _up_ratio percents varibles
     verbosity = 0;
 }
@@ -199,18 +198,19 @@ bool ls_solver::make_space()
         "You may have forgotten to read the formula." << endl;
         return false;
     }
-    _vars.resize(_num_vars + _additional_len);
-    _clauses.resize(_num_clauses + _additional_len);
-    _solution.resize(_num_vars + _additional_len);
-    _index_in_unsat_clauses.resize(_num_clauses + _additional_len);
-    _index_in_unsat_vars.resize(_num_vars + _additional_len);
+    _vars.resize(_num_vars+1);
+    _clauses.resize(_num_clauses+1);
+    _solution.resize(_num_vars+1);
+    _best_solution.resize(_num_vars+1);
+    _index_in_unsat_clauses.resize(_num_clauses+1);
+    _index_in_unsat_vars.resize(_num_vars+1);
 
     return true;
 }
 
 void ls_solver::build_neighborhood()
 {
-    vector<bool> neighbor_flag(_num_vars + _additional_len);
+    vector<bool> neighbor_flag(_num_vars+1);
     for (uint32_t j = 0; j < neighbor_flag.size(); ++j) {
         neighbor_flag[j] = 0;
     }
@@ -233,13 +233,15 @@ void ls_solver::build_neighborhood()
 
 /****************local search**********************************/
 //bool  *return value modified
-bool ls_solver::local_search(const vector<bool> *init_solution)
-{
+bool ls_solver::local_search(
+    const vector<bool> *init_solution
+    , long long int _mems_limit
+) {
     bool result = false;
     _random_gen.seed(_random_seed);
     _best_found_cost = _num_clauses;
+
     for (int t = 0; t < _max_tries; t++) {
-        cout << "c tries: " << t << endl;
         initialize(init_solution);
         if (0 == _unsat_clauses.size()) {
             result = true;
@@ -249,15 +251,27 @@ bool ls_solver::local_search(const vector<bool> *init_solution)
         for (_step = 0; _step < _max_steps; _step++) {
             int flipv = pick_var();
             flip(flipv);
-            if ((_step & 0xffff) == 0xffff) {
-                cout << "c steps: " << _step
+            if (_mems > _mems_limit) {
+                return result;
+            }
+
+
+            if ((int)_unsat_clauses.size() < _best_found_cost) {
+                _best_found_cost = _unsat_clauses.size();
+                assert(_best_solution.size() == _solution.size());
+                std::copy(_solution.begin(), _solution.end(),
+                          _best_solution.begin());
+            }
+
+            if (_best_found_cost == 0 || (_step & 0x3ffff) == 0x3ffff) {
+                cout << "c [ccnr] tries: "
+                << t << " steps: " << _step
                 << " best found: " << _best_found_cost
                 << endl;
             }
-            if (_unsat_clauses.size() < _best_found_cost) {
-                _best_found_cost = _unsat_clauses.size();
-            }
-            if (0 == _unsat_clauses.size()) {
+
+
+            if (_best_found_cost == 0) {
                 result = true;
                 break;
             }
@@ -291,7 +305,7 @@ void ls_solver::initialize(const vector<bool> *init_solution)
             _solution[v] = (_random_gen.next(2) == 0 ? 0 : 1);
         }
     } else {
-        if (init_solution->size() != _num_vars) {
+        if ((int)init_solution->size() != _num_vars+1) {
             cout
             << "ERROR: the init solution's size"
             " is not equal to the number of variables."
@@ -299,7 +313,7 @@ void ls_solver::initialize(const vector<bool> *init_solution)
             exit(-1);
         }
         for (int v = 1; v <= _num_vars; v++) {
-            _solution[v] = init_solution->at(v - 1);
+            _solution[v] = init_solution->at(v);
         }
     }
 
@@ -370,6 +384,7 @@ void ls_solver::initialize_variable_datas()
 int ls_solver::pick_var()
 {
     int best_var = 0;
+    _mems += _ccd_vars.size()/8;
     if (_ccd_vars.size() > 0) {
         best_var = _ccd_vars[0];
         for (int v: _ccd_vars) {
@@ -385,7 +400,7 @@ int ls_solver::pick_var()
 
     //Aspriation Mode
     //----------------------------------------
-    if (aspiration) {
+    if (_aspiration) {
         _aspiration_score = _avg_clause_weight;
         int i;
         for (i = 0; i < _unsat_vars.size(); ++i) {
@@ -432,6 +447,7 @@ void ls_solver::flip(int flipv)
 {
     _solution[flipv] = 1 - _solution[flipv];
     int org_flipv_score = _vars[flipv].score;
+    _mems += _vars[flipv].literals.size();
     for (lit l: _vars[flipv].literals) {
         clause *cp = &(_clauses[l.clause_num]);
         if (_solution[flipv] == l.sense) {
@@ -473,6 +489,7 @@ void ls_solver::update_cc_after_flip(int flipv)
     int last_item;
     variable *vp = &(_vars[flipv]);
     vp->cc_value = 0;
+    _mems += _ccd_vars.size()/4;
     for (int index = _ccd_vars.size() - 1; index >= 0; index--) {
         int v = _ccd_vars[index];
         if (_vars[v].score <= 0) {
@@ -482,7 +499,9 @@ void ls_solver::update_cc_after_flip(int flipv)
             _vars[v].is_in_ccd_vars = 0;
         }
     }
+
     //update all flipv's neighbor's cc to be 1
+    _mems += vp->neighbor_var_nums.size()/4;
     for (int v: vp->neighbor_var_nums) {
         _vars[v].cc_value = 1;
         if (_vars[v].score > 0 && !(_vars[v].is_in_ccd_vars)) {
@@ -559,6 +578,7 @@ void ls_solver::smooth_clause_weights()
     _avg_clause_weight = 0;
     _delta_total_clause_weight = 0;
     clause *cp;
+    _mems += _num_clauses;
     for (int c = 0; c < _num_clauses; ++c) {
         cp = &(_clauses[c]);
         cp->weight = cp->weight * _swt_p + scale_avg;
