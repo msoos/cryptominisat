@@ -1227,7 +1227,6 @@ lbool Searcher::search()
     assert(solver->prop_at_head());
 
     //Loop until restart or finish (SAT/UNSAT)
-    blocked_restart = false;
     PropBy confl;
     lbool dec_ret = l_Undef;
 
@@ -2668,7 +2667,6 @@ void Searcher::check_need_restart()
 
     //dynamic
     if (params.rest_type == Restart::glue) {
-        check_blocking_restart();
         if (hist.glueHist.isvalid()
             && conf.local_glue_multiplier * hist.glueHist.avg() > hist.glueHistLTLimited.avg()
         ) {
@@ -2693,25 +2691,6 @@ void Searcher::check_need_restart()
             << " -- restarting as soon as possible!" << endl;
         }
         params.needToStopSearch = true;
-    }
-}
-
-inline void Searcher::check_blocking_restart()
-{
-    if (conf.do_blocking_restart
-        && sumConflicts > conf.lower_bound_for_blocking_restart
-        && hist.glueHist.isvalid()
-        && hist.trailDepthHistLonger.isvalid()
-        && decisionLevel() > 0
-        && trail_lim.size() > 0
-        && trail.size() > hist.trailDepthHistLonger.avg()*conf.blocking_restart_multip
-    ) {
-        hist.glueHist.clear();
-        if (!blocked_restart) {
-            stats.blocked_restart_same++;
-        }
-        blocked_restart = true;
-        stats.blocked_restart++;
     }
 }
 

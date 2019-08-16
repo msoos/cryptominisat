@@ -380,8 +380,6 @@ class Searcher : public HyperEngine
         int64_t max_confl_this_phase;
         void  check_need_restart();
         uint64_t max_confl_per_search_solve_call;
-        bool blocked_restart = false;
-        void check_blocking_restart();
         uint32_t num_search_called = 0;
         double luby(double y, int x);
         void adjust_restart_strategy();
