@@ -23,16 +23,10 @@ THE SOFTWARE.
 #include "ccnr.h"
 
 //heads
-#include <stdio.h>
 #include <cmath>
 #include <cstdlib>
-#include <ctime>
-#include <fstream>
 #include <iostream>
-#include <sstream>
 #include <vector>
-//these two h files are for timing under linux
-#include <sys/time.h>
 
 using namespace CCNR;
 
@@ -66,7 +60,7 @@ const unsigned int LOWER_MASK = 0x7fffffffUL;
 */
 Mersenne::Mersenne()
 {
-    seed((int)std::time(0));
+    seed(0);
 }
 Mersenne::Mersenne(int s)
 {
