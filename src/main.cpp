@@ -336,9 +336,6 @@ void Main::add_supported_options()
     ;
     #endif
 
-    std::ostringstream s_blocking_multip;
-    s_blocking_multip << std::setprecision(4) << conf.blocking_restart_multip;
-
     std::ostringstream s_local_glue_multiplier;
     s_local_glue_multiplier << std::setprecision(4) << conf.local_glue_multiplier;
 
