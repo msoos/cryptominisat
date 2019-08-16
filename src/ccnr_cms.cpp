@@ -185,25 +185,44 @@ bool CMS_ccnr::init_problem()
     return true;
 }
 
+struct ClWeightSorter
+{
+    bool operator()(const CCNR::clause& a, const CCNR::clause& b)
+    {
+        return a.weight > b.weight;
+    }
+};
+
 lbool CMS_ccnr::deal_with_solution(int res)
 {
+    if (solver->conf.sls_get_phase) {
+        if (solver->conf.verbosity) {
+            cout
+            << "c [ccnr] saving best assignement phase"
+            << endl;
+        }
+
+        for(size_t i = 0; i < solver->nVars(); i++) {
+            solver->varData[i].polarity = ls_s->_best_solution[i+1];
+        }
+    }
+
+    std::sort(ls_s->_clauses.begin(), ls_s->_clauses.end(), ClWeightSorter());
+    uint32_t top_num = 0;
+    for(const auto& c: ls_s->_clauses) {
+        if (top_num > 5)
+            break;
+        top_num++;
+        for(uint32_t i = 0; i < c.literals.size(); i++) {
+            uint32_t v = c.literals[i].var_num-1;
+            solver->bump_var_importance(v);
+        }
+    }
+
     if (!res) {
         if (solver->conf.verbosity) {
             cout << "c [ccnr] ASSIGNMENT NOT FOUND" << endl;
         }
-
-        if (solver->conf.sls_get_phase) {
-            if (solver->conf.verbosity) {
-                cout
-                << "c [ccnr] saving best assignement phase"
-                << endl;
-            }
-
-            for(size_t i = 0; i < solver->nVars(); i++) {
-                solver->varData[i].polarity = ls_s->_best_solution[i+1];
-            }
-        }
-
         return l_Undef;
     }
 

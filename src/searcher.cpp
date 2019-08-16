@@ -3838,3 +3838,23 @@ void Searcher::check_assumptions_sanity()
         assert(varData[inter_lit.var()].assumption != l_Undef);
     }
 }
+
+void Searcher::bump_var_importance(uint32_t var)
+{
+    switch(branch_strategy) {
+            case branch::vsids:
+                vsids_bump_var_act<false>(var);
+                break;
+
+            case branch::maple:
+                varData[var].conflicted+=2;
+                break;
+
+            case branch::vmtf:
+                vmtf_bump_queue(var);
+                break;
+
+            case branch::rnd:
+                break;
+        }
+}

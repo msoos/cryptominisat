@@ -182,8 +182,8 @@ class Searcher : public HyperEngine
         uint64_t last_dumped_conflict_rst_data_for_var = std::numeric_limits<uint64_t>::max();
         #endif
 
-        //Picking polarity when doing decision
         bool pick_polarity(const uint32_t var);
+        void bump_var_importance(uint32_t var);
 
     protected:
         Solver* solver;
