@@ -273,7 +273,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //WalkSAT
         , doSLS(true)
-        , sls_every_n(4)
+        , sls_every_n(1)
         , yalsat_max_mems(80)
         , sls_memoutMB(500)
         , walksat_max_runs(50)
