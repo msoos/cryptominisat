@@ -81,7 +81,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     var_inc_vsids = conf.var_inc_vsids_start;
     more_red_minim_limit_binary_actual = conf.more_red_minim_limit_binary;
     mtrand.seed(conf.origSeed);
-    hist.setSize(conf.shortTermHistorySize, conf.blocking_restart_trail_hist_length);
+    hist.setSize(conf.shortTermHistorySize, 5000);
     cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
 }
 
