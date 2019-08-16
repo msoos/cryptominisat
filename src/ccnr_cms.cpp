@@ -232,32 +232,5 @@ lbool CMS_ccnr::deal_with_solution(int res)
         cout << "c [ccnr] ASSIGNMENT FOUND" << endl;
     }
 
-    assert(solver->decisionLevel() == 0);
-    for(size_t i = 0; i < solver->nVars(); i++) {
-        //this will get set automatically anyway, skip
-        if (solver->varData[i].removed != Removed::none) {
-            continue;
-        }
-        if (solver->value(i) != l_Undef) {
-            //this variable has been removed already
-            //so whatever value it sets, it doesn't matter
-            //the solution is still correct
-            continue;
-        }
-
-        lbool val = ls_s->_solution[i+1] ? l_True : l_False;
-
-        //fix these up, they may have been flipped
-        if (solver->var_inside_assumptions(i) != l_Undef) {
-            val = solver->var_inside_assumptions(i);
-        }
-
-        solver->new_decision_level();
-        solver->enqueue(Lit(i, val == l_False));
-    }
-    #ifdef SLOW_DEBUG
-    solver->check_assigns_for_assumptions();
-    #endif
-
-    return l_True;
+    return l_Undef;
 }

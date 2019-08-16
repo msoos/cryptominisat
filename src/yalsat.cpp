@@ -224,34 +224,5 @@ lbool Yalsat::deal_with_solution(int res)
         cout << "c [yalsat] ASSIGNMENT FOUND" << endl;
     }
 
-    //int lit = (yals_deref (yals, i) > 0) ? i : -i;
-    assert(solver->decisionLevel() == 0);
-    for(size_t i = 0; i < solver->nVars(); i++) {
-        //this will get set automatically anyway, skip
-        if (solver->varData[i].removed != Removed::none) {
-            continue;
-        }
-        if (solver->value(i) != l_Undef) {
-            //this variable has been removed already
-            //so whatever value it sets, it doesn't matter
-            //the solution is still correct
-            continue;
-        }
-
-        int pre_val = yals_deref (yals, i+1);
-        lbool val = pre_val < 0 ? l_False : l_True;
-
-        //fix these up, they may have been flipped
-        if (solver->var_inside_assumptions(i) != l_Undef) {
-            val = solver->var_inside_assumptions(i);
-        }
-
-        solver->new_decision_level();
-        solver->enqueue(Lit(i, val == l_False));
-    }
-    #ifdef SLOW_DEBUG
-    solver->check_assigns_for_assumptions();
-    #endif
-
-    return l_True;
+    return l_Undef;
 }
