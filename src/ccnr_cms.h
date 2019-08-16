@@ -55,7 +55,7 @@ private:
     void init_for_round();
     bool init_problem();
     lbool deal_with_solution(int res);
-    CCNR::ls_solver* ls_s;
+    CCNR::ls_solver* ls_s = NULL;
     uint32_t cl_num = 0;
 
     enum class add_cl_ret {added_cl, skipped_cl, unsat};
