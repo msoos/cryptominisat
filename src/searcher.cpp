@@ -2504,7 +2504,7 @@ lbool Searcher::solve(
                 goto end;
             }
             next_distill = std::min<double>(
-                sumConflicts + sumConflicts * 0.2 + 3000,
+                sumConflicts + sumConflicts * 0.2 + 7000,
                 sumConflicts + 50000);
         }
     }
