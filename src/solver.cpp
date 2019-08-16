@@ -1714,7 +1714,7 @@ lbool Solver::iterate_until_solved()
         }
         dump_memory_stats_to_sql();
 
-        const long num_confl = calc_num_confl_to_do_this_iter(iteration_num);
+        const long num_confl = calc_num_confl_to_do_this_iter(iteration_num++);
         if (num_confl <= 0) {
             break;
         }
