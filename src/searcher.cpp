@@ -142,6 +142,7 @@ inline void Searcher::add_lit_to_learnt(
     #ifdef STATS_NEEDED
     if (!update_bogoprops) {
         varData[var].inside_conflict_clause_antecedents++;
+        varData[var].last_seen_in_1uip = sumConflicts;
     }
     #endif
 

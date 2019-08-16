@@ -363,6 +363,7 @@ create table `var_data_picktime` (
     , `num_decided_pos`                                         int(20) NOT NULL
     , `num_propagated`                                          int(20) NOT NULL
     , `num_propagated_pos`                                      int(20) NOT NULL
+    , `conflicts_since_in_1uip`                                 int(20) NOT NULL
 
     , `sumDecisions_at_picktime`                                int(20) NOT NULL
     , `sumConflicts_at_picktime`                                int(20) NOT NULL

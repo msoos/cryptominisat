@@ -61,6 +61,7 @@ struct VarData
     uint64_t num_decided = 0;
     uint64_t num_decided_pos = 0;
     bool     last_time_set_was_dec;
+    uint32_t last_seen_in_1uip = 0;
 
     //these are per-solver data
     uint64_t sumDecisions_at_picktime = 0;
