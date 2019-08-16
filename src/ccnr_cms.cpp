@@ -170,7 +170,7 @@ bool CMS_ccnr::init_problem()
     }
 
     //Shrink the space if we have to
-    assert(ls_s->_num_clauses <= (int)cl_num);
+    assert(ls_s->_num_clauses >= (int)cl_num);
     ls_s->_num_clauses = (int)cl_num;
     ls_s->make_space();
 
