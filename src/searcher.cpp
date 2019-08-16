@@ -2356,6 +2356,7 @@ void Searcher::set_branch_strategy(const uint32_t iteration_num)
 
 void Searcher::adjust_branch_strategy()
 {
+    assert(decisionLevel() == 0);
     if (sumConflicts > next_change_branch_strategy) {
         set_branch_strategy(branch_strategy_num++);
         next_change_branch_strategy = sumConflicts + 10000;
