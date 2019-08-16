@@ -198,8 +198,6 @@ class DLL_PUBLIC SolverConf
         unsigned    restart_first;      ///<The initial restart limit.                                                                (default 100)
         double    restart_inc;        ///<The factor with which the restart limit is multiplied in each restart.                    (default 1.5)
         Restart  restartType;   ///<If set, the solver will always choose the given restart strategy
-        unsigned blocking_restart_trail_hist_length;
-        double   blocking_restart_multip;
         int      broken_glue_restart;
 
         double   local_glue_multiplier;
