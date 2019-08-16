@@ -164,8 +164,6 @@ class Searcher : public HyperEngine
         //assumptions
         void check_assumptions_sanity();
         void unfill_assumptions_set();
-
-
         bool check_order_heap_sanity() const;
 
 
