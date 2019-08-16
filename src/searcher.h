@@ -331,6 +331,7 @@ class Searcher : public HyperEngine
         void build_branch_strategy_setup(branch which);
         void clear_branch_strategy_setup(branch which);
         void rebuild_all_branch_strategy_setups();
+        void clear_all_branch_strategy_setups();
         uint32_t branch_strategy_num = 0;
         uint32_t next_change_branch_strategy = 0;
         void adjust_branch_strategy();

@@ -1724,6 +1724,7 @@ lbool Solver::iterate_until_solved()
             break;
         }
         status = Searcher::solve(num_confl);
+        clear_all_branch_strategy_setups();
 
         //Check for effectiveness
         check_recursive_minimization_effectiveness(status);

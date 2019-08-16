@@ -2319,13 +2319,16 @@ void Searcher::build_branch_strategy_setup(branch which)
     }
 }
 
-void Searcher::rebuild_all_branch_strategy_setups()
+void Searcher::clear_all_branch_strategy_setups()
 {
     clear_branch_strategy_setup(branch::vsids);
     clear_branch_strategy_setup(branch::maple);
     clear_branch_strategy_setup(branch::vmtf);
     clear_branch_strategy_setup(branch::rnd);
+}
 
+void Searcher::rebuild_all_branch_strategy_setups()
+{
     build_branch_strategy_setup(branch::vsids);
     build_branch_strategy_setup(branch::maple);
     build_branch_strategy_setup(branch::vmtf);

@@ -214,7 +214,9 @@ lbool CMS_ccnr::deal_with_solution(int res)
             break;
         for(uint32_t i = 0; i < c.literals.size(); i++) {
             uint32_t v = c.literals[i].var_num-1;
-            solver->bump_var_importance(v);
+            if (v < solver->nVars() && solver->varData[v].removed == Removed::none) {
+                solver->bump_var_importance(v);
+            }
             vars_bumped++;
         }
     }
