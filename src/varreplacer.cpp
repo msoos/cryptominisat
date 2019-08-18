@@ -431,7 +431,6 @@ bool VarReplacer::replaceImplicit()
 
     for(size_t at = 0; at < solver->watches.get_smudged_list().size(); at++) {
         const Lit origLit1 = solver->watches.get_smudged_list()[at];
-        //const Lit origLit1 = Lit::toLit(at);
         watch_subarray ws = solver->watches[origLit1];
 
         Watched* i = ws.begin();
@@ -544,7 +543,7 @@ Lit* my_lit_find(Clause& cl, const Lit lit)
 }
 
 /**
-@brief Helper function for replace_set()
+@returns TRUE if needs removal
 */
 bool VarReplacer::handleUpdatedClause(
     Clause& c
@@ -584,7 +583,6 @@ bool VarReplacer::handleUpdatedClause(
 
     if (satisfied) {
         (*solver->drat) << findelay;
-        c.shrink(c.size()); //so we free() it
         solver->watches.smudge(origLit1);
         solver->watches.smudge(origLit2);
         c.setRemoved();
