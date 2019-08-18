@@ -416,6 +416,7 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
             #ifdef STATS_NEEDED
             sql_dump_vardata_picktime(v, from);
             varData[v].num_decided++;
+            varData[v].last_decided_on = sumConflicts;
             if (!p.sign()) varData[v].num_decided_pos++;
             #endif
         } else {
@@ -426,6 +427,7 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
                 varData[v].last_flipped = sumConflicts;
             }
             varData[v].num_propagated++;
+            varData[v].last_propagated = sumConflicts;
             if (!p.sign()) varData[v].num_propagated_pos++;
             #endif
         }
