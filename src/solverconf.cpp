@@ -68,7 +68,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Restarting
         , restart_first(100)
         , restart_inc(1.1)
-        , restartType(Restart::glue_geom_luby)
+        , restartType(Restart::glue_geom)
         , broken_glue_restart(true)
         , local_glue_multiplier(0.80)
         , shortTermHistorySize (50)
