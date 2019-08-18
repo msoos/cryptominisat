@@ -323,8 +323,6 @@ DROP TABLE IF EXISTS `var_data_fintime`;
 create table `var_data_fintime` (
     `var`                                              int(20) NOT NULL
     , `sumConflicts_at_picktime`                       int(20) NOT NULL
-
-    , `clauses_below`                                  int(20) NOT NULL
     , `rel_activity_at_fintime`                        double NOT NULL
 
     , `inside_conflict_clause_at_fintime`              int(20) NOT NULL
@@ -340,8 +338,6 @@ create table `var_data_fintime` (
     , `sumDecisionBasedCl_at_fintime`                  int(20) NOT NULL
     , `sumClLBD_at_fintime`                            int(20) NOT NULL
     , `sumClSize_at_fintime`                           int(20) NOT NULL
-
-    , `clid_end_notincl`                               int(20) NOT NULL
 );
 
 DROP TABLE IF EXISTS `var_data_picktime`;
@@ -386,8 +382,6 @@ create table `var_data_picktime` (
     , `sumClSize_below_during`                                  int(20) NOT NULL
 
     , flipped_confs_ago                                         int(20) NOT NULL
-
-    , `clid_start_incl`                                         int(20) NOT NULL
 );
 
 DROP TABLE IF EXISTS `dec_var_clid`;

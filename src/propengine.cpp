@@ -538,7 +538,6 @@ void PropEngine::sql_dump_vardata_picktime(uint32_t v, PropBy from)
         solver
         , outer_var
         , varData[v]
-        , clauseID
         , rel_activity_at_picktime
     );
 }

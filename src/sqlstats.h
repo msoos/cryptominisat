@@ -95,7 +95,6 @@ public:
         const Solver* solver
         , const uint32_t var
         , const VarData& vardata
-        , const uint64_t start_clid_incl
         , const double rel_activity
     ) = 0;
 
@@ -103,8 +102,6 @@ public:
         const Solver* solver
         , const uint32_t var
         , const VarData& vardata
-        , const uint32_t cls_below
-        , const uint64_t end_clid_notincl
         , const double rel_activity
     ) = 0;
 

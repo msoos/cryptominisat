@@ -1936,12 +1936,9 @@ bool Searcher::handle_conflict(const PropBy confl)
         }
     }
 
-
     update_history_stats(backtrack_level, glue);
     uint32_t old_decision_level = decisionLevel();
-    uint32_t plus = learnt_clause.size() > 2;
-    plus += decision_clause.size() > 2;
-    cancelUntil<true, false>(backtrack_level, plus);
+    cancelUntil<true, false>(backtrack_level);
 
     add_otf_subsume_long_clauses<false>();
     add_otf_subsume_implicit_clause<false>();
@@ -3554,19 +3551,14 @@ void Searcher::load_state(SimpleInFile& f, const lbool status)
 
 //Normal running
 template
-void Searcher::cancelUntil<true, false>(uint32_t level, uint32_t clid_plus);
+void Searcher::cancelUntil<true, false>(uint32_t level);
 
 //During inprocessing, dont update anyting really (probing, distilling)
 template
-void Searcher::cancelUntil<false, true>(uint32_t level, uint32_t clid_plus);
+void Searcher::cancelUntil<false, true>(uint32_t level);
 
 template<bool do_insert_var_order, bool update_bogoprops>
-void Searcher::cancelUntil(uint32_t level
-    , uint32_t
-    #ifdef STATS_NEEDED
-    clid_plus
-    #endif
-) {
+void Searcher::cancelUntil(uint32_t level) {
     #ifdef VERBOSE_DEBUG
     cout << "Canceling until level " << level;
     if (level > 0) cout << " sublevel: " << trail_lim[level];
@@ -3614,7 +3606,6 @@ void Searcher::cancelUntil(uint32_t level
                 uint64_t sumDecisionBasedCl_during = sumDecisionBasedCl - varData[var].sumDecisionBasedCl_at_picktime;
                 uint64_t sumClLBD_during = sumClLBD - varData[var].sumClLBD_at_picktime;
                 uint64_t sumClSize_during = sumClSize - varData[var].sumClSize_at_picktime;
-                uint64_t cls_below = sumConflicts_during + sumDecisionBasedCl_during;
                 double rel_activity_at_fintime =
                     std::log2(var_act_vsids[var]+10e-300)/std::log2(max_vsids_act+10e-300);
 
@@ -3635,8 +3626,6 @@ void Searcher::cancelUntil(uint32_t level
                         solver
                         , outer_var
                         , varData[var]
-                        , cls_below
-                        , clauseID+clid_plus
                         , rel_activity_at_fintime
                     );
                 }

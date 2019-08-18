@@ -775,15 +775,12 @@ void SQLiteStats::var_data_fintime(
     const Solver* solver
     , const uint32_t var
     , const VarData& vardata
-    , const uint32_t cls_below
-    , const uint64_t end_clid_notincl
     , const double rel_activity
 ) {
     int bindAt = 1;
     sqlite3_bind_int   (stmt_var_data_fintime, bindAt++, var);
     sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, vardata.sumConflicts_at_picktime);
 
-    sqlite3_bind_int (stmt_var_data_fintime, bindAt++, cls_below);
     sqlite3_bind_double (stmt_var_data_fintime, bindAt++, rel_activity);
 
     sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, vardata.inside_conflict_clause);
@@ -800,9 +797,6 @@ void SQLiteStats::var_data_fintime(
     sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, solver->sumClLBD);
     sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, solver->sumClSize);
 
-    //to get usage data good cl/bad cl, etc.
-    sqlite3_bind_int64 (stmt_var_data_fintime, bindAt++, end_clid_notincl);
-
     run_sqlite_step(stmt_var_data_fintime, "var_data_fintime");
 }
 
@@ -810,7 +804,6 @@ void SQLiteStats::var_data_picktime(
     const Solver* solver
     , const uint32_t var
     , const VarData& vardata
-    , const uint64_t start_clid_incl
     , const double rel_activity
 ) {
     int bindAt = 1;
@@ -856,9 +849,6 @@ void SQLiteStats::var_data_picktime(
     sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, vardata.sumClSize_below_during);
 
     sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, solver->sumConflicts-vardata.last_flipped);
-
-    //to get usage data good cl/bad cl, etc.
-    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, start_clid_incl);
 
     run_sqlite_step(stmt_var_data_picktime, "var_data_picktime");
 }
