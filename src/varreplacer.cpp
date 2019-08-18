@@ -583,6 +583,7 @@ bool VarReplacer::handleUpdatedClause(
 
     if (satisfied) {
         (*solver->drat) << findelay;
+        c.shrink(c.size()); //needed to make clause cleaner happy
         solver->watches.smudge(origLit1);
         solver->watches.smudge(origLit2);
         c.setRemoved();
