@@ -692,9 +692,6 @@ void WalkSAT::print_statistics_final()
             cout << "c [walksat] ASSIGNMENT FOUND"  << endl;
         }
 
-        if (solver->conf.verbosity) {
-            cout << "c [yalsat] saving best assignement phase -- it had " << yals_minimum(yals) << " clauses unsatisfied" << endl;
-        }
         for(size_t i = 0; i < solver->nVars(); i++) {
             solver->varData[i].polarity = assigns[i] == l_True;
         }
