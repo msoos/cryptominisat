@@ -35,7 +35,7 @@ SLS::SLS(Solver* _solver) :
 SLS::~SLS()
 {}
 
-lbool SLS::run()
+lbool SLS::run(const uint32_t num_simplify_calls)
 {
     if (solver->conf.which_sls == "yalsat") {
         return run_yalsat();
@@ -43,6 +43,12 @@ lbool SLS::run()
         return run_ccnr();
     } else if (solver->conf.which_sls == "walksat") {
         return run_walksat();
+    } else if (solver->conf.which_sls == "ccnr_yalsat") {
+        if ((num_simplify_calls % 2) == 0) {
+            return run_ccnr();
+        } else {
+            return run_yalsat();
+        }
     } else {
         cout << "ERROR: SLS configuration '" << solver->conf.which_sls
         << "' does not exist. Only 'walksat', 'yalsat' and 'ccnr' are acceptable."

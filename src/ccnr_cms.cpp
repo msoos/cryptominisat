@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include "ccnr_cms.h"
 #include "solver.h"
 #include "ccnr.h"
+#include "sqlstats.h"
 //#define SLOW_DEBUG
 
 using namespace CMSat;
@@ -74,12 +75,21 @@ lbool CMS_ccnr::main()
         phases[i+1] = solver->varData[i].polarity;
     }
 
-    int res = ls_s->local_search(&phases, 40*1000*1000);
+    int res = ls_s->local_search(&phases, solver->conf.yalsat_max_mems*1000*1000);
     lbool ret = deal_with_solution(res);
 
+    double time_used = cpuTime()-startTime;
     if (solver->conf.verbosity) {
-        cout << "c [ccnr] time: " << (cpuTime()-startTime) << endl;
+        cout << "c [ccnr] time: " << time_used << endl;
     }
+    if (solver->sqlStats) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "sls-ccnr"
+            , time_used
+        );
+    }
+
     return ret;
 }
 
@@ -195,7 +205,7 @@ struct ClWeightSorter
 
 lbool CMS_ccnr::deal_with_solution(int res)
 {
-    if (solver->conf.sls_get_phase) {
+    if (solver->conf.sls_get_phase || res == 10) {
         if (solver->conf.verbosity) {
             cout
             << "c [ccnr] saving best assignement phase"

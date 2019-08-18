@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include "constants.h"
 #include "yalsat.h"
 #include "solver.h"
+#include "sqlstats.h"
 extern "C" {
 #include "yals.h"
 }
@@ -101,9 +102,16 @@ lbool Yalsat::main()
     int res = yals_sat(yals);
     lbool ret = deal_with_solution(res);
 
+    double time_used = cpuTime()-startTime;
     if (solver->conf.verbosity) {
-        yals_stats(yals);
-        cout << "c [yalsat] time: " << (cpuTime()-startTime) << endl;
+        cout << "c [yalsat] time: " << time_used << endl;
+    }
+    if (solver->sqlStats) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "sls-yalsat"
+            , time_used
+        );
     }
     return ret;
 }
@@ -204,7 +212,7 @@ lbool Yalsat::deal_with_solution(int res)
         return l_Undef;
     }
 
-    if (solver->conf.sls_get_phase) {
+    if (solver->conf.sls_get_phase || res == 10) {
         if (solver->conf.verbosity) {
             cout << "c [yalsat] saving best assignement phase -- it had " << yals_minimum(yals) << " clauses unsatisfied" << endl;
         }

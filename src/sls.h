@@ -33,7 +33,7 @@ class SLS {
 public:
     SLS(Solver* solver);
     ~SLS();
-    lbool run();
+    lbool run(const uint32_t num_simplify_calls);
 
 private:
     Solver* solver;
