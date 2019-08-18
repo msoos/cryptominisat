@@ -692,30 +692,12 @@ void WalkSAT::print_statistics_final()
             cout << "c [walksat] ASSIGNMENT FOUND"  << endl;
         }
 
-        assert(solver->decisionLevel() == 0);
-        for(size_t i = 0; i < solver->nVars(); i++) {
-            //this will get set automatically anyway, skip
-            if (solver->varData[i].removed != Removed::none) {
-                continue;
-            }
-            if (solver->value(i) != l_Undef) {
-                //this variable has been removed already
-                //so whatever value it sets, it doesn't matter
-                //the solution is still correct
-                continue;
-            }
-
-            //fix these up, they may have been flipped
-            if (solver->var_inside_assumptions(i) != l_Undef) {
-                assigns[i] = solver->var_inside_assumptions(i);
-            }
-
-            solver->new_decision_level();
-            solver->enqueue(Lit(i, value(i) == l_False));
+        if (solver->conf.verbosity) {
+            cout << "c [yalsat] saving best assignement phase -- it had " << yals_minimum(yals) << " clauses unsatisfied" << endl;
         }
-        #ifdef SLOW_DEBUG
-        solver->check_assigns_for_assumptions();
-        #endif
+        for(size_t i = 0; i < solver->nVars(); i++) {
+            solver->varData[i].polarity = assigns[i] == l_True;
+        }
     } else {
         if (solver->conf.verbosity >=2) {
             cout << "c [walksat] ASSIGNMENT NOT FOUND"  << endl;
