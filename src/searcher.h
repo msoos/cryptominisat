@@ -301,6 +301,7 @@ class Searcher : public HyperEngine
         Clause* create_learnt_clause(PropBy confl);
         int pathC;
         uint64_t more_red_minim_limit_binary_actual;
+        void create_decision_clause();
         #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
         AtecedentData<uint16_t> antec_data;
         #endif

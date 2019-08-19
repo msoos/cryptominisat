@@ -1888,6 +1888,28 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     return cl;
 }
 
+///Add decision-based clause in case it's short
+void Searcher::create_decision_clause()
+{
+    decision_clause.clear();
+    if (conf.do_decision_based_cl
+        && learnt_clause.size() > conf.decision_based_cl_min_learned_size
+        && decisionLevel() <= conf.decision_based_cl_max_levels
+        && decisionLevel() >= 2
+    ) {
+        for(int i = (int)trail_lim.size()-1; i >= 0; i--) {
+            Lit l = ~trail[trail_lim[i]];
+            if (!seen[l.toInt()]) {
+                decision_clause.push_back(l);
+                seen[l.toInt()] = 1;
+            }
+        }
+        for(Lit l: decision_clause) {
+            seen[l.toInt()] = 0;
+        }
+    }
+}
+
 bool Searcher::handle_conflict(const PropBy confl)
 {
     stats.conflStats.numConflicts++;
@@ -1917,24 +1939,7 @@ bool Searcher::handle_conflict(const PropBy confl)
     );
     print_learnt_clause();
 
-    //Add decision-based clause in case it's short
-    decision_clause.clear();
-    if (conf.do_decision_based_cl
-        && learnt_clause.size() > conf.decision_based_cl_min_learned_size
-        && decisionLevel() <= conf.decision_based_cl_max_levels
-        && decisionLevel() >= 2
-    ) {
-        for(int i = (int)trail_lim.size()-1; i >= 0; i--) {
-            Lit l = ~trail[trail_lim[i]];
-            if (!seen[l.toInt()]) {
-                decision_clause.push_back(l);
-                seen[l.toInt()] = 1;
-            }
-        }
-        for(Lit l: decision_clause) {
-            seen[l.toInt()] = 0;
-        }
-    }
+    create_decision_clause();
 
     update_history_stats(backtrack_level, glue);
     uint32_t old_decision_level = decisionLevel();
