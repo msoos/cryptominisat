@@ -169,7 +169,7 @@ inline void Searcher::add_lit_to_learnt(
                 break;
 
             case branch::maple:
-                varData[var].conflicted++;
+                varData[var].maple_conflicted++;
                 break;
 
             case branch::vmtf:
@@ -950,7 +950,7 @@ Clause* Searcher::analyze_conflict(
                             if (!seen[l.var()]) {
                                 seen[l.var()] = true;
                                 toClear.push_back(l);
-                                varData[l.var()].conflicted+=bump_by;
+                                varData[l.var()].maple_conflicted+=bump_by;
                             }
                         }
                     } else if (varData[v].reason.getType() == binary_t) {
@@ -958,13 +958,13 @@ Clause* Searcher::analyze_conflict(
                         if (!seen[l.var()]) {
                             seen[l.var()] = true;
                             toClear.push_back(l);
-                            varData[l.var()].conflicted+=bump_by;
+                            varData[l.var()].maple_conflicted+=bump_by;
                         }
                         l = Lit(v, false);
                         if (!seen[l.var()]) {
                             seen[l.var()] = true;
                             toClear.push_back(l);
-                            varData[l.var()].conflicted+=bump_by;
+                            varData[l.var()].maple_conflicted+=bump_by;
                         }
                     }
                 }
@@ -2890,17 +2890,17 @@ uint32_t Searcher::pick_var_vsids_maple()
         //Adjust maple to account for time passed
         if (branch_strategy == branch::maple) {
             uint32_t v2 = order_heap_maple[0];
-            uint32_t age = sumConflicts - varData[v2].cancelled;
+            uint32_t age = sumConflicts - varData[v2].maple_cancelled;
             while (age > 0) {
                 double decay = pow(0.95, age);
                 var_act_maple[v2] *= decay;
                 if (order_heap_maple.inHeap(v2)) {
                     order_heap_maple.increase(v2);
                 }
-                varData[v2].cancelled = sumConflicts;
+                varData[v2].maple_cancelled = sumConflicts;
 
                 v2 = order_heap_maple[0];
-                age = sumConflicts - varData[v2].cancelled;
+                age = sumConflicts - varData[v2].maple_cancelled;
             }
         }
 
@@ -3653,11 +3653,11 @@ void Searcher::cancelUntil(uint32_t level) {
 
 
             if (!update_bogoprops && branch_strategy == branch::maple) {
-                assert(sumConflicts >= varData[var].last_picked);
-                uint32_t age = sumConflicts - varData[var].last_picked;
+                assert(sumConflicts >= varData[var].maple_last_picked);
+                uint32_t age = sumConflicts - varData[var].maple_last_picked;
                 if (age > 0) {
                     //adjusted reward -> higher if conflicted more or quicker
-                    reward += (double)varData[var].conflicted;
+                    reward += (double)varData[var].maple_conflicted;
                     double adjusted_reward = reward / ((double)age);
 
                     double old_activity = var_act_maple[var];
@@ -3669,7 +3669,7 @@ void Searcher::cancelUntil(uint32_t level) {
                             order_heap_maple.increase(var);
                     }
                 }
-                varData[var].cancelled = sumConflicts;
+                varData[var].maple_cancelled = sumConflicts;
             }
 
             assigns[var] = l_Undef;
@@ -3820,7 +3820,7 @@ void Searcher::bump_var_importance(uint32_t var)
                 break;
 
             case branch::maple:
-                varData[var].conflicted+=2;
+                varData[var].maple_conflicted+=2;
                 break;
 
             case branch::vmtf:

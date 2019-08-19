@@ -396,11 +396,11 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
     }
 
     if (!update_bogoprops && branch_strategy == branch::maple) {
-        varData[v].last_picked = sumConflicts;
-        varData[v].conflicted = 0;
+        varData[v].maple_last_picked = sumConflicts;
+        varData[v].maple_conflicted = 0;
 
-        assert(sumConflicts >= varData[v].cancelled);
-        uint32_t age = sumConflicts - varData[v].cancelled;
+        assert(sumConflicts >= varData[v].maple_cancelled);
+        uint32_t age = sumConflicts - varData[v].maple_cancelled;
         if (age > 0) {
             double decay = std::pow(0.95, age);
             var_act_maple[v] *= decay;
