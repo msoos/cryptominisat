@@ -391,7 +391,6 @@ class Searcher : public HyperEngine
         //////////////
         void print_solution_varreplace_status() const;
 
-    private:
         //////////////
         // Conflict minimisation
         bool litRedundant(Lit p, uint32_t abstract_levels);
@@ -414,6 +413,7 @@ class Searcher : public HyperEngine
         void analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& out_conflict);
         size_t tmp_learnt_clause_size;
         cl_abst_type tmp_learnt_clause_abst;
+        bool subset(const vector<Lit>& A, const Clause& B); //Used for on-the-fly subsumption. Does A subsume B? Uses 'seen' to do its work
 
         ////////////
         // Transitive on-the-fly self-subsuming resolution
@@ -468,10 +468,6 @@ class Searcher : public HyperEngine
 
         //Last time we clean()-ed the clauses, the number of zero-depth assigns was this many
         size_t   lastCleanZeroDepthAssigns;
-
-        //Used for on-the-fly subsumption. Does A subsume B?
-        //Uses 'seen' to do its work
-        bool subset(const vector<Lit>& A, const Clause& B);
 };
 
 inline uint32_t Searcher::abstractLevel(const uint32_t x) const
