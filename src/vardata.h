@@ -64,6 +64,7 @@ struct VarData
     uint32_t last_seen_in_1uip = 0;
     uint32_t last_decided_on = 0;
     uint32_t last_propagated = 0;
+    uint32_t last_canceled = 0;
 
     //these are per-solver data
     uint64_t sumDecisions_at_picktime = 0;

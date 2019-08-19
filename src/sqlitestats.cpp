@@ -829,6 +829,7 @@ void SQLiteStats::var_data_picktime(
     sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, solver->sumConflicts-vardata.last_seen_in_1uip);
     sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, solver->sumConflicts-vardata.last_decided_on);
     sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, solver->sumConflicts-vardata.last_propagated);
+    sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, solver->sumConflicts-vardata.last_canceled);
 
 
     sqlite3_bind_int64 (stmt_var_data_picktime, bindAt++, solver->sumDecisions);
