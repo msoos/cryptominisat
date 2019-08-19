@@ -38,6 +38,7 @@ CMS_ccnr::CMS_ccnr(Solver* _solver) :
     solver(_solver)
 {
     ls_s = new CCNR::ls_solver;
+    ls_s->set_verbosity(solver->conf.verbosity);
 }
 
 CMS_ccnr::~CMS_ccnr()

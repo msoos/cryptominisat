@@ -263,7 +263,9 @@ bool ls_solver::local_search(
                           _best_solution.begin());
             }
 
-            if (_best_found_cost == 0 || (_step & 0x3ffff) == 0x3ffff) {
+            if (_verbosity &&
+                (_best_found_cost == 0 || (_step & 0x3ffff) == 0x3ffff)
+            ) {
                 cout << "c [ccnr] tries: "
                 << t << " steps: " << _step
                 << " best found: " << _best_found_cost
@@ -649,4 +651,9 @@ void ls_solver::print_solution(bool need_verify)
         }
         cout << endl;
     }
+}
+
+void ls_solver::set_verbosity(uint32_t verb)
+{
+    _verbosity = verb;
 }

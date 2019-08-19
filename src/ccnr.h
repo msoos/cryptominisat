@@ -121,35 +121,47 @@ class ls_solver
     {
         return _best_found_cost;
     }
-    void run(int argc, char **argv);
-    //private:
+    void set_verbosity(uint32_t verb);
+
     //formula
-    std::string _inst_file;
     vector<variable> _vars;
     vector<clause> _clauses;
     int _num_vars;
     int _num_clauses;
+
     //data structure used
     vector<int> _unsat_clauses;
     vector<int> _index_in_unsat_clauses;
     vector<int> _unsat_vars;
     vector<int> _index_in_unsat_vars;
     vector<int> _ccd_vars;
+
     //solution information
     vector<uint8_t> _solution;
     vector<uint8_t> _best_solution;
+
+    //functions for buiding data structure
+    bool make_space();
+    void build_neighborhood();
+    int get_cost() { return _unsat_clauses.size(); }
+
+    private:
     int _best_found_cost;
     long long _mems = 0;
     long long _step;
     long long _max_steps;
     int _max_tries;
     int _time_limit;
+
     //aiding data structure
     Mersenne _random_gen; //random generator
     int _random_seed;
+
+    ///////////////////////////
     //algorithmic parameters
     ///////////////////////////
     int _aspiration_score;
+
     //clause weighting
     int _swt_threshold;
     float _swt_p; //w=w*p+ave_w*q
@@ -158,8 +170,10 @@ class ls_solver
     //-------------------
     bool _aspiration;
     float _up_ratio; //control how much variables need to be delete and assigned by up
+
     //=================
     long long _delta_total_clause_weight;
+
     //main functions
     void initialize(const vector<bool> *init_solution = 0);
     void initialize_variable_datas();
@@ -169,27 +183,18 @@ class ls_solver
     void update_cc_after_flip(int flipv);
     void update_clause_weights();
     void smooth_clause_weights();
+
     //funcitons for basic operations
     void sat_a_clause(int the_clause);
     void unsat_a_clause(int the_clause);
-    //void 	unit_propogate();
-    //functions for buiding data structure
-    bool make_space();
-    void build_neighborhood();
-    int get_cost()
-    {
-        return _unsat_clauses.size();
-    }
+
     //--------------------
-    struct timeval _start_time;
-    void start_timing();
-    float get_runtime();
     long long _end_step;
+    uint32_t _verbosity = 0;
 
     long long up_times = 0;
     long long flip_numbers = 0;
     int verbosity; // 0 print sat/unsat & infomation; 1 print everything;
-                   //===================
 };
 
 } // namespace CCNR
