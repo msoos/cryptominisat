@@ -63,12 +63,11 @@ class EGaussian {
 
     //Is the clause at this ROW satisfied already?
     //clause_state[row] tells me that
-    PackedMatrix      clause_state;
+    vector<char> clause_state;
 
     // variable state
-    // basic    = TRUE  -- non-assigned var
-    // non-basic= FALSE -- assigned var
-    // we watch ONE basic(=unassigned) + ONE non-basic(=assigned) var
+    // Someone is responsible for this column if TRUE
+    // we watch ONE basic + ONE non-basic var
     vec<bool> is_basic;
 
     vector<uint32_t>  var_to_col;             // variable to column
@@ -142,6 +141,11 @@ class EGaussian {
         uint32_t p,
         GaussQData& gqd
     );
+
+    uint64_t propg_called_from_find_truth = 0;
+    uint64_t propg_called_from_elim = 0;
+    uint64_t eliminate_col_called = 0;
+    uint64_t propg_called_from_find_truth_ret_fnewwatch = 0;
 
     void check_xor_reason_clauses_not_cleared();
 };

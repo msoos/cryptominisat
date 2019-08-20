@@ -2910,6 +2910,8 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
             }
 
             gqueuedata[i->matrix_num].enter_matrix = true;
+            gqueuedata[i->matrix_num].num_entered_mtx++;
+            sum_gauss_entered_mtx++;
             if (gmatrices[i->matrix_num]->find_truths2(
                 i, j, p.var(), i->row_id, gqueuedata[i->matrix_num])
             ) {
@@ -2943,11 +2945,6 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
     for (GaussQData& gqd: gqueuedata) {
         if (gqd.engaus_disable)
             continue;
-
-        if (gqd.enter_matrix) {
-            gqueuedata[0].num_entered_mtx++;
-            sum_gauss_entered_mtx++;
-        }
 
         //There was a conflict but this is not that matrix.
         //Just skip.
@@ -3657,7 +3654,7 @@ void Searcher::clear_gauss_matrices()
 {
     for(uint32_t i = 0; i < gqueuedata.size(); i++) {
         auto gqd = gqueuedata[i];
-        if (solver->conf.verbosity && gqd.num_entered_mtx > 0) {
+        //if (gqd.num_entered_mtx > 0) {
             cout << "c [gauss] < " << i << " > "
             << "entered mtx    : " << std::left << print_value_kilo_mega(gqd.num_entered_mtx, false)
             << endl;
@@ -3671,7 +3668,7 @@ void Searcher::clear_gauss_matrices()
             << "prop  triggered: "
             << stats_line_percent(gqd.num_props, gqd.num_entered_mtx)
             << " %" <<endl;
-        }
+        //}
 
         if (solver->conf.verbosity >= 2 && gqd.num_entered_mtx > 0) {
             cout
@@ -3690,6 +3687,10 @@ void Searcher::clear_gauss_matrices()
 
     //cout << "Clearing matrices" << endl;
     for(EGaussian* g: gmatrices) {
+        cout << "truth prop checks   : " << g->propg_called_from_find_truth << endl;
+        cout << "-> of which fnnewat : " << g->propg_called_from_find_truth_ret_fnewwatch << endl;
+        cout << "elim prop checks    : " << g->propg_called_from_elim << endl;
+        cout << "eliminate_col_called: " << g->eliminate_col_called << endl;
         delete g;
     }
     for(auto& w: gwatches) {

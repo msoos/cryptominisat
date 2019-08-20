@@ -126,6 +126,7 @@ gret PackedRow::propGause(
                 //TODO: at the beginning of the matrix
 
                 // found new non-basic variable, let's watch it
+                //TODO understand why is !is_basic[var] here?? whaaat? if it's UNDEF how would it propagate?
                 if (val == l_Undef && !is_basic[var]) {
                     nb_var = var;
                     return gret::nothing_fnewwatch;

@@ -86,8 +86,8 @@ void EGaussian::canceling(const uint32_t sublevel) {
     }
     clauses_toclear.resize(clauses_toclear.size() - a);
 
-    PackedMatrix::iterator rowIt = clause_state.beginMatrix();
-    (*rowIt).setZero(); //forget state
+    //forget state
+    memset(clause_state.data(), 0, clause_state.size());
 }
 
 struct ColSorter {
@@ -193,10 +193,10 @@ void EGaussian::fill_matrix(matrixset& origMat) {
     origMat.row_to_nb_var.clear();                             // clear non-basic
 
     delete_gauss_watch_this_matrix();
-    clause_state.resize(1, origMat.num_rows);
-    PackedMatrix::iterator rowIt = clause_state.beginMatrix();
-    (*rowIt).setZero(); // reset this row all zero
-    // print_matrix(origMat);
+
+    //forget clause state
+    clause_state.resize(origMat.num_rows);
+    memset(clause_state.data(), 0, clause_state.size());
 }
 
 void EGaussian::delete_gauss_watch_this_matrix()
@@ -534,12 +534,10 @@ bool EGaussian::find_truths2(
     gqd.e_row_n = std::numeric_limits<uint32_t>::max();
     gqd.do_eliminate = false;
 
-    PackedMatrix::iterator rowIt =
-        matrix.matrix.beginMatrix() + row_n; // gaussian watch invoke row
-    PackedMatrix::iterator clauseIt = clause_state.beginMatrix();
+    PackedMatrix::iterator rowIt = matrix.matrix.beginMatrix() + row_n;
 
     //if this clause is already satisfied
-    if ((*clauseIt)[row_n]) {
+    if (clause_state[row_n]) {
         *j++ = *i;
         return true;
     }
@@ -551,6 +549,9 @@ bool EGaussian::find_truths2(
         is_basic[p] = 0;
     }
 
+    //if the two watched things didn't get knocked out and they are both UNDEF
+    //then we can return here.
+
     const gret ret = (*rowIt).propGause(
         tmp_clause,
         solver->assigns,
@@ -558,6 +559,7 @@ bool EGaussian::find_truths2(
         is_basic,
         nb_var,
         0);
+    propg_called_from_find_truth++;
 
     switch (ret) {
         case gret::confl: {
@@ -635,12 +637,13 @@ bool EGaussian::find_truths2(
                 is_basic[p] = 1;
             }
 
-            (*clauseIt).setBit(row_n); // this clause arleady sat
+            clause_state[row_n] = 1; // this clause arleady satisfied
             return true;
         }
 
         // find new watch list
         case gret::nothing_fnewwatch:
+            propg_called_from_find_truth_ret_fnewwatch++;
             // printf("%d:This row is find new watch:%d => orig %d p:%d    n",row_n ,
             // nb_var,orig_basic , p);
             assert(nb_var != std::numeric_limits<uint32_t>::max());
@@ -676,7 +679,7 @@ bool EGaussian::find_truths2(
                 is_basic[matrix.row_to_nb_var[row_n]] = 0;
                 is_basic[p] = 1;
             }
-            (*clauseIt).setBit(row_n); // this clause arleady sat
+            clause_state[row_n] = 1; // this clause already satisfied
             return true;
 
         //error here
@@ -704,7 +707,6 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
     uint32_t ori_nb_col = 0;
     uint32_t nb_var = 0;
     uint32_t num_row = 0; // row inde
-    PackedMatrix::iterator clauseIt = clause_state.beginMatrix();
 
     #ifdef VERBOSE_DEBUG
     cout
@@ -716,6 +718,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
     << " ***"
     <<  endl;
     #endif
+    eliminate_col_called++;
 
     while (rowI != end) {
         //Row has a '1' in eliminating column, and it's not the row responsible
@@ -754,6 +757,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                     is_basic,
                     nb_var,
                     0); //std::min(e_col, ori_nb_col));
+                propg_called_from_elim++;
 
                 switch (ret) {
                     case gret::confl: {
@@ -854,7 +858,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                             #endif
                         }
                         gqd.ret = gauss_res::prop;
-                        (*clauseIt).setBit(num_row); // this clause arleady sat
+                        clause_state[num_row] = 1; // this clause already satisfied
                         break;
                     }
                     case gret::nothing_fnewwatch: // find new watch list
@@ -885,7 +889,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
 
                         solver->gwatches[p].push(GaussWatched(num_row, matrix_no));
                         matrix.row_to_nb_var[num_row] = p; // update in this row non_basic variable
-                        (*clauseIt).setBit(num_row);        // this clause arleady sat
+                        clause_state[num_row] = 1;        // this clause already satisfied
                         break;
                     default:
                         // can not here
