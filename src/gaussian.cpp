@@ -87,7 +87,7 @@ void EGaussian::canceling(const uint32_t sublevel) {
     clauses_toclear.resize(clauses_toclear.size() - a);
 
     //forget state
-    memset(clause_state.data(), 0, clause_state.size());
+    memset(xor_satisfied.data(), 0, xor_satisfied.size());
 }
 
 struct ColSorter {
@@ -195,8 +195,8 @@ void EGaussian::fill_matrix(matrixset& origMat) {
     delete_gauss_watch_this_matrix();
 
     //forget clause state
-    clause_state.resize(origMat.num_rows);
-    memset(clause_state.data(), 0, clause_state.size());
+    xor_satisfied.resize(origMat.num_rows);
+    memset(xor_satisfied.data(), 0, xor_satisfied.size());
 }
 
 void EGaussian::delete_gauss_watch_this_matrix()
@@ -537,7 +537,7 @@ bool EGaussian::find_truths2(
     PackedMatrix::iterator rowIt = matrix.matrix.beginMatrix() + row_n;
 
     //if this clause is already satisfied
-    if (clause_state[row_n]) {
+    if (xor_satisfied[row_n]) {
         *j++ = *i;
         return true;
     }
@@ -637,7 +637,7 @@ bool EGaussian::find_truths2(
                 is_basic[p] = 1;
             }
 
-            clause_state[row_n] = 1; // this clause arleady satisfied
+            xor_satisfied[row_n] = 1; // this clause arleady satisfied
             return true;
         }
 
@@ -679,7 +679,7 @@ bool EGaussian::find_truths2(
                 is_basic[matrix.row_to_nb_var[row_n]] = 0;
                 is_basic[p] = 1;
             }
-            clause_state[row_n] = 1; // this clause already satisfied
+            xor_satisfied[row_n] = 1; // this clause already satisfied
             return true;
 
         //error here
@@ -858,7 +858,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                             #endif
                         }
                         gqd.ret = gauss_res::prop;
-                        clause_state[num_row] = 1; // this clause already satisfied
+                        xor_satisfied[num_row] = 1; // this clause already satisfied
                         break;
                     }
                     case gret::nothing_fnewwatch: // find new watch list
@@ -889,7 +889,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
 
                         solver->gwatches[p].push(GaussWatched(num_row, matrix_no));
                         matrix.row_to_nb_var[num_row] = p; // update in this row non_basic variable
-                        clause_state[num_row] = 1;        // this clause already satisfied
+                        xor_satisfied[num_row] = 1;        // this clause already satisfied
                         break;
                     default:
                         // can not here

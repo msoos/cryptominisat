@@ -62,8 +62,8 @@ class EGaussian {
     vector<Lit> tmp_clause;  // conflict&propagation handling
 
     //Is the clause at this ROW satisfied already?
-    //clause_state[row] tells me that
-    vector<char> clause_state;
+    //xor_satisfied[row] tells me that
+    vector<char> xor_satisfied;
 
     // variable state
     // Someone is responsible for this column if TRUE
