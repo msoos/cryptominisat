@@ -637,7 +637,7 @@ bool EGaussian::find_truths2(
                 is_basic[p] = 1;
             }
 
-            xor_satisfied[row_n] = 1; // this clause arleady satisfied
+            xor_satisfied[row_n] = 1;
             return true;
         }
 
@@ -679,7 +679,7 @@ bool EGaussian::find_truths2(
                 is_basic[matrix.row_to_nb_var[row_n]] = 0;
                 is_basic[p] = 1;
             }
-            xor_satisfied[row_n] = 1; // this clause already satisfied
+            xor_satisfied[row_n] = 1;
             return true;
 
         //error here
@@ -858,7 +858,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                             #endif
                         }
                         gqd.ret = gauss_res::prop;
-                        xor_satisfied[num_row] = 1; // this clause already satisfied
+                        xor_satisfied[num_row] = 1;
                         break;
                     }
                     case gret::nothing_fnewwatch: // find new watch list
@@ -889,7 +889,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
 
                         solver->gwatches[p].push(GaussWatched(num_row, matrix_no));
                         matrix.row_to_nb_var[num_row] = p; // update in this row non_basic variable
-                        xor_satisfied[num_row] = 1;        // this clause already satisfied
+                        xor_satisfied[num_row] = 1;
                         break;
                     default:
                         // can not here
