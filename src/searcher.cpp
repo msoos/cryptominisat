@@ -1324,6 +1324,9 @@ lbool Searcher::new_decision()
     // Increase decision level and enqueue 'next'
     assert(value(next) == l_Undef);
     new_decision_level();
+    if (gmatrices.size() > 0 && gmatrices[0]) {
+        gmatrices[0]->new_decision_level();
+    }
     enqueue<update_bogoprops>(next);
 
     return l_Undef;

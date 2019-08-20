@@ -55,7 +55,7 @@ namespace CMSat {
 class Solver;
 
 class EGaussian {
-  protected:
+  public:
     Solver* solver;   // orignal sat solver
     const GaussConf& config;  // gauss some configure
     const uint32_t matrix_no;            // matrix index
@@ -63,7 +63,7 @@ class EGaussian {
 
     //Is the clause at this ROW satisfied already?
     //xor_satisfied[row] tells me that
-    vector<char> xor_satisfied;
+    vector<vector<char>> xor_satisfied;
 
     // variable state
     // Someone is responsible for this column if TRUE
@@ -96,6 +96,7 @@ class EGaussian {
                            const uint32_t  row_n,
                            uint32_t no_touch_var = var_Undef);
 
+    void new_decision_level();
     void eliminate(matrixset& m);
     gret adjust_matrix(matrixset& matrix); // adjust matrix, include watch, check row is zero, etc.
 
