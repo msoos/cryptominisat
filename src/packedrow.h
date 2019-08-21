@@ -204,7 +204,7 @@ public:
     uint32_t find_watchVar(
         vector<Lit>& tmp_clause,
         const vector<uint32_t>& col_to_var,
-        vector<char> &is_basic,
+        vector<char> &var_has_responsible_row,
         uint32_t& nb_var);
 
     // using find nonbasic value after watch list is enter
@@ -212,7 +212,7 @@ public:
         vector<Lit>& tmp_clause,
         const vector<lbool>& assigns,
         const vector<uint32_t>& col_to_var,
-        vector<char> &is_basic,
+        vector<char> &var_has_responsible_row,
         uint32_t& nb_var,
         uint32_t start_col);
 

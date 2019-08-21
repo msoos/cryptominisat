@@ -74,7 +74,7 @@ bool PackedRow::fill(
 uint32_t PackedRow::find_watchVar(
     vector<Lit>& tmp_clause,
     const vector<uint32_t>& col_to_var,
-    vector<char> &is_basic,
+    vector<char> &var_has_responsible_row,
     uint32_t& nb_var
 ) {
     uint32_t  tmp_var = 0;
@@ -88,7 +88,7 @@ uint32_t PackedRow::find_watchVar(
             popcnt++;
             tmp_var = col_to_var[i];
             tmp_clause.push_back(Lit(tmp_var, false));
-            if( !is_basic[tmp_var]){  //nobasic
+            if( !var_has_responsible_row[tmp_var]){  //nobasic
                 nb_var = tmp_var;
             }else{  // basic
                 Lit tmp(tmp_clause[0]);
@@ -98,7 +98,7 @@ uint32_t PackedRow::find_watchVar(
         }
     }
     assert(tmp_clause.size() == popcnt);
-    assert( popcnt == 0 || is_basic[ tmp_clause[0].var() ]) ;
+    assert( popcnt == 0 || var_has_responsible_row[ tmp_clause[0].var() ]) ;
     return popcnt;
 }
 
@@ -106,7 +106,7 @@ gret PackedRow::propGause(
     vector<Lit>& tmp_clause,
     const vector<lbool>& assigns,
     const vector<uint32_t>& col_to_var,
-    vector<char> &is_basic,
+    vector<char> &var_has_responsible_row,
     uint32_t& nb_var,
     uint32_t start_col
 ) {
@@ -126,8 +126,8 @@ gret PackedRow::propGause(
                 //TODO: at the beginning of the matrix
 
                 // found new non-basic variable, let's watch it
-                //TODO understand why is !is_basic[var] here?? whaaat? if it's UNDEF how would it propagate?
-                if (val == l_Undef && !is_basic[var]) {
+                //TODO understand why is !var_has_responsible_row[var] here?? whaaat? if it's UNDEF how would it propagate?
+                if (val == l_Undef && !var_has_responsible_row[var]) {
                     nb_var = var;
                     return gret::nothing_fnewwatch;
                 }
@@ -136,7 +136,7 @@ gret PackedRow::propGause(
                 tmp_clause.push_back(Lit(var, val_bool));
 
                 //if this is the basic variable, put it to the 0th position
-                if (is_basic[var]) {
+                if (var_has_responsible_row[var]) {
                     std::swap(tmp_clause[0], tmp_clause.back());
                 }
             }
@@ -153,7 +153,7 @@ gret PackedRow::propGause(
                 if(tmp & 1){
                     const uint32_t var = col_to_var[at  + i2];
                     const lbool val = assigns[var];
-                    if (val == l_Undef && !is_basic[var]) {
+                    if (val == l_Undef && !var_has_responsible_row[var]) {
                         assert(false);
                     }
                 }

@@ -68,24 +68,23 @@ class EGaussian {
     // variable state
     // Someone is responsible for this column if TRUE
     // we watch ONE basic + ONE non-basic var
-    vector<char> is_basic;
+    vector<char> var_has_responsible_row;
 
     vector<uint32_t>  var_to_col;             // variable to column
-    class matrixset { // matrix information
-      public:
-        ///row_to_nb_var[ROW] gives the non-basic variable it's responsible for
-        vector<uint32_t> row_to_nb_var;
 
-        // used in orignal matrix
-        PackedMatrix matrix; // The matrix, updated to reflect variable assignements
+    ///row_responsible_for_var[ROW] gives VAR it's responsible for
+    ///it is MAX in case row is responsible for nothing
+    ///we always WATCH this variable!
+    vector<uint32_t> row_responsible_for_var;
 
-        ///col_to_var[COL] tells which variable is at a given column in the matrix. Gives unassigned_var if the COL has been zeroed (i.e. the variable assigned)
-        vector<uint32_t> col_to_var;
+    // used in orignal matrix
+    PackedMatrix mat; // The matrix, updated to reflect variable assignements
 
-        uint32_t num_rows; // number of active rows in the matrix. Unactive rows are rows that contain only zeros (and if they are conflicting, then the conflict has been treated)
-        uint32_t num_cols; // number of active columns in the matrix. The columns at the end that have all be zeroed are no longer active
-    };
-    matrixset matrix; // The current matrixset, i.e. the one we are working on, or the last one we worked on
+    ///col_to_var[COL] tells which variable is at a given column in the matrix. Gives unassigned_var if the COL has been zeroed (i.e. the variable assigned)
+    vector<uint32_t> col_to_var;
+
+    uint32_t num_rows; // number of active rows in the matrix. Unactive rows are rows that contain only zeros (and if they are conflicting, then the conflict has been treated)
+    uint32_t num_cols; // number of active columns in the matrix. The columns at the end that have all be zeroed are no longer active
 
 
     //Cleanup
@@ -97,13 +96,13 @@ class EGaussian {
                            uint32_t no_touch_var = var_Undef);
 
     void new_decision_level();
-    void eliminate(matrixset& m);
-    gret adjust_matrix(matrixset& matrix); // adjust matrix, include watch, check row is zero, etc.
+    void eliminate();
+    gret adjust_matrix(); // adjust matrix, include watch, check row is zero, etc.
 
     inline void propagation_twoclause();
     inline void conflict_twoclause(PropBy& confl);
 
-    void print_matrix(matrixset& m) const;
+    void print_matrix();
 
   public:
     // variable
@@ -124,8 +123,8 @@ class EGaussian {
     void check_watchlist_sanity();
     void canceling(const uint32_t sublevel); //functions used throughout the Solver
     bool full_init(bool& created);  // initial arrary. return true is fine , return false means solver already false;
-    void fill_matrix(matrixset& origMat); // Fills the origMat matrix
-    uint32_t select_columnorder(matrixset& origMat); // Fills var_to_col and col_to_var of the origMat matrix.
+    void fill_matrix(); // Fills the origMat matrix
+    uint32_t select_columnorder(); // Fills var_to_col and col_to_var of the origMat matrix.
 
     ///execute gaussian
     ///return FALSE only in case of unit conflict
