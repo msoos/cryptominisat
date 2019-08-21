@@ -205,7 +205,7 @@ public:
         vector<Lit>& tmp_clause,
         const vector<uint32_t>& col_to_var,
         vector<char> &var_has_responsible_row,
-        uint32_t& nb_var);
+        uint32_t& responsible_var);
 
     // using find nonbasic value after watch list is enter
     gret propGause(

@@ -75,25 +75,25 @@ uint32_t PackedRow::find_watchVar(
     vector<Lit>& tmp_clause,
     const vector<uint32_t>& col_to_var,
     vector<char> &var_has_responsible_row,
-    uint32_t& nb_var
+    uint32_t& responsible_var
 ) {
-    uint32_t  tmp_var = 0;
     uint32_t popcnt = 0;
-    nb_var = std::numeric_limits<uint32_t>::max();
-    uint32_t i;
+    responsible_var = std::numeric_limits<uint32_t>::max();
     tmp_clause.clear();
 
-    for(i = 0; i < size*64 && popcnt < 3; i++) {
+    for(uint32_t i = 0; i < size*64 && popcnt < 3; i++) {
         if (this->operator[](i)){
             popcnt++;
-            tmp_var = col_to_var[i];
-            tmp_clause.push_back(Lit(tmp_var, false));
-            if( !var_has_responsible_row[tmp_var]){  //nobasic
-                nb_var = tmp_var;
-            }else{  // basic
-                Lit tmp(tmp_clause[0]);
-                tmp_clause[0] = tmp_clause.back();
-                tmp_clause.back() = tmp;
+            uint32_t var = col_to_var[i];
+            tmp_clause.push_back(Lit(var, false));
+
+            if (!var_has_responsible_row[var]) {
+                responsible_var = var;
+            } else {
+                //What???
+                //This var already has a responsible for it...
+                //How can it be 1???
+                std::swap(tmp_clause[0], tmp_clause.back());
             }
         }
     }
