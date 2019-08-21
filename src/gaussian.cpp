@@ -363,12 +363,12 @@ gret EGaussian::adjust_matrix() {
     PackedMatrix::iterator end = mat.beginMatrix() + num_rows;
     PackedMatrix::iterator rowIt = mat.beginMatrix();
     uint32_t row_id = 0;      // row index
-    uint32_t nb_var = 0;      // non-basic variable
+    uint32_t resp_var = 0;      // non-basic variable
     bool xorEqualFalse;       // xor =
     uint32_t adjust_zero = 0; //  elimination row
 
     while (rowIt != end) {
-        const uint32_t popcnt = (*rowIt).find_watchVar(tmp_clause, col_to_var, var_has_responsible_row, nb_var);
+        const uint32_t popcnt = (*rowIt).find_watchVar(tmp_clause, col_to_var, var_has_responsible_row, resp_var);
         switch (popcnt) {
 
             //Conflict potentially
@@ -417,15 +417,15 @@ gret EGaussian::adjust_matrix() {
 
             default: // need to update watch list
                 // printf("%d:need to update watch list    n",row_id);
-                assert(nb_var != std::numeric_limits<uint32_t>::max());
+                assert(resp_var != std::numeric_limits<uint32_t>::max());
 
                 // insert watch list
                 solver->gwatches[tmp_clause[0].var()].push(
                     GaussWatched(row_id, matrix_no)); // insert basic variable
 
-                solver->gwatches[nb_var].push(
+                solver->gwatches[resp_var].push(
                     GaussWatched(row_id, matrix_no)); // insert non-basic variable
-                row_responsible_for_var.push_back(nb_var);               // record in this row non_basic variable
+                row_responsible_for_var.push_back(resp_var);               // record in this row non_basic variable
                 break;
         }
         ++rowIt;
@@ -537,7 +537,7 @@ bool EGaussian::find_truths2(
 
     // printf("dd Watch variable : %d  ,  Wathch row num %d    n", p , row_n);
 
-    uint32_t nb_var = 0;     // new nobasic variable
+    uint32_t new_resp_var = 0;
     bool orig_basic = false; // check invoked variable is basic or non-basic
 
     gqd.e_var = std::numeric_limits<uint32_t>::max();
@@ -574,7 +574,7 @@ bool EGaussian::find_truths2(
         solver->assigns,
         col_to_var,
         var_has_responsible_row,
-        nb_var,
+        new_resp_var,
         0);
     propg_called_from_find_truth++;
 
@@ -662,18 +662,18 @@ bool EGaussian::find_truths2(
         case gret::nothing_fnewwatch:
             propg_called_from_find_truth_ret_fnewwatch++;
             // printf("%d:This row is find new watch:%d => orig %d p:%d    n",row_n ,
-            // nb_var,orig_basic , p);
-            assert(nb_var != std::numeric_limits<uint32_t>::max());
+            // new_resp_var,orig_basic , p);
+            assert(new_resp_var != std::numeric_limits<uint32_t>::max());
             if (orig_basic) {
                 /// clear watchlist, because only one basic value in watchlist
-                assert(nb_var != p);
-                clear_gwatches(nb_var);
+                assert(new_resp_var != p);
+                clear_gwatches(new_resp_var);
             }
-            assert(nb_var != p);
-            solver->gwatches[nb_var].push(GaussWatched(row_n, matrix_no));
+            assert(new_resp_var != p);
+            solver->gwatches[new_resp_var].push(GaussWatched(row_n, matrix_no));
 
             if (!orig_basic) {
-                row_responsible_for_var[row_n] = nb_var; // update in this row non_basic variable
+                row_responsible_for_var[row_n] = new_resp_var;
                 return true;
             }
 
@@ -681,10 +681,10 @@ bool EGaussian::find_truths2(
             var_has_responsible_row[row_responsible_for_var[row_n]] = 0;
 
             // set basic variable
-            var_has_responsible_row[nb_var] = 1;
+            var_has_responsible_row[new_resp_var] = 1;
 
             // store the eliminate variable & row
-            gqd.e_var = nb_var;
+            gqd.e_var = new_resp_var;
             gqd.e_row_n = row_n;
             break;
 
@@ -720,9 +720,9 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
     PackedMatrix::iterator rowI = mat.beginMatrix();
     PackedMatrix::iterator end = mat.endMatrix();
     uint32_t e_col = var_to_col[gqd.e_var];
-    uint32_t ori_nb = 0;
-    uint32_t ori_nb_col = 0;
-    uint32_t nb_var = 0;
+    uint32_t orig_resp_var = 0;
+    uint32_t orig_resp_col = 0;
+    uint32_t new_resp_var = 0;
     uint32_t num_row = 0; // row inde
 
     #ifdef VERBOSE_DEBUG
@@ -742,13 +742,13 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
         if ((*rowI)[e_col] && this_row != rowI) {
 
             // detect orignal non basic watch list change or not
-            ori_nb = row_responsible_for_var[num_row];
-            ori_nb_col = var_to_col[ori_nb];
-            assert((*rowI)[ori_nb_col]);
+            orig_resp_var = row_responsible_for_var[num_row];
+            orig_resp_col = var_to_col[orig_resp_var];
+            assert((*rowI)[orig_resp_col]);
             #ifdef VERBOSE_DEBUG
             cout
             << "mat[" << matrix_no << "] "
-            << "This row " << num_row << " is non-basic for var: " << ori_nb + 1
+            << "This row " << num_row << " is non-basic for var: " << orig_resp_var + 1
             << " i.e. it contains '1' for this var's column"
             << endl;
             #endif
@@ -756,7 +756,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
             assert(satisfied_xors[solver->decisionLevel()][num_row] == 0);
             (*rowI).xorBoth(*this_row);
             elim_xored_rows++;
-            if (!(*rowI)[ori_nb_col]) { // orignal non basic value is eliminated
+            if (!(*rowI)[orig_resp_col]) { // orignal non basic value is eliminated
                 #ifdef VERBOSE_DEBUG
                 cout
                 << "mat[" << matrix_no << "] "
@@ -765,7 +765,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                 #endif
 
                 // Delelte orignal non basic value in watch list
-                if (ori_nb != gqd.e_var) {
+                if (orig_resp_var != gqd.e_var) {
                     delete_gausswatch(true, num_row);
                 }
 
@@ -774,8 +774,8 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                     solver->assigns,
                     col_to_var,
                     var_has_responsible_row,
-                    nb_var,
-                    0); //std::min(e_col, ori_nb_col));
+                    new_resp_var,
+                    0); //std::min(e_col, orig_resp_col));
                 propg_called_from_elim++;
 
                 switch (ret) {
@@ -885,13 +885,13 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                         cout
                         << "mat[" << matrix_no << "] "
                         << "-> Nothing, clause NOT already satisfied, pushing in "
-                        << nb_var+1 << " as non-basic var ( "
+                        << new_resp_var+1 << " as non-basic var ( "
                         << num_row << " row) "
                         << endl;
                         #endif
 
-                        solver->gwatches[nb_var].push(GaussWatched(num_row, matrix_no));
-                        row_responsible_for_var[num_row] = nb_var;
+                        solver->gwatches[new_resp_var].push(GaussWatched(num_row, matrix_no));
+                        row_responsible_for_var[num_row] = new_resp_var;
                         break;
                     case gret::nothing: // this row already satisfied
                         #ifdef VERBOSE_DEBUG
