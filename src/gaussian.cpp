@@ -261,7 +261,7 @@ bool EGaussian::full_init(bool& created) {
             return solver->okay();
         }
 
-        eliminate(); // gauss eliminate algorithm
+        eliminate();
 
         // find some row already true false, and insert watch list
         gret ret = adjust_matrix();
@@ -312,73 +312,83 @@ void EGaussian::check_watchlist_sanity()
 }
 
 void EGaussian::eliminate() {
-    uint32_t i = 0;
-    uint32_t j = 0;
-    PackedMatrix::iterator end = mat.beginMatrix() + num_rows;
-    PackedMatrix::iterator rowIt = mat.beginMatrix();
+    uint32_t row = 0;
+    uint32_t col = 0;
+    PackedMatrix::iterator end_row_it = mat.beginMatrix() + num_rows;
+    PackedMatrix::iterator row_i = mat.beginMatrix();
 
-    while (i != num_rows && j != num_cols) { // Gauss-Jordan Elimination
-        PackedMatrix::iterator row_with_1_in_col = rowIt;
+    // Gauss-Jordan Elimination
+    while (row != num_rows && col != num_cols) {
+        PackedMatrix::iterator row_with_1_in_col = row_i;
 
         //Find first "1" in column.
-        for (; row_with_1_in_col != end; ++row_with_1_in_col) {
-            if ((*row_with_1_in_col)[j]) {
+        for (; row_with_1_in_col != end_row_it; ++row_with_1_in_col) {
+            if ((*row_with_1_in_col)[col]) {
                 break;
             }
         }
 
         //We have found a "1" in this column
-        if (row_with_1_in_col != end) {
-            // swap row row_with_1_in_col and I
-            if (row_with_1_in_col != rowIt) {
-                (*rowIt).swapBoth(*row_with_1_in_col);
+        if (row_with_1_in_col != end_row_it) {
+            //cout << "col zeroed:" << col << " var is: " << col_to_var[col] + 1 << endl;
+            var_has_responsible_row[col_to_var[col]] = 1;
+
+            // swap row row_with_1_in_col and rowIt
+            if (row_with_1_in_col != row_i) {
+                (*row_i).swapBoth(*row_with_1_in_col);
             }
 
-            // XOR into *all* rows that have a "1" in col J
-            // Since we XOR into *all*, this is Gauss-Jordan
+            // XOR into *all* rows that have a "1" in column COL
+            // Since we XOR into *all*, this is Gauss-Jordan (and not just Gauss)
             for (PackedMatrix::iterator k_row = mat.beginMatrix()
-                ; k_row != end
+                ; k_row != end_row_it
                 ; ++k_row
             ) {
                 // xor rows K and I
-                if (k_row != rowIt) {
-                    if ((*k_row)[j]) {
-                        (*k_row).xorBoth(*rowIt);
+                if (k_row != row_i) {
+                    if ((*k_row)[col]) {
+                        (*k_row).xorBoth(*row_i);
                     }
                 }
             }
-            i++;
-            ++rowIt;
-            var_has_responsible_row[col_to_var[j]] = 1; // this column is basic variable
-            // printf("basic var:%d    n",col_to_var[j] + 1);
+            row++;
+            ++row_i;
         }
-        j++;
+        col++;
     }
-    // print_matrix(m);
+    print_matrix();
 }
 
 gret EGaussian::adjust_matrix() {
     assert(solver->decisionLevel() == 0);
+    assert(row_responsible_for_var.empty());
+    assert(satisfied_xors.size() > 0);
+    assert(satisfied_xors[0].size() >= num_rows);
 
     PackedMatrix::iterator end = mat.beginMatrix() + num_rows;
     PackedMatrix::iterator rowIt = mat.beginMatrix();
     uint32_t row_id = 0;      // row index
-    uint32_t resp_var = 0;      // non-basic variable
-    bool xorEqualFalse;       // xor =
+    uint32_t resp_var = 0;
+    bool xorEqualFalse;
     uint32_t adjust_zero = 0; //  elimination row
 
     while (rowIt != end) {
-        const uint32_t popcnt = (*rowIt).find_watchVar(tmp_clause, col_to_var, var_has_responsible_row, resp_var);
+        const uint32_t popcnt = (*rowIt).find_watchVar(
+            tmp_clause, col_to_var, var_has_responsible_row, resp_var);
+
         switch (popcnt) {
 
             //Conflict potentially
             case 0:
-                // printf("%d:Warring: this row is all zero in adjust matrix    n",row_id);
-                adjust_zero++;        // information
-                if ((*rowIt).rhs()) { // conflict
-                    // printf("%d:Warring: this row is conflic in adjust matrix!!!",row_id);
+                // printf("%d:Warning: this row is all zero in adjust matrix    n",row_id);
+                adjust_zero++;
+
+                // conflict
+                if ((*rowIt).rhs()) {
+                    // printf("%d:Warring: this row is conflict in adjust matrix!!!",row_id);
                     return gret::confl;
                 }
+                satisfied_xors[0][row_id] = 1;
                 break;
 
             //Normal propagation
@@ -394,8 +404,8 @@ gret EGaussian::adjust_matrix() {
 
                 //adjusting
                 (*rowIt).setZero(); // reset this row all zero
-                row_responsible_for_var.push_back(std::numeric_limits<uint32_t>::max()); // delete non basic value in this row
-                var_has_responsible_row[tmp_clause[0].var()] = 0; // delete basic value in this row
+                row_responsible_for_var.push_back(std::numeric_limits<uint32_t>::max());
+                var_has_responsible_row[tmp_clause[0].var()] = 0;
                 return gret::unit_prop;
             }
 
@@ -748,7 +758,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
             #ifdef VERBOSE_DEBUG
             cout
             << "mat[" << matrix_no << "] "
-            << "This row " << num_row << " is non-basic for var: " << orig_resp_var + 1
+            << "This row " << num_row << " is responsible for var: " << orig_resp_var + 1
             << " i.e. it contains '1' for this var's column"
             << endl;
             #endif
@@ -760,7 +770,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                 #ifdef VERBOSE_DEBUG
                 cout
                 << "mat[" << matrix_no << "] "
-                << "-> This row " << num_row << " can no longer be non-basic, has no '1', "
+                << "-> This row " << num_row << " can no longer be responsible, has no '1', "
                 << "fixing up..."<< endl;
                 #endif
 
@@ -885,7 +895,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                         cout
                         << "mat[" << matrix_no << "] "
                         << "-> Nothing, clause NOT already satisfied, pushing in "
-                        << new_resp_var+1 << " as non-basic var ( "
+                        << new_resp_var+1 << " as responsible var ( "
                         << num_row << " row) "
                         << endl;
                         #endif
@@ -898,7 +908,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                         cout
                         << "mat[" << matrix_no << "] "
                         << "-> Nothing to do, already satisfied , pushing in "
-                        << p+1 << " as non-basic var ( "
+                        << p+1 << " as responsible var ( "
                         << num_row << " row) "
                         << endl;
                         #endif
@@ -920,7 +930,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                 cout
                 << "mat[" << matrix_no << "] "
                 << "-> OK, this row " << num_row
-                << " still contains '1', can still be non-basic" << endl;
+                << " still contains '1', can still be responsible" << endl;
                 #endif
             }
         }

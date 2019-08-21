@@ -247,7 +247,7 @@ private:
 inline std::ostream& operator << (std::ostream& os, const PackedRow& m)
 {
     for(uint32_t i = 0; i < m.size*64; i++) {
-        os << m[i];
+        os << (int)m[i];
     }
     os << " -- rhs: " << m.rhs();
     return os;
