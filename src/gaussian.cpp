@@ -184,10 +184,10 @@ void EGaussian::fill_matrix(matrixset& origMat) {
     }
     assert(origMat.num_rows == matrix_row);
 
-    // reset  gaussian matrixt condition
-    is_basic.clear();                                // reset variable state
-    is_basic.growTo(solver->nVars(), 0); // init varaible state
-    origMat.row_to_nb_var.clear();                             // clear non-basic
+    // reset
+    is_basic.clear();
+    is_basic.resize(solver->nVars(), 0);
+    origMat.row_to_nb_var.clear();
 
     delete_gauss_watch_this_matrix();
 
@@ -195,9 +195,9 @@ void EGaussian::fill_matrix(matrixset& origMat) {
     assert(solver->decisionLevel() == 0);
     if (satisfied_xors.size() < 1) {
         satisfied_xors.resize(1);
-        satisfied_xors[0].resize(origMat.num_rows);
+        satisfied_xors[0].clear();
+        satisfied_xors[0].resize(origMat.num_rows, 0);
     }
-    memset(satisfied_xors[0].data(), 0, origMat.num_rows);
 }
 
 void EGaussian::new_decision_level()
@@ -205,11 +205,8 @@ void EGaussian::new_decision_level()
     assert(solver->decisionLevel() > 0);
     if (satisfied_xors.size() < solver->decisionLevel()+1) {
         satisfied_xors.resize(solver->decisionLevel()+1);
-        satisfied_xors[solver->decisionLevel()].resize(matrix.num_rows);
     }
-    memcpy(satisfied_xors[solver->decisionLevel()].data(),
-           satisfied_xors[solver->decisionLevel()-1].data(),
-           matrix.num_rows);
+    satisfied_xors[solver->decisionLevel()] = satisfied_xors[solver->decisionLevel()-1];
 }
 
 void EGaussian::delete_gauss_watch_this_matrix()
@@ -397,7 +394,7 @@ gret EGaussian::adjust_matrix(matrixset& m) {
 
                 //adjusting
                 (*rowIt).setZero(); // reset this row all zero
-                m.row_to_nb_var.push(std::numeric_limits<uint32_t>::max()); // delete non basic value in this row
+                m.row_to_nb_var.push_back(std::numeric_limits<uint32_t>::max()); // delete non basic value in this row
                 is_basic[tmp_clause[0].var()] = 0; // delete basic value in this row
                 return gret::unit_prop;
             }
@@ -413,7 +410,7 @@ gret EGaussian::adjust_matrix(matrixset& m) {
                 release_assert(solver->ok);
 
                 (*rowIt).setZero(); // reset this row all zero
-                m.row_to_nb_var.push(std::numeric_limits<uint32_t>::max()); // delete non basic value in this row
+                m.row_to_nb_var.push_back(std::numeric_limits<uint32_t>::max()); // delete non basic value in this row
                 is_basic[tmp_clause[0].var()] = 0; // delete basic value in this row
                 break;
             }
@@ -428,7 +425,7 @@ gret EGaussian::adjust_matrix(matrixset& m) {
 
                 solver->gwatches[nb_var].push(
                     GaussWatched(row_id, matrix_no)); // insert non-basic variable
-                m.row_to_nb_var.push(nb_var);               // record in this row non_basic variable
+                m.row_to_nb_var.push_back(nb_var);               // record in this row non_basic variable
                 break;
         }
         ++rowIt;

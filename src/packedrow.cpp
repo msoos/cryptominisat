@@ -74,7 +74,7 @@ bool PackedRow::fill(
 uint32_t PackedRow::find_watchVar(
     vector<Lit>& tmp_clause,
     const vector<uint32_t>& col_to_var,
-    vec<bool> &is_basic,
+    vector<char> &is_basic,
     uint32_t& nb_var
 ) {
     uint32_t  tmp_var = 0;
@@ -106,7 +106,7 @@ gret PackedRow::propGause(
     vector<Lit>& tmp_clause,
     const vector<lbool>& assigns,
     const vector<uint32_t>& col_to_var,
-    vec<bool> &is_basic,
+    vector<char> &is_basic,
     uint32_t& nb_var,
     uint32_t start_col
 ) {

@@ -63,18 +63,18 @@ class EGaussian {
 
     //Is the clause at this ROW satisfied already?
     //satisfied_xors[row] tells me that
-    vector<vector<char>> satisfied_xors;
+    vector<vector<bool>> satisfied_xors;
 
     // variable state
     // Someone is responsible for this column if TRUE
     // we watch ONE basic + ONE non-basic var
-    vec<bool> is_basic;
+    vector<char> is_basic;
 
     vector<uint32_t>  var_to_col;             // variable to column
     class matrixset { // matrix information
       public:
         ///row_to_nb_var[ROW] gives the non-basic variable it's responsible for
-        vec<uint32_t> row_to_nb_var;
+        vector<uint32_t> row_to_nb_var;
 
         // used in orignal matrix
         PackedMatrix matrix; // The matrix, updated to reflect variable assignements
