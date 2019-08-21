@@ -55,27 +55,26 @@ namespace CMSat {
 class Solver;
 
 class EGaussian {
-  protected:
+  public:
     Solver* solver;   // orignal sat solver
     const GaussConf& config;  // gauss some configure
     const uint32_t matrix_no;            // matrix index
     vector<Lit> tmp_clause;  // conflict&propagation handling
 
     //Is the clause at this ROW satisfied already?
-    //clause_state[row] tells me that
-    PackedMatrix      clause_state;
+    //satisfied_xors[row] tells me that
+    vector<vector<bool>> satisfied_xors;
 
     // variable state
-    // basic    = TRUE  -- non-assigned var
-    // non-basic= FALSE -- assigned var
-    // we watch ONE basic(=unassigned) + ONE non-basic(=assigned) var
-    vec<bool> is_basic;
+    // Someone is responsible for this column if TRUE
+    // we watch ONE basic + ONE non-basic var
+    vector<char> is_basic;
 
     vector<uint32_t>  var_to_col;             // variable to column
     class matrixset { // matrix information
       public:
         ///row_to_nb_var[ROW] gives the non-basic variable it's responsible for
-        vec<uint32_t> row_to_nb_var;
+        vector<uint32_t> row_to_nb_var;
 
         // used in orignal matrix
         PackedMatrix matrix; // The matrix, updated to reflect variable assignements
@@ -97,6 +96,7 @@ class EGaussian {
                            const uint32_t  row_n,
                            uint32_t no_touch_var = var_Undef);
 
+    void new_decision_level();
     void eliminate(matrixset& m);
     gret adjust_matrix(matrixset& matrix); // adjust matrix, include watch, check row is zero, etc.
 
@@ -142,6 +142,12 @@ class EGaussian {
         uint32_t p,
         GaussQData& gqd
     );
+
+    uint64_t propg_called_from_find_truth = 0;
+    uint64_t propg_called_from_elim = 0;
+    uint64_t eliminate_col_called = 0;
+    uint64_t propg_called_from_find_truth_ret_fnewwatch = 0;
+    uint64_t elim_xored_rows = 0;
 
     void check_xor_reason_clauses_not_cleared();
 };

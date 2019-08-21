@@ -74,7 +74,7 @@ bool PackedRow::fill(
 uint32_t PackedRow::find_watchVar(
     vector<Lit>& tmp_clause,
     const vector<uint32_t>& col_to_var,
-    vec<bool> &is_basic,
+    vector<char> &is_basic,
     uint32_t& nb_var
 ) {
     uint32_t  tmp_var = 0;
@@ -106,7 +106,7 @@ gret PackedRow::propGause(
     vector<Lit>& tmp_clause,
     const vector<lbool>& assigns,
     const vector<uint32_t>& col_to_var,
-    vec<bool> &is_basic,
+    vector<char> &is_basic,
     uint32_t& nb_var,
     uint32_t start_col
 ) {
@@ -126,6 +126,7 @@ gret PackedRow::propGause(
                 //TODO: at the beginning of the matrix
 
                 // found new non-basic variable, let's watch it
+                //TODO understand why is !is_basic[var] here?? whaaat? if it's UNDEF how would it propagate?
                 if (val == l_Undef && !is_basic[var]) {
                     nb_var = var;
                     return gret::nothing_fnewwatch;
