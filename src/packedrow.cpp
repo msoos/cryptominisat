@@ -90,7 +90,7 @@ uint32_t PackedRow::find_watchVar(
             if (!var_has_responsible_row[var]) {
                 responsible_var = var;
             } else {
-                //What???
+                //What??? WARNING
                 //This var already has a responsible for it...
                 //How can it be 1???
                 std::swap(tmp_clause[0], tmp_clause.back());

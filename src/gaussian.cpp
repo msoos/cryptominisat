@@ -368,11 +368,10 @@ gret EGaussian::adjust_matrix() {
     PackedMatrix::iterator end = mat.beginMatrix() + num_rows;
     PackedMatrix::iterator rowIt = mat.beginMatrix();
     uint32_t row_id = 0;      // row index
-    uint32_t resp_var = 0;
-    bool xorEqualFalse;
     uint32_t adjust_zero = 0; //  elimination row
 
     while (rowIt != end) {
+        uint32_t resp_var;
         const uint32_t popcnt = (*rowIt).find_watchVar(
             tmp_clause, col_to_var, var_has_responsible_row, resp_var);
 
@@ -397,7 +396,7 @@ gret EGaussian::adjust_matrix() {
                 // printf("%d:This row only one variable, need to propogation!!!! in adjust matrix
                 // n",row_id);
 
-                xorEqualFalse = !mat.get_row(row_id).rhs();
+                bool xorEqualFalse = !mat.get_row(row_id).rhs();
                 tmp_clause[0] = Lit(tmp_clause[0].var(), xorEqualFalse);
                 assert(solver->value(tmp_clause[0].var()) == l_Undef);
                 solver->enqueue(tmp_clause[0]); // propagation
@@ -412,7 +411,7 @@ gret EGaussian::adjust_matrix() {
             //Binary XOR
             case 2: {
                 // printf("%d:This row have two variable!!!! in adjust matrix    n",row_id);
-                xorEqualFalse = !mat.get_row(row_id).rhs();
+                bool xorEqualFalse = !mat.get_row(row_id).rhs();
 
                 tmp_clause[0] = tmp_clause[0].unsign();
                 tmp_clause[1] = tmp_clause[1].unsign();
