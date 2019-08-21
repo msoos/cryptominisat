@@ -62,8 +62,8 @@ class EGaussian {
     vector<Lit> tmp_clause;  // conflict&propagation handling
 
     //Is the clause at this ROW satisfied already?
-    //xor_satisfied[row] tells me that
-    vector<vector<char>> xor_satisfied;
+    //satisfied_xors[row] tells me that
+    vector<vector<char>> satisfied_xors;
 
     // variable state
     // Someone is responsible for this column if TRUE
@@ -147,6 +147,7 @@ class EGaussian {
     uint64_t propg_called_from_elim = 0;
     uint64_t eliminate_col_called = 0;
     uint64_t propg_called_from_find_truth_ret_fnewwatch = 0;
+    uint64_t elim_xored_rows = 0;
 
     void check_xor_reason_clauses_not_cleared();
 };
