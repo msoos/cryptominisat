@@ -179,7 +179,7 @@ void EGaussian::fill_matrix() {
     uint32_t matrix_row = 0;
     for (uint32_t i = 0; i != xorclauses.size(); i++) {
         const Xor& c = xorclauses[i];
-        mat.getMatrixAt(matrix_row).set(c, var_to_col, num_cols);
+        mat.get_row(matrix_row).set(c, var_to_col, num_cols);
         matrix_row++;
     }
     assert(num_rows == matrix_row);
@@ -378,7 +378,7 @@ gret EGaussian::adjust_matrix() {
 
         switch (popcnt) {
 
-            //Conflict potentially
+            //Conflict or satisfied
             case 0:
                 // printf("%d:Warning: this row is all zero in adjust matrix    n",row_id);
                 adjust_zero++;
@@ -397,7 +397,7 @@ gret EGaussian::adjust_matrix() {
                 // printf("%d:This row only one variable, need to propogation!!!! in adjust matrix
                 // n",row_id);
 
-                xorEqualFalse = !mat.getMatrixAt(row_id).rhs();
+                xorEqualFalse = !mat.get_row(row_id).rhs();
                 tmp_clause[0] = Lit(tmp_clause[0].var(), xorEqualFalse);
                 assert(solver->value(tmp_clause[0].var()) == l_Undef);
                 solver->enqueue(tmp_clause[0]); // propagation
@@ -412,7 +412,7 @@ gret EGaussian::adjust_matrix() {
             //Binary XOR
             case 2: {
                 // printf("%d:This row have two variable!!!! in adjust matrix    n",row_id);
-                xorEqualFalse = !mat.getMatrixAt(row_id).rhs();
+                xorEqualFalse = !mat.get_row(row_id).rhs();
 
                 tmp_clause[0] = tmp_clause[0].unsign();
                 tmp_clause[1] = tmp_clause[1].unsign();
