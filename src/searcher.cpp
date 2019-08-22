@@ -2873,6 +2873,7 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
         if (gqd.engaus_disable) {
             continue;
         }
+        gmatrices[i]->update_cols_vals_set();
 
         if (solver->conf.gaussconf.autodisable &&
             (gqd.find_truths_called & 0xff) == 0xff && //only check once in a while

@@ -56,8 +56,72 @@ class Solver;
 
 class EGaussian {
   public:
+      EGaussian(
+        Solver* solver,
+        const GaussConf& config,
+        const uint32_t matrix_no,
+        const vector<Xor>& xorclauses
+    );
+    ~EGaussian();
+
+    vector<pair<ClOffset, uint32_t> > clauses_toclear; // use to delete propagate clause
+
+
+    ///returns FALSE in case of conflict
+    bool  find_truths(
+        GaussWatched*& i,
+        GaussWatched*& j,
+        uint32_t p,
+        const uint32_t row_n,
+        GaussQData& gqd
+    );
+
+    // when basic variable is touched , eliminate one col
+    void eliminate_col(
+        uint32_t p,
+        GaussQData& gqd
+    );
+    void new_decision_level();
+    void canceling(const uint32_t sublevel);
+    bool full_init(bool& created);
+    void update_cols_vals_set(bool force = false);
+
+    vector<Xor> xorclauses;
+
+    //stats
+    uint64_t propg_called_from_find_truth = 0;
+    uint64_t propg_called_from_elim = 0;
+    uint64_t eliminate_col_called = 0;
+    uint64_t propg_called_from_find_truth_ret_fnewwatch = 0;
+    uint64_t elim_xored_rows = 0;
+
+  private:
     Solver* solver;   // orignal sat solver
     const GaussConf& config;
+
+    //Cleanup
+    bool clean_xors();
+    void clear_gwatches(const uint32_t var);
+    void delete_gauss_watch_this_matrix();
+    void delete_gausswatch(const bool orig_basic,
+                           const uint32_t  row_n,
+                           uint32_t no_touch_var = var_Undef);
+
+    //Initialisation
+    void eliminate();
+    void fill_matrix();
+    uint32_t select_columnorder();
+    gret adjust_matrix(); // adjust matrix, include watch, check row is zero, etc.
+
+    ///////////////
+    // Helper during truth finding/elim
+    ///////////////
+    inline void propagation_twoclause();
+    inline void conflict_twoclause(PropBy& confl);
+
+    ///////////////
+    // Internal data
+    ///////////////
 
     const uint32_t matrix_no; // matrix index
     vector<Lit> tmp_clause;  // conflict&propagation handling
@@ -81,80 +145,20 @@ class EGaussian {
     uint32_t num_rows;
     uint32_t num_cols;
 
-
-    //Cleanup
-    bool clean_xors();
-    void clear_gwatches(const uint32_t var);
-    void delete_gauss_watch_this_matrix();
-    void delete_gausswatch(const bool orig_basic,
-                           const uint32_t  row_n,
-                           uint32_t no_touch_var = var_Undef);
-
-    void new_decision_level();
-    void eliminate();
-    gret adjust_matrix(); // adjust matrix, include watch, check row is zero, etc.
-
-    inline void propagation_twoclause();
-    inline void conflict_twoclause(PropBy& confl);
-
-    void print_matrix();
-
     //quick lookup
-    bool cols_vals_set_updated = false;
     PackedRow *cols_vals = NULL;
     PackedRow *cols_set = NULL;
-
-  public:
-    // variable
-    vector<Xor> xorclauses;   // xorclauses
-    vector<pair<ClOffset, uint32_t> > clauses_toclear; // use to delete propagate clause
+    PackedRow *tmp_col = NULL;
+    void update_cols_vals_set(const Lit lit1);
 
 
-    EGaussian(
-        Solver* solver,
-        const GaussConf& config,
-        const uint32_t matrix_no,
-        const vector<Xor>& xorclauses
-    );
-    ~EGaussian();
-
-    // functiion
-    uint32_t get_matrix_no() const;
+    ///////////////
+    // Debug
+    ///////////////
+    void print_matrix();
     void check_watchlist_sanity();
-    void canceling(const uint32_t sublevel); //functions used throughout the Solver
-    bool full_init(bool& created);  // initial arrary. return true is fine , return false means solver already false;
-    void fill_matrix(); // Fills the origMat matrix
-    uint32_t select_columnorder(); // Fills var_to_col and col_to_var of the origMat matrix.
-
-    ///execute gaussian
-    ///return FALSE only in case of unit conflict
-    bool  find_truths(
-        GaussWatched*& i,
-        GaussWatched*& j,
-        uint32_t p,
-        const uint32_t row_n,
-        GaussQData& gqd
-    );
-
-    // when basic variable is touch , eliminate one col
-    void eliminate_col(
-        uint32_t p,
-        GaussQData& gqd
-    );
-
-    uint64_t propg_called_from_find_truth = 0;
-    uint64_t propg_called_from_elim = 0;
-    uint64_t eliminate_col_called = 0;
-    uint64_t propg_called_from_find_truth_ret_fnewwatch = 0;
-    uint64_t elim_xored_rows = 0;
-
     void check_xor_reason_clauses_not_cleared();
 };
-
-inline uint32_t EGaussian::get_matrix_no() const
-{
-    return matrix_no;
-}
 
 }
 

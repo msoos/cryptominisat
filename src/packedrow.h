@@ -48,6 +48,21 @@ class EGaussian;
 class PackedRow
 {
 public:
+    PackedRow& operator=(const PackedRow& b)
+    {
+        #ifdef DEBUG_ROW
+        assert(size > 0);
+        assert(b.size > 0);
+        assert(b.size == size);
+        #endif
+
+        for (int i = -1; i != (int)size; i++) {
+            *(mp + i) = *(b.mp + i);
+        }
+
+        return *this;
+    }
+
     PackedRow& operator^=(const PackedRow& b)
     {
         #ifdef DEBUG_ROW
@@ -62,6 +77,34 @@ public:
 
         rhs_internal ^= b.rhs_internal;
         return *this;
+    }
+
+    PackedRow& operator&=(const PackedRow& b)
+    {
+        #ifdef DEBUG_ROW
+        assert(size > 0);
+        assert(b.size > 0);
+        assert(b.size == size);
+        #endif
+
+        for (uint32_t i = 0; i != size; i++) {
+            *(mp + i) &= *(b.mp + i);
+        }
+
+        return *this;
+    }
+
+    void and_inv(const PackedRow& b)
+    {
+        #ifdef DEBUG_ROW
+        assert(size > 0);
+        assert(b.size > 0);
+        assert(b.size == size);
+        #endif
+
+        for (uint32_t i = 0; i != size; i++) {
+            *(mp + i) &= ~(*(b.mp + i));
+        }
     }
 
     void xor_in(const PackedRow& b)
@@ -110,6 +153,11 @@ public:
         return rhs_internal;
     }
 
+    inline uint64_t& rhs()
+    {
+        return rhs_internal;
+    }
+
     inline bool isZero() const
     {
         for (uint32_t i = 0; i != size; i++) {
@@ -128,14 +176,14 @@ public:
         mp[i/64] &= ~((uint64_t)1 << (i%64));
     }
 
-    inline void invert_rhs(const bool b = true)
-    {
-        rhs_internal ^= (uint64_t)b;
-    }
-
     inline void setBit(const uint32_t i)
     {
         mp[i/64] |= ((uint64_t)1 << (i%64));
+    }
+
+    inline void invert_rhs(const bool b = true)
+    {
+        rhs_internal ^= (uint64_t)b;
     }
 
     void swapBoth(PackedRow b)
@@ -198,7 +246,10 @@ public:
         const vector<uint32_t>& col_to_var,
         vector<char> &var_has_resp_row,
         uint32_t& new_resp_var,
-        uint32_t start_col);
+        PackedRow& tmp_col,
+        PackedRow& cols_vals,
+        PackedRow& cols_set
+    );
 
 private:
     friend class PackedMatrix;

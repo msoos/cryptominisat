@@ -58,9 +58,17 @@ using namespace CMSat;
 // if variable is not in Gaussian matrix , assiag unknown column
 static const uint32_t unassigned_col = std::numeric_limits<uint32_t>::max();
 
-EGaussian::EGaussian(Solver* _solver, const GaussConf& _config, const uint32_t _matrix_no,
-                     const vector<Xor>& _xorclauses)
-    : solver(_solver), config(_config), matrix_no(_matrix_no), xorclauses(_xorclauses) {
+EGaussian::EGaussian(
+    Solver* _solver,
+    const GaussConf& _config,
+    const uint32_t _matrix_no,
+    const vector<Xor>& _xorclauses) :
+xorclauses(_xorclauses),
+solver(_solver),
+config(_config),
+matrix_no(_matrix_no)
+
+{
     vector<Xor> xors;
     for (Xor& x : xorclauses) {
         xors.push_back(x);
@@ -207,7 +215,6 @@ void EGaussian::new_decision_level()
         satisfied_xors.resize(solver->decisionLevel()+1);
     }
     satisfied_xors[solver->decisionLevel()] = satisfied_xors[solver->decisionLevel()-1];
-    cols_vals_set_updated = false;
 }
 
 void EGaussian::delete_gauss_watch_this_matrix()
@@ -298,8 +305,11 @@ bool EGaussian::full_init(bool& created) {
     }
 
     uint32_t num_64b = num_cols/64+(bool)(num_cols%64);
-    cols_set = new PackedRow(num_64b, new uint64_t[num_64b]);
-    cols_vals = new PackedRow(num_64b, new uint64_t[num_64b]);
+    cols_set = new PackedRow(num_64b, new uint64_t[num_64b+1]);
+    cols_vals = new PackedRow(num_64b, new uint64_t[num_64b+1]);
+    tmp_col = new PackedRow(num_64b, new uint64_t[num_64b+1]);
+    cols_vals->rhs() = 0;
+    cols_set->rhs() = 0;
     return true;
 }
 
@@ -454,7 +464,7 @@ gret EGaussian::adjust_matrix() {
     // print_matrix(m);
     // printf(" adjust_zero %d    n",adjust_zero);
     // printf("%d    t%d    t",num_rows , num_cols);
-    return gret::nothing;
+    return gret::nothing_satisfied;
 }
 
 inline void EGaussian::propagation_twoclause() {
@@ -474,6 +484,7 @@ inline void EGaussian::propagation_twoclause() {
     lit1 = ~lit1;
     lit2 = ~lit2;
     solver->enqueue(lit1, PropBy(lit2, true));
+    update_cols_vals_set(lit1);
 }
 
 inline void EGaussian::conflict_twoclause(PropBy& confl) {
@@ -577,7 +588,9 @@ bool EGaussian::find_truths(
         col_to_var,
         var_has_resp_row,
         new_resp_var,
-        0);
+        *tmp_col,
+        *cols_vals,
+        *cols_set);
     propg_called_from_find_truth++;
 
     switch (ret) {
@@ -640,8 +653,10 @@ bool EGaussian::find_truths(
                 cla->set_gauss_temp_cl();
                 const ClOffset offs = solver->cl_alloc.get_offset(cla);
                 clauses_toclear.push_back(std::make_pair(offs, solver->trail.size() - 1));
-                assert(solver->value((*cla)[0].var()) == l_Undef);
-                solver->enqueue((*cla)[0], PropBy(offs));
+                const Lit lit1 = (*cla)[0];
+                assert(solver->value(lit1.var()) == l_Undef);
+                solver->enqueue(lit1, PropBy(offs));
+                update_cols_vals_set(lit1);
             }
             gqd.ret = gauss_res::prop;
             #ifdef VERBOSE_DEBUG
@@ -693,7 +708,7 @@ bool EGaussian::find_truths(
             return true;
 
         // this row already true
-        case gret::nothing:
+        case gret::nothing_satisfied:
             // printf("%d:This row is nothing( maybe already true)     n",row_n);
             *j++ = *i;
             if (p_was_resp_var) { // recover
@@ -711,6 +726,30 @@ bool EGaussian::find_truths(
 
     assert(false);
     return true;
+}
+
+inline void EGaussian::update_cols_vals_set(const Lit lit1)
+{
+    cols_set->setBit(var_to_col[lit1.var()]);
+    if (!lit1.sign()) {
+        cols_vals->setBit(var_to_col[lit1.var()]);
+    }
+}
+
+void EGaussian::update_cols_vals_set(bool force)
+{
+    cols_vals->setZero();
+    cols_set->setZero();
+
+    for(uint32_t i = 0; i < col_to_var.size(); i++) {
+        uint32_t var = col_to_var[i];
+        if (solver->value(var) != l_Undef) {
+            cols_set->setBit(i);
+            if (solver->value(var) == l_True) {
+                cols_vals->setBit(i);
+            }
+        }
+    }
 }
 
 void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
@@ -758,6 +797,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
             //NOTE: basic variable cannot be eliminated
             // orignal non-basic value is eliminated
             if (!(*rowI)[orig_non_resp_col]) {
+
                 #ifdef VERBOSE_DEBUG
                 cout
                 << "mat[" << matrix_no << "] "
@@ -775,8 +815,10 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                     solver->assigns,
                     col_to_var,
                     var_has_resp_row,
-                                     new_non_resp_var,
-                    0); //std::min(e_col, orig_resp_col));
+                    new_non_resp_var,
+                    *tmp_col,
+                    *cols_vals,
+                    *cols_set);
                 propg_called_from_elim++;
 
                 switch (ret) {
@@ -869,8 +911,11 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                             cla->set_gauss_temp_cl();
                             const ClOffset offs = solver->cl_alloc.get_offset(cla);
                             clauses_toclear.push_back(std::make_pair(offs, solver->trail.size() - 1));
-                            assert(solver->value((*cla)[0].var()) == l_Undef);
-                            solver->enqueue((*cla)[0], PropBy(offs));
+                            Lit lit1 = (*cla)[0];
+                            assert(solver->value(lit1.var()) == l_Undef);
+                            solver->enqueue(lit1, PropBy(offs));
+                            update_cols_vals_set(lit1);
+
                             #ifdef VERBOSE_DEBUG
                             cout
                             << "mat[" << matrix_no << "] "
@@ -898,7 +943,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                         break;
 
                     // this row already satisfied
-                    case gret::nothing:
+                    case gret::nothing_satisfied:
                         #ifdef VERBOSE_DEBUG
                         cout
                         << "mat[" << matrix_no << "] "

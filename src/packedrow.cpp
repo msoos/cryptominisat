@@ -69,13 +69,19 @@ gret PackedRow::propGause(
     const vector<uint32_t>& col_to_var,
     vector<char> &var_has_resp_row,
     uint32_t& new_resp_var,
-    uint32_t start_col
+    PackedRow& tmp_col,
+    PackedRow& cols_vals,
+    PackedRow& cols_set
 ) {
     bool final = !rhs_internal;
     new_resp_var = std::numeric_limits<uint32_t>::max();
     tmp_clause.clear();
+    tmp_col = *this;
+    tmp_col.and_inv(cols_set);
+    uint32_t pop = tmp_col.popcnt();
+    tmp_col ^= cols_vals;
 
-    for (uint32_t i = start_col; i != size; i++) if (mp[i]) {
+    for (uint32_t i = 0; i != size; i++) if (mp[i]) {
         uint64_t tmp = mp[i];
         uint32_t at = i*64;
         for (uint32_t i2 = 0 ; i2 < 64; i2++) {
@@ -125,13 +131,21 @@ gret PackedRow::propGause(
     #endif
 
     if (assigns[tmp_clause[0].var()] == l_Undef) {
+        //#ifdef SLOW_DEBUG
+        for(uint32_t i = 1; i < tmp_clause.size(); i++) {
+            assert(assigns[tmp_clause[i].var()] != l_Undef);
+        }
+        //#endif
         tmp_clause[0] = tmp_clause[0].unsign()^final;
+        assert(pop == 1);
         return gret::prop;
     } else if (!final) {
+        assert(pop == 0);
         return gret::confl;
     }
     // this row is already satisfied, all variables are set
-    return gret::nothing;
+    assert(pop == 0);
+    return gret::nothing_satisfied;
 
 }
 
