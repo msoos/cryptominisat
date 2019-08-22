@@ -3693,11 +3693,12 @@ void Searcher::clear_gauss_matrices()
 
     //cout << "Clearing matrices" << endl;
     for(EGaussian* g: gmatrices) {
-        cout << "truth prop checks   : " << g->propg_called_from_find_truth << endl;
-        cout << "-> of which fnnewat : " << g->propg_called_from_find_truth_ret_fnewwatch << endl;
-        cout << "elim prop checks    : " << g->propg_called_from_elim << endl;
-        cout << "eliminate_col_called: " << g->eliminate_col_called << endl;
-        cout << "elim_xored_rows     : " << g->elim_xored_rows << endl;
+        cout << "truth prop checks       : " << g->propg_called_from_find_truth << endl;
+        cout << "-> of which fnnewat     : " << g->propg_called_from_find_truth_ret_fnewwatch << endl;
+
+        cout << "eliminate_col_called    : " << g->eliminate_col_called << endl;
+        cout << "-> lead to xor rows     : " << g->elim_xored_rows << endl;
+        cout << "---> lead to prop checks: " << g->propg_called_from_elim << endl;
         delete g;
     }
     for(auto& w: gwatches) {

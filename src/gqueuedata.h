@@ -27,8 +27,8 @@ namespace CMSat {
 
 struct GaussQData {
     bool do_eliminate; // we do elimination when basic variable is invoked
-    uint32_t e_var;                     // do elimination variable
-    uint32_t e_row_n ;         // do elimination row
+    uint32_t new_resp_var;                     // do elimination variable
+    uint32_t new_resp_row ;         // do elimination row
     PropBy confl;              // for choosing better conflict
 
     ///ret_gauss = 0; // gaussian matrix is long conflict

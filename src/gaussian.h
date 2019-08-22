@@ -68,14 +68,14 @@ class EGaussian {
     // variable state
     // Someone is responsible for this column if TRUE
     // we watch ONE basic + ONE non-basic var
-    vector<char> var_has_responsible_row;
+    vector<char> var_has_resp_row;
 
     vector<uint32_t>  var_to_col;             // variable to column
 
-    ///row_responsible_for_var[ROW] gives VAR it's responsible for
+    ///row_resp_for_var[ROW] gives VAR it's responsible for
     ///it is MAX in case row is responsible for nothing
     ///we always WATCH this variable!
-    vector<uint32_t> row_responsible_for_var;
+    vector<uint32_t> row_non_resp_for_var;
 
     // used in orignal matrix
     PackedMatrix mat; // The matrix, updated to reflect variable assignements
