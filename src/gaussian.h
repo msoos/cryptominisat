@@ -98,7 +98,11 @@ class EGaussian {
     inline void conflict_twoclause(PropBy& confl);
 
     void print_matrix();
-    bool values_set = false;
+
+    //quick lookup
+    bool cols_vals_set_updated = false;
+    PackedRow *cols_vals = NULL;
+    PackedRow *cols_set = NULL;
 
   public:
     // variable

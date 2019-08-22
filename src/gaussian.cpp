@@ -207,7 +207,7 @@ void EGaussian::new_decision_level()
         satisfied_xors.resize(solver->decisionLevel()+1);
     }
     satisfied_xors[solver->decisionLevel()] = satisfied_xors[solver->decisionLevel()-1];
-    values_set = false;
+    cols_vals_set_updated = false;
 }
 
 void EGaussian::delete_gauss_watch_this_matrix()
@@ -249,7 +249,7 @@ bool EGaussian::full_init(bool& created) {
         return false;
     }
 
-    while (do_again_gauss) { // need to chekc
+    while (do_again_gauss) {
         do_again_gauss = false;
 
         if (!solver->clauseCleaner->clean_xor_clauses(xorclauses)) {
@@ -297,7 +297,9 @@ bool EGaussian::full_init(bool& created) {
         cout << "c [gauss] initialised matrix " << matrix_no << endl;
     }
 
-    // std::cout << cpuTime() - GaussConstructTime << "    t";
+    uint32_t num_64b = num_cols/64+(bool)(num_cols%64);
+    cols_set = new PackedRow(num_64b, new uint64_t[num_64b]);
+    cols_vals = new PackedRow(num_64b, new uint64_t[num_64b]);
     return true;
 }
 
@@ -348,7 +350,7 @@ void EGaussian::eliminate() {
                 // xor rows K and I
                 if (k_row != row_i) {
                     if ((*k_row)[col]) {
-                        (*k_row).xorBoth(*row_i);
+                        (*k_row).xor_in(*row_i);
                     }
                 }
             }
@@ -750,7 +752,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
             #endif
 
             assert(satisfied_xors[solver->decisionLevel()][row_num] == 0);
-            (*rowI).xorBoth(*new_resp_row);
+            (*rowI).xor_in(*new_resp_row);
             elim_xored_rows++;
 
             //NOTE: basic variable cannot be eliminated

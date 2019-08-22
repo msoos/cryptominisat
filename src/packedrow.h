@@ -43,6 +43,7 @@ namespace CMSat {
 using std::vector;
 
 class PackedMatrix;
+class EGaussian;
 
 class PackedRow
 {
@@ -78,7 +79,7 @@ public:
         return *this;
     }
 
-    void xorBoth(const PackedRow& b)
+    void xor_in(const PackedRow& b)
     {
         #ifdef DEBUG_ROW
         assert(size > 0);
@@ -198,8 +199,6 @@ public:
         rhs_internal = v.rhs;
     }
 
-    bool fill(vec<Lit>& tmp_clause, const vec<lbool>& assigns, const vector<uint32_t>& col_to_var_original) const;
-
     // using find nonbasic and basic value
     uint32_t find_watchVar(
         vector<Lit>& tmp_clause,
@@ -218,6 +217,7 @@ public:
 
 private:
     friend class PackedMatrix;
+    friend class EGaussian;
     friend std::ostream& operator << (std::ostream& os, const PackedRow& m);
 
     PackedRow(const uint32_t _size, uint64_t*  const _mp) :
