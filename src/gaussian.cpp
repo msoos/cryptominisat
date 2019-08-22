@@ -308,8 +308,11 @@ bool EGaussian::full_init(bool& created) {
     cols_set = new PackedRow(num_64b, new uint64_t[num_64b+1]);
     cols_vals = new PackedRow(num_64b, new uint64_t[num_64b+1]);
     tmp_col = new PackedRow(num_64b, new uint64_t[num_64b+1]);
+    tmp_col2 = new PackedRow(num_64b, new uint64_t[num_64b+1]);
     cols_vals->rhs() = 0;
     cols_set->rhs() = 0;
+    tmp_col->rhs() = 0;
+    tmp_col2->rhs() = 0;
     return true;
 }
 
@@ -584,6 +587,7 @@ bool EGaussian::find_truths(
         var_has_resp_row,
         new_resp_var,
         *tmp_col,
+        *tmp_col2,
         *cols_vals,
         *cols_set);
     find_truth_called_prop++;
@@ -814,6 +818,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                     var_has_resp_row,
                     new_non_resp_var,
                     *tmp_col,
+                    *tmp_col2,
                     *cols_vals,
                     *cols_set);
                 elim_called_prop++;

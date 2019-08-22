@@ -154,6 +154,7 @@ class EGaussian {
     PackedRow *cols_vals = NULL;
     PackedRow *cols_set = NULL;
     PackedRow *tmp_col = NULL;
+    PackedRow *tmp_col2 = NULL;
     void update_cols_vals_set(const Lit lit1);
 
 

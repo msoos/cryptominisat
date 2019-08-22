@@ -247,6 +247,7 @@ public:
         vector<char> &var_has_resp_row,
         uint32_t& new_resp_var,
         PackedRow& tmp_col,
+        PackedRow& tmp_col2,
         PackedRow& cols_vals,
         PackedRow& cols_set
     );

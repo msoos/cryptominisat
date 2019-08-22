@@ -70,45 +70,115 @@ gret PackedRow::propGause(
     vector<char> &var_has_resp_row,
     uint32_t& new_resp_var,
     PackedRow& tmp_col,
+    PackedRow& tmp_col2,
     PackedRow& cols_vals,
     PackedRow& cols_set
 ) {
+    //cout << "start" << endl;
+    //cout << "line: " << *this << endl;
     bool final = !rhs_internal;
     new_resp_var = std::numeric_limits<uint32_t>::max();
     tmp_clause.clear();
     tmp_col = *this;
     tmp_col.and_inv(cols_set);
     uint32_t pop = tmp_col.popcnt();
-    tmp_col ^= cols_vals;
 
-    for (uint32_t i = 0; i != size; i++) if (mp[i]) {
-        uint64_t tmp = mp[i];
-        uint32_t at = i*64;
-        for (uint32_t i2 = 0 ; i2 < 64; i2++) {
-            if(tmp & 1){
-                const uint32_t var = col_to_var[at  + i2];
-                const lbool val = assigns[var];
+    if (pop == 0) {
+        tmp_col2 = *this;
+        tmp_col2 &= cols_vals;
+        uint32_t pop_t = tmp_col2.popcnt();
+        pop_t += tmp_col2.rhs();
 
-                //TODO: let's put the most UNDEF variables
-                //TODO: at the beginning of the matrix
+        if (pop_t % 2 == 0) {
+            return gret::nothing_satisfied;
+        }
+    }
 
-                // found new non-basic variable, let's watch it
-                //TODO understand why is !var_has_resp_row[var] here?? whaaat? if it's UNDEF how would it propagate?
-                if (val == l_Undef && !var_has_resp_row[var]) {
-                    new_resp_var = var;
-                    return gret::nothing_fnewwatch;
-                }
-                const bool val_bool = (val == l_True);
-                final ^= val_bool;
-                tmp_clause.push_back(Lit(var, val_bool));
+    if (pop >=2) {
+        //cout << "line2: " << tmp_col << endl;
+        for (uint32_t i = 0; i != size; i++) if (tmp_col.mp[i]) {
+            uint64_t tmp_orig = tmp_col.mp[i];
+            for (uint32_t i2 = 0; i2 < 2; i2++) {
+                int tmp = tmp_orig >> (32*i2);
+                int at = __builtin_ffs(tmp);
+                int extra = 0;
+                while (at != 0) {
+                    uint32_t col = extra + at-1 + i*64 + i2*32;
+                    //cout << "col: " << col << " extra: " << extra << " at: " << at << endl;
+                    assert(tmp_col[col] == 1);
+                    const uint32_t var = col_to_var[col];
+                    const lbool val = assigns[var];
 
-                //if this is the basic variable, put it to the 0th position
-                if (var_has_resp_row[var]) {
-                    std::swap(tmp_clause[0], tmp_clause.back());
+                    // found new non-basic variable, let's watch it
+                    assert(val == l_Undef);
+                    if (!var_has_resp_row[var]) {
+                        new_resp_var = var;
+                        return gret::nothing_fnewwatch;
+                    }
+                    if (at == 32)
+                        break;
+
+                    extra += at;
+                    tmp >>= at;
+                    at = __builtin_ffs(tmp);
+                    //cout << "next at: " << at << endl;
                 }
             }
-            tmp >>= 1;
         }
+    } else {
+        #ifdef SLOW_DEBUG
+        uint32_t ones_1 = 0;
+        for (uint32_t i = 0; i != size; i++) {
+            for (uint32_t i2 = 0; i2 < 64; i2++) {
+                uint32_t col = i*64+i2;
+                if (this->operator[](col) == 1) {
+                    //cout << "col 1: " << col << endl;
+                    ones_1++;
+                }
+            }
+        }
+        #endif
+
+        //TODO: lazy reason generation!!!!!
+        uint32_t num_undef = 0;
+        for (uint32_t i = 0; i != size; i++) if (mp[i]) {
+            uint64_t tmp_orig = mp[i];
+            for (uint32_t i2 = 0; i2 < 2; i2++) {
+                int tmp = tmp_orig >> (32*i2);
+                int at = __builtin_ffs(tmp);
+                int extra = 0;
+                while (at != 0) {
+                    uint32_t col = extra + at-1 + i*64 + i2*32;
+                    //cout << "col: " << col << " extra: " << extra << " at: " << at << endl;
+                    #ifdef SLOW_DEBUG
+                    assert(this->operator[](col) == 1);
+                    #endif
+                    const uint32_t var = col_to_var[col];
+                    const lbool val = assigns[var];
+                    num_undef += (val == l_Undef);
+                    const bool val_bool = (val == l_True);
+                    final ^= val_bool;
+                    tmp_clause.push_back(Lit(var, val_bool));
+
+                    //if this is the basic variable, put it to the 0th position
+                    if ((num_undef == 0 && var_has_resp_row[var])  || val == l_Undef) {
+                        std::swap(tmp_clause[0], tmp_clause.back());
+                    }
+
+                    extra += at;
+                    tmp >>= at;
+                    if (extra == 32)
+                        break;
+
+                    at = __builtin_ffs(tmp);
+                    //cout << "next at: " << at << " num_undef: " << num_undef << endl;
+                }
+            }
+        }
+        /*cout << " num_undef: " << num_undef << endl;
+        cout << "ones1: " << ones_1 << endl;
+        cout << "ones2: " << ones2 << endl;*/
+        //assert(ones_1 == ones2);
     }
 
     #ifdef SLOW_DEBUG
@@ -131,15 +201,17 @@ gret PackedRow::propGause(
     #endif
 
     if (assigns[tmp_clause[0].var()] == l_Undef) {
-        //#ifdef SLOW_DEBUG
+        #ifdef SLOW_DEBUG
         for(uint32_t i = 1; i < tmp_clause.size(); i++) {
             assert(assigns[tmp_clause[i].var()] != l_Undef);
         }
-        //#endif
+        #endif
         tmp_clause[0] = tmp_clause[0].unsign()^final;
+        //cout << "pop:" << pop << endl;
         assert(pop == 1);
         return gret::prop;
     } else if (!final) {
+        //cout << "pop:" << pop << endl;
         assert(pop == 0);
         //assert(pop_t % 2 == 1);
         return gret::confl;
