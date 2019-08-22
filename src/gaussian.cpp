@@ -534,7 +534,7 @@ void EGaussian::delete_gausswatch(
     }
 }
 
-bool EGaussian::find_truths2(
+bool EGaussian::find_truths(
     GaussWatched*& i,
     GaussWatched*& j,
     uint32_t p,
@@ -597,7 +597,7 @@ bool EGaussian::find_truths2(
                 #ifdef VERBOSE_DEBUG
                 cout
                 << "mat[" << matrix_no << "] "
-                << "find_truths2 - Gauss binary conf " << endl;
+                << "find_truths - Gauss binary conf " << endl;
                 #endif
                 return false;
             }
@@ -609,7 +609,7 @@ bool EGaussian::find_truths2(
             #ifdef VERBOSE_DEBUG
             cout
             << "mat[" << matrix_no << "] "
-            << "find_truths2 - Gauss long conf " << endl;
+            << "find_truths - Gauss long conf " << endl;
             #endif
 
             if (p_was_resp_var) { // recover
@@ -644,7 +644,7 @@ bool EGaussian::find_truths2(
             #ifdef VERBOSE_DEBUG
             cout
             << "mat[" << matrix_no << "] "
-            << "find_truths2 - Gauss prop "
+            << "find_truths - Gauss prop "
             << " tmp_clause.size: " << tmp_clause.size() << endl;
             #endif
 
@@ -710,7 +710,7 @@ bool EGaussian::find_truths2(
     return true;
 }
 
-void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
+void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
     PackedMatrix::iterator new_resp_row = mat.beginMatrix() + gqd.new_resp_row;
     PackedMatrix::iterator rowI = mat.beginMatrix();
     PackedMatrix::iterator end = mat.endMatrix();
@@ -935,7 +935,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
     #ifdef VERBOSE_DEBUG
     cout
     << "mat[" << matrix_no << "] "
-    << "eliminate_col2 - exiting. " << endl;
+    << "eliminate_col - exiting. " << endl;
     #endif
 }
 

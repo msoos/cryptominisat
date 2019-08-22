@@ -128,7 +128,7 @@ class EGaussian {
 
     ///execute gaussian
     ///return FALSE only in case of unit conflict
-    bool  find_truths2(
+    bool  find_truths(
         GaussWatched*& i,
         GaussWatched*& j,
         uint32_t p,
@@ -137,7 +137,7 @@ class EGaussian {
     );
 
     // when basic variable is touch , eliminate one col
-    void eliminate_col2(
+    void eliminate_col(
         uint32_t p,
         GaussQData& gqd
     );

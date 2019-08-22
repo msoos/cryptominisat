@@ -40,7 +40,7 @@ struct GaussQData {
     vector<Lit> conflict_clause_gauss; // for gaussian elimination better conflict
 
 
-    uint32_t num_entered_mtx;   // total gauss time for DPLL
+    uint32_t find_truths_called;   // total gauss time for DPLL
     uint32_t num_props;  // total gauss propogation time for DPLL
     uint32_t num_conflicts;   // total gauss conflict    time for DPLL
     bool engaus_disable;     // decide to do gaussian elimination
@@ -56,7 +56,7 @@ struct GaussQData {
 
     void reset_stats()
     {
-        num_entered_mtx = 0;   // total gauss time for DPLL
+        find_truths_called = 0;   // total gauss time for DPLL
         num_props = 0;  // total gauss propogation time for DPLL
         num_conflicts = 0;   // total gauss conflict    time for DPLL
         engaus_disable = 0;     // decide to do gaussian elimination
