@@ -57,34 +57,29 @@ class Solver;
 class EGaussian {
   public:
     Solver* solver;   // orignal sat solver
-    const GaussConf& config;  // gauss some configure
-    const uint32_t matrix_no;            // matrix index
+    const GaussConf& config;
+
+    const uint32_t matrix_no; // matrix index
     vector<Lit> tmp_clause;  // conflict&propagation handling
 
     //Is the clause at this ROW satisfied already?
-    //satisfied_xors[row] tells me that
+    //satisfied_xors[decision_level][row] tells me that
     vector<vector<bool>> satisfied_xors;
 
-    // variable state
     // Someone is responsible for this column if TRUE
-    // we watch ONE basic + ONE non-basic var
+    ///we always WATCH this variable
     vector<char> var_has_resp_row;
 
-    vector<uint32_t>  var_to_col;             // variable to column
-
-    ///row_resp_for_var[ROW] gives VAR it's responsible for
-    ///it is MAX in case row is responsible for nothing
-    ///we always WATCH this variable!
+    ///row_non_resp_for_var[ROW] gives VAR it's NOT responsible for
+    ///we always WATCH this variable
     vector<uint32_t> row_non_resp_for_var;
 
-    // used in orignal matrix
-    PackedMatrix mat; // The matrix, updated to reflect variable assignements
 
-    ///col_to_var[COL] tells which variable is at a given column in the matrix. Gives unassigned_var if the COL has been zeroed (i.e. the variable assigned)
-    vector<uint32_t> col_to_var;
-
-    uint32_t num_rows; // number of active rows in the matrix. Unactive rows are rows that contain only zeros (and if they are conflicting, then the conflict has been treated)
-    uint32_t num_cols; // number of active columns in the matrix. The columns at the end that have all be zeroed are no longer active
+    PackedMatrix mat;
+    vector<uint32_t>  var_to_col; ///var->col mapping. Index with VAR
+    vector<uint32_t> col_to_var; ///col->var mapping. Index with COL
+    uint32_t num_rows;
+    uint32_t num_cols;
 
 
     //Cleanup
@@ -103,6 +98,7 @@ class EGaussian {
     inline void conflict_twoclause(PropBy& confl);
 
     void print_matrix();
+    bool values_set = false;
 
   public:
     // variable

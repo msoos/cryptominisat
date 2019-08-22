@@ -207,6 +207,7 @@ void EGaussian::new_decision_level()
         satisfied_xors.resize(solver->decisionLevel()+1);
     }
     satisfied_xors[solver->decisionLevel()] = satisfied_xors[solver->decisionLevel()-1];
+    values_set = false;
 }
 
 void EGaussian::delete_gauss_watch_this_matrix()

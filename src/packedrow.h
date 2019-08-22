@@ -216,19 +216,6 @@ public:
         uint32_t& new_resp_var,
         uint32_t start_col);
 
-    inline unsigned long int scan(const unsigned long int var) const
-    {
-        #ifdef DEBUG_ROW
-        assert(size > 0);
-        #endif
-
-        for(uint32_t i = var; i != size*64; i++) {
-            if (this->operator[](i)) return i;
-        }
-
-        return std::numeric_limits<unsigned long int>::max();
-    }
-
 private:
     friend class PackedMatrix;
     friend std::ostream& operator << (std::ostream& os, const PackedRow& m);
@@ -252,30 +239,6 @@ inline std::ostream& operator << (std::ostream& os, const PackedRow& m)
     os << " -- rhs: " << m.rhs();
     return os;
 }
-
-
-inline bool PackedRow::operator ==(const PackedRow& b) const
-{
-    #ifdef DEBUG_ROW
-    assert(size > 0);
-    assert(b.size > 0);
-    assert(size == b.size);
-    #endif
-
-    return (std::equal(b.mp-1, b.mp+size, mp-1));
-}
-
-inline bool PackedRow::operator !=(const PackedRow& b) const
-{
-    #ifdef DEBUG_ROW
-    assert(size > 0);
-    assert(b.size > 0);
-    assert(size == b.size);
-    #endif
-
-    return (!std::equal(b.mp-1, b.mp+size, mp-1));
-}
-
 
 inline uint32_t PackedRow::popcnt() const
 {
