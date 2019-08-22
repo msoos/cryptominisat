@@ -48,21 +48,6 @@ class EGaussian;
 class PackedRow
 {
 public:
-    bool operator ==(const PackedRow& b) const;
-    bool operator !=(const PackedRow& b) const;
-
-    PackedRow& operator=(const PackedRow& b)
-    {
-        #ifdef DEBUG_ROW
-        assert(size > 0);
-        assert(b.size > 0);
-        assert(size == b.size);
-        #endif
-
-        memcpy(mp-1, b.mp-1, size+1);
-        return *this;
-    }
-
     PackedRow& operator^=(const PackedRow& b)
     {
         #ifdef DEBUG_ROW
