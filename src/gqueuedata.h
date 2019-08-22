@@ -44,11 +44,9 @@ struct GaussQData {
     uint32_t num_props;  // total gauss propogation time for DPLL
     uint32_t num_conflicts;   // total gauss conflict    time for DPLL
     bool engaus_disable;     // decide to do gaussian elimination
-    bool enter_matrix;
 
     void reset()
     {
-        enter_matrix = false;
         do_eliminate = false;
         conflict_clause_gauss.clear();
         ret = gauss_res::none;

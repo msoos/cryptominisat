@@ -89,11 +89,16 @@ class EGaussian {
     vector<Xor> xorclauses;
 
     //stats
-    uint64_t propg_called_from_find_truth = 0;
-    uint64_t propg_called_from_elim = 0;
-    uint64_t eliminate_col_called = 0;
-    uint64_t propg_called_from_find_truth_ret_fnewwatch = 0;
+    uint64_t find_truth_called_prop = 0;
+    uint64_t elim_called_prop = 0;
+    uint64_t elim_called = 0;
+    uint64_t find_truth_ret_fnewwatch = 0;
     uint64_t elim_xored_rows = 0;
+    uint64_t find_truth_ret_satisfied = 0;
+    uint64_t elim_prop_ret_satisfied = 0;
+    uint64_t elim_ret_prop = 0;
+    uint64_t find_truth_ret_prop = 0;
+    uint64_t elim_ret_fnewwatch = 0;
 
   private:
     Solver* solver;   // orignal sat solver

@@ -149,7 +149,7 @@ class Searcher : public HyperEngine
         uint32_t sum_gauss_confl = 0;
         uint32_t sum_gauss_prop = 0;
         uint32_t sum_gauss_unit_truths = 0;
-        uint32_t sum_gauss_entered_mtx = 0;
+        uint32_t sum_truths_called = 0;
         uint32_t get_sum_gauss_called() const;
         uint32_t get_sum_gauss_confl() const;
         uint32_t get_sum_gauss_prop() const;

@@ -2916,9 +2916,12 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
                 continue;
             }
 
-            gqueuedata[i->matrix_num].enter_matrix = true;
+            sum_truths_called++;
             gqueuedata[i->matrix_num].find_truths_called++;
-            sum_gauss_entered_mtx++;
+            gqueuedata[i->matrix_num].new_resp_var = std::numeric_limits<uint32_t>::max();
+            gqueuedata[i->matrix_num].new_resp_row = std::numeric_limits<uint32_t>::max();
+            gqueuedata[i->matrix_num].do_eliminate = false;
+
             if (gmatrices[i->matrix_num]->find_truths(
                 i, j, p.var(), i->row_id, gqueuedata[i->matrix_num])
             ) {
@@ -3685,21 +3688,29 @@ void Searcher::clear_gauss_matrices()
         gqd.reset_stats();
     }
 
-    if (solver->conf.verbosity >= 2 && sum_gauss_entered_mtx > 0) {
+    if (solver->conf.verbosity >= 2 && sum_truths_called > 0) {
         cout
         << "c [gauss] sum_gauss_prop: " << print_value_kilo_mega(sum_gauss_prop) << endl
         << "c [gauss] sum_gauss_confl : " << print_value_kilo_mega(sum_gauss_confl) << endl
-        << "c [gauss] sum_gauss_entered_mtx    : " << print_value_kilo_mega(sum_gauss_entered_mtx) << endl;
+        << "c [gauss] sum_truths_called    : " << print_value_kilo_mega(sum_truths_called) << endl;
     }
 
     //cout << "Clearing matrices" << endl;
     for(EGaussian* g: gmatrices) {
-        cout << "truth prop checks       : " << g->propg_called_from_find_truth << endl;
-        cout << "-> of which fnnewat     : " << g->propg_called_from_find_truth_ret_fnewwatch << endl;
+        cout << "truth prop checks       : " << g->find_truth_called_prop << endl;
+        cout << "-> of which fnnewat     : " << g->find_truth_ret_fnewwatch << endl;
+        cout << "-> of which sat         : " << g->find_truth_ret_satisfied << endl;
+        cout << "-> of which prop        : " << g->find_truth_ret_prop << endl;
 
-        cout << "eliminate_col_called    : " << g->eliminate_col_called << endl;
+
+        cout << "elim called             : " << g->elim_called << endl;
         cout << "-> lead to xor rows     : " << g->elim_xored_rows << endl;
-        cout << "---> lead to prop checks: " << g->propg_called_from_elim << endl;
+        cout << "--> lead to prop checks : " << g->elim_called_prop << endl;
+        cout << "---> of which satsified : " << g->elim_prop_ret_satisfied << endl;
+        cout << "---> of which prop      : " << g->elim_ret_prop << endl;
+        cout << "---> of which fnnewat   : " << g->elim_ret_fnewwatch << endl;
+
+
         delete g;
     }
     for(auto& w: gwatches) {

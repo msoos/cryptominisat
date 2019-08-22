@@ -561,11 +561,6 @@ bool EGaussian::find_truths(
     // printf("dd Watch variable : %d  ,  Wathch row num %d    n", p , row_n);
 
     bool p_was_resp_var = false; // check invoked variable is basic or non-basic
-
-    gqd.new_resp_var = std::numeric_limits<uint32_t>::max();
-    gqd.new_resp_row = std::numeric_limits<uint32_t>::max();
-    gqd.do_eliminate = false;
-
     PackedMatrix::iterator rowIt = mat.beginMatrix() + row_n;
 
     // this clause is already satisfied
@@ -591,7 +586,7 @@ bool EGaussian::find_truths(
         *tmp_col,
         *cols_vals,
         *cols_set);
-    propg_called_from_find_truth++;
+    find_truth_called_prop++;
 
     switch (ret) {
         case gret::confl: {
@@ -637,6 +632,7 @@ bool EGaussian::find_truths(
         }
 
         case gret::prop: {
+            find_truth_ret_prop++;
             // printf("%d:This row is propagation : level: %d    n",row_n, solver->level[p]);
             *j++ = *i;
 
@@ -677,7 +673,7 @@ bool EGaussian::find_truths(
 
         // find new watch list
         case gret::nothing_fnewwatch:
-            propg_called_from_find_truth_ret_fnewwatch++;
+            find_truth_ret_fnewwatch++;
             // printf("%d:This row is find new watch:%d => orig %d p:%d    n",row_n ,
             // new_resp_var,orig_basic , p);
             assert(new_resp_var != std::numeric_limits<uint32_t>::max());
@@ -709,6 +705,7 @@ bool EGaussian::find_truths(
 
         // this row already true
         case gret::nothing_satisfied:
+            find_truth_ret_satisfied++;
             // printf("%d:This row is nothing( maybe already true)     n",row_n);
             *j++ = *i;
             if (p_was_resp_var) { // recover
@@ -772,7 +769,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
     << " ***"
     <<  endl;
     #endif
-    eliminate_col_called++;
+    elim_called++;
 
     while (rowI != end) {
         //Row has a '1' in eliminating column, and it's not the row responsible
@@ -819,7 +816,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                     *tmp_col,
                     *cols_vals,
                     *cols_set);
-                propg_called_from_elim++;
+                elim_called_prop++;
 
                 switch (ret) {
                     case gret::confl: {
@@ -874,6 +871,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                         break;
                     }
                     case gret::prop: {
+                        elim_ret_prop++;
                         #ifdef VERBOSE_DEBUG
                         cout
                         << "mat[" << matrix_no << "] "
@@ -929,6 +927,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
 
                     // find new watch list
                     case gret::nothing_fnewwatch:
+                        elim_ret_fnewwatch++;
                         #ifdef VERBOSE_DEBUG
                         cout
                         << "mat[" << matrix_no << "] "
@@ -959,6 +958,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                         solver->gwatches[p].push(GaussWatched(row_num, matrix_no));
                         row_non_resp_for_var[row_num] = p;
                         satisfied_xors[solver->decisionLevel()][row_num] = 1;
+                        elim_prop_ret_satisfied++;
                         break;
                     default:
                         // can not here

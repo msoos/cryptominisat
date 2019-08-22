@@ -141,10 +141,13 @@ gret PackedRow::propGause(
         return gret::prop;
     } else if (!final) {
         assert(pop == 0);
+        //assert(pop_t % 2 == 1);
         return gret::confl;
     }
     // this row is already satisfied, all variables are set
-    assert(pop == 0);
+    //assert(pop == 0);
+    //assert(pop_t % 2 == 0);
+    assert(false);
     return gret::nothing_satisfied;
 
 }
