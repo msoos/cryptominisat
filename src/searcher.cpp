@@ -825,7 +825,10 @@ Clause* Searcher::analyze_conflict(
     const PropBy confl
     , uint32_t& out_btlevel
     , uint32_t& glue
-    , uint32_t& old_glue
+    , uint32_t&
+    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+    old_glue
+    #endif
 ) {
     //Set up environment
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
