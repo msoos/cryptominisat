@@ -71,11 +71,11 @@ public:
         assert(b.size == size);
         #endif
 
+        rhs_internal ^= b.rhs_internal;
         for (uint32_t i = 0; i != size; i++) {
             *(mp + i) ^= *(b.mp + i);
         }
 
-        rhs_internal ^= b.rhs_internal;
         return *this;
     }
 
@@ -115,11 +115,10 @@ public:
         assert(b.size == size);
         #endif
 
+        rhs_internal ^= b.rhs_internal;
         for (uint32_t i = 0; i != size; i++) {
             *(mp + i) ^= *(b.mp + i);
         }
-
-        rhs_internal ^= b.rhs_internal;
     }
 
 
