@@ -1387,6 +1387,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             //solver->clauseCleaner->clean_implicit_clauses();
         } else if (token == "occ-bve") {
             if (solver->conf.doVarElim && solver->conf.do_empty_varelim) {
+                solver->xor_clauses_updated = true;
                 solver->xorclauses.clear();
                 #ifdef USE_GAUSS
                 solver->clear_gauss_matrices();

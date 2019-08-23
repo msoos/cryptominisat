@@ -41,7 +41,6 @@ THE SOFTWARE.
 #include "solverconf.h"
 #include "distillerlong.h"
 #include "xorfinder.h"
-#include "matrixfinder.h"
 #ifdef USE_GAUSS
 #include "gaussian.h"
 #endif
@@ -2346,31 +2345,6 @@ lbool Searcher::solve(
         max_confl_this_phase = conf.restart_first;
         params.rest_type = Restart::luby;
     }
-
-    #ifdef USE_GAUSS
-    clear_gauss_matrices();
-    {
-        MatrixFinder finder(solver);
-        ok = finder.findMatrixes();
-        if (!ok) {
-            status = l_False;
-            goto end;
-        }
-    }
-    if (!solver->init_all_matrices()) {
-        return l_False;
-    }
-
-    #ifdef SLOW_DEBUG
-    for(size_t i = 0; i< solver->gmatrixes.size(); i++) {
-        if (solver->gmatrixes[i]) {
-            solver->gmatrixes[i]->check_watchlist_sanity();
-            assert(solver->gmatrixes[i]->get_matrix_no() == i);
-        }
-    }
-    #endif
-
-    #endif //USE_GAUSS
 
     assert(solver->check_order_heap_sanity());
     while(stats.conflStats.numConflicts < max_confl_per_search_solve_call

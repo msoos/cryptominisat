@@ -67,6 +67,7 @@ THE SOFTWARE.
 #include "xorfinder.h"
 #include "cardfinder.h"
 #include "sls.h"
+#include "matrixfinder.h"
 
 #ifdef USE_BREAKID
 #include "cms_breakid.h"
@@ -202,6 +203,7 @@ bool Solver::add_xor_clause_inter(
     if (!ps.empty()) {
         if (ps.size() > 2) {
             xorclauses.push_back(Xor(ps, rhs));
+            xor_clauses_updated = true;
         }
         ps[0] ^= rhs;
     } else {
@@ -808,6 +810,7 @@ void Solver::renumber_clauses(const vector<uint32_t>& outerToInter)
     }
 
     //Clauses' abstractions have to be re-calculated
+    xor_clauses_updated = true;
     for(Xor& x: xorclauses) {
         updateVarsMap(x, outerToInter);
     }
@@ -876,6 +879,7 @@ double Solver::calc_renumber_saving()
 
 bool Solver::clean_xor_clauses_from_duplicate_and_set_vars()
 {
+    xor_clauses_updated = true;
     assert(decisionLevel() == 0);
     double myTime = cpuTime();
     XorFinder f(NULL, this);
@@ -1761,10 +1765,17 @@ long Solver::calc_num_confl_to_do_this_iter(const size_t iteration_num) const
 
 lbool Solver::iterate_until_solved()
 {
-    size_t iteration_num = 0;
-    VSIDS = true;
-
     lbool status = l_Undef;
+    size_t iteration_num = 0;
+
+    #ifdef USE_GAUSS
+    if (!find_and_init_all_matrices()) {
+        status = l_False;
+        goto end;
+    }
+    #endif //USE_GAUSS
+
+    VSIDS = true;
     while (status == l_Undef
         && !must_interrupt_asap()
         && cpuTime() < conf.maxTime
@@ -1827,9 +1838,8 @@ lbool Solver::iterate_until_solved()
             VSIDS = true;
         }
     }
-    #ifdef USE_GAUSS
-    clear_gauss_matrices();
-    #endif
+
+    end:
     return status;
 }
 
@@ -3884,6 +3894,36 @@ void Solver::renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors
 }
 
 #ifdef USE_GAUSS
+bool Solver::find_and_init_all_matrices()
+{
+    if (!xor_clauses_updated) {
+        return true;
+    }
+
+    clear_gauss_matrices();
+    MatrixFinder finder(solver);
+    ok = finder.findMatrixes();
+    if (!ok) {
+        return false;
+    }
+
+    if (!init_all_matrices()) {
+        return false;
+    }
+
+    #ifdef SLOW_DEBUG
+    for(size_t i = 0; i< solver->gmatrixes.size(); i++) {
+        if (solver->gmatrixes[i]) {
+            solver->gmatrixes[i]->check_watchlist_sanity();
+            assert(solver->gmatrixes[i]->get_matrix_no() == i);
+        }
+    }
+    #endif
+
+    xor_clauses_updated = false;
+    return true;
+}
+
 bool Solver::init_all_matrices()
 {
     assert(ok);

@@ -60,6 +60,7 @@ TEST_F(gauss, min_rows)
     s->conf.gaussconf.min_matrix_rows = 2;
     xs.push_back(Xor(str_to_vars("1, 2, 3"), 0));
     xs.push_back(Xor(str_to_vars("1, 2, 3, 4"), 0));
+    s->xor_clauses_updated = true;
     s->xorclauses = xs;
 
     mf->findMatrixes(false);
@@ -73,6 +74,7 @@ TEST_F(gauss, min_rows_2)
     s->conf.gaussconf.min_matrix_rows = 3;
     xs.push_back(Xor(str_to_vars("1, 2, 3"), 0));
     xs.push_back(Xor(str_to_vars("1, 2, 3, 4"), 0));
+    s->xor_clauses_updated = true;
     s->xorclauses = xs;
 
     mf->findMatrixes(false);
@@ -86,6 +88,7 @@ TEST_F(gauss, separate_1)
     s->conf.gaussconf.min_matrix_rows = 1;
     xs.push_back(Xor(str_to_vars("1, 2, 3"), 0));
     xs.push_back(Xor(str_to_vars("5, 6, 7, 8"), 0));
+    s->xor_clauses_updated = true;
     s->xorclauses = xs;
 
     mf->findMatrixes(false);
@@ -104,6 +107,7 @@ TEST_F(gauss, separate_2)
     xs.push_back(Xor(str_to_vars("15, 16, 17, 18"), 0));
     xs.push_back(Xor(str_to_vars("11, 15, 19"), 0));
     xs.push_back(Xor(str_to_vars("19, 20, 12"), 0));
+    s->xor_clauses_updated = true;
     s->xorclauses = xs;
 
     mf->findMatrixes(false);
@@ -126,6 +130,7 @@ TEST_F(gauss, separate_3)
     xs.push_back(Xor(str_to_vars("21, 22, 23, 29"), 0));
     xs.push_back(Xor(str_to_vars("21, 28, 29"), 0));
     xs.push_back(Xor(str_to_vars("25, 21, 27"), 0));
+    s->xor_clauses_updated = true;
     s->xorclauses = xs;
 
     mf->findMatrixes(false);

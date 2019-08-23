@@ -133,6 +133,7 @@ public:
     **/
     vector<vector<ClOffset> > longRedCls;
     vector<Xor> xorclauses;
+    bool xor_clauses_updated = false;
     BinTriStats binTri;
     LitStats litStats;
     int64_t clauseID = 1;
