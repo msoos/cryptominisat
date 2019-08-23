@@ -203,6 +203,7 @@ void XorFinder::print_found_xors()
 void XorFinder::add_xors_to_solver()
 {
     solver->xorclauses = xors;
+    solver->xor_clauses_updated = true;
     #if defined(SLOW_DEBUG) || defined(XOR_DEBUG)
     for(const Xor& x: xors) {
         for(uint32_t v: x) {

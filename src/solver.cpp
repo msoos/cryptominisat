@@ -1768,13 +1768,6 @@ lbool Solver::iterate_until_solved()
     lbool status = l_Undef;
     size_t iteration_num = 0;
 
-    #ifdef USE_GAUSS
-    if (!find_and_init_all_matrices()) {
-        status = l_False;
-        goto end;
-    }
-    #endif //USE_GAUSS
-
     VSIDS = true;
     while (status == l_Undef
         && !must_interrupt_asap()
@@ -1791,6 +1784,12 @@ lbool Solver::iterate_until_solved()
         if (num_confl <= 0) {
             break;
         }
+        #ifdef USE_GAUSS
+        if (!find_and_init_all_matrices()) {
+            status = l_False;
+            goto end;
+        }
+        #endif //USE_GAUSS
         status = Searcher::solve(num_confl);
 
         //Check for effectiveness
@@ -3897,6 +3896,9 @@ void Solver::renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors
 bool Solver::find_and_init_all_matrices()
 {
     if (!xor_clauses_updated) {
+        if (conf.verbosity >= 2) {
+            cout << "c [find&init matx] XORs not updated, not performing matrix init" << endl;
+        }
         return true;
     }
 

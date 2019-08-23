@@ -3639,6 +3639,7 @@ inline bool Searcher::check_order_heap_sanity() const
 #ifdef USE_GAUSS
 void Searcher::clear_gauss_matrices()
 {
+    solver->xor_clauses_updated = true;
     for(uint32_t i = 0; i < gqueuedata.size(); i++) {
         auto gqd = gqueuedata[i];
         //if (gqd.num_entered_mtx > 0) {
