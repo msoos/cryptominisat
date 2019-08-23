@@ -42,7 +42,7 @@ uint32_t PackedRow::find_watchVar(
     non_resp_var = std::numeric_limits<uint32_t>::max();
     tmp_clause.clear();
 
-    for(uint32_t i = 0; i < size*64 && popcnt < 3; i++) {
+    for(uint32_t i = 0; i < size*32 && popcnt < 3; i++) {
         if (this->operator[](i)){
             popcnt++;
             uint32_t var = col_to_var[i];
@@ -97,40 +97,37 @@ gret PackedRow::propGause(
     if (pop >=2) {
         //cout << "line2: " << tmp_col << endl;
         for (uint32_t i = 0; i != size; i++) if (tmp_col.mp[i]) {
-            uint64_t tmp_orig = tmp_col.mp[i];
-            for (uint32_t i2 = 0; i2 < 2; i2++) {
-                int tmp = tmp_orig >> (32*i2);
-                int at = __builtin_ffs(tmp);
-                int extra = 0;
-                while (at != 0) {
-                    uint32_t col = extra + at-1 + i*64 + i2*32;
-                    //cout << "col: " << col << " extra: " << extra << " at: " << at << endl;
-                    assert(tmp_col[col] == 1);
-                    const uint32_t var = col_to_var[col];
-                    const lbool val = assigns[var];
+            int tmp = tmp_col.mp[i];
+            int at = __builtin_ffs(tmp);
+            int extra = 0;
+            while (at != 0) {
+                uint32_t col = extra + at-1 + i*32;
+                //cout << "col: " << col << " extra: " << extra << " at: " << at << endl;
+                assert(tmp_col[col] == 1);
+                const uint32_t var = col_to_var[col];
+                const lbool val = assigns[var];
 
-                    // found new non-basic variable, let's watch it
-                    assert(val == l_Undef);
-                    if (!var_has_resp_row[var]) {
-                        new_resp_var = var;
-                        return gret::nothing_fnewwatch;
-                    }
-                    if (at == 32)
-                        break;
-
-                    extra += at;
-                    tmp >>= at;
-                    at = __builtin_ffs(tmp);
-                    //cout << "next at: " << at << endl;
+                // found new non-basic variable, let's watch it
+                assert(val == l_Undef);
+                if (!var_has_resp_row[var]) {
+                    new_resp_var = var;
+                    return gret::nothing_fnewwatch;
                 }
+                if (at == 32)
+                    break;
+
+                extra += at;
+                tmp >>= at;
+                at = __builtin_ffs(tmp);
+                //cout << "next at: " << at << endl;
             }
         }
     } else {
         #ifdef SLOW_DEBUG
         uint32_t ones_1 = 0;
         for (uint32_t i = 0; i != size; i++) {
-            for (uint32_t i2 = 0; i2 < 64; i2++) {
-                uint32_t col = i*64+i2;
+            for (uint32_t i2 = 0; i2 < 32; i2++) {
+                uint32_t col = i*32+i2;
                 if (this->operator[](col) == 1) {
                     //cout << "col 1: " << col << endl;
                     ones_1++;
@@ -142,37 +139,34 @@ gret PackedRow::propGause(
         //TODO: lazy reason generation!!!!!
         uint32_t num_undef = 0;
         for (uint32_t i = 0; i != size; i++) if (mp[i]) {
-            uint64_t tmp_orig = mp[i];
-            for (uint32_t i2 = 0; i2 < 2; i2++) {
-                int tmp = tmp_orig >> (32*i2);
-                int at = __builtin_ffs(tmp);
-                int extra = 0;
-                while (at != 0) {
-                    uint32_t col = extra + at-1 + i*64 + i2*32;
-                    //cout << "col: " << col << " extra: " << extra << " at: " << at << endl;
-                    #ifdef SLOW_DEBUG
-                    assert(this->operator[](col) == 1);
-                    #endif
-                    const uint32_t var = col_to_var[col];
-                    const lbool val = assigns[var];
-                    num_undef += (val == l_Undef);
-                    const bool val_bool = (val == l_True);
-                    final ^= val_bool;
-                    tmp_clause.push_back(Lit(var, val_bool));
+            int tmp = mp[i];
+            int at = __builtin_ffs(tmp);
+            int extra = 0;
+            while (at != 0) {
+                uint32_t col = extra + at-1 + i*32;
+                //cout << "col: " << col << " extra: " << extra << " at: " << at << endl;
+                #ifdef SLOW_DEBUG
+                assert(this->operator[](col) == 1);
+                #endif
+                const uint32_t var = col_to_var[col];
+                const lbool val = assigns[var];
+                num_undef += (val == l_Undef);
+                const bool val_bool = (val == l_True);
+                final ^= val_bool;
+                tmp_clause.push_back(Lit(var, val_bool));
 
-                    //if this is the basic variable, put it to the 0th position
-                    if ((num_undef == 0 && var_has_resp_row[var])  || val == l_Undef) {
-                        std::swap(tmp_clause[0], tmp_clause.back());
-                    }
-
-                    extra += at;
-                    tmp >>= at;
-                    if (extra == 32)
-                        break;
-
-                    at = __builtin_ffs(tmp);
-                    //cout << "next at: " << at << " num_undef: " << num_undef << endl;
+                //if this is the basic variable, put it to the 0th position
+                if ((num_undef == 0 && var_has_resp_row[var])  || val == l_Undef) {
+                    std::swap(tmp_clause[0], tmp_clause.back());
                 }
+
+                extra += at;
+                tmp >>= at;
+                if (extra == 32)
+                    break;
+
+                at = __builtin_ffs(tmp);
+                //cout << "next at: " << at << " num_undef: " << num_undef << endl;
             }
         }
         /*cout << " num_undef: " << num_undef << endl;
@@ -184,9 +178,9 @@ gret PackedRow::propGause(
     #ifdef SLOW_DEBUG
     {
         for (uint32_t i = 0; i != size; i++) if (mp[i]) {
-            uint64_t tmp = mp[i];
-            uint32_t at = i*64;
-            for (uint32_t i2 = 0 ; i2 < 64; i2++) {
+            int tmp = mp[i];
+            uint32_t at = i*32;
+            for (uint32_t i2 = 0 ; i2 < 32; i2++) {
                 if(tmp & 1){
                     const uint32_t var = col_to_var[at  + i2];
                     const lbool val = assigns[var];

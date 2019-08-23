@@ -84,7 +84,7 @@ class EGaussian {
     void new_decision_level();
     void canceling(const uint32_t sublevel);
     bool full_init(bool& created);
-    void update_cols_vals_set(bool force = false);
+    void update_cols_vals_set();
 
     vector<Xor> xorclauses;
 

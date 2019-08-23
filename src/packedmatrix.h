@@ -55,10 +55,10 @@ public:
 
     void resize(const uint32_t num_rows, uint32_t num_cols)
     {
-        num_cols = num_cols / 64 + (bool)(num_cols % 64);
+        num_cols = num_cols / 32 + (bool)(num_cols % 32);
         if (numRows*(numCols+1) < num_rows*(num_cols+1)) {
             delete[] mp;
-            mp = new uint64_t[num_rows*(num_cols+1)];
+            mp = new int[num_rows*(num_cols+1)];
         }
 
         numRows = num_rows;
@@ -82,11 +82,11 @@ public:
 
         if (numRows*(numCols+1) < b.numRows*(b.numCols+1)) {
             delete[] mp;
-            mp = new uint64_t[b.numRows*(b.numCols+1)];
+            mp = new int[b.numRows*(b.numCols+1)];
         }
         numRows = b.numRows;
         numCols = b.numCols;
-        memcpy(mp, b.mp, sizeof(uint64_t)*numRows*(numCols+1));
+        memcpy(mp, b.mp, sizeof(int)*numRows*(numCols+1));
 
         return *this;
     }
@@ -154,12 +154,12 @@ public:
         }
 
     private:
-        iterator(uint64_t* _mp, const uint32_t _numCols) :
+        iterator(int* _mp, const uint32_t _numCols) :
             mp(_mp)
             , numCols(_numCols)
         {}
 
-        uint64_t* mp;
+        int* mp;
         const uint32_t numCols;
     };
 
@@ -180,7 +180,7 @@ public:
 
 private:
 
-    uint64_t* mp;
+    int* mp;
     uint32_t numRows;
     uint32_t numCols;
 };
