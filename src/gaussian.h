@@ -54,6 +54,13 @@ namespace CMSat {
 
 class Solver;
 
+struct XorReason
+{
+    bool must_recalc = true;
+    Lit propagated = lit_Undef;
+    vector<Lit> reason;
+};
+
 class EGaussian {
   public:
       EGaussian(
@@ -75,6 +82,8 @@ class EGaussian {
         const uint32_t row_n,
         GaussQData& gqd
     );
+
+    vector<Lit>* get_reason(uint32_t row);
 
     // when basic variable is touched , eliminate one col
     void eliminate_col(
@@ -112,6 +121,9 @@ class EGaussian {
                            const uint32_t  row_n,
                            uint32_t no_touch_var = var_Undef);
 
+    //Reason generation
+    vector<XorReason> xor_reasons;
+
     //Initialisation
     void eliminate();
     void fill_matrix();
@@ -121,7 +133,6 @@ class EGaussian {
     ///////////////
     // Helper during truth finding/elim
     ///////////////
-    inline void propagation_twoclause();
     inline void conflict_twoclause(PropBy& confl);
 
     ///////////////

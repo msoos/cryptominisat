@@ -403,7 +403,8 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
     #endif
     sumAntecedents++;
 
-    Clause* cl = NULL;
+    Lit* lits = NULL;
+    size_t size = 0;
     switch (confl.getType()) {
         case binary_t : {
             sumAntecedentsLits += 2;
@@ -422,7 +423,10 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
         }
 
         case clause_t : {
-            cl = cl_alloc.ptr(confl.get_offset());
+            Clause* cl = cl_alloc.ptr(confl.get_offset());
+            assert(!cl->getRemoved());
+            lits = cl->begin();
+            size = cl->size();
             sumAntecedentsLits += cl->size();
             if (cl->red()) {
                 stats.resolvs.longRed++;
@@ -486,7 +490,15 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                 }
                 #endif
             }
+            break;
+        }
 
+        case xor_t: {
+            vector<Lit>* xor_reason = gmatrices[confl.get_matrix_num()]->
+                get_reason(confl.get_row_num());
+            lits = xor_reason->data();
+            size = xor_reason->size();
+            sumAntecedentsLits += size;
             break;
         }
 
@@ -510,12 +522,13 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                 break;
 
             case clause_t:
-                assert(!cl->getRemoved());
-                x = (*cl)[i];
-                if (i == cl->size()-1) {
+            case xor_t:
+                x = lits[i];
+                if (i == size-1) {
                     cont = false;
                 }
                 break;
+
             case null_clause_t:
                 assert(false);
         }
@@ -524,7 +537,8 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
         }
         i++;
     }
-    return cl;
+
+    return NULL;
 }
 
 template<bool update_bogoprops>
@@ -630,6 +644,7 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
     int index = trail.size() - 1;
     Lit p = lit_Undef;
     Clause* last_resolved_cl = NULL;
+    assert(conf.doOTFSubsume == false);
 
     learnt_clause.push_back(lit_Undef); //make space for ~p
     do {
@@ -950,12 +965,22 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
         assert(!reason.isNULL());
 
         size_t size;
-        Clause* cl = NULL;
+        Lit* lits = NULL;
         switch (type) {
-            case clause_t:
-                cl = cl_alloc.ptr(reason.get_offset());
+            case clause_t: {
+                Clause* cl = cl_alloc.ptr(reason.get_offset());
+                lits = cl->begin();
                 size = cl->size()-1;
                 break;
+            }
+
+            case xor_t: {
+                vector<Lit>* xcl = gmatrices[reason.get_matrix_num()]->
+                    get_reason(reason.get_row_num());
+                lits = xcl->data();
+                size = xcl->size()-1;
+                break;
+            }
 
             case binary_t:
                 size = 1;
@@ -973,7 +998,8 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
             Lit p2;
             switch (type) {
                 case clause_t:
-                    p2 = (*cl)[i+1];
+                case xor_t:
+                    p2 = lits[i+1];
                     break;
 
                 case binary_t:

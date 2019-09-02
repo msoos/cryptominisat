@@ -63,6 +63,47 @@ uint32_t PackedRow::find_watchVar(
     return popcnt;
 }
 
+void PackedRow::get_reason(
+    vector<Lit>& tmp_clause,
+    const vector<lbool>& assigns,
+    const vector<uint32_t>& col_to_var,
+    Lit prop
+) {
+    for (uint32_t i = 0; i != size; i++) if (mp[i]) {
+        int tmp = mp[i];
+        int at = __builtin_ffs(tmp);
+        int extra = 0;
+        while (at != 0) {
+            uint32_t col = extra + at-1 + i*32;
+            #ifdef SLOW_DEBUG
+            assert(this->operator[](col) == 1);
+            #endif
+            const uint32_t var = col_to_var[col];
+            if (var == prop.var()) {
+                tmp_clause.push_back(prop);
+                std::swap(tmp_clause[0], tmp_clause.back());
+            } else {
+                const lbool val = assigns[var];
+                const bool val_bool = (val == l_True);
+                tmp_clause.push_back(Lit(var, val_bool));
+            }
+
+            extra += at;
+            tmp >>= at;
+            if (extra == 32)
+                break;
+
+            at = __builtin_ffs(tmp);
+        }
+    }
+
+    #ifdef SLOW_DEBUG
+    for(uint32_t i = 1; i < tmp_clause.size(); i++) {
+        assert(assigns[tmp_clause[i].var()] != l_Undef);
+    }
+    #endif
+}
+
 gret PackedRow::propGause(
     vector<Lit>& tmp_clause,
     const vector<lbool>& assigns,
@@ -72,30 +113,19 @@ gret PackedRow::propGause(
     PackedRow& tmp_col,
     PackedRow& tmp_col2,
     PackedRow& cols_vals,
-    PackedRow& cols_set
+    PackedRow& cols_set,
+    Lit& ret_lit_prop
 ) {
     //cout << "start" << endl;
     //cout << "line: " << *this << endl;
     bool final = !rhs_internal;
     new_resp_var = std::numeric_limits<uint32_t>::max();
-    tmp_clause.clear();
     tmp_col = *this;
     tmp_col.and_inv(cols_set);
     uint32_t pop = tmp_col.popcnt();
 
-    if (pop == 0) {
-        tmp_col2 = *this;
-        tmp_col2 &= cols_vals;
-        uint32_t pop_t = tmp_col2.popcnt();
-        pop_t += tmp_col2.rhs();
-
-        if (pop_t % 2 == 0) {
-            return gret::nothing_satisfied;
-        }
-    }
-
+    //Find new watch
     if (pop >=2) {
-        //cout << "line2: " << tmp_col << endl;
         for (uint32_t i = 0; i != size; i++) if (tmp_col.mp[i]) {
             int tmp = tmp_col.mp[i];
             int at = __builtin_ffs(tmp);
@@ -119,103 +149,76 @@ gret PackedRow::propGause(
                 extra += at;
                 tmp >>= at;
                 at = __builtin_ffs(tmp);
-                //cout << "next at: " << at << endl;
             }
         }
-    } else {
-        #ifdef SLOW_DEBUG
-        uint32_t ones_1 = 0;
-        for (uint32_t i = 0; i != size; i++) {
-            for (uint32_t i2 = 0; i2 < 32; i2++) {
-                uint32_t col = i*32+i2;
-                if (this->operator[](col) == 1) {
-                    //cout << "col 1: " << col << endl;
-                    ones_1++;
-                }
-            }
-        }
-        #endif
+        assert(false && "Should have found a new watch!");
+    }
 
-        //TODO: lazy reason generation!!!!!
-        uint32_t num_undef = 0;
-        for (uint32_t i = 0; i != size; i++) if (mp[i]) {
-            int tmp = mp[i];
+    //Calc value of row
+    tmp_col2 = *this;
+    tmp_col2 &= cols_vals;
+    const uint32_t pop_t = tmp_col2.popcnt() + tmp_col2.rhs();
+
+    //Lazy prop
+    if (pop == 1) {
+        for (uint32_t i = 0; i != size; i++) if (tmp_col.mp[i]) {
+            int tmp = tmp_col.mp[i];
             int at = __builtin_ffs(tmp);
-            int extra = 0;
-            while (at != 0) {
-                uint32_t col = extra + at-1 + i*32;
-                //cout << "col: " << col << " extra: " << extra << " at: " << at << endl;
-                #ifdef SLOW_DEBUG
-                assert(this->operator[](col) == 1);
-                #endif
-                const uint32_t var = col_to_var[col];
-                const lbool val = assigns[var];
-                num_undef += (val == l_Undef);
-                const bool val_bool = (val == l_True);
-                final ^= val_bool;
-                tmp_clause.push_back(Lit(var, val_bool));
 
-                //if this is the basic variable, put it to the 0th position
-                if ((num_undef == 0 && var_has_resp_row[var])  || val == l_Undef) {
-                    std::swap(tmp_clause[0], tmp_clause.back());
-                }
+            // found prop
+            uint32_t col = at-1 + i*32;
+            assert(tmp_col[col] == 1);
+            const uint32_t var = col_to_var[col];
+            assert(assigns[var] == l_Undef);
+            ret_lit_prop = Lit(var, !(pop_t % 2));
+            return gret::prop;
+        }
+        assert(false && "Should have found the propagating literal!");
+    }
 
-                extra += at;
-                tmp >>= at;
-                if (extra == 32)
-                    break;
+    //Only SAT & UNSAT left.
+    assert(pop == 0);
 
-                at = __builtin_ffs(tmp);
-                //cout << "next at: " << at << " num_undef: " << num_undef << endl;
+    //Satisfied
+    if (pop_t % 2 == 0) {
+        return gret::nothing_satisfied;
+    }
+
+    //Conflict
+    tmp_clause.clear();
+    for (uint32_t i = 0; i != size; i++) if (mp[i]) {
+        int tmp = mp[i];
+        int at = __builtin_ffs(tmp);
+        int extra = 0;
+        while (at != 0) {
+            uint32_t col = extra + at-1 + i*32;
+            //cout << "col: " << col << " extra: " << extra << " at: " << at << endl;
+            #ifdef SLOW_DEBUG
+            assert(this->operator[](col) == 1);
+            #endif
+            const uint32_t var = col_to_var[col];
+            const lbool val = assigns[var];
+            const bool val_bool = (val == l_True);
+            final ^= val_bool;
+            tmp_clause.push_back(Lit(var, val_bool));
+
+            //TODO check do we need this????
+            //if this is the basic variable, put it to the 0th position
+            if (var_has_resp_row[var]) {
+                std::swap(tmp_clause[0], tmp_clause.back());
             }
-        }
-        /*cout << " num_undef: " << num_undef << endl;
-        cout << "ones1: " << ones_1 << endl;
-        cout << "ones2: " << ones2 << endl;*/
-        //assert(ones_1 == ones2);
-    }
 
-    #ifdef SLOW_DEBUG
-    {
-        for (uint32_t i = 0; i != size; i++) if (mp[i]) {
-            int tmp = mp[i];
-            uint32_t at = i*32;
-            for (uint32_t i2 = 0 ; i2 < 32; i2++) {
-                if(tmp & 1){
-                    const uint32_t var = col_to_var[at  + i2];
-                    const lbool val = assigns[var];
-                    if (val == l_Undef && !var_has_resp_row[var]) {
-                        assert(false);
-                    }
-                }
-                tmp >>= 1;
-            }
+            extra += at;
+            tmp >>= at;
+            if (extra == 32)
+                break;
+
+            at = __builtin_ffs(tmp);
         }
     }
-    #endif
 
-    if (assigns[tmp_clause[0].var()] == l_Undef) {
-        #ifdef SLOW_DEBUG
-        for(uint32_t i = 1; i < tmp_clause.size(); i++) {
-            assert(assigns[tmp_clause[i].var()] != l_Undef);
-        }
-        #endif
-        tmp_clause[0] = tmp_clause[0].unsign()^final;
-        //cout << "pop:" << pop << endl;
-        assert(pop == 1);
-        return gret::prop;
-    } else if (!final) {
-        //cout << "pop:" << pop << endl;
-        assert(pop == 0);
-        //assert(pop_t % 2 == 1);
-        return gret::confl;
-    }
-    // this row is already satisfied, all variables are set
-    //assert(pop == 0);
-    //assert(pop_t % 2 == 0);
-    assert(false);
-    return gret::nothing_satisfied;
-
+    assert(!final);
+    return gret::confl;
 }
 
 

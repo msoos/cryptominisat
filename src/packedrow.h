@@ -245,7 +245,15 @@ public:
         PackedRow& tmp_col,
         PackedRow& tmp_col2,
         PackedRow& cols_vals,
-        PackedRow& cols_set
+        PackedRow& cols_set,
+        Lit& ret_lit_prop
+    );
+
+    void get_reason(
+        vector<Lit>& tmp_clause,
+        const vector<lbool>& assigns,
+        const vector<uint32_t>& col_to_var,
+        Lit prop
     );
 
 private:

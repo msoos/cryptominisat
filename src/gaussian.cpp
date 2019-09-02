@@ -304,6 +304,7 @@ bool EGaussian::full_init(bool& created) {
         cout << "c [gauss] initialised matrix " << matrix_no << endl;
     }
 
+    xor_reasons.resize(num_rows);
     uint32_t num_32b = num_cols/32+(bool)(num_cols%32);
     cols_set = new PackedRow(num_32b, new int[num_32b+1]);
     cols_vals = new PackedRow(num_32b, new int[num_32b+1]);
@@ -470,26 +471,6 @@ gret EGaussian::adjust_matrix() {
     return gret::nothing_satisfied;
 }
 
-inline void EGaussian::propagation_twoclause() {
-    // printf("DD:%d %d    n", solver->qhead  ,solver->trail.size());
-    // printf("CC %d. %d  %d    n", solver->qhead , solver->trail.size() , solver->decisionLevel());
-
-    Lit lit1 = tmp_clause[0];
-    Lit lit2 = tmp_clause[1];
-    solver->attach_bin_clause(lit1, lit2, true, false);
-    // solver->dataSync->signalNewBinClause(lit1, lit2);
-
-    lit1 = ~lit1;
-    lit2 = ~lit2;
-    solver->attach_bin_clause(lit1, lit2, true, false);
-    // solver->dataSync->signalNewBinClause(lit1, lit2);
-
-    lit1 = ~lit1;
-    lit2 = ~lit2;
-    solver->enqueue(lit1, PropBy(lit2, true));
-    update_cols_vals_set(lit1);
-}
-
 inline void EGaussian::conflict_twoclause(PropBy& confl) {
     // assert(tmp_clause.size() == 2);
     // printf("dd %d:This row is conflict two    n",row_n);
@@ -580,6 +561,7 @@ bool EGaussian::find_truths(
     }
 
     uint32_t new_resp_var;
+    Lit ret_lit_prop;
     const gret ret = (*rowIt).propGause(
         tmp_clause,
         solver->assigns,
@@ -589,7 +571,8 @@ bool EGaussian::find_truths(
         *tmp_col,
         *tmp_col2,
         *cols_vals,
-        *cols_set);
+        *cols_set,
+        ret_lit_prop);
     find_truth_called_prop++;
 
     switch (ret) {
@@ -640,24 +623,12 @@ bool EGaussian::find_truths(
             // printf("%d:This row is propagation : level: %d    n",row_n, solver->level[p]);
             *j++ = *i;
 
-            if (tmp_clause.size() == 2) {
-                propagation_twoclause();
-            } else {
-                Clause* cla = solver->cl_alloc.Clause_new(
-                    tmp_clause,
-                    solver->sumConflicts
-                    #ifdef STATS_NEEDED
-                    , solver->clauseID++
-                    #endif
-                );
-                cla->set_gauss_temp_cl();
-                const ClOffset offs = solver->cl_alloc.get_offset(cla);
-                clauses_toclear.push_back(std::make_pair(offs, solver->trail.size() - 1));
-                const Lit lit1 = (*cla)[0];
-                assert(solver->value(lit1.var()) == l_Undef);
-                solver->enqueue(lit1, PropBy(offs));
-                update_cols_vals_set(lit1);
-            }
+
+            xor_reasons[row_n].must_recalc = true;
+            xor_reasons[row_n].propagated = ret_lit_prop;
+            assert(solver->value(ret_lit_prop.var()) == l_Undef);
+            solver->enqueue(ret_lit_prop, PropBy(matrix_no, row_n));
+            update_cols_vals_set(ret_lit_prop);
             gqd.ret = gauss_res::prop;
             #ifdef VERBOSE_DEBUG
             cout
@@ -760,7 +731,6 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
     uint32_t new_resp_col = var_to_col[gqd.new_resp_var];
     uint32_t orig_non_resp_var = 0;
     uint32_t orig_non_resp_col = 0;
-    uint32_t new_non_resp_var = 0;
     uint32_t row_num = 0; // row inde
 
     #ifdef VERBOSE_DEBUG
@@ -811,6 +781,8 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                     delete_gausswatch(true, row_num);
                 }
 
+                Lit ret_lit_prop;
+                uint32_t new_non_resp_var = 0;
                 const gret ret = (*rowI).propGause(
                     tmp_clause,
                     solver->assigns,
@@ -820,7 +792,9 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                     *tmp_col,
                     *tmp_col2,
                     *cols_vals,
-                    *cols_set);
+                    *cols_set,
+                    ret_lit_prop
+                );
                 elim_called_prop++;
 
                 switch (ret) {
@@ -896,35 +870,17 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                         solver->gwatches[p].push(GaussWatched(row_num, matrix_no));
                         row_non_resp_for_var[row_num] = p;
 
-                        if (tmp_clause.size() == 2) {
-                            propagation_twoclause();
-                            #ifdef VERBOSE_DEBUG
-                            cout
-                            << "mat[" << matrix_no << "] "
-                            << "-> Binary prop" << endl;
-                            #endif
-                        } else {
-                            Clause* cla = solver->cl_alloc.Clause_new(
-                                tmp_clause,
-                                solver->sumConflicts
-                                #ifdef STATS_NEEDED
-                                , 0
-                                #endif
-                            );
-                            cla->set_gauss_temp_cl();
-                            const ClOffset offs = solver->cl_alloc.get_offset(cla);
-                            clauses_toclear.push_back(std::make_pair(offs, solver->trail.size() - 1));
-                            Lit lit1 = (*cla)[0];
-                            assert(solver->value(lit1.var()) == l_Undef);
-                            solver->enqueue(lit1, PropBy(offs));
-                            update_cols_vals_set(lit1);
+                        xor_reasons[row_num].must_recalc = true;
+                        xor_reasons[row_num].propagated = ret_lit_prop;
+                        assert(solver->value(ret_lit_prop.var()) == l_Undef);
+                        solver->enqueue(ret_lit_prop, PropBy(matrix_no, row_num));
+                        update_cols_vals_set(ret_lit_prop);
 
-                            #ifdef VERBOSE_DEBUG
-                            cout
-                            << "mat[" << matrix_no << "] "
-                            << "-> Long prop"  << endl;
-                            #endif
-                        }
+                        #ifdef VERBOSE_DEBUG
+                        cout
+                        << "mat[" << matrix_no << "] "
+                        << "-> Long prop"  << endl;
+                        #endif
                         gqd.ret = gauss_res::prop;
                         satisfied_xors[solver->decisionLevel()][row_num] = 1;
                         break;
@@ -1010,4 +966,23 @@ void EGaussian::check_xor_reason_clauses_not_cleared() {
         Clause* cl = solver->cl_alloc.ptr(offs);
         assert(!cl->freed());
     }
+}
+
+
+vector<Lit>* EGaussian::get_reason(uint32_t row)
+{
+    if (!xor_reasons[row].must_recalc) {
+        return &(xor_reasons[row].reason);
+    }
+    vector<Lit>& tofill = xor_reasons[row].reason;
+    tofill.clear();
+
+    mat.get_row(row).get_reason(
+        tofill,
+        solver->assigns,
+        col_to_var,
+        xor_reasons[row].propagated);
+
+    xor_reasons[row].must_recalc = false;
+    return &tofill;
 }

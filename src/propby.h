@@ -33,7 +33,7 @@ THE SOFTWARE.
 
 namespace CMSat {
 
-enum PropByType {null_clause_t = 0, clause_t = 1, binary_t = 2};
+enum PropByType {null_clause_t = 0, clause_t = 1, binary_t = 2, xor_t = 3};
 
 class PropBy
 {
@@ -66,6 +66,14 @@ class PropBy
             /*#ifdef DEBUG_PROPAGATEFROM
             assert(offset == get_offset());
             #endif*/
+        }
+
+        //XOR
+        PropBy(const uint32_t matrix_num, const uint32_t row_num):
+            data1(matrix_num)
+            , type(xor_t)
+            , data2(row_num)
+        {
         }
 
         //Binary prop
@@ -152,6 +160,22 @@ class PropBy
             assert(type == binary_t);
             #endif
             return Lit::toLit(data1);
+        }
+
+        uint32_t get_matrix_num() const
+        {
+            #ifdef DEBUG_PROPAGATEFROM
+            assert(type == xor_id);
+            #endif
+            return data1;
+        }
+
+        uint32_t get_row_num() const
+        {
+            #ifdef DEBUG_PROPAGATEFROM
+            assert(type == xor_id);
+            #endif
+            return data2;
         }
 
         ClOffset get_offset() const
