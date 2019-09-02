@@ -267,7 +267,8 @@ private:
         , size(_size)
     {}
 
-    int* __restrict const mp;
+    //int __attribute__ ((aligned (16))) *const mp;
+    int *__restrict const mp;
     int& rhs_internal;
     const uint32_t size;
 };

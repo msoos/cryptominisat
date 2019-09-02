@@ -50,15 +50,15 @@ public:
 
     ~PackedMatrix()
     {
-        delete[] mp;
+        free(mp);
     }
 
     void resize(const uint32_t num_rows, uint32_t num_cols)
     {
         num_cols = num_cols / 32 + (bool)(num_cols % 32);
         if (numRows*(numCols+1) < num_rows*(num_cols+1)) {
-            delete[] mp;
-            mp = new int[num_rows*(num_cols+1)];
+            free(mp);
+            posix_memalign((void**)&mp, 16,  sizeof(int) * num_rows*(num_cols+1));
         }
 
         numRows = num_rows;
@@ -67,22 +67,15 @@ public:
 
     void resizeNumRows(const uint32_t num_rows)
     {
-        #ifdef DEBUG_MATRIX
         assert(num_rows <= numRows);
-        #endif
-
         numRows = num_rows;
     }
 
     PackedMatrix& operator=(const PackedMatrix& b)
     {
-        #ifdef DEBUG_MATRIX
-        //assert(b.numRows > 0 && b.numCols > 0);
-        #endif
-
         if (numRows*(numCols+1) < b.numRows*(b.numCols+1)) {
-            delete[] mp;
-            mp = new int[b.numRows*(b.numCols+1)];
+            free(mp);
+            posix_memalign((void**)&mp, 16,  sizeof(int) * b.numRows*(b.numCols+1));
         }
         numRows = b.numRows;
         numCols = b.numCols;
@@ -91,7 +84,7 @@ public:
         return *this;
     }
 
-    inline PackedRow get_row(const uint32_t i)
+    inline PackedRow operator[](const uint32_t i)
     {
         #ifdef DEBUG_MATRIX
         assert(i <= numRows);
@@ -101,7 +94,7 @@ public:
 
     }
 
-    inline PackedRow get_row(const uint32_t i) const
+    inline PackedRow operator[](const uint32_t i) const
     {
         #ifdef DEBUG_MATRIX
         assert(i <= numRows);
@@ -180,7 +173,7 @@ public:
 
 private:
 
-    int* mp;
+    int __attribute__ ((aligned (16))) *mp;
     uint32_t numRows;
     uint32_t numCols;
 };

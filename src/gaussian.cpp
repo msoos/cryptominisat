@@ -175,7 +175,7 @@ void EGaussian::fill_matrix() {
     uint32_t matrix_row = 0;
     for (uint32_t i = 0; i != xorclauses.size(); i++) {
         const Xor& c = xorclauses[i];
-        mat.get_row(matrix_row).set(c, var_to_col, num_cols);
+        mat[matrix_row].set(c, var_to_col, num_cols);
         matrix_row++;
     }
     assert(num_rows == matrix_row);
@@ -401,7 +401,7 @@ gret EGaussian::adjust_matrix() {
                 // printf("%d:This row only one variable, need to propogation!!!! in adjust matrix
                 // n",row_id);
 
-                bool xorEqualFalse = !mat.get_row(row_id).rhs();
+                bool xorEqualFalse = !mat[row_id].rhs();
                 tmp_clause[0] = Lit(tmp_clause[0].var(), xorEqualFalse);
                 assert(solver->value(tmp_clause[0].var()) == l_Undef);
                 solver->enqueue(tmp_clause[0]); // propagation
@@ -416,7 +416,7 @@ gret EGaussian::adjust_matrix() {
             //Binary XOR
             case 2: {
                 // printf("%d:This row have two variable!!!! in adjust matrix    n",row_id);
-                bool xorEqualFalse = !mat.get_row(row_id).rhs();
+                bool xorEqualFalse = !mat[row_id].rhs();
 
                 tmp_clause[0] = tmp_clause[0].unsign();
                 tmp_clause[1] = tmp_clause[1].unsign();
@@ -976,7 +976,7 @@ vector<Lit>* EGaussian::get_reason(uint32_t row)
     vector<Lit>& tofill = xor_reasons[row].reason;
     tofill.clear();
 
-    mat.get_row(row).get_reason(
+    mat[row].get_reason(
         tofill,
         solver->assigns,
         col_to_var,
