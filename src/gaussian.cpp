@@ -731,7 +731,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
     uint32_t new_resp_col = var_to_col[gqd.new_resp_var];
     uint32_t orig_non_resp_var = 0;
     uint32_t orig_non_resp_col = 0;
-    uint32_t row_num = 0; // row inde
+    uint32_t row_n = 0;
 
     #ifdef VERBOSE_DEBUG
     cout
@@ -750,7 +750,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
         if ((*rowI)[new_resp_col] && new_resp_row != rowI) {
 
             // detect orignal non-basic watch list change or not
-            orig_non_resp_var = row_non_resp_for_var[row_num];
+            orig_non_resp_var = row_non_resp_for_var[row_n];
             orig_non_resp_col = var_to_col[orig_non_resp_var];
             assert((*rowI)[orig_non_resp_col]);
             #ifdef VERBOSE_DEBUG
@@ -761,7 +761,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
             << endl;
             #endif
 
-            assert(satisfied_xors[solver->decisionLevel()][row_num] == 0);
+            assert(satisfied_xors[solver->decisionLevel()][row_n] == 0);
             (*rowI).xor_in(*new_resp_row);
             elim_xored_rows++;
 
@@ -778,7 +778,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
 
                 // Delelte orignal non-basic value in watch list
                 if (orig_non_resp_var != gqd.new_resp_var) {
-                    delete_gausswatch(true, row_num);
+                    delete_gausswatch(true, row_n);
                 }
 
                 Lit ret_lit_prop;
@@ -806,7 +806,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                         #endif
 
                         if (tmp_clause.size() == 2) {
-                            delete_gausswatch(false, row_num);
+                            delete_gausswatch(false, row_n);
                             assert(var_has_resp_row[tmp_clause[0].var()] == 1);
                             assert(var_has_resp_row[tmp_clause[1].var()] == 0);
 
@@ -814,7 +814,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                             var_has_resp_row[tmp_clause[0].var()] = 0;
 
                             // delete non-basic value in this row
-                            row_non_resp_for_var[row_num] = std::numeric_limits<uint32_t>::max();
+                            row_non_resp_for_var[row_n] = std::numeric_limits<uint32_t>::max();
                             (*rowI).setZero();
 
                             conflict_twoclause(gqd.confl);
@@ -831,10 +831,10 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
 
                         } else {
                             solver->gwatches[p].push(
-                                GaussWatched(row_num, matrix_no));
+                                GaussWatched(row_n, matrix_no));
 
                             // update in this row non-basic variable
-                            row_non_resp_for_var[row_num] = p;
+                            row_non_resp_for_var[row_n] = p;
 
                             gqd.conflict_clause_gauss = tmp_clause;
                             gqd.ret = gauss_res::long_confl;
@@ -861,19 +861,19 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                         if (gqd.ret == gauss_res::bin_confl ||
                             gqd.ret == gauss_res::long_confl
                         ) {
-                            solver->gwatches[p].push(GaussWatched(row_num, matrix_no));
-                            row_non_resp_for_var[row_num] = p;
+                            solver->gwatches[p].push(GaussWatched(row_n, matrix_no));
+                            row_non_resp_for_var[row_n] = p;
                             break;
                         }
 
                         // update no_basic information
-                        solver->gwatches[p].push(GaussWatched(row_num, matrix_no));
-                        row_non_resp_for_var[row_num] = p;
+                        solver->gwatches[p].push(GaussWatched(row_n, matrix_no));
+                        row_non_resp_for_var[row_n] = p;
 
-                        xor_reasons[row_num].must_recalc = true;
-                        xor_reasons[row_num].propagated = ret_lit_prop;
+                        xor_reasons[row_n].must_recalc = true;
+                        xor_reasons[row_n].propagated = ret_lit_prop;
                         assert(solver->value(ret_lit_prop.var()) == l_Undef);
-                        solver->enqueue(ret_lit_prop, PropBy(matrix_no, row_num));
+                        solver->enqueue(ret_lit_prop, PropBy(matrix_no, row_n));
                         update_cols_vals_set(ret_lit_prop);
 
                         #ifdef VERBOSE_DEBUG
@@ -882,7 +882,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                         << "-> Long prop"  << endl;
                         #endif
                         gqd.ret = gauss_res::prop;
-                        satisfied_xors[solver->decisionLevel()][row_num] = 1;
+                        satisfied_xors[solver->decisionLevel()][row_n] = 1;
                         break;
                     }
 
@@ -898,8 +898,8 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                         << endl;
                         #endif
 
-                        solver->gwatches[new_non_resp_var].push(GaussWatched(row_num, matrix_no));
-                        row_non_resp_for_var[row_num] = new_non_resp_var;
+                        solver->gwatches[new_non_resp_var].push(GaussWatched(row_n, matrix_no));
+                        row_non_resp_for_var[row_n] = new_non_resp_var;
                         break;
 
                     // this row already satisfied
@@ -916,9 +916,9 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                         // printf("%d:This row is nothing( maybe already true) in eliminate col
                         // n",num_row);
 
-                        solver->gwatches[p].push(GaussWatched(row_num, matrix_no));
-                        row_non_resp_for_var[row_num] = p;
-                        satisfied_xors[solver->decisionLevel()][row_num] = 1;
+                        solver->gwatches[p].push(GaussWatched(row_n, matrix_no));
+                        row_non_resp_for_var[row_n] = p;
+                        satisfied_xors[solver->decisionLevel()][row_n] = 1;
                         elim_prop_ret_satisfied++;
                         break;
                     default:
@@ -936,7 +936,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
             }
         }
         ++rowI;
-        row_num++;
+        row_n++;
     }
 
     // check_xor_reason_clauses_not_cleared();
