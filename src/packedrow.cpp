@@ -120,8 +120,7 @@ gret PackedRow::propGause(
     //cout << "line: " << *this << endl;
     bool final = !rhs_internal;
     new_resp_var = std::numeric_limits<uint32_t>::max();
-    tmp_col = *this;
-    tmp_col.and_inv(cols_set);
+    tmp_col.and_inv(*this, cols_set);
     uint32_t pop = tmp_col.popcnt();
 
     //Find new watch

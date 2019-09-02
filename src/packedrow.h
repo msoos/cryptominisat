@@ -108,6 +108,19 @@ public:
         }
     }
 
+    void and_inv(const PackedRow& a, const PackedRow& b)
+    {
+        #ifdef DEBUG_ROW
+        assert(size > 0);
+        assert(b.size > 0);
+        assert(b.size == size);
+        #endif
+
+        for (int i = 0; i < size; i++) {
+            *(mp + i) = *(a.mp + i) & (~(*(b.mp + i)));
+        }
+    }
+
     void xor_in(const PackedRow& b)
     {
         #ifdef DEBUG_ROW
