@@ -83,9 +83,6 @@ EGaussian::~EGaussian() {
     delete_gauss_watch_this_matrix();
 }
 
-void EGaussian::canceling(const uint32_t sublevel) {
-}
-
 struct ColSorter {
     explicit ColSorter(vector<VarData>& _dats) : dats(_dats) {
     }
@@ -701,18 +698,38 @@ inline void EGaussian::update_cols_vals_set(const Lit lit1)
 
 void EGaussian::update_cols_vals_set()
 {
-    cols_vals->setZero();
-    cols_set->setZero();
+    //cancelled_since_val_update = true;
+    if (cancelled_since_val_update) {
+        cols_vals->setZero();
+        cols_set->setZero();
 
-    for(uint32_t i = 0; i < col_to_var.size(); i++) {
-        uint32_t var = col_to_var[i];
-        if (solver->value(var) != l_Undef) {
-            cols_set->setBit(i);
+        for(uint32_t col = 0; col < col_to_var.size(); col++) {
+            uint32_t var = col_to_var[col];
+            if (solver->value(var) != l_Undef) {
+                cols_set->setBit(col);
+                if (solver->value(var) == l_True) {
+                    cols_vals->setBit(col);
+                }
+            }
+        }
+        last_val_update = solver->trail.size();
+        cancelled_since_val_update = false;
+        return;
+    }
+
+    assert(solver->trail.size() >= last_val_update);
+    for(uint32_t i = last_val_update; i < solver->trail.size(); i++) {
+        uint32_t var = solver->trail[i].var();
+        uint32_t col = var_to_col[var];
+        if (col != unassigned_col) {
+            assert (solver->value(var) != l_Undef);
+            cols_set->setBit(col);
             if (solver->value(var) == l_True) {
-                cols_vals->setBit(i);
+                cols_vals->setBit(col);
             }
         }
     }
+    last_val_update = solver->trail.size();
 }
 
 void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {

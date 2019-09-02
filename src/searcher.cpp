@@ -3482,10 +3482,14 @@ void Searcher::cancelUntil(uint32_t level
         #endif
 
         #ifdef USE_GAUSS
-        for (EGaussian* gauss: gmatrices)
+        for (EGaussian* gauss: gmatrices) {
             if (gauss) {
-                gauss->canceling(trail_lim[level]);
+                //cout << "->Gauss canceling" << endl;
+                gauss->canceling();
+            } else {
+                //cout << "->Gauss NULL" << endl;
             }
+        }
         #endif //USE_GAUSS
 
         //Go through in reverse order, unassign & insert then

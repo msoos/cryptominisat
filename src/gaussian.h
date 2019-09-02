@@ -89,7 +89,7 @@ class EGaussian {
         GaussQData& gqd
     );
     void new_decision_level();
-    void canceling(const uint32_t sublevel);
+    void canceling();
     bool full_init(bool& created);
     void update_cols_vals_set();
 
@@ -136,6 +136,8 @@ class EGaussian {
     ///////////////
     // Internal data
     ///////////////
+    bool cancelled_since_val_update = true;
+    uint32_t last_val_update = 0;
 
     const uint32_t matrix_no; // matrix index
     vector<Lit> tmp_clause;  // conflict&propagation handling
@@ -173,6 +175,10 @@ class EGaussian {
     void print_matrix();
     void check_watchlist_sanity();
 };
+
+inline void EGaussian::canceling() {
+    cancelled_since_val_update = true;
+}
 
 }
 
