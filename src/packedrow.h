@@ -56,7 +56,8 @@ public:
         assert(b.size == size);
         #endif
 
-        for (int i = -1; i != (int)size; i++) {
+        //start from -1, because that's wher RHS is
+        for (int i = -1; i < size; i++) {
             *(mp + i) = *(b.mp + i);
         }
 
@@ -72,7 +73,7 @@ public:
         #endif
 
         rhs_internal ^= b.rhs_internal;
-        for (uint32_t i = 0; i != size; i++) {
+        for (int i = 0; i < size; i++) {
             *(mp + i) ^= *(b.mp + i);
         }
 
@@ -87,7 +88,7 @@ public:
         assert(b.size == size);
         #endif
 
-        for (uint32_t i = 0; i != size; i++) {
+        for (int i = 0; i < size; i++) {
             *(mp + i) &= *(b.mp + i);
         }
 
@@ -102,7 +103,7 @@ public:
         assert(b.size == size);
         #endif
 
-        for (uint32_t i = 0; i != size; i++) {
+        for (int i = 0; i < size; i++) {
             *(mp + i) &= ~(*(b.mp + i));
         }
     }
@@ -116,7 +117,7 @@ public:
         #endif
 
         rhs_internal ^= b.rhs_internal;
-        for (uint32_t i = 0; i != size; i++) {
+        for (int i = 0; i < size; i++) {
             *(mp + i) ^= *(b.mp + i);
         }
     }
@@ -126,7 +127,7 @@ public:
     bool popcnt_is_one() const
     {
         int ret = 0;
-        for (uint32_t i = 0; i != size; i++) {
+        for (int i = 0; i < size; i++) {
             ret += my_popcnt(mp[i]);
             if (ret > 1) return false;
         }
@@ -141,7 +142,7 @@ public:
         tmp >>= from%32;
         if (tmp) return false;
 
-        for (uint32_t i = from/32+1; i != size; i++)
+        for (int i = from/32+1; i < size; i++)
             if (mp[i]) return false;
         return true;
     }
@@ -158,7 +159,7 @@ public:
 
     inline bool isZero() const
     {
-        for (uint32_t i = 0; i != size; i++) {
+        for (int i = 0; i != size; i++) {
             if (mp[i]) return false;
         }
         return true;
@@ -216,7 +217,7 @@ public:
     template<class T>
     void set(const T& v, const vector<uint32_t>& var_to_col, const uint32_t matrix_size)
     {
-        assert(size == (matrix_size/32) + ((bool)(matrix_size % 32)));
+        assert(size == ((int)matrix_size/32) + ((bool)(matrix_size % 32)));
         setZero();
         for (uint32_t i = 0; i != v.size(); i++) {
             const uint32_t toset_var = var_to_col[v[i]];
@@ -270,12 +271,12 @@ private:
     //int __attribute__ ((aligned (16))) *const mp;
     int *__restrict const mp;
     int& rhs_internal;
-    const uint32_t size;
+    const int size;
 };
 
 inline std::ostream& operator << (std::ostream& os, const PackedRow& m)
 {
-    for(uint32_t i = 0; i < m.size*32; i++) {
+    for(int i = 0; i < m.size*32; i++) {
         os << (int)m[i];
     }
     os << " -- rhs: " << m.rhs();
@@ -285,7 +286,7 @@ inline std::ostream& operator << (std::ostream& os, const PackedRow& m)
 inline uint32_t PackedRow::popcnt() const
 {
     int ret = 0;
-    for (uint32_t i = 0; i != size; i++) {
+    for (int i = 0; i < size; i++) {
         ret += my_popcnt(mp[i]);
     }
     return ret;

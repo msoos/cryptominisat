@@ -42,7 +42,7 @@ uint32_t PackedRow::find_watchVar(
     non_resp_var = std::numeric_limits<uint32_t>::max();
     tmp_clause.clear();
 
-    for(uint32_t i = 0; i < size*32 && popcnt < 3; i++) {
+    for(int i = 0; i < size*32 && popcnt < 3; i++) {
         if (this->operator[](i)){
             popcnt++;
             uint32_t var = col_to_var[i];
@@ -69,7 +69,7 @@ void PackedRow::get_reason(
     const vector<uint32_t>& col_to_var,
     Lit prop
 ) {
-    for (uint32_t i = 0; i != size; i++) if (mp[i]) {
+    for (int i = 0; i < size; i++) if (mp[i]) {
         int tmp = mp[i];
         int at = __builtin_ffs(tmp);
         int extra = 0;
@@ -126,7 +126,7 @@ gret PackedRow::propGause(
 
     //Find new watch
     if (pop >=2) {
-        for (uint32_t i = 0; i != size; i++) if (tmp_col.mp[i]) {
+        for (int i = 0; i < size; i++) if (tmp_col.mp[i]) {
             int tmp = tmp_col.mp[i];
             int at = __builtin_ffs(tmp);
             int extra = 0;
@@ -161,7 +161,7 @@ gret PackedRow::propGause(
 
     //Lazy prop
     if (pop == 1) {
-        for (uint32_t i = 0; i != size; i++) if (tmp_col.mp[i]) {
+        for (int i = 0; i < size; i++) if (tmp_col.mp[i]) {
             int tmp = tmp_col.mp[i];
             int at = __builtin_ffs(tmp);
 

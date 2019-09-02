@@ -57,7 +57,7 @@ public:
     void resize(const uint32_t num_rows, uint32_t num_cols)
     {
         num_cols = num_cols / 32 + (bool)(num_cols % 32);
-        if (numRows*(numCols+1) < num_rows*(num_cols+1)) {
+        if (numRows*(numCols+1) < (int)num_rows*((int)num_cols+1)) {
             free(mp);
             posix_memalign((void**)&mp, 16,  sizeof(int) * num_rows*(num_cols+1));
         }
@@ -68,7 +68,7 @@ public:
 
     void resizeNumRows(const uint32_t num_rows)
     {
-        assert(num_rows <= numRows);
+        assert((int)num_rows <= numRows);
         numRows = num_rows;
     }
 
@@ -175,8 +175,8 @@ public:
 private:
 
     int __attribute__ ((aligned (16))) *mp;
-    uint32_t numRows;
-    uint32_t numCols;
+    int numRows;
+    int numCols;
 };
 
 }
