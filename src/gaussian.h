@@ -71,8 +71,6 @@ class EGaussian {
     );
     ~EGaussian();
 
-    vector<pair<ClOffset, uint32_t> > clauses_toclear; // use to delete propagate clause
-
 
     ///returns FALSE in case of conflict
     bool  find_truths(
@@ -174,7 +172,6 @@ class EGaussian {
     ///////////////
     void print_matrix();
     void check_watchlist_sanity();
-    void check_xor_reason_clauses_not_cleared();
 };
 
 }

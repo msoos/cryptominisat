@@ -81,18 +81,9 @@ matrix_no(_matrix_no)
 
 EGaussian::~EGaussian() {
     delete_gauss_watch_this_matrix();
-    for (uint32_t i = 0; i < clauses_toclear.size(); i++) {
-        solver->free_cl(clauses_toclear[i].first);
-    }
 }
 
 void EGaussian::canceling(const uint32_t sublevel) {
-    uint32_t a = 0;
-    for (int32_t i = (int32_t)clauses_toclear.size() - 1; i >= 0 && clauses_toclear[i].second > sublevel; i--) {
-        solver->free_cl(clauses_toclear[i].first);
-        a++;
-    }
-    clauses_toclear.resize(clauses_toclear.size() - a);
 }
 
 struct ColSorter {
@@ -939,7 +930,6 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
         row_n++;
     }
 
-    // check_xor_reason_clauses_not_cleared();
     // Debug_funtion();
     #ifdef VERBOSE_DEBUG
     cout
@@ -957,14 +947,6 @@ void EGaussian::print_matrix() {
             cout << " (considered past the end)";
         }
         cout << endl;
-    }
-}
-
-void EGaussian::check_xor_reason_clauses_not_cleared() {
-    for (int i = clauses_toclear.size() - 1; i >= 0; i--) {
-        ClOffset offs = clauses_toclear[i].first;
-        Clause* cl = solver->cl_alloc.ptr(offs);
-        assert(!cl->freed());
     }
 }
 
