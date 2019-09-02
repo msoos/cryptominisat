@@ -33,6 +33,7 @@ THE SOFTWARE.
 #include <algorithm>
 #include <cstdint>
 #include "packedrow.h"
+//#include <immintrin.h>
 
 //#define DEBUG_MATRIX
 
