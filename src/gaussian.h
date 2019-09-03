@@ -116,11 +116,7 @@ class EGaussian {
     void fill_matrix();
     uint32_t select_columnorder();
     gret adjust_matrix(); // adjust matrix, include watch, check row is zero, etc.
-
-    ///////////////
-    // Helper during truth finding/elim
-    ///////////////
-    inline void conflict_twoclause(PropBy& confl);
+    double get_density();
 
 
     ///////////////
@@ -139,6 +135,8 @@ class EGaussian {
     uint64_t elim_ret_confl = 0;
     uint64_t elim_ret_satisfied = 0;
     uint64_t elim_ret_fnewwatch = 0;
+    double before_init_density;
+    double after_init_density;
 
     ///////////////
     // Internal data

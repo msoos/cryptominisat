@@ -252,6 +252,7 @@ bool EGaussian::full_init(bool& created) {
         }
 
         fill_matrix();
+        before_init_density = get_density();
         if (num_rows == 0 || num_cols == 0) {
             created = false;
             return solver->okay();
@@ -302,6 +303,7 @@ bool EGaussian::full_init(bool& created) {
     cols_set->rhs() = 0;
     tmp_col->rhs() = 0;
     tmp_col2->rhs() = 0;
+    after_init_density = get_density();
     return true;
 }
 
@@ -882,74 +884,90 @@ void EGaussian::print_matrix() {
 
 void EGaussian::print_matrix_stats()
 {
+    std::stringstream ss;
+    ss << "c [g " << matrix_no << "] ";
+    const std::string pre = ss.str();
+
     cout << std::left;
-    cout << "c [g " << matrix_no << "] truth prop checks       : "
+    cout << pre << "truth prop checks       : "
     << print_value_kilo_mega(find_truth_called_propgause, false) << endl;
 
-    cout << "c [g " << matrix_no << "] -> of which fnnewat     : "
+    cout << pre << "-> of which fnnewat     : "
     << std::setw(5) << std::setprecision(2) << std::right
     << stats_line_percent(find_truth_ret_fnewwatch, find_truth_called_propgause)
     << " %"
     << endl;
-    cout << "c [g " << matrix_no << "] -> of which sat         : "
+    cout << pre << "-> of which sat         : "
     << std::setw(5) << std::setprecision(2) << std::right
     << stats_line_percent(find_truth_ret_satisfied, find_truth_called_propgause)
     << " %"
     << endl;
-    cout << "c [g " << matrix_no << "] -> of which prop        : "
+    cout << pre << "-> of which prop        : "
     << std::setw(5) << std::setprecision(2) << std::right
     << stats_line_percent(find_truth_ret_prop, find_truth_called_propgause)
     << " %"
     << endl;
-    cout << "c [g " << matrix_no << "] -> of which confl       : "
+    cout << pre << "-> of which confl       : "
     << std::setw(5) << std::setprecision(2) << std::right
     << stats_line_percent(find_truth_ret_confl, find_truth_called_propgause)
     << " %"
     << endl;
 
     cout << std::left;
-    cout << "c [g " << matrix_no << "] elim called             : "
+    cout << pre << "elim called             : "
     << print_value_kilo_mega(elim_called, false) << endl;
-    cout << "c [g " << matrix_no << "] -> lead to xor rows     : "
+    cout << pre << "-> lead to xor rows     : "
     << print_value_kilo_mega(elim_xored_rows, false) << endl;
-    cout << "c [g " << matrix_no << "] --> lead to prop checks : "
+    cout << pre << "--> lead to prop checks : "
     << print_value_kilo_mega(elim_called_propgause, false) << endl;
 
-    cout << "c [g " << matrix_no << "] ---> of which satsified : "
+    cout << pre << "---> of which satsified : "
     << std::setw(5) << std::setprecision(2) << std::right
     << stats_line_percent(elim_ret_satisfied, elim_called_propgause)
     << " %"
     << endl;
-    cout << "c [g " << matrix_no << "] ---> of which prop      : "
+    cout << pre << "---> of which prop      : "
     << std::setw(5) << std::setprecision(2) << std::right
     << stats_line_percent(elim_ret_prop, elim_called_propgause)
     << " %"
     << endl;
-    cout << "c [g " << matrix_no << "] ---> of which fnnewat   : "
+    cout << pre << "---> of which fnnewat   : "
     << std::setw(5) << std::setprecision(2) << std::right
     << stats_line_percent(elim_ret_fnewwatch, elim_called_propgause)
     << " %"
     << endl;
-    cout << "c [g " << matrix_no << "] ---> of which confl     : "
+    cout << pre << "---> of which confl     : "
     << std::setw(5) << std::setprecision(2) << std::right
     << stats_line_percent(elim_ret_confl, elim_called_propgause)
     << " %"
     << endl;
     cout << std::left;
 
-    cout << "c [g " << matrix_no << "] size: "
+    cout << pre << "size: "
     << std::setw(5) << num_rows << " x "
     << std::setw(5) << num_cols << endl;
 
+    double density = get_density();
 
+    cout << pre << "density before init: "
+    << std::setprecision(4) << std::left << before_init_density
+    << endl;
+    cout << pre << "density after  init: "
+    << std::setprecision(4) << std::left << after_init_density
+    << endl;
+    cout << pre << "density            : "
+    << std::setprecision(4) << std::left << density
+    << endl;
+    cout << std::setprecision(2);
+}
+
+double EGaussian::get_density()
+{
     uint32_t pop = 0;
     for (const auto& row: mat) {
         pop += row.popcnt();
     }
-    cout << "c [g " << matrix_no << "] density: "
-    << std::setprecision(4) << std::left << (double)pop/(num_rows*num_cols)
-    << endl;
-    cout << std::setprecision(2);
+    return (double)pop/(double)(num_rows*num_cols);
 }
 
 
