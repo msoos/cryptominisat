@@ -2946,9 +2946,7 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
 
             if (gqueuedata[g].do_eliminate) {
                 gmatrices[g]->eliminate_col(p.var(), gqueuedata[g]);
-                confl_in_gauss |= (
-                    gqueuedata[g].ret == gauss_res::long_confl ||
-                    gqueuedata[g].ret == gauss_res::bin_confl);
+                confl_in_gauss |= (gqueuedata[g].ret == gauss_res::confl);
             }
         }
     }
@@ -2960,34 +2958,12 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
 
         //There was a conflict but this is not that matrix.
         //Just skip.
-        if (confl_in_gauss
-            && gqd.ret != gauss_res::long_confl
-            && gqd.ret != gauss_res::bin_confl
-        ) {
+        if (confl_in_gauss && gqd.ret != gauss_res::confl) {
             continue;
         }
 
         switch (gqd.ret) {
-            case gauss_res::bin_confl :{
-                //assert(confl.getType() == PropByType::binary_t && "this should hold, right?");
-                bool ret = handle_conflict<false>(gqd.confl);
-                #ifdef VERBOSE_DEBUG
-                cout << "Handled binary GJ conflict"
-                << " conf level:" <<  varData[gqd.confl.lit2().var()].level
-                << " conf value: " << value(gqd.confl.lit2())
-                << " failbin level: " << varData[solver->failBinLit.var()].level
-                << " failbin value: " << value(solver->failBinLit)
-                << endl;
-                #endif
-
-                gqd.num_conflicts++;
-                sum_gauss_confl++;
-
-                if (!ret) return gauss_ret::g_false;
-                return gauss_ret::g_cont;
-            }
-
-            case gauss_res::long_confl :{
+            case gauss_res::confl :{
                 gqd.num_conflicts++;
                 sum_gauss_confl++;
 

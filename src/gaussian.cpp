@@ -459,34 +459,6 @@ gret EGaussian::adjust_matrix() {
     return gret::nothing_satisfied;
 }
 
-inline void EGaussian::conflict_twoclause(PropBy& confl) {
-    // assert(tmp_clause.size() == 2);
-    // printf("dd %d:This row is conflict two    n",row_n);
-    Lit lit1 = tmp_clause[0];
-    Lit lit2 = tmp_clause[1];
-
-#if 0
-    cout << "conflict twoclause: " << lit1 << " " << lit2
-    << " vals: " << solver->value(lit1) << " " << solver->value(lit2)
-    << " levels: " << solver->varData[lit1.var()].level << " " << solver->varData[lit2.var()].level
-    << " declevel: " << solver->decisionLevel()
-    << endl;
-#endif
-
-    solver->attach_bin_clause(lit1, lit2, true, false);
-    // solver->dataSync->signalNewBinClause(lit1, lit2);
-
-    lit1 = ~lit1;
-    lit2 = ~lit2;
-    solver->attach_bin_clause(lit1, lit2, true, false);
-    // solver->dataSync->signalNewBinClause(lit1, lit2);
-
-    lit1 = ~lit1;
-    lit2 = ~lit2;
-    confl = PropBy(lit1, true);
-    solver->failBinLit = lit2;
-}
-
 // Delete this row because we have already add to xor clause, nothing to do anymore
 void EGaussian::delete_gausswatch(
     const bool orig_basic
@@ -527,8 +499,7 @@ bool EGaussian::find_truths(
     const uint32_t row_n,
     GaussQData& gqd
 ) {
-    assert(gqd.ret != gauss_res::long_confl &&
-    gqd.ret != gauss_res::bin_confl);
+    assert(gqd.ret != gauss_res::confl);
 
     // printf("dd Watch variable : %d  ,  Wathch row num %d    n", p , row_n);
 
@@ -566,33 +537,9 @@ bool EGaussian::find_truths(
     switch (ret) {
         case gret::confl: {
             find_truth_ret_confl++;
-            // binary conflict
-            if (tmp_clause.size() == 2) {
-                // printf("%d:This row is conflict two    n",row_n);
-                //WARNING !!!! if orig_basic is FALSE, this will delete
-                delete_gausswatch(p_was_resp_var, row_n, p);
-
-                var_has_resp_row[tmp_clause[0].var()] = 0;
-                var_has_resp_row[tmp_clause[1].var()] = 0;
-                row_non_resp_for_var[row_n] =
-                    std::numeric_limits<uint32_t>::max(); // delete non-basic value in this row
-                (*rowIt).setZero();
-
-                conflict_twoclause(gqd.confl);
-
-                gqd.ret = gauss_res::bin_confl;
-                #ifdef VERBOSE_DEBUG
-                cout
-                << "mat[" << matrix_no << "] "
-                << "find_truths - Gauss binary conf " << endl;
-                #endif
-                return false;
-            }
-
-            // long conflict clause
             *j++ = *i;
             gqd.conflict_clause_gauss = tmp_clause;
-            gqd.ret = gauss_res::long_confl;
+            gqd.ret = gauss_res::confl;
             #ifdef VERBOSE_DEBUG
             cout
             << "mat[" << matrix_no << "] "
@@ -815,48 +762,14 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                         << "-> conflict during fixup"<< endl;
                         #endif
 
-                        if (tmp_clause.size() == 2) {
-                            delete_gausswatch(false, row_n);
-                            assert(var_has_resp_row[tmp_clause[0].var()] == 1);
-                            assert(var_has_resp_row[tmp_clause[1].var()] == 0);
+                        solver->gwatches[p].push(
+                            GaussWatched(row_n, matrix_no));
 
-                            // delete value state
-                            var_has_resp_row[tmp_clause[0].var()] = 0;
+                        // update in this row non-basic variable
+                        row_non_resp_for_var[row_n] = p;
 
-                            // delete non-basic value in this row
-                            row_non_resp_for_var[row_n] = std::numeric_limits<uint32_t>::max();
-                            (*rowI).setZero();
-
-                            conflict_twoclause(gqd.confl);
-
-                            gqd.ret = gauss_res::bin_confl;
-                            #ifdef VERBOSE_DEBUG
-                            cout
-                            << "mat[" << matrix_no << "] "
-                            << "-> Gauss bin confl matrix " << matrix_no
-                            << endl;
-                            #endif
-
-                            break;
-
-                        } else {
-                            solver->gwatches[p].push(
-                                GaussWatched(row_n, matrix_no));
-
-                            // update in this row non-basic variable
-                            row_non_resp_for_var[row_n] = p;
-
-                            gqd.conflict_clause_gauss = tmp_clause;
-                            gqd.ret = gauss_res::long_confl;
-                            #ifdef VERBOSE_DEBUG
-                            cout
-                            << "mat[" << matrix_no << "] "
-                            << "-> Gauss long confl"
-                            << endl;
-                            #endif
-
-                            break;
-                        }
+                        gqd.conflict_clause_gauss = tmp_clause;
+                        gqd.ret = gauss_res::confl;
                         break;
                     }
                     case gret::prop: {
@@ -868,9 +781,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                         #endif
 
                         // if conflicted already, just update non-basic variable
-                        if (gqd.ret == gauss_res::bin_confl ||
-                            gqd.ret == gauss_res::long_confl
-                        ) {
+                        if (gqd.ret == gauss_res::confl) {
                             solver->gwatches[p].push(GaussWatched(row_n, matrix_no));
                             row_non_resp_for_var[row_n] = p;
                             break;
