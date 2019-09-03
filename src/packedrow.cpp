@@ -89,10 +89,10 @@ void PackedRow::get_reason(
             }
 
             extra += at;
-            tmp >>= at;
             if (extra == 32)
                 break;
 
+            tmp >>= at;
             at = __builtin_ffs(tmp);
         }
     }
@@ -118,7 +118,6 @@ gret PackedRow::propGause(
 ) {
     //cout << "start" << endl;
     //cout << "line: " << *this << endl;
-    bool final = !rhs_internal;
     new_resp_var = std::numeric_limits<uint32_t>::max();
     tmp_col.and_inv(*this, cols_set);
     uint32_t pop = tmp_col.popcnt();
@@ -142,10 +141,11 @@ gret PackedRow::propGause(
                     new_resp_var = var;
                     return gret::nothing_fnewwatch;
                 }
-                if (at == 32)
-                    break;
 
                 extra += at;
+                if (extra == 32)
+                    break;
+
                 tmp >>= at;
                 at = __builtin_ffs(tmp);
             }
@@ -185,20 +185,24 @@ gret PackedRow::propGause(
 
     //Conflict
     tmp_clause.clear();
-    for (uint32_t i = 0; i != size; i++) if (mp[i]) {
+    #ifdef SLOW_DEBUG
+    bool final_val = !rhs_internal;
+    #endif
+    for (int i = 0; i < size; i++) if (mp[i]) {
         int tmp = mp[i];
         int at = __builtin_ffs(tmp);
         int extra = 0;
         while (at != 0) {
             uint32_t col = extra + at-1 + i*32;
-            //cout << "col: " << col << " extra: " << extra << " at: " << at << endl;
             #ifdef SLOW_DEBUG
             assert(this->operator[](col) == 1);
             #endif
             const uint32_t var = col_to_var[col];
             const lbool val = assigns[var];
             const bool val_bool = (val == l_True);
-            final ^= val_bool;
+            #ifdef SLOW_DEBUG
+            final_val ^= val_bool;
+            #endif
             tmp_clause.push_back(Lit(var, val_bool));
 
             //TODO check do we need this????
@@ -216,7 +220,9 @@ gret PackedRow::propGause(
         }
     }
 
-    assert(!final);
+    #ifdef SLOW_DEBUG
+    assert(!final_val);
+    #endif
     return gret::confl;
 }
 
