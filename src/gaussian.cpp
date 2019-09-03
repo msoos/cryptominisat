@@ -561,10 +561,11 @@ bool EGaussian::find_truths(
         *cols_vals,
         *cols_set,
         ret_lit_prop);
-    find_truth_called_prop++;
+    find_truth_called_propgause++;
 
     switch (ret) {
         case gret::confl: {
+            find_truth_ret_confl++;
             // binary conflict
             if (tmp_clause.size() == 2) {
                 // printf("%d:This row is conflict two    n",row_n);
@@ -803,10 +804,11 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                     *cols_set,
                     ret_lit_prop
                 );
-                elim_called_prop++;
+                elim_called_propgause++;
 
                 switch (ret) {
                     case gret::confl: {
+                        elim_ret_confl++;
                         #ifdef VERBOSE_DEBUG
                         cout
                         << "mat[" << matrix_no << "] "
@@ -912,6 +914,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
 
                     // this row already satisfied
                     case gret::nothing_satisfied:
+                        elim_ret_satisfied++;
                         #ifdef VERBOSE_DEBUG
                         cout
                         << "mat[" << matrix_no << "] "
@@ -927,7 +930,6 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                         solver->gwatches[p].push(GaussWatched(row_n, matrix_no));
                         row_non_resp_for_var[row_n] = p;
                         satisfied_xors[solver->decisionLevel()][row_n] = 1;
-                        elim_prop_ret_satisfied++;
                         break;
                     default:
                         // can not here

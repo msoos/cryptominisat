@@ -140,6 +140,7 @@ class Searcher : public HyperEngine
         //Gauss
         #ifdef USE_GAUSS
         void clear_gauss_matrices();
+        void print_matrix_stats();
         enum class gauss_ret {g_cont, g_nothing, g_false};
         gauss_ret gauss_jordan_elim();
         vector<EGaussian*> gmatrices;

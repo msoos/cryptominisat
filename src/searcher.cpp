@@ -2519,6 +2519,7 @@ void Searcher::print_solution_type(const lbool status) const
 void Searcher::finish_up_solve(const lbool status)
 {
     print_solution_type(status);
+    print_matrix_stats();
 
     if (status == l_True) {
         #ifdef SLOW_DEBUG
@@ -3704,21 +3705,8 @@ void Searcher::clear_gauss_matrices()
     }
 
     //cout << "Clearing matrices" << endl;
+    print_matrix_stats();
     for(EGaussian* g: gmatrices) {
-        cout << "truth prop checks       : " << g->find_truth_called_prop << endl;
-        cout << "-> of which fnnewat     : " << g->find_truth_ret_fnewwatch << endl;
-        cout << "-> of which sat         : " << g->find_truth_ret_satisfied << endl;
-        cout << "-> of which prop        : " << g->find_truth_ret_prop << endl;
-
-
-        cout << "elim called             : " << g->elim_called << endl;
-        cout << "-> lead to xor rows     : " << g->elim_xored_rows << endl;
-        cout << "--> lead to prop checks : " << g->elim_called_prop << endl;
-        cout << "---> of which satsified : " << g->elim_prop_ret_satisfied << endl;
-        cout << "---> of which prop      : " << g->elim_ret_prop << endl;
-        cout << "---> of which fnnewat   : " << g->elim_ret_fnewwatch << endl;
-
-
         delete g;
     }
     for(auto& w: gwatches) {
@@ -3726,6 +3714,66 @@ void Searcher::clear_gauss_matrices()
     }
     gmatrices.clear();
     gqueuedata.clear();
+}
+
+void Searcher::print_matrix_stats()
+{
+    for(EGaussian* g: gmatrices) {
+        cout << std::left;
+        cout << "c [g] truth prop checks       : "
+        << print_value_kilo_mega(g->find_truth_called_propgause, false) << endl;
+
+        cout << "c [g] -> of which fnnewat     : "
+        << std::setw(5) << std::setprecision(2) << std::right
+        << stats_line_percent(g->find_truth_ret_fnewwatch, g->find_truth_called_propgause)
+        << " %"
+        << endl;
+        cout << "c [g] -> of which sat         : "
+        << std::setw(5) << std::setprecision(2) << std::right
+        << stats_line_percent(g->find_truth_ret_satisfied, g->find_truth_called_propgause)
+        << " %"
+        << endl;
+        cout << "c [g] -> of which prop        : "
+        << std::setw(5) << std::setprecision(2) << std::right
+        << stats_line_percent(g->find_truth_ret_prop, g->find_truth_called_propgause)
+        << " %"
+        << endl;
+        cout << "c [g] -> of which confl       : "
+        << std::setw(5) << std::setprecision(2) << std::right
+        << stats_line_percent(g->find_truth_ret_confl, g->find_truth_called_propgause)
+        << " %"
+        << endl;
+
+        cout << std::left;
+        cout << "c [g] elim called             : "
+        << print_value_kilo_mega(g->elim_called, false) << endl;
+        cout << "c [g] -> lead to xor rows     : "
+        << print_value_kilo_mega(g->elim_xored_rows, false) << endl;
+        cout << "c [g] --> lead to prop checks : "
+        << print_value_kilo_mega(g->elim_called_propgause, false) << endl;
+
+        cout << "c [g] ---> of which satsified : "
+        << std::setw(5) << std::setprecision(2) << std::right
+        << stats_line_percent(g->elim_ret_satisfied, g->elim_called_propgause)
+        << " %"
+        << endl;
+        cout << "c [g] ---> of which prop      : "
+        << std::setw(5) << std::setprecision(2) << std::right
+        << stats_line_percent(g->elim_ret_prop, g->elim_called_propgause)
+        << " %"
+        << endl;
+        cout << "c [g] ---> of which fnnewat   : "
+        << std::setw(5) << std::setprecision(2) << std::right
+        << stats_line_percent(g->elim_ret_fnewwatch, g->elim_called_propgause)
+        << " %"
+        << endl;
+        cout << "c [g] ---> of which confl     : "
+        << std::setw(5) << std::setprecision(2) << std::right
+        << stats_line_percent(g->elim_ret_confl, g->elim_called_propgause)
+        << " %"
+        << endl;
+        cout << std::left;
+    }
 }
 #endif
 
