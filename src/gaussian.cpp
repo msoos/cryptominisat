@@ -669,6 +669,9 @@ void EGaussian::update_cols_vals_set()
     assert(solver->trail.size() >= last_val_update);
     for(uint32_t i = last_val_update; i < solver->trail.size(); i++) {
         uint32_t var = solver->trail[i].var();
+        if (var_to_col.size() <= var) {
+            continue;
+        }
         uint32_t col = var_to_col[var];
         if (col != unassigned_col) {
             assert (solver->value(var) != l_Undef);
