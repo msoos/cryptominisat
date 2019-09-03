@@ -92,24 +92,9 @@ class EGaussian {
     void canceling();
     bool full_init(bool& created);
     void update_cols_vals_set();
+    void print_matrix_stats();
 
     vector<Xor> xorclauses;
-
-    //stats
-    uint64_t find_truth_called_propgause = 0;
-    uint64_t find_truth_ret_fnewwatch = 0;
-    uint64_t find_truth_ret_confl = 0;
-    uint64_t find_truth_ret_satisfied = 0;
-    uint64_t find_truth_ret_prop = 0;
-
-    uint64_t elim_called = 0;
-    uint64_t elim_xored_rows = 0;
-    uint64_t elim_called_propgause = 0;
-    uint64_t elim_ret_prop = 0;
-    uint64_t elim_ret_confl = 0;
-    uint64_t elim_ret_satisfied = 0;
-    uint64_t elim_ret_fnewwatch = 0;
-    const uint32_t matrix_no;
 
   private:
     Solver* solver;   // orignal sat solver
@@ -137,9 +122,28 @@ class EGaussian {
     ///////////////
     inline void conflict_twoclause(PropBy& confl);
 
+
+    ///////////////
+    // stats
+    ///////////////
+    uint64_t find_truth_called_propgause = 0;
+    uint64_t find_truth_ret_fnewwatch = 0;
+    uint64_t find_truth_ret_confl = 0;
+    uint64_t find_truth_ret_satisfied = 0;
+    uint64_t find_truth_ret_prop = 0;
+
+    uint64_t elim_called = 0;
+    uint64_t elim_xored_rows = 0;
+    uint64_t elim_called_propgause = 0;
+    uint64_t elim_ret_prop = 0;
+    uint64_t elim_ret_confl = 0;
+    uint64_t elim_ret_satisfied = 0;
+    uint64_t elim_ret_fnewwatch = 0;
+
     ///////////////
     // Internal data
     ///////////////
+    const uint32_t matrix_no;
     bool cancelled_since_val_update = true;
     uint32_t last_val_update = 0;
     vector<Lit> tmp_clause;  // conflict&propagation handling

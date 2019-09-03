@@ -157,12 +157,12 @@ public:
         const uint32_t numCols;
     };
 
-    inline iterator beginMatrix()
+    inline iterator begin()
     {
         return iterator(mp, numCols);
     }
 
-    inline iterator endMatrix()
+    inline iterator end()
     {
         return iterator(mp+numRows*(numCols+1), numCols);
     }

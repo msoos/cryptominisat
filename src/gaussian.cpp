@@ -319,8 +319,8 @@ void EGaussian::check_watchlist_sanity()
 void EGaussian::eliminate() {
     uint32_t row = 0;
     uint32_t col = 0;
-    PackedMatrix::iterator end_row_it = mat.beginMatrix() + num_rows;
-    PackedMatrix::iterator row_i = mat.beginMatrix();
+    PackedMatrix::iterator end_row_it = mat.begin() + num_rows;
+    PackedMatrix::iterator row_i = mat.begin();
 
     // Gauss-Jordan Elimination
     while (row != num_rows && col != num_cols) {
@@ -345,7 +345,7 @@ void EGaussian::eliminate() {
 
             // XOR into *all* rows that have a "1" in column COL
             // Since we XOR into *all*, this is Gauss-Jordan (and not just Gauss)
-            for (PackedMatrix::iterator k_row = mat.beginMatrix()
+            for (PackedMatrix::iterator k_row = mat.begin()
                 ; k_row != end_row_it
                 ; ++k_row
             ) {
@@ -370,8 +370,8 @@ gret EGaussian::adjust_matrix() {
     assert(satisfied_xors.size() > 0);
     assert(satisfied_xors[0].size() >= num_rows);
 
-    PackedMatrix::iterator end = mat.beginMatrix() + num_rows;
-    PackedMatrix::iterator rowIt = mat.beginMatrix();
+    PackedMatrix::iterator end = mat.begin() + num_rows;
+    PackedMatrix::iterator rowIt = mat.begin();
     uint32_t row_id = 0;      // row index
     uint32_t adjust_zero = 0; //  elimination row
 
@@ -504,7 +504,7 @@ bool EGaussian::find_truths(
     // printf("dd Watch variable : %d  ,  Wathch row num %d    n", p , row_n);
 
     bool p_was_resp_var = false; // check invoked variable is basic or non-basic
-    PackedMatrix::iterator rowIt = mat.beginMatrix() + row_n;
+    PackedMatrix::iterator rowIt = mat.begin() + row_n;
 
     // this clause is already satisfied
     if (satisfied_xors[solver->decisionLevel()][row_n]) {
@@ -681,9 +681,9 @@ void EGaussian::update_cols_vals_set()
 }
 
 void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
-    PackedMatrix::iterator new_resp_row = mat.beginMatrix() + gqd.new_resp_row;
-    PackedMatrix::iterator rowI = mat.beginMatrix();
-    PackedMatrix::iterator end = mat.endMatrix();
+    PackedMatrix::iterator new_resp_row = mat.begin() + gqd.new_resp_row;
+    PackedMatrix::iterator rowI = mat.begin();
+    PackedMatrix::iterator end = mat.end();
     uint32_t new_resp_col = var_to_col[gqd.new_resp_var];
     uint32_t orig_non_resp_var = 0;
     uint32_t orig_non_resp_col = 0;
@@ -870,7 +870,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
 
 void EGaussian::print_matrix() {
     uint32_t row = 0;
-    for (PackedMatrix::iterator it = mat.beginMatrix(); it != mat.endMatrix();
+    for (PackedMatrix::iterator it = mat.begin(); it != mat.end();
          ++it, row++) {
         cout << *it << " -- row:" << row;
         if (row >= num_rows) {
@@ -878,6 +878,78 @@ void EGaussian::print_matrix() {
         }
         cout << endl;
     }
+}
+
+void EGaussian::print_matrix_stats()
+{
+    cout << std::left;
+    cout << "c [g " << matrix_no << "] truth prop checks       : "
+    << print_value_kilo_mega(find_truth_called_propgause, false) << endl;
+
+    cout << "c [g " << matrix_no << "] -> of which fnnewat     : "
+    << std::setw(5) << std::setprecision(2) << std::right
+    << stats_line_percent(find_truth_ret_fnewwatch, find_truth_called_propgause)
+    << " %"
+    << endl;
+    cout << "c [g " << matrix_no << "] -> of which sat         : "
+    << std::setw(5) << std::setprecision(2) << std::right
+    << stats_line_percent(find_truth_ret_satisfied, find_truth_called_propgause)
+    << " %"
+    << endl;
+    cout << "c [g " << matrix_no << "] -> of which prop        : "
+    << std::setw(5) << std::setprecision(2) << std::right
+    << stats_line_percent(find_truth_ret_prop, find_truth_called_propgause)
+    << " %"
+    << endl;
+    cout << "c [g " << matrix_no << "] -> of which confl       : "
+    << std::setw(5) << std::setprecision(2) << std::right
+    << stats_line_percent(find_truth_ret_confl, find_truth_called_propgause)
+    << " %"
+    << endl;
+
+    cout << std::left;
+    cout << "c [g " << matrix_no << "] elim called             : "
+    << print_value_kilo_mega(elim_called, false) << endl;
+    cout << "c [g " << matrix_no << "] -> lead to xor rows     : "
+    << print_value_kilo_mega(elim_xored_rows, false) << endl;
+    cout << "c [g " << matrix_no << "] --> lead to prop checks : "
+    << print_value_kilo_mega(elim_called_propgause, false) << endl;
+
+    cout << "c [g " << matrix_no << "] ---> of which satsified : "
+    << std::setw(5) << std::setprecision(2) << std::right
+    << stats_line_percent(elim_ret_satisfied, elim_called_propgause)
+    << " %"
+    << endl;
+    cout << "c [g " << matrix_no << "] ---> of which prop      : "
+    << std::setw(5) << std::setprecision(2) << std::right
+    << stats_line_percent(elim_ret_prop, elim_called_propgause)
+    << " %"
+    << endl;
+    cout << "c [g " << matrix_no << "] ---> of which fnnewat   : "
+    << std::setw(5) << std::setprecision(2) << std::right
+    << stats_line_percent(elim_ret_fnewwatch, elim_called_propgause)
+    << " %"
+    << endl;
+    cout << "c [g " << matrix_no << "] ---> of which confl     : "
+    << std::setw(5) << std::setprecision(2) << std::right
+    << stats_line_percent(elim_ret_confl, elim_called_propgause)
+    << " %"
+    << endl;
+    cout << std::left;
+
+    cout << "c [g " << matrix_no << "] size: "
+    << std::setw(5) << num_rows << " x "
+    << std::setw(5) << num_cols << endl;
+
+
+    uint32_t pop = 0;
+    for (const auto& row: mat) {
+        pop += row.popcnt();
+    }
+    cout << "c [g " << matrix_no << "] density: "
+    << std::setprecision(4) << std::left << (double)pop/(num_rows*num_cols)
+    << endl;
+    cout << std::setprecision(2);
 }
 
 
