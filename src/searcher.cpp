@@ -2880,14 +2880,13 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
         gmatrices[i]->update_cols_vals_set();
 
         if (solver->conf.gaussconf.autodisable &&
-            (gqd.find_truths_called & 0xff) == 0xff && //only check once in a while
-            gqd.find_truths_called > 1000
+            (gqd.find_truths_called & 0xfff) == 0xfff //only check once in a while
         ) {
             uint32_t limit = (double)gqd.find_truths_called*0.01;
             uint32_t useful = 2*gqd.num_conflicts+gqd.num_props;
             if (useful < limit) {
-                const double perc = stats_line_percent(gqd.num_conflicts*2+gqd.num_props, gqd.find_truths_called);
                 if (solver->conf.verbosity) {
+                    const double perc = stats_line_percent(gqd.num_conflicts*2+gqd.num_props, gqd.find_truths_called);
                     cout << "c [gauss] <" <<  i <<  "> Disabling GJ-elim in this round. "
                     " Usefulness was: "
                     << std::setprecision(2) << std::fixed << perc
@@ -2920,7 +2919,6 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
                 continue;
             }
 
-            sum_truths_called++;
             gqueuedata[i->matrix_num].find_truths_called++;
             gqueuedata[i->matrix_num].new_resp_var = std::numeric_limits<uint32_t>::max();
             gqueuedata[i->matrix_num].new_resp_row = std::numeric_limits<uint32_t>::max();
@@ -3697,11 +3695,11 @@ void Searcher::clear_gauss_matrices()
         gqd.reset_stats();
     }
 
-    if (solver->conf.verbosity >= 2 && sum_truths_called > 0) {
+    if (solver->conf.verbosity >= 2 && sum_gauss_called > 0) {
         cout
+        << "c [gauss] sum_gauss_called    : " << print_value_kilo_mega(sum_gauss_called) << endl
         << "c [gauss] sum_gauss_prop: " << print_value_kilo_mega(sum_gauss_prop) << endl
-        << "c [gauss] sum_gauss_confl : " << print_value_kilo_mega(sum_gauss_confl) << endl
-        << "c [gauss] sum_truths_called    : " << print_value_kilo_mega(sum_truths_called) << endl;
+        << "c [gauss] sum_gauss_confl : " << print_value_kilo_mega(sum_gauss_confl) << endl;
     }
 
     //cout << "Clearing matrices" << endl;

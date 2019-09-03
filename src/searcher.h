@@ -149,12 +149,9 @@ class Searcher : public HyperEngine
         uint32_t sum_gauss_called = 0;
         uint32_t sum_gauss_confl = 0;
         uint32_t sum_gauss_prop = 0;
-        uint32_t sum_gauss_unit_truths = 0;
-        uint32_t sum_truths_called = 0;
         uint32_t get_sum_gauss_called() const;
         uint32_t get_sum_gauss_confl() const;
         uint32_t get_sum_gauss_prop() const;
-        uint32_t get_sum_gauss_unit_truths() const;
         #endif
 
         double get_cla_inc() const
@@ -632,11 +629,6 @@ inline void Searcher::bump_vsids_var_act(uint32_t var, double mult)
 }
 
 #ifdef USE_GAUSS
-inline uint32_t Searcher::get_sum_gauss_unit_truths() const
-{
-    return sum_gauss_unit_truths;
-}
-
 inline uint32_t Searcher::get_sum_gauss_called() const
 {
     return sum_gauss_called;
