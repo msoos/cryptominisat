@@ -3694,54 +3694,54 @@ void Searcher::print_matrix_stats()
 {
     for(EGaussian* g: gmatrices) {
         cout << std::left;
-        cout << "c [g] truth prop checks       : "
+        cout << "c [g " << g->matrix_no << "] truth prop checks       : "
         << print_value_kilo_mega(g->find_truth_called_propgause, false) << endl;
 
-        cout << "c [g] -> of which fnnewat     : "
+        cout << "c [g " << g->matrix_no << "] -> of which fnnewat     : "
         << std::setw(5) << std::setprecision(2) << std::right
         << stats_line_percent(g->find_truth_ret_fnewwatch, g->find_truth_called_propgause)
         << " %"
         << endl;
-        cout << "c [g] -> of which sat         : "
+        cout << "c [g " << g->matrix_no << "] -> of which sat         : "
         << std::setw(5) << std::setprecision(2) << std::right
         << stats_line_percent(g->find_truth_ret_satisfied, g->find_truth_called_propgause)
         << " %"
         << endl;
-        cout << "c [g] -> of which prop        : "
+        cout << "c [g " << g->matrix_no << "] -> of which prop        : "
         << std::setw(5) << std::setprecision(2) << std::right
         << stats_line_percent(g->find_truth_ret_prop, g->find_truth_called_propgause)
         << " %"
         << endl;
-        cout << "c [g] -> of which confl       : "
+        cout << "c [g " << g->matrix_no << "] -> of which confl       : "
         << std::setw(5) << std::setprecision(2) << std::right
         << stats_line_percent(g->find_truth_ret_confl, g->find_truth_called_propgause)
         << " %"
         << endl;
 
         cout << std::left;
-        cout << "c [g] elim called             : "
+        cout << "c [g " << g->matrix_no << "] elim called             : "
         << print_value_kilo_mega(g->elim_called, false) << endl;
-        cout << "c [g] -> lead to xor rows     : "
+        cout << "c [g " << g->matrix_no << "] -> lead to xor rows     : "
         << print_value_kilo_mega(g->elim_xored_rows, false) << endl;
-        cout << "c [g] --> lead to prop checks : "
+        cout << "c [g " << g->matrix_no << "] --> lead to prop checks : "
         << print_value_kilo_mega(g->elim_called_propgause, false) << endl;
 
-        cout << "c [g] ---> of which satsified : "
+        cout << "c [g " << g->matrix_no << "] ---> of which satsified : "
         << std::setw(5) << std::setprecision(2) << std::right
         << stats_line_percent(g->elim_ret_satisfied, g->elim_called_propgause)
         << " %"
         << endl;
-        cout << "c [g] ---> of which prop      : "
+        cout << "c [g " << g->matrix_no << "] ---> of which prop      : "
         << std::setw(5) << std::setprecision(2) << std::right
         << stats_line_percent(g->elim_ret_prop, g->elim_called_propgause)
         << " %"
         << endl;
-        cout << "c [g] ---> of which fnnewat   : "
+        cout << "c [g " << g->matrix_no << "] ---> of which fnnewat   : "
         << std::setw(5) << std::setprecision(2) << std::right
         << stats_line_percent(g->elim_ret_fnewwatch, g->elim_called_propgause)
         << " %"
         << endl;
-        cout << "c [g] ---> of which confl     : "
+        cout << "c [g " << g->matrix_no << "] ---> of which confl     : "
         << std::setw(5) << std::setprecision(2) << std::right
         << stats_line_percent(g->elim_ret_confl, g->elim_called_propgause)
         << " %"

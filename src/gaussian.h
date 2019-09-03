@@ -109,6 +109,7 @@ class EGaussian {
     uint64_t elim_ret_confl = 0;
     uint64_t elim_ret_satisfied = 0;
     uint64_t elim_ret_fnewwatch = 0;
+    const uint32_t matrix_no;
 
   private:
     Solver* solver;   // orignal sat solver
@@ -141,8 +142,6 @@ class EGaussian {
     ///////////////
     bool cancelled_since_val_update = true;
     uint32_t last_val_update = 0;
-
-    const uint32_t matrix_no; // matrix index
     vector<Lit> tmp_clause;  // conflict&propagation handling
 
     //Is the clause at this ROW satisfied already?
