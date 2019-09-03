@@ -270,7 +270,6 @@ bool EGaussian::full_init(bool& created) {
                 return false;
                 break;
             case gret::prop:
-            case gret::unit_prop:
                 do_again_gauss = true;
                 solver->sum_gauss_prop++;
 
@@ -412,7 +411,7 @@ gret EGaussian::adjust_matrix() {
                 (*rowIt).setZero(); // reset this row all zero
                 row_non_resp_for_var.push_back(std::numeric_limits<uint32_t>::max());
                 var_has_resp_row[tmp_clause[0].var()] = 0;
-                return gret::unit_prop;
+                return gret::prop;
             }
 
             //Binary XOR

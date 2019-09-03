@@ -45,7 +45,7 @@ using std::cout;
 using std::endl;
 using std::string;
 
-enum class gret      {confl, prop, unit_prop, nothing_satisfied, nothing_fnewwatch};
+enum class gret      {confl, prop, nothing_satisfied, nothing_fnewwatch};
 enum class gauss_res {none, confl, prop};
 
 inline std::string restart_type_to_string(const Restart type)
