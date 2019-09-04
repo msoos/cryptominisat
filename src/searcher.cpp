@@ -75,10 +75,10 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
         , solver(_solver)
         , cla_inc(1)
 {
-    var_decay_vsids = conf.var_decay_vsids_start;
+    var_decay_vsids = conf.var_decay_vsids;
     maple_step_size = solver->conf.orig_step_size;
 
-    var_inc_vsids = conf.var_inc_vsids_start;
+    var_inc_vsids = conf.var_inc_vsids;
     more_red_minim_limit_binary_actual = conf.more_red_minim_limit_binary;
     mtrand.seed(conf.origSeed);
     hist.setSize(conf.shortTermHistorySize, 5000);
@@ -1312,15 +1312,9 @@ inline void Searcher::update_branch_params()
 {
     switch(branch_strategy) {
         case branch::vsids:
-            if (
-                ((stats.conflStats.numConflicts & 0xfff) == 0xfff)
-                && var_decay_vsids < conf.var_decay_vsids_max
-            ) {
-                var_decay_vsids += 0.01;
-            }
             break;
         case branch::maple:
-            if ( maple_step_size > solver->conf.min_step_size) {
+            if (maple_step_size > solver->conf.min_step_size) {
                 maple_step_size -= solver->conf.step_size_dec;
             }
             break;
@@ -3360,14 +3354,6 @@ inline void Searcher::vsids_decay_var_act()
 {
     assert(branch_strategy == branch::vsids);
     var_inc_vsids *= (1.0 / var_decay_vsids);
-}
-
-void Searcher::update_var_decay_vsids()
-{
-    assert(branch_strategy == branch::vsids);
-    if (var_decay_vsids >= conf.var_decay_vsids_max) {
-        var_decay_vsids = conf.var_decay_vsids_max;
-    }
 }
 
 void Searcher::consolidate_watches(const bool full)

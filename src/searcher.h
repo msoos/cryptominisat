@@ -325,7 +325,6 @@ class Searcher : public HyperEngine
         void vsids_decay_var_act();
         template<bool update_bogoprops>
         void vsids_bump_var_act(uint32_t v, double mult = 1.0);
-        void update_var_decay_vsids();
         double backup_random_var_freq = -1; ///<if restart has full random var branch, we save old value here
         void check_var_in_branch_strategy(uint32_t var) const;
         void set_branch_strategy(const uint32_t iteration_num);

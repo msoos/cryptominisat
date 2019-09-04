@@ -29,9 +29,8 @@ using namespace CMSat;
 
 DLL_PUBLIC SolverConf::SolverConf() :
         //Variable activities
-        var_inc_vsids_start(1)
-        , var_decay_vsids_start(0.8) // 1/0.8 = 1.2 -- large is better for frequent restarts
-        , var_decay_vsids_max(0.95) // 1/0.95 = 1.05 -- smaller is better for hard instances
+        var_inc_vsids(1)
+        , var_decay_vsids(0.95)
         , do_full_random_branch(0)
         , polarity_mode(PolarityMode::polarmode_automatic)
 

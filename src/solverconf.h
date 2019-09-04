@@ -154,9 +154,8 @@ class DLL_PUBLIC SolverConf
         ) const;
 
         //Variable activities
-        double  var_inc_vsids_start;
-        double  var_decay_vsids_start;
-        double  var_decay_vsids_max;
+        double  var_inc_vsids;
+        double  var_decay_vsids;
         int do_full_random_branch;
         PolarityMode polarity_mode;
 

@@ -392,19 +392,14 @@ void Main::add_supported_options()
         , "When dumping redundant clauses, only dump clauses with at most this large glue")
     ;
 
-    std::ostringstream s_var_decay_vsids_start;
-    s_var_decay_vsids_start << std::setprecision(5) << conf.var_decay_vsids_start;
-
-    std::ostringstream s_var_decay_vsids_max;
-    s_var_decay_vsids_max << std::setprecision(5) << conf.var_decay_vsids_max;
+    std::ostringstream s_var_decay_vsids;
+    s_var_decay_vsids << std::setprecision(5) << conf.var_decay_vsids;
 
     po::options_description varPickOptions("Variable branching options");
     varPickOptions.add_options()
-    ("vardecaystart", po::value(&conf.var_decay_vsids_start)->default_value(conf.var_decay_vsids_start, s_var_decay_vsids_start.str())
+    ("vardecay", po::value(&conf.var_decay_vsids)->default_value(conf.var_decay_vsids, s_var_decay_vsids.str())
         , "variable activity increase divider (MUST be smaller than multiplier)")
-    ("vardecaymax", po::value(&conf.var_decay_vsids_max)->default_value(conf.var_decay_vsids_max, s_var_decay_vsids_max.str())
-        , "variable activity increase divider (MUST be smaller than multiplier)")
-    ("vincstart", po::value(&conf.var_inc_vsids_start)->default_value(conf.var_inc_vsids_start)
+    ("varinc", po::value(&conf.var_inc_vsids)->default_value(conf.var_inc_vsids)
         , "variable activity increase starts with this value. Make sure that this multiplied by multiplier and divided by divider is larger than itself")
     ("maple", po::value(&conf.maple)->default_value(conf.maple)
         , "Use maple-type variable picking sometimes")

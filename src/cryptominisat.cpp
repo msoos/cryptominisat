@@ -221,7 +221,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.inc_max_temp_lev2_red_cls = 1.04;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0.1;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.3;
-            conf.var_decay_vsids_max = 0.90; //more 'slow' in adjusting activities
+            conf.var_decay_vsids = 0.90; //more 'slow' in adjusting activities
             break;
         }
         case 8: {
@@ -233,7 +233,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
         case 9: {
             conf.maple = 0;
-            conf.var_decay_vsids_max = 0.998;
+            conf.var_decay_vsids = 0.998;
             break;
         }
         case 10: {
@@ -324,7 +324,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.more_red_minim_limit_binary = 600;
             conf.max_num_lits_more_more_red_min = 20;
             //conf.max_temporary_learnt_clauses = 10000;
-            conf.var_decay_vsids_max = 0.99; //more 'fast' in adjusting activities
+            conf.var_decay_vsids = 0.99; //more 'fast' in adjusting activities
             break;
         }
 
@@ -341,7 +341,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.maple = 0;
             conf.glue_put_lev0_if_below_or_eq = 3;
             conf.glue_put_lev1_if_below_or_eq = 5;
-            conf.var_decay_vsids_max = 0.97;
+            conf.var_decay_vsids = 0.97;
             break;
         }
 
@@ -353,7 +353,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.more_red_minim_limit_binary = 600;
             conf.max_num_lits_more_more_red_min = 20;
             //conf.max_temporary_learnt_clauses = 10000;
-            conf.var_decay_vsids_max = 0.99; //more 'fast' in adjusting activities
+            conf.var_decay_vsids = 0.99; //more 'fast' in adjusting activities
             break;
         }
 
