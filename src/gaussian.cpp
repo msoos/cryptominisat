@@ -588,7 +588,6 @@ bool EGaussian::find_truths(
             find_truth_ret_fnewwatch++;
             // printf("%d:This row is find new watch:%d => orig %d p:%d    n",row_n ,
             // new_resp_var,orig_basic , p);
-            assert(new_resp_var != std::numeric_limits<uint32_t>::max());
             if (p_was_resp_var) {
                 /// clear watchlist, because only one basic value in watchlist
                 assert(new_resp_var != p);

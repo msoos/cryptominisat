@@ -118,7 +118,6 @@ gret PackedRow::propGause(
 ) {
     //cout << "start" << endl;
     //cout << "line: " << *this << endl;
-    new_resp_var = std::numeric_limits<uint32_t>::max();
     tmp_col.and_inv(*this, cols_set);
     uint32_t pop = tmp_col.popcnt();
 
