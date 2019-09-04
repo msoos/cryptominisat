@@ -187,13 +187,13 @@ void EGaussian::fill_matrix() {
 
     delete_gauss_watch_this_matrix();
 
-    //forget clause state
+    //reset satisfied_xor state
     assert(solver->decisionLevel() == 0);
     if (satisfied_xors.size() < 1) {
         satisfied_xors.resize(1);
-        satisfied_xors[0].clear();
-        satisfied_xors[0].resize(num_rows, 0);
     }
+    satisfied_xors[0].clear();
+    satisfied_xors[0].resize(num_rows, 0);
 }
 
 void EGaussian::new_decision_level()
