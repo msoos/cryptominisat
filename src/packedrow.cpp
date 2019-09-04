@@ -154,7 +154,7 @@ gret PackedRow::propGause(
 
     //Calc value of row
     tmp_col2.set_and(*this, cols_vals);
-    const uint32_t pop_t = tmp_col2.popcnt() + tmp_col2.rhs();
+    const uint32_t pop_t = tmp_col2.popcnt() + rhs();
 
     //Lazy prop
     if (pop == 1) {
