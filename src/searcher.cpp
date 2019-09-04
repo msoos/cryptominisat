@@ -2519,7 +2519,9 @@ void Searcher::print_solution_type(const lbool status) const
 void Searcher::finish_up_solve(const lbool status)
 {
     print_solution_type(status);
-    print_matrix_stats();
+    if (conf.verbosity) {
+        print_matrix_stats();
+    }
 
     if (status == l_True) {
         #ifdef SLOW_DEBUG
@@ -3678,8 +3680,9 @@ void Searcher::clear_gauss_matrices()
         << "c [gauss] sum_gauss_confl : " << print_value_kilo_mega(sum_gauss_confl) << endl;
     }
 
-    //cout << "Clearing matrices" << endl;
-    print_matrix_stats();
+    if (solver->conf.verbosity) {
+        print_matrix_stats();
+    }
     for(EGaussian* g: gmatrices) {
         delete g;
     }
