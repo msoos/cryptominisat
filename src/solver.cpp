@@ -146,7 +146,9 @@ Solver::~Solver()
     delete subsumeImplicit;
     delete datasync;
     delete reduceDB;
+#ifdef USE_BREAKID
     delete breakid;
+#endif
     delete card_finder;
 }
 
