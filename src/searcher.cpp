@@ -1111,9 +1111,19 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
                         break;
                     }
 
-                    default:
-                        assert(false);
+                    #ifdef USE_GAUSS
+                    case PropByType::xor_t: {
+                        vector<Lit>* cl = gmatrices[reason.get_matrix_num()]->
+                            get_reason(reason.get_row_num());
+                        assert(value((*cl)[0]) == l_True);
+                        for(const Lit lit: *cl) {
+                            if (varData[lit.var()].level > 0) {
+                                seen[lit.var()] = 1;
+                            }
+                        }
                         break;
+                    }
+                    #endif
                 }
             }
             seen[x] = 0;
@@ -1325,6 +1335,12 @@ lbool Searcher::new_decision()
         if (value(p) == l_True) {
             // Dummy decision level:
             new_decision_level();
+            #ifdef USE_GAUSS
+            for(uint32_t i = 0; i < gmatrices.size(); i++) {
+                assert(gmatrices[i]);
+                gmatrices[i]->new_decision_level();
+            }
+            #endif
         } else if (value(p) == l_False) {
             analyze_final_confl_with_assumptions(~p, conflict);
             return l_False;

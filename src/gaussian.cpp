@@ -501,18 +501,28 @@ bool EGaussian::find_truths(
     GaussQData& gqd
 ) {
     assert(gqd.ret != gauss_res::confl);
-
     // printf("dd Watch variable : %d  ,  Wathch row num %d    n", p , row_n);
 
-    bool p_was_resp_var = false; // check invoked variable is basic or non-basic
-    PackedMatrix::iterator rowIt = mat.begin() + row_n;
+    #ifdef VERBOSE_DEBUG
+    cout << "row_n:" << row_n << endl;
+    cout << "dec lev:" << solver->decisionLevel() << endl;
+    cout << "satisfied_xors[0].size(): " << satisfied_xors[0].size() << endl;
+    cout << "satisfied_xors[solver->decisionLevel()].size(): " << satisfied_xors[solver->decisionLevel()].size() << endl;
+    #endif
+    #ifdef SLOW_DEBUG
+    assert(row_n < num_rows);
+    assert(satisfied_xors.size() > solver->decisionLevel());
+    assert(satisfied_xors[solver->decisionLevel()].size() > row_n);
+    #endif
 
-    // this clause is already satisfied
+    // this XOR is already satisfied
     if (satisfied_xors[solver->decisionLevel()][row_n]) {
         *j++ = *i;
         find_truth_ret_satisfied_precheck++;
         return true;
     }
+
+    bool p_was_resp_var = false; // check invoked variable is basic or non-basic
 
     // swap basic and non-basic variable
     if (var_has_resp_row[p] == 1) {
@@ -523,7 +533,7 @@ bool EGaussian::find_truths(
 
     uint32_t new_resp_var;
     Lit ret_lit_prop;
-    const gret ret = (*rowIt).propGause(
+    const gret ret = mat[row_n].propGause(
         tmp_clause,
         solver->assigns,
         col_to_var,
