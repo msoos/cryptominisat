@@ -118,7 +118,7 @@ gret PackedRow::propGause(
 ) {
     //cout << "start" << endl;
     //cout << "line: " << *this << endl;
-    tmp_col.and_inv(*this, cols_set);
+    tmp_col.set_and_inv(*this, cols_set);
     uint32_t pop = tmp_col.popcnt();
 
     //Find new watch
@@ -153,8 +153,7 @@ gret PackedRow::propGause(
     }
 
     //Calc value of row
-    tmp_col2 = *this;
-    tmp_col2 &= cols_vals;
+    tmp_col2.set_and(*this, cols_vals);
     const uint32_t pop_t = tmp_col2.popcnt() + tmp_col2.rhs();
 
     //Lazy prop
