@@ -122,6 +122,7 @@ class EGaussian {
     ///////////////
     // stats
     ///////////////
+    uint64_t find_truth_ret_satisfied_precheck = 0;
     uint64_t find_truth_called_propgause = 0;
     uint64_t find_truth_ret_fnewwatch = 0;
     uint64_t find_truth_ret_confl = 0;

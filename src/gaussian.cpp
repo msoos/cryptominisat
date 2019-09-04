@@ -510,6 +510,7 @@ bool EGaussian::find_truths(
     // this clause is already satisfied
     if (satisfied_xors[solver->decisionLevel()][row_n]) {
         *j++ = *i;
+        find_truth_ret_satisfied_precheck++;
         return true;
     }
 
@@ -890,7 +891,11 @@ void EGaussian::print_matrix_stats()
     const std::string pre = ss.str();
 
     cout << std::left;
-    cout << pre << "truth prop checks       : "
+
+    cout << pre << "truth-find satisfied    : "
+    << print_value_kilo_mega(find_truth_ret_satisfied_precheck, false) << endl;
+
+    cout << pre << "truth-find prop checks  : "
     << print_value_kilo_mega(find_truth_called_propgause, false) << endl;
 
     cout << pre << "-> of which fnnewat     : "
