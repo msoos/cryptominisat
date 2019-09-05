@@ -264,7 +264,6 @@ public:
 
     // using find nonbasic value after watch list is enter
     gret propGause(
-        vector<Lit>& tmp_clause,
         const vector<lbool>& assigns,
         const vector<uint32_t>& col_to_var,
         vector<char> &var_has_resp_row,

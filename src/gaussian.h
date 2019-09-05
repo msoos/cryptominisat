@@ -111,6 +111,7 @@ class EGaussian {
 
     //Reason generation
     vector<XorReason> xor_reasons;
+    vector<Lit> tmp_clause;
 
     //Initialisation
     void eliminate();
@@ -146,7 +147,6 @@ class EGaussian {
     const uint32_t matrix_no;
     bool cancelled_since_val_update = true;
     uint32_t last_val_update = 0;
-    vector<Lit> tmp_clause;  // conflict&propagation handling
 
     //Is the clause at this ROW satisfied already?
     //satisfied_xors[decision_level][row] tells me that

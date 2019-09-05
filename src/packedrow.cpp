@@ -105,7 +105,6 @@ void PackedRow::get_reason(
 }
 
 gret PackedRow::propGause(
-    vector<Lit>& tmp_clause,
     const vector<lbool>& assigns,
     const vector<uint32_t>& col_to_var,
     vector<char> &var_has_resp_row,
@@ -182,45 +181,6 @@ gret PackedRow::propGause(
     }
 
     //Conflict
-    tmp_clause.clear();
-    #ifdef SLOW_DEBUG
-    bool final_val = !rhs_internal;
-    #endif
-    for (int i = 0; i < size; i++) if (mp[i]) {
-        int tmp = mp[i];
-        int at = __builtin_ffs(tmp);
-        int extra = 0;
-        while (at != 0) {
-            uint32_t col = extra + at-1 + i*32;
-            #ifdef SLOW_DEBUG
-            assert(this->operator[](col) == 1);
-            #endif
-            const uint32_t var = col_to_var[col];
-            const lbool val = assigns[var];
-            const bool val_bool = (val == l_True);
-            #ifdef SLOW_DEBUG
-            final_val ^= val_bool;
-            #endif
-            tmp_clause.push_back(Lit(var, val_bool));
-
-            //TODO check do we need this????
-            //if this is the basic variable, put it to the 0th position
-            if (var_has_resp_row[var]) {
-                std::swap(tmp_clause[0], tmp_clause.back());
-            }
-
-            extra += at;
-            tmp >>= at;
-            if (extra == 32)
-                break;
-
-            at = __builtin_ffs(tmp);
-        }
-    }
-
-    #ifdef SLOW_DEBUG
-    assert(!final_val);
-    #endif
     return gret::confl;
 }
 

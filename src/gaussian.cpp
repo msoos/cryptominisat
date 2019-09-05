@@ -529,14 +529,13 @@ bool EGaussian::find_truths(
         var_has_resp_row[p] = 0;
     }
 
-    uint32_t new_resp_var;
+    uint32_t new_non_resp_var;
     Lit ret_lit_prop;
     const gret ret = mat[row_n].propGause(
-        tmp_clause,
         solver->assigns,
         col_to_var,
         var_has_resp_row,
-        new_resp_var,
+        new_non_resp_var,
         *tmp_col,
         *tmp_col2,
         *cols_vals,
@@ -548,7 +547,10 @@ bool EGaussian::find_truths(
         case gret::confl: {
             find_truth_ret_confl++;
             *j++ = *i;
-            gqd.conflict_clause_gauss = tmp_clause;
+
+            xor_reasons[row_n].must_recalc = true;
+            xor_reasons[row_n].propagated = lit_Undef;
+            gqd.confl = PropBy(matrix_no, row_n);
             gqd.ret = gauss_res::confl;
             #ifdef VERBOSE_DEBUG
             cout
@@ -599,23 +601,23 @@ bool EGaussian::find_truths(
             // new_resp_var,orig_basic , p);
             if (p_was_resp_var) {
                 /// clear watchlist, because only one basic value in watchlist
-                assert(new_resp_var != p);
-                clear_gwatches(new_resp_var);
+                assert(new_non_resp_var != p);
+                clear_gwatches(new_non_resp_var);
             }
-            assert(new_resp_var != p);
-            solver->gwatches[new_resp_var].push(GaussWatched(row_n, matrix_no));
+            assert(new_non_resp_var != p);
+            solver->gwatches[new_non_resp_var].push(GaussWatched(row_n, matrix_no));
 
             if (!p_was_resp_var) {
-                row_non_resp_for_var[row_n] = new_resp_var;
+                row_non_resp_for_var[row_n] = new_non_resp_var;
                 return true;
             }
 
             // adjust resp and non-resp vars
             var_has_resp_row[row_non_resp_for_var[row_n]] = 0;
-            var_has_resp_row[new_resp_var] = 1;
+            var_has_resp_row[new_non_resp_var] = 1;
 
             // store the eliminate variable & row
-            gqd.new_resp_var = new_resp_var;
+            gqd.new_resp_var = new_non_resp_var;
             gqd.new_resp_row = row_n;
             if (solver->gmatrices.size() == 1) {
                 assert(solver->gwatches[gqd.new_resp_var].size() == 1);
@@ -752,7 +754,6 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                 Lit ret_lit_prop;
                 uint32_t new_non_resp_var = 0;
                 const gret ret = (*rowI).propGause(
-                    tmp_clause,
                     solver->assigns,
                     col_to_var,
                     var_has_resp_row,
@@ -780,7 +781,9 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                         // update in this row non-basic variable
                         row_non_resp_for_var[row_n] = p;
 
-                        gqd.conflict_clause_gauss = tmp_clause;
+                        xor_reasons[row_n].must_recalc = true;
+                        xor_reasons[row_n].propagated = lit_Undef;
+                        gqd.confl = PropBy(matrix_no, row_n);
                         gqd.ret = gauss_res::confl;
                         break;
                     }

@@ -2971,35 +2971,8 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
         switch (gqd.ret) {
             case gauss_res::confl :{
                 gqd.num_conflicts++;
-
-                #ifdef DEBUG_GAUSS
-                for(uint32_t i = 0; i < gqd.conflict_clause_gauss.size(); i++) {
-                    Lit& l = gqd.conflict_clause_gauss[i];
-                    if (value(l) != l_False) {
-                        cout << "about to fail, size: " << gqd.conflict_clause_gauss.size() << " i = " << i << " val: " << value(l) << endl;
-                    }
-                    assert(value(l) == l_False);
-                }
-                #endif
-
-                Clause* conflPtr = solver->cl_alloc.Clause_new(
-                    gqd.conflict_clause_gauss,
-                    sumConflicts
-                    #ifdef STATS_NEEDED
-                    , 0
-                    #endif
-                );
-
-                conflPtr->set_gauss_temp_cl();
-                gqd.confl = PropBy(solver->cl_alloc.get_offset(conflPtr));
                 gqhead = qhead = trail.size();
-
                 bool ret = handle_conflict<false>(gqd.confl);
-                #ifdef VERBOSE_DEBUG
-                cout << "Handled long GJ conflict" << endl;
-                #endif
-
-                solver->free_cl(gqd.confl.get_offset());
                 if (!ret) return gauss_ret::g_false;
                 return gauss_ret::g_cont;
             }
