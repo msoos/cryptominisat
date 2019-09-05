@@ -333,6 +333,9 @@ if (NOT WIN32)
         add_cxx_flag_if_supported("-ggdb3")
         add_cxx_flag_if_supported("-Wno-class-memaccess")
 
+        add_cxx_flag_if_supported("-mpopcnt")
+        add_cxx_flag_if_supported("-msse4.2")
+
         # Apparently needed before OS X Maverics (2013)
         #add_c_flag_if_supported("-stdlib=libc++")
     endif()
