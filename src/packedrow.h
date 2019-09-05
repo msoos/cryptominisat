@@ -158,12 +158,12 @@ public:
 
     inline void clearBit(const uint32_t i)
     {
-        mp[i/64] &= ~((int64_t)1 << (i%64));
+        mp[i/64] &= ~(1LL << (i%64));
     }
 
     inline void setBit(const uint32_t i)
     {
-        mp[i/64] |= ((int64_t)1 << (i%64));
+        mp[i/64] |= (1LL << (i%64));
     }
 
     inline void invert_rhs(const bool b = true)
