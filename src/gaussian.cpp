@@ -716,7 +716,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
 
     while (rowI != end) {
         //Row has a '1' in eliminating column, and it's not the row responsible
-        if ((*rowI)[new_resp_col] && new_resp_row != rowI) {
+        if (new_resp_row != rowI && (*rowI)[new_resp_col]) {
 
             // detect orignal non-basic watch list change or not
             orig_non_resp_var = row_non_resp_for_var[row_n];
