@@ -88,7 +88,7 @@ struct ColSorter {
     }
 
     bool operator()(uint32_t a, uint32_t b) {
-        return dats[a].level > dats[b].level;
+        return dats[a].last_picked > dats[b].last_picked;
     }
 
     const vector<VarData>& dats;
