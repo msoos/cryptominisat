@@ -72,24 +72,9 @@ public:
         assert(b.size == size);
         #endif
 
-        rhs_internal ^= b.rhs_internal;
-        for (int i = 0; i < size; i++) {
+        //start from -1, because that's wher RHS is
+        for (int i = -1; i < size; i++) {
             *(mp + i) ^= *(b.mp + i);
-        }
-
-        return *this;
-    }
-
-    PackedRow& operator&=(const PackedRow& b)
-    {
-        #ifdef DEBUG_ROW
-        assert(size > 0);
-        assert(b.size > 0);
-        assert(b.size == size);
-        #endif
-
-        for (int i = 0; i < size; i++) {
-            *(mp + i) &= *(b.mp + i);
         }
 
         return *this;
