@@ -33,7 +33,6 @@ THE SOFTWARE.
 #include <iostream>
 #include <algorithm>
 #include <limits>
-#include <immintrin.h>
 
 #include "solvertypes.h"
 #include "Vec.h"
@@ -274,7 +273,7 @@ inline uint32_t PackedRow::popcnt() const
 {
     uint32_t ret = 0;
     for (int i = 0; i < size; i++) {
-        ret += _mm_popcnt_u64(mp[i]);
+        ret += __builtin_popcountll(mp[i]);
     }
     return ret;
 }
