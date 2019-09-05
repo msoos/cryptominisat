@@ -42,7 +42,7 @@ uint32_t PackedRow::find_watchVar(
     non_resp_var = std::numeric_limits<uint32_t>::max();
     tmp_clause.clear();
 
-    for(int i = 0; i < size*32 && popcnt < 3; i++) {
+    for(int i = 0; i < size*64 && popcnt < 3; i++) {
         if (this->operator[](i)){
             popcnt++;
             uint32_t var = col_to_var[i];
@@ -70,11 +70,11 @@ void PackedRow::get_reason(
     Lit prop
 ) {
     for (int i = 0; i < size; i++) if (mp[i]) {
-        int tmp = mp[i];
-        int at = __builtin_ffs(tmp);
+        int64_t tmp = mp[i];
+        int at = __builtin_ffsll(tmp);
         int extra = 0;
         while (at != 0) {
-            uint32_t col = extra + at-1 + i*32;
+            uint32_t col = extra + at-1 + i*64;
             #ifdef SLOW_DEBUG
             assert(this->operator[](col) == 1);
             #endif
@@ -89,11 +89,11 @@ void PackedRow::get_reason(
             }
 
             extra += at;
-            if (extra == 32)
+            if (extra == 64)
                 break;
 
             tmp >>= at;
-            at = __builtin_ffs(tmp);
+            at = __builtin_ffsll(tmp);
         }
     }
 
@@ -123,13 +123,14 @@ gret PackedRow::propGause(
     //Find new watch
     if (pop >=2) {
         for (int i = 0; i < size; i++) if (tmp_col.mp[i]) {
-            int tmp = tmp_col.mp[i];
-            int at = __builtin_ffs(tmp);
+            int64_t tmp = tmp_col.mp[i];
+            int at = __builtin_ffsll(tmp);
             int extra = 0;
             while (at != 0) {
-                uint32_t col = extra + at-1 + i*32;
-                //cout << "col: " << col << " extra: " << extra << " at: " << at << endl;
+                uint32_t col = extra + at-1 + i*64;
+                #ifdef SLOW_DEBUG
                 assert(tmp_col[col] == 1);
+                #endif
                 const uint32_t var = col_to_var[col];
                 const lbool val = assigns[var];
 
@@ -141,11 +142,11 @@ gret PackedRow::propGause(
                 }
 
                 extra += at;
-                if (extra == 32)
+                if (extra == 64)
                     break;
 
                 tmp >>= at;
-                at = __builtin_ffs(tmp);
+                at = __builtin_ffsll(tmp);
             }
         }
         assert(false && "Should have found a new watch!");
@@ -158,12 +159,13 @@ gret PackedRow::propGause(
     //Lazy prop
     if (pop == 1) {
         for (int i = 0; i < size; i++) if (tmp_col.mp[i]) {
-            int tmp = tmp_col.mp[i];
-            int at = __builtin_ffs(tmp);
+            int at = __builtin_ffsll(tmp_col.mp[i]);
 
             // found prop
-            uint32_t col = at-1 + i*32;
+            uint32_t col = at-1 + i*64;
+            #ifdef SLOW_DEBUG
             assert(tmp_col[col] == 1);
+            #endif
             const uint32_t var = col_to_var[col];
             assert(assigns[var] == l_Undef);
             ret_lit_prop = Lit(var, !(pop_t % 2));

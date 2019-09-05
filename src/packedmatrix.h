@@ -33,7 +33,7 @@ THE SOFTWARE.
 #include <algorithm>
 #include <cstdint>
 #include "packedrow.h"
-//#include <immintrin.h>
+#include <immintrin.h>
 
 //#define DEBUG_MATRIX
 
@@ -56,10 +56,10 @@ public:
 
     void resize(const uint32_t num_rows, uint32_t num_cols)
     {
-        num_cols = num_cols / 32 + (bool)(num_cols % 32);
+        num_cols = num_cols / 64 + (bool)(num_cols % 64);
         if (numRows*(numCols+1) < (int)num_rows*((int)num_cols+1)) {
             free(mp);
-            posix_memalign((void**)&mp, 16,  sizeof(int) * num_rows*(num_cols+1));
+            posix_memalign((void**)&mp, 16,  sizeof(int64_t) * num_rows*(num_cols+1));
         }
 
         numRows = num_rows;
@@ -76,7 +76,7 @@ public:
     {
         if (numRows*(numCols+1) < b.numRows*(b.numCols+1)) {
             free(mp);
-            posix_memalign((void**)&mp, 16,  sizeof(int) * b.numRows*(b.numCols+1));
+            posix_memalign((void**)&mp, 16,  sizeof(int64_t) * b.numRows*(b.numCols+1));
         }
         numRows = b.numRows;
         numCols = b.numCols;
@@ -148,12 +148,12 @@ public:
         }
 
     private:
-        iterator(int* _mp, const uint32_t _numCols) :
+        iterator(int64_t* _mp, const uint32_t _numCols) :
             mp(_mp)
             , numCols(_numCols)
         {}
 
-        int* mp;
+        int64_t *mp;
         const uint32_t numCols;
     };
 
@@ -174,7 +174,7 @@ public:
 
 private:
 
-    int __attribute__ ((aligned (16))) *mp;
+    int64_t *mp;
     int numRows;
     int numCols;
 };

@@ -23,15 +23,4 @@ THE SOFTWARE.
 #ifndef POPCNT__H
 #define POPCNT__H
 
-
-#if defined (_MSC_VER)
-#include <intrin.h>
-#endif
-
-#if defined (_MSC_VER)
-#define my_popcnt(x) __popcnt(x)
-#else
-#define my_popcnt(x) __builtin_popcount(x)
-#endif
-
 #endif //POPCNT__H

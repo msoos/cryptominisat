@@ -33,9 +33,9 @@ THE SOFTWARE.
 #include <iostream>
 #include <algorithm>
 #include <limits>
+#include <immintrin.h>
 
 #include "solvertypes.h"
-#include "popcnt.h"
 #include "Vec.h"
 
 namespace CMSat {
@@ -148,44 +148,19 @@ public:
         }
     }
 
-
-    uint32_t popcnt() const;
-    bool popcnt_is_one() const
-    {
-        int ret = 0;
-        for (int i = 0; i < size; i++) {
-            ret += my_popcnt(mp[i]);
-            if (ret > 1) return false;
-        }
-        return ret == 1;
-    }
-
-    bool popcnt_is_one(uint32_t from) const
-    {
-        from++;
-
-        int tmp = mp[from/32];
-        tmp >>= from%32;
-        if (tmp) return false;
-
-        for (int i = from/32+1; i < size; i++)
-            if (mp[i]) return false;
-        return true;
-    }
-
-    inline const int& rhs() const
+    inline const int64_t& rhs() const
     {
         return rhs_internal;
     }
 
-    inline int& rhs()
+    inline int64_t& rhs()
     {
         return rhs_internal;
     }
 
     inline bool isZero() const
     {
-        for (int i = 0; i != size; i++) {
+        for (int i = 0; i < size; i++) {
             if (mp[i]) return false;
         }
         return true;
@@ -193,17 +168,17 @@ public:
 
     inline void setZero()
     {
-        memset(mp, 0, sizeof(int)*size);
+        memset(mp, 0, sizeof(int64_t)*size);
     }
 
     inline void clearBit(const uint32_t i)
     {
-        mp[i/32] &= ~((int)1 << (i%32));
+        mp[i/64] &= ~((int64_t)1 << (i%64));
     }
 
     inline void setBit(const uint32_t i)
     {
-        mp[i/32] |= ((int)1 << (i%32));
+        mp[i/64] |= ((int64_t)1 << (i%64));
     }
 
     inline void invert_rhs(const bool b = true)
@@ -219,8 +194,8 @@ public:
         assert(b.size == size);
         #endif
 
-        int* __restrict mp1 = mp-1;
-        int* __restrict mp2 = b.mp-1;
+        int64_t* __restrict mp1 = mp-1;
+        int64_t* __restrict mp2 = b.mp-1;
 
         uint32_t i = size+1;
         while(i != 0) {
@@ -231,19 +206,19 @@ public:
         }
     }
 
-    inline bool operator[](const uint32_t& i) const
+    inline bool operator[](const uint32_t i) const
     {
         #ifdef DEBUG_ROW
-        assert(size*32 > i);
+        assert(size*64 > i);
         #endif
 
-        return (mp[i/32] >> (i%32)) & 1;
+        return (mp[i/64] >> (i%64)) & 1;
     }
 
     template<class T>
     void set(const T& v, const vector<uint32_t>& var_to_col, const uint32_t matrix_size)
     {
-        assert(size == ((int)matrix_size/32) + ((bool)(matrix_size % 32)));
+        assert(size == ((int)matrix_size/64) + ((bool)(matrix_size % 64)));
         setZero();
         for (uint32_t i = 0; i != v.size(); i++) {
             const uint32_t toset_var = var_to_col[v[i]];
@@ -282,26 +257,28 @@ public:
         Lit prop
     );
 
+    uint32_t popcnt() const;
+
 private:
     friend class PackedMatrix;
     friend class EGaussian;
     friend std::ostream& operator << (std::ostream& os, const PackedRow& m);
 
-    PackedRow(const uint32_t _size, int*  const _mp) :
+    PackedRow(const uint32_t _size, int64_t*  const _mp) :
         mp(_mp+1)
         , rhs_internal(*_mp)
         , size(_size)
     {}
 
     //int __attribute__ ((aligned (16))) *const mp;
-    int *__restrict const mp;
-    int& rhs_internal;
+    int64_t *__restrict const mp;
+    int64_t& rhs_internal;
     const int size;
 };
 
 inline std::ostream& operator << (std::ostream& os, const PackedRow& m)
 {
-    for(int i = 0; i < m.size*32; i++) {
+    for(int i = 0; i < m.size*64; i++) {
         os << (int)m[i];
     }
     os << " -- rhs: " << m.rhs();
@@ -310,9 +287,9 @@ inline std::ostream& operator << (std::ostream& os, const PackedRow& m)
 
 inline uint32_t PackedRow::popcnt() const
 {
-    int ret = 0;
+    uint32_t ret = 0;
     for (int i = 0; i < size; i++) {
-        ret += my_popcnt(mp[i]);
+        ret += _mm_popcnt_u64(mp[i]);
     }
     return ret;
 }
