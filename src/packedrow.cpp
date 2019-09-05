@@ -132,10 +132,13 @@ gret PackedRow::propGause(
                 assert(tmp_col[col] == 1);
                 #endif
                 const uint32_t var = col_to_var[col];
+
+                #ifdef SLOW_DEBUG
                 const lbool val = assigns[var];
+                assert(val == l_Undef);
+                #endif
 
                 // found new non-basic variable, let's watch it
-                assert(val == l_Undef);
                 if (!var_has_resp_row[var]) {
                     new_resp_var = var;
                     return gret::nothing_fnewwatch;
