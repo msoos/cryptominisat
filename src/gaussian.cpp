@@ -87,9 +87,8 @@ struct ColSorter {
     explicit ColSorter(vector<VarData>& _dats) : dats(_dats) {
     }
 
-    // higher activity first
     bool operator()(uint32_t a, uint32_t b) {
-        return dats[a].set > dats[b].set;
+        return dats[a].level > dats[b].level;
     }
 
     const vector<VarData>& dats;

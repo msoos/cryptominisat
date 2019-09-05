@@ -1103,6 +1103,7 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
                         }
                         break;
                     }
+
                     case PropByType::binary_t: {
                         const Lit lit = reason.lit2();
                         if (varData[lit.var()].level > 0) {
@@ -1124,6 +1125,10 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
                         break;
                     }
                     #endif
+
+                    case PropByType::null_clause_t: {
+                        assert(false);
+                    }
                 }
             }
             seen[x] = 0;
