@@ -459,35 +459,28 @@ gret EGaussian::adjust_matrix() {
 
 // Delete this row because we have already add to xor clause, nothing to do anymore
 void EGaussian::delete_gausswatch(
-    const bool orig_basic
-    , const uint32_t row_n
-    , const uint32_t no_touch_var
+    const uint32_t row_n
 ) {
-    if (orig_basic) {
-        // clear nonbasic value watch list
-        bool debug_find = false;
-        assert(row_non_resp_for_var[row_n] != no_touch_var);
-        vec<GaussWatched>& ws_t = solver->gwatches[row_non_resp_for_var[row_n]];
-        for (int32_t tmpi = ws_t.size() - 1; tmpi >= 0; tmpi--) {
-            if (ws_t[tmpi].row_id == row_n
-                && ws_t[tmpi].matrix_num == matrix_no
-            ) {
-                ws_t[tmpi] = ws_t.last();
-                ws_t.shrink(1);
-                debug_find = true;
-                break;
-            }
+    // clear nonbasic value watch list
+    bool debug_find = false;
+    vec<GaussWatched>& ws_t = solver->gwatches[row_non_resp_for_var[row_n]];
+    for (int32_t tmpi = ws_t.size() - 1; tmpi >= 0; tmpi--) {
+        if (ws_t[tmpi].row_id == row_n
+            && ws_t[tmpi].matrix_num == matrix_no
+        ) {
+            ws_t[tmpi] = ws_t.last();
+            ws_t.shrink(1);
+            debug_find = true;
+            break;
         }
-        #ifdef VERBOSE_DEBUG
-        cout
-        << "mat[" << matrix_no << "] "
-        << "Tried cleaning watch of var: "
-        << row_resp_for_var[row_n]+1 << endl;
-        #endif
-        assert(debug_find);
-    } else {
-        clear_gwatches(tmp_clause[0].var());
     }
+    #ifdef VERBOSE_DEBUG
+    cout
+    << "mat[" << matrix_no << "] "
+    << "Tried cleaning watch of var: "
+    << row_resp_for_var[row_n]+1 << endl;
+    #endif
+    assert(debug_find);
 }
 
 bool EGaussian::find_truths(
@@ -747,7 +740,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
 
                 // Delelte orignal non-basic value in watch list
                 if (orig_non_resp_var != gqd.new_resp_var) {
-                    delete_gausswatch(true, row_n);
+                    delete_gausswatch(row_n);
                 }
 
                 Lit ret_lit_prop;
