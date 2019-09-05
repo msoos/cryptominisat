@@ -266,12 +266,10 @@ bool EGaussian::full_init(bool& created) {
         switch (ret) {
             case gret::confl:
                 solver->ok = false;
-                solver->sum_gauss_confl++;
                 return false;
                 break;
             case gret::prop:
                 do_again_gauss = true;
-                solver->sum_gauss_prop++;
 
                 assert(solver->decisionLevel() == 0);
                 solver->ok = (solver->propagate<false>().isNULL());

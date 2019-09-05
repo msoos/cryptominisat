@@ -2898,20 +2898,9 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
         gmatrices[i]->update_cols_vals_set();
 
         if (solver->conf.gaussconf.autodisable &&
-            (gqd.find_truths_called & 0xfff) == 0xfff //only check once in a while
+            gmatrices[i]->must_disable(gqd, conf.verbosity)
         ) {
-            uint32_t limit = (double)gqd.find_truths_called*0.01;
-            uint32_t useful = 2*gqd.num_conflicts+gqd.num_props;
-            if (useful < limit) {
-                if (solver->conf.verbosity) {
-                    const double perc = stats_line_percent(gqd.num_conflicts*2+gqd.num_props, gqd.find_truths_called);
-                    cout << "c [gauss] <" <<  i <<  "> Disabling GJ-elim in this round. "
-                    " Usefulness was: "
-                    << std::setprecision(2) << std::fixed << perc
-                    <<  "%" << endl;
-                }
-                gqd.engaus_disable = true;
-            }
+            gqd.engaus_disable = true;
         }
     }
     assert(qhead == trail.size());
@@ -2937,7 +2926,6 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
                 continue;
             }
 
-            gqueuedata[i->matrix_num].find_truths_called++;
             gqueuedata[i->matrix_num].new_resp_var = std::numeric_limits<uint32_t>::max();
             gqueuedata[i->matrix_num].new_resp_row = std::numeric_limits<uint32_t>::max();
             gqueuedata[i->matrix_num].do_eliminate = false;
@@ -2983,7 +2971,6 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
         switch (gqd.ret) {
             case gauss_res::confl :{
                 gqd.num_conflicts++;
-                sum_gauss_confl++;
 
                 #ifdef DEBUG_GAUSS
                 for(uint32_t i = 0; i < gqd.conflict_clause_gauss.size(); i++) {
@@ -3019,7 +3006,6 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
 
             case gauss_res::prop:
                 gqd.num_props++;
-                sum_gauss_prop++;
                 finret = gauss_ret::g_cont;
 
             case gauss_res::none:
@@ -3665,35 +3651,11 @@ void Searcher::clear_gauss_matrices()
     solver->xor_clauses_updated = true;
     for(uint32_t i = 0; i < gqueuedata.size(); i++) {
         auto gqd = gqueuedata[i];
-        //if (gqd.num_entered_mtx > 0) {
-            cout << "c [gauss] < " << i << " > "
-            << "entered mtx    : " << std::left << print_value_kilo_mega(gqd.find_truths_called, false)
-            << endl;
-
-            cout << "c [gauss] < " << i << " > "
-            << "confl triggered: "
-            << stats_line_percent(gqd.num_conflicts, gqd.find_truths_called)
-            << " %" <<endl;
-
-            cout << "c [gauss] < " << i << " > "
-            << "prop  triggered: "
-            << stats_line_percent(gqd.num_props, gqd.find_truths_called)
-            << " %" <<endl;
-        //}
-
-        if (solver->conf.verbosity >= 2 && gqd.find_truths_called > 0) {
+        if (solver->conf.verbosity >= 2) {
             cout
             << "c [gauss] num_props       : "<< print_value_kilo_mega(gqd.num_props) << endl
             << "c [gauss] num_conflicts   : "<< print_value_kilo_mega(gqd.num_conflicts)  << endl;
         }
-        gqd.reset_stats();
-    }
-
-    if (solver->conf.verbosity >= 2 && sum_gauss_called > 0) {
-        cout
-        << "c [gauss] sum_gauss_called    : " << print_value_kilo_mega(sum_gauss_called) << endl
-        << "c [gauss] sum_gauss_prop: " << print_value_kilo_mega(sum_gauss_prop) << endl
-        << "c [gauss] sum_gauss_confl : " << print_value_kilo_mega(sum_gauss_confl) << endl;
     }
 
     if (solver->conf.verbosity) {

@@ -93,6 +93,7 @@ class EGaussian {
     bool full_init(bool& created);
     void update_cols_vals_set();
     void print_matrix_stats();
+    bool must_disable(const GaussQData& gqd, bool verbose);
 
     vector<Xor> xorclauses;
 
@@ -183,6 +184,29 @@ class EGaussian {
 
 inline void EGaussian::canceling() {
     cancelled_since_val_update = true;
+}
+
+inline bool EGaussian::must_disable(const GaussQData& gqd, bool verbose)
+{
+    uint64_t egcalled = find_truth_called_propgause + elim_called_propgause;
+    if ((egcalled & 0xfff) == 0xfff //only check once in a while
+    ) {
+        uint32_t limit = (double)egcalled*0.001;
+        uint32_t useful = find_truth_ret_prop+find_truth_ret_confl+elim_ret_prop+elim_ret_confl;
+        if (useful < limit) {
+            if (verbose) {
+                const double perc =
+                    stats_line_percent(gqd.num_conflicts*2+gqd.num_props, egcalled);
+                cout << "c [g  <" <<  matrix_no <<  "] Disabling GJ-elim in this round. "
+                " Usefulness was: "
+                << std::setprecision(2) << std::fixed << perc
+                <<  "%" << endl;
+            }
+            return true;
+        }
+    }
+
+    return false;
 }
 
 }

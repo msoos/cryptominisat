@@ -3948,10 +3948,6 @@ bool Solver::init_all_matrices()
             g = NULL;
         }
     }
-    for(auto& gqd: gqueuedata) {
-        gqd.reset_stats();
-    }
-
     return solver->okay();
 }
 #endif //USE_GAUSS

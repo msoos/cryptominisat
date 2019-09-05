@@ -51,15 +51,6 @@ struct GaussQData {
         conflict_clause_gauss.clear();
         ret = gauss_res::none;
     }
-
-    void reset_stats()
-    {
-        find_truths_called = 0;   // total gauss time for DPLL
-        num_props = 0;  // total gauss propogation time for DPLL
-        num_conflicts = 0;   // total gauss conflict    time for DPLL
-        engaus_disable = 0;     // decide to do gaussian elimination
-    }
-
 };
 
 }
