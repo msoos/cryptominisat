@@ -54,64 +54,16 @@ namespace CMSat {
 
 class Solver;
 
+struct XorReason
+{
+    bool must_recalc = true;
+    Lit propagated = lit_Undef;
+    vector<Lit> reason;
+};
+
 class EGaussian {
   public:
-    Solver* solver;   // orignal sat solver
-    const GaussConf& config;  // gauss some configure
-    const uint32_t matrix_no;            // matrix index
-    vector<Lit> tmp_clause;  // conflict&propagation handling
-
-    //Is the clause at this ROW satisfied already?
-    //satisfied_xors[row] tells me that
-    vector<vector<bool>> satisfied_xors;
-
-    // variable state
-    // Someone is responsible for this column if TRUE
-    // we watch ONE basic + ONE non-basic var
-    vector<char> is_basic;
-
-    vector<uint32_t>  var_to_col;             // variable to column
-    class matrixset { // matrix information
-      public:
-        ///row_to_nb_var[ROW] gives the non-basic variable it's responsible for
-        vector<uint32_t> row_to_nb_var;
-
-        // used in orignal matrix
-        PackedMatrix matrix; // The matrix, updated to reflect variable assignements
-
-        ///col_to_var[COL] tells which variable is at a given column in the matrix. Gives unassigned_var if the COL has been zeroed (i.e. the variable assigned)
-        vector<uint32_t> col_to_var;
-
-        uint32_t num_rows; // number of active rows in the matrix. Unactive rows are rows that contain only zeros (and if they are conflicting, then the conflict has been treated)
-        uint32_t num_cols; // number of active columns in the matrix. The columns at the end that have all be zeroed are no longer active
-    };
-    matrixset matrix; // The current matrixset, i.e. the one we are working on, or the last one we worked on
-
-
-    //Cleanup
-    bool clean_xors();
-    void clear_gwatches(const uint32_t var);
-    void delete_gauss_watch_this_matrix();
-    void delete_gausswatch(const bool orig_basic,
-                           const uint32_t  row_n,
-                           uint32_t no_touch_var = var_Undef);
-
-    void new_decision_level();
-    void eliminate(matrixset& m);
-    gret adjust_matrix(matrixset& matrix); // adjust matrix, include watch, check row is zero, etc.
-
-    inline void propagation_twoclause();
-    inline void conflict_twoclause(PropBy& confl);
-
-    void print_matrix(matrixset& m) const;
-
-  public:
-    // variable
-    vector<Xor> xorclauses;   // xorclauses
-    vector<pair<ClOffset, uint32_t> > clauses_toclear; // use to delete propagate clause
-
-
-    EGaussian(
+      EGaussian(
         Solver* solver,
         const GaussConf& config,
         const uint32_t matrix_no,
@@ -119,17 +71,9 @@ class EGaussian {
     );
     ~EGaussian();
 
-    // functiion
-    uint32_t get_matrix_no() const;
-    void check_watchlist_sanity();
-    void canceling(const uint32_t sublevel); //functions used throughout the Solver
-    bool full_init(bool& created);  // initial arrary. return true is fine , return false means solver already false;
-    void fill_matrix(matrixset& origMat); // Fills the origMat matrix
-    uint32_t select_columnorder(matrixset& origMat); // Fills var_to_col and col_to_var of the origMat matrix.
 
-    ///execute gaussian
-    ///return FALSE only in case of unit conflict
-    bool  find_truths2(
+    ///returns FALSE in case of conflict
+    bool  find_truths(
         GaussWatched*& i,
         GaussWatched*& j,
         uint32_t p,
@@ -137,24 +81,130 @@ class EGaussian {
         GaussQData& gqd
     );
 
-    // when basic variable is touch , eliminate one col
-    void eliminate_col2(
+    vector<Lit>* get_reason(uint32_t row);
+
+    // when basic variable is touched , eliminate one col
+    void eliminate_col(
         uint32_t p,
         GaussQData& gqd
     );
+    void new_decision_level();
+    void canceling();
+    bool full_init(bool& created);
+    void update_cols_vals_set();
+    void print_matrix_stats();
+    bool must_disable(const GaussQData& gqd, bool verbose);
 
-    uint64_t propg_called_from_find_truth = 0;
-    uint64_t propg_called_from_elim = 0;
-    uint64_t eliminate_col_called = 0;
-    uint64_t propg_called_from_find_truth_ret_fnewwatch = 0;
+    vector<Xor> xorclauses;
+
+  private:
+    Solver* solver;   // orignal sat solver
+    const GaussConf& config;
+
+    //Cleanup
+    bool clean_xors();
+    void clear_gwatches(const uint32_t var);
+    void delete_gauss_watch_this_matrix();
+    void delete_gausswatch(const uint32_t  row_n);
+
+    //Reason generation
+    vector<XorReason> xor_reasons;
+    vector<Lit> tmp_clause;
+
+    //Initialisation
+    void eliminate();
+    void fill_matrix();
+    uint32_t select_columnorder();
+    gret adjust_matrix(); // adjust matrix, include watch, check row is zero, etc.
+    double get_density();
+
+
+    ///////////////
+    // stats
+    ///////////////
+    uint64_t find_truth_ret_satisfied_precheck = 0;
+    uint64_t find_truth_called_propgause = 0;
+    uint64_t find_truth_ret_fnewwatch = 0;
+    uint64_t find_truth_ret_confl = 0;
+    uint64_t find_truth_ret_satisfied = 0;
+    uint64_t find_truth_ret_prop = 0;
+
+    uint64_t elim_called = 0;
     uint64_t elim_xored_rows = 0;
+    uint64_t elim_called_propgause = 0;
+    uint64_t elim_ret_prop = 0;
+    uint64_t elim_ret_confl = 0;
+    uint64_t elim_ret_satisfied = 0;
+    uint64_t elim_ret_fnewwatch = 0;
+    double before_init_density;
+    double after_init_density;
 
-    void check_xor_reason_clauses_not_cleared();
+    ///////////////
+    // Internal data
+    ///////////////
+    const uint32_t matrix_no;
+    bool cancelled_since_val_update = true;
+    uint32_t last_val_update = 0;
+
+    //Is the clause at this ROW satisfied already?
+    //satisfied_xors[decision_level][row] tells me that
+    vector<vector<bool>> satisfied_xors;
+
+    // Someone is responsible for this column if TRUE
+    ///we always WATCH this variable
+    vector<char> var_has_resp_row;
+
+    ///row_non_resp_for_var[ROW] gives VAR it's NOT responsible for
+    ///we always WATCH this variable
+    vector<uint32_t> row_non_resp_for_var;
+
+
+    PackedMatrix mat;
+    vector<uint32_t>  var_to_col; ///var->col mapping. Index with VAR
+    vector<uint32_t> col_to_var; ///col->var mapping. Index with COL
+    uint32_t num_rows;
+    uint32_t num_cols;
+
+    //quick lookup
+    PackedRow *cols_vals = NULL;
+    PackedRow *cols_set = NULL;
+    PackedRow *tmp_col = NULL;
+    PackedRow *tmp_col2 = NULL;
+    void update_cols_vals_set(const Lit lit1);
+
+
+    ///////////////
+    // Debug
+    ///////////////
+    void print_matrix();
+    void check_watchlist_sanity();
 };
 
-inline uint32_t EGaussian::get_matrix_no() const
+inline void EGaussian::canceling() {
+    cancelled_since_val_update = true;
+}
+
+inline bool EGaussian::must_disable(const GaussQData& gqd, bool verbose)
 {
-    return matrix_no;
+    uint64_t egcalled = find_truth_called_propgause + elim_called_propgause;
+    if ((egcalled & 0xfff) == 0xfff //only check once in a while
+    ) {
+        uint32_t limit = (double)egcalled*0.001;
+        uint32_t useful = find_truth_ret_prop+find_truth_ret_confl+elim_ret_prop+elim_ret_confl;
+        if (useful < limit) {
+            if (verbose) {
+                const double perc =
+                    stats_line_percent(gqd.num_conflicts*2+gqd.num_props, egcalled);
+                cout << "c [g  <" <<  matrix_no <<  "] Disabling GJ-elim in this round. "
+                " Usefulness was: "
+                << std::setprecision(2) << std::fixed << perc
+                <<  "%" << endl;
+            }
+            return true;
+        }
+    }
+
+    return false;
 }
 
 }

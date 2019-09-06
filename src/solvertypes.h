@@ -45,8 +45,8 @@ using std::cout;
 using std::endl;
 using std::string;
 
-enum class gret      {confl, prop, unit_prop, nothing, nothing_fnewwatch};
-enum class gauss_res {none, long_confl, bin_confl, prop};
+enum class gret      {confl, prop, nothing_satisfied, nothing_fnewwatch};
+enum class gauss_res {none, confl, prop};
 enum class branch {vsids, maple, vmtf, rnd};
 
 inline std::string restart_type_to_string(const Restart type)

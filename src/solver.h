@@ -254,6 +254,7 @@ class Solver : public Searcher
 
         #ifdef USE_GAUSS
         bool init_all_matrices();
+        bool find_and_init_all_matrices();
         #endif
 
         //assumptions

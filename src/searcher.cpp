@@ -41,7 +41,6 @@ THE SOFTWARE.
 #include "solverconf.h"
 #include "distillerlong.h"
 #include "xorfinder.h"
-#include "matrixfinder.h"
 #include "vardistgen.h"
 #ifdef USE_GAUSS
 #include "gaussian.h"
@@ -432,7 +431,8 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
     #endif
     sumAntecedents++;
 
-    Clause* cl = NULL;
+    Lit* lits = NULL;
+    size_t size = 0;
     switch (confl.getType()) {
         case binary_t : {
             sumAntecedentsLits += 2;
@@ -451,7 +451,10 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
         }
 
         case clause_t : {
-            cl = cl_alloc.ptr(confl.get_offset());
+            Clause* cl = cl_alloc.ptr(confl.get_offset());
+            assert(!cl->getRemoved());
+            lits = cl->begin();
+            size = cl->size();
             sumAntecedentsLits += cl->size();
             if (cl->red()) {
                 stats.resolvs.longRed++;
@@ -499,7 +502,15 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                 }
                 #endif
             }
+            break;
+        }
 
+        case xor_t: {
+            vector<Lit>* xor_reason = gmatrices[confl.get_matrix_num()]->
+                get_reason(confl.get_row_num());
+            lits = xor_reason->data();
+            size = xor_reason->size();
+            sumAntecedentsLits += size;
             break;
         }
 
@@ -523,12 +534,13 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                 break;
 
             case clause_t:
-                assert(!cl->getRemoved());
-                x = (*cl)[i];
-                if (i == cl->size()-1) {
+            case xor_t:
+                x = lits[i];
+                if (i == size-1) {
                     cont = false;
                 }
                 break;
+
             case null_clause_t:
                 assert(false);
         }
@@ -537,7 +549,8 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
         }
         i++;
     }
-    return cl;
+
+    return NULL;
 }
 
 template<bool update_bogoprops>
@@ -643,6 +656,7 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
     int index = trail.size() - 1;
     Lit p = lit_Undef;
     Clause* last_resolved_cl = NULL;
+    assert(conf.doOTFSubsume == false);
 
     learnt_clause.push_back(lit_Undef); //make space for ~p
     do {
@@ -1017,12 +1031,22 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
         assert(!reason.isNULL());
 
         size_t size;
-        Clause* cl = NULL;
+        Lit* lits = NULL;
         switch (type) {
-            case clause_t:
-                cl = cl_alloc.ptr(reason.get_offset());
+            case clause_t: {
+                Clause* cl = cl_alloc.ptr(reason.get_offset());
+                lits = cl->begin();
                 size = cl->size()-1;
                 break;
+            }
+
+            case xor_t: {
+                vector<Lit>* xcl = gmatrices[reason.get_matrix_num()]->
+                    get_reason(reason.get_row_num());
+                lits = xcl->data();
+                size = xcl->size()-1;
+                break;
+            }
 
             case binary_t:
                 size = 1;
@@ -1040,7 +1064,8 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
             Lit p2;
             switch (type) {
                 case clause_t:
-                    p2 = (*cl)[i+1];
+                case xor_t:
+                    p2 = lits[i+1];
                     break;
 
                 case binary_t:
@@ -1144,6 +1169,7 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
                         }
                         break;
                     }
+
                     case PropByType::binary_t: {
                         const Lit lit = reason.lit2();
                         if (varData[lit.var()].level > 0) {
@@ -1152,9 +1178,23 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
                         break;
                     }
 
-                    default:
-                        assert(false);
+                    #ifdef USE_GAUSS
+                    case PropByType::xor_t: {
+                        vector<Lit>* cl = gmatrices[reason.get_matrix_num()]->
+                            get_reason(reason.get_row_num());
+                        assert(value((*cl)[0]) == l_True);
+                        for(const Lit lit: *cl) {
+                            if (varData[lit.var()].level > 0) {
+                                seen[lit.var()] = 1;
+                            }
+                        }
                         break;
+                    }
+                    #endif
+
+                    case PropByType::null_clause_t: {
+                        assert(false);
+                    }
                 }
             }
             seen[x] = 0;
@@ -1353,6 +1393,12 @@ lbool Searcher::new_decision()
         if (value(p) == l_True) {
             // Dummy decision level:
             new_decision_level();
+            #ifdef USE_GAUSS
+            for(uint32_t i = 0; i < gmatrices.size(); i++) {
+                assert(gmatrices[i]);
+                gmatrices[i]->new_decision_level();
+            }
+            #endif
         } else if (value(p) == l_False) {
             analyze_final_confl_with_assumptions(~p, conflict);
             return l_False;
@@ -2448,31 +2494,6 @@ lbool Searcher::solve(
     lbool status = l_Undef;
     setup_restart_strategy();
 
-    #ifdef USE_GAUSS
-    clear_gauss_matrices();
-    {
-        MatrixFinder finder(solver);
-        ok = finder.findMatrixes();
-        if (!ok) {
-            status = l_False;
-            goto end;
-        }
-    }
-    if (!solver->init_all_matrices()) {
-        return l_False;
-    }
-
-    #ifdef SLOW_DEBUG
-    for(size_t i = 0; i< solver->gmatrixes.size(); i++) {
-        if (solver->gmatrixes[i]) {
-            solver->gmatrixes[i]->check_watchlist_sanity();
-            assert(solver->gmatrixes[i]->get_matrix_no() == i);
-        }
-    }
-    #endif
-
-    #endif //USE_GAUSS
-
     rebuild_all_branch_strategy_setups();
     set_branch_strategy(branch_strategy_num++);
     next_change_branch_strategy = sumConflicts + 10000;
@@ -2737,6 +2758,9 @@ void Searcher::print_solution_type(const lbool status) const
 void Searcher::finish_up_solve(const lbool status)
 {
     print_solution_type(status);
+    if (conf.verbosity) {
+        print_matrix_stats();
+    }
 
     if (status == l_True) {
         #ifdef SLOW_DEBUG
@@ -3037,23 +3061,12 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
         if (gqd.engaus_disable) {
             continue;
         }
+        gmatrices[i]->update_cols_vals_set();
 
         if (solver->conf.gaussconf.autodisable &&
-            (gqd.num_entered_mtx & 0xff) == 0xff && //only check once in a while
-            gqd.num_entered_mtx > 1000
+            gmatrices[i]->must_disable(gqd, conf.verbosity)
         ) {
-            uint32_t limit = (double)gqd.num_entered_mtx*0.01;
-            uint32_t useful = 2*gqd.num_conflicts+gqd.num_props;
-            if (useful < limit) {
-                const double perc = stats_line_percent(gqd.num_conflicts*2+gqd.num_props, gqd.num_entered_mtx);
-                if (solver->conf.verbosity) {
-                    cout << "c [gauss] <" <<  i <<  "> Disabling GJ-elim in this round. "
-                    " Usefulness was: "
-                    << std::setprecision(2) << std::fixed << perc
-                    <<  "%" << endl;
-                }
-                gqd.engaus_disable = true;
-            }
+            gqd.engaus_disable = true;
         }
     }
     assert(qhead == trail.size());
@@ -3079,10 +3092,11 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
                 continue;
             }
 
-            gqueuedata[i->matrix_num].enter_matrix = true;
-            gqueuedata[i->matrix_num].num_entered_mtx++;
-            sum_gauss_entered_mtx++;
-            if (gmatrices[i->matrix_num]->find_truths2(
+            gqueuedata[i->matrix_num].new_resp_var = std::numeric_limits<uint32_t>::max();
+            gqueuedata[i->matrix_num].new_resp_row = std::numeric_limits<uint32_t>::max();
+            gqueuedata[i->matrix_num].do_eliminate = false;
+
+            if (gmatrices[i->matrix_num]->find_truths(
                 i, j, p.var(), i->row_id, gqueuedata[i->matrix_num])
             ) {
                 continue;
@@ -3103,10 +3117,8 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
                 continue;
 
             if (gqueuedata[g].do_eliminate) {
-                gmatrices[g]->eliminate_col2(p.var(), gqueuedata[g]);
-                confl_in_gauss |= (
-                    gqueuedata[g].ret == gauss_res::long_confl ||
-                    gqueuedata[g].ret == gauss_res::bin_confl);
+                gmatrices[g]->eliminate_col(p.var(), gqueuedata[g]);
+                confl_in_gauss |= (gqueuedata[g].ret == gauss_res::confl);
             }
         }
     }
@@ -3118,72 +3130,21 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
 
         //There was a conflict but this is not that matrix.
         //Just skip.
-        if (confl_in_gauss
-            && gqd.ret != gauss_res::long_confl
-            && gqd.ret != gauss_res::bin_confl
-        ) {
+        if (confl_in_gauss && gqd.ret != gauss_res::confl) {
             continue;
         }
 
         switch (gqd.ret) {
-            case gauss_res::bin_confl :{
-                //assert(confl.getType() == PropByType::binary_t && "this should hold, right?");
-                bool ret = handle_conflict(gqd.confl);
-                #ifdef VERBOSE_DEBUG
-                cout << "Handled binary GJ conflict"
-                << " conf level:" <<  varData[gqd.confl.lit2().var()].level
-                << " conf value: " << value(gqd.confl.lit2())
-                << " failbin level: " << varData[solver->failBinLit.var()].level
-                << " failbin value: " << value(solver->failBinLit)
-                << endl;
-                #endif
-
+            case gauss_res::confl :{
                 gqd.num_conflicts++;
-                sum_gauss_confl++;
-
-                if (!ret) return gauss_ret::g_false;
-                return gauss_ret::g_cont;
-            }
-
-            case gauss_res::long_confl :{
-                gqd.num_conflicts++;
-                sum_gauss_confl++;
-
-                #ifdef DEBUG_GAUSS
-                for(uint32_t i = 0; i < gqd.conflict_clause_gauss.size(); i++) {
-                    Lit& l = gqd.conflict_clause_gauss[i];
-                    if (value(l) != l_False) {
-                        cout << "about to fail, size: " << gqd.conflict_clause_gauss.size() << " i = " << i << " val: " << value(l) << endl;
-                    }
-                    assert(value(l) == l_False);
-                }
-                #endif
-
-                Clause* conflPtr = solver->cl_alloc.Clause_new(
-                    gqd.conflict_clause_gauss,
-                    sumConflicts
-                    #ifdef STATS_NEEDED
-                    , 0
-                    #endif
-                );
-
-                conflPtr->set_gauss_temp_cl();
-                gqd.confl = PropBy(solver->cl_alloc.get_offset(conflPtr));
                 gqhead = qhead = trail.size();
-
                 bool ret = handle_conflict(gqd.confl);
-                #ifdef VERBOSE_DEBUG
-                cout << "Handled long GJ conflict" << endl;
-                #endif
-
-                solver->free_cl(gqd.confl.get_offset());
                 if (!ret) return gauss_ret::g_false;
                 return gauss_ret::g_cont;
             }
 
             case gauss_res::prop:
                 gqd.num_props++;
-                sum_gauss_prop++;
                 finret = gauss_ret::g_cont;
 
             case gauss_res::none:
@@ -3561,10 +3522,14 @@ void Searcher::cancelUntil(uint32_t level) {
 
     if (decisionLevel() > level) {
         #ifdef USE_GAUSS
-        for (EGaussian* gauss: gmatrices)
+        for (EGaussian* gauss: gmatrices) {
             if (gauss) {
-                gauss->canceling(trail_lim[level]);
+                //cout << "->Gauss canceling" << endl;
+                gauss->canceling();
+            } else {
+                //cout << "->Gauss NULL" << endl;
             }
+        }
         #endif //USE_GAUSS
 
         //Go through in reverse order, unassign & insert then
@@ -3750,46 +3715,20 @@ inline bool Searcher::check_order_heap_sanity() const
 #ifdef USE_GAUSS
 void Searcher::clear_gauss_matrices()
 {
+    solver->xor_clauses_updated = true;
     for(uint32_t i = 0; i < gqueuedata.size(); i++) {
         auto gqd = gqueuedata[i];
-        //if (gqd.num_entered_mtx > 0) {
-            cout << "c [gauss] < " << i << " > "
-            << "entered mtx    : " << std::left << print_value_kilo_mega(gqd.num_entered_mtx, false)
-            << endl;
-
-            cout << "c [gauss] < " << i << " > "
-            << "confl triggered: "
-            << stats_line_percent(gqd.num_conflicts, gqd.num_entered_mtx)
-            << " %" <<endl;
-
-            cout << "c [gauss] < " << i << " > "
-            << "prop  triggered: "
-            << stats_line_percent(gqd.num_props, gqd.num_entered_mtx)
-            << " %" <<endl;
-        //}
-
-        if (solver->conf.verbosity >= 2 && gqd.num_entered_mtx > 0) {
+        if (solver->conf.verbosity >= 2) {
             cout
             << "c [gauss] num_props       : "<< print_value_kilo_mega(gqd.num_props) << endl
             << "c [gauss] num_conflicts   : "<< print_value_kilo_mega(gqd.num_conflicts)  << endl;
         }
-        gqd.reset_stats();
     }
 
-    if (solver->conf.verbosity >= 2 && sum_gauss_entered_mtx > 0) {
-        cout
-        << "c [gauss] sum_gauss_prop: " << print_value_kilo_mega(sum_gauss_prop) << endl
-        << "c [gauss] sum_gauss_confl : " << print_value_kilo_mega(sum_gauss_confl) << endl
-        << "c [gauss] sum_gauss_entered_mtx    : " << print_value_kilo_mega(sum_gauss_entered_mtx) << endl;
+    if (solver->conf.verbosity) {
+        print_matrix_stats();
     }
-
-    //cout << "Clearing matrices" << endl;
     for(EGaussian* g: gmatrices) {
-        cout << "truth prop checks   : " << g->propg_called_from_find_truth << endl;
-        cout << "-> of which fnnewat : " << g->propg_called_from_find_truth_ret_fnewwatch << endl;
-        cout << "elim prop checks    : " << g->propg_called_from_elim << endl;
-        cout << "eliminate_col_called: " << g->eliminate_col_called << endl;
-        cout << "elim_xored_rows     : " << g->elim_xored_rows << endl;
         delete g;
     }
     for(auto& w: gwatches) {
@@ -3797,6 +3736,13 @@ void Searcher::clear_gauss_matrices()
     }
     gmatrices.clear();
     gqueuedata.clear();
+}
+
+void Searcher::print_matrix_stats()
+{
+    for(EGaussian* g: gmatrices) {
+        g->print_matrix_stats();
+    }
 }
 #endif
 

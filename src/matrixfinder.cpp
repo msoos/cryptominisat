@@ -147,6 +147,7 @@ bool MatrixFinder::findMatrixes(bool simplify_xors)
         }
     }
 
+    //Just one giant matrix.
     if (!solver->conf.gaussconf.doMatrixFind) {
         if (solver->conf.verbosity >=1) {
             cout << "c Matrix finding disabled through switch. Putting all xors into matrix." << endl;

@@ -439,6 +439,7 @@ Lit HyperEngine::analyzeFail(const PropBy propBy)
             break;
         }
 
+        case xor_t:
         case null_clause_t:
             assert(false);
             break;

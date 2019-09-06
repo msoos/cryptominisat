@@ -35,7 +35,6 @@ THE SOFTWARE.
 #include <limits>
 
 #include "solvertypes.h"
-#include "popcnt.h"
 #include "Vec.h"
 
 namespace CMSat {
@@ -43,22 +42,24 @@ namespace CMSat {
 using std::vector;
 
 class PackedMatrix;
+class EGaussian;
 
 class PackedRow
 {
 public:
-    bool operator ==(const PackedRow& b) const;
-    bool operator !=(const PackedRow& b) const;
-
     PackedRow& operator=(const PackedRow& b)
     {
         #ifdef DEBUG_ROW
         assert(size > 0);
         assert(b.size > 0);
-        assert(size == b.size);
+        assert(b.size == size);
         #endif
 
-        memcpy(mp-1, b.mp-1, size+1);
+        //start from -1, because that's wher RHS is
+        for (int i = -1; i < size; i++) {
+            *(mp + i) = *(b.mp + i);
+        }
+
         return *this;
     }
 
@@ -70,15 +71,15 @@ public:
         assert(b.size == size);
         #endif
 
-        for (uint32_t i = 0; i != size; i++) {
+        //start from -1, because that's wher RHS is
+        for (int i = -1; i < size; i++) {
             *(mp + i) ^= *(b.mp + i);
         }
 
-        rhs_internal ^= b.rhs_internal;
         return *this;
     }
 
-    void xorBoth(const PackedRow& b)
+    void and_inv(const PackedRow& b)
     {
         #ifdef DEBUG_ROW
         assert(size > 0);
@@ -86,47 +87,64 @@ public:
         assert(b.size == size);
         #endif
 
-        for (uint32_t i = 0; i != size; i++) {
-            *(mp + i) ^= *(b.mp + i);
+        for (int i = 0; i < size; i++) {
+            *(mp + i) &= ~(*(b.mp + i));
         }
+    }
+
+    void set_and_inv(const PackedRow& a, const PackedRow& b)
+    {
+        #ifdef DEBUG_ROW
+        assert(size > 0);
+        assert(b.size > 0);
+        assert(b.size == size);
+        #endif
+
+        for (int i = 0; i < size; i++) {
+            *(mp + i) = *(a.mp + i) & (~(*(b.mp + i)));
+        }
+    }
+
+    void set_and(const PackedRow& a, const PackedRow& b)
+    {
+        #ifdef DEBUG_ROW
+        assert(size > 0);
+        assert(b.size > 0);
+        assert(b.size == size);
+        #endif
+
+        for (int i = 0; i < size; i++) {
+            *(mp + i) = *(a.mp + i) & *(b.mp + i);
+        }
+    }
+
+    void xor_in(const PackedRow& b)
+    {
+        #ifdef DEBUG_ROW
+        assert(size > 0);
+        assert(b.size > 0);
+        assert(b.size == size);
+        #endif
 
         rhs_internal ^= b.rhs_internal;
-    }
-
-
-    uint32_t popcnt() const;
-    bool popcnt_is_one() const
-    {
-        int ret = 0;
-        for (uint32_t i = 0; i != size; i++) {
-            ret += my_popcnt(mp[i]&0xffffffff);
-            ret += my_popcnt(mp[i]>>32);
-            if (ret > 1) return false;
+        for (int i = 0; i < size; i++) {
+            *(mp + i) ^= *(b.mp + i);
         }
-        return ret == 1;
     }
 
-    bool popcnt_is_one(uint32_t from) const
+    inline const int64_t& rhs() const
     {
-        from++;
-
-        uint64_t tmp = mp[from/64];
-        tmp >>= from%64;
-        if (tmp) return false;
-
-        for (uint32_t i = from/64+1; i != size; i++)
-            if (mp[i]) return false;
-        return true;
+        return rhs_internal;
     }
 
-    inline const uint64_t& rhs() const
+    inline int64_t& rhs()
     {
         return rhs_internal;
     }
 
     inline bool isZero() const
     {
-        for (uint32_t i = 0; i != size; i++) {
+        for (int i = 0; i < size; i++) {
             if (mp[i]) return false;
         }
         return true;
@@ -134,22 +152,22 @@ public:
 
     inline void setZero()
     {
-        memset(mp, 0, sizeof(uint64_t)*size);
+        memset(mp, 0, sizeof(int64_t)*size);
     }
 
     inline void clearBit(const uint32_t i)
     {
-        mp[i/64] &= ~((uint64_t)1 << (i%64));
-    }
-
-    inline void invert_rhs(const bool b = true)
-    {
-        rhs_internal ^= (uint64_t)b;
+        mp[i/64] &= ~(1LL << (i%64));
     }
 
     inline void setBit(const uint32_t i)
     {
-        mp[i/64] |= ((uint64_t)1 << (i%64));
+        mp[i/64] |= (1LL << (i%64));
+    }
+
+    inline void invert_rhs(const bool b = true)
+    {
+        rhs_internal ^= (int)b;
     }
 
     void swapBoth(PackedRow b)
@@ -160,8 +178,8 @@ public:
         assert(b.size == size);
         #endif
 
-        uint64_t * __restrict mp1 = mp-1;
-        uint64_t * __restrict mp2 = b.mp-1;
+        int64_t* __restrict mp1 = mp-1;
+        int64_t* __restrict mp2 = b.mp-1;
 
         uint32_t i = size+1;
         while(i != 0) {
@@ -172,7 +190,7 @@ public:
         }
     }
 
-    inline bool operator[](const uint32_t& i) const
+    inline bool operator[](const uint32_t i) const
     {
         #ifdef DEBUG_ROW
         assert(size*64 > i);
@@ -184,9 +202,7 @@ public:
     template<class T>
     void set(const T& v, const vector<uint32_t>& var_to_col, const uint32_t matrix_size)
     {
-        //(xorclause, var_to_col, origMat.num_cols)
-        assert(size == (matrix_size/64) + ((bool)(matrix_size % 64)));
-        //mp = new uint64_t[size];
+        assert(size == ((int)matrix_size/64) + ((bool)(matrix_size % 64)));
         setZero();
         for (uint32_t i = 0; i != v.size(); i++) {
             const uint32_t toset_var = var_to_col[v[i]];
@@ -198,91 +214,66 @@ public:
         rhs_internal = v.rhs;
     }
 
-    bool fill(vec<Lit>& tmp_clause, const vec<lbool>& assigns, const vector<uint32_t>& col_to_var_original) const;
-
     // using find nonbasic and basic value
     uint32_t find_watchVar(
         vector<Lit>& tmp_clause,
         const vector<uint32_t>& col_to_var,
-        vector<char> &is_basic,
-        uint32_t& nb_var);
+        vector<char> &var_has_resp_row,
+        uint32_t& non_resp_var);
 
     // using find nonbasic value after watch list is enter
     gret propGause(
+        const vector<lbool>& assigns,
+        const vector<uint32_t>& col_to_var,
+        vector<char> &var_has_resp_row,
+        uint32_t& new_resp_var,
+        PackedRow& tmp_col,
+        PackedRow& tmp_col2,
+        PackedRow& cols_vals,
+        PackedRow& cols_set,
+        Lit& ret_lit_prop
+    );
+
+    void get_reason(
         vector<Lit>& tmp_clause,
         const vector<lbool>& assigns,
         const vector<uint32_t>& col_to_var,
-        vector<char> &is_basic,
-        uint32_t& nb_var,
-        uint32_t start_col);
+        Lit prop
+    );
 
-    inline unsigned long int scan(const unsigned long int var) const
-    {
-        #ifdef DEBUG_ROW
-        assert(size > 0);
-        #endif
-
-        for(uint32_t i = var; i != size*64; i++) {
-            if (this->operator[](i)) return i;
-        }
-
-        return std::numeric_limits<unsigned long int>::max();
-    }
+    uint32_t popcnt() const;
 
 private:
     friend class PackedMatrix;
+    friend class EGaussian;
     friend std::ostream& operator << (std::ostream& os, const PackedRow& m);
 
-    PackedRow(const uint32_t _size, uint64_t*  const _mp) :
+    PackedRow(const uint32_t _size, int64_t*  const _mp) :
         mp(_mp+1)
         , rhs_internal(*_mp)
         , size(_size)
     {}
 
-    uint64_t* __restrict const mp;
-    uint64_t& rhs_internal;
-    const uint32_t size;
+    //int __attribute__ ((aligned (16))) *const mp;
+    int64_t *__restrict const mp;
+    int64_t& rhs_internal;
+    const int size;
 };
 
 inline std::ostream& operator << (std::ostream& os, const PackedRow& m)
 {
-    for(uint32_t i = 0; i < m.size*64; i++) {
-        os << m[i];
+    for(int i = 0; i < m.size*64; i++) {
+        os << (int)m[i];
     }
     os << " -- rhs: " << m.rhs();
     return os;
 }
 
-
-inline bool PackedRow::operator ==(const PackedRow& b) const
-{
-    #ifdef DEBUG_ROW
-    assert(size > 0);
-    assert(b.size > 0);
-    assert(size == b.size);
-    #endif
-
-    return (std::equal(b.mp-1, b.mp+size, mp-1));
-}
-
-inline bool PackedRow::operator !=(const PackedRow& b) const
-{
-    #ifdef DEBUG_ROW
-    assert(size > 0);
-    assert(b.size > 0);
-    assert(size == b.size);
-    #endif
-
-    return (!std::equal(b.mp-1, b.mp+size, mp-1));
-}
-
-
 inline uint32_t PackedRow::popcnt() const
 {
-    int ret = 0;
-    for (uint32_t i = 0; i != size; i++) {
-        ret += my_popcnt(mp[i]&0xffffffff);
-        ret += my_popcnt(mp[i]>>32);
+    uint32_t ret = 0;
+    for (int i = 0; i < size; i++) {
+        ret += __builtin_popcountll(mp[i]);
     }
     return ret;
 }

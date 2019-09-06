@@ -67,6 +67,7 @@ THE SOFTWARE.
 #include "xorfinder.h"
 #include "cardfinder.h"
 #include "sls.h"
+#include "matrixfinder.h"
 
 #ifdef USE_BREAKID
 #include "cms_breakid.h"
@@ -148,7 +149,9 @@ Solver::~Solver()
     delete subsumeImplicit;
     delete datasync;
     delete reduceDB;
+#ifdef USE_BREAKID
     delete breakid;
+#endif
     delete card_finder;
 }
 
@@ -205,6 +208,7 @@ bool Solver::add_xor_clause_inter(
     if (!ps.empty()) {
         if (ps.size() > 2) {
             xorclauses.push_back(Xor(ps, rhs));
+            xor_clauses_updated = true;
         }
         ps[0] ^= rhs;
     } else {
@@ -811,6 +815,7 @@ void Solver::renumber_clauses(const vector<uint32_t>& outerToInter)
     }
 
     //Clauses' abstractions have to be re-calculated
+    xor_clauses_updated = true;
     for(Xor& x: xorclauses) {
         updateVarsMap(x, outerToInter);
     }
@@ -879,6 +884,7 @@ double Solver::calc_renumber_saving()
 
 bool Solver::clean_xor_clauses_from_duplicate_and_set_vars()
 {
+    xor_clauses_updated = true;
     assert(decisionLevel() == 0);
     double myTime = cpuTime();
     XorFinder f(NULL, this);
@@ -1702,8 +1708,9 @@ long Solver::calc_num_confl_to_do_this_iter(const size_t iteration_num) const
 
 lbool Solver::iterate_until_solved()
 {
-    size_t iteration_num = 0;
     lbool status = l_Undef;
+    size_t iteration_num = 0;
+
     while (status == l_Undef
         && !must_interrupt_asap()
         && cpuTime() < conf.maxTime
@@ -1718,6 +1725,12 @@ lbool Solver::iterate_until_solved()
         if (num_confl <= 0) {
             break;
         }
+        #ifdef USE_GAUSS
+        if (!find_and_init_all_matrices()) {
+            status = l_False;
+            goto end;
+        }
+        #endif //USE_GAUSS
         status = Searcher::solve(num_confl);
         clear_all_branch_strategy_setups();
 
@@ -1752,9 +1765,8 @@ lbool Solver::iterate_until_solved()
             check_reconfigure();
         }
     }
-    #ifdef USE_GAUSS
-    clear_gauss_matrices();
-    #endif
+
+    end:
     return status;
 }
 
@@ -3722,6 +3734,39 @@ void Solver::renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors
 }
 
 #ifdef USE_GAUSS
+bool Solver::find_and_init_all_matrices()
+{
+    if (!xor_clauses_updated) {
+        if (conf.verbosity >= 2) {
+            cout << "c [find&init matx] XORs not updated, not performing matrix init" << endl;
+        }
+        return true;
+    }
+
+    clear_gauss_matrices();
+    MatrixFinder finder(solver);
+    ok = finder.findMatrixes();
+    if (!ok) {
+        return false;
+    }
+
+    if (!init_all_matrices()) {
+        return false;
+    }
+
+    #ifdef SLOW_DEBUG
+    for(size_t i = 0; i< solver->gmatrixes.size(); i++) {
+        if (solver->gmatrixes[i]) {
+            solver->gmatrixes[i]->check_watchlist_sanity();
+            assert(solver->gmatrixes[i]->get_matrix_no() == i);
+        }
+    }
+    #endif
+
+    xor_clauses_updated = false;
+    return true;
+}
+
 bool Solver::init_all_matrices()
 {
     assert(ok);
@@ -3742,10 +3787,6 @@ bool Solver::init_all_matrices()
             g = NULL;
         }
     }
-    for(auto& gqd: gqueuedata) {
-        gqd.reset_stats();
-    }
-
     return solver->okay();
 }
 #endif //USE_GAUSS

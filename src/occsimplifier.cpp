@@ -33,6 +33,7 @@ THE SOFTWARE.
 #include <limits>
 #include <cmath>
 #include <functional>
+#include <immintrin.h>
 
 
 #include "popcnt.h"
@@ -1387,6 +1388,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             //solver->clauseCleaner->clean_implicit_clauses();
         } else if (token == "occ-bve") {
             if (solver->conf.doVarElim && solver->conf.do_empty_varelim) {
+                solver->xor_clauses_updated = true;
                 solver->xorclauses.clear();
                 #ifdef USE_GAUSS
                 solver->clear_gauss_matrices();
@@ -2939,7 +2941,7 @@ int OccSimplifier::check_empty_resolvent_action(
                         break;
 
                     case ResolvCount::count:
-                        int num = my_popcnt(seen[(~ws.lit2()).toInt()]);
+                        int num = __builtin_popcount(seen[(~ws.lit2()).toInt()]);
                         assert(num <= otherSize);
                         count += otherSize - num;
                         break;
@@ -2997,7 +2999,7 @@ int OccSimplifier::check_empty_resolvent_action(
 
                 //Count using tmp
                 if (action == ResolvCount::count) {
-                    int num = my_popcnt(tmp);
+                    int num = __builtin_popcount(tmp);
                     assert(num <= otherSize);
                     count += otherSize - num;
                 }
