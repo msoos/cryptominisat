@@ -330,7 +330,7 @@ if (NOT WIN32)
         add_cxx_flag_if_supported("-Winit-self")
         add_cxx_flag_if_supported("-Wparentheses")
         add_cxx_flag_if_supported("-Wunreachable-code")
-        add_cxx_flag_if_supported("-ggdb3")
+        add_cxx_flag_if_supported("-g")
         add_cxx_flag_if_supported("-Wno-class-memaccess")
 
         add_cxx_flag_if_supported("-mpopcnt")
