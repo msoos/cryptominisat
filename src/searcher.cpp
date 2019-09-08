@@ -1139,6 +1139,10 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
         }
     }
     seen[p.var()] = 0;
+
+    learnt_clause = out_conflict;
+    minimize_using_permdiff();
+    out_conflict = learnt_clause;
 }
 
 void Searcher::update_assump_conflict_to_orig_outside(vector<Lit>& out_conflict)
