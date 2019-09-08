@@ -1343,7 +1343,7 @@ lbool Searcher::new_decision()
             #ifdef USE_GAUSS
             for(uint32_t i = 0; i < gmatrices.size(); i++) {
                 assert(gmatrices[i]);
-                gmatrices[i]->new_decision_level();
+                gmatrices[i]->new_decision_level(decisionLevel());
             }
             #endif
         } else if (value(p) == l_False) {
@@ -1376,7 +1376,7 @@ lbool Searcher::new_decision()
     #ifdef USE_GAUSS
     for(uint32_t i = 0; i < gmatrices.size(); i++) {
         assert(gmatrices[i]);
-        gmatrices[i]->new_decision_level();
+        gmatrices[i]->new_decision_level(decisionLevel());
     }
     #endif
     enqueue<update_bogoprops>(next);

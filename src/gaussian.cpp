@@ -195,15 +195,6 @@ void EGaussian::fill_matrix() {
     satisfied_xors[0].resize(num_rows, 0);
 }
 
-void EGaussian::new_decision_level()
-{
-    assert(solver->decisionLevel() > 0);
-    if (satisfied_xors.size() < solver->decisionLevel()+1) {
-        satisfied_xors.resize(solver->decisionLevel()+1);
-    }
-    satisfied_xors[solver->decisionLevel()] = satisfied_xors[solver->decisionLevel()-1];
-}
-
 void EGaussian::delete_gauss_watch_this_matrix()
 {
     for (size_t ii = 0; ii < solver->gwatches.size(); ii++) {

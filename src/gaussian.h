@@ -88,7 +88,7 @@ class EGaussian {
         uint32_t p,
         GaussQData& gqd
     );
-    void new_decision_level();
+    void new_decision_level(uint32_t new_dec_level);
     void canceling();
     bool full_init(bool& created);
     void update_cols_vals_set();
@@ -207,7 +207,15 @@ inline bool EGaussian::must_disable(const GaussQData& gqd, bool verbose)
     return false;
 }
 
+inline void EGaussian::new_decision_level(uint32_t dec_level)
+{
+    assert(dec_level > 0);
+    if (satisfied_xors.size() < dec_level+1) {
+        satisfied_xors.resize(dec_level+1);
+    }
+    satisfied_xors[dec_level] = satisfied_xors[dec_level-1];
 }
 
+}
 
 #endif //ENHANCEGAUSSIAN_H
