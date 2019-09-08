@@ -148,7 +148,7 @@ class EGaussian {
 
     //Is the clause at this ROW satisfied already?
     //satisfied_xors[decision_level][row] tells me that
-    vector<vector<bool>> satisfied_xors;
+    vector<char> satisfied_xors;
 
     // Someone is responsible for this column if TRUE
     ///we always WATCH this variable
@@ -182,6 +182,7 @@ class EGaussian {
 
 inline void EGaussian::canceling() {
     cancelled_since_val_update = true;
+    memset(satisfied_xors.data(), 0, satisfied_xors.size());
 }
 
 inline bool EGaussian::must_disable(const GaussQData& gqd, bool verbose)
@@ -207,13 +208,13 @@ inline bool EGaussian::must_disable(const GaussQData& gqd, bool verbose)
     return false;
 }
 
-inline void EGaussian::new_decision_level(uint32_t dec_level)
+inline void EGaussian::new_decision_level(uint32_t /*dec_level*/)
 {
-    assert(dec_level > 0);
+    /*assert(dec_level > 0);
     if (satisfied_xors.size() < dec_level+1) {
         satisfied_xors.resize(dec_level+1);
     }
-    satisfied_xors[dec_level] = satisfied_xors[dec_level-1];
+    satisfied_xors[dec_level] = satisfied_xors[dec_level-1];*/
 }
 
 }

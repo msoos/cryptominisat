@@ -188,11 +188,8 @@ void EGaussian::fill_matrix() {
 
     //reset satisfied_xor state
     assert(solver->decisionLevel() == 0);
-    if (satisfied_xors.size() < 1) {
-        satisfied_xors.resize(1);
-    }
-    satisfied_xors[0].clear();
-    satisfied_xors[0].resize(num_rows, 0);
+    satisfied_xors.clear();
+    satisfied_xors.resize(num_rows, 0);
 }
 
 void EGaussian::delete_gauss_watch_this_matrix()
@@ -356,8 +353,7 @@ void EGaussian::eliminate() {
 gret EGaussian::adjust_matrix() {
     assert(solver->decisionLevel() == 0);
     assert(row_non_resp_for_var.empty());
-    assert(satisfied_xors.size() > 0);
-    assert(satisfied_xors[0].size() >= num_rows);
+    assert(satisfied_xors.size() >= num_rows);
 
     PackedMatrix::iterator end = mat.begin() + num_rows;
     PackedMatrix::iterator rowIt = mat.begin();
@@ -381,7 +377,7 @@ gret EGaussian::adjust_matrix() {
                     // printf("%d:Warring: this row is conflict in adjust matrix!!!",row_id);
                     return gret::confl;
                 }
-                satisfied_xors[0][row_id] = 1;
+                satisfied_xors[row_id] = 1;
                 break;
 
             //Normal propagation
@@ -487,17 +483,15 @@ bool EGaussian::find_truths(
     #ifdef VERBOSE_DEBUG
     cout << "row_n:" << row_n << endl;
     cout << "dec lev:" << solver->decisionLevel() << endl;
-    cout << "satisfied_xors[0].size(): " << satisfied_xors[0].size() << endl;
-    cout << "satisfied_xors[solver->decisionLevel()].size(): " << satisfied_xors[solver->decisionLevel()].size() << endl;
+    cout << "satisfied_xors.size(): " << satisfied_xors.size() << endl;
     #endif
     #ifdef SLOW_DEBUG
     assert(row_n < num_rows);
-    assert(satisfied_xors.size() > solver->decisionLevel());
-    assert(satisfied_xors[solver->decisionLevel()].size() > row_n);
+    assert(satisfied_xors.size() > row_n);
     #endif
 
     // this XOR is already satisfied
-    if (satisfied_xors[solver->decisionLevel()][row_n]) {
+    if (satisfied_xors[row_n]) {
         *j++ = *i;
         find_truth_ret_satisfied_precheck++;
         return true;
@@ -573,7 +567,7 @@ bool EGaussian::find_truths(
                 var_has_resp_row[p] = 1;
             }
 
-            satisfied_xors[solver->decisionLevel()][row_n] = 1;
+            satisfied_xors[row_n] = 1;
             return true;
         }
 
@@ -617,7 +611,7 @@ bool EGaussian::find_truths(
                 var_has_resp_row[row_non_resp_for_var[row_n]] = 0;
                 var_has_resp_row[p] = 1;
             }
-            satisfied_xors[solver->decisionLevel()][row_n] = 1;
+            satisfied_xors[row_n] = 1;
             return true;
 
         //error here
@@ -714,7 +708,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
             << endl;
             #endif
 
-            assert(satisfied_xors[solver->decisionLevel()][row_n] == 0);
+            assert(satisfied_xors[row_n] == 0);
             (*rowI).xor_in(*new_resp_row);
             elim_xored_rows++;
 
@@ -801,7 +795,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                         << "-> Long prop"  << endl;
                         #endif
                         gqd.ret = gauss_res::prop;
-                        satisfied_xors[solver->decisionLevel()][row_n] = 1;
+                        satisfied_xors[row_n] = 1;
                         break;
                     }
 
@@ -838,7 +832,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
 
                         solver->gwatches[p].push(GaussWatched(row_n, matrix_no));
                         row_non_resp_for_var[row_n] = p;
-                        satisfied_xors[solver->decisionLevel()][row_n] = 1;
+                        satisfied_xors[row_n] = 1;
                         break;
                     default:
                         // can not here
