@@ -493,6 +493,7 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
             break;
         }
 
+        #ifdef USE_GAUSS
         case xor_t: {
             vector<Lit>* xor_reason = gmatrices[confl.get_matrix_num()]->
                 get_reason(confl.get_row_num());
@@ -501,6 +502,7 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
             sumAntecedentsLits += size;
             break;
         }
+        #endif
 
         case null_clause_t:
         default:
@@ -974,6 +976,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
                 break;
             }
 
+            #ifdef USE_GAUSS
             case xor_t: {
                 vector<Lit>* xcl = gmatrices[reason.get_matrix_num()]->
                     get_reason(reason.get_row_num());
@@ -981,6 +984,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
                 size = xcl->size()-1;
                 break;
             }
+            #endif
 
             case binary_t:
                 size = 1;
@@ -2540,9 +2544,11 @@ void Searcher::print_solution_type(const lbool status) const
 void Searcher::finish_up_solve(const lbool status)
 {
     print_solution_type(status);
+    #ifdef USE_GAUSS
     if (conf.verbosity) {
         print_matrix_stats();
     }
+    #endif
 
     if (status == l_True) {
         #ifdef SLOW_DEBUG
