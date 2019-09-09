@@ -286,7 +286,7 @@ void Searcher::normalClMinim()
     for (i = j = 1; i < learnt_clause.size(); i++) {
         const PropBy& reason = varData[learnt_clause[i].var()].reason;
         size_t size;
-        Clause* cl = NULL;
+        Lit *lits = NULL;
         PropByType type = reason.getType();
         if (type == null_clause_t) {
             learnt_clause[j++] = learnt_clause[i];
@@ -294,14 +294,27 @@ void Searcher::normalClMinim()
         }
 
         switch (type) {
-            case clause_t:
-                cl = cl_alloc.ptr(reason.get_offset());
-                size = cl->size()-1;
-                break;
-
             case binary_t:
                 size = 1;
                 break;
+
+            case clause_t: {
+                Clause* cl2 = cl_alloc.ptr(reason.get_offset());
+                lits = cl2->begin();
+                size = cl2->size()-1;
+                break;
+            }
+
+            #ifdef USE_GAUSS
+            case xor_t: {
+                vector<Lit>* xor_reason = gmatrices[reason.get_matrix_num()]->
+                get_reason(reason.get_row_num());
+                lits = xor_reason->data();
+                size = xor_reason->size();
+                sumAntecedentsLits += size;
+                break;
+            }
+            #endif
 
             default:
                 release_assert(false);
@@ -312,7 +325,8 @@ void Searcher::normalClMinim()
             Lit p;
             switch (type) {
                 case clause_t:
-                    p = (*cl)[k+1];
+                case xor_t:
+                    p = lits[k+1];
                     break;
 
                 case binary_t:
