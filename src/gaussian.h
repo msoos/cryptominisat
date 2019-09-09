@@ -136,8 +136,8 @@ class EGaussian {
     uint64_t elim_ret_confl = 0;
     uint64_t elim_ret_satisfied = 0;
     uint64_t elim_ret_fnewwatch = 0;
-    double before_init_density;
-    double after_init_density;
+    double before_init_density = 0;
+    double after_init_density = 0;
 
     ///////////////
     // Internal data
@@ -162,8 +162,8 @@ class EGaussian {
     PackedMatrix mat;
     vector<uint32_t>  var_to_col; ///var->col mapping. Index with VAR
     vector<uint32_t> col_to_var; ///col->var mapping. Index with COL
-    uint32_t num_rows;
-    uint32_t num_cols;
+    uint32_t num_rows = 0;
+    uint32_t num_cols = 0;
 
     //quick lookup
     PackedRow *cols_vals = NULL;
