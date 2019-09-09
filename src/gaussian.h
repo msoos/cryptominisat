@@ -217,6 +217,19 @@ inline void EGaussian::new_decision_level(uint32_t /*dec_level*/)
     satisfied_xors[dec_level] = satisfied_xors[dec_level-1];*/
 }
 
+inline double EGaussian::get_density()
+{
+    if (num_rows*num_cols == 0) {
+        return 0;
+    }
+
+    uint32_t pop = 0;
+    for (const auto& row: mat) {
+        pop += row.popcnt();
+    }
+    return (double)pop/(double)(num_rows*num_cols);
+}
+
 }
 
 #endif //ENHANCEGAUSSIAN_H

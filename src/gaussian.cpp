@@ -955,16 +955,6 @@ void EGaussian::print_matrix_stats()
     cout << std::setprecision(2);
 }
 
-double EGaussian::get_density()
-{
-    uint32_t pop = 0;
-    for (const auto& row: mat) {
-        pop += row.popcnt();
-    }
-    return (double)pop/(double)(num_rows*num_cols);
-}
-
-
 vector<Lit>* EGaussian::get_reason(uint32_t row)
 {
     if (!xor_reasons[row].must_recalc) {
