@@ -81,6 +81,15 @@ matrix_no(_matrix_no)
 
 EGaussian::~EGaussian() {
     delete_gauss_watch_this_matrix();
+    for(auto& x: tofree) {
+        delete[] x;
+    }
+    tofree.clear();
+
+    delete cols_set;
+    delete cols_vals;
+    delete tmp_col;
+    delete tmp_col2;
 }
 
 struct ColSorter {
@@ -279,10 +288,31 @@ bool EGaussian::full_init(bool& created) {
 
     xor_reasons.resize(num_rows);
     uint32_t num_64b = num_cols/64+(bool)(num_cols%64);
-    cols_set = new PackedRow(num_64b, new int64_t[num_64b+1]);
-    cols_vals = new PackedRow(num_64b, new int64_t[num_64b+1]);
-    tmp_col = new PackedRow(num_64b, new int64_t[num_64b+1]);
-    tmp_col2 = new PackedRow(num_64b, new int64_t[num_64b+1]);
+    for(auto& x: tofree) {
+        delete[] x;
+    }
+    tofree.clear();
+    delete cols_set;
+    delete cols_vals;
+    delete tmp_col;
+    delete tmp_col2;
+
+    int64_t* x = new int64_t[num_64b+1];
+    tofree.push_back(x);
+    cols_set = new PackedRow(num_64b, x);
+
+    x = new int64_t[num_64b+1];
+    tofree.push_back(x);
+    cols_vals = new PackedRow(num_64b, x);
+
+    x = new int64_t[num_64b+1];
+    tofree.push_back(x);
+    tmp_col = new PackedRow(num_64b, x);
+
+    x = new int64_t[num_64b+1];
+    tofree.push_back(x);
+    tmp_col2 = new PackedRow(num_64b, x);
+
     cols_vals->rhs() = 0;
     cols_set->rhs() = 0;
     tmp_col->rhs() = 0;
