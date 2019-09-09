@@ -417,14 +417,12 @@ class Tester:
             cmd += "--moremorealways %d " % random.choice([1, 1, 1, 0])
 
             if self.this_gauss_on:
-                # Set maximum no. of rows for gaussian matrix."
-                cmd += "--maxmatrixrows %s " % int(random.gammavariate(5, 15.0))
+                if random.randint(0,1000) < 10:
+                    # Set maximum no. of rows for gaussian matrix."
+                    cmd += "--maxmatrixrows %s " % int(random.gammavariate(1, 15.0))
 
-                # "Set minimum no. of rows for gaussian matrix.
-                cmd += "--minmatrixrows %s " % int(random.gammavariate(3, 15.0))
-
-                # Save matrix every Nth decision level."
-                cmd += "--savematrix %s " % (int(random.gammavariate(1, 15.0))+1)
+                    # "Set minimum no. of rows for gaussian matrix.
+                    cmd += "--minmatrixrows %s " % int(random.gammavariate(1, 15.0))
 
             if "sql" in self.extra_opts_supported and random.randint(0, 3) > 0 and self.num_threads == 1 and not self.preproc:
                 cmd += "--sql 2 "
