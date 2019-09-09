@@ -44,6 +44,10 @@ using std::vector;
 class PackedMatrix;
 class EGaussian;
 
+/*inline void SetBit(int64_t *array, int bit) {
+    asm("bts %1,%0" : "+m" (*array) : "r" (bit));
+}*/
+
 class PackedRow
 {
 public:
@@ -162,6 +166,7 @@ public:
 
     inline void setBit(const uint32_t i)
     {
+        //SetBit(mp+i/64, i%64);
         mp[i/64] |= (1LL << (i%64));
     }
 
