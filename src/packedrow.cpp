@@ -188,7 +188,3 @@ gret PackedRow::propGause(
     //Conflict
     return gret::confl;
 }
-
-
-
-
