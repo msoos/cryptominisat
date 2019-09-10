@@ -3676,7 +3676,9 @@ void Searcher::clear_gauss_matrices()
 void Searcher::print_matrix_stats()
 {
     for(EGaussian* g: gmatrices) {
-        g->print_matrix_stats();
+        if (g) {
+            g->print_matrix_stats();
+        }
     }
 }
 #endif
