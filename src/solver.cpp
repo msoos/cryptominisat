@@ -3931,7 +3931,8 @@ bool Solver::find_and_init_all_matrices()
 bool Solver::init_all_matrices()
 {
     assert(ok);
-    for (EGaussian*& g :gmatrices) {
+    for (uint32_t i = 0; i < gmatrices.size(); i++) {
+        auto& g = gmatrices[i];
         bool created = false;
         // initial arrary. return true is fine , return false means solver already false;
         if (!g->full_init(created)) {
@@ -3941,6 +3942,7 @@ bool Solver::init_all_matrices()
             break;
         }
         if (!created) {
+            gqueuedata[i].engaus_disable = true;
             delete g;
             if (conf.verbosity > 5) {
                 cout << "DELETED matrix" << endl;
