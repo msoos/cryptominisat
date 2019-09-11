@@ -3931,6 +3931,7 @@ bool Solver::find_and_init_all_matrices()
 bool Solver::init_all_matrices()
 {
     assert(ok);
+    assert(gmatrices.size() == gqueuedata.size());
     for (uint32_t i = 0; i < gmatrices.size(); i++) {
         auto& g = gmatrices[i];
         bool created = false;
@@ -3950,6 +3951,18 @@ bool Solver::init_all_matrices()
             g = NULL;
         }
     }
+
+    uint32_t j = 0;
+    for (uint32_t i = 0; i < gqueuedata.size(); i++) {
+        if (gmatrices[i] != NULL) {
+            gmatrices[j] = gmatrices[i];
+            gqueuedata[j] = gqueuedata[i];
+            j++;
+        }
+    }
+    gqueuedata.resize(j);
+    gmatrices.resize(j);
+
     return solver->okay();
 }
 #endif //USE_GAUSS
