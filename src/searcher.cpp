@@ -310,7 +310,7 @@ void Searcher::normalClMinim()
                 vector<Lit>* xor_reason = gmatrices[reason.get_matrix_num()]->
                 get_reason(reason.get_row_num());
                 lits = xor_reason->data();
-                size = xor_reason->size();
+                size = xor_reason->size()-1;
                 sumAntecedentsLits += size;
                 break;
             }
