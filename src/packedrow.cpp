@@ -112,12 +112,12 @@ gret PackedRow::propGause(
     PackedRow& tmp_col,
     PackedRow& tmp_col2,
     PackedRow& cols_vals,
-    PackedRow& cols_set,
+    PackedRow& cols_unset,
     Lit& ret_lit_prop
 ) {
     //cout << "start" << endl;
     //cout << "line: " << *this << endl;
-    tmp_col.set_and_inv(*this, cols_set);
+    tmp_col.set_and(*this, cols_unset);
     uint32_t pop = tmp_col.popcnt();
 
     //Find new watch

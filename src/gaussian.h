@@ -167,7 +167,7 @@ class EGaussian {
 
     //quick lookup
     PackedRow *cols_vals = NULL;
-    PackedRow *cols_set = NULL;
+    PackedRow *cols_unset = NULL;
     PackedRow *tmp_col = NULL;
     PackedRow *tmp_col2 = NULL;
     void update_cols_vals_set(const Lit lit1);

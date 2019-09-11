@@ -167,6 +167,11 @@ public:
         memset(mp, 0, sizeof(int64_t)*size);
     }
 
+    inline void setOne()
+    {
+        memset(mp, 0xff, sizeof(int64_t)*size);
+    }
+
     inline void clearBit(const uint32_t i)
     {
         mp[i/64] &= ~(1LL << (i%64));
@@ -243,7 +248,7 @@ public:
         PackedRow& tmp_col,
         PackedRow& tmp_col2,
         PackedRow& cols_vals,
-        PackedRow& cols_set,
+        PackedRow& cols_unset,
         Lit& ret_lit_prop
     );
 

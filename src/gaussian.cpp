@@ -86,7 +86,7 @@ EGaussian::~EGaussian() {
     }
     tofree.clear();
 
-    delete cols_set;
+    delete cols_unset;
     delete cols_vals;
     delete tmp_col;
     delete tmp_col2;
@@ -292,14 +292,14 @@ bool EGaussian::full_init(bool& created) {
         delete[] x;
     }
     tofree.clear();
-    delete cols_set;
+    delete cols_unset;
     delete cols_vals;
     delete tmp_col;
     delete tmp_col2;
 
     int64_t* x = new int64_t[num_64b+1];
     tofree.push_back(x);
-    cols_set = new PackedRow(num_64b, x);
+    cols_unset = new PackedRow(num_64b, x);
 
     x = new int64_t[num_64b+1];
     tofree.push_back(x);
@@ -314,7 +314,7 @@ bool EGaussian::full_init(bool& created) {
     tmp_col2 = new PackedRow(num_64b, x);
 
     cols_vals->rhs() = 0;
-    cols_set->rhs() = 0;
+    cols_unset->rhs() = 0;
     tmp_col->rhs() = 0;
     tmp_col2->rhs() = 0;
     after_init_density = get_density();
@@ -546,7 +546,7 @@ bool EGaussian::find_truths(
         *tmp_col,
         *tmp_col2,
         *cols_vals,
-        *cols_set,
+        *cols_unset,
         ret_lit_prop);
     find_truth_called_propgause++;
 
@@ -656,7 +656,7 @@ bool EGaussian::find_truths(
 
 inline void EGaussian::update_cols_vals_set(const Lit lit1)
 {
-    cols_set->setBit(var_to_col[lit1.var()]);
+    cols_unset->clearBit(var_to_col[lit1.var()]);
     if (!lit1.sign()) {
         cols_vals->setBit(var_to_col[lit1.var()]);
     }
@@ -667,12 +667,12 @@ void EGaussian::update_cols_vals_set()
     //cancelled_since_val_update = true;
     if (cancelled_since_val_update) {
         cols_vals->setZero();
-        cols_set->setZero();
+        cols_unset->setOne();
 
         for(uint32_t col = 0; col < col_to_var.size(); col++) {
             uint32_t var = col_to_var[col];
             if (solver->value(var) != l_Undef) {
-                cols_set->setBit(col);
+                cols_unset->clearBit(col);
                 if (solver->value(var) == l_True) {
                     cols_vals->setBit(col);
                 }
@@ -692,7 +692,7 @@ void EGaussian::update_cols_vals_set()
         uint32_t col = var_to_col[var];
         if (col != unassigned_col) {
             assert (solver->value(var) != l_Undef);
-            cols_set->setBit(col);
+            cols_unset->clearBit(col);
             if (solver->value(var) == l_True) {
                 cols_vals->setBit(col);
             }
@@ -768,7 +768,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                     *tmp_col,
                     *tmp_col2,
                     *cols_vals,
-                    *cols_set,
+                    *cols_unset,
                     ret_lit_prop
                 );
                 elim_called_propgause++;
