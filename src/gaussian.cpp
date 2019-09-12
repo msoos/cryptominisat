@@ -96,9 +96,6 @@ struct ColSorter {
     explicit ColSorter(Solver* _solver) :
         solver(_solver)
     {
-        for(const auto& x: solver->seen) {
-            assert(x == 0);
-        }
         for(const auto& ass: solver->assumptions) {
             Lit p = solver->map_outer_to_inter(ass.lit_outer);
             assert(solver->seen.size() > p.var());
@@ -112,9 +109,6 @@ struct ColSorter {
             Lit p = solver->map_outer_to_inter(ass.lit_outer);
             solver->seen[p.var()] = 0;
         }
-        for(const auto& x: solver->seen) {
-            assert(x == 0);
-        }
     }
 
     bool operator()(const uint32_t a, const uint32_t b)
@@ -125,7 +119,13 @@ struct ColSorter {
             return true;
         }
 
-        return false;
+        if (!solver->seen[b] && solver->seen[a]) {
+            return false;
+        }
+
+        //return false;
+        return solver->varData[a].level > solver->varData[b].level;
+        //return solver->var_act_vsids[a] > solver->var_act_vsids[b];
     }
 
     Solver* solver;
@@ -177,7 +177,11 @@ uint32_t EGaussian::select_columnorder() {
                 assump = true;
             }
         }
-        cout << "assump:" << (int)assump << endl;
+        cout << "assump:" << (int)assump
+        << " act: " << std::setprecision(2) << std::scientific
+        << solver->var_act_vsids[x] << std::fixed
+        << " level: " << solver->varData[x].level
+        << endl;
     }
     #endif
 
