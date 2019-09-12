@@ -93,14 +93,42 @@ EGaussian::~EGaussian() {
 }
 
 struct ColSorter {
-    explicit ColSorter(vector<VarData>& _dats) : dats(_dats) {
+    explicit ColSorter(Solver* _solver) :
+        solver(_solver)
+    {
+        for(const auto& x: solver->seen) {
+            assert(x == 0);
+        }
+        for(const auto& ass: solver->assumptions) {
+            Lit p = solver->map_outer_to_inter(ass.lit_outer);
+            assert(solver->seen.size() > p.var());
+            solver->seen[p.var()] = 1;
+        }
     }
 
-    bool operator()(uint32_t a, uint32_t b) {
-        return dats[a].last_picked > dats[b].last_picked;
+    void finishup()
+    {
+        for(const auto& ass: solver->assumptions) {
+            Lit p = solver->map_outer_to_inter(ass.lit_outer);
+            solver->seen[p.var()] = 0;
+        }
+        for(const auto& x: solver->seen) {
+            assert(x == 0);
+        }
     }
 
-    const vector<VarData>& dats;
+    bool operator()(const uint32_t a, const uint32_t b)
+    {
+        assert(solver->seen.size() > a);
+        assert(solver->seen.size() > b);
+        if (solver->seen[b] && !solver->seen[a]) {
+            return true;
+        }
+
+        return false;
+    }
+
+    Solver* solver;
 };
 
 uint32_t EGaussian::select_columnorder() {
@@ -135,10 +163,26 @@ uint32_t EGaussian::select_columnorder() {
     }
     var_to_col.resize(largest_used_var + 1);
 
-    col_to_var.clear();
-    std::sort(vars_needed.begin(), vars_needed.end(),
-              ColSorter(solver->varData));
 
+    ColSorter c(solver);
+    std::sort(vars_needed.begin(), vars_needed.end(),c);
+    c.finishup();
+
+    #ifdef VERBOSE_DEBUG
+    cout << "col order: " << endl;
+    for(auto& x: vars_needed) {
+        bool assump = false;
+        for(const auto& ass: solver->assumptions) {
+            if (solver->map_outer_to_inter(ass.lit_outer).var() == x) {
+                assump = true;
+            }
+        }
+        cout << "assump:" << (int)assump << endl;
+    }
+    #endif
+
+
+    col_to_var.clear();
     for (uint32_t v : vars_needed) {
         assert(var_to_col[v] == unassigned_col - 1);
         col_to_var.push_back(v);
