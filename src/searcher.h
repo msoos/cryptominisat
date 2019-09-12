@@ -207,34 +207,7 @@ class Searcher : public HyperEngine
         void add_in_partial_solving_stats();
 
 
-        struct AssumptionPair {
-            AssumptionPair(const Lit _outer, const Lit _outside):
-                lit_outer(_outer)
-                , lit_orig_outside(_outside)
-            {
-            }
-
-            Lit lit_outer;
-            Lit lit_orig_outside; //not outer, but outside(!)
-
-            bool operator==(const AssumptionPair& other) const {
-                return other.lit_outer == lit_outer &&
-                other.lit_orig_outside == lit_orig_outside;
-            }
-
-            bool operator<(const AssumptionPair& other) const
-            {
-                //Yes, we need reverse in terms of inverseness
-                return ~lit_outer < ~other.lit_outer;
-            }
-        };
         void fill_assumptions_set();
-
-        //Note that this array can have the same internal variable more than
-        //once, in case one has been replaced with the other. So if var 1 =  var 2
-        //and var 1 was set to TRUE and var 2 to be FALSE, then we'll have var 1
-        //insided this array twice, once it needs to be set to TRUE and once FALSE
-        vector<AssumptionPair> assumptions;
 
         void update_assump_conflict_to_orig_outside(vector<Lit>& out_conflict);
 
