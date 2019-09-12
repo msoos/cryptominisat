@@ -123,8 +123,8 @@ struct ColSorter {
             return false;
         }
 
-        //return false;
-        return solver->varData[a].level > solver->varData[b].level;
+        return false;
+        //return solver->varData[a].level < solver->varData[b].level;
         //return solver->var_act_vsids[a] > solver->var_act_vsids[b];
     }
 
