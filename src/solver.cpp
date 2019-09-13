@@ -1294,7 +1294,7 @@ void Solver::extend_solution(const bool only_sampling_solution)
     }
 
     //map back without BVA
-    model = map_back_to_without_bva(model);
+    model = map_back_vars_to_without_bva(model);
     if (conf.need_decisions_reaching) {
         decisions_reaching_model_valid = true;
         const vector<uint32_t> my_map = build_outer_to_without_bva_map();

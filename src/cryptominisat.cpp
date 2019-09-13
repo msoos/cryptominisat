@@ -1231,3 +1231,8 @@ DLL_PUBLIC void SATSolver::set_single_run()
         s.conf.breakid_use_assump = false;
     }
 }
+
+DLL_PUBLIC vector<uint32_t> SATSolver::get_var_incidence()
+{
+    return data->solvers[data->which_solved]->get_outside_var_incidence();
+}
