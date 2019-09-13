@@ -2415,7 +2415,6 @@ lbool Searcher::solve(
         params.rest_type = Restart::luby;
     }
 
-    assert(solver->check_order_heap_sanity());
     while(stats.conflStats.numConflicts < max_confl_per_search_solve_call
         && status == l_Undef
     ) {
