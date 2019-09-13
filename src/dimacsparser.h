@@ -244,6 +244,7 @@ bool DimacsParser<C>::parseWeight(C& in)
     return true;
 }
 
+template<class C>
 bool DimacsParser<C>::parse_header(C& in)
 {
     if (match(in, "p cnf")) {
