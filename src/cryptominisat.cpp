@@ -1252,3 +1252,11 @@ DLL_PUBLIC void SATSolver::set_yes_intree_probe()
         s.conf.doIntreeProbe = true;
     }
 }
+
+DLL_PUBLIC void SATSolver::set_no_confl_needed()
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.conf_needed = false;
+    }
+}

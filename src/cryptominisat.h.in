@@ -110,6 +110,7 @@ namespace CMSat {
         void set_single_run(); //we promise to call solve() EXACTLY once
         void set_no_intree_probe();
         void set_yes_intree_probe();
+        void set_no_confl_needed(); //conflict will NOT be calculated for next solve run
 
 
         ////////////////////////////

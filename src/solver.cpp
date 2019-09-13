@@ -1457,6 +1457,7 @@ lbool Solver::simplify_problem_outside()
     end:
     unfill_assumptions_set();
     assumptions.clear();
+    conf.conf_needed = true;
     return status;
 }
 
@@ -1594,6 +1595,7 @@ lbool Solver::solve_with_assumptions(
     conf.max_confl = std::numeric_limits<long>::max();
     conf.maxTime = std::numeric_limits<double>::max();
     drat->flush();
+    conf.conf_needed = true;
     return status;
 }
 
@@ -1884,7 +1886,9 @@ void Solver::handle_found_solution(const lbool status, const bool only_sampling_
                 assert(var_inside_assumptions(lit.var()) != l_Undef);
             }
         }
-        update_assump_conflict_to_orig_outside(conflict);
+        if (conf.conf_needed) {
+            update_assump_conflict_to_orig_outside(conflict);
+        }
     }
 
     #ifdef USE_BREAKID
