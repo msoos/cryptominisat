@@ -1236,3 +1236,19 @@ DLL_PUBLIC vector<uint32_t> SATSolver::get_var_incidence()
 {
     return data->solvers[data->which_solved]->get_outside_var_incidence();
 }
+
+DLL_PUBLIC void SATSolver::set_no_intree_probe()
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.doIntreeProbe = false;
+    }
+}
+
+DLL_PUBLIC void SATSolver::set_yes_intree_probe()
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.doIntreeProbe = true;
+    }
+}
