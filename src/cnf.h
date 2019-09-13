@@ -45,6 +45,28 @@ namespace CMSat {
 
 class ClauseAllocator;
 
+struct AssumptionPair {
+    AssumptionPair(const Lit _outer, const Lit _outside):
+        lit_outer(_outer)
+        , lit_orig_outside(_outside)
+    {
+    }
+
+    Lit lit_outer;
+    Lit lit_orig_outside; //not outer, but outside(!)
+
+    bool operator==(const AssumptionPair& other) const {
+        return other.lit_outer == lit_outer &&
+        other.lit_orig_outside == lit_orig_outside;
+    }
+
+    bool operator<(const AssumptionPair& other) const
+    {
+        //Yes, we need reverse in terms of inverseness
+        return ~lit_outer < ~other.lit_outer;
+    }
+};
+
 struct BinTriStats
 {
     uint64_t irredBins = 0;
@@ -121,12 +143,19 @@ public:
 
     unsigned  cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
 
+    //Note that this array can have the same internal variable more than
+    //once, in case one has been replaced with the other. So if var 1 =  var 2
+    //and var 1 was set to TRUE and var 2 to be FALSE, then we'll have var 1
+    //insided this array twice, once it needs to be set to TRUE and once FALSE
+    vector<AssumptionPair> assumptions;
+
     //drat
     Drat* drat;
     void add_drat(std::ostream* os, bool add_ID);
 
     //Clauses
     vector<ClOffset> longIrredCls;
+    vector<ClOffset> gauss_tmp_cls;
 
     //if the solver object only saw add_clause and new_var(s)
     bool fresh_solver = true;
@@ -264,6 +293,7 @@ public:
     {
         return num_bva_vars;
     }
+    vector<uint32_t> get_outside_var_incidence();
 
     vector<uint32_t> build_outer_to_without_bva_map() const;
     void clean_occur_from_removed_clauses();
@@ -305,7 +335,8 @@ protected:
         return back_numbered;
     }
 
-    vector<lbool> map_back_to_without_bva(const vector<lbool>& val) const;
+    template<class T>
+    vector<T> map_back_vars_to_without_bva(const vector<T>& val) const;
     vector<lbool> assigns;
 
     void save_state(SimpleOutFile& f) const;
@@ -632,6 +663,21 @@ void CNF::clean_xor_vars_no_prop(T& ps, bool& rhs)
         }
     }
     ps.resize(ps.size() - (i - j));
+}
+
+template<class T>
+vector<T> CNF::map_back_vars_to_without_bva(const vector<T>& val) const
+{
+    vector<T> ret;
+    assert(val.size() == nVarsOuter());
+    ret.reserve(nVarsOutside());
+    for(size_t i = 0; i < nVarsOuter(); i++) {
+        if (!varData[map_outer_to_inter(i)].is_bva) {
+            ret.push_back(val[i]);
+        }
+    }
+    assert(ret.size() == nVarsOutside());
+    return ret;
 }
 
 }

@@ -81,17 +81,54 @@ matrix_no(_matrix_no)
 
 EGaussian::~EGaussian() {
     delete_gauss_watch_this_matrix();
+    for(auto& x: tofree) {
+        delete[] x;
+    }
+    tofree.clear();
+
+    delete cols_unset;
+    delete cols_vals;
+    delete tmp_col;
+    delete tmp_col2;
 }
 
 struct ColSorter {
-    explicit ColSorter(vector<VarData>& _dats) : dats(_dats) {
+    explicit ColSorter(Solver* _solver) :
+        solver(_solver)
+    {
+        for(const auto& ass: solver->assumptions) {
+            Lit p = solver->map_outer_to_inter(ass.lit_outer);
+            assert(solver->seen.size() > p.var());
+            solver->seen[p.var()] = 1;
+        }
     }
 
-    bool operator()(uint32_t a, uint32_t b) {
-        return dats[a].maple_last_picked > dats[b].maple_last_picked;
+    void finishup()
+    {
+        for(const auto& ass: solver->assumptions) {
+            Lit p = solver->map_outer_to_inter(ass.lit_outer);
+            solver->seen[p.var()] = 0;
+        }
     }
 
-    const vector<VarData>& dats;
+    bool operator()(const uint32_t a, const uint32_t b)
+    {
+        assert(solver->seen.size() > a);
+        assert(solver->seen.size() > b);
+        if (solver->seen[b] && !solver->seen[a]) {
+            return true;
+        }
+
+        if (!solver->seen[b] && solver->seen[a]) {
+            return false;
+        }
+
+        return false;
+        //return solver->varData[a].level < solver->varData[b].level;
+        //return solver->var_act_vsids[a] > solver->var_act_vsids[b];
+    }
+
+    Solver* solver;
 };
 
 uint32_t EGaussian::select_columnorder() {
@@ -126,10 +163,30 @@ uint32_t EGaussian::select_columnorder() {
     }
     var_to_col.resize(largest_used_var + 1);
 
-    col_to_var.clear();
-    std::sort(vars_needed.begin(), vars_needed.end(),
-              ColSorter(solver->varData));
 
+    ColSorter c(solver);
+    std::sort(vars_needed.begin(), vars_needed.end(),c);
+    c.finishup();
+
+    #ifdef VERBOSE_DEBUG
+    cout << "col order: " << endl;
+    for(auto& x: vars_needed) {
+        bool assump = false;
+        for(const auto& ass: solver->assumptions) {
+            if (solver->map_outer_to_inter(ass.lit_outer).var() == x) {
+                assump = true;
+            }
+        }
+        cout << "assump:" << (int)assump
+        << " act: " << std::setprecision(2) << std::scientific
+        << solver->var_act_vsids[x] << std::fixed
+        << " level: " << solver->varData[x].level
+        << endl;
+    }
+    #endif
+
+
+    col_to_var.clear();
     for (uint32_t v : vars_needed) {
         assert(var_to_col[v] == unassigned_col - 1);
         col_to_var.push_back(v);
@@ -188,20 +245,8 @@ void EGaussian::fill_matrix() {
 
     //reset satisfied_xor state
     assert(solver->decisionLevel() == 0);
-    if (satisfied_xors.size() < 1) {
-        satisfied_xors.resize(1);
-    }
-    satisfied_xors[0].clear();
-    satisfied_xors[0].resize(num_rows, 0);
-}
-
-void EGaussian::new_decision_level()
-{
-    assert(solver->decisionLevel() > 0);
-    if (satisfied_xors.size() < solver->decisionLevel()+1) {
-        satisfied_xors.resize(solver->decisionLevel()+1);
-    }
-    satisfied_xors[solver->decisionLevel()] = satisfied_xors[solver->decisionLevel()-1];
+    satisfied_xors.clear();
+    satisfied_xors.resize(num_rows, 0);
 }
 
 void EGaussian::delete_gauss_watch_this_matrix()
@@ -291,12 +336,33 @@ bool EGaussian::full_init(bool& created) {
 
     xor_reasons.resize(num_rows);
     uint32_t num_64b = num_cols/64+(bool)(num_cols%64);
-    cols_set = new PackedRow(num_64b, new int64_t[num_64b+1]);
-    cols_vals = new PackedRow(num_64b, new int64_t[num_64b+1]);
-    tmp_col = new PackedRow(num_64b, new int64_t[num_64b+1]);
-    tmp_col2 = new PackedRow(num_64b, new int64_t[num_64b+1]);
+    for(auto& x: tofree) {
+        delete[] x;
+    }
+    tofree.clear();
+    delete cols_unset;
+    delete cols_vals;
+    delete tmp_col;
+    delete tmp_col2;
+
+    int64_t* x = new int64_t[num_64b+1];
+    tofree.push_back(x);
+    cols_unset = new PackedRow(num_64b, x);
+
+    x = new int64_t[num_64b+1];
+    tofree.push_back(x);
+    cols_vals = new PackedRow(num_64b, x);
+
+    x = new int64_t[num_64b+1];
+    tofree.push_back(x);
+    tmp_col = new PackedRow(num_64b, x);
+
+    x = new int64_t[num_64b+1];
+    tofree.push_back(x);
+    tmp_col2 = new PackedRow(num_64b, x);
+
     cols_vals->rhs() = 0;
-    cols_set->rhs() = 0;
+    cols_unset->rhs() = 0;
     tmp_col->rhs() = 0;
     tmp_col2->rhs() = 0;
     after_init_density = get_density();
@@ -365,8 +431,7 @@ void EGaussian::eliminate() {
 gret EGaussian::adjust_matrix() {
     assert(solver->decisionLevel() == 0);
     assert(row_non_resp_for_var.empty());
-    assert(satisfied_xors.size() > 0);
-    assert(satisfied_xors[0].size() >= num_rows);
+    assert(satisfied_xors.size() >= num_rows);
 
     PackedMatrix::iterator end = mat.begin() + num_rows;
     PackedMatrix::iterator rowIt = mat.begin();
@@ -390,7 +455,7 @@ gret EGaussian::adjust_matrix() {
                     // printf("%d:Warring: this row is conflict in adjust matrix!!!",row_id);
                     return gret::confl;
                 }
-                satisfied_xors[0][row_id] = 1;
+                satisfied_xors[row_id] = 1;
                 break;
 
             //Normal propagation
@@ -496,17 +561,15 @@ bool EGaussian::find_truths(
     #ifdef VERBOSE_DEBUG
     cout << "row_n:" << row_n << endl;
     cout << "dec lev:" << solver->decisionLevel() << endl;
-    cout << "satisfied_xors[0].size(): " << satisfied_xors[0].size() << endl;
-    cout << "satisfied_xors[solver->decisionLevel()].size(): " << satisfied_xors[solver->decisionLevel()].size() << endl;
+    cout << "satisfied_xors.size(): " << satisfied_xors.size() << endl;
     #endif
     #ifdef SLOW_DEBUG
     assert(row_n < num_rows);
-    assert(satisfied_xors.size() > solver->decisionLevel());
-    assert(satisfied_xors[solver->decisionLevel()].size() > row_n);
+    assert(satisfied_xors.size() > row_n);
     #endif
 
     // this XOR is already satisfied
-    if (satisfied_xors[solver->decisionLevel()][row_n]) {
+    if (satisfied_xors[row_n]) {
         *j++ = *i;
         find_truth_ret_satisfied_precheck++;
         return true;
@@ -531,7 +594,7 @@ bool EGaussian::find_truths(
         *tmp_col,
         *tmp_col2,
         *cols_vals,
-        *cols_set,
+        *cols_unset,
         ret_lit_prop);
     find_truth_called_propgause++;
 
@@ -582,7 +645,7 @@ bool EGaussian::find_truths(
                 var_has_resp_row[p] = 1;
             }
 
-            satisfied_xors[solver->decisionLevel()][row_n] = 1;
+            satisfied_xors[row_n] = 1;
             return true;
         }
 
@@ -626,7 +689,7 @@ bool EGaussian::find_truths(
                 var_has_resp_row[row_non_resp_for_var[row_n]] = 0;
                 var_has_resp_row[p] = 1;
             }
-            satisfied_xors[solver->decisionLevel()][row_n] = 1;
+            satisfied_xors[row_n] = 1;
             return true;
 
         //error here
@@ -641,7 +704,7 @@ bool EGaussian::find_truths(
 
 inline void EGaussian::update_cols_vals_set(const Lit lit1)
 {
-    cols_set->setBit(var_to_col[lit1.var()]);
+    cols_unset->clearBit(var_to_col[lit1.var()]);
     if (!lit1.sign()) {
         cols_vals->setBit(var_to_col[lit1.var()]);
     }
@@ -652,12 +715,12 @@ void EGaussian::update_cols_vals_set()
     //cancelled_since_val_update = true;
     if (cancelled_since_val_update) {
         cols_vals->setZero();
-        cols_set->setZero();
+        cols_unset->setOne();
 
         for(uint32_t col = 0; col < col_to_var.size(); col++) {
             uint32_t var = col_to_var[col];
             if (solver->value(var) != l_Undef) {
-                cols_set->setBit(col);
+                cols_unset->clearBit(col);
                 if (solver->value(var) == l_True) {
                     cols_vals->setBit(col);
                 }
@@ -677,7 +740,7 @@ void EGaussian::update_cols_vals_set()
         uint32_t col = var_to_col[var];
         if (col != unassigned_col) {
             assert (solver->value(var) != l_Undef);
-            cols_set->setBit(col);
+            cols_unset->clearBit(col);
             if (solver->value(var) == l_True) {
                 cols_vals->setBit(col);
             }
@@ -723,7 +786,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
             << endl;
             #endif
 
-            assert(satisfied_xors[solver->decisionLevel()][row_n] == 0);
+            assert(satisfied_xors[row_n] == 0);
             (*rowI).xor_in(*new_resp_row);
             elim_xored_rows++;
 
@@ -753,7 +816,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                     *tmp_col,
                     *tmp_col2,
                     *cols_vals,
-                    *cols_set,
+                    *cols_unset,
                     ret_lit_prop
                 );
                 elim_called_propgause++;
@@ -810,7 +873,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                         << "-> Long prop"  << endl;
                         #endif
                         gqd.ret = gauss_res::prop;
-                        satisfied_xors[solver->decisionLevel()][row_n] = 1;
+                        satisfied_xors[row_n] = 1;
                         break;
                     }
 
@@ -847,7 +910,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
 
                         solver->gwatches[p].push(GaussWatched(row_n, matrix_no));
                         row_non_resp_for_var[row_n] = p;
-                        satisfied_xors[solver->decisionLevel()][row_n] = 1;
+                        satisfied_xors[row_n] = 1;
                         break;
                     default:
                         // can not here
@@ -969,16 +1032,6 @@ void EGaussian::print_matrix_stats()
     << endl;
     cout << std::setprecision(2);
 }
-
-double EGaussian::get_density()
-{
-    uint32_t pop = 0;
-    for (const auto& row: mat) {
-        pop += row.popcnt();
-    }
-    return (double)pop/(double)(num_rows*num_cols);
-}
-
 
 vector<Lit>* EGaussian::get_reason(uint32_t row)
 {

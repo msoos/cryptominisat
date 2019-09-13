@@ -1239,11 +1239,41 @@ DLL_PUBLIC void SATSolver::set_single_run()
         s.conf.breakid_use_assump = false;
     }
 }
+
 DLL_PUBLIC void SATSolver::set_var_weight(Lit lit, double weight)
 {
     actually_add_clauses_to_threads(data);
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
         s.set_var_weight(lit, weight);
+    }
+}
+
+DLL_PUBLIC vector<uint32_t> SATSolver::get_var_incidence()
+{
+    return data->solvers[data->which_solved]->get_outside_var_incidence();
+}
+
+DLL_PUBLIC void SATSolver::set_no_intree_probe()
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.doIntreeProbe = false;
+    }
+}
+
+DLL_PUBLIC void SATSolver::set_yes_intree_probe()
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.doIntreeProbe = true;
+    }
+}
+
+DLL_PUBLIC void SATSolver::set_no_confl_needed()
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.conf_needed = false;
     }
 }

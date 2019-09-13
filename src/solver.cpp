@@ -1256,7 +1256,7 @@ void Solver::extend_solution(const bool only_sampling_solution)
     }
 
     //map back without BVA
-    model = map_back_to_without_bva(model);
+    model = map_back_vars_to_without_bva(model);
     if (conf.need_decisions_reaching) {
         decisions_reaching_model_valid = true;
         const vector<uint32_t> my_map = build_outer_to_without_bva_map();
@@ -1418,6 +1418,7 @@ lbool Solver::simplify_problem_outside()
     end:
     unfill_assumptions_set();
     assumptions.clear();
+    conf.conf_needed = true;
     return status;
 }
 
@@ -1548,6 +1549,7 @@ lbool Solver::solve_with_assumptions(
     conf.max_confl = std::numeric_limits<long>::max();
     conf.maxTime = std::numeric_limits<double>::max();
     drat->flush();
+    conf.conf_needed = true;
     return status;
 }
 
@@ -1810,7 +1812,9 @@ void Solver::handle_found_solution(const lbool status, const bool only_sampling_
                 assert(var_inside_assumptions(lit.var()) != l_Undef);
             }
         }
-        update_assump_conflict_to_orig_outside(conflict);
+        if (conf.conf_needed) {
+            update_assump_conflict_to_orig_outside(conflict);
+        }
     }
 
     #ifdef USE_BREAKID
@@ -3770,7 +3774,9 @@ bool Solver::find_and_init_all_matrices()
 bool Solver::init_all_matrices()
 {
     assert(ok);
-    for (EGaussian*& g :gmatrices) {
+    assert(gmatrices.size() == gqueuedata.size());
+    for (uint32_t i = 0; i < gmatrices.size(); i++) {
+        auto& g = gmatrices[i];
         bool created = false;
         // initial arrary. return true is fine , return false means solver already false;
         if (!g->full_init(created)) {
@@ -3780,6 +3786,7 @@ bool Solver::init_all_matrices()
             break;
         }
         if (!created) {
+            gqueuedata[i].engaus_disable = true;
             delete g;
             if (conf.verbosity > 5) {
                 cout << "DELETED matrix" << endl;
@@ -3787,6 +3794,18 @@ bool Solver::init_all_matrices()
             g = NULL;
         }
     }
+
+    uint32_t j = 0;
+    for (uint32_t i = 0; i < gqueuedata.size(); i++) {
+        if (gmatrices[i] != NULL) {
+            gmatrices[j] = gmatrices[i];
+            gqueuedata[j] = gqueuedata[i];
+            j++;
+        }
+    }
+    gqueuedata.resize(j);
+    gmatrices.resize(j);
+
     return solver->okay();
 }
 #endif //USE_GAUSS

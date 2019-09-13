@@ -311,21 +311,6 @@ size_t CNF::mem_used_renumberer() const
     return mem;
 }
 
-
-vector<lbool> CNF::map_back_to_without_bva(const vector<lbool>& val) const
-{
-    vector<lbool> ret;
-    assert(val.size() == nVarsOuter());
-    ret.reserve(nVarsOutside());
-    for(size_t i = 0; i < nVarsOuter(); i++) {
-        if (!varData[map_outer_to_inter(i)].is_bva) {
-            ret.push_back(val[i]);
-        }
-    }
-    assert(ret.size() == nVarsOutside());
-    return ret;
-}
-
 vector<uint32_t> CNF::build_outer_to_without_bva_map() const
 {
     vector<uint32_t> ret;
@@ -700,4 +685,37 @@ void CNF::add_drat(std::ostream* os, bool add_ID) {
         drat = new DratFile<false>(interToOuterMain);
     }
     drat->setFile(os);
+}
+
+vector<uint32_t> CNF::get_outside_var_incidence()
+{
+    vector<uint32_t> inc;
+    inc.resize(nVars(), 0);
+    for(uint32_t i = 0; i < nVars()*2; i++) {
+        const Lit l = Lit::toLit(i);
+        for(const auto& x: watches[l]) {
+            if (x.isBin()) {
+                inc[x.lit2().var()]++;
+                inc[l.var()]++;
+            }
+        }
+    }
+
+    for(const auto& offs: longIrredCls) {
+        Clause* cl = cl_alloc.ptr(offs);
+        for(const auto& l: *cl) {
+            inc[l.var()]++;
+        }
+    }
+
+    //Map to outer
+    vector<uint32_t> inc_outer(nVarsOuter(), 0);
+    for(uint32_t i = 0; i < inc.size(); i ++) {
+        uint32_t outer = map_inter_to_outer(i);
+        inc_outer[outer] = inc[i];
+    }
+
+    //Map to outside
+    vector<uint32_t> inc_outside = map_back_vars_to_without_bva(inc_outer);
+    return inc_outside;
 }

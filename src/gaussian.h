@@ -88,7 +88,7 @@ class EGaussian {
         uint32_t p,
         GaussQData& gqd
     );
-    void new_decision_level();
+    void new_decision_level(uint32_t new_dec_level);
     void canceling();
     bool full_init(bool& created);
     void update_cols_vals_set();
@@ -136,8 +136,8 @@ class EGaussian {
     uint64_t elim_ret_confl = 0;
     uint64_t elim_ret_satisfied = 0;
     uint64_t elim_ret_fnewwatch = 0;
-    double before_init_density;
-    double after_init_density;
+    double before_init_density = 0;
+    double after_init_density = 0;
 
     ///////////////
     // Internal data
@@ -148,7 +148,7 @@ class EGaussian {
 
     //Is the clause at this ROW satisfied already?
     //satisfied_xors[decision_level][row] tells me that
-    vector<vector<bool>> satisfied_xors;
+    vector<char> satisfied_xors;
 
     // Someone is responsible for this column if TRUE
     ///we always WATCH this variable
@@ -162,15 +162,18 @@ class EGaussian {
     PackedMatrix mat;
     vector<uint32_t>  var_to_col; ///var->col mapping. Index with VAR
     vector<uint32_t> col_to_var; ///col->var mapping. Index with COL
-    uint32_t num_rows;
-    uint32_t num_cols;
+    uint32_t num_rows = 0;
+    uint32_t num_cols = 0;
 
     //quick lookup
     PackedRow *cols_vals = NULL;
-    PackedRow *cols_set = NULL;
+    PackedRow *cols_unset = NULL;
     PackedRow *tmp_col = NULL;
     PackedRow *tmp_col2 = NULL;
     void update_cols_vals_set(const Lit lit1);
+
+    //Data to free (with delete[] x)
+    vector<int64_t*> tofree;
 
 
     ///////////////
@@ -182,6 +185,7 @@ class EGaussian {
 
 inline void EGaussian::canceling() {
     cancelled_since_val_update = true;
+    memset(satisfied_xors.data(), 0, satisfied_xors.size());
 }
 
 inline bool EGaussian::must_disable(const GaussQData& gqd, bool verbose)
@@ -207,7 +211,28 @@ inline bool EGaussian::must_disable(const GaussQData& gqd, bool verbose)
     return false;
 }
 
+inline void EGaussian::new_decision_level(uint32_t /*dec_level*/)
+{
+    /*assert(dec_level > 0);
+    if (satisfied_xors.size() < dec_level+1) {
+        satisfied_xors.resize(dec_level+1);
+    }
+    satisfied_xors[dec_level] = satisfied_xors[dec_level-1];*/
 }
 
+inline double EGaussian::get_density()
+{
+    if (num_rows*num_cols == 0) {
+        return 0;
+    }
+
+    uint32_t pop = 0;
+    for (const auto& row: mat) {
+        pop += row.popcnt();
+    }
+    return (double)pop/(double)(num_rows*num_cols);
+}
+
+}
 
 #endif //ENHANCEGAUSSIAN_H

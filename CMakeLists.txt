@@ -305,7 +305,7 @@ if (NOT WIN32)
         #add_cxx_flag_if_supported("-fvisibility=hidden")
     endif()
     add_compile_options("-fPIC")
-    add_cxx_flag_if_supported("-march=native")
+    add_cxx_flag_if_supported("-mtune=native")
 
     if(CMAKE_BUILD_TYPE STREQUAL "Release")
         #NOTE: out-satrace19-8373595 has confirmed that O3+flto only hurts compared to O2
@@ -330,7 +330,7 @@ if (NOT WIN32)
         add_cxx_flag_if_supported("-Winit-self")
         add_cxx_flag_if_supported("-Wparentheses")
         add_cxx_flag_if_supported("-Wunreachable-code")
-        add_cxx_flag_if_supported("-ggdb3")
+        add_cxx_flag_if_supported("-g")
         add_cxx_flag_if_supported("-Wno-class-memaccess")
 
         add_cxx_flag_if_supported("-mpopcnt")
