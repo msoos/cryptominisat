@@ -109,6 +109,7 @@ class Solver : public Searcher
         vector<Xor> get_recovered_xors(bool elongate);
         bool get_decision_reaching_valid() const;
         vector<double> get_vsids_scores() const;
+        vector<Lit> propagated_by(const std::vector<Lit>& t);
 
         //get learnt clauses
         void start_getting_small_clauses(uint32_t max_len, uint32_t max_glue);

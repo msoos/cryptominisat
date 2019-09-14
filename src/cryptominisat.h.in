@@ -163,6 +163,7 @@ namespace CMSat {
         std::vector<uint32_t> get_var_incidence();
         std::vector<uint32_t> get_var_incidence_also_red();
         std::vector<double> get_vsids_scores();
+        std::vector<Lit> propagated_by(const std::vector<Lit>& t);
 
         //////////////////////
         //Below must be done in-order. Multi-threading not allowed.

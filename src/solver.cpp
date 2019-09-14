@@ -4139,6 +4139,61 @@ vector<double> Solver::get_vsids_scores() const
     return scores_outside;
 }
 
+vector<Lit> Solver::propagated_by(const std::vector<Lit>& t)
+{
+    vector<Lit> ps = t;
+    if (!addClauseHelper(ps)) {
+        //cout << "Immediately UNSAT" << endl;
+        return std::vector<Lit>();
+    }
+
+    assert(decisionLevel() == 0);
+    for(Lit p: ps) {
+        if (value(p) == l_Undef) {
+            new_decision_level();
+            enqueue<true>(p);
+        }
+        if (value(p) == l_False) {
+            cancelUntil(0);
+            //cout << "val is False!" << endl;
+            return std::vector<Lit>();
+        }
+    }
+
+
+    PropBy x = propagate<true>();
+
+//     cout << "x NULL: " << x.isNULL()
+//     << " dec level: " << decisionLevel()
+//     << " trail: " << trail.size() << endl;
+
+    if (!x.isNULL() || decisionLevel() == 0) {
+        cancelUntil(0);
+        return std::vector<Lit>();
+    }
+
+    vector<Lit> prop;
+    for(uint32_t i = trail_lim[0]; i < trail.size(); i++) {
+        if (trail[i].var() < nVars()) {
+            prop.push_back(trail[i]);
+        }
+    }
+    cancelUntil(0);
+
+    //Map to outer
+    vector<Lit> prop_outer;
+    for(const Lit l: prop) {
+        auto outer = map_inter_to_outer(l);
+        prop_outer.push_back(outer);
+    }
+    varReplacer->extend_pop_queue(prop_outer);
+
+    //Map to outside
+    assert(solver->get_num_bva_vars() == 0);
+    //vector<Lit> prop_outside = map_back_vars_to_without_bva(prop_outer);
+    return prop_outer;
+}
+
 #ifdef STATS_NEEDED
 void Solver::stats_del_cl(Clause* cl)
 {

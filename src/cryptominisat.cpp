@@ -1270,3 +1270,9 @@ DLL_PUBLIC std::vector<double> SATSolver::get_vsids_scores()
 {
     return data->solvers[data->which_solved]->get_vsids_scores();
 }
+
+
+DLL_PUBLIC std::vector<Lit> SATSolver::propagated_by(const std::vector<Lit>& t)
+{
+    return data->solvers[data->which_solved]->propagated_by(t);
+}

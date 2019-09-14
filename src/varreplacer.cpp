@@ -677,6 +677,21 @@ void VarReplacer::extend_model(const uint32_t var)
     }
 }
 
+void VarReplacer::extend_pop_queue(vector<Lit>& pop)
+{
+    vector<Lit> extra;
+    for (Lit p: pop) {
+        const auto& repl = reverseTable[p.var()];
+        for(uint32_t x: repl) {
+            extra.push_back(Lit(x, table[x].sign() ^ p.sign()));
+        }
+    }
+
+    for(Lit x: extra) {
+        pop.push_back(x);
+    }
+}
+
 void VarReplacer::extend_model_already_set()
 {
     assert(solver->model.size() == solver->nVarsOuter());
