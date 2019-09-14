@@ -710,6 +710,39 @@ vector<uint32_t> CNF::get_outside_var_incidence()
     for(uint32_t i = 0; i < nVars()*2; i++) {
         const Lit l = Lit::toLit(i);
         for(const auto& x: watches[l]) {
+            if (x.isBin() && !x.red()) {
+                inc[x.lit2().var()]++;
+                inc[l.var()]++;
+            }
+        }
+    }
+
+    for(const auto& offs: longIrredCls) {
+        Clause* cl = cl_alloc.ptr(offs);
+        for(const auto& l: *cl) {
+            inc[l.var()]++;
+        }
+    }
+
+    //Map to outer
+    vector<uint32_t> inc_outer(nVarsOuter(), 0);
+    for(uint32_t i = 0; i < inc.size(); i ++) {
+        uint32_t outer = map_inter_to_outer(i);
+        inc_outer[outer] = inc[i];
+    }
+
+    //Map to outside
+    vector<uint32_t> inc_outside = map_back_vars_to_without_bva(inc_outer);
+    return inc_outside;
+}
+
+vector<uint32_t> CNF::get_outside_var_incidence_also_red()
+{
+    vector<uint32_t> inc;
+    inc.resize(nVars(), 0);
+    for(uint32_t i = 0; i < nVars()*2; i++) {
+        const Lit l = Lit::toLit(i);
+        for(const auto& x: watches[l]) {
             if (x.isBin()) {
                 inc[x.lit2().var()]++;
                 inc[l.var()]++;
@@ -721,6 +754,15 @@ vector<uint32_t> CNF::get_outside_var_incidence()
         Clause* cl = cl_alloc.ptr(offs);
         for(const auto& l: *cl) {
             inc[l.var()]++;
+        }
+    }
+
+    for(const auto& reds: longRedCls) {
+        for(const auto& offs: reds) {
+            Clause* cl = cl_alloc.ptr(offs);
+            for(const auto& l: *cl) {
+                inc[l.var()]++;
+            }
         }
     }
 

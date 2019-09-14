@@ -289,6 +289,7 @@ public:
         return num_bva_vars;
     }
     vector<uint32_t> get_outside_var_incidence();
+    vector<uint32_t> get_outside_var_incidence_also_red();
 
     vector<uint32_t> build_outer_to_without_bva_map() const;
     void clean_occur_from_removed_clauses();

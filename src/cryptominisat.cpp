@@ -1237,6 +1237,11 @@ DLL_PUBLIC vector<uint32_t> SATSolver::get_var_incidence()
     return data->solvers[data->which_solved]->get_outside_var_incidence();
 }
 
+DLL_PUBLIC vector<uint32_t> SATSolver::get_var_incidence_also_red()
+{
+    return data->solvers[data->which_solved]->get_outside_var_incidence_also_red();
+}
+
 DLL_PUBLIC void SATSolver::set_no_intree_probe()
 {
     for (size_t i = 0; i < data->solvers.size(); ++i) {
@@ -1259,4 +1264,9 @@ DLL_PUBLIC void SATSolver::set_no_confl_needed()
         Solver& s = *data->solvers[i];
         s.conf.conf_needed = false;
     }
+}
+
+DLL_PUBLIC std::vector<double> SATSolver::get_vsids_scores()
+{
+    return data->solvers[data->which_solved]->get_vsids_scores();
 }

@@ -4123,6 +4123,22 @@ bool Solver::check_assumptions_contradict_foced_assignement() const
     return false;
 }
 
+vector<double> Solver::get_vsids_scores() const
+{
+    vector<double> scores(var_act_vsids);
+
+    //Map to outer
+    vector<double> scores_outer(nVarsOuter(), 0);
+    for(uint32_t i = 0; i < scores.size(); i ++) {
+        uint32_t outer = map_inter_to_outer(i);
+        scores_outer[outer] = scores[i];
+    }
+
+    //Map to outside
+    vector<double> scores_outside = map_back_vars_to_without_bva(scores_outer);
+    return scores_outside;
+}
+
 #ifdef STATS_NEEDED
 void Solver::stats_del_cl(Clause* cl)
 {

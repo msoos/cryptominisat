@@ -161,6 +161,8 @@ namespace CMSat {
         // EXPERIMENTAL
         std::vector<std::pair<std::vector<uint32_t>, bool> > get_recovered_xors(bool elongate) const; //get XORs recovered. If "elongate" is TRUE, then variables shared ONLY by two XORs will be XORed together
         std::vector<uint32_t> get_var_incidence();
+        std::vector<uint32_t> get_var_incidence_also_red();
+        std::vector<double> get_vsids_scores();
 
         //////////////////////
         //Below must be done in-order. Multi-threading not allowed.
