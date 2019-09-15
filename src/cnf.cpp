@@ -732,8 +732,10 @@ vector<uint32_t> CNF::get_outside_var_incidence()
     }
 
     //Map to outside
-    vector<uint32_t> inc_outside = map_back_vars_to_without_bva(inc_outer);
-    return inc_outside;
+    if (get_num_bva_vars() != 0) {
+        inc_outer = map_back_vars_to_without_bva(inc_outer);
+    }
+    return inc_outer;
 }
 
 vector<uint32_t> CNF::get_outside_var_incidence_also_red()
@@ -774,6 +776,8 @@ vector<uint32_t> CNF::get_outside_var_incidence_also_red()
     }
 
     //Map to outside
-    vector<uint32_t> inc_outside = map_back_vars_to_without_bva(inc_outer);
-    return inc_outside;
+    if (get_num_bva_vars() != 0) {
+        inc_outer = map_back_vars_to_without_bva(inc_outer);
+    }
+    return inc_outer;
 }

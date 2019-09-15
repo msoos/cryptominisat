@@ -219,9 +219,19 @@ class VarReplacer
         bool update_table_and_reversetable(const Lit lit1, const Lit lit2);
         void setAllThatPointsHereTo(const uint32_t var, const Lit lit);
 
+        ///////////////////
         //Mapping tables
-        vector<Lit> table; ///<Stores which variables have been replaced by which literals. Index by: table[VAR]
-        map<uint32_t, vector<uint32_t> > reverseTable; ///<mapping of variable to set of variables it replaces
+        ///////////////////
+
+        ///Stores which variables have been replaced by which literals.
+        //Everything is OUTER here.
+        //Index by: table[VAR] -> tells us what literal
+        //          Lit(VAR, false) has been replaced with.
+        vector<Lit> table;
+
+        ///mapping of variable to set of variables it replaces
+        //Everything is OUTER here.
+        map<uint32_t, vector<uint32_t> > reverseTable;
 
         //Stats
         void printReplaceStats() const;

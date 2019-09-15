@@ -1294,7 +1294,9 @@ void Solver::extend_solution(const bool only_sampling_solution)
     }
 
     //map back without BVA
-    model = map_back_vars_to_without_bva(model);
+    if (solver->get_num_bva_vars() != 0) {
+        model = map_back_vars_to_without_bva(model);
+    }
     if (conf.need_decisions_reaching) {
         decisions_reaching_model_valid = true;
         const vector<uint32_t> my_map = build_outer_to_without_bva_map();
@@ -4135,15 +4137,16 @@ vector<double> Solver::get_vsids_scores() const
     }
 
     //Map to outside
-    vector<double> scores_outside = map_back_vars_to_without_bva(scores_outer);
-    return scores_outside;
+    if (get_num_bva_vars() != 0) {
+        scores_outer = map_back_vars_to_without_bva(scores_outer);
+    }
+    return scores_outer;
 }
 
 vector<Lit> Solver::propagated_by(const std::vector<Lit>& t)
 {
     vector<Lit> ps = t;
     if (!addClauseHelper(ps)) {
-        //cout << "Immediately UNSAT" << endl;
         return std::vector<Lit>();
     }
 
@@ -4155,17 +4158,11 @@ vector<Lit> Solver::propagated_by(const std::vector<Lit>& t)
         }
         if (value(p) == l_False) {
             cancelUntil(0);
-            //cout << "val is False!" << endl;
             return std::vector<Lit>();
         }
     }
 
-
     PropBy x = propagate<true>();
-
-//     cout << "x NULL: " << x.isNULL()
-//     << " dec level: " << decisionLevel()
-//     << " trail: " << trail.size() << endl;
 
     if (!x.isNULL() || decisionLevel() == 0) {
         cancelUntil(0);
@@ -4173,6 +4170,7 @@ vector<Lit> Solver::propagated_by(const std::vector<Lit>& t)
     }
 
     vector<Lit> prop;
+    prop.reserve(trail.size()-trail_lim[0]);
     for(uint32_t i = trail_lim[0]; i < trail.size(); i++) {
         if (trail[i].var() < nVars()) {
             prop.push_back(trail[i]);
@@ -4181,17 +4179,15 @@ vector<Lit> Solver::propagated_by(const std::vector<Lit>& t)
     cancelUntil(0);
 
     //Map to outer
-    vector<Lit> prop_outer;
-    for(const Lit l: prop) {
-        auto outer = map_inter_to_outer(l);
-        prop_outer.push_back(outer);
+    for(auto& l: prop) {
+        l = map_inter_to_outer(l);
     }
-    varReplacer->extend_pop_queue(prop_outer);
+    varReplacer->extend_pop_queue(prop);
 
     //Map to outside
     assert(solver->get_num_bva_vars() == 0);
     //vector<Lit> prop_outside = map_back_vars_to_without_bva(prop_outer);
-    return prop_outer;
+    return prop;
 }
 
 #ifdef STATS_NEEDED

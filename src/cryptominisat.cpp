@@ -1175,7 +1175,7 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
         SolverConf conf = data->solvers[i]->getConf();
         conf.gaussconf.max_num_matrices = 2;
         conf.gaussconf.autodisable = false;
-        conf.global_multiplier_multiplier_max = 3;
+        conf.global_multiplier_multiplier_max = 1;
         conf.global_timeout_multiplier_multiplier = 1.5;
         uint32_t xor_cut = 4;
         assert(xor_cut >= 3);
