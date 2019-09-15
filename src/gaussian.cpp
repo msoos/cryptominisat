@@ -98,8 +98,10 @@ struct ColSorter {
     {
         for(const auto& ass: solver->assumptions) {
             Lit p = solver->map_outer_to_inter(ass.lit_outer);
-            assert(solver->seen.size() > p.var());
-            solver->seen[p.var()] = 1;
+            if (p.var() < solver->nVars()) {
+                assert(solver->seen.size() > p.var());
+                solver->seen[p.var()] = 1;
+            }
         }
     }
 
@@ -107,7 +109,9 @@ struct ColSorter {
     {
         for(const auto& ass: solver->assumptions) {
             Lit p = solver->map_outer_to_inter(ass.lit_outer);
-            solver->seen[p.var()] = 0;
+            if (p.var() < solver->nVars()) {
+                solver->seen[p.var()] = 0;
+            }
         }
     }
 
