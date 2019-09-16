@@ -360,6 +360,7 @@ create table `var_data_picktime` (
     , `num_propagated`                                          int(20) NOT NULL
     , `num_propagated_pos`                                      int(20) NOT NULL
 
+    --conflicts elapsed since this variable was seen in a 1UIP conflict clause (i.e. not minimized conflict clause)
     , `conflicts_since_in_1uip`                                 int(20) NOT NULL
     , `conflicts_since_decided`                                 int(20) NOT NULL
     , `conflicts_since_propagated`                              int(20) NOT NULL

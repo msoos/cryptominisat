@@ -2617,6 +2617,13 @@ void Searcher::setup_restart_strategy()
             params.rest_type = Restart::never;
             break;
     }
+
+    if (conf.verbosity >= 1) {
+        cout << "c [restart] local restart type: "
+        << std::left << std::setw(10) << getNameOfRestartType(params.rest_type)
+        << " size: " << std::setw(9) << max_confl_this_phase
+        << std::right << endl;
+    }
 }
 
 void Searcher::adjust_restart_strategy()
@@ -2626,10 +2633,6 @@ void Searcher::adjust_restart_strategy()
         return;
 
     //Note that all of this will be overridden by params.max_confl_to_do
-    if (conf.verbosity >= 3) {
-        cout << "c doing branch_strategy" << endl;
-    }
-
     switch(conf.restartType) {
         case Restart::never:
             break;
@@ -2685,11 +2688,10 @@ void Searcher::adjust_restart_strategy()
             release_assert(false);
     }
 
-    if (conf.verbosity >= 2) {
-        cout << "c [restart] local phase type: "
+    if (conf.verbosity >= 1) {
+        cout << "c [restart] adjusting local restart type: "
         << std::left << std::setw(10) << getNameOfRestartType(params.rest_type)
-        << " size: " << std::setw(9) << max_confl_this_phase
-        << " global phase size: " << std::setw(9) <<  max_confl_phase
+        << " budget: " << std::setw(9) << max_confl_this_phase
         << std::right << endl;
     }
 }
