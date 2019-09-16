@@ -290,7 +290,7 @@ class QueryCls (QueryHelper):
         """
 
         ############
-        # SHORT magic here
+        # Labeling SHORT
         ############
         if self.conf == 0:
             self.case_stmt_short = """
@@ -348,8 +348,9 @@ class QueryCls (QueryHelper):
             ELSE "BAD"
             END AS `x.class`
             """
+
         ############
-        # LONG magic here
+        # Labeling LONG
         ############
         if self.conf == 0:
             self.case_stmt_long = """

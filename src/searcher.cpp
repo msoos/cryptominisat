@@ -2409,11 +2409,11 @@ void Searcher::set_branch_strategy(const uint32_t iteration_num)
 {
     long modulo = iteration_num % 4;
     if (modulo == 0) {
-        branch_strategy = branch::vmtf;
-    } else if (modulo == 1) {
         branch_strategy = branch::vsids;
-    } else if (modulo == 2) {
+    } else if (modulo == 1) {
         branch_strategy = branch::maple;
+    } else if (modulo == 2) {
+        branch_strategy = branch::vmtf;
     } else if (modulo == 3) {
         branch_strategy = branch::rnd;
     }

@@ -148,24 +148,24 @@ cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 
 
 ####################################
-# Clustering
+# Clustering for cldata, using cldata dataframe
 ####################################
-../clustering.py mydata-min.db-short-conf-2.dat --numconfs 3 --basedir ../src/predict/ --clusters 1 --scale
+../clustering.py "${FNAMEOUT}-min.db-short-conf-2.dat" --numconfs 3 --basedir ../../src/predict/ --clusters 1 --scale --distr
 
 
 ####################################
 # Create the classifiers
 ####################################
 
-../vardata_predict.py mydata.db-vardata.dat --picktimeonly --csv -q 2 --only 0.1
+../vardata_predict.py mydata.db-vardata.dat --picktimeonly --csv -q 2 --only 0.4
 #../vardata_predict.py vardata-comb --final -q 20 --basedir ../src/predict/ --depth 7 --tree
 
 mkdir -p ../../src/predict
 rm -f ../../src/predict/*.h
 
 for CONF in {0..2}; do
-    ./cldata_predict.py short-2-comb.dat --name short --split 0.01 --final --tree --basedir ../src/predict/ --conf $CONF
-    ./cldata_predict.py long-2-comb.dat  --name long  --split 0.01 --final --tree --basedir ../src/predict/ --conf $CONF
+    ./cldata_predict.py short-2-comb.dat --name short --split 0.01 --final --tree --basedir ../../src/predict/ --conf $CONF
+    ./cldata_predict.py long-2-comb.dat  --name long  --split 0.01 --final --tree --basedir ../../src/predict/ --conf $CONF
 done
 )
 

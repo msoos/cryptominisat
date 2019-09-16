@@ -101,16 +101,16 @@ inline int branch_type_to_int(const branch type)
 {
     switch(type) {
         case branch::vsids:
-            return 1;
+            return 0;
 
         case branch::maple:
-            return 2;
+            return 1;
 
         case branch::vmtf:
-            return 3;
+            return 2;
 
         case branch::rnd:
-            return 4;
+            return 3;
     }
 
     assert(false && "oops, one of the branch types has no int name");
