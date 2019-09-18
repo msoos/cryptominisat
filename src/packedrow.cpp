@@ -29,6 +29,9 @@ THE SOFTWARE.
 
 #include "packedrow.h"
 
+// #define VERBOSE_DEBUG
+// #define SLOW_DEBUG
+
 using namespace CMSat;
 
 ///returns popcnt
@@ -121,7 +124,7 @@ gret PackedRow::propGause(
     uint32_t pop = tmp_col.popcnt();
 
     //Find new watch
-    if (pop >=2) {
+    if (pop >= 2) {
         for (int i = 0; i < size; i++) if (tmp_col.mp[i]) {
             int64_t tmp = tmp_col.mp[i];
             int at = __builtin_ffsll(tmp);

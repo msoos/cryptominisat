@@ -2985,6 +2985,17 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
         }
     }
 
+    #ifdef SLOW_DEBUG
+    if (!confl_in_gauss) {
+        for (size_t g = 0; g < gqueuedata.size(); g++) {
+            if (gqueuedata[g].engaus_disable)
+                continue;
+
+            gmatrices[g]->check_invariants();
+        }
+    }
+    #endif
+
     gauss_ret finret = gauss_ret::g_nothing;
     for (GaussQData& gqd: gqueuedata) {
         if (gqd.engaus_disable)

@@ -3937,6 +3937,8 @@ bool Solver::find_and_init_all_matrices()
 bool Solver::init_all_matrices()
 {
     assert(ok);
+    assert(decisionLevel() == 0);
+
     assert(gmatrices.size() == gqueuedata.size());
     for (uint32_t i = 0; i < gmatrices.size(); i++) {
         auto& g = gmatrices[i];
@@ -3959,11 +3961,28 @@ bool Solver::init_all_matrices()
     }
 
     uint32_t j = 0;
+    bool modified = false;
     for (uint32_t i = 0; i < gqueuedata.size(); i++) {
         if (gmatrices[i] != NULL) {
             gmatrices[j] = gmatrices[i];
+            gmatrices[j]->update_matrix_no(j);
             gqueuedata[j] = gqueuedata[i];
+
+            if (modified) {
+                for (size_t var = 0; var < solver->nVars(); var++) {
+                    for(GaussWatched* k = solver->gwatches[var].begin();
+                        k != solver->gwatches[var].end();
+                        k++)
+                    {
+                        if (k->matrix_num == i) {
+                            k->matrix_num = j;
+                        }
+                    }
+                }
+            }
             j++;
+        } else {
+            modified = true;
         }
     }
     gqueuedata.resize(j);
