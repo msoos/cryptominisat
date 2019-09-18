@@ -371,6 +371,13 @@ bool EGaussian::full_init(bool& created) {
     tmp_col->rhs() = 0;
     tmp_col2->rhs() = 0;
     after_init_density = get_density();
+
+    update_cols_vals_set(true);
+    #ifdef SLOW_DEBUG
+    check_invariants();
+    #endif
+
+
     return true;
 }
 
@@ -433,7 +440,8 @@ void EGaussian::eliminate() {
     //print_matrix();
 }
 
-gret EGaussian::adjust_matrix() {
+gret EGaussian::adjust_matrix()
+{
     assert(solver->decisionLevel() == 0);
     assert(row_to_var_non_resp.empty());
     assert(satisfied_xors.size() >= num_rows);
@@ -518,11 +526,6 @@ gret EGaussian::adjust_matrix() {
 
     mat.resizeNumRows(row_id - adjust_zero);
     num_rows = row_id - adjust_zero;
-
-    update_cols_vals_set(true);
-    #ifdef SLOW_DEBUG
-    check_invariants();
-    #endif
 
     return gret::nothing_satisfied;
 }
