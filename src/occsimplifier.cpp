@@ -1594,6 +1594,7 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
         }
     }
 
+    assert(cl_to_add_ternary.empty());
     for(const Lit l: *cl) {
         if (l == dont_check) {
             continue;
@@ -1608,15 +1609,21 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
     }
 
     //Add new ternary resolvents
-    for(vector<Lit>& newcl: cl_to_add_ternary) {
-
+    vector<Lit> tmp;
+    for(const Tri& newcl: cl_to_add_ternary) {
         ClauseStats stats;
         stats.glue = solver->conf.glue_put_lev1_if_below_or_eq;
         stats.which_red_array = 1;
         stats.drop_if_not_used = true;
         stats.last_touched = solver->sumConflicts;
+
+        tmp.clear();
+        for(uint32_t i = 0; i < newcl.size; i++) {
+            tmp.push_back(newcl.lits[i]);
+        }
+
         Clause* newCl = solver->add_clause_int(
-            newcl //Literals in new clause
+            tmp //Literals in new clause
             , true //Is the new clause redundant?
             , stats
             , false //Should clause be attached if long?
@@ -1641,7 +1648,7 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
 void OccSimplifier::check_ternary_cl(Clause* cl, ClOffset offs, watch_subarray ws)
 {
     *limit_to_decrease -= ws.size()*2;
-    for (Watched& w: ws) {
+    for (const Watched& w: ws) {
         if (!w.isClause() || w.get_offset() == offs)
             continue;
 
@@ -1682,28 +1689,28 @@ void OccSimplifier::check_ternary_cl(Clause* cl, ClOffset offs, watch_subarray w
                 *limit_to_decrease-=20;
                 runStats.ternary_added_tri++;
 
-                vector<Lit> newcl;
+                Tri newcl;
                 for(Lit l: *cl) {
                     if (l.var() != lit_clash.var())
-                        newcl.push_back(l);
+                        newcl.lits[newcl.size++] = l;
                 }
                 for(Lit l: *cl2) {
                     if (l.var() != lit_clash.var()
                         && !seen[l.toInt()]
                     ) {
-                        newcl.push_back(l);
+                        newcl.lits[newcl.size++] = l;
                     }
                 }
 
-                if (newcl.size() == 2) {
-                    runStats.ternary_added_bin++;
-                    solver->attach_bin_clause(newcl[0], newcl[1], true);
-                } else {
-                    assert(newcl.size() == 3);
-                    runStats.ternary_added_tri++;
+                if (newcl.size == 2 || newcl.size == 3) {
+                    if (newcl.size == 2) {
+                        runStats.ternary_added_bin++;
+                    } else {
+                        assert(newcl.size == 3);
+                        runStats.ternary_added_tri++;
+                    }
                     cl_to_add_ternary.push_back(newcl);
                 }
-                //cout << "tri: " << *cl << " , " << *cl2 << " Resolve on: " << lit_clash << endl;
             }
         }
     }
