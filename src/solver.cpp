@@ -628,6 +628,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
      //Undo comp handler
     if (!fresh_solver
         && compHandler
+        && compHandler->get_num_vars_removed() > 0
     ) {
         bool readd = false;
         for (Lit lit: ps) {
@@ -643,7 +644,9 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
     }
 
     //Uneliminate vars
-    if (!fresh_solver) {
+    if (!fresh_solver
+        && solver->get_num_vars_elimed() > 0
+    ) {
         for (const Lit lit: ps) {
             if (conf.perform_occur_based_simp
                 && varData[lit.var()].removed == Removed::elimed
