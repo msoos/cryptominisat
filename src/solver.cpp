@@ -1124,6 +1124,7 @@ void Solver::set_assumptions()
     addClauseHelper(inter_assumptions_tmp);
     assert(inter_assumptions_tmp.size() == outside_assumptions.size());
 
+    assumptions.resize(inter_assumptions_tmp.size());
     for(size_t i = 0; i < inter_assumptions_tmp.size(); i++) {
         Lit outside_lit = lit_Undef;
         const Lit inter_lit = inter_assumptions_tmp[i];
@@ -1132,7 +1133,7 @@ void Solver::set_assumptions()
         }
 
         const Lit outer_lit = map_inter_to_outer(inter_lit);
-        assumptions.push_back(AssumptionPair(outer_lit, outside_lit));
+        assumptions[i] = AssumptionPair(outer_lit, outside_lit);
     }
 
     fill_assumptions_set();

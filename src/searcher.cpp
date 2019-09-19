@@ -1356,8 +1356,10 @@ lbool Searcher::new_decision()
     Lit next = lit_Undef;
     while (decisionLevel() < assumptions.size()) {
         // Perform user provided assumption:
-        Lit p = map_outer_to_inter(assumptions[decisionLevel()].lit_outer);
+        const Lit p = map_outer_to_inter(assumptions[decisionLevel()].lit_outer);
+        #ifdef SLOW_DEBUG
         assert(varData[p.var()].removed == Removed::none);
+        #endif
 
         if (value(p) == l_True) {
             // Dummy decision level:

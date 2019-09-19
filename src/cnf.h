@@ -48,6 +48,9 @@ namespace CMSat {
 class ClauseAllocator;
 
 struct AssumptionPair {
+    AssumptionPair()
+    {}
+
     AssumptionPair(const Lit _outer, const Lit _outside):
         lit_outer(_outer)
         , lit_orig_outside(_outside)
