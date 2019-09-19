@@ -146,6 +146,7 @@ cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 ../gen_pandas.py "${FNAMEOUT}-min.db" --limit "$FIXED" --conf $CONF-$CONF ${EXTRA_GEN_PANDAS_OPTS}
 ../vardata_gen_pandas.py "${FNAMEOUT}.db" --limit 1000
 ../vardata_predict.py mydata.db-vardata.dat --picktimeonly --csv -q 2 --only 0.1
+exit 0
 
 ########################
 # Create the classifiers
