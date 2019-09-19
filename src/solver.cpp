@@ -1112,14 +1112,18 @@ void Solver::set_assumptions()
     #endif
 
     conflict.clear();
-    back_number_from_outside_to_outer(outside_assumptions);
-    vector<Lit> inter_assumptions = back_number_from_outside_to_outer_tmp;
-    addClauseHelper(inter_assumptions);
-    assert(inter_assumptions.size() == outside_assumptions.size());
+    if (get_num_bva_vars() > 0) {
+        back_number_from_outside_to_outer(outside_assumptions);
+        inter_assumptions_tmp = back_number_from_outside_to_outer_tmp;
+    } else {
+        inter_assumptions_tmp = outside_assumptions;
+    }
+    addClauseHelper(inter_assumptions_tmp);
+    assert(inter_assumptions_tmp.size() == outside_assumptions.size());
 
-    for(size_t i = 0; i < inter_assumptions.size(); i++) {
+    for(size_t i = 0; i < inter_assumptions_tmp.size(); i++) {
         Lit outside_lit = lit_Undef;
-        const Lit inter_lit = inter_assumptions[i];
+        const Lit inter_lit = inter_assumptions_tmp[i];
         if (i < outside_assumptions.size()) {
             outside_lit = outside_assumptions[i];
         }
