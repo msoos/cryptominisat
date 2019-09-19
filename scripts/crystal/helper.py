@@ -122,7 +122,7 @@ def not_inside(not_these, inside_here):
 
     return True
 
-def add_computed_features_clustering(df):
+def add_computed_szfeat_for_clustering(df):
     print("Adding computed clustering features...")
 
     todiv = []

@@ -376,7 +376,7 @@ if __name__ == "__main__":
 
     orig_feats = list(df)
     if not options.no_computed:
-        helper.add_computed_features_clustering(df)
+        helper.add_computed_szfeat_for_clustering(df)
 
     c = Clustering(df)
     c.cluster()

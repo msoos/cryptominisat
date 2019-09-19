@@ -309,7 +309,7 @@ if __name__ == "__main__":
 
         if not options.unbalanced:
             dfs = []
-            for branch_str in [1,2,3,4]:
+            for branch_str in range(4):
                 print("Doing == 0 use:")
                 dfs.append(q.create_vardata_df(0, 0, branch_str))
                 print("Doing >0 use:")

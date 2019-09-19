@@ -134,35 +134,39 @@ fi
 ########################
 # Augment, fix up and sample the SQLite data
 ########################
-/usr/bin/time -v ../add_lemma_ind.py "$FNAMEOUT.db-raw" "$FNAMEOUT.usedCls"
+/usr/bin/time -v ../fill_used_clauses.py "$FNAMEOUT.db-raw" "$FNAMEOUT.usedCls"
 cp "$FNAMEOUT.db-raw" "$FNAMEOUT.db"
 /usr/bin/time -v ../clean_update_data.py "$FNAMEOUT.db"
 cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
-/usr/bin/time -v ../rem_data.py "$FNAMEOUT-min.db"
+/usr/bin/time -v ../sample_data.py "$FNAMEOUT-min.db"
 
 ########################
 # Denormalize the data into a Pandas Table, label it and sample it
 ########################
-../gen_pandas.py "${FNAMEOUT}-min.db" --limit "$FIXED" --conf $CONF-$CONF ${EXTRA_GEN_PANDAS_OPTS}
+../cldata_gen_pandas.py "${FNAMEOUT}-min.db" --limit "$FIXED" --conf $CONF-$CONF ${EXTRA_GEN_PANDAS_OPTS}
 ../vardata_gen_pandas.py "${FNAMEOUT}.db" --limit 1000
-../vardata_predict.py mydata.db-vardata.dat --picktimeonly --csv -q 2 --only 0.1
+
+
+####################################
+# Clustering for cldata, using cldata dataframe
+####################################
+../clustering.py "${FNAMEOUT}-min.db-short-conf-2.dat" --numconfs 3 --basedir ../../src/predict/ --clusters 1 --scale --distr
+
+
+####################################
+# Create the classifiers
+####################################
+
+../vardata_predict.py mydata.db-vardata.dat --picktimeonly --csv -q 2 --only 0.99
+#../vardata_predict.py vardata-comb --final -q 20 --basedir ../src/predict/ --depth 7 --tree
 exit 0
 
-########################
-# Create the classifiers
-########################
 mkdir -p ../../src/predict
 rm -f ../../src/predict/*.h
-../clustering.py mydata-min.db-short-conf-2.dat --numconfs 3 --basedir ../src/predict/ --clusters 1 --scale
 
-../vardata_predict.py vardata-comb --final -q 20 --basedir ../src/predict/ --depth 7 --tree
 for CONF in {0..2}; do
-    ./predict.py short-2-comb.dat --name short --split 0.01 --final --tree --basedir ../src/predict/ --conf $CONF
-    ./predict.py long-2-comb.dat --name long --split 0.01 --final --tree --basedir ../src/predict/ --conf $CONF
-
-    #../predict.py "${FNAMEOUT}-min.db-short-conf-$CONF.dat" --name short --basedir "../../src/predict/" --final --forest --split 0.1 --conf $CONF
-
-    # ../predict.py "${FNAMEOUT}-min.db-long-conf-$CONF.dat" --name long   --basedir "../../src/predict/" --final --forest --split 0.1 --conf $CONF
+    ../cldata_predict.py short-2-comb.dat --name short --split 0.01 --final --tree --basedir ../../src/predict/ --conf $CONF
+    ../cldata_predict.py long-2-comb.dat  --name long  --split 0.01 --final --tree --basedir ../../src/predict/ --conf $CONF
 done
 )
 

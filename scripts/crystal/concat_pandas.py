@@ -28,7 +28,9 @@ import sys
 
 
 if __name__ == "__main__":
-    usage = "usage: %prog [options] file1.sqlite [file2.sqlite ...]"
+    usage = """usage: %prog [options] file1.dat [file2.dat ...]
+Concatenates Pandas dataframes into a single file. The dataframes must have
+the same columns."""
     parser = optparse.OptionParser(usage=usage)
 
     parser.add_option("--verbose", "-v", action="store_true", default=False,
