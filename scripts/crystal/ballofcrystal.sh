@@ -169,7 +169,7 @@ for CONF in {0..2}; do
     ../cldata_predict.py long-2-comb.dat  --name long  --split 0.01 --final --tree --basedir ../../src/predict/ --conf $CONF
 done
 )
-
+exit 0
 
 ########################
 # Build final CryptoMiniSat with the classifier
