@@ -291,7 +291,7 @@ inline uint32_t PackedRow::popcnt() const
 {
     uint32_t ret = 0;
     for (int i = 0; i < size; i++) {
-        ret += __builtin_popcountll(mp[i]);
+        ret += __builtin_popcountll((uint64_t)mp[i]);
     }
     return ret;
 }

@@ -2968,7 +2968,7 @@ int OccSimplifier::check_empty_resolvent_action(
 
                 //this "if" is only here to avoid undefined shift-up error by
                 //clang sanitizer
-                if (action == ResolvCount::set) {
+                if (action == ResolvCount::set && numCls < 15) {
                     at = at << 1U;
                 }
                 numCls++;
@@ -3011,7 +3011,7 @@ int OccSimplifier::check_empty_resolvent_action(
                 }
                 //this "if" is only here to avoid undefined shift-up error by
                 //clang sanitizer
-                if (action == ResolvCount::set) {
+                if (action == ResolvCount::set && numCls < 15) {
                     at = at << 1U;
                 }
                 numCls++;
