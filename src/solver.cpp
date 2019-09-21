@@ -3937,12 +3937,15 @@ bool Solver::find_and_init_all_matrices()
         return false;
     }
 
-    cout
-    << "finder.unused_xors.size(): " << finder.unused_xors.size()
-    << " can detach: " << can_detach
-    << " no_irred_nonxor_contains_unused_clash_vars(): " << finder.no_irred_nonxor_contains_unused_clash_vars()
-    << " solver->conf.gaussconf.enabled: " << solver->conf.gaussconf.enabled
-    << endl;
+    if (conf.verbosity >= 1) {
+        cout
+        << "c [gauss]"
+        << " finder.unused_xors.size(): " << finder.unused_xors.size()
+        << " can detach: " << can_detach
+        << " no_irred_nonxor_contains_unused_clash_vars(): " << finder.no_irred_nonxor_contains_unused_clash_vars()
+        << " solver->conf.gaussconf.enabled: " << solver->conf.gaussconf.enabled
+        << endl;
+    }
 
     if (can_detach &&
         finder.no_irred_nonxor_contains_unused_clash_vars() &&
@@ -4336,10 +4339,14 @@ void Solver::attach_xor_clauses()
     if (!detached_xor_clauses)
         return;
 
+
     gauss_ret gret = gauss_jordan_elim();
-    cout << "RET false: " << (gret == gauss_ret::g_false) << endl;
-    cout << "RET cont: " << (gret == gauss_ret::g_cont) << endl;
-    cout << "RET nothing: " << (gret == gauss_ret::g_nothing) << endl;
+    if (gret != gauss_ret::g_nothing) {
+        cout << "RET false: " << (gret == gauss_ret::g_false) << endl;
+        cout << "RET cont: " << (gret == gauss_ret::g_cont) << endl;
+        cout << "RET nothing: " << (gret == gauss_ret::g_nothing) << endl;
+        assert(gret == gauss_ret::g_nothing);
+    }
 
     for (size_t g = 0; g < gqueuedata.size(); g++) {
         if (gqueuedata[g].engaus_disable) {
