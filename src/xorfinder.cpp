@@ -270,6 +270,7 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
         #endif
 
         add_found_xor(found_xor);
+        assert(poss_xor.get_fully_used().size() == poss_xor.get_offsets().size());
         for(uint32_t i = 0; i < poss_xor.get_offsets().size() ; i++) {
             ClOffset offs = poss_xor.get_offsets()[i];
             bool fully_used = poss_xor.get_fully_used()[i];

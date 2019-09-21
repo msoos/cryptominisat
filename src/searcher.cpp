@@ -3584,7 +3584,9 @@ void Searcher::cancelUntil(uint32_t level
             }
         }
         qhead = trail_lim[level];
+        #ifdef USE_GAUSS
         gqhead = qhead;
+        #endif
         trail.resize(trail_lim[level]);
         trail_lim.resize(level);
 

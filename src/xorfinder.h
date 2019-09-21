@@ -60,6 +60,7 @@ class PossibleXor
             abst = _abst;
             size = cl.size();
             offsets.clear();
+            fully_used.clear();
             #ifdef VERBOSE_DEBUG_XOR_FINDER
             cout << "Trying to create XOR from clause: " << cl << endl;
             #endif
@@ -73,7 +74,10 @@ class PossibleXor
             }
             setup_seen_rhs_foundcomb(seen);
             if (offset != std::numeric_limits<ClOffset>::max()) {
+                //this is the XOR that starts it all
+                //so it's fully used
                 offsets.push_back(offset);
+                fully_used.push_back(true);
             }
         }
 

@@ -3955,7 +3955,9 @@ bool Solver::find_and_init_all_matrices()
     ) {
         detach_xor_clauses(finder.unused_xors);
     } else {
-        cout << "WHAAAAT" << endl;
+        if (conf.verbosity >= 1) {
+            cout << "c WHAAAAT" << endl;
+        }
     }
 
     #ifdef SLOW_DEBUG
@@ -4293,6 +4295,7 @@ void Solver::detach_xor_clauses(const vector<Xor>& unused_xors)
             assert(w.isClause());
             ClOffset offs = w.get_offset();
             Clause* cl = cl_alloc.ptr(offs);
+            assert(!cl->freed() && !cl->getRemoved());
 
             bool torem = false;
             if (cl->used_in_xor() && cl->used_in_xor_full()) {
@@ -4326,7 +4329,7 @@ void Solver::detach_xor_clauses(const vector<Xor>& unused_xors)
 
     assert(removed % 2 == 0);
 
-    if (solver->conf.verbosity >= 0) {
+    if (solver->conf.verbosity >= 1) {
         cout
         << "c [gauss] XORs detached: " << (removed/2)
         << " T: " << (cpuTime() - myTime)
@@ -4350,7 +4353,7 @@ void Solver::attach_xor_clauses()
 
     for (size_t g = 0; g < gqueuedata.size(); g++) {
         if (gqueuedata[g].engaus_disable) {
-            cout << "WHAAAAAT?????????? DISABLED" << endl;
+            //cout << "WHAAAAAT?????????? DISABLED" << endl;
             continue;
         }
 
@@ -4401,7 +4404,7 @@ void Solver::attach_xor_clauses()
     }
     detached_xor_clauses = false;
 
-    if (solver->conf.verbosity >= 0) {
+    if (solver->conf.verbosity >= 1) {
         cout
         << "c [gauss] XORs reattached: " << reattached
         << " T: " << (cpuTime() - myTime)
