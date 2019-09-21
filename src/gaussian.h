@@ -65,7 +65,6 @@ class EGaussian {
   public:
       EGaussian(
         Solver* solver,
-        const GaussConf& config,
         const uint32_t matrix_no,
         const vector<Xor>& xorclauses
     );
@@ -101,7 +100,6 @@ class EGaussian {
 
   private:
     Solver* solver;   // orignal sat solver
-    const GaussConf& config;
 
     //Cleanup
     bool clean_xors();

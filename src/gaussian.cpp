@@ -61,12 +61,10 @@ static const uint32_t unassigned_col = std::numeric_limits<uint32_t>::max();
 
 EGaussian::EGaussian(
     Solver* _solver,
-    const GaussConf& _config,
     const uint32_t _matrix_no,
     const vector<Xor>& _xorclauses) :
 xorclauses(_xorclauses),
 solver(_solver),
-config(_config),
 matrix_no(_matrix_no)
 
 {
