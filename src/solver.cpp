@@ -3925,6 +3925,8 @@ bool Solver::find_and_init_all_matrices()
 
     bool can_detach;
     clear_gauss_matrices();
+    gqhead = trail.size();
+
     MatrixFinder finder(solver);
     ok = finder.findMatrixes(can_detach);
     if (!ok) {
@@ -3945,7 +3947,8 @@ bool Solver::find_and_init_all_matrices()
     if (can_detach &&
         finder.no_irred_nonxor_contains_unused_clash_vars() &&
         conf.xor_deatach_reattach &&
-        solver->conf.gaussconf.enabled
+        solver->conf.gaussconf.enabled &&
+        !solver->conf.gaussconf.autodisable
     ) {
         detach_xor_clauses(finder.unused_xors);
     } else {
@@ -4333,24 +4336,61 @@ void Solver::attach_xor_clauses()
     if (!detached_xor_clauses)
         return;
 
-    double myTime = cpuTime();
-    uint32_t reattached = 0;
-    for(const auto& offs: longIrredCls) {
-        Clause* cl = cl_alloc.ptr(offs);
-        if (cl->used_in_xor() && cl->used_in_xor_full() && cl->_xor_is_detached) {
-            cl->_xor_is_detached = false;
-            PropEngine::attachClause(*cl, true);
-            reattached++;
+    gauss_ret gret = gauss_jordan_elim();
+    cout << "RET false: " << (gret == gauss_ret::g_false) << endl;
+    cout << "RET cont: " << (gret == gauss_ret::g_cont) << endl;
+    cout << "RET nothing: " << (gret == gauss_ret::g_nothing) << endl;
+
+    for (size_t g = 0; g < gqueuedata.size(); g++) {
+        if (gqueuedata[g].engaus_disable) {
+            cout << "WHAAAAAT?????????? DISABLED" << endl;
+            continue;
         }
+
+        gmatrices[g]->check_invariants();
     }
 
-    for(const auto& cls: longRedCls) for(const auto& offs: cls) {
+    double myTime = cpuTime();
+    uint32_t reattached = 0;
+
+    uint32_t j = 0;
+    for(uint32_t i = 0; i < longIrredCls.size(); i++) {
+        ClOffset offs = longIrredCls[i];
         Clause* cl = cl_alloc.ptr(offs);
         if (cl->used_in_xor() && cl->used_in_xor_full() && cl->_xor_is_detached) {
-            cl->_xor_is_detached = false;
-            PropEngine::attachClause(*cl, true);
             reattached++;
+            bool ret = clauseCleaner->clean_clause(*cl);
+            if (ret) {
+                //Clause is removed
+                continue;
+            } else {
+                cl->_xor_is_detached = false;
+                PropEngine::attachClause(*cl, true);
+            }
         }
+        longIrredCls[j++] = longIrredCls[i];
+    }
+    longIrredCls.resize(j);
+
+    for(auto& cls: longRedCls) {
+        j = 0;
+        for(uint32_t i = 0; i < cls.size(); i++) {
+            ClOffset offs = cls[i];
+            Clause* cl = cl_alloc.ptr(offs);
+            if (cl->used_in_xor() && cl->used_in_xor_full() && cl->_xor_is_detached) {
+                reattached++;
+                bool ret = clauseCleaner->clean_clause(*cl);
+                if (ret) {
+                    //Clause is removed
+                    continue;
+                } else {
+                    cl->_xor_is_detached = false;
+                    PropEngine::attachClause(*cl, true);
+                }
+            }
+            cls[j++] = cls[i];
+        }
+        cls.resize(j);
     }
     detached_xor_clauses = false;
 

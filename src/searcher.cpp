@@ -1250,9 +1250,6 @@ lbool Searcher::search()
     while (!params.needToStopSearch
         || !confl.isNULL() //always finish the last conflict
     ) {
-        #ifdef USE_GAUSS
-        gqhead = qhead;
-        #endif
         confl = propagate_any_order_fast();
 
         if (!confl.isNULL()) {
@@ -1290,7 +1287,6 @@ lbool Searcher::search()
                 //cout << "g_cont" << endl;
                 check_need_restart();
                 continue;
-            //TODO conflict should be goto-d to "confl" label
             }
 
             if (ret == gauss_ret::g_false) {
@@ -2932,11 +2928,10 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
             gqd.engaus_disable = true;
         }
     }
-    assert(qhead == trail.size());
     assert(gqhead <= qhead);
 
     bool confl_in_gauss = false;
-    while (gqhead <  qhead
+    while (gqhead <  trail.size()
         && !confl_in_gauss
     ) {
         const Lit p = trail[gqhead++];
@@ -3589,6 +3584,7 @@ void Searcher::cancelUntil(uint32_t level
             }
         }
         qhead = trail_lim[level];
+        gqhead = qhead;
         trail.resize(trail_lim[level]);
         trail_lim.resize(level);
 

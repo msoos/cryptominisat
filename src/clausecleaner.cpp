@@ -174,7 +174,7 @@ void ClauseCleaner::clean_clauses_inter(vector<ClOffset>& cs)
     cs.resize(cs.size() - (s-ss));
 }
 
-inline bool ClauseCleaner::clean_clause(Clause& cl)
+bool ClauseCleaner::clean_clause(Clause& cl)
 {
     assert(cl.size() > 2);
     (*solver->drat) << deldelay << cl << fin;

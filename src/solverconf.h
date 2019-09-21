@@ -112,7 +112,7 @@ class GaussConf
 
     GaussConf() :
         enabled(1)
-        , autodisable(true)
+        , autodisable(false)
         , max_matrix_rows(5000)
         , min_matrix_rows(2)
         , max_num_matrices(5)
