@@ -259,6 +259,8 @@ public:
     uint16_t occurLinked:1;
     uint16_t must_recalc_abst:1;
     uint16_t _used_in_xor:1;
+    uint16_t _used_in_xor_full:1;
+    uint16_t _xor_is_detached:1;
     uint16_t _gauss_temp_cl:1; ///Used ONLY by Gaussian elimination to incicate where a proagation is coming from
     uint16_t reloced:1;
 
@@ -305,6 +307,8 @@ public:
         is_ternary_resolved = false;
         must_recalc_abst = true;
         _used_in_xor = false;
+        _used_in_xor_full = false;
+        _xor_is_detached = false;
         _gauss_temp_cl = false;
         reloced = false;
 
@@ -339,6 +343,16 @@ public:
     void set_used_in_xor(const bool val)
     {
         _used_in_xor = val;
+    }
+
+    bool used_in_xor_full() const
+    {
+        return _used_in_xor_full;
+    }
+
+    void set_used_in_xor_full(const bool val)
+    {
+        _used_in_xor_full = val;
     }
 
     void shrink(const uint32_t i)

@@ -113,6 +113,8 @@ void XorFinder::clean_equivalent_xors(vector<Xor>& txors)
                 j++;
                 *j = *i;
                 size++;
+            } else {
+                j->clash_vars.insert(i->clash_vars.begin(), i->clash_vars.end());
             }
         }
         txors.resize(size);
@@ -133,7 +135,18 @@ void XorFinder::find_xors()
         solver->conf.maxXorToFind = solver->conf.xor_var_per_cut + 2;
     }
 
+    //Clear flags. This is super-important.
+    for(auto& offs: occsimplifier->clauses) {
+        Clause* cl = solver->cl_alloc.ptr(offs);
+        if (cl->getRemoved() || cl->freed()) {
+            continue;
+        }
+
+        cl->set_used_in_xor(false);
+        cl->set_used_in_xor_full(false);
+    }
     xors.clear();
+
     double myTime = cpuTime();
     const int64_t orig_xor_find_time_limit =
         1000LL*1000LL*solver->conf.xor_finder_time_limitM
@@ -257,10 +270,14 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
         #endif
 
         add_found_xor(found_xor);
-        for(ClOffset offs: poss_xor.get_offsets()) {
+        for(uint32_t i = 0; i < poss_xor.get_offsets().size() ; i++) {
+            ClOffset offs = poss_xor.get_offsets()[i];
+            bool fully_used = poss_xor.get_fully_used()[i];
+
             Clause* cl = solver->cl_alloc.ptr(offs);
             assert(!cl->getRemoved());
             cl->set_used_in_xor(true);
+            cl->set_used_in_xor_full(fully_used);
         }
     }
     poss_xor.clear_seen(occcnt);
@@ -430,6 +447,8 @@ vector<Xor> XorFinder::remove_xors_without_connecting_vars(const vector<Xor>& th
     for(const Xor& x: this_xors) {
         if (xor_has_interesting_var(x)) {
             ret.push_back(x);
+        } else {
+            unused_xors.push_back(x);
         }
     }
 
@@ -551,7 +570,8 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
 
             Xor& x1 = this_xors[idxes[0]];
             Xor& x2 = this_xors[idxes[1]];
-            uint32_t clash_num = xor_two(&x1, &x2);
+            uint32_t clash_var;
+            uint32_t clash_num = xor_two(&x1, &x2, clash_var);
 
             //If they are equivalent
             if (x1.size() == x2.size()
@@ -562,9 +582,9 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 x1 = Xor();
 
                 //Re-attach the other, remove the occur of the one we deleted
-                const Xor& x = x2;
                 solver->watches[Lit(v, false)].push(Watched(idxes[1]));
-                for(uint32_t v2: x) {
+                x2.clash_vars.insert(x1.clash_vars.begin(), x1.clash_vars.end());
+                for(uint32_t v2: x2) {
                     Lit l(v2, false);
                     assert(occcnt[l.var()] >= 2);
                     occcnt[l.var()]--;
@@ -583,6 +603,8 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 assert(occcnt[v] == 0);
 
                 Xor x_new(tmp_vars_xor_two, x1.rhs ^ x2.rhs);
+                x_new.clash_vars.insert(x1.clash_vars.begin(), x1.clash_vars.end());
+                x_new.clash_vars.insert(x2.clash_vars.begin(), x2.clash_vars.end());
                 changed = true;
                 this_xors.push_back(x_new);
                 for(uint32_t v2: x_new) {
@@ -769,7 +791,7 @@ bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* ou
     return solver->okay();
 }
 
-uint32_t XorFinder::xor_two(Xor const* x1_p, Xor const* x2_p)
+uint32_t XorFinder::xor_two(Xor const* x1_p, Xor const* x2_p, uint32_t& clash_var)
 {
     tmp_vars_xor_two.clear();
     if (x1_p->size() > x2_p->size()) {
@@ -792,6 +814,7 @@ uint32_t XorFinder::xor_two(Xor const* x1_p, Xor const* x2_p)
         if (seen[v] == 0) {
             tmp_vars_xor_two.push_back(v);
         } else {
+            clash_var = v;
             if (clash_num > 0 &&
                 clash_num != i_x2 //not equivalent by chance
             ) {

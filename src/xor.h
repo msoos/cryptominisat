@@ -31,6 +31,7 @@ THE SOFTWARE.
 #include <algorithm>
 
 using std::vector;
+using std::set;
 
 namespace CMSat {
 
@@ -135,6 +136,7 @@ public:
         return vars.size();
     }
     bool rhs;
+    set<uint32_t> clash_vars;
 
 private:
     vector<uint32_t> vars;

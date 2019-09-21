@@ -25,6 +25,7 @@ THE SOFTWARE.
 
 #include <vector>
 #include <map>
+#include <set>
 #include "xor.h"
 #include "constants.h"
 
@@ -35,6 +36,7 @@ class Solver;
 using std::map;
 using std::vector;
 using std::pair;
+using std::set;
 
 class MatrixFinder {
 
@@ -42,7 +44,11 @@ class MatrixFinder {
         MatrixFinder(Solver* solver);
 
         //NOTE "simplify_xors" should always be true except during testing
-        bool findMatrixes(bool simplify_xors = true);
+        bool findMatrixes(bool& can_detach, bool simplify_xors = true);
+        bool no_irred_nonxor_contains_unused_clash_vars();
+
+        vector<Xor> unused_xors;
+        set<uint32_t> clash_vars_unused;
 
     private:
         uint32_t setMatrixes();
@@ -85,6 +91,7 @@ class MatrixFinder {
         vector<Xor> xors;
 
         Solver* solver;
+        vector<uint16_t>& seen;
 };
 
 }

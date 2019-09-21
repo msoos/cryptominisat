@@ -96,7 +96,11 @@ class ClauseAllocator {
         size_t mem_used() const;
 
     private:
-        void update_offsets(vector<ClOffset>& offsets);
+        void update_offsets(
+            vector<ClOffset>& offsets,
+            ClOffset* newDataStart,
+            ClOffset*& new_ptr
+        );
         void move_one_watchlist(
             watch_subarray& ws, ClOffset* newDataStart, ClOffset*& new_ptr);
 

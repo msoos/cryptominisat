@@ -298,6 +298,7 @@ void Solver::add_xor_clause_inter_cleaned_cut(
         Clause* cl = add_clause_int(new_lits, false, ClauseStats(), attach, NULL, addDrat);
         if (cl) {
             cl->set_used_in_xor(true);
+            cl->set_used_in_xor_full(true);
             longIrredCls.push_back(cl_alloc.get_offset(cl));
         }
 
@@ -1578,6 +1579,9 @@ lbool Solver::solve_with_assumptions(
 
     if (conf.preprocess == 1) {
         cancelUntil(0);
+        #ifdef USE_GAUSS
+        attach_xor_clauses();
+        #endif
         if (status != l_False) {
             //So no set variables end up in the clauses
             clauseCleaner->remove_and_clean_all();
@@ -2150,6 +2154,7 @@ lbool Solver::simplify_problem(const bool startup)
 
     clear_order_heap();
     #ifdef USE_GAUSS
+    attach_xor_clauses();
     clear_gauss_matrices();
     #endif
 
@@ -3918,15 +3923,33 @@ bool Solver::find_and_init_all_matrices()
         return true;
     }
 
+    bool can_detach;
     clear_gauss_matrices();
     MatrixFinder finder(solver);
-    ok = finder.findMatrixes();
+    ok = finder.findMatrixes(can_detach);
     if (!ok) {
         return false;
     }
 
     if (!init_all_matrices()) {
         return false;
+    }
+
+    cout
+    << "finder.unused_xors.size(): " << finder.unused_xors.size()
+    << " can detach: " << can_detach
+    << " no_irred_nonxor_contains_unused_clash_vars(): " << finder.no_irred_nonxor_contains_unused_clash_vars()
+    << " solver->conf.gaussconf.enabled: " << solver->conf.gaussconf.enabled
+    << endl;
+
+    if (can_detach &&
+        finder.no_irred_nonxor_contains_unused_clash_vars() &&
+        conf.xor_deatach_reattach &&
+        solver->conf.gaussconf.enabled
+    ) {
+        detach_xor_clauses(finder.unused_xors);
+    } else {
+        cout << "WHAAAAT" << endl;
     }
 
     #ifdef SLOW_DEBUG
@@ -3951,7 +3974,8 @@ bool Solver::init_all_matrices()
     for (uint32_t i = 0; i < gmatrices.size(); i++) {
         auto& g = gmatrices[i];
         bool created = false;
-        // initial arrary. return true is fine , return false means solver already false;
+        //initial arrary. return true is fine,
+        //return false means solver already false;
         if (!g->full_init(created)) {
             return false;
         }
@@ -4230,6 +4254,111 @@ void Solver::stats_del_cl(ClOffset offs)
     Clause* cl = cl_alloc.ptr(offs);
     if (cl->stats.ID != 0 && solver->sqlStats) {
         solver->sqlStats->cl_last_in_solver(this, cl->stats.ID);
+    }
+}
+#endif
+
+
+#ifdef USE_GAUSS
+void Solver::detach_xor_clauses(const vector<Xor>& unused_xors)
+{
+    for(const auto& x: unused_xors) {
+        for(const uint32_t v: x) {
+            seen[v] = 1;
+        }
+    }
+
+    double myTime = cpuTime();
+    uint32_t removed = 0;
+    detached_xor_clauses = true;
+
+    assert(solver->watches.get_smudged_list().empty());
+    for(uint32_t x = 0; x < nVars()*2; x++) {
+        Lit l = Lit::toLit(x);
+        uint32_t j = 0;
+        for(uint32_t i = 0; i < watches[l].size(); i++) {
+            const Watched& w = watches[l][i];
+            assert(!w.isIdx());
+            if (w.isBin()) {
+                watches[l][j++] = w;
+                continue;
+            }
+
+            assert(w.isClause());
+            ClOffset offs = w.get_offset();
+            Clause* cl = cl_alloc.ptr(offs);
+
+            bool torem = false;
+            if (cl->used_in_xor() && cl->used_in_xor_full()) {
+                torem = true;
+                for(const Lit lit: *cl) {
+                    //It's part of an unused XOR, skip
+                    if (seen[lit.var()]) {
+                        torem = false;
+                    }
+                }
+            }
+
+            if (torem) {
+                watches.smudge(l);
+                cl->_xor_is_detached = true;
+                removed++;
+                continue;
+            } else {
+                watches[l][j++] = w;
+            }
+        }
+        watches[l].resize(j);
+    }
+    solver->clean_occur_from_removed_clauses_only_smudged();
+
+    for(const auto& x: unused_xors) {
+        for(const uint32_t v: x) {
+            seen[v] = 0;
+        }
+    }
+
+    assert(removed % 2 == 0);
+
+    if (solver->conf.verbosity >= 0) {
+        cout
+        << "c [gauss] XORs detached: " << (removed/2)
+        << " T: " << (cpuTime() - myTime)
+        << endl;
+    }
+}
+
+void Solver::attach_xor_clauses()
+{
+    if (!detached_xor_clauses)
+        return;
+
+    double myTime = cpuTime();
+    uint32_t reattached = 0;
+    for(const auto& offs: longIrredCls) {
+        Clause* cl = cl_alloc.ptr(offs);
+        if (cl->used_in_xor() && cl->used_in_xor_full() && cl->_xor_is_detached) {
+            cl->_xor_is_detached = false;
+            PropEngine::attachClause(*cl, true);
+            reattached++;
+        }
+    }
+
+    for(const auto& cls: longRedCls) for(const auto& offs: cls) {
+        Clause* cl = cl_alloc.ptr(offs);
+        if (cl->used_in_xor() && cl->used_in_xor_full() && cl->_xor_is_detached) {
+            cl->_xor_is_detached = false;
+            PropEngine::attachClause(*cl, true);
+            reattached++;
+        }
+    }
+    detached_xor_clauses = false;
+
+    if (solver->conf.verbosity >= 0) {
+        cout
+        << "c [gauss] XORs reattached: " << reattached
+        << " T: " << (cpuTime() - myTime)
+        << endl;
     }
 }
 #endif

@@ -99,6 +99,11 @@ class PossibleXor
             return offsets;
         }
 
+        const vector<char>& get_fully_used() const
+        {
+            return fully_used;
+        }
+
     private:
         void setup_seen_rhs_foundcomb(vector<uint32_t>& seen)
         {
@@ -136,6 +141,7 @@ class PossibleXor
         uint32_t size;
         bool rhs;
         vector<ClOffset> offsets;
+        vector<char> fully_used;
 };
 
 class XorFinder
@@ -178,6 +184,7 @@ public:
     void clean_equivalent_xors(vector<Xor>& txors);
 
     vector<Xor> xors;
+    vector<Xor> unused_xors;
 
 private:
     PossibleXor poss_xor;
@@ -189,7 +196,7 @@ private:
 
     ///xor two -- don't re-allocate memory all the time
     ///use tmp_vars_xor_two instead
-    uint32_t xor_two(Xor const* x1, Xor const* x2);
+    uint32_t xor_two(Xor const* x1, Xor const* x2, uint32_t& clash_var);
     vector<uint32_t> tmp_vars_xor_two;
 
     int64_t xor_find_time_limit;
@@ -308,6 +315,7 @@ template<class T> void PossibleXor::add(
     }
     if (offset != std::numeric_limits<ClOffset>::max()) {
         offsets.push_back(offset);
+        fully_used.push_back(varsMissing.empty());
     }
 
     #ifdef VERBOSE_DEBUG_XOR_FINDER
