@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include "constants.h"
 #include "solvertypes.h"
 #include "clause.h"
+#include "xor.h"
 #include "watcharray.h"
 #include "simplefile.h"
 
@@ -124,7 +125,7 @@ class VarReplacer
         uint32_t get_var_replaced_with_fast(const uint32_t var) const {
             return fast_inter_replace_lookup[var].var();
         }
-        bool replace_xor_clauses();
+        bool replace_xor_clauses(vector<Xor>& xors);
 
         vector<Lit> ps_tmp;
         bool perform_replace();

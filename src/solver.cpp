@@ -262,6 +262,7 @@ void Solver::add_every_combination_xor(
         if (at != lits.size()) {
             new_var(true);
             const uint32_t newvar = nVars()-1;
+            xorclauses[xorclauses.size()-1].clash_vars.insert(newvar);
             varData[newvar].added_for_xor = true;
             const Lit toadd = Lit(newvar, false);
             xorlits.push_back(toadd);
@@ -819,6 +820,20 @@ void Solver::renumber_clauses(const vector<uint32_t>& outerToInter)
     xor_clauses_updated = true;
     for(Xor& x: xorclauses) {
         updateVarsMap(x, outerToInter);
+        set<uint32_t> clash_vars2;
+        for(uint32_t v: x.clash_vars) {
+            clash_vars2.insert(getUpdatedVar(v, outerToInter));
+        }
+        std::swap(x.clash_vars, clash_vars2);
+    }
+
+    for(Xor& x: xorclauses_unused) {
+        updateVarsMap(x, outerToInter);
+        set<uint32_t> clash_vars2;
+        for(uint32_t v: x.clash_vars) {
+            clash_vars2.insert(getUpdatedVar(v, outerToInter));
+        }
+        std::swap(x.clash_vars, clash_vars2);
     }
 }
 
@@ -883,20 +898,37 @@ double Solver::calc_renumber_saving()
     return saving;
 }
 
+bool Solver::update_vars_of_xors(vector<Xor>& xors)
+{
+    for(Xor& x: xors) {
+        clean_xor_vars_no_prop(x.get_vars(), x.rhs);
+        if (x.size() == 0 && x.rhs == true) {
+            ok = false;
+            break;
+        }
+
+        set<uint32_t> clash_vars_upd;
+        for(uint32_t v: x.clash_vars) {
+            if (value(v) == l_Undef)
+                clash_vars_upd.insert(v);
+        }
+        std::swap(x.clash_vars, clash_vars_upd);
+    }
+
+    return ok;
+}
+
 bool Solver::clean_xor_clauses_from_duplicate_and_set_vars()
 {
     xor_clauses_updated = true;
     assert(decisionLevel() == 0);
     double myTime = cpuTime();
     XorFinder f(NULL, this);
-    for(Xor& x: xorclauses) {
-        solver->clean_xor_vars_no_prop(x.get_vars(), x.rhs);
-        if (x.size() == 0 && x.rhs == true) {
-            ok = false;
-            break;
-        }
-    }
 
+    if (!update_vars_of_xors(xorclauses)) goto end;
+    if (!update_vars_of_xors(xorclauses_unused)) goto end;
+
+    end:
     const double time_used = cpuTime() - myTime;
     if (conf.verbosity) {
         cout
@@ -3863,10 +3895,10 @@ vector<Xor> Solver::get_recovered_xors(bool elongate)
 {
     vector<Xor> xors_ret;
     if (elongate && solver->okay()) {
-        XorFinder finder(NULL, this);
         auto xors = xorclauses;
 
         //YEP -- the solver state can turn to OK=false
+        XorFinder finder(NULL, this);
         finder.xor_together_xors(xors);
         //YEP -- the solver state can turn to OK=false
         if (solver->okay()) {
@@ -3927,8 +3959,8 @@ bool Solver::find_and_init_all_matrices()
     clear_gauss_matrices();
     gqhead = trail.size();
 
-    MatrixFinder finder(solver);
-    ok = finder.findMatrixes(can_detach);
+    MatrixFinder mfinder(solver);
+    ok = mfinder.findMatrixes(can_detach);
     if (!ok) {
         return false;
     }
@@ -3937,25 +3969,25 @@ bool Solver::find_and_init_all_matrices()
         return false;
     }
 
-    if (conf.verbosity >= 1) {
+    if (conf.verbosity >= 0) {
         cout
         << "c [gauss]"
-        << " finder.unused_xors.size(): " << finder.unused_xors.size()
+        << " unused_xors: " << mfinder.unused_xors.size()
         << " can detach: " << can_detach
-        << " no_irred_nonxor_contains_unused_clash_vars(): " << finder.no_irred_nonxor_contains_unused_clash_vars()
-        << " solver->conf.gaussconf.enabled: " << solver->conf.gaussconf.enabled
+        << " no irred with clash: " << mfinder.no_irred_nonxor_contains_clash_vars()
+        << " gaussconf enbl: " << solver->conf.gaussconf.enabled
         << endl;
     }
 
     if (can_detach &&
-        finder.no_irred_nonxor_contains_unused_clash_vars() &&
+        mfinder.no_irred_nonxor_contains_clash_vars() &&
         conf.xor_deatach_reattach &&
         solver->conf.gaussconf.enabled &&
         !solver->conf.gaussconf.autodisable
     ) {
-        detach_xor_clauses(finder.unused_xors);
+        detach_xor_clauses(mfinder.unused_xors, mfinder.clash_vars_unused);
     } else {
-        if (conf.verbosity >= 1) {
+        if (conf.verbosity >= 0) {
             cout << "c WHAAAAT" << endl;
         }
     }
@@ -4268,12 +4300,19 @@ void Solver::stats_del_cl(ClOffset offs)
 
 
 #ifdef USE_GAUSS
-void Solver::detach_xor_clauses(const vector<Xor>& unused_xors)
+void Solver::detach_xor_clauses(
+    const vector<Xor>& unused_xors,
+    const set<uint32_t>& clash_vars_unused
+)
 {
     for(const auto& x: unused_xors) {
         for(const uint32_t v: x) {
             seen[v] = 1;
         }
+    }
+
+    for(const auto& v: clash_vars_unused) {
+        seen[v] = 1;
     }
 
     double myTime = cpuTime();
@@ -4327,11 +4366,15 @@ void Solver::detach_xor_clauses(const vector<Xor>& unused_xors)
         }
     }
 
+    for(const auto& v: clash_vars_unused) {
+        seen[v] = 0;
+    }
+
     assert(removed % 2 == 0);
 
-    if (solver->conf.verbosity >= 1) {
+    if (solver->conf.verbosity >= 0) {
         cout
-        << "c [gauss] XORs detached: " << (removed/2)
+        << "c [gauss] XOR-encoding clauses detached: " << (removed/2)
         << " T: " << (cpuTime() - myTime)
         << endl;
     }
@@ -4406,7 +4449,7 @@ void Solver::attach_xor_clauses()
 
     if (solver->conf.verbosity >= 1) {
         cout
-        << "c [gauss] XORs reattached: " << reattached
+        << "c [gauss] XOR-encoding clauses reattached: " << reattached
         << " T: " << (cpuTime() - myTime)
         << endl;
     }

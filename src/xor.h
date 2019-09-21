@@ -41,7 +41,7 @@ public:
     Xor() : rhs(false)
     {}
     template<typename T>
-    Xor(const T& cl, const bool _rhs) :
+    explicit Xor(const T& cl, const bool _rhs) :
         rhs(_rhs)
     {
         for (uint32_t i = 0; i < cl.size(); i++) {
@@ -49,7 +49,7 @@ public:
         }
     }
 
-    Xor(const vector<uint32_t>& _vars, const bool _rhs) :
+    explicit Xor(const vector<uint32_t>& _vars, const bool _rhs) :
         rhs(_rhs)
         , vars(_vars)
     {
@@ -151,6 +151,11 @@ inline std::ostream& operator<<(std::ostream& os, const Xor& thisXor)
             os << " + ";
     }
     os << " =  " << std::boolalpha << thisXor.rhs << std::noboolalpha;
+
+    os << " -- clash: ";
+    for(const auto& c: thisXor.clash_vars) {
+        os << c+1 << ", ";
+    }
 
     return os;
 }

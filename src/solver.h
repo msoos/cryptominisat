@@ -261,7 +261,10 @@ class Solver : public Searcher
         #ifdef USE_GAUSS
         bool detached_xor_clauses = false;
         bool init_all_matrices();
-        void detach_xor_clauses(const vector<Xor>& unused_xors);
+        void detach_xor_clauses(
+            const vector<Xor>& unused_xors,
+            const set<uint32_t>& clash_vars_unused
+        );
         void attach_xor_clauses();
         bool find_and_init_all_matrices();
         #endif
@@ -383,6 +386,7 @@ class Solver : public Searcher
         void renumber_clauses(const vector<uint32_t>& outerToInter);
         void test_renumbering() const;
         bool clean_xor_clauses_from_duplicate_and_set_vars();
+        bool update_vars_of_xors(vector<Xor>& xors);
 
         /////////////////////////////
         // SAT solution verification

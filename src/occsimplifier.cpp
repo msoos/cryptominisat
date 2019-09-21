@@ -1347,21 +1347,20 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             if (solver->conf.doFindXors) {
                 XorFinder finder(this, solver);
                 finder.find_xors();
-                vector<Xor> xors = finder.xors;
-                if (!finder.xor_together_xors(xors))
+                if (!finder.xor_together_xors(finder.xors))
                     return false;
 
                 vector<Lit> out_changed_occur;
-                solver->ok = finder.add_new_truths_from_xors(xors, &out_changed_occur);
+                solver->ok = finder.add_new_truths_from_xors(finder.xors, &out_changed_occur);
                 if (!solver->ok)
                     return false;
 
+                finder.remove_xors_without_connecting_vars(finder.xors);
                 #ifdef USE_M4RI
                 if (topLevelGauss != NULL
                     && solver->conf.doM4RI
                 ) {
-                    xors = finder.remove_xors_without_connecting_vars(xors);
-                    topLevelGauss->toplevelgauss(xors, &out_changed_occur);
+                    topLevelGauss->toplevelgauss(finder.xors, &out_changed_occur);
                 }
                 #endif
                 finder.add_xors_to_solver();

@@ -196,7 +196,7 @@ private:
     void find_xors_based_on_long_clauses();
     void print_found_xors();
     bool xor_has_interesting_var(const Xor& x);
-    void clean_xors_from_empty();
+    void clean_xors_from_empty(vector<Xor>& thisxors);
 
     ///xor two -- don't re-allocate memory all the time
     ///use tmp_vars_xor_two instead
@@ -227,6 +227,7 @@ private:
     vector<uint32_t> occcnt;
     vector<Lit>& toClear;
     vector<uint16_t>& seen;
+    vector<uint8_t>& seen2;
     vector<uint32_t> interesting;
 };
 

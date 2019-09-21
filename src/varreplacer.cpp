@@ -257,7 +257,11 @@ bool VarReplacer::perform_replace()
     }
     solver->clean_occur_from_removed_clauses_only_smudged();
     attach_delayed_attach();
-    if (!replace_xor_clauses()) {
+    if (!replace_xor_clauses(solver->xorclauses)) {
+        goto end;
+    }
+
+    if (!replace_xor_clauses(solver->xorclauses_unused)) {
         goto end;
     }
 
@@ -314,9 +318,16 @@ end:
     return solver->okay();
 }
 
-bool VarReplacer::replace_xor_clauses()
+bool VarReplacer::replace_xor_clauses(vector<Xor>& xors)
 {
-    for(Xor& x: solver->xorclauses) {
+    for(Xor& x: xors) {
+        set<uint32_t> clash_vars_upd;
+        for(const auto& v: x.clash_vars) {
+            uint32_t upd = get_var_replaced_with_fast(v);
+            clash_vars_upd.insert(upd);
+        }
+        std::swap(x.clash_vars, clash_vars_upd);
+
         for(uint32_t i = 0, end = x.size(); i < end; i++) {
             assert(x[i] < solver->nVars());
             Lit l = Lit(x[i], false);

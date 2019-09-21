@@ -26,6 +26,7 @@ THE SOFTWARE.
 #include "occsimplifier.h"
 #include "clauseallocator.h"
 #include "sqlstats.h"
+#include "varreplacer.h"
 
 #include <limits>
 //#define XOR_DEBUG
@@ -39,6 +40,7 @@ XorFinder::XorFinder(OccSimplifier* _occsimplifier, Solver* _solver) :
     , solver(_solver)
     , toClear(_solver->toClear)
     , seen(_solver->seen)
+    , seen2(_solver->seen2)
 {
     tmp_vars_xor_two.reserve(2000);
 }
@@ -216,6 +218,7 @@ void XorFinder::print_found_xors()
 void XorFinder::add_xors_to_solver()
 {
     solver->xorclauses = xors;
+    solver->xorclauses_unused = unused_xors;
     solver->xor_clauses_updated = true;
     #if defined(SLOW_DEBUG) || defined(XOR_DEBUG)
     for(const Xor& x: xors) {
@@ -447,6 +450,7 @@ vector<Xor> XorFinder::remove_xors_without_connecting_vars(const vector<Xor>& th
 
     for(const Xor& x: this_xors) {
         if (xor_has_interesting_var(x)) {
+            //cout << "XOR that remains: " << x << endl;
             ret.push_back(x);
         } else {
             unused_xors.push_back(x);
@@ -515,13 +519,26 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
         }
     }
 
+    //Don't XOR together over the sampling vars, if they are given
+    if (solver->conf.sampling_vars) {
+        for(uint32_t outside_var: *solver->conf.sampling_vars) {
+            uint32_t outer_var = solver->map_to_with_bva(outside_var);
+            outer_var = solver->varReplacer->get_var_replaced_with_outer(outer_var);
+            uint32_t int_var = solver->map_outer_to_inter(outer_var);
+            if (int_var < solver->nVars()) {
+                seen2[int_var] = 1;
+                //cout << "sampling var: " << int_var+1 << endl;
+            }
+        }
+    }
+
     //until fixedpoint
     bool changed = true;
     while(changed) {
         changed = false;
         interesting.clear();
         for(const Lit l: toClear) {
-            if (occcnt[l.var()] == 2) {
+            if (occcnt[l.var()] == 2 && !seen2[l.var()]) {
                 interesting.push_back(l.var());
             }
         }
@@ -589,7 +606,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                     Lit l(v2, false);
                     assert(occcnt[l.var()] >= 2);
                     occcnt[l.var()]--;
-                    if (occcnt[l.var()] == 2) {
+                    if (occcnt[l.var()] == 2 && !seen2[l.var()]) {
                         interesting.push_back(l.var());
                     }
                 }
@@ -604,15 +621,20 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 assert(occcnt[v] == 0);
 
                 Xor x_new(tmp_vars_xor_two, x1.rhs ^ x2.rhs);
+                x_new.clash_vars.insert(clash_var);
                 x_new.clash_vars.insert(x1.clash_vars.begin(), x1.clash_vars.end());
                 x_new.clash_vars.insert(x2.clash_vars.begin(), x2.clash_vars.end());
+//                 cout << "x1: " << x1 << endl;
+//                 cout << "x2: " << x2 << endl;
+//                 cout << "clashed on var: " << clash_var+1 << endl;
+//                 cout << "final: " << x_new << endl;
                 changed = true;
                 this_xors.push_back(x_new);
                 for(uint32_t v2: x_new) {
                     Lit l(v2, false);
                     solver->watches[l].push(Watched(this_xors.size()-1));
                     assert(occcnt[l.var()] >= 1);
-                    if (occcnt[l.var()] == 2) {
+                    if (occcnt[l.var()] == 2 && !seen2[l.var()]) {
                         interesting.push_back(l.var());
                     }
                 }
@@ -628,8 +650,20 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
     }
     toClear.clear();
 
+    //Clear seen2
+    if (solver->conf.sampling_vars) {
+        for(uint32_t outside_var: *solver->conf.sampling_vars) {
+            uint32_t outer_var = solver->map_to_with_bva(outside_var);
+            outer_var = solver->varReplacer->get_var_replaced_with_outer(outer_var);
+            uint32_t int_var = solver->map_outer_to_inter(outer_var);
+            if (int_var < solver->nVars()) {
+                seen2[int_var] = 0;
+            }
+        }
+    }
+
     solver->clean_occur_from_idx_types_only_smudged();
-    clean_xors_from_empty();
+    clean_xors_from_empty(this_xors);
     double recur_time = cpuTime() - myTime;
         if (solver->conf.verbosity) {
         cout
@@ -675,21 +709,23 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
     return solver->okay();
 }
 
-void XorFinder::clean_xors_from_empty()
+void XorFinder::clean_xors_from_empty(vector<Xor>& thisxors)
 {
-    size_t i2 = 0;
-    for(size_t i = 0;i < xors.size(); i++) {
-        Xor& x = xors[i];
+    size_t j = 0;
+    for(size_t i = 0;i < thisxors.size(); i++) {
+        Xor& x = thisxors[i];
         if (x.size() == 0
             && x.rhs == false
         ) {
             //nothing, skip
         } else {
-            xors[i2] = xors[i];
-            i2++;
+            if (solver->conf.verbosity >= 4) {
+                cout << "c xor after clean: " << thisxors[i] << endl;
+            }
+            thisxors[j++] = thisxors[i];
         }
     }
-    xors.resize(i2);
+    thisxors.resize(j);
 }
 
 bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* out_changed_occur)
