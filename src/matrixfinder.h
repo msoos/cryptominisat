@@ -49,6 +49,7 @@ class MatrixFinder {
 
         vector<Xor> unused_xors;
         set<uint32_t> clash_vars_unused;
+        vector<Xor> xors;
 
     private:
         uint32_t setMatrixes();
@@ -88,7 +89,6 @@ class MatrixFinder {
         map<uint32_t, vector<uint32_t> > reverseTable; //matrix -> vars
         vector<uint32_t> table; //var -> matrix
         uint32_t matrix_no;
-        vector<Xor> xors;
 
         Solver* solver;
         vector<uint16_t>& seen;

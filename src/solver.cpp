@@ -1318,6 +1318,13 @@ void Solver::extend_solution(const bool only_sampling_solution)
 
     const double myTime = cpuTime();
     model = back_number_solution_from_inter_to_outer(model);
+
+    #ifdef USE_GAUSS
+    if (detached_xor_clauses) {
+        extend_model_to_detached_xors();
+    }
+    #endif
+
     if (conf.need_decisions_reaching) {
         map_inter_to_outer(decisions_reaching_model);
     }
@@ -1613,6 +1620,7 @@ lbool Solver::solve_with_assumptions(
         cancelUntil(0);
         #ifdef USE_GAUSS
         attach_xor_clauses();
+        set_clash_decision_vars();
         #endif
         if (status != l_False) {
             //So no set variables end up in the clauses
@@ -2184,9 +2192,10 @@ lbool Solver::simplify_problem(const bool startup)
         return l_Undef;
     }
 
-    clear_order_heap();
     #ifdef USE_GAUSS
     attach_xor_clauses();
+    set_clash_decision_vars();
+    clear_order_heap();
     clear_gauss_matrices();
     #endif
 
@@ -3990,6 +3999,7 @@ bool Solver::find_and_init_all_matrices()
         !solver->conf.gaussconf.autodisable
     ) {
         detach_xor_clauses(mfinder.unused_xors, mfinder.clash_vars_unused);
+        unset_clash_decision_vars(mfinder.xors);
     } else {
         if (conf.verbosity >= 1) {
             cout << "c WHAAAAT" << endl;
@@ -4458,4 +4468,82 @@ void Solver::attach_xor_clauses()
         << endl;
     }
 }
+
+void Solver::unset_clash_decision_vars(const vector<Xor>& xors)
+{
+    vector<uint32_t> clash_vars;
+    for(const auto& x: xors) {
+        for(const auto& v: x.clash_vars) {
+            if (!seen[v]) {
+                clash_vars.push_back(v);
+                seen[v] = 1;
+            }
+        }
+    }
+
+    for(const auto& v: clash_vars) {
+        seen[v] = 0;
+        varData[v].removed = Removed::clashed;
+    }
+    rebuildOrderHeap();
+}
+
+void Solver::set_clash_decision_vars()
+{
+    vector<uint32_t> clash_vars;
+    for(auto& v: varData) {
+        if (v.removed == Removed::clashed) {
+            v.removed = Removed::none;
+        }
+    }
+    rebuildOrderHeap();
+}
+
+void Solver::extend_model_to_detached_xors()
+{
+    double myTime = cpuTime();
+
+    uint32_t set_var = 0;
+    uint32_t more_vars_unset = 1;
+    uint32_t iter = 0;
+    while (more_vars_unset > 0) {
+        more_vars_unset = 0;
+        iter++;
+        for(const auto& offs: longIrredCls) {
+            const Clause* cl = cl_alloc.ptr(offs);
+            if (cl->used_in_xor()) {
+                uint32_t unset_vars = 0;
+                Lit unset = lit_Undef;
+                for(Lit l: *cl) {
+                    if (model_value(l) == l_True) {
+                        unset_vars = 0;
+                        break;
+                    }
+                    if (model_value(l) == l_Undef) {
+                        unset = l;
+                        unset_vars++;
+                    }
+                }
+                if (unset_vars == 1) {
+                    model[unset.var()] = unset.sign() ? l_False : l_True;
+                    set_var++;
+                }
+                if (unset_vars > 1) {
+                    more_vars_unset++;
+                }
+            }
+        }
+    }
+
+    if (conf.verbosity >= 1) {
+        cout
+        << "c [gauss] extended XOR clash vars."
+        << " set: " << set_var
+        << " double-undef: " << more_vars_unset
+        << " iters: " << iter
+        << " T: " << (cpuTime()-myTime)
+        << endl;
+    }
+}
+
 #endif

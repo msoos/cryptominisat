@@ -667,8 +667,9 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
     double recur_time = cpuTime() - myTime;
         if (solver->conf.verbosity) {
         cout
-        << "c [xor-together] xored together " << xored << " xors"
-        << " orig num xors: " << origsize
+        << "c [xor-together] xored together: " << xored
+        << " orig xors: " << origsize
+        << " new xors: " << this_xors.size()
         << solver->conf.print_times(recur_time)
         << endl;
     }
@@ -717,7 +718,9 @@ void XorFinder::clean_xors_from_empty(vector<Xor>& thisxors)
         if (x.size() == 0
             && x.rhs == false
         ) {
-            //nothing, skip
+            if (!x.clash_vars.empty()) {
+                unused_xors.push_back(x);
+            }
         } else {
             if (solver->conf.verbosity >= 4) {
                 cout << "c xor after clean: " << thisxors[i] << endl;

@@ -266,6 +266,9 @@ class Solver : public Searcher
             const set<uint32_t>& clash_vars_unused
         );
         void attach_xor_clauses();
+        void extend_model_to_detached_xors();
+        void unset_clash_decision_vars(const vector<Xor>& xors);
+        void set_clash_decision_vars();
         bool find_and_init_all_matrices();
         #endif
 
