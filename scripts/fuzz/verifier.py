@@ -494,18 +494,19 @@ class solution_parser:
                 return True
 
         # print not set vars
-        print("Unset vars:")
         for lit in lits:
             numlit = int(lit)
             if numlit == 0:
                 break
 
             if abs(numlit) not in solution:
-                print("var %d not set" % abs(numlit))
+                print("var %d in XOR clause not set" % abs(numlit))
 
-        print("Every other var set to FALSE")
-        print("Orig clause in DIMACS: ", lits)
+        #print("Every other var set to FALSE")
+        #print("Orig clause in DIMACS: ", lits)
+        print("Error: clause '%s' not satisfied." % line.strip())
         raise NameError("Error: clause '%s' not satisfied." % line)
+        return False
 
     @staticmethod
     def _check_xor_clause(line, solution):
@@ -520,6 +521,7 @@ class solution_parser:
                 final ^= solution[abs(numlit)]
                 final ^= numlit < 0
         if final is False:
+            print("Error: xor-clause '%s' not satisfied." % line.strip())
             raise NameError("Error: xor-clause '%s' not satisfied." % line)
 
         return final
