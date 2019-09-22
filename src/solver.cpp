@@ -4371,7 +4371,6 @@ void Solver::detach_xor_clauses(
     uint32_t deleted = 0;
     detached_xor_clauses = true;
 
-    assert(solver->watches.get_smudged_list().empty());
     vector<ClOffset> delayed_clause_free;
     for(uint32_t x = 0; x < nVars()*2; x++) {
         Lit l = Lit::toLit(x);
@@ -4430,7 +4429,7 @@ void Solver::detach_xor_clauses(
             if (torem) {
                 if (cl->_xor_is_detached) {
                     detached++;
-                    cout << "detaching: " << *cl << endl;
+                    //cout << "detaching: " << *cl << endl;
                 }
                 cl->_xor_is_detached = true;
                 continue;
@@ -4438,11 +4437,10 @@ void Solver::detach_xor_clauses(
                 if (cl->getRemoved()) {
                     //Only once, hence the check for getRemoved.
                     litStats.redLits -= cl->size();
+                    delayed_clause_free.push_back(offs);
                     deleted++;
                 }
                 cl->setRemoved();
-                watches.smudge(l);
-                delayed_clause_free.push_back(offs);
                 continue;
             } else {
                 watches[l][j++] = w;
@@ -4450,12 +4448,33 @@ void Solver::detach_xor_clauses(
         }
         watches[l].resize(j);
     }
-    solver->clean_occur_from_removed_clauses_only_smudged();
+
+    uint32_t j = 0;
+    for(uint32_t i = 0; i < longIrredCls.size(); i++) {
+        ClOffset offs = longIrredCls[i];
+        Clause* cl = cl_alloc.ptr(offs);
+        if (!cl->getRemoved()) {
+            longIrredCls[j++] = offs;
+        }
+    }
+    longIrredCls.resize(j);
+
+    for(auto& cls: longRedCls) {
+        j = 0;
+        for(uint32_t i = 0; i < cls.size(); i++) {
+            ClOffset offs = cls[i];
+            Clause* cl = cl_alloc.ptr(offs);
+            if (!cl->getRemoved()) {
+                cls[j++] = offs;
+            }
+        }
+        cls.resize(j);
+    }
+
     for(ClOffset offset: delayed_clause_free) {
         solver->free_cl(offset);
     }
     delayed_clause_free.clear();
-
 
     for(const auto& x: unused_xors) {
         for(const uint32_t v: x) {
