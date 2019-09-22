@@ -3969,12 +3969,16 @@ bool Solver::find_and_init_all_matrices()
         return false;
     }
 
-    if (conf.verbosity >= 0) {
+    if (conf.verbosity >= 1) {
+        cout << "c calculating no_irred_contains_clash..." << endl;
+        bool no_irred_contains_clash = mfinder.no_irred_nonxor_contains_clash_vars();
+
+
         cout
         << "c [gauss]"
         << " unused_xors: " << mfinder.unused_xors.size()
         << " can detach: " << can_detach
-        << " no irred with clash: " << mfinder.no_irred_nonxor_contains_clash_vars()
+        << " no irred with clash: " << no_irred_contains_clash
         << " gaussconf enbl: " << solver->conf.gaussconf.enabled
         << endl;
     }
@@ -3987,7 +3991,7 @@ bool Solver::find_and_init_all_matrices()
     ) {
         detach_xor_clauses(mfinder.unused_xors, mfinder.clash_vars_unused);
     } else {
-        if (conf.verbosity >= 0) {
+        if (conf.verbosity >= 1) {
             cout << "c WHAAAAT" << endl;
         }
     }
@@ -4372,7 +4376,7 @@ void Solver::detach_xor_clauses(
 
     assert(removed % 2 == 0);
 
-    if (solver->conf.verbosity >= 0) {
+    if (solver->conf.verbosity >= 1) {
         cout
         << "c [gauss] XOR-encoding clauses detached: " << (removed/2)
         << " T: " << (cpuTime() - myTime)

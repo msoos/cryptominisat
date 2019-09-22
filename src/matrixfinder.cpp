@@ -113,7 +113,10 @@ bool MatrixFinder::findMatrixes(bool& can_detach, bool simplify_xors)
         unused_xors.push_back(x);
         clash_vars_unused.insert(x.clash_vars.begin(), x.clash_vars.end());
     }
-    cout << "c [matrix] unused xors from solver: " << solver->xorclauses_unused.size() << endl;
+
+    if (solver->conf.verbosity >= 1) {
+        cout << "c [matrix] unused xors from solver: " << solver->xorclauses_unused.size() << endl;
+    }
 
 
     XorFinder finder(NULL, solver);
@@ -133,7 +136,10 @@ bool MatrixFinder::findMatrixes(bool& can_detach, bool simplify_xors)
         xors = solver->xorclauses;
     }
     finder.clean_equivalent_xors(xors);
-    cout << "c [matrix] unused xors from cleaning: " << finder.unused_xors.size() << endl;
+
+    if (solver->conf.verbosity >= 1) {
+        cout << "c [matrix] unused xors from cleaning: " << finder.unused_xors.size() << endl;
+    }
 
     for(const auto& x: finder.unused_xors) {
         unused_xors.push_back(x);
@@ -438,7 +444,9 @@ bool MatrixFinder::no_irred_nonxor_contains_clash_vars()
         if (!cl->used_in_xor()) {
             for(const Lit l: *cl) {
                 if (seen[l.var()]) {
-                    cout << "CL with clash: " << *cl << endl;
+                    if (solver->conf.verbosity) {
+                        cout << "c CL with clash: " << *cl << endl;
+                    }
                     ret = false;
 //                     break;
                 }
@@ -453,7 +461,9 @@ bool MatrixFinder::no_irred_nonxor_contains_clash_vars()
         for(const auto& w: ws) {
             if (w.isBin() && !w.red()) {
                 if (seen[l.var()] || seen[w.lit2().var()]) {
-                    cout << "BIN with clash: " << l << " " << w.lit2() << endl;
+                    if (solver->conf.verbosity) {
+                        cout << "c BIN with clash: " << l << " " << w.lit2() << endl;
+                    }
                     ret = false;
 //                     break;
                 }
