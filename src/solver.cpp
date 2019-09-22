@@ -4007,10 +4007,10 @@ bool Solver::find_and_init_all_matrices()
     }
 
     #ifdef SLOW_DEBUG
-    for(size_t i = 0; i< solver->gmatrixes.size(); i++) {
-        if (solver->gmatrixes[i]) {
-            solver->gmatrixes[i]->check_watchlist_sanity();
-            assert(solver->gmatrixes[i]->get_matrix_no() == i);
+    for(size_t i = 0; i< solver->gmatrices.size(); i++) {
+        if (solver->gmatrices[i]) {
+            solver->gmatrices[i]->check_watchlist_sanity();
+            assert(solver->gmatrices[i]->get_matrix_no() == i);
         }
     }
     #endif
@@ -4424,11 +4424,16 @@ void Solver::attach_xor_clauses()
     for(uint32_t i = 0; i < longIrredCls.size(); i++) {
         ClOffset offs = longIrredCls[i];
         Clause* cl = cl_alloc.ptr(offs);
-        if (cl->used_in_xor() && cl->used_in_xor_full() && cl->_xor_is_detached) {
+        if (cl->_xor_is_detached) {
+            assert(cl->used_in_xor() && cl->used_in_xor_full());
+            const uint32_t origSize = cl->size();
+
             reattached++;
             bool ret = clauseCleaner->clean_clause(*cl);
             if (ret) {
                 //Clause is removed
+                litStats.irredLits -= origSize;
+                cl_alloc.clauseFree(cl);
                 continue;
             } else {
                 cl->_xor_is_detached = false;
@@ -4444,11 +4449,16 @@ void Solver::attach_xor_clauses()
         for(uint32_t i = 0; i < cls.size(); i++) {
             ClOffset offs = cls[i];
             Clause* cl = cl_alloc.ptr(offs);
-            if (cl->used_in_xor() && cl->used_in_xor_full() && cl->_xor_is_detached) {
+            if (cl->_xor_is_detached) {
+                assert(cl->used_in_xor() && cl->used_in_xor_full());
+                const uint32_t origSize = cl->size();
+
                 reattached++;
                 bool ret = clauseCleaner->clean_clause(*cl);
                 if (ret) {
                     //Clause is removed
+                    litStats.redLits -= origSize;
+                    cl_alloc.clauseFree(cl);
                     continue;
                 } else {
                     cl->_xor_is_detached = false;

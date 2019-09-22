@@ -95,6 +95,8 @@ class EGaussian {
     bool must_disable(const GaussQData& gqd, bool verbose);
     void check_invariants();
     void update_matrix_no(uint32_t n);
+    void check_watchlist_sanity();
+    uint32_t get_matrix_no();
 
     vector<Xor> xorclauses;
 
@@ -110,6 +112,7 @@ class EGaussian {
     //Invariant checks
     void check_no_prop_or_unsat_rows();
     void check_tracked_cols_only_one_set();
+    bool check_row_satisfied(const uint32_t row);
 
     //Reason generation
     vector<XorReason> xor_reasons;
@@ -184,7 +187,7 @@ class EGaussian {
     // Debug
     ///////////////
     void print_matrix();
-    void check_watchlist_sanity();
+    void check_cols_unset_vals();
 };
 
 inline void EGaussian::canceling() {
@@ -241,6 +244,12 @@ inline void EGaussian::update_matrix_no(uint32_t n)
 {
     matrix_no = n;
 }
+
+inline uint32_t EGaussian::get_matrix_no()
+{
+    return matrix_no;
+}
+
 
 }
 

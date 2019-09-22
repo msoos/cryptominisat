@@ -259,7 +259,6 @@ class Solver : public Searcher
         vector<Lit> get_toplevel_units_internal(bool outer_numbering) const;
 
         #ifdef USE_GAUSS
-        bool detached_xor_clauses = false;
         bool init_all_matrices();
         void detach_xor_clauses(
             const vector<Xor>& unused_xors,

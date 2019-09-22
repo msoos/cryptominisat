@@ -3664,8 +3664,10 @@ void Searcher::clear_gauss_matrices()
         auto gqd = gqueuedata[i];
         if (solver->conf.verbosity >= 2) {
             cout
-            << "c [gauss] num_props       : "<< print_value_kilo_mega(gqd.num_props) << endl
-            << "c [gauss] num_conflicts   : "<< print_value_kilo_mega(gqd.num_conflicts)  << endl;
+            << "c [mat" << i << "] num_props       : "
+            << print_value_kilo_mega(gqd.num_props) << endl
+            << "c [mat" << i << "] num_conflicts   : "
+            << print_value_kilo_mega(gqd.num_conflicts)  << endl;
         }
     }
 

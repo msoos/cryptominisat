@@ -166,6 +166,7 @@ public:
     vector<vector<ClOffset> > longRedCls;
     vector<Xor> xorclauses;
     vector<Xor> xorclauses_unused;
+    bool detached_xor_clauses = false;
     bool xor_clauses_updated = false;
     BinTriStats binTri;
     LitStats litStats;
