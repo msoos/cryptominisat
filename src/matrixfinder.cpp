@@ -330,19 +330,20 @@ uint32_t MatrixFinder::setMatrixes()
 
         //calculate sampling var ratio
         //for statistics ONLY
-        double ratio_sampling = 0;
+        double ratio_sampling;
         if (solver->conf.sampling_vars) {
-            uint32_t sampling_var_inside_matrix = 0;
-
             //'seen' with what is in Matrix
             for(uint32_t int_var: reverseTable[i]) {
                 solver->seen[int_var] = 1;
             }
 
+            uint32_t tot_sampling_vars  = 0;
+            uint32_t sampling_var_inside_matrix = 0;
             for(uint32_t outside_var: *solver->conf.sampling_vars) {
                 uint32_t outer_var = solver->map_to_with_bva(outside_var);
                 outer_var = solver->varReplacer->get_var_replaced_with_outer(outer_var);
                 uint32_t int_var = solver->map_outer_to_inter(outer_var);
+                tot_sampling_vars++;
                 if (int_var < solver->nVars()
                     && solver->seen[int_var]
                 ) {
@@ -355,7 +356,8 @@ uint32_t MatrixFinder::setMatrixes()
                 solver->seen[int_var] = 0;
             }
 
-            ratio_sampling = (double)sampling_var_inside_matrix/(double)reverseTable[i].size();
+            ratio_sampling =
+                (double)sampling_var_inside_matrix/(double)tot_sampling_vars;
         }
 
         //Over the max number of matrixes
@@ -367,7 +369,7 @@ uint32_t MatrixFinder::setMatrixes()
         //Override in case sampling vars ratio is high
         if (solver->conf.sampling_vars) {
             cout << "c [matrix] ratio_sampling: " << ratio_sampling << endl;
-            if (ratio_sampling >= 0.2) { //TODO Magic constant
+            if (ratio_sampling >= 0.6) { //TODO Magic constant
                 use_matrix = true;
                 cout << "c [matrix] ratio good set to TRUE" << endl;
             } else {
@@ -410,12 +412,15 @@ uint32_t MatrixFinder::setMatrixes()
             cout << std::setw(7) << m.rows << " x"
             << std::setw(5) << reverseTable[i].size()
             << "  density:"
-            << std::setw(5) << std::fixed << std::setprecision(1) << m.density << "%"
+            << std::setw(5) << std::fixed << std::setprecision(4) << m.density
             << "  xorlen avg: "
-            << std::setw(5) << std::fixed << std::setprecision(2)  << avg
-            << "  perc sampl: "
-            << std::setw(5) << std::fixed << std::setprecision(3) << ratio_sampling*100.0 << " %"
-            << endl;
+            << std::setw(5) << std::fixed << std::setprecision(2)  << avg;
+            if (solver->conf.sampling_vars) {
+                cout << "  perc of sampl vars: "
+                << std::setw(5) << std::fixed << std::setprecision(3)
+                << ratio_sampling*100.0 << " %";
+            }
+            cout  << endl;
         }
     }
 
