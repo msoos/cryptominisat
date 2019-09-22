@@ -647,9 +647,17 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
 
     //Uneliminate vars
     if (!fresh_solver
-        && solver->get_num_vars_elimed() > 0
+        && (solver->get_num_vars_elimed() > 0 || detached_xor_clauses)
     ) {
         for (const Lit lit: ps) {
+            if (detached_xor_clauses
+                && varData[lit.var()].removed == Removed::clashed
+            ) {
+                set_clash_decision_vars();
+                attach_xor_clauses();
+                assert(varData[lit.var()].removed == Removed::none);
+            }
+
             if (conf.perform_occur_based_simp
                 && varData[lit.var()].removed == Removed::elimed
             ) {
@@ -1619,8 +1627,8 @@ lbool Solver::solve_with_assumptions(
     if (conf.preprocess == 1) {
         cancelUntil(0);
         #ifdef USE_GAUSS
-        attach_xor_clauses();
         set_clash_decision_vars();
+        attach_xor_clauses();
         #endif
         if (status != l_False) {
             //So no set variables end up in the clauses
@@ -2193,8 +2201,8 @@ lbool Solver::simplify_problem(const bool startup)
     }
 
     #ifdef USE_GAUSS
-    attach_xor_clauses();
     set_clash_decision_vars();
+    attach_xor_clauses();
     clear_order_heap();
     clear_gauss_matrices();
     #endif
@@ -4414,6 +4422,7 @@ void Solver::attach_xor_clauses()
             continue;
         }
 
+        assert(solver->gqhead == solver->trail.size());
         gmatrices[g]->check_invariants();
     }
 

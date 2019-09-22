@@ -2987,6 +2987,7 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
             if (gqueuedata[g].engaus_disable)
                 continue;
 
+            assert(solver->gqhead == solver->trail.size());
             gmatrices[g]->check_invariants();
         }
     }

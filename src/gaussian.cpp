@@ -1122,7 +1122,6 @@ vector<Lit>* EGaussian::get_reason(uint32_t row)
 
 void EGaussian::check_no_prop_or_unsat_rows()
 {
-    assert(solver->gqhead == solver->trail.size());
     #ifdef VERBOSE_DEBUG
     cout << "mat[" << matrix_no << "] checking invariants..." << endl;
     #endif
