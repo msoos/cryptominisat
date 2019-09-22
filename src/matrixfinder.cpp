@@ -105,26 +105,25 @@ bool MatrixFinder::findMatrixes(bool& can_detach, bool simplify_xors)
     table.clear();
     table.resize(solver->nVars(), var_Undef);
     reverseTable.clear();
+    xors.clear();
     unused_xors.clear();
     clash_vars_unused.clear();
     matrix_no = 0;
     double myTime = cpuTime();
     for(const Xor& x: solver->xorclauses_unused) {
-        unused_xors.push_back(x);
-        clash_vars_unused.insert(x.clash_vars.begin(), x.clash_vars.end());
+        xors.push_back(x);
     }
-
-    if (solver->conf.verbosity >= 1) {
-        cout << "c [matrix] unused xors from solver: " << solver->xorclauses_unused.size() << endl;
+    for(const Xor& x: solver->xorclauses) {
+        xors.push_back(x);
     }
-
+    solver->xorclauses.clear();
+    solver->xorclauses_unused.clear();
 
     XorFinder finder(NULL, solver);
     if (simplify_xors) {
-        if (!solver->clauseCleaner->clean_xor_clauses(solver->xorclauses)) {
+        if (!solver->clauseCleaner->clean_xor_clauses(xors)) {
             return false;
         }
-        xors = solver->xorclauses;
 
         finder.grab_mem();
         xors = finder.remove_xors_without_connecting_vars(xors);
@@ -132,8 +131,6 @@ bool MatrixFinder::findMatrixes(bool& can_detach, bool simplify_xors)
             return false;
 
         xors = finder.remove_xors_without_connecting_vars(xors);
-    } else {
-        xors = solver->xorclauses;
     }
     finder.clean_equivalent_xors(xors);
 
@@ -435,50 +432,85 @@ bool MatrixFinder::no_irred_nonxor_contains_clash_vars()
 {
     bool ret = true;
     for(const auto& x: xors) {
+        //REAL vars
+        for(uint32_t v: x) {
+            seen[v] = 2;
+        }
+
+        //CLASH vars
         for(uint32_t v: x.clash_vars) {
-            if (!seen[v]) {
-                seen[v] = 1;
-                //cout << "clash var: " << v + 1 << endl;
-            }
+            assert(seen[v] != 2);
+            seen[v] = 1;
+//                 cout << "c clash var: " << v + 1 << endl;
         }
     }
 
-    for(uint32_t i = 0; i < solver->longIrredCls.size() /*&& ret*/; i++) {
+    for(uint32_t i = 0; i < solver->longIrredCls.size() && ret; i++) {
         const ClOffset offs = solver->longIrredCls[i];
         const Clause* cl = solver->cl_alloc.ptr(offs);
-        if (!cl->used_in_xor()) {
-            for(const Lit l: *cl) {
-                if (seen[l.var()]) {
-                    if (solver->conf.verbosity) {
-                        cout << "c CL with clash: " << *cl << endl;
-                    }
-                    ret = false;
-//                     break;
-                }
+
+        //contains NO clash var, never an issue
+        //contains at least 1 clash var AND no real vars, MUST be an issue
+        //contains at least 1 clash var AND some not all real vars--> MUST be an issue
+        //contains at least 1 clash var AND only real vars--> must be a FULL XOR to be OK
+
+        if (cl->red()) {
+            continue;
+        }
+
+        uint32_t num_real_vars = 0;
+        uint32_t num_clash_vars = 0;
+        for(const Lit l: *cl) {
+            if (seen[l.var()] == 1) {
+                num_clash_vars++;
             }
+            if (seen[l.var()] == 2) {
+                num_real_vars++;
+            }
+        }
+        if (num_clash_vars == 0) {
+            continue;
+        }
+
+        assert(num_clash_vars >= 1);
+        if (num_real_vars+num_clash_vars < cl->size()) {
+            ret = false;
+            continue;
+        }
+
+        assert(num_real_vars+num_clash_vars == cl->size());
+        if (!cl->used_in_xor_full()) {
+            ret = false;
         }
     }
 
 
-    for(uint32_t i = 0; i < solver->nVars()*2 /*&& ret*/; i++) {
+    for(uint32_t i = 0; i < solver->nVars()*2 && ret; i++) {
         Lit l = Lit::toLit(i);
         const auto& ws = solver->watches[l];
         for(const auto& w: ws) {
             if (w.isBin() && !w.red()) {
-                if (seen[l.var()] || seen[w.lit2().var()]) {
+                if (seen[l.var()]==1 || seen[w.lit2().var()]==1) {
                     if (solver->conf.verbosity) {
                         cout << "c BIN with clash: " << l << " " << w.lit2() << endl;
                     }
                     ret = false;
-//                     break;
+                    break;
                 }
             }
         }
     }
 
     for(const auto& x: xors) {
+        //REAL vars
+        for(uint32_t v: x) {
+            seen[v] = 0;
+        }
+
+        //CLASH vars
         for(uint32_t v: x.clash_vars) {
             seen[v] = 0;
+//                 cout << "c clash var: " << v + 1 << endl;
         }
     }
 

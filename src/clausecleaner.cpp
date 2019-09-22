@@ -212,6 +212,8 @@ bool ClauseCleaner::clean_clause(Clause& cl)
         solver->drat->forget_delay();
     }
 
+    assert(cl.size() != 0);
+    assert(cl.size() != 1);
     assert(cl.size() > 1);
     assert(solver->value(cl[0]) == l_Undef);
     assert(solver->value(cl[1]) == l_Undef);

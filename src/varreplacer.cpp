@@ -664,6 +664,11 @@ void VarReplacer::set_sub_var_during_solution_extension(uint32_t var, const uint
     const lbool to_set = solver->model[var] ^ table[sub_var].sign();
     const uint32_t sub_var_inter = solver->map_outer_to_inter(sub_var);
     assert(solver->varData[sub_var_inter].removed == Removed::replaced);
+    #ifdef VERBOSE_DEBUG
+    if (solver->model_value(sub_var) != l_Undef) {
+        cout << "ERROR: var " << sub_var +1 << " is set but it's replaced!" << endl;
+    }
+    #endif
     assert(solver->model_value(sub_var) == l_Undef);
 
     if (solver->conf.verbosity > 10) {

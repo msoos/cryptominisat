@@ -1324,14 +1324,14 @@ void Solver::extend_solution(const bool only_sampling_solution)
     }
     #endif
 
-    const double myTime = cpuTime();
-    model = back_number_solution_from_inter_to_outer(model);
-
     #ifdef USE_GAUSS
     if (detached_xor_clauses) {
         extend_model_to_detached_xors();
     }
     #endif
+
+    const double myTime = cpuTime();
+    model = back_number_solution_from_inter_to_outer(model);
 
     if (conf.need_decisions_reaching) {
         map_inter_to_outer(decisions_reaching_model);
@@ -3045,24 +3045,28 @@ const char* Solver::get_compilation_env()
 
 void Solver::print_watch_list(watch_subarray_const ws, const Lit lit) const
 {
+    cout << "Watch[" << lit << "]: "<< endl;
     for (const Watched *it = ws.begin(), *end = ws.end()
         ; it != end
         ; ++it
     ) {
         if (it->isClause()) {
+            Clause* cl = cl_alloc.ptr(it->get_offset());
             cout
-            << "Clause: " << *cl_alloc.ptr(it->get_offset());
+            << "-> Clause: " << *cl
+            << " red: " << cl->red()
+            << " xor: " << cl->used_in_xor()
+            << " full-xor: " << cl->used_in_xor_full()
+            << " xor-detached: " << cl->_xor_is_detached;
         }
-
         if (it->isBin()) {
             cout
-            << "BIN: " << lit << ", " << it->lit2()
-            << " (l: " << it->red() << ")";
+            << "-> BIN: " << lit << ", " << it->lit2()
+            << " red: " << it->red();
         }
-
         cout << endl;
     }
-    cout << endl;
+    cout << "FIN" << endl;
 }
 
 void Solver::check_implicit_propagated() const
@@ -3998,7 +4002,23 @@ bool Solver::find_and_init_all_matrices()
         << " no irred with clash: " << no_irred_contains_clash
         << " gaussconf enbl: " << solver->conf.gaussconf.enabled
         << endl;
+
+        cout << "c unused xors follow." << endl;
+        for(const auto& x: mfinder.unused_xors) {
+            cout << "c " << x << endl;
+        }
+        cout << "c FIN" << endl;
+
+        cout << "c used xors follow." << endl;
+        for(const auto& x: mfinder.xors) {
+            cout << "c " << x << endl;
+        }
+        cout << "c FIN" << endl;
     }
+
+    xorclauses_unused = mfinder.unused_xors;
+    //clash_vars_unused = mfinder.clash_vars_unused;
+    xorclauses = mfinder.xors;
 
     if (can_detach &&
         mfinder.no_irred_nonxor_contains_clash_vars() &&
@@ -4006,7 +4026,7 @@ bool Solver::find_and_init_all_matrices()
         solver->conf.gaussconf.enabled &&
         !solver->conf.gaussconf.autodisable
     ) {
-        detach_xor_clauses(mfinder.unused_xors, mfinder.clash_vars_unused);
+        detach_xor_clauses(mfinder.unused_xors, mfinder.clash_vars_unused, mfinder.xors);
         unset_clash_decision_vars(mfinder.xors);
     } else {
         if (conf.verbosity >= 1) {
@@ -4324,7 +4344,8 @@ void Solver::stats_del_cl(ClOffset offs)
 #ifdef USE_GAUSS
 void Solver::detach_xor_clauses(
     const vector<Xor>& unused_xors,
-    const set<uint32_t>& clash_vars_unused
+    const set<uint32_t>& clash_vars_unused,
+    const vector<Xor>& xors
 )
 {
     for(const auto& x: unused_xors) {
@@ -4337,11 +4358,21 @@ void Solver::detach_xor_clauses(
         seen[v] = 1;
     }
 
+    //Clash on USED xor
+    for(const auto& x: xors) {
+        for(const uint32_t v: x.clash_vars) {
+            assert(seen[v] == 0);
+            seen[v] = 2;
+        }
+    }
+
     double myTime = cpuTime();
-    uint32_t removed = 0;
+    uint32_t detached = 0;
+    uint32_t deleted = 0;
     detached_xor_clauses = true;
 
     assert(solver->watches.get_smudged_list().empty());
+    vector<ClOffset> delayed_clause_free;
     for(uint32_t x = 0; x < nVars()*2; x++) {
         Lit l = Lit::toLit(x);
         uint32_t j = 0;
@@ -4349,30 +4380,69 @@ void Solver::detach_xor_clauses(
             const Watched& w = watches[l][i];
             assert(!w.isIdx());
             if (w.isBin()) {
-                watches[l][j++] = w;
-                continue;
+                if (!w.red()) {
+                    watches[l][j++] = w;
+                    continue;
+                } else {
+                    //Redundant. let's check if it deals with clash vars of
+                    //           XORs that will be removed.
+                    if (seen[l.var()] == 2 || seen[w.lit2().var()] == 2) {
+                        if (l < w.lit2()) {
+                            //Only once, hence the check
+                            binTri.redBins--;
+                            deleted++;
+                        }
+                        continue;
+                    } else {
+                        watches[l][j++] = w;
+                        continue;
+                    }
+                }
             }
 
             assert(w.isClause());
             ClOffset offs = w.get_offset();
             Clause* cl = cl_alloc.ptr(offs);
-            assert(!cl->freed() && !cl->getRemoved());
+            assert(!cl->freed());
 
             bool torem = false;
+            bool todel = false;
             if (cl->used_in_xor() && cl->used_in_xor_full()) {
                 torem = true;
                 for(const Lit lit: *cl) {
                     //It's part of an unused XOR, skip
-                    if (seen[lit.var()]) {
+                    if (seen[lit.var()] == 1) {
                         torem = false;
                     }
+                }
+            } else {
+                //It has a USED XOR's clash var, skip
+                for(const Lit lit: *cl) {
+                    if (seen[lit.var()] == 2) {
+                        todel = true;
+                    }
+                }
+                if (todel) {
+                    assert(cl->red());
                 }
             }
 
             if (torem) {
-                watches.smudge(l);
+                if (cl->_xor_is_detached) {
+                    detached++;
+                    cout << "detaching: " << *cl << endl;
+                }
                 cl->_xor_is_detached = true;
-                removed++;
+                continue;
+            } else if (todel) {
+                if (cl->getRemoved()) {
+                    //Only once, hence the check for getRemoved.
+                    litStats.redLits -= cl->size();
+                    deleted++;
+                }
+                cl->setRemoved();
+                watches.smudge(l);
+                delayed_clause_free.push_back(offs);
                 continue;
             } else {
                 watches[l][j++] = w;
@@ -4381,6 +4451,11 @@ void Solver::detach_xor_clauses(
         watches[l].resize(j);
     }
     solver->clean_occur_from_removed_clauses_only_smudged();
+    for(ClOffset offset: delayed_clause_free) {
+        solver->free_cl(offset);
+    }
+    delayed_clause_free.clear();
+
 
     for(const auto& x: unused_xors) {
         for(const uint32_t v: x) {
@@ -4392,11 +4467,31 @@ void Solver::detach_xor_clauses(
         seen[v] = 0;
     }
 
-    assert(removed % 2 == 0);
+    for(const auto& x: xors) {
+        for(const uint32_t v: x.clash_vars) {
+            seen[v] = 0;
+        }
+    }
+
+    for(const auto& x: xors) {
+        for(const uint32_t v: x.clash_vars) {
+            if (!watches[Lit(v, false)].empty()) {
+                print_watch_list(watches[Lit(v, false)], Lit(v, false));
+            }
+            if (!watches[Lit(v, true)].empty()) {
+                print_watch_list(watches[Lit(v, true)], Lit(v, true));
+            }
+            assert(watches[Lit(v, false)].empty());
+            assert(watches[Lit(v, true)].empty());
+            seen[v] = 0;
+        }
+    }
 
     if (solver->conf.verbosity >= 1) {
         cout
-        << "c [gauss] XOR-encoding clauses detached: " << (removed/2)
+        << "c [gauss] XOR-encoding clauses"
+        << " detached: " << detached
+        << " deleted: " << deleted
         << " T: " << (cpuTime() - myTime)
         << endl;
     }
@@ -4406,7 +4501,6 @@ void Solver::attach_xor_clauses()
 {
     if (!detached_xor_clauses)
         return;
-
 
     gauss_ret gret = gauss_jordan_elim();
     if (gret != gauss_ret::g_nothing) {
@@ -4530,7 +4624,7 @@ void Solver::extend_model_to_detached_xors()
         iter++;
         for(const auto& offs: longIrredCls) {
             const Clause* cl = cl_alloc.ptr(offs);
-            if (cl->used_in_xor()) {
+            if (cl->_xor_is_detached) {
                 uint32_t unset_vars = 0;
                 Lit unset = lit_Undef;
                 for(Lit l: *cl) {
@@ -4554,12 +4648,26 @@ void Solver::extend_model_to_detached_xors()
         }
     }
 
+    uint32_t random_set = 0;
+    for(const auto& offs: longIrredCls) {
+        const Clause* cl = cl_alloc.ptr(offs);
+        if (cl->_xor_is_detached) {
+            for(Lit l: *cl) {
+                if (model_value(l) == l_Undef) {
+                    model[l.var()] = l_False;
+                    random_set++;
+                }
+            }
+        }
+    }
+
     if (conf.verbosity >= 1) {
         cout
         << "c [gauss] extended XOR clash vars."
         << " set: " << set_var
         << " double-undef: " << more_vars_unset
         << " iters: " << iter
+        << " random_set: " << random_set
         << " T: " << (cpuTime()-myTime)
         << endl;
     }

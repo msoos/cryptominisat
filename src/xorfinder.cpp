@@ -63,7 +63,7 @@ void XorFinder::find_xors_based_on_long_clauses()
         xor_find_time_limit -= 1;
 
         //Already freed
-        if (cl->freed() || cl->getRemoved()) {
+        if (cl->freed() || cl->getRemoved() || cl->red()) {
             continue;
         }
 
@@ -309,6 +309,11 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
             #ifdef SLOW_DEBUG
             assert(occcnt[wlit.var()]);
             #endif
+
+            if (w.red()) {
+                continue;
+            }
+
             if (!occcnt[w.lit2().var()]) {
                 goto end;
             }
@@ -340,7 +345,7 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
             xor_find_time_limit -= 3;
             const ClOffset offset = w.get_offset();
             Clause& cl = *solver->cl_alloc.ptr(offset);
-            if (cl.freed() || cl.getRemoved()) {
+            if (cl.freed() || cl.getRemoved() || cl.red()) {
                 //Clauses are ordered!!
                 break;
             }
@@ -450,9 +455,10 @@ vector<Xor> XorFinder::remove_xors_without_connecting_vars(const vector<Xor>& th
 
     for(const Xor& x: this_xors) {
         if (xor_has_interesting_var(x)) {
-            //cout << "XOR that remains: " << x << endl;
+            //cout << "XOR has connecting var: " << x << endl;
             ret.push_back(x);
         } else {
+            //cout << "XOR has no connecting var: " << x << endl;
             unused_xors.push_back(x);
         }
     }

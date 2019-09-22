@@ -262,7 +262,8 @@ class Solver : public Searcher
         bool init_all_matrices();
         void detach_xor_clauses(
             const vector<Xor>& unused_xors,
-            const set<uint32_t>& clash_vars_unused
+            const set<uint32_t>& clash_vars_unused,
+            const vector<Xor>& xors
         );
         void attach_xor_clauses();
         void extend_model_to_detached_xors();
