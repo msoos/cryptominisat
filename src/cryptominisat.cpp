@@ -1059,13 +1059,13 @@ DLL_PUBLIC std::vector<std::pair<Lit, Lit> > SATSolver::get_all_binary_xors() co
 }
 
 DLL_PUBLIC vector<std::pair<vector<uint32_t>, bool> >
-SATSolver::get_recovered_xors(bool elongate) const
+SATSolver::get_recovered_xors(bool xor_together_xors) const
 {
     vector<std::pair<vector<uint32_t>, bool> > ret;
     Solver& s = *data->solvers[0];
 
     std::pair<vector<uint32_t>, bool> tmp;
-    vector<Xor> xors = s.get_recovered_xors(elongate);
+    vector<Xor> xors = s.get_recovered_xors(xor_together_xors);
     for(const auto& x: xors) {
         tmp.first = x.get_vars();
         tmp.second = x.rhs;

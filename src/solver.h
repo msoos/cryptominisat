@@ -106,7 +106,7 @@ class Solver : public Searcher
         const vector<Lit>& get_decisions_reaching_model() const;
         const vector<Lit>& get_final_conflict() const;
         vector<pair<Lit, Lit> > get_all_binary_xors() const;
-        vector<Xor> get_recovered_xors(bool elongate);
+        vector<Xor> get_recovered_xors(const bool xor_together_xors);
         bool get_decision_reaching_valid() const;
         vector<double> get_vsids_scores() const;
         vector<Lit> propagated_by(const std::vector<Lit>& t);

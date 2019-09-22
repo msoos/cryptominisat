@@ -1069,9 +1069,10 @@ TEST(xor_recovery, find_xor_one_only)
     vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(true);
     EXPECT_EQ(xors.size(), 1);
     EXPECT_EQ(xors[0].first, (vector<uint32_t>{0U, 1U, 2U, 3U, 4U, 5U}));
+    EXPECT_EQ(xors[0].second, false);
 }
 
-TEST(xor_recovery, find_xor_none_because_internal_var)
+TEST(xor_recovery, find_xor_one_only_inv)
 {
     SATSolver s;
     s.new_vars(30);
@@ -1081,7 +1082,25 @@ TEST(xor_recovery, find_xor_none_because_internal_var)
     s.simplify();
 
     vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(false);
-    EXPECT_EQ(xors.size(), 0);
+    EXPECT_EQ(xors.size(), 1);
+    EXPECT_EQ(xors[0].first, (vector<uint32_t>{0U, 1U, 2U, 3U, 4U, 5U}));
+    EXPECT_EQ(xors[0].second, true);
+}
+
+TEST(xor_recovery, find_xor_one_that_is_xor_of_2)
+{
+    SATSolver s;
+    s.new_vars(30);
+    s.set_no_bve();
+
+    s.add_xor_clause(vector<unsigned>{0U, 2U, 3U, 4U}, true);
+    s.add_xor_clause(vector<unsigned>{0U, 6U, 7U, 8U}, true);
+    s.simplify();
+
+    vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(true);
+    EXPECT_EQ(xors.size(), 1);
+    EXPECT_EQ(xors[0].first, (vector<uint32_t>{2U, 3U, 4U, 6U, 7U, 8U}));
+    EXPECT_EQ(xors[0].second, false);
 }
 
 //TODO the renubmering make 31 out of 3 and then it's not "outside" anymore...

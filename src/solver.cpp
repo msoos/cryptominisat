@@ -3908,10 +3908,10 @@ void Solver::open_file_and_dump_red_clauses(const std::string &fname) const
     dumper.open_file_and_dump_red_clauses(fname);
 }
 
-vector<Xor> Solver::get_recovered_xors(bool elongate)
+vector<Xor> Solver::get_recovered_xors(const bool xor_together_xors)
 {
     vector<Xor> xors_ret;
-    if (elongate && solver->okay()) {
+    if (xor_together_xors && solver->okay()) {
         auto xors = xorclauses;
 
         //YEP -- the solver state can turn to OK=false
