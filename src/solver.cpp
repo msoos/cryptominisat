@@ -4029,7 +4029,7 @@ bool Solver::find_and_init_all_matrices()
         detach_xor_clauses(mfinder.unused_xors, mfinder.clash_vars_unused, mfinder.xors);
         unset_clash_decision_vars(mfinder.xors);
     } else {
-        if (conf.verbosity >= 1) {
+        if (conf.verbosity >= 0) {
             cout << "c WHAAAAT" << endl;
         }
     }
@@ -4410,18 +4410,21 @@ void Solver::detach_xor_clauses(
                 torem = true;
                 for(const Lit lit: *cl) {
                     //It's part of an unused XOR, skip
+                    //we should use the same check as in no_irred....
                     if (seen[lit.var()] == 1) {
                         torem = false;
                     }
                 }
             } else {
-                //It has a USED XOR's clash var, skip
+                //It has a USED XOR's clash var, delete
                 for(const Lit lit: *cl) {
                     if (seen[lit.var()] == 2) {
+                        //cout << "lit problem: " << lit << endl;
                         todel = true;
                     }
                 }
                 if (todel) {
+                    //cout << "cl: " << *cl << endl;
                     assert(cl->red());
                 }
             }
@@ -4506,7 +4509,7 @@ void Solver::detach_xor_clauses(
         }
     }
 
-    if (solver->conf.verbosity >= 1) {
+    if (solver->conf.verbosity >= 0) {
         cout
         << "c [gauss] XOR-encoding clauses"
         << " detached: " << detached

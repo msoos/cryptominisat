@@ -359,18 +359,26 @@ uint32_t MatrixFinder::setMatrixes()
 
         //Over the max number of matrixes
         if (realMatrixNum >= solver->conf.gaussconf.max_num_matrices) {
+            if (solver->conf.verbosity) {
+                cout << "c [matrix] above max number of matrixes, use matrix set to FALSE" << endl;
+            }
             use_matrix = false;
-            cout << "c [matrix] above max number of matrixes, use matrix set to FALSE" << endl;
         }
 
         //Override in case sampling vars ratio is high
         if (solver->conf.sampling_vars) {
-            cout << "c [matrix] ratio_sampling: " << ratio_sampling << endl;
+            if (solver->conf.verbosity) {
+                cout << "c [matrix] ratio_sampling: " << ratio_sampling << endl;
+            }
             if (ratio_sampling >= 0.6) { //TODO Magic constant
+                if (solver->conf.verbosity) {
+                    cout << "c [matrix] ratio good set to TRUE" << endl;
+                }
                 use_matrix = true;
-                cout << "c [matrix] ratio good set to TRUE" << endl;
             } else {
-                cout << "c [matrix] ratio bad set to FALSE" << endl;
+                if (solver->conf.verbosity) {
+                    cout << "c [matrix] ratio bad set to FALSE" << endl;
+                }
                 use_matrix = false;
             }
         }
@@ -436,10 +444,13 @@ bool MatrixFinder::no_irred_nonxor_contains_clash_vars()
         for(uint32_t v: x) {
             seen[v] = 2;
         }
+    }
 
+    for(const auto& x: xors) {
         //CLASH vars
         for(uint32_t v: x.clash_vars) {
-            assert(seen[v] != 2);
+            //assert(seen[v] != 2); -- actually, it could be (weird, but possible)
+            //in these cases, we should treat it as a clash var (more safe)
             seen[v] = 1;
 //                 cout << "c clash var: " << v + 1 << endl;
         }
@@ -472,18 +483,16 @@ bool MatrixFinder::no_irred_nonxor_contains_clash_vars()
             continue;
         }
 
-        assert(num_clash_vars >= 1);
-        if (num_real_vars+num_clash_vars < cl->size()) {
-            ret = false;
+        if (cl->used_in_xor() && cl->used_in_xor_full() && num_clash_vars+num_real_vars == cl->size()) {
             continue;
         }
 
-        assert(num_real_vars+num_clash_vars == cl->size());
-        if (!cl->used_in_xor_full()) {
-            ret = false;
+        //non-full XORs or other non-XOR clause
+        if (solver->conf.verbosity >= 0) {
+            cout << "c CL with clash: " << *cl << " xor: " << cl->used_in_xor() << " full-xor: " << cl->used_in_xor_full() << endl;
         }
+        ret = false;
     }
-
 
     for(uint32_t i = 0; i < solver->nVars()*2 && ret; i++) {
         Lit l = Lit::toLit(i);
@@ -491,7 +500,7 @@ bool MatrixFinder::no_irred_nonxor_contains_clash_vars()
         for(const auto& w: ws) {
             if (w.isBin() && !w.red()) {
                 if (seen[l.var()]==1 || seen[w.lit2().var()]==1) {
-                    if (solver->conf.verbosity) {
+                    if (solver->conf.verbosity >= 0) {
                         cout << "c BIN with clash: " << l << " " << w.lit2() << endl;
                     }
                     ret = false;
