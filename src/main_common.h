@@ -32,7 +32,9 @@ THE SOFTWARE.
 class MainCommon
 {
 public:
-    uint32_t print_model(CMSat::SATSolver* solver, std::ostream* os);
+    uint32_t print_model(CMSat::SATSolver* solver,
+                         std::ostream* os,
+                         std::vector<uint32_t>* only = NULL);
     void handle_drat_option();
 
     string dratfilname;

@@ -282,20 +282,32 @@ void Main::printResultFunc(
 
     if (ret == l_True && (printResult || toFile)) {
         if (toFile) {
-            for (uint32_t var = 0; var < solver->nVars(); var++) {
+            auto fun = [&](uint32_t var) {
                 if (solver->get_model()[var] != l_Undef) {
                     *os << ((solver->get_model()[var] == l_True)? "" : "-") << var+1 << " ";
+                }
+            };
+
+            if (sampling_vars.empty() || !only_sampling_solution) {
+                for (uint32_t var = 0; var < solver->nVars(); var++) {
+                    fun(var);
+                }
+
+            } else {
+                for (uint32_t var: sampling_vars) {
+                    fun(var);
                 }
             }
             *os << "0" << endl;
         } else {
-            const uint32_t num_undef = print_model(solver, os);
+            uint32_t num_undef;
+            if (sampling_vars.empty() || !only_sampling_solution) {
+                num_undef = print_model(solver, os);
+            } else {
+                num_undef = print_model(solver, os, &sampling_vars);
+            }
             if (num_undef && !toFile && conf.verbosity) {
-                if (only_sampling_solution) {
-                    cout << "c NOTE: some variables' value are NOT set -- you ONLY asked for the sampling set's values: '--onlysampling'" << endl;
-                } else {
-                   cout << "c NOTE: " << num_undef << " variables are NOT set" << endl;
-                }
+                cout << "c NOTE: " << num_undef << " variables are NOT set." << endl;
             }
         }
     }
