@@ -1027,9 +1027,6 @@ if __name__ == "__main__":
         fuzzers_drat = fuzzers_noxor_sls
         fuzzers_nodrat = fuzzers_noxor_sls
 
-    if options.gauss:
-        options.maxtime *= 3
-
     print_version()
     tester = Tester()
     tester.needDebugLib = False
