@@ -654,15 +654,18 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
                 && varData[lit.var()].removed == Removed::clashed
             ) {
                 set_clash_decision_vars();
-                attach_xor_clauses();
+                if (!attach_xor_clauses()) {
+                    return false;
+                }
                 assert(varData[lit.var()].removed == Removed::none);
             }
 
             if (conf.perform_occur_based_simp
                 && varData[lit.var()].removed == Removed::elimed
             ) {
-                if (!occsimplifier->uneliminate(lit.var()))
+                if (!occsimplifier->uneliminate(lit.var())) {
                     return false;
+                }
             }
         }
     }
@@ -1628,7 +1631,10 @@ lbool Solver::solve_with_assumptions(
         cancelUntil(0);
         #ifdef USE_GAUSS
         set_clash_decision_vars();
-        attach_xor_clauses();
+        if (okay() && !attach_xor_clauses()) {
+            status = l_False;
+        }
+
         #endif
         if (status != l_False) {
             //So no set variables end up in the clauses
@@ -2200,9 +2206,16 @@ lbool Solver::simplify_problem(const bool startup)
         return l_Undef;
     }
 
+    lbool ret = l_Undef;
+    if (!okay()) {
+        ret = l_False;
+    }
+
     #ifdef USE_GAUSS
     set_clash_decision_vars();
-    attach_xor_clauses();
+    if (okay() && !attach_xor_clauses()) {
+        ret = l_False;
+    }
     clear_order_heap();
     clear_gauss_matrices();
     #endif
@@ -2213,11 +2226,12 @@ lbool Solver::simplify_problem(const bool startup)
         << endl;
     }
 
-    lbool ret;
-    if (startup) {
-        ret = execute_inprocess_strategy(startup, conf.simplify_schedule_startup);
-    } else {
-        ret = execute_inprocess_strategy(startup, conf.simplify_schedule_nonstartup);
+    if (ret == l_Undef) {
+        if (startup) {
+            ret = execute_inprocess_strategy(startup, conf.simplify_schedule_startup);
+        } else {
+            ret = execute_inprocess_strategy(startup, conf.simplify_schedule_nonstartup);
+        }
     }
 
     //Free unused watch memory
@@ -3981,6 +3995,9 @@ bool Solver::find_and_init_all_matrices()
     gqhead = trail.size();
 
     MatrixFinder mfinder(solver);
+    //BUG: in case we are coming in again, after adding new XORs
+    //we might turn off a previously turned on matrix
+    //which means we wouldn't re-attach those XORs!!!
     ok = mfinder.findMatrixes(can_detach);
     if (!ok) {
         return false;
@@ -4533,10 +4550,12 @@ void Solver::detach_xor_clauses(
     }
 }
 
-void Solver::attach_xor_clauses()
+bool Solver::attach_xor_clauses()
 {
     if (!detached_xor_clauses)
-        return;
+        return okay();
+
+    assert(okay());
 
     gauss_ret gret = gauss_jordan_elim();
     if (gret != gauss_ret::g_nothing) {
@@ -4558,33 +4577,59 @@ void Solver::attach_xor_clauses()
 
     double myTime = cpuTime();
     uint32_t reattached = 0;
+    uint32_t removed = 0;
     for(const auto& offs: detached_xor_repr_cls) {
         Clause* cl = cl_alloc.ptr(offs);
         assert(cl->_xor_is_detached);
         assert(cl->used_in_xor() && cl->used_in_xor_full());
+
+        cl->_xor_is_detached = false;
         const uint32_t origSize = cl->size();
 
         reattached++;
-        bool ret = clauseCleaner->clean_clause(*cl);
-        if (ret) {
-            //Clause is removed
+        const bool rem = clauseCleaner->full_clean(*cl);
+        if (rem) {
+            removed++;
             litStats.irredLits -= origSize;
-            cl_alloc.clauseFree(cl);
+            cl->setRemoved();
+            if (!okay()) {
+                break;
+            }
             continue;
         } else {
-            cl->_xor_is_detached = false;
+            litStats.irredLits -= origSize - cl->size();
+            assert(cl->size() > 2);
             PropEngine::attachClause(*cl, true);
         }
     }
+
+    if (removed > 0) {
+        uint32_t j = 0;
+        for(uint32_t i = 0; i < longIrredCls.size(); i ++) {
+            ClOffset offs = longIrredCls[i];
+            Clause* cl = cl_alloc.ptr(offs);
+            if (cl->getRemoved()) {
+                cl_alloc.clauseFree(offs);
+            } else {
+                longIrredCls[j++] = offs;
+            }
+        }
+        longIrredCls.resize(j);
+    }
+
     detached_xor_repr_cls.clear();
     detached_xor_clauses = false;
+    ok = propagate<false>().isNULL();
 
-    if (solver->conf.verbosity >= 1) {
+
+    if (solver->conf.verbosity >= 0) {
         cout
         << "c [gauss] XOR-encoding clauses reattached: " << reattached
         << " T: " << (cpuTime() - myTime)
         << endl;
     }
+
+    return okay();
 }
 
 void Solver::unset_clash_decision_vars(const vector<Xor>& xors)

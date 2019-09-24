@@ -397,3 +397,37 @@ bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors)
     }
     return solver->okay();
 }
+
+
+bool ClauseCleaner::full_clean(Clause& cl)
+{
+    Lit *i = cl.begin();
+    Lit *j = i;
+    for (Lit *end = cl.end(); i != end; i++) {
+        if (solver->value(*i) == l_True) {
+            return true;
+        }
+
+        if (solver->value(*i) == l_Undef) {
+            *j++ = *i;
+        }
+    }
+    cl.shrink(i-j);
+
+    if (cl.size() == 0) {
+        solver->ok = false;
+        return true;
+    }
+
+    if (cl.size() == 1) {
+        solver->enqueue(cl[0]);
+        return true;
+    }
+
+    if (cl.size() == 2) {
+        solver->attach_bin_clause(cl[0], cl[1], cl.red());
+        return true;
+    }
+
+    return false;
+}

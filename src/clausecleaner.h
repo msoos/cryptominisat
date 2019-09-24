@@ -47,6 +47,7 @@ class ClauseCleaner
         void remove_and_clean_all();
         bool clean_xor_clauses(vector<Xor>& xors);
         bool clean_clause(Clause& c);
+        bool full_clean(Clause& cl);
 
     private:
         bool clean_one_xor(Xor& x);
