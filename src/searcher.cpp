@@ -2584,7 +2584,9 @@ void Searcher::finish_up_solve(const lbool status)
         }
 
         cancelUntil(0);
+        #ifdef SLOW_DEBUG
         print_solution_varreplace_status();
+        #endif
     } else if (status == l_False) {
         if (conflict.size() == 0) {
             ok = false;
