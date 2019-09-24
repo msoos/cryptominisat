@@ -319,6 +319,7 @@ void ClauseAllocator::consolidate(
     for(auto& lredcls: solver->longRedCls) {
         update_offsets(lredcls, newDataStart, new_ptr);
     }
+    update_offsets(solver->detached_xor_repr_cls, newDataStart, new_ptr);
 
     //Fix up propBy
     for (size_t i = 0; i < solver->nVars(); i++) {

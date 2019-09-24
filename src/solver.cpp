@@ -4348,6 +4348,13 @@ void Solver::detach_xor_clauses(
     const vector<Xor>& xors
 )
 {
+    detached_xor_clauses = true;
+    double myTime = cpuTime();
+    assert(detached_xor_repr_cls.empty());
+
+    ///////////////
+    //Set up seen
+    ///////////////
     for(const auto& x: unused_xors) {
         for(const uint32_t v: x) {
             seen[v] = 1;
@@ -4366,11 +4373,11 @@ void Solver::detach_xor_clauses(
         }
     }
 
-    double myTime = cpuTime();
+    ///////////////
+    //Go through watchlist
+    ///////////////
     uint32_t detached = 0;
     uint32_t deleted = 0;
-    detached_xor_clauses = true;
-
     vector<ClOffset> delayed_clause_free;
     for(uint32_t x = 0; x < nVars()*2; x++) {
         Lit l = Lit::toLit(x);
@@ -4432,6 +4439,7 @@ void Solver::detach_xor_clauses(
             if (torem) {
                 if (cl->_xor_is_detached) {
                     detached++;
+                    detached_xor_repr_cls.push_back(offs);
                     //cout << "detaching: " << *cl << endl;
                 }
                 cl->_xor_is_detached = true;
@@ -4452,33 +4460,39 @@ void Solver::detach_xor_clauses(
         watches[l].resize(j);
     }
 
-    uint32_t j = 0;
-    for(uint32_t i = 0; i < longIrredCls.size(); i++) {
-        ClOffset offs = longIrredCls[i];
-        Clause* cl = cl_alloc.ptr(offs);
-        if (!cl->getRemoved()) {
-            longIrredCls[j++] = offs;
-        }
-    }
-    longIrredCls.resize(j);
-
-    for(auto& cls: longRedCls) {
-        j = 0;
-        for(uint32_t i = 0; i < cls.size(); i++) {
-            ClOffset offs = cls[i];
+    if (deleted > 0) {
+        uint32_t j = 0;
+        for(uint32_t i = 0; i < longIrredCls.size(); i++) {
+            ClOffset offs = longIrredCls[i];
             Clause* cl = cl_alloc.ptr(offs);
             if (!cl->getRemoved()) {
-                cls[j++] = offs;
+                longIrredCls[j++] = offs;
             }
         }
-        cls.resize(j);
-    }
+        longIrredCls.resize(j);
 
-    for(ClOffset offset: delayed_clause_free) {
-        solver->free_cl(offset);
-    }
-    delayed_clause_free.clear();
+        for(auto& cls: longRedCls) {
+            j = 0;
+            for(uint32_t i = 0; i < cls.size(); i++) {
+                ClOffset offs = cls[i];
+                Clause* cl = cl_alloc.ptr(offs);
+                if (!cl->getRemoved()) {
+                    cls[j++] = offs;
+                }
+            }
+            cls.resize(j);
+        }
 
+        for(ClOffset offset: delayed_clause_free) {
+            solver->free_cl(offset);
+        }
+        delayed_clause_free.clear();
+    }
+    assert(delayed_clause_free.empty());
+
+    ///////////////
+    //Reset seen
+    ///////////////
     for(const auto& x: unused_xors) {
         for(const uint32_t v: x) {
             seen[v] = 0;
@@ -4544,56 +4558,25 @@ void Solver::attach_xor_clauses()
 
     double myTime = cpuTime();
     uint32_t reattached = 0;
-
-    uint32_t j = 0;
-    for(uint32_t i = 0; i < longIrredCls.size(); i++) {
-        ClOffset offs = longIrredCls[i];
+    for(const auto& offs: detached_xor_repr_cls) {
         Clause* cl = cl_alloc.ptr(offs);
-        if (cl->_xor_is_detached) {
-            assert(cl->used_in_xor() && cl->used_in_xor_full());
-            const uint32_t origSize = cl->size();
+        assert(cl->_xor_is_detached);
+        assert(cl->used_in_xor() && cl->used_in_xor_full());
+        const uint32_t origSize = cl->size();
 
-            reattached++;
-            bool ret = clauseCleaner->clean_clause(*cl);
-            if (ret) {
-                //Clause is removed
-                litStats.irredLits -= origSize;
-                cl_alloc.clauseFree(cl);
-                continue;
-            } else {
-                cl->_xor_is_detached = false;
-                PropEngine::attachClause(*cl, true);
-            }
+        reattached++;
+        bool ret = clauseCleaner->clean_clause(*cl);
+        if (ret) {
+            //Clause is removed
+            litStats.irredLits -= origSize;
+            cl_alloc.clauseFree(cl);
+            continue;
+        } else {
+            cl->_xor_is_detached = false;
+            PropEngine::attachClause(*cl, true);
         }
-        longIrredCls[j++] = longIrredCls[i];
     }
-    longIrredCls.resize(j);
-
-    for(auto& cls: longRedCls) {
-        j = 0;
-        for(uint32_t i = 0; i < cls.size(); i++) {
-            ClOffset offs = cls[i];
-            Clause* cl = cl_alloc.ptr(offs);
-            if (cl->_xor_is_detached) {
-                assert(cl->used_in_xor() && cl->used_in_xor_full());
-                const uint32_t origSize = cl->size();
-
-                reattached++;
-                bool ret = clauseCleaner->clean_clause(*cl);
-                if (ret) {
-                    //Clause is removed
-                    litStats.redLits -= origSize;
-                    cl_alloc.clauseFree(cl);
-                    continue;
-                } else {
-                    cl->_xor_is_detached = false;
-                    PropEngine::attachClause(*cl, true);
-                }
-            }
-            cls[j++] = cls[i];
-        }
-        cls.resize(j);
-    }
+    detached_xor_repr_cls.clear();
     detached_xor_clauses = false;
 
     if (solver->conf.verbosity >= 1) {
@@ -4644,41 +4627,39 @@ void Solver::extend_model_to_detached_xors()
     while (more_vars_unset > 0) {
         more_vars_unset = 0;
         iter++;
-        for(const auto& offs: longIrredCls) {
+        for(const auto& offs: detached_xor_repr_cls) {
             const Clause* cl = cl_alloc.ptr(offs);
-            if (cl->_xor_is_detached) {
-                uint32_t unset_vars = 0;
-                Lit unset = lit_Undef;
-                for(Lit l: *cl) {
-                    if (model_value(l) == l_True) {
-                        unset_vars = 0;
-                        break;
-                    }
-                    if (model_value(l) == l_Undef) {
-                        unset = l;
-                        unset_vars++;
-                    }
+            assert(cl->_xor_is_detached);
+            uint32_t unset_vars = 0;
+            Lit unset = lit_Undef;
+            for(Lit l: *cl) {
+                if (model_value(l) == l_True) {
+                    unset_vars = 0;
+                    break;
                 }
-                if (unset_vars == 1) {
-                    model[unset.var()] = unset.sign() ? l_False : l_True;
-                    set_var++;
+                if (model_value(l) == l_Undef) {
+                    unset = l;
+                    unset_vars++;
                 }
-                if (unset_vars > 1) {
-                    more_vars_unset++;
-                }
+            }
+            if (unset_vars == 1) {
+                model[unset.var()] = unset.sign() ? l_False : l_True;
+                set_var++;
+            }
+            if (unset_vars > 1) {
+                more_vars_unset++;
             }
         }
     }
 
     uint32_t random_set = 0;
-    for(const auto& offs: longIrredCls) {
+    for(const auto& offs: detached_xor_repr_cls) {
         const Clause* cl = cl_alloc.ptr(offs);
-        if (cl->_xor_is_detached) {
-            for(Lit l: *cl) {
-                if (model_value(l) == l_Undef) {
-                    model[l.var()] = l_False;
-                    random_set++;
-                }
+        assert(cl->_xor_is_detached);
+        for(Lit l: *cl) {
+            if (model_value(l) == l_Undef) {
+                model[l.var()] = l_False;
+                random_set++;
             }
         }
     }

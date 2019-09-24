@@ -164,6 +164,7 @@ public:
     level 2 = check often
     **/
     vector<vector<ClOffset> > longRedCls;
+    vector<ClOffset> detached_xor_repr_cls; //these are still in longIrredCls
     vector<Xor> xorclauses;
     vector<Xor> xorclauses_unused;
     bool detached_xor_clauses = false;
