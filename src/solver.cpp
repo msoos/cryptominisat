@@ -1325,7 +1325,7 @@ void Solver::extend_solution(const bool only_sampling_solution)
     #endif
 
     #ifdef USE_GAUSS
-    if (detached_xor_clauses) {
+    if (detached_xor_clauses && !only_sampling_solution) {
         extend_model_to_detached_xors();
     }
     #endif
