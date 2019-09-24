@@ -4350,7 +4350,7 @@ void Solver::detach_xor_clauses(
 {
     detached_xor_clauses = true;
     double myTime = cpuTime();
-    assert(detached_xor_repr_cls.empty());
+    //assert(detached_xor_repr_cls.empty()); //MAY NOT be true!
 
     ///////////////
     //Set up seen
@@ -4437,7 +4437,7 @@ void Solver::detach_xor_clauses(
             }
 
             if (torem) {
-                if (cl->_xor_is_detached) {
+                if (!cl->_xor_is_detached) {
                     detached++;
                     detached_xor_repr_cls.push_back(offs);
                     //cout << "detaching: " << *cl << endl;
