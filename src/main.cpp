@@ -837,6 +837,8 @@ void Main::add_supported_options()
         " matrices are discarded for reasons of efficiency")
     ("maxnummatrices", po::value(&conf.gaussconf.max_num_matrices)->default_value(conf.gaussconf.max_num_matrices)
         , "Maximum number of matrices to treat.")
+    ("detachxor", po::value(&conf.xor_deatach_reattach)->default_value(conf.xor_deatach_reattach)
+        , "Detach and reattach XORs")
     ;
 #endif //USE_GAUSS
 
