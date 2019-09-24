@@ -496,8 +496,10 @@ inline vector<uint32_t> Solver::xor_outer_numbered(const T& cl) const
 
 inline void Solver::move_to_outside_assumps(const vector<Lit>* assumps)
 {
-    outside_assumptions.clear();
+
     if (assumps) {
+        #ifdef SLOW_DEBUG
+        outside_assumptions.clear();
         for(const Lit lit: *assumps) {
             if (lit.var() >= nVarsOutside()) {
                 std::cerr << "ERROR: Assumption variable " << (lit.var()+1)
@@ -508,6 +510,10 @@ inline void Solver::move_to_outside_assumps(const vector<Lit>* assumps)
             }
             outside_assumptions.push_back(lit);
         }
+        #else
+        outside_assumptions.resize(assumps->size());
+        mempcpy(outside_assumptions.data(), assumps->data(), sizeof(Lit)*assumps->size());
+        #endif
     }
 }
 
