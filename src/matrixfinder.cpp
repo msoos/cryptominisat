@@ -456,6 +456,17 @@ bool MatrixFinder::no_irred_nonxor_contains_clash_vars()
         }
     }
 
+    for(const auto& l: solver->assumptions) {
+        const Lit p = solver->map_outer_to_inter(l.lit_outer);
+        if (seen[p.var()] == 1) {
+            //We cannot have a clash variable that's an assumption
+            //it would enqueue the assumption variable but it's a clash
+            //var and that's not supposed to be in the trail at all.
+            ret = false;
+            break;
+        }
+    }
+
     for(uint32_t i = 0; i < solver->longIrredCls.size() && ret; i++) {
         const ClOffset offs = solver->longIrredCls[i];
         const Clause* cl = solver->cl_alloc.ptr(offs);
