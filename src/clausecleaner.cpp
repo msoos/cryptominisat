@@ -176,6 +176,11 @@ void ClauseCleaner::clean_clauses_inter(vector<ClOffset>& cs)
 
 bool ClauseCleaner::clean_clause(Clause& cl)
 {
+    //Don't clean if detached. We'll deal with it during re-attach.
+    if (cl._xor_is_detached) {
+        return false;
+    }
+
     assert(cl.size() > 2);
     (*solver->drat) << deldelay << cl << fin;
 
