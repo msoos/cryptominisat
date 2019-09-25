@@ -1332,7 +1332,7 @@ void Solver::extend_solution(const bool only_sampling_solution)
     #endif
 
     const double myTime = cpuTime();
-    model = back_number_solution_from_inter_to_outer(model);
+    updateArrayRev(model, interToOuterMain);
 
     if (conf.need_decisions_reaching) {
         map_inter_to_outer(decisions_reaching_model);

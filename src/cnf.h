@@ -330,12 +330,6 @@ protected:
     virtual void new_var(const bool bva, const uint32_t orig_outer);
     virtual void new_vars(const size_t n);
     void test_reflectivity_of_renumbering() const;
-    vector<lbool> back_number_solution_from_inter_to_outer(const vector<lbool>& solution) const
-    {
-        vector<lbool> back_numbered = solution;
-        updateArrayRev(back_numbered, interToOuterMain);
-        return back_numbered;
-    }
 
     template<class T>
     vector<T> map_back_vars_to_without_bva(const vector<T>& val) const;
