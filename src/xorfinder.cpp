@@ -116,7 +116,7 @@ void XorFinder::clean_equivalent_xors(vector<Xor>& txors)
                 *j = *i;
                 size++;
             } else {
-                j->clash_vars.insert(i->clash_vars.begin(), i->clash_vars.end());
+                j->merge_clash(*i, seen);
                 j->detached |= i->detached;
             }
         }
@@ -626,7 +626,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
 
                 //Re-attach the other, remove the occur of the one we deleted
                 solver->watches[Lit(v, false)].push(Watched(idxes[1]));
-                x2.clash_vars.insert(x1.clash_vars.begin(), x1.clash_vars.end());
+                x2.merge_clash(x1, seen);
                 x2.detached |= x1.detached;
                 for(uint32_t v2: x2) {
                     Lit l(v2, false);
@@ -647,9 +647,9 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 assert(occcnt[v] == 0);
 
                 Xor x_new(tmp_vars_xor_two, x1.rhs ^ x2.rhs);
-                x_new.clash_vars.insert(clash_var);
-                x_new.clash_vars.insert(x1.clash_vars.begin(), x1.clash_vars.end());
-                x_new.clash_vars.insert(x2.clash_vars.begin(), x2.clash_vars.end());
+                x_new.clash_vars.push_back(clash_var);
+                x_new.merge_clash(x1, seen);
+                x_new.merge_clash(x2, seen);
 //                 cout << "x1: " << x1 << endl;
 //                 cout << "x2: " << x2 << endl;
 //                 cout << "clashed on var: " << clash_var+1 << endl;

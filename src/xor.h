@@ -135,8 +135,27 @@ public:
     {
         return vars.size();
     }
+
+    void merge_clash(const Xor& other, vector<uint16_t>& seen) {
+        for(const auto& v: clash_vars) {
+            seen[v] = 1;
+        }
+
+        for(const auto& v: other.clash_vars) {
+            if (!seen[v]) {
+                seen[v] = 1;
+                clash_vars.push_back(v);
+            }
+        }
+
+        for(const auto& v: clash_vars) {
+            seen[v] = 0;
+        }
+    }
+
+
     bool rhs;
-    set<uint32_t> clash_vars;
+    vector<uint32_t> clash_vars;
     bool detached = false;
 
 private:

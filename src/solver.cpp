@@ -262,7 +262,7 @@ void Solver::add_every_combination_xor(
         if (at != lits.size()) {
             new_var(true);
             const uint32_t newvar = nVars()-1;
-            xorclauses[xorclauses.size()-1].clash_vars.insert(newvar);
+            xorclauses[xorclauses.size()-1].clash_vars.push_back(newvar);
             varData[newvar].added_for_xor = true;
             const Lit toadd = Lit(newvar, false);
             xorlits.push_back(toadd);
@@ -831,20 +831,16 @@ void Solver::renumber_clauses(const vector<uint32_t>& outerToInter)
     xor_clauses_updated = true;
     for(Xor& x: xorclauses) {
         updateVarsMap(x, outerToInter);
-        set<uint32_t> clash_vars2;
-        for(uint32_t v: x.clash_vars) {
-            clash_vars2.insert(getUpdatedVar(v, outerToInter));
+        for(uint32_t& v: x.clash_vars) {
+            v = getUpdatedVar(v, outerToInter);
         }
-        std::swap(x.clash_vars, clash_vars2);
     }
 
     for(Xor& x: xorclauses_unused) {
         updateVarsMap(x, outerToInter);
-        set<uint32_t> clash_vars2;
-        for(uint32_t v: x.clash_vars) {
-            clash_vars2.insert(getUpdatedVar(v, outerToInter));
+        for(uint32_t& v: x.clash_vars) {
+            v = getUpdatedVar(v, outerToInter);
         }
-        std::swap(x.clash_vars, clash_vars2);
     }
 }
 
@@ -918,12 +914,14 @@ bool Solver::update_vars_of_xors(vector<Xor>& xors)
             break;
         }
 
-        set<uint32_t> clash_vars_upd;
-        for(uint32_t v: x.clash_vars) {
-            if (value(v) == l_Undef)
-                clash_vars_upd.insert(v);
+        uint32_t j = 0;
+        for(uint32_t i = 0; i < x.clash_vars.size(); i++) {
+            uint32_t v = x.clash_vars[i];
+            if (value(v) == l_Undef) {
+                x.clash_vars[j++] = v;
+            }
         }
-        std::swap(x.clash_vars, clash_vars_upd);
+        x.clash_vars.resize(j);
     }
 
     return ok;

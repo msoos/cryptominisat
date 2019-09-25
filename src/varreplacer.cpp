@@ -321,12 +321,20 @@ end:
 bool VarReplacer::replace_xor_clauses(vector<Xor>& xors)
 {
     for(Xor& x: xors) {
-        set<uint32_t> clash_vars_upd;
-        for(const auto& v: x.clash_vars) {
+        uint32_t j = 0;
+        for(uint32_t i = 0; i < x.clash_vars.size(); i++) {
+            uint32_t v = x.clash_vars[i];
             uint32_t upd = get_var_replaced_with_fast(v);
-            clash_vars_upd.insert(upd);
+            if (!solver->seen[upd]) {
+                solver->seen[upd] = 1;
+                x.clash_vars[j++] = upd;
+            }
         }
-        std::swap(x.clash_vars, clash_vars_upd);
+        x.clash_vars.resize(j);
+
+        for(auto& v: x.clash_vars) {
+            solver->seen[v] = 0;
+        }
 
         for(uint32_t i = 0, end = x.size(); i < end; i++) {
             assert(x[i] < solver->nVars());
