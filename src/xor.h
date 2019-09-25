@@ -137,6 +137,7 @@ public:
     }
     bool rhs;
     set<uint32_t> clash_vars;
+    bool detached = false;
 
 private:
     vector<uint32_t> vars;

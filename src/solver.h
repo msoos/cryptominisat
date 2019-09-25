@@ -261,9 +261,7 @@ class Solver : public Searcher
         #ifdef USE_GAUSS
         bool init_all_matrices();
         void detach_xor_clauses(
-            const vector<Xor>& unused_xors,
-            const set<uint32_t>& clash_vars_unused,
-            const vector<Xor>& xors
+            const set<uint32_t>& clash_vars_unused
         );
         bool attach_xor_clauses();
         void extend_model_to_detached_xors();

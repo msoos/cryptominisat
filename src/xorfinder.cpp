@@ -117,6 +117,7 @@ void XorFinder::clean_equivalent_xors(vector<Xor>& txors)
                 size++;
             } else {
                 j->clash_vars.insert(i->clash_vars.begin(), i->clash_vars.end());
+                j->detached |= i->detached;
             }
         }
         txors.resize(size);
@@ -454,7 +455,7 @@ vector<Xor> XorFinder::remove_xors_without_connecting_vars(const vector<Xor>& th
     }
 
     for(const Xor& x: this_xors) {
-        if (xor_has_interesting_var(x)) {
+        if (xor_has_interesting_var(x) || x.detached) {
             //cout << "XOR has connecting var: " << x << endl;
             ret.push_back(x);
         } else {
@@ -626,6 +627,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 //Re-attach the other, remove the occur of the one we deleted
                 solver->watches[Lit(v, false)].push(Watched(idxes[1]));
                 x2.clash_vars.insert(x1.clash_vars.begin(), x1.clash_vars.end());
+                x2.detached |= x1.detached;
                 for(uint32_t v2: x2) {
                     Lit l(v2, false);
                     assert(occcnt[l.var()] >= 2);
@@ -635,7 +637,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                     }
                 }
             } else {
-                if (clash_num > 1) {
+                if (clash_num > 1 || x1.detached || x2.detached) {
                     //add back to ws, can't do much
                     ws.push(Watched(idxes[0]));
                     ws.push(Watched(idxes[1]));

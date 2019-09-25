@@ -383,6 +383,18 @@ uint32_t MatrixFinder::setMatrixes()
             }
         }
 
+        //if already detached, we MUST use the matrix
+        for(const auto& x: xorsInMatrix[i]) {
+            if (x.detached) {
+                use_matrix = true;
+                if (solver->conf.verbosity) {
+                    cout << "c we MUST use the matrix, it contains a previously detached XOR"
+                    << endl;
+                }
+                break;
+            }
+        }
+
         if (use_matrix) {
             solver->gmatrices.push_back(
                 new EGaussian(solver, realMatrixNum, xorsInMatrix[i]));

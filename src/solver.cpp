@@ -4043,7 +4043,7 @@ bool Solver::find_and_init_all_matrices()
         solver->conf.gaussconf.enabled &&
         !solver->conf.gaussconf.autodisable
     ) {
-        detach_xor_clauses(mfinder.unused_xors, mfinder.clash_vars_unused, mfinder.xors);
+        detach_xor_clauses(mfinder.clash_vars_unused);
         unset_clash_decision_vars(mfinder.xors);
     } else {
         if (conf.verbosity >= 0) {
@@ -4360,9 +4360,7 @@ void Solver::stats_del_cl(ClOffset offs)
 
 #ifdef USE_GAUSS
 void Solver::detach_xor_clauses(
-    const vector<Xor>& unused_xors,
-    const set<uint32_t>& clash_vars_unused,
-    const vector<Xor>& xors
+    const set<uint32_t>& clash_vars_unused
 )
 {
     detached_xor_clauses = true;
@@ -4371,19 +4369,21 @@ void Solver::detach_xor_clauses(
 
     ///////////////
     //Set up seen
+    //  '1' means it's part of an UNUSED xor
+    //  '2' means it's a CLASH of a USED xor
     ///////////////
-    for(const auto& x: unused_xors) {
+    for(const auto& x: xorclauses_unused) {
         for(const uint32_t v: x) {
             seen[v] = 1;
         }
     }
-
     for(const auto& v: clash_vars_unused) {
         seen[v] = 1;
     }
 
     //Clash on USED xor
-    for(const auto& x: xors) {
+    for(auto& x: xorclauses) {
+        x.detached = true;
         for(const uint32_t v: x.clash_vars) {
             assert(seen[v] == 0);
             seen[v] = 2;
@@ -4510,7 +4510,7 @@ void Solver::detach_xor_clauses(
     ///////////////
     //Reset seen
     ///////////////
-    for(const auto& x: unused_xors) {
+    for(const auto& x: xorclauses_unused) {
         for(const uint32_t v: x) {
             seen[v] = 0;
         }
@@ -4520,14 +4520,10 @@ void Solver::detach_xor_clauses(
         seen[v] = 0;
     }
 
-    for(const auto& x: xors) {
+    for(const auto& x: xorclauses) {
         for(const uint32_t v: x.clash_vars) {
             seen[v] = 0;
-        }
-    }
 
-    for(const auto& x: xors) {
-        for(const uint32_t v: x.clash_vars) {
             if (!watches[Lit(v, false)].empty()) {
                 print_watch_list(watches[Lit(v, false)], Lit(v, false));
             }
@@ -4536,7 +4532,6 @@ void Solver::detach_xor_clauses(
             }
             assert(watches[Lit(v, false)].empty());
             assert(watches[Lit(v, true)].empty());
-            seen[v] = 0;
         }
     }
 
