@@ -336,13 +336,14 @@ bool VarReplacer::replace_xor_clauses(vector<Xor>& xors)
             solver->seen[v] = 0;
         }
 
-        for(uint32_t i = 0, end = x.size(); i < end; i++) {
-            assert(x[i] < solver->nVars());
-            Lit l = Lit(x[i], false);
+        for(uint32_t& v: x) {
+            assert(v < solver->nVars());
+
+            Lit l = Lit(v, false);
             if (get_lit_replaced_with_fast(l) != l) {
                 l = get_lit_replaced_with_fast(l);
                 x.rhs ^= l.sign();
-                x[i] = l.var();
+                v = l.var();
                 runStats.replacedLits++;
             }
         }

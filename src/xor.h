@@ -38,8 +38,9 @@ namespace CMSat {
 class Xor
 {
 public:
-    Xor() : rhs(false)
+    Xor()
     {}
+
     template<typename T>
     explicit Xor(const T& cl, const bool _rhs) :
         rhs(_rhs)
@@ -80,22 +81,12 @@ public:
         return vars.end();
     }
 
-    bool operator==(const Xor& other) const
-    {
-        return (rhs == other.rhs && vars == other.vars);
-    }
-
-    bool operator!=(const Xor& other) const
-    {
-        return !operator==(other);
-    }
-
     bool operator<(const Xor& other) const
     {
         uint64_t i = 0;
         while(i < other.size() && i < size()) {
             if (other[i] != vars[i]) {
-                return (other[i] > vars[i]);
+                return (vars[i] < other[i]);
             }
             i++;
         }
@@ -136,6 +127,21 @@ public:
         return vars.size();
     }
 
+    bool empty() const
+    {
+        if (!vars.empty())
+            return false;
+
+        if (!clash_vars.empty())
+            return false;
+
+        if (rhs != false) {
+            return false;
+        }
+
+        return true;
+    }
+
     void merge_clash(const Xor& other, vector<uint16_t>& seen) {
         for(const auto& v: clash_vars) {
             seen[v] = 1;
@@ -154,11 +160,9 @@ public:
     }
 
 
-    bool rhs;
+    bool rhs = false;
     vector<uint32_t> clash_vars;
     bool detached = false;
-
-private:
     vector<uint32_t> vars;
 };
 

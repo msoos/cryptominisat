@@ -111,13 +111,13 @@ void XorFinder::clean_equivalent_xors(vector<Xor>& txors)
         i++;
         uint64_t size = 1;
         for(vector<Xor>::iterator end = txors.end(); i != end; i++) {
-            if (*j != *i) {
+            if (j->vars == i->vars && i->rhs == j->rhs) {
+                j->merge_clash(*i, seen);
+                j->detached |= i->detached;
+            } else {
                 j++;
                 *j = *i;
                 size++;
-            } else {
-                j->merge_clash(*i, seen);
-                j->detached |= i->detached;
             }
         }
         txors.resize(size);
@@ -602,7 +602,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 const Watched& w = ws[i];
                 if (!w.isIdx()) {
                     ws[i2++] = ws[i];
-                } else if (this_xors[w.get_idx()] != Xor()) {
+                } else if (!this_xors[w.get_idx()].empty()) {
                     assert(at < 2);
                     idxes[at] = w.get_idx();
                     at++;

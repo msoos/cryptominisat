@@ -830,14 +830,14 @@ void Solver::renumber_clauses(const vector<uint32_t>& outerToInter)
     //Clauses' abstractions have to be re-calculated
     xor_clauses_updated = true;
     for(Xor& x: xorclauses) {
-        updateVarsMap(x, outerToInter);
+        updateVarsMap(x.vars, outerToInter);
         for(uint32_t& v: x.clash_vars) {
             v = getUpdatedVar(v, outerToInter);
         }
     }
 
     for(Xor& x: xorclauses_unused) {
-        updateVarsMap(x, outerToInter);
+        updateVarsMap(x.vars, outerToInter);
         for(uint32_t& v: x.clash_vars) {
             v = getUpdatedVar(v, outerToInter);
         }
@@ -961,6 +961,24 @@ bool Solver::renumber_variables(bool must_renumber)
 {
     assert(okay());
     assert(decisionLevel() == 0);
+    #ifdef SLOWDEBUG
+    for(const auto& x: xorclauses) {
+        for(const auto& v: x) {
+            assert(v < nVars());
+        }
+    }
+
+    for(const auto& x: xorclauses_unused) {
+        for(const auto& v: x) {
+            assert(v < nVars());
+        }
+    }
+    #endif
+
+    if (!clean_xor_clauses_from_duplicate_and_set_vars()) {
+        return false;
+    }
+
     if (nVars() == 0) {
         return okay();
     }
@@ -1040,6 +1058,20 @@ bool Solver::renumber_variables(bool must_renumber)
     if (conf.doSaveMem) {
         save_on_var_memory(numEffectiveVars);
     }
+
+    #ifdef SLOWDEBUG
+    for(const auto& x: xorclauses) {
+        for(const auto& v: x.vars) {
+            assert(v < nVars());
+        }
+    }
+
+    for(const auto& x: xorclauses_unused) {
+        for(const auto& v: x.vars) {
+            assert(v < nVars());
+        }
+    }
+    #endif
 
     //NOTE order heap is now wrong, but that's OK, it will be restored from
     //backed up activities and then rebuilt at the start of Searcher
