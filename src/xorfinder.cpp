@@ -544,6 +544,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
             if (!seen2[l.var()]) {
                 seen2[l.var()] = 1;
                 to_clear_2.push_back(l.var());
+                //cout << "Not XORing together over var: " << l.var()+1 << endl;
             }
         }
     }
