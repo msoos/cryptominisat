@@ -533,24 +533,8 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
         }
     }
 
-    //Don't XOR together over the sampling vars
-    //or variables that are in regular clauses
+    //Don't XOR together over the vars that are in normal clauses
     vector<uint32_t> to_clear_2;
-    if (solver->conf.sampling_vars) {
-        for(uint32_t outside_var: *solver->conf.sampling_vars) {
-            uint32_t outer_var = solver->map_to_with_bva(outside_var);
-            outer_var = solver->varReplacer->get_var_replaced_with_outer(outer_var);
-            uint32_t int_var = solver->map_outer_to_inter(outer_var);
-            if (int_var < solver->nVars()) {
-                if (!seen2[int_var]) {
-                    seen2[int_var] = 1;
-                    to_clear_2.push_back(int_var);
-                    //cout << "sampling var: " << int_var+1 << endl;
-                }
-            }
-        }
-    }
-
     for(const auto& offs: solver->longIrredCls) {
         Clause* cl = solver->cl_alloc.ptr(offs);
         if (cl->red() || cl->used_in_xor()) {
