@@ -825,8 +825,6 @@ void Main::add_supported_options()
 #ifdef USE_GAUSS
     po::options_description gaussOptions("Gauss options");
     gaussOptions.add_options()
-    ("gauss", po::value(&conf.gaussconf.enabled)->default_value(conf.gaussconf.enabled)
-        , "Enable Gauss-Jordan elimination")
      ("maxmatrixrows", po::value(&conf.gaussconf.max_matrix_rows)->default_value(conf.gaussconf.max_matrix_rows)
         , "Set maximum no. of rows for gaussian matrix. Too large matrices"
         "should bee discarded for reasons of efficiency")

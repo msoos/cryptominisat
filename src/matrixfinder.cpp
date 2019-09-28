@@ -143,13 +143,7 @@ bool MatrixFinder::findMatrixes(bool& can_detach, bool simplify_xors)
         clash_vars_unused.insert(x.clash_vars.begin(), x.clash_vars.end());
     }
 
-    if (!solver->conf.gaussconf.enabled) {
-        can_detach = false;
-        if (solver->conf.verbosity >= 2) {
-            cout << "c [matrix] GJ disabled, not using XOR clauses for GJ" << endl;
-        }
-        return true;
-    } else if (xors.size() < solver->conf.gaussconf.min_gauss_xor_clauses) {
+    if (xors.size() < solver->conf.gaussconf.min_gauss_xor_clauses) {
         can_detach = false;
         if (solver->conf.verbosity >= 4)
             cout << "c [matrix] too few xor clauses for GJ: " << xors.size() << endl;

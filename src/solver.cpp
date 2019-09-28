@@ -1465,9 +1465,7 @@ void Solver::check_config_parameters() const
     }
 
     #ifdef USE_GAUSS
-    if ((drat->enabled() || solver->conf.simulate_drat) &&
-        conf.gaussconf.enabled
-    )  {
+    if ((drat->enabled() || solver->conf.simulate_drat))  {
         std::cerr << "ERROR: Cannot have both DRAT and GAUSS on at the same time!" << endl;
         exit(-1);
     }
@@ -4040,7 +4038,6 @@ bool Solver::find_and_init_all_matrices()
         << " unused_xors: " << mfinder.unused_xors.size()
         << " can detach: " << can_detach
         << " no irred with clash: " << no_irred_contains_clash
-        << " gaussconf enbl: " << solver->conf.gaussconf.enabled
         << endl;
 
         cout << "c unused xors follow." << endl;
@@ -4063,7 +4060,6 @@ bool Solver::find_and_init_all_matrices()
     if (can_detach &&
         mfinder.no_irred_nonxor_contains_clash_vars() &&
         conf.xor_deatach_reattach &&
-        solver->conf.gaussconf.enabled &&
         !solver->conf.gaussconf.autodisable
     ) {
         detach_xor_clauses(mfinder.clash_vars_unused);

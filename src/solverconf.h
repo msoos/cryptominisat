@@ -111,15 +111,13 @@ class GaussConf
     public:
 
     GaussConf() :
-        enabled(1)
-        , autodisable(false)
+        autodisable(false)
         , max_matrix_rows(5000)
         , min_matrix_rows(2)
         , max_num_matrices(5)
     {
     }
 
-    bool enabled;
     bool autodisable;
     uint32_t max_matrix_rows; //The maximum matrix size -- no. of rows
     uint32_t min_matrix_rows; //The minimum matrix size -- no. of rows
