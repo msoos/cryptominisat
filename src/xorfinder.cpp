@@ -551,6 +551,18 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
         }
     }
 
+    for(const auto& ws: solver->watches) {
+        for(const auto& w: ws) {
+            if (w.isBin() && !w.red()) {
+                uint32_t v = w.lit2().var();
+                if (!seen2[v]) {
+                    seen2[v] = 1;
+                    to_clear_2.push_back(v);
+                }
+            }
+        }
+    }
+
     for(const auto& offs: solver->longIrredCls) {
         Clause* cl = solver->cl_alloc.ptr(offs);
         if (cl->red() || cl->used_in_xor()) {
