@@ -221,6 +221,13 @@ void XorFinder::add_xors_to_solver()
     solver->xorclauses = xors;
     solver->xorclauses_unused = unused_xors;
     solver->xor_clauses_updated = true;
+
+    if (solver->conf.verbosity >= 5) {
+        cout << "c added XORs to solver from xorfinder" << endl;
+        cout << "c 'xorclauses' in solver now: " << solver->xorclauses.size() << endl;
+        cout << "c 'xorclauses_unused' in solver now: " << solver->xorclauses_unused.size() << endl;
+    }
+
     #if defined(SLOW_DEBUG) || defined(XOR_DEBUG)
     for(const Xor& x: xors) {
         for(uint32_t v: x) {
