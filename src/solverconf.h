@@ -402,6 +402,7 @@ class DLL_PUBLIC SolverConf
         GaussConf gaussconf;
         bool doM4RI;
         bool xor_deatach_reattach;
+        bool force_use_all_matrixes;
 
         //Sampling
         std::vector<uint32_t>* sampling_vars;

@@ -395,6 +395,14 @@ uint32_t MatrixFinder::setMatrixes()
             }
         }
 
+        if (solver->conf.force_use_all_matrixes) {
+            use_matrix = true;
+            if (solver->conf.verbosity) {
+                cout << "c solver configured to force use all matrixes"
+                << endl;
+            }
+        }
+
         if (use_matrix) {
             solver->gmatrices.push_back(
                 new EGaussian(solver, realMatrixNum, xorsInMatrix[i]));
