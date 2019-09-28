@@ -314,13 +314,15 @@ uint32_t MatrixFinder::setMatrixes()
             if (m.rows > solver->conf.gaussconf.max_matrix_rows
                 && solver->conf.verbosity
             ) {
-                cout << "c [matrix] Too many rows in matrix: " << m.rows << endl;
+                cout << "c [matrix] Too many rows in matrix: " << m.rows
+                << " -> set usage to NO" << endl;
             }
 
             if (m.rows < solver->conf.gaussconf.min_matrix_rows
                 && solver->conf.verbosity
             ) {
-                cout << "c [matrix] Too few rows in matrix: " << m.rows << endl;
+                cout << "c [matrix] Too few rows in matrix: " << m.rows
+                << " -> set usage to NO" << endl;
             }
             use_matrix = false;
         }
@@ -360,7 +362,7 @@ uint32_t MatrixFinder::setMatrixes()
         //Over the max number of matrixes
         if (realMatrixNum >= solver->conf.gaussconf.max_num_matrices) {
             if (solver->conf.verbosity) {
-                cout << "c [matrix] above max number of matrixes, use matrix set to FALSE" << endl;
+                cout << "c [matrix] above max number of matrixes -> set usage to NO" << endl;
             }
             use_matrix = false;
         }
@@ -372,12 +374,12 @@ uint32_t MatrixFinder::setMatrixes()
             }
             if (ratio_sampling >= 0.6) { //TODO Magic constant
                 if (solver->conf.verbosity) {
-                    cout << "c [matrix] ratio good set to TRUE" << endl;
+                    cout << "c [matrix] sampling ratio good -> set usage to YES" << endl;
                 }
                 use_matrix = true;
             } else {
                 if (solver->conf.verbosity) {
-                    cout << "c [matrix] ratio bad set to FALSE" << endl;
+                    cout << "c [matrix] sampling ratio bad -> set usage to NO" << endl;
                 }
                 use_matrix = false;
             }
@@ -389,7 +391,7 @@ uint32_t MatrixFinder::setMatrixes()
                 use_matrix = true;
                 if (solver->conf.verbosity) {
                     cout << "c we MUST use the matrix, it contains a previously detached XOR"
-                    << endl;
+                    << " -> set usage to YES" << endl;
                 }
                 break;
             }
@@ -399,7 +401,7 @@ uint32_t MatrixFinder::setMatrixes()
             use_matrix = true;
             if (solver->conf.verbosity) {
                 cout << "c solver configured to force use all matrixes"
-                << endl;
+                << " -> set usage to YES" << endl;
             }
         }
 
