@@ -438,7 +438,12 @@ void check_xors_eq(const vector<Xor>& got_data, const std::string& expected)
     }
 
     std::sort(got_data_sorted.begin(), got_data_sorted.end(), xorsort);
-    EXPECT_EQ(expected_sorted, got_data_sorted);
+    EXPECT_EQ(expected_sorted.size(), got_data_sorted.size());
+    for(size_t i = 0; i < expected_sorted.size(); i++) {
+        EXPECT_EQ(expected_sorted[i].vars, got_data_sorted[i].vars);
+        EXPECT_EQ(expected_sorted[i].rhs, got_data_sorted[i].rhs);
+        EXPECT_EQ(expected_sorted[i].clash_vars, got_data_sorted[i].clash_vars);
+    }
 }
 
 void check_xors_contains(const vector<Xor>& got_data, const std::string& expected)
@@ -455,7 +460,9 @@ void check_xors_contains(const vector<Xor>& got_data, const std::string& expecte
 
     bool found = false;
     for(const Xor& x: got_data_sorted) {
-        if (x == expectedX) {
+        if (x.vars == expectedX.vars &&
+            x.rhs == expectedX.rhs &&
+            x.clash_vars == expectedX.clash_vars) {
             found = true;
             break;
         }
