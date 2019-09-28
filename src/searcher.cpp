@@ -482,8 +482,8 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                 #endif
 
                 #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-                cl->stats.last_touched = sumConflicts;
-                #else
+                assert(!conf.broken_last_touched);
+                #endif
                 if (conf.broken_last_touched) {
                     if (cl->stats.which_red_array == 1) {
                         cl->stats.last_touched = sumConflicts;
@@ -491,7 +491,6 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                 } else {
                     cl->stats.last_touched = sumConflicts;
                 }
-                #endif
 
                 //If stats or predictor, bump all because during final
                 //we will need this data and during dump when stats is on
