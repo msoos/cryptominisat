@@ -3962,15 +3962,8 @@ vector<Xor> Solver::get_recovered_xors(const bool xor_together_xors)
     if (xor_together_xors && solver->okay()) {
         auto xors = xorclauses;
 
-        //YEP -- the solver state can turn to OK=false
         XorFinder finder(NULL, this);
         finder.xor_together_xors(xors);
-        //YEP -- the solver state can turn to OK=false
-        if (solver->okay()) {
-            finder.add_new_truths_from_xors(xors);
-        }
-        //YEP -- the solver state can turn to OK=false
-
         renumber_xors_to_outside(xors, xors_ret);
         return xors_ret;
     } else {
