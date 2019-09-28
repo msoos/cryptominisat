@@ -132,7 +132,7 @@ struct ClauseStats
     uint32_t drop_if_not_used:1;
     union {
         float   activity;
-        uint32_t hash_val;
+        uint32_t hash_val; //used in BreakID to remove equivalent clauses
     };
     uint32_t last_touched;
     #ifdef FINAL_PREDICTOR
