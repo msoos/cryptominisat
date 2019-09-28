@@ -142,7 +142,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
 
         //Ternary resolution
-        , doTernary(true)
+        , doTernary(false)
         , ternary_res_time_limitM(100)
         , ternary_keep_mult(4)
         , ternary_max_create(0.5)
