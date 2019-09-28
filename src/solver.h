@@ -512,6 +512,8 @@ inline void Solver::move_to_outside_assumps(const vector<Lit>* assumps)
         outside_assumptions.resize(assumps->size());
         mempcpy(outside_assumptions.data(), assumps->data(), sizeof(Lit)*assumps->size());
         #endif
+    } else {
+        outside_assumptions.clear();
     }
 }
 
