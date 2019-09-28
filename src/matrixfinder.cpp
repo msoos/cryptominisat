@@ -526,13 +526,22 @@ bool MatrixFinder::no_irred_nonxor_contains_clash_vars()
         //non-full XORs or other non-XOR clause
         if (solver->conf.verbosity >= 0) {
             cout << "c CL with clash: " << *cl
+            << " red: " << cl->red()
             << " xor: " << cl->used_in_xor()
             << " full-xor: " << cl->used_in_xor_full()
             << " num_clash_vars: " << num_clash_vars
             << " num_real_vars: " << num_real_vars
+            << " size: " << cl->size()
+            << " missing: " << (cl->size()-num_clash_vars-num_real_vars)
             << endl;
             for(const Lit l: *cl) {
-                if (seen[l.var()] ==0) {
+                if (seen[l.var()] == 1) {
+                    cout << "clash lit: " << l
+                    << " value: " << solver->value(l) << endl;
+                }
+            }
+            for(const Lit l: *cl) {
+                if (seen[l.var()] == 0) {
                     cout << "neither clash nor real: " << l
                     << " value: " << solver->value(l) << endl;
                 }
