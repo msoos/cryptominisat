@@ -2328,7 +2328,7 @@ bool Searcher::must_abort(const lbool status) {
     if (status != l_Undef) {
         if (conf.verbosity >= 6) {
             cout
-            << "c Returned status of search() is non-l_Undef at confl:"
+            << "c Returned status of search() is " << status << " at confl:"
             << sumConflicts
             << endl;
         }
