@@ -33,7 +33,6 @@ THE SOFTWARE.
 #include <limits>
 #include <cmath>
 #include <functional>
-#include <immintrin.h>
 
 
 #include "popcnt.h"
