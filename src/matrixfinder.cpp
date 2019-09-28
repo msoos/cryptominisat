@@ -511,11 +511,14 @@ bool MatrixFinder::no_irred_nonxor_contains_clash_vars()
 //                     cout << "clash : " << l << endl;
 //                 }
             }
-            if (seen[l.var()] == 2) {
+            else if (seen[l.var()] == 2) {
                 num_real_vars++;
 //                 if (!(cl->used_in_xor() && cl->used_in_xor_full())) {
 //                     cout << "real : " << l << endl;
 //                 }
+            }
+            else if (solver->value(l) != l_Undef) {
+                num_real_vars++;
             }
         }
         if (num_clash_vars == 0) {
