@@ -4030,7 +4030,7 @@ bool Solver::find_and_init_all_matrices()
         return false;
     }
 
-    if (conf.verbosity >= 1) {
+    if (conf.verbosity >= 2) {
         cout << "c calculating no_irred_contains_clash..." << endl;
         bool no_irred_contains_clash = mfinder.no_irred_nonxor_contains_clash_vars();
 
