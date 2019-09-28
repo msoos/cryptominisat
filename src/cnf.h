@@ -153,7 +153,6 @@ public:
 
     //Clauses
     vector<ClOffset> longIrredCls;
-    vector<ClOffset> gauss_tmp_cls;
 
     //if the solver object only saw add_clause and new_var(s)
     bool fresh_solver = true;
