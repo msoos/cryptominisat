@@ -458,7 +458,7 @@ TEST_F(xor_finder2, xor_4)
 
 TEST_F(xor_finder2, xor_5)
 {
-    finder->xors = str_to_xors("2, 3, 1 = 0; 1, 5, 6, 4 = 0;" "4, 10, 11 = 0;");
+    finder->xors = str_to_xors("2, 3, 1 = 0; 1, 5, 6, 4 = 0; 4, 10, 11 = 0;");
     finder->xor_together_xors(finder->xors);
     EXPECT_EQ(finder->xors.size(), 1u);
     check_xors_contains(finder->xors, "2, 3, 5, 6, 10, 11 = 0");
