@@ -391,18 +391,16 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
         }
         cl->stats.glue = new_glue;
 
-        //move to lev0 if very low glue
         if (new_glue <= conf.glue_put_lev0_if_below_or_eq
-            && cl->stats.which_red_array >= 1
+            && solver->conf.glue_put_lev0_if_below_or_eq != 0
         ) {
+            //move to lev0 if very low glue
             cl->stats.which_red_array = 0;
-        } else {
-            //move to lev1 if low glue
-            if (new_glue <= conf.glue_put_lev1_if_below_or_eq
+        } else if (new_glue <= conf.glue_put_lev1_if_below_or_eq
                 && solver->conf.glue_put_lev1_if_below_or_eq != 0
-            ) {
-                cl->stats.which_red_array = 1;
-            }
+        ) {
+            //move to lev1 if low glue
+            cl->stats.which_red_array = 1;
         }
      }
 }
@@ -472,14 +470,9 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                 && cl->stats.which_red_array != 0
                 #endif
             ) {
-                //don't update glues on final predictor
-                //but normal "stats", please do, so it doesn't behave much
-                //different than a normal run (except slower)
-                #if !defined(FINAL_PREDICTOR)
                 if (conf.update_glues_on_analyze) {
                     update_clause_glue_from_analysis(cl);
                 }
-                #endif
 
                 #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
                 assert(!conf.broken_last_touched);
