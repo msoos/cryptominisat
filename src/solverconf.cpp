@@ -93,6 +93,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Verbosity
         , verbosity        (0)
+        , xor_detach_verb  (0)
         , doPrintGateDot   (false)
         , print_full_restart_stat   (false)
         , print_all_restarts (false)

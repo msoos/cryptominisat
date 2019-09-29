@@ -524,7 +524,7 @@ bool MatrixFinder::no_irred_nonxor_contains_clash_vars()
         }
 
         //non-full XORs or other non-XOR clause
-        if (solver->conf.verbosity >= 0) {
+        if (solver->conf.verbosity >= 3 || solver->conf.xor_detach_verb) {
             cout << "c CL with clash: " << *cl
             << " red: " << cl->red()
             << " xor: " << cl->used_in_xor()
@@ -557,7 +557,7 @@ bool MatrixFinder::no_irred_nonxor_contains_clash_vars()
         for(const auto& w: ws) {
             if (w.isBin() && !w.red()) {
                 if (seen[l.var()]==1 || seen[w.lit2().var()]==1) {
-                    if (solver->conf.verbosity >= 0) {
+                    if (solver->conf.verbosity >= 3 || solver->conf.xor_detach_verb) {
                         cout << "c BIN with clash: " << l << " " << w.lit2() << endl;
                     }
                     ret = false;

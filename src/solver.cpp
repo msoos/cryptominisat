@@ -4065,7 +4065,7 @@ bool Solver::find_and_init_all_matrices()
         detach_xor_clauses(mfinder.clash_vars_unused);
         unset_clash_decision_vars(mfinder.xors);
     } else {
-        if (conf.verbosity >= 0) {
+        if (conf.verbosity >= 1 || solver->conf.xor_detach_verb) {
             cout << "c WHAAAAT" << endl;
         }
     }
@@ -4554,7 +4554,7 @@ void Solver::detach_xor_clauses(
         }
     }
 
-    if (solver->conf.verbosity >= 0) {
+    if (solver->conf.verbosity >= 1 || solver->conf.xor_detach_verb) {
         cout
         << "c [gauss] XOR-encoding clauses"
         << " detached: " << detached
@@ -4618,7 +4618,7 @@ bool Solver::attach_xor_clauses()
     assert(okay());
     ok = propagate<false>().isNULL();
 
-    if (solver->conf.verbosity >= 0) {
+    if (solver->conf.verbosity >= 1 || solver->conf.xor_detach_verb) {
         cout
         << "c [gauss] XOR-encoding clauses reattached: " << reattached
         << " T: " << (cpuTime() - myTime)
