@@ -4571,24 +4571,6 @@ bool Solver::attach_xor_clauses()
 
     assert(okay());
 
-    gauss_ret gret = gauss_jordan_elim();
-    if (gret != gauss_ret::g_nothing) {
-        cout << "RET false: " << (gret == gauss_ret::g_false) << endl;
-        cout << "RET cont: " << (gret == gauss_ret::g_cont) << endl;
-        cout << "RET nothing: " << (gret == gauss_ret::g_nothing) << endl;
-        assert(gret == gauss_ret::g_nothing);
-    }
-
-    for (size_t g = 0; g < gqueuedata.size(); g++) {
-        if (gqueuedata[g].engaus_disable) {
-            //cout << "WHAAAAAT?????????? DISABLED" << endl;
-            continue;
-        }
-
-        assert(solver->gqhead == solver->trail.size());
-        gmatrices[g]->check_invariants();
-    }
-
     double myTime = cpuTime();
     uint32_t reattached = 0;
     uint32_t removed = 0;
@@ -4601,8 +4583,8 @@ bool Solver::attach_xor_clauses()
         const uint32_t origSize = cl->size();
 
         reattached++;
-        const bool rem = clauseCleaner->full_clean(*cl);
-        if (rem) {
+        const bool rem_or_unsat = clauseCleaner->full_clean(*cl);
+        if (rem_or_unsat) {
             removed++;
             litStats.irredLits -= origSize;
             cl->setRemoved();
@@ -4633,8 +4615,8 @@ bool Solver::attach_xor_clauses()
 
     detached_xor_repr_cls.clear();
     detached_xor_clauses = false;
+    assert(okay());
     ok = propagate<false>().isNULL();
-
 
     if (solver->conf.verbosity >= 0) {
         cout

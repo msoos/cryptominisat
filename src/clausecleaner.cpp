@@ -398,7 +398,7 @@ bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors)
     return solver->okay();
 }
 
-
+//returns TRUE if removed or solver is UNSAT
 bool ClauseCleaner::full_clean(Clause& cl)
 {
     Lit *i = cl.begin();
