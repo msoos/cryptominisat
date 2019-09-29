@@ -536,13 +536,13 @@ bool MatrixFinder::no_irred_nonxor_contains_clash_vars()
             << endl;
             for(const Lit l: *cl) {
                 if (seen[l.var()] == 1) {
-                    cout << "clash lit: " << l
+                    cout << "c clash lit: " << l
                     << " value: " << solver->value(l) << endl;
                 }
             }
             for(const Lit l: *cl) {
                 if (seen[l.var()] == 0) {
-                    cout << "neither clash nor real: " << l
+                    cout << "c neither clash nor real: " << l
                     << " value: " << solver->value(l) << endl;
                 }
             }
