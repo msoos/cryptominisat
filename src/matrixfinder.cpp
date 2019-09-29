@@ -337,7 +337,9 @@ uint32_t MatrixFinder::setMatrixes()
                 outer_var = solver->varReplacer->get_var_replaced_with_outer(outer_var);
                 uint32_t int_var = solver->map_outer_to_inter(outer_var);
                 tot_sampling_vars++;
-                if (int_var < solver->nVars()
+                if (solver->value(int_var) != l_Undef) {
+                    sampling_var_inside_matrix++;
+                } else if (int_var < solver->nVars()
                     && solver->seen[int_var]
                 ) {
                     sampling_var_inside_matrix++;
