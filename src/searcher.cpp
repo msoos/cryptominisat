@@ -2923,7 +2923,7 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
         gmatrices[i]->update_cols_vals_set();
 
         if (conf.gaussconf.autodisable &&
-            !conf.xor_deatach_reattach &&
+            !conf.xor_detach_reattach &&
             gmatrices[i]->must_disable(gqd, conf.verbosity)
         ) {
             gqd.engaus_disable = true;

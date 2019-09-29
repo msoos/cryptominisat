@@ -1177,7 +1177,7 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
         conf.gaussconf.autodisable = false;
         conf.global_multiplier_multiplier_max = 1;
         conf.global_timeout_multiplier_multiplier = 1.5;
-        //conf.xor_deatach_reattach = false;
+        //conf.xor_detach_reattach = false;
         uint32_t xor_cut = 4;
         assert(xor_cut >= 3);
         conf.xor_var_per_cut = xor_cut-2;

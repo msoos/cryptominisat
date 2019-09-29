@@ -4059,7 +4059,7 @@ bool Solver::find_and_init_all_matrices()
 
     if (can_detach &&
         mfinder.no_irred_nonxor_contains_clash_vars() &&
-        conf.xor_deatach_reattach &&
+        conf.xor_detach_reattach &&
         !solver->conf.gaussconf.autodisable
     ) {
         detach_xor_clauses(mfinder.clash_vars_unused);

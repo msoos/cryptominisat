@@ -326,7 +326,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Gauss
         , doM4RI(true)
-        , xor_deatach_reattach(true)
+        , xor_detach_reattach(true)
         , force_use_all_matrixes(false)
 
         //Sampling

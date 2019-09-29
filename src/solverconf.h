@@ -401,7 +401,7 @@ class DLL_PUBLIC SolverConf
         //Gauss
         GaussConf gaussconf;
         bool doM4RI;
-        bool xor_deatach_reattach;
+        bool xor_detach_reattach;
         bool force_use_all_matrixes;
 
         //Sampling
