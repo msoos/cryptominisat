@@ -838,7 +838,7 @@ void Main::add_supported_options()
     ("detachxor", po::value(&conf.xor_deatach_reattach)->default_value(conf.xor_deatach_reattach)
         , "Detach and reattach XORs")
     ("useallmatrixes", po::value(&conf.force_use_all_matrixes)->default_value(conf.force_use_all_matrixes)
-        , "Detach and reattach XORs")
+        , "Force using all matrices")
     ;
 #endif //USE_GAUSS
 
