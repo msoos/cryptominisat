@@ -108,9 +108,14 @@ namespace CMSat {
         void set_need_decisions_reaching(); //set it before calling solve()
         bool get_decision_reaching_valid() const; //the get_decisions_reaching_model will work -- it may NOT be
         void set_single_run(); //we promise to call solve() EXACTLY once
-        void set_no_intree_probe();
-        void set_yes_intree_probe();
-        void set_no_confl_needed(); //conflict will NOT be calculated for next solve run
+        void set_intree_probe(int val);
+        void set_sls(int val);
+        void set_full_bve(int val);
+        void set_scc(int val);
+        void set_bva(int val);
+        void set_distill(int val);
+        void reset_vsids();
+        void set_no_confl_needed(); //assumptions-based conflict will NOT be calculated for next solve run
 
 
         ////////////////////////////

@@ -128,6 +128,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doVarElim        (true)
         , varelim_cutoff_too_many_clauses(2000)
         , do_empty_varelim (true)
+        , do_full_varelim(true)
         , empty_varelim_time_limitM(300LL)
         , varelim_time_limitM(350)
         , varelim_sub_str_limit(600)
@@ -170,7 +171,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , bva_also_twolit_diff(false)
         , bva_extra_lit_and_red_start(0)
         , bva_time_limitM(50)
-        , bva_every_n(20)
+        , bva_every_n(1)
 
         //Probing
         , doProbe          (false)

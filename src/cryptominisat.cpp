@@ -578,18 +578,12 @@ DLL_PUBLIC void SATSolver::set_no_simplify_at_startup()
 
 DLL_PUBLIC void SATSolver::set_no_equivalent_lit_replacement()
 {
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
-        s.conf.doFindAndReplaceEqLits = false;
-    }
+    set_scc(0);
 }
 
 DLL_PUBLIC void SATSolver::set_no_bva()
 {
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
-        s.conf.do_bva = false;
-    }
+    set_bva(0);
 }
 
 DLL_PUBLIC void SATSolver::set_no_bve()
@@ -1187,6 +1181,7 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
         conf.restartType = Restart::geom;
         conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
         conf.maple = 0;
+        conf.bva_every_n = 1;
         conf.do_simplify_problem = true;
         data->solvers[i]->setConf(conf);
     }
@@ -1243,19 +1238,11 @@ DLL_PUBLIC vector<uint32_t> SATSolver::get_var_incidence_also_red()
     return data->solvers[data->which_solved]->get_outside_var_incidence_also_red();
 }
 
-DLL_PUBLIC void SATSolver::set_no_intree_probe()
+DLL_PUBLIC void SATSolver::set_intree_probe(int val)
 {
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
-        s.conf.doIntreeProbe = false;
-    }
-}
-
-DLL_PUBLIC void SATSolver::set_yes_intree_probe()
-{
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
-        s.conf.doIntreeProbe = true;
+        s.conf.doIntreeProbe = val;
     }
 }
 
@@ -1276,4 +1263,58 @@ DLL_PUBLIC std::vector<double> SATSolver::get_vsids_scores()
 DLL_PUBLIC std::vector<Lit> SATSolver::propagated_by(const std::vector<Lit>& t)
 {
     return data->solvers[data->which_solved]->propagated_by(t);
+}
+
+DLL_PUBLIC void SATSolver::set_full_bve(int val)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.do_full_varelim = val;
+    }
+}
+
+DLL_PUBLIC void SATSolver::set_sls(int val)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.doSLS = val;
+    }
+}
+
+DLL_PUBLIC void SATSolver::reset_vsids()
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.reset_vsids();
+    }
+}
+
+DLL_PUBLIC void SATSolver::set_scc(int val)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.doFindAndReplaceEqLits = val;
+    }
+}
+
+DLL_PUBLIC void SATSolver::set_distill(int val)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.do_distill_clauses = val;
+
+        //Below is weird, makes blasted_squaring42.cnf work faster in scalmc
+        s.conf.gaussconf.doMatrixFind = val;
+        s.conf.perform_occur_based_simp = val;
+        s.conf.doRenumberVars = val;
+        s.conf.doStrSubImplicit = val;
+    }
+}
+
+DLL_PUBLIC void SATSolver::set_bva(int val)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.do_bva = val;
+    }
 }

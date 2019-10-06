@@ -4006,10 +4006,13 @@ void Solver::renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors
 bool Solver::find_and_init_all_matrices()
 {
     if (!xor_clauses_updated) {
-        if (conf.verbosity >= 2) {
+        if (conf.verbosity >= 1) {
             cout << "c [find&init matx] XORs not updated, not performing matrix init" << endl;
         }
         return true;
+    }
+    if (conf.verbosity >= 1) {
+        cout << "c [find&init matx] updated, performing matrix init" << endl;
     }
 
     bool can_detach;
@@ -4358,6 +4361,13 @@ vector<Lit> Solver::propagated_by(const std::vector<Lit>& t)
     assert(solver->get_num_bva_vars() == 0);
     //vector<Lit> prop_outside = map_back_vars_to_without_bva(prop_outer);
     return prop;
+}
+
+void Solver::reset_vsids()
+{
+    for(auto& x: var_act_vsids) {
+        x = 0;
+    }
 }
 
 #ifdef STATS_NEEDED

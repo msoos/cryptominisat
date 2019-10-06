@@ -1387,7 +1387,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             //BUG TODO
             //solver->clauseCleaner->clean_implicit_clauses();
         } else if (token == "occ-bve") {
-            if (solver->conf.doVarElim && solver->conf.do_empty_varelim) {
+            if (solver->conf.doVarElim) {
                 solver->xor_clauses_updated = true;
                 solver->xorclauses.clear();
                 solver->xorclauses_unused.clear();
@@ -1395,8 +1395,12 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 solver->clear_gauss_matrices();
                 #endif
 
-                eliminate_empty_resolvent_vars();
-                eliminate_vars();
+                if (solver->conf.do_empty_varelim) {
+                    eliminate_empty_resolvent_vars();
+                }
+                if (solver->conf.do_full_varelim) {
+                    eliminate_vars();
+                }
             }
         } else if (token == "occ-bva") {
             if (solver->conf.verbosity) {
