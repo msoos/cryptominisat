@@ -1302,12 +1302,6 @@ DLL_PUBLIC void SATSolver::set_distill(int val)
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
         s.conf.do_distill_clauses = val;
-
-        //Below is weird, makes blasted_squaring42.cnf work faster in scalmc
-        s.conf.gaussconf.doMatrixFind = val;
-        s.conf.perform_occur_based_simp = val;
-        s.conf.doRenumberVars = val;
-        s.conf.doStrSubImplicit = val;
     }
 }
 
