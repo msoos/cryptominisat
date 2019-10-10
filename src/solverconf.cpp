@@ -229,9 +229,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , max_num_simplify_per_solve_call(25)
         , simplify_schedule_startup(
             "sub-impl,"
+            "breakid, "
             "occ-backw-sub-str, occ-clean-implicit, occ-bve,"
             "occ-ternary-res, occ-backw-sub-str, occ-xor, "
-            "breakid, "
             "card-find,"
             "cl-consolidate," //consolidate after OCC
             "scc-vrepl,"
