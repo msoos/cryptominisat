@@ -650,6 +650,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         && (solver->get_num_vars_elimed() > 0 || detached_xor_clauses)
     ) {
         for (const Lit lit: ps) {
+            #ifdef USE_GAUSS
             if (detached_xor_clauses
                 && varData[lit.var()].removed == Removed::clashed
             ) {
@@ -659,6 +660,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
                 }
                 assert(varData[lit.var()].removed == Removed::none);
             }
+            #endif
 
             if (conf.perform_occur_based_simp
                 && varData[lit.var()].removed == Removed::elimed
