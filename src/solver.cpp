@@ -4671,6 +4671,7 @@ void Solver::set_clash_decision_vars()
     rebuildOrderHeap();
 }
 
+//TODO: this is horrifically SLOW!!!
 void Solver::extend_model_to_detached_xors()
 {
     double myTime = cpuTime();
