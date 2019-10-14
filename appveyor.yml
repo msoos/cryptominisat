@@ -22,7 +22,6 @@ clone_folder: c:\projects\cryptominisat
 
 platform:
   - x64
-#  - x86
 
 environment:
   global:
@@ -63,8 +62,8 @@ configuration:
   - Release
 
 before_build:
-  - IF "%PLATFORM%" == "x86" ( SET CMAKE_GENERATOR="Visual Studio 14 2015")
-  - IF "%PLATFORM%" == "x64" ( SET CMAKE_GENERATOR="Visual Studio 14 2015 Win64")
+  - IF "%IMAGE%" == "Visual Studio 2017" ( SET CMAKE_GENERATOR="Visual Studio 15 2017 Win64")
+  - IF "%IMAGE%" == "Visual Studio 2015" ( SET CMAKE_GENERATOR="Visual Studio 14 2015 Win64")
   - echo %PLATFORM%
   - echo %CMAKE_GENERATOR%
   - echo %configuration%
