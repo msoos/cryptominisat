@@ -63,7 +63,10 @@ configuration:
   - Release
 
 before_build:
+  - IF "%PLATFORM%" == "x86" ( SET CMAKE_GENERATOR="Visual Studio 14 2015")
+  - IF "%PLATFORM%" == "x64" ( SET CMAKE_GENERATOR="Visual Studio 14 2015 Win64")
   - echo %PLATFORM%
+  - echo %CMAKE_GENERATOR%
   - echo %configuration%
 
   # get "lit" from python pip
@@ -96,7 +99,7 @@ before_build:
   - mkdir build
   - mkdir myinstall
   - cd build
-  - cmake -DCMAKE_INSTALL_PREFIX=%ZLIB_ROOT% ..
+  - cmake -G %CMAKE_GENERATOR% -DCMAKE_INSTALL_PREFIX=%ZLIB_ROOT% ..
   - if %PLATFORM%==x64 call msbuild %MSBUILD_FLAGS% /t:Build /p:Configuration=%CONFIGURATION% /p:Platform="x64" zlib.sln
   - msbuild %MSBUILD_FLAGS% INSTALL.vcxproj
 
@@ -112,7 +115,7 @@ before_build:
   # cannot enable testing becasue of visibility issues: -DENABLE_TESTING=%DYNAMIC_COMPILE_SETTING%
   # :(((
 
-  - cmake %EXTRA_FLAGS%  -DENABLE_PYTHON_INTERFACE=%DYNAMIC_COMPILE_SETTING% -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DSTATICCOMPILE=%STATICCOMPILE_SETTING% -DZLIB_ROOT=%ZLIB_ROOT% -DPYTHON_LIBRARY=%PYTHON%/libs -DPYTHON_INCLUDE_DIR=%PYTHON%/include -DPYTHON_EXECUTABLE:FILEPATH=%PYTHON%/python.exe -DBoost_DEBUG=1 -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DBOOST_ROOT=%BOOST_ROOT% ..
+  - cmake -G %CMAKE_GENERATOR% %EXTRA_FLAGS%  -DENABLE_PYTHON_INTERFACE=%DYNAMIC_COMPILE_SETTING% -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DSTATICCOMPILE=%STATICCOMPILE_SETTING% -DZLIB_ROOT=%ZLIB_ROOT% -DPYTHON_LIBRARY=%PYTHON%/libs -DPYTHON_INCLUDE_DIR=%PYTHON%/include -DPYTHON_EXECUTABLE:FILEPATH=%PYTHON%/python.exe -DBoost_DEBUG=1 -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DBOOST_ROOT=%BOOST_ROOT% ..
   - ls
 
 build_script:
