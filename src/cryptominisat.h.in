@@ -111,6 +111,7 @@ namespace CMSat {
         void set_intree_probe(int val);
         void set_sls(int val);
         void set_full_bve(int val);
+        void set_full_bve_iter_ratio(double val);
         void set_scc(int val);
         void set_bva(int val);
         void set_distill(int val);

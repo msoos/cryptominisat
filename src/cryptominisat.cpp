@@ -1313,3 +1313,11 @@ DLL_PUBLIC void SATSolver::set_bva(int val)
         s.conf.do_bva = val;
     }
 }
+
+DLL_PUBLIC void SATSolver::set_full_bve_iter_ratio(double val)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.varElimRatioPerIter = val;
+    }
+}
