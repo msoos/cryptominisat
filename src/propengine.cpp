@@ -91,23 +91,122 @@ void PropEngine::attachClause(
     , const bool checkAttach
 ) {
     const ClOffset offset = cl_alloc.get_offset(&c);
-
-    assert(c.size() > 2);
-    if (checkAttach) {
-        assert(value(c[0]) == l_Undef);
-        assert(value(c[1]) == l_Undef || value(c[1]) == l_False);
+    /*NEW*/
+    if (c.is_atmost()) {
+        assert(c.atmost_watches() != 2);  // should have been made a clause
+        for (int i = 0 ; i < c.atmost_watches() ; i++) {
+            Lit l = c[i];
+            // Visit this constraint when l becomes true
+            watches[l].push(Watched(offset, lit_Undef)); // lit_Undef for no blocker on this Watcher (can't have just one blocker here)
+        }
     }
+    else {
+    /*NEW*/
+        assert(c.size() > 2);
+        if (checkAttach) {
+            assert(value(c[0]) == l_Undef);
+            assert(value(c[1]) == l_Undef || value(c[1]) == l_False);
+        }
 
-    #ifdef DEBUG_ATTACH
-    for (uint32_t i = 0; i < c.size(); i++) {
-        assert(varData[c[i].var()].removed == Removed::none);
+        #ifdef DEBUG_ATTACH
+        for (uint32_t i = 0; i < c.size(); i++) {
+            assert(varData[c[i].var()].removed == Removed::none);
+        }
+        #endif //DEBUG_ATTACH
+
+        const Lit blocked_lit = c[2];
+        watches[c[0]].push(Watched(offset, blocked_lit));
+        watches[c[1]].push(Watched(offset, blocked_lit));
     }
-    #endif //DEBUG_ATTACH
-
-    const Lit blocked_lit = c[2];
-    watches[c[0]].push(Watched(offset, blocked_lit));
-    watches[c[1]].push(Watched(offset, blocked_lit));
 }
+
+/*NEW*/
+Lit PropEngine::find_NewWatch_AtMost(Clause& cl, Lit p) {
+
+    assert(cl.is_atmost());
+
+    Lit newWatch = lit_Error;
+    int numFalse = 0;
+    int numTrue = 0;
+    int maxTrue = cl.size()-cl.atmost_watches()+1;  // n - (n-k+1) + 1 = k
+
+    // Scan through all watchers
+    for (int q = 0 ; q < cl.atmost_watches() ; q++) {
+        lbool val = value(cl[q]);
+
+        if (val == l_Undef) continue;
+        else if (val == l_False) {
+            numFalse++;
+            if (numFalse >= cl.atmost_watches()-1) {
+                // This constraint is satisfied -- no chance of propagation or conflict
+                if (newWatch == lit_Undef || newWatch == lit_Error) {
+                    // If we haven't already swapped a new watch in, just return the old one to be kept
+                    return p;
+                }
+                else {
+                    return newWatch;
+                }
+            }
+            continue;
+        }
+
+        // Lit must be true (other possibilities continue loop, above)
+        assert(val == l_True);
+        numTrue++;
+        if (numTrue > maxTrue) {
+            return lit_Error;
+        }
+
+        if (newWatch != lit_Undef && cl[q] == p) {
+            // Haven't hit our watched lit before now, and this *is* our watched lit
+            assert(newWatch == lit_Error);
+
+            // Need to find new watch
+            for (uint32_t next = cl.atmost_watches() ; next < cl.size() ; next++) {
+                if (value(cl[next]) != l_True) {
+                    // Swap them!
+                    // Record this as the new watch.
+                    newWatch = cl[next];
+                    cl[next] = cl[q];
+                    cl[q] = newWatch;
+
+                    return newWatch;
+                }
+            }
+
+            newWatch = lit_Undef;
+            // If no suitable watch remains, newWatch will be lit_Undef.
+            // In that case: Conflict or propagate remaining literals?
+            // Remaining scan will find out.  newWatch == lit_Undef will trigger
+            // conflict if another l_True is seen in ps, else we'll end up returning
+            // lit_Undef and triggering propagation.
+        }
+    }
+
+    assert(newWatch == lit_Undef);
+
+    if (numTrue > 1) {
+        // No suitable watch plus one other True in watch-space = conflict!
+        return lit_Error;
+    }
+    else {
+        // Else no suitable watch, but no conflict = propagate.
+        return lit_Undef;
+    }
+}
+/*NEW*/
+
+
+/*NEW*/
+void PropEngine::detach_AtMost(const Clause* address)
+{
+    ClOffset offset = cl_alloc.get_offset(address);
+    Clause& cl = *cl_alloc.ptr(offset);
+    for (int i = 0 ; i < cl.atmost_watches() ; i++) {
+        removeWCl(watches[cl[i]], offset);
+    }
+}
+/*NEW*/
 
 /**
 @brief Detaches a (potentially) modified clause
@@ -196,58 +295,102 @@ PropBy PropEngine::propagate_any_order_fast()
 
             const ClOffset offset = i->get_offset();
             Clause& c = *cl_alloc.ptr(offset);
-            Lit      false_lit = ~p;
-            if (c[0] == false_lit) {
-                c[0] = c[1], c[1] = false_lit;
-            }
-            assert(c[1] == false_lit);
-            i++;
+            /*NEW*/
+            if (c.is_atmost()) {
+                // p is our new fact, and so we came here because
+                // this AtMost includes p.
+                // The first n-k+1 are being watched, and we need
+                // to look for another to watch now.
+                Lit newWatch = find_NewWatch_AtMost(c, p);
 
-            Lit     first = c[0];
-            Watched w     = Watched(offset, first);
-            if (first != blocked && value(first) == l_True) {
-                *j++ = w;
-                continue;
-            }
+                if (newWatch == lit_Undef) {
+                    // No new watch found, so we have reached the bound.
+                    // Enqueue the negation of each remaining literal
+                    for (int k = 0 ; k < c.atmost_watches() ; k++) {
+                        if (c[k] != p && value(c[k]) != l_False && (k==0 || c[k] != c[k-1])) {
+                            assert(value(c[k]) == l_Undef);
+                            enqueue<update_bogoprops>(~c[k], PropBy(offset));
+                        }
+                    }
 
-            // Look for new watch:
-            for (uint32_t k = 2; k < c.size(); k++) {
-                //Literal is either unset or satisfied, attach to other watchlist
-                if (likely(value(c[k]) != l_False)) {
-                    c[1] = c[k];
-                    c[k] = false_lit;
-                    watches[c[1]].push(w);
-                    goto nextClause;
-                }
-            }
-
-            // Did not find watch -- clause is unit under assignment:
-            *j++ = w;
-            if (value(c[0]) == l_False) {
-                confl = PropBy(offset);
-                #ifdef STATS_NEEDED
-                if (c.red())
-                    lastConflictCausedBy = ConflCausedBy::longred;
-                else
-                    lastConflictCausedBy = ConflCausedBy::longirred;
-                #endif
-                while (i < end) {
+                    // keep this watch
                     *j++ = *i++;
                 }
-                assert(j <= end);
-                qhead = trail.size();
-            } else {
-                #ifdef STATS_NEEDED
-                c.stats.propagations_made++;
-                if (c.red())
-                    propStats.propsLongRed++;
-                else
-                    propStats.propsLongIrred++;
-                #endif
-                enqueue<update_bogoprops>(c[0], PropBy(offset));
+                else if (newWatch == lit_Error) {
+                    // we have a conflict
+                    confl = PropBy(offset, c.is_atmost());
+                    qhead = trail.size();
+                    // Copy all the remaining watches:
+                    while (i < end)
+                        *j++ = *i++;
+                }
+                else if (newWatch == p) {
+                    // Constraint is satisfied.  Keep this watch.
+                    *j++ = *i++;
+                }
+                else {
+                    // drop this watch
+                    i++;
+                    // add new watch
+                    Watched w = Watched(offset, lit_Undef);
+                    watches[newWatch].push(w);
+                }
             }
+            else {
+            /*NEW*/
+                Lit      false_lit = ~p;
+                if (c[0] == false_lit) {
+                    c[0] = c[1], c[1] = false_lit;
+                }
+                assert(c[1] == false_lit);
+                i++;
 
-            nextClause:;
+                Lit     first = c[0];
+                Watched w     = Watched(offset, first);
+                if (first != blocked && value(first) == l_True) {
+                    *j++ = w;
+                    continue;
+                }
+
+                // Look for new watch:
+                for (uint32_t k = 2; k < c.size(); k++) {
+                    //Literal is either unset or satisfied, attach to other watchlist
+                    if (likely(value(c[k]) != l_False)) {
+                        c[1] = c[k];
+                        c[k] = false_lit;
+                        watches[c[1]].push(w);
+                        goto nextClause;
+                    }
+                }
+
+                // Did not find watch -- clause is unit under assignment:
+                *j++ = w;
+                if (value(c[0]) == l_False) {
+                    confl = PropBy(offset);
+                    #ifdef STATS_NEEDED
+                    if (c.red())
+                        lastConflictCausedBy = ConflCausedBy::longred;
+                    else
+                        lastConflictCausedBy = ConflCausedBy::longirred;
+                    #endif
+                    while (i < end) {
+                        *j++ = *i++;
+                    }
+                    assert(j <= end);
+                    qhead = trail.size();
+                } else {
+                    #ifdef STATS_NEEDED
+                    c.stats.propagations_made++;
+                    if (c.red())
+                        propStats.propsLongRed++;
+                    else
+                        propStats.propsLongIrred++;
+                    #endif
+                    enqueue<update_bogoprops>(c[0], PropBy(offset));
+                }
+
+                nextClause:;
+            }
         }
         ws.shrink_(i-j);
     }

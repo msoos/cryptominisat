@@ -50,7 +50,6 @@ THE SOFTWARE.
 #include "clauseallocator.h"
 #include "subsumeimplicit.h"
 #include "distillerlongwithimpl.h"
-#include "str_impl_w_impl.h"
 #include "datasync.h"
 #include "reducedb.h"
 #include "clausedumper.h"
@@ -95,7 +94,6 @@ Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter
     }
     distill_long_cls = new DistillerLong(this);
     dist_long_with_impl = new DistillerLongWithImpl(this);
-    dist_impl_with_impl = new StrImplWImpl(this);
     clauseCleaner = new ClauseCleaner(this);
     varReplacer = new VarReplacer(this);
     if (conf.doCompHandler) {
@@ -124,7 +122,6 @@ Solver::~Solver()
     delete occsimplifier;
     delete distill_long_cls;
     delete dist_long_with_impl;
-    delete dist_impl_with_impl;
     delete clauseCleaner;
     delete varReplacer;
     delete subsumeImplicit;
@@ -283,6 +280,89 @@ void Solver::add_xor_clause_inter_cleaned_cut(
             return;
     }
 }
+
+/*NEW*/
+bool Solver::add_AtMost(vector<Lit>& ps, int k) {
+    assert(ok);
+    assert(decisionLevel() == 0);
+
+    if (!addClauseHelper(ps)) {
+        return false;
+    }
+
+    std::sort(ps.begin(), ps.end());
+    
+    Lit p = lit_Undef;
+    uint32_t i, j;
+    for (i = j = 0; i < ps.size(); i++) {
+        if (value(ps[i]) == l_True) {
+            // Already true: leave it out and decrement the bound
+            k--;
+        }
+        else if (value(ps[i]) == l_False) {
+            // Already false: left out, but bound unchanged
+            continue;
+        }
+        else if (ps[i] == ~p) {
+            // Opposite literals: leave both out and decrement the bound by one
+            //                    (exactly one of the two will be true)
+            j--;    // remove the last literal kept
+            if (j > 0) {
+                p = ps[j-1];
+            }
+            else {
+                p = lit_Undef;
+            }
+            k--;
+        }
+        else {
+            // Keep this one.
+            ps[j++] = p = ps[i];
+        }
+    }
+    ps.resize(ps.size() - (i - j));
+
+    // Check if constraint is satisfied
+    if (k >= (int)ps.size()) {
+        return true;
+    }
+
+    // Check if constraint is falsified
+    if (k < 0) {
+        return ok = false;
+    }
+
+    // Check if constraint is actually a clause
+    // and add it as a clause for efficiency
+    if (k == (int)ps.size()-1) {
+        for (i = 0 ; i < ps.size() ; i++) {
+            ps[i] = ~ps[i];
+        }
+        return addClauseInt(ps);
+    }
+    
+    // Propagate negation of remaining literals if already at bound
+    if (k == 0) {
+        for (i = 0; i < ps.size(); i++) {
+            if (i == 0 || ps[i] != ps[i-1]) {
+                enqueue(~ps[i]);
+            }
+        }
+        return ok = (propagate<true>().isNULL());
+    }
+
+    // Allocate a Clause in cl_alloc for this AtMost
+    Clause* c = cl_alloc.Clause_new(ps, sumConflicts, true);
+    c->set_atmost_nw(ps.size() - k + 1);  // n-k+1 : AtMost k of n needs n-k+1 watchers
+    ClOffset offset = cl_alloc.get_offset(c);
+    longIrredCls.push_back(offset); /*QUESTION*/
+
+    // Set watchers
+    attachClause(*c);
+
+    return true;
+}
+/*NEW*/
 
 unsigned Solver::num_bits_set(const size_t x, const unsigned max_size) const
 {
@@ -514,12 +594,28 @@ void Solver::attach_bin_clause(
 
 void Solver::detachClause(const Clause& cl, const bool removeDrat)
 {
-    if (removeDrat) {
-        *drat << del << cl << fin;
+    /*NEW*/
+    if (cl.is_atmost()) {
+        PropEngine::detach_AtMost(&cl);
+        // Don't leave pointers to free'd memory! /*QUESTION*/
+        /*for (int i = 0 ; i < cl.atmost_watches() ; i++) {
+            // duplicating locked(c) but for the AtMost
+            if (value(cl[i]) == l_False && reason(var(cl[i])) != CRef_Undef && ca.lea(reason(var(cl[i]))) == &cl) {
+                vardata[var(cl[i])].reason = CRef_Undef;
+            }
+        }*/
     }
+    else {
+    /*NEW*/
+        if (removeDrat) {
+            *drat << del << cl << fin;
+        }
 
-    assert(cl.size() > 2);
-    detach_modified_clause(cl[0], cl[1], cl.size(), &cl);
+        assert(cl.size() > 2);
+        // Don't leave pointers to free'd memory!
+        /*if (locked(c)) vardata[var(c[0])].reason = CRef_Undef;*/ /*QUESTION*/
+        detach_modified_clause(cl[0], cl[1], cl.size(), &cl);
+    }
 }
 
 void Solver::detachClause(const ClOffset offset, const bool removeDrat)
@@ -1881,10 +1977,6 @@ lbool Solver::execute_inprocess_strategy(
             if (conf.do_distill_clauses) {
                 distill_long_cls->distill(false);
             }
-        } else if (token == "str-impl") {
-            if (conf.doStrSubImplicit) {
-                dist_impl_with_impl->str_impl_w_impl();
-            }
         } else if (token == "cl-consolidate") {
             cl_alloc.consolidate(this, false, true);
         } else if (token == "renumber" || token == "must-renumber") {
@@ -2463,7 +2555,6 @@ void Solver::print_mem_stats() const
 
     mem = distill_long_cls->mem_used();
     mem += dist_long_with_impl->mem_used();
-    mem += dist_impl_with_impl->mem_used();
     print_stats_line("c Mem for 3 distills"
         , mem/(1024UL*1024UL)
         , "MB"
@@ -2924,7 +3015,7 @@ unsigned long Solver::get_sql_id() const
     return sqlStats->get_runID();
 }
 
-bool Solver::add_clause_outer(const vector<Lit>& lits, bool red)
+bool Solver::add_clause_outer(const vector<Lit>& lits, /*NEW*/ bool isAtmost, int32_t bound /*NEW*/, bool red)
 {
     if (!ok) {
         return false;
@@ -2933,7 +3024,14 @@ bool Solver::add_clause_outer(const vector<Lit>& lits, bool red)
     check_too_large_variable_number(lits);
     #endif
     back_number_from_outside_to_outer(lits);
-    return addClauseInt(back_number_from_outside_to_outer_tmp, red);
+    /*NEW*/
+    if(isAtmost) {
+        return add_AtMost(back_number_from_outside_to_outer_tmp, bound);
+    }
+    else {
+    /*NEW*/
+        return addClauseInt(back_number_from_outside_to_outer_tmp, red);
+    }
 }
 
 bool Solver::add_xor_clause_outer(const vector<uint32_t>& vars, bool rhs)

@@ -448,7 +448,7 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
             }
             break;
         }
-
+        /*NEW*/case atmost_t : /*NEW*/
         case clause_t : {
             cl = cl_alloc.ptr(confl.get_offset());
             if (cl->red()) {
@@ -520,6 +520,14 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                     cont = false;
                 }
                 break;
+            /*NEW*/
+            case atmost_t :
+                x= ~(*cl)[i];
+                if (i == cl->size()-1) {
+                    cont = false;
+                }
+                break;
+            /*NEW*/
             case null_clause_t:
                 assert(false);
         }

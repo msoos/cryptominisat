@@ -33,7 +33,7 @@ THE SOFTWARE.
 
 namespace CMSat {
 
-enum PropByType {null_clause_t = 0, clause_t = 1, binary_t = 2};
+enum PropByType {null_clause_t = 0, clause_t = 1, binary_t = 2, /*NEW*/ atmost_t = 3 /*NEW*/};
 
 class PropBy
 {
@@ -55,18 +55,20 @@ class PropBy
             , data2(0)
         {}
 
-        //Normal clause prop
-        explicit PropBy(const ClOffset offset) :
+        /*NEW*/
+        //Normal and AtMost clause prop
+        explicit PropBy(const ClOffset offset, bool isAtmost = false) :
             red_step(0)
             , data1(offset)
-            , type(clause_t)
+            , type(isAtmost ? atmost_t : clause_t)
             , data2(0)
         {
             //No roll-over
-            /*#ifdef DEBUG_PROPAGATEFROM
-            assert(offset == get_offset());
-            #endif*/
+             /*#ifdef DEBUG_PROPAGATEFROM
+             assert(offset == get_offset());
+             #endif*/
         }
+        /*NEW*/
 
         //Binary prop
         PropBy(const Lit lit, const bool redStep) :

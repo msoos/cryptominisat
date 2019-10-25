@@ -58,7 +58,7 @@ class ClauseAllocator {
         ~ClauseAllocator();
 
         template<class T>
-        Clause* Clause_new(const T& ps, const uint32_t conflictNum
+        Clause* Clause_new(const T& ps, const uint32_t conflictNum, /*NEW*/ bool isAtmost = false /*NEW*/
             #ifdef STATS_NEEDED
             , const int64_t ID
             #endif
@@ -68,7 +68,7 @@ class ClauseAllocator {
             }
 
             void* mem = allocEnough(ps.size());
-            Clause* real = new (mem) Clause(ps, conflictNum
+            Clause* real = new (mem) Clause(ps, conflictNum, /*NEW*/ isAtmost /*NEW*/
             #ifdef STATS_NEEDED
             , ID
             #endif

@@ -85,7 +85,6 @@ set(cryptoms_lib_files
     solverconf.cpp
     distillerlong.cpp
     distillerlongwithimpl.cpp
-    str_impl_w_impl.cpp
     solutionextender.cpp
     completedetachreattacher.cpp
     searcher.cpp

@@ -66,6 +66,11 @@ class DimacsParser
 
         //Stat
         size_t lineNum;
+        /*NEW*/
+        bool isCardConst;
+        bool isAtLeast;
+        int32_t bound;
+        /*NEW*/
 
         //Printing partial solutions to debugLibPart1..N.output when "debugLib" is set to TRUE
         uint32_t debugLibPart = 1;
@@ -82,6 +87,7 @@ class DimacsParser
 
         size_t norm_clauses_added = 0;
         size_t xor_clauses_added = 0;
+        /*NEW*/ size_t card_constraints_added = 0; /*NEW*/
 };
 
 #include <sstream>
@@ -122,9 +128,31 @@ std::string DimacsParser<C>::stringify(uint32_t x) const
 template<class C>
 bool DimacsParser<C>::readClause(C& in)
 {
+    /*NEW*/
+    isCardConst = false;
+    isAtLeast = false;
+    bound = 0;
+    /*NEW*/
     int32_t parsed_lit;
     uint32_t var;
     for (;;) {
+        /*NEW*/
+        if ((isAtLeast = in.checkForChar('>')) || in.checkForChar('<')) {
+            isCardConst = true;
+            if(!in.checkForChar('=')) {
+                std::cerr
+                << "PARSE ERROR!" "At line " << lineNum
+                << " we expected an equals sign"
+                << std::endl;
+                return false;
+            }
+            else if (!in.parseInt(bound, lineNum)) {
+                return false;
+            }
+            return true;
+        }
+        /*NEW*/
+        
         if (!in.parseInt(parsed_lit, lineNum)) {
             return false;
         }
@@ -403,8 +431,22 @@ bool DimacsParser<C>::parse_and_add_clause(C& in)
         return false;
     }
     lineNum++;
+    /*NEW*/
+    if (isCardConst) {
+        if (isAtLeast) {
+            bound = lits.size() - bound;
+            for (uint32_t i = 0; i < lits.size() ; i++) {
+                lits[i] = ~lits[i];
+            }
+        }
+        solver->add_clause(lits, true, bound);
+        card_constraints_added++;
+    }
+    /*NEW*/
+    else {
     solver->add_clause(lits);
     norm_clauses_added++;
+    }
     return true;
 }
 
@@ -498,10 +540,10 @@ bool DimacsParser<C>::parse_DIMACS(T input_stream, const bool _strict_header)
     if ( !parse_DIMACS_main(in)) {
         return false;
     }
-
     if (verbosity) {
         cout
         << "c -- clauses added: " << norm_clauses_added << endl
+        /*NEW*/<< "c -- cardinality constraints added: " << card_constraints_added << endl /*NEW*/
         << "c -- xor clauses added: " << xor_clauses_added << endl
         << "c -- vars added " << (solver->nVars() - origNumVars)
         << endl;

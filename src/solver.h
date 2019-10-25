@@ -83,8 +83,12 @@ class Solver : public Searcher
         const vector<std::pair<string, string> >& get_sql_tags() const;
         void new_external_var();
         void new_external_vars(size_t n);
-        bool add_clause_outer(const vector<Lit>& lits, bool red = false);
+        bool add_clause_outer(const vector<Lit>& lits, /*NEW*/ bool isAtmost = false, int32_t bound = 0 /*NEW*/, bool red = false);
         bool add_xor_clause_outer(const vector<uint32_t>& vars, bool rhs);
+
+        /*NEW*/
+        bool add_AtMost(vector<Lit>& ps, int k);     // Add an AtMost cardinality constraint to the solver. Will change the passed vector 'ps'.
+        /*NEW*/
 
         lbool solve_with_assumptions(const vector<Lit>* _assumptions, bool only_indep_solution);
         lbool simplify_with_assumptions(const vector<Lit>* _assumptions = NULL);
@@ -574,6 +578,7 @@ inline bool Solver::get_decision_reaching_valid() const
 {
     return decisions_reaching_model_valid;
 }
+
 
 } //end namespace
 
