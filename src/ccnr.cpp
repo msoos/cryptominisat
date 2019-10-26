@@ -379,7 +379,10 @@ void ls_solver::initialize_variable_datas()
     }
     //the virtual var 0
     vp = &(_vars[0]);
-    vp->score = vp->cc_value = vp->is_in_ccd_vars = vp->last_flip_step = 0;
+    vp->score = 0;
+    vp->cc_value = 0;
+    vp->is_in_ccd_vars = 0;
+    vp->last_flip_step = 0;
 }
 
 
@@ -405,7 +408,7 @@ int ls_solver::pick_var()
     //----------------------------------------
     if (_aspiration) {
         _aspiration_score = _avg_clause_weight;
-        int i;
+        size_t i;
         for (i = 0; i < _unsat_vars.size(); ++i) {
             int v = _unsat_vars[i];
             if (_vars[v].score > _aspiration_score) {
@@ -433,7 +436,7 @@ int ls_solver::pick_var()
     int c = _unsat_clauses[_random_gen.next(_unsat_clauses.size())];
     clause *cp = &(_clauses[c]);
     best_var = cp->literals[0].var_num;
-    for (int k = 1; k < cp->literals.size(); k++) {
+    for (size_t k = 1; k < cp->literals.size(); k++) {
         int v = cp->literals[k].var_num;
         if (_vars[v].score > _vars[best_var].score) {
             best_var = v;
