@@ -19,32 +19,60 @@
 # 02110-1301, USA.
 
 import collections
+import sys
+
+toaddheader = []
+toaddval = []
+for x in range(1, len(sys.argv)):
+    if x % 2 == 1:
+        toaddheader.append(sys.argv[x])
+    else:
+        toaddval.append(sys.argv[x])
+
+
+infilenames = []
+infilenames.append("signals.csv")
+infilenames.append("times.csv")
 
 infiles = []
-infiles.append(open("memout.csv", "r"))
-infiles.append(open("signals.csv", "r"))
-infiles.append(open("solveTimes_rev.csv", "r"))
-infiles.append(open("solved_sol.csv", "r"))
-infiles.append(open("walksat.csv", "r"))
-allfiles = open("allFiles.csv", "r")
+for x in infilenames:
+    infiles.append(open(x, "r"))
+allfiles = open("allfiles.csv", "r")
 files = {}
 for l in allfiles:
     l = l.strip()
-    files[l] = []
+    files[l] = {}
 
-for f in infiles:
+for f,fname in zip(infiles, infilenames):
     for l in f:
         l = l.strip()
         l = l.split(" ")
 
         # print("appending to %s : %s" % (l[0], l[1]))
-        files[l[0]].append(l[1])
+        files[l[0]][fname] = l[1]
 
-print("fname,memout,signal,time,res,walksat")
+toprint = "fname,"
+for x in range(len(infilenames)):
+    toprint += infilenames[x].replace(".csv", "")
+    if x+1 < len(infilenames):
+        toprint += ","
+
+for x in toaddheader:
+    toprint+=","+x
+
+print(toprint)
+
 od = collections.OrderedDict(sorted(files.items()))
 for k, v in od.items():
     toprint = ""
-    for datpoint in v:
-        toprint += "%s," % datpoint
+    for fname in infilenames:
+        if fname in v:
+            toprint += "%s," % v[fname]
+        else:
+            toprint += "?,"
+
+    for x in toaddval:
+        toprint+= x + ","
+
     toprint = toprint.rstrip(",")
     print("%s,%s" % (k, toprint))
