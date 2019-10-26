@@ -31,7 +31,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Variable activities
         var_inc_vsids(1)
         , var_decay_vsids(0.95)
-        , do_full_random_branch(0)
         , polarity_mode(PolarityMode::polarmode_automatic)
 
         //Clause cleaning
