@@ -581,18 +581,12 @@ DLL_PUBLIC void SATSolver::set_no_simplify_at_startup()
 
 DLL_PUBLIC void SATSolver::set_no_equivalent_lit_replacement()
 {
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
-        s.conf.doFindAndReplaceEqLits = false;
-    }
+    set_scc(0);
 }
 
 DLL_PUBLIC void SATSolver::set_no_bva()
 {
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
-        s.conf.do_bva = false;
-    }
+    set_bva(0);
 }
 
 DLL_PUBLIC void SATSolver::set_no_bve()
@@ -1067,13 +1061,13 @@ DLL_PUBLIC std::vector<std::pair<Lit, Lit> > SATSolver::get_all_binary_xors() co
 }
 
 DLL_PUBLIC vector<std::pair<vector<uint32_t>, bool> >
-SATSolver::get_recovered_xors(bool elongate) const
+SATSolver::get_recovered_xors(bool xor_together_xors) const
 {
     vector<std::pair<vector<uint32_t>, bool> > ret;
     Solver& s = *data->solvers[0];
 
     std::pair<vector<uint32_t>, bool> tmp;
-    vector<Xor> xors = s.get_recovered_xors(elongate);
+    vector<Xor> xors = s.get_recovered_xors(xor_together_xors);
     for(const auto& x: xors) {
         tmp.first = x.get_vars();
         tmp.second = x.rhs;
@@ -1183,8 +1177,9 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
         SolverConf conf = data->solvers[i]->getConf();
         conf.gaussconf.max_num_matrices = 2;
         conf.gaussconf.autodisable = false;
-        conf.global_multiplier_multiplier_max = 3;
+        conf.global_multiplier_multiplier_max = 1;
         conf.global_timeout_multiplier_multiplier = 1.5;
+        //conf.xor_detach_reattach = false;
         uint32_t xor_cut = 4;
         assert(xor_cut >= 3);
         conf.xor_var_per_cut = xor_cut-2;
@@ -1194,6 +1189,8 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
         conf.restartType = Restart::geom;
         conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
         conf.maple = 0;
+        conf.xor_detach_verb = 1;
+        conf.bva_every_n = 1;
         conf.do_simplify_problem = true;
         data->solvers[i]->setConf(conf);
     }
@@ -1254,19 +1251,16 @@ DLL_PUBLIC vector<uint32_t> SATSolver::get_var_incidence()
     return data->solvers[data->which_solved]->get_outside_var_incidence();
 }
 
-DLL_PUBLIC void SATSolver::set_no_intree_probe()
+DLL_PUBLIC vector<uint32_t> SATSolver::get_var_incidence_also_red()
 {
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
-        s.conf.doIntreeProbe = false;
-    }
+    return data->solvers[data->which_solved]->get_outside_var_incidence_also_red();
 }
 
-DLL_PUBLIC void SATSolver::set_yes_intree_probe()
+DLL_PUBLIC void SATSolver::set_intree_probe(int val)
 {
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
-        s.conf.doIntreeProbe = true;
+        s.conf.doIntreeProbe = val;
     }
 }
 
@@ -1275,5 +1269,72 @@ DLL_PUBLIC void SATSolver::set_no_confl_needed()
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
         s.conf.conf_needed = false;
+    }
+}
+
+DLL_PUBLIC std::vector<double> SATSolver::get_vsids_scores()
+{
+    return data->solvers[data->which_solved]->get_vsids_scores();
+}
+
+
+DLL_PUBLIC std::vector<Lit> SATSolver::propagated_by(const std::vector<Lit>& t)
+{
+    return data->solvers[data->which_solved]->propagated_by(t);
+}
+
+DLL_PUBLIC void SATSolver::set_full_bve(int val)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.do_full_varelim = val;
+    }
+}
+
+DLL_PUBLIC void SATSolver::set_sls(int val)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.doSLS = val;
+    }
+}
+
+DLL_PUBLIC void SATSolver::reset_vsids()
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.reset_vsids();
+    }
+}
+
+DLL_PUBLIC void SATSolver::set_scc(int val)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.doFindAndReplaceEqLits = val;
+    }
+}
+
+DLL_PUBLIC void SATSolver::set_distill(int val)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.do_distill_clauses = val;
+    }
+}
+
+DLL_PUBLIC void SATSolver::set_bva(int val)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.do_bva = val;
+    }
+}
+
+DLL_PUBLIC void SATSolver::set_full_bve_iter_ratio(double val)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.varElimRatioPerIter = val;
     }
 }

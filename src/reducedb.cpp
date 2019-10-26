@@ -448,7 +448,7 @@ void ReduceDB::handle_lev3_final_predictor()
     delayed_clause_free.clear();
 
     //Stats
-    if (solver->conf.verbosity >= 0) {
+    if (solver->conf.verbosity >= 1) {
         cout
         << "c [DBCL pred]"
         << " del: "    << print_value_kilo_mega(deleted)

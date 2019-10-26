@@ -29,6 +29,9 @@ THE SOFTWARE.
 
 #include "packedrow.h"
 
+// #define VERBOSE_DEBUG
+// #define SLOW_DEBUG
+
 using namespace CMSat;
 
 ///returns popcnt
@@ -42,7 +45,7 @@ uint32_t PackedRow::find_watchVar(
     non_resp_var = std::numeric_limits<uint32_t>::max();
     tmp_clause.clear();
 
-    for(int i = 0; i < size*64 && popcnt < 3; i++) {
+    for(int i = 0; i < size*64; i++) {
         if (this->operator[](i)){
             popcnt++;
             uint32_t var = col_to_var[i];
@@ -118,10 +121,16 @@ gret PackedRow::propGause(
     //cout << "start" << endl;
     //cout << "line: " << *this << endl;
     tmp_col.set_and(*this, cols_unset);
-    uint32_t pop = tmp_col.popcnt();
+    const uint32_t pop = tmp_col.popcnt();
+    #ifdef VERBOSE_DEBUG
+    cout << "POP in GausE: " << pop << " row: " << endl;
+    cout << *this << endl;
+    cout << " cols_unset: " << endl;
+    cout << cols_unset << endl;
+    #endif
 
     //Find new watch
-    if (pop >=2) {
+    if (pop >= 2) {
         for (int i = 0; i < size; i++) if (tmp_col.mp[i]) {
             int64_t tmp = tmp_col.mp[i];
             int at = __builtin_ffsll(tmp);

@@ -307,8 +307,8 @@ class Tester:
             cmd += "--dumpdecformodel %s " % self.decisions_dumpfile
 
         # disable gauss when gauss is compiled in but asked not to be used
-        if not self.this_gauss_on and "autodisablegauss" in self.extra_opts_supported:
-            cmd += "--gauss 0 "
+        #if not self.this_gauss_on and "autodisablegauss" in self.extra_opts_supported:
+            #cmd += "--gauss 0 "
 
         # note, presimp=0 is braindead for preproc but it's mostly 1 so OK
         cmd += "--presimp %d " % random.choice([1]*10+[0])

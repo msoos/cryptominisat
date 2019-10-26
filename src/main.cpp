@@ -777,8 +777,6 @@ void Main::add_supported_options()
 #ifdef USE_GAUSS
     po::options_description gaussOptions("Gauss options");
     gaussOptions.add_options()
-    ("gauss", po::value(&conf.gaussconf.enabled)->default_value(conf.gaussconf.enabled)
-        , "Enable Gauss-Jordan elimination")
      ("maxmatrixrows", po::value(&conf.gaussconf.max_matrix_rows)->default_value(conf.gaussconf.max_matrix_rows)
         , "Set maximum no. of rows for gaussian matrix. Too large matrices"
         "should bee discarded for reasons of efficiency")
@@ -789,6 +787,12 @@ void Main::add_supported_options()
         " matrices are discarded for reasons of efficiency")
     ("maxnummatrices", po::value(&conf.gaussconf.max_num_matrices)->default_value(conf.gaussconf.max_num_matrices)
         , "Maximum number of matrices to treat.")
+    ("detachxor", po::value(&conf.xor_detach_reattach)->default_value(conf.xor_detach_reattach)
+        , "Detach and reattach XORs")
+    ("useallmatrixes", po::value(&conf.force_use_all_matrixes)->default_value(conf.force_use_all_matrixes)
+        , "Force using all matrices")
+    ("detachverb", po::value(&conf.xor_detach_verb)->default_value(conf.xor_detach_verb)
+        , "If set, verbosity for XOR detach code is upped, ignoring normal verbosity")
     ;
 #endif //USE_GAUSS
 

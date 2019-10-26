@@ -33,7 +33,6 @@ THE SOFTWARE.
 #include <limits>
 #include <cmath>
 #include <functional>
-#include <immintrin.h>
 
 
 #include "popcnt.h"
@@ -1347,30 +1346,31 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             if (solver->conf.doFindXors) {
                 XorFinder finder(this, solver);
                 finder.find_xors();
-                vector<Xor> xors = finder.xors;
-                if (!finder.xor_together_xors(xors))
-                    return false;
 
-                vector<Lit> out_changed_occur;
-                solver->ok = finder.add_new_truths_from_xors(xors, &out_changed_occur);
-                if (!solver->ok)
-                    return false;
-
-                #ifdef USE_M4RI
-                if (topLevelGauss != NULL
-                    && solver->conf.doM4RI
-                ) {
-                    xors = finder.remove_xors_without_connecting_vars(xors);
-                    topLevelGauss->toplevelgauss(xors, &out_changed_occur);
-                }
-                #endif
+//                 finder.remove_xors_without_connecting_vars(finder.xors);
+//                 if (!finder.xor_together_xors(finder.xors))
+//                     return false;
+//
+//                 vector<Lit> out_changed_occur;
+//                 solver->ok = finder.add_new_truths_from_xors(finder.xors, &out_changed_occur);
+//                 if (!solver->ok)
+//                     return false;
+//
+//                 finder.remove_xors_without_connecting_vars(finder.xors);
+//                 #ifdef USE_M4RI
+//                 if (topLevelGauss != NULL
+//                     && solver->conf.doM4RI
+//                 ) {
+//                     topLevelGauss->toplevelgauss(finder.xors, &out_changed_occur);
+//                 }
+//                 #endif
                 finder.add_xors_to_solver();
 
                 //these may have changed, recalculating occur
-                for(Lit lit: out_changed_occur) {
-                    n_occurs[lit.toInt()] = calc_occ_data(lit);
-                    n_occurs[(~lit).toInt()] = calc_occ_data(~lit);
-                }
+//                 for(Lit lit: out_changed_occur) {
+//                     n_occurs[lit.toInt()] = calc_occ_data(lit);
+//                     n_occurs[(~lit).toInt()] = calc_occ_data(~lit);
+//                 }
                 runStats.xorTime += finder.get_stats().findTime;
             } else {
                 //TODO this is something VERY fishy
@@ -1387,15 +1387,20 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             //BUG TODO
             //solver->clauseCleaner->clean_implicit_clauses();
         } else if (token == "occ-bve") {
-            if (solver->conf.doVarElim && solver->conf.do_empty_varelim) {
+            if (solver->conf.doVarElim) {
                 solver->xor_clauses_updated = true;
                 solver->xorclauses.clear();
+                solver->xorclauses_unused.clear();
                 #ifdef USE_GAUSS
                 solver->clear_gauss_matrices();
                 #endif
 
-                eliminate_empty_resolvent_vars();
-                eliminate_vars();
+                if (solver->conf.do_empty_varelim) {
+                    eliminate_empty_resolvent_vars();
+                }
+                if (solver->conf.do_full_varelim) {
+                    eliminate_vars();
+                }
             }
         } else if (token == "occ-bva") {
             if (solver->conf.verbosity) {
@@ -1592,6 +1597,7 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
         }
     }
 
+    assert(cl_to_add_ternary.empty());
     for(const Lit l: *cl) {
         if (l == dont_check) {
             continue;
@@ -1606,16 +1612,22 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
     }
 
     //Add new ternary resolvents
-    for(vector<Lit>& newcl: cl_to_add_ternary) {
-
+    vector<Lit> tmp;
+    for(const Tri& newcl: cl_to_add_ternary) {
         ClauseStats stats;
         stats.is_ternary_resol_cl = true;
         stats.glue = solver->conf.glue_put_lev1_if_below_or_eq;
         stats.which_red_array = 1;
         stats.drop_if_not_used = true;
         stats.last_touched = solver->sumConflicts;
+
+        tmp.clear();
+        for(uint32_t i = 0; i < newcl.size; i++) {
+            tmp.push_back(newcl.lits[i]);
+        }
+
         Clause* newCl = solver->add_clause_int(
-            newcl //Literals in new clause
+            tmp //Literals in new clause
             , true //Is the new clause redundant?
             , stats
             , false //Should clause be attached if long?
@@ -1640,7 +1652,7 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
 void OccSimplifier::check_ternary_cl(Clause* cl, ClOffset offs, watch_subarray ws)
 {
     *limit_to_decrease -= ws.size()*2;
-    for (Watched& w: ws) {
+    for (const Watched& w: ws) {
         if (!w.isClause() || w.get_offset() == offs)
             continue;
 
@@ -1681,28 +1693,28 @@ void OccSimplifier::check_ternary_cl(Clause* cl, ClOffset offs, watch_subarray w
                 *limit_to_decrease-=20;
                 runStats.ternary_added_tri++;
 
-                vector<Lit> newcl;
+                Tri newcl;
                 for(Lit l: *cl) {
                     if (l.var() != lit_clash.var())
-                        newcl.push_back(l);
+                        newcl.lits[newcl.size++] = l;
                 }
                 for(Lit l: *cl2) {
                     if (l.var() != lit_clash.var()
                         && !seen[l.toInt()]
                     ) {
-                        newcl.push_back(l);
+                        newcl.lits[newcl.size++] = l;
                     }
                 }
 
-                if (newcl.size() == 2) {
-                    runStats.ternary_added_bin++;
-                    solver->attach_bin_clause(newcl[0], newcl[1], true);
-                } else {
-                    assert(newcl.size() == 3);
-                    runStats.ternary_added_tri++;
+                if (newcl.size == 2 || newcl.size == 3) {
+                    if (newcl.size == 2) {
+                        runStats.ternary_added_bin++;
+                    } else {
+                        assert(newcl.size == 3);
+                        runStats.ternary_added_tri++;
+                    }
                     cl_to_add_ternary.push_back(newcl);
                 }
-                //cout << "tri: " << *cl << " , " << *cl2 << " Resolve on: " << lit_clash << endl;
             }
         }
     }
@@ -1710,6 +1722,7 @@ void OccSimplifier::check_ternary_cl(Clause* cl, ClOffset offs, watch_subarray w
 
 bool OccSimplifier::backward_sub_str()
 {
+    auto backup = subsumption_time_limit /= 2;
     limit_to_decrease = &subsumption_time_limit;
     assert(cl_to_free_later.empty());
     assert(solver->watches.get_smudged_list().empty());
@@ -1720,10 +1733,12 @@ bool OccSimplifier::backward_sub_str()
         goto end;
     }
 
+    subsumption_time_limit = backup;
     sub_str->backw_sub_long_with_long();
     if (solver->must_interrupt_asap())
         goto end;
 
+    subsumption_time_limit = backup/2;
     limit_to_decrease = &strengthening_time_limit;
     if (!sub_str->backw_str_long_with_long()
         || solver->must_interrupt_asap()
@@ -2949,7 +2964,7 @@ int OccSimplifier::check_empty_resolvent_action(
 
                 //this "if" is only here to avoid undefined shift-up error by
                 //clang sanitizer
-                if (action == ResolvCount::set) {
+                if (action == ResolvCount::set && numCls < 15) {
                     at = at << 1U;
                 }
                 numCls++;
@@ -2992,7 +3007,7 @@ int OccSimplifier::check_empty_resolvent_action(
                 }
                 //this "if" is only here to avoid undefined shift-up error by
                 //clang sanitizer
-                if (action == ResolvCount::set) {
+                if (action == ResolvCount::set && numCls < 15) {
                     at = at << 1U;
                 }
                 numCls++;

@@ -162,6 +162,7 @@ bool CompHandler::handle()
     }
 
     solver->xorclauses.clear();
+    solver->xorclauses_unused.clear();
     #ifdef USE_GAUSS
     solver->clear_gauss_matrices();
     #endif

@@ -104,8 +104,10 @@ class Solver : public Searcher
         const vector<Lit>& get_decisions_reaching_model() const;
         const vector<Lit>& get_final_conflict() const;
         vector<pair<Lit, Lit> > get_all_binary_xors() const;
-        vector<Xor> get_recovered_xors(bool elongate);
+        vector<Xor> get_recovered_xors(const bool xor_together_xors);
         bool get_decision_reaching_valid() const;
+        vector<double> get_vsids_scores() const;
+        vector<Lit> propagated_by(const std::vector<Lit>& t);
 
         //get learnt clauses
         void start_getting_small_clauses(uint32_t max_len, uint32_t max_glue);
@@ -141,6 +143,7 @@ class Solver : public Searcher
         void add_in_partial_solving_stats();
         void check_implicit_stats(const bool onlypairs = false) const;
         void check_stats(const bool allowFreed = false) const;
+        void reset_vsids();
 
 
         //Checks
@@ -254,11 +257,19 @@ class Solver : public Searcher
 
         #ifdef USE_GAUSS
         bool init_all_matrices();
+        void detach_xor_clauses(
+            const set<uint32_t>& clash_vars_unused
+        );
+        bool attach_xor_clauses();
+        void extend_model_to_detached_xors();
+        void unset_clash_decision_vars(const vector<Xor>& xors);
+        void set_clash_decision_vars();
         bool find_and_init_all_matrices();
         #endif
 
         //assumptions
         void set_assumptions();
+        vector<Lit> inter_assumptions_tmp; //used by set_assumptions() ONLY
         void add_assumption(const Lit assump);
         void check_assigns_for_assumptions() const;
         bool check_assumptions_contradict_foced_assignement() const;
@@ -372,6 +383,7 @@ class Solver : public Searcher
         void renumber_clauses(const vector<uint32_t>& outerToInter);
         void test_renumbering() const;
         bool clean_xor_clauses_from_duplicate_and_set_vars();
+        bool update_vars_of_xors(vector<Xor>& xors);
 
         /////////////////////////////
         // SAT solution verification
@@ -479,8 +491,10 @@ inline vector<uint32_t> Solver::xor_outer_numbered(const T& cl) const
 
 inline void Solver::move_to_outside_assumps(const vector<Lit>* assumps)
 {
-    outside_assumptions.clear();
+
     if (assumps) {
+        #ifdef SLOW_DEBUG
+        outside_assumptions.clear();
         for(const Lit lit: *assumps) {
             if (lit.var() >= nVarsOutside()) {
                 std::cerr << "ERROR: Assumption variable " << (lit.var()+1)
@@ -491,6 +505,12 @@ inline void Solver::move_to_outside_assumps(const vector<Lit>* assumps)
             }
             outside_assumptions.push_back(lit);
         }
+        #else
+        outside_assumptions.resize(assumps->size());
+        mempcpy(outside_assumptions.data(), assumps->data(), sizeof(Lit)*assumps->size());
+        #endif
+    } else {
+        outside_assumptions.clear();
     }
 }
 

@@ -297,7 +297,21 @@ private:
     //Ternary resolution
     bool perform_ternary(Clause* cl, ClOffset offs);
     void check_ternary_cl(Clause* cl, ClOffset offs, watch_subarray ws);
-    vector<vector<Lit>> cl_to_add_ternary;
+    struct Tri {
+        Lit lits[3];
+        uint32_t size = 0;
+
+        Tri () :
+            size(0)
+        {}
+
+        Tri(const Tri & other)
+        {
+            memcpy(lits, other.lits, sizeof(Lit)*3);
+            size = other.size;
+        }
+    };
+    vector<Tri> cl_to_add_ternary;
 
     //debug
     bool subsetReverse(const Clause& B) const;

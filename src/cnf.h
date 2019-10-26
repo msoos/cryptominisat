@@ -46,6 +46,9 @@ namespace CMSat {
 class ClauseAllocator;
 
 struct AssumptionPair {
+    AssumptionPair()
+    {}
+
     AssumptionPair(const Lit _outer, const Lit _outside):
         lit_outer(_outer)
         , lit_orig_outside(_outside)
@@ -155,7 +158,6 @@ public:
 
     //Clauses
     vector<ClOffset> longIrredCls;
-    vector<ClOffset> gauss_tmp_cls;
 
     //if the solver object only saw add_clause and new_var(s)
     bool fresh_solver = true;
@@ -166,7 +168,10 @@ public:
     level 2 = check often
     **/
     vector<vector<ClOffset> > longRedCls;
+    vector<ClOffset> detached_xor_repr_cls; //these are still in longIrredCls
     vector<Xor> xorclauses;
+    vector<Xor> xorclauses_unused;
+    bool detached_xor_clauses = false;
     bool xor_clauses_updated = false;
     BinTriStats binTri;
     LitStats litStats;
@@ -294,6 +299,7 @@ public:
         return num_bva_vars;
     }
     vector<uint32_t> get_outside_var_incidence();
+    vector<uint32_t> get_outside_var_incidence_also_red();
 
     vector<uint32_t> build_outer_to_without_bva_map() const;
     void clean_occur_from_removed_clauses();
@@ -328,12 +334,6 @@ protected:
     virtual void new_var(const bool bva, const uint32_t orig_outer);
     virtual void new_vars(const size_t n);
     void test_reflectivity_of_renumbering() const;
-    vector<lbool> back_number_solution_from_inter_to_outer(const vector<lbool>& solution) const
-    {
-        vector<lbool> back_numbered = solution;
-        updateArrayRev(back_numbered, interToOuterMain);
-        return back_numbered;
-    }
 
     template<class T>
     vector<T> map_back_vars_to_without_bva(const vector<T>& val) const;

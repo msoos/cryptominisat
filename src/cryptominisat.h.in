@@ -109,9 +109,15 @@ namespace CMSat {
         void set_need_decisions_reaching(); //set it before calling solve()
         bool get_decision_reaching_valid() const; //the get_decisions_reaching_model will work -- it may NOT be
         void set_single_run(); //we promise to call solve() EXACTLY once
-        void set_no_intree_probe();
-        void set_yes_intree_probe();
-        void set_no_confl_needed(); //conflict will NOT be calculated for next solve run
+        void set_intree_probe(int val);
+        void set_sls(int val);
+        void set_full_bve(int val);
+        void set_full_bve_iter_ratio(double val);
+        void set_scc(int val);
+        void set_bva(int val);
+        void set_distill(int val);
+        void reset_vsids();
+        void set_no_confl_needed(); //assumptions-based conflict will NOT be calculated for next solve run
 
 
         ////////////////////////////
@@ -160,8 +166,11 @@ namespace CMSat {
 
         //////////////////////
         // EXPERIMENTAL
-        std::vector<std::pair<std::vector<uint32_t>, bool> > get_recovered_xors(bool elongate) const; //get XORs recovered. If "elongate" is TRUE, then variables shared ONLY by two XORs will be XORed together
+        std::vector<std::pair<std::vector<uint32_t>, bool> > get_recovered_xors(bool xor_together_xors) const; //get XORs recovered. If "xor_together_xors" is TRUE, then xors that share a variable (and ONLY they share them) will be XORed together
         std::vector<uint32_t> get_var_incidence();
+        std::vector<uint32_t> get_var_incidence_also_red();
+        std::vector<double> get_vsids_scores();
+        std::vector<Lit> propagated_by(const std::vector<Lit>& t);
 
         //////////////////////
         //Below must be done in-order. Multi-threading not allowed.

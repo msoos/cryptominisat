@@ -295,10 +295,11 @@ void ClauseAllocator::consolidate(
         move_one_watchlist(ws, newDataStart, new_ptr);
     }
 
-    update_offsets(solver->longIrredCls);
+    update_offsets(solver->longIrredCls, newDataStart, new_ptr);
     for(auto& lredcls: solver->longRedCls) {
-        update_offsets(lredcls);
+        update_offsets(lredcls, newDataStart, new_ptr);
     }
+    update_offsets(solver->detached_xor_repr_cls, newDataStart, new_ptr);
 
     //Fix up propBy
     for (size_t i = 0; i < solver->nVars(); i++) {
@@ -356,16 +357,23 @@ void ClauseAllocator::consolidate(
 }
 
 void ClauseAllocator::update_offsets(
-    vector<ClOffset>& offsets
+    vector<ClOffset>& offsets,
+    ClOffset* newDataStart,
+    ClOffset*& new_ptr
 ) {
 
     for(ClOffset& offs: offsets) {
         Clause* old = ptr(offs);
-        assert(old->reloced);
-        offs = (*old)[0].toInt();
-        #ifdef LARGE_OFFSETS
-        offs += ((uint64_t)(*old)[1].toInt())<<32;
-        #endif
+        if (!old->reloced) {
+            assert(old->used_in_xor() && old->used_in_xor_full());
+            assert(old->_xor_is_detached);
+            offs = move_cl(newDataStart, new_ptr, old);
+        } else {
+            offs = (*old)[0].toInt();
+            #ifdef LARGE_OFFSETS
+            offs += ((uint64_t)(*old)[1].toInt())<<32;
+            #endif
+        }
     }
 }
 

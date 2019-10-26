@@ -86,6 +86,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Verbosity
         , verbosity        (0)
+        , xor_detach_verb  (0)
         , doPrintGateDot   (false)
         , print_full_restart_stat   (false)
         , print_all_restarts (false)
@@ -121,8 +122,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doVarElim        (true)
         , varelim_cutoff_too_many_clauses(2000)
         , do_empty_varelim (true)
-        , empty_varelim_time_limitM(200LL)
-        , varelim_time_limitM(250)
+        , empty_varelim_time_limitM(300LL)
+        , varelim_time_limitM(350)
+        , do_full_varelim(true)
         , varelim_sub_str_limit(600)
         , varElimRatioPerIter(1.60)
         , skip_some_bve_resolvents(true) //based on gates
@@ -136,7 +138,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
 
         //Ternary resolution
-        , doTernary(true)
+        , doTernary(false)
         , ternary_res_time_limitM(100)
         , ternary_keep_mult(4)
         , ternary_max_create(0.5)
@@ -163,7 +165,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , bva_also_twolit_diff(false)
         , bva_extra_lit_and_red_start(0)
         , bva_time_limitM(50)
-        , bva_every_n(20)
+        , bva_every_n(1)
 
         //Probing
         , doProbe          (false)
@@ -276,7 +278,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , yalsat_max_mems(40)
         , sls_memoutMB(500)
         , walksat_max_runs(50)
-        , sls_get_phase(1)
+        , sls_get_phase(0)
         , which_sls("ccnr_yalsat")
 
         //Distillation
@@ -314,6 +316,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Gauss
         , doM4RI(true)
+        , xor_detach_reattach(true)
+        , force_use_all_matrixes(false)
 
         //Sampling
         , sampling_vars(NULL)

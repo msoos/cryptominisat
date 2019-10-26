@@ -424,13 +424,11 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
         ) {
             //move to lev0 if very low glue
             cl->stats.which_red_array = 0;
-        } else {
-            //move to lev1 if low glue
-            if (new_glue <= conf.glue_put_lev1_if_below_or_eq
+        } else if (new_glue <= conf.glue_put_lev1_if_below_or_eq
                 && solver->conf.glue_put_lev1_if_below_or_eq != 0
-            ) {
-                cl->stats.which_red_array = 1;
-            }
+        ) {
+            //move to lev1 if low glue
+            cl->stats.which_red_array = 1;
         }
      }
 }
@@ -1327,7 +1325,6 @@ lbool Searcher::search()
                 //cout << "g_cont" << endl;
                 check_need_restart();
                 continue;
-            //TODO conflict should be goto-d to "confl" label
             }
 
             if (ret == gauss_ret::g_false) {
@@ -1409,8 +1406,10 @@ lbool Searcher::new_decision()
     Lit next = lit_Undef;
     while (decisionLevel() < assumptions.size()) {
         // Perform user provided assumption:
-        Lit p = map_outer_to_inter(assumptions[decisionLevel()].lit_outer);
+        const Lit p = map_outer_to_inter(assumptions[decisionLevel()].lit_outer);
+        #ifdef SLOW_DEBUG
         assert(varData[p.var()].removed == Removed::none);
+        #endif
 
         if (value(p) == l_True) {
             // Dummy decision level:
@@ -1667,9 +1666,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl, bool enq)
             stats.learntLongs++;
             solver->attachClause(*cl, enq);
             if (enq) enqueue(learnt_clause[0], PropBy(cl_alloc.get_offset(cl)));
-            for(uint32_t i = 0; i < solver->conf.bump_new_learnt_cls; i++) {
-                bump_cl_act<update_bogoprops>(cl);
-            }
+            bump_cl_act<update_bogoprops>(cl);
 
             #ifdef STATS_NEEDED
             cl->stats.antec_data = antec_data;
@@ -2457,7 +2454,7 @@ bool Searcher::must_abort(const lbool status) {
     if (status != l_Undef) {
         if (conf.verbosity >= 6) {
             cout
-            << "c Returned status of search() is non-l_Undef at confl:"
+            << "c Returned status of search() is " << status << " at confl:"
             << sumConflicts
             << endl;
         }
@@ -2784,7 +2781,7 @@ void Searcher::finish_up_solve(const lbool status)
 {
     print_solution_type(status);
     #ifdef USE_GAUSS
-    if (conf.verbosity) {
+    if (conf.verbosity >= 2) {
         print_matrix_stats();
     }
     #endif
@@ -2810,7 +2807,9 @@ void Searcher::finish_up_solve(const lbool status)
         }
 
         cancelUntil(0);
+        #ifdef SLOW_DEBUG
         print_solution_varreplace_status();
+        #endif
     } else if (status == l_False) {
         if (conflict.size() == 0) {
             ok = false;
@@ -3077,7 +3076,7 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
     #ifdef VERBOSE_DEBUG
     cout << "Gauss searcher::Gauss_elimination called, declevel: " << decisionLevel() << endl;
     #endif
-    if (gqueuedata.empty() || !solver->conf.gaussconf.enabled) {
+    if (gqueuedata.empty()) {
         return gauss_ret::g_nothing;
     }
 
@@ -3090,17 +3089,17 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
         }
         gmatrices[i]->update_cols_vals_set();
 
-        if (solver->conf.gaussconf.autodisable &&
+        if (conf.gaussconf.autodisable &&
+            !conf.xor_detach_reattach &&
             gmatrices[i]->must_disable(gqd, conf.verbosity)
         ) {
             gqd.engaus_disable = true;
         }
     }
-    assert(qhead == trail.size());
     assert(gqhead <= qhead);
 
     bool confl_in_gauss = false;
-    while (gqhead <  qhead
+    while (gqhead <  trail.size()
         && !confl_in_gauss
     ) {
         const Lit p = trail[gqhead++];
@@ -3149,6 +3148,18 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
             }
         }
     }
+
+    #ifdef SLOW_DEBUG
+    if (!confl_in_gauss) {
+        for (size_t g = 0; g < gqueuedata.size(); g++) {
+            if (gqueuedata[g].engaus_disable)
+                continue;
+
+            assert(solver->gqhead == solver->trail.size());
+            gmatrices[g]->check_invariants();
+        }
+    }
+    #endif
 
     gauss_ret finret = gauss_ret::g_nothing;
     for (GaussQData& gqd: gqueuedata) {
@@ -3671,6 +3682,9 @@ void Searcher::cancelUntil(uint32_t level) {
             }
         }
         qhead = trail_lim[level];
+        #ifdef USE_GAUSS
+        gqhead = qhead;
+        #endif
         trail.resize(trail_lim[level]);
         trail_lim.resize(level);
     }
@@ -3747,12 +3761,14 @@ void Searcher::clear_gauss_matrices()
         auto gqd = gqueuedata[i];
         if (solver->conf.verbosity >= 2) {
             cout
-            << "c [gauss] num_props       : "<< print_value_kilo_mega(gqd.num_props) << endl
-            << "c [gauss] num_conflicts   : "<< print_value_kilo_mega(gqd.num_conflicts)  << endl;
+            << "c [mat" << i << "] num_props       : "
+            << print_value_kilo_mega(gqd.num_props) << endl
+            << "c [mat" << i << "] num_conflicts   : "
+            << print_value_kilo_mega(gqd.num_conflicts)  << endl;
         }
     }
 
-    if (solver->conf.verbosity) {
+    if (solver->conf.verbosity >= 2) {
         print_matrix_stats();
     }
     for(EGaussian* g: gmatrices) {

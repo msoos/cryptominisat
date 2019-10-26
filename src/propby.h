@@ -165,7 +165,7 @@ class PropBy
         uint32_t get_matrix_num() const
         {
             #ifdef DEBUG_PROPAGATEFROM
-            assert(type == xor_id);
+            assert(type == xor_t);
             #endif
             return data1;
         }
@@ -173,7 +173,7 @@ class PropBy
         uint32_t get_row_num() const
         {
             #ifdef DEBUG_PROPAGATEFROM
-            assert(type == xor_id);
+            assert(type == xor_t);
             #endif
             return data2;
         }

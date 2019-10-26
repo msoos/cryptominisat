@@ -174,8 +174,13 @@ void ClauseCleaner::clean_clauses_inter(vector<ClOffset>& cs)
     cs.resize(cs.size() - (s-ss));
 }
 
-inline bool ClauseCleaner::clean_clause(Clause& cl)
+bool ClauseCleaner::clean_clause(Clause& cl)
 {
+    //Don't clean if detached. We'll deal with it during re-attach.
+    if (cl._xor_is_detached) {
+        return false;
+    }
+
     assert(cl.size() > 2);
     (*solver->drat) << deldelay << cl << fin;
 
@@ -212,6 +217,8 @@ inline bool ClauseCleaner::clean_clause(Clause& cl)
         solver->drat->forget_delay();
     }
 
+    assert(cl.size() != 0);
+    assert(cl.size() != 1);
     assert(cl.size() > 1);
     assert(solver->value(cl[0]) == l_Undef);
     assert(solver->value(cl[1]) == l_Undef);
@@ -389,4 +396,38 @@ bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors)
         #endif
     }
     return solver->okay();
+}
+
+//returns TRUE if removed or solver is UNSAT
+bool ClauseCleaner::full_clean(Clause& cl)
+{
+    Lit *i = cl.begin();
+    Lit *j = i;
+    for (Lit *end = cl.end(); i != end; i++) {
+        if (solver->value(*i) == l_True) {
+            return true;
+        }
+
+        if (solver->value(*i) == l_Undef) {
+            *j++ = *i;
+        }
+    }
+    cl.shrink(i-j);
+
+    if (cl.size() == 0) {
+        solver->ok = false;
+        return true;
+    }
+
+    if (cl.size() == 1) {
+        solver->enqueue(cl[0]);
+        return true;
+    }
+
+    if (cl.size() == 2) {
+        solver->attach_bin_clause(cl[0], cl[1], cl.red());
+        return true;
+    }
+
+    return false;
 }

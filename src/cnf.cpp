@@ -403,6 +403,19 @@ bool CNF::normClauseIsAttached(const ClOffset offset) const
     attached &= findWCl(watches[cl[0]], offset);
     attached &= findWCl(watches[cl[1]], offset);
 
+    if (detached_xor_clauses && cl._xor_is_detached) {
+        //We expect this NOT to be attached, actually.
+        if (attached) {
+            cout
+            << "Failed. XOR-representing clause is NOT supposed to be attached"
+            << " clause: " << cl
+            << " _xor_is_detached: " << cl._xor_is_detached
+            << " detached_xor_clauses: " << detached_xor_clauses
+            << endl;
+        }
+        return !attached;
+    }
+
     bool satisfied = satisfied_cl(cl);
     uint32_t num_false2 = 0;
     num_false2 += value(cl[0]) == l_False;
@@ -495,25 +508,45 @@ void CNF::find_all_attach(const vector<ClOffset>& cs) const
         ; ++it
     ) {
         Clause& cl = *cl_alloc.ptr(*it);
+        bool should_be_attached = true;
+        if (detached_xor_clauses && cl._xor_is_detached) {
+            should_be_attached = false;
+        }
         bool ret = findWCl(watches[cl[0]], *it);
-        if (!ret) {
+        if (ret != should_be_attached) {
             cout
             << "Clause " << cl
-            << " (red: " << cl.red() << ")"
-            << " doesn't have its 1st watch attached!"
-            << endl;
+            << " (red: " << cl.red()
+            << " used in xor: " << cl.used_in_xor()
+            << " detached xor: " << cl._xor_is_detached
+            << " should be attached: " << should_be_attached
+            << " )";
+            if (ret) {
+                cout << " doesn't have its 1st watch attached!";
+            } else {
+                cout << " HAS its 1st watch attached (but it should NOT)!";
+            }
+            cout << endl;
 
             assert(false);
             std::exit(-1);
         }
 
         ret = findWCl(watches[cl[1]], *it);
-        if (!ret) {
+        if (ret != should_be_attached) {
             cout
             << "Clause " << cl
-            << " (red: " << cl.red() << ")"
-            << " doesn't have its 2nd watch attached!"
-            << endl;
+            << " (red: " << cl.red()
+            << " used in xor: " << cl.used_in_xor()
+            << " detached xor: " << cl._xor_is_detached
+            << " should be attached: " << should_be_attached
+            << " )";
+            if (ret) {
+                cout << " doesn't have its 2nd watch attached!";
+            } else {
+                cout << " HAS its 2nd watch attached (but it should NOT)!";
+            }
+            cout << endl;
 
             assert(false);
             std::exit(-1);
@@ -694,7 +727,7 @@ vector<uint32_t> CNF::get_outside_var_incidence()
     for(uint32_t i = 0; i < nVars()*2; i++) {
         const Lit l = Lit::toLit(i);
         for(const auto& x: watches[l]) {
-            if (x.isBin()) {
+            if (x.isBin() && !x.red()) {
                 inc[x.lit2().var()]++;
                 inc[l.var()]++;
             }
@@ -716,6 +749,52 @@ vector<uint32_t> CNF::get_outside_var_incidence()
     }
 
     //Map to outside
-    vector<uint32_t> inc_outside = map_back_vars_to_without_bva(inc_outer);
-    return inc_outside;
+    if (get_num_bva_vars() != 0) {
+        inc_outer = map_back_vars_to_without_bva(inc_outer);
+    }
+    return inc_outer;
+}
+
+vector<uint32_t> CNF::get_outside_var_incidence_also_red()
+{
+    vector<uint32_t> inc;
+    inc.resize(nVars(), 0);
+    for(uint32_t i = 0; i < nVars()*2; i++) {
+        const Lit l = Lit::toLit(i);
+        for(const auto& x: watches[l]) {
+            if (x.isBin()) {
+                inc[x.lit2().var()]++;
+                inc[l.var()]++;
+            }
+        }
+    }
+
+    for(const auto& offs: longIrredCls) {
+        Clause* cl = cl_alloc.ptr(offs);
+        for(const auto& l: *cl) {
+            inc[l.var()]++;
+        }
+    }
+
+    for(const auto& reds: longRedCls) {
+        for(const auto& offs: reds) {
+            Clause* cl = cl_alloc.ptr(offs);
+            for(const auto& l: *cl) {
+                inc[l.var()]++;
+            }
+        }
+    }
+
+    //Map to outer
+    vector<uint32_t> inc_outer(nVarsOuter(), 0);
+    for(uint32_t i = 0; i < inc.size(); i ++) {
+        uint32_t outer = map_inter_to_outer(i);
+        inc_outer[outer] = inc[i];
+    }
+
+    //Map to outside
+    if (get_num_bva_vars() != 0) {
+        inc_outer = map_back_vars_to_without_bva(inc_outer);
+    }
+    return inc_outer;
 }

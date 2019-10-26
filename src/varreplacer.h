@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include "constants.h"
 #include "solvertypes.h"
 #include "clause.h"
+#include "xor.h"
 #include "watcharray.h"
 #include "simplefile.h"
 
@@ -61,6 +62,7 @@ class VarReplacer
         void extend_model_already_set();
         void extend_model_set_undef();
         void extend_model(const uint32_t var);
+        void extend_pop_queue(vector<Lit>& pop);
 
         uint32_t get_var_replaced_with(const uint32_t var) const;
         uint32_t get_var_replaced_with(const Lit lit) const;
@@ -123,7 +125,7 @@ class VarReplacer
         uint32_t get_var_replaced_with_fast(const uint32_t var) const {
             return fast_inter_replace_lookup[var].var();
         }
-        bool replace_xor_clauses();
+        bool replace_xor_clauses(vector<Xor>& xors);
 
         vector<Lit> ps_tmp;
         bool perform_replace();
@@ -218,9 +220,19 @@ class VarReplacer
         bool update_table_and_reversetable(const Lit lit1, const Lit lit2);
         void setAllThatPointsHereTo(const uint32_t var, const Lit lit);
 
+        ///////////////////
         //Mapping tables
-        vector<Lit> table; ///<Stores which variables have been replaced by which literals. Index by: table[VAR]
-        map<uint32_t, vector<uint32_t> > reverseTable; ///<mapping of variable to set of variables it replaces
+        ///////////////////
+
+        ///Stores which variables have been replaced by which literals.
+        //Everything is OUTER here.
+        //Index by: table[VAR] -> tells us what literal
+        //          Lit(VAR, false) has been replaced with.
+        vector<Lit> table;
+
+        ///mapping of variable to set of variables it replaces
+        //Everything is OUTER here.
+        map<uint32_t, vector<uint32_t> > reverseTable;
 
         //Stats
         void printReplaceStats() const;

@@ -148,7 +148,7 @@ bool DistillerLong::go_through_clauses(
         maxNumProps -= 5;
 
         //If we already tried this clause, then move to next
-        if (cl.getdistilled()) {
+        if (cl.getdistilled() || cl._xor_is_detached) {
             *j++ = *i;
             continue;
         };

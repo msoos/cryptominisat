@@ -31,16 +31,18 @@ THE SOFTWARE.
 #include <algorithm>
 
 using std::vector;
+using std::set;
 
 namespace CMSat {
 
 class Xor
 {
 public:
-    Xor() : rhs(false)
+    Xor()
     {}
+
     template<typename T>
-    Xor(const T& cl, const bool _rhs) :
+    explicit Xor(const T& cl, const bool _rhs) :
         rhs(_rhs)
     {
         for (uint32_t i = 0; i < cl.size(); i++) {
@@ -48,7 +50,7 @@ public:
         }
     }
 
-    Xor(const vector<uint32_t>& _vars, const bool _rhs) :
+    explicit Xor(const vector<uint32_t>& _vars, const bool _rhs) :
         rhs(_rhs)
         , vars(_vars)
     {
@@ -79,22 +81,12 @@ public:
         return vars.end();
     }
 
-    bool operator==(const Xor& other) const
-    {
-        return (rhs == other.rhs && vars == other.vars);
-    }
-
-    bool operator!=(const Xor& other) const
-    {
-        return !operator==(other);
-    }
-
     bool operator<(const Xor& other) const
     {
         uint64_t i = 0;
         while(i < other.size() && i < size()) {
             if (other[i] != vars[i]) {
-                return (other[i] > vars[i]);
+                return (vars[i] < other[i]);
             }
             i++;
         }
@@ -134,9 +126,43 @@ public:
     {
         return vars.size();
     }
-    bool rhs;
 
-private:
+    bool empty() const
+    {
+        if (!vars.empty())
+            return false;
+
+        if (!clash_vars.empty())
+            return false;
+
+        if (rhs != false) {
+            return false;
+        }
+
+        return true;
+    }
+
+    void merge_clash(const Xor& other, vector<uint16_t>& seen) {
+        for(const auto& v: clash_vars) {
+            seen[v] = 1;
+        }
+
+        for(const auto& v: other.clash_vars) {
+            if (!seen[v]) {
+                seen[v] = 1;
+                clash_vars.push_back(v);
+            }
+        }
+
+        for(const auto& v: clash_vars) {
+            seen[v] = 0;
+        }
+    }
+
+
+    bool rhs = false;
+    vector<uint32_t> clash_vars;
+    bool detached = false;
     vector<uint32_t> vars;
 };
 
@@ -149,6 +175,11 @@ inline std::ostream& operator<<(std::ostream& os, const Xor& thisXor)
             os << " + ";
     }
     os << " =  " << std::boolalpha << thisXor.rhs << std::noboolalpha;
+
+    os << " -- clash: ";
+    for(const auto& c: thisXor.clash_vars) {
+        os << c+1 << ", ";
+    }
 
     return os;
 }

@@ -46,6 +46,8 @@ class ClauseCleaner
         void clean_implicit_clauses();
         void remove_and_clean_all();
         bool clean_xor_clauses(vector<Xor>& xors);
+        bool clean_clause(Clause& c);
+        bool full_clean(Clause& cl);
 
     private:
         bool clean_one_xor(Xor& x);
@@ -78,7 +80,6 @@ class ClauseCleaner
         void clean_clauses_inter(vector<ClOffset>& cs);
 
         bool satisfied(const Watched& watched, Lit lit);
-        bool clean_clause(Clause& c);
         vector<ClOffset> delayed_free;
 
         Solver* solver;

@@ -52,6 +52,7 @@ struct gauss : public ::testing::Test {
     std::vector<uint32_t> vars;
     std::atomic<bool> must_inter;
     vector<Xor> xs;
+    bool can_detach;
 };
 
 TEST_F(gauss, min_rows)
@@ -63,7 +64,7 @@ TEST_F(gauss, min_rows)
     s->xor_clauses_updated = true;
     s->xorclauses = xs;
 
-    mf->findMatrixes(false);
+    mf->findMatrixes(can_detach, false);
 
     EXPECT_EQ(s->gmatrices.size(), 1);
 }
@@ -77,7 +78,7 @@ TEST_F(gauss, min_rows_2)
     s->xor_clauses_updated = true;
     s->xorclauses = xs;
 
-    mf->findMatrixes(false);
+    mf->findMatrixes(can_detach, false);
 
     EXPECT_EQ(s->gmatrices.size(), 0);
 }
@@ -91,7 +92,7 @@ TEST_F(gauss, separate_1)
     s->xor_clauses_updated = true;
     s->xorclauses = xs;
 
-    mf->findMatrixes(false);
+    mf->findMatrixes(can_detach, false);
 
     EXPECT_EQ(s->gmatrices.size(), 2);
 }
@@ -110,7 +111,7 @@ TEST_F(gauss, separate_2)
     s->xor_clauses_updated = true;
     s->xorclauses = xs;
 
-    mf->findMatrixes(false);
+    mf->findMatrixes(can_detach, false);
 
     EXPECT_EQ(s->gmatrices.size(), 2);
 }
@@ -133,7 +134,7 @@ TEST_F(gauss, separate_3)
     s->xor_clauses_updated = true;
     s->xorclauses = xs;
 
-    mf->findMatrixes(false);
+    mf->findMatrixes(can_detach, false);
 
     EXPECT_EQ(s->gmatrices.size(), 3);
 }

@@ -65,7 +65,6 @@ class EGaussian {
   public:
       EGaussian(
         Solver* solver,
-        const GaussConf& config,
         const uint32_t matrix_no,
         const vector<Xor>& xorclauses
     );
@@ -76,7 +75,7 @@ class EGaussian {
     bool  find_truths(
         GaussWatched*& i,
         GaussWatched*& j,
-        uint32_t p,
+        const uint32_t var,
         const uint32_t row_n,
         GaussQData& gqd
     );
@@ -91,21 +90,29 @@ class EGaussian {
     void new_decision_level(uint32_t new_dec_level);
     void canceling();
     bool full_init(bool& created);
-    void update_cols_vals_set();
+    void update_cols_vals_set(bool force = false);
     void print_matrix_stats();
     bool must_disable(const GaussQData& gqd, bool verbose);
+    void check_invariants();
+    void update_matrix_no(uint32_t n);
+    void check_watchlist_sanity();
+    uint32_t get_matrix_no();
 
     vector<Xor> xorclauses;
 
   private:
     Solver* solver;   // orignal sat solver
-    const GaussConf& config;
 
     //Cleanup
     bool clean_xors();
     void clear_gwatches(const uint32_t var);
     void delete_gauss_watch_this_matrix();
     void delete_gausswatch(const uint32_t  row_n);
+
+    //Invariant checks
+    void check_no_prop_or_unsat_rows();
+    void check_tracked_cols_only_one_set();
+    bool check_row_satisfied(const uint32_t row);
 
     //Reason generation
     vector<XorReason> xor_reasons;
@@ -142,7 +149,7 @@ class EGaussian {
     ///////////////
     // Internal data
     ///////////////
-    const uint32_t matrix_no;
+    uint32_t matrix_no;
     bool cancelled_since_val_update = true;
     uint32_t last_val_update = 0;
 
@@ -154,9 +161,9 @@ class EGaussian {
     ///we always WATCH this variable
     vector<char> var_has_resp_row;
 
-    ///row_non_resp_for_var[ROW] gives VAR it's NOT responsible for
+    ///row_to_var_non_resp[ROW] gives VAR it's NOT responsible for
     ///we always WATCH this variable
-    vector<uint32_t> row_non_resp_for_var;
+    vector<uint32_t> row_to_var_non_resp;
 
 
     PackedMatrix mat;
@@ -180,7 +187,7 @@ class EGaussian {
     // Debug
     ///////////////
     void print_matrix();
-    void check_watchlist_sanity();
+    void check_cols_unset_vals();
 };
 
 inline void EGaussian::canceling() {
@@ -232,6 +239,17 @@ inline double EGaussian::get_density()
     }
     return (double)pop/(double)(num_rows*num_cols);
 }
+
+inline void EGaussian::update_matrix_no(uint32_t n)
+{
+    matrix_no = n;
+}
+
+inline uint32_t EGaussian::get_matrix_no()
+{
+    return matrix_no;
+}
+
 
 }
 

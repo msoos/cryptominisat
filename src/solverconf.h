@@ -116,15 +116,13 @@ class GaussConf
     public:
 
     GaussConf() :
-        enabled(1)
-        , autodisable(true)
+        autodisable(false)
         , max_matrix_rows(5000)
         , min_matrix_rows(2)
         , max_num_matrices(5)
     {
     }
 
-    bool enabled;
     bool autodisable;
     uint32_t max_matrix_rows; //The maximum matrix size -- no. of rows
     uint32_t min_matrix_rows; //The minimum matrix size -- no. of rows
@@ -215,7 +213,9 @@ class DLL_PUBLIC SolverConf
         unsigned max_num_lits_more_more_red_min;
 
         //Verbosity
-        int  verbosity;  ///<Verbosity level. 0=silent, 1=some progress report, 2=lots of report, 3 = all report       (default 2)
+        int  verbosity;  ///<Verbosity level 0-2: normal  3+ extreme
+        int  xor_detach_verb; ///to debug XOR detach issues
+
         int  doPrintGateDot; ///< Print DOT file of gates
         int  print_full_restart_stat;
         int  print_all_restarts;
@@ -255,6 +255,7 @@ class DLL_PUBLIC SolverConf
         int      doVarElim;          ///<Perform variable elimination
         uint64_t varelim_cutoff_too_many_clauses;
         int      do_empty_varelim;
+        int      do_full_varelim;
         long long empty_varelim_time_limitM;
         long long varelim_time_limitM;
         long long varelim_sub_str_limit;
@@ -397,6 +398,8 @@ class DLL_PUBLIC SolverConf
         //Gauss
         GaussConf gaussconf;
         bool doM4RI;
+        bool xor_detach_reattach;
+        bool force_use_all_matrixes;
 
         //Sampling
         std::vector<uint32_t>* sampling_vars;
