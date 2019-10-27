@@ -355,6 +355,13 @@ void Main::add_supported_options()
         , "Ratio of glue vs geometric restarts -- more is more glue")
     ;
 
+    po::options_description branchOptions("Branch options");
+    branchOptions.add_options()
+    ("branchchangefreq"
+        , po::value(&conf.branch_strategy_change_everyN)->default_value(conf.branch_strategy_change_everyN)
+        , "Iterate through branch strategies with a cycle time of this many conflicts")
+    ;
+
     std::ostringstream s_incclean;
 
     std::ostringstream s_adjust_low;
@@ -802,6 +809,7 @@ void Main::add_supported_options()
     .add(sqlOptions)
     #endif
     .add(restartOptions)
+    .add(branchOptions)
     #if defined(FINAL_PREDICTOR)
     .add(predictOptions)
     #endif

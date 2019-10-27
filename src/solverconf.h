@@ -202,6 +202,9 @@ class DLL_PUBLIC SolverConf
         double   ratio_glue_geom; //higher the number, the more glue will be done. 2 is 2x glue 1x geom
         int doAlwaysFMinim;
 
+        //Branch strategy
+        unsigned branch_strategy_change_everyN;
+
         //Clause minimisation
         int doRecursiveMinim;
         int doMinimRedMore;  ///<Perform learnt clause minimisation using watchists' binary and tertiary clauses? ("strong minimization" in PrecoSat)

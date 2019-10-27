@@ -74,6 +74,13 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , ratio_glue_geom(5)
         , doAlwaysFMinim(false)
 
+        //branch strategy
+        #ifdef STATS_NEEDED
+        , branch_strategy_change_everyN(15000)
+        #else
+        , branch_strategy_change_everyN(55000)
+        #endif
+
         //Clause minimisation
         , doRecursiveMinim (true)
         , doMinimRedMore(true)

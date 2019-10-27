@@ -82,6 +82,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     mtrand.seed(conf.origSeed);
     hist.setSize(conf.shortTermHistorySize, 5000);
     cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
+    next_change_branch_strategy = _conf->branch_strategy_change_everyN;
 }
 
 Searcher::~Searcher()
@@ -2434,7 +2435,7 @@ void Searcher::adjust_branch_strategy()
     assert(decisionLevel() == 0);
     if (sumConflicts > next_change_branch_strategy) {
         set_branch_strategy(branch_strategy_num++);
-        next_change_branch_strategy = sumConflicts + 15000;
+        next_change_branch_strategy = sumConflicts + conf.branch_strategy_change_everyN;
     }
 }
 
@@ -2522,8 +2523,7 @@ lbool Searcher::solve(
     setup_restart_strategy();
 
     rebuild_all_branch_strategy_setups();
-    set_branch_strategy(branch_strategy_num++);
-    next_change_branch_strategy = sumConflicts + 10000;
+    set_branch_strategy(branch_strategy_num);
     check_calc_satzilla_features(true);
     check_calc_vardist_features(true);
 
