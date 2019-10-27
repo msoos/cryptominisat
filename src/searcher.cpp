@@ -2424,7 +2424,7 @@ void Searcher::set_branch_strategy(const uint32_t iteration_num)
     }
 
     if (conf.verbosity) {
-        cout << "c [branch] strategy: "
+        cout << "c [branch] adjusting to: "
         << branch_type_to_string(branch_strategy) << endl;
     }
 }
@@ -2693,7 +2693,7 @@ void Searcher::adjust_restart_strategy()
             release_assert(false);
     }
 
-    if (conf.verbosity >= 1) {
+    if (conf.verbosity >= 2) {
         cout << "c [restart] adjusting local restart type: "
         << std::left << std::setw(10) << getNameOfRestartType(params.rest_type)
         << " budget: " << std::setw(9) << max_confl_this_phase
