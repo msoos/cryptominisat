@@ -82,7 +82,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     mtrand.seed(conf.origSeed);
     hist.setSize(conf.shortTermHistorySize, 5000);
     cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
-    next_change_branch_strategy = _conf->branch_strategy_change_everyN;
+    next_change_branch_strategy = conf.branch_strategy_change_everyN;
 }
 
 Searcher::~Searcher()
