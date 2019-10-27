@@ -121,9 +121,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doVarElim        (true)
         , varelim_cutoff_too_many_clauses(2000)
         , do_empty_varelim (true)
+        , do_full_varelim(true)
         , empty_varelim_time_limitM(300LL)
         , varelim_time_limitM(350)
-        , do_full_varelim(true)
         , varelim_sub_str_limit(600)
         , varElimRatioPerIter(1.60)
         , skip_some_bve_resolvents(true) //based on gates
