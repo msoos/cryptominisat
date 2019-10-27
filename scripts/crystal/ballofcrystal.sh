@@ -108,7 +108,7 @@ set -x
 ########################
 cd "$FNAME-dir"
 # removed: --decbased 0 --tern 0 --bva 0 --gluecut0 100
-../cryptominisat5 --scc 0 --dumpdecformodel dec_list --sqlitedbover 1 --cldatadumpratio "$RATIO" --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
+../cryptominisat5 --bva 0 --scc 0 --dumpdecformodel dec_list --sqlitedbover 1 --cldatadumpratio "$RATIO" --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
 # --bva 0 --updateglueonanalysis 0 --otfsubsume 0
 grep "c conflicts" cms-pred-run.out
 
@@ -165,8 +165,8 @@ mkdir -p ../../src/predict
 rm -f ../../src/predict/*.h
 
 for CONF in {0..2}; do
-    ../cldata_predict.py short-2-comb.dat --name short --split 0.01 --final --tree --basedir ../../src/predict/ --conf $CONF
-    ../cldata_predict.py long-2-comb.dat  --name long  --split 0.01 --final --tree --basedir ../../src/predict/ --conf $CONF
+    ../cldata_predict.py mydata-min.db-short-conf-$CONF.dat --name short --split 0.01 --final --tree --basedir ../../src/predict/ --conf $CONF
+    ../cldata_predict.py mydata-min.db-long-conf-$CONF.dat  --name long  --split 0.01 --final --tree --basedir ../../src/predict/ --conf $CONF
 done
 )
 exit 0
