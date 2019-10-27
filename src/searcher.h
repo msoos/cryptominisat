@@ -111,7 +111,7 @@ class Searcher : public HyperEngine
         size_t hyper_bin_res_all(const bool check_for_set_values = true);
         std::pair<size_t, size_t> remove_useless_bins(bool except_marked = false);
 
-        ///Returns 0 if not inside, 1 if TRUE and 2 if FALSE
+        ///Returns l_Undef if not inside, l_True/l_False otherwise
         lbool var_inside_assumptions(const uint32_t var) const
         {
             #ifdef SLOW_DEBUG
