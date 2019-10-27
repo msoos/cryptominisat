@@ -2408,7 +2408,7 @@ void Searcher::set_branch_strategy(const uint32_t iteration_num)
     #ifdef STATS_NEEDED
     long modulo = iteration_num % 4;
     #else
-    long modulo = iteration_num % 3;
+    long modulo = iteration_num % 1;
     #endif
     if (modulo == 0) {
         branch_strategy = branch::vsids;
