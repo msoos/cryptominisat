@@ -43,7 +43,7 @@ else:
 def add_computed_features(df):
     print("Relative data...")
     cols = list(df)
-    divide = functools.partial(helper.divide, df=df, cols=cols, verb=options.verbose)
+    divide = functools.partial(helper.divide, df=df, feature3s=cols, verb=options.verbose)
 
     if not options.picktime_only:
         # create "during"
@@ -253,12 +253,6 @@ class Learner:
             labels=False)
 
         df['x.class'] = df['x.class'].astype(str)
-
-        #df["x.class"] = pd.cut(
-            #df["x.num_used"],
-            #bins=[-1000, 1, 10**20],
-            ##bins = [-1000, 20, 10**20],
-            #labels=["%d" % x for x in range(2)])
 
     @staticmethod
     def fix_feat_name(x):

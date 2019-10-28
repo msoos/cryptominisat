@@ -53,21 +53,67 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/\n\n""")
 
-def divide(col, name, df, cols, verb):
+
+def divide(dividend, divisor, df, features, verb):
     """
     to be used like:
     import functools
-    divide = functools.partial(helper.divide, df=df, cols=cols, verb=options.verbose)
+    divide = functools.partial(helper.divide, df=df, features=features, verb=options.verbose)
     """
 
-    # cannot divide by it, feature not present
-    if name not in cols:
-        return
+    # dividend feature not present
+    #if dividend not in features:
+        #return None
+
+    # divisorfeature not present
+    #if divisor not in features:
+        #return None
 
     # divide
     if verb:
-        print("dividing col '%s' with '%s' " % (col, name))
-    df["(" + col + "/" + name + ")"] = df[col].div(df[name]+0.000000001)
+        print("Dividing. dividend: '%s' divisor: '%s' " % (dividend, divisor))
+
+    name = "(" + dividend + "/" + divisor + ")"
+    df[name] = df[dividend].div(df[divisor]+0.000000001)
+    return name
+
+def larger_than(lhs, rhs, df, features, verb):
+    """
+    to be used like:
+    import functools
+    larger_than = functools.partial(helper.larger_than, df=df, features=features, verb=options.verbose)
+    """
+
+    # divide
+    if verb:
+        print("Calulating '%s' >: '%s' " % (lhs, rhs))
+
+    name = "(" + lhs + ">" + rhs + ")"
+    df[name] = (df[lhs] > df[rhs]).astype(int)
+    return name
+
+def add(toadd, df, features, verb):
+    """
+    to be used like:
+    import functools
+    larger_than = functools.partial(helper.larger_than, df=df, features=features, verb=options.verbose)
+    """
+
+    # add
+    if verb:
+        print("Calulating: the feature addition of: %s", toadd)
+
+    name = "("
+    for i in range(1, len(toadd)):
+        name = toadd[i]
+        if i < len(toadd)-1:
+            name+="+"
+    name += ")"
+
+    df[name] = df[toadd[0]]
+    for i in range(1, len(toadd)):
+        df[name] += df[toadd[i]]
+    return name
 
 
 def drop_idxs(conn):

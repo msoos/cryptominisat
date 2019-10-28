@@ -601,12 +601,12 @@ class QueryCls (QueryHelper):
             df_parts.append(self.one_query(q + extra, type_data))
             print("shape for %s: %s" % (extra, df_parts[0].shape))
 
-            self.myformat["limit"] = int(this_limit/3)
+            self.myformat["limit"] = int(this_limit/8)
             extra = " and rdb0.dump_no = 2 "
             df_parts.append(self.one_query(q + extra, type_data))
             print("shape for %s: %s" % (extra, df_parts[1].shape))
 
-            self.myformat["limit"] = int(this_limit/4)
+            self.myformat["limit"] = int(this_limit/8)
             extra = " and rdb0.dump_no > 2 "
             df_parts.append(self.one_query(q + extra, type_data))
             print("shape for %s: %s" % (extra, df_parts[2].shape))
@@ -680,7 +680,7 @@ def one_database(dbfname):
             cleanname = re.sub(r'\.cnf.gz.sqlite$', '', dbfname)
             cleanname = re.sub(r'\.db$', '', dbfname)
             cleanname = re.sub(r'\.sqlitedb$', '', dbfname)
-            cleanname = "{cleanname}-{long_or_short}-conf-{conf}".format(
+            cleanname = "{cleanname}-cldata-{long_or_short}-conf-{conf}".format(
                 cleanname=cleanname,
                 long_or_short=long_or_short,
                 conf=conf)

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 FNAMEOUT="mydata"
-FIXED="8000"
+FIXED="600"
 RATIO="0.99"
 CONF=2
 
@@ -164,10 +164,10 @@ exit 0
 mkdir -p ../../src/predict
 rm -f ../../src/predict/*.h
 
-for CONF in {0..2}; do
-    ../cldata_predict.py mydata-min.db-short-conf-$CONF.dat --name short --split 0.01 --final --tree --basedir ../../src/predict/ --conf $CONF
-    ../cldata_predict.py mydata-min.db-long-conf-$CONF.dat  --name long  --split 0.01 --final --tree --basedir ../../src/predict/ --conf $CONF
-done
+# for CONF in {0..2}; do
+    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-conf-$CONF.dat" --name short --split 0.01 --final --tree --basedir ../../src/predict/ --conf $CONF
+    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-conf-$CONF.dat"  --name long  --split 0.01 --final --tree --basedir ../../src/predict/ --conf $CONF
+# done
 )
 exit 0
 

@@ -37,6 +37,7 @@ import matplotlib.pyplot as plt
 import sklearn.ensemble
 import os
 import helper
+import functools
 ver = sklearn.__version__.split(".")
 if int(ver[1]) < 20:
     from sklearn.cross_validation import train_test_split
@@ -46,23 +47,26 @@ else:
 
 def add_computed_features(df):
     print("Adding computed features...")
+    divide = functools.partial(helper.divide, df=df, features=list(df), verb=options.verbose)
+    larger_than = functools.partial(helper.larger_than, df=df, features=list(df), verb=options.verbose)
+    add = functools.partial(helper.add, df=df, features=list(df), verb=options.verbose)
 
     # relative overlaps
     print("Relative overlaps...")
-    df["cl.antec_num_total_lits_rel"] = df["cl.num_total_lits_antecedents"] / \
-        df["cl.antec_sum_size_hist"]
+    divide("cl.num_total_lits_antecedents", "cl.antec_sum_size_hist")
 
     # ************
     # TODO decision level and branch depth are the same, right???
     # ************
     print("size/glue/trail rel...")
-    df["(cl.trail_depth_level/cl.trail_depth_level_hist)"] = df["cl.trail_depth_level"] / \
-        df["cl.trail_depth_level_hist"]
+    divide("cl.trail_depth_level", "cl.trail_depth_level_hist")
 
-    df["rst_cur.all_props"] = df["rst_cur.propBinRed"] + df["rst_cur.propBinIrred"] + \
-        df["rst_cur.propLongRed"] + df["rst_cur.propLongIrred"]
-    df["(cl.num_total_lits_antecedents/cl.num_antecedents)"] = df["cl.num_total_lits_antecedents"] / \
-        df["cl.num_antecedents"]
+    rst_cur_all_props = add(["rst_cur.propBinRed",
+                            "rst_cur.propBinIrred",
+                            "rst_cur.propLongRed",
+                            "rst_cur.propLongIrred"])
+
+    divide("cl.num_total_lits_antecedents", "cl.num_antecedents")
 
     # sum RDB
     orig_cols = list(df)
@@ -72,17 +76,14 @@ def add_computed_features(df):
             cboth = "("+col+"+"+col2+")"
             df[cboth] = df[col]+df[col2]
 
-    df["rdb0.act_ranking_rel"] = df["rdb0.act_ranking"]/df["rdb0.tot_cls_in_db"]
-    df["rdb1.act_ranking_rel"] = df["rdb1.act_ranking"]/df["rdb1.tot_cls_in_db"]
-    df["(rdb0.act_ranking_rel+rdb1.act_ranking_rel)/2.0)"] = \
-        (df["rdb0.act_ranking_rel"]+df["rdb1.act_ranking_rel"])/2
+    rdb0_act_ranking_rel = divide("rdb0.act_ranking", "rdb0.tot_cls_in_db")
+    rdb1_act_ranking_rel = divide("rdb1.act_ranking", "rdb1.tot_cls_in_db")
+    rdb0_plus_rdb1_ranking_rel = add([rdb0_act_ranking_rel, rdb1_act_ranking_rel])
 
-    df["(rdb0.sum_uip1_used/cl.time_inside_solver)"] = df["rdb0.sum_uip1_used"] / \
-        df["cl.time_inside_solver"]
-    df["(rdb1.sum_uip1_used/cl.time_inside_solver)"] = df["rdb1.sum_uip1_used"] / \
-        df["cl.time_inside_solver"]
+    divide("rdb0.sum_uip1_used", "cl.time_inside_solver")
+    divide("rdb1.sum_uip1_used", "cl.time_inside_solver")
 
-    todiv = [
+    divisors = [
         "cl.size_hist"
         , "cl.glue_hist"
         , "cl.glue"
@@ -97,11 +98,10 @@ def add_computed_features(df):
         , "cl.antec_overlap_hist"
         , "(cl.num_total_lits_antecedents/cl.num_antecedents)"
         , "cl.num_antecedents"
-        , "rdb0.act_ranking_rel"
-        , "rdb1.act_ranking_rel"
+        , rdb0_act_ranking_rel
+        , rdb1_act_ranking_rel
         , "szfeat_cur.var_cl_ratio"
         , "cl.time_inside_solver"
-        #, "rdb1.act_ranking_rel"
         #, "((double)(rdb0.act_ranking_rel+rdb1.act_ranking_rel)/2.0)"
         #, "sqrt(rdb0.act_ranking_rel)"
         #, "sqrt(rdb1.act_ranking_rel)"
@@ -111,24 +111,25 @@ def add_computed_features(df):
         #, "rdb0.act_ranking_top_10"
         ]
 
-    # add SQRT
+    # Thanks to Chai Kian Ming Adam for the idea of using LOG instead of SQRT
+    # add LOG
     if True:
         toadd = []
-        for a in todiv:
-            sqrt_name = "sqrt("+a+")"
-            df[sqrt_name] = df[a].apply(np.sqrt)
-            toadd.append(sqrt_name)
-        todiv.extend(toadd)
+        for divisor in divisors:
+            x = "log2("+divisor+")"
+            df[x] = df[divisor].apply(np.log2)
+            toadd.append(x)
+        divisors.extend(toadd)
 
     # relative data
     cols = list(df)
     for col in cols:
         if ("rdb" in col or "cl." in col or "rst" in col) and "restart_type" not in col:
-            for divper in todiv:
-                df["("+col+"/"+divper+")"] = df[col]/df[divper]
+            for divisor in divisors:
+                divide(col, divisor)
 
-    todiv.extend([
-        "rst_cur.all_props"
+    divisors.extend([
+        rst_cur_all_props
         , "rdb0.last_touched_diff"
         , "rdb0.sum_delta_confl_uip1_used"
         , "rdb0.used_for_uip_creation"
@@ -139,12 +140,12 @@ def add_computed_features(df):
     if False:
         for col in cols:
             if ("rdb" in col or "cl." in col or "rst" in col) and "restart_type" not in col:
-                for divper in todiv:
-                    df["("+col+"_<_"+divper+")"] = (df[col] < df[divper]).astype(int)
+                for divisor in divisors:
+                    larger_than(col, divisor)
 
     # satzilla stuff
     if False:
-        todiv = [
+        divisors = [
             "szfeat_cur.numVars",
             "szfeat_cur.numClauses",
             "szfeat_cur.var_cl_ratio",
@@ -154,12 +155,10 @@ def add_computed_features(df):
         ]
         for col in orig_cols:
             if "szfeat" in col:
-                for divper in todiv:
-                    if "min" not in divper:
-                        df["("+col+"/"+divper+")"] = df[col]/df[divper]
-                        df["("+col+"<"+divper+")"] = (df[col]
-                                                      < df[divper]).astype(int)
-                        pass
+                for divisor in divisors:
+                    if "min" not in divisor:
+                        divide(col, divisor)
+                        larger_than(col, divisor)
 
     # relative RDB
     if True:
@@ -168,22 +167,17 @@ def add_computed_features(df):
             if "rdb0" in col and "restart_type" not in col:
                 rdb0 = col
                 rdb1 = col.replace("rdb0", "rdb1")
-                name_per = col.replace("rdb0", "rdb0_per_rdb1")
-                name_larger = col.replace("rdb0", "rdb0_larger_rdb1")
-                df[name_larger] = (df[rdb0] > df[rdb1]).astype(int)
+                larger_than(rdb0, rdb1)
 
                 raw_col = col.replace("rdb0.", "")
                 if raw_col not in ["propagations_made", "dump_no", "conflicts_made", "used_for_uip_creation", "sum_uip1_used", "clause_looked_at", "sum_delta_confl_uip1_used", "activity_rel", "last_touched_diff", "ttl"]:
                     print(rdb0)
-                    df[name_per] = df[rdb0]/df[rdb1]
+                    divide(rdb0, rdb1)
 
     # smaller-or-greater comparisons
     print("smaller-or-greater comparisons...")
-    df["(cl.antec_sum_size_hist<cl.num_total_lits_antecedents)"] = \
-        (df["cl.antec_sum_size_hist"] < df["cl.num_total_lits_antecedents"]).astype(int)
-
-    df["(cl.antec_overlap_hist<cl.num_overlap_literals)"] = \
-        (df["cl.antec_overlap_hist"] < df["cl.num_overlap_literals"]).astype(int)
+    larger_than("cl.antec_sum_size_hist", "cl.num_total_lits_antecedents")
+    larger_than("cl.antec_overlap_hist", "cl.num_overlap_literals")
 
     # print("flatten/list...")
     #old = set(df.columns.values.flatten().tolist())
@@ -412,7 +406,7 @@ class Learner:
         print("-   Filtered test data   -")
         print("-   Cluster: %04d        -" % self.cluster_no)
         print("--------------------------")
-        for dump_no in [1, 3, 10, 20, 40, None, 1]:
+        for dump_no in [1, 3, 10, 20, 40, None]:
             prec, recall, acc = self.filtered_conf_matrixes(
                 dump_no, test, features, to_predict, clf)
 
@@ -533,7 +527,7 @@ if __name__ == "__main__":
                         dest="only_final", help="Only generate final predictor")
     parser.add_argument("--greedy", default=None, type=int, metavar="TOPN",
                         dest="get_best_topn_feats", help="Greedy Best K top features from the top N features given by '--top N'")
-    parser.add_argument("--top", default=None, type=int, metavar="TOPN",
+    parser.add_argument("--top", default=50, type=int, metavar="TOPN",
                         dest="top_num_features", help="Candidates are top N features for greedy selector")
 
     # type of classifier
