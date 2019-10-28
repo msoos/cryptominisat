@@ -47,6 +47,7 @@ else:
 
 def add_computed_features(df):
     print("Adding computed features...")
+    del df["cl.conflicts"]
     divide = functools.partial(helper.divide, df=df, features=list(df), verb=options.verbose)
     larger_than = functools.partial(helper.larger_than, df=df, features=list(df), verb=options.verbose)
     add = functools.partial(helper.add, df=df, features=list(df), verb=options.verbose)
@@ -124,7 +125,7 @@ def add_computed_features(df):
     # relative data
     cols = list(df)
     for col in cols:
-        if ("rdb" in col or "cl." in col or "rst" in col) and "restart_type" not in col:
+        if ("rdb" in col or "cl." in col or "rst" in col) and "restart_type" not in col and "tot_cls_in" not in col and "rst_cur" not in col:
             for divisor in divisors:
                 divide(col, divisor)
 
