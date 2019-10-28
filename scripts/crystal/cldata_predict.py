@@ -527,7 +527,7 @@ if __name__ == "__main__":
                         dest="only_final", help="Only generate final predictor")
     parser.add_argument("--greedy", default=None, type=int, metavar="TOPN",
                         dest="get_best_topn_feats", help="Greedy Best K top features from the top N features given by '--top N'")
-    parser.add_argument("--top", default=50, type=int, metavar="TOPN",
+    parser.add_argument("--top", default=None, type=int, metavar="TOPN",
                         dest="top_num_features", help="Candidates are top N features for greedy selector")
 
     # type of classifier
