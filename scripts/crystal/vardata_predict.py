@@ -246,16 +246,19 @@ class Learner:
         self.cluster_no = cluster_no
 
     def cut_into_chunks(self):
-        #df["x.class"] = pd.qcut(
-            #df["x.num_used"],
-            #q=options.quantiles,
-            #labels=["%d" % x for x in range(options.quantiles)])
-
-        df["x.class"] = pd.cut(
+        df["x.class"] = pd.qcut(
             df["x.num_used"],
-            bins=[-1000, 1, 10**20],
-            #bins = [-1000, 20, 10**20],
-            labels=["%d" % x for x in range(2)])
+            q=options.quantiles,
+            duplicates='drop',
+            labels=False)
+
+        df['x.class'] = df['x.class'].astype(str)
+
+        #df["x.class"] = pd.cut(
+            #df["x.num_used"],
+            #bins=[-1000, 1, 10**20],
+            ##bins = [-1000, 20, 10**20],
+            #labels=["%d" % x for x in range(2)])
 
     @staticmethod
     def fix_feat_name(x):
