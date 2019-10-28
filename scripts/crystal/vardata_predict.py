@@ -406,15 +406,17 @@ class Learner:
             return
 
         best_features = [
-            '(var_data.sumAntecedentsLits_during/var_data.sumAntecedents_during)',
-            '(var_data.sumClSize_during/var_data.sumPropagations_during)',
-            '(var_data.sumConflictClauseLits_during/var_data.sumAntecedents_during)',
-            '(var_data.sumDecisions_during/var_data.sumAntecedentsLits_during)',
-            '(var_data.sumPropagations_during/var_data.sumClLBD_during)',
-            '(var_data.clauses_below/var_data.sumAntecedentsLits_during)',
-            '(var_data.sumClLBD_during/var_data.sumPropagations_during)']
-
-        best_features = ["var_data.rel_activity_at_picktime"]
+            'var_data_picktime.flipped_confs_ago',
+            '(var_dist.tot_act_long_red_cls/var_dist.num_red_long_cls)',
+            'var_data_picktime.conflicts_since_decided',
+            '(var_data_picktime.num_decided/var_data_picktime.num_decided_pos)',
+            '(var_dist.red_num_times_in_long_clause/var_data_picktime.num_propagated)',
+            '(var_dist.red_num_times_in_long_clause/var_data_picktime.num_decided)',
+            'var_data_picktime.rel_activity_at_picktime',
+            '(var_data_picktime.sumAntecedentsLits_below_during/var_data_picktime.sumAntecedentsLits_at_picktime)',
+            '(var_data_picktime.num_propagated/var_data_picktime.num_propagated_pos)',
+            'var_data_picktime.conflicts_since_propagated',
+            ]
 
         self.one_classifier(best_features, "x.class",
                             final=True,
