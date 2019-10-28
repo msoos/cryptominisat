@@ -468,12 +468,22 @@ class Learner:
             return
 
         best_features = [
-            '((rdb0.sum_uip1_used/cl.time_inside_solver)/sqrt(rdb0.act_ranking_rel))',
-            '(rdb0.sum_uip1_used/sqrt(cl.branch_depth_hist_queue))',
-            '((rdb0.sum_uip1_used/cl.time_inside_solver)/sqrt((cl.num_total_lits_antecedents/cl.num_antecedents)))',
-            #'((rdb0.used_for_uip_creation+rdb1.used_for_uip_creation)/cl.glue)',
-            '(rdb0.sum_uip1_used/sqrt(cl.old_glue))'
-            ]
+            '(cl.branch_depth_hist_queue/log2((rdb0.act_ranking/rdb0.tot_cls_in_db)))',
+            '(cl.glue_hist/cl.glue)',
+            '((rdb0.sum_uip1_used/cl.time_inside_solver)/cl.old_glue)',
+            '(cl.backtrack_level/log2((rdb0.act_ranking/rdb0.tot_cls_in_db)))',
+            '(rdb0.sum_delta_confl_uip1_used/(cl.num_total_lits_antecedents/cl.num_antecedents))',
+            '(cl.old_glue/cl.size_hist)',
+            '(cl.num_resolutions_hist/cl.old_glue)',
+            '(log2(cl.glue)/log2(cl.antec_overlap_hist))',
+            '((rdb0.sum_delta_confl_uip1_used+rdb1.sum_delta_confl_uip1_used)/cl.old_glue)',
+            '(cl.old_glue/log2((rdb0.act_ranking/rdb0.tot_cls_in_db)))',
+            '(log2(cl.glue)/cl.antec_overlap_hist)',
+            '(rdb0.sum_uip1_used/cl.glue_hist_queue)',
+            '(log2(cl.old_glue)/cl.size_hist)',
+            '(log2(cl.glue)/log2((rdb0.act_ranking/rdb0.tot_cls_in_db)))',
+            '(rdb0.sum_uip1_used/(rdb0.act_ranking/rdb0.tot_cls_in_db))']
+
         # TODO fill best_features here
         self.one_classifier(best_features, "x.class",
                             final=True,
