@@ -122,10 +122,7 @@ lbool WalkSAT::main()
         last_low_bad = lowbad;
     }
     print_statistics_final();
-    if (found_solution)
-        return l_True;
-    else
-        return l_Undef;
+    return l_Undef;
 }
 
 void WalkSAT::WalkSAT::flipvar(uint32_t toflip)
