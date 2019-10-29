@@ -72,9 +72,11 @@ void VarDistGen::calc()
             for(Lit l: *cl) {
                 data[l.var()].red.num_times_in_long_clause++;
                 data[l.var()].red.tot_num_lit_of_long_cls_it_appears_in+=cl->size();
-                data[l.var()].tot_act_long_red_cls +=
-                    std::log2((double)cl->stats.activity+10e-300)
-                        /std::log2(solver->max_cl_act+10e-300);
+                if (std::log2(solver->max_cl_act+10e-300) != 0) {
+                    data[l.var()].tot_act_long_red_cls +=
+                        std::log2((double)cl->stats.activity+10e-300)
+                            /std::log2(solver->max_cl_act+10e-300);
+                }
 
                 if (solver->varData[l.var()].polarity ^ !l.sign()) {
                     data[l.var()].red.satisfies_cl++;
