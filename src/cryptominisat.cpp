@@ -521,16 +521,15 @@ DLL_PUBLIC void SATSolver::set_max_time(double max_time)
 
 DLL_PUBLIC void SATSolver::set_max_confl(int64_t max_confl)
 {
-  for (size_t i = 0; i < data->solvers.size(); ++i) {
-    Solver& s = *data->solvers[i];
-    if (max_confl >= 0) {
-      s.conf.max_confl = s.get_stats().conflStats.numConflicts + max_confl;
+    assert(max_confl >= 0);
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.max_confl = s.get_stats().conflStats.numConflicts + max_confl;
 
-      //don't allow for overflow
-      if (s.conf.max_confl < max_confl)
-          s.conf.max_confl = max_confl;
+        //don't allow for overflow
+        if (s.conf.max_confl < max_confl)
+            s.conf.max_confl = max_confl;
     }
-  }
 }
 
 DLL_PUBLIC void SATSolver::set_default_polarity(bool polarity)
