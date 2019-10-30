@@ -166,7 +166,6 @@ protected:
         , const bool checkAttach = true
     );
 
-    /*NEW*/
     // Detach an AtMost from watcher lists.
     void detach_AtMost(
         const Clause* address
@@ -176,7 +175,6 @@ protected:
     Lit find_NewWatch_AtMost (
         Clause& cl
         , Lit p);               
-    /*NEW*/
 
     void detach_bin_clause(
         Lit lit1

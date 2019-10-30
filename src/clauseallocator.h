@@ -58,7 +58,7 @@ class ClauseAllocator {
         ~ClauseAllocator();
 
         template<class T>
-        Clause* Clause_new(const T& ps, const uint32_t conflictNum, /*NEW*/ bool isAtmost = false /*NEW*/
+        Clause* Clause_new(const T& ps, const uint32_t conflictNum, bool isAtmost = false
             #ifdef STATS_NEEDED
             , const int64_t ID
             #endif
@@ -67,8 +67,8 @@ class ClauseAllocator {
                 throw CMSat::TooLongClauseError();
             }
 
-            void* mem = allocEnough(ps.size());
-            Clause* real = new (mem) Clause(ps, conflictNum, /*NEW*/ isAtmost /*NEW*/
+            void* mem = allocEnough(ps.size() + (isAtmost ? 1 : 0));
+            Clause* real = new (mem) Clause(ps, conflictNum, isAtmost
             #ifdef STATS_NEEDED
             , ID
             #endif

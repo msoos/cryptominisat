@@ -151,7 +151,7 @@ public:
         }
         exit(-1);
     }
-    /*NEW*/
+
     inline bool checkForChar(char c){
         skipWhitespace();
         if (value() == c) {
@@ -160,7 +160,6 @@ public:
         }
         return false;
     }
-    /*NEW*/
 
     inline bool parseInt(int32_t& ret, size_t lineNum, bool allow_eol = false)
     {

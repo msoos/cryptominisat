@@ -281,7 +281,6 @@ void Solver::add_xor_clause_inter_cleaned_cut(
     }
 }
 
-/*NEW*/
 bool Solver::add_AtMost(vector<Lit>& ps, int k) {
     assert(ok);
     assert(decisionLevel() == 0);
@@ -362,7 +361,6 @@ bool Solver::add_AtMost(vector<Lit>& ps, int k) {
 
     return true;
 }
-/*NEW*/
 
 unsigned Solver::num_bits_set(const size_t x, const unsigned max_size) const
 {
@@ -594,7 +592,6 @@ void Solver::attach_bin_clause(
 
 void Solver::detachClause(const Clause& cl, const bool removeDrat)
 {
-    /*NEW*/
     if (cl.is_atmost()) {
         PropEngine::detach_AtMost(&cl);
         // Don't leave pointers to free'd memory! /*QUESTION*/
@@ -606,7 +603,6 @@ void Solver::detachClause(const Clause& cl, const bool removeDrat)
         }*/
     }
     else {
-    /*NEW*/
         if (removeDrat) {
             *drat << del << cl << fin;
         }
@@ -3015,7 +3011,7 @@ unsigned long Solver::get_sql_id() const
     return sqlStats->get_runID();
 }
 
-bool Solver::add_clause_outer(const vector<Lit>& lits, /*NEW*/ bool isAtmost, int32_t bound /*NEW*/, bool red)
+bool Solver::add_clause_outer(const vector<Lit>& lits, bool isAtmost, int32_t bound, bool red)
 {
     if (!ok) {
         return false;
@@ -3024,12 +3020,10 @@ bool Solver::add_clause_outer(const vector<Lit>& lits, /*NEW*/ bool isAtmost, in
     check_too_large_variable_number(lits);
     #endif
     back_number_from_outside_to_outer(lits);
-    /*NEW*/
     if(isAtmost) {
         return add_AtMost(back_number_from_outside_to_outer_tmp, bound);
     }
     else {
-    /*NEW*/
         return addClauseInt(back_number_from_outside_to_outer_tmp, red);
     }
 }

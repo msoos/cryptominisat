@@ -91,17 +91,15 @@ void PropEngine::attachClause(
     , const bool checkAttach
 ) {
     const ClOffset offset = cl_alloc.get_offset(&c);
-    /*NEW*/
     if (c.is_atmost()) {
         assert(c.atmost_watches() != 2);  // should have been made a clause
-        for (int i = 0 ; i < c.atmost_watches() ; i++) {
+        for (uint32_t i = 0 ; i < c.atmost_watches() ; i++) {
             Lit l = c[i];
             // Visit this constraint when l becomes true
             watches[l].push(Watched(offset, lit_Undef)); // lit_Undef for no blocker on this Watcher (can't have just one blocker here)
         }
     }
     else {
-    /*NEW*/
         assert(c.size() > 2);
         if (checkAttach) {
             assert(value(c[0]) == l_Undef);
@@ -120,18 +118,17 @@ void PropEngine::attachClause(
     }
 }
 
-/*NEW*/
 Lit PropEngine::find_NewWatch_AtMost(Clause& cl, Lit p) {
 
     assert(cl.is_atmost());
 
     Lit newWatch = lit_Error;
-    int numFalse = 0;
-    int numTrue = 0;
-    int maxTrue = cl.size()-cl.atmost_watches()+1;  // n - (n-k+1) + 1 = k
+    uint32_t numFalse = 0;
+    uint32_t numTrue = 0;
+    uint32_t maxTrue = cl.size()-cl.atmost_watches()+1;  // n - (n-k+1) + 1 = k
 
     // Scan through all watchers
-    for (int q = 0 ; q < cl.atmost_watches() ; q++) {
+    for (uint32_t q = 0 ; q < cl.atmost_watches() ; q++) {
         lbool val = value(cl[q]);
 
         if (val == l_Undef) continue;
@@ -194,19 +191,16 @@ Lit PropEngine::find_NewWatch_AtMost(Clause& cl, Lit p) {
         return lit_Undef;
     }
 }
-/*NEW*/
 
 
-/*NEW*/
 void PropEngine::detach_AtMost(const Clause* address)
 {
     ClOffset offset = cl_alloc.get_offset(address);
     Clause& cl = *cl_alloc.ptr(offset);
-    for (int i = 0 ; i < cl.atmost_watches() ; i++) {
+    for (uint32_t i = 0 ; i < cl.atmost_watches() ; i++) {
         removeWCl(watches[cl[i]], offset);
     }
 }
-/*NEW*/
 
 /**
 @brief Detaches a (potentially) modified clause
@@ -295,7 +289,7 @@ PropBy PropEngine::propagate_any_order_fast()
 
             const ClOffset offset = i->get_offset();
             Clause& c = *cl_alloc.ptr(offset);
-            /*NEW*/
+
             if (c.is_atmost()) {
                 // p is our new fact, and so we came here because
                 // this AtMost includes p.
@@ -306,7 +300,7 @@ PropBy PropEngine::propagate_any_order_fast()
                 if (newWatch == lit_Undef) {
                     // No new watch found, so we have reached the bound.
                     // Enqueue the negation of each remaining literal
-                    for (int k = 0 ; k < c.atmost_watches() ; k++) {
+                    for (uint32_t k = 0 ; k < c.atmost_watches() ; k++) {
                         if (c[k] != p && value(c[k]) != l_False && (k==0 || c[k] != c[k-1])) {
                             assert(value(c[k]) == l_Undef);
                             enqueue<update_bogoprops>(~c[k], PropBy(offset));
@@ -337,7 +331,6 @@ PropBy PropEngine::propagate_any_order_fast()
                 }
             }
             else {
-            /*NEW*/
                 Lit      false_lit = ~p;
                 if (c[0] == false_lit) {
                     c[0] = c[1], c[1] = false_lit;

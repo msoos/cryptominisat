@@ -55,7 +55,7 @@ namespace CMSat {
         void new_var(); //add a new variable to the solver
         void new_vars(const size_t n); //and many new variables to the solver -- much faster
         unsigned nVars() const; //get number of variables inside the solver
-        bool add_clause(const std::vector<Lit>& lits, /*NEW*/ bool isAtmost = false, int32_t bound = 0 /*NEW*/);
+        bool add_clause(const std::vector<Lit>& lits, bool isAtmost = false, int32_t bound = 0);
         bool add_xor_clause(const std::vector<unsigned>& vars, bool rhs);
 
         ////////////////////////////

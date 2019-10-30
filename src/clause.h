@@ -202,10 +202,7 @@ to hold the clause.
 */
 class Clause
 {
-    /*NEW*/
     bool isAtmost : 1;
-    int32_t atmostWatches;
-    /*NEW*/
 public:
     uint16_t isRed:1; ///<Is the clause a redundant clause?
     uint16_t isRemoved:1; ///<Is this clause queued for removal?
@@ -236,7 +233,7 @@ public:
 
     template<class V>
     Clause(const V& ps, const uint32_t _introduced_at_conflict,
-        /*NEW*/ bool atmost /*NEW*/
+        bool atmost
         #ifdef STATS_NEEDED
         , const int64_t _ID
         #endif
@@ -261,16 +258,14 @@ public:
         _used_in_xor = false;
         _gauss_temp_cl = false;
         reloced = false;
-        /*NEW*/ isAtmost = atmost; /*NEW*/
+        isAtmost = atmost;
 
         for (uint32_t i = 0; i < ps.size(); i++) {
             getData()[i] = ps[i];
-
-            /*NEW*/ 
-            if (is_atmost())
-                atmostWatches = -1;
-            /*NEW*/
         }
+
+        if (is_atmost())
+            getData()[mySize] = Lit::toLit(0);
     }
 
     typedef Lit* iterator;
@@ -476,22 +471,20 @@ public:
         cout << endl;
     }
 
-    /*NEW*/
     bool is_atmost() const
     {
         return isAtmost;
     }
-    int32_t atmost_watches() const
+    uint32_t atmost_watches() const
     {
         assert(is_atmost());
-        return atmostWatches;
+        return getData()[mySize].toInt();
     }
     void set_atmost_nw(uint32_t nw)
     {
         assert(is_atmost());
-        atmostWatches = nw;
+        getData()[mySize] = Lit::toLit(nw);
     }
-    /*NEW*/
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Clause& cl)
