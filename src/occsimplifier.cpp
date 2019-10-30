@@ -144,7 +144,7 @@ void OccSimplifier::save_on_var_memory()
     cl_to_free_later.shrink_to_fit();
 
     elim_calc_need_update.shrink_to_fit();
-    blockedClauses.shrink_to_fit();;
+    blockedClauses.shrink_to_fit();
 }
 
 void OccSimplifier::print_blocked_clauses_reverse() const
@@ -3137,7 +3137,6 @@ double OccSimplifier::Stats::total_time(OccSimplifier* occs) const
         + occs->sub_str->get_stats().strengthenTime
         + occs->bvestats_global.timeUsed
         + occs->bva->get_stats().time_used;
-        ;
 }
 
 void OccSimplifier::Stats::clear()

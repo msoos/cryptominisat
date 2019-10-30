@@ -1235,7 +1235,7 @@ lbool Searcher::search()
                 && !clean_clauses_if_needed()
             ) {
                 return l_False;
-            };
+            }
             reduce_db_if_needed();
             dec_ret = new_decision<update_bogoprops>();
             if (dec_ret != l_Undef) {

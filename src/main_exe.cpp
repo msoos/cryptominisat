@@ -50,7 +50,7 @@ int main(int argc, char** argv)
     } catch (CMSat::TooLongClauseError& e) {
         std::cerr << "ERROR! Too long clause inserted" << std::endl;
         exit(-1);
-    };
+    }
 
     return ret;
 }

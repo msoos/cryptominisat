@@ -359,7 +359,7 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
             //there is no point in using this clause as a base for another XOR
             //because exactly the same things will be found.
             if (cl.size() == poss_xor.getSize()) {
-                cl.stats.marked_clause = true;;
+                cl.stats.marked_clause = true;
             }
 
             xor_find_time_limit -= cl.size()/4+1;
