@@ -132,8 +132,11 @@ namespace CMSat {
         ////////////////////////////
 
         uint64_t get_sum_conflicts(); //get total number of conflicts of all time of all threads
+        uint64_t get_sum_conflicts() const; //!< Return sum of all conflicts since construction across all the threads
         uint64_t get_sum_propagations();  //get total number of propagations of all time made by all threads
+        uint64_t get_sum_propagations() const; //!< Returns sum of all propagations since construction across all the threads
         uint64_t get_sum_decisions(); //get total number of decisions of all time made by all threads
+        uint64_t get_sum_decisions() const; //!< Returns sum of all decisions since construction across all the threads
 
         void print_stats() const; //print solving stats. Call after solve()/simplify()
         void set_drat(std::ostream* os, bool set_ID); //set drat to ostream, e.g. stdout or a file
