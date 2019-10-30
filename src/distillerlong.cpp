@@ -146,7 +146,7 @@ bool DistillerLong::go_through_clauses(
         if (cl.getdistilled()) {
             *j++ = *i;
             continue;
-        };
+        }
         cl.set_distilled(true);
         runStats.checkedClauses++;
         assert(cl.size() > 2);

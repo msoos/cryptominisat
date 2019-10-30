@@ -119,7 +119,7 @@ inline void updateBySwap(T& toUpdate, T2& seen, const vector< uint32_t >& mapper
                 seen.at(mapper.at(var)) = 1;
                 break;
             }
-        };
+        }
     }
 
     //clear seen

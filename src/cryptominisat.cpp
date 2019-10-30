@@ -659,7 +659,7 @@ void add_xor_clause_to_log(const std::vector<unsigned>& vars, bool rhs, std::ofs
 {
     if (vars.size() == 0) {
         if (rhs) {
-            (*file) << "0" << endl;;
+            (*file) << "0" << endl;
         }
     } else {
         if (!rhs) {
@@ -668,7 +668,7 @@ void add_xor_clause_to_log(const std::vector<unsigned>& vars, bool rhs, std::ofs
         for(unsigned var: vars) {
             (*file) << (var+1) << " ";
         }
-        (*file) << " 0" << endl;;
+        (*file) << " 0" << endl;
     }
 }
 

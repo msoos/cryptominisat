@@ -1388,7 +1388,7 @@ void Main::dump_decisions_for_model()
     if (conf.verbosity) {
         cout << "c size of get_decisions_reaching_model: "
         << solver->get_decisions_reaching_model().size()
-        << endl;;
+        << endl;
     }
     for(const Lit l: solver->get_decisions_reaching_model()) {
         decfile << l << " 0" << endl;
