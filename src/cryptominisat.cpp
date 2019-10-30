@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include <thread>
 #include <mutex>
 #include <atomic>
+#include <cassert>
 using std::thread;
 
 #define CACHE_SIZE 10ULL*1000ULL*1000UL
@@ -494,18 +495,11 @@ static bool actually_add_clauses_to_threads(CMSatPrivateData* data)
 
 DLL_PUBLIC void SATSolver::set_max_time(double max_time)
 {
-  for (size_t i = 0; i < data->solvers.size(); ++i) {
-    Solver& s = *data->solvers[i];
-    if (max_time >= 0) {
-      // the main loop in solver.cpp is checks `maxTime`
-      // against `cpuTime`, so we specify `s.conf.maxTime`
-      // as an offset from `cpuTime`.
-      s.conf.maxTime = cpuTime() + max_time;
+  assert(max_time >= 0 && "Cannot set negative limit on running time");
 
-      //don't allow for overflow
-      if (s.conf.maxTime < max_time)
-          s.conf.maxTime = max_time;
-    }
+  const auto target_time = cpuTime() + max_time;
+  for (Solver* s : data->solvers) {
+    s->conf.maxTime = target_time;
   }
 }
 
