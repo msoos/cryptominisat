@@ -505,15 +505,20 @@ DLL_PUBLIC void SATSolver::set_max_time(double max_time)
 
 DLL_PUBLIC void SATSolver::set_max_confl(int64_t max_confl)
 {
-  for (size_t i = 0; i < data->solvers.size(); ++i) {
-    Solver& s = *data->solvers[i];
-    if (max_confl >= 0) {
-      s.conf.max_confl = s.get_stats().conflStats.numConflicts + max_confl;
+  assert(max_confl >= 0 && "Cannot set negative limit on conflicts");
 
-      //don't allow for overflow
-      if (s.conf.max_confl < max_confl)
-          s.conf.max_confl = max_confl;
-    }
+  for (Solver* s : data->solvers) {
+    uint64_t new_max = s->get_stats().conflStats.numConflicts + static_cast<uint64_t>(max_confl);
+    bool would_overflow = std::numeric_limits<long>::max() < new_max
+                       || new_max < s->get_stats().conflStats.numConflicts;
+
+    // TBD: It is highly unlikely that an int64_t could overflow in practice,
+    // meaning that this test is unlikely to ever fire. However, the conflict
+    // limit inside the solver is stored as a long, which can be 32 bits
+    // on some platforms. In practice that is also unlikely to be overflown,
+    // but it needs some extra checks.
+    s->conf.max_confl = would_overflow? std::numeric_limits<long>::max()
+                                      : static_cast<long>(new_max);
   }
 }
 
