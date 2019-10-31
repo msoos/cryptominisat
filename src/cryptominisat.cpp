@@ -1069,6 +1069,15 @@ DLL_PUBLIC uint64_t SATSolver::get_sum_conflicts()
     return conlf;
 }
 
+DLL_PUBLIC uint64_t SATSolver::get_sum_conflicts() const
+{
+    uint64_t total_conflicts = 0;
+    for (Solver const* s : data->solvers) {
+        total_conflicts += s->sumConflicts;
+    }
+    return total_conflicts;
+}
+
 DLL_PUBLIC uint64_t SATSolver::get_sum_propagations()
 {
     uint64_t props = 0;
@@ -1079,6 +1088,15 @@ DLL_PUBLIC uint64_t SATSolver::get_sum_propagations()
     return props;
 }
 
+DLL_PUBLIC uint64_t SATSolver::get_sum_propagations() const
+{
+    uint64_t total_propagations = 0;
+    for (Solver const* s : data->solvers) {
+        total_propagations += s->sumPropStats.propagations;
+    }
+    return total_propagations;
+}
+
 DLL_PUBLIC uint64_t SATSolver::get_sum_decisions()
 {
     uint64_t dec = 0;
@@ -1087,6 +1105,15 @@ DLL_PUBLIC uint64_t SATSolver::get_sum_decisions()
         dec += s.sumSearchStats.decisions;
     }
     return dec;
+}
+
+DLL_PUBLIC uint64_t SATSolver::get_sum_decisions() const
+{
+    uint64_t total_decisions = 0;
+    for (Solver const* s : data->solvers) {
+        total_decisions += s->sumSearchStats.decisions;
+    }
+    return total_decisions;
 }
 
 DLL_PUBLIC uint64_t SATSolver::get_last_conflicts()
