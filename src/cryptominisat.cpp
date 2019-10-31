@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include <thread>
 #include <mutex>
 #include <atomic>
+#include <cassert>
 using std::thread;
 
 #define CACHE_SIZE 10ULL*1000ULL*1000UL
@@ -494,32 +495,30 @@ static bool actually_add_clauses_to_threads(CMSatPrivateData* data)
 
 DLL_PUBLIC void SATSolver::set_max_time(double max_time)
 {
-  for (size_t i = 0; i < data->solvers.size(); ++i) {
-    Solver& s = *data->solvers[i];
-    if (max_time >= 0) {
-      // the main loop in solver.cpp is checks `maxTime`
-      // against `cpuTime`, so we specify `s.conf.maxTime`
-      // as an offset from `cpuTime`.
-      s.conf.maxTime = cpuTime() + max_time;
+  assert(max_time >= 0 && "Cannot set negative limit on running time");
 
-      //don't allow for overflow
-      if (s.conf.maxTime < max_time)
-          s.conf.maxTime = max_time;
-    }
+  const auto target_time = cpuTime() + max_time;
+  for (Solver* s : data->solvers) {
+    s->conf.maxTime = target_time;
   }
 }
 
 DLL_PUBLIC void SATSolver::set_max_confl(int64_t max_confl)
 {
-  for (size_t i = 0; i < data->solvers.size(); ++i) {
-    Solver& s = *data->solvers[i];
-    if (max_confl >= 0) {
-      s.conf.max_confl = s.get_stats().conflStats.numConflicts + max_confl;
+  assert(max_confl >= 0 && "Cannot set negative limit on conflicts");
 
-      //don't allow for overflow
-      if (s.conf.max_confl < max_confl)
-          s.conf.max_confl = max_confl;
-    }
+  for (Solver* s : data->solvers) {
+    uint64_t new_max = s->get_stats().conflStats.numConflicts + static_cast<uint64_t>(max_confl);
+    bool would_overflow = std::numeric_limits<long>::max() < new_max
+                       || new_max < s->get_stats().conflStats.numConflicts;
+
+    // TBD: It is highly unlikely that an int64_t could overflow in practice,
+    // meaning that this test is unlikely to ever fire. However, the conflict
+    // limit inside the solver is stored as a long, which can be 32 bits
+    // on some platforms. In practice that is also unlikely to be overflown,
+    // but it needs some extra checks.
+    s->conf.max_confl = would_overflow? std::numeric_limits<long>::max()
+                                      : static_cast<long>(new_max);
   }
 }
 
