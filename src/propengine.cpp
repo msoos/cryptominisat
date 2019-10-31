@@ -96,7 +96,7 @@ void PropEngine::attachClause(
         for (uint32_t i = 0 ; i < c.atmost_watches() ; i++) {
             Lit l = c[i];
             // Visit this constraint when l becomes true
-            watches[l].push(Watched(offset, lit_Undef)); // lit_Undef for no blocker on this Watcher (can't have just one blocker here)
+            watches[~l].push(Watched(offset, lit_Undef)); // lit_Undef for no blocker on this Watcher (can't have just one blocker here)
         }
     }
     else {
@@ -278,7 +278,7 @@ PropBy PropEngine::propagate_any_order_fast()
             //propagate normal clause
             //assert(i->isClause());
             Lit blocked = i->getBlockedLit();
-            if (likely(value(blocked) == l_True)) {
+            if (blocked != lit_Undef && likely(value(blocked) == l_True)) {
                 *j++ = *i++;
                 continue;
             }

@@ -276,6 +276,11 @@ public:
         return mySize;
     }
 
+    uint32_t real_size() const
+    {
+        return mySize + (isAtmost ? 1 : 0);
+    }
+
     bool gauss_temp_cl() const
     {
         return _gauss_temp_cl;
