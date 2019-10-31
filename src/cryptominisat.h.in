@@ -92,8 +92,22 @@ namespace CMSat {
 
         void set_num_threads(unsigned n); //Number of threads to use. Must be set before any vars/clauses are added
         void set_allow_otf_gauss(); //allow on-the-fly gaussian elimination
-        void set_max_time(double max_time); //max time to run to on next solve() call
-        void set_max_confl(int64_t max_confl); //max conflict to run to on next solve() call
+        /**
+         * CPU time (in seconds) that can be consumed before the next call to solve() must return
+         *
+         * Because the elapsed CPU time depends on both the number of
+         * threads, and the activity of these threads, the elapsed time
+         * can wildly differ from wall clock time.
+         * 
+         * \pre max_time >= 0
+         */
+        void set_max_time(double max_time);
+        /**
+         * Conflicts that can be consumed before the next call to solve() must return
+         *
+         * \pre max_confl >= 0
+         */
+        void set_max_confl(int64_t max_confl);
         void set_verbosity(unsigned verbosity = 0); //default is 0, silent
         void set_default_polarity(bool polarity); //default polarity when branching for all vars
         void set_no_simplify(); //never simplify
