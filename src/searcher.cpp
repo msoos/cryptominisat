@@ -2434,7 +2434,7 @@ void Searcher::adjust_branch_strategy()
 {
     assert(decisionLevel() == 0);
     if (sumConflicts > next_change_branch_strategy) {
-        set_branch_strategy(branch_strategy_num++);
+        set_branch_strategy(++branch_strategy_num);
         next_change_branch_strategy = sumConflicts + conf.branch_strategy_change_everyN;
     }
 }
