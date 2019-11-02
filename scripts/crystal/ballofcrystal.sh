@@ -159,7 +159,6 @@ cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 
 ../vardata_predict.py mydata.db-vardata.dat --picktimeonly --csv -q 2 --only 0.99
 #../vardata_predict.py vardata-comb --final -q 20 --basedir ../src/predict/ --depth 7 --tree
-exit 0
 
 mkdir -p ../../src/predict
 rm -f ../../src/predict/*.h
