@@ -407,7 +407,7 @@ class Learner:
         print("-   Filtered test data   -")
         print("-   Cluster: %04d        -" % self.cluster_no)
         print("--------------------------")
-        for dump_no in [1, 3, 10, 20, 40, None]:
+        for dump_no in [1, 2, 3, 10, 20, 40, None]:
             prec, recall, acc = self.filtered_conf_matrixes(
                 dump_no, test, features, to_predict, clf)
 
@@ -483,6 +483,18 @@ class Learner:
             '(log2(cl.old_glue)/cl.size_hist)',
             '(log2(cl.glue)/log2((rdb0.act_ranking/rdb0.tot_cls_in_db)))',
             '(rdb0.sum_uip1_used/(rdb0.act_ranking/rdb0.tot_cls_in_db))']
+
+        best_features = [
+            '((rdb0.propagations_made+rdb1.propagations_made)/log2(cl.num_antecedents))',
+            '((rdb0.propagations_made+rdb1.propagations_made)/log2(cl.glue))',
+            '(cl.size/log2(cl.glue_hist))',
+            '((rdb0.propagations_made+rdb1.propagations_made)/cl.num_antecedents)',
+            '(cl.trail_depth_hist_longer/log2(cl.branch_depth_hist_queue))',
+            '((rdb0.propagations_made+rdb1.propagations_made)/log2(szfeat_cur.var_cl_ratio))',
+            '((rdb0.propagations_made+rdb1.propagations_made)/cl.antec_overlap_hist)',
+            '((rdb0.propagations_made+rdb1.propagations_made)/szfeat_cur.var_cl_ratio)',
+            '(rdb0.propagations_made/log2(cl.glue))',
+            '(rdb0.propagations_made/(rdb1.act_ranking/rdb1.tot_cls_in_db))']
 
         # TODO fill best_features here
         self.one_classifier(best_features, "x.class",
