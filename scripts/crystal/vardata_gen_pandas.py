@@ -162,7 +162,6 @@ class QueryVar (QueryHelper):
             , "propagated_pos"
             , "restarts"
             , "var"
-            , "sumConflicts_at_picktime"
             , "cls_marked"]
         var_data_picktime = helper.query_fragment(
             "var_data_picktime", not_cols, "var_data_picktime", options.verbose, self.c)

@@ -43,7 +43,7 @@ else:
 def add_computed_features(df):
     print("Relative data...")
     cols = list(df)
-    divide = functools.partial(helper.divide, df=df, feature3s=cols, verb=options.verbose)
+    divide = functools.partial(helper.divide, df=df, features=cols, verb=options.verbose)
 
     if not options.picktime_only:
         # create "during"
