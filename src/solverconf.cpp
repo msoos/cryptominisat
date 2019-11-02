@@ -76,7 +76,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //branch strategy
         #ifdef STATS_NEEDED
-        , branch_strategy_change_everyN(15000)
+        , branch_strategy_change_everyN(20000)
         #else
         , branch_strategy_change_everyN(55000)
         #endif
