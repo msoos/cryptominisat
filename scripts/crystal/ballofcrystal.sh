@@ -150,7 +150,7 @@ cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 ####################################
 # Clustering for cldata, using cldata dataframe
 ####################################
-../clustering.py "${FNAMEOUT}-min.db-short-conf-2.dat" --numconfs 3 --basedir ../../src/predict/ --clusters 1 --scale --distr
+../clustering.py "${FNAMEOUT}-min.db-cldata-short-conf-2.dat" --numconfs 3 --basedir ../../src/predict/ --clusters 1 --scale --distr
 
 
 ####################################
