@@ -557,7 +557,34 @@ class QueryCls (QueryHelper):
 
         return True, df
 
-    def get_data(self, long_or_short, this_limit=None):
+    def one_set_of_data(self, q, limit):
+        print("Getting one set of data with limit %s" % limit)
+        dfs = {}
+        weighted_size = []
+        for type_data in ["OK", "BAD"]:
+            df_parts = []
+
+            def one_part(mult, extra):
+                self.myformat["limit"] = int(limit*mult)
+                df_parts.append(self.one_query(q + extra, type_data))
+                print("-> Num rows for %s -- '%s': %s" % (type_data, extra, df_parts[-1].shape[0]))
+
+                ws = df_parts[-1].shape[0]/mult
+                print("--> The weight was %f so wegthed size is: %f" % (mult, ws))
+                weighted_size.append(ws)
+
+            one_part(1/2.0, " and rdb0.dump_no = 1 ")
+            one_part(1/8.0, " and rdb0.dump_no = 2 ")
+            one_part(1/8.0, " and rdb0.dump_no > 2 ")
+
+            dfs[type_data] = pd.concat(df_parts)
+            print("size of {t} data: {size}".format(
+                t=type_data, size=dfs[type_data].shape))
+
+        return dfs, weighted_size
+
+
+    def get_data(self, long_or_short):
         # TODO magic numbers: SHORT vs LONG data availability guess
         subformat = {}
         ok0, subformat["avg_used_later_long"] = self.get_avg_used_later("long")
@@ -570,53 +597,26 @@ class QueryCls (QueryHelper):
         if not ok0 or not ok1 or not ok2 or not ok3:
             return False, None, None
 
-        if long_or_short == "short":
-            self.myformat["case_stmt"] = self.case_stmt_short.format(
+        self.myformat["case_stmt"] = self.case_stmt_short.format(
                 **subformat)
-            self.myformat["del_at_least"] = options.short
-            fixed_mult = 1.0
-        else:
-            self.myformat["case_stmt"] = self.case_stmt_long.format(
+        self.myformat["case_stmt"] = self.case_stmt_long.format(
                 **subformat)
-            self.myformat["del_at_least"] = options.long
-            fixed_mult = options.fixed_mult_long
 
-        print("Fixed multiplier set to  %s " % fixed_mult)
+        if long_or_short == "short":
+            self.myformat["del_at_least"] = options.short
+        else:
+            self.myformat["del_at_least"] = options.long
 
         t = time.time()
-        if this_limit is None:
-            this_limit = options.limit
-            this_limit *= fixed_mult
-        print("this_limit is set to:", this_limit)
-
-        q = str(self.q_select)
-
-        #get OK data
-        df = {}
-        for type_data in ["OK", "BAD"]:
-            df_parts = []
-
-            self.myformat["limit"] = int(this_limit/2)
-            extra = " and rdb0.dump_no = 1 "
-            df_parts.append(self.one_query(q + extra, type_data))
-            print("shape for %s: %s" % (extra, df_parts[0].shape))
-
-            self.myformat["limit"] = int(this_limit/8)
-            extra = " and rdb0.dump_no = 2 "
-            df_parts.append(self.one_query(q + extra, type_data))
-            print("shape for %s: %s" % (extra, df_parts[1].shape))
-
-            self.myformat["limit"] = int(this_limit/8)
-            extra = " and rdb0.dump_no > 2 "
-            df_parts.append(self.one_query(q + extra, type_data))
-            print("shape for %s: %s" % (extra, df_parts[2].shape))
-
-            df[type_data] = pd.concat(df_parts)
-            print("size of {type} data: {size}".format(
-                type=type_data, size=df[type_data].shape))
+        limit = options.limit
+        print("Limit is originally:", limit)
+        _, weighted_size = self.one_set_of_data(str(self.q_select), limit)
+        limit = int(min(weighted_size))
+        print("Setting limit to minimum of all of above:", limit)
+        df, weighted_size = self.one_set_of_data(str(self.q_select), limit)
 
         print("Queries finished. T: %-3.2f" % (time.time() - t))
-        return True, pd.concat([df["OK"], df["BAD"]]), this_limit
+        return True, pd.concat([df["OK"], df["BAD"]]), limit
 
 
 def dump_dataframe(df, name):
@@ -703,8 +703,6 @@ if __name__ == "__main__":
     # limits
     parser.add_option("--limit", default=20000, type=int,
                       dest="limit", help="Exact number of examples to take. -1 is to take all. Default: %default")
-    parser.add_option("--limitlongmult", default="0.2", type=float,
-                      dest="fixed_mult_long", help="Use this much less samples for long")
 
     # debugging is faster with this
     parser.add_option("--noind", action="store_true", default=False,
