@@ -41,7 +41,8 @@ else:
 
 
 def add_computed_features(df):
-    print("Relative data...")
+    print("Original number of features:", len(list(df)))
+    print("Adding computed features...")
     cols = list(df)
     divide = functools.partial(helper.divide, df=df, features=cols, verb=options.verbose)
 
@@ -72,7 +73,7 @@ def add_computed_features(df):
 
     if False:
         # per-conflicts, per-decisions, per-lits
-        names = [
+        divisors = [
             "var_data_picktime.sumConflicts_at_picktime"
             , "var_data_picktime.sumClLBD_at_picktime"
             , "var_data_picktime.sumClSize_at_picktime"
@@ -94,8 +95,8 @@ def add_computed_features(df):
         cols = list(df)
         for col in cols:
             if "x." not in col and "var_data_use" not in col:
-                for name in names:
-                    divide(col, name)
+                for divisor in divisors:
+                    divide(col, divisor)
 
     # divide var_dist by szfeat, all-by-all
     if False:
@@ -222,9 +223,8 @@ def add_computed_features(df):
         if "rst." in c and "strategy" not in c and "restart_type" not in c:
             if c in list(df):
                 del df[c]
-    pass
 
-    # del df["rst.numredLits"]
+    print("Done adding computed features. New number of features: ", len(list(df)))
 
 
 def rem_useless_features(df):
@@ -494,8 +494,6 @@ if __name__ == "__main__":
     rem_useless_features(df)
     if not options.no_computed:
         add_computed_features(df)
-
-    print(list(df))
 
     # cluster setup
     if options.use_clusters:
