@@ -53,8 +53,23 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/\n\n""")
 
+def parse_configs(confs):
+    match = re.match(r"^([0-9]*)-([0-9]*)$", confs)
+    if not match:
+        print("ERROR: we cannot parse your config options: '%s'" % confs)
+        exit(-1)
 
-def divide(dividend, divisor, df, features, verb):
+    conf_from = int(match.group(1))
+    conf_to = int(match.group(2))+1
+    if conf_to <= conf_from:
+        print("ERROR: Conf range is not increasing")
+        exit(-1)
+
+    print("Running configs:", range(conf_from, conf_to))
+    return conf_from, conf_to
+
+
+def divide(dividend, divisor, df, features, verb, name=None):
     """
     to be used like:
     import functools
@@ -73,7 +88,9 @@ def divide(dividend, divisor, df, features, verb):
     if verb:
         print("Dividing. dividend: '%s' divisor: '%s' " % (dividend, divisor))
 
-    name = "(" + dividend + "/" + divisor + ")"
+    if name is None:
+        name = "(" + dividend + "/" + divisor + ")"
+
     df[name] = df[dividend].div(df[divisor]+0.000000001)
     return name
 

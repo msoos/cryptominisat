@@ -146,11 +146,13 @@ cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 ../cldata_gen_pandas.py "${FNAMEOUT}-min.db" --limit "$FIXED" --conf $CONF-$CONF ${EXTRA_GEN_PANDAS_OPTS}
 ../vardata_gen_pandas.py "${FNAMEOUT}.db" --limit 1000
 
+mkdir -p ../../src/predict
+rm -f ../../src/predict/*.h
 
 ####################################
 # Clustering for cldata, using cldata dataframe
 ####################################
-../clustering.py "${FNAMEOUT}-min.db-cldata-short-conf-2.dat" --numconfs 3 --basedir ../../src/predict/ --clusters 1 --scale --distr
+../clustering.py ${FNAMEOUT}-min.db-cldata-*short*.dat ${FNAMEOUT}-min.db-cldata-*long*.dat --basedir ../../src/predict/ --clusters 1 --scale --distr
 
 
 ####################################
@@ -159,9 +161,6 @@ cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 
 ../vardata_predict.py mydata.db-vardata.dat --picktimeonly --csv -q 2 --only 0.99
 #../vardata_predict.py vardata-comb --final -q 20 --basedir ../src/predict/ --depth 7 --tree
-
-mkdir -p ../../src/predict
-rm -f ../../src/predict/*.h
 
 # for CONF in {0..2}; do
     ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-conf-$CONF.dat" --name short --split 0.01 --final --tree --basedir ../../src/predict/ --conf $CONF

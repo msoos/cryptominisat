@@ -45,6 +45,26 @@ else:
     from sklearn.model_selection import train_test_split
 
 
+def add_clustering_label(df, feats_used: list, scaler, clust):
+    this_feats = list(df)
+    for f in feats_used:
+        if f not in this_feats:
+            print("ERROR: Features %s is in the other file but not in this one!" % f)
+            exit(-1)
+
+    df_clust = df[feats_used].astype(float).copy()
+    df_clust[feats_used] = scaler.transform(df_clust)
+    df["clust"] = clust.predict(df_clust)
+
+
+def dump_clustered(df, used_clusters: list, fname: str):
+    df = df[df["clust"].isin(used_clusters)]
+    with open(fname, "wb") as f:
+        pickle.dump(df, f)
+
+    print("Dumped to file %s" % fname)
+
+
 class Clustering:
     def __init__(self, df):
         self.df = df
@@ -179,12 +199,12 @@ int ClusteringImp::which_is_closest(const SatZillaFeatures& p) const {
         f.write("} //end namespace\n\n")
         f.write("#endif //ALL_PREDICTORS\n")
 
-    def check_clust_distr(self, clust):
+    def check_clust_distr(self):
         print("Checking cluster distribution....")
 
         # print distribution
         dist = {}
-        for x in clust.labels_:
+        for x in self.clust.labels_:
             if x not in dist:
                 dist[x] = 1
             else:
@@ -226,39 +246,39 @@ int ClusteringImp::which_is_closest(const SatZillaFeatures& p) const {
         self.used_clusters = sorted(self.used_clusters)
 
     def cluster(self):
-        features = self.df.columns.values.flatten().tolist()
+        features = list(self.df)
 
         # features from dataframe
-        self.final_feats = []
-        for x in features:
-            if "szfeat_cur" in x and "szfeat_cur.conflicts" not in x:
-                self.final_feats.append(x)
+        self.feats_used = []
+        for feat in features:
+            if "szfeat_cur" in feat and "szfeat_cur.conflicts" not in feat:
+                self.feats_used.append(feat)
 
-        # print("Features used: ", self.final_feats)
-        print("Number of features used: ", len(self.final_feats))
+        # print("Features used: ", self.feats_used)
+        print("Number of features used: ", len(self.feats_used))
 
         if options.check_row_data:
-            helper.check_too_large_or_nan_values(df, self.final_feats)
+            helper.check_too_large_or_nan_values(df, self.feats_used)
 
         # fit to slice that only includes CNF features
-        df_clust = self.df[self.final_feats].astype(float).copy()
+        df_clust = self.df[self.feats_used].astype(float).copy()
         if options.scale:
-            scaler = StandardScaler()
-            scaler.fit(df_clust)
+            self.scaler = StandardScaler()
+            self.scaler.fit(df_clust)
             if options.verbose:
                 print("Scaler:")
-                print(" -- ", scaler.mean_)
-                print(" -- ", scaler.scale_)
+                print(" -- ", self.scaler.mean_)
+                print(" -- ", self.scaler.scale_)
 
             if options.verbose:
                 df_clust_back = df_clust.copy()
-            df_clust[self.final_feats] = scaler.transform(df_clust)
+            df_clust[self.feats_used] = self.scaler.transform(df_clust)
         else:
             class ScalerNone:
                 def __init__(self):
                     self.mean_ = [0.0 for n in range(df_clust.shape[1])]
                     self.scale_ = [1.0 for n in range(df_clust.shape[1])]
-            scaler = ScalerNone()
+            self.scaler = ScalerNone()
 
         # test scaler's code generation
         if options.scale and options.verbose:
@@ -267,14 +287,14 @@ int ClusteringImp::which_is_closest(const SatZillaFeatures& p) const {
             # for scaler.scale_
             # for cluster.cluster_centers_
             for i in range(df_clust_back.shape[1]):
-                assert df_clust_back.columns[i] == self.final_feats[i]
+                assert df_clust_back.columns[i] == self.feats_used[i]
 
             # checking that scaler works as expected
             for feat in range(df_clust_back.shape[1]):
                 df_clust_back[df_clust_back.columns[feat]
-                              ] -= scaler.mean_[feat]
+                              ] -= self.scaler.mean_[feat]
                 df_clust_back[df_clust_back.columns[feat]
-                              ] /= scaler.scale_[feat]
+                              ] /= self.scaler.scale_[feat]
 
             print(df_clust_back.head()-df_clust.head())
             print(df_clust_back.head())
@@ -286,11 +306,11 @@ int ClusteringImp::which_is_closest(const SatZillaFeatures& p) const {
 
         # print information about the clusters
         if options.verbose:
-            print(self.final_feats)
+            print(self.feats_used)
             print(self.clust.labels_)
             print(self.clust.cluster_centers_)
             print(self.clust.get_params())
-        self.check_clust_distr(self.clust)
+        self.check_clust_distr()
 
         # code for clusters
         if options.basedir is None:
@@ -298,12 +318,14 @@ int ClusteringImp::which_is_closest(const SatZillaFeatures& p) const {
 
         # code for cluster centers
         self.create_code_for_cluster_centers(
-            self.clust, scaler, self.final_feats)
+            self.clust, self.scaler, self.feats_used)
 
         # code for predictors
         fnames = {}
         functs = {}
-        for conf in range(options.num_confs):
+
+        conf_from, conf_to = helper.parse_configs(options.confs)
+        for conf in range(conf_from, conf_to):
             for name in ["long", "short"]:
                 for clno in self.used_clusters:
                     funcname = "should_keep_{name}_conf{conf_num}_cluster{clno}".format(
@@ -317,20 +339,16 @@ int ClusteringImp::which_is_closest(const SatZillaFeatures& p) const {
                 self.write_all_predictors_file(
                     fnames, functs, conf_num=conf, longsh=name)
 
-    def dump_clustered(self, orig_feats, fname):
         print("Used clusters: ", self.used_clusters)
-        df = self.df[self.df["clust"].isin(self.used_clusters)]
-        with open(fname, "wb") as f:
-            pickle.dump(df[orig_feats+["clust"]], f)
-
-        print("Dumped to file %s" % fname)
+        return self.feats_used, self.scaler, self.clust, self.used_clusters
 
 
 if __name__ == "__main__":
     usage = "usage: %(prog)s [options] file.pandas"
     parser = argparse.ArgumentParser(usage=usage)
 
-    parser.add_argument("fname", type=str, metavar='PANDASFILE')
+    parser.add_argument("fnames", nargs='+', metavar='FILES',
+                        help="Files to parse, first file is the one to base data off of")
     parser.add_argument("--verbose", "-v", action="store_true", default=False,
                         dest="verbose", help="Print more output")
     parser.add_argument("--printfeat", action="store_true", default=False,
@@ -351,8 +369,8 @@ if __name__ == "__main__":
                         dest="no_computed", help="Don't add computed features")
 
     # number of configs to generate
-    parser.add_argument("--numconfs", default=4, type=int,
-                        dest="num_confs", help="Number of configs to generate")
+    parser.add_argument("--confs", default="2-2", type=str,
+                        dest="confs", help="Configs to generate")
 
     # code
     parser.add_argument("--basedir", type=str,
@@ -360,25 +378,40 @@ if __name__ == "__main__":
 
     options = parser.parse_args()
 
-    if options.fname is None:
+    if options.fnames is None or len(options.fnames) == 0:
         print("ERROR: You must give the pandas file!")
         exit(-1)
+    else:
+        print("Will base clustering on file:", options.fnames[0])
+        print("Will add clustering to files: ")
+        for f in options.fnames:
+            print("->", f)
 
     if options.clusters <= 0:
         print("ERROR: You must give a '--clusters' option that is greater than 0")
         exit(-1)
 
-    df = pd.read_pickle(options.fname)
-    if options.print_features:
-        feats = sorted(list(df))
-        for f in feats:
-            print(f)
 
-    orig_feats = list(df)
-    if not options.no_computed:
-        helper.add_computed_szfeat_for_clustering(df)
+    feats_used, scaler, clust, used_clusters = [None, None, None, None]
+    for f in options.fnames:
+        if "-clustered.dat" in f:
+            print("Skipping file, seems clustered: %s" % f)
+            continue
 
-    c = Clustering(df)
-    c.cluster()
-    cleanname = re.sub(r'\.dat$', '', options.fname)
-    c.dump_clustered(orig_feats, cleanname+"-clustered.dat")
+        print("=====================")
+        print("-- Reading file %s --" % f)
+        print("=====================")
+        df = pd.read_pickle(f)
+        if not options.no_computed:
+            helper.add_computed_szfeat_for_clustering(df)
+
+        if clust is None:
+            print("!! Using this file for generating clustering !!")
+            c = Clustering(df)
+            feats_used, scaler, clust, used_clusters = c.cluster()
+        else:
+            add_clustering_label(df, feats_used, scaler, clust)
+
+        cleanname = re.sub(r'\.dat$', '', f)
+        dump_clustered(df, used_clusters, cleanname+"-clustered.dat")
+        del df

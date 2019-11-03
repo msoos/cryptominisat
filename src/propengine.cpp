@@ -275,8 +275,10 @@ PropBy PropEngine::propagate_any_order_fast()
                 assert(j <= end);
                 qhead = trail.size();
             } else {
-                #ifdef STATS_NEEDED
+                #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
                 c.stats.propagations_made++;
+                #endif
+                #ifdef STATS_NEEDED
                 if (c.red())
                     propStats.propsLongRed++;
                 else

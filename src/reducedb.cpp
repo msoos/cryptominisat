@@ -373,6 +373,7 @@ void ReduceDB::handle_lev3_final_predictor()
         } else {
             const uint32_t act_ranking_top_10 = \
                 std::ceil((double)i/((double)solver->longRedCls[3].size()/10.0));
+            double act_ranking_rel = (double)i/((double)solver->longRedCls[3].size()+0.0001);
 
             uint32_t last_touched_diff;
             if (cl->stats.last_touched == 0) {
@@ -388,7 +389,7 @@ void ReduceDB::handle_lev3_final_predictor()
                 cl
                 , solver->sumConflicts
                 , last_touched_diff
-                , (double)i/(double)solver->longRedCls[3].size()+0.0001
+                , act_ranking_rel
                 , act_ranking_top_10+1
             )) {
                 marked_long_keep++;
@@ -403,7 +404,7 @@ void ReduceDB::handle_lev3_final_predictor()
                 cl
                 , solver->sumConflicts
                 , last_touched_diff
-                , (double)i/(double)solver->longRedCls[3].size()+0.0001
+                , act_ranking_rel
                 , act_ranking_top_10+1)
             ) {
                 deleted++;
@@ -432,8 +433,10 @@ void ReduceDB::handle_lev3_final_predictor()
                 dumpno_nonz += (cl->stats.dump_number != 0);
                 cl->stats.dump_number++;
                 cl->stats.rdb1_act_ranking_top_10 = act_ranking_top_10;
+                cl->stats.rdb1_act_ranking_rel = act_ranking_rel;
                 cl->stats.rdb1_last_touched_diff = last_touched_diff;
                 cl->stats.rdb1_used_for_uip_creation = cl->stats.used_for_uip_creation;
+                cl->stats.rdb1_propagations_made = cl->stats.propagations_made;
                 cl->stats.reset_rdb_stats();
             }
         }

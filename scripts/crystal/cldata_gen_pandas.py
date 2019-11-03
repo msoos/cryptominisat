@@ -638,18 +638,7 @@ def one_database(dbfname):
             q.create_indexes()
             q.fill_later_useful_data()
 
-    match = re.match(r"^([0-9]*)-([0-9]*)$", options.confs)
-    if not match:
-        print("ERROR: we cannot parse your config options: '%s'" % options.confs)
-        exit(-1)
-
-    conf_from = int(match.group(1))
-    conf_to = int(match.group(2))+1
-    if conf_to <= conf_from:
-        print("ERROR: Conf range is not increasing")
-        exit(-1)
-
-    print("Running configs:", range(conf_from, conf_to))
+    conf_from, conf_to = helper.parse_configs(options.confs)
     print("Using sqlite3db file %s" % dbfname)
     for long_or_short in ["long", "short"]:
         for conf in range(conf_from, conf_to):

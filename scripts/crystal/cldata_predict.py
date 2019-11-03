@@ -77,8 +77,8 @@ def add_computed_features(df):
             cboth = "("+col+"+"+col2+")"
             df[cboth] = df[col]+df[col2]
 
-    rdb0_act_ranking_rel = divide("rdb0.act_ranking", "rdb0.tot_cls_in_db")
-    rdb1_act_ranking_rel = divide("rdb1.act_ranking", "rdb1.tot_cls_in_db")
+    rdb0_act_ranking_rel = divide("rdb0.act_ranking", "rdb0.tot_cls_in_db", name="rdb0_act_ranking_rel")
+    rdb1_act_ranking_rel = divide("rdb1.act_ranking", "rdb1.tot_cls_in_db", name="rdb1_act_ranking_rel")
     rdb0_plus_rdb1_ranking_rel = add([rdb0_act_ranking_rel, rdb1_act_ranking_rel])
 
     divide("rdb0.sum_uip1_used", "cl.time_inside_solver")
@@ -101,7 +101,7 @@ def add_computed_features(df):
         , "cl.num_antecedents"
         , rdb0_act_ranking_rel
         , rdb1_act_ranking_rel
-        , "szfeat_cur.var_cl_ratio"
+        #, "szfeat_cur.var_cl_ratio"
         , "cl.time_inside_solver"
         #, "((double)(rdb0.act_ranking_rel+rdb1.act_ranking_rel)/2.0)"
         #, "sqrt(rdb0.act_ranking_rel)"
@@ -494,7 +494,7 @@ class Learner:
             '((rdb0.propagations_made+rdb1.propagations_made)/cl.antec_overlap_hist)',
             '((rdb0.propagations_made+rdb1.propagations_made)/szfeat_cur.var_cl_ratio)',
             '(rdb0.propagations_made/log2(cl.glue))',
-            '(rdb0.propagations_made/(rdb1.act_ranking/rdb1.tot_cls_in_db))']
+            '(rdb0.propagations_made/rdb1_act_ranking_rel)']
 
         # TODO fill best_features here
         self.one_classifier(best_features, "x.class",

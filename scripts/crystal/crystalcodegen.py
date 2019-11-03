@@ -204,7 +204,7 @@ class SourceGenerator(NodeVisitor):
 
     def visit_Name(self, node):
         #print("type:", type(node.id))
-        if node.id != "sqrt":
+        if node.id != "log2":
             x = self.update(node.id)
         else:
             x = node.id
