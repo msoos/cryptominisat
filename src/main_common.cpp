@@ -91,12 +91,13 @@ void MainCommon::handle_drat_option()
 #endif
 }
 
-uint32_t MainCommon::print_model(CMSat::SATSolver* solver, std::ostream* os)
+uint32_t MainCommon::print_model(CMSat::SATSolver* solver, std::ostream* os, std::vector<uint32_t>* only)
 {
     *os << "v ";
     size_t line_size = 2;
     size_t num_undef = 0;
-    for (uint32_t var = 0; var < solver->nVars(); var++) {
+
+    auto fun = [&](uint32_t var) {
         if (solver->get_model()[var] != CMSat::l_Undef) {
             const bool value_is_positive = (solver->get_model()[var] == CMSat::l_True);
             const size_t this_var_size = std::ceil(std::log10(var+1)) + 1 + !value_is_positive;
@@ -108,6 +109,16 @@ uint32_t MainCommon::print_model(CMSat::SATSolver* solver, std::ostream* os)
             *os << (value_is_positive? "" : "-") << var+1 << " ";
         } else {
             num_undef++;
+        }
+    };
+
+    if (only == NULL) {
+        for (uint32_t var = 0; var < solver->nVars(); var++) {
+            fun(var);
+        }
+    } else {
+        for(uint32_t var: *only) {
+            fun(var);
         }
     }
     *os << "0" << std::endl;
