@@ -121,7 +121,7 @@ gret PackedRow::propGause(
     //cout << "start" << endl;
     //cout << "line: " << *this << endl;
     tmp_col.set_and(*this, cols_unset);
-    const uint32_t pop = tmp_col.popcnt();
+    const uint32_t pop = tmp_col.popcnt_at_least_2();
     #ifdef VERBOSE_DEBUG
     cout << "POP in GausE: " << pop << " row: " << endl;
     cout << *this << endl;

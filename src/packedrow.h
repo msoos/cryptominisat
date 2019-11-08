@@ -260,6 +260,7 @@ public:
     );
 
     uint32_t popcnt() const;
+    uint32_t popcnt_at_least_2() const;
 
 private:
     friend class PackedMatrix;
@@ -285,6 +286,15 @@ inline std::ostream& operator << (std::ostream& os, const PackedRow& m)
     }
     os << " -- rhs: " << m.rhs();
     return os;
+}
+
+inline uint32_t PackedRow::popcnt_at_least_2() const
+{
+    uint32_t ret = 0;
+    for (int i = 0; i < size && ret < 2; i++) {
+        ret += __builtin_popcountll((uint64_t)mp[i]);
+    }
+    return ret;
 }
 
 inline uint32_t PackedRow::popcnt() const
