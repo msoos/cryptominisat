@@ -78,6 +78,7 @@ class DimacsParser
         bool header_found = false;
         int num_header_vars = 0;
         int num_header_cls = 0;
+        bool isCnfPlus = false;
 
         //Reduce temp overhead
         vector<Lit> lits;
@@ -132,19 +133,21 @@ bool DimacsParser<C>::readClause(C& in)
     int32_t parsed_lit;
     uint32_t var;
     for (;;) {
-        if ((isAtLeast = in.checkForChar('>')) || in.checkForChar('<')) {
-            isCardConst = true;
-            if(!in.checkForChar('=')) {
-                std::cerr
-                << "PARSE ERROR!" "At line " << lineNum
-                << " we expected an equals sign"
-                << std::endl;
-                return false;
+        if (isCnfPlus) {
+            if ((isAtLeast = in.checkForChar('>')) || in.checkForChar('<')) {
+                isCardConst = true;
+                if(!in.checkForChar('=')) {
+                    std::cerr
+                    << "PARSE ERROR!" "At line " << lineNum
+                    << " we expected an equals sign"
+                    << std::endl;
+                    return false;
+                }
+                else if (!in.parseInt(bound, lineNum)) {
+                    return false;
+                }
+                return true;
             }
-            else if (!in.parseInt(bound, lineNum)) {
-                return false;
-            }
-            return true;
         }
         
         if (!in.parseInt(parsed_lit, lineNum)) {
@@ -235,6 +238,9 @@ bool DimacsParser<C>::printHeader(C& in)
         }
         header_found = true;
 
+        if (in.checkForChar('+')) {
+            isCnfPlus = true;
+        }
         if (!in.parseInt(num_header_vars, lineNum)
             || !in.parseInt(num_header_cls, lineNum)
         ) {
