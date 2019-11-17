@@ -160,14 +160,13 @@ private:
     uint32_t lowbad;                  /* lowest number of bad clauses during try */
     int64_t totalflip = 0;        /* total number of flips in all tries so far */
     int64_t totalsuccessflip = 0; /* total number of flips in all tries which succeeded so far */
-    bool found_solution = 0;       /* total found solutions */
+    bool found_solution = false;       /* total found solutions */
     int64_t x;
     int64_t integer_sum_x = 0;
     double sum_x = 0.0;
     double seconds_per_flip;
     int r;
     int sum_r = 0;
-    double mean_r;
     double avgfalse;
     double sumfalse;
     double sumfalse_squared;
