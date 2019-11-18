@@ -30,6 +30,8 @@ HyperEngine::HyperEngine(const SolverConf *_conf, std::atomic<bool>* _must_inter
 {
 }
 
+HyperEngine::~HyperEngine() = default;
+
 Lit HyperEngine::propagate_bfs(const uint64_t timeout)
 {
     timedOutPropagateFull = false;
