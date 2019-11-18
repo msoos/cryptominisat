@@ -73,6 +73,7 @@ endif()
 
 set(cryptoms_lib_files
     cnf.cpp
+    drat.cpp
     propengine.cpp
     varreplacer.cpp
     clausecleaner.cpp
