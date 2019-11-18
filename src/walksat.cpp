@@ -679,7 +679,6 @@ void WalkSAT::update_and_print_statistics_end_try()
         integer_sum_x += x;
         sum_x = (double)integer_sum_x;
         sum_r += r;
-        mean_r = ((double)sum_r) / (double)found_solution;
         x = 0;
         r = 0;
     }
@@ -711,9 +710,8 @@ void WalkSAT::print_statistics_final()
         cout << "c [walksat] total elapsed seconds = " <<  totalTime << endl;
         cout << "c [walksat] num tries: " <<  numtry  << endl;
         cout << "c [walksat] avg flips per second = " << ratio_for_stat(totalflip, totalTime) << endl;
-        cout << "c [walksat] final success rate = " << stats_line_percent(found_solution, numtry)  << endl;
-        cout << "c [walksat] avg length successful tries = %" <<
-               ratio_for_stat(totalsuccessflip,found_solution) << endl;
+        cout << "c [walksat] final success rate = " << stats_line_percent(1, numtry)  << endl;
+        cout << "c [walksat] avg length successful tries = %" << totalsuccessflip << endl;
         if (found_solution) {
             cout << "c [walksat] total success flip = " << totalsuccessflip << endl;
             cout << "c [walksat] flips = " << totalflip << endl;
