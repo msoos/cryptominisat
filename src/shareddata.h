@@ -44,9 +44,9 @@ class SharedData
                 data(new vector<Lit>)
             {}
 
-            Spec(const Spec&) {
-                assert(false);
-            }
+            Spec(const Spec&) = delete;
+            Spec& operator=(const Spec&) = delete;
+            
             Spec(Spec&& other)
             #ifndef _MSC_VER
             noexcept
