@@ -1252,8 +1252,7 @@ void VarReplacer::save_state(SimpleOutFile& f) const
     f.put_uint32_t(replacedVars);
 
     f.put_uint32_t(reverseTable.size());
-    for(const std::pair<uint32_t, vector<uint32_t> >& elem: reverseTable)
-    {
+    for(auto const& elem: reverseTable) {
         f.put_uint32_t(elem.first);
         f.put_vector(elem.second);
     }
