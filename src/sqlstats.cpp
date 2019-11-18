@@ -23,6 +23,7 @@ THE SOFTWARE.
 #include "sqlstats.h"
 using namespace CMSat;
 
+SQLStats::~SQLStats() = default;
 
 #ifndef _MSC_VER
 #include <fcntl.h>
