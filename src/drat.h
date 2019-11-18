@@ -93,9 +93,7 @@ struct Drat
     {
     }
 
-    virtual void flush()
-    {
-    }
+    virtual void flush();
 
     int buf_len;
     unsigned char* drup_buf = 0;

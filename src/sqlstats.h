@@ -37,8 +37,7 @@ class SQLStats
 {
 public:
 
-    virtual ~SQLStats()
-    {}
+    virtual ~SQLStats();
 
     virtual void restart(
         const std::string& restart_type
