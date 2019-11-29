@@ -815,9 +815,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
     PackedMatrix::iterator new_resp_row = mat.begin() + gqd.new_resp_row;
     PackedMatrix::iterator rowI = mat.begin();
     PackedMatrix::iterator end = mat.end();
-    uint32_t new_resp_col = var_to_col[gqd.new_resp_var];
-    uint32_t orig_non_resp_var = 0;
-    uint32_t orig_non_resp_col = 0;
+    const uint32_t new_resp_col = var_to_col[gqd.new_resp_var];
     uint32_t row_n = 0;
 
     #ifdef VERBOSE_DEBUG
@@ -835,8 +833,8 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
         if (new_resp_row != rowI && (*rowI)[new_resp_col]) {
 
             // detect orignal non-basic watch list change or not
-            orig_non_resp_var = row_to_var_non_resp[row_n];
-            orig_non_resp_col = var_to_col[orig_non_resp_var];
+            uint32_t orig_non_resp_var = row_to_var_non_resp[row_n];
+            uint32_t orig_non_resp_col = var_to_col[orig_non_resp_var];
             assert((*rowI)[orig_non_resp_col]);
             #ifdef VERBOSE_DEBUG
             cout
