@@ -68,7 +68,10 @@ CMS_DLL_PUBLIC c_lbool cmsat_solve_with_assumptions(SATSolver* self, const c_Lit
 CMS_DLL_PUBLIC slice_lbool cmsat_get_model(const SATSolver* self) NOEXCEPT;
 CMS_DLL_PUBLIC slice_Lit cmsat_get_conflict(const SATSolver* self) NOEXCEPT;
 
+CMS_DLL_PUBLIC void cmsat_print_stats(const SATSolver* self) NOEXCEPT;
+
 CMS_DLL_PUBLIC void cmsat_set_num_threads(SATSolver* self, unsigned n) NOEXCEPT;
+CMS_DLL_PUBLIC void cmsat_set_verbosity(SATSolver* self, unsigned n) NOEXCEPT;
 
 #ifdef __cplusplus
 } // end extern c
