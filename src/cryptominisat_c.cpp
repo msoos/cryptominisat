@@ -117,7 +117,7 @@ extern "C"
         return unwrap<slice_Lit>(self->get_conflict());
     } NOEXCEPT_END
 
-    DLL_PUBLIC void cmsat_print_stats(SATSolver* self) NOEXCEPT_START {
+    DLL_PUBLIC void cmsat_print_stats(const SATSolver* self) NOEXCEPT_START {
         self->print_stats();
     } NOEXCEPT_END
     
