@@ -121,4 +121,8 @@ extern "C"
     DLL_PUBLIC void cmsat_set_num_threads(SATSolver* self, unsigned n) NOEXCEPT_START {
         self->set_num_threads(n);
     } NOEXCEPT_END
+
+    DLL_PUBLIC void cmsat_set_verbosity(SATSolver* self, unsigned n) NOEXCEPT_START {
+        self->set_verbosity(n);
+    } NOEXCEPT_END
 }
