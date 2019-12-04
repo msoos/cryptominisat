@@ -117,7 +117,11 @@ extern "C"
         return unwrap<slice_Lit>(self->get_conflict());
     } NOEXCEPT_END
 
-//Setup
+    DLL_PUBLIC void cmsat_print_stats(SATSolver* self) NOEXCEPT_START {
+        self->print_stats();
+    } NOEXCEPT_END
+    
+    //Setup
     DLL_PUBLIC void cmsat_set_num_threads(SATSolver* self, unsigned n) NOEXCEPT_START {
         self->set_num_threads(n);
     } NOEXCEPT_END
