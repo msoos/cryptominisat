@@ -584,8 +584,9 @@ Create a file `a.cnf`:
 ```
 p cnf 30 3
 1 0
-4 6 -8 2 0
-7 -9 3 0
+2 3 4 6 8 0
+3 7 -9 0
+c -8 0
 ```
 
 Create a simple `cdclt.py` file:
