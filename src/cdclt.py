@@ -19,18 +19,24 @@ def propagate(ass):
             if i > 0:
                 print ("%d: %d" % (i, l))
 
-    for lhs, rhs in pbs:
+    for lhs, rhs in cards:
         #print("lhs:", lhs)
         #print("rhs:", rhs)
         val = 0
         reason = []
-        prop_lits = 0
+        prop_lits = []
         for p in lhs:
             if ass[abs(p)] != 0:
-                reason.append(-p)
+                var = abs(p)
+                if p < 0:
+                    neg = -1
+                else:
+                    neg = 1
+                if ass[var]*neg > 0:
+                    reason.append(-p)
 
             if ass[abs(p)] == 0:
-                prop_lits = -p
+                prop_lits.append(-p)
 
             if p > 0:
                 val += int(ass[p] > 0)
