@@ -37,13 +37,14 @@ print("--------- INIT FINISH ----------")
 # -> ass[1] = 1  means variable 1 is TRUE
 # -> ass[1] = -1 means variable 1 is FALSE
 def propagate(ass):
-    print("propagate() called")
+    print("--- propagate() called ---")
     print("variable assignments: ")
     for val, i in zip(ass, range(100000)):
         if i > 0:
             print ("%d: %d" % (i, val))
 
     # nothing propagated or conflicted, return 0
+    print("-> returning: 0")
     return 0
 
     # to return a conflict do:
