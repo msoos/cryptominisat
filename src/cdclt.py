@@ -1,5 +1,5 @@
 print("--------- INIT ----------")
-cards = [
+cards1 = [
     #1*v1 + 1*v2 + 1*v3 [....] <= 1
     [[1, 2, 3, 4, 5, 6, 7], 1],
     ]
@@ -25,6 +25,9 @@ cards4 = [
     #1*(NOT v10) + 1*(NOT v11) <= 1
     [[-10, -11], 1]
 ]
+
+# active set of cardinality constraints
+cards = cards4
 
 print("--------- INIT FINISH ----------")
 
