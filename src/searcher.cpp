@@ -1342,23 +1342,31 @@ int Searcher::python_propagate(Clause*& conflPtr)
         exit(-1);
     }
 
-    PyObject* ret_p = PyTuple_GetItem(pResult, 0);
-    int ret = PyLong_AsLong(ret_p);
-    if (ret < 0 || ret > 2) {
-        cout << "ERROR: The returned value is less than 0 or larger than 2"
-        << " but only 0,1, and 2 are allowed" << endl;
-        exit(-1);
-    }
-    if (ret == 0) {
-        if (PyTuple_Size(pResult) > 1) {
-            cout << "ERROR: you have returned a tuple that contains more than one element, but you specified that there is no propagation or conflict!" << endl;
+    if (pResult->ob_type == &PyLong_Type) {
+        long ret = PyLong_AsLong(pResult);
+        if (ret != 0) {
+            cout << "ERROR: you returned only a single value but it's not 0! If it's a propagation, you must return what is propagated, and if it's a conflict, you must return the propagation(s) and the conflict!" << endl;
             exit(-1);
         }
-        Py_DECREF(ret_p);
         Py_DECREF(pResult);
         return 0;
     }
 
+    if (pResult->ob_type != &PyTuple_Type) {
+        cout << "ERROR: you didn't return a tuple or a long, you maybe returned an array? That's not OK" << endl;
+        exit(-1);
+    }
+
+    PyObject* ret_p = PyTuple_GetItem(pResult, 0);
+    long ret = PyLong_AsLong(ret_p);
+    if (ret == 0 || ret > 2) {
+        cout << "ERROR: The returned value is: " << ret
+        << ", which is either 0 (which is impossible, because you should then have only returned 0) or larger than 2" << endl;
+        exit(-1);
+    }
+    if (ret == 0) {
+
+    }
     PyObject* props = PyTuple_GetItem(pResult, 1);
     uint32_t num_props = PyList_Size(props);
     for(uint32_t i = 0; i < num_props; i++) {

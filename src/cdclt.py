@@ -11,4 +11,4 @@ def propagate(a):
 
     reason = [1,2, 3]
     prop = (1, reason)
-    return 0, [prop]
+    return 0
