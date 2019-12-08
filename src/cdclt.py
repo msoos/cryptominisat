@@ -1,4 +1,3 @@
-print("Init module now")
 print("--------- INIT ----------")
 cards = [
     #1*v1 + 1*v2 + 1*v3 [....] <= 1
@@ -28,6 +27,7 @@ cards4 = [
 ]
 
 verb = True
+print("--------- INIT FINISH ----------")
 
 # Propagates
 def propagate(ass):
