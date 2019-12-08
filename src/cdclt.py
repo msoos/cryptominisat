@@ -19,32 +19,39 @@ def propagate(ass):
             if i > 0:
                 print ("%d: %d" % (i, l))
 
+    #Let's go through all the cardinality constraints and see what's up
     for lhs, rhs in cards:
-        #print("lhs:", lhs)
-        #print("rhs:", rhs)
+        print("lhs: %s <= %s" % (lhs, rhs))
         val = 0
         reason = []
         prop_lits = []
         for p in lhs:
+            #assigned variable in cardinality constraint
+            #could be part of a reason!
             if ass[abs(p)] != 0:
                 var = abs(p)
                 if p < 0:
                     neg = -1
                 else:
                     neg = 1
+
+                #Only put FALSIFIED values into the reason
                 if ass[var]*neg > 0:
                     reason.append(-p)
 
+            #unassigned variable in cardinality constraint
             if ass[abs(p)] == 0:
+                #potentially propagated literals
                 prop_lits.append(-p)
 
+            #Let's update the current value
             if p > 0:
                 val += int(ass[p] > 0)
             else:
                 val += int(-ass[abs(p)] > 0)
 
         print("val   : ", val)
-        print("maxval: ", rhs)
+        print("rhs   : ", rhs)
         if val > rhs:
             print("Conflict! Reason clause:", reason)
             return 2, [], reason
