@@ -40,6 +40,7 @@ THE SOFTWARE.
 #include "simplefile.h"
 #include "gausswatched.h"
 #include "xor.h"
+#include <Python.h>
 
 using std::numeric_limits;
 
@@ -70,20 +71,11 @@ public:
     size_t mem_used_renumberer() const;
     size_t mem_used() const;
 
-    CNF(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter)
-    {
-        if (_conf != NULL) {
-            conf = *_conf;
-        }
-        drat = new Drat;
-        assert(_must_interrupt_inter != NULL);
-        must_interrupt_inter = _must_interrupt_inter;
-
-        longRedCls.resize(3);
-    }
+    CNF(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter);
 
     virtual ~CNF()
     {
+        Py_Finalize();
         delete drat;
     }
 
@@ -279,6 +271,11 @@ public:
         , const bool red
         , const bool allowFreed
     ) const;
+
+    ////////////
+    // Python
+    ////////////
+    PyObject *pDict = NULL;
 
 protected:
     virtual void new_var(const bool bva, const uint32_t orig_outer);

@@ -190,6 +190,11 @@ class Searcher : public HyperEngine
             bool True_confl
         );
 
+        //////////
+        ///python
+        //////////
+        int python_propagate(Clause*& conflPtr);
+
     protected:
         void new_var(const bool bva, const uint32_t orig_outer) override;
         void new_vars(const size_t n) override;
@@ -469,6 +474,11 @@ class Searcher : public HyperEngine
 
         double   startTime; ///<When solve() was started
         SearchStats stats;
+
+        //////
+        // Python
+        /////
+        bool python_propagated = true;
 };
 
 inline uint32_t Searcher::abstractLevel(const uint32_t x) const

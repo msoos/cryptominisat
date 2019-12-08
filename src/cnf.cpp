@@ -33,6 +33,36 @@ THE SOFTWARE.
 
 using namespace CMSat;
 
+CNF::CNF(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter)
+{
+    if (_conf != NULL) {
+        conf = *_conf;
+    }
+    drat = new Drat;
+    assert(_must_interrupt_inter != NULL);
+    must_interrupt_inter = _must_interrupt_inter;
+
+    longRedCls.resize(3);
+
+    //////
+    // Python
+    //////
+    Py_Initialize();
+    // Convert the file name to a Python string.
+    PyObject* pName = PyUnicode_FromString("cdclt");
+
+    // Import the file as a Python module.
+    PyObject *pModule = PyImport_Import(pName);
+    if (pModule == NULL) {
+        PyErr_Print();
+        cout << "Error importing" << endl;
+        exit(-1);
+    }
+
+    // Create a dictionary for the contents of the module.
+    pDict = PyModule_GetDict(pModule);
+}
+
 void CNF::new_var(const bool bva, const uint32_t orig_outer)
 {
     if (nVars() >= 1ULL<<28) {

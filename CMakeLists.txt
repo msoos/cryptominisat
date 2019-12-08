@@ -622,7 +622,7 @@ if (STATICCOMPILE)
 endif()
 
 option(FORCE_PYTHON2 OFF)
-option(FORCE_PYTHON3 OFF)
+option(FORCE_PYTHON3 ON)
 
 if (FORCE_PYTHON3 AND FORCE_PYTHON2)
     message(FATAL_ERROR "Cannot force both Python2 and Python3. Wrong options given.")

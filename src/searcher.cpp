@@ -43,6 +43,7 @@ THE SOFTWARE.
 #include "distillerlong.h"
 #include "xorfinder.h"
 #include "matrixfinder.h"
+#include <Python.h>
 #ifdef USE_GAUSS
 #include "EGaussian.h"
 #endif
@@ -1217,6 +1218,32 @@ lbool Searcher::search()
             check_need_restart();
         } else {
             assert(ok);
+            Clause* conflPtr;
+            int val = python_propagate(conflPtr);
+            if (val == 0) {
+                //l_Nothing
+                //nothing to do
+            } else if (val == 1) {
+                //l_Continue
+                //propagation only
+                check_need_restart();
+                continue;
+            } else if (val == 2) {
+                //l_Continue
+                //(potentially propagation and) conflict
+                confl = PropBy(solver->cl_alloc.get_offset(conflPtr));
+                qhead = trail.size();
+
+                bool ret = handle_conflict<false>(confl);
+                solver->cl_alloc.clauseFree(confl.get_offset());
+                if (!ret) {
+                    dump_search_loop_stats(myTime);
+                    return l_False;
+                }
+
+                check_need_restart();
+                continue;
+            }
             #ifdef USE_GAUSS
             if (!update_bogoprops) {
                 llbool ret = Gauss_elimination();
@@ -1259,6 +1286,76 @@ lbool Searcher::search()
     dump_search_loop_stats(myTime);
 
     return l_Undef;
+}
+
+int Searcher::python_propagate(Clause*& conflPtr)
+{
+    PyObject *pFunc = PyDict_GetItemString(pDict, "propagate");
+    // Create a Python tuple to hold the arguments to the method.
+
+    PyObject *pList = PyList_New(nVars()+1);
+
+    //Add zeroth element (useless)
+    {
+        PyObject *pListElem = PyLong_FromLong(0);
+        PyList_SetItem(pList, 0, pListElem);
+        Py_INCREF(pListElem);
+    }
+
+    for(uint32_t i = 0; i < nVars(); i++) {
+        // Convert 2 to a Python integer.
+        int x;
+        if (value(i) == l_Undef) {
+            x = 0;
+        } else if (value(i) == l_True) {
+            x = 1;
+        } else if (value(i) == l_False) {
+            x = -1;
+        } else {
+            assert(false);
+        }
+        PyObject *pListElem = PyLong_FromLong(x);
+
+        // Set the Python int as the first and second arguments to the method.
+        PyList_SetItem(pList, i+1, pListElem);
+        Py_INCREF(pListElem);
+    }
+
+    PyObject *pArgs = PyTuple_New(1);
+    PyTuple_SetItem(pArgs, 0, pList);
+    Py_INCREF(pList);
+
+    // Call the function with the arguments.
+    PyObject* pResult = PyObject_CallObject(pFunc, pArgs);
+
+    //Delete memory
+    for(uint32_t i = 0; i < nVars(); i++) {
+        PyObject* p = PyList_GetItem(pList,i);
+        Py_DECREF(p);
+    }
+    Py_DECREF(pList);
+
+    // Print a message if calling the method failed.
+    if(pResult == NULL) {
+        PyErr_Print();
+        cout << "Calling the add method failed" << endl;
+        exit(-1);
+    }
+
+    PyObject* ret_p = PyTuple_GetItem(pResult, 0);
+    int ret = PyLong_AsLong(ret_p);
+    if (ret == 0) {
+        return 0;
+    }
+
+    /*
+    vector<Lit> clause;
+    conflPtr = solver->cl_alloc.Clause_new(
+        clause
+    );
+
+    conflPtr->set_gauss_temp_cl();*/
+    return 0;
 }
 
 void Searcher::dump_search_sql(const double myTime)

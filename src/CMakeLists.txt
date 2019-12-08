@@ -241,12 +241,14 @@ install(TARGETS cryptominisat5
 )
 
 if (NOT ONLY_SIMPLE)
+    include_directories(${PYTHON_INCLUDE_DIRS})
     add_executable(cryptominisat5-bin
         main.cpp
         main_common.cpp
         main_exe.cpp
         signalcode.cpp
     )
+    target_link_libraries(cryptominisat5-bin ${PYTHON_LIBRARIES})
 endif()
 
 if (EMSCRIPTEN)
@@ -265,10 +267,12 @@ if (EMSCRIPTEN)
         PROPERTIES COMPILE_FLAGS "-s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'  -s LINKABLE=1 -s EXPORT_ALL=1"
     )
 else()
+    include_directories(${PYTHON_INCLUDE_DIRS})
     add_executable(cryptominisat5_simple-bin
         main_simple.cpp
         main_common.cpp
     )
+    target_link_libraries(cryptominisat5_simple-bin ${PYTHON_LIBRARIES})
 endif()
 
 set(cryptoms_exec_link_libs
