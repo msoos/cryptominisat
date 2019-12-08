@@ -1231,11 +1231,11 @@ lbool Searcher::search()
             } else if (val == 2) {
                 //l_Continue
                 //(potentially propagation and) conflict
-                confl = PropBy(solver->cl_alloc.get_offset(conflPtr));
+                confl = PropBy(cl_alloc.get_offset(conflPtr));
                 qhead = trail.size();
 
                 bool ret = handle_conflict<false>(confl);
-                solver->cl_alloc.clauseFree(confl.get_offset());
+                cl_alloc.clauseFree(confl.get_offset());
                 if (!ret) {
                     dump_search_loop_stats(myTime);
                     return l_False;
@@ -1402,13 +1402,13 @@ int Searcher::python_propagate(Clause*& conflPtr)
         );
         cla->set_gauss_temp_cl();
         const ClOffset offs = solver->cl_alloc.get_offset(cla);
-        //clauses_toclear.push_back(std::make_pair(offs, solver->trail.size() - 1));
+        clauses_toclear.push_back(std::make_pair(offs, trail.size() - 1));
         assert(!cla->freed());
         if (solver->value((*cla)[0].var()) != l_Undef) {
             cout << "ERROR: Your returned propagation clause No. " << i << " has the first literal that's not UNDEF, it's instead: " << solver->value((*cla)[0].var()) << endl;
             exit(-1);
         }
-        solver->enqueue((*cla)[0], PropBy(offs));
+        enqueue((*cla)[0], PropBy(offs));
     }
     Py_DECREF(props);
 
