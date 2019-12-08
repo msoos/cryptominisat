@@ -1299,7 +1299,6 @@ int Searcher::python_propagate(Clause*& conflPtr)
     {
         PyObject *pListElem = PyLong_FromLong(0);
         PyList_SetItem(pList, 0, pListElem);
-        Py_INCREF(pListElem);
     }
 
     for(uint32_t i = 0; i < nVars(); i++) {
@@ -1318,21 +1317,13 @@ int Searcher::python_propagate(Clause*& conflPtr)
 
         // Set the Python int as the first and second arguments to the method.
         PyList_SetItem(pList, i+1, pListElem);
-        Py_INCREF(pListElem);
     }
 
     PyObject *pArgs = PyTuple_New(1);
     PyTuple_SetItem(pArgs, 0, pList);
-    Py_INCREF(pList);
 
     // Call the function with the arguments.
     PyObject* pResult = PyObject_CallObject(pFunc, pArgs);
-
-    //Delete memory
-    for(uint32_t i = 0; i < nVars(); i++) {
-        PyObject* p = PyList_GetItem(pList,i);
-        Py_DECREF(p);
-    }
     Py_DECREF(pList);
 
     // Print a message if calling the method failed.
@@ -1378,7 +1369,12 @@ int Searcher::python_propagate(Clause*& conflPtr)
         for(uint32_t i2 = 0; i2 < PyList_Size(prop); i2++) {
             PyObject* x = PyList_GetItem(prop, i2);
             long xx = PyLong_AsLong(x);
-            Lit reason_lit = Lit(xx-1, xx < 0);
+            if (xx == 0) {
+                cout
+                << "ERROR: Your clause has a '0' inside, which is impossible, that's not a literal! Variables start numbering at 1, so 0 is impossible. Possible are: 1, -1, 2, -2, ..." << endl;
+                exit(-1);
+            }
+            Lit reason_lit = Lit(std::abs(xx)-1, xx < 0);
             if (reason_lit.var() >= nVars()) {
                 cout
                 << "ERROR: Propagating clause no. " << i
@@ -1389,7 +1385,7 @@ int Searcher::python_propagate(Clause*& conflPtr)
                 exit(-1);
             }
             if (i2 > 0) {
-                if (value(reason_lit.var()) != l_False) {
+                if (value(reason_lit) != l_False) {
                     cout
                     << "ERROR: Propagating clause no. " << i
                     << " has literal inside: " << reason_lit
@@ -1399,9 +1395,7 @@ int Searcher::python_propagate(Clause*& conflPtr)
                 }
             }
             reason.push_back(reason_lit);
-            Py_DECREF(x);
         }
-        Py_DECREF(prop);
 
         Clause* cla = solver->cl_alloc.Clause_new(
             reason, sumConflicts
@@ -1427,18 +1421,24 @@ int Searcher::python_propagate(Clause*& conflPtr)
     }
 
     if (ret == 1) {
+        Py_DECREF(pResult);
         return 1;
     }
 
     /////////////
-    //Propagations
+    //Conflict
     /////////////
     PyObject* confl = PyTuple_GetItem(pResult, 2);
     vector<Lit> reason;
     for(uint32_t i2 = 0; i2 < PyList_Size(confl); i2++) {
         PyObject* x = PyList_GetItem(confl, i2);
         long xx = PyLong_AsLong(x);
-        Lit reason_lit = Lit(xx-1, xx < 0);
+        if (xx == 0) {
+            cout
+            << "ERROR: Your clause has a '0' inside, which is impossible, that's not a literal! Variables start numbering at 1, so 0 is impossible. Possible are: 1, -1, 2, -2, ..." << endl;
+            exit(-1);
+        }
+        Lit reason_lit = Lit(std::abs(xx)-1, xx < 0);
         if (reason_lit.var() >= nVars()) {
             cout
             << "ERROR: Conflicting clause"
@@ -1448,23 +1448,22 @@ int Searcher::python_propagate(Clause*& conflPtr)
             << endl;
             exit(-1);
         }
-        if (value(reason_lit.var()) != l_False) {
+        if (value(reason_lit) != l_False) {
             cout
             << "ERROR: Conflicting clause "
             << " has literal inside: " << reason_lit
-            << " that has value " << value(reason_lit.var())
+            << " that has value " << value(reason_lit)
             << " which is not l_False" << endl;
             exit(-1);
         }
         reason.push_back(reason_lit);
-        Py_DECREF(x);
     }
-    Py_DECREF(confl);
 
     conflPtr = solver->cl_alloc.Clause_new(
         reason, sumConflicts
     );
     conflPtr->set_gauss_temp_cl();
+    Py_DECREF(pResult);
     return 2;
 }
 

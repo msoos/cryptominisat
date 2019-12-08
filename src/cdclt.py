@@ -1,9 +1,11 @@
 print("Init module now")
 print("--------- INIT ----------")
-cards = [
+pbs = [
     #v1 + v2 <= 1
     [[1, 2], 1],
     [[1, 3], 1],
+    [[-1, -3], 1],
+    [[-1, 2], 1],
     [[1, -2], 1],
     [[-2, -3], 1]
     ]
@@ -16,7 +18,9 @@ def propagate(ass):
         if i > 0:
             print ("%d: %d" % (i, l))
 
-    for pb, card in cards:
+    for pb, maxval in pbs:
+        print("pb  :", pb)
+        print("card:", maxval)
         val = 0
         reason = []
         for p in pb:
@@ -28,12 +32,10 @@ def propagate(ass):
             else:
                 val += -ass[-p] > 0
 
-        print("val       : ", val)
-        print("card (max): ", card)
-        if val > card:
+        print("val   : ", val)
+        print("maxval: ", maxval)
+        if val > maxval:
             print("Conflict! Reason clause:", reason)
             return 2, [], reason
 
-    reason = [1,2, 3]
-    prop = (1, reason)
     return 0
