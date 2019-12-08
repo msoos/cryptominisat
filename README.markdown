@@ -582,7 +582,7 @@ Python CDCL(T)
 Create a file `a.cnf`:
 
 ```
-p cnf 30 3
+p cnf 11 3
 1 0
 2 3 4 6 8 0
 3 7 -9 0
