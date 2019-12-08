@@ -5,18 +5,11 @@ LABEL version="5.0"
 LABEL Description="An advanced SAT solver"
 
 # get curl, etc
-RUN apt-get update && apt-get install --no-install-recommends -y software-properties-common && rm -rf /var/lib/apt/lists/*
-RUN add-apt-repository -y ppa:ubuntu-toolchain-r/test && rm -rf /var/lib/apt/lists/*
-RUN apt-get update && apt-get install --no-install-recommends -y libboost-program-options-dev gcc g++ make cmake zlib1g-dev wget && rm -rf /var/lib/apt/lists/*
-
-# get M4RI
-RUN wget https://bitbucket.org/malb/m4ri/downloads/m4ri-20140914.tar.gz \
-    && tar -xvf m4ri-20140914.tar.gz
-WORKDIR m4ri-20140914
-RUN ./configure \
-    && make \
-    && make install \
-    && make clean
+RUN apt-get update
+RUN apt-get install --no-install-recommends -y software-properties-common
+RUN add-apt-repository -y ppa:ubuntu-toolchain-r/test
+RUN apt-get update
+RUN apt-get install --no-install-recommends -y libboost-program-options-dev gcc g++ make cmake zlib1g-dev wget python3 python3-setuptools python3-dev
 
 # set up build env
 RUN groupadd -r solver -g 433
@@ -30,13 +23,13 @@ COPY . /home/solver/cms
 WORKDIR /home/solver/cms
 RUN mkdir build
 WORKDIR /home/solver/cms/build
-RUN cmake -DSTATICCOMPILE=ON .. \
-    && make -j6 \
-    && make install \
-    && rm -rf *
+RUN cmake -DENABLE_PYTHON_INTERFACE=OFF ..
+RUN make -j6 VERBOSE=1
+RUN make install
 
 # set up for running
 FROM alpine:latest
+RUN apt-get update && apt-get install --no-install-recommends -y python3 python3-setuptools python3-dev && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /usr/local/bin/cryptominisat5 /usr/local/bin/
 ENTRYPOINT ["/usr/local/bin/cryptominisat5"]
 

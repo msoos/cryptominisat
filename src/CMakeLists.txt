@@ -248,7 +248,6 @@ if (NOT ONLY_SIMPLE)
         main_exe.cpp
         signalcode.cpp
     )
-    target_link_libraries(cryptominisat5-bin ${PYTHON_LIBRARIES})
 endif()
 
 if (EMSCRIPTEN)
@@ -272,7 +271,6 @@ else()
         main_simple.cpp
         main_common.cpp
     )
-    target_link_libraries(cryptominisat5_simple-bin ${PYTHON_LIBRARIES})
 endif()
 
 set(cryptoms_exec_link_libs
@@ -290,6 +288,7 @@ set_target_properties(cryptominisat5_simple-bin PROPERTIES
 target_link_libraries(cryptominisat5_simple-bin
     ${cryptoms_exec_link_libs}
 )
+target_link_libraries(cryptominisat5_simple-bin ${PYTHON_LIBRARIES})
 install(TARGETS cryptominisat5_simple-bin
     # EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -305,6 +304,7 @@ if (NOT ONLY_SIMPLE)
         ${cryptoms_exec_link_libs}
         "${Boost_LIBRARIES}"
     )
+    target_link_libraries(cryptominisat5-bin ${PYTHON_LIBRARIES})
     install(TARGETS cryptominisat5-bin
         # EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
