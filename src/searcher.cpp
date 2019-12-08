@@ -3553,6 +3553,16 @@ void Searcher::cancelUntil(uint32_t level)
             }
         #endif //USE_GAUSS
 
+        int a = 0;
+        for (int i = (int)clauses_toclear.size() - 1
+            ;i >= 0 && clauses_toclear[i].second > trail_lim[level]
+            ;i--
+        ) {
+            cl_alloc.clauseFree(clauses_toclear[i].first);
+            a++;
+        }
+        clauses_toclear.resize(clauses_toclear.size() - a);
+
         //Go through in reverse order, unassign & insert then
         //back to the vars to be branched upon
         for (int sublevel = trail.size()-1

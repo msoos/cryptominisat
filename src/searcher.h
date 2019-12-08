@@ -194,6 +194,7 @@ class Searcher : public HyperEngine
         ///python
         //////////
         int python_propagate(Clause*& conflPtr);
+        vector<std::pair<ClOffset, uint32_t> > clauses_toclear;
 
     protected:
         void new_var(const bool bva, const uint32_t orig_outer) override;
