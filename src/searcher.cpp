@@ -1364,6 +1364,10 @@ int Searcher::python_propagate(Clause*& conflPtr)
         << ", which is either less than or equal to 0 (which is impossible, because you should then have only returned 0) or larger than 2" << endl;
         exit(-1);
     }
+
+    /////////////
+    //Propagations
+    /////////////
     PyObject* props = PyTuple_GetItem(pResult, 1);
     uint32_t num_props = PyList_Size(props);
     for(uint32_t i = 0; i < num_props; i++) {
@@ -1414,9 +1418,9 @@ int Searcher::python_propagate(Clause*& conflPtr)
     }
     Py_DECREF(props);
 
-    if (PyTuple_Size(pResult) > 2) {
+    if (PyTuple_Size(pResult) > 2 && ret == 1) {
         cout
-        << "ERROR: you have returned more than things but it's not a conflict!"
+        << "ERROR: you have returned more than 2 things but it's not a conflict!"
         << " For a conflict, you must return '2', not '1' or '0' as the first value"
         << endl;
         exit(-1);
@@ -1426,6 +1430,9 @@ int Searcher::python_propagate(Clause*& conflPtr)
         return 1;
     }
 
+    /////////////
+    //Propagations
+    /////////////
     PyObject* confl = PyTuple_GetItem(pResult, 2);
     vector<Lit> reason;
     for(uint32_t i2 = 0; i2 < PyList_Size(confl); i2++) {
