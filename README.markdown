@@ -657,7 +657,6 @@ def propagate(ass):
     # to return multiple proapgations, do:
     #return 1, propagating_reasons
     # where "propagating_reasons" is a list of "propagation_reason"-s
-
 ```
 
 Once both `a.cnf` and `cdclt.py` are in your current directory, run:
