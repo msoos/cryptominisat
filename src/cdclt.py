@@ -10,6 +10,5 @@ def propagate(a):
         print (x)
 
     reason = [1,2, 3]
-    prop = [1, reason]
-    confl = []
-    return (0, [prop], confl)
+    prop = (1, reason)
+    return 0, [prop]

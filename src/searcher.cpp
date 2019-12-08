@@ -1344,18 +1344,113 @@ int Searcher::python_propagate(Clause*& conflPtr)
 
     PyObject* ret_p = PyTuple_GetItem(pResult, 0);
     int ret = PyLong_AsLong(ret_p);
+    if (ret < 0 || ret > 2) {
+        cout << "ERROR: The returned value is less than 0 or larger than 2"
+        << " but only 0,1, and 2 are allowed" << endl;
+        exit(-1);
+    }
     if (ret == 0) {
+        if (PyTuple_Size(pResult) > 1) {
+            cout << "ERROR: you have returned a tuple that contains more than one element, but you specified that there is no propagation or conflict!" << endl;
+            exit(-1);
+        }
+        Py_DECREF(ret_p);
+        Py_DECREF(pResult);
         return 0;
     }
 
-    /*
-    vector<Lit> clause;
-    conflPtr = solver->cl_alloc.Clause_new(
-        clause
-    );
+    PyObject* props = PyTuple_GetItem(pResult, 1);
+    uint32_t num_props = PyList_Size(props);
+    for(uint32_t i = 0; i < num_props; i++) {
+        PyObject* prop = PyList_GetItem(props, i);
 
-    conflPtr->set_gauss_temp_cl();*/
-    return 0;
+        //Reason
+        vector<Lit> reason;
+        for(uint32_t i2 = 0; i2 < PyList_Size(prop); i2++) {
+            PyObject* x = PyList_GetItem(prop, i2);
+            long xx = PyLong_AsLong(x);
+            Lit reason_lit = Lit(xx-1, xx < 0);
+            if (reason_lit.var() >= nVars()) {
+                cout
+                << "ERROR: Propagating clause no. " << i
+                << " has literal inside: " << reason_lit
+                << " that is larger than the number of variables: " <<
+                nVars()+1
+                << endl;
+                exit(-1);
+            }
+            if (i2 > 0) {
+                if (value(reason_lit.var()) != l_False) {
+                    cout
+                    << "ERROR: Propagating clause no. " << i
+                    << " has literal inside: " << reason_lit
+                    << " that has value " << value(reason_lit.var())
+                    << " which is not l_False" << endl;
+                    exit(-1);
+                }
+            }
+            reason.push_back(reason_lit);
+            Py_DECREF(x);
+        }
+        Py_DECREF(prop);
+
+        Clause* cla = solver->cl_alloc.Clause_new(
+            reason, sumConflicts
+        );
+        cla->set_gauss_temp_cl();
+        const ClOffset offs = solver->cl_alloc.get_offset(cla);
+        //clauses_toclear.push_back(std::make_pair(offs, solver->trail.size() - 1));
+        assert(!cla->freed());
+        assert(solver->value((*cla)[0].var()) == l_Undef);
+        solver->enqueue((*cla)[0], PropBy(offs));
+    }
+    Py_DECREF(props);
+
+    if (PyTuple_Size(pResult) > 2) {
+        cout
+        << "ERROR: you have returned more than things but it's not a conflict!"
+        << " For a conflict, you must return '2', not '1' or '0' as the first value"
+        << endl;
+        exit(-1);
+    }
+
+    if (ret == 1) {
+        return 1;
+    }
+
+    PyObject* confl = PyTuple_GetItem(pResult, 2);
+    vector<Lit> reason;
+    for(uint32_t i2 = 0; i2 < PyList_Size(confl); i2++) {
+        PyObject* x = PyList_GetItem(confl, i2);
+        long xx = PyLong_AsLong(x);
+        Lit reason_lit = Lit(xx-1, xx < 0);
+        if (reason_lit.var() >= nVars()) {
+            cout
+            << "ERROR: Conflicting clause"
+            << " has literal inside: " << reason_lit
+            << " that is larger than the number of variables: " <<
+            nVars()+1
+            << endl;
+            exit(-1);
+        }
+        if (value(reason_lit.var()) != l_False) {
+            cout
+            << "ERROR: Propagating clause "
+            << " has literal inside: " << reason_lit
+            << " that has value " << value(reason_lit.var())
+            << " which is not l_False" << endl;
+            exit(-1);
+        }
+        reason.push_back(reason_lit);
+        Py_DECREF(x);
+    }
+    Py_DECREF(confl);
+
+    conflPtr = solver->cl_alloc.Clause_new(
+        reason, sumConflicts
+    );
+    conflPtr->set_gauss_temp_cl();
+    return 2;
 }
 
 void Searcher::dump_search_sql(const double myTime)
