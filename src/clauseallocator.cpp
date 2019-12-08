@@ -338,6 +338,21 @@ void ClauseAllocator::consolidate(
     }
     #endif //USE_GAUSS
 
+    for(auto& gcl: solver->clauses_toclear) {
+        Clause* old = ptr(gcl.first);
+        if (old->reloced) {
+            ClOffset new_offset = (*old)[0].toInt();
+            #ifdef LARGE_OFFSETS
+            new_offset += ((uint64_t)(*old)[1].toInt())<<32;
+            #endif
+            gcl.first = new_offset;
+        } else {
+            ClOffset new_offset = move_cl(newDataStart, new_ptr, old);
+            gcl.first = new_offset;
+        }
+        assert(!old->freed());
+    }
+
     update_offsets(solver->longIrredCls);
     for(auto& lredcls: solver->longRedCls) {
         update_offsets(lredcls);
