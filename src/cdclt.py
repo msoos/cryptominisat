@@ -1,14 +1,33 @@
 print("Init module now")
 print("--------- INIT ----------")
 cards = [
-    #1*v1 + 1*v2 + 1*v3 <= 1
+    #1*v1 + 1*v2 + 1*v3 [....] <= 1
     [[1, 2, 3, 4, 5, 6, 7], 1],
-    #1*(NOT v1) + 1*v2 <= 1
-    [[-1, 10], 1],
-    #1*(NOT v1) + 1*(NOT v3) <= 1
-    [[-1, -30], 1],
     ]
-verb = False
+
+cards2 = [
+    #1*v1 + 1*(NOT v2) + 1*v3 + 1*v4 ...<= 1
+    [[1, 2, 3, 4, 5, 6, 7], 1],
+    ]
+
+# try adding the line "2 0" to the CNF and see what happens
+cards3 = [
+    #1*v1 + 1*v2 + 1*v3 <= 1
+    [[1, 2, 3, 4, 5, 6, 7], 2],
+    ]
+
+cards4 = [
+    #1*v10 + 1*v11 <= 1
+    [[10, 11], 1],
+    #1*(NOT v10) + 1*v11 <= 1
+    [[-10, 11], 1],
+    #1*v10 + 1*(NOT v11) <= 1
+    [[10, -11], 1],
+    #1*(NOT v10) + 1*(NOT v11) <= 1
+    [[-10, -11], 1]
+]
+
+verb = True
 
 # Propagates
 def propagate(ass):
