@@ -1359,13 +1359,10 @@ int Searcher::python_propagate(Clause*& conflPtr)
 
     PyObject* ret_p = PyTuple_GetItem(pResult, 0);
     long ret = PyLong_AsLong(ret_p);
-    if (ret == 0 || ret > 2) {
+    if (ret <= 0 || ret > 2) {
         cout << "ERROR: The returned value is: " << ret
-        << ", which is either 0 (which is impossible, because you should then have only returned 0) or larger than 2" << endl;
+        << ", which is either less than or equal to 0 (which is impossible, because you should then have only returned 0) or larger than 2" << endl;
         exit(-1);
-    }
-    if (ret == 0) {
-
     }
     PyObject* props = PyTuple_GetItem(pResult, 1);
     uint32_t num_props = PyList_Size(props);
@@ -1409,7 +1406,10 @@ int Searcher::python_propagate(Clause*& conflPtr)
         const ClOffset offs = solver->cl_alloc.get_offset(cla);
         //clauses_toclear.push_back(std::make_pair(offs, solver->trail.size() - 1));
         assert(!cla->freed());
-        assert(solver->value((*cla)[0].var()) == l_Undef);
+        if (solver->value((*cla)[0].var()) != l_Undef) {
+            cout << "ERROR: Your returned propagation clause No. " << i << " has the first literal that's not UNDEF, it's instead: " << solver->value((*cla)[0].var()) << endl;
+            exit(-1);
+        }
         solver->enqueue((*cla)[0], PropBy(offs));
     }
     Py_DECREF(props);
@@ -1443,7 +1443,7 @@ int Searcher::python_propagate(Clause*& conflPtr)
         }
         if (value(reason_lit.var()) != l_False) {
             cout
-            << "ERROR: Propagating clause "
+            << "ERROR: Conflicting clause "
             << " has literal inside: " << reason_lit
             << " that has value " << value(reason_lit.var())
             << " which is not l_False" << endl;
