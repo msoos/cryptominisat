@@ -15,11 +15,16 @@ RUN apt-get install --no-install-recommends -y libboost-program-options-dev gcc 
 RUN groupadd -r solver -g 433
 RUN useradd -u 431 -r -g solver -d /home/solver -s /sbin/nologin -c "Docker image user" solver
 RUN mkdir -p /home/solver/cms
+RUN mkdir -p /home/solver/cms/src
+RUN mkdir -p /home/solver/cms/cmake
 RUN chown -R solver:solver /home/solver
 
 # build CMS
 USER root
-COPY . /home/solver/cms
+COPY src /home/solver/cms/src
+COPY cmake /home/solver/cms/cmake
+COPY CMakeLists.txt /home/solver/cms/
+COPY cryptominisat5Config.cmake.in /home/solver/cms/
 WORKDIR /home/solver/cms
 RUN mkdir build
 WORKDIR /home/solver/cms/build
@@ -28,10 +33,12 @@ RUN make -j6 VERBOSE=1
 RUN make install
 
 # set up for running
-FROM alpine:latest
-RUN apt-get update && apt-get install --no-install-recommends -y python3 python3-setuptools python3-dev && rm -rf /var/lib/apt/lists/*
-COPY --from=builder /usr/local/bin/cryptominisat5 /usr/local/bin/
-ENTRYPOINT ["/usr/local/bin/cryptominisat5"]
+FROM ubuntu:16.04
+RUN apt-get update && apt-get install --no-install-recommends -y libboost-program-options1.58.0 libpython3.5 && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /usr/local/bin/cryptominisat5 /usr/bin/
+COPY --from=builder /usr/local/lib/libcryptominisat5.so.5.6 /usr/lib/
+COPY --from=builder /usr/local/lib/libcryptominisat5.so /usr/lib/
+#ENTRYPOINT ["/usr/bin/cryptominisat5"]
 
 # --------------------
 # HOW TO USE

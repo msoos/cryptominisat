@@ -304,6 +304,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , simulate_drat(false)
         , need_decisions_reaching(false)
         , saved_state_file("savedstate.dat")
+        , python_module("cdclt")
 {
     ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
     ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.44;

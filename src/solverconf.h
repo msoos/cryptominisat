@@ -401,6 +401,8 @@ class DLL_PUBLIC SolverConf
         std::string simplified_cnf;
         std::string solution_file;
         std::string saved_state_file;
+
+        std::string python_module;
 };
 
 } //end namespace

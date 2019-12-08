@@ -49,7 +49,7 @@ CNF::CNF(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter)
     //////
     Py_Initialize();
     // Convert the file name to a Python string.
-    PyObject* pName = PyUnicode_FromString("cdclt");
+    PyObject* pName = PyUnicode_FromString(conf.python_module.c_str());
 
     // Import the file as a Python module.
     PyObject *pModule = PyImport_Import(pName);
