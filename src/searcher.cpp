@@ -1389,7 +1389,7 @@ int Searcher::python_propagate(Clause*& conflPtr)
                     cout
                     << "ERROR: Propagating clause no. " << i
                     << " has literal inside: " << reason_lit
-                    << " that has value " << value(reason_lit.var())
+                    << " that has value " << value(reason_lit)
                     << " which is not l_False" << endl;
                     exit(-1);
                 }
