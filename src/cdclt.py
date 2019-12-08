@@ -1,12 +1,12 @@
 print("Init module now")
 print("--------- INIT ----------")
-pbs = [
-    #v1 + v2 <= 1
-    [[1, 2], 1],
-    [[-1, 2], 1],
-    [[-1, -2], 1],
-    [[1, 3], 1],
-    [[-1, -3], 1]
+cards = [
+    #1*v1 + 1*v2 + 1*v3 <= 1
+    [[1, 2, 3, 4, 5, 6, 7], 1],
+    #1*(NOT v1) + 1*v2 <= 1
+    [[-1, 10], 1],
+    #1*(NOT v1) + 1*(NOT v3) <= 1
+    [[-1, -30], 1],
     ]
 verb = False
 
@@ -19,18 +19,18 @@ def propagate(ass):
             if i > 0:
                 print ("%d: %d" % (i, l))
 
-    for pb, maxval in pbs:
-        #print("pb  :", pb)
-        #print("card:", maxval)
+    for lhs, rhs in pbs:
+        #print("lhs:", lhs)
+        #print("rhs:", rhs)
         val = 0
         reason = []
-        prop_lit = 0
-        for p in pb:
+        prop_lits = 0
+        for p in lhs:
             if ass[abs(p)] != 0:
                 reason.append(-p)
 
             if ass[abs(p)] == 0:
-                prop_lit = -p
+                prop_lits = -p
 
             if p > 0:
                 val += int(ass[p] > 0)
@@ -38,16 +38,18 @@ def propagate(ass):
                 val += int(-ass[abs(p)] > 0)
 
         print("val   : ", val)
-        print("maxval: ", maxval)
-        if val > maxval:
+        print("maxval: ", rhs)
+        if val > rhs:
             print("Conflict! Reason clause:", reason)
             return 2, [], reason
 
-        if val == maxval and prop_lit != 0:
-            #print("prop lit:", prop_lit)
-            #print("reason:", reason)
-            prop = [prop_lit] + reason
-            print("Propagation! Reason clause:", prop)
-            return 1, [prop]
+        if val == rhs and len(prop_lits) != 0:
+            props = []
+            for prop_lit in prop_lits:
+                prop = [prop_lit] + reason
+                print("Propagation! Reason clause:", prop)
+                props.append(prop)
+
+            return 1, props
 
     return 0
