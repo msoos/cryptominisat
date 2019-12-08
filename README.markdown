@@ -577,6 +577,43 @@ while (ret) {
 s->end_getting_small_clauses();
 ```
 
+Python CDCL(T)
+-----
+Create a file `a.cnf`:
+
+```
+p cnf 3 2
+1 2 0
+1 2 3 0
+```
+
+Create a simple `cdclt.py` file:
+
+```
+print("Init module now!")
+# reading up all the cardinality constraints....
+
+# Propagate or conflict based on the cardinality constraints
+# 'assign' contains the assignements
+def propagate(assign):
+    print("propagate() called")
+    print("variable assignments: ")
+    for l, i in zip(ass, range(100000)):
+        if i > 0:
+            print ("%d: %d" % (i, l))
+
+    # nothing propagated or conflicted, return 0
+    return 0
+
+```
+
+Once both `a.cnf` and `cdclt.py` are in your current directory, run:
+
+```
+docker run -v `pwd`/../src/cdclt.py:/cdclt.py -v `pwd`/a.cnf:/a.cnf -it --entrypoint "/usr/bin/cryptominisat5" msoos:winterschool --python "/" a.cnf
+```
+
+
 C usage
 -----
 See src/cryptominisat_c.h.in for details. This is an experimental feature.
