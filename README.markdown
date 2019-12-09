@@ -666,7 +666,7 @@ def propagate(ass):
 Once both `a.cnf` and `cdclt.py` are in your current directory, run:
 
 ```
-docker run -v `pwd`/cdclt.py:/cdclt.py -v `pwd`/a.cnf:/a.cnf -it --entrypoint "/usr/bin/cryptominisat5" msoos/cryptominisat:winterschool --python "/" a.cnf
+docker run -v `pwd`/cdclt.py:/cdclt.py -v `pwd`/a.cnf:/a.cnf -it --entrypoint "/usr/bin/cryptominisat5" msoos/cryptominisat:winterschool --python "/" a.cnf --scc 0 --occsimp 0 --renumber 0
 ```
 
 If the above fails, run `docker logout`. If it still fails, you probably didn't set up docker right or you don't have the `a.cnf` or `cdclt.py` file in the directory you are in. Issue `ls` to see if these files are there.
