@@ -4072,11 +4072,12 @@ bool Solver::find_and_init_all_matrices()
         unset_clash_decision_vars(mfinder.xors);
     } else {
         if (conf.verbosity >= 1 || conf.xor_detach_verb) {
-            cout << "c WHAAAAT Detach issue. All below must be 1 to work"
-            " can_detach: " << (bool)can_detach
-            "mfinder.no_irred_nonxor_contains_clash_vars(): " << (bool)mfinder.no_irred_nonxor_contains_clash_vars()
+            cout
+            << "c WHAAAAT Detach issue. All below must be 1 to work"
+            << " can_detach: " << (bool)can_detach
+            << " mfinder.no_irred_nonxor_contains_clash_vars(): " << (bool)mfinder.no_irred_nonxor_contains_clash_vars()
             << " conf.xor_detach_reattach: " << (bool)conf.xor_detach_reattach
-            << "!conf.gaussconf.autodisable: " << (bool)(!conf.gaussconf.autodisable)
+            << " !conf.gaussconf.autodisable: " << (bool)(!conf.gaussconf.autodisable)
             << endl;
         }
     }
