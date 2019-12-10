@@ -4073,12 +4073,12 @@ bool Solver::find_and_init_all_matrices()
     } else {
         if (conf.verbosity >= 1 || conf.xor_detach_verb) {
             cout
-            << "c WHAAAAT Detach issue. All below must be 1 to work"
-            << " can_detach: " << (bool)can_detach
-            << " mfinder.no_irred_nonxor_contains_clash_vars(): " << (bool)mfinder.no_irred_nonxor_contains_clash_vars()
-            << " conf.xor_detach_reattach: " << (bool)conf.xor_detach_reattach
-            << " !conf.gaussconf.autodisable: " << (bool)(!conf.gaussconf.autodisable)
-            << endl;
+            << "c WHAAAAT Detach issue. All below must be 1 to work ---" << endl
+            << "c -- can_detach: " << (bool)can_detach << endl
+            << "c -- mfinder.no_irred_nonxor_contains_clash_vars(): " << (bool)mfinder.no_irred_nonxor_contains_clash_vars() << endl
+            << "c -- conf.xor_detach_reattach: " << (bool)conf.xor_detach_reattach << endl
+            << "c -- !conf.gaussconf.autodisable: " << (bool)(!conf.gaussconf.autodisable) << endl
+            ;
         }
     }
 
