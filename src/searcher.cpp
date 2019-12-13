@@ -522,16 +522,18 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                 break;
 
             case atmost_t :
-                x= ~(*cl)[i];
                 if (i == cl->size()-1) {
                     cont = false;
                 }
+                if (value((*cl)[i]) != l_True) { i++; continue; }
+                x= ~(*cl)[i];
                 break;
 
             case null_clause_t:
                 assert(false);
         }
         if (p == lit_Undef || i > 0) {
+            cout << "Add lit to learnt: " << x << endl;
             add_lit_to_learnt<update_bogoprops>(x);
         }
         i++;
@@ -645,6 +647,13 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
 
     learnt_clause.push_back(lit_Undef); //make space for ~p
     do {
+        Clause& cl = (Clause&)*cl_alloc.ptr(confl.get_offset());
+        cout << "Conflict clause: " << cl << endl;
+        for (uint32_t q = 0 ; q < cl.size() ; q++)
+            if (value(cl[q]) == l_True)
+                cout << cl[q] << " "; 
+        cout << "<= " << cl.size()-cl.atmost_watches()+1 << endl;
+
         #ifdef DEBUG_RESOLV
         cout << "p is: " << p << endl;
         #endif
@@ -671,6 +680,7 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
         while (!seen[trail[index--].var()]);
 
         p = trail[index+1];
+        cout << "Read from trail: " << p << endl;
         assert(p != lit_Undef);
 
         if (!update_bogoprops
@@ -706,6 +716,8 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
     } while (pathC > 0);
     assert(pathC == 0);
     learnt_clause[0] = ~p;
+
+    cout << "Learnt clause: " << learnt_clause << endl;
 
     if (conf.doOTFSubsume
         && !update_bogoprops
@@ -1213,6 +1225,7 @@ lbool Searcher::search()
                 #endif
                 hist.trailDepthHistLonger.push(trail.size());
             }
+            cout << "CONFLICT" << endl;
             if (!handle_conflict<update_bogoprops>(confl)) {
                 dump_search_loop_stats(myTime);
                 return l_False;
@@ -1320,6 +1333,7 @@ lbool Searcher::new_decision()
     assert(value(next) == l_Undef);
     new_decision_level();
     enqueue<update_bogoprops>(next);
+    cout << "DECISION: " << next << endl;
 
     return l_Undef;
 }

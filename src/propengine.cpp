@@ -198,7 +198,7 @@ void PropEngine::detach_AtMost(const Clause* address)
     ClOffset offset = cl_alloc.get_offset(address);
     Clause& cl = *cl_alloc.ptr(offset);
     for (uint32_t i = 0 ; i < cl.atmost_watches() ; i++) {
-        removeWCl(watches[cl[i]], offset);
+        removeWCl(watches[~cl[i]], offset);
     }
 }
 
@@ -279,6 +279,7 @@ PropBy PropEngine::propagate_any_order_fast()
             //assert(i->isClause());
             Lit blocked = i->getBlockedLit();
             if (blocked != lit_Undef && likely(value(blocked) == l_True)) {
+                assert(i->isClause());
                 *j++ = *i++;
                 continue;
             }
@@ -303,7 +304,8 @@ PropBy PropEngine::propagate_any_order_fast()
                     for (uint32_t k = 0 ; k < c.atmost_watches() ; k++) {
                         if (c[k] != p && value(c[k]) != l_False && (k==0 || c[k] != c[k-1])) {
                             assert(value(c[k]) == l_Undef);
-                            enqueue<update_bogoprops>(~c[k], PropBy(offset));
+                            cout << "From (" << c << ") enqueued: " << ~c[k] << endl;
+                            enqueue<update_bogoprops>(~c[k], PropBy(offset, true));
                         }
                     }
 
@@ -312,7 +314,7 @@ PropBy PropEngine::propagate_any_order_fast()
                 }
                 else if (newWatch == lit_Error) {
                     // we have a conflict
-                    confl = PropBy(offset, c.is_atmost());
+                    confl = PropBy(offset, true);
                     qhead = trail.size();
                     // Copy all the remaining watches:
                     while (i < end)
@@ -327,7 +329,7 @@ PropBy PropEngine::propagate_any_order_fast()
                     i++;
                     // add new watch
                     Watched w = Watched(offset, lit_Undef);
-                    watches[newWatch].push(w);
+                    watches[~newWatch].push(w);
                 }
             }
             else {
