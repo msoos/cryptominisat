@@ -328,8 +328,8 @@ if (NOT ONLY_SIMPLE)
         RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
         INSTALL_RPATH_USE_LINK_PATH TRUE)
     target_link_libraries(cryptominisat5-bin
+        ${Boost_LIBRARIES}
         ${cryptoms_exec_link_libs}
-        "${Boost_LIBRARIES}"
     )
     install(TARGETS cryptominisat5-bin
         # EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
