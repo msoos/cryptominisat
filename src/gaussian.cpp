@@ -893,7 +893,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
             assert((*rowI)[orig_non_resp_col]);
             #ifdef VERBOSE_DEBUG
             cout
-            << "--> This row " << (rowI-mat.begin())
+            << "--> This row " << row_n
             << " is being watched on var: " << orig_non_resp_var + 1
             << " i.e. it must contain '1' for this var's column"
             << endl;
@@ -911,7 +911,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
 
                 #ifdef VERBOSE_DEBUG
                 cout
-                << "--> This row " << (rowI-mat.begin())
+                << "--> This row " << row_n
                 << " can no longer be watched (non-responsible), it has no '1' at col " << orig_non_resp_col
                 << " (var " << col_to_var[orig_non_resp_col]+1 << ")"
                 << " fixing up..."<< endl;
@@ -1011,8 +1011,8 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                         #ifdef VERBOSE_DEBUG
                         cout
                         << "---> Nothing, clause NOT already satisfied, pushing in "
-                        << new_non_resp_var+1 << " as responsible var ( "
-                        << (rowI-mat.begin()) << " row) "
+                        << new_non_resp_var+1 << " as non-responsible var ( "
+                        << row_n << " row) "
                         << endl;
                         #endif
 
@@ -1029,8 +1029,8 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                         #ifdef VERBOSE_DEBUG
                         cout
                         << "---> Nothing to do, already satisfied , pushing in "
-                        << p+1 << " as responsible var ( "
-                        << (rowI-mat.begin()) << " row) "
+                        << p+1 << " as non-responsible var ( "
+                        << row_n << " row) "
                         << endl;
                         #endif
 
@@ -1059,7 +1059,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
             } else {
                 #ifdef VERBOSE_DEBUG
                 cout
-                << "--> OK, this row " << (rowI-mat.begin())
+                << "--> OK, this row " << row_n
                 << " still contains '1', can still be responsible" << endl;
                 #endif
             }
