@@ -745,7 +745,7 @@ void Main::add_supported_options()
     ("reconfat", po::value(&conf.reconfigure_at)->default_value(conf.reconfigure_at)
         , "Reconfigure after this many simplifications")
     ("reconf", po::value(&conf.reconfigure_val)->default_value(conf.reconfigure_val)
-        , "Reconfigure after some time to this solver configuration [0..15]")
+        , "Reconfigure after some time to this solver configuration [3,4,6,7,12,13,14,15,16]")
     ;
 
     hiddenOptions.add_options()
