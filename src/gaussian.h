@@ -109,10 +109,13 @@ class EGaussian {
     void delete_gauss_watch_this_matrix();
     void delete_gausswatch(const uint32_t  row_n);
 
-    //Invariant checks
+    //Invariant checks, debug
     void check_no_prop_or_unsat_rows();
     void check_tracked_cols_only_one_set();
     bool check_row_satisfied(const uint32_t row);
+    void print_gwatches(const uint32_t var) const;
+    void check_row_not_in_watch(
+        const uint32_t v, const uint32_t row_num) const;
 
     //Reason generation
     vector<XorReason> xor_reasons;
