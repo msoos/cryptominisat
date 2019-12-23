@@ -542,13 +542,13 @@ The following arguments to cmake configure the generated build artifacts. To use
 
 Trying different configurations
 -----
-Try solving using different reconfiguration values between 1..15 as per:
+Try solving using different reconfiguration values 3,4,6,7,12,13,14,15,16 as per:
 
 ```
-./cryptominisat5 --reconfat 0 --reconf 1 my_hard_problem.cnf
-./cryptominisat5 --reconfat 0 --reconf 2 my_hard_problem.cnf
+./cryptominisat5 --reconfat 0 --reconf 3 my_hard_problem.cnf
+./cryptominisat5 --reconfat 0 --reconf 4 my_hard_problem.cnf
 ...
-./cryptominisat5 --reconfat 0 --reconf 15 my_hard_problem.cnf
+./cryptominisat5 --reconfat 0 --reconf 16 my_hard_problem.cnf
 ```
 
 These configurations are designed to be relatively orthogonal. Check if any of them solve a lot faster. If it does, try using that for similar problems going forward. Please do come back to the author with what you have found to work best for you.

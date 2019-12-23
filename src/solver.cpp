@@ -3390,6 +3390,7 @@ void Solver::reconfigure(int val)
         }
 
         default: {
+            //when this changes, don't forget to update README.markdown and the command line help (main.cpp)
             cout << "ERROR: Only reconfigure values of 3,4,6,7,12,13,14,15,16 are supported" << endl;
             exit(-1);
         }
