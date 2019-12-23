@@ -130,6 +130,23 @@ public:
         }
     }
 
+    uint32_t set_and_until_popcnt_atleast2(const PackedRow& a, const PackedRow& b)
+    {
+        #ifdef DEBUG_ROW
+        assert(size > 0);
+        assert(b.size > 0);
+        assert(b.size == size);
+        #endif
+
+        uint32_t pop = 0;
+        for (int i = 0; i < size && pop < 2; i++) {
+            *(mp + i) = *(a.mp + i) & *(b.mp + i);
+            pop += __builtin_popcountll((uint64_t)*(mp + i));
+        }
+
+        return pop;
+    }
+
     void xor_in(const PackedRow& b)
     {
         #ifdef DEBUG_ROW
