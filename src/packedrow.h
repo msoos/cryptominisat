@@ -256,6 +256,8 @@ public:
         vector<Lit>& tmp_clause,
         const vector<lbool>& assigns,
         const vector<uint32_t>& col_to_var,
+        PackedRow& cols_vals,
+        PackedRow& tmp_col2,
         Lit prop
     );
 

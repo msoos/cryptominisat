@@ -1183,6 +1183,8 @@ vector<Lit>* EGaussian::get_reason(uint32_t row)
         tofill,
         solver->assigns,
         col_to_var,
+        *cols_vals,
+        *tmp_col2,
         xor_reasons[row].propagated);
 
     xor_reasons[row].must_recalc = false;

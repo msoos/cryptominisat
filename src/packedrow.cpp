@@ -70,8 +70,11 @@ void PackedRow::get_reason(
     vector<Lit>& tmp_clause,
     const vector<lbool>& assigns,
     const vector<uint32_t>& col_to_var,
+    PackedRow& cols_vals,
+    PackedRow& tmp_col2,
     Lit prop
 ) {
+    tmp_col2.set_and(*this, cols_vals);
     for (int i = 0; i < size; i++) if (mp[i]) {
         int64_t tmp = mp[i];
         int at = __builtin_ffsll(tmp);
@@ -86,8 +89,7 @@ void PackedRow::get_reason(
                 tmp_clause.push_back(prop);
                 std::swap(tmp_clause[0], tmp_clause.back());
             } else {
-                const lbool val = assigns[var];
-                const bool val_bool = (val == l_True);
+                const bool val_bool = tmp_col2[col];
                 tmp_clause.push_back(Lit(var, val_bool));
             }
 
