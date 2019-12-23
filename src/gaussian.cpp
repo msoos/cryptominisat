@@ -50,6 +50,10 @@ using std::set;
 //#define VERBOSE_DEBUG
 //#define SLOW_DEBUG
 
+//don't delete gauss watches, but check when propagating and
+//lazily delete then
+//#define LAZY_DELETE_HACK
+
 #ifdef VERBOSE_DEBUG
 #include <iterator>
 #endif
@@ -627,6 +631,12 @@ bool EGaussian::find_truths(
     GaussQData& gqd
 ) {
     assert(gqd.ret != gauss_res::confl);
+    #ifdef LAZY_DELETE_HACK
+    if (!mat[row_n][var_to_col[var]]) {
+        //lazy delete
+        return true;
+    }
+    #endif
     // printf("dd Watch variable : %d  ,  Wathch row num %d    n", p , row_n);
 
     #ifdef VERBOSE_DEBUG
@@ -919,7 +929,9 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
 
                 // Delete orignal non-responsible var from watch list
                 if (orig_non_resp_var != gqd.new_resp_var) {
+                    #ifndef LAZY_DELETE_HACK
                     delete_gausswatch(row_n);
+                    #endif
                 } else {
                     //this does not need a delete, because during
                     //find_truths, we already did clear_gwatches of the
