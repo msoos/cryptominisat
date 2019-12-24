@@ -1321,3 +1321,11 @@ DLL_PUBLIC void SATSolver::set_full_bve_iter_ratio(double val)
         s.conf.varElimRatioPerIter = val;
     }
 }
+
+DLL_PUBLIC void SATSolver::set_xor_detach(bool val)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.xor_detach_reattach = val;
+    }
+}

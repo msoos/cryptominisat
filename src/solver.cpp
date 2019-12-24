@@ -4071,7 +4071,7 @@ bool Solver::find_and_init_all_matrices()
         detach_xor_clauses(mfinder.clash_vars_unused);
         unset_clash_decision_vars(mfinder.xors);
     } else {
-        if (conf.verbosity >= 1 || conf.xor_detach_verb) {
+        if (conf.xor_detach_reattach && (conf.verbosity >= 1 || conf.xor_detach_verb)) {
             cout
             << "c WHAAAAT Detach issue. All below must be 1 to work ---" << endl
             << "c -- can_detach: " << (bool)can_detach << endl
