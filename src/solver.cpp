@@ -4731,6 +4731,44 @@ void Solver::extend_model_to_detached_xors()
         }
     }
 
+    #ifdef SLOW_DEBUG
+    for(const auto& offs: detached_xor_repr_cls) {
+        const Clause* cl = cl_alloc.ptr(offs);
+        bool val = false;
+        uint32_t undef_present = false;
+        for(const auto l: *cl) {
+            if (model_value(l) == l_Undef) {
+                undef_present++;
+            }
+            if (model_value(l) == l_True) {
+                val = true;
+                break;
+            }
+        }
+        if (!val) {
+            cout << "ERROR: XOR-Detached clause not satisfied: " << *cl << " -- undef present: " << undef_present << endl;
+            assert(false);
+        }
+    }
+
+    for(const auto& x: xorclauses) {
+        bool val = !x.rhs;
+        for(uint32_t v: x) {
+            if (model_value(v) == l_Undef) {
+                cout << "ERROR: variable " << v+1 << " in XOR: " << x << " is UNDEF!" << endl;
+                assert(false);
+            }
+            assert(model_value(v) != l_Undef);
+            val ^= model_value(v) == l_True;
+        }
+        if (!val) {
+            cout << "ERROR:Value of following XOR is not TRUE: " << x << endl;
+            assert(false);
+        }
+    }
+    #endif
+
+    //Set the rest randomly
     uint32_t random_set = 0;
     for(const auto& offs: detached_xor_repr_cls) {
         const Clause* cl = cl_alloc.ptr(offs);
