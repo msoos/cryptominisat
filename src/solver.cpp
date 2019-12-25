@@ -4508,7 +4508,7 @@ void Solver::detach_xor_clauses(
                 detached++;
                 detached_xor_repr_cls.push_back(offs);
                 cl->_xor_is_detached = true;
-                //cout << "XOR-detaching: " << *cl << endl;
+                //cout << "XOR-detaching cl: " << *cl << endl;
                 continue;
             }
 

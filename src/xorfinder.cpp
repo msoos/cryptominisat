@@ -471,10 +471,14 @@ vector<Xor> XorFinder::remove_xors_without_connecting_vars(const vector<Xor>& th
 
     for(const Xor& x: this_xors) {
         if (xor_has_interesting_var(x) || x.detached) {
-            //cout << "XOR has connecting var: " << x << endl;
+            #ifdef VERBOSE_DEBUG
+            cout << "XOR has connecting var: " << x << endl;
+            #endif
             ret.push_back(x);
         } else {
-            //cout << "XOR has no connecting var: " << x << endl;
+            #ifdef VERBOSE_DEBUG
+            cout << "XOR has no connecting var: " << x << endl;
+            #endif
             unused_xors.push_back(x);
         }
     }
