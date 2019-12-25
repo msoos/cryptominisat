@@ -1491,6 +1491,8 @@ bool OccSimplifier::simplify(const bool _startup, const std::string schedule)
     assert(solver->no_marked_clauses());
     #endif
 
+    assert(solver->detached_xor_repr_cls.empty());
+
     startup = _startup;
     if (!setup()) {
         return solver->okay();
