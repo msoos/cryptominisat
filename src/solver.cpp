@@ -654,7 +654,6 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
             if (detached_xor_clauses
                 && varData[lit.var()].removed == Removed::clashed
             ) {
-                set_clash_decision_vars();
                 if (!attach_xor_clauses()) {
                     return false;
                 }
@@ -1661,7 +1660,6 @@ lbool Solver::solve_with_assumptions(
     if (conf.preprocess == 1) {
         cancelUntil(0);
         #ifdef USE_GAUSS
-        set_clash_decision_vars();
         if (okay() && !attach_xor_clauses()) {
             status = l_False;
         }
@@ -2243,7 +2241,6 @@ lbool Solver::simplify_problem(const bool startup)
     }
 
     #ifdef USE_GAUSS
-    set_clash_decision_vars();
     if (okay() && !attach_xor_clauses()) {
         ret = l_False;
     }
@@ -4599,6 +4596,7 @@ bool Solver::attach_xor_clauses()
         return okay();
 
     assert(okay());
+    set_clash_decision_vars();
 
     double myTime = cpuTime();
     uint32_t reattached = 0;
@@ -4640,6 +4638,10 @@ bool Solver::attach_xor_clauses()
             }
         }
         longIrredCls.resize(j);
+    }
+
+    for(auto& x: xorclauses) {
+        x.detached = false;
     }
 
     detached_xor_repr_cls.clear();
