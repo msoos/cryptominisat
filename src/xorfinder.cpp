@@ -101,6 +101,7 @@ void XorFinder::find_xors_based_on_long_clauses()
 void XorFinder::clean_equivalent_xors(vector<Xor>& txors)
 {
     if (!txors.empty()) {
+        size_t orig_size = txors.size();
         for(Xor& x: txors) {
             std::sort(x.begin(), x.end());
         }
@@ -121,6 +122,12 @@ void XorFinder::clean_equivalent_xors(vector<Xor>& txors)
             }
         }
         txors.resize(size);
+
+        if (solver->conf.verbosity) {
+            cout << "c [xor-clean-equiv] removed equivalent xors: "
+            << (orig_size-txors.size()) << " left with: " << txors.size()
+            << endl;
+        }
     }
 }
 
