@@ -457,6 +457,11 @@ uint32_t MatrixFinder::setMatrixes()
 bool MatrixFinder::no_irred_nonxor_contains_clash_vars()
 {
     bool ret = true;
+
+    //seen 1: it's a variable that's a clash variable
+    //seen 2: it's a variable in an XOR
+
+    //Set variables that are part of an XOR
     for(const auto& x: xors) {
         //REAL vars
         for(uint32_t v: x) {
@@ -464,6 +469,7 @@ bool MatrixFinder::no_irred_nonxor_contains_clash_vars()
         }
     }
 
+    //Set variables that are clashing
     for(const auto& x: xors) {
         //CLASH vars
         for(uint32_t v: x.clash_vars) {

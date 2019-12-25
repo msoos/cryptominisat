@@ -4470,15 +4470,17 @@ void Solver::detach_xor_clauses(
             bool todel = false;
             if (cl->used_in_xor() && cl->used_in_xor_full()) {
                 torem = true;
+
+                //Except if if it's part of an unused XOR. Then skip
+                //TODO: we should use the same check as in no_irred
                 for(const Lit lit: *cl) {
-                    //It's part of an unused XOR, skip
-                    //we should use the same check as in no_irred....
                     if (seen[lit.var()] == 1) {
                         torem = false;
                     }
                 }
             } else {
                 //It has a USED XOR's clash var, delete
+                //obviously, must be redundant
                 for(const Lit lit: *cl) {
                     if (seen[lit.var()] == 2) {
                         //cout << "lit problem: " << lit << endl;
@@ -4491,6 +4493,7 @@ void Solver::detach_xor_clauses(
                 }
             }
 
+            //XOR can be removed
             if (torem) {
                 if (!cl->_xor_is_detached) {
                     detached++;
