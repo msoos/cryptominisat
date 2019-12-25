@@ -2079,6 +2079,9 @@ lbool Solver::execute_inprocess_strategy(
             if (compHandler
                 && conf.doCompHandler
                 && conf.sampling_vars == NULL
+                #ifdef GAUSS
+                && !conf.xor_detach_reattach //a horrid mess, let's not do it
+                #endif
                 && get_num_free_vars() < conf.compVarLimit*conf.var_and_mem_out_mult
                 && solveStats.num_simplify >= conf.handlerFromSimpNum
                 //Only every 2nd, since it can be costly to find parts
