@@ -202,13 +202,7 @@ bool Solver::add_xor_clause_inter(
     }
     //cout << "Cleaned ps is: " << ps << endl;
 
-    if (!ps.empty()) {
-        if (ps.size() > 2) {
-            xorclauses.push_back(Xor(ps, rhs));
-            xor_clauses_updated = true;
-        }
-        ps[0] ^= rhs;
-    } else {
+    if (ps.empty()) {
         if (rhs) {
             *drat << add
             #ifdef STATS_NEEDED
@@ -221,8 +215,16 @@ bool Solver::add_xor_clause_inter(
         return ok;
     }
 
+    if (ps.size() > 2) {
+        xor_clauses_updated = true;
+    }
+    ps[0] ^= rhs;
+
     //cout << "without rhs is: " << ps << endl;
     add_every_combination_xor(ps, attach, addDrat);
+    if (ps.size() > 2) {
+        xorclauses.push_back(Xor(ps, rhs, tmp_xor_clash_vars));
+    }
 
     return ok;
 }
@@ -237,6 +239,7 @@ void Solver::add_every_combination_xor(
     size_t at = 0;
     size_t num = 0;
     vector<Lit> xorlits;
+    tmp_xor_clash_vars.clear();
     Lit lastlit_added = lit_Undef;
     while(at != lits.size()) {
         xorlits.clear();
@@ -262,7 +265,7 @@ void Solver::add_every_combination_xor(
         if (at != lits.size()) {
             new_var(true);
             const uint32_t newvar = nVars()-1;
-            xorclauses[xorclauses.size()-1].clash_vars.push_back(newvar);
+            tmp_xor_clash_vars.push_back(newvar);
             varData[newvar].added_for_xor = true;
             const Lit toadd = Lit(newvar, false);
             xorlits.push_back(toadd);
