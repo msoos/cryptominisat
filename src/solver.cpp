@@ -654,7 +654,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
             if (detached_xor_clauses
                 && varData[lit.var()].removed == Removed::clashed
             ) {
-                if (!attach_xor_clauses()) {
+                if (!fully_undo_xor_detach()) {
                     return false;
                 }
                 assert(varData[lit.var()].removed == Removed::none);
@@ -1660,7 +1660,7 @@ lbool Solver::solve_with_assumptions(
     if (conf.preprocess == 1) {
         cancelUntil(0);
         #ifdef USE_GAUSS
-        if (okay() && !attach_xor_clauses()) {
+        if (okay() && !fully_undo_xor_detach()) {
             status = l_False;
         }
 
@@ -2241,7 +2241,7 @@ lbool Solver::simplify_problem(const bool startup)
     }
 
     #ifdef USE_GAUSS
-    if (okay() && !attach_xor_clauses()) {
+    if (okay() && !fully_undo_xor_detach()) {
         ret = l_False;
     }
     clear_order_heap();
@@ -4590,7 +4590,7 @@ void Solver::detach_xor_clauses(
     }
 }
 
-bool Solver::attach_xor_clauses()
+bool Solver::fully_undo_xor_detach()
 {
     if (!detached_xor_clauses)
         return okay();

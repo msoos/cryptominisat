@@ -264,7 +264,7 @@ class Solver : public Searcher
         void detach_xor_clauses(
             const set<uint32_t>& clash_vars_unused
         );
-        bool attach_xor_clauses();
+        bool fully_undo_xor_detach();
         bool no_irred_nonxor_contains_clash_vars();
         bool assump_contains_xor_clash();
         void extend_model_to_detached_xors();
