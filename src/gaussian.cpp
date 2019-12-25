@@ -766,7 +766,9 @@ bool EGaussian::find_truths(
             }
             assert(new_resp_var != var);
             #ifdef SLOW_DEBUG
+            #ifdef VERBOSE_DEBUG
             print_gwatches(new_resp_var);
+            #endif
             check_row_not_in_watch(new_resp_var, row_n);
             #endif
             solver->gwatches[new_resp_var].push(GaussWatched(row_n, matrix_no));
