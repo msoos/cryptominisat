@@ -650,24 +650,37 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
             assert(at == 2);
             ws.resize(i2);
 
-            Xor& x1 = this_xors[idxes[0]];
-            Xor& x2 = this_xors[idxes[1]];
+            Xor& x0 = this_xors[idxes[0]];
+            Xor& x1 = this_xors[idxes[1]];
             uint32_t clash_var;
-            uint32_t clash_num = xor_two(&x1, &x2, clash_var);
+            uint32_t clash_num = xor_two(&x0, &x1, clash_var);
 
             //If they are equivalent
-            if (x1.size() == x2.size()
-                && x1.rhs == x2.rhs
-                && clash_num == x1.size()
+            if (x0.size() == x1.size()
+                && x0.rhs == x1.rhs
+                && clash_num == x0.size()
             ) {
+                #ifdef VERBOSE_DEBUG
+                cout << "x1: " << x0 << " -- at idx: " << idxes[0] << endl;
+                cout << "x2: " << x1 << " -- at idx: " << idxes[1] << endl;
+                cout << "equivalent. " << endl;
+                #endif
+
+                //Update clash values & detached values
+                x1.merge_clash(x0, seen);
+                x1.detached |= x0.detached;
+
+                #ifdef VERBOSE_DEBUG
+                cout << "after merge: " << x1 <<  " -- at idx: " << idxes[1] << endl;
+                #endif
+
                 //Equivalent, so delete one
-                x1 = Xor();
+                x0 = Xor();
 
                 //Re-attach the other, remove the occur of the one we deleted
                 solver->watches[Lit(v, false)].push(Watched(idxes[1]));
-                x2.merge_clash(x1, seen);
-                x2.detached |= x1.detached;
-                for(uint32_t v2: x2) {
+
+                for(uint32_t v2: x1) {
                     Lit l(v2, false);
                     assert(occcnt[l.var()] >= 2);
                     occcnt[l.var()]--;
@@ -675,24 +688,25 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                         interesting.push_back(l.var());
                     }
                 }
+            } else if (clash_num > 1 || x0.detached || x1.detached) {
+                //add back to ws, can't do much
+                ws.push(Watched(idxes[0]));
+                ws.push(Watched(idxes[1]));
+                continue;
             } else {
-                if (clash_num > 1 || x1.detached || x2.detached) {
-                    //add back to ws, can't do much
-                    ws.push(Watched(idxes[0]));
-                    ws.push(Watched(idxes[1]));
-                    continue;
-                }
                 occcnt[v] -= 2;
                 assert(occcnt[v] == 0);
 
-                Xor x_new(tmp_vars_xor_two, x1.rhs ^ x2.rhs);
+                Xor x_new(tmp_vars_xor_two, x0.rhs ^ x1.rhs);
                 x_new.clash_vars.push_back(clash_var);
+                x_new.merge_clash(x0, seen);
                 x_new.merge_clash(x1, seen);
-                x_new.merge_clash(x2, seen);
-//                 cout << "x1: " << x1 << endl;
-//                 cout << "x2: " << x2 << endl;
-//                 cout << "clashed on var: " << clash_var+1 << endl;
-//                 cout << "final: " << x_new << endl;
+                #ifdef VERBOSE_DEBUG
+                cout << "x1: " << x0 << " -- at idx: " << idxes[0] << endl;
+                cout << "x2: " << x1 << " -- at idx: " << idxes[1] << endl;
+                cout << "clashed on var: " << clash_var+1 << endl;
+                cout << "final: " << x_new <<  " -- at idx: " << this_xors.size() << endl;
+                #endif
                 changed = true;
                 this_xors.push_back(x_new);
                 for(uint32_t v2: x_new) {
