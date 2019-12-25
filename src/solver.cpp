@@ -4007,9 +4007,9 @@ void Solver::renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors
 #ifdef USE_GAUSS
 bool Solver::find_and_init_all_matrices()
 {
-    if (!xor_clauses_updated) {
+    if (!xor_clauses_updated && (!detached_xor_clauses || !assump_contains_xor_clash())) {
         if (conf.verbosity >= 1) {
-            cout << "c [find&init matx] XORs not updated, not performing matrix init" << endl;
+            cout << "c [find&init matx] XORs not updated, and either (XORs are not detached OR assumps does not contain clash variable) -> or not performing matrix init" << endl;
         }
         return true;
     }
@@ -4743,6 +4743,37 @@ void Solver::extend_model_to_detached_xors()
         << " T: " << (cpuTime()-myTime)
         << endl;
     }
+}
+
+bool Solver::assump_contains_xor_clash()
+{
+    assert(detached_xor_clauses);
+    //Set variables that are clashing
+    for(const auto& x: xorclauses) {
+        for(uint32_t v: x.clash_vars) {
+            seen[v] = 1;
+        }
+    }
+
+    bool ret = false;
+    for(const auto& l: solver->assumptions) {
+        const Lit p = solver->map_outer_to_inter(l.lit_outer);
+        if (seen[p.var()] == 1) {
+            //We cannot have a clash variable that's an assumption
+            //it would enqueue the assumption variable but it's a clash
+            //var and that's not supposed to be in the trail at all.
+            ret = true;
+            break;
+        }
+    }
+
+    for(const auto& x: xorclauses) {
+        for(uint32_t v: x.clash_vars) {
+            seen[v] = 0;
+        }
+    }
+
+    return ret;
 }
 
 #endif
