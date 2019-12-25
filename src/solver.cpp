@@ -4466,8 +4466,8 @@ void Solver::detach_xor_clauses(
             ClOffset offs = w.get_offset();
             Clause* cl = cl_alloc.ptr(offs);
             assert(!cl->freed());
-            if (cl->getRemoved()) {
-                //We have already went through this clause, and set it to be removed
+            if (cl->getRemoved() || cl->_xor_is_detached) {
+                //We have already went through this clause, and set it to be removed/detached
                 continue;
             }
 
@@ -4500,12 +4500,11 @@ void Solver::detach_xor_clauses(
 
             //XOR can be removed
             if (torem) {
-                if (!cl->_xor_is_detached) {
-                    detached++;
-                    detached_xor_repr_cls.push_back(offs);
-                    //cout << "detaching: " << *cl << endl;
-                }
+                assert(!cl->_xor_is_detached);
+                detached++;
+                detached_xor_repr_cls.push_back(offs);
                 cl->_xor_is_detached = true;
+                //cout << "detaching: " << *cl << endl;
                 continue;
             }
 
