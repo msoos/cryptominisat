@@ -4038,7 +4038,7 @@ bool Solver::find_and_init_all_matrices()
 
     if (conf.verbosity >= 2) {
         cout << "c calculating no_irred_contains_clash..." << endl;
-        bool no_irred_contains_clash = mfinder.no_irred_nonxor_contains_clash_vars();
+        bool no_irred_contains_clash = no_irred_nonxor_contains_clash_vars();
 
 
         cout
@@ -4065,7 +4065,7 @@ bool Solver::find_and_init_all_matrices()
     xorclauses = mfinder.xors;
 
     if (can_detach &&
-        mfinder.no_irred_nonxor_contains_clash_vars() &&
+        no_irred_nonxor_contains_clash_vars() &&
         conf.xor_detach_reattach &&
         !conf.gaussconf.autodisable
     ) {
@@ -4076,7 +4076,8 @@ bool Solver::find_and_init_all_matrices()
             cout
             << "c WHAAAAT Detach issue. All below must be 1 to work ---" << endl
             << "c -- can_detach: " << (bool)can_detach << endl
-            << "c -- mfinder.no_irred_nonxor_contains_clash_vars(): " << (bool)mfinder.no_irred_nonxor_contains_clash_vars() << endl
+            << "c -- mfinder.no_irred_nonxor_contains_clash_vars(): "
+            << no_irred_nonxor_contains_clash_vars() << endl
             << "c -- conf.xor_detach_reattach: " << (bool)conf.xor_detach_reattach << endl
             << "c -- !conf.gaussconf.autodisable: " << (bool)(!conf.gaussconf.autodisable) << endl
             ;
@@ -4744,6 +4745,143 @@ void Solver::extend_model_to_detached_xors()
         << " T: " << (cpuTime()-myTime)
         << endl;
     }
+}
+
+bool Solver::no_irred_nonxor_contains_clash_vars()
+{
+    bool ret = true;
+
+    //seen 1: it's a variable that's a clash variable
+    //seen 2: it's a variable in an XOR
+
+    //Set variables that are part of an XOR
+    for(const auto& x: xorclauses) {
+        //REAL vars
+        for(uint32_t v: x) {
+            seen[v] = 2;
+        }
+    }
+
+    //Set variables that are clashing
+    for(const auto& x: xorclauses) {
+        //CLASH vars
+        for(uint32_t v: x.clash_vars) {
+            //assert(seen[v] != 2); -- actually, it could be (weird, but possible)
+            //in these cases, we should treat it as a clash var (more safe)
+            seen[v] = 1;
+//                 cout << "c clash var: " << v + 1 << endl;
+        }
+    }
+
+    for(const auto& l: assumptions) {
+        const Lit p = map_outer_to_inter(l.lit_outer);
+        if (seen[p.var()] == 1) {
+            //We cannot have a clash variable that's an assumption
+            //it would enqueue the assumption variable but it's a clash
+            //var and that's not supposed to be in the trail at all.
+            ret = false;
+            break;
+        }
+    }
+
+    for(uint32_t i = 0; i < longIrredCls.size() && ret; i++) {
+        const ClOffset offs = longIrredCls[i];
+        const Clause* cl = cl_alloc.ptr(offs);
+
+        //contains NO clash var, never an issue
+        //contains at least 1 clash var AND no real vars, MUST be an issue
+        //contains at least 1 clash var AND some not all real vars--> MUST be an issue
+        //contains at least 1 clash var AND only real vars--> must be a FULL XOR to be OK
+
+        if (cl->red()) {
+            continue;
+        }
+
+        uint32_t num_real_vars = 0;
+        uint32_t num_clash_vars = 0;
+        for(const Lit l: *cl) {
+            if (seen[l.var()] == 1) {
+                num_clash_vars++;
+//                 if (!(cl->used_in_xor() && cl->used_in_xor_full())) {
+//                     cout << "clash : " << l << endl;
+//                 }
+            }
+            else if (seen[l.var()] == 2) {
+                num_real_vars++;
+//                 if (!(cl->used_in_xor() && cl->used_in_xor_full())) {
+//                     cout << "real : " << l << endl;
+//                 }
+            }
+            else if (value(l) != l_Undef) {
+                num_real_vars++;
+            }
+        }
+        if (num_clash_vars == 0) {
+            continue;
+        }
+
+        if (cl->used_in_xor() && cl->used_in_xor_full() && num_clash_vars+num_real_vars == cl->size()) {
+            continue;
+        }
+
+        //non-full XORs or other non-XOR clause
+        if (conf.verbosity >= 3 || conf.xor_detach_verb) {
+            cout << "c CL with clash: " << *cl
+            << " red: " << cl->red()
+            << " xor: " << cl->used_in_xor()
+            << " full-xor: " << cl->used_in_xor_full()
+            << " num_clash_vars: " << num_clash_vars
+            << " num_real_vars: " << num_real_vars
+            << " size: " << cl->size()
+            << " missing: " << (cl->size()-num_clash_vars-num_real_vars)
+            << endl;
+            for(const Lit l: *cl) {
+                if (seen[l.var()] == 1) {
+                    cout << "c clash lit: " << l
+                    << " value: " << value(l) << endl;
+                }
+            }
+            for(const Lit l: *cl) {
+                if (seen[l.var()] == 0) {
+                    cout << "c neither clash nor real: " << l
+                    << " value: " << value(l) << endl;
+                }
+            }
+
+        }
+        ret = false;
+    }
+
+    for(uint32_t i = 0; i < nVars()*2 && ret; i++) {
+        Lit l = Lit::toLit(i);
+        const auto& ws = watches[l];
+        for(const auto& w: ws) {
+            if (w.isBin() && !w.red()) {
+                if (seen[l.var()]==1 || seen[w.lit2().var()]==1) {
+                    if (conf.verbosity >= 3 || conf.xor_detach_verb) {
+                        cout << "c BIN with clash: " << l << " " << w.lit2() << endl;
+                    }
+                    ret = false;
+                    break;
+                }
+            }
+        }
+    }
+
+    for(const auto& x: xorclauses) {
+        //REAL vars
+        for(uint32_t v: x) {
+            seen[v] = 0;
+        }
+
+        //CLASH vars
+        for(uint32_t v: x.clash_vars) {
+            seen[v] = 0;
+//                 cout << "c clash var: " << v + 1 << endl;
+        }
+    }
+
+    return ret;
 }
 
 bool Solver::assump_contains_xor_clash()

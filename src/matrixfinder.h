@@ -45,7 +45,6 @@ class MatrixFinder {
 
         //NOTE "simplify_xors" should always be true except during testing
         bool findMatrixes(bool& can_detach, bool simplify_xors = true);
-        bool no_irred_nonxor_contains_clash_vars();
 
         vector<Xor> unused_xors;
         set<uint32_t> clash_vars_unused;
