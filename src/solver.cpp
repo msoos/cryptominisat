@@ -4060,7 +4060,6 @@ bool Solver::find_and_init_all_matrices()
     }
 
     xorclauses_unused = mfinder.unused_xors;
-    //clash_vars_unused = mfinder.clash_vars_unused;
     xorclauses = mfinder.xors;
 
     if (can_detach &&
