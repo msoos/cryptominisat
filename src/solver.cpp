@@ -4021,10 +4021,12 @@ bool Solver::find_and_init_all_matrices()
     clear_gauss_matrices();
     gqhead = trail.size();
 
-    MatrixFinder mfinder(solver);
-    //BUG: in case we are coming in again, after adding new XORs
+    //Reattach needed in case we are coming in again, after adding new XORs
     //we might turn off a previously turned on matrix
     //which means we wouldn't re-attach those XORs!!!
+    attach_xor_clauses();
+
+    MatrixFinder mfinder(solver);
     ok = mfinder.findMatrixes(can_detach);
     if (!ok) {
         return false;
