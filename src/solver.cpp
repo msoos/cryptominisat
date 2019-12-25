@@ -4464,6 +4464,10 @@ void Solver::detach_xor_clauses(
             ClOffset offs = w.get_offset();
             Clause* cl = cl_alloc.ptr(offs);
             assert(!cl->freed());
+            if (cl->getRemoved()) {
+                //We have already went through this clause, and set it to be removed
+                continue;
+            }
 
             bool torem = false;
             bool todel = false;
@@ -4501,18 +4505,20 @@ void Solver::detach_xor_clauses(
                 }
                 cl->_xor_is_detached = true;
                 continue;
-            } else if (todel) {
-                if (cl->getRemoved()) {
-                    //Only once, hence the check for getRemoved.
-                    litStats.redLits -= cl->size();
-                    delayed_clause_free.push_back(offs);
-                    deleted++;
-                }
-                cl->setRemoved();
-                continue;
-            } else {
-                watches[l][j++] = w;
             }
+
+            //This is a rendundant clause that has to be removed
+            //for things to be correct (it clashes with an XOR)
+            if (todel) {
+                assert(cl->red());
+                cl->setRemoved();
+                litStats.redLits -= cl->size();
+                delayed_clause_free.push_back(offs);
+                deleted++;
+                continue;
+            }
+
+            watches[l][j++] = w;
         }
         watches[l].resize(j);
     }
