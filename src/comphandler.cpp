@@ -161,6 +161,8 @@ bool CompHandler::handle()
         return solver->okay();
     }
 
+
+    solver->removed_xorclauses_clash_vars.clear();
     solver->xorclauses.clear();
     solver->xorclauses_unused.clear();
     #ifdef USE_GAUSS

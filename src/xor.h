@@ -50,6 +50,16 @@ public:
         }
     }
 
+    template<typename T>
+    explicit Xor(const T& cl, const bool _rhs, const vector<uint32_t>& _clash_vars) :
+        rhs(_rhs)
+        , clash_vars(_clash_vars)
+    {
+        for (uint32_t i = 0; i < cl.size(); i++) {
+            vars.push_back(cl[i].var());
+        }
+    }
+
     explicit Xor(const vector<uint32_t>& _vars, const bool _rhs) :
         rhs(_rhs)
         , vars(_vars)

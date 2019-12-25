@@ -846,6 +846,10 @@ void Solver::renumber_clauses(const vector<uint32_t>& outerToInter)
             v = getUpdatedVar(v, outerToInter);
         }
     }
+
+    for(auto& v: removed_xorclauses_clash_vars) {
+        v = getUpdatedVar(v, outerToInter);
+    }
 }
 
 size_t Solver::calculate_interToOuter_and_outerToInter(
@@ -940,6 +944,15 @@ bool Solver::clean_xor_clauses_from_duplicate_and_set_vars()
 
     if (!update_vars_of_xors(xorclauses)) goto end;
     if (!update_vars_of_xors(xorclauses_unused)) goto end;
+    {
+        uint32_t j = 0;
+        for(uint32_t i = 0; i < removed_xorclauses_clash_vars.size(); i++) {
+            if (value(removed_xorclauses_clash_vars[i]) == l_Undef) {
+                removed_xorclauses_clash_vars[j++] = removed_xorclauses_clash_vars[i];
+            }
+        }
+        removed_xorclauses_clash_vars.resize(j);
+    }
 
     end:
     const double time_used = cpuTime() - myTime;
@@ -4423,6 +4436,9 @@ void Solver::detach_xor_clauses(
     for(const auto& v: clash_vars_unused) {
         seen[v] = 1;
     }
+    for(uint32_t v: removed_xorclauses_clash_vars) {
+        seen[v] = 1;
+    }
 
     //Clash on USED xor
     for(auto& x: xorclauses) {
@@ -4568,6 +4584,10 @@ void Solver::detach_xor_clauses(
     }
 
     for(const auto& v: clash_vars_unused) {
+        seen[v] = 0;
+    }
+
+    for(uint32_t v: removed_xorclauses_clash_vars) {
         seen[v] = 0;
     }
 
@@ -4819,6 +4839,10 @@ bool Solver::no_irred_nonxor_contains_clash_vars()
         }
     }
 
+    for(const auto& v: removed_xorclauses_clash_vars) {
+        seen[v] = 1;
+    }
+
     for(const auto& l: assumptions) {
         const Lit p = map_outer_to_inter(l.lit_outer);
         if (seen[p.var()] == 1) {
@@ -4927,6 +4951,10 @@ bool Solver::no_irred_nonxor_contains_clash_vars()
         }
     }
 
+    for(const auto& v: removed_xorclauses_clash_vars) {
+        seen[v] = 0;
+    }
+
     return ret;
 }
 
@@ -4938,6 +4966,10 @@ bool Solver::assump_contains_xor_clash()
         for(uint32_t v: x.clash_vars) {
             seen[v] = 1;
         }
+    }
+
+    for(const auto& v: removed_xorclauses_clash_vars) {
+        seen[v] = 1;
     }
 
     bool ret = false;
@@ -4956,6 +4988,10 @@ bool Solver::assump_contains_xor_clash()
         for(uint32_t v: x.clash_vars) {
             seen[v] = 0;
         }
+    }
+
+    for(const auto& v: removed_xorclauses_clash_vars) {
+        seen[v] = 0;
     }
 
     return ret;

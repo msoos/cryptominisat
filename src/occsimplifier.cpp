@@ -1388,6 +1388,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             //solver->clauseCleaner->clean_implicit_clauses();
         } else if (token == "occ-bve") {
             if (solver->conf.doVarElim) {
+                solver->removed_xorclauses_clash_vars.clear();
                 solver->xor_clauses_updated = true;
                 solver->xorclauses.clear();
                 solver->xorclauses_unused.clear();

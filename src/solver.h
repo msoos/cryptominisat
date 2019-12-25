@@ -320,6 +320,7 @@ class Solver : public Searcher
         vector<std::pair<string, string> > sql_tags;
 
         void check_config_parameters() const;
+        vector<uint32_t> tmp_xor_clash_vars;
         void check_xor_cut_config_sanity() const;
         void handle_found_solution(const lbool status, const bool only_indep_solution);
         void add_every_combination_xor(const vector<Lit>& lits, bool attach, bool addDrat);
