@@ -220,6 +220,7 @@ void XorFinder::print_found_xors()
         ) {
             cout << "c " << *it << endl;
         }
+        cout << "c -> Total: " << xors.size() << " xors" << endl;
     }
 }
 
@@ -515,6 +516,13 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
     }
     #endif
 
+    if (solver->conf.verbosity >= 5) {
+        cout << "c XOR-ing together XORs. Starting with: " << endl;
+        for(const auto& x: this_xors) {
+            cout << "c XOR before xor-ing together: " << x << endl;
+        }
+    }
+
     assert(solver->okay());
     assert(solver->decisionLevel() == 0);
     assert(solver->watches.get_smudged_list().empty());
@@ -695,6 +703,15 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 this_xors[idxes[1]] = Xor();
                 xored++;
             }
+        }
+    }
+
+    if (solver->conf.verbosity >= 5) {
+        cout << "c Finished XOR-ing together XORs. " << endl;
+        size_t at = 0;
+        for(const auto& x: this_xors) {
+            cout << "c XOR after xor-ing together: " << x << " -- at idx: " << at << endl;
+            at++;
         }
     }
 
