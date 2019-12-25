@@ -4030,17 +4030,20 @@ bool Solver::find_and_init_all_matrices()
         return true;
     }
     if (conf.verbosity >= 1) {
-        cout << "c [find&init matx] updated, performing matrix init" << endl;
+        cout << "c [find&init matx] performing matrix init" << endl;
     }
 
     bool can_detach;
     clear_gauss_matrices();
     gqhead = trail.size();
 
-    //Reattach needed in case we are coming in again, after adding new XORs
-    //we might turn off a previously turned on matrix
-    //which means we wouldn't re-attach those XORs!!!
-    attach_xor_clauses();
+    /*Reattach needed in case we are coming in again, after adding new XORs
+    we might turn off a previously turned on matrix
+    which means we wouldn't re-attach those XORs
+    -> but we fixed this in matrixfinder, where we FORCE a Gauss to be ON
+       in case it contains a previously detached XOR
+    */
+    fully_undo_xor_detach();
 
     MatrixFinder mfinder(solver);
     ok = mfinder.findMatrixes(can_detach);
