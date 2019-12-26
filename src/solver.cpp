@@ -4043,7 +4043,7 @@ bool Solver::find_and_init_all_matrices()
     -> but we fixed this in matrixfinder, where we FORCE a Gauss to be ON
        in case it contains a previously detached XOR
     */
-    fully_undo_xor_detach();
+    //fully_undo_xor_detach();
 
     MatrixFinder mfinder(solver);
     ok = mfinder.findMatrixes(can_detach);
@@ -4097,8 +4097,8 @@ bool Solver::find_and_init_all_matrices()
             << "c -- can_detach: " << (bool)can_detach << endl
             << "c -- mfinder.no_irred_nonxor_contains_clash_vars(): "
             << no_irred_nonxor_contains_clash_vars() << endl
-            << "c -- conf.xor_detach_reattach: " << (bool)conf.xor_detach_reattach << endl
             << "c -- !conf.gaussconf.autodisable: " << (bool)(!conf.gaussconf.autodisable) << endl
+            << "c -- conf.xor_detach_reattach: " << (bool)conf.xor_detach_reattach << endl;
             ;
         }
     }
@@ -4424,7 +4424,6 @@ void Solver::detach_xor_clauses(
 {
     detached_xor_clauses = true;
     double myTime = cpuTime();
-    //assert(detached_xor_repr_cls.empty()); //MAY NOT be true!
 
     ///////////////
     //Set up seen
