@@ -980,6 +980,11 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
                 size = cl->size()-1;
                 break;
 
+            case atmost_t:
+                cl = cl_alloc.ptr(reason.get_offset());
+                size = cl->size();
+                break;
+
             case binary_t:
                 size = 1;
                 break;
@@ -997,6 +1002,11 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
             switch (type) {
                 case clause_t:
                     p2 = (*cl)[i+1];
+                    break;
+
+                case atmost_t:
+                    if (value((*cl)[i]) != l_True) continue;
+                    p2 = ~(*cl)[i];
                     break;
 
                 case binary_t:
