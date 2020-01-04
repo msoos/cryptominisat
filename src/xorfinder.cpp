@@ -272,7 +272,7 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
 
     if (poss_xor.foundAll()) {
         std::sort(lits.begin(), lits.end());
-        Xor found_xor(lits, poss_xor.getRHS());
+        Xor found_xor(lits, poss_xor.getRHS(), vector<uint32_t>());
         #if defined(SLOW_DEBUG) || defined(XOR_DEBUG)
         for(Lit lit: lits) {
             assert(solver->varData[lit.var()].removed == Removed::none);
@@ -688,8 +688,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 occcnt[v] -= 2;
                 assert(occcnt[v] == 0);
 
-                Xor x_new(tmp_vars_xor_two, x0.rhs ^ x1.rhs);
-                x_new.clash_vars.push_back(clash_var);
+                Xor x_new(tmp_vars_xor_two, x0.rhs ^ x1.rhs, clash_var);
                 x_new.merge_clash(x0, seen);
                 x_new.merge_clash(x1, seen);
                 #ifdef VERBOSE_DEBUG

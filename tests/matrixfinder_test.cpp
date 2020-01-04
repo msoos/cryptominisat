@@ -59,8 +59,8 @@ TEST_F(gauss, min_rows)
 {
     //s->conf.verbosity = 20;
     s->conf.gaussconf.min_matrix_rows = 2;
-    xs.push_back(Xor(str_to_vars("1, 2, 3"), 0));
-    xs.push_back(Xor(str_to_vars("1, 2, 3, 4"), 0));
+    xs.push_back(str_to_xors("1, 2, 3 = 0")[0]);
+    xs.push_back(str_to_xors("1, 2, 3, 4 = 0")[0]);
     s->xor_clauses_updated = true;
     s->xorclauses = xs;
 
@@ -73,8 +73,8 @@ TEST_F(gauss, min_rows_2)
 {
     //s->conf.verbosity = 20;
     s->conf.gaussconf.min_matrix_rows = 3;
-    xs.push_back(Xor(str_to_vars("1, 2, 3"), 0));
-    xs.push_back(Xor(str_to_vars("1, 2, 3, 4"), 0));
+    xs.push_back(str_to_xors("1, 2, 3 = 0")[0]);
+    xs.push_back(str_to_xors("1, 2, 3, 4 = 0")[0]);
     s->xor_clauses_updated = true;
     s->xorclauses = xs;
 
@@ -87,8 +87,8 @@ TEST_F(gauss, separate_1)
 {
     //s->conf.verbosity = 20;
     s->conf.gaussconf.min_matrix_rows = 1;
-    xs.push_back(Xor(str_to_vars("1, 2, 3"), 0));
-    xs.push_back(Xor(str_to_vars("5, 6, 7, 8"), 0));
+    xs.push_back(str_to_xors("1, 2, 3 = 0")[0]);
+    xs.push_back(str_to_xors("5, 6, 7, 8 = 0")[0]);
     s->xor_clauses_updated = true;
     s->xorclauses = xs;
 
@@ -101,13 +101,13 @@ TEST_F(gauss, separate_2)
 {
     //s->conf.verbosity = 20;
     s->conf.gaussconf.min_matrix_rows = 1;
-    xs.push_back(Xor(str_to_vars("1, 2, 3"), 0));
-    xs.push_back(Xor(str_to_vars("4, 5, 6"), 0));
-    xs.push_back(Xor(str_to_vars("3, 4, 10"), 0));
+    xs.push_back(str_to_xors("1, 2, 3 = 0")[0]);
+    xs.push_back(str_to_xors("4, 5, 6 = 0")[0]);
+    xs.push_back(str_to_xors("3, 4, 10 = 0")[0]);
 
-    xs.push_back(Xor(str_to_vars("15, 16, 17, 18"), 0));
-    xs.push_back(Xor(str_to_vars("11, 15, 19"), 0));
-    xs.push_back(Xor(str_to_vars("19, 20, 12"), 0));
+    xs.push_back(str_to_xors("15, 16, 17, 18 = 0")[0]);
+    xs.push_back(str_to_xors("11, 15, 19 = 0")[0]);
+    xs.push_back(str_to_xors("19, 20, 12 = 0")[0]);
     s->xor_clauses_updated = true;
     s->xorclauses = xs;
 
@@ -120,17 +120,17 @@ TEST_F(gauss, separate_3)
 {
     //s->conf.verbosity = 20;
     s->conf.gaussconf.min_matrix_rows = 1;
-    xs.push_back(Xor(str_to_vars("1, 2, 3"), 0));
-    xs.push_back(Xor(str_to_vars("4, 5, 6"), 0));
-    xs.push_back(Xor(str_to_vars("3, 4, 10"), 0));
+    xs.push_back(str_to_xors("1, 2, 3 = 0")[0]);
+    xs.push_back(str_to_xors("4, 5, 6 = 0")[0]);
+    xs.push_back(str_to_xors("3, 4, 10 = 0")[0]);
 
-    xs.push_back(Xor(str_to_vars("15, 16, 17, 18"), 0));
-    xs.push_back(Xor(str_to_vars("11, 15, 19"), 0));
-    xs.push_back(Xor(str_to_vars("19, 20, 12"), 0));
+    xs.push_back(str_to_xors("15, 16, 17, 18 = 0")[0]);
+    xs.push_back(str_to_xors("11, 15, 19 = 0")[0]);
+    xs.push_back(str_to_xors("19, 20, 12 = 0")[0]);
 
-    xs.push_back(Xor(str_to_vars("21, 22, 23, 29"), 0));
-    xs.push_back(Xor(str_to_vars("21, 28, 29"), 0));
-    xs.push_back(Xor(str_to_vars("25, 21, 27"), 0));
+    xs.push_back(str_to_xors("21, 22, 23, 29 = 0")[0]);
+    xs.push_back(str_to_xors("21, 28, 29 = 0")[0]);
+    xs.push_back(str_to_xors("25, 21, 27 = 0")[0]);
     s->xor_clauses_updated = true;
     s->xorclauses = xs;
 

@@ -4016,7 +4016,7 @@ void Solver::renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors
         for(auto& v: t) {
             v = outer_to_without_bva_map[v];
         }
-        xors_ret.push_back(Xor(t, x.rhs));
+        xors_ret.push_back(Xor(t, x.rhs, vector<uint32_t>()));
     }
 }
 
