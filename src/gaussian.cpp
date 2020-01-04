@@ -72,14 +72,6 @@ solver(_solver),
 matrix_no(_matrix_no)
 
 {
-    vector<Xor> xors;
-    for (Xor& x : xorclauses) {
-        xors.push_back(x);
-    }
-    for (Xor& x : xors) {
-        x.sort();
-    }
-    std::sort(xors.begin(), xors.end());
 }
 
 EGaussian::~EGaussian() {
