@@ -36,7 +36,9 @@ using std::cout;
 using std::endl;
 
 XorFinder::XorFinder(OccSimplifier* _occsimplifier, Solver* _solver) :
-    occsimplifier(_occsimplifier)
+    xors(_solver->xorclauses)
+    , unused_xors(_solver->xorclauses_unused)
+    , occsimplifier(_occsimplifier)
     , solver(_solver)
     , toClear(_solver->toClear)
     , seen(_solver->seen)
@@ -156,6 +158,7 @@ void XorFinder::find_xors()
         cl->set_used_in_xor_full(false);
     }
     xors.clear();
+    unused_xors.clear();
 
     double myTime = cpuTime();
     const int64_t orig_xor_find_time_limit =
@@ -207,6 +210,15 @@ void XorFinder::find_xors()
             , time_remain
         );
     }
+    solver->xor_clauses_updated = true;
+
+    #if defined(SLOW_DEBUG) || defined(XOR_DEBUG)
+    for(const Xor& x: xors) {
+        for(uint32_t v: x) {
+            assert(solver->varData[v].removed == Removed::none);
+        }
+    }
+    #endif
 }
 
 void XorFinder::print_found_xors()
@@ -222,27 +234,6 @@ void XorFinder::print_found_xors()
         }
         cout << "c -> Total: " << xors.size() << " xors" << endl;
     }
-}
-
-void XorFinder::add_xors_to_solver()
-{
-    solver->xorclauses = xors;
-    solver->xorclauses_unused = unused_xors;
-    solver->xor_clauses_updated = true;
-
-    if (solver->conf.verbosity >= 5) {
-        cout << "c added XORs to solver from xorfinder" << endl;
-        cout << "c 'xorclauses' in solver now: " << solver->xorclauses.size() << endl;
-        cout << "c 'xorclauses_unused' in solver now: " << solver->xorclauses_unused.size() << endl;
-    }
-
-    #if defined(SLOW_DEBUG) || defined(XOR_DEBUG)
-    for(const Xor& x: xors) {
-        for(uint32_t v: x) {
-            assert(solver->varData[v].removed == Removed::none);
-        }
-    }
-    #endif
 }
 
 void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type abst)
