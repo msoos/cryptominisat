@@ -448,6 +448,7 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
             }
             break;
         }
+        
         case atmost_t :
         case clause_t : {
             cl = cl_alloc.ptr(confl.get_offset());
@@ -533,7 +534,6 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                 assert(false);
         }
         if (p == lit_Undef || i > 0) {
-            cout << "Add lit to learnt: " << x << endl;
             add_lit_to_learnt<update_bogoprops>(x);
         }
         i++;
@@ -680,7 +680,6 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
         while (!seen[trail[index--].var()]);
 
         p = trail[index+1];
-        cout << "Read from trail: " << p << endl;
         assert(p != lit_Undef);
 
         if (!update_bogoprops
@@ -716,8 +715,6 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
     } while (pathC > 0);
     assert(pathC == 0);
     learnt_clause[0] = ~p;
-
-    cout << "Learnt clause: " << learnt_clause << endl;
 
     if (conf.doOTFSubsume
         && !update_bogoprops
@@ -1235,7 +1232,6 @@ lbool Searcher::search()
                 #endif
                 hist.trailDepthHistLonger.push(trail.size());
             }
-            cout << "CONFLICT" << endl;
             if (!handle_conflict<update_bogoprops>(confl)) {
                 dump_search_loop_stats(myTime);
                 return l_False;
@@ -1343,7 +1339,6 @@ lbool Searcher::new_decision()
     assert(value(next) == l_Undef);
     new_decision_level();
     enqueue<update_bogoprops>(next);
-    cout << "DECISION: " << next << endl;
 
     return l_Undef;
 }
