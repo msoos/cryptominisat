@@ -424,7 +424,7 @@ Lit HyperEngine::analyzeFail(const PropBy propBy)
 
             break;
         }
-        case atmost_t: /*QUESTION*/
+        case atmost_t:
         case clause_t: {
             const uint32_t offset = propBy.get_offset();
             const Clause& cl = *cl_alloc.ptr(offset);
