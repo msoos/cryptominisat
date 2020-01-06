@@ -648,11 +648,6 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
     learnt_clause.push_back(lit_Undef); //make space for ~p
     do {
         Clause& cl = (Clause&)*cl_alloc.ptr(confl.get_offset());
-        cout << "Conflict clause: " << cl << endl;
-        for (uint32_t q = 0 ; q < cl.size() ; q++)
-            if (value(cl[q]) == l_True)
-                cout << cl[q] << " "; 
-        cout << "<= " << cl.size()-cl.atmost_watches()+1 << endl;
 
         #ifdef DEBUG_RESOLV
         cout << "p is: " << p << endl;
