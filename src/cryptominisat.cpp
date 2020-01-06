@@ -636,7 +636,7 @@ DLL_PUBLIC bool SATSolver::add_clause(const vector< Lit >& lits, bool isAtmost, 
     }
 
     bool ret = true;
-    /*QUESTION*/
+
     if (data->solvers.size() > 1) {
         if (data->cls_lits.size() + lits.size() + 1 > CACHE_SIZE) {
             ret = actually_add_clauses_to_threads(data);
@@ -646,7 +646,6 @@ DLL_PUBLIC bool SATSolver::add_clause(const vector< Lit >& lits, bool isAtmost, 
         for(Lit lit: lits) {
             data->cls_lits.push_back(lit);
         }
-    /*QUESTION*/
     } else {
         data->solvers[0]->new_vars(data->vars_to_add);
         data->vars_to_add = 0;
