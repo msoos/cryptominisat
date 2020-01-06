@@ -538,6 +538,7 @@ bool DimacsParser<C>::parse_DIMACS(T input_stream, const bool _strict_header)
     if ( !parse_DIMACS_main(in)) {
         return false;
     }
+    
     if (verbosity) {
         cout
         << "c -- clauses added: " << norm_clauses_added << endl
