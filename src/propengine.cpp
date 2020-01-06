@@ -304,7 +304,6 @@ PropBy PropEngine::propagate_any_order_fast()
                     for (uint32_t k = 0 ; k < c.atmost_watches() ; k++) {
                         if (c[k] != p && value(c[k]) != l_False && (k==0 || c[k] != c[k-1])) {
                             assert(value(c[k]) == l_Undef);
-                            cout << "From (" << c << ") enqueued: " << ~c[k] << endl;
                             enqueue<update_bogoprops>(~c[k], PropBy(offset, true));
                         }
                     }
