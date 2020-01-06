@@ -647,8 +647,6 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
 
     learnt_clause.push_back(lit_Undef); //make space for ~p
     do {
-        Clause& cl = (Clause&)*cl_alloc.ptr(confl.get_offset());
-
         #ifdef DEBUG_RESOLV
         cout << "p is: " << p << endl;
         #endif
