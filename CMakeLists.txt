@@ -294,6 +294,7 @@ option(ENABLE_TESTING "Enable testing" OFF)
 option(COVERAGE "Build with coverage check" OFF)
 if (STATICCOMPILE)
     set(ENABLE_TESTING OFF)
+    set(Boost_USE_STATIC_LIBS ON)
 endif()
 
 if (COVERAGE AND BUILD_SHARED_LIBS)

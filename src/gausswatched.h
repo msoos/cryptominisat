@@ -33,11 +33,23 @@ THE SOFTWARE.
 namespace CMSat {
     struct GaussWatched{
         GaussWatched(uint32_t r ,uint32_t m):
-            row_id(r) , matrix_num(m)
+            row_n(r) , matrix_num(m)
         {}
 
-        uint32_t row_id;        // watch row id
-        uint32_t matrix_num;    // watch matrix id
+        uint32_t row_n;        // watch row
+        uint32_t matrix_num;   // watch matrix
+
+        bool operator<(const GaussWatched& other) const {
+            if (matrix_num < other.matrix_num) {
+                return true;
+            }
+
+            if (matrix_num > other.matrix_num) {
+                return false;
+            }
+
+            return row_n < other.row_n;
+        }
     };
 }
 

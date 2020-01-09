@@ -260,7 +260,9 @@ class Solver : public Searcher
         void detach_xor_clauses(
             const set<uint32_t>& clash_vars_unused
         );
-        bool attach_xor_clauses();
+        bool fully_undo_xor_detach();
+        bool no_irred_nonxor_contains_clash_vars();
+        bool assump_contains_xor_clash();
         void extend_model_to_detached_xors();
         void unset_clash_decision_vars(const vector<Xor>& xors);
         void set_clash_decision_vars();
@@ -314,6 +316,7 @@ class Solver : public Searcher
         vector<std::pair<string, string> > sql_tags;
 
         void check_config_parameters() const;
+        vector<uint32_t> tmp_xor_clash_vars;
         void check_xor_cut_config_sanity() const;
         void handle_found_solution(const lbool status, const bool only_indep_solution);
         void add_every_combination_xor(const vector<Lit>& lits, bool attach, bool addDrat);

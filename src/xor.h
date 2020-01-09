@@ -41,24 +41,32 @@ public:
     Xor()
     {}
 
-    template<typename T>
-    explicit Xor(const T& cl, const bool _rhs) :
+    explicit Xor(const vector<uint32_t>& cl, const bool _rhs, const vector<uint32_t>& _clash_vars):
         rhs(_rhs)
+        , clash_vars(_clash_vars)
+    {
+        for (uint32_t i = 0; i < cl.size(); i++) {
+            vars.push_back(cl[i]);
+        }
+    }
+
+    template<typename T>
+    explicit Xor(const T& cl, const bool _rhs, const vector<uint32_t>& _clash_vars):
+        rhs(_rhs)
+        , clash_vars(_clash_vars)
     {
         for (uint32_t i = 0; i < cl.size(); i++) {
             vars.push_back(cl[i].var());
         }
     }
 
-    explicit Xor(const vector<uint32_t>& _vars, const bool _rhs) :
+    explicit Xor(const vector<uint32_t>& cl, const bool _rhs, const uint32_t clash_var):
         rhs(_rhs)
-        , vars(_vars)
     {
-    }
-
-    void sort()
-    {
-        std::sort(vars.begin(), vars.end());
+        clash_vars.push_back(clash_var);
+        for (uint32_t i = 0; i < cl.size(); i++) {
+            vars.push_back(cl[i]);
+        }
     }
 
     vector<uint32_t>::const_iterator begin() const

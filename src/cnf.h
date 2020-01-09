@@ -171,6 +171,7 @@ public:
     vector<ClOffset> detached_xor_repr_cls; //these are still in longIrredCls
     vector<Xor> xorclauses;
     vector<Xor> xorclauses_unused;
+    vector<uint32_t> removed_xorclauses_clash_vars;
     bool detached_xor_clauses = false;
     bool xor_clauses_updated = false;
     BinTriStats binTri;

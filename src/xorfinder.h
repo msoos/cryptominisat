@@ -180,14 +180,13 @@ public:
     const Stats& get_stats() const;
     size_t mem_used() const;
     void grab_mem();
-    void add_xors_to_solver();
     vector<Xor> remove_xors_without_connecting_vars(const vector<Xor>& this_xors);
     bool xor_together_xors(vector<Xor>& xors);
     bool add_new_truths_from_xors(vector<Xor>& xors, vector<Lit>* out_changed_occur = NULL);
     void clean_equivalent_xors(vector<Xor>& txors);
 
-    vector<Xor> xors;
-    vector<Xor> unused_xors;
+    vector<Xor>& xors;
+    vector<Xor>& unused_xors;
 
 private:
     PossibleXor poss_xor;

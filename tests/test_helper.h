@@ -127,6 +127,7 @@ vector<Xor> str_to_xors(const string& data)
         int at = 0;
         bool rhs = false;
         vector<uint32_t> vars;
+        vector<uint32_t> clashes;
         while (getline(ss2,token2, '='))
         {
             //cout << "Token is: " << token2 << endl;
@@ -134,15 +135,28 @@ vector<Xor> str_to_xors(const string& data)
                 vars = str_to_vars(token2);
             }
             if (at == 1) {
-                long r = str_to_long_int(token2);
-                assert(r >= 0 && r <= 1);
-                rhs = r;
+                uint32_t at2 = 0;
+                stringstream ss3(token2);
+                string token3;
+                //cout << "parsing token2:" << token2 << endl;
+                while (getline(ss3,token3, 'c')) {
+                    if (at2 == 0) {
+                        long r = str_to_long_int(token3);
+                        assert(r >= 0 && r <= 1);
+                        rhs = r;
+                    } else if (at2 == 1) {
+                        clashes = str_to_vars(token3);
+                    }
+                    assert(at2 < 2 && "We can have only at most one 'c' sign in an XOR");
+                    at2++;
+                }
             }
-            assert(at < 2);
+            assert(at < 2 && "We can ony have one '=' sign in an XOR");
             at++;
         }
+
         assert(at == 2 && "You forgot the =0/1 from the XOR");
-        ret.push_back(Xor(vars, rhs));
+        ret.push_back(Xor(vars, rhs, clashes));
     }
 
     return ret;
@@ -421,6 +435,13 @@ struct XorSorter
     }
 };
 
+
+void sort_xor(Xor& x)
+{
+    std::sort(x.vars.begin(), x.vars.end());
+    std::sort(x.clash_vars.begin(), x.clash_vars.end());
+}
+
 void check_xors_eq(const vector<Xor>& got_data, const std::string& expected)
 {
     XorSorter xorsort;
@@ -433,7 +454,7 @@ void check_xors_eq(const vector<Xor>& got_data, const std::string& expected)
 
     vector<Xor> got_data_sorted = got_data;
     for(Xor& t: got_data_sorted) {
-        t.sort();
+        sort_xor(t);
     }
 
     std::sort(got_data_sorted.begin(), got_data_sorted.end(), xorsort);
@@ -441,6 +462,7 @@ void check_xors_eq(const vector<Xor>& got_data, const std::string& expected)
     for(size_t i = 0; i < expected_sorted.size(); i++) {
         EXPECT_EQ(expected_sorted[i].vars, got_data_sorted[i].vars);
         EXPECT_EQ(expected_sorted[i].rhs, got_data_sorted[i].rhs);
+        EXPECT_EQ(expected_sorted[i].clash_vars, got_data_sorted[i].clash_vars);
     }
 }
 
@@ -453,13 +475,15 @@ void check_xors_contains(const vector<Xor>& got_data, const std::string& expecte
 
     vector<Xor> got_data_sorted = got_data;
     for(auto& t: got_data_sorted) {
-        t.sort();
+        sort_xor(t);
     }
 
     bool found = false;
     for(const Xor& x: got_data_sorted) {
         if (x.vars == expectedX.vars &&
-            x.rhs == expectedX.rhs) {
+            x.rhs == expectedX.rhs &&
+            x.clash_vars == expectedX.clash_vars
+        ) {
             found = true;
             break;
         }

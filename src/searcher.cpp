@@ -3132,7 +3132,7 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
             gqueuedata[i->matrix_num].do_eliminate = false;
 
             if (gmatrices[i->matrix_num]->find_truths(
-                i, j, p.var(), i->row_id, gqueuedata[i->matrix_num])
+                i, j, p.var(), i->row_n, gqueuedata[i->matrix_num])
             ) {
                 continue;
             } else {

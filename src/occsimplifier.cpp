@@ -1346,31 +1346,6 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             if (solver->conf.doFindXors) {
                 XorFinder finder(this, solver);
                 finder.find_xors();
-
-//                 finder.remove_xors_without_connecting_vars(finder.xors);
-//                 if (!finder.xor_together_xors(finder.xors))
-//                     return false;
-//
-//                 vector<Lit> out_changed_occur;
-//                 solver->ok = finder.add_new_truths_from_xors(finder.xors, &out_changed_occur);
-//                 if (!solver->ok)
-//                     return false;
-//
-//                 finder.remove_xors_without_connecting_vars(finder.xors);
-//                 #ifdef USE_M4RI
-//                 if (topLevelGauss != NULL
-//                     && solver->conf.doM4RI
-//                 ) {
-//                     topLevelGauss->toplevelgauss(finder.xors, &out_changed_occur);
-//                 }
-//                 #endif
-                finder.add_xors_to_solver();
-
-                //these may have changed, recalculating occur
-//                 for(Lit lit: out_changed_occur) {
-//                     n_occurs[lit.toInt()] = calc_occ_data(lit);
-//                     n_occurs[(~lit).toInt()] = calc_occ_data(~lit);
-//                 }
                 runStats.xorTime += finder.get_stats().findTime;
             } else {
                 //TODO this is something VERY fishy
@@ -1388,6 +1363,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             //solver->clauseCleaner->clean_implicit_clauses();
         } else if (token == "occ-bve") {
             if (solver->conf.doVarElim) {
+                solver->removed_xorclauses_clash_vars.clear();
                 solver->xor_clauses_updated = true;
                 solver->xorclauses.clear();
                 solver->xorclauses_unused.clear();
@@ -1488,6 +1464,8 @@ bool OccSimplifier::simplify(const bool _startup, const std::string schedule)
     #ifdef DEBUG_MARKED_CLAUSE
     assert(solver->no_marked_clauses());
     #endif
+
+    assert(solver->detached_xor_repr_cls.empty());
 
     startup = _startup;
     if (!setup()) {

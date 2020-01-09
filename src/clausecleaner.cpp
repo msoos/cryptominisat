@@ -378,6 +378,7 @@ bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors)
         size_t j = 0;
         for(size_t size = xors.size(); i < size; i++) {
             Xor& x = xors[i];
+            //cout << "Checking to keep xor: " << x << endl;
             const bool keep = clean_one_xor(x);
             if (!solver->ok) {
                 return false;
@@ -385,6 +386,13 @@ bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors)
 
             if (keep) {
                 xors[j++] = x;
+            } else {
+                solver->removed_xorclauses_clash_vars.insert(
+                    solver->removed_xorclauses_clash_vars.end()
+                    , x.begin()
+                    , x.end()
+                );
+                //cout << "NOT keeping XOR" << endl;
             }
         }
         xors.resize(j);
