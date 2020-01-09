@@ -382,17 +382,6 @@ bool EGaussian::full_init(bool& created) {
     return true;
 }
 
-void EGaussian::check_watchlist_sanity()
-{
-    for(size_t i = 0; i < solver->nVars(); i++) {
-        for(auto w: solver->gwatches[i]) {
-            if (w.matrix_num == matrix_no) {
-                assert(i < var_to_col.size());
-            }
-        }
-    }
-}
-
 void EGaussian::eliminate() {
     uint32_t row = 0;
     uint32_t col = 0;
@@ -559,33 +548,6 @@ gret EGaussian::adjust_matrix()
     num_rows = row_n - adjust_zero;
 
     return gret::nothing_satisfied;
-}
-
-void EGaussian::check_row_not_in_watch(const uint32_t v, const uint32_t row_num) const
-{
-    for(const auto& x: solver->gwatches[v]) {
-        if (x.matrix_num == matrix_no && x.row_n == row_num) {
-            cout << "OOOps, row ID " << row_num << " already in watch for var: " << v+1 << endl;
-            assert(false);
-        }
-    }
-}
-
-void EGaussian::print_gwatches(const uint32_t var) const
-{
-    vec<GaussWatched> mycopy;
-    for(const auto& x: solver->gwatches[var]) {
-        mycopy.push(x);
-    }
-
-    std::sort(mycopy.begin(), mycopy.end());
-    cout << "Watch for var " << var+1 << ": ";
-    for(const auto& x: mycopy) {
-        cout
-        << "(Mat num: " << x.matrix_num
-        << " row_n: " << x.row_n << ") ";
-    }
-    cout << endl;
 }
 
 // Delete this row because we have already add to xor clause, nothing to do anymore
@@ -1195,6 +1157,38 @@ vector<Lit>* EGaussian::get_reason(uint32_t row)
     return &tofill;
 }
 
+//////////////////
+// Checking functions below
+//////////////////
+
+void EGaussian::check_row_not_in_watch(const uint32_t v, const uint32_t row_num) const
+{
+    for(const auto& x: solver->gwatches[v]) {
+        if (x.matrix_num == matrix_no && x.row_n == row_num) {
+            cout << "OOOps, row ID " << row_num << " already in watch for var: " << v+1 << endl;
+            assert(false);
+        }
+    }
+}
+
+void EGaussian::print_gwatches(const uint32_t var) const
+{
+    vec<GaussWatched> mycopy;
+    for(const auto& x: solver->gwatches[var]) {
+        mycopy.push(x);
+    }
+
+    std::sort(mycopy.begin(), mycopy.end());
+    cout << "Watch for var " << var+1 << ": ";
+    for(const auto& x: mycopy) {
+        cout
+        << "(Mat num: " << x.matrix_num
+        << " row_n: " << x.row_n << ") ";
+    }
+    cout << endl;
+}
+
+
 void EGaussian::check_no_prop_or_unsat_rows()
 {
     #ifdef VERBOSE_DEBUG
@@ -1242,6 +1236,17 @@ void EGaussian::check_no_prop_or_unsat_rows()
             cout << "       dec level: " << solver->decisionLevel() << endl;
         }
         assert(bits_unset > 1 || (bits_unset == 0 && val == 0));
+    }
+}
+
+void EGaussian::check_watchlist_sanity()
+{
+    for(size_t i = 0; i < solver->nVars(); i++) {
+        for(auto w: solver->gwatches[i]) {
+            if (w.matrix_num == matrix_no) {
+                assert(i < var_to_col.size());
+            }
+        }
     }
 }
 
