@@ -4603,7 +4603,6 @@ void Solver::unset_clash_decision_vars(const vector<Xor>& xors)
 
 void Solver::set_clash_decision_vars()
 {
-    vector<uint32_t> clash_vars;
     for(auto& v: varData) {
         if (v.removed == Removed::clashed) {
             v.removed = Removed::none;
