@@ -101,17 +101,16 @@ class QueryFill (QueryHelper):
 
         print("indexes created T: %-3.2f s" % (time.time() - t))
 
-    def fill_later_useful_data(self):
+    def fill_used_later(self):
         t = time.time()
         q = """
         DROP TABLE IF EXISTS `used_later`;
-        DROP TABLE IF EXISTS `used_later_short`;
-        DROP TABLE IF EXISTS `used_later_long`;
         """
         for l in q.split('\n'):
             self.c.execute(l)
         print("used_later dropped T: %-3.2f s" % (time.time() - t))
 
+        # Create used_later table
         q = """
         create table `used_later` (
             `clauseID` bigint(20) NOT NULL,
@@ -121,7 +120,7 @@ class QueryFill (QueryHelper):
         self.c.execute(q)
         print("used_later recreated T: %-3.2f s" % (time.time() - t))
 
-
+        # Fill used_later table
         t = time.time()
         q = """insert into used_later
         (
@@ -149,10 +148,27 @@ class QueryFill (QueryHelper):
         and cl_last_in_solver.conflicts >= rdb0.conflicts
 
         group by rdb0.clauseID, rdb0.conflicts;"""
+
         self.c.execute(q)
         print("used_later filled T: %-3.2f s" % (time.time() - t))
 
+        # Add indexes to used_later table
+        idxs = """
+        create index `used_later_idx1` on `used_later` (`clauseID`, rdb0conflicts);
+        create index `used_later_idx2` on `used_later` (`clauseID`, rdb0conflicts, used_later);
+        """
+        t = time.time()
+        for l in idxs.split('\n'):
+            self.c.execute(l)
+        print("used_later indexes added T: %-3.2f s" % (time.time() - t))
 
+    def fill_used_later_X(self):
+        # Drop table
+        q_drop = """
+        DROP TABLE IF EXISTS `used_later_{name};`
+        ;"""
+
+        # Create and fill used_later_X tables
         q_create = """
         create table `used_later_{name}` (
             `clauseID` bigint(20) NOT NULL,
@@ -176,7 +192,7 @@ class QueryFill (QueryHelper):
         reduceDB as rdb0
         left join used_clauses as ucl
 
-        -- reduceDB is always present, used_later may not be, hence left join
+        -- reduceDB is always present, used_clauses may not be, hence left join
         on (ucl.clauseID = rdb0.clauseID
             and ucl.used_at > rdb0.conflicts
             and ucl.used_at <= (rdb0.conflicts+{duration}))
@@ -196,20 +212,12 @@ class QueryFill (QueryHelper):
         t = time.time()
         idxs = ""
         for name in ["short", "long"]:
+            self.c.execute(q_drop.format(name=name))
             self.c.execute(q_create.format(name=name))
             self.c.execute(q_fill.format(name=name, duration=getattr(options, name)))
-            idxs += idx.format(name=name)
-        print("used_later recreated T: %-3.2f s" % (time.time() - t))
-
-
-        t = time.time()
-        idxs += """
-        create index `used_later_idx1` on `used_later` (`clauseID`, rdb0conflicts);
-        create index `used_later_idx2` on `used_later` (`clauseID`, rdb0conflicts, used_later);
-        """
-        for l in idxs.split('\n'):
-            self.c.execute(l)
-        print("used_later indexes added T: %-3.2f s" % (time.time() - t))
+            for l in idxs.format(name=name).split('\n'):
+                self.c.execute(l)
+        print("used_later_X tables dropped, created, filled, indexed T: %-3.2f s" % (time.time() - t))
 
 
 class QueryCls (QueryHelper):
@@ -636,7 +644,8 @@ def one_database(dbfname):
         q.measure_size()
         if not options.no_recreate_indexes:
             q.create_indexes()
-            q.fill_later_useful_data()
+            q.fill_used_later()
+            q.fill_used_later_X()
 
     conf_from, conf_to = helper.parse_configs(options.confs)
     print("Using sqlite3db file %s" % dbfname)
