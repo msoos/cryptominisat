@@ -1814,9 +1814,6 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
 ) {
     #ifdef STATS_NEEDED
     bool to_dump = false;
-    #endif
-
-    #ifdef STATS_NEEDED
     double myrnd = mtrand.randDblExc();
     if (myrnd <= conf.dump_individual_cldata_ratio) {
         to_dump = true;

@@ -218,6 +218,7 @@ void ReduceDB::dump_sql_cl_data(
         if (cl->stats.ID == 0) {
             continue;
         }
+
         const bool locked = solver->clause_locked(*cl, offs);
         const uint32_t act_ranking_top_10 = std::ceil((double)i/((double)all_learnt.size()/10.0));
         //cout << "Ranking top 10: " << act_ranking_top_10 << " act: " << cl->stats.activity << endl;
