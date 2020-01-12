@@ -165,8 +165,8 @@ class QueryFill (QueryHelper):
     def fill_used_later_X(self):
         # Drop table
         q_drop = """
-        DROP TABLE IF EXISTS `used_later_{name};`
-        ;"""
+        DROP TABLE IF EXISTS `used_later_{name}`;
+        """
 
         # Create and fill used_later_X tables
         q_create = """
