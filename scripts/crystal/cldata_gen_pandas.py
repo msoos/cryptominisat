@@ -595,7 +595,8 @@ class QueryCls (QueryHelper):
     def get_data(self, long_or_short):
         # TODO magic numbers: SHORT vs LONG data availability guess
         subformat = {}
-        ok0, subformat["avg_used_later_long"] = self.get_avg_used_later("long")
+        ok0, subformat["avg_used_later_long"] = self.get_avg_used_later(
+            "long")
         ok1, subformat["avg_used_later_short"] = self.get_avg_used_later(
             "short")
         ok2, subformat["median_used_later_long"] = self.get_median_used_later(
