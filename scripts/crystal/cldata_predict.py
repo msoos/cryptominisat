@@ -38,6 +38,7 @@ import sklearn.ensemble
 import os
 import helper
 import functools
+import mlflow
 ver = sklearn.__version__.split(".")
 if int(ver[1]) < 20:
     from sklearn.cross_validation import train_test_split
@@ -217,10 +218,11 @@ class Learner:
         print("New size:", df2.shape)
         return df2
 
-    def filtered_conf_matrixes(self, dump_no, data, features, to_predict, clf, toprint="test"):
+    def filtered_conf_matrixes(self, dump_no, data, features, to_predict, clf, toprint):
         # filter test data
         if dump_no is not None:
             print("\nCalculating confusion matrix -- dump_no == %s" % dump_no)
+            toprint += " dump no %d" % dump_no
             data2 = data[data["rdb0.dump_no"] == dump_no]
         else:
             print("\nCalculating confusion matrix -- ALL dump_no")
@@ -261,7 +263,10 @@ class Learner:
         if options.only_pecr >= 0.98:
             df = self.df.copy()
         else:
-            _, df_tmp = train_test_split(self.df, test_size=options.only_pecr)
+            _, df_tmp = train_test_split(
+                self.df,
+                test_size=options.only_pecr,
+                random_state=prng)
             df = df_tmp.copy()
             print("-> Number of datapoints after applying '--only':", df.shape)
 
@@ -292,7 +297,7 @@ class Learner:
         print("Option to prefer OK is set to  : %-6.3f" % options.prefer_ok)
         print("Final OK preference is         : %-6.3f" % prefer_ok)
 
-        train, test = train_test_split(df, test_size=0.33)
+        train, test = train_test_split(df, test_size=0.33, random_state=prng)
         X_train = train[features]
         y_train = train[to_predict]
 
@@ -307,20 +312,27 @@ class Learner:
             clf_tree = sklearn.tree.DecisionTreeClassifier(
                 max_depth=options.tree_depth,
                 class_weight={"OK": prefer_ok, "BAD": 1},
-                min_samples_split=split_point)
-            clf_svm_pre = sklearn.svm.SVC(C=500, gamma=10**-5)
+                min_samples_split=split_point,
+                random_state=prng)
+            clf_svm_pre = sklearn.svm.SVC(
+                C=500,
+                gamma=10**-5,
+                random_state=prng)
             clf_svm = sklearn.ensemble.BaggingClassifier(
                 clf_svm_pre,
                 n_estimators=3,
-                max_samples=0.5, max_features=0.5)
+                max_samples=0.5, max_features=0.5,
+                random_state=prng)
             clf_logreg = sklearn.linear_model.LogisticRegression(
                 C=0.3,
-                penalty="l1")
+                penalty="l1",
+                random_state=prng)
             clf_forest = sklearn.ensemble.RandomForestClassifier(
                 n_estimators=options.num_trees,
                 max_features="sqrt",
                 class_weight={"OK": prefer_ok, "BAD": 1},
-                min_samples_leaf=split_point)
+                min_samples_leaf=split_point,
+                random_state=prng)
 
             if options.final_is_tree:
                 clf = clf_tree
@@ -333,27 +345,35 @@ class Learner:
             elif options.final_is_voting:
                 mylist = [["forest", clf_forest], [
                     "svm", clf_svm], ["logreg", clf_logreg]]
-                clf = sklearn.ensemble.VotingClassifier(mylist)
+                clf = sklearn.ensemble.VotingClassifier(mylist, random_state=prng)
             else:
                 print(
                     "ERROR: You MUST give one of: tree/forest/svm/logreg/voting classifier")
                 exit(-1)
         else:
             clf = sklearn.ensemble.RandomForestClassifier(
-                n_estimators=1000,
+                n_estimators=options.num_trees*100,
                 max_features="sqrt",
-                class_weight={"OK": prefer_ok, "BAD": 1})
+                class_weight={"OK": prefer_ok, "BAD": 1},
+                random_state=prng)
 
         del df
         clf.fit(X_train, y_train)
         print("Training finished. T: %-3.2f" % (time.time() - t))
 
         if not final:
+            mlflow.log_param("features used", features)
+            # mlflow.log_metric("all features: ", train.columns.values.flatten().tolist())
+            mlflow.log_metric("train num rows", train.shape[0])
+            mlflow.log_metric("test num rows", test.shape[0])
+
             best_features = helper.print_feature_ranking(
                 clf, X_train,
                 top_num_features=options.top_num_features,
                 features=features,
                 plot=options.show)
+
+            #mlflow.log_artifact("best_features", best_features)
         else:
             if options.dot is not None:
                 if not options.final_is_tree:
@@ -404,12 +424,12 @@ class Learner:
                 c.print_full_code()
 
         print("--------------------------")
-        print("-   Filtered test data   -")
-        print("-   Cluster: %04d        -" % self.cluster_no)
+        print("-       test data        -")
+        print("-      cluster: %04d     -" % self.cluster_no)
         print("--------------------------")
         for dump_no in [1, 2, 3, 10, 20, 40, None]:
-            prec, recall, acc = self.filtered_conf_matrixes(
-                dump_no, test, features, to_predict, clf)
+            prec, recall, acc, mse, r2 = self.filtered_conf_matrixes(
+                dump_no, test, features, to_predict, clf, "test data")
 
         print("--------------------------------")
         print("--      train+test data        -")
@@ -417,15 +437,14 @@ class Learner:
         print("--------------------------------")
         for dump_no in [1, None]:
             self.filtered_conf_matrixes(
-                dump_no, self.df, features, to_predict, clf)
+                dump_no, self.df, features, to_predict, clf, "test and train data")
 
-        # Plot "train" confusion matrix
         print("--------------------------")
-        print("-  Filtered train data  - ")
-        print("-   Cluster: %04d       -" % self.cluster_no)
-        print("-------------------------")
+        print("-       train data       -")
+        print("-      cluster: %04d     -" % self.cluster_no)
+        print("--------------------------")
         self.filtered_conf_matrixes(
-            dump_no, train, features, to_predict, clf, "train")
+            dump_no, train, features, to_predict, clf, "train data")
 
         # TODO do L1 regularization
         # TODO do principal component analysis
@@ -433,7 +452,7 @@ class Learner:
         if not final:
             return best_features
         else:
-            return prec+recall+acc
+            return prec, recall, acc, r2, mse
 
     def rem_features(self, feat, to_remove):
         feat_less = list(feat)
@@ -550,7 +569,7 @@ if __name__ == "__main__":
                         dest="only_final", help="Only generate final predictor")
     parser.add_argument("--greedy", default=None, type=int, metavar="TOPN",
                         dest="get_best_topn_feats", help="Greedy Best K top features from the top N features given by '--top N'")
-    parser.add_argument("--top", default=None, type=int, metavar="TOPN",
+    parser.add_argument("--top", default=20, type=int, metavar="TOPN",
                         dest="top_num_features", help="Candidates are top N features for greedy selector")
 
     # type of classifier
@@ -576,6 +595,7 @@ if __name__ == "__main__":
                         dest="use_clusters", help="Use clusters")
 
     options = parser.parse_args()
+    prng = np.random.RandomState(1)
 
     if options.fname is None:
         print("ERROR: You must give the pandas file!")
@@ -593,6 +613,29 @@ if __name__ == "__main__":
     if not os.path.isfile(options.fname):
         print("ERROR: '%s' is not a file" % options.fname)
         exit(-1)
+
+    # ------------
+    #  Experiment starts
+    # ------------
+    mlflow.log_param("final", options.only_final)
+    if options.only_final:
+        mlflow.log_param("tree", options.final_is_tree)
+        mlflow.log_param("svm", options.final_is_svm)
+        mlflow.log_param("logreg", options.final_is_logreg)
+        mlflow.log_param("forest", options.final_is_forest)
+        mlflow.log_param("voting", options.final_is_voting)
+        mlflow.log_param("basedir", options.basedir)
+    else:
+        mlflow.log_param("top_num_features", options.top_num_features)
+
+    mlflow.log_param("conf_num", options.conf_num)
+    mlflow.log_param("prefer_ok", options.prefer_ok)
+    mlflow.log_param("only_percentage", options.only_pecr)
+    mlflow.log_param("min_samples_split", options.min_samples_split)
+    mlflow.log_param("tree_depth", options.tree_depth)
+    mlflow.log_param("num_trees", options.num_trees)
+    mlflow.log_param("no_computed", options.no_computed)
+    mlflow.log_artifact(options.fname)
 
     df = pd.read_pickle(options.fname)
     if options.print_features:

@@ -28,6 +28,7 @@ import crystalcodegen as ccg
 import ast
 import math
 import time
+import mlflow
 from pprint import pprint
 
 def write_mit_header(f):
@@ -236,8 +237,9 @@ def print_confusion_matrix(cm, classes,
     """
     if normalize:
         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-    print(title)
 
+    print(title)
+    mlflow.log_metric(title, cm[0][0])
     np.set_printoptions(precision=2)
     print(cm)
 
@@ -250,7 +252,7 @@ def calc_min_split_point(df, min_samples_split):
     return split_point
 
 
-def conf_matrixes(data, features, to_predict, clf, toprint="test", average="binary"):
+def conf_matrixes(data, features, to_predict, clf, toprint, average="binary"):
     # get data
     X_data = data[features]
     y_data = data[to_predict]
@@ -265,10 +267,24 @@ def conf_matrixes(data, features, to_predict, clf, toprint="test", average="bina
     # calc acc, precision, recall
     accuracy = sklearn.metrics.accuracy_score(
         y_data, y_pred)
+    mlflow.log_metric(toprint + " -- accuracy", accuracy)
+
     precision = sklearn.metrics.precision_score(
         y_data, y_pred, pos_label="OK", average=average)
+    mlflow.log_metric(toprint + " -- precision", precision)
+
     recall = sklearn.metrics.recall_score(
         y_data, y_pred, pos_label="OK", average=average)
+    mlflow.log_metric(toprint + " -- recall", recall)
+
+    mean_squared_err =  None
+    # sklearn.metrics.mean_squared_error(y_data, y_pred)
+    # mlflow.log_metric(toprint + " mse", mean_squared_err)
+
+    r2_score = None
+    # sklearn.metrics.r2_score(y_data, y_pred)
+    # mlflow.log_metric(toprint + " r2 score", r2_score)
+
     print("%s prec : %-3.4f  recall: %-3.4f accuracy: %-3.4f" % (
         toprint, precision, recall, accuracy))
 
@@ -277,12 +293,12 @@ def conf_matrixes(data, features, to_predict, clf, toprint="test", average="bina
         y_true=y_data, y_pred=y_pred)
     print_confusion_matrix(
         cnf_matrix, classes=clf.classes_,
-        title='Confusion matrix, without normalization (%s)' % toprint)
+        title='Confusion matrix without normalization -- %s' % toprint)
     print_confusion_matrix(
         cnf_matrix, classes=clf.classes_, normalize=True,
-        title='Normalized confusion matrix (%s)' % toprint)
+        title='Normalized confusion matrix -- %s' % toprint)
 
-    return precision, recall, accuracy
+    return precision, recall, accuracy, mean_squared_err, r2_score
 
 
 def calc_greedy_best_features(top_feats, get_best_topn_feats, myobj):
