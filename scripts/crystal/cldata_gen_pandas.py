@@ -170,8 +170,8 @@ class QueryFill (QueryHelper):
     def fill_used_later_X(self):
         # Drop table
         q_drop = """
-        DROP TABLE IF EXISTS `used_later_{name};`
-        ;"""
+        DROP TABLE IF EXISTS `used_later_{name}`;
+        """
 
         # Create and fill used_later_X tables
         q_create = """
@@ -600,7 +600,8 @@ class QueryCls (QueryHelper):
     def get_data(self, long_or_short):
         # TODO magic numbers: SHORT vs LONG data availability guess
         subformat = {}
-        ok0, subformat["avg_used_later_long"] = self.get_avg_used_later("long")
+        ok0, subformat["avg_used_later_long"] = self.get_avg_used_later(
+            "long")
         ok1, subformat["avg_used_later_short"] = self.get_avg_used_later(
             "short")
         ok2, subformat["median_used_later_long"] = self.get_median_used_later(
