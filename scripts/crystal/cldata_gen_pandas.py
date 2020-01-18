@@ -71,6 +71,7 @@ class QueryFill (QueryHelper):
         print("Recreating indexes...")
         queries = """
         create index `idxclid33` on `sum_cl_use` (`clauseID`, `last_confl_used`);
+        ---
         create index `idxclid1` on `clause_stats` (`clauseID`, conflicts, restarts, latest_satzilla_feature_calc);
         create index `idxclid1-2` on `clause_stats` (`clauseID`);
         create index `idxclid1-3` on `clause_stats` (`clauseID`, restarts);
@@ -80,13 +81,17 @@ class QueryFill (QueryHelper):
         create index `idxclid4` on `restart` ( `restarts`);
         create index `idxclid88` on `restart_dat_for_cl` ( `conflicts`);
         create index `idxclid5` on `tags` ( `name`);
+        ---
         create index `idxclid6` on `reduceDB` (`clauseID`, conflicts, latest_satzilla_feature_calc);
         create index `idxclid6-2` on `reduceDB` (`clauseID`, `dump_no`);
         create index `idxclid6-3` on `reduceDB` (`clauseID`, `conflicts`, `dump_no`);
         create index `idxclid6-4` on `reduceDB` (`clauseID`, `conflicts`)
+        ---
         create index `idxclid7` on `satzilla_features` (`latest_satzilla_feature_calc`);
+        ---
         create index `idxclidUCLS-1` on `used_clauses` ( `clauseID`, `used_at`);
         create index `idxclidUCLS-2` on `used_clauses` ( `used_at`);
+        ---
         create index `idxcl_last_in_solver-1` on `cl_last_in_solver` ( `clauseID`, `conflicts`);
 
         """
