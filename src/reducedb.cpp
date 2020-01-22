@@ -220,14 +220,14 @@ void ReduceDB::dump_sql_cl_data(
         }
 
         const bool locked = solver->clause_locked(*cl, offs);
-        const uint32_t act_ranking_top_10 = std::ceil((double)i/((double)all_learnt.size()/10.0));
+        const uint32_t act_ranking_top_10 = std::ceil((double)i/((double)all_learnt.size()/10.0))+1;
         //cout << "Ranking top 10: " << act_ranking_top_10 << " act: " << cl->stats.activity << endl;
         solver->sqlStats->reduceDB(
             solver
             , locked
             , cl
             , cur_rst_type
-            , act_ranking_top_10+1
+            , act_ranking_top_10
             , i+1
             , all_learnt.size()
         );
@@ -373,8 +373,9 @@ void ReduceDB::handle_lev3_final_predictor()
             moved_w0++;
         } else {
             const uint32_t act_ranking_top_10 = \
-                std::ceil((double)i/((double)solver->longRedCls[3].size()/10.0));
-            double act_ranking_rel = (double)i/((double)solver->longRedCls[3].size()+0.0001);
+                std::ceil((double)i/((double)solver->longRedCls[3].size()/10.0))+1;
+            double act_ranking_rel = ((double)i+1)/(double)solver->longRedCls[3].size();
+            assert(act_ranking_rel != 0);
 
             uint32_t last_touched_diff;
             if (cl->stats.last_touched == 0) {
@@ -391,7 +392,7 @@ void ReduceDB::handle_lev3_final_predictor()
                 , solver->sumConflicts
                 , last_touched_diff
                 , act_ranking_rel
-                , act_ranking_top_10+1
+                , act_ranking_top_10
             )) {
                 marked_long_keep++;
                 cl->stats.locked_long = 5; //will be immediately decremented below
