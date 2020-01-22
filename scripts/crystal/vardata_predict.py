@@ -364,8 +364,12 @@ class Learner:
                 c.clean_up()
                 c.print_full_code()
 
-        prec, recall, acc = helper.conf_matrixes(test, features, to_predict, clf, average="micro")
-        helper.conf_matrixes(train, features, to_predict, clf, "train", average="micro")
+        precision, recall, accuracy = helper.conf_matrixes(
+            test, features, to_predict, clf,
+            toprint="test", average="micro")
+        helper.conf_matrixes(
+            train, features, to_predict, clf,
+            toprint="train", average="micro")
 
         # TODO do L1 regularization
         # TODO do principal component analysis

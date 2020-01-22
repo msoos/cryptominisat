@@ -277,14 +277,6 @@ def conf_matrixes(data, features, to_predict, clf, toprint, average="binary"):
         y_data, y_pred, pos_label="OK", average=average)
     mlflow.log_metric(toprint + " -- recall", recall)
 
-    mean_squared_err =  None
-    # sklearn.metrics.mean_squared_error(y_data, y_pred)
-    # mlflow.log_metric(toprint + " mse", mean_squared_err)
-
-    r2_score = None
-    # sklearn.metrics.r2_score(y_data, y_pred)
-    # mlflow.log_metric(toprint + " r2 score", r2_score)
-
     print("%s prec : %-3.4f  recall: %-3.4f accuracy: %-3.4f" % (
         toprint, precision, recall, accuracy))
 
@@ -298,7 +290,7 @@ def conf_matrixes(data, features, to_predict, clf, toprint, average="binary"):
         cnf_matrix, classes=clf.classes_, normalize=True,
         title='Normalized confusion matrix -- %s' % toprint)
 
-    return precision, recall, accuracy, mean_squared_err, r2_score
+    return precision, recall, accuracy
 
 
 def calc_greedy_best_features(top_feats, get_best_topn_feats, myobj):

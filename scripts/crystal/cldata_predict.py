@@ -428,7 +428,7 @@ class Learner:
         print("-      cluster: %04d     -" % self.cluster_no)
         print("--------------------------")
         for dump_no in [1, 2, 3, 10, 20, 40, None]:
-            prec, recall, acc, mse, r2 = self.filtered_conf_matrixes(
+            prec, recall, acc = self.filtered_conf_matrixes(
                 dump_no, test, features, to_predict, clf, "test data")
 
         print("--------------------------------")
@@ -449,10 +449,10 @@ class Learner:
         # TODO do L1 regularization
         # TODO do principal component analysis
 
-        if not final:
-            return best_features
+        if final:
+            return prec + recall + acc
         else:
-            return prec, recall, acc, r2, mse
+            return best_features
 
     def rem_features(self, feat, to_remove):
         feat_less = list(feat)
@@ -569,7 +569,7 @@ if __name__ == "__main__":
                         dest="only_final", help="Only generate final predictor")
     parser.add_argument("--greedy", default=None, type=int, metavar="TOPN",
                         dest="get_best_topn_feats", help="Greedy Best K top features from the top N features given by '--top N'")
-    parser.add_argument("--top", default=20, type=int, metavar="TOPN",
+    parser.add_argument("--top", default=None, type=int, metavar="TOPN",
                         dest="top_num_features", help="Candidates are top N features for greedy selector")
 
     # type of classifier
@@ -602,11 +602,11 @@ if __name__ == "__main__":
         exit(-1)
 
     if options.get_best_topn_feats and options.only_final:
-        print("Can't do both greedy best and only final")
+        print("Can't do both --greedy best and --final")
         exit(-1)
 
-    if options.top_num_features and options.only_final:
-        print("Can't do both top N features and only final")
+    if options.top_num_features is None and not options.only_final:
+        print("You must have either --top features OR --final")
         exit(-1)
 
     assert options.min_samples_split <= 1.0, "You must give min_samples_split that's smaller than 1.0"
