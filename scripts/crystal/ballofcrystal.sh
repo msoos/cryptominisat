@@ -169,7 +169,6 @@ rm -f ../../src/predict/*.h
     ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-conf-$CONF.dat"  --name long  --split 0.01 --final --tree --basedir ../../src/predict/ --conf $CONF
 # done
 )
-exit 0
 
 ########################
 # Build final CryptoMiniSat with the classifier
@@ -177,6 +176,6 @@ exit 0
 ./build_final_predictor.sh
 (
 cd "$FNAME-dir"
-../cryptominisat5 "../$FNAME" --printsol 0 --predshort $CONF --predlong $CONF | tee cms-final-run.out
+../cryptominisat5 "../$FNAME"  --confbtwsimp 100000 --decbased 0 --tern 0 --bva 0 --printsol 0 --predshort $CONF --predlong $CONF | tee cms-final-run.out
 )
 exit
