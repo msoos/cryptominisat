@@ -391,7 +391,6 @@ if __name__ == "__main__":
         print("ERROR: You must give a '--clusters' option that is greater than 0")
         exit(-1)
 
-
     feats_used, scaler, clust, used_clusters = [None, None, None, None]
     for f in options.fnames:
         if "-clustered.dat" in f:
