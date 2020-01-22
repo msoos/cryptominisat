@@ -152,7 +152,7 @@ rm -f ../../src/predict/*.h
 ####################################
 # Clustering for cldata, using cldata dataframe
 ####################################
-../clustering.py ${FNAMEOUT}-min.db-cldata-*short*.dat ${FNAMEOUT}-min.db-cldata-*long*.dat --basedir ../../src/predict/ --clusters 1 --scale --distr
+../clustering.py ${FNAMEOUT}-min.db-cldata-*short*.dat ${FNAMEOUT}-min.db-cldata-*long*.dat --basedir ../../src/predict/ --clusters 1 --scale --distr --nocomputed
 
 
 ####################################
@@ -177,6 +177,6 @@ exit 0
 ./build_final_predictor.sh
 (
 cd "$FNAME-dir"
-../cryptominisat5 "../$FNAME" --printsol 0 --predshort 2 --predlong 2 | tee cms-final-run.out
+../cryptominisat5 "../$FNAME" --printsol 0 --predshort $CONF --predlong $CONF | tee cms-final-run.out
 )
 exit
