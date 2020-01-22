@@ -247,6 +247,10 @@ int ClusteringImp::which_is_closest(const SatZillaFeatures& p) const {
 
     def cluster(self):
         features = list(self.df)
+        mycopy = list(features)
+        for f in mycopy:
+            if "var" in f or "vcg" in f or "pnr" in f or "min" in f or "max" in f:
+                features.remove(f)
 
         # features from dataframe
         self.feats_used = []
