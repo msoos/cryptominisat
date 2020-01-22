@@ -496,7 +496,7 @@ class Learner:
         # fill best features from file
         best_features = []
         helper.check_file_exists(options.best_features_fname)
-        with open(options.best_features, "r") as f:
+        with open(options.best_features_fname, "r") as f:
             for l in f:
                 best_features.append(l.strip())
 
