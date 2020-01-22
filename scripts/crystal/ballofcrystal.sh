@@ -159,7 +159,9 @@ rm -f ../../src/predict/*.h
 # Create the classifiers
 ####################################
 
-../vardata_predict.py mydata.db-vardata.dat --picktimeonly --csv -q 2 --only 0.99
+# TODO: add --csv  to dump CSV
+#       then you can play with Weka
+../vardata_predict.py mydata.db-vardata.dat --picktimeonly -q 2 --only 0.99
 #../vardata_predict.py vardata-comb --final -q 20 --basedir ../src/predict/ --depth 7 --tree
 
 # for CONF in {0..2}; do
