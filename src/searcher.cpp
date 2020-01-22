@@ -1793,6 +1793,7 @@ void Searcher::set_clause_data(
     cl->stats.antec_overlap_hist = hist.overlapHistLT.avg();
     cl->stats.num_total_lits_antecedents = antec_data.sum_size();;
     cl->stats.branch_depth_hist_queue =  hist.branchDepthHistQueue.avg_nocheck();
+    cl->stats.num_resolutions_hist_lt =  hist.numResolutionsHistLT.avg();
     cl->stats.old_glue = old_glue;
     cl->stats.trail_depth_hist_longer = hist.trailDepthHistLonger.avg_nocheck();
 }

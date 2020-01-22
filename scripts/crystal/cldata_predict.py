@@ -93,7 +93,7 @@ def add_computed_features(df):
         , "cl.glue_hist_queue"
         , "cl.glue_hist_long"
         # , "cl.decision_level_hist"
-        , "cl.num_antecedents_hist"
+        , "cl.num_resolutions_hist_lt"
         # , "cl.trail_depth_level_hist"
         # , "cl.backtrack_level_hist"
         , "cl.branch_depth_hist_queue"

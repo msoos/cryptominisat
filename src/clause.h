@@ -153,6 +153,7 @@ struct ClauseStats
     uint32_t    rdb1_last_touched_diff;
     uint32_t    num_antecedents;
     float       branch_depth_hist_queue;
+    float       num_resolutions_hist_lt;
     uint32_t    trail_depth_hist_longer;
     uint8_t     rdb1_act_ranking_top_10;
     float       rdb1_act_ranking_rel;

@@ -213,7 +213,7 @@ CREATE TABLE `clause_stats` (
   `trail_depth_level_hist` float,
   `size_hist` float,
   `glue_hist` float,
-  `num_antecedents_hist` float,
+  `num_resolutions_hist_lt` float,
 
   `antec_sum_size_hist` float,
   `antec_overlap_hist` float,
