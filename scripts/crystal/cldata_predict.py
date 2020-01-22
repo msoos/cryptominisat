@@ -484,38 +484,22 @@ class Learner:
                     top_n_feats, options.get_best_topn_feats,
                     self)
 
+                # dump to file
+                with open(options.best_features_fname, "w") as f:
+                    for feat in greedy_features:
+                        f.write("%s\n" % feat)
+                print("Dumped final best selection to file '%s'" %
+                      options.best_features_fname)
+
             return
 
-        best_features = [
-            '(cl.branch_depth_hist_queue/log2((rdb0.act_ranking/rdb0.tot_cls_in_db)))',
-            '(cl.glue_hist/cl.glue)',
-            '((rdb0.sum_uip1_used/cl.time_inside_solver)/cl.old_glue)',
-            '(cl.backtrack_level/log2((rdb0.act_ranking/rdb0.tot_cls_in_db)))',
-            '(rdb0.sum_delta_confl_uip1_used/(cl.num_total_lits_antecedents/cl.num_antecedents))',
-            '(cl.old_glue/cl.size_hist)',
-            '(cl.num_resolutions_hist/cl.old_glue)',
-            '(log2(cl.glue)/log2(cl.antec_overlap_hist))',
-            '((rdb0.sum_delta_confl_uip1_used+rdb1.sum_delta_confl_uip1_used)/cl.old_glue)',
-            '(cl.old_glue/log2((rdb0.act_ranking/rdb0.tot_cls_in_db)))',
-            '(log2(cl.glue)/cl.antec_overlap_hist)',
-            '(rdb0.sum_uip1_used/cl.glue_hist_queue)',
-            '(log2(cl.old_glue)/cl.size_hist)',
-            '(log2(cl.glue)/log2((rdb0.act_ranking/rdb0.tot_cls_in_db)))',
-            '(rdb0.sum_uip1_used/(rdb0.act_ranking/rdb0.tot_cls_in_db))']
+        # fill best features from file
+        best_features = []
+        helper.check_file_exists(options.best_features_fname)
+        with open(options.best_features, "r") as f:
+            for l in f:
+                best_features.append(l.strip())
 
-        best_features = [
-            '((rdb0.propagations_made+rdb1.propagations_made)/log2(cl.num_antecedents))',
-            '((rdb0.propagations_made+rdb1.propagations_made)/log2(cl.glue))',
-            '(cl.size/log2(cl.glue_hist))',
-            '((rdb0.propagations_made+rdb1.propagations_made)/cl.num_antecedents)',
-            '(cl.trail_depth_hist_longer/log2(cl.branch_depth_hist_queue))',
-            '((rdb0.propagations_made+rdb1.propagations_made)/log2(szfeat_cur.var_cl_ratio))',
-            '((rdb0.propagations_made+rdb1.propagations_made)/cl.antec_overlap_hist)',
-            '((rdb0.propagations_made+rdb1.propagations_made)/szfeat_cur.var_cl_ratio)',
-            '(rdb0.propagations_made/log2(cl.glue))',
-            '(rdb0.propagations_made/rdb1_act_ranking_rel)']
-
-        # TODO fill best_features here
         self.one_classifier(best_features, "x.class",
                             final=True,
                             write_code=True)
@@ -535,6 +519,8 @@ if __name__ == "__main__":
                         dest="print_features", help="Print features")
     parser.add_argument("--nocomputed", default=False, action="store_true",
                         dest="no_computed", help="Don't add computed features")
+    parser.add_argument("--bestfeatfile", default="../../scripts/crystal/best_features.txt", type=str,
+                        dest="best_features_fname", help="Name and position of best features file that lists the best features in order")
 
     # tree/forest options
     parser.add_argument("--depth", default=None, type=int,

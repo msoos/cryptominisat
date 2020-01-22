@@ -293,6 +293,16 @@ def conf_matrixes(data, features, to_predict, clf, toprint, average="binary"):
     return precision, recall, accuracy
 
 
+def check_file_exists(fname):
+    try:
+        f = open(fname)
+    except IOError:
+        print("File '%s' not accessible" % fname)
+        exit(-1)
+    finally:
+        f.close()
+
+
 def calc_greedy_best_features(top_feats, get_best_topn_feats, myobj):
     best_features = [top_feats[0]]
     for i in range(get_best_topn_feats-1):
