@@ -172,6 +172,7 @@ def drop_idxs(conn):
 
     print("Removed indexes: T: %-3.2f s"% (time.time() - t))
 
+
 def get_columns(tablename, verbose, conn):
     q = "pragma table_info(%s);" % tablename
     conn.execute(q)
