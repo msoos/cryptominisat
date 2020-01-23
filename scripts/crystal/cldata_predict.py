@@ -18,8 +18,16 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
+# pylint: disable=invalid-name,line-too-long,too-many-locals,consider-using-sys-exit
+
 import operator
 import re
+import time
+import argparse
+import sys
+import os
+import functools
+import itertools
 import pandas as pd
 import pickle
 import sklearn
@@ -27,17 +35,12 @@ import sklearn.svm
 import sklearn.tree
 import sklearn.cluster
 from sklearn.preprocessing import StandardScaler
-import argparse
-import sys
 import numpy as np
 import sklearn.metrics
-import time
-import itertools
 import matplotlib.pyplot as plt
 import sklearn.ensemble
-import os
 import helper
-import functools
+
 import mlflow
 ver = sklearn.__version__.split(".")
 if int(ver[1]) < 20:
@@ -643,14 +646,14 @@ if __name__ == "__main__":
             clno=clno, name=options.longsh, conf_num=options.conf_num)
 
         if options.basedir is not None:
-            f = options.basedir+"/"+fname
+            out_fname = options.basedir+"/"+fname
         else:
-            f = None
+            out_fname = None
 
         learner = Learner(
             df[(df["clust"] == clno)],
             func_name=func_name,
-            fname=f,
+            fname=out_fname,
             cluster_no=clno)
 
         print("================ Cluster %3d ================" % clno)
