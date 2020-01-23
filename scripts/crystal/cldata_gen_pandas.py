@@ -30,24 +30,8 @@ import os.path
 import sys
 import helper
 
-class QueryHelper:
-    def __init__(self, dbfname):
-        if not os.path.isfile(dbfname):
-            print("ERROR: Database file '%s' does not exist" % dbfname)
-            exit(-1)
 
-        self.conn = sqlite3.connect(dbfname)
-        self.c = self.conn.cursor()
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.conn.commit()
-        self.conn.close()
-
-
-class QueryFill (QueryHelper):
+class QueryFill (helper.QueryHelper):
     def __init__(self, dbfname):
         super(QueryFill, self).__init__(dbfname)
 
@@ -225,7 +209,7 @@ class QueryFill (QueryHelper):
         print("used_later_X tables dropped, created, filled, indexed T: %-3.2f s" % (time.time() - t))
 
 
-class QueryCls (QueryHelper):
+class QueryCls (helper.QueryHelper):
     def __init__(self, dbfname, conf):
         super(QueryCls, self).__init__(dbfname)
         self.conf = conf

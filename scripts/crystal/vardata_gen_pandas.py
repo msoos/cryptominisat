@@ -53,24 +53,7 @@ def dump_dataframe(df, name):
         pickle.dump(df, f)
 
 
-class QueryHelper:
-    def __init__(self, dbfname):
-        if not os.path.isfile(dbfname):
-            print("ERROR: Database file '%s' does not exist" % dbfname)
-            exit(-1)
-
-        self.conn = sqlite3.connect(dbfname)
-        self.c = self.conn.cursor()
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.conn.commit()
-        self.conn.close()
-
-
-class QueryVar (QueryHelper):
+class QueryVar (helper.QueryHelper):
     def __init__(self, dbfname):
         super(QueryVar, self).__init__(dbfname)
 

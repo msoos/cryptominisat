@@ -25,24 +25,8 @@ import time
 import os.path
 import helper
 
-class QueryHelper:
-    def __init__(self, dbfname):
-        if not os.path.isfile(dbfname):
-            print("ERROR: Database file '%s' does not exist" % dbfname)
-            exit(-1)
 
-        self.conn = sqlite3.connect(dbfname)
-        self.c = self.conn.cursor()
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.conn.commit()
-        self.conn.close()
-
-
-class QueryFill (QueryHelper):
+class QueryFill (helper.QueryHelper):
     def __init__(self, dbfname):
         super(QueryFill, self).__init__(dbfname)
 
