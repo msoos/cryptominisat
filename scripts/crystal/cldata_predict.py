@@ -380,15 +380,6 @@ class Learner:
                     print("ERROR: You cannot use the DOT function on non-trees")
                     exit(-1)
 
-                #for filt in [1, 3, 10, 10000]:
-                    #x = "Keep these clauses -- filtered to %d and smaller dump_no" % filt
-                    #print(x)
-                    #xdf = df[df["rdb0.dump_no"] <= filt]
-                    #helper.output_to_dot(
-                        #self.filter_percentile(df, features, options.filter_dot),
-                        #clf, features, to_predict, x, xdf)
-                    #del xdf
-
                 helper.output_to_classical_dot(
                     clf, features,
                     fname=options.dot + "-" + self.func_name)

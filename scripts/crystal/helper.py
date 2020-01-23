@@ -18,7 +18,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
-import pandas as pd
+# pylint: disable=invalid-name,line-too-long,too-many-locals,consider-using-sys-exit
+
 import numpy as np
 import matplotlib.pyplot as plt
 import sklearn
@@ -381,47 +382,6 @@ def output_to_classical_dot(clf, features, fname):
     print("dot -Tpng {fname} -o {fname}.png".format(fname=fname))
     print("gwenview {fname}.png".format(fname=fname))
 
-def output_to_dot(df2, clf, features, to_predict, name, df):
-    import dtreeviz.trees
-    X_train = df2[features]
-    y_train = df2[to_predict]
-
-    values2nums = {'OK': 1, 'BAD': 0}
-    y_train = y_train.map(values2nums)
-    print("clf.classes_:", clf.classes_)
-
-
-    #try:
-    viz = dtreeviz.trees.dtreeviz(
-        clf, X_train, y_train, target_name=name,
-        feature_names=features, class_names=list(clf.classes_))
-    viz.view()
-    #except:
-        #print("It doesn't have both OK or BAD -- it instead has:")
-        #print("y_train head:", y_train.head())
-    del df
-    del df2
-
-    if options.show:
-        plt.figure()
-        plt.imshow(cm, interpolation='nearest', cmap=cmap)
-        plt.title(title)
-        plt.colorbar()
-        tick_marks = np.arange(len(classes))
-        plt.xticks(tick_marks, classes, rotation=45)
-        plt.yticks(tick_marks, classes)
-
-        fmt = '.2f' if normalize else 'd'
-        thresh = cm.max() / 2.
-        for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-            plt.text(j, i, format(cm[i, j], fmt),
-                     horizontalalignment="center",
-                     color="white" if cm[i, j] > thresh else "black")
-
-        plt.tight_layout()
-        plt.ylabel('True label')
-        plt.xlabel('Predicted label')
-
 
 def print_feature_ranking(clf, X_train, top_num_features, features, plot=False):
     best_features = []
@@ -606,8 +566,7 @@ static int {funcname}(\n{func_signature}) {{
             print("Left: %s Right: %s Threshold: %s" %
                   (left, right, threshold))
             print("clf.tree_.feature:", clf.tree_.feature)
-        features = [self.feat[i % len(self.feat)]
-                    for i in clf.tree_.feature]
+        features = [self.feat[i % len(self.feat)] for i in clf.tree_.feature]
         self.value = clf.tree_.value
 
         self.recurse(left, right, threshold, features, 0, starttab)

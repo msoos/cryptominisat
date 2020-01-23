@@ -170,6 +170,7 @@ class QueryFill (QueryHelper):
 
         print("Tables dropped T: %-3.2f s" % (time.time() - t))
 
+
 if __name__ == "__main__":
     usage = "usage: %prog [options] sqlitedb"
     parser = optparse.OptionParser(usage=usage)
