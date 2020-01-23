@@ -137,6 +137,7 @@ fi
 /usr/bin/time -v ../fill_used_clauses.py "$FNAMEOUT.db-raw" "$FNAMEOUT.usedCls"
 cp "$FNAMEOUT.db-raw" "$FNAMEOUT.db"
 /usr/bin/time -v ../clean_update_data.py "$FNAMEOUT.db"
+/usr/bin/time -v ../test_data.py "$FNAMEOUT.db"
 cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 /usr/bin/time -v ../sample_data.py "$FNAMEOUT-min.db"
 
