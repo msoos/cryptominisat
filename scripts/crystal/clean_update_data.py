@@ -71,7 +71,6 @@ class QueryFill (helper.QueryHelper):
     def fill_sum_cl_use(self):
         print("Filling sum_cl_use...")
 
-
         t = time.time()
         q = """DROP TABLE IF EXISTS `sum_cl_use`;"""
         self.c.execute(q)
@@ -111,7 +110,7 @@ class QueryFill (helper.QueryHelper):
         print("sum_cl_use indexes added T: %-3.2f s" % (time.time() - t))
 
         t = time.time()
-        q="""
+        q = """
         insert into sum_cl_use
         (
         `clauseID`
