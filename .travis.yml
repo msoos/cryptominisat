@@ -21,7 +21,7 @@ sudo: required
 
 python:
     - "2.7"
-    - "3.5"
+    - "3.7"
 
 env:
   global:
@@ -33,22 +33,22 @@ env:
 
   matrix:
     - CMS_CONFIG=NORMAL
-    - CMS_CONFIG=NORMAL_PYTHON2
-    - CMS_CONFIG=LARGEMEM_GAUSS
-    - CMS_CONFIG=ONLY_SIMPLE
-    - CMS_CONFIG=STATS
-    - CMS_CONFIG=NOZLIB
-    - CMS_CONFIG=RELEASE
-    - CMS_CONFIG=NOSQLITE
-    - CMS_CONFIG=NOPYTHON
-    - CMS_CONFIG=SQLITE
-    - CMS_CONFIG=M4RI
-    - CMS_CONFIG=GAUSS
-    - CMS_CONFIG=SLOW_DEBUG
-    - CMS_CONFIG=INTREE_BUILD
-    - CMS_CONFIG=NOTEST
-    - CMS_CONFIG=STATIC
-    - CMS_CONFIG=ONLY_SIMPLE_STATIC
+    #- CMS_CONFIG=NORMAL_PYTHON2
+    #- CMS_CONFIG=LARGEMEM_GAUSS
+    #- CMS_CONFIG=ONLY_SIMPLE
+    #- CMS_CONFIG=STATS
+    #- CMS_CONFIG=NOZLIB
+    #- CMS_CONFIG=RELEASE
+    #- CMS_CONFIG=NOSQLITE
+    #- CMS_CONFIG=NOPYTHON
+    #- CMS_CONFIG=SQLITE
+    #- CMS_CONFIG=M4RI
+    #- CMS_CONFIG=GAUSS
+    #- CMS_CONFIG=SLOW_DEBUG
+    #- CMS_CONFIG=INTREE_BUILD
+    #- CMS_CONFIG=NOTEST
+    #- CMS_CONFIG=STATIC
+    #- CMS_CONFIG=ONLY_SIMPLE_STATIC
 
 matrix:
   exclude:
@@ -119,15 +119,14 @@ before_install:
   # OSX below
   # we probably want to install python 3 though...
   - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then brew update; fi
-  - if [[ ("$TRAVIS_OS_NAME" == "osx")  &&  ("$CMS_CONFIG" != "NORMAL_PYTHON2") ]]; then brew upgrade python --universal; fi
-  # -  if [[ "$TRAVIS_OS_NAME" == "osx"  ]]; then sudo easy_install pip; fi
+  - if [[ ("$TRAVIS_OS_NAME" == "osx")  &&  ("$CMS_CONFIG" != "NORMAL_PYTHON2") ]]; then brew upgrade python; fi
+  - if [[ ("$TRAVIS_OS_NAME" == "osx") && ("$CMS_CONFIG" != "NORMAL_PYTHON2") ]]; then sudo pip3 install --upgrade pip; pip3 install --user lit; fi
   #
   # linux below
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y --force-yes help2man; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y --force-yes python3-pip; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y --force-yes libboost-test-dev; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y --force-yes cmake3; fi
 
 install:
 #coveralls
