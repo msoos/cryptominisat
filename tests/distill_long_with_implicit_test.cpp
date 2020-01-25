@@ -38,7 +38,7 @@ struct distill_long_with_impl : public ::testing::Test {
         SolverConf conf;
         conf.doStamp = true;
         conf.doCache = true;
-        conf.otfHyperbin - true;
+        conf.otfHyperbin = true;
         //conf.verbosity = 20;
         s = new Solver(&conf, &must_inter);
         distillwbin = s->dist_long_with_impl;
