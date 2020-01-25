@@ -14,7 +14,7 @@ os:
   - linux
   - osx
 
-dist: trusty
+dist: bionic
 
 # not container-based
 sudo: required
@@ -116,10 +116,13 @@ addons:
       secure: "dtJVVMl23o7LVhjk4M3eGOc4e7NGaWQ/mRBLxOTkg1fsspi4drrzID24hD4YxTt2sYkwdxOLrKMuXdFs28L0Dc3K/2ktJW2vz+HzasDScIAaec2Mv0siT/O6PIBzT0BUo1tZrap4zQBGFziDpUFPBIR55OOI7OfKIh9fbtfuCwE="
 
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then brew update; fi
+  # OSX below
   # we probably want to install python 3 though...
+  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then brew update; fi
   - if [[ ("$TRAVIS_OS_NAME" == "osx")  &&  ("$CMS_CONFIG" != "NORMAL_PYTHON2") ]]; then brew upgrade python --universal; fi
   # -  if [[ "$TRAVIS_OS_NAME" == "osx"  ]]; then sudo easy_install pip; fi
+  #
+  # linux below
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y --force-yes help2man; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y --force-yes python3-pip; fi
@@ -127,20 +130,20 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y --force-yes cmake3; fi
 
 install:
-#cmake
-  #- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ./scripts/travis-install-cmake.sh; fi
 #coveralls
   - if [[ "$CMS_CONFIG" == "COVERAGE" ]]; then ./scripts/travis-install-lcov.sh; fi
 # lit
-    # NOTE we probably should NOT use 'sudo' because Travis uses virtualenvs
-    # curl --silent --show-error --retry 5 https://bootstrap.pypa.io/get-pip.py | sudo python
-
+  # OSX below
   - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then curl --show-error --retry 5 https://bootstrap.pypa.io/get-pip.py -o get-pip.py; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then sudo python get-pip.py; fi
+  - export PATH=$PATH:/Users/travis/Library/Python/2.7/bin
+  #
+  # linux below
   - if [[ ("$TRAVIS_OS_NAME" == "linux") && ("$CMS_CONFIG" != "NORMAL_PYTHON2") ]]; then sudo -H pip3 install --upgrade pip; pip3 install --user lit; fi
   - if [[ ("$TRAVIS_OS_NAME" == "linux") && ("$CMS_CONFIG" == "NORMAL_PYTHON2") ]]; then sudo -H pip install --upgrade pip; pip install --user lit; fi
+  #
+  # fixing OSX python path
   - echo $PATH
-  - export PATH=$PATH:/Users/travis/Library/Python/2.7/bin
   - lit --version
   - which lit
 #submodules
