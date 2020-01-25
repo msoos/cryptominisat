@@ -263,13 +263,10 @@ class Learner:
 
         # get smaller part to work on
         # also, copy it so we don't get warning about setting a slice of a DF
-        if options.only_pecr >= 0.98:
+        if options.only_perc >= 0.98:
             df = self.df.copy()
         else:
-            _, df_tmp = train_test_split(
-                self.df,
-                test_size=options.only_pecr,
-                random_state=prng)
+            df_tmp = self.df.sample(options.only_perc, random_state=prng)
             df = df_tmp.copy()
             print("-> Number of datapoints after applying '--only':", df.shape)
 
@@ -542,7 +539,7 @@ if __name__ == "__main__":
 
     # data filtering
     parser.add_argument("--only", default=0.99, type=float,
-                        dest="only_pecr", help="Only use this percentage of data")
+                        dest="only_perc", help="Only use this percentage of data")
 
     # final generator or greedy
     parser.add_argument("--final", default=False, action="store_true",
@@ -610,7 +607,7 @@ if __name__ == "__main__":
 
     mlflow.log_param("conf_num", options.conf_num)
     mlflow.log_param("prefer_ok", options.prefer_ok)
-    mlflow.log_param("only_percentage", options.only_pecr)
+    mlflow.log_param("only_percentage", options.only_perc)
     mlflow.log_param("min_samples_split", options.min_samples_split)
     mlflow.log_param("tree_depth", options.tree_depth)
     mlflow.log_param("num_trees", options.num_trees)
