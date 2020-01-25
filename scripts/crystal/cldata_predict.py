@@ -266,7 +266,7 @@ class Learner:
         if options.only_perc >= 0.98:
             df = self.df.copy()
         else:
-            df_tmp = self.df.sample(options.only_perc, random_state=prng)
+            df_tmp = self.df.sample(frac=options.only_perc, random_state=prng)
             df = df_tmp.copy()
             print("-> Number of datapoints after applying '--only':", df.shape)
 
