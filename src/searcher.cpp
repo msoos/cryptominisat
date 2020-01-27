@@ -748,17 +748,32 @@ void Searcher::simple_create_learnt_clause(
                 }
             } else {
                 const Clause& c = *solver->cl_alloc.ptr(confl.get_offset());
-
-                // if True_confl==true, then choose p begin with the 1st index of c
-                for (uint32_t j = (p == lit_Undef && True_confl == false) ? 0 : 1
-                    ; j < c.size()
-                    ; j++
-                ) {
-                    Lit q = c[j];
-                    assert(q.var() < seen.size());
-                    if (!seen[q.var()]) {
-                        seen[q.var()] = 1;
-                        mypathC++;
+                if (c.is_atmost())
+                {
+                    for (uint32_t j = 0; j < c.size(); j++)
+                    {
+                        if (value((c)[j]) != l_True) { continue; }
+                        Lit q = ~c[j];
+                        assert(q.var() < seen.size());
+                        if (!seen[q.var()]) {
+                            seen[q.var()] = 1;
+                            mypathC++;
+                        }
+                    }
+                }
+                else
+                {
+                    // if True_confl==true, then choose p begin with the 1st index of c
+                    for (uint32_t j = (p == lit_Undef && True_confl == false) ? 0 : 1
+                        ; j < c.size()
+                        ; j++
+                    ) {
+                        Lit q = c[j];
+                        assert(q.var() < seen.size());
+                        if (!seen[q.var()]) {
+                            seen[q.var()] = 1;
+                            mypathC++;
+                        }
                     }
                 }
             }
