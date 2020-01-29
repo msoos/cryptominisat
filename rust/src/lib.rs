@@ -17,7 +17,7 @@ pub const MAX_NUM_VARS: size_t = (1 << 28) - 1;
 enum SATSolver {} // opaque pointer
 
 #[repr(C)]
-#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Debug)]
 pub struct Lit(u32);
 impl Lit {
     /// Returns None if var >= 1 << 31, but you should not rely on var >= MAX_NUM_VARS
@@ -46,7 +46,7 @@ impl std::ops::Not for Lit {
 }
 
 #[repr(u8)]
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum Lbool {
     True = 0,
     False = 1,
