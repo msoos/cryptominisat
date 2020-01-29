@@ -129,4 +129,8 @@ extern "C"
     DLL_PUBLIC void cmsat_set_verbosity(SATSolver* self, unsigned n) NOEXCEPT_START {
         self->set_verbosity(n);
     } NOEXCEPT_END
+
+    DLL_PUBLIC void cmsat_set_max_time(SATSolver* self, double max_time) NOEXCEPT_START {
+        self->set_max_time(max_time);
+    } NOEXCEPT_END
 }

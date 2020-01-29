@@ -72,6 +72,7 @@ CMS_DLL_PUBLIC void cmsat_print_stats(const SATSolver* self) NOEXCEPT;
 
 CMS_DLL_PUBLIC void cmsat_set_num_threads(SATSolver* self, unsigned n) NOEXCEPT;
 CMS_DLL_PUBLIC void cmsat_set_verbosity(SATSolver* self, unsigned n) NOEXCEPT;
+CMS_DLL_PUBLIC void cmsat_set_max_time(SATSolver* self, double max_time) NOEXCEPT;
 
 #ifdef __cplusplus
 } // end extern c
