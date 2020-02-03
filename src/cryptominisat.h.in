@@ -115,6 +115,7 @@ namespace CMSat {
         void set_no_equivalent_lit_replacement(); //don't replace equivalent literals
         void set_no_bva(); //No bounded variable addition
         void set_no_bve(); //No bounded variable elimination
+        void set_yes_comphandler(); //Allow component handler to work
         void set_greedy_undef(); //Try to set variables to l_Undef in solution
         void set_sampling_vars(std::vector<uint32_t>* sampl_vars);
         void set_timeout_all_calls(double secs); //max timeout on all subsequent solve() or simplify

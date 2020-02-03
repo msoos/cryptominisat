@@ -78,6 +78,7 @@ CMS_DLL_PUBLIC void cmsat_set_no_simplify_at_startup(SATSolver* self) NOEXCEPT;
 CMS_DLL_PUBLIC void cmsat_set_no_equivalent_lit_replacement(SATSolver* self) NOEXCEPT;
 CMS_DLL_PUBLIC void cmsat_set_no_bva(SATSolver* self) NOEXCEPT;
 CMS_DLL_PUBLIC void cmsat_set_no_bve(SATSolver* self) NOEXCEPT;
+CMS_DLL_PUBLIC void cmsat_set_yes_comphandler(SATSolver* self) NOEXCEPT;
 CMS_DLL_PUBLIC c_lbool cmsat_simplify(SATSolver* self, const c_Lit* assumptions, size_t num_assumptions) NOEXCEPT;
 
 #ifdef __cplusplus

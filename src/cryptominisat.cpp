@@ -1211,3 +1211,12 @@ DLL_PUBLIC bool SATSolver::get_decision_reaching_valid() const
 {
     return data->solvers[data->which_solved]->get_decision_reaching_valid();
 }
+
+
+DLL_PUBLIC void SATSolver::set_yes_comphandler()
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.doCompHandler = true;
+    }
+}
