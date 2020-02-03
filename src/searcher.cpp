@@ -1950,7 +1950,7 @@ void Searcher::print_restart_header()
         << " " << std::setw(7) << "l/longC"
         << " " << std::setw(7) << "l/allC"
         << endl;
-        lastRestartPrintHeader = sumConflicts;
+        lastRestartPrintHeader = sumConflicts+1;
     }
 }
 
