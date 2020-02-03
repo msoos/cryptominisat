@@ -72,6 +72,12 @@ CMS_DLL_PUBLIC void cmsat_print_stats(const SATSolver* self) NOEXCEPT;
 
 CMS_DLL_PUBLIC void cmsat_set_num_threads(SATSolver* self, unsigned n) NOEXCEPT;
 CMS_DLL_PUBLIC void cmsat_set_verbosity(SATSolver* self, unsigned n) NOEXCEPT;
+CMS_DLL_PUBLIC void cmsat_set_default_polarity(SATSolver* self, int polarity) NOEXCEPT;
+CMS_DLL_PUBLIC void cmsat_set_no_simplify(SATSolver* self) NOEXCEPT;
+CMS_DLL_PUBLIC void cmsat_set_no_simplify_at_startup(SATSolver* self) NOEXCEPT;
+CMS_DLL_PUBLIC void cmsat_set_no_equivalent_lit_replacement(SATSolver* self) NOEXCEPT;
+CMS_DLL_PUBLIC void cmsat_set_no_bva(SATSolver* self) NOEXCEPT;
+CMS_DLL_PUBLIC void cmsat_set_no_bve(SATSolver* self) NOEXCEPT;
 
 #ifdef __cplusplus
 } // end extern c

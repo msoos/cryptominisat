@@ -129,4 +129,28 @@ extern "C"
     DLL_PUBLIC void cmsat_set_verbosity(SATSolver* self, unsigned n) NOEXCEPT_START {
         self->set_verbosity(n);
     } NOEXCEPT_END
+
+    DLL_PUBLIC void cmsat_set_default_polarity(SATSolver* self, int polarity) NOEXCEPT_START {
+        self->set_default_polarity(polarity);
+    } NOEXCEPT_END
+
+    DLL_PUBLIC void cmsat_set_no_simplify(SATSolver* self) NOEXCEPT_START {
+        self->set_no_simplify();
+    } NOEXCEPT_END
+
+    CMS_DLL_PUBLIC void cmsat_set_no_simplify_at_startup(SATSolver* self)  NOEXCEPT_START {
+        self->set_no_simplify_at_startup();
+    } NOEXCEPT_END
+
+    CMS_DLL_PUBLIC void cmsat_set_no_equivalent_lit_replacement(SATSolver* self)  NOEXCEPT_START {
+        self->set_no_equivalent_lit_replacement();
+    } NOEXCEPT_END
+
+    CMS_DLL_PUBLIC void cmsat_set_no_bva(SATSolver* self)  NOEXCEPT_START {
+        self->set_no_bva();
+    } NOEXCEPT_END
+
+    CMS_DLL_PUBLIC void cmsat_set_no_bve(SATSolver* self)  NOEXCEPT_START {
+        self->set_no_bve();
+    } NOEXCEPT_END
 }
