@@ -138,19 +138,24 @@ extern "C"
         self->set_no_simplify();
     } NOEXCEPT_END
 
-    CMS_DLL_PUBLIC void cmsat_set_no_simplify_at_startup(SATSolver* self)  NOEXCEPT_START {
+    DLL_PUBLIC void cmsat_set_no_simplify_at_startup(SATSolver* self)  NOEXCEPT_START {
         self->set_no_simplify_at_startup();
     } NOEXCEPT_END
 
-    CMS_DLL_PUBLIC void cmsat_set_no_equivalent_lit_replacement(SATSolver* self)  NOEXCEPT_START {
+    DLL_PUBLIC void cmsat_set_no_equivalent_lit_replacement(SATSolver* self)  NOEXCEPT_START {
         self->set_no_equivalent_lit_replacement();
     } NOEXCEPT_END
 
-    CMS_DLL_PUBLIC void cmsat_set_no_bva(SATSolver* self)  NOEXCEPT_START {
+    DLL_PUBLIC void cmsat_set_no_bva(SATSolver* self)  NOEXCEPT_START {
         self->set_no_bva();
     } NOEXCEPT_END
 
-    CMS_DLL_PUBLIC void cmsat_set_no_bve(SATSolver* self)  NOEXCEPT_START {
+    DLL_PUBLIC void cmsat_set_no_bve(SATSolver* self)  NOEXCEPT_START {
         self->set_no_bve();
+    } NOEXCEPT_END
+
+    DLL_PUBLIC c_lbool cmsat_simplify(SATSolver* self, const c_Lit* assumptions, size_t num_assumptions) NOEXCEPT_START {
+        auto temp = wrap(fromc(assumptions), num_assumptions);
+        return toc(self->simplify(&temp));
     } NOEXCEPT_END
 }
