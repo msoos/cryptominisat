@@ -266,7 +266,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Component finding
         , doCompHandler    (false)
         , handlerFromSimpNum (0)
-        , compVarLimit      (10ULL*1000ULL)
+        , compVarLimit      (100ULL)
         , comp_find_time_limitM (500)
 
         //Misc optimisations
