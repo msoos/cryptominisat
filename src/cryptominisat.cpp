@@ -1218,5 +1218,6 @@ DLL_PUBLIC void SATSolver::set_yes_comphandler()
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
         s.conf.doCompHandler = true;
+        s.enable_comphandler();
     }
 }

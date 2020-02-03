@@ -132,6 +132,13 @@ Solver::~Solver()
     delete reduceDB;
 }
 
+void Solver::enable_comphandler()
+{
+    assert(compHandler == NULL);
+    assert(nVars() == 0);
+    compHandler = new CompHandler(this);
+}
+
 void Solver::set_sqlite(string
     #ifdef USE_SQLITE3
     filename
