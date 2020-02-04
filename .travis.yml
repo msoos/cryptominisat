@@ -6,16 +6,8 @@ branches:
         - master
         - coverity_scan
 
-compiler:
-    - gcc
-    - clang
-
 # not container-based
 sudo: required
-
-python:
-    - "2.7"
-    - "3.7"
 
 env:
   global:
@@ -29,16 +21,21 @@ matrix:
   include:
     - os: osx
       osx_image: xcode11.3
+      python:
+        - "3.7"
+      complier:
+        - clang
       env:
         - CMS_CONFIG=NORMAL
 
     - os: linux
       dist: bionic
-      env:
-        - CMS_CONFIG=NORMAL
-
-    - os: linux
-      dist: xenial
+      compiler:
+        - gcc
+        - clang
+      python:
+        - "2.7"
+        - "3.7"
       env:
         - CMS_CONFIG=NORMAL
 
