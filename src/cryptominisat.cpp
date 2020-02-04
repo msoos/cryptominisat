@@ -1371,7 +1371,9 @@ DLL_PUBLIC void SATSolver::set_xor_detach(bool val)
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
         s.conf.xor_detach_reattach = val;
-=======
+    }
+}
+
 
 DLL_PUBLIC void SATSolver::set_yes_comphandler()
 {
@@ -1379,6 +1381,5 @@ DLL_PUBLIC void SATSolver::set_yes_comphandler()
         Solver& s = *data->solvers[i];
         s.conf.doCompHandler = true;
         s.enable_comphandler();
->>>>>>> master
     }
 }
