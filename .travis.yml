@@ -22,7 +22,7 @@ matrix:
   include:
     - os: osx
       osx_image: xcode11.3
-      complier: clang
+      compiler: clang
       python: "3.7"
       env:
         - CMS_CONFIG=NORMAL
