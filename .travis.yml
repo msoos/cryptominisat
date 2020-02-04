@@ -90,11 +90,10 @@ matrix:
       env: CMS_CONFIG=NOPYTHON
 
 
-  include:
-    # Covertiy scan should only run once
-    - os: linux
-      compiler: gcc
-      env: COVERITY_SCAN=1 CMS_CONFIG=NORMAL
+  #include:
+    #- os: linux
+      #compiler: gcc
+      #env: COVERITY_SCAN=1 CMS_CONFIG=NORMAL
 
   allow_failures:
     # Covertiy scan might fail
@@ -128,12 +127,12 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y --force-yes libboost-test-dev; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y --force-yes python3-setuptools; fi
 
-install:
+
 #coveralls
   - if [[ "$CMS_CONFIG" == "COVERAGE" ]]; then ./scripts/travis-install-lcov.sh; fi
 # lit
   # OSX below
-  - if [[ ("$TRAVIS_OS_NAME" == "osx") && ("$CMS_CONFIG" != "NORMAL_PYTHON2") ]]; then sudo pip3 install --upgrade pip; pip3 install --user lit; lit --version; fi
+  - if [[ ("$TRAVIS_OS_NAME" == "osx") && ("$CMS_CONFIG" != "NORMAL_PYTHON2") ]]; then sudo pip3 install --upgrade pip; pip3 install lit; lit --version; fi
   # - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then curl --show-error --retry 5 https://bootstrap.pypa.io/get-pip.py -o get-pip.py; fi
   #- if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then sudo python get-pip.py; fi
   #- export PATH=$PATH:/Users/travis/Library/Python/2.7/bin
@@ -142,12 +141,9 @@ install:
   - if [[ ("$TRAVIS_OS_NAME" == "linux") && ("$CMS_CONFIG" != "NORMAL_PYTHON2") ]]; then sudo -H pip3 install --upgrade pip; pip3 install --user lit; lit --version; which lit; fi
   - if [[ ("$TRAVIS_OS_NAME" == "linux") && ("$CMS_CONFIG" == "NORMAL_PYTHON2") ]]; then sudo -H pip install --upgrade pip; pip install --user lit; lit --version; which lit; fi
   #
-  # fixing OSX python path
-  - echo $PATH
-#submodules
+install:
   - git submodule init
   - git submodule update
-#bulid dir
   - mkdir -p build
 
 script:
