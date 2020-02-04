@@ -10,14 +10,6 @@ compiler:
     - gcc
     - clang
 
-os:
-    - linux
-    - osx
-
-dist:
-    - bionic
-    - xenial
-
 # not container-based
 sudo: required
 
