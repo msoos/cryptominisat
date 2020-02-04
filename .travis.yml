@@ -2,19 +2,24 @@ language: cpp
 cache: ccache
 
 branches:
-  only:
-    - master
-    - coverity_scan
+    only:
+        - master
+        - coverity_scan
 
 compiler:
-  - gcc
-  - clang
+    - gcc
+    - clang
 
 os:
-  #- linux
-  - osx
+    - linux
+    - osx
 
-dist: bionic
+osx_image:
+    - xcode11.3
+
+dist:
+    - bionic
+    - xenial
 
 # not container-based
 sudo: required
