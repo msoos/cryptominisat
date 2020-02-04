@@ -11,7 +11,7 @@ compiler:
   - clang
 
 os:
-  - linux
+  #- linux
   - osx
 
 dist: bionic
@@ -133,7 +133,7 @@ install:
   - if [[ "$CMS_CONFIG" == "COVERAGE" ]]; then ./scripts/travis-install-lcov.sh; fi
 # lit
   # OSX below
-  - if [[ ("$TRAVIS_OS_NAME" == "osx") && ("$CMS_CONFIG" != "NORMAL_PYTHON2") ]]; then sudo pip3 install --upgrade pip; pip3 install --user lit; python3 lit --version; fi
+  - if [[ ("$TRAVIS_OS_NAME" == "osx") && ("$CMS_CONFIG" != "NORMAL_PYTHON2") ]]; then sudo pip3 install --upgrade pip; pip3 install --user lit; lit --version; fi
   # - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then curl --show-error --retry 5 https://bootstrap.pypa.io/get-pip.py -o get-pip.py; fi
   #- if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then sudo python get-pip.py; fi
   #- export PATH=$PATH:/Users/travis/Library/Python/2.7/bin
