@@ -25,7 +25,8 @@ env:
     # below is coverity token
     - secure: "WXFslB4aWOcCtMYnNlIYLkxi0aQ8R9ApMmV3fWlGN98gm2+5aaDKsRxpy9Q25ghQNgouS894klSqJhfB9Xa7SW389LHVor3FIYvYHZC0vSQQjFMg4/kUZg+t3HXhRt4254sxIJrTXSeF/3nOq1HMVIk4UanVUp7aihEyNcfJ6rk="
 
-  matrix:
+matrix:
+  include:
     - os: osx
       osx_image: xcode11.3
       env:
@@ -40,6 +41,10 @@ env:
       dist: xenial
       env:
         - CMS_CONFIG=NORMAL
+
+    #- os: linux
+      #compiler: gcc
+      #env: COVERITY_SCAN=1 CMS_CONFIG=NORMAL
 
     #- CMS_CONFIG=NORMAL_PYTHON2
     #- CMS_CONFIG=LARGEMEM_GAUSS
@@ -58,7 +63,6 @@ env:
     #- CMS_CONFIG=STATIC
     #- CMS_CONFIG=ONLY_SIMPLE_STATIC
 
-matrix:
   exclude:
     - os: osx
       compiler: gcc
@@ -96,12 +100,6 @@ matrix:
 
     - os: osx
       env: CMS_CONFIG=NOPYTHON
-
-
-  #include:
-    #- os: linux
-      #compiler: gcc
-      #env: COVERITY_SCAN=1 CMS_CONFIG=NORMAL
 
   allow_failures:
     # Covertiy scan might fail
