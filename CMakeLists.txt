@@ -333,9 +333,11 @@ if (NOT WIN32)
         add_cxx_flag_if_supported("-Wunreachable-code")
         add_cxx_flag_if_supported("-g")
         add_cxx_flag_if_supported("-Wno-class-memaccess")
-
         add_cxx_flag_if_supported("-mpopcnt")
         add_cxx_flag_if_supported("-msse4.2")
+        add_cxx_flag_if_supported("-Wextra-semi-stmt")
+        add_cxx_flag_if_supported("-Wweak-vtables")
+        add_cxx_flag_if_supported("-ggdb3")
 
         # Apparently needed before OS X Maverics (2013)
         #add_c_flag_if_supported("-stdlib=libc++")

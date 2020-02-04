@@ -72,9 +72,9 @@ public:
 
     void printUsage(const char** argv)
     {
-        cout << "USAGE:"
-        << argv[0] << " [options] <input-file> \n\n  where input is plain DIMACS.\n\n";
-        cout << "OPTIONS:\n\n";
+        cout << "Usage: "
+        << argv[0] << " [options] <input-file> where input is plain DIMACS.\n";
+        cout << "Options:\n";
         cout << "  --verb          = [0...]  Sets verbosity level. Anything higher\n";
         cout << "                            than 2 will give debug log\n";
         cout << "  --drat          = {fname} DRAT dumped to file\n";

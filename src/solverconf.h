@@ -93,7 +93,7 @@ inline std::string getNameOfRestartType(Restart rest_type)
 
         default:
             assert(false && "Unknown clause cleaning type?");
-    };
+    }
 }
 
 inline std::string getNameOfCleanType(ClauseClean clauseCleaningType)
@@ -108,7 +108,7 @@ inline std::string getNameOfCleanType(ClauseClean clauseCleaningType)
         default:
             assert(false && "Unknown clause cleaning type?");
             std::exit(-1);
-    };
+    }
 }
 
 class GaussConf

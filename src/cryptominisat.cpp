@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include <thread>
 #include <mutex>
 #include <atomic>
+#include <cassert>
 using std::thread;
 
 #define CACHE_SIZE 10ULL*1000ULL*1000UL
@@ -504,32 +505,31 @@ static bool actually_add_clauses_to_threads(CMSatPrivateData* data)
 
 DLL_PUBLIC void SATSolver::set_max_time(double max_time)
 {
-  for (size_t i = 0; i < data->solvers.size(); ++i) {
-    Solver& s = *data->solvers[i];
-    if (max_time >= 0) {
-      // the main loop in solver.cpp is checks `maxTime`
-      // against `cpuTime`, so we specify `s.conf.maxTime`
-      // as an offset from `cpuTime`.
-      s.conf.maxTime = cpuTime() + max_time;
+  assert(max_time >= 0 && "Cannot set negative limit on running time");
 
-      //don't allow for overflow
-      if (s.conf.maxTime < max_time)
-          s.conf.maxTime = max_time;
-    }
+  const auto target_time = cpuTime() + max_time;
+  for (Solver* s : data->solvers) {
+    s->conf.maxTime = target_time;
   }
 }
 
 DLL_PUBLIC void SATSolver::set_max_confl(int64_t max_confl)
 {
-    assert(max_confl >= 0);
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
-        s.conf.max_confl = s.get_stats().conflStats.numConflicts + max_confl;
+  assert(max_confl >= 0 && "Cannot set negative limit on conflicts");
 
-        //don't allow for overflow
-        if (s.conf.max_confl < max_confl)
-            s.conf.max_confl = max_confl;
-    }
+  for (Solver* s : data->solvers) {
+    uint64_t new_max = s->get_stats().conflStats.numConflicts + static_cast<uint64_t>(max_confl);
+    bool would_overflow = std::numeric_limits<long>::max() < new_max
+                       || new_max < s->get_stats().conflStats.numConflicts;
+
+    // TBD: It is highly unlikely that an int64_t could overflow in practice,
+    // meaning that this test is unlikely to ever fire. However, the conflict
+    // limit inside the solver is stored as a long, which can be 32 bits
+    // on some platforms. In practice that is also unlikely to be overflown,
+    // but it needs some extra checks.
+    s->conf.max_confl = would_overflow? std::numeric_limits<long>::max()
+                                      : static_cast<long>(new_max);
+  }
 }
 
 DLL_PUBLIC void SATSolver::set_default_polarity(bool polarity)
@@ -657,7 +657,7 @@ void add_xor_clause_to_log(const std::vector<unsigned>& vars, bool rhs, std::ofs
 {
     if (vars.size() == 0) {
         if (rhs) {
-            (*file) << "0" << endl;;
+            (*file) << "0" << endl;
         }
     } else {
         if (!rhs) {
@@ -666,7 +666,7 @@ void add_xor_clause_to_log(const std::vector<unsigned>& vars, bool rhs, std::ofs
         for(unsigned var: vars) {
             (*file) << (var+1) << " ";
         }
-        (*file) << " 0" << endl;;
+        (*file) << " 0" << endl;
     }
 }
 
@@ -1097,6 +1097,15 @@ DLL_PUBLIC uint64_t SATSolver::get_sum_conflicts()
     return conlf;
 }
 
+DLL_PUBLIC uint64_t SATSolver::get_sum_conflicts() const
+{
+    uint64_t total_conflicts = 0;
+    for (Solver const* s : data->solvers) {
+        total_conflicts += s->sumConflicts;
+    }
+    return total_conflicts;
+}
+
 DLL_PUBLIC uint64_t SATSolver::get_sum_propagations()
 {
     uint64_t props = 0;
@@ -1107,6 +1116,15 @@ DLL_PUBLIC uint64_t SATSolver::get_sum_propagations()
     return props;
 }
 
+DLL_PUBLIC uint64_t SATSolver::get_sum_propagations() const
+{
+    uint64_t total_propagations = 0;
+    for (Solver const* s : data->solvers) {
+        total_propagations += s->sumPropStats.propagations;
+    }
+    return total_propagations;
+}
+
 DLL_PUBLIC uint64_t SATSolver::get_sum_decisions()
 {
     uint64_t dec = 0;
@@ -1115,6 +1133,15 @@ DLL_PUBLIC uint64_t SATSolver::get_sum_decisions()
         dec += s.sumSearchStats.decisions;
     }
     return dec;
+}
+
+DLL_PUBLIC uint64_t SATSolver::get_sum_decisions() const
+{
+    uint64_t total_decisions = 0;
+    for (Solver const* s : data->solvers) {
+        total_decisions += s->sumSearchStats.decisions;
+    }
+    return total_decisions;
 }
 
 DLL_PUBLIC uint64_t SATSolver::get_last_conflicts()
@@ -1217,6 +1244,7 @@ DLL_PUBLIC bool SATSolver::get_decision_reaching_valid() const
     return data->solvers[data->which_solved]->get_decision_reaching_valid();
 }
 
+<<<<<<< HEAD
 DLL_PUBLIC void SATSolver::add_empty_cl_to_drat()
 {
     data->solvers[data->which_solved]->add_empty_cl_to_drat();
@@ -1343,5 +1371,14 @@ DLL_PUBLIC void SATSolver::set_xor_detach(bool val)
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
         s.conf.xor_detach_reattach = val;
+=======
+
+DLL_PUBLIC void SATSolver::set_yes_comphandler()
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.doCompHandler = true;
+        s.enable_comphandler();
+>>>>>>> master
     }
 }

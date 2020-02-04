@@ -65,7 +65,7 @@ lbool SLS::run_walksat()
     if (mem_needed_mb < maxmem) {
         lbool ret = walksat.main();
         return ret;
-    };
+    }
 
     if (solver->conf.verbosity) {
         cout << "c [sls] would need "
@@ -85,7 +85,7 @@ lbool SLS::run_yalsat()
     if (mem_needed_mb < maxmem) {
         lbool ret = yalsat.main();
         return ret;
-    };
+    }
 
     if (solver->conf.verbosity) {
         cout << "c [sls] would need "

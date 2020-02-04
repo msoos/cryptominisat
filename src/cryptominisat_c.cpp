@@ -117,8 +117,49 @@ extern "C"
         return unwrap<slice_Lit>(self->get_conflict());
     } NOEXCEPT_END
 
-//Setup
+    DLL_PUBLIC void cmsat_print_stats(const SATSolver* self) NOEXCEPT_START {
+        self->print_stats();
+    } NOEXCEPT_END
+    
+    //Setup
     DLL_PUBLIC void cmsat_set_num_threads(SATSolver* self, unsigned n) NOEXCEPT_START {
         self->set_num_threads(n);
+    } NOEXCEPT_END
+
+    DLL_PUBLIC void cmsat_set_verbosity(SATSolver* self, unsigned n) NOEXCEPT_START {
+        self->set_verbosity(n);
+    } NOEXCEPT_END
+
+    DLL_PUBLIC void cmsat_set_default_polarity(SATSolver* self, int polarity) NOEXCEPT_START {
+        self->set_default_polarity(polarity);
+    } NOEXCEPT_END
+
+    DLL_PUBLIC void cmsat_set_no_simplify(SATSolver* self) NOEXCEPT_START {
+        self->set_no_simplify();
+    } NOEXCEPT_END
+
+    DLL_PUBLIC void cmsat_set_no_simplify_at_startup(SATSolver* self)  NOEXCEPT_START {
+        self->set_no_simplify_at_startup();
+    } NOEXCEPT_END
+
+    DLL_PUBLIC void cmsat_set_no_equivalent_lit_replacement(SATSolver* self)  NOEXCEPT_START {
+        self->set_no_equivalent_lit_replacement();
+    } NOEXCEPT_END
+
+    DLL_PUBLIC void cmsat_set_no_bva(SATSolver* self)  NOEXCEPT_START {
+        self->set_no_bva();
+    } NOEXCEPT_END
+
+    DLL_PUBLIC void cmsat_set_no_bve(SATSolver* self)  NOEXCEPT_START {
+        self->set_no_bve();
+    } NOEXCEPT_END
+
+    DLL_PUBLIC void cmsat_set_yes_comphandler(SATSolver* self)  NOEXCEPT_START {
+        self->set_yes_comphandler();
+    } NOEXCEPT_END
+
+    DLL_PUBLIC c_lbool cmsat_simplify(SATSolver* self, const c_Lit* assumptions, size_t num_assumptions) NOEXCEPT_START {
+        auto temp = wrap(fromc(assumptions), num_assumptions);
+        return toc(self->simplify(&temp));
     } NOEXCEPT_END
 }

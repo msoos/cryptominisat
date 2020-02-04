@@ -38,8 +38,7 @@ class SQLStats
 {
 public:
 
-    virtual ~SQLStats()
-    {}
+    virtual ~SQLStats();
 
     virtual void end_transaction() = 0;
     virtual void begin_transaction() = 0;

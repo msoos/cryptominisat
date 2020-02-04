@@ -33,6 +33,8 @@ HyperEngine::HyperEngine(
 {
 }
 
+HyperEngine::~HyperEngine() = default;
+
 Lit HyperEngine::propagate_bfs(const uint64_t timeout)
 {
     timedOutPropagateFull = false;

@@ -332,7 +332,7 @@ print(sys.path)
 " > check_path.py
     ${MYPYTHON} check_path.py
     echo $PYTHONPATH
-    export PYTHONPATH=$PYTHONPATH:/usr/lib/python3.4/site-packages
+    export PYTHONPATH=$PYTHONPATH:/usr/lib/python3.6/site-packages
     export PYTHONPATH=$PYTHONPATH:/usr/lib/python2.7/site-packages
     echo $PYTHONPATH
     ${MYPYTHON} check_path.py

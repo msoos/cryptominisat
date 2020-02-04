@@ -151,7 +151,7 @@ bool DistillerLong::go_through_clauses(
         if (cl.getdistilled() || cl._xor_is_detached) {
             *j++ = *i;
             continue;
-        };
+        }
         cl.set_distilled(true);
         runStats.checkedClauses++;
         assert(cl.size() > 2);
