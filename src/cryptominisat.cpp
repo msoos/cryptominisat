@@ -1244,7 +1244,6 @@ DLL_PUBLIC bool SATSolver::get_decision_reaching_valid() const
     return data->solvers[data->which_solved]->get_decision_reaching_valid();
 }
 
-<<<<<<< HEAD
 DLL_PUBLIC void SATSolver::add_empty_cl_to_drat()
 {
     data->solvers[data->which_solved]->add_empty_cl_to_drat();
