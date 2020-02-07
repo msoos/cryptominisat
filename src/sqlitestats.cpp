@@ -65,12 +65,11 @@ THE SOFTWARE.
     bindat++; \
 }
 
-
-using namespace CMSat;
 using std::cout;
 using std::cerr;
 using std::endl;
 using std::string;
+using namespace CMSat;
 
 const char* rst_dat_type_to_str(rst_dat_type type) {
     static const char* const norm ="restart_norm";
