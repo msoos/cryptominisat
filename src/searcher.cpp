@@ -1623,7 +1623,8 @@ void Searcher::update_history_stats(size_t backtrack_level, uint32_t glue)
     hist.conflSizeHistLT.push(learnt_clause.size());
     hist.trailDepthHistLT.push(trail.size());
     if (params.rest_type == Restart::glue) {
-        hist.glueHistLTLimited.push(std::min<size_t>(glue, 50));
+        hist.glueHistLTLimited.push(
+            std::min<size_t>(glue, conf.max_glue_cutoff_gluehistltlimited));
     }
     hist.glueHistLT.push(glue);
     hist.glueHist.push(glue);

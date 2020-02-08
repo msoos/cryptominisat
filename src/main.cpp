@@ -674,6 +674,8 @@ void Main::add_supported_options()
     propOptions.add_options()
     ("updateglueonanalysis", po::value(&conf.update_glues_on_analyze)->default_value(conf.update_glues_on_analyze)
         , "Update glues while analyzing")
+    ("maxgluehistltlimited", po::value(&conf.max_glue_cutoff_gluehistltlimited)->default_value(conf.max_glue_cutoff_gluehistltlimited)
+        , "Maximum glue used by glue-based restart strategy when populating glue history.")
     ;
 
     po::options_description sqlOptions("SQL options");
@@ -1041,6 +1043,11 @@ void Main::manually_parse_some_options()
         conf.doBreakid = false;
     }
     #endif
+
+    if (conf.max_glue_cutoff_gluehistltlimited > 50) {
+        cout << "ERROR: 'Maximum supported glue size is currently 50" << endl;
+        exit(-1);
+    }
 
     if (conf.yalsat_max_mems < 1) {
         cout << "ERROR: '--walkmems' must be at least 1" << endl;

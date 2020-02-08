@@ -231,6 +231,7 @@ class DLL_PUBLIC SolverConf
 
         //Glues
         int       update_glues_on_analyze;
+        uint32_t  max_glue_cutoff_gluehistltlimited;
 
         //OTF stuff
         int       otfHyperbin;

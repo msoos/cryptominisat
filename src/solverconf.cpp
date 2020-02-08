@@ -106,6 +106,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Glues
         , update_glues_on_analyze(true)
+        , max_glue_cutoff_gluehistltlimited(50)
 
         //OTF
         , otfHyperbin      (true)
