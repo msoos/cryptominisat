@@ -303,7 +303,7 @@ class Tester:
         self.clid_added = False
         cmd = " --zero-exit-status "
         if self.decisions_dumpfile is None and not preproc:
-            self.decisions_dumpfile = unique_file("fuzz-decdump", ".txt")
+            self.decisions_dumpfile = unique_file("fuzz-decdump", ".decisions")
             cmd += "--dumpdecformodel %s " % self.decisions_dumpfile
 
         # disable gauss when gauss is compiled in but asked not to be used
