@@ -567,7 +567,7 @@ class QueryCls (helper.QueryHelper):
                 print("-> Num rows for %s -- '%s': %s" % (type_data, extra, df_parts[-1].shape[0]))
 
                 ws = df_parts[-1].shape[0]/mult
-                print("--> The weight was %f so wegthed size is: %f" % (mult, ws))
+                print("--> The weight was %f so wegthed size is: %d" % (mult, int(ws)))
                 weighted_size.append(ws)
 
             one_part(1/2.0, " and rdb0.dump_no = 1 ")
@@ -610,7 +610,7 @@ class QueryCls (helper.QueryHelper):
         print("Limit is originally:", limit)
         _, weighted_size = self.one_set_of_data(str(self.q_select), limit)
         limit = int(min(weighted_size))
-        print("Setting limit to minimum of all of above:", limit)
+        print("Setting limit to minimum of all of above weighted sizes:", limit)
         df, weighted_size = self.one_set_of_data(str(self.q_select), limit)
 
         print("Queries finished. T: %-3.2f" % (time.time() - t))
