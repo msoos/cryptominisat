@@ -51,6 +51,8 @@ if [ "$NEXT_OP" == "" ]; then
                 break;;
             [6]* )
                 FNAME="UTI-20-10p0.cnf-unz";
+                RATIO="0.30"
+                FIXED="20000";
                 break;;
             [7]* )
                 ORIGTIME="197";
@@ -108,7 +110,7 @@ set -x
 ########################
 cd "$FNAME-dir"
 # to be removed: --decbased 0 --tern 0 --gluecut0 100
-../cryptominisat5 --confbtwsimp 100000 --decbased 0 --tern 0 --bva 0 --scc 0 --dumpdecformodel dec_list --sqlitedbover 1 --cldatadumpratio "$RATIO" --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
+../cryptominisat5 --confbtwsimp 100000 --decbased 0 --tern 0 --bva 0 --scc 0 --dumpdecformodel dec_list --sqlitedbover 1 --cldatadumpratio "$RATIO" --cllockdatagen 0.5 --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
 # --bva 0 --updateglueonanalysis 0 --otfsubsume 0
 grep "c conflicts" cms-pred-run.out
 
