@@ -506,6 +506,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(usage=usage)
 
     parser.add_argument("fname", type=str, metavar='PANDASFILE')
+    parser.add_argument("--seed", default=None, type=int,
+                        dest="seed", help="Seed of PRNG")
     parser.add_argument("--verbose", "-v", action="store_true", default=False,
                         dest="verbose", help="Print more output")
     parser.add_argument("--printfeat", action="store_true", default=False,
@@ -574,7 +576,7 @@ if __name__ == "__main__":
                         dest="use_clusters", help="Use clusters")
 
     options = parser.parse_args()
-    prng = np.random.RandomState(1)
+    prng = np.random.RandomState(options.seed)
 
     if options.fname is None:
         print("ERROR: You must give the pandas file!")
