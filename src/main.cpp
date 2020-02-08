@@ -491,6 +491,8 @@ void Main::add_supported_options()
         , "Carry out intree-based probing")
     ("intreemaxm", po::value(&conf.intree_time_limitM)->default_value(conf.intree_time_limitM)
       , "Time in mega-bogoprops to perform intree probing")
+    ("otfhyper", po::value(&conf.otfHyperbin)->default_value(conf.otfHyperbin)
+        , "Perform hyper-binary resolution during probing")
     ;
 
     std::ostringstream ssERatio;
@@ -668,12 +670,10 @@ void Main::add_supported_options()
         , "Create decision-based conflict if the learnt clause is larger than this")
     ;
 
-    po::options_description propOptions("Propagation options");
+    po::options_description propOptions("Glue options");
     propOptions.add_options()
     ("updateglueonanalysis", po::value(&conf.update_glues_on_analyze)->default_value(conf.update_glues_on_analyze)
         , "Update glues while analyzing")
-    ("otfhyper", po::value(&conf.otfHyperbin)->default_value(conf.otfHyperbin)
-        , "Perform hyper-binary resolution at dec. level 1 after every restart and during probing")
     ;
 
     po::options_description sqlOptions("SQL options");
