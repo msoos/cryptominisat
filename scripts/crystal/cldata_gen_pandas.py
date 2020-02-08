@@ -673,6 +673,13 @@ def one_database(dbfname):
                 long_or_short=long_or_short,
                 conf=conf)
 
+            # some cleanup, stats
+            df["x.class"] = df["x.class"].astype("category")
+            df["fname"] = df["fname"].astype("category")
+            df["cl.cur_restart_type"] = df["cl.cur_restart_type"].astype("category")
+            df["rdb0.cur_restart_type"] = df["rdb0.cur_restart_type"].astype("category")
+            df["rdb1.cur_restart_type"] = df["rdb1.cur_restart_type"].astype("category")
+
             dump_dataframe(df, cleanname)
 
 

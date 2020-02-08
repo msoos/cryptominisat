@@ -297,6 +297,7 @@ class Learner:
         print("Option to prefer OK is set to  : %-6.3f" % options.prefer_ok)
         print("Final OK preference is         : %-6.3f" % prefer_ok)
 
+        #train, test = train_test_split(df[df["rdb0.dump_no"] == 1], test_size=0.33, random_state=prng)
         train, test = train_test_split(df, test_size=0.33, random_state=prng)
         X_train = train[features]
         y_train = train[to_predict]
@@ -419,7 +420,7 @@ class Learner:
         print("-      cluster: %04d     -" % self.cluster_no)
         print("--------------------------")
         for dump_no in [1, 2, 3, 10, 20, 40, None]:
-            prec, recall, acc = self.filtered_conf_matrixes(
+            prec, recall, acc, roc_auc = self.filtered_conf_matrixes(
                 dump_no, test, features, to_predict, clf, "test data")
 
         print("--------------------------------")
@@ -437,11 +438,12 @@ class Learner:
         self.filtered_conf_matrixes(
             dump_no, train, features, to_predict, clf, "train data")
 
+
         # TODO do L1 regularization
         # TODO do principal component analysis
 
         if final:
-            return prec + recall + acc
+            return roc_auc
         else:
             return best_features
 
@@ -622,7 +624,7 @@ if __name__ == "__main__":
     # feature manipulation
     if not options.no_computed:
         add_computed_features(df)
-    helper.clear_data_from_str(df)
+    helper.clear_data_from_str_na(df)
 
     # cluster setup
     if options.use_clusters:

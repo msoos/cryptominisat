@@ -21,6 +21,7 @@
 # pylint: disable=invalid-name,line-too-long,too-many-locals,consider-using-sys-exit
 
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import sklearn
 import sklearn.metrics
@@ -281,7 +282,7 @@ def conf_matrixes(data, features, to_predict, clf, toprint, average="binary"):
     print("Number of elements:", X_data.shape)
     if data.shape[0] <= 1:
         print("Cannot calculate confusion matrix, too few elements")
-        return 0, 0, 0
+        return None, None, None, None
 
     # Preform prediction
     y_pred = clf.predict(X_data)
@@ -299,8 +300,15 @@ def conf_matrixes(data, features, to_predict, clf, toprint, average="binary"):
         y_data, y_pred, pos_label="OK", average=average)
     mlflow.log_metric(toprint + " -- recall", recall)
 
-    print("%s prec : %-3.4f  recall: %-3.4f accuracy: %-3.4f" % (
-        toprint, precision, recall, accuracy))
+    # ROC AUC
+    values2nums = {'OK': 1, 'BAD': 0}
+    predsi = np.array([values2nums[xi] for xi in y_pred])
+    y_testi = pd.DataFrame(y_data)["x.class"].map(values2nums).squeeze()
+    roc_auc = sklearn.metrics.roc_auc_score(y_testi, predsi)
+    mlflow.log_metric(toprint + " -- roc_auc", roc_auc)
+
+    print("%s prec : %-3.4f  recall: %-3.4f accuracy: %-3.4f roc_auc: %-3.4f"
+          % (toprint, precision, recall, accuracy, roc_auc))
 
     # Plot confusion matrix
     cnf_matrix = sklearn.metrics.confusion_matrix(
@@ -312,7 +320,7 @@ def conf_matrixes(data, features, to_predict, clf, toprint, average="binary"):
         cnf_matrix, classes=clf.classes_, normalize=True,
         title='Normalized confusion matrix -- %s' % toprint)
 
-    return precision, recall, accuracy
+    return precision, recall, accuracy, roc_auc
 
 
 def check_file_exists(fname):
@@ -356,7 +364,7 @@ def calc_greedy_best_features(top_feats, get_best_topn_feats, myobj):
     return best_features
 
 
-def clear_data_from_str(df):
+def clear_data_from_str_na(df):
     values2nums = {'luby': 0, 'glue': 1, 'geom': 2}
     df.loc[:, ('cl.cur_restart_type')] = \
         df.loc[:, ('cl.cur_restart_type')].map(values2nums)
@@ -371,7 +379,7 @@ def clear_data_from_str(df):
         df.loc[:, ('rdb1.cur_restart_type')] = \
             df.loc[:, ('rdb1.cur_restart_type')].map(values2nums)
 
-    df.fillna(0, inplace=True)
+    df[df.select_dtypes(include='float').columns] = df[df.select_dtypes(include='float').columns].fillna(0)
 
 
 def filter_min_avg_dump_no(df, min_avg_dumpno):
@@ -468,7 +476,7 @@ class CodeWriter:
         self.f.write(self.file_header)
 
         num_trees = 1
-        if type(self.clf) is sklearn.tree.tree.DecisionTreeClassifier:
+        if type(self.clf) is sklearn.tree.DecisionTreeClassifier:
             self.f.write("""
 static int estimator_{funcname}_0(\n{func_signature}) {{\n
 {per_func_defines}""".format(
