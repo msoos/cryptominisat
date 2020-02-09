@@ -52,13 +52,13 @@ void MainCommon::handle_drat_option()
         }
     }
 
-    if (!conf.otfHyperbin) {
+    if (!conf.do_hyperbin_and_transred) {
         if (conf.verbosity) {
             cout
             << "c OTF hyper-bin is needed for BProp in DRAT, turning it back"
             << endl;
         }
-        conf.otfHyperbin = true;
+        conf.do_hyperbin_and_transred = true;
     }
 
     if (conf.doFindXors) {

@@ -485,7 +485,7 @@ void Main::add_supported_options()
         , "Carry out intree-based probing")
     ("intreemaxm", po::value(&conf.intree_time_limitM)->default_value(conf.intree_time_limitM)
       , "Time in mega-bogoprops to perform intree probing")
-    ("otfhyper", po::value(&conf.otfHyperbin)->default_value(conf.otfHyperbin)
+    ("otfhyper", po::value(&conf.do_hyperbin_and_transred)->default_value(conf.do_hyperbin_and_transred)
         , "Perform hyper-binary resolution during probing")
     ;
 

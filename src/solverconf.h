@@ -234,7 +234,7 @@ class DLL_PUBLIC SolverConf
         uint32_t  max_glue_cutoff_gluehistltlimited;
 
         //OTF stuff
-        int       otfHyperbin;
+        int       do_hyperbin_and_transred;
 
         //chrono bt
         int64_t confl_to_chrono;

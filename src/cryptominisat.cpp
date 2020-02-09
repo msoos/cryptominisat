@@ -1001,7 +1001,7 @@ DLL_PUBLIC void SATSolver::set_drat(std::ostream* os, bool add_ID)
 
     data->solvers[0]->conf.doBreakid = false;
     data->solvers[0]->add_drat(os, add_ID);
-    data->solvers[0]->conf.otfHyperbin = true;
+    data->solvers[0]->conf.do_hyperbin_and_transred = true;
     data->solvers[0]->conf.doFindXors = false;
     data->solvers[0]->conf.doCompHandler = false;
 

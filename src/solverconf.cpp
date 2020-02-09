@@ -108,9 +108,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , update_glues_on_analyze(true)
         , max_glue_cutoff_gluehistltlimited(50)
 
-        //OTF
-        , otfHyperbin      (true)
-
         //Chono BT
         , confl_to_chrono (4000)
         , diff_declev_for_chrono (100)
@@ -175,6 +172,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doTransRed       (true)
         , intree_time_limitM(300ULL)
         , intree_scc_varreplace_time_limitM(7ULL)
+        , do_hyperbin_and_transred(true)
 
         //XOR
         , doFindXors       (true)

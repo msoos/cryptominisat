@@ -36,7 +36,7 @@ struct distill_long_with_impl : public ::testing::Test {
     {
         must_inter.store(false, std::memory_order_relaxed);
         SolverConf conf;
-        conf.otfHyperbin = true;
+        conf.do_hyperbin_and_transred = true;
         //conf.verbosity = 20;
         s = new Solver(&conf, &must_inter);
         distillwbin = s->dist_long_with_impl;

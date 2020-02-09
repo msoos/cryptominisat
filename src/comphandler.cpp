@@ -402,7 +402,7 @@ SolverConf CompHandler::configureNewSolver(
     if (numVars < 60) {
         conf.do_simplify_problem = false;
         conf.doIntreeProbe = false;
-        conf.otfHyperbin = false;
+        conf.do_hyperbin_and_transred = false;
         conf.verbosity = std::min(solver->conf.verbosity, 0);
     }
 
