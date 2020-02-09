@@ -654,12 +654,6 @@ void Main::add_supported_options()
         , "Perform even stronger minimisation at conflict gen.")
     ("moremorealways", po::value(&conf.doAlwaysFMinim)->default_value(conf.doAlwaysFMinim)
         , "Always strong-minimise clause")
-    ("decbased", po::value(&conf.do_decision_based_cl)->default_value(conf.do_decision_based_cl)
-        , "Create decision-based conflict clauses when the UIP clause is too large")
-    ("decbasemaxlev", po::value(&conf.decision_based_cl_max_levels)->default_value(conf.decision_based_cl_max_levels)
-        , "Create decision-based conflict if the maximum level is below or equal to this")
-    ("decbaseminsz", po::value(&conf.decision_based_cl_min_learned_size)->default_value(conf.decision_based_cl_min_learned_size)
-        , "Create decision-based conflict if the learnt clause is larger than this")
     ;
 
     po::options_description propOptions("Glue options");
