@@ -1538,7 +1538,7 @@ lbool Solver::solve_with_assumptions(
     conf.update_glues_on_analyze = false;
     conf.do_decision_based_cl = 0;
     if (conf.verbosity) {
-        cout << "c [stats] glue update disabled, decision based clause disabled" << endl;
+        cout << "c [stats] glue update disabled" << endl;
     }
     assert(!conf.update_glues_on_analyze);
 #endif
