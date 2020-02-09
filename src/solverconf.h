@@ -237,7 +237,7 @@ class DLL_PUBLIC SolverConf
         int       otfHyperbin;
 
         //chrono bt
-        int confl_to_chrono;
+        int64_t confl_to_chrono;
         int diff_declev_for_chrono;
 
 

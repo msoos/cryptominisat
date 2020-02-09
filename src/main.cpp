@@ -668,8 +668,6 @@ void Main::add_supported_options()
         , "Update glues while analyzing")
     ("maxgluehistltlimited", po::value(&conf.max_glue_cutoff_gluehistltlimited)->default_value(conf.max_glue_cutoff_gluehistltlimited)
         , "Maximum glue used by glue-based restart strategy when populating glue history.")
-    ("otfhyper", po::value(&conf.otfHyperbin)->default_value(conf.otfHyperbin)
-        , "Perform hyper-binary resolution at dec. level 1 after every restart and during probing")
     ;
 
     po::options_description chrono_bt_opts("Propagation options");

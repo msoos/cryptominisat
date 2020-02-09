@@ -252,8 +252,10 @@ void Searcher::normalClMinim()
         for (size_t k = 0; k < size; k++) {
             Lit p;
             switch (type) {
-                case clause_t:
+                #ifdef USE_GAUSS
                 case xor_t:
+                #endif
+                case clause_t:
                     p = lits[k+1];
                     break;
 
@@ -451,12 +453,15 @@ void Searcher::add_literals_from_confl_to_learnt(
                 break;
 
             case clause_t:
+
+            #ifdef USE_GAUSS
             case xor_t:
                 x = lits[i];
                 if (i == size-1) {
                     cont = false;
                 }
                 break;
+            #endif
 
             case null_clause_t:
                 assert(false);
@@ -565,7 +570,6 @@ void Searcher::create_learnt_clause(PropBy confl)
     pathC = 0;
     int index = trail.size() - 1;
     Lit p = lit_Undef;
-    Clause* last_resolved_cl = NULL;
 
     Lit lit0 = lit_Error;
     switch (confl.getType()) {
@@ -573,6 +577,11 @@ void Searcher::create_learnt_clause(PropBy confl)
             lit0 = failBinLit;
             break;
         }
+        #ifdef USE_GAUSS
+        case xor_t:
+            assert(false && "MUST IMPLEMENT");
+            break;
+        #endif
 
         case clause_t : {
             lit0 = (*cl_alloc.ptr(confl.get_offset()))[0];
@@ -732,7 +741,7 @@ struct analyze_bumped_smaller {
 };
 
 template<bool update_bogoprops>
-Clause* Searcher::analyze_conflict(
+void Searcher::analyze_conflict(
     const PropBy confl
     , uint32_t& out_btlevel
     , uint32_t& glue
@@ -865,9 +874,6 @@ Clause* Searcher::analyze_conflict(
         }
     }
     sumConflictClauseLits += learnt_clause.size();
-
-    return NULL;
-
 }
 
 bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
@@ -927,8 +933,10 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
         ) {
             Lit p2;
             switch (type) {
-                case clause_t:
+                #ifdef USE_GAUSS
                 case xor_t:
+                #endif
+                case clause_t:
                     p2 = lits[i+1];
                     break;
 
@@ -964,12 +972,12 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
 
     return true;
 }
-template Clause* Searcher::analyze_conflict<true>(const PropBy confl
+template void Searcher::analyze_conflict<true>(const PropBy confl
     , uint32_t& out_btlevel
     , uint32_t& glue
     , uint32_t& old_glue
 );
-template Clause* Searcher::analyze_conflict<false>(const PropBy confl
+template void Searcher::analyze_conflict<false>(const PropBy confl
     , uint32_t& out_btlevel
     , uint32_t& glue
     , uint32_t& old_glue
@@ -1309,143 +1317,6 @@ lbool Searcher::new_decision()
     return l_Undef;
 }
 
-/*template<bool update_bogoprops>
-void Searcher::add_otf_subsume_long_clauses()
-{
-    //Hande long OTF subsumption
-    for(size_t i = 0; i < otf_subsuming_long_cls.size(); i++) {
-        const ClOffset offset = otf_subsuming_long_cls[i];
-        Clause& cl = *solver->cl_alloc.ptr(offset);
-
-        //Find the l_Undef
-        size_t at = std::numeric_limits<size_t>::max();
-        for(size_t i2 = 0; i2 < cl.size(); i2++) {
-            if (value(cl[i2]) == l_Undef) {
-                at = i2;
-                break;
-            }
-        }
-        assert(at != std::numeric_limits<size_t>::max());
-        std::swap(cl[at], cl[0]);
-        assert(value(cl[0]) == l_Undef);
-
-        //Find another l_Undef or an l_True
-        at = 0;
-        for(size_t i2 = 1; i2 < cl.size(); i2++) {
-            if (value(cl[i2]) == l_Undef || value(cl[i2]) == l_True) {
-                at = i2;
-                break;
-            }
-        }
-        assert(cl.size() > 2);
-
-        if (at == 0) {
-            //If none found, we have a propagating clause_t
-            enqueue<update_bogoprops>(cl[0], decisionLevel() == 0 ? PropBy() : PropBy(offset));
-
-            //Drat
-            if (decisionLevel() == 0) {
-                *drat << add << cl[0]
-                #ifdef STATS_NEEDED
-                << cl.stats.ID
-                << sumConflicts
-                #endif
-                << fin;
-            }
-        } else {
-            //We have a non-propagating clause
-
-            std::swap(cl[at], cl[1]);
-            assert(value(cl[1]) == l_Undef || value(cl[1]) == l_True);
-        }
-        solver->attachClause(cl, false);
-        cl.setStrenghtened();
-    }
-    otf_subsuming_long_cls.clear();
-}
-
-template void Searcher::add_otf_subsume_long_clauses<true>();
-template void Searcher::add_otf_subsume_long_clauses<false>();
-
-template<bool update_bogoprops>
-void Searcher::add_otf_subsume_implicit_clause()
-{
-    //Handle implicit OTF subsumption
-    for(vector<OTFClause>::iterator
-        it = otf_subsuming_short_cls.begin(), end = otf_subsuming_short_cls.end()
-        ; it != end
-        ; ++it
-    ) {
-        assert(it->size > 1);
-        //Find the l_Undef
-        size_t at = std::numeric_limits<size_t>::max();
-        for(size_t i2 = 0; i2 < it->size; i2++) {
-            if (value(it->lits[i2]) == l_Undef) {
-                at = i2;
-                break;
-            }
-        }
-        assert(at != std::numeric_limits<size_t>::max());
-        std::swap(it->lits[at], it->lits[0]);
-        assert(value(it->lits[0]) == l_Undef);
-
-        //Find another l_Undef or an l_True
-        at = 0;
-        for(size_t i2 = 1; i2 < it->size; i2++) {
-            if (value(it->lits[i2]) == l_Undef
-                || value(it->lits[i2]) == l_True
-            ) {
-                at = i2;
-                break;
-            }
-        }
-
-        if (at == 0) {
-            //If none found, we have a propagation
-            //Calculate reason
-            PropBy by = PropBy();
-
-            //if decision level is non-zero, we have to be more careful
-            if (decisionLevel() != 0) {
-                assert(it->size == 2);
-                by = PropBy(it->lits[1], true);
-            }
-
-            //Enqueue this literal, finally
-            enqueue<update_bogoprops>(
-                it->lits[0]
-                , by
-            );
-
-            //Drat
-            if (decisionLevel() == 0) {
-                *drat << add << it->lits[0]
-                #ifdef STATS_NEEDED
-                << 0
-                << sumConflicts
-                #endif
-                << fin;
-            }
-        } else {
-            //We have a non-propagating clause
-            std::swap(it->lits[at], it->lits[1]);
-            assert(value(it->lits[1]) == l_Undef
-                || value(it->lits[1]) == l_True
-            );
-
-            //Attach new binary/tertiary clause
-            if (it->size == 2) {
-                solver->datasync->signalNewBinClause(it->lits);
-                solver->attach_bin_clause(it->lits[0], it->lits[1], true);
-            }
-        }
-    }
-    otf_subsuming_short_cls.clear();
-}
-
-template void Searcher::add_otf_subsume_implicit_clause<true>();
-template void Searcher::add_otf_subsume_implicit_clause<false>();*/
-
 void Searcher::update_history_stats(size_t backtrack_level, uint32_t glue)
 {
     assert(decisionLevel() > 0);
@@ -1778,17 +1649,10 @@ bool Searcher::handle_conflict(PropBy confl)
     }
     params.conflictsDoneThisRestart++;
 
-    ConflictData data = FindConflictLevel(confl);
+    ConflictData data = find_conflict_level(confl);
     if (data.nHighestLevel == 0) {
         return false;
     }
-    /*if (data.bOnlyOneLitFromHighest) {
-        cancelUntil(data.nHighestLevel - 1);
-        #ifdef CHRONO_PRINT
-        cout << "cancelUntil(data.nHighestLevel - 1);" << endl;
-        #endif
-        return true;
-    }*/
 
     uint32_t backtrack_level;
     uint32_t glue;
@@ -1806,20 +1670,20 @@ bool Searcher::handle_conflict(PropBy confl)
 
     // check chrono backtrack condition
     if (
-        (solver->conf.confl_to_chrono < 0 || solver->conf.confl_to_chrono <= sumConflicts)
+        (solver->conf.confl_to_chrono < 0 || solver->conf.confl_to_chrono <= (int64_t)sumConflicts)
         && solver->conf.diff_declev_for_chrono > -1
         && (((int)decisionLevel() - (int)backtrack_level) >= solver->conf.diff_declev_for_chrono)
     ) {
-#ifdef CHRONO_PRINT
+        #ifdef CHRONO_PRINT
         cout << "chrono Backtracking to level " << backtrack_level << endl;
-#endif
+        #endif
         chrono_backtrack++;
         cancelUntil<true, false>(data.nHighestLevel -1);
     } else { // default behavior
-        ++non_chrono_backtrack;
-#ifdef CHRONO_PRINT
+        non_chrono_backtrack++;
+        #ifdef CHRONO_PRINT
         cout << "non-chrono Backtracking to level " << backtrack_level << endl;
-#endif
+        #endif
         cancelUntil<true, false>(backtrack_level);
     }
 
@@ -3535,7 +3399,8 @@ void Searcher::check_var_in_branch_strategy(uint32_t int_var) const
 }
 
 
-ConflictData Searcher::FindConflictLevel(PropBy& pb) {
+ConflictData Searcher::find_conflict_level(PropBy& pb)
+{
     ConflictData data;
 
     if (pb.getType() == PropByType::binary_t) {
@@ -3548,16 +3413,12 @@ ConflictData Searcher::FindConflictLevel(PropBy& pb) {
         }
 
         uint32_t highestId = 0;
-        //data.bOnlyOneLitFromHighest = true;
         // find the largest decision level in the clause
         uint32_t nLevel = varData[pb.lit2().var()].level;
         if (nLevel > data.nHighestLevel) {
             highestId = 1;
             data.nHighestLevel = nLevel;
-            //data.bOnlyOneLitFromHighest = true;
-        } /*else if (nLevel == data.nHighestLevel && data.bOnlyOneLitFromHighest == true) {
-            data.bOnlyOneLitFromHighest = false;
-        }*/
+        }
 
         //TODO
         // we might want to swap here if highestID is not 0
@@ -3568,6 +3429,9 @@ ConflictData Searcher::FindConflictLevel(PropBy& pb) {
         }
 
     } else {
+        #ifdef USE_GAUSS
+        assert(false && "MUST IMPLEMENT xor_t here");
+        #endif
         assert(pb.getType() == PropByType::clause_t);
         const ClOffset offs = pb.get_offset();
         Clause& conflCl = *cl_alloc.ptr(offs);
@@ -3580,17 +3444,13 @@ ConflictData Searcher::FindConflictLevel(PropBy& pb) {
         }
 
         uint32_t highestId = 0;
-        //data.bOnlyOneLitFromHighest = true;
         // find the largest decision level in the clause
         for (uint32_t nLitId = 1; nLitId < conflCl.size(); ++nLitId) {
             uint32_t nLevel = varData[conflCl[nLitId].var()].level;
             if (nLevel > data.nHighestLevel) {
                 highestId = nLitId;
                 data.nHighestLevel = nLevel;
-                //data.bOnlyOneLitFromHighest = true;
-            } /*else if (nLevel == data.nHighestLevel && data.bOnlyOneLitFromHighest == true) {
-                data.bOnlyOneLitFromHighest = false;
-            }*/
+            }
         }
 
         if (highestId != 0) {

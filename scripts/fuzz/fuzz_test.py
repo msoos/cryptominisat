@@ -276,7 +276,7 @@ class Tester:
     def rnd_schedule_all(self, preproc):
         sched_opts = "handle-comps,"
         sched_opts += "scc-vrepl,"
-        sched_opts += "sub-impl, intree-probe, probe,"
+        sched_opts += "sub-impl, intree-probe,"
         sched_opts += "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
         sched_opts += "sub-cls-with-bin,"
         sched_opts += "str-impl, sub-str-cls-with-bin, distill-cls, scc-vrepl,"
@@ -386,11 +386,10 @@ class Tester:
             cmd += "--adjustglue %f " % random.choice([0, 0.5, 0.7, 1.0])
             cmd += "--gluehist %s " % random.randint(1, 500)
             cmd += "--updateglueonanalysis %s " % random.randint(0, 1)
-            cmd += "--otfhyper %s " % random.randint(0, 1)
+            cmd += "--intree %d " % random.choice([0, 1, 1, 1])
+            cmd += "--otfhyper %s " % random.randint(0, 1, 1, 1)
             # cmd += "--clean %s " % random.choice(["size", "glue", "activity",
             # "prconf"])
-            cmd += "--bothprop %s " % random.randint(0, 1)
-            cmd += "--probemaxm %s " % random.choice([0, 10, 100, 1000])
             cmd += "--occredmax %s " % random.randint(0, 100)
             cmd += "--distill %s " % random.randint(0, 1)
             cmd += "--recur %s " % random.randint(0, 1)

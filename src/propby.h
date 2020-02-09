@@ -33,7 +33,11 @@ THE SOFTWARE.
 
 namespace CMSat {
 
-enum PropByType {null_clause_t = 0, clause_t = 1, binary_t = 2, xor_t = 3};
+enum PropByType {null_clause_t = 0, clause_t = 1, binary_t = 2
+    #ifdef USE_GAUSS
+    , xor_t = 3
+    #endif
+};
 
 class PropBy
 {
@@ -68,6 +72,7 @@ class PropBy
             #endif*/
         }
 
+#ifdef USE_GAUSS
         //XOR
         PropBy(const uint32_t matrix_num, const uint32_t row_num):
             data1(matrix_num)
@@ -75,6 +80,7 @@ class PropBy
             , data2(row_num)
         {
         }
+#endif
 
         //Binary prop
         PropBy(const Lit lit, const bool redStep) :

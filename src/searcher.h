@@ -61,7 +61,6 @@ struct VariableVariance
 
 struct ConflictData {
     uint32_t nHighestLevel;
-    //bool bOnlyOneLitFromHighest = false;
 };
 
 class Searcher : public HyperEngine
@@ -135,7 +134,7 @@ class Searcher : public HyperEngine
         vector<Trail> add_tmp_canceluntil;
         template<bool do_insert_var_order = true, bool update_bogoprops = false>
         void cancelUntil(uint32_t level); ///<Backtrack until a certain level.
-        ConflictData FindConflictLevel(PropBy& pb);
+        ConflictData find_conflict_level(PropBy& pb);
         uint32_t chrono_backtrack = 0;
         uint32_t non_chrono_backtrack = 0;
 
@@ -231,7 +230,7 @@ class Searcher : public HyperEngine
         vector<Lit> learnt_clause;
         vector<Lit> decision_clause;
         template<bool update_bogoprops>
-        Clause* analyze_conflict(
+        void analyze_conflict(
             PropBy confl //The conflict that we are investigating
             , uint32_t& out_btlevel  //backtrack level
             , uint32_t &glue         //glue of the learnt clause
@@ -251,8 +250,6 @@ class Searcher : public HyperEngine
         template<bool update_bogoprops>
         void add_lit_to_learnt(Lit lit, uint32_t nDecisionLevel);
         void analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& out_conflict);
-        size_t tmp_learnt_clause_size;
-        cl_abst_type tmp_learnt_clause_abst;
         void update_clause_glue_from_analysis(Clause* cl);
         template<bool update_bogoprops>
         void minimize_learnt_clause();
@@ -267,6 +264,14 @@ class Searcher : public HyperEngine
         #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
         AtecedentData<uint16_t> antec_data;
         #endif
+        Clause* handle_last_confl(
+            const uint32_t glue
+            , const uint32_t old_decision_level
+            , const uint32_t
+            #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+            old_glue
+            #endif
+        );
 
         /////////////////////
         // Branching
@@ -285,15 +290,6 @@ class Searcher : public HyperEngine
         uint32_t pick_var_vmtf();
         double maple_step_size;
         void vsids_decay_var_act();
-        Clause* handle_last_confl(
-            const uint32_t glue
-            , const uint32_t old_decision_level
-            , const uint32_t
-            #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-            old_glue
-            #endif
-        );
-
         template<bool update_bogoprops>
         void vsids_bump_var_act(uint32_t v, double mult = 1.0);
         double backup_random_var_freq = -1; ///<if restart has full random var branch, we save old value here

@@ -441,7 +441,9 @@ Lit HyperEngine::analyzeFail(const PropBy propBy)
             break;
         }
 
+#ifdef USE_GAUSS
         case xor_t:
+#endif
         case null_clause_t:
             assert(false);
             break;

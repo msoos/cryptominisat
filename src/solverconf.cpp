@@ -235,7 +235,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "handle-comps,"
             "scc-vrepl,"
             "sub-impl,"
-            "intree-probe,probe,"
+            "intree-probe,"
             "sub-str-cls-with-bin,distill-cls,"
             "scc-vrepl,sub-impl,str-impl,sub-impl,"
             "breakid,"
@@ -262,7 +262,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "cl-consolidate," //consolidate after OCC
             "str-impl, sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
             "str-impl, sub-impl, sub-str-cls-with-bin,"
-            "intree-probe, probe,"
+            "intree-probe, "
             "must-renumber"
         )
 
