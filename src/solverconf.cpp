@@ -177,16 +177,10 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , bva_every_n(1)
 
         //Probing
-        , doProbe          (false)
         , doIntreeProbe    (true)
-        , probe_bogoprops_time_limitM  (800ULL)
+        , doTransRed       (true)
         , intree_time_limitM(300ULL)
         , intree_scc_varreplace_time_limitM(7ULL)
-        , doBothProp       (true)
-        , doTransRed       (true)
-        , otf_hyper_time_limitM(340)
-        , otf_hyper_ratio_limit(0.5) //if higher(closer to 1), we allow for less hyper-bin addition, i.e. we are stricter
-        , single_probe_time_limit_perc(0.5)
 
         //XOR
         , doFindXors       (true)

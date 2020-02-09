@@ -479,12 +479,6 @@ void Main::add_supported_options()
 
     po::options_description probeOptions("Probing options");
     probeOptions.add_options()
-    ("bothprop", po::value(&conf.doBothProp)->default_value(conf.doBothProp)
-        , "Do propagations solely to propagate the same value twice")
-    ("probe", po::value(&conf.doProbe)->default_value(conf.doProbe)
-        , "Carry out probing")
-    ("probemaxm", po::value(&conf.probe_bogoprops_time_limitM)->default_value(conf.probe_bogoprops_time_limitM)
-        , "Time in mega-bogoprops to perform probing")
     ("transred", po::value(&conf.doTransRed)->default_value(conf.doTransRed)
         , "Remove useless binary clauses (transitive reduction)")
     ("intree", po::value(&conf.doIntreeProbe)->default_value(conf.doIntreeProbe)

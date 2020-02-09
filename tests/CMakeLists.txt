@@ -160,7 +160,6 @@ set (MY_TESTS
     scc_test
     vrepl_test
     clause_cleaner_test
-    probe_test
     distiller_all_with_all_test
     distill_long_with_implicit_test
     subsume_impl_test

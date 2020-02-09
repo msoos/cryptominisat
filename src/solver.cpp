@@ -37,7 +37,6 @@ THE SOFTWARE.
 #include "time_mem.h"
 #include "searcher.h"
 #include "occsimplifier.h"
-#include "prober.h"
 #include "distillerlong.h"
 #include "clausecleaner.h"
 #include "solutionextender.h"
@@ -91,10 +90,6 @@ Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter
     Searcher(_conf, this, _must_interrupt_inter)
 {
     sqlStats = NULL;
-
-    if (conf.doProbe) {
-        prober = new Prober(this);
-    }
     intree = new InTree(this);
 
 #ifdef USE_BREAKID
@@ -138,7 +133,6 @@ Solver::~Solver()
 {
     delete compHandler;
     delete sqlStats;
-    delete prober;
     delete intree;
     delete occsimplifier;
     delete distill_long_cls;
@@ -1788,15 +1782,6 @@ void Solver::dump_memory_stats_to_sql()
         , varReplacer->mem_used()/(1024*1024)
     );
 
-    if (prober) {
-        sqlStats->mem_used(
-            this
-            , "prober"
-            , my_time
-            , prober->mem_used()/(1024*1024)
-        );
-    }
-
     double vm_mem_used = 0;
     const uint64_t rss_mem_used = memUsedTotal(vm_mem_used);
     sqlStats->mem_used(
@@ -2069,9 +2054,6 @@ lbool Solver::execute_inprocess_strategy(
             if (conf.doIntreeProbe) {
                 intree->intree_probe();
             }
-        } else if (token == "probe") {
-            if (conf.doProbe)
-                prober->probe();
         } else if (token == "sub-str-cls-with-bin") {
             //Subsumes and strengthens long clauses with binary clauses
             if (conf.do_distill_clauses) {
@@ -2266,15 +2248,6 @@ void Solver::print_min_stats(const double cpu_time, const double cpu_time_total)
         , "% vars"
     );
 
-    //Failed lit stats
-    if (conf.doProbe) {
-        if (conf.do_print_times)
-        print_stats_line("c probing time"
-            , prober->get_stats().cpu_time
-            , stats_line_percent(prober->get_stats().cpu_time, cpu_time)
-            , "% time"
-        );
-    }
     //OccSimplifier stats
     if (conf.perform_occur_based_simp) {
         if (conf.do_print_times)
@@ -2365,20 +2338,6 @@ void Solver::print_norm_stats(const double cpu_time, const double cpu_time_total
         , "% time"
     );
 
-    //Failed lit stats
-    if (conf.doProbe
-        && prober
-    ) {
-        prober->get_stats().print_short(this, 0, 0);
-        if (conf.do_print_times)
-        print_stats_line("c probing time"
-            , prober->get_stats().cpu_time
-            , stats_line_percent(prober->get_stats().cpu_time, cpu_time)
-            , "% time"
-        );
-
-        prober->get_stats().print_short(this, 0, 0);
-    }
     //OccSimplifier stats
     if (conf.perform_occur_based_simp) {
         if (conf.do_print_times)
@@ -2455,18 +2414,6 @@ void Solver::print_full_restart_stat(const double cpu_time, const double cpu_tim
         , stats_line_percent(zeroLevAssignsByCNF, nVarsOutside())
         , "% vars"
     );
-
-    //Failed lit stats
-    if (conf.doProbe) {
-        if (conf.do_print_times)
-        print_stats_line("c probing time"
-            , prober->get_stats().cpu_time
-            , stats_line_percent(prober->get_stats().cpu_time, cpu_time)
-            , "% time"
-        );
-
-        prober->get_stats().print(nVarsOuter(), conf.do_print_times);
-    }
 
     //OccSimplifier stats
     if (conf.perform_occur_based_simp) {
@@ -2678,17 +2625,6 @@ void Solver::print_mem_stats() const
         , "%"
     );
     account += mem;
-
-    if (prober) {
-        mem = prober->mem_used() + intree->mem_used();
-        print_stats_line("c Mem for prober+intree"
-            , mem/(1024UL*1024UL)
-            , "MB"
-            , stats_line_percent(mem, rss_mem_used)
-            , "%"
-        );
-        account += mem;
-    }
 
     print_stats_line("c Accounted for mem (rss)"
         , stats_line_percent(account, rss_mem_used)

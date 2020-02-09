@@ -81,7 +81,6 @@ set(cryptoms_lib_files
     propengine.cpp
     varreplacer.cpp
     clausecleaner.cpp
-    prober.cpp
     occsimplifier.cpp
     subsumestrengthen.cpp
     clauseallocator.cpp

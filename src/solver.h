@@ -48,7 +48,6 @@ using std::string;
 
 class VarReplacer;
 class ClauseCleaner;
-class Prober;
 class OccSimplifier;
 class SCCFinder;
 class DistillerLong;
@@ -157,7 +156,6 @@ class Solver : public Searcher
         SubsumeImplicit*       subsumeImplicit = NULL;
         DataSync*              datasync = NULL;
         ReduceDB*              reduceDB = NULL;
-        Prober*                prober = NULL;
         InTree*                intree = NULL;
         BreakID*               breakid = NULL;
         OccSimplifier*         occsimplifier = NULL;
@@ -292,7 +290,6 @@ class Solver : public Searcher
         void testing_set_solver_not_fresh();
 
     private:
-        friend class Prober;
         friend class ClauseDumper;
         #ifdef CMS_TESTING_ENABLED
         FRIEND_TEST(SearcherTest, pickpolar_auto_not_changed_by_simp);

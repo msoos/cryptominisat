@@ -401,7 +401,7 @@ SolverConf CompHandler::configureNewSolver(
     conf.sampling_vars = NULL;
     if (numVars < 60) {
         conf.do_simplify_problem = false;
-        conf.doProbe = false;
+        conf.doIntreeProbe = false;
         conf.otfHyperbin = false;
         conf.verbosity = std::min(solver->conf.verbosity, 0);
     }
