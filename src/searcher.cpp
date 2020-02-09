@@ -3343,15 +3343,15 @@ void Searcher::cancelUntil(uint32_t blevel)
                     }
                     varData[var].maple_cancelled = sumConflicts;
                 }
-            }
 
-            assigns[var] = l_Undef;
-            if (vmtf_bumped < vmtf_btab[var]) {
-                vmtf_update_queue_unassigned(var);
-            }
+                if (vmtf_bumped < vmtf_btab[var]) {
+                    vmtf_update_queue_unassigned(var);
+                }
 
-            if (do_insert_var_order) {
-                insert_var_order(var);
+                assigns[var] = l_Undef;
+                if (do_insert_var_order) {
+                    insert_var_order(var);
+                }
             }
         }
         qhead = trail_lim[blevel];
