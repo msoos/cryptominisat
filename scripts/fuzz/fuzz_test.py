@@ -386,8 +386,6 @@ class Tester:
             cmd += "--adjustglue %f " % random.choice([0, 0.5, 0.7, 1.0])
             cmd += "--gluehist %s " % random.randint(1, 500)
             cmd += "--updateglueonanalysis %s " % random.randint(0, 1)
-            cmd += "--intree %d " % random.choice([0, 1, 1, 1])
-            cmd += "--otfhyper %s " % random.randint(0, 1, 1, 1)
             # cmd += "--clean %s " % random.choice(["size", "glue", "activity",
             # "prconf"])
             cmd += "--occredmax %s " % random.randint(0, 100)
@@ -426,10 +424,10 @@ class Tester:
                 cmd += "--cldatadumpratio %0.3f " % random.choice([0.9, 0.1, 0.7])
 
         # the most buggy ones, don't turn them off much, please
-        if random.choice([True, False, False]):
-            opts = ["scc", "varelim", "comps", "strengthen", "probe", "intree",
+        if random.choice([1, 0, 0]):
+            opts = ["scc", "varelim", "comps", "strengthen", "intree",
                     "renumber", "savemem", "moreminim", "gates",
-                    "gorshort", "gandrem", "gateeqlit", "schedsimp"]
+                    "gorshort", "gandrem", "gateeqlit", "schedsimp", "otfhyper"]
 
             if "xor" in self.extra_opts_supported:
                 opts.append("xor")
