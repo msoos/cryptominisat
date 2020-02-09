@@ -118,7 +118,6 @@ struct ClauseStats
         #else
         which_red_array = 2;
         #endif
-        is_decision_cl = false;
         is_ternary_resol_cl = false;
         drop_if_not_used = false;
         locked_for_data_gen = 0;
@@ -132,7 +131,6 @@ struct ClauseStats
     uint32_t marked_clause:1;
     uint32_t ttl:2;
     uint32_t which_red_array:3;
-    uint32_t is_decision_cl:1;
     uint32_t is_ternary_resol_cl:1;
     uint32_t drop_if_not_used:1;
     uint32_t locked_for_data_gen:1;

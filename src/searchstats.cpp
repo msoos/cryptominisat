@@ -225,36 +225,6 @@ void SearchStats::print(uint64_t props, bool do_print_times) const
         , "% of conflicts"
     );
 
-    print_stats_line("c otf-subs"
-        , otfSubsumed
-        , ratio_for_stat(otfSubsumed, conflStats.numConflicts)
-        , "/conflict"
-    );
-
-    print_stats_line("c otf-subs implicit"
-        , otfSubsumedImplicit
-        , stats_line_percent(otfSubsumedImplicit, otfSubsumed)
-        , "%"
-    );
-
-    print_stats_line("c otf-subs long"
-        , otfSubsumedLong
-        , stats_line_percent(otfSubsumedLong, otfSubsumed)
-        , "%"
-    );
-
-    print_stats_line("c otf-subs learnt"
-        , otfSubsumedRed
-        , stats_line_percent(otfSubsumedRed, otfSubsumed)
-        , "% otf subsumptions"
-    );
-
-    print_stats_line("c otf-subs lits gained"
-        , otfSubsumedLitsGained
-        , ratio_for_stat(otfSubsumedLitsGained, otfSubsumed)
-        , "lits/otf subsume"
-    );
-
     print_stats_line("c red which0"
         , red_cl_in_which0
         , stats_line_percent(red_cl_in_which0, conflStats.numConflicts)

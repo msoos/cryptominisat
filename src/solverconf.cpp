@@ -110,8 +110,10 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //OTF
         , otfHyperbin      (true)
-        , doOTFSubsume     (false)
-        , doOTFSubsumeOnlyAtOrBelowGlue(5)
+
+        //Chono BT
+        , confl_to_chrono (4000)
+        , diff_declev_for_chrono (100)
 
         //decision-based clause generation. These values have been validated
         //see 8099966.wlm01
@@ -162,7 +164,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , breakid_matrix_detect(true)
 
         //Bounded variable addition
-        , do_bva(true)
+        , do_bva(false)
         #ifdef USE_GAUSS
         , min_bva_gain(2)
         #else

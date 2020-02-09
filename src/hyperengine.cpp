@@ -54,7 +54,7 @@ Lit HyperEngine::propagate_bfs(const uint64_t timeout)
     //this is already set, and there is no need to set it
     if (trail.size() - trail_lim.back() == 1) {
         //Set up root node
-        Lit root = trail[qhead];
+        Lit root = trail[qhead].lit;
         varData[root.var()].reason = PropBy(~lit_Undef, false, false, false);
     }
 
@@ -73,7 +73,7 @@ Lit HyperEngine::propagate_bfs(const uint64_t timeout)
 
     //Propagate binary irred
     while (nlBinQHead < trail.size()) {
-        const Lit p = trail[nlBinQHead++];
+        const Lit p = trail[nlBinQHead++].lit;
         watch_subarray_const ws = watches[~p];
         propStats.bogoProps += 1;
         for(const Watched *k = ws.begin(), *end = ws.end()
@@ -96,7 +96,7 @@ Lit HyperEngine::propagate_bfs(const uint64_t timeout)
     //Propagate binary redundant
     ret = PROP_NOTHING;
     while (lBinQHead < trail.size()) {
-        const Lit p = trail[lBinQHead];
+        const Lit p = trail[lBinQHead].lit;
         watch_subarray_const ws = watches[~p];
         propStats.bogoProps += 1;
         size_t done = 0;
@@ -123,7 +123,7 @@ Lit HyperEngine::propagate_bfs(const uint64_t timeout)
 
     ret = PROP_NOTHING;
     while (qhead < trail.size()) {
-        const Lit p = trail[qhead];
+        const Lit p = trail[qhead].lit;
         watch_subarray ws = watches[~p];
         propStats.bogoProps += 1;
 
@@ -671,7 +671,9 @@ void HyperEngine::enqueue_with_acestor_info(
     , const Lit ancestor
     , const bool redStep
 ) {
-    enqueue(p, PropBy(~ancestor, redStep, false, false));
+    //only called at decision level 1 during solving OR
+    //during intree probing
+    enqueue(p, decisionLevel(), PropBy(~ancestor, redStep, false, false));
 
     assert(varData[ancestor.var()].level != 0);
 

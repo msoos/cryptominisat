@@ -660,8 +660,6 @@ void Main::add_supported_options()
         , "Perform even stronger minimisation at conflict gen.")
     ("moremorealways", po::value(&conf.doAlwaysFMinim)->default_value(conf.doAlwaysFMinim)
         , "Always strong-minimise clause")
-    ("otfsubsume", po::value(&conf.doOTFSubsume)->default_value(conf.doOTFSubsume)
-        , "Perform on-the-fly subsumption")
     ("decbased", po::value(&conf.do_decision_based_cl)->default_value(conf.do_decision_based_cl)
         , "Create decision-based conflict clauses when the UIP clause is too large")
     ("decbasemaxlev", po::value(&conf.decision_based_cl_max_levels)->default_value(conf.decision_based_cl_max_levels)
@@ -676,6 +674,16 @@ void Main::add_supported_options()
         , "Update glues while analyzing")
     ("maxgluehistltlimited", po::value(&conf.max_glue_cutoff_gluehistltlimited)->default_value(conf.max_glue_cutoff_gluehistltlimited)
         , "Maximum glue used by glue-based restart strategy when populating glue history.")
+    ("otfhyper", po::value(&conf.otfHyperbin)->default_value(conf.otfHyperbin)
+        , "Perform hyper-binary resolution at dec. level 1 after every restart and during probing")
+    ;
+
+    po::options_description chrono_bt_opts("Propagation options");
+    chrono_bt_opts.add_options()
+    ("conftochrono", po::value(&conf.confl_to_chrono)->default_value(conf.confl_to_chrono)
+        , "This many conflicts before chronological backtracking is turned on. Giving -1 means it's always on.")
+    ("diffdeclevelchrono", po::value(&conf.diff_declev_for_chrono)->default_value(conf.diff_declev_for_chrono)
+        , "Difference in decision level is more than this, perform chonological backtracking instead of non-chronological backtracking. Giving -1 means it is never turned on (overrides '--confltochrono -1' in this case).")
     ;
 
     po::options_description sqlOptions("SQL options");
@@ -829,6 +837,7 @@ void Main::add_supported_options()
     #endif
     .add(printOptions)
     .add(propOptions)
+    .add(chrono_bt_opts)
     .add(reduceDBOptions)
     .add(red_cl_dump_opts)
     .add(varPickOptions)

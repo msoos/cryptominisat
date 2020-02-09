@@ -161,9 +161,14 @@ PropBy PropEngine::propagate_any_order_fast()
     cout << "Fast Propagation started" << endl;
     #endif
 
+    //so we don't re-calculate it all the time
+    uint32_t declevel = decisionLevel();
+
     int64_t num_props = 0;
     while (qhead < trail.size()) {
-        const Lit p = trail[qhead++];     // 'p' is enqueued fact to propagate.
+        const Lit p = trail[qhead].lit;     // 'p' is enqueued fact to propagate.
+        const uint32_t currLevel = trail[qhead].lev;
+        qhead++;
         watch_subarray ws = watches[~p];
         Watched* i;
         Watched* j;
@@ -186,7 +191,7 @@ PropBy PropEngine::propagate_any_order_fast()
                     else
                         propStats.propsBinIrred++;
                     #endif
-                    enqueue<update_bogoprops>(i->lit2(), PropBy(~p, i->red()));
+                    enqueue<update_bogoprops>(i->lit2(), currLevel, PropBy(~p, i->red()));
                     i++;
                 } else if (val == l_False) {
                     confl = PropBy(~p, i->red());
@@ -284,7 +289,28 @@ PropBy PropEngine::propagate_any_order_fast()
                 else
                     propStats.propsLongIrred++;
                 #endif
-                enqueue<update_bogoprops>(c[0], PropBy(offset));
+                if (currLevel == declevel) {
+                    enqueue<update_bogoprops>(c[0], currLevel, PropBy(offset));
+                } else {
+                    uint32_t nMaxLevel = currLevel;
+                    uint32_t nMaxInd = 1;
+                    // pass over all the literals in the clause and find the one with the biggest level
+                    for (uint32_t nInd = 2; nInd < c.size(); ++nInd) {
+                        uint32_t nLevel = varData[c[nInd].var()].level;
+                        if (nLevel > nMaxLevel) {
+                            nMaxLevel = nLevel;
+                            nMaxInd = nInd;
+                        }
+                    }
+
+                    if (nMaxInd != 1) {
+                        std::swap(c[1], c[nMaxInd]);
+                        j--; // undo last watch
+                        watches[c[1]].push(w);
+                    }
+
+                    enqueue<update_bogoprops>(c[0], nMaxLevel, PropBy(offset));
+                }
             }
 
             nextClause:;
@@ -301,7 +327,6 @@ PropBy PropEngine::propagate_any_order_fast()
 
     return confl;
 }
-
 template PropBy PropEngine::propagate_any_order_fast<true>();
 template PropBy PropEngine::propagate_any_order_fast<false>();
 
@@ -332,8 +357,8 @@ void PropEngine::updateVars(
     assert(decisionLevel() == 0);
 
     //Trail is NOT correct, only its length is correct
-    for(Lit& lit: trail) {
-        lit = lit_Undef;
+    for(Trail& t: trail) {
+        t.lit = lit_Undef;
     }
     updateBySwap(watches, seen, interToOuter2);
 
@@ -380,10 +405,11 @@ inline void PropEngine::updateWatch(
 void PropEngine::print_trail()
 {
     for(size_t i = trail_lim[0]; i < trail.size(); i++) {
+        assert(varData[trail[i].lit.var()].level == trail[i].lev);
         cout
-        << "trail " << i << ":" << trail[i]
-        << " lev: " << varData[trail[i].var()].level
-        << " reason: " << varData[trail[i].var()].reason
+        << "trail " << i << ":" << trail[i].lit
+        << " lev: " << trail[i].lev
+        << " reason: " << varData[trail[i].lit.var()].reason
         << endl;
     }
 }
@@ -392,9 +418,10 @@ void PropEngine::print_trail()
 bool PropEngine::propagate_occur()
 {
     assert(ok);
+    assert(decisionLevel() == 0);
 
     while (qhead < trail_size()) {
-        const Lit p = trail[qhead];
+        const Lit p = trail[qhead].lit;
         qhead++;
         watch_subarray ws = watches[~p];
 

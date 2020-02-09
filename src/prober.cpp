@@ -504,7 +504,7 @@ bool Prober::try_this(const Lit lit, const bool first)
             ; c--
         ) {
             extraTime += 2;
-            const Lit thisLit = solver->trail[c];
+            const Lit thisLit = solver->trail[c].lit;
             const uint32_t var = thisLit.var();
 
             if (solver->conf.doBothProp) {
@@ -515,8 +515,6 @@ bool Prober::try_this(const Lit lit, const bool first)
     }
 
     solver->cancelUntil<false, true>(0);
-    solver->add_otf_subsume_long_clauses<true>();
-    solver->add_otf_subsume_implicit_clause<true>();
 
     if (failed != lit_Undef) {
         if (solver->conf.verbosity >= 6) {
