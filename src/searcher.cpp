@@ -2053,14 +2053,14 @@ void Searcher::set_branch_strategy(const uint32_t iteration_num)
     #ifdef STATS_NEEDED
     long modulo = iteration_num % 4;
     #else
-    long modulo = iteration_num % 1;
+    long modulo = iteration_num % 2;
     #endif
     if (modulo == 0) {
         branch_strategy = branch::vsids;
     } else if (modulo == 1) {
-        branch_strategy = branch::maple;
-    } else if (modulo == 2) {
         branch_strategy = branch::vmtf;
+    } else if (modulo == 2) {
+        branch_strategy = branch::maple;
     } else if (modulo == 3) {
         #ifdef STATS_NEEDED
         branch_strategy = branch::rnd;
