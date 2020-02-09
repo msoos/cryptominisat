@@ -453,18 +453,18 @@ void Searcher::add_literals_from_confl_to_learnt(
                 break;
 
             case clause_t:
-
             #ifdef USE_GAUSS
             case xor_t:
+            #endif
                 x = lits[i];
                 if (i == size-1) {
                     cont = false;
                 }
                 break;
-            #endif
 
             case null_clause_t:
                 assert(false);
+                break;
         }
         if (p == lit_Undef || i > 0) {
             add_lit_to_learnt<update_bogoprops>(x, nDecisionLevel);
