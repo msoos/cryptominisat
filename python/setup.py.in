@@ -111,6 +111,7 @@ extra_link_args = []
 extra_compile_args = []
 if platform.system() == 'Darwin':
     extra_link_args.append('-Wl,-rpath,'+"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+    # NOTE: below apparently could be obtained via: "xcrun --show-sdk-path"
     extra_compile_args.append('-isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk')
 
 if platform.system() == 'Windows':
