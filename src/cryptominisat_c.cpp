@@ -162,4 +162,8 @@ extern "C"
         auto temp = wrap(fromc(assumptions), num_assumptions);
         return toc(self->simplify(&temp));
     } NOEXCEPT_END
+
+    DLL_PUBLIC void cmsat_set_max_time(SATSolver* self, double max_time) NOEXCEPT_START {
+        self->set_max_time(max_time);
+    } NOEXCEPT_END
 }
