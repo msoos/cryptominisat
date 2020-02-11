@@ -83,6 +83,16 @@ else()
        ARGS setup.py build_ext --inplace --rpath ../lib
        DEPENDS cryptominisat5
    )
+elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    execute_process(COMMAND xcrun --show-sdk-path
+        OUTPUT_VARIABLE PY_OSX_SDK_PATH
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+    message(STATUS "OS X SDK path:  '${PY_OSX_SDK_PATH}'")
+    add_custom_command(OUTPUT ${OUTPUT}/timestamp
+       COMMAND ${CMAKE_COMMAND} -E env "CFLAGS='-isysroot${PY_OSX_SDK_PATH} $ENV{CFLAGS}'" ${PYTHON_EXECUTABLE}
+       ARGS setup.py build_ext --inplace --rpath ../lib
+       DEPENDS cryptominisat5
+    )
 endif()
 
 add_custom_target(python_interface
