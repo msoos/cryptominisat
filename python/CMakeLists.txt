@@ -77,12 +77,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
        ARGS setup.py build_ext --inplace
        DEPENDS cryptominisat5
    )
-else()
-    add_custom_command(OUTPUT ${OUTPUT}/timestamp
-       COMMAND ${PYTHON_EXECUTABLE}
-       ARGS setup.py build_ext --inplace --rpath ../lib
-       DEPENDS cryptominisat5
-   )
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     execute_process(COMMAND xcrun --show-sdk-path
         OUTPUT_VARIABLE PY_OSX_SDK_PATH
@@ -93,6 +87,12 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
        ARGS setup.py build_ext --inplace --rpath ../lib
        DEPENDS cryptominisat5
     )
+else()
+    add_custom_command(OUTPUT ${OUTPUT}/timestamp
+       COMMAND ${PYTHON_EXECUTABLE}
+       ARGS setup.py build_ext --inplace --rpath ../lib
+       DEPENDS cryptominisat5
+   )
 endif()
 
 add_custom_target(python_interface
