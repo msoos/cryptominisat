@@ -372,6 +372,9 @@ void Main::add_supported_options()
     ("branchchangefreq"
         , po::value(&conf.branch_strategy_change_everyN)->default_value(conf.branch_strategy_change_everyN)
         , "Iterate through branch strategies with a cycle time of this many conflicts")
+    ("modbranchstr"
+        , po::value(&conf.branch_mod_str)->default_value(conf.branch_mod_str)
+        , "Modulo branch strategy")
     ;
 
     std::ostringstream s_incclean;

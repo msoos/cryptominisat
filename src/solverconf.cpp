@@ -80,6 +80,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         #else
         , branch_strategy_change_everyN(55000)
         #endif
+        , mod_branch_str(2)
 
         //Clause minimisation
         , doRecursiveMinim (true)

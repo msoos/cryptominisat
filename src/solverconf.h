@@ -204,6 +204,7 @@ class DLL_PUBLIC SolverConf
 
         //Branch strategy
         unsigned branch_strategy_change_everyN;
+        unsigned branch_mod_str;
 
         //Clause minimisation
         int doRecursiveMinim;
