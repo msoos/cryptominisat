@@ -32,7 +32,7 @@ for x in range(1, len(sys.argv)):
 
 infilenames = []
 infilenames.append("signals.csv")
-infilenames.append("solveTimes.csv")
+infilenames.append("solveTimes_rev.csv")
 
 infiles = []
 for x in infilenames:
