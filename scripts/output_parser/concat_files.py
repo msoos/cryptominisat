@@ -32,12 +32,12 @@ for x in range(1, len(sys.argv)):
 
 infilenames = []
 infilenames.append("signals.csv")
-infilenames.append("times.csv")
+infilenames.append("solveTimes.csv")
 
 infiles = []
 for x in infilenames:
     infiles.append(open(x, "r"))
-allfiles = open("allfiles.csv", "r")
+allfiles = open("allFiles.csv", "r")
 files = {}
 for l in allfiles:
     l = l.strip()
