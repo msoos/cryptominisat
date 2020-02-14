@@ -1,15 +1,13 @@
 #!/bin/bash
 
-check="$1"
-wc -l *${check}*/solved.csv | sort -n | awk 'BEGIN {ORS="\t"} {print $1 " " $2; split($2,a,"/"); x="xzgrep \"Command being\" " a[1] "/mp1-23.3.cnf.gz.timeout.xz"; system(x)}' | sort -n
-wc -l *${check}*/solvedUNSAT.csv | sort -n
-wc -l *${check}*/solvedSAT.csv | sort -n
-
-echo "On SATCOMP 17 nolimits problems:"
-rm tmp
-for f in $(ls | grep ${check}); do
-	g=$(grep -f out-new-${check}.wlm01-5/allFiles.csv $f/solved.csv | wc -l)
-	echo "$g for $f" >> tmp
+rm out
+for d in `ls | grep $check`; do
+    echo $d;
+    PAR2=`cat $d/PAR2score`
+    name=`xzgrep "Command being" $d/20180321_110706599_p_cnf_320_1120.cnf.gz.timeout.xz`
+    numsolved=`wc -l $d/solved.csv | awk '{print $1}'`
+    numUNSAT=`wc -l $d/solvedUNSAT.csv | awk '{print $1}'`
+    numSAT=`wc -l $d/solvedSAT.csv  | awk '{print $1}'`
+    echo "$PAR2 $d $numsolved $numSAT $numUNSAT $name" >> out
 done
-sort -n tmp
-
+sed "s/20180321_110706.*//" out | sed "s/Command.*time.*cryptominisat5//"  | sed "s/-drat0.solved.csv//" |                 sed "s/ *Command being timed.*cryptominisat5//" | sed "s/\t/ /g" | sed "s/\t/ /g" | sort -n
