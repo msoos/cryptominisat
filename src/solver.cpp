@@ -1436,11 +1436,6 @@ void Solver::check_config_parameters() const
     }
     #endif
 
-    if (conf.modulo_maple_iter == 0) {
-        std::cerr << "ERROR: Modulo maper iteration must be non-zero" << endl;
-        exit(-1);
-    }
-
     #ifdef SLOW_DEBUG
     if (conf.sampling_vars)
     {
@@ -3285,7 +3280,7 @@ void Solver::reconfigure(int val)
     switch (val) {
         case 3: {
             //Glue clause cleaning
-            conf.maple = 0;
+            conf.doMaple = 0;
             branch_strategy = branch::vsids;
             conf.every_lev1_reduce = 0;
             conf.every_lev2_reduce = 0;
@@ -3301,7 +3296,7 @@ void Solver::reconfigure(int val)
         }
 
         case 4: {
-            conf.maple = 0;
+            conf.doMaple = 0;
             branch_strategy = branch::vsids;
             conf.every_lev1_reduce = 0;
             conf.every_lev2_reduce = 0;
@@ -3313,7 +3308,7 @@ void Solver::reconfigure(int val)
 
         case 6: {
             //No more simplifying
-            conf.maple = 0;
+            conf.doMaple = 0;
             branch_strategy = branch::vsids;
             conf.never_stop_search = true;
             break;
@@ -3321,7 +3316,7 @@ void Solver::reconfigure(int val)
 
         case 7: {
             //Geom restart, but keep low glue clauses
-            conf.maple = 0;
+            conf.doMaple = 0;
             branch_strategy = branch::vsids;
             conf.varElimRatioPerIter = 0.2;
             conf.restartType = Restart::geom;
@@ -3338,7 +3333,7 @@ void Solver::reconfigure(int val)
 
         case 12: {
             //Mix of keeping clauses
-            conf.maple = 0;
+            conf.doMaple = 0;
             branch_strategy = branch::vsids;
             conf.do_bva = false;
             conf.varElimRatioPerIter = 1;
@@ -3358,7 +3353,7 @@ void Solver::reconfigure(int val)
         }
 
         case 13: {
-            conf.maple = 0;
+            conf.doMaple = 0;
             branch_strategy = branch::vsids;
             conf.orig_global_timeout_multiplier = 5;
             conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
@@ -3374,7 +3369,7 @@ void Solver::reconfigure(int val)
         }
 
         case 14: {
-            conf.maple = 0;
+            conf.doMaple = 0;
             branch_strategy = branch::vsids;
             conf.shortTermHistorySize = 600;
             conf.doAlwaysFMinim = true;
@@ -3382,7 +3377,7 @@ void Solver::reconfigure(int val)
         }
 
         case 15: {
-            conf.maple = 0;
+            conf.doMaple = 0;
             branch_strategy = branch::vsids;
             //Like OLD-OLD minisat
             conf.varElimRatioPerIter = 1;
@@ -3403,8 +3398,7 @@ void Solver::reconfigure(int val)
         }
 
         case 16: {
-            conf.maple = 1;
-            conf.modulo_maple_iter = 100;
+            conf.doMaple = 1;
             branch_strategy = branch::maple;
             break;
         }

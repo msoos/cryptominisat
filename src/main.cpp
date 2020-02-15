@@ -367,16 +367,6 @@ void Main::add_supported_options()
         , "Ratio of glue vs geometric restarts -- more is more glue")
     ;
 
-    po::options_description branchOptions("Branch options");
-    branchOptions.add_options()
-    ("branchchangefreq"
-        , po::value(&conf.branch_strategy_change_everyN)->default_value(conf.branch_strategy_change_everyN)
-        , "Iterate through branch strategies with a cycle time of this many conflicts")
-    ("modbranchstr"
-        , po::value(&conf.branch_mod_str)->default_value(conf.branch_mod_str)
-        , "Modulo branch strategy")
-    ;
-
     std::ostringstream s_incclean;
 
     std::ostringstream s_adjust_low;
@@ -423,10 +413,16 @@ void Main::add_supported_options()
         , "variable activity increase divider (MUST be smaller than multiplier)")
     ("varinc", po::value(&conf.var_inc_vsids)->default_value(conf.var_inc_vsids)
         , "variable activity increase starts with this value. Make sure that this multiplied by multiplier and divided by divider is larger than itself")
-    ("maple", po::value(&conf.maple)->default_value(conf.maple)
+    ("maple", po::value(&conf.doMaple)->default_value(conf.doMaple)
         , "Use maple-type variable picking sometimes")
     ("maplemod", po::value(&conf.modulo_maple_iter)->default_value(conf.modulo_maple_iter)
         , "Use maple N-1 of N rounds. Normally, N is 2, so used every other round. Set to 3 so it will use maple 2/3rds of the time.")
+    ("branchchangefreq"
+        , po::value(&conf.branch_strategy_change_everyN)->default_value(conf.branch_strategy_change_everyN)
+        , "Iterate through branch strategies with a cycle time of this many conflicts")
+    ("modbranchstr"
+        , po::value(&conf.branch_mod_str)->default_value(conf.branch_mod_str)
+        , "Modulo branch strategy")
     ;
 
 

@@ -59,10 +59,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //NOTE: The "Scavel" system's "usedt" does NOT speed up the solver
         //test conducted: out-drat-check-8359337.wlm01-1-drat0
 
-        //maple
-        , maple(true)
-        , modulo_maple_iter(3)
-
         //Restarting
         , restart_first(100)
         , restart_inc(1.1)
@@ -81,6 +77,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , branch_strategy_change_everyN(55000)
         #endif
         , branch_mod_str(2)
+        , doMaple(true)
+        , modulo_maple_iter(3)
 
         //Clause minimisation
         , doRecursiveMinim (true)

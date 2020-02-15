@@ -186,10 +186,6 @@ class DLL_PUBLIC SolverConf
         double   adjust_glue_if_too_many_low;
         uint64_t min_num_confl_adjust_glue_cutoff;
 
-        //maple
-        int      maple;
-        unsigned modulo_maple_iter;
-
         //For restarting
         unsigned    restart_first;      ///<The initial restart limit.                                                                (default 100)
         double    restart_inc;        ///<The factor with which the restart limit is multiplied in each restart.                    (default 1.5)
@@ -205,6 +201,8 @@ class DLL_PUBLIC SolverConf
         //Branch strategy
         unsigned branch_strategy_change_everyN;
         unsigned branch_mod_str;
+        int      doMaple;
+        unsigned modulo_maple_iter;
 
         //Clause minimisation
         int doRecursiveMinim;
