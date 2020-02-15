@@ -599,7 +599,6 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
             << " inserted, but max var is "
             << nVarsOuter()
             << endl;
-            assert(false);
             std::exit(-1);
         }
 
