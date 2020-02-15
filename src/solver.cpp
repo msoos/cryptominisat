@@ -1346,13 +1346,9 @@ void Solver::extend_solution(const bool only_sampling_solution)
     const double myTime = cpuTime();
     updateArrayRev(model, interToOuterMain);
 
-    if (conf.need_decisions_reaching) {
-        map_inter_to_outer(decisions_reaching_model);
-    }
-
     //Extend solution to stored solution in component handler
     if (compHandler) {
-        compHandler->addSavedState(model, decisions_reaching_model);
+        compHandler->addSavedState(model);
     }
 
     if (!only_sampling_solution) {
@@ -1365,16 +1361,6 @@ void Solver::extend_solution(const bool only_sampling_solution)
     //map back without BVA
     if (get_num_bva_vars() != 0) {
         model = map_back_vars_to_without_bva(model);
-    }
-    if (conf.need_decisions_reaching) {
-        decisions_reaching_model_valid = true;
-        const vector<uint32_t> my_map = build_outer_to_without_bva_map();
-        updateLitsMap(decisions_reaching_model, my_map);
-        for(const Lit lit: decisions_reaching_model) {
-            if (lit.var() >= nVarsOutside()) {
-                decisions_reaching_model_valid = false;
-            }
-        }
     }
 
     if (only_sampling_solution) {
@@ -1492,8 +1478,6 @@ lbool Solver::simplify_problem_outside()
         test_all_clause_attached();
     }
     #endif
-    decisions_reaching_model.clear();
-    decisions_reaching_model_valid = false;
 
     conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
     solveStats.num_simplify_this_solve_call = 0;
@@ -1543,8 +1527,6 @@ lbool Solver::solve_with_assumptions(
 #endif
 
     fresh_solver = false;
-    decisions_reaching_model.clear();
-    decisions_reaching_model_valid = false;
     move_to_outside_assumps(_assumptions);
     set_assumptions();
     #ifdef SLOW_DEBUG

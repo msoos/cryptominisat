@@ -100,11 +100,9 @@ class Solver : public Searcher
         lbool full_model_value (const Lit p) const;  ///<Found model value for lit
         lbool full_model_value (const uint32_t p) const;  ///<Found model value for var
         const vector<lbool>& get_model() const;
-        const vector<Lit>& get_decisions_reaching_model() const;
         const vector<Lit>& get_final_conflict() const;
         vector<pair<Lit, Lit> > get_all_binary_xors() const;
         vector<Xor> get_recovered_xors(const bool xor_together_xors);
-        bool get_decision_reaching_valid() const;
         vector<double> get_vsids_scores() const;
         vector<Lit> propagated_by(const std::vector<Lit>& t);
 
@@ -550,11 +548,6 @@ inline const vector<lbool>& Solver::get_model() const
     return model;
 }
 
-inline const vector<Lit>& Solver::get_decisions_reaching_model() const
-{
-    return decisions_reaching_model;
-}
-
 inline const vector<Lit>& Solver::get_final_conflict() const
 {
     return conflict;
@@ -590,11 +583,6 @@ inline lbool Solver::model_value (const uint32_t p) const
 inline void Solver::testing_set_solver_not_fresh()
 {
     fresh_solver = false;
-}
-
-inline bool Solver::get_decision_reaching_valid() const
-{
-    return decisions_reaching_model_valid;
 }
 
 inline void Solver::free_cl(Clause* cl)

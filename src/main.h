@@ -67,7 +67,6 @@ class Main: public MainCommon
         void manually_parse_some_options();
         void parse_restart_type();
         void parse_polarity_type();
-        void dump_decisions_for_model();
         void check_num_threads_sanity(const unsigned thread_num) const;
 
         po::positional_options_description p;
@@ -112,7 +111,6 @@ class Main: public MainCommon
         bool dont_ban_solutions = false;
         int sql = 0;
         string sqlite_filename;
-        string decisions_for_model_fname;
 
         //Sampling vars
         vector<uint32_t> sampling_vars;

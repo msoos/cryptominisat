@@ -413,7 +413,6 @@ class DLL_PUBLIC SolverConf
         unsigned reconfigure_at;
         unsigned preprocess;
         int      simulate_drat;
-        int      need_decisions_reaching;
         int      conf_needed = true;
         std::string simplified_cnf;
         std::string solution_file;

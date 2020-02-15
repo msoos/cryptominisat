@@ -222,7 +222,6 @@ class Tester:
         self.only_sampling = False
         self.sampling_vars = []
         self.dump_red = None
-        self.decisions_dumpfile = None
         self.this_gauss_on = False
         self.num_threads = 1
         self.preproc = False
@@ -302,9 +301,6 @@ class Tester:
         self.sqlitedbfname = None
         self.clid_added = False
         cmd = " --zero-exit-status "
-        if self.decisions_dumpfile is None and not preproc:
-            self.decisions_dumpfile = unique_file("fuzz-decdump", ".decisions")
-            cmd += "--dumpdecformodel %s " % self.decisions_dumpfile
 
         # disable gauss when gauss is compiled in but asked not to be used
         #if not self.this_gauss_on and "autodisablegauss" in self.extra_opts_supported:
@@ -536,79 +532,6 @@ class Tester:
 
         return consoleOutput, retcode
 
-    def check_decisions(self, solution, fname):
-
-        with open(self.decisions_dumpfile, "r") as f:
-            for line in f:
-                if "INVALID" in line:
-                    print("Cannot check decisions, as it's INVALID")
-                    return
-
-        x = Tester()
-        x.needDebugLib = False
-        x.novalgrind = True
-        consoleOutput, retcode = x.execute(
-            fname,
-            fixed_opts=" --zero-exit-status --input %s " % self.decisions_dumpfile,
-            rnd_opts=" ")
-
-        if retcode != 0:
-            print("ERROR while running decision-injected solver, retcode: ", retcode)
-            exit(-1)
-
-        unsat, solution2, _ = x.sol_parser.parse_solution_from_output(
-            consoleOutput.split("\n"), ignoreNoSolution=False)
-
-        if unsat:
-            print("ERROR: after injecting the decisions, the problem is UNSAT")
-            exit(-1)
-
-        bad = False
-        for key, val in solution.items():
-            if key not in solution2:
-                bad = True
-                print("ERROR: variable %d is not in the second solution" % key)
-                break
-            if solution[key] != solution2[key]:
-                print("ERROR: variable %d does not have the same solutions." % key)
-                print("ERROR: original: %s" % solution[key])
-                print("ERROR: decision-injected: %s" % solution2[key])
-                bad = True
-
-        if bad:
-            print("The solution is not the same after injecting decisions!")
-            print("Original solution:", solution)
-            print("New      solution:", solution2)
-            exit(-1)
-
-        print("OK, decisions verified -- solution is the same, all good.")
-
-        # Now we will check if the number of solutions is exactly 1
-        # which it should be
-        x = Tester()
-        x.needDebugLib = False
-        x.novalgrind = True
-        consoleOutput, retcode = x.execute(
-            fname,
-            fixed_opts=" --zero-exit-status --input %s --maxsol 10 " % self.decisions_dumpfile,
-            rnd_opts=" ")
-
-        found_one = False
-        for line in consoleOutput.split("\n"):
-            m = re.match(r".*Number of solutions found until now:[ ]*([^ ]+)", line)
-            if m is not None:
-                num = int(m.group(1))
-                if num == 1:
-                    found_one = True
-                if num > 1:
-                    print("ERROR: we found more than 1 solution given the set of decisions")
-                    exit(-1)
-        if not found_one:
-            print("ERROR: Did not even find one solution for multi-solution with decisions")
-            exit(-1)
-
-        print("OK, number of decision-restricted solutions verified")
-
     def check(self, fname, fname2=None,
               checkAgainst=None,
               fixed_opts="", dump_output_fname=None,
@@ -628,7 +551,6 @@ class Tester:
         # and that is why there is no solution
         diff_time = time.time() - curr_time
         if diff_time > (options.maxtime - options.maxtimediff) / self.num_threads:
-            self.delete_decisions_dumpfile()
             print("Too much time to solve, aborted!")
             return None
 
@@ -658,7 +580,6 @@ class Tester:
             f = open(dump_output_fname, "w")
             f.write(consoleOutput)
             f.close()
-            self.delete_decisions_dumpfile()
             return True
 
         if not unsat:
@@ -670,14 +591,7 @@ class Tester:
             if self.dump_red:
                 self.check_dumped_clauses(fname)
 
-            if self.decisions_dumpfile is not None and checkAgainst == fname:
-                if len(self.sampling_vars) == 0:
-                    self.check_decisions(solution, fname)
-
-            self.delete_decisions_dumpfile()
             return
-
-        self.delete_decisions_dumpfile()
 
         # it's UNSAT, let's check with DRAT
         if fname2:
@@ -739,11 +653,6 @@ class Tester:
             print("Grave bug: SAT-> UNSAT : Other solver found solution!!")
             exit()
 
-    def delete_decisions_dumpfile(self):
-        if self.decisions_dumpfile is not None:
-            os.unlink(self.decisions_dumpfile)
-            self.decisions_dumpfile = None
-
     def check_dumped_clauses(self, fname):
         assert self.dump_red is not None
 
@@ -778,7 +687,6 @@ class Tester:
 
     def fuzz_test_one(self):
         print("--- NORMAL TESTING ---")
-        self.decisions_dumpfile = None
         self.num_threads = random.choice([1]+[random.randint(2,4)])
         self.num_threads = min(options.max_threads, self.num_threads)
         self.this_gauss_on = "autodisablegauss" in self.extra_opts_supported and random.choice([True, False, False])
@@ -882,7 +790,6 @@ class Tester:
 
     def fuzz_test_preproc(self):
         print("--- PREPROC TESTING ---")
-        assert self.decisions_dumpfile is None
         self.this_gauss_on = False  # don't do gauss on preproc
         assert self == tester
         tester.needDebugLib = False
