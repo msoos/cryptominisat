@@ -382,7 +382,7 @@ class Tester:
             # cmd += "--undef %d " % random.choice([0, 1])
             cmd += " --reconfat %d " % random.randint(0, 2)
             cmd += "--restart %s " % random.choice(
-                ["geom", "glue", "luby"])
+                ["geom", "glue", "luby", "glue-geom", "glue-geom-luby"])
             cmd += "--adjustglue %f " % random.choice([0, 0.5, 0.7, 1.0])
             cmd += "--gluehist %s " % random.randint(1, 500)
             cmd += "--updateglueonanalysis %s " % random.randint(0, 1)
