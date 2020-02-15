@@ -3173,6 +3173,7 @@ uint32_t Solver::num_active_vars() const
     uint32_t removed_replaced = 0;
     uint32_t removed_set = 0;
     uint32_t removed_elimed = 0;
+    uint32_t removed_clashed = 0;
     uint32_t removed_non_decision = 0;
     for(uint32_t var = 0; var < nVarsOuter(); var++) {
         if (value(var) != l_Undef) {
@@ -3190,6 +3191,9 @@ uint32_t Solver::num_active_vars() const
         switch(varData[var].removed) {
             case Removed::decomposed :
                 removed_decomposed++;
+                continue;
+            case Removed::clashed:
+                removed_clashed++;
                 continue;
             case Removed::elimed :
                 removed_elimed++;
