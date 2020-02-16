@@ -793,8 +793,8 @@ void Searcher::analyze_conflict(
     }
     vars_used_for_cl.clear();
     for(auto& lev: level_used_for_cl) {
-        vars_used_for_cl.push_back(trail[trail_lim[lev-1]].var());
-        assert(varData[trail[trail_lim[lev-1]].var()].reason == PropBy());
+        vars_used_for_cl.push_back(trail[trail_lim[lev-1]].lit.var());
+        assert(varData[trail[trail_lim[lev-1]].lit.var()].reason == PropBy());
         assert(level_used_for_cl_arr[lev] == 1);
         level_used_for_cl_arr[lev] = 0;
     }
@@ -1606,7 +1606,7 @@ Clause* Searcher::handle_last_confl(
             , old_glue
             , old_decision_level
             , clauseID
-            , decision_cl //decision_clause
+            , false //decision_clause
             , false //ternary reslution clause
         );
     }
