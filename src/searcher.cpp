@@ -2089,8 +2089,9 @@ inline void Searcher::dump_search_loop_stats(double myTime)
 
     print_restart_header();
     dump_search_sql(myTime);
-    if (conf.verbosity && conf.print_all_restarts)
+    if (conf.verbosity && conf.print_all_restarts) {
         print_restart_stat_line();
+    }
     #ifdef STATS_NEEDED
     if (sqlStats
         && conf.dump_individual_restarts_and_clauses
