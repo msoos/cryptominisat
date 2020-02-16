@@ -1137,7 +1137,7 @@ lbool Searcher::search()
 
     //Loop until restart or finish (SAT/UNSAT)
     PropBy confl;
-    lbool dec_ret = l_Undef;
+    lbool search_ret;
 
     while (!params.needToStopSearch
         || !confl.isNULL() //always finish the last conflict
@@ -1160,8 +1160,8 @@ lbool Searcher::search()
             #endif
             hist.trailDepthHistLonger.push(trail.size());
             if (!handle_conflict(confl)) {
-                dump_search_loop_stats(myTime);
-                return l_False;
+                search_ret = l_False;
+                goto end;
             }
             check_need_restart();
         } else {
@@ -1177,8 +1177,8 @@ lbool Searcher::search()
 
             if (ret == gauss_ret::g_false) {
                 //cout << "g_false" << endl;
-                dump_search_loop_stats(myTime);
-                return l_False;
+                search_ret = l_False;
+                goto end;
             }
 
             assert(ret == gauss_ret::g_nothing);
@@ -1191,10 +1191,10 @@ lbool Searcher::search()
                 return l_False;
             }
             reduce_db_if_needed();
-            dec_ret = new_decision<false>();
+            lbool dec_ret = new_decision<false>();
             if (dec_ret != l_Undef) {
-                dump_search_loop_stats(myTime);
-                return dec_ret;
+                search_ret = dec_ret;
+                goto end;
             }
         }
     }
@@ -1204,15 +1204,19 @@ lbool Searcher::search()
     confl = propagate<false>();
     if (!confl.isNULL()) {
         ok = false;
-        return l_False;
+        search_ret = l_False;
+        goto end;
     }
     assert(solver->prop_at_head());
     if (!solver->datasync->syncData()) {
-        return l_False;
+        search_ret = l_False;
+        goto end;
     }
-    dump_search_loop_stats(myTime);
+    search_ret = l_Undef;
 
-    return l_Undef;
+    end:
+    dump_search_loop_stats(myTime);
+    return search_ret;
 }
 
 inline void Searcher::update_branch_params()
