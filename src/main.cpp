@@ -814,7 +814,6 @@ void Main::add_supported_options()
     .add(sqlOptions)
     #endif
     .add(restartOptions)
-    .add(branchOptions)
     #if defined(FINAL_PREDICTOR)
     .add(predictOptions)
     #endif
