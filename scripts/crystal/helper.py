@@ -33,6 +33,7 @@ import time
 import mlflow
 import os.path
 import sqlite3
+import functools
 from pprint import pprint
 
 
@@ -92,7 +93,7 @@ def parse_configs(confs):
     return conf_from, conf_to
 
 
-def divide(dividend, divisor, df, features, verb, name=None):
+def helper_divide(dividend, divisor, df, features, verb, name=None):
     """
     to be used like:
     import functools
@@ -117,7 +118,7 @@ def divide(dividend, divisor, df, features, verb, name=None):
     df[name] = df[dividend].div(df[divisor]+0.000000001)
     return name
 
-def larger_than(lhs, rhs, df, features, verb):
+def helper_larger_than(lhs, rhs, df, features, verb):
     """
     to be used like:
     import functools
@@ -132,7 +133,7 @@ def larger_than(lhs, rhs, df, features, verb):
     df[name] = (df[lhs] > df[rhs]).astype(int)
     return name
 
-def add(toadd, df, features, verb):
+def helper_add(toadd, df, features, verb):
     """
     to be used like:
     import functools
@@ -599,3 +600,148 @@ static int {funcname}(\n{func_signature}) {{
         self.value = clf.tree_.value
 
         self.recurse(left, right, threshold, features, 0, starttab)
+
+def cldata_add_computed_features(df, verbose):
+    print("Adding computed features...")
+    del df["cl.conflicts"]
+    divide = functools.partial(helper_divide, df=df, features=list(df), verb=verbose)
+    larger_than = functools.partial(helper_larger_than, df=df, features=list(df), verb=verbose)
+    add = functools.partial(helper_add, df=df, features=list(df), verb=verbose)
+
+    # relative overlaps
+    print("Relative overlaps...")
+    divide("cl.num_total_lits_antecedents", "cl.antec_sum_size_hist")
+
+    # ************
+    # TODO decision level and branch depth are the same, right???
+    # ************
+    print("size/glue/trail rel...")
+    divide("cl.trail_depth_level", "cl.trail_depth_level_hist")
+
+    rst_cur_all_props = add(["rst_cur.propBinRed",
+                            "rst_cur.propBinIrred",
+                            "rst_cur.propLongRed",
+                            "rst_cur.propLongIrred"])
+
+    divide("cl.num_total_lits_antecedents", "cl.num_antecedents")
+
+    # sum RDB
+    orig_cols = list(df)
+    for col in orig_cols:
+        if ("rdb0" in col) and "restart_type" not in col:
+            col2 = col.replace("rdb0", "rdb1")
+            cboth = "("+col+"+"+col2+")"
+            df[cboth] = df[col]+df[col2]
+
+    rdb0_act_ranking_rel = divide("rdb0.act_ranking", "rdb0.tot_cls_in_db", name="rdb0_act_ranking_rel")
+    rdb1_act_ranking_rel = divide("rdb1.act_ranking", "rdb1.tot_cls_in_db", name="rdb1_act_ranking_rel")
+    rdb0_plus_rdb1_ranking_rel = add([rdb0_act_ranking_rel, rdb1_act_ranking_rel])
+
+    divide("rdb0.sum_uip1_used", "cl.time_inside_solver")
+    divide("rdb1.sum_uip1_used", "cl.time_inside_solver")
+
+    divisors = [
+        "cl.size_hist"
+        , "cl.glue_hist"
+        , "cl.glue"
+        , "cl.old_glue"
+        , "cl.glue_hist_queue"
+        , "cl.glue_hist_long"
+        # , "cl.decision_level_hist"
+        , "cl.num_resolutions_hist_lt"
+        # , "cl.trail_depth_level_hist"
+        # , "cl.backtrack_level_hist"
+        , "cl.branch_depth_hist_queue"
+        , "cl.antec_overlap_hist"
+        , "(cl.num_total_lits_antecedents/cl.num_antecedents)"
+        , "cl.num_antecedents"
+        , rdb0_act_ranking_rel
+        , rdb1_act_ranking_rel
+        #, "szfeat_cur.var_cl_ratio"
+        , "cl.time_inside_solver"
+        #, "((double)(rdb0.act_ranking_rel+rdb1.act_ranking_rel)/2.0)"
+        #, "sqrt(rdb0.act_ranking_rel)"
+        #, "sqrt(rdb1.act_ranking_rel)"
+        #, "sqrt(rdb0_and_rdb1.act_ranking_rel_avg)"
+        # , "cl.num_overlap_literals"
+        # , "rst_cur.resolutions"
+        #, "rdb0.act_ranking_top_10"
+        ]
+
+    # Thanks to Chai Kian Ming Adam for the idea of using LOG instead of SQRT
+    # add LOG
+    if True:
+        toadd = []
+        for divisor in divisors:
+            x = "log2("+divisor+")"
+            df[x] = df[divisor].apply(np.log2)
+            toadd.append(x)
+        divisors.extend(toadd)
+
+    # relative data
+    cols = list(df)
+    for col in cols:
+        if ("rdb" in col or "cl." in col or "rst" in col) and "restart_type" not in col and "tot_cls_in" not in col and "rst_cur" not in col:
+            for divisor in divisors:
+                divide(col, divisor)
+
+    divisors.extend([
+        rst_cur_all_props
+        , "rdb0.last_touched_diff"
+        , "rdb0.sum_delta_confl_uip1_used"
+        , "rdb0.used_for_uip_creation"
+        , "(rdb0.sum_uip1_used/cl.time_inside_solver)"
+        , "(rdb1.sum_uip1_used/cl.time_inside_solver)"])
+
+    # smaller/larger than
+    if False:
+        for col in cols:
+            if ("rdb" in col or "cl." in col or "rst" in col) and "restart_type" not in col:
+                for divisor in divisors:
+                    larger_than(col, divisor)
+
+    # satzilla stuff
+    if False:
+        divisors = [
+            "szfeat_cur.numVars",
+            "szfeat_cur.numClauses",
+            "szfeat_cur.var_cl_ratio",
+            "szfeat_cur.avg_confl_size",
+            "szfeat_cur.avg_branch_depth",
+            "szfeat_cur.red_glue_distr_mean"
+        ]
+        for col in orig_cols:
+            if "szfeat" in col:
+                for divisor in divisors:
+                    if "min" not in divisor:
+                        divide(col, divisor)
+                        larger_than(col, divisor)
+
+    # relative RDB
+    if True:
+        print("Relative RDB...")
+        for col in orig_cols:
+            if "rdb0" in col and "restart_type" not in col:
+                rdb0 = col
+                rdb1 = col.replace("rdb0", "rdb1")
+                larger_than(rdb0, rdb1)
+
+                raw_col = col.replace("rdb0.", "")
+                if raw_col not in ["propagations_made", "dump_no", "conflicts_made", "used_for_uip_creation", "sum_uip1_used", "clause_looked_at", "sum_delta_confl_uip1_used", "activity_rel", "last_touched_diff", "ttl"]:
+                    print(rdb0)
+                    divide(rdb0, rdb1)
+
+    # smaller-or-greater comparisons
+    print("smaller-or-greater comparisons...")
+    larger_than("cl.antec_sum_size_hist", "cl.num_total_lits_antecedents")
+    larger_than("cl.antec_overlap_hist", "cl.num_overlap_literals")
+
+    # print("flatten/list...")
+    #old = set(df.columns.values.flatten().tolist())
+    #df = df.dropna(how="all")
+    #new = set(df.columns.values.flatten().tolist())
+    #if len(old - new) > 0:
+        #print("ERROR: a NaN number turned up")
+        #print("columns: ", (old - new))
+        #assert(False)
+        #exit(-1)
