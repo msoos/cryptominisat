@@ -253,7 +253,8 @@ int main()
     //Let's use 4 threads
     solver.set_num_threads(4);
 
-    //We need 3 variables
+    //We need 3 variables. They will be: 0,1,2
+    //Variable numbers are always trivially increasing
     solver.new_vars(3);
 
     //add "1 0"
