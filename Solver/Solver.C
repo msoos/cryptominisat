@@ -146,7 +146,7 @@ bool Solver::addXorClause(vec<Lit>& ps, bool xor_clause_inverted, const uint gro
     } else {
         learnt_clause_group = std::max(group+1, learnt_clause_group);
 
-        XorClause* c = XorClause_new(ps, xor_clause_inverted, group);
+        XorClause* c = XorClause::XorClause_new(ps, xor_clause_inverted, group);
 
         xorclauses.push(c);
         attachClause(*c);
@@ -190,7 +190,7 @@ bool Solver::addClause(vec<Lit>& ps, const uint group, const char* group_name)
     } else {
         learnt_clause_group = std::max(group+1, learnt_clause_group);
 
-        Clause* c = Clause_new(ps, group);
+        Clause* c = Clause_new(ps, group, false);
 
         clauses.push(c);
         attachClause(*c);

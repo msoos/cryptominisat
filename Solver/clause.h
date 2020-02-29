@@ -64,8 +64,8 @@ public:
     }
 
     // -- use this function instead:
-    friend Clause* Clause_new(const vec<Lit>& ps, const uint group, const bool learnt = false);
-    friend Clause* Clause_new(const vector<Lit>& ps, const uint group, const bool learnt = false);
+//     friend Clause* Clause_new(const vec<Lit>& ps, const uint group, const bool learnt = false);
+//     friend Clause* Clause_new(const vector<Lit>& ps, const uint group, const bool learnt = false);
 
     uint         size        ()      const {
         return size_etc >> 4;
@@ -124,7 +124,7 @@ public:
 
     // -- use this function instead:
     template<class V>
-    friend XorClause* XorClause_new(const V& ps, const bool xor_clause_inverted, const uint group, const bool learnt = false) {
+    static XorClause* XorClause_new(const V& ps, const bool xor_clause_inverted, const uint group, const bool learnt = false) {
         void* mem = malloc(sizeof(XorClause) + sizeof(Lit)*(ps.size()));
         XorClause* real= new (mem) XorClause(ps, xor_clause_inverted, group, learnt);
         return real;
