@@ -110,6 +110,7 @@ __version__ = '@PROJECT_VERSION@'
 extra_link_args = []
 if platform.system() == 'Darwin':
     extra_link_args.append('-Wl,-rpath,'+"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+    # NOTE: below apparently could be obtained via: "xcrun --show-sdk-path"
 
 if platform.system() == 'Windows':
     libname = "cryptominisat5win"

@@ -311,7 +311,8 @@ int main()
     //Let's use 4 threads
     solver.set_num_threads(4);
 
-    //We need 3 variables
+    //We need 3 variables. They will be: 0,1,2
+    //Variable numbers are always trivially increasing
     solver.new_vars(3);
 
     //add "1 0"
@@ -415,62 +416,26 @@ only used to translate the original problem into CNF should not be added.
 This way, you will not get spurious solutions that don't differ in the main,
 important variables.
 
-Rust binding
+Rust bindings
 -----
 
-To build the Rust binding, download the prerequisites as before, go into the "Rust" subfolder and use cargo:
+To build the Rust bindings:
 
 ```
-sudo apt-get install build-essential cmake
-# not required but very useful
-sudo apt-get install zlib1g-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev help2man
-tar xzvf cryptominisat-version.tar.gz
-cd cryptominisat-version
-cd rust
-cargo build
+git clone https://github.com/msoos/cryptominisat-rs/
+cd cryptominisat-rs
+cargo build --release
 cargo test
 ```
 
-Now you can use your Rust bindings as:
+You can use it as per the (README)[https://github.com/msoos/cryptominisat-rs/blob/master/README.markdown] in that repository. To include CryptoMiniSat in your Rust project, add the dependency to your `Cargo.toml` file:
 
 ```
-extern crate cryptominisat;
-use cryptominisat::*;
-
-fn new_lit(var: u32, neg: bool) -> Lit {
-    Lit::new(var, neg).unwrap()
-}
-
-fn readme_code() {
-    let mut solver = Solver::new();
-    let mut clause = Vec::new();
-
-    solver.set_num_threads(4);
-    solver.new_vars(3);
-
-    clause.push(new_lit(0, false));
-    solver.add_clause(&clause);
-
-    clause.clear();
-    clause.push(new_lit(1, true));
-    solver.add_clause(&clause);
-
-    clause.clear();
-    clause.push(new_lit(0, true));
-    clause.push(new_lit(1, false));
-    clause.push(new_lit(2, false));
-    solver.add_clause(&clause);
-
-    let ret = solver.solve();
-
-    assert!(ret == Lbool::True);
-    assert!(solver.get_model()[0] == Lbool::True);
-    assert!(solver.get_model()[1] == Lbool::False);
-    assert!(solver.get_model()[2] == Lbool::True);
-}
+cryptominisat = { git = "https://github.com/msoos/cryptominisat-rs", branch= "master" }
 ```
 
-The above solves the same problem as above in Python and C++.
+You can see an example project using CryptoMiniSat in Rust (here)[https://github.com/msoos/caqe/].
+
 
 Preprocessor usage
 -----
