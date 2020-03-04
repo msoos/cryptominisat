@@ -577,7 +577,6 @@ inline bool Solver::get_decision_reaching_valid() const
     return decisions_reaching_model_valid;
 }
 
-
 } //end namespace
 
 #endif //SOLVER_H

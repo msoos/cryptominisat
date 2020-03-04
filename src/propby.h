@@ -63,9 +63,9 @@ class PropBy
             , data2(0)
         {
             //No roll-over
-             /*#ifdef DEBUG_PROPAGATEFROM
-             assert(offset == get_offset());
-             #endif*/
+            /*#ifdef DEBUG_PROPAGATEFROM
+            assert(offset == get_offset());
+            #endif*/
         }
 
         //Binary prop

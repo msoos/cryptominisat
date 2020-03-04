@@ -517,8 +517,7 @@ inline void CNF::check_no_removed_or_freed_cl_in_watch() const
 
 template<class T>
 bool CNF::satisfied_cl(const T& cl) const {
-    if (typeid(cl)==typeid(Clause&) && ((Clause&)cl).is_atmost()){
-
+    if (typeid(cl)==typeid(Clause&) && ((Clause&)cl).is_atmost()) {
         uint32_t numFalse = 0;
         // Scan through all literals
         for (uint32_t i = 0 ; i < ((Clause&)cl).size() ; i++) {
@@ -532,12 +531,12 @@ bool CNF::satisfied_cl(const T& cl) const {
 		return false;
     }
     else {
-    for(Lit lit: cl) {
-        if (value(lit) == l_True) {
-            return true;
+        for(Lit lit: cl) {
+            if (value(lit) == l_True) {
+                return true;
+            }
         }
-    }
-    return false;
+        return false;
     }
 }
 
