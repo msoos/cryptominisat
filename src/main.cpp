@@ -767,6 +767,8 @@ void Main::add_supported_options()
         , "Simulate DRAT")
     ("dumpdecformodel", po::value(&decisions_for_model_fname)->default_value(decisions_for_model_fname)
         , "Decisions for model will be dumped here")
+    ("writeunsat", po::value(&equivalent_unsat_fname)->default_value(equivalent_unsat_fname)
+        , "An equivalent UNSAT file will be stored here. Use with dumpdecformodel") // TODO : remove the constraint of dumpdecformodel
     ("sampling", po::value(&sampling_vars_str)->default_value(sampling_vars_str)
         , "Sampling vars, separated by comma")
     ("onlysampling", po::bool_switch(&only_sampling_solution)
@@ -1395,6 +1397,83 @@ void Main::dump_decisions_for_model()
     }
 }
 
+
+void Main::make_equivalent_unsat()
+{
+    assert(max_nr_of_solutions == 1);
+    assert(solver->okay());
+
+    cout << "c An equivalent UNSAT file written in " << equivalent_unsat_fname  << endl;
+
+
+
+    std::vector<lbool> implied_lits;
+    std::string implied_clause;
+    std::string cnf_fname =  vm["input"].as<vector<string>>()[0];
+    std::ofstream unsatfile;
+    // Copy original CNF
+    // solver->open_file_and_dump_irred_clauses(equivalent_unsat_fname);
+    std::ifstream source(cnf_fname, std::ios::binary);
+    std::ofstream dest(equivalent_unsat_fname, std::ios::binary);
+
+    dest << source.rdbuf();
+
+    source.close();
+    dest.close();
+
+    // TODO : header is non-matching in number of clauses
+
+    unsatfile.open(equivalent_unsat_fname.c_str(), std::ofstream::app);
+
+    implied_lits = solver->get_model();     // element l_Undef means not an implied lit
+
+    if (!(unsatfile)) {
+        cout
+        << "ERROR: Couldn't open file '"
+        << equivalent_unsat_fname
+        << "' for writing decisions!"
+        << endl;
+        std::exit(-1);
+    }
+
+    if (!solver->get_decision_reaching_valid()) {
+        unsatfile << "INVALID" << endl;     // TODO : this should be better
+        return;
+    }
+
+    if (conf.verbosity) {
+        cout << "c number of decision "
+        << solver->get_decisions_reaching_model().size()
+        << endl << "c literals in implied clause "
+        << solver->nVars() - solver->get_decisions_reaching_model().size()
+        << endl;
+    }
+
+
+
+
+
+    // Print decision literals
+    for(const Lit l: solver->get_decisions_reaching_model()) {
+        implied_lits[l.var()] = l_Undef;
+        unsatfile << l << " 0" << endl;
+    }
+
+
+    // Print implied literals in a clause
+    for (uint32_t i = 0; i != solver->nVars(); i++) {
+        if (implied_lits[i] != l_Undef){
+            unsatfile
+            << ((solver->get_model()[i]==l_True) ? "-" : "")
+            << (i+1) <<  " ";
+        }
+    }
+
+    unsatfile << " 0" << endl;
+
+}
+
+
 lbool Main::multi_solutions()
 {
     unsigned long current_nr_of_solutions = 0;
@@ -1406,7 +1485,10 @@ lbool Main::multi_solutions()
             dump_decisions_for_model();
             assert(max_nr_of_solutions == 1);
         }
-
+        if (ret == l_True && !equivalent_unsat_fname.empty()) {
+            make_equivalent_unsat();
+            assert(max_nr_of_solutions == 1);
+        }
         if (ret == l_True && current_nr_of_solutions < max_nr_of_solutions) {
             printResultFunc(&cout, false, ret);
             if (resultfile) {

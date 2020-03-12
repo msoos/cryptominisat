@@ -68,6 +68,7 @@ class Main: public MainCommon
         void parse_restart_type();
         void parse_polarity_type();
         void dump_decisions_for_model();
+        void make_equivalent_unsat();
         void check_num_threads_sanity(const unsigned thread_num) const;
 
         po::positional_options_description p;
@@ -111,6 +112,7 @@ class Main: public MainCommon
         int sql = 0;
         string sqlite_filename;
         string decisions_for_model_fname;
+        string equivalent_unsat_fname;
 
         //Sampling vars
         vector<uint32_t> sampling_vars;
