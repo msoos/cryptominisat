@@ -125,6 +125,50 @@ TEST_F(impliedby, ret_false_3)
     EXPECT_EQ(false, ret);
 }
 
+TEST_F(impliedby, ret_false_4)
+{
+    s->add_clause(str_to_cl("1, -2"));
+    s->add_clause(str_to_cl("-1"));
+    s->simplify();
+    lits = str_to_cl("2");
+    bool ret = s->implied_by(lits, out_implied_by);
+    EXPECT_EQ(false, ret);
+}
+
+TEST_F(impliedby, no_imply)
+{
+    s->add_clause(str_to_cl("1, -2"));
+    s->add_clause(str_to_cl("-1"));
+    s->simplify();
+    lits = str_to_cl("-1");
+    bool ret = s->implied_by(lits, out_implied_by);
+    EXPECT_EQ(true, ret);
+    EXPECT_EQ(0, out_implied_by.size());
+}
+
+TEST_F(impliedby, no_imply_2)
+{
+    s->add_clause(str_to_cl("-1"));
+    s->add_clause(str_to_cl("1, -2"));
+    s->simplify();
+    lits = str_to_cl("-2");
+    bool ret = s->implied_by(lits, out_implied_by);
+    EXPECT_EQ(true, ret);
+    EXPECT_EQ(0, out_implied_by.size());
+}
+
+TEST_F(impliedby, imply_3)
+{
+    s->add_clause(str_to_cl("1, -2"));
+    s->add_clause(str_to_cl("2, -3"));
+    s->simplify();
+    lits = str_to_cl("-1");
+    bool ret = s->implied_by(lits, out_implied_by);
+    EXPECT_EQ(true, ret);
+    std::sort(out_implied_by.begin(), out_implied_by.end());
+    EXPECT_EQ(str_to_cl("-1, -2, -3"), out_implied_by);
+}
+
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

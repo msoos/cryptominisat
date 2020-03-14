@@ -4195,7 +4195,6 @@ bool Solver::implied_by(const std::vector<Lit>& lits,
         }
     }
 
-    //Nothing got set, nothing will happen, returning
     if (decisionLevel() == 0) {
         return true;
     }
@@ -4206,6 +4205,8 @@ bool Solver::implied_by(const std::vector<Lit>& lits,
         cancelUntil(0);
         return false;
     }
+    //DO NOT add the "optimization" to return when nothing got propagated
+    //replaced variables CAN be added!!!
 
     out_implied.reserve(trail.size()-trail_lim[0]);
     for(uint32_t i = trail_lim[0]; i < trail.size(); i++) {
