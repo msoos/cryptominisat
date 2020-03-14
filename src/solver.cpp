@@ -4170,21 +4170,21 @@ vector<double> Solver::get_vsids_scores() const
     return scores_outer;
 }
 
-bool Solver::propagated_by(const std::vector<Lit>& lits,
-                                  std::vector<Lit>& out_propagated)
+bool Solver::implied_by(const std::vector<Lit>& lits,
+                                  std::vector<Lit>& out_implied)
 {
-    out_propagated.clear();
+    out_implied.clear();
     if (!okay()) {
         return false;
     }
 
-    propagated_by_tmp_lits = lits;
-    if (!addClauseHelper(propagated_by_tmp_lits)) {
+    implied_by_tmp_lits = lits;
+    if (!addClauseHelper(implied_by_tmp_lits)) {
         return false;
     }
 
     assert(decisionLevel() == 0);
-    for(Lit p: propagated_by_tmp_lits) {
+    for(Lit p: implied_by_tmp_lits) {
         if (value(p) == l_Undef) {
             new_decision_level();
             enqueue<false>(p);
@@ -4207,25 +4207,25 @@ bool Solver::propagated_by(const std::vector<Lit>& lits,
         return false;
     }
 
-    out_propagated.reserve(trail.size()-trail_lim[0]);
+    out_implied.reserve(trail.size()-trail_lim[0]);
     for(uint32_t i = trail_lim[0]; i < trail.size(); i++) {
         if (trail[i].lit.var() < nVars()) {
-            out_propagated.push_back(trail[i].lit);
+            out_implied.push_back(trail[i].lit);
         }
     }
     cancelUntil(0);
 
     //Map to outer
-    for(auto& l: out_propagated) {
+    for(auto& l: out_implied) {
         l = map_inter_to_outer(l);
     }
-    varReplacer->extend_pop_queue(out_propagated);
+    varReplacer->extend_pop_queue(out_implied);
 
     //Map to outside
     if (get_num_bva_vars() != 0) {
         cout << "get_num_bva_vars(): " << get_num_bva_vars() << endl;
         assert(false && "BVA is currently not allowed in this mode, please turn it off");
-        //out_propagated = map_back_vars_to_without_bva(out_propagated);
+        //out_implied = map_back_vars_to_without_bva(out_implied);
     }
     return true;
 }

@@ -172,7 +172,7 @@ set (MY_TESTS
     solver_test
     cardfinder_test
     ternary_resolve_test
-    prop_by_test
+    implied_by_test
 #    undefine_test
 )
 

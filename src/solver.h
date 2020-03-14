@@ -104,9 +104,9 @@ class Solver : public Searcher
         vector<pair<Lit, Lit> > get_all_binary_xors() const;
         vector<Xor> get_recovered_xors(const bool xor_together_xors);
         vector<double> get_vsids_scores() const;
-        vector<Lit> propagated_by_tmp_lits;
-        bool propagated_by(const std::vector<Lit>& lits,
-            std::vector<Lit>& out_propagated
+        vector<Lit> implied_by_tmp_lits;
+        bool implied_by(const std::vector<Lit>& lits,
+            std::vector<Lit>& out_implied
         );
 
         //get learnt clauses

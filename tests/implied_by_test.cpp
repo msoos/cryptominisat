@@ -32,69 +32,70 @@ using namespace CMSat;
 #include <vector>
 using std::vector;
 
-struct propby : public ::testing::Test {
-    propby()
+struct impliedby : public ::testing::Test {
+    impliedby()
     {
 
         SolverConf conf;
         //conf.verbosity = 20;
         s = new SATSolver(&conf);
+        s->set_bva(0);
         s->new_vars(30);
     }
-    ~propby()
+    ~impliedby()
     {
         delete s;
     }
 
     SATSolver* s;
     vector<Lit> lits;
-    vector<Lit> out_prop_by;
+    vector<Lit> out_implied_by;
 };
 
 
-TEST_F(propby, noprop)
+TEST_F(impliedby, noprop)
 {
     s->add_clause(str_to_cl("1"));
     lits = str_to_cl("1");
-    bool ret = s->propagated_by(lits, out_prop_by);
+    bool ret = s->implied_by(lits, out_implied_by);
     EXPECT_EQ(true, ret);
-    EXPECT_EQ(0, out_prop_by.size());
+    EXPECT_EQ(0, out_implied_by.size());
 }
 
-TEST_F(propby, prop_1)
+TEST_F(impliedby, prop_1)
 {
     s->add_clause(str_to_cl("1, 2"));
     lits = str_to_cl("-1");
-    bool ret = s->propagated_by(lits, out_prop_by);
+    bool ret = s->implied_by(lits, out_implied_by);
     EXPECT_EQ(true, ret);
-    EXPECT_EQ(str_to_cl("-1, 2"), out_prop_by);
+    EXPECT_EQ(str_to_cl("-1, 2"), out_implied_by);
 }
 
-TEST_F(propby, replace_prop_1)
+TEST_F(impliedby, replace_prop_1)
 {
     s->add_clause(str_to_cl("1, 2"));
     s->add_clause(str_to_cl("-1, -2"));
     s->simplify();
     lits = str_to_cl("-1");
-    bool ret = s->propagated_by(lits, out_prop_by);
+    bool ret = s->implied_by(lits, out_implied_by);
     EXPECT_EQ(true, ret);
-    std::sort(out_prop_by.begin(), out_prop_by.end());
-    EXPECT_EQ(str_to_cl("-1, 2"), out_prop_by);
+    std::sort(out_implied_by.begin(), out_implied_by.end());
+    EXPECT_EQ(str_to_cl("-1, 2"), out_implied_by);
 }
 
-TEST_F(propby, replace_prop_2)
+TEST_F(impliedby, replace_prop_2)
 {
     s->add_clause(str_to_cl("1, 2"));
     s->add_clause(str_to_cl("-1, -2"));
     s->simplify();
     lits = str_to_cl("-2");
-    bool ret = s->propagated_by(lits, out_prop_by);
+    bool ret = s->implied_by(lits, out_implied_by);
     EXPECT_EQ(true, ret);
-    std::sort(out_prop_by.begin(), out_prop_by.end());
-    EXPECT_EQ(str_to_cl("1, -2"), out_prop_by);
+    std::sort(out_implied_by.begin(), out_implied_by.end());
+    EXPECT_EQ(str_to_cl("1, -2"), out_implied_by);
 }
 
-TEST_F(propby, ret_false_1)
+TEST_F(impliedby, ret_false_1)
 {
     s->add_clause(str_to_cl("1, 2"));
     s->add_clause(str_to_cl("-1, -2"));
@@ -102,25 +103,25 @@ TEST_F(propby, ret_false_1)
     s->add_clause(str_to_cl("-1, 2"));
     s->simplify();
     lits = str_to_cl("3");
-    bool ret = s->propagated_by(lits, out_prop_by);
+    bool ret = s->implied_by(lits, out_implied_by);
     EXPECT_EQ(false, ret);
 }
 
-TEST_F(propby, ret_false_2)
+TEST_F(impliedby, ret_false_2)
 {
     s->add_clause(str_to_cl("1"));
     s->simplify();
     lits = str_to_cl("-1");
-    bool ret = s->propagated_by(lits, out_prop_by);
+    bool ret = s->implied_by(lits, out_implied_by);
     EXPECT_EQ(false, ret);
 }
 
-TEST_F(propby, ret_false_3)
+TEST_F(impliedby, ret_false_3)
 {
     s->add_clause(str_to_cl("1, -2"));
     s->simplify();
     lits = str_to_cl("-1, 2");
-    bool ret = s->propagated_by(lits, out_prop_by);
+    bool ret = s->implied_by(lits, out_implied_by);
     EXPECT_EQ(false, ret);
 }
 
