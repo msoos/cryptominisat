@@ -1282,9 +1282,12 @@ DLL_PUBLIC std::vector<double> SATSolver::get_vsids_scores()
 }
 
 
-DLL_PUBLIC std::vector<Lit> SATSolver::propagated_by(const std::vector<Lit>& t)
+DLL_PUBLIC bool SATSolver::propagated_by(
+    const std::vector<Lit>& lits,
+    std::vector<Lit>& out_propagated
+)
 {
-    return data->solvers[data->which_solved]->propagated_by(t);
+    return data->solvers[data->which_solved]->propagated_by(lits, out_propagated);
 }
 
 DLL_PUBLIC void SATSolver::set_full_bve(int val)

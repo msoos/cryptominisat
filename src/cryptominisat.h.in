@@ -187,7 +187,12 @@ namespace CMSat {
         std::vector<uint32_t> get_var_incidence();
         std::vector<uint32_t> get_var_incidence_also_red();
         std::vector<double> get_vsids_scores();
-        std::vector<Lit> propagated_by(const std::vector<Lit>& t);
+
+        //Given a set of literals to enqueue, returns:
+        // 1) Whether they imply SAT/UNSAT. If "true": SAT. If "false": UNSAT
+        // 2) into "out_propagated" the set of literals they imply.
+        bool propagated_by(
+            const std::vector<Lit>& lits, std::vector<Lit>& out_propagated);
 
         //////////////////////
         //Below must be done in-order. Multi-threading not allowed.

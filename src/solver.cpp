@@ -4170,51 +4170,64 @@ vector<double> Solver::get_vsids_scores() const
     return scores_outer;
 }
 
-vector<Lit> Solver::propagated_by(const std::vector<Lit>& t)
+bool Solver::propagated_by(const std::vector<Lit>& lits,
+                                  std::vector<Lit>& out_propagated)
 {
-    vector<Lit> ps = t;
-    if (!addClauseHelper(ps)) {
-        return std::vector<Lit>();
+    out_propagated.clear();
+    if (!okay()) {
+        return false;
+    }
+
+    propagated_by_tmp_lits = lits;
+    if (!addClauseHelper(propagated_by_tmp_lits)) {
+        return false;
     }
 
     assert(decisionLevel() == 0);
-    for(Lit p: ps) {
+    for(Lit p: propagated_by_tmp_lits) {
         if (value(p) == l_Undef) {
             new_decision_level();
-            enqueue<true>(p);
+            enqueue<false>(p);
         }
         if (value(p) == l_False) {
             cancelUntil(0);
-            return std::vector<Lit>();
+            return false;
         }
     }
 
-    PropBy x = propagate<true>();
-
-    if (!x.isNULL() || decisionLevel() == 0) {
-        cancelUntil(0);
-        return std::vector<Lit>();
+    //Nothing got set, nothing will happen, returning
+    if (decisionLevel() == 0) {
+        return true;
     }
 
-    vector<Lit> prop;
-    prop.reserve(trail.size()-trail_lim[0]);
+    PropBy x = propagate<false>();
+    if (!x.isNULL()) {
+        //UNSAT due to prop
+        cancelUntil(0);
+        return false;
+    }
+
+    out_propagated.reserve(trail.size()-trail_lim[0]);
     for(uint32_t i = trail_lim[0]; i < trail.size(); i++) {
         if (trail[i].lit.var() < nVars()) {
-            prop.push_back(trail[i].lit);
+            out_propagated.push_back(trail[i].lit);
         }
     }
     cancelUntil(0);
 
     //Map to outer
-    for(auto& l: prop) {
+    for(auto& l: out_propagated) {
         l = map_inter_to_outer(l);
     }
-    varReplacer->extend_pop_queue(prop);
+    varReplacer->extend_pop_queue(out_propagated);
 
     //Map to outside
-    assert(get_num_bva_vars() == 0);
-    //vector<Lit> prop_outside = map_back_vars_to_without_bva(prop_outer);
-    return prop;
+    if (get_num_bva_vars() != 0) {
+        cout << "get_num_bva_vars(): " << get_num_bva_vars() << endl;
+        assert(false && "BVA is currently not allowed in this mode, please turn it off");
+        //out_propagated = map_back_vars_to_without_bva(out_propagated);
+    }
+    return true;
 }
 
 void Solver::reset_vsids()
