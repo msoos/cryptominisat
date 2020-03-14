@@ -27,6 +27,11 @@ THE SOFTWARE.
 #include <sstream>
 using namespace CMSat;
 
+//UPDATE.
+//Fixing to:
+//1832701 out-9660847.wlm01-4  239 147 92 a54ed65   --simdrat 1 --bva 1 --slsgetphase 1 --slstype ccnr_yalsat --confbtwsimp 70000 --confbtwsimpinc 1.1 --modbranchstr 3
+
+
 DLL_PUBLIC SolverConf::SolverConf() :
         //Variable activities
         var_inc_vsids(1)
@@ -76,7 +81,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         #else
         , branch_strategy_change_everyN(55000)
         #endif
-        , branch_mod_str(2)
+        , branch_mod_str(3)
         , doMaple(true)
         , modulo_maple_iter(3)
 
@@ -154,7 +159,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , breakid_matrix_detect(true)
 
         //Bounded variable addition
-        , do_bva(false)
+        , do_bva(true)
         #ifdef USE_GAUSS
         , min_bva_gain(2)
         #else
@@ -205,8 +210,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , do_simplify_problem(true)
         , full_simplify_at_startup(false)
         , never_stop_search(false)
-        , num_conflicts_of_search(100ULL*1000ULL)
-        , num_conflicts_of_search_inc(1.2)
+        , num_conflicts_of_search(70ULL*1000ULL)
+        , num_conflicts_of_search_inc(1.1)
         , num_conflicts_of_search_inc_max(10)
         , max_num_simplify_per_solve_call(25)
         , simplify_schedule_startup(
@@ -272,8 +277,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , yalsat_max_mems(40)
         , sls_memoutMB(500)
         , walksat_max_runs(50)
-        , sls_get_phase(0)
-        , which_sls("yalsat")
+        , sls_get_phase(1)
+        , which_sls("ccnr_yalsat")
 
         //Distillation
         , do_distill_clauses(true)
