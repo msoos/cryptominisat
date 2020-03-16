@@ -150,6 +150,13 @@ if (USE_GAUSS)
     )
 endif()
 
+if (MPI_FOUND)
+    SET(cryptoms_lib_files ${cryptoms_lib_files}
+        datasyncserver.cpp
+    )
+    SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${MPI_CXX_LIBRARIES})
+endif()
+
 if (M4RI_FOUND)
     include_directories(${M4RI_INCLUDE_DIRS})
 

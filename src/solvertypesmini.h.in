@@ -153,9 +153,21 @@ public:
 
     uint8_t getValue() const { return value; }
 
-    friend int   toInt  (lbool l);
-    friend lbool toLbool(int   v);
+    friend uint32_t   toInt  (lbool l);
+    friend lbool toLbool(uint32_t   v);
 };
+
+inline uint32_t toInt  (lbool l)
+{
+    return l.value;
+}
+
+inline lbool toLbool(uint32_t v)
+{
+    lbool l;
+    l.value = v;
+    return l;
+}
 
 inline lbool boolToLBool(const bool b)
 {

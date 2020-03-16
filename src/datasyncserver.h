@@ -26,24 +26,23 @@ THE SOFTWARE.
 #include <vector>
 #include "mpi.h"
 
-#include "SolverTypes.h"
-#include "SharedData.h"
+#include "solvertypes.h"
+#include "shareddata.h"
+
+namespace CMSat {
 
 class DataSyncServer {
     public:
         DataSyncServer();
-        const bool actAsServer();
+        bool actAsServer();
     private:
-        const bool syncFromMPI();
+        bool syncFromMPI();
         void addOneBinToOthers(const Lit lit1, const Lit lit2);
-        void addOneTriToOthers(const Lit lit1, const Lit lit2, const Lit lit3);
         void sendDataToAll();
         void forwardNeedToInterrupt();
 
         std::vector<uint32_t> syncMPIFinish;
-        std::vector<uint32_t> syncMPIFinishTri;
         std::vector<std::vector<Lit> > bins;
-        std::vector<std::vector<TriClause> > tris;
         std::vector<lbool> value;
 
         bool ok;
@@ -62,10 +61,10 @@ class DataSyncServer {
         uint32_t nVars;
         uint32_t recvBinData;
         uint32_t sentBinData;
-        uint32_t recvTriData;
-        uint32_t sentTriData;
         uint32_t numGotPacket;
         uint32_t lastSendNumGotPacket;
 };
+
+}
 
 #endif //DATASYNC_SERVER_H

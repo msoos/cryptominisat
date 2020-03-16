@@ -328,9 +328,12 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , global_multiplier_multiplier_max(3)
         , var_and_mem_out_mult(1.0)
 
+        //Multi-thread, MPI
+        , sync_every_confl(20000)
+        , thread_num(0)
+
         //misc
         , origSeed(0)
-        , sync_every_confl(20000)
         , reconfigure_val(0)
         , reconfigure_at(2)
         , preprocess(0)

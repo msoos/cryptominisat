@@ -20,10 +20,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#include "DataSyncServer.h"
+#include "datasyncserver.h"
+#include "solvertypes.h"
+#include <cassert>
 using std::vector;
 
 //#define VERBOSE_DEBUG_MPI_SENDRCV
+
+using namespace CMSat;
 
 DataSyncServer::DataSyncServer() :
     ok(true)
@@ -31,8 +35,6 @@ DataSyncServer::DataSyncServer() :
     , nVars(0)
     , recvBinData(0)
     , sentBinData(0)
-    , recvTriData(0)
-    , sentTriData(0)
     , numGotPacket(0)
     , lastSendNumGotPacket(0)
 {
@@ -56,14 +58,13 @@ DataSyncServer::DataSyncServer() :
     assert(sizeof(unsigned) == sizeof(uint32_t));
 }
 
-const bool DataSyncServer::syncFromMPI()
+bool DataSyncServer::syncFromMPI()
 {
     int err;
     MPI_Status status;
     int flag;
     int count;
     uint32_t thisRecvBinData = 0;
-    uint32_t thisRecvTriData = 0;
 
     err = MPI_Iprobe(MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &flag, &status);
     assert(err == MPI_SUCCESS);
@@ -88,13 +89,13 @@ const bool DataSyncServer::syncFromMPI()
         nVars = buf[at];
         value.resize(nVars, l_Undef);
         bins.resize(nVars*2);
-        tris.resize(nVars*2);
         syncMPIFinish.resize(nVars*2, 0);
-        syncMPIFinishTri.resize(nVars*2, 0);
     }
+
+    //Unit
     assert(nVars == buf[at]);
     at++;
-    for (Var var = 0; var < nVars; var++, at++) {
+    for (uint32_t var = 0; var < nVars; var++, at++) {
         lbool val = toLbool(buf[at]);
         if (value[var] == l_Undef) {
             if (val != l_Undef) value[var] = val;
@@ -110,6 +111,7 @@ const bool DataSyncServer::syncFromMPI()
         }
     }
 
+    //Binary
     assert(buf[at] == nVars*2);
     at++;
     for (uint32_t wsLit = 0; wsLit < nVars*2; wsLit++) {
@@ -124,22 +126,6 @@ const bool DataSyncServer::syncFromMPI()
     }
     recvBinData += thisRecvBinData;
 
-    assert(buf[at] == nVars*2);
-    at++;
-    for (uint32_t wsLit = 0; wsLit < nVars*2; wsLit++) {
-        Lit lit1 = ~Lit::toLit(wsLit);
-        uint32_t num = buf[at];
-        at++;
-        for (uint32_t i = 0; i < num; i++, at++) {
-            Lit lit2 = Lit::toLit(buf[at]);
-            at++;
-            Lit lit3 = Lit::toLit(buf[at]);
-            addOneTriToOthers(lit1, lit2, lit3);
-            thisRecvTriData++;
-        }
-    }
-    recvTriData += thisRecvTriData;
-
     #ifdef VERBOSE_DEBUG_MPI_SENDRCV
     std::cout << "-->> MPI Server Received " << thisRecvBinData << " bins" << std::endl;
     std::cout << "-->> MPI Server Received " << thisRecvTriData << " tris" << std::endl;
@@ -149,22 +135,6 @@ const bool DataSyncServer::syncFromMPI()
     delete[] buf;
     numGotPacket++;
     return ok;
-}
-
-void DataSyncServer::addOneTriToOthers(const Lit lit1, const Lit lit2, const Lit lit3)
-{
-    assert(lit1 < lit2);
-    assert(lit2 < lit3);
-    assert(lit1.var() != lit2.var());
-    assert(lit2.var() != lit3.var());
-
-    vector<TriClause>& triCls = tris[(~lit1).toInt()];
-    for (vector<TriClause>::const_iterator it = triCls.begin(), end = triCls.end(); it != end; it++) {
-        if (it->lit2 == lit2
-            && it->lit3 == lit3) return;
-    }
-
-    triCls.push_back(TriClause(lit1, lit2, lit3));
 }
 
 void DataSyncServer::addOneBinToOthers(const Lit lit1, const Lit lit2)
@@ -181,6 +151,7 @@ void DataSyncServer::addOneBinToOthers(const Lit lit1, const Lit lit2)
 
 void DataSyncServer::sendDataToAll()
 {
+    int err;
     if (sendData != NULL) {
         int numFinished = 0;
         for (int i = 1; i < mpiSize; i++) {
@@ -190,10 +161,10 @@ void DataSyncServer::sendDataToAll()
             }
             MPI_Status status;
             int flag;
-            int err = MPI_Test(&(sendRequests[i]), &flag, &status);
+            err = MPI_Test(&(sendRequests[i]), &flag, &status);
             assert(err == MPI_SUCCESS);
             if (flag == true) {
-                int err = MPI_Request_free(&(sendRequests[i]));
+                err = MPI_Request_free(&(sendRequests[i]));
                 assert(err == MPI_SUCCESS);
                 sendRequestsFinished[i] = true;
                 numFinished++;
@@ -208,14 +179,15 @@ void DataSyncServer::sendDataToAll()
     }
 
     uint32_t thisSentBinData = 0;
-    uint32_t thisSentTriData = 0;
     vector<uint32_t> data;
     data.push_back((uint32_t)nVars);
-    for (Var var = 0; var < nVars; var++) {
-        data.push_back((uint32_t)value[var].getchar());
+    for (uint32_t var = 0; var < nVars; var++) {
+        data.push_back(toInt(value[var]));
     }
 
     data.push_back((uint32_t)nVars*2);
+
+    //Binaries
     uint32_t at = 0;
     for(vector<vector<Lit> >::const_iterator it = bins.begin(), end = bins.end(); it != end; it++, at++) {
         const vector<Lit>& binSet = *it;
@@ -229,22 +201,6 @@ void DataSyncServer::sendDataToAll()
         syncMPIFinish[at] = binSet.size();
     }
     sentBinData += thisSentBinData;
-
-    data.push_back((uint32_t)nVars*2);
-    at = 0;
-    for(vector<vector<TriClause> >::const_iterator it = tris.begin(), end = tris.end(); it != end; it++, at++) {
-        const vector<TriClause>& triSet = *it;
-        assert(triSet.size() >= syncMPIFinishTri[at]);
-        uint32_t sizeToSend = triSet.size() - syncMPIFinishTri[at];
-        data.push_back(sizeToSend);
-        for (uint32_t i = syncMPIFinishTri[at]; i < triSet.size(); i++) {
-            data.push_back(triSet[i].lit2.toInt());
-            data.push_back(triSet[i].lit3.toInt());
-            thisSentTriData++;
-        }
-        syncMPIFinishTri[at] = triSet.size();
-    }
-    sentTriData += thisSentTriData;
 
     uint32_t *sendData = new uint32_t[data.size()];
     std::copy(data.begin(), data.end(), sendData);
@@ -279,13 +235,13 @@ void DataSyncServer::forwardNeedToInterrupt()
 
     for (int i = 1; i < mpiSize; i++) {
         if (alreadySentInterrupt[i]) continue;
-        int err = MPI_Isend(0, 0, MPI_UNSIGNED, i, 1, MPI_COMM_WORLD, &(interruptRequests[i]));
+        err = MPI_Isend(0, 0, MPI_UNSIGNED, i, 1, MPI_COMM_WORLD, &(interruptRequests[i]));
         assert(err == MPI_SUCCESS);
         alreadySentInterrupt[i] = true;
     }
 }
 
-const bool DataSyncServer::actAsServer()
+bool DataSyncServer::actAsServer()
 {
     while(ok) {
         if (!syncFromMPI()) return false;

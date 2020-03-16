@@ -24,6 +24,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 include (GenerateExportHeader)
 include (GNUInstallDirs)
+enable_language( CXX )
 
 message(STATUS "LIB directory is '${CMAKE_INSTALL_LIBDIR}'")
 message(STATUS "BIN directory is '${CMAKE_INSTALL_BINDIR}'")
@@ -651,6 +652,19 @@ macro(cmsat_add_public_header LIBTARGET HEADER)
         PUBLIC_HEADER "${EXISTING_PUBLIC_HEADERS}"
      )
 endmacro()
+
+
+# -----------------------------------------------------------------------------
+# Look for MPI
+# -----------------------------------------------------------------------------
+find_package(MPI)
+if (MPI_FOUND)
+    add_definitions( -DUSE_MPI )
+    include_directories(${MPI_INCLUDE_PATH})
+    #set( CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER} )
+else (MPI_FOUND)
+     MESSAGE(STATUS "No suitable C++ MPI implementation found. CryptoMiniSat will not be distributed.")
+endif(MPI_FOUND)
 
 # -----------------------------------------------------------------------------
 # Look for python

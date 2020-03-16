@@ -86,7 +86,7 @@ using std::endl;
 
 //#define DEBUG_IMPLICIT_PAIRS_TRIPLETS
 
-Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter) :
+Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter, bool is_mpi) :
     Searcher(_conf, this, _must_interrupt_inter)
 {
     sqlStats = NULL;
@@ -115,7 +115,7 @@ Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter
     if (conf.doStrSubImplicit) {
         subsumeImplicit = new SubsumeImplicit(this);
     }
-    datasync = new DataSync(this, NULL);
+    datasync = new DataSync(this, NULL, is_mpi);
     Searcher::solver = this;
     reduceDB = new ReduceDB(this);
 
@@ -178,8 +178,7 @@ void Solver::set_sqlite(string
 
 void Solver::set_shared_data(SharedData* shared_data)
 {
-    delete datasync;
-    datasync = new DataSync(this, shared_data);
+    datasync->set_shared_data(shared_data);
 }
 
 bool Solver::add_xor_clause_inter(
