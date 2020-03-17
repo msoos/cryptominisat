@@ -2046,24 +2046,30 @@ void Searcher::rebuild_all_branch_strategy_setups()
 
 void Searcher::set_branch_strategy(const uint32_t iteration_num)
 {
-    #ifdef STATS_NEEDED
-    long modulo = iteration_num % 4;
-    #else
-    long modulo = iteration_num % conf.branch_mod_str;
-    #endif
-    if (modulo == 0) {
-        branch_strategy = branch::vsids;
-    } else if (modulo == 1) {
-        branch_strategy = branch::vmtf;
-    } else if (modulo == 2) {
-        branch_strategy = branch::maple;
-    } else if (modulo == 3) {
-        #ifdef STATS_NEEDED
-        branch_strategy = branch::rnd;
-        #else
-        assert(false && "Currently disabled");
-        #endif
+    uint32_t num = 0;
+    uint32_t vmtf = conf.branch_strategy_setup.find("vmtf") != std::string::npos;
+    uint32_t vsids = conf.branch_strategy_setup.find("vsids") != std::string::npos;
+    uint32_t maple = conf.branch_strategy_setup.find("maple") != std::string::npos;
+    uint32_t rnd = conf.branch_strategy_setup.find("rnd") != std::string::npos;
+
+    uint32_t total = (uint32_t)vmtf + (uint32_t)vsids + (uint32_t)maple + (uint32_t)rnd;
+    assert(total > 0);
+    CMSat::branch select[total];
+    uint32_t i = 0;
+    if (vmtf) {
+        select[i++]= branch::vmtf;
     }
+    if (vsids) {
+        select[i++]= branch::vsids;
+    }
+    if (maple) {
+        select[i++]= branch::maple;
+    }
+    if (rnd) {
+        select[i++]= branch::rnd;
+    }
+    uint32_t which = iteration_num % total;
+    branch_strategy = select[which];
 
     if (conf.verbosity) {
         cout << "c [branch] adjusting to: "

@@ -139,7 +139,7 @@ public:
                 exit(0);
 
             }else if (strncmp(argv[i], "-", 1) == 0){
-                cout << "ERROR! unknown flag" << argv[i] << endl;
+                cout << "ERROR! unknown flag: " << argv[i] << endl;
                 exit(0);
 
             }else

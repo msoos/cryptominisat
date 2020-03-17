@@ -420,9 +420,9 @@ void Main::add_supported_options()
     ("branchchangefreq"
         , po::value(&conf.branch_strategy_change_everyN)->default_value(conf.branch_strategy_change_everyN)
         , "Iterate through branch strategies with a cycle time of this many conflicts")
-    ("modbranchstr"
-        , po::value(&conf.branch_mod_str)->default_value(conf.branch_mod_str)
-        , "Modulo branch strategy")
+    ("branchstr"
+        , po::value(&conf.branch_strategy_setup)->default_value(conf.branch_strategy_setup)
+        , "Branch strategy. E.g. 'vmtf+vsids+maple+rnd'")
     ;
 
 
