@@ -4210,3 +4210,64 @@ bool Solver::check_assumptions_contradict_foced_assignement() const
     }
     return false;
 }
+
+bool Solver::implied_by(const std::vector<Lit>& lits,
+                                  std::vector<Lit>& out_implied)
+{
+    out_implied.clear();
+    if (!okay()) {
+        return false;
+    }
+
+    implied_by_tmp_lits = lits;
+    if (!addClauseHelper(implied_by_tmp_lits)) {
+        return false;
+    }
+
+    assert(decisionLevel() == 0);
+    for(Lit p: implied_by_tmp_lits) {
+        if (value(p) == l_Undef) {
+            new_decision_level();
+            enqueue<false>(p);
+        }
+        if (value(p) == l_False) {
+            cancelUntil(0);
+            return false;
+        }
+    }
+
+    if (decisionLevel() == 0) {
+        return true;
+    }
+
+    PropBy x = propagate<false>();
+    if (!x.isNULL()) {
+        //UNSAT due to prop
+        cancelUntil(0);
+        return false;
+    }
+    //DO NOT add the "optimization" to return when nothing got propagated
+    //replaced variables CAN be added!!!
+
+    out_implied.reserve(trail.size()-trail_lim[0]);
+    for(uint32_t i = trail_lim[0]; i < trail.size(); i++) {
+        if (trail[i].var() < nVars()) {
+            out_implied.push_back(trail[i]);
+        }
+    }
+    cancelUntil(0);
+
+    //Map to outer
+    for(auto& l: out_implied) {
+        l = map_inter_to_outer(l);
+    }
+    varReplacer->extend_pop_queue(out_implied);
+
+    //Map to outside
+    if (get_num_bva_vars() != 0) {
+        cout << "get_num_bva_vars(): " << get_num_bva_vars() << endl;
+        assert(false && "BVA is currently not allowed in this mode, please turn it off");
+        //out_implied = map_back_vars_to_without_bva(out_implied);
+    }
+    return true;
+}

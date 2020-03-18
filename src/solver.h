@@ -140,6 +140,9 @@ class Solver : public Searcher
         void check_implicit_stats(const bool onlypairs = false) const;
         void check_stats(const bool allowFreed = false) const;
         void enable_comphandler();
+        bool implied_by(const std::vector<Lit>& lits,
+            std::vector<Lit>& out_implied
+        );
 
 
         //Checks
@@ -274,6 +277,7 @@ class Solver : public Searcher
         FRIEND_TEST(SearcherTest, pickpolar_auto_not_changed_by_simp);
         #endif
 
+        vector<Lit> implied_by_tmp_lits;
         vector<Lit> add_clause_int_tmp_cl;
         lbool iterate_until_solved();
         uint64_t mem_used_vardata() const;

@@ -168,6 +168,7 @@ set (MY_TESTS
     searcher_test
     solver_test
     ternary_resolve_test
+    implied_by_test
 #    undefine_test
 )
 

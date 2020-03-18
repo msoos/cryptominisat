@@ -1221,3 +1221,11 @@ DLL_PUBLIC void SATSolver::set_yes_comphandler()
         s.enable_comphandler();
     }
 }
+
+DLL_PUBLIC bool SATSolver::implied_by(
+    const std::vector<Lit>& lits,
+    std::vector<Lit>& out_implied
+)
+{
+    return data->solvers[data->which_solved]->implied_by(lits, out_implied);
+}
