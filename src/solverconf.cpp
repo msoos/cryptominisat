@@ -81,7 +81,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         #else
         , branch_strategy_change_everyN(55000)
         #endif
-        , branch_strategy_setup("vsids+maple+vmtf")
+        , branch_strategy_setup("vsids+vmtf+maple")
         , doMaple(true)
         , modulo_maple_iter(3)
 

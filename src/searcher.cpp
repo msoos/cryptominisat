@@ -2047,20 +2047,20 @@ void Searcher::rebuild_all_branch_strategy_setups()
 void Searcher::set_branch_strategy(const uint32_t iteration_num)
 {
     uint32_t num = 0;
-    uint32_t vmtf = conf.branch_strategy_setup.find("vmtf") != std::string::npos;
     uint32_t vsids = conf.branch_strategy_setup.find("vsids") != std::string::npos;
+    uint32_t vmtf = conf.branch_strategy_setup.find("vmtf") != std::string::npos;
     uint32_t maple = conf.branch_strategy_setup.find("maple") != std::string::npos;
     uint32_t rnd = conf.branch_strategy_setup.find("rnd") != std::string::npos;
 
-    uint32_t total = (uint32_t)vmtf + (uint32_t)vsids + (uint32_t)maple + (uint32_t)rnd;
+    uint32_t total = (uint32_t)vsids + (uint32_t)vmtf + (uint32_t)maple + (uint32_t)rnd;
     assert(total > 0);
     CMSat::branch select[total];
     uint32_t i = 0;
-    if (vmtf) {
-        select[i++]= branch::vmtf;
-    }
     if (vsids) {
         select[i++]= branch::vsids;
+    }
+    if (vmtf) {
+        select[i++]= branch::vmtf;
     }
     if (maple) {
         select[i++]= branch::maple;
