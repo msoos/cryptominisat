@@ -176,7 +176,7 @@ int Mersenne::next(int bound)
 }
 
 //constructor with default setting.
-ls_solver::ls_solver()
+ls_solver::ls_solver(const bool aspiration)
 {
     _max_tries = 100;
     _max_steps = 1*1000 * 1000;
@@ -185,7 +185,7 @@ ls_solver::ls_solver()
     _swt_threshold = 50;
     _swt_p = 0.3;
     _swt_q = 0.7;
-    _aspiration = true;
+    _aspiration = aspiration;
     _up_ratio = 0.3; //delete _up_ratio percents varibles
     verbosity = 0;
 }

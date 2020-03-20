@@ -474,6 +474,8 @@ void Main::add_supported_options()
         , "Max 'runs' for WalkSAT. Limits time of WalkSAT run")
     ("slsgetphase", po::value(&conf.sls_get_phase)->default_value(conf.sls_get_phase)
         , "Get phase from SLS solver, set as new phase for CDCL")
+    ("slsccnraspire", po::value(&conf.sls_ccnr_asipire)->default_value(conf.sls_ccnr_asipire)
+        , "Turn aspiration on/off for CCANR")
     ;
 
     po::options_description probeOptions("Probing options");

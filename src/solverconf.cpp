@@ -278,6 +278,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , sls_memoutMB(500)
         , walksat_max_runs(50)
         , sls_get_phase(1)
+        , sls_ccnr_asipire(1)
         , which_sls("ccnr_yalsat")
 
         //Distillation

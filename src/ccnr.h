@@ -108,7 +108,7 @@ class Mersenne
 class ls_solver
 {
    public:
-    ls_solver();
+    ls_solver(const bool aspiration);
     bool parse_arguments(int argc, char **argv);
     bool build_instance(std::string inst);
     bool local_search(
