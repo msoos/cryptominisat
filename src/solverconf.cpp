@@ -257,6 +257,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , distill_long_cls_time_limitM(20ULL)
         , watch_cache_stamp_based_str_time_limitM(30LL)
         , distill_time_limitM(120LL)
+        , distill_increase_conf_ratio(0.2)
+        , distill_min_confl(50000)
 
         //Memory savings
         , doRenumberVars   (true)

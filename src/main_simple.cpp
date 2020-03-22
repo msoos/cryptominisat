@@ -108,6 +108,9 @@ public:
                     exit(0);
                 }
                 conf.verbosity = verbosity;
+            }else if ((value = hasPrefix(argv[i], "--dratsim="))){
+                int drat_sim  = (int)strtol(value, NULL, 10);
+                conf.simulate_drat = drat_sim;
             }else if ((value = hasPrefix(argv[i], "--threads="))){
                 num_threads  = (int)strtol(value, NULL, 10);
                 if (num_threads == 0 && errno == EINVAL){

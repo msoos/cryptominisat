@@ -1960,8 +1960,9 @@ lbool Searcher::solve(
                 status = l_False;
                 goto end;
             }
-            next_distill = std::min<double>(sumConflicts * 0.2 + sumConflicts + 3000,
-                                    sumConflicts + 50000);
+            next_distill = std::min<double>(
+                sumConflicts + sumConflicts * conf.distill_increase_conf_ratio + 7000,
+                sumConflicts + conf.distill_min_confl);
         }
     }
 

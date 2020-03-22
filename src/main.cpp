@@ -703,6 +703,10 @@ void Main::add_supported_options()
         , "Maximum number of Mega-bogoprops(~time) to spend on vivifying/distilling long cls by enqueueing and propagating")
     ("distillto", po::value(&conf.distill_time_limitM)->default_value(conf.distill_time_limitM)
         , "Maximum time in bogoprops M for distillation")
+    ("distillincconf", po::value(&conf.distill_increase_conf_ratio)->default_value(conf.distill_increase_conf_ratio)
+        , "Multiplier for current number of conflicts OTF distill")
+    ("distillminconf", po::value(&conf.distill_min_confl)->default_value(conf.distill_min_confl)
+        , "Minimum number of conflicts between OTF distill")
     ;
 
     po::options_description mem_save_opts("Memory saving options");
