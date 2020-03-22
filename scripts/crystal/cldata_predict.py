@@ -543,6 +543,7 @@ if __name__ == "__main__":
     y_pred = learner.learn()
 
 
+    # Dump the new prediction into the dataframe
     name = None
     if options.final_is_logreg:
         name = "logreg"
