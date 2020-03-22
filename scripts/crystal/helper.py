@@ -305,7 +305,11 @@ def conf_matrixes(data, features, to_predict, clf, toprint, average="binary"):
     values2nums = {'OK': 1, 'BAD': 0}
     predsi = np.array([values2nums[xi] for xi in y_pred])
     y_testi = pd.DataFrame(y_data)["x.class"].map(values2nums).squeeze()
-    roc_auc = sklearn.metrics.roc_auc_score(y_testi, predsi)
+    try:
+        roc_auc = sklearn.metrics.roc_auc_score(y_testi, predsi)
+    except:
+        print("NOTE: ROC AUC is set to 0 because of completely one-sided OK/BAD")
+        roc_auc = 0
     mlflow.log_metric(toprint + " -- roc_auc", roc_auc)
 
     print("%s prec : %-3.4f  recall: %-3.4f accuracy: %-3.4f roc_auc: %-3.4f"
