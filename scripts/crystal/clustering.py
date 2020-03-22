@@ -45,16 +45,30 @@ else:
     from sklearn.model_selection import train_test_split
 
 
-def add_clustering_label(df, feats_used: list, scaler, clust):
+CLUST_TYPE_FILES = 0
+CLUST_TYPE_USEFULNESS = 1
+
+def get_cluster_name(clust_type):
+    name = None
+    if clust_type == CLUST_TYPE_FILES:
+        name = "clust_f"
+    elif clust_type == CLUST_TYPE_USEFULNESS:
+        name = "clust_u"
+    else:
+        assert False
+
+    return name
+
+def get_clustering_label(df, feats_used: list, scaler, clustering):
     this_feats = list(df)
     for f in feats_used:
         if f not in this_feats:
-            print("ERROR: Features %s is in the other file but not in this one!" % f)
+            print("ERROR: Feature '%s' is in the training file but not in the current one!" % f)
             exit(-1)
 
     df_clust = df[feats_used].astype(float).copy()
-    df_clust[feats_used] = scaler.transform(df_clust)
-    df["clust"] = clust.predict(df_clust)
+    df_clust = scaler.transform(df_clust)
+    return clustering.predict(df_clust)
 
 
 def dump_dataframe(df, fname: str):
@@ -64,25 +78,26 @@ def dump_dataframe(df, fname: str):
 
 
 class Clustering:
-    def __init__(self, df):
+    def __init__(self, df, clust_type):
         self.df = df
+        self.clust_type = clust_type
 
-    def clean_sz_feats(self, sz_feats):
-        sz_feats_clean = []
-        for feat in sz_feats:
+    def reformat_feats(self, feats):
+        feats_clean = []
+        for feat in feats:
             assert "szfeat_cur.conflicts" not in feat
             c = str(feat)
             c = c.replace(".irred_", ".irred_cl_distrib.")
             c = c.replace(".red_", ".red_cl_distrib.")
             c = c.replace("szfeat_cur.", "{val}.")
 
-            sz_feats_clean.append(c)
-        assert len(sz_feats_clean) == len(sz_feats)
+            feats_clean.append(c)
+        assert len(feats_clean) == len(feats)
 
-        return sz_feats_clean
+        return feats_clean
 
     def create_code_for_cluster_centers(self, clust, scaler, sz_feats):
-        sz_feats_clean = self.clean_sz_feats(sz_feats)
+        sz_feats_clean = self.reformat_feats(sz_feats)
         f = open("{basedir}/clustering_imp.cpp".format(basedir=options.basedir), 'w')
 
         helper.write_mit_header(f)
@@ -180,17 +195,33 @@ int ClusteringImp::which_is_closest(const SatZillaFeatures& p) const {
         f.write("} //end namespace\n\n")
         f.write("#endif //ALL_PREDICTORS\n")
 
-    def cluster(self):
+    def select_features_files(self):
         features = list(self.df)
         for f in list(features):
-            if "var" in f or "vcg" in f or "pnr" in f or "min" in f or "max" in f:
+            if any(ext in f for ext in ["var", "vcg", "pnr", "min", "max", "std"]):
                 features.remove(f)
 
         # features from dataframe
-        self.feats_used = []
+        feats_used = []
         for feat in features:
             if "szfeat_cur" in feat and "szfeat_cur.conflicts" not in feat:
-                self.feats_used.append(feat)
+                feats_used.append(feat)
+
+        return feats_used
+
+    def select_features_usefulness(self):
+        features = list(self.df)
+        feats_used = helper.get_features(options.best_features_fname)
+
+        return feats_used
+
+    def cluster(self):
+        if self.clust_type == CLUST_TYPE_FILES:
+            self.feats_used = self.select_features_files()
+        elif self.clust_type == CLUST_TYPE_USEFULNESS:
+            self.feats_used = self.select_features_usefulness()
+        else:
+            assert False
 
         print("Features used: ", self.feats_used)
         print("Number of features used: ", len(self.feats_used))
@@ -212,7 +243,7 @@ int ClusteringImp::which_is_closest(const SatZillaFeatures& p) const {
 
             if options.verbose:
                 df_clust_back = df_clust.copy()
-            df_clust[self.feats_used] = self.scaler.transform(df_clust)
+            df_clust = self.scaler.transform(df_clust)
         else:
             class ScalerNone:
                 def __init__(self):
@@ -285,6 +316,11 @@ if __name__ == "__main__":
                         dest="print_features", help="Print features")
     parser.add_argument("--check", action="store_true", default=False,
                         dest="check_row_data", help="Check row data for NaN or float overflow")
+    parser.add_argument("--bestfeatfile",
+                        default="../../scripts/crystal/best_features_usefulness_clust.txt",
+                        type=str,
+                        dest="best_features_fname",
+                        help="Name and position of best features file that lists the best features in order")
 
     # clustering
     parser.add_argument("--clusters", default=4, type=int,
@@ -329,22 +365,36 @@ if __name__ == "__main__":
     for f in fnames:
         print("===-- Sampling file %s --" % f)
         df = pd.read_pickle(f)
-        if options.computed:
-            helper.add_computed_szfeat_for_clustering(df)
-
         new_samples = df.sample(options.samples_per_file, replace=True,
                                 random_state=prng)
         samples = new_samples.append(samples)
         del df
 
-    c = Clustering(samples)
-    feats_used, scaler, clust = c.cluster()
+    if options.computed:
+        helper.cldata_add_computed_features(samples, options.verbose)
+
+    # clustering_setup is:
+    #   feats_used, scaler, clust
+    clustering_setup = [None, None]
+    for clust_type in [CLUST_TYPE_FILES, CLUST_TYPE_USEFULNESS]:
+        c = Clustering(samples, clust_type)
+        clustering_setup[clust_type] = c.cluster()
+    del samples
 
     for f in fnames:
-        print("===-- Clustering file %s --" % f)
-        df = pd.read_pickle(f)
-        add_clustering_label(df, feats_used, scaler, clust)
+        print("===-- Clustering file %s" % (f))
+        df_orig = pd.read_pickle(f)
+        df = df_orig.copy()
+        if options.computed:
+            helper.cldata_add_computed_features(df, options.verbose)
+
+        for clust_type in [CLUST_TYPE_FILES, CLUST_TYPE_USEFULNESS]:
+            name = get_cluster_name(clust_type)
+            print("===-- TYPE: %s --" % name)
+            df_orig[name] = get_clustering_label(df, *clustering_setup[clust_type])
+            print("Distribution: \n%s" % df_orig[name].value_counts())
+
         cleanname = re.sub(r'\.dat$', '', f)
-        dump_dataframe(df, cleanname+"-clustered.dat")
-        print(df["clust"].value_counts())
+        dump_dataframe(df_orig, cleanname+"-clustered.dat")
         del df
+        del df_orig

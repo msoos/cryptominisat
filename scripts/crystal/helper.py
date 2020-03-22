@@ -34,6 +34,7 @@ import mlflow
 import os.path
 import sqlite3
 import functools
+from termcolor import colored, cprint
 from pprint import pprint
 
 
@@ -91,6 +92,16 @@ def parse_configs(confs):
 
     print("Running configs:", range(conf_from, conf_to))
     return conf_from, conf_to
+
+
+def get_features(fname):
+    best_features = []
+    check_file_exists(fname)
+    with open(fname, "r") as f:
+        for l in f:
+            best_features.append(l.strip())
+
+    return best_features
 
 
 def helper_divide(dividend, divisor, df, features, verb, name=None):
@@ -276,7 +287,8 @@ def calc_min_split_point(df, min_samples_split):
     return split_point
 
 
-def conf_matrixes(data, features, to_predict, clf, toprint, average="binary"):
+def conf_matrixes(data, features, to_predict, clf, toprint,
+                  average="binary", highlight=False):
     # get data
     X_data = data[features]
     y_data = data[to_predict]
@@ -312,8 +324,14 @@ def conf_matrixes(data, features, to_predict, clf, toprint, average="binary"):
         roc_auc = 0
     mlflow.log_metric(toprint + " -- roc_auc", roc_auc)
 
-    print("%s prec : %-3.4f  recall: %-3.4f accuracy: %-3.4f roc_auc: %-3.4f"
-          % (toprint, precision, recall, accuracy, roc_auc))
+    color = "white"
+    bckgrnd = "on_grey"
+    if highlight:
+        color="green"
+        bckgrnd = "on_grey"
+
+    cprint("%s prec : %-3.4f  recall: %-3.4f accuracy: %-3.4f roc_auc: %-3.4f"
+          % (toprint, precision, recall, accuracy, roc_auc), color, bckgrnd)
 
     # Plot confusion matrix
     cnf_matrix = sklearn.metrics.confusion_matrix(
@@ -352,7 +370,7 @@ def calc_greedy_best_features(top_feats, get_best_topn_feats, myobj):
             this_feats = list(best_features)
             this_feats.append(feat)
             print("Trying feature set: ", this_feats)
-            mysum = myobj.one_classifier(this_feats, "x.class", final=True)
+            mysum, y_pred = myobj.one_classifier(this_feats, "x.class", final=True)
             print("Reported mysum: ", mysum)
             if mysum > best_sum:
                 best_sum = mysum

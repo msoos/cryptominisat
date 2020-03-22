@@ -37,6 +37,7 @@ import numpy as np
 import sklearn.metrics
 import matplotlib.pyplot as plt
 import sklearn.ensemble
+import sklearn.linear_model
 import helper
 
 import mlflow
@@ -60,6 +61,20 @@ class Learner:
         self.func_name = func_name
         self.fname = fname
 
+    def count_bad_good(self, df):
+        files = df[["x.class", "rdb0.dump_no"]].groupby("x.class").count()
+        if files["rdb0.dump_no"].index[0] == "BAD":
+            bad = files["rdb0.dump_no"][0]
+            good = files["rdb0.dump_no"][1]
+        else:
+            bad = files["rdb0.dump_no"][1]
+            good = files["rdb0.dump_no"][0]
+
+        assert bad > 0, "No need to train, data only contains BAD"
+        assert good > 0, "No need to train, data only contains GOOD"
+
+        return bad, good
+
     def filter_percentile(self, df, features, perc):
         low = df.quantile(perc, axis=0)
         high = df.quantile(1.0-perc, axis=0)
@@ -73,7 +88,8 @@ class Learner:
         print("New size:", df2.shape)
         return df2
 
-    def filtered_conf_matrixes(self, dump_no, data, features, to_predict, clf, toprint):
+    def filtered_conf_matrixes(self, dump_no, data, features, to_predict, clf,
+                               toprint, highlight=False):
         # filter test data
         if dump_no is not None:
             print("\nCalculating confusion matrix -- dump_no == %s" % dump_no)
@@ -83,7 +99,8 @@ class Learner:
             print("\nCalculating confusion matrix -- ALL dump_no")
             data2 = data
 
-        return helper.conf_matrixes(data2, features, to_predict, clf, toprint)
+        return helper.conf_matrixes(data2, features, to_predict, clf, toprint,
+                                    highlight=highlight)
 
     @staticmethod
     def fix_feat_name(x):
@@ -126,17 +143,7 @@ class Learner:
             helper.check_too_large_or_nan_values(df, features)
 
         # count good and bad
-        files = df[["x.class", "rdb0.dump_no"]].groupby("x.class").count()
-        if files["rdb0.dump_no"].index[0] == "BAD":
-            bad = files["rdb0.dump_no"][0]
-            good = files["rdb0.dump_no"][1]
-        else:
-            bad = files["rdb0.dump_no"][1]
-            good = files["rdb0.dump_no"][0]
-
-        assert bad > 0, "No need to train, data only contains BAD"
-        assert good > 0, "No need to train, data only contains GOOD"
-
+        bad,good = self.count_bad_good(df)
         print("Number of BAD  elements        : %-6d" % bad)
         print("Number of GOOD elements        : %-6d" % good)
 
@@ -148,16 +155,43 @@ class Learner:
         prefer_ok *= options.prefer_ok
         print("Option to prefer OK is set to  : %-6.3f" % options.prefer_ok)
         print("Final OK preference is         : %-6.3f" % prefer_ok)
-        print("dump_no value distribution:", df["rdb0.dump_no"].value_counts())
+        print("Value distribution of 'dump_no':\n%s" % df["rdb0.dump_no"].value_counts())
 
         #train, test = train_test_split(df[df["rdb0.dump_no"] == 1], test_size=0.33, random_state=prng)
         train, test = train_test_split(df, test_size=0.33, random_state=prng)
+        #print("features:", features)
+
+        ## MASSIVE HACK
+        if options.final_is_logreg:
+            features = [
+                "cl.glue_hist_long",
+                "cl.glue_hist_queue",
+                "cl.glue_hist",
+                "cl.size_hist",
+                "cl.old_glue",
+                "cl.glue",
+                "cl.size",
+                "rdb0.used_for_uip_creation",
+                "rdb1.used_for_uip_creation",
+                "cl.num_overlap_literals",
+                "cl.antec_overlap_hist",
+                "cl.num_total_lits_antecedents",
+                "rdb1.last_touched_diff",
+                "cl.num_antecedents",
+                "cl.branch_depth_hist_queue",
+                "cl.num_resolutions_hist_lt",
+                "cl.trail_depth_hist_longer",
+                "rdb0_act_ranking_rel",
+                "rdb0.propagations_made",
+                "rdb1.propagations_made",
+                "rdb0.act_ranking_top_10",
+                "rdb1.act_ranking_top_10"]
+
         X_train = train[features]
         y_train = train[to_predict]
 
         t = time.time()
         clf = None
-        # clf = sklearn.linear_model.LogisticRegression()
 
         if final:
             split_point = helper.calc_min_split_point(
@@ -179,13 +213,11 @@ class Learner:
                 random_state=prng)
             clf_logreg = sklearn.linear_model.LogisticRegression(
                 C=0.3,
-                penalty="l1",
                 random_state=prng)
             clf_forest = sklearn.ensemble.RandomForestClassifier(
                 n_estimators=options.num_trees,
-                max_features="sqrt",
                 class_weight={"OK": prefer_ok, "BAD": 1},
-                min_samples_leaf=split_point,
+                #min_samples_leaf=split_point,
                 random_state=prng)
 
             if options.final_is_tree:
@@ -205,11 +237,14 @@ class Learner:
                     "ERROR: You MUST give one of: tree/forest/svm/logreg/voting classifier")
                 exit(-1)
         else:
-            clf = sklearn.ensemble.RandomForestClassifier(
-                n_estimators=options.num_trees*100,
+            assert options.final_is_forest, "For TOP calculation, we must have --forest"
+            clf_forest = sklearn.ensemble.RandomForestClassifier(
+                n_estimators=options.num_trees*5,
                 max_features="sqrt",
                 class_weight={"OK": prefer_ok, "BAD": 1},
                 random_state=prng)
+
+            clf = clf_forest
 
         del df
         clf.fit(X_train, y_train)
@@ -221,11 +256,14 @@ class Learner:
             mlflow.log_metric("train num rows", train.shape[0])
             mlflow.log_metric("test num rows", test.shape[0])
 
-            best_features = helper.print_feature_ranking(
-                clf, X_train,
-                top_num_features=options.top_num_features,
-                features=features,
-                plot=options.show)
+            if options.final_is_forest:
+                best_features = helper.print_feature_ranking(
+                    clf, X_train,
+                    top_num_features=options.top_num_features,
+                    features=features,
+                    plot=options.show)
+            else:
+                best_features = None
 
             #mlflow.log_artifact("best_features", best_features)
         else:
@@ -239,41 +277,46 @@ class Learner:
                     fname=options.dot + "-" + self.func_name)
 
             if options.basedir and write_code:
-                c = helper.CodeWriter(clf, features, self.func_name, self.fname, options.verbose)
-                c.func_signature = """
-                const CMSat::Clause* cl
-                , const uint64_t sumConflicts
-                , const uint32_t last_touched_diff
-                , const double   act_ranking_rel
-                , const uint32_t act_ranking_top_10
-                """
-                c.func_call = """
-                cl
-                , sumConflicts
-                , last_touched_diff
-                , act_ranking_rel
-                , act_ranking_top_10
-                """
-                c.per_func_defines = """
-                uint32_t time_inside_solver = sumConflicts - cl->stats.introduced_at_conflict;
-                """
-                c.file_header = """
-                #include "clause.h"
-                #include "reducedb.h"
-                #include <cmath>
+                if options.final_is_forest or options.final_is_tree:
+                    c = helper.CodeWriter(
+                        clf, features, self.func_name,
+                        self.fname, options.verbose)
+                    c.func_signature = """
+                    const CMSat::Clause* cl
+                    , const uint64_t sumConflicts
+                    , const uint32_t last_touched_diff
+                    , const double   act_ranking_rel
+                    , const uint32_t act_ranking_top_10
+                    """
+                    c.func_call = """
+                    cl
+                    , sumConflicts
+                    , last_touched_diff
+                    , act_ranking_rel
+                    , act_ranking_top_10
+                    """
+                    c.per_func_defines = """
+                    uint32_t time_inside_solver = sumConflicts - cl->stats.introduced_at_conflict;
+                    """
+                    c.file_header = """
+                    #include "clause.h"
+                    #include "reducedb.h"
+                    #include <cmath>
 
-                namespace CMSat {
-                """
-                c.fix_feat_name = self.fix_feat_name
-                c.clean_up()
-                c.print_full_code()
+                    namespace CMSat {
+                    """
+                    c.fix_feat_name = self.fix_feat_name
+                    c.clean_up()
+                    c.print_full_code()
+                else:
+                    print("NOT writing code")
 
         print("--------------------------")
         print("-       test data        -")
         print("--------------------------")
         for dump_no in [1, 2, 3, 10, 20, 40, None]:
             prec, recall, acc, roc_auc = self.filtered_conf_matrixes(
-                dump_no, test, features, to_predict, clf, "test data")
+                dump_no, test, features, to_predict, clf, "test data", highlight=True)
 
         print("--------------------------------")
         print("--      train+test data        -")
@@ -288,14 +331,14 @@ class Learner:
         self.filtered_conf_matrixes(
             dump_no, train, features, to_predict, clf, "train data")
 
+        # Calculate predicted value for the original dataframe
+        y_pred = clf.predict(self.df[features])
 
-        # TODO do L1 regularization
         # TODO do principal component analysis
-
         if final:
-            return roc_auc
+            return roc_auc, y_pred
         else:
-            return best_features
+            return best_features, y_pred
 
     def rem_features(self, feat, to_remove):
         feat_less = list(feat)
@@ -309,7 +352,7 @@ class Learner:
         return feat_less
 
     def learn(self):
-        features = self.df.columns.values.flatten().tolist()
+        features = list(self.df)
         features = self.rem_features(
             features, ["x.a_num_used", "x.class", "x.a_lifetime", "fname", "sum_cl_use"])
         if options.raw_data_plots:
@@ -319,11 +362,14 @@ class Learner:
 
         if not options.only_final:
             # calculate best features
-            top_n_feats = self.one_classifier(features, "x.class", final=False)
-            if options.show:
-                plt.show()
+            top_n_feats, y_pred = self.one_classifier(
+                features, "x.class", final=False)
 
             if options.get_best_topn_feats is not None:
+                if not options.final_is_forest:
+                    print("ERROR: we can only calculate best features for Forest!")
+                    exit(-1)
+
                 greedy_features = helper.calc_greedy_best_features(
                     top_n_feats, options.get_best_topn_feats,
                     self)
@@ -337,20 +383,18 @@ class Learner:
 
         else:
             # fill best features from file and then do final classifier
-            best_features = []
-            helper.check_file_exists(options.best_features_fname)
-            with open(options.best_features_fname, "r") as f:
-                for l in f:
-                    best_features.append(l.strip())
+            best_features = helper.get_features(options.best_features_fname)
 
             write_code = options.final_is_tree or options.final_is_tree
-            self.one_classifier(
+            roc_auc, y_pred = self.one_classifier(
                 best_features, "x.class",
                 final=True,
                 write_code=write_code)
 
             if options.show:
                 plt.show()
+
+        return y_pred
 
 
 if __name__ == "__main__":
@@ -374,7 +418,7 @@ if __name__ == "__main__":
                         dest="tree_depth", help="Depth of the tree to create")
     parser.add_argument("--split", default=0.01, type=float, metavar="RATIO",
                         dest="min_samples_split", help="Split in tree if this many samples or above. Used as a percentage of datapoints")
-    parser.add_argument("--numtrees", default=5, type=int,
+    parser.add_argument("--numtrees", default=100, type=int,
                         dest="num_trees", help="How many trees to generate for the forest")
 
     # generation of predictor
@@ -394,7 +438,7 @@ if __name__ == "__main__":
                         dest="conf_num", help="Which predict configuration this is")
 
     # data filtering
-    parser.add_argument("--only", default=0.99, type=float,
+    parser.add_argument("--only", default=1.00, type=float,
                         dest="only_perc", help="Only use this percentage of data")
 
     # final generator or greedy
@@ -410,7 +454,7 @@ if __name__ == "__main__":
                         dest="final_is_tree", help="Final classifier should be a tree")
     parser.add_argument("--svm", default=False, action="store_true",
                         dest="final_is_svm", help="Final classifier should be an svm")
-    parser.add_argument("--lreg", default=False, action="store_true",
+    parser.add_argument("--logreg", default=False, action="store_true",
                         dest="final_is_logreg", help="Final classifier should be a logistic regression")
     parser.add_argument("--forest", default=False, action="store_true",
                         dest="final_is_forest", help="Final classifier should be a forest")
@@ -469,6 +513,7 @@ if __name__ == "__main__":
     mlflow.log_artifact(options.fname)
 
     df = pd.read_pickle(options.fname)
+    df_orig = df.copy()
     if options.print_features:
         for f in sorted(list(df)):
             print(f)
@@ -495,4 +540,23 @@ if __name__ == "__main__":
         func_name=func_name,
         fname=out_fname,)
 
-    learner.learn()
+    y_pred = learner.learn()
+
+
+    name = None
+    if options.final_is_logreg:
+        name = "logreg"
+    elif options.final_is_tree:
+        name = "tree"
+    elif options.final_is_forest:
+        name = "forest"
+    else:
+        exit(0)
+
+    cleanname = re.sub(r'\.dat$', '', options.fname)
+    fname = cleanname + "-" + name + ".dat"
+    df_orig[name] = y_pred
+    df_orig[name] = df_orig[name].astype("category").cat.codes
+    with open(fname, "wb") as f:
+        pickle.dump(df_orig, f)
+    print("Enriched data dumped to file %s" % fname)
