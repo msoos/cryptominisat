@@ -4172,6 +4172,17 @@ vector<double> Solver::get_vsids_scores() const
 bool Solver::implied_by(const std::vector<Lit>& lits,
                                   std::vector<Lit>& out_implied)
 {
+    if (get_num_bva_vars() != 0) {
+        cout << "ERROR: get_num_bva_vars(): " << get_num_bva_vars() << endl;
+        assert(false && "ERROR: BVA is currently not allowed at implied_by(), please turn it off");
+        //out_implied = map_back_vars_to_without_bva(out_implied);
+        exit(-1);
+    }
+    if (solver->occsimplifier->get_num_elimed_vars() > 0) {
+        assert(false && "ERROR, you must not have any eliminated variables when calling implied_by -- otherwise, we cannot guarantee all implied variables are found");
+        exit(-1);
+    }
+
     out_implied.clear();
     if (!okay()) {
         return false;
@@ -4220,13 +4231,6 @@ bool Solver::implied_by(const std::vector<Lit>& lits,
         l = map_inter_to_outer(l);
     }
     varReplacer->extend_pop_queue(out_implied);
-
-    //Map to outside
-    if (get_num_bva_vars() != 0) {
-        cout << "get_num_bva_vars(): " << get_num_bva_vars() << endl;
-        assert(false && "BVA is currently not allowed in this mode, please turn it off");
-        //out_implied = map_back_vars_to_without_bva(out_implied);
-    }
     return true;
 }
 

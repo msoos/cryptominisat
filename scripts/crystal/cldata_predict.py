@@ -32,7 +32,6 @@ import pickle
 import sklearn
 import sklearn.svm
 import sklearn.tree
-import sklearn.cluster
 from sklearn.preprocessing import StandardScaler
 import numpy as np
 import sklearn.metrics
@@ -56,11 +55,10 @@ def check_long_short():
 
 
 class Learner:
-    def __init__(self, df, func_name, fname, cluster_no):
+    def __init__(self, df, func_name, fname):
         self.df = df
         self.func_name = func_name
         self.fname = fname
-        self.cluster_no = cluster_no
 
     def filter_percentile(self, df, features, perc):
         low = df.quantile(perc, axis=0)
@@ -150,7 +148,7 @@ class Learner:
         prefer_ok *= options.prefer_ok
         print("Option to prefer OK is set to  : %-6.3f" % options.prefer_ok)
         print("Final OK preference is         : %-6.3f" % prefer_ok)
-        print("value counts: %s", df["rdb0.dump_no"].value_counts())
+        print("dump_no value distribution:", df["rdb0.dump_no"].value_counts())
 
         #train, test = train_test_split(df[df["rdb0.dump_no"] == 1], test_size=0.33, random_state=prng)
         train, test = train_test_split(df, test_size=0.33, random_state=prng)
@@ -272,7 +270,6 @@ class Learner:
 
         print("--------------------------")
         print("-       test data        -")
-        print("-      cluster: %04d     -" % self.cluster_no)
         print("--------------------------")
         for dump_no in [1, 2, 3, 10, 20, 40, None]:
             prec, recall, acc, roc_auc = self.filtered_conf_matrixes(
@@ -280,7 +277,6 @@ class Learner:
 
         print("--------------------------------")
         print("--      train+test data        -")
-        print("-      no cluster applied      -")
         print("--------------------------------")
         for dump_no in [1, None]:
             self.filtered_conf_matrixes(
@@ -288,7 +284,6 @@ class Learner:
 
         print("--------------------------")
         print("-       train data       -")
-        print("-      cluster: %04d     -" % self.cluster_no)
         print("--------------------------")
         self.filtered_conf_matrixes(
             dump_no, train, features, to_predict, clf, "train data")
@@ -316,13 +311,14 @@ class Learner:
     def learn(self):
         features = self.df.columns.values.flatten().tolist()
         features = self.rem_features(
-            features, ["x.a_num_used", "x.class", "x.a_lifetime", "fname", "clust", "sum_cl_use"])
+            features, ["x.a_num_used", "x.class", "x.a_lifetime", "fname", "sum_cl_use"])
         if options.raw_data_plots:
             pd.options.display.mpl_style = "default"
             self.df.hist()
             self.df.boxplot()
 
         if not options.only_final:
+            # calculate best features
             top_n_feats = self.one_classifier(features, "x.class", final=False)
             if options.show:
                 plt.show()
@@ -339,21 +335,22 @@ class Learner:
                 print("Dumped final best selection to file '%s'" %
                       options.best_features_fname)
 
-            return
+        else:
+            # fill best features from file and then do final classifier
+            best_features = []
+            helper.check_file_exists(options.best_features_fname)
+            with open(options.best_features_fname, "r") as f:
+                for l in f:
+                    best_features.append(l.strip())
 
-        # fill best features from file
-        best_features = []
-        helper.check_file_exists(options.best_features_fname)
-        with open(options.best_features_fname, "r") as f:
-            for l in f:
-                best_features.append(l.strip())
+            write_code = options.final_is_tree or options.final_is_tree
+            self.one_classifier(
+                best_features, "x.class",
+                final=True,
+                write_code=write_code)
 
-        self.one_classifier(best_features, "x.class",
-                            final=True,
-                            write_code=True)
-
-        if options.show:
-            plt.show()
+            if options.show:
+                plt.show()
 
 
 if __name__ == "__main__":
@@ -427,8 +424,6 @@ if __name__ == "__main__":
     # which one to generate
     parser.add_argument("--name", default=None, type=str,
                         dest="longsh", help="Raw C-like code will be written to this function and file name")
-    parser.add_argument("--clust", default=False, action="store_true",
-                        dest="use_clusters", help="Use clusters")
 
     options = parser.parse_args()
     prng = np.random.RandomState(options.seed)
@@ -483,34 +478,21 @@ if __name__ == "__main__":
         helper.cldata_add_computed_features(df, options.verbose)
     helper.clear_data_from_str_na(df)
 
-    # cluster setup
-    if options.use_clusters:
-        used_clusters = df.groupby("clust").nunique()
-        clusters = []
-        for clust, _ in used_clusters["clust"].iteritems():
-            clusters.append(clust)
-    else:
-        clusters = [0]
-        df["clust"] = 0
-
     # generation
-    for clno in clusters:
-        func_name = "should_keep_{name}_conf{conf_num}_cluster{clno}".format(
-            clno=clno, name=options.longsh, conf_num=options.conf_num)
+    func_name = "should_keep_{name}_conf{conf_num}".format(
+        name=options.longsh, conf_num=options.conf_num)
 
-        fname = "final_predictor_{name}_conf{conf_num}_cluster{clno}.h".format(
-            clno=clno, name=options.longsh, conf_num=options.conf_num)
+    fname = "final_predictor_{name}_conf{conf_num}.h".format(
+        name=options.longsh, conf_num=options.conf_num)
 
-        if options.basedir is not None:
-            out_fname = options.basedir+"/"+fname
-        else:
-            out_fname = None
+    if options.basedir is not None:
+        out_fname = options.basedir+"/"+fname
+    else:
+        out_fname = None
 
-        learner = Learner(
-            df[(df["clust"] == clno)],
-            func_name=func_name,
-            fname=out_fname,
-            cluster_no=clno)
+    learner = Learner(
+        df,
+        func_name=func_name,
+        fname=out_fname,)
 
-        print("================ Cluster %3d ================" % clno)
-        learner.learn()
+    learner.learn()

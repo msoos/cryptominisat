@@ -83,15 +83,11 @@ ReduceDB::ReduceDB(Solver* _solver) :
 {
     #ifdef FINAL_PREDICTOR
     fill_pred_funcs();
-    clustering = new ClusteringImp;
     #endif
 }
 
 ReduceDB::~ReduceDB()
 {
-    #ifdef FINAL_PREDICTOR
-    delete clustering;
-    #endif
 }
 
 void ReduceDB::check_config()
@@ -356,9 +352,8 @@ void ReduceDB::handle_lev3_final_predictor()
     std::sort(solver->longRedCls[3].begin(), solver->longRedCls[3].end(),
               SortRedClsAct(solver->cl_alloc));
 
-    const uint32_t clust = clustering->which_is_closest(solver->last_solve_satzilla_feature);
-    const keep_func_type short_pred_keep = get_short_pred_keep_funcs(solver->conf.pred_conf_short)[clust];
-    const keep_func_type long_pred_keep = get_long_pred_keep_funcs(solver->conf.pred_conf_long)[clust];
+    const keep_func_type short_pred_keep = get_short_pred_keep_funcs(solver->conf.pred_conf_short);
+    const keep_func_type long_pred_keep = get_long_pred_keep_funcs(solver->conf.pred_conf_long);
 
     size_t j = 0;
     for(size_t i = 0
@@ -465,7 +460,6 @@ void ReduceDB::handle_lev3_final_predictor()
 
         cout << "c [DBCL pred]"
         << " marked-long: "<< print_value_kilo_mega(marked_long_keep)
-        << " clust: " << clust
         << " conf-short: " << solver->conf.pred_conf_short
         << " conf-long: " << solver->conf.pred_conf_long
         << endl;

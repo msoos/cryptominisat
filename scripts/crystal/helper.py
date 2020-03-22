@@ -449,13 +449,13 @@ def plot_feature_importances(importances, indices, myrange, std, features):
 
 
 class CodeWriter:
-    def __init__(self, clf, features, funcname, code_file, verbose):
+    def __init__(self, clf, features, func_name, code_file, verbose):
         self.f = open(code_file, 'w')
         self.code_file = code_file
         write_mit_header(self.f)
         self.clf = clf
         self.feat = features
-        self.func_name = funcname
+        self.func_name = func_name
         self.verbose = verbose
         self.max_pred_val = 1
 

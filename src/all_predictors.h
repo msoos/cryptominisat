@@ -24,7 +24,6 @@ THE SOFTWARE.
 #define ALL_PREDICTORS_H
 
 #include "predict_func_type.h"
-#include "clustering.h"
 
 #include <vector>
 using std::vector;
@@ -34,10 +33,10 @@ namespace CMSat {
 void fill_pred_funcs();
 
 //return value must be indexed by cluster
-const vector<keep_func_type>& get_short_pred_keep_funcs(size_t conf);
+const keep_func_type& get_short_pred_keep_funcs(size_t conf);
 
 //return value must be indexed by cluster
-const vector<keep_func_type>& get_long_pred_keep_funcs(size_t conf);
+const keep_func_type& get_long_pred_keep_funcs(size_t conf);
 
 bool short_pred_func_exists(size_t conf);
 bool long_pred_func_exists(size_t conf);

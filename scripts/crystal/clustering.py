@@ -57,11 +57,9 @@ def add_clustering_label(df, feats_used: list, scaler, clust):
     df["clust"] = clust.predict(df_clust)
 
 
-def dump_clustered(df, used_clusters: list, fname: str):
-    df = df[df["clust"].isin(used_clusters)]
+def dump_dataframe(df, fname: str):
     with open(fname, "wb") as f:
         pickle.dump(df, f)
-
     print("Dumped to file %s" % fname)
 
 
@@ -105,9 +103,8 @@ ClusteringImp::~ClusteringImp() {{
 """.format(clusters=options.clusters))
 
         f.write("void ClusteringImp::set_up_centers() {\n")
-        f.write("\n        centers.resize(%d);\n" % len(self.used_clusters))
-        for i in self.used_clusters:
-
+        f.write("\n        centers.resize(%d);\n" % options.clusters)
+        for i in range(options.clusters):
             f.write("\n        // Doing cluster center %d\n" % i)
             f.write("\n        centers[%d].resize(%d);\n" % (i, len(sz_feats_clean)) )
             f.write("\n        used_clusters.push_back(%d);\n" % i)
@@ -157,7 +154,7 @@ int ClusteringImp::which_is_closest(const SatZillaFeatures& p) const {
     return closest;
     }\n""")
 
-    def write_all_predictors_file(self, fnames, functs, conf_num, longsh):
+    def write_all_predictors_file(self, fname, func_name, conf_num, longsh):
         f = open("{basedir}/all_predictors_{name}_conf{conf_num}.h".format(
             basedir=options.basedir, name=longsh,
             conf_num=conf_num), "w")
@@ -168,87 +165,24 @@ int ClusteringImp::which_is_closest(const SatZillaFeatures& p) const {
 #define ALL_PREDICTORS_{name}_conf{conf_num}_H\n\n""".format(name=longsh, conf_num=conf_num))
         f.write('#include "clause.h"\n')
         f.write('#include "predict_func_type.h"\n\n')
-        for _, fname in fnames.items():
-            f.write('#include "predict/%s"\n' % fname)
+        f.write('#include "predict/%s"\n' % fname)
 
         f.write('#include <vector>\n')
         f.write('using std::vector;\n\n')
 
         f.write("namespace CMSat {\n")
 
-        f.write("\nvector<keep_func_type> should_keep_{name}_conf{conf_num}_funcs = {{\n".format(
-            conf_num=conf_num, name=longsh, clusters=options.clusters))
-
-        for i in range(options.clusters):
-            dummy = ""
-            if i not in self.used_clusters:
-                # just use a dummy one. will never be called
-                func = next(iter(functs.values()))
-                dummy = " /*dummy function, cluster too small*/"
-            else:
-                # use the correct one
-                func = functs[i]
-
-            f.write("    CMSat::{func}{dummy}".format(func=func, dummy=dummy))
-            if i < options.clusters-1:
-                f.write(",\n")
-            else:
-                f.write("\n")
-        f.write("};\n\n")
+        f.write("\nkeep_func_type should_keep_{name}_conf{conf_num}_funcs = \n".format(
+            conf_num=conf_num, name=longsh))
+        f.write(" CMSat::{func}".format(func=func_name))
+        f.write(";\n")
 
         f.write("} //end namespace\n\n")
         f.write("#endif //ALL_PREDICTORS\n")
 
-    def check_clust_distr(self):
-        print("Checking cluster distribution....")
-
-        # print distribution
-        dist = {}
-        for x in self.clust.labels_:
-            if x not in dist:
-                dist[x] = 1
-            else:
-                dist[x] += 1
-        print(dist)
-
-        self.used_clusters = []
-        minimum = int(self.df.shape[0]*options.minimum_cluster_rel)
-        for clust_num, clauses in dist.items():
-            if clauses < minimum:
-                print("== !! Will skip cluster %d !! ==" % clust_num)
-            else:
-                self.used_clusters.append(clust_num)
-
-        if options.show_class_dist:
-            print("Exact class contents follow")
-            for clno in range(options.clusters):
-                x = self.df[(self.df.clust == clno)]
-                fname_dist = {}
-                for _, d in x.iterrows():
-                    fname = d['fname']
-                    if fname not in fname_dist:
-                        fname_dist[fname] = 1
-                    else:
-                        fname_dist[fname] += 1
-
-                skipped = "SKIPPED"
-                if clno in self.used_clusters:
-                    skipped = ""
-                print("\n\nFile name distribution in {skipped} cluster {clno} **".format(
-                    clno=clno, skipped=skipped))
-
-                sorted_x = sorted(fname_dist.items(),
-                                  key=operator.itemgetter(0))
-                for a, b in sorted_x:
-                    print("--> %-10s : %s" % (b, a))
-            print("\n\nClass contents finished.\n")
-
-        self.used_clusters = sorted(self.used_clusters)
-
     def cluster(self):
         features = list(self.df)
-        mycopy = list(features)
-        for f in mycopy:
+        for f in list(features):
             if "var" in f or "vcg" in f or "pnr" in f or "min" in f or "max" in f:
                 features.remove(f)
 
@@ -258,11 +192,13 @@ int ClusteringImp::which_is_closest(const SatZillaFeatures& p) const {
             if "szfeat_cur" in feat and "szfeat_cur.conflicts" not in feat:
                 self.feats_used.append(feat)
 
-        # print("Features used: ", self.feats_used)
+        print("Features used: ", self.feats_used)
         print("Number of features used: ", len(self.feats_used))
 
         if options.check_row_data:
-            helper.check_too_large_or_nan_values(df, self.feats_used)
+            helper.check_too_large_or_nan_values(self.df, self.feats_used)
+        else:
+            helper.check_too_large_or_nan_values(self.df.sample(100), self.feats_used)
 
         # fit to slice that only includes CNF features
         df_clust = self.df[self.feats_used].astype(float).copy()
@@ -304,7 +240,7 @@ int ClusteringImp::which_is_closest(const SatZillaFeatures& p) const {
             print(df_clust_back.head())
             print(df_clust.head())
 
-        self.clust = sklearn.cluster.KMeans(n_clusters=options.clusters)
+        self.clust = sklearn.cluster.KMeans(n_clusters=options.clusters, random_state=prng)
         self.clust.fit(df_clust)
         self.df["clust"] = self.clust.labels_
 
@@ -314,43 +250,33 @@ int ClusteringImp::which_is_closest(const SatZillaFeatures& p) const {
             print(self.clust.labels_)
             print(self.clust.cluster_centers_)
             print(self.clust.get_params())
-        self.check_clust_distr()
-
-        # code for clusters
-        if options.basedir is None:
-            return
 
         # code for cluster centers
         self.create_code_for_cluster_centers(
             self.clust, self.scaler, self.feats_used)
 
         # code for predictors
-        fnames = {}
-        functs = {}
-
         conf_from, conf_to = helper.parse_configs(options.confs)
         for conf in range(conf_from, conf_to):
             for name in ["long", "short"]:
-                for clno in self.used_clusters:
-                    funcname = "should_keep_{name}_conf{conf_num}_cluster{clno}".format(
-                        clno=clno, name=name, conf_num=conf)
-                    functs[clno] = funcname
+                func_name = "should_keep_{name}_conf{conf_num}".format(
+                    name=name, conf_num=conf)
 
-                    fname = "final_predictor_{name}_conf{conf_num}_cluster{clno}.h".format(
-                        clno=clno, name=name, conf_num=conf)
-                    fnames[clno] = fname
+                fname = "final_predictor_{name}_conf{conf_num}.h".format(
+                    name=name, conf_num=conf)
 
                 self.write_all_predictors_file(
-                    fnames, functs, conf_num=conf, longsh=name)
+                    fname, func_name, conf_num=conf, longsh=name)
 
-        print("Used clusters: ", self.used_clusters)
-        return self.feats_used, self.scaler, self.clust, self.used_clusters
+        return self.feats_used, self.scaler, self.clust
 
 
 if __name__ == "__main__":
     usage = "usage: %(prog)s [options] file.pandas"
     parser = argparse.ArgumentParser(usage=usage)
 
+    parser.add_argument("--seed", default=None, type=int,
+                        dest="seed", help="Seed of PRNG")
     parser.add_argument("fnames", nargs='+', metavar='FILES',
                         help="Files to parse, first file is the one to base data off of")
     parser.add_argument("--verbose", "-v", action="store_true", default=False,
@@ -361,16 +287,14 @@ if __name__ == "__main__":
                         dest="check_row_data", help="Check row data for NaN or float overflow")
 
     # clustering
-    parser.add_argument("--clusters", default=1, type=int,
+    parser.add_argument("--clusters", default=4, type=int,
                         dest="clusters", help="How many clusters to use")
-    parser.add_argument("--clustmin", default=0.05, type=float, metavar="RATIO",
-                        dest="minimum_cluster_rel", help="What's the minimum size of the cluster relative to the original set of data.")
     parser.add_argument("--scale", default=False, action="store_true",
                         dest="scale", help="Scale clustering")
-    parser.add_argument("--distr", default=False, action="store_true",
-                        dest="show_class_dist", help="Show class distribution")
-    parser.add_argument("--nocomputed", default=False, action="store_true",
-                        dest="no_computed", help="Don't add computed features")
+    parser.add_argument("--nocomputed", default=True, action="store_false",
+                        dest="computed", help="Don't add computed features")
+    parser.add_argument("--samples", default=1000,
+                        dest="samples_per_file", help="Samples per file")
 
     # number of configs to generate
     parser.add_argument("--confs", default="2-2", type=str,
@@ -381,6 +305,11 @@ if __name__ == "__main__":
                         dest="basedir", help="The base directory of where the CryptoMiniSat source code is")
 
     options = parser.parse_args()
+    prng = np.random.RandomState(options.seed)
+
+    if options.basedir is None:
+        print("ERROR: must set basedir")
+        exit(-1)
 
     if options.fnames is None or len(options.fnames) == 0:
         print("ERROR: You must give the pandas file!")
@@ -395,26 +324,27 @@ if __name__ == "__main__":
         print("ERROR: You must give a '--clusters' option that is greater than 0")
         exit(-1)
 
-    feats_used, scaler, clust, used_clusters = [None, None, None, None]
-    for f in options.fnames:
-        if "-clustered.dat" in f:
-            print("Skipping file, seems clustered: %s" % f)
-            continue
-
-        print("=====================")
-        print("-- Reading file %s --" % f)
-        print("=====================")
+    samples = None
+    fnames = [f for f in options.fnames if "clust" not in f]
+    for f in fnames:
+        print("===-- Sampling file %s --" % f)
         df = pd.read_pickle(f)
-        if not options.no_computed:
+        if options.computed:
             helper.add_computed_szfeat_for_clustering(df)
 
-        if clust is None:
-            print("!! Using this file for generating clustering !!")
-            c = Clustering(df)
-            feats_used, scaler, clust, used_clusters = c.cluster()
-        else:
-            add_clustering_label(df, feats_used, scaler, clust)
+        new_samples = df.sample(options.samples_per_file, replace=True,
+                                random_state=prng)
+        samples = new_samples.append(samples)
+        del df
 
+    c = Clustering(samples)
+    feats_used, scaler, clust = c.cluster()
+
+    for f in fnames:
+        print("===-- Clustering file %s --" % f)
+        df = pd.read_pickle(f)
+        add_clustering_label(df, feats_used, scaler, clust)
         cleanname = re.sub(r'\.dat$', '', f)
-        dump_clustered(df, used_clusters, cleanname+"-clustered.dat")
+        dump_dataframe(df, cleanname+"-clustered.dat")
+        print(df["clust"].value_counts())
         del df

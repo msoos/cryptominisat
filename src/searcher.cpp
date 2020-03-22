@@ -46,6 +46,10 @@ THE SOFTWARE.
 #include "gaussian.h"
 #endif
 
+#ifdef FINAL_PREDICTOR
+#include "clustering.h"
+#endif
+
 #ifdef FINAL_PREDICTOR_BRANCH
 #include "predict/maple_predictor_conf0_cluster0.h"
 #endif
@@ -83,12 +87,20 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     hist.setSize(conf.shortTermHistorySize, 5000);
     cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
     next_change_branch_strategy = conf.branch_strategy_change_everyN;
+
+    #ifdef FINAL_PREDICTOR
+    clustering = new ClusteringImp;
+    #endif
 }
 
 Searcher::~Searcher()
 {
     #ifdef USE_GAUSS
     clear_gauss_matrices();
+    #endif
+
+    #ifdef FINAL_PREDICTOR
+    delete clustering;
     #endif
 }
 
@@ -1505,6 +1517,7 @@ void Searcher::set_clause_data(
     cl->stats.num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-cl->size();
 
 
+    cl->stats.clust = clustering->which_is_closest(solver->last_solve_satzilla_feature);
     cl->stats.glue_hist = hist.glueHistLT.avg();
     cl->stats.size_hist = hist.conflSizeHistLT.avg();
     cl->stats.glue_hist_queue = hist.glueHist.getLongtTerm().avg();

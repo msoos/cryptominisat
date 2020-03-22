@@ -46,6 +46,7 @@ class SQLStats;
 class VarReplacer;
 class EGaussian;
 class DistillerLong;
+class ClusteringImp;
 
 using std::string;
 using std::cout;
@@ -137,6 +138,7 @@ class Searcher : public HyperEngine
         uint32_t non_chrono_backtrack = 0;
 
         SQLStats* sqlStats = NULL;
+        ClusteringImp *clustering = NULL;
         void consolidate_watches(const bool full);
 
         //Gauss

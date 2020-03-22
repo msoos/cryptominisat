@@ -109,8 +109,8 @@ set -x
 # Obtain dynamic data in SQLite and DRAT info
 ########################
 cd "$FNAME-dir"
-# to be removed: --decbased 0 --tern 0 --gluecut0 100
-../cryptominisat5 --confbtwsimp 100000 --decbased 0 --tern 0 --bva 0 --scc 0 --dumpdecformodel dec_list --sqlitedbover 1 --cldatadumpratio "$RATIO" --cllockdatagen 0.5 --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
+# to be removed: --tern 0 --gluecut0 100
+../cryptominisat5 --confbtwsimp 100000 --tern 0 --bva 0 --scc 0 --sqlitedbover 1 --cldatadumpratio "$RATIO" --cllockdatagen 0.5 --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
 # --bva 0 --updateglueonanalysis 0 --otfsubsume 0
 grep "c conflicts" cms-pred-run.out
 
@@ -155,7 +155,7 @@ rm -f ../../src/predict/*.h
 ####################################
 # Clustering for cldata, using cldata dataframe
 ####################################
-../clustering.py ${FNAMEOUT}-min.db-cldata-*short*.dat ${FNAMEOUT}-min.db-cldata-*long*.dat --basedir ../../src/predict/ --clusters 1 --scale --distr --nocomputed
+../clustering.py ${FNAMEOUT}-min.db-cldata-*short*.dat ${FNAMEOUT}-min.db-cldata-*long*.dat --basedir ../../src/predict/ --clusters 4 --scale --nocomputed
 
 
 ####################################
@@ -168,8 +168,8 @@ rm -f ../../src/predict/*.h
 #../vardata_predict.py vardata-comb --final -q 20 --basedir ../src/predict/ --depth 7 --tree
 
 # for CONF in {0..2}; do
-    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-conf-$CONF.dat" --name short --split 0.01 --final --tree --basedir ../../src/predict/ --conf $CONF
-    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-conf-$CONF.dat"  --name long  --split 0.01 --final --tree --basedir ../../src/predict/ --conf $CONF
+    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-conf-$CONF-clustered.dat" --name short --split 0.01 --final --tree --basedir ../../src/predict/ --conf $CONF
+    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-conf-$CONF-clustered.dat"  --name long  --split 0.01 --final --tree --basedir ../../src/predict/ --conf $CONF
 # done
 )
 
@@ -179,6 +179,6 @@ rm -f ../../src/predict/*.h
 ./build_final_predictor.sh
 (
 cd "$FNAME-dir"
-../cryptominisat5 "../$FNAME"  --confbtwsimp 100000 --decbased 0 --tern 0 --bva 0 --printsol 0 --predshort $CONF --predlong $CONF | tee cms-final-run.out
+../cryptominisat5 "../$FNAME"  --confbtwsimp 100000 --tern 0 --bva 0 --printsol 0 --predshort $CONF --predlong $CONF | tee cms-final-run.out
 )
 exit

@@ -40,6 +40,7 @@ struct impliedby : public ::testing::Test {
         //conf.verbosity = 20;
         s = new SATSolver(&conf);
         s->set_bva(0);
+        s->set_no_bve();
         s->new_vars(30);
     }
     ~impliedby()

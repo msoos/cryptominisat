@@ -4,8 +4,6 @@ import sys
 import glob
 import re
 
-PY3 = sys.version_info.major == 3
-
 output_path = sys.argv[1]
 
 def write_predictors(predictors, out, name):
@@ -25,13 +23,15 @@ def write_predictors(predictors, out, name):
     out.write("""    should_keep_{name}_funcs.resize({num});\n""".format(
         num =max(nums)+1, name=name))
 
-    # NULL it out all
-    for num in range(max(nums)+1):
-        out.write("""    should_keep_{name}_funcs[{num}] = vector<keep_func_type>();\n""".format(num=num, name=name))
+    out.write("""    should_keep_{name}_funcs_exists.resize({num}, 0);\n""".format(
+        num =max(nums)+1, name=name))
 
     # set the correct value
     for num in sorted(nums):
-        out.write("""    should_keep_{name}_funcs[{num}] = should_keep_{name}_conf{num}_funcs;\n""".format(num=num, name=name))
+        out.write("""    should_keep_{name}_funcs[{num}] = should_keep_{name}_conf{num}_funcs;\n"""
+                  .format(num=num, name=name))
+        out.write("""    should_keep_{name}_funcs_exists[{num}] = 1;\n"""
+                  .format(num=num, name=name))
 
 
 with open(output_path, 'w') as out:
@@ -60,20 +60,20 @@ THE SOFTWARE.
 //automated
 """)
     predictors = glob.glob("all_predictors_*.h")
-    clusters = glob.glob("clustering_*.h")
-    for x in predictors+clusters:
+    for x in predictors:
         out.write('#include "predict/%s"\n' % x)
 
     out.write("""
-#include "clustering.h"
 #include "predict_func_type.h"
 #include <vector>
 using std::vector;
 
 namespace CMSat {
 
-vector<vector<keep_func_type>> should_keep_short_funcs;
-vector<vector<keep_func_type>> should_keep_long_funcs;
+vector<keep_func_type> should_keep_short_funcs;
+vector<keep_func_type> should_keep_long_funcs;
+vector<int> should_keep_short_funcs_exists;
+vector<int> should_keep_long_funcs_exists;
 
 void fill_pred_funcs() {
     //automated\n""")
@@ -88,23 +88,25 @@ void fill_pred_funcs() {
 //////////
 
 bool short_pred_func_exists(size_t conf) {
-    return should_keep_short_funcs.size() > conf && !should_keep_short_funcs[conf].empty();
+    return (should_keep_short_funcs_exists.size() > conf
+        && should_keep_short_funcs_exists[conf] == 1);
 }
 
 bool long_pred_func_exists(size_t conf) {
-    return should_keep_long_funcs.size() > conf && !should_keep_long_funcs[conf].empty();
+    return (should_keep_long_funcs_exists.size() > conf
+        && should_keep_long_funcs_exists[conf] == 1);
 }
 
 //////////
 //Function returns
 //////////
 
-const vector<keep_func_type>& get_short_pred_keep_funcs(size_t conf) {
+const keep_func_type& get_short_pred_keep_funcs(size_t conf) {
     assert(short_pred_func_exists(conf));
     return should_keep_short_funcs[conf];
 }
 
-const vector<keep_func_type>& get_long_pred_keep_funcs(size_t conf) {
+const keep_func_type& get_long_pred_keep_funcs(size_t conf) {
     assert(long_pred_func_exists(conf));
     return should_keep_long_funcs[conf];
 }
