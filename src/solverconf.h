@@ -360,6 +360,8 @@ class DLL_PUBLIC SolverConf
         unsigned long long distill_long_cls_time_limitM;
         long watch_based_str_time_limitM;
         long long distill_time_limitM;
+        double distill_increase_conf_ratio;
+        long distill_min_confl;
 
         //Memory savings
         int       doRenumberVars;
