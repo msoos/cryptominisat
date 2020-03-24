@@ -1517,7 +1517,7 @@ void Searcher::set_clause_data(
     cl->stats.num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-cl->size();
 
 
-    cl->stats.clust = clustering->which_is_closest(solver->last_solve_satzilla_feature);
+    cl->stats.clust_f = clustering->which_is_closest(solver->last_solve_satzilla_feature);
     cl->stats.glue_hist = hist.glueHistLT.avg();
     cl->stats.size_hist = hist.conflSizeHistLT.avg();
     cl->stats.glue_hist_queue = hist.glueHist.getLongtTerm().avg();

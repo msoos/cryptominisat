@@ -376,7 +376,9 @@ if __name__ == "__main__":
     # clustering_setup is:
     #   feats_used, scaler, clust
     clustering_setup = [None, None]
-    for clust_type in [CLUST_TYPE_FILES, CLUST_TYPE_USEFULNESS]:
+    todo = [CLUST_TYPE_FILES, CLUST_TYPE_USEFULNESS]
+    todo = [CLUST_TYPE_FILES]
+    for clust_type in todo:
         c = Clustering(samples, clust_type)
         clustering_setup[clust_type] = c.cluster()
     del samples
@@ -388,7 +390,7 @@ if __name__ == "__main__":
         if options.computed:
             helper.cldata_add_computed_features(df, options.verbose)
 
-        for clust_type in [CLUST_TYPE_FILES, CLUST_TYPE_USEFULNESS]:
+        for clust_type in todo:
             name = get_cluster_name(clust_type)
             print("===-- TYPE: %s --" % name)
             df_orig[name] = get_clustering_label(df, *clustering_setup[clust_type])
