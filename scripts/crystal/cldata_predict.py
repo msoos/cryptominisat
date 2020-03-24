@@ -125,7 +125,7 @@ class Learner:
 
         return x
 
-    def one_classifier(self, features, to_predict, final, write_code=False):
+    def one_classifier(self, features, to_predict, final):
         print("-> Number of features  :", len(features))
         print("-> Number of datapoints:", self.df.shape)
         print("-> Predicting          :", to_predict)
@@ -276,40 +276,39 @@ class Learner:
                     clf, features,
                     fname=options.dot + "-" + self.func_name)
 
-            if options.basedir and write_code:
-                if options.final_is_forest or options.final_is_tree:
-                    c = helper.CodeWriter(
-                        clf, features, self.func_name,
-                        self.fname, options.verbose)
-                    c.func_signature = """
-                    const CMSat::Clause* cl
-                    , const uint64_t sumConflicts
-                    , const uint32_t last_touched_diff
-                    , const double   act_ranking_rel
-                    , const uint32_t act_ranking_top_10
-                    """
-                    c.func_call = """
-                    cl
-                    , sumConflicts
-                    , last_touched_diff
-                    , act_ranking_rel
-                    , act_ranking_top_10
-                    """
-                    c.per_func_defines = """
-                    uint32_t time_inside_solver = sumConflicts - cl->stats.introduced_at_conflict;
-                    """
-                    c.file_header = """
-                    #include "clause.h"
-                    #include "reducedb.h"
-                    #include <cmath>
+            if options.basedir and (options.final_is_forest or options.final_is_tree):
+                c = helper.CodeWriter(
+                    clf, features, self.func_name,
+                    self.fname, options.verbose)
+                c.func_signature = """
+                const CMSat::Clause* cl
+                , const uint64_t sumConflicts
+                , const uint32_t last_touched_diff
+                , const double   act_ranking_rel
+                , const uint32_t act_ranking_top_10
+                """
+                c.func_call = """
+                cl
+                , sumConflicts
+                , last_touched_diff
+                , act_ranking_rel
+                , act_ranking_top_10
+                """
+                c.per_func_defines = """
+                uint32_t time_inside_solver = sumConflicts - cl->stats.introduced_at_conflict;
+                """
+                c.file_header = """
+                #include "clause.h"
+                #include "reducedb.h"
+                #include <cmath>
 
-                    namespace CMSat {
-                    """
-                    c.fix_feat_name = self.fix_feat_name
-                    c.clean_up()
-                    c.print_full_code()
-                else:
-                    print("NOT writing code")
+                namespace CMSat {
+                """
+                c.fix_feat_name = self.fix_feat_name
+                c.clean_up()
+                c.print_full_code()
+            else:
+                print("NOT writing code")
 
         print("--------------------------")
         print("-       test data        -")
@@ -385,11 +384,9 @@ class Learner:
             # fill best features from file and then do final classifier
             best_features = helper.get_features(options.best_features_fname)
 
-            write_code = options.final_is_tree or options.final_is_tree
             roc_auc, y_pred = self.one_classifier(
                 best_features, "x.class",
-                final=True,
-                write_code=write_code)
+                final=True)
 
             if options.show:
                 plt.show()
