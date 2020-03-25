@@ -53,7 +53,45 @@ class Queries (helper.QueryHelper):
 
         print("indexes created T: %-3.2f s" % (time.time() - t))
 
-    def check_non_negative(self):
+
+    def test_limits(self):
+        checks = [
+            {"table":"clause_stats", "cond":" glue = 0 and size >= 2"},
+            {"table":"clause_stats", "cond":" glue = 1 and size >= 2"},
+            {"table":"clause_stats", "cond":" glue > 50"},
+            {"table":"clause_stats", "cond":" old_glue = 0 and size >= 2"},
+            {"table":"clause_stats", "cond":" old_glue = 1 and size >= 2"},
+        ]
+        for check in checks:
+            q = """select * from `{table}` where {cond} """.format(**check)
+            cursor = self.c.execute(q)
+            for row in cursor:
+                print("ERROR: Following data in `{table}` has {cond}: ".format(**check))
+                print(row)
+                exit(-1)
+            print("Checked for %s" % q)
+
+
+    def test_at_least_n(self):
+        checks = [
+            {"table":"clause_stats", "cond":" glue >= 2", "n": 100},
+            {"table":"reduceDB", "cond":" dump_no == 0", "n": 10},
+            {"table":"reduceDB", "cond":" dump_no == 1", "n": 10}
+        ]
+        for check in checks:
+            q = """select count() from `{table}` where {cond}""".format(**check)
+            cursor = self.c.execute(q)
+            for row in cursor:
+                num = int(row[0])
+                print("Number of {cond} in {table}: {num}".format(num=num, **check))
+                if num < check["n"]:
+                    print("ERROR: That's too few")
+                    exit(-1)
+
+            print("Checked for %s" % q)
+
+
+    def test_non_negative(self):
         table = "reduceDB"
         cols = helper.get_columns(table, options.verbose, self.c)
         for col in cols:
@@ -63,15 +101,15 @@ class Queries (helper.QueryHelper):
             """ % (table, col)
             cursor = self.c.execute(q)
             for row in cursor:
-                print("following data has %s < 0 in table %s: " % (col , table))
+                print("ERROR: following data has %s < 0 in table %s: " % (col , table))
                 print(row)
                 exit(-1)
             print("Checked for %s < 0 in table %s. All are >= 0. T: %-3.2f s" %
                   (col, table, time.time() - t))
 
 
-    def check_positive(self):
-        check_zero = [
+    def test_positive(self):
+        test_zero = [
             ["old_glue", "clause_stats"],
             ["glue", "clause_stats"],
             ["size", "clause_stats"],
@@ -81,14 +119,14 @@ class Queries (helper.QueryHelper):
             ["act_ranking_top_10", "reduceDB"]
             ]
 
-        for col,table in check_zero:
+        for col,table in test_zero:
             t = time.time()
             q = """
             select * from `%s` where `%s` <= 0
             """ % (table, col)
             cursor = self.c.execute(q)
             for row in cursor:
-                print("following data from table %s has %s as non-positive: " % (col, table))
+                print("ERROR: Following data from table %s has %s as non-positive: " % (col, table))
                 print(row)
                 exit(-1)
             print("Checked for %s in table %s. All are positive T: %-3.2f s" %
@@ -111,8 +149,10 @@ if __name__ == "__main__":
 
     with Queries(args[0]) as q:
         #q.create_indexes()
-        q.check_non_negative()
-        q.check_positive()
+        q.test_non_negative()
+        q.test_positive()
+        q.test_limits()
+        q.test_at_least_n()
         #q.drop_idxs()
 
     print("Done.")
