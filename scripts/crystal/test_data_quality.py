@@ -54,19 +54,21 @@ class Queries (helper.QueryHelper):
         print("indexes created T: %-3.2f s" % (time.time() - t))
 
 
-    def test_limits(self):
-        checks = [
+    def test_incorrect_data_values(self):
+        incorrect = [
             {"table":"clause_stats", "cond":" glue = 0 and size >= 2"},
             {"table":"clause_stats", "cond":" glue = 1 and size >= 2"},
             {"table":"clause_stats", "cond":" glue > 50"},
             {"table":"clause_stats", "cond":" old_glue = 0 and size >= 2"},
             {"table":"clause_stats", "cond":" old_glue = 1 and size >= 2"},
+            {"table":"reduceDB", "cond":" act_ranking > tot_cls_in_db"},
+            {"table":"reduceDB", "cond":" act_ranking < 0"},
         ]
-        for check in checks:
-            q = """select * from `{table}` where {cond} """.format(**check)
+        for incorr in incorrect:
+            q = """select * from `{table}` where {cond} """.format(**incorr)
             cursor = self.c.execute(q)
             for row in cursor:
-                print("ERROR: Following data in `{table}` has {cond}: ".format(**check))
+                print("ERROR: Following data in `{table}` has {cond}: ".format(**incorr))
                 print(row)
                 exit(-1)
             print("Checked for %s" % q)
@@ -151,7 +153,7 @@ if __name__ == "__main__":
         #q.create_indexes()
         q.test_non_negative()
         q.test_positive()
-        q.test_limits()
+        q.test_incorrect_data_values()
         q.test_at_least_n()
         #q.drop_idxs()
 
