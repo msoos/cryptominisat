@@ -110,7 +110,7 @@ set -x
 ########################
 cd "$FNAME-dir"
 # to be removed: --tern 0 --gluecut0 100
-../cryptominisat5 --confbtwsimp 100000 --tern 0 --bva 0 --scc 0 --sqlitedbover 1 --cldatadumpratio "$RATIO" --cllockdatagen 0.5 --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
+../cryptominisat5 --updateglueonanalysis 0 --confbtwsimp 100000 --tern 0 --bva 0 --scc 0 --sqlitedbover 1 --cldatadumpratio "$RATIO" --cllockdatagen 0.5 --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
 # --bva 0 --updateglueonanalysis 0 --otfsubsume 0
 grep "c conflicts" cms-pred-run.out
 
@@ -179,6 +179,6 @@ rm -f ../../src/predict/*.h
 ./build_final_predictor.sh
 (
 cd "$FNAME-dir"
-../cryptominisat5 "../$FNAME"  --confbtwsimp 100000 --tern 0 --bva 0 --printsol 0 --predshort $CONF --predlong $CONF | tee cms-final-run.out
+../cryptominisat5 "../$FNAME"  --updateglueonanalysis 0 --confbtwsimp 100000 --tern 0 --bva 0 --printsol 0 --predshort $CONF --predlong $CONF | tee cms-final-run.out
 )
 exit
