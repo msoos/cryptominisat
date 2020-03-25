@@ -232,9 +232,6 @@ class DLL_PUBLIC SolverConf
         int       update_glues_on_analyze;
         uint32_t  max_glue_cutoff_gluehistltlimited;
 
-        //OTF stuff
-        int       do_hyperbin_and_transred;
-
         //chrono bt
         int64_t confl_to_chrono;
         int diff_declev_for_chrono;
@@ -299,6 +296,7 @@ class DLL_PUBLIC SolverConf
         int      doTransRed;   ///<carry out transitive reduction
         unsigned long long   intree_time_limitM;
         unsigned long long intree_scc_varreplace_time_limitM;
+        int       do_hyperbin_and_transred;
 
         //XORs
         int      doFindXors;
