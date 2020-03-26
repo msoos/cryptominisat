@@ -350,24 +350,26 @@ if __name__ == "__main__":
     if options.fnames is None or len(options.fnames) == 0:
         print("ERROR: You must give the pandas file!")
         exit(-1)
-    else:
-        print("Will base clustering on file:", options.fnames[0])
-        print("Will add clustering to files: ")
-        for f in options.fnames:
-            print("->", f)
+
+    fnames = [f for f in options.fnames if "clust" not in f]
+    print("Will add clustering to files: ")
+    for f in fnames:
+        print("->", f)
 
     if options.clusters <= 0:
         print("ERROR: You must give a '--clusters' option that is greater than 0")
         exit(-1)
 
     samples = None
-    fnames = [f for f in options.fnames if "clust" not in f]
     for f in fnames:
         print("===-- Sampling file %s --" % f)
         df = pd.read_pickle(f)
+        print("options.samples_per_file:", options.samples_per_file)
+        print("df.shape:", df.shape)
         new_samples = df.sample(options.samples_per_file, replace=True,
                                 random_state=prng)
         samples = new_samples.append(samples)
+        print("samples.shape:", samples.shape)
         del df
 
     if options.computed:
