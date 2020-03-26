@@ -262,7 +262,7 @@ def check_too_large_or_nan_values(df, features):
     print("Checking finished.")
 
 
-def print_confusion_matrix(cm, classes,
+def print_confusion_matrix(cm,
                            normalize=False,
                            title='Confusion matrix',
                            cmap=plt.cm.Blues):
@@ -298,7 +298,16 @@ def conf_matrixes(data, features, to_predict, clf, toprint,
         return None, None, None, None
 
     # Preform prediction
+    def f(x):
+        if x > 0.5:
+            return 1
+        else:
+            return 0
+
     y_pred = clf.predict(X_data)
+    #print("type(y_pred[0]): ",  type(y_pred[0]))
+    if type(y_pred[0]) == np.float32:
+        y_pred = np.array([f(x) for x in y_pred])
 
     # calc acc, precision, recall
     accuracy = sklearn.metrics.accuracy_score(
@@ -306,17 +315,16 @@ def conf_matrixes(data, features, to_predict, clf, toprint,
     mlflow.log_metric(toprint + " -- accuracy", accuracy)
 
     precision = sklearn.metrics.precision_score(
-        y_data, y_pred, pos_label="OK", average=average)
+        y_data, y_pred, pos_label=1, average=average)
     mlflow.log_metric(toprint + " -- precision", precision)
 
     recall = sklearn.metrics.recall_score(
-        y_data, y_pred, pos_label="OK", average=average)
+        y_data, y_pred, pos_label=1, average=average)
     mlflow.log_metric(toprint + " -- recall", recall)
 
     # ROC AUC
-    values2nums = {'OK': 1, 'BAD': 0}
-    predsi = np.array([values2nums[xi] for xi in y_pred])
-    y_testi = pd.DataFrame(y_data)["x.class"].map(values2nums).squeeze()
+    predsi = np.array(y_pred)
+    y_testi = pd.DataFrame(y_data)["x.class"].squeeze()
     try:
         roc_auc = sklearn.metrics.roc_auc_score(y_testi, predsi)
     except:
@@ -337,10 +345,10 @@ def conf_matrixes(data, features, to_predict, clf, toprint,
     cnf_matrix = sklearn.metrics.confusion_matrix(
         y_true=y_data, y_pred=y_pred)
     print_confusion_matrix(
-        cnf_matrix, classes=clf.classes_,
+        cnf_matrix,
         title='Confusion matrix without normalization -- %s' % toprint)
     print_confusion_matrix(
-        cnf_matrix, classes=clf.classes_, normalize=True,
+        cnf_matrix, normalize=True,
         title='Normalized confusion matrix -- %s' % toprint)
 
     return precision, recall, accuracy, roc_auc

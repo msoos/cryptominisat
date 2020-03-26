@@ -39,7 +39,7 @@ import matplotlib.pyplot as plt
 import sklearn.ensemble
 import sklearn.linear_model
 import helper
-
+import xgboost as xgb
 import mlflow
 ver = sklearn.__version__.split(".")
 if int(ver[1]) < 20:
@@ -61,19 +61,19 @@ class Learner:
         self.func_name = func_name
         self.fname = fname
 
-    def count_bad_good(self, df):
+    def count_bad_ok(self, df):
         files = df[["x.class", "rdb0.dump_no"]].groupby("x.class").count()
-        if files["rdb0.dump_no"].index[0] == "BAD":
+        if files["rdb0.dump_no"].index[0] == 0:
             bad = files["rdb0.dump_no"][0]
-            good = files["rdb0.dump_no"][1]
+            ok = files["rdb0.dump_no"][1]
         else:
             bad = files["rdb0.dump_no"][1]
-            good = files["rdb0.dump_no"][0]
+            ok = files["rdb0.dump_no"][0]
 
-        assert bad > 0, "No need to train, data only contains BAD"
-        assert good > 0, "No need to train, data only contains GOOD"
+        assert bad > 0, "No need to train, data only contains BAD(0)"
+        assert ok > 0, "No need to train, data only contains OK(1)"
 
-        return bad, good
+        return bad, ok
 
     def filter_percentile(self, df, features, perc):
         low = df.quantile(perc, axis=0)
@@ -142,13 +142,13 @@ class Learner:
         if options.check_row_data:
             helper.check_too_large_or_nan_values(df, features)
 
-        # count good and bad
-        bad,good = self.count_bad_good(df)
+        # count bad and ok
+        bad,ok = self.count_bad_ok(df)
         print("Number of BAD  elements        : %-6d" % bad)
-        print("Number of GOOD elements        : %-6d" % good)
+        print("Number of OK   elements        : %-6d" % ok)
 
         # balance it out
-        prefer_ok = float(bad)/float(good)
+        prefer_ok = float(bad)/float(ok)
         print("Balanced OK preference would be: %-6.3f" % prefer_ok)
 
         # apply inbalance from option given
@@ -161,8 +161,8 @@ class Learner:
         train, test = train_test_split(df, test_size=0.33, random_state=prng)
         #print("features:", features)
 
-        ## MASSIVE HACK
-        if options.final_is_logreg:
+        ## MASSIVE HACK for XGBOOST
+        if options.final_is_xgboost:
             features = [
                 "cl.glue_hist_long",
                 "cl.glue_hist_queue",
@@ -199,7 +199,7 @@ class Learner:
 
             clf_tree = sklearn.tree.DecisionTreeClassifier(
                 max_depth=options.tree_depth,
-                class_weight={"OK": prefer_ok, "BAD": 1},
+                class_weight={1: prefer_ok, 0: 1},
                 min_samples_split=split_point,
                 random_state=prng)
             clf_svm_pre = sklearn.svm.SVC(
@@ -216,7 +216,7 @@ class Learner:
                 random_state=prng)
             clf_forest = sklearn.ensemble.RandomForestClassifier(
                 n_estimators=options.num_trees,
-                class_weight={"OK": prefer_ok, "BAD": 1},
+                class_weight={1: prefer_ok, 0: 1},
                 #min_samples_leaf=split_point,
                 random_state=prng)
 
@@ -228,6 +228,8 @@ class Learner:
                 clf = clf_logreg
             elif options.final_is_forest:
                 clf = clf_forest
+            elif options.final_is_xgboost:
+                clf = xgb.XGBRegressor(objective ='binary:logistic')
             elif options.final_is_voting:
                 mylist = [["forest", clf_forest], [
                     "svm", clf_svm], ["logreg", clf_logreg]]
@@ -241,7 +243,7 @@ class Learner:
             clf_forest = sklearn.ensemble.RandomForestClassifier(
                 n_estimators=options.num_trees*5,
                 max_features="sqrt",
-                class_weight={"OK": prefer_ok, "BAD": 1},
+                class_weight={1: prefer_ok, 0: 1},
                 random_state=prng)
 
             clf = clf_forest
@@ -455,6 +457,8 @@ if __name__ == "__main__":
                         dest="final_is_logreg", help="Final classifier should be a logistic regression")
     parser.add_argument("--forest", default=False, action="store_true",
                         dest="final_is_forest", help="Final classifier should be a forest")
+    parser.add_argument("--xgboost", default=False, action="store_true",
+                        dest="final_is_xgboost", help="Final classifier should be a XGBoost")
     parser.add_argument("--voting", default=False, action="store_true",
                         dest="final_is_voting", help="Final classifier should be a voting of all of: forest, svm, logreg")
 

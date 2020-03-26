@@ -301,8 +301,8 @@ class QueryCls (helper.QueryHelper):
                    or
                    (used_later_short.used_later_short > 2 and used_later_long.used_later_long > 40)
             )
-            THEN "OK"
-            ELSE "BAD"
+            THEN 1
+            ELSE 0
             END AS `x.class`
             """
         elif self.conf == 1:
@@ -311,8 +311,8 @@ class QueryCls (helper.QueryHelper):
 
             -- useful in the next round
                    used_later_short.used_later_short > 5
-            THEN "OK"
-            ELSE "BAD"
+            THEN 1
+            ELSE 0
             END AS `x.class`
             """
         elif self.conf == 2:
@@ -321,8 +321,8 @@ class QueryCls (helper.QueryHelper):
 
             -- useful in the next round
                    used_later_short.used_later_short >= max(cast({avg_used_later_short}+0.5 as int),1)
-            THEN "OK"
-            ELSE "BAD"
+            THEN 1
+            ELSE 0
             END AS `x.class`
             """
         elif self.conf == 3:
@@ -331,8 +331,8 @@ class QueryCls (helper.QueryHelper):
 
             -- useful in the next round
                    used_later_short.used_later_short >= max(cast({avg_used_later_short}/2+0.5 as int),1)
-            THEN "OK"
-            ELSE "BAD"
+            THEN 1
+            ELSE 0
             END AS `x.class`
             """
         elif self.conf == 4:
@@ -341,8 +341,8 @@ class QueryCls (helper.QueryHelper):
 
             -- useful in the next round
                    used_later_short.used_later_short >= max({median_used_later_short},1)
-            THEN "OK"
-            ELSE "BAD"
+            THEN 1
+            ELSE 0
             END AS `x.class`
             """
 
@@ -361,8 +361,8 @@ class QueryCls (helper.QueryHelper):
                 -- used quite a bit but less dispersion
                 or (used_later_long.used_later_long > 6 and used_later.used_later > 30)
             )
-            THEN "OK"
-            ELSE "BAD"
+            THEN 1
+            ELSE 0
             END AS `x.class`
             """.format(long_duration=options.long_duration)
         elif self.conf == 1:
@@ -377,8 +377,8 @@ class QueryCls (helper.QueryHelper):
                 -- used quite a bit but less dispersion
                 or (used_later_long.used_later_long > 8 and used_later.used_later > 40)
             )
-            THEN "OK"
-            ELSE "BAD"
+            THEN 1
+            ELSE 0
             END AS `x.class`
             """.format(long_duration=options.long_duration)
         elif self.conf == 2:
@@ -387,8 +387,8 @@ class QueryCls (helper.QueryHelper):
 
            -- useful in the next round
                used_later_long.used_later_long >= max(cast({avg_used_later_long}+0.5 as int), 1)
-            THEN "OK"
-            ELSE "BAD"
+            THEN 1
+            ELSE 0
             END AS `x.class`
             """
         elif self.conf == 3:
@@ -397,8 +397,8 @@ class QueryCls (helper.QueryHelper):
 
            -- useful in the next round
                used_later_long.used_later_long >= max(cast({avg_used_later_long}/2+0.5 as int), 1)
-            THEN "OK"
-            ELSE "BAD"
+            THEN 1
+            ELSE 0
             END AS `x.class`
             """
         elif self.conf == 4:
@@ -407,8 +407,8 @@ class QueryCls (helper.QueryHelper):
 
            -- useful in the next round
                used_later_long.used_later_long >= max({median_used_later_long}, 1)
-            THEN "OK"
-            ELSE "BAD"
+            THEN 1
+            ELSE 0
             END AS `x.class`
             """
 
@@ -527,12 +527,12 @@ class QueryCls (helper.QueryHelper):
 
     def one_query(self, q, ok_or_bad):
         q = q.format(**self.myformat)
-        q = "select * from ( %s ) where `x.class`='%s' " % (q, ok_or_bad)
+        q = "select * from ( %s ) where `x.class` = %d " % (q, ok_or_bad)
         q += self.common_limits
         q = q.format(**self.myformat)
 
         t = time.time()
-        sys.stdout.write("Running query for %s..." % ok_or_bad)
+        sys.stdout.write("Running query for %d..." % ok_or_bad)
         sys.stdout.flush()
         if options.dump_sql:
             print("query:", q)
@@ -558,7 +558,7 @@ class QueryCls (helper.QueryHelper):
         print("Getting one set of data with limit %s" % limit)
         dfs = {}
         weighted_size = []
-        for type_data in ["OK", "BAD"]:
+        for type_data in [1, 0]:
             df_parts = []
 
             def one_part(mult, extra):
@@ -614,7 +614,7 @@ class QueryCls (helper.QueryHelper):
         df, weighted_size = self.one_set_of_data(str(self.q_select), limit)
 
         print("Queries finished. T: %-3.2f" % (time.time() - t))
-        return True, pd.concat([df["OK"], df["BAD"]]), limit
+        return True, pd.concat([df[1], df[0]]), limit
 
 
 def dump_dataframe(df, name):
