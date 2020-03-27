@@ -230,9 +230,9 @@ DLL_PUBLIC void ipasir_set_terminate (void * /*solver*/, void * /*state*/, int (
     //this is complicated.
 }
 
-}
-
 DLL_PUBLIC void ipasir_set_learn (void * /*solver*/, void * /*state*/, int /*max_length*/, void (* /*learn*/)(void * state, int * clause))
 {
     //this is complicated
+}
+
 }
