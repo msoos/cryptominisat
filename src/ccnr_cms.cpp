@@ -206,7 +206,7 @@ struct ClWeightSorter
 
 lbool CMS_ccnr::deal_with_solution(int res)
 {
-    if (solver->conf.sls_get_phase || res == 10) {
+    if (solver->conf.sls_get_phase || res) {
         if (solver->conf.verbosity) {
             cout
             << "c [ccnr] saving best assignement phase"
