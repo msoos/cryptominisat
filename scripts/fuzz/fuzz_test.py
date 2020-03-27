@@ -320,10 +320,11 @@ class Tester:
             sls = random.choice([0, 0, 0, 1])
 
         cmd += "--sls %d " % sls
+        cmd += "--slsgetphase %d " % random.choice([0, 0, 0, 1])
         cmd += "--slseveryn %d " % random.randint(1, 3)
         cmd += "--yalsatmems %d " % random.choice([1, 10, 100, 300])
         cmd += "--walksatruns %d " % random.choice([1, 10, 100, 300])
-        cmd += "--slstype %s " % random.choice(["walksat", "yalsat"])
+        cmd += "--slstype %s " % random.choice(["walksat", "yalsat", "ccnr"])
         cmd += "--mustrenumber %d " % random.choice([0, 1])
         cmd += "--conftochrono %d " % random.choice([-1, random.randint(1, 20000)])
         cmd += "--diffdeclevelchrono %d " % random.choice([1, random.randint(1, 1000), -1])
