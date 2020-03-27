@@ -51,18 +51,17 @@ using std::string;
 using std::cout;
 using std::endl;
 
-struct OTFClause
-{
-    Lit lits[3];
-    unsigned size;
-};
-
 struct VariableVariance
 {
     double avgDecLevelVarLT = 0;
     double avgTrailLevelVarLT= 0;
     double avgDecLevelVar = 0;
     double avgTrailLevelVar = 0;
+};
+
+struct ConflictData {
+    uint32_t nHighestLevel;
+    //bool bOnlyOneLitFromHighest = false;
 };
 
 class Searcher : public HyperEngine
@@ -132,8 +131,14 @@ class Searcher : public HyperEngine
                 return val ^ lit.sign();
             }
         }
+
+        vector<Trail> add_tmp_canceluntil;
         template<bool do_insert_var_order = true, bool update_bogoprops = false>
         void cancelUntil(uint32_t level); ///<Backtrack until a certain level.
+        ConflictData FindConflictLevel(PropBy& pb);
+        uint32_t chrono_backtrack = 0;
+        uint32_t non_chrono_backtrack = 0;
+
         bool check_order_heap_sanity() const;
 
         SQLStats* sqlStats = NULL;
@@ -276,18 +281,13 @@ class Searcher : public HyperEngine
         bool  handle_conflict(PropBy confl);// Handles the conflict clause
         void  update_history_stats(size_t backtrack_level, uint32_t glue);
         template<bool update_bogoprops>
-        void  attach_and_enqueue_learnt_clause(Clause* cl, bool enq = true);
+        void  attach_and_enqueue_learnt_clause(Clause* cl, const uint32_t level, const bool enqueue);
         void  print_learning_debug_info() const;
         void  print_learnt_clause() const;
-        template<bool update_bogoprops>
-        void  add_otf_subsume_long_clauses();
-        template<bool update_bogoprops>
-        void  add_otf_subsume_implicit_clause();
-        Clause* handle_last_confl_otf_subsumption(
-            Clause* cl
-            , const uint32_t glue
-            , const uint32_t old_decision_level
-        );
+        Clause* handle_last_confl(
+            const uint32_t glue
+            , const uint32_t old_decision_level);
+
         template<bool update_bogoprops>
         lbool new_decision();  // Handles the case when decision must be made
         void  check_need_restart();     // Helper function to decide if we need to restart during search
@@ -331,10 +331,9 @@ class Searcher : public HyperEngine
         size_t find_backtrack_level_of_learnt();
         template<bool update_bogoprops>
         void bump_var_activities_based_on_implied_by_learnts(const uint32_t backtrack_level);
-        Clause* otf_subsume_last_resolved_clause(Clause* last_resolved_long_cl);
         void print_debug_resolution_data(const PropBy confl);
         template<bool update_bogoprops>
-        Clause* create_learnt_clause(PropBy confl);
+        void create_learnt_clause(PropBy confl);
         int pathC;
         #ifdef STATS_NEEDED
         AtecedentData<uint16_t> antec_data;
@@ -369,21 +368,12 @@ class Searcher : public HyperEngine
         void normalClMinim();
         MyStack<Lit> analyze_stack;
         uint32_t        abstractLevel(const uint32_t x) const;
-
-        //OTF subsumption during learning
-        vector<ClOffset> otf_subsuming_long_cls;
-        vector<OTFClause> otf_subsuming_short_cls;
-        void check_otf_subsume(const ClOffset offset, Clause& cl);
-        void create_otf_subsuming_implicit_clause(const Clause& cl);
-        void create_otf_subsuming_long_clause(Clause& cl, ClOffset offset);
         template<bool update_bogoprops>
-        Clause* add_literals_from_confl_to_learnt(const PropBy confl, const Lit p);
+        void add_literals_from_confl_to_learnt(const PropBy confl, const Lit p, uint32_t nDecisionLevel);
         void debug_print_resolving_clause(const PropBy confl) const;
         template<bool update_bogoprops>
-        void add_lit_to_learnt(Lit lit);
+        void add_lit_to_learnt(Lit lit, uint32_t nDecisionLevel);
         void analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& out_conflict);
-        size_t tmp_learnt_clause_size;
-        cl_abst_type tmp_learnt_clause_abst;
 
         //Restarts
         uint64_t max_confl_per_search_solve_call;

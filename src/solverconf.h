@@ -231,8 +231,11 @@ class DLL_PUBLIC SolverConf
 
         //OTF stuff
         int       otfHyperbin;
-        int       doOTFSubsume;
-        int       doOTFSubsumeOnlyAtOrBelowGlue;
+
+        //chrono bt
+        int confl_to_chrono;
+        int diff_declev_for_chrono;
+
 
         //decision-based conflict clause generation
         int       do_decision_based_cl;
@@ -268,6 +271,8 @@ class DLL_PUBLIC SolverConf
         //Ternary resolution
         bool doTernary;
         long long ternary_res_time_limitM;
+        double ternary_keep_mult;
+        double ternary_max_create;
 
         //BVA
         int      do_bva;
@@ -345,6 +350,8 @@ class DLL_PUBLIC SolverConf
         unsigned long long distill_long_cls_time_limitM;
         long watch_cache_stamp_based_str_time_limitM;
         long long distill_time_limitM;
+        double distill_increase_conf_ratio;
+        long distill_min_confl;
 
         //Memory savings
         int       doRenumberVars;

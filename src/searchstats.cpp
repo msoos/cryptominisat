@@ -63,11 +63,6 @@ SearchStats& SearchStats::operator+=(const SearchStats& other)
     learntUnits += other.learntUnits;
     learntBins += other.learntBins;
     learntLongs += other.learntLongs;
-    otfSubsumed += other.otfSubsumed;
-    otfSubsumedImplicit += other.otfSubsumedImplicit;
-    otfSubsumedLong += other.otfSubsumedLong;
-    otfSubsumedRed += other.otfSubsumedRed;
-    otfSubsumedLitsGained += other.otfSubsumedLitsGained;
     cache_hit += other.cache_hit;
     red_cl_in_which0 += other.red_cl_in_which0;
 
@@ -125,11 +120,6 @@ SearchStats& SearchStats::operator-=(const SearchStats& other)
     learntUnits -= other.learntUnits;
     learntBins -= other.learntBins;
     learntLongs -= other.learntLongs;
-    otfSubsumed -= other.otfSubsumed;
-    otfSubsumedImplicit -= other.otfSubsumedImplicit;
-    otfSubsumedLong -= other.otfSubsumedLong;
-    otfSubsumedRed -= other.otfSubsumedRed;
-    otfSubsumedLitsGained -= other.otfSubsumedLitsGained;
     cache_hit -= other.cache_hit;
     red_cl_in_which0 -= other.red_cl_in_which0;
 
@@ -236,36 +226,6 @@ void SearchStats::print(uint64_t props, bool do_print_times) const
         , learntLongs
         , stats_line_percent(learntLongs, conflStats.numConflicts)
         , "% of conflicts"
-    );
-
-    print_stats_line("c otf-subs"
-        , otfSubsumed
-        , ratio_for_stat(otfSubsumed, conflStats.numConflicts)
-        , "/conflict"
-    );
-
-    print_stats_line("c otf-subs implicit"
-        , otfSubsumedImplicit
-        , stats_line_percent(otfSubsumedImplicit, otfSubsumed)
-        , "%"
-    );
-
-    print_stats_line("c otf-subs long"
-        , otfSubsumedLong
-        , stats_line_percent(otfSubsumedLong, otfSubsumed)
-        , "%"
-    );
-
-    print_stats_line("c otf-subs learnt"
-        , otfSubsumedRed
-        , stats_line_percent(otfSubsumedRed, otfSubsumed)
-        , "% otf subsumptions"
-    );
-
-    print_stats_line("c otf-subs lits gained"
-        , otfSubsumedLitsGained
-        , ratio_for_stat(otfSubsumedLitsGained, otfSubsumed)
-        , "lits/otf subsume"
     );
 
     print_stats_line("c cache hit re-learnt cl"

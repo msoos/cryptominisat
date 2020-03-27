@@ -204,8 +204,14 @@ void ReduceDB::handle_lev1()
         } else if (cl->stats.which_red_array == 2) {
             assert(false && "we should never move up through any other means");
         } else {
+
+            uint32_t must_touch = solver->conf.must_touch_lev1_within;
+            if (cl->drop_if_not_used) {
+                must_touch *= solver->conf.ternary_keep_mult;
+            }
+
             if (!solver->clause_locked(*cl, offset)
-                && cl->stats.last_touched + solver->conf.must_touch_lev1_within < solver->sumConflicts
+                && cl->stats.last_touched + must_touch < solver->sumConflicts
             ) {
                 solver->longRedCls[2].push_back(offset);
                 cl->stats.which_red_array = 2;

@@ -1531,6 +1531,9 @@ lbool Solver::solve_with_assumptions(
     conf.max_confl = std::numeric_limits<long>::max();
     conf.maxTime = std::numeric_limits<double>::max();
     drat->flush();
+    assert(decisionLevel()== 0);
+    assert(!ok || solver->prop_at_head());
+
     return status;
 }
 
@@ -1802,6 +1805,7 @@ void Solver::handle_found_solution(const lbool status, const bool only_sampling_
     if (status == l_True) {
         extend_solution(only_sampling_solution);
         cancelUntil(0);
+        assert(solver->prop_at_head());
 
         #ifdef DEBUG_ATTACH_MORE
         find_all_attach();
@@ -2087,8 +2091,13 @@ lbool Solver::simplify_problem(const bool startup)
         return ret;
     } else {
         assert(ret == l_True);
-        rebuildOrderHeap();
+        //nothing should happen here, we already have a full solution
+        //but let's check and put the propagation to HEAD
+        PropBy confl = propagate<false>();
+        assert(confl.isNULL());
+
         finish_up_solve(ret);
+        rebuildOrderHeap();
         return ret;
     }
 }
@@ -4251,8 +4260,8 @@ bool Solver::implied_by(const std::vector<Lit>& lits,
 
     out_implied.reserve(trail.size()-trail_lim[0]);
     for(uint32_t i = trail_lim[0]; i < trail.size(); i++) {
-        if (trail[i].var() < nVars()) {
-            out_implied.push_back(trail[i]);
+        if (trail[i].lit.var() < nVars()) {
+            out_implied.push_back(trail[i].lit);
         }
     }
     cancelUntil(0);

@@ -509,12 +509,22 @@ void Main::add_supported_options()
         , "Simp rounds increment by this power of N")
     ;
 
+    std::ostringstream tern_keep;
+    tern_keep << std::setprecision(2) << conf.ternary_keep_mult;
+
+    std::ostringstream tern_max_create;
+    tern_max_create << std::setprecision(2) << conf.ternary_max_create;
+
     po::options_description tern_res_options("Ternary resolution");
     tern_res_options.add_options()
     ("tern", po::value(&conf.doTernary)->default_value(conf.doTernary)
         , "Perform Ternary resolution'")
     ("terntimelim", po::value(&conf.ternary_res_time_limitM)->default_value(conf.ternary_res_time_limitM)
         , "Time-out in bogoprops M of ternary resolution as per paper 'Look-Ahead Versus Look-Back for Satisfiability Problems'")
+    ("ternkeep", po::value(&conf.ternary_keep_mult)->default_value(conf.ternary_keep_mult, tern_keep.str())
+        , "Keep ternary clauses only if they are touched within this multiple of 'lev1usewithin'")
+    ("terncreate", po::value(&conf.ternary_max_create)->default_value(conf.ternary_max_create, tern_max_create.str())
+        , "Create only this multiple (of linked in cls) ternary clauses per simp run")
     ;
 
     po::options_description occ_mem_limits("Occ-based simplification memory limits");
@@ -632,8 +642,6 @@ void Main::add_supported_options()
         , "Use cache for otf more minim of learnt clauses")
     ("moremorealways", po::value(&conf.doAlwaysFMinim)->default_value(conf.doAlwaysFMinim)
         , "Always strong-minimise clause")
-    ("otfsubsume", po::value(&conf.doOTFSubsume)->default_value(conf.doOTFSubsume)
-        , "Perform on-the-fly subsumption")
     ("decbased", po::value(&conf.do_decision_based_cl)->default_value(conf.do_decision_based_cl)
         , "Create decision-based conflict clauses when the UIP clause is too large")
     ("decbasemaxlev", po::value(&conf.decision_based_cl_max_levels)->default_value(conf.decision_based_cl_max_levels)
@@ -648,6 +656,14 @@ void Main::add_supported_options()
         , "Update glues while analyzing")
     ("otfhyper", po::value(&conf.otfHyperbin)->default_value(conf.otfHyperbin)
         , "Perform hyper-binary resolution at dec. level 1 after every restart and during probing")
+    ;
+
+    po::options_description chrono_bt_opts("Propagation options");
+    chrono_bt_opts.add_options()
+    ("conftochrono", po::value(&conf.confl_to_chrono)->default_value(conf.confl_to_chrono)
+        , "This many conflicts before chronological backtracking is turned on. Giving -1 means it's always on.")
+    ("diffdeclevelchrono", po::value(&conf.diff_declev_for_chrono)->default_value(conf.diff_declev_for_chrono)
+        , "Difference in decision level is more than this, perform chonological backtracking instead of non-chronological backtracking. Giving -1 means it is never turned on (overrides '--confltochrono -1' in this case).")
     ;
 
 
@@ -709,6 +725,10 @@ void Main::add_supported_options()
         , "Maximum number of Mega-bogoprops(~time) to spend on vivifying/distilling long cls by enqueueing and propagating")
     ("distillto", po::value(&conf.distill_time_limitM)->default_value(conf.distill_time_limitM)
         , "Maximum time in bogoprops M for distillation")
+    ("distillincconf", po::value(&conf.distill_increase_conf_ratio)->default_value(conf.distill_increase_conf_ratio)
+        , "Multiplier for current number of conflicts OTF distill")
+    ("distillminconf", po::value(&conf.distill_min_confl)->default_value(conf.distill_min_confl)
+        , "Minimum number of conflicts between OTF distill")
     ;
 
     po::options_description mem_save_opts("Memory saving options");
@@ -804,6 +824,7 @@ void Main::add_supported_options()
     .add(restartOptions)
     .add(printOptions)
     .add(propOptions)
+    .add(chrono_bt_opts)
     .add(reduceDBOptions)
     .add(red_cl_dump_opts)
     .add(varPickOptions)
