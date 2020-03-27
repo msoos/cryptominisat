@@ -112,6 +112,7 @@ set(cryptoms_lib_files
     yalsat.cpp
     yals.c
     walksat.cpp
+    ccnr.cpp
     sls.cpp
 
 #    watcharray.cpp
