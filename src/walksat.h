@@ -35,7 +35,6 @@ class Solver;
 class WalkSAT {
 public:
     lbool main();
-    uint64_t mem_needed();
     WalkSAT(Solver* _solver);
     ~WalkSAT();
 
@@ -169,28 +168,17 @@ private:
     int sum_r = 0;
     double avgfalse;
     double sumfalse;
-    double sumfalse_squared;
-    double second_moment_avgfalse, variance_avgfalse, std_dev_avgfalse, ratio_avgfalse;
     double f;
     double sample_size;
     double sum_avgfalse = 0.0;
-    double sum_std_dev_avgfalse = 0.0;
     double mean_avgfalse;
-    double mean_std_dev_avgfalse;
     int number_sampled_runs = 0;
-    double ratio_mean_avgfalse;
     double suc_sum_avgfalse = 0.0;
-    double suc_sum_std_dev_avgfalse = 0.0;
     double suc_mean_avgfalse;
-    double suc_mean_std_dev_avgfalse;
     int suc_number_sampled_runs = 0;
-    double suc_ratio_mean_avgfalse;
     double nonsuc_sum_avgfalse = 0.0;
-    double nonsuc_sum_std_dev_avgfalse = 0.0;
     double nonsuc_mean_avgfalse;
-    double nonsuc_mean_std_dev_avgfalse;
     int nonsuc_number_sampled_runs = 0;
-    double nonsuc_ratio_mean_avgfalse;
     MTRand mtrand;
 
     //helpers

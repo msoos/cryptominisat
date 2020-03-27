@@ -1,5 +1,4 @@
 /******************************************
-Copyright (c) 2018, Henry Kautz <henry.kautz@gmail.com>
 Copyright (c) 2018, Mate Soos <soos.mate@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -36,7 +35,6 @@ class Solver;
 class Yalsat {
 public:
     lbool main();
-    uint64_t mem_needed();
     Yalsat(Solver* _solver);
     ~Yalsat();
 
@@ -61,11 +59,6 @@ private:
     template<class T>
     add_cl_ret add_this_clause(const T& cl);
     vector<int> yals_lits;
-
-    uint32_t numvars;     /* number of vars */
-    uint32_t numclauses;   /* number of clauses */
-    uint32_t numliterals; /* number of instances of literals across all clauses */
-    uint32_t numfalse;   /* number of false clauses */
 };
 
 }

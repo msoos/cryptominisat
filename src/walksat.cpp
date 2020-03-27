@@ -122,10 +122,7 @@ lbool WalkSAT::main()
         last_low_bad = lowbad;
     }
     print_statistics_final();
-    if (found_solution)
-        return l_True;
-    else
-        return l_Undef;
+    return l_Undef;
 }
 
 void WalkSAT::WalkSAT::flipvar(uint32_t toflip)
@@ -193,9 +190,9 @@ void WalkSAT::WalkSAT::flipvar(uint32_t toflip)
 
         numtruelit[cli]++;
         if (numtruelit[cli] == 1) {
+            assert(numfalse > 0);
             const uint32_t last_false_cl = false_cls[numfalse-1];
             uint32_t position_in_false_cls = map_cl_to_false_cls[cli];
-            assert(numfalse > 0);
             numfalse--;
 
             //the postiion in false_cls where this clause was is now replaced with
@@ -337,50 +334,6 @@ void WalkSAT::init_for_round()
     #endif
 }
 
-uint64_t WalkSAT::mem_needed()
-{
-    numvars = solver->nVars();
-    numclauses = solver->longIrredCls.size() + solver->binTri.irredBins;
-    numliterals = solver->litStats.irredLits;
-    uint64_t needed = 0;
-
-    //LIT storage (all clause data)
-    needed += (solver->litStats.irredLits+solver->binTri.irredBins*2)*sizeof(Lit);
-
-    //NOTE: this is underreporting here, but by VERY little
-    //best -> longestclause = ??
-    //needed += sizeof(uint32_t) * longestclause;
-
-    //clause
-    needed += sizeof(Lit *) * numclauses;
-    //clsize
-    needed += sizeof(uint32_t) * numclauses;
-
-    //false_cls
-    needed += sizeof(uint32_t) * numclauses;
-    //map_cl_to_false_cls
-    needed += sizeof(uint32_t) * numclauses;
-    //numtruelit
-    needed += sizeof(uint32_t) * numclauses;
-
-    //occurrence
-    needed += sizeof(uint32_t *) * (2 * numvars);
-    //numoccurrence
-    needed += sizeof(uint32_t) * (2 * numvars);
-    //assigns
-    needed += sizeof(lbool) * numvars;
-    //breakcount
-    needed += sizeof(uint32_t) * numvars;
-    //makecount
-    needed += sizeof(uint32_t) * numvars;
-
-    //occur_list_alloc
-    needed += sizeof(uint32_t) * numliterals;
-
-
-    return needed;
-}
-
 template<class T>
 WalkSAT::add_cl_ret WalkSAT::add_this_clause(const T& cl, uint32_t& i, uint32_t& storeused) {
     uint32_t sz = 0;
@@ -466,7 +419,7 @@ bool WalkSAT::init_problem()
     occur_list_alloc = NULL;
     for(uint32_t i2 = 0; i2 < numvars; i2 ++) {
         /* ties in age between unchanged variables broken for lowest-numbered */
-        changed[i2] = -i2-1000;
+        changed[i2] = 0-(int32_t)i2-1000;
     }
 
     numliterals = 0;
@@ -579,9 +532,9 @@ void WalkSAT::print_statistics_header()
         cout << "c [walksat] numvars = " << numvars << ", numclauses = "
         << numclauses << ", numliterals = " << numliterals << endl;
 
-        cout << "c [walksat]     lowbad     unsat       avg   std dev    sd/avg     flips     nume-" << endl;
-        cout << "c [walksat]       this       end     unsat       avg     ratio      this     rator" << endl;
-        cout << "c [walksat]        try       try      tail     unsat      tail       try          " << endl;
+        cout << "c [walksat]    lowbad    unsat        avg    flips    nume-" << endl;
+        cout << "c [walksat]      this      end      unsat     this    rator" << endl;
+        cout << "c [walksat]       try      try       tail      try         " << endl;
     }
 }
 
@@ -590,7 +543,6 @@ void WalkSAT::update_statistics_start_try()
     lowbad = numfalse;
     sample_size = 0;
     sumfalse = 0.0;
-    sumfalse_squared = 0.0;
 }
 
 void WalkSAT::update_statistics_end_flip()
@@ -631,7 +583,6 @@ void WalkSAT::update_statistics_end_flip()
     }
     if (numflip >= tail_start_flip) {
         sumfalse += numfalse;
-        sumfalse_squared += numfalse * numfalse;
         sample_size++;
     }
 }
@@ -644,33 +595,19 @@ void WalkSAT::update_and_print_statistics_end_try()
 
     if (sample_size > 0) {
         avgfalse = sumfalse / sample_size;
-        second_moment_avgfalse = sumfalse_squared / sample_size;
-        variance_avgfalse = second_moment_avgfalse - (avgfalse * avgfalse);
-        if (sample_size > 1) {
-            variance_avgfalse = (variance_avgfalse * sample_size) / (sample_size - 1);
-        }
-        std_dev_avgfalse = sqrt(variance_avgfalse);
-
-        ratio_avgfalse = ratio_for_stat(avgfalse, std_dev_avgfalse);
 
         sum_avgfalse += avgfalse;
-        sum_std_dev_avgfalse += std_dev_avgfalse;
         number_sampled_runs += 1;
 
         if (numfalse == 0) {
             suc_number_sampled_runs += 1;
             suc_sum_avgfalse += avgfalse;
-            suc_sum_std_dev_avgfalse += std_dev_avgfalse;
         } else {
             nonsuc_number_sampled_runs += 1;
             nonsuc_sum_avgfalse += avgfalse;
-            nonsuc_sum_std_dev_avgfalse += std_dev_avgfalse;
         }
     } else {
         avgfalse = 0;
-        variance_avgfalse = 0;
-        std_dev_avgfalse = 0;
-        ratio_avgfalse = 0;
     }
 
     if (numfalse == 0) {
@@ -686,11 +623,10 @@ void WalkSAT::update_and_print_statistics_end_try()
     if (solver->conf.verbosity) {
         cout
         << "c [walksat] "
+        << std::right
         << std::setw(9) << lowbad
         << std::setw(9) << numfalse
         << std::setw(9+2) << avgfalse
-        << std::setw(9+2) << std_dev_avgfalse
-        << std::setw(9+2) << ratio_avgfalse
         << std::setw(9) << numflip
         << std::setw(9) << numerator
         << endl;
@@ -722,46 +658,27 @@ void WalkSAT::print_statistics_final()
 
     if (number_sampled_runs) {
         mean_avgfalse = sum_avgfalse / number_sampled_runs;
-        mean_std_dev_avgfalse = sum_std_dev_avgfalse / number_sampled_runs;
-        ratio_mean_avgfalse = ratio_for_stat(mean_avgfalse, mean_std_dev_avgfalse);
 
         if (suc_number_sampled_runs) {
             suc_mean_avgfalse = suc_sum_avgfalse / suc_number_sampled_runs;
-            suc_mean_std_dev_avgfalse = suc_sum_std_dev_avgfalse / suc_number_sampled_runs;
-            suc_ratio_mean_avgfalse = ratio_for_stat(suc_mean_avgfalse, suc_mean_std_dev_avgfalse);
         } else {
             suc_mean_avgfalse = 0;
-            suc_mean_std_dev_avgfalse = 0;
-            suc_ratio_mean_avgfalse = 0;
         }
 
         if (nonsuc_number_sampled_runs) {
             nonsuc_mean_avgfalse = nonsuc_sum_avgfalse / nonsuc_number_sampled_runs;
-            nonsuc_mean_std_dev_avgfalse = nonsuc_sum_std_dev_avgfalse / nonsuc_number_sampled_runs;
-            nonsuc_ratio_mean_avgfalse = ratio_for_stat(nonsuc_mean_avgfalse, nonsuc_mean_std_dev_avgfalse);
         } else {
             nonsuc_mean_avgfalse = 0;
-            nonsuc_mean_std_dev_avgfalse = 0;
-            nonsuc_ratio_mean_avgfalse = 0;
         }
 
         if (solver->conf.verbosity) {
             cout << "c [walksat] final numbad level statistics"  << endl;
             cout << "c [walksat]     statistics over all runs:"  << endl;
             cout << "c [walksat]       overall mean avg numbad = " << mean_avgfalse << endl;
-            cout << "c [walksat]       overall mean meanbad std deviation = " << mean_std_dev_avgfalse << endl;
-            cout << "c [walksat]       overall ratio mean numbad to mean std dev = " << ratio_mean_avgfalse << endl;
             cout << "c [walksat]     statistics on successful runs:"  << endl;
             cout << "c [walksat]       successful mean avg numbad = " << suc_mean_avgfalse << endl;
-            cout << "c [walksat]       successful mean numbad std deviation = " << suc_mean_std_dev_avgfalse << endl;
-            cout << "c [walksat]       successful ratio mean numbad to mean std dev = " <<
-                   suc_ratio_mean_avgfalse  << endl;
             cout << "c [walksat]     statistics on nonsuccessful runs:"  << endl;
             cout << "c [walksat]       nonsuccessful mean avg numbad level = " << nonsuc_mean_avgfalse  << endl;
-            cout << "c [walksat]       nonsuccessful mean numbad std deviation = " <<
-                   nonsuc_mean_std_dev_avgfalse  << endl;
-            cout << "c [walksat]       nonsuccessful ratio mean numbad to mean std dev = " <<
-                   nonsuc_ratio_mean_avgfalse  << endl;
         }
     }
 
@@ -770,32 +687,11 @@ void WalkSAT::print_statistics_final()
             cout << "c [walksat] ASSIGNMENT FOUND"  << endl;
         }
 
-        assert(solver->decisionLevel() == 0);
         for(size_t i = 0; i < solver->nVars(); i++) {
-            //this will get set automatically anyway, skip
-            if (solver->varData[i].removed != Removed::none) {
-                continue;
-            }
-            if (solver->value(i) != l_Undef) {
-                //this variable has been removed already
-                //so whatever value it sets, it doesn't matter
-                //the solution is still correct
-                continue;
-            }
-
-            //fix these up, they may have been flipped
-            if (solver->var_inside_assumptions(i) != l_Undef) {
-                assigns[i] = solver->var_inside_assumptions(i);
-            }
-
-            solver->new_decision_level();
-            solver->enqueue(Lit(i, value(i) == l_False));
+            solver->varData[i].polarity = assigns[i] == l_True;
         }
-        #ifdef SLOW_DEBUG
-        solver->check_assigns_for_assumptions();
-        #endif
     } else {
-        if (solver->conf.verbosity) {
+        if (solver->conf.verbosity >=2) {
             cout << "c [walksat] ASSIGNMENT NOT FOUND"  << endl;
         }
     }

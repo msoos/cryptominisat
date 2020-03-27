@@ -1,5 +1,4 @@
 /******************************************
-Copyright (c) 2018, Henry Kautz <henry.kautz@gmail.com>
 Copyright (c) 2018, Mate Soos <soos.mate@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -29,6 +28,7 @@ THE SOFTWARE.
 #include "constants.h"
 #include "yalsat.h"
 #include "solver.h"
+#include "sqlstats.h"
 extern "C" {
 #include "yals.h"
 }
@@ -51,50 +51,6 @@ Yalsat::Yalsat(Solver* _solver) :
 Yalsat::~Yalsat()
 {
     yals_del(yals);
-}
-
-uint64_t Yalsat::mem_needed()
-{
-    numvars = solver->nVars();
-    numclauses = solver->longIrredCls.size() + solver->binTri.irredBins;
-    numliterals = solver->litStats.irredLits;
-    uint64_t needed = 0;
-
-    //LIT storage (all clause data)
-    needed += (solver->litStats.irredLits+solver->binTri.irredBins*2)*sizeof(Lit);
-
-    //NOTE: this is underreporting here, but by VERY little
-    //best -> longestclause = ??
-    //needed += sizeof(uint32_t) * longestclause;
-
-    //clause
-    needed += sizeof(Lit *) * numclauses;
-    //clsize
-    needed += sizeof(uint32_t) * numclauses;
-
-    //false_cls
-    needed += sizeof(uint32_t) * numclauses;
-    //map_cl_to_false_cls
-    needed += sizeof(uint32_t) * numclauses;
-    //numtruelit
-    needed += sizeof(uint32_t) * numclauses;
-
-    //occurrence
-    needed += sizeof(uint32_t *) * (2 * numvars);
-    //numoccurrence
-    needed += sizeof(uint32_t) * (2 * numvars);
-    //assigns
-    needed += sizeof(lbool) * numvars;
-    //breakcount
-    needed += sizeof(uint32_t) * numvars;
-    //makecount
-    needed += sizeof(uint32_t) * numvars;
-
-    //occur_list_alloc
-    needed += sizeof(uint32_t) * numliterals;
-
-
-    return needed;
 }
 
 lbool Yalsat::main()
@@ -146,9 +102,16 @@ lbool Yalsat::main()
     int res = yals_sat(yals);
     lbool ret = deal_with_solution(res);
 
+    double time_used = cpuTime()-startTime;
     if (solver->conf.verbosity) {
-        yals_stats(yals);
-        cout << "c [yalsat] time: " << (cpuTime()-startTime) << endl;
+        cout << "c [yalsat] time: " << time_used << endl;
+    }
+    if (solver->sqlStats) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "sls-yalsat"
+            , time_used
+        );
     }
     return ret;
 }
@@ -244,13 +207,22 @@ lbool Yalsat::deal_with_solution(int res)
 {
     if (res == 20) {
         if (solver->conf.verbosity) {
-            cout << "c [yalsat] says it's un-sat-is-fiable -- strange" << endl;
+            cout << "c [yalsat] says UNSAT -- strange" << endl;
         }
         return l_Undef;
     }
 
-    if (res != 10) {
+    if (solver->conf.sls_get_phase || res == 10) {
         if (solver->conf.verbosity) {
+            cout << "c [yalsat] saving best assignement phase -- it had " << yals_minimum(yals) << " clauses unsatisfied" << endl;
+        }
+        for(size_t i = 0; i < solver->nVars(); i++) {
+            solver->varData[i].polarity = (yals_deref(yals, i+1) >= 0);
+        }
+    }
+
+    if (res != 10) {
+        if (solver->conf.verbosity >= 2) {
             cout << "c [yalsat] ASSIGNMENT NOT FOUND" << endl;
         }
         return l_Undef;
@@ -260,34 +232,5 @@ lbool Yalsat::deal_with_solution(int res)
         cout << "c [yalsat] ASSIGNMENT FOUND" << endl;
     }
 
-    //int lit = (yals_deref (yals, i) > 0) ? i : -i;
-    assert(solver->decisionLevel() == 0);
-    for(size_t i = 0; i < solver->nVars(); i++) {
-        //this will get set automatically anyway, skip
-        if (solver->varData[i].removed != Removed::none) {
-            continue;
-        }
-        if (solver->value(i) != l_Undef) {
-            //this variable has been removed already
-            //so whatever value it sets, it doesn't matter
-            //the solution is still correct
-            continue;
-        }
-
-        int pre_val = yals_deref (yals, i+1);
-        lbool val = pre_val < 0 ? l_False : l_True;
-
-        //fix these up, they may have been flipped
-        if (solver->var_inside_assumptions(i) != l_Undef) {
-            val = solver->var_inside_assumptions(i);
-        }
-
-        solver->new_decision_level();
-        solver->enqueue(Lit(i, val == l_False));
-    }
-    #ifdef SLOW_DEBUG
-    solver->check_assigns_for_assumptions();
-    #endif
-
-    return l_True;
+    return l_Undef;
 }
