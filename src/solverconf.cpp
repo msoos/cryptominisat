@@ -249,11 +249,11 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //WalkSAT
         , doSLS(true)
         , sls_every_n(4)
-        , yalsat_max_mems(150)
+        , yalsat_max_mems(40)
         , sls_memoutMB(500)
         , walksat_max_runs(50)
         , sls_get_phase(0)
-        , which_sls("yalsat")
+        , which_sls("ccnr")
 
         //Distillation
         , do_distill_clauses(true)

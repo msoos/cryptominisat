@@ -194,6 +194,7 @@ class Searcher : public HyperEngine
             vector<Lit>& out_learnt,
             bool True_confl
         );
+        void bump_var_importance(uint32_t var);
 
     protected:
         void new_var(const bool bva, const uint32_t orig_outer) override;

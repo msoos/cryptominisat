@@ -3230,6 +3230,15 @@ inline bool Searcher::check_order_heap_sanity() const
     return true;
 }
 
+void Searcher::bump_var_importance(uint32_t var)
+{
+    if (VSIDS) {
+        bump_vsids_var_act<false>(var, 1.0);
+    } else {
+        varData[var].conflicted+=2;
+    }
+}
+
 #ifdef USE_GAUSS
 void Searcher::clearEnGaussMatrixes()
 {

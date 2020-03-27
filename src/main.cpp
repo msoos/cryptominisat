@@ -448,7 +448,7 @@ void Main::add_supported_options()
     ("sls", po::value(&conf.doSLS)->default_value(conf.doSLS)
         , "Run SLS during simplification")
     ("slstype", po::value(&conf.which_sls)->default_value(conf.which_sls)
-        , "Which SLS to run. Allowed values: walksat, yalsat")
+        , "Which SLS to run. Allowed values: walksat, yalsat, ccnr")
     ("slsmaxmem", po::value(&conf.sls_memoutMB)->default_value(conf.sls_memoutMB)
         , "Maximum number of MB to give to SLS solver. Doesn't run SLS solver if the memory usage would be more than this.")
     ("slseveryn", po::value(&conf.sls_every_n)->default_value(conf.sls_every_n)
@@ -1031,7 +1031,7 @@ void Main::parse_polarity_type()
 
 void Main::manually_parse_some_options()
 {
-    if (conf.which_sls != "yalsat" && conf.which_sls != "walksat") {
+    if (conf.which_sls != "yalsat" && conf.which_sls != "walksat" && conf.which_sls != "ccnr") {
         cout << "ERROR: you gave '" << conf.which_sls << " for SLS with the option '--slstype'."
         << " This is incorrect, we only accept 'yalsat' and 'walksat'"
         << endl;

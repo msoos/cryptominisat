@@ -37,7 +37,7 @@ using namespace CMSat;
 CMS_ccnr::CMS_ccnr(Solver* _solver) :
     solver(_solver)
 {
-    ls_s = new CCNR::ls_solver(solver->conf.sls_ccnr_asipire);
+    ls_s = new CCNR::ls_solver(1);
     ls_s->set_verbosity(solver->conf.verbosity);
 }
 
