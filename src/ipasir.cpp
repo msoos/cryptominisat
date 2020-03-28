@@ -30,6 +30,7 @@ IN THE SOFTWARE.
 #include <vector>
 #include <complex>
 #include <cassert>
+#include <string.h>
 #include "constants.h"
 
 using std::vector;
@@ -54,7 +55,11 @@ extern "C" {
 
 DLL_PUBLIC const char * ipasir_signature ()
 {
-    return SATSolver::get_version();
+    static char tmp[200];
+    std::string tmp2 = "cryptominisat-";
+    tmp2 += SATSolver::get_version();
+    memcpy(tmp, tmp2.c_str(), tmp2.length()+1);
+    return tmp;
 }
 
 /**
