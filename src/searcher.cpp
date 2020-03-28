@@ -3040,7 +3040,7 @@ void Searcher::cancelUntil(uint32_t blevel)
         #ifdef USE_GAUSS
         for (EGaussian* gauss: gmatrixes)
             if (gauss) {
-                gauss->canceling(trail_lim[level]);
+                gauss->canceling(trail_lim[blevel]);
             }
         #endif //USE_GAUSS
 
