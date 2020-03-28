@@ -1339,7 +1339,7 @@ void Searcher::dump_sql_clause_data(
     for(int i = (int)decisionLevel()-1; i >= 0; i--) {
         uint32_t at = trail_lim[i];
         if (at < trail.size()) {
-            uint32_t v = trail[at].var();
+            uint32_t v = trail[at].lit.var();
             double act_rel = var_act_vsids[v]/var_inc_vsids;
             last_dec_var_act.push_back(act_rel);
             if (last_dec_var_act.size() >= 2)
@@ -1354,7 +1354,7 @@ void Searcher::dump_sql_clause_data(
     for(size_t i = 0; i < decisionLevel(); i++) {
         uint32_t at = trail_lim[i];
         if (at < trail.size()) {
-            uint32_t v = trail[at].var();
+            uint32_t v = trail[at].lit.var();
             double act_rel = var_act_vsids[v]/var_inc_vsids;
             first_dec_var_act.push_back(act_rel);
             if (first_dec_var_act.size() >= 2)
