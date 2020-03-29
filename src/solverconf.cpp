@@ -29,7 +29,9 @@ using namespace CMSat;
 
 //UPDATE.
 //Fixing to:
-//1832701 out-9660847.wlm01-4  239 147 92 a54ed65   --simdrat 1 --bva 1 --slsgetphase 1 --slstype ccnr_yalsat --confbtwsimp 70000 --confbtwsimpinc 1.1 --modbranchstr 3
+//1832701 out-9660847.wlm01-4        239 147 92 a54ed65   --simdrat 1 --bva 1 --slsgetphase 1 --slstype ccnr_yalsat --confbtwsimp 70000 --confbtwsimpinc 1.1 --modbranchstr 3
+//sat race 2019
+//2049104 out-9833438.wlm01-7-drat0  220 135 85 c975a55   --simdrat 1 --slseveryn 2 --slstype ccnr --bvalim 150000 --tern 1 --terncreate 1 --ternkeep 6 -m 3 --distillincconf 0.04 --distillminconf 20000
 
 
 DLL_PUBLIC SolverConf::SolverConf() :
@@ -142,10 +144,10 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
 
         //Ternary resolution
-        , doTernary(false)
+        , doTernary(true)
         , ternary_res_time_limitM(100)
-        , ternary_keep_mult(4)
-        , ternary_max_create(0.5)
+        , ternary_keep_mult(6)
+        , ternary_max_create(1)
 
         //BreakID
         , doBreakid(true)
@@ -274,21 +276,21 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //WalkSAT
         , doSLS(true)
-        , sls_every_n(3)
+        , sls_every_n(2)
         , yalsat_max_mems(40)
         , sls_memoutMB(500)
         , walksat_max_runs(50)
         , sls_get_phase(1)
         , sls_ccnr_asipire(1)
-        , which_sls("ccnr_yalsat")
+        , which_sls("ccnr")
 
         //Distillation
         , do_distill_clauses(true)
         , distill_long_cls_time_limitM(20ULL)
         , watch_based_str_time_limitM(30LL)
         , distill_time_limitM(120LL)
-        , distill_increase_conf_ratio(0.2)
-        , distill_min_confl(50000)
+        , distill_increase_conf_ratio(0.04)
+        , distill_min_confl(20000)
 
         //Memory savings
         , doRenumberVars   (true)
