@@ -27,6 +27,10 @@ THE SOFTWARE.
 #include <sstream>
 using namespace CMSat;
 
+//Fixing to
+//1830735 out-9839185.wlm01-8-drat0  243 148 95 2a30cfb
+//--simdrat 1 --bva 1 --slstype ccnr --slseveryn 2 --bvalim 250000 --tern 1 --terncreate 1 --ternkeep 6 -m 3 --distillincconf 0.02 --distillminconf 10000 --slsgetphase 1
+
 DLL_PUBLIC SolverConf::SolverConf() :
         //Variable activities
         var_inc_vsids_start(1)
@@ -135,19 +139,19 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
 
         //Ternary resolution
-        , doTernary(false)
+        , doTernary(true)
         , ternary_res_time_limitM(100)
-        , ternary_keep_mult(0.5)
-        , ternary_max_create(0.5)
+        , ternary_keep_mult(6)
+        , ternary_max_create(1)
 
         //Bounded variable addition
-        , do_bva(false)
+        , do_bva(true)
         #ifdef USE_GAUSS
         , min_bva_gain(2)
         #else
         , min_bva_gain(32)
         #endif
-        , bva_limit_per_call(150000)
+        , bva_limit_per_call(250000)
         , bva_also_twolit_diff(false)
         , bva_extra_lit_and_red_start(0)
         , bva_time_limitM(50)
@@ -248,11 +252,11 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //WalkSAT
         , doSLS(true)
-        , sls_every_n(4)
+        , sls_every_n(2)
         , yalsat_max_mems(40)
         , sls_memoutMB(500)
         , walksat_max_runs(50)
-        , sls_get_phase(0)
+        , sls_get_phase(1)
         , which_sls("ccnr")
 
         //Distillation
@@ -260,8 +264,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , distill_long_cls_time_limitM(20ULL)
         , watch_cache_stamp_based_str_time_limitM(30LL)
         , distill_time_limitM(120LL)
-        , distill_increase_conf_ratio(0.2)
-        , distill_min_confl(50000)
+        , distill_increase_conf_ratio(0.02)
+        , distill_min_confl(10000)
 
         //Memory savings
         , doRenumberVars   (true)
@@ -296,7 +300,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , sampling_vars(NULL)
 
         //Timeouts
-        , orig_global_timeout_multiplier(4.0)
+        , orig_global_timeout_multiplier(3.0)
         , global_timeout_multiplier(1.0) // WILL BE UNSET, NOT RELEVANT
         , global_timeout_multiplier_multiplier(1.1)
         , global_multiplier_multiplier_max(3)
