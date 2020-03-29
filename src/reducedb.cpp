@@ -25,7 +25,7 @@ THE SOFTWARE.
 #include "solverconf.h"
 #include "sqlstats.h"
 #ifdef FINAL_PREDICTOR
-#include "all_predictors.h"
+#include "cl_predictors.h"
 #endif
 
 #include <functional>
@@ -81,26 +81,12 @@ struct SortRedClsAct
 ReduceDB::ReduceDB(Solver* _solver) :
     solver(_solver)
 {
-    #ifdef FINAL_PREDICTOR
-    fill_pred_funcs();
-    #endif
 }
 
 ReduceDB::~ReduceDB()
 {
-}
-
-void ReduceDB::check_config()
-{
     #ifdef FINAL_PREDICTOR
-    if (!short_pred_func_exists(solver->conf.pred_conf_short)) {
-        cout << "ERROR: The SHORT config for '--pred' that you gave does not exist. Generate it first then recompile. You gave: " << solver->conf.pred_conf_short << endl;
-        exit(-1);
-    }
-    if (!long_pred_func_exists(solver->conf.pred_conf_long)) {
-        cout << "ERROR: The LONG config for '--pred' that you gave does not exist. Generate it first then recompile. You gave: " << solver->conf.pred_conf_long << endl;
-        exit(-1);
-    }
+    delete predictors;
     #endif
 }
 
@@ -335,6 +321,11 @@ void ReduceDB::handle_lev1()
 #ifdef FINAL_PREDICTOR
 void ReduceDB::handle_lev3_final_predictor()
 {
+    if (predictors == NULL) {
+        predictors = new ClPredictors;
+        predictors->load_models(solver->conf.pred_conf_short, solver->conf.pred_conf_long);
+    }
+
     assert(delayed_clause_free.empty());
     uint32_t deleted = 0;
     uint32_t kept_short = 0;
@@ -351,9 +342,6 @@ void ReduceDB::handle_lev3_final_predictor()
 
     std::sort(solver->longRedCls[3].begin(), solver->longRedCls[3].end(),
               SortRedClsAct(solver->cl_alloc));
-
-    const keep_func_type short_pred_keep = get_short_pred_keep_funcs(solver->conf.pred_conf_short);
-    const keep_func_type long_pred_keep = get_long_pred_keep_funcs(solver->conf.pred_conf_long);
 
     size_t j = 0;
     for(size_t i = 0
@@ -382,13 +370,14 @@ void ReduceDB::handle_lev3_final_predictor()
             //Check for long keep
             if (cl->stats.locked_long == 0
                 && cl->stats.dump_number > 0
-                && long_pred_keep(
+                && predictors->predict_long(
                 cl
                 , solver->sumConflicts
                 , last_touched_diff
                 , act_ranking_rel
-                , act_ranking_top_10
-            )) {
+                , act_ranking_top_10) > solver->conf.pred_keep_above
+
+            ) {
                 marked_long_keep++;
                 cl->stats.locked_long = 5; //will be immediately decremented below
             }
@@ -397,12 +386,12 @@ void ReduceDB::handle_lev3_final_predictor()
             if (cl->stats.locked_long == 0
                 && cl->stats.dump_number > 0 //don't delete 1st time around
                 && !locked
-                && !short_pred_keep(
+                && predictors->predict_short(
                 cl
                 , solver->sumConflicts
                 , last_touched_diff
                 , act_ranking_rel
-                , act_ranking_top_10+1)
+                , act_ranking_top_10+1) < (1.0f-solver->conf.pred_keep_above)
             ) {
                 deleted++;
                 solver->watches.smudge((*cl)[0]);
@@ -460,8 +449,8 @@ void ReduceDB::handle_lev3_final_predictor()
 
         cout << "c [DBCL pred]"
         << " marked-long: "<< print_value_kilo_mega(marked_long_keep)
-        << " conf-short: " << solver->conf.pred_conf_short
-        << " conf-long: " << solver->conf.pred_conf_long
+//         << " conf-short: " << solver->conf.pred_conf_short
+//         << " conf-long: " << solver->conf.pred_conf_long
         << endl;
 
         cout << "c [DBCL pred]"

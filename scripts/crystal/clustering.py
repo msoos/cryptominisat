@@ -38,6 +38,7 @@ import matplotlib.pyplot as plt
 import sklearn.ensemble
 import os
 import helper
+from termcolor import colored, cprint
 ver = sklearn.__version__.split(".")
 if int(ver[1]) < 20:
     from sklearn.cross_validation import train_test_split
@@ -169,32 +170,6 @@ int ClusteringImp::which_is_closest(const SatZillaFeatures& p) const {
     return closest;
     }\n""")
 
-    def write_all_predictors_file(self, fname, func_name, conf_num, longsh):
-        f = open("{basedir}/all_predictors_{name}_conf{conf_num}.h".format(
-            basedir=options.basedir, name=longsh,
-            conf_num=conf_num), "w")
-
-        helper.write_mit_header(f)
-        f.write("""///auto-generated code. Under MIT license.
-#ifndef ALL_PREDICTORS_{name}_conf{conf_num}_H
-#define ALL_PREDICTORS_{name}_conf{conf_num}_H\n\n""".format(name=longsh, conf_num=conf_num))
-        f.write('#include "clause.h"\n')
-        f.write('#include "predict_func_type.h"\n\n')
-        f.write('#include "predict/%s"\n' % fname)
-
-        f.write('#include <vector>\n')
-        f.write('using std::vector;\n\n')
-
-        f.write("namespace CMSat {\n")
-
-        f.write("\nkeep_func_type should_keep_{name}_conf{conf_num}_funcs = \n".format(
-            conf_num=conf_num, name=longsh))
-        f.write(" CMSat::{func}".format(func=func_name))
-        f.write(";\n")
-
-        f.write("} //end namespace\n\n")
-        f.write("#endif //ALL_PREDICTORS\n")
-
     def select_features_files(self):
         features = list(self.df)
         for f in list(features):
@@ -286,19 +261,6 @@ int ClusteringImp::which_is_closest(const SatZillaFeatures& p) const {
         self.create_code_for_cluster_centers(
             self.clust, self.scaler, self.feats_used)
 
-        # code for predictors
-        conf_from, conf_to = helper.parse_configs(options.confs)
-        for conf in range(conf_from, conf_to):
-            for name in ["long", "short"]:
-                func_name = "should_keep_{name}_conf{conf_num}".format(
-                    name=name, conf_num=conf)
-
-                fname = "final_predictor_{name}_conf{conf_num}.h".format(
-                    name=name, conf_num=conf)
-
-                self.write_all_predictors_file(
-                    fname, func_name, conf_num=conf, longsh=name)
-
         return self.feats_used, self.scaler, self.clust
 
 
@@ -383,6 +345,9 @@ if __name__ == "__main__":
     for clust_type in todo:
         c = Clustering(samples, clust_type)
         clustering_setup[clust_type] = c.cluster()
+        name = get_cluster_name(clust_type)
+        cprint("===-- K-Means clustering **created ** type: %s --" % name,
+               "green", "on_grey")
     del samples
 
     for f in fnames:
@@ -394,7 +359,7 @@ if __name__ == "__main__":
 
         for clust_type in todo:
             name = get_cluster_name(clust_type)
-            print("===-- TYPE: %s --" % name)
+            print("===-- type: %s --" % name)
             df_orig[name] = get_clustering_label(df, *clustering_setup[clust_type])
             print("Distribution: \n%s" % df_orig[name].value_counts())
 

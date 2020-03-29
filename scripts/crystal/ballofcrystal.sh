@@ -168,8 +168,8 @@ rm -f ../../src/predict/*.h
 #../vardata_predict.py vardata-comb --final -q 20 --basedir ../src/predict/ --depth 7 --tree
 
 # for CONF in {0..2}; do
-    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-conf-$CONF-clustered.dat" --name short --split 0.01 --final --forest --basedir ../../src/predict/ --conf $CONF --prefok 1
-    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-conf-$CONF-clustered.dat"  --name long  --split 0.01 --final --forest --basedir ../../src/predict/ --conf $CONF --prefok 1
+    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-conf-$CONF-clustered.dat" --name short --split 0.01 --final --xgboost --basedir ../../src/predict/ --conf $CONF --prefok 1
+    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-conf-$CONF-clustered.dat"  --name long  --split 0.01 --final --xgboost --basedir ../../src/predict/ --conf $CONF --prefok 1
 # done
 )
 
@@ -179,6 +179,6 @@ rm -f ../../src/predict/*.h
 ./build_final_predictor.sh
 (
 cd "$FNAME-dir"
-../cryptominisat5 "../$FNAME"  --updateglueonanalysis 0 --confbtwsimp 100000 --tern 0 --bva 0 --printsol 0 --predshort $CONF --predlong $CONF | tee cms-final-run.out
+../cryptominisat5 "../$FNAME"  --updateglueonanalysis 0 --confbtwsimp 100000 --tern 0 --bva 0 --printsol 0 | tee cms-final-run.out
 )
 exit

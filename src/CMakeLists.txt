@@ -121,26 +121,28 @@ set(cryptoms_lib_files
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
 
+set(cryptoms_lib_link_libs "")
+
 if (FINAL_PREDICTOR)
-    file(GLOB my_depends_all_preds ${CMAKE_CURRENT_SOURCE_DIR}/predict/*.h)
+#     file(GLOB my_depends_all_preds ${CMAKE_CURRENT_SOURCE_DIR}/predict/*.h)
     MESSAGE(STATUS "depends for all_predictors.cpp are: ${my_depends_all_preds}")
 
-    add_custom_command(
-        OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/all_predictors.cpp
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/predict/
-        COMMAND ${PYTHON_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/all_predictors_gen.py ${CMAKE_CURRENT_BINARY_DIR}/all_predictors.cpp
-        DEPENDS ${my_depends_all_preds}
-    )
-    add_custom_target(all_preds ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/all_predictors.cpp)
+#     add_custom_command(
+#         OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/all_predictors.cpp
+#         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/predict/
+#         COMMAND ${PYTHON_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/all_predictors_gen.py ${CMAKE_CURRENT_BINARY_DIR}/all_predictors.cpp
+#         DEPENDS ${my_depends_all_preds}
+#     )
+#     add_custom_target(all_preds ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/all_predictors.cpp)
 
     set(cryptoms_lib_files
         ${cryptoms_lib_files}
-        all_predictors.cpp
+#         all_predictors.cpp
         predict/clustering_imp.cpp
+        cl_predictors.cpp
     )
+    SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} xgboost)
 endif()
-
-set(cryptoms_lib_link_libs "")
 
 if (USE_GAUSS)
     SET(cryptoms_lib_files ${cryptoms_lib_files}
@@ -194,12 +196,6 @@ GENERATE_EXPORT_HEADER(cryptominisat5
 if (SQLITE3_FOUND AND STATS)
     add_dependencies(cryptominisat5
         tablestruct
-    )
-endif()
-
-if (FINAL_PREDICTOR)
-    add_dependencies(cryptominisat5
-        all_preds
     )
 endif()
 

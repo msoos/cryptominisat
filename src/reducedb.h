@@ -24,13 +24,12 @@ THE SOFTWARE.
 #define __REDUCEDB_H__
 
 #include "clauseallocator.h"
-#ifdef FINAL_PREDICTOR
-#include "clustering.h"
-#endif
 
 namespace CMSat {
 
 class Solver;
+class ClPredictors;
+class ClusteringImp;
 
 class ReduceDB
 {
@@ -46,15 +45,11 @@ public:
     void handle_lev3_final_predictor();
     #endif
     void dump_sql_cl_data(const string& cur_rst_type);
-    void check_config();
 
 private:
     Solver* solver;
     vector<ClOffset> delayed_clause_free;
     double total_time = 0.0;
-    #ifdef FINAL_PREDICTOR
-    ClusteringImp* clustering;
-    #endif
 
     unsigned cl_marked;
     unsigned cl_ttl;
@@ -69,6 +64,10 @@ private:
 
     void sort_red_cls(ClauseClean clean_type);
     void mark_top_N_clauses(const uint64_t keep_num);
+
+    #ifdef FINAL_PREDICTOR
+    ClPredictors* predictors = NULL;
+    #endif
 };
 
 }

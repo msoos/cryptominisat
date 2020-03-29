@@ -1,5 +1,5 @@
 /******************************************
-Copyright (c) 2018, Mate Soos
+Copyright (c) 2016, Mate Soos
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -20,27 +20,51 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef ALL_PREDICTORS_H
-#define ALL_PREDICTORS_H
-
-#include "predict_func_type.h"
+#ifndef __CLPREDICTOR_H__
+#define __CLPREDICTOR_H__
 
 #include <vector>
+#include <string>
+#include <xgboost/c_api.h>
+
 using std::vector;
 
 namespace CMSat {
 
-void fill_pred_funcs();
+class Solver;
+class Clause;
 
-//return value must be indexed by cluster
-const keep_func_type& get_short_pred_keep_funcs(size_t conf);
+class ClPredictors
+{
+public:
+    ClPredictors();
+    ~ClPredictors();
+    void load_models(std::string short_fname, std::string long_fname);
+    float predict_short(const CMSat::Clause* cl
+                , const uint64_t sumConflicts
+                , const uint32_t last_touched_diff
+                , const double   act_ranking_rel
+                , const uint32_t act_ranking_top_10);
 
-//return value must be indexed by cluster
-const keep_func_type& get_long_pred_keep_funcs(size_t conf);
+    float predict_long(
+        const CMSat::Clause* cl,
+        const uint64_t sumConflicts,
+        const uint32_t last_touched_diff,
+        const double   act_ranking_rel,
+        const uint32_t act_ranking_top_10);
 
-bool short_pred_func_exists(size_t conf);
-bool long_pred_func_exists(size_t conf);
+private:
+    float predict_one(int num, DMatrixHandle dmat);
+    void set_up_input(
+        const CMSat::Clause* cl,
+        const uint64_t sumConflicts,
+        const uint32_t last_touched_diff,
+        const double   act_ranking_rel,
+        const uint32_t act_ranking_top_10,
+        float *train);
+    vector<BoosterHandle> handles;
+};
 
 }
 
-#endif //ALL_PREDICTORS_H
+#endif

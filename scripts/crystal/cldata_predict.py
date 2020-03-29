@@ -56,10 +56,11 @@ def check_long_short():
 
 
 class Learner:
-    def __init__(self, df, func_name, fname):
+    def __init__(self, df, func_name, fname, longsh):
         self.df = df
         self.func_name = func_name
         self.fname = fname
+        self.longsh = longsh
 
     def count_bad_ok(self, df):
         files = df[["x.class", "rdb0.dump_no"]].groupby("x.class").count()
@@ -159,33 +160,6 @@ class Learner:
 
         #train, test = train_test_split(df[df["rdb0.dump_no"] == 1], test_size=0.33, random_state=prng)
         train, test = train_test_split(df, test_size=0.33, random_state=prng)
-        #print("features:", features)
-
-        ## MASSIVE HACK for XGBOOST
-        if options.final_is_xgboost:
-            features = [
-                "cl.glue_hist_long",
-                "cl.glue_hist_queue",
-                "cl.glue_hist",
-                "cl.size_hist",
-                "cl.old_glue",
-                "cl.glue",
-                "cl.size",
-                "rdb0.used_for_uip_creation",
-                "rdb1.used_for_uip_creation",
-                "cl.num_overlap_literals",
-                "cl.antec_overlap_hist",
-                "cl.num_total_lits_antecedents",
-                "rdb1.last_touched_diff",
-                "cl.num_antecedents",
-                "cl.branch_depth_hist_queue",
-                "cl.num_resolutions_hist_lt",
-                "cl.trail_depth_hist_longer",
-                "rdb0_act_ranking_rel",
-                "rdb0.propagations_made",
-                "rdb1.propagations_made",
-                "rdb0.act_ranking_top_10",
-                "rdb1.act_ranking_top_10"]
 
         X_train = train[features]
         y_train = train[to_predict]
@@ -278,37 +252,11 @@ class Learner:
                     clf, features,
                     fname=options.dot + "-" + self.func_name)
 
-            if options.basedir and (options.final_is_forest or options.final_is_tree):
-                c = helper.CodeWriter(
-                    clf, features, self.func_name,
-                    self.fname, options.verbose)
-                c.func_signature = """
-                const CMSat::Clause* cl
-                , const uint64_t sumConflicts
-                , const uint32_t last_touched_diff
-                , const double   act_ranking_rel
-                , const uint32_t act_ranking_top_10
-                """
-                c.func_call = """
-                cl
-                , sumConflicts
-                , last_touched_diff
-                , act_ranking_rel
-                , act_ranking_top_10
-                """
-                c.per_func_defines = """
-                uint32_t time_inside_solver = sumConflicts - cl->stats.introduced_at_conflict;
-                """
-                c.file_header = """
-                #include "clause.h"
-                #include "reducedb.h"
-                #include <cmath>
-
-                namespace CMSat {
-                """
-                c.fix_feat_name = self.fix_feat_name
-                c.clean_up()
-                c.print_full_code()
+            if options.basedir and options.final_is_xgboost:
+                booster = clf.get_booster()
+                fname = options.basedir + "/predictor_{longsh}.boost".format(
+                    longsh=self.longsh)
+                booster.save_model(fname)
             else:
                 print("NOT writing code")
 
@@ -383,9 +331,7 @@ class Learner:
                       options.best_features_fname)
 
         else:
-            # fill best features from file and then do final classifier
             best_features = helper.get_features(options.best_features_fname)
-
             roc_auc, y_pred = self.one_classifier(
                 best_features, "x.class",
                 final=True)
@@ -539,7 +485,8 @@ if __name__ == "__main__":
     learner = Learner(
         df,
         func_name=func_name,
-        fname=out_fname,)
+        fname=out_fname,
+        longsh=options.longsh)
 
     y_pred = learner.learn()
 
