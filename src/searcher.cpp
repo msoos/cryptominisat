@@ -1295,7 +1295,14 @@ void Searcher::attach_and_enqueue_learnt_clause(
             stats.learntLongs++;
             solver->attachClause(*cl, enq);
             if (enq) enqueue(learnt_clause[0], level, PropBy(cl_alloc.get_offset(cl)));
+            #ifndef STATS_NEEDED
+            if (cl->stats.which_red_array == 2) {
+                bump_cl_act<update_bogoprops>(cl);
+            }
+            #else
             bump_cl_act<update_bogoprops>(cl);
+            #endif
+
 
             #ifdef STATS_NEEDED
             cl->stats.antec_data = antec_data;
