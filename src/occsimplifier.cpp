@@ -655,7 +655,6 @@ void OccSimplifier::add_back_to_solver()
                     && solver->conf.glue_put_lev1_if_below_or_eq != 0
                 ) {
                     cl->stats.which_red_array = 1;
-                    cl->drop_if_not_used = 1;
                 }
                 #endif
                 solver->longRedCls[cl->stats.which_red_array].push_back(offs);
@@ -1618,6 +1617,9 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
             break;
 
         if (newCl != NULL) {
+            newCl->stats.glue = solver->conf.glue_put_lev1_if_below_or_eq;
+            newCl->is_ternary = true;
+            newCl->stats.which_red_array = 1;
             linkInClause(*newCl);
             ClOffset offset = solver->cl_alloc.get_offset(newCl);
             clauses.push_back(offset);

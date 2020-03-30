@@ -478,7 +478,7 @@ Clause* Solver::add_clause_int(
             #endif
             );
             if (red) {
-                c->makeRed(cl_stats.glue);
+                c->makeRed();
             }
             c->stats = cl_stats;
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)

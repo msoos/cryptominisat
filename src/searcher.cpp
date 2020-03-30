@@ -325,6 +325,9 @@ void Searcher::debug_print_resolving_clause(const PropBy confl) const
 void Searcher::update_clause_glue_from_analysis(Clause* cl)
 {
     assert(cl->red());
+    if (cl->is_ternary) {
+        return;
+    }
     const unsigned new_glue = calc_glue(*cl);
 
     if (new_glue < cl->stats.glue) {
@@ -1397,7 +1400,14 @@ void Searcher::attach_and_enqueue_learnt_clause(
             stats.learntLongs++;
             solver->attachClause(*cl, enq);
             if (enq) enqueue(learnt_clause[0], level, PropBy(cl_alloc.get_offset(cl)));
+            #ifndef STATS_NEEDED
+            if (cl->stats.which_red_array == 2) {
+                bump_cl_act<update_bogoprops>(cl);
+            }
+            #else
             bump_cl_act<update_bogoprops>(cl);
+            #endif
+
 
             #ifdef STATS_NEEDED
             cl->stats.antec_data = antec_data;

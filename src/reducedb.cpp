@@ -252,7 +252,7 @@ void ReduceDB::handle_lev1()
             assert(false && "we should never move up through any other means");
         } else {
             uint32_t must_touch = solver->conf.must_touch_lev1_within;
-            if (cl->stats.drop_if_not_used) {
+            if (cl->is_ternary) {
                 must_touch *= solver->conf.ternary_keep_mult;
             }
             if (!solver->clause_locked(*cl, offset)
