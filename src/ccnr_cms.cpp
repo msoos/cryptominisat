@@ -221,7 +221,7 @@ lbool CMS_ccnr::deal_with_solution(int res)
     std::sort(ls_s->_clauses.begin(), ls_s->_clauses.end(), ClWeightSorter());
     uint32_t vars_bumped = 0;
     for(const auto& c: ls_s->_clauses) {
-        if (vars_bumped > 40)
+        if (vars_bumped > solver->conf.sls_how_many_to_bump)
             break;
         for(uint32_t i = 0; i < c.literals.size(); i++) {
             uint32_t v = c.literals[i].var_num-1;

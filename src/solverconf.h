@@ -345,6 +345,7 @@ class DLL_PUBLIC SolverConf
         uint32_t walksat_max_runs;
         int      sls_get_phase;
         string   which_sls;
+        uint32_t sls_how_many_to_bump;
 
         //Distillation
         int      do_distill_clauses;
