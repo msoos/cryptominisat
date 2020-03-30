@@ -295,9 +295,12 @@ void Searcher::debug_print_resolving_clause(const PropBy confl) const
 void Searcher::update_clause_glue_from_analysis(Clause* cl)
 {
     assert(cl->red());
+    if (cl->is_ternary) {
+        return;
+    }
     const unsigned new_glue = calc_glue(*cl);
 
-    if (new_glue < cl->stats.glue && !cl->is_ternary) {
+    if (new_glue < cl->stats.glue) {
         if (cl->stats.glue <= conf.protect_cl_if_improved_glue_below_this_glue_for_one_turn) {
             cl->stats.ttl = 1;
         }
