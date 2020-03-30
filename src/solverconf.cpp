@@ -258,6 +258,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , walksat_max_runs(50)
         , sls_get_phase(1)
         , which_sls("ccnr")
+        , sls_how_many_to_bump(40)
 
         //Distillation
         , do_distill_clauses(true)
