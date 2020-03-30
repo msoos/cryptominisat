@@ -473,6 +473,8 @@ void Main::add_supported_options()
         , "Get phase from SLS solver, set as new phase for CDCL")
     ("slsccnraspire", po::value(&conf.sls_ccnr_asipire)->default_value(conf.sls_ccnr_asipire)
         , "Turn aspiration on/off for CCANR")
+    ("slstobump", po::value(&conf.sls_how_many_to_bump)->default_value(conf.sls_how_many_to_bump)
+        , "How many variables to bump in CCNR")
     ;
 
     po::options_description probeOptions("Probing options");
@@ -1046,6 +1048,17 @@ void Main::manually_parse_some_options()
         cout << "ERROR: 'Maximum supported glue size is currently 50" << endl;
         exit(-1);
     }
+
+    if (conf.which_sls != "yalsat" &&
+        conf.which_sls != "walksat" &&
+        conf.which_sls != "ccnr_yalsat" &&
+        conf.which_sls != "ccnr")
+    {
+        cout << "ERROR: you gave '" << conf.which_sls << " for SLS with the option '--slstype'."
+        << " This is incorrect, we only accept 'yalsat' and 'walksat'"
+        << endl;
+    }
+
 
     if (conf.yalsat_max_mems < 1) {
         cout << "ERROR: '--walkmems' must be at least 1" << endl;

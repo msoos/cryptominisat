@@ -353,6 +353,7 @@ class DLL_PUBLIC SolverConf
         int      sls_get_phase;
         int      sls_ccnr_asipire;
         string   which_sls;
+        uint32_t sls_how_many_to_bump;
 
         //Distillation
         int      do_distill_clauses;

@@ -1568,7 +1568,9 @@ Clause* Searcher::handle_last_confl(
         , to_dump ? clauseID : 0
         #endif
         );
-        cl->makeRed(glue);
+        cl->makeRed();
+        cl->stats.glue = glue;
+        cl->stats.activity = 0.0f;
         ClOffset offset = cl_alloc.get_offset(cl);
         unsigned which_arr = 2;
 
@@ -3102,7 +3104,7 @@ void Searcher::read_long_cls(
         #endif
         );
         if (red) {
-            cl->makeRed(cl_stats.glue);
+            cl->makeRed();
         }
         cl->stats = cl_stats;
         attachClause(*cl);
@@ -3500,6 +3502,15 @@ inline bool Searcher::check_order_heap_sanity() const
     return true;
 }
 
+void Searcher::bump_var_importance(uint32_t var)
+{
+    if (VSIDS) {
+        bump_vsids_var_act<false>(var, 1.0);
+    } else {
+        varData[var].conflicted+=2;
+    }
+}
+
 #ifdef USE_GAUSS
 void Searcher::clear_gauss_matrices()
 {
@@ -3550,24 +3561,4 @@ void Searcher::check_assumptions_sanity()
         }
         assert(varData[inter_lit.var()].assumption != l_Undef);
     }
-}
-
-void Searcher::bump_var_importance(uint32_t var)
-{
-    switch(branch_strategy) {
-            case branch::vsids:
-                vsids_bump_var_act<false>(var);
-                break;
-
-            case branch::maple:
-                varData[var].maple_conflicted+=2;
-                break;
-
-            case branch::vmtf:
-                vmtf_bump_queue(var);
-                break;
-
-            case branch::rnd:
-                break;
-        }
 }

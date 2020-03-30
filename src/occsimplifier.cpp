@@ -655,6 +655,7 @@ void OccSimplifier::add_back_to_solver()
                     && solver->conf.glue_put_lev1_if_below_or_eq != 0
                 ) {
                     cl->stats.which_red_array = 1;
+                    cl->drop_if_not_used = 1;
                 }
                 #endif
                 solver->longRedCls[cl->stats.which_red_array].push_back(offs);

@@ -43,6 +43,12 @@ namespace CMSat {
     #endif
     {
     public:
+        ////////////////////////////
+        // You can pass in a variable that if set to TRUE, will abort the
+        // solver as soon as possible. This bool can be set through a timer,
+        // or through a thread, etc. This gives you the possiblity to abort
+        // the solver any time you like, depending on some external factor
+        // such as time, or your own code's inner workings.
         SATSolver(void* config = NULL
         , std::atomic<bool>* interrupt_asap = NULL
         );
