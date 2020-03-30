@@ -1600,7 +1600,8 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
             break;
 
         if (newCl != NULL) {
-            newCl->stats.glue = 3;
+            newCl->stats.glue = solver->conf.glue_put_lev1_if_below_or_eq;
+            newCl->is_ternary = true;
             newCl->stats.which_red_array = 1;
             linkInClause(*newCl);
             ClOffset offset = solver->cl_alloc.get_offset(newCl);

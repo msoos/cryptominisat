@@ -206,7 +206,7 @@ void ReduceDB::handle_lev1()
         } else {
 
             uint32_t must_touch = solver->conf.must_touch_lev1_within;
-            if (cl->drop_if_not_used) {
+            if (cl->is_ternary) {
                 must_touch *= solver->conf.ternary_keep_mult;
             }
 
