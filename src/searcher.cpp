@@ -1409,7 +1409,9 @@ Clause* Searcher::handle_last_confl(
         , clauseID
         #endif
         );
-        cl->makeRed(glue);
+        cl->makeRed();
+        cl->stats.glue = glue;
+        cl->stats.activity = 0.0f;
         ClOffset offset = cl_alloc.get_offset(cl);
         unsigned which_arr = 2;
 
@@ -2910,7 +2912,7 @@ void Searcher::read_long_cls(
         #endif
         );
         if (red) {
-            cl->makeRed(cl_stats.glue, cla_inc);
+            cl->makeRed();
         }
         cl->stats = cl_stats;
         attachClause(*cl);

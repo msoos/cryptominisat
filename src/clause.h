@@ -128,7 +128,7 @@ struct ClauseStats
     uint32_t marked_clause:1;
     uint32_t ttl:2;
     uint32_t which_red_array:2;
-    float   activity = 1.0;
+    float   activity = 0.0f;
     uint32_t last_touched = 0;
     #ifdef STATS_NEEDED
     uint32_t dump_number = std::numeric_limits<uint32_t>::max();
@@ -357,10 +357,8 @@ public:
         isRed = false;
     }
 
-    void makeRed(const uint32_t newGlue, const double init_activity = 1.0)
+    void makeRed()
     {
-        stats.glue = newGlue;
-        stats.activity = init_activity;
         isRed = true;
     }
 
