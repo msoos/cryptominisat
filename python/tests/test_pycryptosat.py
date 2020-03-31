@@ -324,7 +324,7 @@ class TestSolveTimeLimit(unittest.TestCase):
         solver.add_clauses(clauses)
         sat, sol = solver.solve()
         took_time = time.time() - t0
-        self.assertLess(took_time, 2)
+        self.assertLess(took_time, 4)
 
 # ------------------------------------------------------------------------
 
