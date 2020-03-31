@@ -147,7 +147,6 @@ struct ClauseStats
     float       glue_hist;
     float       size_hist;
     uint32_t    glue_before_minim;
-    uint32_t    orig_glue;
     uint32_t    num_overlap_literals;
     float       antec_overlap_hist;
     uint32_t    num_total_lits_antecedents;
@@ -165,6 +164,7 @@ struct ClauseStats
     #endif
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
+    uint32_t orig_glue;
     uint16_t dump_number = 0;
     uint32_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
 

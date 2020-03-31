@@ -1480,9 +1480,14 @@ void Searcher::sql_dump_last_in_solver()
     }
 }
 
-void Searcher::dump_var_for_learnt_cl(uint32_t v, uint64_t clid)
+void Searcher::dump_var_for_learnt_cl(const uint32_t v,
+                                      const uint64_t clid,
+                                      const bool is_decision)
 {
-    assert(varData[v].reason == PropBy());
+    //When it's a decision clause, the REAL clause could have already
+    //set some variable to having been propagated (due to asserting clause)
+    //so this assert() no longer holds for all literals
+    assert(is_decision || varData[v].reason == PropBy());
     if (varData[v].dump) {
         uint64_t outer_var = map_inter_to_outer(v);
         solver->sqlStats->dec_var_clid(
@@ -1494,21 +1499,21 @@ void Searcher::dump_var_for_learnt_cl(uint32_t v, uint64_t clid)
 }
 
 void Searcher::dump_sql_clause_data(
-    const uint32_t glue
+    const uint32_t orig_glue
     , const uint32_t glue_before_minim
     , const uint32_t old_decision_level
     , const uint64_t clid
-    , const bool decision_cl
+    , const bool is_decision
     , const bool ternary_resol_cl
 ) {
     //solver->sqlStats->begin_transaction();
-    if (decision_cl) {
+    if (is_decision) {
         for(Lit l: learnt_clause) {
-            dump_var_for_learnt_cl(l.var(), clid);
+            dump_var_for_learnt_cl(l.var(), clid, is_decision);
         }
     } else {
         for(uint32_t v: vars_used_for_cl) {
-            dump_var_for_learnt_cl(v, clid);
+            dump_var_for_learnt_cl(v, clid, is_decision);
         }
     }
 
@@ -1525,7 +1530,7 @@ void Searcher::dump_sql_clause_data(
         , params.conflictsDoneThisRestart
         , restart_type_to_short_string(params.rest_type)
         , hist
-        , decision_cl
+        , is_decision
         , ternary_resol_cl
     );
     //solver->sqlStats->end_transaction();
@@ -1535,7 +1540,7 @@ void Searcher::dump_sql_clause_data(
 #ifdef FINAL_PREDICTOR
 void Searcher::set_clause_data(
     Clause* cl
-    , const uint32_t glue
+    , const uint32_t orig_glue
     , const uint32_t glue_before_minim
     , const uint32_t old_decision_level
 ) {
@@ -1547,6 +1552,7 @@ void Searcher::set_clause_data(
 
 
     cl->stats.clust_f = clustering->which_is_closest(solver->last_solve_satzilla_feature);
+    cl->stats.orig_glue = orig_glue;
     cl->stats.glue_hist = hist.glueHistLT.avg();
     cl->stats.size_hist = hist.conflSizeHistLT.avg();
     cl->stats.glue_hist_queue = hist.glueHist.getLongtTerm().avg();
@@ -1565,10 +1571,8 @@ void Searcher::set_clause_data(
 Clause* Searcher::handle_last_confl(
     const uint32_t glue
     , const uint32_t old_decision_level
-    , const uint32_t
-    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-    glue_before_minim
-    #endif
+    , const uint32_t glue_before_minim
+    , const bool is_decision
 ) {
     #ifdef STATS_NEEDED
     bool to_dump = false;
@@ -1599,7 +1603,7 @@ Clause* Searcher::handle_last_confl(
         );
         cl->makeRed();
         cl->stats.glue = glue;
-        #ifdef STATS_NEEDED
+        #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
         cl->stats.orig_glue = glue;
         #endif
         cl->stats.activity = 0.0f;
@@ -1657,7 +1661,7 @@ Clause* Searcher::handle_last_confl(
             , glue_before_minim
             , old_decision_level
             , clauseID
-            , false //decision_clause
+            , is_decision //decision_clause
             , false //ternary reslution clause
         );
     }
@@ -1667,12 +1671,13 @@ Clause* Searcher::handle_last_confl(
     }
     #endif
 
-    #ifdef FINAL_PREDICTOR
     if (cl) {
+        #ifdef FINAL_PREDICTOR
         set_clause_data(cl, glue, glue_before_minim, old_decision_level);
         cl->stats.dump_number = 0;
+        #endif
+        cl->stats.is_decision = is_decision;
     }
-    #endif
 
     return cl;
 }
@@ -1727,6 +1732,7 @@ bool Searcher::handle_conflict(PropBy confl)
         }
         for(Lit l: decision_clause) {
             seen[l.toInt()] = 0;
+            assert(varData[l.var()].reason == PropBy());
         }
     }
 
@@ -1752,7 +1758,7 @@ bool Searcher::handle_conflict(PropBy confl)
     print_learning_debug_info();
     assert(value(learnt_clause[0]) == l_Undef);
     glue = std::min<uint32_t>(glue, std::numeric_limits<uint32_t>::max());
-    Clause* cl = handle_last_confl(glue, old_decision_level, glue_before_minim);
+    Clause* cl = handle_last_confl(glue, old_decision_level, glue_before_minim, false);
     attach_and_enqueue_learnt_clause<false>(cl, backtrack_level, true);
 
     //Add decision-based clause
@@ -1769,10 +1775,7 @@ bool Searcher::handle_conflict(PropBy confl)
 
         learnt_clause = decision_clause;
         print_learnt_clause();
-        cl = handle_last_confl(learnt_clause.size(), old_decision_level, learnt_clause.size());
-        if (cl != NULL) {
-            cl->stats.is_decision = true;
-        }
+        cl = handle_last_confl(learnt_clause.size(), old_decision_level, learnt_clause.size(), true);
         attach_and_enqueue_learnt_clause<false>(cl, backtrack_level, false);
     }
 

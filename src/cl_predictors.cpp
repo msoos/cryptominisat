@@ -65,7 +65,8 @@ void ClPredictors::set_up_input(
     const uint32_t last_touched_diff,
     const double   act_ranking_rel,
     const uint32_t act_ranking_top_10,
-    float *train)
+    float *train,
+    const uint32_t cols)
 {
     float *at = train;
     int x = 0;
@@ -75,7 +76,7 @@ void ClPredictors::set_up_input(
     at[x++] = cl->stats.size_hist;                                //cl.size_hist
     at[x++] = cl->stats.glue_before_minim;                        //cl.glue_before_minim
     at[x++] = cl->stats.orig_glue;                                //cl.orig_glue
-    at[x++] = cl->glue;                                           //rdb0.glue
+    at[x++] = cl->stats.glue;                                     //rdb0.glue
     at[x++] = cl->size();                                         //rdb0.size
     at[x++] = cl->stats.used_for_uip_creation;                    //rdb0.used_for_uip_creation
     at[x++] = cl->stats.rdb1_used_for_uip_creation;               //rdb1.used_for_uip_creation
@@ -93,6 +94,7 @@ void ClPredictors::set_up_input(
     at[x++] = act_ranking_top_10;                                 //rdb0.act_ranking_top_10
     at[x++] = cl->stats.rdb1_act_ranking_top_10;                  //rdb1.act_ranking_top_10
     at[x++] = cl->stats.is_decision;                              //cl.is_decision
+    assert(x==cols);
 }
 
 float ClPredictors::predict_one(int num, DMatrixHandle dmat)
@@ -121,15 +123,16 @@ float ClPredictors::predict_short(
     const uint32_t act_ranking_top_10)
 {
     // convert to DMatrix
-    float train[22];
+    int cols=24;
+    float* train = new float[cols];
     set_up_input(cl, sumConflicts, last_touched_diff,
                  act_ranking_rel, act_ranking_top_10,
-                 train);
-    int cols=22;
+                 train, cols);
     int rows=1;
     DMatrixHandle dmat;
     int ret = XGDMatrixCreateFromMat((float *)train, rows, cols, -1, &dmat);
     assert(ret == 0);
+    delete[] train;
 
     return predict_one(0, dmat);
 }
@@ -142,17 +145,16 @@ float ClPredictors::predict_long(
     const uint32_t act_ranking_top_10)
 {
     // convert to DMatrix
-    float train[22];
+    int cols=24;
+    float* train = new float[cols];
     set_up_input(cl, sumConflicts, last_touched_diff,
                  act_ranking_rel, act_ranking_top_10,
-                 train);
-    int cols=22;
+                 train, cols);
     int rows=1;
     DMatrixHandle dmat;
     int ret = XGDMatrixCreateFromMat((float *)train, rows, cols, -1, &dmat);
     assert(ret == 0);
-
-
+    delete[] train;
 
     return predict_one(1, dmat);
 }

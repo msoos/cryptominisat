@@ -729,7 +729,7 @@ void SQLiteStats::dump_clause_stats(
     , uint64_t conflicts_this_restart
     , const std::string& restart_type
     , const SearchHist& hist
-    , const bool decision_cl
+    , const bool is_decision
     , const bool ternary_resol_cl
 ) {
     uint32_t num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-size;
@@ -746,7 +746,6 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, solver->latest_satzilla_feature_calc);
     sqlite3_bind_int64 (stmt_clause_stats, bindAt++, clid);
 
-    sqlite3_bind_int   (stmt_clause_stats, bindAt++, stats.is_decision);
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, orig_glue);
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, glue_before_minim);
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, size);
@@ -754,7 +753,7 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, num_overlap_literals);
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, antec_data.num());
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, antec_data.sum_size());
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, decision_cl);
+    sqlite3_bind_int   (stmt_clause_stats, bindAt++, is_decision);
     sqlite3_bind_double(stmt_clause_stats, bindAt++, ternary_resol_cl);
 
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, backtrack_level);

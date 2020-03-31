@@ -56,11 +56,12 @@ class Queries (helper.QueryHelper):
 
     def test_incorrect_data_values(self):
         incorrect = [
-            {"table":"clause_stats", "cond":" glue = 0 and size >= 2"},
-            {"table":"clause_stats", "cond":" glue = 1 and size >= 2"},
-            {"table":"clause_stats", "cond":" glue > 50"},
-            {"table":"clause_stats", "cond":" glue_before_minim = 0 and size >= 2"},
-            {"table":"clause_stats", "cond":" glue_before_minim = 1 and size >= 2"},
+            {"table":"clause_stats", "cond":" orig_glue = 0 and orig_size >= 2"},
+            {"table":"clause_stats", "cond":" orig_glue = 1 and orig_size >= 2"},
+            {"table":"clause_stats", "cond":" orig_glue > 50"},
+            {"table":"reduceDB", "cond":" glue > 50"},
+            {"table":"clause_stats", "cond":" glue_before_minim = 0 and orig_size >= 2"},
+            {"table":"clause_stats", "cond":" glue_before_minim = 1 and orig_size >= 2"},
             {"table":"reduceDB", "cond":" act_ranking > tot_cls_in_db"},
             {"table":"reduceDB", "cond":" act_ranking < 0"},
         ]
@@ -76,7 +77,7 @@ class Queries (helper.QueryHelper):
 
     def test_at_least_n(self):
         checks = [
-            {"table":"clause_stats", "cond":" glue >= 2", "n": 100},
+            {"table":"clause_stats", "cond":" orig_glue >= 2", "n": 100},
             {"table":"reduceDB", "cond":" dump_no == 0", "n": 10},
             {"table":"reduceDB", "cond":" dump_no == 1", "n": 10}
         ]
@@ -113,8 +114,8 @@ class Queries (helper.QueryHelper):
     def test_positive(self):
         test_zero = [
             ["glue_before_minim", "clause_stats"],
-            ["glue", "clause_stats"],
-            ["size", "clause_stats"],
+            ["orig_glue", "clause_stats"],
+            ["orig_size", "clause_stats"],
             ["size", "reduceDB"],
             ["glue", "reduceDB"],
             ["act_ranking", "reduceDB"], #act ranking starts at 1, not 0

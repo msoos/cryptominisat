@@ -267,10 +267,8 @@ class Searcher : public HyperEngine
         Clause* handle_last_confl(
             const uint32_t glue
             , const uint32_t old_decision_level
-            , const uint32_t
-            #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-            glue_before_minim
-            #endif
+            , const uint32_t glue_before_minim
+            , const bool is_decision
         );
 
         /////////////////////
@@ -403,7 +401,7 @@ class Searcher : public HyperEngine
         PropStats lastSQLPropStats;
         SearchStats lastSQLGlobalStats;
         void dump_sql_clause_data(
-            const uint32_t glue
+            const uint32_t orig_glue
             , const uint32_t glue_before_minim
             , const uint32_t old_decision_level
             , const uint64_t clid
@@ -412,7 +410,9 @@ class Searcher : public HyperEngine
         );
         int dump_this_many_cldata_in_stream = 0;
         void sql_dump_last_in_solver();
-        void dump_var_for_learnt_cl(uint32_t v, uint64_t clid);
+        void dump_var_for_learnt_cl(const uint32_t v,
+                                    const uint64_t clid,
+                                    const bool is_decision);
         #endif
 
         #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)

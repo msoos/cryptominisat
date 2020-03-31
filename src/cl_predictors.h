@@ -61,7 +61,8 @@ private:
         const uint32_t last_touched_diff,
         const double   act_ranking_rel,
         const uint32_t act_ranking_top_10,
-        float *train);
+        float *train,
+        const uint32_t cols);
     vector<BoosterHandle> handles;
 };
 
