@@ -193,7 +193,6 @@ class DLL_PUBLIC SolverConf
         int       do_blocking_restart;
         unsigned blocking_restart_trail_hist_length;
         double   blocking_restart_multip;
-        int      broken_glue_restart;
 
         double   local_glue_multiplier;
         unsigned  shortTermHistorySize; ///< Rolling avg. glue window size
