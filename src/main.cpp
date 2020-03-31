@@ -652,6 +652,8 @@ void Main::add_supported_options()
         , "Perform even stronger minimisation at conflict gen.")
     ("moremorealways", po::value(&conf.doAlwaysFMinim)->default_value(conf.doAlwaysFMinim)
         , "Always strong-minimise clause")
+    ("decbased", po::value(&conf.do_decision_based_cl)->default_value(conf.do_decision_based_cl)
+        , "Create decision-based conflict clauses when the UIP clause is too large")
     ;
 
     po::options_description propOptions("Glue options");

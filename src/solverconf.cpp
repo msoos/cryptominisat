@@ -123,6 +123,12 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , confl_to_chrono (4000)
         , diff_declev_for_chrono (100)
 
+        //decision-based clause generation. These values have been validated
+        //see 8099966.wlm01
+        , do_decision_based_cl(1)
+        , decision_based_cl_max_levels(9)
+        , decision_based_cl_min_learned_size(50)
+
         //SQL
         , dump_individual_restarts_and_clauses(true)
         , dump_individual_cldata_ratio(0.01)

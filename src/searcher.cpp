@@ -1708,6 +1708,25 @@ bool Searcher::handle_conflict(PropBy confl)
     update_history_stats(backtrack_level, glue);
     uint32_t old_decision_level = decisionLevel();
 
+    //Add decision-based clause in case it's short
+    decision_clause.clear();
+    if (conf.do_decision_based_cl
+        && learnt_clause.size() > conf.decision_based_cl_min_learned_size
+        && decisionLevel() <= conf.decision_based_cl_max_levels
+        && decisionLevel() >= 2
+    ) {
+        for(int i = (int)trail_lim.size()-1; i >= 0; i--) {
+            Lit l = ~trail[trail_lim[i]].lit;
+            if (!seen[l.toInt()]) {
+                decision_clause.push_back(l);
+                seen[l.toInt()] = 1;
+            }
+        }
+        for(Lit l: decision_clause) {
+            seen[l.toInt()] = 0;
+        }
+    }
+
     // check chrono backtrack condition
     if (
         (solver->conf.confl_to_chrono < 0 || solver->conf.confl_to_chrono <= (int64_t)sumConflicts)
@@ -1733,6 +1752,23 @@ bool Searcher::handle_conflict(PropBy confl)
     Clause* cl = handle_last_confl(glue, old_decision_level, old_glue);
     attach_and_enqueue_learnt_clause<false>(cl, backtrack_level, true);
 
+    //Add decision-based clause
+    if (decision_clause.size() > 0) {
+        int i = decision_clause.size();
+        while(--i >= 0) {
+            if (value(decision_clause[i]) == l_True
+                || value(decision_clause[i]) == l_Undef
+            ) {
+                break;
+            }
+        }
+        std::swap(decision_clause[0], decision_clause[i]);
+
+        learnt_clause = decision_clause;
+        print_learnt_clause();
+        cl = handle_last_confl(learnt_clause.size(), old_decision_level, learnt_clause.size());
+        attach_and_enqueue_learnt_clause<false>(cl, backtrack_level, false);
+    }
 
     if (branch_strategy == branch::vsids) {
         vsids_decay_var_act();

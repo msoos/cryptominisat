@@ -238,6 +238,11 @@ class DLL_PUBLIC SolverConf
         int64_t confl_to_chrono;
         int diff_declev_for_chrono;
 
+        //decision-based conflict clause generation
+        int       do_decision_based_cl;
+        uint32_t  decision_based_cl_max_levels;
+        uint32_t  decision_based_cl_min_learned_size;
+
         //SQL
         bool      dump_individual_restarts_and_clauses;
         double    dump_individual_cldata_ratio;
