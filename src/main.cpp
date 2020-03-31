@@ -326,10 +326,10 @@ void Main::add_supported_options()
         , "[0..] Random seed")
     ("threads,t", po::value(&num_threads)->default_value(1)
         ,"Number of threads")
-    ("maxtime", po::value(&conf.maxTime)->default_value(conf.maxTime, "MAX")
-        , "Stop solving after this much time (s)")
-    ("maxconfl", po::value(&conf.max_confl)->default_value(conf.max_confl, "MAX")
-        , "Stop solving after this many conflicts")
+    ("maxtime", po::value(&maxtime),
+        "Stop solving after this much time (s)")
+    ("maxconfl", po::value(&maxconfl),
+        "Stop solving after this many conflicts")
 //     ("undef", po::value(&conf.greedy_undef)->default_value(conf.greedy_undef)
 //         , "Set as many variables in solution to UNDEF as possible if solution is SAT")
     ("mult,m", po::value(&conf.orig_global_timeout_multiplier)->default_value(conf.orig_global_timeout_multiplier)
@@ -1331,6 +1331,13 @@ int Main::solve()
     if (dratf) {
         solver->set_drat(dratf, clause_ID_needed);
     }
+    if (vm.count("maxtime")) {
+        solver->set_max_time(maxtime);
+    }
+    if (vm.count("maxconfl")) {
+        solver->set_max_confl(maxconfl);
+    }
+
     check_num_threads_sanity(num_threads);
     solver->set_num_threads(num_threads);
     if (sql != 0) {
