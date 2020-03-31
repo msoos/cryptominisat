@@ -754,7 +754,7 @@ void Searcher::analyze_conflict(
     , uint32_t& glue
     , uint32_t&
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-    old_glue
+    glue_before_minim
     #endif
 ) {
     //Set up environment
@@ -776,7 +776,7 @@ void Searcher::analyze_conflict(
     create_learnt_clause<update_bogoprops>(confl);
     stats.litsRedNonMin += learnt_clause.size();
     #ifdef STATS_NEEDED
-    old_glue = calc_glue(learnt_clause);
+    glue_before_minim = calc_glue(learnt_clause);
     #endif
     minimize_learnt_clause<update_bogoprops>();
     stats.litsRedFinal += learnt_clause.size();
@@ -982,12 +982,12 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
 template void Searcher::analyze_conflict<true>(const PropBy confl
     , uint32_t& out_btlevel
     , uint32_t& glue
-    , uint32_t& old_glue
+    , uint32_t& glue_before_minim
 );
 template void Searcher::analyze_conflict<false>(const PropBy confl
     , uint32_t& out_btlevel
     , uint32_t& glue
-    , uint32_t& old_glue
+    , uint32_t& glue_before_minim
 );
 
 bool Searcher::subset(const vector<Lit>& A, const Clause& B)
@@ -1495,7 +1495,7 @@ void Searcher::dump_var_for_learnt_cl(uint32_t v, uint64_t clid)
 
 void Searcher::dump_sql_clause_data(
     const uint32_t glue
-    , const uint32_t old_glue
+    , const uint32_t glue_before_minim
     , const uint32_t old_decision_level
     , const uint64_t clid
     , const bool decision_cl
@@ -1515,8 +1515,8 @@ void Searcher::dump_sql_clause_data(
     solver->sqlStats->dump_clause_stats(
         solver
         , clid
-        , glue
-        , old_glue
+        , orig_glue
+        , glue_before_minim
         , decisionLevel()
         , learnt_clause.size()
         , antec_data
@@ -1536,7 +1536,7 @@ void Searcher::dump_sql_clause_data(
 void Searcher::set_clause_data(
     Clause* cl
     , const uint32_t glue
-    , const uint32_t old_glue
+    , const uint32_t glue_before_minim
     , const uint32_t old_decision_level
 ) {
 
@@ -1557,7 +1557,7 @@ void Searcher::set_clause_data(
     cl->stats.num_total_lits_antecedents = antec_data.sum_size();;
     cl->stats.branch_depth_hist_queue =  hist.branchDepthHistQueue.avg_nocheck();
     cl->stats.num_resolutions_hist_lt =  hist.numResolutionsHistLT.avg();
-    cl->stats.old_glue = old_glue;
+    cl->stats.glue_before_minim = glue_before_minim;
     cl->stats.trail_depth_hist_longer = hist.trailDepthHistLonger.avg_nocheck();
 }
 #endif
@@ -1567,7 +1567,7 @@ Clause* Searcher::handle_last_confl(
     , const uint32_t old_decision_level
     , const uint32_t
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-    old_glue
+    glue_before_minim
     #endif
 ) {
     #ifdef STATS_NEEDED
@@ -1599,6 +1599,9 @@ Clause* Searcher::handle_last_confl(
         );
         cl->makeRed();
         cl->stats.glue = glue;
+        #ifdef STATS_NEEDED
+        cl->stats.orig_glue = glue;
+        #endif
         cl->stats.activity = 0.0f;
         ClOffset offset = cl_alloc.get_offset(cl);
         unsigned which_arr = 2;
@@ -1651,7 +1654,7 @@ Clause* Searcher::handle_last_confl(
         dump_this_many_cldata_in_stream--;
         dump_sql_clause_data(
             glue
-            , old_glue
+            , glue_before_minim
             , old_decision_level
             , clauseID
             , false //decision_clause
@@ -1666,7 +1669,7 @@ Clause* Searcher::handle_last_confl(
 
     #ifdef FINAL_PREDICTOR
     if (cl) {
-        set_clause_data(cl, glue, old_glue, old_decision_level);
+        set_clause_data(cl, glue, glue_before_minim, old_decision_level);
         cl->stats.dump_number = 0;
     }
     #endif
@@ -1696,12 +1699,12 @@ bool Searcher::handle_conflict(PropBy confl)
 
     uint32_t backtrack_level;
     uint32_t glue;
-    uint32_t old_glue;
+    uint32_t glue_before_minim;
     analyze_conflict<false>(
         confl
         , backtrack_level  //return backtrack level here
         , glue             //return glue here
-        , old_glue         //return glue before minimization here
+        , glue_before_minim         //return glue before minimization here
     );
     print_learnt_clause();
 
@@ -1749,7 +1752,7 @@ bool Searcher::handle_conflict(PropBy confl)
     print_learning_debug_info();
     assert(value(learnt_clause[0]) == l_Undef);
     glue = std::min<uint32_t>(glue, std::numeric_limits<uint32_t>::max());
-    Clause* cl = handle_last_confl(glue, old_decision_level, old_glue);
+    Clause* cl = handle_last_confl(glue, old_decision_level, glue_before_minim);
     attach_and_enqueue_learnt_clause<false>(cl, backtrack_level, true);
 
     //Add decision-based clause
@@ -1767,6 +1770,9 @@ bool Searcher::handle_conflict(PropBy confl)
         learnt_clause = decision_clause;
         print_learnt_clause();
         cl = handle_last_confl(learnt_clause.size(), old_decision_level, learnt_clause.size());
+        if (cl != NULL) {
+            cl->stats.is_decision = true;
+        }
         attach_and_enqueue_learnt_clause<false>(cl, backtrack_level, false);
     }
 

@@ -59,8 +59,8 @@ class Queries (helper.QueryHelper):
             {"table":"clause_stats", "cond":" glue = 0 and size >= 2"},
             {"table":"clause_stats", "cond":" glue = 1 and size >= 2"},
             {"table":"clause_stats", "cond":" glue > 50"},
-            {"table":"clause_stats", "cond":" old_glue = 0 and size >= 2"},
-            {"table":"clause_stats", "cond":" old_glue = 1 and size >= 2"},
+            {"table":"clause_stats", "cond":" glue_before_minim = 0 and size >= 2"},
+            {"table":"clause_stats", "cond":" glue_before_minim = 1 and size >= 2"},
             {"table":"reduceDB", "cond":" act_ranking > tot_cls_in_db"},
             {"table":"reduceDB", "cond":" act_ranking < 0"},
         ]
@@ -112,7 +112,7 @@ class Queries (helper.QueryHelper):
 
     def test_positive(self):
         test_zero = [
-            ["old_glue", "clause_stats"],
+            ["glue_before_minim", "clause_stats"],
             ["glue", "clause_stats"],
             ["size", "clause_stats"],
             ["size", "reduceDB"],

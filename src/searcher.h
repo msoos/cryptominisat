@@ -234,7 +234,7 @@ class Searcher : public HyperEngine
             PropBy confl //The conflict that we are investigating
             , uint32_t& out_btlevel  //backtrack level
             , uint32_t &glue         //glue of the learnt clause
-            , uint32_t &old_glue     //glue of the unminimised learnt clause
+            , uint32_t &glue_before_minim     //glue of the unminimised learnt clause
         );
         bool  handle_conflict(PropBy confl);// Handles the conflict clause
         void  update_history_stats(size_t backtrack_level, uint32_t glue);
@@ -269,7 +269,7 @@ class Searcher : public HyperEngine
             , const uint32_t old_decision_level
             , const uint32_t
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-            old_glue
+            glue_before_minim
             #endif
         );
 
@@ -397,14 +397,14 @@ class Searcher : public HyperEngine
         void set_clause_data(
             Clause* cl
             , const uint32_t glue
-            , const uint32_t old_glue
+            , const uint32_t glue_before_minim
             , const uint32_t old_decision_level);
         #ifdef STATS_NEEDED
         PropStats lastSQLPropStats;
         SearchStats lastSQLGlobalStats;
         void dump_sql_clause_data(
             const uint32_t glue
-            , const uint32_t old_glue
+            , const uint32_t glue_before_minim
             , const uint32_t old_decision_level
             , const uint64_t clid
             , const bool decision_cl

@@ -121,13 +121,15 @@ struct ClauseStats
         is_ternary_resol_cl = false;
         drop_if_not_used = false;
         locked_for_data_gen = 0;
+        is_decision = false;
 
         activity = 0.0;
         last_touched = 0;
     }
 
     //Stored data
-    uint32_t glue:22;
+    uint32_t glue:20;
+    uint32_t is_decision:1;
     uint32_t marked_clause:1;
     uint32_t ttl:2;
     uint32_t which_red_array:3;
@@ -144,7 +146,8 @@ struct ClauseStats
     float       glue_hist_queue;
     float       glue_hist;
     float       size_hist;
-    uint32_t    old_glue;
+    uint32_t    glue_before_minim;
+    uint32_t    orig_glue;
     uint32_t    num_overlap_literals;
     float       antec_overlap_hist;
     uint32_t    num_total_lits_antecedents;

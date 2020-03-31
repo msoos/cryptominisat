@@ -719,8 +719,8 @@ void SQLiteStats::reduceDB(
 void SQLiteStats::dump_clause_stats(
     const Solver* solver
     , uint64_t clid
-    , uint32_t glue
-    , uint32_t old_glue
+    , uint32_t orig_glue
+    , uint32_t glue_before_minim
     , uint32_t backtrack_level
     , uint32_t size
     , AtecedentData<uint16_t> antec_data
@@ -746,8 +746,9 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, solver->latest_satzilla_feature_calc);
     sqlite3_bind_int64 (stmt_clause_stats, bindAt++, clid);
 
-    sqlite3_bind_int   (stmt_clause_stats, bindAt++, glue);
-    sqlite3_bind_int   (stmt_clause_stats, bindAt++, old_glue);
+    sqlite3_bind_int   (stmt_clause_stats, bindAt++, stats.is_decision);
+    sqlite3_bind_int   (stmt_clause_stats, bindAt++, orig_glue);
+    sqlite3_bind_int   (stmt_clause_stats, bindAt++, glue_before_minim);
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, size);
     sqlite3_bind_int64 (stmt_clause_stats, bindAt++, conflicts_this_restart);
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, num_overlap_literals);

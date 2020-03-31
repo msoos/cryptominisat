@@ -2,9 +2,10 @@ cl.glue_hist_long
 cl.glue_hist_queue
 cl.glue_hist
 cl.size_hist
-cl.old_glue
-cl.glue
-cl.size
+cl.glue_before_minim
+cl.orig_glue
+rdb0.glue
+rdb0.size
 rdb0.used_for_uip_creation
 rdb1.used_for_uip_creation
 cl.num_overlap_literals
@@ -20,3 +21,4 @@ rdb0.propagations_made
 rdb1.propagations_made
 rdb0.act_ranking_top_10
 rdb1.act_ranking_top_10
+cl.is_decision

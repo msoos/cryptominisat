@@ -176,9 +176,10 @@ CREATE TABLE `clause_stats` (
   `latest_satzilla_feature_calc` int(20) NOT NULL,
   `clauseID` bigint(20) NOT NULL,
 
-  `glue` int(20) NOT NULL,
-  `old_glue` int(20) NOT NULL,
-  `size` int(20) NOT NULL,
+  `is_decision` int(20) NOT NULL,
+  `orig_glue` int(20) NOT NULL,
+  `glue_before_minim` int(20) NOT NULL,
+  `orig_size` int(20) NOT NULL,
   `conflicts_this_restart` bigint(20) NOT NULL,
   `num_overlap_literals` int(20) NOT NULL,
   `num_antecedents` int(20) NOT NULL,

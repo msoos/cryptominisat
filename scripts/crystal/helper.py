@@ -522,8 +522,9 @@ def cldata_add_computed_features(df, verbose):
     divisors = [
         "cl.size_hist"
         , "cl.glue_hist"
-        , "cl.glue"
-        , "cl.old_glue"
+        , "rdb0.glue"
+        , "cl.orig_glue"
+        , "cl.glue_before_minim"
         , "cl.glue_hist_queue"
         , "cl.glue_hist_long"
         # , "cl.decision_level_hist"

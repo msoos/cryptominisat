@@ -69,28 +69,30 @@ void ClPredictors::set_up_input(
 {
     float *at = train;
     int x = 0;
-    at[x++] = cl->stats.glue_hist_long;
-    at[x++] = cl->stats.glue_hist_queue;
-    at[x++] = cl->stats.glue_hist;
-    at[x++] = cl->stats.size_hist;
-    at[x++] = cl->stats.old_glue;
-    at[x++] = cl->stats.glue;
-    at[x++] = cl->size();
-    at[x++] = cl->stats.used_for_uip_creation;
-    at[x++] = cl->stats.rdb1_used_for_uip_creation;
-    at[x++] = cl->stats.num_overlap_literals;
-    at[x++] = cl->stats.antec_overlap_hist;
-    at[x++] = cl->stats.num_total_lits_antecedents;
-    at[x++] = cl->stats.rdb1_last_touched_diff;
-    at[x++] = cl->stats.num_antecedents;
-    at[x++] = cl->stats.branch_depth_hist_queue;
-    at[x++] = cl->stats.num_resolutions_hist_lt;
-    at[x++] = cl->stats.trail_depth_hist_longer;
-    at[x++] = act_ranking_rel;
-    at[x++] = cl->stats.propagations_made;
-    at[x++] = cl->stats.rdb1_propagations_made;
-    at[x++] = act_ranking_top_10;
-    at[x++] = cl->stats.rdb1_act_ranking_top_10;
+    at[x++] = cl->stats.glue_hist_long;                           //cl.glue_hist_long
+    at[x++] = cl->stats.glue_hist_queue;                          //cl.glue_hist_queue
+    at[x++] = cl->stats.glue_hist;                                //cl.glue_hist
+    at[x++] = cl->stats.size_hist;                                //cl.size_hist
+    at[x++] = cl->stats.glue_before_minim;                        //cl.glue_before_minim
+    at[x++] = cl->stats.orig_glue;                                //cl.orig_glue
+    at[x++] = cl->glue;                                           //rdb0.glue
+    at[x++] = cl->size();                                         //rdb0.size
+    at[x++] = cl->stats.used_for_uip_creation;                    //rdb0.used_for_uip_creation
+    at[x++] = cl->stats.rdb1_used_for_uip_creation;               //rdb1.used_for_uip_creation
+    at[x++] = cl->stats.num_overlap_literals;                     //cl.num_overlap_literals
+    at[x++] = cl->stats.antec_overlap_hist;                       //cl.antec_overlap_hist
+    at[x++] = cl->stats.num_total_lits_antecedents;               //cl.num_total_lits_antecedents
+    at[x++] = cl->stats.rdb1_last_touched_diff;                   //rdb1.last_touched_diff
+    at[x++] = cl->stats.num_antecedents;                          //cl.num_antecedents
+    at[x++] = cl->stats.branch_depth_hist_queue;                  //cl.branch_depth_hist_queue
+    at[x++] = cl->stats.num_resolutions_hist_lt;                  //cl.num_resolutions_hist_lt
+    at[x++] = cl->stats.trail_depth_hist_longer;                  //cl.trail_depth_hist_longer
+    at[x++] = act_ranking_rel;                                    //rdb0_act_ranking_rel
+    at[x++] = cl->stats.propagations_made;                        //rdb0.propagations_made
+    at[x++] = cl->stats.rdb1_propagations_made;                   //rdb1.propagations_made
+    at[x++] = act_ranking_top_10;                                 //rdb0.act_ranking_top_10
+    at[x++] = cl->stats.rdb1_act_ranking_top_10;                  //rdb1.act_ranking_top_10
+    at[x++] = cl->stats.is_decision;                              //cl.is_decision
 }
 
 float ClPredictors::predict_one(int num, DMatrixHandle dmat)

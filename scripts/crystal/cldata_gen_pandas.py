@@ -250,8 +250,6 @@ class QueryCls (helper.QueryHelper):
             , "latest_satzilla_feature_calc"
             , "runtime"
             , "clauseID"
-            , "glue"
-            , "size"
             , "in_xor"
             , "locked"
             , "activity_rel"]
