@@ -358,8 +358,6 @@ void Main::add_supported_options()
         , "Lower bound on blocking restart -- don't block before this many conflicts")
     ("locgmult" , po::value(&conf.local_glue_multiplier)->default_value(conf.local_glue_multiplier, s_local_glue_multiplier.str())
         , "The multiplier used to determine if we should restart during glue-based restart")
-    ("brokengluerest", po::value(&conf.broken_glue_restart)->default_value(conf.broken_glue_restart)
-        , "Should glue restart be broken as before 8e74cb5010bb4")
     ("ratiogluegeom", po::value(&conf.ratio_glue_geom)->default_value(conf.ratio_glue_geom)
         , "Ratio of glue vs geometric restarts -- more is more glue")
     ;

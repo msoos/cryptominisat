@@ -84,7 +84,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     var_inc_vsids = conf.var_inc_vsids;
     more_red_minim_limit_binary_actual = conf.more_red_minim_limit_binary;
     mtrand.seed(conf.origSeed);
-    hist.setSize(conf.shortTermHistorySize, 5000);
+    hist.setSize(conf.shortTermHistorySize, conf.blocking_restart_trail_hist_length);
     cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
     next_change_branch_strategy = conf.branch_strategy_change_everyN;
 
@@ -1131,6 +1131,25 @@ void Searcher::update_assump_conflict_to_orig_outside(vector<Lit>& out_conflict)
         }
     }
     out_conflict.resize(j);
+}
+
+void Searcher::check_blocking_restart()
+{
+    if (conf.do_blocking_restart
+        && sumConflicts > conf.lower_bound_for_blocking_restart
+        && hist.glueHist.isvalid()
+        && hist.trailDepthHistLonger.isvalid()
+        && decisionLevel() > 0
+        && trail_lim.size() > 0
+        && trail.size() > hist.trailDepthHistLonger.avg()*conf.blocking_restart_multip
+    ) {
+        hist.glueHist.clear();
+        if (!blocked_restart) {
+            stats.blocked_restart_same++;
+        }
+        blocked_restart = true;
+        stats.blocked_restart++;
+    }
 }
 
 lbool Searcher::search()
@@ -2394,6 +2413,7 @@ void Searcher::check_need_restart()
 
     //dynamic
     if (params.rest_type == Restart::glue) {
+        check_blocking_restart();
         if (hist.glueHist.isvalid()
             && conf.local_glue_multiplier * hist.glueHist.avg() > hist.glueHistLTLimited.avg()
         ) {
@@ -2404,7 +2424,7 @@ void Searcher::check_need_restart()
     //static
     if ((params.rest_type == Restart::geom ||
         params.rest_type == Restart::luby ||
-        (conf.broken_glue_restart && params.rest_type == Restart::glue))
+        params.rest_type == Restart::glue)
         && (int64_t)params.conflictsDoneThisRestart > max_confl_this_phase
     ) {
         params.needToStopSearch = true;

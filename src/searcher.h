@@ -343,10 +343,11 @@ class Searcher : public HyperEngine
             Restart rest_type = Restart::never;
         };
         SearchParams params;
-
         int64_t max_confl_phase;
         int64_t max_confl_this_phase;
         void  check_need_restart();
+        void  check_blocking_restart();
+        bool blocked_restart = false;
         uint64_t max_confl_per_search_solve_call;
         uint32_t num_search_called = 0;
         double luby(double y, int x);

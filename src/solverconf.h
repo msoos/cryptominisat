@@ -190,7 +190,9 @@ class DLL_PUBLIC SolverConf
         unsigned    restart_first;      ///<The initial restart limit.                                                                (default 100)
         double    restart_inc;        ///<The factor with which the restart limit is multiplied in each restart.                    (default 1.5)
         Restart  restartType;   ///<If set, the solver will always choose the given restart strategy
-        int      broken_glue_restart;
+        int      do_blocking_restart;
+        unsigned blocking_restart_trail_hist_length;
+        double   blocking_restart_multip;
 
         double   local_glue_multiplier;
         unsigned  shortTermHistorySize; ///< Rolling avg. glue window size
