@@ -324,6 +324,10 @@ class TestSolveTimeLimit(unittest.TestCase):
         solver.add_clauses(clauses)
         sat, sol = solver.solve()
         took_time = time.time() - t0
+
+        # NOTE: the above CNF solves in about 1 hour.
+        # So anything below 10min is good. Setting 2s would work... no most
+        # systems, but not on overloaded CI servers
         self.assertLess(took_time, 4)
 
 # ------------------------------------------------------------------------
