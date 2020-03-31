@@ -25,6 +25,7 @@ from __future__ import print_function
 from array import array as _array
 import sys
 import unittest
+import time
 
 
 import pycryptosat
@@ -293,6 +294,38 @@ class TestSolve(unittest.TestCase):
         res, _ = self.solver.solve()
         self.assertEqual(res, True)
 
+
+class TestSolveTimeLimit(unittest.TestCase):
+
+    def get_clauses(self):
+        cls = []
+        with open("tests/f400-r425-x000.cnf", "r") as f:
+            for line in f:
+                line = line.strip()
+                if len(line) == 0:
+                    continue
+                if line[0] == "p":
+                    continue
+                if line[0] == "c":
+                    continue
+                line = line.split()
+                line = [int(l.strip()) for l in line]
+                assert line[-1] == 0
+                cls.append(line[:-1])
+
+        return cls
+
+
+    def test_time(self):
+        SAT_TIME_LIMIT = 1
+        clauses = self.get_clauses() #returns a few hundred short clauses
+        t0 = time.time()
+        solver = Solver(threads=4, time_limit=SAT_TIME_LIMIT)
+        solver.add_clauses(clauses)
+        sat, sol = solver.solve()
+        took_time = time.time() - t0
+        self.assertLess(took_time, 2)
+
 # ------------------------------------------------------------------------
 
 
@@ -308,6 +341,7 @@ def run():
     suite.addTest(unittest.makeSuite(InitTester))
     suite.addTest(unittest.makeSuite(TestSolve))
     suite.addTest(unittest.makeSuite(TestDump))
+    suite.addTest(unittest.makeSuite(TestSolveTimeLimit))
 
     runner = unittest.TextTestRunner(verbosity=2)
     result = runner.run(suite)
