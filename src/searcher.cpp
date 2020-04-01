@@ -86,7 +86,6 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     mtrand.seed(conf.origSeed);
     hist.setSize(conf.shortTermHistorySize, conf.blocking_restart_trail_hist_length);
     cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
-    next_change_branch_strategy = conf.branch_strategy_change_everyN;
 
     #ifdef FINAL_PREDICTOR
     clustering = new ClusteringImp;
@@ -2135,7 +2134,6 @@ void Searcher::rebuild_all_branch_strategy_setups()
 
 void Searcher::set_branch_strategy(const uint32_t iteration_num)
 {
-    uint32_t num = 0;
     uint32_t vsids = conf.branch_strategy_setup.find("vsids") != std::string::npos;
     uint32_t vmtf = conf.branch_strategy_setup.find("vmtf") != std::string::npos;
     uint32_t maple = conf.branch_strategy_setup.find("maple") != std::string::npos;
@@ -2168,15 +2166,6 @@ void Searcher::set_branch_strategy(const uint32_t iteration_num)
     if (conf.verbosity) {
         cout << "c [branch] adjusting to: "
         << branch_type_to_string(branch_strategy) << endl;
-    }
-}
-
-void Searcher::adjust_branch_strategy()
-{
-    assert(decisionLevel() == 0);
-    if (sumConflicts > next_change_branch_strategy) {
-        set_branch_strategy(++branch_strategy_num);
-        next_change_branch_strategy = sumConflicts + conf.branch_strategy_change_everyN;
     }
 }
 
@@ -2265,7 +2254,7 @@ lbool Searcher::solve(
     setup_restart_strategy();
 
     rebuild_all_branch_strategy_setups();
-    set_branch_strategy(branch_strategy_num);
+    set_branch_strategy(branch_strategy_num++);
     check_calc_satzilla_features(true);
     check_calc_vardist_features(true);
 
@@ -2281,9 +2270,6 @@ lbool Searcher::solve(
         params.max_confl_to_do = max_confl_per_search_solve_call-stats.conflStats.numConflicts;
         status = search();
         if (status == l_Undef) {
-            if (max_confl_this_phase <= 0) {
-                adjust_branch_strategy();
-            }
             adjust_restart_strategy();
         }
 

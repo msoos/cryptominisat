@@ -197,10 +197,8 @@ class DLL_PUBLIC SolverConf
         int doAlwaysFMinim;
 
         //Branch strategy
-        unsigned branch_strategy_change_everyN;
         string branch_strategy_setup;
         int      doMaple;
-        unsigned modulo_maple_iter;
 
         //Clause minimisation
         int doRecursiveMinim;
