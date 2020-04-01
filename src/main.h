@@ -111,6 +111,8 @@ class Main: public MainCommon
         bool dont_ban_solutions = false;
         int sql = 0;
         string sqlite_filename;
+        double maxtime;
+        uint64_t maxconfl;
 
         //Sampling vars
         vector<uint32_t> sampling_vars;
