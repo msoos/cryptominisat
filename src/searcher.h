@@ -341,7 +341,7 @@ class Searcher : public HyperEngine
             Restart rest_type = Restart::never;
         };
         SearchParams params;
-        int64_t max_confl_phase;
+        int64_t increasing_phase_size;
         int64_t max_confl_this_phase;
         void  check_need_restart();
         void  check_blocking_restart();
@@ -349,6 +349,7 @@ class Searcher : public HyperEngine
         uint64_t max_confl_per_search_solve_call;
         uint32_t num_search_called = 0;
         double luby(double y, int x);
+        CMSat::Restart cur_rest_type;
         void adjust_restart_strategy();
         void setup_restart_strategy();
 

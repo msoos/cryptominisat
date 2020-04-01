@@ -61,9 +61,6 @@ inline std::string restart_type_to_string(const Restart type)
         case Restart::luby:
             return "luby";
 
-        case Restart::glue_geom_luby:
-            return "glue-geom-luby";
-
         case Restart::glue_geom:
             return "glue-geom";
 
@@ -133,9 +130,6 @@ inline std::string restart_type_to_short_string(const Restart type)
         case Restart::glue_geom:
             return "gl/geo";
 
-        case Restart::glue_geom_luby:
-            return "gl/g/l";
-
         case Restart::never:
             return "never";
     }
@@ -159,9 +153,6 @@ inline int restart_type_to_int(const Restart type)
 
         case Restart::glue_geom:
             return 4;
-
-        case Restart::glue_geom_luby:
-            return 5;
 
         case Restart::never:
             return 6;

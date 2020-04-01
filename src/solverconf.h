@@ -65,7 +65,6 @@ enum class Restart {
     glue
     , geom
     , glue_geom
-    , glue_geom_luby
     , luby
     , never
 };
@@ -80,9 +79,6 @@ inline std::string getNameOfRestartType(Restart rest_type)
             return "geometric";
 
         case Restart::glue_geom:
-            return "regularly switch between glue and geometric";
-
-        case Restart::glue_geom_luby:
             return "regularly switch between glue and geometric";
 
         case Restart::luby:

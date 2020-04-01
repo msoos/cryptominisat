@@ -2159,6 +2159,11 @@ void Searcher::set_branch_strategy(const uint32_t iteration_num)
     }
     uint32_t which = iteration_num % total;
     branch_strategy = select[which];
+    if (branch_strategy == branch::maple) {
+        cur_rest_type = Restart::luby;
+    } else {
+        cur_rest_type = conf.restartType;
+    }
 
     if (conf.verbosity) {
         cout << "c [branch] adjusting to: "
@@ -2276,8 +2281,10 @@ lbool Searcher::solve(
         params.max_confl_to_do = max_confl_per_search_solve_call-stats.conflStats.numConflicts;
         status = search();
         if (status == l_Undef) {
+            if (max_confl_this_phase <= 0) {
+                adjust_branch_strategy();
+            }
             adjust_restart_strategy();
-            adjust_branch_strategy();
         }
 
         if (must_abort(status)) {
@@ -2332,7 +2339,7 @@ void Searcher::setup_restart_strategy()
         << endl;
     }
 
-    max_confl_phase = conf.restart_first;
+    increasing_phase_size = conf.restart_first;
     max_confl_this_phase = conf.restart_first;
     switch(conf.restartType) {
         case Restart::glue:
@@ -2344,10 +2351,6 @@ void Searcher::setup_restart_strategy()
             break;
 
         case Restart::glue_geom:
-            params.rest_type = Restart::glue;
-            break;
-
-        case Restart::glue_geom_luby:
             params.rest_type = Restart::glue;
             break;
 
@@ -2375,30 +2378,20 @@ void Searcher::adjust_restart_strategy()
         return;
 
     //Note that all of this will be overridden by params.max_confl_to_do
-    switch(conf.restartType) {
+    switch(cur_rest_type) {
         case Restart::never:
             break;
 
         case Restart::glue:
-            assert(params.rest_type == Restart::glue);
+            params.rest_type = Restart::glue;
             break;
 
         case Restart::geom:
-            assert(params.rest_type == Restart::geom);
+            params.rest_type = Restart::geom;
             break;
 
         case Restart::luby:
-            assert(params.rest_type == Restart::luby);
-            break;
-
-        case Restart::glue_geom_luby:
-            if (params.rest_type == Restart::glue) {
-                params.rest_type = Restart::geom;
-            } else if (params.rest_type == Restart::geom) {
-                params.rest_type = Restart::luby;
-            } else {
-                params.rest_type = Restart::glue;
-            }
+            params.rest_type = Restart::luby;
             break;
 
         case Restart::glue_geom:
@@ -2411,19 +2404,32 @@ void Searcher::adjust_restart_strategy()
     }
 
     switch (params.rest_type) {
+        //max_confl_this_phase -- for this phase of search
+        //increasing_phase_size - a value that rolls and increases
+        //                        it's start at conf.restart_first and never
+        //                        reset
         case Restart::luby:
             max_confl_this_phase = luby(conf.restart_inc*1.5, luby_loop_num)
                 * (double)conf.restart_first/2.0;
             luby_loop_num++;
+            if (conf.print_all_restarts) {
+                cout << "c REST LUBY: " << max_confl_this_phase << endl;
+            }
             break;
 
         case Restart::geom:
-            max_confl_phase = (double)max_confl_phase * conf.restart_inc;
-            max_confl_this_phase = max_confl_phase;
+            increasing_phase_size = (double)increasing_phase_size * conf.restart_inc;
+            max_confl_this_phase = increasing_phase_size;
+            if (conf.print_all_restarts) {
+                cout << "c REST GEOM: " << max_confl_this_phase << endl;
+            }
             break;
 
         case Restart::glue:
-            max_confl_this_phase = conf.ratio_glue_geom *max_confl_phase;
+            max_confl_this_phase = conf.ratio_glue_geom *increasing_phase_size;
+            if (conf.print_all_restarts) {
+                cout << "c REST GLUE: " << max_confl_this_phase << endl;
+            }
             break;
 
         default:
@@ -2454,7 +2460,6 @@ void Searcher::check_need_restart()
     }
 
     assert(params.rest_type != Restart::glue_geom);
-    assert(params.rest_type != Restart::glue_geom_luby);
 
     //dynamic
     if (params.rest_type == Restart::glue) {

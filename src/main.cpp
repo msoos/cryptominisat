@@ -1011,8 +1011,6 @@ void Main::parse_restart_type()
             conf.restartType = Restart::luby;
         else if (type == "glue")
             conf.restartType = Restart::glue;
-        else if (type == "glue-geom-luby")
-            conf.restartType = Restart::glue_geom_luby;
         else if (type == "glue-geom")
             conf.restartType = Restart::glue_geom;
         else throw WrongParam("restart", "unknown restart type");
