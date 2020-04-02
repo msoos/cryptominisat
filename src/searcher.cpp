@@ -1541,9 +1541,7 @@ bool Searcher::handle_conflict(PropBy confl)
     uint32_t old_decision_level = decisionLevel();
 
     // check chrono backtrack condition
-    if (
-        (solver->conf.confl_to_chrono < 0 || solver->conf.confl_to_chrono <= sumConflicts)
-        && solver->conf.diff_declev_for_chrono > -1
+    if (solver->conf.diff_declev_for_chrono > -1
         && (((int)decisionLevel() - (int)backtrack_level) >= solver->conf.diff_declev_for_chrono)
     ) {
 #ifdef CHRONO_PRINT
