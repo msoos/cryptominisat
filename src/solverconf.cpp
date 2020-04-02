@@ -106,7 +106,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , otfHyperbin      (true)
 
         //Chono BT
-        , confl_to_chrono (4000)
         , diff_declev_for_chrono (100)
 
         //decision-based clause generation. These values have been validated
