@@ -2252,7 +2252,7 @@ lbool Searcher::solve(
     setup_restart_strategy();
 
     rebuild_all_branch_strategy_setups();
-    set_branch_strategy(branch_strategy_num++);
+    set_branch_strategy(branch_strategy_num);
     check_calc_satzilla_features(true);
     check_calc_vardist_features(true);
 
@@ -2291,6 +2291,9 @@ lbool Searcher::solve(
 
     end:
     finish_up_solve(status);
+    if (status == l_Undef) {
+        branch_strategy_num++;
+    }
 
     return status;
 }
