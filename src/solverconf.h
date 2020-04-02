@@ -229,7 +229,6 @@ class DLL_PUBLIC SolverConf
         uint32_t  max_glue_cutoff_gluehistltlimited;
 
         //chrono bt
-        int64_t confl_to_chrono;
         int diff_declev_for_chrono;
 
         //decision-based conflict clause generation

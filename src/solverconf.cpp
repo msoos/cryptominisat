@@ -38,6 +38,9 @@ using namespace CMSat;
 //1830735 out-9839185.wlm01-8-drat0  243 148 95 2a30cfb
 //--simdrat 1 --bva 1 --slstype ccnr --slseveryn 2 --bvalim 250000 --tern 1 --terncreate 1 --ternkeep 6 -m 3 --distillincconf 0.02 --distillminconf 10000 --slsgetphase 1
 
+//Fixing to:
+//--simdrat 1 --bva 1 --slstype ccnr --slseveryn 2 --bvalim 250000 --tern 1 --terncreate 1 --ternkeep 6 -m 3 --distillincconf 0.02 --distillminconf 10000 --slsgetphase 1 --slstobump 100 --gluehist 60 --diffdeclevelchrono 20 --conftochrono 0
+
 DLL_PUBLIC SolverConf::SolverConf() :
         //Variable activities
         var_inc_vsids(1)
@@ -77,7 +80,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , blocking_restart_trail_hist_length(5000)
         , blocking_restart_multip(1.4)
         , local_glue_multiplier(0.80)
-        , shortTermHistorySize (50)
+        , shortTermHistorySize (60)
         , lower_bound_for_blocking_restart(10000)
         , ratio_glue_geom(5)
         , doAlwaysFMinim(false)
@@ -113,8 +116,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , max_glue_cutoff_gluehistltlimited(50)
 
         //Chono BT
-        , confl_to_chrono (4000)
-        , diff_declev_for_chrono (100)
+        , diff_declev_for_chrono (20)
 
         //decision-based clause generation. These values have been validated
         //see 8099966.wlm01
@@ -287,7 +289,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , sls_get_phase(1)
         , sls_ccnr_asipire(1)
         , which_sls("ccnr")
-        , sls_how_many_to_bump(40)
+        , sls_how_many_to_bump(100)
 
         //Distillation
         , do_distill_clauses(true)
