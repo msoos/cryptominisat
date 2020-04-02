@@ -954,6 +954,8 @@ std::string SATSolver::get_text_version_info()
     ss << "c Using code from 'When Boolean Satisfiability Meets Gauss-E. in a Simplex Way'" << endl;
     ss << "c       by C.-S. Han and J.-H. Roland Jiang in CAV 2012. Fixes by M. Soos" << endl;
     #endif
+    ss << "c Using CCAnr from 'CCAnr: A Conf. Checking Based Local Search Solver [...]'" << endl;
+    ss << "c       by Shaowei Cai, Chuan Luo, and Kaile Su, SAT 2015" << endl;
     ss << "c CMS compilation env " << get_compilation_env() << endl;
     #ifdef __GNUC__
     ss << "c CMS compiled with gcc version " << __VERSION__ << endl;
