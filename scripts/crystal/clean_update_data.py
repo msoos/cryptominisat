@@ -53,6 +53,11 @@ class QueryFill (helper.QueryHelper):
 
         print("indexes created T: %-3.2f s" % (time.time() - t))
 
+    # the clause can be deleted multiple times, because of clause being
+    # minimized. In these cases, a new clause with an identical ID is
+    # created, that is smaller. This clause ID would then be in the DB more
+    # than once. So here we clean the "cl_last_in_solver" from the bogus
+    # deletes, and keep the last one only
     def only_keep_last_conf_from_cl_last_in_solver(self):
         print("Keeping only last one from cl_last_in_solver...")
 

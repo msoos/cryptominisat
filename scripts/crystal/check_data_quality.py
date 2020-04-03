@@ -54,6 +54,34 @@ class Queries (helper.QueryHelper):
         print("indexes created T: %-3.2f s" % (time.time() - t))
 
 
+    def check_only_one(self):
+        only_ones = [
+            # clause should only be deleted once, since we cleaned this up already
+            # in clean_update_data.py
+            {"tbl":"cl_last_in_solver", "elem":"clauseID"},
+            {"tbl":"clause_stats", "elem":"clauseID"}
+        ]
+
+        for only_one in only_ones:
+            t = time.time()
+            q = """
+            select c, {elem}
+            from (select count() as c, {elem}
+                from {tbl}
+                group by {elem}
+            )
+            where c > 1
+            """.format(**only_one)
+            cursor = self.c.execute(q)
+            for row in cursor:
+                if row[0] > 1:
+                    print("ERROR: More than one of {elem} in {tbl} -- clause ID is: {clid}, count is: {cnt}"
+                          .format(**only_one, clid=row[1], cnt=row[0]))
+                    exit(-1)
+            print("Checked for {tbl} only containing at most one of the same {elem} in {t} seconds".
+                  format(**only_one, t=(time.time()-t)))
+
+
     def check_incorrect_data_values(self):
         incorrect = [
             {"table":"clause_stats", "cond":" orig_glue = 0 and orig_size >= 2"},
@@ -66,13 +94,14 @@ class Queries (helper.QueryHelper):
             {"table":"reduceDB", "cond":" act_ranking < 0"},
         ]
         for incorr in incorrect:
+            t = time.time()
             q = """select * from `{table}` where {cond} """.format(**incorr)
             cursor = self.c.execute(q)
             for row in cursor:
                 print("ERROR: Following data in `{table}` has {cond}: ".format(**incorr))
                 print(row)
                 exit(-1)
-            print("Checked for %s" % q)
+            print("Checked for %s in %-2.3f seconds" % (q, time.time()-t))
 
 
     def check_at_least_n(self):
@@ -152,6 +181,7 @@ if __name__ == "__main__":
 
     with Queries(args[0]) as q:
         #q.create_indexes()
+        q.check_only_one()
         q.check_non_negative()
         q.check_positive()
         q.check_incorrect_data_values()
