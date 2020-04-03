@@ -54,7 +54,7 @@ class Queries (helper.QueryHelper):
         print("indexes created T: %-3.2f s" % (time.time() - t))
 
 
-    def test_incorrect_data_values(self):
+    def check_incorrect_data_values(self):
         incorrect = [
             {"table":"clause_stats", "cond":" orig_glue = 0 and orig_size >= 2"},
             {"table":"clause_stats", "cond":" orig_glue = 1 and orig_size >= 2"},
@@ -75,7 +75,7 @@ class Queries (helper.QueryHelper):
             print("Checked for %s" % q)
 
 
-    def test_at_least_n(self):
+    def check_at_least_n(self):
         checks = [
             {"table":"clause_stats", "cond":" orig_glue >= 2", "n": 100},
             {"table":"reduceDB", "cond":" dump_no == 0", "n": 10},
@@ -94,7 +94,7 @@ class Queries (helper.QueryHelper):
             print("Checked for %s" % q)
 
 
-    def test_non_negative(self):
+    def check_non_negative(self):
         table = "reduceDB"
         cols = helper.get_columns(table, options.verbose, self.c)
         for col in cols:
@@ -111,8 +111,8 @@ class Queries (helper.QueryHelper):
                   (col, table, time.time() - t))
 
 
-    def test_positive(self):
-        test_zero = [
+    def check_positive(self):
+        check_zero = [
             ["glue_before_minim", "clause_stats"],
             ["orig_glue", "clause_stats"],
             ["orig_size", "clause_stats"],
@@ -122,7 +122,7 @@ class Queries (helper.QueryHelper):
             ["act_ranking_top_10", "reduceDB"]
             ]
 
-        for col,table in test_zero:
+        for col,table in check_zero:
             t = time.time()
             q = """
             select * from `%s` where `%s` <= 0
@@ -152,10 +152,10 @@ if __name__ == "__main__":
 
     with Queries(args[0]) as q:
         #q.create_indexes()
-        q.test_non_negative()
-        q.test_positive()
-        q.test_incorrect_data_values()
-        q.test_at_least_n()
+        q.check_non_negative()
+        q.check_positive()
+        q.check_incorrect_data_values()
+        q.check_at_least_n()
         #q.drop_idxs()
 
     print("Done.")
