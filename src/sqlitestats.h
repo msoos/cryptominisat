@@ -67,12 +67,14 @@ public:
 
     #ifdef STATS_NEEDED
     void restart(
-        const Restart rest_type
+        const uint32_t restartID
+        , const Restart rest_type
         , const PropStats& thisPropStats
         , const SearchStats& thisStats
         , const Solver* solver
         , const Searcher* searcher
         , const rst_dat_type type
+        , const int64_t clauseID
     ) override;
 
     void reduceDB(
@@ -93,6 +95,7 @@ public:
     void dump_clause_stats(
         const Solver* solver
         , uint64_t clid
+        , const uint64_t restartID
         , uint32_t orig_glue
         , uint32_t glue_before_minim
         , const uint32_t backtrack_level

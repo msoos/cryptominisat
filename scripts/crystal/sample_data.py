@@ -44,6 +44,7 @@ class QueryDatRem(helper.QueryHelper):
         create index `idxclid32` on `reduceDB` (`clauseID`);
         create index `idxclid33` on `sum_cl_use` (`clauseID`);
         create index `idxclid34` on `used_clauses` (`clauseID`);
+        create index `idxclid44` on `restart_dat_for_cl` (`clauseID`);
         create index `idxclid35` on `var_data_fintime` (`var`, `sumConflicts_at_picktime`);
         create index `idxclid36` on `var_data_picktime` (`var`, `sumConflicts_at_picktime`);
         create index `idxclid37` on `dec_var_clid` (`var`, `sumConflicts_at_picktime`);
@@ -255,7 +256,7 @@ class QueryDatRem(helper.QueryHelper):
     def filter_tables_of_ids(self):
         self.print_idxs()
 
-        tables = ["clause_stats", "reduceDB", "sum_cl_use", "used_clauses"]
+        tables = ["clause_stats", "reduceDB", "sum_cl_use", "used_clauses", "restart_dat_for_cl"]
         q = """
         DELETE FROM {table} WHERE clauseID NOT IN
         (SELECT clauseID from used_cl_ids );"""

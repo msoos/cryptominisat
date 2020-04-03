@@ -42,6 +42,7 @@ THE SOFTWARE.
 #include "distillerlong.h"
 #include "xorfinder.h"
 #include "vardistgen.h"
+#include "solvertypes.h"
 #ifdef USE_GAUSS
 #include "gaussian.h"
 #endif
@@ -1162,7 +1163,6 @@ lbool Searcher::search()
 
     //Stats reset & update
     stats.numRestarts++;
-    stats.clauseID_at_start_inclusive = clauseID;
     hist.clear();
     hist.reset_glue_hist_size(conf.shortTermHistorySize);
 
@@ -1221,7 +1221,8 @@ lbool Searcher::search()
             if (decisionLevel() == 0
                 && !clean_clauses_if_needed()
             ) {
-                return l_False;
+                search_ret = l_False;
+                goto end;
             }
             reduce_db_if_needed();
             lbool dec_ret = new_decision<false>();
@@ -1519,6 +1520,7 @@ void Searcher::dump_sql_clause_data(
     solver->sqlStats->dump_clause_stats(
         solver
         , clid
+        , restartID
         , orig_glue
         , glue_before_minim
         , decisionLevel()
@@ -1579,7 +1581,7 @@ Clause* Searcher::handle_last_confl(
     if (myrnd <= conf.dump_individual_cldata_ratio) {
         to_dump = true;
         if (sqlStats) {
-            dump_restart_sql(rst_dat_type::cl);
+            dump_restart_sql(rst_dat_type::cl, clauseID);
         }
     }
     #endif
@@ -1684,6 +1686,7 @@ Clause* Searcher::handle_last_confl(
 bool Searcher::handle_conflict(PropBy confl)
 {
     stats.conflStats.numConflicts++;
+    hist.num_conflicts_this_restart++;
     sumConflicts++;
 
     if (sumConflicts == 100000 && //TODO magic constant
@@ -1924,7 +1927,7 @@ struct MyPolarData
 };
 
 #ifdef STATS_NEEDED
-inline void Searcher::dump_restart_sql(rst_dat_type type)
+inline void Searcher::dump_restart_sql(rst_dat_type type, int64_t clauseID)
 {
     //don't dump twice for var
     if (type == rst_dat_type::var) {
@@ -1937,18 +1940,15 @@ inline void Searcher::dump_restart_sql(rst_dat_type type)
     //Propagation stats
     PropStats thisPropStats = propStats - lastSQLPropStats;
     SearchStats thisStats = stats - lastSQLGlobalStats;
-    if (type == rst_dat_type::norm) {
-        thisStats.clauseID_at_start_inclusive = stats.clauseID_at_start_inclusive;
-        thisStats.clauseID_at_end_exclusive = clauseID;
-    }
-
     solver->sqlStats->restart(
-        params.rest_type
+        restartID
+        , params.rest_type
         , thisPropStats
         , thisStats
         , solver
         , this
         , type
+        , (int64_t)clauseID
     );
 
     if (type == rst_dat_type::norm) {
@@ -2186,6 +2186,7 @@ inline void Searcher::dump_search_loop_stats(double myTime)
         dump_restart_sql(rst_dat_type::norm);
     }
     #endif
+    restartID++;
 }
 
 bool Searcher::must_abort(const lbool status) {

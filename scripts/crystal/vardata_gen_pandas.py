@@ -170,9 +170,7 @@ class QueryVar (helper.QueryHelper):
             , "flipped"
             , "replaced"
             , "eliminated"
-            , "set"
-            , "clauseIDstartInclusive"
-            , "clauseIDendExclusive"]
+            , "set"]
         rst = helper.query_fragment(
             "restart_dat_for_var", not_cols, "rst", options.verbose, self.c)
 

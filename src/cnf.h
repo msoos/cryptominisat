@@ -177,6 +177,7 @@ public:
     BinTriStats binTri;
     LitStats litStats;
     int64_t clauseID = 1;
+    int64_t restartID = 1;
 
     //Temporaries
     vector<uint16_t> seen;

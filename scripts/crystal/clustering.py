@@ -38,6 +38,7 @@ import matplotlib.pyplot as plt
 import sklearn.ensemble
 import os
 import helper
+import decimal
 from termcolor import colored, cprint
 ver = sklearn.__version__.split(".")
 if int(ver[1]) < 20:
@@ -142,10 +143,16 @@ double ClusteringImp::norm_dist(const SatZillaFeatures& a, const std::vector<dou
     double tmp;
 """)
         for feat, i in zip(sz_feats_clean, range(10000)):
-            f.write("        tmp = ((double){feat}-{mean:3.9f})/{scale:3.9f};\n".format(
+            printed_scale = "{scale:3.10f}".format(scale=scaler.scale_[i])
+            if decimal.Decimal(printed_scale) == decimal.Decimal("0.0") :
+                    f.write("         // feature {feat} would have caused a division by zero, avoiding\n".\
+                        format(feat=feat.format(val="a")))
+                    continue
+
+            f.write("        tmp = ((double){feat}-{mean:3.9f})/{printed_scale};\n".format(
                 feat=feat.format(val="a"),
                  mean=scaler.mean_[i],
-                 scale=scaler.scale_[i]
+                 printed_scale=printed_scale
                  ))
 
             f.write("    dist+=sq(tmp-center[{feat}]);\n\n".format(

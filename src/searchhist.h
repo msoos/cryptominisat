@@ -35,6 +35,7 @@ namespace CMSat {
 //History
 struct SearchHist {
     //About the search
+    uint32_t num_conflicts_this_restart = 0;
     AvgCalc<uint32_t>   branchDepthHist;     ///< Avg branch depth in current restart
     AvgCalc<uint32_t>   branchDepthDeltaHist;
 
@@ -83,6 +84,7 @@ struct SearchHist {
     void clear()
     {
         //About the search
+        num_conflicts_this_restart = 0;
         branchDepthHist.clear();
         branchDepthDeltaHist.clear();
         trailDepthDeltaHist.clear();

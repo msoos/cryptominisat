@@ -59,7 +59,9 @@ class Queries (helper.QueryHelper):
             # clause should only be deleted once, since we cleaned this up already
             # in clean_update_data.py
             {"tbl":"cl_last_in_solver", "elem":"clauseID"},
-            {"tbl":"clause_stats", "elem":"clauseID"}
+            {"tbl":"clause_stats", "elem":"clauseID"},
+            {"tbl":"restart", "elem":"restartID"},
+            {"tbl":"restart_dat_for_cl", "elem":"clauseID"},
         ]
 
         for only_one in only_ones:
@@ -78,9 +80,51 @@ class Queries (helper.QueryHelper):
                     print("ERROR: More than one of {elem} in {tbl} -- clause ID is: {clid}, count is: {cnt}"
                           .format(**only_one, clid=row[1], cnt=row[0]))
                     exit(-1)
-            print("Checked for {tbl} only containing at most one of the same {elem} in {t} seconds".
+            print("Checked for {tbl} only containing at most one of the same {elem} in {t:2.3f} seconds".
                   format(**only_one, t=(time.time()-t)))
 
+    def check_all_clauses_have_restart(self):
+        t = time.time()
+        q = """
+        select clause_stats.clauseID, clause_stats.restartID
+        from clause_stats left join restart_dat_for_cl
+        on clause_stats.restartID=restart_dat_for_cl.restartID
+            and  clause_stats.clauseID=restart_dat_for_cl.clauseID
+        where restart_dat_for_cl.clauseID is NULL
+        """
+        cursor = self.c.execute(q)
+        bad = False
+        for row in cursor:
+            bad = True
+            print("ERROR: ClauseID %s has no restart_dat_for_cl, restartID %s:" % (row[0], row[1]))
+
+        if bad:
+            exit(-1)
+
+        print("Checked all clauses have restart. T: %-2.3f" % (time.time()-t))
+
+    def check_is_null(self):
+
+        is_nulls = [
+            {"tbl":"restart", "col":"clauseID"},
+            {"tbl":"restart_data_for_var", "col":"clauseID"}
+        ]
+
+        t = time.time()
+        for is_null in is_nulls:
+            q = """
+            select * from {tbl} where {col} is not NULL
+            """.format(**is_null)
+            cursor = self.c.execute(q)
+            bad = False
+            for row in cursor:
+                bad = True
+                print("ERROR: {col} is not null in table {tbl}: {row}".format(**is_null), row=row)
+
+            if bad:
+                exit(-1)
+
+        print("Checked that some things are NULL. T: %-2.3f" % (time.time()-t))
 
     def check_incorrect_data_values(self):
         incorrect = [
@@ -181,6 +225,7 @@ if __name__ == "__main__":
 
     with Queries(args[0]) as q:
         #q.create_indexes()
+        q.check_all_clauses_have_restart()
         q.check_only_one()
         q.check_non_negative()
         q.check_positive()

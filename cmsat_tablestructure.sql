@@ -73,9 +73,12 @@ CREATE TABLE `reduceDB` (
 
 DROP TABLE IF EXISTS `restart`;
 CREATE TABLE `restart` (
+  `restartID` int (20) NOT NULL,
+  `clauseID` bigint(20) DEFAULT NULL,
   `simplifications` int(20) NOT NULL,
   `restarts` int(20) NOT NULL,
   `conflicts` bigint(20) NOT NULL,
+  `conflicts_this_restart` int(20) NOT NULL,
   `latest_satzilla_feature_calc` int(20) NOT NULL,
   `runtime` float NOT NULL,
 
@@ -155,10 +158,7 @@ CREATE TABLE `restart` (
   `set` int(20) NOT NULL,
 
   `branch_strategy` int NOT NULL,
-  `restart_type` int NOT NULL,
-
-  `clauseIDstartInclusive` int(20) NOT NULL,
-  `clauseIDendExclusive` int(20) NOT NULL
+  `restart_type` int NOT NULL
 );
 
 DROP TABLE IF EXISTS `restart_dat_for_var`;
@@ -175,6 +175,7 @@ CREATE TABLE `clause_stats` (
   `conflicts` bigint(20) NOT NULL,
   `latest_satzilla_feature_calc` int(20) NOT NULL,
   `clauseID` bigint(20) NOT NULL,
+  `restartID` int(20) NOT NULL,
 
   `orig_glue` int(20) NOT NULL,
   `glue_before_minim` int(20) NOT NULL,

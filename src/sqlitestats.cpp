@@ -545,12 +545,14 @@ void SQLiteStats::satzilla_features(
 
 #ifdef STATS_NEEDED
 void SQLiteStats::restart(
-    const Restart rest_type
+    const uint32_t restartID
+    , const Restart rest_type
     , const PropStats& thisPropStats
     , const SearchStats& thisStats
     , const Solver* solver
     , const Searcher* search
     , const rst_dat_type type
+    , const int64_t clauseID
 ) {
     sqlite3_stmt* stmt;
     if (type == rst_dat_type::norm) {
@@ -567,9 +569,16 @@ void SQLiteStats::restart(
     const BinTriStats& binTri = solver->getBinTriStats();
 
     int bindAt = 1;
+    sqlite3_bind_int64(stmt, bindAt++, restartID);
+    if (clauseID == -1) {
+        sqlite3_bind_null(stmt, bindAt++);
+    } else {
+        sqlite3_bind_int64(stmt, bindAt++, clauseID);
+    }
     sqlite3_bind_int64(stmt, bindAt++, solver->get_solve_stats().num_simplify);
     sqlite3_bind_int64(stmt, bindAt++, search->sumRestarts());
     sqlite3_bind_int64(stmt, bindAt++, solver->sumConflicts);
+    sqlite3_bind_int(stmt, bindAt++, searchHist.num_conflicts_this_restart);
     sqlite3_bind_int(stmt, bindAt++, solver->latest_satzilla_feature_calc);
     sqlite3_bind_double(stmt, bindAt++, cpuTime());
 
@@ -659,10 +668,6 @@ void SQLiteStats::restart(
     sqlite3_bind_int(stmt, bindAt++, branch_type_to_int(solver->branch_strategy));
     sqlite3_bind_int(stmt, bindAt++, restart_type_to_int(rest_type));
 
-    //ClauseID
-    sqlite3_bind_int64(stmt, bindAt++, thisStats.clauseID_at_start_inclusive);
-    sqlite3_bind_int64(stmt, bindAt++, thisStats.clauseID_at_end_exclusive);
-
     run_sqlite_step(stmt, rst_dat_type_to_str(type));
 }
 
@@ -719,6 +724,7 @@ void SQLiteStats::reduceDB(
 void SQLiteStats::dump_clause_stats(
     const Solver* solver
     , uint64_t clid
+    , const uint64_t restartID
     , uint32_t orig_glue
     , uint32_t glue_before_minim
     , uint32_t backtrack_level
@@ -745,6 +751,7 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_int64 (stmt_clause_stats, bindAt++, solver->sumConflicts);
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, solver->latest_satzilla_feature_calc);
     sqlite3_bind_int64 (stmt_clause_stats, bindAt++, clid);
+    sqlite3_bind_int   (stmt_clause_stats, bindAt++, restartID);
 
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, orig_glue);
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, glue_before_minim);

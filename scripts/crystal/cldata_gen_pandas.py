@@ -63,7 +63,7 @@ class QueryFill (helper.QueryHelper):
         create index `idxclid1-5` on `clause_stats` (`clauseID`, prev_restart);
         create index `idxclid2` on `clause_stats` (clauseID, `prev_restart`, conflicts, restarts, latest_satzilla_feature_calc);
         create index `idxclid4` on `restart` ( `restarts`);
-        create index `idxclid88` on `restart_dat_for_cl` ( `conflicts`);
+        create index `idxclid88` on `restart_dat_for_cl` ( `clauseID`);
         create index `idxclid5` on `tags` ( `name`);
         ---
         create index `idxclid6` on `reduceDB` (`clauseID`, conflicts, latest_satzilla_feature_calc);
@@ -237,8 +237,8 @@ class QueryCls (helper.QueryHelper):
             , "numredLits"
             , "numIrredLits"
             , "all_props"
-            , "clauseIDstartInclusive"
-            , "clauseIDendExclusive"]
+            , "clauseID"
+            , "restartID"]
         self.rst_cur = helper.query_fragment(
             "restart_dat_for_cl", not_cols, "rst_cur", options.verbose, self.c)
 
@@ -448,7 +448,7 @@ class QueryCls (helper.QueryHelper):
         and rdb1.clauseID = cl.clauseID
         and rdb0.dump_no = rdb1.dump_no+1
 
-        and rst_cur.conflicts = cl.conflicts
+        and rst_cur.clauseID = cl.clauseID
 
         and used_later_short.clauseID = cl.clauseID
         and used_later_short.rdb0conflicts = rdb0.conflicts

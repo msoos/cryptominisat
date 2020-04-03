@@ -93,8 +93,6 @@ public:
     //SatZillaFeatures
     uint64_t num_xors_found_last = 0;
     uint64_t num_gates_found_last = 0;
-    uint64_t clauseID_at_start_inclusive = 0;
-    uint64_t clauseID_at_end_exclusive = 0;
 
     //Resolution Stats
     AtecedentData<uint64_t> resolvs;
