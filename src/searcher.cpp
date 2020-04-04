@@ -154,6 +154,17 @@ void Searcher::renumber_assumptions(const vector<uint32_t>& outerToInter)
     solver->fill_assumptions_set_from(assumptions);
 }
 
+void Searcher::print_local_restart_budget()
+{
+    if (conf.verbosity >= 2 || conf.print_all_restarts) {
+        cout << "c [restart] at confl " << solver->sumConflicts << " -- "
+        << "adjusting local restart type: "
+        << std::left << std::setw(10) << getNameOfRestartType(params.rest_type)
+        << " budget: " << std::setw(9) << max_confl_this_phase
+        << std::right << endl;
+    }
+}
+
 template<bool update_bogoprops>
 inline void Searcher::add_lit_to_learnt(
     const Lit lit
@@ -1930,6 +1941,7 @@ lbool Searcher::solve(
         max_confl_this_phase = conf.restart_first;
         params.rest_type = Restart::luby;
     }
+    print_local_restart_budget();
 
     #ifdef USE_GAUSS
     clearEnGaussMatrixes();
@@ -2050,6 +2062,7 @@ void Searcher::adjust_phases_restarts()
             break;
         }
     }
+    print_local_restart_budget();
 }
 
 void Searcher::print_solution_varreplace_status() const

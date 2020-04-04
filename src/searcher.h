@@ -105,6 +105,7 @@ class Searcher : public HyperEngine
         void     print_clause_stats() const;
         uint64_t sumRestarts() const;
         const SearchHist& getHistory() const;
+        void print_local_restart_budget();
 
         size_t hyper_bin_res_all(const bool check_for_set_values = true);
         std::pair<size_t, size_t> remove_useless_bins(bool except_marked = false);
