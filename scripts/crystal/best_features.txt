@@ -22,4 +22,4 @@ rdb1.propagations_made
 rdb0.act_ranking_top_10
 rdb1.act_ranking_top_10
 cl.is_decision
-rdb0.is_ternary_resol_cl
+rdb0.is_ternary_resolvent

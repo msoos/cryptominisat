@@ -107,7 +107,6 @@ public:
         , const std::string& rest_type
         , const SearchHist& hist
         , const bool is_decision
-        , const bool ternary_resol_cl
     ) override;
 
     void var_data_picktime(

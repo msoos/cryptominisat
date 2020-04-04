@@ -712,7 +712,7 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.glue);
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->size());
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.ttl);
-    sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.is_ternary_resol_cl);
+    sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.is_ternary_resolvent);
     sqlite3_bind_int(stmtReduceDB, bindAt++, act_ranking_top_10);
     sqlite3_bind_int(stmtReduceDB, bindAt++, act_ranking);
     sqlite3_bind_int(stmtReduceDB, bindAt++, tot_cls_in_db);
@@ -737,7 +737,6 @@ void SQLiteStats::dump_clause_stats(
     , const std::string& restart_type
     , const SearchHist& hist
     , const bool is_decision
-    , const bool ternary_resol_cl
 ) {
     uint32_t num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-size;
 
@@ -762,7 +761,6 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, antec_data.num());
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, antec_data.sum_size());
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, is_decision);
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, ternary_resol_cl);
 
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, backtrack_level);
     sqlite3_bind_int64 (stmt_clause_stats, bindAt++, decision_level);

@@ -325,7 +325,7 @@ void Searcher::debug_print_resolving_clause(const PropBy confl) const
 void Searcher::update_clause_glue_from_analysis(Clause* cl)
 {
     assert(cl->red());
-    if (cl->is_ternary) {
+    if (cl->stats.is_ternary_resolvent) {
         return;
     }
     const unsigned new_glue = calc_glue(*cl);
@@ -1504,7 +1504,6 @@ void Searcher::dump_sql_clause_data(
     , const uint32_t old_decision_level
     , const uint64_t clid
     , const bool is_decision
-    , const bool ternary_resol_cl
 ) {
     //solver->sqlStats->begin_transaction();
     if (is_decision) {
@@ -1532,7 +1531,6 @@ void Searcher::dump_sql_clause_data(
         , restart_type_to_short_string(params.rest_type)
         , hist
         , is_decision
-        , ternary_resol_cl
     );
     //solver->sqlStats->end_transaction();
 }
@@ -1662,8 +1660,7 @@ Clause* Searcher::handle_last_confl(
             , glue_before_minim
             , old_decision_level
             , clauseID
-            , is_decision //decision_clause
-            , false //ternary reslution clause
+            , is_decision
         );
     }
 

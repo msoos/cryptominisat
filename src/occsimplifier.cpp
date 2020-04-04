@@ -1593,7 +1593,7 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
     vector<Lit> tmp;
     for(const Tri& newcl: cl_to_add_ternary) {
         ClauseStats stats;
-        stats.is_ternary_resol_cl = true;
+        stats.is_ternary_resolvent = true;
         stats.glue = solver->conf.glue_put_lev1_if_below_or_eq;
         stats.which_red_array = 1;
         stats.drop_if_not_used = true;
@@ -1617,9 +1617,14 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
             break;
 
         if (newCl != NULL) {
-            newCl->stats.glue = solver->conf.glue_put_lev1_if_below_or_eq;
-            newCl->is_ternary = true;
-            newCl->stats.which_red_array = 1;
+            #ifdef STATS_NEEDED
+            bool to_dump = false;
+            double myrnd = solver->mtrand.randDblExc();
+            if (myrnd <= solver->conf.dump_individual_cldata_ratio) {
+                newCl->stats.ID = solver->clauseID++;
+                assert(false && "It will be dumped, but `restart` and `clause_data` will be missing and learning will succeed but prediction of ternaries will be off");
+            }
+            #endif
             linkInClause(*newCl);
             ClOffset offset = solver->cl_alloc.get_offset(newCl);
             clauses.push_back(offset);

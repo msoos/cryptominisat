@@ -126,7 +126,6 @@ public:
         , const std::string& rest_type
         , const SearchHist& hist
         , const bool is_decision
-        , const bool ternary_resol_cl
     ) = 0;
 
     virtual void dec_var_clid(

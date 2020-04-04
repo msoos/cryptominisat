@@ -84,21 +84,24 @@ class Queries (helper.QueryHelper):
                   format(**only_one, t=(time.time()-t)))
 
     def check_all_clauses_have_N(self):
-        Ns = ["restart_dat_for_cl", "cl_last_in_solver"]
+        Ns = [{"tbl1":"reduceDB", "tbl2":"restart_dat_for_cl", "elem":"clauseID"},
+              {"tbl1":"reduceDB", "tbl2":"cl_last_in_solver", "elem":"clauseID"},
+              {"tbl1":"reduceDB", "tbl2":"clause_stats", "elem":"clauseID"}
+          ]
         for n in Ns:
             t = time.time()
             q = """
-            select reduceDB.clauseID
-            from reduceDB left join {tbl}
-            on reduceDB.clauseID={tbl}.clauseID
-            where {tbl}.clauseID is NULL
-            """.format(tbl=n)
+            select {tbl1}.{elem}
+            from {tbl1} left join {tbl2}
+            on {tbl1}.{elem}={tbl2}.{elem}
+            where {tbl2}.{elem} is NULL
+            """.format(**n)
             cursor = self.c.execute(q)
             bad = False
             for row in cursor:
                 bad = True
-                print("ERROR: ClauseID {clid} has no {tbl}:".format(
-                    clid=row[0], tbl=n))
+                print("ERROR: {elem}={clid} has {tbl1} not no corresponding {tbl2}:".format(
+                    **n, clid=row[0]))
 
             if bad:
                 exit(-1)

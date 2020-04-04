@@ -427,9 +427,13 @@ class QueryCls (helper.QueryHelper):
 
         FROM
         reduceDB as rdb0
-        left join clause_stats as cl on
+        -- WARN: ternary clauses are explicity NOT enabled here
+        --       since it's a FULL join
+        join clause_stats as cl on
             cl.clauseID = rdb0.clauseID
 
+        -- WARN: ternary clauses are explicity NOT enabled here
+        --       since it's a FULL join
         join restart_dat_for_cl as rst_cur
             on rst_cur.clauseID = rdb0.clauseID
 
@@ -440,7 +444,7 @@ class QueryCls (helper.QueryHelper):
             rdb1.clauseID = rdb0.clauseID
 
         join satzilla_features as szfeat_cur
-            on szfeat_cur.latest_satzilla_feature_calc = rdb0.latest_satzilla_feature_calc
+            on szfeat_cur.latest_satzilla_feature_calc = cl.latest_satzilla_feature_calc
 
         join used_later_short on
             used_later_short.clauseID = rdb0.clauseID

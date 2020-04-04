@@ -203,7 +203,7 @@ class QueryDatRem(helper.QueryHelper):
         print("Added num_used >= %d from sum_cl_use to used_cls_ids T: %-3.2f s"
               % (min_used, time.time() - t))
 
-    def insert_into_used_cls_ids_from_clstats_from_rdb(self, limit):
+    def insert_into_used_cls_ids_ternary_resolvents(self, limit):
         limit = int(limit)
 
         t = time.time()
@@ -213,7 +213,7 @@ class QueryDatRem(helper.QueryHelper):
         select
         clauseID from reduceDB
         where
-        is_ternary_resol_cl = 1
+        is_ternary_resolvent = 1
         group by clauseID
         order by random() limit {limit}
         """.format(limit=int(limit))
@@ -232,7 +232,7 @@ class QueryDatRem(helper.QueryHelper):
             self.insert_into_used_cls_ids_from_clstats(min_used=5, limit=options.limit/3)
             self.insert_into_used_cls_ids_from_clstats(min_used=1, limit=options.limit/2)
 
-        self.insert_into_used_cls_ids_from_clstats_from_rdb(limit=options.limit/2)
+        #self.insert_into_used_cls_ids_ternary_resolvents(limit=options.limit/2)
         self.insert_into_used_cls_ids_from_clstats(min_used=0, limit=options.limit, max_used=0)
 
         q = """
