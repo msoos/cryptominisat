@@ -71,7 +71,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         #endif
         , clause_decay(0.999)
 
-        , bump_new_learnt_cls(1)
         , adjust_glue_if_too_many_low(0.7)
         , min_num_confl_adjust_glue_cutoff(150ULL*1000ULL)
         //NOTE: The "Scavel" system's "usedt" does NOT speed up the solver
@@ -81,6 +80,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , restart_first(100)
         , restart_inc(1.1)
         , restartType(Restart::glue_geom)
+        , do_blocking_restart(1)
         , blocking_restart_trail_hist_length(5000)
         , blocking_restart_multip(1.4)
         , local_glue_multiplier(0.80)
@@ -181,13 +181,13 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , bva_also_twolit_diff(true)
         , bva_extra_lit_and_red_start(0)
         , bva_time_limitM(50)
-        , bva_every_n(1)
+        , bva_every_n(20)
 
         //Probing
         , doIntreeProbe    (true)
         , doTransRed       (true)
-        , intree_time_limitM(300ULL)
-        , intree_scc_varreplace_time_limitM(7ULL)
+        , intree_time_limitM(1200ULL)
+        , intree_scc_varreplace_time_limitM(10ULL)
         , do_hyperbin_and_transred(true)
 
         //XOR
@@ -223,8 +223,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , do_simplify_problem(true)
         , full_simplify_at_startup(false)
         , never_stop_search(false)
-        , num_conflicts_of_search(70ULL*1000ULL)
-        , num_conflicts_of_search_inc(1.1)
+        , num_conflicts_of_search(50ULL*1000ULL)
+        , num_conflicts_of_search_inc(1.4)
         , num_conflicts_of_search_inc_max(10)
         , max_num_simplify_per_solve_call(25)
         , simplify_schedule_startup(

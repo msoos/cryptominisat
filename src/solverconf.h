@@ -176,7 +176,6 @@ class DLL_PUBLIC SolverConf
         unsigned glue_put_lev1_if_below_or_eq;
         double    ratio_keep_clauses[2]; ///< Remove this ratio of clauses at every database reduction round
         double    clause_decay;
-        uint32_t bump_new_learnt_cls;
 
         //If too many (in percentage) low glues after min_num_confl_adjust_glue_cutoff, adjust glue lower
         double   adjust_glue_if_too_many_low;

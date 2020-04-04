@@ -385,8 +385,6 @@ void Main::add_supported_options()
     #endif
     ("lev1usewithin", po::value(&conf.must_touch_lev1_within)->default_value(conf.must_touch_lev1_within)
         , "Learnt clause must be used in lev1 within this timeframe or be dropped to lev2")
-    ("bumpnewcl", po::value(&conf.bump_new_learnt_cls)->default_value(conf.bump_new_learnt_cls)
-        , "Bump new learnt clauses' activity this many times")
     ;
 
     po::options_description red_cl_dump_opts("Clause dumping after problem finishing");
