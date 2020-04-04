@@ -1685,6 +1685,7 @@ bool Searcher::handle_conflict(PropBy confl)
     stats.conflStats.numConflicts++;
     hist.num_conflicts_this_restart++;
     sumConflicts++;
+    params.conflictsDoneThisRestart++;
 
     if (sumConflicts == 100000 && //TODO magic constant
         longRedCls[0].size() < 100 &&
@@ -1694,7 +1695,6 @@ bool Searcher::handle_conflict(PropBy confl)
     ) {
         conf.glue_put_lev0_if_below_or_eq += 2; //TODO magic constant
     }
-    params.conflictsDoneThisRestart++;
 
     ConflictData data = find_conflict_level(confl);
     if (data.nHighestLevel == 0) {
@@ -2398,12 +2398,7 @@ void Searcher::setup_restart_strategy()
             break;
     }
 
-    if (conf.verbosity >= 1) {
-        cout << "c [restart] local restart type: "
-        << std::left << std::setw(10) << getNameOfRestartType(params.rest_type)
-        << " size: " << std::setw(9) << max_confl_this_phase
-        << std::right << endl;
-    }
+    print_local_restart_budget();
 }
 
 void Searcher::adjust_restart_strategy()
@@ -2447,32 +2442,29 @@ void Searcher::adjust_restart_strategy()
             max_confl_this_phase = luby(conf.restart_inc*1.5, luby_loop_num)
                 * (double)conf.restart_first/2.0;
             luby_loop_num++;
-            if (conf.print_all_restarts) {
-                cout << "c REST LUBY: " << max_confl_this_phase << endl;
-            }
             break;
 
         case Restart::geom:
             increasing_phase_size = (double)increasing_phase_size * conf.restart_inc;
             max_confl_this_phase = increasing_phase_size;
-            if (conf.print_all_restarts) {
-                cout << "c REST GEOM: " << max_confl_this_phase << endl;
-            }
             break;
 
         case Restart::glue:
             max_confl_this_phase = conf.ratio_glue_geom *increasing_phase_size;
-            if (conf.print_all_restarts) {
-                cout << "c REST GLUE: " << max_confl_this_phase << endl;
-            }
             break;
 
         default:
             release_assert(false);
     }
 
-    if (conf.verbosity >= 2) {
-        cout << "c [restart] adjusting local restart type: "
+    print_local_restart_budget();
+}
+
+void Searcher::print_local_restart_budget()
+{
+    if (conf.verbosity >= 2 || conf.print_all_restarts) {
+        cout << "c [restart] at confl " << solver->sumConflicts << " -- "
+        << "adjusting local restart type: "
         << std::left << std::setw(10) << getNameOfRestartType(params.rest_type)
         << " budget: " << std::setw(9) << max_confl_this_phase
         << std::right << endl;
@@ -2506,16 +2498,12 @@ void Searcher::check_need_restart()
         }
     }
 
-    //static
-    if ((params.rest_type == Restart::geom ||
-        params.rest_type == Restart::luby ||
-        params.rest_type == Restart::glue)
-        && (int64_t)params.conflictsDoneThisRestart > max_confl_this_phase
-    ) {
+    //respect restart phase's limit
+    if ((int64_t)params.conflictsDoneThisRestart > max_confl_this_phase) {
         params.needToStopSearch = true;
     }
 
-    //Conflict limit reached?
+    //respect Searcher's limit
     if (params.conflictsDoneThisRestart > params.max_confl_to_do) {
         if (conf.verbosity >= 3) {
             cout
