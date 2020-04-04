@@ -2129,27 +2129,77 @@ void Searcher::rebuild_all_branch_strategy_setups()
 
 void Searcher::set_branch_strategy(const uint32_t iteration_num)
 {
-    uint32_t vsids = conf.branch_strategy_setup.find("vsids") != std::string::npos;
-    uint32_t vmtf = conf.branch_strategy_setup.find("vmtf") != std::string::npos;
-    uint32_t maple = conf.branch_strategy_setup.find("maple") != std::string::npos;
-    uint32_t rnd = conf.branch_strategy_setup.find("rnd") != std::string::npos;
+    size_t smallest = 0;
+    size_t start = 0;
+    size_t total = 0;
+    CMSat::branch select[20];
+    if (conf.verbosity) {
+        cout << "c [branch] selection: ";
+    }
 
-    uint32_t total = (uint32_t)vsids + (uint32_t)vmtf + (uint32_t)maple + (uint32_t)rnd;
+    while(smallest !=std::string::npos) {
+        smallest = std::string::npos;
+
+        size_t vsids = conf.branch_strategy_setup.find("vsids", start);
+        smallest = std::min(vsids, smallest);
+
+        size_t vmtf = conf.branch_strategy_setup.find("vmtf", start);
+        smallest = std::min(vmtf, smallest);
+
+        size_t maple = conf.branch_strategy_setup.find("maple", start);
+        smallest = std::min(maple, smallest);
+
+        size_t rnd = conf.branch_strategy_setup.find("rnd", start);
+        smallest = std::min(rnd, smallest);
+
+        if (smallest == std::string::npos) {
+            break;
+        }
+
+        if (conf.verbosity && total > 0) {
+            cout << "+";
+        }
+
+        if (smallest == vsids) {
+            select[total++]= branch::vsids;
+            if (conf.verbosity) {
+                cout << "VSIDS";
+            }
+        }
+        else if (smallest == vmtf) {
+            select[total++]= branch::vmtf;
+            if (conf.verbosity) {
+                cout << "VMTF";
+            }
+        }
+        else if (smallest == maple) {
+            select[total++]= branch::maple;
+            if (conf.verbosity) {
+                cout << "MAPLE";
+            }
+        }
+        else if (smallest == rnd) {
+            select[total++]= branch::rnd;
+            if (conf.verbosity) {
+                cout << "RND";
+            }
+        } else {
+            assert(false);
+        }
+
+        //Search for next one. The strings are quite distinct, this works.
+        start = smallest + 3;
+
+        if (total >= 20) {
+           cout << "ERROR: you cannot give more than 19 branch strategies" << endl;
+           exit(-1);
+        }
+    }
+    if (conf.verbosity) {
+        cout << " -- total: " << total << endl;
+    }
+
     assert(total > 0);
-    CMSat::branch select[total];
-    uint32_t i = 0;
-    if (vsids) {
-        select[i++]= branch::vsids;
-    }
-    if (vmtf) {
-        select[i++]= branch::vmtf;
-    }
-    if (maple) {
-        select[i++]= branch::maple;
-    }
-    if (rnd) {
-        select[i++]= branch::rnd;
-    }
     uint32_t which = iteration_num % total;
     branch_strategy = select[which];
     if (branch_strategy == branch::maple) {

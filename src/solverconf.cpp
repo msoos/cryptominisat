@@ -90,7 +90,11 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doAlwaysFMinim(false)
 
         //branch strategy
-        , branch_strategy_setup("vsids+vmtf+maple")
+        #ifdef STATS_NEEDED
+        , branch_strategy_setup("vsids+vmtf+maple+rnd")
+        #else
+        , branch_strategy_setup("vsids+vsids+maple")
+        #endif
 
         //Clause minimisation
         , doRecursiveMinim (true)
