@@ -94,6 +94,7 @@ void ClPredictors::set_up_input(
     at[x++] = act_ranking_top_10;                                 //rdb0.act_ranking_top_10
     at[x++] = cl->stats.rdb1_act_ranking_top_10;                  //rdb1.act_ranking_top_10
     at[x++] = cl->stats.is_decision;                              //cl.is_decision
+    at[x++] = cl->stats.is_ternary_resol_cl;                      //rdb0.is_ternary_resol_cl
     assert(x==cols);
 }
 
@@ -123,7 +124,7 @@ float ClPredictors::predict_short(
     const uint32_t act_ranking_top_10)
 {
     // convert to DMatrix
-    int cols=24;
+    int cols=25;
     float* train = new float[cols];
     set_up_input(cl, sumConflicts, last_touched_diff,
                  act_ranking_rel, act_ranking_top_10,

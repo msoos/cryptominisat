@@ -83,25 +83,27 @@ class Queries (helper.QueryHelper):
             print("Checked for {tbl} only containing at most one of the same {elem} in {t:2.3f} seconds".
                   format(**only_one, t=(time.time()-t)))
 
-    def check_all_clauses_have_restart(self):
-        t = time.time()
-        q = """
-        select clause_stats.clauseID, clause_stats.restartID
-        from clause_stats left join restart_dat_for_cl
-        on clause_stats.restartID=restart_dat_for_cl.restartID
-            and  clause_stats.clauseID=restart_dat_for_cl.clauseID
-        where restart_dat_for_cl.clauseID is NULL
-        """
-        cursor = self.c.execute(q)
-        bad = False
-        for row in cursor:
-            bad = True
-            print("ERROR: ClauseID %s has no restart_dat_for_cl, restartID %s:" % (row[0], row[1]))
+    def check_all_clauses_have_N(self):
+        Ns = ["restart_dat_for_cl", "cl_last_in_solver"]
+        for n in Ns:
+            t = time.time()
+            q = """
+            select reduceDB.clauseID
+            from reduceDB left join {tbl}
+            on reduceDB.clauseID={tbl}.clauseID
+            where {tbl}.clauseID is NULL
+            """.format(tbl=n)
+            cursor = self.c.execute(q)
+            bad = False
+            for row in cursor:
+                bad = True
+                print("ERROR: ClauseID {clid} has no {tbl}:".format(
+                    clid=row[0], tbl=n))
 
-        if bad:
-            exit(-1)
+            if bad:
+                exit(-1)
 
-        print("Checked all clauses have restart. T: %-2.3f" % (time.time()-t))
+        print("Checked all clauses have a %s. T: %-2.3f" % (Ns, time.time()-t))
 
     def check_is_null(self):
 
@@ -225,7 +227,7 @@ if __name__ == "__main__":
 
     with Queries(args[0]) as q:
         #q.create_indexes()
-        q.check_all_clauses_have_restart()
+        q.check_all_clauses_have_N()
         q.check_only_one()
         q.check_non_negative()
         q.check_positive()

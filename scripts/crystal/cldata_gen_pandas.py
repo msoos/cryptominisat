@@ -426,43 +426,47 @@ class QueryCls (helper.QueryHelper):
         , {case_stmt}
 
         FROM
-        clause_stats as cl
-        , sum_cl_use as sum_cl_use
-        , restart_dat_for_cl as rst_cur
-        , satzilla_features as szfeat_cur
-        , reduceDB as rdb0
-        , reduceDB as rdb1
+        reduceDB as rdb0
+        left join clause_stats as cl on
+            cl.clauseID = rdb0.clauseID
+
+        join restart_dat_for_cl as rst_cur
+            on rst_cur.clauseID = rdb0.clauseID
+
+        join sum_cl_use on
+            sum_cl_use.clauseID = rdb0.clauseID
+
+        join reduceDB as rdb1 on
+            rdb1.clauseID = rdb0.clauseID
+
+        join satzilla_features as szfeat_cur
+            on szfeat_cur.latest_satzilla_feature_calc = rdb0.latest_satzilla_feature_calc
+
+        join used_later_short on
+            used_later_short.clauseID = rdb0.clauseID
+            and used_later_short.rdb0conflicts = rdb0.conflicts
+
+        join used_later_long on
+            used_later_long.clauseID = rdb0.clauseID
+            and used_later_long.rdb0conflicts = rdb0.conflicts
+
+        join used_later on
+            used_later.clauseID = rdb0.clauseID
+            and used_later.rdb0conflicts = rdb0.conflicts
+
+        join cl_last_in_solver on
+            cl_last_in_solver.clauseID = rdb0.clauseID
+
         , tags
-        , used_later
-        , used_later_short
-        , used_later_long
-        , cl_last_in_solver
 
         WHERE
-        cl.clauseID = sum_cl_use.clauseID
-        and cl.clauseID != 0
-        and used_later.clauseID = cl.clauseID
-        and used_later.rdb0conflicts = rdb0.conflicts
-
-        and rdb0.clauseID = cl.clauseID
-        and rdb1.clauseID = cl.clauseID
+        cl.clauseID != 0
+        and tags.name = "filename"
         and rdb0.dump_no = rdb1.dump_no+1
 
-        and rst_cur.clauseID = cl.clauseID
-
-        and used_later_short.clauseID = cl.clauseID
-        and used_later_short.rdb0conflicts = rdb0.conflicts
-
-        and used_later_long.clauseID = cl.clauseID
-        and used_later_long.rdb0conflicts = rdb0.conflicts
 
         -- to avoid missing clauses and their missing data to affect results
-        and cl_last_in_solver.clauseID = cl.clauseID
         and rdb0.conflicts + {del_at_least} <= cl_last_in_solver.conflicts
-
-        and cl.restarts > 1 -- to avoid history being invalid
-        and szfeat_cur.latest_satzilla_feature_calc = rdb0.latest_satzilla_feature_calc
-        and tags.name = "filename"
         """
 
         self.myformat = {

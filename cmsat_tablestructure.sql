@@ -64,6 +64,7 @@ CREATE TABLE `reduceDB` (
   `glue` int(20) NOT NULL,
   `size` int(20) NOT NULL,
   `ttl` int(20) NOT NULL,
+  `is_ternary_resol_cl` int(20) NOT NULL,
   `act_ranking_top_10` int(20) NOT NULL,
   `act_ranking` int(20) NOT NULL,
   `tot_cls_in_db` int(20) NOT NULL,

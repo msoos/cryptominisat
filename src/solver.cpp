@@ -4253,9 +4253,7 @@ void Solver::stats_del_cl(Clause* cl)
 void Solver::stats_del_cl(ClOffset offs)
 {
     Clause* cl = cl_alloc.ptr(offs);
-    if (cl->stats.ID != 0 && sqlStats) {
-        sqlStats->cl_last_in_solver(this, cl->stats.ID);
-    }
+    stats_del_cl(cl);
 }
 #endif
 

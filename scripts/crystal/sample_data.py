@@ -176,7 +176,7 @@ class QueryDatRem(helper.QueryHelper):
         print("Cleaned up var_data_x & restart_dat_for_var tables T: %-3.2f s"
               % (time.time() - t))
 
-    def insert_into_used_cls_ids(self, min_used, limit, max_used=None):
+    def insert_into_used_cls_ids_from_clstats(self, min_used, limit, max_used=None):
         min_used = int(min_used)
 
         max_const = ""
@@ -203,16 +203,37 @@ class QueryDatRem(helper.QueryHelper):
         print("Added num_used >= %d from sum_cl_use to used_cls_ids T: %-3.2f s"
               % (min_used, time.time() - t))
 
+    def insert_into_used_cls_ids_from_clstats_from_rdb(self, limit):
+        limit = int(limit)
+
+        t = time.time()
+        val = int()
+        q = """
+        insert into used_cl_ids
+        select
+        clauseID from reduceDB
+        where
+        is_ternary_resol_cl = 1
+        group by clauseID
+        order by random() limit {limit}
+        """.format(limit=int(limit))
+
+
+        self.c.execute(q)
+        print("Added clauseIDs from reduceDB that are TERNARY from reduceDB to used_cls_ids T: %-3.2f s"
+              % (time.time() - t))
+
     # inserts less than 1-1 ratio, inserting only 0.3*N from unused ones
     def fill_used_cl_ids_table(self):
         t = time.time()
         if not options.fair:
-            self.insert_into_used_cls_ids(30, options.limit/5)
-            self.insert_into_used_cls_ids(20, options.limit/4)
-            self.insert_into_used_cls_ids(5, options.limit/3)
-            self.insert_into_used_cls_ids(1, options.limit/2)
+            self.insert_into_used_cls_ids_from_clstats(min_used=30, limit=options.limit/5)
+            self.insert_into_used_cls_ids_from_clstats(min_used=20, limit=options.limit/4)
+            self.insert_into_used_cls_ids_from_clstats(min_used=5, limit=options.limit/3)
+            self.insert_into_used_cls_ids_from_clstats(min_used=1, limit=options.limit/2)
 
-        self.insert_into_used_cls_ids(0, options.limit, max_used=0)
+        self.insert_into_used_cls_ids_from_clstats_from_rdb(limit=options.limit/2)
+        self.insert_into_used_cls_ids_from_clstats(min_used=0, limit=options.limit, max_used=0)
 
         q = """
         select count()
@@ -256,7 +277,7 @@ class QueryDatRem(helper.QueryHelper):
     def filter_tables_of_ids(self):
         self.print_idxs()
 
-        tables = ["clause_stats", "reduceDB", "sum_cl_use", "used_clauses", "restart_dat_for_cl"]
+        tables = ["clause_stats", "reduceDB", "sum_cl_use", "used_clauses", "restart_dat_for_cl", "cl_last_in_solver"]
         q = """
         DELETE FROM {table} WHERE clauseID NOT IN
         (SELECT clauseID from used_cl_ids );"""
@@ -265,6 +286,54 @@ class QueryDatRem(helper.QueryHelper):
             t = time.time()
             self.c.execute(q.format(table=table))
             print("Filtered table '%s' T: %-3.2f s" % (table, time.time() - t))
+
+    def print_sum_cl_use_distrib(self):
+        q = """
+        select c, num_used from (
+        select count(*) as c, num_used
+        from sum_cl_use
+        group by num_used) order by num_used
+        """
+        self.c.execute(q)
+        rows = self.c.fetchall()
+        print("Distribution of clause uses:")
+        total = 0
+        zero_use = 0
+        for i in range(len(rows)):
+            cnt = int(rows[i][0])
+            numuse = int(rows[i][1])
+            if numuse == 0:
+                zero_use = cnt
+            total += cnt
+
+        i = 0
+        while i < len(rows):
+            cnt = int(rows[i][0])
+            numuse = int(rows[i][1])
+
+            this_cnt_tot = 0
+            this_numuse_tot = 0
+            for x in range(100000):
+                if i+x >= len(rows):
+                    i+=x
+                    break
+
+                this_cnt = int(rows[i+x][0])
+                this_numuse = int(rows[i+x][1])
+                this_cnt_tot += this_cnt
+                this_numuse_tot += this_numuse
+                if this_cnt_tot > 300:
+                    i+=x
+                    i+=1
+                    break
+            print("  ->  {cnt:-8d} of sum_cl_use: {numuse:-7d}-{this_numuse:-7d}  --  {percent:-3.5f} ratio".format(
+                    cnt=this_cnt_tot, numuse=numuse, this_numuse=this_numuse, percent=(this_cnt_tot/total)))
+
+
+        print("Total: %d of which zero_use: %d" % (total, zero_use))
+        if zero_use == 0 or zero_use/total < 0.1:
+            print("ERROR: Zero use is very low, this is almost surely a bug!")
+            exit(-1)
 
     def check_db_sanity(self):
         print("Checking tables in DB...")
@@ -525,6 +594,7 @@ if __name__ == "__main__":
         q.remove_too_many_vardata()
         q.fill_used_cl_ids_table()
         q.filter_tables_of_ids()
+        q.print_sum_cl_use_distrib()
         q.del_table_and_vacuum()
         print("-------------")
         print("-------------")
