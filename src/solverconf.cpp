@@ -41,6 +41,10 @@ using namespace CMSat;
 //Fixing to:
 //--simdrat 1 --bva 1 --slstype ccnr --slseveryn 2 --bvalim 250000 --tern 1 --terncreate 1 --ternkeep 6 -m 3 --distillincconf 0.02 --distillminconf 10000 --slsgetphase 1 --slstobump 100 --gluehist 60 --diffdeclevelchrono 20 --conftochrono 0
 
+//Fixing to:
+//1722973 out-9860239.wlm01-1-drat0 254 154 100 a6005cf   --simdrat 1 --gluehist 50 --moremoreminim 1 --lev1usewithin 70000 --bva2lit 1
+
+
 DLL_PUBLIC SolverConf::SolverConf() :
         //Variable activities
         var_inc_vsids(1)
@@ -53,7 +57,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
         , every_lev3_reduce(10000)
         #endif
-        , must_touch_lev1_within(30000)
+        , must_touch_lev1_within(70000)
 
         , max_temp_lev2_learnt_clauses(30000) //only used if every_lev2_reduce==0
         , inc_max_temp_lev2_red_cls(1.0)      //only used if every_lev2_reduce==0
@@ -80,7 +84,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , blocking_restart_trail_hist_length(5000)
         , blocking_restart_multip(1.4)
         , local_glue_multiplier(0.80)
-        , shortTermHistorySize (60)
+        , shortTermHistorySize (50)
         , lower_bound_for_blocking_restart(10000)
         , ratio_glue_geom(5)
         , doAlwaysFMinim(false)
@@ -91,7 +95,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Clause minimisation
         , doRecursiveMinim (true)
         , doMinimRedMore(true)
-        , doMinimRedMoreMore(false)
+        , doMinimRedMoreMore(true)
         , max_glue_more_minim(6)
         , max_size_more_minim(30)
         , more_red_minim_limit_binary(200)
@@ -174,7 +178,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , min_bva_gain(32)
         #endif
         , bva_limit_per_call(250000)
-        , bva_also_twolit_diff(false)
+        , bva_also_twolit_diff(true)
         , bva_extra_lit_and_red_start(0)
         , bva_time_limitM(50)
         , bva_every_n(1)
