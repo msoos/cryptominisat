@@ -220,15 +220,15 @@ class QueryVar (helper.QueryHelper):
 
         WHERE
         var_data_picktime.sumConflicts_at_picktime > 15000
-        and dec_var_clid.clauseID = sum_cl_use.clauseID
+        and sum_cl_use.clauseID = dec_var_clid.clauseID
 
         and var_data_picktime.var = dec_var_clid.var
         and var_data_picktime.sumConflicts_at_picktime = dec_var_clid.sumConflicts_at_picktime
 
-        and var_data_fintime.var = var_data_picktime.var
-        and var_data_fintime.sumConflicts_at_picktime = var_data_picktime.sumConflicts_at_picktime
+        and var_data_fintime.var = dec_var_clid.var
+        and var_data_fintime.sumConflicts_at_picktime = dec_var_clid.sumConflicts_at_picktime
 
-        and var_dist.var = var_data_picktime.var
+        and var_dist.var = dec_var_clid.var
         and var_dist.latest_vardist_feature_calc = var_data_picktime.latest_vardist_feature_calc
 
         and rst.conflicts = var_data_picktime.sumConflicts_at_picktime
