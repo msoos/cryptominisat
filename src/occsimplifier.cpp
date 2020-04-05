@@ -1671,7 +1671,12 @@ void OccSimplifier::check_ternary_cl(Clause* cl, ClOffset offs, watch_subarray w
 
 bool OccSimplifier::backward_sub_str()
 {
+    auto backup = subsumption_time_limit;
+    subsumption_time_limit = 0;
     limit_to_decrease = &subsumption_time_limit;
+
+    subsumption_time_limit += (int64_t)
+        ((double)backup*solver->conf.subsumption_time_limit_ratio_sub_str_w_bin);
     assert(cl_to_free_later.empty());
     assert(solver->watches.get_smudged_list().empty());
 
@@ -1681,6 +1686,8 @@ bool OccSimplifier::backward_sub_str()
         goto end;
     }
 
+    subsumption_time_limit += (int64_t)
+        ((double)backup*solver->conf.subsumption_time_limit_ratio_sub_w_long);
     sub_str->backw_sub_long_with_long();
     if (solver->must_interrupt_asap())
         goto end;
