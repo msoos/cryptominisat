@@ -236,8 +236,11 @@ void SubsumeStrengthen::backw_sub_long_with_long()
     size_t subsumed = 0;
     const int64_t orig_limit = simplifier->subsumption_time_limit;
     randomise_clauses_order();
+    const double max_go_through =
+        solver->conf.subsume_gothrough_multip*(double)simplifier->clauses.size();
+
     while (*simplifier->limit_to_decrease > 0
-        && (double)wenThrough < solver->conf.subsume_gothrough_multip*(double)simplifier->clauses.size()
+        && (double)wenThrough < max_go_through
     ) {
         *simplifier->limit_to_decrease -= 3;
         wenThrough++;
