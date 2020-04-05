@@ -315,7 +315,6 @@ public:
         _used_in_xor = false;
         _used_in_xor_full = false;
         _xor_is_detached = false;
-        _gauss_temp_cl = false;
         reloced = false;
 
         for (uint32_t i = 0; i < ps.size(); i++) {
@@ -329,16 +328,6 @@ public:
     uint32_t size() const
     {
         return mySize;
-    }
-
-    bool gauss_temp_cl() const
-    {
-        return _gauss_temp_cl;
-    }
-
-    void set_gauss_temp_cl()
-    {
-        _gauss_temp_cl = true;
     }
 
     bool used_in_xor() const

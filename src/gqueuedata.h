@@ -31,6 +31,7 @@ struct GaussQData {
     uint32_t new_resp_row ;         // do elimination row
     PropBy confl;              // returning conflict
     gauss_res ret; //final return value to Searcher
+    uint32_t currLevel; //level at which the variable was decided on
 
 
     uint32_t num_props;  // total gauss propogation time for DPLL

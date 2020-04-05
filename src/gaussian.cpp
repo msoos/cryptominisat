@@ -679,7 +679,12 @@ bool EGaussian::find_truths(
             xor_reasons[row_n].must_recalc = true;
             xor_reasons[row_n].propagated = ret_lit_prop;
             assert(solver->value(ret_lit_prop.var()) == l_Undef);
-            solver->enqueue(ret_lit_prop, PropBy(matrix_no, row_n));
+            if (gqd.currLevel == solver->decisionLevel()) {
+                solver->enqueue(ret_lit_prop, gqd.currLevel, PropBy(matrix_no, row_n));
+            } else {
+                //TODO
+                assert(false && "TODO");
+            }
             update_cols_vals_set(ret_lit_prop);
             gqd.ret = gauss_res::prop;
 
@@ -814,7 +819,7 @@ void EGaussian::update_cols_vals_set(bool force)
 
     assert(solver->trail.size() >= last_val_update);
     for(uint32_t i = last_val_update; i < solver->trail.size(); i++) {
-        uint32_t var = solver->trail[i].var();
+        uint32_t var = solver->trail[i].lit.var();
         if (var_to_col.size() <= var) {
             continue;
         }
@@ -957,7 +962,12 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                         xor_reasons[row_n].must_recalc = true;
                         xor_reasons[row_n].propagated = ret_lit_prop;
                         assert(solver->value(ret_lit_prop.var()) == l_Undef);
-                        solver->enqueue(ret_lit_prop, PropBy(matrix_no, row_n));
+                        if (gqd.currLevel == solver->decisionLevel()) {
+                            solver->enqueue(ret_lit_prop, gqd.currLevel, PropBy(matrix_no, row_n));
+                        } else {
+                            //TODO
+                            assert(false && "TODO");
+                        }
                         update_cols_vals_set(ret_lit_prop);
                         gqd.ret = gauss_res::prop;
 

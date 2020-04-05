@@ -176,30 +176,12 @@ of the clause. Therefore, the "currentlyUsedSizes" is an overestimation!!
 void ClauseAllocator::clauseFree(Clause* cl)
 {
     assert(!cl->freed());
-
-    bool quick_freed = false;
-    #ifdef USE_GAUSS
-    if (cl->gauss_temp_cl()) {
-        uint64_t neededbytes = (sizeof(Clause) + sizeof(Lit)*cl->size());
-        uint64_t needed
-            = neededbytes/sizeof(BASE_DATA_TYPE) + (bool)(neededbytes % sizeof(BASE_DATA_TYPE));
-
-        if (((BASE_DATA_TYPE*)cl + needed) == (dataStart + size)) {
-            size -= needed;
-            currentlyUsedSize -= needed;
-            quick_freed = true;
-        }
-    }
-    #endif
-
-    if (!quick_freed) {
-        cl->setFreed();
-        uint64_t est_num_cl = cl->size();
-        est_num_cl = std::max(est_num_cl, (uint64_t)3); //we sometimes allow gauss to allocate 3-long clauses
-        uint64_t bytes_freed = sizeof(Clause) + est_num_cl*sizeof(Lit);
-        uint64_t elems_freed = bytes_freed/sizeof(BASE_DATA_TYPE) + (bool)(bytes_freed % sizeof(BASE_DATA_TYPE));
-        currentlyUsedSize -= elems_freed;
-    }
+    cl->setFreed();
+    uint64_t est_num_cl = cl->size();
+    est_num_cl = std::max(est_num_cl, (uint64_t)3); //we sometimes allow gauss to allocate 3-long clauses
+    uint64_t bytes_freed = sizeof(Clause) + est_num_cl*sizeof(Lit);
+    uint64_t elems_freed = bytes_freed/sizeof(BASE_DATA_TYPE) + (bool)(bytes_freed % sizeof(BASE_DATA_TYPE));
+    currentlyUsedSize -= elems_freed;
 
     #ifdef VALGRIND_MAKE_MEM_UNDEFINED
     VALGRIND_MAKE_MEM_UNDEFINED(((char*)cl)+sizeof(Clause), cl->size()*sizeof(Lit));

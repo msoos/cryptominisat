@@ -2899,9 +2899,11 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
     while (gqhead <  trail.size()
         && !confl_in_gauss
     ) {
-        const Lit p = trail[gqhead++].lit;
-        assert(gwatches.size() > p.var());
+        const Lit p = trail[gqhead].lit;
+        uint32_t currLevel = trail[gqhead].lev;
+        gqhead++;
 
+        assert(gwatches.size() > p.var());
         vec<GaussWatched>& ws = gwatches[p.var()];
         GaussWatched* i = ws.begin();
         GaussWatched* j = i;
@@ -2919,6 +2921,7 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
             gqueuedata[i->matrix_num].new_resp_var = std::numeric_limits<uint32_t>::max();
             gqueuedata[i->matrix_num].new_resp_row = std::numeric_limits<uint32_t>::max();
             gqueuedata[i->matrix_num].do_eliminate = false;
+            gqueuedata[i->matrix_num].currLevel = currLevel;
 
             if (gmatrices[i->matrix_num]->find_truths(
                 i, j, p.var(), i->row_n, gqueuedata[i->matrix_num])
