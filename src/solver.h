@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include <iostream>
 #include <utility>
 #include <string>
+#include <algorithm>
 
 #include "constants.h"
 #include "solvertypes.h"
@@ -511,7 +512,7 @@ inline void Solver::move_to_outside_assumps(const vector<Lit>* assumps)
         }
         #else
         outside_assumptions.resize(assumps->size());
-        mempcpy(outside_assumptions.data(), assumps->data(), sizeof(Lit)*assumps->size());
+        std::copy(assumps->begin(), assumps->end(), outside_assumptions.begin());
         #endif
     } else {
         outside_assumptions.clear();
