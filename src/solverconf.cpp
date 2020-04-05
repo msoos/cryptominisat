@@ -194,7 +194,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doIntreeProbe    (true)
         , doTransRed       (true)
         , intree_time_limitM(1200ULL)
-        , intree_scc_varreplace_time_limitM(10ULL)
+        , intree_scc_varreplace_time_limitM(30ULL)
         , do_hyperbin_and_transred(true)
 
         //XOR
