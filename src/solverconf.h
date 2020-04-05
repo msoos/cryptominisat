@@ -260,6 +260,8 @@ class DLL_PUBLIC SolverConf
 
         //Subs, str limits for simplifier
         long long subsumption_time_limitM;
+        double subsumption_time_limit_ratio_sub_str_w_bin;
+        double subsumption_time_limit_ratio_sub_w_long;
         long long strengthening_time_limitM;
         long long aggressive_elim_time_limitM;
 
