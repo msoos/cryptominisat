@@ -57,15 +57,17 @@ bool DistillerLong::distill(const bool red, bool fullstats)
         }
         other = runStats;
     } else {
-        runStats.clear();
         #ifdef FINAL_PREDICTOR
+        runStats.clear();
         if (!distill_long_cls_all(solver->longRedCls[3], 10.0)) {
             goto end;
         }
         #else
+        runStats.clear();
         if (!distill_long_cls_all(solver->longRedCls[0], 10.0)) {
             goto end;
         }
+        runStats.clear();
         if (!distill_long_cls_all(solver->longRedCls[1], solver->conf.distill_red_tier1_ratio)) {
             goto end;
         }
