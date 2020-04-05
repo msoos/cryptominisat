@@ -230,7 +230,6 @@ void ReduceDB::dump_sql_cl_data(
 
 void ReduceDB::handle_lev1()
 {
-    assert(delayed_clause_free.empty());
     uint32_t moved_w0 = 0;
     uint32_t used_recently = 0;
     uint32_t non_recent_use = 0;
@@ -258,27 +257,17 @@ void ReduceDB::handle_lev1()
             if (!solver->clause_locked(*cl, offset)
                 && cl->stats.last_touched + must_touch < solver->sumConflicts
             ) {
-                if (cl->stats.drop_if_not_used) {
-                    solver->watches.smudge((*cl)[0]);
-                    solver->watches.smudge((*cl)[1]);
-                    non_recent_use_dropped++;
-                    solver->litStats.redLits -= cl->size();
-                    *solver->drat << del << *cl << fin;
-                    cl->setRemoved();
-                    delayed_clause_free.push_back(offset);
-                } else {
-                    solver->longRedCls[2].push_back(offset);
-                    cl->stats.which_red_array = 2;
+                solver->longRedCls[2].push_back(offset);
+                cl->stats.which_red_array = 2;
 
-                    //when stats are needed, activities are correctly updated
-                    //across all clauses
-                    //WARNING this changes the way things behave during STATS relative to non-STATS!
-                    #ifndef STATS_NEEDED
-                    cl->stats.activity = 0;
-                    solver->bump_cl_act<false>(cl);
-                    #endif
-                    non_recent_use++;
-                }
+                //when stats are needed, activities are correctly updated
+                //across all clauses
+                //WARNING this changes the way things behave during STATS relative to non-STATS!
+                #ifndef STATS_NEEDED
+                cl->stats.activity = 0;
+                solver->bump_cl_act<false>(cl);
+                #endif
+                non_recent_use++;
             } else {
                 solver->longRedCls[1][j++] = offset;
                 used_recently++;
@@ -289,13 +278,6 @@ void ReduceDB::handle_lev1()
         }
     }
     solver->longRedCls[1].resize(j);
-
-    //Cleanup
-    solver->clean_occur_from_removed_clauses_only_smudged();
-    for(ClOffset offset: delayed_clause_free) {
-        solver->free_cl(offset);
-    }
-    delayed_clause_free.clear();
 
     if (solver->conf.verbosity >= 2) {
         cout << "c [DBclean lev1]"

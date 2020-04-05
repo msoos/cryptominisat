@@ -119,7 +119,6 @@ struct ClauseStats
         which_red_array = 2;
         #endif
         is_ternary_resolvent = false;
-        drop_if_not_used = false;
         locked_for_data_gen = 0;
         is_decision = false;
 
