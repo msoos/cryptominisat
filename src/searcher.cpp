@@ -3172,22 +3172,18 @@ ConflictData Searcher::FindConflictLevel(PropBy& pb) {
         }
 
         uint32_t highestId = 0;
-        //data.bOnlyOneLitFromHighest = true;
         // find the largest decision level in the clause
         for (uint32_t nLitId = 1; nLitId < conflCl.size(); ++nLitId) {
             uint32_t nLevel = varData[conflCl[nLitId].var()].level;
             if (nLevel > data.nHighestLevel) {
                 highestId = nLitId;
                 data.nHighestLevel = nLevel;
-                //data.bOnlyOneLitFromHighest = true;
-            } /*else if (nLevel == data.nHighestLevel && data.bOnlyOneLitFromHighest == true) {
-                data.bOnlyOneLitFromHighest = false;
-            }*/
+            }
         }
 
         if (highestId != 0) {
             std::swap(conflCl[0], conflCl[highestId]);
-            if (highestId > 1) {
+            if (highestId > 1 && !conflCl.gauss_temp_cl()) {
                 removeWCl(watches[conflCl[highestId]], pb.get_offset());
                 watches[conflCl[0]].push(Watched(offs, conflCl[1]));
             }
