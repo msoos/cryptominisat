@@ -528,6 +528,8 @@ void Main::add_supported_options()
         , "Keep ternary clauses only if they are touched within this multiple of 'lev1usewithin'")
     ("terncreate", po::value(&conf.ternary_max_create)->default_value(conf.ternary_max_create, tern_max_create.str())
         , "Create only this multiple (of linked in cls) ternary clauses per simp run")
+    ("ternbincreate", po::value(&conf.allow_ternary_bin_create)->default_value(conf.allow_ternary_bin_create, tern_max_create.str())
+        , "Allow ternary resolving to generate binary clauses")
     ;
 
     po::options_description occ_mem_limits("Occ-based simplification memory limits");

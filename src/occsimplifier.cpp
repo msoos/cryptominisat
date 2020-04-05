@@ -1673,8 +1673,9 @@ void OccSimplifier::check_ternary_cl(Clause* cl, ClOffset offs, watch_subarray w
             }
 
             //Becomes tri
-            if ((num_vars == 4 && num_lits == 5)
-                || (num_vars == 3 && num_lits == 4)
+            if ((num_vars == 4 && num_lits == 5) ||
+                (solver->conf.allow_ternary_bin_create &&
+                num_vars == 3 && num_lits == 4)
             ) {
                 *limit_to_decrease-=20;
                 runStats.ternary_added_tri++;
