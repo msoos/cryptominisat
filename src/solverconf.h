@@ -387,7 +387,6 @@ class DLL_PUBLIC SolverConf
 
         //Gauss
         GaussConf gaussconf;
-        bool dont_elim_xor_vars;
 
         //Greedy undef
         int      greedy_undef;
