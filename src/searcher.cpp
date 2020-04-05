@@ -561,14 +561,6 @@ inline void Searcher::create_learnt_clause(PropBy confl)
         cout << "p is: " << p << endl;
         #endif
 
-        //This is for OTF subsumption ("OTF clause improvement" by Han&Somezi)
-        //~p is essentially popped from the temporary learnt clause
-        if (p != lit_Undef) {
-            #ifdef STATS_NEEDED
-            antec_data.vsids_of_resolving_literals.push(var_act_vsids[p.var()]/var_inc_vsids);
-            #endif
-        }
-
         add_literals_from_confl_to_learnt<update_bogoprops>(
             confl, p, nDecisionLevel);
 
