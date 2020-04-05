@@ -259,7 +259,6 @@ void update_config(SolverConf& conf, unsigned thread_num)
 
         case 13: {
             //Minisat-like
-            conf.doMaple = 1;
             conf.varElimRatioPerIter = 1;
             conf.restartType = Restart::geom;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
@@ -282,7 +281,6 @@ void update_config(SolverConf& conf, unsigned thread_num)
         case 15: {
             //Similar to CMS 2.9 except we look at learnt DB size insteead
             //of conflicts to see if we need to clean.
-            conf.doMaple = 1;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0.5;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0;
             conf.glue_put_lev0_if_below_or_eq = 0;
@@ -291,7 +289,6 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
         case 16: {
             //Similar to CMS 5.0
-            conf.doMaple = 1;
             conf.varElimRatioPerIter = 0.4;
             conf.every_lev1_reduce = 0;
             conf.every_lev2_reduce = 0;
@@ -317,7 +314,6 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
 
         case 19: {
-            conf.doMaple = 1;
             conf.doMinimRedMoreMore = 1;
             conf.orig_global_timeout_multiplier = 5;
             conf.num_conflicts_of_search_inc = 1.15;
@@ -358,7 +354,6 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
 
         default: {
-            conf.doMaple = ((thread_num % 3) <= 1);
             conf.varElimRatioPerIter = 0.1*(thread_num % 9);
             if (thread_num % 4 == 0) {
                 conf.restartType = Restart::glue;

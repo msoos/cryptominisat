@@ -3306,7 +3306,6 @@ void Solver::reconfigure(int val)
 
         case 6: {
             //No more simplifying
-            conf.doMaple = 0;
             conf.branch_strategy_setup = "vsids";
             conf.never_stop_search = true;
             break;
