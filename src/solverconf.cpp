@@ -91,9 +91,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //branch strategy
         #ifdef STATS_NEEDED
-        , branch_strategy_setup("vsids+vmtf+maple+rnd")
+        , branch_strategy_setup("vsids1+vmtf+maple+rnd")
         #else
-        , branch_strategy_setup("vsids+vsids+maple")
+        , branch_strategy_setup("vsids1+vsids1+maple")
         #endif
 
         //Clause minimisation

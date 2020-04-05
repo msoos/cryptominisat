@@ -1537,7 +1537,6 @@ lbool Solver::solve_with_assumptions(
 
     //Reset parameters
     luby_loop_num = 0;
-    var_decay_vsids = conf.var_decay_vsids;
     maple_step_size = conf.orig_step_size;
     conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
     solveStats.num_simplify_this_solve_call = 0;

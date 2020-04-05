@@ -276,7 +276,6 @@ class Searcher : public HyperEngine
         // Branching
         /////////////////////
         double var_inc_vsids;
-        double var_decay_vsids;
         void insert_var_order(const uint32_t x, branch type);
         void insert_var_order(const uint32_t x);
         vector<uint32_t> implied_by_learnts; //for glue-based extra var activity bumping

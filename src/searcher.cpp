@@ -79,7 +79,6 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
         , solver(_solver)
         , cla_inc(1)
 {
-    var_decay_vsids = conf.var_decay_vsids;
     maple_step_size = solver->conf.orig_step_size;
 
     var_inc_vsids = conf.var_inc_vsids;
@@ -2127,12 +2126,26 @@ void Searcher::rebuild_all_branch_strategy_setups()
     build_branch_strategy_setup(branch::rnd);
 }
 
+struct branch_type_total{
+    branch_type_total() {}
+    branch_type_total (CMSat::branch _branch, double _var_decay_vsids) :
+        branch(_branch),
+        var_decay_vsids(_var_decay_vsids)
+    {}
+    explicit branch_type_total(CMSat::branch _branch) :
+        branch(_branch)
+    {}
+
+    CMSat::branch branch = CMSat::branch::vsids;
+    double var_decay_vsids = 0.95;
+};
+
 void Searcher::set_branch_strategy(const uint32_t iteration_num)
 {
     size_t smallest = 0;
     size_t start = 0;
     size_t total = 0;
-    CMSat::branch select[20];
+    branch_type_total select[20];
     if (conf.verbosity) {
         cout << "c [branch] selection: ";
     }
@@ -2140,8 +2153,11 @@ void Searcher::set_branch_strategy(const uint32_t iteration_num)
     while(smallest !=std::string::npos) {
         smallest = std::string::npos;
 
-        size_t vsids = conf.branch_strategy_setup.find("vsids", start);
-        smallest = std::min(vsids, smallest);
+        size_t vsids1 = conf.branch_strategy_setup.find("vsids1", start);
+        smallest = std::min(vsids1, smallest);
+
+        size_t vsids2 = conf.branch_strategy_setup.find("vsids2", start);
+        smallest = std::min(vsids2, smallest);
 
         size_t vmtf = conf.branch_strategy_setup.find("vmtf", start);
         smallest = std::min(vmtf, smallest);
@@ -2160,26 +2176,32 @@ void Searcher::set_branch_strategy(const uint32_t iteration_num)
             cout << "+";
         }
 
-        if (smallest == vsids) {
-            select[total++]= branch::vsids;
+        if (smallest == vsids1) {
+            select[total++]= branch_type_total(branch::vsids, 0.95);
             if (conf.verbosity) {
                 cout << "VSIDS";
             }
         }
+        else if (smallest == vsids2) {
+            select[total++]=  branch_type_total(branch::vsids, 0.98);
+            if (conf.verbosity) {
+                cout << "VSIDS2";
+            }
+        }
         else if (smallest == vmtf) {
-            select[total++]= branch::vmtf;
+            select[total++]= branch_type_total(branch::vmtf);
             if (conf.verbosity) {
                 cout << "VMTF";
             }
         }
         else if (smallest == maple) {
-            select[total++]= branch::maple;
+            select[total++]= branch_type_total(branch::maple);
             if (conf.verbosity) {
                 cout << "MAPLE";
             }
         }
         else if (smallest == rnd) {
-            select[total++]= branch::rnd;
+            select[total++]= branch_type_total(branch::rnd);
             if (conf.verbosity) {
                 cout << "RND";
             }
@@ -2201,7 +2223,8 @@ void Searcher::set_branch_strategy(const uint32_t iteration_num)
 
     assert(total > 0);
     uint32_t which = iteration_num % total;
-    branch_strategy = select[which];
+    branch_strategy = select[which].branch;
+    conf.var_decay_vsids = select[which].var_decay_vsids;
     if (branch_strategy == branch::maple) {
         cur_rest_type = Restart::luby;
     } else {
@@ -3125,7 +3148,7 @@ void Searcher::unfill_assumptions_set()
 inline void Searcher::vsids_decay_var_act()
 {
     assert(branch_strategy == branch::vsids);
-    var_inc_vsids *= (1.0 / var_decay_vsids);
+    var_inc_vsids *= (1.0 / conf.var_decay_vsids);
 }
 
 void Searcher::consolidate_watches(const bool full)
