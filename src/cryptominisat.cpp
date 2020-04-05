@@ -166,7 +166,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
 
         case 1: {
             //Minisat-like
-            conf.branch_strategy_setup = "vsids";
+            conf.branch_strategy_setup = "vsids1";
             conf.varElimRatioPerIter = 1;
             conf.restartType = Restart::geom;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
@@ -177,13 +177,13 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 2: {
-            conf.branch_strategy_setup = "vsids";
+            conf.branch_strategy_setup = "vsids1";
             break;
         }
         case 3: {
             //Similar to CMS 2.9 except we look at learnt DB size insteead
             //of conflicts to see if we need to clean.
-            conf.branch_strategy_setup = "vsids";
+            conf.branch_strategy_setup = "vsids1";
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0.5;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0;
             conf.glue_put_lev0_if_below_or_eq = 0;
@@ -192,7 +192,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
         case 4: {
             //Similar to CMS 5.0
-            conf.branch_strategy_setup = "vsids";
+            conf.branch_strategy_setup = "vsids1";
             conf.varElimRatioPerIter = 0.4;
             conf.every_lev1_reduce = 0;
             conf.every_lev2_reduce = 0;
@@ -204,17 +204,17 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 5: {
-            conf.branch_strategy_setup = "vsids";
+            conf.branch_strategy_setup = "vsids1";
             conf.never_stop_search = true;
             break;
         }
         case 6: {
             //Maple with backtrack
-            conf.branch_strategy_setup = "vsids";
+            conf.branch_strategy_setup = "vsids1";
             break;
         }
         case 7: {
-            conf.branch_strategy_setup = "vsids";
+            conf.branch_strategy_setup = "vsids1";
             conf.do_bva = true;
             conf.glue_put_lev0_if_below_or_eq = 2;
             conf.varElimRatioPerIter = 1;
@@ -226,23 +226,23 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
         case 8: {
             //Different glue limit
-            conf.branch_strategy_setup = "vsids";
+            conf.branch_strategy_setup = "vsids1";
             conf.glue_put_lev0_if_below_or_eq = 2;
             conf.glue_put_lev1_if_below_or_eq = 2;
             break;
         }
         case 9: {
-            conf.branch_strategy_setup = "vsids";
+            conf.branch_strategy_setup = "vsids1";
             conf.var_decay_vsids = 0.998;
             break;
         }
         case 10: {
-            conf.branch_strategy_setup = "vsids";
+            conf.branch_strategy_setup = "vsids1";
             conf.polarity_mode = CMSat::PolarityMode::polarmode_pos;
             break;
         }
         case 11: {
-            conf.branch_strategy_setup = "vsids";
+            conf.branch_strategy_setup = "vsids1";
             conf.varElimRatioPerIter = 1;
             conf.restartType = Restart::geom;
 
@@ -252,7 +252,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 12: {
-            conf.branch_strategy_setup = "vsids";
+            conf.branch_strategy_setup = "vsids1";
             conf.inc_max_temp_lev2_red_cls = 1.001;
             break;
         }
@@ -270,7 +270,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
         case 14: {
             //Different glue limit
-            conf.branch_strategy_setup = "vsids";
+            conf.branch_strategy_setup = "vsids1";
             conf.doMinimRedMoreMore = 1;
             conf.glue_put_lev0_if_below_or_eq = 4;
             //conf.glue_put_lev2_if_below_or_eq = 8;
@@ -305,7 +305,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 18: {
-            conf.branch_strategy_setup = "vsids";
+            conf.branch_strategy_setup = "vsids1";
             conf.every_lev1_reduce = 0;
             conf.every_lev2_reduce = 0;
             conf.glue_put_lev1_if_below_or_eq = 0;
@@ -326,7 +326,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
 
         case 20: {
             //Luby
-            conf.branch_strategy_setup = "vsids";
+            conf.branch_strategy_setup = "vsids1";
             conf.restart_inc = 1.5;
             conf.restart_first = 100;
             conf.restartType = Restart::luby;
@@ -334,7 +334,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
 
         case 21: {
-            conf.branch_strategy_setup = "vsids";
+            conf.branch_strategy_setup = "vsids1";
             conf.glue_put_lev0_if_below_or_eq = 3;
             conf.glue_put_lev1_if_below_or_eq = 5;
             conf.var_decay_vsids = 0.97;
@@ -342,7 +342,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
 
         case 22: {
-            conf.branch_strategy_setup = "vsids";
+            conf.branch_strategy_setup = "vsids1";
             conf.doMinimRedMoreMore = 1;
             conf.orig_global_timeout_multiplier = 5;
             conf.num_conflicts_of_search_inc = 1.15;
@@ -1209,7 +1209,7 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
         conf.varElimRatioPerIter = 1;
         conf.restartType = Restart::geom;
         conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
-        conf.branch_strategy_setup = "vsids";
+        conf.branch_strategy_setup = "vsids1";
         conf.xor_detach_verb = 1;
         conf.bva_every_n = 1;
         conf.do_simplify_problem = true;
