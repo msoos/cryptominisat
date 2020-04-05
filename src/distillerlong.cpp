@@ -58,7 +58,7 @@ bool DistillerLong::distill(const bool red, bool fullstats)
         other = runStats;
     } else {
         runStats.clear();
-        int lev_to_distill = 0;
+        int lev_to_distill = 1;
         #ifdef FINAL_PREDICTOR
         lev_to_distill = 3;
         #endif
