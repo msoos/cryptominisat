@@ -21,6 +21,7 @@
 include_directories(
     ${PROJECT_BINARY_DIR}/cmsat5-src
 )
+add_sanitize_flags()
 
 # Minimal DRAT-enabled CMS binary
 add_executable(minimal_cms
