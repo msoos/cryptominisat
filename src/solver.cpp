@@ -1533,11 +1533,7 @@ lbool Solver::solve_with_assumptions(
     #endif
 
     #ifdef USE_GAUSS
-    if (conf.verbosity) {
-        cout << "c WARN: Turning OFF non-chronological backtracking because it interferes with GAUSS"
-        << endl;
-    }
-    conf.diff_declev_for_chrono = -1;
+    assert(false && "Due to non-chrono backtracking, GAUSS is broken");
     #endif
 
 
