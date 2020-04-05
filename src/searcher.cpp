@@ -3584,7 +3584,7 @@ ConflictData Searcher::find_conflict_level(PropBy& pb)
 
         if (highestId != 0) {
             std::swap(conflCl[0], conflCl[highestId]);
-            if (highestId > 1) {
+            if (highestId > 1 && !conflCl.gauss_temp_cl()) {
                 removeWCl(watches[conflCl[highestId]], pb.get_offset());
                 watches[conflCl[0]].push(Watched(offs, conflCl[1]));
             }
