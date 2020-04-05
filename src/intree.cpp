@@ -41,8 +41,9 @@ bool InTree::replace_until_fixedpoint(bool& aborted)
 {
     uint64_t time_limit =
         solver->conf.intree_scc_varreplace_time_limitM*1000ULL*1000ULL
-        *solver->conf.global_timeout_multiplier;
-    time_limit = (double)time_limit * std::pow(1.1, numCalls+1);
+        *solver->conf.global_timeout_multiplier
+        *0.5;
+    time_limit = (double)time_limit * std::min(std::pow((double)(numCalls+1), 0.2), 3.0);
 
     aborted = false;
     uint64_t bogoprops = 0;
