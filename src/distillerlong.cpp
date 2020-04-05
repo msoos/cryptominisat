@@ -198,6 +198,10 @@ bool DistillerLong::distill_long_cls_all(
     , double time_mult
 ) {
     assert(solver->ok);
+    if (time_mult == 0.0) {
+        return solver->okay();
+    }
+
     if (solver->conf.verbosity >= 6) {
         cout
         << "c Doing distillation branch for long clauses"

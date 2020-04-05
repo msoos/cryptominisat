@@ -554,6 +554,8 @@ void Main::add_supported_options()
         , "Ratio of subsumption time limit to spend on sub long clauses with long")
     ("strstimelim", po::value(&conf.strengthening_time_limitM)->default_value(conf.strengthening_time_limitM)
         , "Time-out in bogoprops M of strengthening of long clauses with long clauses, after computing occur")
+    ("sublonggothrough", po::value(&conf.subsume_gothrough_multip)->default_value(conf.subsume_gothrough_multip)
+        , "How many times go through subsume")
     ;
 
     po::options_description bva_options("BVA options");
