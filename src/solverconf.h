@@ -197,7 +197,6 @@ class DLL_PUBLIC SolverConf
 
         //Branch strategy
         string branch_strategy_setup;
-        int      doMaple;
 
         //Clause minimisation
         int doRecursiveMinim;
