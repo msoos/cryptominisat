@@ -3365,7 +3365,6 @@ void Searcher::cancelUntil(uint32_t blevel)
             const uint32_t var = trail[sublevel].lit.var();
             assert(value(var) != l_Undef);
 
-            double reward = 0;
             #if defined(STATS_NEEDED)
             if (!update_bogoprops) {
                 varData[var].last_canceled = sumConflicts;
@@ -3435,9 +3434,7 @@ void Searcher::cancelUntil(uint32_t blevel)
                     uint32_t age = sumConflicts - varData[var].maple_last_picked;
                     if (age > 0) {
                         //adjusted reward -> higher if conflicted more or quicker
-                        reward += (double)varData[var].maple_conflicted;
-                        double adjusted_reward = reward / ((double)age);
-
+                        double adjusted_reward = ((double)(varData[var].maple_conflicted)) / ((double)age);
                         double old_activity = var_act_maple[var];
                         var_act_maple[var] = maple_step_size * adjusted_reward + ((1.0 - maple_step_size ) * old_activity);
                         if (order_heap_maple.inHeap(var)) {
