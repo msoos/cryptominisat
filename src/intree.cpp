@@ -157,7 +157,7 @@ bool InTree::intree_probe()
     bogoprops_to_use =
         solver->conf.intree_time_limitM*1000ULL*1000ULL
         *solver->conf.global_timeout_multiplier;
-    bogoprops_to_use = (double)bogoprops_to_use * std::pow(1.1, numCalls+1);
+    bogoprops_to_use = (double)bogoprops_to_use * std::pow((double)(numCalls+1), 0.3);
     bogoprops_remain = bogoprops_to_use;
 
     fill_roots();
