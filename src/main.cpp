@@ -720,7 +720,7 @@ void Main::add_supported_options()
     ("compslimit", po::value(&conf.comp_find_time_limitM)->default_value(conf.comp_find_time_limitM)
         , "Limit how much time is spent in component-finding");
 
-    po::options_description distillOptions("Misc options");
+    po::options_description distillOptions("Distill options");
     distillOptions.add_options()
     //("noparts", "Don't find&solve subproblems with subsolvers")
     ("distill", po::value(&conf.do_distill_clauses)->default_value(conf.do_distill_clauses)
@@ -733,6 +733,8 @@ void Main::add_supported_options()
         , "Multiplier for current number of conflicts OTF distill")
     ("distillminconf", po::value(&conf.distill_min_confl)->default_value(conf.distill_min_confl)
         , "Minimum number of conflicts between OTF distill")
+    ("distilltier1ratio", po::value(&conf.distill_red_tier1_ratio)->default_value(conf.distill_red_tier1_ratio)
+        , "How much of tier 1 to distill")
     ;
 
     po::options_description mem_save_opts("Memory saving options");

@@ -354,6 +354,7 @@ class DLL_PUBLIC SolverConf
         long long distill_time_limitM;
         double distill_increase_conf_ratio;
         long distill_min_confl;
+        double distill_red_tier1_ratio;
 
         //Memory savings
         int       doRenumberVars;
