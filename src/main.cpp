@@ -585,8 +585,6 @@ void Main::add_supported_options()
         , "Eliminate this ratio of free variables at most per variable elimination iteration")
     ("skipresol", po::value(&conf.skip_some_bve_resolvents)->default_value(conf.skip_some_bve_resolvents)
         , "Skip BVE resolvents in case they belong to a gate")
-    ("agrelimtimelim", po::value(&conf.aggressive_elim_time_limitM)->default_value(conf.aggressive_elim_time_limitM)
-        , "Time-out in bogoprops M of aggressive(=uses reverse distillation) var-elimination")
     ;
 
     po::options_description xorOptions("XOR-related options");
