@@ -154,7 +154,7 @@ void Searcher::renumber_assumptions(const vector<uint32_t>& outerToInter)
     solver->fill_assumptions_set_from(assumptions);
 }
 
-void Searcher::print_local_restart_budget()
+inline void Searcher::print_local_restart_budget()
 {
     if (conf.verbosity >= 2 || conf.print_all_restarts) {
         cout << "c [restart] at confl " << solver->sumConflicts << " -- "
