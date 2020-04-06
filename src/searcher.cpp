@@ -2483,7 +2483,7 @@ void Searcher::adjust_restart_strategy()
     print_local_restart_budget();
 }
 
-void Searcher::print_local_restart_budget()
+inline void Searcher::print_local_restart_budget()
 {
     if (conf.verbosity >= 2 || conf.print_all_restarts) {
         cout << "c [restart] at confl " << solver->sumConflicts << " -- "
