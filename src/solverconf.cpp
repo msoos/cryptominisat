@@ -70,6 +70,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , maple(true)
         , modulo_maple_iter(3)
         , more_maple_bump_high_glue(false)
+        , alternate_maple(0)
+        , alternate_maple_decay_rate1(0.95)
+        , alternate_maple_decay_rate2(0.98)
 
         //Restarting
         , restart_first(100)

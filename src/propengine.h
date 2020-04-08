@@ -437,7 +437,7 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from)
         assert(sumConflicts >= varData[v].cancelled);
         uint32_t age = sumConflicts - varData[v].cancelled;
         if (age > 0) {
-            double decay = std::pow(0.95, age);
+            double decay = std::pow(maple_decay_base, age);
             var_act_maple[v] *= decay;
             if (order_heap_maple.inHeap(v))
                 order_heap_maple.increase(v);

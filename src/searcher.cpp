@@ -165,7 +165,10 @@ void Searcher::print_local_restart_budget()
         << " VSDIS: " << std::setw(2) << VSIDS;
         if (VSIDS) {
             cout << " decay: "
-            << std::setw(4) << std::setprecision(2) << var_decay_vsids;
+            << std::setw(4) << std::setprecision(4) << var_decay_vsids;
+        } else {
+            cout << " decay: "
+            << std::setw(4) << std::setprecision(4) << maple_decay_base;
         }
         cout << endl;
     }
@@ -2246,7 +2249,7 @@ Lit Searcher::pickBranchLit()
                 uint32_t v2 = order_heap_maple[0];
                 uint32_t age = sumConflicts - varData[v2].cancelled;
                 while (age > 0) {
-                    double decay = pow(0.95, age);
+                    double decay = pow(maple_decay_base, age);
                     var_act_maple[v2] *= decay;
                     if (order_heap_maple.inHeap(v2)) {
                         order_heap_maple.increase(v2);

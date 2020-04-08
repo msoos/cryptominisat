@@ -188,6 +188,9 @@ class DLL_PUBLIC SolverConf
         int      maple;
         unsigned modulo_maple_iter;
         bool     more_maple_bump_high_glue;
+        int      alternate_maple;
+        double   alternate_maple_decay_rate1;
+        double   alternate_maple_decay_rate2;
 
         //For restarting
         unsigned    restart_first;      ///<The initial restart limit.                                                                (default 100)

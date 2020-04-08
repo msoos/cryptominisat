@@ -1718,6 +1718,7 @@ lbool Solver::iterate_until_solved()
 {
     size_t iteration_num = 0;
     size_t iteration_num_vsids = 0;
+    size_t iteration_num_maple = 0;
     VSIDS = true;
 
     lbool status = l_Undef;
@@ -1775,6 +1776,14 @@ lbool Solver::iterate_until_solved()
             long modulo = ((long)iteration_num-1) % conf.modulo_maple_iter;
             if (modulo < ((long)conf.modulo_maple_iter-1)) {
                 VSIDS = false;
+                if (conf.alternate_maple) {
+                    if ((iteration_num_maple%2) == 0) {
+                        maple_decay_base = conf.alternate_maple_decay_rate1;
+                    } else {
+                        maple_decay_base = conf.alternate_maple_decay_rate2;
+                    }
+                }
+                iteration_num_maple++;
             } else {
                 VSIDS = true;
                 if (conf.alternate_vsids &&
