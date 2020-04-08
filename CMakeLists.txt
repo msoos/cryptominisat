@@ -301,7 +301,7 @@ endif()
 
 if (NOT WIN32)
     if(NOT ENABLE_TESTING AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND NOT COVERAGE)
-        #add_cxx_flag_if_supported("-fvisibility=hidden")
+        add_cxx_flag_if_supported("-fvisibility=hidden")
     endif()
     add_compile_options("-fPIC")
     #add_cxx_flag_if_supported("-mtune=native")

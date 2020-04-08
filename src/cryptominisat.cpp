@@ -912,7 +912,7 @@ DLL_PUBLIC const char* SATSolver::get_compilation_env()
     return Solver::get_compilation_env();
 }
 
-std::string SATSolver::get_text_version_info()
+DLL_PUBLIC std::string SATSolver::get_text_version_info()
 {
     std::stringstream ss;
     ss << "c CryptoMiniSat version " << get_version() << endl;
