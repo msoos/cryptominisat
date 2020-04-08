@@ -160,8 +160,14 @@ void Searcher::print_local_restart_budget()
         cout << "c [restart] at confl " << solver->sumConflicts << " -- "
         << "adjusting local restart type: "
         << std::left << std::setw(10) << getNameOfRestartType(params.rest_type)
-        << " budget: " << std::setw(9) << max_confl_this_phase
-        << std::right << endl;
+        << " budget: " << std::setw(7) << max_confl_this_phase
+        << std::right
+        << " VSDIS: " << std::setw(2) << VSIDS;
+        if (VSIDS) {
+            cout << " decay: "
+            << std::setw(4) << std::setprecision(2) << var_decay_vsids;
+        }
+        cout << endl;
     }
 }
 

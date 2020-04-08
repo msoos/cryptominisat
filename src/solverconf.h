@@ -153,6 +153,9 @@ class DLL_PUBLIC SolverConf
         double  var_decay_vsids_start;
         double  var_decay_vsids_max;
         double random_var_freq;
+        int alternate_vsids;
+        double alternate_vsids_decay_rate1;
+        double alternate_vsids_decay_rate2;
         PolarityMode polarity_mode;
 
         //Clause cleaning

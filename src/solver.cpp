@@ -1717,6 +1717,7 @@ long Solver::calc_num_confl_to_do_this_iter(const size_t iteration_num) const
 lbool Solver::iterate_until_solved()
 {
     size_t iteration_num = 0;
+    size_t iteration_num_vsids = 0;
     VSIDS = true;
 
     lbool status = l_Undef;
@@ -1776,6 +1777,20 @@ lbool Solver::iterate_until_solved()
                 VSIDS = false;
             } else {
                 VSIDS = true;
+                if (conf.alternate_vsids &&
+                    sumConflicts > 1000)
+                {
+                    if ((iteration_num_vsids%2) == 1) {
+                        conf.var_decay_vsids_start = conf.alternate_vsids_decay_rate1;
+                        conf.var_decay_vsids_max = conf.alternate_vsids_decay_rate1;
+                        var_decay_vsids = conf.alternate_vsids_decay_rate1;
+                    } else {
+                        conf.var_decay_vsids_start = conf.alternate_vsids_decay_rate2;
+                        conf.var_decay_vsids_max = conf.alternate_vsids_decay_rate2;
+                        var_decay_vsids = conf.alternate_vsids_decay_rate2;
+                    }
+                }
+                iteration_num_vsids++;
             }
         } else {
             //so that in case of reconfiguration, VSIDS is correctly set
