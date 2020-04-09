@@ -37,6 +37,9 @@ using namespace CMSat;
 //Fixing to:
 //1722973 out-9860239.wlm01-1-drat0 254 154 100 a6005cf   --simdrat 1 --gluehist 50 --moremoreminim 1 --lev1usewithin 70000 --bva2lit 1
 
+//Fixing to:
+//1838305 out-9882018.wlm01-1-drat0  241 145 96 16de7b4   --simdrat 1 --substimelimbinratio 0.1 --substimelimlongratio 0.9 --distilltier1ratio 0.03 --sublonggothrough 1.0 --varelimto 750 --bvaeveryn 7
+
 
 DLL_PUBLIC SolverConf::SolverConf() :
         //Variable activities
@@ -136,7 +139,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , varelim_cutoff_too_many_clauses(2000)
         , do_empty_varelim (true)
         , empty_varelim_time_limitM(300LL)
-        , varelim_time_limitM(350)
+        , varelim_time_limitM(750)
         , varelim_sub_str_limit(600)
         , varElimRatioPerIter(1.60)
         , skip_some_bve_resolvents(true) //based on gates
@@ -145,8 +148,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Subs, str limits for simplifier
         , subsumption_time_limitM(300)
-        , subsumption_time_limit_ratio_sub_str_w_bin(1.0)
-        , subsumption_time_limit_ratio_sub_w_long(0.0)
+        , subsumption_time_limit_ratio_sub_str_w_bin(0.1)
+        , subsumption_time_limit_ratio_sub_w_long(0.9)
         , strengthening_time_limitM(300)
 
 
@@ -167,7 +170,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , bva_also_twolit_diff(true)
         , bva_extra_lit_and_red_start(0)
         , bva_time_limitM(50)
-        , bva_every_n(20)
+        , bva_every_n(7)
 
         //Probing
         , doProbe          (false)
@@ -260,7 +263,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , maxOccurIrredMB  (2500)
         , maxOccurRedMB    (600)
         , maxOccurRedLitLinkedM(50)
-        , subsume_gothrough_multip(2.0)
+        , subsume_gothrough_multip(1.0)
 
         //WalkSAT
         , doSLS(true)
@@ -279,7 +282,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , distill_time_limitM(120LL)
         , distill_increase_conf_ratio(0.02)
         , distill_min_confl(10000)
-        , distill_red_tier1_ratio(0.0)
+        , distill_red_tier1_ratio(0.03)
 
         //Memory savings
         , doRenumberVars   (true)
