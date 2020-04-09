@@ -189,6 +189,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.varElimRatioPerIter = 0.4;
             conf.every_lev1_reduce = 0;
             conf.every_lev2_reduce = 0;
+            conf.do_bva = false;
             conf.max_temp_lev2_learnt_clauses = 30000;
             conf.glue_put_lev0_if_below_or_eq = 4;
 
@@ -209,7 +210,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
         case 7: {
             conf.maple = 0;
-            conf.do_bva = true;
+            conf.do_bva = false;
             conf.glue_put_lev0_if_below_or_eq = 2;
             conf.varElimRatioPerIter = 1;
             conf.inc_max_temp_lev2_red_cls = 1.04;
@@ -266,6 +267,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         case 14: {
             //Different glue limit
             conf.maple = 0;
+            conf.do_bva = false;
             conf.doMinimRedMoreMore = 1;
             conf.glue_put_lev0_if_below_or_eq = 4;
             //conf.glue_put_lev2_if_below_or_eq = 8;
@@ -312,7 +314,8 @@ void update_config(SolverConf& conf, unsigned thread_num)
 
         case 19: {
             conf.maple = 1;
-            conf.doMinimRedMoreMore = 1;
+            conf.do_bva = false;
+            conf.doMinimRedMoreMore = 0;
             conf.orig_global_timeout_multiplier = 5;
             conf.num_conflicts_of_search_inc = 1.15;
             conf.more_red_minim_limit_cache = 1200;
@@ -342,7 +345,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
 
         case 22: {
             conf.maple = 0;
-            conf.doMinimRedMoreMore = 1;
+            conf.doMinimRedMoreMore = 0;
             conf.orig_global_timeout_multiplier = 5;
             conf.num_conflicts_of_search_inc = 1.15;
             conf.more_red_minim_limit_cache = 1200;
