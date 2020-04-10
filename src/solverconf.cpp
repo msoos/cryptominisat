@@ -40,6 +40,9 @@ using namespace CMSat;
 //Fixing to:
 //1838305 out-9882018.wlm01-1-drat0  241 145 96 16de7b4   --simdrat 1 --substimelimbinratio 0.1 --substimelimlongratio 0.9 --distilltier1ratio 0.03 --sublonggothrough 1.0 --varelimto 750 --bvaeveryn 7
 
+//Fixing to:
+//1706988 out-9885914.wlm01-6-drat0 253 153 100 def3339   --simdrat 1 --vsidsalternate 1 --vsidsalterval1 0.92 --vsidsalterval2 0.99 --maplealternate 1 --maplealterval1 0.70 --maplealterval2 0.90
+
 
 DLL_PUBLIC SolverConf::SolverConf() :
         //Variable activities
@@ -47,9 +50,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , var_decay_vsids_start(0.8) // 1/0.8 = 1.2 -- large is better for frequent restarts
         , var_decay_vsids_max(0.95) // 1/0.95 = 1.05 -- smaller is better for hard instances
         , random_var_freq(0)
-        , alternate_vsids(0)
-        , alternate_vsids_decay_rate1(0.95)
-        , alternate_vsids_decay_rate2(0.98)
+        , alternate_vsids(1)
+        , alternate_vsids_decay_rate1(0.92)
+        , alternate_vsids_decay_rate2(0.99)
         , polarity_mode(PolarityMode::polarmode_automatic)
 
         //Clause cleaning
@@ -73,9 +76,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , maple(true)
         , modulo_maple_iter(3)
         , more_maple_bump_high_glue(false)
-        , alternate_maple(0)
-        , alternate_maple_decay_rate1(0.95)
-        , alternate_maple_decay_rate2(0.98)
+        , alternate_maple(1)
+        , alternate_maple_decay_rate1(0.70)
+        , alternate_maple_decay_rate2(0.90)
 
         //Restarting
         , restart_first(100)
