@@ -210,11 +210,11 @@ DLL_PUBLIC int ipasir_failed (void * solver, int lit)
     const Lit tofind(std::abs(lit)-1, lit < 0);
 
     for(const Lit l: confl) {
-        if (l == tofind) {
-            return true;
+        if (l == ~tofind) { //yeah, it's messed up, it's the opposite
+            return 1;
         }
     }
-    return false;
+    return 0;
 }
 
 /**
