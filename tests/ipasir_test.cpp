@@ -165,6 +165,117 @@ TEST(ipasir_interface, assump)
     ipasir_release(s);
 }
 
+TEST(ipasir_interface, assump_multi)
+{
+    void* s = ipasir_init();
+    ipasir_add(s, 1);
+    ipasir_add(s, 0);
+
+    ipasir_assume(s, -1);
+
+    int ret = ipasir_solve(s);
+    EXPECT_EQ(ret, 20);
+    EXPECT_EQ(ipasir_failed(s, -1), 1);
+
+    //Redo with 2
+    ipasir_add(s, 2);
+    ipasir_add(s, 0);
+
+    ipasir_assume(s, -2);
+    ret = ipasir_solve(s);
+    EXPECT_EQ(ret, 20);
+    EXPECT_EQ(ipasir_failed(s, -1), 0);
+    EXPECT_EQ(ipasir_failed(s, -2), 1);
+
+    //final, it should be SAT
+    ret = ipasir_solve(s);
+    EXPECT_EQ(ret, 10);
+
+    ipasir_release(s);
+}
+
+TEST(ipasir_interface, assump_multi2)
+{
+    void* s = ipasir_init();
+    ipasir_add(s, 1);
+    ipasir_add(s, 2);
+    ipasir_add(s, 0);
+
+    ipasir_assume(s, -1);
+
+    int ret = ipasir_solve(s);
+    EXPECT_EQ(ret, 10);
+
+    //add assump 2 as well
+    ipasir_assume(s, -1);
+    ipasir_assume(s, -2);
+    ret = ipasir_solve(s);
+    EXPECT_EQ(ret, 20);
+    EXPECT_EQ(ipasir_failed(s, -1), 1);
+    EXPECT_EQ(ipasir_failed(s, -2), 1);
+
+    //final, it should be SAT
+    ret = ipasir_solve(s);
+    EXPECT_EQ(ret, 10);
+
+    ipasir_release(s);
+}
+
+TEST(ipasir_interface, assump_multi3)
+{
+    void* s = ipasir_init();
+    ipasir_add(s, 1);
+    ipasir_add(s, 3);
+    ipasir_add(s, 0);
+
+    ipasir_add(s, -7);
+    ipasir_add(s, -2);
+    ipasir_add(s, 0);
+
+    ipasir_add(s, 1);
+    ipasir_add(s, 4);
+    ipasir_add(s, 6);
+    ipasir_add(s, 0);
+
+    ipasir_assume(s, -1);
+
+    int ret = ipasir_solve(s);
+    EXPECT_EQ(ret, 10);
+
+    //one assum
+    ipasir_assume(s, -1);
+    ipasir_assume(s, -3);
+    ipasir_assume(s, -4);
+    ret = ipasir_solve(s);
+    EXPECT_EQ(ret, 20);
+    EXPECT_EQ(ipasir_failed(s, -1), 1);
+    EXPECT_EQ(ipasir_failed(s, -2), 0);
+    EXPECT_EQ(ipasir_failed(s, -3), 1);
+    EXPECT_EQ(ipasir_failed(s, -4), 0);
+    EXPECT_EQ(ipasir_failed(s, 4), 0);
+    EXPECT_EQ(ipasir_failed(s, -6), 0);
+
+
+    //one assum
+    ipasir_assume(s, 7);
+    ipasir_assume(s, 2);
+    ipasir_assume(s, -6);
+    ret = ipasir_solve(s);
+    EXPECT_EQ(ret, 20);
+    EXPECT_EQ(ipasir_failed(s, -1), 0);
+    EXPECT_EQ(ipasir_failed(s, 2), 1);
+    EXPECT_EQ(ipasir_failed(s, -3), 0);
+    EXPECT_EQ(ipasir_failed(s, 7), 1);
+    EXPECT_EQ(ipasir_failed(s, -6), 0);
+    EXPECT_EQ(ipasir_failed(s, 6), 0);
+
+    //final, it should be SAT
+    ret = ipasir_solve(s);
+    EXPECT_EQ(ret, 10);
+
+    ipasir_release(s);
+}
+
 
 TEST(ipasir_interface, assump_yevgeny)
 {
