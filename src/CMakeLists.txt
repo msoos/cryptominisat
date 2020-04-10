@@ -185,12 +185,37 @@ else()
 endif()
 
 if (IPASIR)
+#     if ((NOT WIN32) AND (STATICCOMPILE))
+#         add_library(ipasircryptominisat5_tmp
+#             ipasir.cpp
+#             ${cryptoms_lib_files}
+#             cryptominisat.cpp
+#         )
+#         add_custom_target(ipasircryptominisat5_target
+#               COMMAND ${CMAKE_AR} rc libipasircryptominisat5.a
+#               $<TARGET_FILE:ipasircryptominisat5_tmp>
+#               ${cryptoms_lib_link_libs}
+#         )
+#         add_dependencies(ipasircryptominisat5_target cryptominisat5 ipasircryptominisat5_tmp)
+#         add_custom_target(ipasir_final ALL)
+#         add_custom_command(TARGET ipasir_final
+#             COMMAND ${CMAKE_COMMAND} -E copy
+#                 ${CMAKE_CURRENT_BINARY_DIR}/libipasircryptominisat5.a
+#                 ${PROJECT_BINARY_DIR}/lib/
+#         )
+#         add_dependencies(ipasir_final ipasircryptominisat5_target)
+#     else ()
     add_library(ipasircryptominisat5
         ipasir.cpp
+        ${cryptoms_lib_files}
+        cryptominisat.cpp
     )
+#         set_target_properties(ipasircryptominisat5 PROPERTIES LINK_SEARCH_START_STATIC 1)
     target_link_libraries(ipasircryptominisat5
-        LINK_PUBLIC ${cryptoms_lib_link_libs} cryptominisat5
+        LINK_PUBLIC ${cryptoms_lib_link_libs}
+        LINK_PUBLIC ${CMAKE_THREAD_LIBS_INIT}
     )
+#         set_target_properties(ipasircryptominisat5 PROPERTIES LINK_SEARCH_END_STATIC 1)
     set_target_properties(ipasircryptominisat5 PROPERTIES
         OUTPUT_NAME ipasircryptominisat5
         PUBLIC_HEADER "${cryptominisat5_public_headers}"
@@ -204,6 +229,7 @@ if (IPASIR)
         RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
         PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/cryptominisat5"
     )
+#     endif()
 
 endif()
 
