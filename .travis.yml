@@ -136,14 +136,14 @@ before_install:
   - if [[ "$CMS_CONFIG" == "COVERAGE" ]]; then ./scripts/travis-install-lcov.sh; fi
 # lit
   # OSX below
-  - if [[ ("$TRAVIS_OS_NAME" == "osx") && ("$CMS_CONFIG" != "NORMAL_PYTHON2") ]]; then sudo pip3 install --upgrade pip; pip3 install lit; lit --version; fi
+  - if [[ ("$TRAVIS_OS_NAME" == "osx") && ("$CMS_CONFIG" != "NORMAL_PYTHON2") ]]; then sudo pip3 install --upgrade pip; pip3 install lit; fi
   # - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then curl --show-error --retry 5 https://bootstrap.pypa.io/get-pip.py -o get-pip.py; fi
   #- if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then sudo python get-pip.py; fi
   #- export PATH=$PATH:/Users/travis/Library/Python/2.7/bin
   #
   # linux below
-  - if [[ ("$TRAVIS_OS_NAME" == "linux") && ("$CMS_CONFIG" != "NORMAL_PYTHON2") ]]; then sudo -H pip3 install --upgrade pip; pip3 install --user lit; lit --version; which lit; fi
-  - if [[ ("$TRAVIS_OS_NAME" == "linux") && ("$CMS_CONFIG" == "NORMAL_PYTHON2") ]]; then sudo -H pip install --upgrade pip; pip install --user lit; lit --version; which lit; fi
+  - if [[ ("$TRAVIS_OS_NAME" == "linux") && ("$CMS_CONFIG" != "NORMAL_PYTHON2") ]]; then sudo -H pip3 install --upgrade pip; pip3 install --user lit; which lit; fi
+  - if [[ ("$TRAVIS_OS_NAME" == "linux") && ("$CMS_CONFIG" == "NORMAL_PYTHON2") ]]; then sudo -H pip install --upgrade pip; pip install --user lit; which lit; fi
   #
 install:
   - git submodule init
