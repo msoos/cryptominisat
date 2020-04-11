@@ -57,6 +57,7 @@ WalkSAT::~WalkSAT()
     free(occurrence);
     free(numoccurrence);
     free(assigns);
+    free(best_assigns);
     free(breakcount);
     free(makecount);
     free(changed);
@@ -90,6 +91,7 @@ lbool WalkSAT::main()
     print_statistics_header();
 
     uint32_t last_low_bad = 1000;
+    lowestbad = std::numeric_limits<uint32_t>::max();
     while (!found_solution && numtry < solver->conf.walksat_max_runs) {
         numtry++;
         init_for_round();
@@ -413,6 +415,7 @@ bool WalkSAT::init_problem()
     occurrence = (uint32_t **)calloc(sizeof(uint32_t *), (2 * numvars));
     numoccurrence = (uint32_t *)calloc(sizeof(uint32_t), (2 * numvars));
     assigns = (lbool *)calloc(sizeof(lbool), numvars);
+    best_assigns = (lbool *)calloc(sizeof(lbool), numvars);
     breakcount = (uint32_t *)calloc(sizeof(uint32_t), numvars);
     changed = (int64_t *)calloc(sizeof(int64_t), numvars);
     makecount = (uint32_t *)calloc(sizeof(uint32_t), numvars);
@@ -581,6 +584,13 @@ void WalkSAT::update_statistics_end_flip()
     if (numfalse < lowbad) {
         lowbad = numfalse;
     }
+    if (numfalse < lowestbad) {
+        lowestbad = numfalse;
+        for(uint32_t i = 0; i < numvars; i++) {
+            best_assigns[i] = assigns[i];
+        }
+
+    }
     if (numflip >= tail_start_flip) {
         sumfalse += numfalse;
         sample_size++;
@@ -698,7 +708,7 @@ void WalkSAT::print_statistics_final()
         }
 
         for(size_t i = 0; i < solver->nVars(); i++) {
-            solver->varData[i].polarity = assigns[i] == l_True;
+            solver->varData[i].polarity = best_assigns[i] == l_True;
         }
     }
 }
