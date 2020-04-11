@@ -682,17 +682,23 @@ void WalkSAT::print_statistics_final()
         }
     }
 
-    if (found_solution) {
+    if (!found_solution) {
+        if (solver->conf.verbosity >=2) {
+            cout << "c [walksat] ASSIGNMENT NOT FOUND"  << endl;
+        }
+    }
+
+    if (found_solution || solver->conf.sls_get_phase) {
         if (solver->conf.verbosity) {
-            cout << "c [walksat] ASSIGNMENT FOUND"  << endl;
+            if (solver->conf.sls_get_phase) {
+                cout << "c [walksat] saving solution as requested"  << endl;
+            } else if (found_solution) {
+                cout << "c [walksat] ASSIGNMENT FOUND"  << endl;
+            }
         }
 
         for(size_t i = 0; i < solver->nVars(); i++) {
             solver->varData[i].polarity = assigns[i] == l_True;
-        }
-    } else {
-        if (solver->conf.verbosity >=2) {
-            cout << "c [walksat] ASSIGNMENT NOT FOUND"  << endl;
         }
     }
 }
