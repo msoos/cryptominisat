@@ -2123,6 +2123,7 @@ lbool Solver::simplify_problem(const bool startup)
         ret = l_False;
     }
 
+    clear_order_heap();
     #ifdef USE_GAUSS
     set_clash_decision_vars();
     if (ret == l_Undef && !fully_undo_xor_detach()) {
@@ -4446,7 +4447,7 @@ void Solver::detach_xor_clauses(
         << "c [gauss] XOR-encoding clauses"
         << " detached: " << detached
         << " deleted: " << deleted
-        << " T: " << (cpuTime() - myTime)
+        << conf.print_times(cpuTime() - myTime)
         << endl;
     }
 }
@@ -4513,7 +4514,7 @@ bool Solver::fully_undo_xor_detach()
     if (conf.verbosity >= 1 || conf.xor_detach_verb) {
         cout
         << "c [gauss] XOR-encoding clauses reattached: " << reattached
-        << " T: " << (cpuTime() - myTime)
+        << conf.print_times(cpuTime() - myTime)
         << endl;
     }
 
@@ -4644,7 +4645,7 @@ void Solver::extend_model_to_detached_xors()
         << " double-undef: " << more_vars_unset
         << " iters: " << iter
         << " random_set: " << random_set
-        << " T: " << (cpuTime()-myTime)
+        << conf.print_times(cpuTime() - myTime)
         << endl;
     }
 }

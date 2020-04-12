@@ -318,10 +318,9 @@ void ClauseCleaner::remove_and_clean_all()
 
     if (solver->conf.verbosity >= 2) {
         cout
-        << "c [clean] T: "
-        << std::fixed << std::setprecision(4)
-        << (cpuTime() - myTime)
-        << " s" << endl;
+        << "c [clean]"
+        << solver->conf.print_times(cpuTime() - myTime)
+        << endl;
     }
 }
 

@@ -87,6 +87,20 @@ class Heap {
 public:
     Heap(const Comp& c) : lt(c) { }
 
+    void print_heap() {
+        std::cout << "heap:";
+        for(auto x: heap) {
+            std::cout << x << " ";
+        }
+        std::cout << std::endl;
+
+        std::cout << "ind:";
+        for(auto x: indices) {
+            std::cout << x << " ";
+        }
+        std::cout << std::endl;
+    }
+
     uint32_t  size      ()          const
     {
         return heap.size();
@@ -143,11 +157,6 @@ public:
         indices[n] = heap.size();
         heap.push(n);
         percolateUp(indices[n]);
-    }
-
-
-    void growTo(uint32_t n) {
-        indices.growTo(n, -1);
     }
 
 

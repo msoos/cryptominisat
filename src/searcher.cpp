@@ -1161,6 +1161,36 @@ void Searcher::check_blocking_restart()
     }
 }
 
+void Searcher::print_order_heap()
+{
+    switch(branch_strategy) {
+        case branch::vsids:
+            cout << "vsids heap size: " << order_heap_vsids.size() << endl;
+            cout << "vsids acts:";
+            for(auto x: var_act_vsids) {
+                cout << std::setprecision(12) << x << " ";
+            }
+            cout << endl;
+            cout << "VSID order heap:" << endl;
+            order_heap_vsids.print_heap();
+            break;
+        case branch::maple:
+            cout << "maple heap size: " << order_heap_maple.size() << endl;
+            cout << "maple acts:";
+            for(auto x: var_act_maple) {
+                cout << std::setprecision(12) << x << " ";
+            }
+            cout << endl;
+            cout << "MAPLE order heap:" << endl;
+            order_heap_maple.print_heap();
+            break;
+        case branch::rnd:
+        case branch::vmtf:
+            assert(false && "Not implemented yet");
+            break;
+    }
+}
+
 lbool Searcher::search()
 {
     assert(ok);
@@ -1181,6 +1211,9 @@ lbool Searcher::search()
     PropBy confl;
     lbool search_ret;
 
+    #ifdef VERBOSE_DEBUG
+    print_order_heap();
+    #endif
     while (!params.needToStopSearch
         || !confl.isNULL() //always finish the last conflict
     ) {
@@ -1227,11 +1260,8 @@ lbool Searcher::search()
             //cout << "g_nothing" << endl;
             #endif //USE_GAUSS
 
-            if (decisionLevel() == 0
-                && !clean_clauses_if_needed()
-            ) {
-                search_ret = l_False;
-                goto end;
+            if (decisionLevel() == 0) {
+                clean_clauses_if_needed();
             }
             reduce_db_if_needed();
             lbool dec_ret = new_decision<false>();
@@ -1264,14 +1294,20 @@ lbool Searcher::search()
 
 inline void Searcher::update_branch_params()
 {
-    if ((sumConflicts & 0xfff) == 0xfff &&
-        var_decay < var_decay_max
-    ) {
+    if (/*branch_strategy == branch::vsids &&*/
+        (sumConflicts & 0xfff) == 0xfff &&
+        var_decay < var_decay_max)
+    {
         var_decay += 0.01;
     }
 
-    if (branch_strategy == branch::maple) {
+    if (branch_strategy == branch::maple
+        && maple_step_size > solver->conf.min_step_size)
+    {
         maple_step_size -= solver->conf.step_size_dec;
+        #ifdef VERBOSE_DEBUG
+        cout << "maple step size is now: " << std::setprecision(7) << maple_step_size << endl;
+        #endif
     }
 }
 
@@ -2020,13 +2056,9 @@ void Searcher::reduce_db_if_needed()
     }
 }
 
-bool Searcher::clean_clauses_if_needed()
+void Searcher::clean_clauses_if_needed()
 {
     assert(decisionLevel() == 0);
-
-    if (!ok || !propagate_any_order_fast().isNULL()) {
-        return ok = false;
-    }
 
     const size_t newZeroDepthAss = trail.size() - lastCleanZeroDepthAssigns;
     if (newZeroDepthAss > 0
@@ -2046,12 +2078,14 @@ bool Searcher::clean_clauses_if_needed()
         cl_alloc.consolidate(solver);
         simpDB_props = (litStats.redLits + litStats.irredLits)<<5;
     }
-
-    return true;
 }
 
-void Searcher::build_branch_strategy_setup(branch which)
+void Searcher::rebuildOrderHeap(branch which)
 {
+    if (solver->conf.verbosity >=2 ) {
+        cout << "c Rebuilding order heap for branch: " <<
+        branch_type_to_string(branch_strategy) << endl;
+    }
     vector<uint32_t> vs;
     for (uint32_t v = 0; v < nVars(); v++) {
         if (varData[v].removed != Removed::none
@@ -2068,14 +2102,24 @@ void Searcher::build_branch_strategy_setup(branch which)
 
     switch(which) {
         case branch::vsids:
+            #ifdef VERBOSE_DEBUG
+            cout << "Building VSDIS order heap" << endl;
+            #endif
             order_heap_vsids.build(vs);
             break;
 
         case branch::maple:
+            #ifdef VERBOSE_DEBUG
+            cout << "Building MAPLE order heap" << endl;
             order_heap_maple.build(vs);
+            #endif
             break;
 
         case branch::rnd:
+            #ifdef VERBOSE_DEBUG
+            cout << "Building RND order heap" << endl;
+            order_heap_maple.build(vs);
+            #endif
             for(uint32_t v: vs) {
                 order_heap_rnd_inside[v] = 1;
                 order_heap_rnd.push_back(v);
@@ -2222,9 +2266,11 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
 
     if (conf.verbosity) {
         cout << "c [branch] adjusting to: "
-        << branch_type_to_string(branch_strategy) << endl;
+        << branch_type_to_string(branch_strategy)
+        << " var_decay_max:" << var_decay << " var_decay:" << var_decay
+        << endl;
     }
-    build_branch_strategy_setup(branch_strategy);
+    rebuildOrderHeap(branch_strategy);
 }
 
 inline void Searcher::dump_search_loop_stats(double myTime)
@@ -2310,10 +2356,10 @@ lbool Searcher::solve(
 
     resetStats();
     lbool status = l_Undef;
-    setup_restart_strategy();
 
     //rebuild_all_branch_strategy_setups();
     set_branch_strategy(branch_strategy_num);
+    setup_restart_strategy();
     check_calc_satzilla_features(true);
     check_calc_vardist_features(true);
 
@@ -2383,13 +2429,13 @@ void Searcher::setup_restart_strategy()
 {
     if (solver->conf.verbosity) {
         cout << "c [restart] strategy: "
-        << restart_type_to_string(conf.restartType)
+        << restart_type_to_string(cur_rest_type)
         << endl;
     }
 
     increasing_phase_size = conf.restart_first;
     max_confl_this_phase = conf.restart_first;
-    switch(conf.restartType) {
+    switch(cur_rest_type) {
         case Restart::glue:
             params.rest_type = Restart::glue;
             break;
@@ -2480,8 +2526,9 @@ inline void Searcher::print_local_restart_budget()
         << std::left << std::setw(10) << getNameOfRestartType(params.rest_type)
         << " budget: " << std::setw(9) << max_confl_this_phase
         << std::right
+        << " maple step_size: " << maple_step_size
         << " branching: " << std::setw(2) << branch_type_to_string(branch_strategy)
-        << " decay: "
+        << "   decay: "
         << std::setw(4) << std::setprecision(4) << var_decay
         << endl;
     }
@@ -2528,6 +2575,12 @@ void Searcher::check_need_restart()
         }
         params.needToStopSearch = true;
     }
+
+    #ifdef VERBOSE_DEBUG
+    if (params.needToStopSearch) {
+        cout << "c needToStopSearch set" << endl;
+    }
+    #endif
 }
 
 void Searcher::print_solution_varreplace_status() const
@@ -2643,6 +2696,7 @@ void Searcher::print_iteration_solving_stats()
 inline Lit Searcher::pickBranchLit()
 {
     #ifdef VERBOSE_DEBUG
+    print_order_heap();
     cout << "picking decision variable, dec. level: "
     << decisionLevel() << endl;
     #endif
@@ -2743,12 +2797,10 @@ uint32_t Searcher::pick_var_vsids_maple()
                     order_heap_maple.increase(v2);
                 }
                 varData[v2].maple_cancelled = sumConflicts;
-
                 v2 = order_heap_maple[0];
                 age = sumConflicts - varData[v2].maple_cancelled;
             }
         }
-
         v = order_heap.removeMin();
     }
     return v;
@@ -3455,6 +3507,7 @@ void Searcher::cancelUntil(uint32_t blevel)
                     if (age > 0) {
                         //adjusted reward -> higher if conflicted more or quicker
                         double adjusted_reward = ((double)(varData[var].maple_conflicted)) / ((double)age);
+
                         double old_activity = var_act_maple[var];
                         var_act_maple[var] = maple_step_size * adjusted_reward + ((1.0 - maple_step_size ) * old_activity);
                         if (order_heap_maple.inHeap(var)) {
@@ -3463,6 +3516,13 @@ void Searcher::cancelUntil(uint32_t blevel)
                             else
                                 order_heap_maple.increase(var);
                         }
+                        #ifdef VERBOSE_DEBUG
+                        cout << "Adjusting reward. Var: " << var+1 << " conflicted:" << std::setprecision(12) << varData[var].maple_conflicted
+                        << " old act: " << old_activity << " new act: " << var_act_maple[var] << endl
+                        << " step_size: " << maple_step_size
+                        << " age: " << age << " sumconflicts: " << sumConflicts << " last picked: " << varData[var].maple_last_picked
+                        << endl;
+                        #endif
                     }
                     varData[var].maple_cancelled = sumConflicts;
                 }

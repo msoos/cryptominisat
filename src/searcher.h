@@ -77,7 +77,7 @@ class Searcher : public HyperEngine
         );
         void finish_up_solve(lbool status);
         void reduce_db_if_needed();
-        bool clean_clauses_if_needed();
+        void clean_clauses_if_needed();
         void check_calc_satzilla_features(bool force = false);
         void check_calc_vardist_features(bool force = false);
         void dump_search_loop_stats(double myTime);
@@ -293,7 +293,15 @@ class Searcher : public HyperEngine
         double backup_random_var_freq = -1; ///<if restart has full random var branch, we save old value here
         void check_var_in_branch_strategy(uint32_t var) const;
         void set_branch_strategy(uint32_t iteration_num);
-        void build_branch_strategy_setup(branch which);
+        void rebuildOrderHeap(branch which);
+        void print_order_heap();
+        void clear_order_heap()
+        {
+            order_heap_vsids.clear();
+            order_heap_maple.clear();
+            order_heap_rnd.clear();
+            //TODO VMTF
+        }
         uint32_t branch_strategy_num = 0;
 
         /////////////////////
