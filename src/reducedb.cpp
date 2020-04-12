@@ -92,6 +92,20 @@ ReduceDB::~ReduceDB()
 
 void ReduceDB::sort_red_cls(ClauseClean clean_type)
 {
+    #ifdef VERBOSE_DEBUG
+    cout << "Before sort" << endl;
+    uint64_t i = 0;
+    for(const auto& x: solver->longRedCls[2]) {
+        const ClOffset offset = x;
+        Clause* cl = solver->cl_alloc.ptr(offset);
+        cout << i << " offset: " << offset << " cl->stats.last_touched: " << cl->stats.last_touched
+        << " act:" << std::setprecision(9) << cl->stats.activity
+        << " which_red_array:" << cl->stats.which_red_array << endl
+        << " -- cl:" << *cl << " tern:" << cl->is_ternary_resolvent
+        << endl;
+    }
+    #endif
+
     switch (clean_type) {
         case ClauseClean::glue : {
             std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(), SortRedClsGlue(solver->cl_alloc));
@@ -252,6 +266,7 @@ void ReduceDB::handle_lev1()
         Clause* cl = solver->cl_alloc.ptr(offset);
         #ifdef VERBOSE_DEBUG
         cout << "offset: " << offset << " cl->stats.last_touched: " << cl->stats.last_touched
+        << " act:" << std::setprecision(9) << cl->stats.activity
         << " which_red_array:" << cl->stats.which_red_array << endl
         << " -- cl:" << *cl << " tern:" << cl->is_ternary_resolvent
         << endl;
@@ -466,6 +481,10 @@ void ReduceDB::handle_lev3_final_predictor()
 
 void ReduceDB::mark_top_N_clauses(const uint64_t keep_num)
 {
+    #ifdef VERBOSE_DEBUG
+    cout << "Marking top N clauses " << keep_num << endl;
+    #endif
+
     size_t marked = 0;
     for(size_t i = 0
         ; i < solver->longRedCls[2].size() && marked < keep_num
@@ -473,6 +492,13 @@ void ReduceDB::mark_top_N_clauses(const uint64_t keep_num)
     ) {
         const ClOffset offset = solver->longRedCls[2][i];
         Clause* cl = solver->cl_alloc.ptr(offset);
+        #ifdef VERBOSE_DEBUG
+        cout << "offset: " << offset << " cl->stats.last_touched: " << cl->stats.last_touched
+        << " act:" << std::setprecision(9) << cl->stats.activity
+        << " which_red_array:" << cl->stats.which_red_array << endl
+        << " -- cl:" << *cl << " tern:" << cl->is_ternary_resolvent
+        << endl;
+        #endif
 
         if (cl->used_in_xor()
             || cl->stats.ttl > 0
@@ -480,12 +506,18 @@ void ReduceDB::mark_top_N_clauses(const uint64_t keep_num)
             || cl->stats.which_red_array != 2
         ) {
             //no need to mark, skip
+            #ifdef VERBOSE_DEBUG
+            cout << "Not marking Skipping "<< endl;
+            #endif
             continue;
         }
 
         if (!cl->stats.marked_clause) {
             marked++;
             cl->stats.marked_clause = true;
+            #ifdef VERBOSE_DEBUG
+            cout << "Not marking Skipping "<< endl;
+            #endif
         }
     }
 }
@@ -542,6 +574,13 @@ void ReduceDB::remove_cl_from_lev2() {
 
         *solver->drat << del << *cl << fin;
         cl->setRemoved();
+        #ifdef VERBOSE_DEBUG
+        cout << "REMOVING offset: " << offset << " cl->stats.last_touched: " << cl->stats.last_touched
+        << " act:" << std::setprecision(9) << cl->stats.activity
+        << " which_red_array:" << cl->stats.which_red_array << endl
+        << " -- cl:" << *cl << " tern:" << cl->is_ternary_resolvent
+        << endl;
+        #endif
         delayed_clause_free.push_back(offset);
     }
     solver->longRedCls[2].resize(j);
