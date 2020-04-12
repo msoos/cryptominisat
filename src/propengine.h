@@ -379,6 +379,7 @@ inline PropResult PropEngine::handle_normal_prop_fail(
     confl = PropBy(offset);
     #ifdef VERBOSE_DEBUG_FULLPROP
     cout << "Conflict from ";
+    Clause& c = *cl_alloc.ptr(offset);
     for(size_t i = 0; i < c.size(); i++) {
         cout  << c[i] << " , ";
     }

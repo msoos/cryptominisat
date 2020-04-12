@@ -183,6 +183,7 @@ class Searcher : public HyperEngine
 
         //Needed for tests around renumbering
         void rebuildOrderHeap();
+        void print_order_heap();
         void clear_order_heap()
         {
             order_heap_vsids.clear();

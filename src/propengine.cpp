@@ -333,6 +333,9 @@ PropBy PropEngine::propagate_any_order_fast()
                 else
                     lastConflictCausedBy = ConflCausedBy::longirred;
                 #endif
+                #ifdef VERBOSE_DEBUG
+                cout << "Conflicting on clause:" << c << endl;
+                #endif
                 while (i < end) {
                     *j++ = *i++;
                 }
@@ -372,7 +375,7 @@ PropBy PropEngine::propagate_any_order_fast()
     propStats.propagations += (uint64_t)num_props;
 
     #ifdef VERBOSE_DEBUG
-    cout << "Propagation (propagate_any_order) ended." << endl;
+    cout << "Propagation (propagate_any_order_fast) ended." << endl;
     #endif
 
     return confl;

@@ -1786,8 +1786,7 @@ lbool Solver::iterate_until_solved()
                 iteration_num_maple++;
             } else {
                 VSIDS = true;
-                if (conf.alternate_vsids &&
-                    sumConflicts > 1000)
+                if (conf.alternate_vsids)
                 {
                     if ((iteration_num_vsids%2) == 1) {
                         conf.var_decay_vsids_start = conf.alternate_vsids_decay_rate1;

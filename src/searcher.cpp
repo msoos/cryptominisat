@@ -160,14 +160,15 @@ void Searcher::print_local_restart_budget()
         cout << "c [restart] at confl " << solver->sumConflicts << " -- "
         << "adjusting local restart type: "
         << std::left << std::setw(10) << getNameOfRestartType(params.rest_type)
-        << " budget: " << std::setw(7) << max_confl_this_phase
+        << " budget: " << std::setw(9) << max_confl_this_phase
         << std::right
-        << " VSDIS: " << std::setw(2) << VSIDS;
+        << " maple step_size: " << step_size
+        << " branching: " << std::setw(2) << (VSIDS ? "vsids":"maple");
         if (VSIDS) {
-            cout << " decay: "
+            cout << "   decay: "
             << std::setw(4) << std::setprecision(4) << var_decay_vsids;
         } else {
-            cout << " decay: "
+            cout << "   decay: "
             << std::setw(4) << std::setprecision(4) << maple_decay_base;
         }
         cout << endl;
@@ -1001,6 +1002,29 @@ void Searcher::check_blocking_restart()
     }
 }
 
+void Searcher::print_order_heap()
+{
+    if (VSIDS) {
+        cout << "vsids heap size: " << order_heap_vsids.size() << endl;
+        cout << "vsids acts:";
+        for(auto x: var_act_vsids) {
+            cout << std::setprecision(12) << x << " ";
+        }
+        cout << endl;
+        cout << "VSID order heap:" << endl;
+        order_heap_vsids.print_heap();
+    } else {
+        cout << "maple heap size: " << order_heap_maple.size() << endl;
+        cout << "maple acts:";
+        for(auto x: var_act_maple) {
+            cout << std::setprecision(12) << x << " ";
+        }
+        cout << endl;
+        cout << "MAPLE order heap:" << endl;
+        order_heap_maple.print_heap();
+    }
+}
+
 template<bool update_bogoprops>
 lbool Searcher::search()
 {
@@ -1025,6 +1049,10 @@ lbool Searcher::search()
     blocked_restart = false;
     PropBy confl;
     lbool dec_ret = l_Undef;
+
+    #ifdef VERBOSE_DEBUG
+    print_order_heap();
+    #endif
     while (!params.needToStopSearch
         || !confl.isNULL() //always finish the last conflict
     ) {
@@ -1048,6 +1076,9 @@ lbool Searcher::search()
                 }
                 if (!VSIDS && step_size > solver->conf.min_step_size) {
                     step_size -= solver->conf.step_size_dec;
+                    #ifdef VERBOSE_DEBUG
+                    cout << "maple step size is now: " << std::setprecision(7) << step_size << endl;
+                    #endif
                 }
             }
 
@@ -1237,6 +1268,12 @@ void Searcher::check_need_restart()
         }
         params.needToStopSearch = true;
     }
+
+    #ifdef VERBOSE_DEBUG
+    if (params.needToStopSearch) {
+        cout << "c needToStopSearch set" << endl;
+    }
+    #endif
 }
 
 void Searcher::update_history_stats(size_t backtrack_level, uint32_t glue)
@@ -1792,10 +1829,6 @@ bool Searcher::clean_clauses_if_needed()
 {
     assert(decisionLevel() == 0);
 
-    if (!ok || !propagate_any_order_fast().isNULL()) {
-        return ok = false;
-    }
-
     const size_t newZeroDepthAss = trail.size() - lastCleanZeroDepthAssigns;
     if (newZeroDepthAss > 0
         && simpDB_props < 0
@@ -1812,7 +1845,6 @@ bool Searcher::clean_clauses_if_needed()
         solver->clauseCleaner->remove_and_clean_all();
 
         cl_alloc.consolidate(solver);
-        rebuildOrderHeap(); //TODO only filter is needed!
         simpDB_props = (litStats.redLits + litStats.irredLits)<<5;
     }
 
@@ -1821,6 +1853,9 @@ bool Searcher::clean_clauses_if_needed()
 
 void Searcher::rebuildOrderHeap()
 {
+    if (solver->conf.verbosity >= 2) {
+        cout << "c Rebuilding order heap" << endl;
+    }
     vector<uint32_t> vs;
     for (uint32_t v = 0; v < nVars(); v++) {
         if (varData[v].removed != Removed::none
@@ -1834,6 +1869,7 @@ void Searcher::rebuildOrderHeap()
             vs.push_back(v);
         }
     }
+
     order_heap_vsids.build(vs);
     order_heap_maple.build(vs);
 }
@@ -2215,6 +2251,7 @@ void Searcher::print_iteration_solving_stats()
 Lit Searcher::pickBranchLit()
 {
     #ifdef VERBOSE_DEBUG
+    print_order_heap();
     cout << "picking decision variable, dec. level: "
     << decisionLevel() << endl;
     #endif
@@ -3107,6 +3144,13 @@ void Searcher::cancelUntil(uint32_t blevel)
                             else
                                 order_heap_maple.increase(var);
                         }
+                        #ifdef VERBOSE_DEBUG
+                        cout << "Adjusting reward. Var: " << var+1 << " conflicted:" << std::setprecision(12) << varData[var].conflicted
+                        << " old act: " << old_activity << " new act: " << var_act_maple[var] << endl
+                        << " step_size: " << step_size
+                        << " age: " << age << " sumconflicts: " << sumConflicts << " last picked: " << varData[var].last_picked
+                        << endl;
+                        #endif
                     }
                     varData[var].cancelled = sumConflicts;
                 }

@@ -512,7 +512,7 @@ void Prober::update_cache(Lit thisLit, Lit lit, size_t numElemsSet)
 
         #ifdef VERBOSE_DEBUG_FULLPROP
         cout << "The impl cache of " << (~ancestor) << " is now: ";
-        cout << solver->implCache[(~ancestor).toInt()] << endl;
+        cout << solver->implCache[~ancestor] << endl;
         #endif
     }
 }
