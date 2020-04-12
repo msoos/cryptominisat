@@ -2276,8 +2276,6 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
     }
     assert(branch_strategy != branch::vmtf);
     assert(branch_strategy != branch::rnd);
-    rebuildOrderHeap(branch::vsids);
-    rebuildOrderHeap(branch::maple);
 }
 
 inline void Searcher::dump_search_loop_stats(double myTime)
@@ -2364,7 +2362,7 @@ lbool Searcher::solve(
     resetStats();
     lbool status = l_Undef;
 
-    //rebuild_all_branch_strategy_setups();
+    set_branch_strategy(branch_strategy_num);
     setup_restart_strategy();
     check_calc_satzilla_features(true);
     check_calc_vardist_features(true);
@@ -2433,11 +2431,11 @@ double Searcher::luby(double y, int x)
 
 void Searcher::setup_restart_strategy()
 {
-    if (solver->conf.verbosity) {
-        cout << "c [restart] strategy: "
-        << restart_type_to_string(cur_rest_type)
-        << endl;
-    }
+//     if (solver->conf.verbosity) {
+//         cout << "c [restart] strategy: "
+//         << restart_type_to_string(cur_rest_type)
+//         << endl;
+//     }
 
     increasing_phase_size = conf.restart_first;
     max_confl_this_phase = conf.restart_first;
