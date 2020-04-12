@@ -42,14 +42,14 @@ public:
     void load_models(std::string short_fname, std::string long_fname);
     float predict_short(const CMSat::Clause* cl
                 , const uint64_t sumConflicts
-                , const uint32_t last_touched_diff
+                , const int64_t last_touched_diff
                 , const double   act_ranking_rel
                 , const uint32_t act_ranking_top_10);
 
     float predict_long(
         const CMSat::Clause* cl,
         const uint64_t sumConflicts,
-        const uint32_t last_touched_diff,
+        const int64_t  last_touched_diff,
         const double   act_ranking_rel,
         const uint32_t act_ranking_top_10);
 
@@ -58,7 +58,7 @@ private:
     void set_up_input(
         const CMSat::Clause* cl,
         const uint64_t sumConflicts,
-        const uint32_t last_touched_diff,
+        const int64_t  last_touched_diff,
         const double   act_ranking_rel,
         const uint32_t act_ranking_top_10,
         float *train,

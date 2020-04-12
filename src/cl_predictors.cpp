@@ -141,7 +141,7 @@ float ClPredictors::predict_short(
 float ClPredictors::predict_long(
     const CMSat::Clause* cl,
     const uint64_t sumConflicts,
-    const uint32_t last_touched_diff,
+    const int64_t last_touched_diff,
     const double   act_ranking_rel,
     const uint32_t act_ranking_top_10)
 {

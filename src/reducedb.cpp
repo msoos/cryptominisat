@@ -335,12 +335,8 @@ void ReduceDB::handle_lev3_final_predictor()
             double act_ranking_rel = ((double)i+1)/(double)solver->longRedCls[3].size();
             assert(act_ranking_rel != 0);
 
-            uint32_t last_touched_diff;
-            if (cl->stats.last_touched == 0) {
-                last_touched_diff = solver->sumConflicts-cl->stats.introduced_at_conflict;
-            } else {
-                last_touched_diff = solver->sumConflicts-cl->stats.last_touched;
-            }
+            int64_t last_touched_diff;
+            last_touched_diff = (int64_t)solver->sumConflicts-(int64_t)cl->stats.last_touched;
 
             //Check for long keep
             if (cl->stats.locked_long == 0
