@@ -79,9 +79,8 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
         , solver(_solver)
         , cla_inc(1)
 {
+    var_inc_vsids = 1;
     maple_step_size = solver->conf.orig_step_size;
-
-    var_inc_vsids = conf.var_inc_vsids;
     more_red_minim_limit_binary_actual = conf.more_red_minim_limit_binary;
     mtrand.seed(conf.origSeed);
     hist.setSize(conf.shortTermHistorySize, conf.blocking_restart_trail_hist_length);
@@ -1254,17 +1253,14 @@ lbool Searcher::search()
 
 inline void Searcher::update_branch_params()
 {
-    switch(branch_strategy) {
-        case branch::vsids:
-            break;
-        case branch::maple:
-            if (maple_step_size > solver->conf.min_step_size) {
-                maple_step_size -= solver->conf.step_size_dec;
-            }
-            break;
+    if ((sumConflicts & 0xfff) == 0xfff &&
+        var_decay < var_decay_max
+    ) {
+        var_decay += 0.01;
+    }
 
-        default:
-            break;
+    if (branch_strategy == branch::maple) {
+        maple_step_size -= solver->conf.step_size_dec;
     }
 }
 
@@ -2128,20 +2124,31 @@ void Searcher::rebuild_all_branch_strategy_setups()
 
 struct branch_type_total{
     branch_type_total() {}
-    branch_type_total (CMSat::branch _branch, double _var_decay_vsids) :
+    branch_type_total (CMSat::branch _branch, double _decay_start, double _decay_max) :
         branch(_branch),
-        var_decay_vsids(_var_decay_vsids)
+        decay_start(_decay_start),
+        decay_max(_decay_max)
     {}
     explicit branch_type_total(CMSat::branch _branch) :
         branch(_branch)
     {}
 
     CMSat::branch branch = CMSat::branch::vsids;
-    double var_decay_vsids = 0.95;
+    double decay_start = 0.95;
+    double decay_max = 0.95;
 };
 
-void Searcher::set_branch_strategy(const uint32_t iteration_num)
+void Searcher::set_branch_strategy(uint32_t iteration_num)
 {
+    if (iteration_num == 0) {
+         branch_strategy = branch::vsids;
+         cur_rest_type = conf.restartType;
+         var_decay = 0.80;
+         var_decay_max = 0.95;
+         return;
+    }
+    iteration_num--;
+
     size_t smallest = 0;
     size_t start = 0;
     size_t total = 0;
@@ -2162,8 +2169,11 @@ void Searcher::set_branch_strategy(const uint32_t iteration_num)
         size_t vmtf = conf.branch_strategy_setup.find("vmtf", start);
         smallest = std::min(vmtf, smallest);
 
-        size_t maple = conf.branch_strategy_setup.find("maple", start);
-        smallest = std::min(maple, smallest);
+        size_t maple1 = conf.branch_strategy_setup.find("maple1", start);
+        smallest = std::min(maple1, smallest);
+
+        size_t maple2 = conf.branch_strategy_setup.find("maple2", start);
+        smallest = std::min(maple2, smallest);
 
         size_t rnd = conf.branch_strategy_setup.find("rnd", start);
         smallest = std::min(rnd, smallest);
@@ -2177,27 +2187,37 @@ void Searcher::set_branch_strategy(const uint32_t iteration_num)
         }
 
         if (smallest == vsids1) {
-            select[total++]= branch_type_total(branch::vsids, 0.95);
+            select[total++]= branch_type_total(branch::vsids, 0.92, 0.92);
             if (conf.verbosity) {
-                cout << "VSIDS";
+                cout << "VSIDS1";
             }
         }
         else if (smallest == vsids2) {
-            select[total++]=  branch_type_total(branch::vsids, 0.98);
+            select[total++]=  branch_type_total(branch::vsids, 0.99, 0.99);
             if (conf.verbosity) {
                 cout << "VSIDS2";
             }
         }
         else if (smallest == vmtf) {
-            select[total++]= branch_type_total(branch::vmtf);
+            select[total++]=  branch_type_total(branch::vmtf);
             if (conf.verbosity) {
                 cout << "VMTF";
             }
         }
-        else if (smallest == maple) {
-            select[total++]= branch_type_total(branch::maple);
+        else if (smallest == maple1) {
+            //TODO should we do this incremental stuff?
+            //maple_step_size = solver->conf.orig_step_size;
+            select[total++]= branch_type_total(branch::maple, 0.70, 0.70);
             if (conf.verbosity) {
-                cout << "MAPLE";
+                cout << "MAPLE1";
+            }
+        }
+        else if (smallest == maple2) {
+            //TODO should we do this incremental stuff?
+            //maple_step_size = solver->conf.orig_step_size;
+            select[total++]= branch_type_total(branch::maple, 0.90, 0.90);
+            if (conf.verbosity) {
+                cout << "MAPLE2";
             }
         }
         else if (smallest == rnd) {
@@ -2224,7 +2244,9 @@ void Searcher::set_branch_strategy(const uint32_t iteration_num)
     assert(total > 0);
     uint32_t which = iteration_num % total;
     branch_strategy = select[which].branch;
-    conf.var_decay_vsids = select[which].var_decay_vsids;
+    var_decay = select[which].decay_start;
+    var_decay_max = select[which].decay_max;
+
     if (branch_strategy == branch::maple) {
         cur_rest_type = Restart::luby;
     } else {
@@ -2462,8 +2484,7 @@ void Searcher::adjust_restart_strategy()
         //                        it's start at conf.restart_first and never
         //                        reset
         case Restart::luby:
-            max_confl_this_phase = luby(conf.restart_inc*1.5, luby_loop_num)
-                * (double)conf.restart_first/2.0;
+            max_confl_this_phase = luby(2, luby_loop_num) * (double)conf.restart_first;
             luby_loop_num++;
             break;
 
@@ -2490,7 +2511,11 @@ inline void Searcher::print_local_restart_budget()
         << "adjusting local restart type: "
         << std::left << std::setw(10) << getNameOfRestartType(params.rest_type)
         << " budget: " << std::setw(9) << max_confl_this_phase
-        << std::right << endl;
+        << std::right
+        << " branching: " << std::setw(2) << branch_type_to_string(branch_strategy)
+        << " decay: "
+        << std::setw(4) << std::setprecision(4) << var_decay
+        << endl;
     }
 }
 
@@ -2744,7 +2769,7 @@ uint32_t Searcher::pick_var_vsids_maple()
             uint32_t v2 = order_heap_maple[0];
             uint32_t age = sumConflicts - varData[v2].maple_cancelled;
             while (age > 0) {
-                double decay = pow(0.95, age);
+                double decay = pow(var_decay, age);
                 var_act_maple[v2] *= decay;
                 if (order_heap_maple.inHeap(v2)) {
                     order_heap_maple.increase(v2);
@@ -3151,7 +3176,7 @@ void Searcher::unfill_assumptions_set()
 inline void Searcher::vsids_decay_var_act()
 {
     assert(branch_strategy == branch::vsids);
-    var_inc_vsids *= (1.0 / conf.var_decay_vsids);
+    var_inc_vsids *= (1.0 / var_decay);
 }
 
 void Searcher::consolidate_watches(const bool full)

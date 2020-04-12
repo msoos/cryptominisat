@@ -397,15 +397,8 @@ void Main::add_supported_options()
         , "When dumping redundant clauses, only dump clauses with at most this large glue")
     ;
 
-    std::ostringstream s_var_decay_vsids;
-    s_var_decay_vsids << std::setprecision(5) << conf.var_decay_vsids;
-
     po::options_description varPickOptions("Variable branching options");
     varPickOptions.add_options()
-    ("vardecay", po::value(&conf.var_decay_vsids)->default_value(conf.var_decay_vsids, s_var_decay_vsids.str())
-        , "variable activity increase divider (MUST be smaller than multiplier)")
-    ("varinc", po::value(&conf.var_inc_vsids)->default_value(conf.var_inc_vsids)
-        , "variable activity increase starts with this value. Make sure that this multiplied by multiplier and divided by divider is larger than itself")
     ("branchstr"
         , po::value(&conf.branch_strategy_setup)->default_value(conf.branch_strategy_setup)
         , "Branch strategy. E.g. 'vmtf+vsids+maple+rnd'")

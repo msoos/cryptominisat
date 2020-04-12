@@ -286,13 +286,12 @@ class Searcher : public HyperEngine
         uint32_t pick_random_var();
         uint32_t pick_var_vsids_maple();
         uint32_t pick_var_vmtf();
-        double maple_step_size;
         void vsids_decay_var_act();
         template<bool update_bogoprops>
         void vsids_bump_var_act(uint32_t v, double mult = 1.0);
         double backup_random_var_freq = -1; ///<if restart has full random var branch, we save old value here
         void check_var_in_branch_strategy(uint32_t var) const;
-        void set_branch_strategy(const uint32_t iteration_num);
+        void set_branch_strategy(uint32_t iteration_num);
         void build_branch_strategy_setup(branch which);
         void clear_branch_strategy_setup(branch which);
         void rebuild_all_branch_strategy_setups();

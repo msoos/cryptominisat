@@ -46,10 +46,7 @@ using namespace CMSat;
 
 
 DLL_PUBLIC SolverConf::SolverConf() :
-        //Variable activities
-        var_inc_vsids(1)
-        , var_decay_vsids(0.95)
-        , polarity_mode(PolarityMode::polarmode_automatic)
+        polarity_mode(PolarityMode::polarmode_automatic)
 
         //Clause cleaning
         , every_lev1_reduce(10000) // kept for a while then moved to lev2
@@ -93,7 +90,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         #ifdef STATS_NEEDED
         , branch_strategy_setup("vsids1+vmtf+maple+rnd")
         #else
-        , branch_strategy_setup("vsids1+vsids1+maple")
+        , branch_strategy_setup("maple1+maple2+vsids2+maple1+maple2+vsids1")
         #endif
 
         //Clause minimisation

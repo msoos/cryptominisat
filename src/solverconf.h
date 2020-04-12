@@ -148,8 +148,6 @@ class DLL_PUBLIC SolverConf
         ) const;
 
         //Variable activities
-        double  var_inc_vsids;
-        double  var_decay_vsids;
         PolarityMode polarity_mode;
 
         //Clause cleaning

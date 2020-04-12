@@ -1805,12 +1805,13 @@ lbool Solver::iterate_until_solved()
         && cpuTime() < conf.maxTime
         && sumConflicts < (uint64_t)conf.max_confl
     ) {
+        iteration_num++;
         if (conf.verbosity) {
             print_clause_size_distrib();
         }
         dump_memory_stats_to_sql();
 
-        const long num_confl = calc_num_confl_to_do_this_iter(iteration_num++);
+        const long num_confl = calc_num_confl_to_do_this_iter(iteration_num);
         if (num_confl <= 0) {
             break;
         }
@@ -3346,7 +3347,6 @@ void Solver::reconfigure(int val)
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.3;
             conf.inc_max_temp_lev2_red_cls = 1.04;
 
-            conf.var_decay_vsids = 0.90; //more 'slow' in adjusting activities
             reset_temp_cl_num();
             break;
         }
@@ -3362,7 +3362,6 @@ void Solver::reconfigure(int val)
             conf.max_num_lits_more_more_red_min = 20;
 
             conf.max_temp_lev2_learnt_clauses = 10000;
-            conf.var_decay_vsids = 0.99; //more 'fast' in adjusting activities
             break;
         }
 
