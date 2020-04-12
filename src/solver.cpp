@@ -1822,7 +1822,6 @@ lbool Solver::iterate_until_solved()
         }
         #endif //USE_GAUSS
         status = Searcher::solve(num_confl);
-        clear_all_branch_strategy_setups();
 
         //Check for effectiveness
         check_recursive_minimization_effectiveness(status);
@@ -2123,7 +2122,6 @@ lbool Solver::simplify_problem(const bool startup)
     if (!okay()) {
         ret = l_False;
     }
-    clear_all_branch_strategy_setups();
 
     #ifdef USE_GAUSS
     set_clash_decision_vars();

@@ -183,8 +183,9 @@ protected:
 
     friend class EGaussian;
 
-    template<bool update_bogoprops>
     PropBy propagate_any_order_fast();
+    template<bool update_bogoprops>
+    PropBy propagate_any_order();
     PropResult prop_normal_helper(
         Clause& c
         , ClOffset offset
@@ -264,6 +265,21 @@ private:
     Solver* solver;
     bool propagate_binary_clause_occur(const Watched& ws);
     bool propagate_long_clause_occur(const ClOffset offset);
+    template<bool update_bogoprops = true>
+    bool prop_bin_cl(
+        const Watched* i
+        , const Lit p
+        , PropBy& confl
+        , uint32_t currLevel
+    ); ///<Propagate 2-long clause
+    template<bool update_bogoprops>
+    bool prop_long_cl_any_order(
+        Watched* i
+        , Watched*& j
+        , const Lit p
+        , PropBy& confl
+        , uint32_t currLevel
+    );
     void sql_dump_vardata_picktime(uint32_t v, PropBy from);
 };
 
@@ -371,6 +387,7 @@ inline PropResult PropEngine::handle_normal_prop_fail(
     confl = PropBy(offset);
     #ifdef VERBOSE_DEBUG_FULLPROP
     cout << "Conflict from ";
+    Clause& c = *cl_alloc.ptr(offset);
     for(size_t i = 0; i < c.size(); i++) {
         cout  << c[i] << " , ";
     }

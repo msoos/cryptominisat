@@ -106,7 +106,7 @@ void Searcher::new_var(const bool bva, const uint32_t orig_outer)
 {
     PropEngine::new_var(bva, orig_outer);
 
-    insert_var_order((int)nVars()-1);
+    insert_var_order_all((int)nVars()-1);
     #ifdef STATS_NEEDED
     level_used_for_cl_arr.insert(level_used_for_cl_arr.end(), 1, 0);
     #endif
@@ -117,7 +117,7 @@ void Searcher::new_vars(size_t n)
     PropEngine::new_vars(n);
 
     for(int i = n-1; i >= 0; i--) {
-        insert_var_order((int)nVars()-i-1);
+        insert_var_order_all((int)nVars()-i-1);
     }
 
     #ifdef STATS_NEEDED
@@ -140,6 +140,17 @@ void Searcher::updateVars(
 ) {
     updateArray(var_act_vsids, interToOuter);
     updateArray(var_act_maple, interToOuter);
+    updateArray(vmtf_links, interToOuter);
+    updateArray(vmtf_btab, interToOuter);
+    vmtf_queue.last = getUpdatedVarMaxToMax(vmtf_queue.last, interToOuter);
+    vmtf_queue.first = getUpdatedVarMaxToMax(vmtf_queue.first, interToOuter);
+    vmtf_queue.unassigned = getUpdatedVarMaxToMax(vmtf_queue.unassigned, interToOuter);
+    vmtf_queue.vmtf_bumped = getUpdatedVarMaxToMax(vmtf_queue.vmtf_bumped, interToOuter);
+
+    for(auto& x: vmtf_links) {
+        x.prev = getUpdatedVarMaxToMax(x.prev, interToOuter);
+        x.next = getUpdatedVarMaxToMax(x.next, interToOuter);
+    }
 }
 
 template<bool update_bogoprops>
@@ -1176,7 +1187,7 @@ lbool Searcher::search()
         #ifdef USE_GAUSS
         gqhead = qhead;
         #endif
-        confl = propagate_any_order_fast<false>();
+        confl = propagate_any_order_fast();
 
         if (!confl.isNULL()) {
             update_branch_params();
@@ -2013,7 +2024,7 @@ bool Searcher::clean_clauses_if_needed()
 {
     assert(decisionLevel() == 0);
 
-    if (!ok || !propagate_any_order_fast<false>().isNULL()) {
+    if (!ok || !propagate_any_order_fast().isNULL()) {
         return ok = false;
     }
 
@@ -2039,31 +2050,6 @@ bool Searcher::clean_clauses_if_needed()
     return true;
 }
 
-void Searcher::clear_branch_strategy_setup(branch which)
-{
-    switch(which) {
-        case branch::vsids:
-            order_heap_vsids.clear();
-            break;
-
-        case branch::maple:
-            order_heap_maple.clear();
-            break;
-
-        case branch::rnd:
-            std::fill(order_heap_rnd_inside.begin(), order_heap_rnd_inside.end(), 0);
-            order_heap_rnd.clear();
-            break;
-
-        case branch::vmtf:
-            vmtf_bumped = 0;
-            std::fill(vmtf_btab.begin(), vmtf_btab.end(), 0);
-            std::fill(vmtf_links.begin(), vmtf_links.end(), Link());
-            vmtf_queue = Queue();
-            break;
-    }
-}
-
 void Searcher::build_branch_strategy_setup(branch which)
 {
     vector<uint32_t> vs;
@@ -2082,12 +2068,10 @@ void Searcher::build_branch_strategy_setup(branch which)
 
     switch(which) {
         case branch::vsids:
-            order_heap_vsids.growTo(nVars());
             order_heap_vsids.build(vs);
             break;
 
         case branch::maple:
-            order_heap_maple.growTo(nVars());
             order_heap_maple.build(vs);
             break;
 
@@ -2099,27 +2083,10 @@ void Searcher::build_branch_strategy_setup(branch which)
             break;
 
         case branch::vmtf:
-            for(uint32_t v: vs) {
-                vmtf_init_enqueue(v);
-            }
+            assert(false && "We would need to filter here! TODO: pop all into a vector, then reinit VMTF from that FILTERED vector");
+            //should be fine
             break;
     }
-}
-
-void Searcher::clear_all_branch_strategy_setups()
-{
-    clear_branch_strategy_setup(branch::vsids);
-    clear_branch_strategy_setup(branch::maple);
-    clear_branch_strategy_setup(branch::vmtf);
-    clear_branch_strategy_setup(branch::rnd);
-}
-
-void Searcher::rebuild_all_branch_strategy_setups()
-{
-    build_branch_strategy_setup(branch::vsids);
-    build_branch_strategy_setup(branch::maple);
-    build_branch_strategy_setup(branch::vmtf);
-    build_branch_strategy_setup(branch::rnd);
 }
 
 struct branch_type_total{
@@ -2257,6 +2224,7 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
         cout << "c [branch] adjusting to: "
         << branch_type_to_string(branch_strategy) << endl;
     }
+    build_branch_strategy_setup(branch_strategy);
 }
 
 inline void Searcher::dump_search_loop_stats(double myTime)
@@ -2344,7 +2312,7 @@ lbool Searcher::solve(
     lbool status = l_Undef;
     setup_restart_strategy();
 
-    rebuild_all_branch_strategy_setups();
+    //rebuild_all_branch_strategy_setups();
     set_branch_strategy(branch_strategy_num);
     check_calc_satzilla_features(true);
     check_calc_vardist_features(true);
@@ -3088,7 +3056,7 @@ PropBy Searcher::propagate() {
     const size_t origTrailSize = trail.size();
 
     PropBy ret;
-    ret = propagate_any_order_fast<update_bogoprops>();
+    ret = propagate_any_order<update_bogoprops>();
 
     //Drat -- If declevel 0 propagation, we have to add the unitaries
     if (decisionLevel() == 0 &&
@@ -3134,7 +3102,8 @@ size_t Searcher::mem_used() const
     mem += order_heap_maple.mem_used();
     mem += order_heap_rnd.capacity()*sizeof(uint32_t);
     mem += order_heap_rnd_inside.capacity()*sizeof(unsigned char);
-    //TODO vmtf size
+    mem += vmtf_btab.capacity()*sizeof(uint64_t);
+    mem += vmtf_links.capacity()*sizeof(Link);
     mem += learnt_clause.capacity()*sizeof(Lit);
     mem += hist.mem_used();
     mem += conflict.capacity()*sizeof(Lit);
@@ -3348,7 +3317,7 @@ void Searcher::load_state(SimpleInFile& f, const lbool status)
         if (varData[i].removed == Removed::none
             && value(i) == l_Undef
         ) {
-            insert_var_order(i);
+            insert_var_order_all(i);
         }
     }
     f.get_vector(model);
@@ -3548,7 +3517,7 @@ void Searcher::check_var_in_branch_strategy(uint32_t int_var) const
 
         case branch::vmtf:
             //vmtf_links[int_var].
-            //TODO
+            //TODO VMTF
             break;
     }
 }

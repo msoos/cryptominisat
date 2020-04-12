@@ -278,6 +278,7 @@ class Searcher : public HyperEngine
         double var_inc_vsids;
         void insert_var_order(const uint32_t x, branch type);
         void insert_var_order(const uint32_t x);
+        void insert_var_order_all(const uint32_t x);
         vector<uint32_t> implied_by_learnts; //for glue-based extra var activity bumping
         void update_branch_params();
         template<bool update_bogoprops>
@@ -293,9 +294,6 @@ class Searcher : public HyperEngine
         void check_var_in_branch_strategy(uint32_t var) const;
         void set_branch_strategy(uint32_t iteration_num);
         void build_branch_strategy_setup(branch which);
-        void clear_branch_strategy_setup(branch which);
-        void rebuild_all_branch_strategy_setups();
-        void clear_all_branch_strategy_setups();
         uint32_t branch_strategy_num = 0;
 
         /////////////////////
@@ -474,7 +472,9 @@ inline void Searcher::insert_var_order(const uint32_t x, branch type)
             // variables sits after the variable to which 'queue.unassigned' currently
             // points.  See our SAT'15 paper for more details on this aspect.
             //
-            if ( vmtf_queue.vmtf_bumped < vmtf_btab[x]) vmtf_update_queue_unassigned (x);
+            if (vmtf_queue.vmtf_bumped < vmtf_btab[x]) {
+                vmtf_update_queue_unassigned (x);
+            }
             break;
 
         case branch::rnd:
@@ -483,6 +483,35 @@ inline void Searcher::insert_var_order(const uint32_t x, branch type)
                 order_heap_rnd.push_back(x);
             }
             break;
+    }
+}
+
+inline void Searcher::insert_var_order_all(const uint32_t x)
+{
+    if (!order_heap_vsids.inHeap(x)) {
+        #ifdef SLOW_DEUG
+        assert(varData[x].removed == Removed::none
+            && "All variables should be decision vars unless removed");
+        #endif
+
+        order_heap_vsids.insert(x);
+    }
+    if (!order_heap_maple.inHeap(x)) {
+        #ifdef SLOW_DEUG
+        assert(varData[x].removed == Removed::none
+            && "All variables should be decision vars unless removed");
+        #endif
+
+        order_heap_maple.insert(x);
+    }
+    vmtf_init_enqueue(x);
+
+    if (order_heap_rnd_inside.size() < x+1) {
+        order_heap_rnd_inside.insert(order_heap_rnd_inside.end(), order_heap_rnd_inside.size()-x+1, 0);
+    }
+    if (order_heap_rnd_inside[x] == 0) {
+        order_heap_rnd_inside[x] = 1;
+        order_heap_rnd.push_back(x);
     }
 }
 

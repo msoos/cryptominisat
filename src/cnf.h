@@ -126,7 +126,7 @@ public:
     #endif
     vector<VarData> varData;
     branch branch_strategy = branch::vsids;
-    vector<uint32_t> depth;
+    vector<uint32_t> depth; //for ancestors in intree probing
     uint32_t minNumVars = 0;
 
     uint64_t sumConflicts = 0;
