@@ -154,7 +154,6 @@ public:
     Links vmtf_links; // table of vmtf_links for decision queue
     Queue vmtf_queue;
     vector<uint64_t> vmtf_btab; // enqueue time stamps for queue
-    uint64_t vmtf_bumped = 0;
     void vmtf_update_queue_unassigned (uint32_t idx);
     void vmtf_init_enqueue (uint32_t idx);
     void vmtf_bump_queue (uint32_t var);

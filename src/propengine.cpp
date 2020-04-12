@@ -752,7 +752,7 @@ void PropEngine::vmtf_init_enqueue (uint32_t var) {
         assert(vmtf_queue.first == std::numeric_limits<uint32_t>::max());
         vmtf_queue.first = var;
     }
-    vmtf_btab[var] = ++vmtf_bumped;
+    vmtf_btab[var] = ++vmtf_queue.vmtf_bumped;
     l.prev = vmtf_queue.last;
     vmtf_queue.last = var;
     vmtf_update_queue_unassigned(vmtf_queue.last);
@@ -770,8 +770,8 @@ void PropEngine::vmtf_bump_queue (uint32_t var) {
     vmtf_queue.dequeue (vmtf_links, var);
     vmtf_queue.enqueue (vmtf_links, var);
 
-    assert (vmtf_bumped != std::numeric_limits<uint32_t>::max());
-    vmtf_btab[var] = ++vmtf_bumped;
+    assert (vmtf_queue.vmtf_bumped != std::numeric_limits<uint32_t>::max());
+    vmtf_btab[var] = ++vmtf_queue.vmtf_bumped;
     //LOG ("moved to front variable %d and vmtf_bumped to %" PRId64 "", idx, vmtf_btab[idx]);
     if (value(var) == l_Undef) {
         vmtf_update_queue_unassigned(var);

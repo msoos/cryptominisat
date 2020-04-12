@@ -139,19 +139,10 @@ void Searcher::updateVars(
     const vector<uint32_t>& /*outerToInter*/
     , const vector<uint32_t>& interToOuter
 ) {
+
     updateArray(var_act_vsids, interToOuter);
     updateArray(var_act_maple, interToOuter);
-    updateArray(vmtf_links, interToOuter);
-    updateArray(vmtf_btab, interToOuter);
-    vmtf_queue.last = getUpdatedVarMaxToMax(vmtf_queue.last, interToOuter);
-    vmtf_queue.first = getUpdatedVarMaxToMax(vmtf_queue.first, interToOuter);
-    vmtf_queue.unassigned = getUpdatedVarMaxToMax(vmtf_queue.unassigned, interToOuter);
-    vmtf_queue.vmtf_bumped = getUpdatedVarMaxToMax(vmtf_queue.vmtf_bumped, interToOuter);
-
-    for(auto& x: vmtf_links) {
-        x.prev = getUpdatedVarMaxToMax(x.prev, interToOuter);
-        x.next = getUpdatedVarMaxToMax(x.next, interToOuter);
-    }
+    rebuildOrderHeapVMTF();
 }
 
 template<bool update_bogoprops>
@@ -2085,13 +2076,14 @@ void Searcher::clean_clauses_if_needed()
     }
 }
 
-void Searcher::rebuildOrderHeap(branch which)
+void Searcher::rebuildOrderHeap()
 {
     if (solver->conf.verbosity) {
         cout << "c [branch] rebuilding order heap for branch: " <<
         branch_type_to_string(branch_strategy) << endl;
     }
     vector<uint32_t> vs;
+    vs.reserve(nVars());
     for (uint32_t v = 0; v < nVars(); v++) {
         if (varData[v].removed != Removed::none
             //NOTE: the level==0 check is needed because SLS calls this
@@ -2105,35 +2097,63 @@ void Searcher::rebuildOrderHeap(branch which)
         }
     }
 
-    switch(which) {
-        case branch::vsids:
-            #ifdef VERBOSE_DEBUG
-            cout << "c [branch] Building VSDIS order heap" << endl;
-            #endif
-            order_heap_vsids.build(vs);
-            break;
+    #ifdef VERBOSE_DEBUG
+    cout << "c [branch] Building VSDIS order heap" << endl;
+    #endif
+    order_heap_vsids.build(vs);
 
-        case branch::maple:
-            #ifdef VERBOSE_DEBUG
-            cout << "c [branch] Building MAPLE order heap" << endl;
-            #endif
-            order_heap_maple.build(vs);
-            break;
+    #ifdef VERBOSE_DEBUG
+    cout << "c [branch] Building MAPLE order heap" << endl;
+    #endif
+    order_heap_maple.build(vs);
 
-        case branch::rnd:
-            #ifdef VERBOSE_DEBUG
-            cout << "c [branch] Building RND order heap" << endl;
-            #endif
-            for(uint32_t v: vs) {
-                order_heap_rnd_inside[v] = 1;
-                order_heap_rnd.push_back(v);
-            }
-            break;
+    #ifdef VERBOSE_DEBUG
+    cout << "c [branch] Building RND order heap" << endl;
+    #endif
+    for(uint32_t v: vs) {
+        order_heap_rnd_inside[v] = 1;
+        order_heap_rnd.push_back(v);
+    }
 
-        case branch::vmtf:
-            assert(false && "We would need to filter here! TODO: pop all into a vector, then reinit VMTF from that FILTERED vector");
-            //should be fine
-            break;
+    //rebuildOrderHeapVMTF();
+}
+
+void Searcher::rebuildOrderHeapVMTF()
+{
+    #ifdef VERBOSE_DEBUG
+    cout << "c [branch] Building VMTF order heap" << endl;
+    #endif
+    //TODO fix
+    return;
+
+    vector<uint32_t> vs;
+    vs.reserve(nVars());
+    uint32_t v = pick_var_vmtf();
+    while(v != var_Undef) {
+        if (varData[v].removed != Removed::none
+            //NOTE: the level==0 check is needed because SLS calls this
+            //when there is a solution already, but we should only skip
+            //level 0 assignements
+            || (value(v) != l_Undef && varData[v].level == 0)
+        ) {
+            //
+        } else {
+            vs.push_back(v);
+        }
+        v = pick_var_vmtf();
+        cout << "v: " << v << endl;
+    }
+
+    //Clear it out
+    vmtf_queue = Queue();
+    vmtf_btab.clear();
+    vmtf_links.clear();
+    vmtf_btab.insert(vmtf_btab.end(), nVars(), 0);
+    vmtf_links.insert(vmtf_links.end(), nVars(), Link());
+
+    //Insert in reverse order
+    for(int i = (int)vs.size()-1; i >= 0; i--) {
+        vmtf_init_enqueue(vs[v]);
     }
 }
 
@@ -3529,10 +3549,6 @@ void Searcher::cancelUntil(uint32_t blevel)
                         #endif
                     }
                     varData[var].maple_cancelled = sumConflicts;
-                }
-
-                if (vmtf_bumped < vmtf_btab[var]) {
-                    vmtf_update_queue_unassigned(var);
                 }
 
                 assigns[var] = l_Undef;

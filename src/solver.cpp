@@ -2170,8 +2170,11 @@ lbool Solver::simplify_problem(const bool startup)
     } else if (ret == l_Undef) {
         check_stats();
         check_implicit_propagated();
-        rebuildOrderHeap(branch::vsids);
-        rebuildOrderHeap(branch::maple);
+        //NOTE:
+        // we have to rebuild HERE, or we'd rebuild every time solve()
+        // is called, which is called form the outside, sometimes 1000x
+        // in one second
+        rebuildOrderHeap();
         #ifdef DEBUG_ATTACH_MORE
         find_all_attach();
         test_all_clause_attached();
@@ -2187,8 +2190,11 @@ lbool Solver::simplify_problem(const bool startup)
         assert(confl.isNULL());
 
         finish_up_solve(ret);
-        rebuildOrderHeap(branch::vsids);
-        rebuildOrderHeap(branch::maple);
+        //NOTE:
+        // we have to rebuild HERE, or we'd rebuild every time solve()
+        // is called, which is called form the outside, sometimes 1000x
+        // in one second
+        rebuildOrderHeap();
         return ret;
     }
 }

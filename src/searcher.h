@@ -293,7 +293,8 @@ class Searcher : public HyperEngine
         double backup_random_var_freq = -1; ///<if restart has full random var branch, we save old value here
         void check_var_in_branch_strategy(uint32_t var) const;
         void set_branch_strategy(uint32_t iteration_num);
-        void rebuildOrderHeap(branch which);
+        void rebuildOrderHeap();
+        void rebuildOrderHeapVMTF();
         void print_order_heap();
         void clear_order_heap()
         {
