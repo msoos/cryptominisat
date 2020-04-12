@@ -133,7 +133,6 @@ struct ClauseStats
     uint32_t ttl:2;
     uint32_t which_red_array:3;
     uint32_t is_ternary_resolvent:1;
-    uint32_t drop_if_not_used:1;
     uint32_t locked_for_data_gen:1;
     union {
         float   activity;

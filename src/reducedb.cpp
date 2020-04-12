@@ -233,8 +233,6 @@ void ReduceDB::handle_lev1()
     uint32_t moved_w0 = 0;
     uint32_t used_recently = 0;
     uint32_t non_recent_use = 0;
-    uint32_t non_recent_use_dropped = 0;
-    uint32_t kept_droppable = 0;
     double myTime = cpuTime();
 
     size_t j = 0;
@@ -271,9 +269,6 @@ void ReduceDB::handle_lev1()
             } else {
                 solver->longRedCls[1][j++] = offset;
                 used_recently++;
-                if (cl->stats.drop_if_not_used) {
-                    kept_droppable++;
-                }
             }
         }
     }
@@ -283,8 +278,6 @@ void ReduceDB::handle_lev1()
         cout << "c [DBclean lev1]"
         << " used recently: " << used_recently
         << " not used recently&moved: " << non_recent_use
-        << " not used recently&dropped: " << non_recent_use_dropped
-        << " kept droppable: " << kept_droppable
         << " moved w0: " << moved_w0
         << solver->conf.print_times(cpuTime()-myTime)
         << endl;

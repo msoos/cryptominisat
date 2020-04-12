@@ -1608,7 +1608,6 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
         stats.is_ternary_resolvent = true;
         stats.glue = solver->conf.glue_put_lev1_if_below_or_eq;
         stats.which_red_array = 1;
-        stats.drop_if_not_used = true;
         stats.last_touched = solver->sumConflicts;
 
         tmp.clear();
