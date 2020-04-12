@@ -2082,8 +2082,8 @@ void Searcher::clean_clauses_if_needed()
 
 void Searcher::rebuildOrderHeap(branch which)
 {
-    if (solver->conf.verbosity >=2 ) {
-        cout << "c Rebuilding order heap for branch: " <<
+    if (solver->conf.verbosity) {
+        cout << "c [branch] rebuilding order heap for branch: " <<
         branch_type_to_string(branch_strategy) << endl;
     }
     vector<uint32_t> vs;
@@ -2103,22 +2103,21 @@ void Searcher::rebuildOrderHeap(branch which)
     switch(which) {
         case branch::vsids:
             #ifdef VERBOSE_DEBUG
-            cout << "Building VSDIS order heap" << endl;
+            cout << "c [branch] Building VSDIS order heap" << endl;
             #endif
             order_heap_vsids.build(vs);
             break;
 
         case branch::maple:
             #ifdef VERBOSE_DEBUG
-            cout << "Building MAPLE order heap" << endl;
-            order_heap_maple.build(vs);
+            cout << "c [branch] Building MAPLE order heap" << endl;
             #endif
+            order_heap_maple.build(vs);
             break;
 
         case branch::rnd:
             #ifdef VERBOSE_DEBUG
-            cout << "Building RND order heap" << endl;
-            order_heap_maple.build(vs);
+            cout << "c [branch] Building RND order heap" << endl;
             #endif
             for(uint32_t v: vs) {
                 order_heap_rnd_inside[v] = 1;
