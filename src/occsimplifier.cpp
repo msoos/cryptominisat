@@ -1605,10 +1605,11 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
     vector<Lit> tmp;
     for(const Tri& newcl: cl_to_add_ternary) {
         ClauseStats stats;
-        stats.is_ternary_resolvent = true;
         stats.glue = solver->conf.glue_put_lev1_if_below_or_eq;
         stats.which_red_array = 1;
-        stats.last_touched = solver->sumConflicts;
+        //TODO: should this be set? It would be more sane
+        //      but MASTER was faster this way.
+        //stats.last_touched = solver->sumConflicts;
 
         tmp.clear();
         for(uint32_t i = 0; i < newcl.size; i++) {
@@ -1628,6 +1629,9 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
             break;
 
         if (newCl != NULL) {
+            newCl->is_ternary_resolvent = true;
+            assert(newCl->stats.which_red_array == 1);
+            assert(newCl->stats.glue == solver->conf.glue_put_lev1_if_below_or_eq);
             #ifdef STATS_NEEDED
             bool to_dump = false;
             double myrnd = solver->mtrand.randDblExc();

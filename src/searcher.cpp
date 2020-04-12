@@ -334,7 +334,7 @@ void Searcher::debug_print_resolving_clause(const PropBy confl) const
 void Searcher::update_clause_glue_from_analysis(Clause* cl)
 {
     assert(cl->red());
-    if (cl->stats.is_ternary_resolvent) {
+    if (cl->is_ternary_resolvent) {
         return;
     }
     const unsigned new_glue = calc_glue(*cl);
@@ -430,7 +430,11 @@ void Searcher::add_literals_from_confl_to_learnt(
                 if (conf.update_glues_on_analyze) {
                     update_clause_glue_from_analysis(cl);
                 }
-                cl->stats.last_touched = sumConflicts;
+
+                #if !defined(STATS_NEEDED) && !defined(FINAL_PREDICTOR)
+                if (cl->stats.which_red_array == 1)
+                #endif
+                    cl->stats.last_touched = sumConflicts;
 
                 //If stats or predictor, bump all because during final
                 //we will need this data and during dump when stats is on

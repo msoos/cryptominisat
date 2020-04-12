@@ -118,7 +118,6 @@ struct ClauseStats
         #else
         which_red_array = 2;
         #endif
-        is_ternary_resolvent = false;
         locked_for_data_gen = 0;
         is_decision = false;
 
@@ -132,7 +131,6 @@ struct ClauseStats
     uint32_t marked_clause:1;
     uint32_t ttl:2;
     uint32_t which_red_array:3;
-    uint32_t is_ternary_resolvent:1;
     uint32_t locked_for_data_gen:1;
     union {
         float   activity;
@@ -261,6 +259,7 @@ public:
     uint16_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
     uint16_t is_distilled:1;
     uint16_t is_ternary_resolved:1;
+    uint16_t is_ternary_resolvent:1;
     uint16_t occurLinked:1;
     uint16_t must_recalc_abst:1;
     uint16_t _used_in_xor:1;
@@ -310,6 +309,7 @@ public:
         isRemoved = false;
         is_distilled = false;
         is_ternary_resolved = false;
+        is_ternary_resolvent = false;
         must_recalc_abst = true;
         _used_in_xor = false;
         _used_in_xor_full = false;
