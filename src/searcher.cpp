@@ -85,6 +85,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     mtrand.seed(conf.origSeed);
     hist.setSize(conf.shortTermHistorySize, conf.blocking_restart_trail_hist_length);
     cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
+    set_branch_strategy(0);
 
     #ifdef FINAL_PREDICTOR
     clustering = new ClusteringImp;
@@ -2273,7 +2274,10 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
         << " var_decay_max:" << var_decay << " var_decay:" << var_decay
         << endl;
     }
-    rebuildOrderHeap(branch_strategy);
+    assert(branch_strategy != branch::vmtf);
+    assert(branch_strategy != branch::rnd);
+    rebuildOrderHeap(branch::vsids);
+    rebuildOrderHeap(branch::maple);
 }
 
 inline void Searcher::dump_search_loop_stats(double myTime)
@@ -2361,7 +2365,6 @@ lbool Searcher::solve(
     lbool status = l_Undef;
 
     //rebuild_all_branch_strategy_setups();
-    set_branch_strategy(branch_strategy_num);
     setup_restart_strategy();
     check_calc_satzilla_features(true);
     check_calc_vardist_features(true);

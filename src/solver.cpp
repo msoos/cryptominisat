@@ -2170,6 +2170,7 @@ lbool Solver::simplify_problem(const bool startup)
     } else if (ret == l_Undef) {
         check_stats();
         check_implicit_propagated();
+        set_branch_strategy(branch_strategy_num);
         #ifdef DEBUG_ATTACH_MORE
         find_all_attach();
         test_all_clause_attached();
@@ -2185,6 +2186,7 @@ lbool Solver::simplify_problem(const bool startup)
         assert(confl.isNULL());
 
         finish_up_solve(ret);
+        set_branch_strategy(branch_strategy_num);
         return ret;
     }
 }
