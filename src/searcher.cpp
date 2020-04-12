@@ -1721,7 +1721,7 @@ void Searcher::print_restart_stats_base() const
 {
     cout << "c"
          << " " << std::setw(6) << restart_type_to_short_string(params.rest_type);
-    cout << " " << std::setw(5) << (int)VSIDS;
+    cout << " " << std::setw(6) << (VSIDS ? "vsids": "maple");
     cout << " " << std::setw(5) << sumRestarts();
 
     if (sumConflicts >  20000) {
@@ -1854,7 +1854,7 @@ bool Searcher::clean_clauses_if_needed()
 void Searcher::rebuildOrderHeap()
 {
     if (solver->conf.verbosity >= 2) {
-        cout << "c Rebuilding order heap" << endl;
+        cout << "c [branch] Rebuilding order heap" << endl;
     }
     vector<uint32_t> vs;
     for (uint32_t v = 0; v < nVars(); v++) {
