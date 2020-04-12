@@ -103,6 +103,7 @@ void ReduceDB::handle_lev2()
 {
     nbReduceDB_lev1++;
     solver->dump_memory_stats_to_sql();
+    size_t orig_size = solver->longRedCls[2].size();
 
     const double myTime = cpuTime();
     assert(solver->watches.get_smudged_list().empty());
@@ -138,6 +139,8 @@ void ReduceDB::handle_lev2()
 
     if (solver->conf.verbosity >= 2) {
         cout << "c [DBclean lev2]"
+        << " confl: " << solver->sumConflicts
+        << " orig size: " << orig_size
         << " marked: " << cl_marked
         << " ttl:" << cl_ttl
         << " locked_solver:" << cl_locked_solver
@@ -185,11 +188,15 @@ void ReduceDB::dump_sql_cl_data()
 
 void ReduceDB::handle_lev1()
 {
+    #ifdef VERBOSE_DEBUG
+    cout << "c handle_lev1()" << endl;
+    #endif
     nbReduceDB_lev1++;
     uint32_t moved_w0 = 0;
     uint32_t used_recently = 0;
     uint32_t non_recent_use = 0;
     double myTime = cpuTime();
+    size_t orig_size = solver->longRedCls[1].size();
 
     size_t j = 0;
     for(size_t i = 0
@@ -198,6 +205,13 @@ void ReduceDB::handle_lev1()
     ) {
         const ClOffset offset = solver->longRedCls[1][i];
         Clause* cl = solver->cl_alloc.ptr(offset);
+        #ifdef VERBOSE_DEBUG
+        cout << "offset: " << offset << " cl->stats.last_touched: " << cl->stats.last_touched
+        << " which_red_array:" << cl->stats.which_red_array << endl
+        << " -- cl:" << *cl << " tern:" << cl->is_ternary
+        << endl;
+        #endif
+
         if (cl->stats.which_red_array == 0) {
             solver->longRedCls[0].push_back(offset);
             moved_w0++;
@@ -209,7 +223,6 @@ void ReduceDB::handle_lev1()
             if (cl->is_ternary) {
                 must_touch *= solver->conf.ternary_keep_mult;
             }
-
             if (!solver->clause_locked(*cl, offset)
                 && cl->stats.last_touched + must_touch < solver->sumConflicts
             ) {
@@ -228,6 +241,8 @@ void ReduceDB::handle_lev1()
 
     if (solver->conf.verbosity >= 2) {
         cout << "c [DBclean lev1]"
+        << " confl: " << solver->sumConflicts
+        << " orig size: " << orig_size
         << " used recently: " << used_recently
         << " not used recently: " << non_recent_use
         << " moved w0: " << moved_w0

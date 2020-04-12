@@ -2102,7 +2102,7 @@ lbool Solver::simplify_problem(const bool startup)
             conf.orig_global_timeout_multiplier*conf.global_multiplier_multiplier_max
         );
     if (conf.verbosity)
-        cout << "c global_timeout_multiplier: " << conf. global_timeout_multiplier << endl;
+        cout << "c global_timeout_multiplier: " << std::setprecision(4) <<  conf.global_timeout_multiplier << endl;
 
     solveStats.num_simplify++;
     solveStats.num_simplify_this_solve_call++;
