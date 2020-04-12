@@ -1346,6 +1346,18 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             if (solver->conf.doFindXors) {
                 XorFinder finder(this, solver);
                 finder.find_xors();
+                #ifdef USE_M4RI
+                if (topLevelGauss != NULL) {
+                    auto xors = finder.remove_xors_without_connecting_vars(solver->xorclauses);
+                    vector<Lit> out_changed_occur;
+                    topLevelGauss->toplevelgauss(xors, &out_changed_occur);
+                    //these may have changed, recalculating occur
+                    for(Lit lit: out_changed_occur) {
+                        n_occurs[lit.toInt()] = calc_occ_data(lit);
+                        n_occurs[(~lit).toInt()] = calc_occ_data(~lit);
+                    }
+                }
+                #endif
                 runStats.xorTime += finder.get_stats().findTime;
             } else {
                 //TODO this is something VERY fishy
