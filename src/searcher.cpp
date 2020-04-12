@@ -3404,7 +3404,7 @@ void Searcher::cancelUntil(uint32_t blevel)
         ) {
             #ifdef VERBOSE_DEBUG
             cout
-            << "Canceling lit " << trail[sublevel]
+            << "Canceling lit " << trail[sublevel].lit
             << " sublevel: " << sublevel
             << endl;
             #endif
@@ -3523,10 +3523,11 @@ void Searcher::cancelUntil(uint32_t blevel)
     }
 
     #ifdef VERBOSE_DEBUG
-    cout
-    << "Canceling finished. Now at level: " << decisionLevel()
-    << " sublevel: " << trail.size()-1
-    << endl;
+    cout << "Canceling finished. Now at level: " << decisionLevel();
+    if (trail.size() > 0) {
+        cout << " sublevel: " << trail.size()-1;
+    }
+    cout << endl;
     #endif
 }
 

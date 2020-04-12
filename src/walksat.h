@@ -118,6 +118,7 @@ private:
     /* Data structures for vars: arrays of size numvars indexed by var */
 
     lbool *assigns = NULL;         /* value of each var */
+    lbool *best_assigns = NULL;
     uint32_t *breakcount = NULL;   /* number of clauses that become unsat if var if flipped */
     uint32_t *makecount = NULL;    /* number of clauses that become sat if var if flipped */
 
@@ -179,6 +180,7 @@ private:
     double nonsuc_sum_avgfalse = 0.0;
     double nonsuc_mean_avgfalse;
     int nonsuc_number_sampled_runs = 0;
+    uint32_t lowestbad;
     MTRand mtrand;
 
     //helpers
