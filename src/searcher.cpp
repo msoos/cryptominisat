@@ -2215,7 +2215,8 @@ void Searcher::print_iteration_solving_stats()
 Lit Searcher::pickBranchLit()
 {
     #ifdef VERBOSE_DEBUG
-    cout << "picking decision variable, dec. level: " << decisionLevel() << " ";
+    cout << "picking decision variable, dec. level: "
+    << decisionLevel() << endl;
     #endif
 
     Lit next = lit_Undef;
@@ -3076,7 +3077,7 @@ void Searcher::cancelUntil(uint32_t blevel)
         ) {
             #ifdef VERBOSE_DEBUG
             cout
-            << "Canceling lit " << trail[sublevel]
+            << "Canceling lit " << trail[sublevel].lit
             << " sublevel: " << sublevel
             << endl;
             #endif
@@ -3129,10 +3130,11 @@ void Searcher::cancelUntil(uint32_t blevel)
     }
 
     #ifdef VERBOSE_DEBUG
-    cout
-    << "Canceling finished. Now at level: " << decisionLevel()
-    << " sublevel: " << trail.size()-1
-    << endl;
+    cout << "Canceling finished. Now at level: " << decisionLevel();
+    if (trail.size() > 0) {
+        cout << " sublevel: " << trail.size()-1;
+    }
+    cout << endl;
     #endif
 }
 
