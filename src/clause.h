@@ -122,6 +122,7 @@ struct ClauseStats
         is_decision = false;
 
         //TODO FIX, this is WRONG
+        //TODO fix -- BUG
         activity = 1.0;
         last_touched = 0;
     }
