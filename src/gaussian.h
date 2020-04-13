@@ -120,6 +120,7 @@ class EGaussian {
     //Reason generation
     vector<XorReason> xor_reasons;
     vector<Lit> tmp_clause;
+    uint32_t get_max_level(const GaussQData& gqd, const uint32_t row_n);
 
     //Initialisation
     void eliminate();

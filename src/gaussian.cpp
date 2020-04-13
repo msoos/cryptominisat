@@ -577,6 +577,28 @@ void EGaussian::delete_gausswatch(
     assert(debug_find);
 }
 
+uint32_t EGaussian::get_max_level(const GaussQData& gqd, const uint32_t row_n)
+{
+    auto cl = get_reason(row_n);
+    uint32_t nMaxLevel = gqd.currLevel;
+    uint32_t nMaxInd = 1;
+
+    for (uint32_t i = 1; i < cl->size(); i++) {
+        Lit l = (*cl)[i];
+        uint32_t nLevel = solver->varData[l.var()].level;
+        if (nLevel > nMaxLevel) {
+            nMaxLevel = nLevel;
+            nMaxInd = i;
+        }
+    }
+
+    //should we??
+    if (nMaxInd != 1) {
+        std::swap((*cl)[1], (*cl)[nMaxInd]);
+    }
+    return nMaxLevel;
+}
+
 bool EGaussian::find_truths(
     GaussWatched*& i,
     GaussWatched*& j,
@@ -682,8 +704,8 @@ bool EGaussian::find_truths(
             if (gqd.currLevel == solver->decisionLevel()) {
                 solver->enqueue(ret_lit_prop, gqd.currLevel, PropBy(matrix_no, row_n));
             } else {
-                //TODO
-                assert(false && "TODO");
+                uint32_t nMaxLevel = get_max_level(gqd, row_n);
+                solver->enqueue(ret_lit_prop, nMaxLevel, PropBy(matrix_no, row_n));
             }
             update_cols_vals_set(ret_lit_prop);
             gqd.ret = gauss_res::prop;
@@ -965,8 +987,8 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                         if (gqd.currLevel == solver->decisionLevel()) {
                             solver->enqueue(ret_lit_prop, gqd.currLevel, PropBy(matrix_no, row_n));
                         } else {
-                            //TODO
-                            assert(false && "TODO");
+                            uint32_t nMaxLevel = get_max_level(gqd, row_n);
+                            solver->enqueue(ret_lit_prop, nMaxLevel, PropBy(matrix_no, row_n));
                         }
                         update_cols_vals_set(ret_lit_prop);
                         gqd.ret = gauss_res::prop;
