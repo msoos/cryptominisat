@@ -1532,11 +1532,6 @@ lbool Solver::solve_with_assumptions(
     }
     #endif
 
-    #ifdef USE_GAUSS
-    assert(false && "Due to non-chrono backtracking, GAUSS is broken");
-    #endif
-
-
     solveStats.num_solve_calls++;
     check_config_parameters();
 

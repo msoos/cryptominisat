@@ -599,9 +599,12 @@ void Searcher::create_learnt_clause(PropBy confl)
             break;
         }
         #ifdef USE_GAUSS
-        case xor_t:
-            assert(false && "MUST IMPLEMENT");
+        case xor_t: {
+            vector<Lit>* cl = gmatrices[confl.get_matrix_num()]->
+                get_reason(confl.get_row_num());
+            lit0 = (*cl)[0];
             break;
+        }
         #endif
 
         case clause_t : {
@@ -3608,24 +3611,45 @@ ConflictData Searcher::find_conflict_level(PropBy& pb)
         }
 
     } else {
-        #ifdef USE_GAUSS
-        assert(false && "MUST IMPLEMENT xor_t here");
-        #endif
-        assert(pb.getType() == PropByType::clause_t);
-        const ClOffset offs = pb.get_offset();
-        Clause& conflCl = *cl_alloc.ptr(offs);
-        data.nHighestLevel = varData[conflCl[0].var()].level;
+        Lit* clause = NULL;
+        uint32_t size = 0;
+        ClOffset offs;
+        switch(pb.getType()) {
+            case PropByType::clause_t: {
+                offs = pb.get_offset();
+                Clause& conflCl = *cl_alloc.ptr(offs);
+                clause = conflCl.getData();
+                size = conflCl.size();
+                break;
+            }
 
+            #ifdef USE_GAUSS
+            case PropByType::xor_t: {
+                vector<Lit>* cl = gmatrices[pb.get_matrix_num()]->
+                    get_reason(pb.get_row_num());
+                    clause = cl->data();
+                    size = cl->size();
+                break;
+            }
+            #endif
+
+            case PropByType::binary_t:
+            case PropByType::null_clause_t:
+                assert(false);
+                break;
+        }
+
+        data.nHighestLevel = varData[clause[0].var()].level;
         if (data.nHighestLevel == decisionLevel()
-            && varData[conflCl[1].var()].level == decisionLevel()
+            && varData[clause[1].var()].level == decisionLevel()
         ) {
             return data;
         }
 
         uint32_t highestId = 0;
         // find the largest decision level in the clause
-        for (uint32_t nLitId = 1; nLitId < conflCl.size(); ++nLitId) {
-            uint32_t nLevel = varData[conflCl[nLitId].var()].level;
+        for (uint32_t nLitId = 1; nLitId < size; ++nLitId) {
+            uint32_t nLevel = varData[clause[nLitId].var()].level;
             if (nLevel > data.nHighestLevel) {
                 highestId = nLitId;
                 data.nHighestLevel = nLevel;
@@ -3633,10 +3657,10 @@ ConflictData Searcher::find_conflict_level(PropBy& pb)
         }
 
         if (highestId != 0) {
-            std::swap(conflCl[0], conflCl[highestId]);
-            if (highestId > 1) {
-                removeWCl(watches[conflCl[highestId]], pb.get_offset());
-                watches[conflCl[0]].push(Watched(offs, conflCl[1]));
+            std::swap(clause[0], clause[highestId]);
+            if (highestId > 1 && pb.getType() == clause_t) {
+                removeWCl(watches[clause[highestId]], pb.get_offset());
+                watches[clause[0]].push(Watched(offs, clause[1]));
             }
         }
     }
