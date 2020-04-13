@@ -374,13 +374,13 @@ class Tester:
             cmd += "--varelimover %d " % random.gammavariate(1, 20)
             cmd += "--memoutmult %0.12f " % random.gammavariate(0.03, 50)
             cmd += "--verb %d " % random.choice([0, 0, 0, 0, 1, 2])
-            cmd += "--maple %d " % random.choice([0, 1])
             if random.randint(0, 2) == 1:
                 cmd += "--reconf %d " % random.choice([3, 4, 6, 7, 12, 13, 14, 15, 16])
             # cmd += "--undef %d " % random.choice([0, 1])
             cmd += " --reconfat %d " % random.randint(0, 2)
+            cmd += " --detachxor %d " % random.choice([0, 1])
             cmd += "--restart %s " % random.choice(
-                ["geom", "glue", "luby", "glue-geom", "glue-geom-luby"])
+                ["geom", "glue", "luby", "glue-geom"])
             cmd += "--adjustglue %f " % random.choice([0, 0.5, 0.7, 1.0])
             cmd += "--gluehist %s " % random.randint(1, 500)
             cmd += "--updateglueonanalysis %s " % random.randint(0, 1)
@@ -691,15 +691,10 @@ class Tester:
         print("--- NORMAL TESTING ---")
         self.num_threads = random.choice([1]+[random.randint(2,4)])
         self.num_threads = min(options.max_threads, self.num_threads)
-        self.this_gauss_on = "autodisablegauss" in self.extra_opts_supported and random.choice([True, False, False])
-
-        # if we are asked to do gauss, force it on.
-        if options.gauss:
-            assert "autodisablegauss" in self.extra_opts_supported
-            self.this_gauss_on = True
+        self.this_gauss_on = "autodisablegauss" in self.extra_opts_supported
 
         # drat turns off a bunch of systems, like symmetry breaking so use it about 50% of time
-        self.drat = self.num_threads == 1 and random.randint(0, 10) < 5 and (not self.this_gauss_on)
+        self.drat = self.num_threads == 1 and (random.randint(0, 10) < 5) and (not self.this_gauss_on)
 
         self.sqlitedbfname = None
         self.preproc = False
