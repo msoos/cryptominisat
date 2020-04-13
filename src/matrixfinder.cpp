@@ -428,7 +428,7 @@ uint32_t MatrixFinder::setMatrixes()
                 clash_vars_unused.insert(x.clash_vars.begin(), x.clash_vars.end());
             }
             if (solver->conf.verbosity) {
-                if (m.rows > 3) {
+                if (m.rows > 5 || solver->conf.verbosity >= 2) {
                     cout << "c [matrix] UNused matrix   ";
                 }
             }
@@ -440,7 +440,7 @@ uint32_t MatrixFinder::setMatrixes()
             if (!solver->conf.verbosity)
                 continue;
 
-            if (!use_matrix && m.rows <=3 && solver->conf.verbosity < 2)
+            if (!use_matrix && m.rows <=5 && solver->conf.verbosity < 2)
                 continue;
 
             cout << std::setw(7) << m.rows << " x"

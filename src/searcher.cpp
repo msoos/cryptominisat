@@ -2198,6 +2198,9 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
     size_t total = 0;
     branch_type_total select[20];
     if (conf.verbosity) {
+        if (conf.verbosity >= 2) {
+            cout << "c [branch] orig text: " << conf.branch_strategy_setup << endl;
+        }
         cout << "c [branch] selection: ";
     }
 
@@ -2650,7 +2653,7 @@ void Searcher::finish_up_solve(const lbool status)
 {
     print_solution_type(status);
     #ifdef USE_GAUSS
-    if (conf.verbosity >= 1) {
+    if (conf.verbosity >= 1 && status != l_Undef) {
         print_matrix_stats();
     }
     #endif
