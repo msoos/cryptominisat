@@ -303,23 +303,23 @@ uint32_t MatrixFinder::setMatrixes()
 
 
         //Over- or undersized
-        if (m.rows < solver->conf.gaussconf.min_matrix_rows
-            || m.rows > solver->conf.gaussconf.max_matrix_rows
-        ) {
-            if (m.rows > solver->conf.gaussconf.max_matrix_rows
-                && solver->conf.verbosity
-            ) {
+        if (m.rows > solver->conf.gaussconf.max_matrix_rows) {
+            use_matrix = false;
+            if (solver->conf.verbosity) {
                 cout << "c [matrix] Too many rows in matrix: " << m.rows
                 << " -> set usage to NO" << endl;
             }
+        }
 
-            if (m.rows < solver->conf.gaussconf.min_matrix_rows
-                && solver->conf.verbosity >= 2
-            ) {
+        if (solver->conf.sampling_vars == NULL &&
+            m.rows < solver->conf.gaussconf.min_matrix_rows)
+        {
+            use_matrix = false;
+            too_few_rows_matrix++;
+            if (solver->conf.verbosity >= 2) {
                 cout << "c [matrix] Too few rows in matrix: " << m.rows
                 << " -> set usage to NO" << endl;
             }
-            use_matrix = false;
         }
 
         //calculate sampling var ratio
@@ -402,12 +402,6 @@ uint32_t MatrixFinder::setMatrixes()
             }
         }
 
-        //If there are no sampling vars, turn off small matrixes
-        if (m.rows <= 5 && solver->conf.sampling_vars == NULL) {
-            use_matrix = false;
-            too_few_rows_matrix++;
-        }
-
         if (use_matrix) {
             solver->gmatrices.push_back(
                 new EGaussian(solver, realMatrixNum, xorsInMatrix[i]));
@@ -428,7 +422,9 @@ uint32_t MatrixFinder::setMatrixes()
                 clash_vars_unused.insert(x.clash_vars.begin(), x.clash_vars.end());
             }
             if (solver->conf.verbosity) {
-                if (m.rows > 5 || solver->conf.verbosity >= 2) {
+                if (m.rows > solver->conf.gaussconf.min_matrix_rows ||
+                    solver->conf.verbosity >= 2)
+                {
                     cout << "c [matrix] UNused matrix   ";
                 }
             }
@@ -440,8 +436,12 @@ uint32_t MatrixFinder::setMatrixes()
             if (!solver->conf.verbosity)
                 continue;
 
-            if (!use_matrix && m.rows <=5 && solver->conf.verbosity < 2)
+            if (!use_matrix &&
+                m.rows <= solver->conf.gaussconf.min_matrix_rows &&
+                solver->conf.verbosity < 2)
+            {
                 continue;
+            }
 
             cout << std::setw(7) << m.rows << " x"
             << std::setw(5) << reverseTable[i].size()
