@@ -121,9 +121,7 @@ struct ClauseStats
         locked_for_data_gen = 0;
         is_decision = false;
 
-        //TODO FIX, this is WRONG
-        //TODO fix -- BUG
-        activity = 1.0;
+        activity = 0;
         last_touched = 0;
     }
 
