@@ -230,8 +230,8 @@ bool MatrixFinder::findMatrixes(bool& can_detach, bool simplify_xors)
     const bool time_out =  false;
     const double time_used = cpuTime() - myTime;
     if (solver->conf.verbosity) {
-        cout << "c Found matrices: " << numMatrixes
-        << " from " << xors.size() << " xors"
+        cout << "c Using " << numMatrixes
+        << " matrices recoverd from " << xors.size() << " xors"
         << solver->conf.print_times(time_used, time_out)
         << endl;
     }
@@ -291,6 +291,7 @@ uint32_t MatrixFinder::setMatrixes()
 
     uint32_t realMatrixNum = 0;
     uint32_t unusedMatrix = 0;
+    uint32_t too_few_rows_matrix = 0;
     for (int a = matrix_no-1; a >= 0; a--) {
         MatrixShape& m = matrix_shape[a];
         uint32_t i = m.num;
@@ -313,7 +314,7 @@ uint32_t MatrixFinder::setMatrixes()
             }
 
             if (m.rows < solver->conf.gaussconf.min_matrix_rows
-                && solver->conf.verbosity
+                && solver->conf.verbosity >= 2
             ) {
                 cout << "c [matrix] Too few rows in matrix: " << m.rows
                 << " -> set usage to NO" << endl;
@@ -357,7 +358,7 @@ uint32_t MatrixFinder::setMatrixes()
 
         //Over the max number of matrixes
         if (realMatrixNum >= solver->conf.gaussconf.max_num_matrices) {
-            if (solver->conf.verbosity) {
+            if (solver->conf.verbosity && solver->conf.verbosity >= 2) {
                 cout << "c [matrix] above max number of matrixes -> set usage to NO" << endl;
             }
             use_matrix = false;
@@ -401,6 +402,12 @@ uint32_t MatrixFinder::setMatrixes()
             }
         }
 
+        //If there are no sampling vars, turn off small matrixes
+        if (m.rows <= 5 && solver->conf.sampling_vars == NULL) {
+            use_matrix = false;
+            too_few_rows_matrix++;
+        }
+
         if (use_matrix) {
             solver->gmatrices.push_back(
                 new EGaussian(solver, realMatrixNum, xorsInMatrix[i]));
@@ -420,16 +427,20 @@ uint32_t MatrixFinder::setMatrixes()
                 //cout<< "c [matrix]xor not in matrix, now unused_xors size: " << unused_xors.size() << endl;
                 clash_vars_unused.insert(x.clash_vars.begin(), x.clash_vars.end());
             }
-            if (solver->conf.verbosity >= 1) {
-                cout << "c [matrix] UNused matrix   ";
+            if (solver->conf.verbosity) {
+                if (m.rows > 3) {
+                    cout << "c [matrix] UNused matrix   ";
+                }
             }
             unusedMatrix++;
         }
 
         if (solver->conf.verbosity) {
             double avg = (double)m.sum_xor_sizes/(double)m.rows;
+            if (!solver->conf.verbosity)
+                continue;
 
-            if (!use_matrix && solver->conf.verbosity < 1)
+            if (!use_matrix && m.rows <=3 && solver->conf.verbosity < 2)
                 continue;
 
             cout << std::setw(7) << m.rows << " x"
@@ -448,7 +459,8 @@ uint32_t MatrixFinder::setMatrixes()
     }
 
     if (solver->conf.verbosity && unusedMatrix > 0) {
-        cout << "c [matrix] unused matrices: " << unusedMatrix << endl;
+        cout << "c [matrix] unused matrices: " << unusedMatrix
+        <<  " of which too few rows: " << too_few_rows_matrix << endl;
     }
 
     return realMatrixNum;
