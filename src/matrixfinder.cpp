@@ -311,9 +311,7 @@ uint32_t MatrixFinder::setMatrixes()
             }
         }
 
-        if (solver->conf.sampling_vars == NULL &&
-            m.rows < solver->conf.gaussconf.min_matrix_rows)
-        {
+        if (m.rows < solver->conf.gaussconf.min_matrix_rows) {
             use_matrix = false;
             too_few_rows_matrix++;
             if (solver->conf.verbosity >= 2) {
