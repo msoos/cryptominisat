@@ -3398,7 +3398,7 @@ void Solver::reconfigure(int val)
         }
 
         case 16: {
-            conf.branch_strategy_setup = "maple";
+            conf.branch_strategy_setup = "maple1";
             break;
         }
 
