@@ -28,6 +28,8 @@ THE SOFTWARE.
 #include "cl_predictors.h"
 #endif
 
+// #define VERBOSE_DEBUG
+
 #include <functional>
 #include <cmath>
 

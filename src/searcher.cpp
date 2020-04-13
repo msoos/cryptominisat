@@ -142,7 +142,9 @@ void Searcher::updateVars(
 
     updateArray(var_act_vsids, interToOuter);
     updateArray(var_act_maple, interToOuter);
+    #ifdef VMTF_NEEDED
     rebuildOrderHeapVMTF();
+    #endif
 }
 
 template<bool update_bogoprops>
@@ -186,12 +188,11 @@ inline void Searcher::add_lit_to_learnt(
                 varData[var].maple_conflicted++;
                 break;
 
+            #ifdef VMTF_NEEDED
             case branch::vmtf:
                 implied_by_learnts.push_back(var);
                 break;
-
-            case branch::rnd:
-                break;
+            #endif
         }
     }
 
@@ -733,6 +734,7 @@ void Searcher::print_debug_resolution_data(const PropBy confl)
 #endif
 }
 
+#ifdef VMTF_NEEDED
 struct analyze_bumped_rank {
   Searcher * internal;
   analyze_bumped_rank (Searcher * i) : internal (i) { }
@@ -751,6 +753,7 @@ struct analyze_bumped_smaller {
     return s < t;
   }
 };
+#endif
 
 template<bool update_bogoprops>
 void Searcher::analyze_conflict(
@@ -871,6 +874,7 @@ void Searcher::analyze_conflict(
                 toClear.clear();
                 break;
             }
+            #ifdef VMTF_NEEDED
             case branch::vmtf:
                 std::sort(implied_by_learnts.begin(),
                           implied_by_learnts.end(),
@@ -881,6 +885,7 @@ void Searcher::analyze_conflict(
                 }
                 implied_by_learnts.clear();
                 break;
+            #endif
             default:
                 break;
         }
@@ -1180,10 +1185,11 @@ void Searcher::print_order_heap()
             cout << "MAPLE order heap:" << endl;
             order_heap_maple.print_heap();
             break;
-        case branch::rnd:
+        #ifdef VMTF_NEEDED
         case branch::vmtf:
             assert(false && "Not implemented yet");
             break;
+        #endif
     }
 }
 
@@ -2110,14 +2116,13 @@ void Searcher::rebuildOrderHeap()
     #ifdef VERBOSE_DEBUG
     cout << "c [branch] Building RND order heap" << endl;
     #endif
-    for(uint32_t v: vs) {
-        order_heap_rnd_inside[v] = 1;
-        order_heap_rnd.push_back(v);
-    }
 
-    //rebuildOrderHeapVMTF();
+    #ifdef STATS_NEEDED
+    rebuildOrderHeapVMTF();
+    #endif
 }
 
+#ifdef STATS_NEEDED
 void Searcher::rebuildOrderHeapVMTF()
 {
     #ifdef VERBOSE_DEBUG
@@ -2156,6 +2161,7 @@ void Searcher::rebuildOrderHeapVMTF()
         vmtf_init_enqueue(vs[v]);
     }
 }
+#endif
 
 struct branch_type_total{
     branch_type_total() {}
@@ -2201,17 +2207,16 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
         size_t vsids2 = conf.branch_strategy_setup.find("vsids2", start);
         smallest = std::min(vsids2, smallest);
 
+        #ifdef VMTF_NEEDED
         size_t vmtf = conf.branch_strategy_setup.find("vmtf", start);
         smallest = std::min(vmtf, smallest);
+        #endif
 
         size_t maple1 = conf.branch_strategy_setup.find("maple1", start);
         smallest = std::min(maple1, smallest);
 
         size_t maple2 = conf.branch_strategy_setup.find("maple2", start);
         smallest = std::min(maple2, smallest);
-
-        size_t rnd = conf.branch_strategy_setup.find("rnd", start);
-        smallest = std::min(rnd, smallest);
 
         if (smallest == std::string::npos) {
             break;
@@ -2233,12 +2238,14 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
                 cout << "VSIDS2";
             }
         }
+        #ifdef VMTF_NEEDED
         else if (smallest == vmtf) {
             select[total++]=  branch_type_total(branch::vmtf);
             if (conf.verbosity) {
                 cout << "VMTF";
             }
         }
+        #endif
         else if (smallest == maple1) {
             //TODO should we do this incremental stuff?
             //maple_step_size = solver->conf.orig_step_size;
@@ -2253,12 +2260,6 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
             select[total++]= branch_type_total(branch::maple, 0.90, 0.90);
             if (conf.verbosity) {
                 cout << "MAPLE2";
-            }
-        }
-        else if (smallest == rnd) {
-            select[total++]= branch_type_total(branch::rnd);
-            if (conf.verbosity) {
-                cout << "RND";
             }
         } else {
             assert(false);
@@ -2294,8 +2295,6 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
         << " var_decay_max:" << var_decay << " var_decay:" << var_decay
         << endl;
     }
-    assert(branch_strategy != branch::vmtf);
-    assert(branch_strategy != branch::rnd);
 }
 
 inline void Searcher::dump_search_loop_stats(double myTime)
@@ -2731,12 +2730,11 @@ inline Lit Searcher::pickBranchLit()
         case branch::maple:
             v = pick_var_vsids_maple();
             break;
+        #ifdef VMTF_NEEDED
         case branch::vmtf:
             v = pick_var_vmtf();
             break;
-        case branch::rnd:
-            v = pick_random_var();
-            break;
+        #endif
     }
 
     #ifdef SLOW_DEBUG
@@ -2755,29 +2753,7 @@ inline Lit Searcher::pickBranchLit()
     return next;
 }
 
-uint32_t Searcher::pick_random_var()
-{
-    uint32_t next_var = var_Undef;
-    while(!order_heap_rnd.empty()
-        && next_var == var_Undef)
-    {
-        uint32_t at = mtrand.randInt(order_heap_rnd.size()-1);
-        next_var = order_heap_rnd[at];
-        order_heap_rnd_inside[next_var] = 0;
-        std::swap(order_heap_rnd[at], order_heap_rnd[order_heap_rnd.size()-1]);
-        order_heap_rnd.pop_back();
-        if (value(next_var) == l_Undef
-            && solver->varData[next_var].removed == Removed::none
-        ) {
-            stats.decisionsRand++;
-        } else {
-            next_var = var_Undef;
-        }
-    }
-
-    return next_var;
-}
-
+#ifdef VMTF_NEEDED
 uint32_t Searcher::pick_var_vmtf()
 {
     uint64_t searched = 0;
@@ -2799,6 +2775,7 @@ uint32_t Searcher::pick_var_vmtf()
     //LOG ("next queue decision variable %d vmtf_bumped %" PRId64 "", res, vmtf_bumped (res));
     return res;
 }
+#endif
 
 uint32_t Searcher::pick_var_vsids_maple()
 {
@@ -3176,10 +3153,10 @@ size_t Searcher::mem_used() const
     mem += var_act_maple.capacity()*sizeof(uint32_t);
     mem += order_heap_vsids.mem_used();
     mem += order_heap_maple.mem_used();
-    mem += order_heap_rnd.capacity()*sizeof(uint32_t);
-    mem += order_heap_rnd_inside.capacity()*sizeof(unsigned char);
+    #ifdef VMTF_NEEDED
     mem += vmtf_btab.capacity()*sizeof(uint64_t);
     mem += vmtf_links.capacity()*sizeof(Link);
+    #endif
     mem += learnt_clause.capacity()*sizeof(Lit);
     mem += hist.mem_used();
     mem += conflict.capacity()*sizeof(Lit);
@@ -3591,14 +3568,12 @@ void Searcher::check_var_in_branch_strategy(uint32_t int_var) const
             assert(order_heap_maple.inHeap(int_var));
             break;
 
-        case branch::rnd:
-            assert(order_heap_rnd_inside[int_var]);
-            break;
-
+        #ifdef VMTF_NEEDED
         case branch::vmtf:
-            //vmtf_links[int_var].
+            assert(false);
             //TODO VMTF
             break;
+        #endif
     }
 }
 
@@ -3766,11 +3741,10 @@ void Searcher::bump_var_importance(uint32_t var)
                 varData[var].maple_conflicted+=2;
                 break;
 
+            #ifdef VMTF_NEEDED
             case branch::vmtf:
                 vmtf_bump_queue(var);
                 break;
-
-            case branch::rnd:
-                break;
+            #endif
         }
 }

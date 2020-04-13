@@ -300,8 +300,10 @@ class Searcher : public HyperEngine
         {
             order_heap_vsids.clear();
             order_heap_maple.clear();
+            #ifdef STATS_NEEDED
             order_heap_rnd.clear();
-            //TODO VMTF
+            assert(false&&"Clear VMTF here please")
+            #endif
         }
         uint32_t branch_strategy_num = 0;
 
@@ -476,6 +478,7 @@ inline void Searcher::insert_var_order(const uint32_t x, branch type)
                 order_heap_maple.insert(x);
             }
             break;
+        #ifdef STATS_NEEDED
         case branch::vmtf:
             // For VMTF we need to update the 'queue.unassigned' pointer in case this
             // variables sits after the variable to which 'queue.unassigned' currently
@@ -485,13 +488,7 @@ inline void Searcher::insert_var_order(const uint32_t x, branch type)
                 vmtf_update_queue_unassigned (x);
             }
             break;
-
-        case branch::rnd:
-            if (order_heap_rnd_inside[x] == 0) {
-                order_heap_rnd_inside[x] = 1;
-                order_heap_rnd.push_back(x);
-            }
-            break;
+        #endif
     }
 }
 
@@ -513,15 +510,10 @@ inline void Searcher::insert_var_order_all(const uint32_t x)
 
         order_heap_maple.insert(x);
     }
-    vmtf_init_enqueue(x);
 
-    if (order_heap_rnd_inside.size() < x+1) {
-        order_heap_rnd_inside.insert(order_heap_rnd_inside.end(), order_heap_rnd_inside.size()-x+1, 0);
-    }
-    if (order_heap_rnd_inside[x] == 0) {
-        order_heap_rnd_inside[x] = 1;
-        order_heap_rnd.push_back(x);
-    }
+    #ifdef VMTF_NEEDED
+    vmtf_init_enqueue(x);
+    #endif
 }
 
 template<bool update_bogoprops>

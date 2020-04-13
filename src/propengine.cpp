@@ -70,11 +70,12 @@ void PropEngine::new_var(const bool bva, uint32_t orig_outer)
 {
     CNF::new_var(bva, orig_outer);
 
-    order_heap_rnd_inside.insert(order_heap_rnd_inside.end(), 1, 0);
-    vmtf_btab.insert(vmtf_btab.end(), 1, 0);
-    vmtf_links.insert(vmtf_links.end(), 1, Link());
     var_act_vsids.insert(var_act_vsids.end(), 1, 0);
     var_act_maple.insert(var_act_maple.end(), 1, 0);
+    #ifdef VMTF_NEEDED
+    vmtf_btab.insert(vmtf_btab.end(), 1, 0);
+    vmtf_links.insert(vmtf_links.end(), 1, Link());
+    #endif
 
     //TODO
     //trail... update x->whatever
@@ -84,11 +85,12 @@ void PropEngine::new_vars(size_t n)
 {
     CNF::new_vars(n);
 
-    order_heap_rnd_inside.insert(order_heap_rnd_inside.end(), n, 0);
-    vmtf_btab.insert(vmtf_btab.end(), n, 0);
-    vmtf_links.insert(vmtf_links.end(), n, Link());
     var_act_vsids.insert(var_act_vsids.end(), n, 0);
     var_act_maple.insert(var_act_maple.end(), n, 0);
+    #ifdef VMTF_NEEDED
+    vmtf_btab.insert(vmtf_btab.end(), n, 0);
+    vmtf_links.insert(vmtf_links.end(), n, Link());
+    #endif
 
     //TODO
     //trail... update x->whatever
@@ -731,6 +733,7 @@ void PropEngine::sql_dump_vardata_picktime(uint32_t v, PropBy from)
 }
 #endif
 
+#ifdef VMTF_NEEDED
 // Update queue to point to last potentially still unassigned variable.
 // All variables after 'queue.unassigned' in bump order are assumed to be
 // assigned.  Then update the 'queue.vmtf_bumped' field and log it.  This is
@@ -777,4 +780,4 @@ void PropEngine::vmtf_bump_queue (uint32_t var) {
         vmtf_update_queue_unassigned(var);
     }
 }
-
+#endif

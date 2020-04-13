@@ -147,17 +147,18 @@ public:
     ///NOT VALID WHILE SIMPLIFYING
     Heap<VarOrderLt> order_heap_vsids;
     Heap<VarOrderLt> order_heap_maple;
-    vector<uint32_t> order_heap_rnd;
-    vector<unsigned char> order_heap_rnd_inside;
-    double max_vsids_act = 0.0;
-    double max_cl_act = 0.0;
-    Links vmtf_links; // table of vmtf_links for decision queue
+    #ifdef STATS_NEEDED
     Queue vmtf_queue;
     vector<uint64_t> vmtf_btab; // enqueue time stamps for queue
     void vmtf_update_queue_unassigned (uint32_t idx);
     void vmtf_init_enqueue (uint32_t idx);
     void vmtf_bump_queue (uint32_t var);
     Link & vmtf_link (uint32_t var) { return vmtf_links[var]; }
+    Links vmtf_links; // table of vmtf_links for decision queue
+    #endif
+
+    double max_vsids_act = 0.0;
+    double max_cl_act = 0.0;
 
 protected:
     int64_t simpDB_props = 0;
