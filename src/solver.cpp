@@ -4547,8 +4547,7 @@ void Solver::unset_clash_decision_vars(const vector<Xor>& xors)
         seen[v] = 0;
         varData[v].removed = Removed::clashed;
     }
-    clear_all_branch_strategy_setups();
-    rebuild_all_branch_strategy_setups();
+    rebuildOrderHeap();
 }
 
 void Solver::set_clash_decision_vars()
@@ -4558,8 +4557,7 @@ void Solver::set_clash_decision_vars()
             v.removed = Removed::none;
         }
     }
-    clear_all_branch_strategy_setups();
-    rebuild_all_branch_strategy_setups();
+    rebuildOrderHeap();
 }
 
 //TODO: this is horrifically SLOW!!!
