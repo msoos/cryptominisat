@@ -422,7 +422,7 @@ uint32_t MatrixFinder::setMatrixes()
                 clash_vars_unused.insert(x.clash_vars.begin(), x.clash_vars.end());
             }
             if (solver->conf.verbosity) {
-                if (m.rows > solver->conf.gaussconf.min_matrix_rows ||
+                if (m.rows >= solver->conf.gaussconf.min_matrix_rows ||
                     solver->conf.verbosity >= 2)
                 {
                     cout << "c [matrix] UNused matrix   ";
@@ -437,7 +437,7 @@ uint32_t MatrixFinder::setMatrixes()
                 continue;
 
             if (!use_matrix &&
-                m.rows <= solver->conf.gaussconf.min_matrix_rows &&
+                m.rows < solver->conf.gaussconf.min_matrix_rows &&
                 solver->conf.verbosity < 2)
             {
                 continue;
