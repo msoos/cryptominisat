@@ -144,11 +144,11 @@ bool TopLevelGauss::extractInfo()
         if (!extractInfoFromBlock(*it, i))
             goto end;
 
-        if (solver->conf.verbosity >= 5) {
-            cout << "Block size: " << it->size() << endl;
-            cout << "New units this round: " << (runStats.newUnits - oldNewUnits) << endl;
-            cout << "New bins this round: " << (runStats.newBins - oldNewBins) << endl;
-            cout << "Time: " << std::setprecision(3) << std::fixed << (cpuTime() - t) << endl;
+        if (solver->conf.verbosity >= 2) {
+            cout << "c [toplevel-xor] Block size: " << it->size() << endl;
+            cout << "c [toplevel-xor] New units this round: " << (runStats.newUnits - oldNewUnits) << endl;
+            cout << "c [toplevel-xor] New bins this round: " << (runStats.newBins - oldNewBins) << endl;
+            cout << "c [toplevel-xor] Time: " << std::setprecision(3) << std::fixed << (cpuTime() - t) << endl;
         }
     }
 

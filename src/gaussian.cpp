@@ -1086,7 +1086,7 @@ void EGaussian::print_matrix() {
     }
 }
 
-void EGaussian::print_matrix_stats()
+void EGaussian::print_matrix_stats(uint32_t verbosity)
 {
     std::stringstream ss;
     ss << "c [g " << matrix_no << "] ";
@@ -1100,26 +1100,28 @@ void EGaussian::print_matrix_stats()
     cout << pre << "truth-find prop checks  : "
     << print_value_kilo_mega(find_truth_called_propgause, false) << endl;
 
-    cout << pre << "-> of which fnnewat     : "
-    << std::setw(5) << std::setprecision(2) << std::right
-    << stats_line_percent(find_truth_ret_fnewwatch, find_truth_called_propgause)
-    << " %"
-    << endl;
-    cout << pre << "-> of which sat         : "
-    << std::setw(5) << std::setprecision(2) << std::right
-    << stats_line_percent(find_truth_ret_satisfied, find_truth_called_propgause)
-    << " %"
-    << endl;
-    cout << pre << "-> of which prop        : "
-    << std::setw(5) << std::setprecision(2) << std::right
-    << stats_line_percent(find_truth_ret_prop, find_truth_called_propgause)
-    << " %"
-    << endl;
-    cout << pre << "-> of which confl       : "
-    << std::setw(5) << std::setprecision(2) << std::right
-    << stats_line_percent(find_truth_ret_confl, find_truth_called_propgause)
-    << " %"
-    << endl;
+    if (verbosity >= 2) {
+        cout << pre << "-> of which fnnewat     : "
+        << std::setw(5) << std::setprecision(2) << std::right
+        << stats_line_percent(find_truth_ret_fnewwatch, find_truth_called_propgause)
+        << " %"
+        << endl;
+        cout << pre << "-> of which sat         : "
+        << std::setw(5) << std::setprecision(2) << std::right
+        << stats_line_percent(find_truth_ret_satisfied, find_truth_called_propgause)
+        << " %"
+        << endl;
+        cout << pre << "-> of which prop        : "
+        << std::setw(5) << std::setprecision(2) << std::right
+        << stats_line_percent(find_truth_ret_prop, find_truth_called_propgause)
+        << " %"
+        << endl;
+        cout << pre << "-> of which confl       : "
+        << std::setw(5) << std::setprecision(2) << std::right
+        << stats_line_percent(find_truth_ret_confl, find_truth_called_propgause)
+        << " %"
+        << endl;
+    }
 
     cout << std::left;
     cout << pre << "elim called             : "
@@ -1129,26 +1131,28 @@ void EGaussian::print_matrix_stats()
     cout << pre << "--> lead to prop checks : "
     << print_value_kilo_mega(elim_called_propgause, false) << endl;
 
-    cout << pre << "---> of which satsified : "
-    << std::setw(5) << std::setprecision(2) << std::right
-    << stats_line_percent(elim_ret_satisfied, elim_called_propgause)
-    << " %"
-    << endl;
-    cout << pre << "---> of which prop      : "
-    << std::setw(5) << std::setprecision(2) << std::right
-    << stats_line_percent(elim_ret_prop, elim_called_propgause)
-    << " %"
-    << endl;
-    cout << pre << "---> of which fnnewat   : "
-    << std::setw(5) << std::setprecision(2) << std::right
-    << stats_line_percent(elim_ret_fnewwatch, elim_called_propgause)
-    << " %"
-    << endl;
-    cout << pre << "---> of which confl     : "
-    << std::setw(5) << std::setprecision(2) << std::right
-    << stats_line_percent(elim_ret_confl, elim_called_propgause)
-    << " %"
-    << endl;
+    if (verbosity >= 2) {
+        cout << pre << "---> of which satsified : "
+        << std::setw(5) << std::setprecision(2) << std::right
+        << stats_line_percent(elim_ret_satisfied, elim_called_propgause)
+        << " %"
+        << endl;
+        cout << pre << "---> of which prop      : "
+        << std::setw(5) << std::setprecision(2) << std::right
+        << stats_line_percent(elim_ret_prop, elim_called_propgause)
+        << " %"
+        << endl;
+        cout << pre << "---> of which fnnewat   : "
+        << std::setw(5) << std::setprecision(2) << std::right
+        << stats_line_percent(elim_ret_fnewwatch, elim_called_propgause)
+        << " %"
+        << endl;
+        cout << pre << "---> of which confl     : "
+        << std::setw(5) << std::setprecision(2) << std::right
+        << stats_line_percent(elim_ret_confl, elim_called_propgause)
+        << " %"
+        << endl;
+    }
     cout << std::left;
 
     cout << pre << "size: "
@@ -1157,15 +1161,17 @@ void EGaussian::print_matrix_stats()
 
     double density = get_density();
 
-    cout << pre << "density before init: "
-    << std::setprecision(4) << std::left << before_init_density
-    << endl;
-    cout << pre << "density after  init: "
-    << std::setprecision(4) << std::left << after_init_density
-    << endl;
-    cout << pre << "density            : "
-    << std::setprecision(4) << std::left << density
-    << endl;
+    if (verbosity >= 2) {
+        cout << pre << "density before init: "
+        << std::setprecision(4) << std::left << before_init_density
+        << endl;
+        cout << pre << "density after  init: "
+        << std::setprecision(4) << std::left << after_init_density
+        << endl;
+        cout << pre << "density            : "
+        << std::setprecision(4) << std::left << density
+        << endl;
+    }
     cout << std::setprecision(2);
 }
 

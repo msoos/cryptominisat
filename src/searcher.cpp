@@ -3705,10 +3705,10 @@ inline bool Searcher::check_order_heap_sanity() const
 #ifdef USE_GAUSS
 void Searcher::clear_gauss_matrices()
 {
-    solver->xor_clauses_updated = true;
+    xor_clauses_updated = true;
     for(uint32_t i = 0; i < gqueuedata.size(); i++) {
         auto gqd = gqueuedata[i];
-        if (solver->conf.verbosity >= 2) {
+        if (conf.verbosity >= 2) {
             cout
             << "c [mat" << i << "] num_props       : "
             << print_value_kilo_mega(gqd.num_props) << endl
@@ -3717,7 +3717,7 @@ void Searcher::clear_gauss_matrices()
         }
     }
 
-    if (solver->conf.verbosity >= 1) {
+    if (conf.verbosity >= 1) {
         print_matrix_stats();
     }
     for(EGaussian* g: gmatrices) {
@@ -3734,7 +3734,7 @@ void Searcher::print_matrix_stats()
 {
     for(EGaussian* g: gmatrices) {
         if (g) {
-            g->print_matrix_stats();
+            g->print_matrix_stats(conf.verbosity);
         }
     }
 }
