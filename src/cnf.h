@@ -123,6 +123,7 @@ public:
     #ifdef USE_GAUSS
     vec<vec<GaussWatched>> gwatches;
     uint32_t gqhead;
+    bool all_matrices_disabled = false;
     #endif
     vector<VarData> varData;
     branch branch_strategy = branch::vsids;

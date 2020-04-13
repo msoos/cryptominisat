@@ -2919,6 +2919,11 @@ size_t Searcher::hyper_bin_res_all(const bool check_for_set_values)
 #ifdef USE_GAUSS
 Searcher::gauss_ret Searcher::gauss_jordan_elim()
 {
+    if (all_matrices_disabled) {
+        gqhead = qhead;
+        return gauss_ret::g_nothing;
+    }
+
     #ifdef VERBOSE_DEBUG
     cout << "Gauss searcher::Gauss_elimination called, declevel: " << decisionLevel() << endl;
     #endif
@@ -2926,23 +2931,32 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
         return gauss_ret::g_nothing;
     }
 
+    uint32_t num_disabled = 0;
     for(uint32_t i = 0; i < gqueuedata.size(); i++) {
         auto& gqd = gqueuedata[i];
-        gqd.reset();
-
         if (gqd.engaus_disable) {
+            num_disabled++;
             continue;
         }
-        gmatrices[i]->update_cols_vals_set();
 
         if (conf.gaussconf.autodisable &&
             !conf.xor_detach_reattach &&
             gmatrices[i]->must_disable(gqd, conf.verbosity)
         ) {
             gqd.engaus_disable = true;
+            num_disabled++;
         }
+
+        gqd.reset();
+        gmatrices[i]->update_cols_vals_set();
     }
     assert(gqhead <= qhead);
+
+    if (num_disabled == gqueuedata.size()) {
+        all_matrices_disabled = true;
+        gqhead = qhead;
+        return gauss_ret::g_nothing;
+    }
 
     bool confl_in_gauss = false;
     while (gqhead <  trail.size()

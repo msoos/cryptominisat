@@ -92,7 +92,7 @@ class EGaussian {
     bool full_init(bool& created);
     void update_cols_vals_set(bool force = false);
     void print_matrix_stats(uint32_t verbosity);
-    bool must_disable(const GaussQData& gqd, bool verbose);
+    bool must_disable(GaussQData& gqd, bool verbose);
     void check_invariants();
     void update_matrix_no(uint32_t n);
     void check_watchlist_sanity();
@@ -199,21 +199,25 @@ inline void EGaussian::canceling() {
     memset(satisfied_xors.data(), 0, satisfied_xors.size());
 }
 
-inline bool EGaussian::must_disable(const GaussQData& gqd, bool verbose)
+inline bool EGaussian::must_disable(GaussQData& gqd, bool verbose)
 {
-    uint64_t egcalled = find_truth_called_propgause + elim_called_propgause;
-    if ((egcalled & 0xfff) == 0xfff //only check once in a while
+    gqd.engaus_disable_checks++;
+    if ((gqd.engaus_disable_checks & 0xff) == 0xff //only check once in a while
     ) {
-        uint32_t limit = (double)egcalled*0.001;
+        uint64_t egcalled = elim_called + find_truth_ret_satisfied_precheck+find_truth_called_propgause;
+        uint32_t limit = (double)egcalled*0.1;
         uint32_t useful = find_truth_ret_prop+find_truth_ret_confl+elim_ret_prop+elim_ret_confl;
-        if (useful < limit) {
+        //cout << "CHECKING - limit: " << limit << " useful:" << useful << endl;
+        if (egcalled > 200 && useful < limit) {
             if (verbose) {
                 const double perc =
-                    stats_line_percent(gqd.num_conflicts*2+gqd.num_props, egcalled);
+                    stats_line_percent(useful, egcalled);
                 cout << "c [g  <" <<  matrix_no <<  "] Disabling GJ-elim in this round. "
                 " Usefulness was: "
-                << std::setprecision(2) << std::fixed << perc
-                <<  "%" << endl;
+                << std::setprecision(4) << std::fixed << perc
+                <<  "%"
+                << std::setprecision(2)
+                << endl;
             }
             return true;
         }

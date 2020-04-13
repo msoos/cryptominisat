@@ -1815,6 +1815,7 @@ lbool Solver::iterate_until_solved()
             status = l_False;
             goto end;
         }
+        all_matrices_disabled = false;
         #endif //USE_GAUSS
         status = Searcher::solve(num_confl);
 
