@@ -2650,7 +2650,7 @@ void Searcher::finish_up_solve(const lbool status)
 {
     print_solution_type(status);
     #ifdef USE_GAUSS
-    if (conf.verbosity >= 2) {
+    if (conf.verbosity >= 1) {
         print_matrix_stats();
     }
     #endif
@@ -3717,7 +3717,7 @@ void Searcher::clear_gauss_matrices()
         }
     }
 
-    if (solver->conf.verbosity >= 2) {
+    if (solver->conf.verbosity >= 1) {
         print_matrix_stats();
     }
     for(EGaussian* g: gmatrices) {
