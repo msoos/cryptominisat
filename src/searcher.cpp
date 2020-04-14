@@ -2121,7 +2121,7 @@ void Searcher::rebuildOrderHeap()
     cout << "c [branch] Building RND order heap" << endl;
     #endif
 
-    #ifdef STATS_NEEDED
+    #ifdef VMTF_NEEDED
     rebuildOrderHeapVMTF();
     #endif
 }
