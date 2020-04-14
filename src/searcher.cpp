@@ -3424,12 +3424,14 @@ void Searcher::cancelUntil(uint32_t blevel)
     if (decisionLevel() > blevel) {
         add_tmp_canceluntil.clear();
         #ifdef USE_GAUSS
-        for (EGaussian* gauss: gmatrices) {
-            if (gauss) {
-                //cout << "->Gauss canceling" << endl;
-                gauss->canceling();
-            } else {
-                //cout << "->Gauss NULL" << endl;
+        if (!all_matrices_disabled) {
+            for (EGaussian* gauss: gmatrices) {
+                if (gauss) {
+                    //cout << "->Gauss canceling" << endl;
+                    gauss->canceling();
+                } else {
+                    //cout << "->Gauss NULL" << endl;
+                }
             }
         }
         #endif //USE_GAUSS
