@@ -121,6 +121,7 @@ struct ClauseStats
         locked_for_data_gen = 0;
         is_decision = false;
 
+        //TODO it's weird, it has been tested to be better with "1"
         activity = 1;
         last_touched = 0;
     }
