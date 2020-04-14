@@ -54,6 +54,9 @@ using namespace CMSat;
 //1813642 out-9896604.wlm01-0-drat0 242 146 96   6d8c7e2  _satcomp2020 --simdrat 1
 //1867880 out-9896604.wlm01-1-drat0 237 139 98   6d8c7e2  _satcomp2020 --simdrat 1 --diffdeclevelchrono 0
 
+//Fixing to -- was with GAUSS, so ignoring "--xor 0"
+//1739293 out-9896604.wlm01-15-drat0 250 146 104 edd5be7  _devel --xor 0 --breakid 1 --breakideveryn 10
+
 DLL_PUBLIC SolverConf::SolverConf() :
         polarity_mode(PolarityMode::polarmode_automatic)
 
@@ -170,7 +173,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //BreakID
         , doBreakid(true)
         , breakid_use_assump(true)
-        , breakid_every_n(3)
+        , breakid_every_n(10)
         , breakid_vars_limit_K(300)
         , breakid_cls_limit_K(600)
         , breakid_lits_limit_K(3500)
