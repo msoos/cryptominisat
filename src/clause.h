@@ -118,7 +118,7 @@ struct ClauseStats
     {
         glue = 1000;
         which_red_array = 2;
-        //TODO fix -- BUG
+        //TODO it's weird, it has been tested to be better with "1"
         activity = 1;
         ttl = 0;
         marked_clause = false;
