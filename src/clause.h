@@ -121,7 +121,7 @@ struct ClauseStats
         locked_for_data_gen = 0;
         is_decision = false;
 
-        activity = 0;
+        activity = 1;
         last_touched = 0;
     }
 

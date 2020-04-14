@@ -187,7 +187,7 @@ if (SANITIZE)
 endif()
 endmacro()
 
-option(USE_GAUSS "Build with every-level GAUSS enabled" OFF)
+option(USE_GAUSS "Build with every-level GAUSS enabled" ON)
 if (USE_GAUSS)
     add_definitions(-DUSE_GAUSS)
     message(STATUS "Building with GAUSS enabled at every level")
