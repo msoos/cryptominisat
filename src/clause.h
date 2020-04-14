@@ -118,7 +118,8 @@ struct ClauseStats
     {
         glue = 1000;
         which_red_array = 2;
-        activity = 0;
+        //TODO fix -- BUG
+        activity = 1;
         ttl = 0;
         marked_clause = false;
     }
