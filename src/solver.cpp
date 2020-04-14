@@ -1416,7 +1416,7 @@ void Solver::check_xor_cut_config_sanity() const
     }
 }
 
-void Solver::check_config_parameters() const
+void Solver::check_and_upd_config_parameters()
 {
     if (conf.max_confl < 0) {
         std::cerr << "ERROR: Maximum number conflicts set must be greater or equal to 0" << endl;
@@ -1428,12 +1428,56 @@ void Solver::check_config_parameters() const
         exit(-1);
     }
 
-    #ifdef USE_GAUSS
     if ((drat->enabled() || conf.simulate_drat))  {
-        std::cerr << "ERROR: Cannot have both DRAT and GAUSS on at the same time!" << endl;
-        exit(-1);
+        if (!conf.do_hyperbin_and_transred) {
+            if (conf.verbosity) {
+                cout
+                << "c OTF hyper-bin is needed for BProp in DRAT, turning it back"
+                << endl;
+            }
+            conf.do_hyperbin_and_transred = true;
+        }
+
+        if (conf.doFindXors) {
+            if (conf.verbosity) {
+                cout
+                << "c XOR manipulation is not supported in DRAT, turning it off"
+                << endl;
+            }
+            conf.doFindXors = false;
+        }
+
+        if (conf.doCompHandler) {
+            if (conf.verbosity) {
+                cout
+                << "c Component finding & solving is not supported during DRAT, turning it off"
+                << endl;
+            }
+            conf.doCompHandler = false;
+        }
+
+        #ifdef USE_BREAKID
+        if (conf.doBreakid) {
+            if (conf.verbosity) {
+                cout
+                << "c BreakID is not supported with DRAT, turning it off"
+                << endl;
+            }
+            conf.doBreakid = false;
+        }
+        #endif
+
+        #ifdef USE_GAUSS
+        if (conf.gaussconf.doMatrixFind) {
+            if (conf.verbosity) {
+                cout
+                << "c GAUSS is not supported with DRAT, turning it off"
+                << endl;
+            }
+            conf.gaussconf.doMatrixFind = false;
+        }
+        #endif
     }
-    #endif
 
     #ifdef SLOW_DEBUG
     if (conf.sampling_vars)
@@ -1441,15 +1485,6 @@ void Solver::check_config_parameters() const
         for(uint32_t v: *conf.sampling_vars) {
             assert(v < nVarsOutside());
         }
-    }
-    #endif
-
-    #ifdef USE_BREAKID
-    if ((drat->enabled() || conf.simulate_drat) &&
-        conf.doBreakid
-    )  {
-        std::cerr << "ERROR: Cannot have both DRAT and BreakID on at the same time!" << endl;
-        exit(-1);
     }
     #endif
 
@@ -1482,7 +1517,7 @@ lbool Solver::simplify_problem_outside()
         status = l_False;
         goto end;
     }
-    check_config_parameters();
+    check_and_upd_config_parameters();
     datasync->rebuild_bva_map();
     #ifdef USE_BREAKID
     if (breakid) {
@@ -1533,7 +1568,7 @@ lbool Solver::solve_with_assumptions(
     #endif
 
     solveStats.num_solve_calls++;
-    check_config_parameters();
+    check_and_upd_config_parameters();
 
     //Reset parameters
     luby_loop_num = 0;

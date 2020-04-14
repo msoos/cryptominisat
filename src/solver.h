@@ -317,7 +317,7 @@ class Solver : public Searcher
         void set_up_sql_writer();
         vector<std::pair<string, string> > sql_tags;
 
-        void check_config_parameters() const;
+        void check_and_upd_config_parameters();
         vector<uint32_t> tmp_xor_clash_vars;
         void check_xor_cut_config_sanity() const;
         void handle_found_solution(const lbool status, const bool only_indep_solution);
