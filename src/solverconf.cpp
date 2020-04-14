@@ -50,6 +50,9 @@ using namespace CMSat;
 //Fixing to:
 //1706988 out-9885914.wlm01-6-drat0 253 153 100 def3339   --simdrat 1 --vsidsalternate 1 --vsidsalterval1 0.92 --vsidsalterval2 0.99 --maplealternate 1 --maplealterval1 0.70 --maplealterval2 0.90
 
+//NOTE: diffdeclevel 0 is not good
+//1813642 out-9896604.wlm01-0-drat0 242 146 96   6d8c7e2  _satcomp2020 --simdrat 1
+//1867880 out-9896604.wlm01-1-drat0 237 139 98   6d8c7e2  _satcomp2020 --simdrat 1 --diffdeclevelchrono 0
 
 DLL_PUBLIC SolverConf::SolverConf() :
         polarity_mode(PolarityMode::polarmode_automatic)
