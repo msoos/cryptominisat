@@ -1200,6 +1200,8 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
         conf.xor_detach_reattach = true;
         conf.global_multiplier_multiplier_max = 1;
         conf.orig_global_timeout_multiplier = 1.5;
+        conf.min_bva_gain = 2;
+        conf.xor_finder_time_limitM = 400;
         uint32_t xor_cut = 4;
         assert(xor_cut >= 3);
         conf.xor_var_per_cut = xor_cut-2;

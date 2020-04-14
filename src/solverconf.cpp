@@ -184,11 +184,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Bounded variable addition
         , do_bva(true)
-        #ifdef USE_GAUSS
-        , min_bva_gain(2)
-        #else
         , min_bva_gain(32)
-        #endif
         , bva_limit_per_call(250000)
         , bva_also_twolit_diff(true)
         , bva_extra_lit_and_red_start(0)
@@ -207,11 +203,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , maxXorToFind     (7)
         , maxXorToFindSlow (5)
         , maxXORMatrix     (400ULL)
-        #ifndef USE_GAUSS
         , xor_finder_time_limitM(50)
-        #else
-        , xor_finder_time_limitM(400)
-        #endif
         , allow_elim_xor_vars(1)
         , xor_var_per_cut(2)
 
