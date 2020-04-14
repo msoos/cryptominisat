@@ -1247,22 +1247,23 @@ lbool Searcher::search()
         } else {
             assert(ok);
             #ifdef USE_GAUSS
-            gauss_ret ret = gauss_jordan_elim();
-            //cout << "ret: " << ret << " -- " << endl;
-            if (ret == gauss_ret::g_cont) {
-                //cout << "g_cont" << endl;
-                check_need_restart();
-                continue;
-            }
+            if (!all_matrices_disabled) {
+                gauss_ret ret = gauss_jordan_elim();
+                //cout << "ret: " << ret << " -- " << endl;
+                if (ret == gauss_ret::g_cont) {
+                    //cout << "g_cont" << endl;
+                    check_need_restart();
+                    continue;
+                }
 
-            if (ret == gauss_ret::g_false) {
-                //cout << "g_false" << endl;
-                search_ret = l_False;
-                goto end;
-            }
+                if (ret == gauss_ret::g_false) {
+                    //cout << "g_false" << endl;
+                    search_ret = l_False;
+                    goto end;
+                }
 
-            assert(ret == gauss_ret::g_nothing);
-            //cout << "g_nothing" << endl;
+                assert(ret == gauss_ret::g_nothing);
+            }
             #endif //USE_GAUSS
 
             if (decisionLevel() == 0) {
@@ -2922,11 +2923,6 @@ size_t Searcher::hyper_bin_res_all(const bool check_for_set_values)
 #ifdef USE_GAUSS
 Searcher::gauss_ret Searcher::gauss_jordan_elim()
 {
-    if (all_matrices_disabled) {
-        gqhead = qhead;
-        return gauss_ret::g_nothing;
-    }
-
     #ifdef VERBOSE_DEBUG
     cout << "Gauss searcher::Gauss_elimination called, declevel: " << decisionLevel() << endl;
     #endif
