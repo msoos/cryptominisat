@@ -152,7 +152,7 @@ bool MatrixFinder::findMatrixes(bool& can_detach, bool simplify_xors)
     }
 
     if (xors.size() > solver->conf.gaussconf.max_gauss_xor_clauses
-        && solver->conf.sampling_vars->size() > 0
+        && solver->conf.sampling_vars != NULL
     ) {
         can_detach = false;
         if (solver->conf.verbosity) {
