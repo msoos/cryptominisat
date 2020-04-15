@@ -1041,7 +1041,8 @@ bool VarReplacer::replace_if_enough_is_found(const size_t limit, uint64_t* bogop
     }
 
     #ifdef USE_GAUSS
-    solver->clear_gauss_matrices();
+    assert(gmatrices.empty());
+    assert(gqueuedata.clear());
     #endif
 
     if (replaced)
