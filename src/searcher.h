@@ -299,10 +299,6 @@ class Searcher : public HyperEngine
         {
             order_heap_vsids.clear();
             order_heap_maple.clear();
-            #ifdef STATS_NEEDED
-            order_heap_rnd.clear();
-            assert(false&&"Clear VMTF here please")
-            #endif
         }
         uint32_t branch_strategy_num = 0;
 
@@ -477,7 +473,7 @@ inline void Searcher::insert_var_order(const uint32_t x, branch type)
                 order_heap_maple.insert(x);
             }
             break;
-        #ifdef STATS_NEEDED
+        #ifdef VMTF_NEEDED
         case branch::vmtf:
             // For VMTF we need to update the 'queue.unassigned' pointer in case this
             // variables sits after the variable to which 'queue.unassigned' currently
