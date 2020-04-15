@@ -1277,3 +1277,18 @@ bool VarReplacer::get_scc_depth_warning_triggered() const
 {
     return scc_finder->depth_warning_triggered();
 }
+
+void VarReplacer::extend_pop_queue(vector<Lit>& pop)
+{
+    vector<Lit> extra;
+    for (Lit p: pop) {
+        const auto& repl = reverseTable[p.var()];
+        for(uint32_t x: repl) {
+            extra.push_back(Lit(x, table[x].sign() ^ p.sign()));
+        }
+    }
+
+    for(Lit x: extra) {
+        pop.push_back(x);
+    }
+}

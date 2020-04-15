@@ -43,6 +43,12 @@ namespace CMSat {
     #endif
     {
     public:
+        ////////////////////////////
+        // You can pass in a variable that if set to TRUE, will abort the
+        // solver as soon as possible. This bool can be set through a timer,
+        // or through a thread, etc. This gives you the possiblity to abort
+        // the solver any time you like, depending on some external factor
+        // such as time, or your own code's inner workings.
         SATSolver(void* config = NULL
         , std::atomic<bool>* interrupt_asap = NULL
         );
@@ -174,10 +180,18 @@ namespace CMSat {
         // EXPERIMENTAL
         std::vector<std::pair<std::vector<uint32_t>, bool> > get_recovered_xors(bool elongate) const; //get XORs recovered. If "elongate" is TRUE, then variables shared ONLY by two XORs will be XORed together
 
+        //Given a set of literals to enqueue, returns:
+        // 1) Whether they imply SAT/UNSAT. If "true": SAT. If "false": UNSAT
+        // 2) into "out_implied" the set of literals they imply, including the literals themselves
+        // NOTES:
+        // * You may get back some of the literals you gave
+        // * Order is not guaranteed: literals you gave as input may end up at the end or may not end up at all
+        // * It only returns literals that are newly implied. So you must call get_zero_assigned_lits() before to be sure you know what literals are implied at decision level 0
+        bool implied_by(
+            const std::vector<Lit>& lits, std::vector<Lit>& out_implied);
+
         //////////////////////
         //Below must be done in-order. Multi-threading not allowed.
-        // EXPERIMENTAL!!!
-
         void start_getting_small_clauses(uint32_t max_len, uint32_t max_glue);
         bool get_next_small_clause(std::vector<Lit>& ret); //returns FALSE if no more
         void end_getting_small_clauses();

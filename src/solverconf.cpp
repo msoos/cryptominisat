@@ -27,18 +27,38 @@ THE SOFTWARE.
 #include <sstream>
 using namespace CMSat;
 
+//Fixing to
+//1830735 out-9839185.wlm01-8-drat0  243 148 95 2a30cfb
+//--simdrat 1 --bva 1 --slstype ccnr --slseveryn 2 --bvalim 250000 --tern 1 --terncreate 1 --ternkeep 6 -m 3 --distillincconf 0.02 --distillminconf 10000 --slsgetphase 1
+
+//Fixing to:
+//--simdrat 1 --bva 1 --slstype ccnr --slseveryn 2 --bvalim 250000 --tern 1 --terncreate 1 --ternkeep 6 -m 3 --distillincconf 0.02 --distillminconf 10000 --slsgetphase 1 --slstobump 100 --gluehist 60 --diffdeclevelchrono 20 --conftochrono 0
+
+//Fixing to:
+//1722973 out-9860239.wlm01-1-drat0 254 154 100 a6005cf   --simdrat 1 --gluehist 50 --moremoreminim 1 --lev1usewithin 70000 --bva2lit 1
+
+//Fixing to:
+//1838305 out-9882018.wlm01-1-drat0  241 145 96 16de7b4   --simdrat 1 --substimelimbinratio 0.1 --substimelimlongratio 0.9 --distilltier1ratio 0.03 --sublonggothrough 1.0 --varelimto 750 --bvaeveryn 7
+
+//Fixing to:
+//1706988 out-9885914.wlm01-6-drat0 253 153 100 def3339   --simdrat 1 --vsidsalternate 1 --vsidsalterval1 0.92 --vsidsalterval2 0.99 --maplealternate 1 --maplealterval1 0.70 --maplealterval2 0.90
+
+
 DLL_PUBLIC SolverConf::SolverConf() :
         //Variable activities
         var_inc_vsids_start(1)
         , var_decay_vsids_start(0.8) // 1/0.8 = 1.2 -- large is better for frequent restarts
         , var_decay_vsids_max(0.95) // 1/0.95 = 1.05 -- smaller is better for hard instances
         , random_var_freq(0)
+        , alternate_vsids(1)
+        , alternate_vsids_decay_rate1(0.92)
+        , alternate_vsids_decay_rate2(0.99)
         , polarity_mode(PolarityMode::polarmode_automatic)
 
         //Clause cleaning
         , every_lev1_reduce(10000) // kept for a while then moved to lev2
         , every_lev2_reduce(15000) // cleared regularly
-        , must_touch_lev1_within(30000)
+        , must_touch_lev1_within(70000)
 
         , max_temp_lev2_learnt_clauses(30000) //only used if every_lev2_reduce==0
         , inc_max_temp_lev2_red_cls(1.0)      //only used if every_lev2_reduce==0
@@ -56,6 +76,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , maple(true)
         , modulo_maple_iter(3)
         , more_maple_bump_high_glue(false)
+        , alternate_maple(1)
+        , alternate_maple_decay_rate1(0.70)
+        , alternate_maple_decay_rate2(0.90)
 
         //Restarting
         , restart_first(100)
@@ -64,7 +87,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , do_blocking_restart(1)
         , blocking_restart_trail_hist_length(5000)
         , blocking_restart_multip(1.4)
-        , broken_glue_restart(true)
         , local_glue_multiplier(0.80)
         , shortTermHistorySize (50)
         , lower_bound_for_blocking_restart(10000)
@@ -76,7 +98,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Clause minimisation
         , doRecursiveMinim (true)
         , doMinimRedMore(true)
-        , doMinimRedMoreMore(false)
+        , doMinimRedMoreMore(true)
         , max_glue_more_minim(6)
         , max_size_more_minim(30)
         , more_red_minim_limit_cache(400)
@@ -101,8 +123,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //OTF
         , otfHyperbin      (true)
-        , doOTFSubsume     (false)
-        , doOTFSubsumeOnlyAtOrBelowGlue(5)
+
+        //Chono BT
+        , diff_declev_for_chrono (20)
 
         //decision-based clause generation. These values have been validated
         //see 8099966.wlm01
@@ -119,7 +142,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , varelim_cutoff_too_many_clauses(2000)
         , do_empty_varelim (true)
         , empty_varelim_time_limitM(300LL)
-        , varelim_time_limitM(350)
+        , varelim_time_limitM(750)
         , varelim_sub_str_limit(600)
         , varElimRatioPerIter(1.60)
         , skip_some_bve_resolvents(true) //based on gates
@@ -128,13 +151,16 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Subs, str limits for simplifier
         , subsumption_time_limitM(300)
+        , subsumption_time_limit_ratio_sub_str_w_bin(0.1)
+        , subsumption_time_limit_ratio_sub_w_long(0.9)
         , strengthening_time_limitM(300)
-        , aggressive_elim_time_limitM(300)
 
 
         //Ternary resolution
-        , doTernary(false)
+        , doTernary(true)
         , ternary_res_time_limitM(100)
+        , ternary_keep_mult(6)
+        , ternary_max_create(1)
 
         //Bounded variable addition
         , do_bva(true)
@@ -143,11 +169,11 @@ DLL_PUBLIC SolverConf::SolverConf() :
         #else
         , min_bva_gain(32)
         #endif
-        , bva_limit_per_call(150000)
-        , bva_also_twolit_diff(false)
+        , bva_limit_per_call(250000)
+        , bva_also_twolit_diff(true)
         , bva_extra_lit_and_red_start(0)
         , bva_time_limitM(50)
-        , bva_every_n(20)
+        , bva_every_n(7)
 
         //Probing
         , doProbe          (false)
@@ -240,21 +266,26 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , maxOccurIrredMB  (2500)
         , maxOccurRedMB    (600)
         , maxOccurRedLitLinkedM(50)
-        , subsume_gothrough_multip(2.0)
+        , subsume_gothrough_multip(1.0)
 
         //WalkSAT
         , doSLS(true)
-        , sls_every_n(4)
-        , yalsat_max_mems(150)
+        , sls_every_n(2)
+        , yalsat_max_mems(40)
         , sls_memoutMB(500)
         , walksat_max_runs(50)
-        , which_sls("yalsat")
+        , sls_get_phase(1)
+        , which_sls("ccnr")
+        , sls_how_many_to_bump(100)
 
         //Distillation
         , do_distill_clauses(true)
         , distill_long_cls_time_limitM(20ULL)
         , watch_cache_stamp_based_str_time_limitM(30LL)
         , distill_time_limitM(120LL)
+        , distill_increase_conf_ratio(0.02)
+        , distill_min_confl(10000)
+        , distill_red_tier1_ratio(0.03)
 
         //Memory savings
         , doRenumberVars   (true)
@@ -289,7 +320,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , sampling_vars(NULL)
 
         //Timeouts
-        , orig_global_timeout_multiplier(4.0)
+        , orig_global_timeout_multiplier(3.0)
         , global_timeout_multiplier(1.0) // WILL BE UNSET, NOT RELEVANT
         , global_timeout_multiplier_multiplier(1.1)
         , global_multiplier_multiplier_max(3)

@@ -1600,7 +1600,8 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
             break;
 
         if (newCl != NULL) {
-            newCl->stats.glue = 3;
+            newCl->stats.glue = solver->conf.glue_put_lev1_if_below_or_eq;
+            newCl->is_ternary = true;
             newCl->stats.which_red_array = 1;
             linkInClause(*newCl);
             ClOffset offset = solver->cl_alloc.get_offset(newCl);
@@ -1670,7 +1671,12 @@ void OccSimplifier::check_ternary_cl(Clause* cl, ClOffset offs, watch_subarray w
 
 bool OccSimplifier::backward_sub_str()
 {
+    auto backup = subsumption_time_limit;
+    subsumption_time_limit = 0;
     limit_to_decrease = &subsumption_time_limit;
+
+    subsumption_time_limit += (int64_t)
+        ((double)backup*solver->conf.subsumption_time_limit_ratio_sub_str_w_bin);
     assert(cl_to_free_later.empty());
     assert(solver->watches.get_smudged_list().empty());
 
@@ -1680,6 +1686,8 @@ bool OccSimplifier::backward_sub_str()
         goto end;
     }
 
+    subsumption_time_limit += (int64_t)
+        ((double)backup*solver->conf.subsumption_time_limit_ratio_sub_w_long);
     sub_str->backw_sub_long_with_long();
     if (solver->must_interrupt_asap())
         goto end;
@@ -2007,7 +2015,7 @@ void OccSimplifier::set_limits()
         *solver->conf.global_timeout_multiplier;
     ternary_res_time_limit     = 1000ULL*1000ULL*solver->conf.ternary_res_time_limitM
         *solver->conf.global_timeout_multiplier;
-    ternary_res_cls_limit = link_in_data_irred.cl_linked * solver->conf.var_and_mem_out_mult;
+    ternary_res_cls_limit = link_in_data_irred.cl_linked * solver->conf.ternary_max_create;
 
     //If variable elimination isn't going so well
     if (bvestats_global.testedToElimVars > 0

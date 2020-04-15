@@ -512,7 +512,7 @@ void Prober::update_cache(Lit thisLit, Lit lit, size_t numElemsSet)
 
         #ifdef VERBOSE_DEBUG_FULLPROP
         cout << "The impl cache of " << (~ancestor) << " is now: ";
-        cout << solver->implCache[(~ancestor).toInt()] << endl;
+        cout << solver->implCache[~ancestor] << endl;
         #endif
     }
 }
@@ -571,7 +571,7 @@ void Prober::add_rest_of_lits_to_cache(Lit lit)
         ; c--
     ) {
         extraTime += 2;
-        const Lit thisLit = solver->trail[c];
+        const Lit thisLit = solver->trail[c].lit;
         tmp_lits.push_back(thisLit);
     }
 
@@ -668,7 +668,7 @@ bool Prober::try_this(const Lit lit, const bool first)
             ; c--
         ) {
             extraTime += 2;
-            const Lit thisLit = solver->trail[c];
+            const Lit thisLit = solver->trail[c].lit;
             const uint32_t var = thisLit.var();
 
             if (solver->conf.doBothProp) {
@@ -688,8 +688,6 @@ bool Prober::try_this(const Lit lit, const bool first)
     }
 
     solver->cancelUntil<false, true>(0);
-    solver->add_otf_subsume_long_clauses<true>();
-    solver->add_otf_subsume_implicit_clause<true>();
     runStats.addedBin += solver->hyper_bin_res_all();
     std::pair<size_t, size_t> tmp = solver->remove_useless_bins();
     runStats.removedIrredBin += tmp.first;
@@ -721,6 +719,7 @@ bool Prober::try_this(const Lit lit, const bool first)
 
 bool Prober::propagate(Lit& failed)
 {
+    assert(solver->decisionLevel() == 1);
     if (solver->conf.otfHyperbin) {
         //Set timeout for ONE enqueue. This used so that in case ONE enqueue
         //takes too long (usually because of hyper-bin), we exit early

@@ -580,7 +580,7 @@ void DistillerLongWithImpl::Stats::print() const
 
 void DistillerLongWithImpl::Stats::CacheBased::print_short(const string type, const Solver* _solver) const
 {
-    cout << "c [distill] cache-based "
+    cout << "c [distill] watch-based "
     << std::setw(5) << type
     << "-- "
     << " cl tried " << std::setw(8) << triedCls

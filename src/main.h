@@ -113,6 +113,8 @@ class Main: public MainCommon
         string sqlite_filename;
         string decisions_for_model_fname;
         string equivalent_unsat_fname;
+        double maxtime;
+        uint64_t maxconfl;
 
         //Sampling vars
         vector<uint32_t> sampling_vars;

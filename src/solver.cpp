@@ -455,7 +455,7 @@ Clause* Solver::add_clause_int(
             #endif
             );
             if (red) {
-                c->makeRed(cl_stats.glue);
+                c->makeRed();
             }
             c->stats = cl_stats;
             #ifdef STATS_NEEDED
@@ -1424,6 +1424,15 @@ lbool Solver::solve_with_assumptions(
     }
     #endif
 
+    #ifdef USE_GAUSS
+    if (conf.verbosity) {
+        cout << "c WARN: Turning OFF non-chronological backtracking because it interferes with GAUSS"
+        << endl;
+    }
+    conf.diff_declev_for_chrono = -1;
+    #endif
+
+
     solveStats.num_solve_calls++;
     conflict.clear();
     check_config_parameters();
@@ -1531,6 +1540,9 @@ lbool Solver::solve_with_assumptions(
     conf.max_confl = std::numeric_limits<long>::max();
     conf.maxTime = std::numeric_limits<double>::max();
     drat->flush();
+    assert(decisionLevel()== 0);
+    assert(!ok || solver->prop_at_head());
+
     return status;
 }
 
@@ -1705,6 +1717,8 @@ long Solver::calc_num_confl_to_do_this_iter(const size_t iteration_num) const
 lbool Solver::iterate_until_solved()
 {
     size_t iteration_num = 0;
+    size_t iteration_num_vsids = 0;
+    size_t iteration_num_maple = 0;
     VSIDS = true;
 
     lbool status = l_Undef;
@@ -1762,8 +1776,29 @@ lbool Solver::iterate_until_solved()
             long modulo = ((long)iteration_num-1) % conf.modulo_maple_iter;
             if (modulo < ((long)conf.modulo_maple_iter-1)) {
                 VSIDS = false;
+                if (conf.alternate_maple) {
+                    if ((iteration_num_maple%2) == 0) {
+                        maple_decay_base = conf.alternate_maple_decay_rate1;
+                    } else {
+                        maple_decay_base = conf.alternate_maple_decay_rate2;
+                    }
+                }
+                iteration_num_maple++;
             } else {
                 VSIDS = true;
+                if (conf.alternate_vsids)
+                {
+                    if ((iteration_num_vsids%2) == 1) {
+                        conf.var_decay_vsids_start = conf.alternate_vsids_decay_rate1;
+                        conf.var_decay_vsids_max = conf.alternate_vsids_decay_rate1;
+                        var_decay_vsids = conf.alternate_vsids_decay_rate1;
+                    } else {
+                        conf.var_decay_vsids_start = conf.alternate_vsids_decay_rate2;
+                        conf.var_decay_vsids_max = conf.alternate_vsids_decay_rate2;
+                        var_decay_vsids = conf.alternate_vsids_decay_rate2;
+                    }
+                }
+                iteration_num_vsids++;
             }
         } else {
             //so that in case of reconfiguration, VSIDS is correctly set
@@ -1802,6 +1837,7 @@ void Solver::handle_found_solution(const lbool status, const bool only_sampling_
     if (status == l_True) {
         extend_solution(only_sampling_solution);
         cancelUntil(0);
+        assert(solver->prop_at_head());
 
         #ifdef DEBUG_ATTACH_MORE
         find_all_attach();
@@ -1924,7 +1960,7 @@ lbool Solver::execute_inprocess_strategy(
                 && solveStats.num_simplify % conf.sls_every_n == (conf.sls_every_n-1)
             ) {
                 SLS sls(this);
-                const lbool ret = sls.run();
+                const lbool ret = sls.run(solveStats.num_simplify);
                 if (ret == l_True) {
                     return l_True;
                 }
@@ -2066,7 +2102,7 @@ lbool Solver::simplify_problem(const bool startup)
             conf.orig_global_timeout_multiplier*conf.global_multiplier_multiplier_max
         );
     if (conf.verbosity)
-        cout << "c global_timeout_multiplier: " << conf. global_timeout_multiplier << endl;
+        cout << "c global_timeout_multiplier: " << std::setprecision(4) <<  conf.global_timeout_multiplier << endl;
 
     solveStats.num_simplify++;
     solveStats.num_simplify_this_solve_call++;
@@ -2087,8 +2123,13 @@ lbool Solver::simplify_problem(const bool startup)
         return ret;
     } else {
         assert(ret == l_True);
-        rebuildOrderHeap();
+        //nothing should happen here, we already have a full solution
+        //but let's check and put the propagation to HEAD
+        PropBy confl = propagate<false>();
+        assert(confl.isNULL());
+
         finish_up_solve(ret);
+        rebuildOrderHeap();
         return ret;
     }
 }
@@ -4209,4 +4250,65 @@ bool Solver::check_assumptions_contradict_foced_assignement() const
         }
     }
     return false;
+}
+
+bool Solver::implied_by(const std::vector<Lit>& lits,
+                                  std::vector<Lit>& out_implied)
+{
+    out_implied.clear();
+    if (!okay()) {
+        return false;
+    }
+
+    implied_by_tmp_lits = lits;
+    if (!addClauseHelper(implied_by_tmp_lits)) {
+        return false;
+    }
+
+    assert(decisionLevel() == 0);
+    for(Lit p: implied_by_tmp_lits) {
+        if (value(p) == l_Undef) {
+            new_decision_level();
+            enqueue<false>(p);
+        }
+        if (value(p) == l_False) {
+            cancelUntil(0);
+            return false;
+        }
+    }
+
+    if (decisionLevel() == 0) {
+        return true;
+    }
+
+    PropBy x = propagate<false>();
+    if (!x.isNULL()) {
+        //UNSAT due to prop
+        cancelUntil(0);
+        return false;
+    }
+    //DO NOT add the "optimization" to return when nothing got propagated
+    //replaced variables CAN be added!!!
+
+    out_implied.reserve(trail.size()-trail_lim[0]);
+    for(uint32_t i = trail_lim[0]; i < trail.size(); i++) {
+        if (trail[i].lit.var() < nVars()) {
+            out_implied.push_back(trail[i].lit);
+        }
+    }
+    cancelUntil(0);
+
+    //Map to outer
+    for(auto& l: out_implied) {
+        l = map_inter_to_outer(l);
+    }
+    varReplacer->extend_pop_queue(out_implied);
+
+    //Map to outside
+    if (get_num_bva_vars() != 0) {
+        cout << "get_num_bva_vars(): " << get_num_bva_vars() << endl;
+        assert(false && "BVA is currently not allowed in this mode, please turn it off");
+        //out_implied = map_back_vars_to_without_bva(out_implied);
+    }
+    return true;
 }

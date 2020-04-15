@@ -30,6 +30,7 @@ IN THE SOFTWARE.
 #include <vector>
 #include <complex>
 #include <cassert>
+#include <string.h>
 #include "constants.h"
 
 using std::vector;
@@ -48,13 +49,19 @@ struct MySolver {
     SATSolver* solver;
     vector<Lit> clause;
     vector<Lit> assumptions;
+    vector<Lit> last_conflict;
+    vector<char> conflict_cl_map;
 };
 
 extern "C" {
 
 DLL_PUBLIC const char * ipasir_signature ()
 {
-    return SATSolver::get_version();
+    static char tmp[200];
+    std::string tmp2 = "cryptominisat-";
+    tmp2 += SATSolver::get_version();
+    memcpy(tmp, tmp2.c_str(), tmp2.length()+1);
+    return tmp;
 }
 
 /**
@@ -145,6 +152,14 @@ DLL_PUBLIC void ipasir_assume (void * solver, int lit)
 DLL_PUBLIC int ipasir_solve (void * solver)
 {
     MySolver* s = (MySolver*)solver;
+
+    //Cleanup last_conflict
+    for(auto x: s->last_conflict) {
+        s->conflict_cl_map[x.toInt()] = 0;
+    }
+    s->last_conflict.clear();
+
+    //solve
     lbool ret = s->solver->solve(&(s->assumptions));
     s->assumptions.clear();
 
@@ -152,6 +167,11 @@ DLL_PUBLIC int ipasir_solve (void * solver)
         return 10;
     }
     if (ret == l_False) {
+        s->conflict_cl_map.resize(s->solver->nVars()*2, 0);
+        s->last_conflict = s->solver->get_conflict();
+        for(auto x: s->last_conflict) {
+            s->conflict_cl_map[x.toInt()] = 1;
+        }
         return 20;
     }
     if (ret == l_Undef) {
@@ -201,15 +221,8 @@ DLL_PUBLIC int ipasir_val (void * solver, int lit)
 DLL_PUBLIC int ipasir_failed (void * solver, int lit)
 {
     MySolver* s = (MySolver*)solver;
-    const vector<Lit>& confl = s->solver->get_conflict();
     const Lit tofind(std::abs(lit)-1, lit < 0);
-
-    for(const Lit l: confl) {
-        if (l == tofind) {
-            return true;
-        }
-    }
-    return false;
+    return s->conflict_cl_map[(~tofind).toInt()];  //yeah, it's reveresed, it's weird
 }
 
 /**
@@ -230,9 +243,9 @@ DLL_PUBLIC void ipasir_set_terminate (void * /*solver*/, void * /*state*/, int (
     //this is complicated.
 }
 
-}
-
 DLL_PUBLIC void ipasir_set_learn (void * /*solver*/, void * /*state*/, int /*max_length*/, void (* /*learn*/)(void * state, int * clause))
 {
     //this is complicated
+}
+
 }

@@ -153,6 +153,9 @@ class DLL_PUBLIC SolverConf
         double  var_decay_vsids_start;
         double  var_decay_vsids_max;
         double random_var_freq;
+        int alternate_vsids;
+        double alternate_vsids_decay_rate1;
+        double alternate_vsids_decay_rate2;
         PolarityMode polarity_mode;
 
         //Clause cleaning
@@ -185,6 +188,9 @@ class DLL_PUBLIC SolverConf
         int      maple;
         unsigned modulo_maple_iter;
         bool     more_maple_bump_high_glue;
+        int      alternate_maple;
+        double   alternate_maple_decay_rate1;
+        double   alternate_maple_decay_rate2;
 
         //For restarting
         unsigned    restart_first;      ///<The initial restart limit.                                                                (default 100)
@@ -193,7 +199,6 @@ class DLL_PUBLIC SolverConf
         int       do_blocking_restart;
         unsigned blocking_restart_trail_hist_length;
         double   blocking_restart_multip;
-        int      broken_glue_restart;
 
         double   local_glue_multiplier;
         unsigned  shortTermHistorySize; ///< Rolling avg. glue window size
@@ -231,8 +236,10 @@ class DLL_PUBLIC SolverConf
 
         //OTF stuff
         int       otfHyperbin;
-        int       doOTFSubsume;
-        int       doOTFSubsumeOnlyAtOrBelowGlue;
+
+        //chrono bt
+        int diff_declev_for_chrono;
+
 
         //decision-based conflict clause generation
         int       do_decision_based_cl;
@@ -262,12 +269,15 @@ class DLL_PUBLIC SolverConf
 
         //Subs, str limits for simplifier
         long long subsumption_time_limitM;
+        double subsumption_time_limit_ratio_sub_str_w_bin;
+        double subsumption_time_limit_ratio_sub_w_long;
         long long strengthening_time_limitM;
-        long long aggressive_elim_time_limitM;
 
         //Ternary resolution
         bool doTernary;
         long long ternary_res_time_limitM;
+        double ternary_keep_mult;
+        double ternary_max_create;
 
         //BVA
         int      do_bva;
@@ -338,13 +348,18 @@ class DLL_PUBLIC SolverConf
         uint32_t yalsat_max_mems;
         uint32_t sls_memoutMB;
         uint32_t walksat_max_runs;
+        int      sls_get_phase;
         string   which_sls;
+        uint32_t sls_how_many_to_bump;
 
         //Distillation
         int      do_distill_clauses;
         unsigned long long distill_long_cls_time_limitM;
         long watch_cache_stamp_based_str_time_limitM;
         long long distill_time_limitM;
+        double distill_increase_conf_ratio;
+        long distill_min_confl;
+        double distill_red_tier1_ratio;
 
         //Memory savings
         int       doRenumberVars;
@@ -377,7 +392,6 @@ class DLL_PUBLIC SolverConf
 
         //Gauss
         GaussConf gaussconf;
-        bool dont_elim_xor_vars;
 
         //Greedy undef
         int      greedy_undef;

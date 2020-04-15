@@ -33,13 +33,15 @@ class SLS {
 public:
     SLS(Solver* solver);
     ~SLS();
-    lbool run();
+    lbool run(const uint32_t num_simplify_calls);
 
 private:
     Solver* solver;
 
     lbool run_walksat();
     lbool run_yalsat();
+    lbool run_ccnr();
+    uint64_t approx_mem_needed();
 };
 
 } //end namespace CMSat

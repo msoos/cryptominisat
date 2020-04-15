@@ -473,7 +473,7 @@ inline void EGaussian::propagation_twoclause() {
 
     lit1 = ~lit1;
     lit2 = ~lit2;
-    solver->enqueue(lit1, PropBy(lit2, true));
+    solver->enqueue(lit1, solver->decisionLevel(), PropBy(lit2, true));
 }
 
 inline void EGaussian::conflict_twoclause(PropBy& confl) {
@@ -653,7 +653,7 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
                     clauses_toclear.push_back(std::make_pair(offs, solver->trail.size() - 1));
                     assert(!cla->freed());
                     assert(solver->value((*cla)[0].var()) == l_Undef);
-                    solver->enqueue((*cla)[0], PropBy(offs));
+                    solver->enqueue((*cla)[0], solver->decisionLevel(), PropBy(offs));
                 }
                 gqd.ret_gauss = 2; // gaussian matrix is  propagation
             }
@@ -843,7 +843,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                                 clauses_toclear.push_back(std::make_pair(offs, solver->trail.size() - 1));
                                 assert(!cla->freed());
                                 assert(solver->value((*cla)[0].var()) == l_Undef);
-                                solver->enqueue((*cla)[0], PropBy(offs));
+                                solver->enqueue((*cla)[0], solver->decisionLevel(), PropBy(offs));
                             }
                             gqd.ret_gauss = 2;
                             (*clauseIt).setBit(num_row); // this clause arleady sat

@@ -61,6 +61,7 @@ class VarReplacer
         void extend_model_already_set();
         void extend_model_set_undef();
         void extend_model(const uint32_t var);
+        void extend_pop_queue(vector<Lit>& pop);
 
         uint32_t get_var_replaced_with(const uint32_t var) const;
         uint32_t get_var_replaced_with(const Lit lit) const;

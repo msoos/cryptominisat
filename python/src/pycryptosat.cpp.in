@@ -103,9 +103,12 @@ static void setup_solver(Solver *self, PyObject *args, PyObject *kwds)
     self->time_limit = std::numeric_limits<double>::max();
     self->confl_limit = std::numeric_limits<long>::max();
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|idli", kwlist, &self->verbose, &self->time_limit, &self->confl_limit, &num_threads)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|idli", kwlist,
+        &self->verbose, &self->time_limit, &self->confl_limit, &num_threads))
+    {
         return;
     }
+
     if (self->verbose < 0) {
         PyErr_SetString(PyExc_ValueError, "verbosity must be at least 0");
         return;

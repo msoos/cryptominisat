@@ -380,7 +380,7 @@ void ClauseAllocator::consolidate(
         size_t log_2_size = 0;
         if (size > 0) {
             //yes, it can be 0 (only binary clauses, for example)
-            std::log2(size);
+            log_2_size = std::log2(size);
         }
         cout << "c [mem] consolidate ";
         cout << " old-sz: "; print_value_kilo_mega(old_size*sizeof(BASE_DATA_TYPE));

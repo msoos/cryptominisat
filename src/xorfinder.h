@@ -240,7 +240,7 @@ template<class T> void PossibleXor::add(
 
     cout << "FoundComb before:" << endl;
     for(size_t i = 0; i < foundComb.size(); i++) {
-        cout << "foundComb[" << i << "]: " << foundComb[i] << endl;
+        cout << "foundComb[" << i << "]: " << (int)foundComb[i] << endl;
     }
     cout << "----" << endl;
     #endif

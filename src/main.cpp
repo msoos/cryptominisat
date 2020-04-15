@@ -326,10 +326,10 @@ void Main::add_supported_options()
         , "[0..] Random seed")
     ("threads,t", po::value(&num_threads)->default_value(1)
         ,"Number of threads")
-    ("maxtime", po::value(&conf.maxTime)->default_value(conf.maxTime, "MAX")
-        , "Stop solving after this much time (s)")
-    ("maxconfl", po::value(&conf.max_confl)->default_value(conf.max_confl, "MAX")
-        , "Stop solving after this many conflicts")
+    ("maxtime", po::value(&maxtime),
+        "Stop solving after this much time (s)")
+    ("maxconfl", po::value(&maxconfl),
+        "Stop solving after this many conflicts")
 //     ("undef", po::value(&conf.greedy_undef)->default_value(conf.greedy_undef)
 //         , "Set as many variables in solution to UNDEF as possible if solution is SAT")
     ("mult,m", po::value(&conf.orig_global_timeout_multiplier)->default_value(conf.orig_global_timeout_multiplier)
@@ -370,8 +370,6 @@ void Main::add_supported_options()
         , "Lower bound on blocking restart -- don't block before this many conflicts")
     ("locgmult" , po::value(&conf.local_glue_multiplier)->default_value(conf.local_glue_multiplier, s_local_glue_multiplier.str())
         , "The multiplier used to determine if we should restart during glue-based restart")
-    ("brokengluerest", po::value(&conf.broken_glue_restart)->default_value(conf.broken_glue_restart)
-        , "Should glue restart be broken as before 8e74cb5010bb4")
     ("ratiogluegeom", po::value(&conf.ratio_glue_geom)->default_value(conf.ratio_glue_geom)
         , "Ratio of glue vs geometric restarts -- more is more glue")
     ;
@@ -424,6 +422,12 @@ void Main::add_supported_options()
         , "variable activity increase divider (MUST be smaller than multiplier)")
     ("vincstart", po::value(&conf.var_inc_vsids_start)->default_value(conf.var_inc_vsids_start)
         , "variable activity increase starts with this value. Make sure that this multiplied by multiplier and divided by divider is larger than itself")
+    ("vsidsalternate", po::value(&conf.alternate_vsids)->default_value(conf.alternate_vsids)
+         , "Alternate VSIDS values between iterations")
+    ("vsidsalterval1", po::value(&conf.alternate_vsids_decay_rate1)->default_value(conf.alternate_vsids_decay_rate1)
+         , "Alternate value 1 of VSIDS decay rate -- active when alternation is ON")
+    ("vsidsalterval2", po::value(&conf.alternate_vsids_decay_rate2)->default_value(conf.alternate_vsids_decay_rate2)
+        , "Alternate value 2 of VSIDS decay rate -- active when alternation is ON")
     ("freq", po::value(&conf.random_var_freq)->default_value(conf.random_var_freq, s_random_var_freq.str())
         , "[0 - 1] freq. of picking var at random")
     ("maple", po::value(&conf.maple)->default_value(conf.maple)
@@ -432,6 +436,12 @@ void Main::add_supported_options()
         , "Use maple N-1 of N rounds. Normally, N is 2, so used every other round. Set to 3 so it will use maple 2/3rds of the time.")
     ("maplemorebump", po::value(&conf.more_maple_bump_high_glue)->default_value(conf.more_maple_bump_high_glue)
         , "Bump variable usefulness more when glue is HIGH")
+    ("maplealternate", po::value(&conf.alternate_maple)->default_value(conf.alternate_maple)
+         , "Alternate maple values between iterations")
+    ("maplealterval1", po::value(&conf.alternate_maple_decay_rate1)->default_value(conf.alternate_maple_decay_rate1)
+         , "Alternate value 1 of maple decay rate -- active when alternation is ON")
+    ("maplealterval2", po::value(&conf.alternate_maple_decay_rate2)->default_value(conf.alternate_maple_decay_rate2)
+        , "Alternate value 2 of maple decay rate -- active when alternation is ON")
     ;
 
 
@@ -448,7 +458,7 @@ void Main::add_supported_options()
     ("sls", po::value(&conf.doSLS)->default_value(conf.doSLS)
         , "Run SLS during simplification")
     ("slstype", po::value(&conf.which_sls)->default_value(conf.which_sls)
-        , "Which SLS to run. Allowed values: walksat, yalsat")
+        , "Which SLS to run. Allowed values: walksat, yalsat, ccnr")
     ("slsmaxmem", po::value(&conf.sls_memoutMB)->default_value(conf.sls_memoutMB)
         , "Maximum number of MB to give to SLS solver. Doesn't run SLS solver if the memory usage would be more than this.")
     ("slseveryn", po::value(&conf.sls_every_n)->default_value(conf.sls_every_n)
@@ -457,6 +467,10 @@ void Main::add_supported_options()
         , "Run Yalsat with this many mems*million timeout. Limits time of yalsat run")
     ("walksatruns", po::value(&conf.walksat_max_runs)->default_value(conf.walksat_max_runs)
         , "Max 'runs' for WalkSAT. Limits time of WalkSAT run")
+    ("slsgetphase", po::value(&conf.sls_get_phase)->default_value(conf.sls_get_phase)
+        , "Get phase from SLS solver, set as new phase for CDCL")
+    ("slstobump", po::value(&conf.sls_how_many_to_bump)->default_value(conf.sls_how_many_to_bump)
+        , "How many variables to bump in CCNR")
     ;
 
     po::options_description probeOptions("Probing options");
@@ -509,12 +523,22 @@ void Main::add_supported_options()
         , "Simp rounds increment by this power of N")
     ;
 
+    std::ostringstream tern_keep;
+    tern_keep << std::setprecision(2) << conf.ternary_keep_mult;
+
+    std::ostringstream tern_max_create;
+    tern_max_create << std::setprecision(2) << conf.ternary_max_create;
+
     po::options_description tern_res_options("Ternary resolution");
     tern_res_options.add_options()
     ("tern", po::value(&conf.doTernary)->default_value(conf.doTernary)
         , "Perform Ternary resolution'")
     ("terntimelim", po::value(&conf.ternary_res_time_limitM)->default_value(conf.ternary_res_time_limitM)
         , "Time-out in bogoprops M of ternary resolution as per paper 'Look-Ahead Versus Look-Back for Satisfiability Problems'")
+    ("ternkeep", po::value(&conf.ternary_keep_mult)->default_value(conf.ternary_keep_mult, tern_keep.str())
+        , "Keep ternary clauses only if they are touched within this multiple of 'lev1usewithin'")
+    ("terncreate", po::value(&conf.ternary_max_create)->default_value(conf.ternary_max_create, tern_max_create.str())
+        , "Create only this multiple (of linked in cls) ternary clauses per simp run")
     ;
 
     po::options_description occ_mem_limits("Occ-based simplification memory limits");
@@ -533,8 +557,14 @@ void Main::add_supported_options()
         , "Perform clause contraction through self-subsuming resolution as part of the occurrence-subsumption system")
     ("substimelim", po::value(&conf.subsumption_time_limitM)->default_value(conf.subsumption_time_limitM)
         , "Time-out in bogoprops M of subsumption of long clauses with long clauses, after computing occur")
+    ("substimelimbinratio", po::value(&conf.subsumption_time_limit_ratio_sub_str_w_bin)->default_value(conf.subsumption_time_limit_ratio_sub_str_w_bin)
+        , "Ratio of subsumption time limit to spend on sub&str long clauses with bin")
+    ("substimelimlongratio", po::value(&conf.subsumption_time_limit_ratio_sub_w_long)->default_value(conf.subsumption_time_limit_ratio_sub_w_long)
+        , "Ratio of subsumption time limit to spend on sub long clauses with long")
     ("strstimelim", po::value(&conf.strengthening_time_limitM)->default_value(conf.strengthening_time_limitM)
         , "Time-out in bogoprops M of strengthening of long clauses with long clauses, after computing occur")
+    ("sublonggothrough", po::value(&conf.subsume_gothrough_multip)->default_value(conf.subsume_gothrough_multip)
+        , "How many times go through subsume")
     ;
 
     po::options_description bva_options("BVA options");
@@ -567,8 +597,6 @@ void Main::add_supported_options()
         , "Eliminate this ratio of free variables at most per variable elimination iteration")
     ("skipresol", po::value(&conf.skip_some_bve_resolvents)->default_value(conf.skip_some_bve_resolvents)
         , "Skip BVE resolvents in case they belong to a gate")
-    ("agrelimtimelim", po::value(&conf.aggressive_elim_time_limitM)->default_value(conf.aggressive_elim_time_limitM)
-        , "Time-out in bogoprops M of aggressive(=uses reverse distillation) var-elimination")
     ;
 
     po::options_description xorOptions("XOR-related options");
@@ -632,8 +660,6 @@ void Main::add_supported_options()
         , "Use cache for otf more minim of learnt clauses")
     ("moremorealways", po::value(&conf.doAlwaysFMinim)->default_value(conf.doAlwaysFMinim)
         , "Always strong-minimise clause")
-    ("otfsubsume", po::value(&conf.doOTFSubsume)->default_value(conf.doOTFSubsume)
-        , "Perform on-the-fly subsumption")
     ("decbased", po::value(&conf.do_decision_based_cl)->default_value(conf.do_decision_based_cl)
         , "Create decision-based conflict clauses when the UIP clause is too large")
     ("decbasemaxlev", po::value(&conf.decision_based_cl_max_levels)->default_value(conf.decision_based_cl_max_levels)
@@ -648,6 +674,12 @@ void Main::add_supported_options()
         , "Update glues while analyzing")
     ("otfhyper", po::value(&conf.otfHyperbin)->default_value(conf.otfHyperbin)
         , "Perform hyper-binary resolution at dec. level 1 after every restart and during probing")
+    ;
+
+    po::options_description chrono_bt_opts("Propagation options");
+    chrono_bt_opts.add_options()
+    ("diffdeclevelchrono", po::value(&conf.diff_declev_for_chrono)->default_value(conf.diff_declev_for_chrono)
+        , "Difference in decision level is more than this, perform chonological backtracking instead of non-chronological backtracking. Giving -1 means it is never turned on (overrides '--confltochrono -1' in this case).")
     ;
 
 
@@ -700,7 +732,7 @@ void Main::add_supported_options()
     ("compslimit", po::value(&conf.comp_find_time_limitM)->default_value(conf.comp_find_time_limitM)
         , "Limit how much time is spent in component-finding");
 
-    po::options_description distillOptions("Misc options");
+    po::options_description distillOptions("Distill options");
     distillOptions.add_options()
     //("noparts", "Don't find&solve subproblems with subsolvers")
     ("distill", po::value(&conf.do_distill_clauses)->default_value(conf.do_distill_clauses)
@@ -709,6 +741,12 @@ void Main::add_supported_options()
         , "Maximum number of Mega-bogoprops(~time) to spend on vivifying/distilling long cls by enqueueing and propagating")
     ("distillto", po::value(&conf.distill_time_limitM)->default_value(conf.distill_time_limitM)
         , "Maximum time in bogoprops M for distillation")
+    ("distillincconf", po::value(&conf.distill_increase_conf_ratio)->default_value(conf.distill_increase_conf_ratio)
+        , "Multiplier for current number of conflicts OTF distill")
+    ("distillminconf", po::value(&conf.distill_min_confl)->default_value(conf.distill_min_confl)
+        , "Minimum number of conflicts between OTF distill")
+    ("distilltier1ratio", po::value(&conf.distill_red_tier1_ratio)->default_value(conf.distill_red_tier1_ratio)
+        , "How much of tier 1 to distill")
     ;
 
     po::options_description mem_save_opts("Memory saving options");
@@ -806,6 +844,7 @@ void Main::add_supported_options()
     .add(restartOptions)
     .add(printOptions)
     .add(propOptions)
+    .add(chrono_bt_opts)
     .add(reduceDBOptions)
     .add(red_cl_dump_opts)
     .add(varPickOptions)
@@ -1010,7 +1049,7 @@ void Main::parse_polarity_type()
 
 void Main::manually_parse_some_options()
 {
-    if (conf.which_sls != "yalsat" && conf.which_sls != "walksat") {
+    if (conf.which_sls != "yalsat" && conf.which_sls != "walksat" && conf.which_sls != "ccnr") {
         cout << "ERROR: you gave '" << conf.which_sls << " for SLS with the option '--slstype'."
         << " This is incorrect, we only accept 'yalsat' and 'walksat'"
         << endl;
@@ -1310,6 +1349,13 @@ int Main::solve()
     if (dratf) {
         solver->set_drat(dratf, clause_ID_needed);
     }
+    if (vm.count("maxtime")) {
+        solver->set_max_time(maxtime);
+    }
+    if (vm.count("maxconfl")) {
+        solver->set_max_confl(maxconfl);
+    }
+
     check_num_threads_sanity(num_threads);
     solver->set_num_threads(num_threads);
     if (sql != 0) {

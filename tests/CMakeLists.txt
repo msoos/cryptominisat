@@ -143,6 +143,18 @@ if (IPASIR)
         COMMAND ipasir_test
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )
+
+    add_executable(ipasir_example
+        ipasir_example.c
+    )
+    target_link_libraries(ipasir_example
+        ipasircryptominisat5
+    )
+    add_test (
+        NAME ipasir_example
+        COMMAND ipasir_example
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
 endif()
 
 #google test harness
@@ -168,6 +180,7 @@ set (MY_TESTS
     searcher_test
     solver_test
     ternary_resolve_test
+    implied_by_test
 #    undefine_test
 )
 

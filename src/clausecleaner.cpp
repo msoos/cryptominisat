@@ -358,7 +358,6 @@ bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors)
 {
     assert(solver->ok);
     #ifdef VERBOSE_DEBUG
-    cout << "(" << matrix_no << ") Cleaning gauss clauses" << endl;
     for(Xor& x : xors) {
         cout << "orig XOR: " << x << endl;
     }
