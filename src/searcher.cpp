@@ -2064,7 +2064,10 @@ void Searcher::reduce_db_if_needed()
 
 void Searcher::clean_clauses_if_needed()
 {
+    #ifdef SLOW_DEBUG
     assert(decisionLevel() == 0);
+    assert(qhead == trail.size());
+    #endif
 
     const size_t newZeroDepthAss = trail.size() - lastCleanZeroDepthAssigns;
     if (newZeroDepthAss > 0
@@ -2082,6 +2085,10 @@ void Searcher::clean_clauses_if_needed()
         solver->clauseCleaner->remove_and_clean_all();
 
         cl_alloc.consolidate(solver);
+        //TODO this is not needed, but seems to help speed
+        //     perhaps because it re-shuffles
+        rebuildOrderHeap();
+
         simpDB_props = (litStats.redLits + litStats.irredLits)<<5;
     }
 }

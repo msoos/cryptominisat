@@ -284,7 +284,6 @@ void ReduceDB::handle_lev1()
             if (cl->is_ternary_resolvent) {
                 must_touch *= solver->conf.ternary_keep_mult;
             }
-
             if (!solver->clause_locked(*cl, offset)
                 && cl->stats.last_touched + must_touch < solver->sumConflicts
             ) {

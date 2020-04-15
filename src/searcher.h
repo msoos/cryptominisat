@@ -162,7 +162,6 @@ class Searcher : public HyperEngine
         void unfill_assumptions_set();
         bool check_order_heap_sanity() const;
 
-
         template<bool update_bogoprops>
         void bump_cl_act(Clause* cl);
         void simple_create_learnt_clause(
