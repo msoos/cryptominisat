@@ -206,6 +206,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , xor_finder_time_limitM(50)
         , allow_elim_xor_vars(1)
         , xor_var_per_cut(2)
+        , force_preserve_xors(false)
 
         //Cardinality
         , doFindCard(0)

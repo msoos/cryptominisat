@@ -358,7 +358,9 @@ bool DistillerLongWithImpl::shorten_all_cl_with_watch(
 
         #ifdef USE_GAUSS
         cl = solver->cl_alloc.ptr(offset);
-        if (cl->used_in_xor()) {
+        if (cl->used_in_xor() &&
+            solver->conf.force_preserve_xors)
+        {
             goto copy;
         }
         #endif

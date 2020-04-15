@@ -139,7 +139,9 @@ bool DistillerLong::go_through_clauses(
         ClOffset offset2;
         Clause& cl = *solver->cl_alloc.ptr(offset);
         #ifdef USE_GAUSS
-        if (cl.used_in_xor()) {
+        if (cl.used_in_xor() &&
+            solver->conf.force_preserve_xors
+        ) {
             offset2 = offset;
             goto copy;
         }

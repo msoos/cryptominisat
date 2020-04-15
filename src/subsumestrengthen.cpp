@@ -153,7 +153,9 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::strengthen_subsume_and_unlink_and_
         ClOffset offset2 = subs[j];
         Clause& cl2 = *solver->cl_alloc.ptr(offset2);
         #ifdef USE_GAUSS
-        if (cl2.used_in_xor()) {
+        if (cl2.used_in_xor() &&
+            solver->conf.force_preserve_xors)
+        {
             continue;
         }
         #endif
@@ -192,7 +194,9 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::strengthen_subsume_and_unlink_and_
             }
             #endif
             #ifdef USE_GAUSS
-            if (cl2.used_in_xor()) {
+            if (cl2.used_in_xor() &&
+                solver->conf.force_preserve_xors)
+            {
                 continue;
             }
             #endif
@@ -881,7 +885,9 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::backw_sub_str_long_with_implicit(
                 cout << "subsumed clause " << cl2 << endl;
             #endif
             #ifdef USE_GAUSS
-            if (cl2.used_in_xor()) {
+            if (cl2.used_in_xor() &&
+                solver->conf.force_preserve_xors)
+            {
                 continue;
             }
             #endif
@@ -899,7 +905,9 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::backw_sub_str_long_with_implicit(
             }
             #endif
             #ifdef USE_GAUSS
-            if (cl2.used_in_xor()) {
+            if (cl2.used_in_xor() &&
+                solver->conf.force_preserve_xors)
+            {
                 //cout << "str-ing used in XOR with bin" << endl;
                 continue;
             }

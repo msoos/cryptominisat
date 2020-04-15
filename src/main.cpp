@@ -597,6 +597,8 @@ void Main::add_supported_options()
         , "Number of _real_ variables per XOR when cutting them. So 2 will have XORs of size 4 because 1 = connecting to previous, 1 = connecting to next, 2 in the midde. If the XOR is 4 long, it will be just one 4-long XOR, no connectors")
     ("maxxormat", po::value(&conf.maxXORMatrix)->default_value(conf.maxXORMatrix)
         , "Maximum matrix size (=num elements) that we should try to echelonize")
+    ("forcepreservexors", po::value(&conf.force_preserve_xors)->default_value(conf.force_preserve_xors)
+        , "Force preserving XORs when they have been found. Easier to make sure XORs are not lost through simplifiactions such as strenghtening")
 #ifdef USE_M4RI
     ("m4ri", po::value(&conf.doM4RI)->default_value(conf.doM4RI)
         , "Use M4RI")

@@ -1481,8 +1481,8 @@ bool OccSimplifier::simplify(const bool _startup, const std::string schedule)
 
     assert(solver->detached_xor_repr_cls.empty());
     #ifdef USE_GAUSS
-    assert(gmatrices.empty());
-    assert(gqueuedata.clear());
+    assert(solver->gmatrices.empty());
+    assert(solver->gqueuedata.empty());
     #endif
 
     startup = _startup;
@@ -2456,21 +2456,25 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
             //Calculate new clause stats
             ClauseStats stats;
             bool is_xor = false;
-            #if defined(USE_GAUSS) || defined(STATS_NEEDED)
-            if (it->isBin() && it2->isClause()) {
-                Clause* c = solver->cl_alloc.ptr(it2->get_offset());
-                stats = c->stats;
-                is_xor |= c->used_in_xor();
-            } else if (it2->isBin() && it->isClause()) {
-                Clause* c = solver->cl_alloc.ptr(it->get_offset());
-                stats = c->stats;
-                is_xor |= c->used_in_xor();
-            } else if (it2->isClause() && it->isClause()) {
-                Clause* c1 = solver->cl_alloc.ptr(it->get_offset());
-                Clause* c2 = solver->cl_alloc.ptr(it2->get_offset());
-                stats = ClauseStats::combineStats(c1->stats, c2->stats);
-                is_xor |= c1->used_in_xor();
-                is_xor |= c2->used_in_xor();
+            #ifndef STATS_NEEDED
+            if (solver->conf.force_preserve_xors) {
+            #endif
+                if (it->isBin() && it2->isClause()) {
+                    Clause* c = solver->cl_alloc.ptr(it2->get_offset());
+                    stats = c->stats;
+                    is_xor |= c->used_in_xor();
+                } else if (it2->isBin() && it->isClause()) {
+                    Clause* c = solver->cl_alloc.ptr(it->get_offset());
+                    stats = c->stats;
+                    is_xor |= c->used_in_xor();
+                } else if (it2->isClause() && it->isClause()) {
+                    Clause* c1 = solver->cl_alloc.ptr(it->get_offset());
+                    Clause* c2 = solver->cl_alloc.ptr(it2->get_offset());
+                    stats = ClauseStats::combineStats(c1->stats, c2->stats);
+                    is_xor |= c1->used_in_xor();
+                    is_xor |= c2->used_in_xor();
+                }
+            #ifndef STATS_NEEDED
             }
             #endif
             //must clear marking that has been set due to gate
