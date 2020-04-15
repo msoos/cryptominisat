@@ -1384,9 +1384,6 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 solver->xor_clauses_updated = true;
                 solver->xorclauses.clear();
                 solver->xorclauses_unused.clear();
-                #ifdef USE_GAUSS
-                solver->clear_gauss_matrices();
-                #endif
 
                 if (solver->conf.do_empty_varelim) {
                     eliminate_empty_resolvent_vars();
@@ -1483,6 +1480,10 @@ bool OccSimplifier::simplify(const bool _startup, const std::string schedule)
     #endif
 
     assert(solver->detached_xor_repr_cls.empty());
+    #ifdef USE_GAUSS
+    assert(gmatrices.empty());
+    assert(gqueuedata.clear());
+    #endif
 
     startup = _startup;
     if (!setup()) {
