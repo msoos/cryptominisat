@@ -299,6 +299,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , sls_ccnr_asipire(1)
         , which_sls("ccnr")
         , sls_how_many_to_bump(100)
+        , sls_bump_var_max_n_times(100)
 
         //Distillation
         , do_distill_clauses(true)

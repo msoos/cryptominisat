@@ -353,6 +353,7 @@ class DLL_PUBLIC SolverConf
         int      sls_ccnr_asipire;
         string   which_sls;
         uint32_t sls_how_many_to_bump;
+        uint32_t sls_bump_var_max_n_times;
 
         //Distillation
         int      do_distill_clauses;

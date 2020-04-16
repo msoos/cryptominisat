@@ -457,6 +457,8 @@ void Main::add_supported_options()
         , "Turn aspiration on/off for CCANR")
     ("slstobump", po::value(&conf.sls_how_many_to_bump)->default_value(conf.sls_how_many_to_bump)
         , "How many variables to bump in CCNR")
+    ("slstobumpmaxpervar", po::value(&conf.sls_bump_var_max_n_times)->default_value(conf.sls_bump_var_max_n_times)
+        , "How many times to bump an individual variable's activity in CCNR")
     ;
 
     po::options_description probeOptions("Probing options");

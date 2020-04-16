@@ -220,9 +220,17 @@ lbool CMS_ccnr::deal_with_solution(int res)
         }
     }
 
+    //Check prerequisites
+    #ifdef SLOW_DEBUG
+    assert(toClear.empty());
+    for(const auto x: seen) {
+        assert(x == 0);
+    }
+    #endif
+
     std::sort(ls_s->_clauses.begin(), ls_s->_clauses.end(), ClWeightSorter());
     uint32_t vars_bumped = 0;
-    assert(toClear.empty());
+    uint32_t individual_vars_bumped = 0;
     for(const auto& c: ls_s->_clauses) {
         if (vars_bumped > solver->conf.sls_how_many_to_bump)
             break;
@@ -231,9 +239,12 @@ lbool CMS_ccnr::deal_with_solution(int res)
             uint32_t v = c.literals[i].var_num-1;
             if (v < solver->nVars() &&
                 solver->varData[v].removed == Removed::none &&
-                seen[v] == 0
+                seen[v] < solver->conf.sls_bump_var_max_n_times
             ) {
-                seen[v] = 1;
+                if (seen[v] == 0) {
+                    individual_vars_bumped++;
+                }
+                seen[v]++;
                 toClear.push_back(Lit(v, false));
                 solver->bump_var_importance_all(v);
                 vars_bumped++;
@@ -245,24 +256,27 @@ lbool CMS_ccnr::deal_with_solution(int res)
         solver->vsids_decay_var_act();
     }
 
+    //Clear up
     for(const auto x: toClear) {
         seen[x.var()] = 0;
     }
     toClear.clear();
 
     if (solver->conf.verbosity) {
-        cout << "c [ccnr] Bumped " << vars_bumped << " variables' activities" << endl;
+        cout << "c [ccnr] Bumped " << individual_vars_bumped
+        << " vars' acts a total of " << vars_bumped << " times"
+        << " -- maxbump per var: " << solver->conf.sls_bump_var_max_n_times
+        << " -- maxbump tot: " << solver->conf.sls_how_many_to_bump
+        << endl;
     }
-
     if (!res) {
         if (solver->conf.verbosity >= 2) {
             cout << "c [ccnr] ASSIGNMENT NOT FOUND" << endl;
         }
-        return l_Undef;
-    }
-
-    if (solver->conf.verbosity) {
-        cout << "c [ccnr] ASSIGNMENT FOUND" << endl;
+    } else {
+        if (solver->conf.verbosity) {
+            cout << "c [ccnr] ASSIGNMENT FOUND" << endl;
+        }
     }
 
     return l_Undef;
