@@ -292,6 +292,7 @@ uint32_t MatrixFinder::setMatrixes()
     uint32_t realMatrixNum = 0;
     uint32_t unusedMatrix = 0;
     uint32_t too_few_rows_matrix = 0;
+    uint32_t unused_matrix_printed = 0;
     for (int a = matrix_no-1; a >= 0; a--) {
         MatrixShape& m = matrix_shape[a];
         uint32_t i = m.num;
@@ -419,7 +420,7 @@ uint32_t MatrixFinder::setMatrixes()
                 //cout<< "c [matrix]xor not in matrix, now unused_xors size: " << unused_xors.size() << endl;
                 clash_vars_unused.insert(x.clash_vars.begin(), x.clash_vars.end());
             }
-            if (solver->conf.verbosity) {
+            if (solver->conf.verbosity && unused_matrix_printed < 10) {
                 if (m.rows >= solver->conf.gaussconf.min_matrix_rows ||
                     solver->conf.verbosity >= 2)
                 {
@@ -435,10 +436,16 @@ uint32_t MatrixFinder::setMatrixes()
                 continue;
 
             if (!use_matrix &&
-                m.rows < solver->conf.gaussconf.min_matrix_rows &&
-                solver->conf.verbosity < 2)
+                    ((m.rows < solver->conf.gaussconf.min_matrix_rows &&
+                    solver->conf.verbosity < 2) ||
+                    (unused_matrix_printed >= 10))
+                )
             {
                 continue;
+            }
+
+            if (!use_matrix) {
+                unused_matrix_printed++;
             }
 
             cout << std::setw(7) << m.rows << " x"
