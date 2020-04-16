@@ -1196,6 +1196,35 @@ void Searcher::print_order_heap()
     }
 }
 
+void Searcher::check_need_gauss_jordan_disable()
+{
+    uint32_t num_disabled = 0;
+    for(uint32_t i = 0; i < gqueuedata.size(); i++) {
+        auto& gqd = gqueuedata[i];
+        if (gqd.engaus_disable) {
+            num_disabled++;
+            continue;
+        }
+
+        if (conf.gaussconf.autodisable &&
+            !conf.xor_detach_reattach &&
+            gmatrices[i]->must_disable(gqd)
+        ) {
+            gqd.engaus_disable = true;
+            num_disabled++;
+        }
+
+        gqd.reset();
+        gmatrices[i]->update_cols_vals_set();
+    }
+    assert(gqhead <= qhead);
+
+    if (num_disabled == gqueuedata.size()) {
+        all_matrices_disabled = true;
+        gqhead = qhead;
+    }
+}
+
 lbool Searcher::search()
 {
     assert(ok);
@@ -1244,6 +1273,7 @@ lbool Searcher::search()
                 goto end;
             }
             check_need_restart();
+            check_need_gauss_jordan_disable();
         } else {
             assert(ok);
             #ifdef USE_GAUSS
@@ -2933,35 +2963,13 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
     #ifdef VERBOSE_DEBUG
     cout << "Gauss searcher::Gauss_elimination called, declevel: " << decisionLevel() << endl;
     #endif
-    if (gqueuedata.empty()) {
-        return gauss_ret::g_nothing;
-    }
 
-    uint32_t num_disabled = 0;
     for(uint32_t i = 0; i < gqueuedata.size(); i++) {
-        auto& gqd = gqueuedata[i];
-        if (gqd.engaus_disable) {
-            num_disabled++;
+        if (gqueuedata[i].engaus_disable) {
             continue;
         }
-
-        if (conf.gaussconf.autodisable &&
-            !conf.xor_detach_reattach &&
-            gmatrices[i]->must_disable(gqd, conf.verbosity)
-        ) {
-            gqd.engaus_disable = true;
-            num_disabled++;
-        }
-
-        gqd.reset();
+        gqueuedata[i].reset();
         gmatrices[i]->update_cols_vals_set();
-    }
-    assert(gqhead <= qhead);
-
-    if (num_disabled == gqueuedata.size()) {
-        all_matrices_disabled = true;
-        gqhead = qhead;
-        return gauss_ret::g_nothing;
     }
 
     bool confl_in_gauss = false;
@@ -3432,10 +3440,10 @@ void Searcher::cancelUntil(uint32_t blevel)
         add_tmp_canceluntil.clear();
         #ifdef USE_GAUSS
         if (!all_matrices_disabled) {
-            for (EGaussian* gauss: gmatrices) {
-                if (gauss) {
+            for (uint32_t i = 0; i < gmatrices.size(); i++) {
+                if (gmatrices[i] && !gqueuedata[i].engaus_disable) {
                     //cout << "->Gauss canceling" << endl;
-                    gauss->canceling();
+                    gmatrices[i]->canceling();
                 } else {
                     //cout << "->Gauss NULL" << endl;
                 }

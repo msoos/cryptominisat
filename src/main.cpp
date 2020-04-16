@@ -806,6 +806,8 @@ void Main::add_supported_options()
         , "Force using all matrices")
     ("detachverb", po::value(&conf.xor_detach_verb)->default_value(conf.xor_detach_verb)
         , "If set, verbosity for XOR detach code is upped, ignoring normal verbosity")
+    ("gaussusefulcutoff", po::value(&conf.gaussconf.min_usefulness_cutoff)->default_value(conf.gaussconf.min_usefulness_cutoff)
+        , "Turn off Gauss if less than this many usefulenss ratio is recorded")
     ;
 #endif //USE_GAUSS
 

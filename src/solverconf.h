@@ -116,10 +116,12 @@ class GaussConf
         , max_matrix_rows(5000)
         , min_matrix_rows(3)
         , max_num_matrices(5)
+        , min_usefulness_cutoff(0.1)
     {
     }
 
     bool autodisable;
+    double min_usefulness_cutoff;
     uint32_t max_matrix_rows; //The maximum matrix size -- no. of rows
     uint32_t min_matrix_rows; //The minimum matrix size -- no. of rows
     uint32_t max_num_matrices; //Maximum number of matrices

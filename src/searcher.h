@@ -148,6 +148,7 @@ class Searcher : public HyperEngine
         void print_matrix_stats();
         enum class gauss_ret {g_cont, g_nothing, g_false};
         gauss_ret gauss_jordan_elim();
+        void check_need_gauss_jordan_disable();
         vector<EGaussian*> gmatrices;
         vector<GaussQData> gqueuedata;
         #endif

@@ -1094,11 +1094,16 @@ void EGaussian::print_matrix_stats(uint32_t verbosity)
 
     cout << std::left;
 
-    cout << pre << "truth-find satisfied    : "
-    << print_value_kilo_mega(find_truth_ret_satisfied_precheck, false) << endl;
+    if (verbosity >= 2) {
+        cout << pre << "truth-find satisfied    : "
+        << print_value_kilo_mega(find_truth_ret_satisfied_precheck, false) << endl;
+    }
 
-    cout << pre << "truth-find prop checks  : "
-    << print_value_kilo_mega(find_truth_called_propgause, false) << endl;
+    if (verbosity >= 1) {
+        cout << pre << "truth-find prop checks  : "
+        << print_value_kilo_mega(find_truth_called_propgause, false) << endl;
+    }
+
 
     if (verbosity >= 2) {
         cout << pre << "-> of which fnnewat     : "
@@ -1111,6 +1116,9 @@ void EGaussian::print_matrix_stats(uint32_t verbosity)
         << stats_line_percent(find_truth_ret_satisfied, find_truth_called_propgause)
         << " %"
         << endl;
+    }
+
+    if (verbosity >= 1) {
         cout << pre << "-> of which prop        : "
         << std::setw(5) << std::setprecision(2) << std::right
         << stats_line_percent(find_truth_ret_prop, find_truth_called_propgause)
@@ -1126,35 +1134,54 @@ void EGaussian::print_matrix_stats(uint32_t verbosity)
     cout << std::left;
     cout << pre << "elim called             : "
     << print_value_kilo_mega(elim_called, false) << endl;
-    cout << pre << "-> lead to xor rows     : "
-    << print_value_kilo_mega(elim_xored_rows, false) << endl;
-    cout << pre << "--> lead to prop checks : "
-    << print_value_kilo_mega(elim_called_propgause, false) << endl;
 
     if (verbosity >= 2) {
+        cout << pre << "-> lead to xor rows     : "
+        << print_value_kilo_mega(elim_xored_rows, false) << endl;
+
+        cout << pre << "--> lead to prop checks : "
+        << print_value_kilo_mega(elim_called_propgause, false) << endl;
+
         cout << pre << "---> of which satsified : "
         << std::setw(5) << std::setprecision(2) << std::right
         << stats_line_percent(elim_ret_satisfied, elim_called_propgause)
         << " %"
         << endl;
+
         cout << pre << "---> of which prop      : "
         << std::setw(5) << std::setprecision(2) << std::right
         << stats_line_percent(elim_ret_prop, elim_called_propgause)
         << " %"
         << endl;
+
         cout << pre << "---> of which fnnewat   : "
         << std::setw(5) << std::setprecision(2) << std::right
         << stats_line_percent(elim_ret_fnewwatch, elim_called_propgause)
         << " %"
         << endl;
+
         cout << pre << "---> of which confl     : "
         << std::setw(5) << std::setprecision(2) << std::right
         << stats_line_percent(elim_ret_confl, elim_called_propgause)
         << " %"
         << endl;
     }
-    cout << std::left;
 
+    if (verbosity == 1) {
+        cout << pre << "---> which lead to prop : "
+        << std::setw(5) << std::setprecision(2) << std::right
+        << stats_line_percent(elim_ret_prop, elim_called)
+        << " %"
+        << endl;
+
+        cout << pre << "---> which lead to confl: "
+        << std::setw(5) << std::setprecision(2) << std::right
+        << stats_line_percent(elim_ret_confl, elim_called)
+        << " %"
+        << endl;
+    }
+
+    cout << std::left;
     cout << pre << "size: "
     << std::setw(5) << num_rows << " x "
     << std::setw(5) << num_cols << endl;
@@ -1379,4 +1406,32 @@ void EGaussian::check_cols_unset_vals()
             assert((*cols_vals)[i] == 0);
         }
     }
+}
+
+bool EGaussian::must_disable(GaussQData& gqd)
+{
+    gqd.engaus_disable_checks++;
+    if ((gqd.engaus_disable_checks & 0x3ff) == 0x3ff //only check once in a while
+    ) {
+        uint64_t egcalled = elim_called + find_truth_ret_satisfied_precheck+find_truth_called_propgause;
+        uint32_t limit = (double)egcalled*solver->conf.gaussconf.min_usefulness_cutoff;
+        uint32_t useful = find_truth_ret_prop+find_truth_ret_confl+elim_ret_prop+elim_ret_confl;
+        //cout << "CHECKING - limit: " << limit << " useful:" << useful << endl;
+        if (egcalled > 200 && useful < limit) {
+            if (solver->conf.verbosity) {
+                const double perc =
+                    stats_line_percent(useful, egcalled);
+                cout << "c [g  <" <<  matrix_no <<  "] Disabling GJ-elim in this round. "
+                " Usefulness was: "
+                << std::setprecision(4) << std::fixed << perc
+                <<  "%"
+                << std::setprecision(2)
+                << "  over " << egcalled << " calls"
+                << endl;
+            }
+            return true;
+        }
+    }
+
+    return false;
 }

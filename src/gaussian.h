@@ -92,7 +92,7 @@ class EGaussian {
     bool full_init(bool& created);
     void update_cols_vals_set(bool force = false);
     void print_matrix_stats(uint32_t verbosity);
-    bool must_disable(GaussQData& gqd, bool verbose);
+    bool must_disable(GaussQData& gqd);
     void check_invariants();
     void update_matrix_no(uint32_t n);
     void check_watchlist_sanity();
@@ -197,33 +197,6 @@ class EGaussian {
 inline void EGaussian::canceling() {
     cancelled_since_val_update = true;
     memset(satisfied_xors.data(), 0, satisfied_xors.size());
-}
-
-inline bool EGaussian::must_disable(GaussQData& gqd, bool verbose)
-{
-    gqd.engaus_disable_checks++;
-    if ((gqd.engaus_disable_checks & 0xff) == 0xff //only check once in a while
-    ) {
-        uint64_t egcalled = elim_called + find_truth_ret_satisfied_precheck+find_truth_called_propgause;
-        uint32_t limit = (double)egcalled*0.1;
-        uint32_t useful = find_truth_ret_prop+find_truth_ret_confl+elim_ret_prop+elim_ret_confl;
-        //cout << "CHECKING - limit: " << limit << " useful:" << useful << endl;
-        if (egcalled > 200 && useful < limit) {
-            if (verbose) {
-                const double perc =
-                    stats_line_percent(useful, egcalled);
-                cout << "c [g  <" <<  matrix_no <<  "] Disabling GJ-elim in this round. "
-                " Usefulness was: "
-                << std::setprecision(4) << std::fixed << perc
-                <<  "%"
-                << std::setprecision(2)
-                << endl;
-            }
-            return true;
-        }
-    }
-
-    return false;
 }
 
 inline void EGaussian::new_decision_level(uint32_t /*dec_level*/)
