@@ -76,7 +76,7 @@ public:
         if (d.size() == 0)
             return;
 
-        put(&d[0], d.size() * sizeof(T));
+        put(d.data(), d.size() * sizeof(T));
     }
 
     template<class T>

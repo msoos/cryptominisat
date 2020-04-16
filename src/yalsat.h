@@ -27,7 +27,7 @@ THE SOFTWARE.
 #include <cstdio>
 #include "solvertypes.h"
 #include "MersenneTwister.h"
-class Yals;
+struct Yals;
 
 namespace CMSat {
 

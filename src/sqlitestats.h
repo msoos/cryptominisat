@@ -29,11 +29,8 @@ namespace CMSat {
 class SQLiteStats: public SQLStats
 {
 public:
-    ~SQLiteStats() override;
-    explicit SQLiteStats(std::string _filename) :
-        filename(_filename)
-    {
-    }
+    virtual ~SQLiteStats() override;
+    explicit SQLiteStats(std::string _filename);
 
     void end_transaction() override;
     void begin_transaction() override;

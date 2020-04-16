@@ -105,7 +105,7 @@ lbool SLS::run_ccnr()
     if (mem_needed_mb < maxmem) {
         lbool ret = ccnr.main();
         return ret;
-    };
+    }
 
     if (solver->conf.verbosity) {
         cout << "c [sls] would need "

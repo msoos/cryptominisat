@@ -88,6 +88,11 @@ const char* rst_dat_type_to_str(rst_dat_type type) {
     exit(-1);
 }
 
+SQLiteStats::SQLiteStats(std::string _filename) :
+        filename(_filename)
+{
+}
+
 vector<string> SQLiteStats::get_columns(const char* tablename)
 {
     vector<string> ret;

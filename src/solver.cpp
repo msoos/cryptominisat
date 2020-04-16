@@ -3908,7 +3908,6 @@ bool Solver::find_and_init_all_matrices()
             << no_irred_nonxor_contains_clash_vars() << endl
             << "c -- !conf.gaussconf.autodisable: " << (bool)(!conf.gaussconf.autodisable) << endl
             << "c -- conf.xor_detach_reattach: " << (bool)conf.xor_detach_reattach << endl;
-            ;
         }
     }
 

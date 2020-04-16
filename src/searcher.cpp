@@ -2751,18 +2751,18 @@ inline Lit Searcher::pickBranchLit()
         #endif
     }
 
-    #ifdef SLOW_DEBUG
-    if (next != lit_Undef) {
-        assert(solver->varData[next.var()].removed == Removed::none);
-    }
-    #endif
-
     Lit next;
     if (v != var_Undef) {
         next = Lit(v, !pick_polarity(v));
     } else {
         next = lit_Undef;
     }
+
+    #ifdef SLOW_DEBUG
+    if (next != lit_Undef) {
+        assert(solver->varData[next.var()].removed == Removed::none);
+    }
+    #endif
 
     return next;
 }

@@ -169,7 +169,6 @@ private:
     int sum_r = 0;
     double avgfalse;
     double sumfalse;
-    double f;
     double sample_size;
     double sum_avgfalse = 0.0;
     double mean_avgfalse;
