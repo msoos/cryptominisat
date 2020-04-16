@@ -62,6 +62,8 @@ private:
     template<class T>
     add_cl_ret add_this_clause(const T& cl);
     vector<int> yals_lits;
+    vector<uint16_t>& seen;
+    vector<Lit>& toClear;
 };
 
 }

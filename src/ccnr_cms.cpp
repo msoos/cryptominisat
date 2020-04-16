@@ -35,7 +35,9 @@ THE SOFTWARE.
 using namespace CMSat;
 
 CMS_ccnr::CMS_ccnr(Solver* _solver) :
-    solver(_solver)
+    solver(_solver),
+    seen(_solver->seen),
+    toClear(_solver->toClear)
 {
     ls_s = new CCNR::ls_solver(solver->conf.sls_ccnr_asipire);
     ls_s->set_verbosity(solver->conf.verbosity);
@@ -220,16 +222,36 @@ lbool CMS_ccnr::deal_with_solution(int res)
 
     std::sort(ls_s->_clauses.begin(), ls_s->_clauses.end(), ClWeightSorter());
     uint32_t vars_bumped = 0;
+    assert(toClear.empty());
     for(const auto& c: ls_s->_clauses) {
         if (vars_bumped > solver->conf.sls_how_many_to_bump)
             break;
+
         for(uint32_t i = 0; i < c.literals.size(); i++) {
             uint32_t v = c.literals[i].var_num-1;
-            if (v < solver->nVars() && solver->varData[v].removed == Removed::none) {
-                solver->bump_var_importance(v);
+            if (v < solver->nVars() &&
+                solver->varData[v].removed == Removed::none &&
+                seen[v] == 0
+            ) {
+                seen[v] = 1;
+                toClear.push_back(Lit(v, false));
+                solver->bump_var_importance_all(v);
+                vars_bumped++;
             }
-            vars_bumped++;
         }
+    }
+
+    if (solver->branch_strategy == branch::vsids) {
+        solver->vsids_decay_var_act();
+    }
+
+    for(const auto x: toClear) {
+        seen[x.var()] = 0;
+    }
+    toClear.clear();
+
+    if (solver->conf.verbosity) {
+        cout << "c [ccnr] Bumped " << vars_bumped << " variables' activities" << endl;
     }
 
     if (!res) {

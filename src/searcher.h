@@ -176,7 +176,39 @@ class Searcher : public HyperEngine
         #endif
 
         bool pick_polarity(const uint32_t var);
-        void bump_var_importance(uint32_t var);
+
+        /////////////////////
+        // Branching
+        /////////////////////
+        double var_inc_vsids;
+        void insert_var_order(const uint32_t x, branch type);
+        void insert_var_order(const uint32_t x);
+        void insert_var_order_all(const uint32_t x);
+        vector<uint32_t> implied_by_learnts; //for glue-based extra var activity bumping
+        void update_branch_params();
+        template<bool update_bogoprops>
+        lbool new_decision();
+        Lit pickBranchLit();
+        uint32_t pick_random_var();
+        uint32_t pick_var_vsids_maple();
+        uint32_t pick_var_vmtf();
+        void vsids_decay_var_act();
+        template<bool update_bogoprops>
+        void vsids_bump_var_act(uint32_t v, double mult = 1.0);
+        double backup_random_var_freq = -1; ///<if restart has full random var branch, we save old value here
+        void check_var_in_branch_strategy(uint32_t var) const;
+        void set_branch_strategy(uint32_t iteration_num);
+        void rebuildOrderHeap();
+        void rebuildOrderHeapVMTF();
+        void print_order_heap();
+        void clear_order_heap()
+        {
+            order_heap_vsids.clear();
+            order_heap_maple.clear();
+        }
+        uint32_t branch_strategy_num = 0;
+        void bump_var_importance(const uint32_t var);
+        void bump_var_importance_all(const uint32_t var);
 
     protected:
         Solver* solver;
@@ -270,37 +302,6 @@ class Searcher : public HyperEngine
             , const uint32_t glue_before_minim
             , const bool is_decision
         );
-
-        /////////////////////
-        // Branching
-        /////////////////////
-        double var_inc_vsids;
-        void insert_var_order(const uint32_t x, branch type);
-        void insert_var_order(const uint32_t x);
-        void insert_var_order_all(const uint32_t x);
-        vector<uint32_t> implied_by_learnts; //for glue-based extra var activity bumping
-        void update_branch_params();
-        template<bool update_bogoprops>
-        lbool new_decision();
-        Lit pickBranchLit();
-        uint32_t pick_random_var();
-        uint32_t pick_var_vsids_maple();
-        uint32_t pick_var_vmtf();
-        void vsids_decay_var_act();
-        template<bool update_bogoprops>
-        void vsids_bump_var_act(uint32_t v, double mult = 1.0);
-        double backup_random_var_freq = -1; ///<if restart has full random var branch, we save old value here
-        void check_var_in_branch_strategy(uint32_t var) const;
-        void set_branch_strategy(uint32_t iteration_num);
-        void rebuildOrderHeap();
-        void rebuildOrderHeapVMTF();
-        void print_order_heap();
-        void clear_order_heap()
-        {
-            order_heap_vsids.clear();
-            order_heap_maple.clear();
-        }
-        uint32_t branch_strategy_num = 0;
 
         /////////////////////
         // Search Stats

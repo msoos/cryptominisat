@@ -3218,7 +3218,7 @@ void Searcher::unfill_assumptions_set()
     #endif
 }
 
-inline void Searcher::vsids_decay_var_act()
+void Searcher::vsids_decay_var_act()
 {
     assert(branch_strategy == branch::vsids);
     var_inc_vsids *= (1.0 / var_decay);
@@ -3776,21 +3776,31 @@ void Searcher::check_assumptions_sanity()
     }
 }
 
-void Searcher::bump_var_importance(uint32_t var)
+void Searcher::bump_var_importance_all(const uint32_t var)
+{
+    vsids_bump_var_act<false>(var);
+    varData[var].maple_conflicted+=2;
+    #ifdef VMTF_NEEDED
+    vmtf_bump_queue(var);
+    #endif
+}
+
+
+void Searcher::bump_var_importance(const uint32_t var)
 {
     switch(branch_strategy) {
-            case branch::vsids:
-                vsids_bump_var_act<false>(var);
-                break;
+        case branch::vsids:
+            vsids_bump_var_act<false>(var);
+            break;
 
-            case branch::maple:
-                varData[var].maple_conflicted+=2;
-                break;
+        case branch::maple:
+            varData[var].maple_conflicted+=2;
+            break;
 
-            #ifdef VMTF_NEEDED
-            case branch::vmtf:
-                vmtf_bump_queue(var);
-                break;
-            #endif
-        }
+        #ifdef VMTF_NEEDED
+        case branch::vmtf:
+            vmtf_bump_queue(var);
+            break;
+        #endif
+    }
 }
