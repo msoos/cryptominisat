@@ -2419,7 +2419,8 @@ void Searcher::setup_polarity_strategy()
     if (branch_strategy_num > 0 && conf.polar_stable_every_n > 0) {
         polar_stable = (branch_strategy_num % conf.polar_stable_every_n) == 0;
         polar_stable_longest_trail = 0;
-    } else if (conf.polar_stable_every_n == 0) {
+    }
+    if (conf.polar_stable_every_n == 0) {
         polar_stable = true;
     }
     if (conf.verbosity) {
