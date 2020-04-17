@@ -247,9 +247,7 @@ protected:
     void updateVars(
         const vector<uint32_t>& outerToInter
         , const vector<uint32_t>& interToOuter
-        , const vector<uint32_t>& interToOuter2
     );
-    void updateWatch(watch_subarray ws, const vector<uint32_t>& outerToInter);
 
     size_t mem_used() const
     {

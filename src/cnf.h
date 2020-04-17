@@ -86,9 +86,11 @@ class CNF
 {
 public:
     void save_on_var_memory();
+    void updateWatch(watch_subarray ws, const vector<uint32_t>& outerToInter);
     void updateVars(
         const vector<uint32_t>& outerToInter
         , const vector<uint32_t>& interToOuter
+        , const vector<uint32_t>& interToOuter2
     );
     size_t mem_used_renumberer() const;
     size_t mem_used() const;

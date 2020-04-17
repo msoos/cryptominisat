@@ -1034,8 +1034,8 @@ bool Solver::renumber_variables(bool must_renumber)
     }
 
     renumber_clauses(outerToInter);
-    CNF::updateVars(outerToInter, interToOuter);
-    PropEngine::updateVars(outerToInter, interToOuter, interToOuter2);
+    CNF::updateVars(outerToInter, interToOuter, interToOuter2);
+    PropEngine::updateVars(outerToInter, interToOuter);
     Searcher::updateVars(outerToInter, interToOuter);
 #ifdef USE_BREAKID
     if (breakid) {

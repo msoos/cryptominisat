@@ -205,10 +205,54 @@ void CNF::test_reflectivity_of_renumbering() const
     #endif
 }
 
+inline void CNF::updateWatch(
+    watch_subarray ws
+    , const vector<uint32_t>& outerToInter
+) {
+    for(Watched *it = ws.begin(), *end = ws.end()
+        ; it != end
+        ; ++it
+    ) {
+        if (it->isBin()) {
+            it->setLit2(
+                getUpdatedLit(it->lit2(), outerToInter)
+            );
+            continue;
+        }
+
+        assert(it->isClause());
+        const Clause &cl = *cl_alloc.ptr(it->get_offset());
+        Lit blocked_lit = it->getBlockedLit();
+        blocked_lit = getUpdatedLit(it->getBlockedLit(), outerToInter);
+        bool found = false;
+        for(Lit lit: cl) {
+            if (lit == blocked_lit) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            it->setBlockedLit(cl[2]);
+        } else {
+            it->setBlockedLit(blocked_lit);
+        }
+    }
+}
+
 void CNF::updateVars(
     const vector<uint32_t>& outerToInter
     , const vector<uint32_t>& interToOuter
+    , const vector<uint32_t>& interToOuter2
 ) {
+    updateArray(varData, interToOuter);
+    updateArray(assigns, interToOuter);
+    updateBySwap(watches, seen, interToOuter2);
+
+    for(watch_subarray w: watches) {
+        if (!w.empty())
+            updateWatch(w, outerToInter);
+    }
+
     updateArray(interToOuterMain, interToOuter);
     updateArrayMapCopy(outerToInterMain, outerToInter);
 }

@@ -176,8 +176,6 @@ class Searcher : public HyperEngine
         uint64_t last_dumped_conflict_rst_data_for_var = std::numeric_limits<uint64_t>::max();
         #endif
 
-        bool pick_polarity(const uint32_t var);
-
         /////////////////////
         // Branching
         /////////////////////
@@ -210,6 +208,7 @@ class Searcher : public HyperEngine
         uint32_t branch_strategy_num = 0;
         void bump_var_importance(const uint32_t var);
         void bump_var_importance_all(const uint32_t var);
+        bool pick_polarity(const uint32_t var);
 
     protected:
         Solver* solver;
