@@ -483,7 +483,9 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from)
     varData[v].reason = from;
     varData[v].level = level;
     if (!update_bogoprops) {
-        varData[v].polarity = !sign;
+        if (!polar_stable) {
+            varData[v].polarity = !sign;
+        }
         #ifdef STATS_NEEDED
         if (sign) {
             propStats.varSetNeg++;

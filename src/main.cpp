@@ -332,8 +332,6 @@ void Main::add_supported_options()
         , "Multiplier for memory-out checks on inprocessing functions. It limits things such as clause-link-in. Useful when you have limited memory but still want to do some inprocessing")
     ("preproc,p", po::value(&conf.preprocess)->default_value(conf.preprocess)
         , "0 = normal run, 1 = preprocess and dump, 2 = read back dump and solution to produce final solution")
-    ("polar", po::value<string>()->default_value("auto")
-        , "{true,false,rnd,auto} Selects polarity mode. 'true' -> selects only positive polarity when branching. 'false' -> selects only negative polarity when branching. 'auto' -> selects last polarity used (also called 'caching')")
     #ifdef STATS_NEEDED
     ("clid", po::bool_switch(&clause_ID_needed)
         , "Add clause IDs to DRAT output")
@@ -349,6 +347,15 @@ void Main::add_supported_options()
         , "Predictor LONG config to use")
     ;
     #endif
+
+    po::options_description polar_options("Polarity options");
+    polar_options.add_options()
+    ("polar", po::value<string>()->default_value("auto")
+        , "{true,false,rnd,auto} Selects polarity mode. 'true' -> selects only positive polarity when branching. 'false' -> selects only negative polarity when branching. 'auto' -> selects last polarity used (also called 'caching')")
+    ("polarstablen", po::value(&conf.polar_stable_every_n)->default_value(conf.polar_stable_every_n)
+        , "Use stable polarities at every N restart")
+    ;
+
 
     std::ostringstream s_local_glue_multiplier;
     s_local_glue_multiplier << std::setprecision(4) << conf.local_glue_multiplier;
@@ -818,6 +825,7 @@ void Main::add_supported_options()
 
     help_options_complicated
     .add(generalOptions)
+    .add(polar_options)
     #if defined(USE_SQLITE3)
     .add(sqlOptions)
     #endif

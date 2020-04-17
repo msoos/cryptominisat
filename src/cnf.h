@@ -129,6 +129,8 @@ public:
     #endif
     vector<VarData> varData;
     branch branch_strategy = branch::vsids;
+    bool polar_stable = false;
+    uint32_t polar_stable_longest_trail = 0;
     vector<uint32_t> depth; //for ancestors in intree probing
     uint32_t minNumVars = 0;
 

@@ -2404,6 +2404,17 @@ bool Searcher::must_abort(const lbool status) {
     return false;
 }
 
+void Searcher::setup_polarity_strategy()
+{
+    if (branch_strategy_num > 0) {
+        polar_stable = (branch_strategy_num % conf.polar_stable_every_n) == 0;
+        polar_stable_longest_trail = 0;
+    }
+    if (conf.verbosity) {
+        cout << "c [polar] stable polarities: " << polar_stable << endl;
+    }
+}
+
 lbool Searcher::solve(
     const uint64_t _max_confls
 ) {
@@ -2429,6 +2440,7 @@ lbool Searcher::solve(
     setup_restart_strategy();
     check_calc_satzilla_features(true);
     check_calc_vardist_features(true);
+    setup_polarity_strategy();
 
     while(stats.conflStats.numConflicts < max_confl_per_search_solve_call
         && status == l_Undef
@@ -3437,6 +3449,18 @@ void Searcher::cancelUntil(uint32_t blevel)
     #endif
 
     if (decisionLevel() > blevel) {
+        if (polar_stable &&
+            polar_stable_longest_trail < trail.size())
+        {
+            for(const auto t: trail) {
+                if (t.lit == lit_Undef) {
+                    continue;
+                }
+                varData[t.lit.var()].polarity = !t.lit.sign();
+            }
+            polar_stable_longest_trail = trail.size();
+            //cout << "polar_stable_longest_trail: " << polar_stable_longest_trail << endl;
+        }
         add_tmp_canceluntil.clear();
         #ifdef USE_GAUSS
         if (!all_matrices_disabled) {

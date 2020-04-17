@@ -149,8 +149,10 @@ class DLL_PUBLIC SolverConf
             const double time_used
         ) const;
 
-        //Variable activities
+        //Variable polarities
         PolarityMode polarity_mode;
+        uint32_t polar_stable_every_n;
+
 
         //Clause cleaning
 

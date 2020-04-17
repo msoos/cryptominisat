@@ -209,6 +209,7 @@ class Searcher : public HyperEngine
         void bump_var_importance(const uint32_t var);
         void bump_var_importance_all(const uint32_t var);
         bool pick_polarity(const uint32_t var);
+        void setup_polarity_strategy();
 
     protected:
         Solver* solver;

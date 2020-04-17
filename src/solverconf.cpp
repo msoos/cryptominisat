@@ -60,6 +60,7 @@ using namespace CMSat;
 
 DLL_PUBLIC SolverConf::SolverConf() :
         polarity_mode(PolarityMode::polarmode_automatic)
+        , polar_stable_every_n(100)
 
         //Clause cleaning
         , every_lev1_reduce(10000) // kept for a while then moved to lev2
