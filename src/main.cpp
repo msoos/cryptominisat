@@ -269,6 +269,11 @@ void Main::printResultFunc(
     } else {
         *os << "s INDETERMINATE" << endl;
     }
+    if (ret == l_True && !printResult && !toFile)
+    {
+        cout << "c Not printing satisfying assignement. "
+        "Use the '--printsol 1' option for that" << endl;
+    }
 
     if (ret == l_True && (printResult || toFile)) {
         if (toFile) {
