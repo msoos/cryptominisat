@@ -2206,10 +2206,13 @@ void Searcher::rebuildOrderHeapVMTF()
 
 struct branch_type_total{
     branch_type_total() {}
-    branch_type_total (CMSat::branch _branch, double _decay_start, double _decay_max) :
+    branch_type_total (CMSat::branch _branch,
+                       double _decay_start, double _decay_max,
+                       string _descr) :
         branch(_branch),
         decay_start(_decay_start),
-        decay_max(_decay_max)
+        decay_max(_decay_max),
+        descr(_descr)
     {}
     explicit branch_type_total(CMSat::branch _branch) :
         branch(_branch)
@@ -2218,6 +2221,7 @@ struct branch_type_total{
     CMSat::branch branch = CMSat::branch::vsids;
     double decay_start = 0.95;
     double decay_max = 0.95;
+    string descr;
 };
 
 void Searcher::set_branch_strategy(uint32_t iteration_num)
@@ -2271,39 +2275,44 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
         }
 
         if (smallest == vsids1) {
-            select[total++]= branch_type_total(branch::vsids, 0.92, 0.92);
+            string s = "VSIDS1";
+            select[total++]= branch_type_total(branch::vsids, 0.92, 0.92, s);
             if (conf.verbosity) {
-                cout << "VSIDS1";
+                cout << s;
             }
         }
         else if (smallest == vsids2) {
-            select[total++]=  branch_type_total(branch::vsids, 0.99, 0.99);
+            string s = "VSIDS2";
+            select[total++]=  branch_type_total(branch::vsids, 0.99, 0.99, s);
             if (conf.verbosity) {
-                cout << "VSIDS2";
+                cout << s;
             }
         }
         #ifdef VMTF_NEEDED
         else if (smallest == vmtf) {
-            select[total++]=  branch_type_total(branch::vmtf);
+            string s = "VMTF";
+            select[total++]=  branch_type_total(branch::vmtf, 0, 0, s);
             if (conf.verbosity) {
-                cout << "VMTF";
+                cout << s;
             }
         }
         #endif
         else if (smallest == maple1) {
             //TODO should we do this incremental stuff?
+            string s = "MAPLE1";
             //maple_step_size = solver->conf.orig_step_size;
-            select[total++]= branch_type_total(branch::maple, 0.70, 0.70);
+            select[total++]= branch_type_total(branch::maple, 0.70, 0.70, s);
             if (conf.verbosity) {
-                cout << "MAPLE1";
+                cout << s;
             }
         }
         else if (smallest == maple2) {
             //TODO should we do this incremental stuff?
+            string s = "MAPLE2";
             //maple_step_size = solver->conf.orig_step_size;
-            select[total++]= branch_type_total(branch::maple, 0.90, 0.90);
+            select[total++]= branch_type_total(branch::maple, 0.90, 0.90, s);
             if (conf.verbosity) {
-                cout << "MAPLE2";
+                cout << s;
             }
         } else {
             assert(false);
@@ -2337,6 +2346,7 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
         cout << "c [branch] adjusting to: "
         << branch_type_to_string(branch_strategy)
         << " var_decay_max:" << var_decay << " var_decay:" << var_decay
+        << " descr: " << select[which].descr
         << endl;
     }
 }
