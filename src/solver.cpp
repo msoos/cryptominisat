@@ -1418,6 +1418,11 @@ void Solver::check_xor_cut_config_sanity() const
 
 void Solver::check_and_upd_config_parameters()
 {
+    if (conf.max_glue_cutoff_gluehistltlimited > 100000) {
+        cout << "ERROR: 'Maximum supported glue size is currently 100000" << endl;
+        exit(-1);
+    }
+
     if (conf.max_confl < 0) {
         std::cerr << "ERROR: Maximum number conflicts set must be greater or equal to 0" << endl;
         exit(-1);

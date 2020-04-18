@@ -165,7 +165,7 @@ protected:
     void new_var(const bool bva, const uint32_t orig_outer) override;
     void new_vars(const size_t n) override;
     void save_on_var_memory();
-    template<class T> uint32_t calc_glue(const T& ps);
+    template<class T> uint32_t calc_glue(const T& ps, const uint32_t max_glue);
 
     //For state saving
     void save_state(SimpleOutFile& f) const;
@@ -315,7 +315,7 @@ inline bool PropEngine::satisfied(const BinaryClause& bin)
 }
 
 template<class T> inline
-uint32_t PropEngine::calc_glue(const T& ps)
+uint32_t PropEngine::calc_glue(const T& ps, uint32_t max_glue)
 {
     MYFLAG++;
     uint32_t nblevels = 0;
@@ -324,7 +324,7 @@ uint32_t PropEngine::calc_glue(const T& ps)
         if (l != 0 && permDiff[l] != MYFLAG) {
             permDiff[l] = MYFLAG;
             nblevels++;
-            if (nblevels >= 50) { //WARNING static constant
+            if (nblevels >= max_glue) {
                 return nblevels;
             }
         }
