@@ -80,10 +80,6 @@ def set_up_parser():
     parser.add_option("--valgrindfreq", dest="valgrind_freq", type=int,
                       default=10, help="1 out of X times valgrind will be used. Default: %default in 1")
 
-    parser.add_option("--small", dest="small", default=False,
-                      action="store_true",
-                      help="Don't run 'large' fuzzer"
-                      " (may mem-out on smaller systems)")
     parser.add_option("--gauss", dest="gauss", default=False,
                       action="store_true",
                       help="Concentrate fuzzing gauss")
@@ -322,7 +318,6 @@ class Tester:
         sls = 0
         if options.sls:
             sls = 1
-            assert options.sls !=1, "--sls and --gauss do NOT work together"
         else:
             # it's kinda slow and using it all the time is probably not a good idea
             sls = random.choice([0]*4+[1])
@@ -372,7 +367,7 @@ class Tester:
                     cmd += "--clid "
             cmd += "--locgmult %.12f " % random.gammavariate(0.5, 0.7)
             cmd += "--varelimover %d " % random.gammavariate(1, 20)
-            cmd += "--memoutmult %0.12f " % random.gammavariate(0.03, 50)
+            cmd += "--memoutmult %0.12f " % random.gammavariate(0.05, 10)
             cmd += "--verb %d " % random.choice([0, 0, 0, 0, 1, 2])
             if random.randint(0, 2) == 1:
                 cmd += "--reconf %d " % random.choice([3, 4, 6, 7, 12, 13, 14, 15, 16])
@@ -847,20 +842,6 @@ class Tester:
         assert self.dump_red is None
 
 
-def filter_large_fuzzer(dat):
-    f = []
-    for x in dat:
-        okay = True
-        for y in x:
-            if "large" in y:
-                okay = False
-
-        if okay:
-            f.append(x)
-
-    return f
-
-
 fuzzers_noxor = [
     ["../../build/tests/sha1-sat/sha1-gen --nocomment --attack preimage --rounds 20",
      "--hash-bits", "--seed"],
@@ -868,7 +849,6 @@ fuzzers_noxor = [
         "--message-bits 400 --rounds 8 --hash-bits 60",
      "--seed"],
     # ["build/cnf-fuzz-nossum"],
-    ["../../build/tests/cnf-utils/largefuzzer"],
     ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
     ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
     ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
@@ -915,9 +895,6 @@ if __name__ == "__main__":
 
     fuzzers_drat = fuzzers_noxor
     fuzzers_nodrat = fuzzers_noxor + fuzzers_xor
-    if options.small:
-        fuzzers_drat = filter_large_fuzzer(fuzzers_drat)
-        fuzzers_nodrat = filter_large_fuzzer(fuzzers_nodrat)
     if options.sls:
         fuzzers_drat = fuzzers_noxor_sls
         fuzzers_nodrat = fuzzers_noxor_sls
