@@ -631,7 +631,7 @@ endif()
 # -----------------------------------------------------------------------------
 # Look for BreakID
 # -----------------------------------------------------------------------------
-option(NOBREAKID "Disable BreakID" ON)
+option(NOBREAKID "Disable BreakID" OFF)
 if (NOT NOBREAKID)
     find_package(breakid)
     if (NOT BREAKID_LIBRARIES)
