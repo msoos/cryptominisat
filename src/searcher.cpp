@@ -2343,6 +2343,7 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
     assert(total > 0);
     uint32_t which = iteration_num % total;
     branch_strategy = select[which].branch;
+    branch_strategy_str = select[which].descr;
     var_decay = select[which].decay_start;
     var_decay_max = select[which].decay_max;
 
@@ -2433,6 +2434,25 @@ void Searcher::setup_polarity_strategy()
     if (conf.polar_stable_every_n == 0) {
         polar_stable = true;
     }
+    if (conf.polar_stable_every_n == -1) {
+        polar_stable = (branch_strategy == branch::vsids);
+    }
+    if (conf.polar_stable_every_n == -2) {
+        polar_stable = (branch_strategy == branch::maple);
+    }
+    if (conf.polar_stable_every_n == -3) {
+        polar_stable = (branch_strategy_str == "VSIDS1");
+    }
+    if (conf.polar_stable_every_n == -4) {
+        polar_stable = (branch_strategy_str == "VSIDS2");
+    }
+    if (conf.polar_stable_every_n == -4) {
+        polar_stable = (branch_strategy_str == "MAPLE1");
+    }
+    if (conf.polar_stable_every_n == -5) {
+        polar_stable = (branch_strategy_str == "MAPLE2");
+    }
+
     if (conf.verbosity) {
         cout << "c [polar] stable polarities: " << polar_stable
         << " branch strategy: " << branch_strategy_num

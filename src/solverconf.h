@@ -151,7 +151,7 @@ class DLL_PUBLIC SolverConf
 
         //Variable polarities
         PolarityMode polarity_mode;
-        uint32_t polar_stable_every_n;
+        int polar_stable_every_n;
 
 
         //Clause cleaning
