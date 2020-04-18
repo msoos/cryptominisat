@@ -80,7 +80,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
         , cla_inc(1)
 {
     var_inc_vsids = 1;
-    maple_step_size = solver->conf.orig_step_size;
+    maple_step_size = conf.orig_step_size;
     more_red_minim_limit_binary_actual = conf.more_red_minim_limit_binary;
     mtrand.seed(conf.origSeed);
     hist.setSize(conf.shortTermHistorySize, conf.blocking_restart_trail_hist_length);
@@ -346,7 +346,7 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
             //move to lev0 if very low glue
             cl->stats.which_red_array = 0;
         } else if (new_glue <= conf.glue_put_lev1_if_below_or_eq
-                && solver->conf.glue_put_lev1_if_below_or_eq != 0
+                && conf.glue_put_lev1_if_below_or_eq != 0
         ) {
             //move to lev1 if low glue
             cl->stats.which_red_array = 1;
@@ -1338,9 +1338,9 @@ inline void Searcher::update_branch_params()
     }
 
     if (branch_strategy == branch::maple
-        && maple_step_size > solver->conf.min_step_size)
+        && maple_step_size > conf.min_step_size)
     {
-        maple_step_size -= solver->conf.step_size_dec;
+        maple_step_size -= conf.step_size_dec;
         #ifdef VERBOSE_DEBUG
         cout << "maple step size is now: " << std::setprecision(7) << maple_step_size << endl;
         #endif
@@ -1814,8 +1814,8 @@ bool Searcher::handle_conflict(PropBy confl)
     }
 
     // check chrono backtrack condition
-    if (solver->conf.diff_declev_for_chrono > -1
-        && (((int)decisionLevel() - (int)backtrack_level) >= solver->conf.diff_declev_for_chrono)
+    if (conf.diff_declev_for_chrono > -1
+        && (((int)decisionLevel() - (int)backtrack_level) >= conf.diff_declev_for_chrono)
     ) {
         #ifdef CHRONO_PRINT
         cout << "chrono Backtracking to level " << backtrack_level << endl;
@@ -2125,7 +2125,7 @@ void Searcher::clean_clauses_if_needed()
 
 void Searcher::rebuildOrderHeap()
 {
-    if (solver->conf.verbosity) {
+    if (conf.verbosity) {
         cout << "c [branch] rebuilding order heap for branch: " <<
         branch_type_to_string(branch_strategy) << endl;
     }
@@ -2310,7 +2310,7 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
         else if (smallest == maple1) {
             //TODO should we do this incremental stuff?
             string s = "MAPLE1";
-            //maple_step_size = solver->conf.orig_step_size;
+            //maple_step_size = conf.orig_step_size;
             select[total++]= branch_type_total(branch::maple, 0.70, 0.70, s);
             if (conf.verbosity) {
                 cout << s;
@@ -2319,7 +2319,7 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
         else if (smallest == maple2) {
             //TODO should we do this incremental stuff?
             string s = "MAPLE2";
-            //maple_step_size = solver->conf.orig_step_size;
+            //maple_step_size = conf.orig_step_size;
             select[total++]= branch_type_total(branch::maple, 0.90, 0.90, s);
             if (conf.verbosity) {
                 cout << s;
@@ -2452,7 +2452,7 @@ lbool Searcher::solve(
     check_no_removed_or_freed_cl_in_watch();
     #endif
 
-    if (solver->conf.verbosity >= 6) {
+    if (conf.verbosity >= 6) {
         cout
         << "c Searcher::solve() called"
         << endl;
@@ -2487,7 +2487,7 @@ lbool Searcher::solve(
         }
 
         if (status == l_Undef &&
-            solver->conf.do_distill_clauses &&
+            conf.do_distill_clauses &&
             sumConflicts > next_distill
         ) {
             if (!solver->distill_long_cls->distill(true, false)) {
@@ -2531,7 +2531,7 @@ double Searcher::luby(double y, int x)
 
 void Searcher::setup_restart_strategy()
 {
-//     if (solver->conf.verbosity) {
+//     if (conf.verbosity) {
 //         cout << "c [restart] strategy: "
 //         << restart_type_to_string(cur_rest_type)
 //         << endl;
@@ -3129,7 +3129,7 @@ std::pair<size_t, size_t> Searcher::remove_useless_bins(bool except_marked)
             ; ++it
         ) {
             propStats.otfHyperTime += 2;
-            if (solver->conf.verbosity >= 10) {
+            if (conf.verbosity >= 10) {
                 cout << "Removing binary clause: " << *it << endl;
             }
             propStats.otfHyperTime += solver->watches[it->getLit1()].size()/2;
@@ -3181,7 +3181,7 @@ PropBy Searcher::propagate() {
 
     //Drat -- If declevel 0 propagation, we have to add the unitaries
     if (decisionLevel() == 0 &&
-        (drat->enabled() || solver->conf.simulate_drat)
+        (drat->enabled() || conf.simulate_drat)
     ) {
         for(size_t i = origTrailSize; i < trail.size(); i++) {
             #ifdef DEBUG_DRAT
