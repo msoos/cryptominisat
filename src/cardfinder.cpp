@@ -29,6 +29,8 @@ THE SOFTWARE.
 #include <limits>
 #include <sstream>
 
+//TODO read: https://sat-smt.in/assets/slides/daniel1.pdf
+
 using namespace CMSat;
 using std::cout;
 using std::endl;
