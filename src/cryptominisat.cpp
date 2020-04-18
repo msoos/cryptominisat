@@ -1195,6 +1195,7 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
 {
     for (size_t i = 0; i < data->solvers.size(); i++) {
         SolverConf conf = data->solvers[i]->getConf();
+        conf.doBreakid = false;
         conf.gaussconf.max_num_matrices = 2;
         conf.gaussconf.autodisable = false;
         conf.xor_detach_reattach = true;

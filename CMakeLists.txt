@@ -631,14 +631,17 @@ endif()
 # -----------------------------------------------------------------------------
 # Look for BreakID
 # -----------------------------------------------------------------------------
-find_package(breakid)
-if (NOT BREAKID_LIBRARIES)
-    message(WARNING "BreakID NOT found")
-else()
-    message(STATUS "BreakID -- found version ${BREAKID_VERSION_MAJOR}.${BREAKID_VERSION_MINOR}")
-    message(STATUS "BreakID -- libraries: ${BREAKID_LIBRARIES}")
-    message(STATUS "BreakID -- include dirs: ${BREAKID_INCLUDE_DIRS}")
-    add_definitions(-DUSE_BREAKID)
+option(NOBREAKID "Disable BreakID" ON)
+if (NOT NOBREAKID)
+    find_package(breakid)
+    if (NOT BREAKID_LIBRARIES)
+        message(WARNING "BreakID NOT found")
+    else()
+        message(STATUS "BreakID -- found version ${BREAKID_VERSION_MAJOR}.${BREAKID_VERSION_MINOR}")
+        message(STATUS "BreakID -- libraries: ${BREAKID_LIBRARIES}")
+        message(STATUS "BreakID -- include dirs: ${BREAKID_INCLUDE_DIRS}")
+        add_definitions(-DUSE_BREAKID)
+    endif()
 endif()
 
 
