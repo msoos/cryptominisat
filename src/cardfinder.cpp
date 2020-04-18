@@ -86,7 +86,11 @@ void CardFinder::get_vars_with_clash(const vector<Lit>& lits, vector<uint32_t>& 
     }
 }
 
-void CardFinder::two_product_finder() {
+//See "Detecting cardinality constraints in CNF"
+//By Armin Biere, Daniel Le Berre, Emmanuel Lonca, and Norbert Manthey
+//Sect. 3.3 -- two-product encoding
+//
+void CardFinder::find_two_product_atmost1() {
     vector<vector<Lit>> new_cards;
     for(size_t at_row = 0; at_row < cards.size(); at_row++) {
         vector<Lit>& card_row = cards[at_row];
@@ -293,10 +297,12 @@ void CardFinder::clean_empty_cards()
     cards.resize(j);
 }
 
-void CardFinder::find_cards()
+//See "Detecting cardinality constraints in CNF"
+//By Armin Biere, Daniel Le Berre, Emmanuel Lonca, and Norbert Manthey
+//Sect. 3.1 -- greeedy algorithm. "S" there is "lits_in_card" here
+//
+void CardFinder::find_pairwise_atmost1()
 {
-    cards.clear();
-    double myTime = cpuTime();
     assert(toClear.size() == 0);
     for (uint32_t i = 0; i < solver->nVars()*2; i++) {
         const Lit l = Lit::toLit(i);
@@ -353,6 +359,12 @@ void CardFinder::find_cards()
         }
     }
 
+    //Now deal with so-called "Nested encoding"
+    //  i.e. x1+x2+x4+x5 <= 1
+    //  divided into the cardinality constraints
+    //  x1+x2+x3 <= 1 and \not x3+x4+x5 <= 1
+    //See sect. 3.2 of same paper
+    //
     std::sort(toClear.begin(), toClear.end());
     vector<uint32_t> vars_with_clash;
     get_vars_with_clash(toClear, vars_with_clash);
@@ -361,8 +373,15 @@ void CardFinder::find_cards()
         seen[x.toInt()] = 0;
     }
     toClear.clear();
+}
 
-    two_product_finder();
+void CardFinder::find_cards()
+{
+    cards.clear();
+    double myTime = cpuTime();
+
+    find_pairwise_atmost1();
+    find_two_product_atmost1();
 
     //print result
     clean_empty_cards();

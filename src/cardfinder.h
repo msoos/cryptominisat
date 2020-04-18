@@ -50,11 +50,12 @@ public:
 
 private:
     void get_vars_with_clash(const vector<Lit>& lits, vector<uint32_t>& vars) const;
+    void find_pairwise_atmost1();
     void deal_with_clash(vector<uint32_t>& vars);
     bool find_connector(Lit lit1, Lit lit2) const;
     std::string print_card(const vector<Lit>& lits) const;
     void print_cards(const vector<vector<Lit>>& card_constraints) const;
-    void two_product_finder();
+    void find_two_product_atmost1();
     void clean_empty_cards();
 
     //from solver

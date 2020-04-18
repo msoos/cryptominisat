@@ -595,8 +595,6 @@ void Main::add_supported_options()
         , "Eliminate this ratio of free variables at most per variable elimination iteration")
     ("skipresol", po::value(&conf.skip_some_bve_resolvents)->default_value(conf.skip_some_bve_resolvents)
         , "Skip BVE resolvents in case they belong to a gate")
-    ("cardfind", po::value(&conf.doFindCard)->default_value(conf.doFindCard)
-        , "Find cardinality constraints")
     ;
 
     po::options_description xorOptions("XOR-related options");
@@ -759,6 +757,8 @@ void Main::add_supported_options()
         , "Timeout (in bogoprop Millions) of implicit subsumption")
     ("implstrto", po::value(&conf.distill_implicit_with_implicit_time_limitM)->default_value(conf.distill_implicit_with_implicit_time_limitM)
         , "Timeout (in bogoprop Millions) of implicit strengthening")
+    ("cardfind", po::value(&conf.doFindCard)->default_value(conf.doFindCard)
+        , "Find cardinality constraints")
     ;
 
     po::options_description reconfOptions("Reconf options");
