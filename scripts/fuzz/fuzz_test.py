@@ -913,8 +913,6 @@ if __name__ == "__main__":
             toexec += "--novalgrind "
         if options.valgrind_freq:
             toexec += "--valgrindfreq %d " % options.valgrind_freq
-        if options.small:
-            toexec += "--small "
         if options.gauss:
             toexec += "--gauss "
         if options.sls:
