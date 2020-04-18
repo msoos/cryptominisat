@@ -113,10 +113,10 @@ class GaussConf
 
     GaussConf() :
         autodisable(true)
+        , min_usefulness_cutoff(0.1)
         , max_matrix_rows(5000)
         , min_matrix_rows(3)
         , max_num_matrices(5)
-        , min_usefulness_cutoff(0.1)
     {
     }
 
