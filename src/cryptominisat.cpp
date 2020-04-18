@@ -1215,7 +1215,7 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
         conf.bva_every_n = 1;
         conf.do_simplify_problem = true;
         conf.force_preserve_xors = true;
-        conf.diff_declev_for_chrono = 0;
+        conf.diff_declev_for_chrono = -1;
         data->solvers[i]->setConf(conf);
     }
 }

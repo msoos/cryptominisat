@@ -2249,6 +2249,9 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
     while(smallest !=std::string::npos) {
         smallest = std::string::npos;
 
+        size_t vsidsx = conf.branch_strategy_setup.find("vsidsx", start);
+        smallest = std::min(vsidsx, smallest);
+
         size_t vsids1 = conf.branch_strategy_setup.find("vsids1", start);
         smallest = std::min(vsids1, smallest);
 
@@ -2274,7 +2277,14 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
             cout << "+";
         }
 
-        if (smallest == vsids1) {
+        if (smallest == vsidsx) {
+            string s = "VSIDSX";
+            select[total++]= branch_type_total(branch::vsids, 0.80, 0.95, s);
+            if (conf.verbosity) {
+                cout << s;
+            }
+        }
+        else if (smallest == vsids1) {
             string s = "VSIDS1";
             select[total++]= branch_type_total(branch::vsids, 0.92, 0.92, s);
             if (conf.verbosity) {
@@ -2424,7 +2434,9 @@ void Searcher::setup_polarity_strategy()
         polar_stable = true;
     }
     if (conf.verbosity) {
-        cout << "c [polar] stable polarities: " << polar_stable << endl;
+        cout << "c [polar] stable polarities: " << polar_stable
+        << " branch strategy: " << branch_strategy_num
+        << endl;
     }
 }
 
