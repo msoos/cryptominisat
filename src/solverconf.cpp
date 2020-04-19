@@ -172,6 +172,10 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , ternary_max_create(1)
         , allow_ternary_bin_create(false)
 
+        //Bosphorus
+        , do_bosphorus(true)
+        , bosphorus_every_n(5)
+
         //BreakID
         , doBreakid(true)
         , breakid_use_assump(true)
@@ -263,7 +267,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "str-impl,sub-str-cls-with-bin,distill-cls,"
             "scc-vrepl,"
             //renumber then it's time for SLS
-            "renumber,sls"
+            "renumber,"
+            "bosphorus,"
+            "sls"
         )
         , simplify_schedule_preproc(
             "handle-comps,"

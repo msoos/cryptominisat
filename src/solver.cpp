@@ -72,6 +72,10 @@ THE SOFTWARE.
 #include "cms_breakid.h"
 #endif
 
+#ifdef USE_BOSPHORUS
+#include "cms_bosphorus.h"
+#endif
+
 using namespace CMSat;
 using std::cout;
 using std::endl;
@@ -1472,6 +1476,17 @@ void Solver::check_and_upd_config_parameters()
         }
         #endif
 
+        #ifdef USE_BOSPHORUS
+        if (conf.do_bosphorus) {
+            if (conf.verbosity) {
+                cout
+                << "c Bosphorus is not supported with DRAT, turning it off"
+                << endl;
+            }
+            conf.do_bosphorus = false;
+        }
+        #endif
+
         #ifdef USE_GAUSS
         if (conf.gaussconf.doMatrixFind) {
             if (conf.verbosity) {
@@ -2108,6 +2123,20 @@ lbool Solver::execute_inprocess_strategy(
                     cout << "c [breakid] BreakID not compiled in, skipping" << endl;
                 }
 #endif
+            }
+        } else if (token == "bosphorus") {
+            if (conf.doBreakid
+                && (solveStats.num_simplify == 0 ||
+                   (solveStats.num_simplify % conf.breakid_every_n == (conf.breakid_every_n-1)))
+            ) {
+                #ifdef USE_BOSPHORUS
+                CMSBosphorus bosph(this);
+                bosph.doit();
+                #else
+                if (conf.verbosity) {
+                    cout << "c [bosphorus] Bosphorus not compiled in, skipping" << endl;
+                }
+                #endif
             }
         } else if (token == "") {
             //Nothing, just an empty comma, ignore

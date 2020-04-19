@@ -166,6 +166,13 @@ if (M4RI_FOUND)
     SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${M4RI_LIBRARIES})
 endif (M4RI_FOUND)
 
+if (BOSPHORUS_LIBRARIES)
+    include_directories( ${BOSPHORUS_INCLUDE_DIRS} )
+
+    SET(cryptoms_lib_files ${cryptoms_lib_files} cms_bosphorus.cpp)
+    SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${BOSPHORUS_LIBRARIES})
+endif()
+
 if (BREAKID_LIBRARIES)
     include_directories( ${BREAKID_INCLUDE_DIRS} )
 
