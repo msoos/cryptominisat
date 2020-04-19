@@ -2125,9 +2125,9 @@ lbool Solver::execute_inprocess_strategy(
 #endif
             }
         } else if (token == "bosphorus") {
-            if (conf.doBreakid
+            if (conf.do_bosphorus
                 && (solveStats.num_simplify == 0 ||
-                   (solveStats.num_simplify % conf.breakid_every_n == (conf.breakid_every_n-1)))
+                   (solveStats.num_simplify % conf.bosphorus_every_n == (conf.bosphorus_every_n-1)))
             ) {
                 #ifdef USE_BOSPHORUS
                 CMSBosphorus bosph(this);

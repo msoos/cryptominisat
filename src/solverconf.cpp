@@ -173,8 +173,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , allow_ternary_bin_create(false)
 
         //Bosphorus
-        , do_bosphorus(true)
-        , bosphorus_every_n(5)
+        , do_bosphorus(false)
+        , bosphorus_every_n(1)
 
         //BreakID
         , doBreakid(true)

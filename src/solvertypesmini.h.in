@@ -148,6 +148,7 @@ public:
 
     constexpr uint8_t getValue() const { return value; }
 
+    friend lbool toLbool(uint32_t   v);
     constexpr friend uint32_t   toInt  (lbool l);
 };
 
