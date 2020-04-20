@@ -139,6 +139,7 @@ class Searcher : public HyperEngine
         ConflictData FindConflictLevel(PropBy& pb);
         uint32_t chrono_backtrack = 0;
         uint32_t non_chrono_backtrack = 0;
+        bool last_backtrack_is_chrono = false;
 
         bool check_order_heap_sanity() const;
 
@@ -345,6 +346,10 @@ class Searcher : public HyperEngine
         vector<uint32_t> implied_by_learnts; //for glue-based extra var activity bumping
 
         /////////////////
+        // Literal activity
+        double lit_inc_lsids;
+
+        /////////////////
         // Variable activity
         double var_inc_vsids;
         void insert_var_order(const uint32_t x);  ///< Insert a variable in current heap
@@ -422,6 +427,13 @@ class Searcher : public HyperEngine
         template<bool update_bogoprops>
         void     bump_vsids_var_act(uint32_t v, double mult = 1.0);
 
+        // Implementation of LSIDS phase selection heuristic
+        ///Increase a literal with the current 'bump' value.
+        // TODO : Why should it have update_bogoprops template?
+        template<bool update_bogoprops>
+        void     bump_lsids_lit_act(uint32_t v, double mult = 1.0);
+
+
         //Clause activites
         double cla_inc;
 
@@ -452,6 +464,7 @@ class Searcher : public HyperEngine
 
         //Picking polarity when doing decision
         bool     pick_polarity(const uint32_t var);
+        bool     pick_lsids_phase(const uint32_t var);
 
         //Last time we clean()-ed the clauses, the number of zero-depth assigns was this many
         size_t   lastCleanZeroDepthAssigns;
@@ -554,8 +567,27 @@ inline void Searcher::decayClauseAct()
     cla_inc *= (1 / conf.clause_decay);
 }
 
+inline bool Searcher::pick_lsids_phase(const uint32_t var){
+    Lit neg_lit = Lit(var, true);
+    Lit pos_lit = Lit(var, false);
+
+    double neg_lsids = lit_act_lsids[neg_lit.toInt()];
+    double pos_lsids = lit_act_lsids[pos_lit.toInt()];
+
+    if(neg_lsids > pos_lsids){
+        return false;
+    }
+    else {
+        return true;
+    }
+}
+
 inline bool Searcher::pick_polarity(const uint32_t var)
 {
+    if(last_backtrack_is_chrono){
+        return pick_lsids_phase(var);
+    }
+
     switch(conf.polarity_mode) {
         case PolarityMode::polarmode_neg:
             return false;
@@ -575,6 +607,38 @@ inline bool Searcher::pick_polarity(const uint32_t var)
 
     return true;
 }
+
+
+// LSIDS things
+
+template<bool update_bogoprops>
+inline void Searcher::bump_lsids_lit_act(uint32_t lit, double mult)
+{
+    if (update_bogoprops) {     // No idea what this is
+        return;
+    }
+
+    lit_act_lsids[lit] += lit_inc_lsids * mult;
+
+    #ifdef SLOW_DEBUG
+    bool lsids_rescaled = false;
+    #endif
+    if (lit_act_lsids[lit] > 1e100) {
+        // Rescale:
+        for (double& act : lit_act_lsids) {
+            act *= 1e-100;
+        }
+        #ifdef SLOW_DEBUG
+        lsids_rescaled = true;
+        #endif
+
+        //Reset var_inc
+        lit_inc_lsids *= 1e-100;
+    }
+
+}
+
+// LSIDS methods end here
 
 template<bool update_bogoprops>
 void Searcher::bump_var_activities_based_on_implied_by_learnts(uint32_t backtrack_level) {

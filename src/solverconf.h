@@ -157,6 +157,7 @@ class DLL_PUBLIC SolverConf
         double alternate_vsids_decay_rate1;
         double alternate_vsids_decay_rate2;
         PolarityMode polarity_mode;
+        unsigned chronophase;
 
         //Clause cleaning
 

@@ -109,6 +109,9 @@ void Searcher::new_var(const bool bva, const uint32_t orig_outer)
     var_act_vsids.push_back(0);
     var_act_maple.push_back(0);
     insert_var_order_all((int)nVars()-1);
+
+    lit_act_lsids.push_back(0);
+    lit_act_lsids.push_back(0);
 }
 
 void Searcher::new_vars(size_t n)
@@ -120,6 +123,8 @@ void Searcher::new_vars(size_t n)
     for(int i = n-1; i >= 0; i--) {
         insert_var_order_all((int)nVars()-i-1);
     }
+    lit_act_lsids.insert(lit_act_lsids.end(), 2*n, 0);
+
 }
 
 void Searcher::save_on_var_memory()
@@ -128,9 +133,10 @@ void Searcher::save_on_var_memory()
 
     var_act_vsids.resize(nVars());
     var_act_maple.resize(nVars());
-
+    lit_act_lsids.resize(2*nVars());
     var_act_vsids.shrink_to_fit();
     var_act_maple.shrink_to_fit();
+    lit_act_lsids.shrink_to_fit();
 
 }
 
@@ -140,6 +146,12 @@ void Searcher::updateVars(
 ) {
     updateArray(var_act_vsids, interToOuter);
     updateArray(var_act_maple, interToOuter);
+    updateArray(lit_act_lsids, interToOuter);
+    // TODO : the updatearray for LSIDS is not correct,
+    // given the interToouter
+    // the only hope is, this function is not called at all
+    // So, to be sure, we put the following assert
+    assert(false);
 
     renumber_assumptions(outerToInter);
 }
@@ -191,6 +203,10 @@ inline void Searcher::add_lit_to_learnt(
         return;
     }
     seen[var] = 1;
+
+    const uint32_t lit_ind = lit.toInt();
+    bump_lsids_lit_act<update_bogoprops>(lit_ind, 0.5);
+
 
     if (!update_bogoprops) {
         if (VSIDS) {
@@ -1597,9 +1613,12 @@ bool Searcher::handle_conflict(PropBy confl)
         cout << "chrono Backtracking to level " << backtrack_level << endl;
 #endif
         chrono_backtrack++;
+        last_backtrack_is_chrono = true;
         cancelUntil<true, update_bogoprops>(data.nHighestLevel -1);
     } else { // default behavior
         ++non_chrono_backtrack;
+        last_backtrack_is_chrono = false;
+
 #ifdef CHRONO_PRINT
         cout << "non-chrono Backtracking to level " << backtrack_level << endl;
 #endif
@@ -2300,7 +2319,7 @@ Lit Searcher::pickBranchLit()
             }
             v = order_heap.removeMin();
         }
-        next = Lit(v, !pick_polarity(v));
+        next = Lit(v, !pick_polarity(v));   // TODO : why is this opposite?
     }
 
     //No vars in heap: solution found
@@ -2750,6 +2769,7 @@ size_t Searcher::mem_used() const
     size_t mem = HyperEngine::mem_used();
     mem += var_act_vsids.capacity()*sizeof(uint32_t);
     mem += var_act_maple.capacity()*sizeof(uint32_t);
+    mem += lit_act_lsids.capacity()*sizeof(uint32_t);
     mem += order_heap_vsids.mem_used();
     mem += order_heap_maple.mem_used();
     mem += learnt_clause.capacity()*sizeof(Lit);
@@ -3036,6 +3056,7 @@ void Searcher::save_state(SimpleOutFile& f, const lbool status) const
     PropEngine::save_state(f);
 
     f.put_vector(var_act_vsids);
+    f.put_vector(lit_act_lsids);
     f.put_vector(var_act_maple);
     f.put_vector(model);
     f.put_vector(conflict);
@@ -3057,6 +3078,7 @@ void Searcher::load_state(SimpleInFile& f, const lbool status)
     PropEngine::load_state(f);
 
     f.get_vector(var_act_vsids);
+    f.get_vector(lit_act_lsids);
     f.get_vector(var_act_maple);
     for(size_t i = 0; i < nVars(); i++) {
         if (varData[i].removed == Removed::none
@@ -3160,6 +3182,8 @@ void Searcher::cancelUntil(uint32_t blevel)
                     insert_var_order(var);
                 }
             }
+            uint32_t lit_ind = trail[sublevel].lit.toInt();
+            bump_lsids_lit_act<update_bogoprops>(lit_ind, 1.0);
         }
         qhead = trail_lim[blevel];
         trail.resize(trail_lim[blevel]);
