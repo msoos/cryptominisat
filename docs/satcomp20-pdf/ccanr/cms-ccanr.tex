@@ -20,7 +20,7 @@ pdfkeywords = {SAT Solver, DPLL, SLS}}
 \begin{document}
 \title{CryptoMiniSat with CCAnr at the SAT Competition 2020}
 \author{Mate Soos (National University of Singapore)\\
-Shaowei Cai (State Key Laboratory of Computer Science,\\Institute of Software, Chinese Academy of Sciences)\\Jo Devriendt (KTH Royal Institute of Technology, Sweden)}
+Shaowei Cai (State Key Laboratory of Computer Science,\\Institute of Software, Chinese Academy of Sciences)\\Jo Devriendt (Lund University \& University of Copenhagen)}
 
 \maketitle
 \thispagestyle{empty}
@@ -51,9 +51,12 @@ As per the upcoming paper~\cite{birdtwo}, the Gauss-Jordan elimination of Crypto
 
 
 \section{Symmetry Breaking using BreakID and Bliss}
-The BreakID~\cite{DBLP:conf/sat/Devriendt0B17} system, is [.... TODO BY Jo]
+The BreakID~\cite{breakid2016} system is a cost-effective symmetry breaking preprocessor for SAT.
+Classic SAT symmetry preprocessing~\cite{shatter2006} detects symmetry by converting the input formula to a graph and computing generators for this graph's automorphism group, and adds symmetry breaking clauses on a generator-by-generator basis.
+On top of this, BreakID heuristically searches for structure in the automorphism group, detecting \emph{row interchangeability symmetry} (such as in the pigeonhole problem) and computing binary symmetry breaking clauses from orbits arising from the symmetry group.
+The resulting symmetry breaking clauses are more effective at reducing symmetrical assignments from the search space, both from a theory point of view as well as in practical experiments.
 
-BreakID has been modified to work as a library. It can receive the clauses on-the-fly from the SAT solver, and produce the breaking clauses as a function return value. Various small bugs have also be fixed, such as memory leaks, which were not an issue when ran as a single executable, but created isses when ran as a library. Furthermore, the underlying highly sophisticated graph automorphism detection system, Bliss~\cite{DBLP:conf/alenex/JunttilaK07}, has been slightly improved to allow for time-outs and it, too, has been fixed not to leak memory. BreakID is fully integrated into CryptoMiniSat by calling it on every 5th inprocessing iteration, and asked to contribute breaking clauses. These are always added with an assumption literal, so they can be removed when the solving finishes. Hence, symmetry breaking also works when CryptoMiniSat it used as a library.
+BreakID has been modified to work as a library. It can receive the clauses on-the-fly from the SAT solver, and produce the breaking clauses as a function return value. Various small bugs have also be fixed, such as memory leaks, which were not an issue when ran as a single executable, but created isses when ran as a library. Furthermore, the underlying highly sophisticated graph automorphism detection system, Bliss~\cite{DBLP:conf/alenex/JunttilaK07}, has been slightly improved to allow for time-outs and it, too, has been fixed not to leak memory. BreakID is fully integrated into CryptoMiniSat by calling it on every 5th inprocessing iteration, and asked to contribute breaking clauses. These are always added with an assumption literal, so they can be removed when the solving finishes. Hence, symmetry breaking also works when CryptoMiniSat is used as a library.
 
 
 \section{Further Improvements Relative to SAT Race 2019}
