@@ -45,8 +45,6 @@ class Query:
     def delete_tbls(self):
         queries = """
         delete from used_clauses;
-        drop table if exists goodClauses;
-        DROP TABLE IF EXISTS `sum_cl_use`;
         """
         for l in queries.split('\n'):
             t2 = time.time()
