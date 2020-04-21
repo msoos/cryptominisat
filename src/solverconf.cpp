@@ -58,6 +58,9 @@ using namespace CMSat;
 //1755046 out-9896604.wlm01-8-drat0  250 146 104 edd5be7  _devel --xor 1 --breakid 1 --breakideveryn 5
 //1773691 out-9896604.wlm01-13-drat0 247 144 103 edd5be7  _devel --xor 0 --breakid 1 --breakideveryn 5
 
+//Tuning to
+//1684592 out-9915739.wlm01-3-drat0 256 149 107 b3b7cfb  _devel --printsol 0 --xorfindtout 400 --gaussusefulcutoff 0.2
+
 DLL_PUBLIC SolverConf::SolverConf() :
         polarity_mode(PolarityMode::polarmode_automatic)
         , polar_stable_every_n(100000) //i.e. never, by default
@@ -208,7 +211,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , maxXorToFind     (7)
         , maxXorToFindSlow (5)
         , maxXORMatrix     (400ULL)
-        , xor_finder_time_limitM(50)
+        , xor_finder_time_limitM(400)
         , allow_elim_xor_vars(1)
         , xor_var_per_cut(2)
         , force_preserve_xors(false)
