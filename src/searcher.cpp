@@ -88,6 +88,10 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     step_size = solver->conf.orig_step_size;
 
     var_inc_vsids = conf.var_inc_vsids_start;
+
+    lit_decay_lsids = conf.var_decay_vsids_start;
+    lit_inc_lsids = conf.var_inc_vsids_start; // TODO We can use different value too
+
     more_red_minim_limit_binary_actual = conf.more_red_minim_limit_binary;
     more_red_minim_limit_cache_actual = conf.more_red_minim_limit_cache;
     mtrand.seed(conf.origSeed);
@@ -146,12 +150,17 @@ void Searcher::updateVars(
 ) {
     updateArray(var_act_vsids, interToOuter);
     updateArray(var_act_maple, interToOuter);
-    updateArray(lit_act_lsids, interToOuter);
-    // TODO : the updatearray for LSIDS is not correct,
-    // given the interToouter
-    // the only hope is, this function is not called at all
-    // So, to be sure, we put the following assert
-    assert(false);
+
+    // TODO : make sure  updatearray for LSIDS correct
+
+    //Create temporary outerToInter2
+    vector<uint32_t> interToOuter2(nVarsOuter()*2);
+    for(size_t i = 0; i < nVarsOuter(); i++) {
+        interToOuter2[i*2] = interToOuter[i]*2;
+        interToOuter2[i*2+1] = interToOuter[i]*2+1;
+    }
+
+    updateArray(lit_act_lsids, interToOuter2);
 
     renumber_assumptions(outerToInter);
 }
@@ -205,10 +214,11 @@ inline void Searcher::add_lit_to_learnt(
     seen[var] = 1;
 
     const uint32_t lit_ind = lit.toInt();
-    bump_lsids_lit_act<update_bogoprops>(lit_ind, 0.5);
 
 
     if (!update_bogoprops) {
+        bump_lsids_lit_act<update_bogoprops>(lit_ind, 0.5);
+
         if (VSIDS) {
             bump_vsids_var_act<update_bogoprops>(var, 0.5);
             implied_by_learnts.push_back(var);
@@ -1652,6 +1662,7 @@ bool Searcher::handle_conflict(PropBy confl)
     }
 
     if (!update_bogoprops) {
+        litDecayActivity();
         if (VSIDS) {
             varDecayActivity();
         }
@@ -2920,6 +2931,13 @@ void Searcher::update_var_decay_vsids()
         var_decay_vsids = conf.var_decay_vsids_max;
     }
 }
+
+inline void Searcher::litDecayActivity()
+{
+    lit_inc_lsids *= (1.0 / lit_decay_lsids);
+}
+
+
 
 void Searcher::consolidate_watches(const bool full)
 {

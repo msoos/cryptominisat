@@ -348,6 +348,7 @@ class Searcher : public HyperEngine
         /////////////////
         // Literal activity
         double lit_inc_lsids;
+        double lit_decay_lsids;
 
         /////////////////
         // Variable activity
@@ -432,6 +433,7 @@ class Searcher : public HyperEngine
         // TODO : Why should it have update_bogoprops template?
         template<bool update_bogoprops>
         void     bump_lsids_lit_act(uint32_t v, double mult = 1.0);
+        void     litDecayActivity ();
 
 
         //Clause activites

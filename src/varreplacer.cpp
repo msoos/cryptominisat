@@ -160,23 +160,25 @@ void VarReplacer::update_vardata_and_activities(
         solver->var_act_maple[replaced_with] += orig_act_maple;
     }
 
-    // Very wishful thinking that orig and replaed with are variables
     assert(orig <= solver->nVars() && replaced_with <= solver->nVars());
 
-    uint32_t neg_orig = Lit((solver->lit_act_lsids[orig]),true).toInt();
-    uint32_t pos_orig = Lit((solver->lit_act_lsids[orig]),false).toInt();
-    uint32_t neg_replaced_with = Lit((solver->lit_act_lsids[replaced_with]),true).toInt();
-    uint32_t pos_replaced_with = Lit((solver->lit_act_lsids[replaced_with]),false).toInt();
+    uint32_t neg_orig = Lit(orig,true).toInt();
+    uint32_t pos_orig = Lit(orig,false).toInt();
+    uint32_t neg_replaced_with = Lit(replaced_with,true).toInt();
+    uint32_t pos_replaced_with = Lit(replaced_with,false).toInt();
+
     double orig_act_lsids_pos = solver->lit_act_lsids[pos_orig];
     double orig_act_lsids_neg = solver->lit_act_lsids[neg_orig];
     double repl_with_act_lsids_pos = solver->lit_act_lsids[pos_replaced_with];
     double repl_with_act_lsids_neg = solver->lit_act_lsids[neg_replaced_with];
+
     if (orig_act_lsids_pos + repl_with_act_lsids_pos >= orig_act_lsids_pos
      && orig_act_lsids_neg + repl_with_act_lsids_neg >= orig_act_lsids_neg
     ) { // WTF is this logic?
         solver->lit_act_lsids[pos_replaced_with] += orig_act_lsids_pos;
         solver->lit_act_lsids[neg_replaced_with] += orig_act_lsids_neg;
     }
+
 }
 
 bool VarReplacer::enqueueDelayedEnqueue()
