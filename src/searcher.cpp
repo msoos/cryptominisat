@@ -330,7 +330,7 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
     if (cl->is_ternary_resolvent) {
         return;
     }
-    const unsigned new_glue = calc_glue(*cl, conf.max_glue_cutoff_gluehistltlimited);
+    const unsigned new_glue = calc_glue(*cl);
 
     if (new_glue < cl->stats.glue) {
         if (cl->stats.glue <= conf.protect_cl_if_improved_glue_below_this_glue_for_one_turn) {
@@ -795,13 +795,13 @@ void Searcher::analyze_conflict(
     //further minimisation 1 -- short, small glue clauses
     glue = std::numeric_limits<uint32_t>::max();
     if (learnt_clause.size() <= conf.max_size_more_minim) {
-        glue = calc_glue(learnt_clause, conf.max_glue_cutoff_gluehistltlimited);
+        glue = calc_glue(learnt_clause);
         if (glue <= conf.max_glue_more_minim) {
             minimize_using_permdiff();
         }
     }
     if (glue == std::numeric_limits<uint32_t>::max()) {
-        glue = calc_glue(learnt_clause, conf.max_glue_cutoff_gluehistltlimited);
+        glue = calc_glue(learnt_clause);
     }
     print_fully_minimized_learnt_clause();
 
