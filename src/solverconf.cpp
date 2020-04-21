@@ -61,9 +61,12 @@ using namespace CMSat;
 //Tuning to
 //1684592 out-9915739.wlm01-3-drat0 256 149 107 b3b7cfb  _devel --printsol 0 --xorfindtout 400 --gaussusefulcutoff 0.2
 
+//Tuning to
+//1732414 out-9915739.wlm01-7-drat0 254 157 97 b3b7cfb  _devel --printsol 0 --simdrat 1 --polarstablen 4
+
 DLL_PUBLIC SolverConf::SolverConf() :
         polarity_mode(PolarityMode::polarmode_automatic)
-        , polar_stable_every_n(100000) //i.e. never, by default
+        , polar_stable_every_n(4)
 
         //Clause cleaning
         , every_lev1_reduce(10000) // kept for a while then moved to lev2
