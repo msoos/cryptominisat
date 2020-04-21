@@ -111,7 +111,6 @@ class Main: public MainCommon
         int sql = 0;
         string sqlite_filename;
         string decisions_for_model_fname;
-        string equivalent_unsat_fname;
         double maxtime;
         uint64_t maxconfl;
 
