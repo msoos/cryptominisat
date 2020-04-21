@@ -1443,6 +1443,7 @@ lbool Solver::solve_with_assumptions(
     max_confl_this_phase = max_confl_phase;
     VSIDS = true;
     var_decay_vsids = conf.var_decay_vsids_start;
+    lit_decay_lsids = conf.var_decay_vsids_start;
     step_size = conf.orig_step_size;
     conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
     solveStats.num_simplify_this_solve_call = 0;
@@ -2289,12 +2290,26 @@ void Solver::print_norm_stats(const double cpu_time, const double cpu_time_total
         , stats_line_percent(zeroLevAssignsByCNF, nVars())
         , "% vars"
     );
-
+//
     print_stats_line("c reduceDB time"
         , reduceDB->get_total_time()
         , stats_line_percent(reduceDB->get_total_time(), cpu_time)
         , "% time"
     );
+
+    if(conf.chronophase == 1) {
+        print_stats_line("c LSIDS decisions"
+        , sumSearchStats.chrono_decisions
+        , stats_line_percent(sumSearchStats.chrono_decisions, sumSearchStats.decisions)
+        , "% all decisions"
+        );
+        print_stats_line("c LSIDS differed caching"
+        , sumSearchStats.lsids_opp_cached
+        , stats_line_percent(sumSearchStats.lsids_opp_cached, sumSearchStats.chrono_decisions)
+        , "% all LSIDS decisions"
+        );
+
+    }
 
     //Failed lit stats
     if (conf.doProbe

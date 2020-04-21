@@ -36,6 +36,10 @@ SearchStats& SearchStats::operator+=(const SearchStats& other)
     decisionsRand += other.decisionsRand;
     decisionFlippedPolar += other.decisionFlippedPolar;
 
+    //LSIDS-data
+    lsids_opp_cached += other.lsids_opp_cached;
+    chrono_decisions += other.chrono_decisions;
+
     //Conflict minimisation stats
     litsRedNonMin += other.litsRedNonMin;
     litsRedFinal += other.litsRedFinal;

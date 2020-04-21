@@ -288,6 +288,8 @@ class Searcher : public HyperEngine
         void  attach_and_enqueue_learnt_clause(Clause* cl, const uint32_t level, const bool enqueue);
         void  print_learning_debug_info() const;
         void  print_learnt_clause() const;
+        void  show_lsids() const;
+
         Clause* handle_last_confl(
             const uint32_t glue
             , const uint32_t old_decision_level);
@@ -435,7 +437,6 @@ class Searcher : public HyperEngine
         void     bump_lsids_lit_act(uint32_t v, double mult = 1.0);
         void     litDecayActivity ();
 
-
         //Clause activites
         double cla_inc;
 
@@ -576,6 +577,17 @@ inline bool Searcher::pick_lsids_phase(const uint32_t var){
     double neg_lsids = lit_act_lsids[neg_lit.toInt()];
     double pos_lsids = lit_act_lsids[pos_lit.toInt()];
 
+    #ifdef VERBOSE_DEBUG
+    cout << "c [Debug] Picking variable " << var
+    << " polarity : " << (neg_lsids < pos_lsids)
+    << " saved phase : " << varData[var].polarity << endl;
+    #endif
+
+    if ((neg_lsids < pos_lsids) != varData[var].polarity){
+        stats.lsids_opp_cached++;
+    }
+
+
     if(neg_lsids > pos_lsids){
         return false;
     }
@@ -586,7 +598,8 @@ inline bool Searcher::pick_lsids_phase(const uint32_t var){
 
 inline bool Searcher::pick_polarity(const uint32_t var)
 {
-    if(last_backtrack_is_chrono){
+    if(conf.chronophase == 1 && last_backtrack_is_chrono){
+        stats.chrono_decisions++;
         return pick_lsids_phase(var);
     }
 

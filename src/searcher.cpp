@@ -213,11 +213,15 @@ inline void Searcher::add_lit_to_learnt(
     }
     seen[var] = 1;
 
-    const uint32_t lit_ind = lit.toInt();
+    const uint32_t lit_ind = (~lit).toInt();
 
 
     if (!update_bogoprops) {
         bump_lsids_lit_act<update_bogoprops>(lit_ind, 0.5);
+
+        #ifdef VERBOSE_DEBUG
+        cout << "c Updating score for " << (~lit) << " "  << lit_ind << endl;
+        #endif
 
         if (VSIDS) {
             bump_vsids_var_act<update_bogoprops>(var, 0.5);
@@ -1100,6 +1104,9 @@ lbool Searcher::search()
                 ) {
                     var_decay_vsids += 0.01;
                 }
+                if ( lit_decay_lsids < conf.var_decay_vsids_max){
+                    lit_decay_lsids += 0.01;    //TODO : this is not there is Durian
+                }
                 if (!VSIDS && step_size > solver->conf.min_step_size) {
                     step_size -= solver->conf.step_size_dec;
                     #ifdef VERBOSE_DEBUG
@@ -1400,6 +1407,16 @@ inline void Searcher::print_learning_debug_info() const
     << " to " << !learnt_clause[0].sign()
     << endl;
     #endif
+}
+
+
+void Searcher::show_lsids() const
+{
+    cout << " LSIDS scores " << endl ;
+    for(size_t i = 0; i < nVars(); i++){
+        cout << i+1 << " : " << lit_act_lsids[2*i] << " " << lit_act_lsids[2*i+1] << " . " << endl;
+    }
+    cout << endl;
 }
 
 void Searcher::print_learnt_clause() const
@@ -2338,7 +2355,7 @@ Lit Searcher::pickBranchLit()
             }
             v = order_heap.removeMin();
         }
-        next = Lit(v, !pick_polarity(v));   // TODO : why is this opposite?
+        next = Lit(v, !pick_polarity(v));
     }
 
     //No vars in heap: solution found
@@ -2930,6 +2947,10 @@ void Searcher::update_var_decay_vsids()
     if (var_decay_vsids >= conf.var_decay_vsids_max) {
         var_decay_vsids = conf.var_decay_vsids_max;
     }
+
+    if (lit_decay_lsids >= conf.var_decay_vsids_max) {
+        lit_decay_lsids = conf.var_decay_vsids_max;
+    }
 }
 
 inline void Searcher::litDecayActivity()
@@ -3208,8 +3229,12 @@ void Searcher::cancelUntil(uint32_t blevel)
                     insert_var_order(var);
                 }
             }
-            uint32_t lit_ind = trail[sublevel].lit.toInt();
-            bump_lsids_lit_act<update_bogoprops>(lit_ind, 1.0);
+            uint32_t lit_ind = (~trail[sublevel].lit).toInt();
+            bump_lsids_lit_act<update_bogoprops>(lit_ind, 2.0);
+            #ifdef VERBOSE_DEBUG
+            cout << "c Updating score by 2 for " << (trail[sublevel].lit)
+            << " "  << lit_ind << endl;
+            #endif
         }
         qhead = trail_lim[blevel];
         trail.resize(trail_lim[blevel]);
