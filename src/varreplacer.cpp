@@ -174,7 +174,7 @@ void VarReplacer::update_vardata_and_activities(
 
     if (orig_act_lsids_pos + repl_with_act_lsids_pos >= orig_act_lsids_pos
      && orig_act_lsids_neg + repl_with_act_lsids_neg >= orig_act_lsids_neg
-    ) { // WTF is this logic?
+    ) {
         solver->lit_act_lsids[pos_replaced_with] += orig_act_lsids_pos;
         solver->lit_act_lsids[neg_replaced_with] += orig_act_lsids_neg;
     }

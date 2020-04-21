@@ -151,8 +151,6 @@ void Searcher::updateVars(
     updateArray(var_act_vsids, interToOuter);
     updateArray(var_act_maple, interToOuter);
 
-    // TODO : make sure  updatearray for LSIDS correct
-
     //Create temporary outerToInter2
     vector<uint32_t> interToOuter2(nVarsOuter()*2);
     for(size_t i = 0; i < nVarsOuter(); i++) {
@@ -1410,7 +1408,7 @@ inline void Searcher::print_learning_debug_info() const
 }
 
 
-void Searcher::show_lsids() const
+void Searcher::print_lsids() const
 {
     cout << " LSIDS scores " << endl ;
     for(size_t i = 0; i < nVars(); i++){
@@ -2803,9 +2801,9 @@ template PropBy Searcher::propagate<false>();
 size_t Searcher::mem_used() const
 {
     size_t mem = HyperEngine::mem_used();
-    mem += var_act_vsids.capacity()*sizeof(uint32_t);
-    mem += var_act_maple.capacity()*sizeof(uint32_t);
-    mem += lit_act_lsids.capacity()*sizeof(uint32_t);
+    mem += var_act_vsids.capacity()*sizeof(double);
+    mem += var_act_maple.capacity()*sizeof(double);
+    mem += lit_act_lsids.capacity()*sizeof(double);
     mem += order_heap_vsids.mem_used();
     mem += order_heap_maple.mem_used();
     mem += learnt_clause.capacity()*sizeof(Lit);
@@ -2957,8 +2955,6 @@ inline void Searcher::litDecayActivity()
 {
     lit_inc_lsids *= (1.0 / lit_decay_lsids);
 }
-
-
 
 void Searcher::consolidate_watches(const bool full)
 {

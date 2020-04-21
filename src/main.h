@@ -68,7 +68,6 @@ class Main: public MainCommon
         void parse_restart_type();
         void parse_polarity_type();
         void dump_decisions_for_model();
-        void make_equivalent_unsat();
         void check_num_threads_sanity(const unsigned thread_num) const;
 
         po::positional_options_description p;

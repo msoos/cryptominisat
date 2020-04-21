@@ -2290,7 +2290,7 @@ void Solver::print_norm_stats(const double cpu_time, const double cpu_time_total
         , stats_line_percent(zeroLevAssignsByCNF, nVars())
         , "% vars"
     );
-//
+
     print_stats_line("c reduceDB time"
         , reduceDB->get_total_time()
         , stats_line_percent(reduceDB->get_total_time(), cpu_time)

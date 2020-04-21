@@ -288,7 +288,7 @@ class Searcher : public HyperEngine
         void  attach_and_enqueue_learnt_clause(Clause* cl, const uint32_t level, const bool enqueue);
         void  print_learning_debug_info() const;
         void  print_learnt_clause() const;
-        void  show_lsids() const;
+        void  print_lsids() const;
 
         Clause* handle_last_confl(
             const uint32_t glue
