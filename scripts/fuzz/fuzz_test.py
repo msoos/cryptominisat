@@ -502,6 +502,9 @@ class Tester:
                 if line == "":
                     continue
 
+                if options.verbose:
+                    print("ERR line: ", line)
+
                 # let's not care about leaks for the moment
                 if "LeakSanitizer: detected memory leaks" in line:
                     break
@@ -563,16 +566,16 @@ class Tester:
         if options.verbose:
             print(consoleOutput)
 
+        if retcode != 0:
+            print("Return code of CryptoMiniSat is not 0, it is: %d -- error!" % retcode)
+            exit(-1)
+
         # if library debug is set, check it
         if (self.needDebugLib):
             must_check_unsat = True
             if options.gauss:
                 must_check_unsat = random.choice([False]*15+[True])
             self.sol_parser.check_debug_lib(checkAgainst, must_check_unsat)
-
-        if retcode != 0:
-            print("Return code of CryptoMiniSat is not 0, it is: %d -- error!" % retcode)
-            exit(-1)
 
         print("Checking console output...")
         unsat, solution, _ = self.sol_parser.parse_solution_from_output(
