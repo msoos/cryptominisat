@@ -137,6 +137,7 @@ class Searcher : public HyperEngine
         ConflictData find_conflict_level(PropBy& pb);
         uint32_t chrono_backtrack = 0;
         uint32_t non_chrono_backtrack = 0;
+        bool last_backtrack_is_chrono = false;
 
         SQLStats* sqlStats = NULL;
         ClusteringImp *clustering = NULL;
@@ -208,8 +209,18 @@ class Searcher : public HyperEngine
         uint32_t branch_strategy_num = 0;
         void bump_var_importance(const uint32_t var);
         void bump_var_importance_all(const uint32_t var);
-        bool pick_polarity(const uint32_t var);
-        void setup_polarity_strategy();
+
+        /////////////////
+        // Polarities
+        bool   pick_polarity(const uint32_t var);
+        double lit_inc_lsids;
+        double lit_decay_lsids;
+        void   print_lsids() const;
+        template<bool update_bogoprops>
+        void   bump_lsids_lit_act(Lit lit, double mult = 1.0);
+        void   litDecayActivity ();
+        bool   pick_lsids_phase(const uint32_t var);
+        void   setup_polarity_strategy();
 
     protected:
         Solver* solver;
@@ -556,8 +567,37 @@ inline void Searcher::decayClauseAct()
     cla_inc *= (1 / conf.clause_decay);
 }
 
+inline bool Searcher::pick_lsids_phase(const uint32_t var) {
+    Lit neg_lit = Lit(var, true);
+    Lit pos_lit = Lit(var, false);
+
+    double neg_lsids = lit_act_lsids[neg_lit.toInt()];
+    double pos_lsids = lit_act_lsids[pos_lit.toInt()];
+
+    #ifdef VERBOSE_DEBUG
+    cout << "c [Debug] Picking variable " << var
+    << " polarity : " << (neg_lsids < pos_lsids)
+    << " saved phase : " << varData[var].polarity << endl;
+    #endif
+
+    if ((neg_lsids < pos_lsids) != varData[var].polarity) {
+        stats.lsids_opp_cached++;
+    }
+
+    if (neg_lsids > pos_lsids){
+        return false;
+    } else {
+        return true;
+    }
+}
+
 inline bool Searcher::pick_polarity(const uint32_t var)
 {
+    if (polar_chrono && last_backtrack_is_chrono) {
+        stats.chrono_decisions++;
+        return pick_lsids_phase(var);
+    }
+
     switch(conf.polarity_mode) {
         case PolarityMode::polarmode_neg:
             return false;
@@ -583,6 +623,31 @@ inline bool Searcher::pick_polarity(const uint32_t var)
     }
 
     return true;
+}
+
+
+template<bool update_bogoprops>
+inline void Searcher::bump_lsids_lit_act(Lit lit, double mult)
+{
+    if (update_bogoprops) {
+        return;
+    }
+
+    if (!polar_chrono) {
+        return;
+    }
+
+    lit_act_lsids[lit.toInt()] += lit_inc_lsids * mult;
+
+    if (lit_act_lsids[lit.toInt()] > 1e100) {
+        // Rescale:
+        for (double& act : lit_act_lsids) {
+            act *= 1e-100;
+        }
+
+        //Reset lit_inc
+        lit_inc_lsids *= 1e-100;
+    }
 }
 
 template<bool update_bogoprops>

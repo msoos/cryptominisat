@@ -341,6 +341,11 @@ class Tester:
         cmd += "--walksatruns %d " % random.choice([2, 15, 20])
         cmd += "--slstype %s " % random.choice(["walksat", "yalsat", "ccnr", "ccnr_yalsat"])
 
+        # polarities
+        cmd += "--polar %s " % random.choice(["true", "false", "rnd", "auto"])
+        cmd += "--polarstablen %d " % random.choice([0, 1, 2, -1, 10000])
+        cmd += "--chronophasen %d " % random.choice([0, 1, 2, 10000])
+
         cmd += "--mustrenumber %d " % random.choice([0, 1])
         cmd += "--diffdeclevelchrono %d " % random.choice([1, random.randint(1, 1000), -1])
         cmd += "--bva %d " % random.choice([1, 1, 1, 0])

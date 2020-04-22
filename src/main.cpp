@@ -353,7 +353,9 @@ void Main::add_supported_options()
     ("polar", po::value<string>()->default_value("auto")
         , "{true,false,rnd,auto} Selects polarity mode. 'true' -> selects only positive polarity when branching. 'false' -> selects only negative polarity when branching. 'auto' -> selects last polarity used (also called 'caching')")
     ("polarstablen", po::value(&conf.polar_stable_every_n)->default_value(conf.polar_stable_every_n)
-        , "Use stable polarities at every N restart")
+        , "When to use stable polarities. 0 = always, otherwise every n. Negative is special, see code")
+    ("chronophasen", po::value(&conf.chronophase_every_n)->default_value(conf.chronophase_every_n)
+        , "When to use LSIDS polarities. 0 = always, otherwise every n. Negative is special, see code")
     ;
 
 

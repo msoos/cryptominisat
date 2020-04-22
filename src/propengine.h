@@ -131,7 +131,6 @@ public:
     double var_decay;
     double var_decay_max;
     double maple_step_size;
-
     struct VarOrderLt { ///Order variables according to their activities
         const vector<double>&  activities;
         bool operator () (const uint32_t x, const uint32_t y) const
@@ -156,8 +155,11 @@ public:
     Link & vmtf_link (uint32_t var) { return vmtf_links[var]; }
     Links vmtf_links; // table of vmtf_links for decision queue
     #endif
-
     double max_vsids_act = 0.0;
+
+    //Other stuff.
+    vector<double> lit_act_lsids;
+    bool   polar_chrono;
     double max_cl_act = 0.0;
 
 protected:

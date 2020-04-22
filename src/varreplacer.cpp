@@ -118,40 +118,48 @@ void VarReplacer::printReplaceStats() const
     }
 }
 
+// Updating activities/data about variables.
+// Given: a V b
+//       -a V -b
+// Means: a = ~b
+//        a is replaced by ~b
+// Then:  orig = a
+//        replaced_with = ~b
 void VarReplacer::update_vardata_and_activities(
-    const uint32_t orig
-    , const uint32_t replaced_with
+    const Lit orig
+    , const Lit replaced_with
 ) {
+    uint32_t orig_var = orig.var();
+    uint32_t replaced_with_var = replaced_with.var();
+
     //Not replaced_with, or not replaceable, so skip
-    if (orig == replaced_with
-        || solver->varData[replaced_with].removed == Removed::decomposed
-        || solver->varData[replaced_with].removed == Removed::elimed
+    if (orig_var == replaced_with_var
+        || solver->varData[replaced_with_var].removed == Removed::decomposed
+        || solver->varData[replaced_with_var].removed == Removed::elimed
     ) {
         return;
     }
 
     //Has already been handled previously, just skip
-    if (solver->varData[orig].removed == Removed::replaced) {
+    if (solver->varData[orig_var].removed == Removed::replaced) {
         return;
     }
 
     //Okay, so unset decision, and set the other one decision
-    assert(orig != replaced_with);
-    solver->varData[orig].removed = Removed::replaced;
-    assert(solver->varData[replaced_with].removed == Removed::none);
-    assert(solver->value(replaced_with) == l_Undef);
+    assert(orig_var != replaced_with_var);
+    solver->varData[orig_var].removed = Removed::replaced;
+    assert(solver->varData[replaced_with_var].removed == Removed::none);
+    assert(solver->value(replaced_with_var) == l_Undef);
 
-    double orig_act_vsids = solver->var_act_vsids[orig];
-    double repl_with_act_vsids = solver->var_act_vsids[replaced_with];
-    if (orig_act_vsids + repl_with_act_vsids >= orig_act_vsids) {
-        solver->var_act_vsids[replaced_with] += orig_act_vsids;
-    }
+    //Update activities
+    solver->var_act_vsids[replaced_with_var] += solver->var_act_vsids[orig_var];
+    solver->var_act_maple[replaced_with_var] += solver->var_act_maple[orig_var];
 
-    double repl_with_act_maple = solver->var_act_maple[replaced_with];
-    double orig_act_maple = solver->var_act_maple[orig];
-    if (orig_act_maple + repl_with_act_maple >= orig_act_maple) {
-        solver->var_act_maple[replaced_with] += orig_act_maple;
-    }
+    assert(orig_var <= solver->nVars() && replaced_with_var <= solver->nVars());
+
+    //Update LSIDS
+    solver->lit_act_lsids[replaced_with.toInt()] += solver->lit_act_lsids[orig.toInt()];
+    solver->lit_act_lsids[(~replaced_with).toInt()] += solver->lit_act_lsids[(~orig).toInt()];
 }
 
 bool VarReplacer::enqueueDelayedEnqueue()
@@ -198,8 +206,12 @@ void VarReplacer::update_all_vardata_activities()
         ; ++it, var++
     ) {
         const uint32_t orig = solver->map_outer_to_inter(var);
+        const Lit orig_lit = Lit(orig, false);
+
         const uint32_t repl = solver->map_outer_to_inter(it->var());
-        update_vardata_and_activities(orig, repl);
+        const Lit repl_lit = Lit(repl, it->sign());
+
+        update_vardata_and_activities(orig_lit, repl_lit);
     }
 }
 

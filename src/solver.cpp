@@ -1593,6 +1593,7 @@ lbool Solver::solve_with_assumptions(
     //Reset parameters
     luby_loop_num = 0;
     maple_step_size = conf.orig_step_size;
+    lit_decay_lsids = 0.8;
     conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
     solveStats.num_simplify_this_solve_call = 0;
     if (conf.verbosity >= 6) {
@@ -2390,6 +2391,17 @@ void Solver::print_norm_stats(const double cpu_time, const double cpu_time_total
         , reduceDB->get_total_time()
         , stats_line_percent(reduceDB->get_total_time(), cpu_time)
         , "% time"
+    );
+
+    print_stats_line("c LSIDS decisions"
+    , sumSearchStats.chrono_decisions
+    , stats_line_percent(sumSearchStats.chrono_decisions, sumSearchStats.decisions)
+    , "% all decisions"
+    );
+    print_stats_line("c LSIDS differed caching"
+    , sumSearchStats.lsids_opp_cached
+    , stats_line_percent(sumSearchStats.lsids_opp_cached, sumSearchStats.chrono_decisions)
+    , "% all LSIDS decisions"
     );
 
     //OccSimplifier stats

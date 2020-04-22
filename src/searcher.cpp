@@ -81,6 +81,9 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
 {
     var_inc_vsids = 1;
     maple_step_size = conf.orig_step_size;
+    lit_decay_lsids = 0.8;
+    lit_inc_lsids = 0.8;
+
     more_red_minim_limit_binary_actual = conf.more_red_minim_limit_binary;
     mtrand.seed(conf.origSeed);
     hist.setSize(conf.shortTermHistorySize, conf.blocking_restart_trail_hist_length);
@@ -111,6 +114,9 @@ void Searcher::new_var(const bool bva, const uint32_t orig_outer)
     #ifdef STATS_NEEDED
     level_used_for_cl_arr.insert(level_used_for_cl_arr.end(), 1, 0);
     #endif
+
+    lit_act_lsids.push_back(0);
+    lit_act_lsids.push_back(0);
 }
 
 void Searcher::new_vars(size_t n)
@@ -124,6 +130,7 @@ void Searcher::new_vars(size_t n)
     #ifdef STATS_NEEDED
     level_used_for_cl_arr.insert(level_used_for_cl_arr.end(), n, 0);
     #endif
+    lit_act_lsids.insert(lit_act_lsids.end(), 2*n, 0);
 }
 
 void Searcher::save_on_var_memory()
@@ -133,6 +140,8 @@ void Searcher::save_on_var_memory()
     #ifdef STATS_NEEDED
     level_used_for_cl_arr.resize(nVars());
     #endif
+    lit_act_lsids.resize(2*nVars());
+    lit_act_lsids.shrink_to_fit();
 }
 
 void Searcher::updateVars(
@@ -142,9 +151,18 @@ void Searcher::updateVars(
 
     updateArray(var_act_vsids, interToOuter);
     updateArray(var_act_maple, interToOuter);
+
     #ifdef VMTF_NEEDED
     rebuildOrderHeapVMTF();
     #endif
+
+    //Update LSIDS
+    vector<uint32_t> interToOuter2(nVarsOuter()*2);
+    for(size_t i = 0; i < nVarsOuter(); i++) {
+        interToOuter2[i*2] = interToOuter[i]*2;
+        interToOuter2[i*2+1] = interToOuter[i]*2+1;
+    }
+    updateArray(lit_act_lsids, interToOuter2);
 }
 
 template<bool update_bogoprops>
@@ -194,6 +212,7 @@ inline void Searcher::add_lit_to_learnt(
                 break;
             #endif
         }
+        bump_lsids_lit_act<update_bogoprops>(~lit, 0.5);
     }
 
     if (varData[var].level >= nDecisionLevel) {
@@ -1330,11 +1349,14 @@ lbool Searcher::search()
 
 inline void Searcher::update_branch_params()
 {
-    if (/*branch_strategy == branch::vsids &&*/
-        (sumConflicts & 0xfff) == 0xfff &&
+    if ((sumConflicts & 0xfff) == 0xfff &&
         var_decay < var_decay_max)
     {
         var_decay += 0.01;
+    }
+
+    if (lit_decay_lsids < 0.95) {
+        lit_decay_lsids += 0.01;
     }
 
     if (branch_strategy == branch::maple
@@ -1527,6 +1549,16 @@ inline void Searcher::print_learning_debug_info() const
     << " to " << !learnt_clause[0].sign()
     << endl;
     #endif
+}
+
+
+void Searcher::print_lsids() const
+{
+    cout << " LSIDS scores " << endl ;
+    for(size_t i = 0; i < nVars(); i++){
+        cout << i+1 << " : " << lit_act_lsids[2*i] << " " << lit_act_lsids[2*i+1] << " . " << endl;
+    }
+    cout << endl;
 }
 
 void Searcher::print_learnt_clause() const
@@ -1817,16 +1849,12 @@ bool Searcher::handle_conflict(PropBy confl)
     if (conf.diff_declev_for_chrono > -1
         && (((int)decisionLevel() - (int)backtrack_level) >= conf.diff_declev_for_chrono)
     ) {
-        #ifdef CHRONO_PRINT
-        cout << "chrono Backtracking to level " << backtrack_level << endl;
-        #endif
         chrono_backtrack++;
+        last_backtrack_is_chrono = true;
         cancelUntil<true, false>(data.nHighestLevel -1);
-    } else { // default behavior
+    } else {
         non_chrono_backtrack++;
-        #ifdef CHRONO_PRINT
-        cout << "non-chrono Backtracking to level " << backtrack_level << endl;
-        #endif
+        last_backtrack_is_chrono = false;
         cancelUntil<true, false>(backtrack_level);
     }
 
@@ -1857,6 +1885,7 @@ bool Searcher::handle_conflict(PropBy confl)
     if (branch_strategy == branch::vsids) {
         vsids_decay_var_act();
     }
+    litDecayActivity();
     decayClauseAct<false>();
 
     return true;
@@ -2453,9 +2482,43 @@ void Searcher::setup_polarity_strategy()
         polar_stable = (branch_strategy_str == "MAPLE2");
     }
 
+    if (!polar_stable) {
+        if (conf.chronophase_every_n > 0) {
+            polar_chrono =
+                (int)(branch_strategy_num % conf.chronophase_every_n) == (conf.chronophase_every_n-1);
+        }
+
+        if (conf.chronophase_every_n == 0) {
+            polar_chrono = true;
+        }
+        if (conf.chronophase_every_n == -1) {
+            polar_chrono = (branch_strategy == branch::vsids);
+        }
+        if (conf.chronophase_every_n == -2) {
+            polar_chrono = (branch_strategy == branch::maple);
+        }
+        if (conf.chronophase_every_n == -3) {
+            polar_chrono = (branch_strategy_str == "VSIDS1");
+        }
+        if (conf.chronophase_every_n == -4) {
+            polar_chrono = (branch_strategy_str == "VSIDS2");
+        }
+        if (conf.chronophase_every_n == -4) {
+            polar_chrono = (branch_strategy_str == "MAPLE1");
+        }
+        if (conf.chronophase_every_n == -5) {
+            polar_chrono = (branch_strategy_str == "MAPLE2");
+        }
+    } else {
+        polar_chrono = false;
+    }
+
     if (conf.verbosity) {
         cout << "c [polar] stable polarities: " << polar_stable
-        << " branch strategy: " << branch_strategy_num
+        << " chrono polarities: " << polar_chrono
+        << " branch strategy num: " << branch_strategy_num
+        << " branch strategy: " << branch_strategy_str
+
         << endl;
     }
 }
@@ -3237,8 +3300,9 @@ template PropBy Searcher::propagate<false>();
 size_t Searcher::mem_used() const
 {
     size_t mem = HyperEngine::mem_used();
-    mem += var_act_vsids.capacity()*sizeof(uint32_t);
-    mem += var_act_maple.capacity()*sizeof(uint32_t);
+    mem += var_act_vsids.capacity()*sizeof(double);
+    mem += var_act_maple.capacity()*sizeof(double);
+    mem += lit_act_lsids.capacity()*sizeof(double);
     mem += order_heap_vsids.mem_used();
     mem += order_heap_maple.mem_used();
     #ifdef VMTF_NEEDED
@@ -3287,6 +3351,13 @@ void Searcher::vsids_decay_var_act()
 {
     assert(branch_strategy == branch::vsids);
     var_inc_vsids *= (1.0 / var_decay);
+}
+
+void Searcher::litDecayActivity()
+{
+    if (polar_chrono) {
+        lit_inc_lsids *= (1.0 / lit_decay_lsids);
+    }
 }
 
 void Searcher::consolidate_watches(const bool full)
@@ -3432,6 +3503,7 @@ void Searcher::save_state(SimpleOutFile& f, const lbool status) const
     PropEngine::save_state(f);
 
     f.put_vector(var_act_vsids);
+    f.put_vector(lit_act_lsids);
     f.put_vector(var_act_maple);
     f.put_vector(model);
     f.put_vector(conflict);
@@ -3453,6 +3525,7 @@ void Searcher::load_state(SimpleInFile& f, const lbool status)
     PropEngine::load_state(f);
 
     f.get_vector(var_act_vsids);
+    f.get_vector(lit_act_lsids);
     f.get_vector(var_act_maple);
     for(size_t i = 0; i < nVars(); i++) {
         if (varData[i].removed == Removed::none
@@ -3635,6 +3708,13 @@ void Searcher::cancelUntil(uint32_t blevel)
                     insert_var_order(var);
                 }
             }
+
+            bump_lsids_lit_act<update_bogoprops>(~trail[sublevel].lit, 2.0);
+
+            #ifdef VERBOSE_DEBUG
+            cout << "c Updating score by 2 for " << (trail[sublevel].lit)
+            << " "  << lit_ind << endl;
+            #endif
         }
         qhead = trail_lim[blevel];
         #ifdef USE_GAUSS
