@@ -33,7 +33,13 @@ import time
 import os.path
 import sqlite3
 import functools
-from termcolor import colored, cprint
+try:
+    from termcolor import cprint
+except ImportError:
+    termcolor_avail = False
+else:
+    termcolor_avail = True
+
 from pprint import pprint
 try:
     import mlflow
@@ -350,8 +356,12 @@ def conf_matrixes(data, features, to_predict, clf, toprint,
         color="green"
         bckgrnd = "on_grey"
 
-    cprint("%s prec : %-3.4f  recall: %-3.4f accuracy: %-3.4f roc_auc: %-3.4f"
-          % (toprint, precision, recall, accuracy, roc_auc), color, bckgrnd)
+    txt = "%s prec : %-3.4f  recall: %-3.4f accuracy: %-3.4f roc_auc: %-3.4f"
+    vals = (toprint, precision, recall, accuracy, roc_auc)
+    if termcolor_avail:
+        cprint(txt % vals , color, bckgrnd)
+    else:
+        cprint(txt % vals)
 
     # Plot confusion matrix
     cnf_matrix = sklearn.metrics.confusion_matrix(

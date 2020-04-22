@@ -39,7 +39,13 @@ import sklearn.ensemble
 import os
 import helper
 import decimal
-from termcolor import colored, cprint
+try:
+    from termcolor import cprint
+except ImportError:
+    termcolor_avail = False
+else:
+    termcolor_avail = True
+
 ver = sklearn.__version__.split(".")
 if int(ver[1]) < 20:
     from sklearn.cross_validation import train_test_split
@@ -353,8 +359,12 @@ if __name__ == "__main__":
         c = Clustering(samples, clust_type)
         clustering_setup[clust_type] = c.cluster()
         name = get_cluster_name(clust_type)
-        cprint("===-- K-Means clustering **created ** type: %s --" % name,
+        if termcolor_avail:
+            cprint("===-- K-Means clustering **created ** type: %s --" % name,
                "green", "on_grey")
+        else:
+            cprint("===-- K-Means clustering **created ** type: %s --" % name)
+
     del samples
 
     for f in fnames:
