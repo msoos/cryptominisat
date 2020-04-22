@@ -139,6 +139,7 @@ class Searcher : public HyperEngine
         ConflictData FindConflictLevel(PropBy& pb);
         uint32_t chrono_backtrack = 0;
         uint32_t non_chrono_backtrack = 0;
+        bool last_backtrack_is_chrono = false;
 
         bool check_order_heap_sanity() const;
 
@@ -287,6 +288,8 @@ class Searcher : public HyperEngine
         void  attach_and_enqueue_learnt_clause(Clause* cl, const uint32_t level, const bool enqueue);
         void  print_learning_debug_info() const;
         void  print_learnt_clause() const;
+        void  print_lsids() const;
+
         Clause* handle_last_confl(
             const uint32_t glue
             , const uint32_t old_decision_level);
@@ -343,6 +346,11 @@ class Searcher : public HyperEngine
         #endif
 
         vector<uint32_t> implied_by_learnts; //for glue-based extra var activity bumping
+
+        /////////////////
+        // Literal activity
+        double lit_inc_lsids;
+        double lit_decay_lsids;
 
         /////////////////
         // Variable activity
@@ -422,6 +430,13 @@ class Searcher : public HyperEngine
         template<bool update_bogoprops>
         void     bump_vsids_var_act(uint32_t v, double mult = 1.0);
 
+        // Implementation of LSIDS phase selection heuristic
+        ///Increase a literal with the current 'bump' value.
+        // TODO : Why should it have update_bogoprops template?
+        template<bool update_bogoprops>
+        void     bump_lsids_lit_act(Lit lit, double mult = 1.0);
+        void     litDecayActivity ();
+
         //Clause activites
         double cla_inc;
 
@@ -452,6 +467,7 @@ class Searcher : public HyperEngine
 
         //Picking polarity when doing decision
         bool     pick_polarity(const uint32_t var);
+        bool     pick_lsids_phase(const uint32_t var);
 
         //Last time we clean()-ed the clauses, the number of zero-depth assigns was this many
         size_t   lastCleanZeroDepthAssigns;
@@ -554,8 +570,39 @@ inline void Searcher::decayClauseAct()
     cla_inc *= (1 / conf.clause_decay);
 }
 
+inline bool Searcher::pick_lsids_phase(const uint32_t var){
+    Lit neg_lit = Lit(var, true);
+    Lit pos_lit = Lit(var, false);
+
+    double neg_lsids = lit_act_lsids[neg_lit.toInt()];
+    double pos_lsids = lit_act_lsids[pos_lit.toInt()];
+
+    #ifdef VERBOSE_DEBUG
+    cout << "c [Debug] Picking variable " << var
+    << " polarity : " << (neg_lsids < pos_lsids)
+    << " saved phase : " << varData[var].polarity << endl;
+    #endif
+
+    if ((neg_lsids < pos_lsids) != varData[var].polarity){
+        stats.lsids_opp_cached++;
+    }
+
+
+    if(neg_lsids > pos_lsids){
+        return false;
+    }
+    else {
+        return true;
+    }
+}
+
 inline bool Searcher::pick_polarity(const uint32_t var)
 {
+    if(conf.chronophase == 1 && last_backtrack_is_chrono){
+        stats.chrono_decisions++;
+        return pick_lsids_phase(var);
+    }
+
     switch(conf.polarity_mode) {
         case PolarityMode::polarmode_neg:
             return false;
@@ -574,6 +621,26 @@ inline bool Searcher::pick_polarity(const uint32_t var)
     }
 
     return true;
+}
+
+
+template<bool update_bogoprops>
+inline void Searcher::bump_lsids_lit_act(Lit lit, double mult)
+{
+    if (update_bogoprops) {
+        return;
+    }
+    lit_act_lsids[lit.toInt()] += lit_inc_lsids * mult;
+
+    if (lit_act_lsids[lit.toInt()] > 1e100) {
+        // Rescale:
+        for (double& act : lit_act_lsids) {
+            act *= 1e-100;
+        }
+
+        //Reset lit_inc
+        lit_inc_lsids *= 1e-100;
+    }
 }
 
 template<bool update_bogoprops>

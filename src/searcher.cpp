@@ -88,6 +88,10 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     step_size = solver->conf.orig_step_size;
 
     var_inc_vsids = conf.var_inc_vsids_start;
+
+    lit_decay_lsids = conf.var_decay_vsids_start;
+    lit_inc_lsids = conf.var_inc_vsids_start; // TODO We can use different value too
+
     more_red_minim_limit_binary_actual = conf.more_red_minim_limit_binary;
     more_red_minim_limit_cache_actual = conf.more_red_minim_limit_cache;
     mtrand.seed(conf.origSeed);
@@ -109,6 +113,9 @@ void Searcher::new_var(const bool bva, const uint32_t orig_outer)
     var_act_vsids.push_back(0);
     var_act_maple.push_back(0);
     insert_var_order_all((int)nVars()-1);
+
+    lit_act_lsids.push_back(0);
+    lit_act_lsids.push_back(0);
 }
 
 void Searcher::new_vars(size_t n)
@@ -120,6 +127,8 @@ void Searcher::new_vars(size_t n)
     for(int i = n-1; i >= 0; i--) {
         insert_var_order_all((int)nVars()-i-1);
     }
+    lit_act_lsids.insert(lit_act_lsids.end(), 2*n, 0);
+
 }
 
 void Searcher::save_on_var_memory()
@@ -128,9 +137,10 @@ void Searcher::save_on_var_memory()
 
     var_act_vsids.resize(nVars());
     var_act_maple.resize(nVars());
-
+    lit_act_lsids.resize(2*nVars());
     var_act_vsids.shrink_to_fit();
     var_act_maple.shrink_to_fit();
+    lit_act_lsids.shrink_to_fit();
 
 }
 
@@ -140,6 +150,15 @@ void Searcher::updateVars(
 ) {
     updateArray(var_act_vsids, interToOuter);
     updateArray(var_act_maple, interToOuter);
+
+    //Create temporary outerToInter2
+    vector<uint32_t> interToOuter2(nVarsOuter()*2);
+    for(size_t i = 0; i < nVarsOuter(); i++) {
+        interToOuter2[i*2] = interToOuter[i]*2;
+        interToOuter2[i*2+1] = interToOuter[i]*2+1;
+    }
+
+    updateArray(lit_act_lsids, interToOuter2);
 
     renumber_assumptions(outerToInter);
 }
@@ -193,6 +212,12 @@ inline void Searcher::add_lit_to_learnt(
     seen[var] = 1;
 
     if (!update_bogoprops) {
+        bump_lsids_lit_act<update_bogoprops>(~lit, 0.5);
+
+        #ifdef VERBOSE_DEBUG
+        cout << "c Updating score for " << (~lit) << " "  << lit_ind << endl;
+        #endif
+
         if (VSIDS) {
             bump_vsids_var_act<update_bogoprops>(var, 0.5);
             implied_by_learnts.push_back(var);
@@ -1074,6 +1099,9 @@ lbool Searcher::search()
                 ) {
                     var_decay_vsids += 0.01;
                 }
+                if ( lit_decay_lsids < conf.var_decay_vsids_max){
+                    lit_decay_lsids += 0.01;
+                }
                 if (!VSIDS && step_size > solver->conf.min_step_size) {
                     step_size -= solver->conf.step_size_dec;
                     #ifdef VERBOSE_DEBUG
@@ -1376,6 +1404,16 @@ inline void Searcher::print_learning_debug_info() const
     #endif
 }
 
+
+void Searcher::print_lsids() const
+{
+    cout << " LSIDS scores " << endl ;
+    for(size_t i = 0; i < nVars(); i++){
+        cout << i+1 << " : " << lit_act_lsids[2*i] << " " << lit_act_lsids[2*i+1] << " . " << endl;
+    }
+    cout << endl;
+}
+
 void Searcher::print_learnt_clause() const
 {
     if (conf.verbosity >= 6) {
@@ -1597,9 +1635,12 @@ bool Searcher::handle_conflict(PropBy confl)
         cout << "chrono Backtracking to level " << backtrack_level << endl;
 #endif
         chrono_backtrack++;
+        last_backtrack_is_chrono = true;
         cancelUntil<true, update_bogoprops>(data.nHighestLevel -1);
     } else { // default behavior
         ++non_chrono_backtrack;
+        last_backtrack_is_chrono = false;
+
 #ifdef CHRONO_PRINT
         cout << "non-chrono Backtracking to level " << backtrack_level << endl;
 #endif
@@ -1633,6 +1674,7 @@ bool Searcher::handle_conflict(PropBy confl)
     }
 
     if (!update_bogoprops) {
+        litDecayActivity();
         if (VSIDS) {
             varDecayActivity();
         }
@@ -2756,8 +2798,9 @@ template PropBy Searcher::propagate<false>();
 size_t Searcher::mem_used() const
 {
     size_t mem = HyperEngine::mem_used();
-    mem += var_act_vsids.capacity()*sizeof(uint32_t);
-    mem += var_act_maple.capacity()*sizeof(uint32_t);
+    mem += var_act_vsids.capacity()*sizeof(double);
+    mem += var_act_maple.capacity()*sizeof(double);
+    mem += lit_act_lsids.capacity()*sizeof(double);
     mem += order_heap_vsids.mem_used();
     mem += order_heap_maple.mem_used();
     mem += learnt_clause.capacity()*sizeof(Lit);
@@ -2899,6 +2942,15 @@ void Searcher::update_var_decay_vsids()
     if (var_decay_vsids >= conf.var_decay_vsids_max) {
         var_decay_vsids = conf.var_decay_vsids_max;
     }
+
+    if (lit_decay_lsids >= conf.var_decay_vsids_max) {
+        lit_decay_lsids = conf.var_decay_vsids_max;
+    }
+}
+
+inline void Searcher::litDecayActivity()
+{
+    lit_inc_lsids *= (1.0 / lit_decay_lsids);
 }
 
 void Searcher::consolidate_watches(const bool full)
@@ -3044,6 +3096,7 @@ void Searcher::save_state(SimpleOutFile& f, const lbool status) const
     PropEngine::save_state(f);
 
     f.put_vector(var_act_vsids);
+    f.put_vector(lit_act_lsids);
     f.put_vector(var_act_maple);
     f.put_vector(model);
     f.put_vector(conflict);
@@ -3065,6 +3118,7 @@ void Searcher::load_state(SimpleInFile& f, const lbool status)
     PropEngine::load_state(f);
 
     f.get_vector(var_act_vsids);
+    f.get_vector(lit_act_lsids);
     f.get_vector(var_act_maple);
     for(size_t i = 0; i < nVars(); i++) {
         if (varData[i].removed == Removed::none
@@ -3168,6 +3222,13 @@ void Searcher::cancelUntil(uint32_t blevel)
                     insert_var_order(var);
                 }
             }
+
+            bump_lsids_lit_act<update_bogoprops>(~trail[sublevel].lit, 2.0);
+
+            #ifdef VERBOSE_DEBUG
+            cout << "c Updating score by 2 for " << (trail[sublevel].lit)
+            << " "  << lit_ind << endl;
+            #endif
         }
         qhead = trail_lim[blevel];
         trail.resize(trail_lim[blevel]);

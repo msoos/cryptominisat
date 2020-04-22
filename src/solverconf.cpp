@@ -54,6 +54,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , alternate_vsids_decay_rate1(0.92)
         , alternate_vsids_decay_rate2(0.99)
         , polarity_mode(PolarityMode::polarmode_automatic)
+        , chronophase(0)
 
         //Clause cleaning
         , every_lev1_reduce(10000) // kept for a while then moved to lev2

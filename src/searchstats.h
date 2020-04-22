@@ -57,6 +57,11 @@ public:
     uint64_t  decisionsRand = 0;
     uint64_t  decisionFlippedPolar = 0;
 
+    //LSIDS related data
+    uint64_t  chrono_decisions = 0;
+    uint64_t  lsids_opp_cached = 0;
+
+
     //Clause shrinking
     uint64_t litsRedNonMin = 0;
     uint64_t litsRedFinal = 0;

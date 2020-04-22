@@ -123,6 +123,7 @@ public:
     void new_decision_level();
     vector<double> var_act_vsids;
     vector<double> var_act_maple;
+    vector<double> lit_act_lsids;
 
     //Variable activities
     struct VarOrderLt { ///Order variables according to their activities
