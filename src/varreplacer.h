@@ -148,8 +148,8 @@ class VarReplacer
         void attach_delayed_attach();
         void update_all_vardata_activities();
         void update_vardata_and_activities(
-            const uint32_t orig
-            , const uint32_t replaced
+            const Lit orig
+            , const Lit replaced
         );
         bool enqueueDelayedEnqueue();
 
