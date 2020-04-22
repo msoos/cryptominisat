@@ -624,35 +624,24 @@ inline bool Searcher::pick_polarity(const uint32_t var)
 }
 
 
-// LSIDS things
-
 template<bool update_bogoprops>
 inline void Searcher::bump_lsids_lit_act(Lit lit, double mult)
 {
     if (update_bogoprops) {
         return;
     }
-    const uint32_t lit_ind = lit.toInt();
-    lit_act_lsids[lit_ind] += lit_inc_lsids * mult;
+    lit_act_lsids[lit.toInt()] += lit_inc_lsids * mult;
 
-    #ifdef SLOW_DEBUG
-    bool lsids_rescaled = false;
-    #endif
-    if (lit_act_lsids[lit_ind] > 1e100) {
+    if (lit_act_lsids[lit.toInt()] > 1e100) {
         // Rescale:
         for (double& act : lit_act_lsids) {
             act *= 1e-100;
         }
-        #ifdef SLOW_DEBUG
-        lsids_rescaled = true;
-        #endif
 
-        //Reset var_inc
+        //Reset lit_inc
         lit_inc_lsids *= 1e-100;
     }
-
 }
-// LSIDS methods end here
 
 template<bool update_bogoprops>
 void Searcher::bump_var_activities_based_on_implied_by_learnts(uint32_t backtrack_level) {
