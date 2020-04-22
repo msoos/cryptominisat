@@ -68,7 +68,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         polarity_mode(PolarityMode::polarmode_automatic)
         , polar_stable_every_n(4)
-        , chronophase_every_n(-1)
+        , chronophase_every_n(10000)
 
         //Clause cleaning
         , every_lev1_reduce(10000) // kept for a while then moved to lev2
