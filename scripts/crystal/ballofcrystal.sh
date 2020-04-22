@@ -157,7 +157,7 @@ rm -f ../../src/predict/*.h
 ####################################
 # Clustering for cldata, using cldata dataframe
 ####################################
-../clustering.py ${FNAMEOUT}-min.db-cldata-*short*.dat ${FNAMEOUT}-min.db-cldata-*long*.dat --basedir ../../src/predict/ --clusters 4 --scale --nocomputed
+# ../clustering.py ${FNAMEOUT}-min.db-cldata-*short*.dat ${FNAMEOUT}-min.db-cldata-*long*.dat --basedir ../../src/predict/ --clusters 4 --scale --nocomputed
 
 
 ####################################
@@ -170,8 +170,8 @@ rm -f ../../src/predict/*.h
 #../vardata_predict.py vardata-comb --final -q 20 --basedir ../src/predict/ --depth 7 --tree
 
 # for CONF in {0..2}; do
-    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-conf-$CONF-clustered.dat" --name short --split 0.01 --final --xgboost --basedir ../../src/predict/ --conf $CONF --prefok 1
-    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-conf-$CONF-clustered.dat"  --name long  --split 0.01 --final --xgboost --basedir ../../src/predict/ --conf $CONF --prefok 1
+    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-conf-$CONF.dat" --name short --split 0.01 --final --xgboost --basedir ../../src/predict/ --conf $CONF --prefok 1
+    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-conf-$CONF.dat"  --name long  --split 0.01 --final --xgboost --basedir ../../src/predict/ --conf $CONF --prefok 1
 # done
 )
 

@@ -48,7 +48,7 @@ THE SOFTWARE.
 #endif
 
 #ifdef FINAL_PREDICTOR
-#include "clustering.h"
+// #include "clustering.h"
 #endif
 
 #ifdef FINAL_PREDICTOR_BRANCH
@@ -88,7 +88,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     set_branch_strategy(0);
 
     #ifdef FINAL_PREDICTOR
-    clustering = new ClusteringImp;
+//     clustering = new ClusteringImp;
     #endif
 }
 
@@ -99,7 +99,7 @@ Searcher::~Searcher()
     #endif
 
     #ifdef FINAL_PREDICTOR
-    delete clustering;
+//     delete clustering;
     #endif
 }
 
@@ -1628,7 +1628,7 @@ void Searcher::set_clause_data(
     cl->stats.num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-cl->size();
 
 
-    cl->stats.clust_f = clustering->which_is_closest(solver->last_solve_satzilla_feature);
+//     cl->stats.clust_f = clustering->which_is_closest(solver->last_solve_satzilla_feature);
     cl->stats.orig_glue = orig_glue;
     cl->stats.glue_hist = hist.glueHistLT.avg();
     cl->stats.size_hist = hist.conflSizeHistLT.avg();
