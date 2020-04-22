@@ -40,7 +40,13 @@ import sklearn.ensemble
 import sklearn.linear_model
 import helper
 import xgboost as xgb
-import mlflow
+try:
+    import mlflow
+except ImportError:
+    mlflow_avail = False
+else:
+    mlflow_avail = True
+
 ver = sklearn.__version__.split(".")
 if int(ver[1]) < 20:
     from sklearn.cross_validation import train_test_split
@@ -227,10 +233,11 @@ class Learner:
         print("Training finished. T: %-3.2f" % (time.time() - t))
 
         if not final:
-            mlflow.log_param("features used", features)
-            # mlflow.log_metric("all features: ", train.columns.values.flatten().tolist())
-            mlflow.log_metric("train num rows", train.shape[0])
-            mlflow.log_metric("test num rows", test.shape[0])
+            if mlflow_avail:
+                mlflow.log_param("features used", features)
+                # mlflow.log_metric("all features: ", train.columns.values.flatten().tolist())
+                mlflow.log_metric("train num rows", train.shape[0])
+                mlflow.log_metric("test num rows", test.shape[0])
 
             if options.final_is_forest:
                 best_features = helper.print_feature_ranking(
@@ -437,28 +444,30 @@ if __name__ == "__main__":
         exit(-1)
 
     # ------------
-    #  Experiment starts
+    #  Log all parameters
     # ------------
-    mlflow.log_param("final", options.only_final)
-    if options.only_final:
-        mlflow.log_param("tree", options.final_is_tree)
-        mlflow.log_param("svm", options.final_is_svm)
-        mlflow.log_param("logreg", options.final_is_logreg)
-        mlflow.log_param("forest", options.final_is_forest)
-        mlflow.log_param("voting", options.final_is_voting)
-        mlflow.log_param("basedir", options.basedir)
-    else:
-        mlflow.log_param("top_num_features", options.top_num_features)
+    if mlflow_avail:
+        mlflow.log_param("final", options.only_final)
+        if options.only_final:
+            mlflow.log_param("tree", options.final_is_tree)
+            mlflow.log_param("svm", options.final_is_svm)
+            mlflow.log_param("logreg", options.final_is_logreg)
+            mlflow.log_param("forest", options.final_is_forest)
+            mlflow.log_param("voting", options.final_is_voting)
+            mlflow.log_param("basedir", options.basedir)
+        else:
+            mlflow.log_param("top_num_features", options.top_num_features)
 
-    mlflow.log_param("conf_num", options.conf_num)
-    mlflow.log_param("prefer_ok", options.prefer_ok)
-    mlflow.log_param("only_percentage", options.only_perc)
-    mlflow.log_param("min_samples_split", options.min_samples_split)
-    mlflow.log_param("tree_depth", options.tree_depth)
-    mlflow.log_param("num_trees", options.num_trees)
-    mlflow.log_param("no_computed", options.no_computed)
-    mlflow.log_artifact(options.fname)
+        mlflow.log_param("conf_num", options.conf_num)
+        mlflow.log_param("prefer_ok", options.prefer_ok)
+        mlflow.log_param("only_percentage", options.only_perc)
+        mlflow.log_param("min_samples_split", options.min_samples_split)
+        mlflow.log_param("tree_depth", options.tree_depth)
+        mlflow.log_param("num_trees", options.num_trees)
+        mlflow.log_param("no_computed", options.no_computed)
+        mlflow.log_artifact(options.fname)
 
+    # Read in Pandas Dataframe
     df = pd.read_pickle(options.fname)
     df_orig = df.copy()
     if options.print_features:

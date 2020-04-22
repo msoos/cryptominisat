@@ -30,12 +30,17 @@ import crystalcodegen as ccg
 import ast
 import math
 import time
-import mlflow
 import os.path
 import sqlite3
 import functools
 from termcolor import colored, cprint
 from pprint import pprint
+try:
+    import mlflow
+except ImportError:
+    mlflow_avail = False
+else:
+    mlflow_avail = True
 
 
 class QueryHelper:
@@ -276,7 +281,8 @@ def print_confusion_matrix(cm,
         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
 
     print(title)
-    mlflow.log_metric(title, cm[0][0])
+    if mlflow_avail:
+        mlflow.log_metric(title, cm[0][0])
     np.set_printoptions(precision=2)
     print(cm)
 
@@ -314,15 +320,13 @@ def conf_matrixes(data, features, to_predict, clf, toprint,
     # calc acc, precision, recall
     accuracy = sklearn.metrics.accuracy_score(
         y_data, y_pred)
-    mlflow.log_metric(toprint + " -- accuracy", accuracy)
 
     precision = sklearn.metrics.precision_score(
         y_data, y_pred, pos_label=1, average=average)
-    mlflow.log_metric(toprint + " -- precision", precision)
+
 
     recall = sklearn.metrics.recall_score(
         y_data, y_pred, pos_label=1, average=average)
-    mlflow.log_metric(toprint + " -- recall", recall)
 
     # ROC AUC
     predsi = np.array(y_pred)
@@ -332,7 +336,13 @@ def conf_matrixes(data, features, to_predict, clf, toprint,
     except:
         print("NOTE: ROC AUC is set to 0 because of completely one-sided OK/BAD")
         roc_auc = 0
-    mlflow.log_metric(toprint + " -- roc_auc", roc_auc)
+
+    # record to mlflow
+    if mlflow_avail:
+        mlflow.log_metric(toprint + " -- accuracy", accuracy)
+        mlflow.log_metric(toprint + " -- precision", precision)
+        mlflow.log_metric(toprint + " -- recall", recall)
+        mlflow.log_metric(toprint + " -- roc_auc", roc_auc)
 
     color = "white"
     bckgrnd = "on_grey"
