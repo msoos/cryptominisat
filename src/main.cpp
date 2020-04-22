@@ -341,7 +341,7 @@ void Main::add_supported_options()
     ("polar", po::value<string>()->default_value("auto")
         , "{true,false,rnd,auto} Selects polarity mode. 'true' -> selects only positive polarity when branching. 'false' -> selects only negative polarity when branching. 'auto' -> selects last polarity used (also called 'caching')")
     ("chronophase", po::value(&conf.chronophase)->default_value(conf.chronophase)
-        , "Phase to choose during chrono BT. 0 = default, 1 = lsids, 2 = random")
+        , "Phase to choose during chrono BT. 0 = default, 1 = lsids")
     #ifdef STATS_NEEDED
     ("clid", po::bool_switch(&clause_ID_needed)
         , "Add clause IDs to DRAT output")

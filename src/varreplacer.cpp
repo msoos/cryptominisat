@@ -178,7 +178,6 @@ void VarReplacer::update_vardata_and_activities(
         solver->lit_act_lsids[pos_replaced_with] += orig_act_lsids_pos;
         solver->lit_act_lsids[neg_replaced_with] += orig_act_lsids_neg;
     }
-
 }
 
 bool VarReplacer::enqueueDelayedEnqueue()

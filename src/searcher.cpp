@@ -211,11 +211,8 @@ inline void Searcher::add_lit_to_learnt(
     }
     seen[var] = 1;
 
-    const uint32_t lit_ind = (~lit).toInt();
-
-
     if (!update_bogoprops) {
-        bump_lsids_lit_act<update_bogoprops>(lit_ind, 0.5);
+        bump_lsids_lit_act<update_bogoprops>(~lit, 0.5);
 
         #ifdef VERBOSE_DEBUG
         cout << "c Updating score for " << (~lit) << " "  << lit_ind << endl;
@@ -1103,7 +1100,7 @@ lbool Searcher::search()
                     var_decay_vsids += 0.01;
                 }
                 if ( lit_decay_lsids < conf.var_decay_vsids_max){
-                    lit_decay_lsids += 0.01;    //TODO : this is not there is Durian
+                    lit_decay_lsids += 0.01;
                 }
                 if (!VSIDS && step_size > solver->conf.min_step_size) {
                     step_size -= solver->conf.step_size_dec;
@@ -3225,8 +3222,9 @@ void Searcher::cancelUntil(uint32_t blevel)
                     insert_var_order(var);
                 }
             }
-            uint32_t lit_ind = (~trail[sublevel].lit).toInt();
-            bump_lsids_lit_act<update_bogoprops>(lit_ind, 2.0);
+
+            bump_lsids_lit_act<update_bogoprops>(~trail[sublevel].lit, 2.0);
+
             #ifdef VERBOSE_DEBUG
             cout << "c Updating score by 2 for " << (trail[sublevel].lit)
             << " "  << lit_ind << endl;

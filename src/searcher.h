@@ -434,7 +434,7 @@ class Searcher : public HyperEngine
         ///Increase a literal with the current 'bump' value.
         // TODO : Why should it have update_bogoprops template?
         template<bool update_bogoprops>
-        void     bump_lsids_lit_act(uint32_t v, double mult = 1.0);
+        void     bump_lsids_lit_act(Lit lit, double mult = 1.0);
         void     litDecayActivity ();
 
         //Clause activites
@@ -627,18 +627,18 @@ inline bool Searcher::pick_polarity(const uint32_t var)
 // LSIDS things
 
 template<bool update_bogoprops>
-inline void Searcher::bump_lsids_lit_act(uint32_t lit, double mult)
+inline void Searcher::bump_lsids_lit_act(Lit lit, double mult)
 {
-    if (update_bogoprops) {     // No idea what this is
+    if (update_bogoprops) {
         return;
     }
-
-    lit_act_lsids[lit] += lit_inc_lsids * mult;
+    const uint32_t lit_ind = lit.toInt();
+    lit_act_lsids[lit_ind] += lit_inc_lsids * mult;
 
     #ifdef SLOW_DEBUG
     bool lsids_rescaled = false;
     #endif
-    if (lit_act_lsids[lit] > 1e100) {
+    if (lit_act_lsids[lit_ind] > 1e100) {
         // Rescale:
         for (double& act : lit_act_lsids) {
             act *= 1e-100;
@@ -652,7 +652,6 @@ inline void Searcher::bump_lsids_lit_act(uint32_t lit, double mult)
     }
 
 }
-
 // LSIDS methods end here
 
 template<bool update_bogoprops>
