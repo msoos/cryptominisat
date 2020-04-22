@@ -149,16 +149,10 @@ void VarReplacer::update_vardata_and_activities(
     assert(solver->value(replaced_with) == l_Undef);
 
     double orig_act_vsids = solver->var_act_vsids[orig];
-    double repl_with_act_vsids = solver->var_act_vsids[replaced_with];
-    if (orig_act_vsids + repl_with_act_vsids >= orig_act_vsids) {
-        solver->var_act_vsids[replaced_with] += orig_act_vsids;
-    }
+    solver->var_act_vsids[replaced_with] += orig_act_vsids;
 
-    double repl_with_act_maple = solver->var_act_maple[replaced_with];
     double orig_act_maple = solver->var_act_maple[orig];
-    if (orig_act_maple + repl_with_act_maple >= orig_act_maple) {
-        solver->var_act_maple[replaced_with] += orig_act_maple;
-    }
+    solver->var_act_maple[replaced_with] += orig_act_maple;
 
     assert(orig <= solver->nVars() && replaced_with <= solver->nVars());
 
@@ -169,15 +163,10 @@ void VarReplacer::update_vardata_and_activities(
 
     double orig_act_lsids_pos = solver->lit_act_lsids[pos_orig];
     double orig_act_lsids_neg = solver->lit_act_lsids[neg_orig];
-    double repl_with_act_lsids_pos = solver->lit_act_lsids[pos_replaced_with];
-    double repl_with_act_lsids_neg = solver->lit_act_lsids[neg_replaced_with];
 
-    if (orig_act_lsids_pos + repl_with_act_lsids_pos >= orig_act_lsids_pos
-     && orig_act_lsids_neg + repl_with_act_lsids_neg >= orig_act_lsids_neg
-    ) {
-        solver->lit_act_lsids[pos_replaced_with] += orig_act_lsids_pos;
-        solver->lit_act_lsids[neg_replaced_with] += orig_act_lsids_neg;
-    }
+    solver->lit_act_lsids[pos_replaced_with] += orig_act_lsids_pos;
+    solver->lit_act_lsids[neg_replaced_with] += orig_act_lsids_neg;
+
 }
 
 bool VarReplacer::enqueueDelayedEnqueue()
