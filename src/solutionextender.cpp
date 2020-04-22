@@ -74,7 +74,7 @@ void SolutionExtender::extend()
         if (solver->undef_must_set_vars[i]
             && solver->model_value(i) == l_Undef
         ) {
-            solver->model[i] = boolToLBool(solver->pick_polarity(solver->map_outer_to_inter(i)));
+            solver->model[i] = l_False;
         }
     }
 
@@ -111,8 +111,7 @@ void SolutionExtender::dummyBlocked(const uint32_t blockedOn)
     if (solver->model_value(blockedOn) != l_Undef)
         return;
 
-    solver->model[blockedOn] =
-        boolToLBool(solver->pick_polarity(solver->map_outer_to_inter(blockedOn)));
+    solver->model[blockedOn] = l_False;
 
     //If var is replacing something else, it MUST be set.
     if (solver->varReplacer->var_is_replacing(blockedOn)) {
