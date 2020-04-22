@@ -124,20 +124,9 @@ set(cryptoms_lib_files
 set(cryptoms_lib_link_libs "")
 
 if (FINAL_PREDICTOR)
-#     file(GLOB my_depends_all_preds ${CMAKE_CURRENT_SOURCE_DIR}/predict/*.h)
-    MESSAGE(STATUS "depends for all_predictors.cpp are: ${my_depends_all_preds}")
-
-#     add_custom_command(
-#         OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/all_predictors.cpp
-#         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/predict/
-#         COMMAND ${PYTHON_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/all_predictors_gen.py ${CMAKE_CURRENT_BINARY_DIR}/all_predictors.cpp
-#         DEPENDS ${my_depends_all_preds}
-#     )
-#     add_custom_target(all_preds ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/all_predictors.cpp)
 
     set(cryptoms_lib_files
         ${cryptoms_lib_files}
-#         all_predictors.cpp
         predict/clustering_imp.cpp
         cl_predictors.cpp
     )
