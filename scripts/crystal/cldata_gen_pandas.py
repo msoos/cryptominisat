@@ -31,9 +31,9 @@ import sys
 import helper
 
 
-class QueryFill (helper.QueryHelper):
+class QueryAddIdxes (helper.QueryHelper):
     def __init__(self, dbfname):
-        super(QueryFill, self).__init__(dbfname)
+        super(QueryAddIdxes, self).__init__(dbfname)
 
     def measure_size(self):
         t = time.time()
@@ -89,124 +89,6 @@ class QueryFill (helper.QueryHelper):
                 print("Index creation T: %-3.2f s" % (time.time() - t2))
 
         print("indexes created T: %-3.2f s" % (time.time() - t))
-
-    def fill_used_later(self):
-        t = time.time()
-        q = """
-        DROP TABLE IF EXISTS `used_later`;
-        """
-        for l in q.split('\n'):
-            self.c.execute(l)
-        print("used_later dropped T: %-3.2f s" % (time.time() - t))
-
-        # Create used_later table
-        q = """
-        create table `used_later` (
-            `clauseID` bigint(20) NOT NULL,
-            `rdb0conflicts` bigint(20) NOT NULL,
-            `used_later` bigint(20)
-        );"""
-        self.c.execute(q)
-        print("used_later recreated T: %-3.2f s" % (time.time() - t))
-
-        # Fill used_later table
-        t = time.time()
-        q = """insert into used_later
-        (
-        `clauseID`,
-        `rdb0conflicts`,
-        `used_later`
-        )
-        SELECT
-        rdb0.clauseID
-        , rdb0.conflicts
-        , count(ucl.used_at) as `useful_later`
-        FROM
-        reduceDB as rdb0
-        left join used_clauses as ucl
-
-        -- for any point later than now
-        -- reduceDB is always present, used_later may not be, hence left join
-        on (ucl.clauseID = rdb0.clauseID
-            and ucl.used_at > rdb0.conflicts)
-        , cl_last_in_solver
-
-        WHERE
-        rdb0.clauseID != 0
-        and cl_last_in_solver.clauseID = rdb0.clauseID
-        and cl_last_in_solver.conflicts >= rdb0.conflicts
-
-        group by rdb0.clauseID, rdb0.conflicts;"""
-
-        self.c.execute(q)
-        print("used_later filled T: %-3.2f s" % (time.time() - t))
-
-        # Add indexes to used_later table
-        idxs = """
-        create index `used_later_idx1` on `used_later` (`clauseID`, rdb0conflicts);
-        create index `used_later_idx2` on `used_later` (`clauseID`, rdb0conflicts, used_later);
-        """
-        t = time.time()
-        for l in idxs.split('\n'):
-            self.c.execute(l)
-        print("used_later indexes added T: %-3.2f s" % (time.time() - t))
-
-    def fill_used_later_X(self):
-        # Drop table
-        q_drop = """
-        DROP TABLE IF EXISTS `used_later_{name}`;
-        """
-
-        # Create and fill used_later_X tables
-        q_create = """
-        create table `used_later_{name}` (
-            `clauseID` bigint(20) NOT NULL,
-            `rdb0conflicts` bigint(20) NOT NULL,
-            `used_later_{name}` bigint(20)
-        );"""
-
-        q_fill = """
-        insert into used_later_{name}
-        (
-        `clauseID`,
-        `rdb0conflicts`,
-        `used_later_{name}`
-        )
-        SELECT
-        rdb0.clauseID
-        , rdb0.conflicts
-        , count(ucl.used_at) as `used_later_{name}`
-
-        FROM
-        reduceDB as rdb0
-        left join used_clauses as ucl
-
-        -- reduceDB is always present, used_clauses may not be, hence left join
-        on (ucl.clauseID = rdb0.clauseID
-            and ucl.used_at > rdb0.conflicts
-            and ucl.used_at <= (rdb0.conflicts+{duration}))
-        , cl_last_in_solver
-
-        WHERE
-        rdb0.clauseID != 0
-        and cl_last_in_solver.clauseID = rdb0.clauseID
-        and cl_last_in_solver.conflicts >= rdb0.conflicts + {duration}
-
-        group by rdb0.clauseID, rdb0.conflicts;"""
-
-        idx = """
-        create index `used_later_{name}_idx1` on `used_later_{name}` (`clauseID`, rdb0conflicts);
-        create index `used_later_{name}_idx2` on `used_later_{name}` (`clauseID`, rdb0conflicts, used_later_{name});"""
-
-        t = time.time()
-        idxs = ""
-        for name in ["short", "long"]:
-            self.c.execute(q_drop.format(name=name))
-            self.c.execute(q_create.format(name=name))
-            self.c.execute(q_fill.format(name=name, duration=getattr(options, name)))
-            for l in idxs.format(name=name).split('\n'):
-                self.c.execute(l)
-        print("used_later_X tables dropped, created, filled, indexed T: %-3.2f s" % (time.time() - t))
 
 
 class QueryCls (helper.QueryHelper):
@@ -318,7 +200,7 @@ class QueryCls (helper.QueryHelper):
             CASE WHEN
 
             -- useful in the next round
-                   used_later_short.used_later_short >= max(cast({avg_used_later_short}+0.5 as int),1)
+                   used_later_short.used_later_short >= {short_non_zero_80_perc}
             THEN 1
             ELSE 0
             END AS `x.class`
@@ -328,7 +210,7 @@ class QueryCls (helper.QueryHelper):
             CASE WHEN
 
             -- useful in the next round
-                   used_later_short.used_later_short >= max(cast({avg_used_later_short}/2+0.5 as int),1)
+                   used_later_short.used_later_short >= max(cast({avg_used_later_short}/3+0.5 as int),1)
             THEN 1
             ELSE 0
             END AS `x.class`
@@ -384,7 +266,7 @@ class QueryCls (helper.QueryHelper):
             CASE WHEN
 
            -- useful in the next round
-               used_later_long.used_later_long >= max(cast({avg_used_later_long}+0.5 as int), 1)
+               used_later_long.used_later_long >= {long_non_zero_80_perc}
             THEN 1
             ELSE 0
             END AS `x.class`
@@ -394,7 +276,7 @@ class QueryCls (helper.QueryHelper):
             CASE WHEN
 
            -- useful in the next round
-               used_later_long.used_later_long >= max(cast({avg_used_later_long}/2+0.5 as int), 1)
+               used_later_long.used_later_long >= max(cast({avg_used_later_long}/3+0.5 as int), 1)
             THEN 1
             ELSE 0
             END AS `x.class`
@@ -483,53 +365,18 @@ class QueryCls (helper.QueryHelper):
             "rst_cur": self.rst_cur
         }
 
-    def get_avg_used_later(self, long_or_short):
+    def get_used_later_percentiles(self, name):
         cur = self.conn.cursor()
         q = """
-        select avg(used_later_short)
-        from used_later_short, used_later
-        where
-        used_later.clauseID = used_later_short.clauseID
-        and used_later > 0;
-        """
-        if long_or_short == "long":
-            q = q.replace("short", "long")
+        select * from used_later_dat_{name}
+        """.format(name=name)
         cur.execute(q)
         rows = cur.fetchall()
-        assert len(rows) == 1
-        if rows[0][0] is None:
-            print("ERROR: No data for avg generation, not a single line for '%s'"
-                  % long_or_short)
-            return False, None
+        lookup = {}
+        for row in rows:
+            lookup[row[0]] = row[1]
 
-        avg = float(rows[0][0])
-        print("%s avg used_later is: %.2f" % (long_or_short, avg))
-        return True, avg
-
-    def get_median_used_later(self, long_or_short):
-        cur = self.conn.cursor()
-        q = """select used_later_short
-            from used_later_short
-            where used_later_short > 0
-            order by used_later_short
-            limit 1
-            OFFSET (
-            SELECT count(*) from used_later_short
-            where used_later_short > 0
-            ) / 2;"""
-        if long_or_short == "long":
-            q = q.replace("short", "long")
-        cur.execute(q)
-        rows = cur.fetchall()
-        assert len(rows) <= 1
-        if len(rows) == 0 or rows[0][0] is None:
-            print("ERROR: No data for median generation, not a single line for '%s'"
-                  % long_or_short)
-            return False, None
-
-        avg = float(rows[0][0])
-        print("%s median used_later is: %.2f" % (long_or_short, avg))
-        return True, avg
+        return lookup
 
     def one_query(self, q, ok_or_bad):
         q = q.format(**self.myformat)
@@ -590,16 +437,14 @@ class QueryCls (helper.QueryHelper):
     def get_data(self, long_or_short):
         # TODO magic numbers: SHORT vs LONG data availability guess
         subformat = {}
-        ok0, subformat["avg_used_later_long"] = self.get_avg_used_later(
-            "long")
-        ok1, subformat["avg_used_later_short"] = self.get_avg_used_later(
-            "short")
-        ok2, subformat["median_used_later_long"] = self.get_median_used_later(
-            "long")
-        ok3, subformat["median_used_later_short"] = self.get_median_used_later(
-            "short")
-        if not ok0 or not ok1 or not ok2 or not ok3:
-            return False, None, None
+        x = self.get_used_later_percentiles("short")
+        for a,b in x.items():
+            subformat["short_"+a.replace("-", "_")] = b
+
+        x = self.get_used_later_percentiles("long")
+        for a,b in x.items():
+            subformat["long_"+a.replace("-", "_")] = b
+
 
         self.myformat["case_stmt"] = self.case_stmt_short.format(
                 **subformat)
@@ -636,12 +481,16 @@ def dump_dataframe(df, name):
 
 
 def one_database(dbfname):
-    with QueryFill(dbfname) as q:
+    with QueryAddIdxes(dbfname) as q:
         q.measure_size()
         if not options.no_recreate_indexes:
             q.create_indexes()
-            q.fill_used_later()
-            q.fill_used_later_X()
+
+    with helper.QueryFill(dbfname) as q:
+        q.delete_all()
+        q.fill_used_later()
+        q.fill_used_later_X("long", options.long)
+        q.fill_used_later_X("short", options.short)
 
     conf_from, conf_to = helper.parse_configs(options.confs)
     print("Using sqlite3db file %s" % dbfname)
@@ -680,7 +529,6 @@ def one_database(dbfname):
                 conf=conf)
 
             # some cleanup, stats
-            df["x.class"] = df["x.class"].astype("category")
             df["fname"] = df["fname"].astype("category")
             df["cl.cur_restart_type"] = df["cl.cur_restart_type"].astype("category")
             df["rdb0.cur_restart_type"] = df["rdb0.cur_restart_type"].astype("category")

@@ -179,7 +179,6 @@ class Learner:
 
             clf_tree = sklearn.tree.DecisionTreeClassifier(
                 max_depth=options.tree_depth,
-                class_weight={1: prefer_ok, 0: 1},
                 min_samples_split=split_point,
                 random_state=prng)
             clf_svm_pre = sklearn.svm.SVC(
@@ -196,7 +195,6 @@ class Learner:
                 random_state=prng)
             clf_forest = sklearn.ensemble.RandomForestClassifier(
                 n_estimators=options.num_trees,
-                class_weight={1: prefer_ok, 0: 1},
                 #min_samples_leaf=split_point,
                 random_state=prng)
 
@@ -223,13 +221,22 @@ class Learner:
             clf_forest = sklearn.ensemble.RandomForestClassifier(
                 n_estimators=options.num_trees*5,
                 max_features="sqrt",
-                class_weight={1: prefer_ok, 0: 1},
                 random_state=prng)
 
             clf = clf_forest
 
         del df
-        clf.fit(X_train, y_train)
+        my_sample_w = np.array(y_train.values)
+        my_sample_w = my_sample_w*prefer_ok
+        def zero_to_one(t):
+            if t == 0:
+                return 1
+            else:
+                return t
+        vfunc = np.vectorize(zero_to_one)
+        my_sample_w = vfunc(my_sample_w)
+        clf.fit(X_train, y_train, sample_weight=my_sample_w)
+
         print("Training finished. T: %-3.2f" % (time.time() - t))
 
         if not final:

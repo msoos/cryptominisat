@@ -35,6 +35,69 @@ class QueryDatRem(helper.QueryHelper):
         self.c.execute("PRAGMA synchronous = OFF")
         pass
 
+    def get_all_avg_median_percentile_X(self, name):
+        # Drop table
+        q_drop = """
+        DROP TABLE IF EXISTS `used_later_dat_{name}`;
+        """
+        self.c.execute(q_drop.format(name=name))
+
+        # Create and fill used_later_X tables
+        q_create = """
+        create table `used_later_dat_{name}` (
+            `name` string NOT NULL,
+            `val` float NOT NULL
+        );"""
+        self.c.execute(q_create.format(name=name))
+
+        q2 = """
+        insert into used_later_dat_{name} (name, val)
+        {q}
+        """
+
+        q = "select 'avg', avg(used_later_{name}) from used_later_{name};".format(name=name)
+        self.c.execute(q2.format(name=name, q=q))
+
+        q = """
+        SELECT
+        'non-zero-{perc}-perc', used_later_{name}
+        FROM used_later_{name}
+        WHERE used_later_{name}>0
+        ORDER BY used_later_{name} ASC
+        LIMIT 1
+        OFFSET (SELECT
+         COUNT(*)
+        FROM used_later_{name}
+        WHERE used_later_{name}>0) * (100-{perc}) / 100 - 1;
+        """
+        for perc in range(0,100,5):
+            myq = q.format(name=name, perc=perc)
+            self.c.execute(q2.format(name=name, q=myq))
+
+        q = """
+        SELECT
+        'also-zero-{perc}-perc', used_later_{name}
+        FROM used_later_{name}
+        ORDER BY used_later_{name} ASC
+        LIMIT 1
+        OFFSET (SELECT
+         COUNT(*)
+        FROM used_later_{name}) * (100-{perc}) / 100 - 1;
+        """
+        for perc in range(0,30,2):
+            myq = q.format(name=name, perc=perc)
+            self.c.execute(q2.format(name=name, q=myq))
+
+        print("Calculating percentiles now...")
+        q_check = "select * from used_later_dat_{name}"
+        cur = self.conn.cursor()
+        cur.execute(q_check.format(name=name))
+        rows = cur.fetchall()
+        print("Percentiles/average for used_later_dat_{name}:".format(name=name))
+        for row in rows:
+            print(" -> %s : %s" %(row[0], row[1]))
+        print("Num rows:", len(rows))
+
 
     def create_indexes1(self):
         print("Recreating indexes...")
@@ -490,6 +553,8 @@ class QueryDatRem(helper.QueryHelper):
         print("Created only_keep_rdb T: %-3.2f s" % (time.time() - t))
 
         if not options.fair:
+            self.insert_into_only_keep_rdb(1000, options.goal_rdb/20)
+            self.insert_into_only_keep_rdb(100, options.goal_rdb/10)
             self.insert_into_only_keep_rdb(20, options.goal_rdb/5)
             self.insert_into_only_keep_rdb(10, options.goal_rdb/5)
             self.insert_into_only_keep_rdb(5, options.goal_rdb/3)
@@ -582,6 +647,20 @@ if __name__ == "__main__":
         print("      and we need lots of positive datapoints")
         print("      most of which will be from clauses that are more used")
 
+
+    # without filter
+    with helper.QueryFill(args[0]) as q:
+        q.delete_all()
+        q.create_indexes(options.verbose)
+        q.fill_used_later()
+        q.fill_used_later_X("short", 10000)
+        q.fill_used_later_X("long", 50000)
+    with QueryDatRem(args[0]) as q:
+        q.get_all_avg_median_percentile_X("short")
+        q.get_all_avg_median_percentile_X("long")
+
+    with helper.QueryFill(args[0]) as q:
+        q.delete_all()
 
     with QueryDatRem(args[0]) as q:
         q.check_db_sanity()

@@ -805,7 +805,7 @@ void Searcher::analyze_conflict(
     print_debug_resolution_data(confl);
     create_learnt_clause<update_bogoprops>(confl);
     stats.litsRedNonMin += learnt_clause.size();
-    #ifdef STATS_NEEDED
+    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     glue_before_minim = calc_glue(learnt_clause);
     #endif
     minimize_learnt_clause<update_bogoprops>();
@@ -1519,12 +1519,12 @@ void Searcher::attach_and_enqueue_learnt_clause(
             stats.learntLongs++;
             solver->attachClause(*cl, enq);
             if (enq) enqueue(learnt_clause[0], level, PropBy(cl_alloc.get_offset(cl)));
-            #ifndef STATS_NEEDED
+            #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+            bump_cl_act<update_bogoprops>(cl);
+            #else
             if (cl->stats.which_red_array == 2) {
                 bump_cl_act<update_bogoprops>(cl);
             }
-            #else
-            bump_cl_act<update_bogoprops>(cl);
             #endif
 
 
@@ -2192,7 +2192,7 @@ void Searcher::rebuildOrderHeap()
     #endif
 }
 
-#ifdef STATS_NEEDED
+#ifdef VMTF_NEEDED
 void Searcher::rebuildOrderHeapVMTF()
 {
     #ifdef VERBOSE_DEBUG

@@ -66,6 +66,152 @@ class QueryHelper:
         self.conn.close()
 
 
+class QueryFill (QueryHelper):
+    def create_indexes(self, verbose=False, reduceDB="reduceDB"):
+        drop_idxs(self.c)
+
+        t = time.time()
+        print("Recreating indexes...")
+        queries = """
+        create index `idxclid6-4` on `{reduceDB}` (`clauseID`, `conflicts`)
+        create index `idxclidUCLS-2` on `used_clauses` ( `clauseID`, `used_at`);
+        create index `idxcl_last_in_solver-1` on `cl_last_in_solver` ( `clauseID`, `conflicts`);
+        """.format(reduceDB=reduceDB)
+        for l in queries.split('\n'):
+            t2 = time.time()
+
+            if verbose:
+                print("Creating index: ", l)
+            self.c.execute(l)
+            if verbose:
+                print("Index creation T: %-3.2f s" % (time.time() - t2))
+
+        print("indexes created T: %-3.2f s" % (time.time() - t))
+
+    def delete_all(self):
+        t = time.time()
+        q = """
+        DROP TABLE IF EXISTS `used_later`;
+        DROP TABLE IF EXISTS `used_later_short`;
+        DROP TABLE IF EXISTS `used_later_long`;
+        """
+        for l in q.split('\n'):
+            self.c.execute(l)
+        print("used_later* dropped T: %-3.2f s" % (time.time() - t))
+
+    def fill_used_later(self, reduceDB="reduceDB"):
+        # Create used_later table
+        t = time.time()
+        q = """
+        create table `used_later` (
+            `clauseID` bigint(20) NOT NULL,
+            `rdb0conflicts` bigint(20) NOT NULL,
+            `used_later` bigint(20)
+        );"""
+        self.c.execute(q)
+        print("used_later recreated T: %-3.2f s" % (time.time() - t))
+
+        # Fill used_later table
+        t = time.time()
+        q = """insert into used_later
+        (
+        `clauseID`,
+        `rdb0conflicts`,
+        `used_later`
+        )
+        SELECT
+        rdb0.clauseID
+        , rdb0.conflicts
+        , count(ucl.used_at) as `useful_later`
+        FROM
+        {reduceDB} as rdb0
+        left join used_clauses as ucl
+
+        -- for any point later than now
+        -- {reduceDB} is always present, used_later may not be, hence left join
+        on (ucl.clauseID = rdb0.clauseID
+            and ucl.used_at > rdb0.conflicts)
+
+        join cl_last_in_solver
+        on cl_last_in_solver.clauseID = rdb0.clauseID
+
+        WHERE
+        rdb0.clauseID != 0
+        and cl_last_in_solver.conflicts >= rdb0.conflicts
+
+        group by rdb0.conflicts, rdb0.clauseID;"""
+
+        self.c.execute(q.format(reduceDB=reduceDB))
+        print("used_later filled T: %-3.2f s" % (time.time() - t))
+
+        # Add indexes to used_later table
+        idxs = """
+        create index `used_later_idx1` on `used_later` (`clauseID`, rdb0conflicts);
+        create index `used_later_idx2` on `used_later` (`clauseID`, rdb0conflicts, used_later);
+        """
+        t = time.time()
+        for l in idxs.split('\n'):
+            self.c.execute(l)
+        print("used_later indexes added T: %-3.2f s" % (time.time() - t))
+
+    def fill_used_later_X(self, name, duration, reduceDB="reduceDB"):
+        # Drop table
+        q_drop = """
+        DROP TABLE IF EXISTS `used_later_{name}`;
+        """
+
+        # Create and fill used_later_X tables
+        q_create = """
+        create table `used_later_{name}` (
+            `clauseID` bigint(20) NOT NULL,
+            `rdb0conflicts` bigint(20) NOT NULL,
+            `used_later_{name}` bigint(20)
+        );"""
+
+        q_fill = """
+        insert into used_later_{name}
+        (
+        `clauseID`,
+        `rdb0conflicts`,
+        `used_later_{name}`
+        )
+        SELECT
+        rdb0.clauseID
+        , rdb0.conflicts
+        , count(ucl.used_at) as `used_later_{name}`
+
+        FROM
+        {reduceDB} as rdb0
+        left join used_clauses as ucl
+
+        -- {reduceDB} is always present, used_clauses may not be, hence left join
+        on (ucl.clauseID = rdb0.clauseID
+            and ucl.used_at > rdb0.conflicts
+            and ucl.used_at <= (rdb0.conflicts+{duration}))
+
+        join cl_last_in_solver
+        on cl_last_in_solver.clauseID = rdb0.clauseID
+
+        WHERE
+        rdb0.clauseID != 0
+        and cl_last_in_solver.conflicts >= rdb0.conflicts + {duration}
+
+        group by rdb0.clauseID, rdb0.conflicts;"""
+
+        idxs = """
+        create index `used_later_{name}_idx1` on `used_later_{name}` (`clauseID`, rdb0conflicts);
+        create index `used_later_{name}_idx2` on `used_later_{name}` (`clauseID`, rdb0conflicts, used_later_{name});"""
+
+        t = time.time()
+        self.c.execute(q_drop.format(name=name))
+        self.c.execute(q_create.format(name=name))
+        self.c.execute(q_fill.format(name=name, reduceDB=reduceDB, duration=duration))
+        for l in idxs.format(name=name).split('\n'):
+            self.c.execute(l)
+        print("used_later_%s table dropped, created, filled, indexed T: %-3.2f s" %
+              (name, time.time() - t))
+
+
 def write_mit_header(f):
     f.write("""/******************************************
 Copyright (c) 2018, Mate Soos

@@ -3,7 +3,8 @@
 FNAMEOUT="mydata"
 FIXED="6000"
 RATIO="0.99"
-CONF=2
+SHORTCONF=2
+LONGCONF=2
 
 EXTRA_GEN_PANDAS_OPTS=""
 if [ "$1" == "--csv" ]; then
@@ -111,8 +112,8 @@ set -x
 ########################
 cd "$FNAME-dir"
 # to be removed: --tern 0
-# for var, we need --bva 0
-../cryptominisat5 ${EXTRA_CMS_OPTS} --maxgluehistltlimited 100000 --tern 0 --scc 0 --sqlitedbover 1 --cldatadumpratio "$RATIO" --cllockdatagen 0.5 --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
+# for var, we need: --bva 0 --scc 0
+../cryptominisat5 ${EXTRA_CMS_OPTS} --maxgluehistltlimited 100000 --tern 0 --sqlitedbover 1 --cldatadumpratio "$RATIO" --cllockdatagen 0.5 --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
 # --bva 0 --updateglueonanalysis 0 --otfsubsume 0
 grep "c conflicts" cms-pred-run.out
 
@@ -148,7 +149,7 @@ cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 ########################
 # Denormalize the data into a Pandas Table, label it and sample it
 ########################
-../cldata_gen_pandas.py "${FNAMEOUT}-min.db" --limit "$FIXED" --conf $CONF-$CONF ${EXTRA_GEN_PANDAS_OPTS}
+../cldata_gen_pandas.py "${FNAMEOUT}-min.db" --limit "$FIXED" --conf 2-2 ${EXTRA_GEN_PANDAS_OPTS}
 ../vardata_gen_pandas.py "${FNAMEOUT}.db" --limit 1000
 
 mkdir -p ../../src/predict
@@ -170,8 +171,8 @@ rm -f ../../src/predict/*.h
 #../vardata_predict.py vardata-comb --final -q 20 --basedir ../src/predict/ --depth 7 --tree
 
 # for CONF in {0..2}; do
-    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-conf-$CONF.dat" --name short --split 0.01 --final --xgboost --basedir ../../src/predict/ --conf $CONF --prefok 1
-    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-conf-$CONF.dat"  --name long  --split 0.01 --final --xgboost --basedir ../../src/predict/ --conf $CONF --prefok 1
+    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-conf-$SHORTCONF.dat" --name short --final --xgboost --basedir ../../src/predict/ --conf $SHORTCONF --prefok 2
+    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-conf-$LONGCONF.dat"  --name long  --final --xgboost --basedir ../../src/predict/ --conf $LONGCONF --prefok 2
 # done
 )
 

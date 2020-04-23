@@ -146,7 +146,7 @@ public:
     ///NOT VALID WHILE SIMPLIFYING
     Heap<VarOrderLt> order_heap_vsids;
     Heap<VarOrderLt> order_heap_maple;
-    #ifdef STATS_NEEDED
+    #ifdef VMTF_NEEDED
     Queue vmtf_queue;
     vector<uint64_t> vmtf_btab; // enqueue time stamps for queue
     void vmtf_update_queue_unassigned (uint32_t idx);
@@ -396,6 +396,7 @@ inline PropResult PropEngine::handle_normal_prop_fail(
 
     //Update stats
     #ifdef STATS_NEEDED
+    Clause& c = *cl_alloc.ptr(offset);
     c.stats.conflicts_made++;
     if (c.red())
         lastConflictCausedBy = ConflCausedBy::longred;
