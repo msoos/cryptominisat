@@ -396,7 +396,6 @@ inline PropResult PropEngine::handle_normal_prop_fail(
 
     //Update stats
     #ifdef STATS_NEEDED
-    Clause& c = *cl_alloc.ptr(offset);
     c.stats.conflicts_made++;
     if (c.red())
         lastConflictCausedBy = ConflCausedBy::longred;
