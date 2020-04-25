@@ -201,10 +201,10 @@ class QueryDatRem(helper.QueryHelper):
             self.c.execute(q)
 
             q = """
-            INSERT INTO myrows
+            INSERT INTO `myrows`
             SELECT `rowid`
-            FROM `{table}` WHERE (`var`, sumConflicts_at_picktime)
-            in (SELECT `var`, sumConflicts_at_picktime from used_vardat);
+            FROM `{table}` WHERE (`var`, `sumConflicts_at_picktime`)
+            in (SELECT `var`, `sumConflicts_at_picktime` from `used_vardat`);
             """
             self.c.execute(q.format(table=table))
 
