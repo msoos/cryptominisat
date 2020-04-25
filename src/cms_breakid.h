@@ -76,6 +76,7 @@ private:
     vector<unordered_map<Lit, Lit> > perms_outer;
 
     bool already_called = false;
+    //variable that is to be assumed to break symmetries
     uint32_t symm_var = var_Undef;
     int64_t set_time_lim;
     uint64_t num_lits_in_graph;
