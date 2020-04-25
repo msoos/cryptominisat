@@ -924,8 +924,8 @@ if __name__ == "__main__":
 
     while True:
         toexec = "./fuzz_test.py --fuzzlim 1 --seed %d " % rnd_seed
-        if options.novalgrind:
-            toexec += "--novalgrind "
+        if not options.novalgrind:
+            toexec += "--dovalgrind "
         if options.valgrind_freq:
             toexec += "--valgrindfreq %d " % options.valgrind_freq
         if options.gauss:
