@@ -185,6 +185,7 @@ set (MY_TESTS
     cardfinder_test
     ternary_resolve_test
     implied_by_test
+    lucky_test
 #    undefine_test
 )
 

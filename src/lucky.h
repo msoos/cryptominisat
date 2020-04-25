@@ -34,12 +34,13 @@ public:
     Lucky(Solver* solver);
     bool doit();
 
-private:
+//private:
     bool check_all(bool polar);
     bool search_fwd_sat(bool polar);
     bool search_backw_sat(bool polar);
     bool horn_sat(bool polar);
 
+private:
     Solver* solver;
 };
 
