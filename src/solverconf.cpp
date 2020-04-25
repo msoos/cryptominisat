@@ -65,8 +65,8 @@ using namespace CMSat;
 //1732414 out-9915739.wlm01-7-drat0 254 157 97 b3b7cfb  _devel --printsol 0 --simdrat 1 --polarstablen 4
 
 DLL_PUBLIC SolverConf::SolverConf() :
-
-        polarity_mode(PolarityMode::polarmode_automatic)
+        do_lucky_polar(true)
+        , polarity_mode(PolarityMode::polarmode_automatic)
         , polar_stable_every_n(4)
         , chronophase_every_n(10000)
 
@@ -254,7 +254,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "cl-consolidate," //consolidate after OCC
             "scc-vrepl,"
             "sub-cls-with-bin,"
-            "sls,"
+            "sls,lucky"
         )
 
         //validated with run 8114195.wlm01
@@ -277,7 +277,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             //renumber then it's time for SLS
             "renumber,"
             "bosphorus,"
-            "sls"
+            "sls,lucky"
         )
         , simplify_schedule_preproc(
             "handle-comps,"

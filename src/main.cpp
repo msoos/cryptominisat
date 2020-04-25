@@ -356,6 +356,8 @@ void Main::add_supported_options()
         , "When to use stable polarities. 0 = always, otherwise every n. Negative is special, see code")
     ("chronophasen", po::value(&conf.chronophase_every_n)->default_value(conf.chronophase_every_n)
         , "When to use LSIDS polarities. 0 = always, otherwise every n. Negative is special, see code")
+    ("lucky", po::value(&conf.do_lucky_polar)->default_value(conf.do_lucky_polar)
+        , "Try computing lucky polarities")
     ;
 
 

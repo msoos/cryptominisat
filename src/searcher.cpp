@@ -1215,6 +1215,7 @@ void Searcher::print_order_heap()
     }
 }
 
+#ifdef USE_GAUSS
 void Searcher::check_need_gauss_jordan_disable()
 {
     uint32_t num_disabled = 0;
@@ -1243,6 +1244,7 @@ void Searcher::check_need_gauss_jordan_disable()
         gqhead = qhead;
     }
 }
+#endif
 
 lbool Searcher::search()
 {
@@ -1851,11 +1853,11 @@ bool Searcher::handle_conflict(PropBy confl)
     ) {
         chrono_backtrack++;
         last_backtrack_is_chrono = true;
-        cancelUntil<true, false>(data.nHighestLevel -1);
+        cancelUntil(data.nHighestLevel -1);
     } else {
         non_chrono_backtrack++;
         last_backtrack_is_chrono = false;
-        cancelUntil<true, false>(backtrack_level);
+        cancelUntil(backtrack_level);
     }
 
     print_learning_debug_info();

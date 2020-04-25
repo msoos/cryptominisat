@@ -67,6 +67,7 @@ THE SOFTWARE.
 #include "cardfinder.h"
 #include "sls.h"
 #include "matrixfinder.h"
+#include "lucky.h"
 
 #ifdef USE_BREAKID
 #include "cms_breakid.h"
@@ -2078,6 +2079,13 @@ lbool Solver::execute_inprocess_strategy(
                 SLS sls(this);
                 const lbool ret = sls.run(solveStats.num_simplify);
                 if (ret == l_True) {
+                    return l_True;
+                }
+            }
+        } else if (token == "lucky") {
+            if (conf.do_lucky_polar) {
+                Lucky lucky(solver);
+                if (lucky.doit()) {
                     return l_True;
                 }
             }
@@ -4283,7 +4291,7 @@ bool Solver::implied_by(const std::vector<Lit>& lits,
             enqueue<false>(p);
         }
         if (value(p) == l_False) {
-            cancelUntil(0);
+            cancelUntil<false, true>(0);
             return false;
         }
     }
@@ -4295,7 +4303,7 @@ bool Solver::implied_by(const std::vector<Lit>& lits,
     PropBy x = propagate<false>();
     if (!x.isNULL()) {
         //UNSAT due to prop
-        cancelUntil(0);
+        cancelUntil<false, true>(0);
         return false;
     }
     //DO NOT add the "optimization" to return when nothing got propagated
@@ -4307,7 +4315,7 @@ bool Solver::implied_by(const std::vector<Lit>& lits,
             out_implied.push_back(trail[i].lit);
         }
     }
-    cancelUntil(0);
+    cancelUntil<false, true>(0);
 
     //Map to outer
     for(auto& l: out_implied) {

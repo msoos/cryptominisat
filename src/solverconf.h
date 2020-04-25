@@ -150,6 +150,7 @@ class DLL_PUBLIC SolverConf
         ) const;
 
         //Variable polarities
+        bool do_lucky_polar;
         PolarityMode polarity_mode;
         int polar_stable_every_n;
         int chronophase_every_n;
