@@ -230,7 +230,7 @@ bool MatrixFinder::findMatrixes(bool& can_detach, bool simplify_xors)
     const bool time_out =  false;
     const double time_used = cpuTime() - myTime;
     if (solver->conf.verbosity) {
-        cout << "c Using " << numMatrixes
+        cout << "c [matrix] Using " << numMatrixes
         << " matrices recoverd from " << xors.size() << " xors"
         << solver->conf.print_times(time_used, time_out)
         << endl;
@@ -253,7 +253,7 @@ uint32_t MatrixFinder::setMatrixes()
         if (solver->conf.gaussconf.max_matrix_rows < size_at_least) {
             solver->conf.gaussconf.max_matrix_rows = size_at_least;
             if (solver->conf.verbosity) {
-                cout << "c [matrixfind] incrementing max number of rows to "
+                cout << "c [matrix] incrementing max number of rows to "
                 << size_at_least
                 << endl;
             }
