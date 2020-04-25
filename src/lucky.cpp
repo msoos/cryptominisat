@@ -160,7 +160,7 @@ bool CMSat::Lucky::search_fwd_sat(bool polar)
         solver->new_decision_level();
 
         Lit lit = Lit(i, !polar);
-        solver->enqueue(lit);
+        solver->enqueue<true>(lit);
         auto p = solver->propagate<true>();
         if (!p.isNULL()) {
             solver->cancelUntil<false, true>(0);
@@ -195,7 +195,7 @@ bool CMSat::Lucky::enqueue_and_prop_assumptions()
         } else {
             assert(p.var() < solver->nVars());
             solver->new_decision_level();
-            solver->enqueue(p);
+            solver->enqueue<true>(p);
             auto prop = solver->propagate<true>();
             if (!prop.isNULL()) {
                 solver->cancelUntil<false, true>(0);
@@ -223,7 +223,7 @@ bool CMSat::Lucky::search_backw_sat(bool polar)
         solver->new_decision_level();
 
         Lit lit = Lit(i, !polar);
-        solver->enqueue(lit);
+        solver->enqueue<true>(lit);
         auto p = solver->propagate<true>();
         if (!p.isNULL()) {
             solver->cancelUntil<false, true>(0);
