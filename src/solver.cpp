@@ -4288,7 +4288,7 @@ bool Solver::implied_by(const std::vector<Lit>& lits,
         return true;
     }
 
-    PropBy x = propagate<false>();
+    PropBy x = propagate<true>();
     if (!x.isNULL()) {
         //UNSAT due to prop
         cancelUntil<false, true>(0);
