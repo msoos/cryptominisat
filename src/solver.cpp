@@ -2079,14 +2079,14 @@ lbool Solver::execute_inprocess_strategy(
                 SLS sls(this);
                 const lbool ret = sls.run(solveStats.num_simplify);
                 if (ret == l_True) {
-                    return l_True;
+                    return l_Undef;
                 }
             }
         } else if (token == "lucky") {
             if (conf.do_lucky_polar) {
                 Lucky lucky(solver);
                 if (lucky.doit()) {
-                    return l_True;
+                    return l_Undef;
                 }
             }
         } else if (token == "intree-probe") {
