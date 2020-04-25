@@ -41,6 +41,7 @@ public:
     bool horn_sat(bool polar);
 
 private:
+    bool enqueue_and_prop_assumptions();
     Solver* solver;
 };
 

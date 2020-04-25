@@ -178,8 +178,40 @@ bool CMSat::Lucky::search_fwd_sat(bool polar)
     return true;
 }
 
+bool CMSat::Lucky::enqueue_and_prop_assumptions()
+{
+    assert(solver->decisionLevel() == 0);
+    while (solver->decisionLevel() < solver->assumptions.size()) {
+        const Lit p = solver->map_outer_to_inter(
+            solver->assumptions[solver->decisionLevel()].lit_outer);
+
+        if (solver->value(p) == l_True) {
+            // Dummy decision level:
+            solver->new_decision_level();
+            continue;
+        } else if (solver->value(p) == l_False) {
+            solver->cancelUntil<false, true>(0);
+            return false;
+        } else {
+            assert(p.var() < solver->nVars());
+            solver->new_decision_level();
+            solver->enqueue(p);
+            auto prop = solver->propagate<true>();
+            if (!prop.isNULL()) {
+                solver->cancelUntil<false, true>(0);
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 bool CMSat::Lucky::search_backw_sat(bool polar)
 {
+    if (!enqueue_and_prop_assumptions()) {
+        return false;
+    }
+
     for(int i = (int)solver->nVars() - 1; i >= 0; i--) {
         if (solver->varData[i].removed != Removed::none) {
             continue;
@@ -211,6 +243,10 @@ bool CMSat::Lucky::search_backw_sat(bool polar)
 
 bool CMSat::Lucky::horn_sat(bool polar)
 {
+    if (!enqueue_and_prop_assumptions()) {
+        return false;
+    }
+
     for(const auto off: solver->longIrredCls) {
         Clause* cl = solver->cl_alloc.ptr(off);
         bool satisfied = false;
