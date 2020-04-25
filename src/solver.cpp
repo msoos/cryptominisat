@@ -1996,8 +1996,8 @@ lbool Solver::execute_inprocess_strategy(
         assert(watches.get_smudged_list().empty());
         assert(prop_at_head());
         assert(okay());
-        check_wrong_attach();
         #ifdef SLOW_DEBUG
+        check_wrong_attach();
         check_stats();
         check_no_duplicate_lits_anywhere();
         check_assumptions_sanity();

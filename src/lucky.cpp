@@ -95,6 +95,7 @@ bool CMSat::Lucky::doit()
             , time_used
         );
     }
+    assert(solver->decisionLevel() == 0);
     return ret;
 }
 
