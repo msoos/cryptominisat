@@ -2219,6 +2219,7 @@ lbool Solver::simplify_problem(const bool startup)
             ret = execute_inprocess_strategy(startup, conf.simplify_schedule_nonstartup);
         }
     }
+    assert(ret != l_True);
 
     //Free unused watch memory
     free_unused_watches();
@@ -2239,38 +2240,25 @@ lbool Solver::simplify_problem(const bool startup)
     solveStats.num_simplify_this_solve_call++;
 
     assert(!(ok == false && ret != l_False));
-    if (!ok || ret == l_False) {
+    if (ret == l_False) {
         return l_False;
-    } else if (ret == l_Undef) {
-        check_stats();
-        check_implicit_propagated();
-        //NOTE:
-        // we have to rebuild HERE, or we'd rebuild every time solve()
-        // is called, which is called form the outside, sometimes 1000x
-        // in one second
-        rebuildOrderHeap();
-        #ifdef DEBUG_ATTACH_MORE
-        find_all_attach();
-        test_all_clause_attached();
-        #endif
-        check_wrong_attach();
-
-        return ret;
-    } else {
-        assert(ret == l_True);
-        //nothing should happen here, we already have a full solution
-        //but let's check and put the propagation to HEAD
-        PropBy confl = propagate<false>();
-        assert(confl.isNULL());
-
-        finish_up_solve(ret);
-        //NOTE:
-        // we have to rebuild HERE, or we'd rebuild every time solve()
-        // is called, which is called form the outside, sometimes 1000x
-        // in one second
-        rebuildOrderHeap();
-        return ret;
     }
+
+    assert(ret == l_Undef);
+    check_stats();
+    check_implicit_propagated();
+    //NOTE:
+    // we have to rebuild HERE, or we'd rebuild every time solve()
+    // is called, which is called form the outside, sometimes 1000x
+    // in one second
+    rebuildOrderHeap();
+    #ifdef DEBUG_ATTACH_MORE
+    find_all_attach();
+    test_all_clause_attached();
+    #endif
+    check_wrong_attach();
+
+    return ret;
 }
 
 void CMSat::Solver::print_stats(const double cpu_time, const double cpu_time_total) const
