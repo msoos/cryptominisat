@@ -266,6 +266,8 @@ class Tester:
 
         if options.sls:
             sched.append("sls")
+        elif random.randint(0,10) < 3:
+            sched.append("sls")
 
         return sched
 
@@ -321,7 +323,7 @@ class Tester:
             sls = 1
         else:
             # it's kinda slow and using it all the time is probably not a good idea
-            sls = random.choice([0]*4+[1])
+            sls = random.choice([0]*2+[1])
 
         if options.gauss:
             sls = 0
@@ -336,13 +338,17 @@ class Tester:
         # SLS
         cmd += "--sls %d " % sls
         cmd += "--slsgetphase %d " % random.choice([0, 0, 0, 1])
-        cmd += "--slseveryn %d " % random.randint(1, 3)
+        if options.sls:
+            cmd += "--slseveryn 1 "
+        else:
+            cmd += "--slseveryn %d " % random.randint(1, 3)
         cmd += "--yalsatmems %d " % random.choice([1, 10, 100])
         cmd += "--walksatruns %d " % random.choice([2, 15, 20])
         cmd += "--slstype %s " % random.choice(["walksat", "yalsat", "ccnr", "ccnr_yalsat"])
 
         # polarities
         cmd += "--polar %s " % random.choice(["true", "false", "rnd", "auto"])
+        cmd += "--lucky %s " % random.choice([1, 1, 1, 0])
         cmd += "--polarstablen %d " % random.choice([0, 1, 2, -1, 10000])
         cmd += "--chronophasen %d " % random.choice([0, 1, 2, 10000])
 
@@ -867,7 +873,7 @@ fuzzers_noxor = [
     ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
     ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
     ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
-    ["../../build/tests/cnf-utils/makewff -cnf 3 300 1700", "-seed"],
+    ["../../build/tests/cnf-utils/makewff -cnf 3 250 1080", "-seed"],
     ["../../build/tests/cnf-utils/sgen4 -unsat -n 50", "-s"],
     ["../../build/tests/cnf-utils//sgen4 -sat -n 50", "-s"],
     ["../../utils/cnf-utils/cnf-fuzz-brummayer.py", "-s"],
@@ -875,7 +881,7 @@ fuzzers_noxor = [
     ["../../utils/cnf-utils/multipart.py", "special"]
 ]
 fuzzers_noxor_sls = [
-    ["../../build/tests/cnf-utils/makewff -cnf 3 250 1080", "-seed"],
+    ["../../build/tests/cnf-utils/makewff -cnf 3 250 1060", "-seed"],
 ]
 
 fuzzers_xor = [
