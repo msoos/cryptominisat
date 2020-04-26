@@ -5,6 +5,7 @@ FIXED="6000"
 RATIO="0.99"
 SHORTCONF=2
 LONGCONF=2
+EXTRA_CMS_OPTS=""
 
 EXTRA_GEN_PANDAS_OPTS=""
 if [ "$1" == "--csv" ]; then
