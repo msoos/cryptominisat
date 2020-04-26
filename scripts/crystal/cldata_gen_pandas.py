@@ -49,8 +49,6 @@ class QueryAddIdxes (helper.QueryHelper):
         print("We have %d lines of clause_stats" % (clss_rows))
 
     def create_indexes(self):
-        helper.drop_idxs(self.c)
-
         t = time.time()
         print("Recreating indexes...")
         queries = """
@@ -174,7 +172,8 @@ class QueryCls (helper.QueryHelper):
             CASE WHEN
 
             -- useful in the next round
-            used_later_short.used_later_short >= {short_top_non_zero_X_perc}
+            (used_later_short.used_later_short >= {short_top_non_zero_X_perc}
+            or used_later.used_later >= (10*{short_top_non_zero_X_perc}))
 
             THEN 1
             ELSE 0
@@ -191,7 +190,8 @@ class QueryCls (helper.QueryHelper):
             CASE WHEN
 
             -- useful in the next round
-            used_later_long.used_later_long >= {long_top_non_zero_X_perc}
+            (used_later_long.used_later_long >= {long_top_non_zero_X_perc}
+            or used_later.used_later >= (5*{long_top_non_zero_X_perc}))
 
             THEN 1
             ELSE 0
@@ -248,6 +248,11 @@ class QueryCls (helper.QueryHelper):
             used_later_long.clauseID = rdb0.clauseID
             and used_later_long.rdb0conflicts = rdb0.conflicts
 
+        join used_later on
+            used_later.clauseID = rdb0.clauseID
+            and used_later.rdb0conflicts = rdb0.conflicts
+
+
         join cl_last_in_solver on
             cl_last_in_solver.clauseID = rdb0.clauseID
 
@@ -281,13 +286,13 @@ class QueryCls (helper.QueryHelper):
     def get_used_later_percentiles(self, name):
         cur = self.conn.cursor()
         q = """
-        select * from used_later_dat_{name}
+        select * from used_later_percentiles_{name}
         """.format(name=name)
         cur.execute(q)
         rows = cur.fetchall()
         lookup = {}
         for row in rows:
-            lookup[row[0]] = row[1]
+            lookup[row[0]+"_"+row[1]] = row[1]
 
         return lookup
 
@@ -400,8 +405,8 @@ def dump_dataframe(df, name):
 def one_database(dbfname):
     with QueryAddIdxes(dbfname) as q:
         q.measure_size()
-        if not options.no_recreate_indexes:
-            q.create_indexes()
+        helper.drop_idxs(q.c)
+        q.create_indexes()
 
     with helper.QueryFill(dbfname) as q:
         q.delete_and_create_all()

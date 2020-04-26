@@ -68,8 +68,6 @@ class QueryHelper:
 
 class QueryFill (QueryHelper):
     def create_indexes(self, verbose=False, used_clauses="used_clauses"):
-        drop_idxs(self.c)
-
         t = time.time()
         print("Recreating indexes...")
         queries = """
@@ -129,6 +127,7 @@ class QueryFill (QueryHelper):
             self.c.execute(l)
 
         idxs = """
+        create index `used_later_idx3` on `used_later` (`used_later`);
         create index `used_later_idx1` on `used_later` (`clauseID`, rdb0conflicts);
         create index `used_later_idx2` on `used_later` (`clauseID`, rdb0conflicts, used_later);
         """
@@ -326,6 +325,11 @@ def helper_add(toadd, df, features, verb):
     for i in range(1, len(toadd)):
         df[name] += df[toadd[i]]
     return name
+
+
+def dangerous(conn):
+    conn.execute("PRAGMA journal_mode = MEMORY")
+    conn.execute("PRAGMA synchronous = OFF")
 
 
 def drop_idxs(conn):

@@ -30,47 +30,43 @@ class QueryDatRem(helper.QueryHelper):
     def __init__(self, dbfname):
         super(QueryDatRem, self).__init__(dbfname)
 
-    def dangerous(self):
-        self.c.execute("PRAGMA journal_mode = MEMORY")
-        self.c.execute("PRAGMA synchronous = OFF")
-        pass
-
-    def get_all_avg_median_percentile_X(self, name):
+    def get_all_avg_median_percentile_X(self, name=""):
         t = time.time()
 
         # Drop table
         q_drop = """
-        DROP TABLE IF EXISTS `used_later_dat_{name}`;
+        DROP TABLE IF EXISTS `used_later_percentiles`;
         """
         self.c.execute(q_drop.format(name=name))
 
         # Create and fill used_later_X tables
         q_create = """
-        create table `used_later_dat_{name}` (
-            `name` string NOT NULL,
+        create table `used_later_percentiles` (
+            `type_of_dat` string NOT NULL,
+            `percentile_descr` string NOT NULL,
             `val` float NOT NULL
         );"""
         self.c.execute(q_create.format(name=name))
 
         q2 = """
-        insert into used_later_dat_{name} (name, val)
+        insert into used_later_percentiles (type_of_dat, percentile_descr, val)
         {q}
         """
 
-        q = "select 'avg', avg(used_later_{name}) from used_later_{name};".format(name=name)
+        q = "select '{name}', 'avg', avg(used_later{name}) from used_later{name};".format(name=name)
         self.c.execute(q2.format(name=name, q=q))
 
         q = """
         SELECT
-        'top-non-zero-{perc}-perc', used_later_{name}
-        FROM used_later_{name}
-        WHERE used_later_{name}>0
-        ORDER BY used_later_{name} ASC
+        '{name}', 'top_non_zero_{perc}_perc', used_later{name}
+        FROM used_later{name}
+        WHERE used_later{name}>0
+        ORDER BY used_later{name} ASC
         LIMIT 1
         OFFSET (SELECT
          COUNT(*)
-        FROM used_later_{name}
-        WHERE used_later_{name}>0) * (100-{perc}) / 100 - 1;
+        FROM used_later{name}
+        WHERE used_later{name}>0) * (100-{perc}) / 100 - 1;
         """
         for perc in range(0,100,5):
             myq = q.format(name=name, perc=perc)
@@ -78,26 +74,26 @@ class QueryDatRem(helper.QueryHelper):
 
         q = """
         SELECT
-        'top-also-zero-{perc}-perc', used_later_{name}
-        FROM used_later_{name}
-        ORDER BY used_later_{name} ASC
+        '{name}', 'top_also_zero_{perc}_perc', used_later{name}
+        FROM used_later{name}
+        ORDER BY used_later{name} ASC
         LIMIT 1
         OFFSET (SELECT
          COUNT(*)
-        FROM used_later_{name}) * (100-{perc}) / 100 - 1;
+        FROM used_later{name}) * (100-{perc}) / 100 - 1;
         """
         for perc in range(0,30,2):
             myq = q.format(name=name, perc=perc)
             self.c.execute(q2.format(name=name, q=myq))
 
         print("Calculating percentiles now...")
-        q_check = "select * from used_later_dat_{name}"
+        q_check = "select * from used_later_percentiles"
         cur = self.conn.cursor()
         cur.execute(q_check.format(name=name))
         rows = cur.fetchall()
-        print("Percentiles/average for used_later_dat_{name}:".format(name=name))
+        print("Percentiles/average for used_later_percentiles:".format(name=name))
         for row in rows:
-            print(" -> %s : %s" %(row[0], row[1]))
+            print(" -> %s -- %s : %s" %(row[0], row[1], row[2]))
         print("Calculated percentiles/averages, T:", time.time()-t)
 
 
@@ -358,7 +354,8 @@ class QueryDatRem(helper.QueryHelper):
     def filter_tables_of_ids(self):
         self.print_idxs()
 
-        tables = ["clause_stats", "reduceDB", "sum_cl_use", "used_clauses", "restart_dat_for_cl", "cl_last_in_solver"]
+        tables = ["clause_stats", "reduceDB", "sum_cl_use",
+                  "used_clauses", "restart_dat_for_cl", "cl_last_in_solver"]
         q = """
         DELETE FROM {table} WHERE clauseID NOT IN
         (SELECT clauseID from used_cl_ids );"""
@@ -455,82 +452,6 @@ class QueryDatRem(helper.QueryHelper):
             exit(-1)
 
         print("Tables seem OK")
-
-    def create_indexes2(self):
-        helper.drop_idxs(self.c)
-
-        print("Recreating indexes...")
-        t = time.time()
-        queries = """
-        create index `idxclid6-4` on `reduceDB` (`clauseID`, `conflicts`);
-        create index `idxclidUCLS-1` on `used_clauses` ( `clauseID`, `used_at`);
-        """
-        for q in queries.split('\n'):
-            t2 = time.time()
-
-            if options.verbose:
-                print("Creating index: ", q)
-            self.c.execute(q)
-            if options.verbose:
-                print("Index creation T: %-3.2f s" % (time.time() - t2))
-
-        print("Indexes created T: %-3.2f s" % (time.time() - t))
-
-    def fill_later_useful_data(self):
-        t = time.time()
-        q = """
-        DROP TABLE IF EXISTS `used_later`;
-        """
-        for l in q.split('\n'):
-            self.c.execute(l)
-        print("used_later dropped T: %-3.2f s" % (time.time() - t))
-
-        self.print_idxs()
-
-        q = """
-        create table `used_later` (
-            `clauseID` bigint(20) NOT NULL,
-            `rdb0conflicts` bigint(20) NOT NULL,
-            `used_later` bigint(20)
-        );"""
-        self.c.execute(q)
-        print("used_later recreated T: %-3.2f s" % (time.time() - t))
-
-        t = time.time()
-        q = """insert into used_later
-        (
-        `clauseID`,
-        `rdb0conflicts`,
-        `used_later`
-        )
-        SELECT
-        rdb.clauseID
-        , rdb.conflicts
-        , count(ucl.used_at) as `useful_later`
-        FROM
-        reduceDB as rdb
-        left join used_clauses as ucl
-
-        -- for any point later than now
-        on (ucl.clauseID = rdb.clauseID
-            and ucl.used_at > rdb.conflicts)
-
-        WHERE
-        rdb.clauseID != 0
-
-        group by rdb.clauseID, rdb.conflicts;"""
-        self.c.execute(q)
-        print("used_later filled T: %-3.2f s" % (time.time() - t))
-
-        t = time.time()
-        q = """
-        create index `used_later_idx1` on `used_later` (`clauseID`, rdb0conflicts);
-        create index `used_later_idx2` on `used_later` (`clauseID`, rdb0conflicts, used_later);
-        """
-        for l in q.split('\n'):
-            self.c.execute(l)
-        print("used_later indexes added T: %-3.2f s" % (time.time() - t))
-
 
     def insert_into_only_keep_rdb(self, min_used_later, limit):
         limit = int(limit)
@@ -667,13 +588,10 @@ if __name__ == "__main__":
 
     with QueryDatRem(args[0]) as q:
         q.check_db_sanity()
-
-        q.dangerous()
-        if not options.noidx:
-            helper.drop_idxs(q.c)
-            q.create_indexes1()
+        helper.dangerous(q.c)
+        helper.drop_idxs(q.c)
+        q.create_indexes1()
         q.remove_too_many_vardata()
-        # sample fairly for used_clauses_red
 
     if False:
         print("This is good for verifying that the fast ones are close")
@@ -681,13 +599,14 @@ if __name__ == "__main__":
         t = time.time()
         with helper.QueryFill(args[0]) as q:
             q.delete_and_create_all()
-            q.create_indexes(options.verbose)
+            q.create_indexes(verbose=options.verbose)
             q.fill_used_later()
             q.fill_used_later_X("short", 10000)
             q.fill_used_later_X("long", 50000)
         with QueryDatRem(args[0]) as q:
-            q.get_all_avg_median_percentile_X("short")
-            q.get_all_avg_median_percentile_X("long")
+            q.get_all_avg_median_percentile_X("")
+            q.get_all_avg_median_percentile_X("_short")
+            q.get_all_avg_median_percentile_X("_long")
         with helper.QueryFill(args[0]) as q:
             q.delete_and_create_all()
         print("SLOWER percentiles:", time.time()-t)
@@ -695,36 +614,37 @@ if __name__ == "__main__":
     # faster percentiles
     t = time.time()
     with QueryDatRem(args[0]) as q:
+        helper.dangerous(q.c)
         q.recreate_used_ID_table()
         q.fill_used_cl_ids_table(True, limit=4*options.limit)
         q.drop_used_clauses_red()
         q.create_used_clauses_red()
     with helper.QueryFill(args[0]) as q:
+        helper.dangerous(q.c)
         q.delete_and_create_all()
-        q.create_indexes(options.verbose, used_clauses="used_clauses_red")
+        q.create_indexes(verbose=options.verbose, used_clauses="used_clauses_red")
         q.fill_used_later(used_clauses="used_clauses_red")
         q.fill_used_later_X("short", 10000, used_clauses="used_clauses_red")
         q.fill_used_later_X("long", 50000, used_clauses="used_clauses_red")
     with QueryDatRem(args[0]) as q:
-        q.get_all_avg_median_percentile_X("short")
-        q.get_all_avg_median_percentile_X("long")
+        helper.dangerous(q.c)
+        q.get_all_avg_median_percentile_X("")
+        q.get_all_avg_median_percentile_X("_short")
+        q.get_all_avg_median_percentile_X("_long")
         q.drop_used_clauses_red()
     with helper.QueryFill(args[0]) as q:
         q.delete_and_create_all()
     print("FASTER percentiles:", time.time()-t)
 
     with QueryDatRem(args[0]) as q:
+        helper.dangerous(q.c)
         q.recreate_used_ID_table()
         q.fill_used_cl_ids_table(options.fair, limit=options.limit)
         q.filter_tables_of_ids()
         q.print_sum_cl_use_distrib()
-        q.del_table_and_vacuum()
         print("-------------")
         print("-------------")
-
-        q.dangerous()
-        q.create_indexes2()
-        q.fill_later_useful_data()
         q.delete_too_many_rdb_rows()
 
+        helper.drop_idxs(q.c)
         q.del_table_and_vacuum()
