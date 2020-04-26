@@ -674,10 +674,6 @@ if __name__ == "__main__":
             q.create_indexes1()
         q.remove_too_many_vardata()
         # sample fairly for used_clauses_red
-        q.recreate_used_ID_table()
-        q.fill_used_cl_ids_table(True, limit=4*options.limit)
-        q.drop_used_clauses_red()
-        q.create_used_clauses_red()
 
     if False:
         print("This is good for verifying that the fast ones are close")
@@ -698,6 +694,11 @@ if __name__ == "__main__":
 
     # faster percentiles
     t = time.time()
+    with QueryDatRem(args[0]) as q:
+        q.recreate_used_ID_table()
+        q.fill_used_cl_ids_table(True, limit=4*options.limit)
+        q.drop_used_clauses_red()
+        q.create_used_clauses_red()
     with helper.QueryFill(args[0]) as q:
         q.delete_all()
         q.create_indexes(options.verbose, used_clauses="used_clauses_red")
@@ -707,13 +708,13 @@ if __name__ == "__main__":
     with QueryDatRem(args[0]) as q:
         q.get_all_avg_median_percentile_X("short")
         q.get_all_avg_median_percentile_X("long")
+        q.drop_used_clauses_red()
     with helper.QueryFill(args[0]) as q:
         q.delete_all()
     print("FASTER percentiles:", time.time()-t)
 
     with QueryDatRem(args[0]) as q:
         q.recreate_used_ID_table()
-        q.drop_used_clauses_red()
         q.fill_used_cl_ids_table(options.fair, limit=options.limit)
         q.filter_tables_of_ids()
         q.print_sum_cl_use_distrib()
