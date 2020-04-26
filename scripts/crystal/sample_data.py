@@ -36,6 +36,8 @@ class QueryDatRem(helper.QueryHelper):
         pass
 
     def get_all_avg_median_percentile_X(self, name):
+        t = time.time()
+
         # Drop table
         q_drop = """
         DROP TABLE IF EXISTS `used_later_dat_{name}`;
@@ -96,7 +98,7 @@ class QueryDatRem(helper.QueryHelper):
         print("Percentiles/average for used_later_dat_{name}:".format(name=name))
         for row in rows:
             print(" -> %s : %s" %(row[0], row[1]))
-        print("Num rows:", len(rows))
+        print("Calculated percentiles/averages, T:", time.time()-t)
 
 
     def create_indexes1(self):

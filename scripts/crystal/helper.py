@@ -199,6 +199,7 @@ class QueryFill (QueryHelper):
         group by rdb0.clauseID, rdb0.conflicts;"""
 
         idxs = """
+        create index `used_later_{name}_idx3` on `used_later_{name}` (used_later_{name});
         create index `used_later_{name}_idx1` on `used_later_{name}` (`clauseID`, rdb0conflicts);
         create index `used_later_{name}_idx2` on `used_later_{name}` (`clauseID`, rdb0conflicts, used_later_{name});"""
 
