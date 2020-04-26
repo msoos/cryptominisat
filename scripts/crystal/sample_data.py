@@ -30,14 +30,12 @@ class QueryDatRem(helper.QueryHelper):
     def __init__(self, dbfname):
         super(QueryDatRem, self).__init__(dbfname)
 
-    def get_all_avg_median_percentile_X(self, name=""):
-        t = time.time()
-
+    def create_avg_median_percentiles_table(self):
         # Drop table
         q_drop = """
         DROP TABLE IF EXISTS `used_later_percentiles`;
         """
-        self.c.execute(q_drop.format(name=name))
+        self.c.execute(q_drop)
 
         # Create and fill used_later_X tables
         q_create = """
@@ -46,7 +44,12 @@ class QueryDatRem(helper.QueryHelper):
             `percentile_descr` string NOT NULL,
             `val` float NOT NULL
         );"""
-        self.c.execute(q_create.format(name=name))
+        self.c.execute(q_create)
+
+
+    def get_all_avg_median_percentile_X(self, name=""):
+        t = time.time()
+        print("Calculating percentiles now...")
 
         q2 = """
         insert into used_later_percentiles (type_of_dat, percentile_descr, val)
@@ -85,16 +88,16 @@ class QueryDatRem(helper.QueryHelper):
         for perc in range(0,30,2):
             myq = q.format(name=name, perc=perc)
             self.c.execute(q2.format(name=name, q=myq))
+        print("Calculated percentiles/averages, T:", time.time()-t)
 
-        print("Calculating percentiles now...")
+    def print_percentiles(self):
         q_check = "select * from used_later_percentiles"
         cur = self.conn.cursor()
-        cur.execute(q_check.format(name=name))
+        cur.execute(q_check)
         rows = cur.fetchall()
-        print("Percentiles/average for used_later_percentiles:".format(name=name))
+        print("Percentiles/average for used_later_percentiles:")
         for row in rows:
             print(" -> %s -- %s : %s" %(row[0], row[1], row[2]))
-        print("Calculated percentiles/averages, T:", time.time()-t)
 
 
     def create_indexes1(self):
@@ -606,20 +609,24 @@ if __name__ == "__main__":
         # slower percentiles
         t = time.time()
         with helper.QueryFill(args[0]) as q:
+            helper.dangerous(q.c)
             q.delete_and_create_all()
             q.create_indexes(verbose=options.verbose)
             q.fill_used_later()
             q.fill_used_later_X("short", 10000)
             q.fill_used_later_X("long", 50000)
         with QueryDatRem(args[0]) as q:
+            helper.dangerous(q.c)
+            q.create_avg_median_percentiles_table()
             q.get_all_avg_median_percentile_X("")
             q.get_all_avg_median_percentile_X("_short")
             q.get_all_avg_median_percentile_X("_long")
+            q.print_percentiles()
         with helper.QueryFill(args[0]) as q:
             q.delete_and_create_all()
         print("SLOWER percentiles:", time.time()-t)
 
-    # faster percentiles
+    # Percentile generation
     t = time.time()
     with QueryDatRem(args[0]) as q:
         helper.dangerous(q.c)
@@ -636,14 +643,20 @@ if __name__ == "__main__":
         q.fill_used_later_X("long", 50000, used_clauses="used_clauses_red")
     with QueryDatRem(args[0]) as q:
         helper.dangerous(q.c)
+        q.create_avg_median_percentiles_table()
         q.get_all_avg_median_percentile_X("")
         q.get_all_avg_median_percentile_X("_short")
         q.get_all_avg_median_percentile_X("_long")
+        q.print_percentiles()
         q.drop_used_clauses_red()
     with helper.QueryFill(args[0]) as q:
+        helper.drop_idxs(q.c)
         q.delete_and_create_all()
     print("FASTER percentiles:", time.time()-t)
 
+    # Filtering for clauseIDs in tables:
+    # ["clause_stats", "reduceDB", "sum_cl_use",
+    #      "used_clauses", "restart_dat_for_cl", "cl_last_in_solver"]
     with QueryDatRem(args[0]) as q:
         helper.dangerous(q.c)
         q.recreate_used_ID_table()
@@ -651,6 +664,15 @@ if __name__ == "__main__":
         q.filter_tables_of_ids()
         q.print_sum_cl_use_distrib()
         print("-------------")
+
+    # RDB filtering
+    with helper.QueryFill(args[0]) as q:
+        helper.dangerous(q.c)
+        helper.drop_idxs(q.c)
+        q.delete_and_create_all()
+        q.create_indexes(verbose=options.verbose)
+        q.fill_used_later()
+    with QueryDatRem(args[0]) as q:
         print("-------------")
         q.delete_too_many_rdb_rows()
 

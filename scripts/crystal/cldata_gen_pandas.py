@@ -172,8 +172,8 @@ class QueryCls (helper.QueryHelper):
             CASE WHEN
 
             -- useful in the next round
-            (used_later_short.used_later_short >= {short_top_non_zero_X_perc}
-            or used_later.used_later >= (10*{short_top_non_zero_X_perc}))
+            (used_later_short.used_later_short >= {name_short_top_non_zero_X_perc}
+            or used_later.used_later >= ({name_top_non_zero_10_perc}))
 
             THEN 1
             ELSE 0
@@ -190,8 +190,8 @@ class QueryCls (helper.QueryHelper):
             CASE WHEN
 
             -- useful in the next round
-            (used_later_long.used_later_long >= {long_top_non_zero_X_perc}
-            or used_later.used_later >= (5*{long_top_non_zero_X_perc}))
+            (used_later_long.used_later_long >= {name_long_top_non_zero_X_perc}
+            or used_later.used_later >= ({name_top_non_zero_10_perc}))
 
             THEN 1
             ELSE 0
@@ -286,13 +286,20 @@ class QueryCls (helper.QueryHelper):
     def get_used_later_percentiles(self, name):
         cur = self.conn.cursor()
         q = """
-        select * from used_later_percentiles_{name}
+        select
+            `type_of_dat`,
+            `percentile_descr`,
+            `val`
+        from used_later_percentiles
+        where `type_of_dat` = '{name}'
         """.format(name=name)
         cur.execute(q)
         rows = cur.fetchall()
         lookup = {}
         for row in rows:
-            lookup[row[0]+"_"+row[1]] = row[1]
+            #print("row:", row)
+            lookup["name"+row[0]+"_"+row[1]] = row[2]
+        #print("rows:", rows)
 
         return lookup
 
@@ -355,28 +362,31 @@ class QueryCls (helper.QueryHelper):
     def get_data(self, long_or_short):
         # TODO magic numbers: SHORT vs LONG data availability guess
         subformat = {}
-        x = self.get_used_later_percentiles("short")
+        x = self.get_used_later_percentiles("_short")
         for a,b in x.items():
-            subformat["short_"+a.replace("-", "_")] = b
-
-        x = self.get_used_later_percentiles("long")
+            subformat[a] = b
+        x = self.get_used_later_percentiles("_long")
         for a,b in x.items():
-            subformat["long_"+a.replace("-", "_")] = b
+            subformat[a] = b
+        x = self.get_used_later_percentiles("")
+        for a,b in x.items():
+            subformat[a] = b
 
-        subformat["short_top_non_zero_X_perc"] = subformat[
-            "short_top_non_zero_%d_perc" % options.top_percentile_short]
-        subformat["long_top_non_zero_X_perc"] = subformat[
-            "long_top_non_zero_%d_perc" % options.top_percentile_long]
-
-        self.myformat["case_stmt"] = self.case_stmt_short.format(
-                **subformat)
-        self.myformat["case_stmt"] = self.case_stmt_long.format(
-                **subformat)
+        subformat["name_short_top_non_zero_X_perc"] = subformat[
+            "name_short_top_non_zero_%d_perc" % options.top_percentile_short]
+        subformat["name_long_top_non_zero_X_perc"] = subformat[
+            "name_long_top_non_zero_%d_perc" % options.top_percentile_long]
+        subformat["name_top_non_zero_X_perc"] = subformat[
+            "name_top_non_zero_%d_perc" % options.top_percentile_long]
 
         if long_or_short == "short":
             self.myformat["del_at_least"] = options.short
+            self.myformat["case_stmt"] = self.case_stmt_short.format(
+                **subformat)
         else:
             self.myformat["del_at_least"] = options.long
+            self.myformat["case_stmt"] = self.case_stmt_long.format(
+                **subformat)
 
         t = time.time()
         limit = options.limit
