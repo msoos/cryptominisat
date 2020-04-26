@@ -429,7 +429,7 @@ class Searcher : public HyperEngine
                                     const bool is_decision);
         #endif
 
-        #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+        #if defined(STATS_NEEDED_BRANCH) || defined(FINAL_PREDICTOR_BRANCH)
         vector<uint32_t> level_used_for_cl;
         vector<uint32_t> vars_used_for_cl;
         vector<unsigned char> level_used_for_cl_arr;

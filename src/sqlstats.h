@@ -26,7 +26,6 @@ THE SOFTWARE.
 #include "satzilla_features.h"
 #include "searchstats.h"
 #include "vardata.h"
-#include "vardistgen.h"
 
 namespace CMSat {
 
@@ -92,6 +91,7 @@ public:
         , const uint32_t tot_cls_in_db
     ) = 0;
 
+    #ifdef STATS_NEEDED_BRANCH
     virtual void var_data_picktime(
         const Solver* solver
         , const uint32_t var
@@ -105,6 +105,19 @@ public:
         , const VarData& vardata
         , const double rel_activity
     ) = 0;
+
+    virtual void dec_var_clid(
+        const uint32_t var
+        , const uint64_t sumConflicts_at_picktime
+        , const uint64_t clid
+    ) = 0;
+
+    virtual void var_dist(
+        const uint32_t var
+        , const VarData2& data
+        , const Solver* solver
+    ) = 0;
+    #endif
 
     virtual void cl_last_in_solver(
         const Solver* solver
@@ -126,18 +139,6 @@ public:
         , const std::string& rest_type
         , const SearchHist& hist
         , const bool is_decision
-    ) = 0;
-
-    virtual void dec_var_clid(
-        const uint32_t var
-        , const uint64_t sumConflicts_at_picktime
-        , const uint64_t clid
-    ) = 0;
-
-    virtual void var_dist(
-        const uint32_t var
-        , const VarData2& data
-        , const Solver* solver
     ) = 0;
     #endif
 

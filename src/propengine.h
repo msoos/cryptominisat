@@ -455,11 +455,11 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from)
         }
     }
 
-    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR_BRANCH)
+    #if defined(STATS_NEEDED_BRANCH) || defined(FINAL_PREDICTOR_BRANCH)
     if (!update_bogoprops) {
         varData[v].set++;
         if (from == PropBy()) {
-            #ifdef STATS_NEEDED
+            #ifdef STATS_NEEDED_BRANCH
             sql_dump_vardata_picktime(v, from);
             varData[v].num_decided++;
             varData[v].last_decided_on = sumConflicts;
@@ -467,7 +467,7 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from)
             #endif
         } else {
             sumPropagations++;
-            #ifdef STATS_NEEDED
+            #ifdef STATS_NEEDED_BRANCH
             bool flipped = (varData[v].polarity != !p.sign());
             if (flipped) {
                 varData[v].last_flipped = sumConflicts;

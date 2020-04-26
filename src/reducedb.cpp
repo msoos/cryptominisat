@@ -187,13 +187,10 @@ void ReduceDB::handle_lev2()
     last_reducedb_num_conflicts = solver->sumConflicts;
 }
 
+#ifdef STATS_NEEDED
 void ReduceDB::dump_sql_cl_data(
-    const string&
-    #ifdef STATS_NEEDED
-    cur_rst_type
-    #endif
+    const string& cur_rst_type
 ) {
-    #ifdef STATS_NEEDED
     double myTime = cpuTime();
     assert(solver->sqlStats);
     solver->sqlStats->begin_transaction();
@@ -244,8 +241,8 @@ void ReduceDB::dump_sql_cl_data(
         << solver->conf.print_times(cpuTime()-myTime)
         << endl;
     }
-    #endif
 }
+#endif
 
 void ReduceDB::handle_lev1()
 {

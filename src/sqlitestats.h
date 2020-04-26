@@ -106,6 +106,7 @@ public:
         , const bool is_decision
     ) override;
 
+    #ifdef STATS_NEEDED_BRANCH
     void var_data_picktime(
         const Solver* solver
         , const uint32_t var
@@ -131,6 +132,7 @@ public:
         , const VarData2& data
         , const Solver* solver
     ) override;
+    #endif
     #endif
 
     bool setup(const Solver* solver) override;

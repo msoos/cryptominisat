@@ -129,7 +129,7 @@ void VarDistGen::calc()
     }
 }
 
-#ifdef STATS_NEEDED
+#ifdef STATS_NEEDED_BRANCH
 void VarDistGen::dump()
 {
     for(uint32_t i = 0; i < solver->nVars(); i++) {
@@ -138,4 +138,4 @@ void VarDistGen::dump()
             outer_var, data[i], solver);
     }
 }
-#endif //STATS_NEEDED
+#endif

@@ -53,7 +53,7 @@ class VarDistGen {
 public:
     VarDistGen(Solver* solver);
     void calc();
-    #ifdef STATS_NEEDED
+    #ifdef STATS_NEEDED_BRANCH
     void dump();
     #endif
 

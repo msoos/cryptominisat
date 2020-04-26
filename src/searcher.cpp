@@ -111,7 +111,7 @@ void Searcher::new_var(const bool bva, const uint32_t orig_outer)
     PropEngine::new_var(bva, orig_outer);
 
     insert_var_order_all((int)nVars()-1);
-    #ifdef STATS_NEEDED
+    #ifdef STATS_NEEDED_BRANCH
     level_used_for_cl_arr.insert(level_used_for_cl_arr.end(), 1, 0);
     #endif
 
@@ -127,7 +127,7 @@ void Searcher::new_vars(size_t n)
         insert_var_order_all((int)nVars()-i-1);
     }
 
-    #ifdef STATS_NEEDED
+    #ifdef STATS_NEEDED_BRANCH
     level_used_for_cl_arr.insert(level_used_for_cl_arr.end(), n, 0);
     #endif
     lit_act_lsids.insert(lit_act_lsids.end(), 2*n, 0);
@@ -137,7 +137,7 @@ void Searcher::save_on_var_memory()
 {
     PropEngine::save_on_var_memory();
 
-    #ifdef STATS_NEEDED
+    #ifdef STATS_NEEDED_BRANCH
     level_used_for_cl_arr.resize(nVars());
     #endif
     lit_act_lsids.resize(2*nVars());
@@ -173,7 +173,7 @@ inline void Searcher::add_lit_to_learnt(
     const uint32_t var = lit.var();
     assert(varData[var].removed == Removed::none);
 
-    #ifdef STATS_NEEDED
+    #ifdef STATS_NEEDED_BRANCH
     if (!update_bogoprops) {
         varData[var].inside_conflict_clause_antecedents++;
         varData[var].last_seen_in_1uip = sumConflicts;
@@ -187,7 +187,7 @@ inline void Searcher::add_lit_to_learnt(
     seen[var] = 1;
 
     if (!update_bogoprops) {
-        #ifdef STATS_NEEDED
+        #ifdef STATS_NEEDED_BRANCH
         if (varData[var].level != 0 &&
             !level_used_for_cl_arr[varData[var].level]
         ) {
@@ -788,15 +788,19 @@ void Searcher::analyze_conflict(
     #endif
 ) {
     //Set up environment
-    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+    #if defined(STATS_NEEDED_BRANCH) || defined(FINAL_PREDICTOR_BRANCH)
     assert(level_used_for_cl.empty());
     #ifdef SLOW_DEBUG
     for(auto& x: level_used_for_cl_arr) {
         assert(x == 0);
     }
     #endif
+    #endif
+
+    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     antec_data.clear();
     #endif
+
     learnt_clause.clear();
     assert(toClear.empty());
     implied_by_learnts.clear();
@@ -831,7 +835,7 @@ void Searcher::analyze_conflict(
         minimise_redundant_more_more(learnt_clause);
     }
 
-    #ifdef STATS_NEEDED
+    #ifdef STATS_NEEDED_BRANCH
     for(const Lit l: learnt_clause) {
         varData[l.var()].inside_conflict_clause++;
         varData[l.var()].inside_conflict_clause_glue += glue;
@@ -1591,7 +1595,9 @@ void Searcher::sql_dump_last_in_solver()
         }
     }
 }
+#endif
 
+#ifdef STATS_NEEDED_BRANCH
 void Searcher::dump_var_for_learnt_cl(const uint32_t v,
                                       const uint64_t clid,
                                       const bool is_decision)
@@ -1609,7 +1615,9 @@ void Searcher::dump_var_for_learnt_cl(const uint32_t v,
         );
     }
 }
+#endif
 
+#ifdef STATS_NEEDED
 void Searcher::dump_sql_clause_data(
     const uint32_t orig_glue
     , const uint32_t glue_before_minim
@@ -1617,7 +1625,8 @@ void Searcher::dump_sql_clause_data(
     , const uint64_t clid
     , const bool is_decision
 ) {
-    //solver->sqlStats->begin_transaction();
+
+    #ifdef STATS_NEEDED_BRANCH
     if (is_decision) {
         for(Lit l: learnt_clause) {
             dump_var_for_learnt_cl(l.var(), clid, is_decision);
@@ -1627,6 +1636,7 @@ void Searcher::dump_sql_clause_data(
             dump_var_for_learnt_cl(v, clid, is_decision);
         }
     }
+    #endif
 
     solver->sqlStats->dump_clause_stats(
         solver
@@ -1644,7 +1654,6 @@ void Searcher::dump_sql_clause_data(
         , hist
         , is_decision
     );
-    //solver->sqlStats->end_transaction();
 }
 #endif
 
@@ -1932,7 +1941,7 @@ void Searcher::check_calc_vardist_features(bool force)
         return;
     }
 
-    #ifdef STATS_NEEDED
+    #ifdef STATS_NEEDED_BRANCH
     if (last_vardist_feature_calc_confl == 0
         || (last_vardist_feature_calc_confl + 10000) < sumConflicts
         || force
@@ -3615,7 +3624,7 @@ void Searcher::cancelUntil(uint32_t blevel)
             const uint32_t var = trail[sublevel].lit.var();
             assert(value(var) != l_Undef);
 
-            #if defined(STATS_NEEDED)
+            #ifdef STATS_NEEDED_BRANCH
             if (!update_bogoprops) {
                 varData[var].last_canceled = sumConflicts;
             }

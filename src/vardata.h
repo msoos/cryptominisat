@@ -55,7 +55,7 @@ struct VarData
     bool polarity = false;
     bool is_bva = false;
     bool added_for_xor = false;
-    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR_BRANCH)
+    #if defined(STATS_NEEDED_BRANCH) || defined(FINAL_PREDICTOR_BRANCH)
     uint64_t num_propagated = 0;
     uint64_t num_propagated_pos = 0;
     uint64_t num_decided = 0;

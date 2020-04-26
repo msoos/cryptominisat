@@ -808,6 +808,7 @@ void SQLiteStats::dump_clause_stats(
     run_sqlite_step(stmt_clause_stats, "dump_clause_stats");
 }
 
+#ifdef STATS_NEEDED_BRANCH
 void SQLiteStats::var_data_fintime(
     const Solver* solver
     , const uint32_t var
@@ -949,6 +950,7 @@ void SQLiteStats::dec_var_clid(
 
     run_sqlite_step(stmt_dec_var_clid, "dec_var_clid");
 }
+#endif
 
 void SQLiteStats::cl_last_in_solver(
     const Solver* solver
