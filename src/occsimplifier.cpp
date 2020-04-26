@@ -1639,7 +1639,6 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
             assert(newCl->stats.which_red_array == 1);
             assert(newCl->stats.glue == solver->conf.glue_put_lev1_if_below_or_eq);
             #ifdef STATS_NEEDED
-            bool to_dump = false;
             double myrnd = solver->mtrand.randDblExc();
             if (myrnd <= solver->conf.dump_individual_cldata_ratio) {
                 newCl->stats.ID = solver->clauseID++;
