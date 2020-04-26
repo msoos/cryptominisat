@@ -140,7 +140,7 @@ float ClPredictors::predict_short(
     delete[] train;
 
     float val = predict_one(short_pred, dmat);
-    XGDMatrixFree(dmat);
+//     XGDMatrixFree(dmat);
 
     return val;
 }
@@ -165,7 +165,7 @@ float ClPredictors::predict_long(
     delete[] train;
 
     float val = predict_one(long_pred, dmat);
-    XGDMatrixFree(dmat);
+//     XGDMatrixFree(dmat);
 
     return val;
 }
