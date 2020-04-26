@@ -62,7 +62,7 @@ class QueryDatRem(helper.QueryHelper):
 
         q = """
         SELECT
-        'non-zero-{perc}-perc', used_later_{name}
+        'top-non-zero-{perc}-perc', used_later_{name}
         FROM used_later_{name}
         WHERE used_later_{name}>0
         ORDER BY used_later_{name} ASC
@@ -78,7 +78,7 @@ class QueryDatRem(helper.QueryHelper):
 
         q = """
         SELECT
-        'also-zero-{perc}-perc', used_later_{name}
+        'top-also-zero-{perc}-perc', used_later_{name}
         FROM used_later_{name}
         ORDER BY used_later_{name} ASC
         LIMIT 1

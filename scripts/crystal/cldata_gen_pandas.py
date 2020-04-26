@@ -200,7 +200,7 @@ class QueryCls (helper.QueryHelper):
             CASE WHEN
 
             -- useful in the next round
-                   used_later_short.used_later_short >= {short_non_zero_80_perc}
+                   used_later_short.used_later_short >= {short_top_non_zero_X_perc}
             THEN 1
             ELSE 0
             END AS `x.class`
@@ -266,7 +266,7 @@ class QueryCls (helper.QueryHelper):
             CASE WHEN
 
            -- useful in the next round
-               used_later_long.used_later_long >= {long_non_zero_80_perc}
+               used_later_long.used_later_long >= {long_top_non_zero_X_perc}
             THEN 1
             ELSE 0
             END AS `x.class`
@@ -445,6 +445,10 @@ class QueryCls (helper.QueryHelper):
         for a,b in x.items():
             subformat["long_"+a.replace("-", "_")] = b
 
+        subformat["short_top_non_zero_X_perc"] = subformat[
+            "short_top_non_zero_%d_perc" % options.top_percentile_short]
+        subformat["long_top_non_zero_X_perc"] = subformat[
+            "long_top_non_zero_%d_perc" % options.top_percentile_long]
 
         self.myformat["case_stmt"] = self.case_stmt_short.format(
                 **subformat)
@@ -548,6 +552,10 @@ if __name__ == "__main__":
                       dest="dump_sql", help="Dump SQL queries")
     parser.add_option("--csv", action="store_true", default=False,
                       dest="dump_csv", help="Dump CSV (for weka)")
+    parser.add_option("--toppercentileshort", type=int, default=80,
+                      dest="top_percentile_short", help="Top percentile of short predictor to mark KEEP")
+    parser.add_option("--toppercentilelong", type=int, default=80,
+                      dest="top_percentile_long", help="Top percentile of long predictor to mark KEEP")
 
     # limits
     parser.add_option("--limit", default=20000, type=int,
