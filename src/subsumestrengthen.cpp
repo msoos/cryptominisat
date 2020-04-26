@@ -64,7 +64,9 @@ uint32_t SubsumeStrengthen::subsume_and_unlink_and_markirred(const ClOffset offs
     if (cl.red()
         && ret.subsumedIrred
     ) {
+        #ifdef STATS_NEEDED
         solver->stats_del_cl(&cl);
+        #endif
         cl.makeIrred();
         solver->litStats.redLits -= cl.size();
         solver->litStats.irredLits += cl.size();
@@ -171,7 +173,9 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::strengthen_subsume_and_unlink_and_
             if (cl.red()
                 && !cl2.red()
             ) {
+                #ifdef STATS_NEEDED
                 solver->stats_del_cl(&cl);
+                #endif
                 cl.makeIrred();
                 solver->litStats.redLits -= cl.size();
                 solver->litStats.irredLits += cl.size();
