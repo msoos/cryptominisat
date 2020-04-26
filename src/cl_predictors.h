@@ -23,6 +23,8 @@ THE SOFTWARE.
 #ifndef __CLPREDICTOR_H__
 #define __CLPREDICTOR_H__
 
+#define PRED_COLS 25
+
 #include <vector>
 #include <string>
 #include <xgboost/c_api.h>
@@ -64,6 +66,7 @@ private:
         float *train,
         const uint32_t cols);
     vector<BoosterHandle> handles;
+    float train[PRED_COLS];
 };
 
 }

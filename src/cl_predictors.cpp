@@ -128,16 +128,13 @@ float ClPredictors::predict_short(
     const uint32_t act_ranking_top_10)
 {
     // convert to DMatrix
-    int cols=25;
-    float* train = new float[cols];
     set_up_input(cl, sumConflicts, last_touched_diff,
                  act_ranking_rel, act_ranking_top_10,
-                 train, cols);
+                 train, PRED_COLS);
     int rows=1;
     DMatrixHandle dmat;
-    int ret = XGDMatrixCreateFromMat((float *)train, rows, cols, -1, &dmat);
+    int ret = XGDMatrixCreateFromMat((float *)train, rows, PRED_COLS, -1, &dmat);
     assert(ret == 0);
-    delete[] train;
 
     float val = predict_one(short_pred, dmat);
 //     XGDMatrixFree(dmat);
@@ -153,16 +150,13 @@ float ClPredictors::predict_long(
     const uint32_t act_ranking_top_10)
 {
     // convert to DMatrix
-    int cols=25;
-    float* train = new float[cols];
     set_up_input(cl, sumConflicts, last_touched_diff,
                  act_ranking_rel, act_ranking_top_10,
-                 train, cols);
+                 train, PRED_COLS);
     int rows=1;
     DMatrixHandle dmat;
-    int ret = XGDMatrixCreateFromMat((float *)train, rows, cols, -1, &dmat);
+    int ret = XGDMatrixCreateFromMat((float *)train, rows, PRED_COLS, -1, &dmat);
     assert(ret == 0);
-    delete[] train;
 
     float val = predict_one(long_pred, dmat);
 //     XGDMatrixFree(dmat);
