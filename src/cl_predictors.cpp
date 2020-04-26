@@ -25,6 +25,8 @@ THE SOFTWARE.
 
 using namespace CMSat;
 
+enum predict_type {short_pred=0, long_pred=1};
+
 ClPredictors::ClPredictors()
 {
     BoosterHandle handle;
@@ -53,9 +55,10 @@ ClPredictors::~ClPredictors()
 void ClPredictors::load_models(std::string short_fname, std::string long_fname)
 {
     int ret;
-    ret = XGBoosterLoadModel(handles[0], short_fname.c_str());
+    ret = XGBoosterLoadModel(handles[short_pred], short_fname.c_str());
     assert(ret == 0);
-    ret =XGBoosterLoadModel(handles[1], long_fname.c_str());
+
+    ret =XGBoosterLoadModel(handles[long_pred], long_fname.c_str());
     assert(ret == 0);
 }
 
@@ -136,7 +139,7 @@ float ClPredictors::predict_short(
     assert(ret == 0);
     delete[] train;
 
-    float val = predict_one(0, dmat);
+    float val = predict_one(short_pred, dmat);
     XGDMatrixFree(dmat);
 
     return val;
@@ -161,7 +164,7 @@ float ClPredictors::predict_long(
     assert(ret == 0);
     delete[] train;
 
-    float val = predict_one(1, dmat);
+    float val = predict_one(long_pred, dmat);
     XGDMatrixFree(dmat);
 
     return val;
