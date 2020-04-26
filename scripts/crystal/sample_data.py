@@ -352,6 +352,14 @@ class QueryDatRem(helper.QueryHelper):
         self.c.execute(q)
 
     def filter_tables_of_ids(self):
+
+        queries = """
+        drop index if exists idxclid34;
+        drop index if exists idxclid32;
+        """
+        for q in queries.split("\n"):
+            self.c.execute(q)
+
         self.print_idxs()
 
         tables = ["clause_stats", "reduceDB", "sum_cl_use",
