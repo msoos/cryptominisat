@@ -202,6 +202,7 @@ void ReduceDB::dump_sql_cl_data(
         for(const auto& offs: cc) {
             Clause* cl = solver->cl_alloc.ptr(offs);
             assert(!cl->getRemoved());
+            assert(cl->red());
             assert(!cl->freed());
             all_learnt.push_back(offs);
         }
@@ -392,7 +393,7 @@ void ReduceDB::handle_lev3_final_predictor()
                 , solver->sumConflicts
                 , last_touched_diff
                 , act_ranking_rel
-                , act_ranking_top_10+1) < (1.0f-solver->conf.pred_keep_above)
+                , act_ranking_top_10) < solver->conf.pred_keep_above
             ) {
                 deleted++;
                 solver->watches.smudge((*cl)[0]);
@@ -418,14 +419,14 @@ void ReduceDB::handle_lev3_final_predictor()
                 tot_dumpno += cl->stats.dump_number;
                 dumpno_zero += (cl->stats.dump_number == 0);
                 dumpno_nonz += (cl->stats.dump_number != 0);
-                cl->stats.dump_number++;
-                cl->stats.rdb1_act_ranking_top_10 = act_ranking_top_10;
-                cl->stats.rdb1_act_ranking_rel = act_ranking_rel;
-                cl->stats.rdb1_last_touched_diff = last_touched_diff;
-                cl->stats.rdb1_used_for_uip_creation = cl->stats.used_for_uip_creation;
-                cl->stats.rdb1_propagations_made = cl->stats.propagations_made;
-                cl->stats.reset_rdb_stats();
             }
+            cl->stats.dump_number++;
+            cl->stats.rdb1_act_ranking_top_10 = act_ranking_top_10;
+            cl->stats.rdb1_act_ranking_rel = act_ranking_rel;
+            cl->stats.rdb1_last_touched_diff = last_touched_diff;
+            cl->stats.rdb1_used_for_uip_creation = cl->stats.used_for_uip_creation;
+            cl->stats.rdb1_propagations_made = cl->stats.propagations_made;
+            cl->stats.reset_rdb_stats();
         }
     }
     solver->longRedCls[3].resize(j);

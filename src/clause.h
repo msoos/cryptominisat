@@ -189,7 +189,6 @@ struct ClauseStats
         used_for_uip_creation = 0;
         locked_for_data_gen = 0;
         propagations_made = 0;
-        rdb1_propagations_made = 0;
         #if defined(STATS_NEEDED)
         clause_looked_at = 0;
         conflicts_made = 0;
