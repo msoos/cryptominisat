@@ -407,9 +407,9 @@ public:
     void makeIrred()
     {
         assert(isRed);
-        /*#if STATS_NEEDED
+        #if STATS_NEEDED
         stats.ID = 0;
-        #endif*/
+        #endif
         isRed = false;
     }
 

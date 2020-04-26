@@ -285,9 +285,13 @@ class Solver : public Searcher
         //Contains _outer_ variables
         vector<bool> undef_must_set_vars;
 
-        //Deleting clauses with free
+        //Deleting clauses
         void free_cl(Clause* cl);
         void free_cl(ClOffset offs);
+        #ifdef STATS_NEEDED
+        void stats_del_cl(Clause* cl);
+        void stats_del_cl(ClOffset offs);
+        #endif
 
         //Helper
         void renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors_ret);
@@ -410,14 +414,6 @@ class Solver : public Searcher
         // Clauses
         bool addClauseHelper(vector<Lit>& ps);
         bool addClauseInt(vector<Lit>& ps, const bool red = false);
-
-
-        ////////////////
-        // stats del
-        #ifdef STATS_NEEDED
-        void stats_del_cl(Clause* cl);
-        void stats_del_cl(ClOffset offs);
-        #endif
 
         /////////////////
         // Debug
