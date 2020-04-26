@@ -67,6 +67,7 @@ private:
         const uint32_t cols);
     vector<BoosterHandle> handles;
     float train[PRED_COLS];
+    DMatrixHandle dmat;
 };
 
 }

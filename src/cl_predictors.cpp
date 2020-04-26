@@ -22,6 +22,7 @@ THE SOFTWARE.
 
 #include "cl_predictors.h"
 #include "clause.h"
+#define MISSING_VAL -1334556787
 
 using namespace CMSat;
 
@@ -132,12 +133,11 @@ float ClPredictors::predict_short(
                  act_ranking_rel, act_ranking_top_10,
                  train, PRED_COLS);
     int rows=1;
-    DMatrixHandle dmat;
-    int ret = XGDMatrixCreateFromMat((float *)train, rows, PRED_COLS, -1, &dmat);
+    int ret = XGDMatrixCreateFromMat((float *)train, rows, PRED_COLS, MISSING_VAL, &dmat);
     assert(ret == 0);
 
     float val = predict_one(short_pred, dmat);
-//     XGDMatrixFree(dmat);
+    XGDMatrixFree(dmat);
 
     return val;
 }
@@ -154,12 +154,11 @@ float ClPredictors::predict_long(
                  act_ranking_rel, act_ranking_top_10,
                  train, PRED_COLS);
     int rows=1;
-    DMatrixHandle dmat;
-    int ret = XGDMatrixCreateFromMat((float *)train, rows, PRED_COLS, -1, &dmat);
+    int ret = XGDMatrixCreateFromMat((float *)train, rows, PRED_COLS, MISSING_VAL, &dmat);
     assert(ret == 0);
 
     float val = predict_one(long_pred, dmat);
-//     XGDMatrixFree(dmat);
+    XGDMatrixFree(dmat);
 
     return val;
 }
