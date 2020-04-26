@@ -69,7 +69,7 @@ void ClPredictors::set_up_input(
     const uint32_t cols)
 {
     float *at = train;
-    int x = 0;
+    uint32_t x = 0;
     at[x++] = cl->stats.glue_hist_long;                           //cl.glue_hist_long
     at[x++] = cl->stats.glue_hist_queue;                          //cl.glue_hist_queue
     at[x++] = cl->stats.glue_hist;                                //cl.glue_hist
@@ -111,6 +111,7 @@ float ClPredictors::predict_one(int num, DMatrixHandle dmat)
         &out_len,
         &out_result
     );
+    assert(ret == 0);
 
     float retval = out_result[0];
     return retval;
@@ -135,7 +136,10 @@ float ClPredictors::predict_short(
     assert(ret == 0);
     delete[] train;
 
-    return predict_one(0, dmat);
+    float val = predict_one(0, dmat);
+    XGDMatrixFree(dmat);
+
+    return val;
 }
 
 float ClPredictors::predict_long(
@@ -157,5 +161,8 @@ float ClPredictors::predict_long(
     assert(ret == 0);
     delete[] train;
 
-    return predict_one(1, dmat);
+    float val = predict_one(1, dmat);
+    XGDMatrixFree(dmat);
+
+    return val;
 }
