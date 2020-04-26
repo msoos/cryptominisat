@@ -174,7 +174,8 @@ class QueryCls (helper.QueryHelper):
             CASE WHEN
 
             -- useful in the next round
-                   used_later_short.used_later_short >= {short_top_non_zero_X_perc}
+            used_later_short.used_later_short >= {short_top_non_zero_X_perc}
+
             THEN 1
             ELSE 0
             END AS `x.class`
@@ -189,8 +190,9 @@ class QueryCls (helper.QueryHelper):
             self.case_stmt_long = """
             CASE WHEN
 
-           -- useful in the next round
-               used_later_long.used_later_long >= {long_top_non_zero_X_perc}
+            -- useful in the next round
+            used_later_long.used_later_long >= {long_top_non_zero_X_perc}
+
             THEN 1
             ELSE 0
             END AS `x.class`
@@ -238,13 +240,13 @@ class QueryCls (helper.QueryHelper):
             used_later_short.clauseID = rdb0.clauseID
             and used_later_short.rdb0conflicts = rdb0.conflicts
 
+        -- join used_later_short as `used_later_short_offset` on
+            -- used_later_short_offset.clauseID = rdb0.clauseID
+            -- and used_later_short_offset.rdb0conflicts = rdb0.conflicts
+
         join used_later_long on
             used_later_long.clauseID = rdb0.clauseID
             and used_later_long.rdb0conflicts = rdb0.conflicts
-
-        join used_later on
-            used_later.clauseID = rdb0.clauseID
-            and used_later.rdb0conflicts = rdb0.conflicts
 
         join cl_last_in_solver on
             cl_last_in_solver.clauseID = rdb0.clauseID
@@ -255,6 +257,9 @@ class QueryCls (helper.QueryHelper):
         cl.clauseID != 0
         and tags.name = "filename"
         and rdb0.dump_no = rdb1.dump_no+1
+        and used_later_long.offset = 0
+        and used_later_short.offset = 0
+        -- and used_later_short_offset.offset = {offset_short}
 
 
         -- to avoid missing clauses and their missing data to affect results
@@ -268,7 +273,9 @@ class QueryCls (helper.QueryHelper):
             "rdb0_dat": self.rdb0_dat,
             "rdb1_dat": self.rdb0_dat.replace("rdb0", "rdb1"),
             "sum_cl_use": self.sum_cl_use,
-            "rst_cur": self.rst_cur
+            "rst_cur": self.rst_cur,
+            "offset_short" : options.short,
+            "offset_long" : options.long
         }
 
     def get_used_later_percentiles(self, name):
@@ -397,10 +404,12 @@ def one_database(dbfname):
             q.create_indexes()
 
     with helper.QueryFill(dbfname) as q:
-        q.delete_all()
+        q.delete_and_create_all()
         q.fill_used_later()
-        q.fill_used_later_X("long", options.long)
-        q.fill_used_later_X("short", options.short)
+        q.fill_used_later_X("long", offset=0, duration=options.long)
+        q.fill_used_later_X("short", offset=0, duration=options.short)
+        q.fill_used_later_X("long", offset=options.long, duration=options.long)
+        q.fill_used_later_X("short", offset=options.short, duration=options.short)
 
     conf_from, conf_to = helper.parse_configs(options.confs)
     print("Using sqlite3db file %s" % dbfname)

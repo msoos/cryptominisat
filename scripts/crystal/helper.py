@@ -88,7 +88,7 @@ class QueryFill (QueryHelper):
 
         print("indexes created T: %-3.2f s" % (time.time() - t))
 
-    def delete_all(self):
+    def delete_and_create_all(self):
         t = time.time()
         q = """
         DROP TABLE IF EXISTS `used_later`;
@@ -97,9 +97,18 @@ class QueryFill (QueryHelper):
         """
         for l in q.split('\n'):
             self.c.execute(l)
-        print("used_later* dropped T: %-3.2f s" % (time.time() - t))
 
-    def fill_used_later(self, used_clauses="used_clauses"):
+        # Create and fill used_later_X tables
+        q_create = """
+        create table `used_later_{name}` (
+            `clauseID` bigint(20) NOT NULL,
+            `rdb0conflicts` bigint(20) NOT NULL,
+            `used_later_{name}` bigint(20),
+            `offset` bigint(20) NOT NULL
+        );"""
+        self.c.execute(q_create.format(name="short"))
+        self.c.execute(q_create.format(name="long"))
+
         # Create used_later table
         t = time.time()
         q = """
@@ -109,8 +118,27 @@ class QueryFill (QueryHelper):
             `used_later` bigint(20)
         );"""
         self.c.execute(q)
-        print("used_later recreated T: %-3.2f s" % (time.time() - t))
 
+        idxs = """
+        create index `used_later_{name}_idx3` on `used_later_{name}` (used_later_{name});
+        create index `used_later_{name}_idx1` on `used_later_{name}` (`clauseID`, rdb0conflicts, offset);
+        create index `used_later_{name}_idx2` on `used_later_{name}` (`clauseID`, rdb0conflicts, used_later_{name}, offset);"""
+        for l in idxs.format(name="short").split('\n'):
+            self.c.execute(l)
+        for l in idxs.format(name="long").split('\n'):
+            self.c.execute(l)
+
+        idxs = """
+        create index `used_later_idx1` on `used_later` (`clauseID`, rdb0conflicts);
+        create index `used_later_idx2` on `used_later` (`clauseID`, rdb0conflicts, used_later);
+        """
+        t = time.time()
+        for l in idxs.split('\n'):
+            self.c.execute(l)
+
+        print("used_later* dropped and recreated T: %-3.2f s" % (time.time() - t))
+
+    def fill_used_later(self, used_clauses="used_clauses"):
         # Fill used_later table
         t = time.time()
         q = """insert into used_later
@@ -144,41 +172,20 @@ class QueryFill (QueryHelper):
         self.c.execute(q.format(used_clauses=used_clauses))
         print("used_later filled T: %-3.2f s" % (time.time() - t))
 
-        # Add indexes to used_later table
-        idxs = """
-        create index `used_later_idx1` on `used_later` (`clauseID`, rdb0conflicts);
-        create index `used_later_idx2` on `used_later` (`clauseID`, rdb0conflicts, used_later);
-        """
-        t = time.time()
-        for l in idxs.split('\n'):
-            self.c.execute(l)
-        print("used_later indexes added T: %-3.2f s" % (time.time() - t))
-
-    def fill_used_later_X(self, name, duration, used_clauses="used_clauses"):
-        # Drop table
-        q_drop = """
-        DROP TABLE IF EXISTS `used_later_{name}`;
-        """
-
-        # Create and fill used_later_X tables
-        q_create = """
-        create table `used_later_{name}` (
-            `clauseID` bigint(20) NOT NULL,
-            `rdb0conflicts` bigint(20) NOT NULL,
-            `used_later_{name}` bigint(20)
-        );"""
-
+    def fill_used_later_X(self, name, duration, offset=0, used_clauses="used_clauses"):
         q_fill = """
         insert into used_later_{name}
         (
         `clauseID`,
         `rdb0conflicts`,
-        `used_later_{name}`
+        `used_later_{name}`,
+        `offset`
         )
         SELECT
         rdb0.clauseID
         , rdb0.conflicts
         , count(ucl.used_at) as `used_later_{name}`
+        , {offset}
 
         FROM
         reduceDB as rdb0
@@ -186,29 +193,22 @@ class QueryFill (QueryHelper):
 
         -- reduceDB is always present, {used_clauses} may not be, hence left join
         on (ucl.clauseID = rdb0.clauseID
-            and ucl.used_at > rdb0.conflicts
-            and ucl.used_at <= (rdb0.conflicts+{duration}))
+            and ucl.used_at > (rdb0.conflicts+{offset})
+            and ucl.used_at <= (rdb0.conflicts+{duration}+{offset}))
 
         join cl_last_in_solver
         on cl_last_in_solver.clauseID = rdb0.clauseID
 
         WHERE
         rdb0.clauseID != 0
-        and cl_last_in_solver.conflicts >= rdb0.conflicts + {duration}
+        and cl_last_in_solver.conflicts >= (rdb0.conflicts + {duration} + {offset})
 
         group by rdb0.clauseID, rdb0.conflicts;"""
 
-        idxs = """
-        create index `used_later_{name}_idx3` on `used_later_{name}` (used_later_{name});
-        create index `used_later_{name}_idx1` on `used_later_{name}` (`clauseID`, rdb0conflicts);
-        create index `used_later_{name}_idx2` on `used_later_{name}` (`clauseID`, rdb0conflicts, used_later_{name});"""
-
         t = time.time()
-        self.c.execute(q_drop.format(name=name))
-        self.c.execute(q_create.format(name=name))
-        self.c.execute(q_fill.format(name=name, used_clauses=used_clauses, duration=duration))
-        for l in idxs.format(name=name).split('\n'):
-            self.c.execute(l)
+        self.c.execute(q_fill.format(
+            name=name, used_clauses=used_clauses,
+            duration=duration, offset=offset))
         print("used_later_%s table dropped, created, filled, indexed T: %-3.2f s" %
               (name, time.time() - t))
 

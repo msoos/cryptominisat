@@ -680,7 +680,7 @@ if __name__ == "__main__":
         # slower percentiles
         t = time.time()
         with helper.QueryFill(args[0]) as q:
-            q.delete_all()
+            q.delete_and_create_all()
             q.create_indexes(options.verbose)
             q.fill_used_later()
             q.fill_used_later_X("short", 10000)
@@ -689,7 +689,7 @@ if __name__ == "__main__":
             q.get_all_avg_median_percentile_X("short")
             q.get_all_avg_median_percentile_X("long")
         with helper.QueryFill(args[0]) as q:
-            q.delete_all()
+            q.delete_and_create_all()
         print("SLOWER percentiles:", time.time()-t)
 
     # faster percentiles
@@ -700,7 +700,7 @@ if __name__ == "__main__":
         q.drop_used_clauses_red()
         q.create_used_clauses_red()
     with helper.QueryFill(args[0]) as q:
-        q.delete_all()
+        q.delete_and_create_all()
         q.create_indexes(options.verbose, used_clauses="used_clauses_red")
         q.fill_used_later(used_clauses="used_clauses_red")
         q.fill_used_later_X("short", 10000, used_clauses="used_clauses_red")
@@ -710,7 +710,7 @@ if __name__ == "__main__":
         q.get_all_avg_median_percentile_X("long")
         q.drop_used_clauses_red()
     with helper.QueryFill(args[0]) as q:
-        q.delete_all()
+        q.delete_and_create_all()
     print("FASTER percentiles:", time.time()-t)
 
     with QueryDatRem(args[0]) as q:
