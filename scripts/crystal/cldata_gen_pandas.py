@@ -169,33 +169,7 @@ class QueryCls (helper.QueryHelper):
         ############
         # Labeling SHORT
         ############
-        if self.conf == 0:
-            self.case_stmt_short = """
-            CASE WHEN
-
-            sum_cl_use.last_confl_used > rdb0.conflicts and
-            (
-                -- useful in the next round
-                   used_later_short.used_later_short > 3
-
-                   or
-                   (used_later_short.used_later_short > 2 and used_later_long.used_later_long > 40)
-            )
-            THEN 1
-            ELSE 0
-            END AS `x.class`
-            """
-        elif self.conf == 1:
-            self.case_stmt_short = """
-            CASE WHEN
-
-            -- useful in the next round
-                   used_later_short.used_later_short > 5
-            THEN 1
-            ELSE 0
-            END AS `x.class`
-            """
-        elif self.conf == 2:
+        if self.conf == 2:
             self.case_stmt_short = """
             CASE WHEN
 
@@ -205,63 +179,13 @@ class QueryCls (helper.QueryHelper):
             ELSE 0
             END AS `x.class`
             """
-        elif self.conf == 3:
-            self.case_stmt_short = """
-            CASE WHEN
-
-            -- useful in the next round
-                   used_later_short.used_later_short >= max(cast({avg_used_later_short}/3+0.5 as int),1)
-            THEN 1
-            ELSE 0
-            END AS `x.class`
-            """
-        elif self.conf == 4:
-            self.case_stmt_short = """
-            CASE WHEN
-
-            -- useful in the next round
-                   used_later_short.used_later_short >= max({median_used_later_short},1)
-            THEN 1
-            ELSE 0
-            END AS `x.class`
-            """
+        else:
+            assert(False)
 
         ############
         # Labeling LONG
         ############
-        if self.conf == 0:
-            self.case_stmt_long = """
-            CASE WHEN
-
-            sum_cl_use.last_confl_used > rdb0.conflicts+{long_duration} and
-            (
-                -- used a lot over a wide range
-                   (used_later_long.used_later_long > 10 and used_later.used_later > 20)
-
-                -- used quite a bit but less dispersion
-                or (used_later_long.used_later_long > 6 and used_later.used_later > 30)
-            )
-            THEN 1
-            ELSE 0
-            END AS `x.class`
-            """.format(long_duration=options.long_duration)
-        elif self.conf == 1:
-            self.case_stmt_long = """
-            CASE WHEN
-
-            sum_cl_use.last_confl_used > rdb0.conflicts+{long_duration} and
-            (
-                -- used a lot over a wide range
-                   (used_later_long.used_later_long > 13 and used_later.used_later > 24)
-
-                -- used quite a bit but less dispersion
-                or (used_later_long.used_later_long > 8 and used_later.used_later > 40)
-            )
-            THEN 1
-            ELSE 0
-            END AS `x.class`
-            """.format(long_duration=options.long_duration)
-        elif self.conf == 2:
+        if self.conf == 2:
             self.case_stmt_long = """
             CASE WHEN
 
@@ -271,28 +195,10 @@ class QueryCls (helper.QueryHelper):
             ELSE 0
             END AS `x.class`
             """
-        elif self.conf == 3:
-            self.case_stmt_long = """
-            CASE WHEN
+        else:
+            assert(False)
 
-           -- useful in the next round
-               used_later_long.used_later_long >= max(cast({avg_used_later_long}/3+0.5 as int), 1)
-            THEN 1
-            ELSE 0
-            END AS `x.class`
-            """
-        elif self.conf == 4:
-            self.case_stmt_long = """
-            CASE WHEN
-
-           -- useful in the next round
-               used_later_long.used_later_long >= max({median_used_later_long}, 1)
-            THEN 1
-            ELSE 0
-            END AS `x.class`
-            """
-
-        # GOOD clauses
+        # final big query
         self.q_select = """
         SELECT
         tags.val as `fname`
