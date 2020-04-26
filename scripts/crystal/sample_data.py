@@ -289,16 +289,16 @@ class QueryDatRem(helper.QueryHelper):
               % (time.time() - t))
 
     # inserts less than 1-1 ratio, inserting only 0.3*N from unused ones
-    def fill_used_cl_ids_table(self):
+    def fill_used_cl_ids_table(self, fair, limit):
         t = time.time()
-        if not options.fair:
-            self.insert_into_used_cls_ids_from_clstats(min_used=30, limit=options.limit/5)
-            self.insert_into_used_cls_ids_from_clstats(min_used=20, limit=options.limit/4)
-            self.insert_into_used_cls_ids_from_clstats(min_used=5, limit=options.limit/3)
-            self.insert_into_used_cls_ids_from_clstats(min_used=1, limit=options.limit/2)
+        if not fair:
+            self.insert_into_used_cls_ids_from_clstats(min_used=30, limit=limit/5)
+            self.insert_into_used_cls_ids_from_clstats(min_used=20, limit=limit/4)
+            self.insert_into_used_cls_ids_from_clstats(min_used=5, limit=limit/3)
+            self.insert_into_used_cls_ids_from_clstats(min_used=1, limit=limit/2)
 
-        #self.insert_into_used_cls_ids_ternary_resolvents(limit=options.limit/2)
-        self.insert_into_used_cls_ids_from_clstats(min_used=0, limit=options.limit, max_used=0)
+        #self.insert_into_used_cls_ids_ternary_resolvents(limit=limit/2)
+        self.insert_into_used_cls_ids_from_clstats(min_used=0, limit=limit, max_used=None)
 
         q = """
         select count()
@@ -338,6 +338,22 @@ class QueryDatRem(helper.QueryHelper):
         queries = ""
         for row in rows:
             print("-> index:", row)
+
+    def create_used_clauses_red(self):
+        t = time.time()
+        q = """
+        CREATE TABLE used_clauses_red AS
+        SELECT * FROM used_clauses WHERE clauseID IN (SELECT clauseID from used_cl_ids );
+        """
+
+        self.c.execute(q)
+        print("Filtered into used_clauses_red T: %-3.2f s" % (time.time() - t))
+
+    def drop_used_clauses_red(self):
+        q = """
+        drop TABLE if exists used_clauses_red;
+        """
+        self.c.execute(q)
 
     def filter_tables_of_ids(self):
         self.print_idxs()
@@ -649,21 +665,6 @@ if __name__ == "__main__":
         print("      and we need lots of positive datapoints")
         print("      most of which will be from clauses that are more used")
 
-
-    # without filter
-    with helper.QueryFill(args[0]) as q:
-        q.delete_all()
-        q.create_indexes(options.verbose)
-        q.fill_used_later()
-        q.fill_used_later_X("short", 10000)
-        q.fill_used_later_X("long", 50000)
-    with QueryDatRem(args[0]) as q:
-        q.get_all_avg_median_percentile_X("short")
-        q.get_all_avg_median_percentile_X("long")
-
-    with helper.QueryFill(args[0]) as q:
-        q.delete_all()
-
     with QueryDatRem(args[0]) as q:
         q.check_db_sanity()
 
@@ -671,9 +672,49 @@ if __name__ == "__main__":
         if not options.noidx:
             helper.drop_idxs(q.c)
             q.create_indexes1()
-        q.recreate_used_ID_table()
         q.remove_too_many_vardata()
-        q.fill_used_cl_ids_table()
+        # sample fairly for used_clauses_red
+        q.recreate_used_ID_table()
+        q.fill_used_cl_ids_table(True, limit=4*options.limit)
+        q.drop_used_clauses_red()
+        q.create_used_clauses_red()
+
+    if False:
+        print("This is good for verifying that the fast ones are close")
+        # slower percentiles
+        t = time.time()
+        with helper.QueryFill(args[0]) as q:
+            q.delete_all()
+            q.create_indexes(options.verbose)
+            q.fill_used_later()
+            q.fill_used_later_X("short", 10000)
+            q.fill_used_later_X("long", 50000)
+        with QueryDatRem(args[0]) as q:
+            q.get_all_avg_median_percentile_X("short")
+            q.get_all_avg_median_percentile_X("long")
+        with helper.QueryFill(args[0]) as q:
+            q.delete_all()
+        print("SLOWER percentiles:", time.time()-t)
+
+    # faster percentiles
+    t = time.time()
+    with helper.QueryFill(args[0]) as q:
+        q.delete_all()
+        q.create_indexes(options.verbose, used_clauses="used_clauses_red")
+        q.fill_used_later(used_clauses="used_clauses_red")
+        q.fill_used_later_X("short", 10000, used_clauses="used_clauses_red")
+        q.fill_used_later_X("long", 50000, used_clauses="used_clauses_red")
+    with QueryDatRem(args[0]) as q:
+        q.get_all_avg_median_percentile_X("short")
+        q.get_all_avg_median_percentile_X("long")
+    with helper.QueryFill(args[0]) as q:
+        q.delete_all()
+    print("FASTER percentiles:", time.time()-t)
+
+    with QueryDatRem(args[0]) as q:
+        q.recreate_used_ID_table()
+        q.drop_used_clauses_red()
+        q.fill_used_cl_ids_table(options.fair, limit=options.limit)
         q.filter_tables_of_ids()
         q.print_sum_cl_use_distrib()
         q.del_table_and_vacuum()
