@@ -2166,7 +2166,7 @@ void Searcher::clean_clauses_if_needed()
 void Searcher::rebuildOrderHeap()
 {
     if (conf.verbosity) {
-        cout << "c [branch] rebuilding order heap for branch: " <<
+        cout << "c [branch] rebuilding order heap for all branchings. Current branching: " <<
         branch_type_to_string(branch_strategy) << endl;
     }
     vector<uint32_t> vs;
