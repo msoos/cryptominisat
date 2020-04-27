@@ -427,6 +427,7 @@ void Searcher::add_literals_from_confl_to_learnt(
             if (!update_bogoprops) {
                 cl->stats.used_for_uip_creation++;
                 cl->stats.sum_uip1_used++;
+                assert(!cl->red() || cl->stats.introduced_at_conflict != 0);
                 cl->stats.sum_delta_confl_uip1_used += sumConflicts - cl->stats.introduced_at_conflict;
             }
             #endif
@@ -1721,7 +1722,7 @@ Clause* Searcher::handle_last_confl(
         , to_dump ? clauseID : 0
         #endif
         );
-        cl->makeRed();
+        cl->makeRed(sumConflicts);
         cl->stats.glue = glue;
         #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
         cl->stats.orig_glue = glue;
@@ -3450,7 +3451,7 @@ void Searcher::read_long_cls(
         #endif
         );
         if (red) {
-            cl->makeRed();
+            cl->makeRed(sumConflicts);
         }
         cl->stats = cl_stats;
         attachClause(*cl);

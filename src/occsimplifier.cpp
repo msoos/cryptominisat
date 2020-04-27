@@ -644,6 +644,9 @@ void OccSimplifier::add_back_to_solver()
         if (complete_clean_clause(*cl)) {
             solver->attachClause(*cl);
             if (cl->red()) {
+                #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+                assert(cl->stats.introduced_at_conflict != 0);
+                #endif
                 assert(cl->stats.which_red_array < solver->longRedCls.size());
                 #ifndef FINAL_PREDICTOR
                 if (cl->stats.locked_for_data_gen) {
@@ -1322,6 +1325,21 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         }
 
         #ifdef SLOW_DEBUG
+        #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+        for (ClOffset offs: clauses) {
+            Clause* cl = solver->cl_alloc.ptr(offs);
+            if (cl->freed())
+                continue;
+            if (!cl->red()) {
+                continue;
+            }
+            assert(cl->stats.introduced_at_conflict != 0);
+        }
+        #endif
+        #endif
+
+
+        #ifdef SLOW_DEBUG
         solver->check_implicit_stats(true);
         solver->check_assumptions_sanity();
         #endif
@@ -1635,6 +1653,10 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
             break;
 
         if (newCl != NULL) {
+            #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+            assert(newCl->stats.introduced_at_conflict != 0);
+            #endif
+
             newCl->is_ternary_resolvent = true;
             assert(newCl->stats.which_red_array == 1);
             assert(newCl->stats.glue == solver->conf.glue_put_lev1_if_below_or_eq);
@@ -2455,22 +2477,20 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
             //Calculate new clause stats
             ClauseStats stats;
             bool is_xor = false;
-            if (solver->conf.force_preserve_xors) {
-                if (it->isBin() && it2->isClause()) {
-                    Clause* c = solver->cl_alloc.ptr(it2->get_offset());
-                    stats = c->stats;
-                    is_xor |= c->used_in_xor();
-                } else if (it2->isBin() && it->isClause()) {
-                    Clause* c = solver->cl_alloc.ptr(it->get_offset());
-                    stats = c->stats;
-                    is_xor |= c->used_in_xor();
-                } else if (it2->isClause() && it->isClause()) {
-                    Clause* c1 = solver->cl_alloc.ptr(it->get_offset());
-                    Clause* c2 = solver->cl_alloc.ptr(it2->get_offset());
-                    stats = ClauseStats::combineStats(c1->stats, c2->stats);
-                    is_xor |= c1->used_in_xor();
-                    is_xor |= c2->used_in_xor();
-                }
+            if (it->isBin() && it2->isClause()) {
+                Clause* c = solver->cl_alloc.ptr(it2->get_offset());
+                stats = c->stats;
+                is_xor |= c->used_in_xor();
+            } else if (it2->isBin() && it->isClause()) {
+                Clause* c = solver->cl_alloc.ptr(it->get_offset());
+                stats = c->stats;
+                is_xor |= c->used_in_xor();
+            } else if (it2->isClause() && it->isClause()) {
+                Clause* c1 = solver->cl_alloc.ptr(it->get_offset());
+                Clause* c2 = solver->cl_alloc.ptr(it2->get_offset());
+                stats = ClauseStats::combineStats(c1->stats, c2->stats);
+                is_xor |= c1->used_in_xor();
+                is_xor |= c2->used_in_xor();
             }
             //must clear marking that has been set due to gate
             stats.marked_clause = 0;
@@ -3182,6 +3202,10 @@ void OccSimplifier::linkInClause(Clause& cl)
             n_occurs[l.toInt()]++;
             added_cl_to_var.touch(l.var());
         }
+    } else {
+        #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+        assert(cl.stats.introduced_at_conflict != 0);
+        #endif
     }
     assert(cl.stats.marked_clause == 0 && "marks must always be zero at linkin");
 

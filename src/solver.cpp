@@ -487,11 +487,12 @@ Clause* Solver::add_clause_int(
             #endif
             );
             if (red) {
-                c->makeRed();
+                c->makeRed(sumConflicts);
             }
             c->stats = cl_stats;
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             c->stats.introduced_at_conflict = introduced_at_conflict;
+            assert(!c->red() || introduced_at_conflict != 0);
             #endif
 
             //In class 'OccSimplifier' we don't need to attach normall

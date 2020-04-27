@@ -207,7 +207,13 @@ struct ClauseStats
         ret.activity = std::max(first.activity, second.activity);
 
         #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
-        ret.introduced_at_conflict = std::min(first.introduced_at_conflict, second.introduced_at_conflict);
+        if (first.introduced_at_conflict == 0) {
+            ret.introduced_at_conflict = second.introduced_at_conflict;
+        } else if (second.introduced_at_conflict == 0) {
+            ret.introduced_at_conflict = first.introduced_at_conflict;
+        } else {
+            ret.introduced_at_conflict = std::min(first.introduced_at_conflict, second.introduced_at_conflict);
+        }
         ret.used_for_uip_creation = first.used_for_uip_creation + second.used_for_uip_creation;
         ret.propagations_made = first.propagations_made + second.propagations_made;
         #endif
@@ -412,9 +418,12 @@ public:
         isRed = false;
     }
 
-    void makeRed()
+    void makeRed(uint64_t confl_num)
     {
         isRed = true;
+        #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+        stats.introduced_at_conflict = confl_num;
+        #endif
     }
 
     void strengthen(const Lit p)
