@@ -111,11 +111,11 @@ class Learner:
 
     @staticmethod
     def fix_feat_name(x):
-        x = re.sub(r"dump_no", r"dump_number", x)
+        x = re.sub(r"dump_no", r"dump_no", x)
         x = re.sub(r"^cl_", r"", x)
         x = re.sub(r"^rdb0_", r"", x)
 
-        if x == "dump_number":
+        if x == "dump_no":
             pass
         elif x == "last_touched_diff":
             pass

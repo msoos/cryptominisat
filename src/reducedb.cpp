@@ -231,7 +231,7 @@ void ReduceDB::dump_sql_cl_data(
             , all_learnt.size()
         );
         added_to_db++;
-        cl->stats.dump_number++;
+        cl->stats.dump_no++;
         cl->stats.reset_rdb_stats();
     }
     solver->sqlStats->end_transaction();
@@ -371,7 +371,7 @@ void ReduceDB::handle_lev3_final_predictor()
 
             //Check for long keep
             if (cl->stats.locked_long == 0
-                && cl->stats.dump_number > 0
+                && cl->stats.dump_no > 0
                 && predictors->predict_long(
                 cl
                 , solver->sumConflicts
@@ -386,7 +386,7 @@ void ReduceDB::handle_lev3_final_predictor()
 
             const bool locked = solver->clause_locked(*cl, offset);
             if (cl->stats.locked_long == 0
-                && cl->stats.dump_number > 0 //don't delete 1st time around
+                && cl->stats.dump_no > 0 //don't delete 1st time around
                 && !locked
                 && predictors->predict_short(
                 cl
@@ -399,7 +399,7 @@ void ReduceDB::handle_lev3_final_predictor()
                 solver->watches.smudge((*cl)[0]);
                 solver->watches.smudge((*cl)[1]);
                 solver->litStats.redLits -= cl->size();
-                assert(cl->stats.dump_number > 0 && "or rdb1 data is wrong!");
+                assert(cl->stats.dump_no > 0 && "or rdb1 data is wrong!");
 
                 *solver->drat << del << *cl << fin;
                 cl->setRemoved();
@@ -410,17 +410,17 @@ void ReduceDB::handle_lev3_final_predictor()
                     cl->stats.locked_long--;
                 } else if (locked) {
                     kept_locked++;
-                } else if (cl->stats.dump_number == 0) {
+                } else if (cl->stats.dump_no == 0) {
                     kept_dump_no++;
                 } else {
                     kept_short++;
                 }
                 solver->longRedCls[3][j++] = offset;
-                tot_dumpno += cl->stats.dump_number;
-                dumpno_zero += (cl->stats.dump_number == 0);
-                dumpno_nonz += (cl->stats.dump_number != 0);
+                tot_dumpno += cl->stats.dump_no;
+                dumpno_zero += (cl->stats.dump_no == 0);
+                dumpno_nonz += (cl->stats.dump_no != 0);
             }
-            cl->stats.dump_number++;
+            cl->stats.dump_no++;
             cl->stats.rdb1_act_ranking_top_10 = act_ranking_top_10;
             cl->stats.rdb1_act_ranking_rel = act_ranking_rel;
             cl->stats.rdb1_last_touched_diff = last_touched_diff;

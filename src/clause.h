@@ -160,7 +160,7 @@ struct ClauseStats
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
     uint32_t orig_glue;
-    uint16_t dump_number = 0;
+    uint16_t dump_no = 0;
     uint32_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
 
     //for average and sum stats

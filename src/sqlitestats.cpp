@@ -685,7 +685,7 @@ void SQLiteStats::reduceDB(
     , const uint32_t act_ranking
     , const uint32_t tot_cls_in_db
 ) {
-    assert(cl->stats.dump_number != std::numeric_limits<uint16_t>::max());
+    assert(cl->stats.dump_no != std::numeric_limits<uint16_t>::max());
 
     int bindAt = 1;
     sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->get_solve_stats().num_simplify);
@@ -697,7 +697,7 @@ void SQLiteStats::reduceDB(
 
     //data
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.ID);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.dump_number);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.dump_no);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.conflicts_made);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.propagations_made);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.clause_looked_at);
