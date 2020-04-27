@@ -151,8 +151,8 @@ struct ClauseStats
     float       branch_depth_hist_queue;
     float       num_resolutions_hist_lt;
     uint32_t    trail_depth_hist_longer;
-    float       rdb1_act_ranking_rel;
-    uint8_t     rdb1_act_ranking_top_10;
+    float       rdb1_act_ranking_rel = 0;
+    uint8_t     rdb1_act_ranking_top_10 = 0;
 
     //for locking in for long
     uint8_t    locked_long = 0;
