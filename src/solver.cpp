@@ -405,8 +405,12 @@ Clause* Solver::add_clause_int(
 
     //Make cl_stats sane
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-    uint64_t introduced_at_conflict =
-        std::min<uint64_t>(Searcher::sumConflicts, cl_stats.introduced_at_conflict);
+    uint64_t introduced_at_conflict;
+    if (cl_stats.introduced_at_conflict == 0) {
+        introduced_at_conflict = sumConflicts;
+    } else {
+        introduced_at_conflict = cl_stats.introduced_at_conflict;
+    }
     #endif
 
     add_clause_int_tmp_cl = lits;
