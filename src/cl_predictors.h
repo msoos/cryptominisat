@@ -23,7 +23,7 @@ THE SOFTWARE.
 #ifndef __CLPREDICTOR_H__
 #define __CLPREDICTOR_H__
 
-#define PRED_COLS 25
+#define PRED_COLS 28
 
 #include <vector>
 #include <string>
@@ -39,7 +39,7 @@ class Clause;
 class ClPredictors
 {
 public:
-    ClPredictors();
+    ClPredictors(Solver* solver);
     ~ClPredictors();
     void load_models(std::string short_fname, std::string long_fname);
     float predict_short(const CMSat::Clause* cl
@@ -68,6 +68,7 @@ private:
     vector<BoosterHandle> handles;
     float train[PRED_COLS];
     DMatrixHandle dmat;
+    Solver* solver;
 };
 
 }

@@ -1,3 +1,6 @@
+((rdb0.propagations_made+rdb1.propagations_made)/log2(cl.num_resolutions_hist_lt))
+((rdb0.propagations_made+rdb1.propagations_made)/log2(cl.orig_glue))
+((rdb0.sum_uip1_used/cl.time_inside_solver)/log2(cl.glue_before_minim))
 cl.glue_hist_long
 cl.glue_hist_queue
 cl.glue_hist

@@ -22,13 +22,16 @@ THE SOFTWARE.
 
 #include "cl_predictors.h"
 #include "clause.h"
+#include "solver.h"
+#include <cmath>
 #define MISSING_VAL -1334556787
 
 using namespace CMSat;
 
 enum predict_type {short_pred=0, long_pred=1};
 
-ClPredictors::ClPredictors()
+ClPredictors::ClPredictors(Solver* _solver) :
+    solver(_solver)
 {
     BoosterHandle handle;
     int ret;
@@ -74,6 +77,19 @@ void ClPredictors::set_up_input(
 {
     float *at = train;
     uint32_t x = 0;
+    at[x++] = ((double)(cl->stats.propagations_made+cl->stats.rdb1_propagations_made))
+        /::log2(cl->stats.num_resolutions_hist_lt);
+    //((rdb0.propagations_made+rdb1.propagations_made)/log2(cl.num_resolutions_hist_lt))
+
+    at[x++] = ((double)(cl->stats.propagations_made+cl->stats.rdb1_propagations_made))
+        /::log2(cl->stats.orig_glue);
+    //((rdb0.propagations_made+rdb1.propagations_made)/log2(cl.orig_glue))
+
+    uint64_t time_inside_solver = solver->sumConflicts - cl->stats.introduced_at_conflict;
+    at[x++] = ((double)cl->stats.sum_uip1_used/(double)time_inside_solver)
+        /::log2(cl->stats.glue_before_minim);
+    //((rdb0.sum_uip1_used/cl.time_inside_solver)/log2(cl.glue_before_minim))
+
     at[x++] = cl->stats.glue_hist_long;                           //cl.glue_hist_long
     at[x++] = cl->stats.glue_hist_queue;                          //cl.glue_hist_queue
     at[x++] = cl->stats.glue_hist;                                //cl.glue_hist
@@ -84,7 +100,8 @@ void ClPredictors::set_up_input(
     at[x++] = cl->size();                                         //rdb0.size
     at[x++] = cl->stats.used_for_uip_creation;                    //rdb0.used_for_uip_creation
     at[x++] = cl->stats.rdb1_used_for_uip_creation;               //rdb1.used_for_uip_creation
-    at[x++] = cl->stats.num_overlap_literals;                     //cl.num_overlap_literals
+    //at[x++] = cl->stats.num_overlap_literals;                     //cl.num_overlap_literals
+    at[x++] = MISSING_VAL;
     at[x++] = cl->stats.antec_overlap_hist;                       //cl.antec_overlap_hist
     at[x++] = cl->stats.num_total_lits_antecedents;               //cl.num_total_lits_antecedents
     at[x++] = cl->stats.rdb1_last_touched_diff;                   //rdb1.last_touched_diff
@@ -92,13 +109,19 @@ void ClPredictors::set_up_input(
     at[x++] = cl->stats.branch_depth_hist_queue;                  //cl.branch_depth_hist_queue
     at[x++] = cl->stats.num_resolutions_hist_lt;                  //cl.num_resolutions_hist_lt
     at[x++] = cl->stats.trail_depth_hist_longer;                  //cl.trail_depth_hist_longer
-    at[x++] = act_ranking_rel;                                    //rdb0_act_ranking_rel
+//     at[x++] = act_ranking_rel;                                    //rdb0_act_ranking_rel
+    at[x++] = MISSING_VAL;
     at[x++] = cl->stats.propagations_made;                        //rdb0.propagations_made
     at[x++] = cl->stats.rdb1_propagations_made;                   //rdb1.propagations_made
-    at[x++] = act_ranking_top_10;                                 //rdb0.act_ranking_top_10
-    at[x++] = cl->stats.rdb1_act_ranking_top_10;                  //rdb1.act_ranking_top_10
+//     at[x++] = act_ranking_top_10;                                 //rdb0.act_ranking_top_10
+    at[x++] = MISSING_VAL;
+//     at[x++] = cl->stats.rdb1_act_ranking_top_10;                  //rdb1.act_ranking_top_10
+    at[x++] = MISSING_VAL;
     at[x++] = cl->stats.is_decision;                              //cl.is_decision
     at[x++] = cl->is_ternary_resolvent;                           //rdb0.is_ternary_resolvent
+//     at[x++] = cl->stats.sum_uip1_used;                            //rdb0.sum_uip1_used
+//     at[x++] = cl->stats.dump_no;                                        //rdb0.dump_no
+
     assert(x==cols);
 }
 
