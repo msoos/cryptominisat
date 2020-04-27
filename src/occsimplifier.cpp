@@ -645,7 +645,10 @@ void OccSimplifier::add_back_to_solver()
             solver->attachClause(*cl);
             if (cl->red()) {
                 #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-                assert(cl->stats.introduced_at_conflict != 0 || solver->sumConflicts == 0);
+                assert(
+                    cl->stats.introduced_at_conflict != 0 ||
+                    solver->sumConflicts == 0 ||
+                    solver->conf.simplify_at_startup == 1);
                 #endif
                 assert(cl->stats.which_red_array < solver->longRedCls.size());
                 #ifndef FINAL_PREDICTOR
@@ -1654,7 +1657,10 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
 
         if (newCl != NULL) {
             #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-            assert(newCl->stats.introduced_at_conflict != 0 || solver->sumConflicts == 0);
+            assert(
+                cl->stats.introduced_at_conflict != 0 ||
+                solver->sumConflicts == 0 ||
+                solver->conf.simplify_at_startup == 1);
             #endif
 
             newCl->is_ternary_resolvent = true;
@@ -1664,7 +1670,7 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
             double myrnd = solver->mtrand.randDblExc();
             if (myrnd <= solver->conf.dump_individual_cldata_ratio) {
                 newCl->stats.ID = solver->clauseID++;
-                assert(false && "It will be dumped, but `restart` and `clause_data` will be missing and learning will succeed but prediction of ternaries will be off");
+                assert(false && "TODO: for ternary we need to create an element that has lots of NULLs in the clause_stats and assign it to a restart (last restart probably)");
             }
             #endif
             linkInClause(*newCl);
@@ -3204,7 +3210,10 @@ void OccSimplifier::linkInClause(Clause& cl)
         }
     } else {
         #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-        assert(cl.stats.introduced_at_conflict != 0 || solver->sumConflicts == 0);
+        assert(
+            cl.stats.introduced_at_conflict != 0 ||
+            solver->sumConflicts == 0 ||
+            solver->conf.simplify_at_startup == 1);
         #endif
     }
     assert(cl.stats.marked_clause == 0 && "marks must always be zero at linkin");
