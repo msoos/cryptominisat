@@ -645,7 +645,7 @@ void OccSimplifier::add_back_to_solver()
             solver->attachClause(*cl);
             if (cl->red()) {
                 #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-                assert(cl->stats.introduced_at_conflict != 0);
+                assert(cl->stats.introduced_at_conflict != 0 || solver->sumConflicts == 0);
                 #endif
                 assert(cl->stats.which_red_array < solver->longRedCls.size());
                 #ifndef FINAL_PREDICTOR
@@ -1654,7 +1654,7 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
 
         if (newCl != NULL) {
             #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-            assert(newCl->stats.introduced_at_conflict != 0);
+            assert(newCl->stats.introduced_at_conflict != 0 || solver->sumConflicts == 0);
             #endif
 
             newCl->is_ternary_resolvent = true;
@@ -3204,7 +3204,7 @@ void OccSimplifier::linkInClause(Clause& cl)
         }
     } else {
         #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-        assert(cl.stats.introduced_at_conflict != 0);
+        assert(cl.stats.introduced_at_conflict != 0 || solver->sumConflicts == 0);
         #endif
     }
     assert(cl.stats.marked_clause == 0 && "marks must always be zero at linkin");
