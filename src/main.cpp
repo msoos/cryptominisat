@@ -1137,12 +1137,12 @@ void Main::manually_parse_some_options()
         }
 
         if (vm.count("schedule")) {
-            std::cerr << "ERROR: Pleaase adjust the --preschedule not the --schedule when preprocessing. Exiting." << endl;
+            std::cerr << "ERROR: Please adjust the --preschedule not the --schedule when preprocessing. Exiting." << endl;
             std::exit(-1);
         }
 
         if (vm.count("occschedule")) {
-            std::cerr << "ERROR: Pleaase adjust the --preoccschedule not the --occschedule when preprocessing. Exiting." << endl;
+            std::cerr << "ERROR: Please adjust the --preoccschedule not the --occschedule when preprocessing. Exiting." << endl;
             std::exit(-1);
         }
 

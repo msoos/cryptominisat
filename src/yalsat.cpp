@@ -166,7 +166,7 @@ Yalsat::add_cl_ret Yalsat::add_this_clause(const T& cl)
 
 bool Yalsat::init_problem()
 {
-    if (solver->check_assumptions_contradict_foced_assignement())
+    if (solver->check_assumptions_contradict_foced_assignment())
     {
         return false;
     }
@@ -214,7 +214,7 @@ lbool Yalsat::deal_with_solution(int res)
 
     if (solver->conf.sls_get_phase || res == 10) {
         if (solver->conf.verbosity) {
-            cout << "c [yalsat] saving best assignement phase -- it had " << yals_minimum(yals) << " clauses unsatisfied" << endl;
+            cout << "c [yalsat] saving best assignment phase -- it had " << yals_minimum(yals) << " clauses unsatisfied" << endl;
         }
 
         for(size_t i = 0; i < solver->nVars(); i++) {

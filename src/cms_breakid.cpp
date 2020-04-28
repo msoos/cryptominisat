@@ -208,7 +208,7 @@ bool BreakID::doit()
         return false;
     }
 
-    if (solver->check_assumptions_contradict_foced_assignement()) {
+    if (solver->check_assumptions_contradict_foced_assignment()) {
         if (solver->conf.verbosity) {
             cout
             << "c [breakid] forced assignements contradicted by assumptions, cannot run"

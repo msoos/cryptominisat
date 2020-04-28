@@ -157,7 +157,7 @@ void PropEngine::detach_modified_clause(
 /**
 @brief Propagates a binary clause
 
-Need to be somewhat tricky if the clause indicates that current assignement
+Need to be somewhat tricky if the clause indicates that current assignment
 is incorrect (i.e. both literals evaluate to FALSE). If conflict if found,
 sets failBinLit
 */

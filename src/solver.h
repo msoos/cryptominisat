@@ -277,7 +277,7 @@ class Solver : public Searcher
         vector<Lit> inter_assumptions_tmp; //used by set_assumptions() ONLY
         void add_assumption(const Lit assump);
         void check_assigns_for_assumptions() const;
-        bool check_assumptions_contradict_foced_assignement() const;
+        bool check_assumptions_contradict_foced_assignment() const;
 
 
         //if set to TRUE, a clause has been removed during add_clause_int

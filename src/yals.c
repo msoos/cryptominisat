@@ -232,7 +232,7 @@ enum ClausePicking {
 
 #define OPTSTEMPLATE \
   OPT (best,0,0,1,"always pick best assignment during restart"); \
-  OPT (breakzero,0,0,1,"always use break zero literal if possibe"); \
+  OPT (breakzero,0,0,1,"always use break zero literal if possible"); \
   OPT (cached,1,0,1,"use cached assignment during restart"); \
   OPT (cacheduni,0,0,1,"pick random cached assignment uniformly"); \
   OPT (cachemax,(1<<10),0,(1<<20),"max cache size of saved assignments"); \
@@ -244,7 +244,7 @@ enum ClausePicking {
   OPT (geomfreq,66,0,100,"geometric picking first frequency (percent)"); \
   OPT (hitlim,-1,-1,INT_MAX,"minimum hit limit"); \
   OPT (keep,0,0,1,"keep assignment during restart"); \
-  OPT (minchunksize,(1<<8),2,(1<<20),"minium queue chunk size"); \
+  OPT (minchunksize,(1<<8),2,(1<<20),"minimum queue chunk size"); \
   OPT (pick,4,-1,4,"-1=pbfs,0=rnd,1=bfs,2=dfs,3=rbfs,4=ubfs"); \
   OPT (pol,0,-1,1,"negative=-1 positive=1 or random=0 polarity"); \
   OPT (prep,1,0,1,"preprocessing through unit propagation"); \
@@ -1718,7 +1718,7 @@ static void yals_cache_assignment (Yals * yals) {
     for (j = 0; j < yals->nvarwords; j++)
       if (other_vals[j] != yals->tmp[j]) break;
     if (j == yals->nvarwords) {
-      yals_msg (yals, 2, "current assigment already in cache");
+      yals_msg (yals, 2, "current assignment already in cache");
       yals->stats.cache.skipped++;
       yals->stats.sig.truepos++;
       return;
@@ -1755,7 +1755,7 @@ static void yals_cache_assignment (Yals * yals) {
   if (ncache < yals->cachesizetarget) {
 PUSH_ASSIGNMENT:
     yals_msg (yals, 2,
-      "pushing current assigment with minimum %d in cache as assignment %d",
+      "pushing current assignment with minimum %d in cache as assignment %d",
       min, ncache);
     NEWN (other_vals, yals->nvarwords);
     memcpy (other_vals, yals->tmp, bytes);

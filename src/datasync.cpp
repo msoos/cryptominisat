@@ -422,7 +422,6 @@ bool DataSync::syncFromMPI()
 
     uint32_t thisMpiRecvUnitData = 0;
     uint32_t thisMpiRecvBinData = 0;
-    uint32_t thisMpiRecvTriData = 0;
 
     err = MPI_Iprobe(0, 0, MPI_COMM_WORLD, &flag, &status);
     assert(err == MPI_SUCCESS);

@@ -418,7 +418,11 @@ public:
         isRed = false;
     }
 
-    void makeRed(uint64_t confl_num)
+    void makeRed(uint64_t
+    #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+    confl_num
+    #endif
+    )
     {
         isRed = true;
         #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
