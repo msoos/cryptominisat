@@ -26,7 +26,6 @@ import matplotlib.pyplot as plt
 import sklearn
 import sklearn.metrics
 import re
-import crystalcodegen as ccg
 import ast
 import math
 import time
