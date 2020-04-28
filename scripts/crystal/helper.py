@@ -734,6 +734,7 @@ def cldata_add_computed_features(df, verbose):
     for col in cols:
         if ("rdb" in col or "cl." in col or "rst" in col) and "restart_type" not in col and "tot_cls_in" not in col and "rst_cur" not in col:
             for divisor in divisors:
+                divide(divisor, col)
                 divide(col, divisor)
 
     divisors.extend([

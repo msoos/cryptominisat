@@ -173,7 +173,7 @@ class QueryCls (helper.QueryHelper):
 
             -- useful in the next round
             (used_later_short.used_later_short >= {name_short_top_non_zero_X_perc}
-            or used_later.used_later >= ({name_top_non_zero_10_perc}))
+            or used_later.used_later >= ({name_top_non_zero_15_perc}))
 
             THEN 1
             ELSE 0

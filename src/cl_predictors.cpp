@@ -76,22 +76,47 @@ void ClPredictors::set_up_input(
 {
     float *at = train;
     uint32_t x = 0;
-    at[x++] = ((double)(cl->stats.propagations_made+cl->stats.rdb1_propagations_made))
-        /::log2((double)cl->stats.num_resolutions_hist_lt);
+
+    at[x++] =
+        ((double)(cl->stats.propagations_made+cl->stats.rdb1_propagations_made))/
+        ::log2((double)cl->stats.num_resolutions_hist_lt);
     //((rdb0.propagations_made+rdb1.propagations_made)/log2(cl.num_resolutions_hist_lt))
 
-    at[x++] = ((double)(cl->stats.propagations_made+cl->stats.rdb1_propagations_made))
-        /::log2(cl->stats.orig_glue);
+    //prevent divide by zero
+    double orig_glue = cl->stats.orig_glue;
+    assert(orig_glue != 1);
+    at[x++] =
+        ((double)(cl->stats.propagations_made+cl->stats.rdb1_propagations_made))/
+        ::log2(orig_glue);
     //((rdb0.propagations_made+rdb1.propagations_made)/log2(cl.orig_glue))
 
     uint64_t time_inside_solver = solver->sumConflicts - cl->stats.introduced_at_conflict;
-    at[x++] = ((double)cl->stats.sum_uip1_used/(double)time_inside_solver)
-        /::log2(cl->stats.glue_before_minim);
-    //((rdb0.sum_uip1_used/cl.time_inside_solver)/log2(cl.glue_before_minim))
+    if (time_inside_solver == 0) {
+        //avoid divide by zero
+        time_inside_solver = 1;
+    }
 
-    at[x++] = (double)cl->stats.sum_uip1_used
-        /::log2(cl->stats.glue);
+    //prevent divide by zero
+    double sum_uip1_used = cl->stats.sum_uip1_used;
+    if (sum_uip1_used == 0) {
+        sum_uip1_used = 1;
+    }
+    at[x++] =
+        ::log2(cl->stats.glue_before_minim)/
+        ((double)sum_uip1_used/(double)time_inside_solver);
+    //(log2(cl.glue_before_minim)/(rdb0.sum_uip1_used/cl.time_inside_solver))
+
+
+    //prevent divide by zero
+    double glue = cl->stats.glue;
+    if (glue == 1) {
+        glue = 2;
+    }
+    at[x++] =
+        (double)cl->stats.sum_uip1_used/
+        ::log2(glue);
     //(rdb0.sum_uip1_used/log2(rdb0.glue))
+
 
     at[x++] = ::log2(act_ranking_rel)/(double)cl->stats.orig_glue;
     //(log2(rdb0_act_ranking_rel)/cl.orig_glue)
@@ -99,8 +124,8 @@ void ClPredictors::set_up_input(
     at[x++] = (double)cl->stats.propagations_made/(double)time_inside_solver;
     //(rdb0.propagations_made/cl.time_inside_solver)
 
-    at[x++] = (double)cl->stats.num_total_lits_antecedents/(double)cl->stats.num_antecedents;
-    //(cl.num_total_lits_antecedents/log2(cl.num_antecedents))
+    at[x++] = ::log2((double)cl->stats.num_antecedents)/(double)cl->stats.num_total_lits_antecedents;
+    //(log2(cl.num_antecedents)/cl.num_total_lits_antecedents)
 
 //     at[x++] = cl->stats.glue_hist_long;                           //cl.glue_hist_long
 //     at[x++] = cl->stats.glue_hist_queue;                          //cl.glue_hist_queue
