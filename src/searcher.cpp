@@ -1709,7 +1709,7 @@ Clause* Searcher::handle_last_confl(
         decaying_ratio = 1.0;
     } else {
         //Make it more-than-linearly less
-        decaying_ratio = ::pow(decaying_ratio, 1.1);
+        decaying_ratio = ::pow(decaying_ratio, 1.3);
     }
     if (myrnd <= (conf.dump_individual_cldata_ratio*decaying_ratio)) {
         to_dump = true;
