@@ -23,7 +23,7 @@ THE SOFTWARE.
 #ifndef __CLPREDICTOR_H__
 #define __CLPREDICTOR_H__
 
-#define PRED_COLS 28
+#define PRED_COLS 5
 
 #include <vector>
 #include <string>
@@ -63,7 +63,6 @@ private:
         const int64_t  last_touched_diff,
         const double   act_ranking_rel,
         const uint32_t act_ranking_top_10,
-        float *train,
         const uint32_t cols);
     vector<BoosterHandle> handles;
     float train[PRED_COLS];
