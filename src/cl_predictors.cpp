@@ -106,7 +106,6 @@ void ClPredictors::set_up_input(
         ((double)sum_uip1_used/(double)time_inside_solver);
     //(log2(cl.glue_before_minim)/(rdb0.sum_uip1_used/cl.time_inside_solver))
 
-
     //prevent divide by zero
     double glue = cl->stats.glue;
     if (glue == 1) {
@@ -117,7 +116,6 @@ void ClPredictors::set_up_input(
         ::log2(glue);
     //(rdb0.sum_uip1_used/log2(rdb0.glue))
 
-
     at[x++] = ::log2(act_ranking_rel)/(double)cl->stats.orig_glue;
     //(log2(rdb0_act_ranking_rel)/cl.orig_glue)
 
@@ -126,6 +124,38 @@ void ClPredictors::set_up_input(
 
     at[x++] = ::log2((double)cl->stats.num_antecedents)/(double)cl->stats.num_total_lits_antecedents;
     //(log2(cl.num_antecedents)/cl.num_total_lits_antecedents)
+
+
+    at[x++] = (double)cl->size()/
+        (double)cl->stats.glue_hist_long;
+    //(rdb0.size/cl.glue_hist_long)
+
+    at[x++] = (double)cl->stats.propagations_made/
+        ::log2(cl->stats.glue_hist_queue);
+    //(rdb0.propagations_made/(log2(cl.glue_hist_queue)
+
+    at[x++] = (double)cl->stats.propagations_made/
+        (double)cl->stats.orig_glue;
+    //(rdb0.propagations_made/cl.orig_glue)
+
+    double props_made = cl->stats.propagations_made;
+    if (props_made == 0) props_made = 1;
+    at[x++] = ::log2((double)cl->stats.num_resolutions_hist_lt)/
+        (props_made);
+    //(log2(cl.num_resolutions_hist_lt)/rdb0.propagations_made)
+
+
+    at[x++] = (double)cl->stats.propagations_made/
+        ((double)cl->stats.num_total_lits_antecedents/(double)cl->stats.num_antecedents);
+    //(rdb0.propagations_made/(cl.num_total_lits_antecedents/cl.num_antecedents))
+
+    at[x++] = (double)cl->stats.size_hist/
+        (double)props_made;
+    //(cl.size_hist/rdb0.propagations_made)
+
+    at[x++] = (double)cl->stats.propagations_made/
+        (double)cl->stats.antec_overlap_hist;
+    //(rdb0.propagations_made/log2(cl.antec_overlap_hist))
 
 //     at[x++] = cl->stats.glue_hist_long;                           //cl.glue_hist_long
 //     at[x++] = cl->stats.glue_hist_queue;                          //cl.glue_hist_queue
