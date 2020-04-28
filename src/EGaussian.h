@@ -80,7 +80,7 @@ class EGaussian {
         vec<uint32_t> nb_rows; // the non_basic value in each row
 
         // used in orignal matrix
-        PackedMatrix matrix; // The matrix, updated to reflect variable assignements
+        PackedMatrix matrix; // The matrix, updated to reflect variable assignments
         vector<uint32_t> col_to_var; // col_to_var[COL] tells which variable is at a given column in the matrix. Gives unassigned_var if the COL has been zeroed (i.e. the variable assigned)
         uint32_t num_rows; // number of active rows in the matrix. Unactive rows are rows that contain only zeros (and if they are conflicting, then the conflict has been treated)
         uint32_t num_cols; // number of active columns in the matrix. The columns at the end that have all be zeroed are no longer active

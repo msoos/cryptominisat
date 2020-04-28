@@ -143,7 +143,7 @@ CMS_ccnr::add_cl_ret CMS_ccnr::add_this_clause(const T& cl)
 
 bool CMS_ccnr::init_problem()
 {
-    if (solver->check_assumptions_contradict_foced_assignement())
+    if (solver->check_assumptions_contradict_foced_assignment())
     {
         return false;
     }
@@ -209,7 +209,7 @@ lbool CMS_ccnr::deal_with_solution(int res)
     if (solver->conf.sls_get_phase || res) {
         if (solver->conf.verbosity) {
             cout
-            << "c [ccnr] saving best assignement phase"
+            << "c [ccnr] saving best assignment phase"
             << endl;
         }
 

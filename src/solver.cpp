@@ -2380,7 +2380,7 @@ void Solver::print_norm_stats(const double cpu_time, const double cpu_time_total
 
 void Solver::print_full_restart_stat(const double cpu_time, const double cpu_time_total) const
 {
-    cout << "c All times are for this thread only except if explicity specified" << endl;
+    cout << "c All times are for this thread only except if explicitly specified" << endl;
     sumSearchStats.print(sumPropStats.propagations, conf.do_print_times);
     sumPropStats.print(sumSearchStats.cpu_time);
     print_stats_line("c props/decision"
@@ -4254,7 +4254,7 @@ void Solver::check_assigns_for_assumptions() const
     }
 }
 
-bool Solver::check_assumptions_contradict_foced_assignement() const
+bool Solver::check_assumptions_contradict_foced_assignment() const
 {
     for (auto& ass: solver->assumptions) {
         if (value(ass.lit_inter) == l_False) {
