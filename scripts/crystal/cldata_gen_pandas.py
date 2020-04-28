@@ -167,7 +167,18 @@ class QueryCls (helper.QueryHelper):
         ############
         # Labeling SHORT
         ############
-        if self.conf == 2:
+        if self.conf == 1:
+            self.case_stmt_short = """
+            CASE WHEN
+
+            -- useful in the next round
+            used_later_short.used_later_short >= {name_short_top_non_zero_X_perc}
+
+            THEN 1
+            ELSE 0
+            END AS `x.class`
+            """
+        elif self.conf == 2:
             self.case_stmt_short = """
             CASE WHEN
 
@@ -185,7 +196,18 @@ class QueryCls (helper.QueryHelper):
         ############
         # Labeling LONG
         ############
-        if self.conf == 2:
+        if self.conf == 1:
+            self.case_stmt_long = """
+            CASE WHEN
+
+            -- useful in the next round
+            used_later_long.used_later_long >= {name_long_top_non_zero_X_perc}
+
+            THEN 1
+            ELSE 0
+            END AS `x.class`
+            """
+        elif self.conf == 2:
             self.case_stmt_long = """
             CASE WHEN
 
@@ -457,10 +479,12 @@ def one_database(dbfname):
             cleanname = re.sub(r'\.cnf.gz.sqlite$', '', dbfname)
             cleanname = re.sub(r'\.db$', '', dbfname)
             cleanname = re.sub(r'\.sqlitedb$', '', dbfname)
-            cleanname = "{cleanname}-cldata-{long_or_short}-conf-{conf}".format(
+            cleanname = "{cleanname}-cldata-{long_or_short}-conf-{conf}-pshort{percshort}-plong{perclong}".format(
                 cleanname=cleanname,
                 long_or_short=long_or_short,
-                conf=conf)
+                conf=conf,
+                percshort=options.top_percentile_short,
+                perclong=options.top_percentile_long)
 
             # some cleanup, stats
             df["fname"] = df["fname"].astype("category")
