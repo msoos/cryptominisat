@@ -420,7 +420,7 @@ class QueryDatRem(helper.QueryHelper):
 
 
         print("Total: %d of which zero_use: %d" % (total, zero_use))
-        if zero_use == 0 or zero_use/total < 0.1:
+        if zero_use == 0 or zero_use/total < 0.01:
             print("ERROR: Zero use is very low, this is almost surely a bug!")
             exit(-1)
 
