@@ -521,7 +521,7 @@ if __name__ == "__main__":
                       help="Don't recreate indexes")
 
     # configs
-    parser.add_option("--confs", default="2-2", type=str,
+    parser.add_option("--confs", default="1-1", type=str,
                       dest="confs", help="Configs to generate. Default: %default")
 
     # lengths of short/long
