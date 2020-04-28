@@ -77,7 +77,7 @@ void ClPredictors::set_up_input(
     float *at = train;
     uint32_t x = 0;
     at[x++] = ((double)(cl->stats.propagations_made+cl->stats.rdb1_propagations_made))
-        /::log2(cl->stats.num_resolutions_hist_lt);
+        /::log2((double)cl->stats.num_resolutions_hist_lt);
     //((rdb0.propagations_made+rdb1.propagations_made)/log2(cl.num_resolutions_hist_lt))
 
     at[x++] = ((double)(cl->stats.propagations_made+cl->stats.rdb1_propagations_made))
@@ -95,6 +95,12 @@ void ClPredictors::set_up_input(
 
     at[x++] = ::log2(act_ranking_rel)/(double)cl->stats.orig_glue;
     //(log2(rdb0_act_ranking_rel)/cl.orig_glue)
+
+    at[x++] = (double)cl->stats.propagations_made/(double)time_inside_solver;
+    //(rdb0.propagations_made/cl.time_inside_solver)
+
+    at[x++] = (double)cl->stats.num_total_lits_antecedents/(double)cl->stats.num_antecedents;
+    //(cl.num_total_lits_antecedents/log2(cl.num_antecedents))
 
 //     at[x++] = cl->stats.glue_hist_long;                           //cl.glue_hist_long
 //     at[x++] = cl->stats.glue_hist_queue;                          //cl.glue_hist_queue
