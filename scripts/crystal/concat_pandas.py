@@ -61,10 +61,14 @@ the same columns."""
         print("----- Reading file %s -------" % fname)
         df = pd.read_pickle(fname)
         print("Read {num} datapoints from {file}".format(num=df.shape[0], file=fname))
+        df["fname"] = df["fname"].astype("str")
+        df["cl.cur_restart_type"] = df["cl.cur_restart_type"].astype("str")
+        df["rdb0.cur_restart_type"] = df["rdb0.cur_restart_type"].astype("str")
+        df["rdb1.cur_restart_type"] = df["rdb1.cur_restart_type"].astype("str")
         dfs.append(df)
 
     print("Concatenating dataframes...")
-    df_full = pd.concat(dfs, sort=False)
+    df_full = pd.concat(dfs)
     print("Concated frame size: %d" % df_full.shape[0])
 
     if options.out is not None:

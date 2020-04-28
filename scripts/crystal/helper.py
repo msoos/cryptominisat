@@ -661,6 +661,16 @@ def cldata_add_computed_features(df, verbose):
     print("Relative overlaps...")
     divide("cl.num_total_lits_antecedents", "cl.antec_sum_size_hist")
 
+    # deleting this feature which is NONE
+    del df["cl.antecedents_glue_long_reds_avg"]
+    del df["cl.antecedents_glue_long_reds_max"]
+    del df["cl.antecedents_glue_long_reds_min"]
+    del df["cl.antecedents_glue_long_reds_var"]
+    del df["cl.antecedents_long_red_age_avg"]
+    del df["cl.antecedents_long_red_age_var"]
+    del df["cl.decision_level_hist"]
+    del df["sum_cl_use.first_confl_used"]
+
     # ************
     # TODO decision level and branch depth are the same, right???
     # ************
