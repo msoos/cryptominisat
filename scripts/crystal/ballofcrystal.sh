@@ -150,7 +150,7 @@ cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 ########################
 # Denormalize the data into a Pandas Table, label it and sample it
 ########################
-../cldata_gen_pandas.py "${FNAMEOUT}-min.db" --limit "$FIXED" --conf 2-2 ${EXTRA_GEN_PANDAS_OPTS} --toppercentileshort 70 --toppercentilelong 70
+../cldata_gen_pandas.py "${FNAMEOUT}-min.db" --limit "$FIXED" --conf 2-2 ${EXTRA_GEN_PANDAS_OPTS} --toppercentileshort 80 --toppercentilelong 70
 # ../vardata_gen_pandas.py "${FNAMEOUT}.db" --limit 1000
 
 mkdir -p ../../src/predict
