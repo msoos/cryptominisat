@@ -1704,13 +1704,12 @@ Clause* Searcher::handle_last_confl(
     //Unfortunately, we have to change the ratio data dumped as time goes on
     //or we run out of space on CNFs that take millions(!) of conflicts
     //to solve, such as e_rphp035_05.cnf
-    double decaying_ratio = (500.0*1000.0)/((double)sumConflicts+1);
-    if (decaying_ratio < 1.0) {
-        decaying_ratio = 1.0
+    double decaying_ratio = (700.0*1000.0)/((double)sumConflicts+1);
+    if (decaying_ratio > 1.0) {
+        decaying_ratio = 1.0;
     } else {
-        //Make it quadratically less. So after 1M conflicts
-        //we gather 1/4th the data
-        decaying_ratio *= decaying_ratio;
+        //Make it more-than-linearly less
+        decaying_ratio = ::pow(decaying_ratio, 1.1);
     }
     if (myrnd <= (conf.dump_individual_cldata_ratio*decaying_ratio)) {
         to_dump = true;
