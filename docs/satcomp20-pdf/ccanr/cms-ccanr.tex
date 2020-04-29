@@ -60,7 +60,7 @@ BreakID has been modified to work as a library. It can receive the clauses on-th
 
 
 \section{Further Improvements Relative to SAT Race 2019}
-Many of the inprocessing parameters have been tuned. A few bugs related to clause activities have been fixed. The VSIDS and Maple decay factors are now iteratively changed between 0.70 and 0.90 for Maple and 0.92 and 0.99 for VSIDS. Between each iteration there is an inprocessing step, as before. This seems to add heterogeneity and avoids having to tune these parameters to a ``single best'' value. Polarity caching is still used, but once in a while, so-called ``stable'' polarities are used, as per CaDiCaL~\cite{cadical} in the SAT Race of 2019.
+Many of the inprocessing parameters have been tuned. A few bugs related to clause activities have been fixed. Clause distillation (or clause vivification)~\cite{DBLP:journals/ai/LiXLMLL20} is now used a lot more, similarly to the previous years' winning solvers. The VSIDS and Maple decay factors are now iteratively changed between 0.70 and 0.90 for Maple and 0.92 and 0.99 for VSIDS. Between each iteration there is an inprocessing step, as before. This seems to add heterogeneity and avoids having to tune these parameters to a ``single best'' value. Polarity caching is still used, but once in a while, so-called ``stable'' polarities are used, as per CaDiCaL~\cite{cadical} in the SAT Race of 2019. Ternary resolution is also used at every inprocessing step, thanks to the suggestion by Armin Biere.
 
 
 \section{Thanks}
