@@ -60,7 +60,7 @@ BreakID has been modified to work as a library. It can receive the clauses on-th
 
 
 \section{Phase Selection using LSIDS}
-LSIDS is a literal activity-based phase-selection heuristic described in an upcoming paper~\cite{shaw2020designing}. LSIDS activity is maintained for each literal, and the activity for literal is updated in a manner very similar to VSIDS. Phase selection is made based on LSIDS activity only if the last backtrack is chronological. An LSIDS based phase selection heuristic looks at the activity of both the literals of a given variable and selects the literal with higher activity.
+LSIDS is a literal activity-based phase selection heuristic~\cite{shaw2020designing}. LSIDS activity is maintained for each literal, and the activity for a literal is updated in a manner similar to VSIDS. Phase selection is made based on LSIDS activity only if the last backtrack is chronological. The LSIDS based phase selection heuristic looks at the activity of both the literals of a given variable and selects the literal with higher activity.
 
 
 \section{Further Improvements Relative to SAT Race 2019}
