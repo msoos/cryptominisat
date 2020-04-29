@@ -167,6 +167,15 @@ void ClPredictors::set_up_input(
         (double)cl->stats.antec_overlap_hist;
     //(rdb0.propagations_made/log2(cl.antec_overlap_hist))
 
+    //avoid log(0)
+    double branch_depth_hist_queue = (double)cl->stats.branch_depth_hist_queue;
+    if (branch_depth_hist_queue == 0) {
+        branch_depth_hist_queue = 1;
+    }
+    at[x++] = ::log2(branch_depth_hist_queue)/
+        (double)props_made;
+    //(log2(cl.branch_depth_hist_queue)/rdb0.propagations_made)
+
     assert(x==cols);
 }
 

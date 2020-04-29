@@ -12,3 +12,4 @@
 (rdb0.propagations_made/(cl.num_total_lits_antecedents/cl.num_antecedents))
 (cl.size_hist/rdb0.propagations_made)
 (rdb0.propagations_made/log2(cl.antec_overlap_hist))
+(log2(cl.branch_depth_hist_queue)/rdb0.propagations_made)
