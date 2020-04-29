@@ -152,6 +152,55 @@ isbn="978-3-319-94144-8"
   year="2018"
 }
 
+@misc {cadical,
+	author="Armin Biere",
+	title="{CaDiCaL SAT solver GitHub page}",
+	url="https://github.com/arminbiere/cadical",
+	year="2020"
+}
+
+@inproceedings{DBLP:conf/sat/CaiLS15,
+
+	author    = {Shaowei Cai and
+Chuan Luo and
+Kaile Su},
+
+	title     = {CCAnr: {A} Configuration Checking Based Local Search Solver for Non-random
+ Satisfiability},
+
+	booktitle = {{SAT} 2015},
+
+	year      = {2015},
+
+	crossref  = {DBLP:conf/sat/2015},
+
+	doi       = {10.1007/978-3-319-24318-4\_1},
+
+}
+
+
+@proceedings{DBLP:conf/sat/2015,
+
+	editor    = {Marijn Heule and
+Sean A. Weaver},
+
+	title     = {{SAT} 2015},
+
+	series    = {LNCS},
+
+	volume    = {9340},
+
+	publisher = {Springer},
+
+	year      = {2015},
+
+	doi       = {10.1007/978-3-319-24318-4},
+
+	isbn      = {978-3-319-24317-7},
+
+}
+
+
 @inproceedings{cheeseman91where,
     author = "Peter Cheeseman and Bob Kanefsky and William M. Taylor",
     title = "Where the Really Hard Problems Are",
@@ -200,6 +249,97 @@ isbn="978-3-540-31679-4"
     pages = {521--532},
     publisher = {}
 }
+
+@INPROCEEDINGS{birdtwo,
+    author = {Mate Soos and Stephan Gocht and Kuldeep S Meel},
+    title = {Accelerating Approximate Techniques for Counting and Sampling Models Through Refined {CNF-XOR} Solving},
+    booktitle = {CAV 2020},
+    year = {2020},
+    publisher = {}
+}
+
+
+
+
+@inproceedings{DBLP:conf/sat/Devriendt0B17,
+
+    author    = {Jo Devriendt and
+
+    Bart Bogaerts and
+
+    Maurice Bruynooghe},
+
+    title     = {Symmetric Explanation Learning: Effective Dynamic Symmetry Handling
+
+    for {SAT}},
+
+    booktitle = {{SAT} 2017},
+
+    pages     = {83--100},
+
+    year      = {2017},
+
+    crossref  = {DBLP:conf/sat/2017},
+
+}
+
+
+@proceedings{DBLP:conf/sat/2017,
+
+    editor    = {Serge Gaspers and
+
+    Toby Walsh},
+
+    title     = {{SAT} 2017},
+
+    series    = {LNCS},
+
+    volume    = {10491},
+
+    publisher = {Springer},
+
+    year      = {2017},
+}
+
+
+
+
+
+
+@inproceedings{DBLP:conf/alenex/JunttilaK07,
+
+    author    = {Tommi A. Junttila and
+
+    Petteri Kaski},
+
+    title     = {Engineering an Efficient Canonical Labeling Tool for Large and Sparse
+
+    Graphs},
+
+    booktitle     = {{ALENEX} 2007},
+
+    year      = {2007},
+
+    crossref  = {DBLP:conf/alenex/2007},
+
+}
+
+
+@proceedings{DBLP:conf/alenex/2007,
+
+    title     = {
+{ALENEX} 2007},
+
+    publisher = {{SIAM}},
+
+    year      = {2007},
+
+    isbn      = {978-1-61197-287-0},
+
+}
+
+
+
 
 
 
@@ -269,3 +409,60 @@ isbn="978-3-540-31679-4"
   bibsource = {dblp computer science bibliography, https://dblp.org}
 }
 
+@InProceedings{breakid2016,
+author="Devriendt, Jo
+and Bogaerts, Bart
+and Bruynooghe, Maurice
+and Denecker, Marc",
+editor="Creignou, Nadia
+and Le Berre, Daniel",
+title="Improved Static Symmetry Breaking for {SAT}",
+booktitle="Theory and Applications of Satisfiability Testing -- SAT 2016",
+year="2016",
+publisher="Springer International Publishing",
+address="Cham",
+pages="104--122",
+abstract="An effective SAT preprocessing technique is the construction of symmetry breaking formulas: auxiliary clauses that guide a SAT solver away from needless exploration of symmetric subproblems. However, during the past decade, state-of-the-art SAT solvers rarely incorporated symmetry breaking. This suggests that the reduction of the search space does not outweigh the overhead incurred by detecting symmetry and constructing symmetry breaking formulas. We investigate three methods to construct more effective symmetry breaking formulas. The first method simply improves the encoding of symmetry breaking formulas. The second detects special symmetry subgroups, for which complete symmetry breaking formulas exist. The third infers binary symmetry breaking clauses for a symmetry group as a whole rather than longer clauses for individual symmetries. We implement these methods in a symmetry breaking preprocessor, and verify their effectiveness on both hand-picked problems as well as the 2014 SAT competition benchmark set. Our experiments indicate that our symmetry breaking preprocessor improves the current state-of-the-art in static symmetry breaking for SAT and has a sufficiently low overhead to improve the performance of modern SAT solvers on hard combinatorial instances.",
+isbn="978-3-319-40970-2",
+doi="10.1007/978-3-319-40970-2\_8",
+url="https://bitbucket.org/krr/breakid"
+}
+
+@article{shatter2006,
+author = {Aloul, Fadi A. and Sakallah, Karem A. and Markov, Igor L.},
+title = {Efficient Symmetry Breaking for {B}oolean Satisfiability},
+year = {2006},
+issue_date = {May 2006},
+publisher = {IEEE Computer Society},
+address = {USA},
+volume = {55},
+number = {5},
+issn = {0018-9340},
+url = {https://doi.org/10.1109/TC.2006.75},
+doi = {10.1109/TC.2006.75},
+journal = {IEEE Trans. Comput.},
+month = may,
+pages = {549–558},
+numpages = {10},
+keywords = {graph automorphism, clause learning, conjunctive normal form (CNF), satisfiability (SAT), symmetries., Backtrack Search}
+}
+
+@article{DBLP:journals/ai/LiXLMLL20,
+  author    = {Chu{-}Min Li and
+               Fan Xiao and
+               Mao Luo and
+               Felip Many{\`{a}} and
+               Zhipeng L{\"{u}} and
+               Yu Li},
+  title     = {Clause vivification by unit propagation in {CDCL} {SAT} solvers},
+  journal   = {Artif. Intell.},
+  volume    = {279},
+  year      = {2020},
+}
+
+@inproceedings{shaw2020designing,
+    title={Designing new Phase Selection Heuristics},
+    author={Shaw, Arijit and Meel, Kuldeep S},
+    booktitle={SAT 2020},
+    year={2020}
+}
