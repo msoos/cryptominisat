@@ -176,6 +176,12 @@ void ClPredictors::set_up_input(
         (double)props_made;
     //(log2(cl.branch_depth_hist_queue)/rdb0.propagations_made)
 
+
+    //NOTE: this is actually really low ranked. Very interesting.
+    at[x++] = (double)cl->stats.used_for_uip_creation/
+        (double)cl->stats.glue_before_minim;;
+    //(rdb0.used_for_uip_creation/cl.glue_before_minim)
+
     assert(x==cols);
 }
 
