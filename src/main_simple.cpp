@@ -62,12 +62,7 @@ public:
 
     void printVersionInfo()
     {
-        cout << "c CryptoMiniSat version " << solver->get_version() << endl;
-        #ifdef __GNUC__
-        cout << "c CryptoMiniSat compiled with gcc version " << __VERSION__ << endl;
-        #else
-        cout << "c CryptoMiniSat compiled with non-gcc compiler" << endl;
-        #endif
+        cout << solver->get_text_version_info() << endl;
     }
 
     void printUsage(const char** argv)
@@ -137,6 +132,9 @@ public:
                 conf.reconfigure_val = reconf;
             }else if (strcmp(argv[i], "--zero-exit-status") == 0){
                 zero_exit_status = true;
+            }else if (strcmp(argv[i], "--version") == 0){
+                printVersionInfo();
+                exit(0);
             } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "-help") == 0 || strcmp(argv[i], "--help") == 0){
                 printUsage(argv);
                 exit(0);
