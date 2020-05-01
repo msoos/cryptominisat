@@ -704,7 +704,7 @@ class Tester:
         self.this_gauss_on = "autodisablegauss" in self.extra_opts_supported
 
         # drat turns off a bunch of systems, like symmetry breaking so use it about 50% of time
-        self.drat = self.num_threads == 1 and (random.randint(0, 10) < 5) and (not self.this_gauss_on)
+        self.drat = self.num_threads == 1 and (random.randint(0, 10) < 5)
 
         self.sqlitedbfname = None
         self.preproc = False
