@@ -20,7 +20,10 @@ pdfkeywords = {SAT Solver, DPLL, SLS}}
 \begin{document}
 \title{CryptoMiniSat with CCAnr at the SAT Competition 2020}
 \author{Mate Soos (National University of Singapore)\\
-Shaowei Cai (State Key Laboratory of Computer Science,\\Institute of Software, Chinese Academy of Sciences)\\Jo Devriendt (Lund University \& University of Copenhagen)}
+Shaowei Cai (State Key Laboratory of Computer Science,\\
+Institute of Software, Chinese Academy of Sciences)\\
+Jo Devriendt (Lund University \& University of Copenhagen)\\
+Arijit Shaw, Kuldeep S. Meel (National University of Singapore)}
 
 \maketitle
 \thispagestyle{empty}
@@ -59,12 +62,16 @@ The resulting symmetry breaking clauses are more effective at reducing symmetric
 BreakID has been modified to work as a library. It can receive the clauses on-the-fly from the SAT solver, and produce the breaking clauses as a function return value. Various small bugs have also be fixed, such as memory leaks, which were not an issue when ran as a single executable, but created isses when ran as a library. Furthermore, the underlying highly sophisticated graph automorphism detection system, Bliss~\cite{DBLP:conf/alenex/JunttilaK07}, has been slightly improved to allow for time-outs and it, too, has been fixed not to leak memory. BreakID is fully integrated into CryptoMiniSat by calling it on every 5th inprocessing iteration, and asked to contribute breaking clauses. These are always added with an assumption literal, so they can be removed when the solving finishes. Hence, symmetry breaking also works when CryptoMiniSat is used as a library.
 
 
+\section{Phase Selection using LSIDS}
+LSIDS is a literal activity-based phase selection heuristic~\cite{shaw2020designing}. LSIDS activity is maintained for each literal, and the activity for a literal is updated in a manner similar to VSIDS. Phase selection is made based on LSIDS activity only if the last backtrack is chronological. The LSIDS based phase selection heuristic looks at the activity of both the literals of a given variable and selects the literal with higher activity.
+
+
 \section{Further Improvements Relative to SAT Race 2019}
-Many of the inprocessing parameters have been tuned. A few bugs related to clause activities have been fixed. The VSIDS and Maple decay factors are now iteratively changed between 0.70 and 0.90 for Maple and 0.92 and 0.99 for VSIDS. Between each iteration there is an inprocessing step, as before. This seems to add heterogeneity and avoids having to tune these parameters to a ``single best'' value. Polarity caching is still used, but once in a while, so-called ``stable'' polarities are used, as per CaDiCaL~\cite{cadical} in the SAT Race of 2019.
+Many of the inprocessing parameters have been tuned. A few bugs related to clause activities have been fixed. Clause distillation (or clause vivification)~\cite{DBLP:journals/ai/LiXLMLL20} is now used a lot more, similarly to the previous years' winning solvers. The VSIDS and Maple decay factors are now iteratively changed between 0.70 and 0.90 for Maple and 0.92 and 0.99 for VSIDS. Between each iteration there is an inprocessing step, as before. This seems to add heterogeneity and avoids having to tune these parameters to a ``single best'' value. Polarity caching is still used, but once in a while, so-called ``stable'' polarities are used, as per CaDiCaL~\cite{cadical} in the SAT Race of 2019. Ternary resolution is also used at every inprocessing step, thanks to the suggestion by Armin Biere.
 
 
 \section{Thanks}
-Mate Soos was supported in part by the National Research Foundation Singapore under its NRF Fellowship Programme[NRF-NRFFAI1-2019-0004 ] and AI Singapore Programme [AISG-RP-2018-005],  and NUS ODPRT Grant [R-252-000-685-13].
+Kuldeep S Meel, Arijit Shaw, and Mate Soos were supported in part by the National Research Foundation Singapore under its NRF Fellowship Programme[NRF-NRFFAI1-2019-0004 ] and AI Singapore Programme [AISG-RP-2018-005],  and NUS ODPRT Grant [R-252-000-685-13].
 
 Shaowei Cai was supported  by Beijing Academy of Artificial Intelligence (BAAI), and Youth Innovation Pro-motion Association, Chinese Academy of Sciences [No. 2017150].
 
