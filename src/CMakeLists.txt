@@ -130,7 +130,7 @@ if (FINAL_PREDICTOR)
 #         predict/clustering_imp.cpp
         cl_predictors.cpp
     )
-    SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} xgboost dmlc rabit)
+    SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} xgboost dmlc rabit rt)
 endif()
 
 if (USE_GAUSS)
