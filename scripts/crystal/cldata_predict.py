@@ -62,10 +62,8 @@ def check_long_short():
 
 
 class Learner:
-    def __init__(self, df, func_name, fname, longsh):
+    def __init__(self, df, longsh):
         self.df = df
-        self.func_name = func_name
-        self.fname = fname
         self.longsh = longsh
 
     def count_bad_ok(self, df):
@@ -487,22 +485,7 @@ if __name__ == "__main__":
     helper.clear_data_from_str_na(df)
 
     # generation
-    func_name = "should_keep_{name}_conf{conf_num}".format(
-        name=options.longsh, conf_num=options.conf_num)
-
-    fname = "final_predictor_{name}_conf{conf_num}.h".format(
-        name=options.longsh, conf_num=options.conf_num)
-
-    if options.basedir is not None:
-        out_fname = options.basedir+"/"+fname
-    else:
-        out_fname = None
-
-    learner = Learner(
-        df,
-        func_name=func_name,
-        fname=out_fname,
-        longsh=options.longsh)
+    learner = Learner(df, longsh=options.longsh)
 
     y_pred = learner.learn()
 
