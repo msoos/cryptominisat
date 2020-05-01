@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <tns:Jobs xmlns:tns="https://www.starexec.org/starexec/public/batchJobSchema.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://www.starexec.org/starexec/public/batchJobSchema.xsd batchJobSchema.xsd">
-<SolverPipeline name="pipe1"><PipelineStage config-id="348770"></PipelineStage><PipelineStage config-id="329365" primary="true"><BenchmarkDependency input="1"/></PipelineStage></SolverPipeline>
-<Job name="rerun_again-hcp_r26_26">
+<SolverPipeline name="pipe1"><PipelineStage config-id="348806"></PipelineStage><PipelineStage config-id="329365" primary="true"><BenchmarkDependency input="1"/></PipelineStage></SolverPipeline>
+<Job name="cryptominisat-test">
 <JobAttributes>
 <description value="Proof Checker and Queue Job"/>
 <queue-id value="1"/>
