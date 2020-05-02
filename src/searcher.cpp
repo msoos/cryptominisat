@@ -3944,9 +3944,9 @@ void Searcher::check_assumptions_sanity()
     }
 }
 
-void Searcher::bump_var_importance_all(const uint32_t var)
+void Searcher::bump_var_importance_all(const uint32_t var, bool only_add)
 {
-    vsids_bump_var_act<false>(var);
+    vsids_bump_var_act<false>(var, 1.0, only_add);
     varData[var].maple_conflicted+=2;
     #ifdef VMTF_NEEDED
     vmtf_bump_queue(var);
