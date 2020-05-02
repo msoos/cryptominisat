@@ -239,6 +239,7 @@ lbool CMS_ccnr::deal_with_solution(int res)
             uint32_t v = c.literals[i].var_num-1;
             if (v < solver->nVars() &&
                 solver->varData[v].removed == Removed::none &&
+                solver->value(v) == l_Undef &&
                 seen[v] < solver->conf.sls_bump_var_max_n_times
             ) {
                 if (seen[v] == 0) {
@@ -246,7 +247,7 @@ lbool CMS_ccnr::deal_with_solution(int res)
                 }
                 seen[v]++;
                 toClear.push_back(Lit(v, false));
-                solver->bump_var_importance_all(v);
+                solver->bump_var_importance_all(v, true);
                 vars_bumped++;
             }
         }

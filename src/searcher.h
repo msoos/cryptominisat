@@ -194,7 +194,7 @@ class Searcher : public HyperEngine
         uint32_t pick_var_vmtf();
         void vsids_decay_var_act();
         template<bool update_bogoprops>
-        void vsids_bump_var_act(uint32_t v, double mult = 1.0);
+        void vsids_bump_var_act(uint32_t v, double mult = 1.0, bool only_add = false);
         double backup_random_var_freq = -1; ///<if restart has full random var branch, we save old value here
         void check_var_in_branch_strategy(uint32_t var) const;
         void set_branch_strategy(uint32_t iteration_num);
@@ -208,7 +208,7 @@ class Searcher : public HyperEngine
         }
         uint32_t branch_strategy_num = 0;
         void bump_var_importance(const uint32_t var);
-        void bump_var_importance_all(const uint32_t var);
+        void bump_var_importance_all(const uint32_t var, bool only_add = false);
 
         /////////////////
         // Polarities
@@ -651,7 +651,7 @@ inline void Searcher::bump_lsids_lit_act(Lit lit, double mult)
 }
 
 template<bool update_bogoprops>
-inline void Searcher::vsids_bump_var_act(uint32_t var, double mult)
+inline void Searcher::vsids_bump_var_act(uint32_t var, double mult, bool only_add)
 {
     if (update_bogoprops) {
         return;
@@ -682,7 +682,7 @@ inline void Searcher::vsids_bump_var_act(uint32_t var, double mult)
     }
 
     // Update order_heap with respect to new activity:
-    if (order_heap_vsids.inHeap(var)) {
+    if (!only_add && order_heap_vsids.inHeap(var)) {
         order_heap_vsids.decrease(var);
     }
 
