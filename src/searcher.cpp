@@ -212,7 +212,7 @@ inline void Searcher::add_lit_to_learnt(
                 break;
             #endif
         }
-        bump_lsids_lit_act<update_bogoprops>(~lit, 0.5);
+        bump_lsids_lit_act<update_bogoprops>(lit, 0.5);
     }
 
     if (varData[var].level >= nDecisionLevel) {
@@ -3734,7 +3734,7 @@ void Searcher::cancelUntil(uint32_t blevel)
                 }
             }
 
-            bump_lsids_lit_act<update_bogoprops>(~trail[sublevel].lit, 2.0);
+            bump_lsids_lit_act<update_bogoprops>(trail[sublevel].lit, 2.0);
 
             #ifdef VERBOSE_DEBUG
             cout << "c Updating score by 2 for " << (trail[sublevel].lit)
