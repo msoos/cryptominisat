@@ -598,11 +598,6 @@ inline bool Searcher::pick_lsids_phase(const uint32_t var){
 
 inline bool Searcher::pick_polarity(const uint32_t var)
 {
-    if(conf.chronophase == 1 && last_backtrack_is_chrono){
-        stats.chrono_decisions++;
-        return pick_lsids_phase(var);
-    }
-
     switch(conf.polarity_mode) {
         case PolarityMode::polarmode_neg:
             return false;
