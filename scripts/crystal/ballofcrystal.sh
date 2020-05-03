@@ -3,9 +3,10 @@
 FNAMEOUT="mydata"
 FIXED="6000"
 RATIO="0.99"
-SHORTCONF=1
-LONGCONF=1
+CONF=1
 EXTRA_CMS_OPTS=""
+SHORTPERC=60
+LONGPERC=50
 
 EXTRA_GEN_PANDAS_OPTS=""
 if [ "$1" == "--csv" ]; then
@@ -150,7 +151,7 @@ cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 ########################
 # Denormalize the data into a Pandas Table, label it and sample it
 ########################
-../cldata_gen_pandas.py "${FNAMEOUT}-min.db" --limit "$FIXED" --conf 2-2 ${EXTRA_GEN_PANDAS_OPTS} --toppercentileshort 80 --toppercentilelong 70
+../cldata_gen_pandas.py "${FNAMEOUT}-min.db" --limit "$FIXED" --conf 1-1 ${EXTRA_GEN_PANDAS_OPTS} --toppercentileshort $SHORTPERC --toppercentilelong $LONGPERC
 # ../vardata_gen_pandas.py "${FNAMEOUT}.db" --limit 1000
 
 mkdir -p ../../src/predict
@@ -172,8 +173,8 @@ rm -f ../../src/predict/*.h
 #../vardata_predict.py vardata-comb --final -q 20 --basedir ../src/predict/ --depth 7 --tree
 
 # for CONF in {0..2}; do
-    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-conf-$SHORTCONF.dat" --name short --final --xgboost --basedir ../../src/predict/ --conf $SHORTCONF --prefok 2
-    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-conf-$LONGCONF.dat"  --name long  --final --xgboost --basedir ../../src/predict/ --conf $LONGCONF --prefok 2
+    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-conf-$CONF-pshort$SHORTPERC-plong$LONGPERC.dat" --name short --final --xgboost --basedir ../../src/predict/ --conf $CONF --prefok 2
+    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-conf-$CONF-pshort$SHORTPERC-plong$LONGPERC.dat" --name long --final --xgboost --basedir ../../src/predict/ --conf $CONF --prefok 2
 # done
 )
 
