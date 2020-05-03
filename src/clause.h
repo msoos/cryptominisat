@@ -187,7 +187,6 @@ struct ClauseStats
     {
         ttl = 0;
         used_for_uip_creation = 0;
-        locked_for_data_gen = 0;
         propagations_made = 0;
         #if defined(STATS_NEEDED)
         clause_looked_at = 0;

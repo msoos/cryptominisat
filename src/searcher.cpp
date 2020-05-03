@@ -1743,7 +1743,7 @@ Clause* Searcher::handle_last_confl(
         unsigned which_arr = 2;
 
         #ifdef STATS_NEEDED
-        cl->stats.locked_for_data_gen = to_dump &&
+        cl->stats.locked_for_data_gen =
             mtrand.randDblExc() < conf.lock_for_data_gen_ratio;
         #endif
 
