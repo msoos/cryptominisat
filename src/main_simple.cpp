@@ -103,7 +103,7 @@ public:
                     exit(0);
                 }
                 conf.verbosity = verbosity;
-            }else if ((value = hasPrefix(argv[i], "--dratsim="))){
+            }else if ((value = hasPrefix(argv[i], "--simdrat="))){
                 int drat_sim  = (int)strtol(value, NULL, 10);
                 conf.simulate_drat = drat_sim;
             }else if ((value = hasPrefix(argv[i], "--chronophasen="))){
