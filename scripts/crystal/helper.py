@@ -698,6 +698,8 @@ def cldata_add_computed_features(df, verbose):
 
     divide("rdb0.sum_uip1_used", "cl.time_inside_solver")
     divide("rdb1.sum_uip1_used", "cl.time_inside_solver")
+    divide("rdb0.sum_propagations_made", "cl.time_inside_solver")
+    divide("rdb1.sum_propagations_made", "cl.time_inside_solver")
 
     divisors = [
         "cl.size_hist"
@@ -793,7 +795,7 @@ def cldata_add_computed_features(df, verbose):
                 larger_than(rdb0, rdb1)
 
                 raw_col = col.replace("rdb0.", "")
-                if raw_col not in ["sum_propagations_made", "propagations_made", "dump_no", "conflicts_made", "used_for_uip_creation", "sum_uip1_used", "clause_looked_at", "activity_rel", "last_touched_diff", "ttl"]:
+                if raw_col not in ["sum_propagations_made", "propagations_made", "dump_no", "conflicts_made", "used_for_uip_creation", "sum_uip1_used", "activity_rel", "last_touched_diff", "ttl"]:
                     print(rdb0)
                     divide(rdb0, rdb1)
 
