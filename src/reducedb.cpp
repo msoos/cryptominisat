@@ -272,6 +272,7 @@ void ReduceDB::handle_lev1()
         << endl;
         #endif
 
+        assert(!cl->stats.locked_for_data_gen);
         if (cl->stats.which_red_array == 0) {
             solver->longRedCls[0].push_back(offset);
             moved_w0++;
