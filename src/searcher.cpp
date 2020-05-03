@@ -430,7 +430,6 @@ void Searcher::add_literals_from_confl_to_learnt(
                     !cl->red() ||
                     cl->stats.introduced_at_conflict != 0 ||
                     solver->conf.simplify_at_startup == 1);
-                cl->stats.sum_delta_confl_uip1_used += sumConflicts - cl->stats.introduced_at_conflict;
             }
             #endif
 

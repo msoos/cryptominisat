@@ -700,6 +700,7 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.dump_no);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.conflicts_made);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.propagations_made);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.sum_propagations_made);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.clause_looked_at);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.used_for_uip_creation);
 
@@ -717,7 +718,6 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int(stmtReduceDB, bindAt++, act_ranking);
     sqlite3_bind_int(stmtReduceDB, bindAt++, tot_cls_in_db);
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.sum_uip1_used);
-    sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.sum_delta_confl_uip1_used);
 
     run_sqlite_step(stmtReduceDB, "reduceDB");
 }

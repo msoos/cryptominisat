@@ -55,6 +55,7 @@ CREATE TABLE `reduceDB` (
   `dump_no` int(20) NOT NULL,
   `conflicts_made` bigint(20) NOT NULL,
   `propagations_made` bigint(20) NOT NULL,
+  `sum_propagations_made` bigint(20) NOT NULL,
   `clause_looked_at` bigint(20) NOT NULL,
   `used_for_uip_creation` bigint(20) NOT NULL,
   `last_touched_diff` bigint(20) NOT NULL,
@@ -69,7 +70,6 @@ CREATE TABLE `reduceDB` (
   `act_ranking` int(20) NOT NULL,
   `tot_cls_in_db` int(20) NOT NULL,
   `sum_uip1_used`  int(20) NOT NULL,
-  `sum_delta_confl_uip1_used` int(20) NOT NULL
 );
 
 DROP TABLE IF EXISTS `restart`;

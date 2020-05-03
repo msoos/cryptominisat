@@ -164,7 +164,6 @@ struct ClauseStats
     uint32_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
 
     //for average and sum stats
-    uint32_t sum_delta_confl_uip1_used = 0; //Sum of "sumConflicts - cl->stats.introduced_at_conflict" of every time the clause is in UIP
     uint32_t sum_uip1_used = 0; ///N.o. times claue was used during 1st UIP generation for ALL TIME
 
     //below resets
@@ -172,6 +171,7 @@ struct ClauseStats
     uint32_t rdb1_used_for_uip_creation = 0; ///N.o. times claue was used during 1st UIP generation in previous RDB
     uint32_t propagations_made = 0; ///<Number of times caused propagation
     uint32_t rdb1_propagations_made = 0; ///<Number of times caused propagation, last round
+    uint32_t sum_propagations_made = 0; ///<Number of times caused propagation
     #endif
 
     #ifdef STATS_NEEDED
