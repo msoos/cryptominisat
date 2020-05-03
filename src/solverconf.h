@@ -59,6 +59,7 @@ enum class PolarityMode {
     , polarmode_rnd
     , polarmode_automatic
     , polarmode_weighted
+    , polarmode_lsids
 };
 
 enum class Restart {
@@ -68,6 +69,24 @@ enum class Restart {
     , luby
     , never
 };
+
+inline std::string getNameOfPolarmodeType(PolarityMode polarmode)
+{
+    switch(polarmode) {
+        case PolarityMode::polarmode_automatic :
+            return "auto";
+        case PolarityMode::polarmode_lsids :
+            return "lsids";
+        case PolarityMode::polarmode_neg :
+            return "neg";
+        case PolarityMode::polarmode_pos :
+            return "pos";
+        case PolarityMode::polarmode_weighted :
+            return "weighted";
+        case PolarityMode::polarmode_rnd :
+            return "rnd";
+    }
+}
 
 inline std::string getNameOfRestartType(Restart rest_type)
 {

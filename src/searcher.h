@@ -137,7 +137,6 @@ class Searcher : public HyperEngine
         ConflictData find_conflict_level(PropBy& pb);
         uint32_t chrono_backtrack = 0;
         uint32_t non_chrono_backtrack = 0;
-        bool last_backtrack_is_chrono = false;
 
         SQLStats* sqlStats = NULL;
         ClusteringImp *clustering = NULL;
@@ -212,6 +211,8 @@ class Searcher : public HyperEngine
 
         /////////////////
         // Polarities
+        PolarityMode polarity_mode;
+        vector<double> lit_act_lsids;
         bool   pick_polarity(const uint32_t var);
         double lit_inc_lsids;
         double lit_decay_lsids;
@@ -580,10 +581,6 @@ inline bool Searcher::pick_lsids_phase(const uint32_t var) {
     << " saved phase : " << varData[var].polarity << endl;
     #endif
 
-    if ((neg_lsids < pos_lsids) != varData[var].polarity) {
-        stats.lsids_opp_cached++;
-    }
-
     if (neg_lsids > pos_lsids){
         return false;
     } else {
@@ -593,12 +590,10 @@ inline bool Searcher::pick_lsids_phase(const uint32_t var) {
 
 inline bool Searcher::pick_polarity(const uint32_t var)
 {
-    if (polar_chrono && last_backtrack_is_chrono) {
-        stats.chrono_decisions++;
-        return pick_lsids_phase(var);
-    }
+    switch(polarity_mode) {
+        case PolarityMode::polarmode_lsids:
+            return pick_lsids_phase(var);
 
-    switch(conf.polarity_mode) {
         case PolarityMode::polarmode_neg:
             return false;
 
@@ -633,7 +628,7 @@ inline void Searcher::bump_lsids_lit_act(Lit lit, double mult)
         return;
     }
 
-    if (!polar_chrono) {
+    if (polarity_mode != PolarityMode::polarmode_lsids) {
         return;
     }
 

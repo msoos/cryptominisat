@@ -2394,17 +2394,6 @@ void Solver::print_norm_stats(const double cpu_time, const double cpu_time_total
         , "% time"
     );
 
-    print_stats_line("c LSIDS decisions"
-    , sumSearchStats.chrono_decisions
-    , stats_line_percent(sumSearchStats.chrono_decisions, sumSearchStats.decisions)
-    , "% all decisions"
-    );
-    print_stats_line("c LSIDS differed caching"
-    , sumSearchStats.lsids_opp_cached
-    , stats_line_percent(sumSearchStats.lsids_opp_cached, sumSearchStats.chrono_decisions)
-    , "% all LSIDS decisions"
-    );
-
     //OccSimplifier stats
     if (conf.perform_occur_based_simp) {
         if (conf.do_print_times)

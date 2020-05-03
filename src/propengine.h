@@ -157,9 +157,7 @@ public:
     #endif
     double max_vsids_act = 0.0;
 
-    //Other stuff.
-    vector<double> lit_act_lsids;
-    bool   polar_chrono;
+    //Clause activities
     double max_cl_act = 0.0;
 
 protected:

@@ -89,6 +89,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     hist.setSize(conf.shortTermHistorySize, conf.blocking_restart_trail_hist_length);
     cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
     set_branch_strategy(0);
+    polarity_mode = _conf->polarity_mode;
 
     #ifdef FINAL_PREDICTOR
 //     clustering = new ClusteringImp;
@@ -111,12 +112,10 @@ void Searcher::new_var(const bool bva, const uint32_t orig_outer)
     PropEngine::new_var(bva, orig_outer);
 
     insert_var_order_all((int)nVars()-1);
+    lit_act_lsids.insert(lit_act_lsids.end(), 2, 0);
     #ifdef STATS_NEEDED_BRANCH
     level_used_for_cl_arr.insert(level_used_for_cl_arr.end(), 1, 0);
     #endif
-
-    lit_act_lsids.push_back(0);
-    lit_act_lsids.push_back(0);
 }
 
 void Searcher::new_vars(size_t n)
@@ -126,11 +125,11 @@ void Searcher::new_vars(size_t n)
     for(int i = n-1; i >= 0; i--) {
         insert_var_order_all((int)nVars()-i-1);
     }
+    lit_act_lsids.insert(lit_act_lsids.end(), 2*n, 0);
 
     #ifdef STATS_NEEDED_BRANCH
     level_used_for_cl_arr.insert(level_used_for_cl_arr.end(), n, 0);
     #endif
-    lit_act_lsids.insert(lit_act_lsids.end(), 2*n, 0);
 }
 
 void Searcher::save_on_var_memory()
@@ -1875,11 +1874,9 @@ bool Searcher::handle_conflict(PropBy confl)
         && (((int)decisionLevel() - (int)backtrack_level) >= conf.diff_declev_for_chrono)
     ) {
         chrono_backtrack++;
-        last_backtrack_is_chrono = true;
         cancelUntil(data.nHighestLevel -1);
     } else {
         non_chrono_backtrack++;
-        last_backtrack_is_chrono = false;
         cancelUntil(backtrack_level);
     }
 
@@ -2481,66 +2478,77 @@ bool Searcher::must_abort(const lbool status) {
 
 void Searcher::setup_polarity_strategy()
 {
-    if (branch_strategy_num > 0 && conf.polar_stable_every_n > 0) {
-        polar_stable = (branch_strategy_num % conf.polar_stable_every_n) == 0;
-        polar_stable_longest_trail = 0;
-    }
-    if (conf.polar_stable_every_n == 0) {
-        polar_stable = true;
-    }
-    if (conf.polar_stable_every_n == -1) {
-        polar_stable = (branch_strategy == branch::vsids);
-    }
-    if (conf.polar_stable_every_n == -2) {
-        polar_stable = (branch_strategy == branch::maple);
-    }
-    if (conf.polar_stable_every_n == -3) {
-        polar_stable = (branch_strategy_str == "VSIDS1");
-    }
-    if (conf.polar_stable_every_n == -4) {
-        polar_stable = (branch_strategy_str == "VSIDS2");
-    }
-    if (conf.polar_stable_every_n == -4) {
-        polar_stable = (branch_strategy_str == "MAPLE1");
-    }
-    if (conf.polar_stable_every_n == -5) {
-        polar_stable = (branch_strategy_str == "MAPLE2");
+    //Set to default first
+    polarity_mode = conf.polarity_mode;
+    polar_stable = false;
+    polar_stable_longest_trail = 0;
+
+    //Stable polarities only make sense in case of automatic polarities
+    if (polarity_mode == PolarityMode::polarmode_automatic) {
+        if (
+            (branch_strategy_num > 0 &&
+            conf.polar_stable_every_n > 0 &&
+            ((branch_strategy_num % conf.polar_stable_every_n) == 0)) ||
+
+            conf.polar_stable_every_n == 0 ||
+
+            (conf.polar_stable_every_n == -1 &&
+            branch_strategy == branch::vsids) ||
+
+            (conf.polar_stable_every_n == -2 &&
+            branch_strategy == branch::maple) ||
+
+            (conf.polar_stable_every_n == -3 &&
+            branch_strategy_str == "VSIDS1") ||
+
+            (conf.polar_stable_every_n == -4 &&
+            branch_strategy_str == "VSIDS2") ||
+
+            (conf.polar_stable_every_n == -5 &&
+            branch_strategy_str == "MAPLE1") ||
+
+            (conf.polar_stable_every_n == -6 &&
+            branch_strategy_str == "MAPLE2"))
+        {
+            polar_stable = true;
+
+        }
     }
 
+    //If not stable, let's try to do LSIDS
     if (!polar_stable) {
-        if (conf.chronophase_every_n > 0) {
-            polar_chrono =
-                (int)(branch_strategy_num % conf.chronophase_every_n) == (conf.chronophase_every_n-1);
-        }
+        if (
+            (conf.chronophase_every_n > 0 &&
+            ((int)(branch_strategy_num % conf.chronophase_every_n)
+                == (conf.chronophase_every_n-1))) ||
 
-        if (conf.chronophase_every_n == 0) {
-            polar_chrono = true;
+            conf.chronophase_every_n == 0 ||
+
+            (conf.chronophase_every_n == -1 &&
+            branch_strategy == branch::vsids) ||
+
+            (conf.chronophase_every_n == -2 &&
+            branch_strategy == branch::maple) ||
+
+            (conf.chronophase_every_n == -3 &&
+            branch_strategy_str == "VSIDS1") ||
+
+            (conf.chronophase_every_n == -4 &&
+            branch_strategy_str == "VSIDS2") ||
+
+            (conf.chronophase_every_n == -5 &&
+            branch_strategy_str == "MAPLE1") ||
+
+            (conf.chronophase_every_n == -6 &&
+            branch_strategy_str == "MAPLE2"))
+        {
+            polarity_mode = PolarityMode::polarmode_lsids;
         }
-        if (conf.chronophase_every_n == -1) {
-            polar_chrono = (branch_strategy == branch::vsids);
-        }
-        if (conf.chronophase_every_n == -2) {
-            polar_chrono = (branch_strategy == branch::maple);
-        }
-        if (conf.chronophase_every_n == -3) {
-            polar_chrono = (branch_strategy_str == "VSIDS1");
-        }
-        if (conf.chronophase_every_n == -4) {
-            polar_chrono = (branch_strategy_str == "VSIDS2");
-        }
-        if (conf.chronophase_every_n == -4) {
-            polar_chrono = (branch_strategy_str == "MAPLE1");
-        }
-        if (conf.chronophase_every_n == -5) {
-            polar_chrono = (branch_strategy_str == "MAPLE2");
-        }
-    } else {
-        polar_chrono = false;
     }
 
     if (conf.verbosity) {
         cout << "c [polar] stable polarities: " << polar_stable
-        << " chrono polarities: " << polar_chrono
+        << " polari mode: " << getNameOfPolarmodeType(polarity_mode)
         << " branch strategy num: " << branch_strategy_num
         << " branch strategy: " << branch_strategy_str
 
@@ -3378,9 +3386,9 @@ void Searcher::vsids_decay_var_act()
     var_inc_vsids *= (1.0 / var_decay);
 }
 
-void Searcher::litDecayActivity()
+inline void Searcher::litDecayActivity()
 {
-    if (polar_chrono) {
+    if (polarity_mode == PolarityMode::polarmode_lsids) {
         lit_inc_lsids *= (1.0 / lit_decay_lsids);
     }
 }
