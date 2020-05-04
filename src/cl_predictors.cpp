@@ -147,9 +147,12 @@ void ClPredictors::set_up_input(
     //(rdb0.propagations_made/cl.orig_glue)
 
     double props_made = cl->stats.propagations_made;
-    if (props_made == 0) props_made = 1;
-    at[x++] = ::log2((double)cl->stats.num_resolutions_hist_lt)/
+    if (props_made == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = ::log2((double)cl->stats.num_resolutions_hist_lt)/
         (props_made);
+    }
     //(log2(cl.num_resolutions_hist_lt)/rdb0.propagations_made)
 
 
