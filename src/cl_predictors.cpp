@@ -161,8 +161,12 @@ void ClPredictors::set_up_input(
     //(rdb0.propagations_made/(cl.num_total_lits_antecedents/cl.num_antecedents))
 
 
-    at[x++] = (double)cl->stats.size_hist/
-        (double)props_made;
+    if (props_made == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = (double)cl->stats.size_hist/
+            (double)props_made;
+    }
     //(cl.size_hist/rdb0.propagations_made)
 
 
@@ -171,12 +175,16 @@ void ClPredictors::set_up_input(
     //(rdb0.propagations_made/log2(cl.antec_overlap_hist))
 
     //avoid log(0)
-    double branch_depth_hist_queue = (double)cl->stats.branch_depth_hist_queue;
-    if (branch_depth_hist_queue == 0) {
-        branch_depth_hist_queue = 1;
+    if (props_made == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        double branch_depth_hist_queue = (double)cl->stats.branch_depth_hist_queue;
+        if (branch_depth_hist_queue == 0) {
+            branch_depth_hist_queue = 1;
+        }
+        at[x++] = ::log2(branch_depth_hist_queue)/
+            (double)props_made;
     }
-    at[x++] = ::log2(branch_depth_hist_queue)/
-        (double)props_made;
     //(log2(cl.branch_depth_hist_queue)/rdb0.propagations_made)
 
 
