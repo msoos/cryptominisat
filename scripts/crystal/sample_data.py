@@ -71,7 +71,7 @@ class QueryDatRem(helper.QueryHelper):
         FROM used_later{name}
         WHERE used_later{name}>0) * (100-{perc}) / 100 - 1;
         """
-        for perc in range(0,100,5):
+        for perc in range(0,100):
             myq = q.format(name=name, perc=perc)
             self.c.execute(q2.format(name=name, q=myq))
 
@@ -85,7 +85,7 @@ class QueryDatRem(helper.QueryHelper):
          COUNT(*)
         FROM used_later{name}) * (100-{perc}) / 100 - 1;
         """
-        for perc in range(0,30,2):
+        for perc in range(0,100):
             myq = q.format(name=name, perc=perc)
             self.c.execute(q2.format(name=name, q=myq))
         print("Calculated percentiles/averages, T:", time.time()-t)
