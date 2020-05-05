@@ -506,9 +506,9 @@ if __name__ == "__main__":
                       dest="dump_sql", help="Dump SQL queries")
     parser.add_option("--csv", action="store_true", default=False,
                       dest="dump_csv", help="Dump CSV (for weka)")
-    parser.add_option("--toppercentileshort", type=int, default=80,
+    parser.add_option("--toppercentileshort", type=int, default=50,
                       dest="top_percentile_short", help="Top percentile of short predictor to mark KEEP")
-    parser.add_option("--toppercentilelong", type=int, default=80,
+    parser.add_option("--toppercentilelong", type=int, default=40,
                       dest="top_percentile_long", help="Top percentile of long predictor to mark KEEP")
 
     # limits

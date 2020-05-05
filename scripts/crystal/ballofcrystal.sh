@@ -5,8 +5,8 @@ FIXED="6000"
 RATIO="0.99"
 CONF=1
 EXTRA_CMS_OPTS=""
-SHORTPERC=60
-LONGPERC=50
+SHORTPERC=50
+LONGPERC=40
 
 EXTRA_GEN_PANDAS_OPTS=""
 if [ "$1" == "--csv" ]; then
@@ -55,11 +55,12 @@ if [ "$NEXT_OP" == "" ]; then
                 break;;
             [6]* )
                 FNAME="UTI-20-10p0.cnf-unz";
-                RATIO="0.30"
+                RATIO="0.20"
                 FIXED="20000";
                 break;;
             [7]* )
                 ORIGTIME="197";
+                RATIO="0.50"
                 FNAME="UCG-20-5p0.cnf";
                 break;;
             * ) echo "Please answer 1-7";;
