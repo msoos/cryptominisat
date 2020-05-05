@@ -291,6 +291,10 @@ class QueryDatRem(helper.QueryHelper):
     def fill_used_cl_ids_table(self, fair, limit):
         t = time.time()
         if not fair:
+            self.insert_into_used_cls_ids_from_clstats(min_used=50000, limit=limit/20)
+            self.insert_into_used_cls_ids_from_clstats(min_used=10000, limit=limit/20)
+            self.insert_into_used_cls_ids_from_clstats(min_used=1000, limit=limit/10)
+            self.insert_into_used_cls_ids_from_clstats(min_used=100, limit=limit/10)
             self.insert_into_used_cls_ids_from_clstats(min_used=30, limit=limit/5)
             self.insert_into_used_cls_ids_from_clstats(min_used=20, limit=limit/4)
             self.insert_into_used_cls_ids_from_clstats(min_used=5, limit=limit/3)
