@@ -24,7 +24,7 @@ if [ "$NEXT_OP" == "" ]; then
         echo "1 -- countbitswegner064.cnf"
         echo "2 -- goldb-heqc-i10mul.cnf"
         echo "3 -- goldb-heqc-alu4mul.cnf"
-        echo "4 -- g2-mizh-md5-48-2.cnf"
+        echo "4 -- NONE"
         echo "5 -- AProVE07-16.cnf"
         echo "6 -- UTI-20-10p0.cnf-unz"
         echo "7 -- UCG-20-5p0.cnf"
@@ -43,11 +43,6 @@ if [ "$NEXT_OP" == "" ]; then
             [3]* )
                 ORIGTIME="70.84";
                 FNAME="goldb-heqc-alu4mul.cnf";
-                break;;
-            [4]* )
-                # !!SATISFIABLE!!
-                FNAME="g2-mizh-md5-48-2.cnf";
-                FIXED="10000";
                 break;;
             [5]* )
                 ORIGTIME="98s";
