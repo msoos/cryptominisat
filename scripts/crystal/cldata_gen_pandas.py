@@ -190,6 +190,18 @@ class QueryCls (helper.QueryHelper):
             ELSE 0
             END AS `x.class`
             """
+        elif self.conf == 3:
+            self.case_stmt_short = """
+            CASE WHEN
+
+            -- useful in the next round
+            (used_later_short.used_later_short >= {name_short_top_non_zero_X_perc}
+            or used_later.used_later >= ({name_top_non_zero_25_perc}))
+
+            THEN 1
+            ELSE 0
+            END AS `x.class`
+            """
         else:
             assert(False)
 
@@ -214,6 +226,18 @@ class QueryCls (helper.QueryHelper):
             -- useful in the next round
             (used_later_long.used_later_long >= {name_long_top_non_zero_X_perc}
             or used_later.used_later >= ({name_top_non_zero_10_perc}))
+
+            THEN 1
+            ELSE 0
+            END AS `x.class`
+            """
+        elif self.conf == 3:
+            self.case_stmt_long = """
+            CASE WHEN
+
+            -- useful in the next round
+            (used_later_long.used_later_long >= {name_long_top_non_zero_X_perc}
+            or used_later.used_later >= ({name_top_non_zero_20_perc}))
 
             THEN 1
             ELSE 0
