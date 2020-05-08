@@ -145,10 +145,15 @@ bool DistillerLong::go_through_clauses(
             goto copy;
         }
         #ifdef FINAL_PREDICTOR
-        if (cl.red() && cl.stats.glue > solver->conf.glue_put_lev0_if_below_or_eq) {
+        if (cl.red() && cl.stats.glue > 3) {
             offset2 = offset;
             goto copy;
         }
+
+//         if (cl.red() && !cl.stats.locked_long) {
+//             offset2 = offset;
+//             goto copy;
+//         }
         #endif
 
         //Time to dereference
