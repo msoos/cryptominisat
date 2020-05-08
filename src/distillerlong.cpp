@@ -138,16 +138,14 @@ bool DistillerLong::go_through_clauses(
         ClOffset offset = *i;
         ClOffset offset2;
         Clause& cl = *solver->cl_alloc.ptr(offset);
-        #ifdef USE_GAUSS
         if (cl.used_in_xor() &&
             solver->conf.force_preserve_xors
         ) {
             offset2 = offset;
             goto copy;
         }
-        #endif
         #ifdef FINAL_PREDICTOR
-        if (cl.red() && !cl.stats.locked_long) {
+        if (cl.red() && cl.stats.glue > solver->conf.glue_put_lev0_if_below_or_eq) {
             offset2 = offset;
             goto copy;
         }
