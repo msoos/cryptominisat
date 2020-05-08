@@ -25,6 +25,7 @@ THE SOFTWARE.
 
 #include <string>
 #include <vector>
+#include "ccnr_mersenne.h"
 
 using std::vector;
 
@@ -82,28 +83,6 @@ struct clause {
 
 //---------------------------
 //functions in mersenne.h & mersenne.cpp
-
-class Mersenne
-{
-    static const int N = 624;
-    unsigned int mt[N];
-    int mti;
-
-   public:
-    Mersenne();         // seed with time-dependent value
-    Mersenne(int seed); // seed with int value; see comments for the seed() method
-    Mersenne(unsigned int *array, int count); // seed with array
-    Mersenne(const Mersenne &copy);
-    Mersenne &operator=(const Mersenne &copy);
-    void seed(int s);
-    void seed(unsigned int *array, int len);
-    unsigned int next32(); // generates random integer in [0..2^32-1]
-    int next31();          // generates random integer in [0..2^31-1]
-    double nextClosed();   // generates random float in [0..1], 2^53 possible values
-    double nextHalfOpen(); // generates random float in [0..1), 2^53 possible values
-    double nextOpen();     // generates random float in (0..1), 2^53 possible values
-    int next(int bound);   // generates random integer in [0..bound), bound < 2^31
-};
 
 class ls_solver
 {
