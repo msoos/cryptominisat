@@ -76,7 +76,7 @@ struct variable {
 };
 struct clause {
     vector<lit> literals;
-    int sat_count;
+    int sat_count; //no. of satisfied literals
     int sat_var;
     long long weight;
 };
