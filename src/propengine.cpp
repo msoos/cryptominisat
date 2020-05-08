@@ -232,9 +232,9 @@ bool PropEngine::prop_long_cl_any_order(
     } else {
         #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
         c.stats.propagations_made++;
-        c.stats.sum_propagations_made++;
         #endif
         #ifdef STATS_NEEDED
+        c.stats.sum_propagations_made++;
         if (c.red())
             propStats.propsLongRed++;
         else

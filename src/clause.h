@@ -171,11 +171,11 @@ struct ClauseStats
 //     uint32_t rdb1_used_for_uip_creation = 0; ///N.o. times claue was used during 1st UIP generation in previous RDB
     uint32_t propagations_made = 0; ///<Number of times caused propagation
     uint32_t rdb1_propagations_made = 0; ///<Number of times caused propagation, last round
-    uint32_t sum_propagations_made = 0; ///<Number of times caused propagation
     #endif
 
     #ifdef STATS_NEEDED
     int32_t ID = 0;
+    uint32_t sum_propagations_made = 0; ///<Number of times caused propagation
 
     AtecedentData<uint16_t> antec_data;
     uint32_t conflicts_made = 0; ///<Number of times caused conflict
