@@ -391,8 +391,6 @@ if __name__ == "__main__":
                         dest="raw_data_plots", help="Display raw data plots")
     parser.add_argument("--basedir", type=str,
                         dest="basedir", help="The base directory of where the CryptoMiniSat source code is")
-    parser.add_argument("--conf", default=0, type=int,
-                        dest="conf_num", help="Which predict configuration this is")
 
     # data filtering
     parser.add_argument("--only", default=1.00, type=float,
@@ -463,7 +461,6 @@ if __name__ == "__main__":
         else:
             mlflow.log_param("top_num_features", options.top_num_features)
 
-        mlflow.log_param("conf_num", options.conf_num)
         mlflow.log_param("prefer_ok", options.prefer_ok)
         mlflow.log_param("only_percentage", options.only_perc)
         mlflow.log_param("min_samples_split", options.min_samples_split)
