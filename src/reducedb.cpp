@@ -422,10 +422,10 @@ void ReduceDB::handle_lev3_final_predictor()
                 dumpno_nonz += (cl->stats.dump_no != 0);
             }
             cl->stats.dump_no++;
-            cl->stats.rdb1_act_ranking_top_10 = act_ranking_top_10;
-            cl->stats.rdb1_act_ranking_rel = act_ranking_rel;
-            cl->stats.rdb1_last_touched_diff = last_touched_diff;
-            cl->stats.rdb1_used_for_uip_creation = cl->stats.used_for_uip_creation;
+//             cl->stats.rdb1_act_ranking_top_10 = act_ranking_top_10;
+//             cl->stats.rdb1_act_ranking_rel = act_ranking_rel;
+//             cl->stats.rdb1_last_touched_diff = last_touched_diff;
+//             cl->stats.rdb1_used_for_uip_creation = cl->stats.used_for_uip_creation;
             cl->stats.rdb1_propagations_made = cl->stats.propagations_made;
             cl->stats.reset_rdb_stats();
         }

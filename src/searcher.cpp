@@ -1670,13 +1670,13 @@ void Searcher::set_clause_data(
 
     //definitely a BUG here I think -- should be 2*antec_data.num(), no?
     //however, it's the same as how it's dumped in sqlitestats.cpp
-    cl->stats.num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-cl->size();
+//     cl->stats.num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-cl->size();
 
 
 //     cl->stats.clust_f = clustering->which_is_closest(solver->last_solve_satzilla_feature);
     cl->stats.orig_glue = orig_glue;
-    cl->stats.glue_hist = hist.glueHistLT.avg();
-    cl->stats.size_hist = hist.conflSizeHistLT.avg();
+//     cl->stats.glue_hist = hist.glueHistLT.avg();
+    cl->stats.confl_size_hist_lt = hist.conflSizeHistLT.avg();
     cl->stats.glue_hist_queue = hist.glueHist.getLongtTerm().avg();
     cl->stats.glue_hist_long = hist.glueHist.avg_nocheck();
 
@@ -1686,7 +1686,7 @@ void Searcher::set_clause_data(
     cl->stats.branch_depth_hist_queue =  hist.branchDepthHistQueue.avg_nocheck();
     cl->stats.num_resolutions_hist_lt =  hist.numResolutionsHistLT.avg();
     cl->stats.glue_before_minim = glue_before_minim;
-    cl->stats.trail_depth_hist_longer = hist.trailDepthHistLonger.avg_nocheck();
+//     cl->stats.trail_depth_hist_longer = hist.trailDepthHistLonger.avg_nocheck();
 }
 #endif
 

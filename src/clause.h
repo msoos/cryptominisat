@@ -140,27 +140,27 @@ struct ClauseStats
     #ifdef FINAL_PREDICTOR
     float       glue_hist_long;
     float       glue_hist_queue;
-    float       glue_hist;
-    float       size_hist;
+//     float       glue_hist;
+    float       confl_size_hist_lt;
     uint32_t    glue_before_minim;
-    uint32_t    num_overlap_literals;
+//     uint32_t    num_overlap_literals;
     float       antec_overlap_hist;
     uint32_t    num_total_lits_antecedents;
-    uint32_t    rdb1_last_touched_diff;
+//     uint32_t    rdb1_last_touched_diff;
     uint32_t    num_antecedents;
     float       branch_depth_hist_queue;
     float       num_resolutions_hist_lt;
-    uint32_t    trail_depth_hist_longer;
-    float       rdb1_act_ranking_rel = 0;
-    uint8_t     rdb1_act_ranking_top_10 = 0;
+//     uint32_t    trail_depth_hist_longer;
+//     float       rdb1_act_ranking_rel = 0;
+//     uint8_t     rdb1_act_ranking_top_10 = 0;
 
     //for locking in for long
-    uint8_t    locked_long = 0;
+    uint16_t dump_no = 0;
+    uint8_t  locked_long = 0;
     #endif
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
     uint32_t orig_glue;
-    uint16_t dump_no = 0;
     uint32_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
 
     //for average and sum stats
@@ -168,7 +168,7 @@ struct ClauseStats
 
     //below resets
     uint32_t used_for_uip_creation = 0; ///N.o. times claue was used during 1st UIP generation in this RDB
-    uint32_t rdb1_used_for_uip_creation = 0; ///N.o. times claue was used during 1st UIP generation in previous RDB
+//     uint32_t rdb1_used_for_uip_creation = 0; ///N.o. times claue was used during 1st UIP generation in previous RDB
     uint32_t propagations_made = 0; ///<Number of times caused propagation
     uint32_t rdb1_propagations_made = 0; ///<Number of times caused propagation, last round
     uint32_t sum_propagations_made = 0; ///<Number of times caused propagation

@@ -164,7 +164,7 @@ void ClPredictors::set_up_input(
     if (props_made == 0) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = (double)cl->stats.size_hist/
+        at[x++] = (double)cl->stats.confl_size_hist_lt/
             (double)props_made;
     }
     //(cl.size_hist/rdb0.propagations_made)
