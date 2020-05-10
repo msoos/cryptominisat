@@ -250,6 +250,8 @@ void ls_solver::initialize_variable_datas()
 /**********************pick variable*******************************************/
 int ls_solver::pick_var()
 {
+    //First, try to get the var with the highest score from _ccd_vars if any
+    //----------------------------------------
     int best_var = 0;
     _mems += _ccd_vars.size()/8;
     if (_ccd_vars.size() > 0) {
@@ -315,6 +317,9 @@ void ls_solver::flip(int flipv)
     _solution[flipv] = 1 - _solution[flipv];
     int org_flipv_score = _vars[flipv].score;
     _mems += _vars[flipv].literals.size();
+    _vars[flipv].flipped++;
+
+    // Go through each clause the literal is in and update status
     for (lit l: _vars[flipv].literals) {
         clause *cp = &(_clauses[l.clause_num]);
         if (_solution[flipv] == l.sense) {

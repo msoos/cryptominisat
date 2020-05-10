@@ -70,9 +70,10 @@ struct variable {
     vector<int> neighbor_var_nums;
     long long score;
     long long last_flip_step;
-    int unsat_appear;
+    int unsat_appear; //how many unsat clauses it appears in
     bool cc_value;
     bool is_in_ccd_vars;
+    long long flipped = 0;
 };
 struct clause {
     vector<lit> literals;
@@ -109,9 +110,9 @@ class ls_solver
     int _num_clauses;
 
     //data structure used
-    vector<int> _unsat_clauses;
-    vector<int> _index_in_unsat_clauses;
-    vector<int> _unsat_vars;
+    vector<int> _unsat_clauses; // list of unsatisfied clauses
+    vector<int> _index_in_unsat_clauses; // _index_in_unsat_clauses[var] tells where "var" is in _unsat_vars
+    vector<int> _unsat_vars; // clauses are UNSAT due to these vars
     vector<int> _index_in_unsat_vars;
     vector<int> _ccd_vars;
 
