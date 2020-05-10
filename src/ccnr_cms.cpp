@@ -206,28 +206,34 @@ struct ClWeightSorter
     }
 };
 
-lbool CMS_ccnr::deal_with_solution(int res)
-{
-    if (solver->conf.sls_get_phase || res) {
-        if (solver->conf.verbosity) {
-            cout
-            << "c [ccnr] saving best assignment phase"
-            << endl;
-        }
-
-        for(size_t i = 0; i < solver->nVars(); i++) {
-            solver->varData[i].polarity = ls_s->_best_solution[i+1];
-        }
+struct VarAndVal {
+    VarAndVal(uint32_t _var, long long _score) :
+        var(_var),
+        val(_score)
+    {
     }
+    uint32_t var;
+    long long val;
+};
 
+struct VarValSorter
+{
+    bool operator()(const VarAndVal& a, const VarAndVal& b) {
+        return a.val > b.val;
+    }
+};
+
+vector<uint32_t> CMS_ccnr::get_bump_based_on_cls()
+{
     //Check prerequisites
-    #ifdef SLOW_DEBUG
     assert(toClear.empty());
+    #ifdef SLOW_DEBUG
     for(const auto x: seen) {
         assert(x == 0);
     }
     #endif
 
+    vector<uint32_t> tobump_cl_var;
     std::sort(ls_s->_clauses.begin(), ls_s->_clauses.end(), ClWeightSorter());
     uint32_t vars_bumped = 0;
     uint32_t individual_vars_bumped = 0;
@@ -247,14 +253,10 @@ lbool CMS_ccnr::deal_with_solution(int res)
                 }
                 seen[v]++;
                 toClear.push_back(Lit(v, false));
-                solver->bump_var_importance_all(v, true);
+                tobump_cl_var.push_back(v);
                 vars_bumped++;
             }
         }
-    }
-
-    if (solver->branch_strategy == branch::vsids) {
-        solver->vsids_decay_var_act();
     }
 
     //Clear up
@@ -263,11 +265,84 @@ lbool CMS_ccnr::deal_with_solution(int res)
     }
     toClear.clear();
 
+    return tobump_cl_var;
+}
+
+vector<uint32_t> CMS_ccnr::get_bump_based_on_var_scores()
+{
+    vector<VarAndVal> vs;
+    for(uint32_t i = 1; i < ls_s->_vars.size(); i++) {
+        vs.push_back(VarAndVal(i-1, ls_s->_vars[i].score));
+    }
+    std::sort(vs.begin(), vs.end(), VarValSorter());
+
+    vector<uint32_t> tobump;
+    for(uint32_t i = 0; i < solver->conf.sls_how_many_to_bump; i++) {
+//         cout << "var: " << vs[i].var + 1 << " score: " <<  vs[i].val << endl;
+        tobump.push_back(vs[i].var);
+    }
+    return tobump;
+}
+
+vector<uint32_t> CMS_ccnr::get_bump_based_on_var_flips()
+{
+    vector<VarAndVal> vs;
+    vs.clear();
+    for(uint32_t i = 1; i < ls_s->_vars.size(); i++) {
+        vs.push_back(VarAndVal(i-1, ls_s->_vars[i].flipped));
+    }
+    std::sort(vs.begin(), vs.end(), VarValSorter());
+
+    vector<uint32_t> tobump;
+    for(uint32_t i = 0; i < solver->conf.sls_how_many_to_bump; i++) {
+//         cout << "var: " << vs[i].var + 1 << " flipped: " <<  vs[i].val << endl;
+        tobump.push_back(vs[i].var);
+    }
+    return tobump;
+}
+
+lbool CMS_ccnr::deal_with_solution(int res)
+{
+    if (solver->conf.sls_get_phase || res) {
+        if (solver->conf.verbosity) {
+            cout
+            << "c [ccnr] saving best assignment phase"
+            << endl;
+        }
+
+        for(size_t i = 0; i < solver->nVars(); i++) {
+            solver->varData[i].polarity = ls_s->_best_solution[i+1];
+        }
+    }
+
+    //Clause score sorting
+    vector<uint32_t> tobump;
+    switch (solver->conf.sls_bump_type) {
+        case 1:
+            tobump = get_bump_based_on_cls();
+            break;
+        case 2:
+            tobump = get_bump_based_on_var_flips();
+            break;
+        case 3:
+            tobump = get_bump_based_on_var_scores();
+            break;
+        default:
+            assert(false && "No such SLS bump type");
+            exit(-1);
+    }
+
+    for(const auto& v: tobump) {
+        solver->bump_var_importance_all(v, true);
+    }
+
+    if (solver->branch_strategy == branch::vsids) {
+        solver->vsids_decay_var_act();
+    }
+
     if (solver->conf.verbosity) {
-        cout << "c [ccnr] Bumped " << individual_vars_bumped
-        << " vars' acts a total of " << vars_bumped << " times"
-        << " -- maxbump per var: " << solver->conf.sls_bump_var_max_n_times
-        << " -- maxbump tot: " << solver->conf.sls_how_many_to_bump
+        cout << "c [ccnr] Bumped vars: " << tobump.size()
+        << " type: " << solver->conf.sls_bump_type
         << endl;
     }
     if (!res) {

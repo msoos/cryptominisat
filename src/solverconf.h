@@ -382,6 +382,7 @@ class DLL_PUBLIC SolverConf
         string   which_sls;
         uint32_t sls_how_many_to_bump;
         uint32_t sls_bump_var_max_n_times;
+        uint32_t sls_bump_type;
 
         //Distillation
         int      do_distill_clauses;

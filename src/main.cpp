@@ -475,6 +475,8 @@ void Main::add_supported_options()
         , "How many variables to bump in CCNR")
     ("slstobumpmaxpervar", po::value(&conf.sls_bump_var_max_n_times)->default_value(conf.sls_bump_var_max_n_times)
         , "How many times to bump an individual variable's activity in CCNR")
+    ("slsbumptype", po::value(&conf.sls_bump_type)->default_value(conf.sls_bump_type)
+        , "How to calculate what variable to bump. 1 = clause-based, 2 = var-flip-based, 3 = var-score-based")
     ;
 
     po::options_description probeOptions("Probing options");
