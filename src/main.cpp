@@ -805,6 +805,16 @@ void Main::add_supported_options()
         , "Put DRAT verification information into this file")
     ;
 
+#ifdef USE_BOSPHORUS
+    po::options_description bosph_options("Gauss options");
+    bosph_options.add_options()
+     ("bosph", po::value(&conf.do_bosphorus)->default_value(conf.do_bosphorus)
+        , "Execute bosphorus")
+     ("bospheveryn", po::value(&conf.bosphorus_every_n)->default_value(conf.bosphorus_every_n)
+        , "Execute bosphorus only every Nth iteration -- starting at Nth iter.")
+     ;
+#endif
+
 #ifdef USE_GAUSS
     po::options_description gaussOptions("Gauss options");
     gaussOptions.add_options()
@@ -851,6 +861,9 @@ void Main::add_supported_options()
     .add(sls_options)
 #ifdef USE_BREAKID
     .add(breakid_options)
+#endif
+#ifdef USE_BOSPHORUS
+    .add(bosph_options)
 #endif
     .add(simp_schedules)
     .add(occ_mem_limits)
