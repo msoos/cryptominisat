@@ -1573,15 +1573,6 @@ lbool Solver::solve_with_assumptions(
     const vector<Lit>* _assumptions,
     const bool only_sampling_solution
 ) {
-
-#if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-    conf.update_glues_on_analyze = false;
-    if (conf.verbosity) {
-        cout << "c [stats] glue update disabled" << endl;
-    }
-    assert(!conf.update_glues_on_analyze);
-#endif
-
     fresh_solver = false;
     move_to_outside_assumps(_assumptions);
     set_assumptions();
