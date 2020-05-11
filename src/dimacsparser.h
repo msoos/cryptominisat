@@ -66,6 +66,9 @@ class DimacsParser
 
         //Stat
         size_t lineNum;
+        bool isCardConst;
+        bool isAtLeast;
+        int32_t bound;
 
         //Printing partial solutions to debugLibPart1..N.output when "debugLib" is set to TRUE
         uint32_t debugLibPart = 1;
@@ -75,6 +78,7 @@ class DimacsParser
         bool header_found = false;
         int num_header_vars = 0;
         int num_header_cls = 0;
+        bool isCnfPlus = false;
 
         //Reduce temp overhead
         vector<Lit> lits;
@@ -82,6 +86,7 @@ class DimacsParser
 
         size_t norm_clauses_added = 0;
         size_t xor_clauses_added = 0;
+        size_t card_constraints_added = 0;
 };
 
 #include <sstream>
@@ -122,9 +127,29 @@ std::string DimacsParser<C>::stringify(uint32_t x) const
 template<class C>
 bool DimacsParser<C>::readClause(C& in)
 {
+    isCardConst = false;
+    isAtLeast = false;
+    bound = 0;
     int32_t parsed_lit;
     uint32_t var;
     for (;;) {
+        if (isCnfPlus) {
+            if ((isAtLeast = in.checkForChar('>')) || in.checkForChar('<')) {
+                isCardConst = true;
+                if(!in.checkForChar('=')) {
+                    std::cerr
+                    << "PARSE ERROR!" "At line " << lineNum
+                    << " we expected an equals sign"
+                    << std::endl;
+                    return false;
+                }
+                else if (!in.parseInt(bound, lineNum)) {
+                    return false;
+                }
+                return true;
+            }
+        }
+        
         if (!in.parseInt(parsed_lit, lineNum)) {
             return false;
         }
@@ -213,6 +238,9 @@ bool DimacsParser<C>::printHeader(C& in)
         }
         header_found = true;
 
+        if (in.checkForChar('+')) {
+            isCnfPlus = true;
+        }
         if (!in.parseInt(num_header_vars, lineNum)
             || !in.parseInt(num_header_cls, lineNum)
         ) {
@@ -403,8 +431,20 @@ bool DimacsParser<C>::parse_and_add_clause(C& in)
         return false;
     }
     lineNum++;
+    if (isCardConst) {
+        if (isAtLeast) {
+            bound = lits.size() - bound;
+            for (uint32_t i = 0; i < lits.size() ; i++) {
+                lits[i] = ~lits[i];
+            }
+        }
+        solver->add_clause(lits, true, bound);
+        card_constraints_added++;
+    }
+    else {
     solver->add_clause(lits);
     norm_clauses_added++;
+    }
     return true;
 }
 
@@ -502,6 +542,7 @@ bool DimacsParser<C>::parse_DIMACS(T input_stream, const bool _strict_header)
     if (verbosity) {
         cout
         << "c -- clauses added: " << norm_clauses_added << endl
+        << "c -- cardinality constraints added: " << card_constraints_added << endl
         << "c -- xor clauses added: " << xor_clauses_added << endl
         << "c -- vars added " << (solver->nVars() - origNumVars)
         << endl;

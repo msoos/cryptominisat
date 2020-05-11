@@ -152,6 +152,15 @@ public:
         exit(-1);
     }
 
+    inline bool checkForChar(char c){
+        skipWhitespace();
+        if (value() == c) {
+            advance();
+            return true;
+        }
+        return false;
+    }
+
     inline bool parseInt(int32_t& ret, size_t lineNum, bool allow_eol = false)
     {
         int32_t val = 0;
@@ -171,7 +180,7 @@ public:
         }
         if (c < '0' || c > '9') {
             std::cerr
-            << "PARSE ERROR! Unexpected char (dec: '" << c << ")"
+            << "PARSE ERROR! Unexpected char (dec: '" << c << "')"
             << " At line " << lineNum
             << " we expected a number"
             << std::endl;

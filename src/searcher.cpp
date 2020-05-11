@@ -448,7 +448,8 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
             }
             break;
         }
-
+        
+        case atmost_t :
         case clause_t : {
             cl = cl_alloc.ptr(confl.get_offset());
             if (cl->red()) {
@@ -520,6 +521,15 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                     cont = false;
                 }
                 break;
+
+            case atmost_t :
+                if (i == cl->size()-1) {
+                    cont = false;
+                }
+                if (value((*cl)[i]) != l_True) { i++; continue; }
+                x= ~(*cl)[i];
+                break;
+
             case null_clause_t:
                 assert(false);
         }
@@ -738,17 +748,32 @@ void Searcher::simple_create_learnt_clause(
                 }
             } else {
                 const Clause& c = *solver->cl_alloc.ptr(confl.get_offset());
-
-                // if True_confl==true, then choose p begin with the 1st index of c
-                for (uint32_t j = (p == lit_Undef && True_confl == false) ? 0 : 1
-                    ; j < c.size()
-                    ; j++
-                ) {
-                    Lit q = c[j];
-                    assert(q.var() < seen.size());
-                    if (!seen[q.var()]) {
-                        seen[q.var()] = 1;
-                        mypathC++;
+                if (c.is_atmost())
+                {
+                    for (uint32_t j = 0; j < c.size(); j++)
+                    {
+                        if (value((c)[j]) != l_True) { continue; }
+                        Lit q = ~c[j];
+                        assert(q.var() < seen.size());
+                        if (!seen[q.var()]) {
+                            seen[q.var()] = 1;
+                            mypathC++;
+                        }
+                    }
+                }
+                else
+                {
+                    // if True_confl==true, then choose p begin with the 1st index of c
+                    for (uint32_t j = (p == lit_Undef && True_confl == false) ? 0 : 1
+                        ; j < c.size()
+                        ; j++
+                    ) {
+                        Lit q = c[j];
+                        assert(q.var() < seen.size());
+                        if (!seen[q.var()]) {
+                            seen[q.var()] = 1;
+                            mypathC++;
+                        }
                     }
                 }
             }
@@ -960,6 +985,11 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
                 size = cl->size()-1;
                 break;
 
+            case atmost_t:
+                cl = cl_alloc.ptr(reason.get_offset());
+                size = cl->size();
+                break;
+
             case binary_t:
                 size = 1;
                 break;
@@ -977,6 +1007,11 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
             switch (type) {
                 case clause_t:
                     p2 = (*cl)[i+1];
+                    break;
+
+                case atmost_t:
+                    if (value((*cl)[i]) != l_True) continue;
+                    p2 = ~(*cl)[i];
                     break;
 
                 case binary_t:

@@ -626,13 +626,17 @@ DLL_PUBLIC void SATSolver::set_timeout_all_calls(double timeout)
     data->timeout = timeout;
 }
 
-DLL_PUBLIC bool SATSolver::add_clause(const vector< Lit >& lits)
+DLL_PUBLIC bool SATSolver::add_clause(const vector< Lit >& lits, bool isAtmost, int32_t bound)
 {
-    if (data->log) {
+    if (data->log && isAtmost) {
+        (*data->log) << lits << " <=" << bound << endl;
+    }
+    else if (data->log){
         (*data->log) << lits << " 0" << endl;
     }
 
     bool ret = true;
+
     if (data->solvers.size() > 1) {
         if (data->cls_lits.size() + lits.size() + 1 > CACHE_SIZE) {
             ret = actually_add_clauses_to_threads(data);
@@ -646,7 +650,7 @@ DLL_PUBLIC bool SATSolver::add_clause(const vector< Lit >& lits)
         data->solvers[0]->new_vars(data->vars_to_add);
         data->vars_to_add = 0;
 
-        ret = data->solvers[0]->add_clause_outer(lits);
+        ret = data->solvers[0]->add_clause_outer(lits, isAtmost, bound);
         data->cls++;
     }
 

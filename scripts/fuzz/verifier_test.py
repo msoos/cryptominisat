@@ -62,6 +62,26 @@ class TestVerifier(unittest.TestCase):
         self.assertRaises(NameError, self.s._check_regular_clause, "1 2 3", {1: False, 2: False, 3: False})
         self.assertRaises(NameError, self.s._check_regular_clause, "-1 -2 -3", {1: True, 2: True, 3: True})
 
+    def test_sat_card_atmost(self):
+        self.assertTrue(self.s._check_card("1 2 3 <= 2", {1: True, 2: True, 3: False}))
+        self.assertTrue(self.s._check_card("-1 -2 -3 <= 2", {1: True, 2: True, 3: False}))
+        self.assertTrue(self.s._check_card("-1 -2 3 <= 0", {1: True, 2: True, 3: False}))
+
+    def test_unsat_card_atmost(self):
+        self.assertRaises(NameError, self.s._check_card, "1 2 3 <= 2", {1: True, 2: True, 3: True})
+        self.assertRaises(NameError, self.s._check_card, "1 2 3 <= 0", {1: True, 2: False, 3: False})
+        self.assertRaises(NameError, self.s._check_card, "-1 -2 3 <= 2", {1: True, 2: True})
+
+    def test_sat_card_atleast(self):
+        self.assertTrue(self.s._check_card("1 2 3 >= 2", {1: True, 2: True, 3: False}))
+        self.assertTrue(self.s._check_card("-1 -2 3 >= 0", {1: True, 2: True, 3: False}))
+        self.assertTrue(self.s._check_card("1 -2 3 >= 1", {1: True, 3: True}))
+
+    def test_unsat_card_atleast(self):
+        self.assertRaises(NameError, self.s._check_card, "1 2 3 >= 2", {1: True, 2: False, 3: False})
+        self.assertRaises(NameError, self.s._check_card, "1 -2 3 >= 2", {1: False, 2: True, 3: False})
+        self.assertRaises(NameError, self.s._check_card, "-1 -2 3 >= 4", {1: False, 2: False, 3: True})
+
     def test_sat_xcl(self):
         self.assertTrue(NameError, self.s._check_xor_clause("x1 2 3", {1: True, 2: False, 3: False}))
         self.assertTrue(NameError, self.s._check_xor_clause("x1 2 3 0", {1: True, 2: False, 3: False}))
