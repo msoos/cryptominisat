@@ -38,6 +38,8 @@ class XorToCNF:
             tmp = tmp[1:]
 
         for lit in tmp.split():
+            if lit == "<=" or lit == ">=":
+                break
             var = abs(int(lit))
             maxvar = max(var, maxvar)
 

@@ -24,6 +24,7 @@ import gzip
 import re
 import fnmatch
 from xor_to_cnf_class import *
+from card_to_cnf_class import *
 from debuglib import *
 import subprocess
 import os
@@ -76,6 +77,7 @@ class solution_parser:
             f = open(fname, "r")
         clauses = 0
         thisDebugLibPart = 0
+        isCnfp = False
 
         for line in f:
             line = line.rstrip()
@@ -95,9 +97,14 @@ class solution_parser:
 
             # check solution against clause
             try:
-                if line[0] != 'c' and line[0] != 'p':
+                if line[0] == 'p':
+                    isCnfp = line.find("cnf+")
+                elif line[0] != 'c':
                     if line[0] != 'x':
-                        solution_parser._check_regular_clause(line, solution)
+                        if isCnfp and (line.find("<=") or line.find(">=")):
+                            solution_parser._check_card(line, solution)
+                        else:
+                            solution_parser._check_regular_clause(line, solution)
                     else:
                         assert line[0] == 'x', "Line must start with p, c, v or x"
                         solution_parser._check_xor_clause(line, solution)
@@ -173,9 +180,12 @@ class solution_parser:
 
     def check_unsat(self, fname):
         a = XorToCNF()
-        tmpfname = unique_file("tmp_for_xor_to_cnf_convert")
-        a.convert(fname, tmpfname)
+        b = CardToCNF()
 
+        tmpfnameXor = unique_file("tmp_for_xor_to_cnf_convert")
+        a.convert(fname, tmpfnameXor)
+        tmpfname = unique_file("tmp_for_card_to_cnf_convert")
+        b.convert(tmpfnameXor, tmpfname)
         # execute with the other solver
         toexec = "../../build/tests/minisat/minisat -verb=0 %s" % tmpfname
         print("Solving with other solver: %s" % toexec)
@@ -190,7 +200,9 @@ class solution_parser:
             raise
 
         consoleOutput2 = p.communicate()[0]
+        os.unlink(tmpfnameXor)
         os.unlink(tmpfname)
+
 
         # if other solver was out of time, then we can't say anything
         diff_time = time.time() - curr_time
@@ -493,18 +505,57 @@ class solution_parser:
             if solution[abs(numlit)] ^ (numlit < 0):
                 return True
 
-        # print not set vars
+        solution_parser._print_not_set_vars(lits, solution)
+        print("Every other var set to FALSE")
+        raise NameError("Error: clause '%s' not satisfied." % line)
+
+    @staticmethod
+    def _check_card(line, solution):
+        lits = line.split()
+        bound = int(lits[-1])
+        isAtmost = lits[-2] == "<="
+        del lits[-2:]
+
+        trueCount = 0
+        for lit in lits:
+            numlit = int(lit)
+
+            if abs(numlit) not in solution:
+                if isAtmost:
+                    solution_parser._print_not_set_vars(lits, solution)
+                    raise NameError("Error: Unset vars in Atmost cardinality constraint '%s'." % line)
+                continue
+
+            if solution[abs(numlit)] ^ (numlit < 0):
+                trueCount += 1
+
+            if isAtmost and trueCount > bound:
+                solution_parser._print_not_set_vars(lits, solution)
+                raise NameError("Error: Atmost cardinality constraint '%s' not satisfied." % line)
+            elif not isAtmost and trueCount >= bound:
+                return True
+
+        if isAtmost:
+            return True
+        elif not isAtmost:
+            solution_parser._print_not_set_vars(lits, solution)
+            raise NameError("Error: Atleast cardinality constraint '%s' not satisfied." % line)
+
+    @staticmethod
+    def _print_not_set_vars(lits, solution):
         print("Unset vars:")
+        found = False
         for lit in lits:
             numlit = int(lit)
             if numlit == 0:
                 break
 
             if abs(numlit) not in solution:
+                found = True
                 print("var %d not set" % abs(numlit))
 
-        print("Every other var set to FALSE")
-        raise NameError("Error: clause '%s' not satisfied." % line)
+        if not found:
+            print("Every var is set")
 
     @staticmethod
     def _check_xor_clause(line, solution):
