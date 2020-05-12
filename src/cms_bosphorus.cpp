@@ -53,7 +53,7 @@ void CMSBosphorus::add_clauses()
         Lit l = Lit::toLit(i);
         lits[0] = l;
         for(const auto& w: solver->watches[l]) {
-            if (w.isBin() && l < w.lit2()) {
+            if (w.isBin() && l < w.lit2() && !w.red()) {
                 lits[1] = w.lit2();
                 bosph->add_dimacs_cl(dimacs, (Bosph::Lit*)lits, 2);
             }
@@ -82,6 +82,7 @@ bool CMSBosphorus::doit()
 
     auto cnf = bosph->cnf_from_anf_and_cnf(NULL, anf);
     auto cls = bosph->get_clauses(cnf);
+    vector<Lit> lits;
     for(auto x: cls) {
         bool use = true;
         for(uint32_t i = 0; i < x.size(); i++) {
@@ -92,7 +93,24 @@ bool CMSBosphorus::doit()
             }
         }
         if (use) {
-            cout << "bosph cl: " << x << endl;
+            lits.clear();
+            for(uint32_t i = 0; i < x.size(); i++) {
+                Bosph::Lit* l = x.lits.data()+i;
+                lits.push_back(*((Lit*)l));
+            }
+            cout << "c adding bosph cl: " << lits << endl;
+            Clause* cl = solver->add_clause_int(
+                lits //Literals in new clause
+                , true //Is the new clause redundant?
+            );
+            if (cl) {
+                cl->stats.glue = 2;
+                auto cloffset = solver->cl_alloc.get_offset(cl);
+                solver->longRedCls[0].push_back(cloffset);
+            }
+            if (!solver->okay()) {
+                break;
+            }
         }
     }
     bosph->delete_dimacs(dimacs);

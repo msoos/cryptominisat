@@ -254,6 +254,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "cl-consolidate," //consolidate after OCC
             "scc-vrepl,"
             "sub-cls-with-bin,"
+            "bosphorus,"
             "sls,lucky"
         )
 
