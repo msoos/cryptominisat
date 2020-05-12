@@ -395,8 +395,8 @@ class QueryCls (helper.QueryHelper):
                 weighted_size.append(ws)
 
             one_part(1/2.0, " and rdb0.dump_no = 1 ")
-            one_part(1/8.0, " and rdb0.dump_no = 2 ")
-            one_part(1/8.0, " and rdb0.dump_no > 2 ")
+            one_part(1/4.0, " and rdb0.dump_no = 2 ")
+            one_part(1/4.0, " and rdb0.dump_no > 2 ")
 
             dfs[type_data] = pd.concat(df_parts)
             print("size of {t} data: {size}".format(
