@@ -30,7 +30,7 @@ class QueryDatRem(helper.QueryHelper):
     def __init__(self, dbfname):
         super(QueryDatRem, self).__init__(dbfname)
 
-    def create_avg_median_percentiles_table(self):
+    def create_percentiles_table(self):
         # Drop table
         q_drop = """
         DROP TABLE IF EXISTS `used_later_percentiles`;
@@ -47,7 +47,7 @@ class QueryDatRem(helper.QueryHelper):
         self.c.execute(q_create)
 
 
-    def get_all_avg_median_percentile_X(self, name=""):
+    def get_all_percentile_X(self, name=""):
         t = time.time()
         print("Calculating percentiles now...")
 
@@ -621,10 +621,10 @@ if __name__ == "__main__":
             q.fill_used_later_X("long", 50000)
         with QueryDatRem(args[0]) as q:
             helper.dangerous(q.c)
-            q.create_avg_median_percentiles_table()
-            q.get_all_avg_median_percentile_X("")
-            q.get_all_avg_median_percentile_X("_short")
-            q.get_all_avg_median_percentile_X("_long")
+            q.create_percentiles_table()
+            q.get_all_percentile_X("")
+            q.get_all_percentile_X("_short")
+            q.get_all_percentile_X("_long")
             q.print_percentiles()
         with helper.QueryFill(args[0]) as q:
             q.delete_and_create_all()
@@ -647,10 +647,10 @@ if __name__ == "__main__":
         q.fill_used_later_X("long", 50000, used_clauses="used_clauses_red")
     with QueryDatRem(args[0]) as q:
         helper.dangerous(q.c)
-        q.create_avg_median_percentiles_table()
-        q.get_all_avg_median_percentile_X("")
-        q.get_all_avg_median_percentile_X("_short")
-        q.get_all_avg_median_percentile_X("_long")
+        q.create_percentiles_table()
+        q.get_all_percentile_X("")
+        q.get_all_percentile_X("_short")
+        q.get_all_percentile_X("_long")
         q.print_percentiles()
         q.drop_used_clauses_red()
     with helper.QueryFill(args[0]) as q:
