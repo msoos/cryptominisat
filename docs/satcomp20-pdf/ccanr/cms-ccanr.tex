@@ -32,7 +32,7 @@ Arijit Shaw, Kuldeep S. Meel (National University of Singapore)}
 \section{Introduction}
 This paper presents the conflict-driven clause-learning (CLDL) SAT solver CryptoMiniSat (\emph{CMS}) augmented with the Stochastic Local Search (SLS)~\cite{DBLP:conf/sat/CaiLS15} solver CCAnr as submitted to SAT Competition 2020.
 
-CryptoMiniSat aims to be a modern, open source SAT solver using inprocessing techniques, optimized data structures and finely-tuned timeouts to have good control over both memory and time usage of inprocessing steps. It also supports, when compiled as such, to recover XOR constraints and perform Gauss-Jordan elimination on them at every decision level. For the competition, this option was disabled. CryptoMiniSat is authored by Mate Soos.
+CryptoMiniSat aims to be a modern, open source SAT solver using inprocessing techniques, optimized data structures and finely-tuned timeouts to have good control over both memory and time usage of inprocessing steps. It also supports, when compiled as such, to recover XOR constraints and perform Gauss-Jordan elimination on them at every decision level. CryptoMiniSat is authored by Mate Soos.
 
 CCAnr~\cite{DBLP:conf/sat/CaiLS15} is a stochastic local search (SLS) solver for SAT, which is based on the configuration checking strategy and has good performance on non-random SAT instances. CCAnr switches between two modes: it flips a variable according to the CCA (configuration checking with aspiration) heuristic if any; otherwise, it flips a variable in a random unsatisfied clause (which we refer to as the focused local search mode). The main novelty of CCAnr lies on the greedy heuristic in the focused local search mode, which contributes significantly to its good performance on structured instances
 
