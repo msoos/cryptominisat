@@ -112,7 +112,6 @@ cd "$FNAME-dir"
 # to be removed: --tern 0
 # for var, we need: --bva 0 --scc 0
 ../cryptominisat5 ${EXTRA_CMS_OPTS} --maxgluehistltlimited 100000 --tern 0 --sqlitedbover 1 --cldatadumpratio "$RATIO" --cllockdatagen 0.5 --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
-# --bva 0 --updateglueonanalysis 0 --otfsubsume 0
 grep "c conflicts" cms-pred-run.out
 
 ########################
