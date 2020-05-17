@@ -247,7 +247,12 @@ bool DimacsParser<C>::parseWeight(C& in)
 template<class C>
 bool DimacsParser<C>::parse_header(C& in)
 {
-    if (match(in, "p cnf")) {
+    ++in;
+    in.skipWhitespace();
+    std::string str;
+    in.parseString(str);
+    cout << "str is:" << str << endl;
+    if (str == "cnf" || str == "pcnf") {
         if (header_found && strict_header) {
             std::cerr << "ERROR: CNF header ('p cnf vars cls') found twice in file! Exiting." << endl;
             exit(-1);
@@ -286,7 +291,7 @@ bool DimacsParser<C>::parse_header(C& in)
         << std::dec
         << ")"
         << " At line " << lineNum+1
-        << "' in the header, at line " << lineNum+1
+        << "' in the header"
         << please_read_dimacs
         << endl;
         return false;
@@ -493,6 +498,13 @@ bool DimacsParser<C>::parse_DIMACS_main(C& in)
             }
             in.skipLine();
             lineNum++;
+            break;
+        case 'v':
+            in.parseString(str);
+            assert(str == "vp");
+            if (!parseIndependentSet(in)) {
+                return false;
+            }
             break;
         case 'w':
             if (!parseWeight(in)) {
