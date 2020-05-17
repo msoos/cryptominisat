@@ -21,7 +21,14 @@ env:
 matrix:
   include:
     - os: osx
-      osx_image: xcode11.3
+      osx_image: xcode10.1 # osx 10.13
+      compiler: clang
+      python: "3.7"
+      env:
+        - CMS_CONFIG=NORMAL
+
+    - os: osx
+      osx_image: xcode11.3 # osx 10.14.6
       compiler: clang
       python: "3.7"
       env:
