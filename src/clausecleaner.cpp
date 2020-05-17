@@ -389,8 +389,8 @@ bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors)
             } else {
                 solver->removed_xorclauses_clash_vars.insert(
                     solver->removed_xorclauses_clash_vars.end()
-                    , x.begin()
-                    , x.end()
+                    , x.clash_vars.begin()
+                    , x.clash_vars.end()
                 );
                 //cout << "NOT keeping XOR" << endl;
             }
