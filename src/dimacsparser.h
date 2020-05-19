@@ -68,6 +68,8 @@ class DimacsParser
         SATSolver* solver;
         std::string debugLib;
         unsigned verbosity;
+        bool pcnf = false;
+        unsigned num_vp = 0; //how many vp's have we seen
 
         //Stat
         size_t lineNum;
@@ -251,8 +253,11 @@ bool DimacsParser<C>::parse_header(C& in)
     in.skipWhitespace();
     std::string str;
     in.parseString(str);
-    cout << "str is:" << str << endl;
     if (str == "cnf" || str == "pcnf") {
+        pcnf = (str == "pcnf");
+        if (pcnf && verbosity) {
+            cout << "c parsing pcnf" << endl;
+        }
         if (header_found && strict_header) {
             std::cerr << "ERROR: CNF header ('p cnf vars cls') found twice in file! Exiting." << endl;
             exit(-1);
@@ -422,8 +427,12 @@ bool DimacsParser<C>::parseComments(C& in, const std::string& str)
             cout << "c Parsed Solver::new_vars( " << n << " )" << endl;
         }
     } else if (str == "ind") {
-        if (!parseIndependentSet(in)) {
-            return false;
+        if (pcnf) {
+            //nothing
+        } else {
+            if (!parseIndependentSet(in)) {
+                return false;
+            }
         }
     } else {
         if (verbosity >= 6) {
@@ -502,8 +511,16 @@ bool DimacsParser<C>::parse_DIMACS_main(C& in)
         case 'v':
             in.parseString(str);
             assert(str == "vp");
-            if (!parseIndependentSet(in)) {
-                return false;
+            if (!pcnf) {
+                in.skipLine();
+            } else {
+                if (num_vp == 0) {
+                    sampling_vars.clear();
+                }
+                num_vp++;
+                if (!parseIndependentSet(in)) {
+                    return false;
+                }
             }
             break;
         case 'w':
