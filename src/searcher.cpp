@@ -81,8 +81,6 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
 {
     var_inc_vsids = 1;
     maple_step_size = conf.orig_step_size;
-    lit_decay_lsids = 0.8;
-    lit_inc_lsids = 0.8;
 
     more_red_minim_limit_binary_actual = conf.more_red_minim_limit_binary;
     mtrand.seed(conf.origSeed);
@@ -112,7 +110,6 @@ void Searcher::new_var(const bool bva, const uint32_t orig_outer)
     PropEngine::new_var(bva, orig_outer);
 
     insert_var_order_all((int)nVars()-1);
-    lit_act_lsids.insert(lit_act_lsids.end(), 2, 0);
     #ifdef STATS_NEEDED_BRANCH
     level_used_for_cl_arr.insert(level_used_for_cl_arr.end(), 1, 0);
     #endif
@@ -125,7 +122,6 @@ void Searcher::new_vars(size_t n)
     for(int i = n-1; i >= 0; i--) {
         insert_var_order_all((int)nVars()-i-1);
     }
-    lit_act_lsids.insert(lit_act_lsids.end(), 2*n, 0);
 
     #ifdef STATS_NEEDED_BRANCH
     level_used_for_cl_arr.insert(level_used_for_cl_arr.end(), n, 0);
@@ -139,8 +135,6 @@ void Searcher::save_on_var_memory()
     #ifdef STATS_NEEDED_BRANCH
     level_used_for_cl_arr.resize(nVars());
     #endif
-    lit_act_lsids.resize(2*nVars());
-    lit_act_lsids.shrink_to_fit();
 }
 
 void Searcher::updateVars(
@@ -154,14 +148,6 @@ void Searcher::updateVars(
     #ifdef VMTF_NEEDED
     rebuildOrderHeapVMTF();
     #endif
-
-    //Update LSIDS
-    vector<uint32_t> interToOuter2(nVarsOuter()*2);
-    for(size_t i = 0; i < nVarsOuter(); i++) {
-        interToOuter2[i*2] = interToOuter[i]*2;
-        interToOuter2[i*2+1] = interToOuter[i]*2+1;
-    }
-    updateArray(lit_act_lsids, interToOuter2);
 }
 
 template<bool update_bogoprops>
@@ -211,7 +197,6 @@ inline void Searcher::add_lit_to_learnt(
                 break;
             #endif
         }
-        bump_lsids_lit_act<update_bogoprops>(lit, 0.5);
     }
 
     if (varData[var].level >= nDecisionLevel) {
@@ -1363,10 +1348,6 @@ inline void Searcher::update_branch_params()
         var_decay += 0.01;
     }
 
-    if (lit_decay_lsids < 0.95) {
-        lit_decay_lsids += 0.01;
-    }
-
     if (branch_strategy == branch::maple
         && maple_step_size > conf.min_step_size)
     {
@@ -1557,16 +1538,6 @@ inline void Searcher::print_learning_debug_info() const
     << " to " << !learnt_clause[0].sign()
     << endl;
     #endif
-}
-
-
-void Searcher::print_lsids() const
-{
-    cout << " LSIDS scores " << endl ;
-    for(size_t i = 0; i < nVars(); i++){
-        cout << i+1 << " : " << lit_act_lsids[2*i] << " " << lit_act_lsids[2*i+1] << " . " << endl;
-    }
-    cout << endl;
 }
 
 void Searcher::print_learnt_clause() const
@@ -1906,7 +1877,6 @@ bool Searcher::handle_conflict(PropBy confl)
     if (branch_strategy == branch::vsids) {
         vsids_decay_var_act();
     }
-    litDecayActivity();
     decayClauseAct<false>();
 
     return true;
@@ -2511,37 +2481,6 @@ void Searcher::setup_polarity_strategy()
         {
             polar_stable = true;
 
-        }
-    }
-
-    //If not stable, let's try to do LSIDS
-    if (!polar_stable) {
-        if (
-            (conf.chronophase_every_n > 0 &&
-            ((int)(branch_strategy_num % conf.chronophase_every_n)
-                == (conf.chronophase_every_n-1))) ||
-
-            conf.chronophase_every_n == 0 ||
-
-            (conf.chronophase_every_n == -1 &&
-            branch_strategy == branch::vsids) ||
-
-            (conf.chronophase_every_n == -2 &&
-            branch_strategy == branch::maple) ||
-
-            (conf.chronophase_every_n == -3 &&
-            branch_strategy_str == "VSIDS1") ||
-
-            (conf.chronophase_every_n == -4 &&
-            branch_strategy_str == "VSIDS2") ||
-
-            (conf.chronophase_every_n == -5 &&
-            branch_strategy_str == "MAPLE1") ||
-
-            (conf.chronophase_every_n == -6 &&
-            branch_strategy_str == "MAPLE2"))
-        {
-            polarity_mode = PolarityMode::polarmode_lsids;
         }
     }
 
@@ -3334,7 +3273,6 @@ size_t Searcher::mem_used() const
     size_t mem = HyperEngine::mem_used();
     mem += var_act_vsids.capacity()*sizeof(double);
     mem += var_act_maple.capacity()*sizeof(double);
-    mem += lit_act_lsids.capacity()*sizeof(double);
     mem += order_heap_vsids.mem_used();
     mem += order_heap_maple.mem_used();
     #ifdef VMTF_NEEDED
@@ -3383,13 +3321,6 @@ void Searcher::vsids_decay_var_act()
 {
     assert(branch_strategy == branch::vsids);
     var_inc_vsids *= (1.0 / var_decay);
-}
-
-inline void Searcher::litDecayActivity()
-{
-    if (polarity_mode == PolarityMode::polarmode_lsids) {
-        lit_inc_lsids *= (1.0 / lit_decay_lsids);
-    }
 }
 
 void Searcher::consolidate_watches(const bool full)
@@ -3535,7 +3466,6 @@ void Searcher::save_state(SimpleOutFile& f, const lbool status) const
     PropEngine::save_state(f);
 
     f.put_vector(var_act_vsids);
-    f.put_vector(lit_act_lsids);
     f.put_vector(var_act_maple);
     f.put_vector(model);
     f.put_vector(conflict);
@@ -3557,7 +3487,6 @@ void Searcher::load_state(SimpleInFile& f, const lbool status)
     PropEngine::load_state(f);
 
     f.get_vector(var_act_vsids);
-    f.get_vector(lit_act_lsids);
     f.get_vector(var_act_maple);
     for(size_t i = 0; i < nVars(); i++) {
         if (varData[i].removed == Removed::none

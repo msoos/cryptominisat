@@ -59,7 +59,6 @@ enum class PolarityMode {
     , polarmode_rnd
     , polarmode_automatic
     , polarmode_weighted
-    , polarmode_lsids
 };
 
 enum class Restart {
@@ -75,8 +74,6 @@ inline std::string getNameOfPolarmodeType(PolarityMode polarmode)
     switch(polarmode) {
         case PolarityMode::polarmode_automatic :
             return "auto";
-        case PolarityMode::polarmode_lsids :
-            return "lsids";
         case PolarityMode::polarmode_neg :
             return "neg";
         case PolarityMode::polarmode_pos :
@@ -172,7 +169,6 @@ class DLL_PUBLIC SolverConf
         bool do_lucky_polar;
         PolarityMode polarity_mode;
         int polar_stable_every_n;
-        int chronophase_every_n;
 
         //Clause cleaning
 

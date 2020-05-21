@@ -106,8 +106,6 @@ public:
             }else if ((value = hasPrefix(argv[i], "--simdrat="))){
                 int drat_sim  = (int)strtol(value, NULL, 10);
                 conf.simulate_drat = drat_sim;
-            }else if ((value = hasPrefix(argv[i], "--chronophasen="))){
-                conf.chronophase_every_n  = (int)strtol(value, NULL, 10);
             }else if ((value = hasPrefix(argv[i], "--threads="))){
                 num_threads  = (int)strtol(value, NULL, 10);
                 if (num_threads == 0 && errno == EINVAL){

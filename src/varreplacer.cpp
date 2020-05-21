@@ -156,10 +156,6 @@ void VarReplacer::update_vardata_and_activities(
     solver->var_act_maple[replaced_with_var] += solver->var_act_maple[orig_var];
 
     assert(orig_var <= solver->nVars() && replaced_with_var <= solver->nVars());
-
-    //Update LSIDS
-    solver->lit_act_lsids[replaced_with.toInt()] += solver->lit_act_lsids[orig.toInt()];
-    solver->lit_act_lsids[(~replaced_with).toInt()] += solver->lit_act_lsids[(~orig).toInt()];
 }
 
 bool VarReplacer::enqueueDelayedEnqueue()
