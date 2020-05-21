@@ -245,7 +245,7 @@ bool DistillerLong::distill_long_cls_all(
     const double time_remain = float_div(
         maxNumProps - ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps),
         orig_maxNumProps);
-    if (solver->conf.verbosity) {
+    if (solver->conf.verbosity >= 2) {
         cout << "c [distill] long cls"
         << " tried: " << runStats.checkedClauses << "/" << offs.size()
         << " cl-short:" << runStats.numClShorten

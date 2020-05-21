@@ -312,6 +312,10 @@ lbool CMS_ccnr::deal_with_solution(int res)
 
         for(size_t i = 0; i < solver->nVars(); i++) {
             solver->varData[i].polarity = ls_s->_best_solution[i+1];
+            if (res) {
+                solver->varData[i].best_polarity = solver->varData[i].polarity;
+                solver->longest_trail_ever = solver->nVarsOuter();
+            }
         }
     }
 

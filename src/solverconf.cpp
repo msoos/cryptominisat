@@ -68,6 +68,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         do_lucky_polar(false)
         , polarity_mode(PolarityMode::polarmode_automatic)
         , polar_stable_every_n(4)
+        , polar_best_inv_multip_n(1000)
+        , polar_best_multip_n(1000)
 
         //Clause cleaning
         , every_lev1_reduce(10000) // kept for a while then moved to lev2

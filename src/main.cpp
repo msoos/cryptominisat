@@ -356,6 +356,10 @@ void Main::add_supported_options()
         , "When to use stable polarities. 0 = always, otherwise every n. Negative is special, see code")
     ("lucky", po::value(&conf.do_lucky_polar)->default_value(conf.do_lucky_polar)
         , "Try computing lucky polarities")
+    ("polarbestinvmult", po::value(&conf.polar_best_inv_multip_n)->default_value(conf.polar_best_inv_multip_n)
+        , "How often should we use inverted best polarities instead of stable")
+    ("polarbestmult", po::value(&conf.polar_best_multip_n)->default_value(conf.polar_best_multip_n)
+        , "How often should we use best polarities instead of stable")
     ;
 
 

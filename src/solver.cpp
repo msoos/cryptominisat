@@ -274,7 +274,6 @@ void Solver::add_every_combination_xor(
             new_var(true);
             const uint32_t newvar = nVars()-1;
             tmp_xor_clash_vars.push_back(newvar);
-            varData[newvar].added_for_xor = true;
             const Lit toadd = Lit(newvar, false);
             xorlits.push_back(toadd);
             lastlit_added = toadd;

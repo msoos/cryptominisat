@@ -83,10 +83,10 @@ inline std::string branch_type_to_string(const branch type)
 {
     switch(type) {
         case branch::vsids:
-            return "vsids";
+            return "vsid";
 
         case branch::maple:
-            return "maple";
+            return "mapl";
 
         #ifdef VMTF_NEEDED
         case branch::vmtf:
@@ -117,30 +117,6 @@ inline int branch_type_to_int(const branch type)
     assert(false && "oops, one of the branch types has no int name");
 
     return 0;
-}
-
-inline std::string restart_type_to_short_string(const Restart type)
-{
-    switch(type) {
-        case Restart::glue:
-            return "glue";
-
-        case Restart::geom:
-            return "geom";
-
-        case Restart::luby:
-            return "luby";
-
-        case Restart::glue_geom:
-            return "gl/geo";
-
-        case Restart::never:
-            return "never";
-    }
-
-        assert(false && "oops, one of the restart types has no string name");
-
-        return "ERR: undefined!";
 }
 
 inline int restart_type_to_int(const Restart type)

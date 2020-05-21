@@ -53,8 +53,8 @@ struct VarData
 
     ///The preferred polarity of each variable.
     bool polarity = false;
+    bool best_polarity = false;
     bool is_bva = false;
-    bool added_for_xor = false;
     #if defined(STATS_NEEDED_BRANCH) || defined(FINAL_PREDICTOR_BRANCH)
     uint64_t num_propagated = 0;
     uint64_t num_propagated_pos = 0;

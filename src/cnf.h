@@ -130,8 +130,10 @@ public:
     vector<VarData> varData;
     branch branch_strategy = branch::vsids;
     string branch_strategy_str = "VSIDSX";
-    bool polar_stable = false;
-    uint32_t polar_stable_longest_trail = 0;
+    string branch_strategy_str_short = "vsx";
+    PolarityMode polarity_mode = PolarityMode::polarmode_automatic; //current polarity mode
+    uint32_t polar_stable_longest_trail_this_iter = 0;
+    uint32_t longest_trail_ever = 0;
     vector<uint32_t> depth; //for ancestors in intree probing
     uint32_t minNumVars = 0;
 

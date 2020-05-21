@@ -1938,15 +1938,16 @@ void Searcher::check_calc_vardist_features(bool force)
 void Searcher::print_restart_header()
 {
     //Print restart output header
-    if (((lastRestartPrintHeader == 0 && sumConflicts > 20000) ||
+    if (((lastRestartPrintHeader == 0 && sumConflicts > 200) ||
         (lastRestartPrintHeader + 1600000) < sumConflicts)
         && conf.verbosity
     ) {
         cout
         << "c"
-        << " " << std::setw(6) << "type"
-        << " " << std::setw(6) << "branch"
-        << " " << std::setw(5) << "rest"
+        << " " << std::setw(4) << "res"
+        << " " << std::setw(4) << "pol"
+        << " " << std::setw(4) << "bran"
+        << " " << std::setw(5) << "nres"
         << " " << std::setw(5) << "conf"
         << " " << std::setw(5) << "freevar"
         << " " << std::setw(5) << "IrrL"
@@ -1983,9 +1984,10 @@ void Searcher::print_restart_stat_line() const
 void Searcher::print_restart_stats_base() const
 {
     cout << "c"
-         << " " << std::setw(6) << restart_type_to_short_string(params.rest_type);
-    cout << " " << std::setw(6) << branch_type_to_string(branch_strategy);
-    cout << " " << std::setw(5) << sumRestarts();
+         << " " << std::setw(4) << restart_type_to_short_string(params.rest_type)
+         << " " << std::setw(4) << polarity_mode_to_short_string(polarity_mode)
+         << " " << std::setw(4) << branch_strategy_str_short
+         << " " << std::setw(5) << sumRestarts();
 
     if (sumConflicts >  20000) {
         cout << " " << std::setw(4) << sumConflicts/1000 << "K";
@@ -2228,11 +2230,12 @@ struct branch_type_total{
     branch_type_total() {}
     branch_type_total (CMSat::branch _branch,
                        double _decay_start, double _decay_max,
-                       string _descr) :
+                       string _descr, string _descr_short) :
         branch(_branch),
         decay_start(_decay_start),
         decay_max(_decay_max),
-        descr(_descr)
+        descr(_descr),
+        descr_short(_descr_short)
     {}
     explicit branch_type_total(CMSat::branch _branch) :
         branch(_branch)
@@ -2242,6 +2245,7 @@ struct branch_type_total{
     double decay_start = 0.95;
     double decay_max = 0.95;
     string descr;
+    string descr_short;
 };
 
 void Searcher::set_branch_strategy(uint32_t iteration_num)
@@ -2298,51 +2302,45 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
         }
 
         if (smallest == vsidsx) {
-            string s = "VSIDSX";
-            select[total++]= branch_type_total(branch::vsids, 0.80, 0.95, s);
+            select[total++]= branch_type_total(branch::vsids, 0.80, 0.95, "VSIDSX", "vsx");
             if (conf.verbosity) {
-                cout << s;
+                cout << select[total-1].descr;
             }
         }
         else if (smallest == vsids1) {
-            string s = "VSIDS1";
-            select[total++]= branch_type_total(branch::vsids, 0.92, 0.92, s);
+            select[total++]= branch_type_total(branch::vsids, 0.92, 0.92, "VSIDS1", "vs1");
             if (conf.verbosity) {
-                cout << s;
+                cout << select[total-1].descr;
             }
         }
         else if (smallest == vsids2) {
-            string s = "VSIDS2";
-            select[total++]=  branch_type_total(branch::vsids, 0.99, 0.99, s);
+            select[total++]=  branch_type_total(branch::vsids, 0.99, 0.99, "VSIDS2", "vs2");
             if (conf.verbosity) {
-                cout << s;
+                cout << select[total-1].descr;
             }
         }
         #ifdef VMTF_NEEDED
         else if (smallest == vmtf) {
-            string s = "VMTF";
-            select[total++]=  branch_type_total(branch::vmtf, 0, 0, s);
+            select[total++]=  branch_type_total(branch::vmtf, 0, 0, "VMTF", "vmt");
             if (conf.verbosity) {
-                cout << s;
+                cout << select[total-1].descr;
             }
         }
         #endif
         else if (smallest == maple1) {
             //TODO should we do this incremental stuff?
-            string s = "MAPLE1";
             //maple_step_size = conf.orig_step_size;
-            select[total++]= branch_type_total(branch::maple, 0.70, 0.70, s);
+            select[total++]= branch_type_total(branch::maple, 0.70, 0.70, "MAPLE1", "mp1");
             if (conf.verbosity) {
-                cout << s;
+                cout << select[total-1].descr;
             }
         }
         else if (smallest == maple2) {
             //TODO should we do this incremental stuff?
-            string s = "MAPLE2";
             //maple_step_size = conf.orig_step_size;
-            select[total++]= branch_type_total(branch::maple, 0.90, 0.90, s);
+            select[total++]= branch_type_total(branch::maple, 0.90, 0.90, "MAPLE2", "mp2");
             if (conf.verbosity) {
-                cout << s;
+                cout << select[total-1].descr;
             }
         } else {
             assert(false);
@@ -2364,6 +2362,7 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
     uint32_t which = iteration_num % total;
     branch_strategy = select[which].branch;
     branch_strategy_str = select[which].descr;
+    branch_strategy_str_short = select[which].descr_short;
     var_decay = select[which].decay_start;
     var_decay_max = select[which].decay_max;
 
@@ -2449,8 +2448,23 @@ void Searcher::setup_polarity_strategy()
 {
     //Set to default first
     polarity_mode = conf.polarity_mode;
-    polar_stable = false;
-    polar_stable_longest_trail = 0;
+    polar_stable_longest_trail_this_iter = 0;
+
+    if (polarity_mode == PolarityMode::polarmode_automatic) {
+        if (branch_strategy_num > 0 &&
+            ((branch_strategy_num % (conf.polar_stable_every_n*conf.polar_best_inv_multip_n)) == 0))
+        {
+            polarity_mode = PolarityMode::polarmode_best_inv;
+        }
+    }
+
+    if (polarity_mode == PolarityMode::polarmode_automatic) {
+        if (branch_strategy_num > 0 &&
+            ((branch_strategy_num % (conf.polar_stable_every_n*conf.polar_best_multip_n)) == 0))
+        {
+            polarity_mode = PolarityMode::polarmode_best;
+        }
+    }
 
     //Stable polarities only make sense in case of automatic polarities
     if (polarity_mode == PolarityMode::polarmode_automatic) {
@@ -2479,14 +2493,14 @@ void Searcher::setup_polarity_strategy()
             (conf.polar_stable_every_n == -6 &&
             branch_strategy_str == "MAPLE2"))
         {
-            polar_stable = true;
+            polarity_mode = PolarityMode::polarmode_stable;
 
         }
     }
 
     if (conf.verbosity) {
-        cout << "c [polar] stable polarities: " << polar_stable
-        << " polari mode: " << getNameOfPolarmodeType(polarity_mode)
+        cout << "c [polar]"
+        << " polar mode: " << getNameOfPolarmodeType(polarity_mode)
         << " branch strategy num: " << branch_strategy_num
         << " branch strategy: " << branch_strategy_str
 
@@ -3509,6 +3523,33 @@ void Searcher::load_state(SimpleInFile& f, const lbool status)
     }
 }
 
+inline void Searcher::update_polarities_on_backtrack()
+{
+    if (polarity_mode == PolarityMode::polarmode_stable &&
+        polar_stable_longest_trail_this_iter < trail.size())
+    {
+        for(const auto t: trail) {
+            if (t.lit == lit_Undef) {
+                continue;
+            }
+            varData[t.lit.var()].polarity = !t.lit.sign();
+        }
+        polar_stable_longest_trail_this_iter = trail.size();
+        //cout << "polar_stable_longest_trail: " << polar_stable_longest_trail << endl;
+    }
+
+    //Just update in case it's the longest
+    if (longest_trail_ever < trail.size()) {
+        for(const auto t: trail) {
+            if (t.lit == lit_Undef) {
+                continue;
+            }
+            varData[t.lit.var()].best_polarity = !t.lit.sign();
+        }
+        longest_trail_ever = trail.size();
+    }
+}
+
 
 //Normal running
 template
@@ -3528,18 +3569,8 @@ void Searcher::cancelUntil(uint32_t blevel)
     #endif
 
     if (decisionLevel() > blevel) {
-        if (polar_stable &&
-            polar_stable_longest_trail < trail.size())
-        {
-            for(const auto t: trail) {
-                if (t.lit == lit_Undef) {
-                    continue;
-                }
-                varData[t.lit.var()].polarity = !t.lit.sign();
-            }
-            polar_stable_longest_trail = trail.size();
-            //cout << "polar_stable_longest_trail: " << polar_stable_longest_trail << endl;
-        }
+        update_polarities_on_backtrack();
+
         add_tmp_canceluntil.clear();
         #ifdef USE_GAUSS
         if (!all_matrices_disabled) {

@@ -58,6 +58,9 @@ enum class PolarityMode {
     , polarmode_neg
     , polarmode_rnd
     , polarmode_automatic
+    , polarmode_stable
+    , polarmode_best_inv
+    , polarmode_best
     , polarmode_weighted
 };
 
@@ -74,12 +77,64 @@ inline std::string getNameOfPolarmodeType(PolarityMode polarmode)
     switch(polarmode) {
         case PolarityMode::polarmode_automatic :
             return "auto";
+        case PolarityMode::polarmode_stable :
+            return "stb";
+        case PolarityMode::polarmode_best_inv :
+            return "ibst";
+        case PolarityMode::polarmode_best :
+            return "bst";
         case PolarityMode::polarmode_neg :
             return "neg";
         case PolarityMode::polarmode_pos :
             return "pos";
         case PolarityMode::polarmode_weighted :
             return "weighted";
+        case PolarityMode::polarmode_rnd :
+            return "rnd";
+    }
+}
+
+inline std::string restart_type_to_short_string(const Restart type)
+{
+    switch(type) {
+        case Restart::glue:
+            return "glue";
+
+        case Restart::geom:
+            return "geom";
+
+        case Restart::luby:
+            return "luby";
+
+        case Restart::glue_geom:
+            return "gl/g";
+
+        case Restart::never:
+            return "neve";
+    }
+
+        assert(false && "oops, one of the restart types has no string name");
+
+        return "ERR: undefined!";
+}
+
+inline std::string polarity_mode_to_short_string(PolarityMode polarmode)
+{
+    switch(polarmode) {
+        case PolarityMode::polarmode_automatic :
+            return "auto";
+        case PolarityMode::polarmode_stable :
+            return "stb";
+        case PolarityMode::polarmode_best_inv :
+            return "istb";
+        case PolarityMode::polarmode_best :
+            return "bstb";
+        case PolarityMode::polarmode_neg :
+            return "neg";
+        case PolarityMode::polarmode_pos :
+            return "pos";
+        case PolarityMode::polarmode_weighted :
+            return "wght";
         case PolarityMode::polarmode_rnd :
             return "rnd";
     }
@@ -169,6 +224,8 @@ class DLL_PUBLIC SolverConf
         bool do_lucky_polar;
         PolarityMode polarity_mode;
         int polar_stable_every_n;
+        int polar_best_inv_multip_n;
+        int polar_best_multip_n;
 
         //Clause cleaning
 
