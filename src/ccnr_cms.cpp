@@ -366,6 +366,13 @@ lbool CMS_ccnr::deal_with_solution(int res, const uint32_t num_sls_called)
                 tobump = get_bump_based_on_cls();
             }
             break;
+        case 6:
+            if (num_sls_called % 3 == 0) {
+                tobump = get_bump_based_on_cls();
+            } else {
+                tobump = get_bump_based_on_conflict_ct();
+            }
+            break;
         default:
             assert(false && "No such SLS bump type");
             exit(-1);
