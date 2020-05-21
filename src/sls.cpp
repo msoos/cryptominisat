@@ -35,17 +35,17 @@ SLS::SLS(Solver* _solver) :
 SLS::~SLS()
 {}
 
-lbool SLS::run(const uint32_t num_simplify_calls)
+lbool SLS::run(const uint32_t num_sls_called)
 {
     if (solver->conf.which_sls == "yalsat") {
         return run_yalsat();
     } else if (solver->conf.which_sls == "ccnr") {
-        return run_ccnr();
+        return run_ccnr(num_sls_called);
     } else if (solver->conf.which_sls == "walksat") {
         return run_walksat();
     } else if (solver->conf.which_sls == "ccnr_yalsat") {
-        if ((num_simplify_calls % 2) == 0) {
-            return run_ccnr();
+        if ((num_sls_called % 2) == 0) {
+            return run_ccnr(num_sls_called);
         } else {
             return run_yalsat();
         }
@@ -97,13 +97,13 @@ lbool SLS::run_yalsat()
     return l_Undef;
 }
 
-lbool SLS::run_ccnr()
+lbool SLS::run_ccnr(const uint32_t num_sls_called)
 {
     CMS_ccnr ccnr(solver);
     double mem_needed_mb = (double)approx_mem_needed()/(1000.0*1000.0);
     double maxmem = solver->conf.sls_memoutMB*solver->conf.var_and_mem_out_mult;
     if (mem_needed_mb < maxmem) {
-        lbool ret = ccnr.main();
+        lbool ret = ccnr.main(num_sls_called);
         return ret;
     }
 

@@ -25,6 +25,7 @@ THE SOFTWARE.
 
 #include <cstdint>
 #include <cstdio>
+#include <utility>
 #include "solvertypes.h"
 
 namespace CCNR {
@@ -34,9 +35,12 @@ namespace CCNR {
 namespace CMSat {
 
 class Solver;
+using std::pair;
+using std::make_pair;
+
 class CMS_ccnr {
 public:
-    lbool main();
+    lbool main(const uint32_t num_sls_called);
     CMS_ccnr(Solver* _solver);
     ~CMS_ccnr();
 
@@ -54,7 +58,7 @@ private:
     void parse_parameters();
     void init_for_round();
     bool init_problem();
-    lbool deal_with_solution(int res);
+    lbool deal_with_solution(int res, const uint32_t num_sls_called);
     CCNR::ls_solver* ls_s = NULL;
     uint32_t cl_num = 0;
 
@@ -66,9 +70,10 @@ private:
     vector<Lit>& toClear;
 
     //Bumping of variable scores
-    vector<uint32_t> get_bump_based_on_cls();
-    vector<uint32_t> get_bump_based_on_var_scores();
-    vector<uint32_t> get_bump_based_on_var_flips();
+    vector<pair<uint32_t, double>> get_bump_based_on_cls();
+    vector<pair<uint32_t, double>> get_bump_based_on_var_scores();
+    vector<pair<uint32_t, double>> get_bump_based_on_var_flips();
+    vector<pair<uint32_t, double>> get_bump_based_on_conflict_ct();
 };
 
 }

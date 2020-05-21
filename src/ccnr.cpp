@@ -101,6 +101,8 @@ bool ls_solver::local_search(
     bool result = false;
     _random_gen.seed(_random_seed);
     _best_found_cost = _num_clauses;
+    _conflict_ct.clear();
+    _conflict_ct.resize(_num_vars+1,0);
 
     for (int t = 0; t < _max_tries; t++) {
         initialize(init_solution);
@@ -112,6 +114,7 @@ bool ls_solver::local_search(
         for (_step = 0; _step < _max_steps; _step++) {
             int flipv = pick_var();
             flip(flipv);
+            for(int var_idx:_unsat_vars) ++_conflict_ct[var_idx];
             if (_mems > _mems_limit) {
                 return result;
             }

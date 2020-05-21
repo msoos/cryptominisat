@@ -127,6 +127,7 @@ public:
     uint32_t gqhead;
     bool all_matrices_disabled = false;
     #endif
+    uint32_t num_sls_called = 0;
     vector<VarData> varData;
     branch branch_strategy = branch::vsids;
     string branch_strategy_str = "VSIDSX";

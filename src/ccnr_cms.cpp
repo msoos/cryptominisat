@@ -48,7 +48,7 @@ CMS_ccnr::~CMS_ccnr()
     delete ls_s;
 }
 
-lbool CMS_ccnr::main()
+lbool CMS_ccnr::main(const uint32_t num_sls_called)
 {
     //It might not work well with few number of variables
     //rnovelty could also die/exit(-1), etc.
@@ -79,7 +79,7 @@ lbool CMS_ccnr::main()
     }
 
     int res = ls_s->local_search(&phases, solver->conf.yalsat_max_mems*2*1000*1000);
-    lbool ret = deal_with_solution(res);
+    lbool ret = deal_with_solution(res, num_sls_called);
 
     double time_used = cpuTime()-startTime;
     if (solver->conf.verbosity) {
@@ -223,8 +223,11 @@ struct VarValSorter
     }
 };
 
-vector<uint32_t> CMS_ccnr::get_bump_based_on_cls()
+vector<pair<uint32_t, double>> CMS_ccnr::get_bump_based_on_cls()
 {
+    if (solver->conf.verbosity) {
+        cout << "c [ccnr] bumping based on clause weights" << endl;
+    }
     //Check prerequisites
     assert(toClear.empty());
     #ifdef SLOW_DEBUG
@@ -233,7 +236,7 @@ vector<uint32_t> CMS_ccnr::get_bump_based_on_cls()
     }
     #endif
 
-    vector<uint32_t> tobump_cl_var;
+    vector<pair<uint32_t, double>> tobump_cl_var;
     std::sort(ls_s->_clauses.begin(), ls_s->_clauses.end(), ClWeightSorter());
     uint32_t vars_bumped = 0;
     uint32_t individual_vars_bumped = 0;
@@ -253,7 +256,7 @@ vector<uint32_t> CMS_ccnr::get_bump_based_on_cls()
                 }
                 seen[v]++;
                 toClear.push_back(Lit(v, false));
-                tobump_cl_var.push_back(v);
+                tobump_cl_var.push_back(std::make_pair(v, 1.0));
                 vars_bumped++;
             }
         }
@@ -268,7 +271,7 @@ vector<uint32_t> CMS_ccnr::get_bump_based_on_cls()
     return tobump_cl_var;
 }
 
-vector<uint32_t> CMS_ccnr::get_bump_based_on_var_scores()
+vector<pair<uint32_t, double>> CMS_ccnr::get_bump_based_on_var_scores()
 {
     vector<VarAndVal> vs;
     for(uint32_t i = 1; i < ls_s->_vars.size(); i++) {
@@ -276,15 +279,15 @@ vector<uint32_t> CMS_ccnr::get_bump_based_on_var_scores()
     }
     std::sort(vs.begin(), vs.end(), VarValSorter());
 
-    vector<uint32_t> tobump;
+    vector<pair<uint32_t, double>> tobump;
     for(uint32_t i = 0; i < solver->conf.sls_how_many_to_bump; i++) {
 //         cout << "var: " << vs[i].var + 1 << " score: " <<  vs[i].val << endl;
-        tobump.push_back(vs[i].var);
+        tobump.push_back(std::make_pair(vs[i].var, 1.0));
     }
     return tobump;
 }
 
-vector<uint32_t> CMS_ccnr::get_bump_based_on_var_flips()
+vector<pair<uint32_t, double>> CMS_ccnr::get_bump_based_on_var_flips()
 {
     vector<VarAndVal> vs;
     vs.clear();
@@ -293,15 +296,37 @@ vector<uint32_t> CMS_ccnr::get_bump_based_on_var_flips()
     }
     std::sort(vs.begin(), vs.end(), VarValSorter());
 
-    vector<uint32_t> tobump;
+    vector<pair<uint32_t, double>> tobump;
     for(uint32_t i = 0; i < solver->conf.sls_how_many_to_bump; i++) {
 //         cout << "var: " << vs[i].var + 1 << " flipped: " <<  vs[i].val << endl;
-        tobump.push_back(vs[i].var);
+        tobump.push_back(std::make_pair(vs[i].var, 1.0));
     }
     return tobump;
 }
 
-lbool CMS_ccnr::deal_with_solution(int res)
+vector<pair<uint32_t, double>> CMS_ccnr::get_bump_based_on_conflict_ct()
+{
+    if (solver->conf.verbosity) {
+        cout << "c [ccnr] bumping based on var unsat frequency: conflict_ct" << endl;
+    }
+
+    vector<pair<uint32_t, double>> tobump;
+    int mymax = 0;
+    for(uint32_t i = 1; i < ls_s->_conflict_ct.size(); i++) {
+        mymax = std::max(mymax, ls_s->_conflict_ct[i]);
+    }
+
+    for(uint32_t i = 1; i < ls_s->_conflict_ct.size(); i++) {
+        double val = ls_s->_conflict_ct[i];
+        tobump.push_back(std::make_pair(i-1, (double)val/(double)mymax * 3.0));
+//         if (tobump.back().second > 0) {
+//             cout << "var: " << tobump.back().first << " bump by: " << tobump.back().second << endl;
+//         }
+    }
+    return tobump;
+}
+
+lbool CMS_ccnr::deal_with_solution(int res, const uint32_t num_sls_called)
 {
     if (solver->conf.sls_get_phase || res) {
         if (solver->conf.verbosity) {
@@ -320,7 +345,7 @@ lbool CMS_ccnr::deal_with_solution(int res)
     }
 
     //Clause score sorting
-    vector<uint32_t> tobump;
+    vector<pair<uint32_t, double>> tobump;
     switch (solver->conf.sls_bump_type) {
         case 1:
             tobump = get_bump_based_on_cls();
@@ -331,13 +356,23 @@ lbool CMS_ccnr::deal_with_solution(int res)
         case 3:
             tobump = get_bump_based_on_var_scores();
             break;
+        case 4:
+            tobump = get_bump_based_on_conflict_ct();
+            break;
+        case 5:
+            if (num_sls_called % 3 == 0) {
+                tobump = get_bump_based_on_conflict_ct();
+            } else {
+                tobump = get_bump_based_on_cls();
+            }
+            break;
         default:
             assert(false && "No such SLS bump type");
             exit(-1);
     }
 
     for(const auto& v: tobump) {
-        solver->bump_var_importance_all(v, true);
+        solver->bump_var_importance_all(v.first, true, v.second);
     }
 
     if (solver->branch_strategy == branch::vsids) {

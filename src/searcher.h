@@ -207,7 +207,7 @@ class Searcher : public HyperEngine
         }
         uint32_t branch_strategy_num = 0;
         void bump_var_importance(const uint32_t var);
-        void bump_var_importance_all(const uint32_t var, bool only_add = false);
+        void bump_var_importance_all(const uint32_t var, bool only_add = false, double amount = 1.0);
 
         /////////////////
         // Polarities

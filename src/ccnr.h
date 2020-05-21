@@ -110,6 +110,7 @@ class ls_solver
     int _num_clauses;
 
     //data structure used
+    vector<int> _conflict_ct;
     vector<int> _unsat_clauses; // list of unsatisfied clauses
     vector<int> _index_in_unsat_clauses; // _index_in_unsat_clauses[var] tells where "var" is in _unsat_vars
     vector<int> _unsat_vars; // clauses are UNSAT due to these vars

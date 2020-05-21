@@ -2072,7 +2072,8 @@ lbool Solver::execute_inprocess_strategy(
                 && solveStats.num_simplify % conf.sls_every_n == (conf.sls_every_n-1)
             ) {
                 SLS sls(this);
-                const lbool ret = sls.run(solveStats.num_simplify);
+                const lbool ret = sls.run(num_sls_called);
+                num_sls_called++;
                 if (ret == l_True) {
                     return l_Undef;
                 }
