@@ -318,6 +318,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , sls_how_many_to_bump(100)
         , sls_bump_var_max_n_times(100)
         , sls_bump_type(1)
+        , sls_set_offset(0)
 
         //Distillation
         , do_distill_clauses(true)

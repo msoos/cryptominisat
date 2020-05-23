@@ -126,26 +126,25 @@ public:
     /////////////////////
     // Branching
     /////////////////////
-    vector<double> var_act_vsids;
-    vector<double> var_act_maple;
+    vector<ActAndOffset> var_act_vsids;
+    vector<ActAndOffset> var_act_maple;
     double var_decay;
     double var_decay_max;
     double maple_step_size;
     struct VarOrderLt { ///Order variables according to their activities
-        const vector<double>&  activities;
+        const vector<ActAndOffset>&  activities;
         bool operator () (const uint32_t x, const uint32_t y) const
         {
-            return activities[x] > activities[y];
+            return activities[x].combine() > activities[y].combine();
         }
 
-        explicit VarOrderLt(const vector<double>& _activities) :
+        explicit VarOrderLt(const vector<ActAndOffset>& _activities) :
             activities(_activities)
         {}
     };
     ///activity-ordered heap of decision variables.
-    ///NOT VALID WHILE SIMPLIFYING
-    Heap<VarOrderLt> order_heap_vsids;
-    Heap<VarOrderLt> order_heap_maple;
+    Heap<VarOrderLt> order_heap_vsids; ///NOT VALID WHILE SIMPLIFYING
+    Heap<VarOrderLt> order_heap_maple; ///NOT VALID WHILE SIMPLIFYING
     #ifdef VMTF_NEEDED
     Queue vmtf_queue;
     vector<uint64_t> vmtf_btab; // enqueue time stamps for queue
@@ -447,7 +446,7 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from)
         uint32_t age = sumConflicts - varData[v].maple_cancelled;
         if (age > 0) {
             double decay = std::pow(var_decay, age);
-            var_act_maple[v] *= decay;
+            var_act_maple[v].act *= decay;
             if (order_heap_maple.inHeap(v))
                 order_heap_maple.increase(v);
         }

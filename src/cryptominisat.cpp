@@ -1277,11 +1277,6 @@ DLL_PUBLIC void SATSolver::set_no_confl_needed()
     }
 }
 
-DLL_PUBLIC std::vector<double> SATSolver::get_vsids_scores()
-{
-    return data->solvers[data->which_solved]->get_vsids_scores();
-}
-
 
 DLL_PUBLIC bool SATSolver::implied_by(
     const std::vector<Lit>& lits,

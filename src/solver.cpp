@@ -4215,12 +4215,12 @@ const Lit, const double
     #endif
 }
 
-vector<double> Solver::get_vsids_scores() const
+vector<ActAndOffset> Solver::get_vsids_scores() const
 {
-    vector<double> scores(var_act_vsids);
+    auto scores(var_act_vsids);
 
     //Map to outer
-    vector<double> scores_outer(nVarsOuter(), 0);
+    vector<ActAndOffset> scores_outer(nVarsOuter(), ActAndOffset());
     for(uint32_t i = 0; i < scores.size(); i ++) {
         uint32_t outer = map_inter_to_outer(i);
         scores_outer[outer] = scores[i];
@@ -4301,7 +4301,7 @@ bool Solver::implied_by(const std::vector<Lit>& lits,
 void Solver::reset_vsids()
 {
     for(auto& x: var_act_vsids) {
-        x = 0;
+        x = ActAndOffset();
     }
 }
 

@@ -35,7 +35,7 @@ double VarDistGen::compute_tot_act_vsids(Clause* cl) const
 {
     double tot_var_acts = 0.0;
     for(Lit l: *cl) {
-        tot_var_acts += solver->var_act_vsids[l.var()];
+        tot_var_acts += solver->var_act_vsids[l.var()].combine();
     }
     tot_var_acts += 10e-300;
     //NOTE Kuldeep wants to re-visit

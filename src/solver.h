@@ -106,7 +106,7 @@ class Solver : public Searcher
         const vector<Lit>& get_final_conflict() const;
         vector<pair<Lit, Lit> > get_all_binary_xors() const;
         vector<Xor> get_recovered_xors(const bool xor_together_xors);
-        vector<double> get_vsids_scores() const;
+        vector<ActAndOffset> get_vsids_scores() const;
         vector<Lit> implied_by_tmp_lits;
         bool implied_by(const std::vector<Lit>& lits,
             std::vector<Lit>& out_implied

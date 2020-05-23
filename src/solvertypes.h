@@ -330,6 +330,24 @@ template<class T> void print_stats_line(
     << endl;
 }
 
+struct ActAndOffset {
+    double act = 0;
+    double offset = 1.0;
+    double combine() const {
+        return act*offset;
+    }
+    void add_in(const ActAndOffset& other) {
+        act += other.act;
+        offset = std::max(offset, other.offset);
+    }
+    std::string str() const {
+        std::string ret;
+        std::stringstream ss;
+        ss << act << "*" << offset;
+        return ret;
+    }
+};
+
 struct AssignStats
 {
     AssignStats() :

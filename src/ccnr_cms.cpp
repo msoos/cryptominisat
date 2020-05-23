@@ -256,7 +256,7 @@ vector<pair<uint32_t, double>> CMS_ccnr::get_bump_based_on_cls()
                 }
                 seen[v]++;
                 toClear.push_back(Lit(v, false));
-                tobump_cl_var.push_back(std::make_pair(v, 1.0));
+                tobump_cl_var.push_back(std::make_pair(v, 3.0));
                 vars_bumped++;
             }
         }
@@ -282,7 +282,7 @@ vector<pair<uint32_t, double>> CMS_ccnr::get_bump_based_on_var_scores()
     vector<pair<uint32_t, double>> tobump;
     for(uint32_t i = 0; i < solver->conf.sls_how_many_to_bump; i++) {
 //         cout << "var: " << vs[i].var + 1 << " score: " <<  vs[i].val << endl;
-        tobump.push_back(std::make_pair(vs[i].var, 1.0));
+        tobump.push_back(std::make_pair(vs[i].var, 3.0));
     }
     return tobump;
 }
@@ -299,7 +299,7 @@ vector<pair<uint32_t, double>> CMS_ccnr::get_bump_based_on_var_flips()
     vector<pair<uint32_t, double>> tobump;
     for(uint32_t i = 0; i < solver->conf.sls_how_many_to_bump; i++) {
 //         cout << "var: " << vs[i].var + 1 << " flipped: " <<  vs[i].val << endl;
-        tobump.push_back(std::make_pair(vs[i].var, 1.0));
+        tobump.push_back(std::make_pair(vs[i].var, 3.0));
     }
     return tobump;
 }
@@ -378,16 +378,29 @@ lbool CMS_ccnr::deal_with_solution(int res, const uint32_t num_sls_called)
             exit(-1);
     }
 
-    for(const auto& v: tobump) {
-        solver->bump_var_importance_all(v.first, true, v.second);
+    for(uint32_t i = 0; i < solver->nVars(); i++) {
+        solver->var_act_vsids[i].offset = 1.0;
+        solver->var_act_maple[i].offset = 1.0;
     }
 
-    if (solver->branch_strategy == branch::vsids) {
-        solver->vsids_decay_var_act();
+    if (solver->conf.sls_set_offset) {
+        for(const auto& v: tobump) {
+            solver->var_act_vsids[v.first].offset = 1.0+v.second*v.second;
+            solver->var_act_maple[v.first].offset = 1.0+v.second*v.second;
+        }
+    } else {
+        for(const auto& v: tobump) {
+            solver->bump_var_importance_all(v.first, true, v.second/3.0);
+        }
+
+        if (solver->branch_strategy == branch::vsids) {
+            solver->vsids_decay_var_act();
+        }
     }
 
     if (solver->conf.verbosity) {
-        cout << "c [ccnr] Bumped vars: " << tobump.size()
+        cout << "c [ccnr] Bumped/set offset to vars: " << tobump.size()
+        << " offset: " << solver->conf.sls_set_offset
         << " type: " << solver->conf.sls_bump_type
         << endl;
     }
