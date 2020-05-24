@@ -38,7 +38,6 @@ struct VarData
     uint32_t maple_cancelled = 0;
     uint32_t maple_last_picked = 0;
     uint32_t maple_conflicted = 0;
-    uint32_t set = 0;
     #ifdef WEIGHTED_SAMPLING
     double weight = 0.5;
     #endif
@@ -56,6 +55,7 @@ struct VarData
     bool best_polarity = false;
     bool is_bva = false;
     #if defined(STATS_NEEDED_BRANCH) || defined(FINAL_PREDICTOR_BRANCH)
+    uint32_t set = 0;
     uint64_t num_propagated = 0;
     uint64_t num_propagated_pos = 0;
     uint64_t num_decided = 0;
