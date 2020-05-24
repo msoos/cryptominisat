@@ -2452,6 +2452,7 @@ void Searcher::setup_polarity_strategy()
 
     if (polarity_mode == PolarityMode::polarmode_automatic) {
         if (branch_strategy_num > 0 &&
+            conf.polar_stable_every_n > 0 &&
             ((branch_strategy_num % (conf.polar_stable_every_n*conf.polar_best_inv_multip_n)) == 0))
         {
             polarity_mode = PolarityMode::polarmode_best_inv;
@@ -2460,6 +2461,7 @@ void Searcher::setup_polarity_strategy()
 
     if (polarity_mode == PolarityMode::polarmode_automatic) {
         if (branch_strategy_num > 0 &&
+            conf.polar_stable_every_n > 0 &&
             ((branch_strategy_num % (conf.polar_stable_every_n*conf.polar_best_multip_n)) == 0))
         {
             polarity_mode = PolarityMode::polarmode_best;

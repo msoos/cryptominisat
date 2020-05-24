@@ -1572,6 +1572,7 @@ lbool Solver::solve_with_assumptions(
     const vector<Lit>* _assumptions,
     const bool only_sampling_solution
 ) {
+    longest_trail_ever = 0; //reset: probably new clauses, changed assumptions
     fresh_solver = false;
     move_to_outside_assumps(_assumptions);
     set_assumptions();
