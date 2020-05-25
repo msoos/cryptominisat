@@ -366,12 +366,35 @@ lbool CMS_ccnr::deal_with_solution(int res, const uint32_t num_sls_called)
         solver->var_act_maple[i].offset = 1.0;
     }
 
-    if (solver->conf.sls_set_offset) {
+    if (solver->conf.sls_set_offset == 1) {
         for(const auto& v: tobump) {
             solver->var_act_vsids[v.first].offset = 1.0+v.second*v.second;
             solver->var_act_maple[v.first].offset = 1.0+v.second*v.second;
         }
-    } else {
+    } else if (solver->conf.sls_set_offset == 2) {
+        for(const auto& v: tobump) {
+            solver->var_act_vsids[v.first].offset = 1.0+v.second*v.second*30;
+            solver->var_act_maple[v.first].offset = 1.0+v.second*v.second*30;
+        }
+    } else if (solver->conf.sls_set_offset == 3) {
+        for(const auto& v: tobump) {
+            solver->var_act_vsids[v.first].offset = 1.0+v.second;
+            solver->var_act_maple[v.first].offset = 1.0+v.second;
+        }
+    } else if (solver->conf.sls_set_offset == 4) {
+        for(const auto& v: tobump) {
+            solver->var_act_vsids[v.first].offset = 1.0+v.second*30;
+            solver->var_act_maple[v.first].offset = 1.0+v.second*30;
+        }
+    } else if (solver->conf.sls_set_offset == 5) {
+        for(const auto& v: tobump) {
+            solver->bump_var_importance_all(v.first, true, v.second*30);
+        }
+
+        if (solver->branch_strategy == branch::vsids) {
+            solver->vsids_decay_var_act();
+        }
+    } else if (solver->conf.sls_set_offset == 0) {
         for(const auto& v: tobump) {
             solver->bump_var_importance_all(v.first, true, v.second/3.0);
         }
@@ -379,6 +402,8 @@ lbool CMS_ccnr::deal_with_solution(int res, const uint32_t num_sls_called)
         if (solver->branch_strategy == branch::vsids) {
             solver->vsids_decay_var_act();
         }
+    } else {
+        assert(false && "No such sls_set_offset variabt");
     }
 
     if (solver->conf.verbosity) {
