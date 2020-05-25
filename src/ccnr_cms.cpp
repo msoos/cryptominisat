@@ -408,8 +408,8 @@ lbool CMS_ccnr::deal_with_solution(int res, const uint32_t num_sls_called)
 
     if (solver->conf.verbosity) {
         cout << "c [ccnr] Bumped/set offset to vars: " << tobump.size()
-        << " offset: " << solver->conf.sls_set_offset
-        << " type: " << solver->conf.sls_bump_type
+        << " offset type: " << solver->conf.sls_set_offset
+        << " bump type: " << solver->conf.sls_bump_type
         << endl;
     }
     if (!res) {
