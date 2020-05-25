@@ -73,7 +73,6 @@ struct variable {
     int unsat_appear; //how many unsat clauses it appears in
     bool cc_value;
     bool is_in_ccd_vars;
-    long long flipped = 0; //NOTE: this does NOT get reset on a new try, but accumulates
 };
 struct clause {
     vector<lit> literals;

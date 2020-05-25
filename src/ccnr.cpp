@@ -320,7 +320,6 @@ void ls_solver::flip(int flipv)
     _solution[flipv] = 1 - _solution[flipv];
     int org_flipv_score = _vars[flipv].score;
     _mems += _vars[flipv].literals.size();
-    _vars[flipv].flipped++;
 
     // Go through each clause the literal is in and update status
     for (lit l: _vars[flipv].literals) {

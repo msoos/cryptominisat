@@ -287,23 +287,6 @@ vector<pair<uint32_t, double>> CMS_ccnr::get_bump_based_on_var_scores()
     return tobump;
 }
 
-vector<pair<uint32_t, double>> CMS_ccnr::get_bump_based_on_var_flips()
-{
-    vector<VarAndVal> vs;
-    vs.clear();
-    for(uint32_t i = 1; i < ls_s->_vars.size(); i++) {
-        vs.push_back(VarAndVal(i-1, ls_s->_vars[i].flipped));
-    }
-    std::sort(vs.begin(), vs.end(), VarValSorter());
-
-    vector<pair<uint32_t, double>> tobump;
-    for(uint32_t i = 0; i < solver->conf.sls_how_many_to_bump; i++) {
-//         cout << "var: " << vs[i].var + 1 << " flipped: " <<  vs[i].val << endl;
-        tobump.push_back(std::make_pair(vs[i].var, 3.0));
-    }
-    return tobump;
-}
-
 vector<pair<uint32_t, double>> CMS_ccnr::get_bump_based_on_conflict_ct()
 {
     if (solver->conf.verbosity) {
@@ -351,7 +334,7 @@ lbool CMS_ccnr::deal_with_solution(int res, const uint32_t num_sls_called)
             tobump = get_bump_based_on_cls();
             break;
         case 2:
-            tobump = get_bump_based_on_var_flips();
+            assert(false && "Does not work, removed");
             break;
         case 3:
             tobump = get_bump_based_on_var_scores();
