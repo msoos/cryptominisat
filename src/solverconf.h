@@ -221,7 +221,7 @@ class DLL_PUBLIC SolverConf
         ) const;
 
         //Variable polarities
-        bool do_lucky_polar;
+        int do_lucky_polar_every_n;
         PolarityMode polarity_mode;
         int polar_stable_every_n;
         int polar_best_inv_multip_n;

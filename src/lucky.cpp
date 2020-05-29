@@ -143,8 +143,20 @@ bool CMSat::Lucky::check_all(bool polar)
     }
     for(auto& x: solver->varData) {
         x.polarity = polar;
+        x.best_polarity = polar;
     }
+    solver->longest_trail_ever = solver->nVarsOuter();
     return true;
+}
+
+
+void Lucky::set_polarities_to_enq_val()
+{
+    for(uint32_t i = 0; i < solver->nVars(); i++) {
+        solver->varData[i].polarity = solver->value(i) == l_True;
+        solver->varData[i].best_polarity = solver->varData[i].polarity;
+    }
+    solver->longest_trail_ever = solver->nVarsOuter();
 }
 
 bool CMSat::Lucky::search_fwd_sat(bool polar)
@@ -171,10 +183,10 @@ bool CMSat::Lucky::search_fwd_sat(bool polar)
     if (solver->conf.verbosity) {
         cout << "c [lucky] Forward polar " << (int)polar  << " worked. Saving phases." << endl;
     }
-    for(uint32_t i = 0; i < solver->nVars(); i++) {
-        solver->varData[i].polarity = solver->value(i) == l_True;
-    }
+
+    set_polarities_to_enq_val();
     solver->cancelUntil<false, true>(0);
+
     return true;
 }
 
@@ -234,9 +246,8 @@ bool CMSat::Lucky::search_backw_sat(bool polar)
     if (solver->conf.verbosity) {
         cout << "c [lucky] Backward polar " << (int)polar  << " worked. Saving phases." << endl;
     }
-    for(uint32_t i = 0; i < solver->nVars(); i++) {
-        solver->varData[i].polarity = solver->value(i) == l_True;
-    }
+
+    set_polarities_to_enq_val();
     solver->cancelUntil<false, true>(0);
     return true;
 }
@@ -345,9 +356,8 @@ bool CMSat::Lucky::horn_sat(bool polar)
     if (solver->conf.verbosity) {
         cout << "c [lucky] Horn polar " << (int)polar  << " worked. Saving phases." << endl;
     }
-    for(uint32_t i = 0; i < solver->nVars(); i++) {
-        solver->varData[i].polarity = solver->value(i) == l_True;
-    }
+
+    set_polarities_to_enq_val();
     solver->cancelUntil<false, true>(0);
     return true;
 }

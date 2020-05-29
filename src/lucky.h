@@ -42,6 +42,7 @@ public:
 
 private:
     bool enqueue_and_prop_assumptions();
+    void set_polarities_to_enq_val();
     Solver* solver;
 };
 

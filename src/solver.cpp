@@ -2080,7 +2080,7 @@ lbool Solver::execute_inprocess_strategy(
                 }
             }
         } else if (token == "lucky") {
-            if (conf.do_lucky_polar) {
+            if (solveStats.num_simplify % conf.do_lucky_polar_every_n== 0) {
                 Lucky lucky(solver);
                 if (lucky.doit()) {
                     return l_Undef;
