@@ -135,7 +135,7 @@ TEST_F(SearcherTest, pickpolar_auto_not_changed_by_simp)
     conf.polarity_mode = PolarityMode::polarmode_automatic;
     conf.doVarElim = false;
     //conf.verbosity = 2;
-    conf.do_lucky_polar = false;
+    conf.do_lucky_polar_every_n = 0;
     conf.doSLS = false;
     s = new Solver(&conf, &must_inter);
     s->new_vars(30);
