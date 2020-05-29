@@ -65,7 +65,7 @@ using namespace CMSat;
 //1732414 out-9915739.wlm01-7-drat0 254 157 97 b3b7cfb  _devel --printsol 0 --simdrat 1 --polarstablen 4
 
 DLL_PUBLIC SolverConf::SolverConf() :
-        do_lucky_polar_every_n(10000)
+        do_lucky_polar_every_n(0)
         , polarity_mode(PolarityMode::polarmode_automatic)
         , polar_stable_every_n(4)
         , polar_best_inv_multip_n(1000)
