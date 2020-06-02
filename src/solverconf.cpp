@@ -64,11 +64,14 @@ using namespace CMSat;
 //Tuning to
 //1732414 out-9915739.wlm01-7-drat0 254 157 97 b3b7cfb  _devel --printsol 0 --simdrat 1 --polarstablen 4
 
+//Tuning to
+//1713867 out-175744.wlm01-11-drat0 252 154 98 de15a43  _devel --printsol 0 --simdrat 1 --slsbumptype 6 --polarbestinvmult 9 --lucky 20
+
 DLL_PUBLIC SolverConf::SolverConf() :
-        do_lucky_polar_every_n(0)
+        do_lucky_polar_every_n(20)
         , polarity_mode(PolarityMode::polarmode_automatic)
         , polar_stable_every_n(4)
-        , polar_best_inv_multip_n(1000)
+        , polar_best_inv_multip_n(9)
         , polar_best_multip_n(1000)
 
         //Clause cleaning
@@ -317,7 +320,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , which_sls("ccnr")
         , sls_how_many_to_bump(100)
         , sls_bump_var_max_n_times(100)
-        , sls_bump_type(1)
+        , sls_bump_type(6)
         , sls_set_offset(0)
 
         //Distillation
