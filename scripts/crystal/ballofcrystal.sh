@@ -168,8 +168,8 @@ rm -f ../../src/predict/*.h
 #../vardata_predict.py vardata-comb --final -q 20 --basedir ../src/predict/ --depth 7 --tree
 
 # for CONF in {0..2}; do
-    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-conf-$CONF-pshort$SHORTPERC-plong$LONGPERC.dat" --name short --final --xgboost --basedir ../../src/predict/ --conf $CONF --prefok 2
-    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-conf-$CONF-pshort$SHORTPERC-plong$LONGPERC.dat" --name long --final --xgboost --basedir ../../src/predict/ --conf $CONF --prefok 2
+    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-conf-$CONF-pshort$SHORTPERC-plong$LONGPERC.dat" --name short --final --xgboost --basedir ../../src/predict/ --prefok 2
+    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-conf-$CONF-pshort$SHORTPERC-plong$LONGPERC.dat" --name long --final --xgboost --basedir ../../src/predict/ --prefok 2
 # done
 )
 

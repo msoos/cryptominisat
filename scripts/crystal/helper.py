@@ -86,14 +86,17 @@ class QueryFill (QueryHelper):
         print("indexes created T: %-3.2f s" % (time.time() - t))
 
     def delete_and_create_all(self):
+        tables = ["short", "long", "forever"]
+
         t = time.time()
-        q = """
-        DROP TABLE IF EXISTS `used_later`;
-        DROP TABLE IF EXISTS `used_later_short`;
-        DROP TABLE IF EXISTS `used_later_long`;
-        """
-        for l in q.split('\n'):
-            self.c.execute(l)
+        q = """DROP TABLE IF EXISTS `used_later`;"""
+        self.c.execute(q)
+
+        for table in tables:
+            q = """
+                DROP TABLE IF EXISTS `used_later_{name}`;
+            """
+            self.c.execute(q.format(name=table))
 
         # Create and fill used_later_X tables
         q_create = """
@@ -105,6 +108,7 @@ class QueryFill (QueryHelper):
         );"""
         self.c.execute(q_create.format(name="short"))
         self.c.execute(q_create.format(name="long"))
+        self.c.execute(q_create.format(name="forever"))
 
         # Create used_later table
         t = time.time()
@@ -120,10 +124,10 @@ class QueryFill (QueryHelper):
         create index `used_later_{name}_idx3` on `used_later_{name}` (used_later_{name});
         create index `used_later_{name}_idx1` on `used_later_{name}` (`clauseID`, rdb0conflicts, offset);
         create index `used_later_{name}_idx2` on `used_later_{name}` (`clauseID`, rdb0conflicts, used_later_{name}, offset);"""
-        for l in idxs.format(name="short").split('\n'):
-            self.c.execute(l)
-        for l in idxs.format(name="long").split('\n'):
-            self.c.execute(l)
+
+        for table in tables:
+            for l in idxs.format(name=table).split('\n'):
+                self.c.execute(l)
 
         idxs = """
         create index `used_later_idx3` on `used_later` (`used_later`);
@@ -170,7 +174,9 @@ class QueryFill (QueryHelper):
         self.c.execute(q.format(used_clauses=used_clauses))
         print("used_later filled T: %-3.2f s" % (time.time() - t))
 
-    def fill_used_later_X(self, name, duration, offset=0, used_clauses="used_clauses"):
+    def fill_used_later_X(self, name, duration, offset=0,
+                          used_clauses="used_clauses",
+                          forever=False):
         q_fill = """
         insert into used_later_{name}
         (
@@ -199,15 +205,16 @@ class QueryFill (QueryHelper):
 
         WHERE
         rdb0.clauseID != 0
-        and cl_last_in_solver.conflicts >= (rdb0.conflicts + {duration} + {offset})
+        and (cl_last_in_solver.conflicts >= (rdb0.conflicts + {duration} + {offset})
+        or 1=={forever})
 
         group by rdb0.clauseID, rdb0.conflicts;"""
 
         t = time.time()
         self.c.execute(q_fill.format(
             name=name, used_clauses=used_clauses,
-            duration=duration, offset=offset))
-        print("used_later_%s table dropped, created, filled, indexed T: %-3.2f s" %
+            duration=duration, offset=offset, forever=int(forever)))
+        print("used_later_%s filled T: %-3.2f s" %
               (name, time.time() - t))
 
 
@@ -451,6 +458,22 @@ def calc_min_split_point(df, min_samples_split):
     return split_point
 
 
+def calc_regression_error(data, features, to_predict, clf, toprint,
+                  average="binary", highlight=False):
+    # get data
+    X_data = data[features]
+    y_data = data[to_predict]
+    print("Number of elements:", X_data.shape)
+    if data.shape[0] <= 1:
+        print("Cannot calculate regression error, too few elements")
+        return None, None, None, None
+
+    y_pred = clf.predict(X_data)
+    error = sklearn.metrics.mean_squared_error(y_data, y_pred)
+    print("Mean squared error is: ", error)
+    return error
+
+
 def conf_matrixes(data, features, to_predict, clf, toprint,
                   average="binary", highlight=False):
     # get data
@@ -523,7 +546,7 @@ def conf_matrixes(data, features, to_predict, clf, toprint,
         cnf_matrix, normalize=True,
         title='Normalized confusion matrix -- %s' % toprint)
 
-    return precision, recall, accuracy, roc_auc
+    return roc_auc
 
 
 def check_file_exists(fname):

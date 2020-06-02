@@ -104,7 +104,11 @@ class Learner:
             print("\nCalculating confusion matrix -- ALL dump_no")
             data2 = data
 
-        return helper.conf_matrixes(data2, features, to_predict, clf, toprint,
+        if False:
+            return helper.conf_matrixes(data2, features, to_predict, clf, toprint,
+                                    highlight=highlight)
+        else:
+            return helper.calc_regression_error(data2, features, to_predict, clf, toprint,
                                     highlight=highlight)
 
     @staticmethod
@@ -205,7 +209,7 @@ class Learner:
             elif options.final_is_forest:
                 clf = clf_forest
             elif options.final_is_xgboost:
-                clf = xgb.XGBRegressor(objective ='binary:logistic')
+                clf = xgb.XGBRegressor(objective ='reg:squarederror') #binary:logistic
             elif options.final_is_voting:
                 mylist = [["forest", clf_forest], [
                     "svm", clf_svm], ["logreg", clf_logreg]]
@@ -276,7 +280,7 @@ class Learner:
         print("-       test data        -")
         print("--------------------------")
         for dump_no in [1, 2, 3, 10, 20, 40, None]:
-            prec, recall, acc, roc_auc = self.filtered_conf_matrixes(
+            roc_auc = self.filtered_conf_matrixes(
                 dump_no, test, features, to_predict, clf, "test data", highlight=True)
 
         print("--------------------------------")
@@ -315,7 +319,13 @@ class Learner:
     def learn(self):
         features = list(self.df)
         features = self.rem_features(
-            features, ["x.a_num_used", "x.class", "x.a_lifetime", "fname", "sum_cl_use"])
+            features, ["x.class",
+                       "x.a_lifetime",
+                       "fname",
+                       "x.sum_cl_use",
+                       "x.used_later_short",
+                       "x.used_later_long",
+                       "x.used_later_forever"])
         if options.raw_data_plots:
             pd.options.display.mpl_style = "default"
             self.df.hist()
@@ -324,7 +334,9 @@ class Learner:
         if not options.only_final:
             # calculate best features
             top_n_feats, y_pred = self.one_classifier(
-                features, "x.class", final=False)
+                features,
+                "x.class",
+                final=False)
 
             if options.get_best_topn_feats is not None:
                 if not options.final_is_forest:
@@ -345,7 +357,8 @@ class Learner:
         else:
             best_features = helper.get_features(options.best_features_fname)
             roc_auc, y_pred = self.one_classifier(
-                best_features, "x.class",
+                best_features,
+                "x.used_later_short", #"x.class",
                 final=True)
 
             if options.show:

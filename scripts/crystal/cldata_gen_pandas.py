@@ -257,9 +257,12 @@ class QueryCls (helper.QueryHelper):
         {rdb1_dat}
         {sum_cl_use}
         , (rdb0.conflicts - cl.conflicts) as `cl.time_inside_solver`
-        , sum_cl_use.num_used as `x.a_num_used`
         , `sum_cl_use`.`last_confl_used`-`cl`.`conflicts` as `x.a_lifetime`
         , {case_stmt}
+        , used_later_short.used_later_short as `x.used_later_short`
+        , used_later_long.used_later_long as `x.used_later_long`
+        , used_later_forever.used_later_forever as `x.used_later_forever`
+        , sum_cl_use.num_used as `x.sum_cl_use`
 
         FROM
         reduceDB as rdb0
@@ -286,13 +289,13 @@ class QueryCls (helper.QueryHelper):
             used_later_short.clauseID = rdb0.clauseID
             and used_later_short.rdb0conflicts = rdb0.conflicts
 
-        -- join used_later_short as `used_later_short_offset` on
-            -- used_later_short_offset.clauseID = rdb0.clauseID
-            -- and used_later_short_offset.rdb0conflicts = rdb0.conflicts
-
         join used_later_long on
             used_later_long.clauseID = rdb0.clauseID
             and used_later_long.rdb0conflicts = rdb0.conflicts
+
+        join used_later_forever on
+            used_later_forever.clauseID = rdb0.clauseID
+            and used_later_forever.rdb0conflicts = rdb0.conflicts
 
         join used_later on
             used_later.clauseID = rdb0.clauseID
@@ -310,6 +313,7 @@ class QueryCls (helper.QueryHelper):
         and rdb0.dump_no = rdb1.dump_no+1
         and used_later_long.offset = 0
         and used_later_short.offset = 0
+        and used_later_forever.offset = 0
         -- and used_later_short_offset.offset = {offset_short}
 
 
@@ -469,6 +473,8 @@ def one_database(dbfname):
         q.fill_used_later()
         q.fill_used_later_X("long", offset=0, duration=options.long)
         q.fill_used_later_X("short", offset=0, duration=options.short)
+        q.fill_used_later_X("forever", offset=0, duration=(1000*1000*1000), forever=True)
+
         q.fill_used_later_X("long", offset=options.long, duration=options.long)
         q.fill_used_later_X("short", offset=options.short, duration=options.short)
 

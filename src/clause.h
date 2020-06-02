@@ -155,11 +155,13 @@ struct ClauseStats
 //     uint8_t     rdb1_act_ranking_top_10 = 0;
 
     //for locking in for long
-    uint16_t dump_no = 0;
     uint8_t  locked_long = 0;
     #endif
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
+    float pred_short_use;
+    float pred_long_use;
+    uint16_t dump_no = 0;
     uint32_t orig_glue;
     uint32_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
 
