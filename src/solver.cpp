@@ -3920,10 +3920,11 @@ bool Solver::find_and_init_all_matrices()
     xorclauses_unused = mfinder.unused_xors;
     xorclauses = mfinder.xors;
 
+    bool ret_no_irred_nonxor_contains_clash_vars;
     if (can_detach &&
         conf.xor_detach_reattach &&
         !conf.gaussconf.autodisable &&
-        no_irred_nonxor_contains_clash_vars()
+        (ret_no_irred_nonxor_contains_clash_vars=no_irred_nonxor_contains_clash_vars())
     ) {
         detach_xor_clauses(mfinder.clash_vars_unused);
         unset_clash_decision_vars(mfinder.xors);
@@ -3936,7 +3937,7 @@ bool Solver::find_and_init_all_matrices()
             << "c WHAAAAT Detach issue. All below must be 1 to work ---" << endl
             << "c -- can_detach: " << (bool)can_detach << endl
             << "c -- mfinder.no_irred_nonxor_contains_clash_vars(): "
-            << no_irred_nonxor_contains_clash_vars() << endl
+            << ret_no_irred_nonxor_contains_clash_vars << endl
             << "c -- !conf.gaussconf.autodisable: " << (bool)(!conf.gaussconf.autodisable) << endl
             << "c -- conf.xor_detach_reattach: " << (bool)conf.xor_detach_reattach << endl;
         }
