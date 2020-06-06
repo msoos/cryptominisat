@@ -42,7 +42,7 @@ public:
     void handle_lev1();
     void handle_lev2();
     #ifdef FINAL_PREDICTOR
-    void handle_lev3_final_predictor();
+    void handle_lev2_predictor();
     #endif
     void dump_sql_cl_data(const string& cur_rst_type);
 

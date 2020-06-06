@@ -1728,11 +1728,7 @@ Clause* Searcher::handle_last_confl(
         ) {
             which_arr = 1;
         } else {
-            #ifdef FINAL_PREDICTOR
-            which_arr = 3;
-            #else
             which_arr = 2;
-            #endif
         }
 
         if (which_arr == 0) {
@@ -1791,6 +1787,7 @@ bool Searcher::handle_conflict(PropBy confl)
     sumConflicts++;
     params.conflictsDoneThisRestart++;
 
+    #ifndef FINAL_PREDICTOR
     if (sumConflicts == 100000 && //TODO magic constant
         longRedCls[0].size() < 100 &&
         //so that in case of some "standard-minisat behavriour" config
@@ -1799,6 +1796,7 @@ bool Searcher::handle_conflict(PropBy confl)
     ) {
         conf.glue_put_lev0_if_below_or_eq += 2; //TODO magic constant
     }
+    #endif
 
     ConflictData data = find_conflict_level(confl);
     if (data.nHighestLevel == 0) {
@@ -2085,13 +2083,14 @@ void Searcher::reduce_db_if_needed()
         }
         #endif
         #ifdef FINAL_PREDICTOR
-        solver->reduceDB->handle_lev3_final_predictor();
+        solver->reduceDB->handle_lev2_predictor();
         cl_alloc.consolidate(solver);
         #endif
         next_lev3_reduce = sumConflicts + conf.every_lev3_reduce;
     }
     #endif
 
+    #ifndef FINAL_PREDICTOR
     if (conf.every_lev1_reduce != 0
         && sumConflicts >= next_lev1_reduce
     ) {
@@ -2112,6 +2111,7 @@ void Searcher::reduce_db_if_needed()
             cl_alloc.consolidate(solver);
         }
     }
+    #endif
 }
 
 void Searcher::clean_clauses_if_needed()

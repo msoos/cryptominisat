@@ -51,9 +51,19 @@ public:
         predict_type pred_type,
         const CMSat::Clause* cl,
         const uint64_t sumConflicts,
-        const int64_t last_touched_diff,
+        const int64_t  last_touched_diff,
         const double   act_ranking_rel,
         const uint32_t act_ranking_top_10);
+
+    void predict(
+        const CMSat::Clause* cl,
+        const uint64_t sumConflicts,
+        const int64_t last_touched_diff,
+        const double   act_ranking_rel,
+        const uint32_t act_ranking_top_10,
+        float& p_short,
+        float& p_long,
+        float& p_forever);
 
 private:
     float predict_one(int num, DMatrixHandle dmat);

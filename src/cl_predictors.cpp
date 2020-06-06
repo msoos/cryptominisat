@@ -245,3 +245,27 @@ float ClPredictors::predict(
 
     return val;
 }
+
+void ClPredictors::predict(
+    const CMSat::Clause* cl,
+    const uint64_t sumConflicts,
+    const int64_t  last_touched_diff,
+    const double   act_ranking_rel,
+    const uint32_t act_ranking_top_10,
+    float& p_short,
+    float& p_long,
+    float& p_forever)
+{
+    // convert to DMatrix
+    set_up_input(cl, sumConflicts, last_touched_diff,
+                 act_ranking_rel, act_ranking_top_10,
+                 PRED_COLS);
+    int rows=1;
+    int ret = XGDMatrixCreateFromMat((float *)train, rows, PRED_COLS, MISSING_VAL, &dmat);
+    assert(ret == 0);
+
+    p_short = predict_one(short_pred, dmat);
+    p_long = predict_one(long_pred, dmat);
+    p_forever = predict_one(forever_pred, dmat);
+    XGDMatrixFree(dmat);
+}
