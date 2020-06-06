@@ -153,18 +153,12 @@ struct ClauseStats
 //     uint32_t    trail_depth_hist_longer;
 //     float       rdb1_act_ranking_rel = 0;
 //     uint8_t     rdb1_act_ranking_top_10 = 0;
-
-    //for locking in for long
-    uint8_t  locked_long = 0;
-    uint8_t  locked_forever = 0;
     #endif
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
     float pred_short_use;
     float pred_long_use;
     float pred_forever_use;
-    uint8_t to_predict_forever = 0;
-    uint8_t to_predict_long = 0;
 
 
     uint16_t dump_no = 0;

@@ -485,14 +485,9 @@ void ReduceDB::handle_lev2_predictor()
         }
 
         if (i < keep_short
-            || cl->stats.locked_forever
-            || cl->stats.locked_long
             || solver->clause_locked(*cl, offset)
         ) {
-            if (cl->stats.locked_long
-                || cl->stats.locked_forever
-                || solver->clause_locked(*cl, offset))
-            {
+            if (solver->clause_locked(*cl, offset)) {
                 keep_short++;
             } else {
                 marked_short++;
