@@ -232,6 +232,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Predict system
         , pred_conf_short("../../src/predict/predictor_short.boost")
         , pred_conf_long("../../src/predict/predictor_long.boost")
+        , pred_conf_forever("../../src/predict/predictor_forever.boost")
         , pred_keep_above(0.5f)
         #endif
 

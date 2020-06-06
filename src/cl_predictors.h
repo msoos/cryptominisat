@@ -33,6 +33,8 @@ using std::vector;
 
 namespace CMSat {
 
+enum predict_type {short_pred=0, long_pred=1, forever_pred=2};
+
 class Solver;
 class Clause;
 
@@ -41,17 +43,15 @@ class ClPredictors
 public:
     ClPredictors(Solver* solver);
     ~ClPredictors();
-    void load_models(std::string short_fname, std::string long_fname);
-    float predict_short(const CMSat::Clause* cl
-                , const uint64_t sumConflicts
-                , const int64_t last_touched_diff
-                , const double   act_ranking_rel
-                , const uint32_t act_ranking_top_10);
+    void load_models(const std::string& short_fname,
+                     const std::string& long_fname,
+                     const std::string& forever_fname);
 
-    float predict_long(
+    float predict(
+        predict_type pred_type,
         const CMSat::Clause* cl,
         const uint64_t sumConflicts,
-        const int64_t  last_touched_diff,
+        const int64_t last_touched_diff,
         const double   act_ranking_rel,
         const uint32_t act_ranking_top_10);
 

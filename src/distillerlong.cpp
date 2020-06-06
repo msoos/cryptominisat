@@ -150,7 +150,7 @@ bool DistillerLong::go_through_clauses(
             goto copy;
         }
 
-//         if (cl.red() && !cl.stats.locked_long) {
+//         if (cl.red() && !cl.stats.locked_long && !cl.stats.locked_forever) {
 //             offset2 = offset;
 //             goto copy;
 //         }
@@ -245,7 +245,7 @@ bool DistillerLong::distill_long_cls_all(
     const double time_remain = float_div(
         maxNumProps - ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps),
         orig_maxNumProps);
-    if (solver->conf.verbosity >= 2) {
+    if (solver->conf.verbosity >= 1) {
         cout << "c [distill] long cls"
         << " tried: " << runStats.checkedClauses << "/" << offs.size()
         << " cl-short:" << runStats.numClShorten

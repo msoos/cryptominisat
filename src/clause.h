@@ -156,11 +156,17 @@ struct ClauseStats
 
     //for locking in for long
     uint8_t  locked_long = 0;
+    uint8_t  locked_forever = 0;
     #endif
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
     float pred_short_use;
     float pred_long_use;
+    float pred_forever_use;
+    uint8_t to_predict_forever = 0;
+    uint8_t to_predict_long = 0;
+
+
     uint16_t dump_no = 0;
     uint32_t orig_glue;
     uint32_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced

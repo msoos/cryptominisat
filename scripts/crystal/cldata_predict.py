@@ -55,16 +55,16 @@ else:
 
 
 def check_long_short():
-    if options.longsh is None:
+    if options.tier is None:
         print("ERROR: You must give option '--name' as 'short' or 'long'")
         assert False
         exit(-1)
 
 
 class Learner:
-    def __init__(self, df, longsh):
+    def __init__(self, df, tier):
         self.df = df
-        self.longsh = longsh
+        self.tier = tier
 
     def count_bad_ok(self, df):
         files = df[["x.class", "rdb0.dump_no"]].groupby("x.class").count()
@@ -270,8 +270,8 @@ class Learner:
 
             if options.basedir and options.final_is_xgboost:
                 booster = clf.get_booster()
-                fname = options.basedir + "/predictor_{longsh}.boost".format(
-                    longsh=self.longsh)
+                fname = options.basedir + "/predictor_{tier}.boost".format(
+                    tier=self.tier)
                 booster.save_model(fname)
             else:
                 print("NOT writing code")
@@ -437,7 +437,7 @@ if __name__ == "__main__":
 
     # which one to generate
     parser.add_argument("--name", default=None, type=str,
-                        dest="longsh", help="Raw C-like code will be written to this function and file name")
+                        dest="tier", help="Raw C-like code will be written to this function and file name")
 
     options = parser.parse_args()
     prng = np.random.RandomState(options.seed)
@@ -495,7 +495,7 @@ if __name__ == "__main__":
     helper.clear_data_from_str_na(df)
 
     # generation
-    learner = Learner(df, longsh=options.longsh)
+    learner = Learner(df, tier=options.tier)
 
     y_pred = learner.learn()
 

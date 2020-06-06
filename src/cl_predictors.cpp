@@ -28,8 +28,6 @@ THE SOFTWARE.
 
 using namespace CMSat;
 
-enum predict_type {short_pred=0, long_pred=1};
-
 ClPredictors::ClPredictors(Solver* _solver) :
     solver(_solver)
 {
@@ -47,6 +45,12 @@ ClPredictors::ClPredictors(Solver* _solver) :
     assert(ret == 0);
     ret = XGBoosterSetParam(handles[1], "nthread", "1");
     assert(ret == 0);
+
+    handles.push_back(handle);
+    ret = XGBoosterCreate(0, 0, &(handles[2]));
+    assert(ret == 0);
+    ret = XGBoosterSetParam(handles[2], "nthread", "1");
+    assert(ret == 0);
 }
 
 ClPredictors::~ClPredictors()
@@ -56,20 +60,25 @@ ClPredictors::~ClPredictors()
     }
 }
 
-void ClPredictors::load_models(std::string short_fname, std::string long_fname)
+void ClPredictors::load_models(const std::string& short_fname,
+                               const std::string& long_fname,
+                               const std::string& forever_fname)
 {
     int ret;
-    ret = XGBoosterLoadModel(handles[short_pred], short_fname.c_str());
+    ret = XGBoosterLoadModel(handles[predict_type::short_pred], short_fname.c_str());
     assert(ret == 0);
 
-    ret =XGBoosterLoadModel(handles[long_pred], long_fname.c_str());
+    ret =XGBoosterLoadModel(handles[predict_type::long_pred], long_fname.c_str());
+    assert(ret == 0);
+
+    ret =XGBoosterLoadModel(handles[predict_type::forever_pred], forever_fname.c_str());
     assert(ret == 0);
 }
 
 void ClPredictors::set_up_input(
     const CMSat::Clause* cl,
     const uint64_t sumConflicts,
-    const int64_t last_touched_diff,
+    const int64_t  last_touched_diff,
     const double   act_ranking_rel,
     const uint32_t act_ranking_top_10,
     const uint32_t cols)
@@ -215,10 +224,11 @@ float ClPredictors::predict_one(int num, DMatrixHandle dmat)
     return retval;
 }
 
-float ClPredictors::predict_short(
+float ClPredictors::predict(
+    predict_type pred_type,
     const CMSat::Clause* cl,
     const uint64_t sumConflicts,
-    const int64_t last_touched_diff,
+    const int64_t  last_touched_diff,
     const double   act_ranking_rel,
     const uint32_t act_ranking_top_10)
 {
@@ -230,28 +240,7 @@ float ClPredictors::predict_short(
     int ret = XGDMatrixCreateFromMat((float *)train, rows, PRED_COLS, MISSING_VAL, &dmat);
     assert(ret == 0);
 
-    float val = predict_one(short_pred, dmat);
-    XGDMatrixFree(dmat);
-
-    return val;
-}
-
-float ClPredictors::predict_long(
-    const CMSat::Clause* cl,
-    const uint64_t sumConflicts,
-    const int64_t last_touched_diff,
-    const double   act_ranking_rel,
-    const uint32_t act_ranking_top_10)
-{
-    // convert to DMatrix
-    set_up_input(cl, sumConflicts, last_touched_diff,
-                 act_ranking_rel, act_ranking_top_10,
-                 PRED_COLS);
-    int rows=1;
-    int ret = XGDMatrixCreateFromMat((float *)train, rows, PRED_COLS, MISSING_VAL, &dmat);
-    assert(ret == 0);
-
-    float val = predict_one(long_pred, dmat);
+    float val = predict_one(pred_type, dmat);
     XGDMatrixFree(dmat);
 
     return val;

@@ -67,6 +67,7 @@ private:
 
     #ifdef FINAL_PREDICTOR
     ClPredictors* predictors = NULL;
+    uint32_t num_times_lev3_called = 0;
     #endif
 };
 

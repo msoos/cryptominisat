@@ -368,10 +368,10 @@ class QueryCls (helper.QueryHelper):
         print("T: %-3.1f" % (time.time() - t))
         return df
 
-    def get_one_data_all_dumpnos(self, long_or_short):
+    def get_one_data_all_dumpnos(self, tier):
         df = None
 
-        ok, df, this_limit = self.get_data(long_or_short)
+        ok, df, this_limit = self.get_data(tier)
         if not ok:
             return False, None
 
@@ -409,32 +409,34 @@ class QueryCls (helper.QueryHelper):
         return dfs, weighted_size
 
 
-    def get_data(self, long_or_short):
-        # TODO magic numbers: SHORT vs LONG data availability guess
+    def get_data(self, tier):
         subformat = {}
-        x = self.get_used_later_percentiles("_short")
-        for a,b in x.items():
-            subformat[a] = b
-        x = self.get_used_later_percentiles("_long")
-        for a,b in x.items():
-            subformat[a] = b
-        x = self.get_used_later_percentiles("")
-        for a,b in x.items():
-            subformat[a] = b
+
+        # fill in percentiles
+        for t in ["_short", "_long", "_forever", ""]:
+            x = self.get_used_later_percentiles(t)
+            for a,b in x.items():
+                subformat[a] = b
 
         subformat["name_short_top_non_zero_X_perc"] = subformat[
             "name_short_top_non_zero_%d_perc" % options.top_percentile_short]
         subformat["name_long_top_non_zero_X_perc"] = subformat[
             "name_long_top_non_zero_%d_perc" % options.top_percentile_long]
+        subformat["name_forever_top_non_zero_X_perc"] = subformat[
+            "name_forever_top_non_zero_%d_perc" % options.top_percentile_forever]
         subformat["name_top_non_zero_X_perc"] = subformat[
             "name_top_non_zero_%d_perc" % options.top_percentile_long]
 
-        if long_or_short == "short":
+        if tier == "short":
             self.myformat["del_at_least"] = options.short
             self.myformat["case_stmt"] = self.case_stmt_short.format(
                 **subformat)
-        else:
+        elif tier == "long":
             self.myformat["del_at_least"] = options.long
+            self.myformat["case_stmt"] = self.case_stmt_long.format(
+                **subformat)
+        elif tier == "forever":
+            self.myformat["del_at_least"] = 0
             self.myformat["case_stmt"] = self.case_stmt_long.format(
                 **subformat)
 
@@ -480,17 +482,17 @@ def one_database(dbfname):
 
     conf_from, conf_to = helper.parse_configs(options.confs)
     print("Using sqlite3db file %s" % dbfname)
-    for long_or_short in ["long", "short"]:
+    for tier in ["long", "short", "forever"]:
         for conf in range(conf_from, conf_to):
-            print("------> Doing config {conf} -- {long_or_short}".format(
-                conf=conf, long_or_short=long_or_short))
+            print("------> Doing config {conf} -- {tier}".format(
+                conf=conf, tier=tier))
 
             with QueryCls(dbfname, conf) as q:
-                ok, df = q.get_one_data_all_dumpnos(long_or_short)
+                ok, df = q.get_one_data_all_dumpnos(tier)
 
             if not ok:
                 print("-> Skipping file {file} config {conf} {ls}".format(
-                    conf=conf, file=dbfname, ls=long_or_short))
+                    conf=conf, file=dbfname, ls=tier))
                 continue
 
             if options.verbose:
@@ -509,9 +511,9 @@ def one_database(dbfname):
             cleanname = re.sub(r'\.cnf.gz.sqlite$', '', dbfname)
             cleanname = re.sub(r'\.db$', '', dbfname)
             cleanname = re.sub(r'\.sqlitedb$', '', dbfname)
-            cleanname = "{cleanname}-cldata-{long_or_short}-conf-{conf}-pshort{percshort}-plong{perclong}".format(
+            cleanname = "{cleanname}-cldata-{tier}-conf-{conf}-pshort{percshort}-plong{perclong}".format(
                 cleanname=cleanname,
-                long_or_short=long_or_short,
+                tier=tier,
                 conf=conf,
                 percshort=options.top_percentile_short,
                 perclong=options.top_percentile_long)
@@ -540,6 +542,8 @@ if __name__ == "__main__":
                       dest="top_percentile_short", help="Top percentile of short predictor to mark KEEP")
     parser.add_option("--toppercentilelong", type=int, default=40,
                       dest="top_percentile_long", help="Top percentile of long predictor to mark KEEP")
+    parser.add_option("--toppercentileforever", type=int, default=20,
+                      dest="top_percentile_forever", help="Top percentile of forever predictor to mark KEEP")
 
     # limits
     parser.add_option("--limit", default=20000, type=int,
