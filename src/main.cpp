@@ -353,6 +353,10 @@ void Main::add_supported_options()
         , "Pred long multiplier")
     ("predforevermult", po::value(&conf.pred_forever_size_mult)->default_value(conf.pred_forever_size_mult)
         , "Pred forever multiplier")
+    ("predlongchunkmult", po::value(&conf.pred_long_chunk_mult)->default_value(conf.pred_long_chunk_mult)
+        , "Pred long chunk multiplier")
+    ("predforeverchunkmult", po::value(&conf.pred_forever_chunk_mult)->default_value(conf.pred_forever_chunk_mult)
+        , "Pred forever chunk multiplier")
     ;
     #endif
 

@@ -231,6 +231,8 @@ class DLL_PUBLIC SolverConf
         float pred_short_size_mult;
         float pred_long_size_mult;
         float pred_forever_size_mult;
+        float pred_long_chunk_mult;
+        float pred_forever_chunk_mult;
 
         //if non-zero, we reduce at every X conflicts.
         //Reduced according to whether it's been used recently

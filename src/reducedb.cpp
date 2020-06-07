@@ -438,7 +438,7 @@ void ReduceDB::handle_lev2_predictor()
 
 
     uint32_t marked_forever = 0;
-    uint32_t keep_forever = 300;
+    uint32_t keep_forever = 300 * solver->conf.pred_forever_chunk_mult;
     std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
               SortRedClsPredForever(solver->cl_alloc));
     size_t j = 0;
@@ -457,7 +457,7 @@ void ReduceDB::handle_lev2_predictor()
 
 
     uint32_t marked_long = 0;
-    uint32_t keep_long = 2000;
+    uint32_t keep_long = 2000 * solver->conf.pred_long_chunk_mult;
     std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
               SortRedClsPredLong(solver->cl_alloc));
 
