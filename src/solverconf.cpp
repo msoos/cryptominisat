@@ -75,6 +75,10 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , polar_best_multip_n(1000)
 
         //Clause cleaning
+        , pred_short_size_mult(1.0)
+        , pred_long_size_mult(1.0)
+        , pred_forever_size_mult(1.0)
+
         , every_lev1_reduce(10000) // kept for a while then moved to lev2
         , every_lev2_reduce(15000) // cleared regularly
         #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)

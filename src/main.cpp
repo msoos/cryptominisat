@@ -345,6 +345,14 @@ void Main::add_supported_options()
         , "Predictor SHORT config to use")
     ("predlong", po::value(&conf.pred_conf_long)->default_value(conf.pred_conf_long)
         , "Predictor LONG config to use")
+    ("predforever", po::value(&conf.pred_conf_forever)->default_value(conf.pred_conf_forever)
+        , "Predictor FOREVER config to use")
+    ("predshortmult", po::value(&conf.pred_short_size_mult)->default_value(conf.pred_short_size_mult)
+        , "Pred short multiplier")
+    ("predlongmult", po::value(&conf.pred_long_size_mult)->default_value(conf.pred_long_size_mult)
+        , "Pred long multiplier")
+    ("predforevermult", po::value(&conf.pred_forever_size_mult)->default_value(conf.pred_forever_size_mult)
+        , "Pred forever multiplier")
     ;
     #endif
 

@@ -412,16 +412,21 @@ void ReduceDB::handle_lev2_predictor()
         assert(act_ranking_rel != 0);
 
         int64_t last_touched_diff = (int64_t)solver->sumConflicts-(int64_t)cl->stats.last_touched;
-         predictors->predict(
-            cl,
-            solver->sumConflicts,
-            last_touched_diff,
-            act_ranking_rel,
-            act_ranking_top_10,
-            cl->stats.pred_short_use,
-            cl->stats.pred_long_use,
-            cl->stats.pred_forever_use
-        );
+        cl->stats.pred_short_use = 0;
+        cl->stats.pred_long_use = 0;
+        cl->stats.pred_forever_use= 0;
+        if (cl->stats.dump_no > 0) {
+            predictors->predict(
+                cl,
+                solver->sumConflicts,
+                last_touched_diff,
+                act_ranking_rel,
+                act_ranking_top_10,
+                cl->stats.pred_short_use,
+                cl->stats.pred_long_use,
+                cl->stats.pred_forever_use
+            );
+        }
         cl->stats.dump_no++;
         cl->stats.rdb1_propagations_made = cl->stats.propagations_made;
         cl->stats.reset_rdb_stats();
@@ -431,7 +436,7 @@ void ReduceDB::handle_lev2_predictor()
 
 
     uint32_t marked_forever = 0;
-    uint32_t keep_forever = 1000;
+    uint32_t keep_forever = 300;
     std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
               SortRedClsPredForever(solver->cl_alloc));
     size_t j = 0;
@@ -470,7 +475,7 @@ void ReduceDB::handle_lev2_predictor()
 
     uint32_t marked_short = 0;
     deleted = 0;
-    uint32_t keep_short = 15000;
+    uint32_t keep_short = 15000 * solver->conf.pred_short_size_mult;
     std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
               SortRedClsPredShort(solver->cl_alloc));
 
@@ -486,8 +491,11 @@ void ReduceDB::handle_lev2_predictor()
 
         if (i < keep_short
             || solver->clause_locked(*cl, offset)
+            || cl->stats.dump_no == 1
         ) {
-            if (solver->clause_locked(*cl, offset)) {
+            if (solver->clause_locked(*cl, offset)
+                || cl->stats.dump_no == 1)
+            {
                 keep_short++;
             } else {
                 marked_short++;
@@ -508,7 +516,9 @@ void ReduceDB::handle_lev2_predictor()
 
 
     //Deal with FOREVER once in a while
-    if (num_times_lev3_called % 6 == 5) {
+    const uint32_t orig_keep_forever = 2000.0*std::sqrt((double)solver->sumConflicts/10000.0) *
+        (double)solver->conf.pred_forever_size_mult;
+    if (num_times_lev3_called % 12 == 11) {
         //Recalc pred_forever_use
         std::sort(solver->longRedCls[0].begin(), solver->longRedCls[0].end(),
               SortRedClsAct(solver->cl_alloc));
@@ -536,7 +546,6 @@ void ReduceDB::handle_lev2_predictor()
 
 
         //Clean up FOREVER, move to LONG
-        const uint32_t orig_keep_forever = 2000.0*std::sqrt((double)solver->sumConflicts/10000.0);
         keep_forever = orig_keep_forever;
         std::sort(solver->longRedCls[0].begin(), solver->longRedCls[0].end(),
               SortRedClsPredForever(solver->cl_alloc));
@@ -587,7 +596,7 @@ void ReduceDB::handle_lev2_predictor()
         //Clean up LONG, move to SHORT
         std::sort(solver->longRedCls[1].begin(), solver->longRedCls[1].end(),
               SortRedClsPredLong(solver->cl_alloc));
-        keep_long = 15000;
+        keep_long = 15000 * solver->conf.pred_long_size_mult;
         j = 0;
         for(uint32_t i = 0; i < solver->longRedCls[1].size(); i ++) {
             const ClOffset offset = solver->longRedCls[1][i];
@@ -619,15 +628,17 @@ void ReduceDB::handle_lev2_predictor()
         << " mshort: " << print_value_kilo_mega(marked_short)
         << " mlong: "  << print_value_kilo_mega(marked_long)
         << " mforever: "  << print_value_kilo_mega(marked_forever)
-        << " kdump0: " << print_value_kilo_mega(kept_dump_no)
-        << " klock: "  << print_value_kilo_mega(kept_locked)
-        //<< " kforever: " << print_value_kilo_mega(orig_keep_forever)
+//         << " kdump0: " << print_value_kilo_mega(kept_dump_no)
+//         << " klock: "  << print_value_kilo_mega(kept_locked)
+        << " kforever: " << print_value_kilo_mega(orig_keep_forever)
         << endl;
 
+        if (solver->conf.verbosity >= 2) {
         cout
         << "c [DBCL pred] lev0: " << solver->longRedCls[0].size() << endl
         << "c [DBCL pred] lev1: " << solver->longRedCls[1].size() << endl
         << "c [DBCL pred] lev2: " << solver->longRedCls[2].size() << endl;
+        }
 
         cout << "c [DBCL pred]"
         << " avg dumpno: " << std::fixed << std::setprecision(2)

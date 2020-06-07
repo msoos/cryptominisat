@@ -511,12 +511,13 @@ def one_database(dbfname):
             cleanname = re.sub(r'\.cnf.gz.sqlite$', '', dbfname)
             cleanname = re.sub(r'\.db$', '', dbfname)
             cleanname = re.sub(r'\.sqlitedb$', '', dbfname)
-            cleanname = "{cleanname}-cldata-{tier}-conf-{conf}-pshort{percshort}-plong{perclong}".format(
+            cleanname = "{cleanname}-cldata-{tier}-conf-{conf}-pshort{percshort}-plong{perclong}-pforever{percforever}".format(
                 cleanname=cleanname,
                 tier=tier,
                 conf=conf,
                 percshort=options.top_percentile_short,
-                perclong=options.top_percentile_long)
+                perclong=options.top_percentile_long,
+                percforever=options.top_percentile_forever)
 
             # some cleanup, stats
             #df["fname"] = df["fname"].astype("category")

@@ -228,6 +228,9 @@ class DLL_PUBLIC SolverConf
         int polar_best_multip_n;
 
         //Clause cleaning
+        float pred_short_size_mult;
+        float pred_long_size_mult;
+        float pred_forever_size_mult;
 
         //if non-zero, we reduce at every X conflicts.
         //Reduced according to whether it's been used recently
