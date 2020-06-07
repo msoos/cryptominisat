@@ -431,8 +431,10 @@ void ReduceDB::handle_lev2_predictor()
         cl->stats.rdb1_propagations_made = cl->stats.propagations_made;
         cl->stats.reset_rdb_stats();
     }
-    double predTime = myTime - cpuTime();
-    cout << "c [DB] predtime: " << predTime << endl;
+    if (solver->conf.verbosity >= 2) {
+        double predTime = cpuTime() - myTime;
+        cout << "c [DB] predtime: " << predTime << endl;
+    }
 
 
     uint32_t marked_forever = 0;
@@ -621,7 +623,7 @@ void ReduceDB::handle_lev2_predictor()
     delayed_clause_free.clear();
 
     //Stats
-    if (solver->conf.verbosity >= 1) {
+    if (solver->conf.verbosity >= 2) {
         cout
         << "c [DBCL pred]"
         << " del: "    << print_value_kilo_mega(deleted)
