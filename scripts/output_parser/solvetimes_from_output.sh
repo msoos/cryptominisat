@@ -76,6 +76,8 @@ grep -v -f walksat_sat.csv allFiles.csv | sed "s/.gz/.gz FALL/" > walksat_nosat.
 sed "s/$/ WALK/" walksat_sat.csv > walksat_sat2.csv
 cat walksat_sat2.csv walksat_nosat.csv | sort > walksat.csv
 
+xzgrep "reduceDB time" *.out.xz | awk '{print $1 " " $5}' | sed "s/.out.xz:c//" > reducedbtime.csv
+
 
 
 ../concat_files.py > combined.csv
