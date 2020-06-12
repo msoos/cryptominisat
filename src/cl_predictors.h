@@ -65,19 +65,32 @@ public:
         float& p_long,
         float& p_forever);
 
+    void start_adding_cls();
+    const vector<vector<float>>& do_predict_many_alltypes();
+    const vector<vector<float>>& do_predict_many_onetype(predict_type which);
+    void add_single_cl(
+        const CMSat::Clause* cl,
+        const uint64_t sumConflicts,
+        const int64_t  last_touched_diff,
+        const double   act_ranking_rel,
+        const uint32_t act_ranking_top_10);
+
 private:
-    float predict_one(int num, DMatrixHandle dmat);
+    float predict_one(int num);
     void set_up_input(
         const CMSat::Clause* cl,
         const uint64_t sumConflicts,
         const int64_t  last_touched_diff,
         const double   act_ranking_rel,
         const uint32_t act_ranking_top_10,
-        const uint32_t cols);
+        const uint32_t cols,
+        float* at);
     vector<BoosterHandle> handles;
     float train[PRED_COLS];
+    vector<float> multi_data;
     DMatrixHandle dmat;
     Solver* solver;
+    vector<vector<float>> multi_ret;
 };
 
 }

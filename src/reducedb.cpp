@@ -396,6 +396,7 @@ void ReduceDB::handle_lev2_predictor()
     std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
               SortRedClsAct(solver->cl_alloc));
 
+    predictors->start_adding_cls();
     for(size_t i = 0
         ; i < solver->longRedCls[2].size()
         ; i++
@@ -416,16 +417,30 @@ void ReduceDB::handle_lev2_predictor()
         cl->stats.pred_long_use = 0;
         cl->stats.pred_forever_use= 0;
         if (cl->stats.dump_no > 0) {
-            predictors->predict(
+            predictors->add_single_cl(
                 cl,
                 solver->sumConflicts,
                 last_touched_diff,
                 act_ranking_rel,
-                act_ranking_top_10,
-                cl->stats.pred_short_use,
-                cl->stats.pred_long_use,
-                cl->stats.pred_forever_use
+                act_ranking_top_10
             );
+        }
+    }
+    auto pred = predictors->do_predict_many_alltypes();
+
+    size_t k = 0;
+    for(size_t i = 0
+        ; i < solver->longRedCls[2].size()
+        ; i++
+    ) {
+        const ClOffset offset = solver->longRedCls[2][i];
+        Clause* cl = solver->cl_alloc.ptr(offset);
+
+        if (cl->stats.dump_no > 0) {
+            cl->stats.pred_short_use = pred[0][k];
+            cl->stats.pred_long_use = pred[1][k];
+            cl->stats.pred_forever_use = pred[2][k];
+            k++;
         }
         cl->stats.dump_no++;
         cl->stats.rdb1_propagations_made = cl->stats.propagations_made;
@@ -433,7 +448,7 @@ void ReduceDB::handle_lev2_predictor()
     }
     if (solver->conf.verbosity >= 2) {
         double predTime = cpuTime() - myTime;
-        cout << "c [DB] predtime: " << predTime << endl;
+        cout << "c [DBCL] main predtime: " << predTime << endl;
     }
 
 
@@ -524,6 +539,8 @@ void ReduceDB::handle_lev2_predictor()
         //Recalc pred_forever_use
         std::sort(solver->longRedCls[0].begin(), solver->longRedCls[0].end(),
               SortRedClsAct(solver->cl_alloc));
+
+        predictors->start_adding_cls();
         for(size_t i = 0
             ; i < solver->longRedCls[0].size()
             ; i++
@@ -537,21 +554,27 @@ void ReduceDB::handle_lev2_predictor()
             assert(act_ranking_rel != 0);
 
             int64_t last_touched_diff = (int64_t)solver->sumConflicts-(int64_t)cl->stats.last_touched;
-            cl->stats.pred_forever_use = predictors->predict(
-                predict_type::forever_pred,
+            predictors->add_single_cl(
                 cl,
                 solver->sumConflicts,
                 last_touched_diff,
                 act_ranking_rel,
                 act_ranking_top_10);
         }
-
+        auto preds = predictors->do_predict_many_onetype(predict_type::forever_pred);
+        for(size_t i = 0
+            ; i < solver->longRedCls[0].size()
+            ; i++
+        ) {
+            const ClOffset offset = solver->longRedCls[0][i];
+            Clause* cl = solver->cl_alloc.ptr(offset);
+            cl->stats.pred_forever_use = preds[0][i];
+        }
 
         //Clean up FOREVER, move to LONG
         keep_forever = orig_keep_forever;
         std::sort(solver->longRedCls[0].begin(), solver->longRedCls[0].end(),
               SortRedClsPredForever(solver->cl_alloc));
-
         j = 0;
         for(uint32_t i = 0; i < solver->longRedCls[0].size(); i ++) {
             const ClOffset offset = solver->longRedCls[0][i];
@@ -573,6 +596,8 @@ void ReduceDB::handle_lev2_predictor()
         //Recalc pred_long_use
         std::sort(solver->longRedCls[1].begin(), solver->longRedCls[1].end(),
               SortRedClsAct(solver->cl_alloc));
+
+        predictors->start_adding_cls();
         for(size_t i = 0
             ; i < solver->longRedCls[1].size()
             ; i++
@@ -586,13 +611,21 @@ void ReduceDB::handle_lev2_predictor()
             assert(act_ranking_rel != 0);
 
             int64_t last_touched_diff = (int64_t)solver->sumConflicts-(int64_t)cl->stats.last_touched;
-            cl->stats.pred_long_use = predictors->predict(
-                predict_type::long_pred,
+            predictors->add_single_cl(
                 cl,
                 solver->sumConflicts,
                 last_touched_diff,
                 act_ranking_rel,
                 act_ranking_top_10);
+        }
+        auto preds = predictors->do_predict_many_onetype(predict_type::long_pred);
+        for(size_t i = 0
+            ; i < solver->longRedCls[0].size()
+            ; i++
+        ) {
+            const ClOffset offset = solver->longRedCls[0][i];
+            Clause* cl = solver->cl_alloc.ptr(offset);
+            cl->stats.pred_long_use = preds[0][i];
         }
 
         //Clean up LONG, move to SHORT
