@@ -437,9 +437,9 @@ void ReduceDB::handle_lev2_predictor()
         Clause* cl = solver->cl_alloc.ptr(offset);
 
         if (cl->stats.dump_no > 0) {
-            cl->stats.pred_short_use = pred[0][k];
-            cl->stats.pred_long_use = pred[1][k];
-            cl->stats.pred_forever_use = pred[2][k];
+            cl->stats.pred_short_use = pred[predict_type::short_pred][k];
+            cl->stats.pred_long_use = pred[predict_type::long_pred][k];
+            cl->stats.pred_forever_use = pred[predict_type::forever_pred][k];
             k++;
         }
         cl->stats.dump_no++;
@@ -568,7 +568,7 @@ void ReduceDB::handle_lev2_predictor()
         ) {
             const ClOffset offset = solver->longRedCls[0][i];
             Clause* cl = solver->cl_alloc.ptr(offset);
-            cl->stats.pred_forever_use = preds[0][i];
+            cl->stats.pred_forever_use = preds[predict_type::forever_pred][i];
         }
 
         //Clean up FOREVER, move to LONG
@@ -625,7 +625,7 @@ void ReduceDB::handle_lev2_predictor()
         ) {
             const ClOffset offset = solver->longRedCls[0][i];
             Clause* cl = solver->cl_alloc.ptr(offset);
-            cl->stats.pred_long_use = preds[0][i];
+            cl->stats.pred_long_use = preds[predict_type::long_pred][i];
         }
 
         //Clean up LONG, move to SHORT

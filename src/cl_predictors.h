@@ -76,6 +76,7 @@ public:
         const uint32_t act_ranking_top_10);
 
 private:
+    void predict_multi_internal(predict_type which);
     float predict_one(int num);
     void set_up_input(
         const CMSat::Clause* cl,
@@ -86,7 +87,6 @@ private:
         const uint32_t cols,
         float* at);
     vector<BoosterHandle> handles;
-    float train[PRED_COLS];
     vector<float> multi_data;
     DMatrixHandle dmat;
     Solver* solver;

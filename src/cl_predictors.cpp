@@ -38,18 +38,24 @@ ClPredictors::ClPredictors(Solver* _solver) :
     ret = XGBoosterCreate(0, 0, &(handles[0]));
     assert(ret == 0);
     ret = XGBoosterSetParam(handles[0], "nthread", "1");
+    ret = XGBoosterSetParam(handles[0], "verbosity", "1");
+    ret = XGBoosterSetParam(handles[0], "seed", "0");
     assert(ret == 0);
 
     handles.push_back(handle);
     ret = XGBoosterCreate(0, 0, &(handles[1]));
     assert(ret == 0);
     ret = XGBoosterSetParam(handles[1], "nthread", "1");
+    ret = XGBoosterSetParam(handles[1], "verbosity", "1");
+    ret = XGBoosterSetParam(handles[1], "seed", "0");
     assert(ret == 0);
 
     handles.push_back(handle);
     ret = XGBoosterCreate(0, 0, &(handles[2]));
     assert(ret == 0);
     ret = XGBoosterSetParam(handles[2], "nthread", "1");
+    ret = XGBoosterSetParam(handles[2], "verbosity", "1");
+    ret = XGBoosterSetParam(handles[2], "seed", "0");
     assert(ret == 0);
 
     multi_ret.resize(3);
@@ -90,21 +96,22 @@ void ClPredictors::add_single_cl(
     const uint32_t act_ranking_top_10)
 {
     size_t orig_size = multi_data.size();
-    multi_data.insert(multi_data.end(), PRED_COLS, 0.0);
+    multi_data.insert(multi_data.end(), PRED_COLS, MISSING_VAL);
     set_up_input(cl, sumConflicts, last_touched_diff,
                  act_ranking_rel, act_ranking_top_10,
                  PRED_COLS, multi_data.data()+orig_size);
 
 }
 
-const vector<vector<float>>& ClPredictors::do_predict_many_onetype(predict_type which)
+void ClPredictors::predict_multi_internal(predict_type which)
 {
-    uint32_t rows = multi_data.size()/PRED_COLS;
-    int ret = XGDMatrixCreateFromMat((float *)train, rows, PRED_COLS, MISSING_VAL, &dmat);
-    assert(ret == 0);
     bst_ulong out_len;
+    const float *out;
+    int ret;
+    uint32_t rows = multi_data.size()/PRED_COLS;
 
-    const float *out_short;
+    ret = XGDMatrixCreateFromMat(multi_data.data(), rows, PRED_COLS, MISSING_VAL, &dmat);
+    assert(ret == 0);
     ret = XGBoosterPredict(
         handles[which],
         dmat,
@@ -112,72 +119,30 @@ const vector<vector<float>>& ClPredictors::do_predict_many_onetype(predict_type 
         0,  //use all trees
         0,  //do not use for training
         &out_len,
-        &out_short
+        &out
     );
     assert(ret == 0);
     assert(out_len == rows);
-    multi_ret[0].resize(out_len);
-    std::copy(out_short, out_short+out_len, multi_ret[0].data());
+    multi_ret[which].resize(out_len);
+    std::copy(out, out+out_len, multi_ret[which].data());
+    XGDMatrixFree(dmat);
+}
+
+const vector<vector<float>>& ClPredictors::do_predict_many_onetype(predict_type which)
+{
+    predict_multi_internal(which);
 
     multi_data.clear();
-    XGDMatrixFree(dmat);
     return multi_ret;
 }
 
 const vector<vector<float>>& ClPredictors::do_predict_many_alltypes()
 {
-    uint32_t rows = multi_data.size()/PRED_COLS;
-    int ret = XGDMatrixCreateFromMat((float *)train, rows, PRED_COLS, MISSING_VAL, &dmat);
-    assert(ret == 0);
-    bst_ulong out_len;
-
-    const float *out_short;
-    ret = XGBoosterPredict(
-        handles[predict_type::short_pred],
-        dmat,
-        0,  //0: normal prediction
-        0,  //use all trees
-        0,  //do not use for training
-        &out_len,
-        &out_short
-    );
-    assert(ret == 0);
-    assert(out_len == rows);
-    multi_ret[0].resize(out_len);
-    std::copy(out_short, out_short+out_len, multi_ret[0].data());
-
-    const float *out_long;
-    ret = XGBoosterPredict(
-        handles[predict_type::long_pred],
-        dmat,
-        0,  //0: normal prediction
-        0,  //use all trees
-        0,  //do not use for training
-        &out_len,
-        &out_long
-    );
-    assert(ret == 0);
-    assert(out_len == rows);
-    multi_ret[1].resize(out_len);
-    std::copy(out_long, out_long+out_len, multi_ret[1].data());
-
-    const float *out_forever;
-    ret = XGBoosterPredict(
-        handles[predict_type::forever_pred],
-        dmat,
-        0,  //0: normal prediction
-        0,  //use all trees
-        0,  //do not use for training
-        &out_len,
-        &out_forever
-    );
-    assert(ret == 0);
-    assert(out_len == rows);
-    multi_ret[2].resize(out_len);
-    std::copy(out_forever, out_forever+out_len, multi_ret[2].data());
+    predict_multi_internal(predict_type::short_pred);
+    predict_multi_internal(predict_type::long_pred);
+    predict_multi_internal(predict_type::forever_pred);
 
     multi_data.clear();
-    XGDMatrixFree(dmat);
     return multi_ret;
 }
 
@@ -339,12 +304,14 @@ float ClPredictors::predict(
     const double   act_ranking_rel,
     const uint32_t act_ranking_top_10)
 {
-    // convert to DMatrix
+
+    multi_data.clear();
+    multi_data.resize(PRED_COLS, MISSING_VAL);
     set_up_input(cl, sumConflicts, last_touched_diff,
                  act_ranking_rel, act_ranking_top_10,
-                 PRED_COLS, train);
+                 PRED_COLS, multi_data.data());
     int rows=1;
-    int ret = XGDMatrixCreateFromMat((float *)train, rows, PRED_COLS, MISSING_VAL, &dmat);
+    int ret = XGDMatrixCreateFromMat(multi_data.data(), rows, PRED_COLS, MISSING_VAL, &dmat);
     assert(ret == 0);
 
     float val = predict_one(pred_type);
@@ -363,12 +330,13 @@ void ClPredictors::predict(
     float& p_long,
     float& p_forever)
 {
-    // convert to DMatrix
+    multi_data.clear();
+    multi_data.resize(PRED_COLS, MISSING_VAL);
     set_up_input(cl, sumConflicts, last_touched_diff,
                  act_ranking_rel, act_ranking_top_10,
-                 PRED_COLS, train);
+                 PRED_COLS, multi_data.data());
     int rows=1;
-    int ret = XGDMatrixCreateFromMat((float *)train, rows, PRED_COLS, MISSING_VAL, &dmat);
+    int ret = XGDMatrixCreateFromMat(multi_data.data(), rows, PRED_COLS, MISSING_VAL, &dmat);
     assert(ret == 0);
 
     p_short = predict_one(short_pred);
