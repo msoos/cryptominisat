@@ -113,11 +113,7 @@ struct ClauseStats
         glue = 1000;
         marked_clause = false;
         ttl = 0;
-        #ifdef FINAL_PREDICTOR
-        which_red_array = 3;
-        #else
         which_red_array = 2;
-        #endif
         locked_for_data_gen = 0;
         is_decision = false;
         //TODO it's weird, it has been tested to be better with "1"
