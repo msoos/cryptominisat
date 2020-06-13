@@ -460,18 +460,44 @@ def calc_min_split_point(df, min_samples_split):
 
 def calc_regression_error(data, features, to_predict, clf, toprint,
                   average="binary", highlight=False):
-    # get data
     X_data = data[features]
     y_data = data[to_predict]
     print("Number of elements:", X_data.shape)
     if data.shape[0] <= 1:
         print("Cannot calculate regression error, too few elements")
-        return None, None, None, None
-
+        return None
     y_pred = clf.predict(X_data)
-    error = sklearn.metrics.mean_squared_error(y_data, y_pred)
-    print("Mean squared error is: ", error)
-    return error
+    main_error = sklearn.metrics.mean_squared_error(y_data, y_pred)
+    print("Mean squared error is: ", main_error)
+
+    for start,end in [(0,10), (1,10), (10, 100), (100, 1000), (1000,10000), (10000, 1000000)]:
+        x = "--> Strata  %10d <= %20s < %10d " % (start, to_predict, end)
+        myfilt = data[(data[to_predict] >= start) & (data[to_predict] < end)]
+        X_data = myfilt[features]
+        y_data = myfilt[to_predict]
+        y = " -- elements: {:20}".format(str(X_data.shape))
+        if myfilt.shape[0] <= 1:
+            #print("Cannot calculate regression error, too few elements")
+            error = -1
+        else:
+            y_pred = clf.predict(X_data)
+            error = sklearn.metrics.mean_squared_error(y_data, y_pred)
+        print("%s %s msqe: %10.3lf" % (x, y, error))
+
+    for start,end in [(0,3), (3,8), (8, 15), (15, 25), (25,50), (50, 100), (100, 1000000)]:
+        x = "--> Strata  %10d <= %20s < %10d " % (start, "rdb0.glue", end)
+        myfilt = data[(data["rdb0.glue"] >= start) & (data["rdb0.glue"] < end)]
+        X_data = myfilt[features]
+        y_data = myfilt[to_predict]
+        y = " -- elements: {:20}".format(str(X_data.shape))
+        if myfilt.shape[0] <= 1:
+            error = -1
+        else:
+            y_pred = clf.predict(X_data)
+            error = sklearn.metrics.mean_squared_error(y_data, y_pred)
+        print("%s %s msqe: %10.3lf" % (x, y, error))
+
+    return main_error
 
 
 def conf_matrixes(data, features, to_predict, clf, toprint,
