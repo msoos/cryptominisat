@@ -1,3 +1,5 @@
+rdb0.used_for_uip_creation
+rdb0.glue
 ((rdb0.sum_uip1_used/cl.time_inside_solver)/log2(rdb1_act_ranking_rel))
 (log2(rdb1_act_ranking_rel)/(rdb0.sum_uip1_used/cl.time_inside_solver))
 (cl.glue_hist/rdb0.propagations_made)
