@@ -412,19 +412,30 @@ void ReduceDB::handle_lev2_predictor()
         double act_ranking_rel = ((double)i+1)/(double)solver->longRedCls[2].size();
         assert(act_ranking_rel != 0);
 
-        int64_t last_touched_diff = (int64_t)solver->sumConflicts-(int64_t)cl->stats.last_touched;
         cl->stats.pred_short_use = 0;
         cl->stats.pred_long_use = 0;
         cl->stats.pred_forever_use= 0;
         if (cl->stats.dump_no > 0) {
+            assert(cl->stats.last_touched <= (int64_t)solver->sumConflicts);
+            assert(cl->stats.rdb1_last_touched <= (int64_t)solver->sumConflicts-10000);
+            int64_t last_touched_diff =
+                (int64_t)solver->sumConflicts-(int64_t)cl->stats.last_touched;
+            int64_t rdb1_last_touched_diff =
+                (int64_t)solver->sumConflicts-10000-(int64_t)cl->stats.rdb1_last_touched;
+
             predictors->add_single_cl(
                 cl,
                 solver->sumConflicts,
                 last_touched_diff,
+                rdb1_last_touched_diff,
                 act_ranking_rel,
                 act_ranking_top_10
             );
         }
+        cl->stats.rdb1_act_ranking_rel = act_ranking_rel;
+        cl->stats.rdb1_last_touched = cl->stats.last_touched;
+        cl->stats.rdb1_propagations_made = cl->stats.propagations_made;
+        cl->stats.reset_rdb_stats();
     }
     auto pred = predictors->do_predict_many_alltypes();
 
@@ -443,10 +454,9 @@ void ReduceDB::handle_lev2_predictor()
             k++;
         }
         cl->stats.dump_no++;
-        cl->stats.rdb1_propagations_made = cl->stats.propagations_made;
-        cl->stats.reset_rdb_stats();
     }
-    if (solver->conf.verbosity >= 2) {
+
+    if (solver->conf.verbosity >= 1) {
         double predTime = cpuTime() - myTime;
         cout << "c [DBCL] main predtime: " << predTime << endl;
     }
@@ -553,11 +563,16 @@ void ReduceDB::handle_lev2_predictor()
             double act_ranking_rel = ((double)i+1)/(double)solver->longRedCls[0].size();
             assert(act_ranking_rel != 0);
 
-            int64_t last_touched_diff = (int64_t)solver->sumConflicts-(int64_t)cl->stats.last_touched;
+            int64_t last_touched_diff =
+                (int64_t)solver->sumConflicts-(int64_t)cl->stats.last_touched;
+            int64_t rdb1_last_touched_diff =
+                (int64_t)solver->sumConflicts-10000-(int64_t)cl->stats.rdb1_last_touched;
+
             predictors->add_single_cl(
                 cl,
                 solver->sumConflicts,
                 last_touched_diff,
+                rdb1_last_touched_diff,
                 act_ranking_rel,
                 act_ranking_top_10);
         }
@@ -610,11 +625,16 @@ void ReduceDB::handle_lev2_predictor()
             double act_ranking_rel = ((double)i+1)/(double)solver->longRedCls[1].size();
             assert(act_ranking_rel != 0);
 
-            int64_t last_touched_diff = (int64_t)solver->sumConflicts-(int64_t)cl->stats.last_touched;
+            int64_t last_touched_diff =
+                (int64_t)solver->sumConflicts-(int64_t)cl->stats.last_touched;
+            int64_t rdb1_last_touched_diff =
+                (int64_t)solver->sumConflicts-10000-(int64_t)cl->stats.rdb1_last_touched;
+
             predictors->add_single_cl(
                 cl,
                 solver->sumConflicts,
                 last_touched_diff,
+                rdb1_last_touched_diff,
                 act_ranking_rel,
                 act_ranking_top_10);
         }
@@ -656,7 +676,7 @@ void ReduceDB::handle_lev2_predictor()
     delayed_clause_free.clear();
 
     //Stats
-    if (solver->conf.verbosity >= 2) {
+    if (solver->conf.verbosity >= 1) {
         cout
         << "c [DBCL pred]"
         << " del: "    << print_value_kilo_mega(deleted)

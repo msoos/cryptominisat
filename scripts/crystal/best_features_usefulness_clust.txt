@@ -1,3 +1,0 @@
-cl.size
-cl.glue
-cl.glue_before_minim

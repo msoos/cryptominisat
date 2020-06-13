@@ -134,19 +134,31 @@ class Learner:
 
         return x
 
+    def importance_XGB(self, clf, features):
+        impdf = []
+        #print("clf:", clf)
+        #print("clf-booster:", clf.feature_importances_)
+
+        for i in range(len(clf.feature_importances_)):
+            score = clf.feature_importances_[i]
+            ft = features[i]
+            impdf.append({'feature': ft, 'importance': score})
+        impdf = pd.DataFrame(impdf)
+        impdf = impdf.sort_values(by='importance', ascending=False).reset_index(drop=True)
+        impdf['importance'] /= impdf['importance'].sum()
+        pd.set_option('display.max_rows', None)
+        pd.set_option('display.max_columns', None)
+        pd.set_option('display.width', None)
+        pd.set_option('display.max_colwidth', -1)
+        print("impdf:", impdf)
+
+        return impdf
+
     def one_classifier(self, features, to_predict, final):
         print("-> Number of features  :", len(features))
         print("-> Number of datapoints:", self.df.shape)
         print("-> Predicting          :", to_predict)
-
-        # get smaller part to work on
-        # also, copy it so we don't get warning about setting a slice of a DF
-        if options.only_perc >= 0.98:
-            df = self.df.copy()
-        else:
-            df_tmp = self.df.sample(frac=options.only_perc, random_state=prng)
-            df = df_tmp.copy()
-            print("-> Number of datapoints after applying '--only':", df.shape)
+        df = self.df.copy()
 
         if options.check_row_data:
             helper.check_too_large_or_nan_values(df, features)
@@ -195,8 +207,9 @@ class Learner:
             clf_logreg = sklearn.linear_model.LogisticRegression(
                 C=0.3,
                 random_state=prng)
-            clf_forest = sklearn.ensemble.RandomForestClassifier(
+            clf_forest = sklearn.ensemble.RandomForestRegressor(
                 n_estimators=options.num_trees,
+                max_features="sqrt",
                 #min_samples_leaf=split_point,
                 random_state=prng)
 
@@ -209,7 +222,10 @@ class Learner:
             elif options.final_is_forest:
                 clf = clf_forest
             elif options.final_is_xgboost:
-                clf = xgb.XGBRegressor(objective ='reg:squarederror') #binary:logistic
+                clf = xgb.XGBRegressor(
+                    objective='reg:squarederror',
+                    max_depth=5
+                    )
             elif options.final_is_voting:
                 mylist = [["forest", clf_forest], [
                     "svm", clf_svm], ["logreg", clf_logreg]]
@@ -219,8 +235,8 @@ class Learner:
                     "ERROR: You MUST give one of: tree/forest/svm/logreg/voting classifier")
                 exit(-1)
         else:
-            assert options.final_is_forest, "For TOP calculation, we must have --forest"
-            clf_forest = sklearn.ensemble.RandomForestClassifier(
+            assert options.final_is_forest or options.final_is_xgboost, "For TOP calculation, we must have --forest or --xgboost"
+            clf_forest = sklearn.ensemble.RandomForestRegressor(
                 n_estimators=options.num_trees*5,
                 max_features="sqrt",
                 random_state=prng)
@@ -254,6 +270,9 @@ class Learner:
                     top_num_features=options.top_num_features,
                     features=features,
                     plot=options.show)
+            elif options.final_is_xgboost:
+                self.importance_XGB(clf, features=features)
+                best_features = None
             else:
                 best_features = None
 
@@ -275,6 +294,9 @@ class Learner:
                 booster.save_model(fname)
             else:
                 print("NOT writing code")
+
+        if options.final_is_xgboost:
+            self.importance_XGB(clf, features=features)
 
         print("--------------------------")
         print("-       test data        -")
@@ -317,48 +339,33 @@ class Learner:
         return feat_less
 
     def learn(self):
-        features = list(self.df)
-        features = self.rem_features(
-            features, ["x.class",
-                       "x.a_lifetime",
-                       "fname",
-                       "x.sum_cl_use",
-                       "x.used_later_short",
-                       "x.used_later_long",
-                       "x.used_later_forever"])
         if options.raw_data_plots:
             pd.options.display.mpl_style = "default"
             self.df.hist()
             self.df.boxplot()
 
         if not options.only_final:
-            # calculate best features
-            top_n_feats, y_pred = self.one_classifier(
+            features = list(self.df)
+            features = self.rem_features(
+            features, ["x.class",
+                       "x.a_lifetime",
+                       "fname",
+                       "sum_cl_use.num_used",
+                       "x.sum_cl_use",
+                       "x.used_later_short",
+                       "x.used_later_long",
+                       "x.used_later_forever"])
+
+            self.one_classifier(
                 features,
-                "x.class",
+                "x.used_later_{name}".format(name=options.tier),
                 final=False)
-
-            if options.get_best_topn_feats is not None:
-                if not options.final_is_forest:
-                    print("ERROR: we can only calculate best features for Forest!")
-                    exit(-1)
-
-                greedy_features = helper.calc_greedy_best_features(
-                    top_n_feats, options.get_best_topn_feats,
-                    self)
-
-                # dump to file
-                with open(options.best_features_fname, "w") as f:
-                    for feat in greedy_features:
-                        f.write("%s\n" % feat)
-                print("Dumped final best selection to file '%s'" %
-                      options.best_features_fname)
 
         else:
             best_features = helper.get_features(options.best_features_fname)
             roc_auc, y_pred = self.one_classifier(
                 best_features,
-                "x.used_later_short", #"x.class",
+                "x.used_later_{name}".format(name=options.tier),
                 final=True)
 
             if options.show:
@@ -409,11 +416,9 @@ if __name__ == "__main__":
     parser.add_argument("--only", default=1.00, type=float,
                         dest="only_perc", help="Only use this percentage of data")
 
-    # final generator or greedy
+    # final generator top/final
     parser.add_argument("--final", default=False, action="store_true",
                         dest="only_final", help="Only generate final predictor")
-    parser.add_argument("--greedy", default=None, type=int, metavar="TOPN",
-                        dest="get_best_topn_feats", help="Greedy Best K top features from the top N features given by '--top N'")
     parser.add_argument("--top", default=None, type=int, metavar="TOPN",
                         dest="top_num_features", help="Candidates are top N features for greedy selector")
 
@@ -437,7 +442,7 @@ if __name__ == "__main__":
 
     # which one to generate
     parser.add_argument("--name", default=None, type=str,
-                        dest="tier", help="Raw C-like code will be written to this function and file name")
+                        dest="tier", help="what to predict")
 
     options = parser.parse_args()
     prng = np.random.RandomState(options.seed)
@@ -446,8 +451,8 @@ if __name__ == "__main__":
         print("ERROR: You must give the pandas file!")
         exit(-1)
 
-    if options.get_best_topn_feats and options.only_final:
-        print("Can't do both --greedy best and --final")
+    if options.top_num_features and options.only_final:
+        print("Can't do both --top and --final")
         exit(-1)
 
     if options.top_num_features is None and not options.only_final:
@@ -488,6 +493,12 @@ if __name__ == "__main__":
     if options.print_features:
         for f in sorted(list(df)):
             print(f)
+
+    # get smaller part to work on
+    # also, copy it so we don't get warning about setting a slice of a DF
+    df_tmp = df.sample(frac=options.only_perc, random_state=prng)
+    df = df_tmp.copy()
+    print("-> Number of datapoints after applying '--only':", df.shape)
 
     # feature manipulation
     if not options.no_computed:
