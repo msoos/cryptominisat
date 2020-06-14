@@ -146,7 +146,11 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Glues
         , update_glues_on_analyze(true)
+        #ifdef FINAL_PREDICTOR
+        , max_glue_cutoff_gluehistltlimited(100000)
+        #else
         , max_glue_cutoff_gluehistltlimited(50)
+        #endif
 
         //Chono BT
         , diff_declev_for_chrono (20)
@@ -184,7 +188,11 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
 
         //Ternary resolution
+        #ifdef FINAL_PREDICTOR
+        , doTernary(false)
+        #else
         , doTernary(true)
+        #endif
         , ternary_res_time_limitM(100)
         , ternary_keep_mult(6)
         , ternary_max_create(1)
