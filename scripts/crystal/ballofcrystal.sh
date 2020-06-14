@@ -146,7 +146,7 @@ cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 ########################
 # Denormalize the data into a Pandas Table, label it and sample it
 ########################
-../cldata_gen_pandas.py "${FNAMEOUT}-min.db" --limit "$FIXED" --conf 1-1 ${EXTRA_GEN_PANDAS_OPTS} --toppercentileshort $SHORTPERC --toppercentilelong $LONGPERC --toppercentileforever 20
+../cldata_gen_pandas.py "${FNAMEOUT}-min.db" --limit "$FIXED" ${EXTRA_GEN_PANDAS_OPTS}
 # ../vardata_gen_pandas.py "${FNAMEOUT}.db" --limit 1000
 
 mkdir -p ../../src/predict
@@ -169,9 +169,9 @@ rm -f ../../src/predict/*.h
 #../vardata_predict.py vardata-comb --final -q 20 --basedir ../src/predict/ --depth 7 --tree
 
 # for CONF in {0..2}; do
-    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-conf-$CONF-pshort$SHORTPERC-plong$LONGPERC.dat" --name short --final --xgboost --basedir ../../src/predict/ --prefok 2
-    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-conf-$CONF-pshort$SHORTPERC-plong$LONGPERC.dat" --name long --final --xgboost --basedir ../../src/predict/ --prefok 2
-    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-forever-conf-$CONF-pshort$SHORTPERC-plong$LONGPERC.dat" --name forever --final --xgboost --basedir ../../src/predict/ --prefok 2
+    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short.dat" --tier short --final --xgboost --basedir ../../src/predict/
+    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long.dat" --tier long --final --xgboost --basedir ../../src/predict/
+    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-forever.dat" --tier forever --final --xgboost --basedir ../../src/predict/
 # done
 )
 

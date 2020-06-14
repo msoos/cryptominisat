@@ -56,7 +56,7 @@ else:
 
 def check_long_short():
     if options.tier is None:
-        print("ERROR: You must give option '--name' as 'short' or 'long'")
+        print("ERROR: You must give option '--tier' as short/long/forever")
         assert False
         exit(-1)
 
@@ -164,18 +164,17 @@ class Learner:
             helper.check_too_large_or_nan_values(df, features)
 
         # count bad and ok
-        bad,ok = self.count_bad_ok(df)
-        print("Number of BAD  elements        : %-6d" % bad)
-        print("Number of OK   elements        : %-6d" % ok)
-
+        #bad,ok = self.count_bad_ok(df)
+        #print("Number of BAD  elements        : %-6d" % bad)
+        #print("Number of OK   elements        : %-6d" % ok)
         # balance it out
-        prefer_ok = float(bad)/float(ok)
-        print("Balanced OK preference would be: %-6.3f" % prefer_ok)
-
+        #prefer_ok = float(bad)/float(ok)
+        #print("Balanced OK preference would be: %-6.3f" % prefer_ok)
         # apply inbalance from option given
-        prefer_ok *= options.prefer_ok
-        print("Option to prefer OK is set to  : %-6.3f" % options.prefer_ok)
-        print("Final OK preference is         : %-6.3f" % prefer_ok)
+        #prefer_ok *= options.prefer_ok
+        #print("Option to prefer OK is set to  : %-6.3f" % options.prefer_ok)
+        #print("Final OK preference is         : %-6.3f" % prefer_ok)
+
         print("Value distribution of 'dump_no':\n%s" % df["rdb0.dump_no"].value_counts())
 
         #train, test = train_test_split(df[df["rdb0.dump_no"] == 1], test_size=0.33, random_state=prng)
@@ -244,16 +243,17 @@ class Learner:
             clf = clf_forest
 
         del df
-        my_sample_w = np.array(y_train.values)
-        my_sample_w = my_sample_w*prefer_ok
-        def zero_to_one(t):
-            if t == 0:
-                return 1
-            else:
-                return t
-        vfunc = np.vectorize(zero_to_one)
-        my_sample_w = vfunc(my_sample_w)
-        clf.fit(X_train, y_train, sample_weight=my_sample_w)
+        #my_sample_w = np.array(y_train.values)
+        #my_sample_w = my_sample_w*prefer_ok
+        #def zero_to_one(t):
+            #if t == 0:
+                #return 1
+            #else:
+                #return t
+        #vfunc = np.vectorize(zero_to_one)
+        #my_sample_w = vfunc(my_sample_w)
+        #clf.fit(X_train, y_train, sample_weight=my_sample_w)
+        clf.fit(X_train, y_train)
 
         print("Training finished. T: %-3.2f" % (time.time() - t))
 
@@ -263,18 +263,6 @@ class Learner:
                 # mlflow.log_metric("all features: ", train.columns.values.flatten().tolist())
                 mlflow.log_metric("train num rows", train.shape[0])
                 mlflow.log_metric("test num rows", test.shape[0])
-
-            if options.final_is_forest:
-                best_features = helper.print_feature_ranking(
-                    clf, X_train,
-                    top_num_features=options.top_num_features,
-                    features=features,
-                    plot=options.show)
-            elif options.final_is_xgboost:
-                self.importance_XGB(clf, features=features)
-                best_features = None
-            else:
-                best_features = None
 
             #mlflow.log_artifact("best_features", best_features)
         else:
@@ -293,25 +281,32 @@ class Learner:
                     tier=self.tier)
                 booster.save_model(fname)
             else:
-                print("NOT writing code")
+                print("WARNING: NOT writing code -- you must use xgboost and give dir for that")
 
-        if options.final_is_xgboost:
+
+        # print feature rankings
+        if options.final_is_forest:
+            helper.print_feature_ranking(
+                clf, X_train,
+                top_num_features=200,
+                features=features,
+                plot=options.show)
+        elif options.final_is_xgboost:
             self.importance_XGB(clf, features=features)
 
+        # print distribution of error
         print("--------------------------")
         print("-       test data        -")
         print("--------------------------")
         for dump_no in [1, 2, 3, 10, 20, 40, None]:
-            roc_auc = self.filtered_conf_matrixes(
+            self.filtered_conf_matrixes(
                 dump_no, test, features, to_predict, clf, "test data", highlight=True)
-
         print("--------------------------------")
         print("--      train+test data        -")
         print("--------------------------------")
         for dump_no in [1, None]:
             self.filtered_conf_matrixes(
                 dump_no, self.df, features, to_predict, clf, "test and train data")
-
         print("--------------------------")
         print("-       train data       -")
         print("--------------------------")
@@ -320,12 +315,7 @@ class Learner:
 
         # Calculate predicted value for the original dataframe
         y_pred = clf.predict(self.df[features])
-
-        # TODO do principal component analysis
-        if final:
-            return roc_auc, y_pred
-        else:
-            return best_features, y_pred
+        return y_pred
 
     def rem_features(self, feat, to_remove):
         feat_less = list(feat)
@@ -363,15 +353,13 @@ class Learner:
 
         else:
             best_features = helper.get_features(options.best_features_fname)
-            roc_auc, y_pred = self.one_classifier(
+            self.one_classifier(
                 best_features,
                 "x.used_later_{name}".format(name=options.tier),
                 final=True)
 
             if options.show:
                 plt.show()
-
-        return y_pred
 
 
 if __name__ == "__main__":
@@ -436,12 +424,8 @@ if __name__ == "__main__":
     parser.add_argument("--voting", default=False, action="store_true",
                         dest="final_is_voting", help="Final classifier should be a voting of all of: forest, svm, logreg")
 
-    # classifier options
-    parser.add_argument("--prefok", default=2.0, type=float,
-                        dest="prefer_ok", help="Prefer OK if >1.0, equal weight if = 1.0, prefer BAD if < 1.0")
-
     # which one to generate
-    parser.add_argument("--name", default=None, type=str,
+    parser.add_argument("--tier", default=None, type=str,
                         dest="tier", help="what to predict")
 
     options = parser.parse_args()
@@ -479,7 +463,7 @@ if __name__ == "__main__":
         else:
             mlflow.log_param("top_num_features", options.top_num_features)
 
-        mlflow.log_param("prefer_ok", options.prefer_ok)
+        #mlflow.log_param("prefer_ok", options.prefer_ok)
         mlflow.log_param("only_percentage", options.only_perc)
         mlflow.log_param("min_samples_split", options.min_samples_split)
         mlflow.log_param("tree_depth", options.tree_depth)
@@ -505,27 +489,6 @@ if __name__ == "__main__":
         helper.cldata_add_computed_features(df, options.verbose)
     helper.clear_data_from_str_na(df)
 
-    # generation
+    # do the heavy lifting
     learner = Learner(df, tier=options.tier)
-
-    y_pred = learner.learn()
-
-
-    # Dump the new prediction into the dataframe
-    name = None
-    if options.final_is_logreg:
-        name = "logreg"
-    elif options.final_is_tree:
-        name = "tree"
-    elif options.final_is_forest:
-        name = "forest"
-    else:
-        exit(0)
-
-    cleanname = re.sub(r'\.dat$', '', options.fname)
-    fname = cleanname + "-" + name + ".dat"
-    df_orig[name] = y_pred
-    df_orig[name] = df_orig[name].astype("category").cat.codes
-    with open(fname, "wb") as f:
-        pickle.dump(df_orig, f)
-    print("Enriched data dumped to file %s" % fname)
+    learner.learn()

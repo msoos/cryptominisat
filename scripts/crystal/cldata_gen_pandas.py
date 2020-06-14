@@ -90,9 +90,8 @@ class QueryAddIdxes (helper.QueryHelper):
 
 
 class QueryCls (helper.QueryHelper):
-    def __init__(self, dbfname, conf):
+    def __init__(self, dbfname):
         super(QueryCls, self).__init__(dbfname)
-        self.conf = conf
         self.fill_sql_query()
 
     def fill_sql_query(self):
@@ -164,88 +163,6 @@ class QueryCls (helper.QueryHelper):
         limit {limit}
         """
 
-        ############
-        # Labeling SHORT
-        ############
-        if self.conf == 1:
-            self.case_stmt_short = """
-            CASE WHEN
-
-            -- useful in the next round
-            used_later_short.used_later_short >= {name_short_top_non_zero_X_perc}
-
-            THEN 1
-            ELSE 0
-            END AS `x.class`
-            """
-        elif self.conf == 2:
-            self.case_stmt_short = """
-            CASE WHEN
-
-            -- useful in the next round
-            (used_later_short.used_later_short >= {name_short_top_non_zero_X_perc}
-            or used_later.used_later >= ({name_top_non_zero_15_perc}))
-
-            THEN 1
-            ELSE 0
-            END AS `x.class`
-            """
-        elif self.conf == 3:
-            self.case_stmt_short = """
-            CASE WHEN
-
-            -- useful in the next round
-            (used_later_short.used_later_short >= {name_short_top_non_zero_X_perc}
-            or used_later.used_later >= ({name_top_non_zero_25_perc}))
-
-            THEN 1
-            ELSE 0
-            END AS `x.class`
-            """
-        else:
-            assert(False)
-
-        ############
-        # Labeling LONG
-        ############
-        if self.conf == 1:
-            self.case_stmt_long = """
-            CASE WHEN
-
-            -- useful in the next round
-            used_later_long.used_later_long >= {name_long_top_non_zero_X_perc}
-
-            THEN 1
-            ELSE 0
-            END AS `x.class`
-            """
-        elif self.conf == 2:
-            self.case_stmt_long = """
-            CASE WHEN
-
-            -- useful in the next round
-            (used_later_long.used_later_long >= {name_long_top_non_zero_X_perc}
-            or used_later.used_later >= ({name_top_non_zero_10_perc}))
-
-            THEN 1
-            ELSE 0
-            END AS `x.class`
-            """
-        elif self.conf == 3:
-            self.case_stmt_long = """
-            CASE WHEN
-
-            -- useful in the next round
-            (used_later_long.used_later_long >= {name_long_top_non_zero_X_perc}
-            or used_later.used_later >= ({name_top_non_zero_20_perc}))
-
-            THEN 1
-            ELSE 0
-            END AS `x.class`
-            """
-        else:
-            assert(False)
-
         # final big query
         self.q_select = """
         SELECT
@@ -258,7 +175,6 @@ class QueryCls (helper.QueryHelper):
         {sum_cl_use}
         , (rdb0.conflicts - cl.conflicts) as `cl.time_inside_solver`
         , `sum_cl_use`.`last_confl_used`-`cl`.`conflicts` as `x.a_lifetime`
-        , {case_stmt}
         , used_later_short.used_later_short as `x.used_later_short`
         , used_later_long.used_later_long as `x.used_later_long`
         , used_later_forever.used_later_forever as `x.used_later_forever`
@@ -347,26 +263,10 @@ class QueryCls (helper.QueryHelper):
         rows = cur.fetchall()
         lookup = {}
         for row in rows:
-            #print("row:", row)
-            lookup["name"+row[0]+"_"+row[1]] = row[2]
-        #print("rows:", rows)
+            lookup[row[1]] = row[2]
+        #print("perc lookup:", lookup)
 
         return lookup
-
-    def one_query(self, q, ok_or_bad):
-        q = q.format(**self.myformat)
-        q = "select * from ( %s ) where `x.class` = %d " % (q, ok_or_bad)
-        q += self.common_limits
-        q = q.format(**self.myformat)
-
-        t = time.time()
-        sys.stdout.write("Running query for %d..." % ok_or_bad)
-        sys.stdout.flush()
-        if options.dump_sql:
-            print("query:", q)
-        df = pd.read_sql_query(q, self.conn)
-        print("T: %-3.1f" % (time.time() - t))
-        return df
 
     def get_one_data_all_dumpnos(self, tier):
         df = None
@@ -382,74 +282,101 @@ class QueryCls (helper.QueryHelper):
 
         return True, df
 
-    def one_set_of_data(self, q, limit):
-        print("Getting one set of data with limit %s" % limit)
-        dfs = {}
-        weighted_size = []
-        for type_data in [1, 0]:
-            df_parts = []
-
-            def one_part(mult, extra):
-                self.myformat["limit"] = int(limit*mult)
-                df_parts.append(self.one_query(q + extra, type_data))
-                print("-> Num rows for %s -- '%s': %s" % (type_data, extra, df_parts[-1].shape[0]))
-
-                ws = df_parts[-1].shape[0]/mult
-                print("--> The weight was %f so wegthed size is: %d" % (mult, int(ws)))
-                weighted_size.append(ws)
-
-            one_part(1/2.0, " and rdb0.dump_no = 1 ")
-            one_part(1/4.0, " and rdb0.dump_no = 2 ")
-            one_part(1/4.0, " and rdb0.dump_no > 2 ")
-
-            dfs[type_data] = pd.concat(df_parts)
-            print("size of {t} data: {size}".format(
-                t=type_data, size=dfs[type_data].shape))
-
-        return dfs, weighted_size
-
 
     def get_data(self, tier):
-        subformat = {}
-
-        # fill in percentiles
-        for t in ["_short", "_long", "_forever", ""]:
-            x = self.get_used_later_percentiles(t)
-            for a,b in x.items():
-                subformat[a] = b
-
-        subformat["name_short_top_non_zero_X_perc"] = subformat[
-            "name_short_top_non_zero_%d_perc" % options.top_percentile_short]
-        subformat["name_long_top_non_zero_X_perc"] = subformat[
-            "name_long_top_non_zero_%d_perc" % options.top_percentile_long]
-        subformat["name_forever_top_non_zero_X_perc"] = subformat[
-            "name_forever_top_non_zero_%d_perc" % options.top_percentile_forever]
-        subformat["name_top_non_zero_X_perc"] = subformat[
-            "name_top_non_zero_%d_perc" % options.top_percentile_long]
+        perc = self.get_used_later_percentiles("_"+tier)
 
         if tier == "short":
             self.myformat["del_at_least"] = options.short
-            self.myformat["case_stmt"] = self.case_stmt_short.format(
-                **subformat)
+
         elif tier == "long":
             self.myformat["del_at_least"] = options.long
-            self.myformat["case_stmt"] = self.case_stmt_long.format(
-                **subformat)
+
         elif tier == "forever":
             self.myformat["del_at_least"] = 0
-            self.myformat["case_stmt"] = self.case_stmt_long.format(
-                **subformat)
 
+        # Make sure these stratas are equally represented
         t = time.time()
         limit = options.limit
-        print("Limit is originally:", limit)
-        _, weighted_size = self.one_set_of_data(str(self.q_select), limit)
-        limit = int(min(weighted_size))
+        limit, _ = self.run_stratified_queries(limit, perc, tier)
         print("Setting limit to minimum of all of above weighted sizes:", limit)
-        df, weighted_size = self.one_set_of_data(str(self.q_select), limit)
+        print("** Running final queries")
+        _, dfs = self.run_stratified_queries(limit, perc, tier)
 
-        print("Queries finished. T: %-3.2f" % (time.time() - t))
-        return True, pd.concat([df[1], df[0]]), limit
+        data = pd.concat(dfs)
+        print("** Queries finished. Total size: %s  -- T: %-3.2f" % (
+            data.shape, time.time() - t))
+        return True, data , limit
+
+    def run_stratified_queries(self, limit, perc, tier):
+        dfs = []
+        for beg_perc, end_perc in [(0, 20), (20, 50), (50, 100)]:
+            beg = perc["top_non_zero_{perc}_perc".format(perc=beg_perc)]
+            if end_perc == 100:
+                end = 0
+            else:
+                end = perc["top_non_zero_{perc}_perc".format(perc=end_perc)]
+            what_to_strata = "`x.used_later_{tier}`".format(tier=tier)
+
+            print("Limit is currently: {limit} value strata perc: ({a}, {b}) translates to value strata ({beg}, {end})".format(
+                limit=limit, a=beg_perc, b=end_perc, beg=beg, end=end))
+
+            df, weighted_size = self.query_strata_per_dumpno(
+                str(self.q_select),
+                limit,
+                what_to_strata=what_to_strata,
+                strata=(beg,end))
+            dfs.append(df)
+            limit = int(min(weighted_size))
+        return limit, dfs
+
+    def query_strata_per_dumpno(self, q, limit, what_to_strata, strata):
+        print("-> Getting one set of data with limit %s" % limit)
+        weighted_size = []
+        df_parts = []
+
+        def one_part(mult, extra):
+            self.myformat["limit"] = int(limit*mult)
+            df_parts.append(self.one_query(q + extra, what_to_strata, strata))
+            print("--> Num rows for strata %s -- '%s': %s" % (strata, extra, df_parts[-1].shape[0]))
+
+            ws = df_parts[-1].shape[0]/mult
+            print("--> The weight was %f so wegthed size is: %d" % (mult, int(ws)))
+            weighted_size.append(ws)
+
+        one_part(1/2.0, " and rdb0.dump_no = 1 ")
+        one_part(1/4.0, " and rdb0.dump_no = 2 ")
+        one_part(1/4.0, " and rdb0.dump_no > 2 ")
+
+        df = pd.concat(df_parts)
+        print("-> size of all dump_no-s, strata {strata} data: {size}".format(
+            strata=strata, size=df.shape))
+
+        return df, weighted_size
+
+    def one_query(self, q, what_to_strata, strata):
+        q = q.format(**self.myformat)
+        q = """
+        select * from ( {q} )
+        where
+        {what_to_strata} <= {beg}
+        and {what_to_strata} >= {end}""".format(
+            q=q,
+            what_to_strata=what_to_strata,
+            beg=strata[0],
+            end=strata[1])
+
+        q += self.common_limits
+        q = q.format(**self.myformat)
+
+        t = time.time()
+        sys.stdout.write("-> Running query for {} stratas {}...".format(what_to_strata, strata))
+        sys.stdout.flush()
+        if options.dump_sql:
+            print("query:", q)
+        df = pd.read_sql_query(q, self.conn)
+        print("T: %-3.1f" % (time.time() - t))
+        return df
 
 
 def dump_dataframe(df, name):
@@ -480,52 +407,39 @@ def one_database(dbfname):
         q.fill_used_later_X("long", offset=options.long, duration=options.long)
         q.fill_used_later_X("short", offset=options.short, duration=options.short)
 
-    conf_from, conf_to = helper.parse_configs(options.confs)
-    print("Using sqlite3db file %s" % dbfname)
-    for tier in ["long", "short", "forever"]:
-        for conf in range(conf_from, conf_to):
-            print("------> Doing config {conf} -- {tier}".format(
-                conf=conf, tier=tier))
+    print("Using sqlite3 DB file %s" % dbfname)
+    for tier in ["short", "long", "forever"]:
+        print("------> Doing tier {tier}".format(tier=tier))
 
-            with QueryCls(dbfname, conf) as q:
-                ok, df = q.get_one_data_all_dumpnos(tier)
+        with QueryCls(dbfname) as q:
+            ok, df = q.get_one_data_all_dumpnos(tier)
 
-            if not ok:
-                print("-> Skipping file {file} config {conf} {ls}".format(
-                    conf=conf, file=dbfname, ls=tier))
-                continue
+        if not ok:
+            print("-> Skipping file {file} {tier}".format(
+                file=dbfname, tier=tier))
+            continue
 
-            if options.verbose:
-                print("Describing----")
-                dat = df.describe()
-                print(dat)
-                print("Describe done.---")
-                print("Features: ", df.columns.values.flatten().tolist())
+        if options.verbose:
+            print("Describing----")
+            dat = df.describe()
+            print(dat)
+            print("Describe done.---")
+            print("Features: ", df.columns.values.flatten().tolist())
 
-            if options.verbose:
-                print("Describing post-transform ----")
-                print(df.describe())
-                print("Describe done.---")
-                print("Features: ", df.columns.values.flatten().tolist())
+        if options.verbose:
+            print("Describing post-transform ----")
+            print(df.describe())
+            print("Describe done.---")
+            print("Features: ", df.columns.values.flatten().tolist())
 
-            cleanname = re.sub(r'\.cnf.gz.sqlite$', '', dbfname)
-            cleanname = re.sub(r'\.db$', '', dbfname)
-            cleanname = re.sub(r'\.sqlitedb$', '', dbfname)
-            cleanname = "{cleanname}-cldata-{tier}-conf-{conf}-pshort{percshort}-plong{perclong}-pforever{percforever}".format(
-                cleanname=cleanname,
-                tier=tier,
-                conf=conf,
-                percshort=options.top_percentile_short,
-                perclong=options.top_percentile_long,
-                percforever=options.top_percentile_forever)
+        cleanname = re.sub(r'\.cnf.gz.sqlite$', '', dbfname)
+        cleanname = re.sub(r'\.db$', '', dbfname)
+        cleanname = re.sub(r'\.sqlitedb$', '', dbfname)
+        cleanname = "{cleanname}-cldata-{tier}".format(
+            cleanname=cleanname,
+            tier=tier)
 
-            # some cleanup, stats
-            #df["fname"] = df["fname"].astype("category")
-            #df["cl.cur_restart_type"] = df["cl.cur_restart_type"].astype("category")
-            #df["rdb0.cur_restart_type"] = df["rdb0.cur_restart_type"].astype("category")
-            #df["rdb1.cur_restart_type"] = df["rdb1.cur_restart_type"].astype("category")
-
-            dump_dataframe(df, cleanname)
+        dump_dataframe(df, cleanname)
 
 
 if __name__ == "__main__":
@@ -539,12 +453,6 @@ if __name__ == "__main__":
                       dest="dump_sql", help="Dump SQL queries")
     parser.add_option("--csv", action="store_true", default=False,
                       dest="dump_csv", help="Dump CSV (for weka)")
-    parser.add_option("--toppercentileshort", type=int, default=50,
-                      dest="top_percentile_short", help="Top percentile of short predictor to mark KEEP")
-    parser.add_option("--toppercentilelong", type=int, default=40,
-                      dest="top_percentile_long", help="Top percentile of long predictor to mark KEEP")
-    parser.add_option("--toppercentileforever", type=int, default=20,
-                      dest="top_percentile_forever", help="Top percentile of forever predictor to mark KEEP")
 
     # limits
     parser.add_option("--limit", default=20000, type=int,
@@ -555,10 +463,6 @@ if __name__ == "__main__":
                       dest="no_recreate_indexes",
                       help="Don't recreate indexes")
 
-    # configs
-    parser.add_option("--confs", default="1-1", type=str,
-                      dest="confs", help="Configs to generate. Default: %default")
-
     # lengths of short/long
     parser.add_option("--short", default="10000", type=str,
                       dest="short", help="Short duration. Default: %default")
@@ -567,11 +471,9 @@ if __name__ == "__main__":
 
     (options, args) = parser.parse_args()
 
-    if len(args) < 1:
-        print("ERROR: You must give at least one file")
+    if len(args) != 1:
+        print("ERROR: You must give exactly one file")
         exit(-1)
 
     np.random.seed(2097483)
-    for dbfname in args:
-        print("----- FILE %s -------" % dbfname)
-        one_database(dbfname)
+    one_database(args[0])

@@ -482,7 +482,7 @@ def calc_regression_error(data, features, to_predict, clf, toprint,
         else:
             y_pred = clf.predict(X_data)
             error = sklearn.metrics.mean_squared_error(y_data, y_pred)
-        print("%s %s msqe: %10.3lf" % (x, y, error))
+        print("%s %s msqe: %13.1lf" % (x, y, error))
 
     for start,end in [(0,3), (3,8), (8, 15), (15, 25), (25,50), (50, 100), (100, 1000000)]:
         x = "--> Strata  %10d <= %20s < %10d " % (start, "rdb0.glue", end)
@@ -495,7 +495,7 @@ def calc_regression_error(data, features, to_predict, clf, toprint,
         else:
             y_pred = clf.predict(X_data)
             error = sklearn.metrics.mean_squared_error(y_data, y_pred)
-        print("%s %s msqe: %10.3lf" % (x, y, error))
+        print("%s %s msqe: %13.1lf" % (x, y, error))
 
     return main_error
 
