@@ -168,11 +168,11 @@ rm -f ../../src/predict/*.h
 #../vardata_predict.py mydata.db-vardata.dat --picktimeonly -q 2 --only 0.99
 #../vardata_predict.py vardata-comb --final -q 20 --basedir ../src/predict/ --depth 7 --tree
 
-# for CONF in {0..2}; do
-    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short.dat" --tier short --final --xgboost --basedir ../../src/predict/
-    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long.dat" --tier long --final --xgboost --basedir ../../src/predict/
-    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-forever.dat" --tier forever --final --xgboost --basedir ../../src/predict/
-# done
+
+../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short.dat" --tier short --final --xgboost --basedir ../../src/predict/
+../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long.dat" --tier long --final --xgboost --basedir ../../src/predict/
+../cldata_predict.py "${FNAMEOUT}-min.db-cldata-forever.dat" --tier forever --final --xgboost --basedir ../../src/predict/
+
 )
 
 ########################
