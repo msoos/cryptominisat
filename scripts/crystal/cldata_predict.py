@@ -277,9 +277,10 @@ class Learner:
 
             if options.basedir and options.final_is_xgboost:
                 booster = clf.get_booster()
-                fname = options.basedir + "/predictor_{tier}.boost".format(
-                    tier=self.tier)
+                fname = options.basedir + "/predictor_{name}.boost".format(
+                    name=options.name)
                 booster.save_model(fname)
+                print("==> Saved model to: ", fname)
             else:
                 print("WARNING: NOT writing code -- you must use xgboost and give dir for that")
 
@@ -427,6 +428,8 @@ if __name__ == "__main__":
     # which one to generate
     parser.add_argument("--tier", default=None, type=str,
                         dest="tier", help="what to predict")
+    parser.add_argument("--name", default=None, type=str,
+                        dest="name", help="what file to generate")
 
     options = parser.parse_args()
     prng = np.random.RandomState(options.seed)
@@ -448,12 +451,18 @@ if __name__ == "__main__":
         print("ERROR: '%s' is not a file" % options.fname)
         exit(-1)
 
+    if options.name is None:
+        print("Name was not set with --name, setting it to --tier, i.e. ", options.tier)
+        options.name = options.tier
+
     # ------------
     #  Log all parameters
     # ------------
     if mlflow_avail:
         mlflow.log_param("final", options.only_final)
         if options.only_final:
+            mlflow.log_param("tier", options.tier)
+            mlflow.log_param("name", options.name)
             mlflow.log_param("tree", options.final_is_tree)
             mlflow.log_param("svm", options.final_is_svm)
             mlflow.log_param("logreg", options.final_is_logreg)
