@@ -209,11 +209,11 @@ void ClPredictors::set_up_input(
         tot_last_touch_diffs_not_0 = 1;
     }
 
-    at[x++] = cl->stats.used_for_uip_creation;
-    //rdb0.used_for_uip_creation
-
-    at[x++] = cl->stats.glue;
-    //rdb0.glue
+//     at[x++] = cl->stats.used_for_uip_creation;
+//     //rdb0.used_for_uip_creation
+//
+//     at[x++] = cl->stats.glue;
+//     //rdb0.glue
 
     at[x++] =
         ((double)cl->stats.sum_uip1_used/time_inside_solver_not_0)/
