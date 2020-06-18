@@ -134,10 +134,10 @@ struct ClauseStats
     };
     uint32_t last_touched;
     #ifdef FINAL_PREDICTOR
-    uint32_t    rdb1_last_touched;
+//     uint32_t    rdb1_last_touched;
     float       glue_hist_long;
     float       glue_hist_queue;
-    float       glue_hist;
+//     float       glue_hist;
     float       confl_size_hist_lt;
     uint32_t    glue_before_minim;
 //     uint32_t    num_overlap_literals;
@@ -148,7 +148,7 @@ struct ClauseStats
     float       branch_depth_hist_queue;
     float       num_resolutions_hist_lt;
 //     uint32_t    trail_depth_hist_longer;
-    float       rdb1_act_ranking_rel = 0;
+//     float       rdb1_act_ranking_rel = 0;
 //     uint8_t     rdb1_act_ranking_top_10 = 0;
     float pred_short_use;
     float pred_long_use;

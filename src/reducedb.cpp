@@ -417,11 +417,12 @@ void ReduceDB::handle_lev2_predictor()
         cl->stats.pred_forever_use= 0;
         if (cl->stats.dump_no > 0) {
             assert(cl->stats.last_touched <= (int64_t)solver->sumConflicts);
-            assert(cl->stats.rdb1_last_touched <= (int64_t)solver->sumConflicts-10000);
+//             assert(cl->stats.rdb1_last_touched <= (int64_t)solver->sumConflicts-10000);
             int64_t last_touched_diff =
                 (int64_t)solver->sumConflicts-(int64_t)cl->stats.last_touched;
             int64_t rdb1_last_touched_diff =
-                (int64_t)solver->sumConflicts-10000-(int64_t)cl->stats.rdb1_last_touched;
+                   0;
+//                 (int64_t)solver->sumConflicts-10000-(int64_t)cl->stats.rdb1_last_touched;
 
             predictors->add_single_cl(
                 cl,
@@ -432,8 +433,8 @@ void ReduceDB::handle_lev2_predictor()
                 act_ranking_top_10
             );
         }
-        cl->stats.rdb1_act_ranking_rel = act_ranking_rel;
-        cl->stats.rdb1_last_touched = cl->stats.last_touched;
+//         cl->stats.rdb1_act_ranking_rel = act_ranking_rel;
+//         cl->stats.rdb1_last_touched = cl->stats.last_touched;
         cl->stats.rdb1_propagations_made = cl->stats.propagations_made;
         cl->stats.reset_rdb_stats();
     }
@@ -566,7 +567,8 @@ void ReduceDB::handle_lev2_predictor()
             int64_t last_touched_diff =
                 (int64_t)solver->sumConflicts-(int64_t)cl->stats.last_touched;
             int64_t rdb1_last_touched_diff =
-                (int64_t)solver->sumConflicts-10000-(int64_t)cl->stats.rdb1_last_touched;
+                0;
+//                 (int64_t)solver->sumConflicts-10000-(int64_t)cl->stats.rdb1_last_touched;
 
             predictors->add_single_cl(
                 cl,
@@ -628,7 +630,8 @@ void ReduceDB::handle_lev2_predictor()
             int64_t last_touched_diff =
                 (int64_t)solver->sumConflicts-(int64_t)cl->stats.last_touched;
             int64_t rdb1_last_touched_diff =
-                (int64_t)solver->sumConflicts-10000-(int64_t)cl->stats.rdb1_last_touched;
+                0;
+//                 (int64_t)solver->sumConflicts-10000-(int64_t)cl->stats.rdb1_last_touched;
 
             predictors->add_single_cl(
                 cl,
