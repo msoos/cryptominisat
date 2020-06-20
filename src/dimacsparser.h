@@ -26,18 +26,17 @@ THE SOFTWARE.
 
 #include <string.h>
 #include "streambuffer.h"
-#include "cryptominisat5/cryptominisat.h"
 #include <cstdlib>
 #include <cmath>
 
 using namespace CMSat;
 using std::vector;
 
-template <class C>
+template <class C, class S>
 class DimacsParser
 {
     public:
-        DimacsParser(SATSolver* solver, const std::string* debugLib, unsigned _verbosity);
+        DimacsParser(S* solver, const std::string* debugLib, unsigned _verbosity);
 
         template <class T> bool parse_DIMACS(
             T input_stream,
@@ -65,7 +64,7 @@ class DimacsParser
         std::string get_debuglib_fname() const;
 
 
-        SATSolver* solver;
+        S* solver;
         std::string debugLib;
         unsigned verbosity;
         bool pcnf = false;
@@ -104,9 +103,9 @@ using std::vector;
 using std::cout;
 using std::endl;
 
-template<class C>
-DimacsParser<C>::DimacsParser(
-    SATSolver* _solver
+template<class C, class S>
+DimacsParser<C, S>::DimacsParser(
+    S* _solver
     , const std::string* _debugLib
     , unsigned _verbosity
 ):
@@ -119,16 +118,16 @@ DimacsParser<C>::DimacsParser(
     }
 }
 
-template<class C>
-std::string DimacsParser<C>::stringify(uint32_t x) const
+template<class C, class S>
+std::string DimacsParser<C, S>::stringify(uint32_t x) const
 {
     std::ostringstream o;
     o << x;
     return o.str();
 }
 
-template<class C>
-bool DimacsParser<C>::readClause(C& in)
+template<class C, class S>
+bool DimacsParser<C, S>::readClause(C& in)
 {
     int32_t parsed_lit;
     uint32_t var;
@@ -203,8 +202,8 @@ bool DimacsParser<C>::readClause(C& in)
     return true;
 }
 
-template<class C>
-bool DimacsParser<C>::match(C& in, const char* str)
+template<class C, class S>
+bool DimacsParser<C, S>::match(C& in, const char* str)
 {
     for (; *str != 0; ++str, ++in)
         if (*str != *in)
@@ -212,8 +211,8 @@ bool DimacsParser<C>::match(C& in, const char* str)
     return true;
 }
 
-template<class C>
-bool DimacsParser<C>::parseWeight(C& in)
+template<class C, class S>
+bool DimacsParser<C, S>::parseWeight(C& in)
 {
     if (match(in, "w ")) {
         int32_t slit;
@@ -246,8 +245,8 @@ bool DimacsParser<C>::parseWeight(C& in)
     return true;
 }
 
-template<class C>
-bool DimacsParser<C>::parse_header(C& in)
+template<class C, class S>
+bool DimacsParser<C, S>::parse_header(C& in)
 {
     ++in;
     in.skipWhitespace();
@@ -305,15 +304,15 @@ bool DimacsParser<C>::parse_header(C& in)
     return true;
 }
 
-template<class C>
-std::string DimacsParser<C>::get_debuglib_fname() const
+template<class C, class S>
+std::string DimacsParser<C, S>::get_debuglib_fname() const
 {
     std::string sol_fname = debugLib + "-debugLibPart" + stringify(debugLibPart) +".output";
     return sol_fname;
 }
 
-template<class C>
-bool DimacsParser<C>::parse_solve_simp_comment(C& in, const bool solve)
+template<class C, class S>
+bool DimacsParser<C, S>::parse_solve_simp_comment(C& in, const bool solve)
 {
     vector<Lit> assumps;
     in.skipWhitespace();
@@ -359,8 +358,8 @@ bool DimacsParser<C>::parse_solve_simp_comment(C& in, const bool solve)
     return true;
 }
 
-template<class C>
-void DimacsParser<C>::write_solution_to_debuglib_file(const lbool ret) const
+template<class C, class S>
+void DimacsParser<C, S>::write_solution_to_debuglib_file(const lbool ret) const
 {
     //Open file for writing
     std::string s = get_debuglib_fname();
@@ -398,8 +397,8 @@ void DimacsParser<C>::write_solution_to_debuglib_file(const lbool ret) const
     partFile.close();
 }
 
-template<class C>
-bool DimacsParser<C>::parseComments(C& in, const std::string& str)
+template<class C, class S>
+bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
 {
     if (!debugLib.empty() && str.substr(0, 13) == "Solver::solve") {
         if (!parse_solve_simp_comment(in, true)) {
@@ -447,8 +446,8 @@ bool DimacsParser<C>::parseComments(C& in, const std::string& str)
     return true;
 }
 
-template<class C>
-bool DimacsParser<C>::parse_and_add_clause(C& in)
+template<class C, class S>
+bool DimacsParser<C, S>::parse_and_add_clause(C& in)
 {
     lits.clear();
     if (!readClause(in)) {
@@ -464,8 +463,8 @@ bool DimacsParser<C>::parse_and_add_clause(C& in)
     return true;
 }
 
-template<class C>
-bool DimacsParser<C>::parse_and_add_xor_clause(C& in)
+template<class C, class S>
+bool DimacsParser<C, S>::parse_and_add_xor_clause(C& in)
 {
     lits.clear();
     if (!readClause(in)) {
@@ -491,8 +490,8 @@ bool DimacsParser<C>::parse_and_add_xor_clause(C& in)
     return true;
 }
 
-template<class C>
-bool DimacsParser<C>::parse_DIMACS_main(C& in)
+template<class C, class S>
+bool DimacsParser<C, S>::parse_DIMACS_main(C& in)
 {
     std::string str;
 
@@ -563,9 +562,9 @@ bool DimacsParser<C>::parse_DIMACS_main(C& in)
     return true;
 }
 
-template <class C>
+template <class C, class S>
 template <class T>
-bool DimacsParser<C>::parse_DIMACS(
+bool DimacsParser<C, S>::parse_DIMACS(
     T input_stream,
     const bool _strict_header,
     uint32_t _offset_vars)
@@ -591,8 +590,8 @@ bool DimacsParser<C>::parse_DIMACS(
     return true;
 }
 
-template <class C>
-bool DimacsParser<C>::parseIndependentSet(C& in)
+template <class C, class S>
+bool DimacsParser<C, S>::parseIndependentSet(C& in)
 {
     int32_t parsed_lit;
     for (;;) {

@@ -99,10 +99,10 @@ void Main::readInAFile(SATSolver* solver2, const string& filename)
     }
     #ifndef USE_ZLIB
     FILE * in = fopen(filename.c_str(), "rb");
-    DimacsParser<StreamBuffer<FILE*, FN> > parser(solver2, &debugLib, conf.verbosity);
+    DimacsParser<StreamBuffer<FILE*, FN>, SATSolver> parser(solver2, &debugLib, conf.verbosity);
     #else
     gzFile in = gzopen(filename.c_str(), "rb");
-    DimacsParser<StreamBuffer<gzFile, GZ> > parser(solver2, &debugLib, conf.verbosity);
+    DimacsParser<StreamBuffer<gzFile, GZ>, SATSolver> parser(solver2, &debugLib, conf.verbosity);
     #endif
 
     if (in == NULL) {
@@ -194,9 +194,9 @@ void Main::readInStandardInput(SATSolver* solver2)
     }
 
     #ifndef USE_ZLIB
-    DimacsParser<StreamBuffer<FILE*, FN> > parser(solver2, &debugLib, conf.verbosity);
+    DimacsParser<StreamBuffer<FILE*, FN>, SATSolver> parser(solver2, &debugLib, conf.verbosity);
     #else
-    DimacsParser<StreamBuffer<gzFile, GZ> > parser(solver2, &debugLib, conf.verbosity);
+    DimacsParser<StreamBuffer<gzFile, GZ>, SATSolver> parser(solver2, &debugLib, conf.verbosity);
     #endif
 
     if (!parser.parse_DIMACS(in, false)) {
