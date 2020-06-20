@@ -51,15 +51,19 @@ class DimacsParser
     private:
         bool parse_DIMACS_main(C& in);
         bool readClause(C& in);
-        bool parseWeight(C& in);
         bool parse_and_add_clause(C& in);
         bool parse_and_add_xor_clause(C& in);
         bool match(C& in, const char* str);
         bool parse_header(C& in);
         bool parseComments(C& in, const std::string& str);
         std::string stringify(uint32_t x) const;
+
+        #ifdef DEBUG_DIMACSPARSER_CMS
+        bool parseWeight(C& in);
         bool parse_solve_simp_comment(C& in, const bool solve);
         void write_solution_to_debuglib_file(const lbool ret) const;
+        #endif
+
         bool parseIndependentSet(C& in);
         std::string get_debuglib_fname() const;
 
@@ -211,6 +215,7 @@ bool DimacsParser<C, S>::match(C& in, const char* str)
     return true;
 }
 
+#ifdef DEBUG_DIMACSPARSER_CMS
 template<class C, class S>
 bool DimacsParser<C, S>::parseWeight(C& in)
 {
@@ -244,6 +249,7 @@ bool DimacsParser<C, S>::parseWeight(C& in)
     }
     return true;
 }
+#endif
 
 template<class C, class S>
 bool DimacsParser<C, S>::parse_header(C& in)
@@ -311,6 +317,7 @@ std::string DimacsParser<C, S>::get_debuglib_fname() const
     return sol_fname;
 }
 
+#ifdef DEBUG_DIMACSPARSER_CMS
 template<class C, class S>
 bool DimacsParser<C, S>::parse_solve_simp_comment(C& in, const bool solve)
 {
@@ -396,10 +403,12 @@ void DimacsParser<C, S>::write_solution_to_debuglib_file(const lbool ret) const
     }
     partFile.close();
 }
+#endif
 
 template<class C, class S>
 bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
 {
+    #ifdef DEBUG_DIMACSPARSER_CMS
     if (!debugLib.empty() && str.substr(0, 13) == "Solver::solve") {
         if (!parse_solve_simp_comment(in, true)) {
             return false;
@@ -408,7 +417,9 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
         if (!parse_solve_simp_comment(in, false)) {
             return false;
         }
-    } else if (!debugLib.empty() && str == "Solver::new_var()") {
+    } else
+    #endif
+    if (!debugLib.empty() && str == "Solver::new_var()") {
         solver->new_var();
 
         if (verbosity >= 6) {
@@ -522,6 +533,8 @@ bool DimacsParser<C, S>::parse_DIMACS_main(C& in)
                 }
             }
             break;
+
+        #ifdef DEBUG_DIMACSPARSER_CMS
         case 'w':
             if (!parseWeight(in)) {
                 return false;
@@ -529,6 +542,7 @@ bool DimacsParser<C, S>::parse_DIMACS_main(C& in)
             in.skipLine();
             lineNum++;
             break;
+        #endif
         case 'c':
             ++in;
             in.parseString(str);

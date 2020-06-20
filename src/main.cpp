@@ -29,6 +29,8 @@ THE SOFTWARE.
 #include <fenv.h>
 #endif
 
+#define DEBUG_DIMACSPARSER_CMS
+
 #include <ctime>
 #include <cstring>
 #include <errno.h>
