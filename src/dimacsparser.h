@@ -557,11 +557,13 @@ bool DimacsParser<C, S>::parse_DIMACS_main(C& in)
             }
             break;
         case '\n':
-            std::cerr
-            << "c WARNING: Empty line at line number " << lineNum+1
-            << " -- this is not part of the DIMACS specifications ("
-            << dimacs_spec << "). Ignoring."
-            << endl;
+            if (verbosity) {
+                std::cout
+                << "c WARNING: Empty line at line number " << lineNum+1
+                << " -- this is not part of the DIMACS specifications ("
+                << dimacs_spec << "). Ignoring."
+                << endl;
+            }
             in.skipLine();
             lineNum++;
             break;
