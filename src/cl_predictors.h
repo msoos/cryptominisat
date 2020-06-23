@@ -23,7 +23,12 @@ THE SOFTWARE.
 #ifndef __CLPREDICTOR_H__
 #define __CLPREDICTOR_H__
 
+#ifdef EXTENDED_FEATURES
+#define PRED_COLS 33
+#else
 #define PRED_COLS 16
+#endif
+
 
 #include <vector>
 #include <string>
@@ -52,7 +57,9 @@ public:
         const CMSat::Clause* cl,
         const uint64_t sumConflicts,
         const int64_t  last_touched_diff,
-        const int64_t  rdb1_last_touched_diff,
+#ifdef EXTENDED_FEATURES
+        const int64_t rdb1_last_touched_diff,
+#endif
         const double   act_ranking_rel,
         const uint32_t act_ranking_top_10);
 
@@ -60,41 +67,32 @@ public:
         const CMSat::Clause* cl,
         const uint64_t sumConflicts,
         const int64_t last_touched_diff,
+#ifdef EXTENDED_FEATURES
         const int64_t rdb1_last_touched_diff,
+#endif
         const double   act_ranking_rel,
         const uint32_t act_ranking_top_10,
         float& p_short,
         float& p_long,
         float& p_forever);
 
-    void start_adding_cls();
-    const vector<vector<float>>& do_predict_many_alltypes();
-    const vector<vector<float>>& do_predict_many_onetype(predict_type which);
-    void add_single_cl(
-        const CMSat::Clause* cl,
-        const uint64_t sumConflicts,
-        const int64_t  last_touched_diff,
-        const int64_t  rdb1_last_touched_diff,
-        const double   act_ranking_rel,
-        const uint32_t act_ranking_top_10);
-
 private:
-    void predict_multi_internal(predict_type which);
-    float predict_one(int num);
+    float predict_one(int num, DMatrixHandle dmat);
     void set_up_input(
         const CMSat::Clause* cl,
         const uint64_t sumConflicts,
         const int64_t  last_touched_diff,
-        const int64_t rdb1_last_touched_diff,
+#ifdef EXTENDED_FEATURES
+        const int64_t  rdb1_last_touched_diff,
+#endif
         const double   act_ranking_rel,
         const uint32_t act_ranking_top_10,
         const uint32_t cols,
         float* at);
     vector<BoosterHandle> handles;
-    vector<float> multi_data;
+    float train[PRED_COLS];
     DMatrixHandle dmat;
     Solver* solver;
-    vector<vector<float>> multi_ret;
 };
 
 }

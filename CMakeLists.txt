@@ -135,6 +135,9 @@ option(LARGEMEM "Allow memory usage to grow to Terabyte values -- uses 64b offse
 if (LARGEMEM)
     add_definitions(-DLARGE_OFFSETS)
 endif()
+if (EXTFEAT)
+    add_definitions(-DEXTENDED_FEATURES)
+endif()
 
 macro(add_sanitize_option flagname)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${flagname}" )

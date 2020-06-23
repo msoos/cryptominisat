@@ -396,7 +396,6 @@ void ReduceDB::handle_lev2_predictor()
     std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
               SortRedClsAct(solver->cl_alloc));
 
-    predictors->start_adding_cls();
     for(size_t i = 0
         ; i < solver->longRedCls[2].size()
         ; i++
@@ -417,44 +416,35 @@ void ReduceDB::handle_lev2_predictor()
         cl->stats.pred_forever_use= 0;
         if (cl->stats.dump_no > 0) {
             assert(cl->stats.last_touched <= (int64_t)solver->sumConflicts);
-//             assert(cl->stats.rdb1_last_touched <= (int64_t)solver->sumConflicts-10000);
             int64_t last_touched_diff =
                 (int64_t)solver->sumConflicts-(int64_t)cl->stats.last_touched;
+            #ifdef EXTENDED_FEATURES
+            assert(cl->stats.rdb1_last_touched <= (int64_t)solver->sumConflicts-10000);
             int64_t rdb1_last_touched_diff =
-                   0;
-//                 (int64_t)solver->sumConflicts-10000-(int64_t)cl->stats.rdb1_last_touched;
+                (int64_t)solver->sumConflicts-10000-(int64_t)cl->stats.rdb1_last_touched;
+            #endif
 
-            predictors->add_single_cl(
+            predictors->predict(
                 cl,
                 solver->sumConflicts,
                 last_touched_diff,
+                #ifdef EXTENDED_FEATURES
                 rdb1_last_touched_diff,
+                #endif
                 act_ranking_rel,
-                act_ranking_top_10
+                act_ranking_top_10,
+                cl->stats.pred_short_use,
+                cl->stats.pred_long_use,
+                cl->stats.pred_forever_use
             );
         }
-//         cl->stats.rdb1_act_ranking_rel = act_ranking_rel;
-//         cl->stats.rdb1_last_touched = cl->stats.last_touched;
+        cl->stats.dump_no++;
+        #ifdef EXTENDED_FEATURES
+        cl->stats.rdb1_act_ranking_rel = act_ranking_rel;
+        cl->stats.rdb1_last_touched = cl->stats.last_touched;
+        #endif
         cl->stats.rdb1_propagations_made = cl->stats.propagations_made;
         cl->stats.reset_rdb_stats();
-    }
-    auto pred = predictors->do_predict_many_alltypes();
-
-    size_t k = 0;
-    for(size_t i = 0
-        ; i < solver->longRedCls[2].size()
-        ; i++
-    ) {
-        const ClOffset offset = solver->longRedCls[2][i];
-        Clause* cl = solver->cl_alloc.ptr(offset);
-
-        if (cl->stats.dump_no > 0) {
-            cl->stats.pred_short_use = pred[predict_type::short_pred][k];
-            cl->stats.pred_long_use = pred[predict_type::long_pred][k];
-            cl->stats.pred_forever_use = pred[predict_type::forever_pred][k];
-            k++;
-        }
-        cl->stats.dump_no++;
     }
 
     if (solver->conf.verbosity >= 1) {
@@ -551,7 +541,6 @@ void ReduceDB::handle_lev2_predictor()
         std::sort(solver->longRedCls[0].begin(), solver->longRedCls[0].end(),
               SortRedClsAct(solver->cl_alloc));
 
-        predictors->start_adding_cls();
         for(size_t i = 0
             ; i < solver->longRedCls[0].size()
             ; i++
@@ -566,26 +555,21 @@ void ReduceDB::handle_lev2_predictor()
 
             int64_t last_touched_diff =
                 (int64_t)solver->sumConflicts-(int64_t)cl->stats.last_touched;
+            #ifdef EXTENDED_FEATURES
             int64_t rdb1_last_touched_diff =
-                0;
-//                 (int64_t)solver->sumConflicts-10000-(int64_t)cl->stats.rdb1_last_touched;
+                (int64_t)solver->sumConflicts-10000-(int64_t)cl->stats.rdb1_last_touched;
+            #endif
 
-            predictors->add_single_cl(
+            cl->stats.pred_forever_use = predictors->predict(
+                predict_type::forever_pred,
                 cl,
                 solver->sumConflicts,
                 last_touched_diff,
+                #ifdef EXTENDED_FEATURES
                 rdb1_last_touched_diff,
+                #endif
                 act_ranking_rel,
                 act_ranking_top_10);
-        }
-        auto preds = predictors->do_predict_many_onetype(predict_type::forever_pred);
-        for(size_t i = 0
-            ; i < solver->longRedCls[0].size()
-            ; i++
-        ) {
-            const ClOffset offset = solver->longRedCls[0][i];
-            Clause* cl = solver->cl_alloc.ptr(offset);
-            cl->stats.pred_forever_use = preds[predict_type::forever_pred][i];
         }
 
         //Clean up FOREVER, move to LONG
@@ -614,7 +598,6 @@ void ReduceDB::handle_lev2_predictor()
         std::sort(solver->longRedCls[1].begin(), solver->longRedCls[1].end(),
               SortRedClsAct(solver->cl_alloc));
 
-        predictors->start_adding_cls();
         for(size_t i = 0
             ; i < solver->longRedCls[1].size()
             ; i++
@@ -629,26 +612,21 @@ void ReduceDB::handle_lev2_predictor()
 
             int64_t last_touched_diff =
                 (int64_t)solver->sumConflicts-(int64_t)cl->stats.last_touched;
+            #ifdef EXTENDED_FEATURES
             int64_t rdb1_last_touched_diff =
-                0;
-//                 (int64_t)solver->sumConflicts-10000-(int64_t)cl->stats.rdb1_last_touched;
+                (int64_t)solver->sumConflicts-10000-(int64_t)cl->stats.rdb1_last_touched;
+            #endif
 
-            predictors->add_single_cl(
+            cl->stats.pred_long_use = predictors->predict(
+                predict_type::long_pred,
                 cl,
                 solver->sumConflicts,
                 last_touched_diff,
+                #ifdef EXTENDED_FEATURES
                 rdb1_last_touched_diff,
+                #endif
                 act_ranking_rel,
                 act_ranking_top_10);
-        }
-        auto preds = predictors->do_predict_many_onetype(predict_type::long_pred);
-        for(size_t i = 0
-            ; i < solver->longRedCls[0].size()
-            ; i++
-        ) {
-            const ClOffset offset = solver->longRedCls[0][i];
-            Clause* cl = solver->cl_alloc.ptr(offset);
-            cl->stats.pred_long_use = preds[predict_type::long_pred][i];
         }
 
         //Clean up LONG, move to SHORT

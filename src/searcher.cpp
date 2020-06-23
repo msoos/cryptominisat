@@ -1646,7 +1646,9 @@ void Searcher::set_clause_data(
 
 //     cl->stats.clust_f = clustering->which_is_closest(solver->last_solve_satzilla_feature);
     cl->stats.orig_glue = orig_glue;
-//     cl->stats.glue_hist = hist.glueHistLT.avg();
+#ifdef EXTENDED_FEATURES
+    cl->stats.glue_hist = hist.glueHistLT.avg();
+#endif
     cl->stats.confl_size_hist_lt = hist.conflSizeHistLT.avg();
     cl->stats.glue_hist_queue = hist.glueHist.getLongtTerm().avg();
     cl->stats.glue_hist_long = hist.glueHist.avg_nocheck();

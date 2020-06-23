@@ -38,27 +38,19 @@ ClPredictors::ClPredictors(Solver* _solver) :
     ret = XGBoosterCreate(0, 0, &(handles[0]));
     assert(ret == 0);
     ret = XGBoosterSetParam(handles[0], "nthread", "1");
-    ret = XGBoosterSetParam(handles[0], "verbosity", "1");
-    ret = XGBoosterSetParam(handles[0], "seed", "0");
     assert(ret == 0);
 
     handles.push_back(handle);
     ret = XGBoosterCreate(0, 0, &(handles[1]));
     assert(ret == 0);
     ret = XGBoosterSetParam(handles[1], "nthread", "1");
-    ret = XGBoosterSetParam(handles[1], "verbosity", "1");
-    ret = XGBoosterSetParam(handles[1], "seed", "0");
     assert(ret == 0);
 
     handles.push_back(handle);
     ret = XGBoosterCreate(0, 0, &(handles[2]));
     assert(ret == 0);
     ret = XGBoosterSetParam(handles[2], "nthread", "1");
-    ret = XGBoosterSetParam(handles[2], "verbosity", "1");
-    ret = XGBoosterSetParam(handles[2], "seed", "0");
     assert(ret == 0);
-
-    multi_ret.resize(3);
 }
 
 ClPredictors::~ClPredictors()
@@ -83,80 +75,13 @@ void ClPredictors::load_models(const std::string& short_fname,
     assert(ret == 0);
 }
 
-void ClPredictors::start_adding_cls()
-{
-    assert(multi_data.empty());
-}
-
-void ClPredictors::add_single_cl(
-    const CMSat::Clause* cl,
-    const uint64_t sumConflicts,
-    const int64_t  last_touched_diff,
-    const int64_t  rdb1_last_touched_diff,
-    const double   act_ranking_rel,
-    const uint32_t act_ranking_top_10)
-{
-    size_t orig_size = multi_data.size();
-    multi_data.insert(multi_data.end(), PRED_COLS, MISSING_VAL);
-    set_up_input(cl,
-                 sumConflicts,
-                 last_touched_diff,
-                 rdb1_last_touched_diff,
-                 act_ranking_rel,
-                 act_ranking_top_10,
-                 PRED_COLS,
-                 multi_data.data()+orig_size);
-
-}
-
-void ClPredictors::predict_multi_internal(predict_type which)
-{
-    bst_ulong out_len;
-    const float *out;
-    int ret;
-    uint32_t rows = multi_data.size()/PRED_COLS;
-
-    ret = XGDMatrixCreateFromMat(multi_data.data(), rows, PRED_COLS, MISSING_VAL, &dmat);
-    assert(ret == 0);
-    ret = XGBoosterPredict(
-        handles[which],
-        dmat,
-        0,  //0: normal prediction
-        0,  //use all trees
-        0,  //do not use for training
-        &out_len,
-        &out
-    );
-    assert(ret == 0);
-    assert(out_len == rows);
-    multi_ret[which].resize(out_len);
-    std::copy(out, out+out_len, multi_ret[which].data());
-    XGDMatrixFree(dmat);
-}
-
-const vector<vector<float>>& ClPredictors::do_predict_many_onetype(predict_type which)
-{
-    predict_multi_internal(which);
-
-    multi_data.clear();
-    return multi_ret;
-}
-
-const vector<vector<float>>& ClPredictors::do_predict_many_alltypes()
-{
-    predict_multi_internal(predict_type::short_pred);
-    predict_multi_internal(predict_type::long_pred);
-    predict_multi_internal(predict_type::forever_pred);
-
-    multi_data.clear();
-    return multi_ret;
-}
-
 void ClPredictors::set_up_input(
     const CMSat::Clause* cl,
     const uint64_t sumConflicts,
     const int64_t  last_touched_diff,
+    #ifdef EXTENDED_FEATURES
     const int64_t  rdb1_last_touched_diff,
+    #endif
     const double   act_ranking_rel,
     const uint32_t act_ranking_top_10,
     const uint32_t cols,
@@ -185,15 +110,6 @@ void ClPredictors::set_up_input(
         sum_uip1_used_not_0 = 1;
     }
     double tot_props_made = cl->stats.propagations_made+cl->stats.rdb1_propagations_made;
-    double tot_props_made_not_0 = tot_props_made == 0 ? 1 : tot_props_made;
-//     double rdb1_act_ranking_rel_not_1_not_0;
-//     if (cl->stats.rdb1_act_ranking_rel == 0) {
-//         rdb1_act_ranking_rel_not_1_not_0 = 0.001;
-//     } else if (cl->stats.rdb1_act_ranking_rel == 1) {
-//         rdb1_act_ranking_rel_not_1_not_0 = 1.001;
-//     } else {
-//         rdb1_act_ranking_rel_not_1_not_0 = (double)cl->stats.rdb1_act_ranking_rel;
-//     }
 
     double act_ranking_rel_not_0 = (act_ranking_rel == 0.0) ? 0.001 : act_ranking_rel;
     double act_ranking_rel_not_1_not_0;
@@ -204,70 +120,82 @@ void ClPredictors::set_up_input(
     } else {
         act_ranking_rel_not_1_not_0 = act_ranking_rel;
     }
+
+#ifdef EXTENDED_FEATURES
+    double tot_props_made_not_0 = tot_props_made == 0 ? 1 : tot_props_made;
+    double rdb1_act_ranking_rel_not_1_not_0;
+    if (cl->stats.rdb1_act_ranking_rel == 0) {
+        rdb1_act_ranking_rel_not_1_not_0 = 0.001;
+    } else if (cl->stats.rdb1_act_ranking_rel == 1) {
+        rdb1_act_ranking_rel_not_1_not_0 = 1.001;
+    } else {
+        rdb1_act_ranking_rel_not_1_not_0 = (double)cl->stats.rdb1_act_ranking_rel;
+    }
     double tot_last_touch_diffs_not_0 = last_touched_diff + rdb1_last_touched_diff;
     if (tot_last_touch_diffs_not_0 == 0) {
         tot_last_touch_diffs_not_0 = 1;
     }
 
-//     at[x++] = cl->stats.used_for_uip_creation;
-//     //rdb0.used_for_uip_creation
-//
-//     at[x++] = cl->stats.glue;
-//     //rdb0.glue
+    at[x++] = cl->stats.used_for_uip_creation;
+    //rdb0.used_for_uip_creation
 
-//     at[x++] =
-//         ((double)cl->stats.sum_uip1_used/time_inside_solver_not_0)/
-//         ::log2(act_ranking_rel_not_1_not_0);
-//     //((rdb0.sum_uip1_used/cl.time_inside_solver)/log2(rdb1_act_ranking_rel))
-//
-//     at[x++] =
-//         ::log2(act_ranking_rel_not_1_not_0)/
-//             (sum_uip1_used_not_0/time_inside_solver_not_0);
-//     // (log2(rdb1_act_ranking_rel)/(rdb0.sum_uip1_used/cl.time_inside_solver))
-//
-//     at[x++] = (double)cl->stats.glue_hist/(double)props_made_not_0;
-//     // (cl.glue_hist/rdb0.propagations_made)
-//
-//     at[x++] = tot_props_made/glue_not_one;
-//     // ((rdb0.propagations_made+rdb1.propagations_made)/rdb0.glue)
-//
-//     at[x++] = (double)(cl->stats.glue)/::log2(act_ranking_rel_not_1_not_0);
-//     // (rdb0.glue/log2(rdb0_act_ranking_rel))
-//
-//     at[x++] = time_inside_solver/tot_last_touch_diffs_not_0;
-//         // (cl.time_inside_solver/(rdb0.last_touched_diff+rdb1.last_touched_diff))
-//
-//     at[x++] = (double)cl->stats.sum_uip1_used/act_ranking_rel_not_0;
-//     // (rdb0.sum_uip1_used/rdb0_act_ranking_rel)
-//
-//     at[x++] = tot_props_made/orig_glue;
-//     // ((rdb0.propagations_made+rdb1.propagations_made)/cl.orig_glue)
-//
-//     at[x++] = (double)(cl->stats.glue)/
-//         (sum_uip1_used_not_0/time_inside_solver_not_0);
-//     // (rdb0.glue/(rdb0.sum_uip1_used/cl.time_inside_solver))
-//
-//     at[x++] = (double)cl->stats.glue_hist_long/tot_props_made_not_0;
-//    // (cl.glue_hist_long/(rdb0.propagations_made+rdb1.propagations_made))
-//
-//     at[x++] = ((double)cl->stats.sum_uip1_used/time_inside_solver_not_0)/
-//         (double)orig_glue;
-//     // ((rdb0.sum_uip1_used/cl.time_inside_solver)/cl.orig_glue)
-//
-//     at[x++] = (double)cl->stats.glue_before_minim/tot_props_made_not_0;
-//     // (cl.glue_before_minim/(rdb0.propagations_made+rdb1.propagations_made))
-//
-//     at[x++] = ::log2((double)cl->stats.antec_overlap_hist)/props_made_not_0;
-//     // (log2(cl.antec_overlap_hist)/rdb0.propagations_made)
-//
-//     at[x++] = (double)act_ranking_rel/props_made_not_0;
-//     // (rdb0_act_ranking_rel/rdb0.propagations_made)
-//
-//     at[x++] = tot_props_made/::log2(glue_not_one);
-//     // ((rdb0.propagations_made+rdb1.propagations_made)/log2(rdb0.glue))
-//
-//     at[x++] = act_ranking_rel/props_made_not_0;
-//     // (rdb0_act_ranking_rel/rdb0.sum_propagations_made)
+    at[x++] = cl->stats.glue;
+    //rdb0.glue
+
+    at[x++] =
+        ((double)cl->stats.sum_uip1_used/time_inside_solver_not_0)/
+        ::log2(act_ranking_rel_not_1_not_0);
+    //((rdb0.sum_uip1_used/cl.time_inside_solver)/log2(rdb1_act_ranking_rel))
+
+    at[x++] =
+        ::log2(act_ranking_rel_not_1_not_0)/
+            (sum_uip1_used_not_0/time_inside_solver_not_0);
+    // (log2(rdb1_act_ranking_rel)/(rdb0.sum_uip1_used/cl.time_inside_solver))
+
+    at[x++] = (double)cl->stats.glue_hist/(double)props_made_not_0;
+    // (cl.glue_hist/rdb0.propagations_made)
+
+    at[x++] = tot_props_made/glue_not_one;
+    // ((rdb0.propagations_made+rdb1.propagations_made)/rdb0.glue)
+
+    at[x++] = (double)(cl->stats.glue)/::log2(act_ranking_rel_not_1_not_0);
+    // (rdb0.glue/log2(rdb0_act_ranking_rel))
+
+    at[x++] = time_inside_solver/tot_last_touch_diffs_not_0;
+        // (cl.time_inside_solver/(rdb0.last_touched_diff+rdb1.last_touched_diff))
+
+    at[x++] = (double)cl->stats.sum_uip1_used/act_ranking_rel_not_0;
+    // (rdb0.sum_uip1_used/rdb0_act_ranking_rel)
+
+    at[x++] = tot_props_made/orig_glue;
+    // ((rdb0.propagations_made+rdb1.propagations_made)/cl.orig_glue)
+
+    at[x++] = (double)(cl->stats.glue)/
+        (sum_uip1_used_not_0/time_inside_solver_not_0);
+    // (rdb0.glue/(rdb0.sum_uip1_used/cl.time_inside_solver))
+
+    at[x++] = (double)cl->stats.glue_hist_long/tot_props_made_not_0;
+   // (cl.glue_hist_long/(rdb0.propagations_made+rdb1.propagations_made))
+
+    at[x++] = ((double)cl->stats.sum_uip1_used/time_inside_solver_not_0)/
+        (double)orig_glue;
+    // ((rdb0.sum_uip1_used/cl.time_inside_solver)/cl.orig_glue)
+
+    at[x++] = (double)cl->stats.glue_before_minim/tot_props_made_not_0;
+    // (cl.glue_before_minim/(rdb0.propagations_made+rdb1.propagations_made))
+
+    at[x++] = ::log2((double)cl->stats.antec_overlap_hist)/props_made_not_0;
+    // (log2(cl.antec_overlap_hist)/rdb0.propagations_made)
+
+    at[x++] = (double)act_ranking_rel/props_made_not_0;
+    // (rdb0_act_ranking_rel/rdb0.propagations_made)
+
+    at[x++] = tot_props_made/::log2(glue_not_one);
+    // ((rdb0.propagations_made+rdb1.propagations_made)/log2(rdb0.glue))
+
+    at[x++] = act_ranking_rel/props_made_not_0;
+    // (rdb0_act_ranking_rel/rdb0.sum_propagations_made)
+#endif
 
     at[x++] = tot_props_made/::log2((double)cl->stats.num_resolutions_hist_lt);
     //((rdb0.propagations_made+rdb1.propagations_made)/log2(cl.num_resolutions_hist_lt))
@@ -324,9 +252,10 @@ void ClPredictors::set_up_input(
     }
     //(cl.size_hist/rdb0.propagations_made)
 
-
+#ifndef EXTENDED_FEATURES
     at[x++] = (double)cl->stats.propagations_made/std::log2((double)cl->stats.antec_overlap_hist);
     //(rdb0.propagations_made/log2(cl.antec_overlap_hist))
+#endif
 
     //avoid log(0)
     if (props_made == 0) {
@@ -349,7 +278,7 @@ void ClPredictors::set_up_input(
     assert(x==cols);
 }
 
-float ClPredictors::predict_one(int num)
+float ClPredictors::predict_one(int num, DMatrixHandle dmat)
 {
     bst_ulong out_len;
     const float *out_result;
@@ -362,7 +291,6 @@ float ClPredictors::predict_one(int num)
         &out_len,
         &out_result
     );
-    assert(out_len == 1);
     assert(ret == 0);
 
     float retval = out_result[0];
@@ -374,26 +302,29 @@ float ClPredictors::predict(
     const CMSat::Clause* cl,
     const uint64_t sumConflicts,
     const int64_t  last_touched_diff,
+    #ifdef EXTENDED_FEATURES
     const int64_t  rdb1_last_touched_diff,
+    #endif
     const double   act_ranking_rel,
     const uint32_t act_ranking_top_10)
 {
-
-    multi_data.clear();
-    multi_data.resize(PRED_COLS, MISSING_VAL);
-    set_up_input(cl,
-                 sumConflicts,
-                 last_touched_diff,
-                 rdb1_last_touched_diff,
-                 act_ranking_rel,
-                 act_ranking_top_10,
-                 PRED_COLS,
-                 multi_data.data());
+    // convert to DMatrix
+    set_up_input(
+        cl,
+        sumConflicts,
+        last_touched_diff,
+        #ifdef EXTENDED_FEATURES
+        rdb1_last_touched_diff,
+        #endif
+        act_ranking_rel,
+        act_ranking_top_10,
+        PRED_COLS,
+        train);
     int rows=1;
-    int ret = XGDMatrixCreateFromMat(multi_data.data(), rows, PRED_COLS, MISSING_VAL, &dmat);
+    int ret = XGDMatrixCreateFromMat((float *)train, rows, PRED_COLS, MISSING_VAL, &dmat);
     assert(ret == 0);
 
-    float val = predict_one(pred_type);
+    float val = predict_one(pred_type, dmat);
     XGDMatrixFree(dmat);
 
     return val;
@@ -403,29 +334,33 @@ void ClPredictors::predict(
     const CMSat::Clause* cl,
     const uint64_t sumConflicts,
     const int64_t  last_touched_diff,
+    #ifdef EXTENDED_FEATURES
     const int64_t  rdb1_last_touched_diff,
+    #endif
     const double   act_ranking_rel,
     const uint32_t act_ranking_top_10,
     float& p_short,
     float& p_long,
     float& p_forever)
 {
-    multi_data.clear();
-    multi_data.resize(PRED_COLS, MISSING_VAL);
-    set_up_input(cl,
-                 sumConflicts,
-                 last_touched_diff,
-                 rdb1_last_touched_diff,
-                 act_ranking_rel,
-                 act_ranking_top_10,
-                 PRED_COLS,
-                 multi_data.data());
+    // convert to DMatrix
+    set_up_input(
+        cl,
+        sumConflicts,
+        last_touched_diff,
+        #ifdef EXTENDED_FEATURES
+        rdb1_last_touched_diff,
+        #endif
+        act_ranking_rel,
+        act_ranking_top_10,
+        PRED_COLS,
+        train);
     int rows=1;
-    int ret = XGDMatrixCreateFromMat(multi_data.data(), rows, PRED_COLS, MISSING_VAL, &dmat);
+    int ret = XGDMatrixCreateFromMat((float *)train, rows, PRED_COLS, MISSING_VAL, &dmat);
     assert(ret == 0);
 
-    p_short = predict_one(short_pred);
-    p_long = predict_one(long_pred);
-    p_forever = predict_one(forever_pred);
+    p_short = predict_one(short_pred, dmat);
+    p_long = predict_one(long_pred, dmat);
+    p_forever = predict_one(forever_pred, dmat);
     XGDMatrixFree(dmat);
 }
