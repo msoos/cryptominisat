@@ -221,10 +221,7 @@ class Learner:
             elif options.final_is_forest:
                 clf = clf_forest
             elif options.final_is_xgboost:
-                clf = xgb.XGBRegressor(
-                    objective='reg:squarederror',
-                    max_depth=5
-                    )
+                clf = xgb.XGBRegressor(objective='reg:squarederror')
             elif options.final_is_voting:
                 mylist = [["forest", clf_forest], [
                     "svm", clf_svm], ["logreg", clf_logreg]]
