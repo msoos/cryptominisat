@@ -88,53 +88,16 @@ void ClPredictors::set_up_input(
     float* at)
 {
     uint32_t x = 0;
-
-    double props_made = cl->stats.propagations_made;
-    double props_made_not_0 = cl->stats.propagations_made == 0 ? 1 : cl->stats.propagations_made;
     double orig_glue = cl->stats.orig_glue;
     assert(orig_glue != 1);
     //updated glue can actually be 1. Original glue cannot.
-    double glue_not_one = cl->stats.glue;
-    if (glue_not_one == 1) {
-        glue_not_one = 2;
-    }
-    //prevent divide by zero
+
     double time_inside_solver = solver->sumConflicts - cl->stats.introduced_at_conflict;
-    double time_inside_solver_not_0 = solver->sumConflicts - cl->stats.introduced_at_conflict;
-    if (time_inside_solver_not_0 == 0) {
-        time_inside_solver_not_0 = 1;
-    }
-    //prevent divide by zero
-    double sum_uip1_used_not_0 = cl->stats.sum_uip1_used;
-    if (sum_uip1_used_not_0 == 0) {
-        sum_uip1_used_not_0 = 1;
-    }
     double tot_props_made = cl->stats.propagations_made+cl->stats.rdb1_propagations_made;
 
-    double act_ranking_rel_not_0 = (act_ranking_rel == 0.0) ? 0.001 : act_ranking_rel;
-    double act_ranking_rel_not_1_not_0;
-    if (act_ranking_rel == 0) {
-        act_ranking_rel_not_1_not_0 = 0.01;
-    } else if (act_ranking_rel == 1.0) {
-        act_ranking_rel_not_1_not_0 = 1.01;
-    } else {
-        act_ranking_rel_not_1_not_0 = act_ranking_rel;
-    }
-
 #ifdef EXTENDED_FEATURES
-    double tot_props_made_not_0 = tot_props_made == 0 ? 1 : tot_props_made;
-    double rdb1_act_ranking_rel_not_1_not_0;
-    if (cl->stats.rdb1_act_ranking_rel == 0) {
-        rdb1_act_ranking_rel_not_1_not_0 = 0.001;
-    } else if (cl->stats.rdb1_act_ranking_rel == 1) {
-        rdb1_act_ranking_rel_not_1_not_0 = 1.001;
-    } else {
-        rdb1_act_ranking_rel_not_1_not_0 = (double)cl->stats.rdb1_act_ranking_rel;
-    }
-    double tot_last_touch_diffs_not_0 = last_touched_diff + rdb1_last_touched_diff;
-    if (tot_last_touch_diffs_not_0 == 0) {
-        tot_last_touch_diffs_not_0 = 1;
-    }
+    double rdb1_act_ranking_rel = (double)cl->stats.rdb1_act_ranking_rel;
+    double tot_last_touch_diffs = last_touched_diff + rdb1_last_touched_diff;
 
     at[x++] = cl->stats.used_for_uip_creation;
     //rdb0.used_for_uip_creation
@@ -142,113 +105,211 @@ void ClPredictors::set_up_input(
     at[x++] = cl->stats.glue;
     //rdb0.glue
 
-    at[x++] =
-        ((double)cl->stats.sum_uip1_used/time_inside_solver_not_0)/
-        ::log2(act_ranking_rel_not_1_not_0);
+    if (rdb1_act_ranking_rel == 1 ||
+        rdb1_act_ranking_rel == 0 ||
+        time_inside_solver == 0)
+    {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = ((double)cl->stats.sum_uip1_used/time_inside_solver)/
+            ::log2(rdb1_act_ranking_rel);
+    }
     //((rdb0.sum_uip1_used/cl.time_inside_solver)/log2(rdb1_act_ranking_rel))
 
-    at[x++] =
-        ::log2(act_ranking_rel_not_1_not_0)/
-            (sum_uip1_used_not_0/time_inside_solver_not_0);
+    if (rdb1_act_ranking_rel == 0 ||
+        time_inside_solver == 0 ||
+        cl->stats.sum_uip1_used == 0)
+    {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = ::log2(rdb1_act_ranking_rel)/
+            (cl->stats.sum_uip1_used/time_inside_solver);
+    }
     // (log2(rdb1_act_ranking_rel)/(rdb0.sum_uip1_used/cl.time_inside_solver))
 
-    at[x++] = (double)cl->stats.glue_hist/(double)props_made_not_0;
+    at[x++] = (double)cl->stats.glue_hist/(double)cl->stats.propagations_made;
     // (cl.glue_hist/rdb0.propagations_made)
 
-    at[x++] = tot_props_made/glue_not_one;
+    if (cl->stats.glue == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = tot_props_made/cl->stats.glue;
+    }
     // ((rdb0.propagations_made+rdb1.propagations_made)/rdb0.glue)
 
-    at[x++] = (double)(cl->stats.glue)/::log2(act_ranking_rel_not_1_not_0);
+    if (act_ranking_rel == 0 || act_ranking_rel == 1) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = (double)(cl->stats.glue)/::log2(act_ranking_rel);
+    }
     // (rdb0.glue/log2(rdb0_act_ranking_rel))
 
-    at[x++] = time_inside_solver/tot_last_touch_diffs_not_0;
-        // (cl.time_inside_solver/(rdb0.last_touched_diff+rdb1.last_touched_diff))
+    if (tot_last_touch_diffs == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = time_inside_solver/tot_last_touch_diffs;
+    }
+    // (cl.time_inside_solver/(rdb0.last_touched_diff+rdb1.last_touched_diff))
 
-    at[x++] = (double)cl->stats.sum_uip1_used/act_ranking_rel_not_0;
+    if (act_ranking_rel == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = (double)cl->stats.sum_uip1_used/act_ranking_rel;
+    }
     // (rdb0.sum_uip1_used/rdb0_act_ranking_rel)
 
     at[x++] = tot_props_made/orig_glue;
     // ((rdb0.propagations_made+rdb1.propagations_made)/cl.orig_glue)
 
-    at[x++] = (double)(cl->stats.glue)/
-        (sum_uip1_used_not_0/time_inside_solver_not_0);
+    if (time_inside_solver == 0 || cl->stats.sum_uip1_used == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = (double)(cl->stats.glue)/
+            (cl->stats.sum_uip1_used/time_inside_solver);
+    }
     // (rdb0.glue/(rdb0.sum_uip1_used/cl.time_inside_solver))
 
-    at[x++] = (double)cl->stats.glue_hist_long/tot_props_made_not_0;
-   // (cl.glue_hist_long/(rdb0.propagations_made+rdb1.propagations_made))
+    if (tot_props_made == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = (double)cl->stats.glue_hist_long/tot_props_made;
+    }
+    // (cl.glue_hist_long/(rdb0.propagations_made+rdb1.propagations_made))
 
-    at[x++] = ((double)cl->stats.sum_uip1_used/time_inside_solver_not_0)/
-        (double)orig_glue;
+    if (time_inside_solver == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = ((double)cl->stats.sum_uip1_used/time_inside_solver)/
+            (double)orig_glue;
+    }
     // ((rdb0.sum_uip1_used/cl.time_inside_solver)/cl.orig_glue)
 
-    at[x++] = (double)cl->stats.glue_before_minim/tot_props_made_not_0;
+    if (tot_props_made == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = (double)cl->stats.glue_before_minim/tot_props_made;
+    }
     // (cl.glue_before_minim/(rdb0.propagations_made+rdb1.propagations_made))
 
-    at[x++] = ::log2((double)cl->stats.antec_overlap_hist)/props_made_not_0;
+    if (cl->stats.propagations_made == 0 || cl->stats.antec_overlap_hist == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = ::log2((double)cl->stats.antec_overlap_hist)/cl->stats.propagations_made;
+    }
     // (log2(cl.antec_overlap_hist)/rdb0.propagations_made)
 
-    at[x++] = (double)act_ranking_rel/props_made_not_0;
+    if (cl->stats.propagations_made == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = (double)act_ranking_rel/cl->stats.propagations_made;
+    }
     // (rdb0_act_ranking_rel/rdb0.propagations_made)
 
-    at[x++] = tot_props_made/::log2(glue_not_one);
+    if (cl->stats.glue == 0 || cl->stats.glue == 1) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = tot_props_made/::log2(cl->stats.glue);
+    }
     // ((rdb0.propagations_made+rdb1.propagations_made)/log2(rdb0.glue))
 
-    at[x++] = act_ranking_rel/props_made_not_0;
+    if (cl->stats.propagations_made == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = act_ranking_rel/cl->stats.propagations_made;
+    }
     // (rdb0_act_ranking_rel/rdb0.sum_propagations_made)
 #endif
 
-    at[x++] = tot_props_made/::log2((double)cl->stats.num_resolutions_hist_lt);
+    if (cl->stats.num_resolutions_hist_lt == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = tot_props_made/::log2((double)cl->stats.num_resolutions_hist_lt);
+    }
     //((rdb0.propagations_made+rdb1.propagations_made)/log2(cl.num_resolutions_hist_lt))
 
     at[x++] = tot_props_made/::log2(orig_glue);
     //((rdb0.propagations_made+rdb1.propagations_made)/log2(cl.orig_glue))
 
-    at[x++] = ::log2(cl->stats.glue_before_minim)/
-        ((double)sum_uip1_used_not_0/time_inside_solver_not_0);
+    if (time_inside_solver == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = ::log2(cl->stats.glue_before_minim)/
+            ((double)cl->stats.sum_uip1_used/time_inside_solver);
+    }
     //(log2(cl.glue_before_minim)/(rdb0.sum_uip1_used/cl.time_inside_solver))
 
-    at[x++] = (double)cl->stats.sum_uip1_used/::log2(glue_not_one);
+    if (cl->stats.glue == 0 || cl->stats.glue == 1) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = (double)cl->stats.sum_uip1_used/::log2(cl->stats.glue);
+    }
     //(rdb0.sum_uip1_used/log2(rdb0.glue))
 
     at[x++] = ::log2(act_ranking_rel)/(double)cl->stats.orig_glue;
     //(log2(rdb0_act_ranking_rel)/cl.orig_glue)
 
-    at[x++] = (double)cl->stats.propagations_made/(double)time_inside_solver_not_0;
+    if (time_inside_solver == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = (double)cl->stats.propagations_made/(double)time_inside_solver;
+    }
     //(rdb0.propagations_made/cl.time_inside_solver)
 
-    at[x++] = ::log2((double)cl->stats.num_antecedents)/(double)cl->stats.num_total_lits_antecedents;
+    if (cl->stats.num_antecedents == 0 ||
+        cl->stats.num_total_lits_antecedents == 0)
+    {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = ::log2((double)cl->stats.num_antecedents)/(double)cl->stats.num_total_lits_antecedents;
+    }
     //(log2(cl.num_antecedents)/cl.num_total_lits_antecedents)
 
-    at[x++] = (double)cl->size()/(double)cl->stats.glue_hist_long;
+    if (cl->stats.glue_hist_long == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = (double)cl->size()/(double)cl->stats.glue_hist_long;
+    }
     //(rdb0.size/cl.glue_hist_long)
 
-    at[x++] = (double)cl->stats.propagations_made/
-        ::log2((double)cl->stats.glue_hist_queue);
+    if (cl->stats.glue_hist_queue == 0 || cl->stats.glue_hist_queue == 1) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = (double)cl->stats.propagations_made/
+            ::log2((double)cl->stats.glue_hist_queue);
+    }
     //(rdb0.propagations_made/(log2(cl.glue_hist_queue)
 
 
+    assert(cl->stats.orig_glue != 0);
     at[x++] = (double)cl->stats.propagations_made/(double)cl->stats.orig_glue;
     //(rdb0.propagations_made/cl.orig_glue)
 
-    if (props_made == 0) {
+    if (cl->stats.propagations_made == 0 ||
+        cl->stats.num_resolutions_hist_lt == 0)
+    {
         at[x++] = MISSING_VAL;
     } else {
         at[x++] = ::log2((double)cl->stats.num_resolutions_hist_lt)/
-        (props_made);
+            (double)cl->stats.propagations_made;
     }
     //(log2(cl.num_resolutions_hist_lt)/rdb0.propagations_made)
 
 
-    at[x++] = (double)cl->stats.propagations_made/
-        ((double)cl->stats.num_total_lits_antecedents/(double)cl->stats.num_antecedents);
+    if (cl->stats.num_antecedents == 0 ||
+        cl->stats.num_total_lits_antecedents == 0)
+    {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = (double)cl->stats.propagations_made/
+            ((double)cl->stats.num_total_lits_antecedents/(double)cl->stats.num_antecedents);
+    }
     //(rdb0.propagations_made/(cl.num_total_lits_antecedents/cl.num_antecedents))
 
 
-    if (props_made == 0) {
+    if (cl->stats.propagations_made == 0) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = (double)cl->stats.confl_size_hist_lt/
-            (double)props_made;
+        at[x++] = (double)cl->stats.confl_size_hist_lt/(double)cl->stats.propagations_made;
     }
     //(cl.size_hist/rdb0.propagations_made)
 
@@ -257,16 +318,13 @@ void ClPredictors::set_up_input(
     //(rdb0.propagations_made/log2(cl.antec_overlap_hist))
 #endif
 
-    //avoid log(0)
-    if (props_made == 0) {
+    if (cl->stats.propagations_made == 0 ||
+        cl->stats.branch_depth_hist_queue == 0)
+    {
         at[x++] = MISSING_VAL;
     } else {
-        double branch_depth_hist_queue = (double)cl->stats.branch_depth_hist_queue;
-        if (branch_depth_hist_queue == 0) {
-            branch_depth_hist_queue = 1;
-        }
-        at[x++] = ::log2(branch_depth_hist_queue)/
-            (double)props_made;
+        at[x++] = ::log2((double)cl->stats.branch_depth_hist_queue)/
+            (double)cl->stats.propagations_made;
     }
     //(log2(cl.branch_depth_hist_queue)/rdb0.propagations_made)
 

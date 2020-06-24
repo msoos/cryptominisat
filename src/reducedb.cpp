@@ -593,7 +593,7 @@ void ReduceDB::handle_lev2_predictor()
 
 
     //Deal with LONG once in a while
-    if (num_times_lev3_called % 3 == 2) {
+    if (num_times_lev3_called % 5 == 4) {
         //Recalc pred_long_use
         std::sort(solver->longRedCls[1].begin(), solver->longRedCls[1].end(),
               SortRedClsAct(solver->cl_alloc));

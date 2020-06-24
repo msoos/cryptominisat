@@ -135,6 +135,8 @@ option(LARGEMEM "Allow memory usage to grow to Terabyte values -- uses 64b offse
 if (LARGEMEM)
     add_definitions(-DLARGE_OFFSETS)
 endif()
+
+option(EXTFEAT "Use extended features" ON)
 if (EXTFEAT)
     add_definitions(-DEXTENDED_FEATURES)
 endif()
