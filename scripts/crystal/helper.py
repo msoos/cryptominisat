@@ -600,7 +600,6 @@ def clear_data_from_str_na(df):
         df.loc[:, ('rdb1.cur_restart_type')] = \
             df.loc[:, ('rdb1.cur_restart_type')].map(values2nums)
 
-    df[df.select_dtypes(include='float').columns] = df[df.select_dtypes(include='float').columns].fillna(0)
 
 
 def filter_min_avg_dump_no(df, min_avg_dumpno):
