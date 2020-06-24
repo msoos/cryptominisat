@@ -601,25 +601,6 @@ def clear_data_from_str_na(df):
             df.loc[:, ('rdb1.cur_restart_type')].map(values2nums)
 
 
-
-def filter_min_avg_dump_no(df, min_avg_dumpno):
-    print("Filtering to minimum average dump_no of {min_avg_dumpno}...".format(
-        min_avg_dumpno=min_avg_dumpno))
-    print("Pre-filter number of datapoints:", df.shape)
-    df_nofilter = df.copy()
-
-    df['rdb0.dump_no'].replace(['None'], 0, inplace=True)
-    df.fillna(0, inplace=True)
-    # print(df[["fname", "sum_cl_use.num_used"]])
-    files = df[["fname", "rdb0.dump_no"]].groupby("fname").mean()
-    fs = files[files["rdb0.dump_no"] >= min_avg_dumpno].index.values
-    filenames = list(fs)
-    print("Left with {num} files".format(num=len(filenames)))
-    df = df[df["fname"].isin(fs)].copy()
-
-    print("Post-filter number of datapoints:", df.shape)
-    return df_nofilter, df
-
 def output_to_classical_dot(clf, features, fname):
     sklearn.tree.export_graphviz(clf, out_file=fname,
                                  feature_names=features,
