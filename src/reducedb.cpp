@@ -408,8 +408,7 @@ void ReduceDB::handle_lev2_predictor()
         }
         const uint32_t act_ranking_top_10 = \
             std::ceil((double)i/((double)solver->longRedCls[2].size()/10.0))+1;
-        double act_ranking_rel = ((double)i+1)/(double)solver->longRedCls[2].size();
-        assert(act_ranking_rel != 0);
+        double act_ranking_rel = (double)i/(double)solver->longRedCls[2].size();
 
         cl->stats.pred_short_use = 0;
         cl->stats.pred_long_use = 0;
@@ -491,7 +490,6 @@ void ReduceDB::handle_lev2_predictor()
     }
     solver->longRedCls[2].resize(j);
 
-    uint32_t marked_short = 0;
     deleted = 0;
     uint32_t keep_short = 15000 * solver->conf.pred_short_size_mult;
     std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
@@ -501,6 +499,7 @@ void ReduceDB::handle_lev2_predictor()
     for(uint32_t i = 0; i < solver->longRedCls[2].size(); i ++) {
         const ClOffset offset = solver->longRedCls[2][i];
         Clause* cl = solver->cl_alloc.ptr(offset);
+//         cout << "Short pred use: " << cl->stats.pred_short_use << endl;
         tot_dumpno += cl->stats.dump_no-1;
 
         if (solver->clause_locked(*cl, offset)) {
@@ -515,8 +514,6 @@ void ReduceDB::handle_lev2_predictor()
                 || cl->stats.dump_no == 1)
             {
                 keep_short++;
-            } else {
-                marked_short++;
             }
             solver->longRedCls[2][j++] =solver->longRedCls[2][i];
         } else {
@@ -550,8 +547,7 @@ void ReduceDB::handle_lev2_predictor()
 
             const uint32_t act_ranking_top_10 = \
                 std::ceil((double)i/((double)solver->longRedCls[0].size()/10.0))+1;
-            double act_ranking_rel = ((double)i+1)/(double)solver->longRedCls[0].size();
-            assert(act_ranking_rel != 0);
+            double act_ranking_rel = (double)i/(double)solver->longRedCls[0].size();
 
             int64_t last_touched_diff =
                 (int64_t)solver->sumConflicts-(int64_t)cl->stats.last_touched;
@@ -607,8 +603,7 @@ void ReduceDB::handle_lev2_predictor()
 
             const uint32_t act_ranking_top_10 = \
                 std::ceil((double)i/((double)solver->longRedCls[1].size()/10.0))+1;
-            double act_ranking_rel = ((double)i+1)/(double)solver->longRedCls[1].size();
-            assert(act_ranking_rel != 0);
+            double act_ranking_rel = (double)i/(double)solver->longRedCls[1].size();
 
             int64_t last_touched_diff =
                 (int64_t)solver->sumConflicts-(int64_t)cl->stats.last_touched;
@@ -661,12 +656,9 @@ void ReduceDB::handle_lev2_predictor()
         cout
         << "c [DBCL pred]"
         << " del: "    << print_value_kilo_mega(deleted)
-        << " mshort: " << print_value_kilo_mega(marked_short)
-        << " mlong: "  << print_value_kilo_mega(marked_long)
-        << " mforever: "  << print_value_kilo_mega(marked_forever)
-//         << " kdump0: " << print_value_kilo_mega(kept_dump_no)
-//         << " klock: "  << print_value_kilo_mega(kept_locked)
-        << " kforever: " << print_value_kilo_mega(orig_keep_forever)
+        << " short: " << print_value_kilo_mega(solver->longRedCls[2].size())
+        << " long: "  << print_value_kilo_mega(solver->longRedCls[1].size())
+        << " forever: "  << print_value_kilo_mega(solver->longRedCls[0].size())
         << endl;
 
         if (solver->conf.verbosity >= 2) {

@@ -36,21 +36,23 @@ ClPredictors::ClPredictors(Solver* _solver) :
     int ret;
 
     handles.push_back(handle);
-    ret = XGBoosterCreate(0, 0, &(handles[0]));
+    ret = XGBoosterCreate(0, 0, &(handles[predict_type::short_pred]));
     assert(ret == 0);
-    ret = XGBoosterSetParam(handles[0], "nthread", "1");
-    assert(ret == 0);
-
-    handles.push_back(handle);
-    ret = XGBoosterCreate(0, 0, &(handles[1]));
-    assert(ret == 0);
-    ret = XGBoosterSetParam(handles[1], "nthread", "1");
+    ret = XGBoosterSetParam(handles[predict_type::short_pred], "nthread", "1");
     assert(ret == 0);
 
-    handles.push_back(handle);
-    ret = XGBoosterCreate(0, 0, &(handles[2]));
+    BoosterHandle handle2;
+    handles.push_back(handle2);
+    ret = XGBoosterCreate(0, 0, &(handles[predict_type::long_pred]));
     assert(ret == 0);
-    ret = XGBoosterSetParam(handles[2], "nthread", "1");
+    ret = XGBoosterSetParam(handles[predict_type::long_pred], "nthread", "1");
+    assert(ret == 0);
+
+    BoosterHandle handle3;
+    handles.push_back(handle3);
+    ret = XGBoosterCreate(0, 0, &(handles[predict_type::forever_pred]));
+    assert(ret == 0);
+    ret = XGBoosterSetParam(handles[predict_type::forever_pred], "nthread", "1");
     assert(ret == 0);
 }
 
@@ -128,7 +130,11 @@ void ClPredictors::set_up_input(
     }
     // (log2(rdb1_act_ranking_rel)/(rdb0.sum_uip1_used/cl.time_inside_solver))
 
-    at[x++] = (double)cl->stats.glue_hist/(double)cl->stats.propagations_made;
+    if (cl->stats.propagations_made == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = (double)cl->stats.glue_hist/(double)cl->stats.propagations_made;
+    }
     // (cl.glue_hist/rdb0.propagations_made)
 
     if (cl->stats.glue == 0) {
@@ -195,14 +201,14 @@ void ClPredictors::set_up_input(
     if (cl->stats.propagations_made == 0 || cl->stats.antec_overlap_hist == 0) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = ::log2((double)cl->stats.antec_overlap_hist)/cl->stats.propagations_made;
+        at[x++] = ::log2((double)cl->stats.antec_overlap_hist)/(double)cl->stats.propagations_made;
     }
     // (log2(cl.antec_overlap_hist)/rdb0.propagations_made)
 
     if (cl->stats.propagations_made == 0) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = (double)act_ranking_rel/cl->stats.propagations_made;
+        at[x++] = act_ranking_rel/(double)cl->stats.propagations_made;
     }
     // (rdb0_act_ranking_rel/rdb0.propagations_made)
 
@@ -216,7 +222,7 @@ void ClPredictors::set_up_input(
     if (cl->stats.propagations_made == 0) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = act_ranking_rel/cl->stats.propagations_made;
+        at[x++] = act_ranking_rel/(double)cl->stats.propagations_made;
     }
     // (rdb0_act_ranking_rel/rdb0.sum_propagations_made)
 #endif
@@ -231,7 +237,7 @@ void ClPredictors::set_up_input(
     at[x++] = tot_props_made/::log2(orig_glue);
     //((rdb0.propagations_made+rdb1.propagations_made)/log2(cl.orig_glue))
 
-    if (time_inside_solver == 0) {
+    if (time_inside_solver == 0 || cl->stats.sum_uip1_used == 0) {
         at[x++] = MISSING_VAL;
     } else {
         at[x++] = ::log2(cl->stats.glue_before_minim)/
@@ -246,7 +252,11 @@ void ClPredictors::set_up_input(
     }
     //(rdb0.sum_uip1_used/log2(rdb0.glue))
 
-    at[x++] = ::log2(act_ranking_rel)/(double)cl->stats.orig_glue;
+    if (act_ranking_rel == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = ::log2(act_ranking_rel)/(double)cl->stats.orig_glue;
+    }
     //(log2(rdb0_act_ranking_rel)/cl.orig_glue)
 
     if (time_inside_solver == 0) {
@@ -337,7 +347,7 @@ void ClPredictors::set_up_input(
     assert(x==cols);
 }
 
-float ClPredictors::predict_one(int num, DMatrixHandle dmat)
+float ClPredictors::predict_one(int num)
 {
     bst_ulong out_len;
     const float *out_result;
@@ -350,6 +360,7 @@ float ClPredictors::predict_one(int num, DMatrixHandle dmat)
         &out_len,
         &out_result
     );
+    assert(out_len == 1);
     assert(ret == 0);
 
     float retval = out_result[0];
@@ -383,7 +394,7 @@ float ClPredictors::predict(
     int ret = XGDMatrixCreateFromMat((float *)train, rows, PRED_COLS, MISSING_VAL, &dmat);
     assert(ret == 0);
 
-    float val = predict_one(pred_type, dmat);
+    float val = predict_one(pred_type);
     XGDMatrixFree(dmat);
 
     return val;
@@ -415,11 +426,20 @@ void ClPredictors::predict(
         PRED_COLS,
         train);
     int rows=1;
-    int ret = XGDMatrixCreateFromMat((float *)train, rows, PRED_COLS, MISSING_VAL, &dmat);
-    assert(ret == 0);
+    int ret;
 
-    p_short = predict_one(short_pred, dmat);
-    p_long = predict_one(long_pred, dmat);
-    p_forever = predict_one(forever_pred, dmat);
+    ret = XGDMatrixCreateFromMat((float *)train, rows, PRED_COLS, MISSING_VAL, &dmat);
+    assert(ret == 0);
+    p_short = predict_one(short_pred);
+    XGDMatrixFree(dmat);
+
+    ret = XGDMatrixCreateFromMat((float *)train, rows, PRED_COLS, MISSING_VAL, &dmat);
+    assert(ret == 0);
+    p_long = predict_one(long_pred);
+    XGDMatrixFree(dmat);
+
+    ret = XGDMatrixCreateFromMat((float *)train, rows, PRED_COLS, MISSING_VAL, &dmat);
+    assert(ret == 0);
+    p_forever = predict_one(forever_pred);
     XGDMatrixFree(dmat);
 }

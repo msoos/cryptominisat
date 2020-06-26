@@ -77,7 +77,7 @@ public:
         float& p_forever);
 
 private:
-    float predict_one(int num, DMatrixHandle dmat);
+    float predict_one(int num);
     void set_up_input(
         const CMSat::Clause* cl,
         const uint64_t sumConflicts,
