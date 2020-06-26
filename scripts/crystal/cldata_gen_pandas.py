@@ -310,7 +310,7 @@ class QueryCls (helper.QueryHelper):
 
     def run_stratified_queries(self, limit, perc, tier):
         dfs = []
-        for beg_perc, end_perc in [(0, 20), (20, 50), (50, 100)]:
+        for beg_perc, end_perc in [(0, 5), (5, 40), (40, 80), (80, 100)]:
             beg = perc["top_non_zero_{perc}_perc".format(perc=beg_perc)]
             if end_perc == 100:
                 end = 0
