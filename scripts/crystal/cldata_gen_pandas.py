@@ -328,7 +328,8 @@ class QueryCls (helper.QueryHelper):
                 what_to_strata=what_to_strata,
                 strata=(beg,end))
             dfs.append(df)
-            limit = int(min(weighted_size))
+            # HACK below!
+            #limit = int(min(weighted_size))
         return limit, dfs
 
     def query_strata_per_dumpno(self, q, limit, what_to_strata, strata):
