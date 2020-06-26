@@ -221,7 +221,7 @@ class Learner:
             elif options.final_is_forest:
                 clf = clf_forest
             elif options.final_is_xgboost:
-                clf = xgb.XGBRegressor(objective='reg:squarederror')
+                clf = xgb.XGBRegressor(objective='reg:squarederror', missing=float(-1334556787))
             elif options.final_is_voting:
                 mylist = [["forest", clf_forest], [
                     "svm", clf_svm], ["logreg", clf_logreg]]
@@ -494,6 +494,10 @@ if __name__ == "__main__":
     if not options.no_computed:
         helper.cldata_add_computed_features(df, options.verbose)
     helper.clear_data_from_str_na(df)
+
+    print("Filling NA with -1334556787..")
+    df[df.select_dtypes(include='float').columns].fillna(float(-1334556787), inplace=True)
+
 
     # do the heavy lifting
     learner = Learner(df, tier=options.tier)
