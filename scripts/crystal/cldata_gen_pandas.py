@@ -310,6 +310,7 @@ class QueryCls (helper.QueryHelper):
 
     def run_stratified_queries(self, limit, perc, tier):
         dfs = []
+        # NOTE: these are NON-ZERO percentages, but we replace 100 with "0", so the LAST chunk contains ALL, including 0, which is a large part of the data
         for beg_perc, end_perc in [(0, 5), (5, 40), (40, 80), (80, 100)]:
             beg = perc["top_non_zero_{perc}_perc".format(perc=beg_perc)]
             if end_perc == 100:
