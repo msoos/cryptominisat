@@ -130,12 +130,12 @@ void ClPredictors::set_up_input(
     }
     // (log2(rdb1_act_ranking_rel)/(rdb0.sum_uip1_used/cl.time_inside_solver))
 
-    if (cl->stats.propagations_made == 0) {
+    if (cl->stats.glue_hist == 0) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = (double)cl->stats.glue_hist/(double)cl->stats.propagations_made;
+        at[x++] = (double)cl->stats.propagations_made/(double)cl->stats.glue_hist;
     }
-    // (cl.glue_hist/rdb0.propagations_made)
+    // (rdb0.propagations_made/cl.glue_hist)
 
     if (cl->stats.glue == 0) {
         at[x++] = MISSING_VAL;
@@ -205,12 +205,12 @@ void ClPredictors::set_up_input(
     }
     // (log2(cl.antec_overlap_hist)/rdb0.propagations_made)
 
-    if (cl->stats.propagations_made == 0) {
+    if (act_ranking_rel == 0) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = act_ranking_rel/(double)cl->stats.propagations_made;
+        at[x++] = (double)cl->stats.propagations_made/act_ranking_rel;
     }
-    // (rdb0_act_ranking_rel/rdb0.propagations_made)
+    // (rdb0.propagations_made/rdb0_act_ranking_rel)
 
     if (cl->stats.glue == 0 || cl->stats.glue == 1) {
         at[x++] = MISSING_VAL;

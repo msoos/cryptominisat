@@ -2,7 +2,7 @@ rdb0.used_for_uip_creation
 rdb0.glue
 ((rdb0.sum_uip1_used/cl.time_inside_solver)/log2(rdb1_act_ranking_rel))
 (log2(rdb1_act_ranking_rel)/(rdb0.sum_uip1_used/cl.time_inside_solver))
-(cl.glue_hist/rdb0.propagations_made)
+(rdb0.propagations_made/cl.glue_hist)
 ((rdb0.propagations_made+rdb1.propagations_made)/rdb0.glue)
 (rdb0.glue/log2(rdb0_act_ranking_rel))
 (cl.time_inside_solver/(rdb0.last_touched_diff+rdb1.last_touched_diff))
@@ -13,7 +13,7 @@ rdb0.glue
 ((rdb0.sum_uip1_used/cl.time_inside_solver)/cl.orig_glue)
 (cl.glue_before_minim/(rdb0.propagations_made+rdb1.propagations_made))
 (log2(cl.antec_overlap_hist)/rdb0.propagations_made)
-(rdb0_act_ranking_rel/rdb0.propagations_made)
+(rdb0.propagations_made/rdb0_act_ranking_rel)
 ((rdb0.propagations_made+rdb1.propagations_made)/log2(rdb0.glue))
 (rdb0_act_ranking_rel/rdb0.sum_propagations_made)
 ((rdb0.propagations_made+rdb1.propagations_made)/log2(cl.num_resolutions_hist_lt))
