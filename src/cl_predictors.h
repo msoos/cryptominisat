@@ -24,7 +24,7 @@ THE SOFTWARE.
 #define __CLPREDICTOR_H__
 
 #ifdef EXTENDED_FEATURES
-#define PRED_COLS 35
+#define PRED_COLS 37
 #else
 #define PRED_COLS 16
 #endif

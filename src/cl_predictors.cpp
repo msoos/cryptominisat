@@ -114,6 +114,12 @@ void ClPredictors::set_up_input(
     at[x++] = (float)last_touched_diff;
     //rdb0.last_touched_diff
 
+    at[x++] = (float)cl->stats.propagations_made;
+    //rdb0.propagations_made
+
+    at[x++] = (float)cl->stats.rdb1_propagations_made;
+    //rdb1.propagations_made
+
     if (rdb1_act_ranking_rel == 1 ||
         rdb1_act_ranking_rel == 0 ||
         time_inside_solver == 0)
