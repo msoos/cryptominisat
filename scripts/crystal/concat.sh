@@ -30,10 +30,11 @@ dir="out-dats-992340.wlm01" # -- incorrect, HACK not present
 dir="out-dats-992539.wlm01" # HACK present, 2000
 
 
-rm short.dat
-rm long.dat
-rm forever.dat
+rm -f short-comb*
+rm -f long-comb*
+rm -f forever-comb*
 echo "Concatenating..."
 concat
-exit
 
+echo "Zipping..."
+xz *.dat
