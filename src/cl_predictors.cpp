@@ -102,11 +102,17 @@ void ClPredictors::set_up_input(
     double rdb1_act_ranking_rel = (double)cl->stats.rdb1_act_ranking_rel;
     double tot_last_touch_diffs = last_touched_diff + rdb1_last_touched_diff;
 
-    at[x++] = cl->stats.used_for_uip_creation;
+    at[x++] = (float)cl->stats.used_for_uip_creation;
     //rdb0.used_for_uip_creation
 
-    at[x++] = cl->stats.glue;
+    at[x++] = (float)cl->stats.glue;
     //rdb0.glue
+
+    at[x++] = (float)time_inside_solver;
+    //cl.time_inside_solver
+
+    at[x++] = (float)last_touched_diff;
+    //rdb0.last_touched_diff
 
     if (rdb1_act_ranking_rel == 1 ||
         rdb1_act_ranking_rel == 0 ||
@@ -227,7 +233,9 @@ void ClPredictors::set_up_input(
     // (rdb0_act_ranking_rel/rdb0.sum_propagations_made)
 #endif
 
-    if (cl->stats.num_resolutions_hist_lt == 0) {
+    if (cl->stats.num_resolutions_hist_lt == 0 ||
+        cl->stats.num_resolutions_hist_lt == 1
+    ) {
         at[x++] = MISSING_VAL;
     } else {
         at[x++] = tot_props_made/::log2((double)cl->stats.num_resolutions_hist_lt);
@@ -288,7 +296,7 @@ void ClPredictors::set_up_input(
         at[x++] = (double)cl->stats.propagations_made/
             ::log2((double)cl->stats.glue_hist_queue);
     }
-    //(rdb0.propagations_made/(log2(cl.glue_hist_queue)
+    //(rdb0.propagations_made/log2(cl.glue_hist_queue)
 
 
     assert(cl->stats.orig_glue != 0);
