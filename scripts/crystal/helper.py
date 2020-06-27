@@ -585,7 +585,7 @@ def check_file_exists(fname):
         f.close()
 
 
-def clear_data_from_str_na(df):
+def clear_data_from_str(df):
     values2nums = {'luby': 0, 'glue': 1, 'geom': 2}
     df.loc[:, ('cl.cur_restart_type')] = \
         df.loc[:, ('cl.cur_restart_type')].map(values2nums)

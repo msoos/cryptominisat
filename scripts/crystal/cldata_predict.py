@@ -40,6 +40,9 @@ import sklearn.ensemble
 import sklearn.linear_model
 import helper
 import xgboost as xgb
+import ast
+import functools
+import crystalcodegen as ccg
 try:
     import mlflow
 except ImportError:
@@ -373,6 +376,8 @@ if __name__ == "__main__":
                         dest="print_features", help="Print features")
     parser.add_argument("--nocomputed", default=False, action="store_true",
                         dest="no_computed", help="Don't add computed features")
+    parser.add_argument("--allcomputed", default=False, action="store_true",
+                        dest="all_computed", help="Add ALL computed features")
     parser.add_argument("--bestfeatfile", default="../../scripts/crystal/best_features.txt", type=str,
                         dest="best_features_fname", help="Name and position of best features file that lists the best features in order")
 
@@ -478,6 +483,7 @@ if __name__ == "__main__":
         mlflow.log_artifact(options.fname)
 
     # Read in Pandas Dataframe
+    print("Reading dataframe...")
     df = pd.read_pickle(options.fname)
     df_orig = df.copy()
     if options.print_features:
@@ -486,17 +492,31 @@ if __name__ == "__main__":
 
     # get smaller part to work on
     # also, copy it so we don't get warning about setting a slice of a DF
+    print("Applying only...")
     df_tmp = df.sample(frac=options.only_perc, random_state=prng)
-    df = df_tmp.copy()
+    df = pd.DataFrame(df_tmp)
     print("-> Number of datapoints after applying '--only':", df.shape)
 
     # feature manipulation
     if not options.no_computed:
-        helper.cldata_add_computed_features(df, options.verbose)
-    helper.clear_data_from_str_na(df)
+        if options.all_computed:
+            helper.cldata_add_computed_features(df, options.verbose)
+        else:
+            print("Adding features...")
+            divide = functools.partial(helper.helper_divide, df=df, features=list(df), verb=options.verbose)
+            rdb0_act_ranking_rel = divide("rdb0.act_ranking", "rdb0.tot_cls_in_db", name="rdb0_act_ranking_rel")
+            rdb1_act_ranking_rel = divide("rdb1.act_ranking", "rdb1.tot_cls_in_db", name="rdb1_act_ranking_rel")
+            best_features = helper.get_features(options.best_features_fname)
+            for feat in best_features:
+                toeval = ccg.to_source(ast.parse(feat))
+                print("Adding feature %s as eval %s" % (feat, toeval))
+                df[feat] = eval(toeval)
 
-    print("Filling NA with -1334556787..")
-    df[df.select_dtypes(include='float').columns].fillna(float(-1334556787), inplace=True)
+    helper.clear_data_from_str(df)
+
+    print("Filling NA with 1334556787..")
+    df.fillna(float(1334556787), inplace=True)
+
 
 
     # do the heavy lifting
