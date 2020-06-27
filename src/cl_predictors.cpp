@@ -360,8 +360,8 @@ float ClPredictors::predict_one(int num)
         &out_len,
         &out_result
     );
-    assert(out_len == 1);
     assert(ret == 0);
+    assert(out_len == 1);
 
     float retval = out_result[0];
     return retval;
