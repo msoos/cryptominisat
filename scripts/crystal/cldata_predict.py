@@ -515,7 +515,7 @@ if __name__ == "__main__":
     helper.clear_data_from_str(df)
 
     print("Filling NA with 1334556787..")
-    df.fillna(float(1334556787), inplace=True)
+    df.fillna(float(-1334556787), inplace=True)
 
 
 
