@@ -24,7 +24,7 @@ bestf="../../scripts/crystal/best_features.txt-ext"
 #wait $pid1
 #wait $pid2
 #wait $pid3
-cp ../../src/predict/*.boost classifiers/
+cp ../../src/predict/*.json classifiers/
 cp out_* classifiers/
 
 exit 0
