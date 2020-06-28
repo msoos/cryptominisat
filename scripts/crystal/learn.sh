@@ -5,8 +5,8 @@ set -e
 
 rm -f out_* classifiers/*
 git-head > out_git
-cat learn.sh > out_git
-md5 *.dat > out_git
+cat learn.sh >> out_git
+md5 *.dat >> out_git
 
 only=0.99
 bestf="../../scripts/crystal/best_features.txt"
