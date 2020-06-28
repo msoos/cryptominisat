@@ -277,7 +277,7 @@ class Learner:
 
             if options.basedir and options.final_is_xgboost:
                 booster = clf.get_booster()
-                fname = options.basedir + "/predictor_{name}.boost".format(
+                fname = options.basedir + "/predictor_{name}.json".format(
                     name=options.name)
                 booster.save_model(fname)
                 print("==> Saved model to: ", fname)
