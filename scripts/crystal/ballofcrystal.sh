@@ -8,6 +8,8 @@ EXTRA_CMS_OPTS=""
 SHORTPERC=50
 LONGPERC=40
 EXTRA_GEN_PANDAS_OPTS=""
+bestf="../../scripts/crystal/best_features.txt"
+bestf="../../scripts/crystal/best_features.txt-ext"
 
 if [ "$1" == "--csv" ]; then
     EXTRA_GEN_PANDAS_OPTS="--csv"
@@ -168,8 +170,6 @@ rm -f ../../src/predict/*.h
 #../vardata_predict.py mydata.db-vardata.dat --picktimeonly -q 2 --only 0.99
 #../vardata_predict.py vardata-comb --final -q 20 --basedir ../src/predict/ --depth 7 --tree
 
-bestf="../../scripts/crystal/best_features.txt"
-bestf="../../scripts/crystal/best_features.txt-ext"
 ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short.dat" --tier short --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf
 ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long.dat" --tier long --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf
 ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-forever.dat" --tier forever --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf
