@@ -358,6 +358,12 @@ void ClPredictors::set_up_input(
         (double)cl->stats.glue_before_minim;;
     //(rdb0.used_for_uip_creation/cl.glue_before_minim)
 
+//     cout << "c val: ";
+//     for(uint32_t i = 0; i < cols; i++) {
+//         cout << at[i] << " ";
+//     }
+//     cout << endl;
+
     assert(x==cols);
 }
 
