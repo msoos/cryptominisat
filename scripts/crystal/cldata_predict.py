@@ -180,8 +180,7 @@ class Learner:
         #print("Final OK preference is         : %-6.3f" % prefer_ok)
 
         print("Value distribution of 'dump_no':\n%s" % df["rdb0.dump_no"].value_counts())
-
-        #train, test = train_test_split(df[df["rdb0.dump_no"] == 1], test_size=0.33, random_state=prng)
+        print("Value distribution of to_predict:\n%s" % df[to_predict].value_counts())
         train, test = train_test_split(df, test_size=0.33, random_state=prng)
 
         X_train = train[features]
