@@ -25,7 +25,7 @@ THE SOFTWARE.
 #include "solver.h"
 #include <cmath>
 //#define MISSING_VAL std::numeric_limits<float>::quiet_NaN()
-#define MISSING_VAL  -1334556787.0
+#define MISSING_VAL  -1334556800.0f
 
 using namespace CMSat;
 

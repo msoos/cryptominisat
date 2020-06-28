@@ -56,6 +56,7 @@ if int(ver[1]) < 20:
 else:
     from sklearn.model_selection import train_test_split
 
+MISSING=np.nan
 
 def check_long_short():
     if options.tier is None:
@@ -224,7 +225,7 @@ class Learner:
             elif options.final_is_forest:
                 clf = clf_forest
             elif options.final_is_xgboost:
-                clf = xgb.XGBRegressor(objective='reg:squarederror', missing=float(-1334556787))
+                clf = xgb.XGBRegressor(objective='reg:squarederror', missing=MISSING)
             elif options.final_is_voting:
                 mylist = [["forest", clf_forest], [
                     "svm", clf_svm], ["logreg", clf_logreg]]
@@ -514,8 +515,9 @@ if __name__ == "__main__":
 
     helper.clear_data_from_str(df)
 
-    print("Filling NA with 1334556787..")
-    df.fillna(float(-1334556787), inplace=True)
+    print("Filling NA with MISSING..")
+    df.fillna(MISSING, inplace=True)
+    df.replace(np.inf, MISSING, inplace=True)
 
 
 
