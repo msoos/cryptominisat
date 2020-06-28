@@ -69,30 +69,17 @@ class SourceGenerator(ast.NodeVisitor):
 
     def __init__(self):
         self.result = []
-        self.new_lines = 0
 
     def write(self, x):
-        if self.new_lines:
-            if self.result:
-                self.result.append('\n' * self.new_lines)
-            self.new_lines = 0
         self.result.append(x)
 
-    def newline(self, node=None, extra=0):
-        self.new_lines = max(self.new_lines, 1 + extra)
-        if node is not None:
-            self.write('# line: %s' % node.lineno)
-            self.new_lines = 1
-
     def body(self, statements):
-        self.new_line = True
         for stmt in statements:
             self.visit(stmt)
 
     def body_or_else(self, node):
         self.body(node.body)
         if node.orelse:
-            self.newline()
             self.write('else:')
             self.body(node.orelse)
 
