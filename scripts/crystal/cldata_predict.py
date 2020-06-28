@@ -314,6 +314,13 @@ class Learner:
         self.filtered_conf_matrixes(
             dump_no, train, features, to_predict, clf, "train data")
 
+        print("Example data:")
+        #print(test[features+to_predict])
+        #print(test[to_predict])
+        with open("example-data.dat", "wb") as f:
+            pickle.dump(test[features+[to_predict]], f)
+
+
         # Calculate predicted value for the original dataframe
         y_pred = clf.predict(self.df[features])
         return y_pred
@@ -516,6 +523,9 @@ if __name__ == "__main__":
 
     print("Filling NA with MISSING..")
     df.fillna(MISSING, inplace=True)
+    df.replace(np.NINF, MISSING, inplace=True)
+    df.replace(np.NaN, MISSING, inplace=True)
+    df.replace(np.Infinity, MISSING, inplace=True)
     df.replace(np.inf, MISSING, inplace=True)
 
 
