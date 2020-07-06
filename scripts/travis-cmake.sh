@@ -58,7 +58,7 @@ check_license CMakeLists.txt
 check_license ./src
 check_license ./tests/
 check_license ./scripts/fuzz/
-check_license ./scripts/learn/
+check_license ./scripts/crystal/
 check_license ./scripts/aws/
 
 check_license_fnames tests/ CMakeLists.txt
