@@ -40,3 +40,6 @@
 [submodule "tests/pbsugar"]
 	path = tests/pbsugar
 	url = https://github.com/msoos/pbsugar
+[submodule "utils/lingeling-ala"]
+	path = utils/lingeling-ala
+	url = https://github.com/msoos/lingeling-ala/

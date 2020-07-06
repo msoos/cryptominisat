@@ -812,6 +812,7 @@ if (ENABLE_TESTING)
     add_subdirectory(tests)
     add_subdirectory(scripts/fuzz)
     add_subdirectory(utils/minimal_cms)
+    add_subdirectory(utils/lingeling-ala)
 
 else()
     message(WARNING "Testing is disabled")

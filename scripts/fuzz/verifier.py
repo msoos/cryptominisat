@@ -133,7 +133,7 @@ class solution_parser:
         print("-> added partial solution to temporary CNF file %s" % tmpfname)
 
         # execute with the other solver
-        toexec = "lingeling %s" % tmpfname
+        toexec = "../../build/utils/lingeling-ala/lingeling %s" % tmpfname
         print("sampling check -- solving with other solver: %s" % toexec)
         curr_time = time.time()
         try:
