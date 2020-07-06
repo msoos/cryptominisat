@@ -25,7 +25,7 @@ THE SOFTWARE.
 
 #ifdef _MSC_VER
 #  include <nmmintrin.h>
-#  define __builtin_popcount _mm_popcnt_u64
+#  define __builtin_popcountll _mm_popcnt_u64
 #endif
 
 #endif //POPCNT__H
