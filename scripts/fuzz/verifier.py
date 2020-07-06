@@ -176,7 +176,7 @@ class solution_parser:
         a.convert(fname, tmpfname)
 
         # execute with the other solver
-        toexec = "lingeling %s" % tmpfname
+        toexec = "../../build/utils/lingeling-ala/lingeling %s" % tmpfname
         print("UNSAT check -- solving with other solver: %s" % toexec)
         curr_time = time.time()
         try:
