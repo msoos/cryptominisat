@@ -34,6 +34,22 @@ THE SOFTWARE.
 
 using namespace CMSat;
 
+#ifdef _MSC_VER
+inline int scan_fwd_64b(int64_t value)
+{
+    unsigned long at;
+    unsigned char ret = _BitScanForward64(&at, value);
+    at++;
+    if (!ret) at = 0;
+    return at;
+}
+#else
+inline int scan_fwd_64b(uint64_t value)
+{
+    return  __builtin_ffsll(value);
+}
+#endif
+
 ///returns popcnt
 uint32_t PackedRow::find_watchVar(
     vector<Lit>& tmp_clause,
@@ -78,13 +94,7 @@ void PackedRow::get_reason(
     for (int i = 0; i < size; i++) if (mp[i]) {
         int64_t tmp = mp[i];
         unsigned long at;
-        #ifdef _MSC_VER
-        unsigned char ret = _BitScanForward64(&at, tmp);
-        at++;
-        if (!ret) at = 0;
-        #else
-        at = __builtin_ffsll(tmp);
-        #endif
+        at = scan_fwd_64b(tmp);
         int extra = 0;
         while (at != 0) {
             uint32_t col = extra + at-1 + i*64;
@@ -105,13 +115,7 @@ void PackedRow::get_reason(
                 break;
 
             tmp >>= at;
-            #ifdef _MSC_VER
-            unsigned char ret = _BitScanForward64(&at, tmp);
-            at++;
-            if (!ret) at = 0;
-            #else
-            at = __builtin_ffsll(tmp);
-            #endif
+            at = scan_fwd_64b(tmp);
         }
     }
 
@@ -147,7 +151,8 @@ gret PackedRow::propGause(
     if (pop >= 2) {
         for (int i = 0; i < size; i++) if (tmp_col.mp[i]) {
             int64_t tmp = tmp_col.mp[i];
-            int at = __builtin_ffsll(tmp);
+            unsigned long at;
+            at = scan_fwd_64b(tmp);
             int extra = 0;
             while (at != 0) {
                 uint32_t col = extra + at-1 + i*64;
@@ -172,7 +177,7 @@ gret PackedRow::propGause(
                     break;
 
                 tmp >>= at;
-                at = __builtin_ffsll(tmp);
+                at = scan_fwd_64b(tmp);
             }
         }
         assert(false && "Should have found a new watch!");
@@ -185,7 +190,7 @@ gret PackedRow::propGause(
     //Lazy prop
     if (pop == 1) {
         for (int i = 0; i < size; i++) if (tmp_col.mp[i]) {
-            int at = __builtin_ffsll(tmp_col.mp[i]);
+            int at = scan_fwd_64b(tmp_col.mp[i]);
 
             // found prop
             uint32_t col = at-1 + i*64;
