@@ -34,6 +34,7 @@ THE SOFTWARE.
 #include <algorithm>
 #include <limits>
 
+#include "popcnt.h"
 #include "solvertypes.h"
 #include "Vec.h"
 

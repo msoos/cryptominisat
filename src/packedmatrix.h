@@ -50,15 +50,25 @@ public:
 
     ~PackedMatrix()
     {
+        #ifdef _MSC_VER
+        _aligned_free((void*)mp);
+        #else
         free(mp);
+        #endif
     }
 
     void resize(const uint32_t num_rows, uint32_t num_cols)
     {
         num_cols = num_cols / 64 + (bool)(num_cols % 64);
         if (numRows*(numCols+1) < (int)num_rows*((int)num_cols+1)) {
+            size_t size = sizeof(int64_t) * num_rows*(num_cols+1);
+            #ifdef _MSC_VER
+            _aligned_free((void*)mp);
+            mp =  (int64_t*)_aligned_malloc(size, 16);
+            #else
             free(mp);
-            posix_memalign((void**)&mp, 16,  sizeof(int64_t) * num_rows*(num_cols+1));
+            posix_memalign((void**)&mp, 16,  size);
+            #endif
         }
 
         numRows = num_rows;
@@ -74,8 +84,14 @@ public:
     PackedMatrix& operator=(const PackedMatrix& b)
     {
         if (numRows*(numCols+1) < b.numRows*(b.numCols+1)) {
+            size_t size = sizeof(int64_t) * b.numRows*(b.numCols+1);
+            #ifdef _MSC_VER
+            _aligned_free((void*)mp);
+            mp =  (int64_t*)_aligned_malloc(size, 16);
+            #else
             free(mp);
-            posix_memalign((void**)&mp, 16,  sizeof(int64_t) * b.numRows*(b.numCols+1));
+            posix_memalign((void**)&mp, 16,  size);
+            #endif
         }
         numRows = b.numRows;
         numCols = b.numCols;

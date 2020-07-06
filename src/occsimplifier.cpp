@@ -2972,7 +2972,7 @@ int OccSimplifier::check_empty_resolvent_action(
                         break;
 
                     case ResolvCount::count:
-                        int num = __builtin_popcount(seen[(~ws.lit2()).toInt()]);
+                        int num = __builtin_popcountll(seen[(~ws.lit2()).toInt()]);
                         assert(num <= otherSize);
                         count += otherSize - num;
                         break;
@@ -3030,7 +3030,7 @@ int OccSimplifier::check_empty_resolvent_action(
 
                 //Count using tmp
                 if (action == ResolvCount::count) {
-                    int num = __builtin_popcount(tmp);
+                    int num = __builtin_popcountll(tmp);
                     assert(num <= otherSize);
                     count += otherSize - num;
                 }
