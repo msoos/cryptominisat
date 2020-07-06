@@ -77,7 +77,14 @@ void PackedRow::get_reason(
     tmp_col2.set_and(*this, cols_vals);
     for (int i = 0; i < size; i++) if (mp[i]) {
         int64_t tmp = mp[i];
-        int at = __builtin_ffsll(tmp);
+        unsigned long at;
+        #ifdef _MSC_VER
+        unsigned char ret = _BitScanForward64(&at, tmp);
+        at++;
+        if (!ret) at = 0;
+        #else
+        at = __builtin_ffsll(tmp);
+        #endif
         int extra = 0;
         while (at != 0) {
             uint32_t col = extra + at-1 + i*64;
@@ -98,7 +105,13 @@ void PackedRow::get_reason(
                 break;
 
             tmp >>= at;
+            #ifdef _MSC_VER
+            unsigned char ret = _BitScanForward64(&at, tmp);
+            at++;
+            if (!ret) at = 0;
+            #else
             at = __builtin_ffsll(tmp);
+            #endif
         }
     }
 
