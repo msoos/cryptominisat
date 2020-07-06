@@ -22,8 +22,6 @@ cmake_minimum_required(VERSION 3.3 FATAL_ERROR)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 11)
 
-include (GenerateExportHeader)
-include (GNUInstallDirs)
 enable_language( CXX )
 
 message(STATUS "LIB directory is '${CMAKE_INSTALL_LIBDIR}'")
@@ -51,6 +49,9 @@ endif()
 # Provide scripts dir for included cmakes to use
 # -----------------------------------------------------------------------------
 set(CRYPTOMS_SCRIPTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/scripts)
+
+include (GenerateExportHeader)
+include (GNUInstallDirs)
 
 # -----------------------------------------------------------------------------
 # Make RelWithDebInfo the default build type if otherwise not set
@@ -464,13 +465,13 @@ if (FINAL_PREDICTOR_BRANCH)
 endif()
 
 if (NOT NOSQLITE)
-    find_package (Sqlite3)
+    find_package (SQLITE3)
     IF (SQLITE3_FOUND)
-        MESSAGE(STATUS "OK, Found Sqlite3!")
+        MESSAGE(STATUS "OK, Found SQLITE3!")
         include_directories(${SQLITE3_INCLUDE_DIR})
         add_definitions( -DUSE_SQLITE3 )
     else ()
-        MESSAGE(STATUS "WARNING: Did not find Sqlite3, Sqlite3 support will be disabled")
+        MESSAGE(STATUS "WARNING: Did not find SQLITE3, SQLITE3 support will be disabled")
     endif ()
 endif()
 

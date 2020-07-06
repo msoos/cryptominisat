@@ -57,7 +57,7 @@ DBG_MSG("M4RI_LIBRARIES=${M4RI_LIBRARIES}")
 include(FindPackageHandleStandardArgs)
 # handle the QUIETLY and REQUIRED arguments and set M4RI_FOUND to TRUE
 # if all listed variables are TRUE
-find_package_handle_standard_args(m4ri  DEFAULT_MSG
+find_package_handle_standard_args(M4RI  DEFAULT_MSG
                                   M4RI_LIBRARIES M4RI_INCLUDE_DIRS)
 IF (M4RI_INCLUDE_DIRS AND M4RI_LIBRARIES)
     SET(M4RI_FOUND TRUE)
