@@ -77,7 +77,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
        ARGS setup.py build_ext --inplace
        DEPENDS cryptominisat5
    )
-elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND NOT DEFINED ENV{NIX_CC})
     execute_process(COMMAND xcrun --show-sdk-path
         OUTPUT_VARIABLE PY_OSX_SDK_PATH
         OUTPUT_STRIP_TRAILING_WHITESPACE)
