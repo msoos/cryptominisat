@@ -273,7 +273,7 @@ void Main::printResultFunc(
     }
     if (ret == l_True && !printResult && !toFile)
     {
-        cout << "c Not printing satisfying assignement. "
+        cout << "c Not printing satisfying assignment. "
         "Use the '--printsol 1' option for that" << endl;
     }
 

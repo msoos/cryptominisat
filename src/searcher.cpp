@@ -2203,7 +2203,7 @@ void Searcher::rebuildOrderHeapVMTF()
         if (varData[v].removed != Removed::none
             //NOTE: the level==0 check is needed because SLS calls this
             //when there is a solution already, but we should only skip
-            //level 0 assignements
+            //level 0 assignments
             || (value(v) != l_Undef && varData[v].level == 0)
         ) {
             //
