@@ -51,6 +51,7 @@ inline unsigned clean_to_int(ClauseClean t)
     }
 
     assert(false);
+    return 255;
 }
 
 enum class PolarityMode {
@@ -92,6 +93,8 @@ inline std::string getNameOfPolarmodeType(PolarityMode polarmode)
         case PolarityMode::polarmode_rnd :
             return "rnd";
     }
+    assert(false);
+    return "ERR: undefined!";
 }
 
 inline std::string restart_type_to_short_string(const Restart type)
@@ -113,9 +116,8 @@ inline std::string restart_type_to_short_string(const Restart type)
             return "neve";
     }
 
-        assert(false && "oops, one of the restart types has no string name");
-
-        return "ERR: undefined!";
+    assert(false && "oops, one of the restart types has no string name");
+    return "ERR: undefined!";
 }
 
 inline std::string polarity_mode_to_short_string(PolarityMode polarmode)
@@ -138,6 +140,8 @@ inline std::string polarity_mode_to_short_string(PolarityMode polarmode)
         case PolarityMode::polarmode_rnd :
             return "rnd";
     }
+    assert(false);
+    return "ERR: undefined!";
 }
 
 inline std::string getNameOfRestartType(Restart rest_type)
@@ -161,6 +165,8 @@ inline std::string getNameOfRestartType(Restart rest_type)
         default:
             assert(false && "Unknown clause cleaning type?");
     }
+    assert(false);
+    return "ERR: undefined!";
 }
 
 inline std::string getNameOfCleanType(ClauseClean clauseCleaningType)
@@ -176,6 +182,8 @@ inline std::string getNameOfCleanType(ClauseClean clauseCleaningType)
             assert(false && "Unknown clause cleaning type?");
             std::exit(-1);
     }
+    assert(false);
+    return "ERR: undefined!";
 }
 
 class GaussConf
