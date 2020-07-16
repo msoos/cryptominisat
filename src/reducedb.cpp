@@ -408,7 +408,7 @@ void ReduceDB::handle_lev2_predictor()
         }
         const uint32_t act_ranking_top_10 = \
             std::ceil((double)i/((double)solver->longRedCls[2].size()/10.0))+1;
-        double act_ranking_rel = (double)i/(double)solver->longRedCls[2].size();
+        double act_ranking_rel = ((double)i+1.0)/(double)solver->longRedCls[2].size();
 
         cl->stats.pred_short_use = 0;
         cl->stats.pred_long_use = 0;
