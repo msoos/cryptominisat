@@ -137,7 +137,12 @@ if (LARGEMEM)
     add_definitions(-DLARGE_OFFSETS)
 endif()
 
-option(EXTFEAT "Use extended features" ON)
+option(RDB0ONLY "Use only RDB0 features only" ON)
+if (RDB0ONLY)
+    add_definitions(-DRDB0_ONLY_FEATURES)
+endif()
+
+option(EXTFEAT "Use extended features" OFF)
 if (EXTFEAT)
     add_definitions(-DEXTENDED_FEATURES)
 endif()

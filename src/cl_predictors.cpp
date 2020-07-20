@@ -97,6 +97,9 @@ void ClPredictors::set_up_input(
 
     double time_inside_solver = solver->sumConflicts - cl->stats.introduced_at_conflict;
     double tot_props_made = cl->stats.propagations_made+cl->stats.rdb1_propagations_made;
+#ifdef RDB0_ONLY_FEATURES
+    tot_props_made = cl->stats.propagations_made;
+#endif
 
 #ifdef EXTENDED_FEATURES
     double rdb1_act_ranking_rel = (double)cl->stats.rdb1_act_ranking_rel;
