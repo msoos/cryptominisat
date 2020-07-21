@@ -203,6 +203,6 @@ rm -f ../../src/predict/*.h
 ./build_final_predictor.sh
 (
 cd "$FNAME-dir"
-../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --maxgluehistltlimited 100000 --tern 0 --printsol 0 | tee cms-final-run.out
+../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --simdrat 1 --maxgluehistltlimited 100000 --tern 0 --printsol 0 | tee cms-final-run.out
 )
 exit
