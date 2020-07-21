@@ -1285,7 +1285,9 @@ lbool Searcher::search()
                 goto end;
             }
             check_need_restart();
+            #ifdef USE_GAUSS
             check_need_gauss_jordan_disable();
+            #endif
         } else {
             assert(ok);
             #ifdef USE_GAUSS
