@@ -523,6 +523,14 @@ DLL_PUBLIC void SATSolver::set_max_confl(int64_t max_confl)
   }
 }
 
+DLL_PUBLIC void SATSolver::set_polarity_auto()
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.polarity_mode = PolarityMode::polarmode_automatic;
+    }
+}
+
 DLL_PUBLIC void SATSolver::set_default_polarity(bool polarity)
 {
     for (size_t i = 0; i < data->solvers.size(); ++i) {
