@@ -134,6 +134,10 @@ extern "C"
         self->set_default_polarity(polarity);
     } NOEXCEPT_END
 
+    DLL_PUBLIC void cmsat_set_polarity_auto(SATSolver* self) NOEXCEPT_START {
+        self->set_polarity_auto();
+    } NOEXCEPT_END
+
     DLL_PUBLIC void cmsat_set_no_simplify(SATSolver* self) NOEXCEPT_START {
         self->set_no_simplify();
     } NOEXCEPT_END
