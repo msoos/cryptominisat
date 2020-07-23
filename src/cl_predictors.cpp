@@ -123,7 +123,9 @@ void ClPredictors::set_up_input(
     at[x++] = (float)cl->stats.rdb1_propagations_made;
     //rdb1.propagations_made
 
-    if (rdb1_act_ranking_rel == 1 ||
+    if (cl->stats.sum_uip1_used == 0) {
+        at[x++] = 0;
+    } else if (rdb1_act_ranking_rel == 1 ||
         rdb1_act_ranking_rel == 0 ||
         time_inside_solver == 0)
     {
@@ -145,14 +147,18 @@ void ClPredictors::set_up_input(
     }
     // (log2(rdb1_act_ranking_rel)/(rdb0.sum_uip1_used/cl.time_inside_solver))
 
-    if (cl->stats.glue_hist == 0) {
+    if (cl->stats.propagations_made == 0) {
+        at[x++] = 0;
+    } else if (cl->stats.glue_hist == 0) {
         at[x++] = MISSING_VAL;
     } else {
         at[x++] = (double)cl->stats.propagations_made/(double)cl->stats.glue_hist;
     }
     // (rdb0.propagations_made/cl.glue_hist)
 
-    if (cl->stats.glue == 0) {
+    if (tot_props_made == 0) {
+        at[x++] = 0;
+    } else if (cl->stats.glue == 0) {
         at[x++] = MISSING_VAL;
     } else {
         at[x++] = tot_props_made/cl->stats.glue;
@@ -173,7 +179,9 @@ void ClPredictors::set_up_input(
     }
     // (cl.time_inside_solver/(rdb0.last_touched_diff+rdb1.last_touched_diff))
 
-    if (act_ranking_rel == 0) {
+    if (cl->stats.sum_uip1_used == 0) {
+        at[x++] = 0;
+    } else if (act_ranking_rel == 0) {
         at[x++] = MISSING_VAL;
     } else {
         at[x++] = (double)cl->stats.sum_uip1_used/act_ranking_rel;
@@ -198,7 +206,9 @@ void ClPredictors::set_up_input(
     }
     // (cl.glue_hist_long/(rdb0.propagations_made+rdb1.propagations_made))
 
-    if (time_inside_solver == 0) {
+    if (cl->stats.sum_uip1_used == 0) {
+        at[x++] = 0;
+    } else if (time_inside_solver == 0) {
         at[x++] = MISSING_VAL;
     } else {
         at[x++] = ((double)cl->stats.sum_uip1_used/time_inside_solver)/
@@ -220,14 +230,18 @@ void ClPredictors::set_up_input(
     }
     // (log2(cl.antec_overlap_hist)/rdb0.propagations_made)
 
-    if (act_ranking_rel == 0) {
+    if (cl->stats.propagations_made == 0) {
+        at[x++] = 0;
+    } else if (act_ranking_rel == 0) {
         at[x++] = MISSING_VAL;
     } else {
         at[x++] = (double)cl->stats.propagations_made/act_ranking_rel;
     }
     // (rdb0.propagations_made/rdb0_act_ranking_rel)
 
-    if (cl->stats.glue == 0 || cl->stats.glue == 1) {
+    if (tot_props_made == 0) {
+        at[x++] = 0;
+    } else if (cl->stats.glue == 0 || cl->stats.glue == 1) {
         at[x++] = MISSING_VAL;
     } else {
         at[x++] = tot_props_made/::log2(cl->stats.glue);
@@ -242,7 +256,9 @@ void ClPredictors::set_up_input(
     // (rdb0_act_ranking_rel/rdb0.sum_propagations_made)
 #endif
 
-    if (cl->stats.num_resolutions_hist_lt == 0 ||
+    if (tot_props_made == 0) {
+        at[x++] = 0;
+    } else if (cl->stats.num_resolutions_hist_lt == 0 ||
         cl->stats.num_resolutions_hist_lt == 1
     ) {
         at[x++] = MISSING_VAL;
@@ -262,7 +278,9 @@ void ClPredictors::set_up_input(
     }
     //(log2(cl.glue_before_minim)/(rdb0.sum_uip1_used/cl.time_inside_solver))
 
-    if (cl->stats.glue == 0 || cl->stats.glue == 1) {
+    if (cl->stats.sum_uip1_used == 0) {
+        at[x++] = 0;
+    } else if (cl->stats.glue == 0 || cl->stats.glue == 1) {
         at[x++] = MISSING_VAL;
     } else {
         at[x++] = (double)cl->stats.sum_uip1_used/::log2(cl->stats.glue);
@@ -276,7 +294,9 @@ void ClPredictors::set_up_input(
     }
     //(log2(rdb0_act_ranking_rel)/cl.orig_glue)
 
-    if (time_inside_solver == 0) {
+    if (cl->stats.propagations_made == 0) {
+        at[x++] = 0;
+    } else if (time_inside_solver == 0) {
         at[x++] = MISSING_VAL;
     } else {
         at[x++] = (double)cl->stats.propagations_made/(double)time_inside_solver;
@@ -299,14 +319,15 @@ void ClPredictors::set_up_input(
     }
     //(rdb0.size/cl.glue_hist_long)
 
-    if (cl->stats.glue_hist_queue == 0 || cl->stats.glue_hist_queue == 1) {
+    if (cl->stats.propagations_made == 0) {
+        at[x++] = 0;
+    } else if (cl->stats.glue_hist_queue == 0 || cl->stats.glue_hist_queue == 1) {
         at[x++] = MISSING_VAL;
     } else {
         at[x++] = (double)cl->stats.propagations_made/
             ::log2((double)cl->stats.glue_hist_queue);
     }
     //(rdb0.propagations_made/log2(cl.glue_hist_queue)
-
 
     assert(cl->stats.orig_glue != 0);
     at[x++] = (double)cl->stats.propagations_made/(double)cl->stats.orig_glue;
@@ -323,7 +344,9 @@ void ClPredictors::set_up_input(
     //(log2(cl.num_resolutions_hist_lt)/rdb0.propagations_made)
 
 
-    if (cl->stats.num_antecedents == 0 ||
+    if (cl->stats.propagations_made == 0) {
+        at[x++] = 0;
+    } else if (cl->stats.num_antecedents == 0 ||
         cl->stats.num_total_lits_antecedents == 0)
     {
         at[x++] = MISSING_VAL;
