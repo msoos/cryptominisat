@@ -69,7 +69,7 @@ private:
     ClPredictors* predictors = NULL;
     uint32_t num_times_pred_called = 0;
     void update_preds_lev2();
-    void pred_move_to_lev1_and_lev0(uint32_t& deleted, uint32_t tot_dumpno);
+    void pred_move_to_lev1_and_lev0(uint32_t& deleted, uint32_t& tot_dumpno);
     void clean_lev1_once_in_a_while();
     void clean_lev0_once_in_a_while();
     #endif

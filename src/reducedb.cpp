@@ -374,7 +374,7 @@ void ReduceDB::handle_lev1()
 }
 
 #ifdef FINAL_PREDICTOR
-void ReduceDB::pred_move_to_lev1_and_lev0(uint32_t& deleted, uint32_t tot_dumpno)
+void ReduceDB::pred_move_to_lev1_and_lev0(uint32_t& deleted, uint32_t& tot_dumpno)
 {
     uint32_t marked_forever = 0;
     uint32_t keep_forever = 300 * solver->conf.pred_forever_chunk_mult;
