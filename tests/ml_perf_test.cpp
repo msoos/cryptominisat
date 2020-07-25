@@ -69,7 +69,6 @@ struct Dat {
         cout << "size: "  << size << endl;
         cout << "sumConflicts: " << sumConflicts << endl;
         cout << "correct_val: "  << correct_val << endl;
-
     }
 };
 

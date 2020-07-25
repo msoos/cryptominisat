@@ -26,6 +26,7 @@ THE SOFTWARE.
 #include "satzilla_features.h"
 #include "searchstats.h"
 #include "vardata.h"
+#include "searchhist.h"
 
 namespace CMSat {
 
