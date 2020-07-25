@@ -376,7 +376,7 @@ void ReduceDB::handle_lev1()
 #ifdef FINAL_PREDICTOR
 void ReduceDB::handle_lev2_predictor()
 {
-    num_times_lev3_called++;
+    num_times_pred_called++;
     if (predictors == NULL) {
         predictors = new ClPredictors;
         predictors->load_models(
