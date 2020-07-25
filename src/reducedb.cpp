@@ -374,25 +374,84 @@ void ReduceDB::handle_lev1()
 }
 
 #ifdef FINAL_PREDICTOR
-void ReduceDB::handle_lev2_predictor()
+void ReduceDB::pred_move_to_lev1_and_lev0(uint32_t& deleted, uint32_t tot_dumpno)
 {
-    num_times_pred_called++;
-    if (predictors == NULL) {
-        predictors = new ClPredictors;
-        predictors->load_models(
-            solver->conf.pred_conf_short,
-            solver->conf.pred_conf_long,
-            solver->conf.pred_conf_forever);
+    uint32_t marked_forever = 0;
+    uint32_t keep_forever = 300 * solver->conf.pred_forever_chunk_mult;
+    std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
+              SortRedClsPredForever(solver->cl_alloc));
+    size_t j = 0;
+    for(uint32_t i = 0; i < solver->longRedCls[2].size(); i ++) {
+        const ClOffset offset = solver->longRedCls[2][i];
+        Clause* cl = solver->cl_alloc.ptr(offset);
+        if (i < keep_forever) {
+            marked_forever++;
+            cl->stats.which_red_array = 0;
+            solver->longRedCls[0].push_back(offset);
+        } else {
+            solver->longRedCls[2][j++] =solver->longRedCls[2][i];
+        }
     }
+    solver->longRedCls[2].resize(j);
 
-    assert(delayed_clause_free.empty());
-    uint32_t deleted = 0;
-    uint32_t kept_locked = 0;
-    uint32_t kept_dump_no = 0;
+
+    uint32_t marked_long = 0;
+    uint32_t keep_long = 2000 * solver->conf.pred_long_chunk_mult;
+    std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
+              SortRedClsPredLong(solver->cl_alloc));
+
+    j = 0;
+    for(uint32_t i = 0; i < solver->longRedCls[2].size(); i ++) {
+        const ClOffset offset = solver->longRedCls[2][i];
+        Clause* cl = solver->cl_alloc.ptr(offset);
+        if (i < keep_long) {
+            marked_long++;
+            cl->stats.which_red_array = 1;
+            solver->longRedCls[1].push_back(offset);
+        } else {
+            solver->longRedCls[2][j++] =solver->longRedCls[2][i];
+        }
+    }
+    solver->longRedCls[2].resize(j);
+
+    uint32_t keep_short = 15000 * solver->conf.pred_short_size_mult;
+    std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
+              SortRedClsPredShort(solver->cl_alloc));
+
+    j = 0;
+    for(uint32_t i = 0; i < solver->longRedCls[2].size(); i ++) {
+        const ClOffset offset = solver->longRedCls[2][i];
+        Clause* cl = solver->cl_alloc.ptr(offset);
+//         cout << "Short pred use: " << cl->stats.pred_short_use << endl;
+        tot_dumpno += cl->stats.dump_no-1;
+
+        if (i < keep_short
+            || solver->clause_locked(*cl, offset)
+            || cl->stats.dump_no == 1
+        ) {
+            if (solver->clause_locked(*cl, offset)
+                || cl->stats.dump_no == 1)
+            {
+                keep_short++;
+            }
+            solver->longRedCls[2][j++] =solver->longRedCls[2][i];
+        } else {
+            deleted++;
+            solver->watches.smudge((*cl)[0]);
+            solver->watches.smudge((*cl)[1]);
+            solver->litStats.redLits -= cl->size();
+
+            *solver->drat << del << *cl << fin;
+            cl->setRemoved();
+            delayed_clause_free.push_back(offset);
+        }
+    }
+    solver->longRedCls[2].resize(j);
+}
+
+void ReduceDB::update_preds_lev2()
+{
     double myTime = cpuTime();
-    uint32_t tot_dumpno = 0;
-    size_t origsize = solver->longRedCls[2].size();
-
     std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
               SortRedClsAct(solver->cl_alloc));
 
@@ -450,86 +509,10 @@ void ReduceDB::handle_lev2_predictor()
         double predTime = cpuTime() - myTime;
         cout << "c [DBCL] main predtime: " << predTime << endl;
     }
+}
 
-
-    uint32_t marked_forever = 0;
-    uint32_t keep_forever = 300 * solver->conf.pred_forever_chunk_mult;
-    std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
-              SortRedClsPredForever(solver->cl_alloc));
-    size_t j = 0;
-    for(uint32_t i = 0; i < solver->longRedCls[2].size(); i ++) {
-        const ClOffset offset = solver->longRedCls[2][i];
-        Clause* cl = solver->cl_alloc.ptr(offset);
-        if (i < keep_forever) {
-            marked_forever++;
-            cl->stats.which_red_array = 0;
-            solver->longRedCls[0].push_back(offset);
-        } else {
-            solver->longRedCls[2][j++] =solver->longRedCls[2][i];
-        }
-    }
-    solver->longRedCls[2].resize(j);
-
-
-    uint32_t marked_long = 0;
-    uint32_t keep_long = 2000 * solver->conf.pred_long_chunk_mult;
-    std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
-              SortRedClsPredLong(solver->cl_alloc));
-
-    j = 0;
-    for(uint32_t i = 0; i < solver->longRedCls[2].size(); i ++) {
-        const ClOffset offset = solver->longRedCls[2][i];
-        Clause* cl = solver->cl_alloc.ptr(offset);
-        if (i < keep_long) {
-            marked_long++;
-            cl->stats.which_red_array = 1;
-            solver->longRedCls[1].push_back(offset);
-        } else {
-            solver->longRedCls[2][j++] =solver->longRedCls[2][i];
-        }
-    }
-    solver->longRedCls[2].resize(j);
-
-    deleted = 0;
-    uint32_t keep_short = 15000 * solver->conf.pred_short_size_mult;
-    std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
-              SortRedClsPredShort(solver->cl_alloc));
-
-    j = 0;
-    for(uint32_t i = 0; i < solver->longRedCls[2].size(); i ++) {
-        const ClOffset offset = solver->longRedCls[2][i];
-        Clause* cl = solver->cl_alloc.ptr(offset);
-//         cout << "Short pred use: " << cl->stats.pred_short_use << endl;
-        tot_dumpno += cl->stats.dump_no-1;
-
-        if (solver->clause_locked(*cl, offset)) {
-            kept_locked++;
-        }
-
-        if (i < keep_short
-            || solver->clause_locked(*cl, offset)
-            || cl->stats.dump_no == 1
-        ) {
-            if (solver->clause_locked(*cl, offset)
-                || cl->stats.dump_no == 1)
-            {
-                keep_short++;
-            }
-            solver->longRedCls[2][j++] =solver->longRedCls[2][i];
-        } else {
-            deleted++;
-            solver->watches.smudge((*cl)[0]);
-            solver->watches.smudge((*cl)[1]);
-            solver->litStats.redLits -= cl->size();
-
-            *solver->drat << del << *cl << fin;
-            cl->setRemoved();
-            delayed_clause_free.push_back(offset);
-        }
-    }
-    solver->longRedCls[2].resize(j);
-
-
+void ReduceDB::clean_lev0_once_in_a_while()
+{
     //Deal with FOREVER once in a while
     const uint32_t orig_keep_forever = 2000.0*std::sqrt((double)solver->sumConflicts/10000.0) *
         (double)solver->conf.pred_forever_size_mult;
@@ -571,15 +554,21 @@ void ReduceDB::handle_lev2_predictor()
         }
 
         //Clean up FOREVER, move to LONG
-        keep_forever = orig_keep_forever;
+        const uint32_t checked_every = solver->conf.pred_forever_check_every_n * 10000;
+        uint32_t keep_forever = orig_keep_forever;
         std::sort(solver->longRedCls[0].begin(), solver->longRedCls[0].end(),
               SortRedClsPredForever(solver->cl_alloc));
-        j = 0;
+        uint32_t j = 0;
         for(uint32_t i = 0; i < solver->longRedCls[0].size(); i ++) {
             const ClOffset offset = solver->longRedCls[0][i];
             Clause* cl = solver->cl_alloc.ptr(offset);
-            if (i < keep_forever) {
+            uint32_t time_inside_solver = solver->sumConflicts - cl->stats.introduced_at_conflict;
+
+            if (i < keep_forever || time_inside_solver < checked_every) {
                 assert(cl->stats.which_red_array == 0);
+                if (time_inside_solver < checked_every) {
+                    keep_forever++;
+                }
                 solver->longRedCls[0][j++] =solver->longRedCls[0][i];
             } else {
                 solver->longRedCls[1].push_back(offset);
@@ -588,8 +577,10 @@ void ReduceDB::handle_lev2_predictor()
         }
         solver->longRedCls[0].resize(j);
     }
+}
 
-
+void ReduceDB::clean_lev1_once_in_a_while()
+{
     //Deal with LONG once in a while
     if (num_times_pred_called % solver->conf.pred_long_check_every_n ==
         (solver->conf.pred_long_check_every_n-1)
@@ -629,15 +620,21 @@ void ReduceDB::handle_lev2_predictor()
         }
 
         //Clean up LONG, move to SHORT
+        const uint32_t checked_every = solver->conf.pred_long_check_every_n * 10000;
         std::sort(solver->longRedCls[1].begin(), solver->longRedCls[1].end(),
               SortRedClsPredLong(solver->cl_alloc));
-        keep_long = 15000 * solver->conf.pred_long_size_mult;
-        j = 0;
+        uint32_t keep_long = 15000 * solver->conf.pred_long_size_mult;
+        uint32_t j = 0;
         for(uint32_t i = 0; i < solver->longRedCls[1].size(); i ++) {
             const ClOffset offset = solver->longRedCls[1][i];
             Clause* cl = solver->cl_alloc.ptr(offset);
-            if (i < keep_long) {
+
+            uint32_t time_inside_solver = solver->sumConflicts - cl->stats.introduced_at_conflict;
+            if (i < keep_long || time_inside_solver < checked_every) {
                 assert(cl->stats.which_red_array == 1);
+                if (time_inside_solver < checked_every) {
+                    keep_long++;
+                }
                 solver->longRedCls[1][j++] =solver->longRedCls[1][i];
             } else {
                 solver->longRedCls[2].push_back(offset);
@@ -646,7 +643,29 @@ void ReduceDB::handle_lev2_predictor()
         }
         solver->longRedCls[1].resize(j);
     }
+}
 
+void ReduceDB::handle_lev2_predictor()
+{
+    num_times_pred_called++;
+    if (predictors == NULL) {
+        predictors = new ClPredictors;
+        predictors->load_models(
+            solver->conf.pred_conf_short,
+            solver->conf.pred_conf_long,
+            solver->conf.pred_conf_forever);
+    }
+
+    assert(delayed_clause_free.empty());
+    uint32_t deleted = 0;
+    double myTime = cpuTime();
+    uint32_t tot_dumpno = 0;
+    size_t origsize = solver->longRedCls[2].size();
+
+    update_preds_lev2();
+    pred_move_to_lev1_and_lev0(deleted, tot_dumpno);
+    clean_lev0_once_in_a_while();
+    clean_lev1_once_in_a_while();
 
     //Cleanup
     solver->clean_occur_from_removed_clauses_only_smudged();
@@ -675,7 +694,6 @@ void ReduceDB::handle_lev2_predictor()
         cout << "c [DBCL pred]"
         << " avg dumpno: " << std::fixed << std::setprecision(2)
         << ratio_for_stat(tot_dumpno, origsize)
-        << " dumpno_nonz: "   << print_value_kilo_mega(origsize-kept_dump_no)
         << solver->conf.print_times(cpuTime()-myTime)
         << endl;
     }
