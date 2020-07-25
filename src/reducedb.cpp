@@ -533,7 +533,9 @@ void ReduceDB::handle_lev2_predictor()
     //Deal with FOREVER once in a while
     const uint32_t orig_keep_forever = 2000.0*std::sqrt((double)solver->sumConflicts/10000.0) *
         (double)solver->conf.pred_forever_size_mult;
-    if (num_times_lev3_called % 12 == 11) {
+    if (num_times_pred_called % solver->conf.pred_forever_check_every_n ==
+        (solver->conf.pred_forever_check_every_n-1)
+    ) {
         //Recalc pred_forever_use
         std::sort(solver->longRedCls[0].begin(), solver->longRedCls[0].end(),
               SortRedClsAct(solver->cl_alloc));
@@ -589,7 +591,9 @@ void ReduceDB::handle_lev2_predictor()
 
 
     //Deal with LONG once in a while
-    if (num_times_lev3_called % 5 == 4) {
+    if (num_times_pred_called % solver->conf.pred_long_check_every_n ==
+        (solver->conf.pred_long_check_every_n-1)
+    ) {
         //Recalc pred_long_use
         std::sort(solver->longRedCls[1].begin(), solver->longRedCls[1].end(),
               SortRedClsAct(solver->cl_alloc));
