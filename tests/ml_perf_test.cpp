@@ -138,7 +138,7 @@ float get_predict(Clause* cl, const Dat& dat, predict_type pred_type)
 void run_one(string fname, predict_type pred_type)
 {
     vector<Lit> lits;
-    lits.resize(1000);
+    lits.resize(5000);
     Clause* cl;
 
     infile.open(fname.c_str());
@@ -146,7 +146,7 @@ void run_one(string fname, predict_type pred_type)
         cout << "ERROR: couldn't open file " << fname << endl;
         exit(-1);
     }
-    BASE_DATA_TYPE* mem = (BASE_DATA_TYPE*) malloc(1000+1000*sizeof(BASE_DATA_TYPE));
+    BASE_DATA_TYPE* mem = (BASE_DATA_TYPE*) malloc((5000+1000)*sizeof(BASE_DATA_TYPE));
 
     double error = 0;
     uint32_t num_done = 0;
