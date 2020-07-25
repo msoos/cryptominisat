@@ -31,6 +31,7 @@ md5sum *.dat >> out_git
 only=0.99
 bestf="../../scripts/crystal/best_features.txt"
 bestf="../../scripts/crystal/best_features.txt-ext"
+bestf="../../scripts/crystal/best_features.txt-rdb0-only"
 ../cldata_predict.py short-comb.dat --tier short --xgboost --final --only $only \
      --basedir ../../src/predict/ --name short --bestfeatfile $bestf | tee out_short
 
