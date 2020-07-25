@@ -158,6 +158,30 @@ class Learner:
 
         return impdf
 
+    def dump_ml_test_data(self, test, fname, to_predict) :
+        f = open(fname, "w")
+        test.reset_index(inplace=True)
+        for i in range(test.shape[0]):
+            towrite = ""
+            towrite += "%s " % test["rdb0.propagations_made"].iloc[i]
+            towrite += "%s " % test["cl.orig_glue"].iloc[i]
+            towrite += "%s " % test["rdb0.glue"].iloc[i]
+            towrite += "%s " % test["cl.glue_before_minim"].iloc[i]
+            towrite += "%s " % test["rdb0.sum_uip1_used"].iloc[i]
+            towrite += "%s " % test["cl.num_antecedents"].iloc[i]
+            towrite += "%s " % test["cl.num_total_lits_antecedents"].iloc[i]
+            towrite += "%s " % test["rdb0.used_for_uip_creation"].iloc[i]
+            towrite += "%s " % test["cl.num_resolutions_hist_lt"].iloc[i]
+            towrite += "%s " % test["cl.glue_hist_long"].iloc[i]
+            towrite += "%s " % test["cl.size_hist"].iloc[i]
+            towrite += "%s " % test["cl.branch_depth_hist_queue"].iloc[i]
+            towrite += "%s " % test["rdb0_act_ranking_rel"].iloc[i]
+            towrite += "%s " % test["rdb0.size"].iloc[i]
+            towrite += "%s " % test["cl.time_inside_solver"].iloc[i]
+            towrite += "%s " % test[to_predict].iloc[i]
+            towrite += "\n"
+            f.write(towrite)
+
     def one_classifier(self, features, to_predict, final):
         print("-> Number of features  :", len(features))
         print("-> Number of datapoints:", self.df.shape)
@@ -314,12 +338,12 @@ class Learner:
         self.filtered_conf_matrixes(
             dump_no, train, features, to_predict, clf, "train data")
 
-        print("Example data:")
         #print(test[features+to_predict])
         #print(test[to_predict])
         with open("example-data.dat", "wb") as f:
             pickle.dump(test[features+[to_predict]], f)
-
+        self.dump_ml_test_data(test, "../ml_perf_test.txt-%s" % options.tier, to_predict)
+        print("Example data dumped")
 
         # Calculate predicted value for the original dataframe
         y_pred = clf.predict(self.df[features])

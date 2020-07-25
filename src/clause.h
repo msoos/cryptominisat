@@ -38,7 +38,6 @@ THE SOFTWARE.
 #include "clabstraction.h"
 #include "avgcalc.h"
 #include "constants.h"
-#include "searchhist.h"
 
 namespace CMSat {
 

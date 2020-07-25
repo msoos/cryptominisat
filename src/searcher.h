@@ -32,6 +32,7 @@ THE SOFTWARE.
 #include "MersenneTwister.h"
 #include "simplefile.h"
 #include "searchstats.h"
+#include "searchhist.h"
 #include "gqueuedata.h"
 
 #ifdef CMS_TESTING_ENABLED

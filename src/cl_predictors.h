@@ -40,13 +40,12 @@ namespace CMSat {
 
 enum predict_type {short_pred=0, long_pred=1, forever_pred=2};
 
-class Solver;
 class Clause;
 
 class ClPredictors
 {
 public:
-    ClPredictors(Solver* solver);
+    ClPredictors();
     ~ClPredictors();
     void load_models(const std::string& short_fname,
                      const std::string& long_fname,
@@ -92,7 +91,6 @@ private:
     vector<BoosterHandle> handles;
     float train[PRED_COLS];
     DMatrixHandle dmat;
-    Solver* solver;
 };
 
 }

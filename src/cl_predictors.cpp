@@ -22,15 +22,13 @@ THE SOFTWARE.
 
 #include "cl_predictors.h"
 #include "clause.h"
-#include "solver.h"
 #include <cmath>
 //#define MISSING_VAL std::numeric_limits<float>::quiet_NaN()
 #define MISSING_VAL  -1334556800.0f
 
 using namespace CMSat;
 
-ClPredictors::ClPredictors(Solver* _solver) :
-    solver(_solver)
+ClPredictors::ClPredictors()
 {
     BoosterHandle handle;
     int ret;
@@ -95,7 +93,7 @@ void ClPredictors::set_up_input(
     assert(orig_glue != 1);
     //updated glue can actually be 1. Original glue cannot.
 
-    double time_inside_solver = solver->sumConflicts - cl->stats.introduced_at_conflict;
+    double time_inside_solver = sumConflicts - cl->stats.introduced_at_conflict;
     double tot_props_made = cl->stats.propagations_made+cl->stats.rdb1_propagations_made;
 #ifdef RDB0_ONLY_FEATURES
     tot_props_made = cl->stats.propagations_made;
