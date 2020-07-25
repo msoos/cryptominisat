@@ -136,7 +136,7 @@ void ClPredictors::set_up_input(
 
     if (rdb1_act_ranking_rel == 1) {
         at[x++] = 0;
-    } se if (rdb1_act_ranking_rel == 0 ||
+    } else if (rdb1_act_ranking_rel == 0 ||
         time_inside_solver == 0 ||
         cl->stats.sum_uip1_used == 0)
     {
