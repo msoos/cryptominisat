@@ -34,15 +34,24 @@ infilenames = []
 infilenames.append("signals.csv")
 infilenames.append("solveTimes_rev.csv")
 
+# main data
+files = {}
+
+
+###############
+# Fill file names
+###############
+allfiles = open("allFiles.csv", "r")
+for l in allfiles:
+    l = l.strip()
+    files[l] = {"SAT":"?"}
+
+###############
+# Fill times, signals
+###############
 infiles = []
 for x in infilenames:
     infiles.append(open(x, "r"))
-allfiles = open("allFiles.csv", "r")
-files = {}
-for l in allfiles:
-    l = l.strip()
-    files[l] = {}
-
 for f,fname in zip(infiles, infilenames):
     for l in f:
         l = l.strip()
@@ -51,6 +60,24 @@ for f,fname in zip(infiles, infilenames):
         # print("appending to %s : %s" % (l[0], l[1]))
         files[l[0]][fname] = l[1]
 
+
+###############
+# Fill SAT/UNSAT
+###############
+with open("solvedUNSAT.csv") as f:
+    for l in f:
+        l = l.strip()
+        files[l]["SAT"] = "UNSAT"
+
+with open("solvedSAT.csv") as f:
+    for l in f:
+        l = l.strip()
+        files[l]["SAT"] = "SAT"
+
+
+###############
+# Print header
+###############
 toprint = "fname,"
 for x in range(len(infilenames)):
     toprint += infilenames[x].replace(".csv", "")
@@ -62,10 +89,15 @@ for x in toaddheader:
 
 print(toprint)
 
+
+
+###############
+# Print lines, in order
+###############
 od = collections.OrderedDict(sorted(files.items()))
 for k, v in od.items():
     toprint = ""
-    for fname in infilenames:
+    for fname in infilenames+["SAT"]:
         if fname in v:
             toprint += "%s," % v[fname]
         else:
