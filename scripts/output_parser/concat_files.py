@@ -86,6 +86,7 @@ for x in range(len(infilenames)):
 
 for x in toaddheader:
     toprint+=","+x
+toprint+=",SAT"
 
 print(toprint)
 
