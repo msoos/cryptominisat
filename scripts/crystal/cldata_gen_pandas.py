@@ -175,10 +175,14 @@ class QueryCls (helper.QueryHelper):
         {sum_cl_use}
         , (rdb0.conflicts - cl.conflicts) as `cl.time_inside_solver`
         , `sum_cl_use`.`last_confl_used`-`cl`.`conflicts` as `x.a_lifetime`
-        , used_later_short.used_later_short as `x.used_later_short`
-        , used_later_long.used_later_long as `x.used_later_long`
-        , used_later_forever.used_later_forever as `x.used_later_forever`
+        , used_later_short.used_later as `x.used_later_short`
+        , used_later_short.percentile_fit as `x.used_later_short_topperc`
+        , used_later_long.used_later as `x.used_later_long`
+        , used_later_long.percentile_fit as `x.used_later_long_topperc`
+        , used_later_forever.used_later as `x.used_later_forever`
+        , used_later_forever.percentile_fit as `x.used_later_forever_topperc`
         , sum_cl_use.num_used as `x.sum_cl_use`
+
 
         FROM
         reduceDB as rdb0
@@ -204,19 +208,17 @@ class QueryCls (helper.QueryHelper):
         join used_later_short on
             used_later_short.clauseID = rdb0.clauseID
             and used_later_short.rdb0conflicts = rdb0.conflicts
+            and used_later_short.offset = 0
 
         join used_later_long on
             used_later_long.clauseID = rdb0.clauseID
             and used_later_long.rdb0conflicts = rdb0.conflicts
+            and used_later_long.offset = 0
 
         join used_later_forever on
             used_later_forever.clauseID = rdb0.clauseID
             and used_later_forever.rdb0conflicts = rdb0.conflicts
-
-        join used_later on
-            used_later.clauseID = rdb0.clauseID
-            and used_later.rdb0conflicts = rdb0.conflicts
-
+            and used_later_forever.offset = 0
 
         join cl_last_in_solver on
             cl_last_in_solver.clauseID = rdb0.clauseID
@@ -227,9 +229,6 @@ class QueryCls (helper.QueryHelper):
         cl.clauseID != 0
         and tags.name = "filename"
         and rdb0.dump_no = rdb1.dump_no+1
-        and used_later_long.offset = 0
-        and used_later_short.offset = 0
-        and used_later_forever.offset = 0
         -- and used_later_short_offset.offset = {offset_short}
 
 
@@ -255,6 +254,7 @@ class QueryCls (helper.QueryHelper):
         select
             `type_of_dat`,
             `percentile_descr`,
+            `percentile`,
             `val`
         from used_later_percentiles
         where `type_of_dat` = '{name}'
@@ -263,7 +263,8 @@ class QueryCls (helper.QueryHelper):
         rows = cur.fetchall()
         lookup = {}
         for row in rows:
-            lookup[row[1]] = row[2]
+            mystr = "%s_%s_perc" % (row[1], row[2])
+            lookup[mystr] = row[3]
         #print("perc lookup:", lookup)
 
         return lookup
@@ -284,7 +285,7 @@ class QueryCls (helper.QueryHelper):
 
 
     def get_data(self, tier):
-        perc = self.get_used_later_percentiles("_"+tier)
+        perc = self.get_used_later_percentiles(tier)
 
         if tier == "short":
             self.myformat["del_at_least"] = options.short
@@ -311,10 +312,10 @@ class QueryCls (helper.QueryHelper):
     def run_stratified_queries(self, limit, perc, tier):
         dfs = []
         # NOTE: these are NON-ZERO percentages, but we replace 100 with "0", so the LAST chunk contains ALL, including 0, which is a large part of the data
-        for beg_perc, end_perc in [(0, 20), (20, 50), (50, 100)]:
+        for beg_perc, end_perc in [(0.0, 20.0), (20.0, 50.0), (50.0, 100.0)]:
             beg = perc["top_non_zero_{perc}_perc".format(perc=beg_perc)]
-            if end_perc == 100:
-                end = 0
+            if end_perc == 100.0:
+                end = 0.0
             else:
                 end = perc["top_non_zero_{perc}_perc".format(perc=end_perc)]
             what_to_strata = "`x.used_later_{tier}`".format(tier=tier)
@@ -398,14 +399,16 @@ def one_database(dbfname):
         q.create_indexes()
 
     with helper.QueryFill(dbfname) as q:
-        q.delete_and_create_all()
-        q.fill_used_later()
-        q.fill_used_later_X("long", offset=0, duration=options.long)
+        q.delete_and_create_used_laters()
         q.fill_used_later_X("short", offset=0, duration=options.short)
+        q.fill_used_later_X("long", offset=0, duration=options.long)
         q.fill_used_later_X("forever", offset=0, duration=(1000*1000*1000), forever=True)
 
-        q.fill_used_later_X("long", offset=options.long, duration=options.long)
         q.fill_used_later_X("short", offset=options.short, duration=options.short)
+        q.fill_used_later_X("long", offset=options.long, duration=options.long)
+        q.fill_used_later_X_perc_fit("short")
+        q.fill_used_later_X_perc_fit("long")
+        q.fill_used_later_X_perc_fit("forever")
 
     print("Using sqlite3 DB file %s" % dbfname)
     for tier in ["short", "long", "forever"]:

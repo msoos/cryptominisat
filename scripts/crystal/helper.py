@@ -85,13 +85,8 @@ class QueryFill (QueryHelper):
 
         print("indexes created T: %-3.2f s" % (time.time() - t))
 
-    def delete_and_create_all(self):
+    def delete_and_create_used_laters(self):
         tables = ["short", "long", "forever"]
-
-        t = time.time()
-        q = """DROP TABLE IF EXISTS `used_later`;"""
-        self.c.execute(q)
-
         for table in tables:
             q = """
                 DROP TABLE IF EXISTS `used_later_{name}`;
@@ -103,76 +98,25 @@ class QueryFill (QueryHelper):
         create table `used_later_{name}` (
             `clauseID` bigint(20) NOT NULL,
             `rdb0conflicts` bigint(20) NOT NULL,
-            `used_later_{name}` bigint(20),
-            `offset` bigint(20) NOT NULL
+            `used_later` bigint(20),
+            `offset` bigint(20) NOT NULL,
+            `percentile_fit` float DEFAULT NULL
         );"""
         self.c.execute(q_create.format(name="short"))
         self.c.execute(q_create.format(name="long"))
         self.c.execute(q_create.format(name="forever"))
 
-        # Create used_later table
-        t = time.time()
-        q = """
-        create table `used_later` (
-            `clauseID` bigint(20) NOT NULL,
-            `rdb0conflicts` bigint(20) NOT NULL,
-            `used_later` bigint(20)
-        );"""
-        self.c.execute(q)
-
         idxs = """
-        create index `used_later_{name}_idx3` on `used_later_{name}` (used_later_{name});
-        create index `used_later_{name}_idx1` on `used_later_{name}` (`clauseID`, rdb0conflicts, offset);
-        create index `used_later_{name}_idx2` on `used_later_{name}` (`clauseID`, rdb0conflicts, used_later_{name}, offset);"""
+        create index `used_later_{name}_idx3` on `used_later_{name}` (`used_later`);
+        create index `used_later_{name}_idx1` on `used_later_{name}` (`clauseID`, `rdb0conflicts`, `offset`);
+        create index `used_later_{name}_idx2` on `used_later_{name}` (`clauseID`, `rdb0conflicts`, `used_later`, `offset`);"""
 
+        t = time.time()
         for table in tables:
             for l in idxs.format(name=table).split('\n'):
                 self.c.execute(l)
 
-        idxs = """
-        create index `used_later_idx3` on `used_later` (`used_later`);
-        create index `used_later_idx1` on `used_later` (`clauseID`, rdb0conflicts);
-        create index `used_later_idx2` on `used_later` (`clauseID`, rdb0conflicts, used_later);
-        """
-        t = time.time()
-        for l in idxs.split('\n'):
-            self.c.execute(l)
-
         print("used_later* dropped and recreated T: %-3.2f s" % (time.time() - t))
-
-    def fill_used_later(self, used_clauses="used_clauses"):
-        # Fill used_later table
-        t = time.time()
-        q = """insert into used_later
-        (
-        `clauseID`,
-        `rdb0conflicts`,
-        `used_later`
-        )
-        SELECT
-        rdb0.clauseID
-        , rdb0.conflicts
-        , count(ucl.used_at) as `useful_later`
-        FROM
-        reduceDB as rdb0
-        left join {used_clauses} as ucl
-
-        -- for any point later than now
-        -- reduceDB is always present, used_later may not be, hence left join
-        on (ucl.clauseID = rdb0.clauseID
-            and ucl.used_at > rdb0.conflicts)
-
-        join cl_last_in_solver
-        on cl_last_in_solver.clauseID = rdb0.clauseID
-
-        WHERE
-        rdb0.clauseID != 0
-        and cl_last_in_solver.conflicts >= rdb0.conflicts
-
-        group by rdb0.conflicts, rdb0.clauseID;"""
-
-        self.c.execute(q.format(used_clauses=used_clauses))
-        print("used_later filled T: %-3.2f s" % (time.time() - t))
 
     def fill_used_later_X(self, name, duration, offset=0,
                           used_clauses="used_clauses",
@@ -182,13 +126,13 @@ class QueryFill (QueryHelper):
         (
         `clauseID`,
         `rdb0conflicts`,
-        `used_later_{name}`,
+        `used_later`,
         `offset`
         )
         SELECT
         rdb0.clauseID
         , rdb0.conflicts
-        , count(ucl.used_at) as `used_later_{name}`
+        , count(ucl.used_at) as `used_later`
         , {offset}
 
         FROM
@@ -216,6 +160,25 @@ class QueryFill (QueryHelper):
             duration=duration, offset=offset, forever=int(forever)))
         print("used_later_%s filled T: %-3.2f s" %
               (name, time.time() - t))
+
+    def fill_used_later_X_perc_fit(self, name):
+        print("Filling percentile fit for used_later_{name}".format(name=name))
+
+        q = """
+        update used_later_{name}
+        set percentile_fit = (
+            select max(used_later_percentiles.percentile)
+            from used_later_percentiles
+            where
+            used_later_percentiles.type_of_dat="{name}"
+            and used_later_percentiles.percentile_descr="top_non_zero"
+            and used_later_percentiles.val >= used_later_{name}.used_later
+            group by used_later_percentiles.type_of_dat);
+        """
+        t = time.time()
+        self.c.execute(q.format(name=name))
+        print("used_later_%s percentile filled T: %-3.2f s" % (name, time.time() - t))
+
 
 
 def write_mit_header(f):
