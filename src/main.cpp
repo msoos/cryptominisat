@@ -360,7 +360,7 @@ void Main::add_supported_options()
     ("predforeverchunkmult", po::value(&conf.pred_forever_chunk_mult)->default_value(conf.pred_forever_chunk_mult)
         , "Pred forever chunk multiplier")
     ("predlongcheckn", po::value(&conf.pred_long_check_every_n)->default_value(conf.pred_long_check_every_n)
-        , "Pred forever check over limit every N")
+        , "Pred long check over limit every N")
     ("predforevercheckn", po::value(&conf.pred_forever_check_every_n)->default_value(conf.pred_forever_check_every_n)
         , "Pred forever check over limit every N")
     ;
