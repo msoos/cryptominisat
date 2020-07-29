@@ -48,8 +48,10 @@ class QueryDatRem(helper.QueryHelper):
         self.c.execute(q_create)
 
         idxs = """
-        create index `used_later_percentiles_idx3` on `used_later_percentiles` (`type_of_dat`, `percentile_descr`, `percentile`, `val`);"""
-        self.c.execute(idxs)
+        create index `used_later_percentiles_idx3` on `used_later_percentiles` (`type_of_dat`, `percentile_descr`, `percentile`, `val`);
+        create index `used_later_percentiles_idx2` on `used_later_percentiles` (`type_of_dat`, `percentile_descr`, `val`);"""
+        for q in idxs.split("\n"):
+            self.c.execute(q)
 
 
     def get_all_percentile_X(self, name):

@@ -172,8 +172,7 @@ class QueryFill (QueryHelper):
             where
             used_later_percentiles.type_of_dat="{name}"
             and used_later_percentiles.percentile_descr="top_non_zero"
-            and used_later_percentiles.val >= used_later_{name}.used_later
-            group by used_later_percentiles.type_of_dat);
+            and used_later_percentiles.val >= used_later_{name}.used_later);
         """
         t = time.time()
         self.c.execute(q.format(name=name))

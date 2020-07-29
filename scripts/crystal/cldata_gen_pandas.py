@@ -75,7 +75,9 @@ class QueryAddIdxes (helper.QueryHelper):
         create index `idxclidUCLS-2` on `used_clauses` ( `used_at`);
         ---
         create index `idxcl_last_in_solver-1` on `cl_last_in_solver` ( `clauseID`, `conflicts`);
-
+        ---
+        create index `used_later_percentiles_idx3` on `used_later_percentiles` (`type_of_dat`, `percentile_descr`, `percentile`, `val`);
+        create index `used_later_percentiles_idx2` on `used_later_percentiles` (`type_of_dat`, `percentile_descr`, `val`);
         """
         for l in queries.split('\n'):
             t2 = time.time()
