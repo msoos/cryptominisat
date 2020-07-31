@@ -314,7 +314,7 @@ class QueryCls (helper.QueryHelper):
     def run_stratified_queries(self, limit, perc, tier):
         dfs = []
         # NOTE: these are NON-ZERO percentages, but we replace 100 with "0", so the LAST chunk contains ALL, including 0, which is a large part of the data
-        for beg_perc, end_perc in [(0.0, 20.0), (20.0, 50.0), (50.0, 100.0)]:
+        for beg_perc, end_perc in [(0.0, options.cut1), (options.cut1, options.cut2), (options.cut2, 100.0)]:
             beg = perc["top_non_zero_{perc}_perc".format(perc=beg_perc)]
             if end_perc == 100.0:
                 end = 0.0
@@ -462,6 +462,10 @@ if __name__ == "__main__":
     # limits
     parser.add_option("--limit", default=20000, type=int,
                       dest="limit", help="Exact number of examples to take. -1 is to take all. Default: %default")
+    parser.add_option("--cut1", default=20.0, type=float,
+                      dest="cut1", help="Where to cut the distrib. Default: %default")
+    parser.add_option("--cut2", default=50.0, type=float,
+                      dest="cut2", help="Where to cut the distrib. Default: %default")
 
     # debugging is faster with this
     parser.add_option("--noind", action="store_true", default=False,
