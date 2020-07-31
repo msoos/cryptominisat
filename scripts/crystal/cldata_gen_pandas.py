@@ -440,8 +440,11 @@ def one_database(dbfname):
         cleanname = re.sub(r'\.cnf.gz.sqlite$', '', dbfname)
         cleanname = re.sub(r'\.db$', '', dbfname)
         cleanname = re.sub(r'\.sqlitedb$', '', dbfname)
-        cleanname = "{cleanname}-cldata-{tier}".format(
+        cleanname = "{cleanname}-cldata-{tier}-cut1-{cut1}-cut2-{cut2}-limit-{limit}".format(
             cleanname=cleanname,
+            cut1=options.cut1,
+            cut2=options.cut2,
+            limit=options.limit,
             tier=tier)
 
         dump_dataframe(df, cleanname)
