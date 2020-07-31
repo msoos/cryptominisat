@@ -157,7 +157,8 @@ struct ClauseStats
 //     uint8_t     rdb1_act_ranking_top_10 = 0;
     float pred_short_use;
     float pred_long_use;
-    float pred_forever_use;
+    //float pred_forever_use;
+    float pred_forever_topperc;
     #endif
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)

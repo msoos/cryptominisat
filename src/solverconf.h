@@ -241,6 +241,7 @@ class DLL_PUBLIC SolverConf
         float pred_forever_size_mult;
         float pred_long_chunk_mult;
         float pred_forever_chunk_mult;
+        float pred_forever_topperc;
         uint32_t pred_long_check_every_n;
         uint32_t pred_forever_check_every_n;
 

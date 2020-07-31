@@ -193,7 +193,7 @@ rm -f ../../src/predict/*.h
 
 ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short.dat" --tier short --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf
 ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long.dat" --tier long --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf
-../cldata_predict.py "${FNAMEOUT}-min.db-cldata-forever.dat" --tier forever --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf
+../cldata_predict.py "${FNAMEOUT}-min.db-cldata-forever.dat" --tier forever --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf --topperc
 
 )
 

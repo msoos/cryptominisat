@@ -80,8 +80,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , pred_forever_size_mult(0.25)
         , pred_long_chunk_mult(1.0)
         , pred_forever_chunk_mult(1.0)
+        , pred_forever_topperc(60.0)
         , pred_long_check_every_n(5)
-        , pred_forever_check_every_n(12)
+        , pred_forever_check_every_n(5)
 
         , every_lev1_reduce(10000) // kept for a while then moved to lev2
         , every_lev2_reduce(15000) // cleared regularly

@@ -366,6 +366,11 @@ class Learner:
             self.df.hist()
             self.df.boxplot()
 
+        if options.topperc:
+            to_predict = "x.used_later_{name}_topperc".format(name=options.tier)
+        else:
+            to_predict = "x.used_later_{name}".format(name=options.tier)
+
         if not options.only_final:
             features = list(self.df)
             features = self.rem_features(
@@ -377,21 +382,10 @@ class Learner:
                        "x.used_later_short",
                        "x.used_later_long",
                        "x.used_later_forever"])
-
-            self.one_classifier(
-                features,
-                "x.used_later_{name}".format(name=options.tier),
-                final=False)
-
         else:
-            best_features = helper.get_features(options.best_features_fname)
-            self.one_classifier(
-                best_features,
-                "x.used_later_{name}".format(name=options.tier),
-                final=True)
+            features = helper.get_features(options.best_features_fname)
 
-            if options.show:
-                plt.show()
+        self.one_classifier(features, to_predict, final=options.only_final)
 
 
 if __name__ == "__main__":
@@ -463,6 +457,8 @@ if __name__ == "__main__":
                         dest="tier", help="what to predict")
     parser.add_argument("--name", default=None, type=str,
                         dest="name", help="what file to generate")
+    parser.add_argument("--topperc", default=False, action="store_true",
+                        dest="topperc", help="Predict toppercent instead of use value")
 
     options = parser.parse_args()
     prng = np.random.RandomState(options.seed)
