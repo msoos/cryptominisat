@@ -27,6 +27,17 @@ class QueryFixPerc (helper.QueryHelper):
     def __init__(self, dbfname):
         super(QueryFixPerc, self).__init__(dbfname)
 
+    def check_table_exists(self):
+        q = "SELECT name FROM sqlite_master WHERE type='table' AND name='{table_name}';".format(
+            table_name="used_later_percentiles_backup")
+        self.c.execute(q)
+        rows = self.c.fetchall()
+        if len(rows) == 1:
+            print("Already fixed")
+            return True
+
+        return False
+
     def copy_db(self):
         # Drop table
         q_drop = """
@@ -140,7 +151,10 @@ if __name__ == "__main__":
 
 
     for f in args:
+        print("Doing file:" , f)
         with QueryFixPerc(f) as q:
+            if q.check_table_exists():
+                continue
             q.copy_db()
             q.create_percentiles_table()
             q.fix()
