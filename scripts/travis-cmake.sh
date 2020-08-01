@@ -245,6 +245,21 @@ case $CMS_CONFIG in
             "${SOURCE_DIR}"
     ;;
 
+    MINGW32)
+        rm -rf ${SOURCE_DIR}/utils/gtest
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
+        eval cmake -DENABLE_PYTHON_INTERFACE=OFF \
+                   -DNOVALGRIND=ON \
+                   -DNOZLIB=ON \
+                   -DONLY_SIMPLE=ON \
+                   -DSTATICCOMPILE=ON \
+                   -DIPASIR=ON \
+                   -MIT=ON \
+                   -DCMAKE_BUILD_TYPE=Release \
+                   -D CMAKE_SYSTEM_NAME=Windows \
+                   "${SOURCE_DIR}"
+    ;;   
+
     *)
         echo "\"${CMS_CONFIG}\" configuration not recognised"
         exit 1
