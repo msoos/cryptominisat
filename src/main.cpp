@@ -363,6 +363,8 @@ void Main::add_supported_options()
         , "Pred long check over limit every N")
     ("predforevercheckn", po::value(&conf.pred_forever_check_every_n)->default_value(conf.pred_forever_check_every_n)
         , "Pred forever check over limit every N")
+    ("predforevertopperc", po::value(&conf.pred_forever_topperc)->default_value(conf.pred_forever_topperc)
+        , "Keep top percent")
     ;
     #endif
 

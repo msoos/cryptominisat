@@ -32,14 +32,14 @@ only=0.99
 bestf="../../scripts/crystal/best_features.txt"
 bestf="../../scripts/crystal/best_features.txt-ext"
 bestf="../../scripts/crystal/best_features.txt-rdb0-only"
-../cldata_predict.py short-comb.dat --tier short --xgboost --final --only $only \
+../cldata_predict.py short-comb-*.dat --tier short --xgboost --final --only $only \
      --basedir ../../src/predict/ --name short --bestfeatfile $bestf | tee out_short
 
-../cldata_predict.py long-comb.dat  --tier long --xgboost --final --only $only \
+../cldata_predict.py long-comb-*.dat  --tier long --xgboost --final --only $only \
     --basedir ../../src/predict/ --name long --bestfeatfile $bestf | tee out_long
 
-../cldata_predict.py forever-comb.dat --tier forever --xgboost --final --only $only \
-    --basedir ../../src/predict/ --name forever --bestfeatfile $bestf | tee out_forever
+../cldata_predict.py forever-comb-*.dat --tier forever --xgboost --final --only $only \
+    --basedir ../../src/predict/ --name forever --topperc --bestfeatfile $bestf | tee out_forever
 
 #pid3=$!
 #wait $pid1
