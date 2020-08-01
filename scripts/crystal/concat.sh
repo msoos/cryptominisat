@@ -20,7 +20,7 @@
 # This file wraps CMake invocation for TravisCI
 # so we can set different configurations via environment variables.
 
-set +x
+set -x
 
 module unload gcc/4.9.3
 module load anaconda/3
@@ -28,9 +28,9 @@ module load openmpi/intel/1.10.2
 
 function concat() {
 #mydata-min.db-cldata-forever-cut1-20.0-cut2-50.0-limit-6000.dat
-./concat_pandas.py $dir/*-cldata-short-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat   -o short-comb-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat.dat
-./concat_pandas.py $dir/*-cldata-long-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat.dat    -o long-comb-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat.dat
-./concat_pandas.py $dir/*-cldata-forever-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat.dat -o forever-comb-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat.dat
+./concat_pandas.py $dir/*-cldata-short-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat   -o short-comb-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat
+./concat_pandas.py $dir/*-cldata-long-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat    -o long-comb-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat
+./concat_pandas.py $dir/*-cldata-forever-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat -o forever-comb-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat
 }
 
 # run with new fixed setup, but only 100 instances, no sum proapgations
