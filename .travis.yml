@@ -97,6 +97,18 @@ matrix:
       env:
         - CMS_CONFIG=STATIC
 
+    - os: linux
+      dist: bionic
+      compiler: gcc
+      python: "3.7"
+      addons:
+         apt:
+            packages: mingw-w64
+      env:
+        - CMS_CONFIG=MINGW32
+        - CC=x86_64-w64-mingw32-gcc-posix
+        - CXX=x86_64-w64-mingw32-g++-posix
+
     #- os: linux
       #compiler: gcc
       #env: COVERITY_SCAN=1 CMS_CONFIG=NORMAL
