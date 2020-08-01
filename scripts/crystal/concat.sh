@@ -27,9 +27,10 @@ module load anaconda/3
 module load openmpi/intel/1.10.2
 
 function concat() {
-./concat_pandas.py $dir/*-cldata-short.dat   -o short-comb.dat
-./concat_pandas.py $dir/*-cldata-long.dat    -o long-comb.dat
-./concat_pandas.py $dir/*-cldata-forever.dat -o forever-comb.dat
+#mydata-min.db-cldata-forever-cut1-20.0-cut2-50.0-limit-6000.dat
+./concat_pandas.py $dir/*-cldata-short-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat   -o short-comb-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat.dat
+./concat_pandas.py $dir/*-cldata-long-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat.dat    -o long-comb-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat.dat
+./concat_pandas.py $dir/*-cldata-forever-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat.dat -o forever-comb-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat.dat
 }
 
 # run with new fixed setup, but only 100 instances, no sum proapgations
@@ -50,11 +51,25 @@ dir="out-dats-814249.wlm01"
 dir="out-dats-992340.wlm01" # -- incorrect, HACK not present
 dir="out-dats-992539.wlm01" # HACK present, 2000
 
+# basically reg3 but with topperc and with cut distributions
+dir="out-dats-1468318.wlm01"
 
 rm -f short-comb*
 rm -f long-comb*
 rm -f forever-comb*
 echo "Concatenating..."
+limit=700
+
+cut1=10
+cut2=40
+concat
+
+cut1=20
+cut2=50
+concat
+
+cut1=40
+cut2=70
 concat
 
 echo "Zipping..."
