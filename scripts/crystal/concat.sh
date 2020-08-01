@@ -60,16 +60,16 @@ rm -f forever-comb*
 echo "Concatenating..."
 limit=700
 
-cut1=10
-cut2=40
+cut1="10.0"
+cut2="40.0"
 concat
 
-cut1=20
-cut2=50
+cut1="20.0"
+cut2="50.0"
 concat
 
-cut1=40
-cut2=70
+cut1="40.0"
+cut2="70.0"
 concat
 
 echo "Zipping..."
