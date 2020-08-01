@@ -50,7 +50,7 @@ public:
 
     ~PackedMatrix()
     {
-        #ifdef _MSC_VER
+        #ifdef _WIN32
         _aligned_free((void*)mp);
         #else
         free(mp);
@@ -62,7 +62,7 @@ public:
         num_cols = num_cols / 64 + (bool)(num_cols % 64);
         if (numRows*(numCols+1) < (int)num_rows*((int)num_cols+1)) {
             size_t size = sizeof(int64_t) * num_rows*(num_cols+1);
-            #ifdef _MSC_VER
+            #ifdef _WIN32
             _aligned_free((void*)mp);
             mp =  (int64_t*)_aligned_malloc(size, 16);
             #else
@@ -85,7 +85,7 @@ public:
     {
         if (numRows*(numCols+1) < b.numRows*(b.numCols+1)) {
             size_t size = sizeof(int64_t) * b.numRows*(b.numCols+1);
-            #ifdef _MSC_VER
+            #ifdef _WIN32
             _aligned_free((void*)mp);
             mp =  (int64_t*)_aligned_malloc(size, 16);
             #else
