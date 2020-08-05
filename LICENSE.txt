@@ -1,4 +1,4 @@
-CryptoMiniSat Copyright (c) Mate Soos 2009-2018
+Copyright (C) 2009-2020 Authors of CryptoMiniSat, see AUTHORS file
 All rights reserved.
 
 The general priciple of the licensing is as follows. Everything that's

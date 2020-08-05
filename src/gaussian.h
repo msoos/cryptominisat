@@ -1,7 +1,7 @@
 /******************************************
 Copyright (c) 2012  Cheng-Shen Han
 Copyright (c) 2012  Jie-Hong Roland Jiang
-Copyright (c) 2018  Mate Soos
+Copyright (C) 2009-2020 Authors of CryptoMiniSat, see AUTHORS file
 
 For more information, see " When Boolean Satisfiability Meets Gaussian
 Elimination in a Simplex Way." by Cheng-Shen Han and Jie-Hong Roland Jiang

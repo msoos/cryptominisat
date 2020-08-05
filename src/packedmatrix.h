@@ -1,5 +1,5 @@
 /******************************************
-Copyright (c) 2018  Mate Soos
+Copyright (C) 2009-2020 Authors of CryptoMiniSat, see AUTHORS file
 Copyright (c) 2012  Cheng-Shen Han
 Copyright (c) 2012  Jie-Hong Roland Jiang
 
