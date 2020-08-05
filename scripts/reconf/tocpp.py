@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2014  Mate Soos
+# Copyright (C) 2009-2020 Authors of CryptoMiniSat, see AUTHORS file
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -45,7 +45,7 @@ if options.num is None:
     exit(-1)
 
 print("""/******************************************
-Copyright (c) 2016, Mate Soos
+Copyright (C) 2009-2020 Authors of CryptoMiniSat, see AUTHORS file
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

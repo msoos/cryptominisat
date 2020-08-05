@@ -1,5 +1,5 @@
 /******************************************
-Copyright (c) 2018, Mate Soos <soos.mate@gmail.com>
+Copyright (C) 2009-2020 Authors of CryptoMiniSat, see AUTHORS file <soos.mate@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -301,7 +301,11 @@ vector<pair<uint32_t, double>> CMS_ccnr::get_bump_based_on_conflict_ct()
 
     for(uint32_t i = 1; i < ls_s->_conflict_ct.size(); i++) {
         double val = ls_s->_conflict_ct[i];
-        tobump.push_back(std::make_pair(i-1, (double)val/(double)mymax * 3.0));
+        if (mymax > 0) {
+            tobump.push_back(std::make_pair(i-1, (double)val/(double)mymax * 3.0));
+        } else {
+            tobump.push_back(std::make_pair(i-1, 0));
+        }
 //         if (tobump.back().second > 0) {
 //             cout << "var: " << tobump.back().first << " bump by: " << tobump.back().second << endl;
 //         }

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (C) 2020  Mate Soos
+# Copyright (C) 2009-2020 Authors of CryptoMiniSat, see AUTHORS file
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License

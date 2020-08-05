@@ -1,5 +1,4 @@
-# Original work Copyright (c) 2017, Mate Soos
-# Modified work Copyright (c) 2017, Pierre Vignet
+# Copyright (C) 2009-2020 Authors of CryptoMiniSat, see AUTHORS file
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

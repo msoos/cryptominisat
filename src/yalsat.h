@@ -1,5 +1,5 @@
 /******************************************
-Copyright (c) 2018, Mate Soos <soos.mate@gmail.com>
+Copyright (C) 2009-2020 Authors of CryptoMiniSat, see AUTHORS file <soos.mate@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

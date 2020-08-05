@@ -1,6 +1,6 @@
 /******************************************
-Copyright (c) 2020, Mate Soos
-Originally from CaDiCaL's "lucky.cpp" by Armin Biere, 2019
+Copyright (C) 2009-2020 Authors of CryptoMiniSat, see AUTHORS file
+Originally from CaDiCaL's "lucky.cpp", Copyright by Armin Biere, 2019
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
