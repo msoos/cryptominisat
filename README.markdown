@@ -34,37 +34,10 @@ To run on file `myfile.cnf`:
 cat myfile.cnf | docker run --rm -i msoos/cryptominisat
 ```
 
-To run on a hand-written CNF:
-
-```
-docker pull msoos/cryptominisat
-echo "1 2 0" | docker run --rm -i msoos/cryptominisat
-```
-
 To run on the file `/home/myfolder/myfile.cnf.gz` by mounting it (may be faster):
 
 ```
 docker run --rm -v /home/myfolder/myfile.cnf.gz:/f msoos/cryptominisat f
-```
-
-To build and run locally:
-
-```
-git clone https://github.com/msoos/cryptominisat.git
-cd cryptominisat
-git submodule update --init
-docker build -t cms .
-cat myfile.cnf | docker run --rm -i cms
-```
-
-To build and run the web interface:
-
-```
-git clone https://github.com/msoos/cryptominisat.git
-cd cryptominisat
-git submodule update --init
-docker build -t cmsweb -f Dockerfile.web .
-docker run --rm -i -p 80:80 cmsweb
 ```
 
 
