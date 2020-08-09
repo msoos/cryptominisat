@@ -473,22 +473,9 @@ sub-str-cls-with-bin, occ-backw-sub-str, occ-bve,check-cache-size, renumber
 
 It is a good idea to put `renumber` as late as possible, as it renumbers the variables for memory usage reduction.
 
-Gaussian elimination
+Gauss-Jordan elimination
 -----
-For building with Gaussian Elimination, you need to build as per:
-
-```
-sudo apt-get install build-essential cmake
-sudo apt-get install zlib1g-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev help2man
-tar xzvf cryptominisat-version.tar.gz
-cd cryptominisat-version
-mkdir build && cd build
-cmake -DUSE_GAUSS=ON ..
-make
-sudo make install
-```
-
-To use Gaussian elimination, provide a CNF with xors in it (either in CNF or XOR+CNF form) and tune the gaussian parameters. Use `--hhelp` to find all the gaussian elimination options:
+Since CryptoMiniSat 5.8, Gauss-Jordan elimination is compiled into the solver by default. However, it will turn off automatically in case the solver observes GJ not to perform too well. To use Gaussian elimination, provide a CNF with xors in it (either in CNF or XOR+CNF form) and either run with default setup, or, tune it to your heart's desire:
 
 ```
 Gauss options:
@@ -506,7 +493,7 @@ Gauss options:
   --maxnummatrixes arg (=3)   Maximum number of matrixes to treat.
 ```
 
-If any of these options seem to be non-existent, then either you forgot to compile the SAT solver with the above options, or you forgot to re-install it with `sudo make install`.
+In particular, you may want to set `--autodisablegauss 0` in case you are sure it'll help.
 
 Testing
 -----
@@ -551,7 +538,7 @@ CMake Arguments
 The following arguments to cmake configure the generated build artifacts. To use, specify options prior to running make in a clean subdirectory: `cmake <options> ..`
 
 - `-DSTATICCOMPILE=<ON/OFF>` -- statically linked library and binary
-- `-DUSE_GAUSS=<ON/OFF>` -- Gauss-Jordan Elimination support
+- `-DUSE_GAUSS=<ON/OFF>` -- Gauss-Jordan Elimination support. On by default.
 - `-DSTATS=<ON/OFF>` -- advanced statistics (slower)
 - `-DENABLE_TESTING=<ON/OFF>` -- test suite support
 - `-DMIT=<ON/OFF>` -- MIT licensed components only
