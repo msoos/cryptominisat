@@ -92,6 +92,17 @@ DLL_PUBLIC void ipasir_release (void * solver)
     delete s;
 }
 
+namespace
+{
+void ensure_var_created(MySolver& s, Lit lit)
+{
+    if (lit.var() >= s.solver->nVars()) {
+        const uint32_t toadd = lit.var() - s.solver->nVars() + 1;
+        s.solver->new_vars(toadd);
+    }
+}
+}
+
 /**
  * Add the given literal into the currently added clause
  * or finalize the clause with a 0.  Clauses added this way
@@ -116,10 +127,7 @@ DLL_PUBLIC void ipasir_add (void * solver, int lit_or_zero)
         s->clause.clear();
     } else {
         Lit lit(std::abs(lit_or_zero)-1, lit_or_zero < 0);
-        if (lit.var() >= s->solver->nVars()) {
-            const uint32_t toadd = lit.var() - s->solver->nVars() + 1;
-            s->solver->new_vars(toadd);
-        }
+        ensure_var_created(*s, lit);
         s->clause.push_back(lit);
     }
 }
@@ -136,6 +144,7 @@ DLL_PUBLIC void ipasir_assume (void * solver, int lit)
 {
     MySolver* s = (MySolver*)solver;
     Lit lit_cms(std::abs(lit)-1, lit < 0);
+    ensure_var_created(*s, lit_cms);
     s->assumptions.push_back(lit_cms);
 }
 
