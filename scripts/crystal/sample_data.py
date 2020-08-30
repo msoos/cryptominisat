@@ -485,8 +485,12 @@ class QueryDatRem(helper.QueryHelper):
         insert into only_keep_rdb (id)
         select
         rdb0.rowid
-        from reduceDB as rdb0, used_later_forever
-        where
+
+        FROM
+        reduceDB as rdb0,
+        used_later_forever
+
+        WHERE
         used_later_forever.clauseID=rdb0.clauseID
         and used_later_forever.rdb0conflicts=rdb0.conflicts
         and used_later_forever.used_later >= {min_used_later}
@@ -517,6 +521,8 @@ class QueryDatRem(helper.QueryHelper):
         print("Created only_keep_rdb T: %-3.2f s" % (time.time() - t))
 
         if not options.fair:
+            self.insert_into_only_keep_rdb(100000, options.goal_rdb/20)
+            self.insert_into_only_keep_rdb(10000, options.goal_rdb/20)
             self.insert_into_only_keep_rdb(1000, options.goal_rdb/20)
             self.insert_into_only_keep_rdb(100, options.goal_rdb/10)
             self.insert_into_only_keep_rdb(20, options.goal_rdb/5)
@@ -629,12 +635,14 @@ if __name__ == "__main__":
             q.fill_used_later_X("short", duration=10000)
             q.fill_used_later_X("long", duration=50000)
             q.fill_used_later_X("forever", duration=1000*1000*1000, forever=True)
+            q.fill_used_later_X("forever_div", duration=1000*1000*1000, forever=True, divide=True)
         with QueryDatRem(args[0]) as q:
             helper.dangerous(q.c)
             q.create_percentiles_table()
             q.get_all_percentile_X("short")
             q.get_all_percentile_X("long")
             q.get_all_percentile_X("forever")
+            q.get_all_percentile_X("forever_div")
             q.print_percentiles()
         with helper.QueryFill(args[0]) as q:
             q.delete_and_create_used_laters()
@@ -654,13 +662,17 @@ if __name__ == "__main__":
         q.create_indexes(verbose=options.verbose, used_clauses="used_clauses_red")
         q.fill_used_later_X("short", duration=10000, used_clauses="used_clauses_red")
         q.fill_used_later_X("long", duration=50000, used_clauses="used_clauses_red")
-        q.fill_used_later_X("forever", duration=1000*1000*1000, used_clauses="used_clauses_red", forever=True)
+        q.fill_used_later_X("forever", duration=1000*1000*1000, used_clauses="used_clauses_red",
+                            forever=True)
+        q.fill_used_later_X("forever_div", duration=1000*1000*1000, used_clauses="used_clauses_red",
+                            forever=True, divide=True)
     with QueryDatRem(args[0]) as q:
         helper.dangerous(q.c)
         q.create_percentiles_table()
         q.get_all_percentile_X("short")
         q.get_all_percentile_X("long")
         q.get_all_percentile_X("forever")
+        q.get_all_percentile_X("forever_div")
         q.print_percentiles()
         q.drop_used_clauses_red()
     with helper.QueryFill(args[0]) as q:

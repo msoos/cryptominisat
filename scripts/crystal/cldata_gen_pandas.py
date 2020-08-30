@@ -173,16 +173,22 @@ class QueryCls (helper.QueryHelper):
         {rst_cur}
         {satzfeat_dat_cur}
         {rdb0_dat}
-        {rdb1_dat}
         {sum_cl_use}
         , (rdb0.conflicts - cl.conflicts) as `cl.time_inside_solver`
         , `sum_cl_use`.`last_confl_used`-`cl`.`conflicts` as `x.a_lifetime`
+
         , used_later_short.used_later as `x.used_later_short`
         , used_later_short.percentile_fit as `x.used_later_short_topperc`
+
         , used_later_long.used_later as `x.used_later_long`
         , used_later_long.percentile_fit as `x.used_later_long_topperc`
+
         , used_later_forever.used_later as `x.used_later_forever`
         , used_later_forever.percentile_fit as `x.used_later_forever_topperc`
+
+        , used_later_forever_div.used_later as `x.used_later_forever_div`
+        , used_later_forever_div.percentile_fit as `x.used_later_forever_div_topperc`
+
         , sum_cl_use.num_used as `x.sum_cl_use`
 
 
@@ -200,9 +206,6 @@ class QueryCls (helper.QueryHelper):
 
         join sum_cl_use on
             sum_cl_use.clauseID = rdb0.clauseID
-
-        join reduceDB as rdb1 on
-            rdb1.clauseID = rdb0.clauseID
 
         join satzilla_features as szfeat_cur
             on szfeat_cur.latest_satzilla_feature_calc = cl.latest_satzilla_feature_calc
@@ -222,6 +225,11 @@ class QueryCls (helper.QueryHelper):
             and used_later_forever.rdb0conflicts = rdb0.conflicts
             and used_later_forever.offset = 0
 
+        join used_later_forever_div on
+            used_later_forever_div.clauseID = rdb0.clauseID
+            and used_later_forever_div.rdb0conflicts = rdb0.conflicts
+            and used_later_forever_div.offset = 0
+
         join cl_last_in_solver on
             cl_last_in_solver.clauseID = rdb0.clauseID
 
@@ -230,8 +238,6 @@ class QueryCls (helper.QueryHelper):
         WHERE
         cl.clauseID != 0
         and tags.name = "filename"
-        and rdb0.dump_no = rdb1.dump_no+1
-        -- and used_later_short_offset.offset = {offset_short}
 
 
         -- to avoid missing clauses and their missing data to affect results
@@ -243,11 +249,8 @@ class QueryCls (helper.QueryHelper):
             "clause_dat": self.clause_dat,
             "satzfeat_dat_cur": self.satzfeat_dat.replace("szfeat.", "szfeat_cur."),
             "rdb0_dat": self.rdb0_dat,
-            "rdb1_dat": self.rdb0_dat.replace("rdb0", "rdb1"),
             "sum_cl_use": self.sum_cl_use,
             "rst_cur": self.rst_cur,
-            "offset_short" : options.short,
-            "offset_long" : options.long
         }
 
     def get_used_later_percentiles(self, name):
@@ -295,8 +298,11 @@ class QueryCls (helper.QueryHelper):
         elif tier == "long":
             self.myformat["del_at_least"] = options.long
 
+        # the two below could be 0, but I want to be on the safe side
         elif tier == "forever":
-            self.myformat["del_at_least"] = 0
+            self.myformat["del_at_least"] = options.short
+        elif tier == "forever_div":
+            self.myformat["del_at_least"] = options.short
 
         # Make sure these stratas are equally represented
         t = time.time()
@@ -405,15 +411,16 @@ def one_database(dbfname):
         q.fill_used_later_X("short", offset=0, duration=options.short)
         q.fill_used_later_X("long", offset=0, duration=options.long)
         q.fill_used_later_X("forever", offset=0, duration=(1000*1000*1000), forever=True)
+        q.fill_used_later_X("forever_div", offset=0, duration=(1000*1000*1000), forever=True, divide=True)
 
-        q.fill_used_later_X("short", offset=options.short, duration=options.short)
-        q.fill_used_later_X("long", offset=options.long, duration=options.long)
+        # fill percentile_fit
         q.fill_used_later_X_perc_fit("short")
         q.fill_used_later_X_perc_fit("long")
         q.fill_used_later_X_perc_fit("forever")
+        q.fill_used_later_X_perc_fit("forever_div")
 
     print("Using sqlite3 DB file %s" % dbfname)
-    for tier in ["short", "long", "forever"]:
+    for tier in ["short", "long", "forever", "forever_div"]:
         print("------> Doing tier {tier}".format(tier=tier))
 
         with QueryCls(dbfname) as q:

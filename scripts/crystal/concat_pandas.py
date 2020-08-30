@@ -64,7 +64,6 @@ the same columns."""
         df["fname"] = df["fname"].astype("str")
         df["cl.cur_restart_type"] = df["cl.cur_restart_type"].astype("str")
         df["rdb0.cur_restart_type"] = df["rdb0.cur_restart_type"].astype("str")
-        df["rdb1.cur_restart_type"] = df["rdb1.cur_restart_type"].astype("str")
         dfs.append(df)
 
     print("Concatenating dataframes...")

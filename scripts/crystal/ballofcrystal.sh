@@ -191,9 +191,9 @@ rm -f ../../src/predict/*.h
 #../vardata_predict.py mydata.db-vardata.dat --picktimeonly -q 2 --only 0.99
 #../vardata_predict.py vardata-comb --final -q 20 --basedir ../src/predict/ --depth 7 --tree
 
-../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short.dat" --tier short --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf
-../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long.dat" --tier long --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf
-../cldata_predict.py "${FNAMEOUT}-min.db-cldata-forever.dat" --tier forever --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf --topperc
+../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier short --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf
+../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier long --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf
+../cldata_predict.py "${FNAMEOUT}-min.db-cldata-forever_div-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier forever --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf --topperc
 
 )
 

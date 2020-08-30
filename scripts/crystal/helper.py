@@ -86,7 +86,7 @@ class QueryFill (QueryHelper):
         print("indexes created T: %-3.2f s" % (time.time() - t))
 
     def delete_and_create_used_laters(self):
-        tables = ["short", "long", "forever"]
+        tables = ["short", "long", "forever", "forever_div"]
         for table in tables:
             q = """
                 DROP TABLE IF EXISTS `used_later_{name}`;
@@ -98,13 +98,14 @@ class QueryFill (QueryHelper):
         create table `used_later_{name}` (
             `clauseID` bigint(20) NOT NULL,
             `rdb0conflicts` bigint(20) NOT NULL,
-            `used_later` bigint(20),
+            `used_later` float,
             `offset` bigint(20) NOT NULL,
             `percentile_fit` float DEFAULT NULL
         );"""
-        self.c.execute(q_create.format(name="short"))
-        self.c.execute(q_create.format(name="long"))
-        self.c.execute(q_create.format(name="forever"))
+        # NOTE: "percentile_fit" is the top percentile this use belongs to. Filled in later.
+
+        for table in tables:
+            self.c.execute(q_create.format(name=table))
 
         idxs = """
         create index `used_later_{name}_idx3` on `used_later_{name}` (`used_later`);
@@ -120,7 +121,14 @@ class QueryFill (QueryHelper):
 
     def fill_used_later_X(self, name, duration, offset=0,
                           used_clauses="used_clauses",
-                          forever=False):
+                          forever=False, divide=False):
+
+
+        if not divide:
+            my_count = ", count(ucl.used_at) as `used_later`"
+        else:
+            my_count = ", ((count(ucl.used_at)*1.0)/(1.0*(cl_last_in_solver.conflicts-rdb0.conflicts))) as `used_later`"
+
         q_fill = """
         insert into used_later_{name}
         (
@@ -132,7 +140,7 @@ class QueryFill (QueryHelper):
         SELECT
         rdb0.clauseID
         , rdb0.conflicts
-        , count(ucl.used_at) as `used_later`
+        {my_count}
         , {offset}
 
         FROM
@@ -157,12 +165,16 @@ class QueryFill (QueryHelper):
         t = time.time()
         self.c.execute(q_fill.format(
             name=name, used_clauses=used_clauses,
-            duration=duration, offset=offset, forever=int(forever)))
+            duration=duration,
+            offset=offset,
+            my_count=my_count,
+            forever=int(forever)))
+
         print("used_later_%s filled T: %-3.2f s" %
               (name, time.time() - t))
 
     def fill_used_later_X_perc_fit(self, name):
-        print("Filling percentile fit for used_later_{name}".format(name=name))
+        print("Filling percentile_fit for used_later_{name}".format(name=name))
 
         q = """
         update used_later_{name}
@@ -558,10 +570,6 @@ def clear_data_from_str(df):
     df.loc[:, ('rst_cur.restart_type')] = \
         df.loc[:, ('rst_cur.restart_type')].map(values2nums)
 
-    if "rdb1.cur_restart_type" in df:
-        df.loc[:, ('rdb1.cur_restart_type')] = \
-            df.loc[:, ('rdb1.cur_restart_type')].map(values2nums)
-
 
 def output_to_classical_dot(clf, features, fname):
     sklearn.tree.export_graphviz(clf, out_file=fname,
@@ -645,22 +653,11 @@ def cldata_add_computed_features(df, verbose):
 
     divide("cl.num_total_lits_antecedents", "cl.num_antecedents")
 
-    # sum RDB
     orig_cols = list(df)
-    for col in orig_cols:
-        if ("rdb0" in col) and "restart_type" not in col:
-            col2 = col.replace("rdb0", "rdb1")
-            cboth = "("+col+"+"+col2+")"
-            df[cboth] = df[col]+df[col2]
-
     rdb0_act_ranking_rel = divide("rdb0.act_ranking", "rdb0.tot_cls_in_db", name="rdb0_act_ranking_rel")
-    rdb1_act_ranking_rel = divide("rdb1.act_ranking", "rdb1.tot_cls_in_db", name="rdb1_act_ranking_rel")
-    rdb0_plus_rdb1_ranking_rel = add([rdb0_act_ranking_rel, rdb1_act_ranking_rel])
 
     divide("rdb0.sum_uip1_used", "cl.time_inside_solver")
-    divide("rdb1.sum_uip1_used", "cl.time_inside_solver")
     divide("rdb0.sum_propagations_made", "cl.time_inside_solver")
-    divide("rdb1.sum_propagations_made", "cl.time_inside_solver")
 
     divisors = [
         "cl.size_hist"
@@ -679,13 +676,9 @@ def cldata_add_computed_features(df, verbose):
         , "(cl.num_total_lits_antecedents/cl.num_antecedents)"
         , "cl.num_antecedents"
         , rdb0_act_ranking_rel
-        , rdb1_act_ranking_rel
         #, "szfeat_cur.var_cl_ratio"
         , "cl.time_inside_solver"
-        #, "((double)(rdb0.act_ranking_rel+rdb1.act_ranking_rel)/2.0)"
         #, "sqrt(rdb0.act_ranking_rel)"
-        #, "sqrt(rdb1.act_ranking_rel)"
-        #, "sqrt(rdb0_and_rdb1.act_ranking_rel_avg)"
         # , "cl.num_overlap_literals"
         # , "rst_cur.resolutions"
         #, "rdb0.act_ranking_top_10"
@@ -713,14 +706,11 @@ def cldata_add_computed_features(df, verbose):
         rst_cur_all_props
         , "rdb0.last_touched_diff"
         , "rdb0.used_for_uip_creation"
-        , "rdb1.used_for_uip_creation"
         , "rdb0.propagations_made"
-        , "rdb1.propagations_made"
         , "rdb0.sum_propagations_made"
         , "(rdb0.sum_propagations_made/cl.time_inside_solver)"
-        , "(rdb1.sum_propagations_made/cl.time_inside_solver)"
         , "(rdb0.sum_uip1_used/cl.time_inside_solver)"
-        , "(rdb1.sum_uip1_used/cl.time_inside_solver)"])
+    ])
 
     # smaller/larger than
     if False:
@@ -745,20 +735,6 @@ def cldata_add_computed_features(df, verbose):
                     if "min" not in divisor:
                         divide(col, divisor)
                         larger_than(col, divisor)
-
-    # relative RDB
-    if True:
-        print("Relative RDB...")
-        for col in orig_cols:
-            if "rdb0" in col and "restart_type" not in col:
-                rdb0 = col
-                rdb1 = col.replace("rdb0", "rdb1")
-                larger_than(rdb0, rdb1)
-
-                raw_col = col.replace("rdb0.", "")
-                if raw_col not in ["sum_propagations_made", "propagations_made", "dump_no", "conflicts_made", "used_for_uip_creation", "sum_uip1_used", "activity_rel", "last_touched_diff", "ttl"]:
-                    print(rdb0)
-                    divide(rdb0, rdb1)
 
     # smaller-or-greater comparisons
     print("smaller-or-greater comparisons...")

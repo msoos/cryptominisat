@@ -532,7 +532,6 @@ if __name__ == "__main__":
             print("Adding features...")
             divide = functools.partial(helper.helper_divide, df=df, features=list(df), verb=options.verbose)
             rdb0_act_ranking_rel = divide("rdb0.act_ranking", "rdb0.tot_cls_in_db", name="rdb0_act_ranking_rel")
-            rdb1_act_ranking_rel = divide("rdb1.act_ranking", "rdb1.tot_cls_in_db", name="rdb1_act_ranking_rel")
             best_features = helper.get_features(options.best_features_fname)
             for feat in best_features:
                 toeval = ccg.to_source(ast.parse(feat))
