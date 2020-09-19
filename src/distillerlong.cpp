@@ -48,20 +48,17 @@ bool DistillerLong::distill(const bool red, bool fullstats)
     assert(solver->ok);
     numCalls++;
     Stats other;
+    runStats.clear();
 
 
     if (!red) {
-        runStats.clear();
         if (!distill_long_cls_all(solver->longIrredCls, 1)) {
             goto end;
         }
-        other = runStats;
     } else {
-        runStats.clear();
         if (!distill_long_cls_all(solver->longRedCls[0], 10.0)) {
             goto end;
         }
-        runStats.clear();
         if (!distill_long_cls_all(solver->longRedCls[1], solver->conf.distill_red_tier1_ratio)) {
             goto end;
         }
@@ -244,7 +241,7 @@ bool DistillerLong::distill_long_cls_all(
     }
 
     //Update stats
-    runStats.time_used += cpuTime() - myTime;
+    runStats.time_used += time_used;
     runStats.zeroDepthAssigns += solver->trail_size() - origTrailSize;
 
     return solver->okay();
