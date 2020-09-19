@@ -160,7 +160,9 @@ extern "C"
     DLL_PUBLIC void cmsat_set_up_for_scalmc(SATSolver* self)  NOEXCEPT_START {
         self->set_up_for_scalmc();
     } NOEXCEPT_END
-
+    DLL_PUBLIC void cmsat_set_up_for_arjun(SATSolver* self)  NOEXCEPT_START {
+        self->set_up_for_arjun();
+    } NOEXCEPT_END
     DLL_PUBLIC void cmsat_set_yes_comphandler(SATSolver* self)  NOEXCEPT_START {
         self->set_yes_comphandler();
     } NOEXCEPT_END

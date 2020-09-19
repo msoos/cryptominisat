@@ -1230,6 +1230,31 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
     }
 }
 
+void DLL_PUBLIC SATSolver::set_up_for_arjun()
+{
+    for (size_t i = 0; i < data->solvers.size(); i++) {
+        SolverConf conf = data->solvers[i]->getConf();
+        conf.doBreakid = false;
+        conf.gaussconf.max_num_matrices = 0;
+        conf.xor_finder_time_limitM = 0;
+        conf.xor_detach_reattach = true;
+        conf.global_multiplier_multiplier_max = 1;
+        conf.orig_global_timeout_multiplier = 1.5;
+        conf.min_bva_gain = 2;
+        conf.polar_stable_every_n = 100000; //i.e. never
+
+        conf.simplify_at_startup = 1;
+        conf.varElimRatioPerIter = 1;
+        conf.restartType = Restart::never;
+        conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
+        conf.branch_strategy_setup = "vsids1";
+        conf.bva_every_n = 1;
+        conf.do_simplify_problem = true;
+        conf.diff_declev_for_chrono = -1;
+        data->solvers[i]->setConf(conf);
+    }
+}
+
 DLL_PUBLIC void SATSolver::set_verbosity_detach_warning(bool verb)
 {
     for (size_t i = 0; i < data->solvers.size(); i++) {
