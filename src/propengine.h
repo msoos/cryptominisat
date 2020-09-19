@@ -404,7 +404,7 @@ inline PropResult PropEngine::handle_normal_prop_fail(
     return PROP_FAIL;
 }
 
-template<bool update_bogoprops>
+template<bool update_bogoprops> inline
 void PropEngine::enqueue(const Lit p)
 {
     enqueue<update_bogoprops>(p, decisionLevel(), PropBy());
