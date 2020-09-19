@@ -2647,6 +2647,7 @@ void Searcher::adjust_restart_strategy()
     //Note that all of this will be overridden by params.max_confl_to_do
     switch(cur_rest_type) {
         case Restart::never:
+            params.rest_type = Restart::never;
             break;
 
         case Restart::glue:
@@ -2687,6 +2688,10 @@ void Searcher::adjust_restart_strategy()
 
         case Restart::glue:
             max_confl_this_phase = conf.ratio_glue_geom *increasing_phase_size;
+            break;
+
+        case Restart::never:
+            max_confl_this_phase = 1000ULL*1000ULL*1000ULL;
             break;
 
         default:
