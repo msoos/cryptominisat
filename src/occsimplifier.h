@@ -56,6 +56,7 @@ class Solver;
 class TopLevelGaussAbst;
 class SubsumeStrengthen;
 class BVA;
+class GateFinder;
 
 struct BlockedClauses {
     BlockedClauses()
@@ -210,6 +211,7 @@ public:
     ~OccSimplifier();
 
     //Called from main
+    vector<uint32_t> get_definabe(vector<uint32_t>& vars);
     bool simplify(const bool _startup, const std::string schedule);
     void new_var(const uint32_t orig_outer);
     void new_vars(const size_t n);
@@ -218,7 +220,6 @@ public:
     size_t mem_used() const;
     size_t mem_used_xor() const;
     size_t mem_used_bva() const;
-    void print_gatefinder_stats() const;
     uint32_t dump_blocked_clauses(std::ostream* outfile) const;
 
     //UnElimination
@@ -542,9 +543,9 @@ private:
     /////////////////////
     //Helpers
     friend class TopLevelGaussAbst;
-    //friend class GateFinder;
+    friend class GateFinder;
     TopLevelGaussAbst *topLevelGauss;
-    //GateFinder *gateFinder;
+    GateFinder *gateFinder;
 
     /////////////////////
     //Blocked clause elimination

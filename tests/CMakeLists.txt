@@ -186,6 +186,7 @@ set (MY_TESTS
     ternary_resolve_test
     implied_by_test
     lucky_test
+    definability_test
 #    undefine_test
 )
 

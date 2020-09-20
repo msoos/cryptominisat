@@ -484,6 +484,7 @@ class DLL_PUBLIC SolverConf
 
         //Gates
         int      doGateFind; ///< Find OR gates
+        int do_simp_with_gates;
         unsigned maxGateBasedClReduceSize;
         int      doShortenWithOrGates; ///<Shorten clauses with or gates during subsumption
         int      doRemClWithAndGates; ///<Remove clauses using and gates during subsumption

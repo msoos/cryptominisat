@@ -271,7 +271,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "sub-impl,"
             "breakid, "
             "occ-backw-sub-str, occ-clean-implicit, occ-bve,"
-            "occ-ternary-res, occ-backw-sub-str, occ-xor, "
+            "occ-ternary-res, occ-backw-sub-str, occ-xor,"
             "card-find,"
             "cl-consolidate," //consolidate after OCC
             "scc-vrepl,"
@@ -369,6 +369,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Gates
         , doGateFind       (false)
+        , do_simp_with_gates(false)
         , maxGateBasedClReduceSize(20)
         , doShortenWithOrGates(true)
         , doRemClWithAndGates(true)

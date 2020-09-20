@@ -53,6 +53,7 @@ THE SOFTWARE.
 #include "sqlstats.h"
 #include "datasync.h"
 #include "xorfinder.h"
+#include "gatefinder.h"
 #include "bva.h"
 #include "trim.h"
 
@@ -93,7 +94,7 @@ OccSimplifier::OccSimplifier(Solver* _solver):
     , toClear(solver->toClear)
     , velim_order(VarOrderLt(varElimComplexity))
     , topLevelGauss(NULL)
-    //, gateFinder(NULL)
+    , gateFinder(NULL)
     , anythingHasBeenBlocked(false)
     , blockedMapBuilt(false)
 {
@@ -105,9 +106,6 @@ OccSimplifier::OccSimplifier(Solver* _solver):
     #endif
     sub_str = new SubsumeStrengthen(this, solver);
 
-    if (solver->conf.doGateFind) {
-        //gateFinder = new GateFinder(this, solver);
-    }
     tmp_bin_cl.resize(2);
 }
 
@@ -116,7 +114,7 @@ OccSimplifier::~OccSimplifier()
     delete bva;
     delete topLevelGauss;
     delete sub_str;
-    //delete gateFinder;
+    delete gateFinder;
 }
 
 void OccSimplifier::new_var(const uint32_t /*orig_outer*/)
@@ -1301,6 +1299,28 @@ void OccSimplifier::sort_occurs_and_set_abst()
     }
 }
 
+vector<uint32_t> OccSimplifier::get_definabe(vector<uint32_t>& vars)
+{
+    vector<uint32_t> definable;
+    gateFinder = new GateFinder(this, solver);
+
+    startup = false;
+    double backup = solver->conf.maxOccurRedMB;
+    if (!setup()) {
+        goto end;
+    }
+
+    gateFinder->find_all();
+    definable = gateFinder->get_definability(vars);
+    gateFinder->cleanup();
+
+    end:
+    solver->conf.maxOccurRedMB = backup;
+    delete gateFinder;
+    gateFinder = NULL;
+    return definable;
+}
+
 bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
 {
     std::istringstream ss(strategy);
@@ -1412,11 +1432,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 added_long_cl.clear();
                 solver->clean_occur_from_removed_clauses_only_smudged();
             }
-        } /*else if (token == "occ-gates") {
-            if (solver->conf.doGateFind) {
-                gateFinder->doAll();
-            }
-        }*/ else if (token == "") {
+        } else if (token == "") {
             //nothing, ignore empty token
         } else {
              cout << "ERROR: occur strategy '" << token << "' not recognised!" << endl;
@@ -3210,14 +3226,6 @@ void OccSimplifier::linkInClause(Clause& cl)
     }
     cl.setOccurLinked(true);
 }
-
-
-/*void OccSimplifier::print_gatefinder_stats() const
-{
-    if (gateFinder) {
-        gateFinder->get_stats().print(solver->nVarsOuter());
-    }
-}*/
 
 double OccSimplifier::Stats::total_time(OccSimplifier* occs) const
 {

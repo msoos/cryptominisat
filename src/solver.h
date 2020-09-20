@@ -254,8 +254,9 @@ class Solver : public Searcher
         bool renumber_variables(bool must_renumber = true);
         SatZillaFeatures calculate_satzilla_features();
         SatZillaFeatures last_solve_satzilla_feature;
+        vector<uint32_t> get_definabe(vector<uint32_t>& vars);
 
-        uint32_t undefine(vector<uint32_t>& trail_lim_vars);
+
         vector<Lit> get_toplevel_units_internal(bool outer_numbering) const;
 
         #ifdef USE_GAUSS

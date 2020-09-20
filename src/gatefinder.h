@@ -37,11 +37,10 @@ using std::set;
 
 class OrGate {
     public:
-        OrGate(const Lit& _rhs, Lit _lit1, Lit _lit2, const bool _red) :
+        OrGate(const Lit& _rhs, Lit _lit1, Lit _lit2) :
             lit1(_lit1)
             , lit2(_lit2)
             , rhs(_rhs)
-            , red(_red)
         {
             if (lit1 > lit2)
                 std::swap(lit1, lit2);
@@ -66,9 +65,6 @@ class OrGate {
 
         //RHS
         Lit rhs;
-
-        //Data about gate
-        bool red;
 };
 
 struct GateCompareForEq
@@ -91,9 +87,7 @@ inline std::ostream& operator<<(std::ostream& os, const OrGate& gate)
     os
     << " gate "
     << " lits: " << gate.lit1 << ", " << gate.lit2
-    << " rhs: " << gate.rhs
-    << " learnt " << gate.red
-    ;
+    << " rhs: " << gate.rhs;
     return os;
 }
 
@@ -101,7 +95,9 @@ class GateFinder
 {
 public:
     GateFinder(OccSimplifier *simplifier, Solver *control);
-    bool doAll();
+    void find_all();
+    void cleanup();
+    vector<uint32_t> get_definability(vector<uint32_t>& vars);
 
     //Stats
     struct Stats
@@ -147,10 +143,8 @@ public:
         uint64_t numERVars = 0;
 
         //Gates
-        uint64_t learntGatesSize = 0;
-        uint64_t numRed = 0;
-        uint64_t irredGatesSize = 0;
-        uint64_t numIrred = 0;
+        uint64_t gatesSize = 0;
+        uint64_t num = 0;
     };
 
     const Stats& get_stats() const;
@@ -185,14 +179,12 @@ private:
     bool remove_clauses_using_and_gate(
         const OrGate& gate
         , const bool reallyRemove
-        , const bool only_irred
     );
 
     cl_abst_type  calc_sorted_occ_and_set_seen2(
         const OrGate& gate
         , uint32_t& maxSize
         , uint32_t& minSize
-        , const bool only_irred
     );
     void set_seen2_and_abstraction(
         const Clause& cl
@@ -218,36 +210,24 @@ private:
         , const size_t maxSize
         , const cl_abst_type abstraction
         , const OrGate& gate
-        , const bool only_irred
     );
 
     ClOffset findAndGateOtherCl(
         const vector<ClOffset>& this_sizeSortedOcc
         , const Lit lit
         , const cl_abst_type abst2
-        , const bool gate_is_red
-        , const bool only_irred
-    );
-    bool findAndGateOtherCl_tri(
-       watch_subarray_const ws_list
-       , const bool gate_is_red
-       , const bool only_irred
-       , Watched& ret
     );
     bool find_pair_for_and_gate_reduction_tri(
         const Watched& ws
         , const OrGate& gate
-        , const bool only_irred
         , Watched& found_pair
     );
     bool remove_clauses_using_and_gate_tri(
        const OrGate& gate
         , const bool really_remove
-        , const bool only_irred
     );
     void set_seen2_tri(
        const OrGate& gate
-        , const bool only_irred
     );
     bool check_seen_and_gate_against_lit(
         const Lit lit
@@ -263,31 +243,6 @@ private:
     //For temporaries
     vector<uint32_t> seen2Set; //Bits that have been set in seen2, and later need to be cleared
     set<ClOffset> clToUnlink;
-    struct TriToUnlink
-    {
-        TriToUnlink(Lit _lit2, Lit _lit3, bool _red) :
-            lit2(_lit2)
-            , lit3(_lit3)
-            , red(_red)
-        {}
-
-        const Lit lit2;
-        const Lit lit3;
-        const bool red;
-
-        bool operator<(const TriToUnlink& other) const
-        {
-            if (lit2 != other.lit2)
-                return lit2 < other.lit2;
-            if (lit3 != other.lit3)
-                return lit3 < other.lit3;
-            return red < other.red;
-        }
-    };
-    set<TriToUnlink> tri_to_unlink;
-
-    //Graph
-    void print_graphviz_dot2(); ///<Print Graphviz DOT file describing the gates
 
     //Stats
     Stats runStats;

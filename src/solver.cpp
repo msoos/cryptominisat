@@ -1551,7 +1551,8 @@ lbool Solver::simplify_problem_outside()
     }
     #endif
 
-    if (nVars() > 0 && conf.do_simplify_problem) {
+    //ignore "no simplify" if explicitly called
+    if (nVars() > 0 /*&& conf.do_simplify_problem*/) {
         bool backup_sls = conf.doSLS;
         bool backup_breakid = conf.doBreakid;
         conf.doSLS = false;
@@ -4905,6 +4906,28 @@ bool Solver::assump_contains_xor_clash()
     }
 
     return ret;
+}
+
+vector<uint32_t> Solver::get_definabe(vector<uint32_t>& vars)
+{
+    if (get_num_bva_vars() != 0) {
+        cout << "ERROR: get_num_bva_vars(): " << get_num_bva_vars() << endl;
+        assert(false && "ERROR: BVA is currently not allowed at get_definabe(), please turn it off");
+        //out_implied = map_back_vars_to_without_bva(out_implied);
+        exit(-1);
+    }
+
+    //Map to inter
+    for(auto& l: vars) {
+        l = map_outer_to_inter(l);
+    }
+    vector<uint32_t> definable = occsimplifier->get_definabe(vars);
+
+    for(uint32_t& v: definable) {
+        v = map_inter_to_outer(v);
+    }
+
+    return definable;
 }
 
 #endif

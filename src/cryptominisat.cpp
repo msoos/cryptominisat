@@ -1240,16 +1240,15 @@ void DLL_PUBLIC SATSolver::set_up_for_arjun()
         conf.xor_detach_reattach = true;
         conf.global_multiplier_multiplier_max = 1;
         conf.orig_global_timeout_multiplier = 1.5;
-        conf.min_bva_gain = 2;
+        conf.do_bva = false;
         conf.polar_stable_every_n = 100000; //i.e. never
 
-        conf.simplify_at_startup = 1;
+        conf.do_simplify_problem = false; //no simplification without explicity calling it
         conf.varElimRatioPerIter = 1;
         conf.restartType = Restart::never;
         conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
         conf.branch_strategy_setup = "vsids1";
         conf.bva_every_n = 1;
-        conf.do_simplify_problem = true;
         conf.diff_declev_for_chrono = -1;
         data->solvers[i]->setConf(conf);
     }
@@ -1295,6 +1294,11 @@ DLL_PUBLIC void SATSolver::set_var_weight(Lit lit, double weight)
 DLL_PUBLIC vector<uint32_t> SATSolver::get_var_incidence()
 {
     return data->solvers[data->which_solved]->get_outside_var_incidence();
+}
+
+DLL_PUBLIC vector<uint32_t> SATSolver::get_definabe(vector<uint32_t>& vars)
+{
+    return data->solvers[0]->get_definabe(vars);
 }
 
 DLL_PUBLIC vector<uint32_t> SATSolver::get_var_incidence_also_red()
