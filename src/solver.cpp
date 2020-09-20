@@ -4918,16 +4918,33 @@ vector<uint32_t> Solver::get_definabe(vector<uint32_t>& vars)
     }
 
     //Map to inter
-    for(auto& l: vars) {
-        l = map_outer_to_inter(l);
+    vector<uint32_t> inter_vars;
+    for(auto& v1: vars) {
+        assert(v1 < nVarsOuter());
+        uint32_t v2 = map_outer_to_inter(v1);
+        assert(v2 < varData.size());
+        //multiple outer variables can map to the same inter var
+        //but we don't want that
+        if (varData[v2].removed == Removed::none && !seen[v2]) {
+            inter_vars.push_back(v2);
+            seen[v2] = true;
+        }
     }
-    vector<uint32_t> definable = occsimplifier->get_definabe(vars);
+    for(auto v: inter_vars) {
+        seen[v] = 0;
+    }
+
+    vector<uint32_t> definable = occsimplifier->get_definabe(inter_vars);
 
     for(uint32_t& v: definable) {
         v = map_inter_to_outer(v);
     }
 
     return definable;
+}
+
+void Solver::remove_and_clean_all() {
+    clauseCleaner->remove_and_clean_all();
 }
 
 #endif

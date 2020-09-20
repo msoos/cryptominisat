@@ -255,6 +255,7 @@ class Solver : public Searcher
         SatZillaFeatures calculate_satzilla_features();
         SatZillaFeatures last_solve_satzilla_feature;
         vector<uint32_t> get_definabe(vector<uint32_t>& vars);
+        void remove_and_clean_all();
 
 
         vector<Lit> get_toplevel_units_internal(bool outer_numbering) const;

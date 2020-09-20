@@ -42,12 +42,13 @@ GateFinder::GateFinder(OccSimplifier *_simplifier, Solver *_solver) :
     , seen2(_solver->seen2)
     , toClear(solver->toClear)
 {
-    sizeSortedOcc.resize(solver->conf.maxGateBasedClReduceSize+1);
+//     sizeSortedOcc.resize(solver->conf.maxGateBasedClReduceSize+1);
 }
 
 void GateFinder::cleanup()
 {
     solver->clean_occur_from_idx_types_only_smudged();
+    orGates.clear();
 }
 
 void GateFinder::find_all()
@@ -136,7 +137,9 @@ vector<uint32_t> GateFinder::get_definability(vector<uint32_t>& vars)
 
     vector<uint32_t> definable;
     assert(toClear.empty());
-    for(auto var: vars) {
+    for(const auto var: vars) {
+        assert(var < solver->nVars() && "get_definability must not be passed variables that no longer exist");
+        assert(var < seen2.size());
         seen2[var] = 1;
     }
 
@@ -147,6 +150,9 @@ vector<uint32_t> GateFinder::get_definability(vector<uint32_t>& vars)
         if (seen2[g.lit1.var()] && seen2[g.lit2.var()] && seen2[g.rhs.var()]) {
             inc[g.rhs.var()]++;
         }
+    }
+    for(const auto var: vars) {
+        assert(var < inc.size());
     }
     std::sort(vars.begin(), vars.end(), IncidenceSorter(inc));
 
@@ -167,10 +173,10 @@ vector<uint32_t> GateFinder::get_definability(vector<uint32_t>& vars)
                 const OrGate& g = orGates[w.get_idx()];
                 assert(g.rhs.var() == var);
 
-                //must be part of original set, and must not have been used to define anything
+                //must be part of original set, and its ingredients must not have been defined
                 if (seen2[g.rhs.var()] && !seen[g.rhs.var()]) {
                     if (seen2[g.lit1.var()] && seen2[g.lit2.var()] //must be part of original set
-                        && !seen[g.lit1.var()] && !seen[g.lit2.var()]) //have not been used to define anything else
+                        && !seen[g.lit1.var()] && !seen[g.lit2.var()]) //ingredients must not have been defined
                     {
                         seen[g.rhs.var()] = 1;
                         toClear.push_back(g.rhs);

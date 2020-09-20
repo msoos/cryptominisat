@@ -197,6 +197,7 @@ namespace CMSat {
         std::vector<uint32_t> get_var_incidence_also_red();
         std::vector<double> get_vsids_scores();
         std::vector<uint32_t> get_definabe(std::vector<uint32_t>& vars);
+        void remove_and_clean_all();
 
         //Given a set of literals to enqueue, returns:
         // 1) Whether they imply SAT/UNSAT. If "true": SAT. If "false": UNSAT

@@ -1248,7 +1248,6 @@ void DLL_PUBLIC SATSolver::set_up_for_arjun()
         conf.restartType = Restart::never;
         conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
         conf.branch_strategy_setup = "vsids1";
-        conf.bva_every_n = 1;
         conf.diff_declev_for_chrono = -1;
         data->solvers[i]->setConf(conf);
     }
@@ -1299,6 +1298,13 @@ DLL_PUBLIC vector<uint32_t> SATSolver::get_var_incidence()
 DLL_PUBLIC vector<uint32_t> SATSolver::get_definabe(vector<uint32_t>& vars)
 {
     return data->solvers[0]->get_definabe(vars);
+}
+
+DLL_PUBLIC void SATSolver::remove_and_clean_all()
+{
+    for(auto& s: data->solvers) {
+        s->remove_and_clean_all();
+    }
 }
 
 DLL_PUBLIC vector<uint32_t> SATSolver::get_var_incidence_also_red()

@@ -1302,22 +1302,26 @@ void OccSimplifier::sort_occurs_and_set_abst()
 vector<uint32_t> OccSimplifier::get_definabe(vector<uint32_t>& vars)
 {
     vector<uint32_t> definable;
+    auto origTrailSize = solver->trail_size();
     gateFinder = new GateFinder(this, solver);
 
     startup = false;
     double backup = solver->conf.maxOccurRedMB;
+    solver->conf.maxOccurRedMB = 0;
     if (!setup()) {
-        goto end;
+        delete gateFinder;
+        gateFinder = NULL;
+        return vector<uint32_t>();
     }
 
     gateFinder->find_all();
     definable = gateFinder->get_definability(vars);
     gateFinder->cleanup();
 
-    end:
     solver->conf.maxOccurRedMB = backup;
     delete gateFinder;
     gateFinder = NULL;
+    finishUp(origTrailSize);
     return definable;
 }
 
