@@ -154,7 +154,7 @@ vector<uint32_t> GateFinder::get_definability(vector<uint32_t>& vars)
     for(const auto var: vars) {
         assert(var < inc.size());
     }
-    std::sort(vars.begin(), vars.end(), IncidenceSorter(inc));
+    std::stable_sort(vars.begin(), vars.end(), IncidenceSorter(inc));
 
     for(auto var: vars) {
         //already defined, let's not do circular dependency
