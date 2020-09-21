@@ -1234,6 +1234,7 @@ void DLL_PUBLIC SATSolver::set_up_for_arjun()
 {
     for (size_t i = 0; i < data->solvers.size(); i++) {
         SolverConf conf = data->solvers[i]->getConf();
+        conf.restart_first = 200;
         conf.doBreakid = false;
         conf.gaussconf.max_num_matrices = 0;
         conf.xor_finder_time_limitM = 0;
@@ -1298,6 +1299,20 @@ DLL_PUBLIC vector<uint32_t> SATSolver::get_var_incidence()
 DLL_PUBLIC vector<uint32_t> SATSolver::get_definabe(vector<uint32_t>& vars)
 {
     return data->solvers[0]->get_definabe(vars);
+}
+
+DLL_PUBLIC void SATSolver::find_backbone(
+    std::vector<Lit>* assumptions,
+    std::vector<uint32_t>& indic_to_var,
+    uint32_t orig_num_vars,
+    std::vector<uint32_t>& non_indep_vars)
+{
+    assert(data->solvers.size() == 1);
+    return data->solvers[0]->find_backbone(
+        assumptions,
+        indic_to_var,
+        orig_num_vars,
+        non_indep_vars);
 }
 
 DLL_PUBLIC void SATSolver::remove_and_clean_all()

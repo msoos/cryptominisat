@@ -3964,3 +3964,171 @@ void Searcher::bump_var_importance(const uint32_t var)
         #endif
     }
 }
+
+void Searcher::find_backbone(
+    std::vector<Lit>* _assumptions,
+    std::vector<uint32_t>& indic_to_var,
+    uint32_t orig_num_vars,
+    std::vector<uint32_t>& non_indep_vars)
+{
+    assert(ok);
+    assert(qhead == trail.size());
+    max_confl_per_search_solve_call = 500;
+    num_search_called++;
+    #ifdef SLOW_DEBUG
+    //When asking for a lot of simple soluitons, search() gets called a lot
+    check_no_removed_or_freed_cl_in_watch();
+    #endif
+
+    if (conf.verbosity >= 6) {
+        cout
+        << "c Searcher::solve() called"
+        << endl;
+    }
+
+    resetStats();
+    lbool status = l_Undef;
+
+    set_branch_strategy(branch_strategy_num);
+    setup_restart_strategy();
+    check_calc_satzilla_features(true);
+    check_calc_vardist_features(true);
+    setup_polarity_strategy();
+
+    //Stats reset & update
+    stats.numRestarts++;
+    hist.clear();
+    hist.reset_glue_hist_size(conf.shortTermHistorySize);
+
+    assert(solver->prop_at_head());
+
+    //Loop until restart or finish (SAT/UNSAT)
+    PropBy confl;
+
+    //Turn off non-chronological backtracking, it'd be a MESS
+    conf.diff_declev_for_chrono = -1;
+
+    backbone_test_var = _assumptions->at(_assumptions->size()-2).var();
+    assert(backbone_test_var < orig_num_vars);
+
+    max_confl_for_backbone = sumConflicts + 500;
+    //TODO we never restart!!!
+    while (true) {
+        if (sumConflicts > max_confl_for_backbone) {
+            _assumptions->pop_back();
+            _assumptions->pop_back();
+            break;
+        }
+        confl = propagate_any_order_fast();
+
+        if (!confl.isNULL()) {
+            hist.trailDepthHistLonger.push(trail.size());
+            if (!handle_conflict(confl)) {
+                assert(false && "This would mean we have a conflict at level 0");
+            }
+        } else {
+            assert(ok);
+            if (decisionLevel() == 0) {
+                clean_clauses_if_needed();
+            }
+            reduce_db_if_needed();
+            lbool dec_ret = new_decision_backbone(
+                _assumptions,
+                indic_to_var,
+                orig_num_vars,
+                non_indep_vars
+            );
+            if (dec_ret != l_Undef) {
+                break;
+            }
+        }
+    }
+
+    cancelUntil<true, false>(0);
+    confl = propagate<false>();
+    if (!confl.isNULL()) {
+        ok = false;
+        assert(false && "That's not possible with backbone");
+    }
+}
+
+lbool Searcher::new_decision_backbone(
+    std::vector<Lit>* _assumptions,
+    std::vector<uint32_t>& indic_to_var,
+    uint32_t orig_num_vars,
+    std::vector<uint32_t>& non_indep_vars)
+{
+    Lit next = lit_Undef;
+    while (decisionLevel() < _assumptions->size()) {
+        // Perform user provided assumption:
+        Lit p = _assumptions->at(decisionLevel());
+        p = solver->varReplacer->get_lit_replaced_with_outer(p);
+        p = map_outer_to_inter(p);
+//         cout
+//         << "val: " << value(p) << " "
+//         << removed_type_to_string(varData[p.var()].removed)
+//         << endl;
+        assert(varData[p.var()].removed == Removed::none);
+
+        if (value(p) == l_True) {
+            // Dummy decision level:
+            new_decision_level();
+//             cout << "Dummy dec level --- do we have to deal with this?" << endl;
+        } else if (value(p) == l_False) {
+            //Deal with top 2 TRUE/FALSE
+            _assumptions->pop_back();
+            _assumptions->pop_back();
+            non_indep_vars.push_back(backbone_test_var);
+            max_confl_for_backbone = sumConflicts + 500;
+
+            if (_assumptions->empty()) {
+                cout << "Finished _assumptions off!" << endl;
+                next = lit_Undef;
+                break;
+            }
+
+            //Deal with indic, add TRUE/FALSE duo
+            Lit indic = _assumptions->at(_assumptions->size()-1);
+            assert(indic.sign());
+            _assumptions->pop_back();
+            cancelUntil(_assumptions->size());
+
+            uint32_t var = indic_to_var[indic.var()];
+            backbone_test_var = var;
+            Lit l = map_outer_to_inter(Lit(var, false));
+            _assumptions->push_back(l);
+            Lit l2 = map_outer_to_inter(Lit(var+orig_num_vars, true));
+            _assumptions->push_back(l2);
+
+            continue;
+        } else {
+            assert(p.var() < nVars());
+            stats.decisionsAssump++;
+            next = p;
+            break;
+        }
+    }
+
+    if (next == lit_Undef) {
+        // New variable decision:
+        next = pickBranchLit();
+
+        //No decision taken, because it's SAT
+        if (next == lit_Undef) {
+            _assumptions->pop_back();
+            _assumptions->pop_back();
+            return l_True;
+        }
+
+        //Update stats
+        stats.decisions++;
+        sumDecisions++;
+    }
+
+    // Increase decision level and enqueue 'next'
+    assert(value(next) == l_Undef);
+    new_decision_level();
+    enqueue<false>(next);
+
+    return l_Undef;
+}

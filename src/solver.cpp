@@ -1569,13 +1569,10 @@ lbool Solver::simplify_problem_outside()
     return status;
 }
 
-lbool Solver::solve_with_assumptions(
-    const vector<Lit>* _assumptions,
-    const bool only_sampling_solution
-) {
+void Solver::reset_for_solving()
+{
     longest_trail_ever = 0; //reset: probably new clauses, changed assumptions
     fresh_solver = false;
-    move_to_outside_assumps(_assumptions);
     set_assumptions();
     #ifdef SLOW_DEBUG
     if (ok) {
@@ -1597,6 +1594,15 @@ lbool Solver::solve_with_assumptions(
     if (conf.verbosity >= 6) {
         cout << "c " << __func__ << " called" << endl;
     }
+    datasync->rebuild_bva_map();
+}
+
+lbool Solver::solve_with_assumptions(
+    const vector<Lit>* _assumptions,
+    const bool only_sampling_solution
+) {
+    move_to_outside_assumps(_assumptions);
+    reset_for_solving();
 
     //Check if adding the clauses caused UNSAT
     lbool status = l_Undef;
@@ -1615,9 +1621,6 @@ lbool Solver::solve_with_assumptions(
         breakid->start_new_solving();
     }
     #endif
-
-    //Clean up as a startup
-    datasync->rebuild_bva_map();
 
     if (conf.preprocess == 2) {
         status = load_state(conf.saved_state_file);
@@ -4945,6 +4948,40 @@ vector<uint32_t> Solver::get_definabe(vector<uint32_t>& vars)
 
 void Solver::remove_and_clean_all() {
     clauseCleaner->remove_and_clean_all();
+}
+
+void Solver::find_backbone(
+    std::vector<Lit>* _assumptions,
+    std::vector<uint32_t> indic_to_var,
+    uint32_t orig_num_vars,
+    std::vector<uint32_t>& non_indep_vars)
+{
+    assert(orig_num_vars < solver->nVarsOuter()/2);
+    assert(non_indep_vars.empty());
+    assert(okay());
+    assert(prop_at_head());
+    assert(get_num_bva_vars() == 0);
+    assert(conf.do_bva == false);
+    move_to_outside_assumps(NULL);
+    reset_for_solving();
+
+    #ifdef USE_GAUSS
+    clear_gauss_matrices();
+    #endif
+
+    Searcher::find_backbone(
+        _assumptions,
+        indic_to_var,
+        orig_num_vars,
+        non_indep_vars);
+
+
+    //Update stats
+    sumSearchStats += Searcher::get_stats();
+    sumPropStats += propStats;
+    propStats.clear();
+    Searcher::resetStats();
+
 }
 
 #endif

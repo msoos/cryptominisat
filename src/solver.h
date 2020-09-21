@@ -256,6 +256,11 @@ class Solver : public Searcher
         SatZillaFeatures last_solve_satzilla_feature;
         vector<uint32_t> get_definabe(vector<uint32_t>& vars);
         void remove_and_clean_all();
+        void find_backbone(
+            std::vector<Lit>* assumptions,
+            std::vector<uint32_t> indic_to_var,
+            uint32_t orig_num_vars,
+            std::vector<uint32_t>& non_indep_vars);
 
 
         vector<Lit> get_toplevel_units_internal(bool outer_numbering) const;
@@ -305,6 +310,7 @@ class Solver : public Searcher
         FRIEND_TEST(SearcherTest, pickpolar_auto_not_changed_by_simp);
         #endif
 
+        void reset_for_solving();
         vector<Lit> add_clause_int_tmp_cl;
         lbool iterate_until_solved();
         uint64_t mem_used_vardata() const;
