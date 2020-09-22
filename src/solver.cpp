@@ -4950,11 +4950,12 @@ void Solver::remove_and_clean_all() {
     clauseCleaner->remove_and_clean_all();
 }
 
-void Solver::find_backbone(
+lbool Solver::find_backbone(
     std::vector<Lit>* _assumptions,
     std::vector<uint32_t> indic_to_var,
     uint32_t orig_num_vars,
-    std::vector<uint32_t>& non_indep_vars)
+    std::vector<uint32_t>& non_indep_vars,
+    uint32_t& last_test_var)
 {
     assert(orig_num_vars < solver->nVarsOuter()/2);
     assert(non_indep_vars.empty());
@@ -4969,11 +4970,12 @@ void Solver::find_backbone(
     clear_gauss_matrices();
     #endif
 
-    Searcher::find_backbone(
+    lbool ret = Searcher::find_backbone(
         _assumptions,
         indic_to_var,
         orig_num_vars,
-        non_indep_vars);
+        non_indep_vars,
+        last_test_var);
 
 
     //Update stats
@@ -4982,6 +4984,7 @@ void Solver::find_backbone(
     propStats.clear();
     Searcher::resetStats();
 
+    return ret;
 }
 
 #endif

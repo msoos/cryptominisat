@@ -1301,18 +1301,20 @@ DLL_PUBLIC vector<uint32_t> SATSolver::get_definabe(vector<uint32_t>& vars)
     return data->solvers[0]->get_definabe(vars);
 }
 
-DLL_PUBLIC void SATSolver::find_backbone(
+DLL_PUBLIC lbool SATSolver::find_backbone(
     std::vector<Lit>* assumptions,
     std::vector<uint32_t>& indic_to_var,
     uint32_t orig_num_vars,
-    std::vector<uint32_t>& non_indep_vars)
+    std::vector<uint32_t>& non_indep_vars,
+    uint32_t& last_test_var)
 {
     assert(data->solvers.size() == 1);
     return data->solvers[0]->find_backbone(
         assumptions,
         indic_to_var,
         orig_num_vars,
-        non_indep_vars);
+        non_indep_vars,
+        last_test_var);
 }
 
 DLL_PUBLIC void SATSolver::remove_and_clean_all()

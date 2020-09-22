@@ -3965,11 +3965,12 @@ void Searcher::bump_var_importance(const uint32_t var)
     }
 }
 
-void Searcher::find_backbone(
+lbool Searcher::find_backbone(
     std::vector<Lit>* _assumptions,
     std::vector<uint32_t>& indic_to_var,
     uint32_t orig_num_vars,
-    std::vector<uint32_t>& non_indep_vars)
+    std::vector<uint32_t>& non_indep_vars,
+    uint32_t& last_test_var)
 {
     assert(ok);
     assert(qhead == trail.size());
@@ -3987,7 +3988,6 @@ void Searcher::find_backbone(
     }
 
     resetStats();
-    lbool status = l_Undef;
 
     set_branch_strategy(branch_strategy_num);
     setup_restart_strategy();
@@ -4009,11 +4009,13 @@ void Searcher::find_backbone(
     conf.diff_declev_for_chrono = -1;
 
     backbone_test_var = _assumptions->at(_assumptions->size()-2).var();
+    assert(last_test_var == backbone_test_var);
     assert(backbone_test_var < orig_num_vars);
 
-    max_confl_for_backbone = sumConflicts + 500;
+    max_confl_for_backbone = sumConflicts + conf.max_confl;
     //TODO we never restart!!!
-    while (true) {
+    lbool status = l_Undef;
+    while (status == l_Undef) {
         if (sumConflicts > max_confl_for_backbone) {
             _assumptions->pop_back();
             _assumptions->pop_back();
@@ -4032,15 +4034,13 @@ void Searcher::find_backbone(
                 clean_clauses_if_needed();
             }
             reduce_db_if_needed();
-            lbool dec_ret = new_decision_backbone(
+            status = new_decision_backbone(
                 _assumptions,
                 indic_to_var,
                 orig_num_vars,
                 non_indep_vars
             );
-            if (dec_ret != l_Undef) {
-                break;
-            }
+            assert(status != l_False && "We never return l_False");
         }
     }
 
@@ -4048,8 +4048,12 @@ void Searcher::find_backbone(
     confl = propagate<false>();
     if (!confl.isNULL()) {
         ok = false;
-        assert(false && "That's not possible with backbone");
+        assert(false && "That's not possible with new_deciion_backbone");
     }
+    last_test_var = backbone_test_var;
+
+    assert(status != l_False && "We can not have l_False, we handle that in new_deciion_backbone");
+    return status;
 }
 
 lbool Searcher::new_decision_backbone(
@@ -4079,10 +4083,11 @@ lbool Searcher::new_decision_backbone(
             _assumptions->pop_back();
             _assumptions->pop_back();
             non_indep_vars.push_back(backbone_test_var);
-            max_confl_for_backbone = sumConflicts + 500;
+            max_confl_for_backbone = sumConflicts + conf.max_confl;
 
             if (_assumptions->empty()) {
                 cout << "Finished _assumptions off!" << endl;
+                backbone_test_var = var_Undef;
                 next = lit_Undef;
                 break;
             }

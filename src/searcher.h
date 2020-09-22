@@ -219,11 +219,12 @@ class Searcher : public HyperEngine
     protected:
         Solver* solver;
         lbool search();
-        void find_backbone(
+        lbool find_backbone(
             std::vector<Lit>* _assumptions,
             std::vector<uint32_t>& indic_to_var,
             uint32_t orig_num_vars,
-            std::vector<uint32_t>& non_indep_vars);
+            std::vector<uint32_t>& non_indep_vars,
+            uint32_t& last_test_var);
         lbool new_decision_backbone(
             std::vector<Lit>* _assumptions,
             std::vector<uint32_t>& indic_to_var,
