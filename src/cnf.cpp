@@ -776,8 +776,8 @@ vector<uint32_t> CNF::get_outside_var_incidence()
         const Lit l = Lit::toLit(i);
         for(const auto& x: watches[l]) {
             if (x.isBin() && !x.red()) {
-                inc[x.lit2().var()]+=2;
-                inc[l.var()]+=2;
+                inc[x.lit2().var()]++;
+                inc[l.var()]++;
             }
         }
     }
