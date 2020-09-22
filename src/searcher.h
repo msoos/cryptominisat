@@ -224,12 +224,14 @@ class Searcher : public HyperEngine
             std::vector<uint32_t>& indic_to_var,
             uint32_t orig_num_vars,
             std::vector<uint32_t>& non_indep_vars,
-            uint32_t& last_test_var);
+            uint32_t& last_test_var,
+            uint32_t indep_size);
         lbool new_decision_backbone(
             std::vector<Lit>* _assumptions,
             std::vector<uint32_t>& indic_to_var,
             uint32_t orig_num_vars,
-            std::vector<uint32_t>& non_indep_vars);
+            std::vector<uint32_t>& non_indep_vars,
+            uint32_t indep_size);
         uint32_t max_confl_for_backbone = 0;
         uint32_t backbone_test_var;
 

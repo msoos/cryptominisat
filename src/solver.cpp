@@ -4955,7 +4955,8 @@ lbool Solver::find_backbone(
     std::vector<uint32_t> indic_to_var,
     uint32_t orig_num_vars,
     std::vector<uint32_t>& non_indep_vars,
-    uint32_t& last_test_var)
+    uint32_t& last_test_var,
+    uint32_t indep_size)
 {
     assert(orig_num_vars < solver->nVarsOuter()/2);
     assert(non_indep_vars.empty());
@@ -4975,7 +4976,8 @@ lbool Solver::find_backbone(
         indic_to_var,
         orig_num_vars,
         non_indep_vars,
-        last_test_var);
+        last_test_var,
+        indep_size);
 
 
     //Update stats

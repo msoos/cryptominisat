@@ -1306,7 +1306,8 @@ DLL_PUBLIC lbool SATSolver::find_backbone(
     std::vector<uint32_t>& indic_to_var,
     uint32_t orig_num_vars,
     std::vector<uint32_t>& non_indep_vars,
-    uint32_t& last_test_var)
+    uint32_t& last_test_var,
+    uint32_t indep_size)
 {
     assert(data->solvers.size() == 1);
     return data->solvers[0]->find_backbone(
@@ -1314,7 +1315,8 @@ DLL_PUBLIC lbool SATSolver::find_backbone(
         indic_to_var,
         orig_num_vars,
         non_indep_vars,
-        last_test_var);
+        last_test_var,
+        indep_size);
 }
 
 DLL_PUBLIC void SATSolver::remove_and_clean_all()

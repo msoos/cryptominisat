@@ -3970,7 +3970,8 @@ lbool Searcher::find_backbone(
     std::vector<uint32_t>& indic_to_var,
     uint32_t orig_num_vars,
     std::vector<uint32_t>& non_indep_vars,
-    uint32_t& last_test_var)
+    uint32_t& last_test_var,
+    uint32_t indep_size)
 {
     assert(ok);
     assert(qhead == trail.size());
@@ -4038,7 +4039,8 @@ lbool Searcher::find_backbone(
                 _assumptions,
                 indic_to_var,
                 orig_num_vars,
-                non_indep_vars
+                non_indep_vars,
+                indep_size
             );
             assert(status != l_False && "We never return l_False");
         }
@@ -4060,7 +4062,8 @@ lbool Searcher::new_decision_backbone(
     std::vector<Lit>* _assumptions,
     std::vector<uint32_t>& indic_to_var,
     uint32_t orig_num_vars,
-    std::vector<uint32_t>& non_indep_vars)
+    std::vector<uint32_t>& non_indep_vars,
+    uint32_t indep_size)
 {
     Lit next = lit_Undef;
     while (decisionLevel() < _assumptions->size()) {
@@ -4085,11 +4088,16 @@ lbool Searcher::new_decision_backbone(
             non_indep_vars.push_back(backbone_test_var);
             max_confl_for_backbone = sumConflicts + conf.max_confl;
 
+            //Empty
             if (_assumptions->empty()) {
-                cout << "Finished _assumptions off!" << endl;
                 backbone_test_var = var_Undef;
-                next = lit_Undef;
-                break;
+                return l_True;
+            }
+
+            //We reached the bottom
+            if (_assumptions->size() == indep_size) {
+                backbone_test_var = var_Undef;
+                return l_True;
             }
 
             //Deal with indic, add TRUE/FALSE duo

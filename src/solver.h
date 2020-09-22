@@ -261,7 +261,8 @@ class Solver : public Searcher
             std::vector<uint32_t> indic_to_var,
             uint32_t orig_num_vars,
             std::vector<uint32_t>& non_indep_vars,
-            uint32_t& last_test_var);
+            uint32_t& last_test_var,
+            uint32_t indep_size);
 
 
         vector<Lit> get_toplevel_units_internal(bool outer_numbering) const;

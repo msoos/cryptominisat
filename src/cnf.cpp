@@ -766,14 +766,18 @@ void CNF::add_drat(std::ostream* os, bool add_ID) {
 
 vector<uint32_t> CNF::get_outside_var_incidence()
 {
+    assert(get_num_bva_vars() == 0);
+    assert(okay());
+
+
     vector<uint32_t> inc;
-    inc.resize(nVars(), 0);
+    inc.resize(nVarsOuter(), 0);
     for(uint32_t i = 0; i < nVars()*2; i++) {
         const Lit l = Lit::toLit(i);
         for(const auto& x: watches[l]) {
             if (x.isBin() && !x.red()) {
-                inc[x.lit2().var()]++;
-                inc[l.var()]++;
+                inc[x.lit2().var()]+=2;
+                inc[l.var()]+=2;
             }
         }
     }
