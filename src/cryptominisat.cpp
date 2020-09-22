@@ -1246,8 +1246,8 @@ void DLL_PUBLIC SATSolver::set_up_for_arjun()
 
         conf.do_simplify_problem = false; //no simplification without explicity calling it
         conf.varElimRatioPerIter = 1;
-        conf.restartType = Restart::never;
-        conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
+//         conf.restartType = Restart::never;
+//         conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
         conf.branch_strategy_setup = "vsids1";
         conf.diff_declev_for_chrono = -1;
         data->solvers[i]->setConf(conf);
