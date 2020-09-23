@@ -352,7 +352,7 @@ class Searcher : public HyperEngine
         };
         SearchParams params;
         int64_t increasing_phase_size;
-        int64_t max_confl_this_phase;
+        int64_t max_confl_this_restart;
         void  check_need_restart();
         void  check_blocking_restart();
         bool blocked_restart = false;

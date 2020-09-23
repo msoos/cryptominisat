@@ -1326,7 +1326,7 @@ lbool Searcher::search()
             }
         }
     }
-    max_confl_this_phase -= (int64_t)params.conflictsDoneThisRestart;
+    max_confl_this_restart -= (int64_t)params.conflictsDoneThisRestart;
 
     cancelUntil<true, false>(0);
     confl = propagate<false>();
@@ -2626,7 +2626,7 @@ void Searcher::setup_restart_strategy()
 //     }
 
     increasing_phase_size = conf.restart_first;
-    max_confl_this_phase = conf.restart_first;
+    max_confl_this_restart = conf.restart_first;
     switch(cur_rest_type) {
         case Restart::glue:
             params.rest_type = Restart::glue;
@@ -2655,7 +2655,7 @@ void Searcher::setup_restart_strategy()
 void Searcher::adjust_restart_strategy()
 {
     //Haven't finished the phase. Keep rolling.
-    if (max_confl_this_phase > 0)
+    if (max_confl_this_restart > 0)
         return;
 
     //Note that all of this will be overridden by params.max_confl_to_do
@@ -2686,26 +2686,26 @@ void Searcher::adjust_restart_strategy()
     }
 
     switch (params.rest_type) {
-        //max_confl_this_phase -- for this phase of search
+        //max_confl_this_restart -- for this phase of search
         //increasing_phase_size - a value that rolls and increases
         //                        it's start at conf.restart_first and never
         //                        reset
         case Restart::luby:
-            max_confl_this_phase = luby(2, luby_loop_num) * (double)conf.restart_first;
+            max_confl_this_restart = luby(2, luby_loop_num) * (double)conf.restart_first;
             luby_loop_num++;
             break;
 
         case Restart::geom:
             increasing_phase_size = (double)increasing_phase_size * conf.restart_inc;
-            max_confl_this_phase = increasing_phase_size;
+            max_confl_this_restart = increasing_phase_size;
             break;
 
         case Restart::glue:
-            max_confl_this_phase = conf.ratio_glue_geom *increasing_phase_size;
+            max_confl_this_restart = conf.ratio_glue_geom *increasing_phase_size;
             break;
 
         case Restart::never:
-            max_confl_this_phase = 1000ULL*1000ULL*1000ULL;
+            max_confl_this_restart = 1000ULL*1000ULL*1000ULL;
             break;
 
         default:
@@ -2721,7 +2721,7 @@ inline void Searcher::print_local_restart_budget()
         cout << "c [restart] at confl " << solver->sumConflicts << " -- "
         << "adjusting local restart type: "
         << std::left << std::setw(10) << getNameOfRestartType(params.rest_type)
-        << " budget: " << std::setw(9) << max_confl_this_phase
+        << " budget: " << std::setw(9) << max_confl_this_restart
         << std::right
         << " maple step_size: " << maple_step_size
         << " branching: " << std::setw(2) << branch_type_to_string(branch_strategy)
@@ -2759,7 +2759,7 @@ void Searcher::check_need_restart()
     }
 
     //respect restart phase's limit
-    if ((int64_t)params.conflictsDoneThisRestart > max_confl_this_phase) {
+    if ((int64_t)params.conflictsDoneThisRestart > max_confl_this_restart) {
         params.needToStopSearch = true;
     }
 
