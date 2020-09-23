@@ -775,7 +775,10 @@ vector<uint32_t> CNF::get_outside_var_incidence()
     for(uint32_t i = 0; i < nVars()*2; i++) {
         const Lit l = Lit::toLit(i);
         for(const auto& x: watches[l]) {
-            if (x.isBin() && !x.red()) {
+            if (x.isBin() &&
+                !x.red() &&
+                l.var() < x.lit2().var()) //don't count twice
+            {
                 inc[x.lit2().var()]++;
                 inc[l.var()]++;
             }
