@@ -4038,8 +4038,6 @@ lbool Searcher::new_decision_backbone()
 
         //No decision taken, because it's SAT
         if (next == lit_Undef) {
-            backbone._assumptions->pop_back();
-            backbone._assumptions->pop_back();
             return l_True;
         }
 
