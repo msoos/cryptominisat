@@ -4950,43 +4950,4 @@ void Solver::remove_and_clean_all() {
     clauseCleaner->remove_and_clean_all();
 }
 
-lbool Solver::find_backbone(
-    std::vector<Lit>* _assumptions,
-    std::vector<uint32_t> indic_to_var,
-    uint32_t orig_num_vars,
-    std::vector<uint32_t>& non_indep_vars,
-    uint32_t& last_test_var,
-    uint32_t indep_size)
-{
-    assert(orig_num_vars < solver->nVarsOuter()/2);
-    assert(non_indep_vars.empty());
-    assert(okay());
-    assert(prop_at_head());
-    assert(get_num_bva_vars() == 0);
-    assert(conf.do_bva == false);
-    move_to_outside_assumps(NULL);
-    reset_for_solving();
-
-    #ifdef USE_GAUSS
-    clear_gauss_matrices();
-    #endif
-
-    lbool ret = Searcher::find_backbone(
-        _assumptions,
-        indic_to_var,
-        orig_num_vars,
-        non_indep_vars,
-        last_test_var,
-        indep_size);
-
-
-    //Update stats
-    sumSearchStats += Searcher::get_stats();
-    sumPropStats += propStats;
-    propStats.clear();
-    Searcher::resetStats();
-
-    return ret;
-}
-
 #endif

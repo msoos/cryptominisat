@@ -1314,7 +1314,12 @@ lbool Searcher::search()
                 clean_clauses_if_needed();
             }
             reduce_db_if_needed();
-            lbool dec_ret = new_decision<false>();
+            lbool dec_ret;
+            if (backbone.backbone_on) {
+                dec_ret = new_decision_backbone();
+            } else {
+                dec_ret = new_decision<false>();
+            }
             if (dec_ret != l_Undef) {
                 search_ret = dec_ret;
                 goto end;
@@ -2514,6 +2519,23 @@ void Searcher::setup_polarity_strategy()
     }
 }
 
+lbool Searcher::distill_clauses_if_needed()
+{
+    assert(decisionLevel() == 0);
+    if (conf.do_distill_clauses &&
+        sumConflicts > next_distill
+    ) {
+        if (!solver->distill_long_cls->distill(true, false)) {
+            return l_False;
+        }
+        next_distill = std::min<double>(
+            sumConflicts + sumConflicts * conf.distill_increase_conf_ratio + 7000,
+            sumConflicts + conf.distill_min_confl);
+    }
+
+    return l_Undef;
+}
+
 lbool Searcher::solve(
     const uint64_t _max_confls
 ) {
@@ -2560,17 +2582,9 @@ lbool Searcher::solve(
             goto end;
         }
 
-        if (status == l_Undef &&
-            conf.do_distill_clauses &&
-            sumConflicts > next_distill
-        ) {
-            if (!solver->distill_long_cls->distill(true, false)) {
-                status = l_False;
-                goto end;
-            }
-            next_distill = std::min<double>(
-                sumConflicts + sumConflicts * conf.distill_increase_conf_ratio + 7000,
-                sumConflicts + conf.distill_min_confl);
+        if (status == l_Undef && distill_clauses_if_needed() == l_False) {
+            status = l_False;
+            goto end;
         }
     }
 
@@ -3965,153 +3979,49 @@ void Searcher::bump_var_importance(const uint32_t var)
     }
 }
 
-lbool Searcher::find_backbone(
-    std::vector<Lit>* _assumptions,
-    std::vector<uint32_t>& indic_to_var,
-    uint32_t orig_num_vars,
-    std::vector<uint32_t>& non_indep_vars,
-    uint32_t& last_test_var,
-    uint32_t indep_size)
-{
-    assert(ok);
-    assert(qhead == trail.size());
-    max_confl_per_search_solve_call = 500;
-    num_search_called++;
-    #ifdef SLOW_DEBUG
-    //When asking for a lot of simple soluitons, search() gets called a lot
-    check_no_removed_or_freed_cl_in_watch();
-    #endif
-
-    if (conf.verbosity >= 6) {
-        cout
-        << "c Searcher::solve() called"
-        << endl;
-    }
-
-    resetStats();
-
-    set_branch_strategy(branch_strategy_num);
-    setup_restart_strategy();
-    check_calc_satzilla_features(true);
-    check_calc_vardist_features(true);
-    setup_polarity_strategy();
-
-    //Stats reset & update
-    stats.numRestarts++;
-    hist.clear();
-    hist.reset_glue_hist_size(conf.shortTermHistorySize);
-
-    assert(solver->prop_at_head());
-
-    //Loop until restart or finish (SAT/UNSAT)
-    PropBy confl;
-
-    //Turn off non-chronological backtracking, it'd be a MESS
-    conf.diff_declev_for_chrono = -1;
-
-    backbone_test_var = _assumptions->at(_assumptions->size()-2).var();
-    assert(last_test_var == backbone_test_var);
-    assert(backbone_test_var < orig_num_vars);
-
-    max_confl_for_backbone = sumConflicts + conf.max_confl;
-    //TODO we never restart!!!
-    lbool status = l_Undef;
-    while (status == l_Undef) {
-        if (sumConflicts > max_confl_for_backbone) {
-            _assumptions->pop_back();
-            _assumptions->pop_back();
-            break;
-        }
-        confl = propagate_any_order_fast();
-
-        if (!confl.isNULL()) {
-            hist.trailDepthHistLonger.push(trail.size());
-            if (!handle_conflict(confl)) {
-                assert(false && "This would mean we have a conflict at level 0");
-            }
-        } else {
-            assert(ok);
-            if (decisionLevel() == 0) {
-                clean_clauses_if_needed();
-            }
-            reduce_db_if_needed();
-            status = new_decision_backbone(
-                _assumptions,
-                indic_to_var,
-                orig_num_vars,
-                non_indep_vars,
-                indep_size
-            );
-            assert(status != l_False && "We never return l_False");
-        }
-    }
-
-    cancelUntil<true, false>(0);
-    confl = propagate<false>();
-    if (!confl.isNULL()) {
-        ok = false;
-        assert(false && "That's not possible with new_deciion_backbone");
-    }
-    last_test_var = backbone_test_var;
-
-    assert(status != l_False && "We can not have l_False, we handle that in new_deciion_backbone");
-    return status;
-}
-
-lbool Searcher::new_decision_backbone(
-    std::vector<Lit>* _assumptions,
-    std::vector<uint32_t>& indic_to_var,
-    uint32_t orig_num_vars,
-    std::vector<uint32_t>& non_indep_vars,
-    uint32_t indep_size)
+lbool Searcher::new_decision_backbone()
 {
     Lit next = lit_Undef;
-    while (decisionLevel() < _assumptions->size()) {
+    while (decisionLevel() < backbone._assumptions->size()) {
         // Perform user provided assumption:
-        Lit p = _assumptions->at(decisionLevel());
+        Lit p = backbone._assumptions->at(decisionLevel());
         p = solver->varReplacer->get_lit_replaced_with_outer(p);
         p = map_outer_to_inter(p);
-//         cout
-//         << "val: " << value(p) << " "
-//         << removed_type_to_string(varData[p.var()].removed)
-//         << endl;
         assert(varData[p.var()].removed == Removed::none);
 
         if (value(p) == l_True) {
             // Dummy decision level:
             new_decision_level();
-//             cout << "Dummy dec level --- do we have to deal with this?" << endl;
         } else if (value(p) == l_False) {
             //Deal with top 2 TRUE/FALSE
-            _assumptions->pop_back();
-            _assumptions->pop_back();
-            non_indep_vars.push_back(backbone_test_var);
-            max_confl_for_backbone = sumConflicts + conf.max_confl;
+            backbone._assumptions->pop_back();
+            backbone._assumptions->pop_back();
+            backbone.non_indep_vars->push_back(*backbone.backbone_test_var);
 
             //Empty
-            if (_assumptions->empty()) {
-                backbone_test_var = var_Undef;
+            if (backbone._assumptions->empty()) {
+                *(backbone.backbone_test_var) = var_Undef;
                 return l_True;
             }
 
             //We reached the bottom
-            if (_assumptions->size() == indep_size) {
-                backbone_test_var = var_Undef;
+            if (backbone._assumptions->size() == backbone.indep_size) {
+                *backbone.backbone_test_var = var_Undef;
                 return l_True;
             }
 
             //Deal with indic, add TRUE/FALSE duo
-            Lit indic = _assumptions->at(_assumptions->size()-1);
+            Lit indic = backbone._assumptions->at(backbone._assumptions->size()-1);
             assert(indic.sign());
-            _assumptions->pop_back();
-            cancelUntil(_assumptions->size());
+            backbone._assumptions->pop_back();
+            cancelUntil(backbone._assumptions->size());
 
-            uint32_t var = indic_to_var[indic.var()];
-            backbone_test_var = var;
+            uint32_t var = backbone.indic_to_var->at(indic.var());
+            *backbone.backbone_test_var = var;
             Lit l = map_outer_to_inter(Lit(var, false));
-            _assumptions->push_back(l);
-            Lit l2 = map_outer_to_inter(Lit(var+orig_num_vars, true));
-            _assumptions->push_back(l2);
+            backbone._assumptions->push_back(l);
+            Lit l2 = map_outer_to_inter(Lit(var+backbone.orig_num_vars, true));
+            backbone._assumptions->push_back(l2);
 
             continue;
         } else {
@@ -4128,8 +4038,8 @@ lbool Searcher::new_decision_backbone(
 
         //No decision taken, because it's SAT
         if (next == lit_Undef) {
-            _assumptions->pop_back();
-            _assumptions->pop_back();
+            backbone._assumptions->pop_back();
+            backbone._assumptions->pop_back();
             return l_True;
         }
 

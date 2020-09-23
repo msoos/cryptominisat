@@ -256,13 +256,6 @@ class Solver : public Searcher
         SatZillaFeatures last_solve_satzilla_feature;
         vector<uint32_t> get_definabe(vector<uint32_t>& vars);
         void remove_and_clean_all();
-        lbool find_backbone(
-            std::vector<Lit>* assumptions,
-            std::vector<uint32_t> indic_to_var,
-            uint32_t orig_num_vars,
-            std::vector<uint32_t>& non_indep_vars,
-            uint32_t& last_test_var,
-            uint32_t indep_size);
 
 
         vector<Lit> get_toplevel_units_internal(bool outer_numbering) const;

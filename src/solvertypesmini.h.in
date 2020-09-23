@@ -188,6 +188,16 @@ inline std::ostream& operator<<(std::ostream& cout, const lbool val)
 
 enum class rst_dat_type {norm, var, cl};
 
+struct BackBoneData {
+    std::vector<Lit>* _assumptions = NULL;
+    std::vector<uint32_t>* indic_to_var  = NULL;
+    uint32_t orig_num_vars = 0;
+    std::vector<uint32_t>* non_indep_vars = NULL;
+    uint32_t indep_size = 0;
+    bool backbone_on = false;
+    uint32_t* backbone_test_var = NULL;
+};
+
 }
 
 #endif //__SOLVERTYPESMINI_H__
