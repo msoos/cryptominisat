@@ -4015,6 +4015,7 @@ lbool Searcher::new_decision_backbone()
             assert(indic.sign());
             backbone._assumptions->pop_back();
             cancelUntil(backbone._assumptions->size());
+            params.max_confl_to_do = params.conflictsDoneThisRestart + 500;
 
             uint32_t var = backbone.indic_to_var->at(indic.var());
             *backbone.backbone_test_var = var;
