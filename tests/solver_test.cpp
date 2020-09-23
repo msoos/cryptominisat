@@ -238,6 +238,37 @@ TEST_F(SolverTest, get_bin_and_long)
     s->end_getting_small_clauses();
 }
 
+TEST_F(SolverTest, get_irred_bin_and_long)
+{
+    s = new Solver(&conf, &must_inter);
+    s->new_vars(30);
+
+    Clause* c;
+    c = s->add_clause_int(str_to_cl(" 1,  5 "));
+    assert(c == NULL);
+    c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"));
+    assert(c != NULL);
+    s->longIrredCls.push_back(s->cl_alloc.get_offset(c));
+
+    s->start_getting_small_clauses(4, 100, false);
+    vector<Lit> lits;
+
+    bool ret = s->get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(str_to_cl(" 1,  5"), lits);
+
+    ret = s->get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(str_to_cl(" 1,  2, 3, 4"), lits);
+
+    ret = s->get_next_small_clause(lits);
+    ASSERT_FALSE(ret);
+
+    s->end_getting_small_clauses();
+}
+
 }
 
 int main(int argc, char **argv) {

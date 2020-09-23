@@ -4020,87 +4020,144 @@ bool Solver::init_all_matrices()
 #endif //USE_GAUSS
 
 
-void Solver::start_getting_small_clauses(const uint32_t max_len, const uint32_t max_glue)
+void Solver::start_getting_small_clauses(
+    const uint32_t max_len, const uint32_t max_glue, bool red)
 {
     if (!ok) {
         std::cerr << "ERROR: the system is in UNSAT state, learnt clauses are meaningless!" <<endl;
         exit(-1);
     }
-    if (!learnt_clause_query_outer_to_without_bva_map.empty()) {
+    if (!get_clause_query_outer_to_without_bva_map.empty()) {
         std::cerr << "ERROR: You forgot to call end_getting_small_clauses() last time!" <<endl;
         exit(-1);
     }
 
-    assert(learnt_clause_query_at == std::numeric_limits<uint32_t>::max());
-    assert(learnt_clause_query_watched_at == std::numeric_limits<uint32_t>::max());
-    assert(learnt_clause_query_watched_at_sub == std::numeric_limits<uint32_t>::max());
+    assert(get_clause_query_at == std::numeric_limits<uint32_t>::max());
+    assert(get_clause_query_watched_at == std::numeric_limits<uint32_t>::max());
+    assert(get_clause_query_watched_at_sub == std::numeric_limits<uint32_t>::max());
     assert(max_len >= 2);
 
-    learnt_clause_query_at = 0;
-    learnt_clause_query_watched_at = 0;
-    learnt_clause_query_watched_at_sub = 0;
-    learnt_clause_query_max_len = max_len;
-    learnt_clause_query_max_glue = max_glue;
-    learnt_clause_query_outer_to_without_bva_map = build_outer_to_without_bva_map();
+    if (!red) {
+        assert(occsimplifier->get_num_elimed_vars() == 0); //We'd need to implement getting blocked clauses
+    }
+    get_clause_query_red = red;
+    get_clause_query_at = 0;
+    get_clause_query_watched_at = 0;
+    get_clause_query_watched_at_sub = 0;
+    get_clause_query_max_len = max_len;
+    get_clause_query_max_glue = max_glue;
+    get_clause_query_varreplace_at = 0;
+    get_clause_query_units_at = 0;
+    get_clause_query_outer_to_without_bva_map = build_outer_to_without_bva_map();
 }
 
 bool Solver::get_next_small_clause(vector<Lit>& out)
 {
     assert(ok);
 
-    while(learnt_clause_query_watched_at < nVars()*2) {
-        Lit l = Lit::toLit(learnt_clause_query_watched_at);
+    while(get_clause_query_watched_at < nVars()*2) {
+        Lit l = Lit::toLit(get_clause_query_watched_at);
         watch_subarray_const ws = watches[l];
-        while(learnt_clause_query_watched_at_sub < ws.size()) {
-            const Watched& w = ws[learnt_clause_query_watched_at_sub];
-            if (w.isBin() && w.lit2() < l && w.red()) {
+        while(get_clause_query_watched_at_sub < ws.size()) {
+            const Watched& w = ws[get_clause_query_watched_at_sub];
+            if (w.isBin() && w.lit2() < l &&
+                (w.red() == get_clause_query_red)
+            ) {
                 out.clear();
                 out.push_back(l);
                 out.push_back(w.lit2());
                 out = clause_outer_numbered(out);
                 if (all_vars_outside(out)) {
                     learnt_clausee_query_map_without_bva(out);
-                    learnt_clause_query_watched_at_sub++;
+                    get_clause_query_watched_at_sub++;
                     return true;
                 }
             }
-            learnt_clause_query_watched_at_sub++;
+            get_clause_query_watched_at_sub++;
         }
-        learnt_clause_query_watched_at++;
-        learnt_clause_query_watched_at_sub = 0;
+        get_clause_query_watched_at++;
+        get_clause_query_watched_at_sub = 0;
     }
 
-    while(learnt_clause_query_at < longRedCls[0].size()) {
-        const ClOffset offs = longRedCls[0][learnt_clause_query_at];
-        const Clause* cl = cl_alloc.ptr(offs);
-        if (cl->size() <= learnt_clause_query_max_len
-            && cl->stats.glue <= learnt_clause_query_max_glue
-        ) {
-            out = clause_outer_numbered(*cl);
-            if (all_vars_outside(out)) {
-                learnt_clausee_query_map_without_bva(out);
-                learnt_clause_query_at++;
-                return true;
+    if (get_clause_query_red) {
+        while(get_clause_query_at < longRedCls[0].size()) {
+            const ClOffset offs = longRedCls[0][get_clause_query_at];
+            const Clause* cl = cl_alloc.ptr(offs);
+            if (cl->size() <= get_clause_query_max_len
+                && cl->stats.glue <= get_clause_query_max_glue
+            ) {
+                out = clause_outer_numbered(*cl);
+                if (all_vars_outside(out)) {
+                    learnt_clausee_query_map_without_bva(out);
+                    get_clause_query_at++;
+                    return true;
+                }
             }
+            get_clause_query_at++;
         }
-        learnt_clause_query_at++;
-    }
 
-    assert(learnt_clause_query_at >= longRedCls[0].size());
-    uint32_t at_lev1 = learnt_clause_query_at-longRedCls[0].size();
-    while(at_lev1 < longRedCls[1].size()) {
-        const ClOffset offs = longRedCls[1][at_lev1];
-        const Clause* cl = cl_alloc.ptr(offs);
-        if (cl->size() <= learnt_clause_query_max_len) {
-            out = clause_outer_numbered(*cl);
-            if (all_vars_outside(out)) {
-                learnt_clausee_query_map_without_bva(out);
-                learnt_clause_query_at++;
-                return true;
+        assert(get_clause_query_at >= longRedCls[0].size());
+        uint32_t at_lev1 = get_clause_query_at-longRedCls[0].size();
+        while(at_lev1 < longRedCls[1].size()) {
+            const ClOffset offs = longRedCls[1][at_lev1];
+            const Clause* cl = cl_alloc.ptr(offs);
+            if (cl->size() <= get_clause_query_max_len) {
+                out = clause_outer_numbered(*cl);
+                if (all_vars_outside(out)) {
+                    learnt_clausee_query_map_without_bva(out);
+                    get_clause_query_at++;
+                    return true;
+                }
             }
+            get_clause_query_at++;
+            at_lev1++;
         }
-        learnt_clause_query_at++;
-        at_lev1++;
+    } else {
+        while(get_clause_query_at < longIrredCls.size()) {
+            const ClOffset offs = longIrredCls[get_clause_query_at];
+            const Clause* cl = cl_alloc.ptr(offs);
+            if (cl->size() <= get_clause_query_max_len) {
+                out = clause_outer_numbered(*cl);
+                if (all_vars_outside(out)) {
+                    learnt_clausee_query_map_without_bva(out);
+                    get_clause_query_at++;
+                    return true;
+                }
+            }
+            get_clause_query_at++;
+        }
+
+        while (get_clause_query_varreplace_at < solver->nVars()*2) {
+            Lit l = Lit::toLit(get_clause_query_varreplace_at);
+            Lit l2 = varReplacer->get_lit_replaced_with(l);
+            if (l2 != l) {
+                out.clear();
+                out.push_back(l);
+                out.push_back(~l2);
+                out = clause_outer_numbered(out);
+                if (all_vars_outside(out)) {
+                    learnt_clausee_query_map_without_bva(out);
+                    get_clause_query_varreplace_at++;
+                    return true;
+                }
+            }
+            get_clause_query_varreplace_at++;
+        }
+
+        while (get_clause_query_units_at < solver->nVars()) {
+            uint32_t v = get_clause_query_units_at;
+            if (value(v) != l_Undef) {
+                out.clear();
+                out.push_back(Lit(v, value(v) == l_False));
+                out = clause_outer_numbered(out);
+                if (all_vars_outside(out)) {
+                    learnt_clausee_query_map_without_bva(out);
+                    get_clause_query_units_at++;
+                    return true;
+                }
+            }
+            get_clause_query_units_at++;
+        }
     }
     return false;
 }
@@ -4112,11 +4169,11 @@ void Solver::end_getting_small_clauses()
         exit(-1);
     }
 
-    learnt_clause_query_at = std::numeric_limits<uint32_t>::max();
-    learnt_clause_query_watched_at = std::numeric_limits<uint32_t>::max();
-    learnt_clause_query_watched_at_sub = std::numeric_limits<uint32_t>::max();
-    learnt_clause_query_outer_to_without_bva_map.clear();
-    learnt_clause_query_outer_to_without_bva_map.shrink_to_fit();
+    get_clause_query_at = std::numeric_limits<uint32_t>::max();
+    get_clause_query_watched_at = std::numeric_limits<uint32_t>::max();
+    get_clause_query_watched_at_sub = std::numeric_limits<uint32_t>::max();
+    get_clause_query_outer_to_without_bva_map.clear();
+    get_clause_query_outer_to_without_bva_map.shrink_to_fit();
 }
 
 bool Solver::all_vars_outside(const vector<Lit>& cl) const
@@ -4131,7 +4188,7 @@ bool Solver::all_vars_outside(const vector<Lit>& cl) const
 void Solver::learnt_clausee_query_map_without_bva(vector<Lit>& cl)
 {
     for(auto& l: cl) {
-        l = Lit(learnt_clause_query_outer_to_without_bva_map[l.var()], l.sign());
+        l = Lit(get_clause_query_outer_to_without_bva_map[l.var()], l.sign());
     }
 }
 

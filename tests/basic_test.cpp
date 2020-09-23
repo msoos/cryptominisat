@@ -904,6 +904,111 @@ TEST(propagate, prop_complex)
     EXPECT_EQ(lits.size(), 5);
 }
 
+TEST(get_small_clauses, mixed)
+{
+    SATSolver s;
+    s.new_vars(30);
+    s.set_no_bve();
+    s.set_no_bva();
+
+    s.add_clause(str_to_cl("1, 2"));
+    s.add_clause(str_to_cl("-5, 6"));
+    s.add_clause(str_to_cl("10"));
+    s.add_clause(str_to_cl("1, -2, -5, -6, 7"));
+
+    s.start_getting_small_clauses(10000000, 10000000, false);
+
+    vector<Lit> lits;
+    bool ret = s.get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(str_to_cl(" 1,  2"), lits);
+
+    ret = s.get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(str_to_cl(" -5,  6"), lits);
+
+    ret = s.get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(str_to_cl("1, -2, -5, -6, 7"), lits);
+
+    ret = s.get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(str_to_cl("10"), lits);
+
+    ret = s.get_next_small_clause(lits);
+    ASSERT_FALSE(ret);
+
+    s.end_getting_small_clauses();
+}
+
+TEST(get_small_clauses, scc)
+{
+    SATSolver s;
+    s.new_vars(30);
+    s.set_no_bve();
+    s.set_no_bva();
+
+    s.add_clause(str_to_cl("5, -6"));
+    s.add_clause(str_to_cl("-5, 6"));
+    s.simplify();
+    auto x = s.get_all_binary_xors();
+    ASSERT_EQ(1, x.size());
+
+    s.start_getting_small_clauses(10000000, 10000000, false);
+
+    vector<Lit> lits;
+    bool ret = s.get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(str_to_cl(" 5,  -6"), lits);
+
+    ret = s.get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(str_to_cl(" -5,  6"), lits);
+
+    ret = s.get_next_small_clause(lits);
+    ASSERT_FALSE(ret);
+
+    s.end_getting_small_clauses();
+}
+
+TEST(get_small_clauses, unit)
+{
+    SATSolver s;
+    s.new_vars(30);
+    s.set_no_bve();
+    s.set_no_bva();
+
+    s.add_clause(str_to_cl("5"));
+    s.add_clause(str_to_cl("6"));
+    s.simplify();
+    auto x = s.get_zero_assigned_lits();
+    ASSERT_EQ(2, x.size());
+
+    s.start_getting_small_clauses(10000000, 10000000, false);
+
+    vector<Lit> lits;
+    bool ret = s.get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(str_to_cl(" 5"), lits);
+
+    ret = s.get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(str_to_cl(" 6"), lits);
+
+    ret = s.get_next_small_clause(lits);
+    ASSERT_FALSE(ret);
+
+    s.end_getting_small_clauses();
+}
+
 TEST(sampling, indep1)
 {
     SolverConf conf;

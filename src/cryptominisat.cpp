@@ -1182,10 +1182,13 @@ void DLL_PUBLIC SATSolver::open_file_and_dump_red_clauses(std::string fname) con
     data->solvers[data->which_solved]->open_file_and_dump_red_clauses(fname);
 }
 
-void DLL_PUBLIC SATSolver::start_getting_small_clauses(uint32_t max_len, uint32_t max_glue)
+void DLL_PUBLIC SATSolver::start_getting_small_clauses(
+    uint32_t max_len,
+    uint32_t max_glue,
+    bool red)
 {
     assert(data->solvers.size() >= 1);
-    data->solvers[0]->start_getting_small_clauses(max_len, max_glue);
+    data->solvers[0]->start_getting_small_clauses(max_len, max_glue, red);
 }
 
 bool DLL_PUBLIC SATSolver::get_next_small_clause(std::vector<Lit>& out)

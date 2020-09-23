@@ -113,7 +113,8 @@ class Solver : public Searcher
         );
 
         //get learnt clauses
-        void start_getting_small_clauses(uint32_t max_len, uint32_t max_glue);
+        void start_getting_small_clauses(
+            uint32_t max_len, uint32_t max_glue, bool red = true);
         bool get_next_small_clause(std::vector<Lit>& out);
         void end_getting_small_clauses();
 
@@ -372,12 +373,15 @@ class Solver : public Searcher
 
 
         //learnt clause querying
-        uint32_t learnt_clause_query_max_len = std::numeric_limits<uint32_t>::max();
-        uint32_t learnt_clause_query_max_glue = std::numeric_limits<uint32_t>::max();
-        uint32_t learnt_clause_query_at = std::numeric_limits<uint32_t>::max();
-        uint32_t learnt_clause_query_watched_at = std::numeric_limits<uint32_t>::max();
-        uint32_t learnt_clause_query_watched_at_sub = std::numeric_limits<uint32_t>::max();
-        vector<uint32_t> learnt_clause_query_outer_to_without_bva_map;
+        bool get_clause_query_red = true;
+        uint32_t get_clause_query_max_len = std::numeric_limits<uint32_t>::max();
+        uint32_t get_clause_query_max_glue = std::numeric_limits<uint32_t>::max();
+        uint32_t get_clause_query_at = std::numeric_limits<uint32_t>::max();
+        uint32_t get_clause_query_varreplace_at = std::numeric_limits<uint32_t>::max();
+        uint32_t get_clause_query_units_at = std::numeric_limits<uint32_t>::max();
+        uint32_t get_clause_query_watched_at = std::numeric_limits<uint32_t>::max();
+        uint32_t get_clause_query_watched_at_sub = std::numeric_limits<uint32_t>::max();
+        vector<uint32_t> get_clause_query_outer_to_without_bva_map;
         bool all_vars_outside(const vector<Lit>& cl) const;
         void learnt_clausee_query_map_without_bva(vector<Lit>& cl);
 
