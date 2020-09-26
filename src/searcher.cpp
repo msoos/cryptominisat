@@ -3994,6 +3994,7 @@ lbool Searcher::new_decision_backbone()
             new_decision_level();
         } else if (value(p) == l_False) {
             //Deal with top 2 TRUE/FALSE
+//             cout << "Testing ret: " << l_False << endl;
             backbone._assumptions->pop_back();
             backbone._assumptions->pop_back();
             backbone.non_indep_vars->push_back(*backbone.backbone_test_var);
@@ -4019,9 +4020,11 @@ lbool Searcher::new_decision_backbone()
 
             uint32_t var = backbone.indic_to_var->at(indic.var());
             *backbone.backbone_test_var = var;
-            Lit l = map_outer_to_inter(Lit(var, false));
+//             cout << "Testing: " << *backbone.backbone_test_var << endl;
+            Lit l = Lit(var, false);
             backbone._assumptions->push_back(l);
-            Lit l2 = map_outer_to_inter(Lit(var+backbone.orig_num_vars, true));
+
+            Lit l2 = Lit(var+backbone.orig_num_vars, true);
             backbone._assumptions->push_back(l2);
 
             continue;
