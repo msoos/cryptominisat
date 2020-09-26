@@ -919,7 +919,14 @@ TEST(get_small_clauses, mixed)
     s.start_getting_small_clauses(10000000, 10000000, false);
 
     vector<Lit> lits;
-    bool ret = s.get_next_small_clause(lits);
+    bool ret;
+
+    ret = s.get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(str_to_cl("10"), lits);
+
+    ret = s.get_next_small_clause(lits);
     ASSERT_TRUE(ret);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(str_to_cl(" 1,  2"), lits);
@@ -933,11 +940,6 @@ TEST(get_small_clauses, mixed)
     ASSERT_TRUE(ret);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(str_to_cl("1, -2, -5, -6, 7"), lits);
-
-    ret = s.get_next_small_clause(lits);
-    ASSERT_TRUE(ret);
-    std::sort(lits.begin(), lits.end());
-    ASSERT_EQ(str_to_cl("10"), lits);
 
     ret = s.get_next_small_clause(lits);
     ASSERT_FALSE(ret);
