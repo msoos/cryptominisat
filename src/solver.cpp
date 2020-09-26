@@ -4055,6 +4055,21 @@ bool Solver::get_next_small_clause(vector<Lit>& out)
 {
     assert(ok);
 
+    while (get_clause_query_units_at < solver->nVars()) {
+        uint32_t v = get_clause_query_units_at;
+        if (value(v) != l_Undef) {
+            out.clear();
+            out.push_back(Lit(v, value(v) == l_False));
+            out = clause_outer_numbered(out);
+            if (all_vars_outside(out)) {
+                learnt_clausee_query_map_without_bva(out);
+                get_clause_query_units_at++;
+                return true;
+            }
+        }
+        get_clause_query_units_at++;
+    }
+
     while(get_clause_query_watched_at < nVars()*2) {
         Lit l = Lit::toLit(get_clause_query_watched_at);
         watch_subarray_const ws = watches[l];
@@ -4113,20 +4128,6 @@ bool Solver::get_next_small_clause(vector<Lit>& out)
             at_lev1++;
         }
     } else {
-        while(get_clause_query_at < longIrredCls.size()) {
-            const ClOffset offs = longIrredCls[get_clause_query_at];
-            const Clause* cl = cl_alloc.ptr(offs);
-            if (cl->size() <= get_clause_query_max_len) {
-                out = clause_outer_numbered(*cl);
-                if (all_vars_outside(out)) {
-                    learnt_clausee_query_map_without_bva(out);
-                    get_clause_query_at++;
-                    return true;
-                }
-            }
-            get_clause_query_at++;
-        }
-
         while (get_clause_query_varreplace_at < solver->nVars()*2) {
             Lit l = Lit::toLit(get_clause_query_varreplace_at);
             Lit l2 = varReplacer->get_lit_replaced_with(l);
@@ -4144,19 +4145,18 @@ bool Solver::get_next_small_clause(vector<Lit>& out)
             get_clause_query_varreplace_at++;
         }
 
-        while (get_clause_query_units_at < solver->nVars()) {
-            uint32_t v = get_clause_query_units_at;
-            if (value(v) != l_Undef) {
-                out.clear();
-                out.push_back(Lit(v, value(v) == l_False));
-                out = clause_outer_numbered(out);
+        while(get_clause_query_at < longIrredCls.size()) {
+            const ClOffset offs = longIrredCls[get_clause_query_at];
+            const Clause* cl = cl_alloc.ptr(offs);
+            if (cl->size() <= get_clause_query_max_len) {
+                out = clause_outer_numbered(*cl);
                 if (all_vars_outside(out)) {
                     learnt_clausee_query_map_without_bva(out);
-                    get_clause_query_units_at++;
+                    get_clause_query_at++;
                     return true;
                 }
             }
-            get_clause_query_units_at++;
+            get_clause_query_at++;
         }
     }
     return false;
