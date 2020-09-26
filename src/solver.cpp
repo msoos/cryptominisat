@@ -4055,7 +4055,7 @@ bool Solver::get_next_small_clause(vector<Lit>& out)
 {
     assert(ok);
 
-    while (get_clause_query_units_at < solver->nVars()) {
+    while (get_clause_query_units_at < solver->nVarsOuter()) {
         uint32_t v = get_clause_query_units_at;
         if (value(v) != l_Undef) {
             out.clear();
@@ -4128,14 +4128,13 @@ bool Solver::get_next_small_clause(vector<Lit>& out)
             at_lev1++;
         }
     } else {
-        while (get_clause_query_varreplace_at < solver->nVars()*2) {
+        while (get_clause_query_varreplace_at < solver->nVarsOuter()*2) {
             Lit l = Lit::toLit(get_clause_query_varreplace_at);
-            Lit l2 = varReplacer->get_lit_replaced_with(l);
+            Lit l2 = varReplacer->get_lit_replaced_with_outer(l);
             if (l2 != l) {
                 out.clear();
                 out.push_back(l);
                 out.push_back(~l2);
-                out = clause_outer_numbered(out);
                 if (all_vars_outside(out)) {
                     learnt_clausee_query_map_without_bva(out);
                     get_clause_query_varreplace_at++;
