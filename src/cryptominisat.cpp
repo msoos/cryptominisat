@@ -1423,3 +1423,10 @@ DLL_PUBLIC void SATSolver::set_yes_comphandler()
         s.enable_comphandler();
     }
 }
+
+DLL_PUBLIC void SATSolver::get_all_irred_clauses(std::vector<Lit>& ret)
+{
+    assert(data->solvers.size() == 1);
+    Solver& s = *data->solvers[0];
+    s.get_all_irred_clauses(ret);
+}

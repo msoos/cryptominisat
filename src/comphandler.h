@@ -67,6 +67,7 @@ class CompHandler
         void readdRemovedClauses();
         const RemovedClauses& getRemovedClauses() const;
         uint32_t dump_removed_clauses(std::ostream* outfile) const;
+        bool get_removed_clause_at(uint32_t& at, uint32_t& at_sum, vector<Lit>& out) const;
         size_t get_num_vars_removed() const;
         size_t get_num_components_solved() const;
         size_t mem_used() const;

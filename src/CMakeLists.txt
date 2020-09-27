@@ -117,6 +117,7 @@ set(cryptoms_lib_files
     ccnr.cpp
     ccnr_cms.cpp
     lucky.cpp
+    get_clause_query.cpp
 #    watcharray.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )

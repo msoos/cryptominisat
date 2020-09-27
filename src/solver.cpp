@@ -68,6 +68,7 @@ THE SOFTWARE.
 #include "sls.h"
 #include "matrixfinder.h"
 #include "lucky.h"
+#include "get_clause_query.h"
 
 #ifdef USE_BREAKID
 #include "cms_breakid.h"
@@ -3790,26 +3791,28 @@ vector<Lit> Solver::get_toplevel_units_internal(bool outer_numbering) const
     return units;
 }
 
+//TODO fix legacy all of the below
 void Solver::dump_irred_clauses(std::ostream *out) const
 {
+    assert(false && "Fix to use get_clause_query");
     ClauseDumper dumper(this);
     dumper.dump_irred_clauses(out);
 }
-
 void Solver::dump_red_clauses(std::ostream *out) const
 {
+    assert(false && "Fix to use get_clause_query");
     ClauseDumper dumper(this);
     dumper.dump_red_clauses(out);
 }
-
 void Solver::open_file_and_dump_irred_clauses(const std::string &fname) const
 {
+    assert(false && "Fix to use get_clause_query");
     ClauseDumper dumper(this);
     dumper.open_file_and_dump_irred_clauses(fname);
 }
-
 void Solver::open_file_and_dump_red_clauses(const std::string &fname) const
 {
+    assert(false && "Fix to use get_clause_query");
     ClauseDumper dumper(this);
     dumper.open_file_and_dump_red_clauses(fname);
 }
@@ -4023,172 +4026,32 @@ bool Solver::init_all_matrices()
 void Solver::start_getting_small_clauses(
     const uint32_t max_len, const uint32_t max_glue, bool red)
 {
-    if (!ok) {
-        std::cerr << "ERROR: the system is in UNSAT state, learnt clauses are meaningless!" <<endl;
-        exit(-1);
-    }
-    if (!get_clause_query_outer_to_without_bva_map.empty()) {
-        std::cerr << "ERROR: You forgot to call end_getting_small_clauses() last time!" <<endl;
-        exit(-1);
-    }
+    assert(get_clause_query == NULL);
+    get_clause_query = new GetClauseQuery(this);
+    get_clause_query->start_getting_small_clauses(max_len, max_glue, red);
 
-    assert(get_clause_query_at == std::numeric_limits<uint32_t>::max());
-    assert(get_clause_query_watched_at == std::numeric_limits<uint32_t>::max());
-    assert(get_clause_query_watched_at_sub == std::numeric_limits<uint32_t>::max());
-    assert(max_len >= 2);
+}
 
-    if (!red) {
-        assert(occsimplifier->get_num_elimed_vars() == 0); //We'd need to implement getting blocked clauses
-    }
-    get_clause_query_red = red;
-    get_clause_query_at = 0;
-    get_clause_query_watched_at = 0;
-    get_clause_query_watched_at_sub = 0;
-    get_clause_query_max_len = max_len;
-    get_clause_query_max_glue = max_glue;
-    get_clause_query_varreplace_at = 0;
-    get_clause_query_units_at = 0;
-    get_clause_query_outer_to_without_bva_map = build_outer_to_without_bva_map();
+void Solver::get_all_irred_clauses(vector<Lit>& out)
+{
+    assert(get_clause_query == NULL);
+    get_clause_query = new GetClauseQuery(this);
+    get_clause_query->get_all_irred_clauses(out);
+    delete get_clause_query;
+    get_clause_query = NULL;
 }
 
 bool Solver::get_next_small_clause(vector<Lit>& out)
 {
-    assert(ok);
-
-    while (get_clause_query_units_at < solver->nVarsOuter()) {
-        uint32_t v = get_clause_query_units_at;
-        if (value(v) != l_Undef) {
-            out.clear();
-            out.push_back(Lit(v, value(v) == l_False));
-            out = clause_outer_numbered(out);
-            if (all_vars_outside(out)) {
-                learnt_clausee_query_map_without_bva(out);
-                get_clause_query_units_at++;
-                return true;
-            }
-        }
-        get_clause_query_units_at++;
-    }
-
-    while(get_clause_query_watched_at < nVars()*2) {
-        Lit l = Lit::toLit(get_clause_query_watched_at);
-        watch_subarray_const ws = watches[l];
-        while(get_clause_query_watched_at_sub < ws.size()) {
-            const Watched& w = ws[get_clause_query_watched_at_sub];
-            if (w.isBin() && w.lit2() < l &&
-                (w.red() == get_clause_query_red)
-            ) {
-                out.clear();
-                out.push_back(l);
-                out.push_back(w.lit2());
-                out = clause_outer_numbered(out);
-                if (all_vars_outside(out)) {
-                    learnt_clausee_query_map_without_bva(out);
-                    get_clause_query_watched_at_sub++;
-                    return true;
-                }
-            }
-            get_clause_query_watched_at_sub++;
-        }
-        get_clause_query_watched_at++;
-        get_clause_query_watched_at_sub = 0;
-    }
-
-    if (get_clause_query_red) {
-        while(get_clause_query_at < longRedCls[0].size()) {
-            const ClOffset offs = longRedCls[0][get_clause_query_at];
-            const Clause* cl = cl_alloc.ptr(offs);
-            if (cl->size() <= get_clause_query_max_len
-                && cl->stats.glue <= get_clause_query_max_glue
-            ) {
-                out = clause_outer_numbered(*cl);
-                if (all_vars_outside(out)) {
-                    learnt_clausee_query_map_without_bva(out);
-                    get_clause_query_at++;
-                    return true;
-                }
-            }
-            get_clause_query_at++;
-        }
-
-        assert(get_clause_query_at >= longRedCls[0].size());
-        uint32_t at_lev1 = get_clause_query_at-longRedCls[0].size();
-        while(at_lev1 < longRedCls[1].size()) {
-            const ClOffset offs = longRedCls[1][at_lev1];
-            const Clause* cl = cl_alloc.ptr(offs);
-            if (cl->size() <= get_clause_query_max_len) {
-                out = clause_outer_numbered(*cl);
-                if (all_vars_outside(out)) {
-                    learnt_clausee_query_map_without_bva(out);
-                    get_clause_query_at++;
-                    return true;
-                }
-            }
-            get_clause_query_at++;
-            at_lev1++;
-        }
-    } else {
-        while (get_clause_query_varreplace_at < solver->nVarsOuter()*2) {
-            Lit l = Lit::toLit(get_clause_query_varreplace_at);
-            Lit l2 = varReplacer->get_lit_replaced_with_outer(l);
-            if (l2 != l) {
-                out.clear();
-                out.push_back(l);
-                out.push_back(~l2);
-                if (all_vars_outside(out)) {
-                    learnt_clausee_query_map_without_bva(out);
-                    get_clause_query_varreplace_at++;
-                    return true;
-                }
-            }
-            get_clause_query_varreplace_at++;
-        }
-
-        while(get_clause_query_at < longIrredCls.size()) {
-            const ClOffset offs = longIrredCls[get_clause_query_at];
-            const Clause* cl = cl_alloc.ptr(offs);
-            if (cl->size() <= get_clause_query_max_len) {
-                out = clause_outer_numbered(*cl);
-                if (all_vars_outside(out)) {
-                    learnt_clausee_query_map_without_bva(out);
-                    get_clause_query_at++;
-                    return true;
-                }
-            }
-            get_clause_query_at++;
-        }
-    }
-    return false;
+    assert(get_clause_query);
+    return get_clause_query->get_next_small_clause(out);
 }
 
 void Solver::end_getting_small_clauses()
 {
-    if (!ok) {
-        std::cerr << "ERROR: the system is in UNSAT state, learnt clauses are meaningless!" <<endl;
-        exit(-1);
-    }
-
-    get_clause_query_at = std::numeric_limits<uint32_t>::max();
-    get_clause_query_watched_at = std::numeric_limits<uint32_t>::max();
-    get_clause_query_watched_at_sub = std::numeric_limits<uint32_t>::max();
-    get_clause_query_outer_to_without_bva_map.clear();
-    get_clause_query_outer_to_without_bva_map.shrink_to_fit();
-}
-
-bool Solver::all_vars_outside(const vector<Lit>& cl) const
-{
-    for(const auto& l: cl) {
-        if (varData[map_outer_to_inter(l.var())].is_bva)
-            return false;
-    }
-    return true;
-}
-
-void Solver::learnt_clausee_query_map_without_bva(vector<Lit>& cl)
-{
-    for(auto& l: cl) {
-        l = Lit(get_clause_query_outer_to_without_bva_map[l.var()], l.sign());
-    }
+    get_clause_query->end_getting_small_clauses();
+    delete get_clause_query;
+    get_clause_query = NULL;
 }
 
 void Solver::add_empty_cl_to_drat()

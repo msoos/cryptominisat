@@ -979,6 +979,99 @@ TEST(get_small_clauses, scc)
     s.end_getting_small_clauses();
 }
 
+TEST(get_small_clauses, units)
+{
+    SATSolver s;
+    s.new_vars(30);
+    s.add_clause(str_to_cl("5"));
+    s.add_clause(str_to_cl("-6"));
+    s.simplify();
+
+    s.start_getting_small_clauses(10000000, 10000000, false);
+
+    vector<Lit> lits;
+    bool ret = s.get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(str_to_cl(" 5"), lits);
+
+    ret = s.get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(str_to_cl("-6"), lits);
+
+    ret = s.get_next_small_clause(lits);
+    ASSERT_FALSE(ret);
+
+    s.end_getting_small_clauses();
+}
+
+TEST(get_small_clauses, bve)
+{
+    SATSolver s;
+    s.new_vars(30);
+    s.add_clause(str_to_cl("5, 6"));
+    s.add_clause(str_to_cl("7, 8"));
+    s.simplify();
+
+    s.start_getting_small_clauses(10000000, 10000000, false);
+
+    vector<Lit> lits;
+    bool ret = s.get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(str_to_cl(" 5, 6"), lits);
+
+    ret = s.get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(str_to_cl("7, 8"), lits);
+
+    ret = s.get_next_small_clause(lits);
+    ASSERT_FALSE(ret);
+
+    s.end_getting_small_clauses();
+}
+
+TEST(get_small_clauses, full)
+{
+    SATSolver s;
+    s.new_vars(30);
+    s.add_clause(str_to_cl("5, 6"));
+    s.add_clause(str_to_cl("7, 8"));
+    s.simplify();
+
+    vector<Lit> lits;
+    s.get_all_irred_clauses(lits);
+    ASSERT_EQ(6, lits.size());
+}
+
+TEST(get_small_clauses, full_bins)
+{
+    SATSolver s;
+    s.new_vars(30);
+    s.add_clause(str_to_cl("5, 6"));
+    s.add_clause(str_to_cl("7, 8"));
+    s.simplify();
+
+    vector<Lit> lits;
+    s.get_all_irred_clauses(lits);
+    ASSERT_EQ(str_to_cl("5, 6, U, 7, 8, U", false), lits);
+}
+
+TEST(get_small_clauses, full_units)
+{
+    SATSolver s;
+    s.new_vars(30);
+    s.add_clause(str_to_cl("5"));
+    s.add_clause(str_to_cl("7"));
+    s.simplify();
+
+    vector<Lit> lits;
+    s.get_all_irred_clauses(lits);
+    ASSERT_EQ(str_to_cl("5, U, 7, U", false), lits);
+}
+
 TEST(get_small_clauses, unit)
 {
     SATSolver s;

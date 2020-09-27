@@ -742,6 +742,23 @@ void CompHandler::readdRemovedClauses()
     removedClauses.sizes.clear();
 }
 
+bool CompHandler::get_removed_clause_at(uint32_t& at, uint32_t& at_sum, vector<Lit>& out) const
+{
+    out.clear();
+    while (at < removedClauses.sizes.size()) {
+        out.clear();
+        for(size_t i = 0; i < removedClauses.sizes[at]; ++i) {
+            out.push_back(removedClauses.lits[at_sum+i]);
+        }
+
+        //Move 'at' along
+        at_sum += removedClauses.sizes[at];
+        at++;
+        return true;
+    }
+    return false;
+}
+
 uint32_t CompHandler::dump_removed_clauses(std::ostream* outfile) const
 {
     if (outfile == NULL)

@@ -221,6 +221,7 @@ public:
     size_t mem_used_xor() const;
     size_t mem_used_bva() const;
     uint32_t dump_blocked_clauses(std::ostream* outfile) const;
+    bool get_blocked_clause_at(uint32_t& at,uint32_t& at2, vector<Lit>& out) const;
 
     //UnElimination
     void print_blocked_clauses_reverse() const;

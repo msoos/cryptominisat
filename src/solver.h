@@ -66,6 +66,7 @@ class SharedData;
 class ReduceDB;
 class InTree;
 class BreakID;
+class GetClauseQuery;
 
 struct SolveStats
 {
@@ -117,12 +118,15 @@ class Solver : public Searcher
             uint32_t max_len, uint32_t max_glue, bool red = true);
         bool get_next_small_clause(std::vector<Lit>& out);
         void end_getting_small_clauses();
-
+        void get_all_irred_clauses(vector<Lit>& out);
+        //Legacy clause dumping
         void dump_irred_clauses(std::ostream *out) const;
         void dump_red_clauses(std::ostream *out) const;
         void open_file_and_dump_irred_clauses(const std::string &fname) const;
         void open_file_and_dump_red_clauses(const std::string &fname) const;
 
+
+        //Version
         static const char* get_version_tag();
         static const char* get_version_sha1();
         static const char* get_compilation_env();
@@ -169,6 +173,7 @@ class Solver : public Searcher
         StrImplWImpl* dist_impl_with_impl = NULL;
         CompHandler*           compHandler = NULL;
         CardFinder*            card_finder = NULL;
+        GetClauseQuery*        get_clause_query = NULL;
 
         SearchStats sumSearchStats;
         PropStats sumPropStats;
@@ -370,20 +375,6 @@ class Solver : public Searcher
         // Temporary datastructs -- must be cleared before use
         mutable std::vector<Lit> tmpCl;
         mutable std::vector<uint32_t> tmpXor;
-
-
-        //learnt clause querying
-        bool get_clause_query_red = true;
-        uint32_t get_clause_query_max_len = std::numeric_limits<uint32_t>::max();
-        uint32_t get_clause_query_max_glue = std::numeric_limits<uint32_t>::max();
-        uint32_t get_clause_query_at = std::numeric_limits<uint32_t>::max();
-        uint32_t get_clause_query_varreplace_at = std::numeric_limits<uint32_t>::max();
-        uint32_t get_clause_query_units_at = std::numeric_limits<uint32_t>::max();
-        uint32_t get_clause_query_watched_at = std::numeric_limits<uint32_t>::max();
-        uint32_t get_clause_query_watched_at_sub = std::numeric_limits<uint32_t>::max();
-        vector<uint32_t> get_clause_query_outer_to_without_bva_map;
-        bool all_vars_outside(const vector<Lit>& cl) const;
-        void learnt_clausee_query_map_without_bva(vector<Lit>& cl);
 
         /////////////////////////////
         //Renumberer

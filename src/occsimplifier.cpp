@@ -208,6 +208,38 @@ uint32_t OccSimplifier::dump_blocked_clauses(std::ostream* outfile) const
     return num_cls;
 }
 
+bool OccSimplifier::get_blocked_clause_at(uint32_t& at,uint32_t& at2, vector<Lit>& out) const
+{
+    out.clear();
+    while(at < blockedClauses.size()) {
+        const auto& blocked = blockedClauses[at];
+        if (blocked.toRemove) {
+            at++;
+            continue;
+        }
+
+        while(at2 <  blocked.size()) {
+            //It's blocked on this variable
+            if (at2 == 0) {
+                at2++;
+                continue;
+            }
+            Lit l = blocked.at(at2, blkcls);
+            if (l == lit_Undef) {
+                at2++;
+                return true;
+                //nothing, return?
+            } else {
+                out.push_back(l);
+            }
+            at2++;
+        }
+        at2 = 0;
+        at++;
+    }
+    return false;
+}
+
 void OccSimplifier::extend_model(SolutionExtender* extender)
 {
     //Either a variable is not eliminated, or its value is undef

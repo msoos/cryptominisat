@@ -81,7 +81,7 @@ long int str_to_long_int(string& token)
     return i;
 }
 
-vector<Lit> str_to_cl(const string& data)
+vector<Lit> str_to_cl(const string& data, bool sort = true)
 {
     vector<string> tokens;
     stringstream ss(data);
@@ -93,6 +93,11 @@ vector<Lit> str_to_cl(const string& data)
 
     vector<Lit> ret;
     for(string& token2: tokens) {
+        token2.erase(remove_if(token2.begin(), token2.end(), isspace), token2.end());
+        if (token2 == "U") {
+            ret.push_back(lit_Undef);
+            continue;
+        }
         long int i = str_to_long_int(token2);
         assert(i == (int)i);
         Lit lit(std::abs(i)-1, i < 0);
@@ -100,7 +105,9 @@ vector<Lit> str_to_cl(const string& data)
     }
     //cout << "input is: " << data << " LITs is: " << ret << endl;
 
-    std::sort(ret.begin(), ret.end());
+    if (sort) {
+        std::sort(ret.begin(), ret.end());
+    }
     return ret;
 }
 
