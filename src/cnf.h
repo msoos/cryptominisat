@@ -337,6 +337,11 @@ public:
         , const bool allowFreed
     ) const;
 
+    /** if set to TRUE, a clause has been removed during add_clause_int
+    that contained "lit, ~lit". So "lit" must be set to a value
+    Contains OUTER variables */
+    vector<bool> undef_must_set_vars;
+
 protected:
     virtual void new_var(const bool bva, const uint32_t orig_outer);
     virtual void new_vars(const size_t n);

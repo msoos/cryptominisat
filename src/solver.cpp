@@ -331,7 +331,7 @@ unsigned Solver::num_bits_set(const size_t x, const unsigned max_size) const
     return bits_set;
 }
 
-
+//Deals with INTERNAL variables
 bool Solver::sort_and_clean_clause(
     vector<Lit>& ps
     , const vector<Lit>& origCl
@@ -379,12 +379,14 @@ bool Solver::sort_and_clean_clause(
 }
 
 /**
-@brief Adds a clause to the problem. Should ONLY be called internally
+@brief Adds a clause to the problem. MUST only be called internally
 
 This code is very specific in that it must NOT be called with variables in
 "ps" that have been replaced, eliminated, etc. Also, it must not be called
 when the wer are in an UNSAT (!ok) state, for example. Use it carefully,
 and only internally
+
+Deals with INTERNAL variables
 */
 Clause* Solver::add_clause_int(
     const vector<Lit>& lits
@@ -584,6 +586,7 @@ void Solver::detach_modified_clause(
     PropEngine::detach_modified_clause(lit1, lit2, address);
 }
 
+//Takes OUTSIDE variables and makes them INTERNAL, replaces them, etc.
 bool Solver::addClauseHelper(vector<Lit>& ps)
 {
     //If already UNSAT, just return
@@ -703,6 +706,7 @@ bool Solver::addClause(const vector<Lit>& lits, bool red)
     return Solver::addClauseInt(ps, red);
 }
 
+//Takes OUTER (NOT *outside*) variables
 bool Solver::addClauseInt(vector<Lit>& ps, bool red)
 {
     if (conf.perform_occur_based_simp && occsimplifier->getAnythingHasBeenBlocked()) {

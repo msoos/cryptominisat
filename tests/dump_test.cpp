@@ -76,6 +76,18 @@ TEST_F(dump, onelit)
     EXPECT_TRUE(cl_eq(dat.cls[0], str_to_cl("1")));
 }
 
+TEST_F(dump, unsat)
+{
+    s.new_var();
+    s.add_clause(str_to_cl("1"));
+    s.add_clause(str_to_cl("-1"));
+    s.solve();
+
+    read_dat();
+    EXPECT_EQ(dat.num_vars, 1);
+    EXPECT_EQ(dat.cls.size(), 0);
+}
+
 TEST_F(dump, twolit)
 {
     s.new_vars(2);

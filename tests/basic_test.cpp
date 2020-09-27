@@ -1006,6 +1006,52 @@ TEST(get_small_clauses, units)
     s.end_getting_small_clauses();
 }
 
+TEST(get_small_clauses, unsat)
+{
+    SATSolver s;
+    s.new_vars(30);
+    s.add_clause(str_to_cl("5"));
+    s.add_clause(str_to_cl("-5"));
+    s.simplify();
+
+    s.start_getting_small_clauses(10000000, 10000000, false);
+
+    vector<Lit> lits;
+    bool ret = s.get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    ASSERT_EQ(str_to_cl(""), lits);
+
+    ret = s.get_next_small_clause(lits);
+    ASSERT_FALSE(ret);
+
+    s.end_getting_small_clauses();
+}
+
+TEST(get_small_clauses, unsat_all)
+{
+    SATSolver s;
+    s.new_vars(30);
+    s.add_clause(str_to_cl("5"));
+    s.add_clause(str_to_cl("-5"));
+    s.simplify();
+
+    vector<Lit> lits;
+    s.get_all_irred_clauses(lits);
+    ASSERT_EQ(str_to_cl("U"), lits);
+}
+
+TEST(get_small_clauses, undef)
+{
+    SATSolver s;
+    s.new_vars(30);
+    s.add_clause(str_to_cl("5, -5"));
+    s.simplify();
+
+    vector<Lit> lits;
+    s.get_all_irred_clauses(lits);
+    ASSERT_EQ(str_to_cl("5, -5, U"), lits);
+}
+
 TEST(get_small_clauses, bve)
 {
     SATSolver s;

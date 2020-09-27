@@ -60,6 +60,7 @@ private:
     uint32_t comp_at_sum = std::numeric_limits<uint32_t>::max();
     uint32_t blocked_at = std::numeric_limits<uint32_t>::max();
     uint32_t blocked_at2 = std::numeric_limits<uint32_t>::max();
+    uint32_t undef_at = std::numeric_limits<uint32_t>::max();
 
     vector<uint32_t> outer_to_without_bva_map;
     bool all_vars_outside(const vector<Lit>& cl) const;

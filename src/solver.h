@@ -287,12 +287,6 @@ class Solver : public Searcher
         void check_assigns_for_assumptions() const;
         bool check_assumptions_contradict_foced_assignment() const;
 
-
-        //if set to TRUE, a clause has been removed during add_clause_int
-        //that contained "lit, ~lit". So "lit" must be set to a value
-        //Contains _outer_ variables
-        vector<bool> undef_must_set_vars;
-
         //Deleting clauses
         void free_cl(Clause* cl);
         void free_cl(ClOffset offs);

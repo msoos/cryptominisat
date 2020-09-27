@@ -37,10 +37,6 @@ GetClauseQuery::GetClauseQuery(Solver* _solver) :
 void GetClauseQuery::start_getting_small_clauses(
     const uint32_t _max_len, const uint32_t _max_glue, bool _red)
 {
-    if (!solver->okay()) {
-        std::cerr << "ERROR: the system is in UNSAT state, learnt clauses are meaningless!" <<endl;
-        exit(-1);
-    }
     if (!outer_to_without_bva_map.empty()) {
         std::cerr << "ERROR: You forgot to call end_getting_small_clauses() last time!" <<endl;
         exit(-1);
@@ -67,6 +63,7 @@ void GetClauseQuery::start_getting_small_clauses(
     comp_at_sum = 0;
     blocked_at = 0;
     blocked_at2 = 0;
+    undef_at = 0;
     outer_to_without_bva_map = solver->build_outer_to_without_bva_map();
     tmp_cl.clear();
 }
@@ -85,9 +82,20 @@ void GetClauseQuery::get_all_irred_clauses(vector<Lit>& out)
 
 bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
 {
-    assert(solver->okay());
     if (!all_in_one_go) {
         out.clear();
+    }
+
+    if (!solver->okay()) {
+        if (at == 0) {
+            at++;
+            if (!all_in_one_go) {
+                return true;
+            } else {
+                out.push_back(lit_Undef);
+            }
+        }
+        return false;
     }
 
     //Adding units
@@ -258,17 +266,36 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
                 }
             }
         }
+
+        //Clauses that have a variable like a V ~a which means the variable MUST take a value
+        //These are already in OUTER notation
+        while (undef_at < solver->nVarsOuter()) {
+            uint32_t v = undef_at;
+            if (solver->undef_must_set_vars[v]) {
+                tmp_cl.clear();
+                tmp_cl.push_back(Lit(v, true));
+                tmp_cl.push_back(Lit(v, false));
+                tmp_cl = solver->clause_outer_numbered(tmp_cl);
+                if (all_vars_outside(tmp_cl)) {
+                    map_without_bva(tmp_cl);
+                    out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
+                    if (!all_in_one_go) {
+                        undef_at++;
+                        return true;
+                    } else {
+                        out.push_back(lit_Undef);
+                    }
+                }
+            }
+            undef_at++;
+        }
+
     }
     return false;
 }
 
 void GetClauseQuery::end_getting_small_clauses()
 {
-    if (!solver->okay()) {
-        std::cerr << "ERROR: the system is in UNSAT state, learnt clauses are meaningless!" <<endl;
-        exit(-1);
-    }
-
     outer_to_without_bva_map.clear();
     outer_to_without_bva_map.shrink_to_fit();
 }

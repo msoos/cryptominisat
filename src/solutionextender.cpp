@@ -35,6 +35,7 @@ SolutionExtender::SolutionExtender(Solver* _solver, OccSimplifier* _simplifier) 
 {
 }
 
+//Model at this point has OUTER variables
 void SolutionExtender::extend()
 {
     if (solver->conf.verbosity >= 10) {
