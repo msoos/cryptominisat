@@ -151,6 +151,28 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
         watched_at_sub = 0;
     }
 
+    //Replaced variables
+    while (varreplace_at < solver->nVarsOuter()*2) {
+        Lit l = Lit::toLit(varreplace_at);
+        Lit l2 = solver->varReplacer->get_lit_replaced_with_outer(l);
+        if (l2 != l) {
+            tmp_cl.clear();
+            tmp_cl.push_back(l);
+            tmp_cl.push_back(~l2);
+            if (all_vars_outside(tmp_cl)) {
+                map_without_bva(tmp_cl);
+                out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
+                if (!all_in_one_go) {
+                    varreplace_at++;
+                    return true;
+                } else {
+                    out.push_back(lit_Undef);
+                }
+            }
+        }
+        varreplace_at++;
+    }
+
     if (red) {
         while(at < solver->longRedCls[0].size()) {
             const ClOffset offs = solver->longRedCls[0][at];
@@ -195,28 +217,6 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
             at_lev1++;
         }
     } else {
-        //Replaced variables
-        while (varreplace_at < solver->nVarsOuter()*2) {
-            Lit l = Lit::toLit(varreplace_at);
-            Lit l2 = solver->varReplacer->get_lit_replaced_with_outer(l);
-            if (l2 != l) {
-                tmp_cl.clear();
-                tmp_cl.push_back(l);
-                tmp_cl.push_back(~l2);
-                if (all_vars_outside(tmp_cl)) {
-                    map_without_bva(tmp_cl);
-                    out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
-                    if (!all_in_one_go) {
-                        varreplace_at++;
-                        return true;
-                    } else {
-                        out.push_back(lit_Undef);
-                    }
-                }
-            }
-            varreplace_at++;
-        }
-
         //Irred long clauses
         while(at < solver->longIrredCls.size()) {
             const ClOffset offs = solver->longIrredCls[at];
