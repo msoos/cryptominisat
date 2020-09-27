@@ -4053,6 +4053,7 @@ bool Solver::get_next_small_clause(vector<Lit>& out)
 
 void Solver::end_getting_small_clauses()
 {
+    assert(get_clause_query);
     get_clause_query->end_getting_small_clauses();
     delete get_clause_query;
     get_clause_query = NULL;

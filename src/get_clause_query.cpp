@@ -70,7 +70,6 @@ void GetClauseQuery::start_getting_small_clauses(
 
 void GetClauseQuery::get_all_irred_clauses(vector<Lit>& out)
 {
-    out.clear();
     start_getting_small_clauses(
         std::numeric_limits<uint32_t>::max(),
         std::numeric_limits<uint32_t>::max(),
@@ -82,10 +81,7 @@ void GetClauseQuery::get_all_irred_clauses(vector<Lit>& out)
 
 bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
 {
-    if (!all_in_one_go) {
-        out.clear();
-    }
-
+    out.clear();
     if (!solver->okay()) {
         if (at == 0) {
             at++;
@@ -137,7 +133,6 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
                     map_without_bva(tmp_cl);
                     out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
                     if (!all_in_one_go) {
-                        out = tmp_cl;
                         watched_at_sub++;
                         return true;
                     } else {
@@ -275,7 +270,6 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
                 tmp_cl.clear();
                 tmp_cl.push_back(Lit(v, false));
                 tmp_cl.push_back(Lit(v, true));
-                tmp_cl = solver->clause_outer_numbered(tmp_cl);
                 if (all_vars_outside(tmp_cl)) {
                     map_without_bva(tmp_cl);
                     out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
