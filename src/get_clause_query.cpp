@@ -269,12 +269,12 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
 
         //Clauses that have a variable like a V ~a which means the variable MUST take a value
         //These are already in OUTER notation
-        while (undef_at < solver->nVarsOuter()) {
+        while (undef_at < solver->undef_must_set_vars.size()) {
             uint32_t v = undef_at;
             if (solver->undef_must_set_vars[v]) {
                 tmp_cl.clear();
-                tmp_cl.push_back(Lit(v, true));
                 tmp_cl.push_back(Lit(v, false));
+                tmp_cl.push_back(Lit(v, true));
                 tmp_cl = solver->clause_outer_numbered(tmp_cl);
                 if (all_vars_outside(tmp_cl)) {
                     map_without_bva(tmp_cl);
