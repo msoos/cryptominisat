@@ -1239,20 +1239,21 @@ void DLL_PUBLIC SATSolver::set_up_for_arjun()
         SolverConf conf = data->solvers[i]->getConf();
         conf.restart_first = 200;
         conf.doBreakid = false;
-        conf.gaussconf.max_num_matrices = 0;
-        conf.xor_finder_time_limitM = 0;
+        //conf.gaussconf.max_num_matrices = 0;
+        //conf.xor_finder_time_limitM = 0;
         conf.xor_detach_reattach = true;
         conf.global_multiplier_multiplier_max = 1;
-        conf.orig_global_timeout_multiplier = 1.5;
+        conf.orig_global_timeout_multiplier = 2.5;
         conf.do_bva = false;
         conf.polar_stable_every_n = 100000; //i.e. never
         conf.do_hyperbin_and_transred = false;
         conf.doTransRed = false;
+        conf.intree_time_limitM = 1200ULL;
 
         conf.do_simplify_problem = false; //no simplification without explicity calling it
         conf.varElimRatioPerIter = 1;
 //         conf.restartType = Restart::never;
-        conf.polarity_mode = CMSat::PolarityMode::polarmode_pos;
+        conf.polarity_mode = CMSat::PolarityMode::polarmode_automatic;
         conf.branch_strategy_setup = "vsids1";
         conf.diff_declev_for_chrono = -1;
         data->solvers[i]->setConf(conf);
