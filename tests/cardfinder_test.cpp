@@ -52,8 +52,8 @@ struct card_finder : public ::testing::Test {
 
 TEST_F(card_finder, find_none)
 {
-    s->add_clause_outer(str_to_cl("-1, -2"));
-    s->add_clause_outer(str_to_cl("-3, -4"));
+    s->add_clause_outside(str_to_cl("-1, -2"));
+    s->add_clause_outside(str_to_cl("-3, -4"));
 
     finder->find_cards();
     EXPECT_EQ(finder->get_cards().size(), 0U);
@@ -61,9 +61,9 @@ TEST_F(card_finder, find_none)
 
 TEST_F(card_finder, find_one)
 {
-    s->add_clause_outer(str_to_cl("-1, -2"));
-    s->add_clause_outer(str_to_cl("-1, -3"));
-    s->add_clause_outer(str_to_cl("-2, -3"));
+    s->add_clause_outside(str_to_cl("-1, -2"));
+    s->add_clause_outside(str_to_cl("-1, -3"));
+    s->add_clause_outside(str_to_cl("-2, -3"));
 
     finder->find_cards();
     EXPECT_EQ(finder->get_cards().size(), 1U);
@@ -71,12 +71,12 @@ TEST_F(card_finder, find_one)
 
 TEST_F(card_finder, find_one_4)
 {
-    s->add_clause_outer(str_to_cl("-1, -2"));
-    s->add_clause_outer(str_to_cl("-1, -3"));
-    s->add_clause_outer(str_to_cl("-1, -4"));
-    s->add_clause_outer(str_to_cl("-2, -3"));
-    s->add_clause_outer(str_to_cl("-2, -4"));
-    s->add_clause_outer(str_to_cl("-3, -4"));
+    s->add_clause_outside(str_to_cl("-1, -2"));
+    s->add_clause_outside(str_to_cl("-1, -3"));
+    s->add_clause_outside(str_to_cl("-1, -4"));
+    s->add_clause_outside(str_to_cl("-2, -3"));
+    s->add_clause_outside(str_to_cl("-2, -4"));
+    s->add_clause_outside(str_to_cl("-3, -4"));
 
     finder->find_cards();
     ASSERT_EQ(finder->get_cards().size(), 1U);
@@ -87,19 +87,19 @@ TEST_F(card_finder, find_one_4)
 
 TEST_F(card_finder, find_two)
 {
-    s->add_clause_outer(str_to_cl("-1, -2"));
-    s->add_clause_outer(str_to_cl("-1, -3"));
-    s->add_clause_outer(str_to_cl("-1, -4"));
-    s->add_clause_outer(str_to_cl("-2, -3"));
-    s->add_clause_outer(str_to_cl("-2, -4"));
-    s->add_clause_outer(str_to_cl("-3, -4"));
+    s->add_clause_outside(str_to_cl("-1, -2"));
+    s->add_clause_outside(str_to_cl("-1, -3"));
+    s->add_clause_outside(str_to_cl("-1, -4"));
+    s->add_clause_outside(str_to_cl("-2, -3"));
+    s->add_clause_outside(str_to_cl("-2, -4"));
+    s->add_clause_outside(str_to_cl("-3, -4"));
 
-    s->add_clause_outer(str_to_cl("-11, -21"));
-    s->add_clause_outer(str_to_cl("-11, -31"));
-    s->add_clause_outer(str_to_cl("-11, -41"));
-    s->add_clause_outer(str_to_cl("-21, -31"));
-    s->add_clause_outer(str_to_cl("-21, -41"));
-    s->add_clause_outer(str_to_cl("-31, -41"));
+    s->add_clause_outside(str_to_cl("-11, -21"));
+    s->add_clause_outside(str_to_cl("-11, -31"));
+    s->add_clause_outside(str_to_cl("-11, -41"));
+    s->add_clause_outside(str_to_cl("-21, -31"));
+    s->add_clause_outside(str_to_cl("-21, -41"));
+    s->add_clause_outside(str_to_cl("-31, -41"));
 
     finder->find_cards();
     ASSERT_EQ(finder->get_cards().size(), 2U);
@@ -108,37 +108,37 @@ TEST_F(card_finder, find_two)
 
 TEST_F(card_finder, find_large)
 {
-    s->add_clause_outer(str_to_cl("-1, -2"));
-    s->add_clause_outer(str_to_cl("-1, -3"));
-    s->add_clause_outer(str_to_cl("-1, -4"));
-    s->add_clause_outer(str_to_cl("-2, -3"));
-    s->add_clause_outer(str_to_cl("-2, -4"));
-    s->add_clause_outer(str_to_cl("-3, -4"));
+    s->add_clause_outside(str_to_cl("-1, -2"));
+    s->add_clause_outside(str_to_cl("-1, -3"));
+    s->add_clause_outside(str_to_cl("-1, -4"));
+    s->add_clause_outside(str_to_cl("-2, -3"));
+    s->add_clause_outside(str_to_cl("-2, -4"));
+    s->add_clause_outside(str_to_cl("-3, -4"));
 
-    s->add_clause_outer(str_to_cl("4, -5"));
-    s->add_clause_outer(str_to_cl("4, -6"));
-    s->add_clause_outer(str_to_cl("4, -7"));
-    s->add_clause_outer(str_to_cl("-5, -6"));
-    s->add_clause_outer(str_to_cl("-5, -7"));
-    s->add_clause_outer(str_to_cl("-6, -7"));
+    s->add_clause_outside(str_to_cl("4, -5"));
+    s->add_clause_outside(str_to_cl("4, -6"));
+    s->add_clause_outside(str_to_cl("4, -7"));
+    s->add_clause_outside(str_to_cl("-5, -6"));
+    s->add_clause_outside(str_to_cl("-5, -7"));
+    s->add_clause_outside(str_to_cl("-6, -7"));
 
-    s->add_clause_outer(str_to_cl("-11, -12"));
-    s->add_clause_outer(str_to_cl("-11, -13"));
-    s->add_clause_outer(str_to_cl("-11, -14"));
-    s->add_clause_outer(str_to_cl("-12, -13"));
-    s->add_clause_outer(str_to_cl("-12, -14"));
-    s->add_clause_outer(str_to_cl("-13, -14"));
+    s->add_clause_outside(str_to_cl("-11, -12"));
+    s->add_clause_outside(str_to_cl("-11, -13"));
+    s->add_clause_outside(str_to_cl("-11, -14"));
+    s->add_clause_outside(str_to_cl("-12, -13"));
+    s->add_clause_outside(str_to_cl("-12, -14"));
+    s->add_clause_outside(str_to_cl("-13, -14"));
 
-    s->add_clause_outer(str_to_cl("14, -15"));
-    s->add_clause_outer(str_to_cl("14, -16"));
-    s->add_clause_outer(str_to_cl("14, -17"));
-    s->add_clause_outer(str_to_cl("-15, -16"));
-    s->add_clause_outer(str_to_cl("-15, -17"));
-    s->add_clause_outer(str_to_cl("-16, -17"));
+    s->add_clause_outside(str_to_cl("14, -15"));
+    s->add_clause_outside(str_to_cl("14, -16"));
+    s->add_clause_outside(str_to_cl("14, -17"));
+    s->add_clause_outside(str_to_cl("-15, -16"));
+    s->add_clause_outside(str_to_cl("-15, -17"));
+    s->add_clause_outside(str_to_cl("-16, -17"));
 
-    s->add_clause_outer(str_to_cl("1, 11"));
-    s->add_clause_outer(str_to_cl("1, -20"));
-    s->add_clause_outer(str_to_cl("11, -20"));
+    s->add_clause_outside(str_to_cl("1, 11"));
+    s->add_clause_outside(str_to_cl("1, -20"));
+    s->add_clause_outside(str_to_cl("11, -20"));
 
     finder->find_cards();
     ASSERT_EQ(finder->get_cards().size(), 1U);
@@ -150,34 +150,34 @@ TEST_F(card_finder, find_two_product)
     //c rows: x 20..x22
     //c cols: x 30..x32
     //c --------------
-    s->add_clause_outer(str_to_cl("-1, 20"));
-    s->add_clause_outer(str_to_cl("-1, 30"));
-    s->add_clause_outer(str_to_cl("-2, 21"));
-    s->add_clause_outer(str_to_cl("-2, 30"));
-    s->add_clause_outer(str_to_cl("-3, 22"));
-    s->add_clause_outer(str_to_cl("-3, 30"));
-    s->add_clause_outer(str_to_cl("-4, 20"));
-    s->add_clause_outer(str_to_cl("-4, 31"));
-    s->add_clause_outer(str_to_cl("-5, 21"));
-    s->add_clause_outer(str_to_cl("-5, 31"));
-    s->add_clause_outer(str_to_cl("-6, 22"));
-    s->add_clause_outer(str_to_cl("-6, 31"));
-    s->add_clause_outer(str_to_cl("-7, 20"));
-    s->add_clause_outer(str_to_cl("-7, 32"));
-    s->add_clause_outer(str_to_cl("-8, 21"));
-    s->add_clause_outer(str_to_cl("-8, 32"));
-    s->add_clause_outer(str_to_cl("-9, 22"));
-    s->add_clause_outer(str_to_cl("-9, 32"));
+    s->add_clause_outside(str_to_cl("-1, 20"));
+    s->add_clause_outside(str_to_cl("-1, 30"));
+    s->add_clause_outside(str_to_cl("-2, 21"));
+    s->add_clause_outside(str_to_cl("-2, 30"));
+    s->add_clause_outside(str_to_cl("-3, 22"));
+    s->add_clause_outside(str_to_cl("-3, 30"));
+    s->add_clause_outside(str_to_cl("-4, 20"));
+    s->add_clause_outside(str_to_cl("-4, 31"));
+    s->add_clause_outside(str_to_cl("-5, 21"));
+    s->add_clause_outside(str_to_cl("-5, 31"));
+    s->add_clause_outside(str_to_cl("-6, 22"));
+    s->add_clause_outside(str_to_cl("-6, 31"));
+    s->add_clause_outside(str_to_cl("-7, 20"));
+    s->add_clause_outside(str_to_cl("-7, 32"));
+    s->add_clause_outside(str_to_cl("-8, 21"));
+    s->add_clause_outside(str_to_cl("-8, 32"));
+    s->add_clause_outside(str_to_cl("-9, 22"));
+    s->add_clause_outside(str_to_cl("-9, 32"));
 
     //c ------ rows
-    s->add_clause_outer(str_to_cl("-20, -21"));
-    s->add_clause_outer(str_to_cl("-20, -22"));
-    s->add_clause_outer(str_to_cl("-21, -22"));
+    s->add_clause_outside(str_to_cl("-20, -21"));
+    s->add_clause_outside(str_to_cl("-20, -22"));
+    s->add_clause_outside(str_to_cl("-21, -22"));
 
     //c ------ cols
-    s->add_clause_outer(str_to_cl("-30, -31"));
-    s->add_clause_outer(str_to_cl("-30, -32"));
-    s->add_clause_outer(str_to_cl("-31, -32"));
+    s->add_clause_outside(str_to_cl("-30, -31"));
+    s->add_clause_outside(str_to_cl("-30, -32"));
+    s->add_clause_outside(str_to_cl("-31, -32"));
 
     finder->find_cards();
     ASSERT_EQ(finder->get_cards().size(), 3U);

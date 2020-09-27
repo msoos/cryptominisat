@@ -64,7 +64,7 @@ TEST_F(clause_allocator, add_1)
             cl[i2] = Lit(start, sign);
             start += rand() % (50000/size);
         }
-        s->add_clause_outer(cl);
+        s->add_clause_outside(cl);
         if (i % (300ULL*1000ULL) == 0) {
             cout << "Added " << i/(3000LL*1000ULL) << "M" << " T:" << (cpuTime()-t) << endl;
             s->cl_alloc.consolidate(s, true);

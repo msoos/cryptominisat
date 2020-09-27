@@ -55,8 +55,8 @@ struct distill_test : public ::testing::Test {
 TEST_F(distill_test, long_by1)
 {
     s->new_vars(4);
-    s->add_clause_outer(str_to_cl("1, -2"));
-    s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
+    s->add_clause_outside(str_to_cl("1, -2"));
+    s->add_clause_outside(str_to_cl("1, 2, 3, 4"));
 
     distill_long_cls->distill(false);
     check_irred_cls_contains(s, "1, 3, 4");
@@ -65,9 +65,9 @@ TEST_F(distill_test, long_by1)
 TEST_F(distill_test, long_by1_transitive)
 {
     s->new_vars(5);
-    s->add_clause_outer(str_to_cl("1, -5"));
-    s->add_clause_outer(str_to_cl("5, -2"));
-    s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
+    s->add_clause_outside(str_to_cl("1, -5"));
+    s->add_clause_outside(str_to_cl("5, -2"));
+    s->add_clause_outside(str_to_cl("1, 2, 3, 4"));
 
     distill_long_cls->distill(false);
     check_irred_cls_contains(s, "1, 3, 4");
@@ -76,8 +76,8 @@ TEST_F(distill_test, long_by1_transitive)
 TEST_F(distill_test, long_by1_2)
 {
     s->new_vars(4);
-    s->add_clause_outer(str_to_cl("2, -3"));
-    s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
+    s->add_clause_outside(str_to_cl("2, -3"));
+    s->add_clause_outside(str_to_cl("1, 2, 3, 4"));
 
     distill_long_cls->distill(false);
     check_irred_cls_contains(s, "1, 2, 4");
@@ -87,8 +87,8 @@ TEST_F(distill_test, long_by1_nodistill
 )
 {
     s->new_vars(5);
-    s->add_clause_outer(str_to_cl("-1, 3"));
-    s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
+    s->add_clause_outside(str_to_cl("-1, 3"));
+    s->add_clause_outside(str_to_cl("1, 2, 3, 4"));
 
     distill_long_cls->distill(false);
     check_irred_cls_contains(s, "1, 2, 3, 4");
@@ -98,8 +98,8 @@ TEST_F(distill_test, long_by1_nodistill2
 )
 {
     s->new_vars(5);
-    s->add_clause_outer(str_to_cl("-1, -2"));
-    s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
+    s->add_clause_outside(str_to_cl("-1, -2"));
+    s->add_clause_outside(str_to_cl("1, 2, 3, 4"));
 
     distill_long_cls->distill(false);
     check_irred_cls_contains(s, "1, 2, 3, 4");
@@ -108,8 +108,8 @@ TEST_F(distill_test, long_by1_nodistill2
 TEST_F(distill_test, tri)
 {
     s->new_vars(5);
-    s->add_clause_outer(str_to_cl("1, 2, -3"));
-    s->add_clause_outer(str_to_cl("1, 2, 3"));
+    s->add_clause_outside(str_to_cl("1, 2, -3"));
+    s->add_clause_outside(str_to_cl("1, 2, 3"));
 
     distill_long_cls->distill(false);
     check_irred_cls_contains(s, "1, 2");
@@ -118,9 +118,9 @@ TEST_F(distill_test, tri)
 TEST_F(distill_test, tri_transitive)
 {
     s->new_vars(5);
-    s->add_clause_outer(str_to_cl("1, 2, 4"));
-    s->add_clause_outer(str_to_cl("-4, -3"));
-    s->add_clause_outer(str_to_cl("1, 2, 3"));
+    s->add_clause_outside(str_to_cl("1, 2, 4"));
+    s->add_clause_outside(str_to_cl("-4, -3"));
+    s->add_clause_outside(str_to_cl("1, 2, 3"));
 
     distill_long_cls->distill(false);
     check_irred_cls_contains(s, "1, 2");

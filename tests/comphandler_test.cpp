@@ -54,7 +54,7 @@ struct comp_handle : public ::testing::Test {
 
 TEST_F(comp_handle, handle_1_comp)
 {
-    s->add_clause_outer(str_to_cl("1, -2, 3"));
+    s->add_clause_outside(str_to_cl("1, -2, 3"));
 
     chandle->handle();
     EXPECT_TRUE(s->okay());
@@ -63,10 +63,10 @@ TEST_F(comp_handle, handle_1_comp)
 
 TEST_F(comp_handle, handle_2_comps)
 {
-    s->add_clause_outer(str_to_cl("1, -2, 3"));
+    s->add_clause_outside(str_to_cl("1, -2, 3"));
 
-    s->add_clause_outer(str_to_cl("9, 4, 5"));
-    s->add_clause_outer(str_to_cl("5, 6, 7"));
+    s->add_clause_outside(str_to_cl("9, 4, 5"));
+    s->add_clause_outside(str_to_cl("5, 6, 7"));
 
     chandle->handle();
     EXPECT_TRUE(s->okay());
@@ -76,13 +76,13 @@ TEST_F(comp_handle, handle_2_comps)
 
 TEST_F(comp_handle, handle_3_comps)
 {
-    s->add_clause_outer(str_to_cl("1, -2, 3"));
+    s->add_clause_outside(str_to_cl("1, -2, 3"));
 
-    s->add_clause_outer(str_to_cl("9, 4, 5"));
-    s->add_clause_outer(str_to_cl("5, 6, 7"));
+    s->add_clause_outside(str_to_cl("9, 4, 5"));
+    s->add_clause_outside(str_to_cl("5, 6, 7"));
 
-    s->add_clause_outer(str_to_cl("19, 14, 15"));
-    s->add_clause_outer(str_to_cl("15, 16, 17"));
+    s->add_clause_outside(str_to_cl("19, 14, 15"));
+    s->add_clause_outside(str_to_cl("15, 16, 17"));
 
     chandle->handle();
     EXPECT_TRUE(s->okay());
@@ -92,18 +92,18 @@ TEST_F(comp_handle, handle_3_comps)
 
 TEST_F(comp_handle, check_solution_zero_lev_assign)
 {
-    s->add_clause_outer(str_to_cl("1, 2"));
-    s->add_clause_outer(str_to_cl("-1, 2"));
-    s->add_clause_outer(str_to_cl("1, -2"));
+    s->add_clause_outside(str_to_cl("1, 2"));
+    s->add_clause_outside(str_to_cl("-1, 2"));
+    s->add_clause_outside(str_to_cl("1, -2"));
 
-    s->add_clause_outer(str_to_cl("11, 12"));
-    s->add_clause_outer(str_to_cl("-11, 12"));
-    s->add_clause_outer(str_to_cl("11, -12"));
+    s->add_clause_outside(str_to_cl("11, 12"));
+    s->add_clause_outside(str_to_cl("-11, 12"));
+    s->add_clause_outside(str_to_cl("11, -12"));
 
-    s->add_clause_outer(str_to_cl("19, 14, 15"));
-    s->add_clause_outer(str_to_cl("15, 16, 17"));
-    s->add_clause_outer(str_to_cl("17, 16, 18, 14"));
-    s->add_clause_outer(str_to_cl("17, 18, 13"));
+    s->add_clause_outside(str_to_cl("19, 14, 15"));
+    s->add_clause_outside(str_to_cl("15, 16, 17"));
+    s->add_clause_outside(str_to_cl("17, 16, 18, 14"));
+    s->add_clause_outside(str_to_cl("17, 18, 13"));
 
     chandle->handle();
     EXPECT_TRUE(s->okay());
@@ -120,19 +120,19 @@ TEST_F(comp_handle, check_solution_zero_lev_assign)
 TEST_F(comp_handle, check_solution_non_zero_lev_assign)
 {
     s->conf.verbosity = 1;
-    s->add_clause_outer(str_to_cl("1, 2"));
-    s->add_clause_outer(str_to_cl("-1, -2"));
+    s->add_clause_outside(str_to_cl("1, 2"));
+    s->add_clause_outside(str_to_cl("-1, -2"));
 
-    s->add_clause_outer(str_to_cl("11, 12"));
-    s->add_clause_outer(str_to_cl("-11, -12"));
+    s->add_clause_outside(str_to_cl("11, 12"));
+    s->add_clause_outside(str_to_cl("-11, -12"));
 
-    s->add_clause_outer(str_to_cl("20, 22"));
-    s->add_clause_outer(str_to_cl("-24, 22"));
+    s->add_clause_outside(str_to_cl("20, 22"));
+    s->add_clause_outside(str_to_cl("-24, 22"));
 
-    s->add_clause_outer(str_to_cl("19, 14, 15"));
-    s->add_clause_outer(str_to_cl("15, 16, 17"));
-    s->add_clause_outer(str_to_cl("17, 16, 18, 14"));
-    s->add_clause_outer(str_to_cl("17, 18, 13"));
+    s->add_clause_outside(str_to_cl("19, 14, 15"));
+    s->add_clause_outside(str_to_cl("15, 16, 17"));
+    s->add_clause_outside(str_to_cl("17, 16, 18, 14"));
+    s->add_clause_outside(str_to_cl("17, 18, 13"));
 
     chandle->handle();
     EXPECT_TRUE(s->okay());
@@ -150,15 +150,15 @@ TEST_F(comp_handle, check_solution_non_zero_lev_assign)
 
 TEST_F(comp_handle, check_unsat)
 {
-    s->add_clause_outer(str_to_cl("1, 2"));
-    s->add_clause_outer(str_to_cl("-1, 2"));
-    s->add_clause_outer(str_to_cl("1, -2"));
-    s->add_clause_outer(str_to_cl("-1, -2"));
+    s->add_clause_outside(str_to_cl("1, 2"));
+    s->add_clause_outside(str_to_cl("-1, 2"));
+    s->add_clause_outside(str_to_cl("1, -2"));
+    s->add_clause_outside(str_to_cl("-1, -2"));
 
-    s->add_clause_outer(str_to_cl("19, 14, 15"));
-    s->add_clause_outer(str_to_cl("15, 16, 17"));
-    s->add_clause_outer(str_to_cl("17, 16, 18, 14"));
-    s->add_clause_outer(str_to_cl("17, 18, 13"));
+    s->add_clause_outside(str_to_cl("19, 14, 15"));
+    s->add_clause_outside(str_to_cl("15, 16, 17"));
+    s->add_clause_outside(str_to_cl("17, 16, 18, 14"));
+    s->add_clause_outside(str_to_cl("17, 18, 13"));
 
     bool ret = chandle->handle();
     EXPECT_FALSE(ret);

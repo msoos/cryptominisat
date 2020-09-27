@@ -42,8 +42,8 @@ int main(int argc, char **argv)
     distillwbin = s->dist_long_with_impl;
 
     s->new_vars(4);
-    s->add_clause_outer(str_to_cl("1, 2"));
-    s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
+    s->add_clause_outside(str_to_cl("1, 2"));
+    s->add_clause_outside(str_to_cl("1, 2, 3, 4"));
     distillwbin->distill_long_with_implicit(false);
     //check_irred_cls_eq(s, "1, 2");
 

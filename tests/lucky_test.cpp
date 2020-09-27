@@ -53,73 +53,73 @@ struct lucky : public ::testing::Test {
 
 TEST_F(lucky, pos1)
 {
-    s->add_clause_outer(str_to_cl("1, -12"));
-    s->add_clause_outer(str_to_cl("2, -3, -4, -5, -6"));
-    s->add_clause_outer(str_to_cl("2, -3, -4, -5, -7"));
+    s->add_clause_outside(str_to_cl("1, -12"));
+    s->add_clause_outside(str_to_cl("2, -3, -4, -5, -6"));
+    s->add_clause_outside(str_to_cl("2, -3, -4, -5, -7"));
 
     EXPECT_EQ(l->check_all(true), true);
 }
 
 TEST_F(lucky, pos2)
 {
-    s->add_clause_outer(str_to_cl("1"));
-    s->add_clause_outer(str_to_cl("-9, -2, -5, 6"));
-    s->add_clause_outer(str_to_cl("-8, -4, -5, 7"));
+    s->add_clause_outside(str_to_cl("1"));
+    s->add_clause_outside(str_to_cl("-9, -2, -5, 6"));
+    s->add_clause_outside(str_to_cl("-8, -4, -5, 7"));
 
     EXPECT_EQ(l->check_all(true), true);
 }
 
 TEST_F(lucky, not_pos)
 {
-    s->add_clause_outer(str_to_cl("-1, -2, -3, -4"));
-    s->add_clause_outer(str_to_cl("2, 3, 4, 5, 7"));
-    s->add_clause_outer(str_to_cl("12, 13, 14, 15, 17"));
+    s->add_clause_outside(str_to_cl("-1, -2, -3, -4"));
+    s->add_clause_outside(str_to_cl("2, 3, 4, 5, 7"));
+    s->add_clause_outside(str_to_cl("12, 13, 14, 15, 17"));
 
     EXPECT_EQ(l->check_all(true), false);
 }
 
 TEST_F(lucky, neg)
 {
-    s->add_clause_outer(str_to_cl("1, 2, 3, -4"));
-    s->add_clause_outer(str_to_cl("2, 3, -4, 5, 7"));
-    s->add_clause_outer(str_to_cl("12, 13, 14, 15, -17"));
+    s->add_clause_outside(str_to_cl("1, 2, 3, -4"));
+    s->add_clause_outside(str_to_cl("2, 3, -4, 5, 7"));
+    s->add_clause_outside(str_to_cl("12, 13, 14, 15, -17"));
 
     EXPECT_EQ(l->check_all(false), true);
 }
 
 TEST_F(lucky, neg2)
 {
-    s->add_clause_outer(str_to_cl("1,-4"));
-    s->add_clause_outer(str_to_cl("2, -4"));
-    s->add_clause_outer(str_to_cl("12, -4"));
+    s->add_clause_outside(str_to_cl("1,-4"));
+    s->add_clause_outside(str_to_cl("2, -4"));
+    s->add_clause_outside(str_to_cl("12, -4"));
 
     EXPECT_EQ(l->check_all(false), true);
 }
 
 TEST_F(lucky, fwd1)
 {
-    s->add_clause_outer(str_to_cl("1, -4"));
-    s->add_clause_outer(str_to_cl("4, 5"));
-    s->add_clause_outer(str_to_cl("-6, 7"));
-    s->add_clause_outer(str_to_cl("7, -8"));
+    s->add_clause_outside(str_to_cl("1, -4"));
+    s->add_clause_outside(str_to_cl("4, 5"));
+    s->add_clause_outside(str_to_cl("-6, 7"));
+    s->add_clause_outside(str_to_cl("7, -8"));
 
     EXPECT_EQ(l->search_fwd_sat(true), true);
 }
 
 TEST_F(lucky, fwd1_fail)
 {
-    s->add_clause_outer(str_to_cl("1, -4"));
-    s->add_clause_outer(str_to_cl("-1, -4"));
-    s->add_clause_outer(str_to_cl("-1, 4"));
+    s->add_clause_outside(str_to_cl("1, -4"));
+    s->add_clause_outside(str_to_cl("-1, -4"));
+    s->add_clause_outside(str_to_cl("-1, 4"));
 
     EXPECT_EQ(l->search_fwd_sat(true), false);
 }
 
 TEST_F(lucky, horn)
 {
-    s->add_clause_outer(str_to_cl("-1, -4, -5, 6"));
-    s->add_clause_outer(str_to_cl("-1, -2, -3, 5"));
-    s->add_clause_outer(str_to_cl("-5, -6, 7"));
+    s->add_clause_outside(str_to_cl("-1, -4, -5, 6"));
+    s->add_clause_outside(str_to_cl("-1, -2, -3, 5"));
+    s->add_clause_outside(str_to_cl("-5, -6, 7"));
 
     EXPECT_EQ(l->horn_sat(true), true);
 }

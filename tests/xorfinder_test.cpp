@@ -55,8 +55,8 @@ struct xor_finder : public ::testing::Test {
 
 TEST_F(xor_finder, find_none)
 {
-    s->add_clause_outer(str_to_cl("1, 2"));
-    s->add_clause_outer(str_to_cl("-1, -2"));
+    s->add_clause_outside(str_to_cl("1, 2"));
+    s->add_clause_outside(str_to_cl("-1, -2"));
 
     occsimp->setup();
     XorFinder finder(occsimp, s);
@@ -67,10 +67,10 @@ TEST_F(xor_finder, find_none)
 
 TEST_F(xor_finder, find_tri_1)
 {
-    s->add_clause_outer(str_to_cl("1, 2, 3"));
-    s->add_clause_outer(str_to_cl("-1, -2, 3"));
-    s->add_clause_outer(str_to_cl("-1, 2, -3"));
-    s->add_clause_outer(str_to_cl("1, -2, -3"));
+    s->add_clause_outside(str_to_cl("1, 2, 3"));
+    s->add_clause_outside(str_to_cl("-1, -2, 3"));
+    s->add_clause_outside(str_to_cl("-1, 2, -3"));
+    s->add_clause_outside(str_to_cl("1, -2, -3"));
 
     occsimp->setup();
     XorFinder finder(occsimp, s);
@@ -80,10 +80,10 @@ TEST_F(xor_finder, find_tri_1)
 
 TEST_F(xor_finder, find_tri_2)
 {
-    s->add_clause_outer(str_to_cl("-1, 2, 3"));
-    s->add_clause_outer(str_to_cl("1, -2, 3"));
-    s->add_clause_outer(str_to_cl("1, 2, -3"));
-    s->add_clause_outer(str_to_cl("-1, -2, -3"));
+    s->add_clause_outside(str_to_cl("-1, 2, 3"));
+    s->add_clause_outside(str_to_cl("1, -2, 3"));
+    s->add_clause_outside(str_to_cl("1, 2, -3"));
+    s->add_clause_outside(str_to_cl("-1, -2, -3"));
 
     occsimp->setup();
     XorFinder finder(occsimp, s);
@@ -93,15 +93,15 @@ TEST_F(xor_finder, find_tri_2)
 
 TEST_F(xor_finder, find_tri_3)
 {
-    s->add_clause_outer(str_to_cl("-1, 2, 3"));
-    s->add_clause_outer(str_to_cl("1, -2, 3"));
-    s->add_clause_outer(str_to_cl("1, 2, -3"));
-    s->add_clause_outer(str_to_cl("-1, -2, -3"));
+    s->add_clause_outside(str_to_cl("-1, 2, 3"));
+    s->add_clause_outside(str_to_cl("1, -2, 3"));
+    s->add_clause_outside(str_to_cl("1, 2, -3"));
+    s->add_clause_outside(str_to_cl("-1, -2, -3"));
 
-    s->add_clause_outer(str_to_cl("1, 2, 3"));
-    s->add_clause_outer(str_to_cl("-1, -2, 3"));
-    s->add_clause_outer(str_to_cl("-1, 2, -3"));
-    s->add_clause_outer(str_to_cl("1, -2, -3"));
+    s->add_clause_outside(str_to_cl("1, 2, 3"));
+    s->add_clause_outside(str_to_cl("-1, -2, 3"));
+    s->add_clause_outside(str_to_cl("-1, 2, -3"));
+    s->add_clause_outside(str_to_cl("1, -2, -3"));
 
     occsimp->setup();
     XorFinder finder(occsimp, s);
@@ -113,15 +113,15 @@ TEST_F(xor_finder, find_tri_3)
 
 TEST_F(xor_finder, find_4_1)
 {
-    s->add_clause_outer(str_to_cl("-1, 2, 3, 4"));
-    s->add_clause_outer(str_to_cl("1, -2, 3, 4"));
-    s->add_clause_outer(str_to_cl("1, 2, -3, 4"));
-    s->add_clause_outer(str_to_cl("1, 2, 3, -4"));
+    s->add_clause_outside(str_to_cl("-1, 2, 3, 4"));
+    s->add_clause_outside(str_to_cl("1, -2, 3, 4"));
+    s->add_clause_outside(str_to_cl("1, 2, -3, 4"));
+    s->add_clause_outside(str_to_cl("1, 2, 3, -4"));
 
-    s->add_clause_outer(str_to_cl("1, -2, -3, -4"));
-    s->add_clause_outer(str_to_cl("-1, 2, -3, -4"));
-    s->add_clause_outer(str_to_cl("-1, -2, 3, -4"));
-    s->add_clause_outer(str_to_cl("-1, -2, -3, 4"));
+    s->add_clause_outside(str_to_cl("1, -2, -3, -4"));
+    s->add_clause_outside(str_to_cl("-1, 2, -3, -4"));
+    s->add_clause_outside(str_to_cl("-1, -2, 3, -4"));
+    s->add_clause_outside(str_to_cl("-1, -2, -3, 4"));
 
     occsimp->setup();
     XorFinder finder(occsimp, s);
@@ -131,14 +131,14 @@ TEST_F(xor_finder, find_4_1)
 
 TEST_F(xor_finder, find_4_4)
 {
-    s->add_clause_outer(str_to_cl("-1, -2, 3, 4"));
-    s->add_clause_outer(str_to_cl("1, -2, -3, 4"));
-    s->add_clause_outer(str_to_cl("1, 2, -3, -4"));
-    s->add_clause_outer(str_to_cl("-1, 2,  -3, 4"));
-    s->add_clause_outer(str_to_cl("-1, 2,  3, -4"));
-    s->add_clause_outer(str_to_cl("1, -2,  3, -4"));
-    s->add_clause_outer(str_to_cl("-1, -2, -3, -4"));
-    s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
+    s->add_clause_outside(str_to_cl("-1, -2, 3, 4"));
+    s->add_clause_outside(str_to_cl("1, -2, -3, 4"));
+    s->add_clause_outside(str_to_cl("1, 2, -3, -4"));
+    s->add_clause_outside(str_to_cl("-1, 2,  -3, 4"));
+    s->add_clause_outside(str_to_cl("-1, 2,  3, -4"));
+    s->add_clause_outside(str_to_cl("1, -2,  3, -4"));
+    s->add_clause_outside(str_to_cl("-1, -2, -3, -4"));
+    s->add_clause_outside(str_to_cl("1, 2, 3, 4"));
 
     occsimp->setup();
     XorFinder finder(occsimp, s);
@@ -152,15 +152,15 @@ TEST_F(xor_finder, find_4_4)
  */
 TEST_F(xor_finder, find_4_2)
 {
-    s->add_clause_outer(str_to_cl("-1, 2, 3, 4"));
-    s->add_clause_outer(str_to_cl("1, -2, 3, 4"));
-    s->add_clause_outer(str_to_cl("1, 2, -3, 4"));
-    s->add_clause_outer(str_to_cl("1, 2, 3"));
+    s->add_clause_outside(str_to_cl("-1, 2, 3, 4"));
+    s->add_clause_outside(str_to_cl("1, -2, 3, 4"));
+    s->add_clause_outside(str_to_cl("1, 2, -3, 4"));
+    s->add_clause_outside(str_to_cl("1, 2, 3"));
 
-    s->add_clause_outer(str_to_cl("1, -2, -3, -4"));
-    s->add_clause_outer(str_to_cl("-1, 2, -3, -4"));
-    s->add_clause_outer(str_to_cl("-1, -2, 3, -4"));
-    s->add_clause_outer(str_to_cl("-1, -2, -3, 4"));
+    s->add_clause_outside(str_to_cl("1, -2, -3, -4"));
+    s->add_clause_outside(str_to_cl("-1, 2, -3, -4"));
+    s->add_clause_outside(str_to_cl("-1, -2, 3, -4"));
+    s->add_clause_outside(str_to_cl("-1, -2, -3, 4"));
 
     occsimp->setup();
     XorFinder finder(occsimp, s);
@@ -170,15 +170,15 @@ TEST_F(xor_finder, find_4_2)
 
 TEST_F(xor_finder, find_4_3)
 {
-    s->add_clause_outer(str_to_cl("-1, 2, 3, 4"));
-    s->add_clause_outer(str_to_cl("1, -2, 3, 4"));
-    s->add_clause_outer(str_to_cl("1, 2, -3, 4"));
-    s->add_clause_outer(str_to_cl("1, 2, 3"));
+    s->add_clause_outside(str_to_cl("-1, 2, 3, 4"));
+    s->add_clause_outside(str_to_cl("1, -2, 3, 4"));
+    s->add_clause_outside(str_to_cl("1, 2, -3, 4"));
+    s->add_clause_outside(str_to_cl("1, 2, 3"));
 
-    s->add_clause_outer(str_to_cl("1, -2, -3, -4"));
-    s->add_clause_outer(str_to_cl("-1, 2, -3, -4"));
-    s->add_clause_outer(str_to_cl("-1, -2, 3, -4"));
-    s->add_clause_outer(str_to_cl("-1, -3, 4"));
+    s->add_clause_outside(str_to_cl("1, -2, -3, -4"));
+    s->add_clause_outside(str_to_cl("-1, 2, -3, -4"));
+    s->add_clause_outside(str_to_cl("-1, -2, 3, -4"));
+    s->add_clause_outside(str_to_cl("-1, -3, 4"));
 
     occsimp->setup();
     XorFinder finder(occsimp, s);
@@ -190,28 +190,28 @@ TEST_F(xor_finder, find_4_3)
 //Finder pruning is too strong and we don't find this one
 TEST_F(xor_finder, find_5_2)
 {
-    s->add_clause_outer(str_to_cl("-1, -2, 3, 4, 5"));
-    s->add_clause_outer(str_to_cl("-1, 2, -3"));
-    s->add_clause_outer(str_to_cl("-1, 2, 3"));
+    s->add_clause_outside(str_to_cl("-1, -2, 3, 4, 5"));
+    s->add_clause_outside(str_to_cl("-1, 2, -3"));
+    s->add_clause_outside(str_to_cl("-1, 2, 3"));
 
-    s->add_clause_outer(str_to_cl("1, -2, -3, 4, 5"));
-    s->add_clause_outer(str_to_cl("1, -2, 3, -4, 5"));
-    s->add_clause_outer(str_to_cl("1, -2, 3, 4, -5"));
+    s->add_clause_outside(str_to_cl("1, -2, -3, 4, 5"));
+    s->add_clause_outside(str_to_cl("1, -2, 3, -4, 5"));
+    s->add_clause_outside(str_to_cl("1, -2, 3, 4, -5"));
 
-    s->add_clause_outer(str_to_cl("1, 2, -3, -4, 5"));
-    s->add_clause_outer(str_to_cl("1, 2, -3, 4, -5"));
+    s->add_clause_outside(str_to_cl("1, 2, -3, -4, 5"));
+    s->add_clause_outside(str_to_cl("1, 2, -3, 4, -5"));
 
-    s->add_clause_outer(str_to_cl("1, 2, 3, -4, -5"));
+    s->add_clause_outside(str_to_cl("1, 2, 3, -4, -5"));
 
     //
 
-    s->add_clause_outer(str_to_cl("1, -2, -3, -4, -5"));
-    s->add_clause_outer(str_to_cl("-1, 2, -3, -4, -5"));
-    s->add_clause_outer(str_to_cl("-1, -2, 3, -4, -5"));
-    s->add_clause_outer(str_to_cl("-1, -2, -3, 4, -5"));
-    s->add_clause_outer(str_to_cl("-1, -2, -3, -4, 5"));
+    s->add_clause_outside(str_to_cl("1, -2, -3, -4, -5"));
+    s->add_clause_outside(str_to_cl("-1, 2, -3, -4, -5"));
+    s->add_clause_outside(str_to_cl("-1, -2, 3, -4, -5"));
+    s->add_clause_outside(str_to_cl("-1, -2, -3, 4, -5"));
+    s->add_clause_outside(str_to_cl("-1, -2, -3, -4, 5"));
 
-    s->add_clause_outer(str_to_cl("1, 2, 3, 4, 5"));
+    s->add_clause_outside(str_to_cl("1, 2, 3, 4, 5"));
 
     occsimp->setup();
     XorFinder finder(occsimp, s);
@@ -221,24 +221,24 @@ TEST_F(xor_finder, find_5_2)
 
 TEST_F(xor_finder, find_4_5)
 {
-    s->add_clause_outer(str_to_cl("-1, -2, 3, 4"));
-    s->add_clause_outer(str_to_cl("1, -2, -3, 4"));
-    s->add_clause_outer(str_to_cl("1, 2, -3, -4"));
-    s->add_clause_outer(str_to_cl("-1, 2,  -3, 4"));
-    s->add_clause_outer(str_to_cl("-1, 2,  3, -4"));
-    s->add_clause_outer(str_to_cl("1, -2,  3, -4"));
-    s->add_clause_outer(str_to_cl("-1, -2, -3, -4"));
-    s->add_clause_outer(str_to_cl("1, 2, 3"));
+    s->add_clause_outside(str_to_cl("-1, -2, 3, 4"));
+    s->add_clause_outside(str_to_cl("1, -2, -3, 4"));
+    s->add_clause_outside(str_to_cl("1, 2, -3, -4"));
+    s->add_clause_outside(str_to_cl("-1, 2,  -3, 4"));
+    s->add_clause_outside(str_to_cl("-1, 2,  3, -4"));
+    s->add_clause_outside(str_to_cl("1, -2,  3, -4"));
+    s->add_clause_outside(str_to_cl("-1, -2, -3, -4"));
+    s->add_clause_outside(str_to_cl("1, 2, 3"));
 
-    s->add_clause_outer(str_to_cl("-1, 2, 3, 4"));
-    s->add_clause_outer(str_to_cl("1, -2, 3, 4"));
-    s->add_clause_outer(str_to_cl("1, 2, -3, 4"));
-    s->add_clause_outer(str_to_cl("1, 2, 3"));
+    s->add_clause_outside(str_to_cl("-1, 2, 3, 4"));
+    s->add_clause_outside(str_to_cl("1, -2, 3, 4"));
+    s->add_clause_outside(str_to_cl("1, 2, -3, 4"));
+    s->add_clause_outside(str_to_cl("1, 2, 3"));
 
-    s->add_clause_outer(str_to_cl("1, -2, -3, -4"));
-    s->add_clause_outer(str_to_cl("-1, 2, -3, -4"));
-    s->add_clause_outer(str_to_cl("-1, -2, 3, -4"));
-    s->add_clause_outer(str_to_cl("-1, -3, 4"));
+    s->add_clause_outside(str_to_cl("1, -2, -3, -4"));
+    s->add_clause_outside(str_to_cl("-1, 2, -3, -4"));
+    s->add_clause_outside(str_to_cl("-1, -2, 3, -4"));
+    s->add_clause_outside(str_to_cl("-1, -3, 4"));
 
     occsimp->setup();
     XorFinder finder(occsimp, s);
@@ -251,29 +251,29 @@ TEST_F(xor_finder, find_4_5)
 
 TEST_F(xor_finder, find_5_1)
 {
-    s->add_clause_outer(str_to_cl("-1, -2, 3, 4, 5"));
-    s->add_clause_outer(str_to_cl("-1, 2, -3, 4, 5"));
-    s->add_clause_outer(str_to_cl("-1, 2, 3, -4, 5"));
-    s->add_clause_outer(str_to_cl("-1, 2, 3, 4, -5"));
+    s->add_clause_outside(str_to_cl("-1, -2, 3, 4, 5"));
+    s->add_clause_outside(str_to_cl("-1, 2, -3, 4, 5"));
+    s->add_clause_outside(str_to_cl("-1, 2, 3, -4, 5"));
+    s->add_clause_outside(str_to_cl("-1, 2, 3, 4, -5"));
 
-    s->add_clause_outer(str_to_cl("1, -2, -3, 4, 5"));
-    s->add_clause_outer(str_to_cl("1, -2, 3, -4, 5"));
-    s->add_clause_outer(str_to_cl("1, -2, 3, 4, -5"));
+    s->add_clause_outside(str_to_cl("1, -2, -3, 4, 5"));
+    s->add_clause_outside(str_to_cl("1, -2, 3, -4, 5"));
+    s->add_clause_outside(str_to_cl("1, -2, 3, 4, -5"));
 
-    s->add_clause_outer(str_to_cl("1, 2, -3, -4, 5"));
-    s->add_clause_outer(str_to_cl("1, 2, -3, 4, -5"));
+    s->add_clause_outside(str_to_cl("1, 2, -3, -4, 5"));
+    s->add_clause_outside(str_to_cl("1, 2, -3, 4, -5"));
 
-    s->add_clause_outer(str_to_cl("1, 2, 3, -4, -5"));
+    s->add_clause_outside(str_to_cl("1, 2, 3, -4, -5"));
 
     //
 
-    s->add_clause_outer(str_to_cl("1, -2, -3, -4, -5"));
-    s->add_clause_outer(str_to_cl("-1, 2, -3, -4, -5"));
-    s->add_clause_outer(str_to_cl("-1, -2, 3, -4, -5"));
-    s->add_clause_outer(str_to_cl("-1, -2, -3, 4, -5"));
-    s->add_clause_outer(str_to_cl("-1, -2, -3, -4, 5"));
+    s->add_clause_outside(str_to_cl("1, -2, -3, -4, -5"));
+    s->add_clause_outside(str_to_cl("-1, 2, -3, -4, -5"));
+    s->add_clause_outside(str_to_cl("-1, -2, 3, -4, -5"));
+    s->add_clause_outside(str_to_cl("-1, -2, -3, 4, -5"));
+    s->add_clause_outside(str_to_cl("-1, -2, -3, -4, 5"));
 
-    s->add_clause_outer(str_to_cl("1, 2, 3, 4, 5"));
+    s->add_clause_outside(str_to_cl("1, 2, 3, 4, 5"));
 
     occsimp->setup();
     XorFinder finder(occsimp, s);
@@ -285,38 +285,38 @@ TEST_F(xor_finder, find_5_1)
 //we don't find 6-long, too expensive
 /*TEST_F(xor_finder, find_6_0)
 {
-    s->add_clause_outer(str_to_cl("1, -7, -3, -4, -5, -9"));
-    s->add_clause_outer(str_to_cl("-1, 7, -3, -4, -5, -9"));
-    s->add_clause_outer(str_to_cl("-1, -7, 3, -4, -5, -9"));
-    s->add_clause_outer(str_to_cl("1, 7, 3, -4, -5, -9"));
-    s->add_clause_outer(str_to_cl("-1, -7, -3, 4, -5, -9"));
-    s->add_clause_outer(str_to_cl("1, 7, -3, 4, -5, -9"));
-    s->add_clause_outer(str_to_cl("1, -7, 3, 4, -5, -9"));
-    s->add_clause_outer(str_to_cl("-1, 7, 3, 4, -5, -9"));
-    s->add_clause_outer(str_to_cl("-1, -7, -3, -4, 5, -9"));
-    s->add_clause_outer(str_to_cl("1, 7, -3, -4, 5, -9"));
-    s->add_clause_outer(str_to_cl("1, -7, 3, -4, 5, -9"));
-    s->add_clause_outer(str_to_cl("-1, 7, 3, -4, 5, -9"));
-    s->add_clause_outer(str_to_cl("1, -7, -3, 4, 5, -9"));
-    s->add_clause_outer(str_to_cl("-1, 7, -3, 4, 5, -9"));
-    s->add_clause_outer(str_to_cl("-1, -7, 3, 4, 5, -9"));
-    s->add_clause_outer(str_to_cl("1, 7, 3, 4, 5, -9"));
-    s->add_clause_outer(str_to_cl("-1, -7, -3, -4, -5, 9"));
-    s->add_clause_outer(str_to_cl("1, 7, -3, -4, -5, 9"));
-    s->add_clause_outer(str_to_cl("1, -7, 3, -4, -5, 9"));
-    s->add_clause_outer(str_to_cl("-1, 7, 3, -4, -5, 9"));
-    s->add_clause_outer(str_to_cl("1, -7, -3, 4, -5, 9"));
-    s->add_clause_outer(str_to_cl("-1, 7, -3, 4, -5, 9"));
-    s->add_clause_outer(str_to_cl("-1, -7, 3, 4, -5, 9"));
-    s->add_clause_outer(str_to_cl("1, 7, 3, 4, -5, 9"));
-    s->add_clause_outer(str_to_cl("1, -7, -3, -4, 5, 9"));
-    s->add_clause_outer(str_to_cl("-1, 7, -3, -4, 5, 9"));
-    s->add_clause_outer(str_to_cl("-1, -7, 3, -4, 5, 9"));
-    s->add_clause_outer(str_to_cl("1, 7, 3, -4, 5, 9"));
-    s->add_clause_outer(str_to_cl("-1, -7, -3, 4, 5, 9"));
-    s->add_clause_outer(str_to_cl("1, 7, -3, 4, 5, 9"));
-    s->add_clause_outer(str_to_cl("1, -7, 3, 4, 5, 9"));
-    s->add_clause_outer(str_to_cl("-1, 7, 3, 4, 5, 9"));
+    s->add_clause_outside(str_to_cl("1, -7, -3, -4, -5, -9"));
+    s->add_clause_outside(str_to_cl("-1, 7, -3, -4, -5, -9"));
+    s->add_clause_outside(str_to_cl("-1, -7, 3, -4, -5, -9"));
+    s->add_clause_outside(str_to_cl("1, 7, 3, -4, -5, -9"));
+    s->add_clause_outside(str_to_cl("-1, -7, -3, 4, -5, -9"));
+    s->add_clause_outside(str_to_cl("1, 7, -3, 4, -5, -9"));
+    s->add_clause_outside(str_to_cl("1, -7, 3, 4, -5, -9"));
+    s->add_clause_outside(str_to_cl("-1, 7, 3, 4, -5, -9"));
+    s->add_clause_outside(str_to_cl("-1, -7, -3, -4, 5, -9"));
+    s->add_clause_outside(str_to_cl("1, 7, -3, -4, 5, -9"));
+    s->add_clause_outside(str_to_cl("1, -7, 3, -4, 5, -9"));
+    s->add_clause_outside(str_to_cl("-1, 7, 3, -4, 5, -9"));
+    s->add_clause_outside(str_to_cl("1, -7, -3, 4, 5, -9"));
+    s->add_clause_outside(str_to_cl("-1, 7, -3, 4, 5, -9"));
+    s->add_clause_outside(str_to_cl("-1, -7, 3, 4, 5, -9"));
+    s->add_clause_outside(str_to_cl("1, 7, 3, 4, 5, -9"));
+    s->add_clause_outside(str_to_cl("-1, -7, -3, -4, -5, 9"));
+    s->add_clause_outside(str_to_cl("1, 7, -3, -4, -5, 9"));
+    s->add_clause_outside(str_to_cl("1, -7, 3, -4, -5, 9"));
+    s->add_clause_outside(str_to_cl("-1, 7, 3, -4, -5, 9"));
+    s->add_clause_outside(str_to_cl("1, -7, -3, 4, -5, 9"));
+    s->add_clause_outside(str_to_cl("-1, 7, -3, 4, -5, 9"));
+    s->add_clause_outside(str_to_cl("-1, -7, 3, 4, -5, 9"));
+    s->add_clause_outside(str_to_cl("1, 7, 3, 4, -5, 9"));
+    s->add_clause_outside(str_to_cl("1, -7, -3, -4, 5, 9"));
+    s->add_clause_outside(str_to_cl("-1, 7, -3, -4, 5, 9"));
+    s->add_clause_outside(str_to_cl("-1, -7, 3, -4, 5, 9"));
+    s->add_clause_outside(str_to_cl("1, 7, 3, -4, 5, 9"));
+    s->add_clause_outside(str_to_cl("-1, -7, -3, 4, 5, 9"));
+    s->add_clause_outside(str_to_cl("1, 7, -3, 4, 5, 9"));
+    s->add_clause_outside(str_to_cl("1, -7, 3, 4, 5, 9"));
+    s->add_clause_outside(str_to_cl("-1, 7, 3, 4, 5, 9"));
 
     occsimp->setup();
     XorFinder finder(occsimp, s);
@@ -326,38 +326,38 @@ TEST_F(xor_finder, find_5_1)
 
 TEST_F(xor_finder, find_6_1)
 {
-    s->add_clause_outer(str_to_cl("-6, -7, -3, -4, -5, -9"));
-    s->add_clause_outer(str_to_cl("6, 7, -3, -4, -5, -9"));
-    s->add_clause_outer(str_to_cl("6, -7, 3, -4, -5, -9"));
-    s->add_clause_outer(str_to_cl("-6, 7, 3, -4, -5, -9"));
-    s->add_clause_outer(str_to_cl("6, -7, -3, 4, -5, -9"));
-    s->add_clause_outer(str_to_cl("-6, 7, -3, 4, -5, -9"));
-    s->add_clause_outer(str_to_cl("-6, -7, 3, 4, -5, -9"));
-    s->add_clause_outer(str_to_cl("6, 7, 3, 4, -5, -9"));
-    s->add_clause_outer(str_to_cl("6, -7, -3, -4, 5, -9"));
-    s->add_clause_outer(str_to_cl("-6, 7, -3, -4, 5, -9"));
-    s->add_clause_outer(str_to_cl("-6, -7, 3, -4, 5, -9"));
-    s->add_clause_outer(str_to_cl("6, 7, 3, -4, 5, -9"));
-    s->add_clause_outer(str_to_cl("-6, -7, -3, 4, 5, -9"));
-    s->add_clause_outer(str_to_cl("6, 7, -3, 4, 5, -9"));
-    s->add_clause_outer(str_to_cl("6, -7, 3, 4, 5, -9"));
-    s->add_clause_outer(str_to_cl("-6, 7, 3, 4, 5, -9"));
-    s->add_clause_outer(str_to_cl("6, -7, -3, -4, -5, 9"));
-    s->add_clause_outer(str_to_cl("-6, 7, -3, -4, -5, 9"));
-    s->add_clause_outer(str_to_cl("-6, -7, 3, -4, -5, 9"));
-    s->add_clause_outer(str_to_cl("6, 7, 3, -4, -5, 9"));
-    s->add_clause_outer(str_to_cl("-6, -7, -3, 4, -5, 9"));
-    s->add_clause_outer(str_to_cl("6, 7, -3, 4, -5, 9"));
-    s->add_clause_outer(str_to_cl("6, -7, 3, 4, -5, 9"));
-    s->add_clause_outer(str_to_cl("-6, 7, 3, 4, -5, 9"));
-    s->add_clause_outer(str_to_cl("-6, -7, -3, -4, 5, 9"));
-    s->add_clause_outer(str_to_cl("6, 7, -3, -4, 5, 9"));
-    s->add_clause_outer(str_to_cl("6, -7, 3, -4, 5, 9"));
-    s->add_clause_outer(str_to_cl("-6, 7, 3, -4, 5, 9"));
-    s->add_clause_outer(str_to_cl("6, -7, -3, 4, 5, 9"));
-    s->add_clause_outer(str_to_cl("-6, 7, -3, 4, 5, 9"));
-    s->add_clause_outer(str_to_cl("-6, -7, 3, 4, 5, 9"));
-    s->add_clause_outer(str_to_cl("6, 7, 3, 4, 5, 9"));
+    s->add_clause_outside(str_to_cl("-6, -7, -3, -4, -5, -9"));
+    s->add_clause_outside(str_to_cl("6, 7, -3, -4, -5, -9"));
+    s->add_clause_outside(str_to_cl("6, -7, 3, -4, -5, -9"));
+    s->add_clause_outside(str_to_cl("-6, 7, 3, -4, -5, -9"));
+    s->add_clause_outside(str_to_cl("6, -7, -3, 4, -5, -9"));
+    s->add_clause_outside(str_to_cl("-6, 7, -3, 4, -5, -9"));
+    s->add_clause_outside(str_to_cl("-6, -7, 3, 4, -5, -9"));
+    s->add_clause_outside(str_to_cl("6, 7, 3, 4, -5, -9"));
+    s->add_clause_outside(str_to_cl("6, -7, -3, -4, 5, -9"));
+    s->add_clause_outside(str_to_cl("-6, 7, -3, -4, 5, -9"));
+    s->add_clause_outside(str_to_cl("-6, -7, 3, -4, 5, -9"));
+    s->add_clause_outside(str_to_cl("6, 7, 3, -4, 5, -9"));
+    s->add_clause_outside(str_to_cl("-6, -7, -3, 4, 5, -9"));
+    s->add_clause_outside(str_to_cl("6, 7, -3, 4, 5, -9"));
+    s->add_clause_outside(str_to_cl("6, -7, 3, 4, 5, -9"));
+    s->add_clause_outside(str_to_cl("-6, 7, 3, 4, 5, -9"));
+    s->add_clause_outside(str_to_cl("6, -7, -3, -4, -5, 9"));
+    s->add_clause_outside(str_to_cl("-6, 7, -3, -4, -5, 9"));
+    s->add_clause_outside(str_to_cl("-6, -7, 3, -4, -5, 9"));
+    s->add_clause_outside(str_to_cl("6, 7, 3, -4, -5, 9"));
+    s->add_clause_outside(str_to_cl("-6, -7, -3, 4, -5, 9"));
+    s->add_clause_outside(str_to_cl("6, 7, -3, 4, -5, 9"));
+    s->add_clause_outside(str_to_cl("6, -7, 3, 4, -5, 9"));
+    s->add_clause_outside(str_to_cl("-6, 7, 3, 4, -5, 9"));
+    s->add_clause_outside(str_to_cl("-6, -7, -3, -4, 5, 9"));
+    s->add_clause_outside(str_to_cl("6, 7, -3, -4, 5, 9"));
+    s->add_clause_outside(str_to_cl("6, -7, 3, -4, 5, 9"));
+    s->add_clause_outside(str_to_cl("-6, 7, 3, -4, 5, 9"));
+    s->add_clause_outside(str_to_cl("6, -7, -3, 4, 5, 9"));
+    s->add_clause_outside(str_to_cl("-6, 7, -3, 4, 5, 9"));
+    s->add_clause_outside(str_to_cl("-6, -7, 3, 4, 5, 9"));
+    s->add_clause_outside(str_to_cl("6, 7, 3, 4, 5, 9"));
 
     occsimp->setup();
     XorFinder finder(occsimp, s);
@@ -569,7 +569,7 @@ TEST_F(xor_finder2, xor_unit)
 #ifdef USE_M4RI
 TEST_F(xor_finder2, xor_unit2_2)
 {
-    s->add_clause_outer(str_to_cl("-4"));
+    s->add_clause_outside(str_to_cl("-4"));
     finder->xors = str_to_xors("1, 2, 3 = 0; 1, 2, 3, 4 = 1;");
     vector<Lit> out_changed_occur;
     bool ret = topLevelGauss->toplevelgauss(finder->xors, &out_changed_occur);

@@ -442,7 +442,7 @@ struct OneThreadAddCls
                 ) {
                     lits.push_back(orig_lits[at]);
                 }
-                ret = solver.add_clause_outer(lits);
+                ret = solver.add_clause_outside(lits);
             } else {
                 vars.clear();
                 at++;
@@ -646,7 +646,7 @@ DLL_PUBLIC bool SATSolver::add_clause(const vector< Lit >& lits)
         data->solvers[0]->new_vars(data->vars_to_add);
         data->vars_to_add = 0;
 
-        ret = data->solvers[0]->add_clause_outer(lits);
+        ret = data->solvers[0]->add_clause_outside(lits);
         data->cls++;
     }
 

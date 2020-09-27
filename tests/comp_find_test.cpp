@@ -51,8 +51,8 @@ struct comp_finder : public ::testing::Test {
 
 TEST_F(comp_finder, find_1_1)
 {
-    s->add_clause_outer(str_to_cl("1, 2"));
-    s->add_clause_outer(str_to_cl("-1, -2"));
+    s->add_clause_outside(str_to_cl("1, 2"));
+    s->add_clause_outside(str_to_cl("-1, -2"));
 
     finder->find_components();
 
@@ -61,11 +61,11 @@ TEST_F(comp_finder, find_1_1)
 
 TEST_F(comp_finder, find_1_2)
 {
-    s->add_clause_outer(str_to_cl("1, 2"));
-    s->add_clause_outer(str_to_cl("3, -4, 5"));
-    s->add_clause_outer(str_to_cl("7, -5"));
-    s->add_clause_outer(str_to_cl("7, 10, 15"));
-    s->add_clause_outer(str_to_cl("15, 4, 2"));
+    s->add_clause_outside(str_to_cl("1, 2"));
+    s->add_clause_outside(str_to_cl("3, -4, 5"));
+    s->add_clause_outside(str_to_cl("7, -5"));
+    s->add_clause_outside(str_to_cl("7, 10, 15"));
+    s->add_clause_outside(str_to_cl("15, 4, 2"));
 
     finder->find_components();
 
@@ -74,12 +74,12 @@ TEST_F(comp_finder, find_1_2)
 
 TEST_F(comp_finder, find_2_1)
 {
-    s->add_clause_outer(str_to_cl("1, 2"));
+    s->add_clause_outside(str_to_cl("1, 2"));
 
-    s->add_clause_outer(str_to_cl("3, -4, 5"));
-    s->add_clause_outer(str_to_cl("7, -5"));
-    s->add_clause_outer(str_to_cl("7, 10, 15"));
-    s->add_clause_outer(str_to_cl("15, 4"));
+    s->add_clause_outside(str_to_cl("3, -4, 5"));
+    s->add_clause_outside(str_to_cl("7, -5"));
+    s->add_clause_outside(str_to_cl("7, 10, 15"));
+    s->add_clause_outside(str_to_cl("15, 4"));
 
     finder->find_components();
 
@@ -88,13 +88,13 @@ TEST_F(comp_finder, find_2_1)
 
 TEST_F(comp_finder, find_2_2)
 {
-    s->add_clause_outer(str_to_cl("1, 2"));
-    s->add_clause_outer(str_to_cl("1, 14, 17"));
+    s->add_clause_outside(str_to_cl("1, 2"));
+    s->add_clause_outside(str_to_cl("1, 14, 17"));
 
-    s->add_clause_outer(str_to_cl("3, -4, 5"));
-    s->add_clause_outer(str_to_cl("7, -5"));
-    s->add_clause_outer(str_to_cl("7, 10, 15"));
-    s->add_clause_outer(str_to_cl("15, 4"));
+    s->add_clause_outside(str_to_cl("3, -4, 5"));
+    s->add_clause_outside(str_to_cl("7, -5"));
+    s->add_clause_outside(str_to_cl("7, 10, 15"));
+    s->add_clause_outside(str_to_cl("15, 4"));
 
     finder->find_components();
 
@@ -103,20 +103,20 @@ TEST_F(comp_finder, find_2_2)
 
 TEST_F(comp_finder, find_5_1)
 {
-    s->add_clause_outer(str_to_cl("1, 2"));
-    s->add_clause_outer(str_to_cl("3, 4, 5"));
+    s->add_clause_outside(str_to_cl("1, 2"));
+    s->add_clause_outside(str_to_cl("3, 4, 5"));
 
-    s->add_clause_outer(str_to_cl("6, -7"));
-    s->add_clause_outer(str_to_cl("6, -8"));
+    s->add_clause_outside(str_to_cl("6, -7"));
+    s->add_clause_outside(str_to_cl("6, -8"));
 
-    s->add_clause_outer(str_to_cl("10, -12, 11"));
-    s->add_clause_outer(str_to_cl("10, -17, 9"));
+    s->add_clause_outside(str_to_cl("10, -12, 11"));
+    s->add_clause_outside(str_to_cl("10, -17, 9"));
 
-    s->add_clause_outer(str_to_cl("13, -14, 15, -16"));
-    s->add_clause_outer(str_to_cl("13, -14, -16"));
+    s->add_clause_outside(str_to_cl("13, -14, 15, -16"));
+    s->add_clause_outside(str_to_cl("13, -14, -16"));
 
-    s->add_clause_outer(str_to_cl("-18, -17"));
-    s->add_clause_outer(str_to_cl("-18, 20"));
+    s->add_clause_outside(str_to_cl("-18, -17"));
+    s->add_clause_outside(str_to_cl("-18, 20"));
 
     finder->find_components();
 

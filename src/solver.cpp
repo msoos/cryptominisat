@@ -3122,7 +3122,7 @@ void Solver::add_in_partial_solving_stats()
     sumPropStats += propStats;
 }
 
-bool Solver::add_clause_outer(const vector<Lit>& lits, bool red)
+bool Solver::add_clause_outside(const vector<Lit>& lits, bool red)
 {
     if (!ok) {
         return false;

@@ -54,8 +54,8 @@ struct sub_impl : public ::testing::Test {
 TEST_F(sub_impl, sub_2by2_1)
 {
     s->new_vars(7);
-    s->add_clause_outer(str_to_cl("1, -2"));
-    s->add_clause_outer(str_to_cl("1, -2"));
+    s->add_clause_outside(str_to_cl("1, -2"));
+    s->add_clause_outside(str_to_cl("1, -2"));
 
     sub->subsume_implicit();
     check_irred_cls_eq(s, "1, -2");
@@ -64,10 +64,10 @@ TEST_F(sub_impl, sub_2by2_1)
 TEST_F(sub_impl, sub_2by2_2)
 {
     s->new_vars(7);
-    s->add_clause_outer(str_to_cl("1, -2"));
-    s->add_clause_outer(str_to_cl("1, 3"));
-    s->add_clause_outer(str_to_cl("1, -4"));
-    s->add_clause_outer(str_to_cl("1, -2"));
+    s->add_clause_outside(str_to_cl("1, -2"));
+    s->add_clause_outside(str_to_cl("1, 3"));
+    s->add_clause_outside(str_to_cl("1, -4"));
+    s->add_clause_outside(str_to_cl("1, -2"));
 
     sub->subsume_implicit();
     check_irred_cls_eq(s, "1, -2; 1, 3; 1, -4");
@@ -76,12 +76,12 @@ TEST_F(sub_impl, sub_2by2_2)
 TEST_F(sub_impl, sub_2by2_3)
 {
     s->new_vars(7);
-    s->add_clause_outer(str_to_cl("2, 1"));
-    s->add_clause_outer(str_to_cl("2, 4"));
-    s->add_clause_outer(str_to_cl("1, 3"));
-    s->add_clause_outer(str_to_cl("1, 3"));
-    s->add_clause_outer(str_to_cl("-1, -3"));
-    s->add_clause_outer(str_to_cl("1, 2"));
+    s->add_clause_outside(str_to_cl("2, 1"));
+    s->add_clause_outside(str_to_cl("2, 4"));
+    s->add_clause_outside(str_to_cl("1, 3"));
+    s->add_clause_outside(str_to_cl("1, 3"));
+    s->add_clause_outside(str_to_cl("-1, -3"));
+    s->add_clause_outside(str_to_cl("1, 2"));
 
     sub->subsume_implicit();
     check_irred_cls_eq(s, "1, 2; 1, 3;2, 4;-1, -3");
@@ -90,10 +90,10 @@ TEST_F(sub_impl, sub_2by2_3)
 TEST_F(sub_impl, sub_2by2_4)
 {
     s->new_vars(7);
-    s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
-    s->add_clause_outer(str_to_cl("1, 4"));
-    s->add_clause_outer(str_to_cl("-1, 2, 4"));
-    s->add_clause_outer(str_to_cl("1, 4"));
+    s->add_clause_outside(str_to_cl("1, 2, 3, 4"));
+    s->add_clause_outside(str_to_cl("1, 4"));
+    s->add_clause_outside(str_to_cl("-1, 2, 4"));
+    s->add_clause_outside(str_to_cl("1, 4"));
 
     sub->subsume_implicit();
     check_irred_cls_eq(s, "1, 4; 1, 2, 3, 4;-1, 2, 4");

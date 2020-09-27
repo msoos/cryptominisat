@@ -65,7 +65,7 @@ TEST_F(SearcherTest, pickpolar_rnd)
     s->new_vars(30);
     ss = (Searcher*)s;
 
-    s->add_clause_outer(str_to_cl(" 1,  2"));
+    s->add_clause_outside(str_to_cl(" 1,  2"));
 
     uint32_t num = 0;
     for(uint32_t i = 0 ; i < 1000000; i++)
@@ -82,7 +82,7 @@ TEST_F(SearcherTest, pickpolar_pos)
     s = new Solver(&conf, &must_inter);
     s->new_vars(30);
     ss = (Searcher*)s;
-    s->add_clause_outer(str_to_cl(" 1,  2"));
+    s->add_clause_outside(str_to_cl(" 1,  2"));
 
     uint32_t num = 0;
     for(uint32_t i = 0 ; i < 100000; i++)
@@ -97,7 +97,7 @@ TEST_F(SearcherTest, pickpolar_neg)
     s = new Solver(&conf, &must_inter);
     s->new_vars(30);
     ss = (Searcher*)s;
-    s->add_clause_outer(str_to_cl(" 1,  2"));
+    s->add_clause_outside(str_to_cl(" 1,  2"));
 
     uint32_t num = 0;
     for(uint32_t i = 0 ; i < 100000; i++)
@@ -112,7 +112,7 @@ TEST_F(SearcherTest, pickpolar_auto)
     s = new Solver(&conf, &must_inter);
     s->new_vars(30);
     ss = (Searcher*)s;
-    s->add_clause_outer(str_to_cl(" 1,  2"));
+    s->add_clause_outside(str_to_cl(" 1,  2"));
 
     s->new_decision_level();
     set_var_polar(0, true);
@@ -140,16 +140,16 @@ TEST_F(SearcherTest, pickpolar_auto_not_changed_by_simp)
     s = new Solver(&conf, &must_inter);
     s->new_vars(30);
     ss = (Searcher*)s;
-    s->add_clause_outer(str_to_cl(" 1,  2"));
-    s->add_clause_outer(str_to_cl(" -1,  2"));
-    s->add_clause_outer(str_to_cl(" 3,  4, 5"));
-    s->add_clause_outer(str_to_cl(" -3,  4, 5"));
-    s->add_clause_outer(str_to_cl(" -3,  -4, 5"));
-    s->add_clause_outer(str_to_cl(" 2, -3,  -4, 5"));
-    s->add_clause_outer(str_to_cl(" 2, -3,  4, 5"));
-    s->add_clause_outer(str_to_cl(" 4, 5"));
-    s->add_clause_outer(str_to_cl(" -4, 5"));
-    s->add_clause_outer(str_to_cl(" -4, -5"));
+    s->add_clause_outside(str_to_cl(" 1,  2"));
+    s->add_clause_outside(str_to_cl(" -1,  2"));
+    s->add_clause_outside(str_to_cl(" 3,  4, 5"));
+    s->add_clause_outside(str_to_cl(" -3,  4, 5"));
+    s->add_clause_outside(str_to_cl(" -3,  -4, 5"));
+    s->add_clause_outside(str_to_cl(" 2, -3,  -4, 5"));
+    s->add_clause_outside(str_to_cl(" 2, -3,  4, 5"));
+    s->add_clause_outside(str_to_cl(" 4, 5"));
+    s->add_clause_outside(str_to_cl(" -4, 5"));
+    s->add_clause_outside(str_to_cl(" -4, -5"));
 
 
     //The mod%3 is only to set it kinda randomly.
