@@ -92,8 +92,10 @@ class Solver : public Searcher
         void set_var_weight(Lit lit, double weight);
 
         lbool solve_with_assumptions(const vector<Lit>* _assumptions, bool only_indep_solution);
-        lbool simplify_with_assumptions(const vector<Lit>* _assumptions = NULL);
+        lbool simplify_with_assumptions(const vector<Lit>* _assumptions = NULL, const string* strategy = NULL);
         void  set_shared_data(SharedData* shared_data);
+        vector<Lit> probe_outside_tmp;
+        lbool probe_outside(Lit l, uint32_t& props);
 
         //drat for SAT problems
         void add_empty_cl_to_drat();
@@ -260,7 +262,7 @@ class Solver : public Searcher
         bool renumber_variables(bool must_renumber = true);
         SatZillaFeatures calculate_satzilla_features();
         SatZillaFeatures last_solve_satzilla_feature;
-        vector<uint32_t> get_definabe(vector<uint32_t>& vars);
+        vector<uint32_t> get_definabe(const vector<uint32_t>& vars);
         void remove_and_clean_all();
 
 
@@ -333,7 +335,7 @@ class Solver : public Searcher
         unsigned num_bits_set(const size_t x, const unsigned max_size) const;
         void check_too_large_variable_number(const vector<Lit>& lits) const;
 
-        lbool simplify_problem_outside();
+        lbool simplify_problem_outside(const string* strategy = NULL);
         void move_to_outside_assumps(const vector<Lit>* assumps);
         vector<Lit> back_number_from_outside_to_outer_tmp;
         void back_number_from_outside_to_outer(const vector<Lit>& lits)
@@ -356,7 +358,7 @@ class Solver : public Searcher
         void print_min_stats(const double cpu_time, const double cpu_time_total) const;
         void print_full_restart_stat(const double cpu_time, const double cpu_time_total) const;
 
-        lbool simplify_problem(const bool startup);
+        lbool simplify_problem(const bool startup, const string& strategy);
         lbool execute_inprocess_strategy(const bool startup, const string& strategy);
         SolveStats solveStats;
         void check_minimization_effectiveness(lbool status);
@@ -508,11 +510,12 @@ inline void Solver::move_to_outside_assumps(const vector<Lit>* assumps)
 }
 
 inline lbool Solver::simplify_with_assumptions(
-    const vector<Lit>* _assumptions
+    const vector<Lit>* _assumptions,
+    const string* strategy
 ) {
     fresh_solver = false;
     move_to_outside_assumps(_assumptions);
-    return simplify_problem_outside();
+    return simplify_problem_outside(strategy);
 }
 
 inline bool Solver::find_with_watchlist_a_or_b(Lit a, Lit b, int64_t* limit) const

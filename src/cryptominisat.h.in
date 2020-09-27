@@ -71,7 +71,7 @@ namespace CMSat {
         ////////////////////////////
 
         lbool solve(const std::vector<Lit>* assumptions = 0, bool only_indep_solution = false); //solve the problem, optionally with assumptions. If only_indep_solution is set, only the independent variables set with set_independent_vars() are returned in the solution
-        lbool simplify(const std::vector<Lit>* assumptions = 0); //simplify the problem, optionally with assumptions
+        lbool simplify(const std::vector<Lit>* assumptions = NULL, const std::string* strategy = NULL); //simplify the problem, optionally with assumptions
         const std::vector<lbool>& get_model() const; //get model that satisfies the problem. Only makes sense if previous solve()/simplify() call was l_True
         const std::vector<Lit>& get_conflict() const; //get conflict in terms of the assumptions given in case the previous call to solve() was l_False
         bool okay() const; //the problem is still solveable, i.e. the empty clause hasn't been derived
@@ -124,6 +124,7 @@ namespace CMSat {
         void set_no_equivalent_lit_replacement(); //don't replace equivalent literals
         void set_no_bva(); //No bounded variable addition
         void set_no_bve(); //No bounded variable elimination
+        void set_bve(int bve);
         void set_yes_comphandler(); //Allow component handler to work
         void set_greedy_undef(); //Try to set variables to l_Undef in solution
         void set_sampling_vars(std::vector<uint32_t>* sampl_vars);
@@ -196,9 +197,10 @@ namespace CMSat {
         std::vector<uint32_t> get_var_incidence();
         std::vector<uint32_t> get_var_incidence_also_red();
         std::vector<double> get_vsids_scores();
-        std::vector<uint32_t> get_definabe(std::vector<uint32_t>& vars);
+        std::vector<uint32_t> get_definabe(const std::vector<uint32_t>& vars);
         lbool find_backbone(BackBoneData backbone);
         void remove_and_clean_all();
+        lbool probe(Lit l, uint32_t& props);
 
         //Given a set of literals to enqueue, returns:
         // 1) Whether they imply SAT/UNSAT. If "true": SAT. If "false": UNSAT

@@ -162,13 +162,13 @@ TEST_F(SearcherTest, pickpolar_auto_not_changed_by_simp)
         ASSERT_EQ(ss->pick_polarity(i), (bool)(i%3));
     }
 
-    s->simplify_problem(true);
+    s->simplify_problem(true, s->conf.simplify_schedule_startup);
     //for unset variables, it must all be FALSE
     for(uint32_t i = 0; i < 30; i++) {
         ASSERT_EQ(ss->pick_polarity(i), (bool)(i%3));
     }
 
-    s->simplify_problem(false);
+    s->simplify_problem(false, s->conf.simplify_schedule_nonstartup);
     for(uint32_t i = 0; i < 30; i++) {
         ASSERT_EQ(ss->pick_polarity(i), (bool)(i%3));
     }

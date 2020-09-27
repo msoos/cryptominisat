@@ -596,6 +596,14 @@ DLL_PUBLIC void SATSolver::set_no_bve()
     }
 }
 
+DLL_PUBLIC void SATSolver::set_bve(int bve)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.doVarElim = bve;
+    }
+}
+
 DLL_PUBLIC void SATSolver::set_greedy_undef()
 {
     assert(false && "ERROR: Unfortunately, greedy undef is broken, please don't use it");
@@ -762,8 +770,10 @@ struct OneThreadCalc
 
 lbool calc(
     const vector< Lit >* assumptions,
-    bool solve, CMSatPrivateData *data,
-    bool only_sampling_solution = false
+    bool solve,
+    CMSatPrivateData *data,
+    bool only_sampling_solution = false,
+    const string* strategy = NULL
 ) {
     //Reset the interrupt signal if it was set
     data->must_interrupt->store(false, std::memory_order_relaxed);
@@ -801,7 +811,7 @@ lbool calc(
         if (solve) {
             ret = data->solvers[0]->solve_with_assumptions(assumptions, only_sampling_solution);
         } else {
-            ret = data->solvers[0]->simplify_with_assumptions(assumptions);
+            ret = data->solvers[0]->simplify_with_assumptions(assumptions, strategy);
         }
         data->okay = data->solvers[0]->okay();
         data->cpu_times[0] = cpuTime();
@@ -853,7 +863,7 @@ DLL_PUBLIC lbool SATSolver::solve(const vector< Lit >* assumptions, bool only_sa
     return calc(assumptions, true, data, only_sampling_solution);
 }
 
-DLL_PUBLIC lbool SATSolver::simplify(const vector< Lit >* assumptions)
+DLL_PUBLIC lbool SATSolver::simplify(const vector< Lit >* assumptions, const string* strategy)
 {
     if (data->promised_single_call
         && data->num_solve_simplify_calls > 0
@@ -871,7 +881,7 @@ DLL_PUBLIC lbool SATSolver::simplify(const vector< Lit >* assumptions)
     data->previous_sum_propagations = get_sum_propagations();
     data->previous_sum_decisions = get_sum_decisions();
 
-    return calc(assumptions, false, data);
+    return calc(assumptions, false, data, false, strategy);
 }
 
 DLL_PUBLIC const vector< lbool >& SATSolver::get_model() const
@@ -1237,11 +1247,10 @@ void DLL_PUBLIC SATSolver::set_up_for_arjun()
 {
     for (size_t i = 0; i < data->solvers.size(); i++) {
         SolverConf conf = data->solvers[i]->getConf();
-        conf.restart_first = 200;
         conf.doBreakid = false;
-        //conf.gaussconf.max_num_matrices = 0;
+        conf.gaussconf.max_num_matrices = 0;
         //conf.xor_finder_time_limitM = 0;
-        conf.xor_detach_reattach = true;
+        //conf.xor_detach_reattach = true;
         conf.global_multiplier_multiplier_max = 1;
         conf.orig_global_timeout_multiplier = 2.5;
         conf.do_bva = false;
@@ -1252,10 +1261,13 @@ void DLL_PUBLIC SATSolver::set_up_for_arjun()
 
         conf.do_simplify_problem = false; //no simplification without explicity calling it
         conf.varElimRatioPerIter = 1;
-//         conf.restartType = Restart::never;
+        conf.restartType = Restart::geom;
+        conf.restart_first = 100;
+        conf.restart_inc = 100;
         conf.polarity_mode = CMSat::PolarityMode::polarmode_automatic;
         conf.branch_strategy_setup = "vsids1";
         conf.diff_declev_for_chrono = -1;
+        conf.doTernary = false;
         data->solvers[i]->setConf(conf);
     }
 }
@@ -1302,7 +1314,7 @@ DLL_PUBLIC vector<uint32_t> SATSolver::get_var_incidence()
     return data->solvers[data->which_solved]->get_outside_var_incidence();
 }
 
-DLL_PUBLIC vector<uint32_t> SATSolver::get_definabe(vector<uint32_t>& vars)
+DLL_PUBLIC vector<uint32_t> SATSolver::get_definabe(const vector<uint32_t>& vars)
 {
     return data->solvers[0]->get_definabe(vars);
 }
@@ -1427,7 +1439,14 @@ DLL_PUBLIC void SATSolver::set_yes_comphandler()
 
 DLL_PUBLIC void SATSolver::get_all_irred_clauses(std::vector<Lit>& ret)
 {
-    assert(data->solvers.size() == 1);
+    assert(data->solvers.size() >= 1);
     Solver& s = *data->solvers[0];
     s.get_all_irred_clauses(ret);
+}
+
+DLL_PUBLIC lbool SATSolver::probe(Lit l, uint32_t& props)
+{
+    assert(data->solvers.size() >= 1);
+    Solver& s = *data->solvers[0];
+    return s.probe_outside(l, props);
 }

@@ -1527,7 +1527,7 @@ void Solver::check_and_upd_config_parameters()
     check_xor_cut_config_sanity();
 }
 
-lbool Solver::simplify_problem_outside()
+lbool Solver::simplify_problem_outside(const string* strategy)
 {
     #ifdef SLOW_DEBUG
     if (ok) {
@@ -1562,7 +1562,7 @@ lbool Solver::simplify_problem_outside()
         bool backup_breakid = conf.doBreakid;
         conf.doSLS = false;
         conf.doBreakid = false;
-        status = simplify_problem(false);
+        status = simplify_problem(false, strategy ? *strategy : conf.simplify_schedule_nonstartup);
         conf.doSLS = backup_sls;
         conf.doBreakid = backup_breakid;
     }
@@ -1650,7 +1650,9 @@ lbool Solver::solve_with_assumptions(
         && conf.simplify_at_startup
         && (solveStats.num_simplify == 0 || conf.simplify_at_every_startup)
     ) {
-        status = simplify_problem(!conf.full_simplify_at_startup);
+        status = simplify_problem(
+            !conf.full_simplify_at_startup,
+            !conf.full_simplify_at_startup ? conf.simplify_schedule_startup : conf.simplify_schedule_nonstartup);
     }
 
     if (status == l_Undef
@@ -1906,7 +1908,7 @@ lbool Solver::iterate_until_solved()
         }
 
         if (conf.do_simplify_problem) {
-            status = simplify_problem(false);
+            status = simplify_problem(false, conf.simplify_schedule_nonstartup);
         }
         if (status == l_Undef) {
             check_reconfigure();
@@ -2182,7 +2184,7 @@ lbool Solver::execute_inprocess_strategy(
 /**
 @brief The function that brings together almost all CNF-simplifications
 */
-lbool Solver::simplify_problem(const bool startup)
+lbool Solver::simplify_problem(const bool startup, const string& strategy)
 {
     assert(ok);
     #ifdef DEBUG_IMPLICIT_STATS
@@ -2222,11 +2224,7 @@ lbool Solver::simplify_problem(const bool startup)
     }
 
     if (ret == l_Undef) {
-        if (startup) {
-            ret = execute_inprocess_strategy(startup, conf.simplify_schedule_startup);
-        } else {
-            ret = execute_inprocess_strategy(startup, conf.simplify_schedule_nonstartup);
-        }
+        ret = execute_inprocess_strategy(startup, strategy);
     }
     assert(ret != l_True);
 
@@ -3132,6 +3130,126 @@ bool Solver::add_clause_outside(const vector<Lit>& lits, bool red)
     #endif
     back_number_from_outside_to_outer(lits);
     return addClauseInt(back_number_from_outside_to_outer_tmp, red);
+}
+
+lbool Solver::probe_outside(Lit l, uint32_t& props)
+{
+    assert(decisionLevel() == 0);
+    assert(l.var() <nVarsOutside());
+
+    props = 0;
+    if (!ok) {
+        return l_False;
+    }
+
+
+    l = map_to_with_bva(l);
+    l = varReplacer->get_lit_replaced_with_outer(l);
+    l = map_outer_to_inter(l);
+    if (varData[l.var()].removed != Removed::none) {
+        //TODO
+        return l_Undef;
+    }
+    if (value(l) != l_Undef) {
+        return l_Undef;
+    }
+
+    uint32_t old_trail_size = trail.size();
+    new_decision_level();
+    enqueue<false>(l);
+    PropBy p = propagate_any_order_fast();
+    props += trail.size() - old_trail_size;
+    for(uint32_t i = old_trail_size+1; i < trail.size(); i++) {
+        toClear.push_back(trail[i].lit);
+        seen[trail[i].lit.var()] = 1+(int)trail[i].lit.sign();
+    }
+    cancelUntil(0);
+
+    //Check result
+    if (!p.isNULL()) {
+        enqueue<false>(~l);
+        p = propagate_any_order_fast();
+        if (!p.isNULL()) {
+            ok = false;
+        }
+        goto end;
+    }
+
+    old_trail_size = trail.size();
+    new_decision_level();
+    enqueue<false>(~l);
+    p = propagate_any_order_fast();
+    props += trail.size() - old_trail_size;
+    probe_outside_tmp.clear();
+    for(uint32_t i = old_trail_size+1; i < trail.size(); i++) {
+        Lit lit = trail[i].lit;
+        uint32_t var = trail[i].lit.var();
+        if (seen[var] == 0) {
+            continue;
+        }
+
+        if (lit.sign() == seen[var]-1) {
+            //Same sign both times
+            probe_outside_tmp.push_back(lit);
+        } else {
+            probe_outside_tmp.push_back(lit_Undef);
+            probe_outside_tmp.push_back(~lit);
+        }
+    }
+    cancelUntil(0);
+
+    //Check result
+    if (!p.isNULL()) {
+        enqueue<false>(l);
+        p = propagate_any_order_fast();
+        if (!p.isNULL()) {
+            ok = false;
+        }
+        goto end;
+    }
+
+    //Deal with bothprop
+    for(uint32_t i = 0; i < probe_outside_tmp.size(); i++) {
+        Lit bp_lit = probe_outside_tmp[i];
+        if (bp_lit != lit_Undef) {
+            //I am not going to deal with the messy version of it already being set
+            if (value(bp_lit) == l_Undef) {
+                enqueue<false>(bp_lit);
+            }
+        } else {
+            //First we must propagate all the enqueued facts
+            p = propagate_any_order_fast();
+            if (!p.isNULL()) {
+                ok = false;
+                goto end;
+            }
+
+            //Add binary XOR
+            i++;
+            bp_lit = probe_outside_tmp[i];
+            vector<Lit> lits(2);
+            lits[0] = l;
+            lits[1] = bp_lit;
+            ok = add_xor_clause_inter(lits, false, true);
+            if (!ok) {
+                goto end;
+            }
+        }
+    }
+
+    //Propagate all enqueued facts due to bprop
+    p = propagate_any_order_fast();
+    if (!p.isNULL()) {
+        ok = false;
+        goto end;
+    }
+
+    end:
+    for(auto clear_l: toClear) {
+        seen[clear_l.var()] = 0;
+    }
+    toClear.clear();
+    return ok ? l_Undef : l_False;
 }
 
 bool Solver::add_xor_clause_outer(const vector<uint32_t>& vars, bool rhs)
@@ -4835,7 +4953,7 @@ bool Solver::assump_contains_xor_clash()
     return ret;
 }
 
-vector<uint32_t> Solver::get_definabe(vector<uint32_t>& vars)
+vector<uint32_t> Solver::get_definabe(const vector<uint32_t>& vars)
 {
     if (get_num_bva_vars() != 0) {
         cout << "ERROR: get_num_bva_vars(): " << get_num_bva_vars() << endl;
@@ -4846,7 +4964,7 @@ vector<uint32_t> Solver::get_definabe(vector<uint32_t>& vars)
 
     //Map to inter
     vector<uint32_t> inter_vars;
-    for(auto& v1: vars) {
+    for(const auto& v1: vars) {
         assert(v1 < nVarsOuter());
         uint32_t v2 = map_outer_to_inter(v1);
         assert(v2 < varData.size());
