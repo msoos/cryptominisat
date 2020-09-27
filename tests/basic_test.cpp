@@ -1186,7 +1186,7 @@ TEST(sampling, indep2)
     s.add_clause(str_to_cl("1, 2, 3, 4"));
     s.add_clause(str_to_cl("-5, 6"));
 
-    vector<uint32_t> x{0U,1U,2U,3U,4U,5U};
+    vector<uint32_t> x = str_to_vars("1, 2, 3, 4, 5, 6");
     s.set_sampling_vars(&x);
 
     lbool ret = s.solve(NULL, true);
@@ -1205,7 +1205,7 @@ TEST(xor_recovery, find_1_3_xor)
     s.new_vars(30);
     s.set_no_bve();
 
-    s.add_xor_clause(vector<unsigned>{0U, 1U, 2U}, false);
+    s.add_xor_clause(str_to_vars("1, 2, 3"), false);
     s.simplify();
 
     vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(false);
@@ -1218,7 +1218,7 @@ TEST(xor_recovery, find_1_3_xor2)
     s.new_vars(30);
     s.set_no_bve();
 
-    s.add_xor_clause(vector<unsigned>{0U, 1U, 2U}, true);
+    s.add_xor_clause(str_to_vars("1, 2, 3"), true);
     s.simplify();
 
     vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(false);
@@ -1232,14 +1232,14 @@ TEST(xor_recovery, find_2_3_xor_2)
     s.set_no_bve();
 
     s.add_clause(str_to_cl("1,2,3,4,5"));
-    s.add_xor_clause(vector<unsigned>{0U, 1U, 2U}, false);
-    s.add_xor_clause(vector<unsigned>{0U, 3U, 4U}, false);
+    s.add_xor_clause(str_to_vars("1, 2, 3"), false);
+    s.add_xor_clause(str_to_vars("1, 4, 5"), false);
     s.simplify();
 
     vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(true);
     EXPECT_EQ(xors.size(), 2);
-    EXPECT_EQ(xors[0].first.size(), 3);
-    EXPECT_EQ(xors[1].first.size(), 3);
+    EXPECT_EQ(xors[0].first, str_to_vars("1, 2, 3"));
+    EXPECT_EQ(xors[1].first, str_to_vars("1, 4, 5"));
     EXPECT_EQ(xors[0].second, false);
     EXPECT_EQ(xors[1].second, false);
 }
@@ -1250,12 +1250,12 @@ TEST(xor_recovery, find_1_3_xor_exact)
     s.new_vars(30);
     s.set_no_bve();
 
-    s.add_xor_clause(vector<unsigned>{0U, 1U, 2U}, false);
+    s.add_xor_clause(str_to_vars("1, 2, 3"), false);
     s.simplify();
 
     vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(false);
     EXPECT_EQ(xors.size(), 1);
-    EXPECT_EQ(xors[0].first, (vector<uint32_t>{0U, 1U, 2U}));
+    EXPECT_EQ(xors[0].first, str_to_vars("1, 2, 3"));
     EXPECT_EQ(xors[0].second, false);
 }
 
@@ -1265,12 +1265,12 @@ TEST(xor_recovery, find_1_3_xor_exact2)
     s.new_vars(30);
     s.set_no_bve();
 
-    s.add_xor_clause(vector<unsigned>{0U, 1U, 2U}, true);
+    s.add_xor_clause(str_to_vars("1, 2, 3"), true);
     s.simplify();
 
     vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(false);
     EXPECT_EQ(xors.size(), 1);
-    EXPECT_EQ(xors[0].first, (vector<uint32_t>{0U, 1U, 2U}));
+    EXPECT_EQ(xors[0].first, str_to_vars("1, 2, 3"));
     EXPECT_EQ(xors[0].second, true);
 }
 
@@ -1280,12 +1280,12 @@ TEST(xor_recovery, find_1_4_xor_exact)
     s.new_vars(30);
     s.set_no_bve();
 
-    s.add_xor_clause(vector<unsigned>{0U, 1U, 2U, 3U}, false);
+    s.add_xor_clause(str_to_vars("1, 2, 3, 4"), false);
     s.simplify();
 
     vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(false);
     EXPECT_EQ(xors.size(), 1);
-    EXPECT_EQ(xors[0].first, (vector<uint32_t>{0U, 1U, 2U, 3U}));
+    EXPECT_EQ(xors[0].first, str_to_vars("1, 2, 3, 4"));
 }
 
 TEST(xor_recovery, find_xor_one_only)
@@ -1294,13 +1294,13 @@ TEST(xor_recovery, find_xor_one_only)
     s.new_vars(30);
     s.set_no_bve();
 
-    s.add_xor_clause(vector<unsigned>{0U, 1U, 2U, 3U, 4U, 5U}, false);
+    s.add_xor_clause(str_to_vars("1, 2, 3, 4, 6"), false);
     s.simplify();
 
     vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(true);
     EXPECT_EQ(xors.size(), 1);
     std::sort(xors[0].first.begin(), xors[0].first.end());
-    EXPECT_EQ(xors[0].first, (vector<uint32_t>{0U, 1U, 2U, 3U, 4U, 5U}));
+    EXPECT_EQ(xors[0].first, str_to_vars("1, 2, 3, 4, 6"));
     EXPECT_EQ(xors[0].second, false);
 }
 
@@ -1310,13 +1310,13 @@ TEST(xor_recovery, find_xor_one_only_inv)
     s.new_vars(30);
     s.set_no_bve();
 
-    s.add_xor_clause(vector<unsigned>{0U, 1U, 2U, 3U, 4U, 5U}, true);
+    s.add_xor_clause(str_to_vars("1, 2, 3, 4, 6"), true);
     s.simplify();
 
     vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(true);
     EXPECT_EQ(xors.size(), 1);
     std::sort(xors[0].first.begin(), xors[0].first.end());
-    EXPECT_EQ(xors[0].first, (vector<uint32_t>{0U, 1U, 2U, 3U, 4U, 5U}));
+    EXPECT_EQ(xors[0].first, str_to_vars("1, 2, 3, 4, 6"));
     EXPECT_EQ(xors[0].second, true);
 }
 
@@ -1326,7 +1326,7 @@ TEST(xor_recovery, find_xor_one_only_inv_external)
     s.new_vars(30);
     s.set_no_bve();
 
-    s.add_xor_clause(vector<unsigned>{0U, 1U, 2U, 3U, 4U, 5U}, true);
+    s.add_xor_clause(str_to_vars("1, 2, 3, 4, 6"), true);
     s.simplify();
 
     vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(false);
@@ -1342,14 +1342,14 @@ TEST(xor_recovery, find_xor_one_that_is_xor_of_2)
     s.new_vars(30);
     s.set_no_bve();
 
-    s.add_xor_clause(vector<unsigned>{0U, 2U, 3U, 4U}, true);
-    s.add_xor_clause(vector<unsigned>{0U, 6U, 7U, 8U}, true);
+    s.add_xor_clause(str_to_vars("1, 3, 4, 5"), true);
+    s.add_xor_clause(str_to_vars("1, 7, 8, 9"), true);
     s.simplify();
 
     vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(true);
     EXPECT_EQ(xors.size(), 1);
     std::sort(xors[0].first.begin(), xors[0].first.end());
-    EXPECT_EQ(xors[0].first, (vector<uint32_t>{2U, 3U, 4U, 6U, 7U, 8U}));
+    EXPECT_EQ(xors[0].first, str_to_vars("3, 4, 5, 7, 8, 9"));
     EXPECT_EQ(xors[0].second, false);
 }
 
@@ -1361,14 +1361,14 @@ TEST(xor_recovery, DISABLED_find_xor_renumber)
     s.set_no_bve();
     s.set_verbosity(5);
 
-    s.add_xor_clause(vector<unsigned>{0U, 1U}, false);
-    s.add_xor_clause(vector<unsigned>{0U, 1U, 2U, 3U, 4U, 5U, 6U, 7U, 8U, 9U}, true);
+    s.add_xor_clause(str_to_vars("1, 2"), false);
+    s.add_xor_clause(str_to_vars("1, 2, 3, 4, 5, 6, 7,8, 9, 10"), true);
     s.simplify();
     s.simplify();
 
     vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(true);
     EXPECT_EQ(xors.size(), 1);
-    EXPECT_EQ(xors[0].first, (vector<uint32_t>{1U, 2U, 3U, 4U, 5U, 6U, 7U, 8U, 9U}));
+    EXPECT_EQ(xors[0].first, str_to_vars("2, 3, 4, 5, 6, 7,8, 9, 10"));
 }
 
 
