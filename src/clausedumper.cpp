@@ -101,7 +101,7 @@ size_t ClauseDumper::get_preprocessor_num_cls(bool outer_numbering) {
         vector<Lit> units = solver->get_zero_assigned_lits();
         num_cls += units.size();
     }
-    num_cls += solver->undef_must_set_vars.size();
+    num_cls += solver->undef_must_set_vars.size(); //TODO this is incorrect
     num_cls += solver->varReplacer->print_equivalent_literals(outer_numbering)*2;
 
     return num_cls;
