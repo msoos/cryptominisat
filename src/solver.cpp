@@ -4292,10 +4292,10 @@ bool Solver::implied_by(const std::vector<Lit>& lits,
         //out_implied = map_back_vars_to_without_bva(out_implied);
         exit(-1);
     }
-    if (solver->occsimplifier->get_num_elimed_vars() > 0) {
-        assert(false && "ERROR, you must not have any eliminated variables when calling implied_by -- otherwise, we cannot guarantee all implied variables are found");
-        exit(-1);
-    }
+//     if (solver->occsimplifier->get_num_elimed_vars() > 0) {
+//         assert(false && "ERROR, you must not have any eliminated variables when calling implied_by -- otherwise, we cannot guarantee all implied variables are found");
+//         exit(-1);
+//     }
 
     out_implied.clear();
     if (!okay()) {

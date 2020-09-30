@@ -204,13 +204,14 @@ namespace CMSat {
         lbool probe(Lit l, uint32_t& min_props);
 
         //Given a set of literals to enqueue, returns:
-        // 1) Whether they imply SAT/UNSAT. If "true": SAT. If "false": UNSAT
+        // 1) Whether they imply UNSAT. If "false": UNSAT
         // 2) into "out_implied" the set of literals they imply, including the literals themselves
         // NOTES:
+        // * In case some variables have been eliminated, they cannot be implied
+        // * You must not put any variable into it that's been eliminated. Pass a pointer to solve() and simplif() to make sure some variables are never elimianted, or call set_no_bve()
         // * You may get back some of the literals you gave
         // * Order is not guaranteed: literals you gave as input may end up at the end or may not end up at all
         // * It only returns literals that are newly implied. So you must call get_zero_assigned_lits() before to be sure you know what literals are implied at decision level 0
-
         bool implied_by(
             const std::vector<Lit>& lits, std::vector<Lit>& out_implied);
 
