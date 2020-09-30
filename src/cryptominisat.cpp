@@ -1267,7 +1267,7 @@ void DLL_PUBLIC SATSolver::set_up_for_arjun()
         conf.polarity_mode = CMSat::PolarityMode::polarmode_automatic;
         conf.branch_strategy_setup = "vsids1";
         conf.diff_declev_for_chrono = -1;
-        conf.doTernary = false;
+        conf.doTernary = true;
         data->solvers[i]->setConf(conf);
     }
 }
