@@ -3132,12 +3132,11 @@ bool Solver::add_clause_outside(const vector<Lit>& lits, bool red)
     return addClauseInt(back_number_from_outside_to_outer_tmp, red);
 }
 
-lbool Solver::probe_outside(Lit l, uint32_t& props)
+lbool Solver::probe_outside(Lit l, uint32_t& min_props)
 {
     assert(decisionLevel() == 0);
     assert(l.var() <nVarsOutside());
 
-    props = 0;
     if (!ok) {
         return l_False;
     }
@@ -3158,7 +3157,7 @@ lbool Solver::probe_outside(Lit l, uint32_t& props)
     new_decision_level();
     enqueue<false>(l);
     PropBy p = propagate_any_order_fast();
-    props += trail.size() - old_trail_size;
+    min_props = trail.size() - old_trail_size;
     for(uint32_t i = old_trail_size+1; i < trail.size(); i++) {
         toClear.push_back(trail[i].lit);
         seen[trail[i].lit.var()] = 1+(int)trail[i].lit.sign();
@@ -3179,7 +3178,7 @@ lbool Solver::probe_outside(Lit l, uint32_t& props)
     new_decision_level();
     enqueue<false>(~l);
     p = propagate_any_order_fast();
-    props += trail.size() - old_trail_size;
+    min_props = std::min<uint32_t>(min_props, trail.size() - old_trail_size);
     probe_outside_tmp.clear();
     for(uint32_t i = old_trail_size+1; i < trail.size(); i++) {
         Lit lit = trail[i].lit;

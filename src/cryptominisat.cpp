@@ -1449,9 +1449,9 @@ DLL_PUBLIC void SATSolver::get_all_irred_clauses(std::vector<Lit>& ret)
     s.get_all_irred_clauses(ret);
 }
 
-DLL_PUBLIC lbool SATSolver::probe(Lit l, uint32_t& props)
+DLL_PUBLIC lbool SATSolver::probe(Lit l, uint32_t& min_props)
 {
     assert(data->solvers.size() >= 1);
     Solver& s = *data->solvers[0];
-    return s.probe_outside(l, props);
+    return s.probe_outside(l, min_props);
 }

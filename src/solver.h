@@ -95,7 +95,7 @@ class Solver : public Searcher
         lbool simplify_with_assumptions(const vector<Lit>* _assumptions = NULL, const string* strategy = NULL);
         void  set_shared_data(SharedData* shared_data);
         vector<Lit> probe_outside_tmp;
-        lbool probe_outside(Lit l, uint32_t& props);
+        lbool probe_outside(Lit l, uint32_t& min_props);
 
         //drat for SAT problems
         void add_empty_cl_to_drat();

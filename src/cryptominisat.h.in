@@ -201,7 +201,7 @@ namespace CMSat {
         std::vector<uint32_t> get_definabe(const std::vector<uint32_t>& vars);
         lbool find_backbone(BackBoneData backbone);
         void remove_and_clean_all();
-        lbool probe(Lit l, uint32_t& props);
+        lbool probe(Lit l, uint32_t& min_props);
 
         //Given a set of literals to enqueue, returns:
         // 1) Whether they imply SAT/UNSAT. If "true": SAT. If "false": UNSAT
