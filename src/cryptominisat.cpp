@@ -1254,7 +1254,7 @@ void DLL_PUBLIC SATSolver::set_up_for_arjun()
         conf.global_multiplier_multiplier_max = 1;
         conf.orig_global_timeout_multiplier = 2.5;
         conf.do_bva = false;
-        conf.polar_stable_every_n = 100000; //i.e. never
+        conf.polar_stable_every_n = 100000; //i.e. never use stable polarities
         conf.do_hyperbin_and_transred = false;
         conf.doTransRed = false;
         conf.intree_time_limitM = 1200ULL;
