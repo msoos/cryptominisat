@@ -764,6 +764,48 @@ void CNF::add_drat(std::ostream* os, bool add_ID) {
     drat->setFile(os);
 }
 
+vector<uint32_t> CNF::get_outside_lit_incidence()
+{
+    assert(get_num_bva_vars() == 0);
+    assert(okay());
+
+
+    vector<uint32_t> inc;
+    inc.resize(nVarsOuter()*2, 0);
+    for(uint32_t i = 0; i < nVars()*2; i++) {
+        const Lit l = Lit::toLit(i);
+        for(const auto& x: watches[l]) {
+            if (x.isBin() &&
+                !x.red() &&
+                l.var() < x.lit2().var()) //don't count twice
+            {
+                inc[x.lit2().toInt()]++;
+                inc[l.toInt()]++;
+            }
+        }
+    }
+
+    for(const auto& offs: longIrredCls) {
+        Clause* cl = cl_alloc.ptr(offs);
+        for(const auto& l: *cl) {
+            inc[l.toInt()]++;
+        }
+    }
+
+    //Map to outer
+    vector<uint32_t> inc_outer(nVarsOuter()*2, 0);
+    for(uint32_t i = 0; i < inc.size(); i ++) {
+        Lit outer = map_inter_to_outer(Lit::toLit(i));
+        inc_outer[outer.toInt()] = inc[i];
+    }
+
+    //Map to outside
+    if (get_num_bva_vars() != 0) {
+        inc_outer = map_back_lits_to_without_bva(inc_outer);
+    }
+    return inc_outer;
+}
+
 vector<uint32_t> CNF::get_outside_var_incidence()
 {
     assert(get_num_bva_vars() == 0);

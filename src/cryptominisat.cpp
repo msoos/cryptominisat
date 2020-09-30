@@ -1309,6 +1309,11 @@ DLL_PUBLIC void SATSolver::set_var_weight(Lit lit, double weight)
     }
 }
 
+DLL_PUBLIC std::vector<uint32_t> SATSolver::get_lit_incidence()
+{
+    return data->solvers[data->which_solved]->get_outside_lit_incidence();
+}
+
 DLL_PUBLIC vector<uint32_t> SATSolver::get_var_incidence()
 {
     return data->solvers[data->which_solved]->get_outside_var_incidence();

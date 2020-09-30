@@ -306,6 +306,7 @@ public:
         return num_bva_vars;
     }
     vector<uint32_t> get_outside_var_incidence();
+    vector<uint32_t> get_outside_lit_incidence();
     vector<uint32_t> get_outside_var_incidence_also_red();
 
     vector<uint32_t> build_outer_to_without_bva_map() const;
@@ -349,6 +350,8 @@ protected:
 
     template<class T>
     vector<T> map_back_vars_to_without_bva(const vector<T>& val) const;
+    template<class T>
+    vector<T> map_back_lits_to_without_bva(const vector<T>& val) const;
     vector<lbool> assigns;
 
     void save_state(SimpleOutFile& f) const;
@@ -676,6 +679,23 @@ void CNF::clean_xor_vars_no_prop(T& ps, bool& rhs)
     }
     ps.resize(ps.size() - (i - j));
 }
+
+template<class T>
+vector<T> CNF::map_back_lits_to_without_bva(const vector<T>& val) const
+{
+    vector<T> ret;
+    assert(val.size() == nVarsOuter()*2);
+    ret.reserve(nVarsOutside()*2);
+    for(size_t i = 0; i < nVarsOuter()*2; i++) {
+        Lit l = Lit::toLit(i);
+        if (!varData[map_outer_to_inter(l).var()].is_bva) {
+            ret.push_back(val[i]);
+        }
+    }
+    assert(ret.size() == nVarsOutside()*2);
+    return ret;
+}
+
 
 template<class T>
 vector<T> CNF::map_back_vars_to_without_bva(const vector<T>& val) const
