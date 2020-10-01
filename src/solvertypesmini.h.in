@@ -193,9 +193,10 @@ struct BackBoneData {
     std::vector<uint32_t>* indic_to_var  = NULL;
     uint32_t orig_num_vars = 0;
     std::vector<uint32_t>* non_indep_vars = NULL;
-    uint32_t indep_size = 0;
+    std::vector<uint32_t>* indep_vars = NULL;
     bool backbone_on = false;
-    uint32_t* backbone_test_var = NULL;
+    uint32_t* test_var = NULL;
+    uint32_t* test_indic = NULL;
 };
 
 }

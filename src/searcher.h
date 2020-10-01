@@ -221,6 +221,7 @@ class Searcher : public HyperEngine
         lbool search();
         lbool distill_clauses_if_needed();
         lbool new_decision_backbone();
+        void create_new_backbone_assumption();
 
         ///////////////
         // Variables

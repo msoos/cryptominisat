@@ -3979,9 +3979,37 @@ void Searcher::bump_var_importance(const uint32_t var)
     }
 }
 
+void Searcher::create_new_backbone_assumption()
+{
+    //Reset conflict limit
+    params.max_confl_to_do = params.conflictsDoneThisRestart + 500;
+
+    //Remove with indic
+    Lit indic = backbone._assumptions->at(backbone._assumptions->size()-1);
+    assert(indic.sign());
+    backbone._assumptions->pop_back();
+
+    //Backtrack
+    if (decisionLevel() > backbone._assumptions->size()) {
+        cancelUntil(backbone._assumptions->size());
+    }
+
+    //Add TRUE/FALSE duo
+    uint32_t var = backbone.indic_to_var->at(indic.var());
+    *backbone.test_indic = indic.var();
+    *backbone.test_var = var;
+    //cout << "Testing: " << *backbone.test_var << endl;
+    Lit l = Lit(var, false);
+    backbone._assumptions->push_back(l);
+
+    Lit l2 = Lit(var+backbone.orig_num_vars, true);
+    backbone._assumptions->push_back(l2);
+}
+
 lbool Searcher::new_decision_backbone()
 {
     Lit next = lit_Undef;
+    start:
     while (decisionLevel() < backbone._assumptions->size()) {
         // Perform user provided assumption:
         Lit p = backbone._assumptions->at(decisionLevel());
@@ -3997,35 +4025,16 @@ lbool Searcher::new_decision_backbone()
 //             cout << "Testing ret: " << l_False << endl;
             backbone._assumptions->pop_back();
             backbone._assumptions->pop_back();
-            backbone.non_indep_vars->push_back(*backbone.backbone_test_var);
-
-            //Empty
-            if (backbone._assumptions->empty()) {
-                *(backbone.backbone_test_var) = var_Undef;
-                return l_True;
-            }
+            backbone.non_indep_vars->push_back(*backbone.test_var);
 
             //We reached the bottom
-            if (backbone._assumptions->size() == backbone.indep_size) {
-                *backbone.backbone_test_var = var_Undef;
+            if (backbone._assumptions->size() == backbone.indep_vars->size()) {
+                *backbone.test_indic = var_Undef;
+                *backbone.test_var = var_Undef;
                 return l_True;
             }
 
-            //Deal with indic, add TRUE/FALSE duo
-            Lit indic = backbone._assumptions->at(backbone._assumptions->size()-1);
-            assert(indic.sign());
-            backbone._assumptions->pop_back();
-            cancelUntil(backbone._assumptions->size());
-            params.max_confl_to_do = params.conflictsDoneThisRestart + 500;
-
-            uint32_t var = backbone.indic_to_var->at(indic.var());
-            *backbone.backbone_test_var = var;
-//             cout << "Testing: " << *backbone.backbone_test_var << endl;
-            Lit l = Lit(var, false);
-            backbone._assumptions->push_back(l);
-
-            Lit l2 = Lit(var+backbone.orig_num_vars, true);
-            backbone._assumptions->push_back(l2);
+            create_new_backbone_assumption();
 
             continue;
         } else {
@@ -4042,7 +4051,33 @@ lbool Searcher::new_decision_backbone()
 
         //No decision taken, because it's SAT
         if (next == lit_Undef) {
-            return l_True;
+            //Let's fix this up.
+            //backtrack until last.
+            backbone.indep_vars->push_back(*backbone.test_var);
+            backbone._assumptions->pop_back();
+            backbone._assumptions->pop_back();
+            cancelUntil(0);
+
+            //Add this indic to the bottom of assumptions.
+            {
+                vector<Lit> backup;
+                backup.reserve(backbone._assumptions->size()+1);
+                backup.push_back(Lit(*backbone.test_indic, true));
+                for(const auto& x: *backbone._assumptions) {
+                    backup.push_back(x);
+                }
+                std::swap(*backbone._assumptions, backup);
+            }
+
+            //We reached the bottom
+            if (backbone._assumptions->size() == backbone.indep_vars->size()) {
+                *backbone.test_var = var_Undef;
+                *backbone.test_indic = var_Undef;
+                return l_True;
+            }
+
+            create_new_backbone_assumption();
+            goto start;
         }
 
         //Update stats
