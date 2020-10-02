@@ -149,6 +149,13 @@ static inline uint64_t memUsedTotal(double& vm_usage)
    vm_usage     = vsize;
    double resident_set = (double)rss * (double)page_size_kb;
 
+   //NOTE: we could query the MAXIMUM resident size using
+   //   /proc/self/status
+   //   as it contains: * VmHWM: Peak resident set size ("high water mark").
+   //   but we'd need to parse it, etc.
+   //   see man(5) proc for details
+   //   This note is related to issue #629 in CryptoMiniSat
+
    return resident_set;
 }
 #elif defined(__FreeBSD__)
