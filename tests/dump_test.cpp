@@ -84,8 +84,9 @@ TEST_F(dump, unsat)
     s.solve();
 
     read_dat();
-    EXPECT_EQ(dat.num_vars, 1);
-    EXPECT_EQ(dat.cls.size(), 0);
+    EXPECT_EQ(0, dat.num_vars); //zero vars because empty clause needs 0 vars
+    EXPECT_EQ(1, dat.cls.size());
+    EXPECT_EQ(0, dat.cls[0].size());//empty clause
 }
 
 TEST_F(dump, twolit)

@@ -3915,25 +3915,25 @@ vector<Lit> Solver::get_toplevel_units_internal(bool outer_numbering) const
 //TODO fix legacy all of the below
 void Solver::dump_irred_clauses(std::ostream *out) const
 {
-    assert(false && "Fix to use get_clause_query");
+//     assert(false && "Fix to use get_clause_query");
     ClauseDumper dumper(this);
     dumper.dump_irred_clauses(out);
 }
 void Solver::dump_red_clauses(std::ostream *out) const
 {
-    assert(false && "Fix to use get_clause_query");
+//     assert(false && "Fix to use get_clause_query");
     ClauseDumper dumper(this);
     dumper.dump_red_clauses(out);
 }
 void Solver::open_file_and_dump_irred_clauses(const std::string &fname) const
 {
-    assert(false && "Fix to use get_clause_query");
+//     assert(false && "Fix to use get_clause_query");
     ClauseDumper dumper(this);
     dumper.open_file_and_dump_irred_clauses(fname);
 }
 void Solver::open_file_and_dump_red_clauses(const std::string &fname) const
 {
-    assert(false && "Fix to use get_clause_query");
+//     assert(false && "Fix to use get_clause_query");
     ClauseDumper dumper(this);
     dumper.open_file_and_dump_red_clauses(fname);
 }
