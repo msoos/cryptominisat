@@ -69,7 +69,7 @@ class MatrixFinder {
 
             uint64_t tot_size() const
             {
-                return rows*cols;
+                return (uint64_t)rows*(uint64_t)cols;
             }
         };
 
