@@ -3983,14 +3983,15 @@ void Searcher::create_new_backbone_assumption()
 {
     //Reset conflict limit
     params.max_confl_to_do = params.conflictsDoneThisRestart + 500;
+    max_confl_this_restart = params.conflictsDoneThisRestart + 500;
 
-    //Remove with indic
+    //Remove indic
     Lit indic = backbone._assumptions->at(backbone._assumptions->size()-1);
     assert(indic.sign());
     backbone._assumptions->pop_back();
 
     //Backtrack
-    if (decisionLevel() > backbone._assumptions->size()) {
+    if (decisionLevel() >= backbone._assumptions->size()) {
         cancelUntil(backbone._assumptions->size());
     }
 
@@ -4053,20 +4054,26 @@ lbool Searcher::new_decision_backbone()
         if (next == lit_Undef) {
             //Let's fix this up.
             //backtrack until last.
-            backbone.indep_vars->push_back(*backbone.test_var);
             backbone._assumptions->pop_back();
             backbone._assumptions->pop_back();
-            cancelUntil(0);
 
-            //Add this indic to the bottom of assumptions.
+            //Add this indic to the middle of assumptions.
             {
                 vector<Lit> backup;
-                backup.reserve(backbone._assumptions->size()+1);
+                backup.reserve(backbone._assumptions->size()+3);
+
+                const uint32_t splice_into = backbone.indep_vars->size();
+                for(uint32_t i = 0; i < splice_into; i++) {
+                    backup.push_back(backbone._assumptions->at(i));
+                }
+                backbone.indep_vars->push_back(*backbone.test_var);
                 backup.push_back(Lit(*backbone.test_indic, true));
-                for(const auto& x: *backbone._assumptions) {
+                for(uint32_t i = splice_into; i < backbone._assumptions->size(); i++) {
+                    auto x = backbone._assumptions->at(i);
                     backup.push_back(x);
                 }
                 std::swap(*backbone._assumptions, backup);
+                cancelUntil(splice_into);
             }
 
             //We reached the bottom
