@@ -367,6 +367,34 @@ TEST(ipasir_interface, assump_clears)
     ipasir_release(s);
 }
 
+TEST(ipasir_interface, ipasir_assump_beyond_problemvars)
+{
+    void* s = ipasir_init();
+    ipasir_add(s, -7);
+    ipasir_add(s, 0);
+    ipasir_assume(s, 10);
+    int ret = ipasir_solve(s);
+    ASSERT_EQ(ret, 10);
+
+    EXPECT_EQ(ipasir_val(s, 10), 10);
+}
+
+TEST(ipasir_interface, ipasir_val)
+{
+    void* s = ipasir_init();
+    ipasir_add(s, -7);
+    ipasir_add(s, 0);
+    ipasir_add(s, 8);
+    ipasir_add(s, 0);
+    int ret = ipasir_solve(s);
+    ASSERT_EQ(ret, 10);
+
+    EXPECT_EQ(ipasir_val(s, -7), -7);
+    EXPECT_EQ(ipasir_val(s, 7), -7);
+    EXPECT_EQ(ipasir_val(s, -8), 8);
+    EXPECT_EQ(ipasir_val(s, 8), 8);
+}
+
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);

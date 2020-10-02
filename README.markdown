@@ -24,63 +24,6 @@ License
 
 Please read LICENSE.txt for a discussion. Everything that is needed to build is MIT licensed. The M4RI library (not included) is GPL, so in case you have M4RI installed, you must build with `-DNOM4RI=ON` or `-DMIT=ON` in case you need a pure MIT build.
 
-CrystalBall
------
-
-Build and use instructions below. Please see the [associated blog post](https://www.msoos.org/2019/06/crystalball-sat-solving-data-gathering-and-machine-learning/) for more information.
-
-```
-# prerequisites on a modern Debian/Ubuntu installation
-sudo apt-get install build-essential cmake git
-sudo apt-get install zlib1g-dev libsqlite3-dev
-sudo apt-get install libboost-program-options-dev
-sudo apt-get install python3-pip
-sudo pip3 install sklearn pandas numpy lit matplotlib
-
-# getting the code
-git clone https://github.com/msoos/cryptominisat
-cd cryptominisat
-git checkout crystalball
-git submodule update --init
-mkdir build && cd build
-ln -s ../scripts/crystal/* .
-ln -s ../scripts/build_scripts/* .
-
-# Let's get an unsatisfiable CNF
-wget https://www.msoos.org/largefiles/goldb-heqc-i10mul.cnf.gz
-gunzip goldb-heqc-i10mul.cnf.gz
-
-# Gather the data, denormalize, label, output CSV,
-# create the classifier, generate C++,
-# and build the final SAT solver
-./ballofcrystal.sh --csv goldb-heqc-i10mul.cnf
-[...compilations and the full data pipeline...]
-
-# let's use our newly built tool
-# we are using configuration number short:3 long:3
-./cryptominisat5 --predshort 3 --predlong 3 goldb-heqc-i10mul.cnf
-[ ... ]
-s UNSATISFIABLE
-
-# Let's look at the data
-cd goldb-heqc-i10mul.cnf-dir
-sqlite3 mydata.db
-sqlite> select count() from sum_cl_use;
-94507
-```
-
-The CNFs go through the following set of transformations to become the generated code:
-
-1. `./cryptominisat` dumps the data. Options: `--cldatadumpratio 0.08`, `--gluecut0 100`
-2. `./drat-trim`
-3. `./add_lemma_ind.py`
-4. `./clean_update_data.py`
-5. `./rem_data.py` Options: `--fair`, etc.
-6. `./vardata_gen_pandas.py`. Options: `--limit`
-7. `./gen_pandas.py` Options: `--limit`, `--confs`
-8. `./concat_pandas.py`
-9. `./predict.py` Options: `--forest/--tree/etc`, `--depth/--split/etc`
-
 
 Docker usage
 -----
@@ -91,37 +34,10 @@ To run on file `myfile.cnf`:
 cat myfile.cnf | docker run --rm -i msoos/cryptominisat
 ```
 
-To run on a hand-written CNF:
-
-```
-docker pull msoos/cryptominisat
-echo "1 2 0" | docker run --rm -i msoos/cryptominisat
-```
-
 To run on the file `/home/myfolder/myfile.cnf.gz` by mounting it (may be faster):
 
 ```
 docker run --rm -v /home/myfolder/myfile.cnf.gz:/f msoos/cryptominisat f
-```
-
-To build and run locally:
-
-```
-git clone https://github.com/msoos/cryptominisat.git
-cd cryptominisat
-git submodule update --init
-docker build -t cms .
-cat myfile.cnf | docker run --rm -i cms
-```
-
-To build and run the web interface:
-
-```
-git clone https://github.com/msoos/cryptominisat.git
-cd cryptominisat
-git submodule update --init
-docker build -t cmsweb -f Dockerfile.web .
-docker run --rm -i -p 80:80 cmsweb
 ```
 
 
@@ -473,22 +389,9 @@ sub-str-cls-with-bin, occ-backw-sub-str, occ-bve,check-cache-size, renumber
 
 It is a good idea to put `renumber` as late as possible, as it renumbers the variables for memory usage reduction.
 
-Gaussian elimination
+Gauss-Jordan elimination
 -----
-For building with Gaussian Elimination, you need to build as per:
-
-```
-sudo apt-get install build-essential cmake
-sudo apt-get install zlib1g-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev help2man
-tar xzvf cryptominisat-version.tar.gz
-cd cryptominisat-version
-mkdir build && cd build
-cmake -DUSE_GAUSS=ON ..
-make
-sudo make install
-```
-
-To use Gaussian elimination, provide a CNF with xors in it (either in CNF or XOR+CNF form) and tune the gaussian parameters. Use `--hhelp` to find all the gaussian elimination options:
+Since CryptoMiniSat 5.8, Gauss-Jordan elimination is compiled into the solver by default. However, it will turn off automatically in case the solver observes GJ not to perform too well. To use Gaussian elimination, provide a CNF with xors in it (either in CNF or XOR+CNF form) and either run with default setup, or, tune it to your heart's desire:
 
 ```
 Gauss options:
@@ -506,7 +409,7 @@ Gauss options:
   --maxnummatrixes arg (=3)   Maximum number of matrixes to treat.
 ```
 
-If any of these options seem to be non-existent, then either you forgot to compile the SAT solver with the above options, or you forgot to re-install it with `sudo make install`.
+In particular, you may want to set `--autodisablegauss 0` in case you are sure it'll help.
 
 Testing
 -----
@@ -538,6 +441,64 @@ cd ../cryptominisat/scripts/fuzz/
 ./fuzz_test.py
 ```
 
+
+CrystalBall
+-----
+
+Build and use instructions below. Please see the [associated blog post](https://www.msoos.org/2019/06/crystalball-sat-solving-data-gathering-and-machine-learning/) for more information.
+
+```
+# prerequisites on a modern Debian/Ubuntu installation
+sudo apt-get install build-essential cmake git
+sudo apt-get install zlib1g-dev libsqlite3-dev
+sudo apt-get install libboost-program-options-dev
+sudo apt-get install python3-pip
+sudo pip3 install sklearn pandas numpy lit matplotlib
+
+# getting the code
+git clone https://github.com/msoos/cryptominisat
+cd cryptominisat
+git checkout crystalball
+git submodule update --init
+mkdir build && cd build
+ln -s ../scripts/crystal/* .
+ln -s ../scripts/build_scripts/* .
+
+# Let's get an unsatisfiable CNF
+wget https://www.msoos.org/largefiles/goldb-heqc-i10mul.cnf.gz
+gunzip goldb-heqc-i10mul.cnf.gz
+
+# Gather the data, denormalize, label, output CSV,
+# create the classifier, generate C++,
+# and build the final SAT solver
+./ballofcrystal.sh --csv goldb-heqc-i10mul.cnf
+[...compilations and the full data pipeline...]
+
+# let's use our newly built tool
+# we are using configuration number short:3 long:3
+./cryptominisat5 --predshort 3 --predlong 3 goldb-heqc-i10mul.cnf
+[ ... ]
+s UNSATISFIABLE
+
+# Let's look at the data
+cd goldb-heqc-i10mul.cnf-dir
+sqlite3 mydata.db
+sqlite> select count() from sum_cl_use;
+94507
+```
+
+The CNFs go through the following set of transformations to become the generated code:
+
+1. `./cryptominisat` dumps the data. Options: `--cldatadumpratio 0.08`, `--gluecut0 100`
+2. `./drat-trim`
+3. `./add_lemma_ind.py`
+4. `./clean_update_data.py`
+5. `./rem_data.py` Options: `--fair`, etc.
+6. `./vardata_gen_pandas.py`. Options: `--limit`
+7. `./gen_pandas.py` Options: `--limit`, `--confs`
+8. `./concat_pandas.py`
+9. `./predict.py` Options: `--forest/--tree/etc`, `--depth/--split/etc`
+
 Configuring a build for a minimal binary&library
 -----
 The following configures the system to build a bare minimal binary&library. It needs a compiler, but nothing much else:
@@ -551,7 +512,7 @@ CMake Arguments
 The following arguments to cmake configure the generated build artifacts. To use, specify options prior to running make in a clean subdirectory: `cmake <options> ..`
 
 - `-DSTATICCOMPILE=<ON/OFF>` -- statically linked library and binary
-- `-DUSE_GAUSS=<ON/OFF>` -- Gauss-Jordan Elimination support
+- `-DUSE_GAUSS=<ON/OFF>` -- Gauss-Jordan Elimination support. On by default.
 - `-DSTATS=<ON/OFF>` -- advanced statistics (slower)
 - `-DENABLE_TESTING=<ON/OFF>` -- test suite support
 - `-DMIT=<ON/OFF>` -- MIT licensed components only
@@ -561,20 +522,6 @@ The following arguments to cmake configure the generated build artifacts. To use
 - `-DONLY_SIMPLE=<ON/OFF>` -- only the simple binary is built
 - `-DNOVALGRIND=<ON/OFF>` -- no extended valgrind memory checking support
 - `-DLARGEMEM=<ON/OFF>` -- more memory available for clauses (but slower on most problems)
-
-
-Trying different configurations
------
-Try solving using different reconfiguration values 3,4,6,7,12,13,14,15,16 as per:
-
-```
-./cryptominisat5 --reconfat 0 --reconf 3 my_hard_problem.cnf
-./cryptominisat5 --reconfat 0 --reconf 4 my_hard_problem.cnf
-...
-./cryptominisat5 --reconfat 0 --reconf 16 my_hard_problem.cnf
-```
-
-These configurations are designed to be relatively orthogonal. Check if any of them solve a lot faster. If it does, try using that for similar problems going forward. Please do come back to the author with what you have found to work best for you.
 
 Getting learnt clauses
 -----

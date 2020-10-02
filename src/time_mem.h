@@ -95,26 +95,66 @@ static inline uint64_t memUsedTotal(double& vm_usage)
 
    // dummy vars for leading entries in stat that we don't care about
    //
-   string pid, comm, state, ppid, pgrp, session, tty_nr;
-   string tpgid, flags, minflt, cminflt, majflt, cmajflt;
-   string utime, stime, cutime, cstime, priority, nice;
-   string O, itrealvalue, starttime;
+   string pid; //                        The process ID.
+   string comm;  //The  filename  of the executable, in parentheses.
+   string state; //One of the following characters, indicating process (see man stat(2))
+   string ppid; //The PID of the parent of this process.
+   string pgrp; //The process group ID of the process.
+   string session; //The session ID of the process.
 
-   // the two fields we want
-   //
-   unsigned long vsize;
+   //The  controlling  terminal of the process.  (The minor device number is contained in the combina‐
+   //tion of bits 31 to 20 and 7 to 0; the major device number is in bits 15 to 8.)
+   string tty_nr;
+
+   //The ID of the foreground process group of the controlling terminal of the process.
+   string tpgid;
+
+
+   string flags;
+   string minflt;
+   string cminflt;
+   string majflt;
+   string cmajflt;
+   string utime;
+   string stime;
+   string cutime;
+   string cstime;
+   string priority;
+   string nice;
+
+   //Number of threads in this process (since Linux 2.6).  Before kernel  2.6,  this  field  was  hard
+   //coded to 0 as a placeholder for an earlier removed field.
+   string num_threads;
+
+   string itrealvalue;
+   string starttime;
+
+   /**** the two fields we want *****/
+   unsigned long vsize; //Virtual memory size in bytes.
+
+   //Resident Set Size: number of pages the process has in real memory.  This is just the pages  which
+   //count toward text, data, or stack space.  This does not include pages which have not been demand-
+   //loaded in, or which are swapped out.
    long rss;
+   /**** the two fields we want *****/
 
    stat_stream >> pid >> comm >> state >> ppid >> pgrp >> session >> tty_nr
                >> tpgid >> flags >> minflt >> cminflt >> majflt >> cmajflt
                >> utime >> stime >> cutime >> cstime >> priority >> nice
-               >> O >> itrealvalue >> starttime >> vsize >> rss; // don't care about the rest
+               >> num_threads >> itrealvalue >> starttime >> vsize >> rss; // don't care about the rest
 
    stat_stream.close();
 
    long page_size_kb = sysconf(_SC_PAGE_SIZE); // in case x86-64 is configured to use 2MB pages
    vm_usage     = vsize;
    double resident_set = (double)rss * (double)page_size_kb;
+
+   //NOTE: we could query the MAXIMUM resident size using
+   //   /proc/self/status
+   //   as it contains: * VmHWM: Peak resident set size ("high water mark").
+   //   but we'd need to parse it, etc.
+   //   see man(5) proc for details
+   //   This note is related to issue #629 in CryptoMiniSat
 
    return resident_set;
 }

@@ -439,7 +439,7 @@ void Main::add_supported_options()
     varPickOptions.add_options()
     ("branchstr"
         , po::value(&conf.branch_strategy_setup)->default_value(conf.branch_strategy_setup)
-        , "Branch strategy. E.g. 'vmtf+vsids+maple+rnd'")
+        , "Branch strategy string that switches between different branch strategies while solving e.g. 'maple1+maple2+vsids1+vsids2'")
     ;
 
 
