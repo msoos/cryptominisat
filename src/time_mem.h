@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include <ios>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 #include <string>
 #include <signal.h>
 
@@ -80,7 +81,7 @@ static inline double cpuTimeTotal(void)
 // size and resident set size, and return the results in KB.
 //
 // On failure, returns 0.0, 0.0
-static inline uint64_t memUsedTotal(double& vm_usage)
+static inline uint64_t memUsedTotal(double& vm_usage, std::string* max_mem_usage = NULL)
 {
    //double& vm_usage
    using std::ios_base;
@@ -149,18 +150,32 @@ static inline uint64_t memUsedTotal(double& vm_usage)
    vm_usage     = vsize;
    double resident_set = (double)rss * (double)page_size_kb;
 
-   //NOTE: we could query the MAXIMUM resident size using
-   //   /proc/self/status
-   //   as it contains: * VmHWM: Peak resident set size ("high water mark").
-   //   but we'd need to parse it, etc.
-   //   see man(5) proc for details
-   //   This note is related to issue #629 in CryptoMiniSat
+   if (max_mem_usage != NULL) {
+       //NOTE: we could query the MAXIMUM resident size using
+       //   /proc/self/status
+       //   as it contains: * VmHWM: Peak resident set size ("high water mark").
+       //   but we'd need to parse it, etc.
+       //   see man(5) proc for details
+       //   This note is related to issue #629 in CryptoMiniSat
+       ifstream stat_stream2("/proc/self/status",ios_base::in);
+       string tp;
+       while(getline(stat_stream2, tp)){
+           if (tp.size() > 7 && tp.find("VmPeak:") != std::string::npos) {
+               tp.erase(0, 7);
+               tp.erase(tp.begin(),
+                        std::find_if(tp.begin(), tp.end(), std::bind1st(std::not_equal_to<char>(), '\t')));
+               tp.erase(tp.begin(),
+                        std::find_if(tp.begin(), tp.end(), std::bind1st(std::not_equal_to<char>(), ' ')));
+               *max_mem_usage = tp;
+           }
+      }
+   }
 
    return resident_set;
 }
 #elif defined(__FreeBSD__)
 #include <sys/types.h>
-inline uint64_t memUsedTotal(double& vm_usage)
+inline uint64_t memUsedTotal(double& vm_usage, std::string* max_mem_usage = NULL))
 {
     vm_usage = 0;
 
@@ -169,7 +184,7 @@ inline uint64_t memUsedTotal(double& vm_usage)
     return ru.ru_maxrss*1024;
 }
 #else //Windows
-static inline size_t memUsedTotal(double& vm_usage)
+static inline size_t memUsedTotal(double& vm_usage, std::string* max_mem_usage = NULL))
 {
     vm_usage = 0;
     return 0;

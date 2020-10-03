@@ -2435,10 +2435,22 @@ void Solver::print_norm_stats(const double cpu_time, const double cpu_time_total
         print_stats_line("c Conflicts in UIP", sumConflicts);
     }
     double vm_usage;
-    print_stats_line("c Mem used"
-        , (double)memUsedTotal(vm_usage)/(1024UL*1024UL)
-        , "MB"
-    );
+    std::string max_mem_usage;
+    double max_rss_mem_mb = (double)memUsedTotal(vm_usage, &max_mem_usage)/(1024UL*1024UL);
+    if (max_mem_usage.empty()) {
+        print_stats_line("c Mem used"
+            , max_rss_mem_mb
+            , "MB"
+        );
+    } else {
+        print_stats_line("c Max virt mem used"
+            , max_mem_usage
+        );
+//      print_stats_line("c Virt mem used at exit"
+//         , vm_usage/(1024UL*1024UL)
+//         , "MB"
+//     );
+    }
     print_stats_time(cpu_time, cpu_time_total);
 }
 
