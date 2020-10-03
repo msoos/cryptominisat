@@ -2443,7 +2443,7 @@ void Solver::print_norm_stats(const double cpu_time, const double cpu_time_total
             , "MB"
         );
     } else {
-        print_stats_line("c Max virt mem used"
+        print_stats_line("c Max Memory (rss) used"
             , max_mem_usage
         );
 //      print_stats_line("c Virt mem used at exit"

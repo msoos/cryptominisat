@@ -160,7 +160,7 @@ static inline uint64_t memUsedTotal(double& vm_usage, std::string* max_mem_usage
        ifstream stat_stream2("/proc/self/status",ios_base::in);
        string tp;
        while(getline(stat_stream2, tp)){
-           if (tp.size() > 7 && tp.find("VmPeak:") != std::string::npos) {
+           if (tp.size() > 7 && tp.find("VmHWM:") != std::string::npos) {
                tp.erase(0, 7);
                tp.erase(tp.begin(),
                         std::find_if(tp.begin(), tp.end(), std::bind1st(std::not_equal_to<char>(), '\t')));
