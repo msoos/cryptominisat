@@ -175,7 +175,7 @@ static inline uint64_t memUsedTotal(double& vm_usage, std::string* max_mem_usage
 }
 #elif defined(__FreeBSD__)
 #include <sys/types.h>
-inline uint64_t memUsedTotal(double& vm_usage, std::string* max_mem_usage = NULL))
+inline uint64_t memUsedTotal(double& vm_usage, std::string* max_mem_usage = NULL)
 {
     vm_usage = 0;
 
@@ -184,7 +184,7 @@ inline uint64_t memUsedTotal(double& vm_usage, std::string* max_mem_usage = NULL
     return ru.ru_maxrss*1024;
 }
 #else //Windows
-static inline size_t memUsedTotal(double& vm_usage, std::string* max_mem_usage = NULL))
+static inline size_t memUsedTotal(double& vm_usage, std::string* max_mem_usage = NULL)
 {
     vm_usage = 0;
     return 0;
