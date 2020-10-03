@@ -18,6 +18,9 @@ jobs:
     - uses: actions/checkout@v2
     
     # install dependencies
+    - name: update git submodules
+      run: git submodule init && git submodule update
+    
     - name: boost and python3
       run: sudo apt-get update && sudo apt-get install -yq libboost1.65-dev libboost-program-options-dev help2man python3-pip python3-setuptools
     - name: Install lit
