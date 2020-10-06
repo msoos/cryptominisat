@@ -1,8 +1,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Linux build](https://travis-ci.org/msoos/cryptominisat.svg?branch=master)](https://travis-ci.org/msoos/cryptominisat)
+[![Liunux&Mac build](https://travis-ci.org/msoos/cryptominisat.svg?branch=master)](https://travis-ci.org/msoos/cryptominisat)
 [![Windows build](https://ci.appveyor.com/api/projects/status/8d000iy63xu7eau5?svg=true)](https://ci.appveyor.com/project/msoos/cryptominisat)
+![build](https://github.com/msoos/cryptominisat/workflows/build/badge.svg)
 [![Coverity](https://scan.coverity.com/projects/507/badge.svg)](https://scan.coverity.com/projects/507)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/f043efa22ea64e9ba44fde0f3a4fb09f)](https://www.codacy.com/app/soos.mate/cryptominisat?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=msoos/cryptominisat&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/f7b6a138a30c47378343fe2ef13d0f0d)](https://www.codacy.com/gh/msoos/cryptominisat/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=msoos/cryptominisat&amp;utm_campaign=Badge_Grade)
 [![Docker Hub](https://img.shields.io/badge/docker-latest-blue.svg)](https://hub.docker.com/r/msoos/cryptominisat/)
 
 
