@@ -197,6 +197,7 @@ struct BackBoneData {
     bool backbone_on = false;
     uint32_t* test_var = NULL;
     uint32_t* test_indic = NULL;
+    uint32_t max_confl = 500;
 };
 
 }

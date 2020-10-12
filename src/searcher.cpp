@@ -3982,8 +3982,8 @@ void Searcher::bump_var_importance(const uint32_t var)
 void Searcher::create_new_backbone_assumption()
 {
     //Reset conflict limit
-    params.max_confl_to_do = params.conflictsDoneThisRestart + 500;
-    max_confl_this_restart = params.conflictsDoneThisRestart + 500;
+    params.max_confl_to_do = params.conflictsDoneThisRestart + backbone.max_confl;
+    max_confl_this_restart = params.conflictsDoneThisRestart + backbone.max_confl;
 
     //Remove indic
     Lit indic = backbone._assumptions->at(backbone._assumptions->size()-1);
