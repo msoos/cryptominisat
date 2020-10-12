@@ -487,7 +487,7 @@ if (louvain_communities_FOUND)
     message(STATUS "Community Louvain dynamic lib: ${COMMLOUVAIN_LIBRARIES}")
     message(STATUS "Community Louvain include dirs: ${COMMLOUVAIN_INCLUDE_DIRS}")
 else()
-    message(FATAL_ERROR "Cannot find Community Louvain. Please install it! Exiting.")
+    message(STATUS "Cannot find Community Louvain. Please install it!")
 endif()
 
 option(STATS "Don't use statistics at all" OFF)
