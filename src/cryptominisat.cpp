@@ -1239,6 +1239,7 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
         conf.do_simplify_problem = true;
         conf.force_preserve_xors = true;
         conf.diff_declev_for_chrono = -1;
+        conf.do_bosphorus = false;
         data->solvers[i]->setConf(conf);
     }
 }
@@ -1268,6 +1269,7 @@ void DLL_PUBLIC SATSolver::set_up_for_arjun()
         conf.branch_strategy_setup = "vsids1";
         conf.diff_declev_for_chrono = -1;
         conf.doTernary = true;
+        conf.do_bosphorus = false;
         data->solvers[i]->setConf(conf);
     }
 }
