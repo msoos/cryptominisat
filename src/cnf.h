@@ -85,7 +85,7 @@ struct LitStats
 class CNF
 {
 public:
-    BackBoneData backbone;
+    FastBackwData fast_backw;
     void save_on_var_memory();
     void updateWatch(watch_subarray ws, const vector<uint32_t>& outerToInter);
     void updateVars(

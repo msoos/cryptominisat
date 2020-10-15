@@ -1326,10 +1326,10 @@ DLL_PUBLIC vector<uint32_t> SATSolver::get_definabe(const vector<uint32_t>& vars
     return data->solvers[0]->get_definabe(vars);
 }
 
-DLL_PUBLIC lbool SATSolver::find_backbone(BackBoneData backbone)
+DLL_PUBLIC lbool SATSolver::find_fast_backw(FastBackwData fast_backw)
 {
     assert(data->solvers.size() == 1);
-    data->solvers[0]->backbone = backbone;
+    data->solvers[0]->fast_backw = fast_backw;
     return solve();
 }
 

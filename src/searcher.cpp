@@ -1315,8 +1315,8 @@ lbool Searcher::search()
             }
             reduce_db_if_needed();
             lbool dec_ret;
-            if (backbone.backbone_on) {
-                dec_ret = new_decision_backbone();
+            if (fast_backw.fast_backw_on) {
+                dec_ret = new_decision_fast_backw();
             } else {
                 dec_ret = new_decision<false>();
             }
@@ -3979,41 +3979,41 @@ void Searcher::bump_var_importance(const uint32_t var)
     }
 }
 
-void Searcher::create_new_backbone_assumption()
+void Searcher::create_new_fast_backw_assumption()
 {
     //Reset conflict limit
-    params.max_confl_to_do = params.conflictsDoneThisRestart + backbone.max_confl;
-    max_confl_this_restart = params.conflictsDoneThisRestart + backbone.max_confl;
+    params.max_confl_to_do = params.conflictsDoneThisRestart + fast_backw.max_confl;
+    max_confl_this_restart = params.conflictsDoneThisRestart + fast_backw.max_confl;
 
     //Remove indic
-    Lit indic = backbone._assumptions->at(backbone._assumptions->size()-1);
+    Lit indic = fast_backw._assumptions->at(fast_backw._assumptions->size()-1);
     assert(indic.sign());
-    backbone._assumptions->pop_back();
+    fast_backw._assumptions->pop_back();
 
     //Backtrack
-    if (decisionLevel() >= backbone._assumptions->size()) {
-        cancelUntil(backbone._assumptions->size());
+    if (decisionLevel() >= fast_backw._assumptions->size()) {
+        cancelUntil(fast_backw._assumptions->size());
     }
 
     //Add TRUE/FALSE duo
-    uint32_t var = backbone.indic_to_var->at(indic.var());
-    *backbone.test_indic = indic.var();
-    *backbone.test_var = var;
-    //cout << "Testing: " << *backbone.test_var << endl;
+    uint32_t var = fast_backw.indic_to_var->at(indic.var());
+    *fast_backw.test_indic = indic.var();
+    *fast_backw.test_var = var;
+    //cout << "Testing: " << *fast_backw.test_var << endl;
     Lit l = Lit(var, false);
-    backbone._assumptions->push_back(l);
+    fast_backw._assumptions->push_back(l);
 
-    Lit l2 = Lit(var+backbone.orig_num_vars, true);
-    backbone._assumptions->push_back(l2);
+    Lit l2 = Lit(var+fast_backw.orig_num_vars, true);
+    fast_backw._assumptions->push_back(l2);
 }
 
-lbool Searcher::new_decision_backbone()
+lbool Searcher::new_decision_fast_backw()
 {
     Lit next = lit_Undef;
     start:
-    while (decisionLevel() < backbone._assumptions->size()) {
+    while (decisionLevel() < fast_backw._assumptions->size()) {
         // Perform user provided assumption:
-        Lit p = backbone._assumptions->at(decisionLevel());
+        Lit p = fast_backw._assumptions->at(decisionLevel());
         p = solver->varReplacer->get_lit_replaced_with_outer(p);
         p = map_outer_to_inter(p);
         assert(varData[p.var()].removed == Removed::none);
@@ -4024,18 +4024,18 @@ lbool Searcher::new_decision_backbone()
         } else if (value(p) == l_False) {
             //Deal with top 2 TRUE/FALSE
 //             cout << "Testing ret: " << l_False << endl;
-            backbone._assumptions->pop_back();
-            backbone._assumptions->pop_back();
-            backbone.non_indep_vars->push_back(*backbone.test_var);
+            fast_backw._assumptions->pop_back();
+            fast_backw._assumptions->pop_back();
+            fast_backw.non_indep_vars->push_back(*fast_backw.test_var);
 
             //We reached the bottom
-            if (backbone._assumptions->size() == backbone.indep_vars->size()) {
-                *backbone.test_indic = var_Undef;
-                *backbone.test_var = var_Undef;
+            if (fast_backw._assumptions->size() == fast_backw.indep_vars->size()) {
+                *fast_backw.test_indic = var_Undef;
+                *fast_backw.test_var = var_Undef;
                 return l_True;
             }
 
-            create_new_backbone_assumption();
+            create_new_fast_backw_assumption();
 
             continue;
         } else {
@@ -4054,36 +4054,36 @@ lbool Searcher::new_decision_backbone()
         if (next == lit_Undef) {
             //Let's fix this up.
             //backtrack until last.
-            backbone._assumptions->pop_back();
-            backbone._assumptions->pop_back();
+            fast_backw._assumptions->pop_back();
+            fast_backw._assumptions->pop_back();
 
             //Add this indic to the middle of assumptions.
             {
                 vector<Lit> backup;
-                backup.reserve(backbone._assumptions->size()+3);
+                backup.reserve(fast_backw._assumptions->size()+3);
 
-                const uint32_t splice_into = backbone.indep_vars->size();
+                const uint32_t splice_into = fast_backw.indep_vars->size();
                 for(uint32_t i = 0; i < splice_into; i++) {
-                    backup.push_back(backbone._assumptions->at(i));
+                    backup.push_back(fast_backw._assumptions->at(i));
                 }
-                backbone.indep_vars->push_back(*backbone.test_var);
-                backup.push_back(Lit(*backbone.test_indic, true));
-                for(uint32_t i = splice_into; i < backbone._assumptions->size(); i++) {
-                    auto x = backbone._assumptions->at(i);
+                fast_backw.indep_vars->push_back(*fast_backw.test_var);
+                backup.push_back(Lit(*fast_backw.test_indic, true));
+                for(uint32_t i = splice_into; i < fast_backw._assumptions->size(); i++) {
+                    auto x = fast_backw._assumptions->at(i);
                     backup.push_back(x);
                 }
-                std::swap(*backbone._assumptions, backup);
+                std::swap(*fast_backw._assumptions, backup);
                 cancelUntil(splice_into);
             }
 
             //We reached the bottom
-            if (backbone._assumptions->size() == backbone.indep_vars->size()) {
-                *backbone.test_var = var_Undef;
-                *backbone.test_indic = var_Undef;
+            if (fast_backw._assumptions->size() == fast_backw.indep_vars->size()) {
+                *fast_backw.test_var = var_Undef;
+                *fast_backw.test_indic = var_Undef;
                 return l_True;
             }
 
-            create_new_backbone_assumption();
+            create_new_fast_backw_assumption();
             goto start;
         }
 

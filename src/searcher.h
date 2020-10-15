@@ -220,8 +220,8 @@ class Searcher : public HyperEngine
         Solver* solver;
         lbool search();
         lbool distill_clauses_if_needed();
-        lbool new_decision_backbone();
-        void create_new_backbone_assumption();
+        lbool new_decision_fast_backw();
+        void create_new_fast_backw_assumption();
 
         ///////////////
         // Variables
