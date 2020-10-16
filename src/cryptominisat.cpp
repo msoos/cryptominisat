@@ -1195,10 +1195,11 @@ void DLL_PUBLIC SATSolver::open_file_and_dump_red_clauses(std::string fname) con
 void DLL_PUBLIC SATSolver::start_getting_small_clauses(
     uint32_t max_len,
     uint32_t max_glue,
-    bool red)
+    bool red,
+    bool bva_vars)
 {
     assert(data->solvers.size() >= 1);
-    data->solvers[0]->start_getting_small_clauses(max_len, max_glue, red);
+    data->solvers[0]->start_getting_small_clauses(max_len, max_glue, red, bva_vars);
 }
 
 bool DLL_PUBLIC SATSolver::get_next_small_clause(std::vector<Lit>& out)
@@ -1249,7 +1250,7 @@ void DLL_PUBLIC SATSolver::set_up_for_arjun()
     for (size_t i = 0; i < data->solvers.size(); i++) {
         SolverConf conf = data->solvers[i]->getConf();
         conf.doBreakid = false;
-        conf.gaussconf.max_num_matrices = 0;
+        //conf.gaussconf.max_num_matrices = 0;
         //conf.xor_finder_time_limitM = 0;
         //conf.xor_detach_reattach = true;
         conf.global_multiplier_multiplier_max = 1;

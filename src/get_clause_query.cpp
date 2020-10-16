@@ -35,7 +35,7 @@ GetClauseQuery::GetClauseQuery(Solver* _solver) :
 {}
 
 void GetClauseQuery::start_getting_small_clauses(
-    const uint32_t _max_len, const uint32_t _max_glue, bool _red)
+    const uint32_t _max_len, const uint32_t _max_glue, bool _red, bool _bva_vars)
 {
     if (!outer_to_without_bva_map.empty()) {
         std::cerr << "ERROR: You forgot to call end_getting_small_clauses() last time!" <<endl;
@@ -64,7 +64,12 @@ void GetClauseQuery::start_getting_small_clauses(
     blocked_at = 0;
     blocked_at2 = 0;
     undef_at = 0;
-    outer_to_without_bva_map = solver->build_outer_to_without_bva_map();
+    bva_vars = _bva_vars;
+    if (bva_vars) {
+        outer_to_without_bva_map = solver->build_outer_to_without_bva_map_extended();
+    } else {
+        outer_to_without_bva_map = solver->build_outer_to_without_bva_map();
+    }
     tmp_cl.clear();
 }
 
@@ -101,7 +106,7 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
             tmp_cl.clear();
             tmp_cl.push_back(Lit(v, solver->value(v) == l_False));
             tmp_cl = solver->clause_outer_numbered(tmp_cl);
-            if (all_vars_outside(tmp_cl)) {
+            if (bva_vars || all_vars_outside(tmp_cl)) {
                 map_without_bva(tmp_cl);
                 out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
                 if (!all_in_one_go) {
@@ -129,7 +134,7 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
                 tmp_cl.push_back(l);
                 tmp_cl.push_back(w.lit2());
                 tmp_cl = solver->clause_outer_numbered(tmp_cl);
-                if (all_vars_outside(tmp_cl)) {
+                if (bva_vars || all_vars_outside(tmp_cl)) {
                     map_without_bva(tmp_cl);
                     out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
                     if (!all_in_one_go) {
@@ -154,7 +159,7 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
             tmp_cl.clear();
             tmp_cl.push_back(l);
             tmp_cl.push_back(~l2);
-            if (all_vars_outside(tmp_cl)) {
+            if (bva_vars || all_vars_outside(tmp_cl)) {
                 map_without_bva(tmp_cl);
                 out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
                 if (!all_in_one_go) {
@@ -176,7 +181,7 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
                 && cl->stats.glue <= max_glue
             ) {
                 tmp_cl = solver->clause_outer_numbered(*cl);
-                if (all_vars_outside(tmp_cl)) {
+                if (bva_vars || all_vars_outside(tmp_cl)) {
                     map_without_bva(tmp_cl);
                     out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
                     if (!all_in_one_go) {
@@ -197,7 +202,7 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
             const Clause* cl = solver->cl_alloc.ptr(offs);
             if (cl->size() <= max_len) {
                 tmp_cl = solver->clause_outer_numbered(*cl);
-                if (all_vars_outside(tmp_cl)) {
+                if (bva_vars || all_vars_outside(tmp_cl)) {
                     map_without_bva(tmp_cl);
                     out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
                     if (!all_in_one_go) {
@@ -218,7 +223,7 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
             const Clause* cl = solver->cl_alloc.ptr(offs);
             if (cl->size() <= max_len) {
                 tmp_cl = solver->clause_outer_numbered(*cl);
-                if (all_vars_outside(tmp_cl)) {
+                if (bva_vars || all_vars_outside(tmp_cl)) {
                     map_without_bva(tmp_cl);
                     out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
                     if (!all_in_one_go) {
@@ -270,7 +275,7 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
                 tmp_cl.clear();
                 tmp_cl.push_back(Lit(v, false));
                 tmp_cl.push_back(Lit(v, true));
-                if (all_vars_outside(tmp_cl)) {
+                if (bva_vars || all_vars_outside(tmp_cl)) {
                     map_without_bva(tmp_cl);
                     out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
                     if (!all_in_one_go) {

@@ -4157,11 +4157,11 @@ bool Solver::init_all_matrices()
 
 
 void Solver::start_getting_small_clauses(
-    const uint32_t max_len, const uint32_t max_glue, bool red)
+    const uint32_t max_len, const uint32_t max_glue, bool red, bool bva_vars)
 {
     assert(get_clause_query == NULL);
     get_clause_query = new GetClauseQuery(this);
-    get_clause_query->start_getting_small_clauses(max_len, max_glue, red);
+    get_clause_query->start_getting_small_clauses(max_len, max_glue, red, bva_vars);
 
 }
 

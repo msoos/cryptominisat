@@ -371,6 +371,26 @@ vector<uint32_t> CNF::build_outer_to_without_bva_map() const
     return ret;
 }
 
+vector<uint32_t> CNF::build_outer_to_without_bva_map_extended() const
+{
+    assert(nVarsOutside() <= nVarsOuter());
+    vector<uint32_t> ret;
+    size_t at = 0;
+    uint32_t extra_map = nVarsOutside();
+    for(size_t i = 0; i < nVarsOuter(); i++) {
+        if (!varData[map_outer_to_inter(i)].is_bva) {
+            ret.push_back(at);
+            at++;
+        } else {
+            ret.push_back(extra_map);
+            extra_map++;
+        }
+    }
+    assert(extra_map == nVarsOuter());
+
+    return ret;
+}
+
 size_t CNF::mem_used() const
 {
     size_t mem = 0;

@@ -310,6 +310,7 @@ public:
     vector<uint32_t> get_outside_var_incidence_also_red();
 
     vector<uint32_t> build_outer_to_without_bva_map() const;
+    vector<uint32_t> build_outer_to_without_bva_map_extended() const;
     void clean_occur_from_removed_clauses();
     void clean_occur_from_removed_clauses_only_smudged();
     void clean_occur_from_idx_types_only_smudged();
