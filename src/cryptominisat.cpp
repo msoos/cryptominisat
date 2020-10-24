@@ -27,11 +27,13 @@ THE SOFTWARE.
 #include "shareddata.h"
 #include <fstream>
 
+#include <cstdint>
 #include <thread>
 #include <mutex>
 #include <atomic>
 #include <cassert>
 using std::thread;
+using std::vector;
 
 #define CACHE_SIZE 10ULL*1000ULL*1000UL
 #ifndef LIMITMEM
