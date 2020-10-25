@@ -1643,7 +1643,7 @@ lbool Solver::solve_with_assumptions(
         check_reconfigure();
     }
 
-    //If still unknown, simplify
+    //Simplify in case simplify_at_startup is set
     if (status == l_Undef
         && nVars() > 0
         && conf.do_simplify_problem
@@ -2353,6 +2353,7 @@ void Solver::print_min_stats(const double cpu_time, const double cpu_time_total)
     } else {
         print_stats_line("c Conflicts in UIP", sumConflicts);
     }
+
     print_stats_time(cpu_time, cpu_time_total);
     double vm_usage;
     print_stats_line("c Mem used"
