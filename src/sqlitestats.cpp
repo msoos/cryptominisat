@@ -680,7 +680,7 @@ void SQLiteStats::reduceDB(
     const Solver* solver
     , const bool locked
     , const Clause* cl
-    , const string& cur_restart_type
+    , const uint32_t cur_restart_type
     , const uint32_t act_ranking_top_10
     , const uint32_t act_ranking
     , const uint32_t tot_cls_in_db
@@ -692,7 +692,7 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->sumRestarts());
     sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->sumConflicts);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->latest_satzilla_feature_calc);
-    sqlite3_bind_text(stmtReduceDB, bindAt++, cur_restart_type.c_str(), -1, NULL);
+    sqlite3_bind_int(stmtReduceDB, bindAt++, cur_restart_type);
     sqlite3_bind_double(stmtReduceDB, bindAt++, cpuTime());
 
     //data
@@ -734,7 +734,7 @@ void SQLiteStats::dump_clause_stats(
     , size_t decision_level
     , size_t trail_depth
     , uint64_t conflicts_this_restart
-    , const std::string& restart_type
+    , const uint32_t restart_type
     , const SearchHist& hist
     , const bool is_decision
 ) {
@@ -767,7 +767,7 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_int64 (stmt_clause_stats, bindAt++, hist.branchDepthHistQueue.prev(1));
     sqlite3_bind_int64 (stmt_clause_stats, bindAt++, hist.branchDepthHistQueue.prev(2));
     sqlite3_bind_int64 (stmt_clause_stats, bindAt++, trail_depth);
-    sqlite3_bind_text  (stmt_clause_stats, bindAt++,  restart_type.c_str(), -1, NULL);
+    sqlite3_bind_int   (stmt_clause_stats, bindAt++, restart_type);
 
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, antec_data.binIrred);
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, antec_data.binRed);

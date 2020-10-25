@@ -236,7 +236,7 @@ void ReduceDB::handle_lev2()
 
 #ifdef STATS_NEEDED
 void ReduceDB::dump_sql_cl_data(
-    const string& cur_rst_type
+    const uint32_t cur_rst_type
 ) {
     double myTime = cpuTime();
     assert(solver->sqlStats);

@@ -1630,7 +1630,7 @@ void Searcher::dump_sql_clause_data(
         , old_decision_level
         , trail.size()
         , params.conflictsDoneThisRestart
-        , restart_type_to_short_string(params.rest_type)
+        , restart_type_to_int(params.rest_type)
         , hist
         , is_decision
     );
@@ -2088,7 +2088,7 @@ void Searcher::reduce_db_if_needed()
     ) {
         #ifdef STATS_NEEDED
         if (solver->sqlStats) {
-            solver->reduceDB->dump_sql_cl_data(restart_type_to_short_string(params.rest_type));
+            solver->reduceDB->dump_sql_cl_data(restart_type_to_int(params.rest_type));
         }
         #endif
         #ifdef FINAL_PREDICTOR

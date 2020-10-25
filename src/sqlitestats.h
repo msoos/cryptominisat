@@ -78,7 +78,7 @@ public:
         const Solver* solver
         , const bool locked
         , const Clause* cl
-        , const string& cur_restart_type
+        , const uint32_t cur_restart_type
         , const uint32_t act_ranking_top_10
         , const uint32_t act_ranking
         , const uint32_t tot_cls_in_db
@@ -101,7 +101,7 @@ public:
         , size_t decision_level
         , size_t trail_depth
         , uint64_t conflicts_this_restart
-        , const std::string& rest_type
+        , const uint32_t rest_type
         , const SearchHist& hist
         , const bool is_decision
     ) override;

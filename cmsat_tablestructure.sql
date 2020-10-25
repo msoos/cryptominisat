@@ -48,7 +48,7 @@ CREATE TABLE `reduceDB` (
   `restarts` int(20) NOT NULL,
   `conflicts` bigint(20) NOT NULL,
   `latest_satzilla_feature_calc` int(20) NOT NULL,
-  `cur_restart_type` varchar(6) NOT NULL,
+  `cur_restart_type` int(20) NOT NULL,
   `runtime` float NOT NULL,
 
   `clauseID` int(20) NOT NULL,
@@ -159,7 +159,7 @@ CREATE TABLE `restart` (
   `set` int(20) NOT NULL,
 
   `branch_strategy` int NOT NULL,
-  `restart_type` int NOT NULL
+  `restart_type` int(20) NOT NULL
 );
 
 DROP TABLE IF EXISTS `restart_dat_for_var`;
@@ -192,7 +192,7 @@ CREATE TABLE `clause_stats` (
   `decision_level_pre1` int(20) NOT NULL,
   `decision_level_pre2` int(20) NOT NULL,
   `trail_depth_level` int(20) NOT NULL,
-  `cur_restart_type` varchar(6) NOT NULL,
+  `cur_restart_type` int(20) NOT NULL,
 
   `atedecents_binIrred` int(20) NOT NULL,
   `atedecents_binRed` int(20) NOT NULL,

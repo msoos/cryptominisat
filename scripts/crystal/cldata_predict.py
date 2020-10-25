@@ -403,7 +403,7 @@ if __name__ == "__main__":
                         dest="no_computed", help="Don't add computed features")
     parser.add_argument("--allcomputed", default=False, action="store_true",
                         dest="all_computed", help="Add ALL computed features")
-    parser.add_argument("--bestfeatfile", default="../../scripts/crystal/best_features.txt", type=str,
+    parser.add_argument("--bestfeatfile", default="../../scripts/crystal/best_features.txt-rdb0-only", type=str,
                         dest="best_features_fname", help="Name and position of best features file that lists the best features in order")
 
     # tree/forest options
@@ -537,8 +537,6 @@ if __name__ == "__main__":
                 toeval = ccg.to_source(ast.parse(feat))
                 print("Adding feature %s as eval %s" % (feat, toeval))
                 df[feat] = eval(toeval)
-
-    helper.clear_data_from_str(df)
 
     print("Filling NA with MISSING..")
     df.fillna(MISSING, inplace=True)

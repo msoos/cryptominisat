@@ -44,7 +44,7 @@ public:
     #ifdef FINAL_PREDICTOR
     void handle_lev2_predictor();
     #endif
-    void dump_sql_cl_data(const string& cur_rst_type);
+    void dump_sql_cl_data(const uint32_t cur_rst_type);
 
 private:
     Solver* solver;
