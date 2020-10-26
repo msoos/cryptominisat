@@ -78,7 +78,7 @@ class QueryDatRem(helper.QueryHelper):
         FROM used_later_{name}
         WHERE used_later>0) * (100-{perc}) / 100 - 1;
         """
-        for perc in range(0,100):
+        for perc in range(0,100, 5):
             myq = q.format(name=name, perc=perc)
             self.c.execute(q2.format(name=name, q=myq))
         self.c.execute(q2.format(name=name, q="select '{name}', 'top_non_zero', 100.0, 0.0;".format(name=name)))
@@ -93,7 +93,7 @@ class QueryDatRem(helper.QueryHelper):
          COUNT(*)
         FROM used_later_{name}) * (100-{perc}) / 100 - 1;
         """
-        for perc in range(0,100):
+        for perc in range(0,100, 5):
             myq = q.format(name=name, perc=perc)
             self.c.execute(q2.format(name=name, q=myq))
         self.c.execute(q2.format(name=name, q="select '{name}', 'top_also_zero', 100.0, 0.0;".format(name=name)))
