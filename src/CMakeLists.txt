@@ -20,6 +20,7 @@
 
 include_directories( ${PROJECT_SOURCE_DIR} )
 include_directories( ${BOSPHORUS_INCLUDE_DIRS} )
+include_directories( ${LOUVAIN_COMMUNITIES_INCLUDE_DIRS} )
 
 if (NOT WIN32)
     add_cxx_flag_if_supported("-Wno-bitfield-constant-conversion")
@@ -118,6 +119,7 @@ set(cryptoms_lib_files
     ccnr_cms.cpp
     lucky.cpp
     get_clause_query.cpp
+    community_finder.cpp
 #    watcharray.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
@@ -199,6 +201,7 @@ endif()
 # indicate that we depend on pthread, and compile in the actual library
 target_link_libraries(cryptominisat5
     LINK_PUBLIC ${cryptoms_lib_link_libs}
+    LINK_PUBLIC ${LOUVAIN_COMMUNITIES_LIBRARIES}
     LINK_PUBLIC ${CMAKE_THREAD_LIBS_INIT}
 )
 

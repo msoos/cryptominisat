@@ -69,6 +69,7 @@ THE SOFTWARE.
 #include "matrixfinder.h"
 #include "lucky.h"
 #include "get_clause_query.h"
+#include "community_finder.h"
 
 #ifdef USE_BREAKID
 #include "cms_breakid.h"
@@ -1655,6 +1656,13 @@ lbool Solver::solve_with_assumptions(
             !conf.full_simplify_at_startup ? conf.simplify_schedule_startup : conf.simplify_schedule_nonstartup);
     }
 
+    #ifdef STATS_NEEDED
+    if (status == l_Undef) {
+        CommunityFinder comm_finder(this);
+        comm_finder.compute();
+    }
+    #endif
+
     if (status == l_Undef
         && conf.preprocess == 0
     ) {
@@ -2125,6 +2133,11 @@ lbool Solver::execute_inprocess_strategy(
             }
         } else if (token == "cl-consolidate") {
             cl_alloc.consolidate(this, false, true);
+        } else if (token == "louvain-comms") {
+            #ifdef STATS_NEEDED
+            CommunityFinder comm_finder(this);
+            comm_finder.compute();
+            #endif
         } else if (token == "renumber" || token == "must-renumber") {
             if (conf.doRenumberVars) {
                 if (!renumber_variables(token == "must-renumber" || conf.must_renumber)) {
@@ -2342,6 +2355,14 @@ void Solver::print_min_stats(const double cpu_time, const double cpu_time_total)
                     , dist_long_with_impl->get_stats().redWatchBased.cpu_time
                     , stats_line_percent(dist_long_with_impl->get_stats().redWatchBased.cpu_time, cpu_time)
                     , "% time"
+    );
+
+    print_stats_line("c avg glue",
+                     hist.glueHistLT.avg()
+    );
+
+    print_stats_line("c avg communities",
+                     hist.connects_num_communities_histLT.avg()
     );
 
     if (conf.do_print_times) {

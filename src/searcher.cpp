@@ -334,6 +334,11 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
         return;
     }
     const unsigned new_glue = calc_glue(*cl);
+    const uint32_t connects_num_communities = calc_connects_num_communities(*cl);
+    if (connects_num_communities < cl->stats.connects_num_communities) {
+        cl->stats.connects_num_communities = connects_num_communities;
+    }
+
 
     if (new_glue < cl->stats.glue) {
         if (cl->stats.glue <= conf.protect_cl_if_improved_glue_below_this_glue_for_one_turn) {
@@ -1443,8 +1448,11 @@ lbool Searcher::new_decision()
     return l_Undef;
 }
 
-void Searcher::update_history_stats(size_t backtrack_level, uint32_t glue)
-{
+void Searcher::update_history_stats(
+    size_t backtrack_level,
+    uint32_t glue,
+    uint32_t connects_num_communities
+) {
     assert(decisionLevel() > 0);
 
     //short-term averages
@@ -1475,6 +1483,7 @@ void Searcher::update_history_stats(size_t backtrack_level, uint32_t glue)
     }
     hist.glueHistLT.push(glue);
     hist.glueHist.push(glue);
+    hist.connects_num_communities_histLT.push(connects_num_communities);
 
     //Global stats from cnf.h
     sumClLBD += glue;
@@ -1604,6 +1613,7 @@ void Searcher::dump_sql_clause_data(
     , const uint32_t old_decision_level
     , const uint64_t clid
     , const bool is_decision
+    , const uint32_t connects_num_communities
 ) {
 
     #ifdef STATS_NEEDED_BRANCH
@@ -1633,6 +1643,7 @@ void Searcher::dump_sql_clause_data(
         , restart_type_to_int(params.rest_type)
         , hist
         , is_decision
+        , connects_num_communities
     );
 }
 #endif
@@ -1670,11 +1681,40 @@ void Searcher::set_clause_data(
 }
 #endif
 
+#if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+template<class T>
+uint32_t Searcher::calc_connects_num_communities(const T& cl)
+{
+    assert(toClear.empty());
+    uint32_t connects_num_communities = 0;
+    for(const auto l: cl) {
+        uint32_t comm = varData[l.var()].community_num;
+        if (comm == std::numeric_limits<uint32_t>::max()) {
+            continue;
+        }
+        assert(comm < solver->nVars());
+        if (!seen[comm]) {
+            connects_num_communities++;
+            toClear.push_back(Lit(comm, 0));
+            seen[comm] = 1;
+        }
+    }
+
+    for(auto& t: toClear) {
+        seen[t.var()] = 0;
+    }
+    toClear.clear();
+
+    return connects_num_communities;
+}
+#endif
+
 Clause* Searcher::handle_last_confl(
     const uint32_t glue
     , const uint32_t old_decision_level
     , const uint32_t glue_before_minim
     , const bool is_decision
+    , const uint32_t connects_num_communities
 ) {
     #ifdef STATS_NEEDED
     bool to_dump = false;
@@ -1717,6 +1757,8 @@ Clause* Searcher::handle_last_confl(
         cl->stats.glue = glue;
         #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
         cl->stats.orig_glue = glue;
+        cl->stats.connects_num_communities = connects_num_communities;
+        cl->stats.orig_connects_num_communities = connects_num_communities;
         #endif
         cl->stats.activity = 0.0f;
         ClOffset offset = cl_alloc.get_offset(cl);
@@ -1770,6 +1812,7 @@ Clause* Searcher::handle_last_confl(
             , old_decision_level
             , clauseID
             , is_decision
+            , connects_num_communities
         );
     }
 
@@ -1821,9 +1864,10 @@ bool Searcher::handle_conflict(PropBy confl)
         , glue             //return glue here
         , glue_before_minim         //return glue before minimization here
     );
+    const uint32_t connects_num_communities = calc_connects_num_communities(learnt_clause);
     print_learnt_clause();
 
-    update_history_stats(backtrack_level, glue);
+    update_history_stats(backtrack_level, glue, connects_num_communities);
     uint32_t old_decision_level = decisionLevel();
 
     //Add decision-based clause in case it's short
@@ -1860,7 +1904,13 @@ bool Searcher::handle_conflict(PropBy confl)
     print_learning_debug_info();
     assert(value(learnt_clause[0]) == l_Undef);
     glue = std::min<uint32_t>(glue, std::numeric_limits<uint32_t>::max());
-    Clause* cl = handle_last_confl(glue, old_decision_level, glue_before_minim, false);
+    Clause* cl = handle_last_confl(
+        glue,
+        old_decision_level,
+        glue_before_minim,
+        false, // is decision?
+        connects_num_communities
+    );
     attach_and_enqueue_learnt_clause<false>(cl, backtrack_level, true);
 
     //Add decision-based clause
@@ -1877,7 +1927,13 @@ bool Searcher::handle_conflict(PropBy confl)
 
         learnt_clause = decision_clause;
         print_learnt_clause();
-        cl = handle_last_confl(learnt_clause.size(), old_decision_level, learnt_clause.size(), true);
+        cl = handle_last_confl(
+            learnt_clause.size(),
+            old_decision_level,
+            learnt_clause.size(),
+            true,
+            calc_connects_num_communities(learnt_clause)
+        );
         attach_and_enqueue_learnt_clause<false>(cl, backtrack_level, false);
     }
 

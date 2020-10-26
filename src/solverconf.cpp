@@ -300,6 +300,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             //renumber then it's time for SLS
             "renumber,"
             "bosphorus,"
+            "louvain-comms,"
             "sls,lucky"
         )
         , simplify_schedule_preproc(

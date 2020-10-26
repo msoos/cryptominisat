@@ -54,6 +54,11 @@ struct VarData
     bool polarity = false;
     bool best_polarity = false;
     bool is_bva = false;
+
+    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+    uint32_t community_num = std::numeric_limits<uint32_t>::max();
+    #endif
+
     #if defined(STATS_NEEDED_BRANCH) || defined(FINAL_PREDICTOR_BRANCH)
     uint32_t set = 0;
     uint64_t num_propagated = 0;

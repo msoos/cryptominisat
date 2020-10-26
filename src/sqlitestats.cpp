@@ -718,6 +718,7 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int(stmtReduceDB, bindAt++, act_ranking);
     sqlite3_bind_int(stmtReduceDB, bindAt++, tot_cls_in_db);
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.sum_uip1_used);
+    sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.connects_num_communities);
 
     run_sqlite_step(stmtReduceDB, "reduceDB");
 }
@@ -737,6 +738,7 @@ void SQLiteStats::dump_clause_stats(
     , const uint32_t restart_type
     , const SearchHist& hist
     , const bool is_decision
+    , const uint32_t orig_connects_num_communities
 ) {
     uint32_t num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-size;
 
@@ -790,6 +792,7 @@ void SQLiteStats::dump_clause_stats(
     bind_null_or_double(stmt_clause_stats, bindAt, hist.trailDepthHistLT,avg);
     bind_null_or_double(stmt_clause_stats, bindAt, hist.conflSizeHistLT,avg);
     bind_null_or_double(stmt_clause_stats, bindAt, hist.glueHistLT,avg);
+    bind_null_or_double(stmt_clause_stats, bindAt, hist.connects_num_communities_histLT,avg);
     bind_null_or_double(stmt_clause_stats, bindAt, hist.numResolutionsHistLT,avg);
 
     bind_null_or_double(stmt_clause_stats, bindAt, hist.antec_data_sum_sizeHistLT,avg);
@@ -804,6 +807,7 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.backtrackLevelHist.avg_nocheck());
     sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.glueHist.avg_nocheck());
     bind_null_or_double(stmt_clause_stats, bindAt,   hist.glueHist.getLongtTerm(),avg);
+    sqlite3_bind_int   (stmt_clause_stats, bindAt++, orig_connects_num_communities);
 
     run_sqlite_step(stmt_clause_stats, "dump_clause_stats");
 }

@@ -69,7 +69,8 @@ CREATE TABLE `reduceDB` (
   `act_ranking_top_10` int(20) NOT NULL,
   `act_ranking` int(20) NOT NULL,
   `tot_cls_in_db` int(20) NOT NULL,
-  `sum_uip1_used`  int(20) NOT NULL
+  `sum_uip1_used`  int(20) NOT NULL,
+  `connects_num_communities` int(20) NOT NULL
 );
 
 DROP TABLE IF EXISTS `restart`;
@@ -214,6 +215,7 @@ CREATE TABLE `clause_stats` (
   `trail_depth_level_hist` float,
   `size_hist` float,
   `glue_hist` float,
+  `connects_num_communities_hist` float,
   `num_resolutions_hist_lt` float,
 
   `antec_sum_size_hist` float,
@@ -227,7 +229,8 @@ CREATE TABLE `clause_stats` (
   `trail_depth_delta_hist` float,
   `backtrack_level_hist` float,
   `glue_hist_queue` float NOT NULL,
-  `glue_hist_long` float
+  `glue_hist_long` float,
+  `orig_connects_num_communities` int(20) NOT NULL
 );
 
 DROP TABLE IF EXISTS `satzilla_features`;

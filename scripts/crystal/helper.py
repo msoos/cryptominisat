@@ -651,6 +651,8 @@ def cldata_add_computed_features(df, verbose):
         "cl.size_hist"
         , "cl.glue_hist"
         , "rdb0.glue"
+        , "cl.orig_connects_num_communities"
+        , "rdb0.connects_num_communities"
         , "cl.orig_glue"
         , "cl.glue_before_minim"
         , "cl.glue_hist_queue"

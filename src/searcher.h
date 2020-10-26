@@ -278,7 +278,10 @@ class Searcher : public HyperEngine
             , uint32_t &glue_before_minim     //glue of the unminimised learnt clause
         );
         bool  handle_conflict(PropBy confl);// Handles the conflict clause
-        void  update_history_stats(size_t backtrack_level, uint32_t glue);
+        void  update_history_stats(
+            size_t backtrack_level,
+            uint32_t glue,
+            uint32_t connects_num_communities);
         template<bool update_bogoprops>
         void  attach_and_enqueue_learnt_clause(Clause* cl, const uint32_t level, const bool enqueue);
         void  print_learning_debug_info() const;
@@ -310,6 +313,7 @@ class Searcher : public HyperEngine
             , const uint32_t old_decision_level
             , const uint32_t glue_before_minim
             , const bool is_decision
+            , const uint32_t connects_num_communities
         );
 
         /////////////////////
@@ -418,6 +422,7 @@ class Searcher : public HyperEngine
             , const uint32_t old_decision_level
             , const uint64_t clid
             , const bool decision_cl
+            , const uint32_t connects_num_communities
         );
         int dump_this_many_cldata_in_stream = 0;
         void sql_dump_last_in_solver();
@@ -433,6 +438,8 @@ class Searcher : public HyperEngine
         #endif
 
         //Other
+        template<class T>
+        uint32_t calc_connects_num_communities(const T& cl);
         void print_solution_type(const lbool status) const;
         uint64_t next_distill = 0;
 
