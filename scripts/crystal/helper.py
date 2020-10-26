@@ -605,6 +605,17 @@ def plot_feature_importances(importances, indices, myrange, std, features):
                                     for x in indices], rotation=45)
         plt.xlim([-1, myrange])
 
+def delete_none_features(df):
+    # deleting this feature which is NONE
+    del df["cl.antecedents_glue_long_reds_avg"]
+    del df["cl.antecedents_glue_long_reds_max"]
+    del df["cl.antecedents_glue_long_reds_min"]
+    del df["cl.antecedents_glue_long_reds_var"]
+    del df["cl.antecedents_long_red_age_avg"]
+    del df["cl.antecedents_long_red_age_var"]
+    del df["cl.decision_level_hist"]
+    del df["sum_cl_use.first_confl_used"]
+    del df["sum_cl_use.last_confl_used"]
 
 def cldata_add_computed_features(df, verbose):
     print("Adding computed features...")
@@ -617,16 +628,7 @@ def cldata_add_computed_features(df, verbose):
     print("Relative overlaps...")
     divide("cl.num_total_lits_antecedents", "cl.antec_sum_size_hist")
 
-    # deleting this feature which is NONE
-    del df["cl.antecedents_glue_long_reds_avg"]
-    del df["cl.antecedents_glue_long_reds_max"]
-    del df["cl.antecedents_glue_long_reds_min"]
-    del df["cl.antecedents_glue_long_reds_var"]
-    del df["cl.antecedents_long_red_age_avg"]
-    del df["cl.antecedents_long_red_age_var"]
-    del df["cl.decision_level_hist"]
-    del df["sum_cl_use.first_confl_used"]
-    del df["sum_cl_use.last_confl_used"]
+    delete_none_features(df)
 
     # ************
     # TODO decision level and branch depth are the same, right???

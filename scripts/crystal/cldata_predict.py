@@ -340,10 +340,11 @@ class Learner:
 
         #print(test[features+to_predict])
         #print(test[to_predict])
-        with open("example-data.dat", "wb") as f:
-            pickle.dump(test[features+[to_predict]], f)
-        self.dump_ml_test_data(test, "../ml_perf_test.txt-%s" % options.tier, to_predict)
-        print("Example data dumped")
+        if not options.no_computed:
+            with open("example-data.dat", "wb") as f:
+                pickle.dump(test[features+[to_predict]], f)
+            self.dump_ml_test_data(test, "../ml_perf_test.txt-%s" % options.tier, to_predict)
+            print("Example data dumped")
 
         # Calculate predicted value for the original dataframe
         y_pred = clf.predict(self.df[features])
@@ -537,6 +538,8 @@ if __name__ == "__main__":
                 toeval = ccg.to_source(ast.parse(feat))
                 print("Adding feature %s as eval %s" % (feat, toeval))
                 df[feat] = eval(toeval)
+    else:
+        helper.delete_none_features(df)
 
     print("Filling NA with MISSING..")
     df.fillna(MISSING, inplace=True)
