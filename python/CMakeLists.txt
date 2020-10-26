@@ -104,11 +104,11 @@ install(CODE "execute_process(
 
 #todo uninstall
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    add_custom_target(uninstall_pycyrptosat
+    add_custom_target(uninstall_pycryptosat
         COMMAND Get-Content files.txt | ForEach-Object {Remove-Item $_ -Recurse -Force}
     )
 else()
-    add_custom_target(uninstall_pycyrptosat
+    add_custom_target(uninstall_pycryptosat
         COMMAND cat files.txt | xargs rm -f
     )
 endif()
