@@ -334,11 +334,6 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
         return;
     }
     const unsigned new_glue = calc_glue(*cl);
-    const uint32_t connects_num_communities = calc_connects_num_communities(*cl);
-    if (connects_num_communities < cl->stats.connects_num_communities) {
-        cl->stats.connects_num_communities = connects_num_communities;
-    }
-
 
     if (new_glue < cl->stats.glue) {
         if (cl->stats.glue <= conf.protect_cl_if_improved_glue_below_this_glue_for_one_turn) {
@@ -1707,6 +1702,8 @@ uint32_t Searcher::calc_connects_num_communities(const T& cl)
 
     return connects_num_communities;
 }
+
+template uint32_t Searcher::calc_connects_num_communities<Clause>(const Clause& cl);
 #endif
 
 Clause* Searcher::handle_last_confl(

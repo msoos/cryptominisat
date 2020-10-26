@@ -176,6 +176,10 @@ class Searcher : public HyperEngine
         void dump_restart_sql(rst_dat_type type, int64_t clauseID = -1);
         uint64_t last_dumped_conflict_rst_data_for_var = std::numeric_limits<uint64_t>::max();
         #endif
+        #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+        template<class T>
+        uint32_t calc_connects_num_communities(const T& cl);
+        #endif
 
         /////////////////////
         // Branching
@@ -438,8 +442,6 @@ class Searcher : public HyperEngine
         #endif
 
         //Other
-        template<class T>
-        uint32_t calc_connects_num_communities(const T& cl);
         void print_solution_type(const lbool status) const;
         uint64_t next_distill = 0;
 
