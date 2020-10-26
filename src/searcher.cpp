@@ -1676,7 +1676,7 @@ void Searcher::set_clause_data(
 }
 #endif
 
-#if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+#ifdef STATS_NEEDED
 template<class T>
 uint32_t Searcher::calc_connects_num_communities(const T& cl)
 {
@@ -1754,14 +1754,14 @@ Clause* Searcher::handle_last_confl(
         cl->stats.glue = glue;
         #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
         cl->stats.orig_glue = glue;
-        cl->stats.connects_num_communities = connects_num_communities;
-        cl->stats.orig_connects_num_communities = connects_num_communities;
         #endif
         cl->stats.activity = 0.0f;
         ClOffset offset = cl_alloc.get_offset(cl);
         unsigned which_arr = 2;
 
         #ifdef STATS_NEEDED
+        cl->stats.connects_num_communities = connects_num_communities;
+        cl->stats.orig_connects_num_communities = connects_num_communities;
         cl->stats.locked_for_data_gen =
             mtrand.randDblExc() < conf.lock_for_data_gen_ratio;
         #endif
@@ -1861,7 +1861,10 @@ bool Searcher::handle_conflict(PropBy confl)
         , glue             //return glue here
         , glue_before_minim         //return glue before minimization here
     );
-    const uint32_t connects_num_communities = calc_connects_num_communities(learnt_clause);
+    const uint32_t connects_num_communities = 0;
+    #ifdef STATS_NEEDED
+    connects_num_communities = calc_connects_num_communities(learnt_clause);
+    #endif
     print_learnt_clause();
 
     update_history_stats(backtrack_level, glue, connects_num_communities);
@@ -1929,7 +1932,11 @@ bool Searcher::handle_conflict(PropBy confl)
             old_decision_level,
             learnt_clause.size(),
             true,
+            #ifdef STATS_NEEDED
             calc_connects_num_communities(learnt_clause)
+            #else
+            0
+            #endif
         );
         attach_and_enqueue_learnt_clause<false>(cl, backtrack_level, false);
     }

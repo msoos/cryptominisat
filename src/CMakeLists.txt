@@ -119,7 +119,6 @@ set(cryptoms_lib_files
     ccnr_cms.cpp
     lucky.cpp
     get_clause_query.cpp
-    community_finder.cpp
 #    watcharray.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
@@ -127,13 +126,19 @@ set(cryptoms_lib_files
 set(cryptoms_lib_link_libs "")
 
 if (FINAL_PREDICTOR)
-
     set(cryptoms_lib_files
         ${cryptoms_lib_files}
 #         predict/clustering_imp.cpp
         cl_predictors.cpp
     )
     SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} xgboost dmlc rabit rt)
+endif()
+
+if (STATS_NEEDED)
+    set(cryptoms_lib_files
+        ${cryptoms_lib_files}
+        community_finder.cpp
+    )
 endif()
 
 if (USE_GAUSS)

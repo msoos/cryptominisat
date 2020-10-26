@@ -164,8 +164,6 @@ struct ClauseStats
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
     uint16_t dump_no = 0;
     uint32_t orig_glue;
-    uint32_t orig_connects_num_communities = 0;
-    uint32_t connects_num_communities = 0;
     uint32_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
 
     //for average and sum stats
@@ -181,6 +179,8 @@ struct ClauseStats
     #ifdef STATS_NEEDED
     int32_t ID = 0;
     uint32_t sum_propagations_made = 0; ///<Number of times caused propagation
+    uint32_t orig_connects_num_communities = 0;
+    uint32_t connects_num_communities = 0;
 
     AtecedentData<uint16_t> antec_data;
     uint32_t conflicts_made = 0; ///<Number of times caused conflict
