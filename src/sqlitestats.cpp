@@ -777,7 +777,6 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, antec_data.longRed);
 
     bind_null_or_double(stmt_clause_stats, bindAt, antec_data.glue_long_reds,avg);
-    bind_null_or_double(stmt_clause_stats, bindAt, antec_data.glue_long_reds,avg);
     bind_null_or_double(stmt_clause_stats, bindAt, antec_data.glue_long_reds,var);
     bind_null_or_int   (stmt_clause_stats, bindAt, antec_data.glue_long_reds,getMin);
     bind_null_or_int   (stmt_clause_stats, bindAt, antec_data.glue_long_reds,getMax);
