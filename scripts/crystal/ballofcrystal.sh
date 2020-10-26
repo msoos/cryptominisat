@@ -195,7 +195,16 @@ rm -f ../../src/predict/*.h
 ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier long --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf
 ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-forever_div-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier forever --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf --topperc
 
+############################
+# To get feature importances
+############################
+# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier long --top 200 --xgboost --nocomputed > output_long2
+# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier long --top 200 --xgboost --allcomputed > output_long
+
+
 )
+
+
 
 ########################
 # Build final CryptoMiniSat with the classifier
