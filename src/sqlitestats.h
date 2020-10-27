@@ -23,6 +23,7 @@ THE SOFTWARE.
 #include "sqlstats.h"
 #include "satzilla_features.h"
 #include <sqlite3.h>
+#include <map>
 
 namespace CMSat {
 
@@ -89,7 +90,7 @@ public:
         , const uint64_t clid
     ) override;
 
-    void dump_clause_stats(
+    void clause_stats(
         const Solver* solver
         , uint64_t clid
         , const uint64_t restartID
@@ -157,7 +158,10 @@ private:
     void init_var_data_picktime_STMT();
     void init_var_data_fintime_STMT();
     void init_dec_var_clid_STMT();
-    void run_sqlite_step(sqlite3_stmt* stmt, const char* name);
+    void run_sqlite_step(
+        sqlite3_stmt* stmt,
+        const char* name,
+        const uint32_t bindAt);
 
     void writeQuestionMarks(size_t num, std::stringstream& ss);
     void initReduceDBSTMT();
@@ -175,6 +179,8 @@ private:
     sqlite3_stmt *stmt_var_data_picktime = NULL;
     sqlite3_stmt *stmt_dec_var_clid = NULL;
     sqlite3_stmt *stmt_var_dist = NULL;
+
+    std::map<string, uint32_t> query_to_size;
 
     sqlite3 *db = NULL;
     bool setup_ok = false;

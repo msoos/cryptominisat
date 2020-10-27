@@ -72,9 +72,9 @@ using std::string;
 using namespace CMSat;
 
 const char* rst_dat_type_to_str(rst_dat_type type) {
-    static const char* const norm ="restart_norm";
-    static const char* const var ="restart_var";
-    static const char* const cl ="restart_cl";
+    static const char* const norm ="restart";
+    static const char* const var ="restart_dat_for_var";
+    static const char* const cl ="restart_dat_for_cl";
     if (type == rst_dat_type::norm) {
         return norm;
     } else if (type == rst_dat_type::var) {
@@ -342,8 +342,15 @@ void SQLiteStats::writeQuestionMarks(
     ss << ")";
 }
 
-void SQLiteStats::run_sqlite_step(sqlite3_stmt* stmt, const char* name)
+void SQLiteStats::run_sqlite_step(
+    sqlite3_stmt* stmt,
+    const char* name,
+    const uint32_t bindAt)
 {
+    assert(query_to_size.find(name) != query_to_size.end());
+    //SQLite numbers them from 1, so it's off-by-one
+    assert(query_to_size[name]+1 == bindAt);
+
     int rc = sqlite3_step(stmt);
     if (rc != SQLITE_DONE) {
         cout
@@ -373,6 +380,7 @@ void SQLiteStats::run_sqlite_step(sqlite3_stmt* stmt, const char* name)
 void SQLiteStats::init(const char* name, sqlite3_stmt** stmt)
 {
     vector<string> cols = get_columns(name);
+    query_to_size[string(name)] = cols.size();
     const size_t numElems = cols.size();
 
     std::stringstream ss;
@@ -417,7 +425,7 @@ void SQLiteStats::mem_used(
     sqlite3_bind_text(stmtMemUsed, bindAt++, name.c_str(), -1, NULL);
     sqlite3_bind_int(stmtMemUsed, bindAt++, mem_used_mb);
 
-    run_sqlite_step(stmtMemUsed, "memused");
+    run_sqlite_step(stmtMemUsed, "memused", bindAt);
 }
 
 void SQLiteStats::time_passed(
@@ -437,7 +445,7 @@ void SQLiteStats::time_passed(
     sqlite3_bind_int(stmtTimePassed, bindAt++, time_out);
     sqlite3_bind_double(stmtTimePassed, bindAt++, percent_time_remain);
 
-    run_sqlite_step(stmtTimePassed, "timepassed");
+    run_sqlite_step(stmtTimePassed, "timepassed", bindAt);
 }
 
 void SQLiteStats::time_passed_min(
@@ -454,7 +462,7 @@ void SQLiteStats::time_passed_min(
     sqlite3_bind_null(stmtTimePassed, bindAt++);
     sqlite3_bind_null(stmtTimePassed, bindAt++);
 
-    run_sqlite_step(stmtTimePassed, "time_passed_min");
+    run_sqlite_step(stmtTimePassed, "timepassed", bindAt);
 }
 
 void SQLiteStats::satzilla_features(
@@ -545,7 +553,7 @@ void SQLiteStats::satzilla_features(
     sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.irred_cl_distrib.activity_distr_mean);
     sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.irred_cl_distrib.activity_distr_var);
 
-    run_sqlite_step(stmtFeat, "satzilla_features");
+    run_sqlite_step(stmtFeat, "satzilla_features", bindAt);
 }
 
 #ifdef STATS_NEEDED
@@ -673,7 +681,7 @@ void SQLiteStats::restart(
     sqlite3_bind_int(stmt, bindAt++, branch_type_to_int(solver->branch_strategy));
     sqlite3_bind_int(stmt, bindAt++, restart_type_to_int(rest_type));
 
-    run_sqlite_step(stmt, rst_dat_type_to_str(type));
+    run_sqlite_step(stmt, rst_dat_type_to_str(type), bindAt);
 }
 
 void SQLiteStats::reduceDB(
@@ -720,10 +728,10 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.sum_uip1_used);
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.connects_num_communities);
 
-    run_sqlite_step(stmtReduceDB, "reduceDB");
+    run_sqlite_step(stmtReduceDB, "reduceDB", bindAt);
 }
 
-void SQLiteStats::dump_clause_stats(
+void SQLiteStats::clause_stats(
     const Solver* solver
     , uint64_t clid
     , const uint64_t restartID
@@ -808,7 +816,7 @@ void SQLiteStats::dump_clause_stats(
     bind_null_or_double(stmt_clause_stats, bindAt,   hist.glueHist.getLongtTerm(),avg);
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, orig_connects_num_communities);
 
-    run_sqlite_step(stmt_clause_stats, "dump_clause_stats");
+    run_sqlite_step(stmt_clause_stats, "clause_stats", bindAt);
 }
 
 #ifdef STATS_NEEDED_BRANCH
@@ -965,7 +973,7 @@ void SQLiteStats::cl_last_in_solver(
     sqlite3_bind_int64(stmt_delete_cl, bindAt++, solver->sumConflicts);
     sqlite3_bind_int64(stmt_delete_cl, bindAt++, clid);
 
-    run_sqlite_step(stmt_delete_cl, "cl_last_in_solver");
+    run_sqlite_step(stmt_delete_cl, "cl_last_in_solver", bindAt);
 }
 
 #endif

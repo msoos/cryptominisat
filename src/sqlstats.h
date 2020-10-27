@@ -125,7 +125,7 @@ public:
         , const uint64_t clid
     ) = 0;
 
-    virtual void dump_clause_stats(
+    virtual void clause_stats(
         const Solver* solver
         , uint64_t clid
         , uint64_t restartID

@@ -1623,7 +1623,7 @@ void Searcher::dump_sql_clause_data(
     }
     #endif
 
-    solver->sqlStats->dump_clause_stats(
+    solver->sqlStats->clause_stats(
         solver
         , clid
         , restartID
@@ -1861,7 +1861,7 @@ bool Searcher::handle_conflict(PropBy confl)
         , glue             //return glue here
         , glue_before_minim         //return glue before minimization here
     );
-    const uint32_t connects_num_communities = 0;
+    uint32_t connects_num_communities = 0;
     #ifdef STATS_NEEDED
     connects_num_communities = calc_connects_num_communities(learnt_clause);
     #endif
