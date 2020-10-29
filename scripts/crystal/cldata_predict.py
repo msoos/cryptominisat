@@ -404,7 +404,7 @@ if __name__ == "__main__":
                         dest="no_computed", help="Don't add computed features")
     parser.add_argument("--allcomputed", default=False, action="store_true",
                         dest="all_computed", help="Add ALL computed features")
-    parser.add_argument("--bestfeatfile", default="../../scripts/crystal/best_features.txt-rdb0-only", type=str,
+    parser.add_argument("--bestfeatfile", default="../../scripts/crystal/best_features-rdb0-only.txt", type=str,
                         dest="best_features_fname", help="Name and position of best features file that lists the best features in order")
 
     # tree/forest options
