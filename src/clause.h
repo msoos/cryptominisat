@@ -168,19 +168,20 @@ struct ClauseStats
 
     //for average and sum stats
     uint32_t sum_uip1_used = 0; ///N.o. times claue was used during 1st UIP generation for ALL TIME
+    uint32_t sum_propagations_made = 0; ///<Number of times caused propagation
 
     //below resets
     uint32_t uip1_used = 0; ///N.o. times claue was used during 1st UIP generation in this RDB
-//     uint32_t rdb1_uip1_used = 0; ///N.o. times claue was used during 1st UIP generation in previous RDB
     uint32_t propagations_made = 0; ///<Number of times caused propagation
     uint32_t rdb1_propagations_made = 0; ///<Number of times caused propagation, last round
     #endif
 
     #ifdef STATS_NEEDED
     int32_t ID = 0;
-    uint32_t sum_propagations_made = 0; ///<Number of times caused propagation
     uint32_t orig_connects_num_communities = 0;
     uint32_t connects_num_communities = 0;
+    uint32_t props_made_rank = 0;
+    uint32_t uip1_used_rank = 0;
 
     AtecedentData<uint16_t> antec_data;
     uint32_t conflicts_made = 0; ///<Number of times caused conflict

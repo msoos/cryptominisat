@@ -66,8 +66,9 @@ CREATE TABLE `reduceDB` (
   `size` int(20) NOT NULL,
   `ttl` int(20) NOT NULL,
   `is_ternary_resolvent` int(20) NOT NULL,
-  `act_ranking_top_10` int(20) NOT NULL,
   `act_ranking` int(20) NOT NULL,
+  `prop_ranking` int(20) NOT NULL,
+  `uip1_ranking` int(20) NOT NULL,
   `tot_cls_in_db` int(20) NOT NULL,
   `sum_uip1_used`  int(20) NOT NULL,
   `connects_num_communities` int(20) NOT NULL

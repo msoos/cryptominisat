@@ -59,8 +59,7 @@ public:
 #ifdef EXTENDED_FEATURES
         const int64_t rdb1_last_touched_diff,
 #endif
-        const double   act_ranking_rel,
-        const uint32_t act_ranking_top_10);
+        const double   act_ranking_rel);
 
     void predict(
         const CMSat::Clause* cl,
@@ -70,7 +69,6 @@ public:
         const int64_t rdb1_last_touched_diff,
 #endif
         const double   act_ranking_rel,
-        const uint32_t act_ranking_top_10,
         float& p_short,
         float& p_long,
         float& p_forever);
@@ -85,7 +83,6 @@ private:
         const int64_t  rdb1_last_touched_diff,
 #endif
         const double   act_ranking_rel,
-        const uint32_t act_ranking_top_10,
         const uint32_t cols,
         float* at);
     vector<BoosterHandle> handles;

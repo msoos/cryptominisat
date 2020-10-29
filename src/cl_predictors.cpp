@@ -84,7 +84,6 @@ void ClPredictors::set_up_input(
     const int64_t  rdb1_last_touched_diff,
     #endif
     const double   act_ranking_rel,
-    const uint32_t act_ranking_top_10,
     const uint32_t cols,
     float* at)
 {
@@ -435,8 +434,7 @@ float ClPredictors::predict(
     #ifdef EXTENDED_FEATURES
     const int64_t  rdb1_last_touched_diff,
     #endif
-    const double   act_ranking_rel,
-    const uint32_t act_ranking_top_10)
+    const double   act_ranking_rel)
 {
     // convert to DMatrix
     set_up_input(
@@ -447,7 +445,6 @@ float ClPredictors::predict(
         rdb1_last_touched_diff,
         #endif
         act_ranking_rel,
-        act_ranking_top_10,
         PRED_COLS,
         train);
     int rows=1;
@@ -468,7 +465,6 @@ void ClPredictors::predict(
     const int64_t  rdb1_last_touched_diff,
     #endif
     const double   act_ranking_rel,
-    const uint32_t act_ranking_top_10,
     float& p_short,
     float& p_long,
     float& p_forever)
@@ -482,7 +478,6 @@ void ClPredictors::predict(
         rdb1_last_touched_diff,
         #endif
         act_ranking_rel,
-        act_ranking_top_10,
         PRED_COLS,
         train);
     int rows=1;

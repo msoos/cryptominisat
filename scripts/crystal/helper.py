@@ -645,6 +645,8 @@ def cldata_add_computed_features(df, verbose):
 
     orig_cols = list(df)
     rdb0_act_ranking_rel = divide("rdb0.act_ranking", "rdb0.tot_cls_in_db", name="rdb0_act_ranking_rel")
+    rdb0_prop_ranking_rel = divide("rdb0.prop_ranking", "rdb0.tot_cls_in_db", name="rdb0_prop_ranking_rel")
+    rdb0_uip1_ranking_rel = divide("rdb0.uip1_ranking", "rdb0.tot_cls_in_db", name="rdb0_uip1_ranking_rel")
 
     divide("rdb0.sum_uip1_used", "cl.time_inside_solver")
     divide("rdb0.sum_propagations_made", "cl.time_inside_solver")
@@ -668,6 +670,8 @@ def cldata_add_computed_features(df, verbose):
         , "(cl.num_total_lits_antecedents/cl.num_antecedents)"
         , "cl.num_antecedents"
         , rdb0_act_ranking_rel
+        , rdb0_prop_ranking_rel
+        , rdb0_uip1_ranking_rel
         #, "szfeat_cur.var_cl_ratio"
         , "cl.time_inside_solver"
         #, "sqrt(rdb0.act_ranking_rel)"

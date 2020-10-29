@@ -79,6 +79,40 @@ struct SortRedClsAct
         return x->stats.activity > y->stats.activity;
     }
 };
+
+#ifdef STATS_NEEDED
+struct SortRedClsUIP1
+{
+    explicit SortRedClsUIP1(ClauseAllocator& _cl_alloc) :
+        cl_alloc(_cl_alloc)
+    {}
+    ClauseAllocator& cl_alloc;
+
+    bool operator () (const ClOffset xOff, const ClOffset yOff) const
+    {
+        const Clause* x = cl_alloc.ptr(xOff);
+        const Clause* y = cl_alloc.ptr(yOff);
+        return x->stats.uip1_used > y->stats.uip1_used;
+    }
+};
+
+struct SortRedClsProps
+{
+    explicit SortRedClsProps(ClauseAllocator& _cl_alloc) :
+        cl_alloc(_cl_alloc)
+    {}
+    ClauseAllocator& cl_alloc;
+
+    bool operator () (const ClOffset xOff, const ClOffset yOff) const
+    {
+        const Clause* x = cl_alloc.ptr(xOff);
+        const Clause* y = cl_alloc.ptr(yOff);
+        return x->stats.propagations_made > y->stats.propagations_made;
+    }
+};
+
+#endif
+
 #ifdef FINAL_PREDICTOR
 struct SortRedClsPredShort
 {
@@ -255,6 +289,20 @@ void ReduceDB::dump_sql_cl_data(
         }
     }
 
+    std::sort(all_learnt.begin(), all_learnt.end(), SortRedClsProps(solver->cl_alloc));
+    for(size_t i = 0; i < all_learnt.size(); i++) {
+        ClOffset offs = all_learnt[i];
+        Clause* cl = solver->cl_alloc.ptr(offs);
+        cl->stats.props_made_rank = i+1;
+    }
+
+    std::sort(all_learnt.begin(), all_learnt.end(), SortRedClsUIP1(solver->cl_alloc));
+    for(size_t i = 0; i < all_learnt.size(); i++) {
+        ClOffset offs = all_learnt[i];
+        Clause* cl = solver->cl_alloc.ptr(offs);
+        cl->stats.uip1_used_rank= i+1;
+    }
+
     std::sort(all_learnt.begin(), all_learnt.end(), SortRedClsAct(solver->cl_alloc));
     for(size_t i = 0; i < all_learnt.size(); i++) {
         ClOffset offs = all_learnt[i];
@@ -266,14 +314,11 @@ void ReduceDB::dump_sql_cl_data(
         }
 
         const bool locked = solver->clause_locked(*cl, offs);
-        const uint32_t act_ranking_top_10 = std::ceil((double)i/((double)all_learnt.size()/10.0))+1;
-        //cout << "Ranking top 10: " << act_ranking_top_10 << " act: " << cl->stats.activity << endl;
         solver->sqlStats->reduceDB(
             solver
             , locked
             , cl
             , cur_rst_type
-            , act_ranking_top_10
             , i+1
             , all_learnt.size()
         );
@@ -484,8 +529,6 @@ void ReduceDB::update_preds_lev2()
         if (cl->stats.which_red_array == 0) {
             assert(false);
         }
-        const uint32_t act_ranking_top_10 = \
-            std::ceil((double)i/((double)solver->longRedCls[2].size()/10.0))+1;
         double act_ranking_rel = ((double)i+1.0)/(double)solver->longRedCls[2].size();
 
         cl->stats.pred_short_use = 0;
@@ -510,7 +553,6 @@ void ReduceDB::update_preds_lev2()
                 rdb1_last_touched_diff,
                 #endif
                 act_ranking_rel,
-                act_ranking_top_10,
                 cl->stats.pred_short_use,
                 cl->stats.pred_long_use,
                 cl->stats.pred_forever_topperc
@@ -547,9 +589,6 @@ void ReduceDB::clean_lev0_once_in_a_while()
         ) {
             const ClOffset offset = solver->longRedCls[0][i];
             Clause* cl = solver->cl_alloc.ptr(offset);
-
-            const uint32_t act_ranking_top_10 = \
-                std::ceil((double)i/((double)solver->longRedCls[0].size()/10.0))+1;
             double act_ranking_rel = (double)i/(double)solver->longRedCls[0].size();
 
             int64_t last_touched_diff =
@@ -567,8 +606,7 @@ void ReduceDB::clean_lev0_once_in_a_while()
                 #ifdef EXTENDED_FEATURES
                 rdb1_last_touched_diff,
                 #endif
-                act_ranking_rel,
-                act_ranking_top_10);
+                act_ranking_rel);
         }
 
         //Clean up FOREVER, move to LONG
@@ -635,9 +673,6 @@ void ReduceDB::clean_lev1_once_in_a_while()
         ) {
             const ClOffset offset = solver->longRedCls[1][i];
             Clause* cl = solver->cl_alloc.ptr(offset);
-
-            const uint32_t act_ranking_top_10 = \
-                std::ceil((double)i/((double)solver->longRedCls[1].size()/10.0))+1;
             double act_ranking_rel = (double)i/(double)solver->longRedCls[1].size();
 
             int64_t last_touched_diff =
@@ -655,8 +690,7 @@ void ReduceDB::clean_lev1_once_in_a_while()
                 #ifdef EXTENDED_FEATURES
                 rdb1_last_touched_diff,
                 #endif
-                act_ranking_rel,
-                act_ranking_top_10);
+                act_ranking_rel);
         }
 
         //Clean up LONG, move to SHORT

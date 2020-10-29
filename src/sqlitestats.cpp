@@ -689,7 +689,6 @@ void SQLiteStats::reduceDB(
     , const bool locked
     , const Clause* cl
     , const uint32_t cur_restart_type
-    , const uint32_t act_ranking_top_10
     , const uint32_t act_ranking
     , const uint32_t tot_cls_in_db
 ) {
@@ -722,8 +721,9 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->size());
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.ttl);
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->is_ternary_resolvent);
-    sqlite3_bind_int(stmtReduceDB, bindAt++, act_ranking_top_10);
     sqlite3_bind_int(stmtReduceDB, bindAt++, act_ranking);
+    sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.props_made_rank);
+    sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.uip1_used_rank);
     sqlite3_bind_int(stmtReduceDB, bindAt++, tot_cls_in_db);
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.sum_uip1_used);
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.connects_num_communities);

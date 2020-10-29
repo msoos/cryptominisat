@@ -87,7 +87,6 @@ public:
         , const bool locked
         , const Clause* cl
         , const uint32_t cur_restart_type
-        , const uint32_t act_ranking_top_10
         , const uint32_t act_ranking
         , const uint32_t tot_cls_in_db
     ) = 0;
