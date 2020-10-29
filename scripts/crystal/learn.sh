@@ -32,8 +32,8 @@ function concat() {
 
     only=0.99
     bestf="../../scripts/crystal/best_features.txt"
-    bestf="../../scripts/crystal/best_features.txt-ext"
-    bestf="../../scripts/crystal/best_features.txt-rdb0-only"
+    bestf="../../scripts/crystal/best_features-ext.txt"
+    bestf="../../scripts/crystal/best_features-rdb0-only.txt"
     ../cldata_predict.py \
         short-comb-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat \
         --tier short --xgboost --final --only $only \

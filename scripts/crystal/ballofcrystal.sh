@@ -29,8 +29,8 @@ SHORTPERC=50
 LONGPERC=40
 EXTRA_GEN_PANDAS_OPTS=""
 bestf="../../scripts/crystal/best_features.txt"
-bestf="../../scripts/crystal/best_features.txt-rdb0-only"
-#bestf="../../scripts/crystal/best_features.txt-ext"
+bestf="../../scripts/crystal/best_features-rdb0-only.txt"
+#bestf="../../scripts/crystal/best_features-ext.txt"
 
 if [ "$1" == "--csv" ]; then
     EXTRA_GEN_PANDAS_OPTS="--csv"
