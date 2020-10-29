@@ -409,7 +409,7 @@ void Searcher::add_literals_from_confl_to_learnt(
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             antec_data.size_longs.push(cl->size());
             if (!update_bogoprops) {
-                cl->stats.used_for_uip_creation++;
+                cl->stats.uip1_used++;
                 cl->stats.sum_uip1_used++;
                 assert(
                     !cl->red() ||

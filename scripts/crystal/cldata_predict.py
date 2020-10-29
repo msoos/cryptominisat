@@ -170,7 +170,7 @@ class Learner:
             towrite += "%s " % test["rdb0.sum_uip1_used"].iloc[i]
             towrite += "%s " % test["cl.num_antecedents"].iloc[i]
             towrite += "%s " % test["cl.num_total_lits_antecedents"].iloc[i]
-            towrite += "%s " % test["rdb0.used_for_uip_creation"].iloc[i]
+            towrite += "%s " % test["rdb0.uip1_used"].iloc[i]
             towrite += "%s " % test["cl.num_resolutions_hist_lt"].iloc[i]
             towrite += "%s " % test["cl.glue_hist_long"].iloc[i]
             towrite += "%s " % test["cl.size_hist"].iloc[i]

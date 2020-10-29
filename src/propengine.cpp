@@ -341,6 +341,9 @@ PropBy PropEngine::propagate_any_order_fast()
             }
             assert(c[1] == false_lit);
             i++;
+            #ifdef STATS_NEEDED
+            c.stats.clause_looked_at++;
+            #endif
 
             Lit     first = c[0];
             Watched w     = Watched(offset, first);
@@ -395,6 +398,7 @@ PropBy PropEngine::propagate_any_order_fast()
                 c.stats.propagations_made++;
                 #endif
                 #ifdef STATS_NEEDED
+                c.stats.sum_propagations_made++;
                 if (c.red())
                     propStats.propsLongRed++;
                 else

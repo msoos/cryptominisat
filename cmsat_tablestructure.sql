@@ -57,7 +57,7 @@ CREATE TABLE `reduceDB` (
   `propagations_made` bigint(20) NOT NULL,
   `sum_propagations_made` bigint(20) NOT NULL,
   `clause_looked_at` bigint(20) NOT NULL,
-  `used_for_uip_creation` bigint(20) NOT NULL,
+  `uip1_used` bigint(20) NOT NULL,
   `last_touched_diff` bigint(20) NOT NULL,
   `activity_rel` float(20) NOT NULL,
   `locked` int(20) NOT NULL,

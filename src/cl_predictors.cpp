@@ -103,8 +103,8 @@ void ClPredictors::set_up_input(
     double rdb1_act_ranking_rel = (double)cl->stats.rdb1_act_ranking_rel;
     double tot_last_touch_diffs = last_touched_diff + rdb1_last_touched_diff;
 
-    at[x++] = (float)cl->stats.used_for_uip_creation;
-    //rdb0.used_for_uip_creation
+    at[x++] = (float)cl->stats.uip1_used;
+    //rdb0.uip1_used
 
     at[x++] = (float)cl->stats.glue;
     //rdb0.glue
@@ -394,9 +394,9 @@ void ClPredictors::set_up_input(
     //(log2(cl.branch_depth_hist_queue)/rdb0.propagations_made)
 
 
-    at[x++] = (double)cl->stats.used_for_uip_creation/
+    at[x++] = (double)cl->stats.uip1_used/
         (double)cl->stats.glue_before_minim;;
-    //(rdb0.used_for_uip_creation/cl.glue_before_minim)
+    //(rdb0.uip1_used/cl.glue_before_minim)
 
 //     cout << "c val: ";
 //     for(uint32_t i = 0; i < cols; i++) {

@@ -710,7 +710,7 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.propagations_made);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.sum_propagations_made);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.clause_looked_at);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.used_for_uip_creation);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.uip1_used);
 
     int64_t last_touched_diff = solver->sumConflicts-cl->stats.last_touched;
     sqlite3_bind_int64(stmtReduceDB, bindAt++, last_touched_diff);

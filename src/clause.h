@@ -170,8 +170,8 @@ struct ClauseStats
     uint32_t sum_uip1_used = 0; ///N.o. times claue was used during 1st UIP generation for ALL TIME
 
     //below resets
-    uint32_t used_for_uip_creation = 0; ///N.o. times claue was used during 1st UIP generation in this RDB
-//     uint32_t rdb1_used_for_uip_creation = 0; ///N.o. times claue was used during 1st UIP generation in previous RDB
+    uint32_t uip1_used = 0; ///N.o. times claue was used during 1st UIP generation in this RDB
+//     uint32_t rdb1_uip1_used = 0; ///N.o. times claue was used during 1st UIP generation in previous RDB
     uint32_t propagations_made = 0; ///<Number of times caused propagation
     uint32_t rdb1_propagations_made = 0; ///<Number of times caused propagation, last round
     #endif
@@ -191,7 +191,7 @@ struct ClauseStats
     void reset_rdb_stats()
     {
         ttl = 0;
-        used_for_uip_creation = 0;
+        uip1_used = 0;
         propagations_made = 0;
         #if defined(STATS_NEEDED)
         clause_looked_at = 0;
@@ -218,7 +218,7 @@ struct ClauseStats
         } else {
             ret.introduced_at_conflict = std::min(first.introduced_at_conflict, second.introduced_at_conflict);
         }
-        ret.used_for_uip_creation = first.used_for_uip_creation + second.used_for_uip_creation;
+        ret.uip1_used = first.uip1_used + second.uip1_used;
         ret.propagations_made = first.propagations_made + second.propagations_made;
         #endif
 
@@ -240,7 +240,7 @@ inline std::ostream& operator<<(std::ostream& os, const ClauseStats& stats)
     os << "glue " << stats.glue << " ";
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
     os << "conflIntro " << stats.introduced_at_conflict<< " ";
-    os << "used_for_uip_creation " << stats.used_for_uip_creation << " ";
+    os << "uip1_used " << stats.uip1_used << " ";
     os << "numProp " << stats.propagations_made<< " ";
     #endif
     #ifdef STATS_NEEDED
@@ -532,7 +532,7 @@ public:
         << " Confls: " << std::setw(10) << stats.conflicts_made
         << " Props: " << std::setw(10) << stats.propagations_made
         << " Looked at: " << std::setw(10)<< stats.clause_looked_at
-        << " UIP used: " << std::setw(10)<< stats.used_for_uip_creation;
+        << " UIP used: " << std::setw(10)<< stats.uip1_used;
         #endif
         cout << endl;
     }

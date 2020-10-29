@@ -697,7 +697,7 @@ def cldata_add_computed_features(df, verbose):
     divisors.extend([
         rst_cur_all_props
         , "rdb0.last_touched_diff"
-        , "rdb0.used_for_uip_creation"
+        , "rdb0.uip1_used"
         , "rdb0.propagations_made"
         , "rdb0.sum_propagations_made"
         , "(rdb0.sum_propagations_made/cl.time_inside_solver)"

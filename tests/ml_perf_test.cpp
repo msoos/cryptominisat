@@ -41,7 +41,7 @@ struct Dat {
     uint32_t sum_uip1_used;
     uint32_t num_antecedents;
     uint32_t num_total_lits_antecedents;
-    uint32_t used_for_uip_creation;
+    uint32_t uip1_used;
     float    num_resolutions_hist_lt;
     float    glue_hist_long;
     float    confl_size_hist_lt;
@@ -60,7 +60,7 @@ struct Dat {
         cout << "sum_uip1_used: "  << sum_uip1_used << endl;
         cout << "num_antecedents: " << num_antecedents << endl;
         cout << "num_total_lits_antecedents: " << num_total_lits_antecedents << endl;
-        cout << "used_for_uip_creation: " << used_for_uip_creation << endl;
+        cout << "uip1_used: " << uip1_used << endl;
         cout << "num_resolutions_hist_lt: " << num_resolutions_hist_lt << endl;
         cout << "glue_hist_long: " << glue_hist_long << endl;
         cout << "confl_size_hist_lt: " << confl_size_hist_lt << endl;
@@ -92,7 +92,7 @@ bool get_val(Dat& dat)
         >> dat.sum_uip1_used
         >> dat.num_antecedents
         >> dat.num_total_lits_antecedents
-        >> dat.used_for_uip_creation
+        >> dat.uip1_used
         >> dat.num_resolutions_hist_lt
         >> dat.glue_hist_long
         >> dat.confl_size_hist_lt
@@ -120,7 +120,7 @@ float get_predict(Clause* cl, const Dat& dat, predict_type pred_type)
     cl->stats.glue_hist_long = dat.glue_hist_long;
     cl->stats.confl_size_hist_lt = dat.confl_size_hist_lt;
     cl->stats.branch_depth_hist_queue = dat.branch_depth_hist_queue;
-    cl->stats.used_for_uip_creation = dat.used_for_uip_creation;
+    cl->stats.uip1_used = dat.uip1_used;
     cl->resize(dat.size);
 
 
