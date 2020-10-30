@@ -139,7 +139,6 @@ class Queries (helper.QueryHelper):
             {"table":"reduceDB", "cond":" glue > 100000"},
             {"table":"clause_stats", "cond":" glue_before_minim = 0 and orig_size >= 2"},
             {"table":"clause_stats", "cond":" glue_before_minim = 1 and orig_size >= 2"},
-            {"table":"reduceDB", "cond":" act_ranking > tot_cls_in_db"},
             {"table":"reduceDB", "cond":" act_ranking < 0"},
         ]
         for incorr in incorrect:
@@ -197,7 +196,8 @@ class Queries (helper.QueryHelper):
             ["size", "reduceDB"],
             ["glue", "reduceDB"],
             ["act_ranking", "reduceDB"], #act ranking starts at 1, not 0
-            ["act_ranking_top_10", "reduceDB"]
+            ["uip1_ranking", "reduceDB"],
+            ["prop_ranking", "reduceDB"]
             ]
 
         for col,table in check_zero:

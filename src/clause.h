@@ -154,7 +154,6 @@ struct ClauseStats
     #ifdef EXTENDED_FEATURES
     float       rdb1_act_ranking_rel = 0;
     #endif
-//     uint8_t     rdb1_act_ranking_top_10 = 0;
     float pred_short_use;
     float pred_long_use;
     //float pred_forever_use;

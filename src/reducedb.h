@@ -50,6 +50,9 @@ private:
     Solver* solver;
     vector<ClOffset> delayed_clause_free;
     double total_time = 0.0;
+    #ifdef STATS_NEEDED
+    uint32_t reduceDB_called = 0;
+    #endif
 
     unsigned cl_marked;
     unsigned cl_ttl;
@@ -70,6 +73,7 @@ private:
     uint32_t num_times_pred_called = 0;
     void update_preds_lev2();
     void pred_move_to_lev1_and_lev0(uint32_t& deleted, uint32_t& tot_dumpno);
+    void delete_from_lev2();
     void clean_lev1_once_in_a_while();
     void clean_lev0_once_in_a_while();
     #endif

@@ -64,7 +64,7 @@ public:
     ) override;
 
     #ifdef STATS_NEEDED
-    void restart(
+    virtual void restart(
         const uint32_t restartID
         , const Restart rest_type
         , const PropStats& thisPropStats
@@ -75,13 +75,25 @@ public:
         , const int64_t clauseID
     ) override;
 
-    void reduceDB(
+    virtual void reduceDB_common(
+        const Solver* solver,
+        const uint32_t reduceDB_called,
+        const uint32_t tot_cls_in_db,
+        const uint32_t cur_rst_type,
+        const float median_act,
+        const uint32_t median_uip1_used,
+        const uint32_t median_props,
+        const double avg_glue,
+        const double avg_props,
+        const double avg_uip1_used
+    ) override;
+
+    virtual void reduceDB(
         const Solver* solver
         , const bool locked
         , const Clause* cl
-        , const uint32_t cur_restart_type
         , const uint32_t act_ranking
-        , const uint32_t tot_cls_in_db
+        , const uint32_t reduceDB_called
     ) override;
 
     virtual void cl_last_in_solver(
@@ -168,6 +180,7 @@ private:
     sqlite3_stmt *stmtTimePassed = NULL;
     sqlite3_stmt *stmtMemUsed = NULL;
     sqlite3_stmt *stmtReduceDB = NULL;
+    sqlite3_stmt *stmtReduceDB_common = NULL;
     sqlite3_stmt *stmtRst = NULL;
     sqlite3_stmt *stmtVarRst = NULL;
     sqlite3_stmt *stmtClRst = NULL;

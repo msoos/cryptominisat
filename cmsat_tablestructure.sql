@@ -41,23 +41,39 @@ CREATE TABLE `finishup` (
   `status` varchar(255) NOT NULL
 );
 
--- TODO Add more features here!
-DROP TABLE IF EXISTS `reduceDB`;
-CREATE TABLE `reduceDB` (
+DROP TABLE IF EXISTS `reduceDB_common`;
+CREATE TABLE `reduceDB_common` (
+  `reduceDB_called` int(20) NOT NULL,
   `simplifications` int(20) NOT NULL,
   `restarts` int(20) NOT NULL,
   `conflicts` bigint(20) NOT NULL,
   `latest_satzilla_feature_calc` int(20) NOT NULL,
   `cur_restart_type` int(20) NOT NULL,
   `runtime` float NOT NULL,
+  `tot_cls_in_db` int(20) NOT NULL,
+
+  `median_act` float NOT NULL,
+  `median_uip1_used` int(20) NOT NULL,
+  `median_props` int(20) NOT NULL,
+
+  `avg_glue` float NOT NULL,
+  `avg_props` float NOT NULL,
+  `avg_uip1_used` float NOT NULL
+);
+
+DROP TABLE IF EXISTS `reduceDB`;
+CREATE TABLE `reduceDB` (
+  `reduceDB_called` int(20) NOT NULL,
 
   `clauseID` int(20) NOT NULL,
   `dump_no` int(20) NOT NULL,
   `conflicts_made` bigint(20) NOT NULL,
+  `conflicts` bigint(20) NOT NULL,
   `propagations_made` bigint(20) NOT NULL,
   `sum_propagations_made` bigint(20) NOT NULL,
   `clause_looked_at` bigint(20) NOT NULL,
   `uip1_used` bigint(20) NOT NULL,
+
   `last_touched_diff` bigint(20) NOT NULL,
   `activity_rel` float(20) NOT NULL,
   `locked` int(20) NOT NULL,
@@ -69,7 +85,6 @@ CREATE TABLE `reduceDB` (
   `act_ranking` int(20) NOT NULL,
   `prop_ranking` int(20) NOT NULL,
   `uip1_ranking` int(20) NOT NULL,
-  `tot_cls_in_db` int(20) NOT NULL,
   `sum_uip1_used`  int(20) NOT NULL,
   `connects_num_communities` int(20) NOT NULL
 );

@@ -64,7 +64,12 @@ class QueryAddIdxes (helper.QueryHelper):
         create index `idxclid88` on `restart_dat_for_cl` ( `clauseID`);
         create index `idxclid5` on `tags` ( `name`);
         ---
-        create index `idxclid6` on `reduceDB` (`clauseID`, conflicts, latest_satzilla_feature_calc);
+        create index `idxclid6` on `reduceDB` (`reduceDB_called`, `clauseID`, conflicts);
+        create index `idxclid6-9` on `reduceDB` (`reduceDB_called`);
+        create index `idxclid9` on `reduceDB_common` (`reduceDB_called`, `latest_satzilla_feature_calc`);
+        create index `idxclid9-2` on `reduceDB_common` (`reduceDB_called`, `latest_satzilla_feature_calc`);
+        create index `idxclid9-3` on `reduceDB_common` (`reduceDB_called`);
+        create index `idxclid9-4` on `reduceDB_common` (`latest_satzilla_feature_calc`);
         create index `idxclid6-2` on `reduceDB` (`clauseID`, `dump_no`);
         create index `idxclid6-3` on `reduceDB` (`clauseID`, `conflicts`, `dump_no`);
         create index `idxclid6-4` on `reduceDB` (`clauseID`, `conflicts`)
@@ -125,24 +130,32 @@ class QueryCls (helper.QueryHelper):
 
         # RDB data
         not_cols = [
-            "simplifications"
+            "reduceDB_called"
+            , "clauseID"
+            , "in_xor"
+            , "locked"
+            , "conflicts"
+            , "activity_rel"]
+        self.rdb0_dat = helper.query_fragment(
+            "reduceDB", not_cols, "rdb0", options.verbose, self.c)
+
+        # reduceDB_common data
+        not_cols = [
+            "reduceDB_called"
+            , "simplifications"
             , "restarts"
             , "conflicts"
             , "latest_satzilla_feature_calc"
             , "runtime"
-            , "clauseID"
-            , "in_xor"
-            , "locked"
-            , "activity_rel"]
-        self.rdb0_dat = helper.query_fragment(
-            "reduceDB", not_cols, "rdb0", options.verbose, self.c)
+            ]
+        self.rdb0_common_dat = helper.query_fragment(
+            "reduceDB_common", not_cols, "rdb0_common", options.verbose, self.c)
 
         # clause data
         not_cols = [
             "simplifications"
             , "restarts"
             , "prev_restart"
-            , "latest_satzilla_feature_calc"
             , "antecedents_long_red_age_max"
             , "antecedents_long_red_age_min"
             , "clauseID"]
@@ -173,6 +186,7 @@ class QueryCls (helper.QueryHelper):
         {rst_cur}
         {satzfeat_dat_cur}
         {rdb0_dat}
+        {rdb0_common_dat}
         {sum_cl_use}
         , (rdb0.conflicts - cl.conflicts) as `cl.time_inside_solver`
         , `sum_cl_use`.`last_confl_used`-`cl`.`conflicts` as `x.a_lifetime`
@@ -194,6 +208,9 @@ class QueryCls (helper.QueryHelper):
 
         FROM
         reduceDB as rdb0
+        join reduceDB_common as rdb0_common on
+            rdb0_common.reduceDB_called = rdb0.reduceDB_called
+
         -- WARN: ternary clauses are explicity NOT enabled here
         --       since it's a FULL join
         join clause_stats as cl on
@@ -251,6 +268,7 @@ class QueryCls (helper.QueryHelper):
             "rdb0_dat": self.rdb0_dat,
             "sum_cl_use": self.sum_cl_use,
             "rst_cur": self.rst_cur,
+            "rdb0_common_dat": self.rdb0_common_dat
         }
 
     def get_used_later_percentiles(self, name):

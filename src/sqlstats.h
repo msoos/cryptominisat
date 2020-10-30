@@ -86,9 +86,21 @@ public:
         const Solver* solver
         , const bool locked
         , const Clause* cl
-        , const uint32_t cur_restart_type
         , const uint32_t act_ranking
-        , const uint32_t tot_cls_in_db
+        , const uint32_t reduceDB_called
+    ) = 0;
+
+    virtual void reduceDB_common(
+        const Solver* solver,
+        const uint32_t reduceDB_called,
+        const uint32_t tot_cls_in_db,
+        const uint32_t cur_rst_type,
+        const float median_act,
+        const uint32_t median_uip1_used,
+        const uint32_t median_props,
+        const double avg_glue,
+        const double avg_props,
+        const double avg_uip1_used
     ) = 0;
 
     #ifdef STATS_NEEDED_BRANCH
