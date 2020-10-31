@@ -1333,7 +1333,7 @@ DLL_PUBLIC lbool SATSolver::find_fast_backw(FastBackwData fast_backw)
 {
     assert(data->solvers.size() == 1);
     data->solvers[0]->fast_backw = fast_backw;
-    return solve();
+    return solve(NULL, true);
 }
 
 DLL_PUBLIC void SATSolver::remove_and_clean_all()

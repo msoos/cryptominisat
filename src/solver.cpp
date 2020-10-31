@@ -1377,8 +1377,7 @@ void Solver::extend_solution(const bool only_sampling_solution)
         model = map_back_vars_to_without_bva(model);
     }
 
-    if (only_sampling_solution) {
-        assert(conf.sampling_vars);
+    if (only_sampling_solution && conf.sampling_vars) {
         for(uint32_t var: *conf.sampling_vars) {
             if (model[var] == l_Undef) {
                 cout << "ERROR: variable " << var+1 << " is set as sampling but is unset!" << endl;
