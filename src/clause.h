@@ -139,7 +139,7 @@ struct ClauseStats
     float       glue_hist_long;
     float       glue_hist_queue;
     #ifdef EXTENDED_FEATURES
-    float       glue_hist;
+    float       glue_hist_lt;
     #endif
     float       confl_size_hist_lt;
     uint32_t    glue_before_minim;

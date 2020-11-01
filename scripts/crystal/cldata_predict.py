@@ -171,7 +171,7 @@ class Learner:
             towrite += "%s " % test["rdb0.uip1_used"].iloc[i]
             towrite += "%s " % test["cl.num_resolutions_hist_lt"].iloc[i]
             towrite += "%s " % test["cl.glue_hist_long"].iloc[i]
-            towrite += "%s " % test["cl.size_hist"].iloc[i]
+            towrite += "%s " % test["cl.size_hist_lt"].iloc[i]
             towrite += "%s " % test["cl.branch_depth_hist_queue"].iloc[i]
             towrite += "%s " % test["rdb0_act_ranking_rel"].iloc[i]
             towrite += "%s " % test["rdb0.size"].iloc[i]

@@ -151,9 +151,9 @@ void ClPredictors::set_up_input(
     } else if (cl->stats.glue_hist == 0) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = (double)cl->stats.propagations_made/(double)cl->stats.glue_hist;
+        at[x++] = (double)cl->stats.propagations_made/(double)cl->stats.glue_hist_lt;
     }
-    // (rdb0.propagations_made/cl.glue_hist)
+    // (rdb0.propagations_made/cl.glue_hist_lt)
 
     if (tot_props_made == 0) {
         at[x++] = 0;
@@ -373,7 +373,7 @@ void ClPredictors::set_up_input(
     } else {
         at[x++] = (double)cl->stats.confl_size_hist_lt/(double)cl->stats.propagations_made;
     }
-    //(cl.size_hist/rdb0.propagations_made)
+    //(cl.size_hist_lt/rdb0.propagations_made)
 
 #ifndef EXTENDED_FEATURES
     at[x++] = (double)cl->stats.propagations_made/std::log2((double)cl->stats.antec_overlap_hist_lt);

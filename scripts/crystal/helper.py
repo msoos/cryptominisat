@@ -643,20 +643,23 @@ def cldata_add_computed_features(df, verbose):
 
     divide("cl.num_total_lits_antecedents", "cl.num_antecedents")
 
-    orig_cols = list(df)
     rdb0_act_ranking_rel = divide("rdb0.act_ranking", "rdb0_common.tot_cls_in_db", name="rdb0_act_ranking_rel")
     rdb0_prop_ranking_rel = divide("rdb0.prop_ranking", "rdb0_common.tot_cls_in_db", name="rdb0_prop_ranking_rel")
     rdb0_uip1_ranking_rel = divide("rdb0.uip1_ranking", "rdb0_common.tot_cls_in_db", name="rdb0_uip1_ranking_rel")
 
-    divide("rdb0.sum_uip1_used", "cl.time_inside_solver")
-    divide("rdb0.sum_propagations_made", "cl.time_inside_solver")
+    sum_uip1_per_time = divide("rdb0.sum_uip1_used", "cl.time_inside_solver")
+    sum_props_per_time = divide("rdb0.sum_propagations_made", "cl.time_inside_solver")
+    orig_cols = list(df)
 
     divisors = [
-        "cl.size_hist"
-        , "cl.glue_hist"
+        "cl.size_hist_lt"
+        , "cl.glue_hist_lt"
         , "rdb0.glue"
-        , "cl.orig_connects_num_communities"
-        , "rdb0.connects_num_communities"
+        , "rdb0.size"
+        , sum_uip1_per_time
+        , sum_props_per_time
+        # , "cl.orig_connects_num_communities"
+        # , "rdb0.connects_num_communities"
         , "cl.orig_glue"
         , "cl.glue_before_minim"
         , "cl.glue_hist_queue"
@@ -674,15 +677,13 @@ def cldata_add_computed_features(df, verbose):
         , rdb0_uip1_ranking_rel
         #, "szfeat_cur.var_cl_ratio"
         , "cl.time_inside_solver"
-        #, "sqrt(rdb0.act_ranking_rel)"
         # , "cl.num_overlap_literals"
         # , "rst_cur.resolutions"
-        #, "rdb0.act_ranking_top_10"
         ]
 
     # Thanks to Chai Kian Ming Adam for the idea of using LOG instead of SQRT
     # add LOG
-    if True:
+    if False:
         toadd = []
         for divisor in divisors:
             x = "log2("+divisor+")"
@@ -693,32 +694,16 @@ def cldata_add_computed_features(df, verbose):
     # relative data
     cols = list(df)
     for col in cols:
-        if ("rdb" in col or "cl." in col or "rst" in col) and "tot_cls_in" not in col and "rst_cur" not in col:
+        if ("rdb" in col or "cl." in col) and "restart_type" not in col and "tot_cls_in" not in col and "rst_cur" not in col:
             for divisor in divisors:
                 divide(divisor, col)
                 divide(col, divisor)
 
-    divisors.extend([
-        rst_cur_all_props
-        , "rdb0.last_touched_diff"
-        , "rdb0_common.median_act"
-        , "rdb0_common.median_uip1_used"
-        , "rdb0_common.median_props"
-        , "rdb0_common.avg_glue"
-        , "rdb0_common.avg_uip1_used"
-        , "rdb0_common.avg_props"
-        , "rdb0.uip1_used"
-        , "rdb0.propagations_made"
-        , "rdb0.sum_propagations_made"
-        , "rdb0.sum_uip1_used"
-        , "(rdb0.sum_propagations_made/cl.time_inside_solver)"
-        , "(rdb0.sum_uip1_used/cl.time_inside_solver)"
-    ])
-
     # smaller/larger than
-    if True:
+    print("smaller-or-greater comparisons...")
+    if False:
         for col in cols:
-            if "rdb" in col or "cl." in col or "rst" in col:
+            if "avg" in col or "median" in col:
                 for divisor in divisors:
                     larger_than(col, divisor)
 
@@ -740,7 +725,6 @@ def cldata_add_computed_features(df, verbose):
                         larger_than(col, divisor)
 
     # smaller-or-greater comparisons
-    print("smaller-or-greater comparisons...")
     larger_than("cl.antec_sum_size_hist_lt", "cl.num_total_lits_antecedents")
     larger_than("cl.antec_overlap_hist_lt", "cl.num_overlap_literals")
 
