@@ -20,7 +20,7 @@
 # This file wraps CMake invocation for TravisCI
 # so we can set different configurations via environment variables.
 
-. ./setparams.sh
+. ./setparams_ballofcrystal.sh
 
 if [ "$1" == "--csv" ]; then
     EXTRA_GEN_PANDAS_OPTS="--csv"
