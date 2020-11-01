@@ -191,11 +191,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
 
         //Ternary resolution
-        #ifdef FINAL_PREDICTOR
-        , doTernary(false)
-        #else
         , doTernary(true)
-        #endif
         , ternary_res_time_limitM(100)
         , ternary_keep_mult(6)
         , ternary_max_create(1)
