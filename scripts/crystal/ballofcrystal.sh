@@ -188,8 +188,9 @@ rm -f ../../src/predict/*.h
 ############################
 # To get feature importances
 ############################
-# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier long --top 200 --xgboost --nocomputed > output_long2
 # ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier long --top 200 --xgboost --allcomputed > output_long
+# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier long --top 200 --xgboost --nocomputed > output_long2
+# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier short --top 200 --xgboost --allcomputed > output_short
 
 
 )
