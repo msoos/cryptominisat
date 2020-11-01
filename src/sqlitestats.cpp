@@ -836,14 +836,14 @@ void SQLiteStats::clause_stats(
     bind_null_or_double(stmt_clause_stats, bindAt, hist.antec_data_sum_sizeHistLT,avg);
     bind_null_or_double(stmt_clause_stats, bindAt, hist.overlapHistLT,avg);
 
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.branchDepthHistQueue.avg_nocheck());
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.trailDepthHist.avg_nocheck());
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.trailDepthHistLonger.avg_nocheck());
+    bind_null_or_double(stmt_clause_stats, bindAt++, hist.branchDepthHistQueue,avg);
+    bind_null_or_double(stmt_clause_stats, bindAt++, hist.trailDepthHist,avg);
+    bind_null_or_double(stmt_clause_stats, bindAt++, hist.trailDepthHistLonger,avg);
     bind_null_or_double(stmt_clause_stats, bindAt,   hist.numResolutionsHist,avg);
     bind_null_or_double(stmt_clause_stats, bindAt,   hist.conflSizeHist,avg);
     bind_null_or_double(stmt_clause_stats, bindAt,   hist.trailDepthDeltaHist,avg);
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.backtrackLevelHist.avg_nocheck());
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.glueHist.avg_nocheck());
+    bind_null_or_double(stmt_clause_stats, bindAt++, hist.backtrackLevelHist,avg);
+    bind_null_or_double(stmt_clause_stats, bindAt++, hist.glueHist,avg);
     bind_null_or_double(stmt_clause_stats, bindAt,   hist.glueHist.getLongtTerm(),avg);
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, orig_connects_num_communities);
 

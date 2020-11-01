@@ -144,7 +144,7 @@ struct ClauseStats
     float       confl_size_hist_lt;
     uint32_t    glue_before_minim;
 //     uint32_t    num_overlap_literals;
-    float       antec_overlap_hist;
+    float       antec_overlap_hist_lt;
     uint32_t    num_total_lits_antecedents;
 //     uint32_t    rdb1_last_touched_diff;
     uint32_t    num_antecedents;

@@ -230,12 +230,12 @@ void ClPredictors::set_up_input(
     }
     // (cl.glue_before_minim/(rdb0.propagations_made+rdb1.propagations_made))
 
-    if (cl->stats.propagations_made == 0 || cl->stats.antec_overlap_hist == 0) {
+    if (cl->stats.propagations_made == 0 || cl->stats.antec_overlap_hist_lt == 0) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = ::log2((double)cl->stats.antec_overlap_hist)/(double)cl->stats.propagations_made;
+        at[x++] = ::log2((double)cl->stats.antec_overlap_hist_lt)/(double)cl->stats.propagations_made;
     }
-    // (log2(cl.antec_overlap_hist)/rdb0.propagations_made)
+    // (log2(cl.antec_overlap_hist_lt)/rdb0.propagations_made)
 
     if (cl->stats.propagations_made == 0) {
         at[x++] = 0;
@@ -376,8 +376,8 @@ void ClPredictors::set_up_input(
     //(cl.size_hist/rdb0.propagations_made)
 
 #ifndef EXTENDED_FEATURES
-    at[x++] = (double)cl->stats.propagations_made/std::log2((double)cl->stats.antec_overlap_hist);
-    //(rdb0.propagations_made/log2(cl.antec_overlap_hist))
+    at[x++] = (double)cl->stats.propagations_made/std::log2((double)cl->stats.antec_overlap_hist_lt);
+    //(rdb0.propagations_made/log2(cl.antec_overlap_hist_lt))
 #endif
 
     if (cl->stats.branch_depth_hist_queue == 1) {

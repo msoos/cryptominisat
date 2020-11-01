@@ -613,7 +613,7 @@ def delete_none_features(df):
     del df["cl.antecedents_glue_long_reds_var"]
     del df["cl.antecedents_long_red_age_avg"]
     del df["cl.antecedents_long_red_age_var"]
-    del df["cl.decision_level_hist"]
+    #del df["cl.decision_level_hist_lt"]
     del df["sum_cl_use.first_confl_used"]
     del df["sum_cl_use.last_confl_used"]
 
@@ -626,7 +626,7 @@ def cldata_add_computed_features(df, verbose):
 
     # relative overlaps
     print("Relative overlaps...")
-    divide("cl.num_total_lits_antecedents", "cl.antec_sum_size_hist")
+    divide("cl.num_total_lits_antecedents", "cl.antec_sum_size_hist_lt")
 
     delete_none_features(df)
 
@@ -666,7 +666,7 @@ def cldata_add_computed_features(df, verbose):
         # , "cl.trail_depth_level_hist"
         # , "cl.backtrack_level_hist"
         , "cl.branch_depth_hist_queue"
-        , "cl.antec_overlap_hist"
+        , "cl.antec_overlap_hist_lt"
         , "(cl.num_total_lits_antecedents/cl.num_antecedents)"
         , "cl.num_antecedents"
         , rdb0_act_ranking_rel
@@ -734,8 +734,8 @@ def cldata_add_computed_features(df, verbose):
 
     # smaller-or-greater comparisons
     print("smaller-or-greater comparisons...")
-    larger_than("cl.antec_sum_size_hist", "cl.num_total_lits_antecedents")
-    larger_than("cl.antec_overlap_hist", "cl.num_overlap_literals")
+    larger_than("cl.antec_sum_size_hist_lt", "cl.num_total_lits_antecedents")
+    larger_than("cl.antec_overlap_hist_lt", "cl.num_overlap_literals")
 
     # print("flatten/list...")
     #old = set(df.columns.values.flatten().tolist())
