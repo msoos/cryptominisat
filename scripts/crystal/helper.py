@@ -693,7 +693,7 @@ def cldata_add_computed_features(df, verbose):
     # relative data
     cols = list(df)
     for col in cols:
-        if ("rdb" in col or "cl." in col or "rst" in col) and "restart_type" not in col and "tot_cls_in" not in col and "rst_cur" not in col:
+        if ("rdb" in col or "cl." in col or "rst" in col) and "tot_cls_in" not in col and "rst_cur" not in col:
             for divisor in divisors:
                 divide(divisor, col)
                 divide(col, divisor)
@@ -701,17 +701,24 @@ def cldata_add_computed_features(df, verbose):
     divisors.extend([
         rst_cur_all_props
         , "rdb0.last_touched_diff"
+        , "rdb0_common.median_act"
+        , "rdb0_common.median_uip1_used"
+        , "rdb0_common.median_props"
+        , "rdb0_common.avg_glue"
+        , "rdb0_common.avg_uip1_used"
+        , "rdb0_common.avg_props"
         , "rdb0.uip1_used"
         , "rdb0.propagations_made"
         , "rdb0.sum_propagations_made"
+        , "rdb0.sum_uip1_used"
         , "(rdb0.sum_propagations_made/cl.time_inside_solver)"
         , "(rdb0.sum_uip1_used/cl.time_inside_solver)"
     ])
 
     # smaller/larger than
-    if False:
+    if True:
         for col in cols:
-            if ("rdb" in col or "cl." in col or "rst" in col) and "restart_type" not in col:
+            if "rdb" in col or "cl." in col or "rst" in col:
                 for divisor in divisors:
                     larger_than(col, divisor)
 
