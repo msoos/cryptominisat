@@ -77,15 +77,15 @@ void ClPredictors::load_models(const std::string& short_fname,
 }
 
 void ClPredictors::set_up_input(
-    const CMSat::Clause* cl,
+    const CMSat::Clause* const cl,
     const uint64_t sumConflicts,
     const double   act_ranking_rel,
     const uint32_t cols,
     float* at)
 {
     uint32_t x = 0;
-    double orig_glue = cl->stats.orig_glue;
-    assert(orig_glue != 1);
+    //NOTE: glue 0 can happen in case it's a ternary resolvent clause
+    assert(cl->stats.orig_glue != 1);
     int32_t last_touched_diff = sumConflicts - cl->stats.last_touched;
     //updated glue can actually be 1. Original glue cannot.
 
@@ -191,7 +191,11 @@ void ClPredictors::set_up_input(
     }
     // (rdb0.sum_uip1_used/rdb0_act_ranking_rel)
 
-    at[x++] = tot_props_made/orig_glue;
+    if (cl->stats.orig_glue == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = tot_props_made/(double)cl->stats.orig_glue;
+    }
     // ((rdb0.propagations_made+rdb1.propagations_made)/cl.orig_glue)
 
     if (cl->stats.glue == 0) {
@@ -215,15 +219,15 @@ void ClPredictors::set_up_input(
 
     if (cl->stats.sum_uip1_used == 0) {
         at[x++] = 0;
-    } else if (time_inside_solver == 0) {
+    } else if (time_inside_solver == 0 || cl->stats.orig_glue == 0) {
         at[x++] = MISSING_VAL;
     } else {
         at[x++] = ((double)cl->stats.sum_uip1_used/time_inside_solver)/
-            (double)orig_glue;
+            (double)cl->stats.orig_glue;
     }
     // ((rdb0.sum_uip1_used/cl.time_inside_solver)/cl.orig_glue)
 
-    if (tot_props_made == 0) {
+    if (tot_props_made == 0 || cl->stats.glue_before_minim == 0) {
         at[x++] = MISSING_VAL;
     } else {
         at[x++] = (double)cl->stats.glue_before_minim/tot_props_made;
@@ -274,10 +278,17 @@ void ClPredictors::set_up_input(
     }
     //((rdb0.propagations_made+rdb1.propagations_made)/log2(cl.num_resolutions_hist_lt))
 
-    at[x++] = tot_props_made/::log2(orig_glue);
+    if (cl->stats.orig_glue == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = tot_props_made/::log2((double)cl->stats.orig_glue);
+    }
     //((rdb0.propagations_made+rdb1.propagations_made)/log2(cl.orig_glue))
 
-    if (time_inside_solver == 0 || cl->stats.sum_uip1_used == 0) {
+    if (time_inside_solver == 0 ||
+        cl->stats.sum_uip1_used == 0 ||
+        cl->stats.glue_before_minim == 0)
+    {
         at[x++] = MISSING_VAL;
     } else {
         at[x++] = ::log2(cl->stats.glue_before_minim)/
@@ -294,7 +305,7 @@ void ClPredictors::set_up_input(
     }
     //(rdb0.sum_uip1_used/log2(rdb0.glue))
 
-    if (act_ranking_rel == 0) {
+    if (act_ranking_rel == 0 || cl->stats.orig_glue == 0) {
         at[x++] = MISSING_VAL;
     } else {
         at[x++] = ::log2(act_ranking_rel)/(double)cl->stats.orig_glue;
@@ -338,8 +349,11 @@ void ClPredictors::set_up_input(
     }
     //(rdb0.propagations_made/log2(cl.glue_hist_queue)
 
-    assert(cl->stats.orig_glue != 0);
-    at[x++] = (double)cl->stats.propagations_made/(double)cl->stats.orig_glue;
+    if (cl->stats.orig_glue == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = (double)cl->stats.propagations_made/(double)cl->stats.orig_glue;
+    }
     //(rdb0.propagations_made/cl.orig_glue)
 
     if (cl->stats.propagations_made == 0 ||
@@ -376,7 +390,11 @@ void ClPredictors::set_up_input(
     //(cl.size_hist_lt/rdb0.propagations_made)
 
 #ifndef EXTENDED_FEATURES
-    at[x++] = (double)cl->stats.propagations_made/std::log2((double)cl->stats.antec_overlap_hist_lt);
+    if (cl->stats.antec_overlap_hist_lt == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = (double)cl->stats.propagations_made/std::log2((double)cl->stats.antec_overlap_hist_lt);
+    }
     //(rdb0.propagations_made/log2(cl.antec_overlap_hist_lt))
 #endif
 
@@ -393,8 +411,12 @@ void ClPredictors::set_up_input(
     //(log2(cl.branch_depth_hist_queue)/rdb0.propagations_made)
 
 
-    at[x++] = (double)cl->stats.uip1_used/
-        (double)cl->stats.glue_before_minim;;
+    if (cl->stats.glue_before_minim == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = (double)cl->stats.uip1_used/
+            (double)cl->stats.glue_before_minim;;
+    }
     //(rdb0.uip1_used/cl.glue_before_minim)
 
 //     cout << "c val: ";

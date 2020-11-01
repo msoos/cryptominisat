@@ -134,22 +134,22 @@ struct ClauseStats
     uint32_t last_touched;
     #ifdef FINAL_PREDICTOR
     #ifdef EXTENDED_FEATURES
-    uint32_t    rdb1_last_touched;
+    uint32_t    rdb1_last_touched = std::numeric_limits<uint32_t>::max();
     #endif
-    float       glue_hist_long;
-    float       glue_hist_queue;
+    float       glue_hist_long = 0;
+    float       glue_hist_queue = 0;
     #ifdef EXTENDED_FEATURES
-    float       glue_hist_lt;
+    float       glue_hist_lt = 0;
     #endif
-    float       confl_size_hist_lt;
-    uint32_t    glue_before_minim;
+    float       confl_size_hist_lt = 0;
+    uint32_t    glue_before_minim = 0;
 //     uint32_t    num_overlap_literals;
-    float       antec_overlap_hist_lt;
-    uint32_t    num_total_lits_antecedents;
+    float       antec_overlap_hist_lt = 0;
+    uint32_t    num_total_lits_antecedents = 0;
 //     uint32_t    rdb1_last_touched_diff;
-    uint32_t    num_antecedents;
-    float       branch_depth_hist_queue;
-    float       num_resolutions_hist_lt;
+    uint32_t    num_antecedents = 0;
+    float       branch_depth_hist_queue = 0;
+    float       num_resolutions_hist_lt = 0;
 //     uint32_t    trail_depth_hist_longer;
     #ifdef EXTENDED_FEATURES
     float       rdb1_act_ranking_rel = 0;
@@ -162,7 +162,7 @@ struct ClauseStats
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
     uint16_t dump_no = 0;
-    uint32_t orig_glue;
+    uint32_t orig_glue = 0;
     uint32_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
 
     //for average and sum stats
