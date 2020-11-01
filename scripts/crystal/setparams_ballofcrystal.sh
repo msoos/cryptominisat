@@ -20,14 +20,14 @@
 # This file wraps CMake invocation for TravisCI
 # so we can set different configurations via environment variables.
 
-FNAMEOUT="mydata"
-FIXED="6000"
-RATIO="0.99"
-CONF=1
-EXTRA_CMS_OPTS=""
-SHORTPERC=50
-LONGPERC=40
-EXTRA_GEN_PANDAS_OPTS=""
-bestf="../../scripts/crystal/best_features.txt"
-bestf="../../scripts/crystal/best_features-rdb0-only.txt"
-#bestf="../../scripts/crystal/best_features-ext.txt"
+export FNAMEOUT="mydata"
+export FIXED="6000"
+export RATIO="0.99"
+export CONF=1
+export EXTRA_CMS_OPTS=""
+export SHORTPERC=50
+export LONGPERC=40
+export EXTRA_GEN_PANDAS_OPTS=""
+export bestf="../../scripts/crystal/best_features.txt"
+export bestf="../../scripts/crystal/best_features-rdb0-only.txt"
+#export bestf="../../scripts/crystal/best_features-ext.txt"
