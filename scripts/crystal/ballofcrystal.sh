@@ -20,17 +20,7 @@
 # This file wraps CMake invocation for TravisCI
 # so we can set different configurations via environment variables.
 
-FNAMEOUT="mydata"
-FIXED="6000"
-RATIO="0.99"
-CONF=1
-EXTRA_CMS_OPTS=""
-SHORTPERC=50
-LONGPERC=40
-EXTRA_GEN_PANDAS_OPTS=""
-bestf="../../scripts/crystal/best_features.txt"
-bestf="../../scripts/crystal/best_features-rdb0-only.txt"
-#bestf="../../scripts/crystal/best_features-ext.txt"
+. ./setparams.sh
 
 if [ "$1" == "--csv" ]; then
     EXTRA_GEN_PANDAS_OPTS="--csv"
