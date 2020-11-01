@@ -230,16 +230,18 @@ bool PropEngine::prop_long_cl_any_order(
         handle_normal_prop_fail(c, offset, confl);
         return false;
     } else {
-        #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-        c.stats.propagations_made++;
-        #endif
-        #ifdef STATS_NEEDED
-        c.stats.sum_propagations_made++;
-        if (c.red())
-            propStats.propsLongRed++;
-        else
-            propStats.propsLongIrred++;
-        #endif
+        if (update_bogoprops) {
+            #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+            c.stats.propagations_made++;
+            #endif
+            #ifdef STATS_NEEDED
+            c.stats.sum_propagations_made++;
+            if (c.red())
+                propStats.propsLongRed++;
+            else
+                propStats.propsLongIrred++;
+            #endif
+        }
 
         if (currLevel == decisionLevel()) {
             enqueue<update_bogoprops>(c[0], currLevel, PropBy(offset));
