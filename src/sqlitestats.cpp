@@ -732,13 +732,17 @@ void SQLiteStats::reduceDB(
     assert(cl->stats.dump_no != std::numeric_limits<uint16_t>::max());
 
     int bindAt = 1;
+
+    //Global data ("conflicts" is needed because otherwise
+    //       code is complicated in data sampler), even though this data
+    //       is available in reduceDB_common
     sqlite3_bind_int(stmtReduceDB, bindAt++, reduceDB_called);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->sumConflicts);
 
     //data
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.ID);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.dump_no);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.conflicts_made);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->sumConflicts);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.propagations_made);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.sum_propagations_made);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.clause_looked_at);

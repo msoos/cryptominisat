@@ -44,6 +44,7 @@ CREATE TABLE `finishup` (
 DROP TABLE IF EXISTS `reduceDB_common`;
 CREATE TABLE `reduceDB_common` (
   `reduceDB_called` int(20) NOT NULL,
+
   `simplifications` int(20) NOT NULL,
   `restarts` int(20) NOT NULL,
   `conflicts` bigint(20) NOT NULL,
@@ -64,11 +65,11 @@ CREATE TABLE `reduceDB_common` (
 DROP TABLE IF EXISTS `reduceDB`;
 CREATE TABLE `reduceDB` (
   `reduceDB_called` int(20) NOT NULL,
+  `conflicts` bigint(20) NOT NULL,
 
   `clauseID` int(20) NOT NULL,
   `dump_no` int(20) NOT NULL,
   `conflicts_made` bigint(20) NOT NULL,
-  `conflicts` bigint(20) NOT NULL,
   `propagations_made` bigint(20) NOT NULL,
   `sum_propagations_made` bigint(20) NOT NULL,
   `clause_looked_at` bigint(20) NOT NULL,
