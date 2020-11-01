@@ -55,19 +55,11 @@ public:
         predict_type pred_type,
         const CMSat::Clause* cl,
         const uint64_t sumConflicts,
-        const int64_t  last_touched_diff,
-#ifdef EXTENDED_FEATURES
-        const int64_t rdb1_last_touched_diff,
-#endif
         const double   act_ranking_rel);
 
     void predict(
         const CMSat::Clause* cl,
         const uint64_t sumConflicts,
-        const int64_t last_touched_diff,
-#ifdef EXTENDED_FEATURES
-        const int64_t rdb1_last_touched_diff,
-#endif
         const double   act_ranking_rel,
         float& p_short,
         float& p_long,
@@ -78,10 +70,6 @@ private:
     void set_up_input(
         const CMSat::Clause* cl,
         const uint64_t sumConflicts,
-        const int64_t  last_touched_diff,
-#ifdef EXTENDED_FEATURES
-        const int64_t  rdb1_last_touched_diff,
-#endif
         const double   act_ranking_rel,
         const uint32_t cols,
         float* at);

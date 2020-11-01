@@ -308,7 +308,15 @@ void Solver::add_xor_clause_inter_cleaned_cut(
             new_lits.push_back(lits[at] ^ xorwith);
         }
         //cout << "Added. " << new_lits << endl;
-        Clause* cl = add_clause_int(new_lits, false, ClauseStats(), attach, NULL, addDrat);
+        Clause* cl = add_clause_int(
+            new_lits, //lits
+            false, //redundant?
+            NULL, //clause stats
+            attach, //attach it?
+            NULL,  //get back the final set of literals
+            addDrat //add to DRAT?
+        );
+
         if (cl) {
             cl->set_used_in_xor(true);
             cl->set_used_in_xor_full(true);
@@ -392,7 +400,7 @@ Deals with INTERNAL variables
 Clause* Solver::add_clause_int(
     const vector<Lit>& lits
     , const bool red
-    , ClauseStats cl_stats
+    , const ClauseStats* cl_stats
     , const bool attach_long
     , vector<Lit>* finalLits
     , bool addDrat
@@ -405,16 +413,6 @@ Clause* Solver::add_clause_int(
     #ifdef VERBOSE_DEBUG
     cout << "add_clause_int clause " << lits << endl;
     #endif //VERBOSE_DEBUG
-
-    //Make cl_stats sane
-    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-    uint64_t introduced_at_conflict;
-    if (cl_stats.introduced_at_conflict == 0) {
-        introduced_at_conflict = sumConflicts;
-    } else {
-        introduced_at_conflict = cl_stats.introduced_at_conflict;
-    }
-    #endif
 
     add_clause_int_tmp_cl = lits;
     vector<Lit>& ps = add_clause_int_tmp_cl;
@@ -446,7 +444,8 @@ Clause* Solver::add_clause_int(
         std::swap(ps[0], ps[i]);
         *drat << add << ps
         #ifdef STATS_NEEDED
-        << cl_stats.ID << sumConflicts
+        << (cl_stats ? cl_stats->ID : 0)
+        << sumConflicts
         #endif
         << fin;
         std::swap(ps[0], ps[i]);
@@ -486,16 +485,17 @@ Clause* Solver::add_clause_int(
             Clause* c = cl_alloc.Clause_new(ps
             , sumConflicts
             #ifdef STATS_NEEDED
-            , cl_stats.ID
+            , (cl_stats ? cl_stats->ID : 0)
             #endif
             );
             if (red) {
                 c->makeRed(sumConflicts);
             }
-            c->stats = cl_stats;
+            if (cl_stats) {
+                c->stats = *cl_stats;
+            }
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-            c->stats.introduced_at_conflict = introduced_at_conflict;
-            assert(!c->red() || introduced_at_conflict != 0 || sumConflicts == 0);
+            assert(!c->red() || c->stats.introduced_at_conflict != 0 || sumConflicts == 0);
             #endif
 
             //In class 'OccSimplifier' we don't need to attach normall
@@ -737,7 +737,7 @@ bool Solver::addClauseInt(vector<Lit>& ps, bool red)
     Clause *cl = add_clause_int(
         ps
         , red
-        , ClauseStats() //default stats
+        , NULL //default stats
         , true //yes, attach
         , pFinalCl
         , false //add drat?

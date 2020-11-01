@@ -79,10 +79,6 @@ void ClPredictors::load_models(const std::string& short_fname,
 void ClPredictors::set_up_input(
     const CMSat::Clause* cl,
     const uint64_t sumConflicts,
-    const int64_t  last_touched_diff,
-    #ifdef EXTENDED_FEATURES
-    const int64_t  rdb1_last_touched_diff,
-    #endif
     const double   act_ranking_rel,
     const uint32_t cols,
     float* at)
@@ -90,6 +86,7 @@ void ClPredictors::set_up_input(
     uint32_t x = 0;
     double orig_glue = cl->stats.orig_glue;
     assert(orig_glue != 1);
+    int32_t last_touched_diff = sumConflicts - cl->stats.last_touched;
     //updated glue can actually be 1. Original glue cannot.
 
     double time_inside_solver = sumConflicts - cl->stats.introduced_at_conflict;
@@ -99,6 +96,9 @@ void ClPredictors::set_up_input(
 #endif
 
 #ifdef EXTENDED_FEATURES
+    assert(cl->stats.rdb1_last_touched <= (int64_t)solver->sumConflicts-10000);
+    int64_t rdb1_last_touched_diff =
+        (int64_t)solver->sumConflicts-10000-(int64_t)cl->stats.rdb1_last_touched;
     double rdb1_act_ranking_rel = (double)cl->stats.rdb1_act_ranking_rel;
     double tot_last_touch_diffs = last_touched_diff + rdb1_last_touched_diff;
 
@@ -430,20 +430,12 @@ float ClPredictors::predict(
     predict_type pred_type,
     const CMSat::Clause* cl,
     const uint64_t sumConflicts,
-    const int64_t  last_touched_diff,
-    #ifdef EXTENDED_FEATURES
-    const int64_t  rdb1_last_touched_diff,
-    #endif
     const double   act_ranking_rel)
 {
     // convert to DMatrix
     set_up_input(
         cl,
         sumConflicts,
-        last_touched_diff,
-        #ifdef EXTENDED_FEATURES
-        rdb1_last_touched_diff,
-        #endif
         act_ranking_rel,
         PRED_COLS,
         train);
@@ -460,10 +452,6 @@ float ClPredictors::predict(
 void ClPredictors::predict(
     const CMSat::Clause* cl,
     const uint64_t sumConflicts,
-    const int64_t  last_touched_diff,
-    #ifdef EXTENDED_FEATURES
-    const int64_t  rdb1_last_touched_diff,
-    #endif
     const double   act_ranking_rel,
     float& p_short,
     float& p_long,
@@ -473,10 +461,6 @@ void ClPredictors::predict(
     set_up_input(
         cl,
         sumConflicts,
-        last_touched_diff,
-        #ifdef EXTENDED_FEATURES
-        rdb1_last_touched_diff,
-        #endif
         act_ranking_rel,
         PRED_COLS,
         train);

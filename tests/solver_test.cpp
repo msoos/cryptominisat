@@ -76,7 +76,7 @@ TEST_F(SolverTest, get_long_lev0)
     stats.glue = 5;
 
     s->add_clause_outside(str_to_cl(" 2,  3"));
-    c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true, stats);
+    c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true, &stats);
     assert(c != NULL);
     s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
 
@@ -104,7 +104,7 @@ TEST_F(SolverTest, get_long_lev1)
     stats.glue = 5;
 
     s->add_clause_outside(str_to_cl(" 2,  3"));
-    c = s->add_clause_int(str_to_cl(" 6,  2, 3, 4"), true, stats);
+    c = s->add_clause_int(str_to_cl(" 6,  2, 3, 4"), true, &stats);
     assert(c != NULL);
     s->longRedCls[1].push_back(s->cl_alloc.get_offset(c));
 
@@ -132,11 +132,11 @@ TEST_F(SolverTest, get_long_lev0_and_lev1)
 
     s->add_clause_outside(str_to_cl(" 2,  3"));
 
-    c = s->add_clause_int(str_to_cl(" 3, -4, -7"), true, stats);
+    c = s->add_clause_int(str_to_cl(" 3, -4, -7"), true, &stats);
     assert(c != NULL);
     s->longRedCls[1].push_back(s->cl_alloc.get_offset(c));
 
-    c = s->add_clause_int(str_to_cl(" 2, 4, 5, 6"), true, stats);
+    c = s->add_clause_int(str_to_cl(" 2, 4, 5, 6"), true, &stats);
     assert(c != NULL);
     s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
 
@@ -169,7 +169,7 @@ TEST_F(SolverTest, get_long_toolarge)
     stats.glue = 5;
 
     s->add_clause_outside(str_to_cl(" 2,  3"));
-    c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true, stats);
+    c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true, &stats);
     assert(c != NULL);
     s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
 
@@ -191,7 +191,7 @@ TEST_F(SolverTest, get_glue_toolarge)
     stats.glue = 20;
 
     s->add_clause_outside(str_to_cl(" 2,  3"));
-    c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true, stats);
+    c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true, &stats);
     assert(c != NULL);
     s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
 
@@ -215,7 +215,7 @@ TEST_F(SolverTest, get_bin_and_long)
     Clause* c;
     c = s->add_clause_int(str_to_cl(" 1,  5 "), true);
     assert(c == NULL);
-    c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true, stats);
+    c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true, &stats);
     assert(c != NULL);
     s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
 

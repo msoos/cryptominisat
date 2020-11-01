@@ -450,7 +450,7 @@ void BreakID::break_symms_in_cms()
         }
         Clause* newcl = solver->add_clause_int(*cl2
             , false //redundant
-            , ClauseStats() //stats
+            , NULL //stats
             , true //attach
             , NULL //return simplified
             , false //DRAT... oops does not work right now

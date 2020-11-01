@@ -84,9 +84,8 @@ class Queries (helper.QueryHelper):
                   format(**only_one, t=(time.time()-t)))
 
     def check_all_clauses_have_N(self):
-        Ns = [{"tbl1":"reduceDB", "tbl2":"restart_dat_for_cl", "elem":"clauseID"},
-              {"tbl1":"reduceDB", "tbl2":"cl_last_in_solver", "elem":"clauseID"},
-              {"tbl1":"reduceDB", "tbl2":"clause_stats", "elem":"clauseID"}
+        Ns = [{"tbl1":"reduceDB", "tbl2":"cl_last_in_solver", "elem":"clauseID",
+               "extra": ""},
           ]
         for n in Ns:
             t = time.time()
@@ -95,6 +94,7 @@ class Queries (helper.QueryHelper):
             from {tbl1} left join {tbl2}
             on {tbl1}.{elem}={tbl2}.{elem}
             where {tbl2}.{elem} is NULL
+            {extra}
             """.format(**n)
             cursor = self.c.execute(q)
             bad = False

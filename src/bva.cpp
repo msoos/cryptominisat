@@ -340,7 +340,7 @@ bool BVA::bva_simplify_system()
         Clause* newCl = solver->add_clause_int(
             bva_tmp_lits, //lits to add
             false, //redundant?
-            ClauseStats(), //stats
+            NULL, //stats
             false, //attach if long?
             &bva_tmp_lits, //put final lits back here
             true, //add DRAT
@@ -525,7 +525,7 @@ bool BVA::add_longer_clause(const Lit new_lit, const OccurClause& cl)
             Clause* cl_check = solver->add_clause_int(
                 lits, //lits to attach
                 false, //redundant?
-                ClauseStats(),
+                NULL,
                 false, //attach?
                 &lits, //put back cls here
                 true, //DRAT?
@@ -551,7 +551,7 @@ bool BVA::add_longer_clause(const Lit new_lit, const OccurClause& cl)
             Clause* newCl = solver->add_clause_int(
                 lits, //lits to add
                 false, //redundant?
-                orig_cl.stats,
+                &orig_cl.stats,
                 false, //attach?
                 &lits, //put back final lits here
                 true, //DRAT

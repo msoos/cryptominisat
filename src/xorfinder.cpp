@@ -824,12 +824,12 @@ bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* ou
             case 2: {
                 //RHS == 1 means both same is not allowed
                 vector<Lit> lits{Lit(x[0], false), Lit(x[1], true^x.rhs)};
-                solver->add_clause_int(lits, true, ClauseStats(), out_changed_occur != NULL);
+                solver->add_clause_int(lits, true, NULL, out_changed_occur != NULL);
                 if (!solver->ok) {
                     goto end;
                 }
                 lits = {Lit(x[0], true), Lit(x[1], false^x.rhs)};
-                solver->add_clause_int(lits, true, ClauseStats(), out_changed_occur != NULL);
+                solver->add_clause_int(lits, true, NULL, out_changed_occur != NULL);
                 if (!solver->ok) {
                     goto end;
                 }

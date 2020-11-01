@@ -738,6 +738,7 @@ void SQLiteStats::reduceDB(
     //       is available in reduceDB_common
     sqlite3_bind_int(stmtReduceDB, bindAt++, reduceDB_called);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->sumConflicts);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.introduced_at_conflict);
 
     //data
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.ID);

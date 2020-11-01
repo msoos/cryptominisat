@@ -1672,11 +1672,19 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
     vector<Lit> tmp;
     for(const Tri& newcl: cl_to_add_ternary) {
         ClauseStats stats;
+        stats.last_touched = solver->sumConflicts;
         stats.glue = solver->conf.glue_put_lev1_if_below_or_eq;
         stats.which_red_array = 1;
-        //TODO: should this be set? It would be more sane
-        //      but MASTER was faster this way.
-        //stats.last_touched = solver->sumConflicts;
+        #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+        stats.introduced_at_conflict = solver->sumConflicts;
+        #endif
+        #ifdef STATS_NEEDED
+        double myrnd = solver->mtrand.randDblExc();
+        if (myrnd <= solver->conf.dump_individual_cldata_ratio) {
+            stats.ID = solver->clauseID;
+            solver->clauseID++;
+        }
+        #endif
 
         tmp.clear();
         for(uint32_t i = 0; i < newcl.size; i++) {
@@ -1686,7 +1694,7 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
         Clause* newCl = solver->add_clause_int(
             tmp //Literals in new clause
             , true //Is the new clause redundant?
-            , stats
+            , &stats
             , false //Should clause be attached if long?
         );
         *limit_to_decrease-=20;
@@ -1697,22 +1705,22 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
 
         if (newCl != NULL) {
             #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+            newCl->stats.locked_for_data_gen =
+                solver->mtrand.randDblExc() < solver->conf.lock_for_data_gen_ratio;
             assert(
-                cl->stats.introduced_at_conflict != 0 ||
+                newCl->stats.introduced_at_conflict != 0 ||
                 solver->sumConflicts == 0 ||
                 solver->conf.simplify_at_startup == 1);
+
+            if (newCl->stats.locked_for_data_gen) {
+                newCl->stats.which_red_array = 0;
+            } else {
+                assert(newCl->stats.which_red_array == 1);
+            }
             #endif
 
             newCl->is_ternary_resolvent = true;
-            assert(newCl->stats.which_red_array == 1);
             assert(newCl->stats.glue == solver->conf.glue_put_lev1_if_below_or_eq);
-            #ifdef STATS_NEEDED
-            double myrnd = solver->mtrand.randDblExc();
-            if (myrnd <= solver->conf.dump_individual_cldata_ratio) {
-                newCl->stats.ID = solver->clauseID++;
-                assert(false && "TODO: for ternary we need to create an element that has lots of NULLs in the clause_stats and assign it to a restart (last restart probably)");
-            }
-            #endif
             linkInClause(*newCl);
             ClOffset offset = solver->cl_alloc.get_offset(newCl);
             clauses.push_back(offset);
@@ -2615,7 +2623,7 @@ bool OccSimplifier::add_varelim_resolvent(
     newCl = solver->add_clause_int(
         finalLits //Literals in new clause
         , false //Is the new clause redundant?
-        , stats //Statistics for this new clause (usage, etc.)
+        , &stats //Statistics for this new clause (usage, etc.)
         , false //Should clause be attached?
         , &finalLits //Return final set of literals here
     );

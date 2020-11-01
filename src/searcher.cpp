@@ -1728,9 +1728,6 @@ Clause* Searcher::handle_last_confl(
     }
     if (myrnd <= (conf.dump_individual_cldata_ratio*decaying_ratio)) {
         to_dump = true;
-        if (sqlStats) {
-            dump_restart_sql(rst_dat_type::cl, clauseID);
-        }
     }
     #endif
 

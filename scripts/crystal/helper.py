@@ -636,11 +636,6 @@ def cldata_add_computed_features(df, verbose):
     print("size/glue/trail rel...")
     divide("cl.trail_depth_level", "cl.trail_depth_level_hist")
 
-    rst_cur_all_props = add(["rst_cur.propBinRed",
-                            "rst_cur.propBinIrred",
-                            "rst_cur.propLongRed",
-                            "rst_cur.propLongIrred"])
-
     divide("cl.num_total_lits_antecedents", "cl.num_antecedents")
 
     rdb0_act_ranking_rel = divide("rdb0.act_ranking", "rdb0_common.tot_cls_in_db", name="rdb0_act_ranking_rel")
@@ -678,7 +673,6 @@ def cldata_add_computed_features(df, verbose):
         #, "szfeat_cur.var_cl_ratio"
         , "cl.time_inside_solver"
         # , "cl.num_overlap_literals"
-        # , "rst_cur.resolutions"
         ]
 
     # Thanks to Chai Kian Ming Adam for the idea of using LOG instead of SQRT
@@ -694,7 +688,7 @@ def cldata_add_computed_features(df, verbose):
     # relative data
     cols = list(df)
     for col in cols:
-        if ("rdb" in col or "cl." in col) and "restart_type" not in col and "tot_cls_in" not in col and "rst_cur" not in col:
+        if ("rdb" in col or "cl." in col) and "restart_type" not in col and "tot_cls_in" not in col:
             for divisor in divisors:
                 divide(divisor, col)
                 divide(col, divisor)

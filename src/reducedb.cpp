@@ -532,19 +532,10 @@ void ReduceDB::update_preds_lev2()
             assert(cl->stats.last_touched <= (int64_t)solver->sumConflicts);
             int64_t last_touched_diff =
                 (int64_t)solver->sumConflicts-(int64_t)cl->stats.last_touched;
-            #ifdef EXTENDED_FEATURES
-            assert(cl->stats.rdb1_last_touched <= (int64_t)solver->sumConflicts-10000);
-            int64_t rdb1_last_touched_diff =
-                (int64_t)solver->sumConflicts-10000-(int64_t)cl->stats.rdb1_last_touched;
-            #endif
 
             predictors->predict(
                 cl,
                 solver->sumConflicts,
-                last_touched_diff,
-                #ifdef EXTENDED_FEATURES
-                rdb1_last_touched_diff,
-                #endif
                 act_ranking_rel,
                 cl->stats.pred_short_use,
                 cl->stats.pred_long_use,
@@ -584,21 +575,10 @@ void ReduceDB::clean_lev0_once_in_a_while()
             Clause* cl = solver->cl_alloc.ptr(offset);
             double act_ranking_rel = (double)i/(double)solver->longRedCls[0].size();
 
-            int64_t last_touched_diff =
-                (int64_t)solver->sumConflicts-(int64_t)cl->stats.last_touched;
-            #ifdef EXTENDED_FEATURES
-            int64_t rdb1_last_touched_diff =
-                (int64_t)solver->sumConflicts-10000-(int64_t)cl->stats.rdb1_last_touched;
-            #endif
-
             cl->stats.pred_forever_topperc = predictors->predict(
                 predict_type::forever_pred,
                 cl,
                 solver->sumConflicts,
-                last_touched_diff,
-                #ifdef EXTENDED_FEATURES
-                rdb1_last_touched_diff,
-                #endif
                 act_ranking_rel);
         }
 
@@ -667,22 +647,10 @@ void ReduceDB::clean_lev1_once_in_a_while()
             const ClOffset offset = solver->longRedCls[1][i];
             Clause* cl = solver->cl_alloc.ptr(offset);
             double act_ranking_rel = (double)i/(double)solver->longRedCls[1].size();
-
-            int64_t last_touched_diff =
-                (int64_t)solver->sumConflicts-(int64_t)cl->stats.last_touched;
-            #ifdef EXTENDED_FEATURES
-            int64_t rdb1_last_touched_diff =
-                (int64_t)solver->sumConflicts-10000-(int64_t)cl->stats.rdb1_last_touched;
-            #endif
-
             cl->stats.pred_long_use = predictors->predict(
                 predict_type::long_pred,
                 cl,
                 solver->sumConflicts,
-                last_touched_diff,
-                #ifdef EXTENDED_FEATURES
-                rdb1_last_touched_diff,
-                #endif
                 act_ranking_rel);
         }
 
@@ -712,7 +680,7 @@ void ReduceDB::clean_lev1_once_in_a_while()
     }
 }
 
-void RedcueDB::delete_from_lev2()
+void ReduceDB::delete_from_lev2(uint32_t& deleted, uint32_t& tot_dumpno)
 {
     // SHORT
     uint32_t keep_short = 15000 * solver->conf.pred_short_size_mult;
@@ -768,7 +736,7 @@ void ReduceDB::handle_lev2_predictor()
 
     update_preds_lev2();
     pred_move_to_lev1_and_lev0(deleted, tot_dumpno);
-    delete_from_lev2();
+    delete_from_lev2(deleted, tot_dumpno);
     clean_lev0_once_in_a_while();
     clean_lev1_once_in_a_while();
 

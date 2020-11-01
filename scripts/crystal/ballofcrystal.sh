@@ -122,9 +122,8 @@ set -x
 # Obtain dynamic data in SQLite and DRAT info
 ########################
 cd "$FNAME-dir"
-# to be removed: --tern 0
 # for var, we need: --bva 0 --scc 0
-../cryptominisat5 ${EXTRA_CMS_OPTS} --maxgluehistltlimited 100000 --tern 0 --sqlitedbover 1 --cldatadumpratio "$RATIO" --cllockdatagen 0.5 --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
+../cryptominisat5 ${EXTRA_CMS_OPTS} --maxgluehistltlimited 100000 --sqlitedbover 1 --cldatadumpratio "$RATIO" --cllockdatagen 0.5 --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
 grep "c conflicts" cms-pred-run.out
 
 ########################
@@ -203,6 +202,6 @@ rm -f ../../src/predict/*.h
 ./build_final_predictor.sh
 (
 cd "$FNAME-dir"
-../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --simdrat 1 --maxgluehistltlimited 100000 --tern 0 --printsol 0 | tee cms-final-run.out
+../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --simdrat 1 --maxgluehistltlimited 100000 --printsol 0 | tee cms-final-run.out
 )
 exit

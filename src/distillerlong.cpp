@@ -356,7 +356,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
         std::copy(cl.begin(), cl.end(), lits.begin());
     }
     solver->free_cl(offset);
-    Clause *cl2 = solver->add_clause_int(lits, red, stats);
+    Clause *cl2 = solver->add_clause_int(lits, red, &stats);
     (*solver->drat) << findelay;
 
     if (cl2 != NULL) {

@@ -128,9 +128,7 @@ float get_predict(Clause* cl, const Dat& dat, predict_type pred_type)
         pred_type,
         cl,
         dat.sumConflicts, //this is the age
-        0, //not used
-        dat.act_ranking_rel,
-        0 //not used
+        dat.act_ranking_rel
     );
     return val;
 }

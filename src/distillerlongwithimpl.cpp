@@ -251,7 +251,7 @@ bool DistillerLongWithImpl::remove_or_shrink_clause(Clause& cl, ClOffset& offset
     watch_based_data.remLitBin += thisremLitBin;
     tmpStats.shrinked++;
     timeAvailable -= (long)lits.size()*2 + 50;
-    Clause* c2 = solver->add_clause_int(lits, cl.red(), cl.stats);
+    Clause* c2 = solver->add_clause_int(lits, cl.red(), &cl.stats);
     if (c2 != NULL) {
         solver->detachClause(offset);
         solver->free_cl(offset);

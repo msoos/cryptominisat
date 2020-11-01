@@ -54,14 +54,9 @@ class QueryAddIdxes (helper.QueryHelper):
         queries = """
         create index `idxclid33` on `sum_cl_use` (`clauseID`, `last_confl_used`);
         ---
-        create index `idxclid1` on `clause_stats` (`clauseID`, conflicts, restarts, latest_satzilla_feature_calc);
+        create index `idxclid1` on `clause_stats` (`clauseID`, conflicts, latest_satzilla_feature_calc);
         create index `idxclid1-2` on `clause_stats` (`clauseID`);
-        create index `idxclid1-3` on `clause_stats` (`clauseID`, restarts);
-        create index `idxclid1-4` on `clause_stats` (`clauseID`, restarts, prev_restart);
-        create index `idxclid1-5` on `clause_stats` (`clauseID`, prev_restart);
-        create index `idxclid2` on `clause_stats` (clauseID, `prev_restart`, conflicts, restarts, latest_satzilla_feature_calc);
-        create index `idxclid4` on `restart` ( `restarts`);
-        create index `idxclid88` on `restart_dat_for_cl` ( `clauseID`);
+        create index `idxclid2` on `clause_stats` (clauseID, conflicts, latest_satzilla_feature_calc);
         create index `idxclid5` on `tags` ( `name`);
         ---
         create index `idxclid6` on `reduceDB` (`reduceDB_called`, `clauseID`, conflicts);
@@ -105,28 +100,6 @@ class QueryCls (helper.QueryHelper):
         # sum_cl_use
         self.sum_cl_use = helper.query_fragment(
             "sum_cl_use", [], "sum_cl_use", options.verbose, self.c)
-
-        # restart data
-        not_cols = [
-            "simplifications"
-            , "restarts"
-            , "conflicts"
-            , "latest_satzilla_feature_calc"
-            , "runtime"
-            , "propagations"
-            , "decisions"
-            , "flipped"
-            , "replaced"
-            , "eliminated"
-            , "set"
-            , "free"
-            , "numredLits"
-            , "numIrredLits"
-            , "all_props"
-            , "clauseID"
-            , "restartID"]
-        self.rst_cur = helper.query_fragment(
-            "restart_dat_for_cl", not_cols, "rst_cur", options.verbose, self.c)
 
         # RDB data
         not_cols = [
@@ -183,13 +156,12 @@ class QueryCls (helper.QueryHelper):
         SELECT
         tags.val as `fname`
         {clause_dat}
-        {rst_cur}
         {satzfeat_dat_cur}
         {rdb0_dat}
         {rdb0_common_dat}
         {sum_cl_use}
-        , (rdb0.conflicts - cl.conflicts) as `cl.time_inside_solver`
-        , `sum_cl_use`.`last_confl_used`-`cl`.`conflicts` as `x.a_lifetime`
+        , (rdb0.conflicts - rdb0.introduced_at_conflict) as `cl.time_inside_solver`
+        , (sum_cl_use.last_confl_used - rdb0.introduced_at_conflict) as `x.a_lifetime`
 
         , used_later_short.used_later as `x.used_later_short`
         , used_later_short.percentile_fit as `x.used_later_short_topperc`
@@ -208,14 +180,15 @@ class QueryCls (helper.QueryHelper):
 
         FROM
         reduceDB as rdb0
-        join reduceDB_common as rdb0_common on
-            rdb0_common.reduceDB_called = rdb0.reduceDB_called
 
+        -- this is DELIBERATEY left-join: this way, clauses that as ternary
+        -- resolvents or otherwise generated during in-processing
+        -- can still be used
         left join clause_stats as cl on
             cl.clauseID = rdb0.clauseID
 
-        join restart_dat_for_cl as rst_cur
-            on rst_cur.clauseID = rdb0.clauseID
+        join reduceDB_common as rdb0_common on
+            rdb0_common.reduceDB_called = rdb0.reduceDB_called
 
         join sum_cl_use on
             sum_cl_use.clauseID = rdb0.clauseID
@@ -228,7 +201,9 @@ class QueryCls (helper.QueryHelper):
             and used_later_short.rdb0conflicts = rdb0.conflicts
             and used_later_short.offset = 0
 
-        join used_later_long on
+        -- this is DELIBERATEY left-join: this way, clauses that were in
+        -- for shorter time can still generate data
+        left join used_later_long on
             used_later_long.clauseID = rdb0.clauseID
             and used_later_long.rdb0conflicts = rdb0.conflicts
             and used_later_long.offset = 0
@@ -249,7 +224,7 @@ class QueryCls (helper.QueryHelper):
         , tags
 
         WHERE
-        cl.clauseID != 0
+        (cl.clauseID != 0 OR cl.clauseID is NULL)
         and tags.name = "filename"
 
 
@@ -263,7 +238,6 @@ class QueryCls (helper.QueryHelper):
             "satzfeat_dat_cur": self.satzfeat_dat.replace("szfeat.", "szfeat_cur."),
             "rdb0_dat": self.rdb0_dat,
             "sum_cl_use": self.sum_cl_use,
-            "rst_cur": self.rst_cur,
             "rdb0_common_dat": self.rdb0_common_dat
         }
 
