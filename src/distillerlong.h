@@ -72,12 +72,7 @@ class DistillerLong {
         ClOffset try_distill_clause_and_return_new(
             ClOffset offset
             , const bool red
-            , const ClauseStats& stats
-        );
-        ClOffset try_distill_clause_and_return_new_slow(
-            ClOffset offset
-            , const bool red
-            , const ClauseStats& stats
+            , const ClauseStats* const stats
         );
         bool distill_long_cls_all(vector<ClOffset>& offs, double time_mult);
         bool go_through_clauses(vector<ClOffset>& cls);

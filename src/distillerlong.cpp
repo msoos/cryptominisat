@@ -162,7 +162,7 @@ bool DistillerLong::go_through_clauses(
         offset2 = try_distill_clause_and_return_new(
             offset
             , cl.red()
-            , cl.stats
+            , &cl.stats
         );
 
         copy:
@@ -250,7 +250,7 @@ bool DistillerLong::distill_long_cls_all(
 ClOffset DistillerLong::try_distill_clause_and_return_new(
     ClOffset offset
     , const bool red
-    , const ClauseStats& stats
+    , const ClauseStats* const stats
 ) {
     #ifdef DRAT_DEBUG
     if (solver->conf.verbosity >= 6) {
@@ -355,8 +355,11 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
         lits.resize(cl.size());
         std::copy(cl.begin(), cl.end(), lits.begin());
     }
+
+    // we have to copy because the re-alloc can invalidate the data
+    ClauseStats stats_copy(*stats);
     solver->free_cl(offset);
-    Clause *cl2 = solver->add_clause_int(lits, red, &stats);
+    Clause *cl2 = solver->add_clause_int(lits, red, &stats_copy);
     (*solver->drat) << findelay;
 
     if (cl2 != NULL) {
