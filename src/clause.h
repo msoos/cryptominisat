@@ -135,25 +135,18 @@ struct ClauseStats
     #ifdef FINAL_PREDICTOR
     #ifdef EXTENDED_FEATURES
     uint32_t    rdb1_last_touched = std::numeric_limits<uint32_t>::max();
+    float       glue_hist_lt = 0;
+    float       rdb1_act_ranking_rel = 0;
     #endif
     float       glue_hist_long = 0;
     float       glue_hist_queue = 0;
-    #ifdef EXTENDED_FEATURES
-    float       glue_hist_lt = 0;
-    #endif
     float       confl_size_hist_lt = 0;
     uint32_t    glue_before_minim = 0;
-//     uint32_t    num_overlap_literals;
     float       antec_overlap_hist_lt = 0;
     uint32_t    num_total_lits_antecedents = 0;
-//     uint32_t    rdb1_last_touched_diff;
     uint32_t    num_antecedents = 0;
     float       branch_depth_hist_queue = 0;
     float       num_resolutions_hist_lt = 0;
-//     uint32_t    trail_depth_hist_longer;
-    #ifdef EXTENDED_FEATURES
-    float       rdb1_act_ranking_rel = 0;
-    #endif
     float pred_short_use;
     float pred_long_use;
     //float pred_forever_use;
