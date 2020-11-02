@@ -56,7 +56,7 @@ if int(ver[1]) < 20:
 else:
     from sklearn.model_selection import train_test_split
 
-MISSING=-1334556800.0
+MISSING=float("-1.0")
 
 def check_long_short():
     if options.tier is None:
