@@ -544,7 +544,6 @@ if __name__ == "__main__":
     df.replace(np.NaN, MISSING, inplace=True)
     df.replace(np.Infinity, MISSING, inplace=True)
     df.replace(np.inf, MISSING, inplace=True)
-    df.replace(math.nan, MISSING, inplace=True)
     df.fillna(MISSING, inplace=True)
 
     # do the heavy lifting
