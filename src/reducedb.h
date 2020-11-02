@@ -61,6 +61,7 @@ private:
     size_t last_reducedb_num_conflicts = 0;
     bool red_cl_too_young(const Clause* cl) const;
     void clear_clauses_stats(vector<ClOffset>& clauseset);
+    void reset_clause_dats(const vector<ClOffset>& offs);
 
     bool cl_needs_removal(const Clause* cl, const ClOffset offset) const;
     void remove_cl_from_lev2();

@@ -538,13 +538,6 @@ void ReduceDB::update_preds_lev2()
                 cl->stats.pred_forever_topperc
             );
         }
-        cl->stats.dump_no++;
-        #ifdef EXTENDED_FEATURES
-        cl->stats.rdb1_act_ranking_rel = act_ranking_rel;
-        cl->stats.rdb1_last_touched = cl->stats.last_touched;
-        cl->stats.rdb1_props_made = cl->stats.props_made;
-        #endif
-        cl->stats.reset_rdb_stats(solver->conf.rdb_discount_factor);
     }
 
     if (solver->conf.verbosity >= 2) {
@@ -713,6 +706,21 @@ void ReduceDB::delete_from_lev2(uint32_t& deleted, uint32_t& tot_dumpno)
     solver->longRedCls[2].resize(j);
 }
 
+void ReduceDB::reset_clause_dats(const vector<ClOffset>& offs)
+{
+    for(const auto& off: offs) {
+        Clause* cl = solver->cl_alloc.ptr(off);
+
+        cl->stats.dump_no++;
+        #ifdef EXTENDED_FEATURES
+        cl->stats.rdb1_act_ranking_rel = act_ranking_rel;
+        cl->stats.rdb1_last_touched = cl->stats.last_touched;
+        cl->stats.rdb1_props_made = cl->stats.props_made;
+        #endif
+        cl->stats.reset_rdb_stats(solver->conf.rdb_discount_factor);
+    }
+}
+
 void ReduceDB::handle_lev2_predictor()
 {
     num_times_pred_called++;
@@ -735,6 +743,9 @@ void ReduceDB::handle_lev2_predictor()
     delete_from_lev2(deleted, tot_dumpno);
     clean_lev0_once_in_a_while();
     clean_lev1_once_in_a_while();
+    reset_clause_dats(solver->longRedCls[0]);
+    reset_clause_dats(solver->longRedCls[1]);
+    reset_clause_dats(solver->longRedCls[2]);
 
     //Cleanup
     solver->clean_occur_from_removed_clauses_only_smudged();
