@@ -608,7 +608,7 @@ void ReduceDB::clean_lev0_once_in_a_while()
                     time_inside_solver < checked_every
                 ) {
                     assert(cl->stats.which_red_array == 0);
-                    solver->longRedCls[0][j++] =solver->longRedCls[0][i];
+                    solver->longRedCls[0][j++] = solver->longRedCls[0][i];
                 } else {
                     solver->longRedCls[1].push_back(offset);
                     cl->stats.which_red_array = 1;
