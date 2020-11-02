@@ -71,8 +71,8 @@ CREATE TABLE `reduceDB` (
   `clauseID` int(20) NOT NULL,
   `dump_no` int(20) NOT NULL,
   `conflicts_made` bigint(20) NOT NULL,
-  `propagations_made` bigint(20) NOT NULL,
-  `sum_propagations_made` bigint(20) NOT NULL,
+  `props_made` bigint(20) NOT NULL,
+  `sum_props_made` bigint(20) NOT NULL,
   `clause_looked_at` bigint(20) NOT NULL,
   `uip1_used` bigint(20) NOT NULL,
 

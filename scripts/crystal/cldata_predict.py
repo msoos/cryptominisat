@@ -161,7 +161,7 @@ class Learner:
         test.reset_index(inplace=True)
         for i in range(test.shape[0]):
             towrite = ""
-            towrite += "%s " % test["rdb0.propagations_made"].iloc[i]
+            towrite += "%s " % test["rdb0.props_made"].iloc[i]
             towrite += "%s " % test["cl.orig_glue"].iloc[i]
             towrite += "%s " % test["rdb0.glue"].iloc[i]
             towrite += "%s " % test["cl.glue_before_minim"].iloc[i]

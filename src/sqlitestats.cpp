@@ -744,8 +744,8 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.ID);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.dump_no);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.conflicts_made);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.propagations_made);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.sum_propagations_made);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.props_made);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.sum_props_made);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.clause_looked_at);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.uip1_used);
 

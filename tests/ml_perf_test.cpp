@@ -34,7 +34,7 @@ ClPredictors* pred;
 
 //TODO read in
 struct Dat {
-    uint32_t propagations_made;
+    uint32_t props_made;
     uint32_t orig_glue;
     uint32_t glue;
     uint32_t glue_before_minim;
@@ -53,7 +53,7 @@ struct Dat {
 
     void print()
     {
-        cout << "propagations_made: "  << propagations_made << endl;
+        cout << "props_made: "  << props_made << endl;
         cout << "orig_glue: " << orig_glue << endl;
         cout << "glue: " << glue << endl;
         cout << "glue_before_minim: " << glue_before_minim << endl;
@@ -85,7 +85,7 @@ bool get_val(Dat& dat)
 
     if (!(
         iss
-        >> dat.propagations_made
+        >> dat.props_made
         >> dat.orig_glue
         >> dat.glue
         >> dat.glue_before_minim
@@ -109,7 +109,7 @@ bool get_val(Dat& dat)
 
 float get_predict(Clause* cl, const Dat& dat, predict_type pred_type)
 {
-    cl->stats.propagations_made = dat.propagations_made;
+    cl->stats.props_made = dat.props_made;
     cl->stats.orig_glue  = dat.orig_glue;
     cl->stats.num_resolutions_hist_lt = dat.num_resolutions_hist_lt;
     cl->stats.glue_before_minim = dat.glue_before_minim;

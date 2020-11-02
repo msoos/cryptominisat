@@ -147,9 +147,10 @@ struct ClauseStats
     uint32_t    num_antecedents = 0;
     float       branch_depth_hist_queue = 0;
     float       num_resolutions_hist_lt = 0;
+    float       discounted_uip1_used = 0;
+    float       discounted_props_made = 0;
     float pred_short_use;
     float pred_long_use;
-    //float pred_forever_use;
     float pred_forever_topperc;
     #endif
 
@@ -160,12 +161,11 @@ struct ClauseStats
 
     //for average and sum stats
     uint32_t sum_uip1_used = 0; ///N.o. times claue was used during 1st UIP generation for ALL TIME
-    uint32_t sum_propagations_made = 0; ///<Number of times caused propagation
+    uint32_t sum_props_made = 0; ///<Number of times caused propagation
 
     //below resets
     uint32_t uip1_used = 0; ///N.o. times claue was used during 1st UIP generation in this RDB
-    uint32_t propagations_made = 0; ///<Number of times caused propagation
-    uint32_t rdb1_propagations_made = 0; ///<Number of times caused propagation, last round
+    uint32_t props_made = 0; ///<Number of times caused propagation
     #endif
 
     #ifdef STATS_NEEDED
@@ -185,7 +185,7 @@ struct ClauseStats
     {
         ttl = 0;
         uip1_used = 0;
-        propagations_made = 0;
+        props_made = 0;
         #if defined(STATS_NEEDED)
         clause_looked_at = 0;
         conflicts_made = 0;
@@ -212,7 +212,7 @@ struct ClauseStats
             ret.introduced_at_conflict = std::min(first.introduced_at_conflict, second.introduced_at_conflict);
         }
         ret.uip1_used = first.uip1_used + second.uip1_used;
-        ret.propagations_made = first.propagations_made + second.propagations_made;
+        ret.props_made = first.props_made + second.props_made;
         #endif
 
         #ifdef STATS_NEEDED
@@ -234,7 +234,7 @@ inline std::ostream& operator<<(std::ostream& os, const ClauseStats& stats)
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
     os << "conflIntro " << stats.introduced_at_conflict<< " ";
     os << "uip1_used " << stats.uip1_used << " ";
-    os << "numProp " << stats.propagations_made<< " ";
+    os << "numProp " << stats.props_made<< " ";
     #endif
     #ifdef STATS_NEEDED
     os << "numConfl " << stats.conflicts_made<< " ";
@@ -523,7 +523,7 @@ public:
         #ifdef STATS_NEEDED
         cout
         << " Confls: " << std::setw(10) << stats.conflicts_made
-        << " Props: " << std::setw(10) << stats.propagations_made
+        << " Props: " << std::setw(10) << stats.props_made
         << " Looked at: " << std::setw(10)<< stats.clause_looked_at
         << " UIP used: " << std::setw(10)<< stats.uip1_used;
         #endif

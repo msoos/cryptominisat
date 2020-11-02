@@ -107,7 +107,7 @@ struct SortRedClsProps
     {
         const Clause* x = cl_alloc.ptr(xOff);
         const Clause* y = cl_alloc.ptr(yOff);
-        return x->stats.propagations_made > y->stats.propagations_made;
+        return x->stats.props_made > y->stats.props_made;
     }
 };
 
@@ -303,10 +303,10 @@ void ReduceDB::dump_sql_cl_data(
         cl->stats.props_made_rank = i+1;
 
         total_glue += cl->stats.glue;
-        total_props += cl->stats.propagations_made;
+        total_props += cl->stats.props_made;
         total_uip1_used += cl->stats.uip1_used;
     }
-    uint32_t median_props = solver->cl_alloc.ptr(all_learnt[all_learnt.size()/2])->stats.propagations_made;
+    uint32_t median_props = solver->cl_alloc.ptr(all_learnt[all_learnt.size()/2])->stats.props_made;
 
     std::sort(all_learnt.begin(), all_learnt.end(), SortRedClsUIP1(solver->cl_alloc));
     for(size_t i = 0; i < all_learnt.size(); i++) {
@@ -547,7 +547,7 @@ void ReduceDB::update_preds_lev2()
         cl->stats.rdb1_act_ranking_rel = act_ranking_rel;
         cl->stats.rdb1_last_touched = cl->stats.last_touched;
         #endif
-        cl->stats.rdb1_propagations_made = cl->stats.propagations_made;
+        cl->stats.rdb1_props_made = cl->stats.props_made;
         cl->stats.reset_rdb_stats();
     }
 

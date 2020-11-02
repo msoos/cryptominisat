@@ -232,10 +232,10 @@ bool PropEngine::prop_long_cl_any_order(
     } else {
         if (update_bogoprops) {
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-            c.stats.propagations_made++;
+            c.stats.props_made++;
             #endif
             #ifdef STATS_NEEDED
-            c.stats.sum_propagations_made++;
+            c.stats.sum_props_made++;
             if (c.red())
                 propStats.propsLongRed++;
             else
@@ -398,10 +398,10 @@ PropBy PropEngine::propagate_any_order_fast()
                 qhead = trail.size();
             } else {
                 #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-                c.stats.propagations_made++;
+                c.stats.props_made++;
                 #endif
                 #ifdef STATS_NEEDED
-                c.stats.sum_propagations_made++;
+                c.stats.sum_props_made++;
                 if (c.red())
                     propStats.propsLongRed++;
                 else
