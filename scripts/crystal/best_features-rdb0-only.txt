@@ -11,6 +11,5 @@
 (log2(cl.num_resolutions_hist_lt)/rdb0.props_made)
 (rdb0.props_made/(cl.num_total_lits_antecedents/cl.num_antecedents))
 (cl.size_hist_lt/rdb0.props_made)
-(rdb0.props_made/log2(cl.antec_overlap_hist_lt))
 (log2(cl.branch_depth_hist_queue)/rdb0.props_made)
 (rdb0.uip1_used/cl.glue_before_minim)

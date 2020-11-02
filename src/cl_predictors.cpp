@@ -213,6 +213,7 @@ void ClPredictors::set_up_input(
     }
     //(cl.size_hist_lt/rdb0.props_made)
 
+
     if (cl->stats.branch_depth_hist_queue == 1) {
         at[x++] = 0;
     } else if (cl->stats.props_made == 0 ||
