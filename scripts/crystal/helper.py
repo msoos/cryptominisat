@@ -618,6 +618,9 @@ def delete_none_features(df):
 def cldata_add_computed_features(df, verbose):
     print("Adding computed features...")
     del df["cl.conflicts"]
+    del df["sum_cl_use.clauseID"]
+    del df["rdb0.introduced_at_conflict"]
+    delete_none_features(df)
 
     divide = functools.partial(helper_divide, df=df, features=list(df), verb=verbose)
     larger_than = functools.partial(helper_larger_than, df=df, features=list(df), verb=verbose)
@@ -626,8 +629,6 @@ def cldata_add_computed_features(df, verbose):
     # relative overlaps
     print("Relative overlaps...")
     divide("cl.num_total_lits_antecedents", "cl.antec_sum_size_hist_lt")
-
-    delete_none_features(df)
 
     # ************
     # TODO decision level and branch depth are the same, right???
@@ -641,8 +642,23 @@ def cldata_add_computed_features(df, verbose):
     rdb0_prop_ranking_rel = divide("rdb0.prop_ranking", "rdb0_common.tot_cls_in_db", name="rdb0_prop_ranking_rel")
     rdb0_uip1_ranking_rel = divide("rdb0.uip1_ranking", "rdb0_common.tot_cls_in_db", name="rdb0_uip1_ranking_rel")
 
+    del df["rdb0.uip1_ranking"]
+    del df["rdb0.prop_ranking"]
+    del df["rdb0.act_ranking"]
+
     sum_uip1_per_time = divide("rdb0.sum_uip1_used", "cl.time_inside_solver")
     sum_props_per_time = divide("rdb0.sum_props_made", "cl.time_inside_solver")
+
+    divide("rdb0.discounted_uip1_used", "rdb0_common.avg_uip1_used")
+    divide("rdb0.discounted_props_made", "rdb0_common.avg_props")
+    divide("rdb0.uip1_used", "rdb0_common.avg_uip1_used")
+    divide("rdb0.props_made", "rdb0_common.avg_props")
+    divide("rdb0.glue", "rdb0_common.avg_glue")
+    divide("rdb0.uip1_used", "rdb0_common.median_uip1_used")
+    divide("rdb0.props_made", "rdb0_common.median_props")
+    divide("rdb0.discounted_uip1_used", "rdb0_common.median_uip1_used")
+    divide("rdb0.discounted_props_made", "rdb0_common.median_props")
+
     orig_cols = list(df)
 
     divisors = [
