@@ -202,10 +202,10 @@ void DataSyncServer::sendDataToAll()
     }
     sentBinData += thisSentBinData;
 
-    uint32_t *sendData = new uint32_t[data.size()];
+    sendData = new uint32_t[data.size()];
     std::copy(data.begin(), data.end(), sendData);
     for (int i = 1; i < mpiSize; i++) {
-        int err = MPI_Isend(sendData, data.size(), MPI_UNSIGNED, i, 0, MPI_COMM_WORLD, &(sendRequests[i]));
+        err = MPI_Isend(sendData, data.size(), MPI_UNSIGNED, i, 0, MPI_COMM_WORLD, &(sendRequests[i]));
         assert(err == MPI_SUCCESS);
         #ifdef VERBOSE_DEBUG_MPI_SENDRCV
         std::cout << "-->> MPI Server Sent to " << i << " num: " << data.size() << " uint32_t -s" << std::endl;
