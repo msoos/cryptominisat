@@ -386,21 +386,19 @@ def add_computed_szfeat_for_clustering(df):
 
 
 # to check for too large or NaN values:
-def check_too_large_or_nan_values(df, features):
+def check_too_large_or_nan_values(df, features=None):
     print("Checking for too large or NaN values...")
-    # features = df.columns.values.flatten().tolist()
+    if features is None:
+        features = df.columns.values.flatten().tolist()
+
     index = 0
     for index, row in df[features].iterrows():
         for x, name in zip(row, features):
-            try:
-                np.isfinite(x)
-            except:
-                print("Name:", name)
-                print("Prolbem with value:", x)
-                print(row)
+            if type(x) == str:
+                continue
 
             if not np.isfinite(x) or x > np.finfo(np.float32).max:
-                print("issue with data for features: ", name, x)
+                print("issue with data for features: ", name, x, type(x))
             index += 1
 
     print("Checking finished.")
@@ -620,6 +618,7 @@ def delete_none_features(df):
 def cldata_add_computed_features(df, verbose):
     print("Adding computed features...")
     del df["cl.conflicts"]
+
     divide = functools.partial(helper_divide, df=df, features=list(df), verb=verbose)
     larger_than = functools.partial(helper_larger_than, df=df, features=list(df), verb=verbose)
     add = functools.partial(helper_add, df=df, features=list(df), verb=verbose)
@@ -670,6 +669,8 @@ def cldata_add_computed_features(df, verbose):
         , rdb0_act_ranking_rel
         , rdb0_prop_ranking_rel
         , rdb0_uip1_ranking_rel
+        , "rdb0.discounted_uip1_used"
+        , "rdb0.discounted_props_made"
         #, "szfeat_cur.var_cl_ratio"
         , "cl.time_inside_solver"
         # , "cl.num_overlap_literals"

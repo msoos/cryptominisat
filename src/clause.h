@@ -133,11 +133,6 @@ struct ClauseStats
     };
     uint32_t last_touched;
     #ifdef FINAL_PREDICTOR
-    #ifdef EXTENDED_FEATURES
-    uint32_t    rdb1_last_touched = std::numeric_limits<uint32_t>::max();
-    float       glue_hist_lt = 0;
-    float       rdb1_act_ranking_rel = 0;
-    #endif
     float       glue_hist_long = 0;
     float       glue_hist_queue = 0;
     float       confl_size_hist_lt = 0;
@@ -147,8 +142,6 @@ struct ClauseStats
     uint32_t    num_antecedents = 0;
     float       branch_depth_hist_queue = 0;
     float       num_resolutions_hist_lt = 0;
-    float       discounted_uip1_used = 0;
-    float       discounted_props_made = 0;
     float pred_short_use;
     float pred_long_use;
     float pred_forever_topperc;
@@ -174,6 +167,8 @@ struct ClauseStats
     uint32_t connects_num_communities = 0;
     uint32_t props_made_rank = 0;
     uint32_t uip1_used_rank = 0;
+    float discounted_uip1_used = 0;
+    float discounted_props_made = 0;
 
     AtecedentData<uint16_t> antec_data;
     uint32_t conflicts_made = 0; ///<Number of times caused conflict
@@ -181,16 +176,21 @@ struct ClauseStats
     #endif
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
-    void reset_rdb_stats()
+    void reset_rdb_stats(float discount_factor)
     {
         ttl = 0;
-        uip1_used = 0;
-        props_made = 0;
-        #if defined(STATS_NEEDED)
+
+        #ifdef STATS_NEEDED
+        discounted_props_made *= discount_factor;
+        discounted_props_made += (float)props_made*(1.0f-discount_factor);
+        discounted_uip1_used *= discount_factor;
+        discounted_uip1_used += (float)uip1_used*(1.0f-discount_factor);
         clause_looked_at = 0;
         conflicts_made = 0;
         antec_data.clear();
         #endif
+        uip1_used = 0;
+        props_made = 0;
     }
     #endif
 

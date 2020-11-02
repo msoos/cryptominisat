@@ -56,7 +56,7 @@ if int(ver[1]) < 20:
 else:
     from sklearn.model_selection import train_test_split
 
-MISSING=np.nan
+MISSING=-1334556800.0
 
 def check_long_short():
     if options.tier is None:
@@ -540,13 +540,12 @@ if __name__ == "__main__":
         helper.delete_none_features(df)
 
     print("Filling NA with MISSING..")
-    df.fillna(MISSING, inplace=True)
     df.replace(np.NINF, MISSING, inplace=True)
     df.replace(np.NaN, MISSING, inplace=True)
     df.replace(np.Infinity, MISSING, inplace=True)
     df.replace(np.inf, MISSING, inplace=True)
-
-
+    df.replace(math.nan, MISSING, inplace=True)
+    df.fillna(MISSING, inplace=True)
 
     # do the heavy lifting
     learner = Learner(df, tier=options.tier)

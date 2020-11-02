@@ -351,7 +351,7 @@ void ReduceDB::dump_sql_cl_data(
         );
         added_to_db++;
         cl->stats.dump_no++;
-        cl->stats.reset_rdb_stats();
+        cl->stats.reset_rdb_stats(solver->conf.rdb_discount_factor);
     }
     solver->sqlStats->end_transaction();
 
@@ -529,10 +529,6 @@ void ReduceDB::update_preds_lev2()
         //cl->stats.pred_forever_use = 0;
         cl->stats.pred_forever_topperc = 100;
         if (cl->stats.dump_no > 0) {
-            assert(cl->stats.last_touched <= (int64_t)solver->sumConflicts);
-            int64_t last_touched_diff =
-                (int64_t)solver->sumConflicts-(int64_t)cl->stats.last_touched;
-
             predictors->predict(
                 cl,
                 solver->sumConflicts,
@@ -546,9 +542,9 @@ void ReduceDB::update_preds_lev2()
         #ifdef EXTENDED_FEATURES
         cl->stats.rdb1_act_ranking_rel = act_ranking_rel;
         cl->stats.rdb1_last_touched = cl->stats.last_touched;
-        #endif
         cl->stats.rdb1_props_made = cl->stats.props_made;
-        cl->stats.reset_rdb_stats();
+        #endif
+        cl->stats.reset_rdb_stats(solver->conf.rdb_discount_factor);
     }
 
     if (solver->conf.verbosity >= 2) {
