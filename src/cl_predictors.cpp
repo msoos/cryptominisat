@@ -23,8 +23,7 @@ THE SOFTWARE.
 #include "cl_predictors.h"
 #include "clause.h"
 #include <cmath>
-//#define MISSING_VAL std::numeric_limits<float>::quiet_NaN()
-#define MISSING_VAL  -1.0f
+#define MISSING_VAL -1.0f
 
 using namespace CMSat;
 

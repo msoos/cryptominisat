@@ -61,7 +61,7 @@ private:
     size_t last_reducedb_num_conflicts = 0;
     bool red_cl_too_young(const Clause* cl) const;
     void clear_clauses_stats(vector<ClOffset>& clauseset);
-    void reset_clause_dats(const vector<ClOffset>& offs);
+    void reset_clause_dats(const uint32_t lev);
 
     bool cl_needs_removal(const Clause* cl, const ClOffset offset) const;
     void remove_cl_from_lev2();
@@ -73,10 +73,10 @@ private:
     ClPredictors* predictors = NULL;
     uint32_t num_times_pred_called = 0;
     void update_preds_lev2();
-    void pred_move_to_lev1_and_lev0(uint32_t& deleted, uint32_t& tot_dumpno);
-    void delete_from_lev2(uint32_t& deleted, uint32_t& tot_dumpno);
-    void clean_lev1_once_in_a_while();
-    void clean_lev0_once_in_a_while();
+    void pred_move_to_lev1_and_lev0();
+    void delete_from_lev2(uint32_t& deleted);
+    void clean_lev1_once_in_a_while(uint32_t& deleted);
+    void clean_lev0_once_in_a_while(uint32_t& deleted);
     #endif
 };
 

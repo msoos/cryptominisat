@@ -257,12 +257,15 @@ class Learner:
                 exit(-1)
         else:
             assert options.final_is_forest or options.final_is_xgboost, "For TOP calculation, we must have --forest or --xgboost"
-            clf_forest = sklearn.ensemble.RandomForestRegressor(
-                n_estimators=options.num_trees*5,
-                max_features="sqrt",
-                random_state=prng)
-
-            clf = clf_forest
+            if options.final_is_forest:
+                clf = sklearn.ensemble.RandomForestRegressor(
+                    n_estimators=options.num_trees*5,
+                    max_features="sqrt",
+                    random_state=prng)
+            elif options.final_is_xgboost:
+                clf = xgb.XGBRegressor(objective='reg:squarederror', missing=MISSING)
+            else:
+                assert False
 
         del df
         #my_sample_w = np.array(y_train.values)
