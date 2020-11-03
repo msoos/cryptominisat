@@ -169,6 +169,8 @@ struct ClauseStats
     uint32_t uip1_used_rank = 0;
     float discounted_uip1_used = 0;
     float discounted_props_made = 0;
+    float discounted_uip1_used2 = 0;
+    float discounted_props_made2 = 0;
 
     AtecedentData<uint16_t> antec_data;
     uint32_t conflicts_made = 0; ///<Number of times caused conflict
@@ -185,6 +187,12 @@ struct ClauseStats
         discounted_props_made += (float)props_made*(1.0f-discount_factor);
         discounted_uip1_used *= discount_factor;
         discounted_uip1_used += (float)uip1_used*(1.0f-discount_factor);
+
+        discount_factor *= 0.5;
+        discounted_props_made2 *= discount_factor;
+        discounted_props_made2 += (float)props_made*(1.0f-discount_factor);
+        discounted_uip1_used2 *= discount_factor;
+        discounted_uip1_used2 += (float)uip1_used*(1.0f-discount_factor);
         clause_looked_at = 0;
         conflicts_made = 0;
         antec_data.clear();

@@ -649,15 +649,23 @@ def cldata_add_computed_features(df, verbose):
     sum_uip1_per_time = divide("rdb0.sum_uip1_used", "cl.time_inside_solver")
     sum_props_per_time = divide("rdb0.sum_props_made", "cl.time_inside_solver")
 
+    # discounted stuff
     divide("rdb0.discounted_uip1_used", "rdb0_common.avg_uip1_used")
     divide("rdb0.discounted_props_made", "rdb0_common.avg_props")
+    divide("rdb0.discounted_uip1_used", "rdb0_common.median_uip1_used")
+    divide("rdb0.discounted_props_made", "rdb0_common.median_props")
+    #==
+    divide("rdb0.discounted_uip1_used2", "rdb0_common.avg_uip1_used")
+    divide("rdb0.discounted_props_made2", "rdb0_common.avg_props")
+    divide("rdb0.discounted_uip1_used2", "rdb0_common.median_uip1_used")
+    divide("rdb0.discounted_props_made2", "rdb0_common.median_props")
+
+    # divide by avg and median
     divide("rdb0.uip1_used", "rdb0_common.avg_uip1_used")
     divide("rdb0.props_made", "rdb0_common.avg_props")
     divide("rdb0.glue", "rdb0_common.avg_glue")
     divide("rdb0.uip1_used", "rdb0_common.median_uip1_used")
     divide("rdb0.props_made", "rdb0_common.median_props")
-    divide("rdb0.discounted_uip1_used", "rdb0_common.median_uip1_used")
-    divide("rdb0.discounted_props_made", "rdb0_common.median_props")
 
     orig_cols = list(df)
 
