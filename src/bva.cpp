@@ -548,10 +548,11 @@ bool BVA::add_longer_clause(const Lit new_lit, const OccurClause& cl)
                     lits[i] = orig_cl[i];
                 }
             }
+            ClauseStats backup_stats(orig_cl.stats);
             Clause* newCl = solver->add_clause_int(
                 lits, //lits to add
                 false, //redundant?
-                &orig_cl.stats,
+                &backup_stats,
                 false, //attach?
                 &lits, //put back final lits here
                 true, //DRAT

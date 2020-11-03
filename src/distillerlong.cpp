@@ -357,9 +357,9 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     }
 
     // we have to copy because the re-alloc can invalidate the data
-    ClauseStats stats_copy(*stats);
+    ClauseStats backup_stats(*stats);
     solver->free_cl(offset);
-    Clause *cl2 = solver->add_clause_int(lits, red, &stats_copy);
+    Clause *cl2 = solver->add_clause_int(lits, red, &backup_stats);
     (*solver->drat) << findelay;
 
     if (cl2 != NULL) {

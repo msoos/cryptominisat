@@ -41,6 +41,7 @@ import sklearn.linear_model
 import helper
 import xgboost as xgb
 import ast
+import math
 import functools
 import crystalcodegen as ccg
 try:

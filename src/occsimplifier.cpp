@@ -2620,10 +2620,11 @@ bool OccSimplifier::add_varelim_resolvent(
         << endl;
     }
 
+    ClauseStats backup_stats(stats);
     newCl = solver->add_clause_int(
         finalLits //Literals in new clause
         , false //Is the new clause redundant?
-        , &stats //Statistics for this new clause (usage, etc.)
+        , &backup_stats//Statistics for this new clause (usage, etc.)
         , false //Should clause be attached?
         , &finalLits //Return final set of literals here
     );
