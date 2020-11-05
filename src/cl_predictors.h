@@ -23,7 +23,8 @@ THE SOFTWARE.
 #ifndef __CLPREDICTOR_H__
 #define __CLPREDICTOR_H__
 
-#define PRED_COLS 15
+#define PRED_COLS_SHORT 5
+#define PRED_COLS 14
 
 
 #include <vector>
@@ -51,12 +52,19 @@ public:
         predict_type pred_type,
         const CMSat::Clause* cl,
         const uint64_t sumConflicts,
-        const double   act_ranking_rel);
+        const double   act_ranking_rel,
+        const double   uip1_ranking_rel,
+        const double   prop_ranking_rel,
+        const double   avg_props
+    );
 
     void predict(
         const CMSat::Clause* cl,
         const uint64_t sumConflicts,
         const double   act_ranking_rel,
+        const double   uip1_ranking_rel,
+        const double   prop_ranking_rel,
+        const double   avg_props,
         float& p_short,
         float& p_long,
         float& p_forever);
@@ -67,6 +75,9 @@ private:
         const CMSat::Clause* const cl,
         const uint64_t sumConflicts,
         const double   act_ranking_rel,
+        const double   uip1_ranking_rel,
+        const double   prop_ranking_rel,
+        const double   avg_props,
         const uint32_t cols,
         float* at);
     vector<BoosterHandle> handles;

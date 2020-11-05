@@ -78,6 +78,14 @@ private:
     void clean_lev1_once_in_a_while(uint32_t& deleted);
     void clean_lev0_once_in_a_while(uint32_t& deleted);
     #endif
+
+
+    void set_props_and_uip_ranks(vector<ClOffset>& all_learnt);
+    uint32_t total_glue = 0;
+    uint32_t total_props = 0;
+    uint32_t total_uip1_used = 0;
+    uint32_t median_props;
+    uint32_t median_uip1_used;
 };
 
 }

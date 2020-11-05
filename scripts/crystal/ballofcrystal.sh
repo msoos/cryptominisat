@@ -180,7 +180,7 @@ rm -f ../../src/predict/*.h
 #../vardata_predict.py mydata.db-vardata.dat --picktimeonly -q 2 --only 0.99
 #../vardata_predict.py vardata-comb --final -q 20 --basedir ../src/predict/ --depth 7 --tree
 
-../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier short --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf
+../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier short --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf_short
 ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier long --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf
 ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-forever_div-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier forever --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf --topperc
 
@@ -188,8 +188,11 @@ rm -f ../../src/predict/*.h
 # To get feature importances
 ############################
 # ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier long --top 200 --xgboost --allcomputed > output_long
-# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier long --top 200 --xgboost --nocomputed > output_long2
+# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier long --top 200 --xgboost --nocomputed > output_long_nocomputed
 # ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier short --top 200 --xgboost --allcomputed > output_short
+# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier short --top 200 --xgboost --nocomputed > output_short_nocomputed
+# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-forever_div-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier forever --top 2000 --xgboost --nocomputed --topperc > output_forever_nocomputed
+# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-forever_div-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier forever --top 2000 --xgboost --allcomputed --topperc > output_forever
 
 
 )

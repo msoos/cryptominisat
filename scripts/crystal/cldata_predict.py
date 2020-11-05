@@ -166,7 +166,7 @@ class Learner:
             towrite += "%s " % test["cl.orig_glue"].iloc[i]
             towrite += "%s " % test["rdb0.glue"].iloc[i]
             towrite += "%s " % test["cl.glue_before_minim"].iloc[i]
-            towrite += "%s " % test["rdb0.sum_uip1_used"].iloc[i]
+            #towrite += "%s " % test["rdb0.sum_uip1_used"].iloc[i]
             towrite += "%s " % test["cl.num_antecedents"].iloc[i]
             towrite += "%s " % test["cl.num_total_lits_antecedents"].iloc[i]
             towrite += "%s " % test["rdb0.uip1_used"].iloc[i]
@@ -174,7 +174,7 @@ class Learner:
             towrite += "%s " % test["cl.glue_hist_long"].iloc[i]
             towrite += "%s " % test["cl.size_hist_lt"].iloc[i]
             towrite += "%s " % test["cl.branch_depth_hist_queue"].iloc[i]
-            towrite += "%s " % test["rdb0_act_ranking_rel"].iloc[i]
+            towrite += "%s " % test["rdb0.act_ranking_rel"].iloc[i]
             towrite += "%s " % test["rdb0.size"].iloc[i]
             towrite += "%s " % test["cl.time_inside_solver"].iloc[i]
             towrite += "%s " % test[to_predict].iloc[i]
@@ -406,7 +406,7 @@ if __name__ == "__main__":
                         dest="no_computed", help="Don't add computed features")
     parser.add_argument("--allcomputed", default=False, action="store_true",
                         dest="all_computed", help="Add ALL computed features")
-    parser.add_argument("--bestfeatfile", default="../../scripts/crystal/best_features-rdb0-only.txt", type=str,
+    parser.add_argument("--bestfeatfile", type=str,
                         dest="best_features_fname", help="Name and position of best features file that lists the best features in order")
 
     # tree/forest options
@@ -487,6 +487,10 @@ if __name__ == "__main__":
         print("Name was not set with --name, setting it to --tier, i.e. ", options.tier)
         options.name = options.tier
 
+    if options.best_features_fname is None and not options.top_num_features:
+        print("You must give best features filename")
+        exit(-1)
+
     # ------------
     #  Log all parameters
     # ------------
@@ -527,20 +531,36 @@ if __name__ == "__main__":
     df = pd.DataFrame(df_tmp)
     print("-> Number of datapoints after applying '--only':", df.shape)
 
+    # for short remove sum
+    if options.tier == "short":
+        print("Removing sum, discounted")
+        feats = list(df)
+        for feat in feats:
+            if "szfeat_cur" in feat:
+                del df[feat]
+                continue
+
+            if "sum_cl_use" not in feat and feat[:2] != "x." and ("sum" in feat or "discount" in feat):
+                print("Removing feature:", feat)
+                del df[feat]
+
+
     # feature manipulation
     if not options.no_computed:
         if options.all_computed:
-            helper.cldata_add_computed_features(df, options.verbose)
+            short = options.tier == "short"
+            helper.cldata_add_computed_features(df, options.verbose, short=short)
         else:
             print("Adding features...")
+            helper.cldata_add_minimum_computed_features(df, options.verbose)
             divide = functools.partial(helper.helper_divide, df=df, features=list(df), verb=options.verbose)
-            rdb0_act_ranking_rel = divide("rdb0.act_ranking", "rdb0_common.tot_cls_in_db", name="rdb0_act_ranking_rel")
             best_features = helper.get_features(options.best_features_fname)
             for feat in best_features:
                 toeval = ccg.to_source(ast.parse(feat))
                 print("Adding feature %s as eval %s" % (feat, toeval))
                 df[feat] = eval(toeval)
     else:
+        helper.cldata_add_minimum_computed_features(df, options.verbose)
         helper.delete_none_features(df)
 
     print("Filling NA with MISSING..")

@@ -615,8 +615,16 @@ def delete_none_features(df):
     del df["sum_cl_use.first_confl_used"]
     del df["sum_cl_use.last_confl_used"]
 
-def cldata_add_computed_features(df, verbose):
+def cldata_add_minimum_computed_features(df, verbose):
+    divide = functools.partial(helper_divide, df=df, features=list(df), verb=verbose)
+    divide("rdb0.act_ranking", "rdb0_common.tot_cls_in_db", name="rdb0.act_ranking_rel")
+    divide("rdb0.prop_ranking", "rdb0_common.tot_cls_in_db", name="rdb0.prop_ranking_rel")
+    divide("rdb0.uip1_ranking", "rdb0_common.tot_cls_in_db", name="rdb0.uip1_ranking_rel")
+
+def cldata_add_computed_features(df, verbose, short=False):
     print("Adding computed features...")
+    cldata_add_minimum_computed_features(df, verbose)
+
     del df["cl.conflicts"]
     del df["sum_cl_use.clauseID"]
     del df["rdb0.introduced_at_conflict"]
@@ -626,10 +634,6 @@ def cldata_add_computed_features(df, verbose):
     larger_than = functools.partial(helper_larger_than, df=df, features=list(df), verb=verbose)
     add = functools.partial(helper_add, df=df, features=list(df), verb=verbose)
 
-    # relative overlaps
-    print("Relative overlaps...")
-    divide("cl.num_total_lits_antecedents", "cl.antec_sum_size_hist_lt")
-
     # ************
     # TODO decision level and branch depth are the same, right???
     # ************
@@ -638,27 +642,9 @@ def cldata_add_computed_features(df, verbose):
 
     divide("cl.num_total_lits_antecedents", "cl.num_antecedents")
 
-    rdb0_act_ranking_rel = divide("rdb0.act_ranking", "rdb0_common.tot_cls_in_db", name="rdb0_act_ranking_rel")
-    rdb0_prop_ranking_rel = divide("rdb0.prop_ranking", "rdb0_common.tot_cls_in_db", name="rdb0_prop_ranking_rel")
-    rdb0_uip1_ranking_rel = divide("rdb0.uip1_ranking", "rdb0_common.tot_cls_in_db", name="rdb0_uip1_ranking_rel")
-
     del df["rdb0.uip1_ranking"]
     del df["rdb0.prop_ranking"]
     del df["rdb0.act_ranking"]
-
-    sum_uip1_per_time = divide("rdb0.sum_uip1_used", "cl.time_inside_solver")
-    sum_props_per_time = divide("rdb0.sum_props_made", "cl.time_inside_solver")
-
-    # discounted stuff
-    divide("rdb0.discounted_uip1_used", "rdb0_common.avg_uip1_used")
-    divide("rdb0.discounted_props_made", "rdb0_common.avg_props")
-    divide("rdb0.discounted_uip1_used", "rdb0_common.median_uip1_used")
-    divide("rdb0.discounted_props_made", "rdb0_common.median_props")
-    #==
-    divide("rdb0.discounted_uip1_used2", "rdb0_common.avg_uip1_used")
-    divide("rdb0.discounted_props_made2", "rdb0_common.avg_props")
-    divide("rdb0.discounted_uip1_used2", "rdb0_common.median_uip1_used")
-    divide("rdb0.discounted_props_made2", "rdb0_common.median_props")
 
     # divide by avg and median
     divide("rdb0.uip1_used", "rdb0_common.avg_uip1_used")
@@ -667,15 +653,11 @@ def cldata_add_computed_features(df, verbose):
     divide("rdb0.uip1_used", "rdb0_common.median_uip1_used")
     divide("rdb0.props_made", "rdb0_common.median_props")
 
-    orig_cols = list(df)
-
     divisors = [
         "cl.size_hist_lt"
         , "cl.glue_hist_lt"
         , "rdb0.glue"
         , "rdb0.size"
-        , sum_uip1_per_time
-        , sum_props_per_time
         # , "cl.orig_connects_num_communities"
         # , "rdb0.connects_num_communities"
         , "cl.orig_glue"
@@ -690,15 +672,36 @@ def cldata_add_computed_features(df, verbose):
         , "cl.antec_overlap_hist_lt"
         , "(cl.num_total_lits_antecedents/cl.num_antecedents)"
         , "cl.num_antecedents"
-        , rdb0_act_ranking_rel
-        , rdb0_prop_ranking_rel
-        , rdb0_uip1_ranking_rel
-        , "rdb0.discounted_uip1_used"
-        , "rdb0.discounted_props_made"
+        , "rdb0.act_ranking_rel"
+        , "rdb0.prop_ranking_rel"
+        , "rdb0.uip1_ranking_rel"
         #, "szfeat_cur.var_cl_ratio"
         , "cl.time_inside_solver"
         # , "cl.num_overlap_literals"
         ]
+
+    if not short:
+        # discounted stuff
+        divide("rdb0.discounted_uip1_used", "rdb0_common.avg_uip1_used")
+        divide("rdb0.discounted_props_made", "rdb0_common.avg_props")
+        divide("rdb0.discounted_uip1_used", "rdb0_common.median_uip1_used")
+        divide("rdb0.discounted_props_made", "rdb0_common.median_props")
+        #==
+        divide("rdb0.discounted_uip1_used2", "rdb0_common.avg_uip1_used")
+        divide("rdb0.discounted_props_made2", "rdb0_common.avg_props")
+        divide("rdb0.discounted_uip1_used2", "rdb0_common.median_uip1_used")
+        divide("rdb0.discounted_props_made2", "rdb0_common.median_props")
+
+        sum_uip1_per_time = divide("rdb0.sum_uip1_used", "cl.time_inside_solver")
+        sum_props_per_time = divide("rdb0.sum_props_made", "cl.time_inside_solver")
+        antec_rel = divide("cl.num_total_lits_antecedents", "cl.antec_sum_size_hist_lt")
+        divisors.append(sum_uip1_per_time)
+        divisors.append(sum_props_per_time)
+        divisors.append("rdb0.discounted_uip1_used")
+        divisors.append("rdb0.discounted_props_made")
+        divisors.append(antec_rel)
+
+    orig_cols = list(df)
 
     # Thanks to Chai Kian Ming Adam for the idea of using LOG instead of SQRT
     # add LOG
@@ -744,8 +747,9 @@ def cldata_add_computed_features(df, verbose):
                         larger_than(col, divisor)
 
     # smaller-or-greater comparisons
-    larger_than("cl.antec_sum_size_hist_lt", "cl.num_total_lits_antecedents")
-    larger_than("cl.antec_overlap_hist_lt", "cl.num_overlap_literals")
+    if not short:
+        larger_than("cl.antec_sum_size_hist_lt", "cl.num_total_lits_antecedents")
+        larger_than("cl.antec_overlap_hist_lt", "cl.num_overlap_literals")
 
     # print("flatten/list...")
     #old = set(df.columns.values.flatten().tolist())

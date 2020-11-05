@@ -131,6 +131,7 @@ class QueryCls (helper.QueryHelper):
             , "prev_restart"
             , "antecedents_long_red_age_max"
             , "antecedents_long_red_age_min"
+            , "latest_satzilla_feature_calc"
             , "clauseID"]
         self.clause_dat = helper.query_fragment(
             "clause_stats", not_cols, "cl", options.verbose, self.c)

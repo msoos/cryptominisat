@@ -79,6 +79,9 @@ void ClPredictors::set_up_input(
     const CMSat::Clause* const cl,
     const uint64_t sumConflicts,
     const double   act_ranking_rel,
+    const double   uip1_ranking_rel,
+    const double   prop_ranking_rel,
+    const double   avg_props,
     const uint32_t cols,
     float* at)
 {
@@ -87,26 +90,41 @@ void ClPredictors::set_up_input(
     //updated glue can actually be 1. Original glue cannot.
     assert(cl->stats.orig_glue != 1);
 
-    //int32_t last_touched_diff = sumConflicts - cl->stats.last_touched;
+    uint32_t last_touched_diff = sumConflicts - cl->stats.last_touched;
     double time_inside_solver = sumConflicts - cl->stats.introduced_at_conflict;
 
-    if (cl->stats.props_made == 0) {
-        at[x++] = 0;
-    } else if (cl->stats.num_resolutions_hist_lt == 0 ||
-        cl->stats.num_resolutions_hist_lt == 1
-    ) {
-        at[x++] = MISSING_VAL;
-    } else {
-        at[x++] = cl->stats.props_made/::log2((double)cl->stats.num_resolutions_hist_lt);
-    }
-    //((rdb0.props_made)/log2(cl.num_resolutions_hist_lt))
+    //TODO
 
-    if (cl->stats.orig_glue == 0) {
+    at[x++] = uip1_ranking_rel;
+//     rdb0_uip1_ranking_rel
+
+    if (last_touched_diff == 0) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = cl->stats.props_made/::log2((double)cl->stats.orig_glue);
+        at[x++] = act_ranking_rel/(double)last_touched_diff;
     }
-    //((rdb0.props_made)/log2(cl.orig_glue))
+//     (rdb0_act_ranking_rel/rdb0.last_touched_diff)
+
+    at[x++] = prop_ranking_rel;
+//     rdb0.prop_ranking_rel
+
+    at[x++] = cl->stats.props_made;
+//     rdb0.props_made
+
+    at[x++] = (double)last_touched_diff;
+//     rdb0.last_touched_diff
+
+    if (cols == PRED_COLS_SHORT) {
+        assert(cols == x);
+        return;
+    }
+
+    if (time_inside_solver  == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = (double)cl->stats.sum_props_made/time_inside_solver;
+    }
+    //(rdb0.sum_props_made/cl.time_inside_solver)
 
     if (time_inside_solver == 0 ||
         cl->stats.sum_uip1_used == 0 ||
@@ -119,30 +137,12 @@ void ClPredictors::set_up_input(
     }
     //(log2(cl.glue_before_minim)/(rdb0.sum_uip1_used/cl.time_inside_solver))
 
-    if (cl->stats.sum_uip1_used == 0) {
-        at[x++] = 0;
-    } else if (cl->stats.glue == 0 || cl->stats.glue == 1) {
-        at[x++] = MISSING_VAL;
-    } else {
-        at[x++] = (double)cl->stats.sum_uip1_used/::log2(cl->stats.glue);
-    }
-    //(rdb0.sum_uip1_used/log2(rdb0.glue))
-
     if (act_ranking_rel == 0 || cl->stats.orig_glue == 0) {
         at[x++] = MISSING_VAL;
     } else {
         at[x++] = ::log2(act_ranking_rel)/(double)cl->stats.orig_glue;
     }
-    //(log2(rdb0_act_ranking_rel)/cl.orig_glue)
-
-    if (cl->stats.props_made == 0) {
-        at[x++] = 0;
-    } else if (time_inside_solver == 0) {
-        at[x++] = MISSING_VAL;
-    } else {
-        at[x++] = (double)cl->stats.props_made/(double)time_inside_solver;
-    }
-    //(rdb0.props_made/cl.time_inside_solver)
+    //(log2(rdb0.act_ranking_rel)/cl.orig_glue)
 
     if (cl->stats.num_antecedents == 1) {
         at[x++] = 0;
@@ -162,77 +162,34 @@ void ClPredictors::set_up_input(
     }
     //(rdb0.size/cl.glue_hist_long)
 
-    if (cl->stats.props_made == 0) {
-        at[x++] = 0;
-    } else if (cl->stats.glue_hist_queue == 0 || cl->stats.glue_hist_queue == 1) {
+    if (cl->is_ternary_resolvent == 0) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = (double)cl->stats.props_made/
-            ::log2((double)cl->stats.glue_hist_queue);
+        at[x++] = (double)cl->stats.discounted_uip1_used/(double)cl->is_ternary_resolvent;
     }
-    //(rdb0.props_made/log2(cl.glue_hist_queue)
+    //(rdb0.discounted_uip1_used/rdb0.is_ternary_resolvent)
 
-    if (cl->stats.orig_glue == 0) {
+    if (cl->stats.num_resolutions_hist_lt == 0) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = (double)cl->stats.props_made/(double)cl->stats.orig_glue;
+        at[x++] = (double)cl->stats.discounted_props_made/(double)cl->stats.num_resolutions_hist_lt;
     }
-    //(rdb0.props_made/cl.orig_glue)
+    //(rdb0.discounted_props_made/cl.num_resolutions_hist_lt)
 
-    if (cl->stats.props_made == 0 ||
-        cl->stats.num_resolutions_hist_lt == 0)
-    {
+    if (cl->stats.discounted_props_made == 0 || time_inside_solver == 0) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = ::log2((double)cl->stats.num_resolutions_hist_lt)/
-            (double)cl->stats.props_made;
+        at[x++] = ((double)cl->stats.sum_uip1_used/time_inside_solver)/((double)cl->stats.discounted_props_made);
     }
-    //(log2(cl.num_resolutions_hist_lt)/rdb0.props_made)
+    //((rdb0.sum_uip1_used/cl.time_inside_solver)/rdb0.discounted_props_made)
 
-
-    if (cl->stats.props_made == 0) {
-        at[x++] = 0;
-    } else if (cl->stats.num_antecedents == 0 ||
-        cl->stats.num_total_lits_antecedents == 0)
-    {
+    if (avg_props == 0 || cl->stats.props_made == 0) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = (double)cl->stats.props_made/
-            ((double)cl->stats.num_total_lits_antecedents/(double)cl->stats.num_antecedents);
+        at[x++] = ((double)cl->stats.glue)/
+            ((double)cl->stats.props_made/ (double)avg_props);
     }
-    //(rdb0.props_made/(cl.num_total_lits_antecedents/cl.num_antecedents))
-
-
-    if (cl->stats.confl_size_hist_lt == 0) {
-        at[x++] = 0;
-    } else if (cl->stats.props_made == 0) {
-        at[x++] = MISSING_VAL;
-    } else {
-        at[x++] = (double)cl->stats.confl_size_hist_lt/(double)cl->stats.props_made;
-    }
-    //(cl.size_hist_lt/rdb0.props_made)
-
-
-    if (cl->stats.branch_depth_hist_queue == 1) {
-        at[x++] = 0;
-    } else if (cl->stats.props_made == 0 ||
-        cl->stats.branch_depth_hist_queue == 0)
-    {
-        at[x++] = MISSING_VAL;
-    } else {
-        at[x++] = ::log2((double)cl->stats.branch_depth_hist_queue)/
-            (double)cl->stats.props_made;
-    }
-    //(log2(cl.branch_depth_hist_queue)/rdb0.props_made)
-
-
-    if (cl->stats.glue_before_minim == 0) {
-        at[x++] = MISSING_VAL;
-    } else {
-        at[x++] = (double)cl->stats.uip1_used/
-            (double)cl->stats.glue_before_minim;;
-    }
-    //(rdb0.uip1_used/cl.glue_before_minim)
+    //(rdb0.glue/(rdb0.props_made/rdb0_common.avg_props))
 
 //     cout << "c val: ";
 //     for(uint32_t i = 0; i < cols; i++) {
@@ -267,17 +224,29 @@ float ClPredictors::predict(
     predict_type pred_type,
     const CMSat::Clause* cl,
     const uint64_t sumConflicts,
-    const double   act_ranking_rel)
+    const double   act_ranking_rel,
+    const double   uip1_ranking_rel,
+    const double   prop_ranking_rel,
+    const double   avg_props)
 {
     // convert to DMatrix
     set_up_input(
         cl,
         sumConflicts,
         act_ranking_rel,
+        uip1_ranking_rel,
+        prop_ranking_rel,
+        avg_props,
         PRED_COLS,
         train);
     int rows=1;
-    int ret = XGDMatrixCreateFromMat((float *)train, rows, PRED_COLS, MISSING_VAL, &dmat);
+    int ret;
+
+    if (pred_type == short_pred) {
+        ret = XGDMatrixCreateFromMat((float *)train, rows, PRED_COLS_SHORT, MISSING_VAL, &dmat);
+    } else {
+        ret = XGDMatrixCreateFromMat((float *)train, rows, PRED_COLS, MISSING_VAL, &dmat);
+    }
     assert(ret == 0);
 
     float val = predict_one(pred_type);
@@ -290,6 +259,9 @@ void ClPredictors::predict(
     const CMSat::Clause* cl,
     const uint64_t sumConflicts,
     const double   act_ranking_rel,
+    const double   uip1_ranking_rel,
+    const double   prop_ranking_rel,
+    const double   avg_props,
     float& p_short,
     float& p_long,
     float& p_forever)
@@ -299,22 +271,27 @@ void ClPredictors::predict(
         cl,
         sumConflicts,
         act_ranking_rel,
+        uip1_ranking_rel,
+        prop_ranking_rel,
+        avg_props,
         PRED_COLS,
         train);
-    int rows=1;
     int ret;
 
-    ret = XGDMatrixCreateFromMat((float *)train, rows, PRED_COLS, MISSING_VAL, &dmat);
+    ret = XGDMatrixCreateFromMat((float *)train, 1, PRED_COLS_SHORT, MISSING_VAL, &dmat);
+//     cout << "ret: " << ret << endl;
     assert(ret == 0);
     p_short = predict_one(short_pred);
     XGDMatrixFree(dmat);
 
-    ret = XGDMatrixCreateFromMat((float *)train, rows, PRED_COLS, MISSING_VAL, &dmat);
+    ret = XGDMatrixCreateFromMat((float *)train, 1, PRED_COLS, MISSING_VAL, &dmat);
+//     cout << "ret: " << ret << endl;
     assert(ret == 0);
     p_long = predict_one(long_pred);
     XGDMatrixFree(dmat);
 
-    ret = XGDMatrixCreateFromMat((float *)train, rows, PRED_COLS, MISSING_VAL, &dmat);
+    ret = XGDMatrixCreateFromMat((float *)train, 1, PRED_COLS, MISSING_VAL, &dmat);
+//     cout << "ret: " << ret << endl;
     assert(ret == 0);
     p_forever = predict_one(forever_pred);
     XGDMatrixFree(dmat);

@@ -80,7 +80,7 @@ struct SortRedClsAct
     }
 };
 
-#ifdef STATS_NEEDED
+#if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
 struct SortRedClsUIP1
 {
     explicit SortRedClsUIP1(ClauseAllocator& _cl_alloc) :
@@ -110,7 +110,6 @@ struct SortRedClsProps
         return x->stats.props_made > y->stats.props_made;
     }
 };
-
 #endif
 
 #ifdef FINAL_PREDICTOR
@@ -268,6 +267,34 @@ void ReduceDB::handle_lev2()
     last_reducedb_num_conflicts = solver->sumConflicts;
 }
 
+#if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+void ReduceDB::set_props_and_uip_ranks(vector<ClOffset>& all_learnt)
+{
+    std::sort(all_learnt.begin(), all_learnt.end(), SortRedClsProps(solver->cl_alloc));
+    total_glue = 0;
+    total_props = 0;
+    total_uip1_used = 0;
+    for(size_t i = 0; i < all_learnt.size(); i++) {
+        ClOffset offs = all_learnt[i];
+        Clause* cl = solver->cl_alloc.ptr(offs);
+        cl->stats.props_made_rank = i+1;
+
+        total_glue += cl->stats.glue;
+        total_props += cl->stats.props_made;
+        total_uip1_used += cl->stats.uip1_used;
+    }
+    median_props = solver->cl_alloc.ptr(all_learnt[all_learnt.size()/2])->stats.props_made;
+
+    std::sort(all_learnt.begin(), all_learnt.end(), SortRedClsUIP1(solver->cl_alloc));
+    for(size_t i = 0; i < all_learnt.size(); i++) {
+        ClOffset offs = all_learnt[i];
+        Clause* cl = solver->cl_alloc.ptr(offs);
+        cl->stats.uip1_used_rank = i+1;
+    }
+    median_uip1_used = solver->cl_alloc.ptr(all_learnt[all_learnt.size()/2])->stats.uip1_used;
+}
+#endif
+
 #ifdef STATS_NEEDED
 void ReduceDB::dump_sql_cl_data(
     const uint32_t cur_rst_type
@@ -293,28 +320,7 @@ void ReduceDB::dump_sql_cl_data(
         return;
     }
 
-    std::sort(all_learnt.begin(), all_learnt.end(), SortRedClsProps(solver->cl_alloc));
-    uint32_t total_glue = 0;
-    uint32_t total_props = 0;
-    uint32_t total_uip1_used = 0;
-    for(size_t i = 0; i < all_learnt.size(); i++) {
-        ClOffset offs = all_learnt[i];
-        Clause* cl = solver->cl_alloc.ptr(offs);
-        cl->stats.props_made_rank = i+1;
-
-        total_glue += cl->stats.glue;
-        total_props += cl->stats.props_made;
-        total_uip1_used += cl->stats.uip1_used;
-    }
-    uint32_t median_props = solver->cl_alloc.ptr(all_learnt[all_learnt.size()/2])->stats.props_made;
-
-    std::sort(all_learnt.begin(), all_learnt.end(), SortRedClsUIP1(solver->cl_alloc));
-    for(size_t i = 0; i < all_learnt.size(); i++) {
-        ClOffset offs = all_learnt[i];
-        Clause* cl = solver->cl_alloc.ptr(offs);
-        cl->stats.uip1_used_rank= i+1;
-    }
-    uint32_t median_uip1_used = solver->cl_alloc.ptr(all_learnt[all_learnt.size()/2])->stats.uip1_used;
+    set_props_and_uip_ranks(all_learnt);
 
     std::sort(all_learnt.begin(), all_learnt.end(), SortRedClsAct(solver->cl_alloc));
     float median_act = solver->cl_alloc.ptr(all_learnt[all_learnt.size()/2])->stats.activity;
@@ -509,9 +515,13 @@ void ReduceDB::pred_move_to_lev1_and_lev0()
 void ReduceDB::update_preds_lev2()
 {
     double myTime = cpuTime();
+
+    set_props_and_uip_ranks(solver->longRedCls[2]);
+
     std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
               SortRedClsAct(solver->cl_alloc));
-
+    double size = (double)solver->longRedCls[2].size();
+    double avg_props = (double)total_props/(double)size;
     for(size_t i = 0
         ; i < solver->longRedCls[2].size()
         ; i++
@@ -522,7 +532,10 @@ void ReduceDB::update_preds_lev2()
         if (cl->stats.which_red_array == 0) {
             assert(false);
         }
-        double act_ranking_rel = ((double)i+1.0)/(double)solver->longRedCls[2].size();
+
+        double act_ranking_rel = ((double)i+1.0)/size;
+        double uip1_ranking_rel = (double)(cl->stats.uip1_used_rank+1)/size;
+        double prop_ranking_rel = (double)(cl->stats.props_made_rank+1)/size;
 
         cl->stats.pred_short_use = 0;
         cl->stats.pred_long_use = 0;
@@ -533,6 +546,9 @@ void ReduceDB::update_preds_lev2()
                 cl,
                 solver->sumConflicts,
                 act_ranking_rel,
+                uip1_ranking_rel,
+                prop_ranking_rel,
+                avg_props,
                 cl->stats.pred_short_use,
                 cl->stats.pred_long_use,
                 cl->stats.pred_forever_topperc
@@ -553,6 +569,10 @@ void ReduceDB::clean_lev0_once_in_a_while(uint32_t& deleted)
         (solver->conf.pred_forever_check_every_n-1)
     ) {
         //Recalc pred_forever_use
+        set_props_and_uip_ranks(solver->longRedCls[0]);
+        double size = (double)solver->longRedCls[0].size();
+        double avg_props = (double)total_props/(double)size;
+
         std::sort(solver->longRedCls[0].begin(), solver->longRedCls[0].end(),
               SortRedClsAct(solver->cl_alloc));
 
@@ -562,13 +582,20 @@ void ReduceDB::clean_lev0_once_in_a_while(uint32_t& deleted)
         ) {
             const ClOffset offset = solver->longRedCls[0][i];
             Clause* cl = solver->cl_alloc.ptr(offset);
-            double act_ranking_rel = (double)i/(double)solver->longRedCls[0].size();
+
+            double act_ranking_rel = ((double)i+1.0)/size;
+            double uip1_ranking_rel = (double)(cl->stats.uip1_used_rank+1)/size;
+            double prop_ranking_rel = (double)(cl->stats.props_made_rank+1)/size;
 
             cl->stats.pred_forever_topperc = predictors->predict(
                 predict_type::forever_pred,
                 cl,
                 solver->sumConflicts,
-                act_ranking_rel);
+                act_ranking_rel,
+                uip1_ranking_rel,
+                prop_ranking_rel,
+                avg_props
+            );
         }
 
         //Clean up FOREVER, move to LONG
@@ -636,6 +663,10 @@ void ReduceDB::clean_lev1_once_in_a_while(uint32_t& deleted)
         (solver->conf.pred_long_check_every_n-1)
     ) {
         //Recalc pred_long_use
+        set_props_and_uip_ranks(solver->longRedCls[1]);
+        double size = (double)solver->longRedCls[1].size();
+        double avg_props = (double)total_props/(double)size;
+
         std::sort(solver->longRedCls[1].begin(), solver->longRedCls[1].end(),
               SortRedClsAct(solver->cl_alloc));
 
@@ -645,12 +676,19 @@ void ReduceDB::clean_lev1_once_in_a_while(uint32_t& deleted)
         ) {
             const ClOffset offset = solver->longRedCls[1][i];
             Clause* cl = solver->cl_alloc.ptr(offset);
-            double act_ranking_rel = (double)i/(double)solver->longRedCls[1].size();
+            double act_ranking_rel = ((double)i+1.0)/size;
+            double uip1_ranking_rel = (double)(cl->stats.uip1_used_rank+1)/size;
+            double prop_ranking_rel = (double)(cl->stats.props_made_rank+1)/size;
+
             cl->stats.pred_long_use = predictors->predict(
                 predict_type::long_pred,
                 cl,
                 solver->sumConflicts,
-                act_ranking_rel);
+                act_ranking_rel,
+                uip1_ranking_rel,
+                prop_ranking_rel,
+                avg_props
+            );
         }
 
         //Clean up LONG, move to SHORT
@@ -708,10 +746,10 @@ void ReduceDB::delete_from_lev2(uint32_t& deleted)
 
         if (i < keep_short
             || solver->clause_locked(*cl, offset)
-            || cl->stats.dump_no == 1
+            || cl->stats.dump_no == 0
         ) {
             if (solver->clause_locked(*cl, offset)
-                || cl->stats.dump_no == 1)
+                || cl->stats.dump_no == 0)
             {
                 keep_short++;
             }
@@ -739,11 +777,6 @@ void ReduceDB::reset_clause_dats(const uint32_t lev)
 
         tot_dumpno += cl->stats.dump_no;
         cl->stats.dump_no++;
-        #ifdef EXTENDED_FEATURES
-        cl->stats.rdb1_act_ranking_rel = act_ranking_rel;
-        cl->stats.rdb1_last_touched = cl->stats.last_touched;
-        cl->stats.rdb1_props_made = cl->stats.props_made;
-        #endif
         cl->stats.reset_rdb_stats(solver->conf.rdb_discount_factor);
     }
 

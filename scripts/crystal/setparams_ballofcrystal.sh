@@ -30,4 +30,5 @@ export LONGPERC=40
 export EXTRA_GEN_PANDAS_OPTS=""
 export bestf="../../scripts/crystal/best_features.txt"
 export bestf="../../scripts/crystal/best_features-rdb0-only.txt"
+export bestf_short="../../scripts/crystal/best_features-rdb0-only-short.txt"
 #export bestf="../../scripts/crystal/best_features-ext.txt"

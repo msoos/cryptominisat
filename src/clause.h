@@ -151,6 +151,10 @@ struct ClauseStats
     uint16_t dump_no = 0;
     uint32_t orig_glue = 0;
     uint32_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
+    uint32_t props_made_rank = 0;
+    uint32_t uip1_used_rank = 0;
+    float discounted_uip1_used = 0;
+    float discounted_props_made = 0;
 
     //for average and sum stats
     uint32_t sum_uip1_used = 0; ///N.o. times claue was used during 1st UIP generation for ALL TIME
@@ -165,10 +169,6 @@ struct ClauseStats
     int32_t ID = 0;
     uint32_t orig_connects_num_communities = 0;
     uint32_t connects_num_communities = 0;
-    uint32_t props_made_rank = 0;
-    uint32_t uip1_used_rank = 0;
-    float discounted_uip1_used = 0;
-    float discounted_props_made = 0;
     float discounted_uip1_used2 = 0;
     float discounted_props_made2 = 0;
 
@@ -181,13 +181,12 @@ struct ClauseStats
     void reset_rdb_stats(float discount_factor)
     {
         ttl = 0;
-
-        #ifdef STATS_NEEDED
         discounted_props_made *= discount_factor;
         discounted_props_made += (float)props_made*(1.0f-discount_factor);
         discounted_uip1_used *= discount_factor;
         discounted_uip1_used += (float)uip1_used*(1.0f-discount_factor);
 
+        #ifdef STATS_NEEDED
         discount_factor *= 0.5;
         discounted_props_made2 *= discount_factor;
         discounted_props_made2 += (float)props_made*(1.0f-discount_factor);

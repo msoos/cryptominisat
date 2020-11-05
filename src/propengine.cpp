@@ -233,9 +233,9 @@ bool PropEngine::prop_long_cl_any_order(
         if (update_bogoprops) {
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             c.stats.props_made++;
+            c.stats.sum_props_made++;
             #endif
             #ifdef STATS_NEEDED
-            c.stats.sum_props_made++;
             if (c.red())
                 propStats.propsLongRed++;
             else
@@ -399,9 +399,9 @@ PropBy PropEngine::propagate_any_order_fast()
             } else {
                 #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
                 c.stats.props_made++;
+                c.stats.sum_props_made++;
                 #endif
                 #ifdef STATS_NEEDED
-                c.stats.sum_props_made++;
                 if (c.red())
                     propStats.propsLongRed++;
                 else
