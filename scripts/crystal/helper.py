@@ -265,7 +265,7 @@ def helper_divide(dividend, divisor, df, features, verb, name=None):
     if name is None:
         name = "(" + dividend + "/" + divisor + ")"
 
-    df[name] = df[dividend].div(df[divisor]+0.000000001)
+    df[name] = df[dividend].div(df[divisor])
     return name
 
 def helper_larger_than(lhs, rhs, df, features, verb):
