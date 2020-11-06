@@ -131,6 +131,7 @@ float get_predict(Clause* cl, const Dat& dat, predict_type pred_type)
         dat.act_ranking_rel,
         0,
         0,
+        0,
         0
     );
     return val;

@@ -522,6 +522,7 @@ void ReduceDB::update_preds_lev2()
               SortRedClsAct(solver->cl_alloc));
     double size = (double)solver->longRedCls[2].size();
     double avg_props = (double)total_props/(double)size;
+    double avg_glue = (double)total_glue/(double)size;
     for(size_t i = 0
         ; i < solver->longRedCls[2].size()
         ; i++
@@ -549,6 +550,7 @@ void ReduceDB::update_preds_lev2()
                 uip1_ranking_rel,
                 prop_ranking_rel,
                 avg_props,
+                avg_glue,
                 cl->stats.pred_short_use,
                 cl->stats.pred_long_use,
                 cl->stats.pred_forever_topperc
@@ -572,6 +574,7 @@ void ReduceDB::clean_lev0_once_in_a_while(uint32_t& deleted)
         set_props_and_uip_ranks(solver->longRedCls[0]);
         double size = (double)solver->longRedCls[0].size();
         double avg_props = (double)total_props/(double)size;
+        double avg_glue = (double)total_glue/(double)size;
 
         std::sort(solver->longRedCls[0].begin(), solver->longRedCls[0].end(),
               SortRedClsAct(solver->cl_alloc));
@@ -594,7 +597,8 @@ void ReduceDB::clean_lev0_once_in_a_while(uint32_t& deleted)
                 act_ranking_rel,
                 uip1_ranking_rel,
                 prop_ranking_rel,
-                avg_props
+                avg_props,
+                avg_glue
             );
         }
 
@@ -666,6 +670,7 @@ void ReduceDB::clean_lev1_once_in_a_while(uint32_t& deleted)
         set_props_and_uip_ranks(solver->longRedCls[1]);
         double size = (double)solver->longRedCls[1].size();
         double avg_props = (double)total_props/(double)size;
+        double avg_glue = (double)total_glue/(double)size;
 
         std::sort(solver->longRedCls[1].begin(), solver->longRedCls[1].end(),
               SortRedClsAct(solver->cl_alloc));
@@ -687,7 +692,8 @@ void ReduceDB::clean_lev1_once_in_a_while(uint32_t& deleted)
                 act_ranking_rel,
                 uip1_ranking_rel,
                 prop_ranking_rel,
-                avg_props
+                avg_props,
+                avg_glue
             );
         }
 

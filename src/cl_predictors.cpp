@@ -82,6 +82,7 @@ void ClPredictors::set_up_input(
     const double   uip1_ranking_rel,
     const double   prop_ranking_rel,
     const double   avg_props,
+    const double   avg_glue,
     const uint32_t cols,
     float* at)
 {
@@ -96,23 +97,23 @@ void ClPredictors::set_up_input(
     //TODO
 
     at[x++] = uip1_ranking_rel;
-//     rdb0_uip1_ranking_rel
+   //rdb0.uip1_ranking_rel
 
     if (last_touched_diff == 0) {
         at[x++] = MISSING_VAL;
     } else {
         at[x++] = act_ranking_rel/(double)last_touched_diff;
     }
-//     (rdb0_act_ranking_rel/rdb0.last_touched_diff)
+    //(rdb0.act_ranking_rel/rdb0.last_touched_diff)
 
     at[x++] = prop_ranking_rel;
-//     rdb0.prop_ranking_rel
+    //rdb0.prop_ranking_rel
 
     at[x++] = cl->stats.props_made;
-//     rdb0.props_made
+    //rdb0.props_made
 
     at[x++] = (double)last_touched_diff;
-//     rdb0.last_touched_diff
+    //rdb0.last_touched_diff
 
     if (cols == PRED_COLS_SHORT) {
         assert(cols == x);
@@ -125,6 +126,13 @@ void ClPredictors::set_up_input(
         at[x++] = (double)cl->stats.sum_props_made/time_inside_solver;
     }
     //(rdb0.sum_props_made/cl.time_inside_solver)
+
+    if (time_inside_solver == 0 || avg_glue == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = ((double)cl->stats.sum_props_made/time_inside_solver)/avg_glue;
+    }
+    //((rdb0.sum_props_made/cl.time_inside_solver)/rdb0_common.avg_glue)
 
     if (time_inside_solver == 0 ||
         cl->stats.sum_uip1_used == 0 ||
@@ -144,9 +152,7 @@ void ClPredictors::set_up_input(
     }
     //(log2(rdb0.act_ranking_rel)/cl.orig_glue)
 
-    if (cl->stats.num_antecedents == 1) {
-        at[x++] = 0;
-    } else if (cl->stats.num_antecedents == 0 ||
+    if (cl->stats.num_antecedents == 0 ||
         cl->stats.num_total_lits_antecedents == 0)
     {
         at[x++] = MISSING_VAL;
@@ -155,12 +161,12 @@ void ClPredictors::set_up_input(
     }
     //(log2(cl.num_antecedents)/cl.num_total_lits_antecedents)
 
-    if (cl->stats.glue_hist_long == 0) {
+    if (cl->stats.glue_before_minim == 0) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = (double)cl->size()/(double)cl->stats.glue_hist_long;
+        at[x++] = (double)cl->stats.glue_hist_long/(double)cl->stats.glue_before_minim;
     }
-    //(rdb0.size/cl.glue_hist_long)
+    //(cl.glue_hist_long/cl.glue_before_minim)
 
     if (cl->is_ternary_resolvent == 0) {
         at[x++] = MISSING_VAL;
@@ -227,7 +233,8 @@ float ClPredictors::predict(
     const double   act_ranking_rel,
     const double   uip1_ranking_rel,
     const double   prop_ranking_rel,
-    const double   avg_props)
+    const double   avg_props,
+    const double   avg_glue)
 {
     // convert to DMatrix
     set_up_input(
@@ -237,6 +244,7 @@ float ClPredictors::predict(
         uip1_ranking_rel,
         prop_ranking_rel,
         avg_props,
+        avg_glue,
         PRED_COLS,
         train);
     int rows=1;
@@ -262,6 +270,7 @@ void ClPredictors::predict(
     const double   uip1_ranking_rel,
     const double   prop_ranking_rel,
     const double   avg_props,
+    const double   avg_glue,
     float& p_short,
     float& p_long,
     float& p_forever)
@@ -274,6 +283,7 @@ void ClPredictors::predict(
         uip1_ranking_rel,
         prop_ranking_rel,
         avg_props,
+        avg_glue,
         PRED_COLS,
         train);
     int ret;
