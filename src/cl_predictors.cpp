@@ -120,6 +120,13 @@ void ClPredictors::set_up_input(
         return;
     }
 
+    if (cl->stats.conflicts_made == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = (double)cl->stats.glue/(double)cl->stats.conflicts_made;
+    }
+    //(rdb0.glue/rdb0.conflicts_made)
+
     if (time_inside_solver  == 0) {
         at[x++] = MISSING_VAL;
     } else {

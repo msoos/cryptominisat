@@ -220,17 +220,17 @@ bool PropEngine::prop_long_cl_any_order(
     assert(!c.freed());
     #endif
 
-    if (prop_normal_helper(c, offset, j, p) == PROP_NOTHING) {
+    if (prop_normal_helper<update_bogoprops>(c, offset, j, p) == PROP_NOTHING) {
         return true;
     }
 
     // Did not find watch -- clause is unit under assignment:
     *j++ = *i;
     if (value(c[0]) == l_False) {
-        handle_normal_prop_fail(c, offset, confl);
+        handle_normal_prop_fail<update_bogoprops>(c, offset, confl);
         return false;
     } else {
-        if (update_bogoprops) {
+        if (!update_bogoprops) {
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             c.stats.props_made++;
             c.stats.sum_props_made++;
@@ -381,8 +381,10 @@ PropBy PropEngine::propagate_any_order_fast()
             *j++ = w;
             if (value(c[0]) == l_False) {
                 confl = PropBy(offset);
-                #ifdef STATS_NEEDED
+                #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
                 c.stats.conflicts_made++;
+                #endif
+                #ifdef STATS_NEEDED
                 if (c.red())
                     lastConflictCausedBy = ConflCausedBy::longred;
                 else

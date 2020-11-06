@@ -644,14 +644,14 @@ PropResult HyperEngine::prop_normal_cl_with_ancestor_info(
     const ClOffset offset = i->get_offset();
     Clause& c = *cl_alloc.ptr(offset);
 
-    PropResult ret = prop_normal_helper(c, offset, j, p);
+    PropResult ret = prop_normal_helper<true>(c, offset, j, p);
     if (ret != PROP_TODO)
         return ret;
 
     // Did not find watch -- clause is unit under assignment:
     *j++ = *i;
     if (value(c[0]) == l_False) {
-        return handle_normal_prop_fail(c, offset, confl);
+        return handle_normal_prop_fail<true>(c, offset, confl);
     }
 
     add_hyper_bin(c[0], c);

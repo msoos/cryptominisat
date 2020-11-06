@@ -185,12 +185,14 @@ protected:
     PropBy propagate_any_order_fast();
     template<bool update_bogoprops>
     PropBy propagate_any_order();
+    template<bool update_bogoprops>
     PropResult prop_normal_helper(
         Clause& c
         , ClOffset offset
         , Watched*& j
         , const Lit p
     );
+    template<bool update_bogoprops>
     PropResult handle_normal_prop_fail(Clause& c, ClOffset offset, PropBy& confl);
 
     /////////////////
@@ -331,6 +333,7 @@ uint32_t PropEngine::calc_glue(const T& ps)
     return nblevels;
 }
 
+template<bool update_bogoprops>
 inline PropResult PropEngine::prop_normal_helper(
     Clause& c
     , ClOffset offset
@@ -338,7 +341,9 @@ inline PropResult PropEngine::prop_normal_helper(
     , const Lit p
 ) {
     #ifdef STATS_NEEDED
-    c.stats.clause_looked_at++;
+    if (!update_bogoprops) {
+        c.stats.clause_looked_at++;
+    }
     #endif
 
     // Make sure the false literal is data[1]:
@@ -373,9 +378,10 @@ inline PropResult PropEngine::prop_normal_helper(
 }
 
 
+template<bool update_bogoprops>
 inline PropResult PropEngine::handle_normal_prop_fail(
     Clause&
-    #ifdef STATS_NEEDED
+    #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
     c
     #endif
     , ClOffset offset
@@ -392,8 +398,12 @@ inline PropResult PropEngine::handle_normal_prop_fail(
     #endif //VERBOSE_DEBUG_FULLPROP
 
     //Update stats
+    #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+    if (!update_bogoprops) {
+        c.stats.conflicts_made++;
+    }
+    #endif
     #ifdef STATS_NEEDED
-    c.stats.conflicts_made++;
     if (c.red())
         lastConflictCausedBy = ConflCausedBy::longred;
     else

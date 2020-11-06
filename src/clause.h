@@ -155,6 +155,7 @@ struct ClauseStats
     uint32_t uip1_used_rank = 0;
     float discounted_uip1_used3 = 0;
     float discounted_props_made = 0;
+    uint32_t conflicts_made = 0; ///<Number of times caused conflict
 
     //for average and sum stats
     uint32_t sum_uip1_used = 0; ///N.o. times claue was used during 1st UIP generation for ALL TIME
@@ -175,7 +176,6 @@ struct ClauseStats
     float discounted_props_made3 = 0;
 
     AtecedentData<uint16_t> antec_data;
-    uint32_t conflicts_made = 0; ///<Number of times caused conflict
     uint32_t clause_looked_at = 0; ///<Number of times the clause has been deferenced during propagation
     #endif
 
@@ -209,9 +209,9 @@ struct ClauseStats
         discounted_props_made3 += (float)props_made*(1.0f-discount_factor);
 
         clause_looked_at = 0;
-        conflicts_made = 0;
         antec_data.clear();
         #endif
+        conflicts_made = 0;
         uip1_used = 0;
         props_made = 0;
         ttl = 0;
@@ -237,11 +237,11 @@ struct ClauseStats
         }
         ret.uip1_used = first.uip1_used + second.uip1_used;
         ret.props_made = first.props_made + second.props_made;
+        ret.conflicts_made = first.conflicts_made + second.conflicts_made;
         #endif
 
         #ifdef STATS_NEEDED
         ret.ID = 0; //don't track combined clauses
-        ret.conflicts_made = first.conflicts_made + second.conflicts_made;
         ret.clause_looked_at = first.clause_looked_at + second.clause_looked_at;
         #endif
 

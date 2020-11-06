@@ -24,7 +24,7 @@ THE SOFTWARE.
 #define __CLPREDICTOR_H__
 
 #define PRED_COLS_SHORT 5
-#define PRED_COLS 15
+#define PRED_COLS 16
 
 
 #include <vector>
