@@ -109,8 +109,12 @@ void ClPredictors::set_up_input(
     at[x++] = prop_ranking_rel;
     //rdb0.prop_ranking_rel
 
-    at[x++] = cl->stats.props_made;
-    //rdb0.props_made
+    if (avg_props == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = (double)cl->stats.props_made/(double)avg_props;
+    }
+    //(rdb0.props_made/rdb0_common.avg_props)
 
     at[x++] = (double)last_touched_diff;
     //rdb0.last_touched_diff
