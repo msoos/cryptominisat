@@ -357,7 +357,7 @@ void ReduceDB::dump_sql_cl_data(
         );
         added_to_db++;
         cl->stats.dump_no++;
-        cl->stats.reset_rdb_stats(solver->conf.rdb_discount_factor);
+        cl->stats.reset_rdb_stats();
     }
     solver->sqlStats->end_transaction();
 
@@ -777,7 +777,7 @@ void ReduceDB::reset_clause_dats(const uint32_t lev)
 
         tot_dumpno += cl->stats.dump_no;
         cl->stats.dump_no++;
-        cl->stats.reset_rdb_stats(solver->conf.rdb_discount_factor);
+        cl->stats.reset_rdb_stats();
     }
 
     if (solver->conf.verbosity) {

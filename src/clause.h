@@ -153,7 +153,7 @@ struct ClauseStats
     uint32_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
     uint32_t props_made_rank = 0;
     uint32_t uip1_used_rank = 0;
-    float discounted_uip1_used = 0;
+    float discounted_uip1_used3 = 0;
     float discounted_props_made = 0;
 
     //for average and sum stats
@@ -169,8 +169,10 @@ struct ClauseStats
     int32_t ID = 0;
     uint32_t orig_connects_num_communities = 0;
     uint32_t connects_num_communities = 0;
+    float discounted_uip1_used = 0;
     float discounted_uip1_used2 = 0;
     float discounted_props_made2 = 0;
+    float discounted_props_made3 = 0;
 
     AtecedentData<uint16_t> antec_data;
     uint32_t conflicts_made = 0; ///<Number of times caused conflict
@@ -178,26 +180,41 @@ struct ClauseStats
     #endif
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
-    void reset_rdb_stats(float discount_factor)
+    void reset_rdb_stats()
     {
-        ttl = 0;
+        float discount_factor;
+        discount_factor = 0.8;
         discounted_props_made *= discount_factor;
         discounted_props_made += (float)props_made*(1.0f-discount_factor);
+
+        discount_factor = 0.90;
+        discounted_uip1_used3 *= discount_factor;
+        discounted_uip1_used3 += (float)uip1_used*(1.0f-discount_factor);
+
+        #ifdef STATS_NEEDED
+        discount_factor = 0.8;
         discounted_uip1_used *= discount_factor;
         discounted_uip1_used += (float)uip1_used*(1.0f-discount_factor);
 
-        #ifdef STATS_NEEDED
-        discount_factor *= 0.5;
+        discount_factor = 0.4;
         discounted_props_made2 *= discount_factor;
         discounted_props_made2 += (float)props_made*(1.0f-discount_factor);
+
+        discount_factor = 0.4;
         discounted_uip1_used2 *= discount_factor;
         discounted_uip1_used2 += (float)uip1_used*(1.0f-discount_factor);
+
+        discount_factor = 0.90;
+        discounted_props_made3 *= discount_factor;
+        discounted_props_made3 += (float)props_made*(1.0f-discount_factor);
+
         clause_looked_at = 0;
         conflicts_made = 0;
         antec_data.clear();
         #endif
         uip1_used = 0;
         props_made = 0;
+        ttl = 0;
     }
     #endif
 

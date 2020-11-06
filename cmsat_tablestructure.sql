@@ -92,7 +92,9 @@ CREATE TABLE `reduceDB` (
   `discounted_uip1_used` float(20) NOT NULL,
   `discounted_props_made` float(20) NOT NULL,
   `discounted_uip1_used2` float(20) NOT NULL,
-  `discounted_props_made2` float(20) NOT NULL
+  `discounted_props_made2` float(20) NOT NULL,
+  `discounted_uip1_used3` float(20) NOT NULL,
+  `discounted_props_made3` float(20) NOT NULL
 );
 
 DROP TABLE IF EXISTS `restart`;

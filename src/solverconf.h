@@ -256,7 +256,6 @@ class DLL_PUBLIC SolverConf
 
         #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
         unsigned every_lev3_reduce;
-        float rdb_discount_factor;
         #endif
 
         uint32_t must_touch_lev1_within;

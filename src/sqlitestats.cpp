@@ -767,6 +767,8 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_double(stmtReduceDB, bindAt++, (double)cl->stats.discounted_props_made);
     sqlite3_bind_double(stmtReduceDB, bindAt++, (double)cl->stats.discounted_uip1_used2);
     sqlite3_bind_double(stmtReduceDB, bindAt++, (double)cl->stats.discounted_props_made2);
+    sqlite3_bind_double(stmtReduceDB, bindAt++, (double)cl->stats.discounted_uip1_used3);
+    sqlite3_bind_double(stmtReduceDB, bindAt++, (double)cl->stats.discounted_props_made3);
 
     run_sqlite_step(stmtReduceDB, "reduceDB", bindAt);
 }

@@ -8,7 +8,7 @@ rdb0.last_touched_diff
 (log2(rdb0.act_ranking_rel)/cl.orig_glue)
 (log2(cl.num_antecedents)/cl.num_total_lits_antecedents)
 (rdb0.size/cl.glue_hist_long)
-(rdb0.discounted_uip1_used/rdb0.is_ternary_resolvent)
+(rdb0.discounted_uip1_used3/rdb0.is_ternary_resolvent)
 (rdb0.discounted_props_made/cl.num_resolutions_hist_lt)
 ((rdb0.sum_uip1_used/cl.time_inside_solver)/rdb0.discounted_props_made)
 (rdb0.glue/(rdb0.props_made/rdb0_common.avg_props))

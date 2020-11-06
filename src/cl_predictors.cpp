@@ -165,9 +165,9 @@ void ClPredictors::set_up_input(
     if (cl->is_ternary_resolvent == 0) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = (double)cl->stats.discounted_uip1_used/(double)cl->is_ternary_resolvent;
+        at[x++] = (double)cl->stats.discounted_uip1_used3/(double)cl->is_ternary_resolvent;
     }
-    //(rdb0.discounted_uip1_used/rdb0.is_ternary_resolvent)
+    //(rdb0.discounted_uip1_used3/rdb0.is_ternary_resolvent)
 
     if (cl->stats.num_resolutions_hist_lt == 0) {
         at[x++] = MISSING_VAL;

@@ -88,7 +88,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , every_lev2_reduce(15000) // cleared regularly
         #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
         , every_lev3_reduce(10000)
-        , rdb_discount_factor(0.8f)
         #endif
         , must_touch_lev1_within(70000)
 
