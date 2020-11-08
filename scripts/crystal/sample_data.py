@@ -73,10 +73,10 @@ class QueryDatRem(helper.QueryHelper):
         WHERE used_later>0
         ORDER BY used_later ASC
         LIMIT 1
-        OFFSET (SELECT
+        OFFSET round((SELECT
          COUNT(*)
         FROM used_later_{name}
-        WHERE used_later>0) * (100-{perc}) / 100 - 1;
+        WHERE used_later>0) * ((100-{perc}) / 100.0)) - 1;
         """
         for perc in range(0,100, 5):
             myq = q.format(name=name, perc=perc)
@@ -89,9 +89,9 @@ class QueryDatRem(helper.QueryHelper):
         FROM used_later_{name}
         ORDER BY used_later ASC
         LIMIT 1
-        OFFSET (SELECT
+        OFFSET round((SELECT
          COUNT(*)
-        FROM used_later_{name}) * (100-{perc}) / 100 - 1;
+        FROM used_later_{name}) * ((100.0-{perc}) / 100.0)) - 1;
         """
         for perc in range(0,100, 5):
             myq = q.format(name=name, perc=perc)
