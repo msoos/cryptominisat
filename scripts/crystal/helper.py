@@ -158,7 +158,7 @@ class QueryFill (QueryHelper):
         WHERE
         rdb0.clauseID != 0
         and (cl_last_in_solver.conflicts >= (rdb0.conflicts + {duration} + {offset})
-        or 1=={forever})
+        or (1=={forever}) and cl_last_in_solver.conflicts >= (rdb0.conflicts + 5000))
 
         group by rdb0.clauseID, rdb0.conflicts;"""
 
