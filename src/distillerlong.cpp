@@ -55,12 +55,21 @@ bool DistillerLong::distill(const bool red, bool fullstats)
             goto end;
         }
     } else {
+        #ifdef FINAL_PREDICTOR
+        if (!distill_long_cls_all(solver->longRedCls[0], 3.0)) {
+            goto end;
+        }
+        if (!distill_long_cls_all(solver->longRedCls[1], 3.0)) {
+            goto end;
+        }
+        #else
         if (!distill_long_cls_all(solver->longRedCls[0], 10.0)) {
             goto end;
         }
         if (!distill_long_cls_all(solver->longRedCls[1], solver->conf.distill_red_tier1_ratio)) {
             goto end;
         }
+        #endif
     }
 
 end:
@@ -97,6 +106,8 @@ bool DistillerLong::go_through_clauses(
     vector<ClOffset>& cls
 ) {
     bool time_out = false;
+    uint32_t skipped = 0;
+    uint32_t tried = 0;
     vector<ClOffset>::iterator i, j;
     i = j = cls.begin();
     for (vector<ClOffset>::iterator end = cls.end()
@@ -137,7 +148,12 @@ bool DistillerLong::go_through_clauses(
         maxNumProps -= 5;
 
         //If we already tried this clause, then move to next
-        if (cl.getdistilled() || cl._xor_is_detached) {
+        if (cl.getdistilled() || cl._xor_is_detached
+#ifdef FINAL_PREDICTOR
+            || cl.stats.glue > 3
+#endif
+        ) {
+            skipped++;
             *j++ = *i;
             continue;
         }
@@ -157,6 +173,7 @@ bool DistillerLong::go_through_clauses(
         }
 
         //Try to distill clause
+        tried++;
         offset2 = try_distill_clause_and_return_new(
             offset
             , cl.red()
@@ -169,6 +186,8 @@ bool DistillerLong::go_through_clauses(
         }
     }
     cls.resize(cls.size()- (i-j));
+//     cout << "Did: " << tried << endl;
+//     cout << "Skipped: " << skipped << endl;
 
     return time_out;
 }
