@@ -823,7 +823,7 @@ void ReduceDB::reset_clause_dats(const uint32_t lev)
     if (solver->conf.verbosity) {
         cout << "c [DBCL pred]"
         << " lev: " << lev
-        << " avg dumpno: " << std::fixed << std::setprecision(2)
+        << " avg dumpno: " << std::fixed << std::setprecision(2) << std::setw(6)
         << ratio_for_stat(tot_dumpno, solver->longRedCls[lev].size())
         << endl;
     }
@@ -889,15 +889,15 @@ void ReduceDB::handle_lev2_predictor()
         cout
         << "c [DBCL pred] lev0: " << std::setw(10) << solver->longRedCls[0].size()
         << " del: " << std::setw(7) << forever_deleted
-        << " del avg dumpno: " << mydiv(forever_deleted_dump_no, forever_deleted)
+        << " del avg dumpno: " << std::setw(6) << mydiv(forever_deleted_dump_no, forever_deleted)
         << endl
         << "c [DBCL pred] lev1: " << std::setw(10) << solver->longRedCls[1].size()
         << " del: " << std::setw(7) << long_deleted
-        << " del avg dumpno: " << mydiv(long_deleted_dump_no, long_deleted)
+        << " del avg dumpno: " << std::setw(6) << mydiv(long_deleted_dump_no, long_deleted)
         << endl
         << "c [DBCL pred] lev2: " << std::setw(10) << solver->longRedCls[2].size()
         << " del: " << std::setw(7) << short_deleted
-        << " del avg dumpno: " << mydiv(short_deleted_dump_no, short_deleted)
+        << " del avg dumpno: " << std::setw(6) << mydiv(short_deleted_dump_no, short_deleted)
         << endl
         << "c [DBCL pred] long-upgrade:         "  << std::setw(7)  << long_upgraded
         << endl;
