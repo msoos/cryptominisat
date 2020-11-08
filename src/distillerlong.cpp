@@ -47,7 +47,6 @@ bool DistillerLong::distill(const bool red, bool fullstats)
 {
     assert(solver->ok);
     numCalls++;
-    Stats other;
     runStats.clear();
 
 
@@ -65,7 +64,6 @@ bool DistillerLong::distill(const bool red, bool fullstats)
     }
 
 end:
-    runStats += other;
     globalStats += runStats;
     if (solver->conf.verbosity && fullstats) {
         if (solver->conf.verbosity >= 3)
