@@ -74,9 +74,9 @@ private:
     uint32_t num_times_pred_called = 0;
     void update_preds_lev2();
     void pred_move_to_lev1_and_lev0();
-    void delete_from_lev2(uint32_t& deleted);
-    void clean_lev1_once_in_a_while(uint32_t& deleted);
-    void clean_lev0_once_in_a_while(uint32_t& deleted);
+    void delete_from_lev2();
+    void clean_lev1_once_in_a_while();
+    void clean_lev0_once_in_a_while();
     #endif
 
 
@@ -86,6 +86,16 @@ private:
     uint32_t total_uip1_used = 0;
     uint32_t median_props;
     uint32_t median_uip1_used;
+
+    uint32_t short_deleted;
+    uint32_t long_deleted;
+    uint32_t forever_deleted;
+
+    uint32_t short_deleted_dump_no;
+    uint32_t long_deleted_dump_no;
+    uint32_t forever_deleted_dump_no;
+
+    uint32_t long_upgraded = 0;
 };
 
 }
