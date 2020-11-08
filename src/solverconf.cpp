@@ -75,8 +75,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , polar_best_multip_n(1000)
 
         //Clause cleaning
-        , pred_short_size_mult(0.5)
-        , pred_long_size_mult(0.5)
+        , pred_short_size_mult(1.5)
+        , pred_long_size_mult(0.25)
         , pred_forever_size_mult(0.25)
         , pred_long_chunk_mult(1.0)
         , pred_forever_chunk_mult(1.0)

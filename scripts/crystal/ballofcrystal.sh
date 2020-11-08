@@ -158,7 +158,7 @@ cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 ########################
 # Denormalize the data into a Pandas Table, label it and sample it
 ########################
-../cldata_gen_pandas.py "${FNAMEOUT}-min.db" --limit "$FIXED" ${EXTRA_GEN_PANDAS_OPTS}
+../cldata_gen_pandas.py "${FNAMEOUT}-min.db" --cut1 10 --cut2 40 --limit "$FIXED" ${EXTRA_GEN_PANDAS_OPTS}
 # ../vardata_gen_pandas.py "${FNAMEOUT}.db" --limit 1000
 
 mkdir -p ../../src/predict
@@ -180,9 +180,9 @@ rm -f ../../src/predict/*.h
 #../vardata_predict.py mydata.db-vardata.dat --picktimeonly -q 2 --only 0.99
 #../vardata_predict.py vardata-comb --final -q 20 --basedir ../src/predict/ --depth 7 --tree
 
-../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier short --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf_short
-../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier long --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf
-../cldata_predict.py "${FNAMEOUT}-min.db-cldata-forever_div-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier forever --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf --topperc
+../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-cut1-10.0-cut2-40.0-limit-${FIXED}.dat" --tier short --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf_short
+../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-10.0-cut2-40.0-limit-${FIXED}.dat" --tier long --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf
+../cldata_predict.py "${FNAMEOUT}-min.db-cldata-forever_div-cut1-10.0-cut2-40.0-limit-${FIXED}.dat" --tier forever --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf --topperc
 
 ############################
 # To get feature importances
