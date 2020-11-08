@@ -605,6 +605,12 @@ if __name__ == "__main__":
     parser.add_option("--fair", "-f", action="store_true", default=False,
                       dest="fair", help="Fair sampling. NOT DEFAULT.")
 
+    # lengths of short/long
+    parser.add_option("--short", default="15000", type=str,
+                      dest="short", help="Short duration. Default: %default")
+    parser.add_option("--long", default="70000", type=str,
+                      dest="long", help="Long duration. Default: %default")
+
     (options, args) = parser.parse_args()
 
     if len(args) < 1:
@@ -632,8 +638,8 @@ if __name__ == "__main__":
             helper.dangerous(q.c)
             q.delete_and_create_used_laters()
             q.create_indexes(verbose=options.verbose)
-            q.fill_used_later_X("short", duration=10000)
-            q.fill_used_later_X("long", duration=50000)
+            q.fill_used_later_X("short", duration=options.short)
+            q.fill_used_later_X("long", duration=options.long)
             q.fill_used_later_X("forever", duration=1000*1000*1000, forever=True)
             q.fill_used_later_X("forever_div", duration=1000*1000*1000, forever=True, divide=True)
         with QueryDatRem(args[0]) as q:
@@ -660,8 +666,8 @@ if __name__ == "__main__":
         helper.dangerous(q.c)
         q.delete_and_create_used_laters()
         q.create_indexes(verbose=options.verbose, used_clauses="used_clauses_red")
-        q.fill_used_later_X("short", duration=10000, used_clauses="used_clauses_red")
-        q.fill_used_later_X("long", duration=50000, used_clauses="used_clauses_red")
+        q.fill_used_later_X("short", duration=options.short, used_clauses="used_clauses_red")
+        q.fill_used_later_X("long", duration=options.long, used_clauses="used_clauses_red")
         q.fill_used_later_X("forever", duration=1000*1000*1000, used_clauses="used_clauses_red",
                             forever=True)
         q.fill_used_later_X("forever_div", duration=1000*1000*1000, used_clauses="used_clauses_red",

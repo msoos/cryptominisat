@@ -603,9 +603,9 @@ void ReduceDB::clean_lev0_once_in_a_while()
         }
 
         //Clean up FOREVER, move to LONG
-        const uint32_t checked_every = solver->conf.pred_forever_check_every_n * 10000;
+        const uint32_t checked_every = solver->conf.pred_forever_check_every_n * solver->conf.every_lev3_reduce;
 //         if (false) {
-//             const uint32_t orig_keep_forever = 2000.0*std::sqrt((double)solver->sumConflicts/10000.0) *
+//             const uint32_t orig_keep_forever = 2000.0*std::sqrt((double)solver->sumConflicts/(double)solver->conf.every_lev3_reduce) *
 //         (double)solver->conf.pred_forever_size_mult;
 //             uint32_t keep_forever = orig_keep_forever;
 //             std::sort(solver->longRedCls[0].begin(), solver->longRedCls[0].end(),
@@ -706,7 +706,7 @@ void ReduceDB::clean_lev1_once_in_a_while()
                 avg_glue
             );
         }
-        const uint32_t checked_every = solver->conf.pred_long_check_every_n * 10000;
+        const uint32_t checked_every = solver->conf.pred_long_check_every_n * solver->conf.every_lev3_reduce;
 
         //Move to FOREVER
         uint32_t j = 0;

@@ -1957,7 +1957,7 @@ void Searcher::check_calc_satzilla_features(bool force)
 {
     #ifdef STATS_NEEDED
     if (last_satzilla_feature_calc_confl == 0
-        || (last_satzilla_feature_calc_confl + 10000) < sumConflicts
+        || (last_satzilla_feature_calc_confl + solver->conf.every_lev3_reduce) < sumConflicts
         || force
     ) {
         last_satzilla_feature_calc_confl = sumConflicts+1;
@@ -1979,7 +1979,7 @@ void Searcher::check_calc_vardist_features(bool force)
 
     #ifdef STATS_NEEDED_BRANCH
     if (last_vardist_feature_calc_confl == 0
-        || (last_vardist_feature_calc_confl + 10000) < sumConflicts
+        || (last_vardist_feature_calc_confl + solver->conf.every_lev3_reduce) < sumConflicts
         || force
     ) {
         last_vardist_feature_calc_confl = sumConflicts+1;
