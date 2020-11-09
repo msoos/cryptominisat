@@ -341,6 +341,7 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
         }
         cl->stats.glue = new_glue;
 
+        #ifndef FINAL_PREDICTOR
         if (cl->stats.locked_for_data_gen) {
             assert(cl->stats.which_red_array == 0);
         } else if (new_glue <= conf.glue_put_lev0_if_below_or_eq
@@ -354,6 +355,7 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
             //move to lev1 if low glue
             cl->stats.which_red_array = 1;
         }
+        #endif
      }
 }
 

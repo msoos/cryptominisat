@@ -245,7 +245,9 @@ struct ClauseStats
         ret.clause_looked_at = first.clause_looked_at + second.clause_looked_at;
         #endif
 
+        #ifndef FINAL_PREDICTOR
         ret.which_red_array = std::min(first.which_red_array, second.which_red_array);
+        #endif
 
         return ret;
     }

@@ -1674,7 +1674,13 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
         ClauseStats stats;
         stats.last_touched = solver->sumConflicts;
         stats.glue = solver->conf.glue_put_lev1_if_below_or_eq;
+
+        #ifndef FINAL_PREDICTOR
         stats.which_red_array = 1;
+        #else
+        stats.which_red_array = 2;
+        #endif
+
         #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
         stats.introduced_at_conflict = solver->sumConflicts;
         #endif
@@ -1704,7 +1710,7 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
             break;
 
         if (newCl != NULL) {
-            #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+            #ifdef STATS_NEEDED
             newCl->stats.locked_for_data_gen =
                 solver->mtrand.randDblExc() < solver->conf.lock_for_data_gen_ratio;
             assert(

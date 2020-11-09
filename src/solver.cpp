@@ -787,7 +787,7 @@ bool Solver::addClauseInt(vector<Lit>& ps, bool red)
                 cl->stats.which_red_array = 1;
             }
             #else
-            cl->stats.which_red_array = 3;
+            cl->stats.which_red_array = 2;
             #endif
             longRedCls[cl->stats.which_red_array].push_back(offset);
         }
