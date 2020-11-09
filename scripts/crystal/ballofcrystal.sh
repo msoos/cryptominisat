@@ -182,7 +182,7 @@ rm -f ../../src/predict/*.h
 
 ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-cut1-10.0-cut2-40.0-limit-${FIXED}.dat" --tier short --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf_short
 ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-10.0-cut2-40.0-limit-${FIXED}.dat" --tier long --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf
-../cldata_predict.py "${FNAMEOUT}-min.db-cldata-forever_div-cut1-10.0-cut2-40.0-limit-${FIXED}.dat" --tier forever --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf --topperc
+../cldata_predict.py "${FNAMEOUT}-min.db-cldata-${myforever}-cut1-10.0-cut2-40.0-limit-${FIXED}.dat" --tier ${myforever} --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf --topperc
 
 ############################
 # To get feature importances
@@ -191,8 +191,8 @@ rm -f ../../src/predict/*.h
 # ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier long --top 200 --xgboost --nocomputed > output_long_nocomputed
 # ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier short --top 200 --xgboost --allcomputed > output_short
 # ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier short --top 200 --xgboost --nocomputed > output_short_nocomputed
-# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-forever_div-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier forever --top 2000 --xgboost --nocomputed --topperc > output_forever_nocomputed
-# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-forever_div-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier forever --top 2000 --xgboost --allcomputed --topperc > output_forever
+# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-${myforever}-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier ${myforever} --top 2000 --xgboost --nocomputed --topperc > "output_${myforever}_nocomputed"
+# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-${myforever}-cut1-20.0-cut2-50.0-limit-${FIXED}.dat" --tier ${myforever} --top 2000 --xgboost --allcomputed --topperc > "output_${myforever}"
 
 
 )
