@@ -443,7 +443,7 @@ def calc_regression_error(data, features, to_predict, clf, toprint,
     print("Mean squared error is: ", main_error)
 
     for start,end in [(0,10), (1,10), (10, 100), (100, 1000), (1000,10000), (10000, 1000000)]:
-        x = "--> Strata  %10d <= %20s < %10d " % (start, to_predict, end)
+        x = "--> Strata  %8d <= %34s < %8d " % (start, to_predict, end)
         myfilt = data[(data[to_predict] >= start) & (data[to_predict] < end)]
         X_data = myfilt[features]
         y_data = myfilt[to_predict]
@@ -457,7 +457,7 @@ def calc_regression_error(data, features, to_predict, clf, toprint,
         print("%s %s msqe: %13.1lf" % (x, y, error))
 
     for start,end in [(0,3), (3,8), (8, 15), (15, 25), (25,50), (50, 100), (100, 1000000)]:
-        x = "--> Strata  %10d <= %20s < %10d " % (start, "rdb0.glue", end)
+        x = "--> Strata  %8d <= %34s < %8d " % (start, "rdb0.glue", end)
         myfilt = data[(data["rdb0.glue"] >= start) & (data["rdb0.glue"] < end)]
         X_data = myfilt[features]
         y_data = myfilt[to_predict]
