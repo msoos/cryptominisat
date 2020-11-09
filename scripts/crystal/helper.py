@@ -747,9 +747,9 @@ def cldata_add_computed_features(df, verbose, short=False):
                         larger_than(col, divisor)
 
     # smaller-or-greater comparisons
-    if not short:
-        larger_than("cl.antec_sum_size_hist_lt", "cl.num_total_lits_antecedents")
-        larger_than("cl.antec_overlap_hist_lt", "cl.num_overlap_literals")
+    #if not short:
+        #larger_than("cl.antec_sum_size_hist_lt", "cl.num_total_lits_antecedents")
+        #larger_than("cl.antec_overlap_hist_lt", "cl.num_overlap_literals")
 
     # print("flatten/list...")
     #old = set(df.columns.values.flatten().tolist())
