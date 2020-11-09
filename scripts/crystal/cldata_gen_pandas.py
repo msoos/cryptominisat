@@ -385,8 +385,9 @@ def dump_dataframe(df, name):
 
     fname = "%s.dat" % name
     print("Dumping pandas data to:", fname)
+    df_float = df.convert_dtypes()
     with open(fname, "wb") as f:
-        pickle.dump(df, f)
+        pickle.dump(df_float, f)
 
 
 def one_database(dbfname):
