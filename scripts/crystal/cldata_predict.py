@@ -384,7 +384,8 @@ class Learner:
                        "x.sum_cl_use",
                        "x.used_later_short",
                        "x.used_later_long",
-                       "x.used_later_forever"])
+                       "x.used_later_forever",
+                       "x.used_later_forever_div"])
         else:
             features = helper.get_features(options.best_features_fname)
 
