@@ -564,6 +564,12 @@ if __name__ == "__main__":
         helper.cldata_add_minimum_computed_features(df, options.verbose)
         helper.delete_none_features(df)
 
+    for name, mytype in df.dtypes.items():
+        #print(mytype)
+        #print(type(mytype))
+        if str(mytype) == str("Int64"):
+            df[name] = df[name].astype(float)
+
     print("Filling NA with MISSING..")
     df.replace(np.NINF, MISSING, inplace=True)
     df.replace(np.NaN, MISSING, inplace=True)
