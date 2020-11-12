@@ -87,7 +87,10 @@ class Query:
                 b2 = f.read(8)
                 cl_id = struct.unpack("<q", b1)[0]
                 conf = struct.unpack("<q", b2)[0]
-                self.cl_used.append((cl_id, conf))
+                dat = (cl_id, conf)
+                if options.verbose:
+                    print("Use:", dat)
+                self.cl_used.append(dat)
                 self.cl_used_num += 1
                 self.cl_used_total += 1
                 if self.cl_used_num > 10000:
