@@ -1720,7 +1720,7 @@ Clause* Searcher::handle_last_confl(
         //Make it more-than-linearly less
         decaying_ratio = ::pow(decaying_ratio, 1.3);
     }
-    if (myrnd <= (conf.dump_individual_cldata_ratio*decaying_ratio)) {
+    if (learnt_clause.size() > 2 && myrnd <= (conf.dump_individual_cldata_ratio*decaying_ratio)) {
         to_dump = true;
     }
     #endif
