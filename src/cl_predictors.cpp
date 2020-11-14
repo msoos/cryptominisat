@@ -51,7 +51,7 @@ ClPredictors::ClPredictors()
 
     for(int i = 0; i < 3; i++) {
         safe_xgboost(XGBoosterSetParam(handles[i], "nthread", "1"));
-        safe_xgboost(XGBoosterSetParam(handles[i], "verbosity", "3"));
+        //safe_xgboost(XGBoosterSetParam(handles[i], "verbosity", "3"));
     }
 }
 
