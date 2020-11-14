@@ -8,7 +8,7 @@ rdb0.ttl_stats
 (rdb0.sum_props_made/cl.time_inside_solver)
 ((rdb0.sum_props_made/cl.time_inside_solver)/rdb0_common.avg_glue)
 (log2(cl.glue_before_minim)/(rdb0.sum_uip1_used/cl.time_inside_solver))
-(log2(rdb0.act_ranking_rel)/cl.orig_glue)
+cl.orig_glue
 (log2(cl.num_antecedents)/cl.num_total_lits_antecedents)
 (cl.glue_hist_long/cl.glue_before_minim)
 (rdb0.discounted_uip1_used3/rdb0.is_ternary_resolvent)

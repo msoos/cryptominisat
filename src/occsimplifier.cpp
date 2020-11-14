@@ -1674,11 +1674,14 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
         ClauseStats stats;
         stats.last_touched = solver->sumConflicts;
         stats.glue = solver->conf.glue_put_lev1_if_below_or_eq;
+        #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+        stats.orig_glue = 0;
+        #endif
 
-        #ifndef FINAL_PREDICTOR
-        stats.which_red_array = 1;
-        #else
+        #ifdef FINAL_PREDICTOR
         stats.which_red_array = 2;
+        #else
+        stats.which_red_array = 1;
         #endif
 
         #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)

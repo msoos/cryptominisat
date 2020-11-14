@@ -168,12 +168,8 @@ void ClPredictors::set_up_input(
     }
     //(log2(cl.glue_before_minim)/(rdb0.sum_uip1_used/cl.time_inside_solver)) -- 10
 
-    if (act_ranking_rel == 0 || cl->stats.orig_glue == 0) {
-        at[x++] = MISSING_VAL;
-    } else {
-        at[x++] = ::log2(act_ranking_rel)/(double)cl->stats.orig_glue;
-    }
-    //(log2(rdb0.act_ranking_rel)/cl.orig_glue) -- 10
+    at[x++] = cl->stats.orig_glue;
+    //cl.orig_glue -- 11
 
     if (cl->stats.num_antecedents == 0 ||
         cl->stats.num_total_lits_antecedents == 0)
