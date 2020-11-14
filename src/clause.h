@@ -124,7 +124,7 @@ struct ClauseStats
     uint32_t glue:20;  //currently in code limited to 100'000
     uint32_t is_decision:1;
     uint32_t marked_clause:1;
-    uint32_t ttl:2;
+    uint32_t ttl:1;
     uint32_t which_red_array:3;
     uint32_t locked_for_data_gen:1;
     union {
@@ -167,6 +167,7 @@ struct ClauseStats
     #endif
 
     #ifdef STATS_NEEDED
+    uint32_t ttl_stats = 0;
     int32_t ID = 0;
     uint32_t orig_connects_num_communities = 0;
     uint32_t connects_num_communities = 0;
@@ -210,11 +211,11 @@ struct ClauseStats
 
         clause_looked_at = 0;
         antec_data.clear();
+        ttl_stats = 0;
         #endif
         conflicts_made = 0;
         uip1_used = 0;
         props_made = 0;
-        ttl = 0;
     }
     #endif
 

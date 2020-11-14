@@ -1000,8 +1000,8 @@ void ReduceDB::remove_cl_from_lev2() {
         }
 
         if (!cl_needs_removal(cl, offset)) {
-            if (cl->stats.ttl > 0) {
-                cl->stats.ttl--;
+            if (cl->stats.ttl == 1) {
+                cl->stats.ttl = 0;
             }
             solver->longRedCls[2][j++] = offset;
             cl->stats.marked_clause = 0;
