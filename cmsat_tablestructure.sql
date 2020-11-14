@@ -82,7 +82,7 @@ CREATE TABLE `reduceDB` (
   `in_xor` int(20) NOT NULL,
   `glue` int(20) NOT NULL,
   `size` int(20) NOT NULL,
-  `ttl` int(20) NOT NULL,
+  `ttl_stats` int(20) NOT NULL,
   `is_ternary_resolvent` int(20) NOT NULL,
   `act_ranking` int(20) NOT NULL,
   `prop_ranking` int(20) NOT NULL,
