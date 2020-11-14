@@ -353,14 +353,16 @@ class Learner:
         return y_pred
 
     def rem_features(self, feat, to_remove):
+        print("To remove: " , to_remove)
         feat_less = list(feat)
-        for feature in feat:
-            for rem in to_remove:
-                if rem in feature:
-                    feat_less.remove(feature)
+        for rem in to_remove:
+            for feat in list(feat_less):
+                if rem in feat:
                     if options.verbose:
-                        print("Removing feature from feat_less:", feature)
+                        print("Removing due to ", rem, " feature from feat_less:", feat)
+                    feat_less.remove(feat)
 
+        print("Done.")
         return feat_less
 
     def learn(self):
@@ -369,6 +371,7 @@ class Learner:
             self.df.hist()
             self.df.boxplot()
 
+        # get to_predict
         if options.topperc:
             to_predict = "x.used_later_{name}_topperc".format(name=options.tier)
         else:
@@ -384,8 +387,7 @@ class Learner:
                        "x.sum_cl_use",
                        "x.used_later_short",
                        "x.used_later_long",
-                       "x.used_later_forever",
-                       "x.used_later_forever_div"])
+                       "x.used_later_forever"])
         else:
             features = helper.get_features(options.best_features_fname)
 
