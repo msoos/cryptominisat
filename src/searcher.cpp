@@ -1246,6 +1246,10 @@ lbool Searcher::search()
     check_no_duplicate_lits_anywhere();
     check_order_heap_sanity();
     #endif
+    #ifdef FINAL_PREDICTOR
+    assert(conf.glue_put_lev0_if_below_or_eq == 0);
+    assert(conf.glue_put_lev1_if_below_or_eq == 0);
+    #endif
     const double myTime = cpuTime();
 
     //Stats reset & update
@@ -1769,6 +1773,9 @@ Clause* Searcher::handle_last_confl(
         } else {
             which_arr = 2;
         }
+        #ifdef FINAL_PREDICTOR
+        assert(which_arr == 2);
+        #endif
 
         if (which_arr == 0) {
             stats.red_cl_in_which0++;
@@ -1790,9 +1797,8 @@ Clause* Searcher::handle_last_confl(
         && conf.dump_individual_restarts_and_clauses
         && to_dump
     ) {
-        if (cl) {
-            cl->stats.dump_no = 0;
-        }
+        assert(cl); //we only dump non-binaries to SQL
+        cl->stats.dump_no = 0;
         dump_this_many_cldata_in_stream--;
         dump_sql_clause_data(
             glue
