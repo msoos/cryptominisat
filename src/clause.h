@@ -164,10 +164,10 @@ struct ClauseStats
     //below resets
     uint32_t uip1_used = 0; ///N.o. times claue was used during 1st UIP generation in this RDB
     uint32_t props_made = 0; ///<Number of times caused propagation
+    uint32_t ttl_stats = 0;
     #endif
 
     #ifdef STATS_NEEDED
-    uint32_t ttl_stats = 0;
     int32_t ID = 0;
     uint32_t orig_connects_num_communities = 0;
     uint32_t connects_num_communities = 0;
