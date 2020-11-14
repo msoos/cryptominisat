@@ -26,7 +26,6 @@ export RATIO="0.99"
 export CONF=1
 export EXTRA_CMS_OPTS=""
 export EXTRA_GEN_PANDAS_OPTS=""
-export bestf="../../scripts/crystal/best_features.txt"
 export bestf="../../scripts/crystal/best_features-rdb0-only.txt"
 export bestf_short="../../scripts/crystal/best_features-rdb0-only-short.txt"
 export myforever="forever_div"
