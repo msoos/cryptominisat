@@ -1928,6 +1928,10 @@ lbool Solver::iterate_until_solved()
 
 void Solver::check_too_many_low_glues()
 {
+    #ifdef FINAL_PREDICTOR
+    return;
+    #endif
+
     if (conf.glue_put_lev0_if_below_or_eq == 2
         || sumConflicts < conf.min_num_confl_adjust_glue_cutoff
         || adjusted_glue_cutoff_if_too_many
