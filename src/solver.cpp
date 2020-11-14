@@ -2457,6 +2457,16 @@ void Solver::print_norm_stats(const double cpu_time, const double cpu_time_total
                     , "% time"
     );
 
+    if (sumConflicts > 0) {
+        for(uint32_t i = 0; i < longRedCls.size(); i ++) {
+            std::stringstream ss;
+            ss << "c avg cls in red " << i;
+            print_stats_line(ss.str()
+                , (double)longRedClsSizes[i]/(double)sumConflicts
+            );
+        }
+    }
+
     if (conf.do_print_times) {
         print_stats_line("c Conflicts in UIP"
             , sumConflicts

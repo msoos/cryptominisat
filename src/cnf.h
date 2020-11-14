@@ -105,6 +105,7 @@ public:
         assert(_must_interrupt_inter != NULL);
         must_interrupt_inter = _must_interrupt_inter;
         longRedCls.resize(3);
+        longRedClsSizes.resize(3, 0);
     }
 
     virtual ~CNF()
@@ -173,6 +174,7 @@ public:
     level 2 = check often
     **/
     vector<vector<ClOffset> > longRedCls;
+    vector<uint64_t> longRedClsSizes;
     vector<ClOffset> detached_xor_repr_cls; //these are still in longIrredCls
     vector<Xor> xorclauses;
     vector<Xor> xorclauses_unused;

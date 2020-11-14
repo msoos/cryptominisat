@@ -1834,6 +1834,9 @@ bool Searcher::handle_conflict(PropBy confl)
     stats.conflStats.numConflicts++;
     hist.num_conflicts_this_restart++;
     sumConflicts++;
+    for(uint32_t i = 0; i < longRedCls.size(); i++) {
+        longRedClsSizes[i] += longRedCls[i].size();
+    }
     params.conflictsDoneThisRestart++;
 
     ConflictData data = find_conflict_level(confl);
