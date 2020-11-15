@@ -100,7 +100,7 @@ class Queries (helper.QueryHelper):
             bad = False
             for row in cursor:
                 bad = True
-                print("ERROR: {elem}={clid} has {tbl1} not no corresponding {tbl2}:".format(
+                print("ERROR: {elem}={clid} has {tbl1} but no corresponding {tbl2}:".format(
                     **n, clid=row[0]))
 
             if bad:
