@@ -1571,23 +1571,6 @@ void Searcher::print_learnt_clause() const
     }
 }
 
-#ifdef STATS_NEEDED
-void Searcher::sql_dump_last_in_solver()
-{
-    if (!sqlStats)
-        return;
-
-    for(auto& red_cls: longRedCls) {
-        for(auto& offs: red_cls) {
-            Clause* cl = cl_alloc.ptr(offs);
-            if (cl->stats.ID != 0) {
-                sqlStats->cl_last_in_solver(solver, cl->stats.ID);
-            }
-        }
-    }
-}
-#endif
-
 #ifdef STATS_NEEDED_BRANCH
 void Searcher::dump_var_for_learnt_cl(const uint32_t v,
                                       const uint64_t clid,

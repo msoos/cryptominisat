@@ -427,7 +427,6 @@ class Searcher : public HyperEngine
             , const uint32_t connects_num_communities
         );
         int dump_this_many_cldata_in_stream = 0;
-        void sql_dump_last_in_solver();
         void dump_var_for_learnt_cl(const uint32_t v,
                                     const uint64_t clid,
                                     const bool is_decision);

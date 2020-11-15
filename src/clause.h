@@ -239,10 +239,10 @@ struct ClauseStats
         ret.uip1_used = first.uip1_used + second.uip1_used;
         ret.props_made = first.props_made + second.props_made;
         ret.conflicts_made = first.conflicts_made + second.conflicts_made;
+        //TODO other measures, such as discounted stats, etc!!!!
         #endif
 
         #ifdef STATS_NEEDED
-        ret.ID = 0; //don't track combined clauses
         ret.clause_looked_at = first.clause_looked_at + second.clause_looked_at;
         #endif
 

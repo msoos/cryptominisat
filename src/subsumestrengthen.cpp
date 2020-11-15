@@ -109,7 +109,7 @@ SubsumeStrengthen::Sub0Ret SubsumeStrengthen::subsume_and_unlink(
     //Go through each clause that can be subsumed
     for (const ClOffset offs: subs) {
         Clause *tmp = solver->cl_alloc.ptr(offs);
-        ret.stats = ClauseStats::combineStats(tmp->stats, ret.stats);
+        ret.stats = ClauseStats::combineStats(ret.stats, tmp->stats); //ID kept will be 1st parameter
         #ifdef VERBOSE_DEBUG
         cout << "-> subsume removing:" << *tmp << endl;
         #endif

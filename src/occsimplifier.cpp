@@ -987,7 +987,7 @@ bool OccSimplifier::eliminate_vars()
     num_otf_update_until_now = 0;
     int64_t orig_norm_varelim_time_limit = norm_varelim_time_limit;
     limit_to_decrease = &norm_varelim_time_limit;
-    cl_to_free_later.clear();
+    assert(cl_to_free_later.empty());
     assert(solver->watches.get_smudged_list().empty());
     bvestats.clear();
     bvestats.numCalls = 1;
@@ -1816,6 +1816,7 @@ bool OccSimplifier::backward_sub_str()
     auto backup = subsumption_time_limit;
     subsumption_time_limit = 0;
     limit_to_decrease = &subsumption_time_limit;
+    assert(cl_to_free_later.empty());
 
     subsumption_time_limit += (int64_t)
         ((double)backup*solver->conf.subsumption_time_limit_ratio_sub_str_w_bin);

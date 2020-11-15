@@ -257,6 +257,7 @@ class Solver : public Searcher
         template<class T> vector<uint32_t> xor_outer_numbered(const T& cl) const;
         size_t mem_used() const;
         void dump_memory_stats_to_sql();
+        void dump_clauses_at_finishup_as_last();
         void set_sqlite(string filename);
         //Not Private for testing (maybe could be called from outside)
         bool renumber_variables(bool must_renumber = true);

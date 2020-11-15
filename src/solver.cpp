@@ -1925,7 +1925,10 @@ lbool Solver::iterate_until_solved()
     #ifdef STATS_NEEDED
     //To record clauses when we finish up
     if (status != l_Undef) {
-        sql_dump_last_in_solver();
+        dump_clauses_at_finishup_as_last();
+        if (conf.verbosity) {
+            cout << "c [sql] dumping all remaining clauses as cl_last_in_solver" << endl;
+        }
     }
     #endif
 
@@ -5051,4 +5054,22 @@ void Solver::remove_and_clean_all() {
     clauseCleaner->remove_and_clean_all();
 }
 
+#ifdef STATS_NEEDED
+void Solver::dump_clauses_at_finishup_as_last()
+{
+    if (!sqlStats)
+        return;
+
+    for(auto& red_cls: longRedCls) {
+        for(auto& offs: red_cls) {
+            Clause* cl = cl_alloc.ptr(offs);
+            if (cl->stats.ID != 0) {
+                sqlStats->cl_last_in_solver(solver, cl->stats.ID);
+            }
+        }
+    }
+}
 #endif
+
+#endif
+
