@@ -304,8 +304,10 @@ void ReduceDB::dump_sql_cl_data(
     assert(solver->sqlStats);
     solver->sqlStats->begin_transaction();
     uint64_t added_to_db = 0;
+    uint32_t non_locked_lev0 = 0;
 
     vector<ClOffset> all_learnt;
+    uint32_t num_locked_for_data_gen = 0;
     for(uint32_t lev = 0; lev < solver->longRedCls.size(); lev++) {
         auto& cc = solver->longRedCls[lev];
         for(const auto& offs: cc) {
@@ -313,7 +315,14 @@ void ReduceDB::dump_sql_cl_data(
             assert(!cl->getRemoved());
             assert(cl->red());
             assert(!cl->freed());
+            if (cl->stats.locked_for_data_gen) {
+                assert(cl->stats.which_red_array == 0);
+//                 cout << "glue:" << cl->stats.glue << endl;
+            } else if (cl->stats.which_red_array == 0) {
+                non_locked_lev0++;
+            }
             all_learnt.push_back(offs);
+            num_locked_for_data_gen += cl->stats.locked_for_data_gen;
         }
     }
     if (all_learnt.empty()) {
@@ -364,9 +373,13 @@ void ReduceDB::dump_sql_cl_data(
     if (solver->conf.verbosity) {
         cout << "c [sql] added to DB " << added_to_db
         << " dump-ratio: " << solver->conf.dump_individual_cldata_ratio
+        << " locked-perc: " << stats_line_percent(num_locked_for_data_gen, all_learnt.size())
+        << " non-locked lev0: " << non_locked_lev0
         << solver->conf.print_times(cpuTime()-myTime)
         << endl;
     }
+    locked_for_data_gen_total += num_locked_for_data_gen;
+    locked_for_data_gen_cls += all_learnt.size();
 }
 #endif
 

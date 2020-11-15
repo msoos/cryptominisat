@@ -46,13 +46,16 @@ public:
     #endif
     void dump_sql_cl_data(const uint32_t cur_rst_type);
 
+    #ifdef STATS_NEEDED
+    uint32_t reduceDB_called = 0;
+    uint64_t locked_for_data_gen_total = 0;
+    uint64_t locked_for_data_gen_cls = 0;
+    #endif
+
 private:
     Solver* solver;
     vector<ClOffset> delayed_clause_free;
     double total_time = 0.0;
-    #ifdef STATS_NEEDED
-    uint32_t reduceDB_called = 0;
-    #endif
 
     unsigned cl_marked;
     unsigned cl_ttl;

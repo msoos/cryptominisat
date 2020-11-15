@@ -2466,6 +2466,12 @@ void Solver::print_norm_stats(const double cpu_time, const double cpu_time_total
             );
         }
     }
+    #ifdef STATS_NEEDED
+    print_stats_line(
+        "c DB locked ratio",
+        stats_line_percent(reduceDB->locked_for_data_gen_total, reduceDB->locked_for_data_gen_cls)
+    );
+    #endif
 
     if (conf.do_print_times) {
         print_stats_line("c Conflicts in UIP"
