@@ -347,9 +347,7 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
         #ifndef FINAL_PREDICTOR
         if (cl->stats.locked_for_data_gen) {
             assert(cl->stats.which_red_array == 0);
-        } else if (new_glue <= conf.glue_put_lev0_if_below_or_eq
-            && cl->stats.which_red_array >= 1
-        ) {
+        } else if (new_glue <= conf.glue_put_lev0_if_below_or_eq) {
             //move to lev0 if very low glue
             cl->stats.which_red_array = 0;
         } else if (new_glue <= conf.glue_put_lev1_if_below_or_eq
