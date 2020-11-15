@@ -2907,10 +2907,6 @@ void Searcher::finish_up_solve(const lbool status)
         assert(solver->prop_at_head());
     }
 
-    #ifdef STATS_NEEDED
-    sql_dump_last_in_solver();
-    #endif
-
     stats.cpu_time = cpuTime() - startTime;
     if (conf.verbosity >= 4) {
         cout << "c Searcher::solve() finished"

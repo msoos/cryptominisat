@@ -1922,6 +1922,13 @@ lbool Solver::iterate_until_solved()
         }
     }
 
+    #ifdef STATS_NEEDED
+    //To record clauses when we finish up
+    if (status != l_Undef) {
+        sql_dump_last_in_solver();
+    }
+    #endif
+
     end:
     return status;
 }
