@@ -205,6 +205,6 @@ rm -f ../../src/predict/*.h
 ./build_final_predictor.sh
 (
 cd "$FNAME-dir"
-../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --simdrat 1 --printsol 0 | tee cms-final-run.out
+../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --simdrat 1 --printsol 0 --predforever "../../src/predict/predictor_${myforever}.json" | tee cms-final-run.out
 )
 exit
