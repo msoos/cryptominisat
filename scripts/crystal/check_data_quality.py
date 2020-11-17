@@ -83,10 +83,32 @@ class Queries (helper.QueryHelper):
             print("Checked for {tbl} only containing at most one of the same {elem} in {t:2.3f} seconds".
                   format(**only_one, t=(time.time()-t)))
 
+    def check_all_clauses_have_at_most_one_del(self):
+        t = time.time()
+        q = """
+        select f.x, f.c, cl_min, cl_max
+        from (
+        select cl_last_in_solver.clauseID as x, count(cl_last_in_solver.clauseID) as c, min(conflicts) as cl_min, max(conflicts) as cl_max
+        from cl_last_in_solver
+        group by clauseID) as f
+        where f.c > 1
+        order by cl_max
+        """
+        cursor = self.c.execute(q)
+        bad = False
+        for row in cursor:
+            bad = True
+            print("ERROR: Clause deleted more than once! ClauseID: {clid}, times deleted: {num}, first deleted: {first}, last deleted: {last}".format(
+                clid=row[0], num=row[1], first=row[2], last=row[3]))
+
+        if bad:
+            exit(-1)
+
+        print("Checked all clauses have at most one delete point. T: %-2.3f" % (time.time()-t))
+
     def check_all_clauses_have_N(self):
         Ns = [
-            {"tbl1":"reduceDB", "tbl2":"cl_last_in_solver", "elem":"clauseID",
-               "extra": ""},
+            {"tbl1":"reduceDB", "tbl2":"cl_last_in_solver", "elem":"clauseID"},
           ]
         for n in Ns:
             t = time.time()
@@ -95,7 +117,7 @@ class Queries (helper.QueryHelper):
             from {tbl1} left join {tbl2}
             on {tbl1}.{elem}={tbl2}.{elem}
             where {tbl2}.{elem} is NULL
-            {extra}
+            order by {tbl1}.{elem}
             """.format(**n)
             cursor = self.c.execute(q)
             bad = False
@@ -231,6 +253,7 @@ if __name__ == "__main__":
 
     with Queries(args[0]) as q:
         #q.create_indexes()
+        q.check_all_clauses_have_at_most_one_del()
         q.check_all_clauses_have_N()
         q.check_only_one()
         q.check_non_negative()
