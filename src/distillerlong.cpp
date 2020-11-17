@@ -375,13 +375,10 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
 
     // we have to copy because the re-alloc can invalidate the data
     ClauseStats backup_stats(*stats);
-    #ifdef STATS_NEEDED
     // new clause will inherit this clause's ID
     // so let's set this to 0, this way, when we free() it, it won't be
     // deleted as per cl_last_in_solver
-    cl.stats.ID = 0;
-    #endif
-    solver->free_cl(offset);
+    solver->free_cl(offset, false);
     Clause *cl2 = solver->add_clause_int(lits, red, &backup_stats);
     (*solver->drat) << findelay;
 
@@ -389,6 +386,9 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
         cl2->set_distilled(true);
         return solver->cl_alloc.get_offset(cl2);
     } else {
+        #ifdef STATS_NEEDED
+        solver->stats_del_cl(offset);
+        #endif
         //it became a bin/unit/zero
         return CL_OFFSET_MAX;
     }

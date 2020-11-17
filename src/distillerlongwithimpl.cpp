@@ -255,7 +255,10 @@ bool DistillerLongWithImpl::remove_or_shrink_clause(Clause& cl, ClOffset& offset
     Clause* c2 = solver->add_clause_int(lits, cl.red(), &backup_stats);
     if (c2 != NULL) {
         solver->detachClause(offset);
-        solver->free_cl(offset);
+        // new clause will inherit this clause's ID
+        // so let's set this to 0, this way, when we free() it, it won't be
+        // deleted as per cl_last_in_solver
+        solver->free_cl(offset, false);
         offset = solver->cl_alloc.get_offset(c2);
         return false;
     }

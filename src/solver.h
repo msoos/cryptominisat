@@ -291,8 +291,8 @@ class Solver : public Searcher
         bool check_assumptions_contradict_foced_assignment() const;
 
         //Deleting clauses
-        void free_cl(Clause* cl);
-        void free_cl(ClOffset offs);
+        void free_cl(Clause* cl, bool also_remove_clid = true);
+        void free_cl(ClOffset offs, bool also_remove_clid = true);
         #ifdef STATS_NEEDED
         void stats_del_cl(Clause* cl);
         void stats_del_cl(ClOffset offs);
@@ -583,18 +583,22 @@ inline void Solver::testing_set_solver_not_fresh()
     fresh_solver = false;
 }
 
-inline void Solver::free_cl(Clause* cl)
+inline void Solver::free_cl(Clause* cl, bool also_remove_clid)
 {
     #ifdef STATS_NEEDED
-    stats_del_cl(cl);
+    if (also_remove_clid) {
+        stats_del_cl(cl);
+    }
     #endif
     cl_alloc.clauseFree(cl);
 }
 
-inline void Solver::free_cl(ClOffset offs)
+inline void Solver::free_cl(ClOffset offs, bool also_remove_clid)
 {
     #ifdef STATS_NEEDED
-    stats_del_cl(offs);
+    if (also_remove_clid) {
+        stats_del_cl(offs);
+    }
     #endif
     cl_alloc.clauseFree(offs);
 }
