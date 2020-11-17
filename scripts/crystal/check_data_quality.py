@@ -84,7 +84,8 @@ class Queries (helper.QueryHelper):
                   format(**only_one, t=(time.time()-t)))
 
     def check_all_clauses_have_N(self):
-        Ns = [{"tbl1":"reduceDB", "tbl2":"cl_last_in_solver", "elem":"clauseID",
+        Ns = [
+            {"tbl1":"reduceDB", "tbl2":"cl_last_in_solver", "elem":"clauseID",
                "extra": ""},
           ]
         for n in Ns:
