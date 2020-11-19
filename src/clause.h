@@ -116,7 +116,11 @@ struct ClauseStats
         locked_for_data_gen = 0;
         is_decision = false;
         //TODO it's weird, it has been tested to be better with "1"
+        #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
+        activity = 0;
+        #else
         activity = 1;
+        #endif
         last_touched = 0;
     }
 
