@@ -239,15 +239,16 @@ struct ClauseStats
         ret.uip1_used = first.uip1_used + second.uip1_used;
         ret.props_made = first.props_made + second.props_made;
         ret.conflicts_made = first.conflicts_made + second.conflicts_made;
-        //TODO other measures, such as discounted stats, etc!!!!
+        ret.discounted_props_made = std::max(first.discounted_props_made, second.discounted_props_made);
+        ret.discounted_uip1_used3 = std::max(first.discounted_uip1_used3, second.discounted_uip1_used3);
         #endif
 
         #ifdef STATS_NEEDED
         ret.clause_looked_at = first.clause_looked_at + second.clause_looked_at;
-        #endif
-
-        #ifndef FINAL_PREDICTOR
-        ret.which_red_array = std::min(first.which_red_array, second.which_red_array);
+        ret.discounted_props_made2 = std::max(first.discounted_props_made2, second.discounted_props_made2);
+        ret.discounted_props_made3 = std::max(first.discounted_props_made3, second.discounted_props_made3);
+        ret.discounted_uip1_used = std::max(first.discounted_uip1_used, second.discounted_uip1_used);
+        ret.discounted_uip1_used2 = std::max(first.discounted_uip1_used2, second.discounted_uip1_used2);
         #endif
 
         return ret;
