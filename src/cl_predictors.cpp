@@ -111,12 +111,12 @@ void ClPredictors::set_up_input(
     }
     //(rdb0.act_ranking_rel/rdb0.last_touched_diff) -- 2
 
-    if (prop_ranking_rel == 0) {
+    if (avg_props == 0) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = (double)cl->stats.conflicts_made/prop_ranking_rel;
+        at[x++] = prop_ranking_rel/avg_props;
     }
-    //(rdb0.conflicts_made/rdb0.prop_ranking_rel) -- 3
+    //(rdb0.prop_ranking_rel/rdb0_common.avg_props) -- 3
 
     if (avg_props == 0) {
         at[x++] = MISSING_VAL;
