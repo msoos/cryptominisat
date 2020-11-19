@@ -150,12 +150,13 @@ void ClPredictors::set_up_input(
     }
     //(rdb0.sum_props_made/cl.time_inside_solver) -- 8
 
-    if (time_inside_solver == 0 || avg_glue == 0) {
+    if (time_inside_solver == 0 || avg_glue == 0 || cl->stats.glue == 0) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = ((double)cl->stats.sum_props_made/time_inside_solver)/avg_glue;
+        at[x++] = ((double)cl->stats.sum_props_made/time_inside_solver)/
+            ((double)cl->stats.glue/avg_glue);
     }
-    //((rdb0.sum_props_made/cl.time_inside_solver)/rdb0_common.avg_glue) -- 9
+    //((rdb0.sum_props_made/cl.time_inside_solver)/(rdb0.glue/rdb0_common.avg_glue)) -- 9
 
     if (time_inside_solver == 0 ||
         cl->stats.sum_uip1_used == 0 ||

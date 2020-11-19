@@ -6,7 +6,7 @@ rdb0.last_touched_diff
 rdb0.ttl_stats
 (rdb0.glue/rdb0.conflicts_made)
 (rdb0.sum_props_made/cl.time_inside_solver)
-((rdb0.sum_props_made/cl.time_inside_solver)/rdb0_common.avg_glue)
+((rdb0.sum_props_made/cl.time_inside_solver)/(rdb0.glue/rdb0_common.avg_glue))
 (log2(cl.glue_before_minim)/(rdb0.sum_uip1_used/cl.time_inside_solver))
 cl.orig_glue
 (log2(cl.num_antecedents)/cl.num_total_lits_antecedents)
