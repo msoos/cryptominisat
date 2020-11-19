@@ -251,6 +251,10 @@ struct ClauseStats
         ret.discounted_uip1_used2 = std::max(first.discounted_uip1_used2, second.discounted_uip1_used2);
         #endif
 
+        #ifdef FINAL_PREDICTOR
+        ret.which_red_array = std::min(first.which_red_array, second.which_red_array);
+        #endif
+
         return ret;
     }
 };
