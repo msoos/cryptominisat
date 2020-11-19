@@ -63,7 +63,7 @@ sudo ldconfig
 Compiling in Mac OSX
 -----
 
-First, you must get Homebew from https://brew.sh/ then:
+First, you must get Homebrew from https://brew.sh/ then:
 
 ```
 brew install cmake boost zlib
