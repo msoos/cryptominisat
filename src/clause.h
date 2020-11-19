@@ -149,7 +149,7 @@ struct ClauseStats
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
     uint16_t dump_no = 0;
-    uint32_t orig_glue = 0;
+    uint32_t orig_glue = 1000;
     uint32_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
     uint32_t props_made_rank = 0;
     uint32_t uip1_used_rank = 0;
@@ -211,8 +211,8 @@ struct ClauseStats
 
         clause_looked_at = 0;
         antec_data.clear();
-        ttl_stats = 0;
         #endif
+        ttl_stats = 0;
         conflicts_made = 0;
         uip1_used = 0;
         props_made = 0;
@@ -241,6 +241,8 @@ struct ClauseStats
         ret.conflicts_made = first.conflicts_made + second.conflicts_made;
         ret.discounted_props_made = std::max(first.discounted_props_made, second.discounted_props_made);
         ret.discounted_uip1_used3 = std::max(first.discounted_uip1_used3, second.discounted_uip1_used3);
+        ret.orig_glue = std::min(first.orig_glue, second.orig_glue);
+        ret.ttl_stats = std::max(first.ttl_stats, second.ttl_stats);
         #endif
 
         #ifdef STATS_NEEDED
