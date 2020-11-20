@@ -1,6 +1,6 @@
 rdb0.uip1_ranking_rel
 (rdb0.act_ranking_rel/rdb0.last_touched_diff)
-(rdb0.prop_ranking_rel/rdb0_common.avg_props)
+rdb0.prop_ranking_rel
 (rdb0.props_made/rdb0_common.avg_props)
 rdb0.last_touched_diff
 rdb0.ttl_stats
