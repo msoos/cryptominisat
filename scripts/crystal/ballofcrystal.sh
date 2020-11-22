@@ -62,6 +62,7 @@ if [ "$NEXT_OP" == "" ]; then
                 FNAME="AProVE07-16.cnf";
                 break;;
             [6]* )
+                ORIGTIME="369.96";
                 FNAME="UTI-20-10p0.cnf-unz";
                 RATIO="0.20"
                 FIXED="20000";
