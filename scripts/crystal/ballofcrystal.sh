@@ -149,10 +149,10 @@ fi
 ########################
 # Augment, fix up and sample the SQLite data
 ########################
-/usr/bin/time -v ../fill_used_clauses.py "$FNAMEOUT.db-raw" "$FNAMEOUT.usedCls"
+../fill_used_clauses.py "$FNAMEOUT.db-raw" "$FNAMEOUT.usedCls"
 cp "$FNAMEOUT.db-raw" "$FNAMEOUT.db"
 /usr/bin/time -v ../clean_update_data.py "$FNAMEOUT.db"
-/usr/bin/time -v ../check_data_quality.py "$FNAMEOUT.db"
+../check_data_quality.py "$FNAMEOUT.db"
 cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 /usr/bin/time -v ../sample_data.py "$FNAMEOUT-min.db"
 
@@ -181,9 +181,9 @@ cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 mkdir -p ../../src/predict
 rm -f ../../src/predict/*.json
 rm -f ../../src/predict/*.h
-../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-cut1-10.0-cut2-40.0-limit-${FIXED}.dat" --tier short --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf_short
-../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-10.0-cut2-40.0-limit-${FIXED}.dat" --tier long --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf
-../cldata_predict.py "${FNAMEOUT}-min.db-cldata-${myforever}-cut1-10.0-cut2-40.0-limit-${FIXED}.dat" --tier ${myforever} --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf --topperc
+../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-cut1-10.0-cut2-40.0-limit-${FIXED}.dat" --tier short --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf_short | tee short_pred_out
+../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-10.0-cut2-40.0-limit-${FIXED}.dat" --tier long --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf | tee long_pred_out
+../cldata_predict.py "${FNAMEOUT}-min.db-cldata-${myforever}-cut1-10.0-cut2-40.0-limit-${FIXED}.dat" --tier ${myforever} --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf --topperc  | tee ${myforever}_pred_out
 
 ############################
 # To get feature importances
