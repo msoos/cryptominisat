@@ -339,7 +339,7 @@ void Searcher::update_glue_from_analysis(Clause* cl)
         if (cl->stats.glue <= conf.protect_cl_if_improved_glue_below_this_glue_for_one_turn) {
             cl->stats.ttl = 1;
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-            cl->stats.ttl_stats = 1;
+            cl->stats.ttl_stats = cl->stats.glue - new_glue;
             #endif
         }
         cl->stats.glue = new_glue;
