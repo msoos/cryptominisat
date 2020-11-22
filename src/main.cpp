@@ -365,6 +365,8 @@ void Main::add_supported_options()
         , "Pred forever check over limit every N")
     ("predforevertopperc", po::value(&conf.pred_forever_topperc)->default_value(conf.pred_forever_topperc)
         , "Keep top percent")
+    ("predforeverdebug", po::value(&conf.debug_forever)->default_value(conf.debug_forever)
+        , "Use glue and glue ONLY for forever")
     ;
     #endif
 

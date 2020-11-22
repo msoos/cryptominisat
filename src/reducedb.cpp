@@ -492,11 +492,23 @@ void ReduceDB::pred_move_to_lev1_and_lev0()
         for(uint32_t i = 0; i < solver->longRedCls[2].size(); i ++) {
             const ClOffset offset = solver->longRedCls[2][i];
             Clause* cl = solver->cl_alloc.ptr(offset);
-            if (cl->stats.pred_forever_topperc < solver->conf.pred_forever_topperc) {
+
+            bool moved = false;
+            if (solver->conf.debug_forever) {
+                if (cl->stats.glue <= solver->conf.glue_put_lev0_if_below_or_eq) {
+                    marked_forever++;
+                    cl->stats.which_red_array = 0;
+                    solver->longRedCls[0].push_back(offset);
+                    moved = true;
+                }
+            } else if (cl->stats.pred_forever_topperc < solver->conf.pred_forever_topperc) {
                 marked_forever++;
                 cl->stats.which_red_array = 0;
                 solver->longRedCls[0].push_back(offset);
-            } else {
+                moved = true;
+            }
+
+            if (!moved) {
                 solver->longRedCls[2][j++] =solver->longRedCls[2][i];
             }
         }
@@ -734,11 +746,23 @@ void ReduceDB::clean_lev1_once_in_a_while()
                 continue;
             }
 
-            if (cl->stats.pred_forever_topperc < solver->conf.pred_forever_topperc) {
+            bool moved = false;
+            if (solver->conf.debug_forever)
+            {
+                if (cl->stats.glue <= solver->conf.glue_put_lev0_if_below_or_eq) {
+                    cl->stats.which_red_array = 0;
+                    solver->longRedCls[0].push_back(offset);
+                    long_upgraded++;
+                    moved = true;
+                }
+            } else if (cl->stats.pred_forever_topperc < solver->conf.pred_forever_topperc) {
                 cl->stats.which_red_array = 0;
                 solver->longRedCls[0].push_back(offset);
                 long_upgraded++;
-            } else {
+                moved = true;
+            }
+
+            if (!moved) {
                 solver->longRedCls[1][j++] =solver->longRedCls[1][i];
             }
         }
@@ -876,9 +900,13 @@ void ReduceDB::handle_lev2_predictor()
     update_preds_lev2();
     pred_move_to_lev1_and_lev0();
     delete_from_lev2();
-    clean_lev0_once_in_a_while();
+    if (!solver->conf.debug_forever) {
+        clean_lev0_once_in_a_while();
+    }
     clean_lev1_once_in_a_while();
-    reset_clause_dats(0);
+    if (!solver->conf.debug_forever) {
+        reset_clause_dats(0);
+    }
     reset_clause_dats(1);
     reset_clause_dats(2);
 
