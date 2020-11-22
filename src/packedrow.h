@@ -60,6 +60,7 @@ inline void SetBit(int64_t *array, int bit) {
 class PackedRow
 {
 public:
+    PackedRow() = delete;
     PackedRow& operator=(const PackedRow& b)
     {
         #ifdef DEBUG_ROW
