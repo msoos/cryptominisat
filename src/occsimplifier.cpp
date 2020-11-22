@@ -672,7 +672,7 @@ void OccSimplifier::add_back_to_solver()
                 assert(cl->stats.which_red_array < solver->longRedCls.size());
                 #ifndef FINAL_PREDICTOR
                 if (cl->stats.locked_for_data_gen) {
-                    assert(cl->stats.which_red_array == 0);
+                    cl->stats.which_red_array = 0;
                 } else if (cl->stats.glue <= solver->conf.glue_put_lev0_if_below_or_eq) {
                     cl->stats.which_red_array = 0;
                 } else if (
