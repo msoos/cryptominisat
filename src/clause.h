@@ -121,7 +121,6 @@ struct ClauseStats
         #else
         activity = 1;
         #endif
-        last_touched = 0;
     }
 
     //Stored data
@@ -135,7 +134,7 @@ struct ClauseStats
         float   activity;
         uint32_t hash_val; //used in BreakID to remove equivalent clauses
     };
-    uint32_t last_touched;
+    uint32_t last_touched = 0;
     #ifdef FINAL_PREDICTOR
     float       glue_hist_long = 0;
     float       glue_hist_queue = 0;
@@ -247,6 +246,7 @@ struct ClauseStats
         ret.discounted_uip1_used3 = std::max(first.discounted_uip1_used3, second.discounted_uip1_used3);
         ret.orig_glue = std::min(first.orig_glue, second.orig_glue);
         ret.ttl_stats = std::max(first.ttl_stats, second.ttl_stats);
+        ret.last_touched = std::max(first.last_touched, second.last_touched);
         #endif
 
         #ifdef STATS_NEEDED
