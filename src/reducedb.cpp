@@ -739,12 +739,13 @@ void ReduceDB::clean_lev1_once_in_a_while()
             const ClOffset offset = solver->longRedCls[1][i];
             Clause* cl = solver->cl_alloc.ptr(offset);
             assert(!cl->freed());
-            uint32_t time_inside_solver = solver->sumConflicts - cl->stats.introduced_at_conflict;
+            //uint32_t time_inside_solver = solver->sumConflicts - cl->stats.introduced_at_conflict;
 
-            if (time_inside_solver < checked_every) {
+            //NOPE, we should move them up if possible, just like when they arrive to lev2
+            /*if (time_inside_solver < checked_every) {
                 solver->longRedCls[1][j++] =solver->longRedCls[1][i];
                 continue;
-            }
+            }*/
 
             bool moved = false;
             if (solver->conf.debug_forever)
