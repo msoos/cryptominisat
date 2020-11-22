@@ -45,7 +45,7 @@ if [ "$NEXT_OP" == "" ]; then
         read -p "Which CNF do you want to run? " myinput
         case $myinput in
             ["1"]* )
-                ORIGTIME="101";
+                ORIGTIME="85.79";
                 FNAME="countbitswegner064.cnf";
                 break;;
             [2]* )
@@ -54,7 +54,7 @@ if [ "$NEXT_OP" == "" ]; then
                 FNAME="goldb-heqc-i10mul.cnf";
                 break;;
             [3]* )
-                ORIGTIME="70.84";
+                ORIGTIME="56.26";
                 FNAME="goldb-heqc-alu4mul.cnf";
                 break;;
             [5]* )
