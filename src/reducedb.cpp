@@ -942,14 +942,17 @@ void ReduceDB::handle_lev2_predictor()
         << " del: " << std::setw(7) << forever_deleted
         << " del avg dumpno: " << std::setw(6) << mydiv(forever_deleted_dump_no, forever_deleted)
         << endl
+
         << "c [DBCL pred] lev1: " << std::setw(10) << solver->longRedCls[1].size()
         << " del: " << std::setw(7) << long_deleted
         << " del avg dumpno: " << std::setw(6) << mydiv(long_deleted_dump_no, long_deleted)
         << endl
+
         << "c [DBCL pred] lev2: " << std::setw(10) << solver->longRedCls[2].size()
         << " del: " << std::setw(7) << short_deleted
         << " del avg dumpno: " << std::setw(6) << mydiv(short_deleted_dump_no, short_deleted)
         << endl
+
         << "c [DBCL pred] long-upgrade:         "  << std::setw(7)  << long_upgraded
         << endl;
         }
