@@ -68,7 +68,7 @@ if [ "$NEXT_OP" == "" ]; then
                 FIXED="20000";
                 break;;
             [7]* )
-                ORIGTIME="197";
+                ORIGTIME="122.15";
                 RATIO="0.50"
                 FNAME="UCG-20-5p0.cnf";
                 break;;
