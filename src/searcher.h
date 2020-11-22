@@ -296,7 +296,7 @@ class Searcher : public HyperEngine
         template<bool update_bogoprops>
         void add_lit_to_learnt(Lit lit, uint32_t nDecisionLevel);
         void analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& out_conflict);
-        void update_clause_glue_from_analysis(Clause* cl);
+        void update_glue_from_analysis(Clause* cl);
         template<bool update_bogoprops>
         void minimize_learnt_clause();
         void watch_based_learnt_minim();

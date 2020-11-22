@@ -327,7 +327,7 @@ void Searcher::debug_print_resolving_clause(const PropBy confl) const
 #endif
 }
 
-void Searcher::update_clause_glue_from_analysis(Clause* cl)
+void Searcher::update_glue_from_analysis(Clause* cl)
 {
     assert(cl->red());
     if (cl->is_ternary_resolvent) {
@@ -430,7 +430,7 @@ void Searcher::add_literals_from_confl_to_learnt(
                 #endif
             ) {
                 if (conf.update_glues_on_analyze) {
-                    update_clause_glue_from_analysis(cl);
+                    update_glue_from_analysis(cl);
                 }
 
                 #if !defined(STATS_NEEDED) && !defined(FINAL_PREDICTOR)
