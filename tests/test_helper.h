@@ -278,7 +278,7 @@ void check_fuzzy_equal(
 string print(const vector<vector<Lit> >& cls)
 {
     std::stringstream ss;
-    for(auto cl: cls) {
+    for(const auto& cl: cls) {
         ss << cl << endl;
     }
     return ss.str();
@@ -331,7 +331,7 @@ void check_red_cls_contains(const Solver* s, const string& data)
     vector<vector<Lit> > cls = get_red_cls(s);
 
     bool found_cl = false;
-    for(auto cl: cls) {
+    for(const auto& cl: cls) {
         if (cl == looking_for) {
             found_cl = true;
             break;
@@ -341,7 +341,7 @@ void check_red_cls_contains(const Solver* s, const string& data)
     if (!found_cl) {
         cout << "Expected to find: " << looking_for << endl;
         cout << "But only found  : ";
-        for(auto cl: cls) {
+        for(const auto& cl: cls) {
             cout << cl << ", ";
         }
         cout << endl;
@@ -355,7 +355,7 @@ unsigned get_num_red_cls_contains(const Solver* s, const string& data)
     vector<Lit> looking_for = str_to_cl(data);
     vector<vector<Lit> > cls = get_red_cls(s);
 
-    for(auto cl: cls) {
+    for(const auto& cl: cls) {
         if (cl == looking_for) {
             found_cl++;
         }
@@ -371,7 +371,7 @@ void check_irred_cls_doesnt_contain(const Solver* s, const string& data)
     vector<vector<Lit> > cls = get_irred_cls(s);
 
     bool not_found_cl = true;
-    for(auto cl: cls) {
+    for(const auto& cl: cls) {
         //cout << "irred cl inside: "  << cl << endl;
         if (cl == not_inside) {
             cout << "Expected not to find irred: " << not_inside << endl;
@@ -390,7 +390,7 @@ void check_red_cls_doesnt_contain(const Solver* s, const string& data)
     vector<vector<Lit> > cls = get_red_cls(s);
 
     bool not_found_cl = true;
-    for(auto cl: cls) {
+    for(const auto& cl: cls) {
         //cout << "red cl inside: "  << cl << endl;
         if (cl == not_inside) {
             cout << "Expected not to find red: " << not_inside << endl;
