@@ -306,7 +306,7 @@ void check_irred_cls_contains(const Solver* s, const string& data)
     vector<vector<Lit> > cls = get_irred_cls(s);
 
     bool found_cl = false;
-    for(auto cl: cls) {
+    for(const auto& cl: cls) {
         if (cl == looking_for) {
             found_cl = true;
             break;
@@ -316,7 +316,7 @@ void check_irred_cls_contains(const Solver* s, const string& data)
     if (!found_cl) {
         cout << "Expected to find: " << looking_for << endl;
         cout << "But only found  : ";
-        for(auto cl: cls) {
+        for(const auto& cl: cls) {
             cout << cl << ", ";
         }
         cout << endl;
