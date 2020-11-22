@@ -230,6 +230,8 @@ struct ClauseStats
         //Combine stats
         ret.glue = std::min(first.glue, second.glue);
         ret.activity = std::max(first.activity, second.activity);
+        ret.last_touched = std::max(first.last_touched, second.last_touched);
+        ret.locked_for_data_gen = std::max(first.locked_for_data_gen, second.locked_for_data_gen);
 
         #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
         if (first.introduced_at_conflict == 0) {
@@ -248,7 +250,6 @@ struct ClauseStats
         ret.discounted_uip1_used3 = first.discounted_uip1_used3 + second.discounted_uip1_used3;
         ret.orig_glue = std::min(first.orig_glue, second.orig_glue);
         ret.ttl_stats = std::max(first.ttl_stats, second.ttl_stats);
-        ret.last_touched = std::max(first.last_touched, second.last_touched);
         #endif
 
         #ifdef STATS_NEEDED
