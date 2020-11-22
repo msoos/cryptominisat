@@ -790,6 +790,7 @@ void ReduceDB::clean_lev1_once_in_a_while()
                     solver->clause_locked(*cl, offset))
                 {
                     keep_long++;
+                    force_kept_long++;
                 }
                 solver->longRedCls[1][j++] =solver->longRedCls[1][i];
             } else {
@@ -805,6 +806,9 @@ void ReduceDB::clean_lev1_once_in_a_while()
             }
         }
         solver->longRedCls[1].resize(j);
+        if (solver->conf.verbosity) {
+            cout << "c LONG force-kept: " << force_kept_long << " kept: " << solver->longRedCls[1].size() << endl;
+        }
     }
 }
 
@@ -816,6 +820,7 @@ void ReduceDB::delete_from_lev2()
               SortRedClsPredShort(solver->cl_alloc));
 
     uint32_t j = 0;
+    force_kept_short = 0;
     for(uint32_t i = 0; i < solver->longRedCls[2].size(); i ++) {
         const ClOffset offset = solver->longRedCls[2][i];
         Clause* cl = solver->cl_alloc.ptr(offset);
@@ -829,6 +834,7 @@ void ReduceDB::delete_from_lev2()
                 || cl->stats.dump_no == 0)
             {
                 keep_short++;
+                force_kept_short++;
             }
             solver->longRedCls[2][j++] =solver->longRedCls[2][i];
         } else {
@@ -844,6 +850,9 @@ void ReduceDB::delete_from_lev2()
         }
     }
     solver->longRedCls[2].resize(j);
+    if (solver->conf.verbosity) {
+        cout << "c SHORT force-kept: " << force_kept_short << " kept: " << solver->longRedCls[2].size() << endl;
+    }
 }
 
 void ReduceDB::reset_clause_dats(const uint32_t lev)
