@@ -45,7 +45,7 @@ if [ "$NEXT_OP" == "" ]; then
         read -p "Which CNF do you want to run? " myinput
         case $myinput in
             ["1"]* )
-                ORIGTIME="85.79";
+                ORIGTIME="102.54";
                 FNAME="countbitswegner064.cnf";
                 break;;
             [2]* )
