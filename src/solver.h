@@ -583,8 +583,13 @@ inline void Solver::testing_set_solver_not_fresh()
     fresh_solver = false;
 }
 
-inline void Solver::free_cl(Clause* cl, bool also_remove_clid)
-{
+inline void Solver::free_cl(
+    Clause* cl,
+    bool
+    #ifdef STATS_NEEDED
+    also_remove_clid
+    #endif
+) {
     #ifdef STATS_NEEDED
     if (also_remove_clid) {
         stats_del_cl(cl);
@@ -593,8 +598,13 @@ inline void Solver::free_cl(Clause* cl, bool also_remove_clid)
     cl_alloc.clauseFree(cl);
 }
 
-inline void Solver::free_cl(ClOffset offs, bool also_remove_clid)
-{
+inline void Solver::free_cl(
+    ClOffset offs,
+    bool
+    #ifdef STATS_NEEDED
+    also_remove_clid
+    #endif
+) {
     #ifdef STATS_NEEDED
     if (also_remove_clid) {
         stats_del_cl(offs);
