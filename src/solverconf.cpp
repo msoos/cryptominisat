@@ -67,6 +67,10 @@ using namespace CMSat;
 //Tuning to
 //1713867 out-175744.wlm01-11-drat0 252 154 98 de15a43  _devel --printsol 0 --simdrat 1 --slsbumptype 6 --polarbestinvmult 9 --lucky 20
 
+//Predict setup that works for countbitswagner064:
+//--predlongchunkmult 0.8 --predlongmult 0.8 --predshortmult 1.4 --predforevertopperc 40
+
+
 DLL_PUBLIC SolverConf::SolverConf() :
         do_lucky_polar_every_n(20)
         , polarity_mode(PolarityMode::polarmode_automatic)
