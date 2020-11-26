@@ -159,15 +159,15 @@ struct ClauseStats
     float discounted_uip1_used3 = 0;
     float discounted_props_made = 0;
     uint32_t conflicts_made = 0; ///<Number of times caused conflict
-
-    //for average and sum stats
     uint32_t sum_uip1_used = 0; ///N.o. times claue was used during 1st UIP generation for ALL TIME
     uint32_t sum_props_made = 0; ///<Number of times caused propagation
+    uint32_t ttl_stats = 0;
+    #endif
 
-    //below resets
+    #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
     uint32_t uip1_used = 0; ///N.o. times claue was used during 1st UIP generation in this RDB
     uint32_t props_made = 0; ///<Number of times caused propagation
-    uint32_t ttl_stats = 0;
+    uint32_t clause_looked_at = 0; ///<Number of times the clause has been deferenced during propagation
     #endif
 
     #ifdef STATS_NEEDED
@@ -180,7 +180,6 @@ struct ClauseStats
     float discounted_props_made3 = 0;
 
     AtecedentData<uint16_t> antec_data;
-    uint32_t clause_looked_at = 0; ///<Number of times the clause has been deferenced during propagation
     #endif
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
@@ -212,15 +211,26 @@ struct ClauseStats
         discounted_props_made3 *= discount_factor;
         discounted_props_made3 += (float)props_made*(1.0f-discount_factor);
 
-        clause_looked_at = 0;
         antec_data.clear();
         #endif
         ttl_stats = 0;
         conflicts_made = 0;
         uip1_used = 0;
         props_made = 0;
+        clause_looked_at = 0;
     }
     #endif
+
+    #if defined(NORMAL_CL_USE_STATS)
+    void reset_rdb_stats()
+    {
+        uip1_used = 0;
+        props_made = 0;
+        clause_looked_at = 0;
+
+    }
+    #endif
+
 
     static ClauseStats combineStats(const ClauseStats& first, const ClauseStats& second)
     {

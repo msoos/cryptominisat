@@ -52,7 +52,22 @@ public:
     uint64_t locked_for_data_gen_cls = 0;
     #endif
 
+    struct ClauseStats
+    {
+        uint32_t total_looked_at = 0;
+        uint32_t total_uip1_used = 0;
+        uint32_t total_props = 0;
+        uint32_t total_cls = 0;
+
+        void add_in(const Clause& cl);
+        ClauseStats operator += (const ClauseStats& other);
+        void print(uint32_t lev);
+    };
+    vector<ClauseStats> cl_stats;
+
 private:
+
+
     Solver* solver;
     vector<ClOffset> delayed_clause_free;
     double total_time = 0.0;
@@ -64,13 +79,13 @@ private:
     size_t last_reducedb_num_conflicts = 0;
     bool red_cl_too_young(const Clause* cl) const;
     void clear_clauses_stats(vector<ClOffset>& clauseset);
-    void reset_clause_dats(const uint32_t lev);
+    ClauseStats reset_clause_dats(const uint32_t lev);
 
     bool cl_needs_removal(const Clause* cl, const ClOffset offset) const;
     void remove_cl_from_lev2();
 
     void sort_red_cls(ClauseClean clean_type);
-    void mark_top_N_clauses(const uint64_t keep_num);
+    void mark_top_N_clauses_lev2(const uint64_t keep_num);
 
     #ifdef FINAL_PREDICTOR
     ClPredictors* predictors = NULL;

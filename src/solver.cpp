@@ -2475,7 +2475,13 @@ void Solver::print_norm_stats(const double cpu_time, const double cpu_time_total
                 , (double)longRedClsSizes[i]/(double)sumConflicts
             );
         }
+        #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
+        for(uint32_t i = 0; i < longRedCls.size(); i++) {
+            reduceDB->cl_stats[i].print(i);
+        }
+        #endif
     }
+
     #ifdef STATS_NEEDED
     print_stats_line(
         "c DB locked ratio",

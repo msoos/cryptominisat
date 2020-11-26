@@ -409,6 +409,9 @@ void Searcher::add_literals_from_confl_to_learnt(
                 antec_data.longIrred++;
                 #endif
             }
+            #if defined(NORMAL_CL_USE_STATS)
+            cl->stats.uip1_used++;
+            #endif
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             antec_data.size_longs.push(cl->size());
             if (!update_bogoprops) {

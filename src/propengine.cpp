@@ -231,6 +231,9 @@ bool PropEngine::prop_long_cl_any_order(
         return false;
     } else {
         if (!update_bogoprops) {
+            #if defined(NORMAL_CL_USE_STATS)
+            c.stats.props_made++;
+            #endif
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             c.stats.props_made++;
             c.stats.sum_props_made++;
@@ -343,7 +346,7 @@ PropBy PropEngine::propagate_any_order_fast()
             }
             assert(c[1] == false_lit);
             i++;
-            #ifdef STATS_NEEDED
+            #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED) || (NORMAL_CL_USE_STATS)
             c.stats.clause_looked_at++;
             #endif
 
@@ -399,6 +402,9 @@ PropBy PropEngine::propagate_any_order_fast()
                 assert(j <= end);
                 qhead = trail.size();
             } else {
+                #if defined(NORMAL_CL_USE_STATS)
+                c.stats.props_made++;
+                #endif
                 #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
                 c.stats.props_made++;
                 c.stats.sum_props_made++;

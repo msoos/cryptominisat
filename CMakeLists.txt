@@ -490,6 +490,12 @@ else()
     message(STATUS "Cannot find Community Louvain. Please install it!")
 endif()
 
+option(NORMAL_CL_USE_STATS "Only prop and uip stats for NORM" OFF)
+if (NORMAL_CL_USE_STATS)
+    add_definitions( -DNORMAL_CL_USE_STATS )
+    MESSAGE(STATUS "Adding uip + props to normal run")
+endif()
+
 option(STATS "Don't use statistics at all" OFF)
 if (STATS)
     if (FINAL_PREDICTOR)
