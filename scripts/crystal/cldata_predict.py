@@ -411,6 +411,8 @@ if __name__ == "__main__":
                         dest="all_computed", help="Add ALL computed features")
     parser.add_argument("--bestfeatfile", type=str,
                         dest="best_features_fname", help="Name and position of best features file that lists the best features in order")
+    parser.add_argument("--csv", type=str, default=None,
+                        dest="csv", help="Output CSV of dataframe here")
 
     # tree/forest options
     parser.add_argument("--depth", default=None, type=int,
@@ -571,6 +573,16 @@ if __name__ == "__main__":
         #print(type(mytype))
         if str(mytype) == str("Int64"):
             df[name] = df[name].astype(float)
+
+    if options.csv is not None:
+        cols = list(df)
+        if not options.no_computed and not options.all_computed:
+            cols = best_features
+            for feat in list(df):
+                if "x." in feat:
+                    cols.append(feat)
+        df.to_csv(options.csv, index=False, columns=sorted(cols))
+        print("Dumped DF to file: ", options.csv)
 
     print("Filling NA with MISSING..")
     df.replace(np.NINF, MISSING, inplace=True)
