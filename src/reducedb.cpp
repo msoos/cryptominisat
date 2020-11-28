@@ -35,6 +35,14 @@ THE SOFTWARE.
 
 using namespace CMSat;
 
+double safe_div(double a, double b) {
+    if (b == 0) {
+        assert(a == 0);
+        return 0;
+    }
+    return a/b;
+}
+
 struct SortRedClsGlue
 {
     explicit SortRedClsGlue(ClauseAllocator& _cl_alloc) :
@@ -309,7 +317,11 @@ void ReduceDB::set_props_and_uip_ranks(vector<ClOffset>& all_learnt)
         total_props += cl->stats.props_made;
         total_uip1_used += cl->stats.uip1_used;
     }
-    median_props = solver->cl_alloc.ptr(all_learnt[all_learnt.size()/2])->stats.props_made;
+    if (all_learnt.empty()) {
+        median_props = 0;
+    } else {
+        median_props = solver->cl_alloc.ptr(all_learnt[all_learnt.size()/2])->stats.props_made;
+    }
 
     std::sort(all_learnt.begin(), all_learnt.end(), SortRedClsUIP1(solver->cl_alloc));
     for(size_t i = 0; i < all_learnt.size(); i++) {
@@ -317,7 +329,11 @@ void ReduceDB::set_props_and_uip_ranks(vector<ClOffset>& all_learnt)
         Clause* cl = solver->cl_alloc.ptr(offs);
         cl->stats.uip1_used_rank = i+1;
     }
-    median_uip1_used = solver->cl_alloc.ptr(all_learnt[all_learnt.size()/2])->stats.uip1_used;
+    if (all_learnt.empty()) {
+        median_uip1_used = 0;
+    } else {
+        median_uip1_used = solver->cl_alloc.ptr(all_learnt[all_learnt.size()/2])->stats.uip1_used;
+    }
 }
 #endif
 
@@ -572,8 +588,8 @@ void ReduceDB::update_preds_lev2()
     std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
               SortRedClsAct(solver->cl_alloc));
     double size = (double)solver->longRedCls[2].size();
-    double avg_props = (double)total_props/(double)size;
-    double avg_glue = (double)total_glue/(double)size;
+    double avg_props = safe_div(total_props, size);
+    double avg_glue = safe_div(total_glue, size);
     for(size_t i = 0
         ; i < solver->longRedCls[2].size()
         ; i++
@@ -624,8 +640,8 @@ void ReduceDB::clean_lev0_once_in_a_while()
         //Recalc pred_forever_use
         set_props_and_uip_ranks(solver->longRedCls[0]);
         double size = (double)solver->longRedCls[0].size();
-        double avg_props = (double)total_props/(double)size;
-        double avg_glue = (double)total_glue/(double)size;
+        double avg_props = safe_div(total_props, size);
+        double avg_glue = safe_div(total_glue, size);
 
         std::sort(solver->longRedCls[0].begin(), solver->longRedCls[0].end(),
               SortRedClsAct(solver->cl_alloc));
@@ -719,8 +735,8 @@ void ReduceDB::clean_lev1_once_in_a_while()
         //Recalc pred_long_use
         set_props_and_uip_ranks(solver->longRedCls[1]);
         double size = (double)solver->longRedCls[1].size();
-        double avg_props = (double)total_props/(double)size;
-        double avg_glue = (double)total_glue/(double)size;
+        double avg_props = safe_div(total_props, size);
+        double avg_glue = safe_div(total_glue, size);
 
         std::sort(solver->longRedCls[1].begin(), solver->longRedCls[1].end(),
               SortRedClsAct(solver->cl_alloc));
@@ -906,14 +922,6 @@ ReduceDB::ClauseStats ReduceDB::reset_clause_dats(const uint32_t lev)
     return cl_stat;
 }
 
-double mydiv(double a, double b) {
-    if (b == 0) {
-        assert(a == 0);
-        return 0;
-    }
-    return a/b;
-}
-
 void ReduceDB::handle_lev2_predictor()
 {
     num_times_pred_called++;
@@ -978,17 +986,17 @@ void ReduceDB::handle_lev2_predictor()
         cout
         << "c [DBCL pred] lev0: " << std::setw(10) << solver->longRedCls[0].size()
         << " del: " << std::setw(7) << forever_deleted
-        << " del avg dumpno: " << std::setw(6) << mydiv(forever_deleted_dump_no, forever_deleted)
+        << " del avg dumpno: " << std::setw(6) << safe_div(forever_deleted_dump_no, forever_deleted)
         << endl
 
         << "c [DBCL pred] lev1: " << std::setw(10) << solver->longRedCls[1].size()
         << " del: " << std::setw(7) << long_deleted
-        << " del avg dumpno: " << std::setw(6) << mydiv(long_deleted_dump_no, long_deleted)
+        << " del avg dumpno: " << std::setw(6) << safe_div(long_deleted_dump_no, long_deleted)
         << endl
 
         << "c [DBCL pred] lev2: " << std::setw(10) << solver->longRedCls[2].size()
         << " del: " << std::setw(7) << short_deleted
-        << " del avg dumpno: " << std::setw(6) << mydiv(short_deleted_dump_no, short_deleted)
+        << " del avg dumpno: " << std::setw(6) << safe_div(short_deleted_dump_no, short_deleted)
         << endl
 
         << "c [DBCL pred] long-upgrade:         "  << std::setw(7)  << long_upgraded
