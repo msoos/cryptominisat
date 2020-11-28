@@ -480,16 +480,6 @@ if (NOT NOSQLITE)
     endif ()
 endif()
 
-
-find_package(louvain_communities CONFIG)
-if (louvain_communities_FOUND)
-    message(STATUS "Found Community Louvain library")
-    message(STATUS "Community Louvain dynamic lib: ${COMMLOUVAIN_LIBRARIES}")
-    message(STATUS "Community Louvain include dirs: ${COMMLOUVAIN_INCLUDE_DIRS}")
-else()
-    message(STATUS "Cannot find Community Louvain. Please install it!")
-endif()
-
 option(NORMAL_CL_USE_STATS "Only prop and uip stats for NORM" OFF)
 if (NORMAL_CL_USE_STATS)
     add_definitions( -DNORMAL_CL_USE_STATS )
@@ -509,6 +499,18 @@ if (STATS)
 ELSE ()
     MESSAGE(STATUS "Not compiling detailed statistics. The system is faster without them")
 ENDIF ()
+
+find_package(louvain_communities CONFIG)
+if (louvain_communities_FOUND)
+    message(STATUS "Found Community Louvain library")
+    message(STATUS "Community Louvain dynamic lib: ${COMMLOUVAIN_LIBRARIES}")
+    message(STATUS "Community Louvain include dirs: ${COMMLOUVAIN_INCLUDE_DIRS}")
+else()
+    message(STATUS "Cannot find Community Louvain. Please install it!")
+    if (STATS_NEEDED)
+        message(FATAL_ERROR "For STATS we must have louvain communities installed!")
+    endif()
+endif()
 
 # ----------
 # manpage
