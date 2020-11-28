@@ -58,7 +58,7 @@ if [ "$NEXT_OP" == "" ]; then
                 FNAME="goldb-heqc-alu4mul.cnf";
                 break;;
             [5]* )
-                ORIGTIME="107.47";
+                ORIGTIME="99.06";
                 FNAME="AProVE07-16.cnf";
                 break;;
             [6]* )
