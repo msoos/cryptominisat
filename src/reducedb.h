@@ -58,6 +58,7 @@ public:
         uint32_t total_uip1_used = 0;
         uint32_t total_props = 0;
         uint32_t total_cls = 0;
+        uint32_t total_dump_nos = 0;
 
         void add_in(const Clause& cl);
         ClauseStats operator += (const ClauseStats& other);

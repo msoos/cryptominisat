@@ -151,7 +151,6 @@ struct ClauseStats
     #endif
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
-    uint16_t dump_no = 0;
     uint32_t orig_glue = 1000;
     uint32_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
     uint32_t props_made_rank = 0;
@@ -165,6 +164,7 @@ struct ClauseStats
     #endif
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
+    uint32_t dump_no = 0;
     uint32_t uip1_used = 0; ///N.o. times claue was used during 1st UIP generation in this RDB
     uint32_t props_made = 0; ///<Number of times caused propagation
     uint32_t clause_looked_at = 0; ///<Number of times the clause has been deferenced during propagation
