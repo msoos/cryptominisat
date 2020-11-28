@@ -1150,6 +1150,7 @@ ReduceDB::ClauseStats ReduceDB::ClauseStats::operator += (const ClauseStats& oth
     return *this;
 }
 
+#ifdef NORMAL_CL_USE_STATS
 void ReduceDB::ClauseStats::add_in(const Clause& cl)
 {
     total_cls++;
@@ -1158,6 +1159,7 @@ void ReduceDB::ClauseStats::add_in(const Clause& cl)
     total_looked_at += cl.stats.clause_looked_at;
     total_dump_nos += cl.stats.dump_no;
 }
+#endif
 
 void ReduceDB::ClauseStats::print(uint32_t lev)
 {
