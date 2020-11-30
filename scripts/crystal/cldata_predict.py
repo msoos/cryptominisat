@@ -523,7 +523,9 @@ if __name__ == "__main__":
 
     # Read in Pandas Dataframe
     print("Reading dataframe...")
-    df = pd.read_pickle(options.fname)
+    df_nofloat = pd.read_pickle(options.fname)
+    df = df_nofloat.convert_dtypes()
+    del df_nofloat
     df_orig = df.copy()
     if options.print_features:
         for f in sorted(list(df)):
