@@ -30,24 +30,23 @@ function concat() {
     cat learn.sh >> out_git
     md5sum *.dat >> out_git
 
-    only=0.99
-    bestf="../../scripts/crystal/best_features.txt"
-    bestf="../../scripts/crystal/best_features-ext.txt"
-    bestf="../../scripts/crystal/best_features-rdb0-only.txt"
+    bestf_short="../../scripts/crystal/best_features-rdb0-only.txt"
+    bestf="../../scripts/crystal/best_features-rdb0.txt"
+    myforever="forever"
     ../cldata_predict.py \
         short-comb-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat \
-        --tier short --xgboost --final --only $only \
-        --basedir ../../src/predict/ --name short --bestfeatfile $bestf | tee out_short
+        --tier short --final --xgboost \
+        --basedir ../../src/predict/ --bestfeatfile ${bestf_short} | tee out_short
 
     ../cldata_predict.py \
         long-comb-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat  \
-        --tier long --xgboost --final --only $only \
-        --basedir ../../src/predict/ --name long --bestfeatfile $bestf | tee out_long
+        --tier long  --final --xgboost\
+        --basedir ../../src/predict/ --bestfeatfile $bestf | tee out_long
 
     ../cldata_predict.py \
-        forever_div-comb-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat \
-        --tier forever --xgboost --final --only $only \
-        --basedir ../../src/predict/ --name forever --topperc --bestfeatfile $bestf | tee out_forever
+        ${myforever}-comb-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat \
+        --tier ${myforever} --final --xgboost \
+        --basedir ../../src/predict/ --bestfeatfile $bestf --topperc | tee out_${myforever}
 
     cp ../../src/predict/*.json classifiers/
     cp out_* classifiers/
