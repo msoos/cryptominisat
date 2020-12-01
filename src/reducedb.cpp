@@ -1150,7 +1150,7 @@ ReduceDB::ClauseStats ReduceDB::ClauseStats::operator += (const ClauseStats& oth
     return *this;
 }
 
-#ifdef NORMAL_CL_USE_STATS
+#if defined(NORMAL_CL_USE_STATS) || defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
 void ReduceDB::ClauseStats::add_in(const Clause& cl)
 {
     total_cls++;
