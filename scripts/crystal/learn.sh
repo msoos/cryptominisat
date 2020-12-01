@@ -30,8 +30,8 @@ function concat() {
     cat learn.sh >> out_git
     md5sum *.dat >> out_git
 
-    bestf_short="../../scripts/crystal/best_features-rdb0-only.txt"
-    bestf="../../scripts/crystal/best_features-rdb0.txt"
+    bestf_short="../../scripts/crystal/best_features-rdb0-only-short.txt"
+    bestf="../../scripts/crystal/best_features-rdb0-only.txt"
     myforever="forever"
     ../cldata_predict.py \
         short-comb-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat \
