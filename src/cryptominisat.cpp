@@ -1269,17 +1269,13 @@ void DLL_PUBLIC SATSolver::set_up_for_arjun()
         conf.polar_stable_every_n = 100000; //i.e. never use stable polarities
         conf.do_hyperbin_and_transred = false;
         conf.doTransRed = false;
-        conf.intree_time_limitM = 1200ULL;
 
-        conf.do_simplify_problem = false; //no simplification without explicity calling it
-        conf.varElimRatioPerIter = 1;
+        //conf.do_simplify_problem = false; //no simplification without explicity calling it
+//         conf.varElimRatioPerIter = 1;
         conf.restartType = Restart::geom;
-        conf.restart_first = 100;
-        conf.restart_inc = 100;
         conf.polarity_mode = CMSat::PolarityMode::polarmode_automatic;
         conf.branch_strategy_setup = "vsids1";
         conf.diff_declev_for_chrono = -1;
-        conf.doTernary = true;
         conf.do_bosphorus = false;
         data->solvers[i]->setConf(conf);
     }
