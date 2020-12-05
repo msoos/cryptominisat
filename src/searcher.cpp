@@ -4014,8 +4014,9 @@ void Searcher::bump_var_importance(const uint32_t var)
 void Searcher::create_new_fast_backw_assumption()
 {
     //Reset conflict limit
-    params.max_confl_to_do = params.conflictsDoneThisRestart + fast_backw.max_confl;
-    max_confl_this_restart = params.conflictsDoneThisRestart + fast_backw.max_confl;
+    fast_backw.cur_max_confl = sumConflicts + fast_backw.max_confl;
+    //params.max_confl_to_do = params.conflictsDoneThisRestart + fast_backw.max_confl;
+    //max_confl_this_restart = params.conflictsDoneThisRestart + fast_backw.max_confl;
 
     //Remove indic
     Lit indic = fast_backw._assumptions->at(fast_backw._assumptions->size()-1);
