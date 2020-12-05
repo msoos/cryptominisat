@@ -2578,6 +2578,9 @@ lbool Searcher::solve(
     assert(ok);
     assert(qhead == trail.size());
     max_confl_per_search_solve_call = _max_confls;
+    if (fast_backw.fast_backw_on && fast_backw.cur_max_confl == 0) {
+        fast_backw.cur_max_confl = sumConflicts + fast_backw.max_confl;
+    }
     num_search_called++;
     #ifdef SLOW_DEBUG
     //When asking for a lot of simple soluitons, search() gets called a lot
@@ -4015,11 +4018,10 @@ void Searcher::create_new_fast_backw_assumption()
 {
     //Reset conflict limit
     fast_backw.cur_max_confl = sumConflicts + fast_backw.max_confl;
-    //params.max_confl_to_do = params.conflictsDoneThisRestart + fast_backw.max_confl;
     //max_confl_this_restart = params.conflictsDoneThisRestart + fast_backw.max_confl;
 
     //Remove indic
-    Lit indic = fast_backw._assumptions->at(fast_backw._assumptions->size()-1);
+    const Lit indic = fast_backw._assumptions->at(fast_backw._assumptions->size()-1);
     assert(indic.sign());
     fast_backw._assumptions->pop_back();
 
@@ -4083,8 +4085,13 @@ lbool Searcher::new_decision_fast_backw()
         // New variable decision:
         next = pickBranchLit();
 
-        //No decision taken, because it's SAT
-        if (next == lit_Undef) {
+        //1) No decision taken, because it's SAT
+        //2) We are out of conflicts
+        //Either way, it's basically independent
+        if (next == lit_Undef|| sumConflicts >  fast_backw.cur_max_confl) {
+            if (sumConflicts >  fast_backw.cur_max_confl) {
+                fast_backw.indep_because_ran_out_of_confl++;
+            }
             //Let's fix this up.
             //backtrack until last.
             fast_backw._assumptions->pop_back();
@@ -4102,7 +4109,7 @@ lbool Searcher::new_decision_fast_backw()
                 fast_backw.indep_vars->push_back(*fast_backw.test_var);
                 backup.push_back(Lit(*fast_backw.test_indic, true));
                 for(uint32_t i = splice_into; i < fast_backw._assumptions->size(); i++) {
-                    auto x = fast_backw._assumptions->at(i);
+                    const auto x = fast_backw._assumptions->at(i);
                     backup.push_back(x);
                 }
                 std::swap(*fast_backw._assumptions, backup);

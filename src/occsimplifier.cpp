@@ -779,10 +779,11 @@ bool OccSimplifier::can_eliminate_var(const uint32_t var) const
     #endif
 
     assert(var < solver->nVars());
-    if (solver->value(var) != l_Undef
-        || solver->varData[var].removed != Removed::none
-        || solver->var_inside_assumptions(var) != l_Undef
-        || (solver->conf.sampling_vars && sampling_vars_occsimp[var])
+    if (solver->value(var) != l_Undef ||
+        solver->varData[var].removed != Removed::none ||
+        solver->var_inside_assumptions(var) != l_Undef ||
+        ((solver->conf.sampling_vars || solver->fast_backw.fast_backw_on) &&
+            sampling_vars_occsimp[var])
     ) {
         return false;
     }
@@ -1557,6 +1558,7 @@ bool OccSimplifier::simplify(const bool _startup, const std::string schedule)
 
     sampling_vars_occsimp.clear();
     if (solver->conf.sampling_vars) {
+        assert(!solver->fast_backw.fast_backw_on);
         sampling_vars_occsimp.resize(solver->nVars(), false);
         for(uint32_t outside_var: *solver->conf.sampling_vars) {
             uint32_t outer_var = solver->map_to_with_bva(outside_var);
@@ -1566,6 +1568,46 @@ bool OccSimplifier::simplify(const bool _startup, const std::string schedule)
                 sampling_vars_occsimp[int_var] = true;
             }
         }
+    } else if (solver->fast_backw.fast_backw_on) {
+        sampling_vars_occsimp.resize(solver->nVars(), false);
+        for(Lit p: *solver->fast_backw._assumptions) {
+            uint32_t var = solver->fast_backw.indic_to_var->at(p.var());
+            p = solver->varReplacer->get_lit_replaced_with_outer(p);
+            p = solver->map_outer_to_inter(p);
+            assert(solver->varData[p.var()].removed == Removed::none);
+            sampling_vars_occsimp[p.var()] = true;
+
+            //Deal with indicators: var, var + orig_num_vars
+            if (var == var_Undef) {
+                continue;
+            }
+            uint32_t var2 = var + solver->fast_backw.orig_num_vars;
+            var = solver->varReplacer->get_var_replaced_with_outer(var);
+            var = solver->map_outer_to_inter(var);
+            assert(solver->varData[var].removed == Removed::none);
+            if (sampling_vars_occsimp.size() > var) {
+                sampling_vars_occsimp[var] = true;
+            }
+
+            var2 = solver->varReplacer->get_var_replaced_with_outer(var2);
+            var2 = solver->map_outer_to_inter(var2);
+            assert(solver->varData[var2].removed == Removed::none);
+            if (sampling_vars_occsimp.size() > var2) {
+                sampling_vars_occsimp[var2] = true;
+            }
+        }
+
+        //Deal with test_indic
+        uint32_t v = *(solver->fast_backw.test_indic);
+        if (v != var_Undef) {
+            v = solver->varReplacer->get_var_replaced_with_outer(v);
+            v = solver->map_outer_to_inter(v);
+            if (sampling_vars_occsimp.size() > v) {
+                sampling_vars_occsimp[v] = true;
+            }
+        }
+
+
     } else {
         sampling_vars_occsimp.shrink_to_fit();
     }
