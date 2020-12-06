@@ -45,11 +45,24 @@ static inline double cpuTimeTotal(void)
 {
     return (double)clock() / CLOCKS_PER_SEC;
 }
+static inline double realTimeSec() {
+    return 0;
+}
 
 #else //Linux or POSIX
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <unistd.h>
+
+static inline long realTimeMicros() {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return 1000000 * tv.tv_sec + tv.tv_usec;
+}
+
+static inline double real_time_sec() {
+    return (double) realTimeMicros() / 1000000;
+}
 
 static inline double cpuTime(void)
 {

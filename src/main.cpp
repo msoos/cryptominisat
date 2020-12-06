@@ -63,6 +63,7 @@ using std::cerr;
 using std::endl;
 using boost::lexical_cast;
 using std::map;
+double wallclock_time_started = 0.0;
 
 struct WrongParam
 {
@@ -1386,6 +1387,7 @@ void Main::dump_red_file()
 
 int Main::solve()
 {
+    wallclock_time_started = real_time_sec();
     solver = new SATSolver((void*)&conf);
     solverToInterrupt = solver;
     if (dratf) {
@@ -1454,7 +1456,7 @@ int Main::solve()
             << endl;
         }
         if (conf.verbosity) {
-            solver->print_stats();
+            solver->print_stats(wallclock_time_started);
         }
         if (ret == l_True) {
             dump_red_file();

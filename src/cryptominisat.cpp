@@ -988,26 +988,25 @@ DLL_PUBLIC std::string SATSolver::get_text_version_info()
     return ss.str();
 }
 
-DLL_PUBLIC void SATSolver::print_stats() const
+DLL_PUBLIC void SATSolver::print_stats(double wallclock_time_started) const
 {
     double cpu_time_total = cpuTimeTotal();
 
     double cpu_time;
     if (data->interrupted) {
-        //cannot know, we have in fact no idea how much time passed...
-        //we have to guess. Shitty guess comes here... :S
-        cpu_time = cpuTimeTotal()/(double)data->solvers.size();
+        //cannot know, we can only print one, so we print the 1st
+        cpu_time = data->cpu_times[0];
     } else {
+        //We print the winning solver's thread time
         cpu_time = data->cpu_times[data->which_solved];
     }
 
-    //If only one thread, then don't confuse the user. The difference
-    //is minimal.
+    //If only one thread, then it's easy
     if (data->solvers.size() == 1) {
         cpu_time = cpu_time_total;
     }
 
-    data->solvers[data->which_solved]->print_stats(cpu_time, cpu_time_total);
+    data->solvers[data->which_solved]->print_stats(cpu_time, cpu_time_total, wallclock_time_started);
 }
 
 DLL_PUBLIC void SATSolver::set_drat(std::ostream* os, bool add_ID)

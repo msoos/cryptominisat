@@ -48,11 +48,12 @@ using std::endl;
 using namespace CMSat;
 
 SATSolver* solver;
+double wallclock_time_started = 0.0;
 
 static void SIGINT_handler(int) {
     cout << "\n*** INTERRUPTED ***\n";
     solver->add_in_partial_solving_stats();
-    solver->print_stats();
+    solver->print_stats(wallclock_time_started);
     cout << "\n*** INTERRUPTED ***\n";
     exit(1);
 }
@@ -89,6 +90,7 @@ public:
 
     int main(int argc, const char** argv) {
         conf.verbosity = 1;
+        wallclock_time_started = real_time_sec();
 
         int i, j;
         for (i = j = 0; i < argc; i++){
@@ -229,7 +231,7 @@ public:
 
         lbool ret = S.solve();
         if (conf.verbosity) {
-            S.print_stats();
+            S.print_stats(wallclock_time_started);
         }
 
         if (ret == l_True) {
