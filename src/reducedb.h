@@ -41,6 +41,7 @@ public:
     }
     void handle_lev1();
     void handle_lev2();
+    void gather_normal_cl_use_stats();
     #ifdef FINAL_PREDICTOR
     void handle_lev2_predictor();
     #endif

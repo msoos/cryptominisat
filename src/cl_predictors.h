@@ -23,8 +23,7 @@ THE SOFTWARE.
 #ifndef __CLPREDICTOR_H__
 #define __CLPREDICTOR_H__
 
-#define PRED_COLS_SHORT 6
-#define PRED_COLS 17
+#define PRED_COLS 23
 
 
 #include <vector>
@@ -56,7 +55,8 @@ public:
         const double   uip1_ranking_rel,
         const double   prop_ranking_rel,
         const double   avg_props,
-        const double   avg_glue
+        const double   avg_glue,
+        const double   avg_uip
     );
 
     void predict(
@@ -67,6 +67,7 @@ public:
         const double   prop_ranking_rel,
         const double   avg_props,
         const double   avg_glue,
+        const double   avg_uip,
         float& p_short,
         float& p_long,
         float& p_forever);
@@ -81,6 +82,7 @@ private:
         const double   prop_ranking_rel,
         const double   avg_props,
         const double   avg_glue,
+        const double   avg_uip,
         const uint32_t cols,
         float* at);
     vector<BoosterHandle> handles;

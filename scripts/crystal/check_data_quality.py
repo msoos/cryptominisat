@@ -158,8 +158,8 @@ class Queries (helper.QueryHelper):
         incorrect = [
             {"table":"clause_stats", "cond":" orig_glue = 0 and orig_size >= 2"},
             {"table":"clause_stats", "cond":" orig_glue = 1 and orig_size >= 2"},
-            {"table":"clause_stats", "cond":" orig_glue > 50"},
-            {"table":"reduceDB", "cond":" glue > 50"},
+            {"table":"clause_stats", "cond":" orig_glue > 100000"},
+            {"table":"reduceDB", "cond":" glue > 100000"},
             {"table":"clause_stats", "cond":" glue_before_minim = 0 and orig_size >= 2"},
             {"table":"clause_stats", "cond":" glue_before_minim = 1 and orig_size >= 2"},
             {"table":"reduceDB", "cond":" act_ranking < 0"},

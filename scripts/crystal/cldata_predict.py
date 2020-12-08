@@ -247,7 +247,11 @@ class Learner:
             elif options.final_is_forest:
                 clf = clf_forest
             elif options.final_is_xgboost:
-                clf = xgb.XGBRegressor(objective='reg:squarederror', missing=MISSING)
+                # , ntree_limit=3
+                clf = xgb.XGBRegressor(
+                    objective='reg:squarederror',
+                    missing=MISSING,
+                    n_estimators=options.n_estimators_xgboost)
             elif options.final_is_voting:
                 mylist = [["forest", clf_forest], [
                     "svm", clf_svm], ["logreg", clf_logreg]]
@@ -459,6 +463,8 @@ if __name__ == "__main__":
                         dest="final_is_xgboost", help="Final classifier should be a XGBoost")
     parser.add_argument("--voting", default=False, action="store_true",
                         dest="final_is_voting", help="Final classifier should be a voting of all of: forest, svm, logreg")
+    parser.add_argument("--xgboostestimators", default=20, type=int,
+                        dest="n_estimators_xgboost", help="Number of estimators for xgboost")
 
     # which one to generate
     parser.add_argument("--tier", default=None, type=str,
@@ -536,21 +542,8 @@ if __name__ == "__main__":
     print("Applying only...")
     df_tmp = df.sample(frac=options.only_perc, random_state=prng)
     df = pd.DataFrame(df_tmp)
+    del df_tmp
     print("-> Number of datapoints after applying '--only':", df.shape)
-
-    # for short remove sum
-    if options.tier == "short":
-        print("Removing sum, discounted")
-        feats = list(df)
-        for feat in feats:
-            if "szfeat_cur" in feat:
-                del df[feat]
-                continue
-
-            if "sum_cl_use" not in feat and feat[:2] != "x." and ("sum" in feat or "discount" in feat):
-                print("Removing feature:", feat)
-                del df[feat]
-
 
     # feature manipulation
     if not options.no_computed:

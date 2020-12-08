@@ -137,14 +137,16 @@ struct ClauseStats
     uint32_t last_touched = 0;
     #ifdef FINAL_PREDICTOR
     float       glue_hist_long = 0;
-    float       glue_hist_queue = 0;
-    float       confl_size_hist_lt = 0;
+//     float       glue_hist_queue = 0;
+//     float       confl_size_hist_lt = 0;
     uint32_t    glue_before_minim = 0;
     float       antec_overlap_hist_lt = 0;
     uint32_t    num_total_lits_antecedents = 0;
     uint32_t    num_antecedents = 0;
-    float       branch_depth_hist_queue = 0;
+//     float       branch_depth_hist_queue = 0;
     float       num_resolutions_hist_lt = 0;
+    float       confl_size_hist = 0;
+    float glue_hist_lt = 0;
     float pred_short_use;
     float pred_long_use;
     float pred_forever_topperc;

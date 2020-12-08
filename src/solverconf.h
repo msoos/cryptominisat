@@ -255,7 +255,7 @@ class DLL_PUBLIC SolverConf
         //Otherwise we geometrically keep around max_temp_lev2_learnt_clauses*(inc**N)
         unsigned every_lev2_reduce;
 
-        #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+        #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED) || defined(NORMAL_CL_USE_STATS)
         unsigned every_lev3_reduce;
         #endif
 

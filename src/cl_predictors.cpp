@@ -73,7 +73,7 @@ void ClPredictors::load_models(const std::string& short_fname,
 //     bst_ulong num_features = 0;
 //     safe_xgboost(XGBoosterGetNumFeature(handles[predict_type::short_pred], &num_features));
 //     cout << "num_features: " << num_features << endl;
-//     assert(num_features == PRED_COLS_SHORT);
+//     assert(num_features == PRED_COLS);
 //     safe_xgboost(XGBoosterGetNumFeature(handles[predict_type::long_pred], &num_features));
 //     cout << "num_features: " << num_features << endl;
 //     assert(num_features == PRED_COLS);
@@ -90,6 +90,7 @@ void ClPredictors::set_up_input(
     const double   prop_ranking_rel,
     const double   avg_props,
     const double   avg_glue,
+    const double   avg_uip,
     const uint32_t cols,
     float* at)
 {
@@ -126,11 +127,6 @@ void ClPredictors::set_up_input(
 
     at[x++] = (double)cl->stats.ttl_stats;
     //rdb0.ttl_stats -- 6
-
-    if (cols == PRED_COLS_SHORT) {
-        assert(cols == x);
-        return;
-    }
 
     if (cl->stats.conflicts_made == 0) {
         at[x++] = MISSING_VAL;
@@ -223,6 +219,71 @@ void ClPredictors::set_up_input(
     }
     //(rdb0.glue/(rdb0.props_made/rdb0_common.avg_props)) -- 17
 
+    if (cl->stats.num_total_lits_antecedents == 0 ||
+        time_inside_solver == 0 ||
+        cl->is_ternary_resolvent //num_total_lits_antecedents does not exist for ternary
+    ) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = ((double)cl->stats.sum_props_made/(double)time_inside_solver)/
+            (double)cl->stats.num_total_lits_antecedents;
+    }
+    // ((rdb0.sum_props_made/cl.time_inside_solver)/cl.num_total_lits_antecedents) -- 18
+
+
+    if (cl->stats.glue_hist_lt == 0 ||
+        time_inside_solver == 0 ||
+        cl->is_ternary_resolvent //glue and glue_hist_lt does not exist for ternary
+    ) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = (double)cl->stats.glue/(double)cl->stats.glue_hist_lt;
+    }
+    // (rdb0.glue/cl.glue_hist_lt) -- 19
+
+
+    if (avg_uip == 0 ||
+        cl->stats.uip1_used == 0 ||
+        prop_ranking_rel == 0
+    ) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = (double)prop_ranking_rel/
+            ((double)cl->stats.uip1_used/(double)avg_uip);
+    }
+    // (rdb0.prop_ranking_rel/(rdb0.uip1_used/rdb0_common.avg_uip1_used)) -- 20
+
+
+    if (cl->stats.confl_size_hist == 0 ||
+        cl->is_ternary_resolvent // size_hist and overlap_hist do not exist for tri
+    ) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = (double)cl->stats.antec_overlap_hist_lt/
+            ((double)cl->stats.confl_size_hist);
+    }
+    // (cl.antec_overlap_hist_lt/cl.confl_size_hist) -- 21
+
+
+    if (cl->stats.uip1_used == 0 ||
+        cl->is_ternary_resolvent // glue_hist_lt do not exist for tri
+    ) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = (double)cl->stats.glue_hist_lt/
+            ((double)cl->stats.uip1_used);
+    }
+    // (cl.glue_hist_lt/rdb0.uip1_used) -- 22
+
+
+    if (avg_glue == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = (double)cl->size()/
+            ((double)avg_glue);
+    }
+    // (rdb0.size/rdb0_common.avg_glue) -- 23
+
 //     cout << "c val: ";
 //     for(uint32_t i = 0; i < cols; i++) {
 //         cout << at[i] << " ";
@@ -260,7 +321,8 @@ float ClPredictors::predict(
     const double   uip1_ranking_rel,
     const double   prop_ranking_rel,
     const double   avg_props,
-    const double   avg_glue)
+    const double   avg_glue,
+    const double   avg_uip)
 {
     // convert to DMatrix
     set_up_input(
@@ -271,14 +333,11 @@ float ClPredictors::predict(
         prop_ranking_rel,
         avg_props,
         avg_glue,
+        avg_uip,
         PRED_COLS,
         train);
 
-    if (pred_type == short_pred) {
-        safe_xgboost(XGDMatrixCreateFromMat((float *)train, 1, PRED_COLS_SHORT, MISSING_VAL, &dmat));
-    } else {
-        safe_xgboost(XGDMatrixCreateFromMat((float *)train, 1, PRED_COLS, MISSING_VAL, &dmat));
-    }
+    safe_xgboost(XGDMatrixCreateFromMat((float *)train, 1, PRED_COLS, MISSING_VAL, &dmat));
 
     float val = predict_one(pred_type);
     safe_xgboost(XGDMatrixFree(dmat));
@@ -294,6 +353,7 @@ void ClPredictors::predict(
     const double   prop_ranking_rel,
     const double   avg_props,
     const double   avg_glue,
+    const double   avg_uip,
     float& p_short,
     float& p_long,
     float& p_forever)
@@ -307,10 +367,11 @@ void ClPredictors::predict(
         prop_ranking_rel,
         avg_props,
         avg_glue,
+        avg_uip,
         PRED_COLS,
         train);
 
-    safe_xgboost(XGDMatrixCreateFromMat((float *)train, 1, PRED_COLS_SHORT, MISSING_VAL, &dmat));
+    safe_xgboost(XGDMatrixCreateFromMat((float *)train, 1, PRED_COLS, MISSING_VAL, &dmat));
     p_short = predict_one(short_pred);
     safe_xgboost(XGDMatrixFree(dmat));
 

@@ -1647,17 +1647,20 @@ void Searcher::set_clause_data(
     //however, it's the same as how it's dumped in sqlitestats.cpp
 //     cl->stats.num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-cl->size();
 
-    cl->stats.orig_glue = orig_glue;
-    cl->stats.confl_size_hist_lt = hist.conflSizeHistLT.avg();
-    cl->stats.glue_hist_queue = hist.glueHist.getLongtTerm().avg();
     cl->stats.glue_hist_long = hist.glueHist.avg_nocheck();
-
-    cl->stats.num_antecedents = antec_data.num();
+    cl->stats.glue_before_minim = glue_before_minim;
     cl->stats.antec_overlap_hist_lt = hist.overlapHistLT.avg();
     cl->stats.num_total_lits_antecedents = antec_data.sum_size();
-    cl->stats.branch_depth_hist_queue =  hist.branchDepthHistQueue.avg_nocheck();
+    cl->stats.num_antecedents = antec_data.num();
     cl->stats.num_resolutions_hist_lt =  hist.numResolutionsHistLT.avg();
-    cl->stats.glue_before_minim = glue_before_minim;
+    cl->stats.confl_size_hist = hist.conflSizeHist.avg();
+    cl->stats.glue_hist_lt = hist.glueHistLT.avg();
+
+    cl->stats.orig_glue = orig_glue;
+//     cl->stats.glue_hist_queue = hist.glueHist.getLongtTerm().avg();
+//     cl->stats.confl_size_hist_lt = hist.conflSizeHistLT.avg();
+//     cl->stats.branch_depth_hist_queue =  hist.branchDepthHistQueue.avg_nocheck();
+
 }
 #endif
 
@@ -2118,6 +2121,15 @@ void Searcher::reset_temp_cl_num()
 
 void Searcher::reduce_db_if_needed()
 {
+    #ifdef NORMAL_CL_USE_STATS
+    if (conf.every_lev3_reduce != 0
+        && sumConflicts >= next_lev3_reduce
+    ) {
+        solver->reduceDB->gather_normal_cl_use_stats();
+        next_lev3_reduce = sumConflicts + conf.every_lev3_reduce;
+    }
+    #endif
+
     #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
     if (conf.every_lev3_reduce != 0
         && sumConflicts >= next_lev3_reduce

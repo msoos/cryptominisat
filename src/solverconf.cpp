@@ -79,8 +79,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , polar_best_multip_n(1000)
 
         //Clause cleaning
-        , pred_short_size_mult(1.3)
-        , pred_long_size_mult(1.15)
+        , pred_short_size_mult(1.5)
+        , pred_long_size_mult(0.25)
         //, pred_forever_size_mult(0.25)
         //
         , pred_long_chunk_mult(2.8)
@@ -89,13 +89,13 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , pred_forever_topperc(60.0)
         , debug_forever(0)
         //
-        , pred_long_check_every_n(4)
-        , pred_forever_check_every_n(6)
+        , pred_long_check_every_n(5)
+        , pred_forever_check_every_n(5)
 
         , every_lev1_reduce(10000) // kept for a while then moved to lev2
         , every_lev2_reduce(15000) // cleared regularly
-        #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-        , every_lev3_reduce(15000)
+        #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED) || defined(NORMAL_CL_USE_STATS)
+        , every_lev3_reduce(10000)
         #endif
         , must_touch_lev1_within(70000)
 
@@ -157,7 +157,11 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Glues
         , update_glues_on_analyze(true)
+        #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
+        , max_glue_cutoff_gluehistltlimited(100000)
+        #else
         , max_glue_cutoff_gluehistltlimited(50)
+        #endif
 
         //Chono BT
         , diff_declev_for_chrono (20)

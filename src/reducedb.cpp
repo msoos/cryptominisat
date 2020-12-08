@@ -214,35 +214,29 @@ void ReduceDB::sort_red_cls(ClauseClean clean_type)
     }
 }
 
+#if defined(NORMAL_CL_USE_STATS)
+void ReduceDB::gather_normal_cl_use_stats()
+{
+    for(uint32_t i = 0; i < 3; i++) {
+        ClauseStats cl_stat;
+        for(const auto& offset: solver->longRedCls[i]) {
+            Clause* cl = solver->cl_alloc.ptr(offset);
+
+            cl->stats.dump_no++;
+            cl_stat.add_in(*cl);
+            cl->stats.reset_rdb_stats();
+        }
+        cl_stat.print(i);
+        cl_stats[i] += cl_stat;
+    }
+}
+
+#endif
+
 //TODO maybe we chould count binary learnt clauses as well into the
 //kept no. of clauses as other solvers do
 void ReduceDB::handle_lev2()
 {
-    //For NORMAL_CL_USE_STATS, do lev0 stats too
-    #if defined(NORMAL_CL_USE_STATS)
-    ClauseStats cl_stat0;
-    for(const auto& offset: solver->longRedCls[0]) {
-        Clause* cl = solver->cl_alloc.ptr(offset);
-
-        cl->stats.dump_no++;
-        cl_stat0.add_in(*cl);
-        cl->stats.reset_rdb_stats();
-    }
-    cl_stat0.print(0);
-    cl_stats[0] += cl_stat0;
-
-    ClauseStats cl_stat1;
-    for(const auto& offset: solver->longRedCls[1]) {
-        Clause* cl = solver->cl_alloc.ptr(offset);
-
-        cl->stats.dump_no++;
-        cl_stat1.add_in(*cl);
-        cl->stats.reset_rdb_stats();
-    }
-    cl_stat1.print(1);
-    cl_stats[1] += cl_stat1;
-    #endif
-
     solver->dump_memory_stats_to_sql();
     size_t orig_size = solver->longRedCls[2].size();
 
@@ -590,6 +584,7 @@ void ReduceDB::update_preds_lev2()
     double size = (double)solver->longRedCls[2].size();
     double avg_props = safe_div(total_props, size);
     double avg_glue = safe_div(total_glue, size);
+    double avg_uip = safe_div(total_uip1_used, size);
     for(size_t i = 0
         ; i < solver->longRedCls[2].size()
         ; i++
@@ -618,6 +613,7 @@ void ReduceDB::update_preds_lev2()
                 prop_ranking_rel,
                 avg_props,
                 avg_glue,
+                avg_uip,
                 cl->stats.pred_short_use,
                 cl->stats.pred_long_use,
                 cl->stats.pred_forever_topperc
@@ -642,6 +638,7 @@ void ReduceDB::clean_lev0_once_in_a_while()
         double size = (double)solver->longRedCls[0].size();
         double avg_props = safe_div(total_props, size);
         double avg_glue = safe_div(total_glue, size);
+        double avg_uip = safe_div(total_uip1_used, size);
 
         std::sort(solver->longRedCls[0].begin(), solver->longRedCls[0].end(),
               SortRedClsAct(solver->cl_alloc));
@@ -665,7 +662,8 @@ void ReduceDB::clean_lev0_once_in_a_while()
                 uip1_ranking_rel,
                 prop_ranking_rel,
                 avg_props,
-                avg_glue
+                avg_glue,
+                avg_uip
             );
         }
 
@@ -710,15 +708,9 @@ void ReduceDB::clean_lev0_once_in_a_while()
                     assert(cl->stats.which_red_array == 0);
                     solver->longRedCls[0][j++] = solver->longRedCls[0][i];
                 } else {
-                    forever_deleted++;
-                    forever_deleted_dump_no += cl->stats.dump_no;
-                    solver->watches.smudge((*cl)[0]);
-                    solver->watches.smudge((*cl)[1]);
-                    solver->litStats.redLits -= cl->size();
+                    solver->longRedCls[1].push_back(offset);
+                    cl->stats.which_red_array = 1;
 
-                    *solver->drat << del << *cl << fin;
-                    cl->setRemoved();
-                    delayed_clause_free.push_back(offset);
                 }
             }
             solver->longRedCls[0].resize(j);
@@ -737,6 +729,7 @@ void ReduceDB::clean_lev1_once_in_a_while()
         double size = (double)solver->longRedCls[1].size();
         double avg_props = safe_div(total_props, size);
         double avg_glue = safe_div(total_glue, size);
+        double avg_uip = safe_div(total_uip1_used, size);
 
         std::sort(solver->longRedCls[1].begin(), solver->longRedCls[1].end(),
               SortRedClsAct(solver->cl_alloc));
@@ -759,7 +752,8 @@ void ReduceDB::clean_lev1_once_in_a_while()
                 uip1_ranking_rel,
                 prop_ranking_rel,
                 avg_props,
-                avg_glue
+                avg_glue,
+                avg_uip
             );
 
             cl->stats.pred_long_use = predictors->predict(
@@ -770,7 +764,8 @@ void ReduceDB::clean_lev1_once_in_a_while()
                 uip1_ranking_rel,
                 prop_ranking_rel,
                 avg_props,
-                avg_glue
+                avg_glue,
+                avg_uip
             );
         }
         const uint32_t checked_every = solver->conf.pred_long_check_every_n * solver->conf.every_lev3_reduce;
@@ -836,15 +831,8 @@ void ReduceDB::clean_lev1_once_in_a_while()
                 }
                 solver->longRedCls[1][j++] =solver->longRedCls[1][i];
             } else {
-                long_deleted++;
-                long_deleted_dump_no += cl->stats.dump_no;
-                solver->watches.smudge((*cl)[0]);
-                solver->watches.smudge((*cl)[1]);
-                solver->litStats.redLits -= cl->size();
-
-                *solver->drat << del << *cl << fin;
-                cl->setRemoved();
-                delayed_clause_free.push_back(offset);
+                solver->longRedCls[2].push_back(offset);
+                cl->stats.which_red_array = 2;
             }
         }
         solver->longRedCls[1].resize(j);
@@ -1027,7 +1015,6 @@ void ReduceDB::mark_top_N_clauses_lev2(const uint64_t keep_num)
     #endif
 
     size_t marked = 0;
-    ClauseStats cl_stat;
     for(size_t i = 0
         ; i < solver->longRedCls[2].size() && marked < keep_num
         ; i++
@@ -1040,12 +1027,6 @@ void ReduceDB::mark_top_N_clauses_lev2(const uint64_t keep_num)
         << " which_red_array:" << cl->stats.which_red_array << endl
         << " -- cl:" << *cl << " tern:" << cl->is_ternary_resolvent
         << endl;
-        #endif
-
-        #if defined(NORMAL_CL_USE_STATS)
-        cl->stats.dump_no++;
-        cl_stat.add_in(*cl);
-        cl->stats.reset_rdb_stats();
         #endif
 
         if (cl->used_in_xor()
@@ -1068,11 +1049,6 @@ void ReduceDB::mark_top_N_clauses_lev2(const uint64_t keep_num)
             #endif
         }
     }
-
-    #if defined(NORMAL_CL_USE_STATS)
-    cl_stat.print(2);
-    cl_stats[2] += cl_stat;
-    #endif
 }
 
 bool ReduceDB::cl_needs_removal(const Clause* cl, const ClOffset offset) const

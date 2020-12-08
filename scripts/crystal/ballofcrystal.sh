@@ -50,7 +50,6 @@ if [ "$NEXT_OP" == "" ]; then
                 break;;
             [2]* )
                 ORIGTIME="16";
-                EXTRA_CMS_OPTS=" --confbtwsimp 100000 "
                 FNAME="goldb-heqc-i10mul.cnf";
                 break;;
             [3]* )

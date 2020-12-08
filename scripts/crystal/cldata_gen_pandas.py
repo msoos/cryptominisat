@@ -472,9 +472,9 @@ if __name__ == "__main__":
                       help="Don't recreate indexes")
 
     # lengths of short/long
-    parser.add_option("--short", default="15000", type=str,
+    parser.add_option("--short", default="10000", type=str,
                       dest="short", help="Short duration. Default: %default")
-    parser.add_option("--long", default="70000", type=str,
+    parser.add_option("--long", default="50000", type=str,
                       dest="long", help="Long duration. Default: %default")
 
     (options, args) = parser.parse_args()

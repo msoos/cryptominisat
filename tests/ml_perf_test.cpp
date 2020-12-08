@@ -118,8 +118,8 @@ float get_predict(Clause* cl, const Dat& dat, predict_type pred_type)
     cl->stats.num_antecedents = dat.num_antecedents;
     cl->stats.num_total_lits_antecedents = dat.num_total_lits_antecedents;
     cl->stats.glue_hist_long = dat.glue_hist_long;
-    cl->stats.confl_size_hist_lt = dat.confl_size_hist_lt;
-    cl->stats.branch_depth_hist_queue = dat.branch_depth_hist_queue;
+//     cl->stats.confl_size_hist_lt = dat.confl_size_hist_lt;
+//     cl->stats.branch_depth_hist_queue = dat.branch_depth_hist_queue;
     cl->stats.uip1_used = dat.uip1_used;
     cl->resize(dat.size);
 
@@ -129,6 +129,7 @@ float get_predict(Clause* cl, const Dat& dat, predict_type pred_type)
         cl,
         dat.sumConflicts, //this is the age
         dat.act_ranking_rel,
+        0,
         0,
         0,
         0,
