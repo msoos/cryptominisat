@@ -708,9 +708,20 @@ void ReduceDB::clean_lev0_once_in_a_while()
                     assert(cl->stats.which_red_array == 0);
                     solver->longRedCls[0][j++] = solver->longRedCls[0][i];
                 } else {
-                    solver->longRedCls[1].push_back(offset);
-                    cl->stats.which_red_array = 1;
+                    if (solver->conf.pred_move_around) {
+                        forever_deleted++;
+                        forever_deleted_dump_no += cl->stats.dump_no;
+                        solver->watches.smudge((*cl)[0]);
+                        solver->watches.smudge((*cl)[1]);
+                        solver->litStats.redLits -= cl->size();
 
+                        *solver->drat << del << *cl << fin;
+                        cl->setRemoved();
+                        delayed_clause_free.push_back(offset);
+                    } else {
+                        solver->longRedCls[1].push_back(offset);
+                        cl->stats.which_red_array = 1;
+                    }
                 }
             }
             solver->longRedCls[0].resize(j);
@@ -831,8 +842,20 @@ void ReduceDB::clean_lev1_once_in_a_while()
                 }
                 solver->longRedCls[1][j++] =solver->longRedCls[1][i];
             } else {
-                solver->longRedCls[2].push_back(offset);
-                cl->stats.which_red_array = 2;
+                if (solver->conf.pred_move_around) {
+                    long_deleted++;
+                    long_deleted_dump_no += cl->stats.dump_no;
+                    solver->watches.smudge((*cl)[0]);
+                    solver->watches.smudge((*cl)[1]);
+                    solver->litStats.redLits -= cl->size();
+
+                    *solver->drat << del << *cl << fin;
+                    cl->setRemoved();
+                    delayed_clause_free.push_back(offset);
+                } else {
+                    solver->longRedCls[2].push_back(offset);
+                    cl->stats.which_red_array = 2;
+                }
             }
         }
         solver->longRedCls[1].resize(j);

@@ -368,6 +368,8 @@ void Main::add_supported_options()
         , "Keep top percent")
     ("predforeverdebug", po::value(&conf.debug_forever)->default_value(conf.debug_forever)
         , "Use glue and glue ONLY for forever")
+    ("predmovearound", po::value(&conf.pred_move_around)->default_value(conf.pred_move_around)
+        , "Move not only UP but also DOWN clauses in the tiers in pred")
     ("preddistillorig", po::value(&conf.pred_distill_orig)->default_value(conf.pred_distill_orig)
         , "Use original distill method during pred")
     ;

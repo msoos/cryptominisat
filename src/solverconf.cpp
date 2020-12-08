@@ -91,6 +91,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //
         , pred_long_check_every_n(5)
         , pred_forever_check_every_n(5)
+        , pred_move_around(true)
         , pred_distill_orig(true)
 
         , every_lev1_reduce(10000) // kept for a while then moved to lev2
