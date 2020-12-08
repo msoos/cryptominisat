@@ -368,6 +368,8 @@ void Main::add_supported_options()
         , "Keep top percent")
     ("predforeverdebug", po::value(&conf.debug_forever)->default_value(conf.debug_forever)
         , "Use glue and glue ONLY for forever")
+    ("preddistillorig", po::value(&conf.pred_distill_orig)->default_value(conf.pred_distill_orig)
+        , "Use original distill method during pred")
     ;
     #endif
 

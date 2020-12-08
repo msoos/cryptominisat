@@ -55,21 +55,21 @@ bool DistillerLong::distill(const bool red, bool fullstats)
             goto end;
         }
     } else {
-        #ifdef FINAL_PREDICTOR
-        if (!distill_long_cls_all(solver->longRedCls[0], 3.0)) {
-            goto end;
+        if (solver->conf.pred_distill_orig) {
+            if (!distill_long_cls_all(solver->longRedCls[0], 3.0)) {
+                goto end;
+            }
+            if (!distill_long_cls_all(solver->longRedCls[1], 3.0)) {
+                goto end;
+            }
+        } else {
+            if (!distill_long_cls_all(solver->longRedCls[0], 10.0)) {
+                goto end;
+            }
+            if (!distill_long_cls_all(solver->longRedCls[1], solver->conf.distill_red_tier1_ratio)) {
+                goto end;
+            }
         }
-        if (!distill_long_cls_all(solver->longRedCls[1], 3.0)) {
-            goto end;
-        }
-        #else
-        if (!distill_long_cls_all(solver->longRedCls[0], 10.0)) {
-            goto end;
-        }
-        if (!distill_long_cls_all(solver->longRedCls[1], solver->conf.distill_red_tier1_ratio)) {
-            goto end;
-        }
-        #endif
     }
 
 end:
@@ -149,9 +149,7 @@ bool DistillerLong::go_through_clauses(
 
         //If we already tried this clause, then move to next
         if (cl.getdistilled() || cl._xor_is_detached
-#ifdef FINAL_PREDICTOR
-            || cl.stats.glue > 3
-#endif
+            || (!solver->conf.pred_distill_orig && cl.stats.glue > 3)
         ) {
             skipped++;
             *j++ = *i;
