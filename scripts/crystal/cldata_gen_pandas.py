@@ -227,10 +227,6 @@ class QueryCls (helper.QueryHelper):
         WHERE
         (cl.clauseID != 0 OR cl.clauseID is NULL)
         and tags.name = "filename"
-
-
-        -- to avoid missing clauses and their missing data to affect results
-        and rdb0.conflicts + {del_at_least} <= cl_last_in_solver.conflicts
         """
 
         self.myformat = {
@@ -280,18 +276,6 @@ class QueryCls (helper.QueryHelper):
 
     def get_data(self, tier):
         perc = self.get_used_later_percentiles(tier)
-
-        if tier == "short":
-            self.myformat["del_at_least"] = options.short
-
-        elif tier == "long":
-            self.myformat["del_at_least"] = options.long
-
-        # the two below could be 0, but I want to be on the safe side
-        elif tier == "forever":
-            self.myformat["del_at_least"] = options.short
-        elif tier == "forever_div":
-            self.myformat["del_at_least"] = options.short
 
         # Make sure these stratas are equally represented
         t = time.time()
