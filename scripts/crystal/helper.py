@@ -159,7 +159,7 @@ class QueryFill (QueryHelper):
 
         WHERE
         rdb0.clauseID != 0
-        and (cl_last_in_solver.conflicts >= (rdb0.conflicts + {min_del_distance} + {offset})
+        and cl_last_in_solver.conflicts >= (rdb0.conflicts + {min_del_distance} + {offset})
 
         group by rdb0.clauseID, rdb0.conflicts;"""
 
@@ -169,7 +169,7 @@ class QueryFill (QueryHelper):
             duration=duration,
             offset=offset,
             my_count=my_count,
-            forever=int(forever)))
+            min_del_distance=min_del_distance))
 
         print("used_later_%s filled T: %-3.2f s" %
               (name, time.time() - t))

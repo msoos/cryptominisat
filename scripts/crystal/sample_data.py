@@ -606,11 +606,11 @@ if __name__ == "__main__":
                       dest="fair", help="Fair sampling. NOT DEFAULT.")
 
     # lengths of short/long
-    parser.add_option("--short", default="10000", type=int,
+    parser.add_option("--short", default=10000, type=int,
                       dest="short", help="Short duration. Default: %default")
-    parser.add_option("--long", default="50000", type=int,
+    parser.add_option("--long", default=50000, type=int,
                       dest="long", help="Long duration. Default: %default")
-    parser.add_option("--forever", default="1000*1000*1000", type=int,
+    parser.add_option("--forever", default=1000*1000*1000, type=int,
                       dest="forever", help="Forever duration. Default: %default")
 
     (options, args) = parser.parse_args()
@@ -677,12 +677,10 @@ if __name__ == "__main__":
                             used_clauses="used_clauses_red")
         q.fill_used_later_X("forever", duration=options.forever,
                             min_del_distance=options.short,
-                            used_clauses="used_clauses_red",
-                            forever=True)
+                            used_clauses="used_clauses_red")
         q.fill_used_later_X("forever_div", duration=options.forever,
                             min_del_distance=options.short,
                             used_clauses="used_clauses_red",
-                            forever=True,
                             divide=True)
     with QueryDatRem(args[0]) as q:
         helper.dangerous(q.c)
