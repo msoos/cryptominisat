@@ -397,10 +397,12 @@ def one_database(dbfname):
 
     with helper.QueryFill(dbfname) as q:
         q.delete_and_create_used_laters()
-        q.fill_used_later_X("short", offset=0, duration=options.short)
-        q.fill_used_later_X("long", offset=0, duration=options.long)
-        q.fill_used_later_X("forever", offset=0, duration=(1000*1000*1000), forever=True)
-        q.fill_used_later_X("forever_div", offset=0, duration=(1000*1000*1000), forever=True, divide=True)
+        q.fill_used_later_X("short", duration=options.short)
+        q.fill_used_later_X("long", duration=options.long)
+        q.fill_used_later_X("forever", duration=options.forever,
+                            min_del_distance=options.short)
+        q.fill_used_later_X("forever_div", duration=options.forever,
+                            min_del_distance=options.short, divide=True)
 
         # fill percentile_fit
         q.fill_used_later_X_perc_fit("short")
@@ -472,10 +474,12 @@ if __name__ == "__main__":
                       help="Don't recreate indexes")
 
     # lengths of short/long
-    parser.add_option("--short", default="10000", type=str,
+    parser.add_option("--short", default=10000, type=int,
                       dest="short", help="Short duration. Default: %default")
-    parser.add_option("--long", default="50000", type=str,
+    parser.add_option("--long", default=50000, type=int,
                       dest="long", help="Long duration. Default: %default")
+    parser.add_option("--forever", default=1000*1000*1000, type=int,
+                      dest="forever", help="Long duration. Default: %default")
 
     (options, args) = parser.parse_args()
 

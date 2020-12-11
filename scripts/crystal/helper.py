@@ -119,10 +119,12 @@ class QueryFill (QueryHelper):
 
         print("used_later* dropped and recreated T: %-3.2f s" % (time.time() - t))
 
-    def fill_used_later_X(self, name, duration, offset=0,
+    def fill_used_later_X(self, name, duration, min_del_distance=None, offset=0,
                           used_clauses="used_clauses",
-                          forever=False, divide=False):
+                          divide=False):
 
+        if min_del_distance is None:
+            min_del_distance = duration
 
         if not divide:
             my_count = ", count(ucl.used_at) as `used_later`"
@@ -157,8 +159,7 @@ class QueryFill (QueryHelper):
 
         WHERE
         rdb0.clauseID != 0
-        and (cl_last_in_solver.conflicts >= (rdb0.conflicts + {duration} + {offset})
-        or (1=={forever}) and cl_last_in_solver.conflicts >= (rdb0.conflicts + 5000))
+        and (cl_last_in_solver.conflicts >= (rdb0.conflicts + {min_del_distance} + {offset})
 
         group by rdb0.clauseID, rdb0.conflicts;"""
 
