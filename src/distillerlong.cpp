@@ -149,7 +149,9 @@ bool DistillerLong::go_through_clauses(
 
         //If we already tried this clause, then move to next
         if (cl.getdistilled() || cl._xor_is_detached
-            || (!solver->conf.pred_distill_orig && cl.stats.glue > 3)
+            || (!solver->conf.pred_distill_orig &&
+                cl.red() &&
+                cl.stats.glue > 3)
         ) {
             skipped++;
             *j++ = *i;

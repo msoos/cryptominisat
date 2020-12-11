@@ -92,7 +92,11 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , pred_long_check_every_n(5)
         , pred_forever_check_every_n(5)
         , pred_move_around(true)
+        #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
         , pred_distill_orig(false)
+        #else
+        , pred_distill_orig(true)
+        #endif
 
         , every_lev1_reduce(10000) // kept for a while then moved to lev2
         , every_lev2_reduce(15000) // cleared regularly
