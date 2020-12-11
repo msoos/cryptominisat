@@ -56,17 +56,17 @@ bool DistillerLong::distill(const bool red, bool fullstats)
         }
     } else {
         if (solver->conf.pred_distill_orig) {
-            if (!distill_long_cls_all(solver->longRedCls[0], 3.0)) {
-                goto end;
-            }
-            if (!distill_long_cls_all(solver->longRedCls[1], 3.0)) {
-                goto end;
-            }
-        } else {
             if (!distill_long_cls_all(solver->longRedCls[0], 10.0)) {
                 goto end;
             }
             if (!distill_long_cls_all(solver->longRedCls[1], solver->conf.distill_red_tier1_ratio)) {
+                goto end;
+            }
+        } else {
+            if (!distill_long_cls_all(solver->longRedCls[0], 7.0)) {
+                goto end;
+            }
+            if (!distill_long_cls_all(solver->longRedCls[1], 3.0)) {
                 goto end;
             }
         }
