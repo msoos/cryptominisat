@@ -37,21 +37,14 @@ using namespace CMSat;
 
 ClPredictors::ClPredictors()
 {
-    BoosterHandle handle;
-    handles.push_back(handle);
-    safe_xgboost(XGBoosterCreate(0, 0, &(handles[predict_type::short_pred])));
-
-    BoosterHandle handle2;
-    handles.push_back(handle2);
+    handles.resize(3);
+    safe_xgboost(XGBoosterCreate(0, 0, &(handles[predict_type::short_pred])))
     safe_xgboost(XGBoosterCreate(0, 0, &(handles[predict_type::long_pred])))
-
-    BoosterHandle handle3;
-    handles.push_back(handle3);
-    safe_xgboost(XGBoosterCreate(0, 0, &(handles[predict_type::forever_pred])));
+    safe_xgboost(XGBoosterCreate(0, 0, &(handles[predict_type::forever_pred])))
 
     for(int i = 0; i < 3; i++) {
-        safe_xgboost(XGBoosterSetParam(handles[i], "nthread", "1"));
-        //safe_xgboost(XGBoosterSetParam(handles[i], "verbosity", "3"));
+        safe_xgboost(XGBoosterSetParam(handles[i], "nthread", "1"))
+        //safe_xgboost(XGBoosterSetParam(handles[i], "verbosity", "3"))
     }
 }
 
@@ -66,9 +59,9 @@ void ClPredictors::load_models(const std::string& short_fname,
                                const std::string& long_fname,
                                const std::string& forever_fname)
 {
-    safe_xgboost(XGBoosterLoadModel(handles[predict_type::short_pred], short_fname.c_str()));
-    safe_xgboost(XGBoosterLoadModel(handles[predict_type::long_pred], long_fname.c_str()));
-    safe_xgboost(XGBoosterLoadModel(handles[predict_type::forever_pred], forever_fname.c_str()));
+    safe_xgboost(XGBoosterLoadModel(handles[predict_type::short_pred], short_fname.c_str()))
+    safe_xgboost(XGBoosterLoadModel(handles[predict_type::long_pred], long_fname.c_str()))
+    safe_xgboost(XGBoosterLoadModel(handles[predict_type::forever_pred], forever_fname.c_str()))
 
 //     bst_ulong num_features = 0;
 //     safe_xgboost(XGBoosterGetNumFeature(handles[predict_type::short_pred], &num_features));
@@ -333,10 +326,10 @@ float ClPredictors::predict(
         PRED_COLS,
         train);
 
-    safe_xgboost(XGDMatrixCreateFromMat((float *)train, 1, PRED_COLS, MISSING_VAL, &dmat));
+    safe_xgboost(XGDMatrixCreateFromMat((float *)train, 1, PRED_COLS, MISSING_VAL, &dmat))
 
     float val = predict_one(pred_type);
-    safe_xgboost(XGDMatrixFree(dmat));
+    safe_xgboost(XGDMatrixFree(dmat))
 
     return val;
 }
@@ -367,15 +360,15 @@ void ClPredictors::predict(
         PRED_COLS,
         train);
 
-    safe_xgboost(XGDMatrixCreateFromMat((float *)train, 1, PRED_COLS, MISSING_VAL, &dmat));
+    safe_xgboost(XGDMatrixCreateFromMat((float *)train, 1, PRED_COLS, MISSING_VAL, &dmat))
     p_short = predict_one(short_pred);
-    safe_xgboost(XGDMatrixFree(dmat));
+    safe_xgboost(XGDMatrixFree(dmat))
 
-    safe_xgboost(XGDMatrixCreateFromMat((float *)train, 1, PRED_COLS, MISSING_VAL, &dmat));
+    safe_xgboost(XGDMatrixCreateFromMat((float *)train, 1, PRED_COLS, MISSING_VAL, &dmat))
     p_long = predict_one(long_pred);
-    safe_xgboost(XGDMatrixFree(dmat));
+    safe_xgboost(XGDMatrixFree(dmat))
 
-    safe_xgboost(XGDMatrixCreateFromMat((float *)train, 1, PRED_COLS, MISSING_VAL, &dmat));
+    safe_xgboost(XGDMatrixCreateFromMat((float *)train, 1, PRED_COLS, MISSING_VAL, &dmat))
     p_forever = predict_one(forever_pred);
-    safe_xgboost(XGDMatrixFree(dmat));
+    safe_xgboost(XGDMatrixFree(dmat))
 }
