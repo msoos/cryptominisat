@@ -354,7 +354,7 @@ if (NOT WIN32)
         add_cxx_flag_if_supported("-mpopcnt")
         add_cxx_flag_if_supported("-msse4.2")
         add_cxx_flag_if_supported("-Wextra-semi-stmt")
-        add_cxx_flag_if_supported("-Wweak-vtables")
+        add_cxx_flag_if_supported("-Wnoweak-vtables")
         add_cxx_flag_if_supported("-ggdb3")
 
         # Apparently needed before OS X Maverics (2013)
