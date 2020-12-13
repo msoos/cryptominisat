@@ -743,7 +743,7 @@ TEST(statistics, zero)
     s.new_vars(10);
 
     lbool ret = s.solve();
-    EXPECT_EQ(ret, l_True);;
+    EXPECT_EQ(ret, l_True);
     EXPECT_EQ(s.get_sum_conflicts(), 0);
     EXPECT_EQ(s.get_sum_propagations(), 10);
     EXPECT_EQ(s.get_sum_decisions(), 10);
