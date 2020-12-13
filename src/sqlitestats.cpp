@@ -726,7 +726,6 @@ void SQLiteStats::reduceDB(
     const Solver* solver
     , const bool locked
     , const Clause* cl
-    , const uint32_t act_ranking
     , const uint32_t reduceDB_called
 ) {
     assert(cl->stats.dump_no != std::numeric_limits<uint16_t>::max());
@@ -749,7 +748,8 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.clause_looked_at);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.uip1_used);
 
-    int64_t last_touched_diff = solver->sumConflicts-cl->stats.last_touched;
+    assert(cl->stats.last_touched <= solver->sumConflicts);
+    int64_t last_touched_diff = solver->sumConflicts - cl->stats.last_touched;
     sqlite3_bind_int64(stmtReduceDB, bindAt++, last_touched_diff);
     sqlite3_bind_double(stmtReduceDB, bindAt++, (double)cl->stats.activity/(double)solver->get_cla_inc());
     sqlite3_bind_int(stmtReduceDB, bindAt++, locked);
@@ -758,7 +758,7 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->size());
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.ttl_stats);
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->is_ternary_resolvent);
-    sqlite3_bind_int(stmtReduceDB, bindAt++, act_ranking);
+    sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.act_rank);
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.props_made_rank);
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.uip1_used_rank);
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.sum_uip1_used);

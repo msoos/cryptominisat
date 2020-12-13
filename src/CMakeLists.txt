@@ -114,6 +114,7 @@ set(cryptoms_lib_files
     yals.c
     walksat.cpp
     sls.cpp
+    sqlstats.cpp
     vardistgen.cpp
     ccnr.cpp
     ccnr_cms.cpp

@@ -24,6 +24,9 @@ THE SOFTWARE.
 #define __REDUCEDB_H__
 
 #include "clauseallocator.h"
+#ifdef FINAL_PREDICTOR
+#include "cl_predictors.h"
+#endif
 
 namespace CMSat {
 
@@ -97,15 +100,17 @@ private:
     void delete_from_lev2();
     void clean_lev1_once_in_a_while();
     void clean_lev0_once_in_a_while();
+    ReduceCommonData commdata;
     #endif
 
 
-    void set_props_and_uip_ranks(vector<ClOffset>& all_learnt);
+    void set_prop_uip_act_ranks(vector<ClOffset>& all_learnt);
     uint32_t total_glue = 0;
     uint32_t total_props = 0;
     uint32_t total_uip1_used = 0;
     uint32_t median_props;
     uint32_t median_uip1_used;
+    float median_act;
     uint32_t force_kept_short = 0;
     uint32_t force_kept_long = 0;
 

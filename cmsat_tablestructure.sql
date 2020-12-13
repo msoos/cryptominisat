@@ -234,15 +234,15 @@ CREATE TABLE `clause_stats` (
   `antecedents_long_red_age_min` bigint(20),
   `antecedents_long_red_age_max` bigint(20),
 
-  `decision_level_hist_lt` float,
-  `backtrack_level_hist_lt` float,
-  `trail_depth_level_hist` float,
-  `size_hist_lt` float,
-  `glue_hist_lt` float,
+  `decision_level_histlt_avg` float,
+  `backtrack_level_histlt_avg` float,
+  `trail_depth_histlt_avg` float,
+  `conflsize_histlt_avg` float,
+  `glue_histlt_avg` float,
   `connects_num_communities_hist_lt` float,
   `num_resolutions_hist_lt` float,
 
-  `antec_sum_size_hist_lt` float,
+  `antec_sum_conflsize_histlt_avg` float,
   `antec_overlap_hist_lt` float,
 
   `branch_depth_hist_queue` float,
@@ -252,8 +252,8 @@ CREATE TABLE `clause_stats` (
   `confl_size_hist` float,
   `trail_depth_delta_hist` float,
   `backtrack_level_hist` float,
-  `glue_hist_queue` float,
-  `glue_hist_long` float,
+  `glue_hist_avg` float,
+  `glue_hist_longterm_avg` float,
   `orig_connects_num_communities` int(20) NOT NULL
 );
 

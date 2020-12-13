@@ -43,8 +43,8 @@ struct Dat {
     uint32_t num_total_lits_antecedents;
     uint32_t uip1_used;
     float    num_resolutions_hist_lt;
-    float    glue_hist_long;
-    float    confl_size_hist_lt;
+    float    glue_hist_longterm_avg;
+    float    confl_conflsize_histlt_avg;
     float    branch_depth_hist_queue;
     double   act_ranking_rel;
     uint32_t size;
@@ -62,8 +62,8 @@ struct Dat {
         cout << "num_total_lits_antecedents: " << num_total_lits_antecedents << endl;
         cout << "uip1_used: " << uip1_used << endl;
         cout << "num_resolutions_hist_lt: " << num_resolutions_hist_lt << endl;
-        cout << "glue_hist_long: " << glue_hist_long << endl;
-        cout << "confl_size_hist_lt: " << confl_size_hist_lt << endl;
+        cout << "glue_hist_longterm_avg: " << glue_hist_longterm_avg << endl;
+        cout << "confl_conflsize_histlt_avg: " << confl_conflsize_histlt_avg << endl;
         cout << "branch_depth_hist_queue: "  << branch_depth_hist_queue << endl;
         cout << "act_ranking_rel: "  << act_ranking_rel << endl;
         cout << "size: "  << size << endl;
@@ -94,8 +94,8 @@ bool get_val(Dat& dat)
         >> dat.num_total_lits_antecedents
         >> dat.uip1_used
         >> dat.num_resolutions_hist_lt
-        >> dat.glue_hist_long
-        >> dat.confl_size_hist_lt
+        >> dat.glue_hist_longterm_avg
+        >> dat.confl_conflsize_histlt_avg
         >> dat.branch_depth_hist_queue
         >> dat.act_ranking_rel
         >> dat.size
@@ -117,13 +117,14 @@ float get_predict(Clause* cl, const Dat& dat, predict_type pred_type)
     cl->stats.glue = dat.glue;
     cl->stats.num_antecedents = dat.num_antecedents;
     cl->stats.num_total_lits_antecedents = dat.num_total_lits_antecedents;
-    cl->stats.glue_hist_long = dat.glue_hist_long;
-//     cl->stats.confl_size_hist_lt = dat.confl_size_hist_lt;
+    cl->stats.glue_hist_longterm_avg = dat.glue_hist_longterm_avg;
+//     cl->stats.confl_conflsize_histlt_avg = dat.confl_conflsize_histlt_avg;
 //     cl->stats.branch_depth_hist_queue = dat.branch_depth_hist_queue;
     cl->stats.uip1_used = dat.uip1_used;
     cl->resize(dat.size);
 
 
+    ReduceCommonData commondata(0, 0, 0, 0, 0);
     float val = pred->predict(
         pred_type,
         cl,
@@ -131,9 +132,7 @@ float get_predict(Clause* cl, const Dat& dat, predict_type pred_type)
         dat.act_ranking_rel,
         0,
         0,
-        0,
-        0,
-        0
+        commondata
     );
     return val;
 }

@@ -577,6 +577,7 @@ OccSimplifier::LinkInData OccSimplifier::link_in_clauses(
         Clause* cl = solver->cl_alloc.ptr(offs);
         cl->recalc_abst_if_needed();
         assert(cl->abst == calcAbstraction(*cl));
+        assert(!cl->red() || cl->stats.glue > 0);
 
         if (alsoOccur
             && cl->size() < max_size
@@ -663,6 +664,7 @@ void OccSimplifier::add_back_to_solver()
         if (complete_clean_clause(*cl)) {
             solver->attachClause(*cl);
             if (cl->red()) {
+                assert(cl->stats.glue > 0);
                 #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
                 assert(
                     cl->stats.introduced_at_conflict != 0 ||
@@ -1717,7 +1719,9 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
         stats.last_touched = solver->sumConflicts;
         stats.glue = solver->conf.glue_put_lev1_if_below_or_eq;
         #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-        stats.orig_glue = 0;
+        //since glue_put_lev1_if_below_or_eq is 6 normally (TODO make this nicer)
+        stats.orig_glue = 6;
+        stats.glue = 6;
         #endif
 
         #ifdef FINAL_PREDICTOR
@@ -1771,7 +1775,6 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
             #endif
 
             newCl->is_ternary_resolvent = true;
-            assert(newCl->stats.glue == solver->conf.glue_put_lev1_if_below_or_eq);
             linkInClause(*newCl);
             ClOffset offset = solver->cl_alloc.get_offset(newCl);
             clauses.push_back(offset);

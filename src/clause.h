@@ -109,12 +109,14 @@ struct ClauseStats
 {
     ClauseStats()
     {
+        //NOTE: we *MUST* set values to high default, as we do
+        //combineStats(default, newclause) to get combined stats.
         glue = 1000;
+        is_decision = false;
         marked_clause = false;
         ttl = 0;
         which_red_array = 2;
         locked_for_data_gen = 0;
-        is_decision = false;
         //TODO it's weird, it has been tested to be better with "1"
         #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
         activity = 0;
@@ -136,17 +138,15 @@ struct ClauseStats
     };
     uint32_t last_touched = 0;
     #ifdef FINAL_PREDICTOR
-    float       glue_hist_long = 0;
-//     float       glue_hist_queue = 0;
-//     float       confl_size_hist_lt = 0;
-    uint32_t    glue_before_minim = 0;
-    float       antec_overlap_hist_lt = 0;
-    uint32_t    num_total_lits_antecedents = 0;
-    uint32_t    num_antecedents = 0;
-//     float       branch_depth_hist_queue = 0;
-    float       num_resolutions_hist_lt = 0;
-    float       confl_size_hist = 0;
-    float glue_hist_lt = 0;
+    float       glue_hist_longterm_avg;
+    float       glue_hist_avg;
+    uint32_t    glue_before_minim;
+    float       antec_overlap_hist_lt;
+    uint32_t    num_total_lits_antecedents;
+    uint32_t    num_antecedents;
+    float       num_resolutions_hist_lt;
+    float       confl_size_hist;
+    float glue_histlt_avg;
     float pred_short_use;
     float pred_long_use;
     float pred_forever_topperc;
@@ -155,14 +155,14 @@ struct ClauseStats
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
     uint32_t orig_glue = 1000;
     uint32_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
-    uint32_t props_made_rank = 0;
-    uint32_t uip1_used_rank = 0;
     float discounted_uip1_used3 = 0;
     float discounted_props_made = 0;
-    uint32_t conflicts_made = 0; ///<Number of times caused conflict
     uint32_t sum_uip1_used = 0; ///N.o. times claue was used during 1st UIP generation for ALL TIME
     uint32_t sum_props_made = 0; ///<Number of times caused propagation
-    uint32_t ttl_stats = 0;
+
+    uint32_t props_made_rank = 0;
+    uint32_t act_rank = 0;
+    uint32_t uip1_used_rank = 0;
     #endif
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
@@ -180,6 +180,8 @@ struct ClauseStats
     float discounted_uip1_used2 = 0;
     float discounted_props_made2 = 0;
     float discounted_props_made3 = 0;
+    uint32_t conflicts_made = 0; ///<Number of times caused conflict
+    uint32_t ttl_stats = 0;
 
     AtecedentData<uint16_t> antec_data;
     #endif
@@ -214,9 +216,9 @@ struct ClauseStats
         discounted_props_made3 += (float)props_made*(1.0f-discount_factor);
 
         antec_data.clear();
-        #endif
-        ttl_stats = 0;
         conflicts_made = 0;
+        ttl_stats = 0;
+        #endif
         uip1_used = 0;
         props_made = 0;
         clause_looked_at = 0;
@@ -255,17 +257,20 @@ struct ClauseStats
         }
         ret.sum_uip1_used = first.sum_uip1_used + second.sum_uip1_used;
         ret.sum_props_made = first.sum_props_made + second.sum_props_made;
-        ret.uip1_used = first.uip1_used + second.uip1_used;
-        ret.props_made = first.props_made + second.props_made;
-        ret.conflicts_made = first.conflicts_made + second.conflicts_made;
         ret.discounted_props_made = first.discounted_props_made + second.discounted_props_made;
         ret.discounted_uip1_used3 = first.discounted_uip1_used3 + second.discounted_uip1_used3;
         ret.orig_glue = std::min(first.orig_glue, second.orig_glue);
-        ret.ttl_stats = std::max(first.ttl_stats, second.ttl_stats);
+        #endif
+
+        #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
+        ret.uip1_used = first.uip1_used + second.uip1_used;
+        ret.props_made = first.props_made + second.props_made;
+        ret.clause_looked_at = first.clause_looked_at + second.clause_looked_at;
         #endif
 
         #ifdef STATS_NEEDED
-        ret.clause_looked_at = first.clause_looked_at + second.clause_looked_at;
+        ret.ttl_stats = std::max(first.ttl_stats, second.ttl_stats);
+        ret.conflicts_made = first.conflicts_made + second.conflicts_made;
         ret.discounted_props_made2 = first.discounted_props_made2 + second.discounted_props_made2;
         ret.discounted_props_made3 = first.discounted_props_made3 + second.discounted_props_made3;
         ret.discounted_uip1_used =   first.discounted_uip1_used   + second.discounted_uip1_used;

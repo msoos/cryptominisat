@@ -338,7 +338,7 @@ void Searcher::update_glue_from_analysis(Clause* cl)
     if (new_glue < cl->stats.glue) {
         if (cl->stats.glue <= conf.protect_cl_if_improved_glue_below_this_glue_for_one_turn) {
             cl->stats.ttl = 1;
-            #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+            #if defined(STATS_NEEDED)
             cl->stats.ttl_stats = cl->stats.glue - new_glue;
             #endif
         }
@@ -1647,18 +1647,18 @@ void Searcher::set_clause_data(
     //however, it's the same as how it's dumped in sqlitestats.cpp
 //     cl->stats.num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-cl->size();
 
-    cl->stats.glue_hist_long = hist.glueHist.avg_nocheck();
+    cl->stats.glue_hist_longterm_avg = hist.glueHist.getLongtTerm().avg();
+    cl->stats.glue_hist_avg = hist.glueHist.avg_nocheck();
     cl->stats.glue_before_minim = glue_before_minim;
     cl->stats.antec_overlap_hist_lt = hist.overlapHistLT.avg();
     cl->stats.num_total_lits_antecedents = antec_data.sum_size();
     cl->stats.num_antecedents = antec_data.num();
     cl->stats.num_resolutions_hist_lt =  hist.numResolutionsHistLT.avg();
     cl->stats.confl_size_hist = hist.conflSizeHist.avg();
-    cl->stats.glue_hist_lt = hist.glueHistLT.avg();
+    cl->stats.glue_histlt_avg = hist.glueHistLT.avg();
 
     cl->stats.orig_glue = orig_glue;
-//     cl->stats.glue_hist_queue = hist.glueHist.getLongtTerm().avg();
-//     cl->stats.confl_size_hist_lt = hist.conflSizeHistLT.avg();
+//     cl->stats.confl_conflsize_histlt_avg = hist.conflSizeHistLT.avg();
 //     cl->stats.branch_depth_hist_queue =  hist.branchDepthHistQueue.avg_nocheck();
 
 }

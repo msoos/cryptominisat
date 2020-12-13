@@ -384,10 +384,8 @@ PropBy PropEngine::propagate_any_order_fast()
             *j++ = w;
             if (value(c[0]) == l_False) {
                 confl = PropBy(offset);
-                #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-                c.stats.conflicts_made++;
-                #endif
                 #ifdef STATS_NEEDED
+                c.stats.conflicts_made++;
                 if (c.red())
                     lastConflictCausedBy = ConflCausedBy::longred;
                 else

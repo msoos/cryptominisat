@@ -27,6 +27,7 @@ THE SOFTWARE.
 
 
 #include <vector>
+#include <cassert>
 #include <string>
 #include <xgboost/c_api.h>
 
@@ -37,6 +38,38 @@ namespace CMSat {
 enum predict_type {short_pred=0, long_pred=1, forever_pred=2};
 
 class Clause;
+
+struct ReduceCommonData
+{
+    double safe_div(double a, double b) {
+        if (b == 0) {
+            assert(a == 0);
+            return 0;
+        }
+        return a/b;
+    }
+
+    double   avg_props;
+    double   avg_glue;
+    double   avg_uip;
+    float    median_act;
+    uint32_t all_learnt_size;
+
+    ReduceCommonData() {}
+    ReduceCommonData(
+        uint32_t total_props,
+        uint32_t total_glue,
+        uint32_t total_uip1_used,
+        uint32_t size,
+        float _median_act)
+    {
+        all_learnt_size = size;
+        median_act = _median_act;
+        avg_props = safe_div(total_props, size);
+        avg_glue = safe_div(total_glue, size);
+        avg_uip = safe_div(total_uip1_used, size);
+    }
+};
 
 class ClPredictors
 {
@@ -54,9 +87,7 @@ public:
         const double   act_ranking_rel,
         const double   uip1_ranking_rel,
         const double   prop_ranking_rel,
-        const double   avg_props,
-        const double   avg_glue,
-        const double   avg_uip
+        const ReduceCommonData& commdata
     );
 
     void predict(
@@ -65,9 +96,7 @@ public:
         const double   act_ranking_rel,
         const double   uip1_ranking_rel,
         const double   prop_ranking_rel,
-        const double   avg_props,
-        const double   avg_glue,
-        const double   avg_uip,
+        const ReduceCommonData& commdata,
         float& p_short,
         float& p_long,
         float& p_forever);
@@ -80,9 +109,7 @@ private:
         const double   act_ranking_rel,
         const double   uip1_ranking_rel,
         const double   prop_ranking_rel,
-        const double   avg_props,
-        const double   avg_glue,
-        const double   avg_uip,
+        const ReduceCommonData& commdata,
         const uint32_t cols,
         float* at);
     vector<BoosterHandle> handles;

@@ -86,7 +86,6 @@ public:
         const Solver* solver
         , const bool locked
         , const Clause* cl
-        , const uint32_t act_ranking
         , const uint32_t reduceDB_called
     ) = 0;
 

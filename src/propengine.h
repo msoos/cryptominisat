@@ -381,7 +381,7 @@ inline PropResult PropEngine::prop_normal_helper(
 template<bool update_bogoprops>
 inline PropResult PropEngine::handle_normal_prop_fail(
     Clause&
-    #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+    #ifdef STATS_NEEDED
     c
     #endif
     , ClOffset offset
@@ -398,12 +398,10 @@ inline PropResult PropEngine::handle_normal_prop_fail(
     #endif //VERBOSE_DEBUG_FULLPROP
 
     //Update stats
-    #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+    #ifdef STATS_NEEDED
     if (!update_bogoprops) {
         c.stats.conflicts_made++;
     }
-    #endif
-    #ifdef STATS_NEEDED
     if (c.red())
         lastConflictCausedBy = ConflCausedBy::longred;
     else
