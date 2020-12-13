@@ -44,7 +44,6 @@ using std::map;
 
 MatrixFinder::MatrixFinder(Solver* _solver) :
     solver(_solver)
-    , seen(_solver->seen)
 {
 }
 

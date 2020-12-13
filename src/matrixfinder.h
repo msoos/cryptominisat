@@ -90,7 +90,6 @@ class MatrixFinder {
         uint32_t matrix_no;
 
         Solver* solver;
-        vector<uint16_t>& seen;
 };
 
 }
