@@ -188,12 +188,8 @@ void ClPredictors::set_up_input(
     }
     //(cl.glue_hist_long/cl.glue_before_minim) -- 13
 
-    if (cl->is_ternary_resolvent == 0) {
-        at[x++] = MISSING_VAL;
-    } else {
-        at[x++] = (double)cl->stats.discounted_uip1_used3/(double)cl->is_ternary_resolvent;
-    }
-    //(rdb0.discounted_uip1_used3/rdb0.is_ternary_resolvent) -- 14
+    at[x++] = cl->is_ternary_resolvent;
+    //rdb0.is_ternary_resolvent -- 14
 
     if (cl->stats.num_resolutions_hist_lt == 0 ||
         cl->is_ternary_resolvent //num_resolutions_hist_lt does not exist for ternary
