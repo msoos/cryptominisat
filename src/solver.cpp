@@ -3407,7 +3407,7 @@ vector<pair<Lit, Lit> > Solver::get_all_binary_xors() const
         }
     }
 
-    for(const std::pair<Lit, Lit> val: ret) {
+    for(const auto& val: ret) {
         assert(val.first.var() < nVarsOutside());
         assert(val.second.var() < nVarsOutside());
     }
