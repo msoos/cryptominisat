@@ -156,7 +156,6 @@ private:
 
     double startTime;
     double totalTime = 0;
-    int64_t flips_this_solution;
     uint32_t lowbad;                  /* lowest number of bad clauses during try */
     int64_t totalflip = 0;        /* total number of flips in all tries so far */
     int64_t totalsuccessflip = 0; /* total number of flips in all tries which succeeded so far */
