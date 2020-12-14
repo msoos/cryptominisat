@@ -1010,6 +1010,14 @@ DLL_PUBLIC void SATSolver::print_stats(double wallclock_time_started) const
     data->solvers[data->which_solved]->print_stats(cpu_time, cpu_time_total, wallclock_time_started);
 }
 
+DLL_PUBLIC void SATSolver::set_find_xors(bool do_find_xors)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.doFindXors = do_find_xors;
+    }
+}
+
 DLL_PUBLIC void SATSolver::set_drat(std::ostream* os, bool add_ID)
 {
     if (data->solvers.size() > 1) {
