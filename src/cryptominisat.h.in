@@ -143,6 +143,7 @@ namespace CMSat {
         void set_no_confl_needed(); //assumptions-based conflict will NOT be calculated for next solve run
         void set_xor_detach(bool val);
         void set_simplify(const bool simp);
+        void set_find_xors(bool do_find_xors);
 
 
         ////////////////////////////
