@@ -564,6 +564,7 @@ DLL_PUBLIC void SATSolver::set_allow_otf_gauss()
         Solver& s = *data->solvers[i];
         //s.conf.reconfigure_at = 0;
         //s.conf.reconfigure_val = 15;
+        s.conf.doFindXors = true;
         s.conf.gaussconf.max_num_matrices = 10;
         s.conf.gaussconf.autodisable = false;
         s.conf.xor_detach_reattach = true;
