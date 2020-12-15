@@ -309,6 +309,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "scc-vrepl,"
             //renumber then it's time for SLS
             "renumber,"
+            "sub-impl,"
             "bosphorus,"
             "louvain-comms,"
             "sls,lucky"
