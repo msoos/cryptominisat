@@ -212,7 +212,7 @@ class Tester:
     def __init__(self):
         self.ignoreNoSolution = False
         self.extra_opts_supported = self.list_options_if_supported(
-            ["xor", "autodisablegauss", "sql", "clid", "breakid"])
+            ["xor", "autodisablegauss", "sql", "clid", "breakid", "predshort"])
         self.sol_parser = solution_parser(options)
         self.sqlitedbfname = None
         self.clid_added = False
@@ -380,7 +380,7 @@ class Tester:
             cmd += "--varelimover %d " % random.gammavariate(1, 20)
             cmd += "--memoutmult %0.12f " % random.gammavariate(0.05, 10)
             cmd += "--verb %d " % random.choice([0, 0, 0, 0, 1, 2])
-            if random.randint(0, 2) == 1:
+            if (not "predshort" in self.extra_opts_supported) and random.randint(0, 2) == 1:
                 cmd += "--reconf %d " % random.choice([3, 4, 6, 7, 12, 13, 14, 15, 16])
             # cmd += "--undef %d " % random.choice([0, 1])
             cmd += " --reconfat %d " % random.randint(0, 2)
