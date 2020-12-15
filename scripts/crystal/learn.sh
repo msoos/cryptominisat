@@ -54,9 +54,9 @@ function concat() {
     tar czvf classifiers-cut1-${cut1}-cut2-${cut2}-limit-${limit}.tar.gz classifiers
 }
 
-limit=700
-cut1="10.0"
-cut2="40.0"
+limit=2000
+cut1="50.0"
+cut2="80.0"
 concat
 
 cut1="20.0"
