@@ -35,7 +35,8 @@ GetClauseQuery::GetClauseQuery(Solver* _solver) :
 {}
 
 void GetClauseQuery::start_getting_small_clauses(
-    const uint32_t _max_len, const uint32_t _max_glue, bool _red, bool _bva_vars)
+    const uint32_t _max_len, const uint32_t _max_glue, bool _red,
+    bool _bva_vars, bool _simplified)
 {
     if (!outer_to_without_bva_map.empty()) {
         std::cerr << "ERROR: You forgot to call end_getting_small_clauses() last time!" <<endl;
@@ -65,6 +66,16 @@ void GetClauseQuery::start_getting_small_clauses(
     blocked_at2 = 0;
     undef_at = 0;
     bva_vars = _bva_vars;
+    simplified = _simplified;
+    if (simplified) {
+        bva_vars = true;
+        if (solver->get_num_bva_vars() != 0) {
+            cout << "ERRROR! You must not have BVA variables for simplified CNF getting" << endl;
+            exit(-1);
+        }
+        release_assert(red == false);
+        release_assert(solver->get_num_bva_vars() == 0);
+    }
     if (bva_vars) {
         outer_to_without_bva_map = solver->build_outer_to_without_bva_map_extended();
     } else {
@@ -100,12 +111,17 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
     }
 
     //Adding units
-    while (units_at < solver->nVarsOuter()) {
+    while (
+        (!simplified && units_at < solver->nVarsOuter()) ||
+        (simplified && units_at < solver->nVars())
+    ) {
         uint32_t v = units_at;
         if (solver->value(v) != l_Undef) {
             tmp_cl.clear();
             tmp_cl.push_back(Lit(v, solver->value(v) == l_False));
-            tmp_cl = solver->clause_outer_numbered(tmp_cl);
+            if (!simplified) {
+                tmp_cl = solver->clause_outer_numbered(tmp_cl);
+            }
             if (bva_vars || all_vars_outside(tmp_cl)) {
                 map_without_bva(tmp_cl);
                 out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
@@ -133,7 +149,9 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
                 tmp_cl.clear();
                 tmp_cl.push_back(l);
                 tmp_cl.push_back(w.lit2());
-                tmp_cl = solver->clause_outer_numbered(tmp_cl);
+                if (!simplified) {
+                    tmp_cl = solver->clause_outer_numbered(tmp_cl);
+                }
                 if (bva_vars || all_vars_outside(tmp_cl)) {
                     map_without_bva(tmp_cl);
                     out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
@@ -152,7 +170,7 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
     }
 
     //Replaced variables
-    while (varreplace_at < solver->nVarsOuter()*2) {
+    while (varreplace_at < solver->nVarsOuter()*2 && !simplified) {
         Lit l = Lit::toLit(varreplace_at);
         Lit l2 = solver->varReplacer->get_lit_replaced_with_outer(l);
         if (l2 != l) {
@@ -174,6 +192,7 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
     }
 
     if (red) {
+        assert(!simplified);
         while(at < solver->longRedCls[0].size()) {
             const ClOffset offs = solver->longRedCls[0][at];
             const Clause* cl = solver->cl_alloc.ptr(offs);
@@ -222,7 +241,14 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
             const ClOffset offs = solver->longIrredCls[at];
             const Clause* cl = solver->cl_alloc.ptr(offs);
             if (cl->size() <= max_len) {
-                tmp_cl = solver->clause_outer_numbered(*cl);
+                if (!simplified) {
+                    tmp_cl = solver->clause_outer_numbered(*cl);
+                } else {
+                    tmp_cl.clear();
+                    for(const auto& l: *cl) {
+                        tmp_cl.push_back(l);
+                    }
+                }
                 if (bva_vars || all_vars_outside(tmp_cl)) {
                     map_without_bva(tmp_cl);
                     out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
@@ -238,23 +264,11 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
         }
 
         //Components (already in OUTER notation)
-        bool ret = true;
-        while (ret && solver->compHandler) {
-            ret = solver->compHandler->get_removed_clause_at(comp_at, comp_at_sum, tmp_cl);
-            if (ret && all_vars_outside(tmp_cl)) {
-                map_without_bva(tmp_cl);
-                out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
-                if (!all_in_one_go) {
-                    return true;
-                } else {
-                    out.push_back(lit_Undef);
-                }
-            }
-        }
+        release_assert(solver->compHandler == NULL || solver->compHandler->get_num_removed_cls() == 0);
 
         //Blocked clauses (already in OUTER notation)
-        ret = true;
-        while (ret && solver->occsimplifier) {
+        bool ret = true;
+        while (ret && solver->occsimplifier && !simplified) {
             ret = solver->occsimplifier->get_blocked_clause_at(blocked_at, blocked_at2, tmp_cl);
             if (ret && all_vars_outside(tmp_cl)) {
                 map_without_bva(tmp_cl);
@@ -269,7 +283,7 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
 
         //Clauses that have a variable like a V ~a which means the variable MUST take a value
         //These are already in OUTER notation
-        while (undef_at < solver->undef_must_set_vars.size()) {
+        while (undef_at < solver->undef_must_set_vars.size() && !simplified) {
             uint32_t v = undef_at;
             if (solver->undef_must_set_vars[v]) {
                 tmp_cl.clear();

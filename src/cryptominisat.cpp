@@ -1214,10 +1214,11 @@ void DLL_PUBLIC SATSolver::start_getting_small_clauses(
     uint32_t max_len,
     uint32_t max_glue,
     bool red,
-    bool bva_vars)
+    bool bva_vars,
+    bool simplified)
 {
     assert(data->solvers.size() >= 1);
-    data->solvers[0]->start_getting_small_clauses(max_len, max_glue, red, bva_vars);
+    data->solvers[0]->start_getting_small_clauses(max_len, max_glue, red, bva_vars, simplified);
 }
 
 bool DLL_PUBLIC SATSolver::get_next_small_clause(std::vector<Lit>& out)
@@ -1230,6 +1231,13 @@ void DLL_PUBLIC SATSolver::end_getting_small_clauses()
 {
     assert(data->solvers.size() >= 1);
     data->solvers[0]->end_getting_small_clauses();
+}
+
+void DLL_PUBLIC SATSolver::set_min_bva_gain(uint32_t min_bva_gain)
+{
+    for (size_t i = 0; i < data->solvers.size(); i++) {
+        data->solvers[i]->conf.min_bva_gain = min_bva_gain;
+    }
 }
 
 void DLL_PUBLIC SATSolver::set_up_for_scalmc()

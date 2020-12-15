@@ -117,7 +117,8 @@ class Solver : public Searcher
 
         //get learnt clauses
         void start_getting_small_clauses(
-            uint32_t max_len, uint32_t max_glue, bool red = true, bool bva_vars = false);
+            uint32_t max_len, uint32_t max_glue, bool red = true,
+            bool bva_vars = false, bool simplified = false);
         bool get_next_small_clause(std::vector<Lit>& out);
         void end_getting_small_clauses();
         void get_all_irred_clauses(vector<Lit>& out);

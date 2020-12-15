@@ -40,7 +40,8 @@ class GetClauseQuery {
 public:
     GetClauseQuery(Solver* solver);
     void start_getting_small_clauses(
-            uint32_t max_len, uint32_t max_glue, bool red = true, bool bva_vars = false);
+            uint32_t max_len, uint32_t max_glue, bool red = true,
+            bool bva_vars = false, bool simplified = false);
     bool get_next_small_clause(std::vector<Lit>& out, bool all_in_one_go = false);
     void end_getting_small_clauses();
     void get_all_irred_clauses(vector<Lit>& out);
@@ -61,6 +62,7 @@ private:
     uint32_t blocked_at = std::numeric_limits<uint32_t>::max();
     uint32_t blocked_at2 = std::numeric_limits<uint32_t>::max();
     uint32_t undef_at = std::numeric_limits<uint32_t>::max();
+    bool simplified = false;
     bool bva_vars = false;
 
     vector<uint32_t> outer_to_without_bva_map;

@@ -71,6 +71,7 @@ class CompHandler
         size_t get_num_vars_removed() const;
         size_t get_num_components_solved() const;
         size_t mem_used() const;
+        size_t get_num_removed_cls() const;
 
     private:
         struct sort_pred {
@@ -197,6 +198,11 @@ inline size_t CompHandler::get_num_vars_removed() const
 inline size_t CompHandler::get_num_components_solved() const
 {
     return components_solved;
+}
+
+inline size_t CompHandler::get_num_removed_cls() const
+{
+    return removedClauses.sizes.size();
 }
 
 } //end of namespace
