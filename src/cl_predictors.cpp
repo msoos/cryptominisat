@@ -157,10 +157,10 @@ void ClPredictors::set_up_input(
     //((rdb0.sum_props_made/cl.time_inside_solver)/(rdb0.glue/rdb0_common.avg_glue)) -- 9
 
 
-    if (time_inside_solver == 0 ||
+    if (cl->is_ternary_resolvent || //glue_before_minim does not exist for ternary
+        time_inside_solver == 0 ||
         cl->stats.sum_uip1_used == 0 ||
-        cl->stats.glue_before_minim == 0 ||
-        cl->is_ternary_resolvent) //glue_before_minim does not exist for ternary
+        cl->stats.glue_before_minim == 0)
     {
         at[x++] = MISSING_VAL;
     } else {
@@ -174,9 +174,9 @@ void ClPredictors::set_up_input(
     //cl.orig_glue -- 11
 
 
-    if (cl->stats.num_antecedents == 0 ||
-        cl->stats.num_total_lits_antecedents == 0 ||
-        cl->is_ternary_resolvent) //num_antecedents does not exist for ternary
+    if (cl->is_ternary_resolvent ||
+        cl->stats.num_antecedents == 0 ||
+        cl->stats.num_total_lits_antecedents == 0) //num_antecedents does not exist for ternary
     {
         at[x++] = MISSING_VAL;
     } else {
@@ -185,8 +185,8 @@ void ClPredictors::set_up_input(
     //(log2(cl.num_antecedents)/cl.num_total_lits_antecedents) -- 12
 
 
-    if (cl->stats.glue_before_minim == 0 ||
-        cl->is_ternary_resolvent //glue_hist_longterm_avg does not exist for ternary
+    if (cl->is_ternary_resolvent ||
+        cl->stats.glue_before_minim == 0 //glue_hist_longterm_avg does not exist for ternary
     ) {
         at[x++] = MISSING_VAL;
     } else {
@@ -199,8 +199,8 @@ void ClPredictors::set_up_input(
     //rdb0.is_ternary_resolvent -- 14
 
 
-    if (cl->stats.num_resolutions_hist_lt == 0 ||
-        cl->is_ternary_resolvent //num_resolutions_hist_lt does not exist for ternary
+    if (cl->is_ternary_resolvent || //num_resolutions_hist_lt does not exist for ternary
+        cl->stats.num_resolutions_hist_lt == 0
     ) {
         at[x++] = MISSING_VAL;
     } else {
@@ -226,9 +226,9 @@ void ClPredictors::set_up_input(
     //(rdb0.glue/(rdb0.props_made/rdb0_common.avg_props)) -- 17
 
 
-    if (cl->stats.num_total_lits_antecedents == 0 ||
-        time_inside_solver == 0 ||
-        cl->is_ternary_resolvent //num_total_lits_antecedents does not exist for ternary
+    if (cl->is_ternary_resolvent || //num_total_lits_antecedents does not exist for ternary
+        cl->stats.num_total_lits_antecedents == 0 ||
+        time_inside_solver == 0
     ) {
         at[x++] = MISSING_VAL;
     } else {
@@ -238,9 +238,9 @@ void ClPredictors::set_up_input(
     // ((rdb0.sum_props_made/cl.time_inside_solver)/cl.num_total_lits_antecedents) -- 18
 
 
-    if (cl->stats.glue_histlt_avg == 0 ||
-        time_inside_solver == 0 ||
-        cl->is_ternary_resolvent //glue and glue_histlt_avg does not exist for ternary
+    if (cl->is_ternary_resolvent || //glue and glue_histlt_avg does not exist for ternary
+        cl->stats.glue_histlt_avg == 0 ||
+        time_inside_solver == 0
     ) {
         at[x++] = MISSING_VAL;
     } else {
@@ -261,8 +261,8 @@ void ClPredictors::set_up_input(
     // (rdb0.prop_ranking_rel/(rdb0.uip1_used/rdb0_common.avg_uip1_used)) -- 20
 
 
-    if (cl->stats.confl_size_hist == 0 ||
-        cl->is_ternary_resolvent // size_hist and overlap_hist do not exist for tri
+    if (cl->is_ternary_resolvent || // size_hist and overlap_hist do not exist for tri
+        cl->stats.confl_size_hist == 0
     ) {
         at[x++] = MISSING_VAL;
     } else {
@@ -272,8 +272,9 @@ void ClPredictors::set_up_input(
     // (cl.antec_overlap_hist_lt/cl.confl_size_hist) -- 21
 
 
-    if (cl->stats.uip1_used == 0 ||
-        cl->is_ternary_resolvent // glue_histlt_avg do not exist for tri
+    if (cl->is_ternary_resolvent || // glue_histlt_avg do not exist for tri
+        cl->stats.uip1_used == 0
+
     ) {
         at[x++] = MISSING_VAL;
     } else {
