@@ -946,15 +946,21 @@ void ReduceDB::handle_lev2_predictor()
     ClauseStats this_stats;
     if (!solver->conf.debug_forever) {
         this_stats = reset_clause_dats(0);
-        this_stats.print(0);
+        if (solver->conf.verbosity) {
+            this_stats.print(0);
+        }
         cl_stats[0] += this_stats;
     }
     this_stats = reset_clause_dats(1);
-    this_stats.print(1);
+    if (solver->conf.verbosity) {
+        this_stats.print(1);
+    }
     cl_stats[1] += this_stats;
 
     this_stats = reset_clause_dats(2);
-    this_stats.print(2);
+    if (solver->conf.verbosity) {
+        this_stats.print(2);
+    }
     cl_stats[2] += this_stats;
 
     //Cleanup
