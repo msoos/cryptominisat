@@ -577,7 +577,8 @@ bool PropEngine::propagate_occur()
     return true;
 }
 
-bool PropEngine::propagate_binary_clause_occur(const Watched& ws)
+inline bool PropEngine::propagate_binary_clause_occur(
+    const Watched& ws)
 {
     const lbool val = value(ws.lit2());
     if (val == l_False) {
@@ -597,7 +598,8 @@ bool PropEngine::propagate_binary_clause_occur(const Watched& ws)
     return true;
 }
 
-bool PropEngine::propagate_long_clause_occur(const ClOffset offset)
+inline bool PropEngine::propagate_long_clause_occur(
+    const ClOffset offset)
 {
     const Clause& cl = *cl_alloc.ptr(offset);
     assert(!cl.freed() && "Cannot be already removed in occur");
