@@ -153,6 +153,7 @@ struct ClauseStats
     #endif
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
+    bool     is_ternary_resolvent = false;
     uint32_t orig_glue = 1000;
     uint32_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
     float discounted_props_made = 0;
@@ -259,6 +260,7 @@ struct ClauseStats
         ret.sum_props_made = first.sum_props_made + second.sum_props_made;
         ret.discounted_props_made = first.discounted_props_made + second.discounted_props_made;
         ret.orig_glue = std::min(first.orig_glue, second.orig_glue);
+        ret.is_ternary_resolvent = first.is_ternary_resolvent;
         #endif
 
         #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
@@ -318,7 +320,6 @@ public:
     uint16_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
     uint16_t is_distilled:1;
     uint16_t is_ternary_resolved:1;
-    uint16_t is_ternary_resolvent:1;
     uint16_t occurLinked:1;
     uint16_t must_recalc_abst:1;
     uint16_t _used_in_xor:1;
@@ -368,7 +369,6 @@ public:
         isRemoved = false;
         is_distilled = false;
         is_ternary_resolved = false;
-        is_ternary_resolvent = false;
         must_recalc_abst = true;
         _used_in_xor = false;
         _used_in_xor_full = false;

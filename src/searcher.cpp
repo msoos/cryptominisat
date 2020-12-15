@@ -330,7 +330,7 @@ void Searcher::debug_print_resolving_clause(const PropBy confl) const
 void Searcher::update_glue_from_analysis(Clause* cl)
 {
     assert(cl->red());
-    if (cl->is_ternary_resolvent) {
+    if (cl->stats.is_ternary_resolvent) {
         return;
     }
     const unsigned new_glue = calc_glue(*cl);
