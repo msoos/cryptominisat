@@ -260,7 +260,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , pred_conf_short("../../src/predict/predictor_short.json")
         , pred_conf_long("../../src/predict/predictor_long.json")
         , pred_conf_forever("../../src/predict/predictor_forever.json")
-        , pred_keep_above(0.5f)
         #endif
 
         //Var-replacer

@@ -414,7 +414,6 @@ class DLL_PUBLIC SolverConf
         std::string pred_conf_short;
         std::string pred_conf_long;
         std::string pred_conf_forever;
-        float pred_keep_above;
         #endif
 
         //Var-replacement
