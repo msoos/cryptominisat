@@ -117,6 +117,7 @@ struct ClauseStats
         ttl = 0;
         which_red_array = 2;
         locked_for_data_gen = 0;
+        is_ternary_resolvent = 0;
         //TODO it's weird, it has been tested to be better with "1"
         #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
         activity = 0;
@@ -132,6 +133,7 @@ struct ClauseStats
     uint32_t ttl:1;
     uint32_t which_red_array:3;
     uint32_t locked_for_data_gen:1;
+    uint32_t is_ternary_resolvent:1;
     union {
         float   activity;
         uint32_t hash_val; //used in BreakID to remove equivalent clauses
@@ -153,7 +155,6 @@ struct ClauseStats
     #endif
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
-    bool     is_ternary_resolvent = false;
     uint32_t orig_glue = 1000;
     uint32_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
     float discounted_props_made = 0;
