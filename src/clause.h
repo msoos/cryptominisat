@@ -248,6 +248,7 @@ struct ClauseStats
         ret.activity = std::max(first.activity, second.activity);
         ret.last_touched = std::max(first.last_touched, second.last_touched);
         ret.locked_for_data_gen = std::max(first.locked_for_data_gen, second.locked_for_data_gen);
+        ret.is_ternary_resolvent = first.is_ternary_resolvent;
 
         #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
         if (first.introduced_at_conflict == 0) {
@@ -261,7 +262,6 @@ struct ClauseStats
         ret.sum_props_made = first.sum_props_made + second.sum_props_made;
         ret.discounted_props_made = first.discounted_props_made + second.discounted_props_made;
         ret.orig_glue = std::min(first.orig_glue, second.orig_glue);
-        ret.is_ternary_resolvent = first.is_ternary_resolvent;
         #endif
 
         #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
