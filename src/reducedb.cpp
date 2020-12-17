@@ -189,7 +189,7 @@ void ReduceDB::sort_red_cls(ClauseClean clean_type)
         cout << i << " offset: " << offset << " cl->stats.last_touched: " << cl->stats.last_touched
         << " act:" << std::setprecision(9) << cl->stats.activity
         << " which_red_array:" << cl->stats.which_red_array << endl
-        << " -- cl:" << *cl << " tern:" << cl->is_ternary_resolvent
+        << " -- cl:" << *cl << " tern:" << cl->stats.is_ternary_resolvent
         << endl;
     }
     #endif
@@ -448,7 +448,7 @@ void ReduceDB::handle_lev1()
         cout << "offset: " << offset << " cl->stats.last_touched: " << cl->stats.last_touched
         << " act:" << std::setprecision(9) << cl->stats.activity
         << " which_red_array:" << cl->stats.which_red_array << endl
-        << " -- cl:" << *cl << " tern:" << cl->is_ternary_resolvent
+        << " -- cl:" << *cl << " tern:" << cl->stats.is_ternary_resolvent
         << endl;
         #endif
 
@@ -1034,7 +1034,7 @@ void ReduceDB::mark_top_N_clauses_lev2(const uint64_t keep_num)
         cout << "offset: " << offset << " cl->stats.last_touched: " << cl->stats.last_touched
         << " act:" << std::setprecision(9) << cl->stats.activity
         << " which_red_array:" << cl->stats.which_red_array << endl
-        << " -- cl:" << *cl << " tern:" << cl->is_ternary_resolvent
+        << " -- cl:" << *cl << " tern:" << cl->stats.is_ternary_resolvent
         << endl;
         #endif
 
@@ -1116,7 +1116,7 @@ void ReduceDB::remove_cl_from_lev2() {
         cout << "REMOVING offset: " << offset << " cl->stats.last_touched: " << cl->stats.last_touched
         << " act:" << std::setprecision(9) << cl->stats.activity
         << " which_red_array:" << cl->stats.which_red_array << endl
-        << " -- cl:" << *cl << " tern:" << cl->is_ternary_resolvent
+        << " -- cl:" << *cl << " tern:" << cl->stats.is_ternary_resolvent
         << endl;
         #endif
         delayed_clause_free.push_back(offset);
