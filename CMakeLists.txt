@@ -111,7 +111,7 @@ if (STATICCOMPILE)
 #     endif()
 endif()
 
-option(NOVALGRIND "Don't use valgrind" ON)
+option(NOVALGRIND "Don't use valgrind" OFF)
 option(ENABLE_PYTHON_INTERFACE "Enable Python interface" ON)
 option(EMSCRIPTEN "Generate only emscripten JS" OFF)
 if (EMSCRIPTEN)

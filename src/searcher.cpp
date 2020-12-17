@@ -46,6 +46,10 @@ THE SOFTWARE.
 #ifdef USE_GAUSS
 #include "gaussian.h"
 #endif
+#ifdef USE_VALGRIND
+#include "valgrind/valgrind.h"
+#include "valgrind/memcheck.h"
+#endif
 
 #ifdef FINAL_PREDICTOR
 // #include "clustering.h"
@@ -417,10 +421,6 @@ void Searcher::add_literals_from_confl_to_learnt(
             if (!update_bogoprops) {
                 cl->stats.uip1_used++;
                 cl->stats.sum_uip1_used++;
-                assert(
-                    !cl->red() ||
-                    cl->stats.introduced_at_conflict != 0 ||
-                    solver->conf.simplify_at_startup == 1);
             }
             #endif
 
@@ -3455,6 +3455,9 @@ void Searcher::write_long_cls(
         }
         if (red) {
             assert(cl.red());
+            #ifdef USE_VALGRIND
+            VALGRIND_MAKE_MEM_DEFINED((char*)&cl.stats, sizeof(ClauseStats));
+            #endif
             f.put_struct(cl.stats);
         }
     }

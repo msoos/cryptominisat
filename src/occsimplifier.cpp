@@ -665,12 +665,6 @@ void OccSimplifier::add_back_to_solver()
             solver->attachClause(*cl);
             if (cl->red()) {
                 assert(cl->stats.glue > 0);
-                #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-                assert(
-                    cl->stats.introduced_at_conflict != 0 ||
-                    solver->sumConflicts == 0 ||
-                    solver->conf.simplify_at_startup == 1);
-                #endif
                 assert(cl->stats.which_red_array < solver->longRedCls.size());
                 #ifndef FINAL_PREDICTOR
                 if (cl->stats.locked_for_data_gen) {
@@ -1763,11 +1757,6 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
             #ifdef STATS_NEEDED
             newCl->stats.locked_for_data_gen =
                 solver->mtrand.randDblExc() < solver->conf.lock_for_data_gen_ratio;
-            assert(
-                newCl->stats.introduced_at_conflict != 0 ||
-                solver->sumConflicts == 0 ||
-                solver->conf.simplify_at_startup == 1);
-
             if (newCl->stats.locked_for_data_gen) {
                 newCl->stats.which_red_array = 0;
             } else {

@@ -238,9 +238,7 @@ class DLL_PUBLIC SolverConf
         //Clause cleaning
         float pred_short_size_mult;
         float pred_long_size_mult;
-        float pred_forever_size_mult;
         float pred_long_chunk_mult;
-        float pred_forever_chunk_mult;
         float pred_forever_topperc;
         int   debug_forever;
         uint32_t pred_long_check_every_n;

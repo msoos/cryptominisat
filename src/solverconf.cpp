@@ -81,10 +81,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Clause cleaning
         , pred_short_size_mult(1.5)
         , pred_long_size_mult(0.25)
-        //, pred_forever_size_mult(0.25)
         //
         , pred_long_chunk_mult(2.8)
-        //, pred_forever_chunk_mult(1.0)
         //
         , pred_forever_topperc(60.0)
         , debug_forever(0)

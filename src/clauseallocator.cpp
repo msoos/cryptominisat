@@ -146,6 +146,9 @@ void* ClauseAllocator::allocEnough(
     size += needed;
     currentlyUsedSize += needed;
 
+    #ifdef USE_VALGRIND
+    VALGRIND_MAKE_MEM_UNDEFINED((char*)pointer, neededbytes);
+    #endif
     return pointer;
 }
 
