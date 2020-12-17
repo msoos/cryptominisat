@@ -185,6 +185,10 @@ void ClPredictors::set_up_input(
     //(log2(cl.num_antecedents)/cl.num_total_lits_antecedents) -- 12
 
 
+    //To protect against unset values being used
+    assert(cl->stats.is_ternary_resolvent ||
+        cl->stats.glue_hist_longterm_avg > 0.9f);
+
     if (cl->stats.is_ternary_resolvent ||
         cl->stats.glue_before_minim == 0 //glue_hist_longterm_avg does not exist for ternary
     ) {
@@ -198,6 +202,10 @@ void ClPredictors::set_up_input(
     at[x++] = cl->stats.is_ternary_resolvent;
     //rdb0.is_ternary_resolvent -- 14
 
+
+    //To protect against unset values being used
+    assert(cl->stats.is_ternary_resolvent ||
+        cl->stats.num_resolutions_hist_lt > 0.9f);
 
     if (cl->stats.is_ternary_resolvent || //num_resolutions_hist_lt does not exist for ternary
         cl->stats.num_resolutions_hist_lt == 0
@@ -238,8 +246,12 @@ void ClPredictors::set_up_input(
     // ((rdb0.sum_props_made/cl.time_inside_solver)/cl.num_total_lits_antecedents) -- 18
 
 
+    //To protect against unset values being used
+    assert(cl->stats.is_ternary_resolvent ||
+        cl->stats.glue_histlt_avg > 0.9f);
+
     if (cl->stats.is_ternary_resolvent || //glue and glue_histlt_avg does not exist for ternary
-        cl->stats.glue_histlt_avg > 1e-20 ||
+        cl->stats.glue_histlt_avg != 0 ||
         time_inside_solver == 0
     ) {
         at[x++] = MISSING_VAL;
