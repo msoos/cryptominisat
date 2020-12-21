@@ -218,6 +218,10 @@ class Searcher : public HyperEngine
         void   setup_polarity_strategy();
         void   update_polarities_on_backtrack();
 
+
+        //Stats
+        SearchStats stats;
+
     protected:
         Solver* solver;
         lbool search();
@@ -327,7 +331,6 @@ class Searcher : public HyperEngine
         void  resetStats(); //For connection with Solver
         SearchHist hist;
         double   startTime; ///<When solve() was started
-        SearchStats stats;
 
         /////////////////////
         // Clause database reduction

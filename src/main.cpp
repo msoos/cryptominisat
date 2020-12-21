@@ -368,6 +368,9 @@ void Main::add_supported_options()
         , "Move not only UP but also DOWN clauses in the tiers in pred")
     ("preddistillorig", po::value(&conf.pred_distill_orig)->default_value(conf.pred_distill_orig)
         , "Use original distill method during pred")
+    ("predadjustsize", po::value(&conf.pred_adjust_for_cl_size)->default_value(conf.pred_adjust_for_cl_size)
+        , "Adjust predict values with the size of the clause")
+
     ;
     #endif
 

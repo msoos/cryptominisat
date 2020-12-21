@@ -100,6 +100,10 @@ private:
     void delete_from_lev2();
     void clean_lev1_once_in_a_while();
     void clean_lev0_once_in_a_while();
+    void reset_predict_stats();
+    void adjust_forever_median(
+        vector<uint32_t>& toppercents_median_sz,
+        const vector<ClOffset>& offs);
     ReduceCommonData commdata;
     #endif
 

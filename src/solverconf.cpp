@@ -90,6 +90,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , pred_long_check_every_n(5)
         , pred_forever_check_every_n(5)
         , pred_move_around(true)
+        , pred_adjust_for_cl_size(2)
         #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
         , pred_distill_orig(false)
         #else

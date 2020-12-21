@@ -244,6 +244,7 @@ class DLL_PUBLIC SolverConf
         uint32_t pred_long_check_every_n;
         uint32_t pred_forever_check_every_n;
         int   pred_move_around;
+        uint32_t pred_adjust_for_cl_size;
         int   pred_distill_orig;
 
         //if non-zero, we reduce at every X conflicts.

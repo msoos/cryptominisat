@@ -559,8 +559,28 @@ void ReduceDB::pred_move_to_lev1_and_lev0()
     solver->longRedCls[2].resize(j);
 }
 
+void ReduceDB::adjust_forever_median(
+    vector<uint32_t>& toppercents_median_sz,
+    const vector<ClOffset>& offs)
+{
+    if (toppercents_median_sz.size() > 2 && solver->conf.pred_adjust_for_cl_size != 0) {
+        double divby = safe_div(solver->stats.litsRedFinal, solver->stats.conflStats.numConflicts)* solver->conf.pred_adjust_for_cl_size;
+        std::sort(toppercents_median_sz.begin(), toppercents_median_sz.end());
+        uint32_t topperc_med_size = toppercents_median_sz[toppercents_median_sz.size()/2];
+        for(const auto& offset: offs) {
+            Clause* cl = solver->cl_alloc.ptr(offset);
+            if (cl->stats.dump_no != 0) {
+                cl->stats.pred_forever_topperc = 1.0/(divby + (double)cl->size())*
+                (double)cl->stats.pred_forever_topperc*
+                ((double)divby+(double)topperc_med_size);
+            }
+        }
+    }
+}
+
 void ReduceDB::update_preds_lev2()
 {
+    vector<uint32_t> toppercents_median_sz;
     double myTime = cpuTime();
     for(size_t i = 0
         ; i < solver->longRedCls[2].size()
@@ -578,7 +598,6 @@ void ReduceDB::update_preds_lev2()
 
         cl->stats.pred_short_use = 0;
         cl->stats.pred_long_use = 0;
-        //cl->stats.pred_forever_use = 0;
         cl->stats.pred_forever_topperc = 100;
         if (cl->stats.dump_no > 0) {
             predictors->predict(
@@ -592,8 +611,17 @@ void ReduceDB::update_preds_lev2()
                 cl->stats.pred_long_use,
                 cl->stats.pred_forever_topperc
             );
+
+            if (solver->conf.pred_adjust_for_cl_size != 0) {
+                double divby = safe_div(solver->stats.litsRedFinal, solver->stats.conflStats.numConflicts) * solver->conf.pred_adjust_for_cl_size;
+                cl->stats.pred_short_use = 1.0/(divby + (double)cl->size())*(double)cl->stats.pred_short_use;
+                cl->stats.pred_long_use = 1.0/(divby + (double)cl->size())*(double)cl->stats.pred_long_use;
+                toppercents_median_sz.push_back(cl->size());
+            }
         }
     }
+
+    adjust_forever_median(toppercents_median_sz, solver->longRedCls[2]);
 
     if (solver->conf.verbosity >= 2) {
         double predTime = cpuTime() - myTime;
@@ -607,6 +635,7 @@ void ReduceDB::clean_lev0_once_in_a_while()
     if (num_times_pred_called % solver->conf.pred_forever_check_every_n ==
         (solver->conf.pred_forever_check_every_n-1)
     ) {
+        vector<uint32_t> toppercents_median_sz;
         for(size_t i = 0
             ; i < solver->longRedCls[0].size()
             ; i++
@@ -627,7 +656,11 @@ void ReduceDB::clean_lev0_once_in_a_while()
                 prop_ranking_rel,
                 commdata
             );
+             if (solver->conf.pred_adjust_for_cl_size != 0) {
+                toppercents_median_sz.push_back(cl->size());
+             }
         }
+        adjust_forever_median(toppercents_median_sz, solver->longRedCls[0]);
 
         //Clean up FOREVER, move to LONG
         const uint32_t checked_every = solver->conf.pred_forever_check_every_n * solver->conf.every_lev3_reduce;
@@ -671,6 +704,7 @@ void ReduceDB::clean_lev1_once_in_a_while()
     if (num_times_pred_called % solver->conf.pred_long_check_every_n ==
         (solver->conf.pred_long_check_every_n-1)
     ) {
+        vector<uint32_t> toppercents_median_sz;
         for(size_t i = 0
             ; i < solver->longRedCls[1].size()
             ; i++
@@ -700,8 +734,14 @@ void ReduceDB::clean_lev1_once_in_a_while()
                 prop_ranking_rel,
                 commdata
             );
+            if (solver->conf.pred_adjust_for_cl_size != 0) {
+                double divby = safe_div(solver->stats.litsRedFinal, solver->stats.conflStats.numConflicts) * solver->conf.pred_adjust_for_cl_size;
+                cl->stats.pred_long_use = 1.0/((double)divby + (double)cl->size())*(double)cl->stats.pred_long_use;
+                toppercents_median_sz.push_back(cl->size());
+            }
         }
         const uint32_t checked_every = solver->conf.pred_long_check_every_n * solver->conf.every_lev3_reduce;
+        adjust_forever_median(toppercents_median_sz, solver->longRedCls[1]);
 
         //Move to FOREVER
         uint32_t j = 0;
@@ -855,6 +895,29 @@ ReduceDB::ClauseStats ReduceDB::reset_clause_dats(const uint32_t lev)
     return cl_stat;
 }
 
+void ReduceDB::reset_predict_stats()
+{
+    ClauseStats this_stats;
+    if (!solver->conf.debug_forever) {
+        this_stats = reset_clause_dats(0);
+        if (solver->conf.verbosity) {
+            this_stats.print(0);
+        }
+        cl_stats[0] += this_stats;
+    }
+    this_stats = reset_clause_dats(1);
+    if (solver->conf.verbosity) {
+        this_stats.print(1);
+    }
+    cl_stats[1] += this_stats;
+
+    this_stats = reset_clause_dats(2);
+    if (solver->conf.verbosity) {
+        this_stats.print(2);
+    }
+    cl_stats[2] += this_stats;
+}
+
 void ReduceDB::handle_lev2_predictor()
 {
     num_times_pred_called++;
@@ -897,25 +960,7 @@ void ReduceDB::handle_lev2_predictor()
         clean_lev0_once_in_a_while();
     }
     clean_lev1_once_in_a_while();
-    ClauseStats this_stats;
-    if (!solver->conf.debug_forever) {
-        this_stats = reset_clause_dats(0);
-        if (solver->conf.verbosity) {
-            this_stats.print(0);
-        }
-        cl_stats[0] += this_stats;
-    }
-    this_stats = reset_clause_dats(1);
-    if (solver->conf.verbosity) {
-        this_stats.print(1);
-    }
-    cl_stats[1] += this_stats;
-
-    this_stats = reset_clause_dats(2);
-    if (solver->conf.verbosity) {
-        this_stats.print(2);
-    }
-    cl_stats[2] += this_stats;
+    reset_predict_stats();
 
     //Cleanup
     solver->clean_occur_from_removed_clauses_only_smudged();
