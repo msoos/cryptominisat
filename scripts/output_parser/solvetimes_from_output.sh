@@ -59,6 +59,12 @@ rm solved_sol.csv
 mv solved_sol2.csv solved_sol.csv
 
 
+# user times
+xzgrep "User time" *.timeout.xz | awk '{print $5 " " $1}' | sed "s/.timeout.xz://" > user_times.csv
+
+#INTERESTING -- find low user times that are unsolved
+grep -f unsolved.csv user_times.csv
+
 xzgrep signal  *.timeout.xz | sed -E "s/.timeout.*signal (.*)/ \1/" > signals.csv
 xzgrep signal  *.timeout.xz | sed -E "s/.timeout.*signal (.*)//" > signals_files.csv
 sed "s/^/\^/" signals_files.csv | sed "s/$/\$/"  > signals_files_filtering.csv
@@ -68,6 +74,8 @@ sort signals.csv > signals_sorted.csv
 rm signals.csv signals_files.csv
 mv signals_sorted.csv signals.csv
 grep " 11" signals.csv
+
+# PAR 2 score
 awk '{if ($1=="5000.00") {x+=10000} else {x += $1};} END {printf "%d\n", x}' solveTimes.csv > PAR2score
 echo "PAR2 score is: " `cat PAR2score`
 
