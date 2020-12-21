@@ -124,14 +124,14 @@ void ClPredictors::set_up_input(
     //rdb0.last_touched_diff -- 5
 
 
-    if (cl->stats.is_ternary_resolvent ||
-        commdata.median_act == 0
-    ) { //glue_hist_avg not valid in this case
+    if (cl->stats.is_ternary_resolvent || //glue_hist_avg not valid for ternary
+        cl->stats.glue_hist_avg == 0)
+    {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = (double)cl->stats.glue_hist_avg/(double)commdata.median_act;
+        at[x++] = (double)cl->stats.glue/(double)cl->stats.glue_hist_avg;
     }
-    //(cl.glue_hist_avg/rdb0_common.median_act) -- 6
+    //(rdb0.glue/cl.glue_hist_avg) -- 6
 
 
     at[x++] = (double)cl->stats.glue;
