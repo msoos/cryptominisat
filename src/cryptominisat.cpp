@@ -1233,6 +1233,12 @@ void DLL_PUBLIC SATSolver::end_getting_small_clauses()
     data->solvers[0]->end_getting_small_clauses();
 }
 
+DLL_PUBLIC vector<uint32_t> SATSolver::translate_sampl_set(
+    const vector<uint32_t>& sampl_set)
+{
+    return data->solvers[0]->translate_sampl_set(sampl_set);
+}
+
 void DLL_PUBLIC SATSolver::set_min_bva_gain(uint32_t min_bva_gain)
 {
     for (size_t i = 0; i < data->solvers.size(); i++) {

@@ -4278,6 +4278,12 @@ void Solver::end_getting_small_clauses()
     get_clause_query = NULL;
 }
 
+vector<uint32_t> Solver::translate_sampl_set(const vector<uint32_t>& sampl_set)
+{
+    assert(get_clause_query);
+    return get_clause_query->translate_sampl_set(sampl_set);
+}
+
 void Solver::add_empty_cl_to_drat()
 {
     *drat << add

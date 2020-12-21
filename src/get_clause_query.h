@@ -45,6 +45,7 @@ public:
     bool get_next_small_clause(std::vector<Lit>& out, bool all_in_one_go = false);
     void end_getting_small_clauses();
     void get_all_irred_clauses(vector<Lit>& out);
+    vector<uint32_t> translate_sampl_set(const vector<uint32_t>& sampl_set);
 
 private:
     Solver* solver;

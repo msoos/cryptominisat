@@ -115,13 +115,14 @@ class Solver : public Searcher
             std::vector<Lit>& out_implied
         );
 
-        //get learnt clauses
+        //get clauses
         void start_getting_small_clauses(
             uint32_t max_len, uint32_t max_glue, bool red = true,
             bool bva_vars = false, bool simplified = false);
         bool get_next_small_clause(std::vector<Lit>& out);
         void end_getting_small_clauses();
         void get_all_irred_clauses(vector<Lit>& out);
+        vector<uint32_t> translate_sampl_set(const vector<uint32_t>& sampl_set);
         //Legacy clause dumping
         void dump_irred_clauses(std::ostream *out) const;
         void dump_red_clauses(std::ostream *out) const;

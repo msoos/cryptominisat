@@ -84,6 +84,21 @@ void GetClauseQuery::start_getting_small_clauses(
     tmp_cl.clear();
 }
 
+vector<uint32_t> GetClauseQuery::translate_sampl_set(
+    const vector<uint32_t>& sampl_set)
+{
+    if (simplified) {
+        assert(solver->get_num_bva_vars() == 0);
+        vector<uint32_t> ret;
+        for(const uint32_t v: sampl_set) {
+            ret.push_back(solver->map_outer_to_inter(v));
+        }
+        return ret;
+    } else {
+        return sampl_set;
+    }
+}
+
 void GetClauseQuery::get_all_irred_clauses(vector<Lit>& out)
 {
     start_getting_small_clauses(
