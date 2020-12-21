@@ -131,6 +131,198 @@ struct IncidenceSorter
     const vector<uint32_t>& inc;
 };
 
+OrGate* GateFinder::find_gate_to_elim_on(Lit lit, uint32_t cutoff)
+{
+
+    //l = g.lit1 OR g.lit2
+    //~lit = ~g.lit1 AND ~g.lit2
+    //-> i.e. we create 2 clauses
+    uint32_t pos = simplifier->n_occurs[lit.toInt()];
+    uint32_t neg = simplifier->n_occurs[(~lit).toInt()];
+
+    //POS adds literals
+    //NEG adds clauses
+    if (neg > cutoff) {
+        return NULL;
+    }
+
+    OrGate* gate = NULL;
+    for(const auto& w: solver->watches[lit]) {
+        if (!w.isIdx()) {
+            continue;
+        }
+        OrGate& g = orGates[w.get_idx()];
+        assert(lit == g.rhs);
+        if (solver->varData[g.lit1.var()].removed != Removed::none) {
+            continue;
+        }
+        if (solver->varData[g.lit2.var()].removed != Removed::none) {
+            continue;
+        }
+        gate = &g;
+        break;
+    }
+    if (gate == NULL) {
+        return NULL;
+    }
+
+    return gate;
+}
+
+bool GateFinder::varelim_with_orgates()
+{
+    vector<Lit> tmp_cl;
+    vector<Lit> finalLits;
+    vector<vector<Lit>> tmp_cls(2);
+    vector<char> depends_on(solver->nVars(), 0);
+
+    for(uint32_t cutoff = 2; cutoff < 3; cutoff++) {
+        double myTime = cpuTime();
+        simplifier->order_vars_for_elim();
+
+        uint32_t elimed_with_gates = 0;
+        solver->watches.clear_smudged();
+
+
+        simplifier->limit_to_decrease = &simplifier->norm_varelim_time_limit;
+        while(!simplifier->velim_order.empty() &&
+            *simplifier->limit_to_decrease > 0 &&
+            simplifier->varelim_num_limit > 0
+        ) {
+            //for(const auto& g: orGates) {
+            uint32_t var = simplifier->velim_order.removeMin();
+            if (!simplifier->can_eliminate_var(var)) {
+                continue;
+            }
+
+
+            OrGate* gate;
+            gate = find_gate_to_elim_on(Lit(var, false), cutoff);
+            if (gate == NULL) {
+                gate = find_gate_to_elim_on(Lit(var, true), cutoff);
+            }
+            if (gate == NULL) {
+                continue;
+            }
+            OrGate& g = *gate;
+            const Lit l = g.rhs;
+            elimed_with_gates++;
+
+
+            //POS
+            for(const auto& w: solver->watches[l]) {
+                ClauseStats* cl_stats = NULL;
+                tmp_cl.clear();
+                if (w.isIdx()) {
+                    continue;
+                }
+                if (w.isBin()) {
+                    tmp_cl.push_back(w.lit2());
+                } else {
+                    assert(w.isClause());
+                    Clause* cl = solver->cl_alloc.ptr(w.get_offset());
+                    assert(!cl->freed());
+                    if (cl->getRemoved()) {
+                        continue;
+                    }
+                    for(const auto& lit: *cl) {
+                        if (lit != l) {
+                            tmp_cl.push_back(lit);
+                        }
+                    }
+                    cl_stats = &cl->stats;
+                }
+                tmp_cl.push_back(g.lit1);
+                tmp_cl.push_back(g.lit2);
+
+                ClauseStats s;
+                if (cl_stats != NULL) {
+                    s = *cl_stats;
+                }
+                if (!simplifier->full_add_clause(tmp_cl, finalLits, cl_stats ? &s : NULL, false)) {
+                    return false;
+                }
+            }
+
+            for(const auto& w: solver->watches[~l]) {
+                ClauseStats* cl_stats = NULL;
+                tmp_cls[0].clear();
+                tmp_cls[1].clear();
+                if (w.isIdx()) {
+                    continue;
+                }
+                if (w.isBin()) {
+                    tmp_cls[0].push_back(w.lit2());
+                    tmp_cls[1].push_back(w.lit2());
+                } else {
+                    assert(w.isClause());
+                    Clause* cl = solver->cl_alloc.ptr(w.get_offset());
+                    assert(!cl->freed());
+                    if (cl->getRemoved()) {
+                        continue;
+                    }
+                    for(const auto& lit: *cl) {
+                        if (lit != ~l) {
+                            tmp_cls[0].push_back(lit);
+                            tmp_cls[1].push_back(lit);
+                        }
+                    }
+                    cl_stats = &cl->stats;
+                }
+                tmp_cls[0].push_back(~g.lit1);
+                tmp_cls[1].push_back(~g.lit2);
+
+                ClauseStats s;
+                if (cl_stats != NULL) {
+                    s = *cl_stats;
+                }
+                for(uint32_t i = 0; i < 2; i++) {
+                    if (!simplifier->full_add_clause(
+                        tmp_cls[i], finalLits, cl_stats ? &s : NULL, false))
+                    {
+                        return false;
+                    }
+                }
+            }
+            simplifier->rem_cls_from_watch_due_to_varelim(l, false);
+            simplifier->rem_cls_from_watch_due_to_varelim(~l, false);
+
+            //add gate to blocked
+            simplifier->create_dummy_blocked_clause(Lit(l.var(), false));
+            simplifier->add_clause_to_blck({l, ~g.lit1, ~g.lit2});
+            simplifier->add_clause_to_blck({~l, g.lit1});
+            simplifier->add_clause_to_blck({~l, g.lit2});
+            simplifier->set_var_as_eliminated(l.var());
+
+
+            if (!solver->ok)
+                return false;
+
+            //SUB and STR for newly added long and short cls
+            simplifier->limit_to_decrease = &simplifier->varelim_sub_str_limit;
+            if (!simplifier->deal_with_added_long_and_bin(false)) {
+                simplifier->limit_to_decrease = &simplifier->norm_varelim_time_limit;
+                return false;
+            }
+            simplifier->limit_to_decrease = &simplifier->norm_varelim_time_limit;
+
+            solver->ok = solver->propagate_occur();
+            if (!solver->okay()) {
+                return false;
+            }
+
+            //simplifier->update_varelim_complexity_heap();
+        }
+        cout << "!!!! elimed_with_gates: " << elimed_with_gates << " T: " << (cpuTime() - myTime) << endl;
+    }
+    //solver->clean_occur_from_removed_clauses();
+    solver->clean_occur_from_removed_clauses_only_smudged();
+    simplifier->free_clauses_to_free();
+    cout << "END clauses: " << simplifier->clauses.size() << endl;
+
+    return solver->okay();
+}
+
 vector<uint32_t> GateFinder::get_definability(vector<uint32_t>& vars)
 {
     double myTime = cpuTime();

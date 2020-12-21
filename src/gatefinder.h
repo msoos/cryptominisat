@@ -98,6 +98,8 @@ public:
     void find_all();
     void cleanup();
     vector<uint32_t> get_definability(vector<uint32_t>& vars);
+    bool varelim_with_orgates();
+    OrGate* find_gate_to_elim_on(Lit lit, uint32_t cutoff);
 
     //Stats
     struct Stats
