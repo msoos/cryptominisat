@@ -2102,6 +2102,10 @@ lbool Solver::execute_inprocess_strategy(
                 varReplacer->replace_if_enough_is_found(
                     std::floor((double)get_num_free_vars()*0.001));
             }
+        }  else if (token == "must-scc-vrepl") {
+            if (conf.doFindAndReplaceEqLits) {
+                varReplacer->replace_if_enough_is_found();
+            }
         } else if (token == "card-find") {
             if (conf.doFindCard) {
                 card_finder->find_cards();
@@ -2151,6 +2155,15 @@ lbool Solver::execute_inprocess_strategy(
         } else if (token == "distill-cls") {
             //Enqueues literals in long + tri clauses two-by-two and propagates
             if (conf.do_distill_clauses) {
+                distill_long_cls->distill(false);
+            }
+        } else if (token == "must-distill-cls") {
+            //Enqueues literals in long + tri clauses two-by-two and propagates
+            if (conf.do_distill_clauses) {
+                for(const auto& offs: longIrredCls) {
+                    Clause* cl = cl_alloc.ptr(offs);
+                    cl->set_distilled(false);
+                }
                 distill_long_cls->distill(false);
             }
         } else if (token == "str-impl") {
