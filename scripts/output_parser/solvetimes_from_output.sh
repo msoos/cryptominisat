@@ -63,7 +63,20 @@ mv solved_sol2.csv solved_sol.csv
 xzgrep "User time" *.timeout.xz | awk '{print $5 " " $1}' | sed "s/.timeout.xz://" > user_times.csv
 
 #INTERESTING -- find low user times that are unsolved
-grep -f unsolved.csv user_times.csv
+grep -f unsolved.csv user_times.csv  | sort -n -r | tail -n 20
+
+# ReduceDB time for solved instances
+xzgrep -i "ReduceDB time" $(cat solved_xz.csv) | awk '{print $1 " " $5}' | sed "s/.out.xz:c//" | sort > reducedb_times.csv
+reducedb_time=$(awk '{a+=$2} END {print a}' reducedb_times.csv)
+solved_total_time=$(awk '{if ($1=="5000.00") {x+=0} else {x += $1};} END {printf "%d\n", x}' solveTimes.csv)
+bc <<< "scale=4; ($reducedb_time/$solved_total_time)*100.0" >> reducedb_percent_time
+
+# Distill time for solved instances
+xzgrep -i "distill time " $(cat solved_xz.csv) | awk '{print $1 " " $5}' | sed "s/.out.xz:c//" | sort > distill_times.csv
+distill_time=$(awk '{a+=$2} END {print a}' distill_times.csv)
+solved_total_time=$(awk '{if ($1=="5000.00") {x+=0} else {x += $1};} END {printf "%d\n", x}' solveTimes.csv)
+bc <<< "scale=4; ($distill_time/$solved_total_time)*100.0" >> distill_percent_time
+
 
 xzgrep signal  *.timeout.xz | sed -E "s/.timeout.*signal (.*)/ \1/" > signals.csv
 xzgrep signal  *.timeout.xz | sed -E "s/.timeout.*signal (.*)//" > signals_files.csv
@@ -83,8 +96,6 @@ xzgrep "ASSIGNMENT FOUND" *.out.xz | sed "s/.out.*//" > walksat_sat.csv
 grep -v -f walksat_sat.csv allFiles.csv | sed "s/.gz/.gz FALL/" > walksat_nosat.csv
 sed "s/$/ WALK/" walksat_sat.csv > walksat_sat2.csv
 cat walksat_sat2.csv walksat_nosat.csv | sort > walksat.csv
-
-xzgrep "reduceDB time" *.out.xz | awk '{print $1 " " $5}' | sed "s/.out.xz:c//" > reducedbtime.csv
 
 
 
