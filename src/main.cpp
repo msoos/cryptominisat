@@ -628,6 +628,8 @@ void Main::add_supported_options()
         , "Eliminate this ratio of free variables at most per variable elimination iteration")
     ("skipresol", po::value(&conf.skip_some_bve_resolvents)->default_value(conf.skip_some_bve_resolvents)
         , "Skip BVE resolvents in case they belong to a gate")
+    ("gatevarelim", po::value(&conf.gate_based_elim)->default_value(conf.gate_based_elim)
+        , "BVE using gate detection and replacement")
     ;
 
     po::options_description xorOptions("XOR-related options");

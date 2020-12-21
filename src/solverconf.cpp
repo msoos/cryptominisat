@@ -377,6 +377,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Gates
         , doGateFind       (false)
+        , gate_based_elim  (false)
         , do_simp_with_gates(false)
         , maxGateBasedClReduceSize(20)
         , doShortenWithOrGates(true)

@@ -239,7 +239,8 @@ bool GateFinder::varelim_with_orgates()
                 if (cl_stats != NULL) {
                     s = *cl_stats;
                 }
-                if (!simplifier->full_add_clause(tmp_cl, finalLits, cl_stats ? &s : NULL, false)) {
+                simplifier->full_add_clause(tmp_cl, finalLits, cl_stats ? &s : NULL, false);
+                if (!solver->okay()) {
                     return false;
                 }
             }
@@ -277,9 +278,9 @@ bool GateFinder::varelim_with_orgates()
                     s = *cl_stats;
                 }
                 for(uint32_t i = 0; i < 2; i++) {
-                    if (!simplifier->full_add_clause(
-                        tmp_cls[i], finalLits, cl_stats ? &s : NULL, false))
-                    {
+                    simplifier->full_add_clause(
+                        tmp_cls[i], finalLits, cl_stats ? &s : NULL, false);
+                    if (!solver->okay()) {
                         return false;
                     }
                 }

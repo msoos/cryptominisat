@@ -297,6 +297,7 @@ private:
     bool execute_simplifier_strategy(const string& strategy);
 
     //Ternary resolution
+    vector<Lit> finalLits_ternary;
     bool perform_ternary(Clause* cl, ClOffset offs);
     void check_ternary_cl(Clause* cl, ClOffset offs, watch_subarray ws);
     struct Tri {
@@ -392,6 +393,12 @@ private:
     bool        handleUpdatedClause(ClOffset c);
     uint32_t    sum_irred_cls_longs() const;
     uint32_t    sum_irred_cls_longs_lits() const;
+    Clause *    full_add_clause(
+        const vector<Lit>& tmp_cl,
+        vector<Lit>& finalLits,
+        ClauseStats* cl_stats,
+        bool red
+    );
 
     struct watch_sort_smallest_first {
         bool operator()(const Watched& first, const Watched& second)
@@ -427,15 +434,17 @@ private:
     };
     void        order_vars_for_elim();
     Heap<VarOrderLt> velim_order;
-    void        rem_cls_from_watch_due_to_varelim(watch_subarray todo, const Lit lit);
+    void        rem_cls_from_watch_due_to_varelim(
+        const Lit lit, bool add_to_block = true);
     vector<Lit> tmp_rem_lits;
     vec<Watched> tmp_rem_cls_copy;
     void        add_clause_to_blck(const vector<Lit>& lits);
-    void        set_var_as_eliminated(const uint32_t var, const Lit lit);
+    void        set_var_as_eliminated(const uint32_t var);
     bool        can_eliminate_var(const uint32_t var) const;
     bool        clear_vars_from_cls_that_have_been_set(size_t& last_trail);
     bool        deal_with_added_cl_to_var_lit(const Lit lit);
     bool        simulate_frw_sub_str_with_added_cl_to_var();
+    bool        full_varelim_with_or_gates();
 
 
     TouchList   elim_calc_need_update;
