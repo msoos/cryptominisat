@@ -135,7 +135,7 @@ class QueryFill (QueryHelper):
         (
         `clauseID`,
         `rdb0conflicts`,
-        `used_later`,
+        `used_later`
         )
         SELECT
         rdb0.clauseID
