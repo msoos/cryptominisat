@@ -99,7 +99,6 @@ class QueryFill (QueryHelper):
             `clauseID` bigint(20) NOT NULL,
             `rdb0conflicts` bigint(20) NOT NULL,
             `used_later` float,
-            `offset` bigint(20) NOT NULL,
             `percentile_fit` float DEFAULT NULL
         );"""
         # NOTE: "percentile_fit" is the top percentile this use belongs to. Filled in later.
@@ -109,8 +108,8 @@ class QueryFill (QueryHelper):
 
         idxs = """
         create index `used_later_{name}_idx3` on `used_later_{name}` (`used_later`);
-        create index `used_later_{name}_idx1` on `used_later_{name}` (`clauseID`, `rdb0conflicts`, `offset`);
-        create index `used_later_{name}_idx2` on `used_later_{name}` (`clauseID`, `rdb0conflicts`, `used_later`, `offset`);"""
+        create index `used_later_{name}_idx1` on `used_later_{name}` (`clauseID`, `rdb0conflicts`);
+        create index `used_later_{name}_idx2` on `used_later_{name}` (`clauseID`, `rdb0conflicts`, `used_later`);"""
 
         t = time.time()
         for table in tables:
@@ -119,7 +118,7 @@ class QueryFill (QueryHelper):
 
         print("used_later* dropped and recreated T: %-3.2f s" % (time.time() - t))
 
-    def fill_used_later_X(self, name, duration, min_del_distance=None, offset=0,
+    def fill_used_later_X(self, name, duration, min_del_distance=None,
                           used_clauses="used_clauses",
                           divide=False):
 
@@ -137,13 +136,11 @@ class QueryFill (QueryHelper):
         `clauseID`,
         `rdb0conflicts`,
         `used_later`,
-        `offset`
         )
         SELECT
         rdb0.clauseID
         , rdb0.conflicts
         {my_count}
-        , {offset}
 
         FROM
         reduceDB as rdb0
@@ -151,15 +148,15 @@ class QueryFill (QueryHelper):
 
         -- reduceDB is always present, {used_clauses} may not be, hence left join
         on (ucl.clauseID = rdb0.clauseID
-            and ucl.used_at > (rdb0.conflicts+{offset})
-            and ucl.used_at <= (rdb0.conflicts+{duration}+{offset}))
+            and ucl.used_at > (rdb0.conflicts)
+            and ucl.used_at <= (rdb0.conflicts+{duration}))
 
         join cl_last_in_solver
         on cl_last_in_solver.clauseID = rdb0.clauseID
 
         WHERE
         rdb0.clauseID != 0
-        and cl_last_in_solver.conflicts >= (rdb0.conflicts + {min_del_distance} + {offset})
+        and cl_last_in_solver.conflicts >= (rdb0.conflicts + {min_del_distance})
 
         group by rdb0.clauseID, rdb0.conflicts;"""
 
@@ -167,7 +164,6 @@ class QueryFill (QueryHelper):
         self.c.execute(q_fill.format(
             name=name, used_clauses=used_clauses,
             duration=duration,
-            offset=offset,
             my_count=my_count,
             min_del_distance=min_del_distance))
 

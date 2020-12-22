@@ -200,24 +200,20 @@ class QueryCls (helper.QueryHelper):
         join used_later_short on
             used_later_short.clauseID = rdb0.clauseID
             and used_later_short.rdb0conflicts = rdb0.conflicts
-            and used_later_short.offset = 0
 
         -- this is DELIBERATEY left-join: this way, clauses that were in
         -- for shorter time can still generate data
         left join used_later_long on
             used_later_long.clauseID = rdb0.clauseID
             and used_later_long.rdb0conflicts = rdb0.conflicts
-            and used_later_long.offset = 0
 
         join used_later_forever on
             used_later_forever.clauseID = rdb0.clauseID
             and used_later_forever.rdb0conflicts = rdb0.conflicts
-            and used_later_forever.offset = 0
 
         join used_later_forever_div on
             used_later_forever_div.clauseID = rdb0.clauseID
             and used_later_forever_div.rdb0conflicts = rdb0.conflicts
-            and used_later_forever_div.offset = 0
 
         join cl_last_in_solver on
             cl_last_in_solver.clauseID = rdb0.clauseID
