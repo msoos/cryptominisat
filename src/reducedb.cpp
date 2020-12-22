@@ -578,23 +578,18 @@ void ReduceDB::adjust_forever_median(
     }
 }
 
-void ReduceDB::update_preds_lev2()
+void ReduceDB::update_preds(const vector<ClOffset>& offs)
 {
     vector<uint32_t> toppercents_median_sz;
-    vector<float> data(PRED_COLS*solver->longRedCls[2].size());
+    vector<float> data(PRED_COLS*offs.size());
 
-    double myTime = cpuTime();
     uint32_t data_at = 0;
     for(size_t i = 0
-        ; i < solver->longRedCls[2].size()
+        ; i < offs.size()
         ; i++
     ) {
-        const ClOffset offset = solver->longRedCls[2][i];
+        const ClOffset offset = offs[i];
         Clause* cl = solver->cl_alloc.ptr(offset);
-
-        if (cl->stats.which_red_array == 0) {
-            assert(false);
-        }
         double act_ranking_rel = safe_div(cl->stats.act_rank, commdata.all_learnt_size);
         double uip1_ranking_rel = safe_div(cl->stats.uip1_used_rank, commdata.all_learnt_size);
         double prop_ranking_rel = safe_div(cl->stats.props_made_rank, commdata.all_learnt_size);
@@ -620,11 +615,7 @@ void ReduceDB::update_preds_lev2()
     predictors->predict_all(data.data(), data_at);
 
     uint32_t retrieve_at = 0;
-    for(size_t i = 0
-        ; i < solver->longRedCls[2].size()
-        ; i++
-    ) {
-        const ClOffset offset = solver->longRedCls[2][i];
+    for(const auto& offset: offs) {
         Clause* cl = solver->cl_alloc.ptr(offset);
         if (cl->stats.dump_no > 0) {
             predictors->get_prediction_at(cl, retrieve_at);
@@ -640,8 +631,13 @@ void ReduceDB::update_preds_lev2()
     }
 
     predictors->finish_all_predict();
+    adjust_forever_median(toppercents_median_sz, offs);
+}
 
-    adjust_forever_median(toppercents_median_sz, solver->longRedCls[2]);
+void ReduceDB::update_preds_lev2()
+{
+    double myTime = cpuTime();
+    update_preds(solver->longRedCls[2]);
 
     if (solver->conf.verbosity >= 2) {
         double predTime = cpuTime() - myTime;
@@ -655,32 +651,7 @@ void ReduceDB::clean_lev0_once_in_a_while()
     if (num_times_pred_called % solver->conf.pred_forever_check_every_n ==
         (solver->conf.pred_forever_check_every_n-1)
     ) {
-        vector<uint32_t> toppercents_median_sz;
-        for(size_t i = 0
-            ; i < solver->longRedCls[0].size()
-            ; i++
-        ) {
-            const ClOffset offset = solver->longRedCls[0][i];
-            Clause* cl = solver->cl_alloc.ptr(offset);
-
-            double act_ranking_rel = safe_div(cl->stats.act_rank, commdata.all_learnt_size);
-            double uip1_ranking_rel = safe_div(cl->stats.uip1_used_rank, commdata.all_learnt_size);
-            double prop_ranking_rel = safe_div(cl->stats.props_made_rank, commdata.all_learnt_size);
-
-            cl->stats.pred_forever_topperc = predictors->predict(
-                predict_type::forever_pred,
-                cl,
-                solver->sumConflicts,
-                act_ranking_rel,
-                uip1_ranking_rel,
-                prop_ranking_rel,
-                commdata
-            );
-             if (solver->conf.pred_adjust_for_cl_size != 0) {
-                toppercents_median_sz.push_back(cl->size());
-             }
-        }
-        adjust_forever_median(toppercents_median_sz, solver->longRedCls[0]);
+        update_preds(solver->longRedCls[0]);
 
         //Clean up FOREVER, move to LONG
         const uint32_t checked_every = solver->conf.pred_forever_check_every_n * solver->conf.every_lev3_reduce;
@@ -724,44 +695,9 @@ void ReduceDB::clean_lev1_once_in_a_while()
     if (num_times_pred_called % solver->conf.pred_long_check_every_n ==
         (solver->conf.pred_long_check_every_n-1)
     ) {
-        vector<uint32_t> toppercents_median_sz;
-        for(size_t i = 0
-            ; i < solver->longRedCls[1].size()
-            ; i++
-        ) {
-            const ClOffset offset = solver->longRedCls[1][i];
-            Clause* cl = solver->cl_alloc.ptr(offset);
-            double act_ranking_rel = safe_div(cl->stats.act_rank, commdata.all_learnt_size);
-            double uip1_ranking_rel = safe_div(cl->stats.uip1_used_rank, commdata.all_learnt_size);
-            double prop_ranking_rel = safe_div(cl->stats.props_made_rank, commdata.all_learnt_size);
+        update_preds(solver->longRedCls[1]);
 
-            cl->stats.pred_forever_topperc = predictors->predict(
-                predict_type::forever_pred,
-                cl,
-                solver->sumConflicts,
-                act_ranking_rel,
-                uip1_ranking_rel,
-                prop_ranking_rel,
-                commdata
-            );
-
-            cl->stats.pred_long_use = predictors->predict(
-                predict_type::long_pred,
-                cl,
-                solver->sumConflicts,
-                act_ranking_rel,
-                uip1_ranking_rel,
-                prop_ranking_rel,
-                commdata
-            );
-            if (solver->conf.pred_adjust_for_cl_size != 0) {
-                double divby = safe_div(solver->stats.litsRedFinal, solver->stats.conflStats.numConflicts) * solver->conf.pred_adjust_for_cl_size;
-                cl->stats.pred_long_use = 1.0/((double)divby + (double)cl->size())*(double)cl->stats.pred_long_use;
-                toppercents_median_sz.push_back(cl->size());
-            }
-        }
         const uint32_t checked_every = solver->conf.pred_long_check_every_n * solver->conf.every_lev3_reduce;
-        adjust_forever_median(toppercents_median_sz, solver->longRedCls[1]);
 
         //Move to FOREVER
         uint32_t j = 0;

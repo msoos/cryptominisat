@@ -101,6 +101,7 @@ private:
     void clean_lev1_once_in_a_while();
     void clean_lev0_once_in_a_while();
     void reset_predict_stats();
+    void update_preds(const vector<ClOffset>& offs);
     void adjust_forever_median(
         vector<uint32_t>& toppercents_median_sz,
         const vector<ClOffset>& offs);
