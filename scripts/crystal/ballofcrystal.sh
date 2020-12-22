@@ -158,7 +158,7 @@ cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 ########################
 # Denormalize the data into a Pandas Table, label it and sample it
 ########################
-../cldata_gen_pandas.py "${FNAMEOUT}-min.db" --cut1 10 --cut2 40 --limit "$FIXED" ${EXTRA_GEN_PANDAS_OPTS}
+../cldata_gen_pandas.py "${FNAMEOUT}-min.db" --cut1 $cut1 --cut2 $cut2 --limit "$FIXED" ${EXTRA_GEN_PANDAS_OPTS}
 # ../vardata_gen_pandas.py "${FNAMEOUT}.db" --limit 1000
 
 
@@ -180,19 +180,19 @@ cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 mkdir -p ../../src/predict
 rm -f ../../src/predict/*.json
 rm -f ../../src/predict/*.h
-../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-cut1-10.0-cut2-40.0-limit-${FIXED}.dat" --tier short --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf_short | tee short_pred_out
-../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-10.0-cut2-40.0-limit-${FIXED}.dat" --tier long --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf | tee long_pred_out
-../cldata_predict.py "${FNAMEOUT}-min.db-cldata-${myforever}-cut1-10.0-cut2-40.0-limit-${FIXED}.dat" --tier ${myforever} --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf --topperc  | tee ${myforever}_pred_out
+../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier short --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf_short | tee short_pred_out
+../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier long --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf | tee long_pred_out
+../cldata_predict.py "${FNAMEOUT}-min.db-cldata-${myforever}-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier ${myforever} --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf --topperc  | tee ${myforever}_pred_out
 
 ############################
 # To get feature importances
 ############################
-# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-10.0-cut2-40.0-limit-${FIXED}.dat" --tier long --top 200 --xgboost --allcomputed > output_long
-# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-10.0-cut2-40.0-limit-${FIXED}.dat" --tier long --top 200 --xgboost --nocomputed > output_long_nocomputed
-# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-cut1-10.0-cut2-40.0-limit-${FIXED}.dat" --tier short --top 200 --xgboost --allcomputed > output_short
-# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-cut1-10.0-cut2-40.0-limit-${FIXED}.dat" --tier short --top 200 --xgboost --nocomputed > output_short_nocomputed
-# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-${myforever}-cut1-10.0-cut2-40.0-limit-${FIXED}.dat" --tier ${myforever} --top 2000 --xgboost --nocomputed --topperc > "output_${myforever}_nocomputed"
-# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-${myforever}-cut1-10.0-cut2-40.0-limit-${FIXED}.dat" --tier ${myforever} --top 2000 --xgboost --allcomputed --topperc > "output_${myforever}"
+# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier long --top 200 --xgboost --allcomputed > output_long
+# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier long --top 200 --xgboost --nocomputed > output_long_nocomputed
+# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier short --top 200 --xgboost --allcomputed > output_short
+# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier short --top 200 --xgboost --nocomputed > output_short_nocomputed
+# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-${myforever}-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier ${myforever} --top 2000 --xgboost --nocomputed --topperc > "output_${myforever}_nocomputed"
+# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-${myforever}-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier ${myforever} --top 2000 --xgboost --allcomputed --topperc > "output_${myforever}"
 
 
 )
