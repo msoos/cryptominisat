@@ -617,6 +617,9 @@ def cldata_add_minimum_computed_features(df, verbose):
     divide("rdb0.act_ranking", "rdb0_common.tot_cls_in_db", name="rdb0.act_ranking_rel")
     divide("rdb0.prop_ranking", "rdb0_common.tot_cls_in_db", name="rdb0.prop_ranking_rel")
     divide("rdb0.uip1_ranking", "rdb0_common.tot_cls_in_db", name="rdb0.uip1_ranking_rel")
+    if "rdb0_common.num_bin_cls" in df:
+        df["rdb0_common.tot_cls"] = df["rdb0_common.num_bin_cls"] + df["rdb0_common.num_long_cls"]
+        divide("rdb0_common.tot_cls", "rdb0_common.num_vars", name="rdb0.cl_var_ratio")
 
 def cldata_add_computed_features(df, verbose, short=False):
     print("Adding computed features...")
