@@ -581,7 +581,10 @@ void ReduceDB::adjust_forever_median(
 void ReduceDB::update_preds_lev2()
 {
     vector<uint32_t> toppercents_median_sz;
+    vector<float> data(PRED_COLS*solver->longRedCls[2].size());
+
     double myTime = cpuTime();
+    uint32_t data_at = 0;
     for(size_t i = 0
         ; i < solver->longRedCls[2].size()
         ; i++
@@ -600,17 +603,32 @@ void ReduceDB::update_preds_lev2()
         cl->stats.pred_long_use = 0;
         cl->stats.pred_forever_topperc = 100;
         if (cl->stats.dump_no > 0) {
-            predictors->predict(
+            predictors->set_up_input(
                 cl,
                 solver->sumConflicts,
                 act_ranking_rel,
                 uip1_ranking_rel,
                 prop_ranking_rel,
                 commdata,
-                cl->stats.pred_short_use,
-                cl->stats.pred_long_use,
-                cl->stats.pred_forever_topperc
+                PRED_COLS,
+                data.data()+data_at*PRED_COLS
             );
+            data_at++;
+        }
+    }
+
+    predictors->predict_all(data.data(), data_at);
+
+    uint32_t retrieve_at = 0;
+    for(size_t i = 0
+        ; i < solver->longRedCls[2].size()
+        ; i++
+    ) {
+        const ClOffset offset = solver->longRedCls[2][i];
+        Clause* cl = solver->cl_alloc.ptr(offset);
+        if (cl->stats.dump_no > 0) {
+            predictors->get_prediction_at(cl, retrieve_at);
+            retrieve_at++;
 
             if (solver->conf.pred_adjust_for_cl_size != 0) {
                 double divby = safe_div(solver->stats.litsRedFinal, solver->stats.conflStats.numConflicts) * solver->conf.pred_adjust_for_cl_size;
@@ -620,6 +638,8 @@ void ReduceDB::update_preds_lev2()
             }
         }
     }
+
+    predictors->finish_all_predict();
 
     adjust_forever_median(toppercents_median_sz, solver->longRedCls[2]);
 

@@ -361,37 +361,55 @@ float ClPredictors::predict(
     return val;
 }
 
-void ClPredictors::predict(
-    const CMSat::Clause* cl,
-    const uint64_t sumConflicts,
-    const double   act_ranking_rel,
-    const double   uip1_ranking_rel,
-    const double   prop_ranking_rel,
-    const ReduceCommonData& commdata,
-    float& p_short,
-    float& p_long,
-    float& p_forever)
+void ClPredictors::predict_all(
+    float* data,
+    uint32_t num)
 {
-    // convert to DMatrix
-    set_up_input(
-        cl,
-        sumConflicts,
-        act_ranking_rel,
-        uip1_ranking_rel,
-        prop_ranking_rel,
-        commdata,
-        PRED_COLS,
-        train);
+    safe_xgboost(XGDMatrixCreateFromMat(data, num, PRED_COLS, MISSING_VAL, &dmat))
+    bst_ulong out_len;
+    safe_xgboost(XGBoosterPredict(
+        handles[short_pred],
+        dmat,
+        0,  //0: normal prediction
+        0,  //use all trees
+        0,  //do not use for training
+        &out_len,
+        &out_result_short
+    ))
+    assert(out_len == num);
 
-    safe_xgboost(XGDMatrixCreateFromMat((float *)train, 1, PRED_COLS, MISSING_VAL, &dmat))
-    p_short = predict_one(short_pred);
-    safe_xgboost(XGDMatrixFree(dmat))
 
-    safe_xgboost(XGDMatrixCreateFromMat((float *)train, 1, PRED_COLS, MISSING_VAL, &dmat))
-    p_long = predict_one(long_pred);
-    safe_xgboost(XGDMatrixFree(dmat))
+    safe_xgboost(XGBoosterPredict(
+        handles[long_pred],
+        dmat,
+        0,  //0: normal prediction
+        0,  //use all trees
+        0,  //do not use for training
+        &out_len,
+        &out_result_long
+    ))
+    assert(out_len == num);
 
-    safe_xgboost(XGDMatrixCreateFromMat((float *)train, 1, PRED_COLS, MISSING_VAL, &dmat))
-    p_forever = predict_one(forever_pred);
+    safe_xgboost(XGBoosterPredict(
+        handles[forever_pred],
+        dmat,
+        0,  //0: normal prediction
+        0,  //use all trees
+        0,  //do not use for training
+        &out_len,
+        &out_result_forever
+    ))
+    assert(out_len == num);
+}
+
+void ClPredictors::get_prediction_at(Clause* cl, const uint32_t at)
+{
+    cl->stats.pred_short_use = out_result_short[at];
+    cl->stats.pred_long_use = out_result_long[at];
+    cl->stats.pred_forever_topperc = out_result_forever[at];
+}
+
+void CMSat::ClPredictors::finish_all_predict()
+{
     safe_xgboost(XGDMatrixFree(dmat))
 }

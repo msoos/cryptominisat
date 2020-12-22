@@ -90,19 +90,10 @@ public:
         const ReduceCommonData& commdata
     );
 
-    void predict(
-        const CMSat::Clause* cl,
-        const uint64_t sumConflicts,
-        const double   act_ranking_rel,
-        const double   uip1_ranking_rel,
-        const double   prop_ranking_rel,
-        const ReduceCommonData& commdata,
-        float& p_short,
-        float& p_long,
-        float& p_forever);
+    void predict_all(
+        float* data,
+        uint32_t num);
 
-private:
-    float predict_one(int num);
     void set_up_input(
         const CMSat::Clause* const cl,
         const uint64_t sumConflicts,
@@ -112,9 +103,19 @@ private:
         const ReduceCommonData& commdata,
         const uint32_t cols,
         float* at);
+
+    void get_prediction_at(Clause* cl, const uint32_t at);
+    void finish_all_predict();
+
+private:
+    float predict_one(int num);
     vector<BoosterHandle> handles;
     float train[PRED_COLS];
     DMatrixHandle dmat;
+
+    const float *out_result_short;
+    const float *out_result_long;
+    const float *out_result_forever;
 };
 
 }
