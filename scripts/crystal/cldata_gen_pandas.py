@@ -330,7 +330,7 @@ class QueryCls (helper.QueryHelper):
         return limit, dfs
 
     def query_strata_per_dumpno(self, q, limit, what_to_strata, strata):
-        print("-> Getting one set of data with limit %s" % limit)
+        print("* Getting one set of data with limit %s" % limit)
         weighted_size = []
         df_parts = []
 
