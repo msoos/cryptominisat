@@ -459,9 +459,9 @@ if __name__ == "__main__":
     # limits
     parser.add_option("--limit", default=20000, type=int,
                       dest="limit", help="Exact number of examples to take. -1 is to take all. Default: %default")
-    parser.add_option("--cut1", default=20.0, type=float,
+    parser.add_option("--cut1", default=50.0, type=float,
                       dest="cut1", help="Where to cut the distrib. Default: %default")
-    parser.add_option("--cut2", default=50.0, type=float,
+    parser.add_option("--cut2", default=80.0, type=float,
                       dest="cut2", help="Where to cut the distrib. Default: %default")
 
     # debugging is faster with this
