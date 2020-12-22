@@ -254,6 +254,11 @@ class QueryCls (helper.QueryHelper):
         lookup = {}
         for row in rows:
             mystr = "%s_%s_perc" % (row[1], row[2])
+            print("type: {t}, perc_desc: {perc_desc}, perc: {perc}, val: {val}".format(
+                t=row[0],
+                perc_desc=row[1],
+                perc=row[2],
+                val=row[3]))
             lookup[mystr] = row[3]
         #print("perc lookup:", lookup)
 
