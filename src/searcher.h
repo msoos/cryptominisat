@@ -221,6 +221,7 @@ class Searcher : public HyperEngine
 
         //Stats
         SearchStats stats;
+        SearchHist hist;
 
     protected:
         Solver* solver;
@@ -329,7 +330,6 @@ class Searcher : public HyperEngine
         size_t mem_used() const;
         void reset_temp_cl_num();
         void  resetStats(); //For connection with Solver
-        SearchHist hist;
         double   startTime; ///<When solve() was started
 
         /////////////////////

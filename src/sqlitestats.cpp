@@ -719,6 +719,17 @@ void SQLiteStats::reduceDB_common(
     sqlite3_bind_double(stmtReduceDB_common, bindAt++, avg_props);
     sqlite3_bind_double(stmtReduceDB_common, bindAt++, avg_uip1_used);
 
+
+    sqlite3_bind_int(stmtReduceDB_common, bindAt++, solver->nVars());
+    sqlite3_bind_int(stmtReduceDB_common, bindAt++, solver->longIrredCls.size());
+    sqlite3_bind_int(stmtReduceDB_common, bindAt++, solver->binTri.irredBins);
+
+    sqlite3_bind_double(stmtReduceDB_common, bindAt++, solver->hist.trailDepthHistLT.avg());
+    sqlite3_bind_double(stmtReduceDB_common, bindAt++, solver->hist.backtrackLevelHistLT.avg());
+    sqlite3_bind_double(stmtReduceDB_common, bindAt++, solver->hist.conflSizeHistLT.avg());
+    sqlite3_bind_double(stmtReduceDB_common, bindAt++, solver->hist.numResolutionsHistLT.avg());
+    sqlite3_bind_double(stmtReduceDB_common, bindAt++, solver->hist.glueHistLT.avg());
+
     run_sqlite_step(stmtReduceDB_common, "reduceDB_common", bindAt);
 }
 

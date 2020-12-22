@@ -59,7 +59,17 @@ CREATE TABLE `reduceDB_common` (
 
   `avg_glue` float NOT NULL,
   `avg_props` float NOT NULL,
-  `avg_uip1_used` float NOT NULL
+  `avg_uip1_used` float NOT NULL,
+
+  num_vars int(20) NOT NULL,
+  num_long_cls int(20) NOT NULL,
+  num_bin_cls int(20) NOT NULL,
+
+  trailDepthHistLT_avg float NOT NULL,
+  backtrackLevelHistLT_avg float NOT NULL,
+  conflSizeHistLT_avg float NOT NULL,
+  numResolutionsHistLT_avg float NOT NULL,
+  glueHistLT_avg float NOT NULL
 );
 
 DROP TABLE IF EXISTS `reduceDB`;
