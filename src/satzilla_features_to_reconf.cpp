@@ -106,7 +106,7 @@ int get_reconf_from_satzilla_features(const SatZillaFeatures& satzilla_feat, con
 
 
 	if (verb >= 2)
-		cout << "c Winning reconf is " << best_val << endl;
+		cout << "c Winning reconf is " << best_val << " best score: " << best_score << endl;
 	return best_val;
 }
 
