@@ -55,16 +55,16 @@ function concat() {
 }
 
 limit=2000
-cut1="50.0"
+cut1="30.0"
+cut2="90.0"
+concat
+
+cut1="60.0"
 cut2="80.0"
 concat
 
-cut1="20.0"
-cut2="50.0"
-concat
-
-cut1="40.0"
-cut2="70.0"
+cut1="60.0"
+cut2="90.0"
 concat
 
 exit 0
