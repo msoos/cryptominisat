@@ -94,6 +94,7 @@ CREATE TABLE `reduceDB` (
   `size` int(20) NOT NULL,
   `ttl_stats` int(20) NOT NULL,
   `is_ternary_resolvent` int(20) NOT NULL,
+  `is_decision` int(20) NOT NULL,
   `act_ranking` int(20) NOT NULL,
   `prop_ranking` int(20) NOT NULL,
   `uip1_ranking` int(20) NOT NULL,

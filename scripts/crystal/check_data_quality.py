@@ -174,6 +174,26 @@ class Queries (helper.QueryHelper):
                 exit(-1)
             print("Checked for %s in %-2.3f seconds" % (q, time.time()-t))
 
+    def check_is_decision_unchanged(self):
+        print("Checking if is_decision hasn't changed while solving...")
+
+        q = """
+        select clstats.clauseID, rdb.is_decision, clstats.is_decision from
+        reduceDB as rdb
+        join clause_stats as clstats
+        on rdb.clauseID = clstats.clauseID
+        where rdb.is_decision != clstats.is_decision
+        """
+        cursor = self.c.execute(q)
+        for row in cursor:
+            clid = int(row[0])
+            is_dec_rdb = int(row[1])
+            is_dec_clstats = int(row[2])
+            print("OOps, for clauseID {clid}, RDB's is_decision is {is_dec_rdb}, while clause_stats's is_decision is {is_dec_clstats}".format(clid=clid, is_dec_rdb=is_dec_rdb, is_dec_clstats=is_dec_clstats))
+            exit(-1)
+
+        print("Check for is_decision change finished, all good, it never changed")
+
 
     def check_at_least_n(self):
         checks = [
@@ -260,6 +280,7 @@ if __name__ == "__main__":
         q.check_positive()
         q.check_incorrect_data_values()
         q.check_at_least_n()
+        q.check_is_decision_unchanged()
         #q.drop_idxs()
 
     print("Done.")

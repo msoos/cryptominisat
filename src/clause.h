@@ -128,7 +128,7 @@ struct ClauseStats
 
     //Stored data
     uint32_t glue:20;  //currently in code limited to 100'000
-    uint32_t is_decision:1;
+    uint32_t is_decision:1; //a "decision clause", i.e. made out of decisions leading to conflict, not resolution
     uint32_t marked_clause:1;
     uint32_t ttl:1;
     uint32_t which_red_array:3;

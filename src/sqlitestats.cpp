@@ -769,6 +769,7 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->size());
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.ttl_stats);
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.is_ternary_resolvent);
+    sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.is_decision);
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.act_rank);
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.props_made_rank);
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.uip1_used_rank);
