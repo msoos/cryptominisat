@@ -69,13 +69,13 @@ grep -f unsolved.csv user_times.csv  | sort -n -r | tail -n 20
 xzgrep -i "ReduceDB time" $(cat solved_xz.csv) | awk '{print $1 " " $5}' | sed "s/.out.xz:c//" | sort > reducedb_times.csv
 reducedb_time=$(awk '{a+=$2} END {print a}' reducedb_times.csv)
 solved_total_time=$(awk '{if ($1=="5000.00") {x+=0} else {x += $1};} END {printf "%d\n", x}' solveTimes.csv)
-bc <<< "scale=4; ($reducedb_time/$solved_total_time)*100.0" >> reducedb_percent_time
+bc <<< "scale=4; ($reducedb_time/$solved_total_time)*100.0" > reducedb_percent_time
 
 # Distill time for solved instances
 xzgrep -i "distill time " $(cat solved_xz.csv) | awk '{print $1 " " $5}' | sed "s/.out.xz:c//" | sort > distill_times.csv
 distill_time=$(awk '{a+=$2} END {print a}' distill_times.csv)
 solved_total_time=$(awk '{if ($1=="5000.00") {x+=0} else {x += $1};} END {printf "%d\n", x}' solveTimes.csv)
-bc <<< "scale=4; ($distill_time/$solved_total_time)*100.0" >> distill_percent_time
+bc <<< "scale=4; ($distill_time/$solved_total_time)*100.0" > distill_percent_time
 
 
 xzgrep signal  *.timeout.xz | sed -E "s/.timeout.*signal (.*)/ \1/" > signals.csv
