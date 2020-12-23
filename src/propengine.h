@@ -84,6 +84,100 @@ struct Trail {
     uint32_t lev;
 };
 
+
+struct RandHeap
+{
+    vector<unsigned char> in_heap;
+    std::set<uint32_t> vars;
+
+    bool inHeap(uint32_t x) const {
+        if (in_heap.size() <= x) {
+            return false;
+        }
+        return in_heap[x];
+    }
+
+    void clear() {
+        in_heap.clear();
+        vars.clear();
+    }
+
+    void insert(uint32_t x) {
+        assert(!inHeap(x));
+        if (in_heap.size() <= x) {
+            uint32_t n = x - in_heap.size() + 1;
+            in_heap.insert(in_heap.end(), n, false);
+        }
+        in_heap[x] = true;
+        vars.insert(x);
+    }
+
+    size_t size() const {
+        return vars.size();
+    }
+
+    void print_heap() const {
+        for(const auto& x: vars) {
+            cout << x << ", ";
+        }
+        cout << endl;
+    }
+
+    uint32_t mem_used() const {
+        uint32_t ret = 0;
+        ret += in_heap.capacity() * sizeof(unsigned char);
+        //ret += vars.capacity() * sizeof(uint32_t);
+        return ret;
+    }
+
+    void build(const vector<uint32_t>& vs) {
+        in_heap.clear();
+        uint32_t max = 0;
+        for(const auto x: vs) {
+            max = std::max(x, max);
+        }
+        in_heap.resize(max+1, false);
+        vars.clear();
+        std::copy(
+            vs.begin(),
+            vs.end(),
+            std::inserter(vars, vars.end()));
+        for(const auto& x: vars) {
+            in_heap[x] = true;
+        }
+    }
+
+    bool heap_property() const
+    {
+        for(const auto& x: vars) {
+            if (!in_heap[x]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    uint32_t get_random_element(MTRand& mtrand)
+    {
+        if (vars.empty()) {
+            return var_Undef;
+        }
+
+        uint32_t which = mtrand.randInt(vars.size()-1);
+        //cout << "which: " << which << " size: " << vars.size() << endl;
+        std::set<uint32_t>::iterator it = std::next(vars.begin(), which);
+        uint32_t picked = *it;
+        vars.erase(it);
+        //cout<< "Picked: " << picked << endl;
+        assert(inHeap(picked));
+        in_heap[picked] = false;
+
+        return picked;
+    }
+};
+
+
 /**
 @brief The propagating and conflict generation class
 
@@ -145,6 +239,7 @@ public:
     ///activity-ordered heap of decision variables.
     Heap<VarOrderLt> order_heap_vsids; ///NOT VALID WHILE SIMPLIFYING
     Heap<VarOrderLt> order_heap_maple; ///NOT VALID WHILE SIMPLIFYING
+    RandHeap order_heap_rand;
     #ifdef VMTF_NEEDED
     Queue vmtf_queue;
     vector<uint64_t> vmtf_btab; // enqueue time stamps for queue

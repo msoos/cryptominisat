@@ -49,7 +49,8 @@ enum class gret      {confl, prop, nothing_satisfied, nothing_fnewwatch};
 enum class gauss_res {none, confl, prop};
 enum class branch {
     vsids,
-    maple
+    maple,
+    rand
 #ifdef VMTF_NEEDED
     ,vmtf
 #endif
@@ -88,6 +89,9 @@ inline std::string branch_type_to_string(const branch type)
         case branch::maple:
             return "mapl";
 
+        case branch::rand:
+            return "rand";
+
         #ifdef VMTF_NEEDED
         case branch::vmtf:
             return "vmtf";
@@ -112,6 +116,9 @@ inline int branch_type_to_int(const branch type)
         case branch::vmtf:
             return 2;
         #endif
+
+        case branch::rand:
+            return 3;
     }
 
     assert(false && "oops, one of the branch types has no int name");

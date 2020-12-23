@@ -207,6 +207,7 @@ class Searcher : public HyperEngine
         {
             order_heap_vsids.clear();
             order_heap_maple.clear();
+            order_heap_rand.clear();
         }
         uint32_t branch_strategy_num = 0;
         void bump_var_importance(const uint32_t var);
@@ -503,6 +504,15 @@ inline void Searcher::insert_var_order(const uint32_t x, branch type)
             }
             break;
         #endif
+        case branch::rand:
+            if (!order_heap_rand.inHeap(x)) {
+                order_heap_rand.insert(x);
+            }
+            break;
+        default:
+            assert(false);
+            exit(-1);
+            break;
     }
 }
 
@@ -523,6 +533,10 @@ inline void Searcher::insert_var_order_all(const uint32_t x)
         #endif
 
         order_heap_maple.insert(x);
+    }
+
+    if (!order_heap_rand.inHeap(x)) {
+        order_heap_rand.insert(x);
     }
 
     #ifdef VMTF_NEEDED

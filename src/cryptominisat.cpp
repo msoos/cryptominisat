@@ -1246,6 +1246,23 @@ void DLL_PUBLIC SATSolver::set_min_bva_gain(uint32_t min_bva_gain)
     }
 }
 
+void DLL_PUBLIC SATSolver::set_up_for_sample_counter()
+{
+    for (size_t i = 0; i < data->solvers.size(); i++) {
+        SolverConf conf = data->solvers[i]->getConf();
+        conf.doSLS = false;
+        conf.doCompHandler = false;
+        conf.doBreakid = false;
+        conf.restartType = Restart::geom;
+        conf.branch_strategy_setup = "rand";
+        conf.branch_strategy_setup_forced = 1;
+        conf.simplify_at_startup = false;
+        conf.polarity_mode = CMSat::PolarityMode::polarmode_rnd;
+
+        data->solvers[i]->setConf(conf);
+    }
+}
+
 void DLL_PUBLIC SATSolver::set_up_for_scalmc()
 {
     for (size_t i = 0; i < data->solvers.size(); i++) {

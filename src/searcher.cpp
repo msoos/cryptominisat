@@ -1204,6 +1204,12 @@ void Searcher::print_order_heap()
             cout << "MAPLE order heap:" << endl;
             order_heap_maple.print_heap();
             break;
+
+        case branch::rand:
+            cout << "rand heap size: " << order_heap_rand.size() << endl;
+            cout << "rand order heap:" << endl;
+            order_heap_rand.print_heap();
+            break;
         #ifdef VMTF_NEEDED
         case branch::vmtf:
             assert(false && "Not implemented yet");
@@ -2234,8 +2240,9 @@ void Searcher::rebuildOrderHeap()
     order_heap_maple.build(vs);
 
     #ifdef VERBOSE_DEBUG
-    cout << "c [branch] Building RND order heap" << endl;
+    cout << "c [branch] Building RAND order heap" << endl;
     #endif
+    order_heap_rand.build(vs);
 
     #ifdef VMTF_NEEDED
     rebuildOrderHeapVMTF();
@@ -2307,7 +2314,7 @@ struct branch_type_total{
 
 void Searcher::set_branch_strategy(uint32_t iteration_num)
 {
-    if (iteration_num == 0) {
+    if (iteration_num == 0 && !conf.branch_strategy_setup_forced) {
          branch_strategy = branch::vsids;
          cur_rest_type = conf.restartType;
          var_decay = 0.80;
@@ -2349,6 +2356,9 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
 
         size_t maple2 = conf.branch_strategy_setup.find("maple2", start);
         smallest = std::min(maple2, smallest);
+
+        size_t rand = conf.branch_strategy_setup.find("rand", start);
+        smallest = std::min(rand, smallest);
 
         if (smallest == std::string::npos) {
             break;
@@ -2396,6 +2406,12 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
             //TODO should we do this incremental stuff?
             //maple_step_size = conf.orig_step_size;
             select[total++]= branch_type_total(branch::maple, 0.90, 0.90, "MAPLE2", "mp2");
+            if (conf.verbosity) {
+                cout << select[total-1].descr;
+            }
+        }
+        else if (smallest == rand) {
+            select[total++]= branch_type_total(branch::rand, 1, 1, "RAND", "rand");
             if (conf.verbosity) {
                 cout << select[total-1].descr;
             }
@@ -2956,6 +2972,18 @@ inline Lit Searcher::pickBranchLit()
             v = pick_var_vmtf();
             break;
         #endif
+        case branch::rand: {
+            v = order_heap_rand.get_random_element(mtrand);
+            while (v != var_Undef && value(v) != l_Undef) {
+                v = order_heap_rand.get_random_element(mtrand);
+            }
+            break;
+        }
+        default: {
+            assert(false);
+            exit(-1);
+            break;
+        }
     }
 
     Lit next;
@@ -3361,6 +3389,7 @@ size_t Searcher::mem_used() const
     mem += var_act_maple.capacity()*sizeof(double);
     mem += order_heap_vsids.mem_used();
     mem += order_heap_maple.mem_used();
+    mem += order_heap_rand.mem_used();
     #ifdef VMTF_NEEDED
     mem += vmtf_btab.capacity()*sizeof(uint64_t);
     mem += vmtf_links.capacity()*sizeof(Link);
@@ -3817,6 +3846,10 @@ void Searcher::check_var_in_branch_strategy(uint32_t int_var) const
             assert(order_heap_maple.inHeap(int_var));
             break;
 
+        case branch::rand:
+            assert(order_heap_rand.inHeap(int_var));
+            break;
+
         #ifdef VMTF_NEEDED
         case branch::vmtf:
             assert(false);
@@ -3944,6 +3977,7 @@ inline bool Searcher::check_order_heap_sanity() const
     }
     assert(order_heap_vsids.heap_property());
     assert(order_heap_maple.heap_property());
+    assert(order_heap_rand.heap_property());
 
     return true;
 }

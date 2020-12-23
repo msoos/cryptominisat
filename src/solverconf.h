@@ -290,6 +290,7 @@ class DLL_PUBLIC SolverConf
 
         //Branch strategy
         string branch_strategy_setup;
+        int branch_strategy_setup_forced; // if set to 1, there is no initial vsids "increment" at the beginning
 
         //Clause minimisation
         int doRecursiveMinim;
