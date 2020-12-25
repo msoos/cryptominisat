@@ -638,6 +638,7 @@ def cldata_add_computed_features(df, verbose, short=False):
     # TODO decision level and branch depth are the same, right???
     # ************
     print("size/glue/trail rel...")
+    divide("cl.trail_depth_level", "cl.trailDepthHistLT_avg")
     divide("cl.trail_depth_level", "cl.trailDepthHist_avg")
 
     divide("cl.num_total_lits_antecedents", "cl.num_antecedents")
@@ -666,8 +667,8 @@ def cldata_add_computed_features(df, verbose, short=False):
         , "cl.glueHist_longterm_avg"
         # , "cl.decision_level_hist"
         , "cl.numResolutionsHistLT_avg"
-        # , "cl.trailDepthHist_avg"
-        # , "cl.backtrackLevelHist_avg"
+        , "cl.trailDepthHistLT_avg"
+        , "cl.trailDepthHist_avg"
         , "cl.branchDepthHistQueue_avg"
         , "cl.overlapHistLT_avg"
         , "(cl.num_total_lits_antecedents/cl.num_antecedents)"
@@ -675,7 +676,6 @@ def cldata_add_computed_features(df, verbose, short=False):
         , "rdb0.act_ranking_rel"
         , "rdb0.prop_ranking_rel"
         , "rdb0.uip1_ranking_rel"
-        #, "szfeat_cur.var_cl_ratio"
         , "cl.time_inside_solver"
         # , "cl.num_overlap_literals"
         ]
