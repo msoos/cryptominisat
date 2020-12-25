@@ -157,7 +157,6 @@ class QueryCls (helper.QueryHelper):
         SELECT
         tags.val as `fname`
         {clause_dat}
-        {satzfeat_dat_cur}
         {rdb0_dat}
         {rdb0_common_dat}
         {sum_cl_use}
@@ -193,9 +192,6 @@ class QueryCls (helper.QueryHelper):
 
         join sum_cl_use on
             sum_cl_use.clauseID = rdb0.clauseID
-
-        join satzilla_features as szfeat_cur
-            on szfeat_cur.latest_satzilla_feature_calc = rdb0_common.latest_satzilla_feature_calc
 
         join used_later_short on
             used_later_short.clauseID = rdb0.clauseID
