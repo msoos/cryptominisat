@@ -406,7 +406,7 @@ void ClPredictors::get_prediction_at(Clause* cl, const uint32_t at)
 {
     cl->stats.pred_short_use = out_result_short[at];
     cl->stats.pred_long_use = out_result_long[at];
-    cl->stats.pred_forever_topperc = out_result_forever[at];
+    cl->stats.pred_forever_use = out_result_forever[at];
 }
 
 void CMSat::ClPredictors::finish_all_predict()

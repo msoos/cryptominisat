@@ -79,27 +79,27 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , polar_best_multip_n(1000)
 
         //Clause cleaning
-        , pred_short_size_mult(1.5)
-        , pred_long_size_mult(0.25)
+        , pred_short_size_mult(0.5)   //out-937344.wlm01-2-drat0 --predshortmult 0.5
+        , pred_long_size_mult(0.5)    //out-937344.wlm01-2-drat0 --predlongmult 0.5
+        , pred_forever_size_mult(0.25) //out-937344.wlm01-2-drat0 --predforevermult 0.25
         //
-        , pred_long_chunk_mult(2.8)
+        , pred_long_chunk_mult(1.0)
+        , pred_forever_chunk_mult(1.0)
         //
-        , pred_forever_topperc(60.0)
-        //
-        , pred_long_check_every_n(5)
-        , pred_forever_check_every_n(5)
-        , pred_move_around(true)
+        , pred_long_check_every_n(3)
+        , pred_forever_check_every_n(12)
         , pred_adjust_for_cl_size(0)
         #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
         , pred_distill_orig(false)
         #else
         , pred_distill_orig(true)
         #endif
+        , pred_dontmove_until_timeinside(1)
 
         , every_lev1_reduce(10000) // kept for a while then moved to lev2
         , every_lev2_reduce(15000) // cleared regularly
         #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED) || defined(NORMAL_CL_USE_STATS)
-        , every_lev3_reduce(10000)
+        , every_pred_reduce(10000)
         #endif
         , must_touch_lev1_within(70000)
 

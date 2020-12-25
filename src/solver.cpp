@@ -130,7 +130,7 @@ Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter
     next_lev1_reduce = conf.every_lev1_reduce;
     next_lev2_reduce =  conf.every_lev2_reduce;
     #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-    next_lev3_reduce =  conf.every_lev3_reduce;
+    next_lev3_reduce =  conf.every_pred_reduce;
     #endif
 
     check_xor_cut_config_sanity();

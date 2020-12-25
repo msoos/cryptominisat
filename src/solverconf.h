@@ -238,13 +238,16 @@ class DLL_PUBLIC SolverConf
         //Clause cleaning
         float pred_short_size_mult;
         float pred_long_size_mult;
+        float pred_forever_size_mult;
+
         float pred_long_chunk_mult;
-        float pred_forever_topperc;
+        float pred_forever_chunk_mult;
+
         uint32_t pred_long_check_every_n;
         uint32_t pred_forever_check_every_n;
-        int   pred_move_around;
         uint32_t pred_adjust_for_cl_size;
         int   pred_distill_orig;
+        int   pred_dontmove_until_timeinside;
 
         //if non-zero, we reduce at every X conflicts.
         //Reduced according to whether it's been used recently
@@ -256,7 +259,7 @@ class DLL_PUBLIC SolverConf
         unsigned every_lev2_reduce;
 
         #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED) || defined(NORMAL_CL_USE_STATS)
-        unsigned every_lev3_reduce;
+        unsigned every_pred_reduce;
         #endif
 
         uint32_t must_touch_lev1_within;

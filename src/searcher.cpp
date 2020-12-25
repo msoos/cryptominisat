@@ -1953,7 +1953,7 @@ void Searcher::check_calc_satzilla_features(bool force)
 {
     #ifdef STATS_NEEDED
     if (last_satzilla_feature_calc_confl == 0
-        || (last_satzilla_feature_calc_confl + solver->conf.every_lev3_reduce) < sumConflicts
+        || (last_satzilla_feature_calc_confl + solver->conf.every_pred_reduce) < sumConflicts
         || force
     ) {
         last_satzilla_feature_calc_confl = sumConflicts+1;
@@ -1975,7 +1975,7 @@ void Searcher::check_calc_vardist_features(bool force)
 
     #ifdef STATS_NEEDED_BRANCH
     if (last_vardist_feature_calc_confl == 0
-        || (last_vardist_feature_calc_confl + solver->conf.every_lev3_reduce) < sumConflicts
+        || (last_vardist_feature_calc_confl + solver->conf.every_pred_reduce) < sumConflicts
         || force
     ) {
         last_vardist_feature_calc_confl = sumConflicts+1;
@@ -2128,16 +2128,16 @@ void Searcher::reset_temp_cl_num()
 void Searcher::reduce_db_if_needed()
 {
     #ifdef NORMAL_CL_USE_STATS
-    if (conf.every_lev3_reduce != 0
+    if (conf.every_pred_reduce != 0
         && sumConflicts >= next_lev3_reduce
     ) {
         solver->reduceDB->gather_normal_cl_use_stats();
-        next_lev3_reduce = sumConflicts + conf.every_lev3_reduce;
+        next_lev3_reduce = sumConflicts + conf.every_pred_reduce;
     }
     #endif
 
     #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-    if (conf.every_lev3_reduce != 0
+    if (conf.every_pred_reduce != 0
         && sumConflicts >= next_lev3_reduce
     ) {
         #ifdef STATS_NEEDED
@@ -2149,7 +2149,7 @@ void Searcher::reduce_db_if_needed()
         solver->reduceDB->handle_lev2_predictor();
         cl_alloc.consolidate(solver);
         #endif
-        next_lev3_reduce = sumConflicts + conf.every_lev3_reduce;
+        next_lev3_reduce = sumConflicts + conf.every_pred_reduce;
     }
     #endif
 

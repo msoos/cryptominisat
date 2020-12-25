@@ -176,7 +176,7 @@ rm -f ../../src/predict/*.json
 rm -f ../../src/predict/*.h
 ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier short --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf_short | tee short_pred_out
 ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier long --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf | tee long_pred_out
-../cldata_predict.py "${FNAMEOUT}-min.db-cldata-${myforever}-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier ${myforever} --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf --topperc  | tee ${myforever}_pred_out
+../cldata_predict.py "${FNAMEOUT}-min.db-cldata-${myforever}-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier ${myforever} --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf | tee ${myforever}_pred_out
 
 ############################
 # To get feature importances
@@ -199,6 +199,6 @@ rm -f ../../src/predict/*.h
 ./build_final_predictor.sh
 (
 cd "$FNAME-dir"
-../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --simdrat 1 --printsol 0 --predforever "../../src/predict/predictor_${myforever}.json" --predforeverdebug 0 | tee cms-final-run.out
+../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --simdrat 1 --printsol 0 --predforever "../../src/predict/predictor_${myforever}.json" | tee cms-final-run.out
 )
 exit

@@ -102,9 +102,6 @@ private:
     void clean_lev0_once_in_a_while();
     void reset_predict_stats();
     void update_preds(const vector<ClOffset>& offs);
-    void adjust_forever_median(
-        vector<uint32_t>& toppercents_median_sz,
-        const vector<ClOffset>& offs);
     ReduceCommonData commdata;
     #endif
 
@@ -117,7 +114,6 @@ private:
     uint32_t median_uip1_used;
     float median_act;
     uint32_t force_kept_short = 0;
-    uint32_t force_kept_long = 0;
 
     uint32_t short_deleted;
     uint32_t long_deleted;

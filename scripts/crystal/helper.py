@@ -362,25 +362,6 @@ def not_inside(not_these, inside_here):
 
     return True
 
-def add_computed_szfeat_for_clustering(df):
-    print("Adding computed clustering features...")
-
-    todiv = []
-    for x in list(df):
-        not_these = ["std", "min", "mean", "_per_", "binary", "vcg", "pnr", "horn", "max"]
-        if "szfeat_cur" in x and x[-3:] != "var" and not_inside(not_these, x):
-            todiv.append(x)
-
-    # relative data
-    cols = list(df)
-    for col in cols:
-        if "szfeat_cur" in col:
-            for divper in todiv:
-                df["("+col+"/"+divper+")"] = df[col]/df[divper]
-                df["("+col+"<"+divper+")"] = (df[col] < df[divper]).astype(int)
-
-    print("Added computed features.")
-
 
 # to check for too large or NaN values:
 def check_too_large_or_nan_values(df, features=None):

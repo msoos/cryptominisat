@@ -350,21 +350,31 @@ void Main::add_supported_options()
         , "Predictor LONG config to use")
     ("predforever", po::value(&conf.pred_conf_forever)->default_value(conf.pred_conf_forever)
         , "Predictor FOREVER config to use")
+
+    //size
     ("predshortmult", po::value(&conf.pred_short_size_mult)->default_value(conf.pred_short_size_mult)
         , "Pred short multiplier")
     ("predlongmult", po::value(&conf.pred_long_size_mult)->default_value(conf.pred_long_size_mult)
         , "Pred long multiplier")
+    ("predforevermult", po::value(&conf.pred_forever_size_mult)->default_value(conf.pred_forever_size_mult)
+        , "Pred forever multiplier")
+
+    //chunk
     ("predlongchunkmult", po::value(&conf.pred_long_chunk_mult)->default_value(conf.pred_long_chunk_mult)
         , "Pred long chunk multiplier")
+    ("predforeverchunkmult", po::value(&conf.pred_forever_chunk_mult)->default_value(conf.pred_forever_chunk_mult)
+        , "Pred forever chunk multiplier")
+
+
+    //Check intervals for LONG and FOREVER
     ("predlongcheckn", po::value(&conf.pred_long_check_every_n)->default_value(conf.pred_long_check_every_n)
         , "Pred long check over limit every N")
     ("predforevercheckn", po::value(&conf.pred_forever_check_every_n)->default_value(conf.pred_forever_check_every_n)
         , "Pred forever check over limit every N")
-    ("predforevertopperc", po::value(&conf.pred_forever_topperc)->default_value(conf.pred_forever_topperc)
-        , "Keep top percent")
-    ("predmovearound", po::value(&conf.pred_move_around)->default_value(conf.pred_move_around)
-        , "Move not only UP but also DOWN clauses in the tiers in pred")
+
     ("preddistillorig", po::value(&conf.pred_distill_orig)->default_value(conf.pred_distill_orig)
+        , "Use original distill method during pred")
+    ("preddontmovetime", po::value(&conf.pred_dontmove_until_timeinside)->default_value(conf.pred_dontmove_until_timeinside)
         , "Use original distill method during pred")
     ("predadjustsize", po::value(&conf.pred_adjust_for_cl_size)->default_value(conf.pred_adjust_for_cl_size)
         , "Adjust predict values with the size of the clause")
@@ -422,7 +432,7 @@ void Main::add_supported_options()
     ("everylev2", po::value(&conf.every_lev2_reduce)->default_value(conf.every_lev2_reduce)
         , "Reduce lev2 clauses every N")
     #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-    ("everylev4", po::value(&conf.every_lev3_reduce)->default_value(conf.every_lev3_reduce)
+    ("everypred", po::value(&conf.every_pred_reduce)->default_value(conf.every_pred_reduce)
         , "Reduce final predictor (lev3) clauses every N, and produce data at every N in case of STATS_NEEDED")
     #endif
     ("lev1usewithin", po::value(&conf.must_touch_lev1_within)->default_value(conf.must_touch_lev1_within)

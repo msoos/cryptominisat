@@ -151,7 +151,7 @@ struct ClauseStats
     float glueHistLT_avg;
     float pred_short_use;
     float pred_long_use;
-    float pred_forever_topperc;
+    float pred_forever_use;
     #endif
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
