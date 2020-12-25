@@ -729,23 +729,6 @@ def cldata_add_computed_features(df, verbose, short=False):
                 for divisor in divisors:
                     larger_than(col, divisor)
 
-    # satzilla stuff
-    if False:
-        divisors = [
-            "szfeat_cur.numVars",
-            "szfeat_cur.numClauses",
-            "szfeat_cur.var_cl_ratio",
-            "szfeat_cur.avg_confl_size",
-            "szfeat_cur.avg_branch_depth",
-            "szfeat_cur.red_glue_distr_mean"
-        ]
-        for col in orig_cols:
-            if "szfeat" in col:
-                for divisor in divisors:
-                    if "min" not in divisor:
-                        divide(col, divisor)
-                        larger_than(col, divisor)
-
     # smaller-or-greater comparisons
     #if not short:
         #larger_than("cl.antec_data_sum_sizeHistLT_avg", "cl.num_total_lits_antecedents")
