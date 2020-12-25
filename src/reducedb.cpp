@@ -517,14 +517,7 @@ void ReduceDB::pred_move_to_lev1_and_lev0()
         Clause* cl = solver->cl_alloc.ptr(offset);
 
         bool moved = false;
-        if (solver->conf.debug_forever) {
-            if (cl->stats.glue <= solver->conf.glue_put_lev0_if_below_or_eq) {
-                marked_forever++;
-                cl->stats.which_red_array = 0;
-                solver->longRedCls[0].push_back(offset);
-                moved = true;
-            }
-        } else if (cl->stats.pred_forever_topperc < solver->conf.pred_forever_topperc) {
+        if (cl->stats.pred_forever_topperc < solver->conf.pred_forever_topperc) {
             marked_forever++;
             cl->stats.which_red_array = 0;
             solver->longRedCls[0].push_back(offset);
@@ -714,15 +707,7 @@ void ReduceDB::clean_lev1_once_in_a_while()
             }*/
 
             bool moved = false;
-            if (solver->conf.debug_forever)
-            {
-                if (cl->stats.glue <= solver->conf.glue_put_lev0_if_below_or_eq) {
-                    cl->stats.which_red_array = 0;
-                    solver->longRedCls[0].push_back(offset);
-                    long_upgraded++;
-                    moved = true;
-                }
-            } else if (cl->stats.pred_forever_topperc < solver->conf.pred_forever_topperc) {
+            if (cl->stats.pred_forever_topperc < solver->conf.pred_forever_topperc) {
                 cl->stats.which_red_array = 0;
                 solver->longRedCls[0].push_back(offset);
                 long_upgraded++;
@@ -854,13 +839,12 @@ ReduceDB::ClauseStats ReduceDB::reset_clause_dats(const uint32_t lev)
 void ReduceDB::reset_predict_stats()
 {
     ClauseStats this_stats;
-    if (!solver->conf.debug_forever) {
-        this_stats = reset_clause_dats(0);
-        if (solver->conf.verbosity) {
-            this_stats.print(0);
-        }
-        cl_stats[0] += this_stats;
+    this_stats = reset_clause_dats(0);
+    if (solver->conf.verbosity) {
+        this_stats.print(0);
     }
+    cl_stats[0] += this_stats;
+
     this_stats = reset_clause_dats(1);
     if (solver->conf.verbosity) {
         this_stats.print(1);
@@ -912,9 +896,7 @@ void ReduceDB::handle_lev2_predictor()
     update_preds_lev2();
     pred_move_to_lev1_and_lev0();
     delete_from_lev2();
-    if (!solver->conf.debug_forever) {
-        clean_lev0_once_in_a_while();
-    }
+    clean_lev0_once_in_a_while();
     clean_lev1_once_in_a_while();
     reset_predict_stats();
 

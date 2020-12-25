@@ -85,7 +85,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , pred_long_chunk_mult(2.8)
         //
         , pred_forever_topperc(60.0)
-        , debug_forever(0)
         //
         , pred_long_check_every_n(5)
         , pred_forever_check_every_n(5)
