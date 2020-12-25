@@ -217,7 +217,7 @@ void ClPredictors::set_up_input(
     //(rdb0.discounted_props_made/cl.numResolutionsHistLT_avg) -- 15
 
 
-    if (cl->stats.discounted_props_made < 1e-20 || time_inside_solver == 0) {
+    if (cl->stats.discounted_props_made < 1e-20f || time_inside_solver == 0) {
         at[x++] = MISSING_VAL;
     } else {
         at[x++] = ((double)cl->stats.sum_uip1_used/time_inside_solver)/((double)cl->stats.discounted_props_made);
