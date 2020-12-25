@@ -253,7 +253,7 @@ CREATE TABLE `clause_stats` (
 
   `decisionLevelHistLT_avg` float,
   `backtrackLevelHistLT_avg` float,
-  `trailDepthHist_avg` float,
+  `trailDepthHistLT_avg` float,
   `conflSizeHistlt_avg` float,
   `glueHistLT_avg` float,
   `connects_num_communities_histLT_avg` float,
