@@ -124,14 +124,14 @@ void ClPredictors::set_up_input(
     //rdb0.last_touched_diff -- 5
 
 
-    if (cl->stats.is_ternary_resolvent || //glue_hist_avg not valid for ternary
-        cl->stats.glue_hist_avg == 0)
+    if (cl->stats.is_ternary_resolvent || //glueHist_avg not valid for ternary
+        cl->stats.glueHist_avg == 0)
     {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = (double)cl->stats.glue/(double)cl->stats.glue_hist_avg;
+        at[x++] = (double)cl->stats.glue/(double)cl->stats.glueHist_avg;
     }
-    //(rdb0.glue/cl.glue_hist_avg) -- 6
+    //(rdb0.glue/cl.glueHist_avg) -- 6
 
 
     at[x++] = (double)cl->stats.glue;
@@ -187,16 +187,16 @@ void ClPredictors::set_up_input(
 
     //To protect against unset values being used
     assert(cl->stats.is_ternary_resolvent ||
-        cl->stats.glue_hist_longterm_avg > 0.9f);
+        cl->stats.glueHist_longterm_avg > 0.9f);
 
     if (cl->stats.is_ternary_resolvent ||
-        cl->stats.glue_before_minim == 0 //glue_hist_longterm_avg does not exist for ternary
+        cl->stats.glue_before_minim == 0 //glueHist_longterm_avg does not exist for ternary
     ) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = (double)cl->stats.glue_hist_longterm_avg/(double)cl->stats.glue_before_minim;
+        at[x++] = (double)cl->stats.glueHist_longterm_avg/(double)cl->stats.glue_before_minim;
     }
-    //(cl.glue_hist_longterm_avg/cl.glue_before_minim) -- 13
+    //(cl.glueHist_longterm_avg/cl.glue_before_minim) -- 13
 
 
     at[x++] = cl->stats.is_ternary_resolvent;
@@ -205,16 +205,16 @@ void ClPredictors::set_up_input(
 
     //To protect against unset values being used
     assert(cl->stats.is_ternary_resolvent ||
-        cl->stats.num_resolutions_hist_lt > 0.9f);
+        cl->stats.numResolutionsHistLT_avg > 0.9f);
 
-    if (cl->stats.is_ternary_resolvent || //num_resolutions_hist_lt does not exist for ternary
-        cl->stats.num_resolutions_hist_lt == 0
+    if (cl->stats.is_ternary_resolvent || //numResolutionsHistLT_avg does not exist for ternary
+        cl->stats.numResolutionsHistLT_avg == 0
     ) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = (double)cl->stats.discounted_props_made/(double)cl->stats.num_resolutions_hist_lt;
+        at[x++] = (double)cl->stats.discounted_props_made/(double)cl->stats.numResolutionsHistLT_avg;
     }
-    //(rdb0.discounted_props_made/cl.num_resolutions_hist_lt) -- 15
+    //(rdb0.discounted_props_made/cl.numResolutionsHistLT_avg) -- 15
 
 
     if (cl->stats.discounted_props_made < 1e-20 || time_inside_solver == 0) {
@@ -248,17 +248,17 @@ void ClPredictors::set_up_input(
 
     //To protect against unset values being used
     assert(cl->stats.is_ternary_resolvent ||
-        cl->stats.glue_histlt_avg > 0.9f);
+        cl->stats.glueHistLT_avg > 0.9f);
 
-    if (cl->stats.is_ternary_resolvent || //glue and glue_histlt_avg does not exist for ternary
-        cl->stats.glue_histlt_avg != 0 ||
+    if (cl->stats.is_ternary_resolvent || //glue and glueHistLT_avg does not exist for ternary
+        cl->stats.glueHistLT_avg != 0 ||
         time_inside_solver == 0
     ) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = (double)cl->stats.glue/(double)cl->stats.glue_histlt_avg;
+        at[x++] = (double)cl->stats.glue/(double)cl->stats.glueHistLT_avg;
     }
-    // (rdb0.glue/cl.glue_histlt_avg) -- 19
+    // (rdb0.glue/cl.glueHistLT_avg) -- 19
 
 
     if (commdata.avg_uip == 0 ||
@@ -274,26 +274,26 @@ void ClPredictors::set_up_input(
 
 
     if (cl->stats.is_ternary_resolvent || // size_hist and overlap_hist do not exist for tri
-        cl->stats.confl_size_hist == 0
+        cl->stats.conflSizeHist_avg == 0
     ) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = (double)cl->stats.antec_overlap_hist_lt/
-            ((double)cl->stats.confl_size_hist);
+        at[x++] = (double)cl->stats.overlapHistLT_avg/
+            ((double)cl->stats.conflSizeHist_avg);
     }
-    // (cl.antec_overlap_hist_lt/cl.confl_size_hist) -- 21
+    // (cl.overlapHistLT_avg/cl.conflSizeHist_avg) -- 21
 
 
-    if (cl->stats.is_ternary_resolvent || // glue_histlt_avg do not exist for tri
+    if (cl->stats.is_ternary_resolvent || // glueHistLT_avg do not exist for tri
         cl->stats.uip1_used == 0
 
     ) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = (double)cl->stats.glue_histlt_avg/
+        at[x++] = (double)cl->stats.glueHistLT_avg/
             ((double)cl->stats.uip1_used);
     }
-    // (cl.glue_histlt_avg/rdb0.uip1_used) -- 22
+    // (cl.glueHistLT_avg/rdb0.uip1_used) -- 22
 
 
     if (commdata.avg_glue == 0) {

@@ -101,7 +101,7 @@ struct SearchHist {
         #endif
     }
 
-    void reset_glue_hist_size(size_t shortTermHistorySize)
+    void reset_glueHist_size(size_t shortTermHistorySize)
     {
         glueHist.clearAndResize(shortTermHistorySize);
         #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)

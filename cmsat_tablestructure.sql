@@ -62,14 +62,20 @@ CREATE TABLE `reduceDB_common` (
   `avg_uip1_used` float NOT NULL,
 
   num_vars int(20) NOT NULL,
-  num_long_cls int(20) NOT NULL,
-  num_bin_cls int(20) NOT NULL,
+  num_long_irred_cls int(20) NOT NULL,
+  num_long_irred_cls_lits int(20) NOT NULL,
+  num_long_red_cls int(20) NOT NULL,
+  num_long_red_cls_lits int(20) NOT NULL,
+  num_bin_irred_cls int(20) NOT NULL,
+  num_bin_red_cls int(20) NOT NULL,
 
   trailDepthHistLT_avg float NOT NULL,
   backtrackLevelHistLT_avg float NOT NULL,
   conflSizeHistLT_avg float NOT NULL,
   numResolutionsHistLT_avg float NOT NULL,
-  glueHistLT_avg float NOT NULL
+  glueHistLT_avg float NOT NULL,
+  antec_data_sum_sizeHistLT_avg float NOT NULL,
+  overlapHistLT_avg float NOT NULL
 );
 
 DROP TABLE IF EXISTS `reduceDB`;
@@ -245,26 +251,26 @@ CREATE TABLE `clause_stats` (
   `antecedents_long_red_age_min` bigint(20),
   `antecedents_long_red_age_max` bigint(20),
 
-  `decision_level_histlt_avg` float,
-  `backtrack_level_histlt_avg` float,
-  `trail_depth_histlt_avg` float,
-  `conflsize_histlt_avg` float,
-  `glue_histlt_avg` float,
-  `connects_num_communities_hist_lt` float,
-  `num_resolutions_hist_lt` float,
+  `decisionLevelHistLT_avg` float,
+  `backtrackLevelHistLT_avg` float,
+  `trailDepthHist_avg` float,
+  `conflSizeHistlt_avg` float,
+  `glueHistLT_avg` float,
+  `connects_num_communities_histLT_avg` float,
+  `numResolutionsHistLT_avg` float,
 
-  `antec_sum_conflsize_histlt_avg` float,
-  `antec_overlap_hist_lt` float,
+  `antec_data_sum_sizeHistLT_avg` float,
+  `overlapHistLT_avg` float,
 
-  `branch_depth_hist_queue` float,
-  `trail_depth_hist` float,
-  `trail_depth_hist_longer` float,
-  `num_resolutions_hist` float,
-  `confl_size_hist` float,
-  `trail_depth_delta_hist` float,
-  `backtrack_level_hist` float,
-  `glue_hist_avg` float,
-  `glue_hist_longterm_avg` float,
+  `branchDepthHistQueue_avg` float,
+  `trailDepthHist_avg` float,
+  `trailDepthHistLonger_avg` float,
+  `numResolutionsHist_avg` float,
+  `conflSizeHist_avg` float,
+  `trailDepthDeltaHist_avg` float,
+  `backtrackLevelHist_avg` float,
+  `glueHist_avg` float,
+  `glueHist_longterm_avg` float,
   `orig_connects_num_communities` int(20) NOT NULL
 );
 

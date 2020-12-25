@@ -140,15 +140,15 @@ struct ClauseStats
     };
     uint32_t last_touched = 0;
     #ifdef FINAL_PREDICTOR
-    float       glue_hist_longterm_avg;
-    float       glue_hist_avg;
+    float       glueHist_longterm_avg;
+    float       glueHist_avg;
     uint32_t    glue_before_minim;
-    float       antec_overlap_hist_lt;
+    float       overlapHistLT_avg;
     uint32_t    num_total_lits_antecedents;
     uint32_t    num_antecedents;
-    float       num_resolutions_hist_lt;
-    float       confl_size_hist;
-    float glue_histlt_avg;
+    float       numResolutionsHistLT_avg;
+    float       conflSizeHist_avg;
+    float glueHistLT_avg;
     float pred_short_use;
     float pred_long_use;
     float pred_forever_topperc;

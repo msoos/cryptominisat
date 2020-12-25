@@ -722,13 +722,23 @@ void SQLiteStats::reduceDB_common(
 
     sqlite3_bind_int(stmtReduceDB_common, bindAt++, solver->nVars());
     sqlite3_bind_int(stmtReduceDB_common, bindAt++, solver->longIrredCls.size());
+    sqlite3_bind_int(stmtReduceDB_common, bindAt++, litStats.irredLits);
+    uint32_t total_long_red_cls = 0;
+    for(const auto& cls: solver->longRedCls) {
+        total_long_red_cls += cls.size();
+    }
+    sqlite3_bind_int(stmtReduceDB_common, bindAt++, total_long_red_cls);
+    sqlite3_bind_int(stmtReduceDB_common, bindAt++, litStats.redLits);
     sqlite3_bind_int(stmtReduceDB_common, bindAt++, solver->binTri.irredBins);
+    sqlite3_bind_int(stmtReduceDB_common, bindAt++, solver->binTri.redBins);
 
     sqlite3_bind_double(stmtReduceDB_common, bindAt++, solver->hist.trailDepthHistLT.avg());
     sqlite3_bind_double(stmtReduceDB_common, bindAt++, solver->hist.backtrackLevelHistLT.avg());
     sqlite3_bind_double(stmtReduceDB_common, bindAt++, solver->hist.conflSizeHistLT.avg());
     sqlite3_bind_double(stmtReduceDB_common, bindAt++, solver->hist.numResolutionsHistLT.avg());
     sqlite3_bind_double(stmtReduceDB_common, bindAt++, solver->hist.glueHistLT.avg());
+    sqlite3_bind_double(stmtReduceDB_common, bindAt++, solver->hist.antec_data_sum_sizeHistLT.avg());
+    sqlite3_bind_double(stmtReduceDB_common, bindAt++, solver->hist.overlapHistLT.avg());
 
     run_sqlite_step(stmtReduceDB_common, "reduceDB_common", bindAt);
 }

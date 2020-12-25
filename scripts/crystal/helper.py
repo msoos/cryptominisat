@@ -608,7 +608,7 @@ def delete_none_features(df):
     del df["cl.antecedents_glue_long_reds_var"]
     del df["cl.antecedents_long_red_age_avg"]
     del df["cl.antecedents_long_red_age_var"]
-    #del df["cl.decision_level_histlt_avg"]
+    #del df["cl.decisionLevelHistLT_avg"]
     del df["sum_cl_use.first_confl_used"]
     del df["sum_cl_use.last_confl_used"]
 
@@ -638,7 +638,7 @@ def cldata_add_computed_features(df, verbose, short=False):
     # TODO decision level and branch depth are the same, right???
     # ************
     print("size/glue/trail rel...")
-    divide("cl.trail_depth_level", "cl.trail_depth_histlt_avg")
+    divide("cl.trail_depth_level", "cl.trailDepthHist_avg")
 
     divide("cl.num_total_lits_antecedents", "cl.num_antecedents")
 
@@ -654,22 +654,22 @@ def cldata_add_computed_features(df, verbose, short=False):
     divide("rdb0.props_made", "rdb0_common.median_props")
 
     divisors = [
-        "cl.conflsize_histlt_avg"
-        , "cl.glue_histlt_avg"
+        "cl.conflSizeHistlt_avg"
+        , "cl.glueHistLT_avg"
         , "rdb0.glue"
         , "rdb0.size"
         # , "cl.orig_connects_num_communities"
         # , "rdb0.connects_num_communities"
         , "cl.orig_glue"
         , "cl.glue_before_minim"
-        , "cl.glue_hist_avg"
-        , "cl.glue_hist_longterm_avg"
+        , "cl.glueHist_avg"
+        , "cl.glueHist_longterm_avg"
         # , "cl.decision_level_hist"
-        , "cl.num_resolutions_hist_lt"
-        # , "cl.trail_depth_histlt_avg"
-        # , "cl.backtrack_level_hist"
-        , "cl.branch_depth_hist_queue"
-        , "cl.antec_overlap_hist_lt"
+        , "cl.numResolutionsHistLT_avg"
+        # , "cl.trailDepthHist_avg"
+        # , "cl.backtrackLevelHist_avg"
+        , "cl.branchDepthHistQueue_avg"
+        , "cl.overlapHistLT_avg"
         , "(cl.num_total_lits_antecedents/cl.num_antecedents)"
         , "cl.num_antecedents"
         , "rdb0.act_ranking_rel"
@@ -694,7 +694,7 @@ def cldata_add_computed_features(df, verbose, short=False):
 
         sum_uip1_per_time = divide("rdb0.sum_uip1_used", "cl.time_inside_solver")
         sum_props_per_time = divide("rdb0.sum_props_made", "cl.time_inside_solver")
-        antec_rel = divide("cl.num_total_lits_antecedents", "cl.antec_sum_conflsize_histlt_avg")
+        antec_rel = divide("cl.num_total_lits_antecedents", "cl.antec_data_sum_sizeHistLT_avg")
         divisors.append(sum_uip1_per_time)
         divisors.append(sum_props_per_time)
         divisors.append("rdb0.discounted_uip1_used")
@@ -748,8 +748,8 @@ def cldata_add_computed_features(df, verbose, short=False):
 
     # smaller-or-greater comparisons
     #if not short:
-        #larger_than("cl.antec_sum_conflsize_histlt_avg", "cl.num_total_lits_antecedents")
-        #larger_than("cl.antec_overlap_hist_lt", "cl.num_overlap_literals")
+        #larger_than("cl.antec_data_sum_sizeHistLT_avg", "cl.num_total_lits_antecedents")
+        #larger_than("cl.overlapHistLT_avg", "cl.num_overlap_literals")
 
     # print("flatten/list...")
     #old = set(df.columns.values.flatten().tolist())

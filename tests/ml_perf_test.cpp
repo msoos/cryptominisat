@@ -42,10 +42,10 @@ struct Dat {
     uint32_t num_antecedents;
     uint32_t num_total_lits_antecedents;
     uint32_t uip1_used;
-    float    num_resolutions_hist_lt;
-    float    glue_hist_longterm_avg;
-    float    confl_conflsize_histlt_avg;
-    float    branch_depth_hist_queue;
+    float    numResolutionsHistLT_avg;
+    float    glueHist_longterm_avg;
+    float    conflSizeHistLT_avg;
+    float    branchDepthHistQueue_avg;
     double   act_ranking_rel;
     uint32_t size;
     uint64_t sumConflicts; //time_inside_the_solver
@@ -61,10 +61,10 @@ struct Dat {
         cout << "num_antecedents: " << num_antecedents << endl;
         cout << "num_total_lits_antecedents: " << num_total_lits_antecedents << endl;
         cout << "uip1_used: " << uip1_used << endl;
-        cout << "num_resolutions_hist_lt: " << num_resolutions_hist_lt << endl;
-        cout << "glue_hist_longterm_avg: " << glue_hist_longterm_avg << endl;
-        cout << "confl_conflsize_histlt_avg: " << confl_conflsize_histlt_avg << endl;
-        cout << "branch_depth_hist_queue: "  << branch_depth_hist_queue << endl;
+        cout << "numResolutionsHistLT_avg: " << numResolutionsHistLT_avg << endl;
+        cout << "glueHist_longterm_avg: " << glueHist_longterm_avg << endl;
+        cout << "conflSizeHistLT_avg: " << conflSizeHistLT_avg << endl;
+        cout << "branchDepthHistQueue_avg: "  << branchDepthHistQueue_avg << endl;
         cout << "act_ranking_rel: "  << act_ranking_rel << endl;
         cout << "size: "  << size << endl;
         cout << "sumConflicts: " << sumConflicts << endl;
@@ -93,10 +93,10 @@ bool get_val(Dat& dat)
         >> dat.num_antecedents
         >> dat.num_total_lits_antecedents
         >> dat.uip1_used
-        >> dat.num_resolutions_hist_lt
-        >> dat.glue_hist_longterm_avg
-        >> dat.confl_conflsize_histlt_avg
-        >> dat.branch_depth_hist_queue
+        >> dat.numResolutionsHistLT_avg
+        >> dat.glueHist_longterm_avg
+        >> dat.conflSizeHistLT_avg
+        >> dat.branchDepthHistQueue_avg
         >> dat.act_ranking_rel
         >> dat.size
         >> dat.sumConflicts
@@ -111,15 +111,15 @@ float get_predict(Clause* cl, const Dat& dat, predict_type pred_type)
 {
     cl->stats.props_made = dat.props_made;
     cl->stats.orig_glue  = dat.orig_glue;
-    cl->stats.num_resolutions_hist_lt = dat.num_resolutions_hist_lt;
+    cl->stats.numResolutionsHistLT_avg = dat.numResolutionsHistLT_avg;
     cl->stats.glue_before_minim = dat.glue_before_minim;
     cl->stats.sum_uip1_used = dat.sum_uip1_used;
     cl->stats.glue = dat.glue;
     cl->stats.num_antecedents = dat.num_antecedents;
     cl->stats.num_total_lits_antecedents = dat.num_total_lits_antecedents;
-    cl->stats.glue_hist_longterm_avg = dat.glue_hist_longterm_avg;
-//     cl->stats.confl_conflsize_histlt_avg = dat.confl_conflsize_histlt_avg;
-//     cl->stats.branch_depth_hist_queue = dat.branch_depth_hist_queue;
+    cl->stats.glueHist_longterm_avg = dat.glueHist_longterm_avg;
+//     cl->stats.conflSizeHistLT_avg = dat.conflSizeHistLT_avg;
+//     cl->stats.branchDepthHistQueue_avg = dat.branchDepthHistQueue_avg;
     cl->stats.uip1_used = dat.uip1_used;
     cl->resize(dat.size);
 
