@@ -248,6 +248,7 @@ class Learner:
                 clf = clf_forest
             elif options.final_is_xgboost:
                 # , ntree_limit=3
+                print("Using xgboost no. estimators:", options.n_estimators_xgboost)
                 clf = xgb.XGBRegressor(
                     objective='reg:squarederror',
                     missing=MISSING,

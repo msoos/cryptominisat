@@ -37,34 +37,44 @@ function concat() {
     ../cldata_predict.py \
         short-comb-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat \
         --tier short --final --xgboost \
+        --xgboostestimators ${estimators}
         --basedir ../../src/predict/ --bestfeatfile ${bestf_short} | tee out_short
 
     ../cldata_predict.py \
         long-comb-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat  \
         --tier long  --final --xgboost\
+        --xgboostestimators ${estimators}
         --basedir ../../src/predict/ --bestfeatfile $bestf | tee out_long
 
     ../cldata_predict.py \
         ${myforever}-comb-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat \
         --tier ${myforever} --final --xgboost \
-        --basedir ../../src/predict/ --bestfeatfile $bestf --topperc | tee out_${myforever}
+        --xgboostestimators ${estimators}
+        --basedir ../../src/predict/ --bestfeatfile $bestf | tee out_${myforever}
 
     cp ../../src/predict/*.json classifiers/
     cp out_* classifiers/
-    tar czvf classifiers-cut1-${cut1}-cut2-${cut2}-limit-${limit}.tar.gz classifiers
+    tar czvf classifiers-cut1-${cut1}-cut2-${cut2}-limit-${limit}-est${estimators}.tar.gz classifiers
 }
 
 limit=2000
-cut1="30.0"
-cut2="90.0"
-concat
-
-cut1="60.0"
+estimators=20
+cut1="50.0"
 cut2="80.0"
 concat
 
-cut1="60.0"
-cut2="90.0"
+estimators=20
+cut1="10.0"
+cut2="40.0"
+concat
+
+estimators=40
+cut1="40.0"
+cut2="70.0"
+
+estimators=20
+cut1="40.0"
+cut2="70.0"
 concat
 
 exit 0
