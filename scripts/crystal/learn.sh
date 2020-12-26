@@ -58,23 +58,24 @@ function concat() {
 }
 
 limit=2000
-estimators=20
-cut1="50.0"
-cut2="80.0"
-concat
+# estimators=20
+# cut1="50.0"
+# cut2="80.0"
+# concat
 
-estimators=20
-cut1="10.0"
-cut2="40.0"
-concat
+# estimators=20
+# cut1="10.0"
+# cut2="40.0"
+# concat
 
 estimators=40
 cut1="40.0"
 cut2="70.0"
-
-estimators=20
-cut1="40.0"
-cut2="70.0"
 concat
+
+# estimators=20
+# cut1="40.0"
+# cut2="70.0"
+# concat
 
 exit 0
