@@ -172,8 +172,8 @@ class QueryCls (helper.QueryHelper):
         , used_later_forever.used_later as `x.used_later_forever`
         , used_later_forever.percentile_fit as `x.used_later_forever_topperc`
 
-        , used_later_forever_div.used_later as `x.used_later_forever_div`
-        , used_later_forever_div.percentile_fit as `x.used_later_forever_div_topperc`
+        -- , used_later_forever_div.used_later as `x.used_later_forever_div`
+        -- , used_later_forever_div.percentile_fit as `x.used_later_forever_div_topperc`
 
         , sum_cl_use.num_used as `x.sum_cl_use`
 
@@ -207,9 +207,9 @@ class QueryCls (helper.QueryHelper):
             used_later_forever.clauseID = rdb0.clauseID
             and used_later_forever.rdb0conflicts = rdb0.conflicts
 
-        join used_later_forever_div on
-            used_later_forever_div.clauseID = rdb0.clauseID
-            and used_later_forever_div.rdb0conflicts = rdb0.conflicts
+        -- join used_later_forever_div on
+        --     used_later_forever_div.clauseID = rdb0.clauseID
+        --     and used_later_forever_div.rdb0conflicts = rdb0.conflicts
 
         join cl_last_in_solver on
             cl_last_in_solver.clauseID = rdb0.clauseID
@@ -285,9 +285,7 @@ class QueryCls (helper.QueryHelper):
             self.myformat["del_at_least"] = options.long
 
         # the two below could be 0, but I want to be on the safe side
-        elif tier == "forever":
-            self.myformat["del_at_least"] = options.short
-        elif tier == "forever_div":
+        elif (tier == "forever" or tier == "forever_div"):
             self.myformat["del_at_least"] = options.short
 
         # Make sure these stratas are equally represented
@@ -398,17 +396,15 @@ def one_database(dbfname):
         q.fill_used_later_X("long", duration=options.long)
         q.fill_used_later_X("forever", duration=options.forever,
                             min_del_distance=options.short)
-        q.fill_used_later_X("forever_div", duration=options.forever,
-                            min_del_distance=options.short, divide=True)
+        #q.fill_used_later_X("forever_div", duration=options.forever,
+                            #min_del_distance=options.short, divide=True)
 
         # fill percentile_fit
-        q.fill_used_later_X_perc_fit("short")
-        q.fill_used_later_X_perc_fit("long")
-        q.fill_used_later_X_perc_fit("forever")
-        q.fill_used_later_X_perc_fit("forever_div")
+        for tier in todo_types:
+            q.fill_used_later_X_perc_fit(tier)
 
     print("Using sqlite3 DB file %s" % dbfname)
-    for tier in ["short", "long", "forever", "forever_div"]:
+    for tier in todo_types:
         print("------> Doing tier {tier}".format(tier=tier))
 
         with QueryCls(dbfname) as q:
@@ -483,6 +479,9 @@ if __name__ == "__main__":
     if len(args) != 1:
         print("ERROR: You must give exactly one file")
         exit(-1)
+
+    # todo_types = ["short", "long", "forever", "forever_div"]
+    todo_types = ["short", "long", "forever"]
 
     np.random.seed(2097483)
     one_database(args[0])
