@@ -37,19 +37,19 @@ function concat() {
     ../cldata_predict.py \
         short-comb-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat \
         --tier short --final --xgboost \
-        --xgboostestimators ${estimators}
+        --xgboostestimators ${estimators} \
         --basedir ../../src/predict/ --bestfeatfile ${bestf_short} | tee out_short
 
     ../cldata_predict.py \
         long-comb-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat  \
         --tier long  --final --xgboost\
-        --xgboostestimators ${estimators}
+        --xgboostestimators ${estimators} \
         --basedir ../../src/predict/ --bestfeatfile $bestf | tee out_long
 
     ../cldata_predict.py \
         ${myforever}-comb-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat \
         --tier ${myforever} --final --xgboost \
-        --xgboostestimators ${estimators}
+        --xgboostestimators ${estimators} \
         --basedir ../../src/predict/ --bestfeatfile $bestf | tee out_${myforever}
 
     cp ../../src/predict/*.json classifiers/
