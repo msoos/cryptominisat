@@ -30,50 +30,40 @@ function concat() {
     cat learn.sh >> out_git
     md5sum *.dat >> out_git
 
-    #bestf_short="../../scripts/crystal/best_features-rdb0-only-short.txt"
-    bestf_short="../../scripts/crystal/best_features-rdb0-only.txt"
     bestf="../../scripts/crystal/best_features-rdb0-only.txt"
-    myforever="forever"
-    ../cldata_predict.py \
-        short-comb-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat \
-        --tier short --final --xgboost \
-        --xgboostestimators ${estimators} \
-        --basedir ../../src/predict/ --bestfeatfile ${bestf_short} | tee out_short
 
-    ../cldata_predict.py \
-        long-comb-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat  \
-        --tier long  --final --xgboost\
-        --xgboostestimators ${estimators} \
-        --basedir ../../src/predict/ --bestfeatfile $bestf | tee out_long
-
-    ../cldata_predict.py \
-        ${myforever}-comb-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat \
-        --tier ${myforever} --final --xgboost \
-        --xgboostestimators ${estimators} \
-        --basedir ../../src/predict/ --bestfeatfile $bestf | tee out_${myforever}
+    tiers=("short" "long" "forever")
+    for tier in "${tiers[@]}"
+    do
+        /usr/bin/time --verbose -o "out_${tier}-cut1-${cut1}-cut2-${cut2}-limit-${limit}-est${est}.timeout" \
+        ../cldata_predict.py \
+        ${tier}-comb-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat \
+        --tier ${tier} --final --xgboost \
+        --xgboostest ${est} \
+        --basedir ../../src/predict/ --bestfeatfile ${bestf} | tee out_${tier}
 
     cp ../../src/predict/*.json classifiers/
     cp out_* classifiers/
-    tar czvf classifiers-cut1-${cut1}-cut2-${cut2}-limit-${limit}-est${estimators}.tar.gz classifiers
+    tar czvf classifiers-cut1-${cut1}-cut2-${cut2}-limit-${limit}-est${est}.tar.gz classifiers
 }
 
 limit=2000
-# estimators=20
+# est=20
 # cut1="50.0"
 # cut2="80.0"
 # concat
 
-# estimators=20
+# est=20
 # cut1="10.0"
 # cut2="40.0"
 # concat
 
-estimators=40
+est=40
 cut1="40.0"
 cut2="70.0"
 concat
 
-# estimators=20
+# est=20
 # cut1="40.0"
 # cut2="70.0"
 # concat
