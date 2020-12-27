@@ -41,6 +41,7 @@ function concat() {
         --tier ${tier} --final --xgboost \
         --xgboostest ${est} \
         --basedir ../../src/predict/ --bestfeatfile ${bestf} | tee out_${tier}
+    done
 
     cp ../../src/predict/*.json classifiers/
     cp out_* classifiers/
