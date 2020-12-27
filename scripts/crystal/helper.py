@@ -408,6 +408,13 @@ def calc_min_split_point(df, min_samples_split):
     return split_point
 
 
+def error_format(error):
+    if error == -1:
+        return "XXX"
+    else:
+        return "{0:<2.2E}".format(error)
+
+
 def calc_regression_error(data, features, to_predict, clf, toprint,
                   average="binary", highlight=False):
     X_data = data[features]
@@ -418,7 +425,7 @@ def calc_regression_error(data, features, to_predict, clf, toprint,
         return None
     y_pred = clf.predict(X_data)
     main_error = sklearn.metrics.mean_squared_error(y_data, y_pred)
-    print("Mean squared error is: ", main_error)
+    print("Mean squared error is: " + error_format(main_error))
 
     for start,end in [(0,10), (1,10), (10, 100), (100, 1000), (1000,10000), (10000, 1000000)]:
         x = "--> Strata  %8d <= %34s < %8d " % (start, to_predict, end)
@@ -432,7 +439,7 @@ def calc_regression_error(data, features, to_predict, clf, toprint,
         else:
             y_pred = clf.predict(X_data)
             error = sklearn.metrics.mean_squared_error(y_data, y_pred)
-        print("%s %s msqe: %13.1lf" % (x, y, error))
+        print("%s %s msqe: " % (x, y) + error_format(error))
 
     for start,end in [(0,3), (3,8), (8, 15), (15, 25), (25,50), (50, 100), (100, 1000000)]:
         x = "--> Strata  %8d <= %34s < %8d " % (start, "rdb0.glue", end)
@@ -445,7 +452,7 @@ def calc_regression_error(data, features, to_predict, clf, toprint,
         else:
             y_pred = clf.predict(X_data)
             error = sklearn.metrics.mean_squared_error(y_data, y_pred)
-        print("%s %s msqe: %13.1lf" % (x, y, error))
+        print("%s %s msqe: " % (x, y) + error_format(error))
 
     return main_error
 

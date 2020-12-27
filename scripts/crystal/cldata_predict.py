@@ -181,6 +181,23 @@ class Learner:
             towrite += "\n"
             f.write(towrite)
 
+    def get_sample_weights(self, X_train, y_train):
+        if options.sample_weight_sqrt == 0:
+            print("SQRT weight is set to NONE")
+            return None
+        weights = np.array(y_train.values)
+        #print("init weights:", weights)
+        def myfunc(x):
+            if x == 0:
+                return 1.0
+            else:
+                return math.pow(x, 1.0/options.sample_weight_sqrt)
+        myfunc_v = np.vectorize(myfunc)
+        weights = myfunc_v(weights)
+        #print("final weights:", weights)
+        print("SQRT weight is set to ", options.sample_weight_sqrt)
+        return weights
+
     def one_classifier(self, features, to_predict, final):
         print("-> Number of features  :", len(features))
         print("-> Number of datapoints:", self.df.shape)
@@ -276,17 +293,12 @@ class Learner:
                 assert False
 
         del df
-        #my_sample_w = np.array(y_train.values)
-        #my_sample_w = my_sample_w*prefer_ok
-        #def zero_to_one(t):
-            #if t == 0:
-                #return 1
-            #else:
-                #return t
-        #vfunc = np.vectorize(zero_to_one)
-        #my_sample_w = vfunc(my_sample_w)
-        #clf.fit(X_train, y_train, sample_weight=my_sample_w)
-        clf.fit(X_train, y_train)
+        sample_weights = self.get_sample_weights(X_train, y_train)
+        if sample_weights is None:
+            clf.fit(X_train, y_train)
+        else:
+            clf.fit(X_train, y_train, sample_weight=sample_weights)
+        del sample_weights
 
         print("Training finished. T: %-3.2f" % (time.time() - t))
 
@@ -468,6 +480,8 @@ if __name__ == "__main__":
                         dest="final_is_voting", help="Final classifier should be a voting of all of: forest, svm, logreg")
     parser.add_argument("--xgboostestimators", default=20, type=int,
                         dest="n_estimators_xgboost", help="Number of estimators for xgboost")
+    parser.add_argument("--weight", default=5.0, type=float,
+                        dest="sample_weight_sqrt", help="The SQRT factor for weights. 0 = disable sample weights. Larger number (e.g. 100) will be basically like 0, while e.g. 1 will skew things a _alot_ towards higher values having more weights")
 
     # which one to generate
     parser.add_argument("--tier", default=None, type=str,
@@ -522,7 +536,6 @@ if __name__ == "__main__":
         else:
             mlflow.log_param("top_num_features", options.top_num_features)
 
-        #mlflow.log_param("prefer_ok", options.prefer_ok)
         mlflow.log_param("only_percentage", options.only_perc)
         mlflow.log_param("min_samples_split", options.min_samples_split)
         mlflow.log_param("tree_depth", options.tree_depth)
