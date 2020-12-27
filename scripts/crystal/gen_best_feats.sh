@@ -8,17 +8,20 @@ md5sum *.dat >> best_feats/out_git
 
 
 function doit() {
-../cldata_predict.py "short-comb-cut1-$cut1-cut2-$cut2-limit-${limit}.dat" \
---tier short --top 200 --xgboost --only "$only" \
-"--${computed}computed" > "best_feats/output_short_${computed}computed"
 
-../cldata_predict.py "long-comb-cut1-$cut1-cut2-$cut2-limit-${limit}.dat" \
---tier long --top 200 --xgboost --only "$only" \
-"--${computed}computed" > "best_feats/output_long_${computed}computed"
+tiers=("short"  "long" "forever")
+for tier in "${tiers[@]}"
+do
+    echo "Doing ${tier}_${computed}computed"
 
-../cldata_predict.py "forever-comb-cut1-$cut1-cut2-$cut2-limit-${limit}.dat" \
---tier forever --top 2000 --xgboost --only "$only" \
-"--${computed}computed" > "best_feats/output_forever_${computed}computed"
+    /usr/bin/time --verbose -o "best_feats/output_${tier}_${computed}computed.timeout" \
+    ../cldata_predict.py "${tier}-comb-cut1-$cut1-cut2-$cut2-limit-${limit}.dat" \
+    --tier ${tier} --top 2000 --xgboost --only "$only" \
+    "--${computed}computed" > "best_feats/output_${tier}_${computed}computed"
+
+    echo "Done with ${tier}_${computed}computed"
+done
+
 }
 
 limit=2000
@@ -28,7 +31,7 @@ only="1.0"
 computed="no"
 doit
 
-only="0.3"
+only="0.1"
 computed="all"
 doit
 
