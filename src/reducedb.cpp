@@ -594,8 +594,10 @@ void ReduceDB::update_preds(const vector<ClOffset>& offs)
 
             if (solver->conf.pred_adjust_for_cl_size != 0) {
                 double divby = safe_div(solver->stats.litsRedFinal, solver->stats.conflStats.numConflicts) * solver->conf.pred_adjust_for_cl_size;
-                cl->stats.pred_short_use = 1.0/(divby + (double)cl->size())*(double)cl->stats.pred_short_use;
-                cl->stats.pred_long_use = 1.0/(divby + (double)cl->size())*(double)cl->stats.pred_long_use;
+                if (!solver->conf.pred_adjust_for_cl_size_onlyforever) {
+                    cl->stats.pred_short_use = 1.0/(divby + (double)cl->size())*(double)cl->stats.pred_short_use;
+                    cl->stats.pred_long_use = 1.0/(divby + (double)cl->size())*(double)cl->stats.pred_long_use;
+                }
                 cl->stats.pred_forever_use = 1.0/(divby + (double)cl->size())*(double)cl->stats.pred_forever_use;
             }
         }

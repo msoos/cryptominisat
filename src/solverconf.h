@@ -246,6 +246,7 @@ class DLL_PUBLIC SolverConf
         uint32_t pred_long_check_every_n;
         uint32_t pred_forever_check_every_n;
         uint32_t pred_adjust_for_cl_size;
+        uint32_t pred_adjust_for_cl_size_onlyforever;
         int   pred_distill_orig;
         int   pred_dontmove_until_timeinside;
 
