@@ -269,7 +269,9 @@ class Learner:
                     max_features="sqrt",
                     random_state=prng)
             elif options.final_is_xgboost:
-                clf = xgb.XGBRegressor(objective='reg:squarederror', missing=MISSING)
+                clf = xgb.XGBRegressor(
+                    objective='reg:squarederror',
+                    missing=MISSING)
             else:
                 assert False
 
