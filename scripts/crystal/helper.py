@@ -611,6 +611,7 @@ def cldata_add_computed_features(df, verbose, short=False):
     cldata_add_minimum_computed_features(df, verbose)
 
     del df["cl.conflicts"]
+    del df["cl.restartID"]
     del df["sum_cl_use.clauseID"]
     del df["rdb0.introduced_at_conflict"]
     delete_none_features(df)
