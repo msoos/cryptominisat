@@ -9,7 +9,7 @@ md5sum *.dat >> best_feats/out_git
 
 function doit() {
 
-tiers=("short"  "long" "forever")
+tiers=("short" "long" "forever")
 for tier in "${tiers[@]}"
 do
     echo "Doing ${tier}_${computed}computed"
@@ -27,11 +27,12 @@ done
 limit=2000
 cut1="40.0"
 cut2="70.0"
+
 only="1.0"
 computed="no"
 doit
 
-only="0.1"
+only="0.05"
 computed="all"
 doit
 
