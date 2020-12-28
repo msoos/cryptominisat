@@ -480,7 +480,7 @@ if __name__ == "__main__":
                         dest="final_is_voting", help="Final classifier should be a voting of all of: forest, svm, logreg")
     parser.add_argument("--xgboostestimators", default=20, type=int,
                         dest="n_estimators_xgboost", help="Number of estimators for xgboost")
-    parser.add_argument("--weight", default=5.0, type=float,
+    parser.add_argument("--weight", default=0.0, type=float,
                         dest="sample_weight_sqrt", help="The SQRT factor for weights. 0 = disable sample weights. Larger number (e.g. 100) will be basically like 0, while e.g. 1 will skew things a _alot_ towards higher values having more weights")
 
     # which one to generate
