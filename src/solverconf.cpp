@@ -355,7 +355,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , do_distill_clauses(true)
         , distill_long_cls_time_limitM(20ULL)
         , watch_based_str_time_limitM(30LL)
-        , distill_time_limitM(120LL)
         , distill_increase_conf_ratio(0.02)
         , distill_min_confl(10000)
         , distill_red_tier1_ratio(0.03)
