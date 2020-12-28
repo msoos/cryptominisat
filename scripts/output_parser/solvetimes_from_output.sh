@@ -5,22 +5,21 @@ xzgrep --color -i -e "assert.*fail" -e "floating" -e "signal" -e "error" -e "ter
 echo "checking for signal 4"
 xzgrep "signal 4"  issues.csv
 
+# for normal
+echo "Getting SAT & UNSAT"
+xzgrep "^s .*SATISFIABLE" *.out.xz | sed 's/:s.*$//' > solved_xz.csv
+sed 's/.gz.*/.gz/' solved_xz.csv > solved.csv
+xzgrep "^s UNSATISFIABLE" $(cat solved_xz.csv) | sed 's/:s.*$//' | sed 's/.gz.*/.gz/' | sort > solvedUNSAT.csv
+xzgrep "^s SATISFIABLE" $(cat solved_xz.csv)   | sed 's/:s.*$//' | sed 's/.gz.*/.gz/' | sort > solvedSAT.csv
+
 # 1500 cutoff
 echo "Getting solveTimes"
-xzgrep "Total" *.out.xz | awk '{print $7 " "$1}' | sed 's/:c.*$//' > solveTimes_xz.csv
+xzgrep "Total" $(cat solved_xz.csv) | awk '{print $7 " "$1}' | sed 's/:c.*$//' > solveTimes_xz.csv
 echo "Getting problems solved under 1500"
 awk '{if ($1 < 1500) {print $2}}' solveTimes_xz.csv | sort > solved_under_1500_full_list_xz.csv
-awk '{print $2}' solveTimes_xz.csv | sort > solved_xz.csv
-sed 's/.gz.*/.gz/' solved_xz.csv > solved.csv
 sed 's/.gz.*/.gz/' solveTimes_xz.csv | sort -n > solveTimes.csv
 ls -- *.out.xz > allFiles_xz.csv
 ls -- *.out.xz | sed "s/.gz.*/.gz/" > allFiles.csv
-
-
-# for normal
-echo "Getting SAT & UNSAT"
-xzgrep "^s UNSATISFIABLE" $(cat solved_xz.csv) | sed 's/:s.*$//' | sed 's/.gz.*/.gz/' | sort > solvedUNSAT.csv
-xzgrep "^s SATISFIABLE" $(cat solved_xz.csv)   | sed 's/:s.*$//' | sed 's/.gz.*/.gz/' | sort > solvedSAT.csv
 
 # adjusting solved.csv, solveTimes.csv, solveTimes_rev.csv
 echo "Getting solveTimes_rev.csv"
@@ -58,7 +57,6 @@ sort solved_sol.csv > solved_sol2.csv
 rm solved_sol.csv
 mv solved_sol2.csv solved_sol.csv
 
-
 # user times
 xzgrep "User time" *.timeout.xz | awk '{print $5 " " $1}' | sed "s/.timeout.xz://" > user_times.csv
 
@@ -69,14 +67,19 @@ grep -f unsolved.csv user_times.csv  | sort -n -r | tail -n 20
 xzgrep -i "ReduceDB time" $(cat solved_xz.csv) | awk '{print $1 " " $5}' | sed "s/.out.xz:c//" | sort > reducedb_times.csv
 reducedb_time=$(awk '{a+=$2} END {print a}' reducedb_times.csv)
 solved_total_time=$(awk '{if ($1=="5000.00") {x+=0} else {x += $1};} END {printf "%d\n", x}' solveTimes.csv)
-bc <<< "scale=4; ($reducedb_time/$solved_total_time)*100.0" > reducedb_percent_time
+bc <<< "scale=4; ($reducedb_time/$solved_total_time)*100.0" > reducedb_percent_time.percent
 
 # Distill time for solved instances
 xzgrep -i "distill time " $(cat solved_xz.csv) | awk '{print $1 " " $5}' | sed "s/.out.xz:c//" | sort > distill_times.csv
 distill_time=$(awk '{a+=$2} END {print a}' distill_times.csv)
 solved_total_time=$(awk '{if ($1=="5000.00") {x+=0} else {x += $1};} END {printf "%d\n", x}' solveTimes.csv)
-bc <<< "scale=4; ($distill_time/$solved_total_time)*100.0" > distill_percent_time
+bc <<< "scale=4; ($distill_time/$solved_total_time)*100.0" > distill_percent_time.percent
 
+# Occsimp time for solved instances
+xzgrep -i "OccSimplifier time " $(cat solved_xz.csv) | awk '{print $1 " " $5}' | sed "s/.out.xz:c//" | sort > occsimp_times.csv
+occsimp_time=$(awk '{a+=$2} END {print a}' occsimp_times.csv)
+solved_total_time=$(awk '{if ($1=="5000.00") {x+=0} else {x += $1};} END {printf "%d\n", x}' solveTimes.csv)
+bc <<< "scale=4; ($occsimp_time/$solved_total_time)*100.0" > occsimp_percent_time.percent
 
 xzgrep signal  *.timeout.xz | sed -E "s/.timeout.*signal (.*)/ \1/" > signals.csv
 xzgrep signal  *.timeout.xz | sed -E "s/.timeout.*signal (.*)//" > signals_files.csv
