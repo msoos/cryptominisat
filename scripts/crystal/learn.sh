@@ -49,45 +49,27 @@ function concat() {
     tar czvf classifiers-${name}.tar.gz classifiers
 }
 
+
+w="0"
+est=20
 limit=2000
-w=0
-# est=20
-# cut1="50.0"
-# cut2="80.0"
-# concat
-
-# w=3
-# est=20
-# cut1="10.0"
-# cut2="40.0"
-# concat
-#
-# w=5
-# est=20
-# cut1="10.0"
-# cut2="40.0"
-# concat
-
-w=0
-est=40
 cut1="10.0"
 cut2="40.0"
 concat
 
-w=0
-est=60
+limit=8000
 cut1="10.0"
 cut2="40.0"
 concat
 
-# est=40
-# cut1="40.0"
-# cut2="70.0"
-# concat
+limit=2000
+cut1="5.0"
+cut2="30.0"
+concat
 
-# est=20
-# cut1="40.0"
-# cut2="70.0"
-# concat
+limit=2000
+cut1="5.0"
+cut2="40.0"
+concat
 
 exit 0

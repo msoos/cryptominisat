@@ -24,9 +24,9 @@ done
 
 }
 
-limit=2000
-cut1="40.0"
-cut2="70.0"
+limit=8000
+cut1="10.0"
+cut2="40.0"
 
 only="1.0"
 computed="no"
@@ -35,5 +35,3 @@ doit
 only="0.05"
 computed="all"
 doit
-
-
