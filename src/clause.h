@@ -265,7 +265,7 @@ struct ClauseStats
         #endif
 
         #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
-        ret.dump_no == std::max(first.dump_no, second.dump_no);
+        ret.dump_no = std::max(first.dump_no, second.dump_no);
         ret.uip1_used = first.uip1_used + second.uip1_used;
         ret.props_made = first.props_made + second.props_made;
         ret.clause_looked_at = first.clause_looked_at + second.clause_looked_at;
