@@ -118,6 +118,7 @@ class QueryFill (QueryHelper):
 
         print("used_later* dropped and recreated T: %-3.2f s" % (time.time() - t))
 
+    # The most expesive operation of all, when called with "forever"
     def fill_used_later_X(self, name, duration, min_del_distance=None,
                           used_clauses="used_clauses",
                           divide=False):
