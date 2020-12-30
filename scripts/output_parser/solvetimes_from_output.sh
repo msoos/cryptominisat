@@ -1,28 +1,28 @@
 #!/bin/sh
 
-echo "checking for assert/signal/error/terminate fail"
+rm -f memout.csv
+
+# checking for assert/signal/error/terminate fail
 xzgrep --color -i -e "assert.*fail" -e "floating" -e "signal" -e "error" -e "terminate" `ls *.out.xz` | tee issues.csv
-echo "checking for signal 4"
 xzgrep "signal 4"  issues.csv
 
-# for normal
-echo "Getting SAT & UNSAT"
+# Getting SAT & UNSAT
 xzgrep "^s .*SATISFIABLE" *.out.xz | sed 's/:s.*$//' > solved_xz.csv
 sed 's/.gz.*/.gz/' solved_xz.csv > solved.csv
 xzgrep "^s UNSATISFIABLE" $(cat solved_xz.csv) | sed 's/:s.*$//' | sed 's/.gz.*/.gz/' | sort > solvedUNSAT.csv
 xzgrep "^s SATISFIABLE" $(cat solved_xz.csv)   | sed 's/:s.*$//' | sed 's/.gz.*/.gz/' | sort > solvedSAT.csv
 
-# 1500 cutoff
-echo "Getting solveTimes"
-xzgrep "Total" $(cat solved_xz.csv) | awk '{print $7 " "$1}' | sed 's/:c.*$//' > solveTimes_xz.csv
-echo "Getting problems solved under 1500"
-awk '{if ($1 < 1500) {print $2}}' solveTimes_xz.csv | sort > solved_under_1500_full_list_xz.csv
-sed 's/.gz.*/.gz/' solveTimes_xz.csv | sort -n > solveTimes.csv
+
+# All files
 ls -- *.out.xz > allFiles_xz.csv
 ls -- *.out.xz | sed "s/.gz.*/.gz/" > allFiles.csv
 
-# adjusting solved.csv, solveTimes.csv, solveTimes_rev.csv
-echo "Getting solveTimes_rev.csv"
+# Getting solveTimes
+xzgrep "Total" $(cat solved_xz.csv) | awk '{print $7 " "$1}' | sed 's/:c.*$//' > solveTimes_xz.csv
+sed 's/.gz.*/.gz/' solveTimes_xz.csv | sort -n > solveTimes.csv
+
+
+# adjusting/getting solved.csv, solveTimes.csv, solveTimes_rev.csv
 sed "s/^/\^/" solved.csv | sed "s/$/\$/"  > solved_filtering.csv
 grep -v -f solved_filtering.csv allFiles.csv | sed "s/.gz.*/.gz/" > unsolved.csv
 rm solved_filtering.csv
@@ -30,38 +30,25 @@ grep -v -f solved_xz.csv allFiles_xz.csv > unsolved_xz.csv
 cat unsolved.csv | awk '{print "5000.00 " $1}' >> solveTimes.csv
 awk '{print $2 " " $1}' solveTimes.csv | sort > solveTimes_rev.csv
 
-# memory out
-echo "Getting memout..."
-xzgrep "what.*bad.*alloc" $(cat unsolved_xz.csv) | sed "s/.gz.*/.gz/" | sort > memout.csv
-sed "s/^/\^/" memout.csv | sed "s/$/\$/"  > memout_filtering.csv
-grep -v -f memout_filtering.csv allFiles.csv | sed "s/.gz/.gz OK/" > memout2.csv
-rm memout_filtering.csv
-cat memout.csv | sed "s/.gz/.gz BAD/" >> memout2.csv
-sort memout2.csv > memout3.csv
-rm memout.csv memout2.csv
-mv memout3.csv memout.csv
 
 # 1500 cutoff
-echo "Getting 1500 UNSAT"
-xzgrep "^s UNSATISFIABLE" $(cat solved_under_1500_full_list_xz.csv) | sed 's/:s.*$//' | sed 's/.gz.*/.gz/' | sort > solvedUNSAT1500.csv
-echo "Getting 1500 SAT"
-xzgrep "^s SATISFIABLE" $(cat solved_under_1500_full_list_xz.csv)   | sed 's/:s.*$//' | sed 's/.gz.*/.gz/' | sort > solvedSAT1500.csv
-rm -f solved1500.csv
-cat solvedUNSAT1500.csv > solved1500.csv
-cat solvedSAT1500.csv >> solved1500.csv
+awk '{if ($1 < 1500) {print $2}}' solveTimes_xz.csv | sort > solved_under_1500_full_list_xz.csv
+grep -f solvedUNSAT.csv solved_under_1500_full_list_xz.csv |  sed 's/:s.*$//' | sed 's/.gz.*/.gz/' | sort > solvedUNSAT1500.csv
+grep -f solvedSAT.csv solved_under_1500_full_list_xz.csv   |  sed 's/:s.*$//' | sed 's/.gz.*/.gz/' | sort > solvedSAT1500.csv
 
+# Getting "file SAT/UNSAT/UNKN" list
 cat solvedSAT.csv | awk '{print $1 " SAT"}' > solved_sol.csv
 cat solvedUNSAT.csv | awk '{print $1 " UNSAT"}' >> solved_sol.csv
 cat unsolved.csv | awk '{print $1 " UNKN"}' >> solved_sol.csv
 sort solved_sol.csv > solved_sol2.csv
-rm solved_sol.csv
+rm -f solved_sol.csv
 mv solved_sol2.csv solved_sol.csv
 
 # user times
 xzgrep "User time" *.timeout.xz | awk '{print $5 " " $1}' | sed "s/.timeout.xz://" > user_times.csv
 
-#INTERESTING -- find low user times that are unsolved
-grep -f unsolved.csv user_times.csv  | sort -n -r | tail -n 20
+#Memout or issue
+grep -f unsolved.csv user_times.csv  | sort -n -r | awk '{if ($1 < 4950) {print $0}}' | sort > memout_or_issue.csv
 
 # ReduceDB time for solved instances
 xzgrep -i "ReduceDB time" $(cat solved_xz.csv) | awk '{print $1 " " $5}' | sed "s/.out.xz:c//" | sort > reducedb_times.csv
@@ -85,20 +72,29 @@ xzgrep signal  *.timeout.xz | sed -E "s/.timeout.*signal (.*)/ \1/" > signals.cs
 xzgrep signal  *.timeout.xz | sed -E "s/.timeout.*signal (.*)//" > signals_files.csv
 sed "s/^/\^/" signals_files.csv | sed "s/$/\$/"  > signals_files_filtering.csv
 grep -v -f signals_files_filtering.csv allFiles.csv | awk '{print $1 " -1"}' >> signals.csv
-rm signals_files_filtering.csv
+rm -f signals_files_filtering.csv
 sort signals.csv > signals_sorted.csv
-rm signals.csv signals_files.csv
+rm -f signals.csv signals_files.csv
 mv signals_sorted.csv signals.csv
 grep " 11" signals.csv
 
-# PAR 2 score
-awk '{if ($1=="5000.00") {x+=10000} else {x += $1};} END {printf "%d\n", x}' solveTimes.csv > PAR2score
-echo "PAR2 score is: " `cat PAR2score`
+# PAR 2 score 5000s timeout
+awk '{if ($1=="5000.00") {x+=10000} else {x += $1};} END {printf "%7.0f\n", x}' solveTimes.csv > PAR2score
+mypwd=`pwd`
+echo "$mypwd PAR2 score is: " `cat PAR2score`
+awk '{if ($1 >= 1500) {x+=3000} else {x += $1};} END {printf "%6.0f\n", x}' solveTimes.csv > PAR2score_1500
+echo "$mypwd PAR2_1500 score is: " `cat PAR2score_1500`
+xzgrep "avg cls in red 0" $(cat solved_xz.csv) | awk '{k+=$8;x+=1} END {printf "%3.1fK", (k/(x*1000))}' > avg_tier0_size
+xzgrep "avg cls in red 1" $(cat solved_xz.csv) | awk '{k+=$8;x+=1} END {printf "%3.1fK", (k/(x*1000))}' > avg_tier1_size
+xzgrep "avg cls in red 2" $(cat solved_xz.csv) | awk '{k+=$8;x+=1} END {printf "%3.1fK", (k/(x*1000))}' > avg_tier2_size
 
-xzgrep "ASSIGNMENT FOUND" *.out.xz | sed "s/.out.*//" > walksat_sat.csv
-grep -v -f walksat_sat.csv allFiles.csv | sed "s/.gz/.gz FALL/" > walksat_nosat.csv
-sed "s/$/ WALK/" walksat_sat.csv > walksat_sat2.csv
-cat walksat_sat2.csv walksat_nosat.csv | sort > walksat.csv
+# avg times SAT/UNSAT
+grep -f solvedSAT.csv solveTimes.csv | sort -n | awk -f ../median.awk > mediantime_SAT
+grep -f solvedUNSAT.csv solveTimes.csv | sort -n | awk -f ../median.awk > mediantime_UNSAT
+grep -f solvedSAT.csv solveTimes.csv | awk '{{x+=$1; y+=1}} END {printf "%-7.2f\n", (x/y)}' > avgtime_SAT
+grep -f solvedUNSAT.csv solveTimes.csv | awk '{{x+=$1; y+=1}} END {printf "%-7.2f\n", (x/y)}' > avgtime_UNSAT
+
+xzgrep "ASSIGNMENT FOUND" $(cat solved_xz.csv | grep -f solvedSAT.csv) | sed 's/:s.*$//' | sed 's/.gz.*/.gz/' | sort > sls_sat.csv
 
 
 
