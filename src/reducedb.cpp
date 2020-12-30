@@ -631,7 +631,8 @@ void ReduceDB::clean_lev0_once_in_a_while()
     const uint32_t checked_every = solver->conf.pred_forever_check_every_n *
         solver->conf.every_pred_reduce;
 
-    const uint32_t keep_forever = 2000.0*std::sqrt((double)solver->sumConflicts/10000.0) *
+    const uint32_t keep_forever = 2000.0 *
+        pow((double)solver->sumConflicts/10000.0, solver->conf.pred_forever_size_pow) *
         (double)solver->conf.pred_forever_size_mult;
 
     std::sort(solver->longRedCls[0].begin(), solver->longRedCls[0].end(),

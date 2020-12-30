@@ -82,6 +82,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , pred_short_size_mult(0.5)   //out-937344.wlm01-2-drat0 --predshortmult 0.5
         , pred_long_size_mult(0.5)    //out-937344.wlm01-2-drat0 --predlongmult 0.5
         , pred_forever_size_mult(0.25) //out-937344.wlm01-2-drat0 --predforevermult 0.25
+        , pred_forever_size_pow(0.5)
         //
         , pred_long_chunk_mult(1.0)
         , pred_forever_chunk_mult(1.0)

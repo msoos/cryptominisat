@@ -358,6 +358,8 @@ void Main::add_supported_options()
         , "Pred long multiplier")
     ("predforevermult", po::value(&conf.pred_forever_size_mult)->default_value(conf.pred_forever_size_mult)
         , "Pred forever multiplier")
+    ("predforeverpow", po::value(&conf.pred_forever_size_pow)->default_value(conf.pred_forever_size_pow)
+        , "Pred forever power to raise the conflicts to")
 
     //chunk
     ("predlongchunkmult", po::value(&conf.pred_long_chunk_mult)->default_value(conf.pred_long_chunk_mult)
