@@ -593,6 +593,7 @@ void ReduceDB::update_preds(const vector<ClOffset>& offs)
                 prop_ranking_rel,
                 commdata,
                 PRED_COLS,
+                solver,
                 data.data()+data_at*PRED_COLS
             );
             data_at++;

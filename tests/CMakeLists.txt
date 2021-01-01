@@ -212,19 +212,19 @@ foreach(F ${MY_TESTS})
     )
 endforeach()
 
-if (FINAL_PREDICTOR)
-    add_executable(ml_perf_test
-        ml_perf_test.cpp
-        ${PROJECT_SOURCE_DIR}/src/cl_predictors.cpp
-    )
-
-    target_link_libraries(ml_perf_test
-        LINK_PUBLIC xgboost dmlc rabit rt
-    )
-
-    add_test (
-        NAME ml_perf_test
-        COMMAND ml_perf_test
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    )
-endif()
+# if (FINAL_PREDICTOR)
+#     add_executable(ml_perf_test
+#         ml_perf_test.cpp
+#         ${PROJECT_SOURCE_DIR}/src/cl_predictors.cpp
+#     )
+#
+#     target_link_libraries(ml_perf_test
+#         LINK_PUBLIC xgboost dmlc rabit rt
+#     )
+#
+#     add_test (
+#         NAME ml_perf_test
+#         COMMAND ml_perf_test
+#         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+#     )
+# endif()

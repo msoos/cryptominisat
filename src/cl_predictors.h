@@ -23,7 +23,7 @@ THE SOFTWARE.
 #ifndef __CLPREDICTOR_H__
 #define __CLPREDICTOR_H__
 
-#define PRED_COLS 23
+#define PRED_COLS 28
 
 
 #include <vector>
@@ -39,6 +39,7 @@ namespace CMSat {
 enum predict_type {short_pred=0, long_pred=1, forever_pred=2};
 
 class Clause;
+class Solver;
 
 struct ReduceCommonData
 {
@@ -103,6 +104,7 @@ public:
         const double   prop_ranking_rel,
         const ReduceCommonData& commdata,
         const uint32_t cols,
+        const Solver* solver,
         float* at);
 
     void get_prediction_at(RDBExtraData& extdata, const uint32_t at);

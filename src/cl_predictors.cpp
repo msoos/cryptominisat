@@ -22,6 +22,7 @@ THE SOFTWARE.
 
 #include "cl_predictors.h"
 #include "clause.h"
+#include "solver.h"
 #include <cmath>
 #define MISSING_VAL -1.0f
 
@@ -83,6 +84,7 @@ void ClPredictors::set_up_input(
     const double   prop_ranking_rel,
     const ReduceCommonData& commdata,
     const uint32_t cols,
+    const Solver* solver,
     float* at)
 {
     uint32_t x = 0;
@@ -199,8 +201,12 @@ void ClPredictors::set_up_input(
     //(cl.glueHist_longterm_avg/cl.glue_before_minim) -- 13
 
 
-    at[x++] = cl->stats.is_ternary_resolvent;
-    //rdb0.is_ternary_resolvent -- 14
+    if (cl->stats.is_ternary_resolvent) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = (double)cl->stats.glue/(double)solver->hist.conflSizeHistLT.avg();
+    }
+    //(rdb0.glue/rdb0_common.conflSizeHistLT_avg) -- 14
 
 
     //To protect against unset values being used
@@ -303,6 +309,49 @@ void ClPredictors::set_up_input(
     }
     // (rdb0.size/rdb0_common.avg_glue) -- 23
 
+    if (cl->stats.sum_uip1_used == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = (double)cl->size()/
+            ((double)cl->stats.sum_uip1_used);
+    }
+    // (rdb0.size/rdb0.sum_uip1_used) -- 24
+
+
+    at[x++] = cl->stats.discounted_uip1_used;
+    // rdb0.discounted_uip1_used -- 25
+
+
+    if (cl->stats.is_ternary_resolvent ||
+        cl->stats.discounted_props_made < 1e-20f)
+    {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = (double)cl->stats.glueHistLT_avg/
+            ((double)cl->stats.discounted_props_made);
+    }
+    //(cl.glueHistLT_avg/rdb0.discounted_props_made) -- 26
+
+
+    if (commdata.avg_uip == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = uip1_ranking_rel/(double)commdata.avg_uip;
+    }
+    // (rdb0.uip1_ranking_rel/rdb0_common.avg_uip1_used) -- 27
+
+
+    if (cl->stats.is_ternary_resolvent ||
+        commdata.avg_uip == 0 ||
+        cl->stats.discounted_uip1_used < 1e-20f ||
+        ((double)cl->stats.discounted_uip1_used/(double)commdata.avg_uip) < 1e-20
+    ) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = (double)cl->stats.num_antecedents/((double)cl->stats.discounted_uip1_used/(double)commdata.avg_uip);
+    }
+    // (cl.num_antecedents/(rdb0.discounted_uip1_used/rdb0_common.avg_uip1_used)) -- 28
+
 //     cout << "c val: ";
 //     for(uint32_t i = 0; i < cols; i++) {
 //         cout << at[i] << " ";
@@ -332,34 +381,6 @@ float ClPredictors::predict_one(int num)
     return retval;
 }
 
-float ClPredictors::predict(
-    predict_type pred_type,
-    const CMSat::Clause* cl,
-    const uint64_t sumConflicts,
-    const double   act_ranking_rel,
-    const double   uip1_ranking_rel,
-    const double   prop_ranking_rel,
-    const ReduceCommonData& commdata)
-{
-    // convert to DMatrix
-    set_up_input(
-        cl,
-        sumConflicts,
-        act_ranking_rel,
-        uip1_ranking_rel,
-        prop_ranking_rel,
-        commdata,
-        PRED_COLS,
-        train);
-
-    safe_xgboost(XGDMatrixCreateFromMat((float *)train, 1, PRED_COLS, MISSING_VAL, &dmat))
-
-    float val = predict_one(pred_type);
-    safe_xgboost(XGDMatrixFree(dmat))
-
-    return val;
-}
-
 void ClPredictors::predict_all(
     float* data,
     uint32_t num)
@@ -376,7 +397,6 @@ void ClPredictors::predict_all(
         &out_result_short
     ))
     assert(out_len == num);
-
 
     safe_xgboost(XGBoosterPredict(
         handles[long_pred],

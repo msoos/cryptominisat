@@ -11,7 +11,7 @@ rdb0.glue
 cl.orig_glue
 (log2(cl.num_antecedents)/cl.num_total_lits_antecedents)
 (cl.glueHist_longterm_avg/cl.glue_before_minim)
-rdb0.is_ternary_resolvent
+(rdb0.glue/rdb0_common.conflSizeHistLT_avg)
 (rdb0.discounted_props_made/cl.numResolutionsHistLT_avg)
 ((rdb0.sum_uip1_used/cl.time_inside_solver)/rdb0.discounted_props_made)
 (rdb0.glue/(rdb0.props_made/rdb0_common.avg_props))
@@ -21,3 +21,8 @@ rdb0.is_ternary_resolvent
 (cl.overlapHistLT_avg/cl.conflSizeHist_avg)
 (cl.glueHistLT_avg/rdb0.uip1_used)
 (rdb0.size/rdb0_common.avg_glue)
+(rdb0.size/rdb0.sum_uip1_used)
+rdb0.discounted_uip1_used
+(cl.glueHistLT_avg/rdb0.discounted_props_made)
+(rdb0.uip1_ranking_rel/rdb0_common.avg_uip1_used)
+(cl.num_antecedents/(rdb0.discounted_uip1_used/rdb0_common.avg_uip1_used))

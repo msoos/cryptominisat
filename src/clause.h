@@ -159,6 +159,7 @@ struct ClauseStats
     uint32_t orig_glue = 1000;
     uint32_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
     float discounted_props_made = 0;
+    float discounted_uip1_used = 0;
     uint32_t sum_uip1_used = 0; ///N.o. times claue was used during 1st UIP generation for ALL TIME
     uint32_t sum_props_made = 0; ///<Number of times caused propagation
     uint32_t pred_clnum;
@@ -177,7 +178,6 @@ struct ClauseStats
     uint32_t dump_no = 0;
     uint32_t orig_connects_num_communities = 0;
     uint32_t connects_num_communities = 0;
-    float discounted_uip1_used = 0;
     float discounted_uip1_used2 = 0;
     float discounted_uip1_used3 = 0;
     float discounted_props_made2 = 0;
@@ -196,14 +196,14 @@ struct ClauseStats
         discounted_props_made *= discount_factor;
         discounted_props_made += (float)props_made*(1.0f-discount_factor);
 
+        discount_factor = 0.8;
+        discounted_uip1_used *= discount_factor;
+        discounted_uip1_used += (float)uip1_used*(1.0f-discount_factor);
+
         #ifdef STATS_NEEDED
         discount_factor = 0.90;
         discounted_uip1_used3 *= discount_factor;
         discounted_uip1_used3 += (float)uip1_used*(1.0f-discount_factor);
-
-        discount_factor = 0.8;
-        discounted_uip1_used *= discount_factor;
-        discounted_uip1_used += (float)uip1_used*(1.0f-discount_factor);
 
         discount_factor = 0.4;
         discounted_props_made2 *= discount_factor;
@@ -261,6 +261,7 @@ struct ClauseStats
         ret.sum_uip1_used = first.sum_uip1_used + second.sum_uip1_used;
         ret.sum_props_made = first.sum_props_made + second.sum_props_made;
         ret.discounted_props_made = first.discounted_props_made + second.discounted_props_made;
+        ret.discounted_uip1_used =   first.discounted_uip1_used   + second.discounted_uip1_used;
         ret.orig_glue = std::min(first.orig_glue, second.orig_glue);
         #endif
 
@@ -277,7 +278,6 @@ struct ClauseStats
         ret.discounted_uip1_used3 = first.discounted_uip1_used3 + second.discounted_uip1_used3;
         ret.discounted_props_made2 = first.discounted_props_made2 + second.discounted_props_made2;
         ret.discounted_props_made3 = first.discounted_props_made3 + second.discounted_props_made3;
-        ret.discounted_uip1_used =   first.discounted_uip1_used   + second.discounted_uip1_used;
         ret.discounted_uip1_used2 =  first.discounted_uip1_used2  + second.discounted_uip1_used2;
         #endif
 
@@ -317,6 +317,7 @@ to hold the clause.
 class Clause
 {
 public:
+    ClauseStats stats;
     uint16_t isRed:1; ///<Is the clause a redundant clause?
     uint16_t isRemoved:1; ///<Is this clause queued for removal?
     uint16_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
@@ -343,7 +344,6 @@ public:
 
 public:
     cl_abst_type abst;
-    ClauseStats stats;
     uint32_t mySize;
 
     template<class V>
