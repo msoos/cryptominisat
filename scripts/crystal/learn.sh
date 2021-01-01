@@ -32,44 +32,59 @@ function concat() {
     md5sum *.dat >> out_git
 
     bestf="../../scripts/crystal/best_features-rdb0-only.txt"
-    name="cut1-${cut1}-cut2-${cut2}-limit-${limit}-est${est}-w${w}"
+    dirname="backto-cut1-${cut1}-cut2-${cut2}-limit-${limit}-est${est}-w${w}-xbmin${xgboostminchild}-xbmd${xboostmaxdepth}"
+    mkdir -p ${dirname}
 
+    mypids=()
     tiers=("short" "long" "forever")
     for tier in "${tiers[@]}"
     do
-        /usr/bin/time --verbose -o "classifiers/out_${tier}-${name}.timeout" \
+        /usr/bin/time --verbose -o "${dirname}/out_${tier}-${name}.timeout" \
         ../cldata_predict.py \
         ${tier}-comb-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat \
         --tier ${tier} --final --xgboost \
         --xgboostest ${est} --weight ${w} \
-        --basedir ../../src/predict/ --bestfeatfile ${bestf} | tee classifiers/out_${tier}
+        --xgboostminchild $xgboostminchild --xboostmaxdepth=${xboostmaxdepth} \
+        --basedir "${dirname}" \
+        --bestfeatfile ${bestf} | tee "${dirname}/out_${tier}" &
+        pid=$!
+        echo "PID here is $pid"
+        mypids+=("$pid")
     done
 
-    cp ../../src/predict/*.json classifiers/
-    tar czvf classifiers-${name}.tar.gz classifiers
+    echo "PIDS to wait for are: ${mypids[*]}"
+    for pid2 in "${mypids[@]}"
+    do
+        echo "Waiting for $pid2 ..."
+        wait $pid2
+    done
+
+    tar czvf classifiers-${dirname}.tar.gz ${dirname}
 }
 
 
+
 w="0"
-est=20
-limit=2000
-cut1="10.0"
-cut2="40.0"
-concat
 
-limit=8000
-cut1="10.0"
-cut2="40.0"
-concat
-
+xgboostminchild=1
+xboostmaxdepth=6
 limit=2000
 cut1="5.0"
 cut2="30.0"
-concat
+est=20
+for xboostmaxdepth in 4 6
+do
+    limit=2000
+    cut1="5.0"
+    cut2="30.0"
+    for xgboostminchild in 1 50 300
+    do
+        for est in 10 20
+        do
+            concat
+        done
+    done
+done
 
-limit=2000
-cut1="5.0"
-cut2="40.0"
-concat
 
 exit 0
