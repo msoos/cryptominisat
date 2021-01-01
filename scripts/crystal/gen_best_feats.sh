@@ -32,6 +32,6 @@ only="1.0"
 computed="no"
 doit
 
-only="0.05"
+only="0.02"
 computed="all"
 doit
