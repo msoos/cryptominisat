@@ -16,7 +16,7 @@ do
 
     /usr/bin/time --verbose -o "best_feats/output_${tier}_${computed}computed.timeout" \
     ../cldata_predict.py "${tier}-comb-cut1-$cut1-cut2-$cut2-limit-${limit}.dat" \
-    --tier ${tier} --top 2000 --xgboost --only "$only" \
+    --tier ${tier} --top 500 --xgboost --only "$only" \
     "--${computed}computed" > "best_feats/output_${tier}_${computed}computed"
 
     echo "Done with ${tier}_${computed}computed"
@@ -24,9 +24,9 @@ done
 
 }
 
-limit=8000
-cut1="10.0"
-cut2="40.0"
+limit=2000
+cut1="5.0"
+cut2="30.0"
 
 only="1.0"
 computed="no"
