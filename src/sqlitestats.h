@@ -93,6 +93,7 @@ public:
         , const bool locked
         , const Clause* cl
         , const uint32_t reduceDB_called
+        , const RDBExtraData& extdata
     ) override;
 
     virtual void cl_last_in_solver(

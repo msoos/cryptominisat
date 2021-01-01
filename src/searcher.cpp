@@ -1814,7 +1814,6 @@ Clause* Searcher::handle_last_confl(
     if (cl) {
         #ifdef FINAL_PREDICTOR
         set_clause_data(cl, glue, glue_before_minim, old_decision_level);
-        cl->stats.dump_no = 0;
         #endif
         cl->stats.is_decision = is_decision;
     }

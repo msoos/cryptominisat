@@ -435,7 +435,7 @@ inline PropResult PropEngine::prop_normal_helper(
     , Watched*& j
     , const Lit p
 ) {
-    #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED) || defined(NORMAL_CL_USE_STATS)
+    #if defined(STATS_NEEDED) || defined(NORMAL_CL_USE_STATS)
     if (!update_bogoprops) {
         c.stats.clause_looked_at++;
     }

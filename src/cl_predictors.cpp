@@ -262,8 +262,7 @@ void ClPredictors::set_up_input(
 
 
     if (commdata.avg_uip == 0 ||
-        cl->stats.uip1_used == 0 ||
-        prop_ranking_rel == 0
+        cl->stats.uip1_used == 0
     ) {
         at[x++] = MISSING_VAL;
     } else {
@@ -402,11 +401,11 @@ void ClPredictors::predict_all(
     assert(out_len == num);
 }
 
-void ClPredictors::get_prediction_at(Clause* cl, const uint32_t at)
+void ClPredictors::get_prediction_at(RDBExtraData& extdata, const uint32_t at)
 {
-    cl->stats.pred_short_use = out_result_short[at];
-    cl->stats.pred_long_use = out_result_long[at];
-    cl->stats.pred_forever_use = out_result_forever[at];
+    extdata.pred_short_use = out_result_short[at];
+    extdata.pred_long_use = out_result_long[at];
+    extdata.pred_forever_use = out_result_forever[at];
 }
 
 void CMSat::ClPredictors::finish_all_predict()

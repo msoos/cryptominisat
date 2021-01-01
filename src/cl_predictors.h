@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include <cassert>
 #include <string>
 #include <xgboost/c_api.h>
+#include "clause.h"
 
 using std::vector;
 
@@ -104,7 +105,7 @@ public:
         const uint32_t cols,
         float* at);
 
-    void get_prediction_at(Clause* cl, const uint32_t at);
+    void get_prediction_at(RDBExtraData& extdata, const uint32_t at);
     void finish_all_predict();
 
 private:

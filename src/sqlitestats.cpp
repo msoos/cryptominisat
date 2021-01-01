@@ -748,6 +748,7 @@ void SQLiteStats::reduceDB(
     , const bool locked
     , const Clause* cl
     , const uint32_t reduceDB_called
+    , const RDBExtraData& extdata
 ) {
     assert(cl->stats.dump_no != std::numeric_limits<uint16_t>::max());
 
@@ -780,11 +781,12 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.ttl_stats);
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.is_ternary_resolvent);
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.is_decision);
-    sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.act_rank);
-    sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.props_made_rank);
-    sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.uip1_used_rank);
+    sqlite3_bind_int(stmtReduceDB, bindAt++, extdata.act_rank);
+    sqlite3_bind_int(stmtReduceDB, bindAt++, extdata.props_made_rank);
+    sqlite3_bind_int(stmtReduceDB, bindAt++, extdata.uip1_used_rank);
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.sum_uip1_used);
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.connects_num_communities);
+
     sqlite3_bind_double(stmtReduceDB, bindAt++, (double)cl->stats.discounted_uip1_used);
     sqlite3_bind_double(stmtReduceDB, bindAt++, (double)cl->stats.discounted_props_made);
     sqlite3_bind_double(stmtReduceDB, bindAt++, (double)cl->stats.discounted_uip1_used2);

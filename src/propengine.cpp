@@ -346,7 +346,7 @@ PropBy PropEngine::propagate_any_order_fast()
             }
             assert(c[1] == false_lit);
             i++;
-            #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED) || (NORMAL_CL_USE_STATS)
+            #if defined(STATS_NEEDED) || (NORMAL_CL_USE_STATS)
             c.stats.clause_looked_at++;
             #endif
 

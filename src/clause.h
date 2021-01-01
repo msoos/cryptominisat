@@ -105,6 +105,15 @@ struct AtecedentData
     AvgCalc<uint32_t> age_long_reds;
 };
 
+struct RDBExtraData {
+    uint32_t props_made_rank;
+    uint32_t act_rank;
+    uint32_t uip1_used_rank;
+    double pred_short_use;
+    double pred_long_use;
+    double pred_forever_use;
+};
+
 struct ClauseStats
 {
     ClauseStats()
@@ -118,12 +127,7 @@ struct ClauseStats
         which_red_array = 2;
         locked_for_data_gen = 0;
         is_ternary_resolvent = 0;
-        //TODO it's weird, it has been tested to be better with "1"
-        #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
         activity = 0;
-        #else
-        activity = 1;
-        #endif
     }
 
     //Stored data
@@ -148,10 +152,7 @@ struct ClauseStats
     uint32_t    num_antecedents;
     float       numResolutionsHistLT_avg;
     float       conflSizeHist_avg;
-    float glueHistLT_avg;
-    float pred_short_use;
-    float pred_long_use;
-    float pred_forever_use;
+    float       glueHistLT_avg;
     #endif
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
@@ -160,21 +161,20 @@ struct ClauseStats
     float discounted_props_made = 0;
     uint32_t sum_uip1_used = 0; ///N.o. times claue was used during 1st UIP generation for ALL TIME
     uint32_t sum_props_made = 0; ///<Number of times caused propagation
-
-    uint32_t props_made_rank = 0;
-    uint32_t act_rank = 0;
-    uint32_t uip1_used_rank = 0;
+    uint32_t pred_clnum;
     #endif
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
-    uint32_t dump_no = 0;
     uint32_t uip1_used = 0; ///N.o. times claue was used during 1st UIP generation in this RDB
     uint32_t props_made = 0; ///<Number of times caused propagation
+    #if defined(STATS_NEEDED) || defined(NORMAL_CL_USE_STATS)
     uint32_t clause_looked_at = 0; ///<Number of times the clause has been deferenced during propagation
+    #endif
     #endif
 
     #ifdef STATS_NEEDED
     int32_t ID = 0;
+    uint32_t dump_no = 0;
     uint32_t orig_connects_num_communities = 0;
     uint32_t connects_num_communities = 0;
     float discounted_uip1_used = 0;
@@ -220,10 +220,10 @@ struct ClauseStats
         antec_data.clear();
         conflicts_made = 0;
         ttl_stats = 0;
+        clause_looked_at = 0;
         #endif
         uip1_used = 0;
         props_made = 0;
-        clause_looked_at = 0;
     }
     #endif
 
@@ -265,13 +265,13 @@ struct ClauseStats
         #endif
 
         #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
-        ret.dump_no = std::max(first.dump_no, second.dump_no);
         ret.uip1_used = first.uip1_used + second.uip1_used;
         ret.props_made = first.props_made + second.props_made;
-        ret.clause_looked_at = first.clause_looked_at + second.clause_looked_at;
         #endif
 
         #ifdef STATS_NEEDED
+        ret.clause_looked_at = first.clause_looked_at + second.clause_looked_at;
+        ret.dump_no = std::max(first.dump_no, second.dump_no);
         ret.ttl_stats = std::max(first.ttl_stats, second.ttl_stats);
         ret.conflicts_made = first.conflicts_made + second.conflicts_made;
         ret.discounted_uip1_used3 = first.discounted_uip1_used3 + second.discounted_uip1_used3;

@@ -106,6 +106,7 @@ CREATE TABLE `reduceDB` (
   `uip1_ranking` int(20) NOT NULL,
   `sum_uip1_used`  int(20) NOT NULL,
   `connects_num_communities` int(20) NOT NULL,
+
   `discounted_uip1_used` float(20) NOT NULL,
   `discounted_props_made` float(20) NOT NULL,
   `discounted_uip1_used2` float(20) NOT NULL,

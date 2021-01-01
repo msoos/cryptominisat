@@ -62,16 +62,15 @@ public:
         uint32_t total_uip1_used = 0;
         uint32_t total_props = 0;
         uint32_t total_cls = 0;
-        uint32_t total_dump_nos = 0;
+        uint64_t total_age = 0;
 
-        void add_in(const Clause& cl);
+        void add_in(const Clause& cl, const uint64_t age);
         ClauseStats operator += (const ClauseStats& other);
         void print(uint32_t lev);
     };
     vector<ClauseStats> cl_stats;
 
 private:
-
 
     Solver* solver;
     vector<ClOffset> delayed_clause_free;
@@ -105,6 +104,10 @@ private:
     ReduceCommonData commdata;
     #endif
 
+    #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+    vector<RDBExtraData> extdata;
+    #endif
+
 
     void set_prop_uip_act_ranks(vector<ClOffset>& all_learnt);
     uint32_t total_glue = 0;
@@ -116,12 +119,10 @@ private:
     uint32_t force_kept_short = 0;
 
     uint32_t short_deleted;
-    uint32_t long_deleted;
-    uint32_t forever_deleted;
+    uint32_t long_moved;
+    uint32_t forever_moved;
 
-    uint32_t short_deleted_dump_no;
-    uint32_t long_deleted_dump_no;
-    uint32_t forever_deleted_dump_no;
+    uint64_t short_deleted_age;
 
     uint32_t long_upgraded = 0;
 };
