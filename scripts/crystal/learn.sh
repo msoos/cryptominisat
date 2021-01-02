@@ -39,7 +39,7 @@ function concat() {
     tiers=("short" "long" "forever")
     for tier in "${tiers[@]}"
     do
-        /usr/bin/time --verbose -o "${dirname}/out_${tier}-${name}.timeout" \
+        /usr/bin/time --verbose -o "${dirname}/out_${tier}.timeout" \
         ../cldata_predict.py \
         ${tier}-comb-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat \
         --tier ${tier} --final --xgboost \
