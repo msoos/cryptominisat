@@ -54,6 +54,7 @@ class QueryDatRem(helper.QueryHelper):
             self.c.execute(q)
 
 
+    # "name" here is "short", "long", or "forever"
     def get_all_percentile_X(self, name):
         t = time.time()
         print("Calculating percentiles now...")
@@ -78,9 +79,10 @@ class QueryDatRem(helper.QueryHelper):
         FROM used_later_{name}
         WHERE used_later>0) * ((100-{perc}) / 100.0)) - 1;
         """
-        for perc in range(0,100, 5):
+        for perc in list(range(0,30,1))+list(range(30,100, 5)):
             myq = q.format(name=name, perc=perc)
             self.c.execute(q2.format(name=name, q=myq))
+        # the 100% perecentile is not 0 (remember, this is "non-zero"), but let's cheat and add it in
         self.c.execute(q2.format(name=name, q="select '{name}', 'top_non_zero', 100.0, 0.0;".format(name=name)))
 
         q = """
@@ -93,7 +95,7 @@ class QueryDatRem(helper.QueryHelper):
          COUNT(*)
         FROM used_later_{name}) * ((100.0-{perc}) / 100.0)) - 1;
         """
-        for perc in range(0,100, 5):
+        for perc in range(0,100, 10):
             myq = q.format(name=name, perc=perc)
             self.c.execute(q2.format(name=name, q=myq))
         self.c.execute(q2.format(name=name, q="select '{name}', 'top_also_zero', 100.0, 0.0;".format(name=name)))
