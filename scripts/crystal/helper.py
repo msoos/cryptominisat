@@ -86,7 +86,7 @@ class QueryFill (QueryHelper):
         print("indexes created T: %-3.2f s" % (time.time() - t))
 
     def delete_and_create_used_laters(self):
-        tables = ["short", "long", "forever", "forever_div"]
+        tables = ["short", "long", "forever"]
         for table in tables:
             q = """
                 DROP TABLE IF EXISTS `used_later_{name}`;

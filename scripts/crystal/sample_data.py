@@ -644,16 +644,12 @@ if __name__ == "__main__":
             q.fill_used_later_X("long", duration=options.long)
             q.fill_used_later_X("forever", duration=options.forever,
                                 min_del_distance=options.short)
-            q.fill_used_later_X("forever_div", duration=options.forever,
-                                min_del_distance=options.short,
-                                divide=True)
         with QueryDatRem(args[0]) as q:
             helper.dangerous(q.c)
             q.create_percentiles_table()
             q.get_all_percentile_X("short")
             q.get_all_percentile_X("long")
             q.get_all_percentile_X("forever")
-            q.get_all_percentile_X("forever_div")
             q.print_percentiles()
         with helper.QueryFill(args[0]) as q:
             q.delete_and_create_used_laters()
@@ -678,17 +674,12 @@ if __name__ == "__main__":
         q.fill_used_later_X("forever", duration=options.forever,
                             min_del_distance=options.short,
                             used_clauses="used_clauses_red")
-        q.fill_used_later_X("forever_div", duration=options.forever,
-                            min_del_distance=options.short,
-                            used_clauses="used_clauses_red",
-                            divide=True)
     with QueryDatRem(args[0]) as q:
         helper.dangerous(q.c)
         q.create_percentiles_table()
         q.get_all_percentile_X("short")
         q.get_all_percentile_X("long")
         q.get_all_percentile_X("forever")
-        q.get_all_percentile_X("forever_div")
         q.print_percentiles()
         q.drop_used_clauses_red()
     with helper.QueryFill(args[0]) as q:

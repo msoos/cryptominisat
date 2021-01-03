@@ -172,9 +172,6 @@ class QueryCls (helper.QueryHelper):
         , used_later_forever.used_later as `x.used_later_forever`
         , used_later_forever.percentile_fit as `x.used_later_forever_topperc`
 
-        -- , used_later_forever_div.used_later as `x.used_later_forever_div`
-        -- , used_later_forever_div.percentile_fit as `x.used_later_forever_div_topperc`
-
         , sum_cl_use.num_used as `x.sum_cl_use`
 
 
@@ -206,10 +203,6 @@ class QueryCls (helper.QueryHelper):
         join used_later_forever on
             used_later_forever.clauseID = rdb0.clauseID
             and used_later_forever.rdb0conflicts = rdb0.conflicts
-
-        -- join used_later_forever_div on
-        --     used_later_forever_div.clauseID = rdb0.clauseID
-        --     and used_later_forever_div.rdb0conflicts = rdb0.conflicts
 
         join cl_last_in_solver on
             cl_last_in_solver.clauseID = rdb0.clauseID
@@ -285,7 +278,7 @@ class QueryCls (helper.QueryHelper):
             self.myformat["del_at_least"] = options.long
 
         # the two below could be 0, but I want to be on the safe side
-        elif (tier == "forever" or tier == "forever_div"):
+        elif tier == "forever":
             self.myformat["del_at_least"] = options.short
 
         # Make sure these stratas are equally represented
@@ -396,8 +389,6 @@ def one_database(dbfname):
         q.fill_used_later_X("long", duration=options.long)
         q.fill_used_later_X("forever", duration=options.forever,
                             min_del_distance=options.short)
-        #q.fill_used_later_X("forever_div", duration=options.forever,
-                            #min_del_distance=options.short, divide=True)
 
         # fill percentile_fit
         for tier in todo_types:
