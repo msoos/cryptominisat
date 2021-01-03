@@ -3267,6 +3267,7 @@ lbool Solver::probe_outside(Lit l, uint32_t& min_props)
         return l_Undef;
     }
 
+    //Probe l
     uint32_t old_trail_size = trail.size();
     new_decision_level();
     enqueue<false>(l);
@@ -3274,6 +3275,9 @@ lbool Solver::probe_outside(Lit l, uint32_t& min_props)
     min_props = trail.size() - old_trail_size;
     for(uint32_t i = old_trail_size+1; i < trail.size(); i++) {
         toClear.push_back(trail[i].lit);
+        //seen[x] == 0 -> not propagated
+        //seen[x] == 1 -> propagated as POS
+        //seen[x] == 2 -> propagated as NEG
         seen[trail[i].lit.var()] = 1+(int)trail[i].lit.sign();
     }
     cancelUntil(0);
@@ -3288,6 +3292,7 @@ lbool Solver::probe_outside(Lit l, uint32_t& min_props)
         goto end;
     }
 
+    //Probe ~l
     old_trail_size = trail.size();
     new_decision_level();
     enqueue<false>(~l);
@@ -3302,9 +3307,10 @@ lbool Solver::probe_outside(Lit l, uint32_t& min_props)
         }
 
         if (lit.sign() == seen[var]-1) {
-            //Same sign both times
+            //Same sign both times (set value of literal)
             probe_outside_tmp.push_back(lit);
         } else {
+            //Inverse sign in the 2 cases (literal equivalence)
             probe_outside_tmp.push_back(lit_Undef);
             probe_outside_tmp.push_back(~lit);
         }
