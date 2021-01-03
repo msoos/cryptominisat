@@ -297,12 +297,13 @@ class QueryDatRem(helper.QueryHelper):
         print("Added clauseIDs from reduceDB that are TERNARY from reduceDB to used_cls_ids T: %-3.2f s"
               % (time.time() - t))
 
-    # inserts less than 1-1 ratio, inserting only 0.3*N from unused ones
+    # inserts ratio that's slanted towards >=1 use
     def fill_used_cl_ids_table(self, fair, limit):
         t = time.time()
         if not fair:
-            self.insert_into_used_cls_ids_from_clstats(min_used=50000, limit=limit/20)
-            self.insert_into_used_cls_ids_from_clstats(min_used=10000, limit=limit/20)
+            self.insert_into_used_cls_ids_from_clstats(min_used=100000, limit=limit/20)
+            self.insert_into_used_cls_ids_from_clstats(min_used=50000, limit=limit/10)
+            self.insert_into_used_cls_ids_from_clstats(min_used=10000, limit=limit/10)
             self.insert_into_used_cls_ids_from_clstats(min_used=1000, limit=limit/10)
             self.insert_into_used_cls_ids_from_clstats(min_used=100, limit=limit/10)
             self.insert_into_used_cls_ids_from_clstats(min_used=30, limit=limit/5)
@@ -311,7 +312,7 @@ class QueryDatRem(helper.QueryHelper):
             self.insert_into_used_cls_ids_from_clstats(min_used=1, limit=limit/2)
 
         #self.insert_into_used_cls_ids_ternary_resolvents(limit=limit/2)
-        self.insert_into_used_cls_ids_from_clstats(min_used=0, limit=limit, max_used=None)
+        self.insert_into_used_cls_ids_from_clstats(min_used=0, limit=limit/2, max_used=None)
 
         q = """
         select count()
