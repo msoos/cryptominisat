@@ -3249,7 +3249,7 @@ bool Solver::add_clause_outside(const vector<Lit>& lits, bool red)
 lbool Solver::probe_outside(Lit l, uint32_t& min_props)
 {
     assert(decisionLevel() == 0);
-    assert(l.var() <nVarsOutside());
+    assert(l.var() < nVarsOutside());
 
     if (!ok) {
         return l_False;
