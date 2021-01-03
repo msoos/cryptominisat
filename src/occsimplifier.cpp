@@ -1274,6 +1274,22 @@ bool OccSimplifier::fill_occur_and_print_stats()
     return true;
 }
 
+struct MyOccSorterVars {
+    MyOccSorterVars(const vector<uint32_t>& _n_occurs):
+        n_occurs(_n_occurs)
+    {
+    }
+    bool operator()(const uint32_t v1, const uint32_t v2)
+    {
+        uint32_t v1_occ = n_occurs[Lit(v1, false).toInt()] + n_occurs[Lit(v1, true).toInt()];
+        uint32_t v2_occ = n_occurs[Lit(v2, false).toInt()] + n_occurs[Lit(v2, true).toInt()];
+
+        return v1_occ > v2_occ;
+    }
+
+    const vector<uint32_t>& n_occurs;
+};
+
 struct MyOccSorter
 {
     MyOccSorter(const Solver* _solver) :
@@ -1452,6 +1468,8 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                     cl->stats.marked_clause = false;
                 }
             }
+        } else if (token == "occ-lit-rem") {
+            all_occ_based_lit_rem();
         } else if (token == "occ-clean-implicit") {
             //BUG TODO
             //solver->clauseCleaner->clean_implicit_clauses();
@@ -2832,9 +2850,10 @@ void OccSimplifier::create_dummy_blocked_clause(const Lit lit)
     blockedMapBuilt = false;
 }
 
-bool OccSimplifier::occ_based_lit_rem(uint32_t var) {
+bool OccSimplifier::occ_based_lit_rem(uint32_t var, uint32_t& removed) {
     assert(solver->decisionLevel() == 0);
 
+    removed = 0;
     vec<Watched> mycopy;
     for(int i = 0; i < 2; i++) {
         Lit lit(var, i);
@@ -2876,16 +2895,65 @@ bool OccSimplifier::occ_based_lit_rem(uint32_t var) {
                     clauses.push_back(offset2);
                 }
                 unlink_clause(offset, true, true, true);
+                removed++;
             }
         }
     }
     return solver->okay();
 }
 
+void OccSimplifier::all_occ_based_lit_rem()
+{
+    double myTime = cpuTime();
+    vector<uint32_t> vars;
+    for(uint32_t v = 0; v < solver->nVars(); v++) {
+        if (solver->varData[v].removed == Removed::none &&
+            solver->value(v) == l_Undef)
+        {
+            vars.push_back(v);
+        }
+    }
+    std::sort(vars.begin(), vars.end(), MyOccSorterVars(n_occurs));
+
+    uint32_t removed_all = 0;
+    for(const auto& v: vars) {
+        uint32_t all = n_occurs[Lit(v, false).toInt()] + n_occurs[Lit(v, true).toInt()];
+        if (all == 0) {
+            continue;
+        }
+        if (solver->conf.verbosity >= 5) {
+            cout << "Picking var " << v
+            << " occ_p: " << n_occurs[Lit(v, false).toInt()]
+            << " occ_n: " << n_occurs[Lit(v, true).toInt()]
+            << endl;
+        }
+        uint32_t removed = 0;
+        occ_based_lit_rem(v, removed);
+        removed_all += removed;
+    }
+
+    free_clauses_to_free();
+    solver->clean_occur_from_removed_clauses_only_smudged();
+
+    double time_used = cpuTime() - myTime;
+    if (solver->conf.verbosity) {
+        cout
+        << "c [occ-lit-rem] Occ Lit Rem: " << removed_all
+        << solver->conf.print_times(time_used)
+        << endl;
+    }
+    if (solver->sqlStats) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "occ based lit rem"
+            , time_used
+        );
+    }
+}
+
 bool OccSimplifier::maybe_eliminate(const uint32_t var)
 {
     assert(solver->ok);
-//     occ_based_lit_rem(var);
     print_var_elim_complexity_stats(var);
     bvestats.testedToElimVars++;
     const Lit lit = Lit(var, false);
