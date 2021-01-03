@@ -303,7 +303,11 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
             cl[j++] = cl[i];
 
             maxNumProps -= 5;
-            confl = solver->propagate<true>();
+            if (red) {
+                confl = solver->propagate<true, true>();
+            } else {
+                confl = solver->propagate<true, false>();
+            }
             if (!confl.isNULL()) {
                 break;
             }
@@ -319,6 +323,15 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     }
     assert(solver->ok);
     cl.resize(j);
+
+    //Actually, we can remove the clause!
+    if (!True_confl && !confl.isNULL() && !red) {
+        //cout << "Removed clause" << endl;
+        solver->cancelUntil<false, true>(0);
+        (*solver->drat) << findelay;
+        solver->free_cl(offset, false);
+        return CL_OFFSET_MAX;
+    }
 
     //Couldn't simplify the clause
     if (j == orig_size && !True_confl && confl.isNULL()) {

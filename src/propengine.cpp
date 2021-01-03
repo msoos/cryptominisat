@@ -161,7 +161,7 @@ Need to be somewhat tricky if the clause indicates that current assignment
 is incorrect (i.e. both literals evaluate to FALSE). If conflict if found,
 sets failBinLit
 */
-template<bool update_bogoprops>
+template<bool update_bogoprops, bool red_also>
 inline bool PropEngine::prop_bin_cl(
     const Watched* i
     , const Lit p
@@ -195,8 +195,7 @@ inline bool PropEngine::prop_bin_cl(
     return true;
 }
 
-template<bool update_bogoprops>
-inline
+template<bool update_bogoprops, bool red_also>
 bool PropEngine::prop_long_cl_any_order(
     Watched* i
     , Watched*& j
@@ -219,6 +218,11 @@ bool PropEngine::prop_long_cl_any_order(
     assert(!c.getRemoved());
     assert(!c.freed());
     #endif
+
+    if (!red_also && c.red()) {
+        *j++ = *i;
+        return true;
+    }
 
     if (prop_normal_helper<update_bogoprops>(c, offset, j, p) == PROP_NOTHING) {
         return true;
@@ -452,7 +456,7 @@ PropBy PropEngine::propagate_any_order_fast()
     return confl;
 }
 
-template<bool update_bogoprops>
+template<bool update_bogoprops, bool red_also>
 PropBy PropEngine::propagate_any_order()
 {
     PropBy confl;
@@ -476,7 +480,10 @@ PropBy PropEngine::propagate_any_order()
         for (; i != end; i++) {
             if (likely(i->isBin())) {
                 *j++ = *i;
-                if (!prop_bin_cl<update_bogoprops>(i, p, confl, currLevel)) {
+                if (!red_also && i->red()) {
+                    continue;
+                }
+                if (!prop_bin_cl<update_bogoprops, red_also>(i, p, confl, currLevel)) {
                     i++;
                     break;
                 }
@@ -484,7 +491,7 @@ PropBy PropEngine::propagate_any_order()
             }
 
             //propagate normal clause
-            if (!prop_long_cl_any_order<update_bogoprops>(i, j, p, confl, currLevel)) {
+            if (!prop_long_cl_any_order<update_bogoprops, red_also>(i, j, p, confl, currLevel)) {
                 i++;
                 break;
             }
@@ -503,8 +510,9 @@ PropBy PropEngine::propagate_any_order()
 
     return confl;
 }
-template PropBy PropEngine::propagate_any_order<true>();
 template PropBy PropEngine::propagate_any_order<false>();
+template PropBy PropEngine::propagate_any_order<true, false>();
+template PropBy PropEngine::propagate_any_order<true, true>();
 
 
 void PropEngine::printWatchList(const Lit lit) const

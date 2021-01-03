@@ -278,7 +278,7 @@ protected:
     friend class EGaussian;
 
     PropBy propagate_any_order_fast();
-    template<bool update_bogoprops>
+    template<bool update_bogoprops, bool red_also = true>
     PropBy propagate_any_order();
     template<bool update_bogoprops>
     PropResult prop_normal_helper(
@@ -359,14 +359,14 @@ private:
     Solver* solver;
     bool propagate_binary_clause_occur(const Watched& ws);
     bool propagate_long_clause_occur(const ClOffset offset);
-    template<bool update_bogoprops = true>
+    template<bool update_bogoprops, bool red_also>
     bool prop_bin_cl(
         const Watched* i
         , const Lit p
         , PropBy& confl
         , uint32_t currLevel
-    ); ///<Propagate 2-long clause
-    template<bool update_bogoprops>
+    );
+    template<bool update_bogoprops, bool red_also>
     bool prop_long_cl_any_order(
         Watched* i
         , Watched*& j

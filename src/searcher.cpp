@@ -3339,12 +3339,12 @@ std::pair<size_t, size_t> Searcher::remove_useless_bins(bool except_marked)
     return std::make_pair(removedIrred, removedRed);
 }
 
-template<bool update_bogoprops>
+template<bool update_bogoprops, bool red_also>
 PropBy Searcher::propagate() {
     const size_t origTrailSize = trail.size();
 
     PropBy ret;
-    ret = propagate_any_order<update_bogoprops>();
+    ret = propagate_any_order<update_bogoprops, red_also>();
 
     //Drat -- If declevel 0 propagation, we have to add the unitaries
     if (decisionLevel() == 0 &&
@@ -3378,7 +3378,8 @@ PropBy Searcher::propagate() {
 
     return ret;
 }
-template PropBy Searcher::propagate<true>();
+template PropBy Searcher::propagate<true, false>();
+template PropBy Searcher::propagate<true, true>();
 template PropBy Searcher::propagate<false>();
 
 size_t Searcher::mem_used() const
