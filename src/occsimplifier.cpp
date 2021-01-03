@@ -2473,6 +2473,45 @@ void OccSimplifier::mark_gate_in_poss_negs(
     }
 }
 
+bool OccSimplifier::try_remove_lit_via_occurrence_simpl(
+    const Clause* cl, const Lit lit)
+{
+    assert(solver->decisionLevel() == 0);
+
+    solver->new_decision_level();
+    assert(!cl->getRemoved());
+    assert(!cl->freed());
+
+    bool conflicted = false;
+    bool found_it = false;
+    for(Lit l: *cl) {
+        if (l != lit) {
+            l = ~l;
+        } else {
+            found_it = true;
+        }
+
+        const lbool val = solver->value(l);
+        if (val == l_False) {
+            conflicted = true;
+            break;
+        }
+        if (val == l_Undef) {
+            solver->enqueue(l);
+        }
+    }
+
+    //No conflict at decision level 0, let's propagate
+    if (!conflicted) {
+        assert(found_it);
+        conflicted = !solver->propagate_occur();
+    }
+    solver->cancelUntil(0);
+
+    assert(solver->decisionLevel() == 0);
+    return conflicted;
+}
+
 int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
 {
     assert(solver->ok);
@@ -2793,9 +2832,60 @@ void OccSimplifier::create_dummy_blocked_clause(const Lit lit)
     blockedMapBuilt = false;
 }
 
+bool OccSimplifier::occ_based_lit_rem(uint32_t var) {
+    assert(solver->decisionLevel() == 0);
+
+    vec<Watched> mycopy;
+    for(int i = 0; i < 2; i++) {
+        Lit lit(var, i);
+        mycopy.clear();
+        solver->watches[lit].copyTo(mycopy);
+
+        for(const auto& w: mycopy) {
+            if (!w.isClause()) {
+                continue;
+            }
+
+            const ClOffset offset = w.get_offset();
+            Clause* cl = solver->cl_alloc.ptr(offset);
+            if (cl->freed() || cl->getRemoved() || cl->red()) {
+                continue;
+            }
+
+            if (try_remove_lit_via_occurrence_simpl(cl, lit)) {
+                //TODO check if this is faster: remove_literal()
+                dummy.clear();
+                for(const auto& l: *cl) {
+                    if (l != lit) {
+                        dummy.push_back(l);
+                    }
+                }
+                ClauseStats stats(cl->stats);
+                Clause* newCl = solver->add_clause_int(
+                    dummy //Literals in new clause
+                    , false //Is the new clause redundant?
+                    , &stats
+                    , false //Should clause be attached if long?
+                );
+                if (!solver->okay()) {
+                    return false;
+                }
+                if (newCl) {
+                    linkInClause(*newCl);
+                    ClOffset offset2 = solver->cl_alloc.get_offset(newCl);
+                    clauses.push_back(offset2);
+                }
+                unlink_clause(offset, true, true, true);
+            }
+        }
+    }
+    return solver->okay();
+}
+
 bool OccSimplifier::maybe_eliminate(const uint32_t var)
 {
     assert(solver->ok);
+//     occ_based_lit_rem(var);
     print_var_elim_complexity_stats(var);
     bvestats.testedToElimVars++;
     const Lit lit = Lit(var, false);
