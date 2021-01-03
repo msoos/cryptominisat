@@ -51,22 +51,22 @@ bool DistillerLong::distill(const bool red, bool fullstats)
 
 
     if (!red) {
-        if (!distill_long_cls_all(solver->longIrredCls, 1)) {
+        if (!distill_long_cls_all(solver->longIrredCls, 1, false)) {
             goto end;
         }
     } else {
         if (solver->conf.pred_distill_orig) {
-            if (!distill_long_cls_all(solver->longRedCls[0], 10.0)) {
+            if (!distill_long_cls_all(solver->longRedCls[0], 10.0, true)) {
                 goto end;
             }
-            if (!distill_long_cls_all(solver->longRedCls[1], solver->conf.distill_red_tier1_ratio)) {
+            if (!distill_long_cls_all(solver->longRedCls[1], solver->conf.distill_red_tier1_ratio, true)) {
                 goto end;
             }
         } else {
-            if (!distill_long_cls_all(solver->longRedCls[0], 7.0)) {
+            if (!distill_long_cls_all(solver->longRedCls[0], 7.0, true)) {
                 goto end;
             }
-            if (!distill_long_cls_all(solver->longRedCls[1], 3.0)) {
+            if (!distill_long_cls_all(solver->longRedCls[1], 3.0, true)) {
                 goto end;
             }
         }
@@ -85,9 +85,9 @@ end:
     return solver->okay();
 }
 
-struct ClauseSizeSorterInv
+struct ClauseSizeSorterLargestFirst
 {
-    ClauseSizeSorterInv(const ClauseAllocator& _cl_alloc) :
+    ClauseSizeSorterLargestFirst(const ClauseAllocator& _cl_alloc) :
         cl_alloc(_cl_alloc)
     {}
 
@@ -195,6 +195,7 @@ bool DistillerLong::go_through_clauses(
 bool DistillerLong::distill_long_cls_all(
     vector<ClOffset>& offs
     , double time_mult
+    , bool red
 ) {
     assert(solver->ok);
     if (time_mult == 0.0) {
@@ -228,10 +229,12 @@ bool DistillerLong::distill_long_cls_all(
     runStats.potentialClauses += offs.size();
     runStats.numCalled += 1;
 
-    /*std::sort(offs.begin()
-        , offs.end()
-        , ClauseSizeSorterInv(solver->cl_alloc)
-    );*/
+    if (!red) {
+        std::sort(offs.begin()
+            , offs.end()
+            , ClauseSizeSorterLargestFirst(solver->cl_alloc)
+        );
+    }
 
     bool time_out = go_through_clauses(offs);
 
@@ -239,12 +242,9 @@ bool DistillerLong::distill_long_cls_all(
     const double time_remain = float_div(
         maxNumProps - ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps),
         orig_maxNumProps);
-    if (solver->conf.verbosity >= 2) {
+    if (solver->conf.verbosity >= 1) {
         cout << "c [distill] long cls"
         << " tried: " << runStats.checkedClauses << "/" << offs.size()
-        << " cl-short:" << runStats.numClShorten
-        << " lit-r:" << runStats.numLitsRem
-        << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
     }
     if (solver->sqlStats) {
@@ -330,6 +330,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
         solver->cancelUntil<false, true>(0);
         (*solver->drat) << findelay;
         solver->free_cl(offset, false);
+        runStats.clRemoved++;
         return CL_OFFSET_MAX;
     }
 
@@ -417,6 +418,7 @@ DistillerLong::Stats& DistillerLong::Stats::operator+=(const Stats& other)
     checkedClauses += other.checkedClauses;
     potentialClauses += other.potentialClauses;
     numCalled += other.numCalled;
+    clRemoved += other.clRemoved;
 
     return *this;
 }
@@ -428,6 +430,7 @@ void DistillerLong::Stats::print_short(const Solver* _solver) const
     << " useful: "<< numClShorten
     << "/" << checkedClauses << "/" << potentialClauses
     << " lits-rem: " << numLitsRem
+    << " cl-rem: " << clRemoved
     << " 0-depth-assigns: " << zeroDepthAssigns
     << _solver->conf.print_times(time_used, timeOut)
     << endl;

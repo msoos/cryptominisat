@@ -62,6 +62,7 @@ class DistillerLong {
             uint64_t checkedClauses = 0;
             uint64_t potentialClauses = 0;
             uint64_t numCalled = 0;
+            uint64_t clRemoved = 0;
         };
 
         const Stats& get_stats() const;
@@ -74,7 +75,7 @@ class DistillerLong {
             , const bool red
             , const ClauseStats* const stats
         );
-        bool distill_long_cls_all(vector<ClOffset>& offs, double time_mult);
+        bool distill_long_cls_all(vector<ClOffset>& offs, double time_mult, bool red);
         bool go_through_clauses(vector<ClOffset>& cls);
         Solver* solver;
 
