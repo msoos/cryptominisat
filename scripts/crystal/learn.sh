@@ -66,6 +66,26 @@ function concat() {
 
 w="0"
 
+xgboostminchild=500
+xboostmaxdepth=5
+limit=8000
+cut1="10.0"
+cut2="40.0"
+est=40
+concat
+exit
+
+
+xgboostminchild=500
+xboostmaxdepth=4
+limit=8000
+cut1="10.0"
+cut2="40.0"
+est=60
+concat
+exit
+
+
 xgboostminchild=1
 xboostmaxdepth=6
 limit=2000
