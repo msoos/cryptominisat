@@ -1751,12 +1751,10 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
     for(const Tri& newcl: cl_to_add_ternary) {
         ClauseStats stats;
         stats.last_touched = solver->sumConflicts;
-        stats.glue = solver->conf.glue_put_lev1_if_below_or_eq;
+        stats.glue = 6;
         stats.is_ternary_resolvent = true;
         #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-        //since glue_put_lev1_if_below_or_eq is 6 normally (TODO make this nicer)
         stats.orig_glue = 6;
-        stats.glue = 6;
         #endif
 
         #ifdef FINAL_PREDICTOR
