@@ -301,6 +301,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
         }
     }
     cl.resize(j);
+    assert(cl.size() > 1); //this must have already been propagated
 
     solver->new_decision_level();
     bool True_confl = false;
