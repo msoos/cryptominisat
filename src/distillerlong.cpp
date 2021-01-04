@@ -51,22 +51,26 @@ bool DistillerLong::distill(const bool red, bool fullstats)
 
 
     if (!red) {
+
+        if (!distill_long_cls_all(solver->longIrredCls, 1, true)) {
+            goto end;
+        }
         if (!distill_long_cls_all(solver->longIrredCls, 1, false)) {
             goto end;
         }
     } else {
         if (solver->conf.pred_distill_orig) {
-            if (!distill_long_cls_all(solver->longRedCls[0], 10.0, true)) {
+            if (!distill_long_cls_all(solver->longRedCls[0], 10.0)) {
                 goto end;
             }
-            if (!distill_long_cls_all(solver->longRedCls[1], solver->conf.distill_red_tier1_ratio, true)) {
+            if (!distill_long_cls_all(solver->longRedCls[1], solver->conf.distill_red_tier1_ratio)) {
                 goto end;
             }
         } else {
-            if (!distill_long_cls_all(solver->longRedCls[0], 7.0, true)) {
+            if (!distill_long_cls_all(solver->longRedCls[0], 7.0)) {
                 goto end;
             }
-            if (!distill_long_cls_all(solver->longRedCls[1], 3.0, true)) {
+            if (!distill_long_cls_all(solver->longRedCls[1], 3.0)) {
                 goto end;
             }
         }
@@ -103,7 +107,8 @@ struct ClauseSizeSorterLargestFirst
 };
 
 bool DistillerLong::go_through_clauses(
-    vector<ClOffset>& cls
+    vector<ClOffset>& cls,
+    bool also_remove
 ) {
     bool time_out = false;
     uint32_t skipped = 0;
@@ -176,8 +181,8 @@ bool DistillerLong::go_through_clauses(
         tried++;
         offset2 = try_distill_clause_and_return_new(
             offset
-            , cl.red()
             , &cl.stats
+            , also_remove
         );
 
         copy:
@@ -195,7 +200,7 @@ bool DistillerLong::go_through_clauses(
 bool DistillerLong::distill_long_cls_all(
     vector<ClOffset>& offs
     , double time_mult
-    , bool red
+    , bool also_remove
 ) {
     assert(solver->ok);
     if (time_mult == 0.0) {
@@ -229,14 +234,14 @@ bool DistillerLong::distill_long_cls_all(
     runStats.potentialClauses += offs.size();
     runStats.numCalled += 1;
 
-    if (!red) {
+    if (also_remove) {
         std::sort(offs.begin()
             , offs.end()
             , ClauseSizeSorterLargestFirst(solver->cl_alloc)
         );
     }
 
-    bool time_out = go_through_clauses(offs);
+    bool time_out = go_through_clauses(offs, also_remove);
 
     const double time_used = cpuTime() - myTime;
     const double time_remain = float_div(
@@ -266,25 +271,32 @@ bool DistillerLong::distill_long_cls_all(
 
 ClOffset DistillerLong::try_distill_clause_and_return_new(
     ClOffset offset
-    , const bool red
     , const ClauseStats* const stats
+    , const bool also_remove
 ) {
+    assert(solver->prop_at_head());
     #ifdef DRAT_DEBUG
     if (solver->conf.verbosity >= 6) {
         cout << "Trying to distill clause:" << lits << endl;
     }
     #endif
 
-    //Try to enqueue the literals in 'queueByBy' amounts and see if we fail
+    //Detach this clause
     solver->detachClause(offset, false);
     Clause& cl = *solver->cl_alloc.ptr(offset);
     (*solver->drat) << deldelay << cl << fin;
+    const bool red = cl.red();
+    if (red) {
+        assert(!also_remove);
+    }
 
     uint32_t orig_size = cl.size();
     uint32_t i = 0;
     uint32_t j = 0;
     for (uint32_t sz = cl.size(); i < sz; i++) {
-        if (solver->value(cl[i]) != l_False) {
+        //When we go into this function, we KNOW the clause is not satisfied
+        assert(solver->value(cl[i]) != l_True);
+        if (solver->value(cl[i]) == l_Undef) {
             cl[j++] = cl[i];
         }
     }
@@ -303,10 +315,12 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
             cl[j++] = cl[i];
 
             maxNumProps -= 5;
-            if (red) {
-                confl = solver->propagate<true, true>();
-            } else {
+            if (!red && also_remove) {
+                //ONLY propagate on irred
                 confl = solver->propagate<true, false>();
+            } else {
+                //Normal propagation, on all clauses
+                confl = solver->propagate<true>();
             }
             if (!confl.isNULL()) {
                 break;
@@ -325,11 +339,11 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     cl.resize(j);
 
     //Actually, we can remove the clause!
-    if (!True_confl && !confl.isNULL() && !red) {
+    if (also_remove && !red && !True_confl && !confl.isNULL()) {
         //cout << "Removed clause" << endl;
         solver->cancelUntil<false, true>(0);
         (*solver->drat) << findelay;
-        solver->free_cl(offset, false);
+        solver->free_cl(offset);
         runStats.clRemoved++;
         return CL_OFFSET_MAX;
     }

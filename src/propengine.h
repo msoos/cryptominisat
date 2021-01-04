@@ -359,7 +359,7 @@ private:
     Solver* solver;
     bool propagate_binary_clause_occur(const Watched& ws);
     bool propagate_long_clause_occur(const ClOffset offset);
-    template<bool update_bogoprops, bool red_also>
+    template<bool update_bogoprops>
     bool prop_bin_cl(
         const Watched* i
         , const Lit p

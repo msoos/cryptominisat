@@ -161,7 +161,7 @@ Need to be somewhat tricky if the clause indicates that current assignment
 is incorrect (i.e. both literals evaluate to FALSE). If conflict if found,
 sets failBinLit
 */
-template<bool update_bogoprops, bool red_also>
+template<bool update_bogoprops>
 inline bool PropEngine::prop_bin_cl(
     const Watched* i
     , const Lit p
@@ -483,7 +483,7 @@ PropBy PropEngine::propagate_any_order()
                 if (!red_also && i->red()) {
                     continue;
                 }
-                if (!prop_bin_cl<update_bogoprops, red_also>(i, p, confl, currLevel)) {
+                if (!prop_bin_cl<update_bogoprops>(i, p, confl, currLevel)) {
                     i++;
                     break;
                 }
