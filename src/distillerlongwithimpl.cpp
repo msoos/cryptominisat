@@ -56,21 +56,21 @@ bool DistillerLongWithImpl::distill_long_with_implicit(const bool alsoStrengthen
     runStats.redWatchBased.clear();
     runStats.irredWatchBased.clear();
 
-    if (!shorten_all_cl_with_watch(solver->longIrredCls, false, false))
+    if (!sub_str_all_cl_with_watch(solver->longIrredCls, false, false))
         goto end;
 
     if (solver->longRedCls[0].size() > 0
-        && !shorten_all_cl_with_watch(solver->longRedCls[0], true, false)
+        && !sub_str_all_cl_with_watch(solver->longRedCls[0], true, false)
     ) {
         goto end;
     }
 
     if (alsoStrengthen) {
-        if (!shorten_all_cl_with_watch(solver->longIrredCls, false, true))
+        if (!sub_str_all_cl_with_watch(solver->longIrredCls, false, true))
             goto end;
 
         if (solver->longRedCls[0].size() > 0
-            && !shorten_all_cl_with_watch(solver->longRedCls[0], true, true)
+            && !sub_str_all_cl_with_watch(solver->longRedCls[0], true, true)
         ) {
             goto end;
         }
@@ -312,7 +312,7 @@ uint64_t DistillerLongWithImpl::calc_time_available(
     return maxCountTime;
 }
 
-bool DistillerLongWithImpl::shorten_all_cl_with_watch(
+bool DistillerLongWithImpl::sub_str_all_cl_with_watch(
     vector<ClOffset>& clauses
     , bool red
     , bool alsoStrengthen
@@ -383,7 +383,7 @@ bool DistillerLongWithImpl::shorten_all_cl_with_watch(
     solver->check_implicit_stats();
     #endif
 
-    dump_stats_for_shorten_all_cl_with_watch(red
+    dump_stats_for_sub_str_all_cl_with_watch(red
         , alsoStrengthen
         , myTime
         , orig_time_available
@@ -392,7 +392,7 @@ bool DistillerLongWithImpl::shorten_all_cl_with_watch(
     return solver->okay();
 }
 
-void DistillerLongWithImpl::dump_stats_for_shorten_all_cl_with_watch(
+void DistillerLongWithImpl::dump_stats_for_sub_str_all_cl_with_watch(
     bool red
     , bool alsoStrengthen
     , double myTime

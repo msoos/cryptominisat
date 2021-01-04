@@ -105,7 +105,7 @@ class DistillerLongWithImpl {
             bool alsoStrengthen
             , Clause& cl
         );
-        void dump_stats_for_shorten_all_cl_with_watch(
+        void dump_stats_for_sub_str_all_cl_with_watch(
             bool red
             , bool alsoStrengthen
             , double myTime
@@ -151,7 +151,7 @@ class DistillerLongWithImpl {
             , const bool red
         ) const;
 
-        bool shorten_all_cl_with_watch(
+        bool sub_str_all_cl_with_watch(
             vector<ClOffset>& clauses
             , bool red
             , bool alsoStrengthen
