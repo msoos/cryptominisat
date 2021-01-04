@@ -275,6 +275,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     , const bool also_remove
 ) {
     assert(solver->prop_at_head());
+    assert(solver->decisionLevel() == 0);
     #ifdef DRAT_DEBUG
     if (solver->conf.verbosity >= 6) {
         cout << "Trying to distill clause:" << lits << endl;
