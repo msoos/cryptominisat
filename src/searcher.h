@@ -191,7 +191,6 @@ class Searcher : public HyperEngine
         template<bool update_bogoprops>
         lbool new_decision();
         Lit pickBranchLit();
-        uint32_t pick_random_var();
         uint32_t pick_var_vsids_maple();
         uint32_t pick_var_vmtf();
         void vsids_decay_var_act();
