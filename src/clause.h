@@ -364,7 +364,6 @@ public:
         stats.ID = _ID;
         assert(_ID >= 0);
         #endif
-        stats.glue = std::min<uint32_t>(stats.glue, ps.size());
         isFreed = false;
         mySize = ps.size();
         isRed = false;
