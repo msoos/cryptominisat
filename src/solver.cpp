@@ -145,6 +145,7 @@ Solver::~Solver()
     delete intree;
     delete occsimplifier;
     delete distill_long_cls;
+    delete distill_bin_cls;
     delete dist_long_with_impl;
     delete dist_impl_with_impl;
     delete clauseCleaner;

@@ -281,7 +281,7 @@ class Tester:
         sched_opts += "occ-backw-sub-str, occ-xor, occ-clean-implicit, occ-bve, occ-bva,"
         sched_opts += "renumber, must-renumber,"
         sched_opts += "sls, card-find, breakid,"
-        sched_opts += "occ-lit-rem"
+        sched_opts += "occ-lit-rem, distill-bins"
 
         # type of schedule
         cmd = ""

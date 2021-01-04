@@ -191,8 +191,8 @@ bool DistillerLong::go_through_clauses(
         }
     }
     cls.resize(cls.size()- (i-j));
-//     cout << "Did: " << tried << endl;
-//     cout << "Skipped: " << skipped << endl;
+//     cout << "distill-long-Tried: " << tried << endl;
+//     cout << "distill-long-Skipped: " << skipped << endl;
 
     return time_out;
 }
