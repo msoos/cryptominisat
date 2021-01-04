@@ -210,7 +210,8 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::strengthen_subsume_and_unlink_and_
                 continue;
             }
             #endif
-            remove_literal(offset2, subsLits[j]);
+            simplifier->remove_literal(offset2, subsLits[j]);
+            runStats.litsRemStrengthen++;
 
             ret.str++;
             if (!solver->ok)
@@ -555,40 +556,6 @@ bool SubsumeStrengthen::handle_added_long_cl(
     return solver->okay();
 }
 
-void SubsumeStrengthen::remove_literal(ClOffset offset, const Lit toRemoveLit)
-{
-    Clause& cl = *solver->cl_alloc.ptr(offset);
-    #ifdef VERBOSE_DEBUG
-    cout << "-> Strenghtening clause :" << cl;
-    cout << " with lit: " << toRemoveLit << endl;
-    #endif
-
-    *simplifier->limit_to_decrease -= 5;
-
-    (*solver->drat) << deldelay << cl << fin;
-    cl.strengthen(toRemoveLit);
-    simplifier->added_cl_to_var.touch(toRemoveLit.var());
-    cl.recalc_abst_if_needed();
-    (*solver->drat) << add << cl
-    #ifdef STATS_NEEDED
-    << solver->sumConflicts
-    #endif
-    << fin << findelay;
-    if (!cl.red()) {
-        simplifier->n_occurs[toRemoveLit.toInt()]--;
-        simplifier->elim_calc_need_update.touch(toRemoveLit.var());
-        simplifier->removed_cl_with_var.touch(toRemoveLit.var());
-    }
-
-    runStats.litsRemStrengthen++;
-    removeWCl(solver->watches[toRemoveLit], offset);
-    if (cl.red())
-        solver->litStats.redLits--;
-    else
-        solver->litStats.irredLits--;
-
-    simplifier->clean_clause(offset);
-}
 /**
 @brief Decides only using abstraction if clause A could subsume clause B
 
@@ -922,7 +889,8 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::backw_sub_str_long_with_implicit(
                 continue;
             }
             #endif
-            remove_literal(offset2, subsLits[j]);
+            simplifier->remove_literal(offset2, subsLits[j]);
+            runStats.litsRemStrengthen++;
 
             ret.str++;
             if (!solver->ok)

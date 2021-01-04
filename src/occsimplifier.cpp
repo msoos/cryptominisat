@@ -1274,8 +1274,8 @@ bool OccSimplifier::fill_occur_and_print_stats()
     return true;
 }
 
-struct MyOccSorterVars {
-    MyOccSorterVars(const vector<uint32_t>& _n_occurs):
+struct OrderByDecreasingIncidence {
+    OrderByDecreasingIncidence(const vector<uint32_t>& _n_occurs):
         n_occurs(_n_occurs)
     {
     }
@@ -2870,29 +2870,7 @@ bool OccSimplifier::occ_based_lit_rem(uint32_t var, uint32_t& removed) {
             }
 
             if (try_remove_lit_via_occurrence_simpl(cl, lit)) {
-                //TODO check if this is faster: remove_literal()
-                dummy.clear();
-                for(const auto& l: *cl) {
-                    if (l != lit) {
-                        dummy.push_back(l);
-                    }
-                }
-                ClauseStats stats(cl->stats);
-                Clause* newCl = solver->add_clause_int(
-                    dummy //Literals in new clause
-                    , false //Is the new clause redundant?
-                    , &stats
-                    , false //Should clause be attached if long?
-                );
-                if (!solver->okay()) {
-                    return false;
-                }
-                if (newCl) {
-                    linkInClause(*newCl);
-                    ClOffset offset2 = solver->cl_alloc.get_offset(newCl);
-                    clauses.push_back(offset2);
-                }
-                unlink_clause(offset, true, true, true);
+                remove_literal(offset, lit);
                 removed++;
             }
         }
@@ -2911,7 +2889,7 @@ void OccSimplifier::all_occ_based_lit_rem()
             vars.push_back(v);
         }
     }
-    std::sort(vars.begin(), vars.end(), MyOccSorterVars(n_occurs));
+    std::sort(vars.begin(), vars.end(), OrderByDecreasingIncidence(n_occurs));
 
     uint32_t removed_all = 0;
     for(const auto& v: vars) {
@@ -3641,3 +3619,38 @@ Clause* OccSimplifier::full_add_clause(
 
     return newCl;
 }
+
+void OccSimplifier::remove_literal(ClOffset offset, const Lit toRemoveLit)
+{
+    Clause& cl = *solver->cl_alloc.ptr(offset);
+    #ifdef VERBOSE_DEBUG
+    cout << "-> Strenghtening clause :" << cl;
+    cout << " with lit: " << toRemoveLit << endl;
+    #endif
+
+    *limit_to_decrease -= 5;
+
+    (*solver->drat) << deldelay << cl << fin;
+    cl.strengthen(toRemoveLit);
+    added_cl_to_var.touch(toRemoveLit.var());
+    cl.recalc_abst_if_needed();
+    (*solver->drat) << add << cl
+    #ifdef STATS_NEEDED
+    << solver->sumConflicts
+    #endif
+    << fin << findelay;
+    if (!cl.red()) {
+        n_occurs[toRemoveLit.toInt()]--;
+        elim_calc_need_update.touch(toRemoveLit.var());
+        removed_cl_with_var.touch(toRemoveLit.var());
+    }
+
+    removeWCl(solver->watches[toRemoveLit], offset);
+    if (cl.red())
+        solver->litStats.redLits--;
+    else
+        solver->litStats.irredLits--;
+
+    clean_clause(offset);
+}
+

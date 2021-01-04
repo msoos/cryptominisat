@@ -295,6 +295,7 @@ private:
     bool startup = false;
     bool backward_sub_str();
     bool execute_simplifier_strategy(const string& strategy);
+    void remove_literal(ClOffset c, const Lit toRemoveLit);
 
     //Ternary resolution
     vector<Lit> finalLits_ternary;

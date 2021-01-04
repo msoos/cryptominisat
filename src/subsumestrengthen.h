@@ -121,7 +121,6 @@ private:
     );
 
     void randomise_clauses_order();
-    void remove_literal(ClOffset c, const Lit toRemoveLit);
 
     template<class T>
     size_t find_smallest_watchlist_for_clause(const T& ps) const;
