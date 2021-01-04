@@ -296,7 +296,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "scc-vrepl,"
             "sub-impl,"
             "intree-probe,"
-            "sub-str-cls-with-bin,distill-cls,"
+            "sub-str-cls-with-bin,distill-cls,distill-bins,"
             "scc-vrepl,sub-impl,str-impl,sub-impl,"
             "breakid,"
             //occurrence based
@@ -305,7 +305,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             //consolidate after OCC
             "cl-consolidate,"
             //strengthen again
-            "str-impl,sub-str-cls-with-bin,distill-cls,"
+            "str-impl,sub-str-cls-with-bin,distill-cls,distill-bins,"
             "scc-vrepl,"
             //renumber then it's time for SLS
             "renumber,"
