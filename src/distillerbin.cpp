@@ -20,6 +20,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
+#include <iomanip>
+#include <algorithm>
+#include <random>
+
 #include "distillerbin.h"
 #include "clausecleaner.h"
 #include "time_mem.h"
@@ -28,7 +32,7 @@ THE SOFTWARE.
 #include "clauseallocator.h"
 #include "sqlstats.h"
 
-#include <iomanip>
+
 using namespace CMSat;
 using std::cout;
 using std::endl;
@@ -106,8 +110,13 @@ bool DistillerBin::distill_bin_cls_all(
     runStats.numCalled += 1;
 
     bool time_out;
+    vector<Lit> todo;
     for(uint32_t i = 0; i < solver->nVars()*2; i ++) {
         const Lit lit = Lit::toLit(i);
+        todo.push_back(lit);
+    }
+    std::shuffle(todo.begin(), todo.end(), std::default_random_engine(solver->mtrand.randInt()));
+    for(const auto& lit: todo) {
         time_out = go_through_bins(lit, also_remove, red);
         if (time_out) {
             break;
