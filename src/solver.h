@@ -52,6 +52,7 @@ class ClauseCleaner;
 class OccSimplifier;
 class SCCFinder;
 class DistillerLong;
+class DistillerBin;
 class DistillerLongWithImpl;
 class StrImplWImpl;
 class CalcDefPolars;
@@ -179,6 +180,7 @@ class Solver : public Searcher
         BreakID*               breakid = NULL;
         OccSimplifier*         occsimplifier = NULL;
         DistillerLong*         distill_long_cls = NULL;
+        DistillerBin*          distill_bin_cls = NULL;
         DistillerLongWithImpl* dist_long_with_impl = NULL;
         StrImplWImpl* dist_impl_with_impl = NULL;
         CompHandler*           compHandler = NULL;

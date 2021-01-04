@@ -38,6 +38,7 @@ THE SOFTWARE.
 #include "searcher.h"
 #include "occsimplifier.h"
 #include "distillerlong.h"
+#include "distillerbin.h"
 #include "clausecleaner.h"
 #include "solutionextender.h"
 #include "varupdatehelper.h"
@@ -112,6 +113,7 @@ Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter
         card_finder = new CardFinder(this);
     }
     distill_long_cls = new DistillerLong(this);
+    distill_bin_cls = new DistillerBin(this);
     dist_long_with_impl = new DistillerLongWithImpl(this);
     dist_impl_with_impl = new StrImplWImpl(this);
     clauseCleaner = new ClauseCleaner(this);
@@ -2151,6 +2153,10 @@ lbool Solver::execute_inprocess_strategy(
             //Subsumes and strengthens long clauses with binary clauses
             if (conf.do_distill_clauses) {
                 dist_long_with_impl->distill_long_with_implicit(false);
+            }
+        } else if (token == "distill-bins") {
+            if (conf.do_distill_clauses) {
+                distill_bin_cls->distill();
             }
         } else if (token == "distill-cls") {
             //Enqueues literals in long + tri clauses two-by-two and propagates

@@ -342,7 +342,6 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
 
     //Actually, we can remove the clause!
     if (also_remove && !red && !True_confl && !confl.isNULL()) {
-        //cout << "Removed clause" << endl;
         solver->cancelUntil<false, true>(0);
         (*solver->drat) << findelay;
         solver->free_cl(offset);
@@ -443,7 +442,7 @@ void DistillerLong::Stats::print_short(const Solver* _solver) const
 {
     cout
     << "c [distill] long"
-    << " useful: "<< numClShorten
+    << " useful: "<< numClShorten+clRemoved
     << "/" << checkedClauses << "/" << potentialClauses
     << " lits-rem: " << numLitsRem
     << " cl-rem: " << clRemoved
