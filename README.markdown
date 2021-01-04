@@ -345,13 +345,13 @@ cargo build --release
 cargo test
 ```
 
-You can use it as per the (README)[https://github.com/msoos/cryptominisat-rs/blob/master/README.markdown] in that repository. To include CryptoMiniSat in your Rust project, add the dependency to your `Cargo.toml` file:
+You can use it as per the [README](https://github.com/msoos/cryptominisat-rs/blob/master/README.markdown) in that repository. To include CryptoMiniSat in your Rust project, add the dependency to your `Cargo.toml` file:
 
 ```
 cryptominisat = { git = "https://github.com/msoos/cryptominisat-rs", branch= "master" }
 ```
 
-You can see an example project using CryptoMiniSat in Rust (here)[https://github.com/msoos/caqe/].
+You can see an example project using CryptoMiniSat in Rust [here](https://github.com/msoos/caqe/).
 
 
 Preprocessor usage
