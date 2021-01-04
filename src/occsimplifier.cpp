@@ -2897,15 +2897,16 @@ void OccSimplifier::all_occ_based_lit_rem()
         if (all == 0) {
             continue;
         }
-        if (solver->conf.verbosity >= 5) {
-            cout << "Picking var " << v
-            << " occ_p: " << n_occurs[Lit(v, false).toInt()]
-            << " occ_n: " << n_occurs[Lit(v, true).toInt()]
-            << endl;
-        }
         uint32_t removed = 0;
         occ_based_lit_rem(v, removed);
         removed_all += removed;
+        if (solver->conf.verbosity >= 5) {
+            cout << "occ-lit-rem finished var " << v
+            << " occ_p: " << n_occurs[Lit(v, false).toInt()]
+            << " occ_n: " << n_occurs[Lit(v, true).toInt()]
+            << " rem: " << removed
+            << endl;
+        }
     }
 
     free_clauses_to_free();
