@@ -2434,28 +2434,26 @@ void OccSimplifier::find_gate(
 
         if (w.isClause()) {
             Clause* cl = solver->cl_alloc.ptr(w.get_offset());
-            if (cl->getRemoved()) {
+            if (cl->getRemoved() || cl->red()) {
                 continue;
             }
 
             assert(cl->size() > 2);
-            if (!cl->red()) {
-                bool OK = true;
-                for(const Lit lit: *cl) {
-                    if (lit != ~elim_lit) {
-                        if (!seen[lit.toInt()]) {
-                            OK = false;
-                            break;
-                        }
+            bool OK = true;
+            for(const Lit lit: *cl) {
+                if (lit != ~elim_lit) {
+                    if (!seen[lit.toInt()]) {
+                        OK = false;
+                        break;
                     }
                 }
+            }
 
-                //Found all lits inside
-                if (OK) {
-                    cl->stats.marked_clause = true;
-                    gate_varelim_clause = cl;
-                    break;
-                }
+            //Found all lits inside
+            if (OK) {
+                cl->stats.marked_clause = true;
+                gate_varelim_clause = cl;
+                break;
             }
         }
     }
