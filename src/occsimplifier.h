@@ -451,6 +451,10 @@ private:
     TouchList   elim_calc_need_update;
     vector<ClOffset> cl_to_free_later;
     bool        maybe_eliminate(const uint32_t x);
+    bool        forward_subsume_irred(
+        const Lit lit,
+        cl_abst_type abs,
+        const uint32_t size);
     bool        deal_with_added_long_and_bin(const bool main);
     bool        prop_and_clean_long_and_impl_clauses();
     vector<Lit> tmp_bin_cl;

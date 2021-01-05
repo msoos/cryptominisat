@@ -2528,6 +2528,42 @@ bool OccSimplifier::try_remove_lit_via_occurrence_simpl(
     return conflicted;
 }
 
+bool OccSimplifier::forward_subsume_irred(
+    const Lit lit,
+    cl_abst_type abs,
+    const uint32_t size)
+{
+    for(const auto& w: solver->watches[lit]) {
+        if (w.isBin()) {
+            if (!w.red() && seen[w.lit2().toInt()]) {
+                return true;
+            }
+        } else {
+            assert(w.isClause());
+            Clause* cl = solver->cl_alloc.ptr(w.get_offset());
+            if (cl->freed() || cl->getRemoved() || cl->red()) {
+                continue;
+            }
+            if (cl->size() >= size || !subsetAbst(cl->abst, abs)) {
+                continue;
+            }
+
+            bool ok = true;
+            for(const auto& l: *cl) {
+                if (!seen[l.toInt()]) {
+                    ok = false;
+                    break;
+                }
+            }
+            if (ok) {
+                return true;
+            }
+
+        }
+    }
+    return false;
+}
+
 int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
 {
     assert(solver->ok);
@@ -2633,6 +2669,25 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
                     gate_varelim_clause->stats.marked_clause = false;
                 }
                 return std::numeric_limits<int>::max();
+            }
+
+            //Try forward-subsumption
+            for(const auto& l: dummy) {
+                seen[l.toInt()] = 1;
+            }
+            bool frw_subsume = false;
+            for(const auto& l: dummy) {
+                frw_subsume |= forward_subsume_irred(l, dummy.size(), calcAbstraction(dummy));
+                if (frw_subsume) {
+                    break;
+                }
+            }
+            for(const auto& l: dummy) {
+                seen[l.toInt()] = 0;
+            }
+            if (frw_subsume) {
+                //No need to add this resolvent
+                continue;
             }
 
             //Calculate new clause stats

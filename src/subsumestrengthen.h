@@ -149,7 +149,6 @@ private:
 
     template<class T1, class T2>
     Lit subset1(const T1& A, const T2& B);
-    bool subsetAbst(const cl_abst_type A, const cl_abst_type B);
 
     vector<ClOffset> subs;
     vector<Lit> subsLits;

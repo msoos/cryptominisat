@@ -43,6 +43,20 @@ namespace CMSat {
 
 class ClauseAllocator;
 
+/**
+@brief Decides only using abstraction if clause A could subsume clause B
+
+@note: It can give false positives. Never gives false negatives.
+
+For A to subsume B, everything that is in A MUST be in B. So, if (A & ~B)
+contains even one bit, it means that A contains something that B doesn't. So
+A may be a subset of B only if (A & ~B) == 0
+*/
+inline bool subsetAbst(const cl_abst_type A, const cl_abst_type B)
+{
+    return ((A & ~B) == 0);
+}
+
 template <class T>
 struct AtecedentData
 {
