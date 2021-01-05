@@ -195,6 +195,9 @@ inline void Searcher::add_lit_to_learnt(
                 varData[var].maple_conflicted++;
                 break;
 
+            case branch::rand:
+                break;
+
             #ifdef VMTF_NEEDED
             case branch::vmtf:
                 implied_by_learnts.push_back(var);
