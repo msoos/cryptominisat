@@ -2669,23 +2669,25 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
                 return std::numeric_limits<int>::max();
             }
 
-            //Try forward-subsumption
-            for(const auto& l: dummy) {
-                seen[l.toInt()] = 1;
-            }
-            bool frw_subsume = false;
-            for(const auto& l: dummy) {
-                frw_subsume |= forward_subsume_irred(l, dummy.size(), calcAbstraction(dummy));
-                if (frw_subsume) {
-                    break;
+            if (solver->conf.do_fwd_sub_bve_resolvents) {
+                //Try forward-subsumption
+                for(const auto& l: dummy) {
+                    seen[l.toInt()] = 1;
                 }
-            }
-            for(const auto& l: dummy) {
-                seen[l.toInt()] = 0;
-            }
-            if (frw_subsume) {
-                //No need to add this resolvent
-                continue;
+                bool frw_subsume = false;
+                for(const auto& l: dummy) {
+                    frw_subsume |= forward_subsume_irred(l, dummy.size(), calcAbstraction(dummy));
+                    if (frw_subsume) {
+                        break;
+                    }
+                }
+                for(const auto& l: dummy) {
+                    seen[l.toInt()] = 0;
+                }
+                if (frw_subsume) {
+                    //No need to add this resolvent
+                    continue;
+                }
             }
 
             //Calculate new clause stats
