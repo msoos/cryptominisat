@@ -197,7 +197,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , skip_some_bve_resolvents(true) //based on gates
         , velim_resolvent_too_large(20)
         , var_linkin_limit_MB(1000)
-        , do_fwd_sub_bve_resolvents(false)
+        , do_fwd_sub_bve_resolvents(false) //expensive, not very effective
 
         //Subs, str limits for simplifier
         , subsumption_time_limitM(300)

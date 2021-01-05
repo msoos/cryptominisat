@@ -205,10 +205,10 @@ void DistillerBin::myprop(
 {
     if (!red && also_remove) {
         //ONLY propagate on irred
-        confl = solver->propagate<true, false>();
+        confl = solver->propagate<true, false, true>();
     } else {
         //Normal propagation, on all clauses
-        confl = solver->propagate<true>();
+        confl = solver->propagate<true, true, true>();
     }
 }
 
@@ -227,9 +227,9 @@ void DistillerBin::try_distill_bin(
     }
     #endif
 
-    //Detach this clause
-    solver->detach_bin_clause(lit1, lit2, red);
-    (*solver->drat) << deldelay << lit1 << lit2 << fin;
+    //Disable this clause
+    findWatchedOfBin(solver->watches, lit1, lit2, red).mark_bin_cl();
+    findWatchedOfBin(solver->watches, lit2, lit1, red).mark_bin_cl();
     if (red) {
         assert(!also_remove);
     }
@@ -251,7 +251,7 @@ void DistillerBin::try_distill_bin(
             vector<Lit> x(1);
             x[0] = lit1;
             solver->add_clause_int(x);
-            *solver->drat << findelay;
+            solver->detach_bin_clause(lit1, lit2, red);
             runStats.numClShorten++;
             return;
         }
@@ -264,15 +264,20 @@ void DistillerBin::try_distill_bin(
 
     if (also_remove && !red && !confl.isNULL()) {
         solver->cancelUntil<false, true>(0);
-        (*solver->drat) << findelay;
+        solver->detach_bin_clause(lit1, lit2, red);
         runStats.clRemoved++;
         return;
     }
 
     //Nothing happened
     solver->cancelUntil<false, true>(0);
-    solver->attach_bin_clause(lit1, lit2, red);
-    solver->drat->forget_delay();
+    auto &w1 = findWatchedOfBin(solver->watches, lit1, lit2, red);
+    assert(w1.bin_cl_marked());
+    w1.unmark_bin_cl();
+
+    auto &w2 = findWatchedOfBin(solver->watches, lit2, lit1, red);
+    assert(w2.bin_cl_marked());
+    w2.unmark_bin_cl();
 }
 
 DistillerBin::Stats& DistillerBin::Stats::operator+=(const Stats& other)

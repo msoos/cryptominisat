@@ -195,7 +195,7 @@ inline bool PropEngine::prop_bin_cl(
     return true;
 }
 
-template<bool update_bogoprops, bool red_also>
+template<bool update_bogoprops, bool red_also, bool use_disable>
 bool PropEngine::prop_long_cl_any_order(
     Watched* i
     , Watched*& j
@@ -217,9 +217,17 @@ bool PropEngine::prop_long_cl_any_order(
     #ifdef SLOW_DEBUG
     assert(!c.getRemoved());
     assert(!c.freed());
+    if (!use_disabled) {
+        assert(!c.disabled);
+    }
     #endif
 
     if (!red_also && c.red()) {
+        *j++ = *i;
+        return true;
+    }
+
+    if (use_disable && c.disabled) {
         *j++ = *i;
         return true;
     }
@@ -456,7 +464,7 @@ PropBy PropEngine::propagate_any_order_fast()
     return confl;
 }
 
-template<bool update_bogoprops, bool red_also>
+template<bool update_bogoprops, bool red_also, bool use_disable>
 PropBy PropEngine::propagate_any_order()
 {
     PropBy confl;
@@ -483,6 +491,9 @@ PropBy PropEngine::propagate_any_order()
                 if (!red_also && i->red()) {
                     continue;
                 }
+                if (use_disable && i->bin_cl_marked()) {
+                    continue;
+                }
                 if (!prop_bin_cl<update_bogoprops>(i, p, confl, currLevel)) {
                     i++;
                     break;
@@ -491,7 +502,7 @@ PropBy PropEngine::propagate_any_order()
             }
 
             //propagate normal clause
-            if (!prop_long_cl_any_order<update_bogoprops, red_also>(i, j, p, confl, currLevel)) {
+            if (!prop_long_cl_any_order<update_bogoprops, red_also, use_disable>(i, j, p, confl, currLevel)) {
                 i++;
                 break;
             }
@@ -511,8 +522,9 @@ PropBy PropEngine::propagate_any_order()
     return confl;
 }
 template PropBy PropEngine::propagate_any_order<false>();
-template PropBy PropEngine::propagate_any_order<true, false>();
-template PropBy PropEngine::propagate_any_order<true, true>();
+template PropBy PropEngine::propagate_any_order<true>();
+template PropBy PropEngine::propagate_any_order<true, false, true>();
+template PropBy PropEngine::propagate_any_order<true, true,  true>();
 
 
 void PropEngine::printWatchList(const Lit lit) const

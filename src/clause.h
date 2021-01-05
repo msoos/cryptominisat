@@ -344,6 +344,7 @@ public:
     uint16_t _xor_is_detached:1;
     uint16_t _gauss_temp_cl:1; ///Used ONLY by Gaussian elimination to incicate where a proagation is coming from
     uint16_t reloced:1;
+    uint16_t disabled:1;
 
 
     Lit* getData()
@@ -389,6 +390,7 @@ public:
         _used_in_xor_full = false;
         _xor_is_detached = false;
         reloced = false;
+        disabled = false;
 
         for (uint32_t i = 0; i < ps.size(); i++) {
             getData()[i] = ps[i];

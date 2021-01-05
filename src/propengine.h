@@ -278,7 +278,7 @@ protected:
     friend class EGaussian;
 
     PropBy propagate_any_order_fast();
-    template<bool update_bogoprops, bool red_also = true>
+    template<bool update_bogoprops, bool red_also = true, bool use_disable = false>
     PropBy propagate_any_order();
     template<bool update_bogoprops>
     PropResult prop_normal_helper(
@@ -366,7 +366,7 @@ private:
         , PropBy& confl
         , uint32_t currLevel
     );
-    template<bool update_bogoprops, bool red_also>
+    template<bool update_bogoprops, bool red_also, bool use_disable>
     bool prop_long_cl_any_order(
         Watched* i
         , Watched*& j

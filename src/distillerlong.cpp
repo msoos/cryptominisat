@@ -282,9 +282,11 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     }
     #endif
 
-    //Detach this clause
-    solver->detachClause(offset, false);
+    //Disable this clause
     Clause& cl = *solver->cl_alloc.ptr(offset);
+    Lit cl_lit1 = cl[0];
+    Lit cl_lit2 = cl[1];
+    cl.disabled = true;
     (*solver->drat) << deldelay << cl << fin;
     const bool red = cl.red();
     if (red) {
@@ -319,10 +321,10 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
             maxNumProps -= 5;
             if (!red && also_remove) {
                 //ONLY propagate on irred
-                confl = solver->propagate<true, false>();
+                confl = solver->propagate<true, false, true>();
             } else {
                 //Normal propagation, on all clauses
-                confl = solver->propagate<true>();
+                confl = solver->propagate<true, true, true>();
             }
             if (!confl.isNULL()) {
                 break;
@@ -343,6 +345,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     //Actually, we can remove the clause!
     if (also_remove && !red && !True_confl && !confl.isNULL()) {
         solver->cancelUntil<false, true>(0);
+        solver->detach_modified_clause(cl_lit1, cl_lit2, orig_size, &cl);
         (*solver->drat) << findelay;
         solver->free_cl(offset);
         runStats.clRemoved++;
@@ -351,9 +354,9 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
 
     //Couldn't simplify the clause
     if (j == orig_size && !True_confl && confl.isNULL()) {
+        cl.disabled = false;
         solver->cancelUntil<false, true>(0);
-        solver->attachClause(cl);
-        solver->drat->forget_delay();
+        (*solver->drat) << findelay;
         return offset;
     }
 
@@ -392,7 +395,9 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
             lits_set = true;
         }
     }
+    (*solver->drat) << deldelay << cl << fin;
     solver->cancelUntil<false, true>(0);
+    solver->detach_modified_clause(cl_lit1, cl_lit2, orig_size, &cl);
     runStats.numLitsRem += orig_size - cl.size();
     runStats.numClShorten++;
 
