@@ -516,6 +516,45 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
     }
 }
 
+struct sort_smallest_first {
+    sort_smallest_first(ClauseAllocator& _cl_alloc) :
+        cl_alloc(_cl_alloc)
+    {}
+
+    bool operator()(const Watched& first, const Watched& second)
+    {
+        if (second.isBin() && first.isClause()) {
+            //wrong order
+            return false;
+        }
+        if (first.isBin() && second.isClause()) {
+            //this is the right order
+            return true;
+        }
+
+        if (first.isBin() && second.isBin()) {
+            //correct order if first has lit2() smaller.
+            return first.lit2() < second.lit2();
+        }
+
+        if (first.isClause() && second.isClause()) {
+            Clause& cl1 = *cl_alloc.ptr(first.get_offset());
+            Clause& cl2 = *cl_alloc.ptr(second.get_offset());
+            if (cl1.size() != cl2.size()) {
+                return cl1.size() < cl2.size();
+            }
+
+            //we don't care, let's use offset as a distinguisher
+            return first.get_offset() < second.get_offset();
+        }
+
+        assert(false && "This cannot happen");
+        return false;
+    }
+
+    ClauseAllocator& cl_alloc;
+};
+
 uint64_t OccSimplifier::calc_mem_usage_of_occur(const vector<ClOffset>& toAdd) const
 {
     uint64_t memUsage = 0;
@@ -2413,14 +2452,23 @@ void OccSimplifier::add_clause_to_blck(const vector<Lit>& lits)
     blockedClauses.back().end = blkcls.size();
 }
 
-void OccSimplifier::find_gate(
-    Lit elim_lit
+bool OccSimplifier::find_or_gate(
+    Lit lit
     , watch_subarray_const a
     , watch_subarray_const b
+    , vec<Watched>& out_a
+    , vec<Watched>& out_b
 ) {
+    bool found = false;
+    out_a.clear();
+    out_b.clear();
+
     assert(toClear.empty());
     for(const Watched w: a) {
-        if (w.isBin() && !w.red()) {
+        if (w.isBin()) {
+            #ifdef SLOW_DEBUG
+            assert(!w.red());
+            #endif
             seen[(~w.lit2()).toInt()] = 1;
             toClear.push_back(~w.lit2());
         }
@@ -2433,15 +2481,15 @@ void OccSimplifier::find_gate(
         }
 
         if (w.isClause()) {
+            #ifdef SLOW_DEBUG
+            assert(!solver->redundant_or_removed(w));
+            #endif
             Clause* cl = solver->cl_alloc.ptr(w.get_offset());
-            if (cl->getRemoved() || cl->red()) {
-                continue;
-            }
 
             assert(cl->size() > 2);
             bool OK = true;
             for(const Lit lit: *cl) {
-                if (lit != ~elim_lit) {
+                if (lit != ~lit) {
                     if (!seen[lit.toInt()]) {
                         OK = false;
                         break;
@@ -2451,8 +2499,13 @@ void OccSimplifier::find_gate(
 
             //Found all lits inside
             if (OK) {
-                cl->stats.marked_clause = true;
-                gate_varelim_clause = cl;
+                out_b.push(w);
+                for(const Lit lit: *cl) {
+                    if (lit != ~lit) {
+                        out_a.push(Watched(~lit, false));
+                    }
+                }
+                found = true;
                 break;
             }
         }
@@ -2462,29 +2515,59 @@ void OccSimplifier::find_gate(
         seen[l.toInt()] = 0;
     }
     toClear.clear();
+
+    return found;
 }
 
-void OccSimplifier::mark_gate_in_poss_negs(
-    Lit elim_lit
-    , watch_subarray_const poss
-    , watch_subarray_const negs
+
+bool OccSimplifier::find_equivalence_gate(
+    Lit lit
+    , watch_subarray_const a
+    , watch_subarray_const b
+    , vec<Watched>& out_a
+    , vec<Watched>& out_b
 ) {
-    //Either of the two is OK. Let's just find ONE, not the biggest one.
-    //We could find the biggest one, but it's expensive.
-    bool found_pos = false;
-    gate_varelim_clause = NULL;
-    find_gate(elim_lit, poss, negs);
-    if (gate_varelim_clause == NULL) {
-        find_gate(~elim_lit, negs, poss);
-        found_pos = true;
+    assert(toClear.empty());
+
+    bool found = false;
+    out_a.clear();
+    out_b.clear();
+
+    for(const Watched& w: a) {
+        if (w.isBin()) {
+            #ifdef SLOW_DEBUG
+            assert(!w.red());
+            #endif
+            seen[w.lit2().toInt()] = 1;
+            toClear.push_back(w.lit2());
+        }
     }
 
-    if (gate_varelim_clause != NULL && solver->conf.verbosity >= 10) {
-        cout
-        << "Lit: " << elim_lit
-        << " gate_found_elim_pos:" << found_pos
-        << endl;
+    for(const Watched& w: b) {
+        if (w.isBin()) {
+            #ifdef SLOW_DEBUG
+            assert(!w.red());
+            #endif
+            if (seen[(~w.lit2()).toInt()]) {
+                out_b.push(w);
+                out_a.push(Watched(~w.lit2(), false));
+                found = true;
+                break;
+            }
+        }
     }
+
+    for(const auto& l: toClear) {
+        seen[l.toInt()] = 0;
+    }
+    toClear.clear();
+
+
+    if (found) {
+        //cout << "EQ gate" << endl;
+    }
+
+    return found;
 }
 
 bool OccSimplifier::try_remove_lit_via_occurrence_simpl(
@@ -2562,82 +2645,29 @@ bool OccSimplifier::forward_subsume_irred(
     return false;
 }
 
-int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
+bool OccSimplifier::generate_resolvents(
+    vec<Watched>& tmp_poss,
+    vec<Watched>& tmp_negs,
+    Lit lit,
+    uint32_t limit)
 {
-    assert(solver->ok);
-    assert(solver->varData[var].removed == Removed::none);
-    assert(solver->value(var) == l_Undef);
-
-    //Gather data
-    #ifdef CHECK_N_OCCUR
-    if (n_occurs[Lit(var, false).toInt()] != calc_data_for_heuristic(Lit(var, false))) {
-        cout << "lit " << Lit(var, false) << endl;
-        cout << "n_occ is: " << n_occurs[Lit(var, false).toInt()] << endl;
-        cout << "calc is: " << calc_data_for_heuristic(Lit(var, false)) << endl;
-        assert(false);
-    }
-
-    if (n_occurs[Lit(var, true).toInt()] != calc_data_for_heuristic(Lit(var, true))) {
-        cout << "lit " << Lit(var, true) << endl;
-        cout << "n_occ is: " << n_occurs[Lit(var, true).toInt()] << endl;
-        cout << "calc is: " << calc_data_for_heuristic(Lit(var, true)) << endl;
-    }
-    #endif
-    const uint32_t pos = n_occurs[Lit(var, false).toInt()];
-    const uint32_t neg = n_occurs[Lit(var, true).toInt()];
-
-    //Heuristic calculation took too much time
-    if (*limit_to_decrease < 0) {
-        return std::numeric_limits<int>::max();
-    }
-
-    //set-up
-    const Lit lit = Lit(var, false);
-    watch_subarray poss = solver->watches[lit];
-    watch_subarray negs = solver->watches[~lit];
-    std::sort(poss.begin(), poss.end(), watch_sort_smallest_first());
-    std::sort(negs.begin(), negs.end(), watch_sort_smallest_first());
-    resolvents.clear();
-
-    //Pure literal, no resolvents
-    //we look at "pos" and "neg" (and not poss&negs) because we don't care about redundant clauses
-    if (pos == 0 || neg == 0) {
-        return -100;
-    }
-
-    //Too expensive to check, it's futile
-    if ((uint64_t)neg * (uint64_t)pos
-        >= solver->conf.varelim_cutoff_too_many_clauses
-    ) {
-        return std::numeric_limits<int>::max();
-    }
-
-    gate_varelim_clause = NULL;
-    if (solver->conf.skip_some_bve_resolvents) {
-        mark_gate_in_poss_negs(lit, poss, negs);
-    }
-
-    // Count clauses/literals after elimination
-    uint32_t before_clauses = pos + neg;
-    uint32_t after_clauses = 0;
-
     size_t at_poss = 0;
-    for (const Watched* it = poss.begin(), *end = poss.end()
+    for (const Watched* it = tmp_poss.begin(), *end = tmp_poss.end()
         ; it != end
         ; ++it, at_poss++
     ) {
         *limit_to_decrease -= 3;
-        if (solver->redundant_or_removed(*it))
-            continue;
+        #ifdef SLOW_DEBUG
+        assert(!solver->redundant_or_removed(*it));
+        #endif
 
         size_t at_negs = 0;
-        for (const Watched *it2 = negs.begin(), *end2 = negs.end()
+        for (const Watched *it2 = tmp_negs.begin(), *end2 = tmp_negs.end()
             ; it2 != end2
             ; it2++, at_negs++
         ) {
             *limit_to_decrease -= 3;
-            if (solver->redundant_or_removed(*it2))
-                continue;
+            assert(!solver->redundant_or_removed(*it2));
 
             //Resolve the two clauses
             bool tautological = resolve_clauses(*it, *it2, lit);
@@ -2647,26 +2677,6 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
 
             if (solver->satisfied_cl(dummy)) {
                 continue;
-            }
-
-            #ifdef VERBOSE_DEBUG_VARELIM
-            cout << "Adding new clause due to varelim: " << dummy << endl;
-            #endif
-
-            after_clauses++;
-            //Early-abort or over time
-            if (after_clauses > (before_clauses + grow)
-                //Too long resolvent
-                || (solver->conf.velim_resolvent_too_large != -1
-                    && ((int)dummy.size() > solver->conf.velim_resolvent_too_large))
-                //Over-time
-                || *limit_to_decrease < -10LL*1000LL
-
-            ) {
-                if (gate_varelim_clause) {
-                    gate_varelim_clause->stats.marked_clause = false;
-                }
-                return std::numeric_limits<int>::max();
             }
 
             if (solver->conf.do_fwd_sub_bve_resolvents) {
@@ -2690,6 +2700,22 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
                 }
             }
 
+            #ifdef VERBOSE_DEBUG_VARELIM
+            cout << "Adding new clause due to varelim: " << dummy << endl;
+            #endif
+
+            //Early-abort or over time
+            if (resolvents.size()+1 > limit
+                //Too long resolvent
+                || (solver->conf.velim_resolvent_too_large != -1
+                    && ((int)dummy.size() > solver->conf.velim_resolvent_too_large))
+                //Over-time
+                || *limit_to_decrease < -10LL*1000LL
+
+            ) {
+                return false;
+            }
+
             //Calculate new clause stats
             ClauseStats stats;
             bool is_xor = false;
@@ -2709,16 +2735,160 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
                 is_xor |= c2->used_in_xor();
             }
             //must clear marking that has been set due to gate
-            stats.marked_clause = 0;
             resolvents.add_resolvent(dummy, stats, is_xor);
         }
     }
 
-    if (gate_varelim_clause) {
-        gate_varelim_clause->stats.marked_clause = false;
+    return true;
+}
+
+void OccSimplifier::get_antecedents(
+    const vec<Watched>& gates,
+    const vec<Watched>& full_set,
+    vec<Watched>& output)
+{
+    //both of gates and full_set are strictly sorted and cleaned from REDundant
+    output.clear();
+    uint32_t j = 0;
+    for(uint32_t i = 0; i < full_set.size(); i++) {
+        const Watched& w = full_set[i];
+        if (solver->redundant_or_removed(w))
+            continue;
+        if (j < gates.size()) {
+            if (gates[j] == w) {
+                j++;
+                continue;
+            }
+        }
+        output.push(w);
     }
 
-    return -1;
+    assert(output.size() == full_set.size() - gates.size());
+}
+
+void OccSimplifier::clean_from_red_or_removed(
+    const vec<Watched>& in,
+    vec<Watched>& out)
+{
+    out.clear();
+    for(const auto& w: in) {
+        if (!solver->redundant_or_removed(w)) {
+            out.push(w);
+        }
+    }
+}
+
+//Return true if it worked
+bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
+{
+    assert(solver->ok);
+    assert(solver->varData[var].removed == Removed::none);
+    assert(solver->value(var) == l_Undef);
+    resolvents.clear();
+
+    //Gather data
+    #ifdef CHECK_N_OCCUR
+    if (n_occurs[Lit(var, false).toInt()] != calc_data_for_heuristic(Lit(var, false))) {
+        cout << "lit " << Lit(var, false) << endl;
+        cout << "n_occ is: " << n_occurs[Lit(var, false).toInt()] << endl;
+        cout << "calc is: " << calc_data_for_heuristic(Lit(var, false)) << endl;
+        assert(false);
+    }
+
+    if (n_occurs[Lit(var, true).toInt()] != calc_data_for_heuristic(Lit(var, true))) {
+        cout << "lit " << Lit(var, true) << endl;
+        cout << "n_occ is: " << n_occurs[Lit(var, true).toInt()] << endl;
+        cout << "calc is: " << calc_data_for_heuristic(Lit(var, true)) << endl;
+    }
+    #endif
+    const uint32_t pos = n_occurs[Lit(var, false).toInt()];
+    const uint32_t neg = n_occurs[Lit(var, true).toInt()];
+
+    //set-up
+    const Lit lit = Lit(var, false);
+    clean_from_red_or_removed(solver->watches[lit], poss);
+    clean_from_red_or_removed(solver->watches[~lit], negs);
+    assert(poss.size() == pos);
+    assert(negs.size() == neg);
+
+    //Pure literal, no resolvents
+    //we look at "pos" and "neg" (and not poss&negs) because we don't care about redundant clauses
+    if (pos == 0 || neg == 0) {
+        return true;
+    }
+
+
+    std::sort(poss.begin(), poss.end(), sort_smallest_first(solver->cl_alloc));
+    std::sort(negs.begin(), negs.end(), sort_smallest_first(solver->cl_alloc));
+
+    //Too expensive to check, it's futile
+    if ((uint64_t)neg * (uint64_t)pos
+        >= solver->conf.varelim_cutoff_too_many_clauses
+    ) {
+        return false;
+    }
+
+    // see:  http://baldur.iti.kit.edu/sat/files/ex04.pdf
+    //Either resolve:
+    //  [[ gates available ]]
+    //  TODO *ALL* gate types: AND, ITE, XOR
+    // 1) gate_pos with atec_neg
+    // 2) gate_neg with atec_pos
+    // 3) gate_neg with gate_pos
+
+    bool gates = false;
+    if (find_equivalence_gate(lit, poss, negs, gates_poss, gates_negs)) {
+        gates = true;
+    } else if (find_or_gate(lit, poss, negs, gates_poss, gates_negs)) {
+        gates = true;
+    } else if (find_or_gate(~lit, negs, poss, gates_negs, gates_poss)) {
+        gates = true;
+    }
+
+    if (gates && solver->conf.verbosity > 5) {
+        cout << "Elim on gate, lit: " << lit << " g poss: ";
+        for(const auto& w: gates_poss) {
+            if (w.isClause()) {
+                cout << " [" << *solver->cl_alloc.ptr(w.get_offset()) << "], ";
+            } else {
+                cout << w << ", ";
+            }
+        }
+        cout << " -- g negs: ";
+        for(const auto& w: gates_negs) {
+            cout << w << ", ";
+        }
+        cout << endl;
+    }
+
+    std::sort(gates_poss.begin(), gates_poss.end(), sort_smallest_first(solver->cl_alloc));
+    std::sort(gates_negs.begin(), gates_negs.end(), sort_smallest_first(solver->cl_alloc));
+    //TODO We could just filter negs, poss below
+    get_antecedents(gates_negs, negs, antec_negs);
+    get_antecedents(gates_poss, poss, antec_poss);
+    const uint32_t limit = pos+neg+grow;
+
+    if (gates) {
+        if (!generate_resolvents(gates_poss, antec_negs, lit, limit)) {
+            return false;
+        } else if (!generate_resolvents(gates_negs, antec_poss, ~lit, limit)) {
+            return false;
+//         } else if (!generate_resolvents(gates_poss, gates_negs, lit, limit)) {
+//             return false;
+        }
+    } else {
+        if (!generate_resolvents(antec_poss, antec_negs, lit, limit)) {
+            return false;
+        }
+    }
+
+    if (gates) {
+        //cout << "Gates success!" << endl;
+    } else {
+        //cout << "Non-gate success!" << endl;
+    }
+
+    return true;
 }
 
 void OccSimplifier::printOccur(const Lit lit) const
@@ -2991,7 +3161,7 @@ bool OccSimplifier::maybe_eliminate(const uint32_t var)
     const Lit lit = Lit(var, false);
 
     //Heuristic says no, or we ran out of time
-    if (test_elim_and_fill_resolvents(var) > 0
+    if (!test_elim_and_fill_resolvents(var)
         || *limit_to_decrease < 0
     ) {
         return false;  //didn't eliminate :(
@@ -3104,20 +3274,6 @@ bool OccSimplifier::resolve_clauses(
         if (cl2->freed()) {
             return true;
         }
-    }
-    if (gate_varelim_clause
-        && cl1 && cl2
-        && !cl1->stats.marked_clause
-        && !cl2->stats.marked_clause
-    ) {
-        //for G (U) R, we only neede to resolve to
-        // (Gx * R!x) (U) (G!x * Rx)
-        // So Rx * R!x is skipped
-        //
-        // Here: Both are long clauses, so only one could be in G. But neither
-        // are marked, hence neither are in G, so both are in R.
-        // see:  http://baldur.iti.kit.edu/sat/files/ex04.pdf
-        return true;
     }
 
     dummy.clear();

@@ -102,6 +102,7 @@ struct ClauseSizeSorterLargestFirst
         const Clause* cl1 = cl_alloc.ptr(off1);
         const Clause* cl2 = cl_alloc.ptr(off2);
 
+        //Correct order if c1's size is larger
         return cl1->size() > cl2->size();
     }
 };

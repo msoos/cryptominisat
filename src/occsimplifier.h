@@ -401,20 +401,6 @@ private:
         bool red
     );
 
-    struct watch_sort_smallest_first {
-        bool operator()(const Watched& first, const Watched& second)
-        {
-            //Anything but clause!
-            if (first.isClause())
-                return false;
-            if (second.isClause())
-                return true;
-
-            //Both are bin
-            return false;
-        }
-    };
-
     /////////////////////
     //Variable elimination
     uint32_t grow = 0; /// maximum grow rate for clauses
@@ -455,13 +441,43 @@ private:
         const Lit lit,
         cl_abst_type abs,
         const uint32_t size);
+    bool generate_resolvents(
+        vec<Watched>& tmp_poss,
+        vec<Watched>& tmp_negs,
+        Lit lit,
+        const uint32_t limit);
+    void get_antecedents(
+        const vec<Watched>& gates,
+        const vec<Watched>& full_set,
+        vec<Watched>& output);
     bool        deal_with_added_long_and_bin(const bool main);
     bool        prop_and_clean_long_and_impl_clauses();
     vector<Lit> tmp_bin_cl;
+    vec<Watched> gates_poss;
+    vec<Watched> gates_negs;
+    vec<Watched> antec_poss;
+    vec<Watched> antec_negs;
+    vec<Watched> poss;
+    vec<Watched> negs;
+    void clean_from_red_or_removed(
+        const vec<Watched>& in,
+        vec<Watched>& out);
     void        create_dummy_blocked_clause(const Lit lit);
-    int         test_elim_and_fill_resolvents(uint32_t var);
-    void        mark_gate_in_poss_negs(Lit elim_lit, watch_subarray_const poss, watch_subarray_const negs);
-    void        find_gate(Lit elim_lit, watch_subarray_const a, watch_subarray_const b);
+    bool        test_elim_and_fill_resolvents(uint32_t var);
+    void        get_gate(Lit elim_lit, watch_subarray_const poss, watch_subarray_const negs);
+    bool find_or_gate(
+        Lit lit,
+        watch_subarray_const a,
+        watch_subarray_const b,
+        vec<Watched>& out_a,
+        vec<Watched>& out_b
+    );
+    bool find_equivalence_gate(
+        Lit lit
+        , watch_subarray_const a
+        , watch_subarray_const b
+        , vec<Watched>& out_a
+        , vec<Watched>& out_b);
     void        print_var_eliminate_stat(Lit lit) const;
     bool        add_varelim_resolvent(vector<Lit>& finalLits, const ClauseStats& stats, bool is_xor);
     void        update_varelim_complexity_heap();
@@ -526,7 +542,6 @@ private:
         }
     };
     Resolvents resolvents;
-    Clause* gate_varelim_clause;
     uint32_t calc_data_for_heuristic(const Lit lit);
     uint64_t time_spent_on_calc_otf_update;
     uint64_t num_otf_update_until_now;
