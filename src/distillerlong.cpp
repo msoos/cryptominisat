@@ -263,6 +263,14 @@ bool DistillerLong::distill_long_cls_all(
         );
     }
 
+    //We went through the loop without timeout, let's reset the distilled flag
+    if (time_remain > 0) {
+        for(const auto& off: offs) {
+            Clause* cl = solver->cl_alloc.ptr(off);
+            cl->set_distilled(0);
+        }
+    }
+
     //Update stats
     runStats.time_used += time_used;
     runStats.zeroDepthAssigns += solver->trail_size() - origTrailSize;
