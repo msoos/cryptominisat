@@ -2453,7 +2453,7 @@ void OccSimplifier::add_clause_to_blck(const vector<Lit>& lits)
 }
 
 bool OccSimplifier::find_or_gate(
-    Lit lit
+    Lit elim_lit
     , watch_subarray_const a
     , watch_subarray_const b
     , vec<Watched>& out_a
@@ -2489,7 +2489,7 @@ bool OccSimplifier::find_or_gate(
             assert(cl->size() > 2);
             bool OK = true;
             for(const Lit lit: *cl) {
-                if (lit != ~lit) {
+                if (lit != ~elim_lit) {
                     if (!seen[lit.toInt()]) {
                         OK = false;
                         break;
@@ -2501,7 +2501,7 @@ bool OccSimplifier::find_or_gate(
             if (OK) {
                 out_b.push(w);
                 for(const Lit lit: *cl) {
-                    if (lit != ~lit) {
+                    if (lit != ~elim_lit) {
                         out_a.push(Watched(~lit, false));
                     }
                 }
@@ -2521,7 +2521,7 @@ bool OccSimplifier::find_or_gate(
 
 
 bool OccSimplifier::find_equivalence_gate(
-    Lit lit
+    Lit elim_lit
     , watch_subarray_const a
     , watch_subarray_const b
     , vec<Watched>& out_a
