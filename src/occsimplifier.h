@@ -478,6 +478,14 @@ private:
         , watch_subarray_const b
         , vec<Watched>& out_a
         , vec<Watched>& out_b);
+    bool find_xor_gate(
+        Lit lit
+        , watch_subarray_const a
+        , watch_subarray_const b
+        , vec<Watched>& out_a
+        , vec<Watched>& out_b);
+    vector<Clause*> toclear_marked_cls;
+    set<uint32_t> parities_found;
     void        print_var_eliminate_stat(Lit lit) const;
     bool        add_varelim_resolvent(vector<Lit>& finalLits, const ClauseStats& stats, bool is_xor);
     void        update_varelim_complexity_heap();

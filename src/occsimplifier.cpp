@@ -2571,6 +2571,184 @@ bool OccSimplifier::find_equivalence_gate(
     return found;
 }
 
+bool OccSimplifier::find_xor_gate(
+    Lit elim_lit
+    , watch_subarray_const a
+    , watch_subarray_const b
+    , vec<Watched>& out_a
+    , vec<Watched>& out_b
+) {
+    assert(toClear.empty());
+    //cout << "Finding xor gate" << endl;
+
+    bool found = false;
+    out_a.clear();
+    out_b.clear();
+    assert(toclear_marked_cls.empty());
+    assert(parities_found.empty());
+
+    bool parity;
+    for(uint32_t j = 0; j < a.size(); j++) {
+        const Watched& w = a[j];
+        if (w.isBin()) {
+            continue;
+        }
+
+        assert(w.isClause());
+        Clause* cl = solver->cl_alloc.ptr(w.get_offset());
+        if (cl->size() != 3 || cl->marked || cl->red()) {
+            continue;
+        }
+
+        //Clear seen
+        for(const auto& l: toClear) {
+            seen[l.var()] = 0;
+        }
+        toClear.clear();
+
+        parity = 0;
+        for(const auto& l: *cl) {
+            seen [l.var()] = 1;
+            toClear.push_back(l);
+            parity ^= l.sign();
+        }
+        out_a.clear();
+        out_a.push(w);
+        cl->marked = 1;
+        toclear_marked_cls.push_back(cl);
+        std::sort(cl->begin(), cl->end());
+        uint32_t val = 0;
+        for(uint32_t i2 = 0; i2 < cl->size(); i2 ++) {
+            if ((*cl)[i2].sign()) {
+                val += 1 << i2;
+            }
+        }
+        parities_found.clear();
+        parities_found.insert(val);
+
+        for(uint32_t i = j+1; i < a.size(); i++) {
+            const Watched& w2 = a[i];
+            if (w2.isBin()) {
+                continue;
+            }
+            assert(w2.isClause());
+            Clause* cl2 = solver->cl_alloc.ptr(w2.get_offset());
+            #ifdef SLOW_DEBUG
+            assert(!cl2->red());
+            #endif
+            if (cl2->size() != 3 || cl2->marked) {
+                continue;
+            }
+            bool this_cl_ok = true;
+            bool myparity = 0;
+            for(const auto& l2: *cl2) {
+                if (!seen[l2.var()]) {
+                    this_cl_ok = false;
+                    break;
+                }
+                myparity ^= l2.sign();
+            }
+            //cout << "Mypar: " << myparity << " real par: " << parity << " ok: " << this_cl_ok << endl;
+            if (this_cl_ok && myparity == parity) {
+                cl2->marked = 1;
+                toclear_marked_cls.push_back(cl2);
+                std::sort(cl2->begin(), cl2->end());
+                val = 0;
+                for(uint32_t i2 = 0; i2 < cl2->size(); i2 ++) {
+                    if ((*cl2)[i2].sign()) {
+                        val += 1 << i2;
+                    }
+                }
+                if (parities_found.find(val) == parities_found.end()) {
+                    out_a.push(w2);
+                    parities_found.insert(val);
+                }
+            }
+        }
+
+        //Early abort, we should have found 3 by now
+        //cout << "Here par find s: " << parities_found.size() << endl;
+        if (parities_found.size() != 2) {
+            continue;
+        }
+
+        out_b.clear();
+        for(const Watched& w2: b) {
+            if (w2.isBin()) {
+                continue;
+            }
+            assert(w2.isClause());
+            Clause* cl2 = solver->cl_alloc.ptr(w2.get_offset());
+            #ifdef SLOW_DEBUG
+            assert(!cl2->red());
+            #endif
+            if (cl2->size() != 3 || cl2->marked) {
+                continue;
+            }
+            bool this_cl_ok = true;
+            bool myparity = 0;
+            for(const auto& l2: *cl2) {
+                if (!seen[l2.var()]) {
+                    this_cl_ok = false;
+                    break;
+                }
+                myparity ^= l2.sign();
+            }
+            //cout << "Mypar: " << myparity << " real par: " << parity << " ok: " << this_cl_ok << endl;
+            if (this_cl_ok && myparity == parity) {
+                cl2->marked = 1;
+                toclear_marked_cls.push_back(cl2);
+                std::sort(cl2->begin(), cl2->end());
+                val = 0;
+                for(uint32_t i2 = 0; i2 < cl2->size(); i2 ++) {
+                    if ((*cl2)[i2].sign()) {
+                        val += 1 << i2;
+                    }
+                }
+                if (parities_found.find(val) == parities_found.end()) {
+                    out_b.push(w2);
+                    parities_found.insert(val);
+                }
+            }
+
+            if (parities_found.size() == 4) {
+                found = true;
+                break;
+            }
+        }
+        if (found) {
+            break;
+        }
+    }
+
+    //Clear seen
+    for(const auto& l: toClear) {
+        seen[l.var()] = 0;
+    }
+    toClear.clear();
+
+    //Cleark cl markings
+    for(const auto& cl: toclear_marked_cls) {
+        cl->marked = 0;
+    }
+    toclear_marked_cls.clear();
+    parities_found.clear();
+
+
+    if (found) {
+        //cout << "XOR gate" << endl;
+        assert(out_a.size() == 2);
+        assert(out_b.size() == 2);
+        std::sort(out_a.begin(), out_a.end(), sort_smallest_first(solver->cl_alloc));
+        std::sort(out_b.begin(), out_b.end(), sort_smallest_first(solver->cl_alloc));
+    } else {
+        out_a.clear();
+        out_b.clear();
+    }
+
+    return found;
+}
+
 bool OccSimplifier::try_remove_lit_via_occurrence_simpl(
     const Clause* cl, const Lit lit)
 {
@@ -2852,6 +3030,8 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
     } else if (find_or_gate(lit, poss, negs, gates_poss, gates_negs)) {
         gates = true;
     } else if (find_or_gate(~lit, negs, poss, gates_negs, gates_poss)) {
+        gates = true;
+    } else if (find_xor_gate(lit, poss, negs, gates_poss, gates_negs)) {
         gates = true;
     }
 
