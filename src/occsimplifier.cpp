@@ -516,36 +516,36 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
     }
 }
 
-struct sort_smallest_first {
-    sort_smallest_first(ClauseAllocator& _cl_alloc) :
+struct sort_largest_first {
+    sort_largest_first(ClauseAllocator& _cl_alloc) :
         cl_alloc(_cl_alloc)
     {}
 
     bool operator()(const Watched& first, const Watched& second)
     {
         if (second.isBin() && first.isClause()) {
-            //wrong order
-            return false;
-        }
-        if (first.isBin() && second.isClause()) {
             //this is the right order
             return true;
         }
+        if (first.isBin() && second.isClause()) {
+            //wrong order
+            return false;
+        }
 
         if (first.isBin() && second.isBin()) {
-            //correct order if first has lit2() smaller.
-            return first.lit2() < second.lit2();
+            //correct order if first has lit2() larger.
+            return first.lit2() > second.lit2();
         }
 
         if (first.isClause() && second.isClause()) {
             Clause& cl1 = *cl_alloc.ptr(first.get_offset());
             Clause& cl2 = *cl_alloc.ptr(second.get_offset());
             if (cl1.size() != cl2.size()) {
-                return cl1.size() < cl2.size();
+                return cl1.size() > cl2.size();
             }
 
             //we don't care, let's use offset as a distinguisher
-            return first.get_offset() < second.get_offset();
+            return first.get_offset() > second.get_offset();
         }
 
         assert(false && "This cannot happen");
@@ -2818,8 +2818,8 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
     }
 
 
-    std::sort(poss.begin(), poss.end(), sort_smallest_first(solver->cl_alloc));
-    std::sort(negs.begin(), negs.end(), sort_smallest_first(solver->cl_alloc));
+    std::sort(poss.begin(), poss.end(), sort_largest_first(solver->cl_alloc));
+    std::sort(negs.begin(), negs.end(), sort_largest_first(solver->cl_alloc));
 
     //Too expensive to check, it's futile
     if ((uint64_t)neg * (uint64_t)pos
@@ -2861,8 +2861,8 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
         cout << endl;
     }
 
-    std::sort(gates_poss.begin(), gates_poss.end(), sort_smallest_first(solver->cl_alloc));
-    std::sort(gates_negs.begin(), gates_negs.end(), sort_smallest_first(solver->cl_alloc));
+    std::sort(gates_poss.begin(), gates_poss.end(), sort_largest_first(solver->cl_alloc));
+    std::sort(gates_negs.begin(), gates_negs.end(), sort_largest_first(solver->cl_alloc));
     //TODO We could just filter negs, poss below
     get_antecedents(gates_negs, negs, antec_negs);
     get_antecedents(gates_poss, poss, antec_poss);
