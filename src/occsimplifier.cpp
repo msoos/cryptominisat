@@ -2587,7 +2587,13 @@ bool OccSimplifier::find_xor_gate(
     assert(toclear_marked_cls.empty());
     assert(parities_found.empty());
 
+    uint32_t maxsize = 7;
+    maxsize = std::min((int)maxsize, (int)std::log2(a.size())+1);
+    maxsize = std::min((int)maxsize, (int)std::log2(b.size())+1);
+
     bool parity;
+    uint32_t size;
+    uint32_t tofind;
     for(uint32_t j = 0; j < a.size(); j++) {
         const Watched& w = a[j];
         if (w.isBin()) {
@@ -2596,9 +2602,11 @@ bool OccSimplifier::find_xor_gate(
 
         assert(w.isClause());
         Clause* cl = solver->cl_alloc.ptr(w.get_offset());
-        if (cl->size() != 3 || cl->marked || cl->red()) {
+        if (cl->size() > maxsize || cl->marked || cl->red()) {
             continue;
         }
+        size = cl->size();
+        tofind = 1ULL<<(size-1);
 
         //Clear seen
         for(const auto& l: toClear) {
@@ -2636,7 +2644,7 @@ bool OccSimplifier::find_xor_gate(
             #ifdef SLOW_DEBUG
             assert(!cl2->red());
             #endif
-            if (cl2->size() != 3 || cl2->marked) {
+            if (cl2->size() != size || cl2->marked) {
                 continue;
             }
             bool this_cl_ok = true;
@@ -2668,12 +2676,13 @@ bool OccSimplifier::find_xor_gate(
 
         //Early abort, we should have found 3 by now
         //cout << "Here par find s: " << parities_found.size() << endl;
-        if (parities_found.size() != 2) {
+        if (parities_found.size() != tofind/2) {
             continue;
         }
 
         out_b.clear();
-        for(const Watched& w2: b) {
+        for(uint32_t i = 0; i < b.size(); i++) {
+            const Watched& w2 = b[i];
             if (w2.isBin()) {
                 continue;
             }
@@ -2682,7 +2691,7 @@ bool OccSimplifier::find_xor_gate(
             #ifdef SLOW_DEBUG
             assert(!cl2->red());
             #endif
-            if (cl2->size() != 3 || cl2->marked) {
+            if (cl2->size() != size || cl2->marked) {
                 continue;
             }
             bool this_cl_ok = true;
@@ -2710,9 +2719,15 @@ bool OccSimplifier::find_xor_gate(
                     parities_found.insert(val);
                 }
             }
+            uint32_t so_far = parities_found.size();
 
-            if (parities_found.size() == 4) {
+            if (so_far == tofind) {
                 found = true;
+                break;
+            }
+
+            //Early abort -- there is not enough left in "b" to be able to do work
+            if (tofind-so_far > (b.size() - i - 1)) {
                 break;
             }
         }
@@ -2737,8 +2752,8 @@ bool OccSimplifier::find_xor_gate(
 
     if (found) {
         //cout << "XOR gate" << endl;
-        assert(out_a.size() == 2);
-        assert(out_b.size() == 2);
+        assert(out_a.size() == tofind/2);
+        assert(out_b.size() == tofind/2);
         std::sort(out_a.begin(), out_a.end(), sort_smallest_first(solver->cl_alloc));
         std::sort(out_b.begin(), out_b.end(), sort_smallest_first(solver->cl_alloc));
     } else {
