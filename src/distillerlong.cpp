@@ -43,7 +43,7 @@ DistillerLong::DistillerLong(Solver* _solver) :
     solver(_solver)
 {}
 
-bool DistillerLong::distill(const bool red, bool fullstats)
+bool DistillerLong::distill(const bool red, bool fullstats, bool only_rem_cl)
 {
     assert(solver->ok);
     numCalls++;
@@ -51,12 +51,13 @@ bool DistillerLong::distill(const bool red, bool fullstats)
 
 
     if (!red) {
-
         if (!distill_long_cls_all(solver->longIrredCls, 1, true)) {
             goto end;
         }
-        if (!distill_long_cls_all(solver->longIrredCls, 1, false)) {
-            goto end;
+        if (!only_rem_cl) {
+            if (!distill_long_cls_all(solver->longIrredCls, 1, false)) {
+                goto end;
+            }
         }
     } else {
         if (solver->conf.pred_distill_orig) {

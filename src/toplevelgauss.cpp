@@ -261,7 +261,7 @@ bool TopLevelGauss::extractInfoFromBlock(
             case 2: {
                 runStats.newBins++;
                 out_changed_occur->insert(out_changed_occur->end(), lits.begin(), lits.end());
-                solver->add_xor_clause_inter(lits, rhs, false);
+                solver->add_xor_clause_inter(lits, rhs, false, true, true);
                 if (!solver->okay())
                     goto end;
                 break;

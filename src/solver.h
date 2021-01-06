@@ -210,6 +210,7 @@ class Solver : public Searcher
             , bool rhs
             , bool attach
             , bool addDrat = true
+            , bool red = false
         );
         void new_var(const bool bva = false, const uint32_t orig_outer = std::numeric_limits<uint32_t>::max()) override;
         void new_vars(const size_t n) override;
@@ -318,6 +319,7 @@ class Solver : public Searcher
         FRIEND_TEST(SearcherTest, pickpolar_auto_not_changed_by_simp);
         #endif
 
+        lbool probe_inside(Lit l, uint32_t& min_props);
         void reset_for_solving();
         vector<Lit> add_clause_int_tmp_cl;
         lbool iterate_until_solved();
@@ -341,8 +343,8 @@ class Solver : public Searcher
         vector<uint32_t> tmp_xor_clash_vars;
         void check_xor_cut_config_sanity() const;
         void handle_found_solution(const lbool status, const bool only_indep_solution);
-        void add_every_combination_xor(const vector<Lit>& lits, bool attach, bool addDrat);
-        void add_xor_clause_inter_cleaned_cut(const vector<Lit>& lits, bool attach, bool addDrat);
+        void add_every_combination_xor(const vector<Lit>& lits, bool attach, const bool addDrat, const bool red);
+        void add_xor_clause_inter_cleaned_cut(const vector<Lit>& lits, bool attach, bool addDrat, const bool red);
         unsigned num_bits_set(const size_t x, const unsigned max_size) const;
         void check_too_large_variable_number(const vector<Lit>& lits) const;
 

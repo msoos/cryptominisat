@@ -49,7 +49,7 @@ void SubsumeImplicit::try_subsume_bin(
     //Subsume bin with bin
     if (i->lit2() == lastLit2) {
         //The sorting algorithm prefers irred to red, so it is
-        //impossible to have irred before red
+        //impossible to have red before irred
         assert(!(i->red() == false && lastRed == true));
 
         runStats.remBins++;

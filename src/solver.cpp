@@ -196,6 +196,7 @@ bool Solver::add_xor_clause_inter(
     , bool rhs
     , const bool attach
     , bool addDrat
+    , bool red
 ) {
     assert(ok);
     assert(!attach || qhead == trail.size());
@@ -234,7 +235,7 @@ bool Solver::add_xor_clause_inter(
     ps[0] ^= rhs;
 
     //cout << "without rhs is: " << ps << endl;
-    add_every_combination_xor(ps, attach, addDrat);
+    add_every_combination_xor(ps, attach, addDrat, red);
     if (ps.size() > 2) {
         xorclauses.push_back(Xor(ps, rhs, tmp_xor_clash_vars));
     }
@@ -246,6 +247,7 @@ void Solver::add_every_combination_xor(
     const vector<Lit>& lits
     , const bool attach
     , const bool addDrat
+    , const bool red
 ) {
     //cout << "add_every_combination got: " << lits << endl;
 
@@ -284,7 +286,7 @@ void Solver::add_every_combination_xor(
             lastlit_added = toadd;
         }
 
-        add_xor_clause_inter_cleaned_cut(xorlits, attach, addDrat);
+        add_xor_clause_inter_cleaned_cut(xorlits, attach, addDrat, red);
         if (!ok)
             break;
 
@@ -296,6 +298,7 @@ void Solver::add_xor_clause_inter_cleaned_cut(
     const vector<Lit>& lits
     , const bool attach
     , const bool addDrat
+    , const bool red
 ) {
     //cout << "xor_inter_cleaned_cut got: " << lits << endl;
     vector<Lit> new_lits;
@@ -313,7 +316,7 @@ void Solver::add_xor_clause_inter_cleaned_cut(
         //cout << "Added. " << new_lits << endl;
         Clause* cl = add_clause_int(
             new_lits, //lits
-            false, //redundant?
+            red, //redundant?
             NULL, //clause stats
             attach, //attach it?
             NULL,  //get back the final set of literals
@@ -323,7 +326,11 @@ void Solver::add_xor_clause_inter_cleaned_cut(
         if (cl) {
             cl->set_used_in_xor(true);
             cl->set_used_in_xor_full(true);
-            longIrredCls.push_back(cl_alloc.get_offset(cl));
+            if (red) {
+                longRedCls[2].push_back(cl_alloc.get_offset(cl));
+            } else {
+                longIrredCls.push_back(cl_alloc.get_offset(cl));
+            }
         }
 
         if (!ok)
@@ -2109,6 +2116,18 @@ lbool Solver::execute_inprocess_strategy(
             if (conf.doFindAndReplaceEqLits) {
                 varReplacer->replace_if_enough_is_found();
             }
+        } else if (token == "full-probe") {
+            for(uint32_t i = 0; i < nVars(); i++) {
+                uint32_t min_props;
+                Lit l(i, false);
+                if (value(l) == l_Undef &&
+                    varData[i].removed == Removed::none)
+                {
+                    if (probe_inside(l, min_props) == l_False) {
+                        break;
+                    }
+                }
+            }
         } else if (token == "card-find") {
             if (conf.doFindCard) {
                 card_finder->find_cards();
@@ -2162,7 +2181,12 @@ lbool Solver::execute_inprocess_strategy(
         } else if (token == "distill-cls") {
             //Enqueues literals in long + tri clauses two-by-two and propagates
             if (conf.do_distill_clauses) {
-                distill_long_cls->distill(false);
+                distill_long_cls->distill(false, true, false);
+            }
+        } else if (token == "distill-cls-onlyrem") {
+            //Enqueues literals in long + tri clauses two-by-two and propagates
+            if (conf.do_distill_clauses) {
+                distill_long_cls->distill(false, true, true);
             }
         } else if (token == "must-distill-cls") {
             //Enqueues literals in long + tri clauses two-by-two and propagates
@@ -2171,7 +2195,16 @@ lbool Solver::execute_inprocess_strategy(
                     Clause* cl = cl_alloc.ptr(offs);
                     cl->set_distilled(false);
                 }
-                distill_long_cls->distill(false);
+                distill_long_cls->distill(false, true, false);
+            }
+        } else if (token == "must-distill-cls-onlyrem") {
+            //Enqueues literals in long + tri clauses two-by-two and propagates
+            if (conf.do_distill_clauses) {
+                for(const auto& offs: longIrredCls) {
+                    Clause* cl = cl_alloc.ptr(offs);
+                    cl->set_distilled(false);
+                }
+                distill_long_cls->distill(false, true, true);
             }
         } else if (token == "str-impl") {
             if (conf.doStrSubImplicit) {
@@ -3253,27 +3286,8 @@ bool Solver::add_clause_outside(const vector<Lit>& lits, bool red)
     return addClauseInt(back_number_from_outside_to_outer_tmp, red);
 }
 
-lbool Solver::probe_outside(Lit l, uint32_t& min_props)
+lbool Solver::probe_inside(Lit l, uint32_t& min_props)
 {
-    assert(decisionLevel() == 0);
-    assert(l.var() < nVarsOutside());
-
-    if (!ok) {
-        return l_False;
-    }
-
-
-    l = map_to_with_bva(l);
-    l = varReplacer->get_lit_replaced_with_outer(l);
-    l = map_outer_to_inter(l);
-    if (varData[l.var()].removed != Removed::none) {
-        //TODO
-        return l_Undef;
-    }
-    if (value(l) != l_Undef) {
-        return l_Undef;
-    }
-
     //Probe l
     uint32_t old_trail_size = trail.size();
     new_decision_level();
@@ -3356,7 +3370,7 @@ lbool Solver::probe_outside(Lit l, uint32_t& min_props)
             vector<Lit> lits(2);
             lits[0] = l;
             lits[1] = bp_lit;
-            ok = add_xor_clause_inter(lits, false, true);
+            ok = add_xor_clause_inter(lits, false, true, true, true);
             if (!ok) {
                 goto end;
             }
@@ -3376,6 +3390,30 @@ lbool Solver::probe_outside(Lit l, uint32_t& min_props)
     }
     toClear.clear();
     return ok ? l_Undef : l_False;
+}
+
+lbool Solver::probe_outside(Lit l, uint32_t& min_props)
+{
+    assert(decisionLevel() == 0);
+    assert(l.var() < nVarsOutside());
+
+    if (!ok) {
+        return l_False;
+    }
+
+
+    l = map_to_with_bva(l);
+    l = varReplacer->get_lit_replaced_with_outer(l);
+    l = map_outer_to_inter(l);
+    if (varData[l.var()].removed != Removed::none) {
+        //TODO
+        return l_Undef;
+    }
+    if (value(l) != l_Undef) {
+        return l_Undef;
+    }
+
+    return probe_inside(l, min_props);
 }
 
 bool Solver::add_xor_clause_outer(const vector<uint32_t>& vars, bool rhs)
