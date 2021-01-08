@@ -142,13 +142,12 @@ bool DistillerLong::go_through_clauses(
 
         //Get pointer
         ClOffset offset = *i;
-        ClOffset offset2;
         Clause& cl = *solver->cl_alloc.ptr(offset);
         if (cl.used_in_xor() &&
             solver->conf.force_preserve_xors
         ) {
-            offset2 = offset;
-            goto copy;
+            *j++ = *i;
+            continue;
         }
 
         //Time to dereference
@@ -181,13 +180,12 @@ bool DistillerLong::go_through_clauses(
 
         //Try to distill clause
         tried++;
-        offset2 = try_distill_clause_and_return_new(
+        ClOffset offset2 = try_distill_clause_and_return_new(
             offset
             , &cl.stats
             , also_remove
         );
 
-        copy:
         if (offset2 != CL_OFFSET_MAX) {
             *j++ = offset2;
         }
