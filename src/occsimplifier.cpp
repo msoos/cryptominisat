@@ -2387,7 +2387,6 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(
                     add_clause_to_blck(lits);
                 } else {
                     red = true;
-                    bvestats.longRedClRemThroughElim++;
                 }
             }
 
@@ -2403,23 +2402,22 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(
                 bvestats.clauses_elimed_sumsize += 2;
             } else {
                 red = true;
-                bvestats.binRedClRemThroughElim++;
             }
 
             //Put clause into blocked status
             lits.resize(2);
             lits[0] = lit;
             lits[1] = watch.lit2();
-            if (add_to_block) {
-                if (!watch.red()) {
+            if (!watch.red()) {
+                if (add_to_block) {
                     add_clause_to_blck(lits);
-                    n_occurs[lits[0].toInt()]--;
-                    n_occurs[lits[1].toInt()]--;
-                } else {
-                    //If redundant, delayed blocked-based DRAT deletion will not work
-                    //so delete explicitly
-                    (*solver->drat) << del << lits[0] << lits[1] << fin;
                 }
+                n_occurs[lits[0].toInt()]--;
+                n_occurs[lits[1].toInt()]--;
+            } else {
+                //If redundant, delayed blocked-based DRAT deletion will not work
+                //so delete explicitly
+                (*solver->drat) << del << lits[0] << lits[1] << fin;
             }
 
             //Remove
@@ -2520,6 +2518,227 @@ bool OccSimplifier::find_or_gate(
     return found;
 }
 
+bool OccSimplifier::find_ite_gate(
+    Lit elim_lit
+    , watch_subarray_const a
+    , watch_subarray_const b
+    , vec<Watched>& out_a
+    , vec<Watched>& out_b
+) {
+    int limit = solver->conf.varelim_gate_find_limit;
+    bool found = false;
+    out_a.clear();
+    out_b.clear();
+
+    //gate description we are looking for where "a" is being defineed
+    // as  x -> (a=f)
+    //    -x -> (a=g)
+    // these translate to:
+    // -a V  f V -x
+    // -a V  g V  x
+    //  a V -f V -x
+    //  a V -g V  x
+    //where elim_lit = -a
+    //      lits[0]  =  f
+    //      lits[1]  = -x
+    //      lits[2]  =  g
+    Lit lits[3];
+    assert(toClear.empty());
+    for(uint32_t i = 0; i < a.size() && limit >= 0; i++, limit--) {
+        const Watched& w = a[i];
+        if (w.isBin()) {
+            #ifdef SLOW_DEBUG
+            assert(!w.red());
+            #endif
+            continue;
+        }
+
+        assert(w.isClause());
+        #ifdef SLOW_DEBUG
+        assert(!solver->redundant_or_removed(w));
+        #endif
+        Clause* cl = solver->cl_alloc.ptr(w.get_offset());
+        if (cl->size() != 3) {
+            continue;
+        }
+
+        //Clear seen
+        for(const auto& l: toClear) {
+            seen[l.var()] = 0;
+        }
+        toClear.clear();
+        out_a.clear();
+        out_a.push(w);
+
+        //Set up base
+        uint32_t at = 0;
+        for(const auto& l: *cl) {
+            if (l == elim_lit) {
+                continue;
+            }
+            lits[at++] = l;
+            seen[l.var()] = 1;
+            toClear.push_back(l);
+        }
+        assert(at == 2);
+
+        //Find 2nd base: -a V  g V  x
+        for(uint32_t j = i+1; j < a.size(); j++, limit--) {
+            const Watched& w2 = a[j];
+            if (w2.isBin()) {
+                continue;
+            }
+            Clause* cl2 = solver->cl_alloc.ptr(w2.get_offset());
+            if (cl2->size() != 3) {
+                continue;
+            }
+
+            uint32_t match = 0;
+            bool ok = false;
+            bool ok2 = false;
+            for(const auto& l: *cl2) {
+                match += seen[l.var()];
+                if (l == ~lits[1]) {
+                    ok = true;
+                }
+                if (l == ~lits[2]) {
+                    ok2 = true;
+                }
+            }
+            if (match != 1) {
+                continue;
+            }
+
+            if (!ok && !ok2) {
+                continue;
+            }
+            if (!ok && ok2) {
+//                 cout << "Swapped" << endl;
+                std::swap(lits[0], lits[1]);
+            }
+
+            //Make elim_lit 1st position
+            if (elim_lit == (*cl2)[1]) {
+                std::swap((*cl2)[0], (*cl2)[1]);
+            }
+            if (elim_lit == (*cl2)[2]) {
+                std::swap((*cl2)[0], (*cl2)[2]);
+            }
+
+            //Make ~lits[1] (i.e. x) 2nd position
+            if (~lits[1] == (*cl2)[2]) {
+                std::swap((*cl2)[2], (*cl2)[1]);
+            }
+            lits[2] = (*cl2)[2];
+
+            std::sort(cl2->begin(), cl2->end());
+            seen[lits[2].var()] = 1;
+            toClear.push_back(lits[2]);
+            out_a.push(w2);
+            break;
+        }
+
+        if (out_a.size() != 2) {
+            continue;
+        }
+
+//         cout << "Start" << endl;
+        out_b.clear();
+        bool got_mf_v_mx = false;
+        bool got_mg_v_x = false;
+        limit -= b.size();
+        for(uint32_t j = 0; j < b.size(); j++, limit--) {
+            const Watched& w2 = b[j];
+            if (w2.isBin()) {
+                continue;
+            }
+            Clause* cl2 = solver->cl_alloc.ptr(w2.get_offset());
+            if (cl2->size() != 3) {
+                continue;
+            }
+            uint32_t match = 0;
+            for(const auto& l: *cl2) {
+                match += seen[l.var()];
+            }
+            if (match != 2) {
+                continue;
+            }
+//             cout << "base: " << *cl << endl;
+//             cout << "elim lit: " << elim_lit << endl;
+//             cout << "lits[0]: " << lits[0] << endl;
+//             cout << "lits[1]: " << lits[1] << endl;
+//             cout << "lits[1]: " << lits[2] << endl;
+//             cout << "check " << *cl2 << endl;
+
+
+            //Make ~elim_lit 1st position
+            if (~elim_lit == (*cl2)[1]) {
+                std::swap((*cl2)[0], (*cl2)[1]);
+            }
+            if (~elim_lit == (*cl2)[2]) {
+                std::swap((*cl2)[0], (*cl2)[2]);
+            }
+
+            //Make lits[1].var() (i.e. (~)x) 2nd position
+            if (lits[1].var() == (*cl2)[2].var()) {
+                std::swap((*cl2)[1], (*cl2)[2]);
+            }
+
+            //it's -x here, so must have -f i.e. ~lits[0]
+            //  a V -f V -x
+            if ((*cl2)[1] == lits[1] &&
+                (*cl2)[2] == ~lits[0] &&
+                !got_mf_v_mx)
+            {
+                std::sort(cl2->begin(), cl2->end());
+                out_b.push(w2);
+                got_mf_v_mx = true;
+                continue;
+            }
+
+            //it's x here, so must have -g i.e. ~lits[2]
+            if ((*cl2)[1] == ~lits[1] &&
+                (*cl2)[2] == ~lits[2] &&
+                !got_mg_v_x)
+            {
+                std::sort(cl2->begin(), cl2->end());
+                out_b.push(w2);
+                got_mg_v_x = true;
+                continue;
+            }
+            std::sort(cl2->begin(), cl2->end());
+
+            if (got_mf_v_mx && got_mg_v_x) {
+                break;
+            }
+        }
+        if (got_mf_v_mx && got_mg_v_x) {
+            found = true;
+            break;
+        }
+    }
+
+    if (limit < 0) {
+//         cout << "ITE Gate find limit reached" << endl;
+        bvestats.gatefind_timeouts++;
+    }
+
+    for(Lit l: toClear) {
+        seen[l.var()] = 0;
+    }
+    toClear.clear();
+
+    if (found) {
+//         cout << "ITE found" << endl;
+        assert(out_a.size() == 2);
+        assert(out_b.size() == 2);
+        std::sort(out_a.begin(), out_a.end(), sort_smallest_first(solver->cl_alloc));
+        std::sort(out_b.begin(), out_b.end(), sort_smallest_first(solver->cl_alloc));
+    }
+
+    return found;
+}
+
 
 bool OccSimplifier::find_equivalence_gate(
     Lit elim_lit
@@ -2582,6 +2801,7 @@ bool OccSimplifier::find_xor_gate(
     //cout << "Finding xor gate" << endl;
 
     bool found = false;
+    int limit = solver->conf.varelim_gate_find_limit;
     out_a.clear();
     out_b.clear();
     assert(toclear_marked_cls.empty());
@@ -2594,7 +2814,7 @@ bool OccSimplifier::find_xor_gate(
     bool parity;
     uint32_t size;
     uint32_t tofind;
-    for(uint32_t j = 0; j < a.size(); j++) {
+    for(uint32_t j = 0; j < a.size() && limit >= 0; j++, limit--) {
         const Watched& w = a[j];
         if (w.isBin()) {
             continue;
@@ -2681,7 +2901,7 @@ bool OccSimplifier::find_xor_gate(
         }
 
         out_b.clear();
-        for(uint32_t i = 0; i < b.size(); i++) {
+        for(uint32_t i = 0; i < b.size(); i++, limit--) {
             const Watched& w2 = b[i];
             if (w2.isBin()) {
                 continue;
@@ -2734,6 +2954,11 @@ bool OccSimplifier::find_xor_gate(
         if (found) {
             break;
         }
+    }
+
+    if (limit < 0) {
+//         cout << "XOR Gate find limit reached" << endl;
+        bvestats.gatefind_timeouts++;
     }
 
     //Clear seen
@@ -2873,7 +3098,7 @@ bool OccSimplifier::generate_resolvents(
                 continue;
             }
 
-            if (solver->conf.do_fwd_sub_bve_resolvents) {
+            if (solver->conf.velim_fwd_sub_bve_resolvents) {
                 //Try forward-subsumption
                 for(const auto& l: dummy) {
                     seen[l.toInt()] = 1;
@@ -3045,6 +3270,10 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
     } else if (find_or_gate(lit, poss, negs, gates_poss, gates_negs)) {
         gates = true;
     } else if (find_or_gate(~lit, negs, poss, gates_negs, gates_poss)) {
+        gates = true;
+    } else if (find_ite_gate(lit, poss, negs, gates_poss, gates_negs)) {
+        gates = true;
+    } else if (find_ite_gate(~lit, negs, poss, gates_negs, gates_poss)) {
         gates = true;
     } else if (find_xor_gate(lit, poss, negs, gates_poss, gates_negs)) {
         gates = true;
@@ -3919,13 +4148,11 @@ BVEStats& BVEStats::operator+=(const BVEStats& other)
     clauses_elimed_long += other.clauses_elimed_long;
     clauses_elimed_bin += other.clauses_elimed_bin;
     clauses_elimed_sumsize += other.clauses_elimed_sumsize;
-    longRedClRemThroughElim += other.longRedClRemThroughElim;
-    binRedClRemThroughElim += other.binRedClRemThroughElim;
-    numRedBinVarRemAdded += other.numRedBinVarRemAdded;
     testedToElimVars += other.testedToElimVars;
     triedToElimVars += other.triedToElimVars;
     newClauses += other.newClauses;
     subsumedByVE  += other.subsumedByVE;
+    gatefind_timeouts += other.gatefind_timeouts;
 
     return *this;
 }

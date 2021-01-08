@@ -111,22 +111,21 @@ struct BVEStats
     uint64_t clauses_elimed_long = 0;
     uint64_t clauses_elimed_bin = 0;
     uint64_t clauses_elimed_sumsize = 0;
-    uint64_t longRedClRemThroughElim = 0;
-    uint64_t binRedClRemThroughElim = 0;
-    uint64_t numRedBinVarRemAdded = 0;
     uint64_t testedToElimVars = 0;
     uint64_t triedToElimVars = 0;
     uint64_t newClauses = 0;
     uint64_t subsumedByVE = 0;
+    uint64_t gatefind_timeouts = 0;
 
     BVEStats& operator+=(const BVEStats& other);
 
-    void print() const
+    void print_short() const
     {
         //About elimination
         cout
         << "c [occ-bve]"
         << " elimed: " << numVarsElimed
+        << " gatefind timeout: " << gatefind_timeouts
         << endl;
 
         cout
@@ -139,12 +138,10 @@ struct BVEStats
         cout
         << "c [occ-bve]"
         << " subs: "  << subsumedByVE
-        << " red-bin rem: " << binRedClRemThroughElim
-        << " red-long rem: " << longRedClRemThroughElim
         << endl;
     }
 
-    void print()
+    void print() const
     {
         print_stats_line("c timeouted"
             , stats_line_percent(varElimTimeOut, numCalls)
@@ -155,12 +152,6 @@ struct BVEStats
             , "% vars"
         );
 
-        /*cout << "c"
-        << " v-elimed: " << numVarsElimed
-        << " / " << origNumMaxElimVars
-        << " / " << origNumFreeVars
-        << endl;*/
-
         print_stats_line("c cl-new"
             , newClauses
         );
@@ -168,15 +159,6 @@ struct BVEStats
         print_stats_line("c tried to elim"
             , triedToElimVars
         );
-
-        print_stats_line("c elim-bin-lt-cl"
-            , binRedClRemThroughElim);
-
-        print_stats_line("c elim-long-lt-cl"
-            , longRedClRemThroughElim);
-
-        print_stats_line("c lt-bin added due to v-elim"
-            , numRedBinVarRemAdded);
 
         print_stats_line("c cl-elim-bin"
             , clauses_elimed_bin);
@@ -484,6 +466,13 @@ private:
         , watch_subarray_const b
         , vec<Watched>& out_a
         , vec<Watched>& out_b);
+    bool find_ite_gate(
+        Lit elim_lit
+        , watch_subarray_const a
+        , watch_subarray_const b
+        , vec<Watched>& out_a
+        , vec<Watched>& out_b
+    );
     vector<Clause*> toclear_marked_cls;
     set<uint32_t> parities_found;
     void        print_var_eliminate_stat(Lit lit) const;
