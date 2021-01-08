@@ -3251,8 +3251,8 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
     clean_from_red_or_removed(solver->watches[~lit], negs);
     assert(poss.size() == pos);
     assert(negs.size() == neg);
-    clean_from_satisfied(solver->watches[lit]);
-    clean_from_satisfied(solver->watches[~lit]);
+    clean_from_satisfied(poss);
+    clean_from_satisfied(negs);
     pos = poss.size();
     neg = negs.size();
 
