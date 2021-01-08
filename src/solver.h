@@ -96,7 +96,7 @@ class Solver : public Searcher
         lbool solve_with_assumptions(const vector<Lit>* _assumptions, bool only_indep_solution);
         lbool simplify_with_assumptions(const vector<Lit>* _assumptions = NULL, const string* strategy = NULL);
         void  set_shared_data(SharedData* shared_data);
-        vector<Lit> probe_outside_tmp;
+        vector<Lit> probe_inter_tmp;
         lbool probe_outside(Lit l, uint32_t& min_props);
 
         //drat for SAT problems
@@ -321,7 +321,7 @@ class Solver : public Searcher
         FRIEND_TEST(SearcherTest, pickpolar_auto_not_changed_by_simp);
         #endif
 
-        lbool probe_inside(Lit l, uint32_t& min_props);
+        lbool probe_inter(Lit l, uint32_t& min_props);
         void reset_for_solving();
         vector<Lit> add_clause_int_tmp_cl;
         lbool iterate_until_solved();

@@ -2125,7 +2125,7 @@ lbool Solver::execute_inprocess_strategy(
                 if (value(l) == l_Undef &&
                     varData[i].removed == Removed::none)
                 {
-                    if (probe_inside(l, min_props) == l_False) {
+                    if (probe_inter(l, min_props) == l_False) {
                         break;
                     }
                 }
@@ -3292,7 +3292,7 @@ bool Solver::add_clause_outside(const vector<Lit>& lits, bool red)
     return addClauseInt(back_number_from_outside_to_outer_tmp, red);
 }
 
-lbool Solver::probe_inside(Lit l, uint32_t& min_props)
+lbool Solver::probe_inter(Lit l, uint32_t& min_props)
 {
     //Probe l
     uint32_t old_trail_size = trail.size();
@@ -3325,7 +3325,7 @@ lbool Solver::probe_inside(Lit l, uint32_t& min_props)
     enqueue<false>(~l);
     p = propagate_any_order_fast();
     min_props = std::min<uint32_t>(min_props, trail.size() - old_trail_size);
-    probe_outside_tmp.clear();
+    probe_inter_tmp.clear();
     for(uint32_t i = old_trail_size+1; i < trail.size(); i++) {
         Lit lit = trail[i].lit;
         uint32_t var = trail[i].lit.var();
@@ -3335,11 +3335,11 @@ lbool Solver::probe_inside(Lit l, uint32_t& min_props)
 
         if (lit.sign() == seen[var]-1) {
             //Same sign both times (set value of literal)
-            probe_outside_tmp.push_back(lit);
+            probe_inter_tmp.push_back(lit);
         } else {
             //Inverse sign in the 2 cases (literal equivalence)
-            probe_outside_tmp.push_back(lit_Undef);
-            probe_outside_tmp.push_back(~lit);
+            probe_inter_tmp.push_back(lit_Undef);
+            probe_inter_tmp.push_back(~lit);
         }
     }
     cancelUntil(0);
@@ -3355,8 +3355,8 @@ lbool Solver::probe_inside(Lit l, uint32_t& min_props)
     }
 
     //Deal with bothprop
-    for(uint32_t i = 0; i < probe_outside_tmp.size(); i++) {
-        Lit bp_lit = probe_outside_tmp[i];
+    for(uint32_t i = 0; i < probe_inter_tmp.size(); i++) {
+        Lit bp_lit = probe_inter_tmp[i];
         if (bp_lit != lit_Undef) {
             //I am not going to deal with the messy version of it already being set
             if (value(bp_lit) == l_Undef) {
@@ -3372,7 +3372,7 @@ lbool Solver::probe_inside(Lit l, uint32_t& min_props)
 
             //Add binary XOR
             i++;
-            bp_lit = probe_outside_tmp[i];
+            bp_lit = probe_inter_tmp[i];
             vector<Lit> lits(2);
             lits[0] = l;
             lits[1] = bp_lit;
@@ -3419,7 +3419,7 @@ lbool Solver::probe_outside(Lit l, uint32_t& min_props)
         return l_Undef;
     }
 
-    return probe_inside(l, min_props);
+    return probe_inter(l, min_props);
 }
 
 bool Solver::add_xor_clause_outer(const vector<uint32_t>& vars, bool rhs)
