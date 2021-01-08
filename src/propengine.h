@@ -336,7 +336,6 @@ protected:
     // Debug & etc:
     void     print_all_clauses();
     void     printWatchList(const Lit lit) const;
-    bool     satisfied(const BinaryClause& bin);
     void     print_trail();
 
     //Var selection, activity, etc.
@@ -402,12 +401,6 @@ inline size_t PropEngine::getTrailSize() const
     } else {
         return trail_lim[0];
     }
-}
-
-inline bool PropEngine::satisfied(const BinaryClause& bin)
-{
-    return ((value(bin.getLit1()) == l_True)
-            || (value(bin.getLit2()) == l_True));
 }
 
 template<class T> inline

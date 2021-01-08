@@ -238,6 +238,8 @@ public:
     size_t cl_size(const Watched& ws) const;
     string watched_to_string(Lit otherLit, const Watched& ws) const;
     string watches_to_string(const Lit lit, watch_subarray_const ws) const;
+    bool satisfied(const ClOffset& off) const;
+    bool satisfied(const Clause* cl) const;
 
     uint64_t print_mem_used_longclauses(size_t totalMem) const;
     uint64_t mem_used_longclauses() const;
@@ -713,6 +715,22 @@ vector<T> CNF::map_back_vars_to_without_bva(const vector<T>& val) const
     }
     assert(ret.size() == nVarsOutside());
     return ret;
+}
+
+inline bool CNF::satisfied(const ClOffset& off) const
+{
+    Clause* cl = cl_alloc.ptr(off);
+    return satisfied(cl);
+}
+
+inline bool CNF::satisfied(const Clause* cl) const
+{
+    for(const auto& l: *cl) {
+        if (value(l) == l_True) {
+            return true;
+        }
+    }
+    return false;
 }
 
 }

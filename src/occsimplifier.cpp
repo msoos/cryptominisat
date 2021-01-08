@@ -3197,6 +3197,28 @@ void OccSimplifier::clean_from_red_or_removed(
     }
 }
 
+void OccSimplifier::clean_from_satisfied(vec<Watched>& in)
+{
+    uint32_t j = 0;
+    uint32_t i = 0;
+    for(; i < in.size(); i++) {
+        const Watched& w = in[i];
+        if (w.isBin()) {
+            if (solver->value(w.lit2()) == l_Undef) {
+                in[j++] = in[i];
+            }
+            continue;
+        }
+
+        assert(w.isClause());
+        if (!solver->satisfied(w.get_offset())) {
+            in[j++] = in[i];
+        }
+        continue;
+    }
+    in.shrink(i-j);
+}
+
 //Return true if it worked
 bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
 {
@@ -3220,8 +3242,8 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
         cout << "calc is: " << calc_data_for_heuristic(Lit(var, true)) << endl;
     }
     #endif
-    const uint32_t pos = n_occurs[Lit(var, false).toInt()];
-    const uint32_t neg = n_occurs[Lit(var, true).toInt()];
+    uint32_t pos = n_occurs[Lit(var, false).toInt()];
+    uint32_t neg = n_occurs[Lit(var, true).toInt()];
 
     //set-up
     const Lit lit = Lit(var, false);
@@ -3229,6 +3251,10 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
     clean_from_red_or_removed(solver->watches[~lit], negs);
     assert(poss.size() == pos);
     assert(negs.size() == neg);
+    clean_from_satisfied(solver->watches[lit]);
+    clean_from_satisfied(solver->watches[~lit]);
+    pos = poss.size();
+    neg = negs.size();
 
     //Pure literal, no resolvents
     //we look at "pos" and "neg" (and not poss&negs) because we don't care about redundant clauses

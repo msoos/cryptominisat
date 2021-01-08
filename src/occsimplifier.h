@@ -441,6 +441,7 @@ private:
     vec<Watched> antec_negs;
     vec<Watched> poss;
     vec<Watched> negs;
+    void clean_from_satisfied(vec<Watched>& in);
     void clean_from_red_or_removed(
         const vec<Watched>& in,
         vec<Watched>& out);
