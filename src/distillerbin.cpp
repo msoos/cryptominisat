@@ -128,7 +128,7 @@ bool DistillerBin::distill_bin_cls_all(
         maxNumProps - ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps),
         orig_maxNumProps);
     if (solver->conf.verbosity >= 3) {
-        cout << "c [distill] bin cls"
+        cout << "c [distill-bin] cls"
         << " tried: " << runStats.checkedClauses << "/" << potential_size
         << endl;
     }
@@ -298,7 +298,7 @@ DistillerBin::Stats& DistillerBin::Stats::operator+=(const Stats& other)
 void DistillerBin::Stats::print_short(const Solver* _solver) const
 {
     cout
-    << "c [distill] bin"
+    << "c [distill-bin]"
     << " useful: "<< numClShorten+clRemoved
     << "/" << checkedClauses << "/" << potentialClauses
     << " lits-rem: " << numLitsRem
@@ -310,7 +310,7 @@ void DistillerBin::Stats::print_short(const Solver* _solver) const
 
 void DistillerBin::Stats::print(const size_t nVars) const
 {
-    cout << "c -------- DISTILLBIN STATS --------" << endl;
+    cout << "c -------- DISTILL-BIN STATS --------" << endl;
     print_stats_line("c time"
         , time_used
         , ratio_for_stat(time_used, numCalled)

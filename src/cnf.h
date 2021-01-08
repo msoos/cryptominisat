@@ -239,7 +239,6 @@ public:
     string watched_to_string(Lit otherLit, const Watched& ws) const;
     string watches_to_string(const Lit lit, watch_subarray_const ws) const;
     bool satisfied(const ClOffset& off) const;
-    bool satisfied(const Clause* cl) const;
 
     uint64_t print_mem_used_longclauses(size_t totalMem) const;
     uint64_t mem_used_longclauses() const;
@@ -331,7 +330,7 @@ public:
     void check_wrong_attach() const;
     void check_watchlist(watch_subarray_const ws) const;
     template<class T>
-    bool satisfied_cl(const T& cl) const;
+    bool satisfied(const T& cl) const;
     template<typename T> bool no_duplicate_lits(const T& lits) const;
     void check_no_duplicate_lits_anywhere() const;
     void print_all_clauses() const;
@@ -584,7 +583,7 @@ inline void CNF::check_no_removed_or_freed_cl_in_watch() const
 }
 
 template<class T>
-bool CNF::satisfied_cl(const T& cl) const {
+bool CNF::satisfied(const T& cl) const {
     for(Lit lit: cl) {
         if (value(lit) == l_True) {
             return true;
@@ -720,17 +719,7 @@ vector<T> CNF::map_back_vars_to_without_bva(const vector<T>& val) const
 inline bool CNF::satisfied(const ClOffset& off) const
 {
     Clause* cl = cl_alloc.ptr(off);
-    return satisfied(cl);
-}
-
-inline bool CNF::satisfied(const Clause* cl) const
-{
-    for(const auto& l: *cl) {
-        if (value(l) == l_True) {
-            return true;
-        }
-    }
-    return false;
+    return satisfied(*cl);
 }
 
 }

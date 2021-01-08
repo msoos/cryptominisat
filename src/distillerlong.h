@@ -20,8 +20,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef __DISTILLERALL_WITH_ALL_H__
-#define __DISTILLERALL_WITH_ALL_H__
+#ifndef _DISTILLERLONG_H_
+#define _DISTILLERLONG_H_
 
 #include <vector>
 #include "clause.h"
@@ -99,4 +99,4 @@ inline const DistillerLong::Stats& DistillerLong::get_stats() const
 
 } //end namespace
 
-#endif //__DISTILLERALL_WITH_ALL_H__
+#endif //_DISTILLERLONG_H_

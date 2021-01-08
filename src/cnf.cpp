@@ -480,11 +480,11 @@ bool CNF::normClauseIsAttached(const ClOffset offset) const
         return !attached;
     }
 
-    bool satisfied = satisfied_cl(cl);
+    bool satcl = satisfied(cl);
     uint32_t num_false2 = 0;
     num_false2 += value(cl[0]) == l_False;
     num_false2 += value(cl[1]) == l_False;
-    if (!satisfied) {
+    if (!satcl) {
         if (num_false2 != 0) {
             cout << "Clause failed: " << cl << endl;
             for(Lit l: cl) {
@@ -524,8 +524,8 @@ void CNF::find_all_attach() const
             Clause* cl = cl_alloc.ptr(w.get_offset());
             assert(!cl->freed());
 
-            bool satisfied = satisfied_cl(*cl);
-            if (!satisfied) {
+            bool satcl = satisfied(*cl);
+            if (!satcl) {
                 if (value(w.getBlockedLit())  == l_True) {
                     cout << "ERROR: Clause " << *cl << " not satisfied, but its blocked lit, "
                     << w.getBlockedLit() << " is." << endl;
@@ -666,14 +666,14 @@ void CNF::check_watchlist(watch_subarray_const ws) const
         Lit blockedLit = w.getBlockedLit();
         /*cout << "Clause " << c << " blocked lit:  "<< blockedLit << " val: " << value(blockedLit)
         << " blocked removed:" << !(varData[blockedLit.var()].removed == Removed::none)
-        << " cl satisfied: " << satisfied_cl(&c)
+        << " cl satisfied: " << satisfied(&c)
         << endl;*/
         assert(blockedLit.var() < nVars());
 
         if (varData[blockedLit.var()].removed == Removed::none
             //0-level FALSE --> clause cleaner removed it from clause, that's OK
             && value(blockedLit) != l_False
-            && !satisfied_cl(c)
+            && !satisfied(c)
         ) {
             bool found = false;
             for(Lit l: c) {

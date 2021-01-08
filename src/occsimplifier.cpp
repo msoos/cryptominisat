@@ -3094,7 +3094,7 @@ bool OccSimplifier::generate_resolvents(
                 continue;
             }
 
-            if (solver->satisfied_cl(dummy)) {
+            if (solver->satisfied(dummy)) {
                 continue;
             }
 

@@ -173,7 +173,7 @@ bool DistillerLong::go_through_clauses(
         maxNumProps -= solver->watches[cl[1]].size();
 
         maxNumProps -= cl.size();
-        if (solver->satisfied_cl(cl)) {
+        if (solver->satisfied(cl)) {
             solver->detachClause(cl);
             solver->free_cl(&cl);
             continue;
@@ -250,7 +250,7 @@ bool DistillerLong::distill_long_cls_all(
         maxNumProps - ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps),
         orig_maxNumProps);
     if (solver->conf.verbosity >= 3) {
-        cout << "c [distill] long cls"
+        cout << "c [distill-long] cls"
         << " tried: " << runStats.checkedClauses << "/" << offs.size()
         << endl;
     }
@@ -456,7 +456,7 @@ DistillerLong::Stats& DistillerLong::Stats::operator+=(const Stats& other)
 void DistillerLong::Stats::print_short(const Solver* _solver) const
 {
     cout
-    << "c [distill] long"
+    << "c [distill-long]"
     << " useful: "<< numClShorten+clRemoved
     << "/" << checkedClauses << "/" << potentialClauses
     << " lits-rem: " << numLitsRem
@@ -468,7 +468,7 @@ void DistillerLong::Stats::print_short(const Solver* _solver) const
 
 void DistillerLong::Stats::print(const size_t nVars) const
 {
-    cout << "c -------- DISTILL STATS --------" << endl;
+    cout << "c -------- DISTILL-LONG STATS --------" << endl;
     print_stats_line("c time"
         , time_used
         , ratio_for_stat(time_used, numCalled)
