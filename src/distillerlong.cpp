@@ -366,7 +366,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     if (j == orig_size && !True_confl && confl.isNULL()) {
         cl.disabled = false;
         solver->cancelUntil<false, true>(0);
-        (*solver->drat) << findelay;
+        solver->drat->forget_delay();
         return offset;
     }
 
@@ -405,7 +405,6 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
             lits_set = true;
         }
     }
-    (*solver->drat) << deldelay << cl << fin;
     solver->cancelUntil<false, true>(0);
     solver->detach_modified_clause(cl_lit1, cl_lit2, orig_size, &cl);
     runStats.numLitsRem += orig_size - cl.size();
