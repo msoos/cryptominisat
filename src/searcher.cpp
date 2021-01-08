@@ -4059,6 +4059,9 @@ void Searcher::bump_var_importance(const uint32_t var)
             varData[var].maple_conflicted+=2;
             break;
 
+        case branch::rand:
+            break;
+
         #ifdef VMTF_NEEDED
         case branch::vmtf:
             vmtf_bump_queue(var);

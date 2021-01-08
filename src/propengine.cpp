@@ -217,7 +217,7 @@ bool PropEngine::prop_long_cl_any_order(
     #ifdef SLOW_DEBUG
     assert(!c.getRemoved());
     assert(!c.freed());
-    if (!use_disabled) {
+    if (!use_disable) {
         assert(!c.disabled);
     }
     #endif
@@ -626,11 +626,11 @@ inline bool PropEngine::propagate_long_clause_occur(
 
     Lit lastUndef = lit_Undef;
     uint32_t numUndef = 0;
-    bool satisfied = false;
+    bool satcl = false;
     for (const Lit lit: cl) {
         const lbool val = value(lit);
         if (val == l_True) {
-            satisfied = true;
+            satcl = true;
             break;
         }
         if (val == l_Undef) {
@@ -639,7 +639,7 @@ inline bool PropEngine::propagate_long_clause_occur(
             lastUndef = lit;
         }
     }
-    if (satisfied)
+    if (satcl)
         return true;
 
     //Problem is UNSAT
