@@ -88,6 +88,7 @@ set(cryptoms_lib_files
     sccfinder.cpp
     solverconf.cpp
     distillerlong.cpp
+    distillerlitrem.cpp
     distillerbin.cpp
     distillerlongwithimpl.cpp
     str_impl_w_impl.cpp

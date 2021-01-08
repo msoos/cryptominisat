@@ -282,6 +282,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , simplify_schedule_startup(
             "sub-impl,"
             "breakid, "
+            "distill-cls,distill-bins,"
             "occ-backw-sub-str, occ-clean-implicit, occ-bve,"
             "occ-ternary-res, occ-backw-sub-str, occ-xor,"
             "card-find,"
@@ -298,7 +299,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "scc-vrepl,"
             "sub-impl,"
             "intree-probe,"
-            "sub-str-cls-with-bin,distill-cls,distill-bins,"
+            "sub-str-cls-with-bin,distill-cls,distill-bins,distill-litrem,"
             "scc-vrepl,sub-impl,str-impl,sub-impl,"
             "breakid,"
             //occurrence based

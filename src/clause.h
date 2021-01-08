@@ -606,6 +606,13 @@ public:
         #endif
         cout << endl;
     }
+
+    void copy_to(vector<Lit>& lits) {
+        lits.clear();
+        for(const Lit l: *this) {
+            lits.push_back(l);
+        }
+    }
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Clause& cl)
