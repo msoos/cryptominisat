@@ -3257,13 +3257,6 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
     }
 
     // see:  http://baldur.iti.kit.edu/sat/files/ex04.pdf
-    //Either resolve:
-    //  [[ gates available ]]
-    //  TODO *ALL* gate types: AND, ITE, XOR
-    // 1) gate_pos with atec_neg
-    // 2) gate_neg with atec_pos
-    // 3) gate_neg with gate_pos
-
     bool gates = false;
     if (find_equivalence_gate(lit, poss, negs, gates_poss, gates_negs)) {
         gates = true;
