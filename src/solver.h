@@ -92,8 +92,11 @@ class Solver : public Searcher
         bool add_clause_outside(const vector<Lit>& lits, bool red = false);
         bool add_xor_clause_outer(const vector<uint32_t>& vars, bool rhs);
         void set_var_weight(Lit lit, double weight);
+        lbool backbone_simpl(uint64_t max_confl = 10ULL*1000ULL);
 
-        lbool solve_with_assumptions(const vector<Lit>* _assumptions, bool only_indep_solution);
+        lbool solve_with_assumptions(
+            const vector<Lit>* _assumptions = NULL,
+            bool only_indep_solution = false);
         lbool simplify_with_assumptions(const vector<Lit>* _assumptions = NULL, const string* strategy = NULL);
         void  set_shared_data(SharedData* shared_data);
         vector<Lit> probe_inter_tmp;

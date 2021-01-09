@@ -81,6 +81,7 @@ namespace CMSat {
         int sql = 0;
         double timeout = std::numeric_limits<double>::max();
         bool interrupted = false;
+        uint64_t max_confl_for_backbone; //valid for BACKBONE ONLY
 
         //variables and clauses added/to add
         unsigned cls = 0;
@@ -109,6 +110,7 @@ struct DataForThread
         , assumptions(_assumptions)
         , update_mutex(new std::mutex)
         , which_solved(&(data->which_solved))
+        , max_confl_for_backbone(data->max_confl_for_backbone)
         , ret(new lbool(l_Undef))
     {
     }
@@ -125,6 +127,7 @@ struct DataForThread
     const vector<Lit> *assumptions;
     std::mutex* update_mutex;
     int *which_solved;
+    uint64_t max_confl_for_backbone; //valid for BACKBONE ONLY
     lbool* ret;
 };
 
@@ -511,17 +514,7 @@ DLL_PUBLIC void SATSolver::set_max_confl(int64_t max_confl)
   assert(max_confl >= 0 && "Cannot set negative limit on conflicts");
 
   for (Solver* s : data->solvers) {
-    uint64_t new_max = s->get_stats().conflStats.numConflicts + static_cast<uint64_t>(max_confl);
-    bool would_overflow = std::numeric_limits<long>::max() < new_max
-                       || new_max < s->get_stats().conflStats.numConflicts;
-
-    // TBD: It is highly unlikely that an int64_t could overflow in practice,
-    // meaning that this test is unlikely to ever fire. However, the conflict
-    // limit inside the solver is stored as a long, which can be 32 bits
-    // on some platforms. In practice that is also unlikely to be overflown,
-    // but it needs some extra checks.
-    s->conf.max_confl = would_overflow? std::numeric_limits<long>::max()
-                                      : static_cast<long>(new_max);
+    s->conf.max_confl = s->get_stats().conflStats.numConflicts + static_cast<uint64_t>(max_confl);
   }
 }
 
@@ -717,17 +710,19 @@ DLL_PUBLIC bool SATSolver::add_xor_clause(const std::vector<unsigned>& vars, boo
     return ret;
 }
 
+enum class Todo {todo_solve, todo_simplify, todo_backbone};
+
 struct OneThreadCalc
 {
     OneThreadCalc(
         DataForThread& _data_for_thread,
         size_t _tid,
-        bool _solve,
+        Todo _todo,
         bool _only_sampling_solution
     ) :
         data_for_thread(_data_for_thread)
         , tid(_tid)
-        , solve(_solve)
+        , todo(_todo)
         , only_sampling_solution(_only_sampling_solution)
     {}
 
@@ -743,10 +738,14 @@ struct OneThreadCalc
         OneThreadAddCls cls_adder(data_for_thread, tid);
         cls_adder();
         lbool ret;
-        if (solve) {
+        if (todo == Todo::todo_solve) {
             ret = data_for_thread.solvers[tid]->solve_with_assumptions(data_for_thread.assumptions, only_sampling_solution);
-        } else {
+        } else if (todo == Todo::todo_simplify) {
             ret = data_for_thread.solvers[tid]->simplify_with_assumptions(data_for_thread.assumptions);
+        } else if (todo == Todo::todo_backbone) {
+            ret = data_for_thread.solvers[tid]->backbone_simpl(data_for_thread.max_confl_for_backbone);
+        } else {
+            assert(false);
         }
 
         data_for_thread.cpu_times[tid] = cpuTime();
@@ -775,13 +774,13 @@ struct OneThreadCalc
     DataForThread& data_for_thread;
     const size_t tid;
     double start_time;
-    bool solve;
+    Todo todo;
     bool only_sampling_solution;
 };
 
 lbool calc(
     const vector< Lit >* assumptions,
-    bool solve,
+    Todo todo,
     CMSatPrivateData *data,
     bool only_sampling_solution = false,
     const string* strategy = NULL
@@ -798,9 +797,15 @@ lbool calc(
     }
 
     if (data->log) {
-        (*data->log) << "c Solver::"
-        << (solve ? "solve" : "simplify")
-        << "( ";
+        (*data->log) << "c Solver::";
+        if (todo == Todo::todo_solve) {
+            (*data->log) << "solve";
+        } else if (todo == Todo::todo_simplify) {
+            (*data->log) << "simplify";
+        } else {
+            assert(false);
+        }
+        (*data->log) << "( ";
         if (assumptions) {
             (*data->log) << *assumptions;
         }
@@ -819,10 +824,12 @@ lbool calc(
         data->vars_to_add = 0;
 
         lbool ret ;
-        if (solve) {
+        if (todo == Todo::todo_solve) {
             ret = data->solvers[0]->solve_with_assumptions(assumptions, only_sampling_solution);
-        } else {
+        } else if (todo == Todo::todo_simplify) {
             ret = data->solvers[0]->simplify_with_assumptions(assumptions, strategy);
+        } else if (todo == Todo::todo_backbone) {
+            ret = data->solvers[0]->backbone_simpl(data->max_confl_for_backbone);
         }
         data->okay = data->solvers[0]->okay();
         data->cpu_times[0] = cpuTime();
@@ -836,7 +843,8 @@ lbool calc(
         ; i < data->solvers.size()
         ; i++
     ) {
-        thds.push_back(thread(OneThreadCalc(data_for_thread, i, solve, only_sampling_solution)));
+        thds.push_back(thread(OneThreadCalc(
+            data_for_thread, i, todo, only_sampling_solution)));
     }
     for(std::thread& thread : thds){
         thread.join();
@@ -871,7 +879,7 @@ DLL_PUBLIC lbool SATSolver::solve(const vector< Lit >* assumptions, bool only_sa
     data->previous_sum_propagations = get_sum_propagations();
     data->previous_sum_decisions = get_sum_decisions();
 
-    return calc(assumptions, true, data, only_sampling_solution);
+    return calc(assumptions, Todo::todo_solve, data, only_sampling_solution);
 }
 
 DLL_PUBLIC lbool SATSolver::simplify(const vector< Lit >* assumptions, const string* strategy)
@@ -892,7 +900,18 @@ DLL_PUBLIC lbool SATSolver::simplify(const vector< Lit >* assumptions, const str
     data->previous_sum_propagations = get_sum_propagations();
     data->previous_sum_decisions = get_sum_decisions();
 
-    return calc(assumptions, false, data, false, strategy);
+    return calc(assumptions, Todo::todo_simplify, data, false, strategy);
+}
+
+DLL_PUBLIC lbool SATSolver::backbone_simpl(uint64_t max_confl)
+{
+    //set information data (props, confl, dec)
+    data->previous_sum_conflicts = get_sum_conflicts();
+    data->previous_sum_propagations = get_sum_propagations();
+    data->previous_sum_decisions = get_sum_decisions();
+    data->max_confl_for_backbone = max_confl;
+
+    return calc(NULL, Todo::todo_backbone, data);
 }
 
 DLL_PUBLIC const vector< lbool >& SATSolver::get_model() const

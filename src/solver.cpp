@@ -72,6 +72,7 @@ THE SOFTWARE.
 #include "lucky.h"
 #include "get_clause_query.h"
 #include "community_finder.h"
+#include "backbonesimpl.h"
 
 #ifdef USE_BREAKID
 #include "cms_breakid.h"
@@ -1463,11 +1464,6 @@ void Solver::check_and_upd_config_parameters()
         exit(-1);
     }
 
-    if (conf.max_confl < 0) {
-        std::cerr << "ERROR: Maximum number conflicts set must be greater or equal to 0" << endl;
-        exit(-1);
-    }
-
     if (conf.shortTermHistorySize <= 0) {
         std::cerr << "ERROR: You MUST give a short term history size (\"--gluehist\")  greater than 0!" << endl;
         exit(-1);
@@ -1730,7 +1726,7 @@ lbool Solver::solve_with_assumptions(
     handle_found_solution(status, only_sampling_solution);
     unfill_assumptions_set();
     assumptions.clear();
-    conf.max_confl = std::numeric_limits<long>::max();
+    conf.max_confl = std::numeric_limits<uint64_t>::max();
     conf.maxTime = std::numeric_limits<double>::max();
     drat->flush();
     conf.conf_needed = true;
@@ -1879,7 +1875,7 @@ long Solver::calc_num_confl_to_do_this_iter(const size_t iteration_num) const
     }
     num_conflicts_of_search = std::min<long>(
         num_conflicts_of_search
-        , (long)conf.max_confl - (long)sumConflicts
+        , conf.max_confl - sumConflicts
     );
 
     return num_conflicts_of_search;
@@ -5167,6 +5163,14 @@ vector<uint32_t> Solver::get_definabe(const vector<uint32_t>& vars)
 
 void Solver::remove_and_clean_all() {
     clauseCleaner->remove_and_clean_all();
+}
+
+lbool Solver::backbone_simpl(uint64_t max_confl)
+{
+    BackboneSimpl* backb = new BackboneSimpl(this);
+    auto ret = backb->backbone_simpl(max_confl);
+    delete backb;
+    return ret;
 }
 
 #ifdef STATS_NEEDED

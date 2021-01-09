@@ -318,7 +318,7 @@ class DLL_PUBLIC SolverConf
 
         //Limits
         double   maxTime;
-        long max_confl;
+        uint64_t max_confl;
 
         //Glues
         int       update_glues_on_analyze;
