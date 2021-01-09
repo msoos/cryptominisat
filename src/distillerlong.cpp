@@ -154,8 +154,10 @@ bool DistillerLong::go_through_clauses(
         maxNumProps -= 5;
 
         //If we already tried this clause, then move to next
-        if (cl.getdistilled() || cl._xor_is_detached
-            || (!solver->conf.pred_distill_orig &&
+        if ((also_remove && cl.tried_to_remove) ||
+            (!also_remove && cl.getdistilled()) ||
+            cl._xor_is_detached ||
+            (!solver->conf.pred_distill_orig &&
                 cl.red() &&
                 cl.stats.glue > 3)
         ) {
@@ -163,7 +165,11 @@ bool DistillerLong::go_through_clauses(
             *j++ = *i;
             continue;
         }
-        cl.set_distilled(true);
+        if (also_remove) {
+            cl.tried_to_remove = 1;
+        } else {
+            cl.set_distilled(1);
+        }
         runStats.checkedClauses++;
         assert(cl.size() > 2);
 
@@ -262,11 +268,15 @@ bool DistillerLong::distill_long_cls_all(
         );
     }
 
-    //We went through the loop without timeout, let's reset the distilled flag
-    if (time_remain > 0 && also_remove) {
+    //We went through the loop without timeout, let's reset the distilled/tried_to_remove flag
+    if (time_remain > 0) {
         for(const auto& off: offs) {
             Clause* cl = solver->cl_alloc.ptr(off);
-            cl->set_distilled(0);
+            if (also_remove) {
+                cl->tried_to_remove = 0;
+            } else {
+                cl->set_distilled(0);
+            }
         }
     }
 
@@ -427,7 +437,11 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     (*solver->drat) << findelay;
 
     if (cl2 != NULL) {
-        cl2->set_distilled(true);
+        if (also_remove) {
+            cl2->tried_to_remove = 1;
+        } else {
+            cl2->set_distilled(1);
+        }
         return solver->cl_alloc.get_offset(cl2);
     } else {
         #ifdef STATS_NEEDED

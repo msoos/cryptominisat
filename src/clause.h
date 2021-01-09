@@ -346,6 +346,7 @@ public:
     uint16_t reloced:1;
     uint16_t disabled:1;
     uint16_t marked:1;
+    uint16_t tried_to_remove:1;
 
 
     Lit* getData()
@@ -393,6 +394,7 @@ public:
         reloced = false;
         disabled = false;
         marked = false;
+        tried_to_remove = false;
 
         for (uint32_t i = 0; i < ps.size(); i++) {
             getData()[i] = ps[i];
