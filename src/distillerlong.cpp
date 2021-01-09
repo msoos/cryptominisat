@@ -277,19 +277,6 @@ bool DistillerLong::distill_long_cls_all(
     return solver->okay();
 }
 
-struct VSIDS_sorter{
-    VSIDS_sorter(const vector<ActAndOffset>& _vsids_act) :
-        vsids_act(_vsids_act)
-    {
-    }
-
-    bool operator()(const Lit& a, const Lit& b) const {
-        return vsids_act[a.var()].act > vsids_act[b.var()].act;
-    }
-
-    const vector<ActAndOffset>& vsids_act;
-};
-
 ClOffset DistillerLong::try_distill_clause_and_return_new(
     ClOffset offset
     , const ClauseStats* const stats
@@ -332,7 +319,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     PropBy confl;
     i = 0;
     j = 0;
-    std::sort(cl.begin(), cl.end(), VSIDS_sorter(solver->var_act_vsids));
+    std::sort(cl.begin(), cl.end(), VSIDS_largest_first(solver->var_act_vsids));
     for (uint32_t sz = cl.size(); i < sz; i++) {
         const Lit lit = cl[i];
         lbool val = solver->value(lit);

@@ -356,6 +356,19 @@ struct ActAndOffset {
     }
 };
 
+struct VSIDS_largest_first{
+    VSIDS_largest_first(const vector<ActAndOffset>& _vsids_act) :
+        vsids_act(_vsids_act)
+    {
+    }
+
+    bool operator()(const Lit& a, const Lit& b) const {
+        return vsids_act[a.var()].act > vsids_act[b.var()].act;
+    }
+
+    const vector<ActAndOffset>& vsids_act;
+};
+
 struct AssignStats
 {
     AssignStats() :
