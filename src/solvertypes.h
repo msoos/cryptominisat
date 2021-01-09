@@ -339,18 +339,19 @@ template<class T> void print_stats_line(
 
 struct ActAndOffset {
     double act = 0;
-    double offset = 1.0;
+    //double offset = 1.0;
     double combine() const {
-        return act*offset;
+        //return act*offset;
+        return act;
     }
     void add_in(const ActAndOffset& other) {
         act += other.act;
-        offset = std::max(offset, other.offset);
+        //offset = std::max(offset, other.offset);
     }
     std::string str() const {
         std::string ret;
         std::stringstream ss;
-        ss << act << "*" << offset;
+        ss << act; //<< "*" << offset;
         return ret;
     }
 };
