@@ -509,12 +509,12 @@ DLL_PUBLIC void SATSolver::set_max_time(double max_time)
   }
 }
 
-DLL_PUBLIC void SATSolver::set_max_confl(int64_t max_confl)
+DLL_PUBLIC void SATSolver::set_max_confl(uint64_t max_confl)
 {
   assert(max_confl >= 0 && "Cannot set negative limit on conflicts");
 
   for (Solver* s : data->solvers) {
-    s->conf.max_confl = s->get_stats().conflStats.numConflicts + static_cast<uint64_t>(max_confl);
+      s->set_max_confl(max_confl);
   }
 }
 

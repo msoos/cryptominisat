@@ -101,6 +101,7 @@ class Solver : public Searcher
         void  set_shared_data(SharedData* shared_data);
         vector<Lit> probe_inter_tmp;
         lbool probe_outside(Lit l, uint32_t& min_props);
+        void set_max_confl(uint64_t max_confl);
 
         //drat for SAT problems
         void add_empty_cl_to_drat();
@@ -332,7 +333,7 @@ class Solver : public Searcher
         void check_reconfigure();
         void reconfigure(int val);
         bool already_reconfigured = false;
-        long calc_num_confl_to_do_this_iter(const size_t iteration_num) const;
+        uint64_t calc_num_confl_to_do_this_iter(const size_t iteration_num) const;
 
         vector<Lit> finalCl_tmp;
         bool sort_and_clean_clause(

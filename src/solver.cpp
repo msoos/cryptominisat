@@ -1864,19 +1864,23 @@ void Solver::dump_memory_stats_to_sql()
     );
 }
 
-long Solver::calc_num_confl_to_do_this_iter(const size_t iteration_num) const
+uint64_t Solver::calc_num_confl_to_do_this_iter(const size_t iteration_num) const
 {
     double iter_num = std::min<size_t>(iteration_num, 100ULL);
     double mult = std::pow(conf.num_conflicts_of_search_inc, iter_num);
     mult = std::min(mult, conf.num_conflicts_of_search_inc_max);
-    long num_conflicts_of_search = (double)conf.num_conflicts_of_search*mult;
+    uint64_t num_conflicts_of_search = (double)conf.num_conflicts_of_search*mult;
     if (conf.never_stop_search) {
         num_conflicts_of_search = 500ULL*1000ULL*1000ULL;
     }
-    num_conflicts_of_search = std::min<long>(
-        num_conflicts_of_search
-        , conf.max_confl - sumConflicts
-    );
+    if (conf.max_confl >= sumConflicts) {
+        num_conflicts_of_search = std::min<uint64_t>(
+            num_conflicts_of_search
+            , conf.max_confl - sumConflicts
+        );
+    } else {
+        num_conflicts_of_search = 0;
+    }
 
     return num_conflicts_of_search;
 }
@@ -1890,7 +1894,7 @@ lbool Solver::iterate_until_solved()
     while (status == l_Undef
         && !must_interrupt_asap()
         && cpuTime() < conf.maxTime
-        && sumConflicts < (uint64_t)conf.max_confl
+        && sumConflicts < conf.max_confl
     ) {
         iteration_num++;
         if (conf.verbosity) {
@@ -1898,8 +1902,8 @@ lbool Solver::iterate_until_solved()
         }
         dump_memory_stats_to_sql();
 
-        const long num_confl = calc_num_confl_to_do_this_iter(iteration_num);
-        if (num_confl <= 0) {
+        const uint64_t num_confl = calc_num_confl_to_do_this_iter(iteration_num);
+        if (num_confl == 0) {
             break;
         }
         #ifdef USE_GAUSS
@@ -1928,7 +1932,7 @@ lbool Solver::iterate_until_solved()
         }
 
         //If we are over the limit, exit
-        if (sumConflicts >= (uint64_t)conf.max_confl
+        if (sumConflicts >= conf.max_confl
             || cpuTime() > conf.maxTime
             || must_interrupt_asap()
         ) {
@@ -2033,7 +2037,7 @@ lbool Solver::execute_inprocess_strategy(
     std::string occ_strategy_tokens;
 
     while(std::getline(ss, token, ',')) {
-        if (sumConflicts >= (uint64_t)conf.max_confl
+        if (sumConflicts >= conf.max_confl
             || cpuTime() > conf.maxTime
             || must_interrupt_asap()
             || nVars() == 0
@@ -2066,7 +2070,7 @@ lbool Solver::execute_inprocess_strategy(
                 occsimplifier->simplify(startup, occ_strategy_tokens);
             }
             occ_strategy_tokens.clear();
-            if (sumConflicts >= (uint64_t)conf.max_confl
+            if (sumConflicts >= conf.max_confl
                 || cpuTime() > conf.maxTime
                 || must_interrupt_asap()
                 || nVars() == 0
@@ -5171,6 +5175,15 @@ lbool Solver::backbone_simpl(uint64_t max_confl)
     auto ret = backb->backbone_simpl(max_confl);
     delete backb;
     return ret;
+}
+
+void Solver::set_max_confl(uint64_t max_confl)
+{
+    if (get_stats().conflStats.numConflicts + max_confl < max_confl) {
+          conf.max_confl = std::numeric_limits<uint64_t>::max();
+      } else {
+          conf.max_confl = get_stats().conflStats.numConflicts + max_confl;
+      }
 }
 
 #ifdef STATS_NEEDED

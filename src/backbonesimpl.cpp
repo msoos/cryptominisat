@@ -47,7 +47,7 @@ lbool BackboneSimpl::backbone_simpl(uint64_t max_confl)
     vector<lbool> model;
     vector<char> model_enabled;
 
-    solver->conf.max_confl = solver->get_stats().conflStats.numConflicts + max_confl;
+    solver->set_max_confl(max_confl);
     lbool ret = solver->solve_with_assumptions();
     if (ret == l_False) {
         return l_False;
@@ -66,7 +66,7 @@ lbool BackboneSimpl::backbone_simpl(uint64_t max_confl)
         l = Lit(i, model[i] == l_False);
         assumps.clear();
         assumps.push_back(~l);
-        solver->conf.max_confl = solver->get_stats().conflStats.numConflicts + max_confl;
+        solver->set_max_confl(max_confl);
         ret = solver->solve_with_assumptions(&assumps);
         if (ret == l_True) {
             for(uint32_t i2 = 0; i2 < solver->nVars(); i2++) {
