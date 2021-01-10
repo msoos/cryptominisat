@@ -300,7 +300,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "scc-vrepl,"
             "sub-impl,"
             "intree-probe,"
-            "sub-str-cls-with-bin,distill-cls,distill-bins,distill-litrem,"
+            "sub-str-cls-with-bin,distill-cls,distill-bins,"
             "scc-vrepl,sub-impl,str-impl,sub-impl,"
             "breakid,"
             //occurrence based
