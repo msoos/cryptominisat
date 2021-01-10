@@ -90,8 +90,11 @@ vector<uint32_t> GetClauseQuery::translate_sampl_set(
     if (simplified) {
         assert(solver->get_num_bva_vars() == 0);
         vector<uint32_t> ret;
-        for(const uint32_t v: sampl_set) {
-            ret.push_back(solver->map_outer_to_inter(v));
+        for(uint32_t v: sampl_set) {
+            v = solver->varReplacer->get_var_replaced_with_outer(v);
+            v = solver->map_outer_to_inter(v);
+            assert(solver->varData[v].removed == Removed::none);
+            ret.push_back(v);
         }
         return ret;
     } else {
