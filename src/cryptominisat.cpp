@@ -1333,7 +1333,7 @@ void DLL_PUBLIC SATSolver::set_up_for_arjun()
         //conf.do_simplify_problem = false; //no simplification without explicity calling it
 //         conf.varElimRatioPerIter = 1;
         conf.restartType = Restart::geom;
-        conf.polarity_mode = CMSat::PolarityMode::polarmode_automatic;
+        conf.polarity_mode = CMSat::PolarityMode::polarmode_best;
         conf.branch_strategy_setup = "vsids1";
         conf.diff_declev_for_chrono = -1;
         conf.do_bosphorus = false;
