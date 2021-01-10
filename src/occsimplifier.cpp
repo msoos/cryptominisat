@@ -439,7 +439,7 @@ lbool OccSimplifier::clean_clause(ClOffset offset)
             solver->attach_bin_clause(cl[0], cl[1], cl.red());
             if (!cl.red()) {
                 std::pair<Lit, Lit> tmp = {cl[0], cl[1]};
-                added_bin_cl.push_back(tmp);
+                added_irred_bin.push_back(tmp);
                 n_occurs[tmp.first.toInt()]++;
                 n_occurs[tmp.second.toInt()]++;
             }
@@ -860,24 +860,24 @@ uint32_t OccSimplifier::sum_irred_cls_longs_lits() const
 
 bool OccSimplifier::deal_with_added_long_and_bin(const bool main)
 {
-    while (!added_long_cl.empty() && !added_bin_cl.empty())
+    while (!added_long_cl.empty() && !added_irred_bin.empty())
     {
         if (!sub_str->handle_added_long_cl(limit_to_decrease, main)) {
             return false;
         }
         added_long_cl.clear();
 
-        //NOTE: added_bin_cl CAN CHANGE while this is running!!
-        for (size_t i = 0; i < added_bin_cl.size(); i++) {
-            tmp_bin_cl[0] = added_bin_cl[i].first;
-            tmp_bin_cl[1] = added_bin_cl[i].second;
+        //NOTE: added_irred_bin CAN CHANGE while this is running!!
+        for (size_t i = 0; i < added_irred_bin.size(); i++) {
+            tmp_bin_cl[0] = added_irred_bin[i].first;
+            tmp_bin_cl[1] = added_irred_bin[i].second;
 
-            sub_str->backw_sub_str_long_with_implicit(tmp_bin_cl);
-            if (!solver->okay()) {
+            Sub1Ret ret; //TODO use this in the stats
+            if (!sub_str->backw_sub_str_with_implicit(tmp_bin_cl, ret)) {
                 return false;
             }
         }
-        added_bin_cl.clear();
+        added_irred_bin.clear();
     }
     return true;
 }
@@ -1040,7 +1040,7 @@ bool OccSimplifier::eliminate_vars()
     uint32_t n_vars_last = solver->get_num_free_vars();
 
 
-    added_bin_cl.clear();
+    added_irred_bin.clear();
 
     //For debug ONLY
     // subsume with bins everywhere first
@@ -1543,7 +1543,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             }
             if ((globalStats.numCalls % solver->conf.bva_every_n) == (solver->conf.bva_every_n-1)) {
                 bva->bounded_var_addition();
-                added_bin_cl.clear();
+                added_irred_bin.clear();
                 added_cl_to_var.clear();
                 added_long_cl.clear();
                 solver->clean_occur_from_removed_clauses_only_smudged();
@@ -1575,7 +1575,7 @@ bool OccSimplifier::setup()
     assert(solver->okay());
     assert(toClear.empty());
     added_long_cl.clear();
-    added_bin_cl.clear();
+    added_irred_bin.clear();
     added_cl_to_var.clear();
     n_occurs.clear();
     n_occurs.resize(solver->nVars()*2, 0);
@@ -3485,7 +3485,7 @@ bool OccSimplifier::add_varelim_resolvent(
     } else if (finalLits.size() == 2) {
         n_occurs[finalLits[0].toInt()]++;
         n_occurs[finalLits[1].toInt()]++;
-        added_bin_cl.push_back(std::make_pair(finalLits[0], finalLits[1]));
+        added_irred_bin.push_back(std::make_pair(finalLits[0], finalLits[1]));
 
         // 8 = watch space
         varelim_linkin_limit_bytes -= (int64_t)finalLits.size()*(8);
@@ -3599,7 +3599,9 @@ bool OccSimplifier::occ_based_lit_rem(uint32_t var, uint32_t& removed) {
             }
 
             if (try_remove_lit_via_occurrence_simpl(cl, lit)) {
-                remove_literal(offset, lit);
+                if (remove_literal(offset, lit) == l_False) {
+                    return false;
+                }
                 removed++;
             }
         }
@@ -4323,7 +4325,7 @@ Clause* OccSimplifier::full_add_clause(
         if (finalLits.size() == 2 && !red) {
             n_occurs[finalLits[0].toInt()]++;
             n_occurs[finalLits[1].toInt()]++;
-            added_bin_cl.push_back(std::make_pair(finalLits[0], finalLits[1]));
+            added_irred_bin.push_back(std::make_pair(finalLits[0], finalLits[1]));
         }
     } else {
         linkInClause(*newCl);
@@ -4334,7 +4336,7 @@ Clause* OccSimplifier::full_add_clause(
     return newCl;
 }
 
-void OccSimplifier::remove_literal(ClOffset offset, const Lit toRemoveLit)
+lbool OccSimplifier::remove_literal(ClOffset offset, const Lit toRemoveLit)
 {
     Clause& cl = *solver->cl_alloc.ptr(offset);
     #ifdef VERBOSE_DEBUG
@@ -4365,6 +4367,6 @@ void OccSimplifier::remove_literal(ClOffset offset, const Lit toRemoveLit)
     else
         solver->litStats.irredLits--;
 
-    clean_clause(offset);
+    return clean_clause(offset);
 }
 

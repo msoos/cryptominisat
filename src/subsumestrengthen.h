@@ -36,6 +36,41 @@ class OccSimplifier;
 class GateFinder;
 class Solver;
 
+struct Sub0Ret {
+    ClauseStats stats;
+    bool subsumedIrred = 0;
+    uint32_t numSubsumed = 0;
+
+    void clear() {
+        *this = Sub0Ret();
+    }
+
+    Sub0Ret& operator+=(const Sub0Ret& other)
+    {
+        numSubsumed += other.numSubsumed;
+        return *this;
+    }
+
+};
+
+struct Sub1Ret {
+    Sub1Ret& operator+=(const Sub1Ret& other)
+    {
+        sub += other.sub;
+        str += other.str;
+
+        return *this;
+    }
+
+    void clear() {
+        *this = Sub1Ret();
+    }
+
+    size_t sub = 0;
+    size_t str = 0;
+    bool subsumedIrred = false;
+};
+
 class SubsumeStrengthen
 {
 public:
@@ -45,37 +80,21 @@ public:
     void backw_sub_long_with_long();
     bool backw_str_long_with_long();
     bool backw_sub_str_long_with_bins();
-
-    //Called from simplifier at resolvent-adding of var-elim
-    uint32_t subsume_and_unlink_and_markirred(const ClOffset offset);
     bool backw_sub_str_long_with_bins_watch(
         const Lit lit
         , const bool redundant_too = false
     );
     bool handle_added_long_cl(int64_t* limit, const bool main_run);
 
-    struct Sub0Ret {
-        ClauseStats stats;
-        bool subsumedIrred = 0;
-        uint32_t numSubsumed = 0;
-    };
 
-    struct Sub1Ret {
-        Sub1Ret& operator+=(const Sub1Ret& other)
-        {
-            sub += other.sub;
-            str += other.str;
+    Sub0Ret backw_sub_with_long(const ClOffset offset);
 
-            return *this;
-        }
-
-        size_t sub = 0;
-        size_t str = 0;
-        bool subsumedIrred = false;
-    };
-
-    Sub1Ret backw_sub_str_long_with_implicit(const vector<Lit>& lits);
-    Sub1Ret strengthen_subsume_and_unlink_and_markirred(ClOffset offset);
+    bool backw_sub_str_with_implicit(
+        const vector<Lit>& lits,
+        Sub1Ret& ret_sub_str);
+    bool backw_sub_str_with_long(
+        ClOffset offset,
+        Sub1Ret& ret_sub_str);
 
     struct Stats
     {
@@ -83,9 +102,8 @@ public:
         void print_short(const Solver* solver) const;
         void print() const;
 
-        uint64_t subsumedBySub = 0;
-        uint64_t subsumedByStr = 0;
-        uint64_t litsRemStrengthen = 0;
+        Sub0Ret sub0;
+        Sub1Ret sub1;
 
         double subsumeTime = 0.0;
         double strengthenTime = 0.0;
@@ -141,6 +159,7 @@ private:
         , vector<OccurClause>& out_subsumed
         , vector<Lit>& out_lits
         , const Lit lit
+        , const bool inverted
     );
 
     template<class T1, class T2>

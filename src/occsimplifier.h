@@ -252,7 +252,7 @@ public:
     TouchListLit added_cl_to_var;
     vector<uint32_t> n_occurs;
     TouchListLit removed_cl_with_var;
-    vector<std::pair<Lit, Lit> > added_bin_cl;
+    vector<std::pair<Lit, Lit> > added_irred_bin;
     vector<ClOffset> clauses;
     void check_elimed_vars_are_unassignedAndStats() const;
     void unlink_clause(ClOffset cc
@@ -277,7 +277,7 @@ private:
     bool startup = false;
     bool backward_sub_str();
     bool execute_simplifier_strategy(const string& strategy);
-    void remove_literal(ClOffset c, const Lit toRemoveLit);
+    lbool remove_literal(ClOffset c, const Lit toRemoveLit);
 
     //Ternary resolution
     vector<Lit> finalLits_ternary;

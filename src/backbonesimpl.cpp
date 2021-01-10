@@ -30,6 +30,7 @@ BackboneSimpl::BackboneSimpl(Solver* _solver) :
 {}
 
 // See Preprocessing for Propositional Model Counting by Jean-Marie Lagniez and Pierre Marquis
+// TODO must get polarity to be RND(!!!) or it will not really take advantage of the fact we can solve fast
 lbool BackboneSimpl::backbone_simpl(uint64_t max_confl)
 {
     if (solver->conf.verbosity) {
