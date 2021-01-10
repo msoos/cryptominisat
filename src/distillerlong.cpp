@@ -155,7 +155,7 @@ bool DistillerLong::go_through_clauses(
 
         //If we already tried this clause, then move to next
         if ((also_remove && cl.tried_to_remove) ||
-            (!also_remove && cl.getdistilled()) ||
+            (!also_remove && cl.distilled) ||
             cl._xor_is_detached ||
             (!solver->conf.pred_distill_orig &&
                 cl.red() &&
@@ -168,7 +168,7 @@ bool DistillerLong::go_through_clauses(
         if (also_remove) {
             cl.tried_to_remove = 1;
         } else {
-            cl.set_distilled(1);
+            cl.distilled = 1;
         }
         runStats.checkedClauses++;
         assert(cl.size() > 2);
@@ -275,7 +275,7 @@ bool DistillerLong::distill_long_cls_all(
             if (also_remove) {
                 cl->tried_to_remove = 0;
             } else {
-                cl->set_distilled(0);
+                cl->distilled = 0;
             }
         }
     }
@@ -440,7 +440,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
         if (also_remove) {
             cl2->tried_to_remove = 1;
         } else {
-            cl2->set_distilled(1);
+            cl2->distilled = 1;
         }
         return solver->cl_alloc.get_offset(cl2);
     } else {

@@ -75,6 +75,9 @@ THE SOFTWARE.
 using namespace CMSat;
 using std::cout;
 using std::endl;
+using std::sort;
+using std::unique;
+using std::array;
 
 //#define VERBOSE_DEBUG_VARELIM
 //#define VERBOSE_DEBUG_XOR_FINDER
@@ -3022,7 +3025,7 @@ bool OccSimplifier::try_remove_lit_via_occurrence_simpl(
         assert(found_it);
         conflicted = !solver->propagate_occur();
     }
-    solver->cancelUntil(0);
+    solver->cancelUntil<false, true>(0);
 
     assert(solver->decisionLevel() == 0);
     return conflicted;

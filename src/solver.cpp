@@ -148,6 +148,7 @@ Solver::~Solver()
     delete intree;
     delete occsimplifier;
     delete distill_long_cls;
+    delete distill_lit_rem;
     delete distill_bin_cls;
     delete dist_long_with_impl;
     delete dist_impl_with_impl;
@@ -2199,7 +2200,8 @@ lbool Solver::execute_inprocess_strategy(
             if (conf.do_distill_clauses) {
                 for(const auto& offs: longIrredCls) {
                     Clause* cl = cl_alloc.ptr(offs);
-                    cl->set_distilled(false);
+                    cl->distilled = 0;
+                    cl->tried_to_remove = 0;
                 }
                 distill_long_cls->distill(false, true, false);
             }
@@ -2208,7 +2210,7 @@ lbool Solver::execute_inprocess_strategy(
             if (conf.do_distill_clauses) {
                 for(const auto& offs: longIrredCls) {
                     Clause* cl = cl_alloc.ptr(offs);
-                    cl->set_distilled(false);
+                    cl->tried_to_remove = 0;
                 }
                 distill_long_cls->distill(false, true, true);
             }

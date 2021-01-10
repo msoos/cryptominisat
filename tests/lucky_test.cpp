@@ -44,6 +44,7 @@ struct lucky : public ::testing::Test {
     }
     ~lucky()
     {
+        delete l;
         delete s;
     }
     Solver* s = NULL;

@@ -44,6 +44,7 @@ struct gauss : public ::testing::Test {
     }
     ~gauss()
     {
+        delete mf;
         delete s;
     }
 
