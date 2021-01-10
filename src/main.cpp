@@ -643,8 +643,6 @@ void Main::add_supported_options()
         , "Maximum extra MB of memory to use for new clauses during varelim")
     ("eratio", po::value(&conf.varElimRatioPerIter)->default_value(conf.varElimRatioPerIter, ssERatio.str())
         , "Eliminate this ratio of free variables at most per variable elimination iteration")
-    ("skipresol", po::value(&conf.skip_some_bve_resolvents)->default_value(conf.skip_some_bve_resolvents)
-        , "Skip BVE resolvents in case they belong to a gate")
     ("gatevarelim", po::value(&conf.gate_based_elim)->default_value(conf.gate_based_elim)
         , "BVE using gate detection and replacement")
     ;
