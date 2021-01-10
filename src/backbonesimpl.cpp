@@ -57,7 +57,7 @@ lbool BackboneSimpl::backbone_simpl(uint64_t max_confl)
     }
 
     model = solver->get_model();
-    model_enabled.resize(solver->nVars(), 1);
+    model_enabled.resize(solver->nVarsOutside(), 1);
     for(uint32_t i = 0; i < solver->nVarsOutside(); i++) {
         if (!model_enabled[i]) {
             continue;
