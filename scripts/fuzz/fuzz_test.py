@@ -75,7 +75,7 @@ def set_up_parser():
     parser.add_option("--fuzzlim", dest="fuzz_test_lim", type=int,
                       help="Number of fuzz tests to run"
                       )
-    parser.add_option("--dovalgrind", dest="novalgrind", default=False,
+    parser.add_option("--dovalgrind", dest="novalgrind", default=True,
                       action="store_false", help="Use valgrind installed -- NOT recommended, compile with SANTIZE instead!")
 
     parser.add_option("--valgrindfreq", dest="valgrind_freq", type=int,
