@@ -125,7 +125,7 @@ private:
     uint32_t find_smallest_watchlist_for_clause(const T& ps) const;
 
     template<class T>
-    void findStrengthened(
+    void find_subsumed_and_strengthened(
         const ClOffset offset
         , const T& ps
         , const cl_abst_type abs
@@ -134,7 +134,7 @@ private:
     );
 
     template<class T>
-    void fillSubs(
+    void fill_sub_str(
         const ClOffset offset
         , const T& ps
         , cl_abst_type abs

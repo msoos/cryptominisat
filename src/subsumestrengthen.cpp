@@ -147,7 +147,7 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::strengthen_subsume_and_unlink_and_
     if (solver->conf.verbosity >= 6)
         cout << "strengthen_subsume_and_unlink_and_markirred-ing with clause:" << cl << endl;
 
-    findStrengthened(
+    find_subsumed_and_strengthened(
         offset
         , cl
         , cl.abst
@@ -381,36 +381,68 @@ bool SubsumeStrengthen::backw_str_long_with_long()
 }
 
 /**
-@brief Helper function for findStrengthened
+@brief Helper function for find_subsumed_and_strengthened
 
 Used to avoid duplication of code
 */
 template<class T>
-void inline SubsumeStrengthen::fillSubs(
+void inline SubsumeStrengthen::fill_sub_str(
     const ClOffset offset
     , const T& cl
     , const cl_abst_type abs
     , vector<OccurClause>& out_subsumed
     , vector<Lit>& out_lits
-    , const Lit lit
+    , const Lit lit // this variable is in the "cl", but may be inverted
 ) {
     Lit litSub;
+    uint32_t num_bin_found = 0;
     watch_subarray_const cs = solver->watches[lit];
-    *simplifier->limit_to_decrease -= (long)cs.size()*2+ 40;
-    for (const Watched *it = cs.begin(), *end = cs.end()
-        ; it != end
-        ; ++it
-    ) {
-        if (!it->isClause())
-            continue;
 
-        if (it->get_offset() == offset
-            || !subsetAbst(abs, it->getAbst())
+    //Do subsume only for the moment
+    //TODO strengthening
+    Lit bin_other_lit = lit_Undef;
+    if (cl.size() == 2) {
+        if (lit == cl[0]) {
+            bin_other_lit = cl[1];
+        } else if (lit == cl[1]) {
+            bin_other_lit = cl[0];
+        }
+    }
+
+    *simplifier->limit_to_decrease -= (long)cs.size()*2+ 40;
+    for (const auto& w: cs) {
+        if (w.isBin()) {
+            if (cl.size() > 2) {
+                continue;
+            }
+
+            if (w.red()) {
+                //let's ignore
+                continue;
+            }
+
+            if (w.lit2() != bin_other_lit) {
+                continue;
+            }
+
+            //Don't delete ourselves
+            num_bin_found++;
+            if (num_bin_found <= 1) {
+                continue;
+            }
+            out_subsumed.push_back(OccurClause(lit, w));
+            out_lits.push_back(lit_Undef);
+            continue;
+        }
+
+        assert(w.isClause());
+        if (w.get_offset() == offset
+            || !subsetAbst(abs, w.getAbst())
         ) {
             continue;
         }
 
-        ClOffset offset2 = it->get_offset();
+        ClOffset offset2 = w.get_offset();
         const Clause& cl2 = *solver->cl_alloc.ptr(offset2);
         if (cl2.getRemoved()
             || cl.size() > cl2.size())
@@ -421,7 +453,7 @@ void inline SubsumeStrengthen::fillSubs(
         *simplifier->limit_to_decrease -= (long)((cl.size() + cl2.size())/4);
         litSub = subset1(cl, cl2);
         if (litSub != lit_Error) {
-            out_subsumed.push_back(OccurClause(lit, *it));
+            out_subsumed.push_back(OccurClause(lit, w));
             out_lits.push_back(litSub);
 
             #ifdef VERBOSE_DEBUG
@@ -429,7 +461,7 @@ void inline SubsumeStrengthen::fillSubs(
             else cout << "strengthen_subsume_and_unlink_and_markirred-ed (lit: "
                 << litSub
                 << ") clause offset: "
-                << it->get_offset()
+                << w.get_offset()
                 << endl;
             #endif
         }
@@ -450,7 +482,7 @@ Checks if:
 literal, or by subsumption (in this case, there is lit_Undef here)
 */
 template<class T>
-void SubsumeStrengthen::findStrengthened(
+void SubsumeStrengthen::find_subsumed_and_strengthened(
     ClOffset offset
     , const T& cl
     , const cl_abst_type abs
@@ -459,7 +491,7 @@ void SubsumeStrengthen::findStrengthened(
 )
 {
     #ifdef VERBOSE_DEBUG
-    cout << "findStrengthened: " << cl << endl;
+    cout << "find_subsumed_and_strengthened: " << cl << endl;
     #endif
 
     uint32_t minVar = var_Undef;
@@ -477,8 +509,8 @@ void SubsumeStrengthen::findStrengthened(
     assert(minVar != var_Undef);
     *simplifier->limit_to_decrease -= (long)cl.size();
 
-    fillSubs(offset, cl, abs, out_subsumed, out_lits, Lit(minVar, true));
-    fillSubs(offset, cl, abs, out_subsumed, out_lits, Lit(minVar, false));
+    fill_sub_str(offset, cl, abs, out_subsumed, out_lits, Lit(minVar, true));
+    fill_sub_str(offset, cl, abs, out_subsumed, out_lits, Lit(minVar, false));
 }
 
 bool SubsumeStrengthen::handle_added_long_cl(
@@ -772,7 +804,7 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::backw_sub_str_long_with_implicit(
     subs.clear();
     subsLits.clear();
 
-    findStrengthened(
+    find_subsumed_and_strengthened(
         CL_OFFSET_MAX
         , lits
         , calcAbstraction(lits)
@@ -786,6 +818,15 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::backw_sub_str_long_with_implicit(
         ; j < subs.size() && solver->okay()
         ; j++
     ) {
+        if (subs[j].ws.isBin()) {
+            solver->detach_bin_clause(subs[j].lit, subs[j].ws.lit2(), subs[j].ws.red());
+            if (!subs[j].ws.red()) {
+                simplifier->n_occurs[subs[j].lit.toInt()]--;
+                simplifier->n_occurs[subs[j].ws.lit2().toInt()]--;
+            }
+            continue;
+        }
+
         assert(subs[j].ws.isClause());
         ClOffset offset2 = subs[j].ws.get_offset();
         Clause& cl2 = *solver->cl_alloc.ptr(offset2);
