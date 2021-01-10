@@ -2993,18 +2993,23 @@ bool OccSimplifier::find_xor_gate(
 }
 
 bool OccSimplifier::try_remove_lit_via_occurrence_simpl(
-    const Clause* cl, const Lit lit)
+    const OccurClause& occ_cl)
 {
     assert(solver->decisionLevel() == 0);
+    if (occ_cl.ws.isBin()) {
+        return false;
+    }
 
     solver->new_decision_level();
+    Clause* cl = solver->cl_alloc.ptr(occ_cl.ws.get_offset());
     assert(!cl->getRemoved());
     assert(!cl->freed());
 
     bool conflicted = false;
     bool found_it = false;
+    bool can_remove_cl = false;
     for(Lit l: *cl) {
-        if (l != lit) {
+        if (l != occ_cl.lit) {
             l = ~l;
         } else {
             found_it = true;
@@ -3012,7 +3017,12 @@ bool OccSimplifier::try_remove_lit_via_occurrence_simpl(
 
         const lbool val = solver->value(l);
         if (val == l_False) {
-            conflicted = true;
+            //either  it's the ORIG lit -- then the lit can be removed
+            if (l == occ_cl.lit) {
+                conflicted = true;
+            } else { //it's an INVERTED lit -- then the whole clause can be removed.
+                assert(false && "Not possible, we cleaned up the clauses from satisfied");
+            }
             break;
         }
         if (val == l_Undef) {
@@ -3021,7 +3031,7 @@ bool OccSimplifier::try_remove_lit_via_occurrence_simpl(
     }
 
     //No conflict at decision level 0, let's propagate
-    if (!conflicted) {
+    if (!conflicted && !can_remove_cl) {
         assert(found_it);
         conflicted = !solver->propagate_occur();
     }
@@ -3229,6 +3239,7 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
     assert(solver->varData[var].removed == Removed::none);
     assert(solver->value(var) == l_Undef);
     resolvents.clear();
+    const Lit lit = Lit(var, false);
 
     //Gather data
     #ifdef CHECK_N_OCCUR
@@ -3249,7 +3260,6 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
     uint32_t neg = n_occurs[Lit(var, true).toInt()];
 
     //set-up
-    const Lit lit = Lit(var, false);
     clean_from_red_or_removed(solver->watches[lit], poss);
     clean_from_red_or_removed(solver->watches[~lit], negs);
     assert(poss.size() == pos);
@@ -3581,24 +3591,23 @@ bool OccSimplifier::occ_based_lit_rem(uint32_t var, uint32_t& removed) {
     assert(solver->decisionLevel() == 0);
 
     removed = 0;
-    vec<Watched> mycopy;
     for(int i = 0; i < 2; i++) {
         Lit lit(var, i);
-        mycopy.clear();
-        solver->watches[lit].copyTo(mycopy);
+        solver->watches[lit].copyTo(poss);
 
-        for(const auto& w: mycopy) {
+        for(const auto& w: poss) {
             if (!w.isClause()) {
                 continue;
             }
 
             const ClOffset offset = w.get_offset();
             Clause* cl = solver->cl_alloc.ptr(offset);
-            if (cl->freed() || cl->getRemoved() || cl->red()) {
+            assert(!cl->freed());
+            if (cl->getRemoved() || cl->red() || solver->satisfied(*cl)) {
                 continue;
             }
 
-            if (try_remove_lit_via_occurrence_simpl(cl, lit)) {
+            if (try_remove_lit_via_occurrence_simpl(OccurClause(lit, w))) {
                 if (remove_literal(offset, lit) == l_False) {
                     return false;
                 }
@@ -3666,7 +3675,14 @@ bool OccSimplifier::maybe_eliminate(const uint32_t var)
     bvestats.testedToElimVars++;
     const Lit lit = Lit(var, false);
 
-    //Heuristic says no, or we ran out of time
+
+    if (solver->conf.varelim_check_resolvent_subs &&
+        (n_occurs[lit.toInt()] + n_occurs[(~lit).toInt()] < 10))
+    {
+        uint32_t rem = 0;
+        occ_based_lit_rem(var, rem);
+    }
+
     if (!test_elim_and_fill_resolvents(var)
         || *limit_to_decrease < 0
     ) {
