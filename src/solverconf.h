@@ -357,6 +357,7 @@ class DLL_PUBLIC SolverConf
         int var_linkin_limit_MB;
         int velim_fwd_sub_bve_resolvents;
         int varelim_gate_find_limit;
+        int varelim_check_resolvent_subs;
 
         //Subs, str limits for simplifier
         long long subsumption_time_limitM;

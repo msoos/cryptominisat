@@ -284,6 +284,24 @@ struct OccurClause {
 
     Lit lit;
     Watched ws;
+
+    bool operator<(const OccurClause& other) {
+        if (ws.isBin() && !other.ws.isBin()) {
+            return true;
+        }
+        if (!ws.isBin() && other.ws.isBin()) {
+            return false;
+        }
+
+        if (ws.isBin()) {
+            assert(other.ws.isBin());
+            return ws.lit2() < other.ws.lit2();
+        }
+
+        assert(ws.isClause());
+        assert(other.ws.isClause());
+        return ws.get_offset() < other.ws.get_offset();
+    }
 };
 
 struct WatchSorterBinTriLong {

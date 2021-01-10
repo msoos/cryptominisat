@@ -3338,10 +3338,58 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
         }
     }
 
-    if (gates) {
-        //cout << "Gates success!" << endl;
-    } else {
-        //cout << "Non-gate success!" << endl;
+    if (solver->conf.varelim_check_resolvent_subs) {
+        tmp_subs.clear();
+        int64_t total_lits = 0;
+        for(uint32_t i = 0; i < resolvents.at; i++) {
+            const auto& lits = resolvents.resolvents_lits[i];
+            total_lits += lits.size();
+            sub_str->find_subsumed(
+                CL_OFFSET_MAX,
+                lits,
+                calcAbstraction(lits),
+                tmp_subs,
+                true //only irred
+            );
+        }
+        sort(tmp_subs.begin(), tmp_subs.end());
+        tmp_subs.erase(unique(tmp_subs.begin(),tmp_subs.end()),tmp_subs.end());
+        for(const auto& cl_off: tmp_subs) {
+            if (cl_off.ws.isBin()) {
+                total_lits -= 2;
+                continue;
+            }
+            assert(cl_off.ws.isClause());
+            Clause* cl = solver->cl_alloc.ptr(cl_off.ws.get_offset());
+            total_lits -= cl->size();
+        }
+        for(const auto& w: poss) {
+            if (w.isBin()) {
+                total_lits -= 2;
+                continue;
+            }
+            assert(w.isClause());
+            Clause* cl = solver->cl_alloc.ptr(w.get_offset());
+            total_lits -= cl->size();
+        }
+        for(const auto& w: negs) {
+            if (w.isBin()) {
+                total_lits -= 2;
+                continue;
+            }
+            assert(w.isClause());
+            Clause* cl = solver->cl_alloc.ptr(w.get_offset());
+            total_lits -= cl->size();
+        }
+
+        //TODO some of the subsumed clauses could be the clauses in POSS and NEGS. Have to check.
+        if ((int)resolvents.size() - (int)tmp_subs.size() < (int)limit-15
+            || total_lits < grow
+        ) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     return true;

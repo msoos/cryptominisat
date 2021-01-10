@@ -199,6 +199,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , var_linkin_limit_MB(1000)
         , velim_fwd_sub_bve_resolvents(false) //expensive, not very effective
         , varelim_gate_find_limit(800)
+        , varelim_check_resolvent_subs(true)
 
         //Subs, str limits for simplifier
         , subsumption_time_limitM(300)

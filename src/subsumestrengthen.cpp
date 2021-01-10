@@ -88,7 +88,6 @@ template SubsumeStrengthen::Sub0Ret SubsumeStrengthen::subsume_and_unlink(
     const ClOffset offset
     , const vector<Lit>& ps
     , const cl_abst_type abs
-    , const bool removeImplicit
 );
 
 /**
@@ -99,16 +98,19 @@ SubsumeStrengthen::Sub0Ret SubsumeStrengthen::subsume_and_unlink(
     const ClOffset offset
     , const T& ps
     , const cl_abst_type abs
-    , const bool removeImplicit
 ) {
     Sub0Ret ret;
 
     subs.clear();
-    find_subsumed(offset, ps, abs, subs, removeImplicit);
+    find_subsumed(offset, ps, abs, subs);
 
     //Go through each clause that can be subsumed
-    for (const ClOffset offs: subs) {
-        Clause *tmp = solver->cl_alloc.ptr(offs);
+    for (const auto& occ_cl: subs) {
+        if (!occ_cl.ws.isClause()) {
+            continue;
+        }
+        ClOffset off = occ_cl.ws.get_offset();
+        Clause *tmp = solver->cl_alloc.ptr(off);
 
         //-> ID kept will be 1st parameter
         //Stats will be merged together here then merged into the
@@ -122,7 +124,7 @@ SubsumeStrengthen::Sub0Ret SubsumeStrengthen::subsume_and_unlink(
             ret.subsumedIrred = true;
         }
 
-        simplifier->unlink_clause(offs, true, false, true);
+        simplifier->unlink_clause(off, true, false, true);
         ret.numSubsumed++;
 
         //If we are waaay over time, just exit
@@ -157,7 +159,8 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::strengthen_subsume_and_unlink_and_
         ; j < subs.size() && solver->okay()
         ; j++
     ) {
-        ClOffset offset2 = subs[j];
+        assert(subs[j].ws.isClause());
+        ClOffset offset2 = subs[j].ws.get_offset();
         Clause& cl2 = *solver->cl_alloc.ptr(offset2);
         #ifdef USE_GAUSS
         if (cl2.used_in_xor() &&
@@ -387,7 +390,7 @@ void inline SubsumeStrengthen::fillSubs(
     const ClOffset offset
     , const T& cl
     , const cl_abst_type abs
-    , vector<ClOffset>& out_subsumed
+    , vector<OccurClause>& out_subsumed
     , vector<Lit>& out_lits
     , const Lit lit
 ) {
@@ -418,7 +421,7 @@ void inline SubsumeStrengthen::fillSubs(
         *simplifier->limit_to_decrease -= (long)((cl.size() + cl2.size())/4);
         litSub = subset1(cl, cl2);
         if (litSub != lit_Error) {
-            out_subsumed.push_back(it->get_offset());
+            out_subsumed.push_back(OccurClause(lit, *it));
             out_lits.push_back(litSub);
 
             #ifdef VERBOSE_DEBUG
@@ -451,7 +454,7 @@ void SubsumeStrengthen::findStrengthened(
     ClOffset offset
     , const T& cl
     , const cl_abst_type abs
-    , vector<ClOffset>& out_subsumed
+    , vector<OccurClause>& out_subsumed
     , vector<Lit>& out_lits
 )
 {
@@ -654,9 +657,9 @@ Lit SubsumeStrengthen::subset1(const T1& A, const T2& B)
 }
 
 template<class T>
-size_t SubsumeStrengthen::find_smallest_watchlist_for_clause(const T& ps) const
+uint32_t SubsumeStrengthen::find_smallest_watchlist_for_clause(const T& ps) const
 {
-    size_t min_i = 0;
+    uint32_t min_i = 0;
     size_t min_num = solver->watches[ps[min_i]].size();
     for (uint32_t i = 1; i < ps.size(); i++){
         const size_t this_num = solver->watches[ps[i]].size();
@@ -680,8 +683,8 @@ template<class T> void SubsumeStrengthen::find_subsumed(
     const ClOffset offset //Will not match with index of the name value
     , const T& ps //Literals in clause
     , const cl_abst_type abs //Abstraction of literals in clause
-    , vector<ClOffset>& out_subsumed //List of clause indexes subsumed
-    , bool removeImplicit
+    , vector<OccurClause>& out_subsumed //List of clauses
+    , bool only_irred
 ) {
     #ifdef VERBOSE_DEBUG
     cout << "find_subsumed: ";
@@ -691,75 +694,67 @@ template<class T> void SubsumeStrengthen::find_subsumed(
     cout << endl;
     #endif
 
-    const size_t smallest = find_smallest_watchlist_for_clause(ps);
+    const uint32_t smallest = find_smallest_watchlist_for_clause(ps);
+    const Lit lit = ps[smallest];
 
     //Go through the occur list of the literal that has the smallest occur list
-    watch_subarray occ = solver->watches[ps[smallest]];
+    watch_subarray occ = solver->watches[lit];
     *simplifier->limit_to_decrease -= (long)occ.size()*8 + 40;
 
-    Watched* it = occ.begin();
-    Watched* it2 = occ.begin();
-    size_t numBinFound = 0;
-    for (const Watched* end = occ.end()
-        ; it != end
-        ; ++it
-    ) {
-        if (removeImplicit) {
-            if (it->isBin()
-                && ps.size() == 2
-                && ps[!smallest] == it->lit2()
-                && !it->red()
-            ) {
-                /*cout
-                << "ps " << ps << " could subsume this bin: "
-                << ps[smallest] << ", " << it->lit2()
-                << endl;*/
-                numBinFound++;
-
-                //We cannot remove ourselves
-                if (numBinFound > 1) {
-                    removeWBin(solver->watches, it->lit2(), ps[smallest], it->red());
-                    solver->binTri.irredBins--;
-                    continue;
-                }
-            }
+    //cout << "find_subsumed going through: " << solver->watches_to_string(lit, occ) << endl;
+    for (const auto& w: occ) {
+        if (w.isBin()
+            && ps.size() == 2
+            && ps[!smallest] == w.lit2()
+            && !w.red()
+        ) {
+            out_subsumed.push_back(OccurClause(lit, w));
         }
-        *it2++ = *it;
 
-        if (!it->isClause()) {
+        if (!w.isClause()) {
             continue;
         }
 
         *simplifier->limit_to_decrease -= 15;
 
-        if (it->get_offset() == offset
-            || !subsetAbst(abs, it->getAbst())
+        if (w.get_offset() == offset
+            || !subsetAbst(abs, w.getAbst())
         ) {
             continue;
         }
 
-        const ClOffset offset2 = it->get_offset();
+        const ClOffset offset2 = w.get_offset();
         Clause& cl2 = *solver->cl_alloc.ptr(offset2);
 
-        if (ps.size() > cl2.size() || cl2.getRemoved())
+        if (ps.size() > cl2.size() ||
+            cl2.getRemoved() ||
+            (only_irred && cl2.red()))
+        {
             continue;
+        }
 
         *simplifier->limit_to_decrease -= 50;
         if (subset(ps, cl2)) {
-            out_subsumed.push_back(offset2);
+            out_subsumed.push_back(OccurClause(lit, w));
             #ifdef VERBOSE_DEBUG
             cout << "subsumed cl offset: " << offset2 << endl;
             #endif
         }
     }
-    occ.shrink(it-it2);
 }
 template void SubsumeStrengthen::find_subsumed(
     const ClOffset offset
     , const std::array<Lit, 2>& ps
     , const cl_abst_type abs //Abstraction of literals in clause
-    , vector<ClOffset>& out_subsumed //List of clause indexes subsumed
-    , bool removeImplicit
+    , vector<OccurClause>& out_subsumed //List of clause indexes subsumed
+    , bool only_irred
+);
+template void SubsumeStrengthen::find_subsumed(
+    const ClOffset offset
+    , const vector<Lit>& ps
+    , const cl_abst_type abs //Abstraction of literals in clause
+    , vector<OccurClause>& out_subsumed //List of clause indexes subsumed
+    , bool only_irred
 );
 
 size_t SubsumeStrengthen::mem_used() const
@@ -769,55 +764,6 @@ size_t SubsumeStrengthen::mem_used() const
     b += subsLits.capacity()*sizeof(Lit);
 
     return b;
-}
-
-void SubsumeStrengthen::finishedRun()
-{
-    globalstats += runStats;
-}
-
-void SubsumeStrengthen::Stats::print_short(const Solver* solver) const
-{
-    cout << "c [occ-substr] long"
-    << " subBySub: " << subsumedBySub
-    << " subByStr: " << subsumedByStr
-    << " lits-rem-str: " << litsRemStrengthen
-    << solver->conf.print_times(subsumeTime+strengthenTime)
-    << endl;
-}
-
-void SubsumeStrengthen::Stats::print() const
-{
-    cout << "c -------- SubsumeStrengthen STATS ----------" << endl;
-    print_stats_line("c cl-subs"
-        , subsumedBySub + subsumedByStr
-        , " Clauses"
-    );
-    print_stats_line("c cl-str rem lit"
-        , litsRemStrengthen
-        , " Lits"
-    );
-    print_stats_line("c cl-sub T"
-        , subsumeTime
-        , " s"
-    );
-    print_stats_line("c cl-str T"
-        , strengthenTime
-        , " s"
-    );
-    cout << "c -------- SubsumeStrengthen STATS END ----------" << endl;
-}
-
-SubsumeStrengthen::Stats& SubsumeStrengthen::Stats::operator+=(const Stats& other)
-{
-    subsumedBySub += other.subsumedBySub;
-    subsumedByStr += other.subsumedByStr;
-    litsRemStrengthen += other.litsRemStrengthen;
-
-    subsumeTime += other.subsumeTime;
-    strengthenTime += other.strengthenTime;
-
-    return *this;
 }
 
 SubsumeStrengthen::Sub1Ret SubsumeStrengthen::backw_sub_str_long_with_implicit(
@@ -840,7 +786,8 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::backw_sub_str_long_with_implicit(
         ; j < subs.size() && solver->okay()
         ; j++
     ) {
-        ClOffset offset2 = subs[j];
+        assert(subs[j].ws.isClause());
+        ClOffset offset2 = subs[j].ws.get_offset();
         Clause& cl2 = *solver->cl_alloc.ptr(offset2);
         if (subsLits[j] == lit_Undef) {  //Subsume
             #ifdef VERBOSE_DEBUG
@@ -991,3 +938,52 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins()
     return solver->okay();
 }
 
+
+void SubsumeStrengthen::finishedRun()
+{
+    globalstats += runStats;
+}
+
+void SubsumeStrengthen::Stats::print_short(const Solver* solver) const
+{
+    cout << "c [occ-substr] long"
+    << " subBySub: " << subsumedBySub
+    << " subByStr: " << subsumedByStr
+    << " lits-rem-str: " << litsRemStrengthen
+    << solver->conf.print_times(subsumeTime+strengthenTime)
+    << endl;
+}
+
+void SubsumeStrengthen::Stats::print() const
+{
+    cout << "c -------- SubsumeStrengthen STATS ----------" << endl;
+    print_stats_line("c cl-subs"
+        , subsumedBySub + subsumedByStr
+        , " Clauses"
+    );
+    print_stats_line("c cl-str rem lit"
+        , litsRemStrengthen
+        , " Lits"
+    );
+    print_stats_line("c cl-sub T"
+        , subsumeTime
+        , " s"
+    );
+    print_stats_line("c cl-str T"
+        , strengthenTime
+        , " s"
+    );
+    cout << "c -------- SubsumeStrengthen STATS END ----------" << endl;
+}
+
+SubsumeStrengthen::Stats& SubsumeStrengthen::Stats::operator+=(const Stats& other)
+{
+    subsumedBySub += other.subsumedBySub;
+    subsumedByStr += other.subsumedByStr;
+    litsRemStrengthen += other.litsRemStrengthen;
+
+    subsumeTime += other.subsumeTime;
+    strengthenTime += other.strengthenTime;
+
+    return *this;
+}

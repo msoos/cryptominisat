@@ -100,8 +100,8 @@ public:
         const ClOffset offset
         , const T& ps
         , const cl_abst_type abs
-        , vector<ClOffset>& out_subsumed
-        , const bool removeImplicit = false
+        , vector<OccurClause>& out_subsumed
+        , const bool only_irred = false
     );
 
 private:
@@ -117,20 +117,19 @@ private:
         const ClOffset offset
         , const T& ps
         , const cl_abst_type abs
-        , const bool removeImplicit = false
     );
 
     void randomise_clauses_order();
 
     template<class T>
-    size_t find_smallest_watchlist_for_clause(const T& ps) const;
+    uint32_t find_smallest_watchlist_for_clause(const T& ps) const;
 
     template<class T>
     void findStrengthened(
         const ClOffset offset
         , const T& ps
         , const cl_abst_type abs
-        , vector<ClOffset>& out_subsumed
+        , vector<OccurClause>& out_subsumed
         , vector<Lit>& out_lits
     );
 
@@ -139,7 +138,7 @@ private:
         const ClOffset offset
         , const T& ps
         , cl_abst_type abs
-        , vector<ClOffset>& out_subsumed
+        , vector<OccurClause>& out_subsumed
         , vector<Lit>& out_lits
         , const Lit lit
     );
@@ -150,7 +149,7 @@ private:
     template<class T1, class T2>
     Lit subset1(const T1& A, const T2& B);
 
-    vector<ClOffset> subs;
+    vector<OccurClause> subs;
     vector<Lit> subsLits;
     vector<Lit> tmpLits;
     size_t tried_bin_tri = 0;
