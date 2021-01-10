@@ -276,6 +276,7 @@ private:
     BVA* bva;
     bool startup = false;
     bool backward_sub_str();
+    void backward_sub();
     bool execute_simplifier_strategy(const string& strategy);
     lbool remove_literal(ClOffset c, const Lit toRemoveLit);
 

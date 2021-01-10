@@ -352,7 +352,6 @@ class DLL_PUBLIC SolverConf
         long long varelim_time_limitM;
         long long varelim_sub_str_limit;
         double    varElimRatioPerIter;
-        int      skip_some_bve_resolvents;
         int velim_resolvent_too_large; //-1 == no limit
         int var_linkin_limit_MB;
         int velim_fwd_sub_bve_resolvents;

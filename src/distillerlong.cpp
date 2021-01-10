@@ -51,11 +51,11 @@ bool DistillerLong::distill(const bool red, bool fullstats, bool only_rem_cl)
 
 
     if (!red) {
-        if (!distill_long_cls_all(solver->longIrredCls, 1, true)) {
+        if (!distill_long_cls_all(solver->longIrredCls, 2, true)) {
             goto end;
         }
         if (!only_rem_cl) {
-            if (!distill_long_cls_all(solver->longIrredCls, 1, false)) {
+            if (!distill_long_cls_all(solver->longIrredCls, 0.5, false)) {
                 goto end;
             }
         }

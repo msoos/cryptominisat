@@ -1474,6 +1474,8 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         }
         if (token == "occ-backw-sub-str") {
             backward_sub_str();
+        } else if (token == "occ-backw-sub") {
+            backward_sub();
         } else if (token == "occ-ternary-res") {
             if (solver->conf.doTernary) {
                 ternary_res();
@@ -1912,6 +1914,35 @@ void OccSimplifier::check_ternary_cl(Clause* cl, ClOffset offs, watch_subarray w
             }
         }
     }
+}
+
+
+
+void OccSimplifier::backward_sub()
+{
+    auto backup = subsumption_time_limit;
+    subsumption_time_limit = 0;
+    limit_to_decrease = &subsumption_time_limit;
+    assert(cl_to_free_later.empty());
+
+    subsumption_time_limit += (int64_t)
+        ((double)backup*solver->conf.subsumption_time_limit_ratio_sub_str_w_bin);
+
+    assert(cl_to_free_later.empty());
+    assert(solver->watches.get_smudged_list().empty());
+
+//     if (!sub_str->backw_sub_str_long_with_bins()
+//         || solver->must_interrupt_asap()
+//     ) {
+//         goto end;
+//     }
+
+    subsumption_time_limit += (int64_t)
+        ((double)backup*solver->conf.subsumption_time_limit_ratio_sub_w_long);
+    sub_str->backw_sub_long_with_long();
+
+    free_clauses_to_free();
+    solver->clean_occur_from_removed_clauses_only_smudged();
 }
 
 bool OccSimplifier::backward_sub_str()
