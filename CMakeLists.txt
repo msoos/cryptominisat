@@ -173,11 +173,6 @@ if (SANITIZE)
     #MESSAGE(WARNING "Using clang sanitizers -- you MUST use clang++ or the compile WILL fail")
     add_sanitize_option("-fsanitize-trap=undefined,float-divide-by-zero,unsigned-integer-overflow,implicit-conversion,local-bounds,bounds,return,alignment,null,integer,enum,bool,float-cast-overflow,integer-divide-by-zero,signed-integer-overflow")
     add_sanitize_option("-fsanitize=address")
-    #add_sanitize_option("-Weverything")
-    #add_sanitize_option("-Wshorten-64-to-32")
-    #add_sanitize_option("-Wweak-vtables")
-    #add_sanitize_option("-Wsign-conversion")
-    #add_sanitize_option("-Wconversion")
 endif()
 endmacro()
 
@@ -697,7 +692,7 @@ endif(MPI_FOUND)
 # -----------------------------------------------------------------------------
 # Look for python
 # -----------------------------------------------------------------------------
-if (STATICCOMPILE)
+if (STATICCOMPILE OR SANITIZE)
     set(ENABLE_PYTHON_INTERFACE OFF)
 endif()
 
