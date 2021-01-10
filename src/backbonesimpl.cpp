@@ -41,7 +41,8 @@ lbool BackboneSimpl::backbone_simpl(uint64_t max_confl)
     uint32_t orig_vars_set = solver->get_zero_assigned_lits().size();
     bool finished = false;
     Lit l;
-
+    uint32_t backup_verb = solver->conf.verbosity;
+    solver->conf.verbosity = 0;
 
     vector<Lit> tmp_clause;
     vector<Lit> assumps;
@@ -51,6 +52,7 @@ lbool BackboneSimpl::backbone_simpl(uint64_t max_confl)
     solver->set_max_confl(max_confl);
     lbool ret = solver->solve_with_assumptions();
     if (ret == l_False) {
+        solver->conf.verbosity = backup_verb;
         return l_False;
     }
     if (ret == l_Undef) {
@@ -79,6 +81,7 @@ lbool BackboneSimpl::backbone_simpl(uint64_t max_confl)
             tmp_clause.clear();
             tmp_clause.push_back(l);
             if (!solver->add_clause_outside(tmp_clause)) {
+                solver->conf.verbosity = backup_verb;
                 return l_False;
             }
         } else {
@@ -91,6 +94,7 @@ lbool BackboneSimpl::backbone_simpl(uint64_t max_confl)
     end:
     uint32_t num_set = solver->get_zero_assigned_lits().size() - orig_vars_set;
     double time_used = cpuTime() - myTime;
+    solver->conf.verbosity = backup_verb;
 
     if (solver->conf.verbosity) {
         if (!finished) {
