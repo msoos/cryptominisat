@@ -1397,9 +1397,11 @@ DLL_PUBLIC lbool SATSolver::find_fast_backw(FastBackwData fast_backw)
 {
     assert(data->solvers.size() == 1);
     data->solvers[0]->fast_backw = fast_backw;
+    bool backup_doVarElim = data->solvers[0]->conf.doVarElim;
     data->solvers[0]->conf.doVarElim = true;
     const auto ret = solve(NULL, true);
-    data->solvers[0]->conf.doVarElim = false;
+    data->solvers[0]->fast_backw = FastBackwData();
+    data->solvers[0]->conf.doVarElim = backup_doVarElim;
 
     return ret;
 }
