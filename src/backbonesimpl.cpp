@@ -29,8 +29,21 @@ BackboneSimpl::BackboneSimpl(Solver* _solver) :
     solver(_solver)
 {}
 
+struct IncSorterAsc
+{
+    IncSorterAsc(const vector<uint32_t>& _inc) :
+        inc(_inc)
+    {}
+
+    bool operator()(const uint32_t a, const uint32_t b) const {
+        //Return that the order is OK when "a" has less incidence than "b"
+        return inc[a] < inc[b];
+    }
+
+    const vector<uint32_t>& inc;
+};
+
 // See Preprocessing for Propositional Model Counting by Jean-Marie Lagniez and Pierre Marquis
-// TODO must get polarity to be RND(!!!) or it will not really take advantage of the fact we can solve fast
 lbool BackboneSimpl::backbone_simpl(uint64_t max_confl)
 {
     if (solver->conf.verbosity) {
@@ -49,6 +62,13 @@ lbool BackboneSimpl::backbone_simpl(uint64_t max_confl)
     vector<lbool> model;
     vector<char> model_enabled;
 
+    vector<uint32_t> var_order(solver->nVarsOutside());
+    for(uint32_t i = 0; i < solver->nVarsOutside(); i++) {
+        var_order[i] = i;
+    }
+    const auto inc = solver->get_outside_lit_incidence();
+    std::sort(var_order.begin(), var_order.end(), IncSorterAsc(inc));
+
     solver->set_max_confl(max_confl);
     lbool ret = solver->solve_with_assumptions();
     if (ret == l_False) {
@@ -61,18 +81,19 @@ lbool BackboneSimpl::backbone_simpl(uint64_t max_confl)
 
     model = solver->get_model();
     model_enabled.resize(solver->nVarsOutside(), 1);
-    for(uint32_t i = 0; i < solver->nVarsOutside(); i++) {
-        if (!model_enabled[i]) {
+
+    for(const uint32_t var: var_order) {
+        if (!model_enabled[var]) {
             continue;
         }
 
-        l = Lit(i, model[i] == l_False);
+        l = Lit(var, model[var] == l_False);
         assumps.clear();
         assumps.push_back(~l);
         solver->set_max_confl(max_confl);
         ret = solver->solve_with_assumptions(&assumps);
         if (ret == l_True) {
-            for(uint32_t i2 = 0; i2 < solver->nVars(); i2++) {
+            for(uint32_t i2 = 0; i2 < solver->nVarsOutside(); i2++) {
                 if (solver->get_model()[i2] != model[i2]) {
                     model_enabled[i2] = 0;
                 }
@@ -90,6 +111,7 @@ lbool BackboneSimpl::backbone_simpl(uint64_t max_confl)
         }
     }
     finished = true;
+    assert(solver->okay());
 
     end:
     uint32_t num_set = solver->get_zero_assigned_lits().size() - orig_vars_set;
