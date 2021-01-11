@@ -1428,6 +1428,102 @@ bool OccSimplifier::full_varelim_with_or_gates()
     return solver->okay();
 }
 
+bool OccSimplifier::occ_rem_with_gates()
+{
+    assert(solver->okay());
+    assert(solver->prop_at_head());
+
+    double myTime = cpuTime();
+    gateFinder = new GateFinder(this, solver);
+    gateFinder->find_all();
+    const auto gates = gateFinder->get_gates();
+    gateFinder->cleanup();
+    delete gateFinder;
+    gateFinder = NULL;
+
+    uint32_t shortened = 0;
+    for(const auto& gate: gates) {
+        if (solver->value(gate.rhs) != l_Undef) {
+            continue;
+        }
+
+        Lit l1 = gate.lit1;
+        Lit l2 = gate.lit2;
+        if (solver->watches[l1].size() > solver->watches[l1].size()) {
+            std::swap(l1, l2);
+        }
+        solver->watches[l1].copyTo(poss);
+        for(const auto& w: poss) {
+            if (w.isBin()) {
+                continue;
+            }
+            assert(w.isClause());
+            const auto off = w.get_offset();
+            Clause* cl = solver->cl_alloc.ptr(w.get_offset());
+            if (cl->size() == 3 || //could be the gate definition, skip
+                cl->red()) //no need, slow
+            {
+                continue;
+            }
+            assert(!cl->getRemoved());
+            assert(!cl->freed());
+
+            //TODO check calcAbst!
+            uint32_t at = std::numeric_limits<uint32_t>::max();
+            for(uint32_t i = 0, sz = cl->size(); i < sz; i++) {
+                const Lit l = (*cl)[i];
+                if (l > l2) {
+                    //lits are sorted, early-abort
+                    break;
+                }
+
+                if (l == l2) {
+                    at = i;
+                    break;
+                }
+            }
+            if (at == numeric_limits<uint32_t>::max()) {
+                continue;
+            }
+
+            shortened++;
+            (*cl)[at] = gate.rhs; //replace l2
+            cl->strengthen(l1); //remove l1
+            cl->reCalcAbstraction(); //abst is was wrong
+            std::sort(cl->begin(), cl->end());
+            removeWCl(solver->watches[l2], off);
+            removeWCl(solver->watches[l1], off); //TODO we can NOT copy +get rid of this, speedup!
+            solver->watches[gate.rhs].push(Watched(off, cl->abst));
+            n_occurs[l1.toInt()]--;
+            n_occurs[l2.toInt()]--;
+            n_occurs[gate.rhs.toInt()]++;
+            removed_cl_with_var.touch(l1.var());
+            removed_cl_with_var.touch(l2.var());
+            solver->litStats.irredLits--;
+        }
+    }
+    //Update global stats
+    const double time_used = cpuTime() - myTime;
+    //const bool time_out = (*limit_to_decrease <= 0);
+    if (solver->conf.verbosity) {
+        cout
+        << "c [occ-gate-based-lit-rem]"
+        << " lit-rem: " << shortened
+        << solver->conf.print_times(time_used, false)
+        << endl;
+    }
+    if (solver->sqlStats) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "occ-gate-based-lit-rem"
+            , time_used
+        );
+    }
+
+
+    return solver->okay();
+}
+
 bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
 {
     std::istringstream ss(strategy);
@@ -1535,6 +1631,9 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                         }
                     }
                     if (!eliminate_vars()) {
+                        continue;
+                    }
+                    if (solver->conf.varelim_check_resolvent_subs && !occ_rem_with_gates()) {
                         continue;
                     }
                 }

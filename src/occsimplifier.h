@@ -415,6 +415,7 @@ private:
     bool        deal_with_added_cl_to_var_lit(const Lit lit);
     bool        simulate_frw_sub_str_with_added_cl_to_var();
     bool        full_varelim_with_or_gates();
+    bool        occ_rem_with_gates();
 
 
     TouchList   elim_calc_need_update;

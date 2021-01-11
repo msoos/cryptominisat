@@ -99,7 +99,7 @@ public:
     void cleanup();
     vector<uint32_t> get_definability(vector<uint32_t>& vars);
     bool varelim_with_orgates();
-    OrGate* find_gate_to_elim_on(Lit lit, uint32_t cutoff);
+    const vector<OrGate>& get_gates() const;
 
     //Stats
     struct Stats
@@ -152,6 +152,7 @@ public:
     const Stats& get_stats() const;
 
 private:
+    OrGate* find_gate_to_elim_on(Lit lit, uint32_t cutoff);
     void print_graphviz_dot();
 
     //Setup
@@ -269,6 +270,11 @@ private:
 inline const GateFinder::Stats& GateFinder::get_stats() const
 {
     return globalStats;
+}
+
+inline const vector<OrGate>& GateFinder::get_gates() const
+{
+    return orGates;
 }
 
 } //end namespace
