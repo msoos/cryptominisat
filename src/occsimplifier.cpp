@@ -3424,8 +3424,8 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
         }
 
         //TODO some of the subsumed clauses could be the clauses in POSS and NEGS. Have to check.
-        if ((int)resolvents.size() - (int)tmp_subs.size() < (int)limit-15
-            || total_lits < grow
+        if ((int)resolvents.size() - (int)tmp_subs.size() < (int)limit-10
+            || (int)total_lits < (int)grow-20
         ) {
             return true;
         } else {
