@@ -403,7 +403,6 @@ class Tester:
             cmd += "--occsimp %s " % random.randint(0, 1)
             cmd += "--occirredmaxmb %s " % random.gammavariate(0.2, 5)
             cmd += "--occredmaxmb %s " % random.gammavariate(0.2, 5)
-            cmd += "--skipresol %d " % random.choice([1, 1, 1, 0])
             cmd += "--implsubsto %s " % random.choice([0, 10, 1000])
             cmd += "--sync %d " % random.choice([100, 1000, 6000, 100000])
             cmd += "-m %0.12f " % random.gammavariate(0.1, 5.0)
