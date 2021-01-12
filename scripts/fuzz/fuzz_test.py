@@ -396,6 +396,7 @@ class Tester:
             cmd += "--occredmax %s " % random.randint(0, 100)
             cmd += "--distill %s " % random.randint(0, 1)
             cmd += "--recur %s " % random.randint(0, 1)
+            cmd += "--varelimcheckres %s " % random.randint(0, 1)
             cmd += "--compsfrom %d " % random.randint(0, 2)
             cmd += "--compsvar %d " % random.randint(20000, 500000)
             cmd += "--compslimit %d " % random.randint(0, 3000)

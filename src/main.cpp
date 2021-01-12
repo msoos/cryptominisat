@@ -643,6 +643,8 @@ void Main::add_supported_options()
         , "Maximum extra MB of memory to use for new clauses during varelim")
     ("eratio", po::value(&conf.varElimRatioPerIter)->default_value(conf.varElimRatioPerIter, ssERatio.str())
         , "Eliminate this ratio of free variables at most per variable elimination iteration")
+    ("varelimcheckres", po::value(&conf.varelim_check_resolvent_subs)->default_value(conf.varelim_check_resolvent_subs)
+        , "BVE should check whether resolvents subsume others and check for exact size increase")
 
     ;
 
