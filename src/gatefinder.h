@@ -98,7 +98,6 @@ public:
     void find_all();
     void cleanup();
     vector<uint32_t> get_definability(vector<uint32_t>& vars);
-    bool varelim_with_orgates();
     const vector<OrGate>& get_gates() const;
 
     //Stats
@@ -160,10 +159,6 @@ private:
     void add_gate_if_not_already_inside(Lit rhs, Lit lit1, Lit lit2);
     void find_or_gates_in_sweep_mode(Lit lit);
 
-    //High-level functions
-    bool remove_clauses_with_all_or_gates();
-    bool shorten_with_all_or_gates();
-
     //Finding
     void find_or_gates_and_update_stats();
     void find_or_gates();
@@ -173,72 +168,8 @@ private:
         , const Lit lit2
     );
 
-    bool all_simplifications_with_gates();
     vector<ClOffset> subs; //to reduce overhead of allocation
-    bool shortenWithOrGate(const OrGate& gate);
     size_t findEqOrGates();
-
-    //And gate treatment
-    bool remove_clauses_using_and_gate(
-        const OrGate& gate
-        , const bool reallyRemove
-    );
-
-    cl_abst_type  calc_sorted_occ_and_set_seen2(
-        const OrGate& gate
-        , uint32_t& maxSize
-        , uint32_t& minSize
-    );
-    void set_seen2_and_abstraction(
-        const Clause& cl
-        , cl_abst_type& abstraction
-    );
-    bool check_seen_and_gate_against_cl(
-        const Clause& this_cl
-        , const OrGate& gate
-    );
-
-    void treatAndGateClause(
-        const ClOffset other_cl_offset
-        , const OrGate& gate
-        , const ClOffset this_cl_offset
-    );
-    cl_abst_type calc_abst_and_set_seen(
-       const Clause& cl
-        , const OrGate& gate
-    );
-    ClOffset find_pair_for_and_gate_reduction(
-        const Watched& ws
-        , const size_t minSize
-        , const size_t maxSize
-        , const cl_abst_type abstraction
-        , const OrGate& gate
-    );
-
-    ClOffset findAndGateOtherCl(
-        const vector<ClOffset>& this_sizeSortedOcc
-        , const Lit lit
-        , const cl_abst_type abst2
-    );
-    bool find_pair_for_and_gate_reduction_tri(
-        const Watched& ws
-        , const OrGate& gate
-        , Watched& found_pair
-    );
-    bool remove_clauses_using_and_gate_tri(
-       const OrGate& gate
-        , const bool really_remove
-    );
-    void set_seen2_tri(
-       const OrGate& gate
-    );
-    bool check_seen_and_gate_against_lit(
-        const Lit lit
-        , const OrGate& gate
-    );
-
-    ///temporary for and-gate treatment. Cleared at every treatAndGate() call
-//     vector<vector<ClOffset> > sizeSortedOcc;
 
     //Indexes, gate data
     vector<OrGate> orGates; //List of OR gates

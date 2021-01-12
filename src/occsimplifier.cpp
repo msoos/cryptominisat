@@ -1413,21 +1413,6 @@ vector<uint32_t> OccSimplifier::get_definabe(vector<uint32_t>& vars)
     return definable;
 }
 
-bool OccSimplifier::full_varelim_with_or_gates()
-{
-    gateFinder = new GateFinder(this, solver);
-    gateFinder->find_all();
-    gateFinder->varelim_with_orgates();
-    for(uint32_t i = 0; i < solver->nVars(); i++) {
-        solver->clean_occur_from_idx(Lit(i, false));
-        solver->clean_occur_from_idx(Lit(i, true));
-    }
-    delete gateFinder;
-    gateFinder = NULL;
-
-    return solver->okay();
-}
-
 bool OccSimplifier::occ_rem_with_gates()
 {
     assert(solver->okay());
@@ -1625,11 +1610,6 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                     eliminate_empty_resolvent_vars();
                 }
                 if (solver->conf.do_full_varelim) {
-                    if (solver->conf.gate_based_elim) {
-                        if (!full_varelim_with_or_gates()) {
-                            continue;
-                        }
-                    }
                     if (!eliminate_vars()) {
                         continue;
                     }
