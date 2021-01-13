@@ -359,7 +359,7 @@ void OccSimplifier::unlink_clause(
 lbool OccSimplifier::clean_clause(ClOffset offset)
 {
     assert(!solver->drat->something_delayed());
-    assert(solver->ok);
+    assert(solver->okay());
 
     bool satisfied = false;
     Clause& cl = *solver->cl_alloc.ptr(offset);
@@ -427,13 +427,15 @@ lbool OccSimplifier::clean_clause(ClOffset offset)
             solver->ok = false;
             return l_False;
 
-        case 1:
+        case 1: {
             solver->enqueue(cl[0]);
             #ifdef STATS_NEEDED
             solver->propStats.propsUnit++;
             #endif
             unlink_clause(offset, false);
-            return l_True;
+            bool ret = solver->propagate_occur();
+            return ret ? l_True : l_False;
+        }
 
         case 2: {
             solver->attach_bin_clause(cl[0], cl[1], cl.red());
@@ -503,13 +505,13 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
             solver->ok = false;
             return false;
 
-        case 1:
+        case 1: {
             solver->enqueue(cl[0]);
             #ifdef STATS_NEEDED
             solver->propStats.propsUnit++;
             #endif
-            return false;
-
+            return solver->propagate_occur();
+        }
         case 2:
             solver->attach_bin_clause(cl[0], cl[1], cl.red());
             return false;
@@ -704,7 +706,7 @@ void OccSimplifier::add_back_to_solver()
             continue;
         }
 
-        if (complete_clean_clause(*cl)) {
+        if (solver->okay() && complete_clean_clause(*cl)) {
             solver->attachClause(*cl);
             if (cl->red()) {
                 assert(cl->stats.glue > 0);
@@ -1017,6 +1019,8 @@ bool OccSimplifier::simulate_frw_sub_str_with_added_cl_to_var()
 
 bool OccSimplifier::eliminate_vars()
 {
+    assert(solver->prop_at_head());
+
     //solver->conf.verbosity = 1;
     //Set-up
     size_t last_trail = solver->trail_size();
@@ -1088,12 +1092,15 @@ bool OccSimplifier::eliminate_vars()
         while(!removed_cl_with_var.getTouchedList().empty()
             && *limit_to_decrease > 0
             && !solver->must_interrupt_asap()
+            && solver->okay()
         ) {
+            assert(solver->prop_at_head());
             removed_cl_with_var.clear();
             while(!velim_order.empty()
                 && *limit_to_decrease > 0
                 && varelim_num_limit > 0
                 && varelim_linkin_limit_bytes > 0
+                && solver->okay()
                 && !solver->must_interrupt_asap()
             ) {
                 assert(limit_to_decrease == &norm_varelim_time_limit);
@@ -1507,6 +1514,8 @@ bool OccSimplifier::occ_rem_with_gates()
     }
 
 
+    assert(solver->okay());
+    assert(solver->prop_at_head());
     return solver->okay();
 }
 
@@ -1519,7 +1528,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         if (cpuTime() > solver->conf.maxTime
             || solver->must_interrupt_asap()
             || solver->nVars() == 0
-            || !solver->ok
+            || !solver->okay()
         ) {
             return solver->okay();
         }
@@ -1543,10 +1552,11 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         solver->check_implicit_stats(true);
         solver->check_assumptions_sanity();
         #endif
-        if (!solver->propagate_occur()) {
-            solver->ok = false;
-            return false;
-        }
+        assert(solver->prop_at_head());
+//         if (!solver->propagate_occur()) {
+//             solver->ok = false;
+//             return false;
+//         }
         set_limits();
 
         token = trim(token);
@@ -1554,6 +1564,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         if (token != "" && solver->conf.verbosity) {
             cout << "c --> Executing OCC strategy token: " << token << '\n';
         }
+
         if (token == "occ-backw-sub-str") {
             backward_sub_str();
         } else if (token == "occ-backw-sub") {
@@ -1637,16 +1648,20 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             exit(-1);
         }
 
-#ifdef CHECK_N_OCCUR
+        #ifdef CHECK_N_OCCUR
         check_n_occur();
-#endif //CHECK_N_OCCUR
+        #endif //CHECK_N_OCCUR
+        assert(solver->prop_at_head());
     }
 
-    if (solver->okay() &&
-        !solver->propagate_occur()
-    ) {
-        solver->ok = false;
-        return false;
+    if (solver->okay()) {
+        assert(solver->prop_at_head());
+        //solver->check_implicit_propagated();
+//         if (!solver->propagate_occur()
+//         ) {
+//             solver->ok = false;
+//             return false;
+//         }
     }
 
     return solver->okay();
@@ -3791,6 +3806,8 @@ bool OccSimplifier::all_occ_based_lit_rem()
 bool OccSimplifier::maybe_eliminate(const uint32_t var)
 {
     assert(solver->ok);
+    assert(solver->prop_at_head());
+
     print_var_elim_complexity_stats(var);
     bvestats.testedToElimVars++;
     const Lit lit = Lit(var, false);
