@@ -829,7 +829,7 @@ bool SubsumeStrengthen::backw_sub_str_with_implicit(
                 if (val == l_False) {
                     return false;
                 } else if (val == l_Undef) {
-                    (*solver->drat) << subsLits[j] << fin;
+                    (*solver->drat) << add << subsLits[j] << fin;
                     solver->enqueue(subsLits[j]);
                     if (!solver->propagate_occur()) {
                         return false;
