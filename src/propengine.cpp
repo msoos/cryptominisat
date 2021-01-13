@@ -620,7 +620,7 @@ inline bool PropEngine::propagate_long_clause_occur(
     const ClOffset offset)
 {
     const Clause& cl = *cl_alloc.ptr(offset);
-    assert(!cl.freed() && "Cannot be already removed in occur");
+    assert(!cl.freed() && "Cannot be already freed in occur");
     if (cl.getRemoved())
         return true;
 
