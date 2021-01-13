@@ -3852,6 +3852,11 @@ bool OccSimplifier::maybe_eliminate(const uint32_t var)
         uint32_t rem = 0;
         occ_based_lit_rem(var, rem);
     }
+    if (solver->value(var) != l_Undef ||
+        !solver->okay()
+    ) {
+        return false;
+    }
 
     if (!test_elim_and_fill_resolvents(var)
         || *limit_to_decrease < 0
