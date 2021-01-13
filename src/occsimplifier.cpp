@@ -4496,4 +4496,3 @@ lbool OccSimplifier::remove_literal(ClOffset offset, const Lit toRemoveLit)
 
     return clean_clause(offset);
 }
-
