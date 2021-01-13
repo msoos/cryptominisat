@@ -518,6 +518,7 @@ void SubsumeStrengthen::find_subsumed_and_strengthened(
 bool SubsumeStrengthen::handle_added_long_cl(
     int64_t* limit_to_decrease, const bool main_run)
 {
+    assert(solver->prop_at_head());
     int64_t orig_limit = *limit_to_decrease;
     size_t origTrailSize = solver->trail_size();
     const double start_time = cpuTime();

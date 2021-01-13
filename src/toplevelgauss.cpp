@@ -253,8 +253,13 @@ bool TopLevelGauss::extractInfoFromBlock(
             case 1: {
                 runStats.newUnits++;
                 solver->add_xor_clause_inter(lits, rhs, false);
-                if (!solver->okay())
+                if (solver->okay()) {
+                    solver->ok = solver->propagate_occur();
+                }
+                if (!solver->okay()) {
                     goto end;
+                }
+
                 break;
             }
 
@@ -262,8 +267,12 @@ bool TopLevelGauss::extractInfoFromBlock(
                 runStats.newBins++;
                 out_changed_occur->insert(out_changed_occur->end(), lits.begin(), lits.end());
                 solver->add_xor_clause_inter(lits, rhs, false, true, true);
-                if (!solver->okay())
+                if (solver->okay()) {
+                    solver->ok = solver->propagate_occur();
+                }
+                if (!solver->okay()) {
                     goto end;
+                }
                 break;
             }
 

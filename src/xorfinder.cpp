@@ -838,6 +838,9 @@ bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* ou
                 } else {
                     solver->ok = solver->propagate<true>().isNULL();
                 }
+                if (!solver->ok) {
+                    goto end;
+                }
 
                 if (out_changed_occur) {
                     out_changed_occur->push_back(Lit(x[0], false));

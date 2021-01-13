@@ -433,8 +433,8 @@ lbool OccSimplifier::clean_clause(ClOffset offset)
             solver->propStats.propsUnit++;
             #endif
             unlink_clause(offset, false);
-            bool ret = solver->propagate_occur();
-            return ret ? l_True : l_False;
+            solver->ok = solver->propagate_occur();
+            return l_False;
         }
 
         case 2: {
@@ -461,6 +461,8 @@ lbool OccSimplifier::clean_clause(ClOffset offset)
 
 bool OccSimplifier::complete_clean_clause(Clause& cl)
 {
+    assert(solver->okay());
+
     assert(!solver->drat->something_delayed());
     assert(cl.size() > 2);
     (*solver->drat) << deldelay << cl << fin;
@@ -510,7 +512,8 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
             #ifdef STATS_NEEDED
             solver->propStats.propsUnit++;
             #endif
-            return solver->propagate_occur();
+            solver->ok = solver->propagate_occur();
+            return false;
         }
         case 2:
             solver->attach_bin_clause(cl[0], cl[1], cl.red());
@@ -862,12 +865,17 @@ uint32_t OccSimplifier::sum_irred_cls_longs_lits() const
 
 bool OccSimplifier::deal_with_added_long_and_bin(const bool main)
 {
+    assert(solver->okay());
+    assert(solver->prop_at_head());
+
     while (!added_long_cl.empty() && !added_irred_bin.empty())
     {
         if (!sub_str->handle_added_long_cl(limit_to_decrease, main)) {
             return false;
         }
         added_long_cl.clear();
+        assert(solver->okay());
+        assert(solver->prop_at_head());
 
         //NOTE: added_irred_bin CAN CHANGE while this is running!!
         for (size_t i = 0; i < added_irred_bin.size(); i++) {
@@ -920,8 +928,10 @@ bool OccSimplifier::clear_vars_from_cls_that_have_been_set(size_t& last_trail)
     for(ClOffset offs: cls_to_clean) {
         Clause* cl = solver->cl_alloc.ptr(offs);
         if (!cl->getRemoved() && !cl->freed()) {
-            lbool ret = clean_clause(offs);
-            if (ret == l_False) {
+            if (clean_clause(offs) == l_False) {
+                //HHMMM should unlink? TODO check.
+            }
+            if (!solver->okay()) {
                 return false;
             }
         }
@@ -955,16 +965,15 @@ bool OccSimplifier::deal_with_added_cl_to_var_lit(const Lit lit)
 
 bool OccSimplifier::prop_and_clean_long_and_impl_clauses()
 {
-    solver->ok = solver->propagate_occur();
-    if (!solver->okay()) {
-        return false;
-    }
+    assert(solver->okay());
 
     for(ClOffset offs: clauses) {
         Clause* cl = solver->cl_alloc.ptr(offs);
         if (!cl->getRemoved() && !cl->freed() && cl->getOccurLinked()) {
-            lbool ret = clean_clause(offs);
-            if (ret == l_False) {
+            if (clean_clause(offs) == l_False) {
+                //HMMM TODO should unlink?
+            }
+            if (!solver->okay()) {
                 return false;
             }
         }
@@ -1103,6 +1112,7 @@ bool OccSimplifier::eliminate_vars()
                 && solver->okay()
                 && !solver->must_interrupt_asap()
             ) {
+                assert(solver->prop_at_head());
                 assert(limit_to_decrease == &norm_varelim_time_limit);
                 uint32_t var = velim_order.removeMin();
 
@@ -1120,8 +1130,11 @@ bool OccSimplifier::eliminate_vars()
                     varelim_num_limit--;
                     last_elimed++;
                 }
-                if (!solver->ok)
+                if (!solver->okay()) {
                     goto end;
+                }
+                assert(solver->prop_at_head());
+                assert(solver->okay());
 
                 //SUB and STR for newly added long and short cls
                 limit_to_decrease = &varelim_sub_str_limit;
@@ -1130,14 +1143,12 @@ bool OccSimplifier::eliminate_vars()
                     goto end;
                 }
                 limit_to_decrease = &norm_varelim_time_limit;
-
-                solver->ok = solver->propagate_occur();
-                if (!solver->okay()) {
-                    goto end;
-                }
+                assert(solver->okay());
+                assert(solver->prop_at_head());
 
                 update_varelim_complexity_heap();
             }
+            assert(solver->prop_at_head());
 
             //Clean clauses that have vars that have been set
             if (last_trail != solver->trail_size()) {
@@ -1226,6 +1237,7 @@ bool OccSimplifier::eliminate_vars()
                 << endl;
             }
         }
+        assert(solver->prop_at_head());
 
 
         if (n_cls_now > n_cls_init || cl_inc_rate > (var_dec_rate)) {
@@ -1239,6 +1251,7 @@ bool OccSimplifier::eliminate_vars()
         } else {
             grow *= 2;
         }
+        assert(solver->prop_at_head());
     }
 
     if (solver->conf.verbosity) {
@@ -1251,7 +1264,12 @@ bool OccSimplifier::eliminate_vars()
     }
 
 end:
+    if (solver->okay()) {
+        assert(solver->prop_at_head());
+    }
     free_clauses_to_free();
+    solver->clean_occur_from_removed_clauses_only_smudged();
+    assert(solver->watches.get_smudged_list().empty());
     const double time_used = cpuTime() - myTime;
     const bool time_out = (*limit_to_decrease <= 0);
     const double time_remain = float_div(*limit_to_decrease, orig_norm_varelim_time_limit);
@@ -1651,7 +1669,9 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         #ifdef CHECK_N_OCCUR
         check_n_occur();
         #endif //CHECK_N_OCCUR
-        assert(solver->prop_at_head());
+        if (solver->okay()) {
+            assert(solver->prop_at_head());
+        }
     }
 
     if (solver->okay()) {
@@ -3122,6 +3142,7 @@ bool OccSimplifier::try_remove_lit_via_occurrence_simpl(
     const OccurClause& occ_cl)
 {
     assert(solver->decisionLevel() == 0);
+    assert(solver->prop_at_head());
     if (occ_cl.ws.isBin()) {
         return false;
     }
@@ -3585,6 +3606,9 @@ bool OccSimplifier::add_varelim_resolvent(
     , const ClauseStats& stats
     , const bool is_xor
 ) {
+    assert(solver->okay());
+    assert(solver->prop_at_head());
+
     bvestats.newClauses++;
     Clause* newCl = NULL;
 
@@ -3604,8 +3628,12 @@ bool OccSimplifier::add_varelim_resolvent(
         , &finalLits //Return final set of literals here
     );
 
-    if (!solver->ok)
+    if (solver->okay()) {
+        solver->ok = solver->propagate_occur();
+    }
+    if (!solver->okay()) {
         return false;
+    }
 
     if (newCl != NULL) {
         newCl->set_used_in_xor(is_xor);
@@ -3734,13 +3762,11 @@ bool OccSimplifier::occ_based_lit_rem(uint32_t var, uint32_t& removed) {
             }
 
             if (try_remove_lit_via_occurrence_simpl(OccurClause(lit, w))) {
-                if (remove_literal(offset, lit) == l_False) {
-                    return false;
-                }
-                solver->ok = solver->propagate_occur();
+                remove_literal(offset, lit);
                 if (!solver->okay()) {
                     return false;
                 }
+
                 removed++;
             }
             solver->check_implicit_propagated();
@@ -3751,6 +3777,9 @@ bool OccSimplifier::occ_based_lit_rem(uint32_t var, uint32_t& removed) {
 
 bool OccSimplifier::all_occ_based_lit_rem()
 {
+    assert(solver->okay());
+    assert(solver->prop_at_head());
+
     double myTime = cpuTime();
     vector<uint32_t> vars;
     for(uint32_t v = 0; v < solver->nVars(); v++) {
@@ -3784,6 +3813,10 @@ bool OccSimplifier::all_occ_based_lit_rem()
 
     free_clauses_to_free();
     solver->clean_occur_from_removed_clauses_only_smudged();
+    if (solver->okay()) {
+        assert(solver->prop_at_head());
+        solver->check_implicit_propagated();
+    }
 
     double time_used = cpuTime() - myTime;
     if (solver->conf.verbosity) {
@@ -4470,6 +4503,9 @@ Clause* OccSimplifier::full_add_clause(
         , &finalLits
     );
 
+    if (solver->okay()) {
+        solver->ok = solver->propagate_occur();
+    }
     if (!solver->okay()) {
         return NULL;
     }
