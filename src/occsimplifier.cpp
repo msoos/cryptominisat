@@ -1149,6 +1149,7 @@ bool OccSimplifier::eliminate_vars()
             }
 
             if (!simulate_frw_sub_str_with_added_cl_to_var()) {
+                limit_to_decrease = &norm_varelim_time_limit;
                 goto end;
             }
 
@@ -1474,7 +1475,7 @@ bool OccSimplifier::occ_rem_with_gates()
             shortened++;
             (*cl)[at] = gate.rhs; //replace l2
             cl->strengthen(l1); //remove l1
-            cl->reCalcAbstraction(); //abst is was wrong
+            cl->reCalcAbstraction(); //abst is wrong
             std::sort(cl->begin(), cl->end());
             removeWCl(solver->watches[l2], off);
             removeWCl(solver->watches[l1], off); //TODO we can NOT copy +get rid of this, speedup!
