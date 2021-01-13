@@ -134,20 +134,22 @@ struct IncidenceSorter
 vector<uint32_t> GateFinder::get_definability(vector<uint32_t>& vars)
 {
     double myTime = cpuTime();
-
     vector<uint32_t> definable;
-    assert(toClear.empty());
+
     for(const auto var: vars) {
         assert(var < solver->nVars() && "get_definability must not be passed variables that no longer exist");
-        assert(var < seen2.size());
-        seen2[var] = 1;
+        assert(var < seen.size());
+        seen[var] = 1;
     }
 
 
     //Set up incidence
     vector<uint32_t> inc(solver->nVars(), 0);
     for(const auto& g: orGates) {
-        if (seen2[g.lit1.var()] && seen2[g.lit2.var()] && seen2[g.rhs.var()]) {
+        if (seen[g.lit1.var()] &&
+            seen[g.lit2.var()] &&
+            seen[g.rhs.var()])
+        {
             inc[g.rhs.var()]++;
         }
     }
@@ -158,7 +160,7 @@ vector<uint32_t> GateFinder::get_definability(vector<uint32_t>& vars)
 
     for(auto var: vars) {
         //already defined, let's not do circular dependency
-        if (seen[var]) {
+        if (!seen[var]) {
             continue;
         }
 
@@ -174,29 +176,21 @@ vector<uint32_t> GateFinder::get_definability(vector<uint32_t>& vars)
                 assert(g.rhs.var() == var);
 
                 //must be part of original set, and its ingredients must not have been defined
-                if (seen2[g.rhs.var()] && !seen[g.rhs.var()]) {
-                    if (seen2[g.lit1.var()] && seen2[g.lit2.var()] //must be part of original set
-                        && !seen[g.lit1.var()] && !seen[g.lit2.var()]) //ingredients must not have been defined
-                    {
-                        seen[g.rhs.var()] = 1;
-                        toClear.push_back(g.rhs);
+                if (seen[g.rhs.var()] &&
+                    seen[g.lit1.var()] &&
+                    seen[g.lit2.var()])
+                {
+                        seen[g.rhs.var()] = 0;
                         definable.push_back(var);
                         defined = true;
                         break;
-                    }
                 }
             }
         }
     }
 
-
-    for(auto lit: toClear) {
-        seen[lit.var()] = 0;
-    }
-    toClear.clear();
-
     for(auto var: vars) {
-        seen2[var] = 0;
+        seen[var] = 0;
     }
 
     double time_passed = cpuTime() - myTime;
