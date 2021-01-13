@@ -3722,14 +3722,19 @@ bool OccSimplifier::occ_based_lit_rem(uint32_t var, uint32_t& removed) {
                 if (remove_literal(offset, lit) == l_False) {
                     return false;
                 }
+                solver->ok = solver->propagate_occur();
+                if (!solver->okay()) {
+                    return false;
+                }
                 removed++;
             }
+            solver->check_implicit_propagated();
         }
     }
     return solver->okay();
 }
 
-void OccSimplifier::all_occ_based_lit_rem()
+bool OccSimplifier::all_occ_based_lit_rem()
 {
     double myTime = cpuTime();
     vector<uint32_t> vars;
@@ -3749,7 +3754,9 @@ void OccSimplifier::all_occ_based_lit_rem()
             continue;
         }
         uint32_t removed = 0;
-        occ_based_lit_rem(v, removed);
+        if (!occ_based_lit_rem(v, removed)) {
+            break;
+        }
         removed_all += removed;
         if (solver->conf.verbosity >= 5) {
             cout << "occ-lit-rem finished var " << v
@@ -3777,6 +3784,8 @@ void OccSimplifier::all_occ_based_lit_rem()
             , time_used
         );
     }
+
+    return solver->okay();
 }
 
 bool OccSimplifier::maybe_eliminate(const uint32_t var)

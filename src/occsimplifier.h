@@ -487,7 +487,7 @@ private:
     bool        try_remove_lit_via_occurrence_simpl(const OccurClause& occ_cl);
     bool        occurrence_simp_based_resolv_skip(const Watched* it, const Lit lit);
     bool        occ_based_lit_rem(uint32_t var, uint32_t& removed);
-    void        all_occ_based_lit_rem();
+    bool        all_occ_based_lit_rem();
 
     struct ResolventData {
         ResolventData()
