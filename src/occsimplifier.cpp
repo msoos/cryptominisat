@@ -3769,7 +3769,6 @@ bool OccSimplifier::occ_based_lit_rem(uint32_t var, uint32_t& removed) {
 
                 removed++;
             }
-            solver->check_implicit_propagated();
         }
     }
     return solver->okay();
