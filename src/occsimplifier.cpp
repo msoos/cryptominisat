@@ -3744,6 +3744,7 @@ bool OccSimplifier::occ_based_lit_rem(uint32_t var, uint32_t& removed) {
 
             if (solver->satisfied(*cl)) {
                 unlink_clause(offset, true, true, true);
+                continue;
             }
 
             if (try_remove_lit_via_occurrence_simpl(OccurClause(lit, w))) {
