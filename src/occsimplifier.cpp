@@ -3702,7 +3702,7 @@ void OccSimplifier::update_varelim_complexity_heap()
     num_otf_update_until_now++;
     for(uint32_t var: elim_calc_need_update.getTouchedList()) {
         //No point in updating the score of this var
-        if (!can_eliminate_var(var)) {
+        if (!can_eliminate_var(var) || !velim_order.inHeap(var)) {
             continue;
         }
 
@@ -3714,6 +3714,7 @@ void OccSimplifier::update_varelim_complexity_heap()
             velim_order.update(var);
         }
     }
+    elim_calc_need_update.clear();
 
     #ifdef CHECK_N_OCCUR
     for(uint32_t var = 0; var < solver->nVars(); var++) {
