@@ -251,7 +251,7 @@ public:
     vector<ClOffset> added_long_cl;
     TouchListLit added_cl_to_var;
     vector<uint32_t> n_occurs;
-    TouchListLit removed_cl_with_var;
+    TouchList removed_cl_with_var;
     vector<std::pair<Lit, Lit> > added_irred_bin;
     vector<ClOffset> clauses;
     void check_elimed_vars_are_unassignedAndStats() const;

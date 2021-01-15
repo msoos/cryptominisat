@@ -1123,6 +1123,7 @@ bool OccSimplifier::eliminate_vars()
         ) {
             assert(solver->prop_at_head());
             removed_cl_with_var.clear();
+            update_varelim_complexity_heap();
             while(!velim_order.empty()
                 && *limit_to_decrease > 0
                 && varelim_num_limit > 0
@@ -1142,7 +1143,6 @@ bool OccSimplifier::eliminate_vars()
                     continue;
 
                 //Try to eliminate
-                elim_calc_need_update.clear();
                 if (maybe_eliminate(var)) {
                     vars_elimed++;
                     varelim_num_limit--;
@@ -1167,14 +1167,11 @@ bool OccSimplifier::eliminate_vars()
                 limit_to_decrease = &norm_varelim_time_limit;
                 assert(solver->okay());
                 assert(solver->prop_at_head());
-
                 update_varelim_complexity_heap();
             }
             assert(solver->prop_at_head());
 
             solver->clean_occur_from_removed_clauses_only_smudged();
-            update_varelim_complexity_heap();
-
 
             if (solver->conf.verbosity >= 2) {
                 cout <<"c size of added_cl_to_var    : " << added_cl_to_var.getTouchedList().size() << endl;
@@ -1186,13 +1183,15 @@ bool OccSimplifier::eliminate_vars()
                 goto end;
             }
 
+            //These WILL ADD VARS BACK even though it's not changed.
             for(uint32_t var: removed_cl_with_var.getTouchedList()) {
                 if (!can_eliminate_var(var)) {
                     continue;
                 }
                 varElimComplexity[var] = heuristicCalcVarElimScore(var);
-                velim_order.update(var);
+                velim_order.insert(var);
             }
+
 
             if (solver->conf.verbosity >= 2) {
                 cout << "c x n vars       : " << solver->get_num_free_vars() << endl;
@@ -1526,8 +1525,8 @@ bool OccSimplifier::occ_rem_with_gates()
             elim_calc_need_update.touch(l1);
             elim_calc_need_update.touch(l2);
             elim_calc_need_update.touch(gate.rhs);
-            removed_cl_with_var.touch(l1.var());
-            removed_cl_with_var.touch(l2.var());
+            removed_cl_with_var.touch(l1);
+            removed_cl_with_var.touch(l2);
             solver->litStats.irredLits--;
         }
     }
@@ -2582,6 +2581,10 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(
                 }
                 n_occurs[lits[0].toInt()]--;
                 n_occurs[lits[1].toInt()]--;
+                removed_cl_with_var.touch(lits[0]);
+                removed_cl_with_var.touch(lits[1]);
+                elim_calc_need_update.touch(lits[0]);
+                elim_calc_need_update.touch(lits[1]);
             } else {
                 //If redundant, delayed blocked-based DRAT deletion will not work
                 //so delete explicitly
@@ -3699,14 +3702,33 @@ void OccSimplifier::update_varelim_complexity_heap()
     num_otf_update_until_now++;
     for(uint32_t var: elim_calc_need_update.getTouchedList()) {
         //No point in updating the score of this var
-        if (!can_eliminate_var(var) || !velim_order.inHeap(var)) {
+        if (!can_eliminate_var(var)) {
             continue;
         }
 
-        //cout << "updating var " << var+1 << endl;
+        auto prev = varElimComplexity[var];
         varElimComplexity[var] = heuristicCalcVarElimScore(var);
-        velim_order.update(var);
+
+        //If different, PUT IT BACK IN, and update the heap
+        if (prev != varElimComplexity[var]) {
+            velim_order.update(var);
+        }
     }
+
+    #ifdef CHECK_N_OCCUR
+    for(uint32_t var = 0; var < solver->nVars(); var++) {
+        if (!can_eliminate_var(var)) {
+            continue;
+        }
+
+        auto prev = varElimComplexity[var];
+        varElimComplexity[var] = heuristicCalcVarElimScore(var);
+        if (prev != varElimComplexity[var]) {
+            cout << "prev: " << prev << " now: " << varElimComplexity[var] << endl;
+        }
+        assert(prev == varElimComplexity[var]);
+    }
+    #endif
 }
 
 void OccSimplifier::print_var_elim_complexity_stats(const uint32_t var) const

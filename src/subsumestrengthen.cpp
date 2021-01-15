@@ -201,6 +201,7 @@ bool SubsumeStrengthen::backw_sub_str_with_long(
             //Update stats
             cl.combineStats(cl2.stats);
 
+            //this will handle touching all vars for elim re-calc
             simplifier->unlink_clause(offset2, true, false, true);
             ret_sub_str.sub++;
         } else { //Strengthen
@@ -827,6 +828,10 @@ bool SubsumeStrengthen::backw_sub_str_with_implicit(
                 if (!subs[j].ws.red()) {
                     simplifier->n_occurs[subs[j].lit.toInt()]--;
                     simplifier->n_occurs[subs[j].ws.lit2().toInt()]--;
+                    simplifier->elim_calc_need_update.touch(subs[j].lit);
+                    simplifier->elim_calc_need_update.touch(subs[j].ws.lit2());
+                    simplifier->removed_cl_with_var.touch(subs[j].lit);
+                    simplifier->removed_cl_with_var.touch(subs[j].ws.lit2());
                 }
             } else { //strengthen
                 lbool val = solver->value(subsLits[j]);
@@ -845,6 +850,10 @@ bool SubsumeStrengthen::backw_sub_str_with_implicit(
                 if (!subs[j].ws.red()) {
                     simplifier->n_occurs[subs[j].lit.toInt()]--;
                     simplifier->n_occurs[subs[j].ws.lit2().toInt()]--;
+                    simplifier->elim_calc_need_update.touch(subs[j].lit);
+                    simplifier->elim_calc_need_update.touch(subs[j].ws.lit2());
+                    simplifier->removed_cl_with_var.touch(subs[j].lit);
+                    simplifier->removed_cl_with_var.touch(subs[j].ws.lit2());
                 }
             }
             continue;
@@ -934,6 +943,8 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins_watch(
                 solver->binTri.irredBins++;
                 simplifier->n_occurs[tmpLits[0].toInt()]++;
                 simplifier->n_occurs[tmpLits[1].toInt()]++;
+                simplifier->elim_calc_need_update.touch(tmpLits[0]);
+                simplifier->elim_calc_need_update.touch(tmpLits[1]);
                 simplifier->added_cl_to_var.touch(tmpLits[0]);
                 simplifier->added_cl_to_var.touch(tmpLits[1]);
                 findWatchedOfBin(solver->watches, tmpLits[1], tmpLits[0], true).setRed(false);
