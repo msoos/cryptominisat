@@ -58,7 +58,7 @@ bool BVA::bounded_var_addition()
 
     simplifier->limit_to_decrease = &bounded_var_elim_time_limit;
     int64_t limit_orig = *simplifier->limit_to_decrease;
-    if (!simplifier->prop_and_clean_long_and_impl_clauses()) {
+    if (!simplifier->clear_vars_from_cls_that_have_been_set()) {
         return solver->okay();
     }
 

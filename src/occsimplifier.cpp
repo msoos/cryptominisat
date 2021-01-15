@@ -894,45 +894,86 @@ bool OccSimplifier::deal_with_added_long_and_bin(const bool main)
     return true;
 }
 
-bool OccSimplifier::clear_vars_from_cls_that_have_been_set(size_t& last_trail)
+bool OccSimplifier::clear_vars_from_cls_that_have_been_set()
 {
-    //BUG TODO
+    //This only matters in terms of var elim complexity
     //solver->clauseCleaner->clean_implicit_clauses();
 
-    vector<ClOffset> cls_to_clean;
-    while(last_trail < solver->trail_size()) {
-        Lit l = solver->trail_at(last_trail++);
+    cls_to_clean_tmp.clear();
+    while(last_trail_cleared < solver->trail_size()) {
+        Lit l = solver->trail_at(last_trail_cleared++);
+        elim_calc_need_update.touch(l.var());
         watch_subarray ws = solver->watches[l];
-        for (Watched& w: ws) {
-            if (w.isClause()) {
-                ClOffset offs = w.get_offset();
-                Clause* cl = solver->cl_alloc.ptr(offs);
-                if (cl->getRemoved() || cl->freed()) {
-                    continue;
+
+        //Everything here is satisfied
+        uint32_t j = 0;
+        for (uint32_t i = 0; i < ws.size(); i ++) {
+            Watched& w = ws[i];
+            if (w.isBin()) {
+                removeWBin(solver->watches, w.lit2(), l, w.red());
+                if (w.red()) {
+                    solver->binTri.redBins--;
+                } else {
+                    n_occurs[l.toInt()]--;
+                    n_occurs[w.lit2().toInt()]--;
+                    elim_calc_need_update.touch(w.lit2());
+                    solver->binTri.irredBins--;
                 }
-                cls_to_clean.push_back(offs);
+                *(solver->drat) << del << l << w.lit2() << fin;
+                continue;
             }
+
+            ws[j++] = w;
+            assert(w.isClause());
+            ClOffset offs = w.get_offset();
+            Clause* cl = solver->cl_alloc.ptr(offs);
+            if (cl->getRemoved() || cl->freed()) {
+                //Satisfied and removed
+                continue;
+            }
+            //We'll need to set removed, etc.
+            cls_to_clean_tmp.push_back(offs);
         }
+        ws.resize(j);
 
         l = ~l;
         watch_subarray ws2 = solver->watches[l];
-        for(Watched& w: ws2) {
-            if (w.isClause()) {
-                ClOffset offs = w.get_offset();
-                Clause* cl = solver->cl_alloc.ptr(offs);
-                if (cl->getRemoved() || cl->freed()) {
-                    continue;
+
+        //Remove literal
+        j = 0;
+        for (uint32_t i = 0; i < ws2.size(); i ++) {
+            Watched& w = ws2[i];
+            if (w.isBin()) {
+                assert(solver->value(w.lit2()) == l_True); //we propagate and it'd be UNSAT otherwise
+                removeWBin(solver->watches, w.lit2(), l, w.red());
+                if (w.red()) {
+                    solver->binTri.redBins--;
+                } else {
+                    n_occurs[l.toInt()]--;
+                    n_occurs[w.lit2().toInt()]--;
+                    elim_calc_need_update.touch(w.lit2());
+                    solver->binTri.irredBins--;
                 }
-                cls_to_clean.push_back(offs);
+                *(solver->drat) << del << l << w.lit2() << fin;
+                continue;
             }
+
+            ws2[j++] = w;
+            assert(w.isClause());
+            ClOffset offs = w.get_offset();
+            Clause* cl = solver->cl_alloc.ptr(offs);
+            if (cl->getRemoved() || cl->freed()) {
+                continue;
+            }
+            cls_to_clean_tmp.push_back(offs);
         }
+        ws2.resize(j);
     }
-    for(ClOffset offs: cls_to_clean) {
+
+    for(ClOffset offs: cls_to_clean_tmp) {
         Clause* cl = solver->cl_alloc.ptr(offs);
         if (!cl->getRemoved() && !cl->freed()) {
-            if (clean_clause(offs, true) == l_False) {
-                //HHMMM should unlink? TODO check.
-            }
+            clean_clause(offs, true);
             if (!solver->okay()) {
                 return false;
             }
@@ -962,29 +1003,6 @@ bool OccSimplifier::deal_with_added_cl_to_var_lit(const Lit lit)
             added_long_cl.push_back(offs);
         }
     }
-    return true;
-}
-
-bool OccSimplifier::prop_and_clean_long_and_impl_clauses()
-{
-    assert(solver->okay());
-
-    for(ClOffset offs: clauses) {
-        Clause* cl = solver->cl_alloc.ptr(offs);
-        if (!cl->getRemoved() && !cl->freed() && cl->getOccurLinked()) {
-            if (clean_clause(offs, false) == l_False) {
-                //HMMM TODO should unlink?
-            }
-            if (!solver->okay()) {
-                return false;
-            }
-        }
-    }
-
-    //BUG TODO
-    //solver->clauseCleaner->clean_implicit_clauses();
-
-    solver->clean_occur_from_removed_clauses_only_smudged();
     return true;
 }
 
@@ -1034,7 +1052,6 @@ bool OccSimplifier::eliminate_vars()
 
     //solver->conf.verbosity = 1;
     //Set-up
-    size_t last_trail = solver->trail_size();
     double myTime = cpuTime();
     size_t vars_elimed = 0;
     size_t wenThrough = 0;
@@ -1074,10 +1091,9 @@ bool OccSimplifier::eliminate_vars()
 //     }
     //
 
-    if (!prop_and_clean_long_and_impl_clauses()) {
+    if (!clear_vars_from_cls_that_have_been_set()) {
         goto end;
     }
-    last_trail = solver->trail_size();
 
     while(varelim_num_limit > 0
         && varelim_linkin_limit_bytes > 0
@@ -1138,6 +1154,10 @@ bool OccSimplifier::eliminate_vars()
                 assert(solver->prop_at_head());
                 assert(solver->okay());
 
+                if (!clear_vars_from_cls_that_have_been_set()) {
+                    goto end;
+                }
+
                 //SUB and STR for newly added long and short cls
                 limit_to_decrease = &varelim_sub_str_limit;
                 if (!deal_with_added_long_and_bin(false)) {
@@ -1151,13 +1171,6 @@ bool OccSimplifier::eliminate_vars()
                 update_varelim_complexity_heap();
             }
             assert(solver->prop_at_head());
-
-            //Clean clauses that have vars that have been set
-            if (last_trail != solver->trail_size()) {
-                if (!clear_vars_from_cls_that_have_been_set(last_trail)) {
-                    goto end;
-                }
-            }
 
             solver->clean_occur_from_removed_clauses_only_smudged();
             update_varelim_complexity_heap();
@@ -1510,6 +1523,9 @@ bool OccSimplifier::occ_rem_with_gates()
             n_occurs[l1.toInt()]--;
             n_occurs[l2.toInt()]--;
             n_occurs[gate.rhs.toInt()]++;
+            elim_calc_need_update.touch(l1);
+            elim_calc_need_update.touch(l2);
+            elim_calc_need_update.touch(gate.rhs);
             removed_cl_with_var.touch(l1.var());
             removed_cl_with_var.touch(l2.var());
             solver->litStats.irredLits--;
@@ -1810,6 +1826,7 @@ bool OccSimplifier::simplify(const bool _startup, const std::string schedule)
         sampling_vars_occsimp.shrink_to_fit();
     }
 
+    last_trail_cleared = solver->getTrailSize();
     execute_simplifier_strategy(schedule);
 
     remove_by_drat_recently_blocked_clauses(origBlockedSize);

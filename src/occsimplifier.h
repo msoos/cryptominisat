@@ -384,6 +384,12 @@ private:
         bool red
     );
 
+    ///////
+    // Clearing clauses
+    vector<ClOffset> cls_to_clean_tmp;
+    size_t last_trail_cleared;
+    bool clear_vars_from_cls_that_have_been_set();
+
     /////////////////////
     //Variable elimination
     uint32_t grow = 0; /// maximum grow rate for clauses
@@ -411,7 +417,6 @@ private:
     void        add_clause_to_blck(const vector<Lit>& lits);
     void        set_var_as_eliminated(const uint32_t var);
     bool        can_eliminate_var(const uint32_t var) const;
-    bool        clear_vars_from_cls_that_have_been_set(size_t& last_trail);
     bool        deal_with_added_cl_to_var_lit(const Lit lit);
     bool        simulate_frw_sub_str_with_added_cl_to_var();
     bool        occ_rem_with_gates();
@@ -434,7 +439,6 @@ private:
         const vec<Watched>& full_set,
         vec<Watched>& output);
     bool        deal_with_added_long_and_bin(const bool main);
-    bool        prop_and_clean_long_and_impl_clauses();
     vector<Lit> tmp_bin_cl;
     vec<Watched> gates_poss;
     vec<Watched> gates_negs;

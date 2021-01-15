@@ -75,6 +75,8 @@ Sub0Ret SubsumeStrengthen::backw_sub_with_long(const ClOffset offset)
         } else {
             for(const Lit l: cl) {
                 simplifier->n_occurs[l.toInt()]++;
+                simplifier->elim_calc_need_update.touch(l);
+                simplifier->added_cl_to_var.touch(l);
             }
         }
     }
@@ -799,6 +801,7 @@ size_t SubsumeStrengthen::mem_used() const
     return b;
 }
 
+//Implicit input here is ALWAY irred
 bool SubsumeStrengthen::backw_sub_str_with_implicit(
     const vector<Lit>& lits,
     Sub1Ret& ret_sub_str
@@ -931,6 +934,8 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins_watch(
                 solver->binTri.irredBins++;
                 simplifier->n_occurs[tmpLits[0].toInt()]++;
                 simplifier->n_occurs[tmpLits[1].toInt()]++;
+                simplifier->added_cl_to_var.touch(tmpLits[0]);
+                simplifier->added_cl_to_var.touch(tmpLits[1]);
                 findWatchedOfBin(solver->watches, tmpLits[1], tmpLits[0], true).setRed(false);
                 findWatchedOfBin(solver->watches, tmpLits[0], tmpLits[1], true).setRed(false);
             }
