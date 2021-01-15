@@ -88,6 +88,8 @@ lbool BackboneSimpl::backbone_simpl(uint64_t max_confl)
         }
 
         l = Lit(var, model[var] == l_False);
+
+        //There is definitely a solution with "l". Let's see if ~l fails.
         assumps.clear();
         assumps.push_back(~l);
         solver->set_max_confl(max_confl);
