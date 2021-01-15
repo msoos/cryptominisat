@@ -3540,8 +3540,8 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
         }
 
         //TODO some of the subsumed clauses could be the clauses in POSS and NEGS. Have to check.
-        if ((int)resolvents.size() - (int)tmp_subs.size() < (int)limit-10
-            || (int)total_lits < (int)grow-20
+        if ((int)resolvents.size() - (int)tmp_subs.size() < (int)limit-5
+            || (int)total_lits < (int)grow-15
         ) {
             return true;
         } else {
@@ -3846,7 +3846,7 @@ bool OccSimplifier::maybe_eliminate(const uint32_t var)
 
 
     if (solver->conf.varelim_check_resolvent_subs &&
-        (n_occurs[lit.toInt()] + n_occurs[(~lit).toInt()] < 10))
+        (n_occurs[lit.toInt()] + n_occurs[(~lit).toInt()] < 15))
     {
         uint32_t rem = 0;
         occ_based_lit_rem(var, rem);
