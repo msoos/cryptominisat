@@ -3260,27 +3260,6 @@ bool OccSimplifier::generate_resolvents(
                 continue;
             }
 
-            if (solver->conf.velim_fwd_sub_bve_resolvents) {
-                //Try forward-subsumption
-                for(const auto& l: dummy) {
-                    seen[l.toInt()] = 1;
-                }
-                bool frw_subsume = false;
-                for(const auto& l: dummy) {
-                    frw_subsume |= forward_subsume_irred(l, dummy.size(), calcAbstraction(dummy));
-                    if (frw_subsume) {
-                        break;
-                    }
-                }
-                for(const auto& l: dummy) {
-                    seen[l.toInt()] = 0;
-                }
-                if (frw_subsume) {
-                    //No need to add this resolvent
-                    continue;
-                }
-            }
-
             #ifdef VERBOSE_DEBUG_VARELIM
             cout << "Adding new clause due to varelim: " << dummy << endl;
             #endif
