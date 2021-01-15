@@ -278,7 +278,7 @@ private:
     bool backward_sub_str();
     void backward_sub();
     bool execute_simplifier_strategy(const string& strategy);
-    lbool remove_literal(ClOffset c, const Lit toRemoveLit);
+    lbool remove_literal(ClOffset c, const Lit toRemoveLit, bool only_set_is_removed);
 
     //Ternary resolution
     vector<Lit> finalLits_ternary;
@@ -372,7 +372,7 @@ private:
     bool complete_clean_clause(Clause& ps);
 
     //Clause update
-    lbool       clean_clause(ClOffset c);
+    lbool       clean_clause(ClOffset c, bool only_set_is_removed);
     void        linkInClause(Clause& cl);
     bool        handleUpdatedClause(ClOffset c);
     uint32_t    sum_irred_cls_longs() const;

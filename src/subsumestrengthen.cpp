@@ -214,7 +214,7 @@ bool SubsumeStrengthen::backw_sub_str_with_long(
                 continue;
             }
             #endif
-            if (simplifier->remove_literal(offset2, subsLits[j]) == l_False) {
+            if (simplifier->remove_literal(offset2, subsLits[j], true) == l_False) {
                 return false;
             }
             ret_sub_str.str++;
@@ -883,7 +883,7 @@ bool SubsumeStrengthen::backw_sub_str_with_implicit(
                 continue;
             }
             #endif
-            if (simplifier->remove_literal(offset2, subsLits[j]) == l_False) {
+            if (simplifier->remove_literal(offset2, subsLits[j], true) == l_False) {
                 return false;
             }
             ret_sub_str.str++;

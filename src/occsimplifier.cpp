@@ -356,7 +356,9 @@ void OccSimplifier::unlink_clause(
     }
 }
 
-lbool OccSimplifier::clean_clause(ClOffset offset)
+lbool OccSimplifier::clean_clause(
+    ClOffset offset,
+    bool only_set_is_removed)
 {
     assert(!solver->drat->something_delayed());
     assert(solver->okay());
@@ -423,7 +425,7 @@ lbool OccSimplifier::clean_clause(ClOffset offset)
 
     switch(cl.size()) {
         case 0:
-            unlink_clause(offset, false);
+            unlink_clause(offset, false, false, only_set_is_removed);
             solver->ok = false;
             return l_False;
 
@@ -432,7 +434,7 @@ lbool OccSimplifier::clean_clause(ClOffset offset)
             #ifdef STATS_NEEDED
             solver->propStats.propsUnit++;
             #endif
-            unlink_clause(offset, false);
+            unlink_clause(offset, false, false, only_set_is_removed);
             solver->ok = solver->propagate_occur();
             return l_False;
         }
@@ -445,7 +447,7 @@ lbool OccSimplifier::clean_clause(ClOffset offset)
                 n_occurs[tmp.first.toInt()]++;
                 n_occurs[tmp.second.toInt()]++;
             }
-            unlink_clause(offset, false);
+            unlink_clause(offset, false,  false, only_set_is_removed);
             return l_True;
         }
         default:
@@ -928,7 +930,7 @@ bool OccSimplifier::clear_vars_from_cls_that_have_been_set(size_t& last_trail)
     for(ClOffset offs: cls_to_clean) {
         Clause* cl = solver->cl_alloc.ptr(offs);
         if (!cl->getRemoved() && !cl->freed()) {
-            if (clean_clause(offs) == l_False) {
+            if (clean_clause(offs, true) == l_False) {
                 //HHMMM should unlink? TODO check.
             }
             if (!solver->okay()) {
@@ -970,7 +972,7 @@ bool OccSimplifier::prop_and_clean_long_and_impl_clauses()
     for(ClOffset offs: clauses) {
         Clause* cl = solver->cl_alloc.ptr(offs);
         if (!cl->getRemoved() && !cl->freed() && cl->getOccurLinked()) {
-            if (clean_clause(offs) == l_False) {
+            if (clean_clause(offs, false) == l_False) {
                 //HMMM TODO should unlink?
             }
             if (!solver->okay()) {
@@ -3757,12 +3759,16 @@ bool OccSimplifier::occ_based_lit_rem(uint32_t var, uint32_t& removed) {
             const ClOffset offset = w.get_offset();
             Clause* cl = solver->cl_alloc.ptr(offset);
             assert(!cl->freed());
-            if (cl->getRemoved() || cl->red() || solver->satisfied(*cl)) {
+            if (cl->getRemoved() || cl->red()) {
                 continue;
             }
 
+            if (solver->satisfied(*cl)) {
+                unlink_clause(offset, true, true, true);
+            }
+
             if (try_remove_lit_via_occurrence_simpl(OccurClause(lit, w))) {
-                remove_literal(offset, lit);
+                remove_literal(offset, lit, true);
                 if (!solver->okay()) {
                     return false;
                 }
@@ -4529,7 +4535,10 @@ Clause* OccSimplifier::full_add_clause(
     return newCl;
 }
 
-lbool OccSimplifier::remove_literal(ClOffset offset, const Lit toRemoveLit)
+lbool OccSimplifier::remove_literal(
+    ClOffset offset,
+    const Lit toRemoveLit,
+    bool only_set_is_removed)
 {
     Clause& cl = *solver->cl_alloc.ptr(offset);
     #ifdef VERBOSE_DEBUG
@@ -4560,5 +4569,5 @@ lbool OccSimplifier::remove_literal(ClOffset offset, const Lit toRemoveLit)
     else
         solver->litStats.irredLits--;
 
-    return clean_clause(offset);
+    return clean_clause(offset, only_set_is_removed);
 }
