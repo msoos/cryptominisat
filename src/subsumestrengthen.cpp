@@ -913,20 +913,22 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins_watch(
     const Lit lit
     , const bool redundant_too
 ) {
-    watch_subarray ws = solver->watches[lit];
+    //NOTE this can modify itself,
+    //     by removing a binary from tmp by backw_sub_str_with_implicit
+    solver->watches[lit].copyTo(tmp);
     for (size_t i = 0
-        ; i < ws.size() && *simplifier->limit_to_decrease > 0
+        ; i < tmp.size() && *simplifier->limit_to_decrease > 0
         ; i++
     ) {
         //Each BIN only once
-        if (ws[i].isBin()
-            && (redundant_too || lit < ws[i].lit2())
+        if (tmp[i].isBin()
+            && (redundant_too || lit < tmp[i].lit2())
         ) {
-            const bool red = ws[i].red();
+            const bool red = tmp[i].red();
             tried_bin_tri++;
             tmpLits.resize(2);
             tmpLits[0] = lit;
-            tmpLits[1] = ws[i].lit2();
+            tmpLits[1] = tmp[i].lit2();
             std::sort(tmpLits.begin(), tmpLits.end());
 
             Sub1Ret ret;

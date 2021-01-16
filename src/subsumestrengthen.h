@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include "cryptominisat5/solvertypesmini.h"
 #include "clabstraction.h"
 #include "clause.h"
+#include "Vec.h"
 #include <vector>
 using std::vector;
 
@@ -169,6 +170,7 @@ private:
     Lit subset1(const T1& A, const T2& B);
 
     vector<OccurClause> subs;
+    vec<Watched> tmp;
     vector<Lit> subsLits;
     vector<Lit> tmpLits;
     size_t tried_bin_tri = 0;
