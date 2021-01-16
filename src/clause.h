@@ -345,7 +345,6 @@ public:
     uint16_t _gauss_temp_cl:1; ///Used ONLY by Gaussian elimination to incicate where a proagation is coming from
     uint16_t reloced:1;
     uint16_t disabled:1;
-    uint16_t marked:1;
     uint16_t tried_to_remove:1;
 
 
@@ -393,7 +392,6 @@ public:
         _xor_is_detached = false;
         reloced = false;
         disabled = false;
-        marked = false;
         tried_to_remove = false;
 
         for (uint32_t i = 0; i < ps.size(); i++) {

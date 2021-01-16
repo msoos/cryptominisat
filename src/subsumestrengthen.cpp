@@ -71,7 +71,7 @@ Sub0Ret SubsumeStrengthen::backw_sub_with_long(const ClOffset offset)
         solver->litStats.redLits -= cl.size();
         solver->litStats.irredLits += cl.size();
         if (!cl.getOccurLinked()) {
-            simplifier->linkInClause(cl);
+            simplifier->link_in_clause(cl);
         } else {
             for(const Lit l: cl) {
                 simplifier->n_occurs[l.toInt()]++;
@@ -190,7 +190,7 @@ bool SubsumeStrengthen::backw_sub_str_with_long(
                 solver->litStats.redLits -= cl.size();
                 solver->litStats.irredLits += cl.size();
                 if (!cl.getOccurLinked()) {
-                    simplifier->linkInClause(cl);
+                    simplifier->link_in_clause(cl);
                 } else {
                     for(const Lit l: cl) {
                         simplifier->n_occurs[l.toInt()]++;
@@ -217,7 +217,7 @@ bool SubsumeStrengthen::backw_sub_str_with_long(
                 continue;
             }
             #endif
-            if (simplifier->remove_literal(offset2, subsLits[j], true) == l_False) {
+            if (!simplifier->remove_literal(offset2, subsLits[j], true)) {
                 return false;
             }
             ret_sub_str.str++;
@@ -529,8 +529,8 @@ bool SubsumeStrengthen::handle_added_long_cl(
     bool interrupted = false;
 
     //NOTE added_long_cl CAN CHANGE while the below is running!
-    for(size_t i = 0
-        ; i < simplifier->added_long_cl.size()
+    uint32_t i = 0;
+    for(; i < simplifier->added_long_cl.size()
         && *simplifier->limit_to_decrease >= 0
         ; i++
     ) {
@@ -551,22 +551,18 @@ bool SubsumeStrengthen::handle_added_long_cl(
             goto end;
         }
     }
-    if (*simplifier->limit_to_decrease < 0) {
-        interrupted = true;
-    }
 
     end:
-
     //we still have to clear the marks
-    if (interrupted) {
-        for(const ClOffset offs: simplifier->added_long_cl) {
-            Clause* cl = solver->cl_alloc.ptr(offs);
-            if (cl->freed() || cl->getRemoved())
-                continue;
+    for(; i < simplifier->added_long_cl.size(); i ++) {
+        ClOffset off = simplifier->added_long_cl[i];
+        Clause* cl = solver->cl_alloc.ptr(off);
+        if (cl->freed() || cl->getRemoved())
+            continue;
 
-            cl->stats.marked_clause = 0;
-        }
+        cl->stats.marked_clause = 0;
     }
+    simplifier->added_long_cl.clear();
 
     if (main_run) {
         const bool time_out =  *limit_to_decrease <= 0;
@@ -895,7 +891,7 @@ bool SubsumeStrengthen::backw_sub_str_with_implicit(
                 continue;
             }
             #endif
-            if (simplifier->remove_literal(offset2, subsLits[j], true) == l_False) {
+            if (!simplifier->remove_literal(offset2, subsLits[j], true)) {
                 return false;
             }
             ret_sub_str.str++;

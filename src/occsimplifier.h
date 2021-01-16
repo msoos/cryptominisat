@@ -242,6 +242,7 @@ public:
     const Stats& get_stats() const;
     const SubsumeStrengthen* get_sub_str() const;
     void check_elimed_vars_are_unassigned() const;
+    void check_no_marked_clauses();
     bool getAnythingHasBeenBlocked() const;
 
     /// Used ONLY for XOR, changes occur setup
@@ -278,7 +279,7 @@ private:
     bool backward_sub_str();
     void backward_sub();
     bool execute_simplifier_strategy(const string& strategy);
-    lbool remove_literal(ClOffset c, const Lit toRemoveLit, bool only_set_is_removed);
+    bool remove_literal(ClOffset c, const Lit toRemoveLit, bool only_set_is_removed);
 
     //Ternary resolution
     vector<Lit> finalLits_ternary;
@@ -372,8 +373,8 @@ private:
     bool complete_clean_clause(Clause& ps);
 
     //Clause update
-    lbool       clean_clause(ClOffset c, bool only_set_is_removed);
-    void        linkInClause(Clause& cl);
+    bool clean_clause(ClOffset c, bool only_set_is_removed);
+    void        link_in_clause(Clause& cl);
     bool        handleUpdatedClause(ClOffset c);
     uint32_t    sum_irred_cls_longs() const;
     uint32_t    sum_irred_cls_longs_lits() const;

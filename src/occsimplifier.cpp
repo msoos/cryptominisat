@@ -356,7 +356,7 @@ void OccSimplifier::unlink_clause(
     }
 }
 
-lbool OccSimplifier::clean_clause(
+bool OccSimplifier::clean_clause(
     ClOffset offset,
     bool only_set_is_removed)
 {
@@ -406,7 +406,7 @@ lbool OccSimplifier::clean_clause(
     if (satisfied) {
         (*solver->drat) << findelay;
         unlink_clause(offset, false);
-        return l_True;
+        return true;
     }
 
     if (solver->conf.verbosity >= 6) {
@@ -427,7 +427,7 @@ lbool OccSimplifier::clean_clause(
         case 0:
             unlink_clause(offset, false, false, only_set_is_removed);
             solver->ok = false;
-            return l_False;
+            return false;
 
         case 1: {
             solver->enqueue(cl[0]);
@@ -436,7 +436,7 @@ lbool OccSimplifier::clean_clause(
             #endif
             unlink_clause(offset, false, false, only_set_is_removed);
             solver->ok = solver->propagate_occur();
-            return l_False;
+            return solver->okay();
         }
 
         case 2: {
@@ -448,7 +448,7 @@ lbool OccSimplifier::clean_clause(
                 n_occurs[tmp.second.toInt()]++;
             }
             unlink_clause(offset, false,  false, only_set_is_removed);
-            return l_True;
+            return true;
         }
         default:
             cl.setStrenghtened();
@@ -456,7 +456,7 @@ lbool OccSimplifier::clean_clause(
             if (!cl.red()) {
                 added_long_cl.push_back(offset);
             }
-            return l_Undef;
+            return true;
     }
 }
 
@@ -633,7 +633,7 @@ OccSimplifier::LinkInData OccSimplifier::link_in_clauses(
             && cl->size() < max_size
             && link_in_lit_limit > 0
         ) {
-            linkInClause(*cl);
+            link_in_clause(*cl);
             link_in_data.cl_linked++;
             link_in_lit_limit -= cl->size();
             clause_lits_added += cl->size();
@@ -696,6 +696,7 @@ void OccSimplifier::add_back_to_solver()
             continue;
 
         assert(!cl->getRemoved());
+        assert(!cl->stats.marked_clause);
 
         //All clauses are larger than 2-long
         assert(cl->size() > 2);
@@ -875,7 +876,6 @@ bool OccSimplifier::deal_with_added_long_and_bin(const bool main)
         if (!sub_str->handle_added_long_cl(limit_to_decrease, main)) {
             return false;
         }
-        added_long_cl.clear();
         assert(solver->okay());
         assert(solver->prop_at_head());
 
@@ -891,7 +891,7 @@ bool OccSimplifier::deal_with_added_long_and_bin(const bool main)
         }
         added_irred_bin.clear();
     }
-    return true;
+    return solver->okay();
 }
 
 bool OccSimplifier::clear_vars_from_cls_that_have_been_set()
@@ -1042,8 +1042,21 @@ bool OccSimplifier::simulate_frw_sub_str_with_added_cl_to_var()
         return false;
     }
     limit_to_decrease = &norm_varelim_time_limit;
+    #ifdef SLOW_DEBUG
+    check_no_marked_clauses();
+    #endif
 
     return true;
+}
+
+void OccSimplifier::check_no_marked_clauses()
+{
+    for(const auto& off: clauses) {
+        Clause* cl = solver->cl_alloc.ptr(off);
+        if (!cl->getRemoved()) {
+            assert(!cl->stats.marked_clause);
+        }
+    }
 }
 
 bool OccSimplifier::eliminate_vars()
@@ -1280,6 +1293,10 @@ bool OccSimplifier::eliminate_vars()
 end:
     if (solver->okay()) {
         assert(solver->prop_at_head());
+        assert(added_long_cl.empty());
+        #ifdef SLOW_DEBUG
+        check_no_marked_clauses();
+        #endif
     }
     free_clauses_to_free();
     solver->clean_occur_from_removed_clauses_only_smudged();
@@ -1567,6 +1584,10 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         ) {
             return solver->okay();
         }
+        assert(added_long_cl.empty());
+        assert(solver->prop_at_head());
+        assert(solver->decisionLevel() == 0);
+        set_limits();
 
         #ifdef SLOW_DEBUG
         #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
@@ -1580,19 +1601,10 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             assert(cl->stats.introduced_at_conflict != 0);
         }
         #endif
-        #endif
-
-
-        #ifdef SLOW_DEBUG
         solver->check_implicit_stats(true);
         solver->check_assumptions_sanity();
+        check_no_marked_clauses();
         #endif
-        assert(solver->prop_at_head());
-//         if (!solver->propagate_occur()) {
-//             solver->ok = false;
-//             return false;
-//         }
-        set_limits();
 
         token = trim(token);
         std::transform(token.begin(), token.end(), token.begin(), ::tolower);
@@ -1638,7 +1650,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 sort_occurs_and_set_abst();
                 for(ClOffset offset: clauses) {
                     Clause* cl = solver->cl_alloc.ptr(offset);
-                    cl->stats.marked_clause = false;
+                    cl->stats.marked_clause = 0;
                 }
             }
         } else if (token == "occ-lit-rem") {
@@ -1686,19 +1698,10 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         #ifdef CHECK_N_OCCUR
         check_n_occur();
         #endif //CHECK_N_OCCUR
-        if (solver->okay()) {
-            assert(solver->prop_at_head());
-        }
     }
 
     if (solver->okay()) {
         assert(solver->prop_at_head());
-        //solver->check_implicit_propagated();
-//         if (!solver->propagate_occur()
-//         ) {
-//             solver->ok = false;
-//             return false;
-//         }
     }
 
     return solver->okay();
@@ -2117,7 +2120,6 @@ bool OccSimplifier::backward_sub_str()
     }
 
     end:
-    added_long_cl.clear();
     free_clauses_to_free();
     solver->clean_occur_from_removed_clauses_only_smudged();
 
@@ -2993,7 +2995,7 @@ bool OccSimplifier::find_xor_gate(
 
         assert(w.isClause());
         Clause* cl = solver->cl_alloc.ptr(w.get_offset());
-        if (cl->size() > maxsize || cl->marked || cl->red()) {
+        if (cl->size() > maxsize || cl->stats.marked_clause || cl->red()) {
             continue;
         }
         size = cl->size();
@@ -3013,7 +3015,7 @@ bool OccSimplifier::find_xor_gate(
         }
         out_a.clear();
         out_a.push(w);
-        cl->marked = 1;
+        cl->stats.marked_clause = 1;
         toclear_marked_cls.push_back(cl);
         std::sort(cl->begin(), cl->end());
         uint32_t val = 0;
@@ -3035,7 +3037,7 @@ bool OccSimplifier::find_xor_gate(
             #ifdef SLOW_DEBUG
             assert(!cl2->red());
             #endif
-            if (cl2->size() != size || cl2->marked) {
+            if (cl2->size() != size || cl2->stats.marked_clause) {
                 continue;
             }
             bool this_cl_ok = true;
@@ -3049,7 +3051,7 @@ bool OccSimplifier::find_xor_gate(
             }
             //cout << "Mypar: " << myparity << " real par: " << parity << " ok: " << this_cl_ok << endl;
             if (this_cl_ok && myparity == parity) {
-                cl2->marked = 1;
+                cl2->stats.marked_clause = 1;
                 toclear_marked_cls.push_back(cl2);
                 std::sort(cl2->begin(), cl2->end());
                 val = 0;
@@ -3082,7 +3084,7 @@ bool OccSimplifier::find_xor_gate(
             #ifdef SLOW_DEBUG
             assert(!cl2->red());
             #endif
-            if (cl2->size() != size || cl2->marked) {
+            if (cl2->size() != size || cl2->stats.marked_clause) {
                 continue;
             }
             bool this_cl_ok = true;
@@ -3096,7 +3098,7 @@ bool OccSimplifier::find_xor_gate(
             }
             //cout << "Mypar: " << myparity << " real par: " << parity << " ok: " << this_cl_ok << endl;
             if (this_cl_ok && myparity == parity) {
-                cl2->marked = 1;
+                cl2->stats.marked_clause = 1;
                 toclear_marked_cls.push_back(cl2);
                 std::sort(cl2->begin(), cl2->end());
                 val = 0;
@@ -3140,7 +3142,7 @@ bool OccSimplifier::find_xor_gate(
 
     //Cleark cl markings
     for(const auto& cl: toclear_marked_cls) {
-        cl->marked = 0;
+        cl->stats.marked_clause = 0;
     }
     toclear_marked_cls.clear();
     parities_found.clear();
@@ -3638,7 +3640,7 @@ bool OccSimplifier::add_varelim_resolvent(
 
     if (newCl != NULL) {
         newCl->set_used_in_xor(is_xor);
-        linkInClause(*newCl);
+        link_in_clause(*newCl);
         ClOffset offset = solver->cl_alloc.get_offset(newCl);
         clauses.push_back(offset);
         added_long_cl.push_back(offset);
@@ -4368,8 +4370,9 @@ size_t OccSimplifier::mem_used_bva() const
         return 0;
 }
 
-void OccSimplifier::linkInClause(Clause& cl)
+void OccSimplifier::link_in_clause(Clause& cl)
 {
+    assert(!cl.stats.marked_clause);
     assert(cl.size() > 2);
     ClOffset offset = solver->cl_alloc.get_offset(&cl);
     cl.recalc_abst_if_needed();
@@ -4547,7 +4550,7 @@ Clause* OccSimplifier::full_add_clause(
             added_irred_bin.push_back(std::make_pair(finalLits[0], finalLits[1]));
         }
     } else {
-        linkInClause(*newCl);
+        link_in_clause(*newCl);
         ClOffset offset = solver->cl_alloc.get_offset(newCl);
         clauses.push_back(offset);
     }
@@ -4555,7 +4558,7 @@ Clause* OccSimplifier::full_add_clause(
     return newCl;
 }
 
-lbool OccSimplifier::remove_literal(
+bool OccSimplifier::remove_literal(
     ClOffset offset,
     const Lit toRemoveLit,
     bool only_set_is_removed)

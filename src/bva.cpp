@@ -348,7 +348,7 @@ bool BVA::bva_simplify_system()
         );
 
         if (newCl != NULL) {
-            simplifier->linkInClause(*newCl);
+            simplifier->link_in_clause(*newCl);
             ClOffset offset = solver->cl_alloc.get_offset(newCl);
             simplifier->clauses.push_back(offset);
         } else {
@@ -559,7 +559,7 @@ bool BVA::add_longer_clause(const Lit new_lit, const OccurClause& cl)
                 new_lit //first DRAT literal
             );
             if (newCl != NULL) {
-                simplifier->linkInClause(*newCl);
+                simplifier->link_in_clause(*newCl);
                 ClOffset offset = solver->cl_alloc.get_offset(newCl);
                 simplifier->clauses.push_back(offset);
             } else {

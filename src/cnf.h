@@ -230,9 +230,6 @@ public:
     }
 
     bool clause_locked(const Clause& c, const ClOffset offset) const;
-    void unmark_all_irred_clauses();
-    void unmark_all_red1_clauses();
-
     bool redundant(const Watched& ws) const;
     bool redundant_or_removed(const Watched& ws) const;
     size_t cl_size(const Watched& ws) const;
@@ -470,6 +467,18 @@ inline void CNF::clean_occur_from_removed_clauses_only_smudged()
         clear_one_occur_from_removed_clauses(watches[l]);
     }
     watches.clear_smudged();
+
+    #ifdef SLOW_DEBUG
+    for(const auto& ws: watches) {
+        for(const auto& w: ws) {
+            if (!w.isClause()) {
+                continue;
+            }
+            Clause* cl = cl_alloc.ptr(w.get_offset());
+            assert(!cl->isRemoved);
+        }
+    }
+    #endif
 }
 
 inline void CNF::clean_occur_from_idx_types_only_smudged()
@@ -518,22 +527,6 @@ inline void CNF::clear_one_occur_from_removed_clauses(watch_subarray w)
         }
     }
     w.shrink(i-j);
-}
-
-inline void CNF::unmark_all_irred_clauses()
-{
-    for(ClOffset offset: longIrredCls) {
-        Clause* cl = cl_alloc.ptr(offset);
-        cl->stats.marked_clause = false;
-    }
-}
-
-inline void CNF::unmark_all_red1_clauses()
-{
-    for(ClOffset offset: longRedCls[1]) {
-        Clause* cl = cl_alloc.ptr(offset);
-        cl->stats.marked_clause = false;
-    }
 }
 
 inline void CNF::renumber_outer_to_inter_lits(vector<Lit>& ps) const
