@@ -1189,7 +1189,7 @@ bool OccSimplifier::eliminate_vars()
                     continue;
                 }
                 varElimComplexity[var] = heuristicCalcVarElimScore(var);
-                velim_order.insert(var);
+                velim_order.update(var);
             }
 
 
