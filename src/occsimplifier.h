@@ -249,7 +249,7 @@ public:
     void save_state(SimpleOutFile& f);
     void load_state(SimpleInFile& f);
     vector<ClOffset> added_long_cl;
-    TouchListLit added_cl_to_var;
+    TouchList added_cl_to_var;
     vector<uint32_t> n_occurs;
     TouchList removed_cl_with_var;
     vector<std::pair<Lit, Lit> > added_irred_bin;
