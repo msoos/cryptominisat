@@ -1507,6 +1507,14 @@ DLL_PUBLIC void SATSolver::set_xor_detach(bool val)
     }
 }
 
+DLL_PUBLIC void SATSolver::set_max_red_linkin_size(uint32_t sz)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.maxRedLinkInSize = sz;
+    }
+}
+
 
 DLL_PUBLIC void SATSolver::set_yes_comphandler()
 {

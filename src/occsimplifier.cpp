@@ -2200,28 +2200,30 @@ bool OccSimplifier::fill_occur()
     print_linkin_data(link_in_data_irred);
 
     //Add redundant to occur
-    memUsage = calc_mem_usage_of_occur(solver->longRedCls[0]);
-    print_mem_usage_of_occur(memUsage);
-    bool linkin = true;
-    if (memUsage > solver->conf.maxOccurRedMB*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult) {
-        linkin = false;
-    }
-    //Sort, so we get the shortest ones in at least
-    uint32_t arr_to_link = 0;
-    std::sort(solver->longRedCls[arr_to_link].begin(), solver->longRedCls[arr_to_link].end()
-        , ClauseSizeSorter(solver->cl_alloc));
+    if (solver->conf.maxRedLinkInSize > 0) {
+        memUsage = calc_mem_usage_of_occur(solver->longRedCls[0]);
+        print_mem_usage_of_occur(memUsage);
+        bool linkin = true;
+        if (memUsage > solver->conf.maxOccurRedMB*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult) {
+            linkin = false;
+        }
+        //Sort, so we get the shortest ones in at least
+        uint32_t arr_to_link = 0;
+        std::sort(solver->longRedCls[arr_to_link].begin(), solver->longRedCls[arr_to_link].end()
+            , ClauseSizeSorter(solver->cl_alloc));
 
-    link_in_data_red = link_in_clauses(
-        solver->longRedCls[arr_to_link]
-        , linkin
-        , solver->conf.maxRedLinkInSize
-        , solver->conf.maxOccurRedLitLinkedM*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult
-    );
-    solver->longRedCls[arr_to_link].clear();
+        link_in_data_red = link_in_clauses(
+            solver->longRedCls[arr_to_link]
+            , linkin
+            , solver->conf.maxRedLinkInSize
+            , solver->conf.maxOccurRedLitLinkedM*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult
+        );
+        solver->longRedCls[arr_to_link].clear();
+    }
 
     //Don't really link in the rest
     for(auto& lredcls: solver->longRedCls) {
-        link_in_clauses(lredcls, linkin, 0, 0);
+        link_in_clauses(lredcls, false, 0, 0);
     }
     for(auto& lredcls: solver->longRedCls) {
         lredcls.clear();
