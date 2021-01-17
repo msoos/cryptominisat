@@ -2435,9 +2435,9 @@ void OccSimplifier::finishUp(
     const double myTime = cpuTime();
 
     //Add back clauses to solver
-    assert(solver->prop_at_head());
     remove_all_longs_from_watches();
     if (solver->ok) {
+        assert(solver->prop_at_head());
         add_back_to_solver();
         solver->ok = solver->propagate<false>().isNULL();
     }
@@ -3944,7 +3944,7 @@ bool OccSimplifier::all_occ_based_lit_rem()
         }
         uint32_t removed = 0;
         if (!occ_based_lit_rem(v, removed)) {
-            break;
+            goto end;
         }
         removed_all += removed;
         if (solver->conf.verbosity >= 5) {
@@ -3956,6 +3956,11 @@ bool OccSimplifier::all_occ_based_lit_rem()
         }
     }
 
+    if (!deal_with_added_long_and_bin(false)) {
+        goto end;
+    }
+
+    end:
     solver->clean_occur_from_removed_clauses_only_smudged();
     free_clauses_to_free();
 
