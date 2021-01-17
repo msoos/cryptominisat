@@ -32,6 +32,12 @@ namespace CMSat
 
 struct VarData
 {
+    VarData()
+    {
+        is_bva = 0;
+        occ_simp_tried = 0;
+    }
+
     ///contains the decision level at which the assignment was made.
     uint32_t level = 0;
 
@@ -53,7 +59,9 @@ struct VarData
     ///The preferred polarity of each variable.
     bool polarity = false;
     bool best_polarity = false;
-    bool is_bva = false;
+    uint8_t is_bva:1;
+    uint8_t occ_simp_tried:1;
+
 
     #if defined(STATS_NEEDED)
     uint32_t community_num = std::numeric_limits<uint32_t>::max();

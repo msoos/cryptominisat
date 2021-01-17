@@ -3903,8 +3903,10 @@ bool OccSimplifier::maybe_eliminate(const uint32_t var)
 
 
     if (solver->conf.varelim_check_resolvent_subs &&
-        (n_occurs[lit.toInt()] + n_occurs[(~lit).toInt()] < 15))
+        !solver->varData[var].occ_simp_tried &&
+        (n_occurs[lit.toInt()] + n_occurs[(~lit).toInt()] < 40))
     {
+        solver->varData[var].occ_simp_tried = 1;
         uint32_t rem = 0;
         occ_based_lit_rem(var, rem);
     }
