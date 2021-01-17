@@ -283,7 +283,8 @@ private:
 
     //Ternary resolution
     vector<Lit> finalLits_ternary;
-    bool perform_ternary(Clause* cl, ClOffset offs);
+    vector<Lit> tmp_tern_res;
+    bool perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret);
     void check_ternary_cl(Clause* cl, ClOffset offs, watch_subarray ws);
     struct Tri {
         Lit lits[3];

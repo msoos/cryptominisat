@@ -229,7 +229,6 @@ class BinaryClause {
         bool red;
 };
 
-
 inline std::ostream& operator<<(std::ostream& os, const BinaryClause val)
 {
     os << val.getLit1() << " , " << val.getLit2()

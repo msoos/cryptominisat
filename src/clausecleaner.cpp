@@ -233,6 +233,7 @@ bool ClauseCleaner::clean_clause(Clause& cl)
     #endif
 
     if (i != j) {
+        cl.setStrenghtened();
         if (cl.size() == 2) {
             solver->attach_bin_clause(cl[0], cl[1], cl.red());
             return true;

@@ -49,8 +49,7 @@ bool BVA::bounded_var_addition()
     bva_verbosity = false;
 
     assert(solver->ok);
-    if (!solver->conf.do_bva)
-        return solver->okay();
+    assert(solver->conf.do_bva);
 
     if (solver->conf.verbosity >= 3 || bva_verbosity) {
         cout << "c [occ-bva] Running BVA" << endl;
@@ -59,8 +58,10 @@ bool BVA::bounded_var_addition()
     simplifier->limit_to_decrease = &bounded_var_elim_time_limit;
     int64_t limit_orig = *simplifier->limit_to_decrease;
     if (!simplifier->clear_vars_from_cls_that_have_been_set()) {
-        return solver->okay();
+        return false;
     }
+    //TODO check if this is really needed (why is isRemoved a problem??)
+    solver->clean_occur_from_removed_clauses_only_smudged();
 
     bva_worked = 0;
     bva_simp_size = 0;
@@ -120,6 +121,7 @@ bool BVA::bounded_var_addition()
     globalStats += runStats;
     runStats.reset();
 
+    solver->clean_occur_from_removed_clauses_only_smudged();
     return solver->okay();
 }
 
@@ -808,7 +810,7 @@ void BVA::calc_watch_irred_sizes()
 
 size_t BVA::calc_watch_irred_size(const Lit lit) const
 {
-#ifdef CHECK_N_OCCUR
+    #ifdef CHECK_N_OCCUR
     size_t num = 0;
     watch_subarray_const ws = solver->watches[lit];
     for(const Watched w: ws) {
@@ -820,8 +822,7 @@ size_t BVA::calc_watch_irred_size(const Lit lit) const
         assert(w.isClause());
         const Clause& cl = *solver->cl_alloc.ptr(w.get_offset());
         assert(!cl.freed());
-        assert(!cl.getRemoved());
-        num += !cl.red();
+        num += (!cl.getRemoved() && !cl.red());
     }
     if (num != simplifier->n_occurs[lit.toInt()]) {
         cout << "for lit "<< lit << endl;
@@ -829,7 +830,7 @@ size_t BVA::calc_watch_irred_size(const Lit lit) const
         cout << "our count: "<< num << endl;
         assert(false);
     }
-#endif
+    #endif
 
     return simplifier->n_occurs[lit.toInt()];
 }

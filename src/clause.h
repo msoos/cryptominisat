@@ -648,6 +648,41 @@ struct BinaryXor
     }
 };
 
+struct Sub0Ret {
+    ClauseStats stats;
+    bool subsumedIrred = 0;
+    uint32_t numSubsumed = 0;
+
+    void clear() {
+        *this = Sub0Ret();
+    }
+
+    Sub0Ret& operator+=(const Sub0Ret& other)
+    {
+        numSubsumed += other.numSubsumed;
+        return *this;
+    }
+
+};
+
+struct Sub1Ret {
+    Sub1Ret& operator+=(const Sub1Ret& other)
+    {
+        sub += other.sub;
+        str += other.str;
+
+        return *this;
+    }
+
+    void clear() {
+        *this = Sub1Ret();
+    }
+
+    size_t sub = 0;
+    size_t str = 0;
+    bool subsumedIrred = false;
+};
+
 } //end namespace
 
 #endif //CLAUSE_H

@@ -286,7 +286,7 @@ void SubsumeStrengthen::backw_sub_long_with_long()
     const double time_remain = float_div(*simplifier->limit_to_decrease, orig_limit);
     if (solver->conf.verbosity) {
         cout
-        << "c [occ-sub-long-w-long] rem cl: " << sub0ret.numSubsumed
+        << "c [occ-backw-sub-long-w-long] rem cl: " << sub0ret.numSubsumed
         << " tried: " << wenThrough << "/" << simplifier->clauses.size()
         << " (" << std::setprecision(1) << std::fixed
         << stats_line_percent(wenThrough, simplifier->clauses.size())
@@ -297,7 +297,7 @@ void SubsumeStrengthen::backw_sub_long_with_long()
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
-            , "occ-sub-long-w-long"
+            , "occ-backw-sub-long-w-long"
             , time_used
             , time_out
             , time_remain
@@ -353,7 +353,8 @@ bool SubsumeStrengthen::backw_str_long_with_long()
 
     if (solver->conf.verbosity) {
         cout
-        << "c [occ-sub-str-long-w-long] sub: " << ret.sub
+        << "c [occ-backw-sub-str-long-w-long]"
+        << " sub: " << ret.sub
         << " str: " << ret.str
         << " tried: " << wenThrough << "/" << simplifier->clauses.size()
         << " ("
@@ -365,7 +366,7 @@ bool SubsumeStrengthen::backw_str_long_with_long()
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
-            , "occ-sub-str-long-w-long"
+            , "occ-backw-sub-str-long-w-long"
             , time_used
             , time_out
             , time_remain
@@ -570,7 +571,7 @@ bool SubsumeStrengthen::handle_added_long_cl(
         const double time_remain = float_div(*limit_to_decrease, orig_limit);
         if (solver->conf.verbosity) {
             cout
-            << "c [occ-sub-str-w-added-long] "
+            << "c [occ-backw-sub-str-w-added-long] "
             << " sub: " << stat.sub
             << " str: " << stat.str
             << " 0-depth ass: " << solver->trail_size() - origTrailSize
@@ -580,7 +581,7 @@ bool SubsumeStrengthen::handle_added_long_cl(
         if (solver->sqlStats) {
             solver->sqlStats->time_passed(
                 solver
-                , "occ-sub-str-w-added-long"
+                , "occ-backw-sub-str-w-added-long"
                 , time_used
                 , time_out
                 , time_remain
