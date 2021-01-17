@@ -52,7 +52,7 @@ TEST_F(definability, none_found)
     s->add_clause(str_to_cl("1, 2, 3"));
     s->add_clause(str_to_cl("1, -2, 4"));
 
-    auto defin = s->get_definabe(vs);
+    auto defin = s->get_definabe_by_or_gate(vs);
     EXPECT_EQ(0, defin.size());
 
 }
@@ -63,7 +63,7 @@ TEST_F(definability, do_1)
     s->add_clause(str_to_cl("1, -3"));
     s->add_clause(str_to_cl("2, 3, -1"));
 
-    auto defin = s->get_definabe(vs);
+    auto defin = s->get_definabe_by_or_gate(vs);
     EXPECT_EQ(1, defin.size());
     EXPECT_EQ(0, defin[0]);
 }
@@ -74,7 +74,7 @@ TEST_F(definability, do_1_inv)
     s->add_clause(str_to_cl("-1, -3"));
     s->add_clause(str_to_cl("2, 3, 1"));
 
-    auto defin = s->get_definabe(vs);
+    auto defin = s->get_definabe_by_or_gate(vs);
     EXPECT_EQ(1, defin.size());
     EXPECT_EQ(0, defin[0]);
 }
@@ -89,7 +89,7 @@ TEST_F(definability, do_2)
     s->add_clause(str_to_cl("11, -13"));
     s->add_clause(str_to_cl("12, 13, -11"));
 
-    auto defin = s->get_definabe(vs);
+    auto defin = s->get_definabe_by_or_gate(vs);
     EXPECT_EQ(2, defin.size());
 
     std::sort(defin.begin(), defin.end());
@@ -110,7 +110,7 @@ TEST_F(definability, circular)
     s->add_clause(str_to_cl("3, -4"));
     s->add_clause(str_to_cl("4, 1, -3"));
 
-    auto defin = s->get_definabe(vs);
+    auto defin = s->get_definabe_by_or_gate(vs);
     EXPECT_EQ(1, defin.size());
 }
 
@@ -132,7 +132,7 @@ TEST_F(definability, circular_and_normal)
     s->add_clause(str_to_cl("11, -13"));
     s->add_clause(str_to_cl("12, 13, -11"));
 
-    auto defin = s->get_definabe(vs);
+    auto defin = s->get_definabe_by_or_gate(vs);
     EXPECT_EQ(2, defin.size());
 
     //The non-circular one must be found

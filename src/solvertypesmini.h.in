@@ -27,6 +27,8 @@ THE SOFTWARE.
 #include <iostream>
 #include <cassert>
 #include <vector>
+#include <array>
+#include <algorithm>
 
 namespace CMSat {
 
@@ -185,6 +187,43 @@ inline std::ostream& operator<<(std::ostream& cout, const lbool val)
     if (val == l_Undef) cout << "l_Undef";
     return cout;
 }
+
+class OrGate {
+    public:
+        OrGate(const Lit& _rhs, Lit _lit1, Lit _lit2) :
+            lit1(_lit1)
+            , lit2(_lit2)
+            , rhs(_rhs)
+        {
+            if (lit1 > lit2)
+                std::swap(lit1, lit2);
+        }
+
+        bool operator==(const OrGate& other) const
+        {
+            return
+                rhs == other.rhs
+                && lit1 == other.lit1
+                && lit2 == other.lit2
+                ;
+        }
+        std::array<Lit, 2> get_lhs() const
+        {
+            return std::array<Lit, 2>{{lit1, lit2}};
+        }
+        std::array<Lit, 3> get_all() const
+        {
+            return std::array<Lit, 3>{{lit1, lit2, rhs}};
+        }
+
+        //LHS
+        Lit lit1;
+        Lit lit2;
+
+        //RHS
+        Lit rhs;
+};
+
 
 enum class rst_dat_type {norm, var, cl};
 

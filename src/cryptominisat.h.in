@@ -201,11 +201,12 @@ namespace CMSat {
         //////////////////////
         // EXPERIMENTAL
         std::vector<std::pair<std::vector<uint32_t>, bool> > get_recovered_xors(bool xor_together_xors) const; //get XORs recovered. If "xor_together_xors" is TRUE, then xors that share a variable (and ONLY they share them) will be XORed together
+        std::vector<OrGate> get_recovered_or_gates();
         std::vector<uint32_t> get_var_incidence();
         std::vector<uint32_t> get_lit_incidence();
         std::vector<uint32_t> get_var_incidence_also_red();
         std::vector<double> get_vsids_scores();
-        std::vector<uint32_t> get_definabe(const std::vector<uint32_t>& vars);
+
         lbool find_fast_backw(FastBackwData fast_backw);
         void remove_and_clean_all();
         lbool probe(Lit l, uint32_t& min_props);

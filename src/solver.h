@@ -280,7 +280,7 @@ class Solver : public Searcher
         bool renumber_variables(bool must_renumber = true);
         SatZillaFeatures calculate_satzilla_features();
         SatZillaFeatures last_solve_satzilla_feature;
-        vector<uint32_t> get_definabe(const vector<uint32_t>& vars);
+        vector<OrGate> get_recovered_or_gates();
         void remove_and_clean_all();
 
 

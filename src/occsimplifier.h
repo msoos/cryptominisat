@@ -193,7 +193,7 @@ public:
     ~OccSimplifier();
 
     //Called from main
-    vector<uint32_t> get_definabe(vector<uint32_t>& vars);
+    vector<OrGate> get_recovered_or_gates();
     bool simplify(const bool _startup, const std::string schedule);
     void new_var(const uint32_t orig_outer);
     void new_vars(const size_t n);

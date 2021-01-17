@@ -131,79 +131,6 @@ struct IncidenceSorter
     const vector<uint32_t>& inc;
 };
 
-vector<uint32_t> GateFinder::get_definability(vector<uint32_t>& vars)
-{
-    double myTime = cpuTime();
-    vector<uint32_t> definable;
-
-    for(const auto var: vars) {
-        assert(var < solver->nVars() && "get_definability must not be passed variables that no longer exist");
-        assert(var < seen.size());
-        seen[var] = 1;
-    }
-
-
-    //Set up incidence
-    vector<uint32_t> inc(solver->nVars(), 0);
-    for(const auto& g: orGates) {
-        if (seen[g.lit1.var()] &&
-            seen[g.lit2.var()] &&
-            seen[g.rhs.var()])
-        {
-            inc[g.rhs.var()]++;
-        }
-    }
-    for(const auto var: vars) {
-        assert(var < inc.size());
-    }
-    std::stable_sort(vars.begin(), vars.end(), IncidenceSorter(inc));
-
-    for(auto var: vars) {
-        //already defined, let's not do circular dependency
-        if (!seen[var]) {
-            continue;
-        }
-
-        bool defined = false;
-        for(int inv = 0; inv < 2 && !defined; inv++) {
-            Lit lit = Lit(var, inv);
-            const auto& ws = solver->watches[lit];
-            for(auto w: ws) {
-                if (!w.isIdx()) {
-                    continue;
-                }
-                const OrGate& g = orGates[w.get_idx()];
-                assert(g.rhs.var() == var);
-
-                //must be part of original set, and its ingredients must not have been defined
-                if (seen[g.rhs.var()] &&
-                    seen[g.lit1.var()] &&
-                    seen[g.lit2.var()])
-                {
-                        seen[g.rhs.var()] = 0;
-                        definable.push_back(var);
-                        defined = true;
-                        break;
-                }
-            }
-        }
-    }
-
-    for(auto var: vars) {
-        seen[var] = 0;
-    }
-
-    double time_passed = cpuTime() - myTime;
-    if (solver->conf.verbosity) {
-        cout << "c [occ-gates] definable: "
-        << print_value_kilo_mega(definable.size())
-        << solver->conf.print_times(time_passed)
-        << endl;
-    }
-
-    return definable;
-}
-
 void GateFinder::find_or_gates()
 {
     if (solver->nVars() < 1)
@@ -327,7 +254,7 @@ void GateFinder::print_graphviz_dot()
     size_t index = 0;
     for (const OrGate orGate: orGates) {
         index++;
-        for (const Lit lit: orGate.getLits()) {
+        for (const Lit lit: orGate.get_lhs()) {
             for (Watched ws: solver->watches[lit]) {
                 if (!ws.isIdx()) {
                     continue;

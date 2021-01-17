@@ -35,38 +35,6 @@ class Solver;
 class OccSimplifier;
 using std::set;
 
-class OrGate {
-    public:
-        OrGate(const Lit& _rhs, Lit _lit1, Lit _lit2) :
-            lit1(_lit1)
-            , lit2(_lit2)
-            , rhs(_rhs)
-        {
-            if (lit1 > lit2)
-                std::swap(lit1, lit2);
-        }
-
-        bool operator==(const OrGate& other) const
-        {
-            return
-                rhs == other.rhs
-                && lit1 == other.lit1
-                && lit2 == other.lit2
-                ;
-        }
-        std::array<Lit, 2> getLits() const
-        {
-            return std::array<Lit, 2>{{lit1, lit2}};
-        }
-
-        //LHS
-        Lit lit1;
-        Lit lit2;
-
-        //RHS
-        Lit rhs;
-};
-
 struct GateCompareForEq
 {
     bool operator()(const OrGate& a, const OrGate& b) const
@@ -97,7 +65,6 @@ public:
     GateFinder(OccSimplifier *simplifier, Solver *control);
     void find_all();
     void cleanup();
-    vector<uint32_t> get_definability(vector<uint32_t>& vars);
     const vector<OrGate>& get_gates() const;
 
     //Stats

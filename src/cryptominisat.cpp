@@ -1388,9 +1388,9 @@ DLL_PUBLIC vector<uint32_t> SATSolver::get_var_incidence()
     return data->solvers[data->which_solved]->get_outside_var_incidence();
 }
 
-DLL_PUBLIC vector<uint32_t> SATSolver::get_definabe(const vector<uint32_t>& vars)
+DLL_PUBLIC vector<OrGate> SATSolver::get_recovered_or_gates()
 {
-    return data->solvers[0]->get_definabe(vars);
+    return data->solvers[0]->get_recovered_or_gates();
 }
 
 DLL_PUBLIC lbool SATSolver::find_fast_backw(FastBackwData fast_backw)

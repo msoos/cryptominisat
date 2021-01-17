@@ -1454,9 +1454,9 @@ void OccSimplifier::sort_occurs_and_set_abst()
     }
 }
 
-vector<uint32_t> OccSimplifier::get_definabe(vector<uint32_t>& vars)
+vector<OrGate> OccSimplifier::get_recovered_or_gates()
 {
-    vector<uint32_t> definable;
+    vector<OrGate> or_gates;
     auto origTrailSize = solver->trail_size();
     gateFinder = new GateFinder(this, solver);
 
@@ -1466,18 +1466,18 @@ vector<uint32_t> OccSimplifier::get_definabe(vector<uint32_t>& vars)
     if (!setup()) {
         delete gateFinder;
         gateFinder = NULL;
-        return vector<uint32_t>();
+        return or_gates;
     }
 
     gateFinder->find_all();
-    definable = gateFinder->get_definability(vars);
+    or_gates = gateFinder->get_gates();
     gateFinder->cleanup();
 
     solver->conf.maxOccurRedMB = backup;
     delete gateFinder;
     gateFinder = NULL;
     finishUp(origTrailSize);
-    return definable;
+    return or_gates;
 }
 
 bool OccSimplifier::occ_rem_with_gates()
