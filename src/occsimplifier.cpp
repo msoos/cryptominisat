@@ -3807,10 +3807,10 @@ bool OccSimplifier::occ_based_lit_rem(uint32_t var, uint32_t& removed) {
 
             const ClOffset offset = w.get_offset();
             Clause* cl = solver->cl_alloc.ptr(offset);
-            assert(!cl->freed());
             if (cl->getRemoved() || cl->red()) {
                 continue;
             }
+            assert(!cl->freed());
 
             if (solver->satisfied(*cl)) {
                 unlink_clause(offset, true, true, true);
