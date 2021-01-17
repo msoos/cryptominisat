@@ -1092,9 +1092,6 @@ bool OccSimplifier::eliminate_vars()
     uint32_t n_cls_init = n_cls_last;
     uint32_t n_vars_last = solver->get_num_free_vars();
 
-
-    added_irred_bin.clear();
-
     //For debug ONLY
     // subsume with bins everywhere first
 //     for(uint32_t i = 0; i < solver->nVars(); i++) {
