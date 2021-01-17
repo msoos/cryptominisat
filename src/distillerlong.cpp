@@ -437,6 +437,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     (*solver->drat) << findelay;
 
     if (cl2 != NULL) {
+        //This new, distilled clause has been distilled now.
         if (also_remove) {
             cl2->tried_to_remove = 1;
         } else {
