@@ -1066,7 +1066,10 @@ void OccSimplifier::check_no_marked_clauses()
 
 bool OccSimplifier::eliminate_vars()
 {
+    assert(solver->okay());
     assert(solver->prop_at_head());
+    assert(added_irred_bin.empty());
+    assert(added_long_cl.empty());
 
     //solver->conf.verbosity = 1;
     //Set-up
