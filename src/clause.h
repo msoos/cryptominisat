@@ -384,7 +384,7 @@ public:
         mySize = ps.size();
         isRed = false;
         isRemoved = false;
-        distilled = false;
+        distilled = 0;
         is_ternary_resolved = false;
         must_recalc_abst = true;
         _used_in_xor = false;
@@ -392,7 +392,7 @@ public:
         _xor_is_detached = false;
         reloced = false;
         disabled = false;
-        tried_to_remove = false;
+        tried_to_remove = 0;
 
         for (uint32_t i = 0; i < ps.size(); i++) {
             getData()[i] = ps[i];
