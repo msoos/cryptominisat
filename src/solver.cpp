@@ -5145,6 +5145,20 @@ vector<OrGate> Solver::get_recovered_or_gates()
     return or_gates;
 }
 
+vector<ITEGate> Solver::get_recovered_ite_gates()
+{
+    vector<ITEGate> or_gates = occsimplifier->get_recovered_ite_gates();
+
+    for(auto& g: or_gates) {
+        g.rhs = map_inter_to_outer(g.rhs);
+        for(auto& l: g.lhs) {
+            l = map_inter_to_outer(l);
+        }
+    }
+
+    return or_gates;
+}
+
 void Solver::remove_and_clean_all() {
     clauseCleaner->remove_and_clean_all();
 }

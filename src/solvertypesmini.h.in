@@ -224,6 +224,30 @@ class OrGate {
         Lit rhs;
 };
 
+class ITEGate {
+    public:
+        ITEGate() {}
+        ITEGate(const Lit& _rhs, Lit _lit1, Lit _lit2, Lit _lit3) :
+            rhs(_rhs)
+        {
+            lhs[0] = _lit1;
+            lhs[1] = _lit2;
+            lhs[2] = _lit3;
+            std::sort(lhs.begin(), lhs.end());
+        }
+
+        std::array<Lit, 4> get_all() const
+        {
+            return std::array<Lit, 4>{{lhs[0], lhs[1], lhs[2], rhs}};
+        }
+
+        //LHS
+        std::array<Lit, 3> lhs;
+
+        //RHS
+        Lit rhs;
+};
+
 
 enum class rst_dat_type {norm, var, cl};
 

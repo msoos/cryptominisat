@@ -281,6 +281,7 @@ class Solver : public Searcher
         SatZillaFeatures calculate_satzilla_features();
         SatZillaFeatures last_solve_satzilla_feature;
         vector<OrGate> get_recovered_or_gates();
+        vector<ITEGate> get_recovered_ite_gates();
         void remove_and_clean_all();
 
 

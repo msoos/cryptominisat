@@ -194,6 +194,7 @@ public:
 
     //Called from main
     vector<OrGate> get_recovered_or_gates();
+    vector<ITEGate> get_recovered_ite_gates();
     bool simplify(const bool _startup, const std::string schedule);
     void new_var(const uint32_t orig_outer);
     void new_vars(const size_t n);
@@ -481,6 +482,7 @@ private:
         , watch_subarray_const b
         , vec<Watched>& out_a
         , vec<Watched>& out_b
+        , vec<Watched>* out_a_all = NULL
     );
     vector<Clause*> toclear_marked_cls;
     set<uint32_t> parities_found;

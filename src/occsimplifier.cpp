@@ -1480,6 +1480,76 @@ vector<OrGate> OccSimplifier::get_recovered_or_gates()
     return or_gates;
 }
 
+vector<ITEGate> OccSimplifier::get_recovered_ite_gates()
+{
+    vector<ITEGate> or_gates;
+    auto origTrailSize = solver->trail_size();
+
+    startup = false;
+    double backup = solver->conf.maxOccurRedMB;
+    solver->conf.maxOccurRedMB = 0;
+    if (!setup()) {
+        delete gateFinder;
+        gateFinder = NULL;
+        return or_gates;
+    }
+
+    vec<Watched> out_a_all;
+    for(uint32_t i = 0; i < solver->nVars()*2; i++) {
+        const Lit lit = Lit::toLit(i);
+        out_a_all.clear();
+        gates_poss.clear(); //temps, not needed
+        gates_negs.clear(); //temps, not needed
+        find_ite_gate(lit, solver->watches[lit], solver->watches[~lit],
+                      gates_poss, gates_negs, //temporaries, actually not used
+                      &out_a_all); // what we are looking for
+
+        if (out_a_all.empty()) {
+            continue;
+        }
+
+        //out_a_all contains N*2 clauses, every 2 make up an ITE
+        //For each of 2:
+        //     x -> (a=f)
+        //    -x -> (a=g)
+        // and we get back 2x 3-long clauses:
+        // -a V  f V -x
+        // -a V  g V  x
+        // i.e. lhs[0] = f, lhs[2] = g, lhs[1] --> if TRUE selects lhs[2] otherwise lhs[1]
+        //cout << "out_a_all.s: " << out_a_all.size() << endl;
+        for(uint32_t i2 = 0; i2 < out_a_all.size(); i2+=2) {
+            ITEGate gate;
+            gate.rhs = lit;
+            seen[lit.var()] = 1;
+            uint32_t at = 0;
+
+            for(uint32_t x = 0; x < 2; x++) {
+                Watched& w = out_a_all[i2+x];
+                assert(w.isClause());
+                Clause* cl = solver->cl_alloc.ptr(w.get_offset());
+                //cout << "c: " << *cl << endl;
+                for(const auto&l : *cl) {
+                    if (!seen[l.var()]) {
+                        gate.lhs[at++] = l;
+                        seen[l.var()] = 1;
+                    }
+                }
+            }
+            assert(at == 3);
+
+            //Cleanup
+            for(const auto& l: gate.get_all()) {
+                seen[l.var()] = 0;
+            }
+            or_gates.push_back(gate);
+        }
+    }
+
+    solver->conf.maxOccurRedMB = backup;
+    finishUp(origTrailSize);
+    return or_gates;
+}
+
 bool OccSimplifier::occ_rem_with_gates()
 {
     assert(solver->okay());
@@ -2741,6 +2811,7 @@ bool OccSimplifier::find_ite_gate(
     , watch_subarray_const b
     , vec<Watched>& out_a
     , vec<Watched>& out_b
+    , vec<Watched>* out_a_all
 ) {
     int limit = solver->conf.varelim_gate_find_limit;
     bool found = false;
@@ -2784,7 +2855,6 @@ bool OccSimplifier::find_ite_gate(
             seen[l.var()] = 0;
         }
         toClear.clear();
-        out_a.clear();
         out_a.push(w);
 
         //Set up base
@@ -2863,7 +2933,6 @@ bool OccSimplifier::find_ite_gate(
         out_b.clear();
         bool got_mf_v_mx = false;
         bool got_mg_v_x = false;
-        limit -= b.size();
         for(uint32_t j = 0; j < b.size(); j++, limit--) {
             const Watched& w2 = b[j];
             if (w2.isBin()) {
@@ -2931,12 +3000,18 @@ bool OccSimplifier::find_ite_gate(
         }
         if (got_mf_v_mx && got_mg_v_x) {
             found = true;
-            break;
+            if (out_a_all == NULL) {
+                break;
+            } else {
+                assert(out_a.size() == 2);
+                out_a_all->push(out_a[0]);
+                out_a_all->push(out_a[1]);
+            }
         }
     }
 
     if (limit < 0) {
-//         cout << "ITE Gate find limit reached" << endl;
+        //cout << "ITE Gate find timeout limit reached" << endl;
         bvestats.gatefind_timeouts++;
     }
 
@@ -2945,8 +3020,7 @@ bool OccSimplifier::find_ite_gate(
     }
     toClear.clear();
 
-    if (found) {
-//         cout << "ITE found" << endl;
+    if (found && out_a_all == NULL) {
         assert(out_a.size() == 2);
         assert(out_b.size() == 2);
         std::sort(out_a.begin(), out_a.end(), sort_smallest_first(solver->cl_alloc));

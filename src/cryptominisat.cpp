@@ -1393,6 +1393,11 @@ DLL_PUBLIC vector<OrGate> SATSolver::get_recovered_or_gates()
     return data->solvers[0]->get_recovered_or_gates();
 }
 
+DLL_PUBLIC vector<ITEGate> SATSolver::get_recovered_ite_gates()
+{
+    return data->solvers[0]->get_recovered_ite_gates();
+}
+
 DLL_PUBLIC lbool SATSolver::find_fast_backw(FastBackwData fast_backw)
 {
     assert(data->solvers.size() == 1);
