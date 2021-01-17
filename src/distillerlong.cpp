@@ -48,7 +48,22 @@ bool DistillerLong::distill(const bool red, bool fullstats, bool only_rem_cl)
     assert(solver->ok);
     numCalls++;
     runStats.clear();
-
+    lit_counts.clear();
+    lit_counts.resize(solver->nVars()*2, 0);
+    for(const auto& off: solver->longIrredCls) {
+        Clause* cl = solver->cl_alloc.ptr(off);
+        for(const auto& l: *cl) {
+            lit_counts[l.toInt()]++;
+        }
+    }
+    for(const auto& offs: solver->longRedCls) {
+        for(const auto& off: offs) {
+            Clause* cl = solver->cl_alloc.ptr(off);
+            for(const auto& l: *cl) {
+                lit_counts[l.toInt()]++;
+            }
+        }
+    }
 
     if (!red) {
         if (!distill_long_cls_all(solver->longIrredCls, 2, true)) {
@@ -86,6 +101,8 @@ end:
             runStats.print_short(solver);
     }
     runStats.clear();
+    lit_counts.clear();
+    lit_counts.shrink_to_fit();
 
     return solver->okay();
 }
@@ -106,6 +123,20 @@ struct ClauseSizeSorterLargestFirst
         //Correct order if c1's size is larger
         return cl1->size() > cl2->size();
     }
+};
+
+struct LitCountDescSort
+{
+    LitCountDescSort(const vector<uint64_t>& _lit_counts) :
+        lit_counts(_lit_counts)
+    {}
+
+    bool operator()(const Lit& lit1, const Lit& lit2) {
+        return lit_counts[lit1.toInt()] > lit_counts[lit2.toInt()];
+    }
+
+
+    const vector<uint64_t>& lit_counts;
 };
 
 bool DistillerLong::go_through_clauses(
@@ -323,7 +354,13 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     solver->new_decision_level();
     i = 0;
     j = 0;
-    std::sort(cl.begin(), cl.end(), VSIDS_largest_first(solver->var_act_vsids));
+    //Sort them differently once in a while, so all literals have a chance of
+    //being removed
+    if (offset % 2  == 0) {
+        std::sort(cl.begin(), cl.end(), VSIDS_largest_first(solver->var_act_vsids));
+    } else {
+        std::sort(cl.begin(), cl.end(), LitCountDescSort(lit_counts));
+    }
     for (uint32_t sz = cl.size(); i < sz; i++) {
         const Lit lit = cl[i];
         lbool val = solver->value(lit);

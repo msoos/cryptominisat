@@ -80,6 +80,7 @@ class DistillerLong {
         Solver* solver;
 
         //For distill
+        vector<uint64_t> lit_counts;
         vector<Lit> lits;
         uint64_t oldBogoProps;
         int64_t maxNumProps;
