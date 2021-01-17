@@ -885,7 +885,7 @@ bool OccSimplifier::deal_with_added_long_and_bin(const bool main)
             tmp_bin_cl[1] = added_irred_bin[i].second;
 
             Sub1Ret ret; //TODO use this in the stats
-            if (!sub_str->backw_sub_str_with_implicit(tmp_bin_cl, ret)) {
+            if (!sub_str->backw_sub_str_with_impl(tmp_bin_cl, ret)) {
                 return false;
             }
         }
@@ -1025,7 +1025,7 @@ bool OccSimplifier::simulate_frw_sub_str_with_added_cl_to_var()
     ) {
         uint32_t var = added_cl_to_var.getTouchedList()[i];
         Lit lit = Lit(var, true);
-        if (!sub_str->backw_sub_str_long_with_bins_watch(lit, false)) {
+        if (!sub_str->backw_sub_str_long_with_bins_watch(lit, true)) {
             return false;
         }
         if (!deal_with_added_cl_to_var_lit(lit)) {
@@ -1033,7 +1033,7 @@ bool OccSimplifier::simulate_frw_sub_str_with_added_cl_to_var()
         }
 
         lit = ~lit;
-        if (!sub_str->backw_sub_str_long_with_bins_watch(lit, false)) {
+        if (!sub_str->backw_sub_str_long_with_bins_watch(lit, true)) {
             return false;
         }
         if (!deal_with_added_cl_to_var_lit(lit)) {
@@ -1875,7 +1875,6 @@ bool OccSimplifier::ternary_res()
             && *limit_to_decrease > 0
             && ternary_res_cls_limit > 0
         ) {
-            cl->is_ternary_resolved = true;
             if (!perform_ternary(cl, offs, sub1_ret))
                 goto end;
         }
@@ -1919,7 +1918,10 @@ bool OccSimplifier::ternary_res()
 
 bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret)
 {
-    assert(cl_to_add_ternary.empty());
+    assert(cl->size() == 3);
+    assert(!cl->red());
+
+    cl->is_ternary_resolved = 1;
     *limit_to_decrease -= 3;
     for(const Lit l: *cl) {
         seen[l.toInt()] = 1;
@@ -1997,9 +1999,11 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
                 return false;
             }
         } else {
-            if (!sub_str->backw_sub_str_with_implicit(finalLits_ternary, sub1_ret)) {
-                return false;
-            }
+            //We'd need to check sub1_ret and see if it subsumed an irred
+            // then fix it up. Can't be bothered.
+//             if (!sub_str->backw_sub_str_with_impl(finalLits_ternary, sub1_ret)) {
+//                 return false;
+//             }
         }
         *limit_to_decrease-=20;
         ternary_res_cls_limit--;
@@ -2024,16 +2028,20 @@ void OccSimplifier::check_ternary_cl(Clause* cl, ClOffset offs, watch_subarray w
             && cl2->size() == 3
             && !cl2->red()
         ) {
-            uint32_t num_lits = 3;
-            uint32_t num_vars = 3;
+            uint32_t num_lits = 0;
+            uint32_t num_vars = 0;
             Lit lit_clash = lit_Undef;
             for(Lit l2: *cl2) {
-                num_vars += !(seen[l2.toInt()] | seen[(~l2).toInt()]);
-                num_lits += !seen[l2.toInt()];
+                num_vars += (seen[l2.toInt()] || seen[(~l2).toInt()]);
+                num_lits += seen[l2.toInt()];
                 if (seen[(~l2).toInt()]) {
                     lit_clash = l2;
 
                     //It's symmetric so only do it one way
+                    // I can resolve
+                    //      "a b c" with "a -b d" OR
+                    //      "a -b d" with "a b c"
+                    // This ensures we only do it one way.
                     if (!lit_clash.sign()) {
                         lit_clash = lit_Error;
                         break;
@@ -2047,9 +2055,9 @@ void OccSimplifier::check_ternary_cl(Clause* cl, ClOffset offs, watch_subarray w
             }
 
             //Becomes tri
-            if ((num_vars == 4 && num_lits == 5) ||
+            if ((num_vars == 2 && num_lits == 1) ||
                 (solver->conf.allow_ternary_bin_create &&
-                    num_vars == 3 && num_lits == 4)
+                    num_vars == 3 && num_lits == 2)
             ) {
                 *limit_to_decrease-=20;
 
@@ -2066,6 +2074,7 @@ void OccSimplifier::check_ternary_cl(Clause* cl, ClOffset offs, watch_subarray w
                     }
                 }
 
+                assert(newcl.size < 4 && newcl.size > 1);
                 if (newcl.size == 2 || newcl.size == 3) {
                     if (newcl.size == 2) {
                         runStats.ternary_added_bin++;
@@ -3906,7 +3915,7 @@ bool OccSimplifier::maybe_eliminate(const uint32_t var)
 
     if (solver->conf.varelim_check_resolvent_subs &&
         !solver->varData[var].occ_simp_tried &&
-        (n_occurs[lit.toInt()] + n_occurs[(~lit).toInt()] < 40))
+        (n_occurs[lit.toInt()] + n_occurs[(~lit).toInt()] < 20))
     {
         solver->varData[var].occ_simp_tried = 1;
         uint32_t rem = 0;

@@ -545,6 +545,13 @@ bool SubsumeStrengthen::handle_added_long_cl(
             goto end;
         }
 
+//         if (cl->size() == 3 &&
+//             !cl->red() &&
+//             !simplifier->perform_ternary(cl, offs, stat))
+//         {
+//             goto end;
+//         }
+
         if ((i&0xfff) == 0xfff
             && solver->must_interrupt_asap()
         ) {
@@ -800,7 +807,7 @@ size_t SubsumeStrengthen::mem_used() const
 }
 
 //Implicit input here is ALWAY irred
-bool SubsumeStrengthen::backw_sub_str_with_implicit(
+bool SubsumeStrengthen::backw_sub_str_with_impl(
     const vector<Lit>& lits,
     Sub1Ret& ret_sub_str
 ) {
@@ -907,20 +914,20 @@ bool SubsumeStrengthen::backw_sub_str_with_implicit(
 }
 
 bool SubsumeStrengthen::backw_sub_str_long_with_bins_watch(
-    const Lit lit
-    , const bool redundant_too
+    const Lit lit,
+    bool both_bins
 ) {
     //NOTE this can modify itself,
-    //     by removing a binary from tmp by backw_sub_str_with_implicit
+    //     by removing a binary from tmp by backw_sub_str_with_impl
     solver->watches[lit].copyTo(tmp);
     for (size_t i = 0
         ; i < tmp.size() && *simplifier->limit_to_decrease > 0
         ; i++
     ) {
         //Each BIN only once
-        if (tmp[i].isBin()
-            && (redundant_too || lit < tmp[i].lit2())
-        ) {
+        if (tmp[i].isBin() &&
+            (both_bins || lit < tmp[i].lit2()))
+        {
             const bool red = tmp[i].red();
             tried_bin_tri++;
             tmpLits.resize(2);
@@ -929,7 +936,7 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins_watch(
             std::sort(tmpLits.begin(), tmpLits.end());
 
             Sub1Ret ret;
-            if (!backw_sub_str_with_implicit(tmpLits, ret)) {
+            if (!backw_sub_str_with_impl(tmpLits, ret)) {
                 return false;
             }
             subsumedBin += ret.sub;
@@ -979,7 +986,7 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins()
 
     ) {
         Lit lit = Lit::toLit(upI);
-        if (!backw_sub_str_long_with_bins_watch(lit, true)) {
+        if (!backw_sub_str_long_with_bins_watch(lit)) {
             break;
         }
     }

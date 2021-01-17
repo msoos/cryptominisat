@@ -46,16 +46,13 @@ public:
     void backw_sub_long_with_long();
     bool backw_str_long_with_long();
     bool backw_sub_str_long_with_bins();
-    bool backw_sub_str_long_with_bins_watch(
-        const Lit lit
-        , const bool redundant_too = false
-    );
+    bool backw_sub_str_long_with_bins_watch(const Lit lit, bool both_bins = false);
     bool handle_added_long_cl(int64_t* limit, const bool main_run);
 
 
     Sub0Ret backw_sub_with_long(const ClOffset offset);
 
-    bool backw_sub_str_with_implicit(
+    bool backw_sub_str_with_impl(
         const vector<Lit>& lits,
         Sub1Ret& ret_sub_str);
     bool backw_sub_str_with_long(
