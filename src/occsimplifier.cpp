@@ -1131,6 +1131,11 @@ bool OccSimplifier::eliminate_vars()
         last_elimed = 0;
         limit_to_decrease = &norm_varelim_time_limit;
         order_vars_for_elim();
+        if (velim_order.size() < 400) {
+            for(auto& v: solver->varData) {
+                v.occ_simp_tried = 0;
+            }
+        }
 
         added_cl_to_var.clear();
         removed_cl_with_var.touch(Lit(0, false));
