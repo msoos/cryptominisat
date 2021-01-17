@@ -177,13 +177,6 @@ bool DistillerLong::go_through_clauses(
         maxNumProps -= solver->watches[cl[0]].size();
         maxNumProps -= solver->watches[cl[1]].size();
 
-        maxNumProps -= cl.size();
-        if (solver->satisfied(cl)) {
-            solver->detachClause(cl);
-            solver->free_cl(&cl);
-            continue;
-        }
-
         //Try to distill clause
         tried++;
         ClOffset offset2 = try_distill_clause_and_return_new(
@@ -299,6 +292,8 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
         cout << "Trying to distill clause:" << lits << endl;
     }
     #endif
+    bool True_confl = false;
+    PropBy confl;
 
     //Disable this clause
     Clause& cl = *solver->cl_alloc.ptr(offset);
@@ -315,8 +310,9 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     uint32_t i = 0;
     uint32_t j = 0;
     for (uint32_t sz = cl.size(); i < sz; i++) {
-        //When we go into this function, we KNOW the clause is not satisfied
-        assert(solver->value(cl[i]) != l_True);
+        if (solver->value(cl[i]) == l_True) {
+            goto rem;
+        }
         if (solver->value(cl[i]) == l_Undef) {
             cl[j++] = cl[i];
         }
@@ -325,8 +321,6 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     assert(cl.size() > 1); //this must have already been propagated
 
     solver->new_decision_level();
-    bool True_confl = false;
-    PropBy confl;
     i = 0;
     j = 0;
     std::sort(cl.begin(), cl.end(), VSIDS_largest_first(solver->var_act_vsids));
@@ -363,6 +357,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
 
     //Actually, we can remove the clause!
     if (also_remove && !red && !True_confl && !confl.isNULL()) {
+        rem:
         solver->cancelUntil<false, true>(0);
         solver->detach_modified_clause(cl_lit1, cl_lit2, orig_size, &cl);
         (*solver->drat) << findelay;
