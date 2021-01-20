@@ -122,6 +122,7 @@ bool BVA::bounded_var_addition()
     runStats.reset();
 
     solver->clean_occur_from_removed_clauses_only_smudged();
+    simplifier->free_clauses_to_free();
     return solver->okay();
 }
 

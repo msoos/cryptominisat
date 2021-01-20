@@ -514,7 +514,6 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
             #ifdef STATS_NEEDED
             solver->propStats.propsUnit++;
             #endif
-            solver->ok = solver->propagate_occur();
             return false;
         }
         case 2:
@@ -2427,7 +2426,9 @@ void OccSimplifier::finishUp(
     if (solver->ok) {
         assert(solver->prop_at_head());
         add_back_to_solver();
-        solver->ok = solver->propagate<false>().isNULL();
+        if (solver->okay()) {
+            solver->ok = solver->propagate<false>().isNULL();
+        }
     }
 
     //Update global stats
@@ -2444,7 +2445,11 @@ void OccSimplifier::finishUp(
     sub_str->finishedRun();
 
     //Sanity checks
-    if (solver->okay() && somethingSet) {
+    if (solver->okay()
+        #ifndef SLOW_DEBUG
+         && somethingSet
+        #endif
+    ) {
         solver->test_all_clause_attached();
         solver->check_wrong_attach();
         solver->check_stats();
