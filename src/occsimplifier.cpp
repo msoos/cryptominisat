@@ -2444,7 +2444,7 @@ void OccSimplifier::finishUp(
     sub_str->finishedRun();
 
     //Sanity checks
-    if (solver->ok && somethingSet) {
+    if (solver->okay() && somethingSet) {
         solver->test_all_clause_attached();
         solver->check_wrong_attach();
         solver->check_stats();
