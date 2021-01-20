@@ -5134,6 +5134,7 @@ bool Solver::assump_contains_xor_clash()
 
 vector<OrGate> Solver::get_recovered_or_gates()
 {
+    assert(get_num_bva_vars() == 0 && "not implemented for BVA");
     vector<OrGate> or_gates = occsimplifier->get_recovered_or_gates();
 
     for(auto& g: or_gates) {
@@ -5147,6 +5148,7 @@ vector<OrGate> Solver::get_recovered_or_gates()
 
 vector<ITEGate> Solver::get_recovered_ite_gates()
 {
+    assert(get_num_bva_vars() == 0 && "not implemented for BVA");
     vector<ITEGate> or_gates = occsimplifier->get_recovered_ite_gates();
 
     for(auto& g: or_gates) {
