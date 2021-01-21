@@ -490,15 +490,8 @@ class DLL_PUBLIC SolverConf
         long long  distill_implicit_with_implicit_time_limitM;
 
         //Gates
-        int      doGateFind; ///< Find OR gates
-        int do_simp_with_gates;
-        unsigned maxGateBasedClReduceSize;
-        int      doShortenWithOrGates; ///<Shorten clauses with or gates during subsumption
-        int      doRemClWithAndGates; ///<Remove clauses using and gates during subsumption
-        int      doFindEqLitsWithGates; ///<Find equivalent literals using gates during subsumption
+        int doGateFind; ///< Find OR gates
         long long gatefinder_time_limitM;
-        long long shorten_with_gates_time_limitM;
-        long long remove_cl_with_gates_time_limitM;
 
         //Gauss
         GaussConf gaussconf;

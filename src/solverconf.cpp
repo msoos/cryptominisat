@@ -383,14 +383,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Gates
         , doGateFind       (false)
-        , do_simp_with_gates(false)
-        , maxGateBasedClReduceSize(20)
-        , doShortenWithOrGates(true)
-        , doRemClWithAndGates(true)
-        , doFindEqLitsWithGates(true)
         , gatefinder_time_limitM(200)
-        , shorten_with_gates_time_limitM(200)
-        , remove_cl_with_gates_time_limitM(100)
 
         //Gauss
         , doM4RI(true)

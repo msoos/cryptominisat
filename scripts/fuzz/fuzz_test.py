@@ -432,7 +432,7 @@ class Tester:
         if random.choice([1, 0, 0]):
             opts = ["scc", "varelim", "comps", "strengthen", "intree",
                     "renumber", "savemem", "moreminim", "gates",
-                    "gorshort", "gandrem", "gateeqlit", "schedsimp", "otfhyper"]
+                    "schedsimp", "otfhyper"]
 
             if "xor" in self.extra_opts_supported:
                 opts.append("xor")

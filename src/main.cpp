@@ -680,23 +680,11 @@ void Main::add_supported_options()
     po::options_description gateOptions("Gate-related options");
     gateOptions.add_options()
     ("gates", po::value(&conf.doGateFind)->default_value(conf.doGateFind)
-        , "Find gates. Disables all sub-options below")
-    ("gorshort", po::value(&conf.doShortenWithOrGates)->default_value(conf.doShortenWithOrGates)
-        , "Shorten clauses with OR gates")
-    ("gandrem", po::value(&conf.doRemClWithAndGates)->default_value(conf.doRemClWithAndGates)
-        , "Remove clauses with AND gates")
-    ("gateeqlit", po::value(&conf.doFindEqLitsWithGates)->default_value(conf.doFindEqLitsWithGates)
-        , "Find equivalent literals using gates")
-    /*("maxgatesz", po::value(&conf.maxGateSize)->default_value(conf.maxGateSize)
-        , "Maximum gate size to discover")*/
+        , "Find gates.")
     ("printgatedot", po::value(&conf.doPrintGateDot)->default_value(conf.doPrintGateDot)
         , "Print gate structure regularly to file 'gatesX.dot'")
     ("gatefindto", po::value(&conf.gatefinder_time_limitM)->default_value(conf.gatefinder_time_limitM)
         , "Max time in bogoprops M to find gates")
-    ("shortwithgatesto", po::value(&conf.shorten_with_gates_time_limitM)->default_value(conf.shorten_with_gates_time_limitM)
-        , "Max time to shorten with gates, bogoprops M")
-    ("remwithgatesto", po::value(&conf.remove_cl_with_gates_time_limitM)->default_value(conf.remove_cl_with_gates_time_limitM)
-        , "Max time to remove with gates, bogoprops M")
     ;
 
     po::options_description conflOptions("Conflict options");
