@@ -604,7 +604,7 @@ inline bool PropEngine::propagate_binary_clause_occur(
     }
 
     if (val == l_Undef) {
-        enqueue(ws.lit2());
+        enqueue<true>(ws.lit2());
         #ifdef STATS_NEEDED
         if (ws.red())
             propStats.propsBinRed++;
@@ -650,7 +650,7 @@ inline bool PropEngine::propagate_long_clause_occur(
     if (numUndef > 1)
         return true;
 
-    enqueue(lastUndef);
+    enqueue<true>(lastUndef);
     #ifdef STATS_NEEDED
     if (cl.red())
         propStats.propsLongRed++;

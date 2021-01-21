@@ -330,7 +330,7 @@ bool InTree::handle_lit_popped_from_queue(const Lit lit, const Lit other_lit, co
     }
 
     if (solver->value(lit) == l_Undef) {
-        solver->enqueue(lit);
+        solver->enqueue<true>(lit);
 
         //Should do HHBR here
         bool ok;
@@ -382,7 +382,7 @@ bool InTree::empty_failed_list()
         }
 
         if (solver->value(lit) == l_Undef) {
-            solver->enqueue(lit);
+            solver->enqueue<true>(lit);
             *(solver->drat) << add << lit
             #ifdef STATS_NEEDED
             << 0

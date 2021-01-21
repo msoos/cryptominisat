@@ -427,7 +427,7 @@ bool ClauseCleaner::full_clean(Clause& cl)
     }
 
     if (cl.size() == 1) {
-        solver->enqueue(cl[0]);
+        solver->enqueue<false>(cl[0]);
         return true;
     }
 

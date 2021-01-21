@@ -163,7 +163,7 @@ bool VarReplacer::enqueueDelayedEnqueue()
     for(Lit lit: delayedEnqueue) {
         lit = get_lit_replaced_with(lit);
         if (solver->value(lit) == l_Undef) {
-            solver->enqueue(lit);
+            solver->enqueue<false>(lit);
             #ifdef STATS_NEEDED
             solver->propStats.propsUnit++;
             #endif
@@ -857,7 +857,7 @@ bool VarReplacer::handleOneSet(
         } else {
             toEnqueue = lit1 ^ (val2 == l_False);
         }
-        solver->enqueue(toEnqueue);
+        solver->enqueue<false>(toEnqueue);
         (*solver->drat) << add << toEnqueue
         #ifdef STATS_NEEDED
         << 0

@@ -480,7 +480,7 @@ gret EGaussian::adjust_matrix()
                 bool xorEqualFalse = !mat[row_n].rhs();
                 tmp_clause[0] = Lit(tmp_clause[0].var(), xorEqualFalse);
                 assert(solver->value(tmp_clause[0].var()) == l_Undef);
-                solver->enqueue(tmp_clause[0]); // propagation
+                solver->enqueue<false>(tmp_clause[0]); // propagation
 
                 #ifdef VERBOSE_DEBUG
                 cout << "-> Propagation for " << tmp_clause[0] << endl;
@@ -702,10 +702,10 @@ bool EGaussian::find_truths(
             xor_reasons[row_n].propagated = ret_lit_prop;
             assert(solver->value(ret_lit_prop.var()) == l_Undef);
             if (gqd.currLevel == solver->decisionLevel()) {
-                solver->enqueue(ret_lit_prop, gqd.currLevel, PropBy(matrix_no, row_n));
+                solver->enqueue<false>(ret_lit_prop, gqd.currLevel, PropBy(matrix_no, row_n));
             } else {
                 uint32_t nMaxLevel = get_max_level(gqd, row_n);
-                solver->enqueue(ret_lit_prop, nMaxLevel, PropBy(matrix_no, row_n));
+                solver->enqueue<false>(ret_lit_prop, nMaxLevel, PropBy(matrix_no, row_n));
             }
             update_cols_vals_set(ret_lit_prop);
             gqd.ret = gauss_res::prop;
@@ -985,10 +985,10 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                         xor_reasons[row_n].propagated = ret_lit_prop;
                         assert(solver->value(ret_lit_prop.var()) == l_Undef);
                         if (gqd.currLevel == solver->decisionLevel()) {
-                            solver->enqueue(ret_lit_prop, gqd.currLevel, PropBy(matrix_no, row_n));
+                            solver->enqueue<false>(ret_lit_prop, gqd.currLevel, PropBy(matrix_no, row_n));
                         } else {
                             uint32_t nMaxLevel = get_max_level(gqd, row_n);
-                            solver->enqueue(ret_lit_prop, nMaxLevel, PropBy(matrix_no, row_n));
+                            solver->enqueue<false>(ret_lit_prop, nMaxLevel, PropBy(matrix_no, row_n));
                         }
                         update_cols_vals_set(ret_lit_prop);
                         gqd.ret = gauss_res::prop;

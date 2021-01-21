@@ -809,7 +809,7 @@ bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* ou
                 if (solver->value(lit) == l_False) {
                     solver->ok = false;
                 } else if (solver->value(lit) == l_Undef) {
-                    solver->enqueue(lit);
+                    solver->enqueue<true>(lit);
                     if (out_changed_occur)
                         solver->ok = solver->propagate_occur();
                     else

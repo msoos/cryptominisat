@@ -211,9 +211,9 @@ public:
     }
     bool propagate_occur();
     PropStats propStats;
-    template<bool update_bogoprops = true>
+    template<bool update_bogoprops>
     void enqueue(const Lit p, const uint32_t level, const PropBy from = PropBy());
-    template<bool update_bogoprops = true>
+    template<bool update_bogoprops>
     void enqueue(const Lit p);
     void new_decision_level();
 

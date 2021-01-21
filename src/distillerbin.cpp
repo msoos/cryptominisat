@@ -236,7 +236,7 @@ void DistillerBin::try_distill_bin(
 
     solver->new_decision_level();
     PropBy confl;
-    solver->enqueue(~lit1);
+    solver->enqueue<true>(~lit1);
     myprop(red, also_remove, confl);
 
     if (confl.isNULL()) {
@@ -257,7 +257,7 @@ void DistillerBin::try_distill_bin(
         }
 
         if (solver->value(lit2) == l_Undef) {
-            solver->enqueue(~lit2);
+            solver->enqueue<true>(~lit2);
             myprop(red, also_remove, confl);
         }
     }

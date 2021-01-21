@@ -430,7 +430,7 @@ bool OccSimplifier::clean_clause(
             return false;
 
         case 1: {
-            solver->enqueue(cl[0]);
+            solver->enqueue<true>(cl[0]);
             #ifdef STATS_NEEDED
             solver->propStats.propsUnit++;
             #endif
@@ -510,7 +510,7 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
             return false;
 
         case 1: {
-            solver->enqueue(cl[0]);
+            solver->enqueue<true>(cl[0]);
             #ifdef STATS_NEEDED
             solver->propStats.propsUnit++;
             #endif
@@ -3308,7 +3308,7 @@ bool OccSimplifier::try_remove_lit_via_occurrence_simpl(
             break;
         }
         if (val == l_Undef) {
-            solver->enqueue(l);
+            solver->enqueue<true>(l);
         }
     }
 

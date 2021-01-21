@@ -365,7 +365,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
         const Lit lit = cl[i];
         lbool val = solver->value(lit);
         if (val == l_Undef) {
-            solver->enqueue(~lit);
+            solver->enqueue<true>(~lit);
             cl[j++] = cl[i];
 
             maxNumProps -= 5;

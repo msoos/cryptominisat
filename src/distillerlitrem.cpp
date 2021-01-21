@@ -284,7 +284,7 @@ ClOffset DistillerLitRem::try_distill_clause_and_return_new(
             lit = ~lit;
         }
         //cout << "Enq: " << ~lit << endl;
-        solver->enqueue(~lit);
+        solver->enqueue<true>(~lit);
     }
     assert(solver->ok);
     PropBy confl = solver->propagate<true>();

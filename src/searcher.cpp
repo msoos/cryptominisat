@@ -1514,7 +1514,7 @@ void Searcher::attach_and_enqueue_learnt_clause(
         case 1:
             //Unitary learnt
             stats.learntUnits++;
-            if (enq) enqueue(learnt_clause[0], level, PropBy());
+            if (enq) enqueue<false>(learnt_clause[0], level, PropBy());
 
             #ifdef STATS_NEEDED
             propStats.propsUnit++;
@@ -1526,7 +1526,7 @@ void Searcher::attach_and_enqueue_learnt_clause(
             stats.learntBins++;
             solver->datasync->signalNewBinClause(learnt_clause);
             solver->attach_bin_clause(learnt_clause[0], learnt_clause[1], true, enq);
-            if (enq) enqueue(learnt_clause[0], level, PropBy(learnt_clause[1], true));
+            if (enq) enqueue<false>(learnt_clause[0], level, PropBy(learnt_clause[1], true));
 
             #ifdef STATS_NEEDED
             propStats.propsBinRed++;
@@ -1537,7 +1537,7 @@ void Searcher::attach_and_enqueue_learnt_clause(
             //Long learnt
             stats.learntLongs++;
             solver->attachClause(*cl, enq);
-            if (enq) enqueue(learnt_clause[0], level, PropBy(cl_alloc.get_offset(cl)));
+            if (enq) enqueue<false>(learnt_clause[0], level, PropBy(cl_alloc.get_offset(cl)));
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             bump_cl_act<update_bogoprops>(cl);
             #else

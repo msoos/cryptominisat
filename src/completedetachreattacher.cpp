@@ -202,7 +202,7 @@ bool CompleteDetachReatacher::clean_clause(Clause* cl)
             return false;
 
         case 1:
-            solver->enqueue(ps[0]);
+            solver->enqueue<false>(ps[0]);
             #ifdef STATS_NEEDED
             solver->propStats.propsUnit++;
             #endif

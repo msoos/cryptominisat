@@ -675,7 +675,7 @@ void HyperEngine::enqueue_with_acestor_info(
 ) {
     //only called at decision level 1 during solving OR
     //during intree probing
-    enqueue(p, decisionLevel(), PropBy(~ancestor, redStep, false, false));
+    enqueue<true>(p, decisionLevel(), PropBy(~ancestor, redStep, false, false));
 
     assert(varData[ancestor.var()].level != 0);
 

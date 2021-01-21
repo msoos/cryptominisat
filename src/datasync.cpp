@@ -330,7 +330,7 @@ bool DataSync::shareUnitData()
                 continue;
             }
 
-            solver->enqueue(litToEnqueue);
+            solver->enqueue<false>(litToEnqueue);
             solver->ok = solver->propagate<false>().isNULL();
             if (!solver->ok) {
                 return false;
@@ -561,7 +561,7 @@ bool DataSync::sync_mpi_unit(
             return true;
         }
 
-        solver->enqueue(litToEnqueue);
+        solver->enqueue<false>(litToEnqueue);
         solver->ok = solver->propagate<false>().isNULL();
         if (!solver->ok) {
             return false;

@@ -482,7 +482,7 @@ Clause* Solver::add_clause_int(
             }
             return NULL;
         case 1:
-            enqueue(ps[0]);
+            enqueue<false>(ps[0]);
             #ifdef STATS_NEEDED
             propStats.propsUnit++;
             #endif
@@ -3252,7 +3252,7 @@ bool Solver::fully_enqueue_this(const Lit lit)
     const lbool val = value(lit);
     if (val == l_Undef) {
         assert(varData[lit.var()].removed == Removed::none);
-        enqueue(lit);
+        enqueue<false>(lit);
         ok = propagate<true>().isNULL();
 
         if (!ok) {
