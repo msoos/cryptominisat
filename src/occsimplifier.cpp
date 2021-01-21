@@ -1595,6 +1595,7 @@ bool OccSimplifier::occ_rem_with_gates()
                 continue;
             }
 
+            (*solver->drat) << deldelay << *cl << fin;
             shortened++;
             (*cl)[at] = gate.rhs; //replace l2
             cl->strengthen(l1); //remove l1
@@ -1602,6 +1603,7 @@ bool OccSimplifier::occ_rem_with_gates()
             std::sort(cl->begin(), cl->end());
             removeWCl(solver->watches[l2], off);
             removeWCl(solver->watches[l1], off); //TODO we can NOT copy +get rid of this, speedup!
+            (*solver->drat) << add << *cl << fin << findelay;
             solver->watches[gate.rhs].push(Watched(off, cl->abst));
             n_occurs[l1.toInt()]--;
             n_occurs[l2.toInt()]--;
