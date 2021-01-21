@@ -3905,7 +3905,18 @@ bool OccSimplifier::occ_based_lit_rem(uint32_t var, uint32_t& removed) {
             }
 
             if (try_remove_lit_via_occurrence_simpl(OccurClause(lit, w))) {
+// TODO Not sure if this is needed.... I think it is?
+//                 occ_based_lit_rem_tmp.clear();
+//                 for(const auto& l: *cl) {
+//                     if (l == lit) {
+//                         occ_based_lit_rem_tmp.push_back(~l);
+//                     } else {
+//                         occ_based_lit_rem_tmp.push_back(l);
+//                     }
+//                 }
+//                 (*solver->drat) << add << occ_based_lit_rem_tmp << fin;
                 remove_literal(offset, lit, true);
+//                 (*solver->drat) << del << occ_based_lit_rem_tmp << fin;
                 if (!solver->okay()) {
                     return false;
                 }

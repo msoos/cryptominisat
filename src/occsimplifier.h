@@ -493,6 +493,7 @@ private:
     void        print_var_elim_complexity_stats(const uint32_t var) const;
 
     //OccSimp
+    //vector<Lit> occ_based_lit_rem_tmp;
     bool        try_remove_lit_via_occurrence_simpl(const OccurClause& occ_cl);
     bool        occurrence_simp_based_resolv_skip(const Watched* it, const Lit lit);
     bool        occ_based_lit_rem(uint32_t var, uint32_t& removed);
