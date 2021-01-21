@@ -2532,6 +2532,8 @@ void OccSimplifier::set_limits()
         *solver->conf.global_timeout_multiplier;
     ternary_res_time_limit     = 1000ULL*1000ULL*solver->conf.ternary_res_time_limitM
         *solver->conf.global_timeout_multiplier;
+    occ_based_lit_rem_time_limit = 1000ULL*1000ULL*solver->conf.occ_based_lit_rem_time_limitM
+        *solver->conf.global_timeout_multiplier;
     ternary_res_cls_limit = link_in_data_irred.cl_linked * solver->conf.ternary_max_create;
 
     //If variable elimination isn't going so well
@@ -3919,6 +3921,9 @@ bool OccSimplifier::all_occ_based_lit_rem()
     assert(solver->prop_at_head());
 
     double myTime = cpuTime();
+    limit_to_decrease = &occ_based_lit_rem_time_limit;
+
+    //Order them for removal
     vector<uint32_t> vars;
     for(uint32_t v = 0; v < solver->nVars(); v++) {
         if (solver->varData[v].removed == Removed::none &&
@@ -3929,6 +3934,7 @@ bool OccSimplifier::all_occ_based_lit_rem()
     }
     std::sort(vars.begin(), vars.end(), OrderByDecreasingIncidence(n_occurs));
 
+    //Try to remove
     uint32_t removed_all = 0;
     for(const auto& v: vars) {
         uint32_t all = n_occurs[Lit(v, false).toInt()] + n_occurs[Lit(v, true).toInt()];

@@ -326,6 +326,7 @@ private:
     int64_t  varelim_sub_str_limit;
     int64_t  ternary_res_time_limit;
     int64_t  ternary_res_cls_limit;
+    int64_t  occ_based_lit_rem_time_limit;
     int64_t* limit_to_decrease;
 
     //Memory limits
