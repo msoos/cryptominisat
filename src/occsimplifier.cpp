@@ -3945,6 +3945,7 @@ bool OccSimplifier::all_occ_based_lit_rem()
     assert(solver->prop_at_head());
 
     double myTime = cpuTime();
+    //TODO this is not being used, bogoprops is not checked here
     limit_to_decrease = &occ_based_lit_rem_time_limit;
 
     //Order them for removal
