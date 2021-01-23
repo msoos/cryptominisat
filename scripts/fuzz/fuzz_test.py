@@ -278,7 +278,7 @@ class Tester:
         sched_opts += "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
         sched_opts += "sub-cls-with-bin,"
         sched_opts += "str-impl, sub-str-cls-with-bin, distill-cls, scc-vrepl,"
-        sched_opts += "occ-backw-sub-str, occ-xor, occ-clean-implicit, occ-bve, occ-bva,"
+        sched_opts += "occ-backw-sub-str, occ-backw-sub, occ-xor, occ-clean-implicit, occ-bve, occ-bva,"
         sched_opts += "renumber, must-renumber,"
         sched_opts += "sls, card-find, breakid,"
         sched_opts += "occ-lit-rem, distill-bins"
