@@ -2281,6 +2281,10 @@ bool OccSimplifier::fill_occur()
         , std::numeric_limits<int64_t>::max()
     );
     solver->longIrredCls.clear();
+    if (solver->conf.verbosity) {
+        cout << "c [occ] Linked in IRRED BIN by default: " << solver->binTri.irredBins << endl;
+        cout << "c [occ] Linked in RED   BIN by default: " << solver->binTri.redBins << endl;
+    }
     print_linkin_data(link_in_data_irred);
 
     //Add redundant to occur
