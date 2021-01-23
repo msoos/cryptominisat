@@ -233,7 +233,11 @@ class Searcher : public HyperEngine
         ///////////////
         // Variables
         ///////////////
-        void new_var(const bool bva, const uint32_t orig_outer) override;
+        void new_var(
+            const bool bva,
+            const uint32_t orig_outer,
+            const bool insert_varorder
+        ) override;
         void new_vars(const size_t n) override;
         void save_on_var_memory();
         void updateVars(

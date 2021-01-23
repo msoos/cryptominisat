@@ -345,7 +345,10 @@ public:
     vector<bool> undef_must_set_vars;
 
 protected:
-    virtual void new_var(const bool bva, const uint32_t orig_outer);
+    virtual void new_var(
+        const bool bva,
+        const uint32_t orig_outer,
+        const bool insert_varorder = true);
     virtual void new_vars(const size_t n);
     void test_reflectivity_of_renumbering() const;
 

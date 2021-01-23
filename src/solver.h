@@ -218,7 +218,11 @@ class Solver : public Searcher
             , bool addDrat = true
             , bool red = false
         );
-        void new_var(const bool bva = false, const uint32_t orig_outer = std::numeric_limits<uint32_t>::max()) override;
+        void new_var(
+            const bool bva = false,
+            const uint32_t orig_outer = std::numeric_limits<uint32_t>::max(),
+            const bool insert_varorder = true
+        ) override;
         void new_vars(const size_t n) override;
         void bva_changed();
 

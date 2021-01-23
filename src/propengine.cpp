@@ -66,9 +66,12 @@ PropEngine::~PropEngine()
 {
 }
 
-void PropEngine::new_var(const bool bva, uint32_t orig_outer)
+void PropEngine::new_var(
+    const bool bva,
+    uint32_t orig_outer,
+    const bool insert_varorder)
 {
-    CNF::new_var(bva, orig_outer);
+    CNF::new_var(bva, orig_outer, insert_varorder);
 
     var_act_vsids.insert(var_act_vsids.end(), 1, ActAndOffset());
     var_act_maple.insert(var_act_maple.end(), 1, ActAndOffset());

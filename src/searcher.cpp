@@ -109,14 +109,19 @@ Searcher::~Searcher()
     #endif
 }
 
-void Searcher::new_var(const bool bva, const uint32_t orig_outer)
+void Searcher::new_var(
+    const bool bva,
+    const uint32_t orig_outer,
+    bool insert_varorder)
 {
-    PropEngine::new_var(bva, orig_outer);
+    PropEngine::new_var(bva, orig_outer, insert_varorder);
 
-    insert_var_order_all((int)nVars()-1);
-    #ifdef STATS_NEEDED_BRANCH
-    level_used_for_cl_arr.insert(level_used_for_cl_arr.end(), 1, 0);
-    #endif
+    if (insert_varorder) {
+        insert_var_order_all((int)nVars()-1);
+        #ifdef STATS_NEEDED_BRANCH
+        level_used_for_cl_arr.insert(level_used_for_cl_arr.end(), 1, 0);
+        #endif
+    }
 }
 
 void Searcher::new_vars(size_t n)

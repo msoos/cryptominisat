@@ -1140,9 +1140,12 @@ void Solver::new_vars(size_t n)
     datasync->new_vars(n);
 }
 
-void Solver::new_var(const bool bva, const uint32_t orig_outer)
+void Solver::new_var(
+    const bool bva,
+    const uint32_t orig_outer,
+    const bool insert_varorder)
 {
-    Searcher::new_var(bva, orig_outer);
+    Searcher::new_var(bva, orig_outer, insert_varorder);
 
     varReplacer->new_var(orig_outer);
 

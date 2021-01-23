@@ -33,7 +33,10 @@ THE SOFTWARE.
 
 using namespace CMSat;
 
-void CNF::new_var(const bool bva, const uint32_t orig_outer)
+void CNF::new_var(
+    const bool bva,
+    const uint32_t orig_outer,
+    const bool /*insert_varorder*/)
 {
     if (nVars() >= 1ULL<<28) {
         cout << "ERROR! Variable requested is far too large" << endl;

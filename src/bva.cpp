@@ -328,7 +328,7 @@ bool BVA::bva_simplify_system()
     bva_worked++;
     bva_simp_size += simp_size;
 
-    solver->new_var(true);
+    solver->new_var(true, std::numeric_limits<uint32_t>::max(), false);
     const uint32_t newvar = solver->nVars()-1;
     const Lit new_lit(newvar, false);
 
