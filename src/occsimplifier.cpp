@@ -751,6 +751,10 @@ void OccSimplifier::remove_all_longs_from_watches()
 
 void OccSimplifier::eliminate_empty_resolvent_vars()
 {
+    assert(added_long_cl.empty());
+    assert(solver->okay());
+    assert(solver->prop_at_head());
+
     uint32_t var_elimed = 0;
     double myTime = cpuTime();
     const int64_t orig_empty_varelim_time_limit = empty_varelim_time_limit;
@@ -853,6 +857,7 @@ uint32_t OccSimplifier::sum_irred_cls_longs_lits() const
     return sum;
 }
 
+//backward subsumes with added long and bin
 bool OccSimplifier::deal_with_added_long_and_bin(const bool main)
 {
     assert(solver->okay());
@@ -970,6 +975,10 @@ bool OccSimplifier::clear_vars_from_cls_that_have_been_set()
                 return false;
             }
         }
+    }
+
+    if (!deal_with_added_long_and_bin(false)) {
+        return false;
     }
 
     return solver->okay();
@@ -1180,6 +1189,7 @@ bool OccSimplifier::eliminate_vars()
                 update_varelim_complexity_heap();
             }
             assert(solver->prop_at_head());
+            assert(added_long_cl.empty());
 
             solver->clean_occur_from_removed_clauses_only_smudged();
 
@@ -1276,6 +1286,7 @@ bool OccSimplifier::eliminate_vars()
             grow *= 2;
         }
         assert(solver->prop_at_head());
+        assert(added_long_cl.empty());
     }
 
     if (solver->conf.verbosity) {
