@@ -195,8 +195,8 @@ bool DistillerBin::go_through_bins(
 }
 
 void DistillerBin::try_distill_bin(
-    const Lit lit1,
-    const Lit lit2
+    Lit lit1,
+    Lit lit2
 ) {
     assert(solver->prop_at_head());
     assert(solver->decisionLevel() == 0);
@@ -205,6 +205,11 @@ void DistillerBin::try_distill_bin(
         cout << "Trying to distill clause:" << lits << endl;
     }
     #endif
+
+    //Try different ordering
+    if (solver->mtrand.randInt(1) == 1) {
+        std::swap(lit1, lit2);
+    }
 
     //Disable this clause
     findWatchedOfBin(solver->watches, lit1, lit2, false).mark_bin_cl();
@@ -218,10 +223,8 @@ void DistillerBin::try_distill_bin(
     if (confl.isNULL()) {
         if (solver->value(lit2) == l_True) {
             //clause can be removed
-            confl = PropBy(Lit(0, false), false);
-        }
-
-        if (solver->value(lit2) == l_False) {
+            confl = PropBy(ClOffset(0));
+        } else if (solver->value(lit2) == l_False) {
             //Unit derived
             solver->cancelUntil<false, true>(0);
             vector<Lit> x(1);
@@ -230,9 +233,7 @@ void DistillerBin::try_distill_bin(
             solver->detach_bin_clause(lit1, lit2, false);
             runStats.numClShorten++;
             return;
-        }
-
-        if (solver->value(lit2) == l_Undef) {
+        } else if (solver->value(lit2) == l_Undef) {
             solver->enqueue<true>(~lit2);
             confl = solver->propagate<true, false, true>();
         }

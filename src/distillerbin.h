@@ -72,8 +72,8 @@ class DistillerBin {
     private:
 
         void try_distill_bin(
-            const Lit lit1,
-            const Lit lit2
+            Lit lit1,
+            Lit lit2
         );
         bool distill_bin_cls_all(double time_mult);
         bool go_through_bins(const Lit lit);
