@@ -73,16 +73,10 @@ class DistillerBin {
 
         void try_distill_bin(
             const Lit lit1,
-            const Lit lit2,
-            const bool red,
-            const bool also_remove
+            const Lit lit2
         );
-        void myprop(
-            const bool red,
-            const bool also_remove,
-            PropBy& confl);
-        bool distill_bin_cls_all(double time_mult, const bool also_remove, const bool red);
-        bool go_through_bins(const Lit lit, bool also_remove, const bool red);
+        bool distill_bin_cls_all(double time_mult);
+        bool go_through_bins(const Lit lit);
         Solver* solver;
         vec<Watched> tmp;
 

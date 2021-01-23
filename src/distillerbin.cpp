@@ -53,7 +53,7 @@ bool DistillerBin::distill()
     numCalls++;
     runStats.clear();
 
-    if (!distill_bin_cls_all(1.0, true, false)) {
+    if (!distill_bin_cls_all(1.0)) {
         goto end;
     }
 
@@ -72,9 +72,7 @@ end:
 
 
 bool DistillerBin::distill_bin_cls_all(
-    double time_mult,
-    const bool also_remove,
-    const bool red
+    double time_mult
 ) {
     assert(solver->ok);
     if (time_mult == 0.0) {
@@ -105,7 +103,7 @@ bool DistillerBin::distill_bin_cls_all(
 
     //stats setup
     oldBogoProps = solver->propStats.bogoProps;
-    uint32_t potential_size = red ? solver->binTri.redBins : solver->binTri.irredBins;
+    uint32_t potential_size = solver->binTri.irredBins;
     runStats.potentialClauses += potential_size;
     runStats.numCalled += 1;
 
@@ -117,7 +115,7 @@ bool DistillerBin::distill_bin_cls_all(
     }
     std::shuffle(todo.begin(), todo.end(), std::default_random_engine(solver->mtrand.randInt()));
     for(const auto& lit: todo) {
-        time_out = go_through_bins(lit, also_remove, red);
+        time_out = go_through_bins(lit);
         if (time_out) {
             break;
         }
@@ -150,17 +148,16 @@ bool DistillerBin::distill_bin_cls_all(
 }
 
 bool DistillerBin::go_through_bins(
-    const Lit lit1,
-    bool also_remove,
-    const bool red
+    const Lit lit1
 ) {
     bool time_out = false;
     solver->watches[lit1].copyTo(tmp);
 
     for (const auto& w: tmp) {
-        if (time_out || !solver->ok || //Check if we are in state where we only copy offsets around
-            !w.isBin() || lit1 > w.lit2() || //check if we are bin and don't do it 2x
-            w.red() != red) // only the ones we want
+        if (time_out || //Check if we timeout
+            !w.isBin() || //check if we are bin
+            lit1 > w.lit2() || // don't do it 2x
+            w.red()) // only irred
         {
             continue;
         }
@@ -191,33 +188,15 @@ bool DistillerBin::go_through_bins(
         }
 
         //Try to distill clause
-        try_distill_bin(lit1, lit2, w.red(), also_remove);
+        try_distill_bin(lit1, lit2);
     }
 
     return time_out;
 }
 
-inline
-void DistillerBin::myprop(
-    const bool red,
-    const bool also_remove,
-    PropBy& confl)
-{
-    if (!red && also_remove) {
-        //ONLY propagate on irred
-        confl = solver->propagate<true, false, true>();
-    } else {
-        //Normal propagation, on all clauses
-        confl = solver->propagate<true, true, true>();
-    }
-}
-
-
 void DistillerBin::try_distill_bin(
     const Lit lit1,
-    const Lit lit2,
-    const bool red,
-    bool also_remove
+    const Lit lit2
 ) {
     assert(solver->prop_at_head());
     assert(solver->decisionLevel() == 0);
@@ -228,16 +207,13 @@ void DistillerBin::try_distill_bin(
     #endif
 
     //Disable this clause
-    findWatchedOfBin(solver->watches, lit1, lit2, red).mark_bin_cl();
-    findWatchedOfBin(solver->watches, lit2, lit1, red).mark_bin_cl();
-    if (red) {
-        assert(!also_remove);
-    }
+    findWatchedOfBin(solver->watches, lit1, lit2, false).mark_bin_cl();
+    findWatchedOfBin(solver->watches, lit2, lit1, false).mark_bin_cl();
 
     solver->new_decision_level();
     PropBy confl;
     solver->enqueue<true>(~lit1);
-    myprop(red, also_remove, confl);
+    confl = solver->propagate<true, false, true>();
 
     if (confl.isNULL()) {
         if (solver->value(lit2) == l_True) {
@@ -251,31 +227,31 @@ void DistillerBin::try_distill_bin(
             vector<Lit> x(1);
             x[0] = lit1;
             solver->add_clause_int(x);
-            solver->detach_bin_clause(lit1, lit2, red);
+            solver->detach_bin_clause(lit1, lit2, false);
             runStats.numClShorten++;
             return;
         }
 
         if (solver->value(lit2) == l_Undef) {
             solver->enqueue<true>(~lit2);
-            myprop(red, also_remove, confl);
+            confl = solver->propagate<true, false, true>();
         }
     }
 
-    if (also_remove && !red && !confl.isNULL()) {
+    if (!confl.isNULL()) {
         solver->cancelUntil<false, true>(0);
-        solver->detach_bin_clause(lit1, lit2, red);
+        solver->detach_bin_clause(lit1, lit2, false);
         runStats.clRemoved++;
         return;
     }
 
     //Nothing happened
     solver->cancelUntil<false, true>(0);
-    auto &w1 = findWatchedOfBin(solver->watches, lit1, lit2, red);
+    auto &w1 = findWatchedOfBin(solver->watches, lit1, lit2, false);
     assert(w1.bin_cl_marked());
     w1.unmark_bin_cl();
 
-    auto &w2 = findWatchedOfBin(solver->watches, lit2, lit1, red);
+    auto &w2 = findWatchedOfBin(solver->watches, lit2, lit1, false);
     assert(w2.bin_cl_marked());
     w2.unmark_bin_cl();
 }
