@@ -107,7 +107,7 @@ public:
         const Solver* solver,
         float* at);
 
-    void get_prediction_at(RDBExtraData& extdata, const uint32_t at);
+    void get_prediction_at(ClauseStatsExtra& extdata, const uint32_t at);
     void finish_all_predict();
 
 private:

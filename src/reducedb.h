@@ -46,7 +46,7 @@ public:
     void handle_lev2();
     void gather_normal_cl_use_stats();
     #ifdef FINAL_PREDICTOR
-    void handle_lev2_predictor();
+    void handle_predictors();
     #endif
     void dump_sql_cl_data(const uint32_t cur_rst_type);
 
@@ -58,7 +58,6 @@ public:
 
     struct ClauseStats
     {
-        uint32_t total_looked_at = 0;
         uint32_t total_uip1_used = 0;
         uint32_t total_props = 0;
         uint32_t total_cls = 0;
@@ -103,11 +102,6 @@ private:
     void update_preds(const vector<ClOffset>& offs);
     ReduceCommonData commdata;
     #endif
-
-    #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-    vector<RDBExtraData> extdata;
-    #endif
-
 
     void set_prop_uip_act_ranks(vector<ClOffset>& all_learnt);
     uint32_t total_glue = 0;

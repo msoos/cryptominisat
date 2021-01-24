@@ -80,7 +80,6 @@ struct AtecedentData
 
         glue_long_reds += other.glue_long_reds;
         size_longs += other.size_longs;
-        age_long_reds += other.age_long_reds;
 
         return *this;
     }
@@ -95,7 +94,6 @@ struct AtecedentData
 
         glue_long_reds -= other.glue_long_reds;
         size_longs -= other.size_longs;
-        age_long_reds -= other.age_long_reds;
 
         return *this;
     }
@@ -116,16 +114,6 @@ struct AtecedentData
     T longRed = 0;
     AvgCalc<uint32_t> glue_long_reds;
     AvgCalc<uint32_t> size_longs;
-    AvgCalc<uint32_t> age_long_reds;
-};
-
-struct RDBExtraData {
-    uint32_t props_made_rank;
-    uint32_t act_rank;
-    uint32_t uip1_used_rank;
-    double pred_short_use;
-    double pred_long_use;
-    double pred_forever_use;
 };
 
 struct ClauseStats
@@ -157,100 +145,15 @@ struct ClauseStats
         uint32_t hash_val; //used in BreakID to remove equivalent clauses
     };
     uint32_t last_touched = 0;
-    #ifdef FINAL_PREDICTOR
-    float       glueHist_longterm_avg;
-    float       glueHist_avg;
-    uint32_t    glue_before_minim;
-    float       overlapHistLT_avg;
-    uint32_t    num_total_lits_antecedents;
-    uint32_t    num_antecedents;
-    float       numResolutionsHistLT_avg;
-    float       conflSizeHist_avg;
-    float       glueHistLT_avg;
-    #endif
-
-    #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
-    uint32_t orig_glue = 1000;
-    uint32_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
-    float discounted_props_made = 0;
-    float discounted_uip1_used = 0;
-    uint32_t sum_uip1_used = 0; ///N.o. times claue was used during 1st UIP generation for ALL TIME
-    uint32_t sum_props_made = 0; ///<Number of times caused propagation
-    uint32_t pred_clnum;
+    #ifdef STATS_NEEDED
+    int64_t ID = 0;
     #endif
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
+    uint32_t extra_pos = std::numeric_limits<uint32_t>::max();
     uint32_t uip1_used = 0; ///N.o. times claue was used during 1st UIP generation in this RDB
     uint32_t props_made = 0; ///<Number of times caused propagation
-    #if defined(STATS_NEEDED) || defined(NORMAL_CL_USE_STATS)
-    uint32_t clause_looked_at = 0; ///<Number of times the clause has been deferenced during propagation
     #endif
-    #endif
-
-    #ifdef STATS_NEEDED
-    int32_t ID = 0;
-    uint32_t dump_no = 0;
-    uint32_t orig_connects_num_communities = 0;
-    uint32_t connects_num_communities = 0;
-    float discounted_uip1_used2 = 0;
-    float discounted_uip1_used3 = 0;
-    float discounted_props_made2 = 0;
-    float discounted_props_made3 = 0;
-    uint32_t conflicts_made = 0; ///<Number of times caused conflict
-    uint32_t ttl_stats = 0;
-
-    AtecedentData<uint16_t> antec_data;
-    #endif
-
-    #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
-    void reset_rdb_stats()
-    {
-        float discount_factor;
-        discount_factor = 0.8;
-        discounted_props_made *= discount_factor;
-        discounted_props_made += (float)props_made*(1.0f-discount_factor);
-
-        discount_factor = 0.8;
-        discounted_uip1_used *= discount_factor;
-        discounted_uip1_used += (float)uip1_used*(1.0f-discount_factor);
-
-        #ifdef STATS_NEEDED
-        discount_factor = 0.90;
-        discounted_uip1_used3 *= discount_factor;
-        discounted_uip1_used3 += (float)uip1_used*(1.0f-discount_factor);
-
-        discount_factor = 0.4;
-        discounted_props_made2 *= discount_factor;
-        discounted_props_made2 += (float)props_made*(1.0f-discount_factor);
-
-        discount_factor = 0.4;
-        discounted_uip1_used2 *= discount_factor;
-        discounted_uip1_used2 += (float)uip1_used*(1.0f-discount_factor);
-
-        discount_factor = 0.90;
-        discounted_props_made3 *= discount_factor;
-        discounted_props_made3 += (float)props_made*(1.0f-discount_factor);
-
-        antec_data.clear();
-        conflicts_made = 0;
-        ttl_stats = 0;
-        clause_looked_at = 0;
-        #endif
-        uip1_used = 0;
-        props_made = 0;
-    }
-    #endif
-
-    #if defined(NORMAL_CL_USE_STATS)
-    void reset_rdb_stats()
-    {
-        uip1_used = 0;
-        props_made = 0;
-        clause_looked_at = 0;
-
-    }
-    #endif
-
 
     static ClauseStats combineStats(const ClauseStats& first, const ClauseStats& second)
     {
@@ -263,6 +166,127 @@ struct ClauseStats
         ret.last_touched = std::max(first.last_touched, second.last_touched);
         ret.locked_for_data_gen = std::max(first.locked_for_data_gen, second.locked_for_data_gen);
         ret.is_ternary_resolvent = first.is_ternary_resolvent;
+        ret.ttl = std::max(first.ttl, second.ttl);
+
+        #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
+        ret.uip1_used = first.uip1_used + second.uip1_used;
+        ret.props_made = first.props_made + second.props_made;
+        #endif
+
+        #ifdef FINAL_PREDICTOR
+        ret.which_red_array = std::min(first.which_red_array, second.which_red_array);
+        #endif
+
+        return ret;
+    }
+
+    #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
+    void reset_rdb_stats_pre()
+    {
+    }
+
+    void reset_rdb_stats()
+    {
+        uip1_used = 0;
+        props_made = 0;
+    }
+    #endif
+};
+
+#if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
+struct ClauseStatsExtra
+{
+    //Used in RDB
+    uint32_t props_made_rank;
+    uint32_t act_rank;
+    uint32_t uip1_used_rank;
+    double pred_short_use;
+    double pred_long_use;
+    double pred_forever_use;
+
+    //Features that are normally available through SQL
+    #ifdef FINAL_PREDICTOR
+    float       glueHist_longterm_avg;
+    float       glueHist_avg;
+    uint32_t    glue_before_minim;
+    float       overlapHistLT_avg;
+    uint32_t    num_total_lits_antecedents;
+    uint32_t    num_antecedents;
+    float       numResolutionsHistLT_avg;
+    float       conflSizeHist_avg;
+    float       glueHistLT_avg;
+    #endif
+
+    //Features that are computed while running (not in SQL)
+    uint32_t orig_glue = 1000;
+    uint32_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
+    float discounted_props_made = 0;
+    float discounted_uip1_used = 0;
+    uint32_t sum_uip1_used = 0; ///N.o. times claue was used during 1st UIP generation for ALL TIME
+    uint32_t sum_props_made = 0; ///<Number of times caused propagation
+    #ifdef STATS_NEEDED
+    uint32_t dump_no = 0;
+    uint32_t orig_connects_num_communities = 0;
+    uint32_t connects_num_communities = 0;
+    float discounted_uip1_used2 = 0;
+    float discounted_uip1_used3 = 0;
+    float discounted_props_made2 = 0;
+    float discounted_props_made3 = 0;
+    uint32_t conflicts_made = 0; ///<Number of times caused conflict
+    uint32_t ttl_stats = 0;
+    AtecedentData<uint16_t> antec_data;
+    #endif
+
+    void reset_rdb_stats_pre(ClauseStats& stats)
+    {
+        sum_uip1_used += stats.uip1_used;
+        sum_props_made += stats.props_made;
+
+        float discount_factor;
+        discount_factor = 0.8;
+        discounted_props_made *= discount_factor;
+        discounted_props_made += (float)stats.props_made*(1.0f-discount_factor);
+
+        discount_factor = 0.8;
+        discounted_uip1_used *= discount_factor;
+        discounted_uip1_used += (float)stats.uip1_used*(1.0f-discount_factor);
+
+        #ifdef STATS_NEEDED
+        discount_factor = 0.90;
+        discounted_uip1_used3 *= discount_factor;
+        discounted_uip1_used3 += (float)stats.uip1_used*(1.0f-discount_factor);
+
+        discount_factor = 0.4;
+        discounted_props_made2 *= discount_factor;
+        discounted_props_made2 += (float)stats.props_made*(1.0f-discount_factor);
+
+        discount_factor = 0.4;
+        discounted_uip1_used2 *= discount_factor;
+        discounted_uip1_used2 += (float)stats.uip1_used*(1.0f-discount_factor);
+
+        discount_factor = 0.90;
+        discounted_props_made3 *= discount_factor;
+        discounted_props_made3 += (float)stats.props_made*(1.0f-discount_factor);
+        #endif
+
+        stats.reset_rdb_stats_pre();
+    }
+
+    void reset_rdb_stats(ClauseStats& stats)
+    {
+        #ifdef STATS_NEEDED
+        antec_data.clear();
+        conflicts_made = 0;
+        ttl_stats = 0;
+        #endif
+
+        stats.reset_rdb_stats();
+    }
+
+    static ClauseStatsExtra combineStats(const ClauseStatsExtra& first, const ClauseStatsExtra& second)
+    {
+        //Create to-be-returned data
+        ClauseStatsExtra ret = first;
 
         #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
         if (first.introduced_at_conflict == 0) {
@@ -279,44 +303,28 @@ struct ClauseStats
         ret.orig_glue = std::min(first.orig_glue, second.orig_glue);
         #endif
 
-        #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
-        ret.uip1_used = first.uip1_used + second.uip1_used;
-        ret.props_made = first.props_made + second.props_made;
-        #endif
-
         #ifdef STATS_NEEDED
-        ret.clause_looked_at = first.clause_looked_at + second.clause_looked_at;
         ret.dump_no = std::max(first.dump_no, second.dump_no);
         ret.ttl_stats = std::max(first.ttl_stats, second.ttl_stats);
         ret.conflicts_made = first.conflicts_made + second.conflicts_made;
+        ret.orig_connects_num_communities = std::max(
+            first.orig_connects_num_communities,
+            second.orig_connects_num_communities);
         ret.discounted_uip1_used3 = first.discounted_uip1_used3 + second.discounted_uip1_used3;
         ret.discounted_props_made2 = first.discounted_props_made2 + second.discounted_props_made2;
         ret.discounted_props_made3 = first.discounted_props_made3 + second.discounted_props_made3;
         ret.discounted_uip1_used2 =  first.discounted_uip1_used2  + second.discounted_uip1_used2;
         #endif
 
-        #ifdef FINAL_PREDICTOR
-        ret.which_red_array = std::min(first.which_red_array, second.which_red_array);
-        #endif
-
         return ret;
     }
 };
+#endif
 
 inline std::ostream& operator<<(std::ostream& os, const ClauseStats& stats)
 {
 
     os << "glue " << stats.glue << " ";
-    #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
-    os << "conflIntro " << stats.introduced_at_conflict<< " ";
-    os << "uip1_used " << stats.uip1_used << " ";
-    os << "numProp " << stats.props_made<< " ";
-    #endif
-    #ifdef STATS_NEEDED
-    os << "numConfl " << stats.conflicts_made<< " ";
-    os << "numLook " << stats.clause_looked_at<< " ";
-    #endif
-
     return os;
 }
 
@@ -372,9 +380,6 @@ public:
         //assert(ps.size() > 2);
 
         stats.last_touched = _introduced_at_conflict;
-        #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-        stats.introduced_at_conflict = _introduced_at_conflict;
-        #endif
 
         #ifdef STATS_NEEDED
         stats.ID = _ID;
@@ -492,18 +497,6 @@ public:
         isRed = false;
     }
 
-    void makeRed(uint64_t
-    #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-    confl_num
-    #endif
-    )
-    {
-        isRed = true;
-        #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-        stats.introduced_at_conflict = confl_num;
-        #endif
-    }
-
     void strengthen(const Lit p)
     {
         remove(*this, p);
@@ -565,11 +558,6 @@ public:
         isFreed = true;
     }
 
-    void combineStats(const ClauseStats& other)
-    {
-        stats = ClauseStats::combineStats(stats, other);
-    }
-
     bool getOccurLinked() const
     {
         return occurLinked;
@@ -587,13 +575,6 @@ public:
         if (red()) {
             cout << " glue : " << std::setw(4) << stats.glue;
         }
-        #ifdef STATS_NEEDED
-        cout
-        << " Confls: " << std::setw(10) << stats.conflicts_made
-        << " Props: " << std::setw(10) << stats.props_made
-        << " Looked at: " << std::setw(10)<< stats.clause_looked_at
-        << " UIP used: " << std::setw(10)<< stats.uip1_used;
-        #endif
         cout << endl;
     }
 
@@ -650,6 +631,9 @@ struct BinaryXor
 
 struct Sub0Ret {
     ClauseStats stats;
+    #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+    ClauseStatsExtra stats_extra;
+    #endif
     bool subsumedIrred = 0;
     uint32_t numSubsumed = 0;
 

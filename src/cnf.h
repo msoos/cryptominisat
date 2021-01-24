@@ -175,6 +175,9 @@ public:
     **/
     vector<vector<ClOffset> > longRedCls;
     vector<uint64_t> longRedClsSizes;
+    #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+    vector<ClauseStatsExtra> red_stats_extra;
+    #endif
     vector<ClOffset> detached_xor_repr_cls; //these are still in longIrredCls
     vector<Xor> xorclauses;
     vector<Xor> xorclauses_unused;

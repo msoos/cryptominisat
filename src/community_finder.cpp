@@ -132,7 +132,7 @@ void CMSat::CommunityFinder::compute()
         for(auto& offs: cls) {
             Clause* cl = solver->cl_alloc.ptr(offs);
             const uint32_t comms = solver->calc_connects_num_communities(*cl);
-            cl->stats.connects_num_communities = comms;
+            solver->red_stats_extra[cl->stats.extra_pos].connects_num_communities = comms;
         }
     }
 

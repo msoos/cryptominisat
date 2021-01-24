@@ -250,7 +250,6 @@ bool PropEngine::prop_long_cl_any_order(
             #endif
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             c.stats.props_made++;
-            c.stats.sum_props_made++;
             #endif
             #ifdef STATS_NEEDED
             if (c.red())
@@ -360,9 +359,6 @@ PropBy PropEngine::propagate_any_order_fast()
             }
             assert(c[1] == false_lit);
             i++;
-            #if defined(STATS_NEEDED) || (NORMAL_CL_USE_STATS)
-            c.stats.clause_looked_at++;
-            #endif
 
             Lit     first = c[0];
             Watched w     = Watched(offset, first);
@@ -387,11 +383,12 @@ PropBy PropEngine::propagate_any_order_fast()
             if (value(c[0]) == l_False) {
                 confl = PropBy(offset);
                 #ifdef STATS_NEEDED
-                c.stats.conflicts_made++;
-                if (c.red())
+                if (c.red()) {
+                    red_stats_extra[c.stats.extra_pos].conflicts_made++;
                     lastConflictCausedBy = ConflCausedBy::longred;
-                else
+                } else {
                     lastConflictCausedBy = ConflCausedBy::longirred;
+                }
                 #endif
                 #ifdef VERBOSE_DEBUG
                 cout << "Conflicting on clause:" << c << endl;
@@ -407,7 +404,6 @@ PropBy PropEngine::propagate_any_order_fast()
                 #endif
                 #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
                 c.stats.props_made++;
-                c.stats.sum_props_made++;
                 #endif
                 #ifdef STATS_NEEDED
                 if (c.red())

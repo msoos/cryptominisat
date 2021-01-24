@@ -90,12 +90,13 @@ void ClPredictors::set_up_input(
     uint32_t x = 0;
     //glue 0 can happen in case it's a ternary resolvent clause
     //updated glue can actually be 1. Original glue cannot.
-    assert(cl->stats.orig_glue != 1);
+    const ClauseStatsExtra& extra_stats = solver->red_stats_extra[cl->stats.extra_pos];
+    assert(extra_stats.orig_glue != 1);
 
     assert(cl->stats.last_touched <= sumConflicts);
-    assert(cl->stats.introduced_at_conflict <= sumConflicts);
+    assert(extra_stats.introduced_at_conflict <= sumConflicts);
     uint32_t last_touched_diff = sumConflicts - (uint64_t)cl->stats.last_touched;
-    double time_inside_solver = sumConflicts - (uint64_t)cl->stats.introduced_at_conflict;
+    double time_inside_solver = sumConflicts - (uint64_t)extra_stats.introduced_at_conflict;
 
 
     at[x++] = uip1_ranking_rel;
@@ -127,11 +128,11 @@ void ClPredictors::set_up_input(
 
 
     if (cl->stats.is_ternary_resolvent || //glueHist_avg not valid for ternary
-        cl->stats.glueHist_avg == 0)
+        extra_stats.glueHist_avg == 0)
     {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = (double)cl->stats.glue/(double)cl->stats.glueHist_avg;
+        at[x++] = (double)cl->stats.glue/(double)extra_stats.glueHist_avg;
     }
     //(rdb0.glue/cl.glueHist_avg) -- 6
 
@@ -143,7 +144,7 @@ void ClPredictors::set_up_input(
     if (time_inside_solver  == 0) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = (double)cl->stats.sum_props_made/time_inside_solver;
+        at[x++] = (double)extra_stats.sum_props_made/time_inside_solver;
     }
     //(rdb0.sum_props_made/cl.time_inside_solver) -- 8
 
@@ -153,7 +154,7 @@ void ClPredictors::set_up_input(
         cl->stats.glue == 0) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = ((double)cl->stats.sum_props_made/time_inside_solver)/
+        at[x++] = (extra_stats.sum_props_made/time_inside_solver)/
             ((double)cl->stats.glue/commdata.avg_glue);
     }
     //((rdb0.sum_props_made/cl.time_inside_solver)/(rdb0.glue/rdb0_common.avg_glue)) -- 9
@@ -161,42 +162,42 @@ void ClPredictors::set_up_input(
 
     if (cl->stats.is_ternary_resolvent || //glue_before_minim does not exist for ternary
         time_inside_solver == 0 ||
-        cl->stats.sum_uip1_used == 0 ||
-        cl->stats.glue_before_minim == 0)
+        extra_stats.sum_uip1_used == 0 ||
+        extra_stats.glue_before_minim == 0)
     {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = ::log2(cl->stats.glue_before_minim)/
-            ((double)cl->stats.sum_uip1_used/time_inside_solver);
+        at[x++] = ::log2(extra_stats.glue_before_minim)/
+            ((double)extra_stats.sum_uip1_used/time_inside_solver);
     }
     //(log2(cl.glue_before_minim)/(rdb0.sum_uip1_used/cl.time_inside_solver)) -- 10
 
 
-    at[x++] = cl->stats.orig_glue;
+    at[x++] = extra_stats.orig_glue;
     //cl.orig_glue -- 11
 
 
     if (cl->stats.is_ternary_resolvent ||
-        cl->stats.num_antecedents == 0 ||
-        cl->stats.num_total_lits_antecedents == 0) //num_antecedents does not exist for ternary
+        extra_stats.num_antecedents == 0 ||
+        extra_stats.num_total_lits_antecedents == 0) //num_antecedents does not exist for ternary
     {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = ::log2((double)cl->stats.num_antecedents)/(double)cl->stats.num_total_lits_antecedents;
+        at[x++] = ::log2((double)extra_stats.num_antecedents)/(double)extra_stats.num_total_lits_antecedents;
     }
     //(log2(cl.num_antecedents)/cl.num_total_lits_antecedents) -- 12
 
 
     //To protect against unset values being used
     assert(cl->stats.is_ternary_resolvent ||
-        cl->stats.glueHist_longterm_avg > 0.9f);
+        extra_stats.glueHist_longterm_avg > 0.9f);
 
     if (cl->stats.is_ternary_resolvent ||
-        cl->stats.glue_before_minim == 0 //glueHist_longterm_avg does not exist for ternary
+        extra_stats.glue_before_minim == 0 //glueHist_longterm_avg does not exist for ternary
     ) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = (double)cl->stats.glueHist_longterm_avg/(double)cl->stats.glue_before_minim;
+        at[x++] = (double)extra_stats.glueHist_longterm_avg/(double)extra_stats.glue_before_minim;
     }
     //(cl.glueHist_longterm_avg/cl.glue_before_minim) -- 13
 
@@ -211,22 +212,22 @@ void ClPredictors::set_up_input(
 
     //To protect against unset values being used
     assert(cl->stats.is_ternary_resolvent ||
-        cl->stats.numResolutionsHistLT_avg > 0.9f);
+        extra_stats.numResolutionsHistLT_avg > 0.9f);
 
     if (cl->stats.is_ternary_resolvent || //numResolutionsHistLT_avg does not exist for ternary
-        cl->stats.numResolutionsHistLT_avg == 0
+        extra_stats.numResolutionsHistLT_avg == 0
     ) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = (double)cl->stats.discounted_props_made/(double)cl->stats.numResolutionsHistLT_avg;
+        at[x++] = (double)extra_stats.discounted_props_made/(double)extra_stats.numResolutionsHistLT_avg;
     }
     //(rdb0.discounted_props_made/cl.numResolutionsHistLT_avg) -- 15
 
 
-    if (cl->stats.discounted_props_made < 1e-20f || time_inside_solver == 0) {
+    if (extra_stats.discounted_props_made < 1e-20f || time_inside_solver == 0) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = ((double)cl->stats.sum_uip1_used/time_inside_solver)/((double)cl->stats.discounted_props_made);
+        at[x++] = ((double)extra_stats.sum_uip1_used/time_inside_solver)/((double)extra_stats.discounted_props_made);
     }
     //((rdb0.sum_uip1_used/cl.time_inside_solver)/rdb0.discounted_props_made) -- 16
 
@@ -241,28 +242,28 @@ void ClPredictors::set_up_input(
 
 
     if (cl->stats.is_ternary_resolvent || //num_total_lits_antecedents does not exist for ternary
-        cl->stats.num_total_lits_antecedents == 0 ||
+        extra_stats.num_total_lits_antecedents == 0 ||
         time_inside_solver == 0
     ) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = ((double)cl->stats.sum_props_made/(double)time_inside_solver)/
-            (double)cl->stats.num_total_lits_antecedents;
+        at[x++] = ((double)extra_stats.sum_props_made/(double)time_inside_solver)/
+            (double)extra_stats.num_total_lits_antecedents;
     }
     // ((rdb0.sum_props_made/cl.time_inside_solver)/cl.num_total_lits_antecedents) -- 18
 
 
     //To protect against unset values being used
     assert(cl->stats.is_ternary_resolvent ||
-        cl->stats.glueHistLT_avg > 0.9f);
+        extra_stats.glueHistLT_avg > 0.9f);
 
     if (cl->stats.is_ternary_resolvent || //glue and glueHistLT_avg does not exist for ternary
-        cl->stats.glueHistLT_avg != 0 ||
+        extra_stats.glueHistLT_avg != 0 ||
         time_inside_solver == 0
     ) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = (double)cl->stats.glue/(double)cl->stats.glueHistLT_avg;
+        at[x++] = (double)cl->stats.glue/(double)extra_stats.glueHistLT_avg;
     }
     // (rdb0.glue/cl.glueHistLT_avg) -- 19
 
@@ -279,12 +280,12 @@ void ClPredictors::set_up_input(
 
 
     if (cl->stats.is_ternary_resolvent || // size_hist and overlap_hist do not exist for tri
-        cl->stats.conflSizeHist_avg == 0
+        extra_stats.conflSizeHist_avg == 0
     ) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = (double)cl->stats.overlapHistLT_avg/
-            ((double)cl->stats.conflSizeHist_avg);
+        at[x++] = (double)extra_stats.overlapHistLT_avg/
+            ((double)extra_stats.conflSizeHist_avg);
     }
     // (cl.overlapHistLT_avg/cl.conflSizeHist_avg) -- 21
 
@@ -295,7 +296,7 @@ void ClPredictors::set_up_input(
     ) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = (double)cl->stats.glueHistLT_avg/
+        at[x++] = (double)extra_stats.glueHistLT_avg/
             ((double)cl->stats.uip1_used);
     }
     // (cl.glueHistLT_avg/rdb0.uip1_used) -- 22
@@ -309,26 +310,26 @@ void ClPredictors::set_up_input(
     }
     // (rdb0.size/rdb0_common.avg_glue) -- 23
 
-    if (cl->stats.sum_uip1_used == 0) {
+    if (extra_stats.sum_uip1_used == 0) {
         at[x++] = MISSING_VAL;
     } else {
         at[x++] = (double)cl->size()/
-            ((double)cl->stats.sum_uip1_used);
+            ((double)extra_stats.sum_uip1_used);
     }
     // (rdb0.size/rdb0.sum_uip1_used) -- 24
 
 
-    at[x++] = cl->stats.discounted_uip1_used;
+    at[x++] = extra_stats.discounted_uip1_used;
     // rdb0.discounted_uip1_used -- 25
 
 
     if (cl->stats.is_ternary_resolvent ||
-        cl->stats.discounted_props_made < 1e-20f)
+        extra_stats.discounted_props_made < 1e-20f)
     {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = (double)cl->stats.glueHistLT_avg/
-            ((double)cl->stats.discounted_props_made);
+        at[x++] = (double)extra_stats.glueHistLT_avg/
+            ((double)extra_stats.discounted_props_made);
     }
     //(cl.glueHistLT_avg/rdb0.discounted_props_made) -- 26
 
@@ -343,12 +344,12 @@ void ClPredictors::set_up_input(
 
     if (cl->stats.is_ternary_resolvent ||
         commdata.avg_uip == 0 ||
-        cl->stats.discounted_uip1_used < 1e-20f ||
-        ((double)cl->stats.discounted_uip1_used/(double)commdata.avg_uip) < 1e-20
+        extra_stats.discounted_uip1_used < 1e-20f ||
+        ((double)extra_stats.discounted_uip1_used/(double)commdata.avg_uip) < 1e-20
     ) {
         at[x++] = MISSING_VAL;
     } else {
-        at[x++] = (double)cl->stats.num_antecedents/((double)cl->stats.discounted_uip1_used/(double)commdata.avg_uip);
+        at[x++] = (double)extra_stats.num_antecedents/((double)extra_stats.discounted_uip1_used/(double)commdata.avg_uip);
     }
     // (cl.num_antecedents/(rdb0.discounted_uip1_used/rdb0_common.avg_uip1_used)) -- 28
 
@@ -421,7 +422,7 @@ void ClPredictors::predict_all(
     assert(out_len == num);
 }
 
-void ClPredictors::get_prediction_at(RDBExtraData& extdata, const uint32_t at)
+void ClPredictors::get_prediction_at(ClauseStatsExtra& extdata, const uint32_t at)
 {
     extdata.pred_short_use = out_result_short[at];
     extdata.pred_long_use = out_result_long[at];

@@ -81,8 +81,12 @@ Sub0Ret SubsumeStrengthen::backw_sub_with_long(const ClOffset offset)
         }
     }
 
-    //Combine stats
-    cl.combineStats(ret.stats);
+    //Update stats
+    cl.stats = ClauseStats::combineStats(cl.stats, ret.stats);
+    #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
+    auto& extra_stats = solver->red_stats_extra[cl.stats.extra_pos];
+    extra_stats = ClauseStatsExtra::combineStats(extra_stats, ret.stats_extra);
+    #endif
 
     return ret;
 }
@@ -112,20 +116,22 @@ Sub0Ret SubsumeStrengthen::subsume_and_unlink(
             continue;
         }
         ClOffset off = occ_cl.ws.get_offset();
-        Clause *tmp = solver->cl_alloc.ptr(off);
+        Clause *tmpcl = solver->cl_alloc.ptr(off);
 
         //-> ID kept will be 1st parameter
         //Stats will be merged together here then merged into the
         //subsuming clause's stats
-        ret.stats = ClauseStats::combineStats(ret.stats, tmp->stats);
+        ret.stats = ClauseStats::combineStats(ret.stats, tmpcl->stats);
+        #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+        ret.stats_extra = ClauseStatsExtra::combineStats(
+            ret.stats_extra,
+            solver->red_stats_extra[tmpcl->stats.extra_pos]);
+        #endif
         #ifdef VERBOSE_DEBUG
-        cout << "-> subsume removing:" << *tmp << endl;
+        cout << "-> subsume removing:" << *tmpcl << endl;
         #endif
 
-        if (!tmp->red()) {
-            ret.subsumedIrred = true;
-        }
-
+        ret.subsumedIrred |= !tmpcl->red();
         simplifier->unlink_clause(off, true, false, true);
         ret.numSubsumed++;
 
@@ -199,7 +205,12 @@ bool SubsumeStrengthen::backw_sub_str_with_long(
             }
 
             //Update stats
-            cl.combineStats(cl2.stats);
+            cl.stats = ClauseStats::combineStats(cl.stats, cl2.stats);
+            #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
+            auto& extra_stats = solver->red_stats_extra[cl.stats.extra_pos];
+            auto& extra_stats2 = solver->red_stats_extra[cl2.stats.extra_pos];
+            extra_stats = ClauseStatsExtra::combineStats(extra_stats, extra_stats2);
+            #endif
 
             //this will handle touching all vars for elim re-calc
             simplifier->unlink_clause(offset2, true, false, true);

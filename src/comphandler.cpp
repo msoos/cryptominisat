@@ -503,9 +503,6 @@ void CompHandler::moveClausesLong(
 
         //Add 'tmp' to the new solver
         if (cl.red()) {
-            #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-            cl.stats.introduced_at_conflict = 0;
-            #endif
             //newSolver->addRedClause(tmp, cl.stats);
         } else {
             saveClause(cl);

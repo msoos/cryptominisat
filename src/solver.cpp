@@ -502,15 +502,17 @@ Clause* Solver::add_clause_int(
             , (cl_stats ? cl_stats->ID : 0)
             #endif
             );
-            if (red) {
-                c->makeRed(sumConflicts);
-            }
+            c->isRed = red;
             if (cl_stats) {
                 c->stats = *cl_stats;
             }
-            #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-            assert(!c->red() || c->stats.introduced_at_conflict != 0 || sumConflicts == 0);
-            #endif
+            if (red && cl_stats == NULL) {
+                assert(false && "does this happen at all? should it happen??");
+                #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+                red_stats_extra.push_back(ClauseStatsExtra());
+                c->stats.extra_pos = red_stats_extra.size()-1;
+                #endif
+            }
 
             //In class 'OccSimplifier' we don't need to attach normall
             if (attach_long) {

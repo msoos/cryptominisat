@@ -351,7 +351,7 @@ void Searcher::update_glue_from_analysis(Clause* cl)
         if (cl->stats.glue <= conf.protect_cl_if_improved_glue_below_this_glue_for_one_turn) {
             cl->stats.ttl = 1;
             #if defined(STATS_NEEDED)
-            cl->stats.ttl_stats = cl->stats.glue - new_glue;
+            red_stats_extra[cl->stats.extra_pos].ttl_stats = cl->stats.glue - new_glue;
             #endif
         }
         cl->stats.glue = new_glue;
@@ -412,7 +412,6 @@ void Searcher::add_literals_from_confl_to_learnt(
                 stats.resolvs.longRed++;
                 #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
                 antec_data.longRed++;
-                antec_data.age_long_reds.push(sumConflicts - cl->stats.introduced_at_conflict);
                 antec_data.glue_long_reds.push(cl->stats.glue);
                 #endif
             } else {
@@ -428,7 +427,6 @@ void Searcher::add_literals_from_confl_to_learnt(
             antec_data.size_longs.push(cl->size());
             if (!update_bogoprops) {
                 cl->stats.uip1_used++;
-                cl->stats.sum_uip1_used++;
             }
             #endif
 
@@ -1553,7 +1551,7 @@ void Searcher::attach_and_enqueue_learnt_clause(
 
 
             #ifdef STATS_NEEDED
-            cl->stats.antec_data = antec_data;
+            red_stats_extra[cl->stats.extra_pos].antec_data = antec_data;
             propStats.propsLongRed++;
             #endif
 
@@ -1657,23 +1655,27 @@ void Searcher::set_clause_data(
     , const uint32_t glue_before_minim
     , const uint32_t old_decision_level
 ) {
+    assert(cl->red());
+    auto& stats_extra = red_stats_extra[cl->stats.extra_pos];
+
     //definitely a BUG here I think -- should be 2*antec_data.num(), no?
     //however, it's the same as how it's dumped in sqlitestats.cpp
-//     cl->stats.num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-cl->size();
+    //stats_extra.num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-cl->size();
 
-    cl->stats.glueHist_longterm_avg = hist.glueHist.getLongtTerm().avg();
-    cl->stats.glueHist_avg = hist.glueHist.avg_nocheck();
-    cl->stats.glue_before_minim = glue_before_minim;
-    cl->stats.overlapHistLT_avg = hist.overlapHistLT.avg();
-    cl->stats.num_total_lits_antecedents = antec_data.sum_size();
-    cl->stats.num_antecedents = antec_data.num();
-    cl->stats.numResolutionsHistLT_avg =  hist.numResolutionsHistLT.avg();
-    cl->stats.conflSizeHist_avg = hist.conflSizeHist.avg();
-    cl->stats.glueHistLT_avg = hist.glueHistLT.avg();
 
-    cl->stats.orig_glue = orig_glue;
-//     cl->stats.conflSizeHistLT_avg = hist.conflSizeHistLT.avg();
-//     cl->stats.branchDepthHistQueue_avg =  hist.branchDepthHistQueue.avg_nocheck();
+    stats_extra.glueHist_longterm_avg = hist.glueHist.getLongtTerm().avg();
+    stats_extra.glueHist_avg = hist.glueHist.avg_nocheck();
+    stats_extra.glue_before_minim = glue_before_minim;
+    stats_extra.overlapHistLT_avg = hist.overlapHistLT.avg();
+    stats_extra.num_total_lits_antecedents = antec_data.sum_size();
+    stats_extra.num_antecedents = antec_data.num();
+    stats_extra.numResolutionsHistLT_avg =  hist.numResolutionsHistLT.avg();
+    stats_extra.conflSizeHist_avg = hist.conflSizeHist.avg();
+    stats_extra.glueHistLT_avg = hist.glueHistLT.avg();
+
+    stats_extra.orig_glue = orig_glue;
+//     stats_extra.conflSizeHistLT_avg = hist.conflSizeHistLT.avg();
+//     stats_extra.branchDepthHistQueue_avg =  hist.branchDepthHistQueue.avg_nocheck();
 
 }
 #endif
@@ -1744,23 +1746,26 @@ Clause* Searcher::handle_last_confl(
         cl = NULL;
     } else {
         cl = cl_alloc.Clause_new(learnt_clause
-        , sumConflicts
-        #ifdef STATS_NEEDED
-        , to_dump ? clauseID : 0
-        #endif
-        );
-        cl->makeRed(sumConflicts);
+            , sumConflicts
+            #ifdef STATS_NEEDED
+            , to_dump ? clauseID : 0
+            #endif
+            );
         cl->stats.glue = glue;
         #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-        cl->stats.orig_glue = glue;
+        red_stats_extra.push_back(ClauseStatsExtra());
+        cl->stats.extra_pos = red_stats_extra.size()-1;
+        auto& ext_stats = red_stats_extra[cl->stats.extra_pos];
+        ext_stats.introduced_at_conflict = sumConflicts;
+        ext_stats.orig_glue = glue;
         #endif
         cl->stats.activity = 0.0f;
         ClOffset offset = cl_alloc.get_offset(cl);
         unsigned which_arr = 2;
 
         #ifdef STATS_NEEDED
-        cl->stats.connects_num_communities = connects_num_communities;
-        cl->stats.orig_connects_num_communities = connects_num_communities;
+        ext_stats.connects_num_communities = connects_num_communities;
+        ext_stats.orig_connects_num_communities = connects_num_communities;
         cl->stats.locked_for_data_gen =
             mtrand.randDblExc() < conf.lock_for_data_gen_ratio;
         #endif
@@ -1802,7 +1807,6 @@ Clause* Searcher::handle_last_confl(
         && to_dump
     ) {
         assert(cl); //we only dump non-binaries to SQL
-        cl->stats.dump_no = 0;
         dump_this_many_cldata_in_stream--;
         dump_sql_clause_data(
             glue
@@ -2153,7 +2157,7 @@ void Searcher::reduce_db_if_needed()
         }
         #endif
         #ifdef FINAL_PREDICTOR
-        solver->reduceDB->handle_lev2_predictor();
+        solver->reduceDB->handle_predictors();
         cl_alloc.consolidate(solver);
         #endif
         next_lev3_reduce = sumConflicts + conf.every_pred_reduce;
@@ -3528,9 +3532,7 @@ void Searcher::read_long_cls(
         , cl_stats.ID
         #endif
         );
-        if (red) {
-            cl->makeRed(sumConflicts);
-        }
+        assert(!red && "Redundant clause saving and reading is no longer supported");
         cl->stats = cl_stats;
         attachClause(*cl);
         const ClOffset offs = cl_alloc.get_offset(cl);

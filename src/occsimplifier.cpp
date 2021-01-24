@@ -2033,7 +2033,8 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
         stats.glue = 6;
         stats.is_ternary_resolvent = true;
         #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-        stats.orig_glue = 6;
+        ClauseStatsExtra stats_extra;
+        stats_extra.orig_glue = 6;
         #endif
 
         #ifdef FINAL_PREDICTOR
@@ -2043,7 +2044,7 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
         #endif
 
         #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-        stats.introduced_at_conflict = solver->sumConflicts;
+        stats_extra.introduced_at_conflict = solver->sumConflicts;
         #endif
         #ifdef STATS_NEEDED
         double myrnd = solver->mtrand.randDblExc();
@@ -2068,6 +2069,8 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
             } else {
                 assert(newCl->stats.which_red_array == 1);
             }
+            solver->red_stats_extra.push_back(stats_extra);
+            newCl->stats.extra_pos = solver->red_stats_extra.size()-1;
             #endif
             ClOffset off = solver->cl_alloc.get_offset(newCl);
             if (!sub_str->backw_sub_str_with_long(off, sub1_ret)) {
@@ -3442,6 +3445,7 @@ bool OccSimplifier::generate_resolvents(
             } else if (it2->isClause() && it->isClause()) {
                 Clause* c1 = solver->cl_alloc.ptr(it->get_offset());
                 Clause* c2 = solver->cl_alloc.ptr(it2->get_offset());
+                //Neither are redundant, this works.
                 stats = ClauseStats::combineStats(c1->stats, c2->stats);
                 is_xor |= c1->used_in_xor();
                 is_xor |= c2->used_in_xor();
@@ -4535,13 +4539,6 @@ void OccSimplifier::link_in_clause(Clause& cl)
             n_occurs[l.toInt()]++;
             added_cl_to_var.touch(l.var());
         }
-    } else {
-        #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-        assert(
-            cl.stats.introduced_at_conflict != 0 ||
-            solver->sumConflicts == 0 ||
-            solver->conf.simplify_at_startup == 1);
-        #endif
     }
     assert(cl.stats.marked_clause == 0 && "marks must always be zero at linkin");
 

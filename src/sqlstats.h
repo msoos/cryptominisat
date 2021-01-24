@@ -87,7 +87,6 @@ public:
         , const bool locked
         , const Clause* cl
         , const uint32_t reduceDB_called
-        , const RDBExtraData& extdata
     ) = 0;
 
     virtual void reduceDB_common(

@@ -431,12 +431,6 @@ inline PropResult PropEngine::prop_normal_helper(
     , Watched*& j
     , const Lit p
 ) {
-    #if defined(STATS_NEEDED) || defined(NORMAL_CL_USE_STATS)
-    if (!update_bogoprops) {
-        c.stats.clause_looked_at++;
-    }
-    #endif
-
     // Make sure the false literal is data[1]:
     if (c[0] == ~p) {
         std::swap(c[0], c[1]);
@@ -491,7 +485,7 @@ inline PropResult PropEngine::handle_normal_prop_fail(
     //Update stats
     #ifdef STATS_NEEDED
     if (!update_bogoprops) {
-        c.stats.conflicts_made++;
+        red_stats_extra[c.stats.extra_pos].conflicts_made++;
     }
     if (c.red())
         lastConflictCausedBy = ConflCausedBy::longred;
