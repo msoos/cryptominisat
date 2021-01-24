@@ -1751,6 +1751,7 @@ Clause* Searcher::handle_last_confl(
             , to_dump ? clauseID : 0
             #endif
             );
+        cl->isRed = true;
         cl->stats.glue = glue;
         #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
         red_stats_extra.push_back(ClauseStatsExtra());

@@ -84,8 +84,10 @@ Sub0Ret SubsumeStrengthen::backw_sub_with_long(const ClOffset offset)
     //Update stats
     cl.stats = ClauseStats::combineStats(cl.stats, ret.stats);
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
-    auto& extra_stats = solver->red_stats_extra[cl.stats.extra_pos];
-    extra_stats = ClauseStatsExtra::combineStats(extra_stats, ret.stats_extra);
+    if (cl.red()) {
+        auto& extra_stats = solver->red_stats_extra[cl.stats.extra_pos];
+        extra_stats = ClauseStatsExtra::combineStats(extra_stats, ret.stats_extra);
+    }
     #endif
 
     return ret;
@@ -123,9 +125,11 @@ Sub0Ret SubsumeStrengthen::subsume_and_unlink(
         //subsuming clause's stats
         ret.stats = ClauseStats::combineStats(ret.stats, tmpcl->stats);
         #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-        ret.stats_extra = ClauseStatsExtra::combineStats(
-            ret.stats_extra,
-            solver->red_stats_extra[tmpcl->stats.extra_pos]);
+        if (tmpcl->red()) {
+            ret.stats_extra = ClauseStatsExtra::combineStats(
+                ret.stats_extra,
+                solver->red_stats_extra[tmpcl->stats.extra_pos]);
+        }
         #endif
         #ifdef VERBOSE_DEBUG
         cout << "-> subsume removing:" << *tmpcl << endl;
@@ -207,9 +211,11 @@ bool SubsumeStrengthen::backw_sub_str_with_long(
             //Update stats
             cl.stats = ClauseStats::combineStats(cl.stats, cl2.stats);
             #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
-            auto& extra_stats = solver->red_stats_extra[cl.stats.extra_pos];
-            auto& extra_stats2 = solver->red_stats_extra[cl2.stats.extra_pos];
-            extra_stats = ClauseStatsExtra::combineStats(extra_stats, extra_stats2);
+            if (cl.red() && cl2.red()) {
+                auto& extra_stats = solver->red_stats_extra[cl.stats.extra_pos];
+                auto& extra_stats2 = solver->red_stats_extra[cl2.stats.extra_pos];
+                extra_stats = ClauseStatsExtra::combineStats(extra_stats, extra_stats2);
+            }
             #endif
 
             //this will handle touching all vars for elim re-calc
