@@ -692,12 +692,11 @@ void SQLiteStats::reduceDB_common(
     const uint32_t reduceDB_called,
     const uint32_t tot_cls_in_db,
     const uint32_t cur_rst_type,
-    const float median_act,
-    const uint32_t median_uip1_used,
-    const uint32_t median_props,
+    const MedianCommonDataRDB& median_data,
     const double avg_glue,
     const double avg_props,
-    const double avg_uip1_used)
+    const double avg_uip1_used,
+    const double avg_sum_uip1_used)
 {
     int bindAt = 1;
 
@@ -711,13 +710,15 @@ void SQLiteStats::reduceDB_common(
     sqlite3_bind_double(stmtReduceDB_common, bindAt++, cpuTime());
     sqlite3_bind_int   (stmtReduceDB_common, bindAt++, tot_cls_in_db);
 
-    sqlite3_bind_double(stmtReduceDB_common, bindAt++, (double)median_act);
-    sqlite3_bind_int   (stmtReduceDB_common, bindAt++, median_uip1_used);
-    sqlite3_bind_int   (stmtReduceDB_common, bindAt++, median_props);
+    sqlite3_bind_double(stmtReduceDB_common, bindAt++, (double)median_data.median_act);
+    sqlite3_bind_int   (stmtReduceDB_common, bindAt++, median_data.median_uip1_used);
+    sqlite3_bind_int   (stmtReduceDB_common, bindAt++, median_data.median_props);
+    sqlite3_bind_double(stmtReduceDB_common, bindAt++, median_data.median_sum_uip_per_time);
 
     sqlite3_bind_double(stmtReduceDB_common, bindAt++, avg_glue);
     sqlite3_bind_double(stmtReduceDB_common, bindAt++, avg_props);
     sqlite3_bind_double(stmtReduceDB_common, bindAt++, avg_uip1_used);
+    sqlite3_bind_double(stmtReduceDB_common, bindAt++, avg_sum_uip1_used);
 
 
     sqlite3_bind_int   (stmtReduceDB_common, bindAt++, solver->nVars());
@@ -791,6 +792,7 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int(stmtReduceDB, bindAt++, stats_extra.act_ranking);
     sqlite3_bind_int(stmtReduceDB, bindAt++, stats_extra.prop_ranking);
     sqlite3_bind_int(stmtReduceDB, bindAt++, stats_extra.uip1_ranking);
+    sqlite3_bind_int(stmtReduceDB, bindAt++, stats_extra.sum_uip_per_time_ranking);
 
     //Discounted
     sqlite3_bind_double(stmtReduceDB, bindAt++, (double)stats_extra.discounted_uip1_used);

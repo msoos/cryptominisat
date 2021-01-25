@@ -107,9 +107,8 @@ private:
     uint32_t total_glue = 0;
     uint32_t total_props = 0;
     uint32_t total_uip1_used = 0;
-    uint32_t median_props;
-    uint32_t median_uip1_used;
-    float median_act;
+    uint32_t total_sum_uip1_used = 0;
+    MedianCommonDataRDB median_data;
     uint32_t force_kept_short = 0;
 
     uint32_t short_deleted;

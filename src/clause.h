@@ -204,9 +204,14 @@ struct ClauseStatsExtra
     uint32_t act_ranking;
     uint32_t prop_ranking;
     uint32_t uip1_ranking;
+    uint32_t sum_uip_per_time_ranking;
     double pred_short_use;
     double pred_long_use;
     double pred_forever_use;
+    double calc_sum_uip_per_time(const uint64_t sumConflicts) const {
+        const uint32_t time = sumConflicts - introduced_at_conflict;
+        return (double)sum_uip1_used/(double)time;
+    }
 
     //Features that are normally available through SQL
     #ifdef FINAL_PREDICTOR

@@ -82,6 +82,7 @@ void ClPredictors::set_up_input(
     const double   act_ranking_rel,
     const double   uip1_ranking_rel,
     const double   prop_ranking_rel,
+    const double   sum_uip_per_time_ranking_rel,
     const ReduceCommonData& commdata,
     const uint32_t cols,
     const Solver* solver,

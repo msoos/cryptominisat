@@ -54,7 +54,8 @@ struct ReduceCommonData
     double   avg_props;
     double   avg_glue;
     double   avg_uip;
-    float    median_act;
+    double   avg_sum_uip1_used;
+    MedianCommonDataRDB  median_data;
     uint32_t all_learnt_size;
 
     ReduceCommonData() {}
@@ -62,14 +63,16 @@ struct ReduceCommonData
         uint32_t total_props,
         uint32_t total_glue,
         uint32_t total_uip1_used,
+        uint32_t total_sum_uip1_used,
         uint32_t size,
-        float _median_act)
+        const MedianCommonDataRDB& _median_data)
     {
         all_learnt_size = size;
-        median_act = _median_act;
+        median_data = _median_data;
         avg_props = safe_div(total_props, size);
         avg_glue = safe_div(total_glue, size);
         avg_uip = safe_div(total_uip1_used, size);
+        avg_sum_uip1_used = safe_div(total_sum_uip1_used, size);
     }
 };
 
@@ -102,6 +105,7 @@ public:
         const double   act_ranking_rel,
         const double   uip1_ranking_rel,
         const double   prop_ranking_rel,
+        const double   sum_uip_per_time_ranking_rel,
         const ReduceCommonData& commdata,
         const uint32_t cols,
         const Solver* solver,

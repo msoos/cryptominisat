@@ -115,6 +115,28 @@ struct SortRedClsProps
         return x->stats.props_made > y->stats.props_made;
     }
 };
+
+struct SortRedClsSumUIPPerTime
+{
+    explicit SortRedClsSumUIPPerTime(Solver* _solver) :
+        solver(_solver)
+    {
+
+    }
+    Solver* solver;
+
+    bool operator () (const ClOffset xOff, const ClOffset yOff) const
+    {
+        const Clause* x = solver->cl_alloc.ptr(xOff);
+        const Clause* y = solver->cl_alloc.ptr(yOff);
+        const auto& x_extra_stats = solver->red_stats_extra[x->stats.extra_pos];
+        const auto& y_extra_stats = solver->red_stats_extra[y->stats.extra_pos];
+
+        return x_extra_stats.calc_sum_uip_per_time(solver->sumConflicts) >
+            y_extra_stats.calc_sum_uip_per_time(solver->sumConflicts);
+    }
+};
+
 #endif
 
 #ifdef FINAL_PREDICTOR
@@ -313,6 +335,7 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
     total_glue = 0;
     total_props = 0;
     total_uip1_used = 0;
+    total_sum_uip1_used = 0;
 
     for(size_t i = 0; i < all_learnt.size(); i++) {
         ClOffset offs = all_learnt[i];
@@ -325,11 +348,12 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
         total_glue += cl->stats.glue;
         total_props += cl->stats.props_made;
         total_uip1_used += cl->stats.uip1_used;
+        total_sum_uip1_used += stats_extra.sum_uip1_used;
     }
     if (all_learnt.empty()) {
-        median_props = 0;
+        median_data.median_props = 0;
     } else {
-        median_props = solver->cl_alloc.ptr(all_learnt[all_learnt.size()/2])->stats.props_made;
+        median_data.median_props = solver->cl_alloc.ptr(all_learnt[all_learnt.size()/2])->stats.props_made;
     }
 
     std::sort(all_learnt.begin(), all_learnt.end(), SortRedClsUIP1(solver->cl_alloc));
@@ -340,9 +364,24 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
         stats_extra.uip1_ranking = i+1;
     }
     if (all_learnt.empty()) {
-        median_uip1_used = 0;
+        median_data.median_uip1_used = 0;
     } else {
-        median_uip1_used = solver->cl_alloc.ptr(all_learnt[all_learnt.size()/2])->stats.uip1_used;
+        median_data.median_uip1_used = solver->cl_alloc.ptr(all_learnt[all_learnt.size()/2])->stats.uip1_used;
+    }
+
+    std::sort(all_learnt.begin(), all_learnt.end(), SortRedClsSumUIPPerTime(solver));
+    for(size_t i = 0; i < all_learnt.size(); i++) {
+        ClOffset offs = all_learnt[i];
+        Clause* cl = solver->cl_alloc.ptr(offs);
+        ClauseStatsExtra& stats_extra = solver->red_stats_extra[cl->stats.extra_pos];
+        stats_extra.sum_uip_per_time_ranking = i+1;
+    }
+    if (all_learnt.empty()) {
+        median_data.median_sum_uip_per_time = 0;
+    } else {
+        uint32_t extra_at = solver->cl_alloc.ptr(all_learnt[all_learnt.size()/2])->stats.extra_pos;
+        ClauseStatsExtra& stats_extra = solver->red_stats_extra[extra_at];
+        median_data.median_sum_uip_per_time = stats_extra.calc_sum_uip_per_time(solver->sumConflicts);
     }
 
     uint32_t new_extra_pos = 0;
@@ -358,9 +397,9 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
         new_extra_pos++;
     }
     if (all_learnt.empty()) {
-        median_act = 0;
+        median_data.median_act = 0;
     } else {
-        median_act = solver->cl_alloc.ptr(all_learnt[all_learnt.size()/2])->stats.activity;
+        median_data.median_act = solver->cl_alloc.ptr(all_learnt[all_learnt.size()/2])->stats.activity;
     }
     std::swap(solver->red_stats_extra, new_red_stats_extra);
 }
@@ -408,12 +447,11 @@ void ReduceDB::dump_sql_cl_data(
         reduceDB_called,
         all_learnt.size(),
         cur_rst_type,
-        median_act,
-        median_uip1_used,
-        median_props,
+        median_data,
         (double)total_glue/(double)all_learnt.size(),
         (double)total_props/(double)all_learnt.size(),
-        (double)total_uip1_used/(double)all_learnt.size()
+        (double)total_uip1_used/(double)all_learnt.size(),
+        (double)total_sum_uip1_used/(double)all_learnt.size()
     );
 
     //Dump clause features
@@ -595,6 +633,7 @@ void ReduceDB::update_preds(const vector<ClOffset>& offs)
         double act_ranking_rel = safe_div(stats_extra.act_ranking, commdata.all_learnt_size);
         double uip1_ranking_rel = safe_div(stats_extra.uip1_ranking, commdata.all_learnt_size);
         double prop_ranking_rel = safe_div(stats_extra.prop_ranking, commdata.all_learnt_size);
+        double sum_uip_per_time_ranking_rel = safe_div(stats_extra.sum_uip_per_time_ranking, commdata.all_learnt_size);
 
         stats_extra.pred_short_use = 0;
         stats_extra.pred_long_use = 0;
@@ -608,6 +647,7 @@ void ReduceDB::update_preds(const vector<ClOffset>& offs)
                 act_ranking_rel,
                 uip1_ranking_rel,
                 prop_ranking_rel,
+                sum_uip_per_time_ranking_rel,
                 commdata,
                 PRED_COLS,
                 solver,
@@ -891,9 +931,9 @@ void ReduceDB::handle_predictors()
     }
     prepare_features(all_learnt);
     commdata = ReduceCommonData(
-        total_props, total_glue, total_uip1_used,
+        total_props, total_glue, total_uip1_used, total_sum_uip1_used,
         all_learnt.size(),
-        median_act);
+        median_data);
 
     //Move clauses around
     long_upgraded = 0;
