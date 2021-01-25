@@ -89,24 +89,26 @@ CREATE TABLE `reduceDB` (
   `conflicts_made` bigint(20) NOT NULL,
   `props_made` bigint(20) NOT NULL,
   `sum_props_made` bigint(20) NOT NULL,
-  `clause_looked_at` bigint(20) NOT NULL,
   `uip1_used` bigint(20) NOT NULL,
 
   `last_touched_diff` bigint(20) NOT NULL,
   `activity_rel` float(20) NOT NULL,
   `locked` int(20) NOT NULL,
   `in_xor` int(20) NOT NULL,
-  `glue` int(20) NOT NULL,
+  `glue` int(20) DEFAULT NULL,
   `size` int(20) NOT NULL,
   `ttl_stats` int(20) NOT NULL,
   `is_ternary_resolvent` int(20) NOT NULL,
   `is_decision` int(20) NOT NULL,
-  `act_ranking` int(20) NOT NULL,
-  `prop_ranking` int(20) NOT NULL,
-  `uip1_ranking` int(20) NOT NULL,
   `sum_uip1_used`  int(20) NOT NULL,
   `connects_num_communities` int(20) NOT NULL,
 
+  -- ranking
+  `act_ranking` int(20) NOT NULL,
+  `prop_ranking` int(20) NOT NULL,
+  `uip1_ranking` int(20) NOT NULL,
+
+  -- discounted
   `discounted_uip1_used` float(20) NOT NULL,
   `discounted_props_made` float(20) NOT NULL,
   `discounted_uip1_used2` float(20) NOT NULL,
@@ -241,16 +243,6 @@ CREATE TABLE `clause_stats` (
   `atedecents_binRed` int(20) NOT NULL,
   `atedecents_longIrred` int(20) NOT NULL,
   `atedecents_longRed` int(20) NOT NULL,
-
-  `antecedents_glue_long_reds_avg` float,
-  `antecedents_glue_long_reds_var` float,
-  `antecedents_glue_long_reds_min` int(20),
-  `antecedents_glue_long_reds_max` int(20),
-
-  `antecedents_long_red_age_avg` float,
-  `antecedents_long_red_age_var` float,
-  `antecedents_long_red_age_min` bigint(20),
-  `antecedents_long_red_age_max` bigint(20),
 
   `decisionLevelHistLT_avg` float,
   `backtrackLevelHistLT_avg` float,

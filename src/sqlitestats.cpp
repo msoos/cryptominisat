@@ -593,8 +593,8 @@ void SQLiteStats::restart(
     sqlite3_bind_int64(stmt, bindAt++, solver->get_solve_stats().num_simplify);
     sqlite3_bind_int64(stmt, bindAt++, search->sumRestarts());
     sqlite3_bind_int64(stmt, bindAt++, solver->sumConflicts);
-    sqlite3_bind_int(stmt, bindAt++, searchHist.num_conflicts_this_restart);
-    sqlite3_bind_int(stmt, bindAt++, solver->latest_satzilla_feature_calc);
+    sqlite3_bind_int  (stmt, bindAt++, searchHist.num_conflicts_this_restart);
+    sqlite3_bind_int  (stmt, bindAt++, solver->latest_satzilla_feature_calc);
     sqlite3_bind_double(stmt, bindAt++, cpuTime());
 
 
@@ -703,26 +703,26 @@ void SQLiteStats::reduceDB_common(
 
     sqlite3_bind_int(stmtReduceDB_common, bindAt++, reduceDB_called);
 
-    sqlite3_bind_int64(stmtReduceDB_common, bindAt++, solver->get_solve_stats().num_simplify);
-    sqlite3_bind_int64(stmtReduceDB_common, bindAt++, solver->sumRestarts());
-    sqlite3_bind_int64(stmtReduceDB_common, bindAt++, solver->sumConflicts);
-    sqlite3_bind_int64(stmtReduceDB_common, bindAt++, solver->latest_satzilla_feature_calc);
-    sqlite3_bind_int(stmtReduceDB_common, bindAt++, cur_rst_type);
+    sqlite3_bind_int64 (stmtReduceDB_common, bindAt++, solver->get_solve_stats().num_simplify);
+    sqlite3_bind_int64 (stmtReduceDB_common, bindAt++, solver->sumRestarts());
+    sqlite3_bind_int64 (stmtReduceDB_common, bindAt++, solver->sumConflicts);
+    sqlite3_bind_int64 (stmtReduceDB_common, bindAt++, solver->latest_satzilla_feature_calc);
+    sqlite3_bind_int   (stmtReduceDB_common, bindAt++, cur_rst_type);
     sqlite3_bind_double(stmtReduceDB_common, bindAt++, cpuTime());
-    sqlite3_bind_int(stmtReduceDB_common, bindAt++, tot_cls_in_db);
+    sqlite3_bind_int   (stmtReduceDB_common, bindAt++, tot_cls_in_db);
 
     sqlite3_bind_double(stmtReduceDB_common, bindAt++, (double)median_act);
-    sqlite3_bind_int(stmtReduceDB_common, bindAt++, median_uip1_used);
-    sqlite3_bind_int(stmtReduceDB_common, bindAt++, median_props);
+    sqlite3_bind_int   (stmtReduceDB_common, bindAt++, median_uip1_used);
+    sqlite3_bind_int   (stmtReduceDB_common, bindAt++, median_props);
 
     sqlite3_bind_double(stmtReduceDB_common, bindAt++, avg_glue);
     sqlite3_bind_double(stmtReduceDB_common, bindAt++, avg_props);
     sqlite3_bind_double(stmtReduceDB_common, bindAt++, avg_uip1_used);
 
 
-    sqlite3_bind_int(stmtReduceDB_common, bindAt++, solver->nVars());
-    sqlite3_bind_int(stmtReduceDB_common, bindAt++, solver->longIrredCls.size());
-    sqlite3_bind_int(stmtReduceDB_common, bindAt++, solver->litStats.irredLits);
+    sqlite3_bind_int   (stmtReduceDB_common, bindAt++, solver->nVars());
+    sqlite3_bind_int   (stmtReduceDB_common, bindAt++, solver->longIrredCls.size());
+    sqlite3_bind_int   (stmtReduceDB_common, bindAt++, solver->litStats.irredLits);
     uint32_t total_long_red_cls = 0;
     for(const auto& cls: solver->longRedCls) {
         total_long_red_cls += cls.size();
@@ -767,7 +767,6 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int64(stmtReduceDB, bindAt++, stats_extra.conflicts_made);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.props_made);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, stats_extra.sum_props_made);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, 0);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.uip1_used);
 
     assert(cl->stats.last_touched <= solver->sumConflicts);
@@ -776,17 +775,24 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_double(stmtReduceDB, bindAt++, (double)cl->stats.activity/(double)solver->get_cla_inc());
     sqlite3_bind_int(stmtReduceDB, bindAt++, locked);
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->used_in_xor());
-    sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.glue);
+    if (cl->stats.is_ternary_resolvent) {
+        sqlite3_bind_null(stmtReduceDB, bindAt++);
+    } else {
+        sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.glue);
+    }
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->size());
     sqlite3_bind_int(stmtReduceDB, bindAt++, stats_extra.ttl_stats);
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.is_ternary_resolvent);
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.is_decision);
-    sqlite3_bind_int(stmtReduceDB, bindAt++, stats_extra.act_rank);
-    sqlite3_bind_int(stmtReduceDB, bindAt++, stats_extra.props_made_rank);
-    sqlite3_bind_int(stmtReduceDB, bindAt++, stats_extra.uip1_used_rank);
     sqlite3_bind_int(stmtReduceDB, bindAt++, stats_extra.sum_uip1_used);
     sqlite3_bind_int(stmtReduceDB, bindAt++, stats_extra.connects_num_communities);
 
+    //Ranking
+    sqlite3_bind_int(stmtReduceDB, bindAt++, stats_extra.act_ranking);
+    sqlite3_bind_int(stmtReduceDB, bindAt++, stats_extra.prop_ranking);
+    sqlite3_bind_int(stmtReduceDB, bindAt++, stats_extra.uip1_ranking);
+
+    //Discounted
     sqlite3_bind_double(stmtReduceDB, bindAt++, (double)stats_extra.discounted_uip1_used);
     sqlite3_bind_double(stmtReduceDB, bindAt++, (double)stats_extra.discounted_props_made);
     sqlite3_bind_double(stmtReduceDB, bindAt++, (double)stats_extra.discounted_uip1_used2);
@@ -849,16 +855,6 @@ void SQLiteStats::clause_stats(
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, antec_data.binRed);
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, antec_data.longIrred);
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, antec_data.longRed);
-
-    sqlite3_bind_double(stmt_clause_stats, bindAt, 0);
-    sqlite3_bind_double(stmt_clause_stats, bindAt, 0);
-    sqlite3_bind_int   (stmt_clause_stats, bindAt, 0);
-    sqlite3_bind_int   (stmt_clause_stats, bindAt, 0);
-
-    sqlite3_bind_double(stmt_clause_stats, bindAt, 0);
-    sqlite3_bind_double(stmt_clause_stats, bindAt, 0);
-    sqlite3_bind_int   (stmt_clause_stats, bindAt, 0);
-    sqlite3_bind_int   (stmt_clause_stats, bindAt, 0);
 
     bind_null_or_double(stmt_clause_stats, bindAt, hist.decisionLevelHistLT,avg);
     bind_null_or_double(stmt_clause_stats, bindAt, hist.backtrackLevelHistLT,avg);

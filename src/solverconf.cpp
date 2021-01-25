@@ -70,6 +70,9 @@ using namespace CMSat;
 //Predict setup that works for countbitswagner064:
 //--predlongchunkmult 0.8 --predlongmult 0.8 --predshortmult 1.4 --predforevertopperc 40
 
+//Tuning to
+//mybase="--printsol 0 --simdrat 1 --predforeverpow 0.1 --predforevermult 0.40 --predlongmult 0.5 --predshortmult 0.5 --preddontmovetime 1 --predadjustsize 0 --predforeverchunkmult 4"
+
 
 DLL_PUBLIC SolverConf::SolverConf() :
         do_lucky_polar_every_n(20)
@@ -81,11 +84,11 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Clause cleaning
         , pred_short_size_mult(0.5)   //out-937344.wlm01-2-drat0 --predshortmult 0.5
         , pred_long_size_mult(0.5)    //out-937344.wlm01-2-drat0 --predlongmult 0.5
-        , pred_forever_size_mult(0.25) //out-937344.wlm01-2-drat0 --predforevermult 0.25
-        , pred_forever_size_pow(0.5)
+        , pred_forever_size_mult(0.40) //out-937344.wlm01-2-drat0 --predforevermult 0.25
+        , pred_forever_size_pow(0.1)
         //
         , pred_long_chunk_mult(1.0)
-        , pred_forever_chunk_mult(1.0)
+        , pred_forever_chunk_mult(4.0)
         //
         , pred_long_check_every_n(3)
         , pred_forever_check_every_n(12)

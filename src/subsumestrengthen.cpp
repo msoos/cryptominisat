@@ -123,12 +123,12 @@ Sub0Ret SubsumeStrengthen::subsume_and_unlink(
         //-> ID kept will be 1st parameter
         //Stats will be merged together here then merged into the
         //subsuming clause's stats
-        ret.stats = ClauseStats::combineStats(ret.stats, tmpcl->stats);
+        ret.stats = ClauseStats::combineStats(tmpcl->stats, ret.stats);
         #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
         if (tmpcl->red()) {
             ret.stats_extra = ClauseStatsExtra::combineStats(
-                ret.stats_extra,
-                solver->red_stats_extra[tmpcl->stats.extra_pos]);
+                solver->red_stats_extra[tmpcl->stats.extra_pos],
+                ret.stats_extra);
         }
         #endif
         #ifdef VERBOSE_DEBUG
@@ -860,7 +860,12 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
                     solver->ok = false;
                     return false;
                 } else if (val == l_Undef) {
-                    (*solver->drat) << add << subsLits[j] << fin;
+                    (*solver->drat) << add << subsLits[j]
+                    #ifdef STATS_NEEDED
+                    << 0
+                    << solver->sumConflicts
+                    #endif
+                    << fin;
                     solver->enqueue<true>(subsLits[j]);
                     solver->ok = solver->propagate_occur();
                     if (!solver->okay()) {

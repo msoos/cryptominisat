@@ -511,6 +511,7 @@ Clause* Solver::add_clause_int(
                 #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
                 red_stats_extra.push_back(ClauseStatsExtra());
                 c->stats.extra_pos = red_stats_extra.size()-1;
+                //TODO set introduced_at_confilict
                 #endif
             }
 

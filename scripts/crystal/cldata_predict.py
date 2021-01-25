@@ -454,6 +454,8 @@ if __name__ == "__main__":
                         dest="show", help="Show visual graphs")
     parser.add_argument("--check", action="store_true", default=False,
                         dest="check_row_data", help="Check row data for NaN or float overflow")
+    parser.add_argument("--checkverbose", action="store_true", default=False,
+                        dest="check_row_data_verbose", help="Check row data for NaN or float overflow in a verbose way, printing them all")
     parser.add_argument("--rawplots", action="store_true", default=False,
                         dest="raw_data_plots", help="Display raw data plots")
     parser.add_argument("--basedir", type=str,
@@ -553,9 +555,12 @@ if __name__ == "__main__":
 
     # Read in Pandas Dataframe
     print("Reading dataframe...")
-    df_nofloat = pd.read_pickle(options.fname)
-    df = df_nofloat.convert_dtypes()
-    del df_nofloat
+    if False:
+        df_nofloat = pd.read_pickle(options.fname)
+        df = df_nofloat.convert_dtypes()
+        del df_nofloat
+    else:
+        df = pd.read_pickle(options.fname)
     df_orig = df.copy()
     if options.print_features:
         for f in sorted(list(df)):
@@ -609,6 +614,9 @@ if __name__ == "__main__":
     df.replace(np.Infinity, MISSING, inplace=True)
     df.replace(np.inf, MISSING, inplace=True)
     df.fillna(MISSING, inplace=True)
+
+    if options.check_row_data_verbose:
+        helper.check_too_large_or_nan_values(df, list(df))
 
     # do the heavy lifting
     learner = Learner(df, tier=options.tier)

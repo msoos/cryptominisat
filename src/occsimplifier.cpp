@@ -1614,7 +1614,11 @@ bool OccSimplifier::occ_rem_with_gates()
             std::sort(cl->begin(), cl->end());
             removeWCl(solver->watches[l2], off);
             removeWCl(solver->watches[l1], off); //TODO we can NOT copy +get rid of this, speedup!
-            (*solver->drat) << add << *cl << fin << findelay;
+            (*solver->drat) << add << *cl
+            #ifdef STATS_NEEDED
+            << solver->sumConflicts
+            #endif
+            << fin << findelay;
             solver->watches[gate.rhs].push(Watched(off, cl->abst));
             n_occurs[l1.toInt()]--;
             n_occurs[l2.toInt()]--;
@@ -2034,7 +2038,7 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
         stats.is_ternary_resolvent = true;
         #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
         ClauseStatsExtra stats_extra;
-        stats_extra.orig_glue = 6;
+        stats_extra.introduced_at_conflict = solver->sumConflicts;
         #endif
 
         #ifdef FINAL_PREDICTOR
@@ -2043,9 +2047,6 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
         stats.which_red_array = 1;
         #endif
 
-        #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-        stats_extra.introduced_at_conflict = solver->sumConflicts;
-        #endif
         #ifdef STATS_NEEDED
         double myrnd = solver->mtrand.randDblExc();
         if (myrnd <= solver->conf.dump_individual_cldata_ratio) {
@@ -2066,9 +2067,9 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
                 solver->mtrand.randDblExc() < solver->conf.lock_for_data_gen_ratio;
             if (newCl->stats.locked_for_data_gen) {
                 newCl->stats.which_red_array = 0;
-            } else {
-                assert(newCl->stats.which_red_array == 1);
             }
+            #endif
+            #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
             solver->red_stats_extra.push_back(stats_extra);
             newCl->stats.extra_pos = solver->red_stats_extra.size()-1;
             #endif

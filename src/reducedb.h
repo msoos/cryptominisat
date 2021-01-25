@@ -103,7 +103,7 @@ private:
     ReduceCommonData commdata;
     #endif
 
-    void set_prop_uip_act_ranks(vector<ClOffset>& all_learnt);
+    void prepare_features(vector<ClOffset>& all_learnt);
     uint32_t total_glue = 0;
     uint32_t total_props = 0;
     uint32_t total_uip1_used = 0;

@@ -306,24 +306,19 @@ void ReduceDB::handle_lev2()
 }
 
 #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-void ReduceDB::set_prop_uip_act_ranks(vector<ClOffset>& all_learnt)
+void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
 {
+    vector<ClauseStatsExtra> new_red_stats_extra(all_learnt.size());
     std::sort(all_learnt.begin(), all_learnt.end(), SortRedClsProps(solver->cl_alloc));
     total_glue = 0;
     total_props = 0;
     total_uip1_used = 0;
-    uint32_t new_extra_pos = 0;
+
     for(size_t i = 0; i < all_learnt.size(); i++) {
         ClOffset offs = all_learnt[i];
         Clause* cl = solver->cl_alloc.ptr(offs);
-        uint32_t old_extra_pos = cl->stats.extra_pos;
-        std::swap(solver->red_stats_extra[old_extra_pos],
-                  solver->red_stats_extra[new_extra_pos]);
-        cl->stats.extra_pos = new_extra_pos;
-        new_extra_pos++;
-
         ClauseStatsExtra& stats_extra = solver->red_stats_extra[cl->stats.extra_pos];
-        stats_extra.props_made_rank = i+1;
+        stats_extra.prop_ranking = i+1;
         assert(cl->stats.glue > 0);
         stats_extra.reset_rdb_stats_pre(cl->stats);
 
@@ -336,14 +331,13 @@ void ReduceDB::set_prop_uip_act_ranks(vector<ClOffset>& all_learnt)
     } else {
         median_props = solver->cl_alloc.ptr(all_learnt[all_learnt.size()/2])->stats.props_made;
     }
-    solver->red_stats_extra.resize(new_extra_pos);
 
     std::sort(all_learnt.begin(), all_learnt.end(), SortRedClsUIP1(solver->cl_alloc));
     for(size_t i = 0; i < all_learnt.size(); i++) {
         ClOffset offs = all_learnt[i];
         Clause* cl = solver->cl_alloc.ptr(offs);
         ClauseStatsExtra& stats_extra = solver->red_stats_extra[cl->stats.extra_pos];
-        stats_extra.uip1_used_rank = i+1;
+        stats_extra.uip1_ranking = i+1;
     }
     if (all_learnt.empty()) {
         median_uip1_used = 0;
@@ -351,18 +345,24 @@ void ReduceDB::set_prop_uip_act_ranks(vector<ClOffset>& all_learnt)
         median_uip1_used = solver->cl_alloc.ptr(all_learnt[all_learnt.size()/2])->stats.uip1_used;
     }
 
+    uint32_t new_extra_pos = 0;
     std::sort(all_learnt.begin(), all_learnt.end(), SortRedClsAct(solver->cl_alloc));
     for(size_t i = 0; i < all_learnt.size(); i++) {
         ClOffset offs = all_learnt[i];
         Clause* cl = solver->cl_alloc.ptr(offs);
         ClauseStatsExtra& stats_extra = solver->red_stats_extra[cl->stats.extra_pos];
-        stats_extra.act_rank = i+1;
+        stats_extra.act_ranking = i+1;
+
+        new_red_stats_extra[new_extra_pos] = stats_extra;
+        cl->stats.extra_pos = new_extra_pos;
+        new_extra_pos++;
     }
     if (all_learnt.empty()) {
         median_act = 0;
     } else {
         median_act = solver->cl_alloc.ptr(all_learnt[all_learnt.size()/2])->stats.activity;
     }
+    std::swap(solver->red_stats_extra, new_red_stats_extra);
 }
 #endif
 
@@ -398,7 +398,7 @@ void ReduceDB::dump_sql_cl_data(
     if (all_learnt.empty()) {
         return;
     }
-    set_prop_uip_act_ranks(all_learnt);
+    prepare_features(all_learnt);
 
 
     //Dump common features
@@ -592,9 +592,9 @@ void ReduceDB::update_preds(const vector<ClOffset>& offs)
         Clause* cl = solver->cl_alloc.ptr(offset);
         auto& stats_extra = solver->red_stats_extra[cl->stats.extra_pos];
 
-        double act_ranking_rel = safe_div(stats_extra.act_rank, commdata.all_learnt_size);
-        double uip1_ranking_rel = safe_div(stats_extra.uip1_used_rank, commdata.all_learnt_size);
-        double prop_ranking_rel = safe_div(stats_extra.props_made_rank, commdata.all_learnt_size);
+        double act_ranking_rel = safe_div(stats_extra.act_ranking, commdata.all_learnt_size);
+        double uip1_ranking_rel = safe_div(stats_extra.uip1_ranking, commdata.all_learnt_size);
+        double prop_ranking_rel = safe_div(stats_extra.prop_ranking, commdata.all_learnt_size);
 
         stats_extra.pred_short_use = 0;
         stats_extra.pred_long_use = 0;
@@ -835,13 +835,13 @@ ReduceDB::ClauseStats ReduceDB::reset_clause_dats(const uint32_t lev)
         cl->stats.reset_rdb_stats();
     }
 
-    if (solver->conf.verbosity) {
+    /*if (solver->conf.verbosity) {
         cout << "c [DBCL pred]"
         << " lev: " << lev
-        << " avg dumpno: " << std::fixed << std::setprecision(2) << std::setw(6)
+        << " avg age: " << std::fixed << std::setprecision(2) << std::setw(6)
         << ratio_for_stat(tot_age, solver->longRedCls[lev].size())
         << endl;
-    }
+    }*/
 
     return cl_stat;
 }
@@ -889,7 +889,7 @@ void ReduceDB::handle_predictors()
             all_learnt.push_back(offs);
         }
     }
-    set_prop_uip_act_ranks(all_learnt);
+    prepare_features(all_learnt);
     commdata = ReduceCommonData(
         total_props, total_glue, total_uip1_used,
         all_learnt.size(),
@@ -925,22 +925,22 @@ void ReduceDB::handle_predictors()
         << endl;
 
         if (solver->conf.verbosity >= 1) {
-        cout
-        << "c [DBCL pred] lev0: " << std::setw(10) << solver->longRedCls[0].size()
-        << " moved: " << std::setw(7) << forever_moved
-        << endl
+            cout
+            << "c [DBCL pred] lev0: " << std::setw(10) << solver->longRedCls[0].size()
+            << " moved to lev1: " << std::setw(7) << forever_moved
+            << endl
 
-        << "c [DBCL pred] lev1: " << std::setw(10) << solver->longRedCls[1].size()
-        << " moved: " << std::setw(7) << long_moved
-        << endl
+            << "c [DBCL pred] lev1: " << std::setw(10) << solver->longRedCls[1].size()
+            << " moved to lev2: " << std::setw(7) << long_moved
+            << endl
 
-        << "c [DBCL pred] lev2: " << std::setw(10) << solver->longRedCls[2].size()
-        << " del  : " << std::setw(7) << short_deleted
-        << " del avg dumpno: " << std::setw(6) << safe_div(short_deleted_age, short_deleted)
-        << endl
+            << "c [DBCL pred] lev2: " << std::setw(10) << solver->longRedCls[2].size()
+            << " del          : " << std::setw(7) << short_deleted
+            << " del avg age: " << std::setw(6) << safe_div(short_deleted_age, short_deleted)
+            << endl
 
-        << "c [DBCL pred] long-upgrade:         "  << std::setw(7)  << long_upgraded
-        << endl;
+            << "c [DBCL pred] long-upgrade:         "  << std::setw(7)  << long_upgraded
+            << endl;
         }
 
         cout

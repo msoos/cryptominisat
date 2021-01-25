@@ -372,13 +372,17 @@ def check_too_large_or_nan_values(df, features=None):
 
     index = 0
     for index, row in df[features].iterrows():
-        for x, name in zip(row, features):
-            if type(x) == str:
+        print("-------------")
+        print("At row index: ", index)
+        for val, name in zip(row, features):
+            print("Name: '%s', val: %s" % (name, val))
+            if type(val) == str:
                 continue
 
-            if not np.isfinite(x) or x > np.finfo(np.float32).max:
-                print("issue with data for features: ", name, x, type(x))
-            index += 1
+            if math.isnan(val) or not np.isfinite(val) or val > np.finfo(np.float32).max:
+                print("issue with feature '%s' Value: '%s'  Type: '%s" % (
+                    name, val, type(val)))
+        index += 1
 
     print("Checking finished.")
 

@@ -131,6 +131,55 @@ class Queries (helper.QueryHelper):
 
         print("Checked all clauses have a %s. T: %-2.3f" % (Ns, time.time()-t))
 
+    def check_glue_sizes(self):
+        if options.slow:
+
+            queries = """
+            create index `idx-check-qual1` on `reduceDB` (`clauseID`);
+            create index `idx-check-qual2` on `clause_stats` ( `clauseID`);
+            """
+            for l in queries.split('\n'):
+                self.c.execute(l)
+
+            t = time.time()
+            q = """
+            select * from `clause_stats`,`reduceDB`
+            where clause_stats.clauseID = reduceDB.clauseID
+            and glue > orig_glue"""
+            cursor = self.c.execute(q)
+            for row in cursor:
+                print("ERROR: glue is larger than orig_glue!")
+                print(row)
+                exit(-1)
+
+            queries = """
+            drop index `idx-check-qual1`;
+            drop index `idx-check-qual2`;
+            """
+            for l in queries.split('\n'):
+                self.c.execute(l)
+
+
+            print("Checked for glue vs orig_glue in %-2.3f seconds" % (time.time()-t))
+
+        t = time.time()
+        q = """select * from `clause_stats` where orig_glue > glue_before_minim"""
+        cursor = self.c.execute(q)
+        for row in cursor:
+            print("ERROR: orig_glue is larger than glue_before_minim!")
+            print(row)
+            exit(-1)
+        print("Checked for orig_glue vs glue_before_minim in %-2.3f seconds" % (time.time()-t))
+
+        t = time.time()
+        q = """select * from `clause_stats` where orig_glue > orig_size"""
+        cursor = self.c.execute(q)
+        for row in cursor:
+            print("ERROR: orig_glue is larger than orig_size!")
+            print(row)
+            exit(-1)
+        print("Checked for orig_glue vs orig_size in %-2.3f seconds" % (time.time()-t))
+
     def check_is_null(self):
 
         is_nulls = [
@@ -215,20 +264,21 @@ class Queries (helper.QueryHelper):
 
 
     def check_non_negative(self):
-        table = "reduceDB"
-        cols = helper.get_columns(table, options.verbose, self.c)
-        for col in cols:
-            t = time.time()
-            q = """
-            select * from `%s` where `%s` < 0
-            """ % (table, col)
-            cursor = self.c.execute(q)
-            for row in cursor:
-                print("ERROR: following data has %s < 0 in table %s: " % (col , table))
-                print(row)
-                exit(-1)
-            print("Checked for %s < 0 in table %s. All are >= 0. T: %-3.2f s" %
-                  (col, table, time.time() - t))
+        tables = ["reduceDB", "clause_stats", "reduceDB_common"]
+        for table in tables:
+            cols = helper.get_columns(table, options.verbose, self.c)
+            for col in cols:
+                t = time.time()
+                q = """
+                select * from `%s` where `%s` < 0
+                """ % (table, col)
+                cursor = self.c.execute(q)
+                for row in cursor:
+                    print("ERROR: following data has %s < 0 in table %s: " % (col , table))
+                    print(row)
+                    exit(-1)
+                print("Checked for %s < 0 in table %s. All are >= 0. T: %-3.2f s" %
+                      (col, table, time.time() - t))
 
 
     def check_positive(self):
@@ -238,7 +288,7 @@ class Queries (helper.QueryHelper):
             ["orig_size", "clause_stats"],
             ["size", "reduceDB"],
             ["glue", "reduceDB"],
-            ["act_ranking", "reduceDB"], #act ranking starts at 1, not 0
+            ["act_ranking", "reduceDB"], # all ranking starts at 1, not 0
             ["uip1_ranking", "reduceDB"],
             ["prop_ranking", "reduceDB"]
             ]
@@ -250,7 +300,7 @@ class Queries (helper.QueryHelper):
             """ % (table, col)
             cursor = self.c.execute(q)
             for row in cursor:
-                print("ERROR: Following data from table %s has %s as non-positive: " % (col, table))
+                print("ERROR: Following data from table %s has %s as non-positive: " % (table, col))
                 print(row)
                 exit(-1)
             print("Checked for %s in table %s. All are positive T: %-3.2f s" %
@@ -264,6 +314,8 @@ if __name__ == "__main__":
     parser = optparse.OptionParser(usage=usage)
     parser.add_option("--verbose", "-v", action="store_true", default=False,
                       dest="verbose", help="Print more output")
+    parser.add_option("--slow", action="store_true", default=False,
+                      dest="slow", help="Do more checks")
 
     (options, args) = parser.parse_args()
 
@@ -276,6 +328,7 @@ if __name__ == "__main__":
         q.check_all_clauses_have_at_most_one_del()
         q.check_all_clauses_have_N()
         q.check_only_one()
+        q.check_glue_sizes()
         q.check_non_negative()
         q.check_positive()
         q.check_incorrect_data_values()

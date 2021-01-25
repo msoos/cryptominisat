@@ -177,6 +177,10 @@ struct ClauseStats
         ret.which_red_array = std::min(first.which_red_array, second.which_red_array);
         #endif
 
+        if (ret.locked_for_data_gen) {
+            ret.which_red_array = 0;
+        }
+
         return ret;
     }
 
@@ -197,9 +201,9 @@ struct ClauseStats
 struct ClauseStatsExtra
 {
     //Used in RDB
-    uint32_t props_made_rank;
-    uint32_t act_rank;
-    uint32_t uip1_used_rank;
+    uint32_t act_ranking;
+    uint32_t prop_ranking;
+    uint32_t uip1_ranking;
     double pred_short_use;
     double pred_long_use;
     double pred_forever_use;
@@ -340,20 +344,20 @@ class Clause
 {
 public:
     ClauseStats stats;
-    uint16_t isRed:1; ///<Is the clause a redundant clause?
-    uint16_t isRemoved:1; ///<Is this clause queued for removal?
-    uint16_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
-    uint16_t distilled:1;
-    uint16_t is_ternary_resolved:1;
-    uint16_t occurLinked:1;
-    uint16_t must_recalc_abst:1;
-    uint16_t _used_in_xor:1;
-    uint16_t _used_in_xor_full:1;
-    uint16_t _xor_is_detached:1;
-    uint16_t _gauss_temp_cl:1; ///Used ONLY by Gaussian elimination to incicate where a proagation is coming from
-    uint16_t reloced:1;
-    uint16_t disabled:1;
-    uint16_t tried_to_remove:1;
+    uint32_t isRed:1; ///<Is the clause a redundant clause?
+    uint32_t isRemoved:1; ///<Is this clause queued for removal?
+    uint32_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
+    uint32_t distilled:1;
+    uint32_t is_ternary_resolved:1;
+    uint32_t occurLinked:1;
+    uint32_t must_recalc_abst:1;
+    uint32_t _used_in_xor:1;
+    uint32_t _used_in_xor_full:1;
+    uint32_t _xor_is_detached:1;
+    uint32_t _gauss_temp_cl:1; ///Used ONLY by Gaussian elimination to incicate where a proagation is coming from
+    uint32_t reloced:1;
+    uint32_t disabled:1;
+    uint32_t tried_to_remove:1;
 
 
     Lit* getData()
