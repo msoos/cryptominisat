@@ -1496,6 +1496,14 @@ DLL_PUBLIC void SATSolver::set_bva(int val)
     }
 }
 
+DLL_PUBLIC void SATSolver::set_polarity_mode(CMSat::PolarityMode mode)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.polarity_mode = mode;
+    }
+}
+
 DLL_PUBLIC void SATSolver::set_full_bve_iter_ratio(double val)
 {
     for (size_t i = 0; i < data->solvers.size(); ++i) {
