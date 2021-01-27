@@ -754,6 +754,8 @@ void OccSimplifier::eliminate_empty_resolvent_vars()
     assert(added_long_cl.empty());
     assert(solver->okay());
     assert(solver->prop_at_head());
+    assert(added_irred_bin.empty());
+    assert(added_long_cl.empty());
 
     uint32_t var_elimed = 0;
     double myTime = cpuTime();
@@ -865,7 +867,7 @@ bool OccSimplifier::deal_with_added_long_and_bin(const bool main)
 
     while (!added_long_cl.empty() || !added_irred_bin.empty())
     {
-        if (!sub_str->handle_added_long_cl(limit_to_decrease, main)) {
+        if (!sub_str->handle_added_long_cl(main)) {
             return false;
         }
         assert(solver->okay());
@@ -1039,9 +1041,10 @@ bool OccSimplifier::simulate_frw_sub_str_with_added_cl_to_var()
     added_cl_to_var.clear();
 
     //here, we clean the marks on the clauses, even in case of timeout/abort
-    if (!sub_str->handle_added_long_cl(&varelim_sub_str_limit, false)) {
+    if (!deal_with_added_long_and_bin(false)) {
         return false;
     }
+
     limit_to_decrease = &norm_varelim_time_limit;
     #ifdef SLOW_DEBUG
     check_no_marked_clauses();
@@ -1190,6 +1193,7 @@ bool OccSimplifier::eliminate_vars()
             }
             assert(solver->prop_at_head());
             assert(added_long_cl.empty());
+            assert(added_irred_bin.empty());
 
             solver->clean_occur_from_removed_clauses_only_smudged();
 
@@ -1271,8 +1275,6 @@ bool OccSimplifier::eliminate_vars()
                 << endl;
             }
         }
-        assert(solver->prop_at_head());
-
 
         if (n_cls_now > n_cls_init || cl_inc_rate > (var_dec_rate)) {
             break;
@@ -1287,6 +1289,7 @@ bool OccSimplifier::eliminate_vars()
         }
         assert(solver->prop_at_head());
         assert(added_long_cl.empty());
+        assert(added_irred_bin.empty());
     }
 
     if (solver->conf.verbosity) {
@@ -1302,6 +1305,7 @@ end:
     if (solver->okay()) {
         assert(solver->prop_at_head());
         assert(added_long_cl.empty());
+        assert(added_irred_bin.empty());
         #ifdef SLOW_DEBUG
         check_no_marked_clauses();
         #endif
@@ -1552,6 +1556,8 @@ bool OccSimplifier::occ_rem_with_gates()
 {
     assert(solver->okay());
     assert(solver->prop_at_head());
+    assert(added_irred_bin.empty());
+    assert(added_long_cl.empty());
 
     double myTime = cpuTime();
     gateFinder = new GateFinder(this, solver);
