@@ -1240,10 +1240,10 @@ void DLL_PUBLIC SATSolver::start_getting_small_clauses(
     data->solvers[0]->start_getting_small_clauses(max_len, max_glue, red, bva_vars, simplified);
 }
 
-bool DLL_PUBLIC SATSolver::get_next_small_clause(std::vector<Lit>& out)
+bool DLL_PUBLIC SATSolver::get_next_small_clause(std::vector<Lit>& out, bool all_in_one)
 {
     assert(data->solvers.size() >= 1);
-    return data->solvers[0]->get_next_small_clause(out);
+    return data->solvers[0]->get_next_small_clause(out, all_in_one);
 }
 
 void DLL_PUBLIC SATSolver::end_getting_small_clauses()

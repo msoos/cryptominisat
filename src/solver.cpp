@@ -4339,10 +4339,10 @@ void Solver::get_all_irred_clauses(vector<Lit>& out)
     get_clause_query = NULL;
 }
 
-bool Solver::get_next_small_clause(vector<Lit>& out)
+bool Solver::get_next_small_clause(vector<Lit>& out, bool all_in_one)
 {
     assert(get_clause_query);
-    return get_clause_query->get_next_small_clause(out);
+    return get_clause_query->get_next_small_clause(out, all_in_one);
 }
 
 void Solver::end_getting_small_clauses()
