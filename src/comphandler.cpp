@@ -383,11 +383,11 @@ void CompHandler::move_decision_level_zero_vars_here(
 
         const uint32_t outer = solver->map_inter_to_outer(lit.var());
         savedState[outer] = l_Undef;
-        solver->enqueue<false>(lit);
+        solver->enqueue<true>(lit);
 
         //These vars are not meant to be in the orig solver
         //so they cannot cause UNSAT
-        solver->ok = (solver->propagate<false>().isNULL());
+        solver->ok = (solver->propagate<true>().isNULL());
         assert(solver->ok);
     }
 }
