@@ -396,6 +396,14 @@ void CMSat::DataSync::signal_new_long_clause(const vector<Lit>& cl)
     if (!enabled()) {
         return;
     }
+
+    //Don't signal clauses with BVA variables
+    for(const auto& l: cl) {
+        if (solver->varData[l.var()].is_bva) {
+            return;
+        }
+    }
+
     signalled_gpu_long_cls++;
 
     if ((signalled_gpu_long_cls & 0xffff) == 0xffff) {

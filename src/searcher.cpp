@@ -4269,6 +4269,12 @@ Clause* Searcher::insert_gpu_clause(Lit* lits, uint32_t count)
         if (varData[lits[i].var()].removed != Removed::none) {
             return NULL;
         }
+
+        //Can't deal with BVA variables
+        if (varData[lits[i].var()].is_bva) {
+            return NULL;
+        }
+
         if (value(lits[i]) == l_True) {
             std::swap(lits[i], lits[0]);
             sat = true;
