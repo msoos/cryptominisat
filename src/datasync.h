@@ -61,6 +61,7 @@ class DataSync
         void trySendAssignmentToGpu(uint32_t level);
         Clause* pop_clauses();
         uint32_t signalled_gpu_long_cls = 0;
+        uint32_t popped_clause = 0;
 
         struct Stats
         {
@@ -75,12 +76,13 @@ class DataSync
         void extend_bins_if_needed();
         Lit map_outside_without_bva(Lit lit) const;
         bool shareUnitData();
+        bool shareBinData();
         bool syncBinFromOthers();
         bool syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished, watch_subarray ws);
         void syncBinToOthers();
         void clear_set_binary_values();
         void addOneBinToOthers(const Lit lit1, const Lit lit2);
-        bool shareBinData();
+
 
         uint32_t trailCopiedUntil = 0;
         int thread_id = -1;

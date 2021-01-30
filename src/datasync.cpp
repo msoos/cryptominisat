@@ -114,12 +114,12 @@ bool DataSync::syncData()
     sharedData->unit_mutex.unlock();
     if (!ok) return false;
 
-    sharedData->bin_mutex.lock();
-    extend_bins_if_needed();
-    clear_set_binary_values();
-    ok = shareBinData();
-    sharedData->bin_mutex.unlock();
-    if (!ok) return false;
+//     sharedData->bin_mutex.lock();
+//     extend_bins_if_needed();
+//     clear_set_binary_values();
+//     ok = shareBinData();
+//     sharedData->bin_mutex.unlock();
+//     if (!ok) return false;
 
     #ifdef USE_MPI
     if (is_mpi && mpiSize > 1 && solver->conf.thread_num == 0) {
@@ -398,8 +398,10 @@ void CMSat::DataSync::signal_new_long_clause(const vector<Lit>& cl)
     }
     signalled_gpu_long_cls++;
 
-    if (thread_id != 0) {
-        cout << "signalled_gpu_long_cls: " << signalled_gpu_long_cls << endl;
+    if ((signalled_gpu_long_cls & 0xffff) == 0xffff) {
+        cout << "signalled_gpu_long_cls: " << signalled_gpu_long_cls
+        << " thread id: " << thread_id
+        << endl;
     }
 
     sharedData->gpuClauseSharer->addClause((int*)cl.data(), cl.size());
@@ -411,6 +413,14 @@ void DataSync::unsetFromGpu(uint32_t level) {
     }
 
     if (trailCopiedUntil > solver->trail_lim[level]) {
+//         if (thread_id == 0) {
+//             cout
+//             << "Unset from point " << solver->trail_lim[level]
+//             << " count: " << trailCopiedUntil - solver->trail_lim[level]
+//             << " level: " << level
+//             << endl;
+//         }
+
         sharedData->gpuClauseSharer->unsetSolverValues(
             thread_id,
             (int*)&solver->trail[solver->trail_lim[level]],
@@ -435,6 +445,15 @@ void DataSync::trySendAssignmentToGpu(uint32_t level) {
         return;
     }
 
+//     if (thread_id == 0) {
+//         cout
+//         << "Set from point " << solver->trail_lim[level]
+//         << " count: " << sendUntil - trailCopiedUntil
+//         << " level: " << level
+//         << endl;
+//     }
+
+
     // gpuClauseSharer might already have too many assignments from our solver
     //   in which case we might not be able to pass a new assignment
     bool success = sharedData->gpuClauseSharer->trySetSolverValues(
@@ -454,6 +473,8 @@ Clause* CMSat::DataSync::pop_clauses()
         return NULL;
     }
 
+    //cout << "thread ID: " << thread_id << endl;
+
     //cout << "Trying to pop." << thread_id << endl;
     int* litsAsInt;
     int count;
@@ -464,6 +485,13 @@ Clause* CMSat::DataSync::pop_clauses()
     while (sharedData->gpuClauseSharer->popReportedClause(
         thread_id, litsAsInt, count, gpuClauseId))
     {
+        popped_clause++;
+//         if ((popped_clause & 0xfff) == 0xfff) {
+//             cout << "popped_clause: " << popped_clause
+//             << " thread id: " << thread_id
+//             << endl;
+//         }
+
         Lit *lits = (Lit*) litsAsInt;
         cl = solver->insert_gpu_clause(lits, count);
         if (!solver->okay()) {

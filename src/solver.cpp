@@ -463,10 +463,6 @@ Clause* Solver::add_clause_int(
         #endif
         << fin;
         std::swap(ps[0], ps[i]);
-
-        if (ps.size() == 2) {
-            datasync->signalNewBinClause(ps);
-        }
     }
 
     //Handle special cases

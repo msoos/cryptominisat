@@ -118,8 +118,8 @@ struct GPUThread
 
     void operator()()
     {
-        uint32_t gpuReduceDbPeriod = 20000;
-        uint32_t gpuReduceDbPeriodInc = 20000;
+        uint32_t gpuReduceDbPeriod = 10000;
+        uint32_t gpuReduceDbPeriodInc = 10000;
 
         while (!must_interrupt->load(std::memory_order_relaxed)) {
             shared_data->gpuClauseSharer->gpuRun();
