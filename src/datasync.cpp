@@ -406,11 +406,11 @@ void CMSat::DataSync::signal_new_long_clause(const vector<Lit>& cl)
 
     signalled_gpu_long_cls++;
 
-    if ((signalled_gpu_long_cls & 0xffff) == 0xffff) {
-        cout << "signalled_gpu_long_cls: " << signalled_gpu_long_cls
-        << " thread id: " << thread_id
-        << endl;
-    }
+//     if ((signalled_gpu_long_cls & 0xffff) == 0xffff) {
+//         cout << "signalled_gpu_long_cls: " << signalled_gpu_long_cls
+//         << " thread id: " << thread_id
+//         << endl;
+//     }
 
     sharedData->gpuClauseSharer->addClause((int*)cl.data(), cl.size());
 }
