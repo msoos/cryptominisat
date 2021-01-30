@@ -3315,11 +3315,11 @@ lbool Solver::probe_inter(Lit l, uint32_t& min_props)
         //seen[x] == 2 -> propagated as NEG
         seen[trail[i].lit.var()] = 1+(int)trail[i].lit.sign();
     }
-    cancelUntil(0);
+    cancelUntil<false, true> (0);
 
     //Check result
     if (!p.isNULL()) {
-        enqueue<false>(~l);
+        enqueue<true>(~l);
         p = propagate_any_order_fast();
         if (!p.isNULL()) {
             ok = false;
@@ -3330,7 +3330,7 @@ lbool Solver::probe_inter(Lit l, uint32_t& min_props)
     //Probe ~l
     old_trail_size = trail.size();
     new_decision_level();
-    enqueue<false>(~l);
+    enqueue<true>(~l);
     p = propagate_any_order_fast();
     min_props = std::min<uint32_t>(min_props, trail.size() - old_trail_size);
     probe_inter_tmp.clear();
@@ -3350,7 +3350,7 @@ lbool Solver::probe_inter(Lit l, uint32_t& min_props)
             probe_inter_tmp.push_back(~lit);
         }
     }
-    cancelUntil(0);
+    cancelUntil<false, true>(0);
 
     //Check result
     if (!p.isNULL()) {
@@ -3430,7 +3430,7 @@ lbool Solver::probe_outside(Lit l, uint32_t& min_props)
     return probe_inter(l, min_props);
 }
 
-bool Solver::add_xor_clause_outer(const vector<uint32_t>& vars, bool rhs)
+bool Solver::add_xor_clause_outside(const vector<uint32_t>& vars, bool rhs)
 {
     if (!ok) {
         return false;

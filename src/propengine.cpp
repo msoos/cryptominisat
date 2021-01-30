@@ -553,6 +553,7 @@ void PropEngine::print_trail()
 }
 
 
+template<bool update_bogoprops>
 bool PropEngine::propagate_occur()
 {
     assert(ok);
@@ -567,12 +568,12 @@ bool PropEngine::propagate_occur()
             ; ++it
         ) {
             if (it->isClause()) {
-                if (!propagate_long_clause_occur(it->get_offset()))
+                if (!propagate_long_clause_occur<update_bogoprops>(it->get_offset()))
                     return false;
             }
 
             if (it->isBin()) {
-                if (!propagate_binary_clause_occur(*it))
+                if (!propagate_binary_clause_occur<update_bogoprops>(*it))
                     return false;
             }
         }
@@ -581,6 +582,10 @@ bool PropEngine::propagate_occur()
     return true;
 }
 
+template bool PropEngine::propagate_occur<true>();
+template bool PropEngine::propagate_occur<false>();
+
+template<bool update_bogoprops>
 inline bool PropEngine::propagate_binary_clause_occur(
     const Watched& ws)
 {
@@ -590,7 +595,7 @@ inline bool PropEngine::propagate_binary_clause_occur(
     }
 
     if (val == l_Undef) {
-        enqueue<true>(ws.lit2());
+        enqueue<update_bogoprops>(ws.lit2());
         #ifdef STATS_NEEDED
         if (ws.red())
             propStats.propsBinRed++;
@@ -602,6 +607,7 @@ inline bool PropEngine::propagate_binary_clause_occur(
     return true;
 }
 
+template<bool update_bogoprops>
 inline bool PropEngine::propagate_long_clause_occur(
     const ClOffset offset)
 {
@@ -636,7 +642,7 @@ inline bool PropEngine::propagate_long_clause_occur(
     if (numUndef > 1)
         return true;
 
-    enqueue<true>(lastUndef);
+    enqueue<update_bogoprops>(lastUndef);
     #ifdef STATS_NEEDED
     if (cl.red())
         propStats.propsLongRed++;

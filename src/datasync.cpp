@@ -450,7 +450,7 @@ bool DataSync::syncFromMPI()
             goto end;
         }
     }
-    solver->ok = solver->propagate<true>().isNULL();
+    solver->ok = solver->propagate<false>().isNULL();
     if (!solver->ok) goto end;
     mpiRecvUnitData += thisMpiRecvUnitData;
 

@@ -27,6 +27,8 @@ THE SOFTWARE.
 #include "mpi.h"
 #endif //USE_MPI
 
+#ifndef _DATASYNC_H_
+#define _DATASYNC_H_
 
 namespace CMSat {
 
@@ -144,3 +146,5 @@ inline bool DataSync::enabled()
 }
 
 }
+
+#endif

@@ -25,8 +25,8 @@ THE SOFTWARE.
 #include "solver.h"
 #include "drat.h"
 #include "shareddata.h"
-#include <fstream>
 
+#include <fstream>
 #include <cstdint>
 #include <thread>
 #include <mutex>
@@ -71,19 +71,25 @@ namespace CMSat {
         CMSatPrivateData(const CMSatPrivateData&) = delete;
         CMSatPrivateData& operator=(const CMSatPrivateData&) = delete;
 
+        //Mult-threaded data
         vector<Solver*> solvers;
         SharedData *shared_data = NULL;
         int which_solved = 0;
         std::atomic<bool>* must_interrupt;
         bool must_interrupt_needs_delete = false;
+
         bool okay = true;
+
+        ///????
         std::ofstream* log = NULL;
         int sql = 0;
         double timeout = std::numeric_limits<double>::max();
         bool interrupted = false;
         uint64_t max_confl_for_backbone; //valid for BACKBONE ONLY
 
-        //variables and clauses added/to add
+        //variables and clauses added/to add.
+        //This is to make it faster to add variables/clasues
+        //   by adding them in one go
         unsigned cls = 0;
         unsigned vars_to_add = 0;
         vector<Lit> cls_lits;
@@ -460,7 +466,7 @@ struct OneThreadAddCls
                 ) {
                     vars.push_back(orig_lits[at].var());
                 }
-                ret = solver.add_xor_clause_outer(vars, rhs);
+                ret = solver.add_xor_clause_outside(vars, rhs);
             }
         }
 
@@ -475,6 +481,7 @@ struct OneThreadAddCls
     const size_t tid;
 };
 
+//Add the cached clauses and variables to the threads
 static bool actually_add_clauses_to_threads(CMSatPrivateData* data)
 {
     DataForThread data_for_thread(data);
@@ -482,12 +489,12 @@ static bool actually_add_clauses_to_threads(CMSatPrivateData* data)
         OneThreadAddCls t(data_for_thread, 0);
         t.operator()();
     } else {
-        std::vector<std::thread> thds;
+        vector<thread> thds;
         for(size_t i = 0; i < data->solvers.size(); i++) {
             thds.push_back(thread(OneThreadAddCls(data_for_thread, i)));
         }
-        for(std::thread& thread : thds){
-            thread.join();
+        for(std::thread& t: thds){
+            t.join();
         }
     }
     bool ret = (*data_for_thread.ret == l_True);
@@ -703,7 +710,7 @@ DLL_PUBLIC bool SATSolver::add_xor_clause(const std::vector<unsigned>& vars, boo
         data->solvers[0]->new_vars(data->vars_to_add);
         data->vars_to_add = 0;
 
-        ret = data->solvers[0]->add_xor_clause_outer(vars, rhs);
+        ret = data->solvers[0]->add_xor_clause_outside(vars, rhs);
         data->cls++;
     }
 
@@ -785,6 +792,14 @@ lbool calc(
     bool only_sampling_solution = false,
     const string* strategy = NULL
 ) {
+    //Sanity check
+    if (data->solvers.size() > 1 && data->sql > 0) {
+        std::cerr
+        << "Multithreaded solving and SQL cannot be specified at the same time"
+        << endl;
+        exit(-1);
+    }
+
     //Reset the interrupt signal if it was set
     data->must_interrupt->store(false, std::memory_order_relaxed);
 
@@ -812,13 +827,7 @@ lbool calc(
         (*data->log) << " )" << endl;
     }
 
-    if (data->solvers.size() > 1 && data->sql > 0) {
-        std::cerr
-        << "Multithreaded solving and SQL cannot be specified at the same time"
-        << endl;
-        exit(-1);
-    }
-
+    //Deal with the single-thread case
     if (data->solvers.size() == 1) {
         data->solvers[0]->new_vars(data->vars_to_add);
         data->vars_to_add = 0;
@@ -836,9 +845,9 @@ lbool calc(
         return ret;
     }
 
-    //Multi-thread from now on.
+    //Multi-threaded case
     DataForThread data_for_thread(data, assumptions);
-    std::vector<std::thread> thds;
+    vector<thread> thds;
     for(size_t i = 0
         ; i < data->solvers.size()
         ; i++
@@ -846,8 +855,8 @@ lbool calc(
         thds.push_back(thread(OneThreadCalc(
             data_for_thread, i, todo, only_sampling_solution)));
     }
-    for(std::thread& thread : thds){
-        thread.join();
+    for(std::thread& t: thds){
+        t.join();
     }
     lbool real_ret = *data_for_thread.ret;
 

@@ -866,8 +866,8 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
                     << solver->sumConflicts
                     #endif
                     << fin;
-                    solver->enqueue<true>(subsLits[j]);
-                    solver->ok = solver->propagate_occur();
+                    solver->enqueue<false>(subsLits[j]);
+                    solver->ok = solver->propagate_occur<false>();
                     if (!solver->okay()) {
                         return false;
                     }

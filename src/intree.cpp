@@ -389,7 +389,7 @@ bool InTree::empty_failed_list()
             << solver->sumConflicts
             #endif
             << fin;
-            solver->ok = solver->propagate<true>().isNULL();
+            solver->ok = solver->propagate<false>().isNULL();
             if (!solver->ok) {
                 return false;
             }

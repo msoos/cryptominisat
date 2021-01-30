@@ -1350,7 +1350,7 @@ lbool Searcher::search()
     }
     max_confl_this_restart -= (int64_t)params.conflictsDoneThisRestart;
 
-    cancelUntil<true, false>(0);
+    cancelUntil(0);
     confl = propagate<false>();
     if (!confl.isNULL()) {
         ok = false;

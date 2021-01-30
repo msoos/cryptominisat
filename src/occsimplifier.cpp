@@ -430,12 +430,12 @@ bool OccSimplifier::clean_clause(
             return false;
 
         case 1: {
-            solver->enqueue<true>(cl[0]);
+            solver->enqueue<false>(cl[0]);
             #ifdef STATS_NEEDED
             solver->propStats.propsUnit++;
             #endif
             unlink_clause(offset, false, false, only_set_is_removed);
-            solver->ok = solver->propagate_occur();
+            solver->ok = solver->propagate_occur<false>();
             return solver->okay();
         }
 
@@ -510,7 +510,7 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
             return false;
 
         case 1: {
-            solver->enqueue<true>(cl[0]);
+            solver->enqueue<false>(cl[0]);
             #ifdef STATS_NEEDED
             solver->propStats.propsUnit++;
             #endif
@@ -3338,7 +3338,7 @@ bool OccSimplifier::try_remove_lit_via_occurrence_simpl(
     //No conflict at decision level 0, let's propagate
     if (!conflicted && !can_remove_cl) {
         assert(found_it);
-        conflicted = !solver->propagate_occur();
+        conflicted = !solver->propagate_occur<true>();
     }
     solver->cancelUntil<false, true>(0);
 
@@ -3767,7 +3767,7 @@ bool OccSimplifier::add_varelim_resolvent(
     );
 
     if (solver->okay()) {
-        solver->ok = solver->propagate_occur();
+        solver->ok = solver->propagate_occur<false>();
     }
     if (!solver->okay()) {
         return false;
@@ -4689,7 +4689,7 @@ Clause* OccSimplifier::full_add_clause(
     );
 
     if (solver->okay()) {
-        solver->ok = solver->propagate_occur();
+        solver->ok = solver->propagate_occur<false>();
     }
     if (!solver->okay()) {
         return NULL;

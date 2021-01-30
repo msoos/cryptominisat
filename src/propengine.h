@@ -209,6 +209,8 @@ public:
     Lit trail_at(size_t at) const {
         return trail[at].lit;
     }
+
+    template<bool update_bogoprops>
     bool propagate_occur();
     PropStats propStats;
     template<bool update_bogoprops>
@@ -359,7 +361,9 @@ protected:
 
 private:
     Solver* solver;
+    template<bool update_bogoprops>
     bool propagate_binary_clause_occur(const Watched& ws);
+    template<bool update_bogoprops>
     bool propagate_long_clause_occur(const ClOffset offset);
     template<bool update_bogoprops>
     bool prop_bin_cl(
