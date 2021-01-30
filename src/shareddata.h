@@ -42,6 +42,11 @@ class SharedData
             gpuClauseSharer = GpuShare::makeGpuClauseSharerPtr(csOpts);
         }
 
+        ~SharedData()
+        {
+            //gpuClauseSharer->free()
+        }
+
         struct Spec {
             Spec() :
                 data(new vector<Lit>)

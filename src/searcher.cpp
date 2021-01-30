@@ -1288,14 +1288,15 @@ lbool Searcher::search()
         #ifdef USE_GAUSS
         gqhead = qhead;
         #endif
-        Clause* pop = solver->datasync->pop_clauses();
+        confl = PropBy();
+        if ((sumConflicts & 0xf) == 0xf) {
+            confl = solver->datasync->pop_clauses();
+        }
         if (!solver->okay()) {
             search_ret = l_False;
             goto end;
         }
-        if (pop != NULL) {
-            confl = PropBy(cl_alloc.get_offset(pop));
-        } else {
+        if (confl.isNULL()) {
             confl = propagate_any_order_fast();
         }
 
@@ -1867,8 +1868,10 @@ bool Searcher::handle_conflict(PropBy confl)
         , glue             //return glue here
         , glue_before_minim         //return glue before minimization here
     );
-    solver->datasync->signal_new_long_clause(learnt_clause);
-    solver->datasync->trySendAssignmentToGpu(decisionLevel()-1);
+    if ((sumConflicts & 0x0) == 0x0) {
+        solver->datasync->signal_new_long_clause(learnt_clause);
+        solver->datasync->trySendAssignmentToGpu(decisionLevel()-1);
+    }
 
     uint32_t connects_num_communities = 0;
     #ifdef STATS_NEEDED
@@ -4230,8 +4233,13 @@ void Searcher::find_largest_level(Lit* lits, uint32_t count, uint32_t start)
 // May lead to canceling to backtracking if this clause leads to an implication at a level strictly lower
 // than the current level
 // returns a non-undef cref if this clause is in conflict
-Clause* Searcher::insert_gpu_clause(Lit* lits, uint32_t count)
+PropBy Searcher::insert_gpu_clause(Lit* lits, uint32_t count)
 {
+    if (count == 0) {
+        solver->ok = false;
+        return PropBy();
+    }
+
     //Update, clean from duplicates
     for(uint32_t i = 0; i < count; i ++) {
         lits[i] = solver->varReplacer->get_lit_replaced_with(lits[i]);
@@ -4244,22 +4252,19 @@ Clause* Searcher::insert_gpu_clause(Lit* lits, uint32_t count)
         }
         if (lits[i] == ~lits[j]) {
             //already satisfied
-            return NULL;
+            return PropBy();
         }
         j++;
         lits[j] = lits[i];
     }
     count = j+1;
 
-    //TODO fix to be better, this is far from optimal
-    if (count <= 2) {
-        return NULL;
-    }
-
     // if only one literal isn't false, it will be in 0 of lits
     // if only two literals aren't set, they will be in 0 and 1 of lits
     find_largest_level(lits, count, 0);
-    find_largest_level(lits, count, 1);
+    if (count > 1) {
+        find_largest_level(lits, count, 1);
+    }
 
     bool sat = false;
     for(uint32_t i = 0; i < count; i ++) {
@@ -4267,12 +4272,12 @@ Clause* Searcher::insert_gpu_clause(Lit* lits, uint32_t count)
 
         //Variable has been removed already
         if (varData[lits[i].var()].removed != Removed::none) {
-            return NULL;
+            return PropBy();
         }
 
         //Can't deal with BVA variables
         if (varData[lits[i].var()].is_bva) {
-            return NULL;
+            return PropBy();
         }
 
         if (value(lits[i]) == l_True) {
@@ -4281,7 +4286,7 @@ Clause* Searcher::insert_gpu_clause(Lit* lits, uint32_t count)
 
             //It's satisfied at level 0, nothing to do
             if (level(lits[i]) == 0) {
-                return NULL;
+                return PropBy();
             }
         }
     }
@@ -4292,36 +4297,35 @@ Clause* Searcher::insert_gpu_clause(Lit* lits, uint32_t count)
 //     }
 //     cout << endl;
 
-    //Empty clause
-    if (count == 0) {
-        solver->ok = false;
-        return NULL;
-    }
-
     //Unit clause
     if (count == 1) {
         lbool val = value(lits[0]);
         if (val == l_False && level(lits[0]) == 0) {
             solver->ok = false;
-            return NULL;
+            return PropBy();
         }
         // we've learned a unary clause we already knew
         if (val == l_True && level(lits[0]) == 0) {
-            return NULL;
+            return PropBy();
         }
         cancelUntil<false>(0);
         enqueue<false>(lits[0]);
-        return NULL;
+        return PropBy();
+    }
+
+    //TODO this is just for debug
+    if (count == 2) {
+        return PropBy();
     }
 
     // It's already satisfied
     // Or at least 2 are unset
-    // ---> We can just attach the clause
+    // ---> We only attach the clause
     if (sat ||
         (value(lits[0]) == l_Undef && value(lits[1]) == l_Undef) )
     {
         learn_gpu_clause(lits, count);
-        return NULL;
+        return PropBy();
     }
 
     // All are l_False, this is a conflict
@@ -4334,8 +4338,13 @@ Clause* Searcher::insert_gpu_clause(Lit* lits, uint32_t count)
         //#endif
 
         //Go back to highest level
-        //assert(value(lits[0]) == l_False);
         cancelUntil(level(lits[0]));
+
+        //#ifdef SLOW_DEBUG
+        for (uint32_t i = 0; i < count; i++) {
+            assert(value(lits[i]) == l_False);
+        }
+        //#endif
         return learn_gpu_clause(lits, count);
     }
 
@@ -4349,33 +4358,41 @@ Clause* Searcher::insert_gpu_clause(Lit* lits, uint32_t count)
     }
     //#endif
 
-    Clause* cl = learn_gpu_clause(lits, count);
-    enqueue<false>(lits[0], level(lits[1]), PropBy(cl_alloc.get_offset(cl)));
-
-    return NULL;
+    PropBy by = learn_gpu_clause(lits, count);
+    enqueue<false>(lits[0], decisionLevel(), by);
+    return PropBy();
 }
 
-Clause* Searcher::learn_gpu_clause(Lit* lits, uint32_t count)
+PropBy Searcher::learn_gpu_clause(Lit* lits, uint32_t count)
 {
-    tmp_gpu_clause.resize(count);
-    for(uint32_t i = 0; i < count; i++) {
-        tmp_gpu_clause[i] = lits[i];
+    if (count > 2) {
+        tmp_gpu_clause.resize(count);
+        for(uint32_t i = 0; i < count; i++) {
+            tmp_gpu_clause[i] = lits[i];
+        }
+
+        assert(count >= 2);
+        Clause* cl = cl_alloc.Clause_new(tmp_gpu_clause, sumConflicts);
+        ClOffset off = cl_alloc.get_offset(cl);
+
+        cl->stats.glue = count;
+        cl->stats.which_red_array = 2;
+        cl->stats.activity = 0.0f;
+        cl->isRed = true;
+
+        longRedCls[cl->stats.which_red_array].push_back(off);
+        bump_cl_act<false>(cl);
+        litStats.redLits += count;
+
+        attachClause(*cl, false);
+        //TODO red_stats_extra
+
+        return PropBy(cl_alloc.get_offset(cl));
     }
 
-    assert(count >= 2);
-    Clause* cl = cl_alloc.Clause_new(tmp_gpu_clause, sumConflicts);
-    ClOffset off = cl_alloc.get_offset(cl);
-
-    cl->stats.glue = count;
-    cl->stats.which_red_array = 2;
-    cl->stats.activity = 0.0f;
-    cl->isRed = true;
-
-    longRedCls[cl->stats.which_red_array].push_back(off);
-    bump_cl_act<false>(cl);
-    litStats.redLits += count;
-
-    attachClause(*cl, false);
-    //TODO red_stats_extra
-    return cl;
+    //Binary, and lits[0] may be propagated due to lits[1]
+    assert(count == 2);
+    attach_bin_clause(lits[0], lits[1], false, false);
+    binTri.irredBins++;
+    return PropBy(lits[1], false);
 }

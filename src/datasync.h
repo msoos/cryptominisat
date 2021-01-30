@@ -22,6 +22,7 @@ THE SOFTWARE.
 
 #include "solvertypes.h"
 #include "watched.h"
+#include "propby.h"
 #include "watcharray.h"
 #ifdef USE_MPI
 #include "mpi.h"
@@ -59,7 +60,7 @@ class DataSync
         void signal_new_long_clause(const vector<Lit>& clause);
         void unsetFromGpu(uint32_t level);
         void trySendAssignmentToGpu(uint32_t level);
-        Clause* pop_clauses();
+        PropBy pop_clauses();
         uint32_t signalled_gpu_long_cls = 0;
         uint32_t popped_clause = 0;
 

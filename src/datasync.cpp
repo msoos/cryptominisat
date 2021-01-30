@@ -475,10 +475,10 @@ void DataSync::trySendAssignmentToGpu(uint32_t level) {
     }
 }
 
-Clause* CMSat::DataSync::pop_clauses()
+PropBy CMSat::DataSync::pop_clauses()
 {
     if (!enabled()) {
-        return NULL;
+        return PropBy();
     }
 
     //cout << "thread ID: " << thread_id << endl;
@@ -489,6 +489,7 @@ Clause* CMSat::DataSync::pop_clauses()
     long gpuClauseId;
     uint32_t decisionLevelAtConflict = -1;
     Clause* cl;
+    PropBy by = PropBy();
 
     while (sharedData->gpuClauseSharer->popReportedClause(
         thread_id, litsAsInt, count, gpuClauseId))
@@ -501,19 +502,19 @@ Clause* CMSat::DataSync::pop_clauses()
 //         }
 
         Lit *lits = (Lit*) litsAsInt;
-        cl = solver->insert_gpu_clause(lits, count);
+        by = solver->insert_gpu_clause(lits, count);
         if (!solver->okay()) {
-            return NULL;
+            return PropBy();
         }
-        if (cl != NULL) {
+        if (!by.isNULL()) {
             decisionLevelAtConflict = solver->decisionLevel();
         }
     }
 
     if (solver->decisionLevel() == decisionLevelAtConflict) {
-        return cl;
+        return by;
     }
-    return NULL;
+    return PropBy();
 }
 
 ///////////////////////////////////////
