@@ -92,6 +92,7 @@ namespace CMSat {
         //   by adding them in one go
         unsigned cls = 0;
         unsigned vars_to_add = 0;
+        unsigned total_num_vars = 0;
         vector<Lit> cls_lits;
 
         //For single call setup
@@ -105,6 +106,38 @@ namespace CMSat {
         vector<double> cpu_times;
     };
 }
+
+struct GPUThread
+{
+    GPUThread(
+        SharedData* _shared_data,
+        std::atomic<bool>* _must_interrupt):
+        shared_data(_shared_data),
+        must_interrupt(_must_interrupt)
+    {}
+
+    void operator()()
+    {
+        uint32_t gpuReduceDbPeriod = 20000;
+        uint32_t gpuReduceDbPeriodInc = 20000;
+
+        while (!must_interrupt->load(std::memory_order_relaxed)) {
+            shared_data->gpuClauseSharer->gpuRun();
+            if (shared_data->gpuClauseSharer->getAddedClauseCount() -
+                shared_data->gpuClauseSharer->getAddedClauseCountAtLastReduceDb() >= gpuReduceDbPeriod)
+            {
+                shared_data->gpuClauseSharer->reduceDb();
+                if (!shared_data->gpuClauseSharer->hasRunOutOfGpuMemoryOnce()) {
+                    gpuReduceDbPeriod += gpuReduceDbPeriodInc;
+                }
+            }
+            //<<< maybe print stats>>>
+        }
+    }
+
+    SharedData* shared_data;
+    std::atomic<bool>* must_interrupt;
+};
 
 struct DataForThread
 {
@@ -403,6 +436,9 @@ DLL_PUBLIC void SATSolver::set_num_threads(unsigned num)
     }
 
     data->cls_lits.reserve(CACHE_SIZE);
+
+    //GPU system does not support variable renumbering
+    data->solvers[0]->conf.doRenumberVars = 0;
     for(unsigned i = 1; i < num; i++) {
         SolverConf conf = data->solvers[0]->getConf();
         update_config(conf, i);
@@ -412,6 +448,7 @@ DLL_PUBLIC void SATSolver::set_num_threads(unsigned num)
 
     //set shared data
     data->shared_data = new SharedData(data->solvers.size());
+    data->shared_data->gpuClauseSharer->setCpuSolverCount(num);
     for(unsigned i = 0; i < num; i++) {
         SolverConf conf = data->solvers[i]->getConf();
         if (i >= 1) {
@@ -496,7 +533,9 @@ static bool actually_add_clauses_to_threads(CMSatPrivateData* data)
         for(std::thread& t: thds){
             t.join();
         }
+        cout << "Setting var count to : " << data->total_num_vars << endl;
     }
+    cout << "Set var count to : " << data->total_num_vars << endl;
     bool ret = (*data_for_thread.ret == l_True);
 
     //clear what has been added
@@ -848,6 +887,11 @@ lbool calc(
     //Multi-threaded case
     DataForThread data_for_thread(data, assumptions);
     vector<thread> thds;
+    data->shared_data->gpuClauseSharer->setVarCount(data->total_num_vars);
+    if (todo == Todo::todo_solve) {
+        thds.push_back(thread(GPUThread(
+            data->shared_data, data->must_interrupt)));
+    }
     for(size_t i = 0
         ; i < data->solvers.size()
         ; i++
@@ -936,7 +980,9 @@ DLL_PUBLIC const std::vector<Lit>& SATSolver::get_conflict() const
 
 DLL_PUBLIC uint32_t SATSolver::nVars() const
 {
-    return data->solvers[0]->nVarsOutside() + data->vars_to_add;
+    //Below holds all the time, except when Ctrl+C -ing from calc(), disabling.
+    //assert(data->solvers[0]->nVarsOutside() + data->vars_to_add == data->total_num_vars);
+    return data->total_num_vars;
 }
 
 DLL_PUBLIC void SATSolver::new_var()
@@ -946,9 +992,9 @@ DLL_PUBLIC void SATSolver::new_var()
 
 DLL_PUBLIC void SATSolver::new_vars(const size_t n)
 {
-    if (n >= MAX_VARS
-        || (data->vars_to_add + n) >= MAX_VARS
-    ) {
+    if (n >= MAX_VARS ||
+        data->total_num_vars + n >= MAX_VARS)
+    {
         throw CMSat::TooManyVarsError();
     }
 
@@ -957,6 +1003,7 @@ DLL_PUBLIC void SATSolver::new_vars(const size_t n)
     }
 
     data->vars_to_add += n;
+    data->total_num_vars += n;
 }
 
 DLL_PUBLIC void SATSolver::add_sql_tag(const std::string& name, const std::string& val)

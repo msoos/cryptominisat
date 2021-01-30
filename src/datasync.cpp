@@ -52,6 +52,7 @@ DataSync::DataSync(Solver* _solver, SharedData* _sharedData, bool _is_mpi) :
 void DataSync::set_shared_data(SharedData* _sharedData)
 {
     sharedData = _sharedData;
+    thread_id = _sharedData->threads++;
 }
 
 void DataSync::new_var(const bool bva)
@@ -390,6 +391,94 @@ void DataSync::signalNewBinClause(Lit lit1, Lit lit2)
     newBinClauses.push_back(std::make_pair(lit1, lit2));
 }
 
+void CMSat::DataSync::signal_new_long_clause(const vector<Lit>& cl)
+{
+    if (!enabled()) {
+        return;
+    }
+    signalled_gpu_long_cls++;
+
+    if (thread_id != 0) {
+        cout << "signalled_gpu_long_cls: " << signalled_gpu_long_cls << endl;
+    }
+
+    sharedData->gpuClauseSharer->addClause((int*)cl.data(), cl.size());
+}
+
+void DataSync::unsetFromGpu(uint32_t level) {
+    if (!enabled()) {
+        return;
+    }
+
+    if (trailCopiedUntil > solver->trail_lim[level]) {
+        sharedData->gpuClauseSharer->unsetSolverValues(
+            thread_id,
+            (int*)&solver->trail[solver->trail_lim[level]],
+            trailCopiedUntil - solver->trail_lim[level]);
+        trailCopiedUntil = solver->trail_lim[level];
+    }
+}
+
+void DataSync::trySendAssignmentToGpu(uint32_t level) {
+    if (!enabled()) {
+        return;
+    }
+
+    uint32_t sendUntil;
+    if (level < solver->decisionLevel()) {
+        unsetFromGpu(level);
+        sendUntil = solver->trail_lim[level];
+    } else {
+        sendUntil = solver->trail_size();
+    }
+    if (trailCopiedUntil >= sendUntil) {
+        return;
+    }
+
+    // gpuClauseSharer might already have too many assignments from our solver
+    //   in which case we might not be able to pass a new assignment
+    bool success = sharedData->gpuClauseSharer->trySetSolverValues(
+        thread_id,
+        (int*)&solver->trail[trailCopiedUntil],
+        sendUntil - trailCopiedUntil);
+
+    if (success) {
+        trailCopiedUntil = sendUntil;
+        sharedData->gpuClauseSharer->trySendAssignment(thread_id);
+    }
+}
+
+Clause* CMSat::DataSync::pop_clauses()
+{
+    if (!enabled()) {
+        return NULL;
+    }
+
+    //cout << "Trying to pop." << thread_id << endl;
+    int* litsAsInt;
+    int count;
+    long gpuClauseId;
+    uint32_t decisionLevelAtConflict = -1;
+    Clause* cl;
+
+    while (sharedData->gpuClauseSharer->popReportedClause(
+        thread_id, litsAsInt, count, gpuClauseId))
+    {
+        Lit *lits = (Lit*) litsAsInt;
+        cl = solver->insert_gpu_clause(lits, count);
+        if (!solver->okay()) {
+            return NULL;
+        }
+        if (cl != NULL) {
+            decisionLevelAtConflict = solver->decisionLevel();
+        }
+    }
+
+    if (solver->decisionLevel() == decisionLevelAtConflict) {
+        return cl;
+    }
+    return NULL;
+}
 
 ///////////////////////////////////////
 // MPI

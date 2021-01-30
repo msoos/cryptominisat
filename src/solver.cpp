@@ -1737,6 +1737,7 @@ lbool Solver::solve_with_assumptions(
     conf.maxTime = std::numeric_limits<double>::max();
     drat->flush();
     conf.conf_needed = true;
+    set_must_interrupt_asap();
     assert(decisionLevel()== 0);
     assert(!ok || solver->prop_at_head());
 

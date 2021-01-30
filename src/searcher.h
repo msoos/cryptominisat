@@ -83,6 +83,7 @@ class Searcher : public HyperEngine
         void check_calc_vardist_features(bool force = false);
         void dump_search_loop_stats(double myTime);
         bool must_abort(lbool status);
+        Clause* insert_gpu_clause(Lit* lits, uint32_t count);
         uint64_t luby_loop_num = 0;
         MTRand mtrand; ///< random number generator
 
@@ -376,6 +377,14 @@ class Searcher : public HyperEngine
         CMSat::Restart cur_rest_type;
         void adjust_restart_strategy();
         void setup_restart_strategy();
+
+
+        ///////
+        // GPU
+        //////
+        void find_largest_level(Lit* lits, uint32_t count, uint32_t start);
+        vector<Lit> tmp_gpu_clause;
+        Clause* learn_gpu_clause(Lit* lits, uint32_t count);
 
         //////////////
         // Debug

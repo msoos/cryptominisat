@@ -595,7 +595,7 @@ size_t Searcher::find_backtrack_level_of_learnt()
     else {
         uint32_t max_i = 1;
         for (uint32_t i = 2; i < learnt_clause.size(); i++) {
-            if (varData[learnt_clause[i].var()].level > varData[learnt_clause[max_i].var()].level)
+            if (level(learnt_clause[i]) > level(learnt_clause[max_i]))
                 max_i = i;
         }
         std::swap(learnt_clause[max_i], learnt_clause[1]);
@@ -1288,7 +1288,16 @@ lbool Searcher::search()
         #ifdef USE_GAUSS
         gqhead = qhead;
         #endif
-        confl = propagate_any_order_fast();
+        Clause* pop = solver->datasync->pop_clauses();
+        if (!solver->okay()) {
+            search_ret = l_False;
+            goto end;
+        }
+        if (pop != NULL) {
+            confl = PropBy(cl_alloc.get_offset(pop));
+        } else {
+            confl = propagate_any_order_fast();
+        }
 
         if (!confl.isNULL()) {
             update_branch_params();
@@ -1538,6 +1547,9 @@ void Searcher::attach_and_enqueue_learnt_clause(
 
         default:
             //Long learnt
+            if (!update_bogoprops) {
+                solver->datasync->signal_new_long_clause(learnt_clause);
+            }
             stats.learntLongs++;
             solver->attachClause(*cl, enq);
             if (enq) enqueue<false>(learnt_clause[0], level, PropBy(cl_alloc.get_offset(cl)));
@@ -1843,6 +1855,7 @@ bool Searcher::handle_conflict(PropBy confl)
         longRedClsSizes[i] += longRedCls[i].size();
     }
     params.conflictsDoneThisRestart++;
+    solver->datasync->trySendAssignmentToGpu(decisionLevel()-1);
 
     ConflictData data = find_conflict_level(confl);
     if (data.nHighestLevel == 0) {
@@ -3686,6 +3699,7 @@ void Searcher::cancelUntil(uint32_t blevel)
 
     if (decisionLevel() > blevel) {
         update_polarities_on_backtrack();
+        solver->datasync->unsetFromGpu(blevel);
 
         add_tmp_canceluntil.clear();
         #ifdef USE_GAUSS
@@ -4202,4 +4216,108 @@ lbool Searcher::new_decision_fast_backw()
     enqueue<false>(next);
 
     return l_Undef;
+}
+
+void Searcher::find_largest_level(Lit* lits, uint32_t count, uint32_t start)
+{
+    for (uint32_t i = start + 1; i < count; i++) {
+        if (level(lits[i])> level(lits[start])) {
+            std::swap(lits[i], lits[start]);
+        }
+    }
+}
+
+// Learns the clause, and attach it
+// May lead to canceling to backtracking if this clause leads to an implication at a level strictly lower
+// than the current level
+// returns a non-undef cref if this clause is in conflict
+Clause* Searcher::insert_gpu_clause(Lit* lits, uint32_t count)
+{
+    // if only one literal isn't false, it will be in 0 of lits
+    // if only two literals aren't set, they will be in 0 and 1 of lits
+    find_largest_level(lits, count, 0);
+    find_largest_level(lits, count, 1);
+
+    //Empty clause
+    if (count == 0) {
+        solver->ok = false;
+        return NULL;
+    }
+
+    //Unit clause
+    if (count == 1) {
+        lbool val = value(lits[0]);
+        if (val == l_False && level(lits[0]) == 0) {
+            solver->ok = false;
+            return NULL;
+        }
+        // we've learned a unary clause we already knew
+        if (val == l_True && level(lits[0]) == 0) {
+            return NULL;
+        }
+        cancelUntil<false>(0);
+        enqueue<false>(lits[0]);
+        return NULL;
+    }
+
+    // two literals not set: we can just learn the clause
+    if (value(lits[1]) != l_False) {
+        assert(value(lits[0]) != l_False);
+        learn_gpu_clause(lits, count);
+        return NULL;
+    }
+
+    // We're implying a literal at a level <= to what it is already.
+    //   Just learn the clause, it's not doing anything now, though
+    if (value(lits[0]) == l_True
+            && level(lits[0]) <= level(lits[1]))
+    {
+        learn_gpu_clause(lits, count);
+        return NULL;
+    }
+
+    // conflict
+    if ((value(lits[0]) == l_False)
+            && (level(lits[1]) == level(lits[0])))
+    {
+        //#ifdef DEBUG
+        for (uint32_t i = 0; i < count; i++) {
+            assert(value(lits[i]) == l_False);
+        }
+        //#endif
+        assert(value(lits[1]) == l_False);
+        cancelUntil(level(lits[1]));
+        qhead = trail.size();
+        return learn_gpu_clause(lits, count);
+    }
+
+    // lit 0 is implied by the rest, may currently be undef or false
+
+    //#ifdef DEBUG
+    for (uint32_t i = 1; i < count; i++) {
+        assert(value(lits[i]) == l_False);
+    }
+    //#endif
+    Clause* cl = learn_gpu_clause(lits, count);
+    cancelUntil(level(lits[1]));
+    enqueue<false>(lits[0], level(lits[1]), PropBy(cl_alloc.get_offset(cl)));
+
+    return NULL;
+}
+
+Clause* Searcher::learn_gpu_clause(Lit* lits, uint32_t count)
+{
+    tmp_gpu_clause.resize(count);
+    for(uint32_t i = 0; i < count; i++) {
+        tmp_gpu_clause[i] = lits[i];
+    }
+
+    assert(count >= 2);
+    Clause* cl = cl_alloc.Clause_new(tmp_gpu_clause, sumConflicts);
+    ClOffset off = cl_alloc.get_offset(cl);
+    longRedCls[2].push_back(off);
+    bump_cl_act<false>(cl);
+    cl->stats.glue = count;
+    attachClause(*cl);
+    return cl;
 }

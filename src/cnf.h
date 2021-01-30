@@ -196,6 +196,11 @@ public:
     vector<Lit>      toClear;
     uint64_t MYFLAG = 1;
 
+    uint32_t level(Lit l) const
+    {
+        return varData[l.var()].level;
+    }
+
     bool okay() const
     {
         return ok;
@@ -213,8 +218,7 @@ public:
 
     bool must_interrupt_asap() const
     {
-        std::atomic_thread_fence(std::memory_order_acquire);
-        return *must_interrupt_inter;
+        return must_interrupt_inter->load(std::memory_order_relaxed);
     }
 
     void set_must_interrupt_asap()

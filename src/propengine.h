@@ -49,6 +49,7 @@ namespace CMSat {
 using std::set;
 class Solver;
 class SQLStats;
+class DataSync;
 
 //#define VERBOSE_DEBUG_FULLPROP
 //#define VERBOSE_DEBUG
@@ -257,6 +258,7 @@ public:
     double max_cl_act = 0.0;
 
 protected:
+    friend class DataSync;
     int64_t simpDB_props = 0;
     void new_var(
         const bool bva,

@@ -32,6 +32,7 @@ THE SOFTWARE.
 
 namespace CMSat {
 
+class Clause;
 class SharedData;
 class Solver;
 class DataSync
@@ -50,8 +51,16 @@ class DataSync
             , const vector<uint32_t>& interToOuter
         );
 
+        //Non-GPU
         template <class T> void signalNewBinClause(T& ps);
         void signalNewBinClause(Lit lit1, Lit lit2);
+
+        //GPU
+        void signal_new_long_clause(const vector<Lit>& clause);
+        void unsetFromGpu(uint32_t level);
+        void trySendAssignmentToGpu(uint32_t level);
+        Clause* pop_clauses();
+        uint32_t signalled_gpu_long_cls = 0;
 
         struct Stats
         {
@@ -72,6 +81,9 @@ class DataSync
         void clear_set_binary_values();
         void addOneBinToOthers(const Lit lit1, const Lit lit2);
         bool shareBinData();
+
+        uint32_t trailCopiedUntil = 0;
+        int thread_id = -1;
 
         //stuff to sync
         vector<std::pair<Lit, Lit> > newBinClauses;
