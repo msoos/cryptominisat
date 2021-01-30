@@ -893,10 +893,6 @@ lbool calc(
     DataForThread data_for_thread(data, assumptions);
     vector<thread> thds;
     data->shared_data->gpuClauseSharer->setVarCount(data->total_num_vars);
-    if (todo == Todo::todo_solve) {
-        thds.push_back(thread(GPUThread(
-            data->shared_data, data->must_interrupt)));
-    }
     for(size_t i = 0
         ; i < data->solvers.size()
         ; i++
@@ -904,6 +900,11 @@ lbool calc(
         thds.push_back(thread(OneThreadCalc(
             data_for_thread, i, todo, only_sampling_solution)));
     }
+    if (todo == Todo::todo_solve) {
+        GPUThread gpu_thread(data->shared_data, data->must_interrupt);
+        gpu_thread();
+    }
+
     for(std::thread& t: thds){
         t.join();
     }
