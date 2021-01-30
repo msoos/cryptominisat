@@ -420,6 +420,11 @@ DLL_PUBLIC void SATSolver::set_num_threads(unsigned num)
     if (num == 1) {
         return;
     }
+    if (data->solvers.size() > 1) {
+        const char err[] = "ERROR: You must call set_num_threads() at most once";
+        std::cerr << err << endl;
+        throw std::runtime_error(err);
+    }
 
     if (data->solvers[0]->drat->enabled() ||
         data->solvers[0]->conf.simulate_drat
