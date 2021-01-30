@@ -1289,7 +1289,7 @@ lbool Searcher::search()
         gqhead = qhead;
         #endif
         confl = PropBy();
-        if ((sumConflicts & 0xf) == 0xf) {
+        if ((sumConflicts & 0x0) == 0x0) {
             confl = solver->datasync->pop_clauses();
         }
         if (!solver->okay()) {
