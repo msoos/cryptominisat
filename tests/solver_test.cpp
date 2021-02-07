@@ -56,12 +56,12 @@ TEST_F(SolverTest, get_bin)
 
     s->start_getting_small_clauses(2, 100);
     vector<Lit> lits;
-    bool ret = s->get_next_small_clause(lits);
+    bool ret = s->get_next_small_clause(lits, false);
     ASSERT_TRUE(ret);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(lits, str_to_cl(" 1,  2"));
 
-    ret = s->get_next_small_clause(lits);
+    ret = s->get_next_small_clause(lits, false);
     ASSERT_FALSE(ret);
 
     s->end_getting_small_clauses();
@@ -83,12 +83,12 @@ TEST_F(SolverTest, get_long_lev0)
     s->start_getting_small_clauses(10, 100);
     vector<Lit> lits;
 
-    bool ret = s->get_next_small_clause(lits);
+    bool ret = s->get_next_small_clause(lits, false);
     ASSERT_TRUE(ret);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(lits, str_to_cl(" 1,  2, 3, 4"));
 
-    ret = s->get_next_small_clause(lits);
+    ret = s->get_next_small_clause(lits, false);
     ASSERT_FALSE(ret);
 
     s->end_getting_small_clauses();
@@ -111,12 +111,12 @@ TEST_F(SolverTest, get_long_lev1)
     s->start_getting_small_clauses(10, 100);
     vector<Lit> lits;
 
-    bool ret = s->get_next_small_clause(lits);
+    bool ret = s->get_next_small_clause(lits, false);
     ASSERT_TRUE(ret);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(lits, str_to_cl(" 6,  2, 3, 4"));
 
-    ret = s->get_next_small_clause(lits);
+    ret = s->get_next_small_clause(lits, false);
     ASSERT_FALSE(ret);
 
     s->end_getting_small_clauses();
@@ -144,17 +144,17 @@ TEST_F(SolverTest, get_long_lev0_and_lev1)
     vector<Lit> lits;
 
     //Order is reverse because we get lev0 then lev1
-    bool ret = s->get_next_small_clause(lits);
+    bool ret = s->get_next_small_clause(lits, false);
     ASSERT_TRUE(ret);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(lits, str_to_cl(" 2, 4, 5, 6"));
 
-    ret = s->get_next_small_clause(lits);
+    ret = s->get_next_small_clause(lits, false);
     ASSERT_TRUE(ret);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(lits, str_to_cl(" 3, -4, -7"));
 
-    ret = s->get_next_small_clause(lits);
+    ret = s->get_next_small_clause(lits, false);
     ASSERT_FALSE(ret);
 
     s->end_getting_small_clauses();
@@ -176,7 +176,7 @@ TEST_F(SolverTest, get_long_toolarge)
     s->start_getting_small_clauses(2, 100);
     vector<Lit> lits;
 
-    bool ret = s->get_next_small_clause(lits);
+    bool ret = s->get_next_small_clause(lits, false);
     ASSERT_FALSE(ret);
 
     s->end_getting_small_clauses();
@@ -198,7 +198,7 @@ TEST_F(SolverTest, get_glue_toolarge)
     s->start_getting_small_clauses(100, 2);
     vector<Lit> lits;
 
-    bool ret = s->get_next_small_clause(lits);
+    bool ret = s->get_next_small_clause(lits, false);
     ASSERT_FALSE(ret);
 
     s->end_getting_small_clauses();
@@ -222,17 +222,17 @@ TEST_F(SolverTest, get_bin_and_long)
     s->start_getting_small_clauses(4, 100);
     vector<Lit> lits;
 
-    bool ret = s->get_next_small_clause(lits);
+    bool ret = s->get_next_small_clause(lits, false);
     ASSERT_TRUE(ret);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(lits, str_to_cl(" 1,  5"));
 
-    ret = s->get_next_small_clause(lits);
+    ret = s->get_next_small_clause(lits, false);
     ASSERT_TRUE(ret);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(lits, str_to_cl(" 1,  2, 3, 4"));
 
-    ret = s->get_next_small_clause(lits);
+    ret = s->get_next_small_clause(lits, false);
     ASSERT_FALSE(ret);
 
     s->end_getting_small_clauses();
@@ -253,17 +253,17 @@ TEST_F(SolverTest, get_irred_bin_and_long)
     s->start_getting_small_clauses(4, 100, false);
     vector<Lit> lits;
 
-    bool ret = s->get_next_small_clause(lits);
+    bool ret = s->get_next_small_clause(lits, false);
     ASSERT_TRUE(ret);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(str_to_cl(" 1,  5"), lits);
 
-    ret = s->get_next_small_clause(lits);
+    ret = s->get_next_small_clause(lits, false);
     ASSERT_TRUE(ret);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(str_to_cl(" 1,  2, 3, 4"), lits);
 
-    ret = s->get_next_small_clause(lits);
+    ret = s->get_next_small_clause(lits, false);
     ASSERT_FALSE(ret);
 
     s->end_getting_small_clauses();
