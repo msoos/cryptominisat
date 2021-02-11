@@ -396,6 +396,7 @@ void CMSat::DataSync::signal_new_long_clause(const vector<Lit>& cl)
     if (!enabled()) {
         return;
     }
+    assert(thread_id != -1);
 
     //Don't signal clauses with BVA variables
     for(const auto& l: cl) {
@@ -480,8 +481,7 @@ PropBy CMSat::DataSync::pop_clauses()
     if (!enabled()) {
         return PropBy();
     }
-
-    //cout << "thread ID: " << thread_id << endl;
+    assert(thread_id != -1);
 
     //cout << "Trying to pop." << thread_id << endl;
     int* litsAsInt;

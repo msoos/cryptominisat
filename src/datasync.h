@@ -98,7 +98,7 @@ class DataSync
 
         //Other systems
         Solver* solver;
-        SharedData* sharedData;
+        SharedData* sharedData = NULL;
 
 
         //MPI
@@ -142,7 +142,7 @@ inline const DataSync::Stats& DataSync::get_stats() const
 template <class T>
 inline void DataSync::signalNewBinClause(T& ps)
 {
-    if (sharedData == NULL) {
+    if (!enabled()) {
         return;
     }
     //assert(ps.size() == 2);
