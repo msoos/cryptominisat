@@ -124,7 +124,6 @@ set(cryptoms_lib_files
     get_clause_query.cpp
     backbonesimpl.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
-    gpuShareLib/Profiler.cc
     gpuShareLib/Utils.cc
     gpuShareLib/Assigs.cu
     gpuShareLib/BaseTypes.cu
@@ -210,6 +209,9 @@ add_library(cryptominisat5
 
 set_target_properties(cryptominisat5
     PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+set_property(TARGET cryptominisat5
+    PROPERTY CUDA_ARCHITECTURES 35 50 72
+)
 
 GENERATE_EXPORT_HEADER(cryptominisat5
          BASE_NAME cryptominisat5

@@ -46,6 +46,11 @@ if(POLICY CMP0026)
     cmake_policy(SET CMP0026 NEW)
 endif()
 
+if(POLICY CMP0104)
+    cmake_policy(SET CMP0104 NEW)
+endif()
+
+
 # -----------------------------------------------------------------------------
 # Provide scripts dir for included cmakes to use
 # -----------------------------------------------------------------------------
@@ -563,16 +568,16 @@ if (NOT NOZLIB AND NOT ((NOT BUILD_SHARED_LIBS) AND WIN32))
     ENDIF (ZLIB_FOUND)
 endif()
 
-if (NOT NOVALGRIND)
-    find_package(Valgrind)
-    if (VALGRIND_FOUND )
-        message(STATUS "OK, Found Valgrind. Using valgrind client requests to mark freed clauses in pool as undefined")
-        add_definitions(-DUSE_VALGRIND)
-        include_directories(${VALGRIND_INCLUDE_DIR})
-    else()
-        message(STATUS "Cannot find valgrind or it's disabled, we will not be able to mark memory pool objects as undefined")
-    endif()
-endif()
+# if (NOT NOVALGRIND)
+#     find_package(Valgrind)
+#     if (VALGRIND_FOUND )
+#         message(STATUS "OK, Found Valgrind. Using valgrind client requests to mark freed clauses in pool as undefined")
+#         add_definitions(-DUSE_VALGRIND)
+#         include_directories(${VALGRIND_INCLUDE_DIR})
+#     else()
+#         message(STATUS "Cannot find valgrind or it's disabled, we will not be able to mark memory pool objects as undefined")
+#     endif()
+# endif()
 
 include(CheckFloatPrecision)
 check_float_precision()

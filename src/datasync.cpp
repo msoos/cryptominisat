@@ -412,7 +412,7 @@ void CMSat::DataSync::signal_new_long_clause(const vector<Lit>& cl)
 //         << endl;
 //     }
 
-    sharedData->gpuClauseSharer->addClause((int*)cl.data(), cl.size());
+    sharedData->gpuClauseSharer->addClause(thread_id, (int*)cl.data(), cl.size());
 }
 
 void DataSync::unsetFromGpu(uint32_t level) {
