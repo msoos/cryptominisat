@@ -407,13 +407,6 @@ void CMSat::DataSync::signal_new_long_clause(const vector<Lit>& cl)
     }
 
     signalled_gpu_long_cls++;
-
-//     if ((signalled_gpu_long_cls & 0xffff) == 0xffff) {
-//         cout << "signalled_gpu_long_cls: " << signalled_gpu_long_cls
-//         << " thread id: " << thread_id
-//         << endl;
-//     }
-
     sharedData->gpuClauseSharer->addClause(thread_id, (int*)cl.data(), cl.size());
 }
 
@@ -423,14 +416,6 @@ void DataSync::unsetFromGpu(uint32_t level) {
     }
 
     if (trailCopiedUntil > solver->trail_lim[level]) {
-//         if (thread_id == 0) {
-//             cout
-//             << "Unset from point " << solver->trail_lim[level]
-//             << " count: " << trailCopiedUntil - solver->trail_lim[level]
-//             << " level: " << level
-//             << endl;
-//         }
-
         sharedData->gpuClauseSharer->unsetSolverValues(
             thread_id,
             (int*)&solver->trail[solver->trail_lim[level]],
