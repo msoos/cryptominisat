@@ -40,6 +40,7 @@ class SharedData
             num_threads(_num_threads)
         {
             gpuClauseSharer = GpuShare::makeGpuClauseSharerPtr(csOpts);
+            cur_thread_id.store(0);
         }
 
         ~SharedData()
@@ -81,7 +82,7 @@ class SharedData
 
         vector<lbool> value;
         vector<Spec> bins;
-        std::atomic<int> threads;
+        std::atomic<int> cur_thread_id;
         std::mutex unit_mutex;
         std::mutex bin_mutex;
 

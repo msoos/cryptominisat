@@ -52,7 +52,7 @@ DataSync::DataSync(Solver* _solver, SharedData* _sharedData, bool _is_mpi) :
 void DataSync::set_shared_data(SharedData* _sharedData)
 {
     sharedData = _sharedData;
-    thread_id = _sharedData->threads++;
+    thread_id = _sharedData->cur_thread_id++;
 }
 
 void DataSync::new_var(const bool bva)
@@ -397,6 +397,7 @@ void CMSat::DataSync::signal_new_long_clause(const vector<Lit>& cl)
         return;
     }
     assert(thread_id != -1);
+    //cout << "thread ID: " << thread_id << endl;
 
     //Don't signal clauses with BVA variables
     for(const auto& l: cl) {
@@ -482,6 +483,7 @@ PropBy CMSat::DataSync::pop_clauses()
         return PropBy();
     }
     assert(thread_id != -1);
+    //cout << "thread ID: " << thread_id << endl;
 
     //cout << "Trying to pop." << thread_id << endl;
     int* litsAsInt;
