@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include "sqlstats.h"
 
 #include <iomanip>
+#include <random>
 using namespace CMSat;
 using std::cout;
 using std::endl;
@@ -264,11 +265,20 @@ bool DistillerLong::distill_long_cls_all(
     runStats.potentialClauses += offs.size();
     runStats.numCalled += 1;
 
-    if (also_remove) {
-        std::sort(offs.begin()
-            , offs.end()
-            , ClauseSizeSorterLargestFirst(solver->cl_alloc)
-        );
+    if (also_remove &&
+        //Don't shuffle when it's very-very large, too expensive
+        offs.size() < 100ULL*1000ULL*1000ULL)
+    {
+        bool randomly_sort = solver->mtrand.randInt(1);
+        if (randomly_sort) {
+            std::mt19937 gen(solver->mtrand.randInt());
+            std::shuffle(offs.begin(), offs.end(), gen);
+        } else {
+            std::sort(offs.begin(),
+                offs.end(),
+                ClauseSizeSorterLargestFirst(solver->cl_alloc)
+            );
+        }
     }
 
     bool time_out = go_through_clauses(offs, also_remove);
@@ -354,12 +364,16 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     solver->new_decision_level();
     i = 0;
     j = 0;
-    //Sort them differently once in a while, so all literals have a chance of
-    //being removed
-    if (offset % 2  == 0) {
-        std::sort(cl.begin(), cl.end(), VSIDS_largest_first(solver->var_act_vsids));
-    } else {
-        std::sort(cl.begin(), cl.end(), LitCountDescSort(lit_counts));
+
+    //Don't sort them if they are too large, it can be really slow
+    if (cl.size() < 500) {
+        //Sort them differently once in a while, so all literals have a chance of
+        //being removed
+        if (offset % 2  == 0) {
+            std::sort(cl.begin(), cl.end(), VSIDS_largest_first(solver->var_act_vsids));
+        } else {
+            std::sort(cl.begin(), cl.end(), LitCountDescSort(lit_counts));
+        }
     }
     for (uint32_t sz = cl.size(); i < sz; i++) {
         const Lit lit = cl[i];
