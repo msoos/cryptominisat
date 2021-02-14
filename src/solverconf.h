@@ -466,13 +466,6 @@ class DLL_PUBLIC SolverConf
         int       doSaveMem;
         uint64_t  full_watch_consolidate_every_n_confl;
 
-        //Component handling
-        int       doCompHandler;
-        unsigned  handlerFromSimpNum;
-        size_t    compVarLimit;
-        unsigned long long  comp_find_time_limitM;
-
-
         //Misc Optimisations
         int      doStrSubImplicit;
         long long  subsume_implicit_time_limitM;

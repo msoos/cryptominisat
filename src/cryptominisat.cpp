@@ -1121,7 +1121,6 @@ DLL_PUBLIC void SATSolver::set_drat(std::ostream* os, bool add_ID)
     data->solvers[0]->add_drat(os, add_ID);
     data->solvers[0]->conf.do_hyperbin_and_transred = true;
     data->solvers[0]->conf.doFindXors = false;
-    data->solvers[0]->conf.doCompHandler = false;
 
 }
 
@@ -1338,7 +1337,6 @@ void DLL_PUBLIC SATSolver::set_up_for_sample_counter()
     for (size_t i = 0; i < data->solvers.size(); i++) {
         SolverConf conf = data->solvers[i]->getConf();
         conf.doSLS = false;
-        conf.doCompHandler = false;
         conf.doBreakid = false;
         conf.restartType = Restart::geom;
         conf.never_stop_search = true;
@@ -1593,16 +1591,6 @@ DLL_PUBLIC void SATSolver::set_max_red_linkin_size(uint32_t sz)
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
         s.conf.maxRedLinkInSize = sz;
-    }
-}
-
-
-DLL_PUBLIC void SATSolver::set_yes_comphandler()
-{
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
-        s.conf.doCompHandler = true;
-        s.enable_comphandler();
     }
 }
 

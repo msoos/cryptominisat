@@ -163,10 +163,6 @@ extern "C"
     DLL_PUBLIC void cmsat_set_up_for_arjun(SATSolver* self)  NOEXCEPT_START {
         self->set_up_for_arjun();
     } NOEXCEPT_END
-    DLL_PUBLIC void cmsat_set_yes_comphandler(SATSolver* self)  NOEXCEPT_START {
-        self->set_yes_comphandler();
-    } NOEXCEPT_END
-
     DLL_PUBLIC c_lbool cmsat_simplify(SATSolver* self, const c_Lit* assumptions, size_t num_assumptions) NOEXCEPT_START {
         auto temp = wrap(fromc(assumptions), num_assumptions);
         return toc(self->simplify(&temp));

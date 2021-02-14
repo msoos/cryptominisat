@@ -78,7 +78,6 @@ private:
     void dump_unit_cls(std::ostream *out, bool outer_numbering);
     uint32_t dump_blocked_clauses(std::ostream *out, bool outer_numbering);
     void dump_irred_cls(std::ostream *out, bool outer_numbering);
-    uint32_t dump_component_clauses(std::ostream *out, bool outer_numbering);
     void dump_vars_appearing_inverted(std::ostream *out, bool outer_numbering);
     void dump_clauses(std::ostream *out,
         const vector<ClOffset>& cls

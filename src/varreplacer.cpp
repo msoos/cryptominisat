@@ -134,7 +134,6 @@ void VarReplacer::update_vardata_and_activities(
 
     //Not replaced_with, or not replaceable, so skip
     if (orig_var == replaced_with_var
-        || solver->varData[replaced_with_var].removed == Removed::decomposed
         || solver->varData[replaced_with_var].removed == Removed::elimed
     ) {
         return;

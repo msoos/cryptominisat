@@ -24,7 +24,6 @@ THE SOFTWARE.
 #include "solver.h"
 #include "occsimplifier.h"
 #include "varreplacer.h"
-#include "comphandler.h"
 
 using namespace CMSat;
 
@@ -172,7 +171,6 @@ void ClauseDumper::dump_irred_cls(std::ostream *out, bool outer_numbering)
 
     size_t num_cls = get_preprocessor_num_cls(outer_numbering);
     num_cls += dump_blocked_clauses(NULL, outer_numbering);
-    num_cls += dump_component_clauses(NULL, outer_numbering);
 
     *out
     << "p cnf " << solver->nVarsOutside()
@@ -182,9 +180,6 @@ void ClauseDumper::dump_irred_cls(std::ostream *out, bool outer_numbering)
 
     *out << "c ------------------ previously eliminated variables" << endl;
     dump_blocked_clauses(out, outer_numbering);
-
-    *out << "c ---------- clauses in components" << endl;
-    dump_component_clauses(out, outer_numbering);
 }
 
 void ClauseDumper::dump_unit_cls(std::ostream *out, bool outer_numbering)
@@ -209,16 +204,6 @@ uint32_t ClauseDumper::dump_blocked_clauses(std::ostream *out, bool outer_number
     uint32_t num_cls = 0;
     if (solver->conf.perform_occur_based_simp) {
         num_cls = solver->occsimplifier->dump_blocked_clauses(out);
-    }
-    return num_cls;
-}
-
-uint32_t ClauseDumper::dump_component_clauses(std::ostream *out, bool outer_numbering)
-{
-    assert(outer_numbering);
-    uint32_t num_cls = 0;
-    if (solver->compHandler) {
-        num_cls = solver->compHandler->dump_removed_clauses(out);
     }
     return num_cls;
 }

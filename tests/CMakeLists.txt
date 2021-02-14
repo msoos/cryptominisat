@@ -175,10 +175,8 @@ set (MY_TESTS
     distiller_test
     distill_long_with_implicit_test
     subsume_impl_test
-    comp_find_test
     intree_test
     xorfinder_test
-    comphandler_test
     dump_test
     searcher_test
     solver_test

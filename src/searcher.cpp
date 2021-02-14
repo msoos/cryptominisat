@@ -3984,8 +3984,7 @@ inline bool Searcher::check_order_heap_sanity() const
             outer_var = solver->varReplacer->get_var_replaced_with_outer(outer_var);
             uint32_t int_var = map_outer_to_inter(outer_var);
 
-            assert(varData[int_var].removed == Removed::none ||
-                varData[int_var].removed == Removed::decomposed);
+            assert(varData[int_var].removed == Removed::none);
 
             if (int_var < nVars() &&
                 varData[int_var].removed == Removed::none &&

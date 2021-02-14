@@ -44,8 +44,6 @@ THE SOFTWARE.
 #include "solutionextender.h"
 #include "varupdatehelper.h"
 #include "completedetachreattacher.h"
-#include "compfinder.h"
-#include "comphandler.h"
 #include "subsumestrengthen.h"
 #include "watchalgos.h"
 #include "clauseallocator.h"
@@ -121,9 +119,6 @@ Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter
     dist_impl_with_impl = new StrImplWImpl(this);
     clauseCleaner = new ClauseCleaner(this);
     varReplacer = new VarReplacer(this);
-    if (conf.doCompHandler) {
-        compHandler = new CompHandler(this);
-    }
     if (conf.doStrSubImplicit) {
         subsumeImplicit = new SubsumeImplicit(this);
     }
@@ -143,7 +138,6 @@ Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter
 
 Solver::~Solver()
 {
-    delete compHandler;
     delete sqlStats;
     delete intree;
     delete occsimplifier;
@@ -161,13 +155,6 @@ Solver::~Solver()
     delete breakid;
 #endif
     delete card_finder;
-}
-
-void Solver::enable_comphandler()
-{
-    assert(compHandler == NULL);
-    assert(nVars() == 0);
-    compHandler = new CompHandler(this);
 }
 
 void Solver::set_sqlite(string
@@ -659,24 +646,6 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
     }
     #endif
 
-     //Undo comp handler
-    if (!fresh_solver
-        && compHandler
-        && compHandler->get_num_vars_removed() > 0
-    ) {
-        bool readd = false;
-        for (Lit lit: ps) {
-            if (varData[lit.var()].removed == Removed::decomposed) {
-                readd = true;
-                break;
-            }
-        }
-
-        if (readd) {
-            compHandler->readdRemovedClauses();
-        }
-    }
-
     //Uneliminate vars
     if (!fresh_solver
         && (get_num_vars_elimed() > 0 || detached_xor_clauses)
@@ -825,7 +794,6 @@ void Solver::test_renumbering() const
 
         if (varData[i].removed == Removed::elimed
             || varData[i].removed == Removed::replaced
-            || varData[i].removed == Removed::decomposed
         ) {
             uninteresting = true;
             //cout << " removed" << endl;
@@ -836,7 +804,6 @@ void Solver::test_renumbering() const
         if (value(i) == l_Undef
             && varData[i].removed != Removed::elimed
             && varData[i].removed != Removed::replaced
-            && varData[i].removed != Removed::decomposed
             && uninteresting
         ) {
             problem = true;
@@ -894,7 +861,6 @@ size_t Solver::calculate_interToOuter_and_outerToInter(
         if (value(i) != l_Undef
             || varData[i].removed == Removed::elimed
             || varData[i].removed == Removed::replaced
-            || varData[i].removed == Removed::decomposed
         ) {
             useless.push_back(i);
             continue;
@@ -934,7 +900,6 @@ double Solver::calc_renumber_saving()
         if (value(i) != l_Undef
             || varData[i].removed == Removed::elimed
             || varData[i].removed == Removed::replaced
-            || varData[i].removed == Removed::decomposed
         ) {
             continue;
         }
@@ -1133,9 +1098,6 @@ void Solver::new_vars(size_t n)
         occsimplifier->new_vars(n);
     }
 
-    if (compHandler) {
-        compHandler->new_vars(n);
-    }
     datasync->new_vars(n);
 }
 
@@ -1152,9 +1114,6 @@ void Solver::new_var(
         occsimplifier->new_var(orig_outer);
     }
 
-    if (compHandler) {
-        compHandler->new_var(orig_outer);
-    }
     if (orig_outer == std::numeric_limits<uint32_t>::max()) {
         datasync->new_var(bva);
     }
@@ -1174,9 +1133,6 @@ void Solver::save_on_var_memory(const uint32_t newNumVars)
     varReplacer->save_on_var_memory();
     if (occsimplifier) {
         occsimplifier->save_on_var_memory();
-    }
-    if (compHandler) {
-        compHandler->save_on_var_memory();
     }
     datasync->save_on_var_memory();
 
@@ -1357,8 +1313,7 @@ void Solver::extend_solution(const bool only_sampling_solution)
             outer_var = varReplacer->get_var_replaced_with_outer(outer_var);
             uint32_t int_var = map_outer_to_inter(outer_var);
 
-            assert(varData[int_var].removed == Removed::none ||
-                varData[int_var].removed == Removed::decomposed);
+            assert(varData[int_var].removed == Removed::none);
 
             if (int_var < nVars() && varData[int_var].removed == Removed::none) {
                 assert(model[int_var] != l_Undef);
@@ -1375,11 +1330,6 @@ void Solver::extend_solution(const bool only_sampling_solution)
 
     const double myTime = cpuTime();
     updateArrayRev(model, interToOuterMain);
-
-    //Extend solution to stored solution in component handler
-    if (compHandler) {
-        compHandler->addSavedState(model);
-    }
 
     if (!only_sampling_solution) {
         SolutionExtender extender(this, occsimplifier);
@@ -1489,15 +1439,6 @@ void Solver::check_and_upd_config_parameters()
                 << endl;
             }
             conf.doFindXors = false;
-        }
-
-        if (conf.doCompHandler) {
-            if (conf.verbosity) {
-                cout
-                << "c Component finding & solving is not supported during DRAT, turning it off"
-                << endl;
-            }
-            conf.doCompHandler = false;
         }
 
         #ifdef USE_BREAKID
@@ -1812,16 +1753,6 @@ void Solver::dump_memory_stats_to_sql()
         , CNF::mem_used_renumberer()/(1024*1024)
     );
 
-
-    if (compHandler) {
-        sqlStats->mem_used(
-            this
-            , "component"
-            , my_time
-            , compHandler->mem_used()/(1024*1024)
-        );
-    }
-
     if (occsimplifier) {
         sqlStats->mem_used(
             this
@@ -2092,28 +2023,7 @@ lbool Solver::execute_inprocess_strategy(
             cout << "c --> Executing strategy token: " << token << '\n';
         }
 
-        if (token == "find-comps" &&
-            conf.sampling_vars == NULL //no point finding, cannot be handled
-        ) {
-            if (get_num_free_vars() < conf.compVarLimit*conf.var_and_mem_out_mult) {
-                CompFinder findParts(this);
-                findParts.find_components();
-            }
-        } else if (token == "handle-comps") {
-            if (compHandler
-                && conf.doCompHandler
-                && conf.sampling_vars == NULL
-                #ifdef GAUSS
-                && !conf.xor_detach_reattach //a horrid mess, let's not do it
-                #endif
-                && get_num_free_vars() < conf.compVarLimit*conf.var_and_mem_out_mult
-                && solveStats.num_simplify >= conf.handlerFromSimpNum
-                //Only every 2nd, since it can be costly to find parts
-                && solveStats.num_simplify % 2 == 0 //TODO
-            ) {
-                compHandler->handle();
-            }
-        }  else if (token == "scc-vrepl") {
+        if (token == "scc-vrepl") {
             if (conf.doFindAndReplaceEqLits) {
                 varReplacer->replace_if_enough_is_found(
                     std::floor((double)get_num_free_vars()*0.001));
@@ -2786,17 +2696,6 @@ void Solver::print_mem_stats() const
     );
     account += mem;
 
-    if (compHandler) {
-        mem = compHandler->mem_used();
-        print_stats_line("c Mem for component handler"
-            , mem/(1024UL*1024UL)
-            , "MB"
-            , stats_line_percent(mem, rss_mem_used)
-            , "%"
-        );
-        account += mem;
-    }
-
     if (occsimplifier) {
         mem = occsimplifier->mem_used();
         print_stats_line("c Mem for occsimplifier"
@@ -3066,10 +2965,6 @@ size_t Solver::get_num_nonfree_vars() const
     }
     nonfree += varReplacer->get_num_replaced_vars();
 
-
-    if (compHandler) {
-        nonfree += compHandler->get_num_vars_removed();
-    }
     return nonfree;
 }
 
@@ -3221,7 +3116,6 @@ void Solver::free_unused_watches()
         Lit lit = Lit::toLit(wsLit);
         if (varData[lit.var()].removed == Removed::elimed
             || varData[lit.var()].removed == Removed::replaced
-            || varData[lit.var()].removed == Removed::decomposed
         ) {
             watch_subarray ws = *it;
             assert(ws.empty());
@@ -3542,7 +3436,6 @@ void Solver::update_assumptions_after_varreplace()
 uint32_t Solver::num_active_vars() const
 {
     uint32_t numActive = 0;
-    uint32_t removed_decomposed = 0;
     uint32_t removed_replaced = 0;
     uint32_t removed_set = 0;
     uint32_t removed_elimed = 0;
@@ -3562,9 +3455,6 @@ uint32_t Solver::num_active_vars() const
             continue;
         }
         switch(varData[var].removed) {
-            case Removed::decomposed :
-                removed_decomposed++;
-                continue;
             case Removed::clashed:
                 removed_clashed++;
                 continue;
@@ -3587,12 +3477,6 @@ uint32_t Solver::num_active_vars() const
         assert(removed_elimed == occsimplifier->get_num_elimed_vars());
     } else {
         assert(removed_elimed == 0);
-    }
-
-    if (compHandler) {
-        assert(removed_decomposed == compHandler->get_num_vars_removed());
-    } else {
-        assert(removed_decomposed == 0);
     }
 
     assert(removed_set == ((decisionLevel() == 0) ? trail.size() : trail_lim[0]));

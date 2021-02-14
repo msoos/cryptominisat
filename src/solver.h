@@ -58,8 +58,6 @@ class DistillerLongWithImpl;
 class StrImplWImpl;
 class CalcDefPolars;
 class SolutionExtender;
-class CompFinder;
-class CompHandler;
 class CardFinder;
 class SubsumeStrengthen;
 class SubsumeImplicit;
@@ -168,7 +166,6 @@ class Solver : public Searcher
         void check_implicit_stats(const bool onlypairs = false) const;
         void check_stats(const bool allowFreed = false) const;
         void reset_vsids();
-        void enable_comphandler();
 
 
         //Checks
@@ -189,7 +186,6 @@ class Solver : public Searcher
         DistillerLitRem*       distill_lit_rem = NULL;
         DistillerLongWithImpl* dist_long_with_impl = NULL;
         StrImplWImpl* dist_impl_with_impl = NULL;
-        CompHandler*           compHandler = NULL;
         CardFinder*            card_finder = NULL;
         GetClauseQuery*        get_clause_query = NULL;
 

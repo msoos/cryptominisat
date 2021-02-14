@@ -301,7 +301,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         )
         //validated with run 8114195.wlm01
         , simplify_schedule_nonstartup(
-            "handle-comps,"
             "scc-vrepl,"
             "sub-impl,"
             "intree-probe,"
@@ -324,7 +323,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "sls,lucky"
         )
         , simplify_schedule_preproc(
-            "handle-comps,"
             "scc-vrepl,"
             "sub-impl,"
             "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
@@ -375,12 +373,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , must_renumber    (false)
         , doSaveMem        (true)
         , full_watch_consolidate_every_n_confl (4ULL*1000ULL*1000ULL) //validated in run 8113323.wlm01
-
-        //Component finding
-        , doCompHandler    (false)
-        , handlerFromSimpNum (0)
-        , compVarLimit      (1ULL*1000ULL*1000ULL)
-        , comp_find_time_limitM (500)
 
         //Misc optimisations
         , doStrSubImplicit (true)

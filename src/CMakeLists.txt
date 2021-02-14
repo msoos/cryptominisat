@@ -96,8 +96,6 @@ set(cryptoms_lib_files
     completedetachreattacher.cpp
     searcher.cpp
     solver.cpp
-    compfinder.cpp
-    comphandler.cpp
     hyperengine.cpp
     subsumeimplicit.cpp
     datasync.cpp

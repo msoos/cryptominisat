@@ -28,7 +28,6 @@ using namespace CMSat;
 #include "solver.h"
 #include "occsimplifier.h"
 #include "varreplacer.h"
-#include "comphandler.h"
 
 GetClauseQuery::GetClauseQuery(Solver* _solver) :
     solver(_solver)
@@ -280,9 +279,6 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
             }
             at++;
         }
-
-        //Components (already in OUTER notation)
-        release_assert(solver->compHandler == NULL || solver->compHandler->get_num_removed_cls() == 0);
 
         //Blocked clauses (already in OUTER notation)
         bool ret = true;

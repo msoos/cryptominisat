@@ -745,17 +745,6 @@ void Main::add_supported_options()
         , "Write solution(s) to this file")
     ;
 
-    po::options_description componentOptions("Component options");
-    componentOptions.add_options()
-    ("comps", po::value(&conf.doCompHandler)->default_value(conf.doCompHandler)
-        , "Perform component-finding and separate handling")
-    ("compsfrom", po::value(&conf.handlerFromSimpNum)->default_value(conf.handlerFromSimpNum)
-        , "Component finding only after this many simplification rounds")
-    ("compsvar", po::value(&conf.compVarLimit)->default_value(conf.compVarLimit)
-        , "Only use components in case the number of variables is below this limit")
-    ("compslimit", po::value(&conf.comp_find_time_limitM)->default_value(conf.comp_find_time_limitM)
-        , "Limit how much time is spent in component-finding");
-
     po::options_description distillOptions("Distill options");
     distillOptions.add_options()
     //("noparts", "Don't find&solve subproblems with subsolvers")
@@ -903,7 +892,6 @@ void Main::add_supported_options()
     .add(bve_options)
     .add(bva_options)
     .add(eqLitOpts)
-    .add(componentOptions)
     .add(mem_save_opts)
     .add(xorOptions)
     .add(gateOptions)
@@ -1147,12 +1135,6 @@ void Main::manually_parse_some_options()
         conf.simplify_at_startup = 1;
         conf.varelim_time_limitM *= 5;
         conf.orig_global_timeout_multiplier *= 1.5;
-        if (conf.doCompHandler) {
-            conf.doCompHandler = false;
-            if (conf.verbosity) {
-                cout << "c Cannot handle components when preprocessing. Turning it off." << endl;
-            }
-        }
 
         if (num_threads > 1) {
             num_threads = 1;

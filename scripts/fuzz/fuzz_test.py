@@ -272,7 +272,6 @@ class Tester:
         return sched
 
     def rnd_schedule_all(self, preproc):
-        sched_opts = "handle-comps,"
         sched_opts += "scc-vrepl,"
         sched_opts += "sub-impl, intree-probe,"
         sched_opts += "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
@@ -397,9 +396,6 @@ class Tester:
             cmd += "--distill %s " % random.randint(0, 1)
             cmd += "--recur %s " % random.randint(0, 1)
             cmd += "--varelimcheckres %s " % random.randint(0, 1)
-            cmd += "--compsfrom %d " % random.randint(0, 2)
-            cmd += "--compsvar %d " % random.randint(20000, 500000)
-            cmd += "--compslimit %d " % random.randint(0, 3000)
             cmd += "--implicitmanip %s " % random.randint(0, 1)
             cmd += "--occsimp %s " % random.randint(0, 1)
             cmd += "--occirredmaxmb %s " % random.gammavariate(0.2, 5)
@@ -430,7 +426,7 @@ class Tester:
 
         # the most buggy ones, don't turn them off much, please
         if random.choice([1, 0, 0]):
-            opts = ["scc", "varelim", "comps", "strengthen", "intree",
+            opts = ["scc", "varelim", "strengthen", "intree",
                     "renumber", "savemem", "moreminim", "gates",
                     "schedsimp", "otfhyper"]
 
