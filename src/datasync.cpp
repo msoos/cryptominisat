@@ -112,14 +112,24 @@ bool DataSync::syncData()
     sharedData->unit_mutex.lock();
     ok = shareUnitData();
     sharedData->unit_mutex.unlock();
-    if (!ok) return false;
+    if (!ok) {
+        return false;
+    }
+    solver->ok = solver->propagate<true>().isNULL();
+    if (!solver->ok) {
+        return false;
+    }
 
-//     sharedData->bin_mutex.lock();
-//     extend_bins_if_needed();
-//     clear_set_binary_values();
-//     ok = shareBinData();
-//     sharedData->bin_mutex.unlock();
-//     if (!ok) return false;
+    #ifndef USE_GAUSS
+    sharedData->bin_mutex.lock();
+    extend_bins_if_needed();
+    clear_set_binary_values();
+    ok = shareBinData();
+    sharedData->bin_mutex.unlock();
+    if (!ok) {
+        return false;
+    }
+    #endif
 
     #ifdef USE_MPI
     if (is_mpi && mpiSize > 1 && solver->conf.thread_num == 0) {
@@ -166,10 +176,11 @@ void DataSync::extend_bins_if_needed()
 
 bool DataSync::shareBinData()
 {
+    assert(solver->okay());
     uint32_t oldRecvBinData = stats.recvBinData;
     uint32_t oldSentBinData = stats.sentBinData;
 
-    syncBinFromOthers();
+    bool ok = syncBinFromOthers();
     syncBinToOthers();
     size_t mem = sharedData->calc_memory_use_bins();
 
@@ -181,7 +192,7 @@ bool DataSync::shareBinData()
         << endl;
     }
 
-    return true;
+    return ok;
 }
 
 bool DataSync::syncBinFromOthers()
@@ -252,7 +263,7 @@ bool DataSync::syncBinFromOthers(
 
             //Don't add DRAT: it would add to the thread data, too
             solver->add_clause_int(lits, true, NULL, true, NULL, false);
-            if (!solver->ok) {
+            if (!solver->okay()) {
                 goto end;
             }
         }
@@ -296,12 +307,16 @@ void DataSync::addOneBinToOthers(Lit lit1, Lit lit2)
 
 bool DataSync::shareUnitData()
 {
+    assert(solver->okay());
+
     uint32_t thisGotUnitData = 0;
     uint32_t thisSentUnitData = 0;
 
     SharedData& shared = *sharedData;
     if (shared.value.size() < solver->nVarsOutside()) {
-        shared.value.resize(solver->nVarsOutside(), l_Undef);
+        shared.value.insert(
+            shared.value.end(),
+            solver->nVarsOutside()-shared.value.size(), l_Undef);
     }
     for (uint32_t var = 0; var < solver->nVarsOutside(); var++) {
         Lit thisLit = Lit(var, false);
@@ -332,10 +347,6 @@ bool DataSync::shareUnitData()
             }
 
             solver->enqueue<true>(litToEnqueue);
-            solver->ok = solver->propagate<true>().isNULL();
-            if (!solver->ok) {
-                return false;
-            }
 
             thisGotUnitData++;
             continue;
@@ -364,7 +375,7 @@ bool DataSync::shareUnitData()
     return true;
 }
 
-void DataSync::signalNewBinClause(Lit lit1, Lit lit2)
+void DataSync::signal_new_bin_clause(Lit lit1, Lit lit2)
 {
     if (!enabled()) {
         return;
@@ -406,10 +417,17 @@ void CMSat::DataSync::signal_new_long_clause(const vector<Lit>& cl)
         }
     }
 
+    #ifdef USE_GPU
     signalled_gpu_long_cls++;
     sharedData->gpuClauseSharer->addClause(thread_id, (int*)cl.data(), cl.size());
+    #else
+    if (cl.size() == 2) {
+        signal_new_bin_clause(cl[0], cl[1]);
+    }
+    #endif
 }
 
+#ifdef USE_GPU
 void DataSync::unsetFromGpu(uint32_t level) {
     if (!enabled()) {
         return;
@@ -503,6 +521,7 @@ PropBy CMSat::DataSync::pop_clauses()
     }
     return PropBy();
 }
+#endif
 
 ///////////////////////////////////////
 // MPI

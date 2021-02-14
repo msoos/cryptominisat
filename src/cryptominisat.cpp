@@ -107,6 +107,7 @@ namespace CMSat {
     };
 }
 
+#ifdef USE_GPU
 struct GPUThread
 {
     GPUThread(
@@ -138,6 +139,7 @@ struct GPUThread
     SharedData* shared_data;
     std::atomic<bool>* must_interrupt;
 };
+#endif
 
 struct DataForThread
 {
@@ -453,7 +455,9 @@ DLL_PUBLIC void SATSolver::set_num_threads(unsigned num)
 
     //set shared data
     data->shared_data = new SharedData(data->solvers.size());
+    #ifdef USE_GPU
     data->shared_data->gpuClauseSharer->setCpuSolverCount(num);
+    #endif
     for(unsigned i = 0; i < num; i++) {
         SolverConf conf = data->solvers[i]->getConf();
         if (i >= 1) {
@@ -892,7 +896,9 @@ lbool calc(
     //Multi-threaded case
     DataForThread data_for_thread(data, assumptions);
     vector<thread> thds;
+    #ifdef USE_GPU
     data->shared_data->gpuClauseSharer->setVarCount(data->total_num_vars);
+    #endif
     for(size_t i = 0
         ; i < data->solvers.size()
         ; i++
@@ -900,10 +906,12 @@ lbool calc(
         thds.push_back(thread(OneThreadCalc(
             data_for_thread, i, todo, only_sampling_solution)));
     }
+    #ifdef USE_GPU
     if (todo == Todo::todo_solve) {
         GPUThread gpu_thread(data->shared_data, data->must_interrupt);
         gpu_thread();
     }
+    #endif
 
     for(std::thread& t: thds){
         t.join();

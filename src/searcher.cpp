@@ -1289,9 +1289,9 @@ lbool Searcher::search()
         gqhead = qhead;
         #endif
         confl = PropBy();
-        if ((sumConflicts & 0x0) == 0x0) {
-            confl = solver->datasync->pop_clauses();
-        }
+        #ifdef USE_GPU
+        confl = solver->datasync->pop_clauses();
+        #endif
         if (!solver->okay()) {
             search_ret = l_False;
             goto end;
@@ -1868,10 +1868,10 @@ bool Searcher::handle_conflict(PropBy confl)
         , glue             //return glue here
         , glue_before_minim         //return glue before minimization here
     );
-    if ((sumConflicts & 0x0) == 0x0) {
-        solver->datasync->signal_new_long_clause(learnt_clause);
-        solver->datasync->trySendAssignmentToGpu(decisionLevel()-1);
-    }
+    solver->datasync->signal_new_long_clause(learnt_clause);
+    #ifdef USE_GPU
+    solver->datasync->trySendAssignmentToGpu(decisionLevel()-1);
+    #endif
 
     uint32_t connects_num_communities = 0;
     #ifdef STATS_NEEDED
@@ -3702,7 +3702,9 @@ void Searcher::cancelUntil(uint32_t blevel)
     if (decisionLevel() > blevel) {
         if (!update_bogoprops) {
             update_polarities_on_backtrack();
+            #ifdef USE_GPU
             solver->datasync->unsetFromGpu(blevel);
+            #endif
         }
 
         add_tmp_canceluntil.clear();

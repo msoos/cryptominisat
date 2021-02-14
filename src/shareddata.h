@@ -24,7 +24,9 @@ THE SOFTWARE.
 #define SHARED_DATA_H
 
 #include "cryptominisat5/solvertypesmini.h"
+#ifdef USE_GPU
 #include "gpuShareLib/GpuClauseSharer.h"
+#endif
 
 #include <vector>
 #include <mutex>
@@ -39,13 +41,17 @@ class SharedData
         SharedData(const uint32_t _num_threads) :
             num_threads(_num_threads)
         {
+            #ifdef USE_GPU
             gpuClauseSharer = GpuShare::makeGpuClauseSharerPtr(csOpts);
+            #endif
             cur_thread_id.store(0);
         }
 
         ~SharedData()
         {
+            #ifdef USE_GPU
             delete gpuClauseSharer;
+            #endif
         }
 
         struct Spec {
@@ -77,8 +83,10 @@ class SharedData
             }
         };
 
+        #ifdef USE_GPU
         GpuShare::GpuClauseSharerOptions csOpts;
         GpuShare::GpuClauseSharer* gpuClauseSharer = NULL;
+        #endif
 
         vector<lbool> value;
         vector<Spec> bins;

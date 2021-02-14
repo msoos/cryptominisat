@@ -51,18 +51,15 @@ class DataSync
            const vector<uint32_t>& outerToInter
             , const vector<uint32_t>& interToOuter
         );
-
-        //Non-GPU
-        template <class T> void signalNewBinClause(T& ps);
-        void signalNewBinClause(Lit lit1, Lit lit2);
-
-        //GPU
         void signal_new_long_clause(const vector<Lit>& clause);
+
+        #ifdef USE_GPU
         void unsetFromGpu(uint32_t level);
         void trySendAssignmentToGpu(uint32_t level);
         PropBy pop_clauses();
         uint32_t signalled_gpu_long_cls = 0;
         uint32_t popped_clause = 0;
+        #endif
 
         struct Stats
         {
@@ -83,6 +80,7 @@ class DataSync
         void syncBinToOthers();
         void clear_set_binary_values();
         void addOneBinToOthers(const Lit lit1, const Lit lit2);
+        void signal_new_bin_clause(Lit lit1, Lit lit2);
 
 
         uint32_t trailCopiedUntil = 0;
@@ -137,16 +135,6 @@ class DataSync
 inline const DataSync::Stats& DataSync::get_stats() const
 {
     return stats;
-}
-
-template <class T>
-inline void DataSync::signalNewBinClause(T& ps)
-{
-    if (!enabled()) {
-        return;
-    }
-    //assert(ps.size() == 2);
-    signalNewBinClause(ps[0], ps[1]);
 }
 
 inline Lit DataSync::map_outside_without_bva(const Lit lit) const

@@ -124,21 +124,25 @@ set(cryptoms_lib_files
     get_clause_query.cpp
     backbonesimpl.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
-    gpuShareLib/Utils.cc
-    gpuShareLib/Assigs.cu
-    gpuShareLib/BaseTypes.cu
-    gpuShareLib/Clauses.cu
-    gpuShareLib/ClauseUpdates.cu
-    gpuShareLib/CorrespArr.cu
-    gpuShareLib/GpuClauseSharerImpl.cu
-    gpuShareLib/GpuRunner.cu
-    gpuShareLib/GpuUtils.cu
-    gpuShareLib/Helper.cu
-    gpuShareLib/Reported.cu
-    gpuShareLib/Reporter.cu
-
-
 )
+
+if (GPU)
+    set(cryptoms_lib_files
+        ${cryptoms_lib_files}
+        gpuShareLib/Utils.cc
+        gpuShareLib/Assigs.cu
+        gpuShareLib/BaseTypes.cu
+        gpuShareLib/Clauses.cu
+        gpuShareLib/ClauseUpdates.cu
+        gpuShareLib/CorrespArr.cu
+        gpuShareLib/GpuClauseSharerImpl.cu
+        gpuShareLib/GpuRunner.cu
+        gpuShareLib/GpuUtils.cu
+        gpuShareLib/Helper.cu
+        gpuShareLib/Reported.cu
+        gpuShareLib/Reporter.cu
+    )
+endif()
 
 set(cryptoms_lib_link_libs "")
 

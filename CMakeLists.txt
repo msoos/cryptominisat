@@ -18,12 +18,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required(VERSION 3.3 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.11 FATAL_ERROR)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 11)
 
 enable_language( CXX )
-enable_language( CUDA )
 
 message(STATUS "LIB directory is '${CMAKE_INSTALL_LIBDIR}'")
 message(STATUS "BIN directory is '${CMAKE_INSTALL_BINDIR}'")
@@ -117,14 +116,18 @@ if (STATICCOMPILE)
 #     endif()
 endif()
 
-option(NOVALGRIND "Don't use valgrind" OFF)
+option(GPU "Use GPU based setup" OFF)
+if (GPU)
+    add_definitions( -DUSE_GPU )
+    enable_language( CUDA )
+endif()
+
 option(ENABLE_PYTHON_INTERFACE "Enable Python interface" ON)
 option(EMSCRIPTEN "Generate only emscripten JS" OFF)
 if (EMSCRIPTEN)
     set(ONLY_SIMPLE ON)
     set(BUILD_SHARED_LIBS ON)
     set(NOZLIB ON)
-    set(NOVALGRIND ON)
     set(ENABLE_PYTHON_INTERFACE OFF)
 else()
     set(THREADS_PREFER_PTHREAD_FLAG ON)
@@ -567,17 +570,6 @@ if (NOT NOZLIB AND NOT ((NOT BUILD_SHARED_LIBS) AND WIN32))
         MESSAGE(STATUS "WARNING: Did not find ZLIB, gzipped file support will be disabled")
     ENDIF (ZLIB_FOUND)
 endif()
-
-# if (NOT NOVALGRIND)
-#     find_package(Valgrind)
-#     if (VALGRIND_FOUND )
-#         message(STATUS "OK, Found Valgrind. Using valgrind client requests to mark freed clauses in pool as undefined")
-#         add_definitions(-DUSE_VALGRIND)
-#         include_directories(${VALGRIND_INCLUDE_DIR})
-#     else()
-#         message(STATUS "Cannot find valgrind or it's disabled, we will not be able to mark memory pool objects as undefined")
-#     endif()
-# endif()
 
 include(CheckFloatPrecision)
 check_float_precision()
