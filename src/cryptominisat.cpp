@@ -994,9 +994,7 @@ DLL_PUBLIC const std::vector<Lit>& SATSolver::get_conflict() const
 
 DLL_PUBLIC uint32_t SATSolver::nVars() const
 {
-    //Below holds all the time, except when Ctrl+C -ing from calc(), disabling.
-    //assert(data->solvers[0]->nVarsOutside() + data->vars_to_add == data->total_num_vars);
-    return data->total_num_vars;
+    return data->solvers[0]->nVarsOutside() + data->vars_to_add;
 }
 
 DLL_PUBLIC void SATSolver::new_var()
