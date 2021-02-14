@@ -123,10 +123,10 @@ lbool BackboneSimpl::backbone_simpl(uint64_t max_confl)
     if (solver->conf.verbosity) {
         if (!finished) {
             cout << "c [backbone-simpl] "
-            << " skipping, taking too many conflicts."
+            << "skipping, taking too many conflicts."
             << endl;
         }
-        cout << "c [backbone-simpl] "
+        cout << "c [backbone-simpl]"
         << " set: " << num_set
         << " T: " << std::setprecision(2) << time_used
         << endl;
