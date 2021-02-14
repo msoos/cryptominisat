@@ -3620,9 +3620,6 @@ void Searcher::save_state(SimpleOutFile& f, const lbool status) const
         write_binary_cls(f, false);
         write_binary_cls(f, true);
         write_long_cls(longIrredCls, f, false);
-        for(auto& lredcls: longRedCls) {
-            write_long_cls(lredcls, f, true);
-        }
     }
 }
 
@@ -3648,8 +3645,8 @@ void Searcher::load_state(SimpleInFile& f, const lbool status)
         binTri.irredBins = read_binary_cls(f, false);
         binTri.redBins =read_binary_cls(f, true);
         read_long_cls(f, false);
-        for(size_t i = 0; i < longRedCls.size(); i++) {
-            read_long_cls(f, true);
+        for(auto& longr: longRedCls) {
+            longr.clear();
         }
     }
 }
