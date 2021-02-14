@@ -126,7 +126,7 @@ struct ClauseStats
         is_decision = false;
         marked_clause = false;
         ttl = 0;
-        which_red_array = 2;
+        which_red_array = 7; //intentionally breaking it so we catch bugs, 7 NEVER exists
         locked_for_data_gen = 0;
         is_ternary_resolvent = 0;
         activity = 0;
