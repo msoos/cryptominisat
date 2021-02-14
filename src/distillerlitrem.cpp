@@ -267,15 +267,13 @@ ClOffset DistillerLitRem::try_distill_clause_and_return_new(
 
     Clause& cl = *solver->cl_alloc.ptr(offset);
     const bool red = cl.red();
-    cl.copy_to(lits);
-    std::sort(lits.begin(), lits.end(), VSIDS_largest_first(solver->var_act_vsids));
 
     uint32_t orig_size = cl.size();
     assert(cl.size() > at);
-    Lit torem = lits[at];
-    //     if (solver->conf.verbosity >= 6) {
-//         cout << "Trying to rem lit: " << torem << " from clause:" << cl << endl;
-//     }
+    Lit torem = cl[at];
+    //if (solver->conf.verbosity >= 6) {
+    //    cout << "Trying to rem lit: " << torem << " from clause:" << cl << endl;
+    //}
 
     solver->new_decision_level();
     for (const auto& l: cl) {
