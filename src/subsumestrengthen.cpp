@@ -536,11 +536,12 @@ void SubsumeStrengthen::find_subsumed_and_strengthened(
     fill_sub_str(offset, cl, abs, out_subsumed, out_lits, ~minLit, true);
 }
 
-bool SubsumeStrengthen::handle_added_long_cl(
-    int64_t* limit_to_decrease, const bool main_run)
+//must be called from deal_with_added_long_and_bin
+bool SubsumeStrengthen::handle_added_long_cl(const bool main_run)
 {
     assert(solver->prop_at_head());
-    int64_t orig_limit = *limit_to_decrease;
+
+    int64_t orig_limit = *simplifier->limit_to_decrease;
     size_t origTrailSize = solver->trail_size();
     const double start_time = cpuTime();
     Sub1Ret stat;
@@ -590,9 +591,9 @@ bool SubsumeStrengthen::handle_added_long_cl(
     simplifier->added_long_cl.clear();
 
     if (main_run) {
-        const bool time_out =  *limit_to_decrease <= 0;
+        const bool time_out =  *simplifier->limit_to_decrease <= 0;
         const double time_used = cpuTime() - start_time;
-        const double time_remain = float_div(*limit_to_decrease, orig_limit);
+        const double time_remain = float_div(*simplifier->limit_to_decrease, orig_limit);
         if (solver->conf.verbosity) {
             cout
             << "c [occ-backw-sub-str-w-added-long] "

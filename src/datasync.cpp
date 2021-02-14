@@ -331,8 +331,8 @@ bool DataSync::shareUnitData()
                 continue;
             }
 
-            solver->enqueue<false>(litToEnqueue);
-            solver->ok = solver->propagate<false>().isNULL();
+            solver->enqueue<true>(litToEnqueue);
+            solver->ok = solver->propagate<true>().isNULL();
             if (!solver->ok) {
                 return false;
             }
@@ -674,7 +674,7 @@ bool DataSync::sync_mpi_unit(
             return true;
         }
 
-        solver->enqueue<false>(litToEnqueue);
+        solver->enqueue<true>(litToEnqueue);
         solver->ok = solver->propagate<false>().isNULL();
         if (!solver->ok) {
             return false;

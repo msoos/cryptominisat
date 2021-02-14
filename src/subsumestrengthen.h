@@ -47,7 +47,7 @@ public:
     bool backw_str_long_with_long();
     bool backw_sub_str_long_with_bins();
     bool backw_sub_str_long_with_bins_watch(const Lit lit, bool both_bins = false);
-    bool handle_added_long_cl(int64_t* limit, const bool main_run);
+    bool handle_added_long_cl(const bool main_run);
 
 
     Sub0Ret backw_sub_with_long(const ClOffset offset);

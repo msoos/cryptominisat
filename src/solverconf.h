@@ -54,17 +54,6 @@ inline unsigned clean_to_int(ClauseClean t)
     return 255;
 }
 
-enum class PolarityMode {
-    polarmode_pos
-    , polarmode_neg
-    , polarmode_rnd
-    , polarmode_automatic
-    , polarmode_stable
-    , polarmode_best_inv
-    , polarmode_best
-    , polarmode_weighted
-};
-
 enum class Restart {
     glue
     , geom

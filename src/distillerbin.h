@@ -71,7 +71,7 @@ class DistillerBin {
 
     private:
 
-        void try_distill_bin(
+        bool try_distill_bin(
             Lit lit1,
             Lit lit2
         );

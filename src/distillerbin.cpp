@@ -116,7 +116,7 @@ bool DistillerBin::distill_bin_cls_all(
     std::shuffle(todo.begin(), todo.end(), std::default_random_engine(solver->mtrand.randInt()));
     for(const auto& lit: todo) {
         time_out = go_through_bins(lit);
-        if (time_out) {
+        if (time_out || !solver->okay()) {
             break;
         }
     }
@@ -150,12 +150,10 @@ bool DistillerBin::distill_bin_cls_all(
 bool DistillerBin::go_through_bins(
     const Lit lit1
 ) {
-    bool time_out = false;
     solver->watches[lit1].copyTo(tmp);
 
     for (const auto& w: tmp) {
-        if (time_out || //Check if we timeout
-            !w.isBin() || //check if we are bin
+        if (!w.isBin() || //check if we are bin
             lit1 > w.lit2() || // don't do it 2x
             w.red()) // only irred
         {
@@ -172,7 +170,7 @@ bool DistillerBin::go_through_bins(
                 << endl;
             }
             runStats.timeOut++;
-            time_out = true;
+            return true;
         }
         runStats.checkedClauses++;
         const Lit lit2 = w.lit2();
@@ -188,16 +186,20 @@ bool DistillerBin::go_through_bins(
         }
 
         //Try to distill clause
-        try_distill_bin(lit1, lit2);
+        if (!try_distill_bin(lit1, lit2)) {
+            //UNSAT
+            return false;
+        }
     }
 
-    return time_out;
+    return false;
 }
 
-void DistillerBin::try_distill_bin(
+bool DistillerBin::try_distill_bin(
     Lit lit1,
     Lit lit2
 ) {
+    assert(solver->okay());
     assert(solver->prop_at_head());
     assert(solver->decisionLevel() == 0);
     #ifdef DRAT_DEBUG
@@ -232,7 +234,7 @@ void DistillerBin::try_distill_bin(
             solver->add_clause_int(x);
             solver->detach_bin_clause(lit1, lit2, false);
             runStats.numClShorten++;
-            return;
+            return solver->okay();
         } else if (solver->value(lit2) == l_Undef) {
             solver->enqueue<true>(~lit2);
             confl = solver->propagate<true, false, true>();
@@ -243,7 +245,7 @@ void DistillerBin::try_distill_bin(
         solver->cancelUntil<false, true>(0);
         solver->detach_bin_clause(lit1, lit2, false);
         runStats.clRemoved++;
-        return;
+        return true;
     }
 
     //Nothing happened
@@ -255,6 +257,8 @@ void DistillerBin::try_distill_bin(
     auto &w2 = findWatchedOfBin(solver->watches, lit2, lit1, false);
     assert(w2.bin_cl_marked());
     w2.unmark_bin_cl();
+
+    return true;
 }
 
 DistillerBin::Stats& DistillerBin::Stats::operator+=(const Stats& other)
