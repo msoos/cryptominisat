@@ -272,7 +272,7 @@ class Tester:
         return sched
 
     def rnd_schedule_all(self, preproc):
-        sched_opts += "scc-vrepl,"
+        sched_opts = "scc-vrepl,"
         sched_opts += "sub-impl, intree-probe,"
         sched_opts += "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
         sched_opts += "sub-cls-with-bin,"
