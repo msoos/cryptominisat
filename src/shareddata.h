@@ -45,7 +45,7 @@ class SharedData
 
         ~SharedData()
         {
-            //gpuClauseSharer->free()
+            delete gpuClauseSharer;
         }
 
         struct Spec {
@@ -78,7 +78,7 @@ class SharedData
         };
 
         GpuShare::GpuClauseSharerOptions csOpts;
-        GpuShare::GpuClauseSharer* gpuClauseSharer;
+        GpuShare::GpuClauseSharer* gpuClauseSharer = NULL;
 
         vector<lbool> value;
         vector<Spec> bins;
