@@ -27,6 +27,7 @@ using std::set;
 
 #include "src/solver.h"
 #include "src/distillerlong.h"
+#include "src/distillerlitrem.h"
 #include "src/solverconf.h"
 using namespace CMSat;
 #include "test_helper.h"
@@ -39,6 +40,7 @@ struct distill_test : public ::testing::Test {
         //conf.verbosity = 20;
         s = new Solver(&conf, &must_inter);
         distill_long_cls = s->distill_long_cls;
+        distill_lit_rem = s->distill_lit_rem;
     }
     ~distill_test()
     {
@@ -47,6 +49,7 @@ struct distill_test : public ::testing::Test {
 
     Solver* s;
     DistillerLong* distill_long_cls;
+    DistillerLitRem* distill_lit_rem;
     std::atomic<bool> must_inter;
 };
 
@@ -124,6 +127,39 @@ TEST_F(distill_test, tri_transitive)
 
     distill_long_cls->distill(false);
     check_irred_cls_contains(s, "1, 2");
+}
+
+TEST_F(distill_test, litrem_1)
+{
+    s->new_vars(5);
+    s->add_clause_outside(str_to_cl("1, 2, 3"));
+    s->add_clause_outside(str_to_cl("1, -2, 3"));
+
+    distill_lit_rem->distill_lit_rem();
+    check_irred_cls_contains(s, "1, 3");
+}
+
+TEST_F(distill_test, litrem_2)
+{
+    s->new_vars(5);
+    s->add_clause_outside(str_to_cl("1, 2, 3, 4"));
+    s->add_clause_outside(str_to_cl("1, -2, 3, 4"));
+
+    distill_lit_rem->distill_lit_rem();
+    check_irred_cls_contains(s, "1, 3, 4");
+}
+
+TEST_F(distill_test, litrem_3)
+{
+    s->new_vars(10);
+    s->add_clause_outside(str_to_cl("1, 2, 3, 4"));
+    s->add_clause_outside(str_to_cl("1, -2, 3, 4"));
+    s->add_clause_outside(str_to_cl("1, 2, 3, 7"));
+    s->add_clause_outside(str_to_cl("1, 2, -3, 7"));
+
+    distill_lit_rem->distill_lit_rem();
+    check_irred_cls_contains(s, "1, 3, 4");
+    check_irred_cls_contains(s, "1, 2, 7");
 }
 
 

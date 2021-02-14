@@ -172,7 +172,7 @@ set (MY_TESTS
     scc_test
     vrepl_test
     clause_cleaner_test
-    distiller_all_with_all_test
+    distiller_test
     distill_long_with_implicit_test
     subsume_impl_test
     comp_find_test
