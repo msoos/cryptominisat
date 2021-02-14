@@ -2454,7 +2454,7 @@ void OccSimplifier::finishUp(
         assert(solver->prop_at_head());
         add_back_to_solver();
         if (solver->okay()) {
-            solver->ok = solver->propagate<false>().isNULL();
+            solver->ok = solver->propagate<true>().isNULL();
         }
     }
 

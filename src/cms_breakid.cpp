@@ -489,7 +489,7 @@ void BreakID::start_new_solving()
 
     assert(solver->value(symm_var) == l_Undef);
     solver->enqueue<false>(Lit(symm_var, false));
-    PropBy ret = solver->propagate<false>();
+    PropBy ret = solver->propagate<true>();
     assert(ret == PropBy() && "Must not fail on resetting symmetry var");
     symm_var = var_Undef;
 }

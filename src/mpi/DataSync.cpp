@@ -228,7 +228,7 @@ const bool DataSync::syncFromMPI()
             goto end;
         }
     }
-    solver.ok = solver.propagate<false>().isNULL();
+    solver.ok = solver.propagate<true>().isNULL();
     if (!solver.ok) goto end;
     mpiRecvUnitData += thisMpiRecvUnitData;
 
@@ -667,7 +667,7 @@ const bool DataSync::syncUnit(const lbool otherVal, const Var var, SharedData* s
             ) return true;
 
         solver.uncheckedEnqueue(litToEnqueue);
-        solver.ok = solver.propagate<false>().isNULL();
+        solver.ok = solver.propagate<true>().isNULL();
         if (!solver.ok) return false;
         thisGotUnitData++;
         return true;
