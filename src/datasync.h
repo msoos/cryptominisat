@@ -20,6 +20,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
+#ifndef _DATASYNC_H_
+#define _DATASYNC_H_
+
 #include "solvertypes.h"
 #include "watched.h"
 #include "propby.h"
@@ -27,9 +30,6 @@ THE SOFTWARE.
 #ifdef USE_MPI
 #include "mpi.h"
 #endif //USE_MPI
-
-#ifndef _DATASYNC_H_
-#define _DATASYNC_H_
 
 namespace CMSat {
 
