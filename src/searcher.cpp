@@ -2341,19 +2341,9 @@ struct branch_type_total{
 
 void Searcher::set_branch_strategy(uint32_t iteration_num)
 {
-    if (iteration_num == 0 && !conf.branch_strategy_setup_forced) {
-         branch_strategy = branch::vsids;
-         cur_rest_type = conf.restartType;
-         var_decay = 0.80;
-         var_decay_max = 0.95;
-         return;
-    }
-    iteration_num--;
-
     size_t smallest = 0;
     size_t start = 0;
-    size_t total = 0;
-    branch_type_total select[20];
+    vector<branch_type_total> select;
     if (conf.verbosity) {
         if (conf.verbosity >= 2) {
             cout << "c [branch] orig text: " << conf.branch_strategy_setup << endl;
@@ -2363,6 +2353,9 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
 
     while(smallest !=std::string::npos) {
         smallest = std::string::npos;
+
+        size_t vsidsx_once = conf.branch_strategy_setup.find("vsidsx_once", start);
+        smallest = std::min(vsidsx_once, smallest);
 
         size_t vsidsx = conf.branch_strategy_setup.find("vsidsx", start);
         smallest = std::min(vsidsx, smallest);
@@ -2391,56 +2384,61 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
             break;
         }
 
-        if (conf.verbosity && total > 0) {
+        if (conf.verbosity && !select.empty()) {
             cout << "+";
         }
 
-        if (smallest == vsidsx) {
-            select[total++]= branch_type_total(branch::vsids, 0.80, 0.95, "VSIDSX", "vsx");
+        if (smallest == vsidsx_once) {
+            select.push_back(branch_type_total(branch::vsids, 0.80, 0.95, "VSIDSXONCE", "vxo"));
             if (conf.verbosity) {
-                cout << select[total-1].descr;
+                cout << select[select.size()-1].descr;
+            }
+        } else if (smallest == vsidsx) {
+            select.push_back(branch_type_total(branch::vsids, 0.80, 0.95, "VSIDSX", "vx"));
+            if (conf.verbosity) {
+                cout << select[select.size()-1].descr;
             }
         }
         else if (smallest == vsids1) {
-            select[total++]= branch_type_total(branch::vsids, 0.92, 0.92, "VSIDS1", "vs1");
+            select.push_back(branch_type_total(branch::vsids, 0.92, 0.92, "VSIDS1", "vs1"));
             if (conf.verbosity) {
-                cout << select[total-1].descr;
+                cout << select[select.size()-1].descr;
             }
         }
         else if (smallest == vsids2) {
-            select[total++]=  branch_type_total(branch::vsids, 0.99, 0.99, "VSIDS2", "vs2");
+            select.push_back(branch_type_total(branch::vsids, 0.99, 0.99, "VSIDS2", "vs2"));
             if (conf.verbosity) {
-                cout << select[total-1].descr;
+                cout << select[select.size()-1].descr;
             }
         }
         #ifdef VMTF_NEEDED
         else if (smallest == vmtf) {
-            select[total++]=  branch_type_total(branch::vmtf, 0, 0, "VMTF", "vmt");
+            select.push_back(branch_type_total(branch::vmtf, 0, 0, "VMTF", "vmt"));
             if (conf.verbosity) {
-                cout << select[total-1].descr;
+                cout << select[select.size()-1].descr;
             }
         }
         #endif
         else if (smallest == maple1) {
             //TODO should we do this incremental stuff?
             //maple_step_size = conf.orig_step_size;
-            select[total++]= branch_type_total(branch::maple, 0.70, 0.70, "MAPLE1", "mp1");
+            select.push_back(branch_type_total(branch::maple, 0.70, 0.70, "MAPLE1", "mp1"));
             if (conf.verbosity) {
-                cout << select[total-1].descr;
+                cout << select[select.size()-1].descr;
             }
         }
         else if (smallest == maple2) {
             //TODO should we do this incremental stuff?
             //maple_step_size = conf.orig_step_size;
-            select[total++]= branch_type_total(branch::maple, 0.90, 0.90, "MAPLE2", "mp2");
+            select.push_back(branch_type_total(branch::maple, 0.90, 0.90, "MAPLE2", "mp2"));
             if (conf.verbosity) {
-                cout << select[total-1].descr;
+                cout << select[select.size()-1].descr;
             }
         }
         else if (smallest == rand) {
-            select[total++]= branch_type_total(branch::rand, 1, 1, "RAND", "rand");
+            select.push_back(branch_type_total(branch::rand, 1, 1, "RAND", "rand"));
             if (conf.verbosity) {
-                cout << select[total-1].descr;
+                cout << select[select.size()-1].descr;
             }
         } else {
             assert(false);
@@ -2448,18 +2446,26 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
 
         //Search for next one. The strings are quite distinct, this works.
         start = smallest + 3;
-
-        if (total >= 20) {
-           cout << "ERROR: you cannot give more than 19 branch strategies" << endl;
-           exit(-1);
-        }
     }
     if (conf.verbosity) {
-        cout << " -- total: " << total << endl;
+        cout << " -- total: " << select.size() << endl;
     }
 
-    assert(total > 0);
-    uint32_t which = iteration_num % total;
+    assert(!select.empty());
+
+    //Deal with systems that are only meant to be done once
+    if (iteration_num >= select.size()) {
+        uint32_t j = 0;
+        for(uint32_t i = 0; i < select.size(); i ++) {
+            if (select[i].descr != "VSIDSXONCE") {
+                select[j++] = select[i];
+            }
+        }
+        select.resize(j);
+        iteration_num--;
+    }
+
+    uint32_t which = iteration_num % select.size();
     branch_strategy = select[which].branch;
     branch_strategy_str = select[which].descr;
     branch_strategy_str_short = select[which].descr_short;
