@@ -102,8 +102,8 @@ TEST_F(gatefinder_test, orgate_5)
 
     EXPECT_EQ( 1, gs.size());
     const auto tmp = gs[0].get_lhs();
-    find_lit(tmp, "2");
-    find_lit(tmp, "3");
+    EXPECT_TRUE(find_lit(tmp, "2"));
+    EXPECT_TRUE(find_lit(tmp, "3"));
 }
 
 
