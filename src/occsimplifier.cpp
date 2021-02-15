@@ -2477,10 +2477,12 @@ void OccSimplifier::finishUp(
          && somethingSet
         #endif
     ) {
+        #ifndef SLOW_DEBUG
         solver->test_all_clause_attached();
         solver->check_wrong_attach();
         solver->check_stats();
         solver->check_implicit_propagated();
+        #endif
     }
 
     if (solver->ok) {
