@@ -1147,7 +1147,7 @@ DLL_PUBLIC unsigned long SATSolver::get_sql_id() const
 
 DLL_PUBLIC bool SATSolver::okay() const
 {
-    return data->okay;
+    return data->okay && data->solvers[0]->okay();
 }
 
 DLL_PUBLIC void SATSolver::log_to_file(std::string filename)
