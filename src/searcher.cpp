@@ -2459,10 +2459,11 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
         for(uint32_t i = 0; i < select.size(); i ++) {
             if (select[i].descr != "VSIDSXONCE") {
                 select[j++] = select[i];
+            } else {
+                iteration_num--;
             }
         }
         select.resize(j);
-        iteration_num--;
     }
 
     uint32_t which = iteration_num % select.size();
