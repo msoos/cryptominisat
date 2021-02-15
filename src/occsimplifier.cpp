@@ -986,7 +986,7 @@ bool OccSimplifier::clear_vars_from_cls_that_have_been_set()
     return solver->okay();
 }
 
-bool OccSimplifier::deal_with_added_cl_to_var_lit(const Lit lit)
+bool OccSimplifier::mark_and_push_to_added_long_cl_cls_containing(const Lit lit)
 {
     watch_subarray_const cs = solver->watches[lit];
     *limit_to_decrease -= (long)cs.size()*2+ 40;
@@ -1013,7 +1013,7 @@ bool OccSimplifier::simulate_frw_sub_str_with_added_cl_to_var()
 {
     limit_to_decrease = &varelim_sub_str_limit;
 
-    //during the deal_with_added_cl_to_var_lit() below, we mark the clauses
+    //during the mark_and_push_to_added_long_cl_cls_containing() below, we mark the clauses
     //so we don't add the same clause twice
     for(uint32_t i = 0
         ; i < added_cl_to_var.getTouchedList().size()
@@ -1026,7 +1026,7 @@ bool OccSimplifier::simulate_frw_sub_str_with_added_cl_to_var()
         if (!sub_str->backw_sub_str_long_with_bins_watch(lit, true)) {
             return false;
         }
-        if (!deal_with_added_cl_to_var_lit(lit)) {
+        if (!mark_and_push_to_added_long_cl_cls_containing(lit)) {
             return false;
         }
 
@@ -1034,7 +1034,7 @@ bool OccSimplifier::simulate_frw_sub_str_with_added_cl_to_var()
         if (!sub_str->backw_sub_str_long_with_bins_watch(lit, true)) {
             return false;
         }
-        if (!deal_with_added_cl_to_var_lit(lit)) {
+        if (!mark_and_push_to_added_long_cl_cls_containing(lit)) {
             return false;
         }
     }
