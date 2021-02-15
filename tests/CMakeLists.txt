@@ -185,6 +185,7 @@ set (MY_TESTS
     implied_by_test
     lucky_test
     definability_test
+    gatefinder_test
 #    undefine_test
 )
 

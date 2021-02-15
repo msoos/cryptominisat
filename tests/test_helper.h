@@ -81,6 +81,15 @@ long int str_to_long_int(string& token)
     return i;
 }
 
+Lit str_to_lit(const std::string& str)
+{
+    string mycopy = str;
+    long int i = str_to_long_int(mycopy);
+    assert(i == (int)i);
+    Lit lit(std::abs(i)-1, i < 0);
+    return lit;
+}
+
 vector<Lit> str_to_cl(const string& data, bool sort = true)
 {
     vector<string> tokens;
