@@ -765,7 +765,7 @@ DLL_PUBLIC bool SATSolver::add_xor_clause(const std::vector<unsigned>& vars, boo
     return ret;
 }
 
-enum class Todo {todo_solve, todo_simplify, todo_backbone};
+enum class Todo {todo_solve, todo_simplify};
 
 struct OneThreadCalc
 {
@@ -797,8 +797,6 @@ struct OneThreadCalc
             ret = data_for_thread.solvers[tid]->solve_with_assumptions(data_for_thread.assumptions, only_sampling_solution);
         } else if (todo == Todo::todo_simplify) {
             ret = data_for_thread.solvers[tid]->simplify_with_assumptions(data_for_thread.assumptions);
-        } else if (todo == Todo::todo_backbone) {
-            ret = data_for_thread.solvers[tid]->backbone_simpl(data_for_thread.max_confl_for_backbone);
         } else {
             assert(false);
         }
@@ -885,8 +883,6 @@ lbool calc(
             ret = data->solvers[0]->solve_with_assumptions(assumptions, only_sampling_solution);
         } else if (todo == Todo::todo_simplify) {
             ret = data->solvers[0]->simplify_with_assumptions(assumptions, strategy);
-        } else if (todo == Todo::todo_backbone) {
-            ret = data->solvers[0]->backbone_simpl(data->max_confl_for_backbone);
         }
         data->okay = data->solvers[0]->okay();
         data->cpu_times[0] = cpuTime();
@@ -968,17 +964,6 @@ DLL_PUBLIC lbool SATSolver::simplify(const vector< Lit >* assumptions, const str
     data->previous_sum_decisions = get_sum_decisions();
 
     return calc(assumptions, Todo::todo_simplify, data, false, strategy);
-}
-
-DLL_PUBLIC lbool SATSolver::backbone_simpl(uint64_t max_confl)
-{
-    //set information data (props, confl, dec)
-    data->previous_sum_conflicts = get_sum_conflicts();
-    data->previous_sum_propagations = get_sum_propagations();
-    data->previous_sum_decisions = get_sum_decisions();
-    data->max_confl_for_backbone = max_confl;
-
-    return calc(NULL, Todo::todo_backbone, data);
 }
 
 DLL_PUBLIC const vector< lbool >& SATSolver::get_model() const
