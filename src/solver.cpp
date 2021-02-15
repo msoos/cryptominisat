@@ -70,7 +70,6 @@ THE SOFTWARE.
 #include "lucky.h"
 #include "get_clause_query.h"
 #include "community_finder.h"
-#include "backbonesimpl.h"
 
 #ifdef USE_BREAKID
 #include "cms_breakid.h"
@@ -5062,14 +5061,6 @@ vector<ITEGate> Solver::get_recovered_ite_gates()
 
 void Solver::remove_and_clean_all() {
     clauseCleaner->remove_and_clean_all();
-}
-
-lbool Solver::backbone_simpl(uint64_t max_confl)
-{
-    BackboneSimpl* backb = new BackboneSimpl(this);
-    auto ret = backb->backbone_simpl(max_confl);
-    delete backb;
-    return ret;
 }
 
 void Solver::set_max_confl(uint64_t max_confl)

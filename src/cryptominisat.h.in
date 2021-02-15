@@ -76,7 +76,6 @@ namespace CMSat {
         const std::vector<Lit>& get_conflict() const; //get conflict in terms of the assumptions given in case the previous call to solve() was l_False
         bool okay() const; //the problem is still solveable, i.e. the empty clause hasn't been derived
         const std::vector<Lit>& get_decisions_reaching_model() const; //get decisions that lead to model. may NOT work, in case the decisions needed were internal, extended variables. exit(-1)'s in case of such a case. you MUST check decisions_reaching_computed().
-        lbool backbone_simpl(uint64_t max_confl = 10ULL*1000ULL); // See Preprocessing for Propositional Model Counting by Jean-Marie Lagniez and Pierre Marquis
 
         ////////////////////////////
         // Debug all calls for later replay with --debuglit FILENAME

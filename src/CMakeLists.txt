@@ -120,7 +120,6 @@ set(cryptoms_lib_files
     ccnr_cms.cpp
     lucky.cpp
     get_clause_query.cpp
-    backbonesimpl.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
 

@@ -90,7 +90,6 @@ class Solver : public Searcher
         bool add_clause_outside(const vector<Lit>& lits, bool red = false);
         bool add_xor_clause_outside(const vector<uint32_t>& vars, bool rhs);
         void set_var_weight(Lit lit, double weight);
-        lbool backbone_simpl(uint64_t max_confl = 10ULL*1000ULL);
 
         lbool solve_with_assumptions(
             const vector<Lit>* _assumptions = NULL,
