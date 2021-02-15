@@ -651,6 +651,12 @@ bool cl_exists(const vector<vector<Lit> >& cls, const vector<Lit>& cl) {
     return false;
 }
 
+template<class T>
+bool find_lit(const T& where, const string& lit) {
+    Lit l = str_to_lit(lit);
+    return std::find(where.begin(), where.end(), l) != where.end();
+}
+
 // string print(const vector<Lit>& dat) {
 //     std::stringstream m;
 //     for(size_t i = 0; i < dat.size();) {

@@ -85,12 +85,8 @@ TEST_F(gatefinder_test, orgate_4)
     const auto gs = s->get_recovered_or_gates();
     EXPECT_EQ( 1, gs.size());
     const auto tmp = gs[0].get_lhs();
-    EXPECT_NE(
-        std::find(tmp.begin(), tmp.end(), str_to_lit("2")),
-              tmp.end());
-    EXPECT_NE(
-        std::find(tmp.begin(), tmp.end(), str_to_lit("3")),
-              tmp.end());
+    EXPECT_TRUE(find_lit(tmp, "2"));
+    EXPECT_TRUE(find_lit(tmp, "3"));
 }
 
 
@@ -106,12 +102,8 @@ TEST_F(gatefinder_test, orgate_5)
 
     EXPECT_EQ( 1, gs.size());
     const auto tmp = gs[0].get_lhs();
-    EXPECT_NE(
-        std::find(tmp.begin(), tmp.end(), str_to_lit("2")),
-              tmp.end());
-    EXPECT_NE(
-        std::find(tmp.begin(), tmp.end(), str_to_lit("3")),
-              tmp.end());
+    find_lit(tmp, "2");
+    find_lit(tmp, "3");
 }
 
 
@@ -127,11 +119,34 @@ TEST_F(gatefinder_test, orgate_6)
 
     EXPECT_EQ( 1, gs.size());
     const auto tmp = gs[0].get_lhs();
-    EXPECT_NE(
-        std::find(tmp.begin(), tmp.end(), str_to_lit("-2")),
-              tmp.end());
-    EXPECT_NE(
-        std::find(tmp.begin(), tmp.end(), str_to_lit("-3")),
-              tmp.end());
+    EXPECT_TRUE(find_lit(tmp, "-2"));
+    EXPECT_TRUE(find_lit(tmp, "-3"));
+}
+
+//a = 1
+//f = 2
+//g = 3
+//x = 4
+
+// -a V  f V -x
+// -a V  g V  x
+//  a V -f V -x
+//  a V -g V  x
+TEST_F(gatefinder_test, itegate_1)
+{
+    s->new_vars(20);
+    s->add_clause_outside(str_to_cl("-1, 2, -4"));
+    s->add_clause_outside(str_to_cl("-1, 3, 4"));
+    s->add_clause_outside(str_to_cl("1, -2, -4"));
+    s->add_clause_outside(str_to_cl("1, -3, 4"));
+
+    const auto gs = s->get_recovered_ite_gates();
+
+    EXPECT_EQ( 2, gs.size());
+    const auto tmp = gs[0].get_all();
+    EXPECT_TRUE(find_lit(tmp, "-2"));
+    EXPECT_TRUE(find_lit(tmp, "-3"));
+    EXPECT_TRUE(find_lit(tmp, "-4"));
+    EXPECT_TRUE(find_lit(tmp, "1"));
 }
 
