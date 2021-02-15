@@ -4001,7 +4001,11 @@ void Solver::open_file_and_dump_red_clauses(const std::string &fname) const
 vector<Xor> Solver::get_recovered_xors(const bool xor_together_xors)
 {
     vector<Xor> xors_ret;
-    if (xor_together_xors && okay()) {
+    if (!okay()) {
+        return xors_ret;
+    }
+
+    if (xor_together_xors) {
         auto xors = xorclauses;
 
         XorFinder finder(NULL, this);
@@ -5022,6 +5026,10 @@ bool Solver::assump_contains_xor_clash()
 vector<OrGate> Solver::get_recovered_or_gates()
 {
     assert(get_num_bva_vars() == 0 && "not implemented for BVA");
+    if (!okay()) {
+        return vector<OrGate>();
+    }
+
     vector<OrGate> or_gates = occsimplifier->get_recovered_or_gates();
 
     for(auto& g: or_gates) {
@@ -5036,6 +5044,10 @@ vector<OrGate> Solver::get_recovered_or_gates()
 vector<ITEGate> Solver::get_recovered_ite_gates()
 {
     assert(get_num_bva_vars() == 0 && "not implemented for BVA");
+    if (!okay()) {
+        return vector<ITEGate>();
+    }
+
     vector<ITEGate> or_gates = occsimplifier->get_recovered_ite_gates();
 
     for(auto& g: or_gates) {
