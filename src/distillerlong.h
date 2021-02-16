@@ -89,7 +89,8 @@ class DistillerLong {
         //Global status
         Stats runStats;
         Stats globalStats;
-        size_t numCalls = 0;
+        size_t numCalls_red = 0;
+        size_t numCalls_irred = 0;
 
 };
 

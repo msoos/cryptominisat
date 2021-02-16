@@ -47,7 +47,8 @@ DistillerLong::DistillerLong(Solver* _solver) :
 bool DistillerLong::distill(const bool red, bool fullstats, bool only_rem_cl)
 {
     assert(solver->ok);
-    numCalls++;
+    numCalls_red += (unsigned)red;
+    numCalls_irred += (unsigned)!red;
     runStats.clear();
     lit_counts.clear();
     lit_counts.resize(solver->nVars()*2, 0);
@@ -77,6 +78,7 @@ bool DistillerLong::distill(const bool red, bool fullstats, bool only_rem_cl)
         }
     } else {
         if (solver->conf.pred_distill_orig) {
+            //non-stats/pred version
             if (!distill_long_cls_all(solver->longRedCls[0], 10.0)) {
                 goto end;
             }
@@ -145,8 +147,6 @@ bool DistillerLong::go_through_clauses(
     bool also_remove
 ) {
     bool time_out = false;
-    uint32_t skipped = 0;
-    uint32_t tried = 0;
     vector<ClOffset>::iterator i, j;
     i = j = cls.begin();
     for (vector<ClOffset>::iterator end = cls.end()
@@ -193,7 +193,6 @@ bool DistillerLong::go_through_clauses(
                 cl.red() &&
                 cl.stats.glue > 3)
         ) {
-            skipped++;
             *j++ = *i;
             continue;
         }
@@ -210,7 +209,6 @@ bool DistillerLong::go_through_clauses(
         maxNumProps -= solver->watches[cl[1]].size();
 
         //Try to distill clause
-        tried++;
         ClOffset offset2 = try_distill_clause_and_return_new(
             offset
             , &cl.stats
@@ -222,8 +220,6 @@ bool DistillerLong::go_through_clauses(
         }
     }
     cls.resize(cls.size()- (i-j));
-//     cout << "distill-long-Tried: " << tried << endl;
-//     cout << "distill-long-Skipped: " << skipped << endl;
 
     return time_out;
 }
@@ -265,6 +261,7 @@ bool DistillerLong::distill_long_cls_all(
     runStats.potentialClauses += offs.size();
     runStats.numCalled += 1;
 
+    //Shuffle only when it's non-learnt run (i.e. also_remove)
     if (also_remove &&
         //Don't shuffle when it's very-very large, too expensive
         offs.size() < 100ULL*1000ULL*1000ULL)
@@ -290,6 +287,7 @@ bool DistillerLong::distill_long_cls_all(
     if (solver->conf.verbosity >= 3) {
         cout << "c [distill-long] cls"
         << " tried: " << runStats.checkedClauses << "/" << offs.size()
+        << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
     }
     if (solver->sqlStats) {
