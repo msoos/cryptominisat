@@ -4053,7 +4053,7 @@ bool Solver::find_and_init_all_matrices()
 {
     if (!xor_clauses_updated && (!detached_xor_clauses || !assump_contains_xor_clash())) {
         if (conf.verbosity >= 1) {
-            cout << "c [find&init matx] XORs not updated, and either (XORs are not detached OR assumps does not contain clash variable) -> or not performing matrix init" << endl;
+            cout << "c [find&init matx] XORs not updated, and either (XORs are not detached OR assumps does not contain clash variable) -> or not performing matrix init. Matrices: " << gmatrices.size() << endl;
         }
         return true;
     }
