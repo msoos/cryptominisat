@@ -295,9 +295,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "sls,lucky"
         )*/
         , simplify_schedule_startup(
-            "sub-impl,"
             "breakid, "
-            "occ-backw-sub, occ-bve,"
+            "occ-bve,"
         )
         //validated with run 8114195.wlm01
         , simplify_schedule_nonstartup(
