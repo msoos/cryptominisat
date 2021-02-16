@@ -300,6 +300,9 @@ bool DistillerLong::distill_long_cls_all(
         );
     }
 
+    //TODO check how to do this well. Takes 50% of solving time as-is
+    //     perhaps Kissat has a good idea for this.
+    #if 0
     //We went through the loop without timeout, let's reset the distilled/tried_to_remove flag
     if (time_remain > 0) {
         for(const auto& off: offs) {
@@ -311,6 +314,8 @@ bool DistillerLong::distill_long_cls_all(
             }
         }
     }
+    #endif
+
 
     //Update stats
     runStats.time_used += time_used;
