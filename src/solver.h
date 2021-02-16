@@ -377,11 +377,7 @@ class Solver : public Searcher
             const double cpu_time,
             const double cpu_time_total,
             const double wallclock_time_started=0) const;
-        void print_min_stats(
-            const double cpu_time,
-            const double cpu_time_total,
-            const double wallclock_time_started=0) const;
-        void print_full_restart_stat(
+        void print_full_stats(
             const double cpu_time,
             const double cpu_time_total,
             const double wallclock_time_started=0) const;
