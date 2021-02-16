@@ -56,11 +56,17 @@ reducedb_time=$(awk '{a+=$2} END {print a}' reducedb_times.csv)
 solved_total_time=$(awk '{if ($1=="5000.00") {x+=0} else {x += $1};} END {printf "%d\n", x}' solveTimes.csv)
 bc <<< "scale=4; ($reducedb_time/$solved_total_time)*100.0" > reducedb_percent_time.percent
 
-# Distill time for solved instances
-xzgrep -i "distill time " $(cat solved_xz.csv) | awk '{print $1 " " $5}' | sed "s/.out.xz:c//" | sort > distill_times.csv
-distill_time=$(awk '{a+=$2} END {print a}' distill_times.csv)
+# Distill long time for solved instances
+xzgrep -i "distill long time " $(cat solved_xz.csv) | awk '{print $1 " " $5}' | sed "s/.out.xz:c//" | sort > distill_long_times.csv
+distill_long_time=$(awk '{a+=$2} END {print a}' distill_long_times.csv)
 solved_total_time=$(awk '{if ($1=="5000.00") {x+=0} else {x += $1};} END {printf "%d\n", x}' solveTimes.csv)
-bc <<< "scale=4; ($distill_time/$solved_total_time)*100.0" > distill_percent_time.percent
+bc <<< "scale=4; ($distill_long_time/$solved_total_time)*100.0" > distill_long_percent_time.percent
+
+# Distill bin time for solved instances
+xzgrep -i "distill bin time " $(cat solved_xz.csv) | awk '{print $1 " " $5}' | sed "s/.out.xz:c//" | sort > distill_bin_times.csv
+distill_bin_time=$(awk '{a+=$2} END {print a}' distill_bin_times.csv)
+solved_total_time=$(awk '{if ($1=="5000.00") {x+=0} else {x += $1};} END {printf "%d\n", x}' solveTimes.csv)
+bc <<< "scale=4; ($distill_bin_time/$solved_total_time)*100.0" > distill_long_percent_time.percent
 
 # Occsimp time for solved instances
 xzgrep -i "OccSimplifier time " $(cat solved_xz.csv) | awk '{print $1 " " $5}' | sed "s/.out.xz:c//" | sort > occsimp_times.csv
