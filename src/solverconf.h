@@ -454,6 +454,7 @@ class DLL_PUBLIC SolverConf
 
         //Distillation
         int      do_distill_clauses;
+        int      do_distill_bin_clauses;
         unsigned long long distill_long_cls_time_limitM;
         long watch_based_str_time_limitM;
         double distill_increase_conf_ratio;

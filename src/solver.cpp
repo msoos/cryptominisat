@@ -2090,7 +2090,7 @@ lbool Solver::execute_inprocess_strategy(
                 dist_long_with_impl->distill_long_with_implicit(false);
             }
         } else if (token == "distill-bins") {
-            if (conf.do_distill_clauses) {
+            if (conf.do_distill_bin_clauses) {
                 distill_bin_cls->distill();
             }
         } else if (token == "distill-litrem") {
