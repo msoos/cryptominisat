@@ -2368,7 +2368,7 @@ void Solver::print_norm_stats(
     varReplacer->print_some_stats(cpu_time);
 
     //varReplacer->get_stats().print_short(nVars());
-    print_stats_line("c distill time"
+    print_stats_line("c distill long time"
                     , distill_long_cls->get_stats().time_used
                     , stats_line_percent(distill_long_cls->get_stats().time_used, cpu_time)
                     , "% time"
