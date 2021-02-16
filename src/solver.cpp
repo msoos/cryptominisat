@@ -2439,7 +2439,6 @@ void Solver::print_norm_stats(
 //     );
     }
     print_stats_time(cpu_time, cpu_time_total, wallclock_time_started);
-    print_mem_stats();
 }
 
 void Solver::print_full_stats(
@@ -2450,8 +2449,6 @@ void Solver::print_full_stats(
     cout << "c All times are for this thread only except if explicitly specified" << endl;
     sumSearchStats.print(sumPropStats.propagations, conf.do_print_times);
     sumPropStats.print(sumSearchStats.cpu_time);
-
-    cout << "c ------- FINAL TOTAL SOLVING STATS END ---------" << endl;
     //reduceDB->get_total_time().print(cpu_time);
 
     //OccSimplifier stats
@@ -2465,25 +2462,16 @@ void Solver::print_full_stats(
         occsimplifier->print_gatefinder_stats();
     }*/
 
-    //VarReplacer stats
-    if (conf.do_print_times)
-    print_stats_line("c SCC time"
-        , varReplacer->get_scc_finder()->get_stats().cpu_time
-        , stats_line_percent(varReplacer->get_scc_finder()->get_stats().cpu_time, cpu_time)
-        , "% time"
-    );
     varReplacer->get_scc_finder()->get_stats().print();
-
     varReplacer->get_stats().print(nVarsOuter());
     varReplacer->print_some_stats(cpu_time);
-
-    //DistillerAllWithAll stats
     distill_bin_cls->get_stats().print(nVarsOuter());
     dist_long_with_impl->get_stats().print();
 
     if (conf.doStrSubImplicit) {
         subsumeImplicit->get_stats().print("");
     }
+    print_mem_stats();
 }
 
 uint64_t Solver::print_watch_mem_used(const uint64_t rss_mem_used) const
