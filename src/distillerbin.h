@@ -47,8 +47,8 @@ class DistillerBin {
         {
             void clear()
             {
-                Stats tmp;
-                *this = tmp;
+                Stats _tmp;
+                *this = _tmp;
             }
 
             Stats& operator+=(const Stats& other);
