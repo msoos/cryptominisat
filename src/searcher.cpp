@@ -3199,6 +3199,11 @@ size_t Searcher::hyper_bin_res_all(const bool check_for_set_values)
 #ifdef USE_GAUSS
 Searcher::gauss_ret Searcher::gauss_jordan_elim()
 {
+    if (gmatrices.empty()) {
+        gqhead = qhead;
+        return gauss_ret::g_nothing;
+    }
+
     #ifdef VERBOSE_DEBUG
     cout << "Gauss searcher::Gauss_elimination called, declevel: " << decisionLevel() << endl;
     #endif
