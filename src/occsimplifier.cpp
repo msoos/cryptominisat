@@ -2040,7 +2040,6 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
     for(const Tri& newcl: cl_to_add_ternary) {
         ClauseStats stats;
         stats.last_touched = solver->sumConflicts;
-        stats.glue = 6;
         stats.is_ternary_resolvent = true;
         #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
         ClauseStatsExtra stats_extra;
