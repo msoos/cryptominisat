@@ -1940,10 +1940,10 @@ bool Searcher::handle_conflict(PropBy confl)
         learnt_clause = decision_clause;
         print_learnt_clause();
         cl = handle_last_confl(
-            learnt_clause.size(),
+            learnt_clause.size(), // glue is the number of decisions, i.e. the size of decision clause
             old_decision_level,
-            learnt_clause.size(),
-            true,
+            learnt_clause.size(), // minimized glue is the same as glue before minim
+            true, // is decision?
             #ifdef STATS_NEEDED
             calc_connects_num_communities(learnt_clause)
             #else
