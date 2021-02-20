@@ -189,6 +189,8 @@ bool DistillerLong::go_through_clauses(
         if ((also_remove && cl.tried_to_remove) ||
             (!also_remove && cl.distilled) ||
             cl._xor_is_detached ||
+
+            //If it's a redundant that's not very good, let's not distill it
             (!solver->conf.pred_distill_orig &&
                 cl.red() &&
                 cl.stats.glue > 3)

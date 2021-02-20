@@ -138,8 +138,9 @@ bool DistillerLitRem::go_through_clauses(
         //Time to dereference
         maxNumProps -= 5;
 
-        //If we already tried this clause, then move to next
         if (cl._xor_is_detached
+
+            //If it's a redundant that's not very good, let's not distill it
             || (!solver->conf.pred_distill_orig &&
                 cl.red() &&
                 cl.stats.glue > 3)
