@@ -206,10 +206,6 @@ bool DistillerLong::go_through_clauses(
         runStats.checkedClauses++;
         assert(cl.size() > 2);
 
-        //we will detach the clause no matter what
-        maxNumProps -= solver->watches[cl[0]].size();
-        maxNumProps -= solver->watches[cl[1]].size();
-
         //Try to distill clause
         ClOffset offset2 = try_distill_clause_and_return_new(
             offset
