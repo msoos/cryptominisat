@@ -125,13 +125,6 @@ public:
                 sls = sls.substr(6, 100);
                 conf.which_sls = sls;
                 cout << "c using SLS: '" << sls << "'" << endl;
-            }else if ((value = hasPrefix(argv[i], "--reconf="))){
-                long int reconf  = (int)strtol(value, NULL, 10);
-                if (reconf == 0 && errno == EINVAL){
-                    cout << "ERROR! illegal threads " << value << endl;
-                    exit(0);
-                }
-                conf.reconfigure_val = reconf;
             }else if (strcmp(argv[i], "--zero-exit-status") == 0){
                 zero_exit_status = true;
             }else if (strcmp(argv[i], "--version") == 0){

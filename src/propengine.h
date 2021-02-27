@@ -268,10 +268,6 @@ protected:
     void save_on_var_memory();
     template<class T> uint32_t calc_glue(const T& ps);
 
-    //For state saving
-    void save_state(SimpleOutFile& f) const;
-    void load_state(SimpleInFile& f);
-
     //Stats for conflicts
     ConflCausedBy lastConflictCausedBy;
 

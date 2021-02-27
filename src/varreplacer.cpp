@@ -1294,33 +1294,6 @@ vector<pair<Lit, Lit> > VarReplacer::get_all_binary_xors_outer() const
     return ret;
 }
 
-void VarReplacer::save_state(SimpleOutFile& f) const
-{
-    f.put_vector(table);
-    f.put_uint32_t(replacedVars);
-
-    f.put_uint32_t(reverseTable.size());
-    for(auto const& elem: reverseTable) {
-        f.put_uint32_t(elem.first);
-        f.put_vector(elem.second);
-    }
-}
-void VarReplacer::load_state(SimpleInFile& f)
-{
-    f.get_vector(table);
-    replacedVars = f.get_uint32_t();
-
-    vector<uint32_t> point_to;
-    uint32_t num = f.get_uint32_t();
-    for(uint32_t i = 0; i < num; i++)
-    {
-        uint32_t v = f.get_uint32_t();
-        point_to.clear();
-        f.get_vector(point_to);
-        reverseTable[v] = point_to;
-    }
-}
-
 bool VarReplacer::get_scc_depth_warning_triggered() const
 {
     return scc_finder->depth_warning_triggered();

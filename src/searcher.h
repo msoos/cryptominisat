@@ -246,30 +246,6 @@ class Searcher : public HyperEngine
             , const vector<uint32_t>& interToOuter
         );
 
-
-        ///////////////
-        // Reading and writing simplified CNF file
-        ///////////////
-        void save_state(SimpleOutFile& f, const lbool status) const;
-        void load_state(SimpleInFile& f, const lbool status);
-        void write_long_cls(
-            const vector<ClOffset>& clauses
-            , SimpleOutFile& f
-            , const bool red
-        ) const;
-        void read_long_cls(
-            SimpleInFile& f
-            , const bool red
-        );
-        uint64_t read_binary_cls(
-            SimpleInFile& f
-            , bool red
-        );
-        void write_binary_cls(
-            SimpleOutFile& f
-            , bool red
-        ) const;
-
         //Misc
         void add_in_partial_solving_stats();
 

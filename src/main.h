@@ -99,7 +99,6 @@ class Main: public MainCommon
         void printVersionInfo();
         int correctReturnValue(const lbool ret) const;
         lbool multi_solutions();
-        void dump_red_file();
         void ban_found_solution();
 
         //Config
@@ -126,9 +125,6 @@ class Main: public MainCommon
         bool fileNamePresent;
         vector<string> filesToRead;
         std::ofstream* resultfile = NULL;
-        string dump_red_fname;
-        uint32_t dump_red_max_len = 10000;
-        uint32_t dump_red_max_glue = 1000;
 
         //Drat checker
         bool clause_ID_needed = false;

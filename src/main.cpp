@@ -117,7 +117,7 @@ void Main::readInAFile(SATSolver* solver2, const string& filename)
         std::exit(1);
     }
 
-    bool strict_header = conf.preprocess;
+    bool strict_header = false;
     if (!parser.parse_DIMACS(in, strict_header)) {
         exit(-1);
     }
@@ -333,8 +333,6 @@ void Main::add_supported_options()
         , "Time multiplier for all simplification cutoffs")
     ("memoutmult", po::value(&conf.var_and_mem_out_mult)->default_value(conf.var_and_mem_out_mult)
         , "Multiplier for memory-out checks on inprocessing functions. It limits things such as clause-link-in. Useful when you have limited memory but still want to do some inprocessing")
-    ("preproc,p", po::value(&conf.preprocess)->default_value(conf.preprocess)
-        , "0 = normal run, 1 = preprocess and dump, 2 = read back dump and solution to produce final solution")
     #ifdef STATS_NEEDED
     ("clid", po::bool_switch(&clause_ID_needed)
         , "Add clause IDs to DRAT output")
@@ -440,16 +438,6 @@ void Main::add_supported_options()
     #endif
     ("lev1usewithin", po::value(&conf.must_touch_lev1_within)->default_value(conf.must_touch_lev1_within)
         , "Learnt clause must be used in lev1 within this timeframe or be dropped to lev2")
-    ;
-
-    po::options_description red_cl_dump_opts("Clause dumping after problem finishing");
-    reduceDBOptions.add_options()
-    ("dumpred", po::value(&dump_red_fname)->default_value(dump_red_fname)
-        , "Dump redundant clauses of gluecut0&1 to this filename")
-    ("dumpredmaxlen", po::value(&dump_red_max_len)->default_value(dump_red_max_len)
-        , "When dumping redundant clauses, only dump clauses at most this long")
-    ("dumpredmaxglue", po::value(&dump_red_max_len)->default_value(dump_red_max_glue)
-        , "When dumping redundant clauses, only dump clauses with at most this large glue")
     ;
 
     po::options_description varPickOptions("Variable branching options");
@@ -789,14 +777,6 @@ void Main::add_supported_options()
         , "Find cardinality constraints")
     ;
 
-    po::options_description reconfOptions("Reconf options");
-    reconfOptions.add_options()
-    ("reconfat", po::value(&conf.reconfigure_at)->default_value(conf.reconfigure_at)
-        , "Reconfigure after this many simplifications")
-    ("reconf", po::value(&conf.reconfigure_val)->default_value(conf.reconfigure_val)
-        , "Reconfigure after some time to this solver configuration [3,4,6,7,12,13,14,15,16]")
-    ;
-
     hiddenOptions.add_options()
     ("sync", po::value(&conf.sync_every_confl)->default_value(conf.sync_every_confl)
         , "Sync threads every N conflicts")
@@ -808,8 +788,6 @@ void Main::add_supported_options()
         , "Exit with status zero in case the solving has finished without an issue")
     ("printtimes", po::value(&conf.do_print_times)->default_value(conf.do_print_times)
         , "Print time it took for each simplification run. If set to 0, logs are easier to compare")
-    ("savedstate", po::value(&conf.saved_state_file)->default_value(conf.saved_state_file)
-        , "The file to save the saved state of the solver")
     ("maxsccdepth", po::value(&conf.max_scc_depth)->default_value(conf.max_scc_depth)
         , "The maximum for scc search depth")
     ("simdrat", po::value(&conf.simulate_drat)->default_value(conf.simulate_drat)
@@ -875,7 +853,6 @@ void Main::add_supported_options()
     .add(propOptions)
     .add(chrono_bt_opts)
     .add(reduceDBOptions)
-    .add(red_cl_dump_opts)
     .add(varPickOptions)
     .add(conflOptions)
     .add(iterativeOptions)
@@ -901,7 +878,6 @@ void Main::add_supported_options()
     .add(gaussOptions)
     #endif
     .add(distillOptions)
-    .add(reconfOptions)
     .add(miscOptions)
     ;
 }
@@ -1133,63 +1109,6 @@ void Main::manually_parse_some_options()
         std::exit(-1);
     }
 
-    if (conf.preprocess != 0) {
-        conf.simplify_at_startup = 1;
-        conf.varelim_time_limitM *= 5;
-        conf.orig_global_timeout_multiplier *= 1.5;
-
-        if (num_threads > 1) {
-            num_threads = 1;
-            cout << "c Cannot handle multiple threads for preprocessing. Setting to 1." << endl;
-        }
-
-
-        if (!redDumpFname.empty()
-            || !irredDumpFname.empty()
-        ) {
-            std::cerr << "ERROR: dumping clauses with preprocessing makes no sense. Exiting" << endl;
-            std::exit(-1);
-        }
-
-        if (max_nr_of_solutions > 1) {
-            std::cerr << "ERROR: multi-solutions make no sense with preprocessing. Exiting." << endl;
-            std::exit(-1);
-        }
-
-        if (!filesToRead.empty()) {
-            assert(false && "we should never reach this place, filesToRead has not been populated yet");
-            exit(-1);
-        }
-
-        if (!debugLib.empty()) {
-            std::cerr << "ERROR: debugLib makes no sense with preprocessing. Exiting." << endl;
-            std::exit(-1);
-        }
-
-        if (vm.count("schedule")) {
-            std::cerr << "ERROR: Please adjust the --preschedule not the --schedule when preprocessing. Exiting." << endl;
-            std::exit(-1);
-        }
-
-        if (vm.count("occschedule")) {
-            std::cerr << "ERROR: Please adjust the --preoccschedule not the --occschedule when preprocessing. Exiting." << endl;
-            std::exit(-1);
-        }
-
-        if (!vm.count("preschedule")) {
-            conf.simplify_schedule_startup = conf.simplify_schedule_preproc;
-        }
-
-        if (!vm.count("eratio")) {
-            conf.varElimRatioPerIter = 2.0;
-        }
-    } else {
-        if (!vm["savedstate"].defaulted()) {
-            cout << "ERROR: It does not make sense to have --savedstate passed and not use preprocessing" << endl;
-            exit(-1);
-        }
-    }
-
     if (vm.count("dumpresult")) {
         resultfile = new std::ofstream;
         resultfile->open(resultFilename.c_str());
@@ -1204,35 +1123,10 @@ void Main::manually_parse_some_options()
     }
 
     parse_polarity_type();
-
-    //Conflict
-    if (vm.count("maxdump") && redDumpFname.empty()) {
-        throw WrongParam("maxdump", "--dumpred <filename> must be activated if issuing --maxdump <size>");
-    }
-
     parse_restart_type();
 
-    if (conf.preprocess == 2) {
-        if (vm.count("input") == 0) {
-            cout << "ERROR: When post-processing you must give the solution as the positional argument"
-            << endl;
-            std::exit(-1);
-        }
-
-        vector<string> solution = vm["input"].as<vector<string> >();
-        if (solution.size() > 1) {
-            cout << "ERROR: When post-processing you must give only the solution as the positional argument."
-            << endl
-            << "The saved state must be given as the argument '--savedsate X'"
-            << endl;
-            std::exit(-1);
-        }
-        conf.solution_file = solution[0];
-    } else if (vm.count("input")) {
+    if (vm.count("input")) {
         filesToRead = vm["input"].as<vector<string> >();
-        if (conf.preprocess == 1) {
-            filesToRead.resize(1);
-        }
 
         if (!vm.count("sqlitedb")) {
             sqlite_filename = filesToRead[0] + ".sqlite";
@@ -1244,44 +1138,7 @@ void Main::manually_parse_some_options()
         fileNamePresent = false;
     }
 
-    if (conf.preprocess == 1) {
-        if (vm["input"].as<vector<string> >().size() + vm.count("drat") > 2) {
-            cout << "ERROR: When preprocessing, you must give the simplified file name as 2nd argument" << endl;
-            cout << "You gave this many inputs: "
-                << vm["input"].as<vector<string> >().size()+vm.count("drat")
-                << endl;
-
-            for(const string& s: vm["input"].as<vector<string> >()) {
-                cout << " --> " << s << endl;
-            }
-            if (vm.count("drat")) {
-                cout << " --> " << vm["drat"].as<string>() << endl;
-            }
-            exit(-1);
-        }
-        if (vm["input"].as<vector<string> >().size() > 1) {
-            conf.simplified_cnf = vm["input"].as<vector<string> >()[1];
-        } else {
-            try {
-                conf.simplified_cnf = vm["drat"].as<string>();
-            } catch (boost::bad_any_cast &e) {
-                std::cerr
-                << "ERROR! Did you give a simplified CNF as a 2nd argument? You are preprocessing! So you must (and it must be a string)" << endl;
-                exit(-1);
-            }
-        }
-    }
-
-    if (conf.preprocess == 2) {
-        if (vm.count("drat")) {
-            cout << "ERROR: When postprocessing, you must NOT give a 2nd argument" << endl;
-            std::exit(-1);
-        }
-    }
-
-    if (conf.preprocess == 0 &&
-        (vm.count("drat") || conf.simulate_drat)
-    ) {
+    if (vm.count("drat") || conf.simulate_drat) {
         handle_drat_option();
     }
 
@@ -1343,36 +1200,6 @@ void Main::check_num_threads_sanity(const unsigned thread_num) const
     }
 }
 
-void Main::dump_red_file()
-{
-    if (dump_red_fname.length() == 0)
-        return;
-
-    std::ofstream* dumpfile = new std::ofstream;
-    dumpfile->open(dump_red_fname.c_str());
-    if (!(*dumpfile)) {
-        cout
-        << "ERROR: Couldn't open file '"
-        << resultFilename
-        << "' for writing redundant clauses!"
-        << endl;
-        std::exit(-1);
-    }
-
-    bool ret = true;
-    vector<Lit> lits;
-    solver->start_getting_small_clauses(dump_red_max_len, dump_red_max_glue);
-    while(ret) {
-        ret = solver->get_next_small_clause(lits);
-        if (ret) {
-            *dumpfile << lits << " " << 0 << endl;
-        }
-    }
-    solver->end_getting_small_clauses();
-
-    delete dumpfile;
-}
-
 int Main::solve()
 {
     wallclock_time_started = real_time_sec();
@@ -1417,9 +1244,7 @@ int Main::solve()
 
     //Parse in DIMACS (maybe gzipped) files
     //solver->log_to_file("mydump.cnf");
-    if (conf.preprocess != 2) {
-        parseInAllFiles(solver);
-    }
+    parseInAllFiles(solver);
     if (!assump_filename.empty()) {
         std::ifstream* tmp = new std::ifstream;
         tmp->open(assump_filename.c_str());
@@ -1436,20 +1261,15 @@ int Main::solve()
     }
 
     lbool ret = multi_solutions();
-
-    if (conf.preprocess != 1) {
-        if (ret == l_Undef && conf.verbosity) {
-            cout
-            << "c Not finished running -- signal caught or some maximum reached"
-            << endl;
-        }
-        if (conf.verbosity) {
-            solver->print_stats(wallclock_time_started);
-        }
-        if (ret == l_True) {
-            dump_red_file();
-        }
+    if (ret == l_Undef && conf.verbosity) {
+        cout
+        << "c Not finished running -- signal caught or some maximum reached"
+        << endl;
     }
+    if (conf.verbosity) {
+        solver->print_stats(wallclock_time_started);
+    }
+
     printResultFunc(&cout, false, ret);
     if (resultfile) {
         printResultFunc(resultfile, true, ret);
@@ -1461,7 +1281,6 @@ int Main::solve()
 lbool Main::multi_solutions()
 {
     if (max_nr_of_solutions == 1
-        && conf.preprocess == 0
         && dratf == NULL
         && !conf.simulate_drat
         && debugLib.empty()

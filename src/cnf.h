@@ -365,8 +365,6 @@ protected:
     vector<T> map_back_lits_to_without_bva(const vector<T>& val) const;
     vector<lbool> assigns;
 
-    void save_state(SimpleOutFile& f) const;
-    void load_state(SimpleInFile& f);
     vector<uint32_t> outerToInterMain;
     vector<uint32_t> interToOuterMain;
 

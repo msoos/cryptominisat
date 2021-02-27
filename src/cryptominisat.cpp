@@ -198,9 +198,6 @@ DLL_PUBLIC SATSolver::~SATSolver()
 void update_config(SolverConf& conf, unsigned thread_num)
 {
     //Don't accidentally reconfigure everything to a specific value!
-    if (thread_num > 0) {
-        conf.reconfigure_val = 0;
-    }
     conf.origSeed += thread_num;
     conf.thread_num = thread_num;
 
@@ -1259,26 +1256,6 @@ DLL_PUBLIC uint64_t SATSolver::get_last_propagations()
 DLL_PUBLIC uint64_t SATSolver::get_last_decisions()
 {
     return get_sum_decisions() - data->previous_sum_decisions;
-}
-
-DLL_PUBLIC void SATSolver::dump_irred_clauses(std::ostream *out) const
-{
-    data->solvers[data->which_solved]->dump_irred_clauses(out);
-}
-
-void DLL_PUBLIC SATSolver::dump_red_clauses(std::ostream *out) const
-{
-    data->solvers[data->which_solved]->dump_red_clauses(out);
-}
-
-DLL_PUBLIC void SATSolver::open_file_and_dump_irred_clauses(std::string fname) const
-{
-    data->solvers[data->which_solved]->open_file_and_dump_irred_clauses(fname);
-}
-
-void DLL_PUBLIC SATSolver::open_file_and_dump_red_clauses(std::string fname) const
-{
-    data->solvers[data->which_solved]->open_file_and_dump_red_clauses(fname);
 }
 
 void DLL_PUBLIC SATSolver::start_getting_small_clauses(

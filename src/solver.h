@@ -126,12 +126,6 @@ class Solver : public Searcher
         void end_getting_small_clauses();
         void get_all_irred_clauses(vector<Lit>& out);
         vector<uint32_t> translate_sampl_set(const vector<uint32_t>& sampl_set);
-        //Legacy clause dumping
-        void dump_irred_clauses(std::ostream *out) const;
-        void dump_red_clauses(std::ostream *out) const;
-        void open_file_and_dump_irred_clauses(const std::string &fname) const;
-        void open_file_and_dump_red_clauses(const std::string &fname) const;
-
 
         //Version
         static const char* get_version_tag();
@@ -198,8 +192,6 @@ class Solver : public Searcher
         void update_assumptions_after_varreplace();
 
         //State load/unload
-        void save_state(const string& fname, const lbool status) const;
-        lbool load_state(const string& fname);
         template<typename A>
         void parse_v_line(A* in, const size_t lineNum);
         lbool load_solution_from_file(const string& fname);
@@ -330,9 +322,6 @@ class Solver : public Searcher
         vector<Lit> add_clause_int_tmp_cl;
         lbool iterate_until_solved();
         uint64_t mem_used_vardata() const;
-        void check_reconfigure();
-        void reconfigure(int val);
-        bool already_reconfigured = false;
         uint64_t calc_num_confl_to_do_this_iter(const size_t iteration_num) const;
 
         vector<Lit> finalCl_tmp;

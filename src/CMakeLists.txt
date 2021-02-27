@@ -100,7 +100,6 @@ set(cryptoms_lib_files
     subsumeimplicit.cpp
     datasync.cpp
     reducedb.cpp
-    clausedumper.cpp
     bva.cpp
     intree.cpp
     satzilla_features_calc.cpp

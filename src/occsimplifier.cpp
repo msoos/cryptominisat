@@ -4644,7 +4644,7 @@ void OccSimplifier::Stats::print(const size_t nVars, OccSimplifier* occs) const
     cout << "c -------- OccSimplifier STATS END ----------" << endl;
 }
 
-void OccSimplifier::save_state(SimpleOutFile& f)
+/*void OccSimplifier::save_state(SimpleOutFile& f)
 {
     assert(solver->decisionLevel() == 0);
     cleanBlockedClauses();
@@ -4655,31 +4655,7 @@ void OccSimplifier::save_state(SimpleOutFile& f)
     f.put_vector(blkcls);
     f.put_struct(globalStats);
     f.put_uint32_t(anythingHasBeenBlocked);
-
-
-}
-void OccSimplifier::load_state(SimpleInFile& f)
-{
-    const uint64_t sz = f.get_uint64_t();
-    for(uint64_t i = 0; i < sz; i++) {
-        BlockedClauses b;
-        b.load_from_file(f);
-        blockedClauses.push_back(b);
-    }
-    f.get_vector(blkcls);
-    f.get_struct(globalStats);
-    anythingHasBeenBlocked = f.get_uint32_t();
-
-    blockedMapBuilt = false;
-    buildBlockedMap();
-
-    //Sanity check
-    for(size_t i = 0; i < solver->nVars(); i++) {
-        if (solver->varData[i].removed == Removed::elimed) {
-            assert(solver->value(i) == l_Undef);
-        }
-    }
-}
+}*/
 
 Clause* OccSimplifier::full_add_clause(
     const vector<Lit>& tmp_cl,

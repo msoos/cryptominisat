@@ -653,22 +653,6 @@ inline bool PropEngine::propagate_long_clause_occur(
     return true;
 }
 
-void PropEngine::save_state(SimpleOutFile& f) const
-{
-    f.put_vector(trail);
-    f.put_uint32_t(qhead);
-
-    CNF::save_state(f);
-}
-
-void PropEngine::load_state(SimpleInFile& f)
-{
-    f.get_vector(trail);
-    qhead = f.get_uint32_t();
-
-    CNF::load_state(f);
-}
-
 #ifdef STATS_NEEDED_BRANCH
 void PropEngine::sql_dump_vardata_picktime(uint32_t v, PropBy from)
 {

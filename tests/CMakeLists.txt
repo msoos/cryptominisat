@@ -177,7 +177,6 @@ set (MY_TESTS
     subsume_impl_test
     intree_test
     xorfinder_test
-    dump_test
     searcher_test
     solver_test
     cardfinder_test

@@ -52,7 +52,6 @@ THE SOFTWARE.
 #include "str_impl_w_impl.h"
 #include "datasync.h"
 #include "reducedb.h"
-#include "clausedumper.h"
 #include "sccfinder.h"
 #include "intree.h"
 #include "satzilla_features_calc.h"
@@ -1591,22 +1590,6 @@ lbool Solver::solve_with_assumptions(
     }
     #endif
 
-    if (conf.preprocess == 2) {
-        status = load_state(conf.saved_state_file);
-        if (status != l_False) {
-            model = assigns;
-            status = load_solution_from_file(conf.solution_file);
-            if (status == l_Undef) {
-                cout << "ERROR loading in solution from file '" << conf.solution_file << "'. Please check solution file for correctness" << endl;
-                exit(-1);
-            }
-        }
-    }
-
-    if (status == l_Undef) {
-        check_reconfigure();
-    }
-
     //Simplify in case simplify_at_startup is set
     if (status == l_Undef
         && nVars() > 0
@@ -1626,44 +1609,14 @@ lbool Solver::solve_with_assumptions(
     }
     #endif
 
-    if (status == l_Undef
-        && conf.preprocess == 0
-    ) {
+    if (status == l_Undef) {
         status = iterate_until_solved();
     }
+
 
     end:
     if (sqlStats) {
         sqlStats->finishup(status);
-    }
-
-    if (conf.preprocess == 1) {
-        cancelUntil(0);
-        #ifdef USE_GAUSS
-        if (okay() && !fully_undo_xor_detach()) {
-            status = l_False;
-        }
-
-        #endif
-        if (status != l_False) {
-            //So no set variables end up in the clauses
-            clauseCleaner->remove_and_clean_all();
-        }
-
-        if (status == l_True) {
-            cout << "WARN: Solution found during preprocessing,"
-            "but putting simplified CNF to file" << endl;
-        }
-        save_state(conf.saved_state_file, status);
-        ClauseDumper dumper(this);
-        if (status == l_False) {
-            dumper.open_file_and_write_unsat(conf.simplified_cnf);
-        } else {
-            dumper.open_file_and_dump_irred_clauses_preprocessor(conf.simplified_cnf);
-        }
-        cout << "Wrote solver state to file " << conf.saved_state_file
-        << " and simplified CNF to file " << conf.simplified_cnf
-        << endl;
     }
 
     handle_found_solution(status, only_sampling_solution);
@@ -1678,28 +1631,6 @@ lbool Solver::solve_with_assumptions(
     assert(!ok || solver->prop_at_head());
 
     return status;
-}
-
-void Solver::check_reconfigure()
-{
-    if (nVars() > 2
-        && longIrredCls.size() > 1
-        && (binTri.irredBins + binTri.redBins) > 1
-    ) {
-        if (solveStats.num_simplify == conf.reconfigure_at &&
-            !already_reconfigured
-        ) {
-            check_calc_satzilla_features();
-            if (conf.reconfigure_val == 100) {
-                conf.reconfigure_val = get_reconf_from_satzilla_features(last_solve_satzilla_feature, conf.verbosity);
-            }
-            if (conf.reconfigure_val != 0) {
-                reconfigure(conf.reconfigure_val);
-                already_reconfigured = true;
-            }
-        }
-    }
-
 }
 
 void Solver::dump_memory_stats_to_sql()
@@ -1875,9 +1806,6 @@ lbool Solver::iterate_until_solved()
 
         if (conf.do_simplify_problem) {
             status = simplify_problem(false, conf.simplify_schedule_nonstartup);
-        }
-        if (status == l_Undef) {
-            check_reconfigure();
         }
     }
 
@@ -3392,303 +3320,6 @@ SatZillaFeatures Solver::calculate_satzilla_features()
     return satzilla_feat;
 }
 
-void Solver::reconfigure(int val)
-{
-    //TODO adjust distill_queue_by !!
-
-    assert(val > 0);
-    switch (val) {
-        case 3: {
-            //Glue clause cleaning
-            conf.branch_strategy_setup = "vsids1";
-            conf.every_lev1_reduce = 0;
-            conf.every_lev2_reduce = 0;
-            conf.glue_put_lev1_if_below_or_eq = 0;
-
-            conf.adjust_glue_if_too_many_low = 0;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0.5;
-            conf.inc_max_temp_lev2_red_cls = 1.03;
-
-            reset_temp_cl_num();
-            break;
-        }
-
-        case 4: {
-            conf.branch_strategy_setup = "vsids1";
-            conf.every_lev1_reduce = 0;
-            conf.every_lev2_reduce = 0;
-            conf.glue_put_lev1_if_below_or_eq = 0;
-            conf.max_temp_lev2_learnt_clauses = 10000;
-            reset_temp_cl_num();
-            break;
-        }
-
-        case 6: {
-            //No more simplifying
-            conf.branch_strategy_setup = "vsids1";
-            conf.never_stop_search = true;
-            break;
-        }
-
-        case 7: {
-            //Geom restart, but keep low glue clauses
-            conf.branch_strategy_setup = "vsids1";
-            conf.varElimRatioPerIter = 0.2;
-            conf.restartType = Restart::geom;
-            conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
-
-            conf.every_lev1_reduce = 0;
-            conf.every_lev2_reduce = 0;
-            conf.glue_put_lev1_if_below_or_eq = 0;
-            conf.inc_max_temp_lev2_red_cls = 1.02;
-
-            reset_temp_cl_num();
-            break;
-        }
-
-        case 12: {
-            //Mix of keeping clauses
-            conf.branch_strategy_setup = "vsids1";
-            conf.do_bva = false;
-            conf.varElimRatioPerIter = 1;
-            conf.every_lev1_reduce = 0;
-            conf.every_lev2_reduce = 0;
-            conf.glue_put_lev1_if_below_or_eq = 0;
-
-            conf.glue_put_lev0_if_below_or_eq = 2;
-            conf.glue_put_lev1_if_below_or_eq = 4;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0.1;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.3;
-            conf.inc_max_temp_lev2_red_cls = 1.04;
-
-            reset_temp_cl_num();
-            break;
-        }
-
-        case 13: {
-            conf.branch_strategy_setup = "vsids1";
-            conf.orig_global_timeout_multiplier = 5;
-            conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
-            conf.global_multiplier_multiplier_max = 5;
-
-            conf.num_conflicts_of_search_inc = 1.15;
-            conf.more_red_minim_limit_binary = 600;
-            conf.max_num_lits_more_more_red_min = 20;
-
-            conf.max_temp_lev2_learnt_clauses = 10000;
-            break;
-        }
-
-        case 14: {
-            conf.branch_strategy_setup = "vsids1";
-            conf.shortTermHistorySize = 600;
-            conf.doAlwaysFMinim = true;
-            break;
-        }
-
-        case 15: {
-            conf.branch_strategy_setup = "vsids1";
-            //Like OLD-OLD minisat
-            conf.varElimRatioPerIter = 1;
-            conf.restartType = Restart::geom;
-            conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
-
-            //conf.every_lev1_reduce = 0;
-            //conf.every_lev2_reduce = 0;
-            //conf.glue_put_lev1_if_below_or_eq = 0;
-            //conf.glue_put_lev0_if_below_or_eq = 0;
-            conf.inc_max_temp_lev2_red_cls = 1.01;
-
-            conf.update_glues_on_analyze = 0;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.5;
-            reset_temp_cl_num();
-            break;
-        }
-
-        case 16: {
-            conf.branch_strategy_setup = "maple1";
-            break;
-        }
-
-        default: {
-            //when this changes, don't forget to update README.markdown and the command line help (main.cpp)
-            cout << "ERROR: Only reconfigure values of 3,4,6,7,12,13,14,15,16 are supported" << endl;
-            exit(-1);
-        }
-    }
-
-    if (conf.verbosity) {
-        cout << "c [satzilla_features] reconfigured solver to config " << val << endl;
-    }
-
-    /*Note to self: change
-     * inc_max_temp_red_cls 1.1 -> 1.3
-     * numCleanBetweenSimplify 2->4
-     * bva: 1->0
-    */
-}
-
-void Solver::save_state(const string& fname, const lbool status) const
-{
-    SimpleOutFile f;
-    f.start(fname);
-
-    f.put_lbool(status);
-    Searcher::save_state(f, status);
-    //f.put_struct(sumStats);
-    //f.put_struct(sumPropStats);
-    //f.put_vector(outside_assumptions);
-
-    varReplacer->save_state(f);
-    if (occsimplifier) {
-        occsimplifier->save_state(f);
-    }
-}
-
-lbool Solver::load_state(const string& fname)
-{
-    SimpleInFile f;
-    f.start(fname);
-
-    const lbool status = f.get_lbool();
-    Searcher::load_state(f, status);
-    //f.get_struct(sumStats);
-    //f.get_struct(sumPropStats);
-    //f.get_vector(outside_assumptions);
-
-    varReplacer->load_state(f);
-    if (occsimplifier) {
-        occsimplifier->load_state(f);
-    }
-
-    return status;
-}
-
-lbool Solver::load_solution_from_file(const string& fname)
-{
-    //At this point, model is set up, we just need to fill the l_Undef in
-    //from assigns
-    lbool status = l_Undef;
-    FILE* input_stream = fopen(fname.c_str(), "r");
-    if (input_stream == NULL) {
-        std::cerr << "ERROR: could not open solution file "
-        << fname
-        << endl;
-        std::exit(-1);
-    }
-    StreamBuffer<FILE*, FN> in(input_stream);
-
-    unsigned lineNum = 0;
-    std::string str;
-    bool sol_already_seen = false;
-    for (;;) {
-        in.skipWhitespace();
-        switch (*in) {
-            case EOF:
-                goto end;
-            case 's': {
-                if (sol_already_seen) {
-                    std::cerr << "ERROR: The input file you gave for solution extension contains more than one line starting with 's', which indicates more than one solution! That is not supported!" << endl;
-                    exit(-1);
-                }
-                sol_already_seen = true;
-                ++in;
-                in.skipWhitespace();
-                in.parseString(str);
-                if (str == "SATISFIABLE") {
-                    status = l_True;
-                } else if (str == "UNSATISFIABLE") {
-                    status = l_False;
-                    goto end;
-                } else if (str == "INDETERMINATE") {
-                    std::cerr << "The solution given for preproc extension is INDETERMINATE -- we cannot extend it!" << endl;
-                    exit(-1);
-                } else {
-                    std::cerr << "ERROR: Cannot parse solution line starting with 's'"
-                    << endl;
-                    std::exit(-1);
-                }
-                in.skipLine();
-                lineNum++;
-                break;
-            }
-            case 'v': {
-                if (status == l_False) {
-                    std::cerr << "ERROR: The solution you gave is UNSAT but it has 'v' lines. This is definietely wrong." << endl;
-                    exit(-1);
-                }
-                ++in;
-                parse_v_line(&in, lineNum);
-                in.skipLine();
-                lineNum++;
-                break;
-            }
-            case '\n':
-                std::cerr
-                << "c WARNING: Empty line at line number " << lineNum+1
-                << " -- this is not part of the DIMACS specifications. Ignoring."
-                << endl;
-                in.skipLine();
-                lineNum++;
-                break;
-            default:
-                in.skipLine();
-                lineNum++;
-                break;
-        }
-    }
-
-    end:
-    fclose(input_stream);
-    return status;
-}
-
-template<typename A>
-void Solver::parse_v_line(A* in, const size_t lineNum)
-{
-    model.resize(nVarsOuter(), l_Undef);
-
-    int32_t parsed_lit;
-    uint32_t var;
-    for (;;) {
-        if (!in->parseInt(parsed_lit, lineNum, true)) {
-            exit(-1);
-        }
-        if (parsed_lit == std::numeric_limits<int32_t>::max()) {
-            break;
-        }
-        if (parsed_lit == 0) break;
-        var = abs(parsed_lit)-1;
-        if (var >= nVars()
-            || var >= model.size()
-            || var >= varData.size()
-        ) {
-            std::cerr
-            << "ERROR! "
-            << "Variable in solution is too large: " << var +1 << endl
-            << "--> At line " << lineNum+1
-            << endl;
-            std::exit(-1);
-        }
-
-        //Don't overwrite previously computed values
-        if (model[var] == l_Undef
-            && varData[var].removed == Removed::none
-        ) {
-            model[var] = parsed_lit < 0 ? l_False : l_True;
-            if (conf.verbosity >= 10) {
-                uint32_t outer_var = map_inter_to_outer(var);
-                cout << "Read V line: model for inter var " << (var+1)
-                << " (outer ver for this is: " << outer_var+1 << ")"
-                << " set to " << model[var] << endl;
-            }
-        }
-    }
-}
-
-
 void Solver::check_implicit_stats(const bool onlypairs) const
 {
     //Don't check if in crazy mode
@@ -3828,32 +3459,6 @@ vector<Lit> Solver::get_toplevel_units_internal(bool outer_numbering) const
     }
 
     return units;
-}
-
-//TODO fix legacy all of the below
-void Solver::dump_irred_clauses(std::ostream *out) const
-{
-//     assert(false && "Fix to use get_clause_query");
-    ClauseDumper dumper(this);
-    dumper.dump_irred_clauses(out);
-}
-void Solver::dump_red_clauses(std::ostream *out) const
-{
-//     assert(false && "Fix to use get_clause_query");
-    ClauseDumper dumper(this);
-    dumper.dump_red_clauses(out);
-}
-void Solver::open_file_and_dump_irred_clauses(const std::string &fname) const
-{
-//     assert(false && "Fix to use get_clause_query");
-    ClauseDumper dumper(this);
-    dumper.open_file_and_dump_irred_clauses(fname);
-}
-void Solver::open_file_and_dump_red_clauses(const std::string &fname) const
-{
-//     assert(false && "Fix to use get_clause_query");
-    ClauseDumper dumper(this);
-    dumper.open_file_and_dump_red_clauses(fname);
 }
 
 vector<Xor> Solver::get_recovered_xors(const bool xor_together_xors)

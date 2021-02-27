@@ -498,14 +498,8 @@ class DLL_PUBLIC SolverConf
 
         //Misc
         unsigned origSeed;
-        unsigned reconfigure_val;
-        unsigned reconfigure_at;
-        unsigned preprocess;
         int      simulate_drat;
         int      conf_needed = true;
-        std::string simplified_cnf;
-        std::string solution_file;
-        std::string saved_state_file;
 };
 
 } //end namespace

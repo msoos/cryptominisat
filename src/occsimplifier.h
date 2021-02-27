@@ -248,8 +248,6 @@ public:
 
     /// Used ONLY for XOR, changes occur setup
     void sort_occurs_and_set_abst();
-    void save_state(SimpleOutFile& f);
-    void load_state(SimpleInFile& f);
     vector<ClOffset> added_long_cl;
     TouchList added_cl_to_var;
     vector<uint32_t> n_occurs;
