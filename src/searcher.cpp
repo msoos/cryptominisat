@@ -4197,32 +4197,32 @@ PropBy Searcher::insert_gpu_clause(Lit* lits, uint32_t count)
     // All are l_False, this is a conflict
     if (value(lits[0]) == l_False)
     {
-        //#ifdef SLOW_DEBUG
+        #ifdef SLOW_DEBUG
         for (uint32_t i = 0; i < count; i++) {
             assert(value(lits[i]) == l_False);
         }
-        //#endif
+        #endif
 
         //Go back to highest level
         cancelUntil(level(lits[0]));
 
-        //#ifdef SLOW_DEBUG
+        #ifdef SLOW_DEBUG
         for (uint32_t i = 0; i < count; i++) {
             assert(value(lits[i]) == l_False);
         }
-        //#endif
+        #endif
         return learn_gpu_clause(lits, count);
     }
 
     // lit 0 is implied by the rest
     cancelUntil(level(lits[1]));
 
-    //#ifdef SLOW_DEBUG
+    #ifdef SLOW_DEBUG
     assert(value(lits[0]) == l_Undef);
     for (uint32_t i = 1; i < count; i++) {
         assert(value(lits[i]) == l_False);
     }
-    //#endif
+    #endif
 
     PropBy by = learn_gpu_clause(lits, count);
     enqueue<false>(lits[0], decisionLevel(), by);
