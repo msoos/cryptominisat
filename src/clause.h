@@ -209,7 +209,12 @@ struct ClauseStatsExtra
     double pred_long_use;
     double pred_forever_use;
     double calc_sum_uip_per_time(const uint64_t sumConflicts) const {
-        const uint32_t time = sumConflicts - introduced_at_conflict;
+        assert(introduced_at_conflict <= sumConflicts);
+        const uint64_t time = sumConflicts - introduced_at_conflict;
+        if (time == 0) {
+            assert(sum_uip1_used <= 1);
+            return 0;
+        }
         return (double)sum_uip1_used/(double)time;
     }
 
