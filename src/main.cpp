@@ -1109,6 +1109,13 @@ void Main::manually_parse_some_options()
         std::exit(-1);
     }
 
+    #ifdef USE_BREAKID
+    if (num_threads > 1 && conf.doBreakid) {
+        cout << "ERROR: BreakID cannot work with multiple threads. Something is off in the memory allocation of the library that's likely 'static'. Perhaps in 'bliss'. Exiting." << endl;
+        exit(-1);
+    }
+    #endif
+
     if (vm.count("dumpresult")) {
         resultfile = new std::ofstream;
         resultfile->open(resultFilename.c_str());
