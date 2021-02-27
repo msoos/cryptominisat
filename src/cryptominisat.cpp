@@ -776,7 +776,10 @@ struct OneThreadCalc
         , tid(_tid)
         , todo(_todo)
         , only_sampling_solution(_only_sampling_solution)
-    {}
+    {
+        assert(data_for_thread.cpu_times.size() > tid);
+        assert(data_for_thread.solvers.size() > tid);
+    }
 
     void operator()()
     {

@@ -4091,7 +4091,6 @@ void Searcher::find_largest_level(Lit* lits, uint32_t count, uint32_t start)
 }
 
 #ifdef USE_GPU
-
 // Learns the clause, and attach it
 // May lead to canceling to backtracking if this clause leads to an implication at a level strictly lower
 // than the current level
@@ -4122,6 +4121,23 @@ PropBy Searcher::insert_gpu_clause(Lit* lits, uint32_t count)
     }
     count = j+1;
 
+    //Clear it of 0-level assigned literals
+    j = 0;
+    for(uint32_t i = 0; i < count; i ++) {
+        const Lit l = lits[i];
+        if (varData[l.var()].level == 0) {
+            if (value(l) == l_True) {
+                return PropBy();
+            }
+            if (value(l) == l_False) {
+                continue;
+            }
+        }
+        lits[j] = lits[i];
+        j++;
+    }
+    count = j;
+
     // if only one literal isn't false, it will be in 0 of lits
     // if only two literals aren't set, they will be in 0 and 1 of lits
     find_largest_level(lits, count, 0);
@@ -4129,10 +4145,10 @@ PropBy Searcher::insert_gpu_clause(Lit* lits, uint32_t count)
         find_largest_level(lits, count, 1);
     }
 
+    //Make sure it doesn't have BVA/elimed/etc. variables
+    //Make sure TRUE literal is at the beginning
     bool sat = false;
     for(uint32_t i = 0; i < count; i ++) {
-        lits[i] = solver->varReplacer->get_lit_replaced_with(lits[i]);
-
         //Variable has been removed already
         if (varData[lits[i].var()].removed != Removed::none) {
             return PropBy();
@@ -4140,17 +4156,13 @@ PropBy Searcher::insert_gpu_clause(Lit* lits, uint32_t count)
 
         //Can't deal with BVA variables
         if (varData[lits[i].var()].is_bva) {
+            assert(false && "This should not be possible, other threads should not be sending BVA vars!");
             return PropBy();
         }
 
         if (value(lits[i]) == l_True) {
             std::swap(lits[i], lits[0]);
             sat = true;
-
-            //It's satisfied at level 0, nothing to do
-            if (level(lits[i]) == 0) {
-                return PropBy();
-            }
         }
     }
 
@@ -4162,21 +4174,12 @@ PropBy Searcher::insert_gpu_clause(Lit* lits, uint32_t count)
 
     //Unit clause
     if (count == 1) {
-        lbool val = value(lits[0]);
-        if (val == l_False && level(lits[0]) == 0) {
-            solver->ok = false;
-            return PropBy();
-        }
-        // we've learned a unary clause we already knew
-        if (val == l_True && level(lits[0]) == 0) {
-            return PropBy();
-        }
         cancelUntil<false>(0);
         enqueue<false>(lits[0]);
         return PropBy();
     }
 
-    //TODO this is just for debug
+    //TODO we need to work on this
     if (count == 2) {
         return PropBy();
     }
