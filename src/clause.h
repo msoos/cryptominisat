@@ -200,6 +200,10 @@ struct ClauseStats
 #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
 struct ClauseStatsExtra
 {
+    //TODO add new LBD definitions:
+    //LBD computed over assigned TRUE literals only
+    //LBD computed over assigned FALSE literals only
+
     //Used in RDB
     uint32_t act_ranking;
     uint32_t prop_ranking;
