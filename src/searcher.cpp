@@ -1277,7 +1277,7 @@ lbool Searcher::search()
 
     //Loop until restart or finish (SAT/UNSAT)
     PropBy confl;
-    lbool search_ret;
+    lbool search_ret = l_Undef;
 
     #ifdef VERBOSE_DEBUG
     print_order_heap();
@@ -1372,7 +1372,7 @@ lbool Searcher::search()
         search_ret = l_False;
         goto end;
     }
-    search_ret = l_Undef;
+    assert(search_ret == l_Undef);
 
     end:
     dump_search_loop_stats(myTime);

@@ -1629,6 +1629,11 @@ lbool Solver::solve_with_assumptions(
     set_must_interrupt_asap();
     assert(decisionLevel()== 0);
     assert(!ok || solver->prop_at_head());
+    if (_assumptions == NULL || _assumptions->empty()) {
+        if (status == l_False) {
+            assert(!okay());
+        }
+    }
 
     return status;
 }
@@ -2112,13 +2117,13 @@ lbool Solver::execute_inprocess_strategy(
         check_stats();
         #endif
 
-        if (!ok) {
+        if (!okay()) {
             return l_False;
         }
         check_wrong_attach();
     }
 
-    return ok ? l_Undef : l_False;
+    return okay() ? l_Undef : l_False;
 }
 
 /**
