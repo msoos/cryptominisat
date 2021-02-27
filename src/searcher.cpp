@@ -4239,6 +4239,8 @@ void Searcher::find_largest_level(Lit* lits, uint32_t count, uint32_t start)
     }
 }
 
+#ifdef USE_GPU
+
 // Learns the clause, and attach it
 // May lead to canceling to backtracking if this clause leads to an implication at a level strictly lower
 // than the current level
@@ -4406,3 +4408,5 @@ PropBy Searcher::learn_gpu_clause(Lit* lits, uint32_t count)
     binTri.irredBins++;
     return PropBy(lits[1], false);
 }
+
+#endif
