@@ -256,8 +256,8 @@ struct ClauseStatsExtra
     #endif
 
     float discount(
-        float orig,
         float discount_factor,
+        float orig,
         uint32_t val
     ) {
         orig *= discount_factor;
