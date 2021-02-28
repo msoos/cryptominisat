@@ -271,13 +271,13 @@ struct ClauseStatsExtra
         sum_props_made += stats.props_made;
 
         discounted_props_made = discount(0.8, discounted_props_made, stats.props_made);
-        discounted_uip1_used = discount(0.8, discounted_uip1_used, stats.uip1_used);
+        discounted_uip1_used =  discount(0.8, discounted_uip1_used, stats.uip1_used);
 
         #ifdef STATS_NEEDED
         discounted_props_made3 = discount(0.9, discounted_props_made3, stats.props_made);
-        discounted_uip1_used3 = discount(0.9, discounted_uip1_used3, stats.uip1_used);
+        discounted_uip1_used3 =  discount(0.9, discounted_uip1_used3, stats.uip1_used);
         discounted_props_made2 = discount(0.4, discounted_props_made2, stats.props_made);
-        discounted_uip1_used2 = discount(0.4, discounted_uip1_used2, stats.uip1_used);
+        discounted_uip1_used2 =  discount(0.4, discounted_uip1_used2, stats.uip1_used);
         #endif
 
         stats.reset_rdb_stats_pre();
@@ -310,7 +310,7 @@ struct ClauseStatsExtra
         ret.sum_uip1_used = first.sum_uip1_used + second.sum_uip1_used;
         ret.sum_props_made = first.sum_props_made + second.sum_props_made;
         ret.discounted_props_made = first.discounted_props_made + second.discounted_props_made;
-        ret.discounted_uip1_used =   first.discounted_uip1_used   + second.discounted_uip1_used;
+        ret.discounted_uip1_used =  first.discounted_uip1_used  + second.discounted_uip1_used;
         ret.orig_glue = std::min(first.orig_glue, second.orig_glue);
         #endif
 
