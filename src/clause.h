@@ -255,36 +255,29 @@ struct ClauseStatsExtra
     AtecedentData<uint16_t> antec_data;
     #endif
 
+    float discount(
+        float orig,
+        float discount_factor,
+        uint32_t val
+    ) {
+        orig *= discount_factor;
+        orig += (float)val * (1.0f-discount_factor);
+        return orig;
+    }
+
     void reset_rdb_stats_pre(ClauseStats& stats)
     {
         sum_uip1_used += stats.uip1_used;
         sum_props_made += stats.props_made;
 
-        float discount_factor;
-        discount_factor = 0.8;
-        discounted_props_made *= discount_factor;
-        discounted_props_made += (float)stats.props_made*(1.0f-discount_factor);
-
-        discount_factor = 0.8;
-        discounted_uip1_used *= discount_factor;
-        discounted_uip1_used += (float)stats.uip1_used*(1.0f-discount_factor);
+        discounted_props_made = discount(0.8, discounted_props_made, stats.props_made);
+        discounted_uip1_used = discount(0.8, discounted_uip1_used, stats.uip1_used);
 
         #ifdef STATS_NEEDED
-        discount_factor = 0.90;
-        discounted_uip1_used3 *= discount_factor;
-        discounted_uip1_used3 += (float)stats.uip1_used*(1.0f-discount_factor);
-
-        discount_factor = 0.4;
-        discounted_props_made2 *= discount_factor;
-        discounted_props_made2 += (float)stats.props_made*(1.0f-discount_factor);
-
-        discount_factor = 0.4;
-        discounted_uip1_used2 *= discount_factor;
-        discounted_uip1_used2 += (float)stats.uip1_used*(1.0f-discount_factor);
-
-        discount_factor = 0.90;
-        discounted_props_made3 *= discount_factor;
-        discounted_props_made3 += (float)stats.props_made*(1.0f-discount_factor);
+        discounted_props_made3 = discount(0.9, discounted_props_made3, stats.props_made);
+        discounted_uip1_used3 = discount(0.9, discounted_uip1_used3, stats.uip1_used);
+        discounted_props_made2 = discount(0.4, discounted_props_made2, stats.props_made);
+        discounted_uip1_used2 = discount(0.4, discounted_uip1_used2, stats.uip1_used);
         #endif
 
         stats.reset_rdb_stats_pre();
