@@ -1398,10 +1398,6 @@ void Solver::check_xor_cut_config_sanity() const
 void Solver::check_and_upd_config_parameters()
 {
     #ifdef FINAL_PREDICTOR
-    if (conf.reconfigure_val != 0) {
-        cout << "ERROR: --reconf in PREDICT mode not supported" << endl;
-        exit(-1);
-    }
     if (conf.glue_put_lev0_if_below_or_eq != 0 ||
         conf.glue_put_lev1_if_below_or_eq != 0
     ) {
