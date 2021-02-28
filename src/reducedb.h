@@ -103,6 +103,7 @@ private:
     ReduceCommonData commdata;
     #endif
 
+    const CMSat::ClauseStats& get_median_stat(const vector<ClOffset>& all_learnt) const;
     void prepare_features(vector<ClOffset>& all_learnt);
     uint32_t total_glue = 0;
     uint32_t total_props = 0;

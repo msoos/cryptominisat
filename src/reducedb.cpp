@@ -328,9 +328,14 @@ void ReduceDB::handle_lev2()
 }
 
 #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+const CMSat::ClauseStats&
+ReduceDB::get_median_stat(const vector<ClOffset>& all_learnt) const
+{
+    return solver->cl_alloc.ptr(all_learnt[all_learnt.size()/2])->stats;
+}
+
 void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
 {
-    vector<ClauseStatsExtra> new_red_stats_extra(all_learnt.size());
     std::sort(all_learnt.begin(), all_learnt.end(), SortRedClsProps(solver->cl_alloc));
     total_glue = 0;
     total_props = 0;
@@ -343,7 +348,7 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
         ClauseStatsExtra& stats_extra = solver->red_stats_extra[cl->stats.extra_pos];
         stats_extra.prop_ranking = i+1;
         assert(cl->stats.glue > 0);
-        stats_extra.reset_rdb_stats_pre(cl->stats);
+        stats_extra.update_rdb_stats(cl->stats);
 
         total_glue += cl->stats.glue;
         total_props += cl->stats.props_made;
@@ -353,7 +358,7 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
     if (all_learnt.empty()) {
         median_data.median_props = 0;
     } else {
-        median_data.median_props = solver->cl_alloc.ptr(all_learnt[all_learnt.size()/2])->stats.props_made;
+        median_data.median_props = get_median_stat(all_learnt).props_made;
     }
 
     std::sort(all_learnt.begin(), all_learnt.end(), SortRedClsUIP1(solver->cl_alloc));
@@ -366,7 +371,7 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
     if (all_learnt.empty()) {
         median_data.median_uip1_used = 0;
     } else {
-        median_data.median_uip1_used = solver->cl_alloc.ptr(all_learnt[all_learnt.size()/2])->stats.uip1_used;
+        median_data.median_uip1_used = get_median_stat(all_learnt).uip1_used;
     }
 
     std::sort(all_learnt.begin(), all_learnt.end(), SortRedClsSumUIPPerTime(solver));
@@ -379,12 +384,14 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
     if (all_learnt.empty()) {
         median_data.median_sum_uip_per_time = 0;
     } else {
-        uint32_t extra_at = solver->cl_alloc.ptr(all_learnt[all_learnt.size()/2])->stats.extra_pos;
+        uint32_t extra_at = get_median_stat(all_learnt).extra_pos;
         ClauseStatsExtra& stats_extra = solver->red_stats_extra[extra_at];
         median_data.median_sum_uip_per_time = stats_extra.calc_sum_uip_per_time(solver->sumConflicts);
     }
 
+    //We'll also compact solver->red_stats_extra
     uint32_t new_extra_pos = 0;
+    vector<ClauseStatsExtra> new_red_stats_extra(all_learnt.size());
     std::sort(all_learnt.begin(), all_learnt.end(), SortRedClsAct(solver->cl_alloc));
     for(size_t i = 0; i < all_learnt.size(); i++) {
         ClOffset offs = all_learnt[i];
@@ -399,7 +406,7 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
     if (all_learnt.empty()) {
         median_data.median_act = 0;
     } else {
-        median_data.median_act = solver->cl_alloc.ptr(all_learnt[all_learnt.size()/2])->stats.activity;
+        median_data.median_act = get_median_stat(all_learnt).activity;
     }
     std::swap(solver->red_stats_extra, new_red_stats_extra);
 }
@@ -474,7 +481,6 @@ void ReduceDB::dump_sql_cl_data(
             , reduceDB_called
         );
         added_to_db++;
-        stats_extra.dump_no++;
         stats_extra.reset_rdb_stats(cl->stats);
     }
     solver->sqlStats->end_transaction();
@@ -868,11 +874,8 @@ ReduceDB::ClauseStats ReduceDB::reset_clause_dats(const uint32_t lev)
         assert(stats_extra.introduced_at_conflict <= solver->sumConflicts);
         const uint64_t age = solver->sumConflicts - stats_extra.introduced_at_conflict;
         tot_age += age;
-        #ifdef STATS_NEEDED
-        cl->stats.dump_no++;
-        #endif
         cl_stat.add_in(*cl, age);
-        cl->stats.reset_rdb_stats();
+        stats_extra.reset_rdb_stats(cl->stats);
     }
 
     /*if (solver->conf.verbosity) {

@@ -185,7 +185,7 @@ struct ClauseStats
     }
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
-    void reset_rdb_stats_pre()
+    void update_rdb_stats()
     {
     }
 
@@ -265,7 +265,7 @@ struct ClauseStatsExtra
         return orig;
     }
 
-    void reset_rdb_stats_pre(ClauseStats& stats)
+    void update_rdb_stats(ClauseStats& stats)
     {
         sum_uip1_used += stats.uip1_used;
         sum_props_made += stats.props_made;
@@ -280,7 +280,7 @@ struct ClauseStatsExtra
         discounted_uip1_used2 =  discount(0.4, discounted_uip1_used2, stats.uip1_used);
         #endif
 
-        stats.reset_rdb_stats_pre();
+        stats.update_rdb_stats();
     }
 
     void reset_rdb_stats(ClauseStats& stats)
@@ -289,6 +289,7 @@ struct ClauseStatsExtra
         antec_data.clear();
         conflicts_made = 0;
         ttl_stats = 0;
+        dump_no++;
         #endif
 
         stats.reset_rdb_stats();
