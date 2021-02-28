@@ -108,7 +108,11 @@ set -x
 ########################
 # Build statistics-gathering CryptoMiniSat
 ########################
-./build_stats.sh
+if [[ SANITIZE -eq 1 ]]; then
+    ./build_stats.sh
+else
+    ./build_stats_sanitize.sh
+fi
 
 
 (
@@ -196,7 +200,12 @@ rm -f ../../src/predict/*.h
 ########################
 # Build final CryptoMiniSat with the classifier
 ########################
-./build_final_predictor.sh
+if [[ SANITIZE -eq 1 ]]; then
+    ./build_final_predictor_sanitize.sh
+else
+    ./build_final_predictor.sh
+fi
+
 (
 cd "$FNAME-dir"
 ../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --simdrat 1 --printsol 0 --predforever "../../src/predict/predictor_${myforever}.json" | tee cms-final-run.out
