@@ -801,17 +801,20 @@ struct OneThreadCalc
             assert(false);
         }
 
+        //We have to lock, because we are updating data_for_thread
+        data_for_thread.update_mutex->lock();
+        cout << "tid: " << tid << "data_for_thread.size():" << data_for_thread.cpu_times.size() << endl;
+        assert(data_for_thread.cpu_times.size() > tid);
         data_for_thread.cpu_times[tid] = cpuTime();
         if (print_thread_start_and_finish) {
-            data_for_thread.update_mutex->lock();
             ios::fmtflags f(cout.flags());
             cout << "c Finished thread " << tid << " with result: " << ret
             << " T-diff: " << std::fixed << std::setprecision(2)
             << (data_for_thread.cpu_times[tid]-start_time)
             << endl;
             cout.flags(f);
-            data_for_thread.update_mutex->unlock();
         }
+        data_for_thread.update_mutex->unlock();
 
 
         if (ret != l_Undef) {

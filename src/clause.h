@@ -209,6 +209,7 @@ struct ClauseStatsExtra
     uint32_t prop_ranking;
     uint32_t uip1_ranking;
     uint32_t sum_uip_per_time_ranking;
+    uint32_t sum_props_per_time_ranking;
     double pred_short_use;
     double pred_long_use;
     double pred_forever_use;
@@ -220,6 +221,15 @@ struct ClauseStatsExtra
             return 0;
         }
         return (double)sum_uip1_used/(double)time;
+    }
+
+    double calc_sum_props_per_time(const uint64_t sumConflicts) const {
+        assert(introduced_at_conflict <= sumConflicts);
+        const uint64_t time = sumConflicts - introduced_at_conflict;
+        if (time == 0) {
+            return 0;
+        }
+        return (double)sum_props_made/(double)time;
     }
 
     //Features that are normally available through SQL

@@ -384,7 +384,16 @@ struct MedianCommonDataRDB {
     uint32_t median_props;
     uint32_t median_uip1_used;
     double median_sum_uip_per_time;
+    double median_sum_props_per_time;
     float median_act;
+};
+
+struct AverageCommonDataRDB {
+    double avg_glue;
+    double avg_props;
+    double avg_uip1_used;
+    double avg_sum_uip1_per_time;
+    double avg_sum_props_per_time;
 };
 
 struct PropStats

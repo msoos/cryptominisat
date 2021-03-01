@@ -81,10 +81,7 @@ public:
         const uint32_t tot_cls_in_db,
         const uint32_t cur_rst_type,
         const MedianCommonDataRDB& median_data,
-        const double avg_glue,
-        const double avg_props,
-        const double avg_uip1_used,
-        const double avg_sum_uip1_used
+        const AverageCommonDataRDB& avg_data
     ) override;
 
     virtual void reduceDB(

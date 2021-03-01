@@ -137,6 +137,27 @@ struct SortRedClsSumUIPPerTime
     }
 };
 
+struct SortRedClsSumPropsPerTime
+{
+    explicit SortRedClsSumPropsPerTime(Solver* _solver) :
+        solver(_solver)
+    {
+
+    }
+    Solver* solver;
+
+    bool operator () (const ClOffset xOff, const ClOffset yOff) const
+    {
+        const Clause* x = solver->cl_alloc.ptr(xOff);
+        const Clause* y = solver->cl_alloc.ptr(yOff);
+        const auto& x_extra_stats = solver->red_stats_extra[x->stats.extra_pos];
+        const auto& y_extra_stats = solver->red_stats_extra[y->stats.extra_pos];
+
+        return x_extra_stats.calc_sum_props_per_time(solver->sumConflicts) >
+            y_extra_stats.calc_sum_props_per_time(solver->sumConflicts);
+    }
+};
+
 #endif
 
 #ifdef FINAL_PREDICTOR
@@ -336,12 +357,13 @@ ReduceDB::get_median_stat(const vector<ClOffset>& all_learnt) const
 
 void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
 {
+    //Also save total_* data for stats
     std::sort(all_learnt.begin(), all_learnt.end(), SortRedClsProps(solver->cl_alloc));
     total_glue = 0;
     total_props = 0;
     total_uip1_used = 0;
     total_sum_uip1_used = 0;
-
+    total_sum_props_used = 0;
     for(size_t i = 0; i < all_learnt.size(); i++) {
         ClOffset offs = all_learnt[i];
         Clause* cl = solver->cl_alloc.ptr(offs);
@@ -354,6 +376,7 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
         total_props += cl->stats.props_made;
         total_uip1_used += cl->stats.uip1_used;
         total_sum_uip1_used += stats_extra.sum_uip1_used;
+        total_sum_props_used += stats_extra.sum_props_made;
     }
     if (all_learnt.empty()) {
         median_data.median_props = 0;
@@ -374,6 +397,7 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
         median_data.median_uip1_used = get_median_stat(all_learnt).uip1_used;
     }
 
+    // Sum UIP1 use/time
     std::sort(all_learnt.begin(), all_learnt.end(), SortRedClsSumUIPPerTime(solver));
     for(size_t i = 0; i < all_learnt.size(); i++) {
         ClOffset offs = all_learnt[i];
@@ -387,6 +411,22 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
         uint32_t extra_at = get_median_stat(all_learnt).extra_pos;
         ClauseStatsExtra& stats_extra = solver->red_stats_extra[extra_at];
         median_data.median_sum_uip_per_time = stats_extra.calc_sum_uip_per_time(solver->sumConflicts);
+    }
+
+    // Sum props/time
+    std::sort(all_learnt.begin(), all_learnt.end(), SortRedClsSumPropsPerTime(solver));
+    for(size_t i = 0; i < all_learnt.size(); i++) {
+        ClOffset offs = all_learnt[i];
+        Clause* cl = solver->cl_alloc.ptr(offs);
+        ClauseStatsExtra& stats_extra = solver->red_stats_extra[cl->stats.extra_pos];
+        stats_extra.sum_props_per_time_ranking = i+1;
+    }
+    if (all_learnt.empty()) {
+        median_data.median_sum_props_per_time = 0;
+    } else {
+        uint32_t extra_at = get_median_stat(all_learnt).extra_pos;
+        ClauseStatsExtra& stats_extra = solver->red_stats_extra[extra_at];
+        median_data.median_sum_props_per_time = stats_extra.calc_sum_props_per_time(solver->sumConflicts);
     }
 
     //We'll also compact solver->red_stats_extra
@@ -446,6 +486,13 @@ void ReduceDB::dump_sql_cl_data(
     }
     prepare_features(all_learnt);
 
+    AverageCommonDataRDB avgdata;
+    avgdata.avg_glue = (double)total_glue/(double)all_learnt.size();
+    avgdata.avg_props = (double)total_props/(double)all_learnt.size();
+    avgdata.avg_uip1_used = (double)total_uip1_used/(double)all_learnt.size();
+    avgdata.avg_sum_uip1_per_time = (double)total_sum_uip1_used/(double)all_learnt.size();
+    avgdata.avg_sum_props_per_time = (double)total_sum_props_used/(double)all_learnt.size();
+
 
     //Dump common features
     solver->sqlStats->begin_transaction();
@@ -455,10 +502,7 @@ void ReduceDB::dump_sql_cl_data(
         all_learnt.size(),
         cur_rst_type,
         median_data,
-        (double)total_glue/(double)all_learnt.size(),
-        (double)total_props/(double)all_learnt.size(),
-        (double)total_uip1_used/(double)all_learnt.size(),
-        (double)total_sum_uip1_used/(double)all_learnt.size()
+        avgdata
     );
 
     //Dump clause features
