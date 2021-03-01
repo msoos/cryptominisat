@@ -383,7 +383,7 @@ struct AssignStats
 struct MedianCommonDataRDB {
     uint32_t median_props;
     uint32_t median_uip1_used;
-    double median_sum_uip_per_time;
+    double median_sum_uip1_per_time;
     double median_sum_props_per_time;
     float median_act;
 };

@@ -594,13 +594,6 @@ def plot_feature_importances(importances, indices, myrange, std, features):
         plt.xlim([-1, myrange])
 
 def delete_none_features(df):
-    # deleting this feature which is NONE
-    del df["cl.antecedents_glue_long_reds_avg"]
-    del df["cl.antecedents_glue_long_reds_max"]
-    del df["cl.antecedents_glue_long_reds_min"]
-    del df["cl.antecedents_glue_long_reds_var"]
-    del df["cl.antecedents_long_red_age_avg"]
-    del df["cl.antecedents_long_red_age_var"]
     #del df["cl.decisionLevelHistLT_avg"]
     del df["sum_cl_use.first_confl_used"]
     del df["sum_cl_use.last_confl_used"]
@@ -621,6 +614,9 @@ def cldata_add_minimum_computed_features(df, verbose):
 def cldata_add_computed_features(df, verbose, short=False):
     print("Adding computed features...")
     cldata_add_minimum_computed_features(df, verbose)
+
+    time_in_solver = "(cl.conflicts-rdb0.introduced_at_conflict)"
+    df[time_in_solver] = df["cl.conflicts"] - df["rdb0.introduced_at_conflict"];
 
     del df["cl.conflicts"]
     del df["cl.restartID"]
@@ -649,8 +645,17 @@ def cldata_add_computed_features(df, verbose, short=False):
     divide("rdb0.uip1_used", "rdb0_common.avg_uip1_used")
     divide("rdb0.props_made", "rdb0_common.avg_props")
     divide("rdb0.glue", "rdb0_common.avg_glue")
+
     divide("rdb0.uip1_used", "rdb0_common.median_uip1_used")
     divide("rdb0.props_made", "rdb0_common.median_props")
+
+    sum_props_per_time = divide("rdb0.sum_props_made", time_in_solver)
+    sum_uip1_per_time = divide("rdb0.sum_uip1_used", time_in_solver)
+    divide(sum_props_per_time, "rdb0_common.median_sum_uip1_per_time")
+    divide(sum_uip1_per_time, "rdb0_common.median_sum_props_per_time")
+    divide(sum_props_per_time, "rdb0_common.avg_sum_uip1_per_time")
+    divide(sum_uip1_per_time, "rdb0_common.avg_sum_props_per_time")
+    del df[time_in_solver]
 
     divisors = [
         "cl.conflSizeHistlt_avg"

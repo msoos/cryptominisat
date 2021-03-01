@@ -710,7 +710,7 @@ void SQLiteStats::reduceDB_common(
     sqlite3_bind_double(stmtReduceDB_common, bindAt++, (double)median_data.median_act);
     sqlite3_bind_int   (stmtReduceDB_common, bindAt++, median_data.median_uip1_used);
     sqlite3_bind_int   (stmtReduceDB_common, bindAt++, median_data.median_props);
-    sqlite3_bind_double(stmtReduceDB_common, bindAt++, median_data.median_sum_uip_per_time);
+    sqlite3_bind_double(stmtReduceDB_common, bindAt++, median_data.median_sum_uip1_per_time);
     sqlite3_bind_double(stmtReduceDB_common, bindAt++, median_data.median_sum_props_per_time);
 
     sqlite3_bind_double(stmtReduceDB_common, bindAt++, avg_data.avg_glue);
@@ -791,7 +791,7 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int(stmtReduceDB, bindAt++, stats_extra.act_ranking);
     sqlite3_bind_int(stmtReduceDB, bindAt++, stats_extra.prop_ranking);
     sqlite3_bind_int(stmtReduceDB, bindAt++, stats_extra.uip1_ranking);
-    sqlite3_bind_int(stmtReduceDB, bindAt++, stats_extra.sum_uip_per_time_ranking);
+    sqlite3_bind_int(stmtReduceDB, bindAt++, stats_extra.sum_uip1_per_time_ranking);
     sqlite3_bind_int(stmtReduceDB, bindAt++, stats_extra.sum_props_per_time_ranking);
 
     //Discounted

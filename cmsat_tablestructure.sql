@@ -56,7 +56,7 @@ CREATE TABLE `reduceDB_common` (
   `median_act` float NOT NULL,
   `median_uip1_used` int(20) NOT NULL,
   `median_props` int(20) NOT NULL,
-  `median_sum_uip_per_time` float NOT NULL,
+  `median_sum_uip1_per_time` float NOT NULL,
   `median_sum_props_per_time` float NOT NULL,
 
   `avg_glue` float NOT NULL,
@@ -111,7 +111,7 @@ CREATE TABLE `reduceDB` (
   `act_ranking` int(20) NOT NULL,
   `prop_ranking` int(20) NOT NULL,
   `uip1_ranking` int(20) NOT NULL,
-  `sum_uip_per_time_ranking` int(20) NOT NULL,
+  `sum_uip1_per_time_ranking` int(20) NOT NULL,
   `sum_props_per_time_ranking` int(20) NOT NULL,
 
   -- discounted

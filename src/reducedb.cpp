@@ -132,8 +132,8 @@ struct SortRedClsSumUIPPerTime
         const auto& x_extra_stats = solver->red_stats_extra[x->stats.extra_pos];
         const auto& y_extra_stats = solver->red_stats_extra[y->stats.extra_pos];
 
-        return x_extra_stats.calc_sum_uip_per_time(solver->sumConflicts) >
-            y_extra_stats.calc_sum_uip_per_time(solver->sumConflicts);
+        return x_extra_stats.calc_sum_uip1_per_time(solver->sumConflicts) >
+            y_extra_stats.calc_sum_uip1_per_time(solver->sumConflicts);
     }
 };
 
@@ -403,14 +403,14 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
         ClOffset offs = all_learnt[i];
         Clause* cl = solver->cl_alloc.ptr(offs);
         ClauseStatsExtra& stats_extra = solver->red_stats_extra[cl->stats.extra_pos];
-        stats_extra.sum_uip_per_time_ranking = i+1;
+        stats_extra.sum_uip1_per_time_ranking = i+1;
     }
     if (all_learnt.empty()) {
-        median_data.median_sum_uip_per_time = 0;
+        median_data.median_sum_uip1_per_time = 0;
     } else {
         uint32_t extra_at = get_median_stat(all_learnt).extra_pos;
         ClauseStatsExtra& stats_extra = solver->red_stats_extra[extra_at];
-        median_data.median_sum_uip_per_time = stats_extra.calc_sum_uip_per_time(solver->sumConflicts);
+        median_data.median_sum_uip1_per_time = stats_extra.calc_sum_uip1_per_time(solver->sumConflicts);
     }
 
     // Sum props/time
@@ -683,7 +683,7 @@ void ReduceDB::update_preds(const vector<ClOffset>& offs)
         double act_ranking_rel = safe_div(stats_extra.act_ranking, commdata.all_learnt_size);
         double uip1_ranking_rel = safe_div(stats_extra.uip1_ranking, commdata.all_learnt_size);
         double prop_ranking_rel = safe_div(stats_extra.prop_ranking, commdata.all_learnt_size);
-        double sum_uip_per_time_ranking_rel = safe_div(stats_extra.sum_uip_per_time_ranking, commdata.all_learnt_size);
+        double sum_uip1_per_time_ranking_rel = safe_div(stats_extra.sum_uip1_per_time_ranking, commdata.all_learnt_size);
 
         stats_extra.pred_short_use = 0;
         stats_extra.pred_long_use = 0;
@@ -697,7 +697,7 @@ void ReduceDB::update_preds(const vector<ClOffset>& offs)
                 act_ranking_rel,
                 uip1_ranking_rel,
                 prop_ranking_rel,
-                sum_uip_per_time_ranking_rel,
+                sum_uip1_per_time_ranking_rel,
                 commdata,
                 PRED_COLS,
                 solver,
