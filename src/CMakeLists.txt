@@ -286,6 +286,7 @@ if (IPASIR)
         VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
         SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     )
+    GENERATE_EXPORT_HEADER(ipasircryptominisat5)
     install(TARGETS ipasircryptominisat5
         EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
         LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
@@ -325,6 +326,7 @@ foreach(public_header ${cryptominisat5_public_headers})
                       )
 endforeach()
 
+GENERATE_EXPORT_HEADER(cryptominisat5)
 install(TARGETS cryptominisat5
     EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
     LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
