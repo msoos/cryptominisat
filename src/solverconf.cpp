@@ -164,11 +164,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Glues
         , update_glues_on_analyze(true)
-        #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
-        , max_glue_cutoff_gluehistltlimited(100000)
-        #else
         , max_glue_cutoff_gluehistltlimited(50)
-        #endif
 
         //Chono BT
         , diff_declev_for_chrono (20)
