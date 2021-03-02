@@ -790,8 +790,11 @@ struct OneThreadCalc
             //data_for_thread.update_mutex->unlock();
         }
 
+        //Add clauses and variables
         OneThreadAddCls cls_adder(data_for_thread, tid);
         cls_adder();
+
+        //Solve or simplify
         lbool ret;
         if (todo == Todo::todo_solve) {
             ret = data_for_thread.solvers[tid]->solve_with_assumptions(data_for_thread.assumptions, only_sampling_solution);
