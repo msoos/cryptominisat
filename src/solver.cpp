@@ -1406,8 +1406,8 @@ void Solver::check_and_upd_config_parameters()
     }
     #endif
 
-    if (conf.max_glue_cutoff_gluehistltlimited > 100000) {
-        cout << "ERROR: 'Maximum supported glue size is currently 100000" << endl;
+    if (conf.max_glue_cutoff_gluehistltlimited > 1000) {
+        cout << "ERROR: 'Maximum supported glue size is currently 1000" << endl;
         exit(-1);
     }
 

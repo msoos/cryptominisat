@@ -1069,7 +1069,7 @@ void Main::manually_parse_some_options()
     }
     #endif
 
-    if (conf.max_glue_cutoff_gluehistltlimited > 100000) {
+    if (conf.max_glue_cutoff_gluehistltlimited > 1000) {
         cout << "ERROR: 'Maximum supported glue size is currently 100000" << endl;
         exit(-1);
     }
