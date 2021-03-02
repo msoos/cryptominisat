@@ -237,6 +237,7 @@ public:
 };
 
 
+// Fixes by @Topologist from GitHub. Thank you so much!
 template<class T>
 void vec<T>::capacity(int32_t min_cap)
 {
@@ -246,10 +247,22 @@ void vec<T>::capacity(int32_t min_cap)
 
     // NOTE: grow by approximately 3/2
     uint32_t add = imax((min_cap - (int32_t)cap + 1) & ~1, (((int32_t)cap >> 1) + 2) & ~1);
-    if (add > std::numeric_limits<uint32_t>::max() - cap
-        || (((data = (T*)::realloc(data, (cap += (uint32_t)add) * sizeof(T))) == NULL)
-            && errno == ENOMEM)
-    ) {
+    if (add > std::numeric_limits<uint32_t>::max() - cap) {
+        throw std::bad_alloc();
+    }
+    cap += (uint32_t)add;
+
+    // This avoids memory fragmentation by many reallocations
+    uint32_t new_size = 2;
+    while (new_size < cap) {
+        new_size *= 2;
+    }
+    if (new_size * 2 / 3 > cap) {
+        new_size = new_size * 2 / 3;
+    }
+    cap = new_size;
+
+    if (((data = (T*)::realloc(data, cap * sizeof(T))) == NULL) && errno == ENOMEM) {
         throw std::bad_alloc();
     }
 }
