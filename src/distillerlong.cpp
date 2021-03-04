@@ -82,22 +82,6 @@ bool DistillerLong::distill(const bool red, bool fullstats, bool only_rem_cl)
     numCalls_red += (unsigned)red;
     numCalls_irred += (unsigned)!red;
     runStats.clear();
-    lit_counts.clear();
-    lit_counts.resize(solver->nVars()*2, 0);
-    for(const auto& off: solver->longIrredCls) {
-        Clause* cl = solver->cl_alloc.ptr(off);
-        for(const auto& l: *cl) {
-            lit_counts[l.toInt()]++;
-        }
-    }
-    for(const auto& offs: solver->longRedCls) {
-        for(const auto& off: offs) {
-            Clause* cl = solver->cl_alloc.ptr(off);
-            for(const auto& l: *cl) {
-                lit_counts[l.toInt()]++;
-            }
-        }
-    }
 
     if (!red) {
         if (!distill_long_cls_all(solver->longIrredCls, 4, true)) {
@@ -109,22 +93,13 @@ bool DistillerLong::distill(const bool red, bool fullstats, bool only_rem_cl)
             }
         }
     } else {
-        //if (solver->conf.pred_distill_orig) {
-            //non-stats/pred version
-            if (!distill_long_cls_all(solver->longRedCls[0], solver->conf.distill_red_tier0_ratio)) {
-                goto end;
-            }
-            if (!distill_long_cls_all(solver->longRedCls[1], solver->conf.distill_red_tier1_ratio)) {
-                goto end;
-            }
-        /*}/ else {
-            if (!distill_long_cls_all(solver->longRedCls[0], 7.0)) {
-                goto end;
-            }
-            if (!distill_long_cls_all(solver->longRedCls[1], 3.0)) {
-                goto end;
-            }
-        }*/
+        //Redundant
+        if (!distill_long_cls_all(solver->longRedCls[0], solver->conf.distill_red_tier0_ratio)) {
+            goto end;
+        }
+        if (!distill_long_cls_all(solver->longRedCls[1], solver->conf.distill_red_tier1_ratio)) {
+            goto end;
+        }
     }
 
 end:
@@ -198,31 +173,48 @@ bool DistillerLong::distill_long_cls_all(
     }
 
     //Prioritize
-    vector<ClOffset> offs2;
-    offs2.reserve(offs.size());
+    lit_counts.clear();
+    lit_counts.resize(solver->nVars()*2, 0);
+    vector<ClOffset> todo;
+    todo.reserve(offs.size());
     for(uint32_t prio = 0; prio < 2; prio ++) {
-        for(const auto& off: offs) {
-            Clause* cl = solver->cl_alloc.ptr(off);
-            if (cl->stats.is_ternary_resolvent) {
-                if (prio == 1) {
-                    offs2.push_back(off);
+        uint32_t j = 0;
+        for(uint32_t i = 0; i < offs.size(); i ++) {
+            Clause* cl = solver->cl_alloc.ptr(offs[i]);
+            bool ok = false;
+            if (!cl->stats.is_ternary_resolvent
+                && !solver->satisfied(*cl)
+            ) {
+                if (also_remove) {
+                    if (cl->tried_to_remove == prio) {
+                        ok = true;
+                    }
+                } else {
+                    if (cl->distilled == prio) {
+                        ok = true;
+                    }
                 }
+            }
+
+            if (ok) {
+                for(const auto& l: *cl) {
+                    lit_counts[l.toInt()]++;
+                }
+                todo.push_back(offs[i]);
+            } else {
+                offs[j++] = offs[i];
                 continue;
             }
-            if (also_remove) {
-                if (cl->tried_to_remove == prio) {
-                    offs2.push_back(off);
-                }
-            } else {
-                if (cl->distilled == prio) {
-                    offs2.push_back(off);
-                }
-            }
         }
+        offs.resize(j);
     }
-    std::swap(offs, offs2);
 
-    bool time_out = go_through_clauses(offs, also_remove);
+    bool time_out = go_through_clauses(todo, also_remove);
+
+    //Add back the prioritized clauses
+    for(const auto off: todo) {
+        offs.push_back(off);
+    }
 
     const double time_used = cpuTime() - myTime;
     const double time_remain = float_div(
@@ -268,6 +260,10 @@ bool DistillerLong::go_through_clauses(
             continue;
         }
 
+        //Get pointer
+        ClOffset offset = *i;
+        Clause& cl = *solver->cl_alloc.ptr(offset);
+
         //if done enough, stop doing it
         if ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps >= maxNumProps
             || solver->must_interrupt_asap()
@@ -281,9 +277,7 @@ bool DistillerLong::go_through_clauses(
             time_out = true;
         }
 
-        //Get pointer
-        ClOffset offset = *i;
-        Clause& cl = *solver->cl_alloc.ptr(offset);
+        //check XOR
         if (cl.used_in_xor() &&
             solver->conf.force_preserve_xors
         ) {
