@@ -746,6 +746,8 @@ void Main::add_supported_options()
         , "Multiplier for current number of conflicts OTF distill")
     ("distillminconf", po::value(&conf.distill_min_confl)->default_value(conf.distill_min_confl)
         , "Minimum number of conflicts between OTF distill")
+    ("distilltier0ratio", po::value(&conf.distill_red_tier0_ratio)->default_value(conf.distill_red_tier0_ratio)
+        , "How much of tier 0 to distill")
     ("distilltier1ratio", po::value(&conf.distill_red_tier1_ratio)->default_value(conf.distill_red_tier1_ratio)
         , "How much of tier 1 to distill")
     ;

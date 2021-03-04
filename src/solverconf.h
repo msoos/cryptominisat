@@ -459,6 +459,7 @@ class DLL_PUBLIC SolverConf
         long watch_based_str_time_limitM;
         double distill_increase_conf_ratio;
         long distill_min_confl;
+        double distill_red_tier0_ratio;
         double distill_red_tier1_ratio;
 
         //Memory savings

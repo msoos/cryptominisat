@@ -40,76 +40,6 @@ using std::endl;
 
 //#define VERBOSE_SUBSUME_NONEXIST
 
-DistillerLong::DistillerLong(Solver* _solver) :
-    solver(_solver)
-{}
-
-bool DistillerLong::distill(const bool red, bool fullstats, bool only_rem_cl)
-{
-    assert(solver->ok);
-    numCalls_red += (unsigned)red;
-    numCalls_irred += (unsigned)!red;
-    runStats.clear();
-    lit_counts.clear();
-    lit_counts.resize(solver->nVars()*2, 0);
-    for(const auto& off: solver->longIrredCls) {
-        Clause* cl = solver->cl_alloc.ptr(off);
-        for(const auto& l: *cl) {
-            lit_counts[l.toInt()]++;
-        }
-    }
-    for(const auto& offs: solver->longRedCls) {
-        for(const auto& off: offs) {
-            Clause* cl = solver->cl_alloc.ptr(off);
-            for(const auto& l: *cl) {
-                lit_counts[l.toInt()]++;
-            }
-        }
-    }
-
-    if (!red) {
-        if (!distill_long_cls_all(solver->longIrredCls, 2, true)) {
-            goto end;
-        }
-        if (!only_rem_cl) {
-            if (!distill_long_cls_all(solver->longIrredCls, 0.5, false)) {
-                goto end;
-            }
-        }
-    } else {
-        if (solver->conf.pred_distill_orig) {
-            //non-stats/pred version
-            if (!distill_long_cls_all(solver->longRedCls[0], 10.0)) {
-                goto end;
-            }
-            if (!distill_long_cls_all(solver->longRedCls[1], solver->conf.distill_red_tier1_ratio)) {
-                goto end;
-            }
-        } else {
-            if (!distill_long_cls_all(solver->longRedCls[0], 7.0)) {
-                goto end;
-            }
-            if (!distill_long_cls_all(solver->longRedCls[1], 3.0)) {
-                goto end;
-            }
-        }
-    }
-
-end:
-    globalStats += runStats;
-    if (solver->conf.verbosity && fullstats) {
-        if (solver->conf.verbosity >= 3)
-            runStats.print(solver->nVars());
-        else
-            runStats.print_short(solver);
-    }
-    runStats.clear();
-    lit_counts.clear();
-    lit_counts.shrink_to_fit();
-
-    return solver->okay();
-}
-
 struct ClauseSizeSorterLargestFirst
 {
     ClauseSizeSorterLargestFirst(const ClauseAllocator& _cl_alloc) :
@@ -142,85 +72,76 @@ struct LitCountDescSort
     const vector<uint64_t>& lit_counts;
 };
 
-bool DistillerLong::go_through_clauses(
-    vector<ClOffset>& cls,
-    bool also_remove
-) {
-    bool time_out = false;
-    vector<ClOffset>::iterator i, j;
-    i = j = cls.begin();
-    for (vector<ClOffset>::iterator end = cls.end()
-        ; i != end
-        ; i++
-    ) {
-        //Check if we are in state where we only copy offsets around
-        if (time_out || !solver->ok) {
-            *j++ = *i;
-            continue;
-        }
+DistillerLong::DistillerLong(Solver* _solver) :
+    solver(_solver)
+{}
 
-        //if done enough, stop doing it
-        if ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps >= maxNumProps
-            || solver->must_interrupt_asap()
-        ) {
-            if (solver->conf.verbosity >= 3) {
-                cout
-                << "c Need to finish distillation -- ran out of prop (=allocated time)"
-                << endl;
-            }
-            runStats.timeOut++;
-            time_out = true;
-        }
-
-        //Get pointer
-        ClOffset offset = *i;
-        Clause& cl = *solver->cl_alloc.ptr(offset);
-        if (cl.used_in_xor() &&
-            solver->conf.force_preserve_xors
-        ) {
-            *j++ = *i;
-            continue;
-        }
-
-        //Time to dereference
-        maxNumProps -= 5;
-
-        //If we already tried this clause, then move to next
-        if ((also_remove && cl.tried_to_remove) ||
-            (!also_remove && cl.distilled) ||
-            cl._xor_is_detached ||
-
-            //If it's a redundant that's not very good, let's not distill it
-            (!solver->conf.pred_distill_orig &&
-                cl.red() &&
-                cl.stats.glue > 3)
-        ) {
-            *j++ = *i;
-            continue;
-        }
-        if (also_remove) {
-            cl.tried_to_remove = 1;
-        } else {
-            cl.distilled = 1;
-        }
-        runStats.checkedClauses++;
-        assert(cl.size() > 2);
-
-        //Try to distill clause
-        ClOffset offset2 = try_distill_clause_and_return_new(
-            offset
-            , &cl.stats
-            , also_remove
-        );
-
-        if (offset2 != CL_OFFSET_MAX) {
-            *j++ = offset2;
+bool DistillerLong::distill(const bool red, bool fullstats, bool only_rem_cl)
+{
+    assert(solver->ok);
+    numCalls_red += (unsigned)red;
+    numCalls_irred += (unsigned)!red;
+    runStats.clear();
+    lit_counts.clear();
+    lit_counts.resize(solver->nVars()*2, 0);
+    for(const auto& off: solver->longIrredCls) {
+        Clause* cl = solver->cl_alloc.ptr(off);
+        for(const auto& l: *cl) {
+            lit_counts[l.toInt()]++;
         }
     }
-    cls.resize(cls.size()- (i-j));
+    for(const auto& offs: solver->longRedCls) {
+        for(const auto& off: offs) {
+            Clause* cl = solver->cl_alloc.ptr(off);
+            for(const auto& l: *cl) {
+                lit_counts[l.toInt()]++;
+            }
+        }
+    }
 
-    return time_out;
+    if (!red) {
+        if (!distill_long_cls_all(solver->longIrredCls, 4, true)) {
+            goto end;
+        }
+        if (!only_rem_cl) {
+            if (!distill_long_cls_all(solver->longIrredCls, 0.5, false)) {
+                goto end;
+            }
+        }
+    } else {
+        //if (solver->conf.pred_distill_orig) {
+            //non-stats/pred version
+            if (!distill_long_cls_all(solver->longRedCls[0], solver->conf.distill_red_tier0_ratio)) {
+                goto end;
+            }
+            if (!distill_long_cls_all(solver->longRedCls[1], solver->conf.distill_red_tier1_ratio)) {
+                goto end;
+            }
+        /*}/ else {
+            if (!distill_long_cls_all(solver->longRedCls[0], 7.0)) {
+                goto end;
+            }
+            if (!distill_long_cls_all(solver->longRedCls[1], 3.0)) {
+                goto end;
+            }
+        }*/
+    }
+
+end:
+    globalStats += runStats;
+    if (solver->conf.verbosity && fullstats) {
+        if (solver->conf.verbosity >= 3)
+            runStats.print(solver->nVars());
+        else
+            runStats.print_short(solver);
+    }
+    runStats.clear();
+    lit_counts.clear();
+    lit_counts.shrink_to_fit();
+
+    return solver->okay();
 }
+
 
 bool DistillerLong::distill_long_cls_all(
     vector<ClOffset>& offs
@@ -276,13 +197,32 @@ bool DistillerLong::distill_long_cls_all(
         }
     }
 
+    //Prioritize
+    vector<ClOffset> offs2;
+    offs2.reserve(offs.size());
+    for(uint32_t prio = 0; prio < 2; prio ++) {
+        for(const auto& off: offs) {
+            Clause* cl = solver->cl_alloc.ptr(off);
+            if (also_remove) {
+                if (cl->tried_to_remove == prio) {
+                    offs2.push_back(off);
+                }
+            } else {
+                if (cl->distilled == prio) {
+                    offs2.push_back(off);
+                }
+            }
+        }
+    }
+    std::swap(offs, offs2);
+
     bool time_out = go_through_clauses(offs, also_remove);
 
     const double time_used = cpuTime() - myTime;
     const double time_remain = float_div(
         maxNumProps - ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps),
         orig_maxNumProps);
-    if (solver->conf.verbosity >= 3) {
+    if (solver->conf.verbosity >= 1) {
         cout << "c [distill-long] cls"
         << " tried: " << runStats.checkedClauses << "/" << offs.size()
         << solver->conf.print_times(time_used, time_out, time_remain)
@@ -298,28 +238,89 @@ bool DistillerLong::distill_long_cls_all(
         );
     }
 
-    //TODO check how to do this well. Takes 50% of solving time as-is
-    //     perhaps Kissat has a good idea for this.
-    #if 0
-    //We went through the loop without timeout, let's reset the distilled/tried_to_remove flag
-    if (time_remain > 0) {
-        for(const auto& off: offs) {
-            Clause* cl = solver->cl_alloc.ptr(off);
-            if (also_remove) {
-                cl->tried_to_remove = 0;
-            } else {
-                cl->distilled = 0;
-            }
-        }
-    }
-    #endif
-
-
     //Update stats
     runStats.time_used += time_used;
     runStats.zeroDepthAssigns += solver->trail_size() - origTrailSize;
 
     return solver->okay();
+}
+
+bool DistillerLong::go_through_clauses(
+    vector<ClOffset>& cls,
+    bool also_remove
+) {
+    bool time_out = false;
+    vector<ClOffset>::iterator i, j;
+    i = j = cls.begin();
+    for (vector<ClOffset>::iterator end = cls.end()
+        ; i != end
+        ; i++
+    ) {
+        //Check if we are in state where we only copy offsets around
+        if (time_out || !solver->ok) {
+            *j++ = *i;
+            continue;
+        }
+
+        //if done enough, stop doing it
+        if ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps >= maxNumProps
+            || solver->must_interrupt_asap()
+        ) {
+            if (solver->conf.verbosity >= 3) {
+                cout
+                << "c Need to finish distillation -- ran out of prop (=allocated time)"
+                << endl;
+            }
+            runStats.timeOut++;
+            time_out = true;
+        }
+
+        //Get pointer
+        ClOffset offset = *i;
+        Clause& cl = *solver->cl_alloc.ptr(offset);
+        if (cl.used_in_xor() &&
+            solver->conf.force_preserve_xors
+        ) {
+            *j++ = *i;
+            continue;
+        }
+
+        //Time to dereference
+        maxNumProps -= 5;
+
+        //If we already tried this clause, then move to next
+        if (cl._xor_is_detached ||
+
+            //If it's a redundant that's not very good, let's not distill it
+            (!solver->conf.pred_distill_orig &&
+                cl.red() &&
+                cl.stats.glue > 3)
+        ) {
+            *j++ = *i;
+            continue;
+        }
+        if (also_remove) {
+            cl.tried_to_remove = 1;
+        } else {
+            cl.distilled = 1;
+        }
+        runStats.checkedClauses++;
+        assert(cl.size() > 2);
+
+        //Try to distill clause
+        ClOffset offset2 = try_distill_clause_and_return_new(
+            offset
+            , &cl.stats
+            , also_remove
+        );
+
+        if (offset2 != CL_OFFSET_MAX) {
+            *j++ = offset2;
+        }
+    }
+    cls.resize(cls.size()- (i-j));
+
+    return time_out;
 }
 
 ClOffset DistillerLong::try_distill_clause_and_return_new(

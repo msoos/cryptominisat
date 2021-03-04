@@ -358,11 +358,12 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Distillation
         , do_distill_clauses(true)
         , do_distill_bin_clauses(true)
-        , distill_long_cls_time_limitM(20ULL)
+        , distill_long_cls_time_limitM(11ULL)
         , watch_based_str_time_limitM(30LL)
         , distill_increase_conf_ratio(0.02)
         , distill_min_confl(10000)
-        , distill_red_tier1_ratio(0.03)
+        , distill_red_tier0_ratio(0.6)
+        , distill_red_tier1_ratio(0.07)
 
         //Memory savings
         , doRenumberVars   (true)
