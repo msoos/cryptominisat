@@ -203,6 +203,12 @@ bool DistillerLong::distill_long_cls_all(
     for(uint32_t prio = 0; prio < 2; prio ++) {
         for(const auto& off: offs) {
             Clause* cl = solver->cl_alloc.ptr(off);
+            if (cl->stats.is_ternary_resolvent) {
+                if (prio == 1) {
+                    offs2.push_back(off);
+                }
+                continue;
+            }
             if (also_remove) {
                 if (cl->tried_to_remove == prio) {
                     offs2.push_back(off);
