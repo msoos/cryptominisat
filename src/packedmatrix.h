@@ -67,7 +67,8 @@ public:
             mp =  (int64_t*)_aligned_malloc(size, 16);
             #else
             free(mp);
-            posix_memalign((void**)&mp, 16,  size);
+            int ret = posix_memalign((void**)&mp, 16,  size);
+            release_assert(ret == 0);
             #endif
         }
 
@@ -90,7 +91,8 @@ public:
             mp =  (int64_t*)_aligned_malloc(size, 16);
             #else
             free(mp);
-            posix_memalign((void**)&mp, 16,  size);
+            int ret = posix_memalign((void**)&mp, 16,  size);
+            release_assert(ret == 0);
             #endif
         }
         numRows = b.numRows;
