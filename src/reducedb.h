@@ -105,11 +105,12 @@ private:
 
     const CMSat::ClauseStats& get_median_stat(const vector<ClOffset>& all_learnt) const;
     void prepare_features(vector<ClOffset>& all_learnt);
-    uint32_t total_glue = 0;
-    uint32_t total_props = 0;
-    uint32_t total_uip1_used = 0;
-    uint32_t total_sum_uip1_used = 0;
-    uint32_t total_sum_props_used = 0;
+    uint64_t total_glue = 0;
+    uint64_t total_props = 0;
+    uint64_t total_uip1_used = 0;
+    uint64_t total_sum_uip1_used = 0;
+    uint64_t total_sum_props_used = 0;
+    uint64_t total_time_in_solver = 0;
     MedianCommonDataRDB median_data;
     uint32_t force_kept_short = 0;
 

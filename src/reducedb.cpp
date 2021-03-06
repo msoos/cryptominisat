@@ -364,6 +364,7 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
     total_uip1_used = 0;
     total_sum_uip1_used = 0;
     total_sum_props_used = 0;
+    total_time_in_solver = 0;
     for(size_t i = 0; i < all_learnt.size(); i++) {
         ClOffset offs = all_learnt[i];
         Clause* cl = solver->cl_alloc.ptr(offs);
@@ -377,6 +378,8 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
         total_uip1_used += cl->stats.uip1_used;
         total_sum_uip1_used += stats_extra.sum_uip1_used;
         total_sum_props_used += stats_extra.sum_props_made;
+        assert(solver->sumConflicts >= stats_extra.introduced_at_conflict);
+        total_time_in_solver += solver->sumConflicts - stats_extra.introduced_at_conflict;
     }
     if (all_learnt.empty()) {
         median_data.median_props = 0;
@@ -490,8 +493,10 @@ void ReduceDB::dump_sql_cl_data(
     avgdata.avg_glue = (double)total_glue/(double)all_learnt.size();
     avgdata.avg_props = (double)total_props/(double)all_learnt.size();
     avgdata.avg_uip1_used = (double)total_uip1_used/(double)all_learnt.size();
-    avgdata.avg_sum_uip1_per_time = (double)total_sum_uip1_used/(double)all_learnt.size();
-    avgdata.avg_sum_props_per_time = (double)total_sum_props_used/(double)all_learnt.size();
+    if (total_time_in_solver > 0) {
+        avgdata.avg_sum_uip1_per_time = (double)total_sum_uip1_used/(double)(all_learnt.size()*total_time_in_solver);
+        avgdata.avg_sum_props_per_time = (double)total_sum_props_used/(double)(all_learnt.size()*total_time_in_solver);
+    }
 
 
     //Dump common features

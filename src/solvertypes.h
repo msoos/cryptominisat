@@ -389,11 +389,11 @@ struct MedianCommonDataRDB {
 };
 
 struct AverageCommonDataRDB {
-    double avg_glue;
-    double avg_props;
-    double avg_uip1_used;
-    double avg_sum_uip1_per_time;
-    double avg_sum_props_per_time;
+    double avg_glue = 0;
+    double avg_props = 0;
+    double avg_uip1_used = 0;
+    double avg_sum_uip1_per_time = 0;
+    double avg_sum_props_per_time = 0;
 };
 
 struct PropStats
