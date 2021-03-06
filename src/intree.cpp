@@ -189,8 +189,8 @@ bool InTree::intree_probe()
         << (orig_num_free_vars - solver->get_num_free_vars())
         << " vars"
         << " hyper-added: " << hyperbin_added
-        << " trans-irred::" << removedIrredBin
-        << " trans-red::" << removedRedBin
+        << " trans-irred: " << removedIrredBin
+        << " trans-red: " << removedRedBin
         << solver->conf.print_times(time_used,  time_out, time_remain)
         << endl;
     }

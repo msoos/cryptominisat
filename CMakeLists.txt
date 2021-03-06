@@ -182,6 +182,8 @@ if (SANITIZE)
     #MESSAGE(WARNING "Using clang sanitizers -- you MUST use clang++ or the compile WILL fail")
     add_sanitize_option("-fsanitize-trap=undefined,float-divide-by-zero,unsigned-integer-overflow,implicit-conversion,local-bounds,bounds,return,alignment,null,integer,enum,bool,float-cast-overflow,integer-divide-by-zero,signed-integer-overflow")
     add_sanitize_option("-fsanitize=address")
+    add_sanitize_option("-fno-sanitize-recover")
+    add_compile_options("$<$<CONFIG:RELWITHDEBINFO>:-D_GLIBCXX_ASSERTIONS>")
 endif()
 endmacro()
 
@@ -787,7 +789,7 @@ configure_file(
 
 add_custom_target(uninstall
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake
-    DEPENDS uninstall_pycyrptosat
+    DEPENDS uninstall_pycryptosat
 )
 
 # -----------------------------------------------------------------------------

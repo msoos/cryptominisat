@@ -2922,7 +2922,7 @@ void Searcher::finish_up_solve(const lbool status)
 {
     print_solution_type(status);
     #ifdef USE_GAUSS
-    if (conf.verbosity >= 1 && status != l_Undef) {
+    if (conf.verbosity >= 2 && status != l_Undef) {
         print_matrix_stats();
     }
     #endif

@@ -369,7 +369,10 @@ void ls_solver::update_cc_after_flip(int flipv)
         if (_vars[v].score <= 0) {
             last_item = _ccd_vars.back();
             _ccd_vars.pop_back();
-            _ccd_vars[index] = last_item;
+            if (index < (int)_ccd_vars.size()) {
+                _ccd_vars[index] = last_item;
+            }
+
             _vars[v].is_in_ccd_vars = 0;
         }
     }
@@ -392,7 +395,9 @@ void ls_solver::sat_a_clause(int the_clause)
     int last_item = _unsat_clauses.back();
     _unsat_clauses.pop_back();
     int index = _index_in_unsat_clauses[the_clause];
-    _unsat_clauses[index] = last_item;
+    if (index < _unsat_clauses.size()) {
+        _unsat_clauses[index] = last_item;
+    }
     _index_in_unsat_clauses[last_item] = index;
     //update unsat_appear and unsat_vars
     for (lit l: _clauses[the_clause].literals) {
@@ -401,7 +406,9 @@ void ls_solver::sat_a_clause(int the_clause)
             last_item = _unsat_vars.back();
             _unsat_vars.pop_back();
             index = _index_in_unsat_vars[l.var_num];
-            _unsat_vars[index] = last_item;
+            if (index < (int)_unsat_vars.size()) {
+                _unsat_vars[index] = last_item;
+            }
             _index_in_unsat_vars[last_item] = index;
         }
     }
