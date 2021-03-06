@@ -184,6 +184,7 @@ if (SANITIZE)
     add_sanitize_option("-fsanitize=bool")
     add_sanitize_option("-fsanitize=enum")
     add_sanitize_option("-fsanitize=float-cast-overflow")
+    add_compile_options("$<$<CONFIG:RELWITHDEBINFO>:-D_GLIBCXX_ASSERTIONS>")
 
     #add_sanitize_option("-Weverything")
     #add_sanitize_option("-Wshorten-64-to-32")
