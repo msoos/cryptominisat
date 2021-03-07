@@ -90,7 +90,7 @@ def set_up_parser():
     parser.add_option("--sampling", dest="only_sampling", default=False,
                       action="store_true",
                       help="Concentrate fuzzing sampling variables")
-    parser.add_option("--maxth", "-m", dest="max_threads", default=100,
+    parser.add_option("--maxth", "-m", dest="max_threads", default=20,
                       type=int, help="Max number of threads")
 
     parser.add_option("--tout", "-t", dest="maxtime", type=int, default=35,
