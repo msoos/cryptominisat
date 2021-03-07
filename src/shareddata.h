@@ -87,19 +87,21 @@ class SharedData
         #ifdef USE_GPU
         GpuShare::GpuClauseSharerOptions csOpts;
         GpuShare::GpuClauseSharer* gpuClauseSharer = NULL;
+        #else
+        vector<Spec> bins;
+        std::mutex bin_mutex;
         #endif
 
         vector<lbool> value;
-        vector<Spec> bins;
-        std::atomic<int> cur_thread_id;
         std::mutex unit_mutex;
-        std::mutex bin_mutex;
-
+        std::atomic<int> cur_thread_id;
         uint32_t num_threads;
 
         size_t calc_memory_use_bins()
         {
             size_t mem = 0;
+            mem += value.capacity()*sizeof(lbool);
+            #ifndef USE_GPU
             mem += bins.capacity()*sizeof(Spec);
             for(size_t i = 0; i < bins.size(); i++) {
                 if (bins[i].data) {
@@ -107,6 +109,7 @@ class SharedData
                     mem += sizeof(vector<Lit>);
                 }
             }
+            #endif
             return mem;
         }
 };
