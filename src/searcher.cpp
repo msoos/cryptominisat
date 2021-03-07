@@ -4209,7 +4209,7 @@ PropBy Searcher::insert_gpu_clause(Lit* lits, uint32_t count)
         return learn_gpu_clause(lits, count);
     }
 
-    // lit 0 is implied by the rest
+    // lit 0 is implied by the rest -- i.e. lit[0] is l_Undef, rest is l_False
     cancelUntil(level(lits[1]));
 
     #ifdef SLOW_DEBUG
@@ -4254,6 +4254,7 @@ PropBy Searcher::learn_gpu_clause(Lit* lits, uint32_t count)
     assert(count == 2);
     attach_bin_clause(lits[0], lits[1], false, false);
     binTri.irredBins++;
+    failBinLit = lits[0];
     return PropBy(lits[1], false);
 }
 
