@@ -440,9 +440,6 @@ DLL_PUBLIC void SATSolver::set_num_threads(unsigned num)
     }
 
     data->cls_lits.reserve(CACHE_SIZE);
-
-    //GPU system does not support variable renumbering
-    data->solvers[0]->conf.doRenumberVars = 0;
     for(unsigned i = 1; i < num; i++) {
         SolverConf conf = data->solvers[0]->getConf();
         update_config(conf, i);

@@ -54,8 +54,10 @@ class DataSync
         void signal_new_long_clause(const vector<Lit>& clause);
 
         #ifdef USE_GPU
+        vector<Lit> clause_tmp;
+        vector<Lit> trail_tmp;
         void unsetFromGpu(uint32_t level);
-        void trySendAssignmentToGpu(uint32_t level);
+        void trySendAssignmentToGpu();
         PropBy pop_clauses();
         uint32_t signalled_gpu_long_cls = 0;
         uint32_t popped_clause = 0;
@@ -72,7 +74,7 @@ class DataSync
 
     private:
         void extend_bins_if_needed();
-        Lit map_outside_without_bva(Lit lit) const;
+        Lit map_outer_to_outside(Lit lit) const;
         bool shareUnitData();
         bool shareBinData();
         bool syncBinFromOthers();
@@ -81,6 +83,7 @@ class DataSync
         void clear_set_binary_values();
         void addOneBinToOthers(const Lit lit1, const Lit lit2);
         void signal_new_bin_clause(Lit lit1, Lit lit2);
+        void rebuild_bva_map_if_needed();
 
 
         uint32_t trailCopiedUntil = 0;
@@ -137,7 +140,7 @@ inline const DataSync::Stats& DataSync::get_stats() const
     return stats;
 }
 
-inline Lit DataSync::map_outside_without_bva(const Lit lit) const
+inline Lit DataSync::map_outer_to_outside(const Lit lit) const
 {
     return Lit(outer_to_without_bva_map[lit.var()], lit.sign());
 

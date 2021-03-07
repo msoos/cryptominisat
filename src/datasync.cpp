@@ -91,6 +91,14 @@ void DataSync::updateVars(
 ) {
 }
 
+inline void DataSync::rebuild_bva_map_if_needed()
+{
+    if (must_rebuild_bva_map) {
+        outer_to_without_bva_map = solver->build_outer_to_without_bva_map();
+        must_rebuild_bva_map = false;
+    }
+}
+
 bool DataSync::syncData()
 {
     if (!enabled()
@@ -102,11 +110,7 @@ bool DataSync::syncData()
 
     assert(sharedData != NULL);
     assert(solver->decisionLevel() == 0);
-
-    if (must_rebuild_bva_map) {
-        outer_to_without_bva_map = solver->build_outer_to_without_bva_map();
-        must_rebuild_bva_map = false;
-    }
+    rebuild_bva_map_if_needed();
 
     bool ok;
     sharedData->unit_mutex.lock();
@@ -152,49 +156,242 @@ bool DataSync::syncData()
     return true;
 }
 
-void DataSync::clear_set_binary_values()
-{
-    for(size_t i = 0; i < solver->nVarsOutside()*2; i++) {
-        Lit lit1 = Lit::toLit(i);
-        lit1 = solver->map_to_with_bva(lit1);
-        lit1 = solver->varReplacer->get_lit_replaced_with_outer(lit1);
-        lit1 = solver->map_outer_to_inter(lit1);
-        if (solver->value(lit1) != l_Undef) {
-            sharedData->bins[i].clear();
-        }
-    }
-}
-
-void DataSync::extend_bins_if_needed()
-{
-    assert(sharedData->bins.size() <= (solver->nVarsOutside())*2);
-    if (sharedData->bins.size() == (solver->nVarsOutside())*2)
-        return;
-
-    sharedData->bins.resize(solver->nVarsOutside()*2);
-}
-
-bool DataSync::shareBinData()
+bool DataSync::shareUnitData()
 {
     assert(solver->okay());
-    uint32_t oldRecvBinData = stats.recvBinData;
-    uint32_t oldSentBinData = stats.sentBinData;
 
-    bool ok = syncBinFromOthers();
-    syncBinToOthers();
-    size_t mem = sharedData->calc_memory_use_bins();
+    uint32_t thisGotUnitData = 0;
+    uint32_t thisSentUnitData = 0;
 
-    if (solver->conf.verbosity >= 3) {
+    SharedData& shared = *sharedData;
+    if (shared.value.size() < solver->nVarsOutside()) {
+        shared.value.insert(
+            shared.value.end(),
+            solver->nVarsOutside()-shared.value.size(), l_Undef);
+    }
+    for (uint32_t var = 0; var < solver->nVarsOutside(); var++) {
+        Lit thisLit = Lit(var, false);
+        thisLit = solver->map_to_with_bva(thisLit);
+        thisLit = solver->varReplacer->get_lit_replaced_with_outer(thisLit);
+        thisLit = solver->map_outer_to_inter(thisLit);
+        const lbool thisVal = solver->value(thisLit);
+        const lbool otherVal = shared.value[var];
+
+        if (thisVal == l_Undef && otherVal == l_Undef) {
+            continue;
+        }
+
+        if (thisVal != l_Undef && otherVal != l_Undef) {
+            if (thisVal != otherVal) {
+                solver->ok = false;
+                return false;
+            } else {
+                continue;
+            }
+        }
+
+        if (otherVal != l_Undef) {
+            assert(thisVal == l_Undef);
+            Lit litToEnqueue = thisLit ^ (otherVal == l_False);
+            if (solver->varData[litToEnqueue.var()].removed != Removed::none) {
+                continue;
+            }
+
+            solver->enqueue<true>(litToEnqueue);
+
+            thisGotUnitData++;
+            continue;
+        }
+
+        if (thisVal != l_Undef) {
+            assert(otherVal == l_Undef);
+            shared.value[var] = thisVal;
+            thisSentUnitData++;
+            continue;
+        }
+    }
+
+    if (solver->conf.verbosity >= 3
+        //&& (thisGotUnitData > 0 || thisSentUnitData > 0)
+    ) {
         cout
-        << "c [sync] got bins " << (stats.recvBinData - oldRecvBinData)
-        << " sent bins " << (stats.sentBinData - oldSentBinData)
-        << " mem use: " << mem/(1024*1024) << " M"
+        << "c [sync] got units " << thisGotUnitData
+        << " sent units " << thisSentUnitData
         << endl;
     }
 
-    return ok;
+    stats.recvUnitData += thisGotUnitData;
+    stats.sentUnitData += thisSentUnitData;
+
+    return true;
 }
 
+void CMSat::DataSync::signal_new_long_clause(const vector<Lit>& cl)
+{
+    if (!enabled()) {
+        return;
+    }
+    assert(thread_id != -1);
+    //cout << "thread ID: " << thread_id << endl;
+
+    #ifdef USE_GPU
+    rebuild_bva_map_if_needed();
+
+    //Don't signal clauses with BVA variables
+    clause_tmp.clear();
+    for(Lit lit: cl) {
+        if (solver->varData[lit.var()].is_bva) {
+            return;
+        }
+        lit = solver->map_inter_to_outer(lit);
+        lit = map_outer_to_outside(lit);
+        clause_tmp.push_back(lit);
+    }
+
+    signalled_gpu_long_cls++;
+    sharedData->gpuClauseSharer->addClause(thread_id, (int*)clause_tmp.data(), clause_tmp.size());
+    #else
+    if (cl.size() == 2) {
+        signal_new_bin_clause(cl[0], cl[1]);
+    }
+    #endif
+}
+
+#ifdef USE_GPU
+void DataSync::unsetFromGpu(uint32_t level) {
+    if (!enabled()) {
+        return;
+    }
+    rebuild_bva_map_if_needed();
+
+    trail_tmp.clear();
+    //assert(trailCopiedUntil < solver->trail.size());
+    for(int i = ((int)solver->trail.size())-1; i >= (int)solver->trail_lim[level]; i--) {
+        Lit lit = solver->trail_at(i);
+        if (lit == lit_Undef) {
+            //This can happen because variables set at level 0
+            //     are cleared from the trail and set to lit_Undef
+            continue;
+        }
+        //cout << "lit: " << lit << endl;
+        if (solver->varData[lit.var()].is_bva) {
+            continue;
+        }
+        lit = solver->map_inter_to_outer(lit);
+        lit = map_outer_to_outside(lit);
+        trail_tmp.push_back(lit);
+    }
+
+    if (!trail_tmp.empty()) {
+        sharedData->gpuClauseSharer->unsetSolverValues(
+            thread_id,
+            (int*)trail_tmp.data(),
+            trail_tmp.size());
+    }
+    trailCopiedUntil = solver->trail_lim[level];
+}
+
+void DataSync::trySendAssignmentToGpu() {
+    if (!enabled()) {
+        return;
+    }
+    rebuild_bva_map_if_needed();
+
+    uint32_t sendUntil = solver->trail_size();
+    if (sendUntil == 0) {
+        return;
+    }
+    if (trailCopiedUntil >= sendUntil) {
+        return;
+    }
+
+//     if (thread_id == 0) {
+//         cout
+//         << "Set from point " << solver->trail_lim[level]
+//         << " count: " << sendUntil - trailCopiedUntil
+//         << " level: " << level
+//         << endl;
+//     }
+
+    trail_tmp.clear();
+    for(uint32_t i = trailCopiedUntil; i < sendUntil; i++) {
+        Lit lit = solver->trail_at(i);
+        if (lit == lit_Undef) {
+            //This can happen because variables set at level 0
+            //     are cleared from the trail and set to lit_Undef
+            continue;
+        }
+        if (solver->varData[lit.var()].is_bva) {
+            continue;
+        }
+        lit = solver->map_inter_to_outer(lit);
+        lit = map_outer_to_outside(lit);
+        trail_tmp.push_back(lit);
+    }
+
+    bool success = sharedData->gpuClauseSharer->trySetSolverValues(
+        thread_id,
+        (int*)trail_tmp.data(),
+        trail_tmp.size());
+
+
+    if (success) {
+        trailCopiedUntil = sendUntil-1;
+        sharedData->gpuClauseSharer->trySendAssignment(thread_id);
+    }
+}
+
+PropBy CMSat::DataSync::pop_clauses()
+{
+    if (!enabled()) {
+        return PropBy();
+    }
+    assert(thread_id != -1);
+    //cout << "thread ID: " << thread_id << endl;
+
+    //cout << "Trying to pop." << thread_id << endl;
+    int* litsAsInt;
+    int count;
+    long gpuClauseId;
+    uint32_t decisionLevelAtConflict = -1;
+    PropBy by = PropBy();
+
+    while (sharedData->gpuClauseSharer->popReportedClause(
+        thread_id, litsAsInt, count, gpuClauseId))
+    {
+        popped_clause++;
+//         if ((popped_clause & 0xfff) == 0xfff) {
+//             cout << "popped_clause: " << popped_clause
+//             << " thread id: " << thread_id
+//             << endl;
+//         }
+
+        Lit *lits = (Lit*) litsAsInt;
+        for(int i = 0; i < count; i ++) {
+            lits[i] = solver->map_to_with_bva(lits[i]);
+            lits[i] = solver->varReplacer->get_lit_replaced_with_outer(lits[i]);
+            lits[i] = solver->map_outer_to_inter(lits[i]);
+        }
+        by = solver->insert_gpu_clause(lits, count);
+        if (!solver->okay()) {
+            return PropBy();
+        }
+        if (!by.isNULL()) {
+            decisionLevelAtConflict = solver->decisionLevel();
+        }
+    }
+
+    if (solver->decisionLevel() == decisionLevelAtConflict) {
+        return by;
+    }
+    return PropBy();
+}
+#endif
+
+////////////////////////////////////////
+// Non-GPU
+////////////////////////////////////////
+#ifndef USE_GPU
 bool DataSync::syncBinFromOthers()
 {
     for (uint32_t wsLit = 0; wsLit < sharedData->bins.size(); wsLit++) {
@@ -305,74 +502,47 @@ void DataSync::addOneBinToOthers(Lit lit1, Lit lit2)
     stats.sentBinData++;
 }
 
-bool DataSync::shareUnitData()
+void DataSync::clear_set_binary_values()
+{
+    for(size_t i = 0; i < solver->nVarsOutside()*2; i++) {
+        Lit lit1 = Lit::toLit(i);
+        lit1 = solver->map_to_with_bva(lit1);
+        lit1 = solver->varReplacer->get_lit_replaced_with_outer(lit1);
+        lit1 = solver->map_outer_to_inter(lit1);
+        if (solver->value(lit1) != l_Undef) {
+            sharedData->bins[i].clear();
+        }
+    }
+}
+
+void DataSync::extend_bins_if_needed()
+{
+    assert(sharedData->bins.size() <= (solver->nVarsOutside())*2);
+    if (sharedData->bins.size() == (solver->nVarsOutside())*2)
+        return;
+
+    sharedData->bins.resize(solver->nVarsOutside()*2);
+}
+
+bool DataSync::shareBinData()
 {
     assert(solver->okay());
+    uint32_t oldRecvBinData = stats.recvBinData;
+    uint32_t oldSentBinData = stats.sentBinData;
 
-    uint32_t thisGotUnitData = 0;
-    uint32_t thisSentUnitData = 0;
+    bool ok = syncBinFromOthers();
+    syncBinToOthers();
+    size_t mem = sharedData->calc_memory_use_bins();
 
-    SharedData& shared = *sharedData;
-    if (shared.value.size() < solver->nVarsOutside()) {
-        shared.value.insert(
-            shared.value.end(),
-            solver->nVarsOutside()-shared.value.size(), l_Undef);
-    }
-    for (uint32_t var = 0; var < solver->nVarsOutside(); var++) {
-        Lit thisLit = Lit(var, false);
-        thisLit = solver->map_to_with_bva(thisLit);
-        thisLit = solver->varReplacer->get_lit_replaced_with_outer(thisLit);
-        thisLit = solver->map_outer_to_inter(thisLit);
-        const lbool thisVal = solver->value(thisLit);
-        const lbool otherVal = shared.value[var];
-
-        if (thisVal == l_Undef && otherVal == l_Undef) {
-            continue;
-        }
-
-        if (thisVal != l_Undef && otherVal != l_Undef) {
-            if (thisVal != otherVal) {
-                solver->ok = false;
-                return false;
-            } else {
-                continue;
-            }
-        }
-
-        if (otherVal != l_Undef) {
-            assert(thisVal == l_Undef);
-            Lit litToEnqueue = thisLit ^ (otherVal == l_False);
-            if (solver->varData[litToEnqueue.var()].removed != Removed::none) {
-                continue;
-            }
-
-            solver->enqueue<true>(litToEnqueue);
-
-            thisGotUnitData++;
-            continue;
-        }
-
-        if (thisVal != l_Undef) {
-            assert(otherVal == l_Undef);
-            shared.value[var] = thisVal;
-            thisSentUnitData++;
-            continue;
-        }
-    }
-
-    if (solver->conf.verbosity >= 3
-        //&& (thisGotUnitData > 0 || thisSentUnitData > 0)
-    ) {
+    if (solver->conf.verbosity >= 3) {
         cout
-        << "c [sync] got units " << thisGotUnitData
-        << " sent units " << thisSentUnitData
+        << "c [sync] got bins " << (stats.recvBinData - oldRecvBinData)
+        << " sent bins " << (stats.sentBinData - oldSentBinData)
+        << " mem use: " << mem/(1024*1024) << " M"
         << endl;
     }
 
-    stats.recvUnitData += thisGotUnitData;
-    stats.sentUnitData += thisSentUnitData;
-
-    return true;
+    return ok;
 }
 
 void DataSync::signal_new_bin_clause(Lit lit1, Lit lit2)
@@ -392,9 +562,9 @@ void DataSync::signal_new_bin_clause(Lit lit1, Lit lit2)
         return;
 
     lit1 = solver->map_inter_to_outer(lit1);
-    lit1 = map_outside_without_bva(lit1);
+    lit1 = map_outer_to_outside(lit1);
     lit2 = solver->map_inter_to_outer(lit2);
-    lit2 = map_outside_without_bva(lit2);
+    lit2 = map_outer_to_outside(lit2);
 
     if (lit1.toInt() > lit2.toInt()) {
         std::swap(lit1, lit2);
@@ -402,126 +572,8 @@ void DataSync::signal_new_bin_clause(Lit lit1, Lit lit2)
     newBinClauses.push_back(std::make_pair(lit1, lit2));
 }
 
-void CMSat::DataSync::signal_new_long_clause(const vector<Lit>& cl)
-{
-    if (!enabled()) {
-        return;
-    }
-    assert(thread_id != -1);
-    //cout << "thread ID: " << thread_id << endl;
-
-    //Don't signal clauses with BVA variables
-    for(const auto& l: cl) {
-        if (solver->varData[l.var()].is_bva) {
-            return;
-        }
-    }
-
-    #ifdef USE_GPU
-    signalled_gpu_long_cls++;
-    sharedData->gpuClauseSharer->addClause(thread_id, (int*)cl.data(), cl.size());
-    #else
-    if (cl.size() == 2) {
-        signal_new_bin_clause(cl[0], cl[1]);
-    }
-    #endif
-}
-
-#ifdef USE_GPU
-void DataSync::unsetFromGpu(uint32_t level) {
-    if (!enabled()) {
-        return;
-    }
-
-    if (trailCopiedUntil > solver->trail_lim[level]) {
-        sharedData->gpuClauseSharer->unsetSolverValues(
-            thread_id,
-            (int*)&solver->trail[solver->trail_lim[level]],
-            trailCopiedUntil - solver->trail_lim[level]);
-        trailCopiedUntil = solver->trail_lim[level];
-    }
-}
-
-void DataSync::trySendAssignmentToGpu(uint32_t level) {
-    if (!enabled()) {
-        return;
-    }
-
-    uint32_t sendUntil;
-    if (level < solver->decisionLevel()) {
-        unsetFromGpu(level);
-        sendUntil = solver->trail_lim[level];
-    } else {
-        sendUntil = solver->trail_size();
-    }
-    if (trailCopiedUntil >= sendUntil) {
-        return;
-    }
-
-//     if (thread_id == 0) {
-//         cout
-//         << "Set from point " << solver->trail_lim[level]
-//         << " count: " << sendUntil - trailCopiedUntil
-//         << " level: " << level
-//         << endl;
-//     }
-
-
-    // gpuClauseSharer might already have too many assignments from our solver
-    //   in which case we might not be able to pass a new assignment
-    bool success = sharedData->gpuClauseSharer->trySetSolverValues(
-        thread_id,
-        (int*)&solver->trail[trailCopiedUntil],
-        sendUntil - trailCopiedUntil);
-
-    if (success) {
-        trailCopiedUntil = sendUntil;
-        sharedData->gpuClauseSharer->trySendAssignment(thread_id);
-    }
-}
-
-PropBy CMSat::DataSync::pop_clauses()
-{
-    if (!enabled()) {
-        return PropBy();
-    }
-    assert(thread_id != -1);
-    //cout << "thread ID: " << thread_id << endl;
-
-    //cout << "Trying to pop." << thread_id << endl;
-    int* litsAsInt;
-    int count;
-    long gpuClauseId;
-    uint32_t decisionLevelAtConflict = -1;
-    Clause* cl;
-    PropBy by = PropBy();
-
-    while (sharedData->gpuClauseSharer->popReportedClause(
-        thread_id, litsAsInt, count, gpuClauseId))
-    {
-        popped_clause++;
-//         if ((popped_clause & 0xfff) == 0xfff) {
-//             cout << "popped_clause: " << popped_clause
-//             << " thread id: " << thread_id
-//             << endl;
-//         }
-
-        Lit *lits = (Lit*) litsAsInt;
-        by = solver->insert_gpu_clause(lits, count);
-        if (!solver->okay()) {
-            return PropBy();
-        }
-        if (!by.isNULL()) {
-            decisionLevelAtConflict = solver->decisionLevel();
-        }
-    }
-
-    if (solver->decisionLevel() == decisionLevelAtConflict) {
-        return by;
-    }
-    return PropBy();
-}
 #endif
+
 
 ///////////////////////////////////////
 // MPI
@@ -712,5 +764,4 @@ bool DataSync::sync_mpi_unit(
 
     return true;
 }
-
 #endif

@@ -1870,7 +1870,7 @@ bool Searcher::handle_conflict(PropBy confl)
     );
     solver->datasync->signal_new_long_clause(learnt_clause);
     #ifdef USE_GPU
-    solver->datasync->trySendAssignmentToGpu(decisionLevel()-1);
+    solver->datasync->trySendAssignmentToGpu();
     #endif
 
     uint32_t connects_num_communities = 0;
@@ -4097,15 +4097,6 @@ void Searcher::find_largest_level(Lit* lits, uint32_t count, uint32_t start)
 // returns a non-undef cref if this clause is in conflict
 PropBy Searcher::insert_gpu_clause(Lit* lits, uint32_t count)
 {
-    if (count == 0) {
-        solver->ok = false;
-        return PropBy();
-    }
-
-    //Update, clean from duplicates
-    for(uint32_t i = 0; i < count; i ++) {
-        lits[i] = solver->varReplacer->get_lit_replaced_with(lits[i]);
-    }
     std::sort(lits, lits+count);
     uint32_t j = 0;
     for(uint32_t i = 1; i < count; i ++) {
@@ -4172,15 +4163,17 @@ PropBy Searcher::insert_gpu_clause(Lit* lits, uint32_t count)
 //     }
 //     cout << endl;
 
-    //Unit clause
-    if (count == 1) {
-        cancelUntil<false>(0);
-        enqueue<false>(lits[0]);
+
+    //Empty clause
+    if (count == 0) {
+        solver->ok = false;
         return PropBy();
     }
 
-    //TODO we need to work on this
-    if (count == 2) {
+    //Unit clause
+    if (count == 1) {
+        cancelUntil(0);
+        enqueue<false>(lits[0]);
         return PropBy();
     }
 
@@ -4237,7 +4230,6 @@ PropBy Searcher::learn_gpu_clause(Lit* lits, uint32_t count)
             tmp_gpu_clause[i] = lits[i];
         }
 
-        assert(count >= 2);
         Clause* cl = cl_alloc.Clause_new(tmp_gpu_clause, sumConflicts);
         ClOffset off = cl_alloc.get_offset(cl);
 
