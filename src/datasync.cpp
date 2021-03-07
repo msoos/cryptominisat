@@ -353,7 +353,7 @@ PropBy CMSat::DataSync::pop_clauses()
     int* litsAsInt;
     int count;
     long gpuClauseId;
-    uint32_t decisionLevelAtConflict = -1;
+    int decisionLevelAtConflict = -1;
     PropBy by = PropBy();
 
     while (sharedData->gpuClauseSharer->popReportedClause(
@@ -372,6 +372,7 @@ PropBy CMSat::DataSync::pop_clauses()
             lits[i] = solver->varReplacer->get_lit_replaced_with_outer(lits[i]);
             lits[i] = solver->map_outer_to_inter(lits[i]);
         }
+
         by = solver->insert_gpu_clause(lits, count);
         if (!solver->okay()) {
             return PropBy();
@@ -381,7 +382,7 @@ PropBy CMSat::DataSync::pop_clauses()
         }
     }
 
-    if (solver->decisionLevel() == decisionLevelAtConflict) {
+    if ((int)solver->decisionLevel() == decisionLevelAtConflict) {
         return by;
     }
     return PropBy();
