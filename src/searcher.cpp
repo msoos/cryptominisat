@@ -1856,6 +1856,7 @@ bool Searcher::handle_conflict(PropBy confl)
 
     ConflictData data = find_conflict_level(confl);
     if (data.nHighestLevel == 0) {
+        solver->ok = false;
         return false;
     }
 
@@ -4166,6 +4167,7 @@ PropBy Searcher::insert_gpu_clause(Lit* lits, uint32_t count)
 
     //Empty clause
     if (count == 0) {
+        cancelUntil(0);
         solver->ok = false;
         return PropBy();
     }
