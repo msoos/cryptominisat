@@ -454,7 +454,8 @@ class Tester:
             else:
                 command += " %s --savedstate %s-savedstate.dat " % (fname2, fname2)
 
-        print("Executing: %s " % command)
+        if options.verbose:
+            print("Executing before doalarm/pipes: %s " % command)
 
         # print time limit
         if options.verbose:
@@ -462,21 +463,30 @@ class Tester:
 
         # if need time limit, then limit
         err_fname = unique_file("err", ".out")
-        err_file = open(err_fname, "w")
-        p = subprocess.Popen(
-            command.rsplit(), stderr=err_file, stdout=subprocess.PIPE,
-            preexec_fn=partial(setlimits, options.maxtime),
-            universal_newlines=True)
+        out_fname = unique_file("out", ".out")
+
+        if self.num_threads == 1:
+            time_limit = partial(setlimits, options.maxtime)
+        else:
+            time_limit = None
+
+        myalarm = "./doalarm -t real %d "% options.maxtime
+        toexec = myalarm + command + " 1>" + out_fname + " 2> " + err_fname
+        print("Executing: " + toexec)
+        retcode = os.system(toexec)
 
         # print time limit after child startup
-        if options.verbose:
-            print("CPU limit of parent (pid %d) after startup of child: %s secs" %
-                  (os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)))
+        #if options.verbose:
+            #print("CPU limit of parent (pid %d) after startup of child: %s secs" %
+                  #(os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)))
 
         # Get solver output
-        consoleOutput, err = p.communicate()
-        retcode = p.returncode
-        err_file.close()
+        consoleOutput = ""
+        with open(out_fname, "r") as f:
+            for line in f:
+                consoleOutput += line
+        #retcode = p.returncode
+        #err_file.close()
         with open(err_fname, "r") as err_file:
             found_something = False
             for line in err_file:
@@ -518,6 +528,7 @@ class Tester:
             print("CPU limit of parent (pid %d) after child finished executing: %s" %
                   (os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)))
 
+        os.unlink(out_fname)
         return consoleOutput, retcode
 
     def check(self, fname, fname2=None,
@@ -538,7 +549,7 @@ class Tester:
         # if time was limited, we need to know if we were over the time limit
         # and that is why there is no solution
         diff_time = time.time() - curr_time
-        if diff_time > (options.maxtime - options.maxtimediff) / self.num_threads:
+        if diff_time > (options.maxtime - options.maxtimediff):
             print("Too much time to solve, aborted!")
             return None
 
