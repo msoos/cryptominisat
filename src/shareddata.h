@@ -42,6 +42,7 @@ class SharedData
             num_threads(_num_threads)
         {
             #ifdef USE_GPU
+            csOpts.verbosity = 0;
             gpuClauseSharer = GpuShare::makeGpuClauseSharerPtr(csOpts);
             #endif
             cur_thread_id.store(0);
