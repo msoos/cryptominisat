@@ -4174,8 +4174,8 @@ PropBy Searcher::insert_gpu_clause(Lit* lits, uint32_t count)
 
     //Unit clause
     if (count == 1) {
-        cancelUntil(0);
-        enqueue<false>(lits[0]);
+        /*cancelUntil(0);
+        enqueue<false>(lits[0]);*/
         return PropBy();
     }
 
