@@ -9,7 +9,7 @@ rm -f out_*
 mkdir -p ${basename}
 rm -f ${basename}/*
 git rev-parse HEAD > ${basename}/out_git
-cat learn.sh >> ${basename}/out_git
+cat gen_best_feats.sh >> ${basename}/out_git
 md5sum *.dat >> ${basename}/out_git
 
 

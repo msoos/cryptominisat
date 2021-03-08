@@ -24,15 +24,14 @@
 set -e
 
 function concat() {
-    rm -f out_*
+    dirname="${basename}-${cut1}-cut2-${cut2}-limit-${limit}-est${est}-w${w}-xbmin${xgboostminchild}-xbmd${xboostmaxdepth}"
+
     rm -f ../../src/predict/*.json
-    rm -f classifiers/*
-    git rev-parse HEAD > out_git
-    cat learn.sh >> out_git
-    md5sum *.dat >> out_git
+    git rev-parse HEAD > ${dirname}/out_git
+    cat learn.sh >> ${dirname}/out_git
+    md5sum *.dat >> ${dirname}/out_git
 
     bestf="../../scripts/crystal/best_features-rdb0-only.txt"
-    dirname="${basename}-${cut1}-cut2-${cut2}-limit-${limit}-est${est}-w${w}-xbmin${xgboostminchild}-xbmd${xboostmaxdepth}"
     mkdir -p ${dirname}
 
     mypids=()
