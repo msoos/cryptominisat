@@ -68,11 +68,11 @@ function concat() {
 
 #xgboostminchild=1
 #xboostmaxdepth=6
+w=0
 basename="8march-2020-3acd81dc55df3"
 limit=2000
 cut1="5.0"
 cut2="30.0"
-est=20
 for xboostmaxdepth in 4 6
 do
     for xgboostminchild in 50 300
@@ -84,5 +84,17 @@ do
     done
 done
 
+cut1="3.0"
+cut2="25.0"
+for xboostmaxdepth in 4 6
+do
+    for xgboostminchild in 50 300
+    do
+        for est in 10 20
+        do
+            concat
+        done
+    done
+done
 
 exit 0
