@@ -768,6 +768,7 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.props_made);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, stats_extra.sum_props_made);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.uip1_used);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, stats_extra.sum_uip1_used);
 
     assert(cl->stats.last_touched <= solver->sumConflicts);
     int64_t last_touched_diff = solver->sumConflicts - cl->stats.last_touched;
@@ -784,7 +785,7 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int(stmtReduceDB, bindAt++, stats_extra.ttl_stats);
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.is_ternary_resolvent);
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.is_decision);
-    sqlite3_bind_int(stmtReduceDB, bindAt++, stats_extra.sum_uip1_used);
+    sqlite3_bind_int(stmtReduceDB, bindAt++, cl->distilled);
     sqlite3_bind_int(stmtReduceDB, bindAt++, stats_extra.connects_num_communities);
 
     //Ranking

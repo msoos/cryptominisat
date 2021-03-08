@@ -94,6 +94,7 @@ CREATE TABLE `reduceDB` (
   `props_made` bigint(20) NOT NULL,
   `sum_props_made` bigint(20) NOT NULL,
   `uip1_used` bigint(20) NOT NULL,
+  `sum_uip1_used`  int(20) NOT NULL,
 
   `last_touched_diff` bigint(20) NOT NULL,
   `activity_rel` float(20) NOT NULL,
@@ -104,7 +105,7 @@ CREATE TABLE `reduceDB` (
   `ttl_stats` int(20) NOT NULL,
   `is_ternary_resolvent` int(20) NOT NULL,
   `is_decision` int(20) NOT NULL,
-  `sum_uip1_used`  int(20) NOT NULL,
+  `is_distilled` int(20) NOT NULL,
   `connects_num_communities` int(20) NOT NULL,
 
   -- ranking
