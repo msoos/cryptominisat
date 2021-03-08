@@ -26,13 +26,12 @@ set -e
 function concat() {
     dirname="${basename}-${cut1}-cut2-${cut2}-limit-${limit}-est${est}-w${w}-xbmin${xgboostminchild}-xbmd${xboostmaxdepth}"
 
-    rm -f ../../src/predict/*.json
+    mkdir -p ${dirname}
     git rev-parse HEAD > ${dirname}/out_git
     cat learn.sh >> ${dirname}/out_git
     md5sum *.dat >> ${dirname}/out_git
 
     bestf="../../scripts/crystal/best_features-rdb0-only.txt"
-    mkdir -p ${dirname}
 
     mypids=()
     tiers=("short" "long" "forever")
