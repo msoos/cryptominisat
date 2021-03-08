@@ -563,14 +563,19 @@ if __name__ == "__main__":
         del df_nofloat
     else:
         df = pd.read_pickle(options.fname)
-        filt = df[df["cl.glue_before_minim"].apply(type)==None]
-        def f(x):
+        print("Making None into NaN...")
+        def make_none_into_nan(x):
             if x is None:
                 return np.nan
             else:
                 return x
 
-        df["cl.glue_before_minim"] = df["cl.glue_before_minim"].apply(f)
+        for col in list(df):
+            if type(None) in df[col].apply(type).unique():
+                df[col] = df[col].apply(make_none_into_nan)
+        print("Done filtering")
+
+
     df_orig = df.copy()
     if options.print_features:
         for f in sorted(list(df)):
