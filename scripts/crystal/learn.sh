@@ -24,7 +24,7 @@
 set -e
 
 function concat() {
-    dirname="${basename}-${cut1}-cut2-${cut2}-limit-${limit}-est${est}-w${w}-xbmin${xgboostminchild}-xbmd${xboostmaxdepth}"
+    dirname="${basename}-cut1-${cut1}-cut2-${cut2}-limit-${limit}-est${est}-w${w}-xbmin${xgboostminchild}-xbmd${xboostmaxdepth}"
 
     mkdir -p ${dirname}
     git rev-parse HEAD > ${dirname}/out_git
