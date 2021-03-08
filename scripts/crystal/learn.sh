@@ -44,7 +44,7 @@ function concat() {
         --xgboostest ${est} --weight ${w} \
         --xgboostminchild $xgboostminchild --xboostmaxdepth=${xboostmaxdepth} \
         --basedir "${dirname}" \
-        --bestfeatfile ${bestf} | tee "${dirname}/out_${tier}" &
+        --bestfeatfile ${bestf} 2>&1 | tee "${dirname}/out_${tier}" &
         pid=$!
         echo "PID here is $pid"
         mypids+=("$pid")
