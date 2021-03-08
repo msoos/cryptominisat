@@ -1,23 +1,33 @@
 #!/usr/bin/bash
 
+set -e
+set -x
+
+
+basename="8march-2020-3acd81dc55df3-best-feats"
 rm -f out_*
-rm -f best_feats/*
-git rev-parse HEAD > best_feats/out_git
-cat learn.sh >> best_feats/out_git
-md5sum *.dat >> best_feats/out_git
+mkdir -p ${basename}
+rm -f ${basename}/*
+git rev-parse HEAD > ${basename}/out_git
+cat learn.sh >> ${basename}/out_git
+md5sum *.dat >> ${basename}/out_git
 
 
 function doit() {
 
-tiers=("short" "long" "forever")
+tiers=(
+"short"
+"long"
+"forever")
+
 for tier in "${tiers[@]}"
 do
     echo "Doing ${tier}_${computed}computed"
 
-    /usr/bin/time --verbose -o "best_feats/output_${tier}_${computed}computed.timeout" \
+    /usr/bin/time --verbose -o "${basename}/output_${tier}_${computed}computed.timeout" \
     ../cldata_predict.py "${tier}-comb-cut1-$cut1-cut2-$cut2-limit-${limit}.dat" \
     --tier ${tier} --top 500 --xgboost --only "$only" \
-    "--${computed}computed" > "best_feats/output_${tier}_${computed}computed"
+    "--${computed}computed" > "${basename}/output_${tier}_${computed}computed"
 
     echo "Done with ${tier}_${computed}computed"
 done

@@ -32,7 +32,7 @@ function concat() {
     md5sum *.dat >> out_git
 
     bestf="../../scripts/crystal/best_features-rdb0-only.txt"
-    dirname="backto-cut1-${cut1}-cut2-${cut2}-limit-${limit}-est${est}-w${w}-xbmin${xgboostminchild}-xbmd${xboostmaxdepth}"
+    dirname="${basename}-${cut1}-cut2-${cut2}-limit-${limit}-est${est}-w${w}-xbmin${xgboostminchild}-xbmd${xboostmaxdepth}"
     mkdir -p ${dirname}
 
     mypids=()
@@ -62,32 +62,15 @@ function concat() {
     tar czvf classifiers-${dirname}.tar.gz ${dirname}
 }
 
+# best was: backto-cut1-5.0-cut2-30.0-limit-2000-est20-w0-xbmin50-xbmd6
+# next best:backto-cut1-5.0-cut2-30.0-limit-2000-est10-w0-xbmin50-xbmd6
+# next      backto-cut1-10.0-cut2-40.0-limit-8000-est60-w0-xbmin500-xbmd4
+# next      backto-cut1-5.0-cut2-30.0-limit-2000-est10-w0-xbmin300-xbmd6
+# next      backto-cut1-5.0-cut2-30.0-limit-2000-est10-w0-xbmin1-xbmd4
 
-
-w="0"
-
-xgboostminchild=500
-xboostmaxdepth=5
-limit=8000
-cut1="10.0"
-cut2="40.0"
-est=40
-concat
-exit
-
-
-xgboostminchild=500
-xboostmaxdepth=4
-limit=8000
-cut1="10.0"
-cut2="40.0"
-est=60
-concat
-exit
-
-
-xgboostminchild=1
-xboostmaxdepth=6
+#xgboostminchild=1
+#xboostmaxdepth=6
+basename="8march-2020-3acd81dc55df3"
 limit=2000
 cut1="5.0"
 cut2="30.0"
@@ -97,7 +80,7 @@ do
     limit=2000
     cut1="5.0"
     cut2="30.0"
-    for xgboostminchild in 1 50 300
+    for xgboostminchild in 50 300
     do
         for est in 10 20
         do
