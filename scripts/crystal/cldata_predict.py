@@ -365,7 +365,7 @@ class Learner:
 
         #print(test[features+to_predict])
         #print(test[to_predict])
-        if not options.no_computed:
+        if not options.no_computed and options.dump_example_data:
             with open("example-data.dat", "wb") as f:
                 pickle.dump(test[features+[to_predict]], f)
             self.dump_ml_test_data(test, "../ml_perf_test.txt-%s" % options.tier, to_predict)
@@ -436,6 +436,8 @@ if __name__ == "__main__":
                         dest="best_features_fname", help="Name and position of best features file that lists the best features in order")
     parser.add_argument("--csv", type=str, default=None,
                         dest="csv", help="Output CSV of dataframe here")
+    parser.add_argument("--dumpexample", default=False, action="store_true",
+                        dest="dump_example_data", help="Dump example data")
 
     # tree/forest options
     parser.add_argument("--depth", default=None, type=int,
