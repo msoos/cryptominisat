@@ -20,6 +20,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
+#ifndef SQLITESTATS_H__
+#define SQLITESTATS_H__
+
 #include "sqlstats.h"
 #include "satzilla_features.h"
 #include <sqlite3.h>
@@ -31,7 +34,7 @@ class SQLiteStats: public SQLStats
 {
 public:
     virtual ~SQLiteStats() override;
-    explicit SQLiteStats(std::string _filename);
+    explicit SQLiteStats(const std::string& _filename);
 
     void end_transaction() override;
     void begin_transaction() override;
@@ -195,3 +198,5 @@ private:
 };
 
 }
+
+#endif

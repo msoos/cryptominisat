@@ -195,7 +195,7 @@ public:
     //Called from main
     vector<OrGate> get_recovered_or_gates();
     vector<ITEGate> get_recovered_ite_gates();
-    bool simplify(const bool _startup, const std::string schedule);
+    bool simplify(const bool _startup, const std::string& schedule);
     void new_var(const uint32_t orig_outer);
     void new_vars(const size_t n);
     void save_on_var_memory();
@@ -569,17 +569,17 @@ private:
 
     uint64_t heuristicCalcVarElimScore(const uint32_t var);
     bool resolve_clauses(
-        const Watched ps
-        , const Watched qs
-        , const Lit noPosLit
+        const Watched& ps
+        , const Watched& qs
+        , const Lit& noPosLit
     );
     void add_pos_lits_to_dummy_and_seen(
-        const Watched ps
-        , const Lit posLit
+        const Watched& ps
+        , const Lit& posLit
     );
     bool add_neg_lits_to_dummy_and_seen(
-        const Watched qs
-        , const Lit posLit
+        const Watched& qs
+        , const Lit& posLit
     );
     bool eliminate_vars();
     void eliminate_empty_resolvent_vars();

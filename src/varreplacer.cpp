@@ -524,7 +524,7 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs)
     assert(!solver->drat->something_delayed());
     vector<ClOffset>::iterator i = cs.begin();
     vector<ClOffset>::iterator j = i;
-    for (vector<ClOffset>::iterator end = cs.end(); i != end; i++) {
+    for (vector<ClOffset>::iterator end = cs.end(); i != end; ++i) {
         runStats.bogoprops += 3;
         assert(!solver->drat->something_delayed());
 

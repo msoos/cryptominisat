@@ -272,10 +272,10 @@ inline string print_value_kilo_mega(const int64_t value, bool setw = true)
 }
 
 template<class T, class T2> void print_stats_line(
-    string left
+    const string& left
     , T value
     , T2 value2
-    , string extra
+    , const string& extra
 ) {
     cout
     << std::fixed << std::left << std::setw(27) << left
@@ -287,7 +287,7 @@ template<class T, class T2> void print_stats_line(
 }
 
 inline void print_stats_line(
-    string left
+    const string& left
     , uint64_t value
     , uint64_t value2
     , uint64_t value3
@@ -302,11 +302,11 @@ inline void print_stats_line(
 }
 
 template<class T, class T2> void print_stats_line(
-    string left
+    const string& left
     , T value
-    , string extra1
+    , const string& extra1
     , T2 value2
-    , string extra2
+    , const string& extra2
 ) {
     cout
     << std::fixed << std::left << std::setw(27) << left
@@ -319,9 +319,22 @@ template<class T, class T2> void print_stats_line(
 }
 
 template<class T> void print_stats_line(
-    string left
+    const string& left
     , T value
-    , string extra = ""
+) {
+    cout
+    << std::fixed << std::left << std::setw(27) << left
+    << ": " << std::setw(11) << std::setprecision(2)
+    << value
+    << " "
+    << std::right
+    << endl;
+}
+
+template<class T> void print_stats_line(
+    const string& left
+    , T value
+    , const string& extra
 ) {
     cout
     << std::fixed << std::left << std::setw(27) << left

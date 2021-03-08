@@ -65,10 +65,10 @@ struct ReduceCommonData
         uint32_t total_uip1_used,
         uint32_t total_sum_uip1_used,
         uint32_t size,
-        const MedianCommonDataRDB& _median_data)
+        const MedianCommonDataRDB& _median_data) :
+            median_data(_median_data)
     {
         all_learnt_size = size;
-        median_data = _median_data;
         avg_props = safe_div(total_props, size);
         avg_glue = safe_div(total_glue, size);
         avg_uip = safe_div(total_uip1_used, size);

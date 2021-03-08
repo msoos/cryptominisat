@@ -134,7 +134,7 @@ void CompleteDetachReatacher::cleanAndAttachClauses(
 ) {
     vector<ClOffset>::iterator i = cs.begin();
     vector<ClOffset>::iterator j = i;
-    for (vector<ClOffset>::iterator end = cs.end(); i != end; i++) {
+    for (vector<ClOffset>::iterator end = cs.end(); i != end; ++i) {
         assert(!solver->drat->something_delayed());
         Clause* cl = solver->cl_alloc.ptr(*i);
 

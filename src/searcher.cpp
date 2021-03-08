@@ -3140,7 +3140,7 @@ void Searcher::minimise_redundant_more_more(vector<Lit>& cl)
     //we should be able to remove this, but I can't figure out how to
     //reorder the clause then
     seen[cl[0].toInt()] = 1;
-    for (vector<Lit>::iterator end = cl.end(); i != end; i++) {
+    for (vector<Lit>::iterator end = cl.end(); i != end; ++i) {
         if (seen[i->toInt()]) {
             *j++ = *i;
         } else {

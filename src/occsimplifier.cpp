@@ -658,7 +658,7 @@ bool OccSimplifier::check_varelim_when_adding_back_cl(const Clause* cl) const
     for (Clause::const_iterator
         it2 = cl->begin(), end2 = cl->end()
         ; it2 != end2
-        ; it2++
+        ; ++it2
     ) {
         //The clause was too long, and wasn't linked in
         //but has been var-elimed, so remove it
@@ -1845,7 +1845,7 @@ bool OccSimplifier::setup()
     return solver->okay();
 }
 
-bool OccSimplifier::simplify(const bool _startup, const std::string schedule)
+bool OccSimplifier::simplify(const bool _startup, const std::string& schedule)
 {
     #ifdef DEBUG_MARKED_CLAUSE
     assert(solver->no_marked_clauses());
@@ -2613,7 +2613,7 @@ void OccSimplifier::cleanBlockedClauses()
     for (vector<BlockedClauses>::iterator
         end = blockedClauses.end()
         ; i != end
-        ; i++
+        ; ++i
     ) {
         const uint32_t blockedOn = solver->map_outer_to_inter(i->at(0, blkcls).var());
         if (solver->varData[blockedOn].removed == Removed::elimed
@@ -4083,8 +4083,8 @@ end:
 }
 
 void OccSimplifier::add_pos_lits_to_dummy_and_seen(
-    const Watched ps
-    , const Lit posLit
+    const Watched& ps
+    , const Lit& posLit
 ) {
     if (ps.isBin()) {
         *limit_to_decrease -= 1;
@@ -4107,8 +4107,8 @@ void OccSimplifier::add_pos_lits_to_dummy_and_seen(
 }
 
 bool OccSimplifier::add_neg_lits_to_dummy_and_seen(
-    const Watched qs
-    , const Lit posLit
+    const Watched& qs
+    , const Lit& posLit
 ) {
     if (qs.isBin()) {
         *limit_to_decrease -= 1;
@@ -4145,9 +4145,9 @@ bool OccSimplifier::add_neg_lits_to_dummy_and_seen(
 }
 
 bool OccSimplifier::resolve_clauses(
-    const Watched ps
-    , const Watched qs
-    , const Lit posLit
+    const Watched& ps
+    , const Watched& qs
+    , const Lit& posLit
 ) {
     //If clause has already been freed, skip
     Clause *cl1 = NULL;

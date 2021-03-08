@@ -107,9 +107,10 @@ class CSet {
                 it(_it)
                 {}
 
-                void operator++()
+                iterator& operator++()
                 {
-                    it++;
+                    ++it;
+                    return *this;
                 }
 
                 bool operator!=(const iterator& iter) const
@@ -140,9 +141,11 @@ class CSet {
                 it(_it)
                 {}
 
-                void operator++()
+                const_iterator& operator++()
                 {
-                    it++;
+                    ++it;
+
+                    return *this;
                 }
 
                 bool operator!=(const const_iterator& iter) const

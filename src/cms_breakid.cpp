@@ -386,17 +386,17 @@ bool BreakID::remove_duplicates()
     if (dedup_cls.size() > 1 && true) {
         vector<ClOffset>::iterator prev = dedup_cls.begin();
         vector<ClOffset>::iterator i = dedup_cls.begin();
-        i++;
+        ++i;
         Clause* prevcl = solver->cl_alloc.ptr(*prev);
-        for(vector<ClOffset>::iterator end = dedup_cls.end(); i != end; i++) {
+        for(vector<ClOffset>::iterator end = dedup_cls.end(); i != end; ++i) {
             Clause* cl = solver->cl_alloc.ptr(*i);
             if (!equiv(cl, prevcl)) {
-                prev++;
+                ++prev;
                 *prev = *i;
                 prevcl = cl;
             }
         }
-        prev++;
+        ++prev;
         dedup_cls.resize(prev-dedup_cls.begin());
     }
 

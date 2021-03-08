@@ -172,7 +172,7 @@ bool TopLevelGauss::extractInfoFromBlock(
     for(vector<uint32_t>::const_iterator
         it2 = block.begin(), end2 = block.end()
         ; it2 != end2
-        ; it2++, num++
+        ; ++it2, num++
     ) {
         //Used to put XOR into matrix
         outerToInterVarMap[*it2] = num;
@@ -359,12 +359,12 @@ void TopLevelGauss::cutIntoBlocks(const vector<size_t>& xorsToUse)
                 const size_t blockNum = *blocksBelongTo.begin();
                 set<size_t>::const_iterator it2 = blocksBelongTo.begin();
                 vector<uint32_t>& finalBlock = blocks[blockNum];
-                it2++; //don't merge the first into the first
-                for(set<size_t>::const_iterator end2 = blocksBelongTo.end(); it2 != end2; it2++) {
+                ++it2; //don't merge the first into the first
+                for(set<size_t>::const_iterator end2 = blocksBelongTo.end(); it2 != end2; ++it2) {
                     for(vector<uint32_t>::const_iterator
                         it3 = blocks[*it2].begin(), end3 = blocks[*it2].end()
                         ; it3 != end3
-                        ; it3++
+                        ; ++it3
                     ) {
                         finalBlock.push_back(*it3);
                         varToBlock[*it3] = blockNum;

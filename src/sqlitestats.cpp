@@ -88,7 +88,7 @@ const char* rst_dat_type_to_str(rst_dat_type type) {
     exit(-1);
 }
 
-SQLiteStats::SQLiteStats(std::string _filename) :
+SQLiteStats::SQLiteStats(const std::string& _filename) :
         filename(_filename)
 {
 }

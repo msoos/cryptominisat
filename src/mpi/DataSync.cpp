@@ -315,9 +315,9 @@ void DataSync::syncToMPI()
     uint32_t thisMpiSentTriData = 0;
     data.push_back((uint32_t)solver.nVars()*2);
     wsLit = 0;
-    for(vector<vector<TriClause> >::const_iterator it = sharedData->tris.begin()
-        , end = sharedData->tris.end(); it != end; it++, wsLit++
-    ) {
+    for(vector<vector<TriClause> >::const_iterator it = sharedData->tris.begin(),
+        end = sharedData->tris.end(); it != end; ++it, wsLit++)
+    {
         Lit lit1 = ~Lit::toLit(wsLit);
         const vector<TriClause>& triSet = *it;
         assert(triSet.size() >= syncMPIFinishTri[wsLit]);
@@ -520,7 +520,9 @@ const bool DataSync::syncTriFromOthers(const Lit lit1, const vector<TriClause>& 
 
 void DataSync::syncTriToOthers()
 {
-    for(vector<TriClause>::const_iterator it = newTriClauses.begin(), end = newTriClauses.end(); it != end; it++) {
+    for(vector<TriClause>::const_iterator it = newTriClauses.begin(),
+        end = newTriClauses.end(); it != end; ++it)
+    {
         addOneTriToOthers(it->lit1, it->lit2, it->lit3);
         sentTriData++;
     }
@@ -540,7 +542,9 @@ void DataSync::addOneTriToOthers(const Lit lit1, const Lit lit2, const Lit lit3)
     assert(lit2.var() != lit3.var());
 
     vector<TriClause>& tris = sharedData->tris[(~lit1).toInt()];
-    for (vector<TriClause>::const_iterator it = tris.begin(), end = tris.end(); it != end; it++) {
+    for (vector<TriClause>::const_iterator it = tris.begin(),
+        end = tris.end(); it != end; ++it)
+    {
         if (it->lit2 == lit2
             && it->lit3 == lit3) return;
     }
@@ -595,7 +599,9 @@ const bool DataSync::syncBinFromOthers(const Lit lit, const vector<BinClause>& b
 
 void DataSync::syncBinToOthers()
 {
-    for(vector<BinClause>::const_iterator it = newBinClauses.begin(), end = newBinClauses.end(); it != end; it++) {
+    for(vector<BinClause>::const_iterator it = newBinClauses.begin(),
+        end = newBinClauses.end(); it != end; ++it)
+    {
         addOneBinToOthers(it->lit1, it->lit2, it->learnt);
         sentBinData++;
     }
@@ -612,7 +618,7 @@ void DataSync::addOneBinToOthers(const Lit lit1, const Lit lit2, const bool lear
     assert(lit1.toInt() < lit2.toInt());
 
     vector<BinClause>& bins = sharedData->bins[(~lit1).toInt()];
-    for (vector<BinClause>::const_iterator it = bins.begin(), end = bins.end(); it != end; it++) {
+    for (vector<BinClause>::const_iterator it = bins.begin(), end = bins.end(); it != end; ++it) {
         if (it->lit2 == lit2 && it->learnt == learnt) return;
     }
 

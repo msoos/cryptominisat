@@ -268,7 +268,7 @@ inline std::ostream& operator<<(std::ostream& os, const Watched& ws)
 }
 
 struct OccurClause {
-    OccurClause(const Lit _lit, const Watched _ws) :
+    OccurClause(const Lit& _lit, const Watched& _ws) :
         lit(_lit)
         , ws(_ws)
     {}

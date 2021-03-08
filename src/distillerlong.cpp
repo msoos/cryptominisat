@@ -252,7 +252,7 @@ bool DistillerLong::go_through_clauses(
     i = j = cls.begin();
     for (vector<ClOffset>::iterator end = cls.end()
         ; i != end
-        ; i++
+        ; ++i
     ) {
         //Check if we are in state where we only copy offsets around
         if (time_out || !solver->ok) {

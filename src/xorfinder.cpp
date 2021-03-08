@@ -111,14 +111,14 @@ void XorFinder::clean_equivalent_xors(vector<Xor>& txors)
 
         vector<Xor>::iterator i = txors.begin();
         vector<Xor>::iterator j = i;
-        i++;
+        ++i;
         uint64_t size = 1;
-        for(vector<Xor>::iterator end = txors.end(); i != end; i++) {
+        for(vector<Xor>::iterator end = txors.end(); i != end; ++i) {
             if (j->vars == i->vars && i->rhs == j->rhs) {
                 j->merge_clash(*i, seen);
                 j->detached |= i->detached;
             } else {
-                j++;
+                ++j;
                 *j = *i;
                 size++;
             }

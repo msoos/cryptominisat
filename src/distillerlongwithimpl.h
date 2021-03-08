@@ -72,7 +72,7 @@ class DistillerLongWithImpl {
                     *this = tmp;
                 }
 
-                void print_short(const string type, const Solver* solver) const;
+                void print_short(const string& type, const Solver* solver) const;
                 void print() const;
 
                 WatchBased& operator+=(const WatchBased& other)

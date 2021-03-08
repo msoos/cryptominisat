@@ -67,7 +67,7 @@ double wallclock_time_started = 0.0;
 
 struct WrongParam
 {
-    WrongParam(string _param, string _msg) :
+    WrongParam(const string& _param, const string& _msg) :
         param(_param)
         , msg(_msg)
     {}
@@ -229,7 +229,7 @@ void Main::parseInAllFiles(SATSolver* solver2)
     }
 
     for (const string& fname: filesToRead) {
-        readInAFile(solver2, fname.c_str());
+        readInAFile(solver2, fname);
     }
 
     solver->add_sql_tag("stdin", fileNamePresent ? "False" : "True");

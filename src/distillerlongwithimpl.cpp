@@ -487,7 +487,8 @@ void DistillerLongWithImpl::Stats::print() const
 }
 
 
-void DistillerLongWithImpl::Stats::WatchBased::print_short(const string type, const Solver* _solver) const
+void DistillerLongWithImpl::Stats::WatchBased::print_short(
+    const string& type, const Solver* _solver) const
 {
     cout << "c [distill] watch-based "
     << std::setw(5) << type

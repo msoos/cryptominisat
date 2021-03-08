@@ -142,7 +142,7 @@ void DataSyncServer::addOneBinToOthers(const Lit lit1, const Lit lit2)
     assert(lit1 < lit2);
 
     vector<Lit>& thisBins = bins[(~lit1).toInt()];
-    for (vector<Lit>::const_iterator it = thisBins.begin(), end = thisBins.end(); it != end; it++) {
+    for (vector<Lit>::const_iterator it = thisBins.begin(), end = thisBins.end(); it != end; ++it) {
         if (*it == lit2) return;
     }
 
@@ -189,7 +189,7 @@ void DataSyncServer::sendDataToAll()
 
     //Binaries
     uint32_t at = 0;
-    for(vector<vector<Lit> >::const_iterator it = bins.begin(), end = bins.end(); it != end; it++, at++) {
+    for(vector<vector<Lit> >::const_iterator it = bins.begin(), end = bins.end(); it != end; ++it, at++) {
         const vector<Lit>& binSet = *it;
         assert(binSet.size() >= syncMPIFinish[at]);
         uint32_t sizeToSend = binSet.size() - syncMPIFinish[at];

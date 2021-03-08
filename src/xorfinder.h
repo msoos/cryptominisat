@@ -284,7 +284,7 @@ template<class T> void PossibleXor::add(
     for (typename T::const_iterator
         l = cl.begin(), end = cl.end()
         ; l != end
-        ; l++, i++, origI++
+        ; ++l, i++, origI++
     ) {
         thisRhs ^= l->sign();
 

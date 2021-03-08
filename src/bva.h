@@ -112,7 +112,7 @@ private:
         Lit lit2;
     };
     struct PotentialClause {
-        PotentialClause(const lit_pair _lits, const OccurClause cl) :
+        PotentialClause(const lit_pair& _lits, const OccurClause& cl) :
             lits(_lits)
             , occur_cl(cl)
         {}
