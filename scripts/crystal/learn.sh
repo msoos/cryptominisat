@@ -76,9 +76,6 @@ cut2="30.0"
 est=20
 for xboostmaxdepth in 4 6
 do
-    limit=2000
-    cut1="5.0"
-    cut2="30.0"
     for xgboostminchild in 50 300
     do
         for est in 10 20
