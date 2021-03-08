@@ -5,7 +5,6 @@ set -x
 
 
 basename="8march-2020-3acd81dc55df3-best-feats"
-rm -f out_*
 mkdir -p ${basename}
 rm -f ${basename}/*
 git rev-parse HEAD > ${basename}/out_git
