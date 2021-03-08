@@ -243,6 +243,7 @@ struct ClauseStatsExtra
     float       numResolutionsHistLT_avg;
     float       conflSizeHist_avg;
     float       glueHistLT_avg;
+    uint32_t    antecedents_binred;
     #endif
 
     //Features that are computed while running (not in SQL)

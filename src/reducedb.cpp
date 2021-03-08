@@ -689,6 +689,7 @@ void ReduceDB::update_preds(const vector<ClOffset>& offs)
         double uip1_ranking_rel = safe_div(stats_extra.uip1_ranking, commdata.all_learnt_size);
         double prop_ranking_rel = safe_div(stats_extra.prop_ranking, commdata.all_learnt_size);
         double sum_uip1_per_time_ranking_rel = safe_div(stats_extra.sum_uip1_per_time_ranking, commdata.all_learnt_size);
+        double sum_props_per_time_ranking_rel = safe_div(stats_extra.sum_props_per_time_ranking, commdata.all_learnt_size);
 
         stats_extra.pred_short_use = 0;
         stats_extra.pred_long_use = 0;
@@ -703,6 +704,7 @@ void ReduceDB::update_preds(const vector<ClOffset>& offs)
                 uip1_ranking_rel,
                 prop_ranking_rel,
                 sum_uip1_per_time_ranking_rel,
+                sum_props_per_time_ranking_rel,
                 commdata,
                 PRED_COLS,
                 solver,

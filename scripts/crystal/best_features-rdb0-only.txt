@@ -26,3 +26,6 @@ rdb0.discounted_uip1_used
 (cl.glueHistLT_avg/rdb0.discounted_props_made)
 (rdb0.uip1_ranking_rel/rdb0_common.avg_uip1_used)
 (cl.num_antecedents/(rdb0.discounted_uip1_used/rdb0_common.avg_uip1_used))
+rdb0.sum_uip1_per_time_ranking_rel
+rdb0.sum_props_per_time_ranking_rel
+(cl.glueHist_avg/cl.atedecents_binRed)

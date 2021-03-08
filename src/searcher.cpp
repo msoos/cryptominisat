@@ -1682,6 +1682,7 @@ void Searcher::set_clause_data(
     stats_extra.numResolutionsHistLT_avg =  hist.numResolutionsHistLT.avg();
     stats_extra.conflSizeHist_avg = hist.conflSizeHist.avg();
     stats_extra.glueHistLT_avg = hist.glueHistLT.avg();
+    stats_extra.antecedents_binred = antec_data.binRed;
 
     stats_extra.orig_glue = orig_glue;
 //     stats_extra.conflSizeHistLT_avg = hist.conflSizeHistLT.avg();

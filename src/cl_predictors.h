@@ -23,7 +23,7 @@ THE SOFTWARE.
 #ifndef __CLPREDICTOR_H__
 #define __CLPREDICTOR_H__
 
-#define PRED_COLS 28
+#define PRED_COLS 31
 
 
 #include <vector>
@@ -106,6 +106,7 @@ public:
         const double   uip1_ranking_rel,
         const double   prop_ranking_rel,
         const double   sum_uip1_per_time_ranking_rel,
+        const double   sum_props_per_time_ranking_rel,
         const ReduceCommonData& commdata,
         const uint32_t cols,
         const Solver* solver,

@@ -83,6 +83,7 @@ void ClPredictors::set_up_input(
     const double   uip1_ranking_rel,
     const double   prop_ranking_rel,
     const double   sum_uip1_per_time_ranking_rel,
+    const double   sum_props_per_time_ranking_rel,
     const ReduceCommonData& commdata,
     const uint32_t cols,
     const Solver* solver,
@@ -353,6 +354,20 @@ void ClPredictors::set_up_input(
         at[x++] = (double)extra_stats.num_antecedents/((double)extra_stats.discounted_uip1_used/(double)commdata.avg_uip);
     }
     // (cl.num_antecedents/(rdb0.discounted_uip1_used/rdb0_common.avg_uip1_used)) -- 28
+
+
+    at[x++] = sum_uip1_per_time_ranking_rel;
+    // rdb0.sum_uip1_per_time_ranking_rel -- 29
+
+    at[x++] = sum_props_per_time_ranking_rel;
+    // rdb0.sum_props_per_time_ranking_rel -- 30
+
+    if (extra_stats.antecedents_binred == 0) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = extra_stats.glueHist_avg/(float)extra_stats.antecedents_binred;
+    }
+    // (cl.glueHist_avg/cl.atedecents_binRed) -- 31
 
 //     cout << "c val: ";
 //     for(uint32_t i = 0; i < cols; i++) {
