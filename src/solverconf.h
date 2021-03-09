@@ -461,6 +461,8 @@ class DLL_PUBLIC SolverConf
         long distill_min_confl;
         double distill_red_tier0_ratio;
         double distill_red_tier1_ratio;
+        double distill_irred_alsoremove_ratio;
+        double distill_irred_noremove_ratio;
 
         //Memory savings
         int       doRenumberVars;

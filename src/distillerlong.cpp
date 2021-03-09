@@ -84,11 +84,11 @@ bool DistillerLong::distill(const bool red, bool fullstats, bool only_rem_cl)
     runStats.clear();
 
     if (!red) {
-        if (!distill_long_cls_all(solver->longIrredCls, 4, true)) {
+        if (!distill_long_cls_all(solver->longIrredCls, solver->conf.distill_irred_alsoremove_ratio, true)) {
             goto end;
         }
         if (!only_rem_cl) {
-            if (!distill_long_cls_all(solver->longIrredCls, 0.5, false)) {
+            if (!distill_long_cls_all(solver->longIrredCls, solver->conf.distill_irred_noremove_ratio, false)) {
                 goto end;
             }
         }
