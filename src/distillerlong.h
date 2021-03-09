@@ -51,7 +51,6 @@ class DistillerLong {
             }
 
             Stats& operator+=(const Stats& other);
-            void print_short(const Solver* solver) const;
             void print(const size_t nVars) const;
 
             double time_used = 0.0;
@@ -69,13 +68,12 @@ class DistillerLong {
         double mem_used() const;
 
     private:
-
         ClOffset try_distill_clause_and_return_new(
             ClOffset offset
             , const ClauseStats* const stats
             , const bool also_remove
         );
-        bool distill_long_cls_all(vector<ClOffset>& offs, double time_mult, bool also_remove=false);
+        bool distill_long_cls_all(vector<ClOffset>& offs, double time_mult, bool also_remove, bool red, uint32_t red_lev = std::numeric_limits<uint32_t>::max());
         bool go_through_clauses(vector<ClOffset>& cls, bool also_remove);
         Solver* solver;
 
