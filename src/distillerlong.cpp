@@ -155,7 +155,6 @@ bool DistillerLong::distill_long_cls_all(
 
     //stats setup
     oldBogoProps = solver->propStats.bogoProps;
-    runStats.potentialClauses += offs.size();
     runStats.numCalled += 1;
 
     //Shuffle only when it's non-learnt run (i.e. also_remove)
@@ -180,7 +179,7 @@ bool DistillerLong::distill_long_cls_all(
     lit_counts.resize(solver->nVars()*2, 0);
     vector<ClOffset> todo;
     todo.reserve(offs.size());
-    for(uint32_t prio = 0; prio < 2; prio ++) {
+    for(uint32_t prio = 0; prio < (red ? 1: 2); prio ++) {
         uint32_t j = 0;
         for(uint32_t i = 0; i < offs.size(); i ++) {
             Clause* cl = solver->cl_alloc.ptr(offs[i]);
@@ -211,7 +210,10 @@ bool DistillerLong::distill_long_cls_all(
         }
         offs.resize(j);
     }
+    const uint32_t orig_todo_size = todo.size();
+    runStats.potentialClauses += orig_todo_size;
 
+    assert(runStats.checkedClauses == 0);
     bool time_out = go_through_clauses(todo, also_remove);
 
     //Add back the prioritized clauses
@@ -232,7 +234,7 @@ bool DistillerLong::distill_long_cls_all(
         }
         cout
         << " cls"
-        << " tried: " << runStats.checkedClauses << "/" << offs.size()
+        << " tried: " << runStats.checkedClauses << "/" << orig_todo_size
         << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
     }
@@ -299,12 +301,12 @@ bool DistillerLong::go_through_clauses(
         maxNumProps -= 5;
 
         //If we already tried this clause, then move to next
-        if (cl._xor_is_detached ||
+        if (cl._xor_is_detached /*||
 
             //If it's a redundant that's not very good, let's not distill it
             (!solver->conf.pred_distill_orig &&
                 cl.red() &&
-                cl.stats.glue > 3)
+                cl.stats.glue > 3)*/
         ) {
             *j++ = *i;
             continue;
