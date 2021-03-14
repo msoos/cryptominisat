@@ -907,8 +907,9 @@ void ReduceDB::delete_from_lev2()
         }
     }
     solver->longRedCls[2].resize(j);
-    if (solver->conf.verbosity) {
-        cout << "c SHORT force-kept: " << force_kept_short
+    if (solver->conf.verbosity >= 2) {
+        cout << "c [DBCL pred]"
+        << "SHORT force-kept: " << force_kept_short
         << " kept: " << solver->longRedCls[2].size() << endl;
     }
 }
@@ -944,19 +945,19 @@ void ReduceDB::reset_predict_stats()
 {
     ClauseStats this_stats;
     this_stats = reset_clause_dats(0);
-    if (solver->conf.verbosity) {
+    if (solver->conf.verbosity >= 2) {
         this_stats.print(0);
     }
     cl_stats[0] += this_stats;
 
     this_stats = reset_clause_dats(1);
-    if (solver->conf.verbosity) {
+    if (solver->conf.verbosity >= 2) {
         this_stats.print(1);
     }
     cl_stats[1] += this_stats;
 
     this_stats = reset_clause_dats(2);
-    if (solver->conf.verbosity) {
+    if (solver->conf.verbosity >= 2) {
         this_stats.print(2);
     }
     cl_stats[2] += this_stats;
@@ -1010,7 +1011,7 @@ void ReduceDB::handle_predictors()
     delayed_clause_free.clear();
 
     //Stats
-    if (solver->conf.verbosity >= 1) {
+    if (solver->conf.verbosity >= 2) {
         cout
         << "c [DBCL pred]"
         << " short: " << print_value_kilo_mega(solver->longRedCls[2].size())
@@ -1018,7 +1019,7 @@ void ReduceDB::handle_predictors()
         << " forever: "  << print_value_kilo_mega(solver->longRedCls[0].size())
         << endl;
 
-        if (solver->conf.verbosity >= 1) {
+        if (solver->conf.verbosity >= 3) {
             cout
             << "c [DBCL pred] lev0: " << std::setw(10) << solver->longRedCls[0].size()
             << " moved to lev1: " << std::setw(7) << forever_moved
@@ -1188,7 +1189,8 @@ void ReduceDB::ClauseStats::print(uint32_t lev)
     }
 
     cout
-    << "c [cl-stats " << lev << "]"
+    << "c [DBCL pred]"
+    << " cl-stats " << lev << "]"
     << " (U+P)/cls: "
     << std::setw(7) << std::setprecision(4)
     << (double)(total_uip1_used)/(double)total_cls
