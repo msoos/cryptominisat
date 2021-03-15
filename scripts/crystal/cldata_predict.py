@@ -243,79 +243,77 @@ class Learner:
         t = time.time()
         clf = None
 
-        if final:
-            split_point = helper.calc_min_split_point(
-                df, options.min_samples_split)
+        split_point = helper.calc_min_split_point(
+            df, options.min_samples_split)
 
-            clf_tree = sklearn.tree.DecisionTreeClassifier(
-                max_depth=options.tree_depth,
-                min_samples_split=split_point,
-                random_state=prng)
-            clf_svm_pre = sklearn.svm.SVC(
-                C=500,
-                gamma=10**-5,
-                random_state=prng)
-            clf_svm = sklearn.ensemble.BaggingClassifier(
-                clf_svm_pre,
-                n_estimators=3,
-                max_samples=0.5, max_features=0.5,
-                random_state=prng)
-            clf_linear = sklearn.linear_model.LinearRegression(
-                normalize=True)
-            clf_forest = sklearn.ensemble.RandomForestRegressor(
-                n_estimators=options.num_trees,
-                max_features="sqrt",
-                #min_samples_leaf=split_point,
-                random_state=prng)
-            clf_ridge = sklearn.linear_model.Ridge(alpha=.5)
-            clf_lasso = sklearn.linear_model.Lasso()
-            clf_elasticnet = sklearn.linear_model.ElasticNet()
-            clf_xgboost = xgb.XGBRegressor(
-                    objective='reg:squarederror',
-                    missing=MISSING,
-                    min_child_weight=options.min_child_weight_xgboost,
-                    max_depth=options.xboost_max_depth,
-                    n_estimators=options.n_estimators_xgboost)
+        clf_tree = sklearn.tree.DecisionTreeClassifier(
+            max_depth=options.tree_depth,
+            min_samples_split=split_point,
+            random_state=prng)
+        clf_svm_pre = sklearn.svm.SVC(
+            C=500,
+            gamma=10**-5,
+            random_state=prng)
+        clf_svm = sklearn.ensemble.BaggingClassifier(
+            clf_svm_pre,
+            n_estimators=3,
+            max_samples=0.5, max_features=0.5,
+            random_state=prng)
+        clf_linear = sklearn.linear_model.LinearRegression(
+            normalize=True)
+        clf_forest = sklearn.ensemble.RandomForestRegressor(
+            n_estimators=options.num_trees,
+            max_features="sqrt",
+            #min_samples_leaf=split_point,
+            random_state=prng)
+        clf_ridge = sklearn.linear_model.Ridge(alpha=.5)
+        clf_lasso = sklearn.linear_model.Lasso()
+        clf_elasticnet = sklearn.linear_model.ElasticNet()
+        clf_xgboost = xgb.XGBRegressor(
+                objective='reg:squarederror',
+                missing=MISSING,
+                min_child_weight=options.min_child_weight_xgboost,
+                max_depth=options.xboost_max_depth,
+                n_estimators=options.n_estimators_xgboost)
 
-            if options.regressor == "tree":
-                clf = clf_tree
-            elif options.regressor == "svm":
-                clf = clf_svm
-            elif options.regressor == "linear":
-                clf = clf_linear
-            elif options.regressor == "ridge":
-                clf = clf_ridge
-            elif options.regressor == "lasso":
-                clf = clf_lasso
-            elif options.regressor == "elasticnet":
-                clf = clf_elasticnet
-            elif options.regressor == "forest":
-                clf = clf_forest
-            elif options.regressor == "xgboost":
-                print("Using xgboost no. estimators:", options.n_estimators_xgboost)
-                clf = clf_xgboost
-            elif options.regressor == "median":
-                mylist = [clf_xgboost, clf_linear, clf_elasticnet]
-                clf = MyEnsemble(mylist)
-            else:
-                print(
-                    "ERROR: You MUST give one of: tree/forest/svm/linear/bagging classifier")
-                exit(-1)
+        if options.regressor == "tree":
+            clf = clf_tree
+        elif options.regressor == "svm":
+            clf = clf_svm
+        elif options.regressor == "linear":
+            clf = clf_linear
+        elif options.regressor == "ridge":
+            clf = clf_ridge
+        elif options.regressor == "lasso":
+            clf = clf_lasso
+        elif options.regressor == "elasticnet":
+            clf = clf_elasticnet
+        elif options.regressor == "forest":
+            clf = clf_forest
+        elif options.regressor == "xgboost":
+            print("Using xgboost no. estimators:", options.n_estimators_xgboost)
+            clf = clf_xgboost
+        elif options.regressor == "median":
+            mylist = [clf_xgboost, clf_linear]
+            clf = MyEnsemble(mylist)
         else:
-            assert options.regressor == "forest" or options.regressor == "xgboost", "For TOP calculation, we must have forest or xgboost regressor"
+            print(
+                "ERROR: You MUST give one of: tree/forest/svm/linear/bagging classifier")
+            exit(-1)
+        if not options.only_final:
             if options.regressor == "forest":
+                print("for TOP calculation, we are replacing the forest predictor!!!")
                 clf = sklearn.ensemble.RandomForestRegressor(
                     n_estimators=options.num_trees*5,
                     max_features="sqrt",
                     random_state=prng)
             elif options.regressor == "xgboost":
+                print("for TOP calculation, we are replacing the XGBOOST predictor!!!")
                 clf = xgb.XGBRegressor(
                     objective='reg:squarederror',
                     min_child_weight=options.min_child_weight_xgboost,
                     max_depth=options.xboost_max_depth,
                     missing=MISSING)
-            else:
-                assert False
 
         del df
         sample_weights = self.get_sample_weights(X_train, y_train)
@@ -386,7 +384,7 @@ class Learner:
 
         #print(test[features+to_predict])
         #print(test[to_predict])
-        if not options.no_computed and options.dump_example_data:
+        if options.dump_example_data:
             with open("example-data.dat", "wb") as f:
                 pickle.dump(test[features+[to_predict]], f)
             self.dump_ml_test_data(test, "../ml_perf_test.txt-%s" % options.tier, to_predict)
@@ -421,17 +419,18 @@ class Learner:
         else:
             to_predict = "x.used_later_{name}".format(name=options.tier)
 
-        if not options.only_final:
+        if options.features != "best_only":
             features = list(self.df)
             features = self.rem_features(
-            features, ["x.class",
-                       "x.a_lifetime",
-                       "fname",
-                       "sum_cl_use.num_used",
-                       "x.sum_cl_use",
-                       "x.used_later_short",
-                       "x.used_later_long",
-                       "x.used_later_forever"])
+                features, [
+                    "x.class",
+                    "x.a_lifetime",
+                    "fname",
+                    "sum_cl_use.num_used",
+                    "x.sum_cl_use",
+                    "x.used_later_short",
+                    "x.used_later_long",
+                    "x.used_later_forever"])
         else:
             features = helper.get_features(options.best_features_fname)
 
@@ -450,6 +449,17 @@ def filter_nan(df):
             df[col] = df[col].apply(make_none_into_nan)
     print("Done filtering")
 
+
+def add_best_features(df):
+    print("Adding features...")
+    helper.cldata_add_minimum_computed_features(df, options.verbose)
+    best_features = helper.get_features(options.best_features_fname)
+    for feat in best_features:
+        toeval = ccg.to_source(ast.parse(feat))
+        print("Adding feature %s as eval %s" % (feat, toeval))
+        df[feat] = eval(toeval)
+
+
 if __name__ == "__main__":
     usage = "usage: %(prog)s [options] file.pandas"
     parser = argparse.ArgumentParser(usage=usage)
@@ -461,10 +471,8 @@ if __name__ == "__main__":
                         dest="verbose", help="Print more output")
     parser.add_argument("--printfeat", action="store_true", default=False,
                         dest="print_features", help="Print features")
-    parser.add_argument("--nocomputed", default=False, action="store_true",
-                        dest="no_computed", help="Don't add computed features")
-    parser.add_argument("--allcomputed", default=False, action="store_true",
-                        dest="all_computed", help="Add ALL computed features")
+    parser.add_argument("--features", default="best_only", type=str,
+                        help="What features to use: all, best_only, best_also, no_computed ")
     parser.add_argument("--bestfeatfile", type=str, default="../../scripts/crystal/best_features-rdb0-only.txt",
                         dest="best_features_fname", help="Name and position of best features file that lists the best features in order")
     parser.add_argument("--csv", type=str, default=None,
@@ -571,7 +579,7 @@ if __name__ == "__main__":
         mlflow.log_param("min_samples_split", options.min_samples_split)
         mlflow.log_param("tree_depth", options.tree_depth)
         mlflow.log_param("num_trees", options.num_trees)
-        mlflow.log_param("no_computed", options.no_computed)
+        mlflow.log_param("features", options.features)
         mlflow.log_artifact(options.fname)
 
     # Read in Pandas Dataframe
@@ -600,18 +608,11 @@ if __name__ == "__main__":
 
     # feature manipulation
     helper.delete_none_features(df)
-    if not options.no_computed:
-        if options.all_computed:
-            helper.cldata_add_computed_features(df, options.verbose)
-        else:
-            print("Adding features...")
-            helper.cldata_add_minimum_computed_features(df, options.verbose)
-            best_features = helper.get_features(options.best_features_fname)
-            for feat in best_features:
-                toeval = ccg.to_source(ast.parse(feat))
-                print("Adding feature %s as eval %s" % (feat, toeval))
-                df[feat] = eval(toeval)
-    else:
+    if options.features =="all_computed":
+        helper.cldata_add_computed_features(df, options.verbose)
+    elif options.features == "best_only" or options.features == "best_also":
+        add_best_features(df)
+    elif options.features == "no_computed":
         helper.cldata_add_minimum_computed_features(df, options.verbose)
 
     for name, mytype in df.dtypes.items():
@@ -622,7 +623,7 @@ if __name__ == "__main__":
 
     if options.csv is not None:
         cols = list(df)
-        if not options.no_computed and not options.all_computed:
+        if options.features == "best_only":
             cols = best_features
             for feat in list(df):
                 if "x." in feat:
