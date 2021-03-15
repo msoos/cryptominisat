@@ -59,11 +59,25 @@ else:
 
 MISSING=float("-1.0")
 
-def check_long_short():
-    if options.tier is None:
-        print("ERROR: You must give option '--tier' as short/long/forever")
-        assert False
-        exit(-1)
+class MyEnsemble:
+    def __init__(self, models):
+        self.models = models
+
+    def fit(self, X_train, y_train, weights=None):
+        assert weights is None
+        for model in self.models:
+            model.fit(X_train, y_train)
+
+    def predict(self, X_data):
+        #df = pd.DataFrame(index=range(numRows),columns=range(numCols))
+        vals = np.ndarray(shape=(len(self.models), len(X_data)), dtype=float)
+        for i in range(len(self.models)):
+            pred = self.models[i].predict(X_data)
+            vals[i] = pred
+
+        ret = np.median(vals, axis=0)
+        return ret
+
 
 
 class Learner:
@@ -246,48 +260,55 @@ class Learner:
                 n_estimators=3,
                 max_samples=0.5, max_features=0.5,
                 random_state=prng)
-            clf_logreg = sklearn.linear_model.LogisticRegression(
-                C=0.3,
-                random_state=prng)
+            clf_linear = sklearn.linear_model.LinearRegression(
+                normalize=True)
             clf_forest = sklearn.ensemble.RandomForestRegressor(
                 n_estimators=options.num_trees,
                 max_features="sqrt",
                 #min_samples_leaf=split_point,
                 random_state=prng)
-
-            if options.final_is_tree:
-                clf = clf_tree
-            elif options.final_is_svm:
-                clf = clf_svm
-            elif options.final_is_logreg:
-                clf = clf_logreg
-            elif options.final_is_forest:
-                clf = clf_forest
-            elif options.final_is_xgboost:
-                # , ntree_limit=3
-                print("Using xgboost no. estimators:", options.n_estimators_xgboost)
-                clf = xgb.XGBRegressor(
+            clf_ridge = sklearn.linear_model.Ridge(alpha=.5)
+            clf_lasso = sklearn.linear_model.Lasso()
+            clf_elasticnet = sklearn.linear_model.ElasticNet()
+            clf_xgboost = xgb.XGBRegressor(
                     objective='reg:squarederror',
                     missing=MISSING,
                     min_child_weight=options.min_child_weight_xgboost,
                     max_depth=options.xboost_max_depth,
                     n_estimators=options.n_estimators_xgboost)
-            elif options.final_is_voting:
-                mylist = [["forest", clf_forest], [
-                    "svm", clf_svm], ["logreg", clf_logreg]]
-                clf = sklearn.ensemble.VotingClassifier(mylist, random_state=prng)
+
+            if options.regressor == "tree":
+                clf = clf_tree
+            elif options.regressor == "svm":
+                clf = clf_svm
+            elif options.regressor == "linear":
+                clf = clf_linear
+            elif options.regressor == "ridge":
+                clf = clf_ridge
+            elif options.regressor == "lasso":
+                clf = clf_lasso
+            elif options.regressor == "elasticnet":
+                clf = clf_elasticnet
+            elif options.regressor == "forest":
+                clf = clf_forest
+            elif options.regressor == "xgboost":
+                print("Using xgboost no. estimators:", options.n_estimators_xgboost)
+                clf = clf_xgboost
+            elif options.regressor == "median":
+                mylist = [clf_xgboost, clf_linear, clf_elasticnet]
+                clf = MyEnsemble(mylist)
             else:
                 print(
-                    "ERROR: You MUST give one of: tree/forest/svm/logreg/voting classifier")
+                    "ERROR: You MUST give one of: tree/forest/svm/linear/bagging classifier")
                 exit(-1)
         else:
-            assert options.final_is_forest or options.final_is_xgboost, "For TOP calculation, we must have --forest or --xgboost"
-            if options.final_is_forest:
+            assert options.regressor == "forest" or options.regressor == "xgboost", "For TOP calculation, we must have forest or xgboost regressor"
+            if options.regressor == "forest":
                 clf = sklearn.ensemble.RandomForestRegressor(
                     n_estimators=options.num_trees*5,
                     max_features="sqrt",
                     random_state=prng)
-            elif options.final_is_xgboost:
+            elif options.regressor == "xgboost":
                 clf = xgb.XGBRegressor(
                     objective='reg:squarederror',
                     min_child_weight=options.min_child_weight_xgboost,
@@ -316,7 +337,7 @@ class Learner:
             #mlflow.log_artifact("best_features", best_features)
         else:
             if options.dot is not None:
-                if not options.final_is_tree:
+                if not options.regresspr == "tree":
                     print("ERROR: You cannot use the DOT function on non-trees")
                     exit(-1)
 
@@ -324,7 +345,7 @@ class Learner:
                     clf, features,
                     fname=options.dot + "-" + self.func_name)
 
-            if options.basedir and options.final_is_xgboost:
+            if options.basedir and options.regressor == "xgboost":
                 booster = clf.get_booster()
                 fname = options.basedir + "/predictor_{name}.json".format(
                     name=options.name)
@@ -335,13 +356,13 @@ class Learner:
 
 
         # print feature rankings
-        if options.final_is_forest:
+        if options.regressor == "forest":
             helper.print_feature_ranking(
                 clf, X_train,
                 top_num_features=200,
                 features=features,
                 plot=options.show)
-        elif options.final_is_xgboost:
+        elif options.regressor == "xgboost":
             self.importance_XGB(clf, features=features)
 
         # print distribution of error
@@ -416,6 +437,18 @@ class Learner:
 
         self.one_classifier(features, to_predict, final=options.only_final)
 
+def filter_nan(df):
+    print("Making None into NaN...")
+    def make_none_into_nan(x):
+        if x is None:
+            return np.nan
+        else:
+            return x
+
+    for col in list(df):
+        if type(None) in df[col].apply(type).unique():
+            df[col] = df[col].apply(make_none_into_nan)
+    print("Done filtering")
 
 if __name__ == "__main__":
     usage = "usage: %(prog)s [options] file.pandas"
@@ -432,7 +465,7 @@ if __name__ == "__main__":
                         dest="no_computed", help="Don't add computed features")
     parser.add_argument("--allcomputed", default=False, action="store_true",
                         dest="all_computed", help="Add ALL computed features")
-    parser.add_argument("--bestfeatfile", type=str,
+    parser.add_argument("--bestfeatfile", type=str, default="../../scripts/crystal/best_features-rdb0-only.txt",
                         dest="best_features_fname", help="Name and position of best features file that lists the best features in order")
     parser.add_argument("--csv", type=str, default=None,
                         dest="csv", help="Output CSV of dataframe here")
@@ -473,19 +506,9 @@ if __name__ == "__main__":
     parser.add_argument("--top", default=None, type=int, metavar="TOPN",
                         dest="top_num_features", help="Candidates are top N features for greedy selector")
 
-    # type of classifier
-    parser.add_argument("--tree", default=False, action="store_true",
-                        dest="final_is_tree", help="Final classifier should be a tree")
-    parser.add_argument("--svm", default=False, action="store_true",
-                        dest="final_is_svm", help="Final classifier should be an svm")
-    parser.add_argument("--logreg", default=False, action="store_true",
-                        dest="final_is_logreg", help="Final classifier should be a logistic regression")
-    parser.add_argument("--forest", default=False, action="store_true",
-                        dest="final_is_forest", help="Final classifier should be a forest")
-    parser.add_argument("--xgboost", default=False, action="store_true",
-                        dest="final_is_xgboost", help="Final classifier should be a XGBoost")
-    parser.add_argument("--voting", default=False, action="store_true",
-                        dest="final_is_voting", help="Final classifier should be a voting of all of: forest, svm, logreg")
+    # type of regressor
+    parser.add_argument("--regressor", type=str, default="xgboost",
+                        dest="regressor", help="Final classifier should be a: tree, svm, linear, forest, xgboost, bagging")
     parser.add_argument("--xgboostestimators", default=20, type=int,
                         dest="n_estimators_xgboost", help="Number of estimators for xgboost")
     parser.add_argument("--xgboostminchild", default=1, type=int,
@@ -539,11 +562,7 @@ if __name__ == "__main__":
         if options.only_final:
             mlflow.log_param("tier", options.tier)
             mlflow.log_param("name", options.name)
-            mlflow.log_param("tree", options.final_is_tree)
-            mlflow.log_param("svm", options.final_is_svm)
-            mlflow.log_param("logreg", options.final_is_logreg)
-            mlflow.log_param("forest", options.final_is_forest)
-            mlflow.log_param("voting", options.final_is_voting)
+            mlflow.log_param("regressor", options.regressor)
             mlflow.log_param("basedir", options.basedir)
         else:
             mlflow.log_param("top_num_features", options.top_num_features)
@@ -563,17 +582,6 @@ if __name__ == "__main__":
         del df_nofloat
     else:
         df = pd.read_pickle(options.fname)
-        print("Making None into NaN...")
-        def make_none_into_nan(x):
-            if x is None:
-                return np.nan
-            else:
-                return x
-
-        for col in list(df):
-            if type(None) in df[col].apply(type).unique():
-                df[col] = df[col].apply(make_none_into_nan)
-        print("Done filtering")
 
 
     df_orig = df.copy()
@@ -588,16 +596,16 @@ if __name__ == "__main__":
     df = pd.DataFrame(df_tmp)
     del df_tmp
     print("-> Number of datapoints after applying '--only':", df.shape)
+    filter_nan(df)
 
     # feature manipulation
+    helper.delete_none_features(df)
     if not options.no_computed:
         if options.all_computed:
-            short = options.tier == "short"
-            helper.cldata_add_computed_features(df, options.verbose, short=short)
+            helper.cldata_add_computed_features(df, options.verbose)
         else:
             print("Adding features...")
             helper.cldata_add_minimum_computed_features(df, options.verbose)
-            divide = functools.partial(helper.helper_divide, df=df, features=list(df), verb=options.verbose)
             best_features = helper.get_features(options.best_features_fname)
             for feat in best_features:
                 toeval = ccg.to_source(ast.parse(feat))
@@ -605,7 +613,6 @@ if __name__ == "__main__":
                 df[feat] = eval(toeval)
     else:
         helper.cldata_add_minimum_computed_features(df, options.verbose)
-        helper.delete_none_features(df)
 
     for name, mytype in df.dtypes.items():
         #print(mytype)

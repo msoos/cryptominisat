@@ -40,7 +40,7 @@ function concat() {
         /usr/bin/time --verbose -o "${dirname}/out_${tier}.timeout" \
         ../cldata_predict.py \
         ${tier}-comb-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat \
-        --tier ${tier} --final --xgboost \
+        --tier ${tier} --final --regressor "xgboost" \
         --xgboostest ${est} --weight ${w} \
         --xgboostminchild $xgboostminchild --xboostmaxdepth=${xboostmaxdepth} \
         --basedir "${dirname}" \

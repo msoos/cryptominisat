@@ -594,9 +594,11 @@ def plot_feature_importances(importances, indices, myrange, std, features):
         plt.xlim([-1, myrange])
 
 def delete_none_features(df):
-    #del df["cl.decisionLevelHistLT_avg"]
-    del df["sum_cl_use.first_confl_used"]
-    del df["sum_cl_use.last_confl_used"]
+    if "sum_cl_use.first_confl_used" in list(df):
+        del df["sum_cl_use.first_confl_used"]
+
+    if "sum_cl_use.last_confl_used" in list(df):
+        del df["sum_cl_use.last_confl_used"]
 
 def cldata_add_minimum_computed_features(df, verbose):
     divide = functools.partial(helper_divide, df=df, features=list(df), verb=verbose)
@@ -616,7 +618,7 @@ def cldata_add_minimum_computed_features(df, verbose):
         divide("rdb0_common.num_long_irred_cls", "rdb0_common.num_vars")
 
 
-def cldata_add_computed_features(df, verbose, short=False):
+def cldata_add_computed_features(df, verbose):
     print("Adding computed features...")
     cldata_add_minimum_computed_features(df, verbose)
 
@@ -663,7 +665,7 @@ def cldata_add_computed_features(df, verbose, short=False):
     divide(sum_uip1_per_time, "rdb0_common.median_sum_props_per_time")
     divide(sum_props_per_time, "rdb0_common.avg_sum_uip1_per_time")
     divide(sum_uip1_per_time, "rdb0_common.avg_sum_props_per_time")
-    del df[time_in_solver]
+    #del df[time_in_solver]
 
     divisors = [
         "cl.conflSizeHistlt_avg"
@@ -693,26 +695,25 @@ def cldata_add_computed_features(df, verbose, short=False):
         # , "cl.num_overlap_literals"
         ]
 
-    if not short:
-        # discounted stuff
-        divide("rdb0.discounted_uip1_used", "rdb0_common.avg_uip1_used")
-        divide("rdb0.discounted_props_made", "rdb0_common.avg_props")
-        divide("rdb0.discounted_uip1_used", "rdb0_common.median_uip1_used")
-        divide("rdb0.discounted_props_made", "rdb0_common.median_props")
-        #==
-        divide("rdb0.discounted_uip1_used2", "rdb0_common.avg_uip1_used")
-        divide("rdb0.discounted_props_made2", "rdb0_common.avg_props")
-        divide("rdb0.discounted_uip1_used2", "rdb0_common.median_uip1_used")
-        divide("rdb0.discounted_props_made2", "rdb0_common.median_props")
+    # discounted stuff
+    divide("rdb0.discounted_uip1_used", "rdb0_common.avg_uip1_used")
+    divide("rdb0.discounted_props_made", "rdb0_common.avg_props")
+    divide("rdb0.discounted_uip1_used", "rdb0_common.median_uip1_used")
+    divide("rdb0.discounted_props_made", "rdb0_common.median_props")
+    #==
+    divide("rdb0.discounted_uip1_used2", "rdb0_common.avg_uip1_used")
+    divide("rdb0.discounted_props_made2", "rdb0_common.avg_props")
+    divide("rdb0.discounted_uip1_used2", "rdb0_common.median_uip1_used")
+    divide("rdb0.discounted_props_made2", "rdb0_common.median_props")
 
-        sum_uip1_per_time = divide("rdb0.sum_uip1_used", "cl.time_inside_solver")
-        sum_props_per_time = divide("rdb0.sum_props_made", "cl.time_inside_solver")
-        antec_rel = divide("cl.num_total_lits_antecedents", "cl.antec_data_sum_sizeHistLT_avg")
-        divisors.append(sum_uip1_per_time)
-        divisors.append(sum_props_per_time)
-        divisors.append("rdb0.discounted_uip1_used")
-        divisors.append("rdb0.discounted_props_made")
-        divisors.append(antec_rel)
+    sum_uip1_per_time = divide("rdb0.sum_uip1_used", "cl.time_inside_solver")
+    sum_props_per_time = divide("rdb0.sum_props_made", "cl.time_inside_solver")
+    antec_rel = divide("cl.num_total_lits_antecedents", "cl.antec_data_sum_sizeHistLT_avg")
+    divisors.append(sum_uip1_per_time)
+    divisors.append(sum_props_per_time)
+    divisors.append("rdb0.discounted_uip1_used")
+    divisors.append("rdb0.discounted_props_made")
+    divisors.append(antec_rel)
 
     orig_cols = list(df)
 
