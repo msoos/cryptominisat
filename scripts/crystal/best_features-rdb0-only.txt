@@ -30,3 +30,11 @@ rdb0.sum_uip1_per_time_ranking_rel
 rdb0.sum_props_per_time_ranking_rel
 (cl.glueHist_avg/cl.atedecents_binRed)
 (cl.conflicts-rdb0.introduced_at_conflict)
+#cl.atedecents_binRed
+#rdb0.discounted_uip1_used3
+#rdb0_common.num_vars
+#cl.glueHist_avg
+#rdb0.discounted_props_made3
+#cl.num_antecedents
+#rdb0_common.num_bin_irred_cls
+#cl.trailDepthHistLT_avg

@@ -235,8 +235,13 @@ def get_features(fname):
     with open(fname, "r") as f:
         for l in f:
             l = l.strip()
-            if l != "":
-                best_features.append(l)
+            if len(l) == 0:
+                continue
+
+            if l[0] == "#":
+                continue
+
+            best_features.append(l)
 
     return best_features
 
