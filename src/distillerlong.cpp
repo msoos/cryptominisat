@@ -58,6 +58,46 @@ struct ClauseSizeSorterLargestFirst
     }
 };
 
+struct ClauseSorterSmallGlueFirst
+{
+    ClauseSorterSmallGlueFirst(const ClauseAllocator& _cl_alloc) :
+        cl_alloc(_cl_alloc)
+    {}
+
+    const ClauseAllocator& cl_alloc;
+
+    bool operator()(const ClOffset off1, const ClOffset off2) const
+    {
+        const Clause* cl1 = cl_alloc.ptr(off1);
+        const Clause* cl2 = cl_alloc.ptr(off2);
+
+        //Correct order if c1's glue is smaller
+        return cl1->stats.glue < cl2->stats.glue;
+    }
+};
+
+struct ClauseSorterBestPredFirst
+{
+    ClauseSorterBestPredFirst(const ClauseAllocator& _cl_alloc, vector<ClauseStatsExtra>& _extra_data) :
+        cl_alloc(_cl_alloc),
+        extra_data(_extra_data)
+    {}
+
+    const ClauseAllocator& cl_alloc;
+    const vector<ClauseStatsExtra>& extra_data;
+
+    bool operator()(const ClOffset off1, const ClOffset off2) const
+    {
+        const Clause* cl1 = cl_alloc.ptr(off1);
+        const Clause* cl2 = cl_alloc.ptr(off2);
+        const auto& ext1 = extra_data[cl1->stats.extra_pos];
+        const auto& ext2 = extra_data[cl2->stats.extra_pos];
+
+        //Correct order if c1's predicted use is larger
+        return ext1.pred_forever_use  > ext2.pred_forever_use;
+    }
+};
+
 struct LitCountDescSort
 {
     LitCountDescSort(const vector<uint64_t>& _lit_counts) :
@@ -158,19 +198,34 @@ bool DistillerLong::distill_long_cls_all(
     runStats.numCalled += 1;
 
     //Shuffle only when it's non-learnt run (i.e. also_remove)
-    if (also_remove &&
-        //Don't shuffle when it's very-very large, too expensive
+    if (//Don't shuffle when it's very-very large, too expensive
         offs.size() < 100ULL*1000ULL*1000ULL)
     {
-        bool randomly_sort = solver->mtrand.randInt(1);
+        bool randomly_sort = solver->mtrand.randInt(solver->conf.distill_rand_shuffle_order_every_n) == 0;
         if (randomly_sort) {
+//             cout << "RANDOM SORT" << endl;
             std::mt19937 gen(solver->mtrand.randInt());
             std::shuffle(offs.begin(), offs.end(), gen);
         } else {
-            std::sort(offs.begin(),
-                offs.end(),
-                ClauseSizeSorterLargestFirst(solver->cl_alloc)
-            );
+            if (solver->conf.distill_sort == 1 || red == false) {
+//                 cout << "NORMAL SORT -- largest first" << endl;
+                std::sort(offs.begin(),
+                    offs.end(),
+                    ClauseSizeSorterLargestFirst(solver->cl_alloc)
+                );
+            } else if (solver->conf.distill_sort == 2) {
+//                 cout << "NORMAL SORT -- small glue first" << endl;
+                std::sort(offs.begin(),
+                    offs.end(),
+                    ClauseSorterSmallGlueFirst(solver->cl_alloc)
+                );
+            } else {
+//                 cout << "NORMAL SORT -- high pred first" << endl;
+                std::sort(offs.begin(),
+                    offs.end(),
+                    ClauseSorterBestPredFirst(solver->cl_alloc, solver->red_stats_extra)
+                );
+            }
         }
     }
 

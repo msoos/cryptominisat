@@ -367,9 +367,11 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , distill_increase_conf_ratio(0.02)
         , distill_min_confl(10000)
         , distill_red_tier0_ratio(0.7)
-        , distill_red_tier1_ratio(0.03)
+        , distill_red_tier1_ratio(0.07)
         , distill_irred_alsoremove_ratio(1.2)
-        , distill_irred_noremove_ratio(1)
+        , distill_irred_noremove_ratio(0.5) //from out-3756148.wlm01-12-drat0
+        , distill_rand_shuffle_order_every_n(3)
+        , distill_sort(1)
 
         //Memory savings
         , doRenumberVars   (true)

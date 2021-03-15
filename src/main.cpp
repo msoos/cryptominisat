@@ -758,6 +758,10 @@ void Main::add_supported_options()
         , "How much of irred to distill when doing also removal")
     ("distillirrednoremratio", po::value(&conf.distill_irred_noremove_ratio)->default_value(conf.distill_irred_noremove_ratio)
         , "How much of irred to distill when doing no removal")
+    ("distillshuffleeveryn", po::value(&conf.distill_rand_shuffle_order_every_n)->default_value(conf.distill_rand_shuffle_order_every_n)
+        , "Shuffle to-be-distilled clauses every N cases randomly")
+    ("distillsort", po::value(&conf.distill_sort)->default_value(conf.distill_sort)
+        , "Distill sorting type")
     ;
 
     po::options_description mem_save_opts("Memory saving options");

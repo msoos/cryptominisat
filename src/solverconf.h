@@ -463,6 +463,8 @@ class DLL_PUBLIC SolverConf
         double distill_red_tier1_ratio;
         double distill_irred_alsoremove_ratio;
         double distill_irred_noremove_ratio;
+        int    distill_rand_shuffle_order_every_n;
+        int    distill_sort;
 
         //Memory savings
         int       doRenumberVars;
