@@ -213,7 +213,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doTernary(true)
         , ternary_res_time_limitM(100)
         , ternary_keep_mult(5)
-        , ternary_max_create(1)
+        , ternary_max_create(0.3)
         , allow_ternary_bin_create(false)
 
         //Bosphorus
