@@ -74,6 +74,10 @@ using namespace CMSat;
 //mybase="--printsol 0 --simdrat 1 --predforeverpow 0.1 --predforevermult 0.40 --predlongmult 0.5 --predshortmult 0.5 --preddontmovetime 1 --predadjustsize 0 --predforeverchunkmult 4"
 
 
+//tuning to
+//--base="--printsol 0 --simdrat 1 --predforeverpow 0.1 --predforevermult 0.40 --predlongmult 0.5 --predshortmult 0.5 --preddontmovetime 1 --predadjustsize 0 --predforeverchunkmult 4 --occredmax 50 --branchstr vsidsx_once+maple1+maple2+vsids2+maple1+maple2+vsidsx --ternkeep 5 --distillmaxm 10"
+
+
 DLL_PUBLIC SolverConf::SolverConf() :
         do_lucky_polar_every_n(20)
         , polarity_mode(PolarityMode::polarmode_automatic)
@@ -138,7 +142,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doAlwaysFMinim(false)
 
         //branch strategy
-        , branch_strategy_setup("vsidsx_once+maple1+maple2+vsids2+maple1+maple2+vsids1")
+        , branch_strategy_setup("vsidsx_once+maple1+maple2+vsids2+maple1+maple2+vsidsx")
         , branch_strategy_setup_forced(0)
 
         //Clause minimisation
@@ -208,7 +212,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Ternary resolution
         , doTernary(true)
         , ternary_res_time_limitM(100)
-        , ternary_keep_mult(6)
+        , ternary_keep_mult(5)
         , ternary_max_create(1)
         , allow_ternary_bin_create(false)
 
@@ -335,7 +339,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Occur based simplification
         , perform_occur_based_simp(true)
         , do_strengthen_with_occur       (true)
-        , maxRedLinkInSize (200)
+        , maxRedLinkInSize (50)
         , maxOccurIrredMB  (2500)
         , maxOccurRedMB    (600)
         , maxOccurRedLitLinkedM(50)
@@ -358,7 +362,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Distillation
         , do_distill_clauses(true)
         , do_distill_bin_clauses(true)
-        , distill_long_cls_time_limitM(11ULL)
+        , distill_long_cls_time_limitM(10ULL)
         , watch_based_str_time_limitM(30LL)
         , distill_increase_conf_ratio(0.02)
         , distill_min_confl(10000)
