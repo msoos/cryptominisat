@@ -22,7 +22,7 @@ jobs:
       run: git submodule init && git submodule update
     
     - name: boost and python3
-      run: sudo apt-get update && sudo apt-get install -yq libboost1.65-dev libboost-program-options-dev help2man python3-pip python3-setuptools
+      run: sudo apt-get update && sudo apt-get install -yq libboost-dev libboost-program-options-dev help2man python3-pip python3-setuptools
     - name: Install lit
       run: sudo -H pip3 install --upgrade pip && pip3 install --user lit
 
