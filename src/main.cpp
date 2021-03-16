@@ -413,6 +413,8 @@ void Main::add_supported_options()
         , "The multiplier used to determine if we should restart during glue-based restart")
     ("ratiogluegeom", po::value(&conf.ratio_glue_geom)->default_value(conf.ratio_glue_geom)
         , "Ratio of glue vs geometric restarts -- more is more glue")
+    ("blockingglue", po::value(&conf.do_blocking_restart)->default_value(conf.do_blocking_restart)
+        , "Do blocking restart for glues")
     ;
 
     std::ostringstream s_incclean;

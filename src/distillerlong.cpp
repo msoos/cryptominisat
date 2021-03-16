@@ -76,6 +76,7 @@ struct ClauseSorterSmallGlueFirst
     }
 };
 
+#ifdef FINAL_PREDICTOR
 struct ClauseSorterBestPredFirst
 {
     ClauseSorterBestPredFirst(const ClauseAllocator& _cl_alloc, vector<ClauseStatsExtra>& _extra_data) :
@@ -97,6 +98,7 @@ struct ClauseSorterBestPredFirst
         return ext1.pred_forever_use  > ext2.pred_forever_use;
     }
 };
+#endif
 
 struct LitCountDescSort
 {
@@ -220,11 +222,16 @@ bool DistillerLong::distill_long_cls_all(
                     ClauseSorterSmallGlueFirst(solver->cl_alloc)
                 );
             } else {
+                #ifdef FINAL_PREDICTOR
 //                 cout << "NORMAL SORT -- high pred first" << endl;
                 std::sort(offs.begin(),
                     offs.end(),
                     ClauseSorterBestPredFirst(solver->cl_alloc, solver->red_stats_extra)
                 );
+                #else
+                cout << "ERROR: only distill sort 1 and 2 are recognized" << endl;
+                exit(-1);
+                #endif
             }
         }
     }
