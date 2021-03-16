@@ -627,7 +627,7 @@ def cldata_add_computed_features(df, verbose):
     print("Adding computed features...")
     cldata_add_minimum_computed_features(df, verbose)
 
-    time_in_solver = "(cl.conflicts-rdb0.introduced_at_conflict)"
+    time_in_solver = "(rdb0.conflicts-rdb0.introduced_at_conflict)"
     df[time_in_solver] = df["cl.conflicts"] - df["rdb0.introduced_at_conflict"];
 
     del df["cl.conflicts"]
