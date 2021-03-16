@@ -144,7 +144,7 @@ bool TopLevelGauss::extractInfo()
         if (!extractInfoFromBlock(*it, i))
             goto end;
 
-        if (solver->conf.verbosity >= 2) {
+        if (solver->conf.verbosity >= 3) {
             cout << "c [toplevel-xor] Block size: " << it->size() << endl;
             cout << "c [toplevel-xor] New units this round: " << (runStats.newUnits - oldNewUnits) << endl;
             cout << "c [toplevel-xor] New bins this round: " << (runStats.newBins - oldNewBins) << endl;
