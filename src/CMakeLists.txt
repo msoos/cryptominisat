@@ -70,7 +70,7 @@ if (SQLITE3_FOUND)
         OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         COMMAND ${PYTHON_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py cmsat_tablestructure.sql ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp
-        DEPENDS ${CMAKE_SOURCE_DIR}/cmsat_tablestructure.sql
+        DEPENDS ${CMAKE_SOURCE_DIR}/cmsat_tablestructure.sql ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py
     )
     add_custom_target(tablestruct ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp)
 endif()
@@ -80,7 +80,7 @@ if (FINAL_PREDICTOR)
         OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/pred_short.cpp
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         COMMAND ${PYTHON_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py src/predict/predictor_short.json ${CMAKE_CURRENT_BINARY_DIR}/pred_short.cpp
-        DEPENDS ${CMAKE_SOURCE_DIR}/src/predict/predictor_short.json
+        DEPENDS ${CMAKE_SOURCE_DIR}/src/predict/predictor_short.json ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py
     )
     add_custom_target(pred_short ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/pred_short.cpp)
 
@@ -88,7 +88,7 @@ if (FINAL_PREDICTOR)
         OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/pred_long.cpp
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         COMMAND ${PYTHON_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py src/predict/predictor_long.json ${CMAKE_CURRENT_BINARY_DIR}/pred_long.cpp
-        DEPENDS ${CMAKE_SOURCE_DIR}/src/predict/predictor_long.json
+        DEPENDS ${CMAKE_SOURCE_DIR}/src/predict/predictor_long.json ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py
     )
     add_custom_target(pred_long ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/pred_long.cpp)
 
@@ -96,7 +96,7 @@ if (FINAL_PREDICTOR)
         OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/pred_forever.cpp
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         COMMAND ${PYTHON_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py src/predict/predictor_forever.json ${CMAKE_CURRENT_BINARY_DIR}/pred_forever.cpp
-        DEPENDS ${CMAKE_SOURCE_DIR}/src/predict/predictor_forever.json
+        DEPENDS ${CMAKE_SOURCE_DIR}/src/predict/predictor_forever.json ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py
     )
     add_custom_target(pred_forever ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/pred_forever.cpp)
 endif()

@@ -85,6 +85,7 @@ public:
                      const std::string& long_fname,
                      const std::string& forever_fname);
     void load_models_from_buffers();
+    vector<std::string> get_hashes() const;
 
     float predict(
         predict_type pred_type,

@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 
 import sys
+import hashlib
 
 PY3 = sys.version_info.major == 3
 
@@ -63,3 +64,4 @@ with open(output_path, 'w') as out:
     out.write('\n};\n')
 
     out.write('unsigned int {}_len = {};\n'.format(output_name, len(contents)))
+    out.write('const char* {}_hash = "{}";\n'.format(output_name, hashlib.sha1(contents).hexdigest()))

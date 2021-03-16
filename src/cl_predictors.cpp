@@ -27,10 +27,15 @@ THE SOFTWARE.
 #define MISSING_VAL -1.0f
 extern char predictor_short_json[];
 extern unsigned int predictor_short_json_len;
+extern const char* predictor_short_json_hash;
+
 extern char predictor_long_json[];
 extern unsigned int predictor_long_json_len;
+extern const char* predictor_long_json_hash;
+
 extern char predictor_forever_json[];
 extern unsigned int predictor_forever_json_len;
+extern const char* predictor_forever_json_hash;
 
 #define safe_xgboost(call) {  \
   int err = (call); \
@@ -90,6 +95,16 @@ void ClPredictors::load_models_from_buffers()
         handles[predict_type::long_pred], predictor_long_json, predictor_long_json_len));
     safe_xgboost(XGBoosterLoadModelFromBuffer(
         handles[predict_type::forever_pred], predictor_forever_json, predictor_forever_json_len))
+}
+
+vector<std::string> ClPredictors::get_hashes() const
+{
+    vector<std::string> ret;
+    ret.push_back(string(predictor_short_json_hash));
+    ret.push_back(string(predictor_long_json_hash));
+    ret.push_back(string(predictor_forever_json_hash));
+
+    return ret;
 }
 
 void ClPredictors::set_up_input(

@@ -970,6 +970,13 @@ void ReduceDB::handle_predictors()
         predictors = new ClPredictors;
         if (solver->conf.pred_conf_location.empty()) {
             predictors->load_models_from_buffers();
+            if (solver->conf.verbosity) {
+                cout << "c [pred] predictor hashes: ";
+                for(const auto& h: predictors->get_hashes()) {
+                    cout << h << " ";
+                }
+                cout << endl;
+            }
         } else {
             predictors->load_models(
                 solver->conf.pred_conf_location + std::string("predictor_short.json"),
