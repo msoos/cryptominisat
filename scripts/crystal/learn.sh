@@ -59,7 +59,7 @@ function concat() {
         wait $pid2
     done
 
-    tar czvf classifiers-${dirname}.tar.gz ${dirname}
+    tar czvf ${dirname}.tar.gz ${dirname}
 }
 
 # best was: backto-cut1-5.0-cut2-30.0-limit-2000-est20-w0-xbmin50-xbmd6
