@@ -209,6 +209,6 @@ fi
 
 (
 cd "$FNAME-dir"
-../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --simdrat 1 --printsol 0 --predforever "../../src/predict/predictor_${myforever}.json" | tee cms-final-run.out
+../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --simdrat 1 --printsol 0 --predloc "../../src/predict/" | tee cms-final-run.out
 )
 exit
