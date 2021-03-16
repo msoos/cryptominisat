@@ -545,6 +545,10 @@ if __name__ == "__main__":
         print("ERROR: '%s' is not a file" % options.fname)
         exit(-1)
 
+    if options.tier is None:
+        print("ERROR: you must set --tier, exiting")
+        exit(-1)
+
     if options.name is None:
         print("Name was not set with --name, setting it to --tier, i.e. ", options.tier)
         options.name = options.tier
