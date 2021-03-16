@@ -212,7 +212,7 @@ class Learner:
         print("SQRT weight is set to ", options.sample_weight_sqrt)
         return weights
 
-    def one_classifier(self, features, to_predict, final):
+    def one_classifier(self, features, to_predict):
         print("-> Number of features  :", len(features))
         print("-> Number of datapoints:", self.df.shape)
         print("-> Predicting          :", to_predict)
@@ -300,7 +300,8 @@ class Learner:
             print(
                 "ERROR: You MUST give one of: tree/forest/svm/linear/bagging classifier")
             exit(-1)
-        if not options.only_final:
+        if options.gen_topfeats:
+            print("WARNING: Replacing normal forest/xgboost with top feature computation!!!")
             if options.regressor == "forest":
                 print("for TOP calculation, we are replacing the forest predictor!!!")
                 clf = sklearn.ensemble.RandomForestRegressor(
@@ -314,6 +315,9 @@ class Learner:
                     min_child_weight=options.min_child_weight_xgboost,
                     max_depth=options.xboost_max_depth,
                     missing=MISSING)
+            else:
+                print("Error: --topfeats only works with xgboost/forest")
+                exit(-1)
 
         del df
         sample_weights = self.get_sample_weights(X_train, y_train)
@@ -325,32 +329,29 @@ class Learner:
 
         print("Training finished. T: %-3.2f" % (time.time() - t))
 
-        if not final:
-            if mlflow_avail:
-                mlflow.log_param("features used", features)
-                # mlflow.log_metric("all features: ", train.columns.values.flatten().tolist())
-                mlflow.log_metric("train num rows", train.shape[0])
-                mlflow.log_metric("test num rows", test.shape[0])
+        if mlflow_avail:
+            mlflow.log_param("features used", features)
+            # mlflow.log_metric("all features: ", train.columns.values.flatten().tolist())
+            mlflow.log_metric("train num rows", train.shape[0])
+            mlflow.log_metric("test num rows", test.shape[0])
 
-            #mlflow.log_artifact("best_features", best_features)
+        if options.dot is not None:
+            if not options.regresspr == "tree":
+                print("ERROR: You cannot use the DOT function on non-trees")
+                exit(-1)
+
+            helper.output_to_classical_dot(
+                clf, features,
+                fname=options.dot + "-" + self.func_name)
+
+        if options.basedir and options.regressor == "xgboost":
+            booster = clf.get_booster()
+            fname = options.basedir + "/predictor_{name}.json".format(
+                name=options.name)
+            booster.save_model(fname)
+            print("==> Saved model to: ", fname)
         else:
-            if options.dot is not None:
-                if not options.regresspr == "tree":
-                    print("ERROR: You cannot use the DOT function on non-trees")
-                    exit(-1)
-
-                helper.output_to_classical_dot(
-                    clf, features,
-                    fname=options.dot + "-" + self.func_name)
-
-            if options.basedir and options.regressor == "xgboost":
-                booster = clf.get_booster()
-                fname = options.basedir + "/predictor_{name}.json".format(
-                    name=options.name)
-                booster.save_model(fname)
-                print("==> Saved model to: ", fname)
-            else:
-                print("WARNING: NOT writing code -- you must use xgboost and give dir for that")
+            print("WARNING: NOT writing code -- you must use xgboost and give dir for that")
 
 
         # print feature rankings
@@ -434,7 +435,7 @@ class Learner:
         else:
             features = helper.get_features(options.best_features_fname)
 
-        self.one_classifier(features, to_predict, final=options.only_final)
+        self.one_classifier(features, to_predict)
 
 def filter_nan(df):
     print("Making None into NaN...")
@@ -509,10 +510,8 @@ if __name__ == "__main__":
                         dest="only_perc", help="Only use this percentage of data")
 
     # final generator top/final
-    parser.add_argument("--final", default=False, action="store_true",
-                        dest="only_final", help="Only generate final predictor")
-    parser.add_argument("--top", default=None, type=int, metavar="TOPN",
-                        dest="top_num_features", help="Candidates are top N features for greedy selector")
+    parser.add_argument("--topfeats", default=False, action="store_true",
+                        dest="gen_topfeats", help="Only generate final predictor")
 
     # type of regressor
     parser.add_argument("--regressor", type=str, default="xgboost",
@@ -541,14 +540,6 @@ if __name__ == "__main__":
         print("ERROR: You must give the pandas file!")
         exit(-1)
 
-    if options.top_num_features and options.only_final:
-        print("Can't do both --top and --final")
-        exit(-1)
-
-    if options.top_num_features is None and not options.only_final:
-        print("You must have either --top features OR --final")
-        exit(-1)
-
     assert options.min_samples_split <= 1.0, "You must give min_samples_split that's smaller than 1.0"
     if not os.path.isfile(options.fname):
         print("ERROR: '%s' is not a file" % options.fname)
@@ -566,15 +557,11 @@ if __name__ == "__main__":
     #  Log all parameters
     # ------------
     if mlflow_avail:
-        mlflow.log_param("final", options.only_final)
-        if options.only_final:
-            mlflow.log_param("tier", options.tier)
-            mlflow.log_param("name", options.name)
-            mlflow.log_param("regressor", options.regressor)
-            mlflow.log_param("basedir", options.basedir)
-        else:
-            mlflow.log_param("top_num_features", options.top_num_features)
-
+        mlflow.log_param("gen_topfeats", options.gen_topfeats)
+        mlflow.log_param("tier", options.tier)
+        mlflow.log_param("name", options.name)
+        mlflow.log_param("regressor", options.regressor)
+        mlflow.log_param("basedir", options.basedir)
         mlflow.log_param("only_percentage", options.only_perc)
         mlflow.log_param("min_samples_split", options.min_samples_split)
         mlflow.log_param("tree_depth", options.tree_depth)

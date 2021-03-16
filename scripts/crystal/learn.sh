@@ -27,6 +27,7 @@ function concat() {
     dirname="${basename}-cut1-${cut1}-cut2-${cut2}-limit-${limit}-est${est}-w${w}-xbmin${xgboostminchild}-xbmd${xboostmaxdepth}"
 
     mkdir -p ${dirname}
+    rm -f ${dirname}/*
     git rev-parse HEAD > ${dirname}/out_git
     cat learn.sh >> ${dirname}/out_git
     md5sum *.dat >> ${dirname}/out_git
@@ -40,7 +41,7 @@ function concat() {
         /usr/bin/time --verbose -o "${dirname}/out_${tier}.timeout" \
         ../cldata_predict.py \
         ${tier}-comb-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat \
-        --tier ${tier} --final --regressor "xgboost" \
+        --tier ${tier} --regressor "xgboost" \
         --xgboostest ${est} --weight ${w} \
         --xgboostminchild $xgboostminchild --xboostmaxdepth=${xboostmaxdepth} \
         --basedir "${dirname}" \
