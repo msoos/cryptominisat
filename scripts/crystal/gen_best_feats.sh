@@ -26,7 +26,7 @@ do
     /usr/bin/time --verbose -o "${basename}/output_${tier}_${computed}computed.timeout" \
     ../cldata_predict.py "${tier}-comb-cut1-$cut1-cut2-$cut2-limit-${limit}.dat" \
     --tier ${tier} --regressor "xgboost" --only "$only" \
-    --features "${computed}_computed" > "${basename}/output_${tier}_${computed}computed-cut1-${cut1}-cut2-${cit2}"
+    --features "${computed}_computed" > "${basename}/output_${tier}_${computed}computed-cut1-${cut1}-cut2-${cut2}"
 
     echo "Done with ${tier}_${computed}computed"
 done
