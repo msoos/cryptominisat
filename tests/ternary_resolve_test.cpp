@@ -37,6 +37,7 @@ struct ternary_resolv : public ::testing::Test {
     {
         must_inter.store(false, std::memory_order_relaxed);
         SolverConf conf;
+        conf.ternary_max_create = 2.0;
         s = new Solver(&conf, &must_inter);
         s->new_vars(50);
         occsimp = s->occsimplifier;
