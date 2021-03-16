@@ -260,13 +260,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Cardinality
         , doFindCard(0)
 
-        #ifdef FINAL_PREDICTOR
-        //Predict system
-        , pred_conf_short("../../src/predict/predictor_short.json")
-        , pred_conf_long("../../src/predict/predictor_long.json")
-        , pred_conf_forever("../../src/predict/predictor_forever.json")
-        #endif
-
         //Var-replacer
         , doFindAndReplaceEqLits(true)
         , max_scc_depth (10000)

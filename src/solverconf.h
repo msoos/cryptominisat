@@ -406,9 +406,7 @@ class DLL_PUBLIC SolverConf
 
         #ifdef FINAL_PREDICTOR
         //Predictor system
-        std::string pred_conf_short;
-        std::string pred_conf_long;
-        std::string pred_conf_forever;
+        std::string pred_conf_location;
         #endif
 
         //Var-replacement

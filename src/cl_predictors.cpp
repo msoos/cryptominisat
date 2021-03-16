@@ -25,6 +25,12 @@ THE SOFTWARE.
 #include "solver.h"
 #include <cmath>
 #define MISSING_VAL -1.0f
+extern char predictor_short_json[];
+extern unsigned int predictor_short_json_len;
+extern char predictor_long_json[];
+extern unsigned int predictor_long_json_len;
+extern char predictor_forever_json[];
+extern unsigned int predictor_forever_json_len;
 
 #define safe_xgboost(call) {  \
   int err = (call); \
@@ -74,6 +80,16 @@ void ClPredictors::load_models(const std::string& short_fname,
 //     safe_xgboost(XGBoosterGetNumFeature(handles[predict_type::forever_pred], &num_features));
 //     cout << "num_features: " << num_features << endl;
 //     assert(num_features == PRED_COLS);
+}
+
+void ClPredictors::load_models_from_buffers()
+{
+    safe_xgboost(XGBoosterLoadModelFromBuffer(
+        handles[predict_type::short_pred], predictor_short_json, predictor_short_json_len));
+    safe_xgboost(XGBoosterLoadModelFromBuffer(
+        handles[predict_type::long_pred], predictor_long_json, predictor_long_json_len));
+    safe_xgboost(XGBoosterLoadModelFromBuffer(
+        handles[predict_type::forever_pred], predictor_forever_json, predictor_forever_json_len))
 }
 
 void ClPredictors::set_up_input(

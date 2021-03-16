@@ -75,6 +75,32 @@ if (SQLITE3_FOUND)
     add_custom_target(tablestruct ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp)
 endif()
 
+if (FINAL_PREDICTOR)
+    add_custom_command(
+        OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/pred_short.cpp
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMAND ${PYTHON_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py src/predict/predictor_short.json ${CMAKE_CURRENT_BINARY_DIR}/pred_short.cpp
+        DEPENDS ${CMAKE_SOURCE_DIR}/src/predict/predictor_short.json
+    )
+    add_custom_target(pred_short ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/pred_short.cpp)
+
+    add_custom_command(
+        OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/pred_long.cpp
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMAND ${PYTHON_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py src/predict/predictor_long.json ${CMAKE_CURRENT_BINARY_DIR}/pred_long.cpp
+        DEPENDS ${CMAKE_SOURCE_DIR}/src/predict/predictor_long.json
+    )
+    add_custom_target(pred_long ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/pred_long.cpp)
+
+    add_custom_command(
+        OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/pred_forever.cpp
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMAND ${PYTHON_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py src/predict/predictor_forever.json ${CMAKE_CURRENT_BINARY_DIR}/pred_forever.cpp
+        DEPENDS ${CMAKE_SOURCE_DIR}/src/predict/predictor_forever.json
+    )
+    add_custom_target(pred_forever ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/pred_forever.cpp)
+endif()
+
 set(cryptoms_lib_files
     cnf.cpp
     drat.cpp
@@ -202,6 +228,14 @@ if (SQLITE3_FOUND)
     SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${SQLITE3_LIBRARIES})
 endif ()
 
+if (FINAL_PREDICTOR)
+    SET(cryptoms_lib_files ${cryptoms_lib_files}
+        ${CMAKE_CURRENT_BINARY_DIR}/pred_short.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/pred_long.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/pred_forever.cpp
+    )
+endif()
+
 add_library(cryptominisat5
     ${cryptoms_lib_files}
     cryptominisat.cpp
@@ -223,6 +257,14 @@ GENERATE_EXPORT_HEADER(cryptominisat5
 if (SQLITE3_FOUND AND STATS)
     add_dependencies(cryptominisat5
         tablestruct
+    )
+endif()
+
+if (FINAL_PREDICTOR)
+    add_dependencies(cryptominisat5
+        pred_short
+        pred_long
+        pred_forever
     )
 endif()
 

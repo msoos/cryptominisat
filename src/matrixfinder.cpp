@@ -356,7 +356,7 @@ uint32_t MatrixFinder::setMatrixes()
 
         //Over the max number of matrixes
         if (realMatrixNum >= solver->conf.gaussconf.max_num_matrices) {
-            if (solver->conf.verbosity && solver->conf.verbosity >= 2) {
+            if (solver->conf.verbosity && solver->conf.verbosity >= 3) {
                 cout << "c [matrix] above max number of matrixes -> set usage to NO" << endl;
             }
             use_matrix = false;

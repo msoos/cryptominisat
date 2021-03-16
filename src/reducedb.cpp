@@ -968,10 +968,14 @@ void ReduceDB::handle_predictors()
     num_times_pred_called++;
     if (predictors == NULL) {
         predictors = new ClPredictors;
-        predictors->load_models(
-            solver->conf.pred_conf_short,
-            solver->conf.pred_conf_long,
-            solver->conf.pred_conf_forever);
+        if (solver->conf.pred_conf_location.empty()) {
+            predictors->load_models_from_buffers();
+        } else {
+            predictors->load_models(
+                solver->conf.pred_conf_location + std::string("predictor_short.json"),
+                solver->conf.pred_conf_location + std::string("predictor_long.json"),
+                solver->conf.pred_conf_location + std::string("predictor_forever.json"));
+        }
     }
 
     assert(delayed_clause_free.empty());

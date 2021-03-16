@@ -344,12 +344,8 @@ void Main::add_supported_options()
     #ifdef FINAL_PREDICTOR
     po::options_description predictOptions("Predict options");
     predictOptions.add_options()
-    ("predshort", po::value(&conf.pred_conf_short)->default_value(conf.pred_conf_short)
-        , "Predictor SHORT config to use")
-    ("predlong", po::value(&conf.pred_conf_long)->default_value(conf.pred_conf_long)
-        , "Predictor LONG config to use")
-    ("predforever", po::value(&conf.pred_conf_forever)->default_value(conf.pred_conf_forever)
-        , "Predictor FOREVER config to use")
+    ("predloc", po::value(&conf.pred_conf_location)->default_value(conf.pred_conf_location)
+        , "Directory where predictor_short.json, predictor_long.json, predictor_forever.json are")
 
     //size
     ("predshortmult", po::value(&conf.pred_short_size_mult)->default_value(conf.pred_short_size_mult)

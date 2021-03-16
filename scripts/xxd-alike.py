@@ -27,7 +27,11 @@ PY3 = sys.version_info.major == 3
 
 input_name = sys.argv[1]
 output_path = sys.argv[2]
-output_name = input_name.replace('.', '_')
+last_dash = input_name.rfind("/")
+if last_dash != -1:
+    output_name = input_name[last_dash+1:].replace('.', '_')
+else:
+    output_name = input_name.replace('.', '_')
 
 
 # In python 3, opening file as rb will return bytes and iteration is per byte
