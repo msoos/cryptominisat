@@ -978,10 +978,21 @@ void ReduceDB::handle_predictors()
                 cout << endl;
             }
         } else {
+            vector<std::string> locations;
+            locations.push_back(solver->conf.pred_conf_location + std::string("predictor_short.json"));
+            locations.push_back(solver->conf.pred_conf_location + std::string("predictor_long.json"));
+            locations.push_back(solver->conf.pred_conf_location + std::string("predictor_forever.json"));
             predictors->load_models(
-                solver->conf.pred_conf_location + std::string("predictor_short.json"),
-                solver->conf.pred_conf_location + std::string("predictor_long.json"),
-                solver->conf.pred_conf_location + std::string("predictor_forever.json"));
+                locations[0],
+                locations[1],
+                locations[2]);
+            if (solver->conf.verbosity) {
+                cout << "c [pred] loaded predictors from: ";
+                for(const auto& l: locations) {
+                    cout << l << " ";
+                }
+                cout << endl;
+            }
         }
     }
 
