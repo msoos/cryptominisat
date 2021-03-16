@@ -558,7 +558,7 @@ inline void Searcher::watch_based_learnt_minim()
                 permDiff[imp.var()] = MYFLAG - 1;
             }
         } else {
-            break;
+            continue;
         }
     }
     uint32_t l = learnt_clause.size() - 1;
@@ -818,7 +818,9 @@ void Searcher::analyze_conflict(
     glue = std::numeric_limits<uint32_t>::max();
     if (learnt_clause.size() <= conf.max_size_more_minim) {
         glue = calc_glue(learnt_clause);
-        if (glue <= conf.max_glue_more_minim) {
+        if (glue <= conf.max_glue_more_minim
+            && learnt_clause.size() <= 30
+        ) {
             minimize_using_permdiff();
         }
     }
