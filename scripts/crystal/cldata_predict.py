@@ -473,7 +473,7 @@ if __name__ == "__main__":
                         dest="verbose", help="Print more output")
     parser.add_argument("--printfeat", action="store_true", default=False,
                         dest="print_features", help="Print features")
-    parser.add_argument("--features", default="best_only", type=str,
+    parser.add_argument("--features", default="best_only", type=str, dest="features",
                         help="What features to use: all_computed, best_only, best_also, no_computed ")
     parser.add_argument("--bestfeatfile", type=str, default="../../scripts/crystal/best_features-rdb0-only.txt",
                         dest="best_features_fname", help="Name and position of best features file that lists the best features in order")
