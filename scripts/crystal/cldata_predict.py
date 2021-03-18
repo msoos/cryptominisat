@@ -32,7 +32,7 @@ import pickle
 import sklearn
 import sklearn.svm
 import sklearn.tree
-from sklearn.preprocessing import StandardScaler
+import sklearn.preprocessing
 import numpy as np
 import sklearn.metrics
 import matplotlib.pyplot as plt
