@@ -389,7 +389,7 @@ class Learner:
         if options.dump_example_data:
             with open("example-data.dat", "wb") as f:
                 pickle.dump(test[features+[to_predict]], f)
-            self.dump_ml_test_data(test, "../ml_perf_test.txt-%s" % options.tier, to_predict)
+            self.dump_ml_test_data(test, "../ml_perf_test.txt-%s" % self.tier, to_predict)
             print("Example data dumped")
 
         # Calculate predicted value for the original dataframe
@@ -417,9 +417,9 @@ class Learner:
 
         # get to_predict
         if options.topperc:
-            to_predict = "x.used_later_{name}_topperc".format(name=options.tier)
+            to_predict = "x.used_later_{name}_topperc".format(name=self.tier)
         else:
-            to_predict = "x.used_later_{name}".format(name=options.tier)
+            to_predict = "x.used_later_{name}".format(name=self.tier)
 
         if options.features != "best_only":
             features = list(self.df)
