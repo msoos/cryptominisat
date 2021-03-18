@@ -420,7 +420,7 @@ def calc_min_split_point(df, min_samples_split):
 
 
 def error_format(error):
-    if error == -1:
+    if error is None:
         return "XXX"
     else:
         return "{0:<2.2E}".format(error)
@@ -436,34 +436,47 @@ def calc_regression_error(data, features, to_predict, clf, toprint,
         return None
     y_pred = clf.predict(X_data)
     main_error = sklearn.metrics.mean_squared_error(y_data, y_pred)
-    print("Mean squared error is: " + error_format(main_error))
+    print("Mean squared error is: %9s" % error_format(main_error))
+    median_absolute_error = sklearn.metrics.median_absolute_error(y_data, y_pred)
+    print("Median abs error is  : %9s" % error_format(median_absolute_error))
 
+    # use distrib
     for start,end in [(0,10), (1,10), (10, 100), (100, 1000), (1000,10000), (10000, 1000000)]:
-        x = "--> Strata  %8d <= %34s < %8d " % (start, to_predict, end)
+        x = "--> Strata  %6d <= %21s < %8d " % (start, to_predict, end)
         myfilt = data[(data[to_predict] >= start) & (data[to_predict] < end)]
         X_data = myfilt[features]
         y_data = myfilt[to_predict]
-        y = " -- elements: {:20}".format(str(X_data.shape))
+        y = " -- elems: {:12}".format(str(X_data.shape))
         if myfilt.shape[0] <= 1:
-            #print("Cannot calculate regression error, too few elements")
-            error = -1
+            msqe = None
+            med_err = None
+            mean_err = None
         else:
             y_pred = clf.predict(X_data)
-            error = sklearn.metrics.mean_squared_error(y_data, y_pred)
-        print("%s %s msqe: " % (x, y) + error_format(error))
+            msqe = sklearn.metrics.mean_squared_error(y_data, y_pred)
+            med_abs_err = sklearn.metrics.median_absolute_error(y_data, y_pred)
+            mean_err = (y_data - y_pred).sum()/len(y_data)
+        print("{} {}   msqe: {:9s}   mabse: {:9s} abs: {:9s}".format(
+            x, y,  error_format(msqe), error_format(med_abs_err), error_format(mean_err)))
 
+    # glue distrib
     for start,end in [(0,3), (3,8), (8, 15), (15, 25), (25,50), (50, 100), (100, 1000000)]:
-        x = "--> Strata  %8d <= %34s < %8d " % (start, "rdb0.glue", end)
+        x = "--> Strata  %6d <= %21s < %8d " % (start, "rdb0.glue", end)
         myfilt = data[(data["rdb0.glue"] >= start) & (data["rdb0.glue"] < end)]
         X_data = myfilt[features]
         y_data = myfilt[to_predict]
-        y = " -- elements: {:20}".format(str(X_data.shape))
+        y = " -- elems: {:12}".format(str(X_data.shape))
         if myfilt.shape[0] <= 1:
-            error = -1
+            msqe = None
+            med_err = None
+            mean_err = None
         else:
             y_pred = clf.predict(X_data)
-            error = sklearn.metrics.mean_squared_error(y_data, y_pred)
-        print("%s %s msqe: " % (x, y) + error_format(error))
+            msqe = sklearn.metrics.mean_squared_error(y_data, y_pred)
+            med_abs_err = sklearn.metrics.median_absolute_error(y_data, y_pred)
+            mean_err = (y_data - y_pred).sum()/len(y_data)
+        print("{} {}   msqe: {:9s}   mabse: {:9s} abs: {:9s}".format(
+            x, y,  error_format(msqe), error_format(med_abs_err), error_format(mean_err)))
 
     return main_error
 
@@ -631,6 +644,7 @@ def delete_none_features(df):
         del df["sum_cl_use.last_confl_used"]
 
 def cldata_add_poly_features(df, features):
+    print("Adding polynomial features..")
     ret = list(features)
     for feat in features:
         poly = "({s}*{s})".format(s=feat)
