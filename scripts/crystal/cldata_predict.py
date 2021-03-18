@@ -43,7 +43,6 @@ import xgboost as xgb
 import ast
 import math
 import functools
-import crystalcodegen as ccg
 try:
     import mlflow
 except ImportError:

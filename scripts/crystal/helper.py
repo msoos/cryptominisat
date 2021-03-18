@@ -32,6 +32,7 @@ import time
 import os.path
 import sqlite3
 import functools
+import crystalcodegen as ccg
 try:
     from termcolor import cprint
 except ImportError:
@@ -599,10 +600,10 @@ def plot_feature_importances(importances, indices, myrange, std, features):
         plt.xlim([-1, myrange])
 
 
-def add_features_from_fname(df, features_fname):
+def add_features_from_fname(df, features_fname, verbose=False):
     print("Adding features...")
-    helper.cldata_add_minimum_computed_features(df, options.verbose)
-    best_features = helper.get_features(features_fname)
+    cldata_add_minimum_computed_features(df, verbose)
+    best_features = get_features(features_fname)
     for feat in best_features:
         toeval = ccg.to_source(ast.parse(feat))
         print("Adding feature %s as eval %s" % (feat, toeval))
@@ -628,6 +629,15 @@ def delete_none_features(df):
 
     if "sum_cl_use.last_confl_used" in list(df):
         del df["sum_cl_use.last_confl_used"]
+
+def cldata_add_poly_features(df, features):
+    ret = list(features)
+    for feat in features:
+        poly = "({s}*{s})".format(s=feat)
+        df[poly] = df[feat]*df[feat]
+        ret.append(poly)
+
+    return ret
 
 def cldata_add_minimum_computed_features(df, verbose):
     divide = functools.partial(helper_divide, df=df, features=list(df), verb=verbose)
