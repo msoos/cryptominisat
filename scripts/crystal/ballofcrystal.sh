@@ -120,9 +120,8 @@ fi
 # Obtain dynamic data in SQLite and DRAT info
 ########################
 cd "$FNAME-dir"
-cms_opts="--printsol 0"
 # for var, we need: --bva 0 --scc 0
-../cryptominisat5 ${EXTRA_CMS_OPTS} $cms_opts --sqlitedbover 1 --cldatadumpratio "$RATIO" --cllockdatagen 0.5 --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
+../cryptominisat5 ${EXTRA_CMS_OPTS} --sqlitedbover 1 --cldatadumpratio "$RATIO" --cllockdatagen 0.5 --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
 grep "c conflicts" cms-pred-run.out
 
 ########################
@@ -177,9 +176,9 @@ cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 #../vardata_predict.py vardata-comb --final -q 20 --basedir ../src/predict/ --depth 7 --tree
 
 rm -f .*.json
-../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier short --final --xgboost --basedir "." --bestfeatfile $bestf_short | tee short_pred_out
-../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier long --final --xgboost --basedir "." --bestfeatfile $bestf | tee long_pred_out
-../cldata_predict.py "${FNAMEOUT}-min.db-cldata-${myforever}-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier ${myforever} --final --xgboost --basedir "." --bestfeatfile $bestf | tee ${myforever}_pred_out
+../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier short --features best_only --regressor xgboost --basedir "." --bestfeatfile $bestf_short | tee short_pred_out
+../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier long --features best_only --regressor xgboost --basedir "." --bestfeatfile $bestf | tee long_pred_out
+../cldata_predict.py "${FNAMEOUT}-min.db-cldata-${myforever}-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier ${myforever} --features best_only --regressor xgboost --basedir "." --bestfeatfile $bestf | tee ${myforever}_pred_out
 
 ############################
 # To get feature importances
@@ -199,7 +198,7 @@ rm -f .*.json
 ########################
 # Build final CryptoMiniSat with the classifier
 ########################
-if [[ SANITIZE -eq 1 ]]; then
+if [[ $SANITIZE -eq 1 ]]; then
     ./build_final_predictor_sanitize.sh
 else
     ./build_final_predictor.sh
@@ -207,6 +206,6 @@ fi
 
 (
 cd "$FNAME-dir"
-../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --simdrat 1 --printsol 0 --predloc "." | tee cms-final-run.out
+../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --simdrat 1 --printsol 0 --predloc "./" | tee cms-final-run.out
 )
 exit
