@@ -598,6 +598,19 @@ def plot_feature_importances(importances, indices, myrange, std, features):
                                     for x in indices], rotation=45)
         plt.xlim([-1, myrange])
 
+def make_missing_into_nan(df):
+    print("Making None into NaN...")
+    def make_none_into_nan(x):
+        if x is None:
+            return np.nan
+        else:
+            return x
+
+    for col in list(df):
+        if type(None) in df[col].apply(type).unique():
+            df[col] = df[col].apply(make_none_into_nan)
+    print("Done.")
+
 def delete_none_features(df):
     if "sum_cl_use.first_confl_used" in list(df):
         del df["sum_cl_use.first_confl_used"]

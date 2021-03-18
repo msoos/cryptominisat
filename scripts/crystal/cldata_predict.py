@@ -425,19 +425,6 @@ class Learner:
 
         self.one_classifier(features, to_predict)
 
-def filter_nan(df):
-    print("Making None into NaN...")
-    def make_none_into_nan(x):
-        if x is None:
-            return np.nan
-        else:
-            return x
-
-    for col in list(df):
-        if type(None) in df[col].apply(type).unique():
-            df[col] = df[col].apply(make_none_into_nan)
-    print("Done filtering")
-
 
 def add_best_features(df):
     print("Adding features...")
@@ -585,7 +572,7 @@ if __name__ == "__main__":
     df = pd.DataFrame(df_tmp)
     del df_tmp
     print("-> Number of datapoints after applying '--only':", df.shape)
-    filter_nan(df)
+    helper.make_missing_into_nan(df)
 
     # feature manipulation
     helper.delete_none_features(df)
