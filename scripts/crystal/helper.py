@@ -615,12 +615,11 @@ def cldata_add_minimum_computed_features(df, verbose):
     divide("rdb0.sum_props_per_time_ranking", "rdb0_common.tot_cls_in_db",
            name="rdb0.sum_props_per_time_ranking_rel")
 
-    if "rdb0_common.num_bin_irred_cls" in df:
-        df["rdb0_common.tot_irred_cls"] = df["rdb0_common.num_bin_irred_cls"] + df["rdb0_common.num_long_irred_cls"]
-        divide("rdb0_common.tot_irred_cls", "rdb0_common.num_vars")
-        divide("rdb0_common.num_long_irred_cls", "rdb0_common.num_long_irred_cls_lits")
-        divide("rdb0_common.num_long_irred_cls_lits", "rdb0_common.num_vars")
-        divide("rdb0_common.num_long_irred_cls", "rdb0_common.num_vars")
+    df["rdb0_common.tot_irred_cls"] = df["rdb0_common.num_bin_irred_cls"] + df["rdb0_common.num_long_irred_cls"]
+    divide("rdb0_common.tot_irred_cls", "rdb0_common.num_vars")
+    divide("rdb0_common.num_long_irred_cls", "rdb0_common.num_long_irred_cls_lits")
+    divide("rdb0_common.num_long_irred_cls_lits", "rdb0_common.num_vars")
+    divide("rdb0_common.num_long_irred_cls", "rdb0_common.num_vars")
 
 
 def cldata_add_computed_features(df, verbose):
