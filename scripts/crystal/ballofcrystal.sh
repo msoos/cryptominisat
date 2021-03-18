@@ -120,7 +120,7 @@ fi
 # Obtain dynamic data in SQLite and DRAT info
 ########################
 cd "$FNAME-dir"
-cms_opts="--printsol 0 --distillmaxm 10 --occredmax 50 --branchstr vsidsx_once+maple1+maple2+vsids2+maple1+maple2+vsidsx --ternkeep 5"
+cms_opts="--printsol 0"
 # for var, we need: --bva 0 --scc 0
 ../cryptominisat5 ${EXTRA_CMS_OPTS} $cms_opts --sqlitedbover 1 --cldatadumpratio "$RATIO" --cllockdatagen 0.5 --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
 grep "c conflicts" cms-pred-run.out
