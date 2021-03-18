@@ -176,21 +176,8 @@ class Learner:
         test.reset_index(inplace=True)
         for i in range(test.shape[0]):
             towrite = ""
-            towrite += "%s " % test["rdb0.props_made"].iloc[i]
-            towrite += "%s " % test["cl.orig_glue"].iloc[i]
-            towrite += "%s " % test["rdb0.glue"].iloc[i]
-            towrite += "%s " % test["cl.glue_before_minim"].iloc[i]
-            #towrite += "%s " % test["rdb0.sum_uip1_used"].iloc[i]
-            towrite += "%s " % test["cl.num_antecedents"].iloc[i]
-            towrite += "%s " % test["cl.num_total_lits_antecedents"].iloc[i]
-            towrite += "%s " % test["rdb0.uip1_used"].iloc[i]
-            towrite += "%s " % test["cl.numResolutionsHistLT_avg"].iloc[i]
-            towrite += "%s " % test["cl.glueHist_longterm_avg"].iloc[i]
-            towrite += "%s " % test["cl.conflSizeHistlt_avg"].iloc[i]
-            towrite += "%s " % test["cl.branchDepthHistQueue_avg"].iloc[i]
-            towrite += "%s " % test["rdb0.act_ranking_rel"].iloc[i]
-            towrite += "%s " % test["rdb0.size"].iloc[i]
-            towrite += "%s " % test["cl.time_inside_solver"].iloc[i]
+            towrite += "%s " % test[TODO_go_through_all_features_here].iloc[i]
+            assert False, "not implemented, must put all features here in a loop"
             towrite += "%s " % test[to_predict].iloc[i]
             towrite += "\n"
             f.write(towrite)
