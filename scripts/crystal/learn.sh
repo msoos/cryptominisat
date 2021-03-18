@@ -46,6 +46,7 @@ function concat() {
         --xgboostminchild $xgboostminchild --xboostmaxdepth=${xboostmaxdepth} \
         --basedir "${dirname}" \
         --features "best_only" \
+        --xgboostsubsample "$xgboostsubsample" \
         --bestfeatfile ${bestf} 2>&1 | tee "${dirname}/out_${tier}" &
         pid=$!
         echo "PID here is $pid"

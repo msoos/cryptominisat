@@ -274,6 +274,7 @@ class Learner:
                 missing=MISSING,
                 min_child_weight=options.min_child_weight_xgboost,
                 max_depth=options.xboost_max_depth,
+                subsample=options.xgboost_subsample,
                 n_estimators=options.n_estimators_xgboost)
 
         if options.regressor == "tree":
@@ -522,6 +523,8 @@ if __name__ == "__main__":
                         dest="min_child_weight_xgboost", help="Number of elements in the leaf to split it in xgboost")
     parser.add_argument("--xboostmaxdepth", default=6, type=int,
                         dest="xboost_max_depth", help="Max depth of xboost trees")
+    parser.add_argument("--xgboostsubsample", default=1.0, type=float,
+                        dest="xgboost_subsample", help="Subsample xgboost on each iteration")
     parser.add_argument("--weight", default=0.0, type=float,
                         dest="sample_weight_sqrt", help="The SQRT factor for weights. 0 = disable sample weights. Larger number (e.g. 100) will be basically like 0, while e.g. 1 will skew things a _alot_ towards higher values having more weights")
 
