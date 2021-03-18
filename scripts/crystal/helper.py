@@ -598,6 +598,17 @@ def plot_feature_importances(importances, indices, myrange, std, features):
                                     for x in indices], rotation=45)
         plt.xlim([-1, myrange])
 
+
+def add_features_from_fname(df, features_fname):
+    print("Adding features...")
+    helper.cldata_add_minimum_computed_features(df, options.verbose)
+    best_features = helper.get_features(features_fname)
+    for feat in best_features:
+        toeval = ccg.to_source(ast.parse(feat))
+        print("Adding feature %s as eval %s" % (feat, toeval))
+        df[feat] = eval(toeval)
+
+
 def make_missing_into_nan(df):
     print("Making None into NaN...")
     def make_none_into_nan(x):

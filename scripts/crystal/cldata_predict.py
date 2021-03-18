@@ -426,16 +426,6 @@ class Learner:
         self.one_classifier(features, to_predict)
 
 
-def add_best_features(df):
-    print("Adding features...")
-    helper.cldata_add_minimum_computed_features(df, options.verbose)
-    best_features = helper.get_features(options.best_features_fname)
-    for feat in best_features:
-        toeval = ccg.to_source(ast.parse(feat))
-        print("Adding feature %s as eval %s" % (feat, toeval))
-        df[feat] = eval(toeval)
-
-
 if __name__ == "__main__":
     usage = "usage: %(prog)s [options] file.pandas"
     parser = argparse.ArgumentParser(usage=usage)
@@ -530,8 +520,8 @@ if __name__ == "__main__":
         print("Name was not set with --name, setting it to --tier, i.e. ", options.tier)
         options.name = options.tier
 
-    if options.best_features_fname is None and not options.top_num_features:
-        print("You must give best features filename")
+    if options.best_features_fname is None and "best" in options.features:
+        print("You must give best features filename or we cannot add best features")
         exit(-1)
 
     # ------------
@@ -579,7 +569,7 @@ if __name__ == "__main__":
     if options.features =="all_computed":
         helper.cldata_add_computed_features(df, options.verbose)
     elif options.features == "best_only" or options.features == "best_also":
-        add_best_features(df)
+        helper.add_features_from_fname(df, options.best_features_fname)
     elif options.features == "no_computed":
         helper.cldata_add_minimum_computed_features(df, options.verbose)
     else:
