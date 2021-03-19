@@ -489,7 +489,7 @@ ELSE ()
     MESSAGE(STATUS "Not compiling detailed statistics. The system is faster without them")
 ENDIF ()
 
-if (STATS_NEEDED OR FINAL_PREDICTOR)
+if (STATS_NEEDED)
     find_package(louvain_communities CONFIG)
     if (louvain_communities_FOUND)
         message(STATUS "Found Community Louvain library")
