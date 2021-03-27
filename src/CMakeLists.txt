@@ -21,6 +21,7 @@
 include_directories( ${PROJECT_SOURCE_DIR} )
 include_directories( ${BOSPHORUS_INCLUDE_DIRS} )
 include_directories( ${LOUVAIN_COMMUNITIES_INCLUDE_DIRS} )
+include_directories( SYSTEM ${MPI_INCLUDE_PATH} )
 
 if (NOT WIN32)
     add_cxx_flag_if_supported("-Wno-bitfield-constant-conversion")
@@ -393,9 +394,9 @@ if (EMSCRIPTEN)
     )
 
     set_target_properties(cryptominisat5_simple-bin
-    PROPERTIES
-    OUTPUT_NAME cryptominisat5_simple
-    LINK_FLAGS "-s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'  -s LINKABLE=1 -s EXPORT_ALL=1"
+        PROPERTIES
+        OUTPUT_NAME cryptominisat5_simple
+        LINK_FLAGS "-s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'  -s LINKABLE=1 -s EXPORT_ALL=1"
     )
 
     SET_SOURCE_FILES_PROPERTIES(main_emscripten.cpp
@@ -408,6 +409,12 @@ else()
     )
 endif()
 
+if (MPI_FOUND)
+    add_executable(cryptominisat5_mpi-bin
+        main_mpi.cpp
+    )
+endif()
+
 set(cryptoms_exec_link_libs
     cryptominisat5
 )
@@ -416,10 +423,15 @@ IF (ZLIB_FOUND)
     SET(cryptoms_exec_link_libs ${cryptoms_exec_link_libs} ${ZLIB_LIBRARY})
 ENDIF()
 
+
+##########################
+### Deal with binaries
+##########################
 set_target_properties(cryptominisat5_simple-bin PROPERTIES
     OUTPUT_NAME cryptominisat5_simple
     RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
-    INSTALL_RPATH_USE_LINK_PATH TRUE)
+    INSTALL_RPATH_USE_LINK_PATH TRUE
+)
 target_link_libraries(cryptominisat5_simple-bin
     ${cryptoms_exec_link_libs}
 )
@@ -428,6 +440,23 @@ install(TARGETS cryptominisat5_simple-bin
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5_simple")
+
+if (MPI_FOUND)
+    set_target_properties(cryptominisat5_mpi-bin PROPERTIES
+        OUTPUT_NAME cryptominisat5_mpi
+        RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
+        INSTALL_RPATH_USE_LINK_PATH TRUE
+    )
+    target_link_libraries(cryptominisat5_mpi-bin
+        ${cryptoms_exec_link_libs}
+        ${MPI_C_LIBRARIES}
+    )
+    install(TARGETS cryptominisat5_mpi-bin
+        # EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+    SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5_mpi")
+endif()
 
 if (NOT ONLY_SIMPLE)
     set_target_properties(cryptominisat5-bin PROPERTIES

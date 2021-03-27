@@ -29,18 +29,12 @@ using std::vector;
 
 using namespace CMSat;
 
-DataSyncServer::DataSyncServer() :
-    ok(true)
-    , sendData(NULL)
-    , nVars(0)
-    , recvBinData(0)
-    , sentBinData(0)
-    , numGotPacket(0)
-    , lastSendNumGotPacket(0)
+DataSyncServer::DataSyncServer()
 {
     int err;
     err = MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
     assert(err == MPI_SUCCESS);
+
     sendRequests.resize(mpiSize);
     sendRequestsFinished.resize(mpiSize, true);
 
@@ -54,11 +48,12 @@ DataSyncServer::DataSyncServer() :
     assert(mpiRank == 0);
 
     std::cout << "c MPI server says -- mpiSize:" << mpiSize << std::endl;
-
     assert(sizeof(unsigned) == sizeof(uint32_t));
 }
 
-bool DataSyncServer::syncFromMPI()
+
+//Tag of messsage "0"
+void DataSyncServer::syncFromMPI()
 {
     int err;
     MPI_Status status;
@@ -66,16 +61,21 @@ bool DataSyncServer::syncFromMPI()
     int count;
     uint32_t thisRecvBinData = 0;
 
+    //Check for message
     err = MPI_Iprobe(MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &flag, &status);
     assert(err == MPI_SUCCESS);
-    if (flag == false) return true;
+    if (flag == false) {
+        return;
+    }
 
+    //Get message size
     err = MPI_Get_count(&status, MPI_UNSIGNED, &count);
     assert(err == MPI_SUCCESS);
     #ifdef VERBOSE_DEBUG_MPI_SENDRCV
     std::cout << "-->> MPI Server Received " << count << " uint32_t-s" << std::endl;
     #endif
 
+    //Get message
     uint32_t* buf = new uint32_t[count];
     err = MPI_Recv((unsigned*)buf, count, MPI_UNSIGNED, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &status);
     assert(err == MPI_SUCCESS);
@@ -85,14 +85,9 @@ bool DataSyncServer::syncFromMPI()
     #endif
 
     int at = 0;
-    if (nVars == 0) {
-        nVars = buf[at];
-        value.resize(nVars, l_Undef);
-        bins.resize(nVars*2);
-        syncMPIFinish.resize(nVars*2, 0);
-    }
+    assert(nVars == buf[at]); //the first uint32_t is the number of bytes, always
 
-    //Unit
+    //Sync all units, starts with nVars
     assert(nVars == buf[at]);
     at++;
     for (uint32_t var = 0; var < nVars; var++, at++) {
@@ -107,11 +102,11 @@ bool DataSyncServer::syncFromMPI()
             #ifdef VERBOSE_DEBUG_MPI_SENDRCV
             std::cout << "-->> MPI Server solver FALSE" << std::endl;
             #endif
-            goto end;
         }
     }
 
-    //Binary
+    //Sync all binaries, starts with nVars*2
+    //for each Lit, there is SIZE of elements that follow, then the elements
     assert(buf[at] == nVars*2);
     at++;
     for (uint32_t wsLit = 0; wsLit < nVars*2; wsLit++) {
@@ -131,27 +126,31 @@ bool DataSyncServer::syncFromMPI()
     std::cout << "-->> MPI Server Received " << thisRecvTriData << " tris" << std::endl;
     #endif
 
-    end:
     delete[] buf;
     numGotPacket++;
-    return ok;
 }
 
 void DataSyncServer::addOneBinToOthers(const Lit lit1, const Lit lit2)
 {
     assert(lit1 < lit2);
 
+    //check if binary is already known
     vector<Lit>& thisBins = bins[(~lit1).toInt()];
     for (vector<Lit>::const_iterator it = thisBins.begin(), end = thisBins.end(); it != end; ++it) {
-        if (*it == lit2) return;
+        if (*it == lit2) {
+            return;
+        }
     }
 
+    //binary not already known
     thisBins.push_back(lit2);
 }
 
 void DataSyncServer::sendDataToAll()
 {
     int err;
+
+    //Something to send, then send it.
     if (sendData != NULL) {
         int numFinished = 0;
         for (int i = 1; i < mpiSize; i++) {
@@ -160,10 +159,10 @@ void DataSyncServer::sendDataToAll()
                 continue;
             }
             MPI_Status status;
-            int flag;
-            err = MPI_Test(&(sendRequests[i]), &flag, &status);
+            int op_completed;
+            err = MPI_Test(&(sendRequests[i]), &op_completed, &status);
             assert(err == MPI_SUCCESS);
-            if (flag == true) {
+            if (op_completed) {
                 err = MPI_Request_free(&(sendRequests[i]));
                 assert(err == MPI_SUCCESS);
                 sendRequestsFinished[i] = true;
@@ -173,11 +172,14 @@ void DataSyncServer::sendDataToAll()
                 #endif
             }
         }
-        if (numFinished != mpiSize-1) return;
+        if (numFinished != mpiSize-1) {
+            return;
+        }
         delete sendData;
         sendData = NULL;
     }
 
+    //Set up units. First, the nVars, then the values
     uint32_t thisSentBinData = 0;
     vector<uint32_t> data;
     data.push_back((uint32_t)nVars);
@@ -185,9 +187,10 @@ void DataSyncServer::sendDataToAll()
         data.push_back(toInt(value[var]));
     }
 
-    data.push_back((uint32_t)nVars*2);
 
-    //Binaries
+
+    //Binaries. First, the 2*nVars, then the list sizes, then the data.
+    data.push_back((uint32_t)nVars*2);
     uint32_t at = 0;
     for(vector<vector<Lit> >::const_iterator it = bins.begin(), end = bins.end(); it != end; ++it, at++) {
         const vector<Lit>& binSet = *it;
@@ -217,41 +220,122 @@ void DataSyncServer::sendDataToAll()
     lastSendNumGotPacket= numGotPacket;
 }
 
-void DataSyncServer::forwardNeedToInterrupt()
+
+//Tag of message "1"
+void DataSyncServer::check_interrupt_and_forward_to_all()
 {
     int err;
     MPI_Status status;
     int flag;
 
+    //Check for interrupt data
     err = MPI_Iprobe(MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &flag, &status);
     assert(err == MPI_SUCCESS);
     if (flag == false) return;
 
+    //Get the interrupt signal data itself
     uint32_t* buf = NULL;
     err = MPI_Recv((unsigned*)buf, 0, MPI_UNSIGNED, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &status);
     assert(err == MPI_SUCCESS);
-    //int source = status.MPI_SOURCE;
+    int source = status.MPI_SOURCE;
     numAlreadyInterrupted++;
 
+    //Send to all, in case they haven't received it yet. EVERYONE gets the message,
+    //including the one who sent it :)
     for (int i = 1; i < mpiSize; i++) {
-        if (alreadySentInterrupt[i]) continue;
+        if (alreadySentInterrupt[i]) {
+            continue;
+        }
         err = MPI_Isend(0, 0, MPI_UNSIGNED, i, 1, MPI_COMM_WORLD, &(interruptRequests[i]));
         assert(err == MPI_SUCCESS);
         alreadySentInterrupt[i] = true;
     }
 }
 
+void CMSat::DataSyncServer::print_solution()
+{
+    cout << "v ";
+    for(uint32_t i = 0; i < solution.size(); i++) {
+        if (solution[i] == l_True) {
+            cout << i+1 << " ";
+        } else if (solution[i] == l_False) {
+            cout << "-" << i+1 << " ";
+        } else {
+            assert(false && "We should always have full solution");
+        }
+    }
+    cout << endl;
+}
+
+void CMSat::DataSyncServer::send_cnf_to_solvers()
+{
+    value.resize(nVars, l_Undef);
+    bins.resize(nVars*2);
+    syncMPIFinish.resize(nVars*2, 0);
+
+    int err;
+    bool finished = false;
+    Lit buf[1024];
+    uint32_t at = 0;
+    uint32_t i = 0;
+
+    //first byte we send is the number of variables
+    buf[i] = Lit(nVars, false);
+    i++;
+
+    while(!finished) {
+        for(;i < 1024; i++) {
+            if (clauses_array.size() <= at) {
+                buf[i] = lit_Error;
+                finished = true;
+                continue;
+            }
+
+            buf[i] = clauses_array[at];
+            at++;
+        }
+        err = MPI_Bcast(buf, 1024, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
+        assert(err == MPI_SUCCESS);
+        i = 0;
+    }
+    assert(clauses_array.size() == at);
+}
+
+void CMSat::DataSyncServer::new_var()
+{
+    nVars++;
+}
+
+void CMSat::DataSyncServer::new_vars(uint32_t i)
+{
+    nVars+=i;
+}
+
+void CMSat::DataSyncServer::add_clause(const vector<CMSat::Lit>& lits)
+{
+    for(const auto& lit: lits) {
+        clauses_array.push_back(lit);
+    }
+    clauses_array.push_back(lit_Undef);
+}
+
+
 bool DataSyncServer::actAsServer()
 {
     while(ok) {
-        if (!syncFromMPI()) return false;
+        syncFromMPI();
 
         if (numAlreadyInterrupted == 0
-            && lastSendNumGotPacket+(mpiSize/2)+1 < numGotPacket) sendDataToAll();
+            && lastSendNumGotPacket+(mpiSize/2)+1 < numGotPacket)
+        {
+            sendDataToAll();
+        }
 
-        forwardNeedToInterrupt();
+        check_interrupt_and_forward_to_all();
 
-        if (numAlreadyInterrupted == mpiSize-1) break;
+        if (numAlreadyInterrupted == mpiSize-1) {
+            break;
+        }
     }
 
     return ok;

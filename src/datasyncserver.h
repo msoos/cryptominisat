@@ -35,19 +35,24 @@ class DataSyncServer {
     public:
         DataSyncServer();
         bool actAsServer();
+        void print_solution();
+        void send_cnf_to_solvers();
+        void add_clause(const vector<Lit>& lits);
+        void new_vars(uint32_t i);
+        void new_var();
+
     private:
-        bool syncFromMPI();
+        void syncFromMPI();
         void addOneBinToOthers(const Lit lit1, const Lit lit2);
         void sendDataToAll();
-        void forwardNeedToInterrupt();
+        void check_interrupt_and_forward_to_all();
 
         std::vector<uint32_t> syncMPIFinish;
         std::vector<std::vector<Lit> > bins;
         std::vector<lbool> value;
+        std::vector<Lit> clauses_array;
 
-        bool ok;
-
-        uint32_t *sendData;
+        uint32_t *sendData = NULL;
 
         std::vector<MPI_Request> sendRequests;
         std::vector<bool> sendRequestsFinished;
@@ -57,12 +62,15 @@ class DataSyncServer {
         std::vector<MPI_Request> interruptRequests;
         int numAlreadyInterrupted;
 
+        vector<lbool> solution;
+
         int mpiSize;
-        uint32_t nVars;
-        uint32_t recvBinData;
-        uint32_t sentBinData;
-        uint32_t numGotPacket;
-        uint32_t lastSendNumGotPacket;
+        bool ok = true;
+        uint32_t nVars = 0;
+        uint32_t recvBinData = 0;
+        uint32_t sentBinData = 0;
+        uint32_t numGotPacket = 0;
+        uint32_t lastSendNumGotPacket = 0;
 };
 
 }
