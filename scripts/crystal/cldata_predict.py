@@ -203,6 +203,7 @@ class Learner:
         print("-> Number of datapoints:", self.df.shape)
         print("-> Predicting          :", to_predict)
         df = self.df.copy()
+        print("features: ", list(df))
 
         if options.check_row_data:
             helper.check_too_large_or_nan_values(df, features)
@@ -245,8 +246,7 @@ class Learner:
             n_estimators=3,
             max_samples=0.5, max_features=0.5,
             random_state=prng)
-        clf_linear = sklearn.linear_model.LinearRegression(
-            normalize=True)
+        clf_linear = sklearn.linear_model.LinearRegression()
         clf_forest = sklearn.ensemble.RandomForestRegressor(
             n_estimators=options.num_trees,
             max_features="sqrt",
@@ -407,6 +407,10 @@ class Learner:
         else:
             to_predict = "x.used_later_{name}".format(name=self.tier)
 
+
+        if options.poly_features:
+            features = helper.cldata_add_poly_features(df, features)
+
         if options.features != "best_only":
             features = list(self.df)
             features = self.rem_features(
@@ -440,6 +444,8 @@ if __name__ == "__main__":
                         help="What features to use: all_computed, best_only, best_also, no_computed ")
     parser.add_argument("--bestfeatfile", type=str, default="../../scripts/crystal/best_features-rdb0-only.txt",
                         dest="best_features_fname", help="Name and position of best features file that lists the best features in order")
+    parser.add_argument("--polyfeats", action="store_true", default=False,
+                        dest="poly_features", help="Add polynomial features")
     parser.add_argument("--csv", type=str, default=None,
                         dest="csv", help="Output CSV of dataframe here")
     parser.add_argument("--dumpexample", default=False, action="store_true",
