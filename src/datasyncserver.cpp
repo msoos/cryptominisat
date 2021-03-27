@@ -269,6 +269,8 @@ void CMSat::DataSyncServer::print_solution()
 
 void CMSat::DataSyncServer::send_cnf_to_solvers()
 {
+    cout << "c sending file to all solvers..." << endl;
+
     value.resize(num_vars, l_Undef);
     bins.resize(num_vars*2);
     syncMPIFinish.resize(num_vars*2, 0);
@@ -299,6 +301,8 @@ void CMSat::DataSyncServer::send_cnf_to_solvers()
         i = 0;
     }
     assert(clauses_array.size() == at);
+
+    cout << "c sent file to all solvers" << endl;
 }
 
 void CMSat::DataSyncServer::new_var()

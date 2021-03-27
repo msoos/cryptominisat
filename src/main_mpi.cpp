@@ -40,12 +40,10 @@ int solve()
     err = MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
     assert(err == MPI_SUCCESS);
     CMSat::SolverConf conf;
+    conf.verbosity = 1;
 
     if (mpiSize > 1 && mpiRank > 1) {
-        conf.verbosity = 0;
         conf.origSeed = mpiRank;
-        //conf.simpStartMult *= 0.9;
-        //conf.simpStartMMult *= 0.9;
         if (mpiRank % 6 == 3) {
             conf.polarity_mode = CMSat::PolarityMode::polarmode_pos;
             conf.restartType = CMSat::Restart::geom;
@@ -55,7 +53,6 @@ int solve()
             conf.restartType = CMSat::Restart::glue;
         }
     }
-    conf.verbosity = 0;
 
     CMSat::SATSolver solver(&conf);
 
@@ -63,10 +60,14 @@ int solve()
     Lit data[1024];
     vector<Lit> clause;
     uint32_t num_msgs = 0;
+    uint32_t num_clauses = 0;
     bool done = false;
 
+    cout << "c created solver " << mpiRank << " reading in file..." << endl;
     while(!done) {
-        MPI_Recv(data, 1024, MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Bcast(&data, 1024, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
+        cout << "c solver " << mpiRank << " got file msg " << num_msgs << endl;
+
         uint32_t i = 0;
         if (num_msgs == 0) {
             solver.new_vars(data[0].var());
@@ -81,6 +82,7 @@ int solve()
                 break;
             } else if (data[i] == lit_Undef) {
                 solver.add_clause(clause);
+                num_clauses++;
                 clause.clear();
             } else {
                 assert(data[i].var() < solver.nVars());
@@ -88,6 +90,9 @@ int solve()
             }
         }
     }
+    cout << "c Solver " << mpiRank << " finished getting all of the file."
+    << " nvars: " << solver.nVars()
+    << " num_clauses: " << num_clauses << endl;
 
     lbool ret = solver.solve();
     return 0;
@@ -114,10 +119,12 @@ int main(int argc, char** argv)
     }
 
     assert(argc == 2);
-    std::string filename(argv[1]);
-    cout << "c Filename is: " << filename << endl;
+
 
     if (mpiRank == 0) {
+        std::string filename(argv[1]);
+        cout << "c Filename is: " << filename << endl;
+
         CMSat::DataSyncServer server;
         gzFile in = gzopen(filename.c_str(), "rb");
         DimacsParser<StreamBuffer<gzFile, GZ>, CMSat::DataSyncServer> parser(&server, NULL, 0);
@@ -135,6 +142,8 @@ int main(int argc, char** argv)
             exit(-1);
         }
         gzclose(in);
+
+        cout << "c read in file" << endl;;
 
         server.send_cnf_to_solvers();
 
