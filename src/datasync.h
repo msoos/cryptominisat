@@ -81,7 +81,7 @@ class DataSync
         bool syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished, watch_subarray ws);
         void syncBinToOthers();
         void clear_set_binary_values();
-        void add_bin_to_threads(const Lit lit1, const Lit lit2);
+        bool add_bin_to_threads(const Lit lit1, const Lit lit2);
         void signal_new_bin_clause(Lit lit1, Lit lit2);
         void rebuild_bva_map_if_needed();
 
@@ -118,9 +118,9 @@ class DataSync
 
         int           mpiRank = 0;
         int           mpiSize = 0;
-        uint32_t      mpiRecvUnitData;
-        uint32_t      mpiRecvBinData;
-        uint32_t      mpiSentBinData;
+        uint32_t      mpiRecvUnitData = 0;
+        uint32_t      mpiRecvBinData = 0;
+        uint32_t      mpiSentBinData = 0;
         #endif
 
 

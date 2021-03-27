@@ -495,21 +495,22 @@ void DataSync::syncBinToOthers()
     newBinClauses.clear();
 }
 
-void DataSync::add_bin_to_threads(Lit lit1, Lit lit2)
+bool DataSync::add_bin_to_threads(Lit lit1, Lit lit2)
 {
     assert(lit1 < lit2);
     if (sharedData->bins[lit1.toInt()].data == NULL) {
-        return;
+        return false;
     }
 
     vector<Lit>& bins = *sharedData->bins[lit1.toInt()].data;
     for (const Lit lit : bins) {
         if (lit == lit2)
-            return;
+            return false;
     }
 
     bins.push_back(lit2);
     stats.sentBinData++;
+    return true;
 }
 
 void DataSync::clear_set_binary_values()
@@ -695,8 +696,7 @@ bool DataSync::syncFromMPI()
         at++;
         for (uint32_t i = 0; i < num; i++, at++) {
             Lit otherLit = Lit::toLit(buf[at]);
-            add_bin_to_threads(lit, otherLit);
-            thisMpiRecvBinData++;
+            thisMpiRecvBinData += add_bin_to_threads(lit, otherLit);
         }
     }
     mpiRecvBinData += thisMpiRecvBinData;
@@ -704,9 +704,9 @@ bool DataSync::syncFromMPI()
     end:
     #ifdef VERBOSE_DEBUG_MPI_SENDRCV
     std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
-    " Received " << thisMpiRecvUnitData << " units" << std::endl;
+    " Received " << thisMpiRecvUnitData << " units (total: " << mpiRecvUnitData << ")" << std::endl;
     std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
-    " Received " << thisMpiRecvBinData << " bins" << std::endl;
+    " Received " << thisMpiRecvBinData << " bins (total: " << mpiRecvBinData << ")" << std::endl;
     #endif
 
     delete[] buf;
