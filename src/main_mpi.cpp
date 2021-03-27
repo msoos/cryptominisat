@@ -69,7 +69,7 @@ int solve()
     cout << "c created solver " << mpiRank << " reading in file..." << endl;
     while(!done) {
         MPI_Bcast(&data, 1024, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
-        cout << "c solver " << mpiRank << " got file msg " << num_msgs << endl;
+        //cout << "c solver " << mpiRank << " got file msg " << num_msgs << endl;
 
         uint32_t i = 0;
         if (num_msgs == 0) {
