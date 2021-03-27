@@ -147,12 +147,14 @@ bool DataSync::syncData()
         sharedData->unit_mutex.lock();
         sharedData->bin_mutex.lock();
         ok = syncFromMPI();
-        if (ok && numCalls % 2 == 1) {
+        if (ok && numCalls % 4 == 3) {
             syncToMPI();
         }
         sharedData->unit_mutex.unlock();
         sharedData->bin_mutex.unlock();
-        if (!ok) return false;
+        if (!ok) {
+            return false;
+        }
     }
 
     if (solver->conf.is_mpi) {
@@ -219,18 +221,18 @@ bool DataSync::shareUnitData()
             continue;
         }
     }
-
-    if (solver->conf.verbosity >= 3
-        //&& (thisGotUnitData > 0 || thisSentUnitData > 0)
-    ) {
-        cout
-        << "c [sync] got units " << thisGotUnitData
-        << " sent units " << thisSentUnitData
-        << endl;
-    }
-
     stats.recvUnitData += thisGotUnitData;
     stats.sentUnitData += thisSentUnitData;
+
+    if (solver->conf.verbosity >= 1) {
+        cout
+        << "c [sync " << thread_id << "  ]"
+        << " got units " << thisGotUnitData
+        << " (total: " << stats.recvUnitData << ")"
+        << " sent units " << thisSentUnitData
+        << " (total: " << stats.sentUnitData << ")"
+        << endl;
+    }
 
     return true;
 }
@@ -545,10 +547,13 @@ bool DataSync::shareBinData()
     syncBinToOthers();
     size_t mem = sharedData->calc_memory_use_bins();
 
-    if (solver->conf.verbosity >= 3) {
+    if (solver->conf.verbosity >= 1) {
         cout
-        << "c [sync] got bins " << (stats.recvBinData - oldRecvBinData)
+        << "c [sync " << thread_id << "  ]"
+        << " got bins " << (stats.recvBinData - oldRecvBinData)
+        << " (total: " << stats.recvBinData << ")"
         << " sent bins " << (stats.sentBinData - oldSentBinData)
+        << " (total: " << stats.sentBinData << ")"
         << " mem use: " << mem/(1024*1024) << " M"
         << endl;
     }
