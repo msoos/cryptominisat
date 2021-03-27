@@ -25,7 +25,7 @@ THE SOFTWARE.
 #include <cassert>
 using std::vector;
 
-#define VERBOSE_DEBUG_MPI_SENDRCV
+//#define VERBOSE_DEBUG_MPI_SENDRCV
 
 using namespace CMSat;
 

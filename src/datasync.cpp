@@ -28,7 +28,7 @@ THE SOFTWARE.
 #include <iostream>
 #include <iomanip>
 
-#define VERBOSE_DEBUG_MPI_SENDRCV
+//#define VERBOSE_DEBUG_MPI_SENDRCV
 
 using namespace CMSat;
 
@@ -147,7 +147,7 @@ bool DataSync::syncData()
         sharedData->unit_mutex.lock();
         sharedData->bin_mutex.lock();
         ok = syncFromMPI();
-        if (ok && numCalls % 4 == 3) {
+        if (ok && numCalls % 3 == 2) {
             syncToMPI();
         }
         sharedData->unit_mutex.unlock();

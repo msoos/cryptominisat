@@ -397,7 +397,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , var_and_mem_out_mult(1.0)
 
         //Multi-thread, MPI
-        , sync_every_confl(20000)
+        , sync_every_confl(10000)
         , thread_num(0)
         , is_mpi(false)
 
