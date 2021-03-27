@@ -65,7 +65,7 @@ class DataSync
         vector<BinClause> newBinClauses;
         const bool    syncBinFromOthers(const Lit lit, const vector<BinClause>& bins, uint32_t& finished);
         void          syncBinToOthers();
-        void          addOneBinToOthers(const Lit lit1, const Lit lit2, const bool leanrt);
+        void          add_bin_to_threads(const Lit lit1, const Lit lit2, const bool leanrt);
         vec<uint32_t> syncFinish;
         uint32_t      sentBinData;
         uint32_t      recvBinData;

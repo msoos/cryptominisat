@@ -115,7 +115,7 @@ void DataSyncServer::syncFromMPI()
         at++;
         for (uint32_t i = 0; i < num; i++, at++) {
             Lit otherLit = Lit::toLit(buf[at]);
-            addOneBinToOthers(lit, otherLit);
+            add_bin_to_threads(lit, otherLit);
             thisRecvBinData++;
         }
     }
@@ -130,7 +130,7 @@ void DataSyncServer::syncFromMPI()
     numGotPacket++;
 }
 
-void DataSyncServer::addOneBinToOthers(const Lit lit1, const Lit lit2)
+void DataSyncServer::add_bin_to_threads(const Lit lit1, const Lit lit2)
 {
     assert(lit1 < lit2);
 

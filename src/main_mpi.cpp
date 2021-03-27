@@ -42,6 +42,7 @@ int solve()
     CMSat::SolverConf conf;
     conf.verbosity = 1;
     conf.is_mpi = true;
+    conf.do_bva = false;
 
     if (mpiSize > 1 && mpiRank > 1) {
         conf.origSeed = mpiRank;

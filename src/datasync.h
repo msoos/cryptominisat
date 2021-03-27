@@ -81,7 +81,7 @@ class DataSync
         bool syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished, watch_subarray ws);
         void syncBinToOthers();
         void clear_set_binary_values();
-        void addOneBinToOthers(const Lit lit1, const Lit lit2);
+        void add_bin_to_threads(const Lit lit1, const Lit lit2);
         void signal_new_bin_clause(Lit lit1, Lit lit2);
         void rebuild_bva_map_if_needed();
 
@@ -98,7 +98,7 @@ class DataSync
         Stats stats;
 
         //Other systems
-        Solver* solver;
+        Solver* solver = NULL;
         SharedData* sharedData = NULL;
 
         //MPI
@@ -107,16 +107,14 @@ class DataSync
         bool syncFromMPI();
         void syncToMPI();
         void getNeedToInterruptFromMPI();
-        bool sync_mpi_unit(
+        bool get_mpi_unit(
             const lbool otherVal,
             const uint32_t var,
-            SharedData* shared,
-            uint32_t& thisGotUnitData,
-            uint32_t& thisSentUnitData
+            uint32_t& thisGotUnitData
         );
         vector<uint32_t> syncMPIFinish;
         MPI_Request   sendReq;
-        uint32_t*     mpiSendData;
+        uint32_t*     mpiSendData = NULL;
 
         int           mpiRank = 0;
         int           mpiSize = 0;

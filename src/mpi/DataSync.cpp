@@ -240,7 +240,7 @@ const bool DataSync::syncFromMPI()
         at++;
         for (uint32_t i = 0; i < num; i++, at++) {
             Lit otherLit = Lit::toLit(buf[at]);
-            addOneBinToOthers(lit, otherLit, true);
+            add_bin_to_threads(lit, otherLit, true);
             thisMpiRecvBinData++;
         }
     }
@@ -602,7 +602,7 @@ void DataSync::syncBinToOthers()
     for(vector<BinClause>::const_iterator it = newBinClauses.begin(),
         end = newBinClauses.end(); it != end; ++it)
     {
-        addOneBinToOthers(it->lit1, it->lit2, it->learnt);
+        add_bin_to_threads(it->lit1, it->lit2, it->learnt);
         sentBinData++;
     }
 
@@ -613,7 +613,7 @@ void DataSync::syncBinToOthers()
     newBinClauses.clear();
 }
 
-void DataSync::addOneBinToOthers(const Lit lit1, const Lit lit2, const bool learnt)
+void DataSync::add_bin_to_threads(const Lit lit1, const Lit lit2, const bool learnt)
 {
     assert(lit1.toInt() < lit2.toInt());
 

@@ -47,7 +47,7 @@ class DataSyncServer {
 
     private:
         void syncFromMPI();
-        void addOneBinToOthers(const Lit lit1, const Lit lit2);
+        void add_bin_to_threads(const Lit lit1, const Lit lit2);
         void sendDataToAll();
         void check_interrupt_and_forward_to_all();
 

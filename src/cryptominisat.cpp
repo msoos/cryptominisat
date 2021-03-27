@@ -439,6 +439,13 @@ DLL_PUBLIC void SATSolver::set_num_threads(unsigned num)
         throw std::runtime_error(err);
     }
 
+    #ifdef USE_BREAKID
+    if (num > 1) {
+        cout << "ERROR: BreakID cannot work with multiple threads. Something is off in the memory allocation of the library that's likely 'static'. Perhaps in 'bliss'. Exiting." << endl;
+        exit(-1);
+    }
+    #endif
+
     data->cls_lits.reserve(CACHE_SIZE);
     for(unsigned i = 1; i < num; i++) {
         SolverConf conf = data->solvers[0]->getConf();
@@ -1525,6 +1532,12 @@ DLL_PUBLIC void SATSolver::set_bva(int val)
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
         s.conf.do_bva = val;
+
+        //Cannot have BVA on thread 0 when MPI is turned on
+        if (s.conf.do_bva && s.conf.is_mpi && i == 0) {
+            cout << "ERROR, cannot have MPI + BVA" << endl;
+            exit(-1);
+        }
     }
 }
 
