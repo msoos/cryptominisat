@@ -30,6 +30,7 @@ THE SOFTWARE.
 
 #include <vector>
 #include <mutex>
+#include <atomic>
 using std::vector;
 using std::mutex;
 

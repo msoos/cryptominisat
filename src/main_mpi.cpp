@@ -32,7 +32,7 @@ THE SOFTWARE.
 using std::cout;
 using std::endl;
 
-const int solve()
+int solve()
 {
     int err, mpiRank, mpiSize;
     err = MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
@@ -47,7 +47,7 @@ const int solve()
         //conf.simpStartMult *= 0.9;
         //conf.simpStartMMult *= 0.9;
         if (mpiRank % 6 == 3) {
-            conf.polarity_mode = CMSat::PolarityMode::polarmode_pos
+            conf.polarity_mode = CMSat::PolarityMode::polarmode_pos;
             conf.restartType = CMSat::Restart::geom;
         }
         if (mpiRank % 6 == 4) {
@@ -70,7 +70,7 @@ const int solve()
         uint32_t i = 0;
         if (num_msgs == 0) {
             solver.new_vars(data[0].var());
-            cout << "We were told there are " << solver.nVars() << variables << endl;
+            cout << "We were told there are " << solver.nVars() << " variables" << endl;
             i++;
         }
         num_msgs++;
@@ -80,7 +80,7 @@ const int solve()
                 done = true;
                 break;
             } else if (data[i] == lit_Undef) {
-                solver.add_clause(clause)
+                solver.add_clause(clause);
                 clause.clear();
             } else {
                 assert(data[i].var() < solver.nVars());
@@ -113,10 +113,14 @@ int main(int argc, char** argv)
         exit(-1);
     }
 
+    assert(argc == 2);
+    std::string filename(argv[2]);
+    cout << "c Filename is: " << filename << endl;
+
     if (mpiRank == 0) {
         CMSat::DataSyncServer server;
         gzFile in = gzopen(filename.c_str(), "rb");
-        DimacsParser<StreamBuffer<gzFile, GZ>, SATSolver> parser(&server, NULL, 0);
+        DimacsParser<StreamBuffer<gzFile, GZ>, CMSat::DataSyncServer> parser(&server, NULL, 0);
         server.send_cnf_to_solvers();
 
         ret = server.actAsServer();
@@ -124,7 +128,7 @@ int main(int argc, char** argv)
             cout << "s UNSATISFIABLE" << endl;
         } else {
             cout << "s SATISFIABLE" << endl;
-            cout << server.print_solution() << endl;
+            server.print_solution();
         }
     } else {
         solve();
