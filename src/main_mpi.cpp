@@ -32,7 +32,10 @@ THE SOFTWARE.
 using std::cout;
 using std::endl;
 
-int solve()
+
+int num_threads = 2;
+
+vector<lbool> solve(lbool& solution_val)
 {
     int err, mpiRank, mpiSize;
     err = MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
@@ -40,12 +43,12 @@ int solve()
     err = MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
     assert(err == MPI_SUCCESS);
     CMSat::SolverConf conf;
-    conf.verbosity = 1;
+    conf.verbosity = (mpiRank == 1);
     conf.is_mpi = true;
     conf.do_bva = false;
 
     if (mpiSize > 1 && mpiRank > 1) {
-        conf.origSeed = mpiRank;
+        conf.origSeed = mpiRank*2000; //this will be added T that is the thread number within the MPI
         if (mpiRank % 6 == 3) {
             conf.polarity_mode = CMSat::PolarityMode::polarmode_pos;
             conf.restartType = CMSat::Restart::geom;
@@ -66,7 +69,10 @@ int solve()
     uint32_t num_clauses = 0;
     bool done = false;
 
+
+    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
     cout << "c created solver " << mpiRank << " reading in file..." << endl;
+    #endif
     while(!done) {
         MPI_Bcast(&data, 1024, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
         //cout << "c solver " << mpiRank << " got file msg " << num_msgs << endl;
@@ -74,7 +80,10 @@ int solve()
         uint32_t i = 0;
         if (num_msgs == 0) {
             solver.new_vars(data[0].var());
-            cout << "We were told there are " << solver.nVars() << " variables" << endl;
+            #ifdef VERBOSE_DEBUG_MPI_SENDRCV
+            cout << "c Solver " << mpiRank
+            << " was told by MPI there are " << solver.nVars() << " variables" << endl;
+            #endif
             i++;
         }
         num_msgs++;
@@ -93,18 +102,24 @@ int solve()
             }
         }
     }
-    cout << "c Solver " << mpiRank << " finished getting all of the file."
+    #ifdef VERBOSE_DEBUG_MPI_SENDRCV
+    cout << "c Solver " << mpiRank
+    << " finished getting all of the file."
     << " nvars: " << solver.nVars()
     << " num_clauses: " << num_clauses << endl;
+    #endif
 
-    lbool ret = solver.solve();
-    return 0;
+    solution_val = solver.solve();
+    vector<lbool> model;
+    if (solution_val == l_True) {
+        model = solver.get_model();
+    }
+    return model;
 }
 
 
 int main(int argc, char** argv)
 {
-    int ret;
     int err;
     err = MPI_Init(&argc, &argv);
     assert(err == MPI_SUCCESS);
@@ -117,16 +132,33 @@ int main(int argc, char** argv)
     assert(err == MPI_SUCCESS);
 
     if (mpiSize <= 1) {
-        cout << "ERROR, you must run on at least 2 MPI nodes" << endl;
+        cout << "ERROR: you must run on at least 2 MPI nodes" << endl;
         exit(-1);
     }
 
-    assert(argc == 2);
+    if (argc != 3) {
+        cout << "ERROR: You MUST give 2 position parameters: FILENAME and NUM_THREADS" << endl;
+        exit(-1);
+    }
+
+    assert(argc == 3);
+    for(uint32_t i = 0; i < strlen(argv[2]); i++) {
+        if (argv[2][i]-'0' < 0 || argv[2][i]-'0' > '9') {
+            cout << "ERROR: You MUST give a thread number that's an integer!" << endl;
+            exit(-1);
+        }
+    }
+    num_threads = atoi(argv[2]);
+    if (num_threads < 2) {
+        cout << "ERROR: you must have at least 2 threads per MPI node" << endl;
+        exit(-1);
+    }
 
 
     if (mpiRank == 0) {
         std::string filename(argv[1]);
         cout << "c Filename is: " << filename << endl;
+        cout << "c num threads used: " << num_threads << endl;
 
         CMSat::DataSyncServer server;
         gzFile in = gzopen(filename.c_str(), "rb");
@@ -150,17 +182,52 @@ int main(int argc, char** argv)
 
         server.send_cnf_to_solvers();
 
-        ret = server.actAsServer();
-        if (ret == 0) {
-            cout << "s UNSATISFIABLE" << endl;
-        } else {
+        lbool sol = server.actAsServer();
+        if (sol == l_True) {
             cout << "s SATISFIABLE" << endl;
             server.print_solution();
+        } else if (sol == l_False) {
+            cout << "s UNSATISFIABLE" << endl;
+        } else {
+            assert(false);
         }
     } else {
-        solve();
+        lbool solution_val;
+        const vector<lbool> model = solve(solution_val);
+        #ifdef VERBOSE_DEBUG_MPI_SENDRCV
+        std::cout << "c --> MPI Main"
+        << " Solved " << mpiRank << " with value: " << solution_val << std::endl;
+        #endif
+
+
+        if (solution_val != l_Undef) {
+            //Send tag 1 to 0 that indicates we solved
+            MPI_Request req;
+            vector<int> solution_dat;
+            solution_dat.push_back(toInt(solution_val));
+            if (solution_val == l_True) {
+                solution_dat.push_back(model.size());
+                for(uint32_t i = 0; i < model.size(); i++) {
+                    solution_dat.push_back(toInt(model[i]));
+                }
+            }
+
+            err = MPI_Isend(solution_dat.data(), solution_dat.size(), MPI_UNSIGNED, 0, 1, MPI_COMM_WORLD, &req);
+            assert(err == MPI_SUCCESS);
+            #ifdef VERBOSE_DEBUG_MPI_SENDRCV
+            std::cout << "c --> MPI Main"
+            << " Rank " << mpiRank << " sent tag 1 to master to indicate finished" << std::endl;
+            #endif
+
+//             MPI_Status status;
+//             err = MPI_Wait(&req, &status);
+//             assert(err == MPI_SUCCESS);
+//             std::cout << "c --> MPI Main"
+//             << " Rank " << mpiRank << " waited for tag 1 that indicates to master we finished" << std::endl;
+        }
     }
 
     err = MPI_Finalize();
     assert(err == MPI_SUCCESS);
+    return 0;
 }

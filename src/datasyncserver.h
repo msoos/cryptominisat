@@ -34,7 +34,7 @@ namespace CMSat {
 class DataSyncServer {
     public:
         DataSyncServer();
-        bool actAsServer();
+        lbool actAsServer();
         void print_solution();
         void send_cnf_to_solvers();
         void add_clause(const vector<Lit>& lits);
@@ -49,7 +49,7 @@ class DataSyncServer {
         void syncFromMPI();
         void add_bin_to_threads(const Lit lit1, const Lit lit2);
         void sendDataToAll();
-        void check_interrupt_and_forward_to_all();
+        bool check_interrupt_and_forward_to_all();
 
         std::vector<uint32_t> syncMPIFinish;
         std::vector<std::vector<Lit> > bins;
@@ -60,16 +60,12 @@ class DataSyncServer {
 
         std::vector<MPI_Request> sendRequests;
         std::vector<bool> sendRequestsFinished;
-
-        std::vector<bool> alreadyInterrupted;
-        std::vector<bool> alreadySentInterrupt;
         std::vector<MPI_Request> interruptRequests;
-        int numAlreadyInterrupted;
 
-        vector<lbool> solution;
+        vector<lbool> model;
+        lbool solution_val = l_Undef;
 
         int mpiSize;
-        bool ok = true;
         uint32_t num_vars = 0;
         uint32_t recvBinData = 0;
         uint32_t sentBinData = 0;

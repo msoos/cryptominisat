@@ -604,6 +604,7 @@ void DataSync::set_up_for_mpi()
     }
 }
 
+//Interrupts are tag 1
 void DataSync::getNeedToInterruptFromMPI()
 {
     #ifdef VERBOSE_DEBUG_MPI_SENDRCV
@@ -619,8 +620,8 @@ void DataSync::getNeedToInterruptFromMPI()
         return;
     }
 
-    char* buf = NULL;
-    err = MPI_Recv((unsigned*)buf, 0, MPI_UNSIGNED, 0, 1, MPI_COMM_WORLD, &status);
+    unsigned buf;
+    err = MPI_Recv(&buf, 0, MPI_UNSIGNED, 0, 1, MPI_COMM_WORLD, &status);
     assert(err == MPI_SUCCESS);
     solver->set_must_interrupt_asap();
 }
@@ -635,11 +636,11 @@ bool DataSync::syncFromMPI()
     uint32_t thisMpiRecvBinData = 0;
     #ifdef VERBOSE_DEBUG_MPI_SENDRCV
     std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
-    " syncying from MPI..." << std::endl;
+    " syncing from MPI..." << std::endl;
     #endif
 
 
-    //Check if there is data
+    //Check if there is data, tagged 0, from source 0 (root)
     err = MPI_Iprobe(0, 0, MPI_COMM_WORLD, &flag, &status);
     assert(err == MPI_SUCCESS);
     if (flag == false) {
