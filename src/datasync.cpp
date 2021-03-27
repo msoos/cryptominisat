@@ -114,7 +114,7 @@ bool DataSync::syncData()
         return false;
     }
 
-    #ifndef USE_GAUSS
+    //RECEIVE data
     sharedData->bin_mutex.lock();
     extend_bins_if_needed();
     clear_set_binary_values();
@@ -123,7 +123,6 @@ bool DataSync::syncData()
     if (!ok) {
         return false;
     }
-    #endif
 
     #ifdef USE_MPI
     if (solver->conf.is_mpi
