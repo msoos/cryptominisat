@@ -114,13 +114,28 @@ int main(int argc, char** argv)
     }
 
     assert(argc == 2);
-    std::string filename(argv[2]);
+    std::string filename(argv[1]);
     cout << "c Filename is: " << filename << endl;
 
     if (mpiRank == 0) {
         CMSat::DataSyncServer server;
         gzFile in = gzopen(filename.c_str(), "rb");
         DimacsParser<StreamBuffer<gzFile, GZ>, CMSat::DataSyncServer> parser(&server, NULL, 0);
+        if (in == NULL) {
+            std::cerr
+            << "ERROR! Could not open file '"
+            << filename
+            << "' for reading: " << strerror(errno) << endl;
+
+            std::exit(1);
+        }
+
+        bool strict_header = false;
+        if (!parser.parse_DIMACS(in, strict_header)) {
+            exit(-1);
+        }
+        gzclose(in);
+
         server.send_cnf_to_solvers();
 
         ret = server.actAsServer();

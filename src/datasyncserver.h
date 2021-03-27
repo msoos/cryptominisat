@@ -40,6 +40,10 @@ class DataSyncServer {
         void add_clause(const vector<Lit>& lits);
         void new_vars(uint32_t i);
         void new_var();
+        void add_xor_clause(const vector<uint32_t>& vars, bool& rhs);
+        uint32_t nVars() const {
+            return num_vars;
+        }
 
     private:
         void syncFromMPI();
@@ -66,7 +70,7 @@ class DataSyncServer {
 
         int mpiSize;
         bool ok = true;
-        uint32_t nVars = 0;
+        uint32_t num_vars = 0;
         uint32_t recvBinData = 0;
         uint32_t sentBinData = 0;
         uint32_t numGotPacket = 0;

@@ -85,12 +85,12 @@ void DataSyncServer::syncFromMPI()
     #endif
 
     int at = 0;
-    assert(nVars == buf[at]); //the first uint32_t is the number of bytes, always
+    assert(num_vars == buf[at]); //the first uint32_t is the number of bytes, always
 
-    //Sync all units, starts with nVars
-    assert(nVars == buf[at]);
+    //Sync all units, starts with num_vars
+    assert(num_vars == buf[at]);
     at++;
-    for (uint32_t var = 0; var < nVars; var++, at++) {
+    for (uint32_t var = 0; var < num_vars; var++, at++) {
         lbool val = toLbool(buf[at]);
         if (value[var] == l_Undef) {
             if (val != l_Undef) value[var] = val;
@@ -105,11 +105,11 @@ void DataSyncServer::syncFromMPI()
         }
     }
 
-    //Sync all binaries, starts with nVars*2
+    //Sync all binaries, starts with num_vars*2
     //for each Lit, there is SIZE of elements that follow, then the elements
-    assert(buf[at] == nVars*2);
+    assert(buf[at] == num_vars*2);
     at++;
-    for (uint32_t wsLit = 0; wsLit < nVars*2; wsLit++) {
+    for (uint32_t wsLit = 0; wsLit < num_vars*2; wsLit++) {
         Lit lit = ~Lit::toLit(wsLit);
         uint32_t num = buf[at];
         at++;
@@ -179,18 +179,18 @@ void DataSyncServer::sendDataToAll()
         sendData = NULL;
     }
 
-    //Set up units. First, the nVars, then the values
+    //Set up units. First, the num_vars, then the values
     uint32_t thisSentBinData = 0;
     vector<uint32_t> data;
-    data.push_back((uint32_t)nVars);
-    for (uint32_t var = 0; var < nVars; var++) {
+    data.push_back((uint32_t)num_vars);
+    for (uint32_t var = 0; var < num_vars; var++) {
         data.push_back(toInt(value[var]));
     }
 
 
 
-    //Binaries. First, the 2*nVars, then the list sizes, then the data.
-    data.push_back((uint32_t)nVars*2);
+    //Binaries. First, the 2*num_vars, then the list sizes, then the data.
+    data.push_back((uint32_t)num_vars*2);
     uint32_t at = 0;
     for(vector<vector<Lit> >::const_iterator it = bins.begin(), end = bins.end(); it != end; ++it, at++) {
         const vector<Lit>& binSet = *it;
@@ -269,9 +269,9 @@ void CMSat::DataSyncServer::print_solution()
 
 void CMSat::DataSyncServer::send_cnf_to_solvers()
 {
-    value.resize(nVars, l_Undef);
-    bins.resize(nVars*2);
-    syncMPIFinish.resize(nVars*2, 0);
+    value.resize(num_vars, l_Undef);
+    bins.resize(num_vars*2);
+    syncMPIFinish.resize(num_vars*2, 0);
 
     int err;
     bool finished = false;
@@ -280,7 +280,7 @@ void CMSat::DataSyncServer::send_cnf_to_solvers()
     uint32_t i = 0;
 
     //first byte we send is the number of variables
-    buf[i] = Lit(nVars, false);
+    buf[i] = Lit(num_vars, false);
     i++;
 
     while(!finished) {
@@ -303,12 +303,18 @@ void CMSat::DataSyncServer::send_cnf_to_solvers()
 
 void CMSat::DataSyncServer::new_var()
 {
-    nVars++;
+    num_vars++;
 }
+
+void CMSat::DataSyncServer::add_xor_clause(const vector<uint32_t>& vars, bool& rhs)
+{
+    assert(false);
+}
+
 
 void CMSat::DataSyncServer::new_vars(uint32_t i)
 {
-    nVars+=i;
+    num_vars+=i;
 }
 
 void CMSat::DataSyncServer::add_clause(const vector<CMSat::Lit>& lits)
