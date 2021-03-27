@@ -79,8 +79,7 @@ class Solver : public Searcher
 {
     public:
         Solver(const SolverConf *_conf = NULL,
-               std::atomic<bool>* _must_interrupt_inter = NULL,
-               bool is_mpi = false);
+               std::atomic<bool>* _must_interrupt_inter = NULL);
         ~Solver() override;
 
         void add_sql_tag(const string& name, const string& val);

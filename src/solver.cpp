@@ -92,7 +92,7 @@ using std::endl;
 
 //#define DEBUG_IMPLICIT_PAIRS_TRIPLETS
 
-Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter, bool is_mpi) :
+Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter) :
     Searcher(_conf, this, _must_interrupt_inter)
 {
     sqlStats = NULL;
@@ -120,7 +120,7 @@ Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter
     if (conf.doStrSubImplicit) {
         subsumeImplicit = new SubsumeImplicit(this);
     }
-    datasync = new DataSync(this, NULL, is_mpi);
+    datasync = new DataSync(this, NULL);
     Searcher::solver = this;
     reduceDB = new ReduceDB(this);
 

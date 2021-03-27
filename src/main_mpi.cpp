@@ -41,6 +41,7 @@ int solve()
     assert(err == MPI_SUCCESS);
     CMSat::SolverConf conf;
     conf.verbosity = 1;
+    conf.is_mpi = true;
 
     if (mpiSize > 1 && mpiRank > 1) {
         conf.origSeed = mpiRank;
@@ -55,6 +56,7 @@ int solve()
     }
 
     CMSat::SATSolver solver(&conf);
+    solver.set_num_threads(2);
 
     //Receive the num variables, and all the claues
     Lit data[1024];

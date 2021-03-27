@@ -39,7 +39,7 @@ class Solver;
 class DataSync
 {
     public:
-        DataSync(Solver* solver, SharedData* sharedData, bool is_mpi);
+        DataSync(Solver* solver, SharedData* sharedData);
         bool enabled();
         void set_shared_data(SharedData* sharedData);
         void new_var(const bool bva);
@@ -101,10 +101,9 @@ class DataSync
         Solver* solver;
         SharedData* sharedData = NULL;
 
-
         //MPI
-        bool is_mpi;
         #ifdef USE_MPI
+        void set_up_for_mpi();
         bool syncFromMPI();
         void syncToMPI();
         void getNeedToInterruptFromMPI();

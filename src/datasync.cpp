@@ -28,31 +28,21 @@ THE SOFTWARE.
 
 using namespace CMSat;
 
-DataSync::DataSync(Solver* _solver, SharedData* _sharedData, bool _is_mpi) :
+DataSync::DataSync(Solver* _solver, SharedData* _sharedData) :
     solver(_solver)
     , sharedData(_sharedData)
-    , is_mpi(_is_mpi)
     , seen(solver->seen)
     , toClear(solver->toClear)
 {
-#ifdef USE_MPI
-    if (is_mpi) {
-        int err;
-        err = MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-        assert(err == MPI_SUCCESS);
-
-        err = MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-        assert(err == MPI_SUCCESS);
-        release_assert(!(mpiSize > 1 && mpiRank == 0));
-        assert(!(mpiSize > 1 && sharedData == NULL));
-    }
-#endif
 }
 
 void DataSync::set_shared_data(SharedData* _sharedData)
 {
     sharedData = _sharedData;
     thread_id = _sharedData->cur_thread_id++;
+    #ifdef USE_MPI
+    set_up_for_mpi();
+    #endif
 }
 
 void DataSync::new_var(const bool bva)
@@ -136,7 +126,9 @@ bool DataSync::syncData()
     #endif
 
     #ifdef USE_MPI
-    if (is_mpi && mpiSize > 1 && solver->conf.thread_num == 0) {
+    if (solver->conf.is_mpi
+        && solver->conf.thread_num == 0)
+    {
         sharedData->unit_mutex.lock();
         sharedData->bin_mutex.lock();
         ok = syncFromMPI();
@@ -146,7 +138,7 @@ bool DataSync::syncData()
         if (!ok) return false;
     }
 
-    if (is_mpi) {
+    if (solver->conf.is_mpi) {
         getNeedToInterruptFromMPI();
     }
     #endif
@@ -581,6 +573,20 @@ void DataSync::signal_new_bin_clause(Lit lit1, Lit lit2)
 ///////////////////////////////////////
 
 #ifdef USE_MPI
+void DataSync::set_up_for_mpi()
+{
+    if (solver->conf.is_mpi) {
+        int err;
+        err = MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+        assert(err == MPI_SUCCESS);
+
+        err = MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+        assert(err == MPI_SUCCESS);
+        release_assert(mpiRank != 0);
+        assert(sharedData != NULL);
+    }
+}
+
 void DataSync::getNeedToInterruptFromMPI()
 {
     int flag;
