@@ -671,9 +671,9 @@ bool DataSync::mpi_recv_from_others()
 
     //Unit clauses
     int at = 0;
-    assert(solver->nVarsOuter() == buf[at]);
+    assert(solver->nVarsOutside() == buf[at]);
     at++;
-    for (uint32_t var = 0; var < solver->nVarsOuter(); var++, at++) {
+    for (uint32_t var = 0; var < solver->nVarsOutside(); var++, at++) {
         const lbool otherVal = toLbool(buf[at]);
         if (!get_mpi_unit(otherVal, var, thisMpiRecvUnitData)) {
             #ifdef VERBOSE_DEBUG_MPI_SENDRCV
@@ -690,9 +690,9 @@ bool DataSync::mpi_recv_from_others()
     mpiRecvUnitData += thisMpiRecvUnitData;
 
     //Binary clauses
-    assert(buf[at] == solver->nVarsOuter()*2);
+    assert(buf[at] == solver->nVarsOutside()*2);
     at++;
-    for (uint32_t wsLit = 0; wsLit < solver->nVarsOuter()*2; wsLit++) {
+    for (uint32_t wsLit = 0; wsLit < solver->nVarsOutside()*2; wsLit++) {
         Lit lit = Lit::toLit(wsLit);
         uint32_t num = buf[at];
         at++;
