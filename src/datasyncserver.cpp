@@ -190,6 +190,10 @@ void DataSyncServer::finish_data_send()
             assert(err == MPI_SUCCESS);
             sendRequestsFinished[i] = true;
             numFinished++;
+            #ifdef VERBOSE_DEBUG_MPI_SENDRCV
+            std::cout << "c -->> MPI Server"
+            << " cancelling send to " << i << " due to interrupt" << std::endl;
+            #endif
         }
     }
     if (numFinished != mpiSize-1) {
