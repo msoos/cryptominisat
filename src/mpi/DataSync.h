@@ -84,7 +84,7 @@ class DataSync
         //MPI
         const bool    mpi_recv_from_others();
         void          mpi_send_to_others();
-        void          getNeedToInterruptFromMPI();
+        void          mpi_get_interrupt();
         vec<uint32_t> syncMPIFinish;
         vec<uint32_t> syncMPIFinishTri;
         MPI_Request   sendReq;

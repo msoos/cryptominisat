@@ -149,7 +149,7 @@ const bool DataSync::syncData()
         if (!ok) return false;
     }
 
-    getNeedToInterruptFromMPI();
+    mpi_get_interrupt();
     #endif //USE_MPI
 
     lastSyncConf = solver.conflicts;
@@ -176,7 +176,7 @@ void DataSync::syncERVarsFromHere()
 }
 
 #ifdef USE_MPI
-void DataSync::getNeedToInterruptFromMPI()
+void DataSync::mpi_get_interrupt()
 {
     int flag;
     MPI_Status status;

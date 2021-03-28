@@ -158,7 +158,7 @@ bool DataSync::syncData()
     }
 
     if (solver->conf.is_mpi) {
-        getNeedToInterruptFromMPI();
+        mpi_get_interrupt();
     }
     #endif
 
@@ -608,7 +608,7 @@ void DataSync::set_up_for_mpi()
 }
 
 //Interrupts are tag 1
-void DataSync::getNeedToInterruptFromMPI()
+void DataSync::mpi_get_interrupt()
 {
     #ifdef VERBOSE_DEBUG_MPI_SENDRCV
     std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
