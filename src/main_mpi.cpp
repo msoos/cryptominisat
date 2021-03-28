@@ -60,7 +60,7 @@ vector<lbool> solve(lbool& solution_val)
     }
 
     CMSat::SATSolver solver(&conf);
-    solver.set_num_threads(2);
+    solver.set_num_threads(num_threads);
 
     //Receive the num variables, and all the claues
     Lit data[1024];
