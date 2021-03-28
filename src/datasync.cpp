@@ -114,7 +114,7 @@ bool DataSync::syncData()
     if (!ok) {
         return false;
     }
-    solver->ok = solver->propagate<true>().isNULL();
+    solver->ok = solver->propagate<false>().isNULL();
     if (!solver->ok) {
         return false;
     }
@@ -208,7 +208,7 @@ bool DataSync::shareUnitData()
                 continue;
             }
 
-            solver->enqueue<true>(litToEnqueue);
+            solver->enqueue<false>(litToEnqueue);
 
             thisGotUnitData++;
             continue;
@@ -683,7 +683,7 @@ bool DataSync::mpi_recv_from_others()
             goto end;
         }
     }
-    solver->ok = solver->propagate<true>().isNULL();
+    solver->ok = solver->propagate<false>().isNULL();
     if (!solver->ok) {
         goto end;
     }
@@ -799,10 +799,15 @@ bool DataSync::get_mpi_unit(
     lit1 = solver->map_outer_to_inter(lit1);
     const lbool thisVal = solver->value(lit1);
 
-    if (thisVal == l_Undef && otherVal == l_Undef) {
+    if (thisVal == otherVal) {
         return true;
     }
-    if (thisVal != l_Undef && otherVal != l_Undef) {
+
+    if (otherVal == l_Undef) {
+        return true;
+    }
+
+    if (thisVal != l_Undef) {
         if (thisVal != otherVal) {
             solver->ok = false;
             return false;
@@ -811,21 +816,20 @@ bool DataSync::get_mpi_unit(
         }
     }
 
-    if (otherVal != l_Undef) {
-        assert(thisVal == l_Undef);
-        Lit litToEnqueue = lit1 ^ (otherVal == l_False);
-        if (solver->varData[litToEnqueue.var()].removed != Removed::none) {
-            return true;
-        }
-
-        solver->enqueue<false>(litToEnqueue);
-        solver->ok = solver->propagate<false>().isNULL();
-        if (!solver->ok) {
-            return false;
-        }
-
-        thisGotUnitData++;
+    assert(otherVal != l_Undef);
+    assert(thisVal == l_Undef);
+    Lit litToEnqueue = lit1 ^ (otherVal == l_False);
+    if (solver->varData[litToEnqueue.var()].removed != Removed::none) {
+        return true;
     }
+
+    solver->enqueue<false>(litToEnqueue);
+    solver->ok = solver->propagate<false>().isNULL();
+    if (!solver->ok) {
+        return false;
+    }
+
+    thisGotUnitData++;
 
     return true;
 }
