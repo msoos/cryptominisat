@@ -20,9 +20,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
+#include <cassert>
+#include <unistd.h>
+
 #include "datasyncserver.h"
 #include "solvertypes.h"
-#include <cassert>
 using std::vector;
 
 //#define VERBOSE_DEBUG_MPI_SENDRCV
@@ -80,7 +82,8 @@ void DataSyncServer::mpi_recv_from_others()
     << " Received " << count << " uint32_t-s" << std::endl;
     #endif
 
-    //Get message
+    //Get message, BLOCKING
+    assert(sizeof(unsigned int) == 4);
     uint32_t* buf = new uint32_t[count];
     err = MPI_Recv((unsigned*)buf, count, MPI_UNSIGNED, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &status);
     assert(err == MPI_SUCCESS);
@@ -187,8 +190,14 @@ void DataSyncServer::sendDataToAll()
 //             #endif
             return;
         }
+        send_requests_finished = true;
         delete[] sendData;
         sendData = NULL;
+    }
+
+    //If interrupt already sent, we just waited for things to be received
+    if (interrupt_sent) {
+        return;
     }
 
     //Set up units. First, the num_vars, then the values
@@ -230,6 +239,7 @@ void DataSyncServer::sendDataToAll()
         sendRequestsFinished[i] = false;
     }
     lastSendNumGotPacket= numGotPacket;
+    send_requests_finished = false;
 }
 
 
@@ -383,18 +393,19 @@ void CMSat::DataSyncServer::add_clause(const vector<CMSat::Lit>& lits)
 
 lbool DataSyncServer::actAsServer()
 {
-    while(true) {
+    while(!(interrupt_sent && send_requests_finished)) {
         mpi_recv_from_others();
 
         if (lastSendNumGotPacket+(mpiSize/2)+1 < numGotPacket) {
             sendDataToAll();
         }
 
-        if (check_interrupt_and_forward_to_all()) {
-            return solution_val;
+        if (!interrupt_sent && check_interrupt_and_forward_to_all()) {
+            interrupt_sent = true;
         }
+        usleep(50);
     }
 
-    return l_Undef;
+    return solution_val;
 }
 

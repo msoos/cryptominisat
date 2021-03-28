@@ -21,7 +21,8 @@ THE SOFTWARE.
 ***********************************************/
 
 #include <iostream>
-#include "mpi.h"
+#include <unistd.h>
+#include <mpi.h>
 #include "datasyncserver.h"
 #include "cryptominisat5/cryptominisat.h"
 #include "solverconf.h"
@@ -215,17 +216,47 @@ int main(int argc, char** argv)
             err = MPI_Isend(solution_dat.data(), solution_dat.size(), MPI_UNSIGNED, 0, 1, MPI_COMM_WORLD, &req);
             assert(err == MPI_SUCCESS);
 //             #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-            std::cout << "c --> MPI Main"
-            << " Rank " << mpiRank << " sent tag 1 to master to indicate finished" << std::endl;
+            std::cout << "c --> MPI Main Rank " << mpiRank
+            << " sent tag 1 to master to indicate finished" << std::endl;
 //             #endif
 
+            //Either we should we get an acknowledgement of receipt, or we get an interrupt
+            int flag;
             MPI_Status status;
-            err = MPI_Wait(&req, &status);
-            assert(err == MPI_SUCCESS);
-//             #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-            std::cout << "c --> MPI Main"
-            << " Rank " << mpiRank << " waited to send message tag 1 to indicates to master we finished" << std::endl;
-//             #endif
+            while(true) {
+                err = MPI_Iprobe(0, 1, MPI_COMM_WORLD, &flag, &status);
+                assert(err == MPI_SUCCESS);
+
+                //We received an interrupt, let's cancel the send and exit
+                if (flag == true) {
+                    unsigned buf;
+                    err = MPI_Recv(&buf, 0, MPI_UNSIGNED, 0, 1, MPI_COMM_WORLD, &status);
+                    assert(err == MPI_SUCCESS);
+                    //#ifdef VERBOSE_DEBUG_MPI_SENDRCV
+                    std::cout << "c --> MPI Main Rank " << mpiRank
+                    << " got tag 1 from master. Let's cancel our send & exit." << std::endl;
+                    //#endif
+
+                    err = MPI_Cancel(&req);
+                    assert(err == MPI_SUCCESS);
+                    break;
+                }
+
+                int op_completed;
+                err = MPI_Test(&req, &op_completed, &status);
+                assert(err == MPI_SUCCESS);
+
+                //OK, server got our message, we can exit
+                if (op_completed) {
+                    //#ifdef VERBOSE_DEBUG_MPI_SENDRCV
+                    std::cout << "c --> MPI Main Rank " << mpiRank
+                    << " completed sending solution & tag 1 to master. Let's exit." << std::endl;
+                    //#endif
+                    break;
+                }
+
+                usleep(50);
+            }
         }
     }
 
