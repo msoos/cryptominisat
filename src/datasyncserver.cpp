@@ -53,7 +53,7 @@ DataSyncServer::DataSyncServer()
 
 
 //Tag of messsage "0"
-void DataSyncServer::syncFromMPI()
+void DataSyncServer::mpi_recv_from_others()
 {
     int err;
     MPI_Status status;
@@ -380,7 +380,7 @@ void CMSat::DataSyncServer::add_clause(const vector<CMSat::Lit>& lits)
 lbool DataSyncServer::actAsServer()
 {
     while(true) {
-        syncFromMPI();
+        mpi_recv_from_others();
 
         if (lastSendNumGotPacket+(mpiSize/2)+1 < numGotPacket) {
             sendDataToAll();

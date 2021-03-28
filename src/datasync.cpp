@@ -146,9 +146,9 @@ bool DataSync::syncData()
 
         sharedData->unit_mutex.lock();
         sharedData->bin_mutex.lock();
-        ok = syncFromMPI();
+        ok = mpi_recv_from_others();
         if (ok && numCalls % 3 == 2) {
-            syncToMPI();
+            mpi_send_to_others();
         }
         sharedData->unit_mutex.unlock();
         sharedData->bin_mutex.unlock();
@@ -587,14 +587,11 @@ void DataSync::signal_new_bin_clause(Lit lit1, Lit lit2)
     }
     newBinClauses.push_back(std::make_pair(lit1, lit2));
 }
-
 #endif
-
 
 ///////////////////////////////////////
 // MPI
 ///////////////////////////////////////
-
 #ifdef USE_MPI
 void DataSync::set_up_for_mpi()
 {
@@ -632,7 +629,7 @@ void DataSync::getNeedToInterruptFromMPI()
     solver->set_must_interrupt_asap();
 }
 
-bool DataSync::syncFromMPI()
+bool DataSync::mpi_recv_from_others()
 {
     int err;
     MPI_Status status;
@@ -718,7 +715,7 @@ bool DataSync::syncFromMPI()
     return solver->okay();
 }
 
-void DataSync::syncToMPI()
+void DataSync::mpi_send_to_others()
 {
     int err;
 

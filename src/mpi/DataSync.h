@@ -82,8 +82,8 @@ class DataSync
 
         #ifdef USE_MPI
         //MPI
-        const bool    syncFromMPI();
-        void          syncToMPI();
+        const bool    mpi_recv_from_others();
+        void          mpi_send_to_others();
         void          getNeedToInterruptFromMPI();
         vec<uint32_t> syncMPIFinish;
         vec<uint32_t> syncMPIFinishTri;

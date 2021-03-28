@@ -46,7 +46,7 @@ class DataSyncServer {
         }
 
     private:
-        void syncFromMPI();
+        void mpi_recv_from_others();
         void add_bin_to_threads(const Lit lit1, const Lit lit2);
         void sendDataToAll();
         bool check_interrupt_and_forward_to_all();

@@ -104,8 +104,8 @@ class DataSync
         //MPI
         #ifdef USE_MPI
         void set_up_for_mpi();
-        bool syncFromMPI();
-        void syncToMPI();
+        bool mpi_recv_from_others();
+        void mpi_send_to_others();
         void getNeedToInterruptFromMPI();
         bool get_mpi_unit(
             const lbool otherVal,

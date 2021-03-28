@@ -143,8 +143,8 @@ const bool DataSync::syncData()
         {
         #pragma omp critical (triData)
         {
-            ok = syncFromMPI();
-            if (ok && numCalls % 2 == 1) syncToMPI();
+            ok = mpi_recv_from_others();
+            if (ok && numCalls % 2 == 1) mpi_send_to_others();
         }}}
         if (!ok) return false;
     }
@@ -190,7 +190,7 @@ void DataSync::getNeedToInterruptFromMPI()
     solver.setNeedToInterrupt();
 }
 
-const bool DataSync::syncFromMPI()
+const bool DataSync::mpi_recv_from_others()
 {
     int err;
     MPI_Status status;
@@ -273,7 +273,7 @@ const bool DataSync::syncFromMPI()
     return solver.ok;
 }
 
-void DataSync::syncToMPI()
+void DataSync::mpi_send_to_others()
 {
     int err;
     if (mpiSendData != NULL) {
