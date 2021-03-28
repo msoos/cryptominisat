@@ -107,7 +107,7 @@ class DataSync
         void set_up_for_mpi();
         bool mpi_recv_from_others();
         void mpi_send_to_others();
-        void mpi_get_interrupt();
+        bool mpi_get_interrupt();
         bool mpi_get_unit(
             const lbool otherVal,
             const uint32_t var,

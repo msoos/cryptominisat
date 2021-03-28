@@ -142,18 +142,18 @@ bool DataSync::syncData()
             syncMPIFinish.resize(solver->nVarsOutside()*2, 0);
         }
 
-        mpi_get_interrupt();
-
-        sharedData->unit_mutex.lock();
-        sharedData->bin_mutex.lock();
-        ok = mpi_recv_from_others();
-        if (ok && numCalls % 3 == 2) {
-            mpi_send_to_others();
-        }
-        sharedData->unit_mutex.unlock();
-        sharedData->bin_mutex.unlock();
-        if (!ok) {
-            return false;
+        if (!mpi_get_interrupt()) {
+            sharedData->unit_mutex.lock();
+            sharedData->bin_mutex.lock();
+            ok = mpi_recv_from_others();
+            if (ok && numCalls % 3 == 2) {
+                mpi_send_to_others();
+            }
+            sharedData->unit_mutex.unlock();
+            sharedData->bin_mutex.unlock();
+            if (!ok) {
+                return false;
+            }
         }
     }
     #endif
@@ -604,7 +604,7 @@ void DataSync::set_up_for_mpi()
 }
 
 //Interrupts are tag 1, coming from master (i.e. rank 0)
-void DataSync::mpi_get_interrupt()
+bool DataSync::mpi_get_interrupt()
 {
     #ifdef VERBOSE_DEBUG_MPI_SENDRCV
     std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
@@ -616,13 +616,15 @@ void DataSync::mpi_get_interrupt()
     int err = MPI_Iprobe(0, 1, MPI_COMM_WORLD, &flag, &status);
     assert(err == MPI_SUCCESS);
     if (flag == false) {
-        return;
+        return false;
     }
 
     unsigned buf;
     err = MPI_Recv(&buf, 0, MPI_UNSIGNED, 0, 1, MPI_COMM_WORLD, &status);
     assert(err == MPI_SUCCESS);
     solver->set_must_interrupt_asap();
+
+    return true;
 }
 
 bool DataSync::mpi_recv_from_others()
