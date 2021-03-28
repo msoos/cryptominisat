@@ -737,19 +737,19 @@ void DataSync::mpi_send_to_others()
     #endif
 
     //Set up units
-    assert(solver->nVarsOuter() == sharedData->value.size());
+    assert(solver->nVarsOutside() == sharedData->value.size());
     vector<uint32_t> data;
-    data.push_back(solver->nVarsOuter());
-    for (uint32_t var = 0; var < solver->nVarsOuter(); var++) {
+    data.push_back(solver->nVarsOutside());
+    for (uint32_t var = 0; var < solver->nVarsOutside(); var++) {
         data.push_back(toInt(sharedData->value[var]));
     }
 
     //Set up binaries
-    assert(sharedData->bins.size() == solver->nVarsOuter()*2);
+    assert(sharedData->bins.size() == solver->nVarsOutside()*2);
     uint32_t thisMpiSentBinData = 0;
-    data.push_back(solver->nVarsOuter()*2);
+    data.push_back(solver->nVarsOutside()*2);
 
-    for(uint32_t wsLit = 0; wsLit < solver->nVarsOuter()*2; wsLit++) {
+    for(uint32_t wsLit = 0; wsLit < solver->nVarsOutside()*2; wsLit++) {
         //Lit lit1 = ~Lit::toLit(wsLit);
         assert(syncMPIFinish.size() > wsLit);
         if (sharedData->bins[wsLit].data == NULL) {
