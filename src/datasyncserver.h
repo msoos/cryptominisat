@@ -51,6 +51,7 @@ class DataSyncServer {
         void get_bin(const Lit lit1, const Lit lit2);
         void sendDataToAll();
         bool check_interrupt_and_forward_to_all();
+        void finish_data_send();
 
         std::vector<uint32_t> syncMPIFinish;
         std::vector<std::vector<Lit> > bins;

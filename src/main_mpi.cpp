@@ -200,7 +200,6 @@ int main(int argc, char** argv)
         << " Solved " << mpiRank << " with value: " << solution_val << std::endl;
         #endif
 
-
         if (solution_val != l_Undef) {
             //Send tag 1 to 0 that indicates we solved
             MPI_Request req;

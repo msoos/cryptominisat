@@ -152,49 +152,61 @@ void DataSyncServer::get_bin(const Lit lit1, const Lit lit2)
     thisBins.push_back(lit2);
 }
 
+void DataSyncServer::finish_data_send()
+{
+    if (sendData == NULL) {
+        assert(send_requests_finished == true);
+        return;
+    }
+
+    int err;
+    int numFinished = 0;
+    for (int i = 1; i < mpiSize; i++) {
+        if (sendRequestsFinished[i]) {
+            numFinished++;
+            continue;
+        }
+//      #ifdef VERBOSE_DEBUG_MPI_SENDRCV
+//      std::cout << "c -->> MPI Server"
+//      << " Checking if sending finished to " << i << std::endl;
+//      #endif
+
+        MPI_Status status;
+        int op_completed;
+        err = MPI_Test(&(sendRequests[i]), &op_completed, &status);
+        assert(err == MPI_SUCCESS);
+        if (op_completed) {
+            //NOTE: no need to free, MPI_Test also frees it
+            sendRequestsFinished[i] = true;
+            numFinished++;
+            #ifdef VERBOSE_DEBUG_MPI_SENDRCV
+            std::cout << "c -->> MPI Server"
+            << " Sending finished to " << i << std::endl;
+            #endif
+        } else if (interrupt_sent) {
+            //If we have finished then we can (and should!) cancel this otherwise we may hang
+            //   waiting for a receive of a thread that itself has already found SAT/UNSAT on its own
+            err = MPI_Cancel(&(sendRequests[i]));
+            assert(err == MPI_SUCCESS);
+            sendRequestsFinished[i] = true;
+            numFinished++;
+        }
+    }
+    if (numFinished != mpiSize-1) {
+//      #ifdef VERBOSE_DEBUG_MPI_SENDRCV
+//      std::cout << "c -->> MPI Server"
+//      << " sending not all finished, exiting sendDataToAll" << std::endl;
+//      #endif
+        return;
+    }
+    send_requests_finished = true;
+    delete[] sendData;
+    sendData = NULL;
+}
+
 void DataSyncServer::sendDataToAll()
 {
     int err;
-
-    //Something to send, then send it.
-    if (sendData != NULL) {
-        int numFinished = 0;
-        for (int i = 1; i < mpiSize; i++) {
-            if (sendRequestsFinished[i]) {
-                numFinished++;
-                continue;
-            }
-//             #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-//             std::cout << "c -->> MPI Server"
-//             << " Checking if sending finished to " << i << std::endl;
-//             #endif
-
-            MPI_Status status;
-            int op_completed;
-            err = MPI_Test(&(sendRequests[i]), &op_completed, &status);
-            assert(err == MPI_SUCCESS);
-            if (op_completed) {
-                //NOTE: no need to free, MPI_Test also frees it
-                sendRequestsFinished[i] = true;
-                numFinished++;
-                #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-                std::cout << "c -->> MPI Server"
-                << " Sending finished to " << i << std::endl;
-                #endif
-            }
-        }
-        if (numFinished != mpiSize-1) {
-//             #ifdef VERBOSE_DEBUG_MPI_SENDRCV
-//             std::cout << "c -->> MPI Server"
-//             << " sending not all finished, exiting sendDataToAll" << std::endl;
-//             #endif
-            return;
-        }
-        send_requests_finished = true;
-        delete[] sendData;
-        sendData = NULL;
-    }
-
     //If interrupt already sent, we just waited for things to be received
     if (interrupt_sent) {
         return;
@@ -395,12 +407,18 @@ lbool DataSyncServer::actAsServer()
 {
     while(!(interrupt_sent && send_requests_finished)) {
         mpi_recv_from_others();
+        finish_data_send();
 
-        if (lastSendNumGotPacket+(mpiSize/2)+1 < numGotPacket) {
+        if (lastSendNumGotPacket+(mpiSize/2)+1 < numGotPacket &&
+            send_requests_finished &&
+            !interrupt_sent)
+        {
             sendDataToAll();
         }
 
-        if (!interrupt_sent && check_interrupt_and_forward_to_all()) {
+        if (!interrupt_sent &&
+            check_interrupt_and_forward_to_all())
+        {
             interrupt_sent = true;
         }
         usleep(50);
