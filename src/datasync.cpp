@@ -42,7 +42,9 @@ DataSync::DataSync(Solver* _solver, SharedData* _sharedData) :
 
 DataSync::~DataSync()
 {
+    #ifdef USE_MPI
     delete[] mpiSendData;
+    #endif
 }
 
 void DataSync::set_shared_data(SharedData* _sharedData)
