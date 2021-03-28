@@ -40,6 +40,11 @@ DataSync::DataSync(Solver* _solver, SharedData* _sharedData) :
 {
 }
 
+DataSync::~DataSync()
+{
+    delete[] mpiSendData;
+}
+
 void DataSync::set_shared_data(SharedData* _sharedData)
 {
     sharedData = _sharedData;
@@ -133,16 +138,11 @@ bool DataSync::syncData()
     if (solver->conf.is_mpi
         && solver->conf.thread_num == 0)
     {
-        if (solver->conf.do_bva) {
-            cout << "ERROR: cannot have BVA and MPI in thread 0!" << endl;
-            exit(-1);
+        if (syncMPIFinish.size() < solver->nVarsOutside()*2) {
+            syncMPIFinish.resize(solver->nVarsOutside()*2, 0);
         }
-        assert(solver->nVarsOuter() == solver->nVarsOutside()
-            && "XORs, BVA not allowed in MPI");
 
-        if (syncMPIFinish.size() < solver->nVars()*2) {
-            syncMPIFinish.resize(solver->nVars()*2, 0);
-        }
+        mpi_get_interrupt();
 
         sharedData->unit_mutex.lock();
         sharedData->bin_mutex.lock();
@@ -155,10 +155,6 @@ bool DataSync::syncData()
         if (!ok) {
             return false;
         }
-    }
-
-    if (solver->conf.is_mpi) {
-        mpi_get_interrupt();
     }
     #endif
 
@@ -607,7 +603,7 @@ void DataSync::set_up_for_mpi()
     }
 }
 
-//Interrupts are tag 1
+//Interrupts are tag 1, coming from master (i.e. rank 0)
 void DataSync::mpi_get_interrupt()
 {
     #ifdef VERBOSE_DEBUG_MPI_SENDRCV
@@ -729,7 +725,7 @@ void DataSync::mpi_send_to_others()
         MPI_Status status;
         err = MPI_Wait(&sendReq, &status);
         assert(err == MPI_SUCCESS);
-        delete mpiSendData;
+        delete[] mpiSendData;
         mpiSendData = NULL;
     }
 
@@ -739,14 +735,15 @@ void DataSync::mpi_send_to_others()
     #endif
 
     //Set up units
+    assert(solver->nVarsOuter() == sharedData->value.size());
     vector<uint32_t> data;
     data.push_back(solver->nVarsOuter());
     for (uint32_t var = 0; var < solver->nVarsOuter(); var++) {
         data.push_back(toInt(sharedData->value[var]));
     }
 
-
     //Set up binaries
+    assert(sharedData->bins.size() == solver->nVarsOuter()*2);
     uint32_t thisMpiSentBinData = 0;
     data.push_back(solver->nVarsOuter()*2);
 

@@ -51,6 +51,10 @@ DataSyncServer::DataSyncServer()
     assert(sizeof(unsigned) == sizeof(uint32_t));
 }
 
+DataSyncServer::~DataSyncServer()
+{
+    delete[] sendData;
+}
 
 //Tag of messsage "0"
 void DataSyncServer::mpi_recv_from_others()
@@ -114,7 +118,7 @@ void DataSyncServer::mpi_recv_from_others()
         at++;
         for (uint32_t i = 0; i < num; i++, at++) {
             Lit otherLit = Lit::toLit(buf[at]);
-            add_bin_to_threads(lit, otherLit);
+            get_bin(lit, otherLit);
             thisRecvBinData++;
         }
     }
@@ -129,7 +133,7 @@ void DataSyncServer::mpi_recv_from_others()
     numGotPacket++;
 }
 
-void DataSyncServer::add_bin_to_threads(const Lit lit1, const Lit lit2)
+void DataSyncServer::get_bin(const Lit lit1, const Lit lit2)
 {
     assert(lit1 < lit2);
 
@@ -183,7 +187,7 @@ void DataSyncServer::sendDataToAll()
 //             #endif
             return;
         }
-        delete sendData;
+        delete[] sendData;
         sendData = NULL;
     }
 
@@ -258,7 +262,7 @@ bool DataSyncServer::check_interrupt_and_forward_to_all()
     << " Interrupt from " << source << " has size " << count << std::endl;
     #endif
 
-    //Get the interrupt signal, tagged 1, with the solution
+    //Get the interrupt signal, tagged 1, with the solution. BLOCKING.
     uint32_t* buf = new uint32_t[count];
     err = MPI_Recv(buf, count, MPI_UNSIGNED, source, 1, MPI_COMM_WORLD, &status);
     assert(err == MPI_SUCCESS);

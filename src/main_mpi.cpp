@@ -214,16 +214,18 @@ int main(int argc, char** argv)
 
             err = MPI_Isend(solution_dat.data(), solution_dat.size(), MPI_UNSIGNED, 0, 1, MPI_COMM_WORLD, &req);
             assert(err == MPI_SUCCESS);
-            #ifdef VERBOSE_DEBUG_MPI_SENDRCV
+//             #ifdef VERBOSE_DEBUG_MPI_SENDRCV
             std::cout << "c --> MPI Main"
             << " Rank " << mpiRank << " sent tag 1 to master to indicate finished" << std::endl;
-            #endif
+//             #endif
 
-//             MPI_Status status;
-//             err = MPI_Wait(&req, &status);
-//             assert(err == MPI_SUCCESS);
-//             std::cout << "c --> MPI Main"
-//             << " Rank " << mpiRank << " waited for tag 1 that indicates to master we finished" << std::endl;
+            MPI_Status status;
+            err = MPI_Wait(&req, &status);
+            assert(err == MPI_SUCCESS);
+//             #ifdef VERBOSE_DEBUG_MPI_SENDRCV
+            std::cout << "c --> MPI Main"
+            << " Rank " << mpiRank << " waited to send message tag 1 to indicates to master we finished" << std::endl;
+//             #endif
         }
     }
 

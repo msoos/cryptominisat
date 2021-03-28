@@ -34,6 +34,7 @@ namespace CMSat {
 class DataSyncServer {
     public:
         DataSyncServer();
+        ~DataSyncServer();
         lbool actAsServer();
         void print_solution();
         void send_cnf_to_solvers();
@@ -47,7 +48,7 @@ class DataSyncServer {
 
     private:
         void mpi_recv_from_others();
-        void add_bin_to_threads(const Lit lit1, const Lit lit2);
+        void get_bin(const Lit lit1, const Lit lit2);
         void sendDataToAll();
         bool check_interrupt_and_forward_to_all();
 
