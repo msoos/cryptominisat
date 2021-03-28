@@ -675,7 +675,7 @@ bool DataSync::mpi_recv_from_others()
     at++;
     for (uint32_t var = 0; var < solver->nVarsOutside(); var++, at++) {
         const lbool otherVal = toLbool(buf[at]);
-        if (!get_mpi_unit(otherVal, var, thisMpiRecvUnitData)) {
+        if (!mpi_get_unit(otherVal, var, thisMpiRecvUnitData)) {
             #ifdef VERBOSE_DEBUG_MPI_SENDRCV
             std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
             " solver FALSE" << std::endl;
@@ -788,7 +788,7 @@ void DataSync::mpi_send_to_others()
     #endif
 }
 
-bool DataSync::get_mpi_unit(
+bool DataSync::mpi_get_unit(
     const lbool otherVal,
     const uint32_t var,
     uint32_t& thisGotUnitData
