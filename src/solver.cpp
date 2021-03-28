@@ -1628,6 +1628,7 @@ lbool Solver::solve_with_assumptions(
     conf.max_confl = std::numeric_limits<uint64_t>::max();
     conf.maxTime = std::numeric_limits<double>::max();
     drat->flush();
+    datasync->finish_up_mpi();
     conf.conf_needed = true;
     set_must_interrupt_asap();
     assert(decisionLevel()== 0);

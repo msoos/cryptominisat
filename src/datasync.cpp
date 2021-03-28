@@ -40,10 +40,26 @@ DataSync::DataSync(Solver* _solver, SharedData* _sharedData) :
 {
 }
 
-DataSync::~DataSync()
+void DataSync::finish_up_mpi()
 {
     #ifdef USE_MPI
-    delete[] mpiSendData;
+    if (mpiSendData) {
+        MPI_Status status;
+        int op_completed = false;
+        int err;
+
+        while(!op_completed) {
+            err = MPI_Test(&sendReq, &op_completed, &status);
+            assert(err == MPI_SUCCESS);
+            if (!op_completed) {
+                err = MPI_Cancel(&sendReq);
+                assert(err == MPI_SUCCESS);
+            }
+            usleep(1);
+        }
+        delete[] mpiSendData;
+        mpiSendData = NULL;
+    }
     #endif
 }
 

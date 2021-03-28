@@ -40,7 +40,7 @@ class DataSync
 {
     public:
         DataSync(Solver* solver, SharedData* sharedData);
-        ~DataSync();
+        void finish_up_mpi();
         bool enabled();
         void set_shared_data(SharedData* sharedData);
         void new_var(const bool bva);
