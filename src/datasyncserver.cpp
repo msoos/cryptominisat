@@ -184,12 +184,16 @@ void DataSyncServer::finish_data_send()
             << " Sending finished to " << i << std::endl;
             #endif
         } else if (interrupt_sent) {
-            //If we have finished then we can (and should!) cancel this otherwise we may hang
+            //If we have finished then we must cancel this otherwise we may hang
             //   waiting for a receive of a thread that itself has already found SAT/UNSAT on its own
+
+            //NOTE: "It is still necessary to complete a communication that has been marked for cancellation, using a call to MPI_REQUEST_FREE, MPI_WAIT or MPI_TEST (or any of the derived operations)."
+            //      --> So we cannot set sendRequesFinished -- we must still test!
+
             err = MPI_Cancel(&(sendRequests[i]));
             assert(err == MPI_SUCCESS);
-            sendRequestsFinished[i] = true;
-            numFinished++;
+            //sendRequestsFinished[i] = true;
+            //numFinished++;
             #ifdef VERBOSE_DEBUG_MPI_SENDRCV
             std::cout << "c -->> MPI Server"
             << " cancelling send to " << i << " due to interrupt" << std::endl;
@@ -310,8 +314,7 @@ bool DataSyncServer::check_interrupt_and_forward_to_all()
     << " got solution from " << source << std::endl;
 //     #endif
 
-    //Send to all, in case they haven't received it yet. EVERYONE gets the message,
-    //including the one who sent it :)
+    //Send to all except the one who sent it
     for (int i = 1; i < mpiSize; i++) {
         if (i == source) {
             continue;
