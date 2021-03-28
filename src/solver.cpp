@@ -406,7 +406,7 @@ Clause* Solver::add_clause_int(
     , const Lit drat_first
     , const bool sorted
 ) {
-    assert(ok);
+    assert(okay());
     assert(decisionLevel() == 0);
     assert(!attach_long || qhead == trail.size());
     #ifdef VERBOSE_DEBUG
@@ -423,7 +423,7 @@ Clause* Solver::add_clause_int(
     }
 
     #ifdef VERBOSE_DEBUG
-    cout << "add_clause_int final clause " << ps << endl;
+    cout << "add_clause_int final clause: " << ps << endl;
     #endif
 
     //If caller required final set of lits, return it.
