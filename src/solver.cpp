@@ -434,20 +434,27 @@ Clause* Solver::add_clause_int(
     if (addDrat) {
         size_t i = 0;
         if (drat_first != lit_Undef) {
-            for(i = 0; i < ps.size(); i++) {
-                if (ps[i] == drat_first) {
-                    break;
+            assert(ps.size() > 0);
+            if (drat_first != lit_Undef) {
+                for(i = 0; i < ps.size(); i++) {
+                    if (ps[i] == drat_first) {
+                        break;
+                    }
                 }
             }
+            std::swap(ps[0], ps[i]);
         }
-        std::swap(ps[0], ps[i]);
+
         *drat << add << ps
         #ifdef STATS_NEEDED
         << (cl_stats ? cl_stats->ID : 0)
         << sumConflicts
         #endif
         << fin;
-        std::swap(ps[0], ps[i]);
+
+        if (drat_first != lit_Undef) {
+            std::swap(ps[0], ps[i]);
+        }
     }
 
     //Handle special cases
