@@ -180,6 +180,11 @@ add_library(cryptominisat5
     ${cryptoms_lib_files}
     cryptominisat.cpp
 )
+# Make sure the exported target has the include directory set
+target_include_directories(cryptominisat5 PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:include>
+)
 
 GENERATE_EXPORT_HEADER(cryptominisat5
          BASE_NAME cryptominisat5
