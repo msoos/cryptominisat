@@ -1265,10 +1265,6 @@ lbool Searcher::search()
     check_no_duplicate_lits_anywhere();
     check_order_heap_sanity();
     #endif
-    #ifdef FINAL_PREDICTOR
-    assert(conf.glue_put_lev0_if_below_or_eq == 0);
-    assert(conf.glue_put_lev1_if_below_or_eq == 0);
-    #endif
     const double myTime = cpuTime();
 
     //Stats reset & update
