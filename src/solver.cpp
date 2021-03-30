@@ -1404,15 +1404,6 @@ void Solver::check_xor_cut_config_sanity() const
 
 void Solver::check_and_upd_config_parameters()
 {
-    #ifdef FINAL_PREDICTOR
-    if (conf.glue_put_lev0_if_below_or_eq != 0 ||
-        conf.glue_put_lev1_if_below_or_eq != 0
-    ) {
-        cout << "ERROR: setting glue cutoff in PREDICT mode not supported" << endl;
-        exit(-1);
-    }
-    #endif
-
     if (conf.max_glue_cutoff_gluehistltlimited > 1000) {
         cout << "ERROR: 'Maximum supported glue size is currently 1000" << endl;
         exit(-1);
