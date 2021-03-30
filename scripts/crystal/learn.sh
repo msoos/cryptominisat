@@ -63,16 +63,17 @@ function concat() {
     tar czvf ${dirname}.tar.gz ${dirname}
 }
 
-# best was: backto-cut1-5.0-cut2-30.0-limit-2000-est20-w0-xbmin50-xbmd6
-# next best:backto-cut1-5.0-cut2-30.0-limit-2000-est10-w0-xbmin50-xbmd6
-# next      backto-cut1-10.0-cut2-40.0-limit-8000-est60-w0-xbmin500-xbmd4
-# next      backto-cut1-5.0-cut2-30.0-limit-2000-est10-w0-xbmin300-xbmd6
-# next      backto-cut1-5.0-cut2-30.0-limit-2000-est10-w0-xbmin1-xbmd4
 
-#xgboostminchild=1
-#xboostmaxdepth=6
+# best was: 8march-2020-3acd81dc55df3-cut1-5.0-cut2-30.0-limit-2000-est10-w0-xbmin300-xbmd4
+
+#xboostmaxdepth=4
+#xboostminchild=300
+#est=10
+
 w=0
+xgboostsubsample="1.0"
 basename="8march-2020-3acd81dc55df3"
+basename="aes-30-march-2020-a1e0e19be0c1"
 limit=2000
 cut1="5.0"
 cut2="30.0"
@@ -87,17 +88,17 @@ do
     done
 done
 
-cut1="3.0"
-cut2="25.0"
-for xboostmaxdepth in 4 6
-do
-    for xgboostminchild in 50 300
-    do
-        for est in 10 20
-        do
-            concat
-        done
-    done
-done
+# cut1="3.0"
+# cut2="25.0"
+# for xboostmaxdepth in 4 6
+# do
+#     for xgboostminchild in 50 300
+#     do
+#         for est in 10 20
+#         do
+#             concat
+#         done
+#     done
+# done
 
 exit 0
