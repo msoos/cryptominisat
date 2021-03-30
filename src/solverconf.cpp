@@ -116,8 +116,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , inc_max_temp_lev2_red_cls(1.0)      //only used if every_lev2_reduce==0
         , protect_cl_if_improved_glue_below_this_glue_for_one_turn(30)
         #ifdef FINAL_PREDICTOR
-        , glue_put_lev0_if_below_or_eq(0)
-        , glue_put_lev1_if_below_or_eq(0)
+        , glue_put_lev0_if_below_or_eq(3)
+        , glue_put_lev1_if_below_or_eq(6)
         #else
         , glue_put_lev0_if_below_or_eq(3) // never removed
         , glue_put_lev1_if_below_or_eq(6) // kept for a while then moved to lev2
@@ -148,7 +148,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Clause minimisation
         , doRecursiveMinim (true)
         , doMinimRedMore(true)
-        , doMinimRedMoreMore(true)
+        , doMinimRedMoreMore(2)
         , max_glue_more_minim(6)
         , max_size_more_minim(30)
         , more_red_minim_limit_binary(200)
@@ -362,7 +362,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , distill_red_tier0_ratio(0.7)
         , distill_red_tier1_ratio(0.07)
         , distill_irred_alsoremove_ratio(1.2)
-        , distill_irred_noremove_ratio(0.5) //from out-3756148.wlm01-12-drat0
+        , distill_irred_noremove_ratio(1.0) //from out-3946531.wlm01-15-drat0
         , distill_rand_shuffle_order_every_n(3)
         , distill_sort(1)
 

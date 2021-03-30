@@ -532,49 +532,43 @@ inline void Searcher::minimize_learnt_clause()
     stats.recMinLitRem += origSize - learnt_clause.size();
 }
 
-inline void Searcher::minimize_using_permdiff()
+inline void Searcher::minimize_using_bins()
 {
     if (conf.doMinimRedMore
         && learnt_clause.size() > 1
     ) {
         stats.permDiff_attempt++;
         stats.moreMinimLitsStart += learnt_clause.size();
-        watch_based_learnt_minim();
-
+        MYFLAG++;
+        const auto& ws  = watches[~learnt_clause[0]];
+        uint32_t nb = 0;
+        for (const Watched& w: ws) {
+            if (w.isBin()) {
+                Lit imp = w.lit2();
+                if (permDiff[imp.var()] == MYFLAG && value(imp) == l_True) {
+                    nb++;
+                    permDiff[imp.var()] = MYFLAG - 1;
+                }
+            } else {
+                continue;
+            }
+        }
+        uint32_t l = learnt_clause.size() - 1;
+        if (nb > 0) {
+            for (uint32_t i = 1; i < learnt_clause.size() - nb; i++) {
+                if (permDiff[learnt_clause[i].var()] != MYFLAG) {
+                    Lit p = learnt_clause[l];
+                    learnt_clause[l] = learnt_clause[i];
+                    learnt_clause[i] = p;
+                    l--;
+                    i--;
+                }
+            }
+            learnt_clause.resize(learnt_clause.size()-nb);
+            stats.permDiff_success++;
+            stats.permDiff_rem_lits+=nb;
+        }
         stats.moreMinimLitsEnd += learnt_clause.size();
-    }
-}
-
-inline void Searcher::watch_based_learnt_minim()
-{
-    MYFLAG++;
-    const auto& ws  = watches[~learnt_clause[0]];
-    uint32_t nb = 0;
-    for (const Watched& w: ws) {
-        if (w.isBin()) {
-            Lit imp = w.lit2();
-            if (permDiff[imp.var()] == MYFLAG && value(imp) == l_True) {
-                nb++;
-                permDiff[imp.var()] = MYFLAG - 1;
-            }
-        } else {
-            continue;
-        }
-    }
-    uint32_t l = learnt_clause.size() - 1;
-    if (nb > 0) {
-        for (uint32_t i = 1; i < learnt_clause.size() - nb; i++) {
-            if (permDiff[learnt_clause[i].var()] != MYFLAG) {
-                Lit p = learnt_clause[l];
-                learnt_clause[l] = learnt_clause[i];
-                learnt_clause[i] = p;
-                l--;
-                i--;
-            }
-        }
-        learnt_clause.resize(learnt_clause.size()-nb);
-        stats.permDiff_success++;
-        stats.permDiff_rem_lits+=nb;
     }
 }
 
@@ -819,7 +813,7 @@ void Searcher::analyze_conflict(
     if (learnt_clause.size() <= conf.max_size_more_minim) {
         glue = calc_glue(learnt_clause);
         if (glue <= conf.max_glue_more_minim) {
-            minimize_using_permdiff();
+            minimize_using_bins();
         }
     }
     if (glue == std::numeric_limits<uint32_t>::max()) {
@@ -827,11 +821,20 @@ void Searcher::analyze_conflict(
     }
     print_fully_minimized_learnt_clause();
 
-    if (learnt_clause.size() > conf.max_size_more_minim
-        && glue <= (conf.glue_put_lev0_if_below_or_eq+2)
-        && conf.doMinimRedMoreMore
-    ) {
-        minimise_redundant_more_more(learnt_clause);
+    if (glue <= (conf.glue_put_lev0_if_below_or_eq+2)) {
+        bool doit = false;
+        if (conf.doMinimRedMoreMore == 1 && learnt_clause.size() <= conf.max_size_more_minim) {
+            doit = true;
+        }
+        if (conf.doMinimRedMoreMore == 2 && learnt_clause.size() > conf.max_size_more_minim) {
+            doit = true;
+        }
+        if (conf.doMinimRedMoreMore == 3) {
+            doit = true;
+        }
+        if (doit) {
+            minimise_redundant_more_more(learnt_clause);
+        }
     }
 
     #ifdef STATS_NEEDED_BRANCH
@@ -1117,7 +1120,7 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
     seen[p.var()] = 0;
 
     learnt_clause = out_conflict;
-    minimize_using_permdiff();
+    minimize_using_bins();
     out_conflict = learnt_clause;
 }
 
@@ -1782,6 +1785,8 @@ Clause* Searcher::handle_last_confl(
             mtrand.randDblExc() < conf.lock_for_data_gen_ratio;
         #endif
 
+
+        #ifndef FINAL_PREDICTOR
         if (cl->stats.locked_for_data_gen) {
             which_arr = 0;
         } else if (glue <= conf.glue_put_lev0_if_below_or_eq) {
@@ -1794,8 +1799,8 @@ Clause* Searcher::handle_last_confl(
         } else {
             which_arr = 2;
         }
-        #ifdef FINAL_PREDICTOR
-        assert(which_arr == 2);
+        #else
+        which_arr = 2;
         #endif
 
         if (which_arr == 0) {

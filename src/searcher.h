@@ -285,8 +285,7 @@ class Searcher : public HyperEngine
         void update_glue_from_analysis(Clause* cl);
         template<bool update_bogoprops>
         void minimize_learnt_clause();
-        void watch_based_learnt_minim();
-        void minimize_using_permdiff();
+        void minimize_using_bins();
         void print_fully_minimized_learnt_clause() const;
         size_t find_backtrack_level_of_learnt();
         Clause* otf_subsume_last_resolved_clause(Clause* last_resolved_long_cl);
