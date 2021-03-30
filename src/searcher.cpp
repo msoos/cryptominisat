@@ -818,9 +818,7 @@ void Searcher::analyze_conflict(
     glue = std::numeric_limits<uint32_t>::max();
     if (learnt_clause.size() <= conf.max_size_more_minim) {
         glue = calc_glue(learnt_clause);
-        if (glue <= conf.max_glue_more_minim
-            && learnt_clause.size() <= 30
-        ) {
+        if (glue <= conf.max_glue_more_minim) {
             minimize_using_permdiff();
         }
     }
