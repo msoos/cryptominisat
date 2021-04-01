@@ -225,13 +225,13 @@ class DLL_PUBLIC SolverConf
         int polar_best_multip_n;
 
         //Clause cleaning
-        float pred_short_size_mult;
-        float pred_long_size_mult;
-        float pred_forever_size_mult;
-        float pred_forever_size_pow;
+        double pred_short_size_mult;
+        double pred_long_size_mult;
+        double pred_forever_size_mult;
+        double pred_forever_size_pow;
 
-        float pred_long_chunk_mult;
-        float pred_forever_chunk_mult;
+        double pred_long_chunk_mult;
+        double pred_forever_chunk_mult;
 
         uint32_t pred_long_check_every_n;
         uint32_t pred_forever_check_every_n;

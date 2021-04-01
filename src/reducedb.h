@@ -115,12 +115,20 @@ private:
     uint32_t force_kept_short = 0;
 
     uint32_t short_deleted;
-    uint32_t long_moved;
-    uint32_t forever_moved;
+    uint32_t moved_from_long_to_short;
+    uint32_t kept_in_long;
+    uint32_t kept_in_long_due_to_dontmove;
+    uint32_t moved_from_forever_to_long;
+    uint32_t kept_in_forever;
+    uint32_t moved_from_short_to_forever;
+    uint32_t moved_from_short_to_long;
+    uint32_t kept_in_forever_due_to_dontmove;
+    uint32_t kept_in_short;
+    uint32_t kept_in_short_due_to_dontmove;
 
     uint64_t short_deleted_age;
 
-    uint32_t long_upgraded = 0;
+    //uint32_t long_upgraded = 0;
 };
 
 }
