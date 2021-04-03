@@ -86,14 +86,14 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , polar_best_multip_n(1000)
 
         //Clause cleaning
-        , pred_short_size_mult(0.8)   //out-937344.wlm01-2-drat0 --predshortmult 0.5
+        , pred_short_size_mult(0.5)   //out-937344.wlm01-2-drat0 --predshortmult 0.5
         , pred_long_size_mult(0.5)    //out-937344.wlm01-2-drat0 --predlongmult 0.5
-        , pred_forever_size_mult(0.50) //out-937344.wlm01-2-drat0 --predforevermult 0.25
+        , pred_forever_size_mult(0.40) //out-937344.wlm01-2-drat0 --predforevermult 0.25
 
         , pred_forever_size_pow(0.1)
         //
-        , pred_long_chunk_mult(2.0)
-        , pred_forever_chunk_mult(8.0)
+        , pred_long_chunk_mult(1.0)
+        , pred_forever_chunk_mult(4.0)
         //
         , pred_long_check_every_n(3)
         , pred_forever_check_every_n(12)
@@ -149,7 +149,11 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Clause minimisation
         , doRecursiveMinim (true)
         , doMinimRedMore(true)
+#ifdef FINAL_PREDICTOR
+        , doMinimRedMoreMore(0)
+#else
         , doMinimRedMoreMore(2)
+#endif
         , max_glue_more_minim(6)
         , max_size_more_minim(30)
         , more_red_minim_limit_binary(200)

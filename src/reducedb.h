@@ -127,8 +127,6 @@ private:
     uint32_t kept_in_short_due_to_dontmove;
 
     uint64_t short_deleted_age;
-
-    //uint32_t long_upgraded = 0;
 };
 
 }

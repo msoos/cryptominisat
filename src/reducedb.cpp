@@ -633,7 +633,7 @@ void ReduceDB::pred_move_to_lev1_and_lev0()
 {
     //FOREVER
     uint32_t mark_forever = 300 * solver->conf.pred_forever_chunk_mult;
-    mark_forever *= pow((double)solver->sumConflicts/10000.0, solver->conf.pred_forever_size_pow);
+    //mark_forever *= pow((double)solver->sumConflicts/10000.0, solver->conf.pred_forever_size_pow);
 
     std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
               SortRedClsPredForever(solver->cl_alloc, solver->red_stats_extra));
@@ -654,7 +654,7 @@ void ReduceDB::pred_move_to_lev1_and_lev0()
 
     // LONG
     uint32_t mark_long = 2000 * solver->conf.pred_long_chunk_mult;
-    mark_long *= pow((double)solver->sumConflicts/10000.0, solver->conf.pred_forever_size_pow);
+    //mark_long *= pow((double)solver->sumConflicts/10000.0, solver->conf.pred_forever_size_pow);
 
     std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
               SortRedClsPredLong(solver->cl_alloc, solver->red_stats_extra));
@@ -791,14 +791,14 @@ void ReduceDB::clean_lev0_once_in_a_while()
             (time_inside_solver < checked_every &&
             solver->conf.pred_dontmove_until_timeinside == 2)
         ) {
-            if ((time_inside_solver < checked_every/2 &&
-                solver->conf.pred_dontmove_until_timeinside == 1) ||
-                (time_inside_solver < checked_every &&
-                solver->conf.pred_dontmove_until_timeinside == 2))
-            {
-                kept_in_forever_due_to_dontmove++;
-                keep_forever++;
-            }
+//             if ((time_inside_solver < checked_every/2 &&
+//                 solver->conf.pred_dontmove_until_timeinside == 1) ||
+//                 (time_inside_solver < checked_every &&
+//                 solver->conf.pred_dontmove_until_timeinside == 2))
+//             {
+//                 kept_in_forever_due_to_dontmove++;
+//                 keep_forever++;
+//             }
 
             //cout << "stats_extra.pred_forever_use: " << stats_extra.pred_forever_use/(10*1000.0) << endl;
             kept_in_forever++;
@@ -826,33 +826,12 @@ void ReduceDB::clean_lev1_once_in_a_while()
 
     const uint32_t checked_every = solver->conf.pred_long_check_every_n * solver->conf.every_pred_reduce;
 
-    //Move to FOREVER
-//     uint32_t j = 0;
-//     for(uint32_t i = 0; i < solver->longRedCls[1].size(); i ++) {
-//         const ClOffset offset = solver->longRedCls[1][i];
-//         Clause* cl = solver->cl_alloc.ptr(offset);
-//         assert(!cl->freed());
-//
-//         bool moved = false;
-//         if (cl->stats.pred_forever_use < solver->conf.pred_forever_use) {
-//             cl->stats.which_red_array = 0;
-//             solver->longRedCls[0].push_back(offset);
-//             long_upgraded++;
-//             moved = true;
-//         }
-//
-//         if (!moved) {
-//             solver->longRedCls[1][j++] =solver->longRedCls[1][i];
-//         }
-//     }
-//     solver->longRedCls[1].resize(j);
-
 
     //Clean up LONG
     std::sort(solver->longRedCls[1].begin(), solver->longRedCls[1].end(),
           SortRedClsPredLong(solver->cl_alloc, solver->red_stats_extra));
     uint32_t keep_long = 15000.0 * solver->conf.pred_long_size_mult;
-    keep_long *= pow((double)solver->sumConflicts/10000.0, solver->conf.pred_forever_size_pow);
+    //keep_long *= pow((double)solver->sumConflicts/10000.0, solver->conf.pred_forever_size_pow);
 
 
     int j = 0;
@@ -869,14 +848,14 @@ void ReduceDB::clean_lev1_once_in_a_while()
             (time_inside_solver < checked_every &&
             solver->conf.pred_dontmove_until_timeinside == 2)
         ) {
-            if ((time_inside_solver < checked_every/2 &&
-                solver->conf.pred_dontmove_until_timeinside == 1) ||
-                (time_inside_solver < checked_every &&
-                solver->conf.pred_dontmove_until_timeinside == 2))
-            {
-                kept_in_long_due_to_dontmove++;
-                keep_long++;
-            }
+//             if ((time_inside_solver < checked_every/2 &&
+//                 solver->conf.pred_dontmove_until_timeinside == 1) ||
+//                 (time_inside_solver < checked_every &&
+//                 solver->conf.pred_dontmove_until_timeinside == 2))
+//             {
+//                 kept_in_long_due_to_dontmove++;
+//                 keep_long++;
+//             }
 
             kept_in_long++;
             assert(cl->stats.which_red_array == 1);
@@ -1032,7 +1011,6 @@ void ReduceDB::handle_predictors()
         median_data);
 
     //Move clauses around
-    //long_upgraded = 0;
     short_deleted = 0;
     moved_from_long_to_short = 0;
     kept_in_long = 0;
