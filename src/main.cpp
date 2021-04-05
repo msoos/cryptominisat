@@ -374,10 +374,6 @@ void Main::add_supported_options()
         , "Use original distill method during pred")
     ("preddontmovetime", po::value(&conf.pred_dontmove_until_timeinside)->default_value(conf.pred_dontmove_until_timeinside)
         , "Use original distill method during pred")
-    ("predadjustsize", po::value(&conf.pred_adjust_for_cl_size)->default_value(conf.pred_adjust_for_cl_size)
-        , "Adjust predict values with the size of the clause")
-    ("pedadjustonlyforever", po::value(&conf.pred_adjust_for_cl_size_onlyforever)->default_value(conf.pred_adjust_for_cl_size_onlyforever)
-        , "Adjust predict values with the size of the clause")
     ;
     #endif
 

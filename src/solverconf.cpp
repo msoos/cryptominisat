@@ -97,8 +97,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //
         , pred_long_check_every_n(3)
         , pred_forever_check_every_n(12)
-        , pred_adjust_for_cl_size(0)
-        , pred_adjust_for_cl_size_onlyforever(0)
         #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
         , pred_distill_orig(false)
         #else
