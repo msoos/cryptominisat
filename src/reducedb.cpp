@@ -741,7 +741,7 @@ void ReduceDB::update_preds_lev2()
 
     if (solver->conf.verbosity >= 2) {
         double predTime = cpuTime() - myTime;
-        cout << "c [DBCL] main predtime: " << predTime << endl;
+        cout << "c [DBCL] lev2 predtime: " << predTime << endl;
     }
 }
 
