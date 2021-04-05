@@ -348,19 +348,19 @@ void Main::add_supported_options()
         , "Directory where predictor_short.json, predictor_long.json, predictor_forever.json are")
 
     //size
-    ("predshortmult", po::value(&conf.pred_short_size_mult)->default_value(conf.pred_short_size_mult)
+    ("predshortsize", po::value(&conf.pred_short_size)->default_value(conf.pred_short_size)
         , "Pred short multiplier")
-    ("predlongmult", po::value(&conf.pred_long_size_mult)->default_value(conf.pred_long_size_mult)
+    ("predlongsize", po::value(&conf.pred_long_size)->default_value(conf.pred_long_size)
         , "Pred long multiplier")
-    ("predforevermult", po::value(&conf.pred_forever_size_mult)->default_value(conf.pred_forever_size_mult)
+    ("predforeversize", po::value(&conf.pred_forever_size)->default_value(conf.pred_forever_size)
         , "Pred forever multiplier")
     ("predforeverpow", po::value(&conf.pred_forever_size_pow)->default_value(conf.pred_forever_size_pow)
         , "Pred forever power to raise the conflicts to")
 
     //chunk
-    ("predlongchunkmult", po::value(&conf.pred_long_chunk_mult)->default_value(conf.pred_long_chunk_mult)
+    ("predlongchunk", po::value(&conf.pred_long_chunk)->default_value(conf.pred_long_chunk)
         , "Pred long chunk multiplier")
-    ("predforeverchunkmult", po::value(&conf.pred_forever_chunk_mult)->default_value(conf.pred_forever_chunk_mult)
+    ("predforeverchunk", po::value(&conf.pred_forever_chunk)->default_value(conf.pred_forever_chunk)
         , "Pred forever chunk multiplier")
 
 

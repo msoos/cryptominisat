@@ -632,7 +632,7 @@ void ReduceDB::handle_lev1()
 void ReduceDB::pred_move_to_lev1_and_lev0()
 {
     //FOREVER
-    uint32_t mark_forever = 300 * solver->conf.pred_forever_chunk_mult;
+    uint32_t mark_forever = solver->conf.pred_forever_chunk;
     //mark_forever *= pow((double)solver->sumConflicts/10000.0, solver->conf.pred_forever_size_pow);
 
     std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
@@ -653,7 +653,7 @@ void ReduceDB::pred_move_to_lev1_and_lev0()
 
 
     // LONG
-    uint32_t mark_long = 2000 * solver->conf.pred_long_chunk_mult;
+    uint32_t mark_long = solver->conf.pred_long_chunk;
     //mark_long *= pow((double)solver->sumConflicts/10000.0, solver->conf.pred_forever_size_pow);
 
     std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
@@ -771,7 +771,7 @@ void ReduceDB::clean_lev0_once_in_a_while()
     const uint32_t checked_every = solver->conf.pred_forever_check_every_n *
         solver->conf.every_pred_reduce;
 
-    uint32_t keep_forever = 2000.0 * (double)solver->conf.pred_forever_size_mult;
+    uint32_t keep_forever = solver->conf.pred_forever_size;
     keep_forever *= pow((double)solver->sumConflicts/10000.0, solver->conf.pred_forever_size_pow);
 
     std::sort(solver->longRedCls[0].begin(), solver->longRedCls[0].end(),
@@ -830,7 +830,7 @@ void ReduceDB::clean_lev1_once_in_a_while()
     //Clean up LONG
     std::sort(solver->longRedCls[1].begin(), solver->longRedCls[1].end(),
           SortRedClsPredLong(solver->cl_alloc, solver->red_stats_extra));
-    uint32_t keep_long = 15000.0 * solver->conf.pred_long_size_mult;
+    uint32_t keep_long = solver->conf.pred_long_size;
     //keep_long *= pow((double)solver->sumConflicts/10000.0, solver->conf.pred_forever_size_pow);
 
 
@@ -872,7 +872,7 @@ void ReduceDB::clean_lev1_once_in_a_while()
 void ReduceDB::delete_from_lev2()
 {
     // SHORT
-    uint32_t keep_short = 15000 * solver->conf.pred_short_size_mult;
+    uint32_t keep_short = solver->conf.pred_short_size;
     std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
               SortRedClsPredShort(solver->cl_alloc, solver->red_stats_extra));
 
