@@ -86,10 +86,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , polar_best_multip_n(1000)
 
         //Clause cleaning
-        , pred_short_size(7500)
+        , pred_short_size(20000)
         , pred_long_size(7500)
-        , pred_forever_size(800)
-
+        , pred_forever_size(600)
         , pred_forever_size_pow(0.1)
         //
         , pred_long_chunk(2000)
@@ -102,7 +101,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         #else
         , pred_distill_orig(true)
         #endif
-        , pred_dontmove_until_timeinside(1)
+        , pred_dontmove_until_timeinside(3.0)
 
         , every_lev1_reduce(10000) // kept for a while then moved to lev2
         , every_lev2_reduce(15000) // cleared regularly

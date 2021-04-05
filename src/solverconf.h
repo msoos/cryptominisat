@@ -236,7 +236,7 @@ class DLL_PUBLIC SolverConf
         uint32_t pred_long_check_every_n;
         uint32_t pred_forever_check_every_n;
         int   pred_distill_orig;
-        int   pred_dontmove_until_timeinside;
+        double pred_dontmove_until_timeinside;
 
         //if non-zero, we reduce at every X conflicts.
         //Reduced according to whether it's been used recently

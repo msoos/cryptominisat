@@ -759,8 +759,11 @@ void ReduceDB::clean_lev0_once_in_a_while()
     const uint32_t checked_every = solver->conf.pred_forever_check_every_n *
         solver->conf.every_pred_reduce;
 
-    uint32_t keep_forever = solver->conf.pred_forever_size;
-    keep_forever *= pow((double)solver->sumConflicts/10000.0, solver->conf.pred_forever_size_pow);
+    uint32_t keep_forever_plus = solver->conf.pred_forever_size;
+    keep_forever_plus *= pow((double)solver->sumConflicts/10000.0, solver->conf.pred_forever_size_pow);
+    uint32_t keep_forever = last_forever_size + keep_forever_plus;
+    cout << "c XXXXX last_forever_size: " << last_forever_size << " keep_forever_plus: " << keep_forever_plus <<  endl;
+    last_forever_size = 0;
 
     std::sort(solver->longRedCls[0].begin(), solver->longRedCls[0].end(),
           SortRedClsPredForever(solver->cl_alloc, solver->red_stats_extra));
@@ -773,20 +776,22 @@ void ReduceDB::clean_lev0_once_in_a_while()
         assert(!cl->freed());
 
         uint32_t time_inside_solver = solver->sumConflicts - stats_extra.introduced_at_conflict;
+        bool not_enough_time_inside =
+            solver->conf.pred_dontmove_until_timeinside > 0.0 &&
+            time_inside_solver < (double)checked_every/solver->conf.pred_dontmove_until_timeinside;
+
+        if (time_inside_solver >= checked_every) {
+            last_forever_size++;
+        }
+
         if (i < keep_forever ||
-            (time_inside_solver < checked_every/2 &&
-            solver->conf.pred_dontmove_until_timeinside == 1) ||
-            (time_inside_solver < checked_every &&
-            solver->conf.pred_dontmove_until_timeinside == 2)
-        ) {
-//             if ((time_inside_solver < checked_every/2 &&
-//                 solver->conf.pred_dontmove_until_timeinside == 1) ||
-//                 (time_inside_solver < checked_every &&
-//                 solver->conf.pred_dontmove_until_timeinside == 2))
-//             {
-//                 kept_in_forever_due_to_dontmove++;
-//                 keep_forever++;
-//             }
+            solver->clause_locked(*cl, offset) ||
+            not_enough_time_inside)
+        {
+            if (not_enough_time_inside) {
+                kept_in_forever_due_to_dontmove++;
+                keep_forever++;
+            }
 
             //cout << "stats_extra.pred_forever_use: " << stats_extra.pred_forever_use/(10*1000.0) << endl;
             kept_in_forever++;
@@ -794,11 +799,19 @@ void ReduceDB::clean_lev0_once_in_a_while()
             solver->longRedCls[0][j++] = solver->longRedCls[0][i];
         } else {
             moved_from_forever_to_long++;
-            solver->longRedCls[1].push_back(offset);
-            cl->stats.which_red_array = 1;
+            solver->watches.smudge((*cl)[0]);
+            solver->watches.smudge((*cl)[1]);
+            solver->litStats.redLits -= cl->size();
+            *solver->drat << del << *cl << fin;
+            cl->setRemoved();
+            delayed_clause_free.push_back(offset);
+
+            //solver->longRedCls[1].push_back(offset);
+            //cl->stats.which_red_array = 1;
         }
     }
     solver->longRedCls[0].resize(j);
+    cout << "c XXXXX NEW last_forever_size: " << last_forever_size << endl;
 }
 
 void ReduceDB::clean_lev1_once_in_a_while()
@@ -830,17 +843,15 @@ void ReduceDB::clean_lev1_once_in_a_while()
         assert(!cl->freed());
 
         uint32_t time_inside_solver = solver->sumConflicts - stats_extra.introduced_at_conflict;
+        bool not_enough_time_inside =
+            solver->conf.pred_dontmove_until_timeinside > 0.0 &&
+            time_inside_solver < (double)checked_every/solver->conf.pred_dontmove_until_timeinside;
+
         if (i < keep_long ||
-            (time_inside_solver < checked_every/2 &&
-            solver->conf.pred_dontmove_until_timeinside == 1) ||
-            (time_inside_solver < checked_every &&
-            solver->conf.pred_dontmove_until_timeinside == 2)
-        ) {
-//             if ((time_inside_solver < checked_every/2 &&
-//                 solver->conf.pred_dontmove_until_timeinside == 1) ||
-//                 (time_inside_solver < checked_every &&
-//                 solver->conf.pred_dontmove_until_timeinside == 2))
-//             {
+            solver->clause_locked(*cl, offset) ||
+            not_enough_time_inside)
+        {
+//             if (not_enough_time_inside) {
 //                 kept_in_long_due_to_dontmove++;
 //                 keep_long++;
 //             }
@@ -850,8 +861,14 @@ void ReduceDB::clean_lev1_once_in_a_while()
             solver->longRedCls[1][j++] =solver->longRedCls[1][i];
         } else {
             moved_from_long_to_short++;
-            solver->longRedCls[2].push_back(offset);
-            cl->stats.which_red_array = 2;
+            solver->watches.smudge((*cl)[0]);
+            solver->watches.smudge((*cl)[1]);
+            solver->litStats.redLits -= cl->size();
+            *solver->drat << del << *cl << fin;
+            cl->setRemoved();
+            delayed_clause_free.push_back(offset);
+//             solver->longRedCls[2].push_back(offset);
+//             cl->stats.which_red_array = 2;
         }
     }
     solver->longRedCls[1].resize(j);
@@ -1014,6 +1031,7 @@ void ReduceDB::handle_predictors()
     moved_from_short_to_forever = 0;
     moved_from_short_to_long = 0;
 
+    assert(delayed_clause_free.empty());
     update_preds_lev2();
     pred_move_to_lev1_and_lev0();
     delete_from_lev2();
@@ -1029,7 +1047,7 @@ void ReduceDB::handle_predictors()
     delayed_clause_free.clear();
 
     //Stats
-    if (solver->conf.verbosity >= 1) {
+    if (solver->conf.verbosity >= 2) {
         cout
         << "c [DBCL pred]"
         << " short: " << print_value_kilo_mega(solver->longRedCls[2].size())
