@@ -114,7 +114,6 @@ private:
     MedianCommonDataRDB median_data;
     uint32_t force_kept_short = 0;
 
-    uint32_t last_forever_size = 0;
     uint32_t short_deleted;
     uint32_t moved_from_long_to_short;
     uint32_t kept_in_long;
