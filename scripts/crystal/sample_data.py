@@ -613,7 +613,7 @@ if __name__ == "__main__":
                       dest="short", help="Short duration. Default: %default")
     parser.add_option("--long", default=50000, type=int,
                       dest="long", help="Long duration. Default: %default")
-    parser.add_option("--forever", default=1000*1000*1000, type=int,
+    parser.add_option("--forever", default=200*1000, type=int,
                       dest="forever", help="Forever duration. Default: %default")
 
     (options, args) = parser.parse_args()
@@ -646,8 +646,7 @@ if __name__ == "__main__":
             q.create_indexes(verbose=options.verbose)
             q.fill_used_later_X("short", duration=options.short)
             q.fill_used_later_X("long", duration=options.long)
-            q.fill_used_later_X("forever", duration=options.forever,
-                                min_del_distance=options.short)
+            q.fill_used_later_X("forever", duration=options.forever)
         with QueryDatRem(args[0]) as q:
             helper.dangerous(q.c)
             q.create_percentiles_table()
@@ -681,7 +680,6 @@ if __name__ == "__main__":
         q.fill_used_later_X("long", duration=options.long,
                             used_clauses="used_clauses_red")
         q.fill_used_later_X("forever", duration=options.forever,
-                            min_del_distance=options.short,
                             used_clauses="used_clauses_red")
 
     # now we calculate the distributions and save them
@@ -716,8 +714,7 @@ if __name__ == "__main__":
         helper.drop_idxs(q.c)
         q.delete_and_create_used_laters()
         q.create_indexes(verbose=options.verbose)
-        q.fill_used_later_X("forever", duration=options.forever,
-                            min_del_distance=options.short)
+        #q.fill_used_later_X("forever", duration=options.forever)
     with QueryDatRem(args[0]) as q:
         print("-------------")
         q.delete_too_many_rdb_rows()

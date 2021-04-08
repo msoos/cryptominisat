@@ -59,11 +59,11 @@ class QueryAddIdxes (helper.QueryHelper):
         create index `idxclid2` on `clause_stats` (clauseID, conflicts, latest_satzilla_feature_calc);
         create index `idxclid5` on `tags` ( `name`);
         ---
-        create index `idxclid6` on `reduceDB` (`reduceDB_called`, `clauseID`, conflicts);
-        create index `idxclid6-9` on `reduceDB` (`reduceDB_called`);
-        create index `idxclid9` on `reduceDB_common` (`reduceDB_called`, `latest_satzilla_feature_calc`);
-        create index `idxclid9-2` on `reduceDB_common` (`reduceDB_called`, `latest_satzilla_feature_calc`);
-        create index `idxclid9-3` on `reduceDB_common` (`reduceDB_called`);
+        create index `idxclid6` on `reduceDB` (`clauseID`, conflicts);
+        create index `idxclid6-9` on `reduceDB` (`conflicts`);
+        create index `idxclid9` on `reduceDB_common` (`conflicts`, `latest_satzilla_feature_calc`);
+        create index `idxclid9-2` on `reduceDB_common` (`conflicts`, `latest_satzilla_feature_calc`);
+        create index `idxclid9-3` on `reduceDB_common` (`conflicts`);
         create index `idxclid9-4` on `reduceDB_common` (`latest_satzilla_feature_calc`);
         create index `idxclid6-2` on `reduceDB` (`clauseID`, `dump_no`);
         create index `idxclid6-3` on `reduceDB` (`clauseID`, `conflicts`, `dump_no`);
@@ -92,11 +92,11 @@ class QueryAddIdxes (helper.QueryHelper):
 
 
 class QueryCls (helper.QueryHelper):
-    def __init__(self, dbfname):
+    def __init__(self, dbfname, tier):
         super(QueryCls, self).__init__(dbfname)
-        self.fill_sql_query()
+        self.fill_sql_query(tier)
 
-    def fill_sql_query(self):
+    def fill_sql_query(self, tier):
         # sum_cl_use
         self.sum_cl_use = helper.query_fragment(
             "sum_cl_use", [], "sum_cl_use", options.verbose, self.c)
@@ -117,7 +117,7 @@ class QueryCls (helper.QueryHelper):
             "reduceDB_called"
             , "simplifications"
             , "restarts"
-            , "conflicts"
+            #, "conflicts"
             , "latest_satzilla_feature_calc"
             , "runtime"
             ]
@@ -152,6 +152,20 @@ class QueryCls (helper.QueryHelper):
         limit {limit}
         """
 
+        q_time_base="""
+        join used_later_{timeframe} on
+            used_later_{timeframe}.clauseID = rdb0.clauseID
+            and used_later_{timeframe}.rdb0conflicts = rdb0.conflicts
+        """
+
+        q_columns_base="""
+            , used_later_{timeframe}.used_later as `x.used_later_{timeframe}`
+            , used_later_{timeframe}.percentile_fit as `x.used_later_{timeframe}_topperc`
+            """
+
+        q_time = q_time_base.format(timeframe=tier)
+        q_columns = q_columns_base.format(timeframe=tier)
+
         # final big query
         self.q_select = """
         SELECT
@@ -162,16 +176,7 @@ class QueryCls (helper.QueryHelper):
         {sum_cl_use}
         , (rdb0.conflicts - rdb0.introduced_at_conflict) as `cl.time_inside_solver`
         , (sum_cl_use.last_confl_used - rdb0.introduced_at_conflict) as `x.a_lifetime`
-
-        , used_later_short.used_later as `x.used_later_short`
-        , used_later_short.percentile_fit as `x.used_later_short_topperc`
-
-        , used_later_long.used_later as `x.used_later_long`
-        , used_later_long.percentile_fit as `x.used_later_long_topperc`
-
-        , used_later_forever.used_later as `x.used_later_forever`
-        , used_later_forever.percentile_fit as `x.used_later_forever_topperc`
-
+        {q_columns}
         , sum_cl_use.num_used as `x.sum_cl_use`
 
 
@@ -185,22 +190,12 @@ class QueryCls (helper.QueryHelper):
             cl.clauseID = rdb0.clauseID
 
         join reduceDB_common as rdb0_common on
-            rdb0_common.reduceDB_called = rdb0.reduceDB_called
+            rdb0_common.conflicts = rdb0.conflicts
 
         join sum_cl_use on
             sum_cl_use.clauseID = rdb0.clauseID
 
-        join used_later_short on
-            used_later_short.clauseID = rdb0.clauseID
-            and used_later_short.rdb0conflicts = rdb0.conflicts
-
-        join used_later_long on
-            used_later_long.clauseID = rdb0.clauseID
-            and used_later_long.rdb0conflicts = rdb0.conflicts
-
-        join used_later_forever on
-            used_later_forever.clauseID = rdb0.clauseID
-            and used_later_forever.rdb0conflicts = rdb0.conflicts
+        {q_time}
 
         join cl_last_in_solver on
             cl_last_in_solver.clauseID = rdb0.clauseID
@@ -210,7 +205,6 @@ class QueryCls (helper.QueryHelper):
         WHERE
         (cl.clauseID != 0 OR cl.clauseID is NULL)
         and tags.name = "filename"
-
 
         -- to avoid missing clauses and their missing data to affect results
         and rdb0.conflicts + {del_at_least} <= cl_last_in_solver.conflicts
@@ -222,7 +216,9 @@ class QueryCls (helper.QueryHelper):
             "satzfeat_dat_cur": self.satzfeat_dat.replace("szfeat.", "szfeat_cur."),
             "rdb0_dat": self.rdb0_dat,
             "sum_cl_use": self.sum_cl_use,
-            "rdb0_common_dat": self.rdb0_common_dat
+            "rdb0_common_dat": self.rdb0_common_dat,
+            "q_time": q_time,
+            "q_columns": q_columns
         }
 
     def get_used_later_percentiles(self, name):
@@ -275,9 +271,8 @@ class QueryCls (helper.QueryHelper):
         elif tier == "long":
             self.myformat["del_at_least"] = options.long
 
-        # the two below could be 0, but I want to be on the safe side
         elif tier == "forever":
-            self.myformat["del_at_least"] = options.short
+            self.myformat["del_at_least"] = options.forever
 
         # Make sure these stratas are equally represented
         t = time.time()
@@ -319,10 +314,10 @@ class QueryCls (helper.QueryHelper):
         weighted_size = []
         df_parts = []
 
-        def one_part(mult, extra):
+        def one_part(mult, extra_filter):
             self.myformat["limit"] = int(limit*mult)
-            df_parts.append(self.one_query(q + extra, what_to_strata, strata))
-            print("--> Num rows for strata %s -- '%s': %s" % (strata, extra, df_parts[-1].shape[0]))
+            df_parts.append(self.one_query(q + extra_filter, what_to_strata, strata))
+            print("--> Num rows for strata %s -- '%s': %s" % (strata, extra_filter, df_parts[-1].shape[0]))
 
             ws = df_parts[-1].shape[0]/mult
             print("--> The weight was %f so wegthed size is: %d" % (mult, int(ws)))
@@ -340,15 +335,23 @@ class QueryCls (helper.QueryHelper):
 
     def one_query(self, q, what_to_strata, strata):
         q = q.format(**self.myformat)
+
+        if strata[1] == 0.0:
+            my_less_equal = ">="
+        else:
+            my_less_equal = ">"
+
         q = """
         select * from ( {q} )
         where
         {what_to_strata} <= {beg}
-        and {what_to_strata} >= {end}""".format(
+        and {what_to_strata} {my_less_equal} {end}""".format(
             q=q,
             what_to_strata=what_to_strata,
             beg=strata[0],
-            end=strata[1])
+            end=strata[1],
+            my_less_equal=my_less_equal
+            )
 
         q += self.common_limits
         q = q.format(**self.myformat)
@@ -396,7 +399,7 @@ def one_database(dbfname):
     for tier in todo_types:
         print("------> Doing tier {tier}".format(tier=tier))
 
-        with QueryCls(dbfname) as q:
+        with QueryCls(dbfname, tier) as q:
             ok, df = q.get_one_data_all_dumpnos(tier)
 
         if not ok:
@@ -458,9 +461,9 @@ if __name__ == "__main__":
     # lengths of short/long
     parser.add_option("--short", default=10000, type=int,
                       dest="short", help="Short duration. Default: %default")
-    parser.add_option("--long", default=50000, type=int,
+    parser.add_option("--long", default=50*1000, type=int,
                       dest="long", help="Long duration. Default: %default")
-    parser.add_option("--forever", default=1000*1000*1000, type=int,
+    parser.add_option("--forever", default=200*1000, type=int,
                       dest="forever", help="Long duration. Default: %default")
 
     (options, args) = parser.parse_args()

@@ -121,16 +121,9 @@ class QueryFill (QueryHelper):
 
     # The most expesive operation of all, when called with "forever"
     def fill_used_later_X(self, name, duration, min_del_distance=None,
-                          used_clauses="used_clauses",
-                          divide=False):
+                          used_clauses="used_clauses"):
 
-        if min_del_distance is None:
-            min_del_distance = duration
-
-        if not divide:
-            my_count = ", count(ucl.used_at) as `used_later`"
-        else:
-            my_count = ", ((count(ucl.used_at)*1.0)/(1.0*(cl_last_in_solver.conflicts-rdb0.conflicts))) as `used_later`"
+        min_del_distance = duration
 
         q_fill = """
         insert into used_later_{name}
@@ -142,7 +135,7 @@ class QueryFill (QueryHelper):
         SELECT
         rdb0.clauseID
         , rdb0.conflicts
-        {my_count}
+        , count(ucl.used_at) as `used_later`
 
         FROM
         reduceDB as rdb0
@@ -166,7 +159,6 @@ class QueryFill (QueryHelper):
         self.c.execute(q_fill.format(
             name=name, used_clauses=used_clauses,
             duration=duration,
-            my_count=my_count,
             min_del_distance=min_del_distance))
 
         print("used_later_%s filled T: %-3.2f s" %
