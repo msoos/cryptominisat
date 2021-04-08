@@ -635,6 +635,7 @@ if __name__ == "__main__":
         q.create_indexes1()
         q.remove_too_many_vardata()
 
+    # this is the SLOW way of doing it -- without pre-sampling it
     if False:
         print("This is good for verifying that the fast ones are close")
         # slower percentiles
@@ -660,12 +661,17 @@ if __name__ == "__main__":
 
     # Percentile generation
     t = time.time()
+
+    # first, we create "used_clauses_red" that contains a reduced
+    # list of clauseIDs we want to do this over. Here we sample FAIRLY!!!!
     with QueryDatRem(args[0]) as q:
         helper.dangerous(q.c)
         q.recreate_used_ID_table()
-        q.fill_used_cl_ids_table(True, limit=4*options.limit)
+        q.fill_used_cl_ids_table(True, limit=4*options.limit) # notice the FAIR sampling!
         q.drop_used_clauses_red()
         q.create_used_clauses_red()
+
+    # now we generate the used_later data
     with helper.QueryFill(args[0]) as q:
         helper.dangerous(q.c)
         q.delete_and_create_used_laters()
@@ -677,6 +683,8 @@ if __name__ == "__main__":
         q.fill_used_later_X("forever", duration=options.forever,
                             min_del_distance=options.short,
                             used_clauses="used_clauses_red")
+
+    # now we calculate the distributions and save them
     with QueryDatRem(args[0]) as q:
         helper.dangerous(q.c)
         q.create_percentiles_table()
@@ -693,6 +701,7 @@ if __name__ == "__main__":
     # Filtering for clauseIDs in tables:
     # ["clause_stats", "reduceDB", "sum_cl_use",
     #      "used_clauses", "restart_dat_for_cl", "cl_last_in_solver"]
+    # here we sample NON-FAIRLY (options.fair) by default!
     with QueryDatRem(args[0]) as q:
         helper.dangerous(q.c)
         q.recreate_used_ID_table()
