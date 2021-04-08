@@ -82,7 +82,8 @@ class QueryFill (helper.QueryHelper):
         , count()
         , min(used_at)
         , max(used_at)
-        from used_clauses as c group by clauseID;"""
+        from used_clauses as c
+        group by clauseID;"""
         self.c.execute(q)
         print("sum_cl_use filled T: %-3.2f s" % (time.time() - t))
 
