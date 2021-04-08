@@ -194,9 +194,7 @@ class QueryCls (helper.QueryHelper):
             used_later_short.clauseID = rdb0.clauseID
             and used_later_short.rdb0conflicts = rdb0.conflicts
 
-        -- this is DELIBERATEY left-join: this way, clauses that were in
-        -- for shorter time can still generate data
-        left join used_later_long on
+        join used_later_long on
             used_later_long.clauseID = rdb0.clauseID
             and used_later_long.rdb0conflicts = rdb0.conflicts
 
