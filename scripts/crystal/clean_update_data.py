@@ -118,27 +118,6 @@ class QueryFill (helper.QueryHelper):
         self.c.execute(q)
         print("sum_cl_use added bad claues T: %-3.2f s" % (time.time() - t))
 
-    def drop_idxs_tables(self):
-        helper.drop_idxs(self.c)
-
-        print("Dropping tables...")
-        t = time.time()
-        q = """
-        drop table if exists `goodClauses`;
-        drop table if exists `idxused_clauses`;
-        """
-
-        for l in q.split('\n'):
-            t2 = time.time()
-
-            if options.verbose:
-                print("Dropping table: ", l)
-            self.c.execute(l)
-            if options.verbose:
-                print("Dopped table T: %-3.2f s" % (time.time() - t2))
-
-        print("Tables dropped T: %-3.2f s" % (time.time() - t))
-
 
 if __name__ == "__main__":
     usage = "usage: %prog [options] sqlitedb"
@@ -155,6 +134,6 @@ if __name__ == "__main__":
     with QueryFill(args[0]) as q:
         q.create_indexes()
         q.fill_sum_cl_use()
-        q.drop_idxs_tables()
+        helper.drop_idxs(q.c)
 
     print("Done.")
