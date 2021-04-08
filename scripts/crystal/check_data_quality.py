@@ -86,12 +86,12 @@ class Queries (helper.QueryHelper):
     def check_all_clauses_have_at_most_one_del(self):
         t = time.time()
         q = """
-        select f.x, f.c, cl_min, cl_max
+        select f.clid, f.cnt, cl_min, cl_max
         from (
-        select cl_last_in_solver.clauseID as x, count(cl_last_in_solver.clauseID) as c, min(conflicts) as cl_min, max(conflicts) as cl_max
+        select cl_last_in_solver.clauseID as clid, count(cl_last_in_solver.clauseID) as cnt, min(conflicts) as cl_min, max(conflicts) as cl_max
         from cl_last_in_solver
         group by clauseID) as f
-        where f.c > 1
+        where f.cnt != 1
         order by cl_max
         """
         cursor = self.c.execute(q)
@@ -104,7 +104,7 @@ class Queries (helper.QueryHelper):
         if bad:
             exit(-1)
 
-        print("Checked all clauses have at most one delete point. T: %-2.3f" % (time.time()-t))
+        print("Checked all clauses have exactly one delete point. T: %-2.3f" % (time.time()-t))
 
     def check_all_clauses_have_N(self):
         Ns = [
