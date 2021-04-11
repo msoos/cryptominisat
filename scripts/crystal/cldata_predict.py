@@ -35,6 +35,7 @@ import sklearn.tree
 import sklearn.preprocessing
 import numpy as np
 import sklearn.metrics
+import sklearn.impute
 import matplotlib.pyplot as plt
 import sklearn.ensemble
 import sklearn.linear_model
@@ -56,7 +57,7 @@ if int(ver[1]) < 20:
 else:
     from sklearn.model_selection import train_test_split
 
-MISSING=float("-1.0")
+MISSING=float(-1)
 
 class MyEnsemble:
     def __init__(self, models):
@@ -121,12 +122,9 @@ class Learner:
             print("\nCalculating confusion matrix -- ALL dump_no")
             data2 = data
 
-        if False:
-            return helper.conf_matrixes(data2, features, to_predict, clf, toprint,
-                                    highlight=highlight)
-        else:
-            return helper.calc_regression_error(data2, features, to_predict, clf, toprint,
-                                    highlight=highlight)
+        return helper.calc_regression_error(
+            data2, features, to_predict, clf, toprint,
+            highlight=highlight)
 
     @staticmethod
     def fix_feat_name(x):
@@ -201,28 +199,46 @@ class Learner:
         print("-> Number of features  :", len(features))
         print("-> Number of datapoints:", self.df.shape)
         print("-> Predicting          :", to_predict)
-        df = self.df.copy()
-        print("features: ", list(df))
+        #extra_feats = [to_predict, "rdb0.dump_no", "rdb0.glue"]
+        extra_feats = [to_predict, "rdb0.dump_no"]
+        df = self.df[features+extra_feats].copy()
 
         if options.check_row_data:
             helper.check_too_large_or_nan_values(df, features)
 
-        # count bad and ok
-        #bad,ok = self.count_bad_ok(df)
-        #print("Number of BAD  elements        : %-6d" % bad)
-        #print("Number of OK   elements        : %-6d" % ok)
-        # balance it out
-        #prefer_ok = float(bad)/float(ok)
-        #print("Balanced OK preference would be: %-6.3f" % prefer_ok)
-        # apply inbalance from option given
-        #prefer_ok *= options.prefer_ok
-        #print("Option to prefer OK is set to  : %-6.3f" % options.prefer_ok)
-        #print("Final OK preference is         : %-6.3f" % prefer_ok)
-
         print("Value distribution of 'dump_no':\n%s" % df["rdb0.dump_no"].value_counts())
         print("Value distribution of to_predict:\n%s" % df[to_predict].value_counts())
-        train, test = train_test_split(df, test_size=0.33, random_state=prng)
 
+        if False:
+            transformed = df[features].values
+
+            # Impute data
+            imp_mean = sklearn.impute.SimpleImputer(missing_values=MISSING, strategy='mean')
+            transformed = imp_mean.fit_transform(transformed)
+
+            # Scale data
+            my_scaler = sklearn.preprocessing.Normalizer()
+            transformed = my_scaler.fit_transform(transformed)
+
+            # recreate dataframe
+            transformed = np.append(transformed, df[extra_feats].values, axis=1)
+            df_trans = pd.DataFrame(transformed, columns=features+extra_feats)
+            df = df_trans
+
+        if options.poly_features:
+            transformed = df[features].values
+
+            # poly transform
+            poly = sklearn.preprocessing.PolynomialFeatures(2)
+            transformed = poly.fit_transform(transformed)
+            features = poly.get_feature_names(input_features=features)
+
+            # recreate dataframe
+            transformed = np.append(transformed, df[extra_feats].values, axis=1)
+            df_trans = pd.DataFrame(transformed, columns=features+extra_feats)
+            df = df_trans
+
+        train, test = train_test_split(df, test_size=0.33, random_state=prng)
         X_train = train[features]
         y_train = train[to_predict]
 
@@ -280,8 +296,10 @@ class Learner:
             print("Using xgboost no. estimators:", options.n_estimators_xgboost)
             clf = clf_xgboost
         elif options.regressor == "median":
-            mylist = [clf_xgboost, clf_linear]
-            clf = MyEnsemble(mylist)
+            mylist = [("xgb", clf_xgboost), ("linear", clf_linear),
+                      ("elasticnet", clf_elasticnet), ("lasso", clf_lasso)]
+            clf = sklearn.ensemble.VotingRegressor(estimators=mylist, weights=[1.0, 0.5, 0.5, 0.5])
+            #clf = MyEnsemble(mylist)
         else:
             print(
                 "ERROR: You MUST give one of: tree/forest/svm/linear/bagging classifier")
@@ -305,7 +323,6 @@ class Learner:
                 print("Error: --topfeats only works with xgboost/forest")
                 exit(-1)
 
-        del df
         sample_weights = self.get_sample_weights(X_train, y_train)
         if sample_weights is None:
             clf.fit(X_train, y_train)
@@ -362,7 +379,7 @@ class Learner:
         print("--------------------------------")
         for dump_no in [1, None]:
             self.filtered_conf_matrixes(
-                dump_no, self.df, features, to_predict, clf, "test and train data")
+                dump_no, df, features, to_predict, clf, "test and train data")
         print("--------------------------")
         print("-       train data       -")
         print("--------------------------")
@@ -378,7 +395,7 @@ class Learner:
             print("Example data dumped")
 
         # Calculate predicted value for the original dataframe
-        y_pred = clf.predict(self.df[features])
+        y_pred = clf.predict(df[features])
         return y_pred
 
     def rem_features(self, feat, to_remove):
@@ -397,18 +414,14 @@ class Learner:
     def learn(self):
         if options.raw_data_plots:
             pd.options.display.mpl_style = "default"
-            self.df.hist()
-            self.df.boxplot()
+            df.hist()
+            df.boxplot()
 
         # get to_predict
         if options.topperc:
             to_predict = "x.used_later_{name}_topperc".format(name=options.tier)
         else:
             to_predict = "x.used_later_{name}".format(name=options.tier)
-
-
-        if options.poly_features:
-            features = helper.cldata_add_poly_features(df, features)
 
         if options.features != "best_only":
             features = list(self.df)
@@ -421,8 +434,11 @@ class Learner:
                     "x.sum_cl_use",
                     "x.used_later_short",
                     "x.used_later_long",
-                    "x.used_later_forever"])
+                    "x.used_later_forever",
+                    "rdb0.dump_no",
+                    "fname"])
         else:
+            del df["fname"]
             features = helper.get_features(options.best_features_fname)
 
         self.one_classifier(features, to_predict)
@@ -569,7 +585,7 @@ if __name__ == "__main__":
     helper.make_missing_into_nan(df)
 
     # feature manipulation
-    helper.delete_none_features(df)
+    #helper.delete_none_features(df)
     if options.features =="all_computed":
         helper.cldata_add_computed_features(df, options.verbose)
     elif options.features == "best_only" or options.features == "best_also":
@@ -597,10 +613,7 @@ if __name__ == "__main__":
         print("Dumped DF to file: ", options.csv)
 
     print("Filling NA with MISSING..")
-    df.replace(np.NINF, MISSING, inplace=True)
-    df.replace(np.NaN, MISSING, inplace=True)
-    df.replace(np.Infinity, MISSING, inplace=True)
-    df.replace(np.inf, MISSING, inplace=True)
+    df.replace([np.inf, np.NaN, np.inf, np.NINF, np.Infinity], MISSING, inplace=True)
     df.fillna(MISSING, inplace=True)
 
     if options.check_row_data_verbose:

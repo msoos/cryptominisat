@@ -388,8 +388,7 @@ def one_database(dbfname):
         q.delete_and_create_used_laters()
         q.fill_used_later_X("short", duration=options.short)
         q.fill_used_later_X("long", duration=options.long)
-        q.fill_used_later_X("forever", duration=options.forever,
-                            min_del_distance=options.short)
+        q.fill_used_later_X("forever", duration=options.forever)
 
         # fill percentile_fit
         for tier in todo_types:

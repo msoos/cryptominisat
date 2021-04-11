@@ -509,7 +509,7 @@ class QueryDatRem(helper.QueryHelper):
         ret = self.c.execute("select count() from reduceDB")
         rows = self.c.fetchall()
         rdb_rows = rows[0][0]
-        print("Have %d lines of RDB" % (rdb_rows))
+        print("Have %d lines of RDB, let's do non-fair selection" % (rdb_rows))
 
         q = """
         drop table if exists only_keep_rdb;
@@ -714,10 +714,12 @@ if __name__ == "__main__":
         helper.drop_idxs(q.c)
         q.delete_and_create_used_laters()
         q.create_indexes(verbose=options.verbose)
-        #q.fill_used_later_X("forever", duration=options.forever)
+
+        # this is is needed because the RDB row deletion below is NOT fair
+        q.fill_used_later_X("forever", duration=options.forever)
     with QueryDatRem(args[0]) as q:
         print("-------------")
-        q.delete_too_many_rdb_rows()
+        q.delete_too_many_rdb_rows() # NOTE: NOT FAIR!!!
 
         helper.drop_idxs(q.c)
         q.del_table_and_vacuum()

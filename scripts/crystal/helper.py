@@ -120,10 +120,7 @@ class QueryFill (QueryHelper):
         print("used_later* dropped and recreated T: %-3.2f s" % (time.time() - t))
 
     # The most expesive operation of all, when called with "forever"
-    def fill_used_later_X(self, name, duration, min_del_distance=None,
-                          used_clauses="used_clauses"):
-
-        min_del_distance = duration
+    def fill_used_later_X(self, name, duration, used_clauses="used_clauses"):
 
         q_fill = """
         insert into used_later_{name}
@@ -151,18 +148,30 @@ class QueryFill (QueryHelper):
 
         WHERE
         rdb0.clauseID != 0
-        and cl_last_in_solver.conflicts >= (rdb0.conflicts + {min_del_distance})
+        and cl_last_in_solver.conflicts >= (rdb0.conflicts + {duration})
 
         group by rdb0.clauseID, rdb0.conflicts;"""
 
         t = time.time()
-        self.c.execute(q_fill.format(
+        q = q_fill.format(
             name=name, used_clauses=used_clauses,
-            duration=duration,
-            min_del_distance=min_del_distance))
+            duration=duration)
+        self.c.execute(q)
 
-        print("used_later_%s filled T: %-3.2f s" %
-              (name, time.time() - t))
+        q_num = "select count(*) from used_later_{name}".format(name=name)
+        self.c.execute(q_num)
+        rows = self.c.fetchall()
+        for row in rows:
+            num = row[0]
+
+        if num == 0:
+            print("ERROR: number of rows in used_later_{name} is 0!".format(name=name))
+            print("Query was: %s" % q)
+            exit(-1)
+
+
+        print("used_later_%s filled T: %-3.2f s -- num rows: %d" %
+              (name, time.time() - t, num))
 
     def fill_used_later_X_perc_fit(self, name):
         print("Filling percentile_fit for used_later_{name}".format(name=name))
@@ -316,7 +325,7 @@ def drop_idxs(conn):
     rows = conn.fetchall()
     queries = ""
     for row in rows:
-        print("Will delete index:", row[0])
+        #print("Will delete index:", row[0])
         queries += "drop index if exists `%s`;\n" % row[0]
 
     t = time.time()
@@ -628,23 +637,6 @@ def make_missing_into_nan(df):
             df[col] = df[col].apply(make_none_into_nan)
     print("Done.")
 
-def delete_none_features(df):
-    if "sum_cl_use.first_confl_used" in list(df):
-        del df["sum_cl_use.first_confl_used"]
-
-    if "sum_cl_use.last_confl_used" in list(df):
-        del df["sum_cl_use.last_confl_used"]
-
-def cldata_add_poly_features(df, features):
-    print("Adding polynomial features..")
-    ret = list(features)
-    for feat in features:
-        poly = "({s}*{s})".format(s=feat)
-        df[poly] = df[feat]*df[feat]
-        ret.append(poly)
-
-    return ret
-
 def cldata_add_minimum_computed_features(df, verbose):
     divide = functools.partial(helper_divide, df=df, features=list(df), verb=verbose)
     divide("rdb0.act_ranking", "rdb0_common.tot_cls_in_db", name="rdb0.act_ranking_rel")
@@ -668,9 +660,7 @@ def cldata_add_computed_features(df, verbose):
 
     del df["cl.conflicts"]
     del df["cl.restartID"]
-    del df["sum_cl_use.clauseID"]
     del df["rdb0.introduced_at_conflict"]
-    delete_none_features(df)
 
     divide = functools.partial(helper_divide, df=df, features=list(df), verb=verbose)
     larger_than = functools.partial(helper_larger_than, df=df, features=list(df), verb=verbose)
