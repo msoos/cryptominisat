@@ -32,8 +32,6 @@ function concat() {
     cat learn.sh >> ${dirname}/out_git
     md5sum *.dat >> ${dirname}/out_git
 
-    bestf="../../scripts/crystal/best_features-rdb0-only.txt"
-
     mypids=()
     tiers=("short" "long" "forever")
     for tier in "${tiers[@]}"
@@ -70,6 +68,7 @@ function concat() {
 #xboostminchild=300
 #est=10
 
+bestf="../../scripts/crystal/best_features-rdb0-only.txt"
 w=0
 xgboostsubsample="1.0"
 basename="8march-2020-3acd81dc55df3"
