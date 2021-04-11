@@ -23,7 +23,7 @@
 #set -x
 set -e
 
-function concat() {
+function generate() {
     dirname="${basename}-cut1-${cut1}-cut2-${cut2}-limit-${limit}-est${est}-w${w}-xbmin${xgboostminchild}-xbmd${xboostmaxdepth}"
 
     mkdir -p ${dirname}
@@ -71,33 +71,37 @@ function concat() {
 bestf="../../scripts/crystal/best_features-rdb0-only.txt"
 w=0
 xgboostsubsample="1.0"
-basename="8march-2020-3acd81dc55df3"
-basename="aes-30-march-2020-a1e0e19be0c1"
+basename="8march-2020-3acd81dc55df3-36feats"
+#basename="aes-30-march-2020-a1e0e19be0c1"
+#basename="orig"
 limit=2000
 cut1="5.0"
 cut2="30.0"
+xboostmaxdepth=4
+xgboostminchild=300
+est=10
 for xboostmaxdepth in 4 6
 do
     for xgboostminchild in 50 300
     do
         for est in 10 20
         do
-            concat
+            generate
         done
     done
 done
 
-# cut1="3.0"
-# cut2="25.0"
-# for xboostmaxdepth in 4 6
-# do
-#     for xgboostminchild in 50 300
-#     do
-#         for est in 10 20
-#         do
-#             concat
-#         done
-#     done
-# done
+cut1="3.0"
+cut2="25.0"
+for xboostmaxdepth in 4 6
+do
+    for xgboostminchild in 50 300
+    do
+        for est in 10 20
+        do
+            generate
+        done
+    done
+done
 
 exit 0
