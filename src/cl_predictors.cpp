@@ -182,14 +182,16 @@ void ClPredictors::set_up_input(
     //(rdb0.sum_props_made/cl.time_inside_solver) -- 8
 
 
+    float myval_at_9;
     if (time_inside_solver == 0 ||
         commdata.avg_glue == 0 ||
         cl->stats.glue == 0) {
-        at[x++] = MISSING_VAL;
+        myval_at_9 = MISSING_VAL;
     } else {
-        at[x++] = (extra_stats.sum_props_made/time_inside_solver)/
+        myval_at_9 = (extra_stats.sum_props_made/time_inside_solver)/
             ((double)cl->stats.glue/commdata.avg_glue);
     }
+    at[x++] = myval_at_9;
     //((rdb0.sum_props_made/cl.time_inside_solver)/(rdb0.glue/rdb0_common.avg_glue)) -- 9
 
 
@@ -393,12 +395,60 @@ void ClPredictors::set_up_input(
     at[x++] = sum_props_per_time_ranking_rel;
     // rdb0.sum_props_per_time_ranking_rel -- 30
 
-    if (extra_stats.antecedents_binred == 0) {
+    if (extra_stats.antecedents_binred == 0 ||
+        cl->stats.is_ternary_resolvent
+    ) {
         at[x++] = MISSING_VAL;
     } else {
         at[x++] = extra_stats.glueHist_avg/(float)extra_stats.antecedents_binred;
     }
     // (cl.glueHist_avg/cl.atedecents_binRed) -- 31
+
+
+    if (last_touched_diff == 0 ||
+        commdata.avg_uip == 0
+    ) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = (act_ranking_rel/(double)last_touched_diff)*
+            (uip1_ranking_rel/commdata.avg_uip);
+    }
+    //((rdb0.act_ranking_rel/rdb0.last_touched_diff)
+    //    *(rdb0.uip1_ranking_rel/rdb0_common.avg_uip1_used)) -- 32
+
+
+    if (extra_stats.conflSizeHist_avg == 0 ||
+        cl->stats.is_ternary_resolvent
+    ) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = (extra_stats.overlapHistLT_avg/extra_stats.conflSizeHist_avg)*
+            extra_stats.discounted_uip1_used;
+    }
+    //((cl.overlapHistLT_avg/cl.conflSizeHist_avg)*(rdb0.discounted_uip1_used)) -- 33
+
+
+    if (time_inside_solver == 0 ||
+        myval_at_9 == MISSING_VAL)
+    {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = ((double)extra_stats.sum_props_made/(double)time_inside_solver)*
+            (double)myval_at_9;
+    }
+    //((rdb0.sum_props_made/cl.time_inside_solver)*
+    //    (rdb0.sum_props_made/cl.time_inside_solver)/(rdb0.glue/rdb0_common.avg_glue)) -- 34
+
+    at[x++] = (double)extra_stats.discounted_uip1_used3 * solver->hist.glueHistLT.avg();
+    //(rdb0.discounted_uip1_used3*rdb0_common.glueHistLT_avg) -- 35
+
+
+    if (cl->stats.is_ternary_resolvent) {
+        at[x++] = MISSING_VAL;
+    } else {
+        at[x++] = extra_stats.antecedents_binIrred * commdata.avg_uip;
+    }
+    //(cl.atedecents_binIrred*rdb0_common.avg_uip1_used) -- 36
 
 //     cout << "c val: ";
 //     for(uint32_t i = 0; i < cols; i++) {
