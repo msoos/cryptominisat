@@ -99,11 +99,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , pred_forever_check_every_n(12)
         , pred_adjust_for_cl_size(0)
         , pred_adjust_for_cl_size_onlyforever(0)
-        #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-        , pred_distill_orig(false)
-        #else
         , pred_distill_orig(true)
-        #endif
         , pred_dontmove_until_timeinside(1)
 
         , every_lev1_reduce(10000) // kept for a while then moved to lev2
