@@ -460,9 +460,9 @@ if __name__ == "__main__":
     # lengths of short/long
     parser.add_option("--short", default=10000, type=int,
                       dest="short", help="Short duration. Default: %default")
-    parser.add_option("--long", default=50*1000, type=int,
+    parser.add_option("--long", default=30*1000, type=int,
                       dest="long", help="Long duration. Default: %default")
-    parser.add_option("--forever", default=200*1000, type=int,
+    parser.add_option("--forever", default=120*1000, type=int,
                       dest="forever", help="Long duration. Default: %default")
 
     (options, args) = parser.parse_args()
