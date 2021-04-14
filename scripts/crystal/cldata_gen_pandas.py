@@ -287,6 +287,9 @@ class QueryCls (helper.QueryHelper):
             data.shape, time.time() - t))
         return True, data , limit
 
+    # perc == percentile distribution
+    # limit == how many in total
+    # tier == forever/long/short
     def run_stratified_queries(self, limit, perc, tier):
         dfs = []
         # NOTE: these are NON-ZERO percentages, but we replace 100 with "0", so the LAST chunk contains ALL, including 0, which is a large part of the data
@@ -301,6 +304,7 @@ class QueryCls (helper.QueryHelper):
             print("Limit is currently: {limit} value strata perc: ({a}, {b}) translates to value strata ({beg}, {end})".format(
                 limit=limit, a=beg_perc, b=end_perc, beg=beg, end=end))
 
+            # create one query for (beg,end) with different dump numbers
             df, weighted_size = self.query_strata_per_dumpno(
                 str(self.q_select),
                 limit,
