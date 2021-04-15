@@ -220,7 +220,8 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 2: {
-            conf.branch_strategy_setup = "vsids1";
+            conf.branch_strategy_setup = "vsidsx";
+            conf.polar_best_inv_multip_n = 100;
             break;
         }
         case 3: {
@@ -255,6 +256,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         case 6: {
             //Maple with backtrack
             conf.branch_strategy_setup = "vsids1";
+            conf.polar_stable_every_n = 10000;
             break;
         }
         case 7: {
@@ -269,18 +271,20 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
         case 8: {
             //Different glue limit
-            conf.branch_strategy_setup = "vsids1";
+            conf.branch_strategy_setup = "maple2";
             conf.glue_put_lev0_if_below_or_eq = 2;
             conf.glue_put_lev1_if_below_or_eq = 2;
             break;
         }
         case 9: {
             conf.branch_strategy_setup = "vsids1";
+            conf.polar_stable_every_n = 1;
             break;
         }
         case 10: {
             conf.branch_strategy_setup = "vsids1";
             conf.polarity_mode = CMSat::PolarityMode::polarmode_pos;
+            conf.polar_stable_every_n = 100000;
             break;
         }
         case 11: {
@@ -294,8 +298,10 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 12: {
-            conf.branch_strategy_setup = "vsids1";
+            conf.branch_strategy_setup = "maple1";
             conf.inc_max_temp_lev2_red_cls = 1.001;
+            conf.polar_stable_every_n = 7;
+            conf.polar_best_inv_multip_n = 6;
             break;
         }
 
@@ -328,6 +334,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0;
             conf.glue_put_lev0_if_below_or_eq = 0;
             conf.inc_max_temp_lev2_red_cls = 1.03;
+            conf.polar_stable_every_n = 2;
             break;
         }
         case 16: {
@@ -363,16 +370,18 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.num_conflicts_of_search_inc = 1.15;
             conf.more_red_minim_limit_binary = 600;
             conf.max_num_lits_more_more_red_min = 20;
+            conf.polar_stable_every_n = 4;
             //conf.max_temporary_learnt_clauses = 10000;
             break;
         }
 
         case 20: {
             //Luby
-            conf.branch_strategy_setup = "vsids1";
+            conf.branch_strategy_setup = "maple2";
             conf.restart_inc = 1.5;
             conf.restart_first = 100;
             conf.restartType = Restart::luby;
+            conf.polar_stable_every_n = 2;
             break;
         }
 
@@ -384,7 +393,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
 
         case 22: {
-            conf.branch_strategy_setup = "vsids1";
+            conf.branch_strategy_setup = "maple1";
             conf.doMinimRedMoreMore = 0;
             conf.orig_global_timeout_multiplier = 5;
             conf.num_conflicts_of_search_inc = 1.15;
