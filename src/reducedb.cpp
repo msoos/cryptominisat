@@ -882,7 +882,7 @@ void ReduceDB::delete_from_lev2()
     } else if (solver->conf.order_tier2_by == 1) {
         std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
                   SortRedClsPredLong(solver->cl_alloc, solver->red_stats_extra));
-    } if (solver->conf.order_tier2_by == 0) {
+    } else if (solver->conf.order_tier2_by == 0) {
         std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
                   SortRedClsPredForever(solver->cl_alloc, solver->red_stats_extra));
     } else {
