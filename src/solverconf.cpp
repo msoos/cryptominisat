@@ -115,6 +115,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         #ifdef FINAL_PREDICTOR
         , glue_put_lev0_if_below_or_eq(3)
         , glue_put_lev1_if_below_or_eq(6)
+        , dump_pred_distrib(0)
         #else
         , glue_put_lev0_if_below_or_eq(3) // never removed
         , glue_put_lev1_if_below_or_eq(6) // kept for a while then moved to lev2

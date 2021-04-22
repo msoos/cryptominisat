@@ -357,6 +357,10 @@ void Main::add_supported_options()
     ("predforeverpow", po::value(&conf.pred_forever_size_pow)->default_value(conf.pred_forever_size_pow)
         , "Pred forever power to raise the conflicts to")
 
+    //dumping data
+    ("dumppreddistrib", po::value(&conf.dump_pred_distrib)->default_value(conf.dump_pred_distrib)
+         , "Dump predict distirution to pred_distrib.csv")
+
     //chunk
     ("predlongchunk", po::value(&conf.pred_long_chunk)->default_value(conf.pred_long_chunk)
         , "Pred long chunk multiplier")

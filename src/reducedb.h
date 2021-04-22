@@ -49,9 +49,9 @@ public:
     void handle_predictors();
     #endif
     void dump_sql_cl_data(const uint32_t cur_rst_type);
+    uint32_t reduceDB_called = 0;
 
     #ifdef STATS_NEEDED
-    uint32_t reduceDB_called = 0;
     uint64_t locked_for_data_gen_total = 0;
     uint64_t locked_for_data_gen_cls = 0;
     #endif
@@ -101,6 +101,7 @@ private:
     void reset_predict_stats();
     void update_preds(const vector<ClOffset>& offs);
     ReduceCommonData commdata;
+    void dump_pred_distrib(const vector<ClOffset>& offs, uint32_t lev);
     #endif
 
     const CMSat::ClauseStats& get_median_stat(const vector<ClOffset>& all_learnt) const;

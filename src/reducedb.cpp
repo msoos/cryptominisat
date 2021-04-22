@@ -224,6 +224,17 @@ ReduceDB::ReduceDB(Solver* _solver) :
     solver(_solver)
 {
     cl_stats.resize(3);
+
+    if (solver->conf.dump_pred_distrib) {
+        std::ofstream distrib_file("pred_distrib.csv");
+        distrib_file
+        << "rdb_called" << ","
+        << "tier" << "," << "age"
+        << "," << "pred_short_use"
+        << "," << "pred_long_use"
+        << "," << "pred_forever_use"
+        << endl;
+    }
 }
 
 ReduceDB::~ReduceDB()
@@ -750,6 +761,7 @@ void ReduceDB::update_preds_lev2()
 {
     double myTime = cpuTime();
     update_preds(solver->longRedCls[2]);
+    dump_pred_distrib(solver->longRedCls[2], 2);
 
     if (solver->conf.verbosity >= 2) {
         double predTime = cpuTime() - myTime;
@@ -766,6 +778,7 @@ void ReduceDB::clean_lev0_once_in_a_while()
         return;
     }
     update_preds(solver->longRedCls[0]);
+    dump_pred_distrib(solver->longRedCls[0], 0);
 
     //Clean up FOREVER, move to LONG
     const uint32_t checked_every = solver->conf.pred_forever_check_every_n *
@@ -823,6 +836,7 @@ void ReduceDB::clean_lev1_once_in_a_while()
     }
 
     update_preds(solver->longRedCls[1]);
+    dump_pred_distrib(solver->longRedCls[1], 1);
 
     const uint32_t checked_every = solver->conf.pred_long_check_every_n * solver->conf.every_pred_reduce;
 
@@ -959,6 +973,27 @@ void ReduceDB::reset_predict_stats()
         this_stats.print(2);
     }
     cl_stats[2] += this_stats;
+}
+
+void ReduceDB::dump_pred_distrib(const vector<ClOffset>& offs, uint32_t lev) {
+    if (!solver->conf.dump_pred_distrib) {
+        return;
+    }
+    std::ofstream distrib_file("pred_distrib.csv", ios::app);
+    for(const auto& off:offs) {
+        Clause* cl = solver->cl_alloc.ptr(off);
+        ClauseStatsExtra& stats_extra = solver->red_stats_extra[cl->stats.extra_pos];
+        const uint64_t age = solver->sumConflicts - stats_extra.introduced_at_conflict;
+        if (age > solver->conf.every_pred_reduce)  {
+            distrib_file
+            << num_times_pred_called << ","
+            << lev << "," << age
+            << "," << stats_extra.pred_short_use
+            << "," << stats_extra.pred_long_use
+            << "," << stats_extra.pred_forever_use
+            << endl;
+        }
+    }
 }
 
 void ReduceDB::handle_predictors()
