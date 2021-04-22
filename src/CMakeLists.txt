@@ -194,9 +194,6 @@ if (USE_GAUSS)
 endif()
 
 if (MPI_FOUND)
-    SET(cryptoms_lib_files ${cryptoms_lib_files}
-        datasyncserver.cpp
-    )
     SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${MPI_CXX_LIBRARIES})
 endif()
 
@@ -412,6 +409,7 @@ endif()
 if (MPI_FOUND)
     add_executable(cryptominisat5_mpi-bin
         main_mpi.cpp
+        datasyncserver.cpp
     )
 endif()
 
