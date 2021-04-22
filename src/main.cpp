@@ -356,6 +356,8 @@ void Main::add_supported_options()
         , "Pred forever multiplier")
     ("predforeverpow", po::value(&conf.pred_forever_size_pow)->default_value(conf.pred_forever_size_pow)
         , "Pred forever power to raise the conflicts to")
+    ("ordertier2by", po::value(&conf.order_tier2_by)->default_value(conf.order_tier2_by)
+         , "Order Tier 2 by Tier 2/1/0 prediction")
 
     //dumping data
     ("dumppreddistrib", po::value(&conf.dump_pred_distrib)->default_value(conf.dump_pred_distrib)

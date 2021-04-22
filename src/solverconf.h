@@ -228,6 +228,7 @@ class DLL_PUBLIC SolverConf
         uint32_t pred_short_size;
         uint32_t pred_long_size;
         uint32_t pred_forever_size;
+        uint32_t order_tier2_by;
         double pred_forever_size_pow;
 
         uint32_t pred_long_chunk;

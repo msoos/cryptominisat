@@ -876,8 +876,18 @@ void ReduceDB::delete_from_lev2()
 {
     // SHORT
     uint32_t keep_short = solver->conf.pred_short_size;
-    std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
-              SortRedClsPredShort(solver->cl_alloc, solver->red_stats_extra));
+    if (solver->conf.order_tier2_by == 2) {
+        std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
+                  SortRedClsPredShort(solver->cl_alloc, solver->red_stats_extra));
+    } else if (solver->conf.order_tier2_by == 1) {
+        std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
+                  SortRedClsPredLong(solver->cl_alloc, solver->red_stats_extra));
+    } if (solver->conf.order_tier2_by == 0) {
+        std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
+                  SortRedClsPredForever(solver->cl_alloc, solver->red_stats_extra));
+    } else {
+        assert(false);
+    }
 
     uint32_t j = 0;
     for(uint32_t i = 0; i < solver->longRedCls[2].size(); i ++) {

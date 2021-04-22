@@ -89,6 +89,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , pred_short_size(7500)
         , pred_long_size(7500)
         , pred_forever_size(800)
+        , order_tier2_by(2)
 
         , pred_forever_size_pow(0.1)
         //
