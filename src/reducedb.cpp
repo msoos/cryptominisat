@@ -224,17 +224,6 @@ ReduceDB::ReduceDB(Solver* _solver) :
     solver(_solver)
 {
     cl_stats.resize(3);
-
-    if (solver->conf.dump_pred_distrib) {
-        std::ofstream distrib_file("pred_distrib.csv");
-        distrib_file
-        << "rdb_called" << ","
-        << "tier" << "," << "age"
-        << "," << "pred_short_use"
-        << "," << "pred_long_use"
-        << "," << "pred_forever_use"
-        << endl;
-    }
 }
 
 ReduceDB::~ReduceDB()
@@ -998,6 +987,16 @@ void ReduceDB::dump_pred_distrib(const vector<ClOffset>& offs, uint32_t lev) {
 
 void ReduceDB::handle_predictors()
 {
+    if (solver->conf.dump_pred_distrib && num_times_pred_called == 0) {
+        std::ofstream distrib_file("pred_distrib.csv");
+        distrib_file
+        << "rdb_called" << ","
+        << "tier" << "," << "age"
+        << "," << "pred_short_use"
+        << "," << "pred_long_use"
+        << "," << "pred_forever_use"
+        << endl;
+    }
     num_times_pred_called++;
     if (predictors == NULL) {
         predictors = new ClPredictors;
