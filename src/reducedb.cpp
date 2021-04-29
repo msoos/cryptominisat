@@ -810,8 +810,19 @@ void ReduceDB::clean_lev0_once_in_a_while()
             solver->longRedCls[0][j++] = solver->longRedCls[0][i];
         } else {
             moved_from_forever_to_long++;
-            solver->longRedCls[1].push_back(offset);
-            cl->stats.which_red_array = 1;
+
+            if (solver->conf.move_from_tier0 == 0) {
+                solver->longRedCls[1].push_back(offset);
+                cl->stats.which_red_array = 1;
+            } else {
+                solver->watches.smudge((*cl)[0]);
+                solver->watches.smudge((*cl)[1]);
+                solver->litStats.redLits -= cl->size();
+
+                *solver->drat << del << *cl << fin;
+                cl->setRemoved();
+                delayed_clause_free.push_back(offset);
+            }
         }
     }
     solver->longRedCls[0].resize(j);
@@ -854,22 +865,33 @@ void ReduceDB::clean_lev1_once_in_a_while()
             solver->conf.pred_dontmove_until_timeinside == 2) ||
             solver->clause_locked(*cl, offset)
         ) {
-//             if ((time_inside_solver < checked_every/2 &&
-//                 solver->conf.pred_dontmove_until_timeinside == 1) ||
-//                 (time_inside_solver < checked_every &&
-//                 solver->conf.pred_dontmove_until_timeinside == 2))
-//             {
-//                 kept_in_long_due_to_dontmove++;
-//                 keep_long++;
-//             }
+            if ((time_inside_solver < checked_every/2 &&
+                solver->conf.pred_dontmove_until_timeinside == 1) ||
+                (time_inside_solver < checked_every &&
+                solver->conf.pred_dontmove_until_timeinside == 2) ||
+                solver->clause_locked(*cl, offset))
+            {
+                kept_in_long_due_to_dontmove++;
+                keep_long++;
+            }
 
             kept_in_long++;
             assert(cl->stats.which_red_array == 1);
             solver->longRedCls[1][j++] =solver->longRedCls[1][i];
         } else {
             moved_from_long_to_short++;
-            solver->longRedCls[2].push_back(offset);
-            cl->stats.which_red_array = 2;
+            if (solver->conf.move_from_tier1 == 0) {
+                solver->longRedCls[2].push_back(offset);
+                cl->stats.which_red_array = 2;
+            } else {
+                solver->watches.smudge((*cl)[0]);
+                solver->watches.smudge((*cl)[1]);
+                solver->litStats.redLits -= cl->size();
+
+                *solver->drat << del << *cl << fin;
+                cl->setRemoved();
+                delayed_clause_free.push_back(offset);
+            }
         }
     }
     solver->longRedCls[1].resize(j);

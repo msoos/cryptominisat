@@ -234,6 +234,9 @@ class DLL_PUBLIC SolverConf
         uint32_t pred_long_chunk;
         uint32_t pred_forever_chunk;
 
+        int move_from_tier0;
+        int move_from_tier1;
+
         uint32_t pred_long_check_every_n;
         uint32_t pred_forever_check_every_n;
         uint32_t pred_adjust_for_cl_size;

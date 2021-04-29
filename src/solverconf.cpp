@@ -96,6 +96,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , pred_long_chunk(2000)
         , pred_forever_chunk(1200)
         //
+        , move_from_tier0(1)
+        , move_from_tier1(1)
+        //
         , pred_long_check_every_n(3)
         , pred_forever_check_every_n(12)
         , pred_adjust_for_cl_size(0)

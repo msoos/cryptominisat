@@ -359,6 +359,12 @@ void Main::add_supported_options()
     ("ordertier2by", po::value(&conf.order_tier2_by)->default_value(conf.order_tier2_by)
          , "Order Tier 2 by Tier 2/1/0 prediction")
 
+    //move or del?
+    ("movefromtier0", po::value(&conf.move_from_tier0)->default_value(conf.move_from_tier0)
+         , "Move from tier0 to tier1? If set to 0, then it's deleted instead of moved.")
+    ("movefromtier1", po::value(&conf.move_from_tier1)->default_value(conf.move_from_tier1)
+         , "Move from tier1 to tier2? If set to 0, then it's deleted instead of moved.")
+
     //dumping data
     ("dumppreddistrib", po::value(&conf.dump_pred_distrib)->default_value(conf.dump_pred_distrib)
          , "Dump predict distirution to pred_distrib.csv")
