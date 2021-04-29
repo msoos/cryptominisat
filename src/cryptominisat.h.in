@@ -227,6 +227,10 @@ namespace CMSat {
         std::vector<uint32_t> translate_sampl_set(const std::vector<uint32_t>& sampl_set);
         void get_all_irred_clauses(std::vector<Lit>& ret);
 
+        /////////////////////
+        // Backwards compatibility, implemented using the above "small clauses" functions
+        void open_file_and_dump_irred_clauses(const char* fname);
+
     private:
 
         ////////////////////////////

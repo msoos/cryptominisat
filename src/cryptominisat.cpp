@@ -1603,3 +1603,32 @@ DLL_PUBLIC void SATSolver::set_varelim_check_resolvent_subs(bool varelim_check_r
         s.conf.varelim_check_resolvent_subs = varelim_check_resolvent_subs;
     }
 }
+
+
+DLL_PUBLIC void SATSolver::open_file_and_dump_irred_clauses(const char* fname)
+{
+    vector<Lit> cls;
+    get_all_irred_clauses(cls);
+
+    uint32_t num_cls = 0;
+    int32_t max_vars = -1;
+    for(const Lit l: cls) {
+        if (l == lit_Undef) {
+            num_cls++;
+        } else {
+            if ((int32_t)l.var() > max_vars) {
+                max_vars = (int32_t)l.var();
+            }
+        }
+    }
+
+    std::ofstream f(fname);
+    f << "p cnf " << max_vars << " " << num_cls << endl;
+    for(const Lit l: cls) {
+        if (l == lit_Undef) {
+            f << " 0" << endl;
+        } else {
+            f << l << " ";
+        }
+    }
+}
