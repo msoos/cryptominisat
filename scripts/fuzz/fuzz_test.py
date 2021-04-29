@@ -344,7 +344,7 @@ class Tester:
             cmd += "--slseveryn %d " % random.randint(1, 3)
         cmd += "--yalsatmems %d " % random.choice([1, 10, 100])
         cmd += "--walksatruns %d " % random.choice([2, 15, 20])
-        cmd += "--slstype %s " % random.choice(["walksat", "yalsat", "ccnr", "ccnr_yalsat"])
+        cmd += "--slstype %s " % random.choice(["walksat", "ccnr"]) #"yalsat", "ccnr_yalsat"
 
         # polarities
         cmd += "--polar %s " % random.choice(["true", "false", "rnd", "auto"])
