@@ -108,8 +108,6 @@ set(cryptoms_lib_files
     xorfinder.cpp
     cardfinder.cpp
     cryptominisat_c.cpp
-    yalsat.cpp
-    yals.c
     walksat.cpp
     sls.cpp
     vardistgen.cpp
@@ -119,6 +117,15 @@ set(cryptoms_lib_files
 #    watcharray.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
+
+if (REQUIRE_YALSAT)
+    set(cryptoms_lib_files
+        ${cryptoms_lib_files}
+        yalsat.cpp
+        yals.c
+    )
+endif()
+
 
 set(cryptoms_lib_link_libs "")
 

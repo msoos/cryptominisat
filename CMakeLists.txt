@@ -572,11 +572,16 @@ if (NOT NOVALGRIND)
     endif()
 endif()
 
-include(CheckFloatPrecision)
-check_float_precision()
-if (HAVE__FPU_SETCW)
-    add_definitions(-DYALSAT_FPU)
-    message(STATUS "Found FPU code for yalsat: fpu_control.h, _FPU_SINGLE, _FPU_DOUBLE")
+
+option(REQUIRE_YALSAT "Try to use YALSAT (not normally needed)" OFF)
+if (REQUIRE_YALSAT)
+    add_definitions(-DUSE_YALSAT)
+    include(CheckFloatPrecision)
+    check_float_precision()
+    if (HAVE__FPU_SETCW)
+        add_definitions(-DYALSAT_FPU)
+        message(STATUS "Found FPU code for yalsat: fpu_control.h, _FPU_SINGLE, _FPU_DOUBLE")
+    endif()
 endif()
 
 

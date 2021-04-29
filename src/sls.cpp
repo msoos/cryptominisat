@@ -22,7 +22,9 @@ THE SOFTWARE.
 
 #include "sls.h"
 #include "solver.h"
+#ifdef USE_YALSAT
 #include "yalsat.h"
+#endif
 #include "walksat.h"
 #include "ccnr_cms.h"
 
@@ -38,7 +40,12 @@ SLS::~SLS()
 lbool SLS::run(const uint32_t num_sls_called)
 {
     if (solver->conf.which_sls == "yalsat") {
+#ifdef USE_YALSAT
         return run_yalsat();
+#else
+        cout << "ERROR: yalsat was not compiled in. Set -DREQUIRE_YALSAT=ON" << endl;
+        exit(-1);
+#endif
     } else if (solver->conf.which_sls == "ccnr") {
         return run_ccnr(num_sls_called);
     } else if (solver->conf.which_sls == "walksat") {
@@ -47,7 +54,12 @@ lbool SLS::run(const uint32_t num_sls_called)
         if ((num_sls_called % 2) == 0) {
             return run_ccnr(num_sls_called);
         } else {
+            #ifdef USE_YALSAT
             return run_yalsat();
+            #else
+            cout << "ERROR: yalsat was not compiled in. Set -DREQUIRE_YALSAT=ON" << endl;
+            exit(-1);
+            #endif
         }
     } else {
         cout << "ERROR: SLS configuration '" << solver->conf.which_sls
@@ -77,6 +89,7 @@ lbool SLS::run_walksat()
     return l_Undef;
 }
 
+#ifdef USE_YALSAT
 lbool SLS::run_yalsat()
 {
     Yalsat yalsat(solver);
@@ -96,6 +109,7 @@ lbool SLS::run_yalsat()
 
     return l_Undef;
 }
+#endif
 
 lbool SLS::run_ccnr(const uint32_t num_sls_called)
 {

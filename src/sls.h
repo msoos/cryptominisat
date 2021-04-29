@@ -39,7 +39,9 @@ private:
     Solver* solver;
 
     lbool run_walksat();
+    #ifdef USE_YALSAT
     lbool run_yalsat();
+    #endif
     lbool run_ccnr(const uint32_t num_sls_called);
     uint64_t approx_mem_needed();
 };
