@@ -1633,41 +1633,90 @@ DLL_PUBLIC void SATSolver::open_file_and_dump_irred_clauses(const char* fname)
     }
 }
 
-
-DLL_PUBLIC void SATSolver::set_pred_short_size(uint32_t sz)
+DLL_PUBLIC void SATSolver::set_pred_short_size(int32_t sz)
 {
+    if (sz == -1) {
+        //set to default
+        SolverConf conf2;
+        sz = conf2.pred_short_size;
+    } else if (sz < 0) {
+        cout << "ERROR: only 'sz' parameters accepted are -1 for resetting to default, and >=0" << endl;
+        assert(false);
+        exit(-1);
+    }
+
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
         s.conf.pred_short_size = sz;
     }
 }
 
-DLL_PUBLIC void SATSolver::set_pred_long_size(uint32_t sz)
+DLL_PUBLIC void SATSolver::set_pred_long_size(int32_t sz)
 {
+    if (sz == -1) {
+        //set to default
+        SolverConf conf2;
+        sz = conf2.pred_long_size;
+    } else if (sz < 0) {
+        cout << "ERROR: only 'sz' parameters accepted are -1 for resetting to default, and >=0" << endl;
+        assert(false);
+        exit(-1);
+    }
+
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
         s.conf.pred_long_size = sz;
     }
 }
 
-DLL_PUBLIC void SATSolver::set_pred_forever_size(uint32_t sz)
+DLL_PUBLIC void SATSolver::set_pred_forever_size(int32_t sz)
 {
+    if (sz == -1) {
+        //set to default
+        SolverConf conf2;
+        sz = conf2.pred_forever_size;
+    } else if (sz < 0) {
+        cout << "ERROR: only 'sz' parameters accepted are -1 for resetting to default, and >=0" << endl;
+        assert(false);
+        exit(-1);
+    }
+
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
         s.conf.pred_forever_size = sz;
     }
 }
 
-DLL_PUBLIC void SATSolver::set_pred_long_chunk(uint32_t sz)
+DLL_PUBLIC void SATSolver::set_pred_long_chunk(int32_t sz)
 {
+    if (sz == -1) {
+        //set to default
+        SolverConf conf2;
+        sz = conf2.pred_long_chunk;
+    } else if (sz < 0) {
+        cout << "ERROR: only 'sz' parameters accepted are -1 for resetting to default, and >=0" << endl;
+        assert(false);
+        exit(-1);
+    }
+
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
         s.conf.pred_long_chunk = sz;
     }
 }
 
-DLL_PUBLIC void SATSolver::set_pred_forever_chunk(uint32_t sz)
+DLL_PUBLIC void SATSolver::set_pred_forever_chunk(int32_t sz)
 {
+    if (sz == -1) {
+        //set to default
+        SolverConf conf2;
+        sz = conf2.pred_forever_chunk;
+    } else if (sz < 0) {
+        cout << "ERROR: only 'sz' parameters accepted are -1 for resetting to default, and >=0" << endl;
+        assert(false);
+        exit(-1);
+    }
+
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
         s.conf.pred_forever_chunk = sz;
