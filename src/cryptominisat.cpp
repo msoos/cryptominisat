@@ -1632,3 +1632,44 @@ DLL_PUBLIC void SATSolver::open_file_and_dump_irred_clauses(const char* fname)
         }
     }
 }
+
+
+DLL_PUBLIC void SATSolver::set_pred_short_size(uint32_t sz)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.pred_short_size = sz;
+    }
+}
+
+DLL_PUBLIC void SATSolver::set_pred_long_size(uint32_t sz)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.pred_long_size = sz;
+    }
+}
+
+DLL_PUBLIC void SATSolver::set_pred_forever_size(uint32_t sz)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.pred_forever_size = sz;
+    }
+}
+
+DLL_PUBLIC void SATSolver::set_pred_long_chunk(uint32_t sz)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.pred_long_chunk = sz;
+    }
+}
+
+DLL_PUBLIC void SATSolver::set_pred_forever_chunk(uint32_t sz)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.pred_forever_chunk = sz;
+    }
+}
