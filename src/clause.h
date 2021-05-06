@@ -655,7 +655,7 @@ struct BinaryXor
 
 struct Sub0Ret {
     ClauseStats stats;
-    #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     ClauseStatsExtra stats_extra;
     #endif
     bool subsumedIrred = 0;
