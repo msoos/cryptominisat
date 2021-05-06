@@ -446,7 +446,7 @@ void Main::add_supported_options()
         , "Reduce lev1 clauses every N")
     ("everylev2", po::value(&conf.every_lev2_reduce)->default_value(conf.every_lev2_reduce)
         , "Reduce lev2 clauses every N")
-    #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     ("everypred", po::value(&conf.every_pred_reduce)->default_value(conf.every_pred_reduce)
         , "Reduce final predictor (lev3) clauses every N, and produce data at every N in case of STATS_NEEDED")
     #endif

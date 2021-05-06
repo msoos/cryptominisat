@@ -317,7 +317,7 @@ class Searcher : public HyperEngine
         /////////////////////
         uint64_t next_lev1_reduce;
         uint64_t next_lev2_reduce;
-        uint64_t next_lev3_reduce;
+        uint64_t next_pred_reduce;
 
         ///////////////
         // Restart parameters

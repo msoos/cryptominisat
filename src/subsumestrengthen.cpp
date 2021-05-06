@@ -124,7 +124,7 @@ Sub0Ret SubsumeStrengthen::subsume_and_unlink(
         //Stats will be merged together here then merged into the
         //subsuming clause's stats
         ret.stats = ClauseStats::combineStats(tmpcl->stats, ret.stats);
-        #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+        #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
         if (tmpcl->red()) {
             ret.stats_extra = ClauseStatsExtra::combineStats(
                 solver->red_stats_extra[tmpcl->stats.extra_pos],

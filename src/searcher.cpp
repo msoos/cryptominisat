@@ -1768,7 +1768,7 @@ Clause* Searcher::handle_last_confl(
             );
         cl->isRed = true;
         cl->stats.glue = glue;
-        #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+        #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
         red_stats_extra.push_back(ClauseStatsExtra());
         cl->stats.extra_pos = red_stats_extra.size()-1;
         auto& ext_stats = red_stats_extra[cl->stats.extra_pos];
@@ -2164,16 +2164,16 @@ void Searcher::reduce_db_if_needed()
 {
     #ifdef NORMAL_CL_USE_STATS
     if (conf.every_pred_reduce != 0
-        && sumConflicts >= next_lev3_reduce
+        && sumConflicts >= next_pred_reduce
     ) {
         solver->reduceDB->gather_normal_cl_use_stats();
-        next_lev3_reduce = sumConflicts + conf.every_pred_reduce;
+        next_pred_reduce = sumConflicts + conf.every_pred_reduce;
     }
     #endif
 
-    #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     if (conf.every_pred_reduce != 0
-        && sumConflicts >= next_lev3_reduce
+        && sumConflicts >= next_pred_reduce
     ) {
         #ifdef STATS_NEEDED
         if (solver->sqlStats) {
@@ -2184,7 +2184,7 @@ void Searcher::reduce_db_if_needed()
         solver->reduceDB->handle_predictors();
         cl_alloc.consolidate(solver);
         #endif
-        next_lev3_reduce = sumConflicts + conf.every_pred_reduce;
+        next_pred_reduce = sumConflicts + conf.every_pred_reduce;
     }
     #endif
 

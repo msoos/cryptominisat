@@ -348,7 +348,7 @@ void ReduceDB::handle_lev2()
     last_reducedb_num_conflicts = solver->sumConflicts;
 }
 
-#if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+#if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
 const CMSat::ClauseStats&
 ReduceDB::get_median_stat(const vector<ClOffset>& all_learnt) const
 {
@@ -1276,7 +1276,7 @@ ReduceDB::ClauseStats ReduceDB::ClauseStats::operator += (const ClauseStats& oth
     return *this;
 }
 
-#if defined(NORMAL_CL_USE_STATS) || defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+#if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
 void ReduceDB::ClauseStats::add_in(const Clause& cl, const uint64_t age)
 {
     total_cls++;

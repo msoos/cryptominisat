@@ -399,10 +399,7 @@ PropBy PropEngine::propagate_any_order_fast()
                 assert(j <= end);
                 qhead = trail.size();
             } else {
-                #if defined(NORMAL_CL_USE_STATS)
-                c.stats.props_made++;
-                #endif
-                #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+                #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
                 c.stats.props_made++;
                 #endif
                 #ifdef STATS_NEEDED

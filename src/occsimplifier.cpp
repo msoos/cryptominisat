@@ -1681,7 +1681,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         set_limits();
 
         #ifdef SLOW_DEBUG
-        #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+        #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
         for (ClOffset offs: clauses) {
             Clause* cl = solver->cl_alloc.ptr(offs);
             if (cl->freed())
@@ -2041,7 +2041,7 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
         ClauseStats stats;
         stats.last_touched = solver->sumConflicts;
         stats.is_ternary_resolvent = true;
-        #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+        #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
         ClauseStatsExtra stats_extra;
         stats_extra.introduced_at_conflict = solver->sumConflicts;
         #endif
@@ -2074,7 +2074,7 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
                 newCl->stats.which_red_array = 0;
             }
             #endif
-            #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+            #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             solver->red_stats_extra.push_back(stats_extra);
             newCl->stats.extra_pos = solver->red_stats_extra.size()-1;
             #endif

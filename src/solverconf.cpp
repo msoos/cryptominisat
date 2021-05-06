@@ -108,7 +108,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         , every_lev1_reduce(10000) // kept for a while then moved to lev2
         , every_lev2_reduce(15000) // cleared regularly
-        #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED) || defined(NORMAL_CL_USE_STATS)
+        #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
         , every_pred_reduce(10000)
         #endif
         , must_touch_lev1_within(70000)
