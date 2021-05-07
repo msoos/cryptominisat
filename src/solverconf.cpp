@@ -92,7 +92,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , pred_forever_cutoff(0) //100 seems to work
         , order_tier2_by(2)
 
-        , pred_forever_size_pow(0.1)
+        , pred_forever_size_pow(0.1) // meaningless if pred_forever_cutoff is not 0!!
         //
         , pred_long_chunk(2000)
         , pred_forever_chunk(1200) // meaningless if pred_forever_cutoff is not 0!!
