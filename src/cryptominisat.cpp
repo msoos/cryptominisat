@@ -1722,3 +1722,39 @@ DLL_PUBLIC void SATSolver::set_pred_forever_chunk(int32_t sz)
         s.conf.pred_forever_chunk = sz;
     }
 }
+
+DLL_PUBLIC void SATSolver::set_pred_forever_cutoff(int32_t sz)
+{
+    if (sz == -1) {
+        //set to default
+        SolverConf conf2;
+        sz = conf2.pred_forever_cutoff;
+    } else if (sz < 0) {
+        cout << "ERROR: only 'sz' parameters accepted are -1 for resetting to default, and >=0" << endl;
+        assert(false);
+        exit(-1);
+    }
+
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.pred_forever_cutoff = sz;
+    }
+}
+
+DLL_PUBLIC void SATSolver::set_every_pred_reduce(int32_t sz)
+{
+        if (sz == -1) {
+        //set to default
+        SolverConf conf2;
+        sz = conf2.every_pred_reduce;
+    } else if (sz < 0) {
+        cout << "ERROR: only 'sz' parameters accepted are -1 for resetting to default, and >=0" << endl;
+        assert(false);
+        exit(-1);
+    }
+
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.every_pred_reduce = sz;
+    }
+}
