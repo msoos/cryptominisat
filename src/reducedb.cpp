@@ -641,7 +641,18 @@ void ReduceDB::pred_move_to_lev1_and_lev0()
     for(uint32_t i = 0; i < solver->longRedCls[2].size(); i ++) {
         const ClOffset offset = solver->longRedCls[2][i];
         Clause* cl = solver->cl_alloc.ptr(offset);
-        if (i < mark_forever) {
+        const auto& stats_extra = solver->red_stats_extra[cl->stats.extra_pos];
+
+        bool move = false;
+        if (solver->conf.pred_forever_cutoff == 0) {
+            if (i < mark_forever) {
+                move = true;
+            }
+        } else if (stats_extra.pred_forever_use >= solver->conf.pred_forever_cutoff) {
+            move = true;
+        }
+
+        if (move) {
             moved_from_short_to_forever++;
             cl->stats.which_red_array = 0;
             solver->longRedCls[0].push_back(offset);
@@ -787,8 +798,9 @@ void ReduceDB::clean_lev0_once_in_a_while()
         assert(!cl->freed());
 
         uint32_t time_inside_solver = solver->sumConflicts - stats_extra.introduced_at_conflict;
-        if (i < keep_forever ||
-            (time_inside_solver < checked_every/2 &&
+
+        bool keep = false;
+        if ((time_inside_solver < checked_every/2 &&
             solver->conf.pred_dontmove_until_timeinside == 1) ||
             (time_inside_solver < checked_every &&
             solver->conf.pred_dontmove_until_timeinside == 2) ||
@@ -803,7 +815,18 @@ void ReduceDB::clean_lev0_once_in_a_while()
                 kept_in_forever_due_to_dontmove++;
                 keep_forever++;
             }
+            keep = true;
+        }
 
+        if (solver->conf.pred_forever_cutoff == 0) {
+            if (i < keep_forever) {
+                keep = true;
+            }
+        } else if (stats_extra.pred_forever_use >= solver->conf.pred_forever_cutoff) {
+            keep = true;
+        }
+
+        if (keep) {
             //cout << "stats_extra.pred_forever_use: " << stats_extra.pred_forever_use/(10*1000.0) << endl;
             kept_in_forever++;
             assert(cl->stats.which_red_array == 0);

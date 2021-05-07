@@ -88,13 +88,14 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Clause cleaning
         , pred_short_size(7500)
         , pred_long_size(7500)
-        , pred_forever_size(800)
+        , pred_forever_size(800) // meaningless if pred_forever_cutoff is not 0!!
+        , pred_forever_cutoff(0) //100 seems to work
         , order_tier2_by(2)
 
         , pred_forever_size_pow(0.1)
         //
         , pred_long_chunk(2000)
-        , pred_forever_chunk(1200)
+        , pred_forever_chunk(1200) // meaningless if pred_forever_cutoff is not 0!!
         //
         , move_from_tier0(1)
         , move_from_tier1(1)
@@ -109,7 +110,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , every_lev1_reduce(10000) // kept for a while then moved to lev2
         , every_lev2_reduce(15000) // cleared regularly
         #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
-        , every_pred_reduce(10000)
+        , every_pred_reduce(10000) //5000 seems to work better
         #endif
         , must_touch_lev1_within(70000)
 
