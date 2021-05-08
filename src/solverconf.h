@@ -253,10 +253,7 @@ class DLL_PUBLIC SolverConf
         //if non-zero, we reduce at every X conflicts.
         //Otherwise we geometrically keep around max_temp_lev2_learnt_clauses*(inc**N)
         unsigned every_lev2_reduce;
-
-        #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
         unsigned every_pred_reduce;
-        #endif
 
         uint32_t must_touch_lev1_within;
         unsigned  max_temp_lev2_learnt_clauses;

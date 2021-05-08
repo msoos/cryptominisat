@@ -109,9 +109,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         , every_lev1_reduce(10000) // kept for a while then moved to lev2
         , every_lev2_reduce(15000) // cleared regularly
-        #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
         , every_pred_reduce(10000) //5000 seems to work better
-        #endif
         , must_touch_lev1_within(70000)
 
         , max_temp_lev2_learnt_clauses(30000) //only used if every_lev2_reduce==0
