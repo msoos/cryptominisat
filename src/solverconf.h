@@ -500,6 +500,7 @@ class DLL_PUBLIC SolverConf
 
         //Multi-thread, MPI
         unsigned long long sync_every_confl;
+        uint32_t every_n_mpi_sync;
         unsigned thread_num;
         uint32_t is_mpi;
 

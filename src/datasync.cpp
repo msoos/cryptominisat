@@ -44,19 +44,22 @@ void DataSync::finish_up_mpi()
 {
     #ifdef USE_MPI
     if (mpiSendData) {
+        //mpiSendData is only non-NULL when MPI is on and it's the 0 thread
+        assert(solver->conf.is_mpi);
+        assert(solver->conf.thread_num == 0);
+
         MPI_Status status;
         int op_completed = false;
         int err;
 
-        while(!op_completed) {
+//         while(!op_completed) {
             err = MPI_Test(&sendReq, &op_completed, &status);
             assert(err == MPI_SUCCESS);
             if (!op_completed) {
                 err = MPI_Cancel(&sendReq);
                 assert(err == MPI_SUCCESS);
             }
-            usleep(1);
-        }
+//         }
         delete[] mpiSendData;
         mpiSendData = NULL;
     }
@@ -164,7 +167,10 @@ bool DataSync::syncData()
             sharedData->unit_mutex.lock();
             sharedData->bin_mutex.lock();
             ok = mpi_recv_from_others();
-            if (ok && numCalls % 3 == 2) {
+            assert(solver->conf.every_n_mpi_sync > 0);
+            if (ok &&
+                numCalls % solver->conf.every_n_mpi_sync == solver->conf.every_n_mpi_sync-1
+            ) {
                 mpi_send_to_others();
             }
             sharedData->unit_mutex.unlock();
@@ -631,15 +637,29 @@ bool DataSync::mpi_get_interrupt()
 
     int flag;
     MPI_Status status;
-    int err = MPI_Iprobe(0, 1, MPI_COMM_WORLD, &flag, &status);
+    int err = MPI_Iprobe(
+        0, //master source
+        1, //tag "1" for finish interrupt
+        MPI_COMM_WORLD, &flag, &status);
     assert(err == MPI_SUCCESS);
     if (flag == false) {
         return false;
     }
 
+
+    //Receive the tag 1 message
     unsigned buf;
-    err = MPI_Recv(&buf, 0, MPI_UNSIGNED, 0, 1, MPI_COMM_WORLD, &status);
+    err = MPI_Recv(
+        &buf,
+        0, //data is empty
+        MPI_UNSIGNED,
+        0, //source is master
+        1, //tag is "1"
+        MPI_COMM_WORLD, &status);
     assert(err == MPI_SUCCESS);
+
+    //TODO should we cancel the potentially running SEND request?
+
     solver->set_must_interrupt_asap();
 
     return true;
@@ -743,10 +763,17 @@ void DataSync::mpi_send_to_others()
         #endif
 
         MPI_Status status;
-        err = MPI_Wait(&sendReq, &status);
+        int op_completed;
+        err = MPI_Request_get_status(sendReq, &op_completed, &status);
         assert(err == MPI_SUCCESS);
-        delete[] mpiSendData;
-        mpiSendData = NULL;
+        if (op_completed) {
+            err = MPI_Wait(&sendReq, &status);
+            assert(err == MPI_SUCCESS);
+            delete[] mpiSendData;
+            mpiSendData = NULL;
+        } else {
+            return;
+        }
     }
 
     #ifdef VERBOSE_DEBUG_MPI_SENDRCV
