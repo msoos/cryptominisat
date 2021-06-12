@@ -644,9 +644,21 @@ if (NOT NOBOSPHORUS)
 endif()
 
 # -----------------------------------------------------------------------------
-# Look for BreakID
+# Look for MPI
 # -----------------------------------------------------------------------------
 option(NOBREAKID "Disable BreakID" OFF)
+find_package(MPI)
+if (MPI_FOUND)
+    add_definitions( -DUSE_MPI )
+    set(NOBREAKID ON)
+    #set( CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER} )
+else (MPI_FOUND)
+     MESSAGE(STATUS "No suitable C++ MPI implementation found. CryptoMiniSat will not be distributed.")
+endif(MPI_FOUND)
+
+# -----------------------------------------------------------------------------
+# Look for BreakID
+# -----------------------------------------------------------------------------
 if (NOT NOBREAKID)
     find_package(breakid)
     if (NOT BREAKID_LIBRARIES)
@@ -677,18 +689,6 @@ macro(cmsat_add_public_header LIBTARGET HEADER)
         PUBLIC_HEADER "${EXISTING_PUBLIC_HEADERS}"
      )
 endmacro()
-
-
-# -----------------------------------------------------------------------------
-# Look for MPI
-# -----------------------------------------------------------------------------
-find_package(MPI)
-if (MPI_FOUND)
-    add_definitions( -DUSE_MPI )
-    #set( CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER} )
-else (MPI_FOUND)
-     MESSAGE(STATUS "No suitable C++ MPI implementation found. CryptoMiniSat will not be distributed.")
-endif(MPI_FOUND)
 
 # -----------------------------------------------------------------------------
 # Look for python
