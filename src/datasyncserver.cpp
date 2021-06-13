@@ -73,10 +73,10 @@ void DataSyncServer::mpi_recv_from_others()
         0, //tag 0, i.e. unit/bin data
         MPI_COMM_WORLD, &flag, &status);
     assert(err == MPI_SUCCESS);
-    int source = status.MPI_SOURCE;
     if (flag == false) {
         return;
     }
+    int source = status.MPI_SOURCE;
 
     //Get message size
     err = MPI_Get_count(&status, MPI_UNSIGNED, &count);
@@ -92,12 +92,12 @@ void DataSyncServer::mpi_recv_from_others()
     err = MPI_Recv((unsigned*)buf, count, MPI_UNSIGNED,
                    source,
                    0, //tag "0", i.e. unit/bin data
-                   MPI_COMM_WORLD, &status);
+                   MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     assert(err == MPI_SUCCESS);
 
     #ifdef VERBOSE_DEBUG_MPI_SENDRCV
     std::cout << "c -->> MPI Server [from " << source << "]"
-    << " Received data from " << std::endl;
+    << " Received data " << std::endl;
     #endif
 
     int at = 0;
