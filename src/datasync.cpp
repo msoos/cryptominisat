@@ -48,18 +48,16 @@ void DataSync::finish_up_mpi()
         assert(solver->conf.is_mpi);
         assert(solver->conf.thread_num == 0);
 
-        MPI_Status status;
+        /*MPI_Status status;
         int op_completed = false;
         int err;
 
-//         while(!op_completed) {
-            err = MPI_Test(&sendReq, &op_completed, &status);
+        err = MPI_Test(&sendReq, &op_completed, &status);
+        assert(err == MPI_SUCCESS);
+        if (!op_completed) {
+            err = MPI_Cancel(&sendReq);
             assert(err == MPI_SUCCESS);
-            if (!op_completed) {
-                err = MPI_Cancel(&sendReq);
-                assert(err == MPI_SUCCESS);
-            }
-//         }
+        }*/
         delete[] mpiSendData;
         mpiSendData = NULL;
     }
@@ -762,18 +760,18 @@ void DataSync::mpi_send_to_others()
         " Still sending data, waiting now." << std::endl;
         #endif
 
-        MPI_Status status;
+        /*MPI_Status status;
         int op_completed;
         err = MPI_Request_get_status(sendReq, &op_completed, &status);
         assert(err == MPI_SUCCESS);
         if (op_completed) {
             err = MPI_Wait(&sendReq, &status);
-            assert(err == MPI_SUCCESS);
+            assert(err == MPI_SUCCESS);*/
             delete[] mpiSendData;
             mpiSendData = NULL;
-        } else {
+        /*} else {
             return;
-        }
+        }*/
     }
 
     #ifdef VERBOSE_DEBUG_MPI_SENDRCV
@@ -823,7 +821,8 @@ void DataSync::mpi_send_to_others()
     //Send the data
     mpiSendData = new uint32_t[data.size()];
     std::copy(data.begin(), data.end(), mpiSendData);
-    err = MPI_Isend(mpiSendData, data.size(), MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD, &sendReq);
+    //err = MPI_Isend(mpiSendData, data.size(), MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD, &sendReq);
+    err = MPI_Send(mpiSendData, data.size(), MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD);
     assert(err == MPI_SUCCESS);
 
     #ifdef VERBOSE_DEBUG_MPI_SENDRCV
