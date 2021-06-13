@@ -44,7 +44,7 @@ vector<lbool> solve(lbool& solution_val)
     err = MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
     assert(err == MPI_SUCCESS);
     CMSat::SolverConf conf;
-    conf.verbosity = (mpiRank == 1);
+    conf.verbosity = 0; //(mpiRank == 1);
     conf.is_mpi = true;
     conf.do_bva = false;
 
