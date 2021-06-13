@@ -447,6 +447,17 @@ lbool DataSyncServer::actAsServer()
             check_interrupt_and_forward_to_all())
         {
             interrupt_sent = true;
+
+            //HACK below, we don't cleanly exit
+            if (solution_val == l_True) {
+                cout << "s SATISFIABLE" << endl;
+            } else if (solution_val == l_False) {
+                cout << "s UNSATISFIABLE" << endl;
+            } else {
+                assert(false);
+            }
+            MPI_Abort(MPI_COMM_WORLD, 0);
+            exit(0);
         }
         usleep(1);
     }
