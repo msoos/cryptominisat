@@ -99,6 +99,10 @@ DLL_PUBLIC int continue_solve()
     }
 
     if (ret == l_True) {
+        MainCommon::print_model(solver, &std::cout);
+    }
+
+    if (ret == l_True) {
         return 0;
     } else if (ret == l_False) {
         return 1;
