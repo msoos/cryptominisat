@@ -60,7 +60,7 @@ DLL_PUBLIC int start_solve(const char* input)
         printVersionInfo();
     }
 
-    DimacsParser<StreamBuffer<const char*, CH>> parser(solver, NULL, conf.verbosity);
+    DimacsParser<StreamBuffer<const char*, CH>, SATSolver> parser(solver, NULL, conf.verbosity);
     if (!parser.parse_DIMACS(input, false)) {
         exit(-1);
     }
@@ -96,10 +96,6 @@ DLL_PUBLIC int continue_solve()
     } else if (ret == l_False) {
         cout << "s UNSATISFIABLE"<< endl;
         solver->print_stats();
-    }
-
-    if (ret == l_True) {
-        print_model(&std::cout, solver);
     }
 
     if (ret == l_True) {
