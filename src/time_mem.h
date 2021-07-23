@@ -35,7 +35,7 @@ THE SOFTWARE.
 #include <signal.h>
 
 // note: MinGW64 defines both __MINGW32__ and __MINGW64__
-#if defined (_MSC_VER) || defined (__MINGW32__) || defined(_WIN32)
+#if defined (_MSC_VER) || defined (__MINGW32__) || defined(_WIN32) || defined(EMSCRIPTEN)
 #include <ctime>
 static inline double cpuTime(void)
 {
