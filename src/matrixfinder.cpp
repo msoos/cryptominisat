@@ -303,15 +303,22 @@ uint32_t MatrixFinder::setMatrixes()
 
 
         //Over- or undersized
-        if (m.rows > solver->conf.gaussconf.max_matrix_rows) {
+        if (use_matrix && m.rows > solver->conf.gaussconf.max_matrix_rows) {
             use_matrix = false;
             if (solver->conf.verbosity) {
                 cout << "c [matrix] Too many rows in matrix: " << m.rows
                 << " -> set usage to NO" << endl;
             }
         }
+        if (use_matrix && m.cols > solver->conf.gaussconf.max_matrix_columns) {
+            use_matrix = false;
+            if (solver->conf.verbosity) {
+                cout << "c [matrix] Too many columns in matrix: " << m.cols
+                << " -> set usage to NO" << endl;
+            }
+        }
 
-        if (m.rows < solver->conf.gaussconf.min_matrix_rows) {
+        if (use_matrix && m.rows < solver->conf.gaussconf.min_matrix_rows) {
             use_matrix = false;
             too_few_rows_matrix++;
             if (solver->conf.verbosity >= 2) {
@@ -355,7 +362,7 @@ uint32_t MatrixFinder::setMatrixes()
         }
 
         //Over the max number of matrixes
-        if (realMatrixNum >= solver->conf.gaussconf.max_num_matrices) {
+        if (use_matrix && realMatrixNum >= solver->conf.gaussconf.max_num_matrices) {
             if (solver->conf.verbosity && solver->conf.verbosity >= 3) {
                 cout << "c [matrix] above max number of matrixes -> set usage to NO" << endl;
             }
