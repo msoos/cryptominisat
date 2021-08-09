@@ -41,15 +41,22 @@ enum PropByType {null_clause_t = 0, clause_t = 1, binary_t = 2
 
 class PropBy
 {
+    enum bitFieldSizes {
+        bizsize_red_step = 1,
+        bitsize_data1 = 31,
+        bitsize_type = 2,
+        bizsize_data2 = 30
+    };
+    
     private:
-        uint32_t red_step:1;
-        uint32_t data1:31;
-        uint32_t type:2;
+        uint32_t red_step:bizsize_red_step;
+        uint32_t data1:bitsize_data1;
+        uint32_t type:bitsize_type;
         //0: clause, NULL
         //1: clause, non-null
         //2: binary
         //3: tertiary
-        uint32_t data2:30;
+        uint32_t data2:bizsize_data2;
 
     public:
         PropBy() :
@@ -59,6 +66,7 @@ class PropBy
             , data2(0)
         {}
 
+#ifndef LARGE_OFFSETS 
         //Normal clause prop
         explicit PropBy(const ClOffset offset) :
             red_step(0)
@@ -71,6 +79,20 @@ class PropBy
             assert(offset == get_offset());
             #endif*/
         }
+#else
+        //Normal clause prop
+        explicit PropBy(const ClOffset offset) :
+            red_step(0)
+            , type(clause_t)
+        {
+            //No roll-over
+            data1 = offset & ((((ClOffset)1) << bitsize_data1) - 1);
+            data2 = offset >> bitsize_data1; 
+            /*#ifdef DEBUG_PROPAGATEFROM
+            assert(offset == get_offset());
+            #endif*/
+        }
+#endif
 
 #ifdef USE_GAUSS
         //XOR
@@ -189,7 +211,14 @@ class PropBy
             #ifdef DEBUG_PROPAGATEFROM
             assert(isClause());
             #endif
+#ifndef LARGE_OFFSETS 
             return data1;
+#else
+            ClOffset offset = data2;
+            offset <<= bitsize_data1;
+            offset |= data1;
+            return offset;
+#endif
         }
 
         bool isNULL() const
