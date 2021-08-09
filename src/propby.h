@@ -42,21 +42,21 @@ enum PropByType {null_clause_t = 0, clause_t = 1, binary_t = 2
 class PropBy
 {
     enum bitFieldSizes {
-        bizsize_red_step = 1,
+        bitsize_red_step = 1,
         bitsize_data1 = 31,
         bitsize_type = 2,
-        bizsize_data2 = 30
+        bitsize_data2 = 30
     };
     
     private:
-        uint32_t red_step:bizsize_red_step;
+        uint32_t red_step:bitsize_red_step;
         uint32_t data1:bitsize_data1;
         uint32_t type:bitsize_type;
         //0: clause, NULL
         //1: clause, non-null
         //2: binary
         //3: tertiary
-        uint32_t data2:bizsize_data2;
+        uint32_t data2:bitsize_data2;
 
     public:
         PropBy() :
