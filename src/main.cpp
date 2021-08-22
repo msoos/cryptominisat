@@ -946,10 +946,6 @@ void Main::check_options_correctness()
             << remove_last_comma_if_exists(conf.simplify_schedule_nonstartup) << endl<< endl;
             cout << "  Schedule at startup: "
             << remove_last_comma_if_exists(conf.simplify_schedule_startup) << endl << endl;
-
-            cout << "Preproc run schedule:" << endl;
-            cout << "  "
-            << remove_last_comma_if_exists(conf.simplify_schedule_preproc) << endl;
             std::exit(0);
         }
 

@@ -319,20 +319,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "louvain-comms,"
             "sls,lucky"
         )
-        , simplify_schedule_preproc(
-            "scc-vrepl,"
-            "sub-impl,"
-            "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
-            "breakid, "
-            "occ-backw-sub-str, occ-clean-implicit, occ-bve, occ-bva,"
-            "occ-ternary-res, occ-xor,"
-            //"occ-gates,"
-            "cl-consolidate," //consolidate after OCC
-            "str-impl, sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
-            "str-impl, sub-impl, sub-str-cls-with-bin,"
-            "intree-probe, "
-            "must-renumber"
-        )
 
         //Occur based simplification
         , perform_occur_based_simp(true)
