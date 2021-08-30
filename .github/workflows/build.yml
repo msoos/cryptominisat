@@ -51,10 +51,10 @@ jobs:
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest -C ${{ matrix.build_type }}
 
-    - name: "Install CMS (unix)"
-      if: ${{ !contains(matrix.os, 'windows') }}
-      #run: sudo cmake --install build --config ${{ matrix.build_type }}
+    #- name: "Install CMS (unix)"
+    #  if: ${{ !contains(matrix.os, 'windows') }}
+    #  run: sudo cmake --install build --config ${{ matrix.build_type }}
 
-    - name: "Install Spix (win)"
-      if: ${{ contains(matrix.os, 'windows') }}
-      #run: cmake --install build --config ${{ matrix.build_type }}
+    #- name: "Install Spix (win)"
+    #  if: ${{ contains(matrix.os, 'windows') }}
+    #  run: cmake --install build --config ${{ matrix.build_type }}
