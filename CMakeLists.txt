@@ -97,18 +97,9 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
 # static compilation
-option(BUILD_SHARED_LIBS "Build the shared library" ON)
 option(STATICCOMPILE "Compile to static executable" OFF)
 if (STATICCOMPILE)
     set(BUILD_SHARED_LIBS OFF)
-    set(Boost_USE_STATIC_LIBS ON)
-#     if (IPASIR)
-#         if ( ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-#             set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -Wl,--whole-archive -ldl -lpthread -Wl,--no-whole-archive -static ")
-#             SET(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-#             add_compile_options( -static-libstdc++)
-#         endif()
-#     endif()
 endif()
 
 option(NOVALGRIND "Don't use valgrind" ON)
@@ -306,10 +297,6 @@ endif()
 
 option(ENABLE_TESTING "Enable testing" OFF)
 option(COVERAGE "Build with coverage check" OFF)
-if (STATICCOMPILE)
-    set(ENABLE_TESTING OFF)
-    set(Boost_USE_STATIC_LIBS ON)
-endif()
 
 if (COVERAGE AND BUILD_SHARED_LIBS)
     MESSAGE(FATAL_ERROR "Coverage can only be computed on static compilation")
@@ -696,7 +683,7 @@ endif(MPI_FOUND)
 # -----------------------------------------------------------------------------
 # Look for python
 # -----------------------------------------------------------------------------
-if (STATICCOMPILE)
+if (NOT BUILD_SHARED_LIBS)
     set(ENABLE_PYTHON_INTERFACE OFF)
 endif()
 
