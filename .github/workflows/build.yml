@@ -53,8 +53,8 @@ jobs:
 
     - name: "Install CMS (unix)"
       if: ${{ !contains(matrix.os, 'windows') }}
-      run: sudo cmake --install build --config ${{ matrix.build_type }}
+      #run: sudo cmake --install build --config ${{ matrix.build_type }}
 
     - name: "Install Spix (win)"
       if: ${{ contains(matrix.os, 'windows') }}
-      run: cmake --install build --config ${{ matrix.build_type }}
+      #run: cmake --install build --config ${{ matrix.build_type }}
