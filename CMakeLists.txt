@@ -239,7 +239,7 @@ else()
 
     add_compile_options("$<$<CONFIG:DEBUG>:/Od>")
 
-    if (NOT BUILD_SHARED_LIBS)
+    if(STATICCOMPILE)
         # We statically link to reduce dependencies
         foreach(flag_var CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
             # /MD -- Causes the application to use the multithread-specific
@@ -742,8 +742,6 @@ if(NOT Boost_FOUND)
     message(STATUS "Only building executable with few command-line options because the boost program_options library were not available")
 else()
     message(STATUS "Boost -- found at library: ${Boost_LIBRARIES}")
-    message(STATUS "Boost -- adding '${Boost_LIBRARY_DIRS}' to link directories")
-    link_directories(${Boost_LIBRARY_DIRS})
 endif()
 
 # -----------------------------------------------------------------------------
