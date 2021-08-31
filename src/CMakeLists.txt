@@ -45,10 +45,6 @@ add_sanitize_flags()
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-if(Boost_FOUND)
-    include_directories(${Boost_INCLUDE_DIRS})
-endif()
-
 if (ENABLE_TESTING)
     add_definitions( -DCMS_TESTING_ENABLED )
     set(GTEST_PREFIX ${PROJECT_SOURCE_DIR}/utils/gtest)
@@ -370,7 +366,7 @@ if (NOT ONLY_SIMPLE)
         RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
         INSTALL_RPATH_USE_LINK_PATH TRUE)
     target_link_libraries(cryptominisat5-bin
-        ${Boost_LIBRARIES}
+        Boost::program_options
         ${cryptoms_exec_link_libs}
     )
     install(TARGETS cryptominisat5-bin
