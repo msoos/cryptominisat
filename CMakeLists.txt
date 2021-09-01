@@ -245,7 +245,20 @@ else()
     add_compile_options("$<$<CONFIG:DEBUG>:/Od>")
 
     if(STATICCOMPILE)
-        add_compile_options($<$<CONFIG:>:/MT> $<$<CONFIG:Debug>:/MTd> $<$<CONFIG:Release>:/MT>)
+        # We statically link to reduce dependencies
+        foreach(flag_var CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
+            # /MD -- Causes the application to use the multithread-specific
+            #        and DLL-specific version of the run-time library.
+            #        Defines _MT and _DLL and causes the compiler to place
+            #        the library name MSVCRT.lib into the .obj file.
+            # /MDd -- Defines _DEBUG, _MT, and _DLL and causes the application to use the debug multithread-specific and DLL-specific version of the run-time library.
+            #         It also causes the compiler to place the library name MSVCRTD.lib into the .obj file.
+            if(flag_var MATCHES "/MD")
+                string(REGEX REPLACE "/MD" "/MT" flag_var "${flag_var}")
+            elseif(NOT flag_var MATCHES "/MT")
+                set(flag_var "${flag_var} /MT")
+            endif()
+        endforeach()
     endif()
 
     # buffers security check
