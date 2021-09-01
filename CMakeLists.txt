@@ -27,6 +27,11 @@ enable_language( CXX )
 message(STATUS "LIB directory is '${CMAKE_INSTALL_LIBDIR}'")
 message(STATUS "BIN directory is '${CMAKE_INSTALL_BINDIR}'")
 
+if(POLICY CMP0092)
+    # Disable passing /W3 by default on MSVC
+    cmake_policy(SET CMP0092 NEW)
+endif()
+
 if(POLICY CMP0048)
     #policy for VERSION in cmake 3.0
     cmake_policy(SET CMP0048 NEW)
@@ -240,25 +245,7 @@ else()
     add_compile_options("$<$<CONFIG:DEBUG>:/Od>")
 
     if(STATICCOMPILE)
-        # We statically link to reduce dependencies
-        foreach(flag_var CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
-            # /MD -- Causes the application to use the multithread-specific
-            #        and DLL-specific version of the run-time library.
-            #        Defines _MT and _DLL and causes the compiler to place
-            #        the library name MSVCRT.lib into the .obj file.
-            if(${flag_var} MATCHES "/MD")
-                string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
-            endif(${flag_var} MATCHES "/MD")
-
-            # /MDd	-- Defines _DEBUG, _MT, and _DLL and causes the application to use the debug multithread-specific and DLL-specific version of the run-time library.
-            #          It also causes the compiler to place the library name MSVCRTD.lib into the .obj file.
-            if(${flag_var} MATCHES "/MDd")
-                string(REGEX REPLACE "/MDd" "/MTd" ${flag_var} "${${flag_var}}")
-            endif(${flag_var} MATCHES "/MDd")
-        endforeach(flag_var)
-
-        # Creates a multithreaded executable (static) file using LIBCMT.lib.
-        add_compile_options(/MT)
+        add_compile_options($<$<CONFIG:>:/MT> $<$<CONFIG:Debug>:/MTd> $<$<CONFIG:Release>:/MT>)
     endif()
 
     # buffers security check
