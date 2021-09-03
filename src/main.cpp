@@ -150,20 +150,22 @@ void Main::readInAFile(SATSolver* solver2, const string& filename)
         }
     } else {
         solver2->set_sampling_vars(&sampling_vars);
-        if (sampling_vars.size() > 100) {
-            cout
-            << "c Sampling var set contains over 100 variables, not displaying"
-            << endl;
-        } else {
-            cout << "c Sampling vars set (total num: "
-            << sampling_vars.size() << " ) : ";
-            for(size_t i = 0; i < sampling_vars.size(); i++) {
-                const uint32_t v = sampling_vars[i];
-                cout << v+1;
-                if (i+1 != sampling_vars.size())
-                    cout << ",";
+        if (conf.verbosity) {
+            if (sampling_vars.size() > 100) {
+                cout
+                << "c Sampling var set contains over 100 variables, not displaying"
+                << endl;
+            } else {
+                    cout << "c Sampling vars set (total num: "
+                    << sampling_vars.size() << " ) : ";
+                for(size_t i = 0; i < sampling_vars.size(); i++) {
+                    const uint32_t v = sampling_vars[i];
+                    cout << v+1;
+                    if (i+1 != sampling_vars.size())
+                        cout << ",";
+                }
+                cout << endl;
             }
-            cout << endl;
         }
     }
 
