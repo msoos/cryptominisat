@@ -834,7 +834,7 @@ void ReduceDB::clean_lev0_once_in_a_while()
         } else {
             moved_from_forever_to_long++;
 
-            if (solver->conf.move_from_tier0 == 0) {
+            if (solver->conf.move_from_tier0 == 1) {
                 solver->longRedCls[1].push_back(offset);
                 cl->stats.which_red_array = 1;
             } else {
@@ -903,7 +903,7 @@ void ReduceDB::clean_lev1_once_in_a_while()
             solver->longRedCls[1][j++] =solver->longRedCls[1][i];
         } else {
             moved_from_long_to_short++;
-            if (solver->conf.move_from_tier1 == 0) {
+            if (solver->conf.move_from_tier1 == 1) {
                 solver->longRedCls[2].push_back(offset);
                 cl->stats.which_red_array = 2;
             } else {
