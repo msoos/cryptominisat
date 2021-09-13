@@ -23,7 +23,7 @@ THE SOFTWARE.
 #ifndef __CLPREDICTOR_H__
 #define __CLPREDICTOR_H__
 
-#define PRED_COLS 36
+#define PRED_COLS 20
 
 
 #include <vector>
