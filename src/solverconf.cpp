@@ -149,11 +149,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Clause minimisation
         , doRecursiveMinim (true)
         , doMinimRedMore(true)
-#ifdef FINAL_PREDICTOR
-        , doMinimRedMoreMore(0)
-#else
         , doMinimRedMoreMore(2)
-#endif
         , max_glue_more_minim(6)
         , max_size_more_minim(30)
         , more_red_minim_limit_binary(200)
