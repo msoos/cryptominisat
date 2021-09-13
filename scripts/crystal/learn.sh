@@ -26,8 +26,10 @@ set -e
 function generate() {
     dirname="${basename}-cut1-${cut1}-cut2-${cut2}-limit-${limit}-est${est}-w${w}-xbmin${xgboostminchild}-xbmd${xboostmaxdepth}"
 
+
     mkdir -p ${dirname}
-    rm -f ${dirname}/*
+    rm -f ${dirname}/out_*
+    rm -f ${dirname}/predictor*.json
     git rev-parse HEAD > ${dirname}/out_git
     cat learn.sh >> ${dirname}/out_git
     md5sum *.dat >> ${dirname}/out_git
@@ -36,9 +38,18 @@ function generate() {
     tiers=("short" "long" "forever")
     for tier in "${tiers[@]}"
     do
+        # check if DAT file exists
+        INFILE="${tier}-comb-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat"
+        if test -f "$INFILE"; then
+            echo "$INFILE exists, OK"
+        else
+            echo "ERROR: $INFILE does not exist!!"
+            exit -1
+        fi
+
         /usr/bin/time --verbose -o "${dirname}/out_${tier}.timeout" \
         ../cldata_predict.py \
-        ${tier}-comb-cut1-${cut1}-cut2-${cut2}-limit-${limit}.dat \
+        $INFILE \
         --tier ${tier} --regressor "xgboost" \
         --xgboostest ${est} --weight ${w} \
         --xgboostminchild $xgboostminchild --xboostmaxdepth=${xboostmaxdepth} \
@@ -75,25 +86,12 @@ basename="14-april-2021-69bad529f962c"
 #basename="8march-2020-3acd81dc55df3-36feats"
 #basename="aes-30-march-2020-a1e0e19be0c1"
 #basename="orig"
-limit=2000
-cut1="5.0"
-cut2="30.0"
+limit=1000
+cut1="3.0"
+cut2="25.0"
 xboostmaxdepth=4
 xgboostminchild=300
 est=10
-for xboostmaxdepth in 4 6
-do
-    for xgboostminchild in 50 300
-    do
-        for est in 10 20
-        do
-            generate
-        done
-    done
-done
-
-cut1="3.0"
-cut2="25.0"
 for xboostmaxdepth in 4 6
 do
     for xgboostminchild in 50 300
