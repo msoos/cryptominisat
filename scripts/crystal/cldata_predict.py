@@ -274,11 +274,15 @@ class Learner:
         clf_xgboost = xgb.XGBRegressor(
                 objective='reg:squarederror',
                 missing=MISSING,
-                min_child_weight=options.min_child_weight_xgboost,
+                min_child_weight=options.min_child_weight_xgboost, # from doc: "In linear regression task, this simply corresponds to minimum number of instances needed to be in each node."
                 max_depth=options.xboost_max_depth,
                 subsample=options.xgboost_subsample,
                 n_estimators=options.n_estimators_xgboost)
-        clf_lgbm = model = lgbm.LGBMRegressor(n_jobs=1)
+        clf_lgbm = model = lgbm.LGBMRegressor(
+            subsample=options.xgboost_subsample,
+            min_child_samples=options.min_child_weight_xgboost # from doc: "Minimum number of data needed in a child"
+            max_depth=options.xboost_max_depth
+            n_estimators=options.n_estimators_xgboost)
 
         if options.regressor == "tree":
             clf = clf_tree
@@ -508,7 +512,7 @@ if __name__ == "__main__":
     # type of regressor
     parser.add_argument("--regressor", type=str, default="xgboost",
                         dest="regressor", help="Final classifier should be a: tree, svm, linear, forest, xgboost, bagging")
-    parser.add_argument("--xgboostestimators", default=20, type=int,
+    parser.add_argument("--xgboostestimators", default=10, type=int,
                         dest="n_estimators_xgboost", help="Number of estimators for xgboost")
     parser.add_argument("--xgboostminchild", default=1, type=int,
                         dest="min_child_weight_xgboost", help="Number of elements in the leaf to split it in xgboost")

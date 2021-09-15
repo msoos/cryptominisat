@@ -108,6 +108,38 @@ void ClPredictorsLGBM::predict_all(
     }
 }
 
+/*void ClPredictorsLGBM::predict_all(
+    float* data,
+    uint32_t num)
+{
+    for(uint32_t i = 0; i < 3; i ++) {
+        out_result[i].resize(num);
+        double* out = out_result[i].data();
+        int64_t out_len;
+
+        for(uint32_t x = 0; x < num; x++) {
+            auto ret = LGBM_BoosterPredictForMatSingleRow(
+                handle[i],
+                data,
+                C_API_DTYPE_FLOAT32, //type of "data"
+                PRED_COLS, //num features
+                1, //row major
+                C_API_PREDICT_NORMAL, // what should be predicted: normal, raw score, etc.
+                0, //start iteration
+                -1,
+                "n_jobs=1", //other parameters for prediction (const char*)
+                &out_len, //length of output
+                out
+            );
+            assert(ret == 0);
+            assert(out_len == 1);
+            data += PRED_COLS;
+            out ++;
+
+        }
+    }
+}*/
+
 void ClPredictorsLGBM::get_prediction_at(ClauseStatsExtra& extdata, const uint32_t at)
 {
     extdata.pred_short_use   = out_result[0][at];
