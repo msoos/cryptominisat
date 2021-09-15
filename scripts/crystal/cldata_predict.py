@@ -346,8 +346,9 @@ class Learner:
             mlflow.log_metric("train num rows", train.shape[0])
             mlflow.log_metric("test num rows", test.shape[0])
 
+
         if options.dot is not None:
-            if not options.regresspr == "tree":
+            if not options.regressor == "tree":
                 print("ERROR: You cannot use the DOT function on non-trees")
                 exit(-1)
 
