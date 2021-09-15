@@ -74,17 +74,6 @@ void ClPredictors::load_models(const std::string& short_fname,
     safe_xgboost(XGBoosterLoadModel(handles[predict_type::short_pred], short_fname.c_str()))
     safe_xgboost(XGBoosterLoadModel(handles[predict_type::long_pred], long_fname.c_str()))
     safe_xgboost(XGBoosterLoadModel(handles[predict_type::forever_pred], forever_fname.c_str()))
-
-//     bst_ulong num_features = 0;
-//     safe_xgboost(XGBoosterGetNumFeature(handles[predict_type::short_pred], &num_features));
-//     cout << "num_features: " << num_features << endl;
-//     assert(num_features == PRED_COLS);
-//     safe_xgboost(XGBoosterGetNumFeature(handles[predict_type::long_pred], &num_features));
-//     cout << "num_features: " << num_features << endl;
-//     assert(num_features == PRED_COLS);
-//     safe_xgboost(XGBoosterGetNumFeature(handles[predict_type::forever_pred], &num_features));
-//     cout << "num_features: " << num_features << endl;
-//     assert(num_features == PRED_COLS);
 }
 
 void ClPredictors::load_models_from_buffers()
