@@ -451,6 +451,9 @@ if (FINAL_PREDICTOR)
     find_package(dmlc REQUIRED)
     find_package(rabit REQUIRED)
     find_package(xgboost REQUIRED)
+    find_library(lightgbm
+    NAMES _lightgbm lightgbm LightGBM
+    REQUIRED)
     add_definitions( -DFINAL_PREDICTOR )
 endif()
 
