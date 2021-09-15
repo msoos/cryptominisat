@@ -124,9 +124,9 @@ void ClPredictorsXGB::predict_all(
 
 void ClPredictorsXGB::get_prediction_at(ClauseStatsExtra& extdata, const uint32_t at)
 {
-    extdata.pred_short_use = out_result_short[at];
-    extdata.pred_long_use = out_result_long[at];
-    extdata.pred_forever_use = out_result_forever[at];
+    extdata.pred_short_use = (double)out_result_short[at];
+    extdata.pred_long_use = (double)out_result_long[at];
+    extdata.pred_forever_use = (double)out_result_forever[at];
 }
 
 void CMSat::ClPredictorsXGB::finish_all_predict()

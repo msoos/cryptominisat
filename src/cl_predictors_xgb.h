@@ -66,7 +66,6 @@ public:
 
 private:
     vector<BoosterHandle> handles;
-    float train[PRED_COLS];
     DMatrixHandle dmat;
 
     const float *out_result_short;
