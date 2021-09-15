@@ -27,12 +27,12 @@ THE SOFTWARE.
 
 int main(int argc, char** argv)
 {
-    #if defined(__GNUC__) && defined(__linux__)
-    feenableexcept(FE_INVALID   |
-                   FE_DIVBYZERO |
-                   FE_OVERFLOW
-    );
-    #endif
+//     #if defined(__GNUC__) && defined(__linux__)
+//     feenableexcept(FE_INVALID   |
+//                    FE_DIVBYZERO |
+//                    FE_OVERFLOW
+//     );
+//     #endif
 
     int ret = -1;
     try {

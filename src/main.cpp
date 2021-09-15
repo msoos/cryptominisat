@@ -346,6 +346,8 @@ void Main::add_supported_options()
     predictOptions.add_options()
     ("predloc", po::value(&conf.pred_conf_location)->default_value(conf.pred_conf_location)
         , "Directory where predictor_short.json, predictor_long.json, predictor_forever.json are")
+    ("predtype", po::value(&conf.predictor_type)->default_value(conf.predictor_type)
+        , "Type of predictor. Supported: xgboost, lgbm")
 
     //size
     ("predshortsize", po::value(&conf.pred_short_size)->default_value(conf.pred_short_size)
@@ -367,7 +369,7 @@ void Main::add_supported_options()
     ("movefromtier1", po::value(&conf.move_from_tier1)->default_value(conf.move_from_tier1)
          , "Move from tier1 to tier2? If set to 0, then it's deleted instead of moved.")
 
-    //dumping data
+    //printing
     ("dumppreddistrib", po::value(&conf.dump_pred_distrib)->default_value(conf.dump_pred_distrib)
          , "Dump predict distirution to pred_distrib.csv")
 
@@ -377,17 +379,21 @@ void Main::add_supported_options()
     ("predforeverchunk", po::value(&conf.pred_forever_chunk)->default_value(conf.pred_forever_chunk)
         , "Pred forever chunk multiplier")
 
-
     //Check intervals for LONG and FOREVER
     ("predlongcheckn", po::value(&conf.pred_long_check_every_n)->default_value(conf.pred_long_check_every_n)
         , "Pred long check over limit every N")
     ("predforevercheckn", po::value(&conf.pred_forever_check_every_n)->default_value(conf.pred_forever_check_every_n)
         , "Pred forever check over limit every N")
 
+    // Some old stuff
     ("preddistillorig", po::value(&conf.pred_distill_orig)->default_value(conf.pred_distill_orig)
         , "Use original distill method during pred")
+
+    // Lock clauses in
     ("preddontmovetime", po::value(&conf.pred_dontmove_until_timeinside)->default_value(conf.pred_dontmove_until_timeinside)
         , "Use original distill method during pred")
+
+    // Adjust score depending on clause size
     ("predadjustsize", po::value(&conf.pred_adjust_for_cl_size)->default_value(conf.pred_adjust_for_cl_size)
         , "Adjust predict values with the size of the clause")
     ("pedadjustonlyforever", po::value(&conf.pred_adjust_for_cl_size_onlyforever)->default_value(conf.pred_adjust_for_cl_size_onlyforever)

@@ -86,7 +86,7 @@ void ClPredictorsXGB::predict_all(
     float* data,
     uint32_t num)
 {
-    safe_xgboost(XGDMatrixCreateFromMat(data, num, PRED_COLS, MISSING_VAL, &dmat))
+    safe_xgboost(XGDMatrixCreateFromMat(data, num, PRED_COLS, missing_val, &dmat))
     bst_ulong out_len;
     safe_xgboost(XGBoosterPredict(
         handles[short_pred],

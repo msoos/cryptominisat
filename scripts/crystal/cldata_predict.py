@@ -58,7 +58,7 @@ if int(ver[1]) < 20:
 else:
     from sklearn.model_selection import train_test_split
 
-MISSING=float(-1)
+MISSING=np.NaN
 
 class MyEnsemble:
     def __init__(self, models):
@@ -278,7 +278,7 @@ class Learner:
                 max_depth=options.xboost_max_depth,
                 subsample=options.xgboost_subsample,
                 n_estimators=options.n_estimators_xgboost)
-        clf_lgbm = model = lgbm.LGBMClassifier()
+        clf_lgbm = model = lgbm.LGBMRegressor(n_jobs=1)
 
         if options.regressor == "tree":
             clf = clf_tree
@@ -351,14 +351,17 @@ class Learner:
                 clf, features,
                 fname=options.dot + "-" + self.func_name)
 
+        fname_pred_out = options.basedir + "/predictor_{name}_{typ}.json".format(
+                name=options.name, typ=options.regressor)
         if options.basedir and options.regressor == "xgboost":
             booster = clf.get_booster()
-            fname = options.basedir + "/predictor_{name}.json".format(
-                name=options.name)
-            booster.save_model(fname)
-            print("==> Saved model to: ", fname)
+            booster.save_model(fname_pred_out)
+            print("==> Saved XGB model to: ", fname_pred_out)
+        elif options.basedir and options.regressor == "lgbm":
+            clf.booster_.save_model(fname_pred_out)
+            print("==> Saved LGBM model to: ", fname_pred_out)
         else:
-            print("WARNING: NOT writing code -- you must use xgboost and give dir for that")
+            print("WARNING: NOT writing code -- you must use xgboost/lgbm and give dir for that")
 
 
         # print feature rankings

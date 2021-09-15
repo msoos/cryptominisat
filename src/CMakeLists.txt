@@ -174,9 +174,10 @@ if (FINAL_PREDICTOR)
         ${cryptoms_lib_files}
 #         predict/clustering_imp.cpp
         cl_predictors_xgb.cpp
+        cl_predictors_lgbm.cpp
         cl_predictors_abs.cpp
     )
-    SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} xgboost dmlc rabit rt)
+    SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} _lightgbm xgboost dmlc rabit rt)
 endif()
 
 if (STATS_NEEDED)

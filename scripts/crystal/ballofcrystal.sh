@@ -176,11 +176,12 @@ cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 #../vardata_predict.py vardata-comb --final -q 20 --basedir ../src/predict/ --depth 7 --tree
 
 rm -f .*.json
-#regressor="lgbm"
-regressor="xgboost"
-../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier short --features best_only --regressor $regressor --basedir "." --bestfeatfile $bestf_short | tee short_pred_out
-../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier long --features best_only --regressor $regressor --basedir "." --bestfeatfile $bestf | tee long_pred_out
-../cldata_predict.py "${FNAMEOUT}-min.db-cldata-${myforever}-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier ${myforever} --features best_only --regressor $regressor --basedir "." --bestfeatfile $bestf | tee ${myforever}_pred_out
+regressors=("xgboost" "lgbm" )
+for regressor in "${regressors[@]}"; do
+    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier short --features best_only --regressor $regressor --basedir "." --bestfeatfile $bestf_short | tee "short_pred_out_${regressor}"
+    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier long --features best_only --regressor $regressor --basedir "." --bestfeatfile $bestf | tee "long_pred_out_${regressor}"
+    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-${myforever}-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier ${myforever} --features best_only --regressor $regressor --basedir "." --bestfeatfile $bestf | tee "forever_pred_out_${regressor}"
+done
 
 ############################
 # To get feature importances

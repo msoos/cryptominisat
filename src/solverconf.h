@@ -412,6 +412,7 @@ class DLL_PUBLIC SolverConf
         #ifdef FINAL_PREDICTOR
         //Predictor system
         std::string pred_conf_location;
+        std::string predictor_type = "xgboost";
         #endif
 
         //Var-replacement

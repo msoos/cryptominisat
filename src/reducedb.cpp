@@ -26,6 +26,7 @@ THE SOFTWARE.
 #include "sqlstats.h"
 #ifdef FINAL_PREDICTOR
 #include "cl_predictors_xgb.h"
+#include "cl_predictors_lgbm.h"
 #endif
 
 // #define VERBOSE_DEBUG
@@ -1061,7 +1062,14 @@ void ReduceDB::handle_predictors()
     }
     num_times_pred_called++;
     if (predictors == NULL) {
-        predictors = new ClPredictorsXGB;
+        if (solver->conf.predictor_type == "xgboost") {
+            predictors = new ClPredictorsXGB;
+        } else if (solver->conf.predictor_type == "lgbm") {
+            predictors = new ClPredictorsLGBM;
+        } else {
+            cout << "ERROR: You must give either lgbm or xgboost for predictor" << endl;
+            exit(-1);
+        }
         if (solver->conf.pred_conf_location.empty()) {
             predictors->load_models_from_buffers();
             if (solver->conf.verbosity) {
@@ -1073,9 +1081,19 @@ void ReduceDB::handle_predictors()
             }
         } else {
             vector<std::string> locations;
-            locations.push_back(solver->conf.pred_conf_location + std::string("predictor_short.json"));
-            locations.push_back(solver->conf.pred_conf_location + std::string("predictor_long.json"));
-            locations.push_back(solver->conf.pred_conf_location + std::string("predictor_forever.json"));
+            locations.push_back(solver->conf.pred_conf_location +
+                std::string("predictor_short_")
+                + solver->conf.predictor_type
+                + std::string(".json"));
+            locations.push_back(solver->conf.pred_conf_location +
+                std::string("predictor_long_")
+                + solver->conf.predictor_type
+                + std::string(".json"));
+            locations.push_back(solver->conf.pred_conf_location +
+                std::string("predictor_forever_")
+                + solver->conf.predictor_type
+                + std::string(".json"));
+
             predictors->load_models(
                 locations[0],
                 locations[1],

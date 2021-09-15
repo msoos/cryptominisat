@@ -26,10 +26,10 @@ THE SOFTWARE.
 #include <vector>
 #include <cassert>
 #include <string>
+#include <cmath>
 #include <xgboost/c_api.h>
 #include "clause.h"
 
-#define MISSING_VAL -1.0f
 #define PRED_COLS 20
 
 using std::vector;
@@ -79,7 +79,7 @@ struct ReduceCommonData
 class ClPredictorsAbst
 {
 public:
-    ClPredictorsAbst() {}
+    ClPredictorsAbst() {missing_val = nanf("");}
     virtual ~ClPredictorsAbst() {}
     virtual void load_models(const std::string& short_fname,
                      const std::string& long_fname,
@@ -106,6 +106,7 @@ public:
 
     virtual void get_prediction_at(ClauseStatsExtra& extdata, const uint32_t at) = 0;
     virtual void finish_all_predict() = 0;
+    float missing_val;
 };
 
 }
