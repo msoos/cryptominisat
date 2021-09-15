@@ -20,7 +20,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#include "src/cl_predictors.h"
+#include "src/cl_predictors_abs.h"
+#include "src/cl_predictors_xgb.h"
 #include "src/clause.h"
 #include "cryptominisat5/solvertypesmini.h"
 #include <vector>
@@ -30,7 +31,7 @@ THE SOFTWARE.
 using std::vector;
 using std::string;
 using namespace CMSat;
-ClPredictors* pred;
+ClPredictorsAbst* pred;
 
 //TODO read in
 struct Dat {

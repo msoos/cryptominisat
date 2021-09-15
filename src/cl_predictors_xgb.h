@@ -37,11 +37,11 @@ namespace CMSat {
 class Clause;
 class Solver;
 
-class ClPredictors : public ClPredictorsAbst
+class ClPredictorsXGB : public ClPredictorsAbst
 {
 public:
-    ClPredictors();
-    virtual ~ClPredictors();
+    ClPredictorsXGB();
+    virtual ~ClPredictorsXGB();
     virtual void load_models(const std::string& short_fname,
                      const std::string& long_fname,
                      const std::string& forever_fname) override;

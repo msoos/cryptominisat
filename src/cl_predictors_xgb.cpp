@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#include "cl_predictors.h"
+#include "cl_predictors_xgb.h"
 #include "clause.h"
 #include "solver.h"
 #include <cmath>
@@ -43,7 +43,7 @@ extern unsigned int predictor_forever_json_len;
 
 using namespace CMSat;
 
-ClPredictors::ClPredictors()
+ClPredictorsXGB::ClPredictorsXGB()
 {
     handles.resize(3);
     safe_xgboost(XGBoosterCreate(0, 0, &(handles[predict_type::short_pred])))
@@ -56,14 +56,14 @@ ClPredictors::ClPredictors()
     }
 }
 
-ClPredictors::~ClPredictors()
+ClPredictorsXGB::~ClPredictorsXGB()
 {
     for(auto& h: handles) {
         XGBoosterFree(h);
     }
 }
 
-void ClPredictors::load_models(const std::string& short_fname,
+void ClPredictorsXGB::load_models(const std::string& short_fname,
                                const std::string& long_fname,
                                const std::string& forever_fname)
 {
@@ -72,7 +72,7 @@ void ClPredictors::load_models(const std::string& short_fname,
     safe_xgboost(XGBoosterLoadModel(handles[predict_type::forever_pred], forever_fname.c_str()))
 }
 
-void ClPredictors::load_models_from_buffers()
+void ClPredictorsXGB::load_models_from_buffers()
 {
     safe_xgboost(XGBoosterLoadModelFromBuffer(
         handles[predict_type::short_pred], predictor_short_json, predictor_short_json_len));
@@ -82,7 +82,7 @@ void ClPredictors::load_models_from_buffers()
         handles[predict_type::forever_pred], predictor_forever_json, predictor_forever_json_len))
 }
 
-void ClPredictors::predict_all(
+void ClPredictorsXGB::predict_all(
     float* data,
     uint32_t num)
 {
@@ -122,14 +122,14 @@ void ClPredictors::predict_all(
     assert(out_len == num);
 }
 
-void ClPredictors::get_prediction_at(ClauseStatsExtra& extdata, const uint32_t at)
+void ClPredictorsXGB::get_prediction_at(ClauseStatsExtra& extdata, const uint32_t at)
 {
     extdata.pred_short_use = out_result_short[at];
     extdata.pred_long_use = out_result_long[at];
     extdata.pred_forever_use = out_result_forever[at];
 }
 
-void CMSat::ClPredictors::finish_all_predict()
+void CMSat::ClPredictorsXGB::finish_all_predict()
 {
     safe_xgboost(XGDMatrixFree(dmat))
 }

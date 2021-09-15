@@ -173,7 +173,7 @@ if (FINAL_PREDICTOR)
     set(cryptoms_lib_files
         ${cryptoms_lib_files}
 #         predict/clustering_imp.cpp
-        cl_predictors.cpp
+        cl_predictors_xgb.cpp
         cl_predictors_abs.cpp
     )
     SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} xgboost dmlc rabit rt)

@@ -25,7 +25,7 @@ THE SOFTWARE.
 #include "solverconf.h"
 #include "sqlstats.h"
 #ifdef FINAL_PREDICTOR
-#include "cl_predictors.h"
+#include "cl_predictors_xgb.h"
 #endif
 
 // #define VERBOSE_DEBUG
@@ -1061,7 +1061,7 @@ void ReduceDB::handle_predictors()
     }
     num_times_pred_called++;
     if (predictors == NULL) {
-        predictors = new ClPredictors;
+        predictors = new ClPredictorsXGB;
         if (solver->conf.pred_conf_location.empty()) {
             predictors->load_models_from_buffers();
             if (solver->conf.verbosity) {
