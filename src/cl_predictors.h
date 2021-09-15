@@ -20,72 +20,32 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef __CLPREDICTOR_H__
-#define __CLPREDICTOR_H__
-
-#define PRED_COLS 20
-
+#ifndef _CLPREDICTORS_H__
+#define _CLPREDICTORS_H__
 
 #include <vector>
 #include <cassert>
 #include <string>
 #include <xgboost/c_api.h>
 #include "clause.h"
+#include "cl_predictors_abs.h"
 
 using std::vector;
 
 namespace CMSat {
 
-enum predict_type {short_pred=0, long_pred=1, forever_pred=2};
-
 class Clause;
 class Solver;
 
-struct ReduceCommonData
-{
-    double safe_div(double a, double b) {
-        if (b == 0) {
-            assert(a == 0);
-            return 0;
-        }
-        return a/b;
-    }
-
-    double   avg_props;
-    double   avg_glue;
-    double   avg_uip;
-    double   avg_sum_uip1_used;
-    MedianCommonDataRDB  median_data;
-    uint32_t all_learnt_size;
-
-    ReduceCommonData() {}
-    ReduceCommonData(
-        uint32_t total_props,
-        uint32_t total_glue,
-        uint32_t total_uip1_used,
-        uint32_t total_sum_uip1_used,
-        uint32_t size,
-        const MedianCommonDataRDB& _median_data) :
-            median_data(_median_data)
-    {
-        all_learnt_size = size;
-        avg_props = safe_div(total_props, size);
-        avg_glue = safe_div(total_glue, size);
-        avg_uip = safe_div(total_uip1_used, size);
-        avg_sum_uip1_used = safe_div(total_sum_uip1_used, size);
-    }
-};
-
-class ClPredictors
+class ClPredictors : public ClPredictorsAbst
 {
 public:
     ClPredictors();
-    ~ClPredictors();
-    void load_models(const std::string& short_fname,
+    virtual ~ClPredictors();
+    virtual void load_models(const std::string& short_fname,
                      const std::string& long_fname,
-                     const std::string& forever_fname);
-    void load_models_from_buffers();
-    vector<std::string> get_hashes() const;
+                     const std::string& forever_fname) override;
+    virtual void load_models_from_buffers() override;
 
     float predict(
         predict_type pred_type,
@@ -97,25 +57,12 @@ public:
         const ReduceCommonData& commdata
     );
 
-    void predict_all(
+    virtual void predict_all(
         float* data,
-        uint32_t num);
+        uint32_t num) override;
 
-    void set_up_input(
-        const CMSat::Clause* const cl,
-        const uint64_t sumConflicts,
-        const double   act_ranking_rel,
-        const double   uip1_ranking_rel,
-        const double   prop_ranking_rel,
-        const double   sum_uip1_per_time_ranking_rel,
-        const double   sum_props_per_time_ranking_rel,
-        const ReduceCommonData& commdata,
-        const uint32_t cols,
-        const Solver* solver,
-        float* at);
-
-    void get_prediction_at(ClauseStatsExtra& extdata, const uint32_t at);
-    void finish_all_predict();
+    virtual void get_prediction_at(ClauseStatsExtra& extdata, const uint32_t at) override;
+    virtual void finish_all_predict() override;
 
 private:
     vector<BoosterHandle> handles;

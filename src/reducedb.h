@@ -25,7 +25,7 @@ THE SOFTWARE.
 
 #include "clauseallocator.h"
 #ifdef FINAL_PREDICTOR
-#include "cl_predictors.h"
+#include "cl_predictors_abs.h"
 #endif
 
 namespace CMSat {
@@ -91,7 +91,7 @@ private:
     void mark_top_N_clauses_lev2(const uint64_t keep_num);
 
     #ifdef FINAL_PREDICTOR
-    ClPredictors* predictors = NULL;
+    ClPredictorsAbst* predictors = NULL;
     uint32_t num_times_pred_called = 0;
     void update_preds_lev2();
     void pred_move_to_lev1_and_lev0();

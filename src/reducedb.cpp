@@ -24,8 +24,12 @@ THE SOFTWARE.
 #include "solver.h"
 #include "solverconf.h"
 #include "sqlstats.h"
+#ifdef FINAL_PREDICTOR
+#include "cl_predictors.h"
+#endif
 
 // #define VERBOSE_DEBUG
+
 
 #include <functional>
 #include <cmath>
