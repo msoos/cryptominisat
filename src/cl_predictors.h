@@ -118,7 +118,6 @@ public:
     void finish_all_predict();
 
 private:
-    float predict_one(int num);
     vector<BoosterHandle> handles;
     float train[PRED_COLS];
     DMatrixHandle dmat;

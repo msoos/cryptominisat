@@ -304,26 +304,6 @@ void ClPredictors::set_up_input(
     assert(x==cols);
 }
 
-float ClPredictors::predict_one(int num)
-{
-    bst_ulong out_len;
-    const float *out_result;
-    int ret = XGBoosterPredict(
-        handles[num],
-        dmat,
-        0,  //0: normal prediction
-        0,  //use all trees
-        0,  //do not use for training
-        &out_len,
-        &out_result
-    );
-    assert(ret == 0);
-    assert(out_len == 1);
-
-    float retval = out_result[0];
-    return retval;
-}
-
 void ClPredictors::predict_all(
     float* data,
     uint32_t num)
