@@ -280,8 +280,8 @@ class Learner:
                 n_estimators=options.n_estimators_xgboost)
         clf_lgbm = model = lgbm.LGBMRegressor(
             subsample=options.xgboost_subsample,
-            min_child_samples=options.min_child_weight_xgboost # from doc: "Minimum number of data needed in a child"
-            max_depth=options.xboost_max_depth
+            min_child_samples=options.min_child_weight_xgboost, # from doc: "Minimum number of data needed in a child"
+            max_depth=options.xboost_max_depth,
             n_estimators=options.n_estimators_xgboost)
 
         if options.regressor == "tree":
