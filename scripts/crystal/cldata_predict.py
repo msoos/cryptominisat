@@ -41,6 +41,7 @@ import sklearn.ensemble
 import sklearn.linear_model
 import helper
 import xgboost as xgb
+import lightgbm as lgbm
 import ast
 import math
 import functools
@@ -277,6 +278,7 @@ class Learner:
                 max_depth=options.xboost_max_depth,
                 subsample=options.xgboost_subsample,
                 n_estimators=options.n_estimators_xgboost)
+        clf_lgbm = model = lgbm.LGBMClassifier()
 
         if options.regressor == "tree":
             clf = clf_tree
@@ -292,6 +294,8 @@ class Learner:
             clf = clf_elasticnet
         elif options.regressor == "forest":
             clf = clf_forest
+        elif options.regressor == "lgbm":
+            clf = clf_lgbm
         elif options.regressor == "xgboost":
             print("Using xgboost no. estimators:", options.n_estimators_xgboost)
             clf = clf_xgboost
