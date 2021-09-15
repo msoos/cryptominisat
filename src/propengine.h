@@ -195,7 +195,7 @@ public:
         , Solver* solver
         , std::atomic<bool>* _must_interrupt_inter
     );
-    ~PropEngine();
+    virtual ~PropEngine();
 
     // Read state:
     //

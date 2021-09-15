@@ -80,7 +80,7 @@ class Solver : public Searcher
     public:
         Solver(const SolverConf *_conf = NULL,
                std::atomic<bool>* _must_interrupt_inter = NULL);
-        ~Solver() override;
+        virtual ~Solver() override;
 
         void add_sql_tag(const string& name, const string& val);
         const vector<std::pair<string, string> >& get_sql_tags() const;
