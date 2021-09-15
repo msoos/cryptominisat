@@ -24,7 +24,7 @@
 set -e
 
 function generate() {
-    dirname="${basename}-cut1-${cut1}-cut2-${cut2}-limit-${limit}-est${est}-w${w}-xbmin${xgboostminchild}-xbmd${xboostmaxdepth}"
+    dirname="${basename}-cut1-${cut1}-cut2-${cut2}-limit-${limit}-est${est}-w${w}-xbmin${xgboostminchild}-xbmd${xboostmaxdepth}-reg${regressor}"
 
 
     mkdir -p ${dirname}
@@ -50,7 +50,7 @@ function generate() {
         /usr/bin/time --verbose -o "${dirname}/out_${tier}.timeout" \
         ../cldata_predict.py \
         $INFILE \
-        --tier ${tier} --regressor "xgboost" \
+        --tier ${tier} --regressor $regressor \
         --xgboostest ${est} --weight ${w} \
         --xgboostminchild $xgboostminchild --xboostmaxdepth=${xboostmaxdepth} \
         --basedir "${dirname}" \
@@ -92,13 +92,17 @@ cut2="25.0"
 xboostmaxdepth=4
 xgboostminchild=300
 est=10
-for xboostmaxdepth in 4 6
+
+for regressor in "xgboost" "lgbm"
 do
-    for xgboostminchild in 50 300
+    for xboostmaxdepth in 4 6
     do
-        for est in 10 20
+        for xgboostminchild in 50 300
         do
-            generate
+            for est in 10
+            do
+                generate
+            done
         done
     done
 done
