@@ -20,8 +20,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef _CLPREDICTORS_H__
-#define _CLPREDICTORS_H__
+#ifndef _CLPREDICTORS_XGB_H__
+#define _CLPREDICTORS_XGB_H__
 
 #include <vector>
 #include <cassert>
