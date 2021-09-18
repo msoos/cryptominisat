@@ -27,6 +27,7 @@ THE SOFTWARE.
 #ifdef FINAL_PREDICTOR
 #include "cl_predictors_xgb.h"
 #include "cl_predictors_lgbm.h"
+#include "cl_predictors_py.h"
 #endif
 
 // #define VERBOSE_DEBUG
@@ -1066,6 +1067,8 @@ void ReduceDB::handle_predictors()
             predictors = new ClPredictorsXGB;
         } else if (solver->conf.predictor_type == "lgbm") {
             predictors = new ClPredictorsLGBM;
+        } else if (solver->conf.predictor_type == "py") {
+            predictors = new ClPredictorsPy;
         } else {
             cout << "ERROR: You must give either lgbm or xgboost for predictor" << endl;
             exit(-1);

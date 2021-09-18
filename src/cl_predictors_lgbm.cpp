@@ -54,7 +54,7 @@ ClPredictorsLGBM::~ClPredictorsLGBM()
     }
 }
 
-void ClPredictorsLGBM::load_models(const std::string& short_fname,
+int ClPredictorsLGBM::load_models(const std::string& short_fname,
                                const std::string& long_fname,
                                const std::string& forever_fname)
 {
@@ -68,9 +68,10 @@ void ClPredictorsLGBM::load_models(const std::string& short_fname,
 
     ret = LGBM_BoosterCreateFromModelfile(forever_fname.c_str(), &num_iterations[2], &handle[2]);
     assert(ret == 0);
+    return 0;
 }
 
-void ClPredictorsLGBM::load_models_from_buffers()
+int ClPredictorsLGBM::load_models_from_buffers()
 {
     assert(false);
     exit(-1);
@@ -80,11 +81,12 @@ void ClPredictorsLGBM::load_models_from_buffers()
 //         handles[predict_type::long_pred], predictor_long_json, predictor_long_json_len));
 //     safe_xgboost(XGBoosterLoadModelFromBuffer(
 //         handles[predict_type::forever_pred], predictor_forever_json, predictor_forever_json_len))
+    return 0;
 }
 
 void ClPredictorsLGBM::predict_all(
-    float* data,
-    uint32_t num)
+    float* const data,
+    const uint32_t num)
 {
     for(uint32_t i = 0; i < 3; i ++) {
         out_result[i].resize(num);

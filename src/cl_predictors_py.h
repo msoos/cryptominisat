@@ -20,15 +20,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef _CLPREDICTORS_XGB_H__
-#define _CLPREDICTORS_XGB_H__
+#ifndef _CLPREDICTORS_PY_H__
+#define _CLPREDICTORS_PY_H__
 
 #include <vector>
 #include <cassert>
 #include <string>
-#include <xgboost/c_api.h>
 #include "clause.h"
 #include "cl_predictors_abs.h"
+
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#include <Python.h>
+#include <numpy/arrayobject.h>
 
 using std::vector;
 
@@ -37,11 +40,11 @@ namespace CMSat {
 class Clause;
 class Solver;
 
-class ClPredictorsXGB : public ClPredictorsAbst
+class ClPredictorsPy : public ClPredictorsAbst
 {
 public:
-    ClPredictorsXGB();
-    virtual ~ClPredictorsXGB();
+    ClPredictorsPy();
+    virtual ~ClPredictorsPy();
     virtual int load_models(const std::string& short_fname,
                      const std::string& long_fname,
                      const std::string& forever_fname) override;
@@ -59,18 +62,16 @@ public:
 
     virtual void predict_all(
         float* const data,
-        const uint32_t num) override;
+        uint32_t const num) override;
 
     virtual void get_prediction_at(ClauseStatsExtra& extdata, const uint32_t at) override;
     virtual void finish_all_predict() override;
 
 private:
-    vector<BoosterHandle> handles;
-    DMatrixHandle dmat;
-
-    const float *out_result_short;
-    const float *out_result_long;
-    const float *out_result_forever;
+    double* out_result[3];
+    PyObject *pDict = NULL;
+    PyObject *pFunc = NULL;
+    PyObject *pRet[3];
 };
 
 }

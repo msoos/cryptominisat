@@ -18,20 +18,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "
+execute_process(COMMAND ${Python3_EXECUTABLE} -c "
 from __future__ import print_function;
 import sysconfig;
 print(sysconfig.get_config_var('CFLAGS'), end = '')"
     OUTPUT_VARIABLE PY_C_CONFIG)
 
-execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "
+execute_process(COMMAND ${Python3_EXECUTABLE} -c "
 from __future__ import print_function;
 import sysconfig;
 print(sysconfig.get_config_var('SHLIBS'), end = '')"
     OUTPUT_VARIABLE PY_LD_CONFIG)
 
 
-execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "
+execute_process(COMMAND ${Python3_EXECUTABLE} -c "
 from __future__ import print_function;
 import sysconfig;
 print(sysconfig.get_config_var('LINKFORSHARED'), end = '')"
@@ -72,7 +72,7 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/pycryptosat.cpp.in" "${CMAKE_CUR
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_custom_command(OUTPUT ${OUTPUT}/timestamp
-       COMMAND ${PYTHON_EXECUTABLE}
+       COMMAND ${Python3_EXECUTABLE}
        ARGS setup.py build_ext --inplace
        DEPENDS cryptominisat5
    )
@@ -82,13 +82,13 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND NOT DEFINED ENV{NIX_CC})
         OUTPUT_STRIP_TRAILING_WHITESPACE)
     message(STATUS "OS X SDK path:  '${PY_OSX_SDK_PATH}'")
     add_custom_command(OUTPUT ${OUTPUT}/timestamp
-       COMMAND ${CMAKE_COMMAND} -E env "CFLAGS='-isysroot${PY_OSX_SDK_PATH} $ENV{CFLAGS}'" ${PYTHON_EXECUTABLE}
+       COMMAND ${CMAKE_COMMAND} -E env "CFLAGS='-isysroot${PY_OSX_SDK_PATH} $ENV{CFLAGS}'" ${Python3_EXECUTABLE}
        ARGS setup.py build_ext --inplace --rpath ../lib
        DEPENDS cryptominisat5
     )
 else()
     add_custom_command(OUTPUT ${OUTPUT}/timestamp
-       COMMAND ${PYTHON_EXECUTABLE}
+       COMMAND ${Python3_EXECUTABLE}
        ARGS setup.py build_ext --inplace --rpath ../lib
        DEPENDS cryptominisat5
    )
@@ -98,7 +98,7 @@ add_custom_target(python_interface
                   ALL DEPENDS ${OUTPUT}/timestamp)
 
 install(CODE "execute_process(
-    COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} install --root=\$ENV{DESTDIR}/ ${PY_INSTALL_PREFIX} --record files.txt
+    COMMAND ${Python3_EXECUTABLE} ${SETUP_PY} install --root=\$ENV{DESTDIR}/ ${PY_INSTALL_PREFIX} --record files.txt
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})"
 )
 
@@ -115,6 +115,6 @@ endif()
 
 if (ENABLE_TESTING AND NOT APPLE)
     add_test(NAME python_interface_test
-             COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} test
+             COMMAND ${Python3_EXECUTABLE} ${SETUP_PY} test
              WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endif()

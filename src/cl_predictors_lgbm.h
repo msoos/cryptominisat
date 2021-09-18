@@ -43,10 +43,10 @@ class ClPredictorsLGBM : public ClPredictorsAbst
 public:
     ClPredictorsLGBM();
     virtual ~ClPredictorsLGBM();
-    virtual void load_models(const std::string& short_fname,
+    virtual int load_models(const std::string& short_fname,
                      const std::string& long_fname,
                      const std::string& forever_fname) override;
-    virtual void load_models_from_buffers() override;
+    virtual int load_models_from_buffers() override;
 
     float predict(
         predict_type pred_type,
@@ -59,8 +59,8 @@ public:
     );
 
     virtual void predict_all(
-        float* data,
-        uint32_t num) override;
+        float* const data,
+        const uint32_t num) override;
 
     virtual void get_prediction_at(ClauseStatsExtra& extdata, const uint32_t at) override;
     virtual void finish_all_predict() override;

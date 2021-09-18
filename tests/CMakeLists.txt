@@ -23,9 +23,9 @@ if (NOT WIN32)
 endif()
 
 
-set (LIT_TOOL "${PYTHON_EXECUTABLE} -m lit.main")
+set (LIT_TOOL "${Python3_EXECUTABLE} -m lit.main")
 execute_process(
-    COMMAND "${PYTHON_EXECUTABLE}" "-m" "lit.main" "--version"
+    COMMAND "${Python3_EXECUTABLE}" "-m" "lit.main" "--version"
     OUTPUT_VARIABLE LIT_VER_OUT
     ERROR_VARIABLE  LIT_VER_ERR
     RESULT_VARIABLE RES
@@ -35,7 +35,7 @@ if(NOT("${RES}" STREQUAL "0"))
     message(STATUS "Output of LIT stdout: '${LIT_VER_OUT}'")
     message(STATUS "Output of LIT stderr: '${LIT_VER_ERR}'")
     message(STATUS "LIT result val is: '${RES}'")
-    message(FATAL_ERROR "Could not find 'lit' tool for Python executable ${PYTHON_EXECUTABLE}. You need to install it for this Python version by running '${PYTHON_EXECUTABLE} -m pip install lit'. If it's already installed, set LIT_TOOL to the full path for lit")
+    message(FATAL_ERROR "Could not find 'lit' tool for Python executable ${Python3_EXECUTABLE}. You need to install it for this Python version by running '${Python3_EXECUTABLE} -m pip install lit'. If it's already installed, set LIT_TOOL to the full path for lit")
 endif()
 
 set(LIT_ARGS -v CACHE STRING "Arguments to pass to lit")
@@ -79,7 +79,7 @@ endif()
 
 add_sanitize_flags()
 # below is expensive tests, let's not run it
-# if (PYTHON_EXECUTABLE AND ZLIB_FOUND AND NOT STATS_NEEDED AND NOT ONLY_SIMPLE)
+# if (Python3_EXECUTABLE AND ZLIB_FOUND AND NOT STATS_NEEDED AND NOT ONLY_SIMPLE)
 #     add_subdirectory(${PROJECT_SOURCE_DIR}/utils/minisat_only_elim_and_subsume minisat_only_elim_and_subsume)
 #     add_subdirectory(simp-checks)
 # endif()

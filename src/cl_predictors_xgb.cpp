@@ -63,16 +63,17 @@ ClPredictorsXGB::~ClPredictorsXGB()
     }
 }
 
-void ClPredictorsXGB::load_models(const std::string& short_fname,
+int ClPredictorsXGB::load_models(const std::string& short_fname,
                                const std::string& long_fname,
                                const std::string& forever_fname)
 {
     safe_xgboost(XGBoosterLoadModel(handles[predict_type::short_pred], short_fname.c_str()))
     safe_xgboost(XGBoosterLoadModel(handles[predict_type::long_pred], long_fname.c_str()))
     safe_xgboost(XGBoosterLoadModel(handles[predict_type::forever_pred], forever_fname.c_str()))
+    return 0;
 }
 
-void ClPredictorsXGB::load_models_from_buffers()
+int ClPredictorsXGB::load_models_from_buffers()
 {
     safe_xgboost(XGBoosterLoadModelFromBuffer(
         handles[predict_type::short_pred], predictor_short_json, predictor_short_json_len));
@@ -80,11 +81,12 @@ void ClPredictorsXGB::load_models_from_buffers()
         handles[predict_type::long_pred], predictor_long_json, predictor_long_json_len));
     safe_xgboost(XGBoosterLoadModelFromBuffer(
         handles[predict_type::forever_pred], predictor_forever_json, predictor_forever_json_len))
+    return 0;
 }
 
 void ClPredictorsXGB::predict_all(
-    float* data,
-    uint32_t num)
+    float* const data,
+    const uint32_t num)
 {
     safe_xgboost(XGDMatrixCreateFromMat(data, num, PRED_COLS, missing_val, &dmat))
     bst_ulong out_len;

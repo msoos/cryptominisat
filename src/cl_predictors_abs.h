@@ -81,15 +81,15 @@ class ClPredictorsAbst
 public:
     ClPredictorsAbst() {missing_val = nanf("");}
     virtual ~ClPredictorsAbst() {}
-    virtual void load_models(const std::string& short_fname,
+    virtual int load_models(const std::string& short_fname,
                      const std::string& long_fname,
                      const std::string& forever_fname) = 0;
-    virtual void load_models_from_buffers() = 0;
+    virtual int load_models_from_buffers() = 0;
     vector<std::string> get_hashes() const;
 
     virtual void predict_all(
-        float* data,
-        uint32_t num) = 0;
+        float* const data,
+        const uint32_t num) = 0;
 
     void set_up_input(
         const CMSat::Clause* const cl,

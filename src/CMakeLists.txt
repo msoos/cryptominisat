@@ -63,24 +63,26 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/solvertypesmini.h.in" "${CMAKE_CURRE
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cryptominisat_c.h.in" "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat_c.h" @ONLY)
 
 if (SQLITE3_FOUND)
-    if (NOT PYTHON_EXECUTABLE)
+    if (NOT Python3_EXECUTABLE)
         MESSAGE(FATAL_ERROR "Unfortunately, the python interpreter is needed for statistics because of SQL text generation")
     endif()
 
     add_custom_command(
         OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        COMMAND ${PYTHON_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py cmsat_tablestructure.sql ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp
+        COMMAND ${Python3_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py cmsat_tablestructure.sql ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp
         DEPENDS ${CMAKE_SOURCE_DIR}/cmsat_tablestructure.sql ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py
     )
     add_custom_target(tablestruct ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp)
 endif()
 
 if (FINAL_PREDICTOR)
+    include_directories(${Python3_INCLUDE_DIRS})
+    include_directories(${Python3_NumPy_INCLUDE_DIRS})
     add_custom_command(
         OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/pred_short.cpp
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        COMMAND ${PYTHON_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py src/predict/predictor_short.json ${CMAKE_CURRENT_BINARY_DIR}/pred_short.cpp
+        COMMAND ${Python3_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py src/predict/predictor_short.json ${CMAKE_CURRENT_BINARY_DIR}/pred_short.cpp
         DEPENDS ${CMAKE_SOURCE_DIR}/src/predict/predictor_short.json ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py
     )
     add_custom_target(pred_short ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/pred_short.cpp)
@@ -88,7 +90,7 @@ if (FINAL_PREDICTOR)
     add_custom_command(
         OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/pred_long.cpp
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        COMMAND ${PYTHON_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py src/predict/predictor_long.json ${CMAKE_CURRENT_BINARY_DIR}/pred_long.cpp
+        COMMAND ${Python3_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py src/predict/predictor_long.json ${CMAKE_CURRENT_BINARY_DIR}/pred_long.cpp
         DEPENDS ${CMAKE_SOURCE_DIR}/src/predict/predictor_long.json ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py
     )
     add_custom_target(pred_long ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/pred_long.cpp)
@@ -96,7 +98,7 @@ if (FINAL_PREDICTOR)
     add_custom_command(
         OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/pred_forever.cpp
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        COMMAND ${PYTHON_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py src/predict/predictor_forever.json ${CMAKE_CURRENT_BINARY_DIR}/pred_forever.cpp
+        COMMAND ${Python3_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py src/predict/predictor_forever.json ${CMAKE_CURRENT_BINARY_DIR}/pred_forever.cpp
         DEPENDS ${CMAKE_SOURCE_DIR}/src/predict/predictor_forever.json ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py
     )
     add_custom_target(pred_forever ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/pred_forever.cpp)
@@ -174,10 +176,12 @@ if (FINAL_PREDICTOR)
         ${cryptoms_lib_files}
 #         predict/clustering_imp.cpp
         cl_predictors_xgb.cpp
+        cl_predictors_py.cpp
         cl_predictors_lgbm.cpp
         cl_predictors_abs.cpp
     )
-    SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} _lightgbm xgboost dmlc rabit rt)
+    SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs}
+        _lightgbm xgboost dmlc rabit rt ${Python3_LIBRARIES})
 endif()
 
 if (STATS_NEEDED)
