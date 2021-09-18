@@ -82,7 +82,8 @@ function generate() {
 bestf="../../scripts/crystal/best_features-rdb0-only.txt"
 w=0
 xgboostsubsample="1.0"
-basename="14-april-2021-69bad529f962c"
+basename="18-sept-2021-a408d53c665f9305b"
+#basename="14-april-2021-69bad529f962c"
 #basename="8march-2020-3acd81dc55df3-36feats"
 #basename="aes-30-march-2020-a1e0e19be0c1"
 #basename="orig"
