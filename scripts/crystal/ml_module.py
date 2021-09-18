@@ -37,13 +37,9 @@ def load_models(short_fname, long_fname, forever_fname):
         models.append(clf_xgboost)
 
 def predict(data):
-    ret_short = models[0].get_booster().inplace_predict(data)
-    ret_long = models[1].get_booster().inplace_predict(data)
-    ret_forever = models[2].get_booster().inplace_predict(data)
-
-    #df = pd.DataFrame(data, columns=columns)
-    #ret_short = models[0].predict(df)
-    #ret_long = models[1].predict(df)
-    #ret_forever = models[2].predict(df)
+    df = pd.DataFrame(data, columns=columns)
+    ret_short = models[0].predict(df)
+    ret_long = models[1].predict(df)
+    ret_forever = models[2].predict(df)
 
     return [ret_short, ret_long, ret_forever]
