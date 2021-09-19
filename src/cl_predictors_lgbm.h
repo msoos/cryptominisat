@@ -45,7 +45,8 @@ public:
     virtual ~ClPredictorsLGBM();
     virtual int load_models(const std::string& short_fname,
                      const std::string& long_fname,
-                     const std::string& forever_fname) override;
+                     const std::string& forever_fname,
+                     const std::string& module_fname) override;
     virtual int load_models_from_buffers() override;
 
     float predict(

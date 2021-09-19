@@ -83,7 +83,8 @@ public:
     virtual ~ClPredictorsAbst() {}
     virtual int load_models(const std::string& short_fname,
                      const std::string& long_fname,
-                     const std::string& forever_fname) = 0;
+                     const std::string& forever_fname,
+                     const std::string& module_fname) = 0;
     virtual int load_models_from_buffers() = 0;
     vector<std::string> get_hashes() const;
 

@@ -1097,10 +1097,17 @@ void ReduceDB::handle_predictors()
                 + solver->conf.predictor_type
                 + std::string(".json"));
 
-            predictors->load_models(
+            int ret = predictors->load_models(
                 locations[0],
                 locations[1],
-                locations[2]);
+                locations[2],
+                solver->conf.predict_model_fname);
+
+            if (ret == NULL) {
+                cout << "ERROR with python array loading!" << endl;
+                exit(-1);
+            }
+
             if (solver->conf.verbosity) {
                 cout << "c [pred] loaded predictors from: ";
                 for(const auto& l: locations) {

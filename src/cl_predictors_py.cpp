@@ -25,6 +25,14 @@ THE SOFTWARE.
 #include "solver.h"
 #include <cmath>
 
+static wchar_t* charToWChar(const char* text)
+{
+    const size_t size = strlen(text) + 1;
+    wchar_t* wText = new wchar_t[size];
+    mbstowcs(wText, text, size);
+    return wText;
+}
+
 extern char predictor_short_json[];
 extern unsigned int predictor_short_json_len;
 
@@ -57,29 +65,63 @@ ClPredictorsPy::~ClPredictorsPy()
 }
 
 int ClPredictorsPy::load_models(const std::string& short_fname,
-                               const std::string& long_fname,
-                               const std::string& forever_fname)
+                                const std::string& long_fname,
+                                const std::string& forever_fname,
+                                const std::string& module_fname)
 {
 
-    //Initialize Python
+//     std::vector<wchar_t*> wargv;
+//     for(uint32_t i=0; i < argc; i++) {
+//         wargv.push_back(charToWChar(argv[i]));
+//
+//     }
+//     PySys_SetArgv(argc, wargv.data());
     Py_Initialize();
     import_array();
+    wchar_t *tmp = charToWChar(module_fname.c_str());
+    PySys_SetArgv(1, &tmp);
 
+    //Initialize Python
+//     std::wstring pypath(Py_GetPath());
+//     std::wcout << L"path: " << pypath << std::endl;
+    //pypath = pypath + L":" + PY_SITEPACKAGES + L":" + MX_PYMODULE_DIR + L":" + NUMPY_PYPATH;
+
+//     std::wstring widestr = std::wstring(module_fname.begin(), module_fname.end());
+//     pypath += L":" + widestr;
+//     Py_SetPath(pypath.c_str());
+
+//     PyObject* sysPath = PySys_GetObject((char*)"path");
+//     PyObject* programName = PyUnicode_FromString("ml_module.py");
+//     PyList_Append(sysPath, programName);
+//     Py_DECREF(programName);
+
+    std::wstring pypath2(Py_GetPath());
+    std::wcout << L"path: " << pypath2 << std::endl;
+
+    //Py_Initialize();
+    //import_array();
+
+
+    /*
     // Convert the file name to a Python string.
     PyObject* pName = PyUnicode_FromString("ml_module");
 
     //Add dir to sys path
-    PyObject* sysPath = PySys_GetObject((char*)"path");
     PyObject* programName = PyUnicode_FromString("ml_module.py");
     PyList_Append(sysPath, programName);
     Py_DECREF(programName);
 
     // Import the file as a Python module.
     PyObject *pModule = PyImport_Import(pName);
+    */
 
+    PyObject* pName = PyUnicode_FromString("ml_module");
+    /* Error checking of pName left out */
+    PyObject* pModule = PyImport_Import(pName);
+    Py_DECREF(pName);
     if (pModule == NULL) {
         PyErr_Print();
-        cout << "Error importing" << endl;
+        cout << "ERROR: Failed to load \"" + module_fname + "\"!" << endl;
         exit(-1);
     }
 
@@ -95,7 +137,7 @@ int ClPredictorsPy::load_models(const std::string& short_fname,
     PyTuple_SetItem(pArgs, 2, PyUnicode_FromString(forever_fname.c_str()));
 
     PyObject_CallObject(load_models, pArgs);
-    return 0;
+    return 1;
 }
 
 int ClPredictorsPy::load_models_from_buffers()

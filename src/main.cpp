@@ -348,6 +348,8 @@ void Main::add_supported_options()
         , "Directory where predictor_short.json, predictor_long.json, predictor_forever.json are")
     ("predtype", po::value(&conf.predictor_type)->default_value(conf.predictor_type)
         , "Type of predictor. Supported: xgboost, lgbm")
+    ("predfname", po::value(&conf.predict_model_fname)->default_value(conf.predict_model_fname)
+        , "Model python file name")
 
     //size
     ("predshortsize", po::value(&conf.pred_short_size)->default_value(conf.pred_short_size)
