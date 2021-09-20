@@ -113,18 +113,18 @@ num_called = 0
 def predict(data):
     ret = []
     df = pd.DataFrame(data, columns=raw_data)
-    df2 = np.empty((df.shape[0], len(best_features)), dtype=float)
+    outarray = np.empty((df.shape[0], len(best_features)), dtype=float)
     #global num_called
     #dump_or_check('df_dat'+str(num_called), df)
 
-    add_features(df, df2)
-    df3 = pd.DataFrame(df2, columns=best_features)
-    df3.replace([np.inf, np.NaN, np.inf, np.NINF, np.Infinity], MISSING, inplace=True)
+    add_features(df, outarray)
+    df_final = pd.DataFrame(outarray, columns=best_features)
+    df_final.replace([np.inf, np.NaN, np.inf, np.NINF, np.Infinity], MISSING, inplace=True)
 
     for i in range(3):
-        #x = models[i].predict(df3)
-        x = models[i].get_booster().inplace_predict(df3)
+        #x = models[i].predict(df_final)
+        x = models[i].get_booster().inplace_predict(df_final)
         ret.append(x)
-    #dump_or_check('df_pred'+str(num_called), df[best_features])
+    #dump_or_check('df_pred'+str(num_called), df_final)
     #num_called += 1
     return ret
