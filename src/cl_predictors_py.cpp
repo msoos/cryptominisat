@@ -190,11 +190,6 @@ void ClPredictorsPy::predict_all(
         return;
     }
 
-//     // Test data transfer
-//     cout << "data[0][0]: " << data[0] << endl;
-//     cout << "data[1][0]: " << data[PRED_COLS] << endl;
-//     cout << "data[1][1]: " << data[PRED_COLS+1] << endl;
-
     // Create NumPy 2D array with data
     npy_intp dims[2];
     dims[0] = num;
@@ -232,15 +227,6 @@ void ClPredictorsPy::predict_all(
 
     //This should decrement all elements in the array, so we incremented it above.
     Py_DECREF(pResult);
-
-//     //Test data transfer
-//     for(uint32_t i =0; i < 20; i++) {
-//         cout << std::setprecision(20) <<
-//         out_result[0][i]
-//         << std::setprecision(2)
-//         << endl;
-//     }
-//     Py_DECREF(pResult);
 }
 
 void ClPredictorsPy::get_prediction_at(ClauseStatsExtra& extdata, const uint32_t at)
