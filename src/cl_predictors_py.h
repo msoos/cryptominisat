@@ -52,6 +52,20 @@ public:
         const std::string& module_fname) override;
     virtual int load_models_from_buffers() override;
 
+    virtual int set_up_input(
+        const CMSat::Clause* const cl,
+        const uint64_t sumConflicts,
+        const double   act_ranking_rel,
+        const double   uip1_ranking_rel,
+        const double   prop_ranking_rel,
+        const double   sum_uip1_per_time_ranking_rel,
+        const double   sum_props_per_time_ranking_rel,
+        const ReduceCommonData& commdata,
+        const Solver* solver,
+        float* at) override;
+
+    virtual int get_step_size() override {return NUM_RAW_FEATS;}
+
     float predict(
         predict_type pred_type,
         const CMSat::Clause* cl,

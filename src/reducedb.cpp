@@ -693,7 +693,11 @@ void ReduceDB::pred_move_to_lev1_and_lev0()
 
 void ReduceDB::update_preds(const vector<ClOffset>& offs)
 {
-    vector<float> data(PRED_COLS*offs.size());
+    int step_size = predictors->get_step_size();
+    float* data_orig = (float*)malloc(step_size*offs.size()*sizeof(float));
+    memset(data_orig, 0, step_size*offs.size()*sizeof(float));
+    float* data = data_orig;
+
 
     uint32_t data_at = 0;
     for(size_t i = 0
@@ -716,7 +720,7 @@ void ReduceDB::update_preds(const vector<ClOffset>& offs)
         assert(stats_extra.introduced_at_conflict <= solver->sumConflicts);
         uint64_t age = solver->sumConflicts - stats_extra.introduced_at_conflict;
         if (age > solver->conf.every_pred_reduce) {
-            predictors->set_up_input(
+            int ret = predictors->set_up_input(
                 cl,
                 solver->sumConflicts,
                 act_ranking_rel,
@@ -725,15 +729,16 @@ void ReduceDB::update_preds(const vector<ClOffset>& offs)
                 sum_uip1_per_time_ranking_rel,
                 sum_props_per_time_ranking_rel,
                 commdata,
-                PRED_COLS,
                 solver,
-                data.data()+data_at*PRED_COLS
+                data
             );
+            assert(ret == step_size);
             data_at++;
+            data += step_size;
         }
     }
 
-    predictors->predict_all(data.data(), data_at);
+    predictors->predict_all(data_orig, data_at);
 
     uint32_t retrieve_at = 0;
     for(const auto& offset: offs) {
@@ -761,6 +766,7 @@ void ReduceDB::update_preds(const vector<ClOffset>& offs)
     }
 
     predictors->finish_all_predict();
+    free(data_orig);
 }
 
 void ReduceDB::update_preds_lev2()
@@ -1074,7 +1080,10 @@ void ReduceDB::handle_predictors()
             exit(-1);
         }
         if (solver->conf.pred_conf_location.empty()) {
-            predictors->load_models_from_buffers();
+            if (predictors->load_models_from_buffers() != 0) {
+                cout << "ERROR: cannot load models from buffers" << endl;
+                exit(-1);
+            }
             if (solver->conf.verbosity) {
                 cout << "c [pred] predictor hashes: ";
                 for(const auto& h: predictors->get_hashes()) {

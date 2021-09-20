@@ -31,6 +31,7 @@ THE SOFTWARE.
 #include "clause.h"
 
 #define PRED_COLS 20
+#define NUM_RAW_FEATS 25
 
 using std::vector;
 
@@ -92,7 +93,9 @@ public:
         float* const data,
         const uint32_t num) = 0;
 
-    void set_up_input(
+    virtual int get_step_size() {return PRED_COLS;}
+
+    virtual int set_up_input(
         const CMSat::Clause* const cl,
         const uint64_t sumConflicts,
         const double   act_ranking_rel,
@@ -101,7 +104,6 @@ public:
         const double   sum_uip1_per_time_ranking_rel,
         const double   sum_props_per_time_ranking_rel,
         const ReduceCommonData& commdata,
-        const uint32_t cols,
         const Solver* solver,
         float* at);
 

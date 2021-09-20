@@ -71,7 +71,7 @@ int ClPredictorsXGB::load_models(const std::string& short_fname,
     safe_xgboost(XGBoosterLoadModel(handles[predict_type::short_pred], short_fname.c_str()))
     safe_xgboost(XGBoosterLoadModel(handles[predict_type::long_pred], long_fname.c_str()))
     safe_xgboost(XGBoosterLoadModel(handles[predict_type::forever_pred], forever_fname.c_str()))
-    return 0;
+    return 1;
 }
 
 int ClPredictorsXGB::load_models_from_buffers()
@@ -82,7 +82,7 @@ int ClPredictorsXGB::load_models_from_buffers()
         handles[predict_type::long_pred], predictor_long_json, predictor_long_json_len));
     safe_xgboost(XGBoosterLoadModelFromBuffer(
         handles[predict_type::forever_pred], predictor_forever_json, predictor_forever_json_len))
-    return 0;
+    return 1;
 }
 
 void ClPredictorsXGB::predict_all(

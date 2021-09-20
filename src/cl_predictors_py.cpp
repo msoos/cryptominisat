@@ -45,6 +45,70 @@ extern unsigned int predictor_forever_json_len;
 
 using namespace CMSat;
 
+int ClPredictorsPy::set_up_input(
+    const CMSat::Clause* const cl,
+    const uint64_t sumConflicts,
+    const double   act_ranking_rel,
+    const double   uip1_ranking_rel,
+    const double   prop_ranking_rel,
+    const double   sum_uip1_per_time_ranking_rel,
+    const double   sum_props_per_time_ranking_rel,
+    const ReduceCommonData& commdata,
+    const Solver* solver,
+    float* at)
+{
+    int x = 0;
+
+    const ClauseStatsExtra& extra_stats = solver->red_stats_extra[cl->stats.extra_pos];
+    uint32_t last_touched_diff = sumConflicts - (uint64_t)cl->stats.last_touched;
+    double time_inside_solver = sumConflicts - (uint64_t)extra_stats.introduced_at_conflict;
+
+    at[x++] = extra_stats.orig_glue;
+    at[x++] = cl->stats.last_touched;
+    at[x++] = act_ranking_rel;
+    at[x++] = uip1_ranking_rel;
+    at[x++] = prop_ranking_rel;
+    at[x++] = last_touched_diff;
+    at[x++] = time_inside_solver;
+    at[x++] = cl->stats.props_made;
+    at[x++] = commdata.avg_props;
+    at[x++] = commdata.avg_glue;
+    at[x++] = commdata.avg_uip;
+    at[x++] = extra_stats.sum_props_made;
+    at[x++] = extra_stats.discounted_props_made;
+    at[x++] = extra_stats.discounted_uip1_used;
+    at[x++] = extra_stats.sum_uip1_used;
+    at[x++] = cl->stats.uip1_used;
+    at[x++] = cl->stats.glue;
+
+    //Ternary resolvents lack glue and antecedent data
+    if (cl->stats.is_ternary_resolvent) {
+        at[x++] = missing_val;
+        at[x++] = missing_val;
+        at[x++] = missing_val;
+        at[x++] = missing_val;
+        at[x++] = missing_val;
+        at[x++] = missing_val;
+        at[x++] = missing_val;
+        at[x++] = missing_val;
+    } else {
+        at[x++] = extra_stats.glueHist_avg;
+        at[x++] = extra_stats.antecedents_binIrred;
+        at[x++] = extra_stats.glueHistLT_avg;
+        at[x++] = extra_stats.glueHist_longterm_avg;
+        at[x++] = extra_stats.num_antecedents;
+        at[x++] = extra_stats.overlapHistLT_avg;
+        at[x++] = extra_stats.conflSizeHist_avg;
+        at[x++] = extra_stats.antecedents_binred;
+    }
+    assert(x == NUM_RAW_FEATS);
+    //at[x++] = sum_uip1_per_time_ranking_rel;
+    //at[x++] = sum_props_per_time_ranking_rel;
+
+    return NUM_RAW_FEATS;
+}
+
+
 ClPredictorsPy::ClPredictorsPy()
 {
     for(uint32_t i=0; i < 3; i++) {
@@ -69,54 +133,15 @@ int ClPredictorsPy::load_models(const std::string& short_fname,
                                 const std::string& forever_fname,
                                 const std::string& module_fname)
 {
-
-//     std::vector<wchar_t*> wargv;
-//     for(uint32_t i=0; i < argc; i++) {
-//         wargv.push_back(charToWChar(argv[i]));
-//
-//     }
-//     PySys_SetArgv(argc, wargv.data());
     Py_Initialize();
     import_array();
     wchar_t *tmp = charToWChar(module_fname.c_str());
     PySys_SetArgv(1, &tmp);
 
-    //Initialize Python
-//     std::wstring pypath(Py_GetPath());
-//     std::wcout << L"path: " << pypath << std::endl;
-    //pypath = pypath + L":" + PY_SITEPACKAGES + L":" + MX_PYMODULE_DIR + L":" + NUMPY_PYPATH;
-
-//     std::wstring widestr = std::wstring(module_fname.begin(), module_fname.end());
-//     pypath += L":" + widestr;
-//     Py_SetPath(pypath.c_str());
-
-//     PyObject* sysPath = PySys_GetObject((char*)"path");
-//     PyObject* programName = PyUnicode_FromString("ml_module.py");
-//     PyList_Append(sysPath, programName);
-//     Py_DECREF(programName);
-
     std::wstring pypath2(Py_GetPath());
-    std::wcout << L"path: " << pypath2 << std::endl;
-
-    //Py_Initialize();
-    //import_array();
-
-
-    /*
-    // Convert the file name to a Python string.
-    PyObject* pName = PyUnicode_FromString("ml_module");
-
-    //Add dir to sys path
-    PyObject* programName = PyUnicode_FromString("ml_module.py");
-    PyList_Append(sysPath, programName);
-    Py_DECREF(programName);
-
-    // Import the file as a Python module.
-    PyObject *pModule = PyImport_Import(pName);
-    */
+    //std::wcout << L"path: " << pypath2 << std::endl;
 
     PyObject* pName = PyUnicode_FromString("ml_module");
-    /* Error checking of pName left out */
     PyObject* pModule = PyImport_Import(pName);
     Py_DECREF(pName);
     if (pModule == NULL) {
@@ -131,10 +156,11 @@ int ClPredictorsPy::load_models(const std::string& short_fname,
 
     //Load models
     PyObject * load_models = PyDict_GetItemString(pDict, "load_models");
-    PyObject *pArgs = PyTuple_New(3);
+    PyObject *pArgs = PyTuple_New(4);
     PyTuple_SetItem(pArgs, 0, PyUnicode_FromString(short_fname.c_str()));
     PyTuple_SetItem(pArgs, 1, PyUnicode_FromString(long_fname.c_str()));
     PyTuple_SetItem(pArgs, 2, PyUnicode_FromString(forever_fname.c_str()));
+    PyTuple_SetItem(pArgs, 3, PyUnicode_FromString(module_fname.c_str()));
 
     PyObject_CallObject(load_models, pArgs);
     return 1;
@@ -144,7 +170,7 @@ int ClPredictorsPy::load_models_from_buffers()
 {
     cout << "ERROR: it is not possible to load models from buffer in Python mode" << endl;
     exit(-1);
-    return 0;
+    return 1;
 }
 
 void ClPredictorsPy::predict_all(
@@ -163,7 +189,7 @@ void ClPredictorsPy::predict_all(
     // Create NumPy 2D array with data
     npy_intp dims[2];
     dims[0] = num;
-    dims[1] = PRED_COLS;
+    dims[1] = NUM_RAW_FEATS;
     PyObject *pArray = PyArray_SimpleNewFromData(2, dims, NPY_FLOAT, data);
     assert(pArray != NULL);
 

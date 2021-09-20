@@ -214,7 +214,9 @@ class Learner:
             transformed = df[features].values
 
             # Impute data
-            imp_mean = sklearn.impute.SimpleImputer(missing_values=MISSING, strategy='mean')
+            imp_mean = sklearn.impute.SimpleImputer(
+                #missing_values=MISSING,
+                strategy='mean')
             transformed = imp_mean.fit_transform(transformed)
 
             # Scale data
@@ -273,7 +275,7 @@ class Learner:
         clf_elasticnet = sklearn.linear_model.ElasticNet()
         clf_xgboost = xgb.XGBRegressor(
                 objective='reg:squarederror',
-                missing=MISSING,
+                #missing=MISSING,
                 min_child_weight=options.min_child_weight_xgboost, # from doc: "In linear regression task, this simply corresponds to minimum number of instances needed to be in each node."
                 max_depth=options.xboost_max_depth,
                 subsample=options.xgboost_subsample,
@@ -326,7 +328,8 @@ class Learner:
                     objective='reg:squarederror',
                     min_child_weight=options.min_child_weight_xgboost,
                     max_depth=options.xboost_max_depth,
-                    missing=MISSING)
+                    #missing=MISSING
+                    )
             else:
                 print("Error: --topfeats only works with xgboost/forest")
                 exit(-1)
@@ -626,7 +629,7 @@ if __name__ == "__main__":
 
     print("Filling NA with MISSING..")
     df.replace([np.inf, np.NaN, np.inf, np.NINF, np.Infinity], MISSING, inplace=True)
-    df.fillna(MISSING, inplace=True)
+    #df.fillna(MISSING, inplace=True)
 
     if options.check_row_data_verbose:
         helper.check_too_large_or_nan_values(df, list(df))

@@ -39,7 +39,7 @@ vector<std::string> ClPredictorsAbst::get_hashes() const
     return ret;
 }
 
-void ClPredictorsAbst::set_up_input(
+int ClPredictorsAbst::set_up_input(
     const CMSat::Clause* const cl,
     const uint64_t sumConflicts,
     const double   act_ranking_rel,
@@ -48,7 +48,6 @@ void ClPredictorsAbst::set_up_input(
     const double   sum_uip1_per_time_ranking_rel,
     const double   sum_props_per_time_ranking_rel,
     const ReduceCommonData& commdata,
-    const uint32_t cols,
     const Solver* solver,
     float* at)
 {
@@ -244,5 +243,6 @@ void ClPredictorsAbst::set_up_input(
 //     }
 //     cout << endl;
 
-    assert(x==cols);
+    assert(x==PRED_COLS);
+    return PRED_COLS;
 }
