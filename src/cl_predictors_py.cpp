@@ -231,7 +231,7 @@ void ClPredictorsPy::predict_all(
     }
 
     //This should decrement all elements in the array, so we incremented it above.
-//     Py_DECREF(pResult);
+    Py_DECREF(pResult);
 
 //     //Test data transfer
 //     for(uint32_t i =0; i < 20; i++) {
