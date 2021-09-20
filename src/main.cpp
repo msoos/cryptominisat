@@ -347,7 +347,7 @@ void Main::add_supported_options()
     ("predloc", po::value(&conf.pred_conf_location)->default_value(conf.pred_conf_location)
         , "Directory where predictor_short.json, predictor_long.json, predictor_forever.json are")
     ("predtype", po::value(&conf.predictor_type)->default_value(conf.predictor_type)
-        , "Type of predictor. Supported: xgboost, lgbm")
+        , "Type of predictor. Supported: py, xgb, lgbm")
     ("predbestfeats", po::value(&conf.predict_best_feat_fname)->default_value(conf.predict_best_feat_fname)
         , "Model python file name")
 
