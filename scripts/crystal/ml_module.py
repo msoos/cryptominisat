@@ -81,7 +81,6 @@ raw_data = [
 
 models = []
 best_features = []
-num_called = 0
 feat_gen_exprs = []
 feat_gen_funcs = []
 
@@ -89,8 +88,7 @@ def add_features(df, df2):
     for i, feat_gen_func in zip(range(len(best_features)), feat_gen_funcs):
         df2[:, i] = feat_gen_func(df)
 
-
-def load_models(short_fname, long_fname, forever_fname, features_fname):
+def set_up_features(features_fname):
     global best_features
     global feat_gen_exprs
     global feat_gen_funcs
@@ -104,19 +102,20 @@ def load_models(short_fname, long_fname, forever_fname, features_fname):
     print(feat_gen_funcs)
 
 
+def load_models(short_fname, long_fname, forever_fname):
     global models
     for fname in [short_fname, long_fname, forever_fname]:
         clf_xgboost = xgb.XGBRegressor(n_jobs=1)
         clf_xgboost.load_model(fname)
         models.append(clf_xgboost)
 
+num_called = 0
 def predict(data):
     ret = []
     df = pd.DataFrame(data, columns=raw_data)
     df2 = np.empty((df.shape[0], len(best_features)), dtype=float)
     #global num_called
     #dump_or_check('df_dat'+str(num_called), df)
-
 
     add_features(df, df2)
     df3 = pd.DataFrame(df2, columns=best_features)

@@ -154,15 +154,24 @@ int ClPredictorsPy::load_models(const std::string& short_fname,
     pDict = PyModule_GetDict(pModule);
     pFunc = PyDict_GetItemString(pDict, "predict");
 
+    // Set up features
+    PyObject * set_up_features = PyDict_GetItemString(pDict, "set_up_features");
+    PyObject *pArgs = PyTuple_New(1);
+    PyTuple_SetItem(pArgs, 0, PyUnicode_FromString(module_fname.c_str()));
+    PyObject_CallObject(set_up_features, pArgs);
+    Py_DecRef(set_up_features);
+    Py_DecRef(pArgs);
+
+
     //Load models
     PyObject * load_models = PyDict_GetItemString(pDict, "load_models");
-    PyObject *pArgs = PyTuple_New(4);
+    pArgs = PyTuple_New(3);
     PyTuple_SetItem(pArgs, 0, PyUnicode_FromString(short_fname.c_str()));
     PyTuple_SetItem(pArgs, 1, PyUnicode_FromString(long_fname.c_str()));
     PyTuple_SetItem(pArgs, 2, PyUnicode_FromString(forever_fname.c_str()));
-    PyTuple_SetItem(pArgs, 3, PyUnicode_FromString(module_fname.c_str()));
-
     PyObject_CallObject(load_models, pArgs);
+    Py_DecRef(load_models);
+    Py_DecRef(pArgs);
     return 1;
 }
 
