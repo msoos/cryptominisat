@@ -49,7 +49,7 @@ public:
         const std::string& short_fname,
         const std::string& long_fname,
         const std::string& forever_fname,
-        const std::string& module_fname) override;
+        const std::string& best_feats_fname) override;
     virtual int load_models_from_buffers() override;
 
     virtual int set_up_input(

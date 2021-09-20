@@ -1110,7 +1110,7 @@ void ReduceDB::handle_predictors()
                 locations[0],
                 locations[1],
                 locations[2],
-                solver->conf.predict_model_fname);
+                solver->conf.predict_best_feat_fname);
 
             if (ret == NULL) {
                 cout << "ERROR with python array loading!" << endl;

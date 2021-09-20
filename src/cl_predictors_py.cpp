@@ -131,11 +131,11 @@ ClPredictorsPy::~ClPredictorsPy()
 int ClPredictorsPy::load_models(const std::string& short_fname,
                                 const std::string& long_fname,
                                 const std::string& forever_fname,
-                                const std::string& module_fname)
+                                const std::string& best_feats_fname)
 {
     Py_Initialize();
     import_array();
-    wchar_t *tmp = charToWChar(module_fname.c_str());
+    wchar_t *tmp = charToWChar(best_feats_fname.c_str());
     PySys_SetArgv(1, &tmp);
 
     std::wstring pypath2(Py_GetPath());
@@ -146,7 +146,7 @@ int ClPredictorsPy::load_models(const std::string& short_fname,
 //     Py_DECREF(pName);
     if (pModule == NULL) {
         PyErr_Print();
-        cout << "ERROR: Failed to load \"" + module_fname + "\"!" << endl;
+        cout << "ERROR: Failed to load ml_module from the same place as \"" + best_feats_fname + "\"!" << endl;
         exit(-1);
     }
 
@@ -157,7 +157,7 @@ int ClPredictorsPy::load_models(const std::string& short_fname,
     // Set up features
     PyObject * set_up_features = PyDict_GetItemString(pDict, "set_up_features");
     PyObject *pArgs = PyTuple_New(1);
-    PyTuple_SetItem(pArgs, 0, PyUnicode_FromString(module_fname.c_str()));
+    PyTuple_SetItem(pArgs, 0, PyUnicode_FromString(best_feats_fname.c_str()));
     PyObject_CallObject(set_up_features, pArgs);
 //     Py_DECREF(set_up_features);
 //     Py_DECREF(pArgs);

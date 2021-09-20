@@ -66,7 +66,7 @@ ClPredictorsXGB::~ClPredictorsXGB()
 int ClPredictorsXGB::load_models(const std::string& short_fname,
                                const std::string& long_fname,
                                const std::string& forever_fname,
-                               const std::string& module_fname)
+                               const std::string& best_feats_fname)
 {
     safe_xgboost(XGBoosterLoadModel(handles[predict_type::short_pred], short_fname.c_str()))
     safe_xgboost(XGBoosterLoadModel(handles[predict_type::long_pred], long_fname.c_str()))
