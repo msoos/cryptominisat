@@ -122,7 +122,7 @@ ClPredictorsPy::~ClPredictorsPy()
     if (pRet[0]) {
         for(uint32_t i=0; i < 3; i++) {
             assert(pRet[i]);
-            Py_DecRef(pRet[i]);
+            Py_DECREF(pRet[i]);
         }
     }
     Py_Finalize();
@@ -143,7 +143,7 @@ int ClPredictorsPy::load_models(const std::string& short_fname,
 
     PyObject* pName = PyUnicode_FromString("ml_module");
     PyObject* pModule = PyImport_Import(pName);
-    Py_DECREF(pName);
+//     Py_DECREF(pName);
     if (pModule == NULL) {
         PyErr_Print();
         cout << "ERROR: Failed to load \"" + module_fname + "\"!" << endl;
@@ -159,8 +159,8 @@ int ClPredictorsPy::load_models(const std::string& short_fname,
     PyObject *pArgs = PyTuple_New(1);
     PyTuple_SetItem(pArgs, 0, PyUnicode_FromString(module_fname.c_str()));
     PyObject_CallObject(set_up_features, pArgs);
-    Py_DecRef(set_up_features);
-    Py_DecRef(pArgs);
+//     Py_DECREF(set_up_features);
+//     Py_DECREF(pArgs);
 
 
     //Load models
@@ -170,8 +170,8 @@ int ClPredictorsPy::load_models(const std::string& short_fname,
     PyTuple_SetItem(pArgs, 1, PyUnicode_FromString(long_fname.c_str()));
     PyTuple_SetItem(pArgs, 2, PyUnicode_FromString(forever_fname.c_str()));
     PyObject_CallObject(load_models, pArgs);
-    Py_DecRef(load_models);
-    Py_DecRef(pArgs);
+//     Py_DECREF(load_models);
+//     Py_DECREF(pArgs);
     return 1;
 }
 
@@ -231,7 +231,7 @@ void ClPredictorsPy::predict_all(
     }
 
     //This should decrement all elements in the array, so we incremented it above.
-    Py_DecRef(pResult);
+//     Py_DECREF(pResult);
 
 //     //Test data transfer
 //     for(uint32_t i =0; i < 20; i++) {
@@ -240,7 +240,7 @@ void ClPredictorsPy::predict_all(
 //         << std::setprecision(2)
 //         << endl;
 //     }
-    Py_DECREF(pResult);
+//     Py_DECREF(pResult);
 }
 
 void ClPredictorsPy::get_prediction_at(ClauseStatsExtra& extdata, const uint32_t at)
@@ -256,7 +256,7 @@ void CMSat::ClPredictorsPy::finish_all_predict()
     if (pRet[0] != NULL) {
         for(uint32_t i=0; i < 3; i++) {
             assert(pRet[i]);
-            Py_DecRef(pRet[i]);
+            Py_DECREF(pRet[i]);
             pRet[i] = NULL;
         }
     }
