@@ -82,24 +82,26 @@ raw_data = [
 models = []
 best_features = []
 num_called = 0
-toevals = []
-toevals2 = []
+feat_gen_exprs = []
+feat_gen_funcs = []
 
-def add_features(df, df2, verbose=False):
-    for i, toeval in zip(range(len(best_features)), toevals):
-        df2[:, i] = eval(toeval)
+def add_features(df, df2):
+    for i, feat_gen_func in zip(range(len(best_features)), feat_gen_funcs):
+        df2[:, i] = feat_gen_func(df)
 
 
 def load_models(short_fname, long_fname, forever_fname, features_fname):
     global best_features
-    global toevals
-    global toevals2
+    global feat_gen_exprs
+    global feat_gen_funcs
     best_features = get_features(features_fname)
-    for feat in best_features:
-        toeval = ccg.to_source(ast.parse(feat))
-        toevals.append(toeval)
-        #toevals2.append(np.vectorize(toeval))
-    #print(toevals2)
+    for i, feat in zip(range(len(best_features)), best_features):
+        feat_gen_expr = ccg.to_source(ast.parse(feat))
+        feat_gen_exprs.append(feat_gen_expr)
+        create_function = "def a%d(df): return %s" % (i, feat_gen_expr)
+        exec(create_function)
+        exec("feat_gen_funcs.append(a%d)" % i)
+    print(feat_gen_funcs)
 
 
     global models
@@ -113,7 +115,6 @@ def predict(data):
     df = pd.DataFrame(data, columns=raw_data)
     df2 = np.empty((df.shape[0], len(best_features)), dtype=float)
     #global num_called
-    #print("df.shape[0]: ", df.shape[0])
     #dump_or_check('df_dat'+str(num_called), df)
 
 
