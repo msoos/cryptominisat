@@ -88,6 +88,7 @@ private:
     PyObject *pDict = NULL;
     PyObject *pFunc = NULL;
     PyObject *pRet[3];
+    PyObject *pArray = NULL;
 };
 
 }

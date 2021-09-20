@@ -199,7 +199,7 @@ void ClPredictorsPy::predict_all(
     npy_intp dims[2];
     dims[0] = num;
     dims[1] = NUM_RAW_FEATS;
-    PyObject *pArray = PyArray_SimpleNewFromData(2, dims, NPY_FLOAT, data);
+    pArray = PyArray_SimpleNewFromData(2, dims, NPY_FLOAT, data);
     assert(pArray != NULL);
 
     // Tuple to hold the arguments to the method
@@ -259,6 +259,9 @@ void CMSat::ClPredictorsPy::finish_all_predict()
             Py_DECREF(pRet[i]);
             pRet[i] = NULL;
         }
+        assert(pArray != NULL);
+        Py_DECREF(pArray);
+        pArray = NULL;
     }
 }
 
