@@ -17,8 +17,18 @@ def dump_or_check(fname, df):
         picklefile = open(fname, 'rb')
         df_saved = pickle.load(picklefile)
         picklefile.close()
-        print("Equals?", fname)
-        assert df.equals(df_saved)
+        print("Checking equals...", fname)
+        if not df.equals(df_saved):
+            print("df.shape       :", df.shape)
+            print("df_saved.shape :", df_saved.shape)
+            assert df.shape == df_saved.shape
+            for i in range(df):
+                if df[i] != df_saved[i]:
+                    print("Not equal:")
+                    print(df[i])
+                    print(df_saved[i])
+                    exit(-1)
+
     else:
         picklefile = open(fname, 'wb')
         pickle.dump(df, picklefile)
@@ -110,12 +120,13 @@ def load_models(short_fname, long_fname, forever_fname):
         models.append(clf_xgboost)
 
 num_called = 0
-def predict(data):
+def predict(data, check=False):
     ret = []
     df = pd.DataFrame(data, columns=raw_data)
     outarray = np.empty((df.shape[0], len(best_features)), dtype=float)
-    #global num_called
-    #dump_or_check('df_dat'+str(num_called), df)
+    if check:
+        global num_called
+        dump_or_check('df_dat'+str(num_called), df)
 
     add_features(df, outarray)
     df_final = pd.DataFrame(outarray, columns=best_features)
@@ -124,7 +135,11 @@ def predict(data):
     for i in range(3):
         #x = models[i].predict(df_final)
         x = models[i].get_booster().inplace_predict(df_final)
+        if check:
+            dump_or_check('x-%d-%d' % (num_called, i), pd.DataFrame(x))
         ret.append(x)
-    #dump_or_check('df_pred'+str(num_called), df_final)
-    #num_called += 1
+
+    if check:
+        dump_or_check('df_pred'+str(num_called), df_final)
+        num_called += 1
     return ret
