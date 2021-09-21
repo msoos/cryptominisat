@@ -109,7 +109,7 @@ def set_up_features(features_fname):
         create_function = "def a%d(df): return %s" % (i, feat_gen_expr)
         exec(create_function)
         exec("feat_gen_funcs.append(a%d)" % i)
-    print(feat_gen_funcs)
+    #print(feat_gen_funcs)
 
 
 def load_models(short_fname, long_fname, forever_fname):
