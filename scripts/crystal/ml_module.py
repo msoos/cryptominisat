@@ -116,7 +116,7 @@ def load_models(short_fname, long_fname, forever_fname):
     global models
     for fname in [short_fname, long_fname, forever_fname]:
         clf_xgboost = xgb.XGBRegressor(n_jobs=1)
-        clf_xgboost.load_model(fname)
+        clf_xgboost.load_model(fname.replace("_py.", "_xgboost."))
         models.append(clf_xgboost)
 
 num_called = 0
