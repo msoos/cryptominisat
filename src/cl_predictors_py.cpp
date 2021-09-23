@@ -123,6 +123,9 @@ ClPredictorsPy::~ClPredictorsPy()
         for(uint32_t i=0; i < 3; i++) {
             assert(pRet[i]);
             Py_DECREF(pRet[i]);
+
+            assert(ret_data[i]);
+            Py_DECREF(ret_data[i]);
         }
     }
     Py_Finalize();
@@ -219,9 +222,13 @@ void ClPredictorsPy::predict_all(
     assert(num_elems == 3);
     for(uint32_t i = 0; i < 3; i++) {
         pRet[i] = PyList_GetItem(pResult, i);
-        PyArrayObject* a_dat = (PyArrayObject *)PyArray_ContiguousFromObject(pRet[i], NPY_DOUBLE, 1, 1);
-        out_result[i] = (double*)PyArray_DATA(a_dat);
-        assert(PyArray_SIZE(a_dat) == num);
+        ret_data[i] = (PyArrayObject *)PyArray_ContiguousFromObject(pRet[i], NPY_DOUBLE, 1, 1);
+
+        //NOTE: PyArray_DATA has no effect on the reference count of the array it is applied to
+        //      see: https://stackoverflow.com/questions/37919094/decrefing-after-a-call-to-pyarray-data
+        //      So no decrefing needed for this one
+        out_result[i] = (double*)PyArray_DATA(ret_data[i]);
+        assert(PyArray_SIZE(ret_data[i]) == num);
         Py_IncRef(pRet[i]);
     }
 
@@ -244,6 +251,10 @@ void CMSat::ClPredictorsPy::finish_all_predict()
             assert(pRet[i]);
             Py_DECREF(pRet[i]);
             pRet[i] = NULL;
+
+            assert(ret_data[i]);
+            Py_DECREF(ret_data[i]);
+            ret_data[i] = NULL;
         }
         assert(pArray != NULL);
         Py_DECREF(pArray);
