@@ -94,7 +94,7 @@ xboostmaxdepth=4
 xgboostminchild=300
 est=10
 
-for regressor in "xgboost" "lgbm"
+for regressor in "xgb" "lgbm"
 do
     for xboostmaxdepth in 4 6
     do

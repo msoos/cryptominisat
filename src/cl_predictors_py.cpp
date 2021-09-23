@@ -112,22 +112,21 @@ int ClPredictorsPy::set_up_input(
 ClPredictorsPy::ClPredictorsPy()
 {
     for(uint32_t i=0; i < 3; i++) {
-        pRet[i] = NULL;
+        ret_data[i] = NULL;
     }
 }
 
 ClPredictorsPy::~ClPredictorsPy()
 {
     //Free if we didn't already
-    if (pRet[0]) {
+    if (ret_data[0]) {
         for(uint32_t i=0; i < 3; i++) {
-            assert(pRet[i]);
-            Py_DECREF(pRet[i]);
-
             assert(ret_data[i]);
             Py_DECREF(ret_data[i]);
         }
     }
+    Py_DECREF(pFunc);
+
     Py_Finalize();
 }
 
@@ -145,8 +144,8 @@ int ClPredictorsPy::load_models(const std::string& short_fname,
     //std::wcout << L"path: " << pypath2 << std::endl;
 
     PyObject* pName = PyUnicode_FromString("ml_module");
-    PyObject* pModule = PyImport_Import(pName);
-//     Py_DECREF(pName);
+    pModule = PyImport_Import(pName);
+    Py_DECREF(pName);
     if (pModule == NULL) {
         PyErr_Print();
         cout << "ERROR: Failed to load ml_module from the same place as \"" + best_feats_fname + "\"!" << endl;
@@ -158,23 +157,32 @@ int ClPredictorsPy::load_models(const std::string& short_fname,
     pFunc = PyDict_GetItemString(pDict, "predict");
 
     // Set up features
-    PyObject * set_up_features = PyDict_GetItemString(pDict, "set_up_features");
-    PyObject *pArgs = PyTuple_New(1);
+    PyObject *set_up_features = PyDict_GetItemString(pDict, "set_up_features");
+    pArgs = PyTuple_New(1);
     PyTuple_SetItem(pArgs, 0, PyUnicode_FromString(best_feats_fname.c_str()));
-    PyObject_CallObject(set_up_features, pArgs);
-//     Py_DECREF(set_up_features);
-//     Py_DECREF(pArgs);
+    PyObject* ret = PyObject_CallObject(set_up_features, pArgs);
+    Py_DECREF(set_up_features);
+    Py_DECREF(pArgs);
+    Py_DECREF(ret);
 
 
     //Load models
-    PyObject * load_models = PyDict_GetItemString(pDict, "load_models");
+    PyObject* load_models = PyDict_GetItemString(pDict, "load_models");
     pArgs = PyTuple_New(3);
     PyTuple_SetItem(pArgs, 0, PyUnicode_FromString(short_fname.c_str()));
     PyTuple_SetItem(pArgs, 1, PyUnicode_FromString(long_fname.c_str()));
     PyTuple_SetItem(pArgs, 2, PyUnicode_FromString(forever_fname.c_str()));
-    PyObject_CallObject(load_models, pArgs);
-//     Py_DECREF(load_models);
-//     Py_DECREF(pArgs);
+    ret = PyObject_CallObject(load_models, pArgs);
+    if (ret == NULL) {
+        PyErr_Print();
+        cout << "ERROR: Failed to load models !" << endl;
+        exit(-1);
+    }
+    Py_DECREF(load_models);
+    Py_DECREF(pArgs);
+    Py_DECREF(ret);
+    Py_DECREF(pModule);
+    Py_DECREF(pDict);
     return 1;
 }
 
@@ -201,11 +209,12 @@ void ClPredictorsPy::predict_all(
     assert(pArray != NULL);
 
     // Tuple to hold the arguments to the method
-    PyObject *pArgs = PyTuple_New(1);
+    pArgs = PyTuple_New(1);
     PyTuple_SetItem(pArgs, 0, pArray);
 
     // Call the function with the arguments
     PyObject* pResult = PyObject_CallObject(pFunc, pArgs);
+    Py_DECREF(pArgs);
     if(pResult == NULL) {
         PyErr_Print();
         cout << "Calling the add method failed" << endl;
@@ -229,7 +238,7 @@ void ClPredictorsPy::predict_all(
         //      So no decrefing needed for this one
         out_result[i] = (double*)PyArray_DATA(ret_data[i]);
         assert(PyArray_SIZE(ret_data[i]) == num);
-        Py_IncRef(pRet[i]);
+        //Py_DECREF(pRet[i]);
     }
 
     //This should decrement all elements in the array, so we incremented it above.
@@ -246,19 +255,16 @@ void ClPredictorsPy::get_prediction_at(ClauseStatsExtra& extdata, const uint32_t
 void CMSat::ClPredictorsPy::finish_all_predict()
 {
     //Free previous result
-    if (pRet[0] != NULL) {
+    if (ret_data[0] != NULL) {
         for(uint32_t i=0; i < 3; i++) {
-            assert(pRet[i]);
-            Py_DECREF(pRet[i]);
-            pRet[i] = NULL;
+//             assert(pRet[i]);
+//             Py_DECREF(pRet[i]);
+//             pRet[i] = NULL;
 
             assert(ret_data[i]);
             Py_DECREF(ret_data[i]);
             ret_data[i] = NULL;
         }
-        assert(pArray != NULL);
-        Py_DECREF(pArray);
-        pArray = NULL;
     }
 }
 

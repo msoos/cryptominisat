@@ -89,7 +89,9 @@ private:
     PyObject *pFunc = NULL;
     PyObject *pRet[3];
     PyObject *pArray = NULL;
+    PyObject *pArgs = NULL;
     PyArrayObject* ret_data[3];
+    PyObject* pModule;
 };
 
 }

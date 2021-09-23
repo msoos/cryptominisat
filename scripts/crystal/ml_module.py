@@ -2,17 +2,17 @@
 
 import numpy as np
 import pandas as pd
-import time
 import xgboost as xgb
 import ast
 import crystalcodegen as ccg
-import pickle
 import os
+#from memory_profiler import *
 
 MISSING=np.NaN
 
 # check reproducibility by dumping and checking against previous run's dump
 def dump_or_check(fname, df):
+    import pickle
     if check_file_exists(fname):
         picklefile = open(fname, 'rb')
         df_saved = pickle.load(picklefile)
@@ -116,20 +116,23 @@ def load_models(short_fname, long_fname, forever_fname):
     global models
     for fname in [short_fname, long_fname, forever_fname]:
         clf_xgboost = xgb.XGBRegressor(n_jobs=1)
-        clf_xgboost.load_model(fname.replace("_py.", "_xgboost."))
+        clf_xgboost.load_model(fname.replace("_py.", "_xgb."))
         models.append(clf_xgboost)
 
+
 num_called = 0
+
+#@profile
 def predict(data, check=False):
     ret = []
     df = pd.DataFrame(data, columns=raw_data)
-    outarray = np.empty((df.shape[0], len(best_features)), dtype=float)
+    transformed_data = np.empty((df.shape[0], len(best_features)), dtype=float)
     if check:
         global num_called
         dump_or_check('df_dat'+str(num_called), df)
 
-    add_features(df, outarray)
-    df_final = pd.DataFrame(outarray, columns=best_features)
+    add_features(df, transformed_data)
+    df_final = pd.DataFrame(transformed_data, columns=best_features)
     df_final.replace([np.inf, np.NaN, np.inf, np.NINF, np.Infinity], MISSING, inplace=True)
 
     for i in range(3):
@@ -142,4 +145,8 @@ def predict(data, check=False):
     if check:
         dump_or_check('df_pred'+str(num_called), df_final)
         num_called += 1
+
+    del df
+    del df_final
+    del transformed_data
     return ret
