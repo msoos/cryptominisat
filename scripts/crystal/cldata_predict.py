@@ -302,7 +302,7 @@ class Learner:
             clf = clf_forest
         elif options.regressor == "lgbm":
             clf = clf_lgbm
-        elif options.regressor == "xgboost":
+        elif options.regressor == "xgb":
             print("Using xgboost no. estimators:", options.n_estimators_xgboost)
             clf = clf_xgboost
         elif options.regressor == "median":
@@ -322,7 +322,7 @@ class Learner:
                     n_estimators=options.num_trees*5,
                     max_features="sqrt",
                     random_state=prng)
-            elif options.regressor == "xgboost":
+            elif options.regressor == "xgb":
                 print("for TOP calculation, we are replacing the XGBOOST predictor!!!")
                 clf = xgb.XGBRegressor(
                     objective='reg:squarederror',
@@ -361,7 +361,7 @@ class Learner:
 
         fname_pred_out = options.basedir + "/predictor_{name}_{typ}.json".format(
                 name=options.name, typ=options.regressor)
-        if options.basedir and options.regressor == "xgboost":
+        if options.basedir and options.regressor == "xgb":
             booster = clf.get_booster()
             booster.save_model(fname_pred_out)
             print("==> Saved XGB model to: ", fname_pred_out)
@@ -379,7 +379,7 @@ class Learner:
                 top_num_features=200,
                 features=features,
                 plot=options.show)
-        elif options.regressor == "xgboost":
+        elif options.regressor == "xgb":
             self.importance_XGB(clf, features=features)
 
         # print distribution of error
@@ -514,7 +514,7 @@ if __name__ == "__main__":
                         dest="gen_topfeats", help="Only generate final predictor")
 
     # type of regressor
-    parser.add_argument("--regressor", type=str, default="xgboost",
+    parser.add_argument("--regressor", type=str, default="xgb",
                         dest="regressor", help="Final classifier should be a: tree, svm, linear, forest, xgboost, bagging")
     parser.add_argument("--xgboostestimators", default=10, type=int,
                         dest="n_estimators_xgboost", help="Number of estimators for xgboost")

@@ -100,7 +100,7 @@ do
     do
         for xgboostminchild in 50 300
         do
-            for est in 10
+            for est in 15
             do
                 generate
             done
