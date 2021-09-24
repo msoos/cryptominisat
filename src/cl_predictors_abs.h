@@ -31,7 +31,6 @@ THE SOFTWARE.
 #include "clause.h"
 
 #define PRED_COLS 20
-#define NUM_RAW_FEATS 25
 
 using std::vector;
 

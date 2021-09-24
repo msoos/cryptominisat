@@ -212,3 +212,10 @@ cd "$FNAME-dir"
 ../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype xgboost --simdrat 1 --printsol 0 --predloc "./" | tee cms-final-run.out
 )
 exit
+
+
+# old
+# ./cryptominisat5 goldb-heqc-i10mul.cnf --simdrat 1 --printsol 0 --predloc ./data/14-april-2021-69bad529f962c-cut1-3.0-cut2-25.0-limit-1000-est10-w0-xbmin50-xbmd6/ --predtype py --predbestfeats ./best_features-b93210018231ab04d2.txt
+
+# current
+# ./cryptominisat5 goldb-heqc-i10mul.cnf --simdrat 1 --printsol 0 --predloc ./data/18-sept-2021-a408d53c665f9305b-cut1-3.0-cut2-25.0-limit-1000-est10-w0-xbmin50-xbmd6-regxgb/ --predtype py --predbestfeats ./best_features-rdb0-only.txt

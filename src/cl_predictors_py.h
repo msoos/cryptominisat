@@ -33,6 +33,8 @@ THE SOFTWARE.
 #include <Python.h>
 #include <numpy/arrayobject.h>
 
+#define NUM_RAW_FEATS 34
+
 using std::vector;
 
 namespace CMSat {
