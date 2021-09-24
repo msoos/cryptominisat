@@ -6,6 +6,10 @@ import xgboost as xgb
 import ast
 import crystalcodegen as ccg
 import os
+
+# to test memory safety
+#import gc
+# to test memory usage
 #from memory_profiler import *
 
 MISSING=np.NaN
@@ -122,6 +126,7 @@ def load_models(short_fname, long_fname, forever_fname):
 
 num_called = 0
 
+# to test memory usage
 #@profile
 def predict(data, check=False):
     ret = []
@@ -149,4 +154,5 @@ def predict(data, check=False):
     del df
     del df_final
     del transformed_data
+    # gc.collect() # to test memory safety
     return ret

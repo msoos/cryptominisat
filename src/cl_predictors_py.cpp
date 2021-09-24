@@ -161,7 +161,7 @@ int ClPredictorsPy::load_models(const std::string& short_fname,
     pArgs = PyTuple_New(1);
     PyTuple_SetItem(pArgs, 0, PyUnicode_FromString(best_feats_fname.c_str()));
     PyObject* ret = PyObject_CallObject(set_up_features, pArgs);
-    Py_DECREF(set_up_features);
+    //Py_DECREF(set_up_features);
     Py_DECREF(pArgs);
     Py_DECREF(ret);
 
@@ -178,7 +178,7 @@ int ClPredictorsPy::load_models(const std::string& short_fname,
         cout << "ERROR: Failed to load models !" << endl;
         exit(-1);
     }
-    Py_DECREF(load_models);
+    //Py_DECREF(load_models);
     Py_DECREF(pArgs);
     Py_DECREF(ret);
     //Py_DECREF(pModule);
