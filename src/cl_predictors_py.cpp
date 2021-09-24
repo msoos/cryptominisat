@@ -181,8 +181,8 @@ int ClPredictorsPy::load_models(const std::string& short_fname,
     Py_DECREF(load_models);
     Py_DECREF(pArgs);
     Py_DECREF(ret);
-    Py_DECREF(pModule);
-    Py_DECREF(pDict);
+    //Py_DECREF(pModule);
+    //Py_DECREF(pDict);
     return 1;
 }
 
