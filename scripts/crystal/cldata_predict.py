@@ -359,15 +359,16 @@ class Learner:
                 clf, features,
                 fname=options.dot + "-" + self.func_name)
 
-        fname_pred_out = options.basedir + "/predictor_{name}_{typ}.json".format(
+        if options.basedir:
+            fname_pred_out = options.basedir + "/predictor_{name}_{typ}.json".format(
                 name=options.name, typ=options.regressor)
-        if options.basedir and options.regressor == "xgb":
-            booster = clf.get_booster()
-            booster.save_model(fname_pred_out)
-            print("==> Saved XGB model to: ", fname_pred_out)
-        elif options.basedir and options.regressor == "lgbm":
-            clf.booster_.save_model(fname_pred_out)
-            print("==> Saved LGBM model to: ", fname_pred_out)
+            if options.regressor == "xgb":
+                booster = clf.get_booster()
+                booster.save_model(fname_pred_out)
+                print("==> Saved XGB model to: ", fname_pred_out)
+            elif options.basedir and options.regressor == "lgbm":
+                clf.booster_.save_model(fname_pred_out)
+                print("==> Saved LGBM model to: ", fname_pred_out)
         else:
             print("WARNING: NOT writing code -- you must use xgboost/lgbm and give dir for that")
 
