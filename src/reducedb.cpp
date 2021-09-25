@@ -818,15 +818,15 @@ void ReduceDB::clean_lev0_once_in_a_while()
             solver->conf.pred_dontmove_until_timeinside == 2) ||
             solver->clause_locked(*cl, offset))
         {
-            if ((time_inside_solver < checked_every/2 &&
-                solver->conf.pred_dontmove_until_timeinside == 1) ||
-                (time_inside_solver < checked_every &&
-                solver->conf.pred_dontmove_until_timeinside == 2) ||
-                solver->clause_locked(*cl, offset))
-            {
-                kept_in_forever_due_to_dontmove++;
-                keep_forever++;
-            }
+//             if ((time_inside_solver < checked_every/2 &&
+//                 solver->conf.pred_dontmove_until_timeinside == 1) ||
+//                 (time_inside_solver < checked_every &&
+//                 solver->conf.pred_dontmove_until_timeinside == 2) ||
+//                 solver->clause_locked(*cl, offset))
+//             {
+//                 kept_in_forever_due_to_dontmove++;
+//                 keep_forever++;
+//             }
             keep = true;
         }
 
@@ -900,15 +900,15 @@ void ReduceDB::clean_lev1_once_in_a_while()
             solver->conf.pred_dontmove_until_timeinside == 2) ||
             solver->clause_locked(*cl, offset)
         ) {
-            if ((time_inside_solver < checked_every/2 &&
-                solver->conf.pred_dontmove_until_timeinside == 1) ||
-                (time_inside_solver < checked_every &&
-                solver->conf.pred_dontmove_until_timeinside == 2) ||
-                solver->clause_locked(*cl, offset))
-            {
-                kept_in_long_due_to_dontmove++;
-                keep_long++;
-            }
+//             if ((time_inside_solver < checked_every/2 &&
+//                 solver->conf.pred_dontmove_until_timeinside == 1) ||
+//                 (time_inside_solver < checked_every &&
+//                 solver->conf.pred_dontmove_until_timeinside == 2) ||
+//                 solver->clause_locked(*cl, offset))
+//             {
+//                 kept_in_long_due_to_dontmove++;
+//                 keep_long++;
+//             }
 
             kept_in_long++;
             assert(cl->stats.which_red_array == 1);
