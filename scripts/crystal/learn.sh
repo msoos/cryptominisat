@@ -109,3 +109,8 @@ do
 done
 
 exit 0
+
+
+# simple run:
+
+# ../cldata_predict.py forever-comb-cut1-3.0-cut2-25.0-limit-1000.dat --tier forever --regressor linear --xgboostest 10 --weight 0 --xgboostminchild 300 --xboostmaxdepth=4 --features "best_only" --bestfeatfile ../best_features-rdb0-only.txt

@@ -200,33 +200,52 @@ class Learner:
         print("-> Number of features  :", len(features))
         print("-> Number of datapoints:", self.df.shape)
         print("-> Predicting          :", to_predict)
-        #extra_feats = [to_predict, "rdb0.dump_no", "rdb0.glue"]
         extra_feats = [to_predict, "rdb0.dump_no"]
         df = self.df[features+extra_feats].copy()
 
         if options.check_row_data:
             helper.check_too_large_or_nan_values(df, features)
 
-        print("Value distribution of 'dump_no':\n%s" % df["rdb0.dump_no"].value_counts())
+        print("Value distribution of 'rdb0.dump_no':\n%s" % df["rdb0.dump_no"].value_counts())
+        print("Value distribution of 'rdb0.glue':\n%s" % df["rdb0.glue"].value_counts())
         print("Value distribution of to_predict:\n%s" % df[to_predict].value_counts())
 
-        if False:
-            transformed = df[features].values
+        train, test = train_test_split(df, test_size=0.33, random_state=prng)
+        if options.regressor == "linear":
+            #cg = ColumnTransformer([("norm1", Normalizer(norm='l1'), list(range(len(df)))),
+            #                        ])
+            #cg.fit_transform(df)
+
+            trans_train = train[features].values
+            trans_test = test[features].values
+
 
             # Impute data
             imp_mean = sklearn.impute.SimpleImputer(
                 #missing_values=MISSING,
+                copy=False,
                 strategy='mean')
-            transformed = imp_mean.fit_transform(transformed)
+            imp_mean.fit_transform(trans_train)
+            imp_mean.transform(trans_test)
 
             # Scale data
-            my_scaler = sklearn.preprocessing.Normalizer()
-            transformed = my_scaler.fit_transform(transformed)
+            my_scaler = sklearn.preprocessing.Normalizer(
+                norm='l1',
+                copy=False)
+            my_scaler.fit_transform(trans_train)
+            my_scaler.transform(trans_test)
 
             # recreate dataframe
-            transformed = np.append(transformed, df[extra_feats].values, axis=1)
-            df_trans = pd.DataFrame(transformed, columns=features+extra_feats)
-            df = df_trans
+            trans_train = np.append(trans_train, train[extra_feats].values, axis=1)
+            df_trans_train = pd.DataFrame(trans_train, columns=features+extra_feats)
+            train = df_trans_train
+
+            trans_test = np.append(trans_test, test[extra_feats].values, axis=1)
+            df_trans_test = pd.DataFrame(trans_test, columns=features+extra_feats)
+            test = df_trans_test
+
+            print("Value distribution of 'rdb0.glue' in test:\n%s" % test["rdb0.glue"].value_counts())
+            print("Value distribution of 'rdb0.glue' in train:\n%s" % train["rdb0.glue"].value_counts())
 
         if options.poly_features:
             transformed = df[features].values
@@ -241,7 +260,6 @@ class Learner:
             df_trans = pd.DataFrame(transformed, columns=features+extra_feats)
             df = df_trans
 
-        train, test = train_test_split(df, test_size=0.33, random_state=prng)
         X_train = train[features]
         y_train = train[to_predict]
 
@@ -395,7 +413,7 @@ class Learner:
         print("--------------------------------")
         for dump_no in [1, None]:
             self.filtered_conf_matrixes(
-                dump_no, df, features, to_predict, clf, "test and train data")
+                dump_no, pd.concat([test, train]), features, to_predict, clf, "test and train data")
         print("--------------------------")
         print("-       train data       -")
         print("--------------------------")
@@ -409,10 +427,6 @@ class Learner:
                 pickle.dump(test[features+[to_predict]], f)
             self.dump_ml_test_data(test, "../ml_perf_test.txt-%s" % options.tier, to_predict)
             print("Example data dumped")
-
-        # Calculate predicted value for the original dataframe
-        y_pred = clf.predict(df[features])
-        return y_pred
 
     def rem_features(self, feat, to_remove):
         print("To remove: " , to_remove)
