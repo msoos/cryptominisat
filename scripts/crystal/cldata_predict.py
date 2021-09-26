@@ -200,7 +200,13 @@ class Learner:
         print("-> Number of features  :", len(features))
         print("-> Number of datapoints:", self.df.shape)
         print("-> Predicting          :", to_predict)
-        extra_feats = [to_predict, "rdb0.dump_no"]
+
+        # these are needed for prediction/later checks, so let's add them in
+        #       if they are not already in the features
+        extra_feats = [to_predict]
+        for missing_needed in ["rdb0.glue", "rdb0.dump_no"]:
+            if missing_needed not in features:
+                extra_feats.append(missing_needed)
         df = self.df[features+extra_feats].copy()
 
         if options.check_row_data:
