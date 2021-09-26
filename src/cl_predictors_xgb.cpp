@@ -24,6 +24,8 @@ THE SOFTWARE.
 #include "clause.h"
 #include "solver.h"
 #include <cmath>
+#include <sstream>
+#include <fstream>
 extern char predictor_short_json[];
 extern unsigned int predictor_short_json_len;
 
@@ -90,6 +92,33 @@ void ClPredictorsXGB::predict_all(
     const uint32_t num)
 {
     safe_xgboost(XGDMatrixCreateFromMat(data, num, PRED_COLS, missing_val, &dmat))
+    if (num == 0) {
+        return;
+    }
+
+//For checking in python using check_against_binary_dat
+#if 0
+        std::stringstream s;
+        s << "my_dump_" << num_dumps << ".csv";
+        std::ofstream f;
+        f.open(s.str().c_str());
+        float* data_ptr = data;
+        for(uint32_t i = 0; i < num; i ++) {
+            std::stringstream line;
+            for(uint32_t i2 = 0; i2 < PRED_COLS; i2++) {
+                line << std::setprecision(30) << *data_ptr;
+                if (i2+1 < PRED_COLS) {
+                    line << ",";
+                }
+                data_ptr++;
+            }
+            f << line.str() << endl;
+        }
+        f.close();
+        num_dumps++;
+    }
+#endif
+
     bst_ulong out_len;
     safe_xgboost(XGBoosterPredict(
         handles[short_pred],

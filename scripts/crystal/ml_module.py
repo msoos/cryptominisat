@@ -14,6 +14,52 @@ import os
 
 MISSING=np.NaN
 
+raw_data = [
+    "is_ternary_resolvent",
+    "cl.glue_before_minim",
+    "rdb0.last_touched",
+    "rdb0.act_ranking_rel",
+    "rdb0.uip1_ranking_rel",
+    "rdb0.prop_ranking_rel",
+    "rdb0.last_touched_diff",
+    "cl.time_inside_solver",
+    "rdb0.props_made",
+    "rdb0_common.avg_props",
+    "rdb0_common.avg_glue",
+    "rdb0_common.avg_uip1_used",
+    "rdb0_common.conflSizeHistLT_avg",
+    "rdb0_common.glueHistLT_avg",
+    "rdb0.sum_props_made",
+    "rdb0.discounted_props_made",
+    "rdb0.discounted_props_made2",
+    "rdb0.discounted_props_made3",
+    "rdb0.discounted_uip1_used",
+    "rdb0.discounted_uip1_used2",
+    "rdb0.discounted_uip1_used3",
+    "rdb0.sum_uip1_used",
+    "rdb0.uip1_used",
+    "rdb0.glue",
+    "cl.orig_glue",
+    "rdb0.size",
+    "rdb0.sum_uip1_per_time_ranking",
+    "rdb0.sum_props_per_time_ranking",
+    "rdb0.sum_uip1_per_time_ranking_rel",
+    "rdb0.sum_props_per_time_ranking_rel",
+    "cl.glueHist_avg",
+    "cl.atedecents_binIrred",
+    "cl.glueHistLT_avg",
+    "cl.glueHist_longterm_avg",
+    "cl.num_antecedents",
+    "cl.overlapHistLT_avg",
+    "cl.conflSizeHist_avg",
+    "cl.atedecents_binRed",
+    "cl.num_total_lits_antecedents",
+    "cl.numResolutionsHistLT_avg"
+    #"sum_uip1_per_time_ranking_rel",
+    #"sum_props_per_time_ranking_rel",
+]
+
+
 # check reproducibility by dumping and checking against previous run's dump
 def dump_or_check(fname, df):
     import pickle
@@ -62,49 +108,30 @@ def get_features(fname):
 
     return best_features
 
-raw_data = [
-    "cl.glue_before_minim",
-    "rdb0.last_touched",
-    "rdb0.act_ranking_rel",
-    "rdb0.uip1_ranking_rel",
-    "rdb0.prop_ranking_rel",
-    "rdb0.last_touched_diff",
-    "cl.time_inside_solver",
-    "rdb0.props_made",
-    "rdb0_common.avg_props",
-    "rdb0_common.avg_glue",
-    "rdb0_common.avg_uip1_used",
-    "rdb0_common.conflSizeHistLT_avg",
-    "rdb0_common.glueHistLT_avg",
-    "rdb0.sum_props_made",
-    "rdb0.discounted_props_made",
-    "rdb0.discounted_props_made2",
-    "rdb0.discounted_props_made3",
-    "rdb0.discounted_uip1_used",
-    "rdb0.discounted_uip1_used2",
-    "rdb0.discounted_uip1_used3",
-    "rdb0.sum_uip1_used",
-    "rdb0.uip1_used",
-    "rdb0.glue",
-    "cl.orig_glue",
-    "rdb0.size",
-    "rdb0.sum_uip1_per_time_ranking",
-    "rdb0.sum_props_per_time_ranking",
-    "rdb0.sum_uip1_per_time_ranking_rel",
-    "rdb0.sum_props_per_time_ranking_rel",
-    "cl.glueHist_avg",
-    "cl.atedecents_binIrred",
-    "cl.glueHistLT_avg",
-    "cl.glueHist_longterm_avg",
-    "cl.num_antecedents",
-    "cl.overlapHistLT_avg",
-    "cl.conflSizeHist_avg",
-    "cl.atedecents_binRed",
-    "cl.num_total_lits_antecedents",
-    "cl.numResolutionsHistLT_avg"
-    #"sum_uip1_per_time_ranking_rel",
-    #"sum_props_per_time_ranking_rel",
-]
+
+def check_against_binary_dat(fname, df, df_raw):
+    global best_features
+    check_file_exists(fname)
+    df2 = pd.read_csv(fname, sep=",", names=best_features)
+    print("Checking binary vs python:", fname)
+
+    for f in best_features:
+        for i in range(df.shape[0]):
+            s_pyt = float(df[f][i])
+            s_bin = float(df2[f][i])
+            if np.isnan(s_pyt) and np.isnan(s_bin):
+                continue
+            diff = abs(s_pyt - s_bin)
+
+            if diff > 10e-5:
+                for f_raw in list(df_raw):
+                    print("pyt_raw:", df_raw[f_raw][i], " feat: ", f_raw)
+                print("pyt:", s_pyt, " feat: ", f)
+                print("bin:", s_bin, " feat: ", f)
+                print("diff: ", diff)
+            assert diff < 10e-5
+
+    #assert df.equals(df2)
 
 
 models = []
@@ -143,16 +170,20 @@ num_called = 0
 # to test memory usage
 #@profile
 def predict(data, check=False):
+    global num_called
     ret = []
+
     df = pd.DataFrame(data, columns=raw_data)
     transformed_data = np.empty((df.shape[0], len(best_features)), dtype=float)
     if check:
-        global num_called
         dump_or_check('df_dat'+str(num_called), df)
 
     add_features(df, transformed_data)
     df_final = pd.DataFrame(transformed_data, columns=best_features)
     df_final.replace([np.inf, np.NaN, np.inf, np.NINF, np.Infinity], MISSING, inplace=True)
+
+    if check:
+        check_against_binary_dat('my_dump_'+str(num_called)+".csv", df_final, df)
 
     for i in range(3):
         #x = models[i].predict(df_final)
@@ -163,8 +194,8 @@ def predict(data, check=False):
 
     if check:
         dump_or_check('df_pred'+str(num_called), df_final)
-        num_called += 1
 
+    num_called += 1
     del df
     del df_final
     del transformed_data

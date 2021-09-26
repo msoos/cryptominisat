@@ -65,6 +65,7 @@ int ClPredictorsPy::set_up_input(
     uint32_t last_touched_diff = sumConflicts - (uint64_t)cl->stats.last_touched;
     double time_inside_solver = sumConflicts - (uint64_t)extra_stats.introduced_at_conflict;
 
+    at[x++] = cl->stats.is_ternary_resolvent;
     at[x++] = extra_stats.glue_before_minim;
     at[x++] = cl->stats.last_touched;
     at[x++] = act_ranking_rel;

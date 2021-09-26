@@ -72,6 +72,9 @@ private:
     const float *out_result_short;
     const float *out_result_long;
     const float *out_result_forever;
+
+    //debugging
+    int num_dumps = 0;
 };
 
 }
