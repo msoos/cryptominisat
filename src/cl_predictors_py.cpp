@@ -97,7 +97,7 @@ int ClPredictorsPy::set_up_input(
     at[x++] = sum_props_per_time_ranking_rel;
 
     //Ternary resolvents lack glue and antecedent data
-    if (!cl->stats.is_ternary_resolvent) {
+    if (cl->stats.is_ternary_resolvent) {
         for(int i = 0; i < 10; i++) {
             at[x++] = missing_val;
         }
