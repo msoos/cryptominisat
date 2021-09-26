@@ -255,13 +255,13 @@ struct ClauseStatsExtra
     uint32_t sum_uip1_used = 0; ///N.o. times claue was used during 1st UIP generation for ALL TIME
     uint32_t sum_props_made = 0; ///<Number of times caused propagation
     float discounted_uip1_used3 = 0;
+    float discounted_uip1_used2 = 0;
+    float discounted_props_made2 = 0;
+    float discounted_props_made3 = 0;
     #ifdef STATS_NEEDED
     uint32_t dump_no = 0;
     uint32_t orig_connects_num_communities = 0;
     uint32_t connects_num_communities = 0;
-    float discounted_uip1_used2 = 0;
-    float discounted_props_made2 = 0;
-    float discounted_props_made3 = 0;
     uint32_t conflicts_made = 0; ///<Number of times caused conflict
     uint32_t ttl_stats = 0;
     AtecedentData<uint16_t> antec_data;
@@ -285,11 +285,12 @@ struct ClauseStatsExtra
         discounted_props_made = discount(0.8, discounted_props_made, stats.props_made);
         discounted_uip1_used =  discount(0.8, discounted_uip1_used, stats.uip1_used);
         discounted_uip1_used3 =  discount(0.9, discounted_uip1_used3, stats.uip1_used);
+        discounted_uip1_used2 =  discount(0.4, discounted_uip1_used2, stats.uip1_used);
+        discounted_props_made2 = discount(0.4, discounted_props_made2, stats.props_made);
+        discounted_props_made3 = discount(0.9, discounted_props_made3, stats.props_made);
 
         #ifdef STATS_NEEDED
-        discounted_props_made3 = discount(0.9, discounted_props_made3, stats.props_made);
-        discounted_props_made2 = discount(0.4, discounted_props_made2, stats.props_made);
-        discounted_uip1_used2 =  discount(0.4, discounted_uip1_used2, stats.uip1_used);
+        //unused discounted ones come here
         #endif
 
         stats.update_rdb_stats();
@@ -326,6 +327,9 @@ struct ClauseStatsExtra
         ret.discounted_uip1_used =  first.discounted_uip1_used  + second.discounted_uip1_used;
         ret.orig_glue = std::min(first.orig_glue, second.orig_glue);
         ret.discounted_uip1_used3 = first.discounted_uip1_used3 + second.discounted_uip1_used3;
+        ret.discounted_props_made2 = first.discounted_props_made2 + second.discounted_props_made2;
+        ret.discounted_uip1_used2 =  first.discounted_uip1_used2  + second.discounted_uip1_used2;
+        ret.discounted_props_made3 = first.discounted_props_made3 + second.discounted_props_made3;
         #endif
 
         #ifdef STATS_NEEDED
@@ -335,9 +339,6 @@ struct ClauseStatsExtra
         ret.orig_connects_num_communities = std::max(
             first.orig_connects_num_communities,
             second.orig_connects_num_communities);
-        ret.discounted_props_made2 = first.discounted_props_made2 + second.discounted_props_made2;
-        ret.discounted_props_made3 = first.discounted_props_made3 + second.discounted_props_made3;
-        ret.discounted_uip1_used2 =  first.discounted_uip1_used2  + second.discounted_uip1_used2;
         #endif
 
         return ret;

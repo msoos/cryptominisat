@@ -18,6 +18,16 @@ rdb0.discounted_uip1_used
 (cl.glueHist_avg/cl.atedecents_binRed)
 ((rdb0.act_ranking_rel/rdb0.last_touched_diff)*(rdb0.uip1_ranking_rel/rdb0_common.avg_uip1_used))
 (cl.atedecents_binIrred*rdb0_common.avg_uip1_used)
+# Correlation check wants these:
+#rdb0_common.avg_uip1_used
+#rdb0.uip1_used
+#rdb0.discounted_uip1_used2
+#rdb0.discounted_props_made2
+#rdb0.props_made
+#rdb0.sum_props_per_time_ranking_rel
+#rdb0.discounted_uip1_used3
+#rdb0.sum_uip1_per_time_ranking_rel
+
 #
 # Some old stuff
 #(cl.conflicts-rdb0.introduced_at_conflict)

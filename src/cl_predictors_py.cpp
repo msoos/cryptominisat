@@ -78,7 +78,11 @@ int ClPredictorsPy::set_up_input(
     at[x++] = solver->hist.glueHistLT.avg();
     at[x++] = extra_stats.sum_props_made;
     at[x++] = extra_stats.discounted_props_made;
+    at[x++] = extra_stats.discounted_props_made2;
+    at[x++] = extra_stats.discounted_props_made3;
     at[x++] = extra_stats.discounted_uip1_used;
+    at[x++] = extra_stats.discounted_uip1_used2;
+    at[x++] = extra_stats.discounted_uip1_used3;
     at[x++] = extra_stats.sum_uip1_used;
     at[x++] = cl->stats.uip1_used;
     at[x++] = cl->stats.glue;
@@ -86,7 +90,6 @@ int ClPredictorsPy::set_up_input(
     at[x++] = cl->size();
     at[x++] = sum_uip1_per_time_ranking_rel;
     at[x++] = sum_props_per_time_ranking_rel;
-    at[x++] = extra_stats.discounted_uip1_used3;
 
     //Ternary resolvents lack glue and antecedent data
     if (!cl->stats.is_ternary_resolvent) {
