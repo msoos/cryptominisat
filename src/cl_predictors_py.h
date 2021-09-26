@@ -33,7 +33,7 @@ THE SOFTWARE.
 #include <Python.h>
 #include <numpy/arrayobject.h>
 
-#define NUM_RAW_FEATS 37
+#define NUM_RAW_FEATS 39
 
 using std::vector;
 
@@ -60,6 +60,8 @@ public:
         const double   act_ranking_rel,
         const double   uip1_ranking_rel,
         const double   prop_ranking_rel,
+        const double   sum_uip1_per_time_ranking,
+        const double   sum_props_per_time_ranking,
         const double   sum_uip1_per_time_ranking_rel,
         const double   sum_props_per_time_ranking_rel,
         const ReduceCommonData& commdata,

@@ -100,6 +100,8 @@ public:
         const double   act_ranking_rel,
         const double   uip1_ranking_rel,
         const double   prop_ranking_rel,
+        const double   sum_uip1_per_time_ranking,
+        const double   sum_props_per_time_ranking,
         const double   sum_uip1_per_time_ranking_rel,
         const double   sum_props_per_time_ranking_rel,
         const ReduceCommonData& commdata,

@@ -88,6 +88,8 @@ raw_data = [
     "rdb0.glue",
     "cl.orig_glue",
     "rdb0.size",
+    "rdb0.sum_uip1_per_time_ranking",
+    "rdb0.sum_props_per_time_ranking",
     "rdb0.sum_uip1_per_time_ranking_rel",
     "rdb0.sum_props_per_time_ranking_rel",
     "cl.glueHist_avg",

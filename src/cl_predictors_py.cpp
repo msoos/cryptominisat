@@ -51,6 +51,8 @@ int ClPredictorsPy::set_up_input(
     const double   act_ranking_rel,
     const double   uip1_ranking_rel,
     const double   prop_ranking_rel,
+    const double   sum_uip1_per_time_ranking,
+    const double   sum_props_per_time_ranking,
     const double   sum_uip1_per_time_ranking_rel,
     const double   sum_props_per_time_ranking_rel,
     const ReduceCommonData& commdata,
@@ -88,6 +90,8 @@ int ClPredictorsPy::set_up_input(
     at[x++] = cl->stats.glue;
     at[x++] = extra_stats.orig_glue;
     at[x++] = cl->size();
+    at[x++] = sum_uip1_per_time_ranking;
+    at[x++] = sum_props_per_time_ranking;
     at[x++] = sum_uip1_per_time_ranking_rel;
     at[x++] = sum_props_per_time_ranking_rel;
 

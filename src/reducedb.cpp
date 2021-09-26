@@ -726,6 +726,8 @@ void ReduceDB::update_preds(const vector<ClOffset>& offs)
                 act_ranking_rel,
                 uip1_ranking_rel,
                 prop_ranking_rel,
+                stats_extra.sum_uip1_per_time_ranking,
+                stats_extra.sum_props_per_time_ranking,
                 sum_uip1_per_time_ranking_rel,
                 sum_props_per_time_ranking_rel,
                 commdata,
