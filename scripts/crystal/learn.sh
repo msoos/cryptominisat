@@ -79,7 +79,7 @@ function generate() {
 #xboostminchild=300
 #est=10
 
-bestf="../../scripts/crystal/best_features-rdb0-only.txt"
+bestf="../../scripts/crystal/best_features-correlaton.txt"
 w=0
 xgboostsubsample="1.0"
 basename="18-sept-2021-a408d53c665f9305b"
