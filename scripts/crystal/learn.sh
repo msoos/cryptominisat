@@ -82,12 +82,12 @@ function generate() {
 bestf="../../scripts/crystal/best_features-correlaton.txt"
 w=0
 xgboostsubsample="1.0"
-basename="18-sept-2021-a408d53c665f9305b"
+basename="27-sept-a408d53c665f9305b"
 #basename="14-april-2021-69bad529f962c"
 #basename="8march-2020-3acd81dc55df3-36feats"
 #basename="aes-30-march-2020-a1e0e19be0c1"
 #basename="orig"
-limit=1000
+limit=3000
 cut1="3.0"
 cut2="25.0"
 xboostmaxdepth=4
@@ -96,11 +96,11 @@ est=10
 
 for regressor in "xgb" "lgbm"
 do
-    for xboostmaxdepth in 4 6
+    for xboostmaxdepth in 6
     do
-        for xgboostminchild in 50 300
+        for xgboostminchild in 5 10
         do
-            for est in 15
+            for est in 10 15 20
             do
                 generate
             done
