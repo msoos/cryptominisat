@@ -817,8 +817,7 @@ void ReduceDB::clean_lev0_once_in_a_while()
         if ((time_inside_solver < checked_every/2 &&
             solver->conf.pred_dontmove_until_timeinside == 1) ||
             (time_inside_solver < checked_every &&
-            solver->conf.pred_dontmove_until_timeinside == 2) ||
-            solver->clause_locked(*cl, offset))
+            solver->conf.pred_dontmove_until_timeinside == 2))
         {
 //             if ((time_inside_solver < checked_every/2 &&
 //                 solver->conf.pred_dontmove_until_timeinside == 1) ||
@@ -848,7 +847,8 @@ void ReduceDB::clean_lev0_once_in_a_while()
         } else {
             moved_from_forever_to_long++;
 
-            if (solver->conf.move_from_tier0 == 1) {
+            //if locked, move anyway, even though we are supposed to delete
+            if (solver->conf.move_from_tier0 == 1 || solver->clause_locked(*cl, offset)) {
                 solver->longRedCls[1].push_back(offset);
                 cl->stats.which_red_array = 1;
             } else {
@@ -899,9 +899,8 @@ void ReduceDB::clean_lev1_once_in_a_while()
             (time_inside_solver < checked_every/2 &&
             solver->conf.pred_dontmove_until_timeinside == 1) ||
             (time_inside_solver < checked_every &&
-            solver->conf.pred_dontmove_until_timeinside == 2) ||
-            solver->clause_locked(*cl, offset)
-        ) {
+            solver->conf.pred_dontmove_until_timeinside == 2))
+        {
 //             if ((time_inside_solver < checked_every/2 &&
 //                 solver->conf.pred_dontmove_until_timeinside == 1) ||
 //                 (time_inside_solver < checked_every &&
@@ -917,7 +916,8 @@ void ReduceDB::clean_lev1_once_in_a_while()
             solver->longRedCls[1][j++] =solver->longRedCls[1][i];
         } else {
             moved_from_long_to_short++;
-            if (solver->conf.move_from_tier1 == 1) {
+            //if locked, we'll move it anyway, since we can't delete
+            if (solver->conf.move_from_tier1 == 1 || solver->clause_locked(*cl, offset)) {
                 solver->longRedCls[2].push_back(offset);
                 cl->stats.which_red_array = 2;
             } else {
