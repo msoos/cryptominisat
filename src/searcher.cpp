@@ -1738,33 +1738,6 @@ Clause* Searcher::handle_last_confl(
     //Unfortunately, we have to change the ratio data dumped as time goes on
     //or we run out of space on CNFs that take millions(!) of conflicts
     //to solve, such as e_rphp035_05.cnf
-    num_confl_since_perf_adjust++;
-    if (num_confl_since_perf_adjust > 40000) {
-        double myTime = cpuTime();
-        if (myTime != 0) {
-            //only adjust on systems where it's possible, i.e. timing makes sense
-            const double conf_per_sec = sumConflicts/myTime;
-            const double old_rate = stats_cl_gather_adjust_rate;
-            if (conf_per_sec <= 200.0) {
-                stats_cl_gather_adjust_rate = 5.0;
-            }
-            if (conf_per_sec <= 500.0) {
-                stats_cl_gather_adjust_rate = 3.0;
-            }
-            if (conf_per_sec > 500.0) {
-                stats_cl_gather_adjust_rate = 1.0;
-            }
-            if (conf_per_sec > 3000.0) {
-                stats_cl_gather_adjust_rate = 0.3;
-            }
-            if (conf.verbosity) {
-                cout << "c [stats] conf/s: " << conf_per_sec
-                << " previous adjust rate:" << old_rate
-                << " new rate:" << stats_cl_gather_adjust_rate << endl;
-            }
-        }
-        num_confl_since_perf_adjust = 0;
-    }
     double decaying_ratio = (8000.0*1000.0)/((double)sumConflicts+1);
     if (decaying_ratio > 1.0) {
         decaying_ratio = 1.0;
@@ -1772,11 +1745,7 @@ Clause* Searcher::handle_last_confl(
         //Make it more-than-linearly less
         decaying_ratio = ::pow(decaying_ratio, 1.1);
     }
-    if (learnt_clause.size() > 2 &&
-        myrnd <= (conf.dump_individual_cldata_ratio*
-            decaying_ratio*
-            stats_cl_gather_adjust_rate))
-    {
+    if (learnt_clause.size() > 2 && myrnd <= (conf.dump_individual_cldata_ratio*decaying_ratio)) {
         to_dump = true;
     }
     #endif
