@@ -128,7 +128,7 @@ def check_against_binary_dat(fname, df, df_raw):
                     print("pyt_raw:", df_raw[f_raw][i], " feat: ", f_raw)
                 print("pyt:", s_pyt, " feat: ", f)
                 print("bin:", s_bin, " feat: ", f)
-                print("diff: ", diff)
+                print("diff for feat ", f, ": ", diff)
             assert diff < 10e-5
 
     #assert df.equals(df2)
