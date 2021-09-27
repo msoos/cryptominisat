@@ -209,7 +209,9 @@ fi
 
 (
 cd "$FNAME-dir"
-../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" | tee cms-final-run.out
+ln -s ../ml_module.py .
+ln -s ../crystalcodegen.py .
+../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" | tee cms-final-run.out
 )
 exit
 
