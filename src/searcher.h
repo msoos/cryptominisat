@@ -294,6 +294,8 @@ class Searcher : public HyperEngine
         uint64_t more_red_minim_limit_binary_actual;
         #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
         AtecedentData<uint16_t> antec_data;
+        uint32_t num_confl_since_perf_adjust = 0;
+        double stats_cl_gather_adjust_rate = 1.0;
         #endif
         Clause* handle_last_confl(
             const uint32_t glue
