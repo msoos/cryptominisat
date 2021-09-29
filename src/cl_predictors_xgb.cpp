@@ -116,7 +116,6 @@ void ClPredictorsXGB::predict_all(
         }
         f.close();
         num_dumps++;
-    }
 #endif
 
     bst_ulong out_len;
