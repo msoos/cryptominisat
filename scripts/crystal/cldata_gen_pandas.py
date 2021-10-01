@@ -330,7 +330,7 @@ class QueryCls (helper.QueryHelper):
         one_part(1/4.0, " and rdb0.dump_no = 1 ")
         one_part(1/4.0, " and rdb0.dump_no = 2 ")
         one_part(1/4.0, " and rdb0.dump_no > 2 ")
-        one_part(1/4.0, " and rdb0.dump_no > 20 ")
+        one_part(1/4.0, " and rdb0.dump_no > 8 ")
 
         df = pd.concat(df_parts)
         print("-> size of all dump_no-s, strata {strata} data: {size}".format(
