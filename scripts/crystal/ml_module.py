@@ -59,6 +59,12 @@ raw_data = [
     #"sum_props_per_time_ranking_rel",
 ]
 
+def dump_dataframe(fname, df):
+    picklefile = open(fname, 'wb')
+    pickle.dump(df, picklefile)
+    picklefile.close()
+
+
 
 # check reproducibility by dumping and checking against previous run's dump
 def dump_or_check(fname, df):
@@ -80,9 +86,7 @@ def dump_or_check(fname, df):
                     exit(-1)
 
     else:
-        picklefile = open(fname, 'wb')
-        pickle.dump(df, picklefile)
-        picklefile.close()
+        dump_dataframe(fname, df)
         print("Not checking, writing: ", fname)
 
 
@@ -172,21 +176,24 @@ num_called = 0
 
 # to test memory usage
 #@profile
-def predict(data, check=False):
+def predict(data, check=False, dump=False):
     global num_called
     ret = []
 
     df = pd.DataFrame(data, columns=raw_data)
+    if dump:
+        dump_dataframe('df_dump_%s' % num_called)
+
     transformed_data = np.empty((df.shape[0], len(best_features)), dtype=float)
     if check:
-        dump_or_check('df_dat'+str(num_called), df)
+        dump_or_check('df_check'+str(num_called), df)
 
     add_features(df, transformed_data)
     df_final = pd.DataFrame(transformed_data, columns=best_features)
     df_final.replace([np.inf, np.NaN, np.inf, np.NINF, np.Infinity], MISSING, inplace=True)
 
     if check:
-        check_against_binary_dat('my_dump_'+str(num_called)+".csv", df_final, df)
+        check_against_binary_dat('bin_dump'+str(num_called)+".csv", df_final, df)
 
     for i in range(3):
         #x = models[i].predict(df_final)

@@ -99,7 +99,7 @@ void ClPredictorsXGB::predict_all(
 //For checking in python using check_against_binary_dat
 #if 0
         std::stringstream s;
-        s << "my_dump_" << num_dumps << ".csv";
+        s << "bin_dump" << num_dumps << ".csv";
         std::ofstream f;
         f.open(s.str().c_str());
         float* data_ptr = data;
