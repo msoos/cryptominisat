@@ -17,7 +17,6 @@ MISSING=np.NaN
 raw_data = [
     "is_ternary_resolvent",
     "rdb0.which_red_array",
-    "cl.glue_before_minim",
     "rdb0.last_touched",
     "rdb0.act_ranking_rel",
     "rdb0.uip1_ranking_rel",
@@ -56,6 +55,7 @@ raw_data = [
     "cl.numResolutionsHistLT_avg",
     "rdb0.glue",
     "cl.orig_glue",
+    "cl.glue_before_minim",
     #"sum_uip1_per_time_ranking_rel",
     #"sum_props_per_time_ranking_rel",
 ]

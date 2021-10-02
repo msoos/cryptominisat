@@ -67,7 +67,6 @@ int ClPredictorsPy::set_up_input(
 
     at[x++] = cl->stats.is_ternary_resolvent;
     at[x++] = cl->stats.which_red_array;
-    at[x++] = extra_stats.glue_before_minim;
     at[x++] = cl->stats.last_touched;
     at[x++] = act_ranking_rel;
     at[x++] = uip1_ranking_rel;
@@ -97,7 +96,7 @@ int ClPredictorsPy::set_up_input(
 
     //Ternary resolvents lack glue and antecedent data
     if (cl->stats.is_ternary_resolvent) {
-        for(int i = 0; i < 12; i++) {
+        for(int i = 0; i < 13; i++) {
             at[x++] = missing_val;
         }
     } else {
@@ -113,6 +112,7 @@ int ClPredictorsPy::set_up_input(
         at[x++] = extra_stats.numResolutionsHistLT_avg;
         at[x++] = cl->stats.glue;
         at[x++] = extra_stats.orig_glue;
+        at[x++] = extra_stats.glue_before_minim;
     }
     assert(x == NUM_RAW_FEATS);
 
