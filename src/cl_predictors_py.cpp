@@ -66,6 +66,7 @@ int ClPredictorsPy::set_up_input(
     double time_inside_solver = sumConflicts - (uint64_t)extra_stats.introduced_at_conflict;
 
     at[x++] = cl->stats.is_ternary_resolvent;
+    at[x++] = cl->stats.which_red_array;
     at[x++] = extra_stats.glue_before_minim;
     at[x++] = cl->stats.last_touched;
     at[x++] = act_ranking_rel;
@@ -88,8 +89,6 @@ int ClPredictorsPy::set_up_input(
     at[x++] = extra_stats.discounted_uip1_used3;
     at[x++] = extra_stats.sum_uip1_used;
     at[x++] = cl->stats.uip1_used;
-    at[x++] = cl->stats.glue;
-    at[x++] = extra_stats.orig_glue;
     at[x++] = cl->size();
     at[x++] = sum_uip1_per_time_ranking;
     at[x++] = sum_props_per_time_ranking;
@@ -98,7 +97,7 @@ int ClPredictorsPy::set_up_input(
 
     //Ternary resolvents lack glue and antecedent data
     if (cl->stats.is_ternary_resolvent) {
-        for(int i = 0; i < 10; i++) {
+        for(int i = 0; i < 12; i++) {
             at[x++] = missing_val;
         }
     } else {
@@ -112,6 +111,8 @@ int ClPredictorsPy::set_up_input(
         at[x++] = extra_stats.antecedents_binred;
         at[x++] = extra_stats.num_total_lits_antecedents;
         at[x++] = extra_stats.numResolutionsHistLT_avg;
+        at[x++] = cl->stats.glue;
+        at[x++] = extra_stats.orig_glue;
     }
     assert(x == NUM_RAW_FEATS);
 

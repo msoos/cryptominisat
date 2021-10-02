@@ -16,6 +16,7 @@ MISSING=np.NaN
 
 raw_data = [
     "is_ternary_resolvent",
+    "rdb0.which_red_array",
     "cl.glue_before_minim",
     "rdb0.last_touched",
     "rdb0.act_ranking_rel",
@@ -38,8 +39,6 @@ raw_data = [
     "rdb0.discounted_uip1_used3",
     "rdb0.sum_uip1_used",
     "rdb0.uip1_used",
-    "rdb0.glue",
-    "cl.orig_glue",
     "rdb0.size",
     "rdb0.sum_uip1_per_time_ranking",
     "rdb0.sum_props_per_time_ranking",
@@ -54,7 +53,9 @@ raw_data = [
     "cl.conflSizeHist_avg",
     "cl.atedecents_binRed",
     "cl.num_total_lits_antecedents",
-    "cl.numResolutionsHistLT_avg"
+    "cl.numResolutionsHistLT_avg",
+    "rdb0.glue",
+    "cl.orig_glue",
     #"sum_uip1_per_time_ranking_rel",
     #"sum_props_per_time_ranking_rel",
 ]
