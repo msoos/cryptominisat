@@ -639,7 +639,9 @@ void ReduceDB::pred_move_to_lev1_and_lev0()
 {
     //FOREVER
     uint32_t mark_forever = solver->conf.pred_forever_chunk;
-    //mark_forever *= pow((double)solver->sumConflicts/10000.0, solver->conf.pred_forever_size_pow);
+    if (solver->conf.pred_forever_chunk_mult) {
+        mark_forever *= pow((double)solver->sumConflicts/10000.0, solver->conf.pred_forever_size_pow);
+    }
 
     std::sort(solver->longRedCls[2].begin(), solver->longRedCls[2].end(),
               SortRedClsPredForever(solver->cl_alloc, solver->red_stats_extra));

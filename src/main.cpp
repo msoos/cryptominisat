@@ -380,6 +380,8 @@ void Main::add_supported_options()
         , "Pred long chunk multiplier")
     ("predforeverchunk", po::value(&conf.pred_forever_chunk)->default_value(conf.pred_forever_chunk)
         , "Pred forever chunk multiplier")
+    ("predforeverchunkmult", po::value(&conf.pred_forever_chunk_mult)->default_value(conf.pred_forever_chunk_mult)
+        , "Pred forever chunk should be POW multiplied just like forever. 0/1 (i.e. true/false) option")
 
     //Check intervals for LONG and FOREVER
     ("predlongcheckn", po::value(&conf.pred_long_check_every_n)->default_value(conf.pred_long_check_every_n)

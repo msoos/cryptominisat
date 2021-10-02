@@ -96,6 +96,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //
         , pred_long_chunk(2000)
         , pred_forever_chunk(1200) // Used only if pred_forever_cutoff is 0
+        , pred_forever_chunk_mult(0)
         //
         , move_from_tier0(1) //if 1 = moves it, rather than deletes it
         , move_from_tier1(1) //if 1 = moves it, rather than deletes it

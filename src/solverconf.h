@@ -236,6 +236,7 @@ class DLL_PUBLIC SolverConf
 
         uint32_t pred_long_chunk;
         uint32_t pred_forever_chunk;
+        int      pred_forever_chunk_mult; //true or false
 
         int move_from_tier0;
         int move_from_tier1;
