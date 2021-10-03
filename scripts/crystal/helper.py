@@ -268,7 +268,7 @@ def helper_divide(dividend, divisor, df, features, verb, name=None):
         print("Dividing. dividend: '%s' divisor: '%s' " % (dividend, divisor))
 
     if name is None:
-        name = "(" + dividend + "/" + divisor + ")"
+        name = "(%s/%s)" % (dividend, divisor)
 
     df[name] = df[dividend].div(df[divisor])
     return name
@@ -690,6 +690,7 @@ def cldata_add_computed_features(df, verbose):
     divide("rdb0.uip1_used", "rdb0_common.median_uip1_used")
     divide("rdb0.props_made", "rdb0_common.median_props")
 
+    time_in_solver = "cl.time_inside_solver"
     sum_props_per_time = divide("rdb0.sum_props_made", time_in_solver)
     sum_uip1_per_time = divide("rdb0.sum_uip1_used", time_in_solver)
     divide(sum_props_per_time, "rdb0_common.median_sum_uip1_per_time")

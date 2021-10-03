@@ -127,27 +127,6 @@ class Learner:
             data2, features, to_predict, clf, toprint,
             highlight=highlight)
 
-    @staticmethod
-    def fix_feat_name(x):
-        x = re.sub(r"dump_no", r"dump_no", x)
-        x = re.sub(r"^cl_", r"", x)
-        x = re.sub(r"^rdb0_", r"", x)
-
-        if x == "dump_no":
-            pass
-        elif x == "last_touched_diff":
-            pass
-        elif x == "act_ranking_rel":
-            pass
-        elif x == "time_inside_solver":
-            pass
-        elif x == "size":
-            x = "cl->" + x + "()"
-        else:
-            x = "cl->stats." + x
-
-        return x
-
     def importance_XGB(self, clf, features):
         impdf = []
         #print("clf:", clf)
