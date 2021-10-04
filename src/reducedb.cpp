@@ -91,7 +91,7 @@ struct SortRedClsAct
     }
 };
 
-#if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+#if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
 struct SortRedClsUIP1
 {
     explicit SortRedClsUIP1(ClauseAllocator& _cl_alloc) :

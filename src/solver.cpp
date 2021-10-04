@@ -127,7 +127,7 @@ Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter
     set_up_sql_writer();
     next_lev1_reduce = conf.every_lev1_reduce;
     next_lev2_reduce =  conf.every_lev2_reduce;
-    #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     next_pred_reduce =  conf.every_pred_reduce;
     #endif
 
@@ -496,10 +496,10 @@ Clause* Solver::add_clause_int(
             }
             if (red && cl_stats == NULL) {
                 assert(false && "does this happen at all? should it happen??");
-                #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+                #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
                 red_stats_extra.push_back(ClauseStatsExtra());
                 c->stats.extra_pos = red_stats_extra.size()-1;
-                //TODO set introduced_at_confilict
+                red_stats_extra.back().introduced_at_conflict = sumConflicts;
                 #endif
             }
 

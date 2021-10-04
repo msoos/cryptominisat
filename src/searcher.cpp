@@ -450,13 +450,10 @@ void Searcher::add_literals_from_confl_to_learnt(
                 //If stats or predictor, bump all because during final
                 //we will need this data and during dump when stats is on
                 //we also need this data.
-                #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-                bump_cl_act<update_bogoprops>(cl);
-                #else
-                if (cl->stats.which_red_array == 2) {
-                    bump_cl_act<update_bogoprops>(cl);
-                }
+                #if !defined(STATS_NEEDED) && !defined(FINAL_PREDICTOR)
+                if (cl->stats.which_red_array == 2)
                 #endif
+                    bump_cl_act<update_bogoprops>(cl);
             }
             break;
         }
@@ -1550,14 +1547,10 @@ void Searcher::attach_and_enqueue_learnt_clause(
             stats.learntLongs++;
             solver->attachClause(*cl, enq);
             if (enq) enqueue<false>(learnt_clause[0], level, PropBy(cl_alloc.get_offset(cl)));
-            #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-            bump_cl_act<update_bogoprops>(cl);
-            #else
-            if (cl->stats.which_red_array == 2) {
-                bump_cl_act<update_bogoprops>(cl);
-            }
+            #if !defined(STATS_NEEDED) && !defined(FINAL_PREDICTOR)
+            if (cl->stats.which_red_array == 2)
             #endif
-
+                bump_cl_act<update_bogoprops>(cl);
 
             #ifdef STATS_NEEDED
             red_stats_extra[cl->stats.extra_pos].antec_data = antec_data;
