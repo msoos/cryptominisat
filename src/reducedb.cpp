@@ -802,6 +802,9 @@ void ReduceDB::clean_lev0_once_in_a_while()
 
     uint32_t keep_forever = solver->conf.pred_forever_size;
     keep_forever *= pow((double)solver->sumConflicts/10000.0, solver->conf.pred_forever_size_pow);
+    const uint32_t orig_keep_forever = keep_forever;
+    const uint32_t orig_size = solver->longRedCls[0].size();
+    uint32_t force_kept = 0;
 
     std::sort(solver->longRedCls[0].begin(), solver->longRedCls[0].end(),
           SortRedClsPredForever(solver->cl_alloc, solver->red_stats_extra));
@@ -824,12 +827,12 @@ void ReduceDB::clean_lev0_once_in_a_while()
 //             if ((time_inside_solver < checked_every/2 &&
 //                 solver->conf.pred_dontmove_until_timeinside == 1) ||
 //                 (time_inside_solver < checked_every &&
-//                 solver->conf.pred_dontmove_until_timeinside == 2) ||
-//                 solver->clause_locked(*cl, offset))
+//                 solver->conf.pred_dontmove_until_timeinside == 2))
 //             {
 //                 kept_in_forever_due_to_dontmove++;
 //                 keep_forever++;
 //             }
+            force_kept++;
             keep = true;
         }
 
@@ -865,6 +868,13 @@ void ReduceDB::clean_lev0_once_in_a_while()
         }
     }
     solver->longRedCls[0].resize(j);
+
+    if (solver->conf.verbosity) {
+        cout
+        << "c ---->>> Keep fore: " << std::setw(9) << orig_keep_forever
+        << " size: " << std::setw(9) << orig_size
+        << " of which force-kept:" << std::setw(9) << force_kept << endl;
+    }
 }
 
 void ReduceDB::clean_lev1_once_in_a_while()
@@ -887,7 +897,9 @@ void ReduceDB::clean_lev1_once_in_a_while()
           SortRedClsPredLong(solver->cl_alloc, solver->red_stats_extra));
     uint32_t keep_long = solver->conf.pred_long_size;
     //keep_long *= pow((double)solver->sumConflicts/10000.0, solver->conf.pred_forever_size_pow);
-
+    const uint32_t orig_keep_long = keep_long;
+    const uint32_t orig_size = solver->longRedCls[1].size();
+    uint32_t force_kept = 0;
 
     int j = 0;
     for(uint32_t i = 0; i < solver->longRedCls[1].size(); i ++) {
@@ -903,15 +915,15 @@ void ReduceDB::clean_lev1_once_in_a_while()
             (time_inside_solver < checked_every &&
             solver->conf.pred_dontmove_until_timeinside == 2))
         {
-//             if ((time_inside_solver < checked_every/2 &&
-//                 solver->conf.pred_dontmove_until_timeinside == 1) ||
-//                 (time_inside_solver < checked_every &&
-//                 solver->conf.pred_dontmove_until_timeinside == 2) ||
-//                 solver->clause_locked(*cl, offset))
-//             {
+            if ((time_inside_solver < checked_every/2 &&
+                solver->conf.pred_dontmove_until_timeinside == 1) ||
+                (time_inside_solver < checked_every &&
+                solver->conf.pred_dontmove_until_timeinside == 2))
+            {
+                force_kept++;
 //                 kept_in_long_due_to_dontmove++;
 //                 keep_long++;
-//             }
+            }
 
             kept_in_long++;
             assert(cl->stats.which_red_array == 1);
@@ -934,6 +946,13 @@ void ReduceDB::clean_lev1_once_in_a_while()
         }
     }
     solver->longRedCls[1].resize(j);
+
+    if (solver->conf.verbosity) {
+        cout
+        << "c ---->>> Keep long: " << std::setw(9) << orig_keep_long
+        << " size: " << std::setw(9) << orig_size
+        << " of which force-kept:" << std::setw(9) << force_kept << endl;
+    }
 }
 
 void ReduceDB::delete_from_lev2()

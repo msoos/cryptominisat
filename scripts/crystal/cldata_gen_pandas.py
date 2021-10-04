@@ -271,8 +271,9 @@ class QueryCls (helper.QueryHelper):
         elif tier == "long":
             self.myformat["del_at_least"] = options.long
 
+        # NOTE: we only delete short because forever can be e.g. 1 million
         elif tier == "forever":
-            self.myformat["del_at_least"] = options.forever
+            self.myformat["del_at_least"] = options.short
 
         # Make sure these stratas are equally represented
         t = time.time()
@@ -327,10 +328,10 @@ class QueryCls (helper.QueryHelper):
             print("--> The weight was %f so wegthed size is: %d" % (mult, int(ws)))
             weighted_size.append(ws)
 
-        one_part(1/4.0, " and rdb0.dump_no = 1 ")
+        one_part(1/2.0, " and rdb0.dump_no = 1 ")
         one_part(1/4.0, " and rdb0.dump_no = 2 ")
         one_part(1/4.0, " and rdb0.dump_no > 2 ")
-        one_part(1/4.0, " and rdb0.dump_no > 8 ")
+        #one_part(1/4.0, " and rdb0.dump_no > 8 ")
 
         df = pd.concat(df_parts)
         print("-> size of all dump_no-s, strata {strata} data: {size}".format(
@@ -393,7 +394,8 @@ def one_database(dbfname):
         q.delete_and_create_used_laters()
         q.fill_used_later_X("short", duration=options.short)
         q.fill_used_later_X("long", duration=options.long)
-        q.fill_used_later_X("forever", duration=options.forever)
+        q.fill_used_later_X("forever", duration=options.forever,
+                            min_del_distance=options.short)
 
         # fill percentile_fit
         for tier in todo_types:
@@ -452,9 +454,9 @@ if __name__ == "__main__":
     # limits
     parser.add_option("--limit", default=20000, type=int,
                       dest="limit", help="Exact number of examples to take. -1 is to take all. Default: %default")
-    parser.add_option("--cut1", default=50.0, type=float,
+    parser.add_option("--cut1", default=5.0, type=float,
                       dest="cut1", help="Where to cut the distrib. Default: %default")
-    parser.add_option("--cut2", default=80.0, type=float,
+    parser.add_option("--cut2", default=30.0, type=float,
                       dest="cut2", help="Where to cut the distrib. Default: %default")
 
     # debugging is faster with this
@@ -465,9 +467,9 @@ if __name__ == "__main__":
     # lengths of short/long
     parser.add_option("--short", default=10000, type=int,
                       dest="short", help="Short duration. Default: %default")
-    parser.add_option("--long", default=30*1000, type=int,
+    parser.add_option("--long", default=50*1000, type=int,
                       dest="long", help="Long duration. Default: %default")
-    parser.add_option("--forever", default=120*1000, type=int,
+    parser.add_option("--forever", default=1000*1000*1000, type=int,
                       dest="forever", help="Long duration. Default: %default")
 
     (options, args) = parser.parse_args()

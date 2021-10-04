@@ -120,7 +120,11 @@ class QueryFill (QueryHelper):
         print("used_later* dropped and recreated T: %-3.2f s" % (time.time() - t))
 
     # The most expesive operation of all, when called with "forever"
-    def fill_used_later_X(self, name, duration, used_clauses="used_clauses"):
+    def fill_used_later_X(self, name, duration, used_clauses="used_clauses",
+                          min_del_distance=None):
+
+        if min_del_distance is None:
+            min_del_distance = duration
 
         q_fill = """
         insert into used_later_{name}
@@ -148,14 +152,15 @@ class QueryFill (QueryHelper):
 
         WHERE
         rdb0.clauseID != 0
-        and cl_last_in_solver.conflicts >= (rdb0.conflicts + {duration})
+        and cl_last_in_solver.conflicts >= (rdb0.conflicts + {min_del_distance})
 
         group by rdb0.clauseID, rdb0.conflicts;"""
 
         t = time.time()
         q = q_fill.format(
             name=name, used_clauses=used_clauses,
-            duration=duration)
+            duration=duration,
+            min_del_distance=min_del_distance)
         self.c.execute(q)
 
         q_num = "select count(*) from used_later_{name}".format(name=name)

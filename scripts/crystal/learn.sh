@@ -79,30 +79,30 @@ function generate() {
 #xboostminchild=300
 #est=10
 
-bestf="../../scripts/crystal/best_features-correlaton.txt"
+bestf="../../scripts/crystal/best_features-d6e51325f8046.txt"
 w=0
 xgboostsubsample="1.0"
-basename="01-oct-a408d53c665f9305b"
+basename="04-oct-a408d53c665f9305b"
 #basename="14-april-2021-69bad529f962c"
 #basename="8march-2020-3acd81dc55df3-36feats"
 #basename="aes-30-march-2020-a1e0e19be0c1"
 #basename="orig"
 limit=3000
-cut1="3.0"
-cut2="25.0"
+cut1="5.0"
+cut2="30.0"
 xboostmaxdepth=4
 xgboostminchild=300
 est=10
 
-for limit in 1000 10000
+for limit in 2000
 do
     for regressor in "xgb" # "lgbm"
     do
-        for xboostmaxdepth in 6
+        for xboostmaxdepth in 4 6
         do
-            for xgboostminchild in 10
+            for xgboostminchild in 10 300
             do
-                for est in 6 8 10
+                for est in 10
                 do
                     generate
                 done

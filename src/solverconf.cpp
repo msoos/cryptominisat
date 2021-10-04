@@ -106,7 +106,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , pred_adjust_for_cl_size(0)
         , pred_adjust_for_cl_size_onlyforever(0)
         , pred_distill_orig(true)
-        , pred_dontmove_until_timeinside(0) //always move, don't wait
+        , pred_dontmove_until_timeinside(1) //always move, don't wait
 
         , every_lev1_reduce(10000) // kept for a while then moved to lev2
         , every_lev2_reduce(15000) // cleared regularly
@@ -116,13 +116,10 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , max_temp_lev2_learnt_clauses(30000) //only used if every_lev2_reduce==0
         , inc_max_temp_lev2_red_cls(1.0)      //only used if every_lev2_reduce==0
         , protect_cl_if_improved_glue_below_this_glue_for_one_turn(30)
-        #ifdef FINAL_PREDICTOR
-        , glue_put_lev0_if_below_or_eq(3)
-        , glue_put_lev1_if_below_or_eq(6)
-        , dump_pred_distrib(0)
-        #else
         , glue_put_lev0_if_below_or_eq(3) // never removed
         , glue_put_lev1_if_below_or_eq(6) // kept for a while then moved to lev2
+        #ifdef FINAL_PREDICTOR
+        , dump_pred_distrib(0)
         #endif
         , clause_decay(0.999)
         , adjust_glue_if_too_many_low(0.7)

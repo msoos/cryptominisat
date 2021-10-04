@@ -821,11 +821,7 @@ void Searcher::analyze_conflict(
     }
     print_fully_minimized_learnt_clause();
 
-#ifdef FINAL_PREDICTOR
-    if (glue <= 2) {
-#else
     if (glue <= (conf.glue_put_lev0_if_below_or_eq+2)) {
-#endif
         bool doit = false;
         if (conf.doMinimRedMoreMore == 1 && learnt_clause.size() <= conf.max_size_more_minim) {
             doit = true;

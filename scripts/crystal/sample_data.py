@@ -611,9 +611,9 @@ if __name__ == "__main__":
     # lengths of short/long
     parser.add_option("--short", default=10*1000, type=int,
                       dest="short", help="Short duration. Default: %default")
-    parser.add_option("--long", default=30*1000, type=int,
+    parser.add_option("--long", default=50*1000, type=int,
                       dest="long", help="Long duration. Default: %default")
-    parser.add_option("--forever", default=120*1000, type=int,
+    parser.add_option("--forever", default=1000*1000*1000, type=int,
                       dest="forever", help="Forever duration. Default: %default")
 
     (options, args) = parser.parse_args()
@@ -646,7 +646,8 @@ if __name__ == "__main__":
             q.create_indexes(verbose=options.verbose)
             q.fill_used_later_X("short", duration=options.short)
             q.fill_used_later_X("long", duration=options.long)
-            q.fill_used_later_X("forever", duration=options.forever)
+            q.fill_used_later_X("forever", duration=options.forever,
+                                min_del_distance=options.short)
         with QueryDatRem(args[0]) as q:
             helper.dangerous(q.c)
             q.create_percentiles_table()
@@ -680,6 +681,7 @@ if __name__ == "__main__":
         q.fill_used_later_X("long", duration=options.long,
                             used_clauses="used_clauses_red")
         q.fill_used_later_X("forever", duration=options.forever,
+                            min_del_distance=options.short,
                             used_clauses="used_clauses_red")
 
     # now we calculate the distributions and save them
@@ -716,7 +718,8 @@ if __name__ == "__main__":
         q.create_indexes(verbose=options.verbose)
 
         # this is is needed because the RDB row deletion below is NOT fair
-        q.fill_used_later_X("forever", duration=options.forever)
+        q.fill_used_later_X("forever", duration=options.forever,
+                            min_del_distance=options.short)
     with QueryDatRem(args[0]) as q:
         print("-------------")
         q.delete_too_many_rdb_rows() # NOTE: NOT FAIR!!!
