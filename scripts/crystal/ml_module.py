@@ -60,19 +60,10 @@ raw_data = [
     #"sum_props_per_time_ranking_rel",
 ]
 
-def dump_dataframe(fname, df):
-    picklefile = open(fname, 'wb')
-    pickle.dump(df, picklefile)
-    picklefile.close()
-
-
-
 # check reproducibility by dumping and checking against previous run's dump
 def dump_or_check(fname, df):
-    import pickle
     if check_file_exists(fname):
-        picklefile = open(fname, 'rb')
-        df_saved = pickle.load(picklefile)
+        df_saved = pd.read_pickle(fname)
         picklefile.close()
         print("Checking equals...", fname)
         if not df.equals(df_saved):
@@ -87,7 +78,7 @@ def dump_or_check(fname, df):
                     exit(-1)
 
     else:
-        dump_dataframe(fname, df)
+        df.to_pickle(fname)
         print("Not checking, writing: ", fname)
 
 
@@ -177,14 +168,11 @@ num_called = 0
 
 # to test memory usage
 #@profile
-def predict(data, check=False, dump=False):
+def predict(data, check=False, dump=True):
     global num_called
     ret = []
 
     df = pd.DataFrame(data, columns=raw_data)
-    if dump:
-        dump_dataframe('df_dump_%s' % num_called)
-
     transformed_data = np.empty((df.shape[0], len(best_features)), dtype=float)
     if check:
         dump_or_check('df_check'+str(num_called), df)
@@ -202,6 +190,12 @@ def predict(data, check=False, dump=False):
         if check:
             dump_or_check('x-%d-%d' % (num_called, i), pd.DataFrame(x))
         ret.append(x)
+
+    if dump:
+        for i,name in zip(range(3), ["short", "long", "forever"]):
+            df["x.used_later_%s" % name] = ret[i]
+
+        df.to_pickle('df_dump_%s' % num_called)
 
     if check:
         dump_or_check('df_pred'+str(num_called), df_final)
