@@ -760,6 +760,7 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int(stmtReduceDB, bindAt++, reduceDB_called);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->sumConflicts);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, stats_extra.introduced_at_conflict);
+    sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.which_red_array);
 
     //data
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.ID);

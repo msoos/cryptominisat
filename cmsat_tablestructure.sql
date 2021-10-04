@@ -87,6 +87,7 @@ CREATE TABLE `reduceDB` (
   `reduceDB_called` int(20) NOT NULL,
   `conflicts` bigint(20) NOT NULL,
   `introduced_at_conflict` bigint(20) NOT NULL, -- this is BAD but for ternary clauses we need this
+  `which_red_array` int(20) NOT NULL,
 
   `clauseID` int(20) NOT NULL,
   `dump_no` int(20) NOT NULL,
