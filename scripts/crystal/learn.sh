@@ -82,7 +82,7 @@ function generate() {
 bestf="../../scripts/crystal/best_features-d6e51325f8046.txt"
 w=0
 xgboostsubsample="1.0"
-basename="04-oct-a408d53c665f9305b"
+basename="04-oct-8march-2021-3acd81dc55df3"
 #basename="14-april-2021-69bad529f962c"
 #basename="8march-2020-3acd81dc55df3-36feats"
 #basename="aes-30-march-2020-a1e0e19be0c1"
