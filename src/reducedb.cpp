@@ -38,7 +38,7 @@ THE SOFTWARE.
 
 using namespace CMSat;
 
-double safe_div(double a, double b) {
+inline double safe_div(double a, double b) {
     if (b == 0) {
         assert(a == 0);
         return 0;
@@ -47,7 +47,7 @@ double safe_div(double a, double b) {
 }
 
 struct SortValAndPos {
-    bool operator () (const val_and_pos& a, const val_and_pos& b) const
+    inline bool operator () (const val_and_pos& a, const val_and_pos& b) const
     {
         return a.val > b.val;
     }
@@ -60,7 +60,7 @@ struct SortRedClsGlue
     {}
     ClauseAllocator& cl_alloc;
 
-    bool operator () (const ClOffset xOff, const ClOffset yOff) const
+    inline bool operator () (const ClOffset xOff, const ClOffset yOff) const
     {
         const Clause* x = cl_alloc.ptr(xOff);
         const Clause* y = cl_alloc.ptr(yOff);
@@ -75,7 +75,7 @@ struct SortRedClsSize
     {}
     ClauseAllocator& cl_alloc;
 
-    bool operator () (const ClOffset xOff, const ClOffset yOff) const
+    inline bool operator () (const ClOffset xOff, const ClOffset yOff) const
     {
         const Clause* x = cl_alloc.ptr(xOff);
         const Clause* y = cl_alloc.ptr(yOff);
@@ -90,7 +90,7 @@ struct SortRedClsAct
     {}
     ClauseAllocator& cl_alloc;
 
-    bool operator () (const ClOffset xOff, const ClOffset yOff) const
+    inline bool operator () (const ClOffset xOff, const ClOffset yOff) const
     {
         const Clause* x = cl_alloc.ptr(xOff);
         const Clause* y = cl_alloc.ptr(yOff);
@@ -106,7 +106,7 @@ struct SortRedClsUIP1
     {}
     ClauseAllocator& cl_alloc;
 
-    bool operator () (const ClOffset xOff, const ClOffset yOff) const
+    inline bool operator () (const ClOffset xOff, const ClOffset yOff) const
     {
         const Clause* x = cl_alloc.ptr(xOff);
         const Clause* y = cl_alloc.ptr(yOff);
@@ -121,7 +121,7 @@ struct SortRedClsProps
     {}
     ClauseAllocator& cl_alloc;
 
-    bool operator () (const ClOffset xOff, const ClOffset yOff) const
+    inline bool operator () (const ClOffset xOff, const ClOffset yOff) const
     {
         const Clause* x = cl_alloc.ptr(xOff);
         const Clause* y = cl_alloc.ptr(yOff);
@@ -143,7 +143,7 @@ struct SortRedClsPredShort
     const ClauseAllocator& cl_alloc;
     const vector<ClauseStatsExtra>& extdata;
 
-    bool operator () (const ClOffset xOff, const ClOffset yOff) const
+    inline bool operator () (const ClOffset xOff, const ClOffset yOff) const
     {
         uint32_t x_num = cl_alloc.ptr(xOff)->stats.extra_pos;
         uint32_t y_num = cl_alloc.ptr(yOff)->stats.extra_pos;
@@ -162,7 +162,7 @@ struct SortRedClsPredLong
     const ClauseAllocator& cl_alloc;
     const vector<ClauseStatsExtra>& extdata;
 
-    bool operator () (const ClOffset xOff, const ClOffset yOff) const
+    inline bool operator () (const ClOffset xOff, const ClOffset yOff) const
     {
         uint32_t x_num = cl_alloc.ptr(xOff)->stats.extra_pos;
         uint32_t y_num = cl_alloc.ptr(yOff)->stats.extra_pos;
@@ -181,7 +181,7 @@ struct SortRedClsPredForever
     const ClauseAllocator& cl_alloc;
     const vector<ClauseStatsExtra>& extdata;
 
-    bool operator () (const ClOffset xOff, const ClOffset yOff) const
+    inline bool operator () (const ClOffset xOff, const ClOffset yOff) const
     {
         uint32_t x_num = cl_alloc.ptr(xOff)->stats.extra_pos;
         uint32_t y_num = cl_alloc.ptr(yOff)->stats.extra_pos;
