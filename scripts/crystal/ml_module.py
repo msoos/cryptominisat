@@ -171,7 +171,7 @@ num_called = 0
 
 # to test memory usage
 #@profile
-def predict(data, check=False, dump=True):
+def predict(data, check=False, dump=False):
     global num_called
     ret = []
 
