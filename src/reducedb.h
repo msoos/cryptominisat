@@ -34,6 +34,11 @@ class Solver;
 class ClPredictors;
 class ClusteringImp;
 
+struct val_and_pos {
+    float val;
+    uint32_t pos;
+};
+
 class ReduceDB
 {
 public:
@@ -105,6 +110,7 @@ private:
     #endif
 
     const CMSat::ClauseStats& get_median_stat(const vector<ClOffset>& all_learnt) const;
+    const CMSat::ClauseStats& get_median_stat_dat(const vector<ClOffset>& all_learnt, const vector<val_and_pos>& dat) const;
     void prepare_features(vector<ClOffset>& all_learnt);
     uint64_t total_glue = 0;
     uint64_t total_props = 0;
