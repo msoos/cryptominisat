@@ -428,9 +428,15 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
     //We'll also compact solver->red_stats_extra
     uint32_t new_extra_pos = 0;
     vector<ClauseStatsExtra> new_red_stats_extra(all_learnt.size());
-    std::sort(all_learnt.begin(), all_learnt.end(), SortRedClsAct(solver->cl_alloc));
-    for(size_t i = 0; i < all_learnt.size(); i++) {
+    for(uint32_t i = 0; i < all_learnt.size(); i++) {
         ClOffset offs = all_learnt[i];
+        Clause* cl = solver->cl_alloc.ptr(offs);
+        dat[i].pos = i;
+        dat[i].val = cl->stats.activity;
+    }
+    std::sort(dat.begin(), dat.end(), SortValAndPos());
+    for(size_t i = 0; i < all_learnt.size(); i++) {
+        ClOffset offs = all_learnt[dat[i].pos];
         Clause* cl = solver->cl_alloc.ptr(offs);
         ClauseStatsExtra& stats_extra = solver->red_stats_extra[cl->stats.extra_pos];
         stats_extra.act_ranking = i+1;
@@ -442,7 +448,7 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
     if (all_learnt.empty()) {
         median_data.median_act = 0;
     } else {
-        median_data.median_act = get_median_stat(all_learnt).activity;
+        median_data.median_act = get_median_stat_dat(all_learnt, dat).activity;
     }
     std::swap(solver->red_stats_extra, new_red_stats_extra);
 }
