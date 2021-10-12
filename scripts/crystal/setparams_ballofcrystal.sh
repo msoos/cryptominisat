@@ -30,6 +30,4 @@ export cut1="50.0"
 export cut2="80.0"
 export SANITIZE=0
 export bestf="../../scripts/crystal/best_features-d6e51325f8046.txt"
-export myforever="forever"
-#export myforever="forever_div"
 #export bestf="../../scripts/crystal/best_features-ext.txt"

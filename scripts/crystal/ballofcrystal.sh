@@ -180,7 +180,7 @@ regressors=("xgb" "lgbm" )
 for regressor in "${regressors[@]}"; do
     ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier short --features best_only --regressor $regressor --basedir "." --bestfeatfile $bestf | tee "short_pred_out_${regressor}"
     ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier long --features best_only --regressor $regressor --basedir "." --bestfeatfile $bestf | tee "long_pred_out_${regressor}"
-    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-${myforever}-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier ${myforever} --features best_only --regressor $regressor --basedir "." --bestfeatfile $bestf | tee "forever_pred_out_${regressor}"
+    ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-forever-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier forever --features best_only --regressor $regressor --basedir "." --bestfeatfile $bestf | tee "forever_pred_out_${regressor}"
 done
 
 ############################
@@ -190,12 +190,11 @@ done
 # ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier long --top 200 --xgb --nocomputed > output_long_nocomputed
 # ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier short --top 200 --xgb --allcomputed > output_short
 # ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier short --top 200 --xgb --nocomputed > output_short_nocomputed
-# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-${myforever}-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier ${myforever} --top 2000 --xgb --nocomputed --topperc > "output_${myforever}_nocomputed"
-# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-${myforever}-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier ${myforever} --top 2000 --xgb --allcomputed --topperc > "output_${myforever}"
+# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-forever-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier forever --top 2000 --xgb --nocomputed --topperc > "output_forever_nocomputed"
+# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-forever-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier forever --top 2000 --xgb --allcomputed --topperc > "output_forever"
 
 
 )
-
 
 
 ########################
