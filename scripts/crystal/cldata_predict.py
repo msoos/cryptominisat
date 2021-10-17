@@ -187,6 +187,11 @@ class Learner:
             if missing_needed not in features:
                 extra_feats.append(missing_needed)
         df = self.df[features+extra_feats].copy()
+        if options.verbose:
+            pd.set_option('display.max_rows', len(df.dtypes))
+            print(df.dtypes)
+            pd.reset_option('display.max_rows')
+
 
         if options.check_row_data:
             helper.check_too_large_or_nan_values(df, features)
