@@ -271,9 +271,8 @@ class QueryCls (helper.QueryHelper):
         elif tier == "long":
             self.myformat["del_at_least"] = options.long
 
-        # NOTE: we only delete short because forever can be e.g. 1 million
         elif tier == "forever":
-            self.myformat["del_at_least"] = options.short
+            self.myformat["del_at_least"] = options.forever
 
         # Make sure these stratas are equally represented
         t = time.time()
@@ -328,10 +327,11 @@ class QueryCls (helper.QueryHelper):
             print("--> The weight was %f so wegthed size is: %d" % (mult, int(ws)))
             weighted_size.append(ws)
 
-        one_part(1/2.0, " and rdb0.dump_no = 1 ")
+        one_part(1/4.0, " and rdb0.dump_no = 1 ")
         one_part(1/4.0, " and rdb0.dump_no = 2 ")
         one_part(1/4.0, " and rdb0.dump_no > 2 ")
-        #one_part(1/4.0, " and rdb0.dump_no > 8 ")
+        one_part(1/4.0, " and rdb0.dump_no > 20 ")
+
 
         df = pd.concat(df_parts)
         print("-> size of all dump_no-s, strata {strata} data: {size}".format(
@@ -467,9 +467,9 @@ if __name__ == "__main__":
     # lengths of short/long
     parser.add_option("--short", default=10000, type=int,
                       dest="short", help="Short duration. Default: %default")
-    parser.add_option("--long", default=50*1000, type=int,
+    parser.add_option("--long", default=30*1000, type=int,
                       dest="long", help="Long duration. Default: %default")
-    parser.add_option("--forever", default=1000*1000*1000, type=int,
+    parser.add_option("--forever", default=120*1000, type=int,
                       dest="forever", help="Long duration. Default: %default")
 
     (options, args) = parser.parse_args()
