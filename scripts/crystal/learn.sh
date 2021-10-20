@@ -24,7 +24,7 @@
 set -e
 
 function generate() {
-    dirname="${basename}-cut1-${cut1}-cut2-${cut2}-limit-${limit}-est${est}-w${w}-xbmin${xgboostminchild}-xbmd${xboostmaxdepth}-reg${regressor}"
+    dirname="${basename}-cut1-${cut1}-cut2-${cut2}-limit-${limit}-est${est}-w${w}-xbmin${xgboostminchild}-xbmd${xboostmaxdepth}-reg${regressor}-subs${xgboostsubsample}"
 
 
     mkdir -p ${dirname}
@@ -82,25 +82,27 @@ function generate() {
 bestf="../../scripts/crystal/best_features-correlaton.txt"
 w=0
 xgboostsubsample="1.0"
-basename="04-oct-8march-2021-3acd81dc55df3"
+basename="17-oct-27-sept-a408d53c665f9305b-new2"
 #basename="14-april-2021-69bad529f962c"
 #basename="8march-2020-3acd81dc55df3-36feats"
 #basename="aes-30-march-2020-a1e0e19be0c1"
 #basename="orig"
 limit=3000
-cut1="5.0"
-cut2="30.0"
+cut1="3.0"
+cut2="25.0"
 xboostmaxdepth=4
 xgboostminchild=300
 est=10
 
-for limit in 2000
+for xgboostsubsample in 1.0
 do
-    for regressor in "xgb" # "lgbm"
+for limit in 3000
+do
+    for regressor in "xgb" #"lgbm"
     do
-        for xboostmaxdepth in 4 6
+        for xboostmaxdepth in 4 6 8 10 12
         do
-            for xgboostminchild in 10 300
+            for xgboostminchild in 10 #300
             do
                 for est in 10
                 do
@@ -109,6 +111,7 @@ do
             done
         done
     done
+done
 done
 
 exit 0
