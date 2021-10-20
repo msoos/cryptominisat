@@ -581,14 +581,28 @@ if __name__ == "__main__":
         mlflow.log_artifact(options.fname)
 
     # Read in Pandas Dataframe
-    print("Reading dataframe...")
-    if False:
-        df_nofloat = pd.read_pickle(options.fname)
-        df = df_nofloat.convert_dtypes()
-        del df_nofloat
-    else:
-        df = pd.read_pickle(options.fname)
+    print("Reading dataframe....")
+    df_before_dtype_conv = pd.read_pickle(options.fname)
 
+    # We must convert these or we'll have trouble with inf, -inf, NaN for NULLs
+    print("Converting datatypes to those supporting np.NA ...")
+    if options.verbose:
+        print("Datatypes before:")
+        helper.print_datatypes(df_before_dtype_conv)
+    df = df_before_dtype_conv.convert_dtypes(
+        convert_integer=False, convert_string=False,
+        convert_floating=False)
+    del df_before_dtype_conv
+    if options.verbose:
+        print("Datatypes after:")
+        helper.print_datatypes(df)
+
+    # only "fname" is allowed to be an object (a string)
+    for name,ty in zip(list(df), df.dtypes):
+        if name == "fname":
+            assert ty == object
+        else:
+            assert ty != object
 
     df_orig = df.copy()
     if options.print_features:
@@ -617,10 +631,11 @@ if __name__ == "__main__":
         exit(-1)
 
     for name, mytype in df.dtypes.items():
-        #print(mytype)
-        #print(type(mytype))
-        if str(mytype) == str("Int64"):
-            df[name] = df[name].astype(float)
+        if str(mytype) == str("Int64") or str(mytype) == str("Float64"):
+            assert False
+
+    print("Filling NA with MISSING..")
+    df.replace([np.inf, np.NaN, np.inf, np.NINF, np.Infinity], MISSING, inplace=True)
 
     if options.csv is not None:
         cols = list(df)
@@ -629,12 +644,12 @@ if __name__ == "__main__":
             for feat in list(df):
                 if "x." in feat:
                     cols.append(feat)
-        df.to_csv(options.csv, index=False, columns=sorted(cols))
-        print("Dumped DF to file: ", options.csv)
-
-    print("Filling NA with MISSING..")
-    df.replace([np.inf, np.NaN, np.inf, np.NINF, np.Infinity], MISSING, inplace=True)
-    #df.fillna(MISSING, inplace=True)
+        csv_file = options.csv
+        dat_file = options.csv.replace(".csv", ".dat")
+        df.to_csv(csv_file, index=False, columns=sorted(cols))
+        df.to_pickle(dat_file)
+        print("Dumped DF to CSV: ", csv_file)
+        print("Dumped DF to pickle: ", dat_file)
 
     if options.check_row_data_verbose:
         helper.check_too_large_or_nan_values(df, list(df))

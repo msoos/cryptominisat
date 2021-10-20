@@ -794,3 +794,8 @@ def cldata_add_computed_features(df, verbose):
         #print("columns: ", (old - new))
         #assert(False)
         #exit(-1)
+
+def print_datatypes(df):
+    pd.set_option('display.max_rows', len(df.dtypes))
+    print(df.dtypes)
+    pd.reset_option('display.max_rows')
