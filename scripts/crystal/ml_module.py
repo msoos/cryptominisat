@@ -64,7 +64,6 @@ raw_data = [
 def dump_or_check(fname, df):
     if check_file_exists(fname):
         df_saved = pd.read_pickle(fname)
-        picklefile.close()
         print("Checking equals...", fname)
         if not df.equals(df_saved):
             print("df.shape       :", df.shape)
