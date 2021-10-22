@@ -862,7 +862,7 @@ void ReduceDB::clean_lev0_once_in_a_while()
     }
     solver->longRedCls[0].resize(j);
 
-    if (solver->conf.verbosity) {
+    if (solver->conf.verbosity >= 2) {
         cout
         << "c ---->>> Keep fore: " << std::setw(9) << orig_keep_forever
         << " size: " << std::setw(9) << orig_size
@@ -940,7 +940,7 @@ void ReduceDB::clean_lev1_once_in_a_while()
     }
     solver->longRedCls[1].resize(j);
 
-    if (solver->conf.verbosity) {
+    if (solver->conf.verbosity >= 2) {
         cout
         << "c ---->>> Keep long: " << std::setw(9) << orig_keep_long
         << " size: " << std::setw(9) << orig_size
@@ -1190,7 +1190,7 @@ void ReduceDB::handle_predictors()
     delayed_clause_free.clear();
 
     //Stats
-    if (solver->conf.verbosity >= 1) {
+    if (solver->conf.verbosity >= 2) {
         cout
         << "c [DBCL pred]"
         << " short: " << print_value_kilo_mega(solver->longRedCls[2].size())
