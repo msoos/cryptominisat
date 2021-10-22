@@ -26,10 +26,10 @@ set -e
 function generate() {
     dirname="${basename}-cut1-${cut1}-cut2-${cut2}-limit-${limit}-est${est}-w${w}-xbmin${xgboostminchild}-xbmd${xboostmaxdepth}-reg${regressor}-subs${xgboostsubsample}"
 
-
     mkdir -p ${dirname}
     rm -f ${dirname}/out_*
     rm -f ${dirname}/predictor*.json
+    rm -f dirname.tar.gz
     git rev-parse HEAD > ${dirname}/out_git
     cat learn.sh >> ${dirname}/out_git
     md5sum *.dat >> ${dirname}/out_git
@@ -82,7 +82,7 @@ function generate() {
 bestf="../../scripts/crystal/best_features-correlaton.txt"
 w=0
 xgboostsubsample="1.0"
-basename="17-oct-27-sept-a408d53c665f9305b-new2"
+basename="22-oct-27-sept-a408d53c665f9305b"
 #basename="14-april-2021-69bad529f962c"
 #basename="8march-2020-3acd81dc55df3-36feats"
 #basename="aes-30-march-2020-a1e0e19be0c1"
