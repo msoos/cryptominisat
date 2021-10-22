@@ -116,6 +116,10 @@ def check_against_binary_dat(fname, df, df_raw):
             s_bin = float(df2[f][i])
             if np.isnan(s_pyt) and np.isnan(s_bin):
                 continue
+            if np.isnan(s_pyt) and not np.isnan(s_bin):
+                assert False
+            if not np.isnan(s_pyt) and np.isnan(s_bin):
+                assert False
             diff = abs(s_pyt - s_bin)
 
             if diff > 10e-5:
