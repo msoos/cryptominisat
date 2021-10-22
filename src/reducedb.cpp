@@ -1109,15 +1109,15 @@ void ReduceDB::handle_predictors()
             }
         } else {
             vector<std::string> locations;
-            locations.push_back(solver->conf.pred_conf_location +
+            locations.push_back(solver->conf.pred_conf_location + "/" +
                 std::string("predictor_short_")
                 + solver->conf.predictor_type
                 + std::string(".json"));
-            locations.push_back(solver->conf.pred_conf_location +
+            locations.push_back(solver->conf.pred_conf_location + "/" +
                 std::string("predictor_long_")
                 + solver->conf.predictor_type
                 + std::string(".json"));
-            locations.push_back(solver->conf.pred_conf_location +
+            locations.push_back(solver->conf.pred_conf_location + "/" +
                 std::string("predictor_forever_")
                 + solver->conf.predictor_type
                 + std::string(".json"));
