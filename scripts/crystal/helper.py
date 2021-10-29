@@ -455,7 +455,7 @@ def calc_regression_error(data, features, to_predict, clf, toprint,
         y = " -- elems: {:12}".format(str(X_data.shape))
         if myfilt.shape[0] <= 1:
             msqe = None
-            med_err = None
+            med_abs_err = None
             mean_err = None
         else:
             y_pred = clf.predict(X_data)
@@ -474,7 +474,7 @@ def calc_regression_error(data, features, to_predict, clf, toprint,
         y = " -- elems: {:12}".format(str(X_data.shape))
         if myfilt.shape[0] <= 1:
             msqe = None
-            med_err = None
+            med_abs_err = None
             mean_err = None
         else:
             y_pred = clf.predict(X_data)

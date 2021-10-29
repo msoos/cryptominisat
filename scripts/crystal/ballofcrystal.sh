@@ -57,12 +57,12 @@ if [ "$NEXT_OP" == "" ]; then
                 FNAME="AProVE07-16.cnf";
                 break;;
             [6]* )
+                DUMPRATIO="0.20"
                 FNAME="UTI-20-10p0.cnf-unz";
-                RATIO="0.20"
                 FIXED="20000";
                 break;;
             [7]* )
-                RATIO="0.50"
+                DUMPRATIO="0.50"
                 FNAME="UCG-20-5p0.cnf";
                 break;;
             * ) echo "Please answer 1-7";;
@@ -85,7 +85,8 @@ set -e
 
 echo "--> Running on file                   $FNAME"
 echo "--> Outputting to data                $FNAMEOUT"
-echo "--> Using clause gather ratio of      $RATIO"
+echo "--> Using clause gather ratio of      $DUMPRATIO"
+echo "--> Locking in ratio of               $CLLOCK"
 echo "--> with fixed number of data points  $FIXED"
 
 if [ "$FNAMEOUT" == "" ]; then
@@ -121,7 +122,7 @@ fi
 ########################
 cd "$FNAME-dir"
 # for var, we need: --bva 0 --scc 0
-../cryptominisat5 ${EXTRA_CMS_OPTS} --sqlitedbover 1 --cldatadumpratio "$RATIO" --cllockdatagen 0.5 --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
+../cryptominisat5 ${EXTRA_CMS_OPTS} --sqlitedbover 1 --cldatadumpratio "$DUMPRATIO" --cllockdatagen $CLLOCK --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
 grep "c conflicts" cms-pred-run.out
 
 ########################
