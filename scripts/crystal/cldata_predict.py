@@ -158,22 +158,38 @@ class Learner:
             towrite += "\n"
             f.write(towrite)
 
-    def get_sample_weights(self, X_train, y_train):
-        if options.sample_weight_sqrt == 0:
-            print("SQRT weight is set to NONE")
-            return None
-        weights = np.array(y_train.values)
-        #print("init weights:", weights)
-        def myfunc(x):
-            if x == 0:
-                return 1.0
-            else:
-                return math.pow(x, 1.0/options.sample_weight_sqrt)
-        myfunc_v = np.vectorize(myfunc)
-        weights = myfunc_v(weights)
-        #print("final weights:", weights)
-        print("SQRT weight is set to ", options.sample_weight_sqrt)
-        return weights
+    def scale_and_impute(self, train, test, features, extra_feats):
+        trans_train = train[features].values
+        trans_test = test[features].values
+
+        # Scale data if linear
+        my_scaler = sklearn.preprocessing.Normalizer(
+            norm='l1',
+            copy=False)
+        my_scaler.fit_transform(trans_train)
+        my_scaler.transform(trans_test)
+
+        # Impute data
+        imp_mean = sklearn.impute.SimpleImputer(
+            #missing_values=MISSING,
+            copy=False,
+            strategy='mean')
+        imp_mean.fit_transform(trans_train)
+        imp_mean.transform(trans_test)
+
+        # recreate dataframe
+        trans_train = np.append(trans_train, train[extra_feats].values, axis=1)
+        df_trans_train = pd.DataFrame(trans_train, columns=features+extra_feats)
+        train = df_trans_train
+
+        trans_test = np.append(trans_test, test[extra_feats].values, axis=1)
+        df_trans_test = pd.DataFrame(trans_test, columns=features+extra_feats)
+        test = df_trans_test
+
+        print("Value distribution of 'rdb0.glue' in test:\n%s" % test["rdb0.glue"].value_counts())
+        print("Value distribution of 'rdb0.glue' in train:\n%s" % train["rdb0.glue"].value_counts())
+
+        return train, test
 
     def one_classifier(self, features, to_predict):
         print("-> Number of features  :", len(features))
@@ -201,41 +217,9 @@ class Learner:
         print("Value distribution of to_predict:\n%s" % df[to_predict].value_counts())
 
         train, test = train_test_split(df, test_size=0.33, random_state=prng)
-        if options.regressor == "linear":
-            #cg = ColumnTransformer([("norm1", Normalizer(norm='l1'), list(range(len(df)))),
-            #                        ])
-            #cg.fit_transform(df)
+        if options.regressor in ["linear", "tree"]:
+            train, test = self.scale_and_impute(train, test, features, extra_feats)
 
-            trans_train = train[features].values
-            trans_test = test[features].values
-
-
-            # Impute data
-            imp_mean = sklearn.impute.SimpleImputer(
-                #missing_values=MISSING,
-                copy=False,
-                strategy='mean')
-            imp_mean.fit_transform(trans_train)
-            imp_mean.transform(trans_test)
-
-            # Scale data
-            my_scaler = sklearn.preprocessing.Normalizer(
-                norm='l1',
-                copy=False)
-            my_scaler.fit_transform(trans_train)
-            my_scaler.transform(trans_test)
-
-            # recreate dataframe
-            trans_train = np.append(trans_train, train[extra_feats].values, axis=1)
-            df_trans_train = pd.DataFrame(trans_train, columns=features+extra_feats)
-            train = df_trans_train
-
-            trans_test = np.append(trans_test, test[extra_feats].values, axis=1)
-            df_trans_test = pd.DataFrame(trans_test, columns=features+extra_feats)
-            test = df_trans_test
-
-            print("Value distribution of 'rdb0.glue' in test:\n%s" % test["rdb0.glue"].value_counts())
-            print("Value distribution of 'rdb0.glue' in train:\n%s" % train["rdb0.glue"].value_counts())
 
         if options.poly_features:
             transformed = df[features].values
@@ -259,8 +243,8 @@ class Learner:
         split_point = helper.calc_min_split_point(
             df, options.min_samples_split)
 
-        clf_tree = sklearn.tree.DecisionTreeClassifier(
-            max_depth=options.tree_depth,
+        clf_tree = sklearn.tree.DecisionTreeRegressor(
+            max_depth=options.xboost_max_depth,
             min_samples_split=split_point,
             random_state=prng)
         clf_svm_pre = sklearn.svm.SVC(
@@ -275,6 +259,7 @@ class Learner:
         clf_linear = sklearn.linear_model.LinearRegression()
         clf_forest = sklearn.ensemble.RandomForestRegressor(
             n_estimators=options.num_trees,
+            max_depth=options.xboost_max_depth,
             max_features="sqrt",
             #min_samples_leaf=split_point,
             random_state=prng)
@@ -342,13 +327,8 @@ class Learner:
                 print("Error: --topfeats only works with xgboost/forest")
                 exit(-1)
 
-        sample_weights = self.get_sample_weights(X_train, y_train)
-        if sample_weights is None:
-            clf.fit(X_train, y_train)
-        else:
-            clf.fit(X_train, y_train, sample_weight=sample_weights)
-        del sample_weights
 
+        clf.fit(X_train, y_train)
         print("Training finished. T: %-3.2f" % (time.time() - t))
 
         if mlflow_avail:
@@ -359,13 +339,19 @@ class Learner:
 
 
         if options.dot is not None:
-            if not options.regressor == "tree":
+            if options.regressor == "tree":
+                helper.output_to_classical_dot(
+                    clf, features,
+                    fname=options.dot + "-" + options.tier)
+
+            elif options.regressor == "xgb":
+                dot_data = xgb.to_graphviz(booster=clf, num_trees=9)
+                with open("x.dot", "w") as f:
+                    f.write("%s" % dot_data)
+
+            else:
                 print("ERROR: You cannot use the DOT function on non-trees")
                 exit(-1)
-
-            helper.output_to_classical_dot(
-                clf, features,
-                fname=options.dot + "-" + self.func_name)
 
         if options.basedir:
             fname_pred_out = options.basedir + "/predictor_{name}_{typ}.json".format(
@@ -481,14 +467,12 @@ if __name__ == "__main__":
                         dest="best_features_fname", help="Name and position of best features file that lists the best features in order")
     parser.add_argument("--polyfeats", action="store_true", default=False,
                         dest="poly_features", help="Add polynomial features")
-    parser.add_argument("--csv", type=str, default=None,
-                        dest="csv", help="Output CSV of dataframe here")
+    parser.add_argument("--dat", type=str, default=None,
+                        dest="dat_file", help="Output Pickle of dataframe here")
     parser.add_argument("--dumpexample", default=False, action="store_true",
                         dest="dump_example_data", help="Dump example data")
 
     # tree/forest options
-    parser.add_argument("--depth", default=None, type=int,
-                        dest="tree_depth", help="Depth of the tree to create")
     parser.add_argument("--split", default=0.01, type=float, metavar="RATIO",
                         dest="min_samples_split", help="Split in tree if this many samples or above. Used as a percentage of datapoints")
     parser.add_argument("--numtrees", default=100, type=int,
@@ -523,14 +507,12 @@ if __name__ == "__main__":
                         dest="regressor", help="Final classifier should be a: tree, svm, linear, forest, xgboost, bagging")
     parser.add_argument("--xgboostestimators", default=10, type=int,
                         dest="n_estimators_xgboost", help="Number of estimators for xgboost")
-    parser.add_argument("--xgboostminchild", default=1, type=int,
+    parser.add_argument("--xgboostminchild", default=10, type=int,
                         dest="min_child_weight_xgboost", help="Number of elements in the leaf to split it in xgboost")
-    parser.add_argument("--xboostmaxdepth", default=6, type=int,
+    parser.add_argument("--xboostmaxdepth", default=10, type=int,
                         dest="xboost_max_depth", help="Max depth of xboost trees")
     parser.add_argument("--xgboostsubsample", default=1.0, type=float,
                         dest="xgboost_subsample", help="Subsample xgboost on each iteration")
-    parser.add_argument("--weight", default=0.0, type=float,
-                        dest="sample_weight_sqrt", help="The SQRT factor for weights. 0 = disable sample weights. Larger number (e.g. 100) will be basically like 0, while e.g. 1 will skew things a _alot_ towards higher values having more weights")
 
     # which one to generate
     parser.add_argument("--tier", default=None, type=str,
@@ -575,14 +557,21 @@ if __name__ == "__main__":
         mlflow.log_param("basedir", options.basedir)
         mlflow.log_param("only_percentage", options.only_perc)
         mlflow.log_param("min_samples_split", options.min_samples_split)
-        mlflow.log_param("tree_depth", options.tree_depth)
+        mlflow.log_param("xboost_max_depth", options.xboost_max_depth)
         mlflow.log_param("num_trees", options.num_trees)
         mlflow.log_param("features", options.features)
         mlflow.log_artifact(options.fname)
 
     # Read in Pandas Dataframe
     print("Reading dataframe....")
-    df_before_dtype_conv = pd.read_pickle(options.fname)
+    df = pd.read_pickle(options.fname)
+
+    print("Applying only...")
+    df_tmp = df.sample(frac=options.only_perc, random_state=prng)
+    df_before_dtype_conv = pd.DataFrame(df_tmp)
+    del df_tmp
+    del df
+    print("-> Number of datapoints after applying '--only':", df_before_dtype_conv.shape)
 
     # We must convert these or we'll have trouble with inf, -inf, NaN for NULLs
     print("Converting datatypes to those supporting np.NA ...")
@@ -609,13 +598,7 @@ if __name__ == "__main__":
         for f in sorted(list(df)):
             print(f)
 
-    # get smaller part to work on
-    # also, copy it so we don't get warning about setting a slice of a DF
-    print("Applying only...")
-    df_tmp = df.sample(frac=options.only_perc, random_state=prng)
-    df = pd.DataFrame(df_tmp)
-    del df_tmp
-    print("-> Number of datapoints after applying '--only':", df.shape)
+    # make missing into NaN
     helper.make_missing_into_nan(df)
 
     # feature manipulation
@@ -637,19 +620,10 @@ if __name__ == "__main__":
     print("Filling NA with MISSING..")
     df.replace([np.inf, np.NaN, np.inf, np.NINF, np.Infinity], MISSING, inplace=True)
 
-    if options.csv is not None:
+    if options.dat_file is not None:
         cols = list(df)
-        if options.features == "best_only":
-            cols = best_features
-            for feat in list(df):
-                if "x." in feat:
-                    cols.append(feat)
-        csv_file = options.csv
-        dat_file = options.csv.replace(".csv", ".dat")
-        df.to_csv(csv_file, index=False, columns=sorted(cols))
-        df.to_pickle(dat_file)
-        print("Dumped DF to CSV: ", csv_file)
-        print("Dumped DF to pickle: ", dat_file)
+        df.to_pickle(options.dat_file, protocol=3)
+        print("Dumped DF to pickle: ", options.dat_file)
 
     if options.check_row_data_verbose:
         helper.check_too_large_or_nan_values(df, list(df))
