@@ -24,7 +24,7 @@
 set -e
 
 function generate() {
-    dirname="${basename}-cut1-${cut1}-cut2-${cut2}-limit-${limit}-est${est}-w${w}-xbmin${xgboostminchild}-xbmd${xboostmaxdepth}-reg${regressor}-subs${xgboostsubsample}"
+    dirname="${basename}-cut1-${cut1}-cut2-${cut2}-limit-${limit}-est${est}-xbmin${xgboostminchild}-xbmd${xboostmaxdepth}-reg${regressor}-subs${xgboostsubsample}"
 
     mkdir -p ${dirname}
     rm -f ${dirname}/out_*
@@ -51,7 +51,7 @@ function generate() {
         ../cldata_predict.py \
         $INFILE \
         --tier ${tier} --regressor $regressor \
-        --xgboostest ${est} --weight ${w} \
+        --xgboostest ${est} \
         --xgboostminchild $xgboostminchild --xboostmaxdepth=${xboostmaxdepth} \
         --basedir "${dirname}" \
         --features "best_only" \
@@ -79,10 +79,10 @@ function generate() {
 #xboostminchild=300
 #est=10
 
-bestf="../../scripts/crystal/best_features-correlaton.txt"
+bestf="../../scripts/crystal/best_features-correlation2.txt"
 w=0
 xgboostsubsample="1.0"
-basename="22-oct-27-sept-a408d53c665f9305b"
+basename="26-oct-27-sept-a408d53c665f9305b-correlation2"
 #basename="14-april-2021-69bad529f962c"
 #basename="8march-2020-3acd81dc55df3-36feats"
 #basename="aes-30-march-2020-a1e0e19be0c1"

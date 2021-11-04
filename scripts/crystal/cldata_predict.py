@@ -591,6 +591,8 @@ if __name__ == "__main__":
         if name == "fname":
             assert ty == object
         else:
+            if ty == object:
+                print("name: " , name, " is object!")
             assert ty != object
 
     df_orig = df.copy()

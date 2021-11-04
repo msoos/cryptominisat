@@ -359,12 +359,6 @@ CREATE TABLE `satzilla_features` (
   `irred_activity_distr_var` double NOT NULL
 );
 
-DROP TABLE IF EXISTS `used_clauses`;
-create table `used_clauses` (
-    `clauseID` bigint(20) NOT NULL
-    , `used_at` bigint(20) NOT NULL
-);
-
 DROP TABLE IF EXISTS `var_data_fintime`;
 create table `var_data_fintime` (
     `var`                                              int(20) NOT NULL

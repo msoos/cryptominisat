@@ -264,16 +264,18 @@ class QueryFill (QueryHelper):
         print("indexes created T: %-3.2f s" % (time.time() - t))
 
     def delete_and_create_used_laters(self):
-        tables = ["short", "long", "forever"]
-        for table in tables:
-            q = """
-                DROP TABLE IF EXISTS `used_later_{name}`;
-            """
-            self.c.execute(q.format(name=table))
+        tiers = ["short", "long", "forever"]
+        tables = ["used_later", "used_later_anc"]
+        for tier in tiers:
+            for table in tables:
+                q = """
+                    DROP TABLE IF EXISTS `{table}_{tier}`;
+                """
+                self.c.execute(q.format(tier=tier, table=table))
 
         # Create and fill used_later_X tables
         q_create = """
-        create table `used_later_{name}` (
+        create table `{table}_{tier}` (
             `clauseID` bigint(20) NOT NULL,
             `rdb0conflicts` bigint(20) NOT NULL,
             `used_later` float,
@@ -281,30 +283,32 @@ class QueryFill (QueryHelper):
         );"""
         # NOTE: "percentile_fit" is the top percentile this use belongs to. Filled in later.
 
-        for table in tables:
-            self.c.execute(q_create.format(name=table))
+        for tier in tiers:
+            for table in tables:
+                self.c.execute(q_create.format(tier=tier, table=table))
 
         idxs = """
-        create index `used_later_{name}_idx3` on `used_later_{name}` (`used_later`);
-        create index `used_later_{name}_idx1` on `used_later_{name}` (`clauseID`, `rdb0conflicts`);
-        create index `used_later_{name}_idx2` on `used_later_{name}` (`clauseID`, `rdb0conflicts`, `used_later`);"""
+        create index `{table}_{tier}_idx3` on `{table}_{tier}` (`used_later`);
+        create index `{table}_{tier}_idx1` on `{table}_{tier}` (`clauseID`, `rdb0conflicts`);
+        create index `{table}_{tier}_idx2` on `{table}_{tier}` (`clauseID`, `rdb0conflicts`, `used_later`);"""
 
         t = time.time()
-        for table in tables:
-            for l in idxs.format(name=table).split('\n'):
-                self.c.execute(l)
+        for tier in tiers:
+            for table in tables:
+                for l in idxs.format(tier=tier, table=table).split('\n'):
+                    self.c.execute(l)
 
         print("used_later* dropped and recreated T: %-3.2f s" % (time.time() - t))
 
     # The most expesive operation of all, when called with "forever"
     def fill_used_later_X(self, name, duration, used_clauses="used_clauses",
-                          min_del_distance=None):
+                          table="used_later"):
 
-        if min_del_distance is None:
-            min_del_distance = duration
+        if duration > 2*1000*1000:
+            min_del_distance = 100*1000
 
         q_fill = """
-        insert into used_later_{name}
+        insert into {table}_{name}
         (
         `clauseID`,
         `rdb0conflicts`,
@@ -337,8 +341,10 @@ class QueryFill (QueryHelper):
         q = q_fill.format(
             name=name, used_clauses=used_clauses,
             duration=duration,
+            table=table,
             min_del_distance=min_del_distance)
         self.c.execute(q)
+
 
         q_num = "select count(*) from used_later_{name}".format(name=name)
         self.c.execute(q_num)
@@ -346,31 +352,31 @@ class QueryFill (QueryHelper):
         for row in rows:
             num = row[0]
 
-        if num == 0:
+        if table == "used_later" and num == 0:
             print("ERROR: number of rows in used_later_{name} is 0!".format(name=name))
             print("Query was: %s" % q)
             exit(-1)
 
 
-        print("used_later_%s filled T: %-3.2f s -- num rows: %d" %
-              (name, time.time() - t, num))
+        print("%s_%s filled T: %-3.2f s -- num rows: %d" %
+              (table, name, time.time() - t, num))
 
-    def fill_used_later_X_perc_fit(self, name):
-        print("Filling percentile_fit for used_later_{name}".format(name=name))
+    def fill_used_later_X_perc_fit(self, tier, table):
+        print("Filling percentile_fit for {table}_{tier}".format(tier=tier, table=table))
 
         q = """
-        update used_later_{name}
+        update {table}_{tier}
         set percentile_fit = (
-            select max(used_later_percentiles.percentile)
-            from used_later_percentiles
+            select max({table}_percentiles.percentile)
+            from {table}_percentiles
             where
-            used_later_percentiles.type_of_dat="{name}"
-            and used_later_percentiles.percentile_descr="top_non_zero"
-            and used_later_percentiles.val >= used_later_{name}.used_later);
+            {table}_percentiles.type_of_dat="{tier}"
+            and {table}_percentiles.percentile_descr="top_non_zero"
+            and {table}_percentiles.val >= {table}_{tier}.used_later);
         """
         t = time.time()
-        self.c.execute(q.format(name=name))
-        print("used_later_%s percentile filled T: %-3.2f s" % (name, time.time() - t))
+        self.c.execute(q.format(tier=tier, table=table))
+        print("used_later_%s percentile filled T: %-3.2f s" % (tier, time.time() - t))
 
 
 

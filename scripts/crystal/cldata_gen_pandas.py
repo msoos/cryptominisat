@@ -92,11 +92,11 @@ class QueryAddIdxes (helper.QueryHelper):
 
 
 class QueryCls (helper.QueryHelper):
-    def __init__(self, dbfname, tier):
+    def __init__(self, dbfname, tier, table):
         super(QueryCls, self).__init__(dbfname)
-        self.fill_sql_query(tier)
+        self.fill_sql_query(tier, table=table)
 
-    def fill_sql_query(self, tier):
+    def fill_sql_query(self, tier, table):
         # sum_cl_use
         self.sum_cl_use = helper.query_fragment(
             "sum_cl_use", [], "sum_cl_use", options.verbose, self.c)
@@ -153,18 +153,18 @@ class QueryCls (helper.QueryHelper):
         """
 
         q_time_base="""
-        join used_later_{timeframe} on
-            used_later_{timeframe}.clauseID = rdb0.clauseID
-            and used_later_{timeframe}.rdb0conflicts = rdb0.conflicts
+        join {table}_{tier} on
+            {table}_{tier}.clauseID = rdb0.clauseID
+            and {table}_{tier}.rdb0conflicts = rdb0.conflicts
         """
 
         q_columns_base="""
-            , used_later_{timeframe}.used_later as `x.used_later_{timeframe}`
-            , used_later_{timeframe}.percentile_fit as `x.used_later_{timeframe}_topperc`
+            , {table}_{tier}.used_later as `x.used_later_{tier}`
+            , {table}_{tier}.percentile_fit as `x.used_later_{tier}_topperc`
             """
 
-        q_time = q_time_base.format(timeframe=tier)
-        q_columns = q_columns_base.format(timeframe=tier)
+        q_time = q_time_base.format(tier=tier, table=table)
+        q_columns = q_columns_base.format(tier=tier, table=table)
 
         # final big query
         self.q_select = """
@@ -221,7 +221,7 @@ class QueryCls (helper.QueryHelper):
             "q_columns": q_columns
         }
 
-    def get_used_later_percentiles(self, name):
+    def get_used_later_percentiles(self, name, table):
         cur = self.conn.cursor()
         q = """
         select
@@ -229,15 +229,16 @@ class QueryCls (helper.QueryHelper):
             `percentile_descr`,
             `percentile`,
             `val`
-        from used_later_percentiles
+        from {table}_percentiles
         where `type_of_dat` = '{name}'
-        """.format(name=name)
+        """.format(name=name, table=table)
         cur.execute(q)
         rows = cur.fetchall()
         lookup = {}
         for row in rows:
             mystr = "%s_%s_perc" % (row[1], row[2])
-            print("type: {t}, perc_desc: {perc_desc}, perc: {perc}, val: {val}".format(
+            print("table: {table} type: {t}, perc_desc: {perc_desc}, perc: {perc}, val: {val}".format(
+                table=table,
                 t=row[0],
                 perc_desc=row[1],
                 perc=row[2],
@@ -247,10 +248,10 @@ class QueryCls (helper.QueryHelper):
 
         return lookup
 
-    def get_one_data_all_dumpnos(self, tier):
+    def get_one_data_all_dumpnos(self, tier, table):
         df = None
 
-        ok, df, this_limit = self.get_data(tier)
+        ok, df, this_limit = self.get_data(tier, table)
         if not ok:
             return False, None
 
@@ -262,25 +263,22 @@ class QueryCls (helper.QueryHelper):
         return True, df
 
 
-    def get_data(self, tier):
-        perc = self.get_used_later_percentiles(tier)
+    def get_data(self, tier, table):
+        perc = self.get_used_later_percentiles(tier, table)
+        self.myformat["del_at_least"] = getattr(options, tier)
 
-        if tier == "short":
-            self.myformat["del_at_least"] = options.short
-
-        elif tier == "long":
-            self.myformat["del_at_least"] = options.long
-
-        elif tier == "forever":
-            self.myformat["del_at_least"] = options.forever
+        # when del_at_least is over 2 million, then we need to make this smaller
+        #    or we will delete all data
+        if self.myformat["del_at_least"] > 2*1000*1000:
+            self.myformat["del_at_least"] = 100*1000
 
         # Make sure these stratas are equally represented
         t = time.time()
         limit = options.limit
-        limit, _ = self.run_stratified_queries(limit, perc, tier)
+        limit, _ = self.run_stratified_queries(limit, perc, tier, table)
         print("Setting limit to minimum of all of above weighted sizes:", limit)
         print("** Running final queries")
-        _, dfs = self.run_stratified_queries(limit, perc, tier)
+        _, dfs = self.run_stratified_queries(limit, perc, tier, table)
 
         data = pd.concat(dfs)
         print("** Queries finished. Total size: %s  -- T: %-3.2f" % (
@@ -290,7 +288,7 @@ class QueryCls (helper.QueryHelper):
     # perc == percentile distribution
     # limit == how many in total
     # tier == forever/long/short
-    def run_stratified_queries(self, limit, perc, tier):
+    def run_stratified_queries(self, limit, perc, tier, table):
         dfs = []
         # NOTE: these are NON-ZERO percentages, but we replace 100 with "0", so the LAST chunk contains ALL, including 0, which is a large part of the data
         for beg_perc, end_perc in [(0.0, options.cut1), (options.cut1, options.cut2), (options.cut2, 100.0)]:
@@ -318,20 +316,19 @@ class QueryCls (helper.QueryHelper):
         weighted_size = []
         df_parts = []
 
-        def one_part(mult, extra_filter):
+        def one_part(mult, dump_no_filter=""):
             self.myformat["limit"] = int(limit*mult)
-            df_parts.append(self.one_query(q + extra_filter, what_to_strata, strata))
-            print("--> Num rows for strata %s -- '%s': %s" % (strata, extra_filter, df_parts[-1].shape[0]))
+            df_parts.append(self.one_query(q + dump_no_filter, what_to_strata, strata))
+            print("--> Num rows for strata %s -- '%s': %s" % (strata, dump_no_filter, df_parts[-1].shape[0]))
 
             ws = df_parts[-1].shape[0]/mult
             print("--> The weight was %f so wegthed size is: %d" % (mult, int(ws)))
             weighted_size.append(ws)
 
-        one_part(1/4.0, " and rdb0.dump_no = 1 ")
-        one_part(1/4.0, " and rdb0.dump_no = 2 ")
-        one_part(1/4.0, " and rdb0.dump_no > 2 ")
-        one_part(1/4.0, " and rdb0.dump_no > 20 ")
-
+        one_part(1/4.0, dump_no_filter=" and rdb0.dump_no = 1 ")
+        one_part(1/4.0, dump_no_filter=" and rdb0.dump_no = 2 ")
+        one_part(1/4.0, dump_no_filter=" and rdb0.dump_no > 2 ")
+        one_part(1/4.0, dump_no_filter=" and rdb0.dump_no > 20 ")
 
         df = pd.concat(df_parts)
         print("-> size of all dump_no-s, strata {strata} data: {size}".format(
@@ -356,8 +353,7 @@ class QueryCls (helper.QueryHelper):
             what_to_strata=what_to_strata,
             beg=strata[0],
             end=strata[1],
-            my_less_equal=my_less_equal
-            )
+            my_less_equal=my_less_equal)
 
         q += self.common_limits
         q = q.format(**self.myformat)
@@ -392,21 +388,23 @@ def one_database(dbfname):
 
     with helper.QueryFill(dbfname) as q:
         q.delete_and_create_used_laters()
-        q.fill_used_later_X("short", duration=options.short)
-        q.fill_used_later_X("long", duration=options.long)
-        q.fill_used_later_X("forever", duration=options.forever,
-                            min_del_distance=None)
-
-        # fill percentile_fit
-        for tier in todo_types:
-            q.fill_used_later_X_perc_fit(tier)
+        for tier in ["short", "long", "forever"]:
+            for table in ["used_later", "used_later_anc"]:
+                q.fill_used_later_X(tier, duration=getattr(options, tier), table=table)
+                q.fill_used_later_X_perc_fit(tier, table=table)
 
     print("Using sqlite3 DB file %s" % dbfname)
-    for tier in todo_types:
+    for tier in ["short", "long", "forever"]:
         print("------> Doing tier {tier}".format(tier=tier))
 
-        with QueryCls(dbfname, tier) as q:
-            ok, df = q.get_one_data_all_dumpnos(tier)
+        # HACK  When it's FOREVER, we use ancestor data, not real data
+        table = "used_later"
+        if tier == "forever":
+            table = "used_later_anc"
+
+
+        with QueryCls(dbfname, tier, table) as q:
+            ok, df = q.get_one_data_all_dumpnos(tier, table)
 
         if not ok:
             print("-> Skipping file {file} {tier}".format(
@@ -477,9 +475,6 @@ if __name__ == "__main__":
     if len(args) != 1:
         print("ERROR: You must give exactly one file")
         exit(-1)
-
-    # todo_types = ["short", "long", "forever", "forever_div"]
-    todo_types = ["short", "long", "forever"]
 
     np.random.seed(2097483)
     one_database(args[0])

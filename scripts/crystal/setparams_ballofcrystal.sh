@@ -21,13 +21,13 @@
 # so we can set different configurations via environment variables.
 
 export FNAMEOUT="mydata"
-export FIXED="6000"
-export RATIO="0.99"
-export CONF=1
+export FIXED="3000"
+export DUMPRATIO="0.999"
+export CLLOCK="0.3"
 export EXTRA_CMS_OPTS=""
 export EXTRA_GEN_PANDAS_OPTS=""
 export cut1="3.0"
 export cut2="25.0"
 export SANITIZE=0
-export bestf="../../scripts/crystal/best_features-correlaton.txt"
+export bestf="../../scripts/crystal/best_features-correlation2.txt"
 #export bestf="../../scripts/crystal/best_features-ext.txt"

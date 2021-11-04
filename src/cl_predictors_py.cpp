@@ -172,6 +172,11 @@ int ClPredictorsPy::load_models(const std::string& short_fname,
     pArgs = PyTuple_New(1);
     PyTuple_SetItem(pArgs, 0, PyUnicode_FromString(best_feats_fname.c_str()));
     PyObject* ret = PyObject_CallObject(set_up_features, pArgs);
+    if (ret == NULL) {
+        PyErr_Print();
+        cout << "ERROR: Failed to set up features!" << endl;
+        exit(-1);
+    }
     //Py_DECREF(set_up_features);
     Py_DECREF(pArgs);
     Py_DECREF(ret);

@@ -31,76 +31,83 @@ class QueryDatRem(helper.QueryHelper):
         super(QueryDatRem, self).__init__(dbfname)
 
     def create_percentiles_table(self):
-        # Drop table
-        q_drop = """
-        DROP TABLE IF EXISTS `used_later_percentiles`;
-        """
-        self.c.execute(q_drop)
+        for table in ["used_later", "used_later_anc"]:
+            # drop table
+            q_drop = """
+            DROP TABLE IF EXISTS `{table}_percentiles`;
+            """
+            self.c.execute(q_drop.format(table=table))
 
-        # Create and fill used_later_X tables
-        q_create = """
-        create table `used_later_percentiles` (
-            `type_of_dat` string NOT NULL,
-            `percentile_descr` string NOT NULL,
-            `percentile` float DEFAULT NULL,
-            `val` float NOT NULL
-        );"""
-        self.c.execute(q_create)
+            # Create percentiles table
+            q_create = """
+            create table `{table}_percentiles` (
+                `type_of_dat` string NOT NULL,
+                `percentile_descr` string NOT NULL,
+                `percentile` float DEFAULT NULL,
+                `val` float NOT NULL
+            );"""
+            self.c.execute(q_create.format(table=table))
 
-        idxs = """
-        create index `used_later_percentiles_idx3` on `used_later_percentiles` (`type_of_dat`, `percentile_descr`, `percentile`, `val`);
-        create index `used_later_percentiles_idx2` on `used_later_percentiles` (`type_of_dat`, `percentile_descr`, `val`);"""
-        for q in idxs.split("\n"):
-            self.c.execute(q)
+            idxs = """
+            create index `{table}_percentiles_idx3` on `{table}_percentiles` (`type_of_dat`, `percentile_descr`, `percentile`, `val`);
+            create index `{table}_percentiles_idx2` on `{table}_percentiles` (`type_of_dat`, `percentile_descr`, `val`);"""
+            for q in idxs.split("\n"):
+                self.c.execute(q.format(table=table))
 
 
-    # "name" here is "short", "long", or "forever"
-    def get_all_percentile_X(self, name):
+    # "tier" here is "short", "long", or "forever"
+    def get_all_percentile_X(self, tier):
         t = time.time()
         print("Calculating percentiles now...")
 
-        q2 = """
-        insert into used_later_percentiles (type_of_dat, percentile_descr, percentile, val)
-        {q}
-        """
+        for table in ["used_later", "used_later_anc"]:
+            q2 = """
+            insert into {table}_percentiles (type_of_dat, percentile_descr, percentile, val)
+            {q}
+            """
 
-        q = "select '{name}', 'avg', NULL, avg(used_later) from used_later_{name};".format(name=name)
-        self.c.execute(q2.format(name=name, q=q))
+            q = "select '{tier}', 'avg', NULL, avg(used_later) from {table}_{tier};".format(
+                tier=tier, table=table)
+            self.c.execute(q2.format(tier=tier, table=table, q=q))
 
-        q = """
-        SELECT
-        '{name}', 'top_non_zero', {perc}, used_later
-        FROM used_later_{name}
-        WHERE used_later>0
-        ORDER BY used_later ASC
-        LIMIT 1
-        OFFSET round((SELECT
-         COUNT(*)
-        FROM used_later_{name}
-        WHERE used_later>0) * ((100-{perc}) / 100.0)) - 1;
-        """
-        for perc in list(range(0,30,1))+list(range(30,100, 5)):
-            myq = q.format(name=name, perc=perc)
-            self.c.execute(q2.format(name=name, q=myq))
-        # the 100% perecentile is not 0 (remember, this is "non-zero"), but let's cheat and add it in
-        self.c.execute(q2.format(name=name, q="select '{name}', 'top_non_zero', 100.0, 0.0;".format(name=name)))
+            q = """
+            SELECT
+            '{tier}', 'top_non_zero', {perc}, used_later
+            FROM {table}_{tier}
+            WHERE used_later>0
+            ORDER BY used_later ASC
+            LIMIT 1
+            OFFSET round((SELECT
+             COUNT(*)
+            FROM {table}_{tier}
+            WHERE used_later>0) * ((100-{perc}) / 100.0)) - 1;
+            """
+            for perc in list(range(0,30,1))+list(range(30,100, 5)):
+                myq = q.format(tier=tier, table=table, perc=perc)
+                self.c.execute(q2.format(tier=tier, table=table, q=myq))
+            # the 100% perecentile is not 0 (remember, this is "non-zero"), but let's cheat and add it in
+            self.c.execute(q2.format(
+                tier=tier, table=table, q="select '{tier}', 'top_non_zero', 100.0, 0.0;".format(
+                    tier=tier, table=table)))
 
-        q = """
-        SELECT
-        '{name}', 'top_also_zero', {perc}, used_later
-        FROM used_later_{name}
-        ORDER BY used_later ASC
-        LIMIT 1
-        OFFSET round((SELECT
-         COUNT(*)
-        FROM used_later_{name}) * ((100.0-{perc}) / 100.0)) - 1;
-        """
-        for perc in range(0,100, 10):
-            myq = q.format(name=name, perc=perc)
-            self.c.execute(q2.format(name=name, q=myq))
-        self.c.execute(q2.format(name=name, q="select '{name}', 'top_also_zero', 100.0, 0.0;".format(name=name)))
+            q = """
+            SELECT
+            '{tier}', 'top_also_zero', {perc}, used_later
+            FROM {table}_{tier}
+            ORDER BY used_later ASC
+            LIMIT 1
+            OFFSET round((SELECT
+             COUNT(*)
+            FROM {table}_{tier}) * ((100.0-{perc}) / 100.0)) - 1;
+            """
+            for perc in range(0,100, 10):
+                myq = q.format(tier=tier, table=table, perc=perc)
+                self.c.execute(q2.format(tier=tier, table=table, q=myq))
+            self.c.execute(
+                q2.format(tier=tier, table=table,
+                          q="select '{tier}', 'top_also_zero', 100.0, 0.0;".format(tier=tier, table=table)))
 
-        print("Calculated percentiles/averages, T:", time.time()-t)
+            print("Calculated percentiles/averages, T:", time.time()-t)
 
     def print_percentiles(self):
         q_check = "select * from used_later_percentiles"
@@ -279,21 +286,6 @@ class QueryDatRem(helper.QueryHelper):
         print("Added num_used >= %d from sum_cl_use to used_cls_ids T: %-3.2f s"
               % (min_used, time.time() - t))
 
-    def insert_into_used_cls_ids_ternary_resolvents(self, limit):
-        limit = int(limit)
-
-        t = time.time()
-        val = int()
-        q = """
-        insert into used_cl_ids
-        select
-        clauseID from reduceDB
-        where
-        is_ternary_resolvent = 1
-        group by clauseID
-        order by random() limit {limit}
-        """.format(limit=int(limit))
-
 
         self.c.execute(q)
         print("Added clauseIDs from reduceDB that are TERNARY from reduceDB to used_cls_ids T: %-3.2f s"
@@ -313,7 +305,6 @@ class QueryDatRem(helper.QueryHelper):
             self.insert_into_used_cls_ids_from_clstats(min_used=5, limit=limit/3)
             self.insert_into_used_cls_ids_from_clstats(min_used=1, limit=limit/2)
 
-        #self.insert_into_used_cls_ids_ternary_resolvents(limit=limit/2)
         self.insert_into_used_cls_ids_from_clstats(min_used=0, limit=limit/2, max_used=None)
 
         q = """
@@ -382,7 +373,7 @@ class QueryDatRem(helper.QueryHelper):
 
         self.print_idxs()
 
-        tables = ["clause_stats", "reduceDB", "sum_cl_use",
+        tables = ["clause_stats", "reduceDB", "sum_cl_use", "used_clauses_anc",
                   "used_clauses", "restart_dat_for_cl", "cl_last_in_solver"]
         q = """
         DELETE FROM {table} WHERE clauseID NOT IN
@@ -676,13 +667,16 @@ if __name__ == "__main__":
         helper.dangerous(q.c)
         q.delete_and_create_used_laters()
         q.create_indexes(verbose=options.verbose, used_clauses="used_clauses_red")
-        q.fill_used_later_X("short", duration=options.short,
-                            used_clauses="used_clauses_red")
-        q.fill_used_later_X("long", duration=options.long,
-                            used_clauses="used_clauses_red")
-        q.fill_used_later_X("forever", duration=options.forever,
-                            min_del_distance=None,
-                            used_clauses="used_clauses_red")
+        for table in ["used_later", "used_later_anc"]:
+            q.fill_used_later_X("short", duration=options.short,
+                                used_clauses="used_clauses_red",
+                                table=table)
+            q.fill_used_later_X("long", duration=options.long,
+                                used_clauses="used_clauses_red",
+                                table=table)
+            q.fill_used_later_X("forever", duration=options.forever,
+                                used_clauses="used_clauses_red",
+                                table=table)
 
     # now we calculate the distributions and save them
     with QueryDatRem(args[0]) as q:
