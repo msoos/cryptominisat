@@ -1108,19 +1108,17 @@ void ReduceDB::handle_predictors()
                 cout << endl;
             }
         } else {
-            vector<std::string> locations;
-            locations.push_back(solver->conf.pred_conf_location + "/" +
-                std::string("predictor_short_")
+            vector<string> locations;
+            vector<string> tiers = {"short", "long", "forever"};
+            for (uint32_t i = 0; i < 3; i ++) {
+                locations.push_back(solver->conf.pred_conf_location + "/" +
+                std::string("predictor-")
+                + (solver->conf.pred_tables[i] == '0' ? "used_later" : "used_later_anc")
+                + "-"
+                + tiers[i] + "-"
                 + solver->conf.predictor_type
                 + std::string(".json"));
-            locations.push_back(solver->conf.pred_conf_location + "/" +
-                std::string("predictor_long_")
-                + solver->conf.predictor_type
-                + std::string(".json"));
-            locations.push_back(solver->conf.pred_conf_location + "/" +
-                std::string("predictor_forever_")
-                + solver->conf.predictor_type
-                + std::string(".json"));
+            }
 
             int ret = predictors->load_models(
                 locations[0],
@@ -1128,7 +1126,7 @@ void ReduceDB::handle_predictors()
                 locations[2],
                 solver->conf.predict_best_feat_fname);
 
-            if (ret == NULL) {
+            if (ret == 0) {
                 cout << "ERROR with python array loading!" << endl;
                 exit(-1);
             }

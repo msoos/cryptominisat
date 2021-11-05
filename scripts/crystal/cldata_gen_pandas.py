@@ -159,8 +159,8 @@ class QueryCls (helper.QueryHelper):
         """
 
         q_columns_base="""
-            , {table}_{tier}.used_later as `x.used_later_{tier}`
-            , {table}_{tier}.percentile_fit as `x.used_later_{tier}_topperc`
+            , {table}_{tier}.used_later as `x.{table}_{tier}`
+            , {table}_{tier}.percentile_fit as `x.{table}_{tier}_topperc`
             """
 
         q_time = q_time_base.format(tier=tier, table=table)
@@ -297,7 +297,7 @@ class QueryCls (helper.QueryHelper):
                 end = 0.0
             else:
                 end = perc["top_non_zero_{perc}_perc".format(perc=end_perc)]
-            what_to_strata = "`x.used_later_{tier}`".format(tier=tier)
+            what_to_strata = "`x.{table}_{tier}`".format(tier=tier, table=table)
 
             print("Limit is currently: {limit} value strata perc: ({a}, {b}) translates to value strata ({beg}, {end})".format(
                 limit=limit, a=beg_perc, b=end_perc, beg=beg, end=end))
@@ -395,46 +395,43 @@ def one_database(dbfname):
 
     print("Using sqlite3 DB file %s" % dbfname)
     for tier in ["short", "long", "forever"]:
-        print("------> Doing tier {tier}".format(tier=tier))
+        for table in ["used_later", "used_later_anc"]:
+            print("------> Doing tier {tier} table {table}".format(
+                tier=tier,table=table))
 
-        # HACK  When it's FOREVER, we use ancestor data, not real data
-        table = "used_later"
-        if tier == "forever":
-            table = "used_later_anc"
+            with QueryCls(dbfname, tier, table) as q:
+                ok, df = q.get_one_data_all_dumpnos(tier, table)
 
+            if not ok:
+                print("-> Skipping file {file} {tier} {table}".format(
+                    file=dbfname, tier=tier, table=table))
+                continue
 
-        with QueryCls(dbfname, tier, table) as q:
-            ok, df = q.get_one_data_all_dumpnos(tier, table)
+            if options.verbose:
+                print("Describing----")
+                dat = df.describe()
+                print(dat)
+                print("Describe done.---")
+                print("Features: ", df.columns.values.flatten().tolist())
 
-        if not ok:
-            print("-> Skipping file {file} {tier}".format(
-                file=dbfname, tier=tier))
-            continue
+            if options.verbose:
+                print("Describing post-transform ----")
+                print(df.describe())
+                print("Describe done.---")
+                print("Features: ", df.columns.values.flatten().tolist())
 
-        if options.verbose:
-            print("Describing----")
-            dat = df.describe()
-            print(dat)
-            print("Describe done.---")
-            print("Features: ", df.columns.values.flatten().tolist())
+            cleanname = re.sub(r'\.cnf.gz.sqlite$', '', dbfname)
+            cleanname = re.sub(r'\.db$', '', dbfname)
+            cleanname = re.sub(r'\.sqlitedb$', '', dbfname)
+            cleanname = "{cleanname}-cldata-{table}-{tier}-cut1-{cut1}-cut2-{cut2}-limit-{limit}".format(
+                cleanname=cleanname,
+                cut1=options.cut1,
+                cut2=options.cut2,
+                limit=options.limit,
+                tier=tier,
+                table=table)
 
-        if options.verbose:
-            print("Describing post-transform ----")
-            print(df.describe())
-            print("Describe done.---")
-            print("Features: ", df.columns.values.flatten().tolist())
-
-        cleanname = re.sub(r'\.cnf.gz.sqlite$', '', dbfname)
-        cleanname = re.sub(r'\.db$', '', dbfname)
-        cleanname = re.sub(r'\.sqlitedb$', '', dbfname)
-        cleanname = "{cleanname}-cldata-{tier}-cut1-{cut1}-cut2-{cut2}-limit-{limit}".format(
-            cleanname=cleanname,
-            cut1=options.cut1,
-            cut2=options.cut2,
-            limit=options.limit,
-            tier=tier)
-
-        dump_dataframe(df, cleanname)
+            dump_dataframe(df, cleanname)
 
 
 if __name__ == "__main__":

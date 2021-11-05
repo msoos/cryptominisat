@@ -234,6 +234,7 @@ struct ClauseStatsExtra
 
     //Features that are normally available through SQL
     #ifdef FINAL_PREDICTOR
+    uint32_t    trail_depth_level;
     float       glueHist_longterm_avg;
     float       glueHist_avg;
     uint32_t    glue_before_minim;

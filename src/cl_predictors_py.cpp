@@ -93,10 +93,11 @@ int ClPredictorsPy::set_up_input(
     at[x++] = sum_props_per_time_ranking;
     at[x++] = sum_uip1_per_time_ranking_rel;
     at[x++] = sum_props_per_time_ranking_rel;
+    at[x++] = cl->distilled;
 
     //Ternary resolvents lack glue and antecedent data
     if (cl->stats.is_ternary_resolvent) {
-        for(int i = 0; i < 13; i++) {
+        for(int i = 0; i < 14; i++) {
             at[x++] = missing_val;
         }
     } else {
@@ -113,6 +114,7 @@ int ClPredictorsPy::set_up_input(
         at[x++] = cl->stats.glue;
         at[x++] = extra_stats.orig_glue;
         at[x++] = extra_stats.glue_before_minim;
+        at[x++] = extra_stats.trail_depth_level;
     }
     assert(x == NUM_RAW_FEATS);
 

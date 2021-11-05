@@ -191,7 +191,7 @@ class Learner:
 
         return train, test
 
-    def one_classifier(self, features, to_predict):
+    def one_regressor(self, features, to_predict):
         print("-> Number of features  :", len(features))
         print("-> Number of datapoints:", self.df.shape)
         print("-> Predicting          :", to_predict)
@@ -342,7 +342,8 @@ class Learner:
             if options.regressor == "tree":
                 helper.output_to_classical_dot(
                     clf, features,
-                    fname=options.dot + "-" + options.tier)
+                    fname="{name}-{table}-{tier}.dot".format(
+                        name=options.dot, tier=options.tier, table=options.table))
 
             elif options.regressor == "xgb":
                 dot_data = xgb.to_graphviz(booster=clf, num_trees=9)
@@ -354,8 +355,8 @@ class Learner:
                 exit(-1)
 
         if options.basedir:
-            fname_pred_out = options.basedir + "/predictor_{name}_{typ}.json".format(
-                name=options.name, typ=options.regressor)
+            fname_pred_out = options.basedir + "/predictor-{table}-{tier}-{regr}.json".format(
+                tier=options.tier, table=options.table, regr=options.regressor)
             if options.regressor == "xgb":
                 booster = clf.get_booster()
                 booster.save_model(fname_pred_out)
@@ -401,7 +402,8 @@ class Learner:
         if options.dump_example_data:
             with open("example-data.dat", "wb") as f:
                 pickle.dump(test[features+[to_predict]], f)
-            self.dump_ml_test_data(test, "../ml_perf_test.txt-%s" % options.tier, to_predict)
+            self.dump_ml_test_data(test, "../ml_perf_test.txt-{table}-{tier}".format(
+                table=options.table, tier=options.tier))
             print("Example data dumped")
 
     def rem_features(self, feat, to_remove):
@@ -423,31 +425,30 @@ class Learner:
             df.hist()
             df.boxplot()
 
-        # get to_predict
-        if options.topperc:
-            to_predict = "x.used_later_{name}_topperc".format(name=options.tier)
-        else:
-            to_predict = "x.used_later_{name}".format(name=options.tier)
-
         if options.features != "best_only":
             features = list(self.df)
-            features = self.rem_features(
-                features, [
-                    "x.class",
-                    "x.a_lifetime",
-                    "fname",
-                    "sum_cl_use.num_used",
-                    "x.sum_cl_use",
-                    "x.used_later_short",
-                    "x.used_later_long",
-                    "x.used_later_forever",
-                    "rdb0.dump_no",
-                    "fname"])
+
+            # remove features that would be "cheating" or useless
+            torem = []
+            for table in ["used_later", "used_later_anc"]:
+                for tier in ["short", "long", "forever"]:
+                    torem. append("x.{table}_{tier}".format(tier=tier, table=table))
+
+            torem.extend([
+                "x.class",
+                "x.a_lifetime",
+                "fname",
+                "sum_cl_use.num_used",
+                "x.sum_cl_use",
+                "rdb0.dump_no",
+                "fname"])
+            features = self.rem_features(features, torem)
         else:
             del df["fname"]
             features = helper.get_features(options.best_features_fname)
 
-        self.one_classifier(features, to_predict)
+        to_predict = "x.{table}_{tier}".format(tier=options.tier, table=options.table)
+        self.one_regressor(features, to_predict)
 
 
 if __name__ == "__main__":
@@ -516,11 +517,9 @@ if __name__ == "__main__":
 
     # which one to generate
     parser.add_argument("--tier", default=None, type=str,
-                        dest="tier", help="what to predict")
-    parser.add_argument("--name", default=None, type=str,
-                        dest="name", help="what file to generate")
-    parser.add_argument("--topperc", default=False, action="store_true",
-                        dest="topperc", help="Predict toppercent instead of use value")
+                        dest="tier", help="Tier to do")
+    parser.add_argument("--table", default="used_later", type=str,
+                        dest="table", help="Table to do")
 
     options = parser.parse_args()
     prng = np.random.RandomState(options.seed)
@@ -538,9 +537,9 @@ if __name__ == "__main__":
         print("ERROR: you must set --tier, exiting")
         exit(-1)
 
-    if options.name is None:
-        print("Name was not set with --name, setting it to --tier, i.e. ", options.tier)
-        options.name = options.tier
+    if options.table is None:
+        print("ERROR: you must set --table, exiting")
+        exit(-1)
 
     if options.best_features_fname is None and "best" in options.features:
         print("You must give best features filename or we cannot add best features")
@@ -552,7 +551,6 @@ if __name__ == "__main__":
     if mlflow_avail:
         mlflow.log_param("gen_topfeats", options.gen_topfeats)
         mlflow.log_param("tier", options.tier)
-        mlflow.log_param("name", options.name)
         mlflow.log_param("regressor", options.regressor)
         mlflow.log_param("basedir", options.basedir)
         mlflow.log_param("only_percentage", options.only_perc)
@@ -586,6 +584,7 @@ if __name__ == "__main__":
         print("Datatypes after:")
         helper.print_datatypes(df)
 
+    # Check feature type sanity
     # only "fname" is allowed to be an object (a string)
     for name,ty in zip(list(df), df.dtypes):
         if name == "fname":
@@ -595,16 +594,14 @@ if __name__ == "__main__":
                 print("name: " , name, " is object!")
             assert ty != object
 
-    df_orig = df.copy()
     if options.print_features:
         for f in sorted(list(df)):
             print(f)
 
-    # make missing into NaN
+    # make missing (None) into NaN
     helper.make_missing_into_nan(df)
 
     # feature manipulation
-    #helper.delete_none_features(df)
     if options.features =="all_computed":
         helper.cldata_add_computed_features(df, options.verbose)
     elif options.features == "best_only" or options.features == "best_also":
@@ -615,6 +612,7 @@ if __name__ == "__main__":
         print("ERROR: Unrecognized --features option!")
         exit(-1)
 
+    # Check feature type sanity
     for name, mytype in df.dtypes.items():
         if str(mytype) == str("Int64") or str(mytype) == str("Float64"):
             assert False

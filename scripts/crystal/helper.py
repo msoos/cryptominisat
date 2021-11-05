@@ -304,7 +304,8 @@ class QueryFill (QueryHelper):
     def fill_used_later_X(self, name, duration, used_clauses="used_clauses",
                           table="used_later"):
 
-        if duration > 2*1000*1000:
+        min_del_distance = duration
+        if min_del_distance > 2*1000*1000:
             min_del_distance = 100*1000
 
         q_fill = """

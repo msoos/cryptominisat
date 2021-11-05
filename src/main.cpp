@@ -348,6 +348,8 @@ void Main::add_supported_options()
         , "Directory where predictor_short.json, predictor_long.json, predictor_forever.json are")
     ("predtype", po::value(&conf.predictor_type)->default_value(conf.predictor_type)
         , "Type of predictor. Supported: py, xgb, lgbm")
+    ("predtables", po::value(&conf.pred_tables)->default_value(conf.pred_tables)
+        , "000 = normal for all, 111 = ancestor for all")
     ("predbestfeats", po::value(&conf.predict_best_feat_fname)->default_value(conf.predict_best_feat_fname)
         , "Model python file name")
 

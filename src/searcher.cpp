@@ -1667,6 +1667,7 @@ void Searcher::set_clause_data(
 
     stats_extra.glueHist_longterm_avg = hist.glueHist.getLongtTerm().avg();
     stats_extra.glueHist_avg = hist.glueHist.avg_nocheck();
+    stats_extra.trail_depth_level = trail.size();
     stats_extra.glue_before_minim = glue_before_minim;
     stats_extra.overlapHistLT_avg = hist.overlapHistLT.avg();
     stats_extra.num_total_lits_antecedents = antec_data.sum_size();

@@ -43,6 +43,7 @@ raw_data = [
     "rdb0.sum_props_per_time_ranking",
     "rdb0.sum_uip1_per_time_ranking_rel",
     "rdb0.sum_props_per_time_ranking_rel",
+    "rdb0.is_distilled",
     "cl.glueHist_avg",
     "cl.atedecents_binIrred",
     "cl.glueHistLT_avg",
@@ -56,6 +57,7 @@ raw_data = [
     "rdb0.glue",
     "cl.orig_glue",
     "cl.glue_before_minim",
+    "cl.trail_depth_level",
     #"sum_uip1_per_time_ranking_rel",
     #"sum_props_per_time_ranking_rel",
 ]
@@ -163,9 +165,9 @@ def load_models(short_fname, long_fname, forever_fname):
     global models
     for fname in [short_fname, long_fname, forever_fname]:
         clf_xgboost = xgb.XGBRegressor(n_jobs=1)
-        new_fname = fname.replace("_py.", "_xgb.")
+        new_fname = fname.replace("-py.", "-xgb.")
         if not os.path.exists(new_fname):
-            new_fname = fname.replace("_py.", ".")
+            new_fname = fname.replace("-py.", ".")
         clf_xgboost.load_model(new_fname)
         models.append(clf_xgboost)
 

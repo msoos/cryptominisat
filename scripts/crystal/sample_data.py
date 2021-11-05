@@ -491,8 +491,13 @@ class QueryDatRem(helper.QueryHelper):
         order by random()
         limit {limit}""".format(min_used_later=min_used_later, limit=limit)
         self.c.execute(q)
-        print("Insert only_keep_rdb where used_later >= %d T: %-3.2f s" %
-              (min_used_later, time.time() - t))
+
+        ret = self.c.execute("""select count() from only_keep_rdb""")
+        rows = self.c.fetchall()
+        rdb_rows = rows[0][0]
+
+        print("Insert only_keep_rdb where used_later >= %d T: %-3.2f s. Now size: %s" %
+              (min_used_later, time.time() - t, rdb_rows))
 
     def delete_too_many_rdb_rows(self):
         t = time.time()
@@ -635,16 +640,13 @@ if __name__ == "__main__":
             helper.dangerous(q.c)
             q.delete_and_create_used_laters()
             q.create_indexes(verbose=options.verbose)
-            q.fill_used_later_X("short", duration=options.short)
-            q.fill_used_later_X("long", duration=options.long)
-            q.fill_used_later_X("forever", duration=options.forever,
-                                min_del_distance=None)
+            for tier in ["short", "long", "forever"]:
+                q.fill_used_later_X(tier, getattr(options, tier))
         with QueryDatRem(args[0]) as q:
             helper.dangerous(q.c)
             q.create_percentiles_table()
-            q.get_all_percentile_X("short")
-            q.get_all_percentile_X("long")
-            q.get_all_percentile_X("forever")
+            for tier in ["short", "long", "forever"]:
+                q.get_all_percentile_X(tier)
             q.print_percentiles()
         with helper.QueryFill(args[0]) as q:
             q.delete_and_create_used_laters()
@@ -668,23 +670,17 @@ if __name__ == "__main__":
         q.delete_and_create_used_laters()
         q.create_indexes(verbose=options.verbose, used_clauses="used_clauses_red")
         for table in ["used_later", "used_later_anc"]:
-            q.fill_used_later_X("short", duration=options.short,
-                                used_clauses="used_clauses_red",
-                                table=table)
-            q.fill_used_later_X("long", duration=options.long,
-                                used_clauses="used_clauses_red",
-                                table=table)
-            q.fill_used_later_X("forever", duration=options.forever,
-                                used_clauses="used_clauses_red",
-                                table=table)
+            for tier in ["short", "long", "forever"]:
+                q.fill_used_later_X(tier, duration=getattr(options, tier),
+                                    used_clauses="used_clauses_red",
+                                    table=table)
 
     # now we calculate the distributions and save them
     with QueryDatRem(args[0]) as q:
         helper.dangerous(q.c)
         q.create_percentiles_table()
-        q.get_all_percentile_X("short")
-        q.get_all_percentile_X("long")
-        q.get_all_percentile_X("forever")
+        for tier in ["short", "long", "forever"]:
+                q.get_all_percentile_X(tier)
         q.print_percentiles()
         q.drop_used_clauses_red()
     with helper.QueryFill(args[0]) as q:
@@ -712,8 +708,7 @@ if __name__ == "__main__":
         q.create_indexes(verbose=options.verbose)
 
         # this is is needed because the RDB row deletion below is NOT fair
-        q.fill_used_later_X("forever", duration=options.forever,
-                            min_del_distance=None)
+        q.fill_used_later_X("forever", duration=options.forever)
     with QueryDatRem(args[0]) as q:
         print("-------------")
         q.delete_too_many_rdb_rows() # NOTE: NOT FAIR!!!
