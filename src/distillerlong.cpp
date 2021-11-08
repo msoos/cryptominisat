@@ -110,7 +110,7 @@ struct LitCountDescSort
     {}
 
     bool operator()(const Lit& lit1, const Lit& lit2) {
-        return lit_counts[lit1.toInt()] > lit_counts[lit2.toInt()];
+        return lit_counts[lit1.toInt()] < lit_counts[lit2.toInt()];
     }
 
 
@@ -448,7 +448,10 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     if (cl.size() < 500) {
         //Sort them differently once in a while, so all literals have a chance of
         //being removed
-        if (offset % 2  == 0) {
+        if (solver->mtrand.randInt(1) == 0) {
+//             for(uint32_t i2 = 0; i2 < cl.size()-1; i2++) {
+//                 std::swap(cl[i2], cl[i2+solver->mtrand.randInt(cl.size()-i2-1)]);
+//             }
             std::sort(cl.begin(), cl.end(), VSIDS_largest_first(solver->var_act_vsids));
         } else {
             std::sort(cl.begin(), cl.end(), LitCountDescSort(lit_counts));
