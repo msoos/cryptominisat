@@ -20,14 +20,6 @@
 
 import unittest
 
-xors = [
-    ["a", "b", "c"],
-    ["a", "b", "d"]
-]
-
-# to prove impossible
-prove = ["c", "d"]
-
 def inv(l):
     assert len(l) > 0
     if l[0] == "-":
@@ -50,7 +42,8 @@ def check_clause_sanity(c):
 
     return True
 
-def resolve(c1, c2):
+
+def can_resolve(c1, c2):
     check_clause_sanity(c1)
     check_clause_sanity(c2)
 
@@ -59,10 +52,15 @@ def resolve(c1, c2):
     for a in c1:
         for b in c2:
             if a==inv(b):
-                assert resolve_on is None, "Two inverted literals in the 2 clauses!"
+                if resolve_on is not None:
+                    return None
                 resolve_on = a
 
-    assert resolve_on is not None, "Must resolve on a literal!"
+    return resolve_on
+
+def resolve(c1, c2):
+    resolve_on = can_resolve(c1,c2)
+    assert resolve_on is not None, "Cannot resolve the two clauses!"
 
     ret = []
     for a in c1:
@@ -104,7 +102,6 @@ def gen_cls(x):
         ret.append(cl)
 
     return ret
-
 
 
 class TestMethods(unittest.TestCase):
@@ -153,7 +150,94 @@ class TestMethods(unittest.TestCase):
 
         self.assertEqual(resolve(["a", "b", "c"], ["-a", "b"]), ["b", "c"])
 
+def num_inside(cl,lits):
+    num = 0
+    for l in cl:
+        for l2 in lits:
+            if l == l2:
+                num+=1
+
+    return num
+
+
+def find_most_inside(xors, to_prove):
+    most_inside = 0
+    most_inside_cl = None
+    for i_x in range(len(xors)):
+        x = xors[i_x]
+        cls = gen_cls(x)
+        for i_c in range(len(cls)):
+            cl = cls[i_c]
+            n = num_inside(cl, to_prove)
+            if n > most_inside:
+                most_inside = n
+                most_inside_cl = cl
+                most_inside_at = i_x
+
+    return most_inside, most_inside_cl, most_inside_at
+
+
+def find_resolvent_most_inside(xors, cl_other, to_prove):
+    most_inside = 0
+    most_inside_cl = None
+    for i_x in range(len(xors)):
+        x = xors[i_x]
+        cls = gen_cls(x)
+        for i in range(len(cls)):
+            cl = cls[i]
+            if can_resolve(cl,cl_other) is None:
+                continue
+
+            n = num_inside(cl, to_prove)
+            if n > most_inside:
+                most_inside = n
+                most_inside_cl = cl
+                most_inside_at = i_x
+
+    return most_inside, most_inside_cl, most_inside_at
+
+def prove(xors, to_prove):
+    to_prove = sorted(to_prove)
+
+    ret = []
+    most_inside, cl, most_inside_at = find_most_inside(xors, to_prove)
+    assert most_inside > 0
+    print("cl picked:", cl)
+    xors.remove(xors[most_inside_at])
+
+    while cl != to_prove:
+        most_inside, cl2, most_inside_at = find_resolvent_most_inside(xors, cl, to_prove)
+        assert most_inside > 0
+        print("cl picked:", cl2)
+
+        cl = resolve(cl, cl2)
+        cl = sorted(cl)
+        print("resolvent:", cl)
+
 if __name__ == '__main__':
+    # XORs to add together (we know this)
+    xors = [
+        ["a", "b", "c"],
+        ["a", "b", "d"]
+    ]
+
+    # so c+d = 0
+    # so c=1 d=0 must be banned
+    # generate clause
+    to_prove = ["-c", "d"]
+
+
+    print("xors:", xors)
+    print("to_prove:", to_prove)
+    prove(xors, to_prove)
+    print("----------------")
+    print("----------------")
+
+
+    print(gen_cls(["v1", "-v2"]))
     print(gen_cls(["v1", "v2", "v3"]))
+    print("----------------")
+    print("----------------")
+
     unittest.main()
 
