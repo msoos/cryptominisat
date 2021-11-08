@@ -392,7 +392,7 @@ void Main::add_supported_options()
         , "Pred forever check over limit every N")
 
     // Some old stuff
-    ("preddistillorig", po::value(&conf.pred_distill_orig)->default_value(conf.pred_distill_orig)
+    ("preddistillorig", po::value(&conf.pred_distill_same_as_orig)->default_value(conf.pred_distill_same_as_orig)
         , "Use original distill method during pred")
 
     // Lock clauses in
