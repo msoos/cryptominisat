@@ -132,7 +132,7 @@ a=$(grep "s SATIS" cms-pred-run.out)
 retval=$?
 set -e
 if [[ retval -eq 1 ]]; then
-    ../utils/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -o "$FNAMEOUT.usedCls" -i -O 3 | tee drat.out
+    ../utils/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -o "$FNAMEOUT.usedCls" -i -O 3 | tee drat.out-newO3
 else
     rm -f final.cnf
     touch final.cnf
@@ -214,7 +214,7 @@ fi
 cd "$FNAME-dir"
 ln -s ../ml_module.py .
 ln -s ../crystalcodegen.py .
-../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables 111 | tee cms-final-run.out
+../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables 111 --distillsort 3 | tee cms-final-run.out-111-distillsort3
 )
 exit
 
