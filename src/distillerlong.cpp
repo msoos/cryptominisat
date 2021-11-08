@@ -94,8 +94,11 @@ struct ClauseSorterBestPredFirst
         const auto& ext1 = extra_data[cl1->stats.extra_pos];
         const auto& ext2 = extra_data[cl2->stats.extra_pos];
 
+        if (cl1->size() != cl2->size()) {
+            return cl1->size() > cl2->size();
+        }
         //Correct order if c1's predicted use is larger
-        return ext1.pred_forever_use  > ext2.pred_forever_use;
+        return ext1.pred_short_use  > ext2.pred_short_use;
     }
 };
 #endif
@@ -221,9 +224,9 @@ bool DistillerLong::distill_long_cls_all(
                     offs.end(),
                     ClauseSorterSmallGlueFirst(solver->cl_alloc)
                 );
-            } else {
+            } else if (solver->conf.distill_sort == 3) {
                 #ifdef FINAL_PREDICTOR
-//                 cout << "NORMAL SORT -- high pred first" << endl;
+//                 cout << "c PRED SORT -- high pred first" << endl;
                 std::sort(offs.begin(),
                     offs.end(),
                     ClauseSorterBestPredFirst(solver->cl_alloc, solver->red_stats_extra)

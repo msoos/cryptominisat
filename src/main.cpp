@@ -397,7 +397,7 @@ void Main::add_supported_options()
 
     // Lock clauses in
     ("preddontmovetime", po::value(&conf.pred_dontmove_until_timeinside)->default_value(conf.pred_dontmove_until_timeinside)
-        , "Use original distill method during pred")
+        , "Don't move clause until it's time has passed. For lev0 and lev1 only. If 1 = half time needs to pass (e.g. if we check every 50k conflicts, it must have been in the solver for 25k or it's force-kept). If 2 = the full time is needed, in the example, 25k.")
 
     // Adjust score depending on clause size
     ("predadjustsize", po::value(&conf.pred_adjust_for_cl_size)->default_value(conf.pred_adjust_for_cl_size)
