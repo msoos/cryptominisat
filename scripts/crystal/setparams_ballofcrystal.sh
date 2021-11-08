@@ -22,7 +22,7 @@
 
 export FNAMEOUT="mydata"
 export FIXED="3000"
-export DUMPRATIO="0.999"
+export DUMPRATIO="0.04"
 export CLLOCK="0.3"
 export EXTRA_CMS_OPTS=""
 export EXTRA_GEN_PANDAS_OPTS=""
