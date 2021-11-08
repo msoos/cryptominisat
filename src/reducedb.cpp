@@ -1031,23 +1031,14 @@ ReduceDB::ClauseStats ReduceDB::reset_clause_dats(const uint32_t lev)
 void ReduceDB::reset_predict_stats()
 {
     ClauseStats this_stats;
-    this_stats = reset_clause_dats(0);
-    if (solver->conf.verbosity >= 2) {
-        this_stats.print(0);
-    }
-    cl_stats[0] += this_stats;
 
-    this_stats = reset_clause_dats(1);
-    if (solver->conf.verbosity >= 2) {
-        this_stats.print(1);
+    for(uint32_t i = 0; i < 3; i ++) {
+        this_stats = reset_clause_dats(i);
+        if (solver->conf.verbosity >= 2) {
+            this_stats.print(i);
+        }
+        cl_stats[i] += this_stats;
     }
-    cl_stats[1] += this_stats;
-
-    this_stats = reset_clause_dats(2);
-    if (solver->conf.verbosity >= 2) {
-        this_stats.print(2);
-    }
-    cl_stats[2] += this_stats;
 }
 
 void ReduceDB::dump_pred_distrib(const vector<ClOffset>& offs, uint32_t lev) {
