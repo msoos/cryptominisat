@@ -141,7 +141,10 @@ bool DistillerLitRem::go_through_clauses(
         if (cl._xor_is_detached
 
             //If it's a redundant that's not very good, let's not distill it
-            || (!solver->conf.pred_distill_orig &&
+            || (
+#ifdef FINAL_PREDICTOR
+                solver->conf.pred_distill_orig &&
+#endif
                 cl.red() &&
                 cl.stats.glue > 3)
         ) {
