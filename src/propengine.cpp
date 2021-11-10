@@ -36,6 +36,9 @@ THE SOFTWARE.
 #include "varupdatehelper.h"
 #include "watchalgos.h"
 #include "sqlstats.h"
+#ifdef USE_GAUSS
+#include "gaussian.h"
+#endif
 
 using namespace CMSat;
 using std::cout;
@@ -155,6 +158,136 @@ void PropEngine::detach_modified_clause(
     removeWCl(watches[lit1], offset);
     removeWCl(watches[lit2], offset);
 }
+
+
+
+#ifdef USE_GAUSS
+PropBy PropEngine::gauss_jordan_elim()
+{
+    if (gmatrices.empty()) {
+        gqhead = qhead;
+        return PropBy();
+    }
+
+    #ifdef VERBOSE_DEBUG
+    cout << "Gauss searcher::Gauss_elimination called, declevel: " << decisionLevel() << endl;
+    #endif
+
+    for(uint32_t i = 0; i < gqueuedata.size(); i++) {
+        if (gqueuedata[i].engaus_disable) {
+            continue;
+        }
+        gqueuedata[i].reset();
+        gmatrices[i]->update_cols_vals_set();
+    }
+
+    bool confl_in_gauss = false;
+    while (gqhead <  trail.size()
+        && !confl_in_gauss
+    ) {
+        const Lit p = trail[gqhead].lit;
+        uint32_t currLevel = trail[gqhead].lev;
+        gqhead++;
+
+        assert(gwatches.size() > p.var());
+        vec<GaussWatched>& ws = gwatches[p.var()];
+        GaussWatched* i = ws.begin();
+        GaussWatched* j = i;
+        const GaussWatched* end = ws.end();
+        #ifdef VERBOSE_DEBUG
+        cout << "New GQHEAD: " << p << endl;
+        #endif
+
+        for (; i != end; i++) {
+            if (gqueuedata[i->matrix_num].engaus_disable) {
+                //remove watch and continue
+                continue;
+            }
+
+            gqueuedata[i->matrix_num].new_resp_var = std::numeric_limits<uint32_t>::max();
+            gqueuedata[i->matrix_num].new_resp_row = std::numeric_limits<uint32_t>::max();
+            gqueuedata[i->matrix_num].do_eliminate = false;
+            gqueuedata[i->matrix_num].currLevel = currLevel;
+
+            if (gmatrices[i->matrix_num]->find_truths(
+                i, j, p.var(), i->row_n, gqueuedata[i->matrix_num])
+            ) {
+                continue;
+            } else {
+                confl_in_gauss = true;
+                i++;
+                break;
+            }
+        }
+
+        for (; i != end; i++) {
+            *j++ = *i;
+        }
+        ws.shrink(i-j);
+
+        for (size_t g = 0; g < gqueuedata.size(); g++) {
+            if (gqueuedata[g].engaus_disable)
+                continue;
+
+            if (gqueuedata[g].do_eliminate) {
+                gmatrices[g]->eliminate_col(p.var(), gqueuedata[g]);
+                confl_in_gauss |= (gqueuedata[g].ret == gauss_res::confl);
+            }
+        }
+    }
+
+    #ifdef SLOW_DEBUG
+    if (!confl_in_gauss) {
+        for (size_t g = 0; g < gqueuedata.size(); g++) {
+            if (gqueuedata[g].engaus_disable)
+                continue;
+
+            assert(solver->gqhead == solver->trail.size());
+            gmatrices[g]->check_invariants();
+        }
+    }
+    #endif
+
+    for (GaussQData& gqd: gqueuedata) {
+        if (gqd.engaus_disable)
+            continue;
+
+        //There was a conflict but this is not that matrix.
+        //Just skip.
+        if (confl_in_gauss && gqd.ret != gauss_res::confl) {
+            continue;
+        }
+
+        switch (gqd.ret) {
+            case gauss_res::confl :{
+                gqd.num_conflicts++;
+                gqhead = qhead = trail.size();
+                return gqd.confl;
+//                 bool ret = handle_conflict(gqd.confl);
+//                 if (!ret) return gauss_ret::g_false;
+//                 return gauss_ret::g_cont;
+            }
+
+            case gauss_res::prop:
+                gqd.num_props++;
+                break;
+
+            case gauss_res::none:
+                //nothing
+                break;
+
+            default:
+                assert(false);
+                return PropBy();
+        }
+    }
+    #ifdef VERBOSE_DEBUG
+    cout << "Exiting GJ" << endl;
+    #endif
+    return PropBy();
+}
+#endif //USE_GAUSS
+
 
 /**
 @brief Propagates a binary clause
@@ -298,7 +431,7 @@ PropBy PropEngine::propagate_any_order_fast()
     uint32_t declevel = decisionLevel();
 
     int64_t num_props = 0;
-    while (qhead < trail.size()) {
+    while (qhead < trail.size() && confl.isNULL()) {
         const Lit p = trail[qhead].lit;     // 'p' is enqueued fact to propagate.
         const uint32_t currLevel = trail[qhead].lev;
         qhead++;
@@ -435,6 +568,18 @@ PropBy PropEngine::propagate_any_order_fast()
             nextClause:;
         }
         ws.shrink_(i-j);
+
+        #ifdef USE_GAUSS
+        if (!all_matrices_disabled) {
+            PropBy ret = gauss_jordan_elim();
+            //cout << "ret: " << ret << " -- " << endl;
+            if (!ret.isNULL()) {
+                confl = ret;
+                //break; //it's expensive, let's end it here?
+            }
+        }
+        #endif //USE_GAUSS
+
     }
     qhead = trail.size();
     simpDB_props -= num_props;

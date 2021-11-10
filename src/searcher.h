@@ -33,7 +33,6 @@ THE SOFTWARE.
 #include "simplefile.h"
 #include "searchstats.h"
 #include "searchhist.h"
-#include "gqueuedata.h"
 
 #ifdef CMS_TESTING_ENABLED
 #include "gtest/gtest_prod.h"
@@ -148,11 +147,7 @@ class Searcher : public HyperEngine
         #ifdef USE_GAUSS
         void clear_gauss_matrices();
         void print_matrix_stats();
-        enum class gauss_ret {g_cont, g_nothing, g_false};
-        gauss_ret gauss_jordan_elim();
         void check_need_gauss_jordan_disable();
-        vector<EGaussian*> gmatrices;
-        vector<GaussQData> gqueuedata;
         #endif
 
         double get_cla_inc() const
