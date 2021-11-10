@@ -57,6 +57,7 @@ if [ "$NEXT_OP" == "" ]; then
                 FNAME="AProVE07-16.cnf";
                 break;;
             [6]* )
+                DUMPRATIO="0.01"
                 FNAME="UTI-20-10p0.cnf-unz";
                 FIXED="20000";
                 break;;
@@ -114,6 +115,7 @@ else
     ./build_stats_sanitize.sh
 fi
 
+NOBUF="stdbuf -oL -eL "
 
 (
 ########################
@@ -121,7 +123,7 @@ fi
 ########################
 cd "$FNAME-dir"
 # for var, we need: --bva 0 --scc 0
-../cryptominisat5 --presimp 1 -n1 ${EXTRA_CMS_OPTS} --sqlitedbover 1 --cldatadumpratio "$DUMPRATIO" --cllockdatagen $CLLOCK --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
+$NOBUF ../cryptominisat5 --presimp 1 -n1 ${EXTRA_CMS_OPTS} --sqlitedbover 1 --cldatadumpratio "$DUMPRATIO" --cllockdatagen $CLLOCK --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
 grep "c conflicts" cms-pred-run.out
 
 ########################
@@ -132,7 +134,8 @@ a=$(grep "s SATIS" cms-pred-run.out)
 retval=$?
 set -e
 if [[ retval -eq 1 ]]; then
-    ../utils/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -o "$FNAMEOUT.usedCls" -i -O 3 | tee drat.out-newO3
+    rm -f $FNAMEOUT.usedCls-*
+    /usr/bin/time -v $NOBUF ../utils/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -o "$FNAMEOUT.usedCls" -i -O 3 | tee drat.out-newO3
 else
     rm -f final.cnf
     touch final.cnf
@@ -214,7 +217,32 @@ fi
 cd "$FNAME-dir"
 ln -s ../ml_module.py .
 ln -s ../crystalcodegen.py .
-../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables 111 --distillsort 3 | tee cms-final-run.out-111-distillsort3
+$NOBUF ../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables 111 --distillsort 3 | tee cms-final-run.out-111-distillsort3
+
+TODO="000"
+$NOBUF ../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 | tee cms-final-run.out-${TODO}-distillsort3
+
+TODO="001"
+$NOBUF ../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 | tee cms-final-run.out-${TODO}-distillsort3
+
+TODO="010"
+$NOBUF ../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 | tee cms-final-run.out-${TODO}-distillsort3
+
+TODO="011"
+$NOBUF ../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 | tee cms-final-run.out-${TODO}-distillsort3
+
+TODO="100"
+$NOBUF ../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 | tee cms-final-run.out-${TODO}-distillsort3
+
+TODO="101"
+$NOBUF ../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 | tee cms-final-run.out-${TODO}-distillsort3
+
+TODO="110"
+$NOBUF ../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 | tee cms-final-run.out-${TODO}-distillsort3
+
+TODO="111"
+$NOBUF ../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 | tee cms-final-run.out-${TODO}-distillsort3
+
 )
 exit
 
