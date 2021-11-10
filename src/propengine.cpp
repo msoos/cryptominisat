@@ -281,9 +281,6 @@ PropBy PropEngine::gauss_jordan_elim()
                 return PropBy();
         }
     }
-    #ifdef VERBOSE_DEBUG
-    cout << "Exiting GJ" << endl;
-    #endif
     return PropBy();
 }
 #endif //USE_GAUSS
@@ -575,11 +572,10 @@ PropBy PropEngine::propagate_any_order_fast()
             //cout << "ret: " << ret << " -- " << endl;
             if (!ret.isNULL()) {
                 confl = ret;
-                //break; //it's expensive, let's end it here?
+                break;
             }
         }
         #endif //USE_GAUSS
-
     }
     qhead = trail.size();
     simpDB_props -= num_props;
