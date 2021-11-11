@@ -298,7 +298,7 @@ PropBy PropEngine::propagate_any_order_fast()
     uint32_t declevel = decisionLevel();
 
     int64_t num_props = 0;
-    while (qhead < trail.size()) {
+    while (qhead < trail.size() && confl.isNULL()) {
         const Lit p = trail[qhead].lit;     // 'p' is enqueued fact to propagate.
         const uint32_t currLevel = trail[qhead].lev;
         qhead++;
@@ -455,6 +455,8 @@ PropBy PropEngine::propagate_any_order()
     #ifdef VERBOSE_DEBUG_PROP
     cout << "Fast Propagation started" << endl;
     #endif
+
+    bool fast_confl_break = solver->conf.fast_confl_break;
 
     while (qhead < trail.size() && confl.isNULL()) {
         const Lit p = trail[qhead].lit;     // 'p' is enqueued fact to propagate.
