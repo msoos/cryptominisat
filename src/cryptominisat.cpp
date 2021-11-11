@@ -576,8 +576,6 @@ DLL_PUBLIC void SATSolver::set_max_time(double max_time)
 
 DLL_PUBLIC void SATSolver::set_max_confl(uint64_t max_confl)
 {
-  assert(max_confl >= 0 && "Cannot set negative limit on conflicts");
-
   for (Solver* s : data->solvers) {
       s->set_max_confl(max_confl);
   }
