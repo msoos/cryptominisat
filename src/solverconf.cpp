@@ -79,6 +79,7 @@ using namespace CMSat;
 
 
 DLL_PUBLIC SolverConf::SolverConf() :
+        // Polarities
         do_lucky_polar_every_n(20)
         , polarity_mode(PolarityMode::polarmode_automatic)
         , polar_stable_every_n(4)
@@ -390,6 +391,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //misc
         , origSeed(0)
         , simulate_drat(false)
+        , fast_confl_break(false)
 {
     ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
     ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.44;
