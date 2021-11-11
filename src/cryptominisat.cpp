@@ -581,6 +581,13 @@ DLL_PUBLIC void SATSolver::set_max_confl(uint64_t max_confl)
   }
 }
 
+DLL_PUBLIC void SATSolver::set_fast_confl_break(const bool fast_confl_break)
+{
+  for (Solver* s : data->solvers) {
+      s->conf.fast_confl_break = fast_confl_break;
+  }
+}
+
 DLL_PUBLIC void SATSolver::set_polarity_auto()
 {
     for (size_t i = 0; i < data->solvers.size(); ++i) {
