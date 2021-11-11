@@ -297,8 +297,10 @@ PropBy PropEngine::propagate_any_order_fast()
     //so we don't re-calculate it all the time
     uint32_t declevel = decisionLevel();
 
+    const bool fast_confl_break = solver->conf.fast_confl_break;
+
     int64_t num_props = 0;
-    while (qhead < trail.size() && confl.isNULL()) {
+    while (qhead < trail.size() && (!fast_confl_break || confl.isNULL())) {
         const Lit p = trail[qhead].lit;     // 'p' is enqueued fact to propagate.
         const uint32_t currLevel = trail[qhead].lev;
         qhead++;
@@ -456,9 +458,9 @@ PropBy PropEngine::propagate_any_order()
     cout << "Fast Propagation started" << endl;
     #endif
 
-    bool fast_confl_break = solver->conf.fast_confl_break;
+    const bool fast_confl_break = solver->conf.fast_confl_break;
 
-    while (qhead < trail.size() && confl.isNULL()) {
+    while (qhead < trail.size() && (!fast_confl_break || confl.isNULL())) {
         const Lit p = trail[qhead].lit;     // 'p' is enqueued fact to propagate.
         watch_subarray ws = watches[~p];
         uint32_t currLevel = trail[qhead].lev;
