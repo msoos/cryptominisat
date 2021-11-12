@@ -22,7 +22,7 @@
 
 export FNAMEOUT="mydata"
 export FIXED="3000"
-export DUMPRATIO="0.04"
+export DUMPRATIO="0.1"
 export CLLOCK="0.3"
 export EXTRA_CMS_OPTS=""
 export EXTRA_GEN_PANDAS_OPTS=""
@@ -30,4 +30,5 @@ export cut1="3.0"
 export cut2="25.0"
 export SANITIZE=0
 export bestf="../../scripts/crystal/best_features-correlation2.txt"
+export NOBUF="stdbuf -oL -eL "
 #export bestf="../../scripts/crystal/best_features-ext.txt"

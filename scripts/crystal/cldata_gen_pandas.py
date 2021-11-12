@@ -322,7 +322,7 @@ class QueryCls (helper.QueryHelper):
             print("--> Num rows for strata %s -- '%s': %s" % (strata, dump_no_filter, df_parts[-1].shape[0]))
 
             ws = df_parts[-1].shape[0]/mult
-            print("--> The weight was %f so wegthed size is: %d" % (mult, int(ws)))
+            print("--> The weight was %f so weighted size is: %d" % (mult, int(ws)))
             weighted_size.append(ws)
 
         one_part(1/4.0, dump_no_filter=" and rdb0.dump_no = 1 ")

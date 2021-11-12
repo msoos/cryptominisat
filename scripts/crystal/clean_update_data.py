@@ -62,7 +62,7 @@ class QueryFill (helper.QueryHelper):
         q = """
         create table `sum_cl_use` (
             `clauseID` bigint(20) NOT NULL,
-            `num_used` bigint(20) NOT NULL,
+            `num_used` float(20) NOT NULL,
             `first_confl_used` bigint(20),
             `last_confl_used` bigint(20)
         );"""
@@ -79,7 +79,7 @@ class QueryFill (helper.QueryHelper):
         )
         select
         clauseID
-        , count()
+        , sum(weight)
         , min(used_at)
         , max(used_at)
         from used_clauses as c

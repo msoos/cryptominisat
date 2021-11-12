@@ -58,9 +58,10 @@ class QueryDatRem(helper.QueryHelper):
     # "tier" here is "short", "long", or "forever"
     def get_all_percentile_X(self, tier):
         t = time.time()
-        print("Calculating percentiles now...")
-
         for table in ["used_later", "used_later_anc"]:
+            print("Calculating percentiles now for table {table} and tier {tier} ...".format(
+                tier=tier, table=table))
+
             q2 = """
             insert into {table}_percentiles (type_of_dat, percentile_descr, percentile, val)
             {q}

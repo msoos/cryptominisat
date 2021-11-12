@@ -45,7 +45,7 @@ class Query:
     def delete_tbls(self, table):
         queries = """
 DROP TABLE IF EXISTS `{table}`;
-create table `{table}` ( `clauseID` bigint(20) NOT NULL, `used_at` bigint(20) NOT NULL);
+create table `{table}` ( `clauseID` bigint(20) NOT NULL, `used_at` bigint(20) NOT NULL, `weight` float NOT NULL);
 """.format(table=table)
 
         for l in queries.split('\n'):
@@ -62,9 +62,8 @@ create table `{table}` ( `clauseID` bigint(20) NOT NULL, `used_at` bigint(20) NO
         for i in range(100):
             tfname = "%s-%d" % (basefname, i)
             print("Checking if file %s exists" % tfname)
-            if not os.path.isfile(tfname):
-                break
-            last_good = i
+            if os.path.isfile(tfname):
+              last_good = i
 
         if last_good == -1:
             print("ERROR: file does not exist at all")
@@ -89,11 +88,18 @@ create table `{table}` ( `clauseID` bigint(20) NOT NULL, `used_at` bigint(20) NO
                 while True:
                     b1 = f.read(8)
                     if not b1:
+                        # end of file
                         break
                     b2 = f.read(8)
                     cl_id = struct.unpack("<q", b1)[0]
                     conf = struct.unpack("<q", b2)[0]
-                    dat = (cl_id, conf)
+
+                    weight = 1.0
+                    if "used_clauses_anc" in table:
+                        b3 = f.read(4)
+                        weight = struct.unpack("<f", b3)[0]
+
+                    dat = (cl_id, conf, weight)
                     if options.verbose:
                         print("Use:", dat)
                     self.cl_used.append(dat)
@@ -109,9 +115,10 @@ create table `{table}` ( `clauseID` bigint(20) NOT NULL, `used_at` bigint(20) NO
     def dump_used_clauses(self, table):
         self.c.executemany("""
         INSERT INTO %s (
-        `clauseID`
-        , `used_at`)
-        VALUES (?, ?);""" % table, self.cl_used)
+        `clauseID`,
+        `used_at`,
+        `weight`)
+        VALUES (?, ?, ?);""" % table, self.cl_used)
         self.cl_used = []
         self.cl_used_num = 0
 

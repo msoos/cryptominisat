@@ -115,8 +115,6 @@ else
     ./build_stats_sanitize.sh
 fi
 
-NOBUF="stdbuf -oL -eL "
-
 (
 ########################
 # Obtain dynamic data in SQLite and DRAT info

@@ -301,7 +301,7 @@ class QueryFill (QueryHelper):
         print("used_later* dropped and recreated T: %-3.2f s" % (time.time() - t))
 
     # The most expesive operation of all, when called with "forever"
-    def fill_used_later_X(self, name, duration, used_clauses="used_clauses",
+    def fill_used_later_X(self, tier, duration, used_clauses="used_clauses",
                           table="used_later"):
 
         min_del_distance = duration
@@ -309,7 +309,7 @@ class QueryFill (QueryHelper):
             min_del_distance = 100*1000
 
         q_fill = """
-        insert into {table}_{name}
+        insert into {table}_{tier}
         (
         `clauseID`,
         `rdb0conflicts`,
@@ -318,7 +318,7 @@ class QueryFill (QueryHelper):
         SELECT
         rdb0.clauseID
         , rdb0.conflicts
-        , count(ucl.used_at) as `used_later`
+        , sum(ucl.weight) as `used_later`
 
         FROM
         reduceDB as rdb0
@@ -340,27 +340,31 @@ class QueryFill (QueryHelper):
 
         t = time.time()
         q = q_fill.format(
-            name=name, used_clauses=used_clauses,
+            tier=tier, used_clauses=used_clauses,
             duration=duration,
             table=table,
             min_del_distance=min_del_distance)
         self.c.execute(q)
 
+        q_fix_null = "update {table}_{tier} set used_later = 0 where used_later is NULL".format(
+            tier=tier, table=table)
+        self.c.execute(q_fix_null)
 
-        q_num = "select count(*) from used_later_{name}".format(name=name)
+
+        q_num = "select count(*) from {table}_{tier}".format(tier=tier, table=table)
         self.c.execute(q_num)
         rows = self.c.fetchall()
         for row in rows:
             num = row[0]
 
         if table == "used_later" and num == 0:
-            print("ERROR: number of rows in used_later_{name} is 0!".format(name=name))
+            print("ERROR: number of rows in {table}_{tier} is 0!".format(tier=tier, table=table))
             print("Query was: %s" % q)
             exit(-1)
 
 
         print("%s_%s filled T: %-3.2f s -- num rows: %d" %
-              (table, name, time.time() - t, num))
+              (table, tier, time.time() - t, num))
 
     def fill_used_later_X_perc_fit(self, tier, table):
         print("Filling percentile_fit for {table}_{tier}".format(tier=tier, table=table))
