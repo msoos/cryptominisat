@@ -129,14 +129,24 @@ bool DistillerLong::distill(const bool red, bool fullstats, bool only_rem_cl)
     runStats.clear();
 
     if (!red) {
-        if (!distill_long_cls_all(solver->longIrredCls, solver->conf.distill_irred_alsoremove_ratio, true, red)) {
+        if (!distill_long_cls_all(
+            solver->longIrredCls,
+            solver->conf.distill_irred_alsoremove_ratio,
+            true, //also remove
+            red))
+        {
             goto end;
         }
         globalStats += runStats;
         runStats.clear();
 
         if (!only_rem_cl) {
-            if (!distill_long_cls_all(solver->longIrredCls, solver->conf.distill_irred_noremove_ratio, false, red)) {
+            if (!distill_long_cls_all(
+                solver->longIrredCls,
+                solver->conf.distill_irred_noremove_ratio,
+                false, //also remove
+                red))
+            {
                 goto end;
             }
         }
@@ -144,13 +154,25 @@ bool DistillerLong::distill(const bool red, bool fullstats, bool only_rem_cl)
         runStats.clear();
     } else {
         //Redundant
-        if (!distill_long_cls_all(solver->longRedCls[0], solver->conf.distill_red_tier0_ratio, false, red, 0)) {
+        if (!distill_long_cls_all(
+            solver->longRedCls[0],
+            solver->conf.distill_red_tier0_ratio,
+            false, //dont' remove (it's always redundant)
+            red,
+            0)) //red lev (only to print)
+        {
             goto end;
         }
         globalStats += runStats;
         runStats.clear();
 
-        if (!distill_long_cls_all(solver->longRedCls[1], solver->conf.distill_red_tier1_ratio, false, red, 1)) {
+        if (!distill_long_cls_all(
+            solver->longRedCls[1],
+            solver->conf.distill_red_tier1_ratio,
+            false, //dont' remove (it's always redundant)
+            red,
+            1))  // //red lev (only to print)
+        {
             goto end;
         }
         globalStats += runStats;
