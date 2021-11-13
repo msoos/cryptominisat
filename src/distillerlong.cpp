@@ -38,6 +38,8 @@ using std::endl;
 #define VERBOSE_SUBSUME_NONEXIST
 #endif
 
+//#define VERBOSE_DEBUG
+
 //#define VERBOSE_SUBSUME_NONEXIST
 
 struct ClauseSizeSorterLargestFirst
@@ -270,6 +272,9 @@ bool DistillerLong::distill_long_cls_all(
         uint32_t j = 0;
         for(uint32_t i = 0; i < offs.size(); i ++) {
             Clause* cl = solver->cl_alloc.ptr(offs[i]);
+            #ifdef VERBOSE_DEBUG
+            cout << "Clause at " << i << " is:  " << *cl << endl;
+            #endif
             bool ok = false;
             if (!cl->stats.is_ternary_resolvent
                 && !solver->satisfied(*cl)
@@ -290,6 +295,9 @@ bool DistillerLong::distill_long_cls_all(
                     lit_counts[l.toInt()]++;
                 }
                 todo.push_back(offs[i]);
+                #ifdef VERBOSE_DEBUG
+                cout << "Adding this one to TODO" << endl;
+                #endif
             } else {
                 offs[j++] = offs[i];
                 continue;
@@ -353,6 +361,10 @@ bool DistillerLong::go_through_clauses(
         ; i != end
         ; ++i
     ) {
+        #ifdef VERBOSE_DEBUG
+        cout << "At offset: " << *i << endl;
+        #endif
+
         //Check if we are in state where we only copy offsets around
         if (time_out || !solver->ok) {
             *j++ = *i;
@@ -381,6 +393,9 @@ bool DistillerLong::go_through_clauses(
             solver->conf.force_preserve_xors
         ) {
             *j++ = *i;
+            #ifdef VERBOSE_DEBUG
+            cout << "Skipping offset for XOR " << *i << endl;
+            #endif
             continue;
         }
 
@@ -402,6 +417,9 @@ bool DistillerLong::go_through_clauses(
                 cl.stats.glue > 3) //TODO I don't like this at all for FINAL_PREDICTOR !!!!
         ) {
             *j++ = *i;
+            #ifdef VERBOSE_DEBUG
+            cout << "Skipping offset " << *i << endl;
+            #endif
             continue;
         }
         if (also_remove) {
@@ -519,7 +537,17 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     cl.resize(j);
 
     //Actually, we can remove the clause!
+    #ifdef VERBOSE_DEBUG
+    cout << "also_remove: " << also_remove
+    << "red: " << red
+    << "True_confl: " << True_confl
+    << "confl.isNULL(): " << confl.isNULL()
+    << endl;
+    #endif
     if (also_remove && !red && !True_confl && !confl.isNULL()) {
+        #ifdef VERBOSE_DEBUG
+        cout << "CL Removed." << endl;
+        #endif
         rem:
         solver->cancelUntil<false, true>(0);
         solver->detach_modified_clause(cl_lit1, cl_lit2, orig_size, &cl);
@@ -531,6 +559,9 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
 
     //Couldn't simplify the clause
     if (j == orig_size && !True_confl && confl.isNULL()) {
+        #ifdef VERBOSE_DEBUG
+        cout << "CL Cannot be simplified." << endl;
+        #endif
         cl.disabled = false;
         solver->cancelUntil<false, true>(0);
         std::swap(*std::find(cl.begin(), cl.end(), cl_lit1), cl[0]);
