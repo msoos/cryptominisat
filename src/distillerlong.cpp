@@ -110,7 +110,7 @@ struct LitCountDescSort
     {}
 
     bool operator()(const Lit& lit1, const Lit& lit2) {
-        return lit_counts[lit1.toInt()] < lit_counts[lit2.toInt()];
+        return lit_counts[lit1.toInt()] > lit_counts[lit2.toInt()];
     }
 
 
