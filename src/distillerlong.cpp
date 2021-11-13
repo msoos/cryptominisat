@@ -370,6 +370,12 @@ bool DistillerLong::go_through_clauses(
 
             //If it's a redundant that's not very good, let's not distill it
             (
+#ifdef FINAL_PREDICTOR
+                solver->conf.pred_distill_only_smallgue &&
+#else
+                false &&
+#endif
+
                 cl.red() &&
                 cl.stats.glue > 3) //TODO I don't like this at all for FINAL_PREDICTOR !!!!
         ) {
@@ -407,11 +413,6 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
 ) {
     assert(solver->prop_at_head());
     assert(solver->decisionLevel() == 0);
-    #ifdef DRAT_DEBUG
-    if (solver->conf.verbosity >= 6) {
-        cout << "Trying to distill clause:" << lits << endl;
-    }
-    #endif
     bool True_confl = false;
     PropBy confl;
 
@@ -425,6 +426,9 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     if (red) {
         assert(!also_remove);
     }
+    #ifdef VERBOSE_DEBUG
+    cout << "Trying to distill clause:" << cl << endl;
+    #endif
 
     uint32_t orig_size = cl.size();
     uint32_t i = 0;
@@ -448,7 +452,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     if (cl.size() < 500) {
         //Sort them differently once in a while, so all literals have a chance of
         //being removed
-        if (solver->mtrand.randInt(1) == 0) {
+        if (offset % 2 == 0) {
 //             for(uint32_t i2 = 0; i2 < cl.size()-1; i2++) {
 //                 std::swap(cl[i2], cl[i2+solver->mtrand.randInt(cl.size()-i2-1)]);
 //             }
@@ -457,6 +461,10 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
             std::sort(cl.begin(), cl.end(), LitCountDescSort(lit_counts));
         }
     }
+    #ifdef VERBOSE_DEBUG
+    cout << "Trying to distill clause after sort:" << cl << endl;
+    #endif
+
     for (uint32_t sz = cl.size(); i < sz; i++) {
         const Lit lit = cl[i];
         lbool val = solver->value(lit);

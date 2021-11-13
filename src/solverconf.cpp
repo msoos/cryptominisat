@@ -106,7 +106,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , pred_forever_check_every_n(12)
         , pred_adjust_for_cl_size(0)
         , pred_adjust_for_cl_size_onlyforever(0)
-        , pred_distill_same_as_orig(false)
+        , pred_distill_only_smallgue(false)
         , pred_dontmove_until_timeinside(1) //always move, don't wait
 
         , every_lev1_reduce(10000) // kept for a while then moved to lev2

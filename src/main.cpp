@@ -394,8 +394,8 @@ void Main::add_supported_options()
         , "Pred forever check over limit every N")
 
     // Some old stuff
-    ("preddistillorig", po::value(&conf.pred_distill_same_as_orig)->default_value(conf.pred_distill_same_as_orig)
-        , "Use original distill method during pred")
+    ("preddistillsmallgue", po::value(&conf.pred_distill_only_smallgue)->default_value(conf.pred_distill_only_smallgue)
+        , "Only distill small glue clauses")
 
     // Lock clauses in
     ("preddontmovetime", po::value(&conf.pred_dontmove_until_timeinside)->default_value(conf.pred_dontmove_until_timeinside)
