@@ -540,23 +540,25 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     }
 
     #ifdef VERBOSE_DEBUG
-    if (j < i && solver->conf.verbosity >= 5) {
+    if (j < i) {
         cout
         << "c Distillation branch effective." << endl
         << "c --> shortened cl:" << cl<< endl
         << "c --> orig size:" << orig_size << endl
         << "c --> new size:" << j << endl;
+    } else {
+        cout
+        << "c Distillation branch NOT effective." << endl
+        << "c --> orig size:" << orig_size << endl;
     }
     #endif
 
     bool lits_set = false;
     if (red && j > 1 && (!confl.isNULL() || True_confl)) {
         #ifdef VERBOSE_DEBUG
-        if (solver->conf.verbosity >= 5) {
-            cout
-            << "c Distillation even more effective." << endl
-            << "c --> orig shortened cl:" << cl << endl;
-        }
+        cout
+        << "c Distillation even more effective." << endl
+        << "c --> orig shortened cl:" << cl << endl;
         #endif
         maxNumProps -= 20;
         lits.clear();
@@ -566,10 +568,8 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
         solver->simple_create_learnt_clause(confl, lits, True_confl);
         if (lits.size() < cl.size()) {
             #ifdef VERBOSE_DEBUG
-            if (solver->conf.verbosity >= 5) {
-                cout
-                << "c --> more shortened cl:" << lits << endl;
-            }
+            cout
+            << "c --> more shortened cl:" << lits << endl;
             #endif
             lits_set = true;
         }
