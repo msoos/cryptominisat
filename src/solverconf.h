@@ -270,7 +270,7 @@ class DLL_PUBLIC SolverConf
         double    clause_decay;
 
         //If too many (in percentage) low glues after min_num_confl_adjust_glue_cutoff, adjust glue lower
-        double   adjust_glue_if_too_many_low;
+        double   adjust_glue_if_too_many_tier0;
         uint64_t min_num_confl_adjust_glue_cutoff;
 
         //For restarting

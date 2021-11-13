@@ -1789,7 +1789,7 @@ lbool Solver::iterate_until_solved()
         sumPropStats += propStats;
         propStats.clear();
         Searcher::resetStats();
-        check_too_many_low_glues();
+        check_too_many_in_tier0();
 
         //Solution has been found
         if (status != l_Undef) {
@@ -1823,22 +1823,25 @@ lbool Solver::iterate_until_solved()
     return status;
 }
 
-void Solver::check_too_many_low_glues()
+void Solver::check_too_many_in_tier0()
 {
-    #ifdef FINAL_PREDICTOR
+    //For both of these, it makes no sense:
+    // * for STATS_NEEDED, we have many in Tier0 because of locking-in
+    // * for FINAL_PREDICT Tier0 works completely differently
+    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     return;
     #endif
 
     if (conf.glue_put_lev0_if_below_or_eq == 2
         || sumConflicts < conf.min_num_confl_adjust_glue_cutoff
         || adjusted_glue_cutoff_if_too_many
-        || conf.adjust_glue_if_too_many_low >= 1.0
+        || conf.adjust_glue_if_too_many_tier0 >= 1.0
     ) {
         return;
     }
 
     double perc = float_div(sumSearchStats.red_cl_in_which0, sumConflicts);
-    if (perc > conf.adjust_glue_if_too_many_low) {
+    if (perc > conf.adjust_glue_if_too_many_tier0) {
         conf.glue_put_lev0_if_below_or_eq--;
         adjusted_glue_cutoff_if_too_many = true;
         if (conf.verbosity) {

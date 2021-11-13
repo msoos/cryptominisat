@@ -448,7 +448,7 @@ void Main::add_supported_options()
     std::ostringstream s_incclean;
 
     std::ostringstream s_adjust_low;
-    s_adjust_low << std::setprecision(2) << conf.adjust_glue_if_too_many_low;
+    s_adjust_low << std::setprecision(2) << conf.adjust_glue_if_too_many_tier0;
 
     po::options_description reduceDBOptions("Redundant clause options");
     reduceDBOptions.add_options()
@@ -456,7 +456,7 @@ void Main::add_supported_options()
         , "Glue value for lev 0 ('keep') cut")
     ("gluecut1", po::value(&conf.glue_put_lev1_if_below_or_eq)->default_value(conf.glue_put_lev1_if_below_or_eq)
         , "Glue value for lev 1 cut ('give another shot'")
-    ("adjustglue", po::value(&conf.adjust_glue_if_too_many_low)->default_value(conf.adjust_glue_if_too_many_low, s_adjust_low.str())
+    ("adjustglue", po::value(&conf.adjust_glue_if_too_many_tier0)->default_value(conf.adjust_glue_if_too_many_tier0, s_adjust_low.str())
         , "If more than this % of clauses is LOW glue (level 0) then lower the glue cutoff by 1 -- once and never again")
     ("everylev1", po::value(&conf.every_lev1_reduce)->default_value(conf.every_lev1_reduce)
         , "Reduce lev1 clauses every N")
