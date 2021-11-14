@@ -489,22 +489,22 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     i = 0;
     j = 0;
 
-    //Don't sort them if they are too large, it can be really slow
-    if (cl.size() < 500) {
-        //Sort them differently once in a while, so all literals have a chance of
-        //being removed
-        if (offset % 2 == 0) {
+
+    // Sort them differently once in a while, so all literals have a chance of
+    // being removed
+//     if (cl.size() < 500) {
+//         if (solver->mtrand.randInt(2) == 0) {
 //             for(uint32_t i2 = 0; i2 < cl.size()-1; i2++) {
 //                 std::swap(cl[i2], cl[i2+solver->mtrand.randInt(cl.size()-i2-1)]);
 //             }
-            std::sort(cl.begin(), cl.end(), VSIDS_largest_first(solver->var_act_vsids));
-        } else {
-            std::sort(cl.begin(), cl.end(), LitCountDescSort(lit_counts));
-        }
-    }
-    #ifdef VERBOSE_DEBUG
-    cout << "Trying to distill clause after sort:" << cl << endl;
-    #endif
+//             std::sort(cl.begin(), cl.end(), VSIDS_largest_first(solver->var_act_vsids));
+//         } else {
+//             std::sort(cl.begin(), cl.end(), LitCountDescSort(lit_counts));
+//         }
+//     }
+//     #ifdef VERBOSE_DEBUG
+//     cout << "Trying to distill clause after sort:" << cl << endl;
+//     #endif
 
     for (uint32_t sz = cl.size(); i < sz; i++) {
         const Lit lit = cl[i];
