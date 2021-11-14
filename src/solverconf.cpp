@@ -349,7 +349,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , distill_irred_alsoremove_ratio(1.2)
         , distill_irred_noremove_ratio(1.0) //from out-3946531.wlm01-15-drat0
         , distill_rand_shuffle_order_every_n(3)
-        , distill_sort(1)
+        , distill_sort(0)
 
         //Memory savings
         , doRenumberVars   (true)

@@ -60,6 +60,31 @@ struct ClauseSizeSorterLargestFirst
     }
 };
 
+#ifdef FINAL_PREDICTOR
+struct ClauseSorterFirstInSolver
+{
+    ClauseSorterFirstInSolver(const ClauseAllocator& _cl_alloc, const vector<ClauseStatsExtra>& _extras) :
+        cl_alloc(_cl_alloc),
+        extras(_extras)
+    {}
+
+    const ClauseAllocator& cl_alloc;
+    const vector<ClauseStatsExtra>& extras;
+
+    bool operator()(const ClOffset off1, const ClOffset off2) const
+    {
+        const Clause* cl1 = cl_alloc.ptr(off1);
+        const Clause* cl2 = cl_alloc.ptr(off2);
+
+        const auto& extra1 = extras[cl1->stats.extra_pos];
+        const auto& extra2 = extras[cl2->stats.extra_pos];
+
+        //Correct order if c1 was introduced earlier goes first
+        return extra1.introduced_at_conflict < extra2.introduced_at_conflict;
+    }
+};
+#endif
+
 struct ClauseSorterSmallGlueFirst
 {
     ClauseSorterSmallGlueFirst(const ClauseAllocator& _cl_alloc) :
@@ -227,40 +252,32 @@ bool DistillerLong::distill_long_cls_all(
     runStats.numCalled += 1;
 
     //Shuffle only when it's non-learnt run (i.e. also_remove)
-    if (false &&
-        //Don't shuffle when it's very-very large, too expensive
+    if (//Don't shuffle when it's very-very large, too expensive
         offs.size() < 100ULL*1000ULL*1000ULL)
     {
-        bool randomly_sort = solver->mtrand.randInt(solver->conf.distill_rand_shuffle_order_every_n) == 0;
-        if (randomly_sort) {
-//             cout << "RANDOM SORT" << endl;
-            std::mt19937 gen(solver->mtrand.randInt());
-            std::shuffle(offs.begin(), offs.end(), gen);
-        } else {
-            if (solver->conf.distill_sort == 1 || red == false) {
-//                 cout << "NORMAL SORT -- largest first" << endl;
-                std::sort(offs.begin(),
-                    offs.end(),
-                    ClauseSizeSorterLargestFirst(solver->cl_alloc)
-                );
-            } else if (solver->conf.distill_sort == 2) {
-//                 cout << "NORMAL SORT -- small glue first" << endl;
-                std::sort(offs.begin(),
-                    offs.end(),
-                    ClauseSorterSmallGlueFirst(solver->cl_alloc)
-                );
-            } else if (solver->conf.distill_sort == 3) {
-                #ifdef FINAL_PREDICTOR
-//                 cout << "c PRED SORT -- high pred first" << endl;
-                std::sort(offs.begin(),
-                    offs.end(),
-                    ClauseSorterBestPredFirst(solver->cl_alloc, solver->red_stats_extra)
-                );
-                #else
-                cout << "ERROR: only distill sort 1 and 2 are recognized" << endl;
-                exit(-1);
-                #endif
-            }
+        if (solver->conf.distill_sort == 0) {
+            //Nothing
+
+        } else if (solver->conf.distill_sort == 1) {
+            std::sort(offs.begin(),
+                offs.end(),
+                ClauseSizeSorterLargestFirst(solver->cl_alloc)
+            );
+        } else if (solver->conf.distill_sort == 2) {
+            std::sort(offs.begin(),
+                offs.end(),
+                ClauseSorterSmallGlueFirst(solver->cl_alloc)
+            );
+        } else if (solver->conf.distill_sort == 3) {
+            #ifdef FINAL_PREDICTOR
+            std::sort(offs.begin(),
+                offs.end(),
+                ClauseSorterFirstInSolver(solver->cl_alloc, solver->red_stats_extra)
+            );
+            #else
+            cout << "ERROR: only distill sort 0, 1 and 2 are recognized" << endl;
+            exit(-1);
+            #endif
         }
     }
 
