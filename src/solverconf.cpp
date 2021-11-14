@@ -80,7 +80,7 @@ using namespace CMSat;
 
 DLL_PUBLIC SolverConf::SolverConf() :
         // Polarities
-        do_lucky_polar_every_n(20)
+        do_lucky_polar_every_n(0)
         , polarity_mode(PolarityMode::polarmode_automatic)
         , polar_stable_every_n(4)
         , polar_best_inv_multip_n(9)
@@ -142,7 +142,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doAlwaysFMinim(false)
 
         //branch strategy
-        , branch_strategy_setup("vsidsx_once+maple1+maple2+vsids2+maple1+maple2+vsidsx")
+        , branch_strategy_setup("vsidsx_once+maple1+maple2+vsids2+maple1+maple2+vsids1")
 
         //Clause minimisation
         , doRecursiveMinim (true)
@@ -340,12 +340,12 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Distillation
         , do_distill_clauses(true)
         , do_distill_bin_clauses(true)
-        , distill_long_cls_time_limitM(10ULL)
+        , distill_long_cls_time_limitM(20ULL)
         , watch_based_str_time_limitM(30LL)
         , distill_increase_conf_ratio(0.02)
         , distill_min_confl(10000)
-        , distill_red_tier0_ratio(0.7)
-        , distill_red_tier1_ratio(0.007)
+        , distill_red_tier0_ratio(10.0)
+        , distill_red_tier1_ratio(0.03)
         , distill_irred_alsoremove_ratio(1.2)
         , distill_irred_noremove_ratio(1.0) //from out-3946531.wlm01-15-drat0
         , distill_rand_shuffle_order_every_n(3)

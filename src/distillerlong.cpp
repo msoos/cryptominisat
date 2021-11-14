@@ -227,7 +227,8 @@ bool DistillerLong::distill_long_cls_all(
     runStats.numCalled += 1;
 
     //Shuffle only when it's non-learnt run (i.e. also_remove)
-    if (//Don't shuffle when it's very-very large, too expensive
+    if (false &&
+        //Don't shuffle when it's very-very large, too expensive
         offs.size() < 100ULL*1000ULL*1000ULL)
     {
         bool randomly_sort = solver->mtrand.randInt(solver->conf.distill_rand_shuffle_order_every_n) == 0;

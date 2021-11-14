@@ -125,7 +125,7 @@ bool DistillerBin::distill_bin_cls_all(
     const double time_remain = float_div(
         maxNumProps - ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps),
         orig_maxNumProps);
-    if (solver->conf.verbosity >= 3) {
+    if (solver->conf.verbosity >= 1) {
         cout << "c [distill-bin] cls"
         << " tried: " << runStats.checkedClauses << "/" << potential_size
         << endl;
