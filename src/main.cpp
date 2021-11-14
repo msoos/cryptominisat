@@ -475,9 +475,6 @@ void Main::add_supported_options()
     ("branchstr"
         , po::value(&conf.branch_strategy_setup)->default_value(conf.branch_strategy_setup)
         , "Branch strategy string that switches between different branch strategies while solving e.g. 'maple1+maple2+vsids1+vsids2'")
-    ("branchsetupforce"
-        , po::value(&conf.branch_strategy_setup_forced)->default_value(conf.branch_strategy_setup_forced)
-        , "Do not run a 0th run of branch strategy with increasing VSIDS")
     ;
 
 

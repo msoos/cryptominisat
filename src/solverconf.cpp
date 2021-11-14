@@ -143,7 +143,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //branch strategy
         , branch_strategy_setup("vsidsx_once+maple1+maple2+vsids2+maple1+maple2+vsidsx")
-        , branch_strategy_setup_forced(0)
 
         //Clause minimisation
         , doRecursiveMinim (true)

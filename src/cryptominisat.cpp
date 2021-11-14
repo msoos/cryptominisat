@@ -1330,7 +1330,6 @@ void DLL_PUBLIC SATSolver::set_up_for_sample_counter()
         conf.restartType = Restart::geom;
         conf.never_stop_search = true;
         conf.branch_strategy_setup = "rand";
-        conf.branch_strategy_setup_forced = 1;
         conf.simplify_at_startup = false;
         conf.doFindXors = false;
         conf.polarity_mode = CMSat::PolarityMode::polarmode_rnd;
