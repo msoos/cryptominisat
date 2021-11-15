@@ -394,8 +394,8 @@ void Main::add_supported_options()
         , "Pred forever check over limit every N")
 
     // Some old stuff
-    ("preddistillorig", po::value(&conf.pred_distill_same_as_orig)->default_value(conf.pred_distill_same_as_orig)
-        , "Use original distill method during pred")
+    ("preddistillsmallgue", po::value(&conf.pred_distill_only_smallgue)->default_value(conf.pred_distill_only_smallgue)
+        , "Only distill small glue clauses")
 
     // Lock clauses in
     ("preddontmovetime", po::value(&conf.pred_dontmove_until_timeinside)->default_value(conf.pred_dontmove_until_timeinside)
@@ -448,7 +448,7 @@ void Main::add_supported_options()
     std::ostringstream s_incclean;
 
     std::ostringstream s_adjust_low;
-    s_adjust_low << std::setprecision(2) << conf.adjust_glue_if_too_many_low;
+    s_adjust_low << std::setprecision(2) << conf.adjust_glue_if_too_many_tier0;
 
     po::options_description reduceDBOptions("Redundant clause options");
     reduceDBOptions.add_options()
@@ -456,7 +456,7 @@ void Main::add_supported_options()
         , "Glue value for lev 0 ('keep') cut")
     ("gluecut1", po::value(&conf.glue_put_lev1_if_below_or_eq)->default_value(conf.glue_put_lev1_if_below_or_eq)
         , "Glue value for lev 1 cut ('give another shot'")
-    ("adjustglue", po::value(&conf.adjust_glue_if_too_many_low)->default_value(conf.adjust_glue_if_too_many_low, s_adjust_low.str())
+    ("adjustglue", po::value(&conf.adjust_glue_if_too_many_tier0)->default_value(conf.adjust_glue_if_too_many_tier0, s_adjust_low.str())
         , "If more than this % of clauses is LOW glue (level 0) then lower the glue cutoff by 1 -- once and never again")
     ("everylev1", po::value(&conf.every_lev1_reduce)->default_value(conf.every_lev1_reduce)
         , "Reduce lev1 clauses every N")
@@ -475,9 +475,6 @@ void Main::add_supported_options()
     ("branchstr"
         , po::value(&conf.branch_strategy_setup)->default_value(conf.branch_strategy_setup)
         , "Branch strategy string that switches between different branch strategies while solving e.g. 'maple1+maple2+vsids1+vsids2'")
-    ("branchsetupforce"
-        , po::value(&conf.branch_strategy_setup_forced)->default_value(conf.branch_strategy_setup_forced)
-        , "Do not run a 0th run of branch strategy with increasing VSIDS")
     ;
 
 

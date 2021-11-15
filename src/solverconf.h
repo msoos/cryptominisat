@@ -245,7 +245,7 @@ class DLL_PUBLIC SolverConf
         uint32_t pred_forever_check_every_n;
         uint32_t pred_adjust_for_cl_size;
         uint32_t pred_adjust_for_cl_size_onlyforever;
-        int   pred_distill_same_as_orig;
+        int   pred_distill_only_smallgue;
         int   pred_dontmove_until_timeinside;
 
         //if non-zero, we reduce at every X conflicts.
@@ -270,7 +270,7 @@ class DLL_PUBLIC SolverConf
         double    clause_decay;
 
         //If too many (in percentage) low glues after min_num_confl_adjust_glue_cutoff, adjust glue lower
-        double   adjust_glue_if_too_many_low;
+        double   adjust_glue_if_too_many_tier0;
         uint64_t min_num_confl_adjust_glue_cutoff;
 
         //For restarting
@@ -289,7 +289,6 @@ class DLL_PUBLIC SolverConf
 
         //Branch strategy
         string branch_strategy_setup;
-        int branch_strategy_setup_forced; // if set to 1, there is no initial vsids "increment" at the beginning
 
         //Clause minimisation
         int doRecursiveMinim;

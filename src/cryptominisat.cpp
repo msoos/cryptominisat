@@ -576,8 +576,6 @@ DLL_PUBLIC void SATSolver::set_max_time(double max_time)
 
 DLL_PUBLIC void SATSolver::set_max_confl(uint64_t max_confl)
 {
-  assert(max_confl >= 0 && "Cannot set negative limit on conflicts");
-
   for (Solver* s : data->solvers) {
       s->set_max_confl(max_confl);
   }
@@ -1332,7 +1330,6 @@ void DLL_PUBLIC SATSolver::set_up_for_sample_counter()
         conf.restartType = Restart::geom;
         conf.never_stop_search = true;
         conf.branch_strategy_setup = "rand";
-        conf.branch_strategy_setup_forced = 1;
         conf.simplify_at_startup = false;
         conf.doFindXors = false;
         conf.polarity_mode = CMSat::PolarityMode::polarmode_rnd;

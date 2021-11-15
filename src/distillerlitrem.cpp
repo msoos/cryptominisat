@@ -143,7 +143,9 @@ bool DistillerLitRem::go_through_clauses(
             //If it's a redundant that's not very good, let's not distill it
             || (
 #ifdef FINAL_PREDICTOR
-                solver->conf.pred_distill_same_as_orig &&
+                solver->conf.pred_distill_only_smallgue &&
+#else
+                false &&
 #endif
                 cl.red() &&
                 cl.stats.glue > 3)

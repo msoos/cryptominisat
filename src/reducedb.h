@@ -67,6 +67,7 @@ public:
         uint32_t total_props = 0;
         uint32_t total_cls = 0;
         uint64_t total_age = 0;
+        uint64_t total_len = 0;
 
         void add_in(const Clause& cl, const uint64_t age);
         ClauseStats operator += (const ClauseStats& other);
@@ -121,19 +122,19 @@ private:
     MedianCommonDataRDB median_data;
     uint32_t force_kept_short = 0;
 
-    uint32_t short_deleted;
-    uint32_t moved_from_long_to_short;
-    uint32_t kept_in_long;
-    uint32_t kept_in_long_due_to_dontmove;
-    uint32_t moved_from_forever_to_long;
-    uint32_t kept_in_forever;
-    uint32_t moved_from_short_to_forever;
-    uint32_t moved_from_short_to_long;
-    uint32_t kept_in_forever_due_to_dontmove;
-    uint32_t kept_in_short;
-    uint32_t kept_in_short_due_to_dontmove;
+    uint32_t T2_deleted;
+    uint32_t moved_from_T1_to_T2;
+    uint32_t kept_in_T1;
+    uint32_t kept_in_T1_due_to_dontmove;
+    uint32_t moved_from_T0_to_T1;
+    uint32_t kept_in_T0;
+    uint32_t moved_from_T2_to_T0;
+    uint32_t moved_from_T2_to_T1;
+    uint32_t kept_in_T0_due_to_dontmove;
+    uint32_t kept_in_T2;
+    uint32_t kept_in_T2_due_to_dontmove;
 
-    uint64_t short_deleted_age;
+    uint64_t T2_deleted_age;
 };
 
 }

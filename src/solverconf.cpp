@@ -80,7 +80,7 @@ using namespace CMSat;
 
 DLL_PUBLIC SolverConf::SolverConf() :
         // Polarities
-        do_lucky_polar_every_n(20)
+        do_lucky_polar_every_n(0)
         , polarity_mode(PolarityMode::polarmode_automatic)
         , polar_stable_every_n(4)
         , polar_best_inv_multip_n(9)
@@ -88,15 +88,15 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Clause cleaning
         , pred_short_size(7500)
-        , pred_long_size(7500)
-        , pred_forever_size(800) // Used only if pred_forever_cutoff is 0
+        , pred_long_size(18500)
+        , pred_forever_size(10500) // Used only if pred_forever_cutoff is 0
         , pred_forever_cutoff(0) //this sets a static cutoff
         , order_tier2_by(2) //order Tier2 by this tier's sort function. 2 means Tier2, i.e. default
 
-        , pred_forever_size_pow(0.1) // Used only if pred_forever_cutoff is 0
+        , pred_forever_size_pow(0.01) // Used only if pred_forever_cutoff is 0
         //
-        , pred_long_chunk(2000)
-        , pred_forever_chunk(1200) // Used only if pred_forever_cutoff is 0
+        , pred_long_chunk(4700)
+        , pred_forever_chunk(2000) // Used only if pred_forever_cutoff is 0
         , pred_forever_chunk_mult(0)
         //
         , move_from_tier0(1) //if 1 = moves it, rather than deletes it
@@ -106,7 +106,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , pred_forever_check_every_n(12)
         , pred_adjust_for_cl_size(0)
         , pred_adjust_for_cl_size_onlyforever(0)
-        , pred_distill_same_as_orig(false)
+        , pred_distill_only_smallgue(false)
         , pred_dontmove_until_timeinside(1) //always move, don't wait
 
         , every_lev1_reduce(10000) // kept for a while then moved to lev2
@@ -123,7 +123,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , dump_pred_distrib(0)
         #endif
         , clause_decay(0.999)
-        , adjust_glue_if_too_many_low(0.7)
+        , adjust_glue_if_too_many_tier0(0.7)
         , min_num_confl_adjust_glue_cutoff(150ULL*1000ULL)
         //NOTE: The "Scavel" system's "usedt" does NOT speed up the solver
         //test conducted: out-drat-check-8359337.wlm01-1-drat0
@@ -142,8 +142,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doAlwaysFMinim(false)
 
         //branch strategy
-        , branch_strategy_setup("vsidsx_once+maple1+maple2+vsids2+maple1+maple2+vsidsx")
-        , branch_strategy_setup_forced(0)
+        , branch_strategy_setup("vsidsx_once+maple1+maple2+vsids2+maple1+maple2+vsids1")
 
         //Clause minimisation
         , doRecursiveMinim (true)
@@ -341,16 +340,20 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Distillation
         , do_distill_clauses(true)
         , do_distill_bin_clauses(true)
-        , distill_long_cls_time_limitM(10ULL)
+        , distill_long_cls_time_limitM(20ULL)
         , watch_based_str_time_limitM(30LL)
         , distill_increase_conf_ratio(0.02)
         , distill_min_confl(10000)
-        , distill_red_tier0_ratio(0.7)
-        , distill_red_tier1_ratio(0.07)
+        , distill_red_tier0_ratio(10.0)
+        , distill_red_tier1_ratio(0.03)
         , distill_irred_alsoremove_ratio(1.2)
         , distill_irred_noremove_ratio(1.0) //from out-3946531.wlm01-15-drat0
         , distill_rand_shuffle_order_every_n(3)
-        , distill_sort(1)
+        #ifdef FINAL_PREDICTOR
+        , distill_sort(3)
+        #else
+        , distill_sort(0)
+        #endif
 
         //Memory savings
         , doRenumberVars   (true)

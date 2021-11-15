@@ -38,6 +38,8 @@ using std::endl;
 #define VERBOSE_SUBSUME_NONEXIST
 #endif
 
+//#define VERBOSE_DEBUG
+
 //#define VERBOSE_SUBSUME_NONEXIST
 
 struct ClauseSizeSorterLargestFirst
@@ -57,6 +59,31 @@ struct ClauseSizeSorterLargestFirst
         return cl1->size() > cl2->size();
     }
 };
+
+#ifdef FINAL_PREDICTOR
+struct ClauseSorterFirstInSolver
+{
+    ClauseSorterFirstInSolver(const ClauseAllocator& _cl_alloc, const vector<ClauseStatsExtra>& _extras) :
+        cl_alloc(_cl_alloc),
+        extras(_extras)
+    {}
+
+    const ClauseAllocator& cl_alloc;
+    const vector<ClauseStatsExtra>& extras;
+
+    bool operator()(const ClOffset off1, const ClOffset off2) const
+    {
+        const Clause* cl1 = cl_alloc.ptr(off1);
+        const Clause* cl2 = cl_alloc.ptr(off2);
+
+        const auto& extra1 = extras[cl1->stats.extra_pos];
+        const auto& extra2 = extras[cl2->stats.extra_pos];
+
+        //Correct order if c1 was introduced earlier goes first
+        return extra1.introduced_at_conflict < extra2.introduced_at_conflict;
+    }
+};
+#endif
 
 struct ClauseSorterSmallGlueFirst
 {
@@ -110,7 +137,7 @@ struct LitCountDescSort
     {}
 
     bool operator()(const Lit& lit1, const Lit& lit2) {
-        return lit_counts[lit1.toInt()] < lit_counts[lit2.toInt()];
+        return lit_counts[lit1.toInt()] > lit_counts[lit2.toInt()];
     }
 
 
@@ -129,14 +156,24 @@ bool DistillerLong::distill(const bool red, bool fullstats, bool only_rem_cl)
     runStats.clear();
 
     if (!red) {
-        if (!distill_long_cls_all(solver->longIrredCls, solver->conf.distill_irred_alsoremove_ratio, true, red)) {
+        if (!distill_long_cls_all(
+            solver->longIrredCls,
+            solver->conf.distill_irred_alsoremove_ratio,
+            true, //also remove
+            red))
+        {
             goto end;
         }
         globalStats += runStats;
         runStats.clear();
 
         if (!only_rem_cl) {
-            if (!distill_long_cls_all(solver->longIrredCls, solver->conf.distill_irred_noremove_ratio, false, red)) {
+            if (!distill_long_cls_all(
+                solver->longIrredCls,
+                solver->conf.distill_irred_noremove_ratio,
+                false, //also remove
+                red))
+            {
                 goto end;
             }
         }
@@ -144,13 +181,25 @@ bool DistillerLong::distill(const bool red, bool fullstats, bool only_rem_cl)
         runStats.clear();
     } else {
         //Redundant
-        if (!distill_long_cls_all(solver->longRedCls[0], solver->conf.distill_red_tier0_ratio, false, red, 0)) {
+        if (!distill_long_cls_all(
+            solver->longRedCls[0],
+            solver->conf.distill_red_tier0_ratio,
+            false, //dont' remove (it's always redundant)
+            red,
+            0)) //red lev (only to print)
+        {
             goto end;
         }
         globalStats += runStats;
         runStats.clear();
 
-        if (!distill_long_cls_all(solver->longRedCls[1], solver->conf.distill_red_tier1_ratio, false, red, 1)) {
+        if (!distill_long_cls_all(
+            solver->longRedCls[1],
+            solver->conf.distill_red_tier1_ratio,
+            false, //dont' remove (it's always redundant)
+            red,
+            1))  // //red lev (only to print)
+        {
             goto end;
         }
         globalStats += runStats;
@@ -206,36 +255,32 @@ bool DistillerLong::distill_long_cls_all(
     if (//Don't shuffle when it's very-very large, too expensive
         offs.size() < 100ULL*1000ULL*1000ULL)
     {
-        bool randomly_sort = solver->mtrand.randInt(solver->conf.distill_rand_shuffle_order_every_n) == 0;
-        if (randomly_sort) {
-//             cout << "RANDOM SORT" << endl;
-            std::mt19937 gen(solver->mtrand.randInt());
-            std::shuffle(offs.begin(), offs.end(), gen);
-        } else {
-            if (solver->conf.distill_sort == 1 || red == false) {
-//                 cout << "NORMAL SORT -- largest first" << endl;
+        if (solver->conf.distill_sort == 0) {
+            //Nothing
+
+        } else if (solver->conf.distill_sort == 1) {
+            std::sort(offs.begin(),
+                offs.end(),
+                ClauseSizeSorterLargestFirst(solver->cl_alloc)
+            );
+        } else if (solver->conf.distill_sort == 2) {
+            std::sort(offs.begin(),
+                offs.end(),
+                ClauseSorterSmallGlueFirst(solver->cl_alloc)
+            );
+        } else if (solver->conf.distill_sort == 3) {
+            #ifdef FINAL_PREDICTOR
+            if (red) {
+                //This ensures fixed order. Otherwise, due to reducedb's ordering clauses around, it'd always be very hectic order, effectively random order
                 std::sort(offs.begin(),
                     offs.end(),
-                    ClauseSizeSorterLargestFirst(solver->cl_alloc)
+                    ClauseSorterFirstInSolver(solver->cl_alloc, solver->red_stats_extra)
                 );
-            } else if (solver->conf.distill_sort == 2) {
-//                 cout << "NORMAL SORT -- small glue first" << endl;
-                std::sort(offs.begin(),
-                    offs.end(),
-                    ClauseSorterSmallGlueFirst(solver->cl_alloc)
-                );
-            } else if (solver->conf.distill_sort == 3) {
-                #ifdef FINAL_PREDICTOR
-//                 cout << "c PRED SORT -- high pred first" << endl;
-                std::sort(offs.begin(),
-                    offs.end(),
-                    ClauseSorterBestPredFirst(solver->cl_alloc, solver->red_stats_extra)
-                );
-                #else
-                cout << "ERROR: only distill sort 1 and 2 are recognized" << endl;
-                exit(-1);
-                #endif
             }
+            #else
+            cout << "ERROR: only distill sort 0, 1 and 2 are recognized" << endl;
+            exit(-1);
+            #endif
         }
     }
 
@@ -248,6 +293,9 @@ bool DistillerLong::distill_long_cls_all(
         uint32_t j = 0;
         for(uint32_t i = 0; i < offs.size(); i ++) {
             Clause* cl = solver->cl_alloc.ptr(offs[i]);
+            #ifdef VERBOSE_DEBUG
+            cout << "Clause at " << i << " is:  " << *cl << endl;
+            #endif
             bool ok = false;
             if (!cl->stats.is_ternary_resolvent
                 && !solver->satisfied(*cl)
@@ -268,6 +316,9 @@ bool DistillerLong::distill_long_cls_all(
                     lit_counts[l.toInt()]++;
                 }
                 todo.push_back(offs[i]);
+                #ifdef VERBOSE_DEBUG
+                cout << "Adding this one to TODO" << endl;
+                #endif
             } else {
                 offs[j++] = offs[i];
                 continue;
@@ -331,6 +382,10 @@ bool DistillerLong::go_through_clauses(
         ; i != end
         ; ++i
     ) {
+        #ifdef VERBOSE_DEBUG
+        cout << "At offset: " << *i << endl;
+        #endif
+
         //Check if we are in state where we only copy offsets around
         if (time_out || !solver->ok) {
             *j++ = *i;
@@ -359,6 +414,9 @@ bool DistillerLong::go_through_clauses(
             solver->conf.force_preserve_xors
         ) {
             *j++ = *i;
+            #ifdef VERBOSE_DEBUG
+            cout << "Skipping offset for XOR " << *i << endl;
+            #endif
             continue;
         }
 
@@ -370,10 +428,19 @@ bool DistillerLong::go_through_clauses(
 
             //If it's a redundant that's not very good, let's not distill it
             (
+#ifdef FINAL_PREDICTOR
+                solver->conf.pred_distill_only_smallgue &&
+#else
+                false &&
+#endif
+
                 cl.red() &&
                 cl.stats.glue > 3) //TODO I don't like this at all for FINAL_PREDICTOR !!!!
         ) {
             *j++ = *i;
+            #ifdef VERBOSE_DEBUG
+            cout << "Skipping offset " << *i << endl;
+            #endif
             continue;
         }
         if (also_remove) {
@@ -407,11 +474,6 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
 ) {
     assert(solver->prop_at_head());
     assert(solver->decisionLevel() == 0);
-    #ifdef DRAT_DEBUG
-    if (solver->conf.verbosity >= 6) {
-        cout << "Trying to distill clause:" << lits << endl;
-    }
-    #endif
     bool True_confl = false;
     PropBy confl;
 
@@ -425,6 +487,9 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     if (red) {
         assert(!also_remove);
     }
+    #ifdef VERBOSE_DEBUG
+    cout << "Trying to distill clause:" << cl << endl;
+    #endif
 
     uint32_t orig_size = cl.size();
     uint32_t i = 0;
@@ -444,19 +509,23 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     i = 0;
     j = 0;
 
-    //Don't sort them if they are too large, it can be really slow
-    if (cl.size() < 500) {
-        //Sort them differently once in a while, so all literals have a chance of
-        //being removed
-        if (solver->mtrand.randInt(1) == 0) {
+
+    // Sort them differently once in a while, so all literals have a chance of
+    // being removed
+//     if (cl.size() < 500) {
+//         if (solver->mtrand.randInt(2) == 0) {
 //             for(uint32_t i2 = 0; i2 < cl.size()-1; i2++) {
 //                 std::swap(cl[i2], cl[i2+solver->mtrand.randInt(cl.size()-i2-1)]);
 //             }
-            std::sort(cl.begin(), cl.end(), VSIDS_largest_first(solver->var_act_vsids));
-        } else {
-            std::sort(cl.begin(), cl.end(), LitCountDescSort(lit_counts));
-        }
-    }
+//             std::sort(cl.begin(), cl.end(), VSIDS_largest_first(solver->var_act_vsids));
+//         } else {
+//             std::sort(cl.begin(), cl.end(), LitCountDescSort(lit_counts));
+//         }
+//     }
+//     #ifdef VERBOSE_DEBUG
+//     cout << "Trying to distill clause after sort:" << cl << endl;
+//     #endif
+
     for (uint32_t sz = cl.size(); i < sz; i++) {
         const Lit lit = cl[i];
         lbool val = solver->value(lit);
@@ -489,7 +558,17 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     cl.resize(j);
 
     //Actually, we can remove the clause!
+    #ifdef VERBOSE_DEBUG
+    cout << "also_remove: " << also_remove
+    << "red: " << red
+    << "True_confl: " << True_confl
+    << "confl.isNULL(): " << confl.isNULL()
+    << endl;
+    #endif
     if (also_remove && !red && !True_confl && !confl.isNULL()) {
+        #ifdef VERBOSE_DEBUG
+        cout << "CL Removed." << endl;
+        #endif
         rem:
         solver->cancelUntil<false, true>(0);
         solver->detach_modified_clause(cl_lit1, cl_lit2, orig_size, &cl);
@@ -501,6 +580,9 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
 
     //Couldn't simplify the clause
     if (j == orig_size && !True_confl && confl.isNULL()) {
+        #ifdef VERBOSE_DEBUG
+        cout << "CL Cannot be simplified." << endl;
+        #endif
         cl.disabled = false;
         solver->cancelUntil<false, true>(0);
         std::swap(*std::find(cl.begin(), cl.end(), cl_lit1), cl[0]);
@@ -510,23 +592,25 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     }
 
     #ifdef VERBOSE_DEBUG
-    if (j < i && solver->conf.verbosity >= 5) {
+    if (j < i) {
         cout
         << "c Distillation branch effective." << endl
         << "c --> shortened cl:" << cl<< endl
         << "c --> orig size:" << orig_size << endl
         << "c --> new size:" << j << endl;
+    } else {
+        cout
+        << "c Distillation branch NOT effective." << endl
+        << "c --> orig size:" << orig_size << endl;
     }
     #endif
 
     bool lits_set = false;
     if (red && j > 1 && (!confl.isNULL() || True_confl)) {
         #ifdef VERBOSE_DEBUG
-        if (solver->conf.verbosity >= 5) {
-            cout
-            << "c Distillation even more effective." << endl
-            << "c --> orig shortened cl:" << cl << endl;
-        }
+        cout
+        << "c Distillation even more effective." << endl
+        << "c --> orig shortened cl:" << cl << endl;
         #endif
         maxNumProps -= 20;
         lits.clear();
@@ -536,10 +620,8 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
         solver->simple_create_learnt_clause(confl, lits, True_confl);
         if (lits.size() < cl.size()) {
             #ifdef VERBOSE_DEBUG
-            if (solver->conf.verbosity >= 5) {
-                cout
-                << "c --> more shortened cl:" << lits << endl;
-            }
+            cout
+            << "c --> more shortened cl:" << lits << endl;
             #endif
             lits_set = true;
         }

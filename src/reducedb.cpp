@@ -654,7 +654,7 @@ void ReduceDB::pred_move_to_lev1_and_lev0()
         }
 
         if (move) {
-            moved_from_short_to_forever++;
+            moved_from_T2_to_T0++;
             cl->stats.which_red_array = 0;
             solver->longRedCls[0].push_back(offset);
         } else {
@@ -676,7 +676,7 @@ void ReduceDB::pred_move_to_lev1_and_lev0()
         const ClOffset offset = solver->longRedCls[2][i];
         Clause* cl = solver->cl_alloc.ptr(offset);
         if (i < mark_long) {
-            moved_from_short_to_long++;
+            moved_from_T2_to_T1++;
             cl->stats.which_red_array = 1;
             solver->longRedCls[1].push_back(offset);
         } else {
@@ -822,7 +822,7 @@ void ReduceDB::clean_lev0_once_in_a_while()
 //                 (time_inside_solver < checked_every &&
 //                 solver->conf.pred_dontmove_until_timeinside == 2))
 //             {
-//                 kept_in_forever_due_to_dontmove++;
+//                 kept_in_T0_due_to_dontmove++;
 //                 keep_forever++;
 //             }
             force_kept++;
@@ -839,11 +839,11 @@ void ReduceDB::clean_lev0_once_in_a_while()
 
         if (keep) {
             //cout << "stats_extra.pred_forever_use: " << stats_extra.pred_forever_use/(10*1000.0) << endl;
-            kept_in_forever++;
+            kept_in_T0++;
             assert(cl->stats.which_red_array == 0);
             solver->longRedCls[0][j++] = solver->longRedCls[0][i];
         } else {
-            moved_from_forever_to_long++;
+            moved_from_T0_to_T1++;
 
             //if locked, move anyway, even though we are supposed to delete
             if (solver->conf.move_from_tier0 == 1 || solver->clause_locked(*cl, offset)) {
@@ -914,15 +914,15 @@ void ReduceDB::clean_lev1_once_in_a_while()
                 solver->conf.pred_dontmove_until_timeinside == 2))
             {
                 force_kept++;
-//                 kept_in_long_due_to_dontmove++;
+//                 kept_in_T1_due_to_dontmove++;
 //                 keep_long++;
             }
 
-            kept_in_long++;
+            kept_in_T1++;
             assert(cl->stats.which_red_array == 1);
             solver->longRedCls[1][j++] =solver->longRedCls[1][i];
         } else {
-            moved_from_long_to_short++;
+            moved_from_T1_to_T2++;
             //if locked, we'll move it anyway, since we can't delete
             if (solver->conf.move_from_tier1 == 1 || solver->clause_locked(*cl, offset)) {
                 solver->longRedCls[2].push_back(offset);
@@ -982,13 +982,13 @@ void ReduceDB::delete_from_lev2()
                 || age < solver->conf.every_pred_reduce)
             {
                 keep_short++;
-                kept_in_short_due_to_dontmove++;
+                kept_in_T2_due_to_dontmove++;
             }
-            kept_in_short++;
+            kept_in_T2++;
             solver->longRedCls[2][j++] = solver->longRedCls[2][i];
         } else {
-            short_deleted++;
-            short_deleted_age += age;
+            T2_deleted++;
+            T2_deleted_age += age;
             solver->watches.smudge((*cl)[0]);
             solver->watches.smudge((*cl)[1]);
             solver->litStats.redLits -= cl->size();
@@ -1149,20 +1149,20 @@ void ReduceDB::handle_predictors()
         median_data);
 
     //Move clauses around
-    short_deleted = 0;
-    moved_from_long_to_short = 0;
-    kept_in_long = 0;
-    kept_in_long_due_to_dontmove = 0;
-    moved_from_forever_to_long = 0;
-    kept_in_forever = 0;
-    kept_in_forever_due_to_dontmove = 0;
-    kept_in_short = 0;
-    kept_in_short_due_to_dontmove = 0;
-    short_deleted_age = 0;
+    T2_deleted = 0;
+    moved_from_T1_to_T2 = 0;
+    kept_in_T1 = 0;
+    kept_in_T1_due_to_dontmove = 0;
+    moved_from_T0_to_T1 = 0;
+    kept_in_T0 = 0;
+    kept_in_T0_due_to_dontmove = 0;
+    kept_in_T2 = 0;
+    kept_in_T2_due_to_dontmove = 0;
+    T2_deleted_age = 0;
 
 
-    moved_from_short_to_forever = 0;
-    moved_from_short_to_long = 0;
+    moved_from_T2_to_T0 = 0;
+    moved_from_T2_to_T1 = 0;
 
     update_preds_lev2();
     pred_move_to_lev1_and_lev0();
@@ -1190,24 +1190,24 @@ void ReduceDB::handle_predictors()
         if (solver->conf.verbosity >= 1) {
             cout
             << "c [DBCL pred] lev0: " << std::setw(9) << solver->longRedCls[0].size()
-            << " moved to lev1: " << std::setw(6) << moved_from_forever_to_long
-            << " kept at lev0: " << std::setw(6) << kept_in_forever
-            << " -- due to dontmove: " << std::setw(6) << kept_in_forever_due_to_dontmove
+            << " moved to lev1: " << std::setw(6) << moved_from_T0_to_T1
+            << " kept at lev0: " << std::setw(6) << kept_in_T0
+            << " -- due to dontmove: " << std::setw(6) << kept_in_T0_due_to_dontmove
             << endl
 
             << "c [DBCL pred] lev1: " << std::setw(9) << solver->longRedCls[1].size()
-            << " moved to lev2: " << std::setw(6) << moved_from_long_to_short
-            << " kept at lev1: " << std::setw(6) << kept_in_long
-            << " -- due to dontmove: " << std::setw(6) << kept_in_long_due_to_dontmove
+            << " moved to lev2: " << std::setw(6) << moved_from_T1_to_T2
+            << " kept at lev1: " << std::setw(6) << kept_in_T1
+            << " -- due to dontmove: " << std::setw(6) << kept_in_T1_due_to_dontmove
             << endl
 
             << "c [DBCL pred] lev2: " << std::setw(9) << solver->longRedCls[2].size()
-            << " m-to-lev1: " << std::setw(6) << moved_from_short_to_long
-            << " m-to-lev0: " << std::setw(6) << moved_from_short_to_forever
-            << " del: " << std::setw(6) << short_deleted
-            << " kept: " << std::setw(6) << kept_in_short
-            << " -- due to dontmove: " << std::setw(6) << kept_in_short_due_to_dontmove
-            //<< " del avg age: " << std::setw(6) << safe_div(short_deleted_age, short_deleted)
+            << " m-to-lev1: " << std::setw(6) << moved_from_T2_to_T1
+            << " m-to-lev0: " << std::setw(6) << moved_from_T2_to_T0
+            << " del: " << std::setw(6) << T2_deleted
+            << " kept: " << std::setw(6) << kept_in_T2
+            << " -- due to dontmove: " << std::setw(6) << kept_in_T2_due_to_dontmove
+            //<< " del avg age: " << std::setw(6) << safe_div(T2_deleted_age, T2_deleted)
             << endl;
         }
 
@@ -1341,6 +1341,7 @@ ReduceDB::ClauseStats ReduceDB::ClauseStats::operator += (const ClauseStats& oth
     total_props += other.total_props;
     total_cls += other.total_cls;
     total_age += other.total_age;
+    total_len += other.total_len;
 
     return *this;
 }
@@ -1352,6 +1353,7 @@ void ReduceDB::ClauseStats::add_in(const Clause& cl, const uint64_t age)
     total_props += cl.stats.props_made;
     total_uip1_used += cl.stats.uip1_used;
     total_age += age;
+    total_len += cl.size();
 }
 #endif
 
@@ -1370,5 +1372,8 @@ void ReduceDB::ClauseStats::print(uint32_t lev)
     << " avg age: "
     << std::setw(7) << std::setprecision(1)
     << (double)(total_age)/((double)total_cls*1000) << "K"
+    << " avg len: "
+    << std::setw(7) << std::setprecision(1)
+    << (double)(total_len)/((double)total_cls)
     << endl;
 }
