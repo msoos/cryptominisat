@@ -88,15 +88,15 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Clause cleaning
         , pred_short_size(7500)
-        , pred_long_size(7500)
-        , pred_forever_size(800) // Used only if pred_forever_cutoff is 0
+        , pred_long_size(18500)
+        , pred_forever_size(10500) // Used only if pred_forever_cutoff is 0
         , pred_forever_cutoff(0) //this sets a static cutoff
         , order_tier2_by(2) //order Tier2 by this tier's sort function. 2 means Tier2, i.e. default
 
-        , pred_forever_size_pow(0.1) // Used only if pred_forever_cutoff is 0
+        , pred_forever_size_pow(0.01) // Used only if pred_forever_cutoff is 0
         //
-        , pred_long_chunk(2000)
-        , pred_forever_chunk(1200) // Used only if pred_forever_cutoff is 0
+        , pred_long_chunk(4700)
+        , pred_forever_chunk(2000) // Used only if pred_forever_cutoff is 0
         , pred_forever_chunk_mult(0)
         //
         , move_from_tier0(1) //if 1 = moves it, rather than deletes it
