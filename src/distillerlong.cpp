@@ -271,6 +271,7 @@ bool DistillerLong::distill_long_cls_all(
         } else if (solver->conf.distill_sort == 3) {
             #ifdef FINAL_PREDICTOR
             if (red) {
+                //This ensures fixed order. Otherwise, due to reducedb's ordering clauses around, it'd always be very hectic order, effectively random order
                 std::sort(offs.begin(),
                     offs.end(),
                     ClauseSorterFirstInSolver(solver->cl_alloc, solver->red_stats_extra)
