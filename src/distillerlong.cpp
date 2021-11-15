@@ -270,10 +270,12 @@ bool DistillerLong::distill_long_cls_all(
             );
         } else if (solver->conf.distill_sort == 3) {
             #ifdef FINAL_PREDICTOR
-            std::sort(offs.begin(),
-                offs.end(),
-                ClauseSorterFirstInSolver(solver->cl_alloc, solver->red_stats_extra)
-            );
+            if (red) {
+                std::sort(offs.begin(),
+                    offs.end(),
+                    ClauseSorterFirstInSolver(solver->cl_alloc, solver->red_stats_extra)
+                );
+            }
             #else
             cout << "ERROR: only distill sort 0, 1 and 2 are recognized" << endl;
             exit(-1);
