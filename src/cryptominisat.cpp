@@ -1321,17 +1321,18 @@ void DLL_PUBLIC SATSolver::set_min_bva_gain(uint32_t min_bva_gain)
     }
 }
 
-void DLL_PUBLIC SATSolver::set_up_for_sample_counter()
+void DLL_PUBLIC SATSolver::set_up_for_sample_counter(const uint32_t fixed_restart)
 {
     for (size_t i = 0; i < data->solvers.size(); i++) {
         SolverConf conf = data->solvers[i]->getConf();
         conf.doSLS = false;
         conf.doBreakid = false;
-        conf.restartType = Restart::geom;
+        conf.restartType = Restart::fixed;
         conf.never_stop_search = true;
         conf.branch_strategy_setup = "rand";
         conf.simplify_at_startup = false;
         conf.doFindXors = false;
+        conf.fixed_restart_num_confl = fixed_restart;
         conf.polarity_mode = CMSat::PolarityMode::polarmode_rnd;
 
         data->solvers[i]->setConf(conf);
@@ -1764,5 +1765,14 @@ DLL_PUBLIC void SATSolver::set_every_pred_reduce(int32_t sz)
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
         s.conf.every_pred_reduce = sz;
+    }
+}
+
+DLL_PUBLIC void SATSolver::set_seed(const uint32_t seed)
+{
+
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.set_seed(seed);
     }
 }

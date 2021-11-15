@@ -59,6 +59,7 @@ enum class Restart {
     , geom
     , glue_geom
     , luby
+    , fixed
     , never
 };
 
@@ -100,6 +101,9 @@ inline std::string restart_type_to_short_string(const Restart type)
 
         case Restart::glue_geom:
             return "gl/g";
+
+        case Restart::fixed:
+            return "fixd";
 
         case Restart::never:
             return "neve";
@@ -280,6 +284,8 @@ class DLL_PUBLIC SolverConf
         int      do_blocking_restart;
         unsigned blocking_restart_trail_hist_length;
         double   blocking_restart_multip;
+        uint32_t fixed_restart_num_confl;
+
 
         double   local_glue_multiplier;
         unsigned  shortTermHistorySize; ///< Rolling avg. glue window size

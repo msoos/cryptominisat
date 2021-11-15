@@ -89,7 +89,7 @@ struct Trail {
 struct RandHeap
 {
     vector<unsigned char> in_heap;
-    std::set<uint32_t> vars;
+    vector<uint32_t> vars;
 
     bool inHeap(uint32_t x) const {
         if (in_heap.size() <= x) {
@@ -110,7 +110,7 @@ struct RandHeap
             in_heap.insert(in_heap.end(), n, false);
         }
         in_heap[x] = true;
-        vars.insert(x);
+        vars.push_back(x);
     }
 
     size_t size() const {
@@ -166,11 +166,9 @@ struct RandHeap
         }
 
         uint32_t which = mtrand.randInt(vars.size()-1);
-        //cout << "which: " << which << " size: " << vars.size() << endl;
-        std::set<uint32_t>::iterator it = std::next(vars.begin(), which);
-        uint32_t picked = *it;
-        vars.erase(it);
-        //cout<< "Picked: " << picked << endl;
+        uint32_t picked = vars[which];
+        std::swap(vars[which], vars[vars.size()-1]);
+        vars.pop_back();
         assert(inHeap(picked));
         in_heap[picked] = false;
 

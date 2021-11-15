@@ -86,6 +86,7 @@ class Searcher : public HyperEngine
         PropBy insert_gpu_clause(Lit* lits, uint32_t count);
         uint64_t luby_loop_num = 0;
         MTRand mtrand; ///< random number generator
+        void set_seed(const uint32_t seed);
 
 
         vector<lbool>  model;
