@@ -2723,6 +2723,11 @@ void Searcher::setup_restart_strategy()
             params.rest_type = Restart::luby;
             break;
 
+        case Restart::fixed:
+            params.rest_type = Restart::fixed;
+            max_confl_this_restart = conf.fixed_restart_num_confl;
+            break;
+
         case Restart::never:
             params.rest_type = Restart::never;
             break;
@@ -2755,6 +2760,10 @@ void Searcher::adjust_restart_strategy()
             params.rest_type = Restart::luby;
             break;
 
+        case Restart::fixed:
+            params.rest_type = Restart::fixed;
+            break;
+
         case Restart::glue_geom:
             if (params.rest_type == Restart::glue) {
                 params.rest_type = Restart::geom;
@@ -2781,6 +2790,10 @@ void Searcher::adjust_restart_strategy()
 
         case Restart::glue:
             max_confl_this_restart = conf.ratio_glue_geom *increasing_phase_size;
+            break;
+
+        case Restart::fixed:
+            max_confl_this_restart = conf.fixed_restart_num_confl;
             break;
 
         case Restart::never:
@@ -3939,6 +3952,11 @@ void Searcher::find_largest_level(Lit* lits, uint32_t count, uint32_t start)
             std::swap(lits[i], lits[start]);
         }
     }
+}
+
+void Searcher::set_seed(const uint32_t seed)
+{
+    mtrand.seed(seed);
 }
 
 #ifdef USE_GPU

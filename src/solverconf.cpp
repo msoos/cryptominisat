@@ -135,6 +135,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , do_blocking_restart(1)
         , blocking_restart_trail_hist_length(5000)
         , blocking_restart_multip(1.4)
+        , fixed_restart_num_confl(100)
         , local_glue_multiplier(0.80)
         , shortTermHistorySize (50)
         , lower_bound_for_blocking_restart(10000)
@@ -142,7 +143,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doAlwaysFMinim(false)
 
         //branch strategy
-        , branch_strategy_setup("vsidsx_once+maple1+maple2+vsids2+maple1+maple2+vsids1")
+        , branch_strategy_setup("vsidsx_once+maple1+maple2+vsids2+maple1+maple2+vsidsx")
 
         //Clause minimisation
         , doRecursiveMinim (true)

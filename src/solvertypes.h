@@ -71,6 +71,9 @@ inline std::string restart_type_to_string(const Restart type)
         case Restart::glue_geom:
             return "glue-geom";
 
+        case Restart::fixed:
+            return "fixed";
+
         case Restart::never:
             return "never";
     }
@@ -140,6 +143,9 @@ inline int restart_type_to_int(const Restart type)
 
         case Restart::glue_geom:
             return 4;
+
+        case Restart::fixed:
+            return 5;
 
         case Restart::never:
             return 6;
