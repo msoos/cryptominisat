@@ -1358,6 +1358,15 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
         assert(xor_cut >= 3);
         conf.xor_var_per_cut = xor_cut-2;
 
+        //Distill
+        conf.distill_sort = 4;
+        conf.distill_long_cls_time_limitM = 10ULL;
+        conf.distill_red_tier0_ratio = 0.7;
+        conf.distill_red_tier1_ratio = 0.07;
+
+
+
+
         conf.simplify_at_startup = 1;
         conf.varElimRatioPerIter = 1;
         conf.restartType = Restart::geom;
@@ -1394,6 +1403,13 @@ void DLL_PUBLIC SATSolver::set_up_for_arjun()
         conf.branch_strategy_setup = "vsids1";
         conf.diff_declev_for_chrono = -1;
         conf.do_bosphorus = false;
+
+        //Distill
+        conf.distill_sort = 4;
+        conf.distill_long_cls_time_limitM = 10ULL;
+        conf.distill_red_tier0_ratio = 0.7;
+        conf.distill_red_tier1_ratio = 0.07;
+
         data->solvers[i]->setConf(conf);
     }
 }
