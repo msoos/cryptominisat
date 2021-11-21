@@ -68,6 +68,7 @@ public:
         uint32_t total_cls = 0;
         uint64_t total_age = 0;
         uint64_t total_len = 0;
+        uint64_t total_glue = 0;
 
         void add_in(const Clause& cl, const uint64_t age);
         ClauseStats operator += (const ClauseStats& other);

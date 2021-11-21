@@ -1342,6 +1342,7 @@ ReduceDB::ClauseStats ReduceDB::ClauseStats::operator += (const ClauseStats& oth
     total_cls += other.total_cls;
     total_age += other.total_age;
     total_len += other.total_len;
+    total_glue += other.total_glue;
 
     return *this;
 }
@@ -1354,6 +1355,7 @@ void ReduceDB::ClauseStats::add_in(const Clause& cl, const uint64_t age)
     total_uip1_used += cl.stats.uip1_used;
     total_age += age;
     total_len += cl.size();
+    total_glue += cl.stats.glue;
 }
 #endif
 
@@ -1375,5 +1377,8 @@ void ReduceDB::ClauseStats::print(uint32_t lev)
     << " avg len: "
     << std::setw(7) << std::setprecision(1)
     << (double)(total_len)/((double)total_cls)
+    << " avg glue: "
+    << std::setw(7) << std::setprecision(1)
+    << (double)(total_glue)/((double)total_cls)
     << endl;
 }
