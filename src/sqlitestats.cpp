@@ -713,7 +713,7 @@ void SQLiteStats::reduceDB_common(
     sqlite3_bind_double(stmtReduceDB_common, bindAt++, median_data.median_sum_uip1_per_time);
     sqlite3_bind_double(stmtReduceDB_common, bindAt++, median_data.median_sum_props_per_time);
 
-    sqlite3_bind_double(stmtReduceDB_common, bindAt++, avg_data.avg_glue);
+    //sqlite3_bind_double(stmtReduceDB_common, bindAt++, avg_data.avg_glue);
     sqlite3_bind_double(stmtReduceDB_common, bindAt++, avg_data.avg_props);
     sqlite3_bind_double(stmtReduceDB_common, bindAt++, avg_data.avg_uip1_used);
     sqlite3_bind_double(stmtReduceDB_common, bindAt++, avg_data.avg_sum_uip1_per_time);

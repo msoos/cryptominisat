@@ -336,7 +336,7 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
 {
     //Prop and also save total_* data for stats
     std::sort(all_learnt.begin(), all_learnt.end(), SortRedClsProps(solver->cl_alloc));
-    total_glue = 0;
+    //total_glue = 0;
     total_props = 0;
     total_uip1_used = 0;
     total_sum_uip1_used = 0;
@@ -350,7 +350,7 @@ void ReduceDB::prepare_features(vector<ClOffset>& all_learnt)
         assert(cl->stats.glue > 0);
         stats_extra.update_rdb_stats(cl->stats);
 
-        total_glue += cl->stats.glue;
+        //total_glue += cl->stats.glue; CANNOT CALCULATE! ternaries have no glues
         total_props += cl->stats.props_made;
         total_uip1_used += cl->stats.uip1_used;
         total_sum_uip1_used += stats_extra.sum_uip1_used;
@@ -1144,7 +1144,10 @@ void ReduceDB::handle_predictors()
     }
     prepare_features(all_learnt);
     commdata = ReduceCommonData(
-        total_props, total_glue, total_uip1_used, total_sum_uip1_used,
+        total_props,
+//         total_glue,
+        total_uip1_used,
+        total_sum_uip1_used,
         all_learnt.size(),
         median_data);
 
@@ -1342,7 +1345,7 @@ ReduceDB::ClauseStats ReduceDB::ClauseStats::operator += (const ClauseStats& oth
     total_cls += other.total_cls;
     total_age += other.total_age;
     total_len += other.total_len;
-    total_glue += other.total_glue;
+    //total_glue += other.total_glue; CANNOT DO, ternaries have no glue
 
     return *this;
 }
@@ -1355,7 +1358,7 @@ void ReduceDB::ClauseStats::add_in(const Clause& cl, const uint64_t age)
     total_uip1_used += cl.stats.uip1_used;
     total_age += age;
     total_len += cl.size();
-    total_glue += cl.stats.glue;
+    //total_glue += cl.stats.glue; CANNOT DO, ternaries have no glue
 }
 #endif
 
@@ -1377,8 +1380,5 @@ void ReduceDB::ClauseStats::print(uint32_t lev)
     << " avg len: "
     << std::setw(7) << std::setprecision(1)
     << (double)(total_len)/((double)total_cls)
-    << " avg glue: "
-    << std::setw(7) << std::setprecision(1)
-    << (double)(total_glue)/((double)total_cls)
     << endl;
 }

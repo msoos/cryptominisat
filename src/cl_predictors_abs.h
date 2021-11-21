@@ -52,7 +52,7 @@ struct ReduceCommonData
     }
 
     double   avg_props;
-    double   avg_glue;
+    //double   avg_glue; CANNOT COUNT, ternary has no glue!
     double   avg_uip;
     double   avg_sum_uip1_used;
     MedianCommonDataRDB  median_data;
@@ -61,7 +61,7 @@ struct ReduceCommonData
     ReduceCommonData() {}
     ReduceCommonData(
         uint32_t total_props,
-        uint32_t total_glue,
+//         uint32_t total_glue,
         uint32_t total_uip1_used,
         uint32_t total_sum_uip1_used,
         uint32_t size,
@@ -70,7 +70,7 @@ struct ReduceCommonData
     {
         all_learnt_size = size;
         avg_props = safe_div(total_props, size);
-        avg_glue = safe_div(total_glue, size);
+        //avg_glue = safe_div(total_glue, size);
         avg_uip = safe_div(total_uip1_used, size);
         avg_sum_uip1_used = safe_div(total_sum_uip1_used, size);
     }

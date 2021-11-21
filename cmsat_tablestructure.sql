@@ -59,7 +59,7 @@ CREATE TABLE `reduceDB_common` (
   `median_sum_uip1_per_time` float NOT NULL,
   `median_sum_props_per_time` float NOT NULL,
 
-  `avg_glue` float NOT NULL,
+  -- `avg_glue` float NOT NULL, CANNOT do this, ternaries don't have a glue!
   `avg_props` float NOT NULL,
   `avg_uip1_used` float NOT NULL,
   `avg_sum_uip1_per_time` float NOT NULL,

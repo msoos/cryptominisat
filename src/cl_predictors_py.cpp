@@ -75,7 +75,6 @@ int ClPredictorsPy::set_up_input(
     at[x++] = time_inside_solver;
     at[x++] = cl->stats.props_made;
     at[x++] = commdata.avg_props;
-    at[x++] = commdata.avg_glue;
     at[x++] = commdata.avg_uip;
     at[x++] = solver->hist.conflSizeHistLT.avg();
     at[x++] = solver->hist.glueHistLT.avg();

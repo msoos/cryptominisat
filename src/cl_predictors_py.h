@@ -33,7 +33,7 @@ THE SOFTWARE.
 #include <Python.h>
 #include <numpy/arrayobject.h>
 
-#define NUM_RAW_FEATS 43
+#define NUM_RAW_FEATS 42
 
 using std::vector;
 

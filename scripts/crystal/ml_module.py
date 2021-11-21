@@ -44,7 +44,7 @@ raw_data = [
     "cl.time_inside_solver",
     "rdb0.props_made",
     "rdb0_common.avg_props",
-    "rdb0_common.avg_glue",
+    #"rdb0_common.avg_glue", CANNOT DO, ternaries have no glue!
     "rdb0_common.avg_uip1_used",
     "rdb0_common.conflSizeHistLT_avg",
     "rdb0_common.glueHistLT_avg",

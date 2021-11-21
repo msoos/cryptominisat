@@ -68,7 +68,7 @@ public:
         uint32_t total_cls = 0;
         uint64_t total_age = 0;
         uint64_t total_len = 0;
-        uint64_t total_glue = 0;
+        //uint64_t total_glue = 0; //Cannot calculate, ternaries have no glues!
 
         void add_in(const Clause& cl, const uint64_t age);
         ClauseStats operator += (const ClauseStats& other);
@@ -114,7 +114,7 @@ private:
     const CMSat::ClauseStats& get_median_stat(const vector<ClOffset>& all_learnt) const;
     const CMSat::ClauseStats& get_median_stat_dat(const vector<ClOffset>& all_learnt, const vector<val_and_pos>& dat) const;
     void prepare_features(vector<ClOffset>& all_learnt);
-    uint64_t total_glue = 0;
+    //uint64_t total_glue = 0;
     uint64_t total_props = 0;
     uint64_t total_uip1_used = 0;
     uint64_t total_sum_uip1_used = 0;
