@@ -53,7 +53,7 @@ public:
     {
         if (size != b.size) {
             mp = (uint64_t*)realloc(mp, b.size*sizeof(uint64_t));
-            release_assert(mp != NULL);
+            assert(mp != NULL);
             size = b.size;
         }
         memcpy(mp, b.mp, size*sizeof(uint64_t));
@@ -66,7 +66,7 @@ public:
         _size = _size/64 + (bool)(_size%64);
         if (size != _size) {
             mp = (uint64_t*)realloc(mp, _size*sizeof(uint64_t));
-            release_assert(mp != NULL);
+            assert(mp != NULL);
             size = _size;
         }
         if (fill) setOne();
