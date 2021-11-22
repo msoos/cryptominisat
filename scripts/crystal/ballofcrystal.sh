@@ -133,7 +133,7 @@ retval=$?
 set -e
 if [[ retval -eq 1 ]]; then
     rm -f $FNAMEOUT.usedCls-*
-    /usr/bin/time -v $NOBUF ../utils/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -o "$FNAMEOUT.usedCls" -i -O 3 | tee drat.out-newO3
+    /usr/bin/time -v $NOBUF ../utils/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -o "$FNAMEOUT.usedCls" -i -O 4 | tee drat.out-newO4
 else
     rm -f final.cnf
     touch final.cnf
