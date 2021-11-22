@@ -1331,6 +1331,8 @@ void DLL_PUBLIC SATSolver::set_up_for_sample_counter(const uint32_t fixed_restar
         conf.never_stop_search = true;
         conf.branch_strategy_setup = "rand";
         conf.simplify_at_startup = false;
+        conf.doFindAndReplaceEqLits = false;
+        conf.do_distill_clauses = false;
         conf.doFindXors = false;
         conf.fixed_restart_num_confl = fixed_restart;
         conf.polarity_mode = CMSat::PolarityMode::polarmode_rnd;
