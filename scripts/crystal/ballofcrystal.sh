@@ -215,7 +215,6 @@ fi
 cd "$FNAME-dir"
 ln -s ../ml_module.py .
 ln -s ../crystalcodegen.py .
-$NOBUF ../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables 111 --distillsort 3 | tee cms-final-run.out-111-distillsort3
 
 TODO="000"
 $NOBUF ../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 | tee cms-final-run.out-${TODO}-distillsort3
