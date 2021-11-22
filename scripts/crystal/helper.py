@@ -308,6 +308,9 @@ class QueryFill (QueryHelper):
         if min_del_distance > 2*1000*1000:
             min_del_distance = 100*1000
 
+        mult = 1.2
+        pow_lev=1.0
+
         q_fill = """
         insert into {table}_{tier}
         (
@@ -318,7 +321,7 @@ class QueryFill (QueryHelper):
         SELECT
         rdb0.clauseID
         , rdb0.conflicts
-        , sum(ucl.weight) as `used_later`
+        , sum(ucl.weight* POW( (({duration}*{mult}-(ucl.used_at-rdb0.conflicts)+0.001)/({duration}*{mult}+0.001)), {pow_lev}) ) as `used_later`
 
         FROM
         reduceDB as rdb0
@@ -343,6 +346,8 @@ class QueryFill (QueryHelper):
             tier=tier, used_clauses=used_clauses,
             duration=duration,
             table=table,
+            pow_lev=pow_lev,
+            mult=mult,
             min_del_distance=min_del_distance)
         self.c.execute(q)
 
