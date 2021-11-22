@@ -489,7 +489,7 @@ void ReduceDB::dump_sql_cl_data(
     prepare_features(all_learnt);
 
     AverageCommonDataRDB avgdata;
-    avgdata.avg_glue = (double)total_glue/(double)all_learnt.size();
+//     avgdata.avg_glue = (double)total_glue/(double)all_learnt.size();
     avgdata.avg_props = (double)total_props/(double)all_learnt.size();
     avgdata.avg_uip1_used = (double)total_uip1_used/(double)all_learnt.size();
     if (total_time_in_solver > 0) {
