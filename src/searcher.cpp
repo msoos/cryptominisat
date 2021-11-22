@@ -1764,6 +1764,7 @@ Clause* Searcher::handle_last_confl(
         auto& ext_stats = red_stats_extra[cl->stats.extra_pos];
         ext_stats.introduced_at_conflict = sumConflicts;
         ext_stats.orig_glue = glue;
+        ext_stats.orig_size = cl->size();
         #endif
         cl->stats.activity = 0.0f;
         ClOffset offset = cl_alloc.get_offset(cl);

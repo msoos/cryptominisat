@@ -1013,7 +1013,7 @@ ReduceDB::ClauseStats ReduceDB::reset_clause_dats(const uint32_t lev)
         assert(stats_extra.introduced_at_conflict <= solver->sumConflicts);
         const uint64_t age = solver->sumConflicts - stats_extra.introduced_at_conflict;
         tot_age += age;
-        cl_stat.add_in(*cl, age);
+        cl_stat.add_in(*cl, age, stats_extra.orig_size);
         stats_extra.reset_rdb_stats(cl->stats);
     }
 
@@ -1345,19 +1345,25 @@ ReduceDB::ClauseStats ReduceDB::ClauseStats::operator += (const ClauseStats& oth
     total_cls += other.total_cls;
     total_age += other.total_age;
     total_len += other.total_len;
+    total_ternary += other.total_ternary;
+    total_distilled += other.total_distilled;
+    total_orig_size += other.total_orig_size;
     //total_glue += other.total_glue; CANNOT DO, ternaries have no glue
 
     return *this;
 }
 
 #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
-void ReduceDB::ClauseStats::add_in(const Clause& cl, const uint64_t age)
+void ReduceDB::ClauseStats::add_in(const Clause& cl, const uint64_t age, const uint32_t orig_size)
 {
     total_cls++;
     total_props += cl.stats.props_made;
     total_uip1_used += cl.stats.uip1_used;
     total_age += age;
     total_len += cl.size();
+    total_ternary += cl.stats.is_ternary_resolvent;
+    total_distilled += cl.distilled;
+    total_orig_size += orig_size;
     //total_glue += cl.stats.glue; CANNOT DO, ternaries have no glue
 }
 #endif
@@ -1380,5 +1386,14 @@ void ReduceDB::ClauseStats::print(uint32_t lev)
     << " avg len: "
     << std::setw(7) << std::setprecision(1)
     << (double)(total_len)/((double)total_cls)
+    << " tern r: "
+    << std::setw(4) << std::setprecision(2)
+    << (double)(total_ternary)/((double)total_cls)
+    << " dist r: "
+    << std::setw(4) << std::setprecision(2)
+    << (double)(total_distilled)/((double)total_cls)
+    << " shr r: "
+    << std::setw(4) << std::setprecision(2)
+    << (double)(total_len)/((double)total_orig_size)
     << endl;
 }

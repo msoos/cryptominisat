@@ -68,9 +68,12 @@ public:
         uint32_t total_cls = 0;
         uint64_t total_age = 0;
         uint64_t total_len = 0;
+        uint32_t total_ternary = 0;
+        uint32_t total_distilled = 0;
+        uint64_t total_orig_size = 0;
         //uint64_t total_glue = 0; //Cannot calculate, ternaries have no glues!
 
-        void add_in(const Clause& cl, const uint64_t age);
+        void add_in(const Clause& cl, const uint64_t age, const uint32_t orig_size);
         ClauseStats operator += (const ClauseStats& other);
         void print(uint32_t lev);
     };

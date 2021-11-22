@@ -2044,6 +2044,7 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
         #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
         ClauseStatsExtra stats_extra;
         stats_extra.introduced_at_conflict = solver->sumConflicts;
+        stats_extra.orig_size = 3;
         #endif
 
         #ifdef FINAL_PREDICTOR

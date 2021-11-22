@@ -249,7 +249,8 @@ struct ClauseStatsExtra
     #endif
 
     //Features that are computed while running (not in SQL)
-    uint32_t orig_glue = 1000;
+    uint32_t orig_glue = std::numeric_limits<uint32_t>::max();
+    uint32_t orig_size = std::numeric_limits<uint32_t>::max();
     uint32_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
     float discounted_props_made = 0;
     float discounted_uip1_used = 0;
