@@ -497,9 +497,7 @@ Clause* Solver::add_clause_int(
             if (red && cl_stats == NULL) {
                 assert(false && "does this happen at all? should it happen??");
                 #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-                red_stats_extra.push_back(ClauseStatsExtra());
-                c->stats.extra_pos = red_stats_extra.size()-1;
-                red_stats_extra.back().introduced_at_conflict = sumConflicts;
+                //TODO red_stats_extra setup: glue, size, introduced_at_conflict
                 #endif
             }
 
