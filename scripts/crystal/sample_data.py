@@ -260,53 +260,42 @@ class QueryDatRem(helper.QueryHelper):
         print("Cleaned up var_data_x & restart_dat_for_var tables T: %-3.2f s"
               % (time.time() - t))
 
-    def insert_into_used_cls_ids_from_clstats(self, min_used, limit, max_used=None):
+    def insert_into_used_cls_ids_from_clstats(self, min_used, limit, table):
         min_used = int(min_used)
-
-        max_const = ""
-        if max_used is not None:
-            max_const = " and num_used <= %d" % max_used
 
         t = time.time()
         val = int()
         q = """
         insert into used_cl_ids
         select
-        clauseID from sum_cl_use
+        clauseID from {table}
         where
         num_used >= {min_used}
-        {max_const}
         order by random() limit {limit}
         """.format(
             min_used=min_used,
             limit=int(limit),
-            max_const=max_const)
-
+            table=table)
 
         self.c.execute(q)
         print("Added num_used >= %d from sum_cl_use to used_cls_ids T: %-3.2f s"
               % (min_used, time.time() - t))
 
-
-        self.c.execute(q)
-        print("Added clauseIDs from reduceDB that are TERNARY from reduceDB to used_cls_ids T: %-3.2f s"
-              % (time.time() - t))
-
     # inserts ratio that's slanted towards >=1 use
     def fill_used_cl_ids_table(self, fair, limit):
         t = time.time()
-        if not fair:
-            self.insert_into_used_cls_ids_from_clstats(min_used=100000, limit=limit/20)
-            self.insert_into_used_cls_ids_from_clstats(min_used=50000, limit=limit/10)
-            self.insert_into_used_cls_ids_from_clstats(min_used=10000, limit=limit/10)
-            self.insert_into_used_cls_ids_from_clstats(min_used=1000, limit=limit/10)
-            self.insert_into_used_cls_ids_from_clstats(min_used=100, limit=limit/10)
-            self.insert_into_used_cls_ids_from_clstats(min_used=30, limit=limit/5)
-            self.insert_into_used_cls_ids_from_clstats(min_used=20, limit=limit/4)
-            self.insert_into_used_cls_ids_from_clstats(min_used=5, limit=limit/3)
-            self.insert_into_used_cls_ids_from_clstats(min_used=1, limit=limit/2)
-
-        self.insert_into_used_cls_ids_from_clstats(min_used=0, limit=limit/2, max_used=None)
+        for table in ["sum_cl_use"]:
+            if not fair:
+                self.insert_into_used_cls_ids_from_clstats(min_used=100000, limit=limit/20, table=table)
+                self.insert_into_used_cls_ids_from_clstats(min_used=50000, limit=limit/10, table=table)
+                self.insert_into_used_cls_ids_from_clstats(min_used=10000, limit=limit/10, table=table)
+                self.insert_into_used_cls_ids_from_clstats(min_used=1000, limit=limit/10, table=table)
+                self.insert_into_used_cls_ids_from_clstats(min_used=100, limit=limit/10, table=table)
+                self.insert_into_used_cls_ids_from_clstats(min_used=30, limit=limit/5, table=table)
+                self.insert_into_used_cls_ids_from_clstats(min_used=20, limit=limit/4, table=table)
+                self.insert_into_used_cls_ids_from_clstats(min_used=5, limit=limit/3, table=table)
+                self.insert_into_used_cls_ids_from_clstats(min_used=1, limit=limit/2, table=table)
+            self.insert_into_used_cls_ids_from_clstats(min_used=0, limit=limit/2, table=table)
 
         q = """
         select count()
@@ -473,7 +462,7 @@ class QueryDatRem(helper.QueryHelper):
 
         print("Tables seem OK")
 
-    def insert_into_only_keep_rdb(self, min_used_later, limit):
+    def insert_into_only_keep_rdb(self, min_used_later, limit, tier, table):
         limit = int(limit)
         t = time.time()
         q = """
@@ -483,14 +472,15 @@ class QueryDatRem(helper.QueryHelper):
 
         FROM
         reduceDB as rdb0,
-        used_later_forever
+        {table}_{tier}
 
         WHERE
-        used_later_forever.clauseID=rdb0.clauseID
-        and used_later_forever.rdb0conflicts=rdb0.conflicts
-        and used_later_forever.used_later >= {min_used_later}
+        {table}_{tier}.clauseID=rdb0.clauseID
+        and {table}_{tier}.rdb0conflicts=rdb0.conflicts
+        and {table}_{tier}.used_later >= {min_used_later}
         order by random()
-        limit {limit}""".format(min_used_later=min_used_later, limit=limit)
+        limit {limit}""".format(min_used_later=min_used_later, limit=limit,
+                                tier=tier, table=table)
         self.c.execute(q)
 
         ret = self.c.execute("""select count() from only_keep_rdb""")
@@ -520,17 +510,19 @@ class QueryDatRem(helper.QueryHelper):
         self.c.execute(q)
         print("Created only_keep_rdb T: %-3.2f s" % (time.time() - t))
 
-        if not options.fair:
-            self.insert_into_only_keep_rdb(100000, options.goal_rdb/20)
-            self.insert_into_only_keep_rdb(10000, options.goal_rdb/20)
-            self.insert_into_only_keep_rdb(1000, options.goal_rdb/20)
-            self.insert_into_only_keep_rdb(100, options.goal_rdb/10)
-            self.insert_into_only_keep_rdb(20, options.goal_rdb/5)
-            self.insert_into_only_keep_rdb(10, options.goal_rdb/5)
-            self.insert_into_only_keep_rdb(5, options.goal_rdb/3)
-            self.insert_into_only_keep_rdb(1, options.goal_rdb/2)
-
-        self.insert_into_only_keep_rdb(0, options.goal_rdb)
+        mygoal = options.goal_rdb/10
+        for tier in ["short", "long", "forever"]:
+            mygoal*=3 # this gives 10%, 30%, 90% distribution
+            if not options.fair:
+                self.insert_into_only_keep_rdb(100000, mygoal/20, tier=tier, table=table)
+                self.insert_into_only_keep_rdb(10000, mygoal/20, tier=tier, table=table)
+                self.insert_into_only_keep_rdb(1000, mygoal/20, tier=tier, table=table)
+                self.insert_into_only_keep_rdb(100, mygoal/10, tier=tier, table=table)
+                self.insert_into_only_keep_rdb(20, mygoal/5, tier=tier, table=table)
+                self.insert_into_only_keep_rdb(10, mygoal/5, tier=tier, table=table)
+                self.insert_into_only_keep_rdb(5, mygoal/3, tier=tier, table=table)
+                self.insert_into_only_keep_rdb(1, mygoal/2, tier=tier, table=table)
+            self.insert_into_only_keep_rdb(0, mygoal, tier=tier, table=table)
 
         t = time.time()
         ret = self.c.execute("select count() from only_keep_rdb")
@@ -708,8 +700,10 @@ if __name__ == "__main__":
         q.delete_and_create_used_laters()
         q.create_indexes(verbose=options.verbose)
 
-        # this is is needed because the RDB row deletion below is NOT fair
-        q.fill_used_later_X("forever", duration=options.forever)
+        # this is is needed for RDB row deletion below (since it's not fair)
+        for tier in ["short", "long", "forever"]:
+            q.fill_used_later_X(tier=tier, table=table, duration=getattr(options, tier))
+
     with QueryDatRem(args[0]) as q:
         print("-------------")
         q.delete_too_many_rdb_rows() # NOTE: NOT FAIR!!!
