@@ -22,11 +22,12 @@
 
 . ./setparams_ballofcrystal.sh
 
-if [ "$1" == "--csv" ]; then
-    EXTRA_GEN_PANDAS_OPTS="--csv"
-    echo "CSV will be generated (may take some disk space)"
+if [ "$1" == "--skip" ]; then
+    echo "Will skip running CMS stats + DRAT"
+    SKIP="1"
     NEXT_OP="$2"
 else
+    SKIP="0"
     NEXT_OP="$1"
 fi
 
@@ -94,65 +95,82 @@ if [ "$FNAMEOUT" == "" ]; then
     exit -1
 fi
 
-echo "Cleaning up"
-(
-rm -rf "$FNAME-dir"
-mkdir "$FNAME-dir"
-cd "$FNAME-dir"
-rm -f $FNAMEOUT.d*
-rm -f $FNAMEOUT.lemma*
-)
 
-set -x
+if [ "$SKIP" != "1" ]; then
+    echo "Cleaning up"
+    (
+    rm -rf "$FNAME-dir"
+    mkdir "$FNAME-dir"
+    cd "$FNAME-dir"
+    rm -f $FNAMEOUT.d*
+    rm -f $FNAMEOUT.lemma*
+    )
 
+    set -x
 
-########################
-# Build statistics-gathering CryptoMiniSat
-########################
-if [[ SANITIZE -eq 1 ]]; then
-    ./build_stats.sh
-else
-    ./build_stats_sanitize.sh
+    ########################
+    # Build statistics-gathering CryptoMiniSat
+    ########################
+    if [[ SANITIZE -eq 1 ]]; then
+        ./build_stats.sh
+    else
+        ./build_stats_sanitize.sh
+    fi
+
+    (
+    ########################
+    # Obtain dynamic data in SQLite and DRAT info
+    ########################
+    cd "$FNAME-dir"
+    # for var, we need: --bva 0 --scc 0
+    $NOBUF ../cryptominisat5 --presimp 1 -n1 ${EXTRA_CMS_OPTS} --sqlitedbover 1 --cldatadumpratio "$DUMPRATIO" --cllockdatagen $CLLOCK --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
+    grep "c conflicts" cms-pred-run.out
+
+    ########################
+    # Run our own DRAT-Trim
+    ########################
+    set +e
+    a=$(grep "s SATIS" cms-pred-run.out)
+    retval=$?
+    set -e
+    if [[ retval -eq 1 ]]; then
+        rm -f $FNAMEOUT.usedCls-*
+        /usr/bin/time -v $NOBUF ../utils/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -o "$FNAMEOUT.usedCls" -i -O 4 | tee drat.out-newO4
+    else
+        rm -f final.cnf
+        touch final.cnf
+        cat "../$FNAME" >> final.cnf
+        cat dec_list >> final.cnf
+        grep ^v cms-pred-run.out | sed "s/v//" | tr -d "\n" | sed "s/  / /g" | sed -e "s/ -/X/g" -e "s/ /Y/g" | sed "s/X/ /g" | sed -E "s/Y([1-9])/ -\1/g" | sed "s/Y0/ 0\n/" >> final.cnf
+        ../../utils/cnf-utils/xor_to_cnf.py final.cnf final_good.cnf
+        ../tests/drat-trim/drat-trim final_good.cnf "$FNAMEOUT.drat" -o "$FNAMEOUT.usedCls" -i
+    fi
+    echo "CMS+DRAT done now"
+    )
 fi
 
 (
-########################
-# Obtain dynamic data in SQLite and DRAT info
-########################
 cd "$FNAME-dir"
-# for var, we need: --bva 0 --scc 0
-$NOBUF ../cryptominisat5 --presimp 1 -n1 ${EXTRA_CMS_OPTS} --sqlitedbover 1 --cldatadumpratio "$DUMPRATIO" --cllockdatagen $CLLOCK --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
-grep "c conflicts" cms-pred-run.out
-
-########################
-# Run our own DRAT-Trim
-########################
-set +e
-a=$(grep "s SATIS" cms-pred-run.out)
-retval=$?
-set -e
-if [[ retval -eq 1 ]]; then
-    rm -f $FNAMEOUT.usedCls-*
-    /usr/bin/time -v $NOBUF ../utils/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -o "$FNAMEOUT.usedCls" -i -O 4 | tee drat.out-newO4
-else
-    rm -f final.cnf
-    touch final.cnf
-    cat "../$FNAME" >> final.cnf
-    cat dec_list >> final.cnf
-    grep ^v cms-pred-run.out | sed "s/v//" | tr -d "\n" | sed "s/  / /g" | sed -e "s/ -/X/g" -e "s/ /Y/g" | sed "s/X/ /g" | sed -E "s/Y([1-9])/ -\1/g" | sed "s/Y0/ 0\n/" >> final.cnf
-    ../../utils/cnf-utils/xor_to_cnf.py final.cnf final_good.cnf
-    ../tests/drat-trim/drat-trim final_good.cnf "$FNAMEOUT.drat" -o "$FNAMEOUT.usedCls" -i
-fi
 
 ########################
 # Augment, fix up and sample the SQLite data
 ########################
-../fill_used_clauses.py "$FNAMEOUT.db-raw" "$FNAMEOUT.usedCls"
+
+rm -f "$FNAMEOUT.db"
+rm -f "$FNAMEOUT-min.db"
+rm -f "${FNAMEOUT}-min.db-cldata-*"
+rm -f out_pred_*
+rm -f sample.out
+rm -f check_quality.out
+rm -f clean_update.out
+rm -f fill_clauses.out
+
+../fill_used_clauses.py "$FNAMEOUT.db-raw" "$FNAMEOUT.usedCls" | tee fill_clauses.out
 cp "$FNAMEOUT.db-raw" "$FNAMEOUT.db"
-/usr/bin/time -v ../clean_update_data.py "$FNAMEOUT.db"
-../check_data_quality.py --slow "$FNAMEOUT.db"
+/usr/bin/time -v ../clean_update_data.py "$FNAMEOUT.db"  | tee clean_update.out
+../check_data_quality.py --slow "$FNAMEOUT.db" | tee check_quality.out
 cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
-/usr/bin/time -v ../sample_data.py "$FNAMEOUT-min.db"
+/usr/bin/time -v ../sample_data.py "$FNAMEOUT-min.db" | tee sample.out
 
 ########################
 # Denormalize the data into a Pandas Table, label it and sample it
@@ -213,8 +231,8 @@ fi
 
 (
 cd "$FNAME-dir"
-ln -s ../ml_module.py .
-ln -s ../crystalcodegen.py .
+ln -fs ../ml_module.py .
+ln -fs ../crystalcodegen.py .
 
 TODO="000"
 $NOBUF ../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 | tee cms-final-run.out-${TODO}-distillsort3
