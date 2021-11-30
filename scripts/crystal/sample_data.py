@@ -510,9 +510,10 @@ class QueryDatRem(helper.QueryHelper):
         self.c.execute(q)
         print("Created only_keep_rdb T: %-3.2f s" % (time.time() - t))
 
-        mygoal = options.goal_rdb/10
+        mygoal = options.goal_rdb/13
+        table="used_later" # we could iterate with "used_later_anc", but not doing that
         for tier in ["short", "long", "forever"]:
-            mygoal*=3 # this gives 10%, 30%, 90% distribution
+            mygoal*=3 # this gives 8%, 23%, 70% distribution (total 100% if not rounded)
             if not options.fair:
                 self.insert_into_only_keep_rdb(100000, mygoal/20, tier=tier, table=table)
                 self.insert_into_only_keep_rdb(10000, mygoal/20, tier=tier, table=table)
