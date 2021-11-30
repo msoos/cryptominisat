@@ -111,7 +111,7 @@ if [ "$SKIP" != "1" ]; then
     ########################
     # Build statistics-gathering CryptoMiniSat
     ########################
-    if [[ SANITIZE -eq 1 ]]; then
+    if [[ SANITIZE -eq 0 ]]; then
         ./build_stats.sh
     else
         ./build_stats_sanitize.sh
