@@ -705,6 +705,7 @@ if __name__ == "__main__":
         q.create_indexes(verbose=options.verbose)
 
         # this is is needed for RDB row deletion below (since it's not fair)
+        table = "used_later" # we could also do used_later_anc (for RDB)
         for tier in ["short", "long", "forever"]:
             q.fill_used_later_X(tier=tier, table=table, duration=getattr(options, tier))
 
