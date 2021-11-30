@@ -326,15 +326,18 @@ class QueryDatRem(helper.QueryHelper):
         print("   T: %-3.2f s" % (time.time() - t))
 
     def print_idxs(self):
-        print("Using indexes: ")
+
         q = """
         SELECT * FROM sqlite_master WHERE type == 'index'
         """
         self.c.execute(q)
         rows = self.c.fetchall()
         queries = ""
-        for row in rows:
-            print("-> index:", row)
+
+        if options.verbose:
+            print("Using indexes: ")
+            for row in rows:
+                print("-> index:", row)
 
     def create_used_clauses_red(self):
         t = time.time()
