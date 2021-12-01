@@ -290,6 +290,7 @@ class QueryCls (helper.QueryHelper):
     # tier == forever/long/short
     def run_stratified_queries(self, limit, perc, tier, table):
         dfs = []
+        final_limit = limit
         # NOTE: these are NON-ZERO percentages, but we replace 100 with "0", so the LAST chunk contains ALL, including 0, which is a large part of the data
         for beg_perc, end_perc in [(0.0, options.cut1), (options.cut1, options.cut2), (options.cut2, 100.0)]:
             beg = perc["top_non_zero_{perc}_perc".format(perc=beg_perc)]
@@ -309,7 +310,9 @@ class QueryCls (helper.QueryHelper):
                 what_to_strata=what_to_strata,
                 strata=(beg,end))
             dfs.append(df)
-        return limit, dfs
+            print("-> sum weighted size:", sum(weighted_size))
+            final_limit = min(int(sum(weighted_size)), final_limit)
+        return final_limit, dfs
 
     def query_strata_per_dumpno(self, q, limit, what_to_strata, strata):
         print("* Getting one set of data with limit %s" % limit)
