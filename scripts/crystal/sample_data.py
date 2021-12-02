@@ -490,8 +490,8 @@ class QueryDatRem(helper.QueryHelper):
         rows = self.c.fetchall()
         rdb_rows = rows[0][0]
 
-        print("Insert only_keep_rdb where used_later >= %d T: %-3.2f s. Now size: %s" %
-              (min_used_later, time.time() - t, rdb_rows))
+        print("Insert only_keep_rdb where %s_%s >= %d T: %-3.2f s. Now size: %s" %
+              (table, tier, min_used_later, time.time() - t, rdb_rows))
 
     def delete_too_many_rdb_rows(self):
         t = time.time()
