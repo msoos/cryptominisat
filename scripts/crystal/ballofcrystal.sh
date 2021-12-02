@@ -46,7 +46,8 @@ if [ "$NEXT_OP" == "" ]; then
         read -p "Which CNF do you want to run? " myinput
         case $myinput in
             ["1"]* )
-                FNAME="countbitswegner064.cnf";
+                echo "removed."
+                exit -1
                 break;;
             [2]* )
                 FNAME="goldb-heqc-i10mul.cnf";
