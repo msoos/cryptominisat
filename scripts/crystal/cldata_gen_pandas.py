@@ -248,22 +248,7 @@ class QueryCls (helper.QueryHelper):
 
         return lookup
 
-    def get_one_data_all_dumpnos(self, tier, table):
-        df = None
-
-        ok, df, this_limit = self.get_data(tier, table)
-        if not ok:
-            return False, None
-
-        if options.verbose:
-            print("Printing head:")
-            print(df.head())
-            print("Print head done.")
-
-        return True, df
-
-
-    def get_data(self, tier, table):
+    def get_one_data(self, tier, table):
         perc = self.get_used_later_percentiles(tier, table)
         self.myformat["del_at_least"] = getattr(options, tier)
 
@@ -274,19 +259,15 @@ class QueryCls (helper.QueryHelper):
 
         # Make sure these stratas are equally represented
         t = time.time()
-        limit = options.limit
-        limit, _ = self.run_stratified_queries(limit, perc, tier, table)
-        print("Setting limit to minimum of all of above weighted sizes:", limit)
-        print("** Running final queries")
-        _, dfs = self.run_stratified_queries(limit, perc, tier, table)
-
+        dfs = self.run_stratified_queries(
+            limit=options.limit, perc=perc, tier=tier, table=table)
         data = pd.concat(dfs)
         print("** Queries finished. Total size: %s  -- T: %-3.2f" % (
             data.shape, time.time() - t))
-        return True, data , limit
+        return data
 
     # perc == percentile distribution
-    # limit == how many in total
+    # limit == MAX in total
     # tier == forever/long/short
     def run_stratified_queries(self, limit, perc, tier, table):
         dfs = []
@@ -300,19 +281,17 @@ class QueryCls (helper.QueryHelper):
                 end = perc["top_non_zero_{perc}_perc".format(perc=end_perc)]
             what_to_strata = "`x.{table}_{tier}`".format(tier=tier, table=table)
 
-            print("Limit is currently: {limit} value strata perc: ({a}, {b}) translates to value strata ({beg}, {end})".format(
+            print("Limit is {limit} value strata perc: ({a}, {b}) translates to value strata ({beg}, {end})".format(
                 limit=limit, a=beg_perc, b=end_perc, beg=beg, end=end))
 
             # create one query for (beg,end) with different dump numbers
-            df, weighted_size = self.query_strata_per_dumpno(
+            df, weighted_sizes = self.query_strata_per_dumpno(
                 str(self.q_select),
                 limit,
                 what_to_strata=what_to_strata,
                 strata=(beg,end))
             dfs.append(df)
-            print("-> sum weighted size:", sum(weighted_size))
-            final_limit = min(int(sum(weighted_size)), final_limit)
-        return final_limit, dfs
+        return dfs
 
     def query_strata_per_dumpno(self, q, limit, what_to_strata, strata):
         print("* Getting one set of data with limit %s" % limit)
@@ -403,12 +382,7 @@ def one_database(dbfname):
                 tier=tier,table=table))
 
             with QueryCls(dbfname, tier, table) as q:
-                ok, df = q.get_one_data_all_dumpnos(tier, table)
-
-            if not ok:
-                print("-> Skipping file {file} {tier} {table}".format(
-                    file=dbfname, tier=tier, table=table))
-                continue
+                df = q.get_one_data(tier, table)
 
             if options.verbose:
                 print("Describing----")
@@ -451,7 +425,7 @@ if __name__ == "__main__":
 
     # limits
     parser.add_option("--limit", default=20000, type=int,
-                      dest="limit", help="Exact number of examples to take. -1 is to take all. Default: %default")
+                      dest="limit", help="Max number of samples to take from each strata (for each table/tier)")
     parser.add_option("--cut1", default=5.0, type=float,
                       dest="cut1", help="Where to cut the distrib. Default: %default")
     parser.add_option("--cut2", default=30.0, type=float,

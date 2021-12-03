@@ -37,7 +37,7 @@ if [ "$NEXT_OP" == "" ]; then
         echo "Options are:"
         echo "1 -- countbitswegner064.cnf"
         echo "2 -- goldb-heqc-i10mul.cnf"
-        echo "3 -- goldb-heqc-alu4mul.cnf"
+        echo "3 -- Haystacks-ext-13_c18.cnf"
         echo "4 -- NONE"
         echo "5 -- AProVE07-16.cnf"
         echo "6 -- UTI-20-10p0.cnf-unz"
@@ -53,7 +53,7 @@ if [ "$NEXT_OP" == "" ]; then
                 FNAME="goldb-heqc-i10mul.cnf";
                 break;;
             [3]* )
-                FNAME="goldb-heqc-alu4mul.cnf";
+                FNAME="dist6.c-sc2018.cnf";
                 break;;
             [5]* )
                 FNAME="AProVE07-16.cnf";
@@ -166,12 +166,12 @@ rm -f check_quality.out
 rm -f clean_update.out
 rm -f fill_clauses.out
 
-../fill_used_clauses.py "$FNAMEOUT.db-raw" "$FNAMEOUT.usedCls" | tee fill_clauses.out
+$NOBUF ../fill_used_clauses.py "$FNAMEOUT.db-raw" "$FNAMEOUT.usedCls" | tee fill_clauses.out
 cp "$FNAMEOUT.db-raw" "$FNAMEOUT.db"
-/usr/bin/time -v ../clean_update_data.py "$FNAMEOUT.db"  | tee clean_update.out
-../check_data_quality.py --slow "$FNAMEOUT.db" | tee check_quality.out
+$NOBUF /usr/bin/time -v ../clean_update_data.py "$FNAMEOUT.db"  | tee clean_update.out
+$NOBUF ../check_data_quality.py --slow "$FNAMEOUT.db" | tee check_quality.out
 cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
-/usr/bin/time -v ../sample_data.py "$FNAMEOUT-min.db" | tee sample.out
+$NOBUF /usr/bin/time -v ../sample_data.py "$FNAMEOUT-min.db" | tee sample.out
 
 ########################
 # Denormalize the data into a Pandas Table, label it and sample it
@@ -202,7 +202,7 @@ tables=("used_later" "used_later_anc")
 for tier in "${tiers[@]}"; do
     for table in "${tables[@]}"; do
         for regressor in "${regressors[@]}"; do
-            ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-${table}-${tier}-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier ${tier} --table ${table} --features best_only --regressor $regressor --basedir "." --bestfeatfile $bestf | tee "out_pred_${tier}-${table}-${regressor}"
+            $NOBUF ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-${table}-${tier}-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier ${tier} --table ${table} --features best_only --regressor $regressor --basedir "." --bestfeatfile $bestf | tee "out_pred_${tier}-${table}-${regressor}"
         done
     done
 done
@@ -236,28 +236,28 @@ ln -fs ../ml_module.py .
 ln -fs ../crystalcodegen.py .
 
 TODO="000"
-$NOBUF ../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 | tee cms-final-run.out-${TODO}-distillsort3
+../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
 
 TODO="001"
-$NOBUF ../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 | tee cms-final-run.out-${TODO}-distillsort3
+../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
 
 TODO="010"
-$NOBUF ../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 | tee cms-final-run.out-${TODO}-distillsort3
+../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
 
 TODO="011"
-$NOBUF ../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 | tee cms-final-run.out-${TODO}-distillsort3
+../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
 
 TODO="100"
-$NOBUF ../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 | tee cms-final-run.out-${TODO}-distillsort3
+../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
 
 TODO="101"
-$NOBUF ../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 | tee cms-final-run.out-${TODO}-distillsort3
+../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
 
 TODO="110"
-$NOBUF ../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 | tee cms-final-run.out-${TODO}-distillsort3
+../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
 
 TODO="111"
-$NOBUF ../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 | tee cms-final-run.out-${TODO}-distillsort3
+../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
 
 )
 exit
