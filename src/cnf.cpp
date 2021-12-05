@@ -739,7 +739,7 @@ bool CNF::no_marked_clauses() const
     return true;
 }
 
-void CNF::add_drat(std::ostream* os, bool add_ID) {
+void CNF::add_drat(FILE* os, bool add_ID) {
     if (drat)
         delete drat;
 

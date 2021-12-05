@@ -26,6 +26,7 @@ THE SOFTWARE.
 #include "clause.h"
 #include <vector>
 #include <iostream>
+#include <stdio.h>
 
 using std::vector;
 //#define DEBUG_DRAT
@@ -89,7 +90,7 @@ struct Drat
         return *this;
     }
 
-    virtual void setFile(std::ostream*)
+    virtual void setFile(FILE*)
     {
     }
 
@@ -185,12 +186,12 @@ struct DratFile: public Drat
     }
 
     void binDRUP_flush() {
-        drup_file->write((const char*)drup_buf, buf_len);
+        fwrite(drup_buf, sizeof(unsigned char), buf_len, drup_file);
         buf_ptr = drup_buf;
         buf_len = 0;
     }
 
-    void setFile(std::ostream* _file) override
+    void setFile(FILE* _file) override
     {
         drup_file = _file;
     }
@@ -388,7 +389,7 @@ struct DratFile: public Drat
         return *this;
     }
 
-    std::ostream* drup_file = NULL;
+    FILE* drup_file = NULL;
     vector<uint32_t>& interToOuterMain;
     #ifdef STATS_NEEDED
     int64_t ID = 0;

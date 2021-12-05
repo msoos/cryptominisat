@@ -37,8 +37,7 @@ int main(int argc, char **argv) {
 
   ifstream dimacs_stream{dimacs};
 
-  std::ofstream *proof_stream = new std::ofstream;
-  proof_stream->open(drat.c_str(), std::ofstream::out | std::ofstream::binary);
+  FILE* proof_stream = fopen(drat.c_str(), "wb");
 
   CMSat::SATSolver solver{};
 
@@ -75,9 +74,8 @@ int main(int argc, char **argv) {
 
   CMSat::lbool res = solver.solve();
 
-  assert(proof_stream->good());
-  *proof_stream << std::flush;
-  delete proof_stream;
+  fflush(proof_stream);
+  fclose(proof_stream);
 
   solver.print_stats();
   std::cerr << "Res: " << res << std::endl;

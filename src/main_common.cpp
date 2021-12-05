@@ -34,22 +34,17 @@ using namespace CMSat;
 void MainCommon::handle_drat_option()
 {
     if (!conf.simulate_drat) {
-        if (dratDebug) {
-            dratf = &cout;
-        } else {
-            std::ofstream* dratfTmp = new std::ofstream;
-            dratfTmp->open(dratfilname.c_str(), std::ofstream::out | std::ofstream::binary);
-            if (!*dratfTmp) {
-                std::cerr
-                << "ERROR: Could not open DRAT file "
-                << dratfilname
-                << " for writing"
-                << endl;
+        FILE* dratfTmp = fopen(dratfilname.c_str(), "wb");
+        if (dratfTmp == NULL) {
+            std::cerr
+            << "ERROR: Could not open DRAT file "
+            << dratfilname
+            << " for writing"
+            << endl;
 
-                std::exit(-1);
-            }
-            dratf = dratfTmp;
+            std::exit(-1);
         }
+        dratf = dratfTmp;
     }
 }
 

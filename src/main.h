@@ -46,10 +46,8 @@ class Main: public MainCommon
         ~Main()
         {
             if (dratf) {
-                *dratf << std::flush;
-                if (dratf != &std::cout) {
-                    delete dratf;
-                }
+                fflush(dratf);
+                fclose(dratf);
             }
 
             delete solver;

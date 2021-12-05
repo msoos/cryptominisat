@@ -38,8 +38,7 @@ public:
     void handle_drat_option();
 
     string dratfilname;
-    bool dratDebug = false;
-    std::ostream* dratf = NULL;
+    FILE* dratf = NULL;
     bool zero_exit_status = false;
     CMSat::SolverConf conf;
     unsigned num_threads = 1;

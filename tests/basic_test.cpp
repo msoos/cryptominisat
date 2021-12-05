@@ -685,7 +685,7 @@ TEST(error_throw, multithread_0)
 TEST(error_throw, multithread_drat)
 {
     SATSolver s;
-    std::ostream* os = NULL;
+    FILE* os = NULL;
     s.set_drat(os, false);
 
     EXPECT_THROW({

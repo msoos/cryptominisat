@@ -238,10 +238,8 @@ public:
         }
 
         if (dratf) {
-            *dratf << std::flush;
-            if (dratf != &std::cout) {
-                delete dratf;
-            }
+            fflush(dratf);
+            fclose(dratf);
         }
 
         if (zero_exit_status)

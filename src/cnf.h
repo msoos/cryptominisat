@@ -160,7 +160,7 @@ public:
 
     //drat
     Drat* drat;
-    void add_drat(std::ostream* os, bool add_ID);
+    void add_drat(FILE* os, bool add_ID);
 
     //Clauses
     vector<ClOffset> longIrredCls;
