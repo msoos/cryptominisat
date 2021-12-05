@@ -530,8 +530,8 @@ void PropEngine::printWatchList(const Lit lit) const
 }
 
 void PropEngine::updateVars(
-    const vector<uint32_t>& outerToInter
-    , const vector<uint32_t>& interToOuter
+    [[maybe_unused]] const vector<uint32_t>& outerToInter,
+    [[maybe_unused]] const vector<uint32_t>& interToOuter
 ) {
     //Trail is NOT correct, only its length is correct
     for(Trail& t: trail) {

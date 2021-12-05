@@ -79,8 +79,12 @@ class Searcher : public HyperEngine
         void finish_up_solve(lbool status);
         void reduce_db_if_needed();
         void clean_clauses_if_needed();
+        #ifdef STATS_NEEDED
         void check_calc_satzilla_features(bool force = false);
+        #endif
+        #ifdef STATS_NEEDED_BRANCH
         void check_calc_vardist_features(bool force = false);
+        #endif
         void dump_search_loop_stats(double myTime);
         bool must_abort(lbool status);
         PropBy insert_gpu_clause(Lit* lits, uint32_t count);

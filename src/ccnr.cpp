@@ -395,7 +395,7 @@ void ls_solver::sat_a_clause(int the_clause)
     int last_item = _unsat_clauses.back();
     _unsat_clauses.pop_back();
     int index = _index_in_unsat_clauses[the_clause];
-    if (index < _unsat_clauses.size()) {
+    if (index < (int)_unsat_clauses.size()) {
         _unsat_clauses[index] = last_item;
     }
     _index_in_unsat_clauses[last_item] = index;

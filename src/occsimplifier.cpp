@@ -3056,7 +3056,7 @@ bool OccSimplifier::find_ite_gate(
 
 
 bool OccSimplifier::find_equivalence_gate(
-    Lit elim_lit
+    [[maybe_unused]] Lit elim_lit
     , watch_subarray_const a
     , watch_subarray_const b
     , vec<Watched>& out_a
@@ -3106,7 +3106,7 @@ bool OccSimplifier::find_equivalence_gate(
 }
 
 bool OccSimplifier::find_xor_gate(
-    Lit elim_lit
+    [[maybe_unused]] Lit elim_lit
     , watch_subarray_const a
     , watch_subarray_const b
     , vec<Watched>& out_a

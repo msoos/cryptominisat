@@ -86,11 +86,9 @@ void GateFinder::find_or_gates_and_update_stats()
     simplifier->limit_to_decrease = &numMaxGateFinder;
 
     find_or_gates();
+    runStats.gatesSize += 2*orGates.size();
+    runStats.num+=orGates.size();
 
-    for(const auto orgate: orGates) {
-        runStats.gatesSize += 2;
-        runStats.num++;
-    }
     const double time_used = cpuTime() - myTime;
     const bool time_out = (numMaxGateFinder <= 0);
     const double time_remain = float_div(numMaxGateFinder, orig_numMaxGateFinder);
@@ -291,10 +289,7 @@ void GateFinder::print_graphviz_dot()
         }
     }
 
-    index = 0;
-    for (const OrGate orGate: orGates) {
-        index++;
-
+    for (index = 0; index < orGates.size(); index++) {
         if (gateUsed[index]) {
             file << "Gate" << index << " [ shape=\"point\"";
             file << ", size = 0.8";

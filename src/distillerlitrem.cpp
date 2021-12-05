@@ -201,7 +201,6 @@ bool DistillerLitRem::distill_long_cls_all(
         << endl;
     }
 
-    double myTime = cpuTime();
     const size_t origTrailSize = solver->trail_size();
 
     //Time-limiting

@@ -1716,11 +1716,11 @@ template uint32_t Searcher::calc_connects_num_communities<Clause>(const Clause& 
 #endif
 
 Clause* Searcher::handle_last_confl(
-    const uint32_t glue
-    , const uint32_t old_decision_level
-    , const uint32_t glue_before_minim
-    , const bool is_decision
-    , const uint32_t connects_num_communities
+    const uint32_t glue,
+    [[maybe_unused]] const uint32_t old_decision_level,
+    [[maybe_unused]] const uint32_t glue_before_minim,
+    [[maybe_unused]] const bool is_decision,
+    [[maybe_unused]] const uint32_t connects_num_communities
 ) {
     #ifdef STATS_NEEDED
     bool to_dump = false;
@@ -1975,9 +1975,9 @@ void Searcher::resetStats()
     lastCleanZeroDepthAssigns = trail.size();
 }
 
+#ifdef STATS_NEEDED
 void Searcher::check_calc_satzilla_features(bool force)
 {
-    #ifdef STATS_NEEDED
     if (last_satzilla_feature_calc_confl == 0
         || (last_satzilla_feature_calc_confl + solver->conf.every_pred_reduce) < sumConflicts
         || force
@@ -1990,16 +1990,16 @@ void Searcher::check_calc_satzilla_features(bool force)
             solver->last_solve_satzilla_feature = solver->calculate_satzilla_features();
         }
     }
-    #endif
 }
+#endif
 
+#ifdef STATS_NEEDED_BRANCH
 void Searcher::check_calc_vardist_features(bool force)
 {
     if (!solver->sqlStats) {
         return;
     }
 
-    #ifdef STATS_NEEDED_BRANCH
     if (last_vardist_feature_calc_confl == 0
         || (last_vardist_feature_calc_confl + solver->conf.every_pred_reduce) < sumConflicts
         || force
@@ -2010,8 +2010,8 @@ void Searcher::check_calc_vardist_features(bool force)
         latest_vardist_feature_calc++;
         v.dump();
     }
-    #endif
 }
+#endif
 
 void Searcher::print_restart_header()
 {
@@ -2491,7 +2491,9 @@ inline void Searcher::dump_search_loop_stats(double myTime)
 {
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     check_calc_satzilla_features();
+    #if defined(STATS_NEEDED_BRANCH)
     check_calc_vardist_features();
+    #endif
     #endif
 
     print_restart_header();
@@ -2659,8 +2661,12 @@ lbool Searcher::solve(
 
     set_branch_strategy(branch_strategy_num);
     setup_restart_strategy();
+    #ifdef STATS_NEEDED
     check_calc_satzilla_features(true);
+    #endif
+    #ifdef STATS_NEEDED_BRANCH
     check_calc_vardist_features(true);
+    #endif
     setup_polarity_strategy();
 
     while(stats.conflStats.numConflicts < max_confl_per_search_solve_call

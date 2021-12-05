@@ -545,7 +545,6 @@ bool SubsumeStrengthen::handle_added_long_cl(const bool main_run)
     size_t origTrailSize = solver->trail_size();
     const double start_time = cpuTime();
     Sub1Ret stat;
-    bool interrupted = false;
 
     //NOTE added_long_cl CAN CHANGE while the below is running!
     uint32_t i = 0;
@@ -573,7 +572,6 @@ bool SubsumeStrengthen::handle_added_long_cl(const bool main_run)
         if ((i&0xfff) == 0xfff
             && solver->must_interrupt_asap()
         ) {
-            interrupted = true;
             goto end;
         }
     }
