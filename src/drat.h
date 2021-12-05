@@ -101,7 +101,7 @@ struct Drat
     unsigned char* buf_ptr = NULL;
 };
 
-template<bool add_ID>
+template<bool add_ID, bool bindrat = false>
 struct DratFile: public Drat
 {
     DratFile(vector<uint32_t>& _interToOuterMain) :
@@ -140,18 +140,21 @@ struct DratFile: public Drat
     {
         uint32_t v = l.var();
         v = interToOuterMain[v];
-#ifdef DEBUG_DRAT
-        cout << Lit(v, l.sign()) << " ";
-#endif
-        unsigned int u = 2 * (v + 1) + l.sign();
-        do {
-            *buf_ptr++ = (u & 0x7f) | 0x80;
-            buf_len++;
-            u = u >> 7;
-        } while (u);
-
-        // End marker of this unsigned number
-        *(buf_ptr - 1) &= 0x7f;
+        if (bindrat) {
+            unsigned int u = 2 * (v + 1) + l.sign();
+            do {
+                *buf_ptr++ = (u & 0x7f) | 0x80;
+                buf_len++;
+                u = u >> 7;
+            } while (u);
+            // End marker of this unsigned number
+            *(buf_ptr - 1) &= 0x7f;
+        } else {
+            uint32_t num = sprintf(
+                (char*)buf_ptr, "%s%d ", (l.sign() ? "-": ""), l.var()+1);
+            buf_ptr+=num;
+            buf_len+=num;
+        }
     }
 
     void byteDRUPaID(const uint64_t id)
@@ -166,18 +169,22 @@ struct DratFile: public Drat
     {
         uint32_t v = l.var();
         v = interToOuterMain[v];
-#ifdef DEBUG_DRAT
-        cout << Lit(v, l.sign()) << " ";
-#endif
-        unsigned int u = 2 * (v + 1) + l.sign();
-        do {
-            *del_ptr++ = (u & 0x7f) | 0x80;
-            del_len++;
-            u = u >> 7;
-        } while (u);
+        if (bindrat) {
+            unsigned int u = 2 * (v + 1) + l.sign();
+            do {
+                *del_ptr++ = (u & 0x7f) | 0x80;
+                del_len++;
+                u = u >> 7;
+            } while (u);
 
-        // End marker of this unsigned number
-        *(del_ptr - 1) &= 0x7f;
+            // End marker of this unsigned number
+            *(del_ptr - 1) &= 0x7f;
+        } else {
+            uint32_t num = sprintf(
+                (char*)del_ptr, "%s%d ", (l.sign() ? "-": ""), l.var()+1);
+            del_ptr+=num;
+            del_len+=num;
+        }
     }
 
     void flush() override
@@ -228,21 +235,9 @@ struct DratFile: public Drat
     Drat& operator<<(const Lit lit) override
     {
         if (must_delete_next) {
-#ifdef DEBUG_DRAT
-            cout << "dLIT ";
-#endif
             byteDRUPd(lit);
-#ifdef DEBUG_DRAT
-            cout << endl;
-#endif
         } else {
-#ifdef DEBUG_DRAT
-            cout << "aLIT ";
-#endif
             byteDRUPa(lit);
-#ifdef DEBUG_DRAT
-            cout << endl;
-#endif
         }
 
         return *this;
@@ -251,24 +246,13 @@ struct DratFile: public Drat
     Drat& operator<<(const Clause& cl) override
     {
         if (must_delete_next) {
-#ifdef DEBUG_DRAT
-            cout << "d ";
-#endif
-            for(const Lit l: cl)
+            for(const Lit l: cl) {
                 byteDRUPd(l);
-#ifdef DEBUG_DRAT
-            cout << endl;
-#endif
+            }
         } else {
-#ifdef DEBUG_DRAT
-            cout << "a ";
-#endif
-            for(const Lit l: cl)
+            for(const Lit l: cl) {
                 byteDRUPa(l);
-#ifdef DEBUG_DRAT
-            cout << endl;
-#endif
-
+            }
             #ifdef STATS_NEEDED
             id_set = true;
             if (is_add && add_ID) {
@@ -290,23 +274,13 @@ struct DratFile: public Drat
     Drat& operator<<(const vector<Lit>& cl) override
     {
         if (must_delete_next) {
-#ifdef DEBUG_DRAT
-            cout << "d ";
-#endif
-            for(const Lit l: cl)
+            for(const Lit l: cl) {
                 byteDRUPd(l);
-#ifdef DEBUG_DRAT
-            cout << endl;
-#endif
+            }
         } else {
-#ifdef DEBUG_DRAT
-            cout << "a ";
-#endif
-            for(const Lit l: cl)
+            for(const Lit l: cl) {
                 byteDRUPa(l);
-#ifdef DEBUG_DRAT
-            cout << endl;
-#endif
+            }
         }
 
         return *this;
@@ -318,12 +292,24 @@ struct DratFile: public Drat
         {
             case DratFlag::fin:
                 if (must_delete_next) {
-                    *del_ptr++ = 0;
-                    del_len++;
+                    if (bindrat) {
+                        *del_ptr++ = 0;
+                        del_len++;
+                    } else {
+                        *del_ptr++ = '0';
+                        *del_ptr++ = '\n';
+                        del_len+=2;
+                    }
                     delete_filled = true;
                 } else {
-                    *buf_ptr++ = 0;
-                    buf_len++;
+                    if (bindrat) {
+                        *buf_ptr++ = 0;
+                        buf_len++;
+                    } else {
+                        *buf_ptr++ = '0';
+                        *buf_ptr++ = '\n';
+                        buf_len+=2;
+                    }
                     #ifdef STATS_NEEDED
                     if (is_add && add_ID) {
                         byteDRUPaID(ID);
@@ -347,6 +333,10 @@ struct DratFile: public Drat
                 forget_delay();
                 *del_ptr++ = 'd';
                 del_len++;
+                if (!bindrat)  {
+                    *del_ptr++ = ' ';
+                    del_len++;
+                }
                 delete_filled = false;
                 must_delete_next = true;
                 break;
@@ -370,8 +360,10 @@ struct DratFile: public Drat
                 id_set = false;
                 sumConflicts = std::numeric_limits<int64_t>::max();
                 #endif
-                *buf_ptr++ = 'a';
-                buf_len++;
+                if (bindrat) {
+                    *buf_ptr++ = 'a';
+                    buf_len++;
+                }
                 break;
 
             case DratFlag::del:
@@ -383,6 +375,10 @@ struct DratFile: public Drat
                 forget_delay();
                 *buf_ptr++ = 'd';
                 buf_len++;
+                if (!bindrat) {
+                    *buf_ptr++ = ' ';
+                    buf_len++;
+                }
                 break;
         }
 
