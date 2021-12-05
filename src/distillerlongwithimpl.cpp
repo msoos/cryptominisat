@@ -188,7 +188,6 @@ void DistillerLongWithImpl::strsub_with_watch(
 
 bool DistillerLongWithImpl::sub_str_cl_with_watch(
     ClOffset& offset
-    , bool red
     , const bool alsoStrengthen
 ) {
     Clause& cl = *solver->cl_alloc.ptr(offset);
@@ -369,7 +368,7 @@ bool DistillerLongWithImpl::sub_str_all_cl_with_watch(
         }
         #endif
 
-        if (sub_str_cl_with_watch(offset, red, alsoStrengthen)) {
+        if (sub_str_cl_with_watch(offset, alsoStrengthen)) {
             solver->detachClause(offset);
             solver->free_cl(offset);
             continue;

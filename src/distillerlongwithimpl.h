@@ -142,7 +142,6 @@ class DistillerLongWithImpl {
         //bool needToFinish;
         bool sub_str_cl_with_watch(
             ClOffset& offset
-            , bool red
             , const bool alsoStrengthen
         );
         void randomise_order_of_clauses(vector<ClOffset>& clauses);
