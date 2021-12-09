@@ -668,14 +668,15 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 assert(occcnt[v] == 0);
 
                 Xor x_new(tmp_vars_xor_two, x0.rhs ^ x1.rhs, clash_var);
-                solver->drat->flush();
-                xor_set xs;
-                xs.add(*x0.create_bdd_xor());
-                xs.add(*x1.create_bdd_xor());
-
                 x_new.merge_clash(x0, seen);
                 x_new.merge_clash(x1, seen);
-                x_new.bdd = xs.sum();
+                if (solver->drat->enabled()) {
+                    solver->drat->flush();
+                    xor_set xs;
+                    xs.add(*x0.create_bdd_xor());
+                    xs.add(*x1.create_bdd_xor());
+                    x_new.bdd = xs.sum();
+                }
 
                 //#ifdef VERBOSE_DEBUG
                 cout << "x1: " << x0 << " -- at idx: " << idxes[0] << endl;

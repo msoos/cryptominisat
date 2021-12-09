@@ -1541,7 +1541,9 @@ lbool Solver::solve_with_assumptions(
     const vector<Lit>* _assumptions,
     const bool only_sampling_solution
 ) {
-    tbdd_init_drat(drat->getFile(), nVars());
+    if (drat->enabled()) {
+        tbdd_init_drat(drat->getFile(), nVars());
+    }
     move_to_outside_assumps(_assumptions);
     reset_for_solving();
 
@@ -1609,7 +1611,9 @@ lbool Solver::solve_with_assumptions(
         }
     }
 
-    tbdd_done();
+    if (drat->enabled()) {
+        tbdd_done();
+    }
     return status;
 }
 

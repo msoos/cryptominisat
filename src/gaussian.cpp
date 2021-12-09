@@ -510,13 +510,18 @@ gret EGaussian::adjust_matrix()
                 tmp_clause[0] = Lit(tmp_clause[0].var(), xorEqualFalse);
                 assert(solver->value(tmp_clause[0].var()) == l_Undef);
                 solver->enqueue<false>(tmp_clause[0]); // propagation
-                auto x = bdd_create(row_n);
+                xor_constraint* bdd;
+                if (solver->drat->enabled()) {
+                    bdd = bdd_create(row_n);
+                }
 
                 ilist out = ilist_new(1);
                 ilist_resize(out, 1);
                 out[0] = (tmp_clause[0].var()+1) * (tmp_clause[0].sign() ? -1 :1);
                 assert_clause(out);
-                delete x;
+                if (solver->drat->enabled()) {
+                    delete bdd;
+                }
 
                 //#ifdef VERBOSE_DEBUG
                 cout << "-> UNIT during adjust: " << tmp_clause[0] << endl;
@@ -541,30 +546,31 @@ gret EGaussian::adjust_matrix()
 
                 tmp_clause[0] = tmp_clause[0].unsign();
                 tmp_clause[1] = tmp_clause[1].unsign();
-                auto x = bdd_create(row_n);
+                if (solver->drat->enabled()) {
+                    xor_constraint* bdd = bdd_create(row_n);
+                    ilist out = ilist_new(2);
+                    ilist_resize(out, 2);
+                    if (mat[row_n].rhs()) {
+                        out[0] = (tmp_clause[0].var()+1);
+                        out[1] = (tmp_clause[1].var()+1);
+                    } else {
+                        out[0] = (tmp_clause[0].var()+1)*-1;
+                        out[1] = (tmp_clause[1].var()+1);
+                    }
+                    assert_clause(out);
 
-                ilist out = ilist_new(2);
-                ilist_resize(out, 2);
-                if (mat[row_n].rhs()) {
-                    out[0] = (tmp_clause[0].var()+1);
-                    out[1] = (tmp_clause[1].var()+1);
-                } else {
-                    out[0] = (tmp_clause[0].var()+1)*-1;
-                    out[1] = (tmp_clause[1].var()+1);
+                    ilist out2 = ilist_new(2);
+                    ilist_resize(out2, 2);
+                    if (mat[row_n].rhs()) {
+                        out2[0] = (tmp_clause[0].var()+1)*-1;
+                        out2[1] = (tmp_clause[1].var()+1)*-1;
+                    } else {
+                        out2[0] = (tmp_clause[0].var()+1);
+                        out2[1] = (tmp_clause[1].var()+1)*-1;
+                    }
+                    assert_clause(out2);
+                    delete bdd;
                 }
-                assert_clause(out);
-
-                ilist out2 = ilist_new(2);
-                ilist_resize(out2, 2);
-                if (mat[row_n].rhs()) {
-                    out2[0] = (tmp_clause[0].var()+1)*-1;
-                    out2[1] = (tmp_clause[1].var()+1)*-1;
-                } else {
-                    out2[0] = (tmp_clause[0].var()+1);
-                    out2[1] = (tmp_clause[1].var()+1)*-1;
-                }
-                assert_clause(out2);
-                delete x;
 
                 solver->ok = solver->add_xor_clause_inter(tmp_clause, !xorEqualFalse, true);
                 release_assert(solver->ok);
@@ -1280,16 +1286,16 @@ vector<Lit>* EGaussian::get_reason(uint32_t row)
         *tmp_col2,
         xor_reasons[row].propagated);
 
-    solver->drat->flush();
-
-    bdd_create(row);
-
-    ilist out = ilist_new(tofill.size());
-    ilist_resize(out, tofill.size());
-    for(uint32_t i = 0; i < tofill.size(); i++) {
-        out[i] = (tofill[i].var()+1) * (tofill[i].sign() ? -1 :1);
+    if (solver->drat->enabled()) {
+        solver->drat->flush();
+        bdd_create(row);
+        ilist out = ilist_new(tofill.size());
+        ilist_resize(out, tofill.size());
+        for(uint32_t i = 0; i < tofill.size(); i++) {
+            out[i] = (tofill[i].var()+1) * (tofill[i].sign() ? -1 :1);
+        }
+        assert_clause(out);
     }
-    assert_clause(out);
 
     xor_reasons[row].must_recalc = false;
     return &tofill;
