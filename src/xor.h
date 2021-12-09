@@ -33,6 +33,7 @@ THE SOFTWARE.
 
 using std::vector;
 using std::set;
+using namespace trustbdd;
 
 namespace CMSat {
 
