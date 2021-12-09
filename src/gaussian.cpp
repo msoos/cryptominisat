@@ -1288,13 +1288,14 @@ vector<Lit>* EGaussian::get_reason(uint32_t row)
 
     if (solver->drat->enabled()) {
         solver->drat->flush();
-        bdd_create(row);
+        xor_constraint* tmp = bdd_create(row);
         ilist out = ilist_new(tofill.size());
         ilist_resize(out, tofill.size());
         for(uint32_t i = 0; i < tofill.size(); i++) {
             out[i] = (tofill[i].var()+1) * (tofill[i].sign() ? -1 :1);
         }
         assert_clause(out);
+        delete tmp;
     }
 
     xor_reasons[row].must_recalc = false;
