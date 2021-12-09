@@ -694,6 +694,10 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                         interesting.push_back(l.var());
                     }
                 }
+                if (solver->drat->enabled()) {
+                    delete this_xors[idxes[0]].bdd;
+                    delete this_xors[idxes[1]].bdd;
+                }
                 this_xors[idxes[0]] = Xor();
                 this_xors[idxes[1]] = Xor();
                 xored++;
