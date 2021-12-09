@@ -343,7 +343,7 @@ bool ClauseCleaner::clean_one_xor(Xor& x)
     if (j < x.size()) {
         x.resize(j);
         x.rhs = rhs;
-        x.create_bdd_xor();
+        //x.create_bdd_xor();
 //#ifdef VERBOSE_DEBUG
         cout << "cleaned XOR: " << x << endl;
 //#endif
