@@ -38,6 +38,7 @@ THE SOFTWARE.
 #include "simplefile.h"
 #include "gausswatched.h"
 #include "xor.h"
+#include <pseudoboolean.h>
 
 using std::numeric_limits;
 
@@ -682,7 +683,10 @@ void CNF::clean_xor_vars_no_prop(T& ps, bool& rhs)
             rhs ^= value(ps[i]) == l_True;
         }
     }
-    ps.resize(ps.size() - (i - j));
+    if ((i - j) > 0) {
+        ps.resize(ps.size() - (i - j));
+        //TODO tbdd ?
+    }
 }
 
 template<class T>

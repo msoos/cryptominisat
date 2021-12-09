@@ -23,6 +23,8 @@ include_directories(
 )
 add_sanitize_flags()
 
+link_directories("/home/soos/development/sat_solvers/tbuddy/buddy/lib/")
+
 # Minimal DRAT-enabled CMS binary
 add_executable(minimal_cms
     minimal_cms.cpp

@@ -125,9 +125,13 @@ class EGaussian {
     //Initialisation
     void eliminate();
     void fill_matrix();
-    uint32_t select_columnorder();
+    void select_columnorder();
     gret adjust_matrix(); // adjust matrix, include watch, check row is zero, etc.
     double get_density();
+
+    //BDD stuff
+    void xor_in_bdd(const uint32_t a, const uint32_t b);
+    xor_constraint* bdd_create(const uint32_t row_n);
 
 
     ///////////////
@@ -171,6 +175,7 @@ class EGaussian {
 
 
     PackedMatrix mat;
+    vector<vector<char>> bdd_matrix;
     vector<uint32_t>  var_to_col; ///var->col mapping. Index with VAR
     vector<uint32_t> col_to_var; ///col->var mapping. Index with COL
     uint32_t num_rows = 0;

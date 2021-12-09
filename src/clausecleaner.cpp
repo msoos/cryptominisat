@@ -331,6 +331,7 @@ bool ClauseCleaner::clean_one_xor(Xor& x)
     bool rhs = x.rhs;
     size_t i = 0;
     size_t j = 0;
+    cout << "Trying to clean XOR: " << x << endl;
     for(size_t size = x.size(); i < size; i++) {
         uint32_t var = x[i];
         if (solver->value(var) != l_Undef) {
@@ -339,8 +340,14 @@ bool ClauseCleaner::clean_one_xor(Xor& x)
             x[j++] = var;
         }
     }
-    x.resize(j);
-    x.rhs = rhs;
+    if (j < x.size()) {
+        x.resize(j);
+        x.rhs = rhs;
+        x.create_bdd_xor();
+//#ifdef VERBOSE_DEBUG
+        cout << "cleaned XOR: " << x << endl;
+//#endif
+    }
 
     switch(x.size()) {
         case 0:
@@ -348,11 +355,12 @@ bool ClauseCleaner::clean_one_xor(Xor& x)
             return false;
 
         case 1: {
+            (*solver->drat) << add << Lit(x[0], !x.rhs) << fin;
             solver->fully_enqueue_this(Lit(x[0], !x.rhs));
             return false;
         }
         case 2: {
-            solver->add_xor_clause_inter(vars_to_lits(x), x.rhs, true);
+            solver->add_xor_clause_inter(vars_to_lits(x), x.rhs, true, true);
             return false;
         }
         default: {
@@ -395,12 +403,6 @@ bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors)
             }
         }
         xors.resize(j);
-
-        #ifdef VERBOSE_DEBUG
-        for(Xor& x : xors) {
-            cout << "cleaned XOR: " << x << endl;
-        }
-        #endif
     }
     return solver->okay();
 }

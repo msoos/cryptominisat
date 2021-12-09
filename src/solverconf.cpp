@@ -289,7 +289,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         )*/
         , simplify_schedule_startup(
             "breakid, "
-            "occ-bve,"
+            "occ-bve,occ-xor"
         )
         //validated with run 8114195.wlm01
         , simplify_schedule_nonstartup(

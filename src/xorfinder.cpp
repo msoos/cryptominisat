@@ -29,6 +29,8 @@ THE SOFTWARE.
 #include "varreplacer.h"
 
 #include <limits>
+#include <iostream>
+#include <pseudoboolean.h>
 //#define XOR_DEBUG
 
 using namespace CMSat;
@@ -223,7 +225,7 @@ void XorFinder::find_xors()
 
 void XorFinder::print_found_xors()
 {
-    if (solver->conf.verbosity >= 5) {
+    if (solver->conf.verbosity >= 1) {
         cout << "c Found XORs: " << endl;
         for(vector<Xor>::const_iterator
             it = xors.begin(), end = xors.end()
@@ -273,6 +275,7 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
     if (poss_xor.foundAll()) {
         std::sort(lits.begin(), lits.end());
         Xor found_xor(lits, poss_xor.getRHS(), vector<uint32_t>());
+
         #if defined(SLOW_DEBUG) || defined(XOR_DEBUG)
         for(Lit lit: lits) {
             assert(solver->varData[lit.var()].removed == Removed::none);
@@ -665,14 +668,21 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 assert(occcnt[v] == 0);
 
                 Xor x_new(tmp_vars_xor_two, x0.rhs ^ x1.rhs, clash_var);
+                solver->drat->flush();
+                xor_set xs;
+                xs.add(*x0.create_bdd_xor());
+                xs.add(*x1.create_bdd_xor());
+
                 x_new.merge_clash(x0, seen);
                 x_new.merge_clash(x1, seen);
-                #ifdef VERBOSE_DEBUG
+                x_new.bdd = xs.sum();
+
+                //#ifdef VERBOSE_DEBUG
                 cout << "x1: " << x0 << " -- at idx: " << idxes[0] << endl;
                 cout << "x2: " << x1 << " -- at idx: " << idxes[1] << endl;
                 cout << "clashed on var: " << clash_var+1 << endl;
                 cout << "final: " << x_new <<  " -- at idx: " << this_xors.size() << endl;
-                #endif
+                //#endif
                 changed = true;
                 this_xors.push_back(x_new);
                 for(uint32_t v2: x_new) {
@@ -690,7 +700,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
         }
     }
 
-    if (solver->conf.verbosity >= 5) {
+    if (solver->conf.verbosity >= 1) {
         cout << "c Finished XOR-ing together XORs. " << endl;
         size_t at = 0;
         for(const auto& x: this_xors) {
@@ -712,7 +722,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
     solver->clean_occur_from_idx_types_only_smudged();
     clean_xors_from_empty(this_xors);
     double recur_time = cpuTime() - myTime;
-        if (solver->conf.verbosity) {
+    if (solver->conf.verbosity) {
         cout
         << "c [xor-together] xored together: " << xored
         << " orig xors: " << origsize
@@ -810,10 +820,11 @@ bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* ou
                     solver->ok = false;
                 } else if (solver->value(lit) == l_Undef) {
                     solver->enqueue<true>(lit);
-                    if (out_changed_occur)
+                    if (out_changed_occur) {
                         solver->ok = solver->propagate_occur<false>();
-                    else
+                    } else {
                         solver->ok = solver->propagate<true>().isNULL();
+                    }
                 }
                 if (!solver->ok) {
                     goto end;
@@ -856,6 +867,11 @@ bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* ou
     }
     this_xors.resize(i2);
     end:
+    if (solver->conf.verbosity >= 5) {
+        if (!solver->okay()) {
+            cout << "c add_new_truths_from_xors lead to UNSAT" << endl;
+        }
+    }
 
     double add_time = cpuTime() - myTime;
     uint32_t num_bins_added = solver->binTri.redBins - origBins;

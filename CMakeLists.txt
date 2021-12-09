@@ -595,7 +595,7 @@ endif()
 # -----------------------------------------------------------------------------
 # MIT option
 # -----------------------------------------------------------------------------
-option(REQUIRE_M4RI "Must use m4ri" OFF)
+#option(REQUIRE_M4RI "Must use m4ri" OFF)
 option(NOM4RI "Don't use m4ri" OFF)
 option(NOBOSPHORUS "Don't use Bosphorus" ON)
 option(REQUIRE_BOSPHORUS "Must use Bosphorus" OFF)
@@ -614,18 +614,18 @@ endif()
 # -----------------------------------------------------------------------------
 # Look for M4RI (for Gauss)
 # -----------------------------------------------------------------------------
-if (NOT NOM4RI)
-    find_package(M4RI)
-    IF (M4RI_FOUND)
-        MESSAGE(STATUS "OK, Found M4RI lib at ${M4RI_LIBRARIES} and includes at ${M4RI_INCLUDE_DIRS}")
-        add_definitions( -DUSE_M4RI )
-    ELSE (M4RI_FOUND)
-        MESSAGE(WARNING "Did not find M4RI, XOR detection&manipulation disabled")
-        if (REQUIRE_M4RI)
-            MESSAGE(FATAL_ERROR "REQUIRE_M4RI was set but M4RI was not found!")
-        endif()
-    ENDIF (M4RI_FOUND)
-endif()
+#if (NOT NOM4RI)
+    #find_package(M4RI)
+    #IF (M4RI_FOUND)
+        #MESSAGE(STATUS "OK, Found M4RI lib at ${M4RI_LIBRARIES} and includes at ${M4RI_INCLUDE_DIRS}")
+        #add_definitions( -DUSE_M4RI )
+    #ELSE (M4RI_FOUND)
+        #MESSAGE(WARNING "Did not find M4RI, XOR detection&manipulation disabled")
+        #if (REQUIRE_M4RI)
+            #MESSAGE(FATAL_ERROR "REQUIRE_M4RI was set but M4RI was not found!")
+        #endif()
+    #ENDIF (M4RI_FOUND)
+#endif()
 
 # -----------------------------------------------------------------------------
 # Look for Boshphorus

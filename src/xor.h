@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include <set>
 #include <iostream>
 #include <algorithm>
+#include <pseudoboolean.h>
 
 using std::vector;
 using std::set;
@@ -50,6 +51,20 @@ public:
         }
     }
 
+    xor_constraint* create_bdd_xor()
+    {
+        if (bdd == NULL) {
+            ilist l = ilist_new(vars.size());
+            ilist_resize(l, vars.size());
+            for (uint32_t i = 0; i < vars.size(); i++) {
+                l[i] = vars[i]+1;
+            }
+            bdd = new xor_constraint(l, rhs);
+            cout << "CREATE" << endl;
+        }
+        return bdd;
+    }
+
     template<typename T>
     explicit Xor(const T& cl, const bool _rhs, const vector<uint32_t>& _clash_vars):
         rhs(_rhs)
@@ -67,6 +82,10 @@ public:
         for (uint32_t i = 0; i < cl.size(); i++) {
             vars.push_back(cl[i]);
         }
+    }
+
+    ~Xor()
+    {
     }
 
     vector<uint32_t>::const_iterator begin() const
@@ -172,6 +191,7 @@ public:
     vector<uint32_t> clash_vars;
     bool detached = false;
     vector<uint32_t> vars;
+    xor_constraint* bdd = NULL;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Xor& thisXor)

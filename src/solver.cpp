@@ -1422,15 +1422,6 @@ void Solver::check_and_upd_config_parameters()
             conf.do_hyperbin_and_transred = true;
         }
 
-        if (conf.doFindXors) {
-            if (conf.verbosity) {
-                cout
-                << "c XOR manipulation is not supported in DRAT, turning it off"
-                << endl;
-            }
-            conf.doFindXors = false;
-        }
-
         #ifdef USE_BREAKID
         if (conf.doBreakid) {
             if (conf.verbosity) {
@@ -1450,17 +1441,6 @@ void Solver::check_and_upd_config_parameters()
                 << endl;
             }
             conf.do_bosphorus = false;
-        }
-        #endif
-
-        #ifdef USE_GAUSS
-        if (conf.gaussconf.doMatrixFind) {
-            if (conf.verbosity) {
-                cout
-                << "c GAUSS is not supported with DRAT, turning it off"
-                << endl;
-            }
-            conf.gaussconf.doMatrixFind = false;
         }
         #endif
     }
@@ -1561,6 +1541,7 @@ lbool Solver::solve_with_assumptions(
     const vector<Lit>* _assumptions,
     const bool only_sampling_solution
 ) {
+    tbdd_init_drat(drat->getFile(), nVars());
     move_to_outside_assumps(_assumptions);
     reset_for_solving();
 
@@ -1628,6 +1609,7 @@ lbool Solver::solve_with_assumptions(
         }
     }
 
+    tbdd_done();
     return status;
 }
 

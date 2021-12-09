@@ -94,6 +94,11 @@ struct Drat
     {
     }
 
+    virtual FILE* getFile()
+    {
+        return NULL;
+    }
+
     virtual void flush();
 
     int buf_len;
@@ -135,6 +140,11 @@ struct DratFile: public Drat
         return *this;
     }
     #endif
+
+    virtual FILE* getFile() override
+    {
+        return drup_file;
+    }
 
     void byteDRUPa(const Lit l)
     {
