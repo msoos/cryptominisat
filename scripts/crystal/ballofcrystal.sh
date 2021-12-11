@@ -20,6 +20,9 @@
 # This file wraps CMake invocation for TravisCI
 # so we can set different configurations via environment variables.
 
+set -e
+set -x
+
 . ./setparams_ballofcrystal.sh
 
 if [ "$1" == "--skip" ]; then
@@ -136,7 +139,7 @@ if [ "$SKIP" != "1" ]; then
     set -e
     if [[ retval -eq 1 ]]; then
         rm -f $FNAMEOUT.usedCls-*
-        /usr/bin/time -v $NOBUF ../utils/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -o "$FNAMEOUT.usedCls" -i -O 4 | tee drat.out-newO4
+        /usr/bin/time -v $NOBUF ../utils/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -o "$FNAMEOUT.usedCls" -i -O 4 -m | tee drat.out-newO4
     else
         rm -f final.cnf
         touch final.cnf
