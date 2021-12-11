@@ -285,7 +285,7 @@ struct OccurClause {
     Lit lit;
     Watched ws;
 
-    bool operator<(const OccurClause& other) {
+    bool operator<(const OccurClause& other) const {
         if (ws.isBin() && !other.ws.isBin()) {
             return true;
         }

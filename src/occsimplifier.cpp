@@ -3655,7 +3655,7 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
                 true //only irred
             );
         }
-        sort(tmp_subs.begin(), tmp_subs.end());
+        std::sort(tmp_subs.begin(), tmp_subs.end());
         tmp_subs.erase(unique(tmp_subs.begin(),tmp_subs.end()),tmp_subs.end());
         for(const auto& cl_off: tmp_subs) {
             if (cl_off.ws.isBin()) {
