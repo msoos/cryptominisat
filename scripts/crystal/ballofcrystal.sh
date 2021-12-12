@@ -170,17 +170,17 @@ rm -f check_quality.out
 rm -f clean_update.out
 rm -f fill_clauses.out
 
-$NOBUF ../fill_used_clauses.py "$FNAMEOUT.db-raw" "$FNAMEOUT.usedCls" | tee fill_clauses.out
+../fill_used_clauses.py "$FNAMEOUT.db-raw" "$FNAMEOUT.usedCls" | tee fill_used_clauses.out
 cp "$FNAMEOUT.db-raw" "$FNAMEOUT.db"
-$NOBUF /usr/bin/time -v ../clean_update_data.py "$FNAMEOUT.db"  | tee clean_update.out
-$NOBUF ../check_data_quality.py --slow "$FNAMEOUT.db" | tee check_quality.out
+/usr/bin/time -v ../clean_update_data.py "$FNAMEOUT.db"  | tee clean_update_data.out
+../check_data_quality.py --slow "$FNAMEOUT.db" | tee check_data_quality.out
 cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
-$NOBUF /usr/bin/time -v ../sample_data.py "$FNAMEOUT-min.db" | tee sample.out
+/usr/bin/time -v ../sample_data.py "$FNAMEOUT-min.db" | tee sample_data.out
 
 ########################
 # Denormalize the data into a Pandas Table, label it and sample it
 ########################
-../cldata_gen_pandas.py "${FNAMEOUT}-min.db" --cut1 $cut1 --cut2 $cut2 --limit "$FIXED" ${EXTRA_GEN_PANDAS_OPTS}
+../cldata_gen_pandas.py "${FNAMEOUT}-min.db" --cut1 $cut1 --cut2 $cut2 --limit "$FIXED" ${EXTRA_GEN_PANDAS_OPTS} | tee cldata_gen_pandas.out
 # ../vardata_gen_pandas.py "${FNAMEOUT}.db" --limit 1000
 
 
@@ -206,7 +206,7 @@ tables=("used_later" "used_later_anc")
 for tier in "${tiers[@]}"; do
     for table in "${tables[@]}"; do
         for regressor in "${regressors[@]}"; do
-            $NOBUF ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-${table}-${tier}-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier ${tier} --table ${table} --features best_only --regressor $regressor --basedir "." --bestfeatfile $bestf | tee "out_pred_${tier}-${table}-${regressor}"
+            $NOBUF ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-${table}-${tier}-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier ${tier} --table ${table} --features best_only --regressor $regressor --basedir "." --bestfeatfile $bestf | tee "cldata_predict_${tier}-${table}-${regressor}.out"
         done
     done
 done
@@ -237,7 +237,6 @@ fi
 (
 cd "$FNAME-dir"
 ln -fs ../ml_module.py .
-ln -fs ../crystalcodegen.py .
 
 TODO="000"
 ../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &

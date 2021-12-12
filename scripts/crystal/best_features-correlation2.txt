@@ -35,7 +35,7 @@ rdb0.discounted_uip1_used3
 (rdb0.props_made/rdb0_common.avg_props)
 (rdb0.sum_props_made/cl.time_inside_solver)
 (rdb0.sum_uip1_used/cl.time_inside_solver)
-(log2(cl.num_antecedents)/cl.num_total_lits_antecedents)
+(cl.num_antecedents/cl.num_total_lits_antecedents)
 #
 #
 # other

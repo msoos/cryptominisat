@@ -30,5 +30,6 @@ export cut1="3.0"
 export cut2="25.0"
 export SANITIZE=0
 export bestf="../../scripts/crystal/best_features-correlation2.txt"
+export NOBUF=""
 export NOBUF="stdbuf -oL -eL "
 #export bestf="../../scripts/crystal/best_features-ext.txt"
