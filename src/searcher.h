@@ -269,6 +269,7 @@ class Searcher : public HyperEngine
             , uint32_t& out_btlevel  //backtrack level
             , uint32_t &glue         //glue of the learnt clause
             , uint32_t &glue_before_minim     //glue of the unminimised learnt clause
+            , uint32_t &size_before_minim     //size of the unminimised learnt clause
         );
         bool  handle_conflict(PropBy confl);// Handles the conflict clause
         void  update_history_stats(
@@ -304,6 +305,7 @@ class Searcher : public HyperEngine
             const uint32_t glue
             , const uint32_t old_decision_level
             , const uint32_t glue_before_minim
+            , const uint32_t size_before_minim
             , const bool is_decision
             , const uint32_t connects_num_communities
         );
@@ -415,12 +417,14 @@ class Searcher : public HyperEngine
         PropStats lastSQLPropStats;
         SearchStats lastSQLGlobalStats;
         void dump_sql_clause_data(
-            const uint32_t orig_glue
-            , const uint32_t glue_before_minim
-            , const uint32_t old_decision_level
-            , const uint64_t clid
-            , const bool decision_cl
-            , const uint32_t connects_num_communities
+            const uint32_t glue,
+            const uint32_t size,
+            const uint32_t glue_before_minim,
+            const uint32_t size_before_minim,
+            const uint32_t old_decision_level,
+            const uint64_t clid,
+            const bool decision_cl,
+            const uint32_t connects_num_communities
         );
         int dump_this_many_cldata_in_stream = 0;
         void dump_var_for_learnt_cl(const uint32_t v,

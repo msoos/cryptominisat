@@ -811,10 +811,11 @@ void SQLiteStats::clause_stats(
     const Solver* solver
     , uint64_t clid
     , const uint64_t restartID
-    , uint32_t orig_glue
+    , uint32_t glue
     , uint32_t glue_before_minim
-    , uint32_t backtrack_level
     , uint32_t size
+    , uint32_t size_before_minim
+    , uint32_t backtrack_level
     , AtecedentData<uint16_t> antec_data
     , size_t decision_level
     , size_t trail_depth
@@ -839,9 +840,10 @@ void SQLiteStats::clause_stats(
     sqlite3_bind_int64 (stmt_clause_stats, bindAt++, clid);
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, restartID);
 
-    sqlite3_bind_int   (stmt_clause_stats, bindAt++, orig_glue);
+    sqlite3_bind_int   (stmt_clause_stats, bindAt++, glue);
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, glue_before_minim);
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, size);
+    sqlite3_bind_int   (stmt_clause_stats, bindAt++, size_before_minim);
     sqlite3_bind_int64 (stmt_clause_stats, bindAt++, conflicts_this_restart);
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, num_overlap_literals);
     sqlite3_bind_int   (stmt_clause_stats, bindAt++, antec_data.num());

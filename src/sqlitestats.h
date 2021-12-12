@@ -106,10 +106,11 @@ public:
         const Solver* solver
         , uint64_t clid
         , const uint64_t restartID
-        , uint32_t orig_glue
+        , uint32_t glue
         , uint32_t glue_before_minim
-        , const uint32_t backtrack_level
         , uint32_t size
+        , uint32_t size_before_minim
+        , const uint32_t backtrack_level
         , AtecedentData<uint16_t> resoltypes
         , size_t decision_level
         , size_t trail_depth

@@ -38,7 +38,7 @@ if [ "$NEXT_OP" == "" ]; then
     while true; do
         echo "No CNF command line parameter, running predefined CNFs"
         echo "Options are:"
-        echo "1 -- countbitswegner064.cnf"
+        echo "1 -- velev-pipe-uns-1.0-9.cnf"
         echo "2 -- goldb-heqc-i10mul.cnf"
         echo "3 -- Haystacks-ext-13_c18.cnf"
         echo "4 -- NONE"
@@ -49,8 +49,7 @@ if [ "$NEXT_OP" == "" ]; then
         read -p "Which CNF do you want to run? " myinput
         case $myinput in
             ["1"]* )
-                echo "removed."
-                exit -1
+                FNAME="velev-pipe-uns-1.0-9.cnf"
                 break;;
             [2]* )
                 FNAME="goldb-heqc-i10mul.cnf";

@@ -769,13 +769,11 @@ struct analyze_bumped_smaller {
 
 template<bool update_bogoprops>
 void Searcher::analyze_conflict(
-    const PropBy confl
-    , uint32_t& out_btlevel
-    , uint32_t& glue
-    , uint32_t&
-    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-    glue_before_minim
-    #endif
+    const PropBy confl,
+    uint32_t& out_btlevel,
+    uint32_t& glue,
+    [[maybe_unused]] uint32_t& glue_before_minim,
+    [[maybe_unused]] uint32_t& size_before_minim
 ) {
     //Set up environment
     #if defined(STATS_NEEDED_BRANCH) || defined(FINAL_PREDICTOR_BRANCH)
@@ -801,6 +799,7 @@ void Searcher::analyze_conflict(
     stats.litsRedNonMin += learnt_clause.size();
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     glue_before_minim = calc_glue(learnt_clause);
+    size_before_minim = learnt_clause.size();
     #endif
     minimize_learnt_clause<update_bogoprops>();
     stats.litsRedFinal += learnt_clause.size();
@@ -831,6 +830,7 @@ void Searcher::analyze_conflict(
         }
         if (doit) {
             minimise_redundant_more_more(learnt_clause);
+            glue = calc_glue(learnt_clause);
         }
     }
 
@@ -1018,11 +1018,13 @@ template void Searcher::analyze_conflict<true>(const PropBy confl
     , uint32_t& out_btlevel
     , uint32_t& glue
     , uint32_t& glue_before_minim
+    , uint32_t& size_before_minim
 );
 template void Searcher::analyze_conflict<false>(const PropBy confl
     , uint32_t& out_btlevel
     , uint32_t& glue
     , uint32_t& glue_before_minim
+    , uint32_t& size_before_minim
 );
 
 bool Searcher::subset(const vector<Lit>& A, const Clause& B)
@@ -1610,8 +1612,10 @@ void Searcher::dump_var_for_learnt_cl(const uint32_t v,
 
 #ifdef STATS_NEEDED
 void Searcher::dump_sql_clause_data(
-    const uint32_t orig_glue
+    const uint32_t glue
+    , const uint32_t size
     , const uint32_t glue_before_minim
+    , const uint32_t size_before_minim
     , const uint32_t old_decision_level
     , const uint64_t clid
     , const bool is_decision
@@ -1634,10 +1638,11 @@ void Searcher::dump_sql_clause_data(
         solver
         , clid
         , restartID
-        , orig_glue
+        , glue
         , glue_before_minim
+        , size
+        , size_before_minim
         , decisionLevel()
-        , learnt_clause.size()
         , antec_data
         , old_decision_level
         , trail.size()
@@ -1719,6 +1724,7 @@ Clause* Searcher::handle_last_confl(
     const uint32_t glue,
     [[maybe_unused]] const uint32_t old_decision_level,
     [[maybe_unused]] const uint32_t glue_before_minim,
+    [[maybe_unused]] const uint32_t size_before_minim,
     [[maybe_unused]] const bool is_decision,
     [[maybe_unused]] const uint32_t connects_num_communities
 ) {
@@ -1819,7 +1825,9 @@ Clause* Searcher::handle_last_confl(
         dump_this_many_cldata_in_stream--;
         dump_sql_clause_data(
             glue
+            , learnt_clause.size()
             , glue_before_minim
+            , size_before_minim
             , old_decision_level
             , clauseID
             , is_decision
@@ -1861,11 +1869,13 @@ bool Searcher::handle_conflict(PropBy confl)
     uint32_t backtrack_level;
     uint32_t glue;
     uint32_t glue_before_minim;
+    uint32_t size_before_minim;
     analyze_conflict<false>(
         confl
         , backtrack_level  //return backtrack level here
         , glue             //return glue here
         , glue_before_minim         //return glue before minimization here
+        , size_before_minim         //return glue before minimization here
     );
     solver->datasync->signal_new_long_clause(learnt_clause);
     #ifdef USE_GPU
@@ -1919,6 +1929,7 @@ bool Searcher::handle_conflict(PropBy confl)
         glue,
         old_decision_level,
         glue_before_minim,
+        size_before_minim,
         false, // is decision?
         connects_num_communities
     );
@@ -1942,6 +1953,7 @@ bool Searcher::handle_conflict(PropBy confl)
             learnt_clause.size(), // glue is the number of decisions, i.e. the size of decision clause
             old_decision_level,
             learnt_clause.size(), // minimized glue is the same as glue before minim
+            learnt_clause.size(),
             true, // is decision?
             #ifdef STATS_NEEDED
             calc_connects_num_communities(learnt_clause)
