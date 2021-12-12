@@ -744,7 +744,7 @@ void CNF::add_drat(FILE* os, bool add_ID) {
         delete drat;
 
     if (add_ID) {
-        drat = new DratFile<true>(interToOuterMain);
+        drat = new DratFile<true, true>(interToOuterMain);
     } else {
         drat = new DratFile<false>(interToOuterMain);
     }
