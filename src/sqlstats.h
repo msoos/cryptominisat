@@ -23,10 +23,13 @@ THE SOFTWARE.
 #ifndef __SQLSTATS_H__
 #define __SQLSTATS_H__
 
-#include "satzilla_features.h"
 #include "searchstats.h"
 #include "vardata.h"
 #include "searchhist.h"
+
+#ifdef STATS_NEEDED
+#include "satzilla_features.h"
+#endif
 
 namespace CMSat {
 
@@ -64,13 +67,13 @@ public:
         , uint64_t mem_used_mb
     ) = 0;
 
+    #ifdef STATS_NEEDED
     virtual void satzilla_features(
         const Solver* solver
         , const Searcher* search
         , const SatZillaFeatures& satzilla_feat
     ) = 0;
 
-    #ifdef STATS_NEEDED
     virtual void restart(
         const uint32_t restartID
         , const Restart rest_type

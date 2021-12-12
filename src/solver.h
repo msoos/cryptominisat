@@ -35,10 +35,12 @@ THE SOFTWARE.
 #include "solvertypes.h"
 #include "propengine.h"
 #include "searcher.h"
-#include "satzilla_features.h"
 #include "searchstats.h"
 #ifdef CMS_TESTING_ENABLED
 #include "gtest/gtest_prod.h"
+#endif
+#ifdef STATS_NEEDED
+#include "satzilla_features.h"
 #endif
 
 namespace CMSat {
@@ -268,13 +270,10 @@ class Solver : public Searcher
         void set_sqlite(string filename);
         //Not Private for testing (maybe could be called from outside)
         bool renumber_variables(bool must_renumber = true);
-        SatZillaFeatures calculate_satzilla_features();
-        SatZillaFeatures last_solve_satzilla_feature;
+
         vector<OrGate> get_recovered_or_gates();
         vector<ITEGate> get_recovered_ite_gates();
         void remove_and_clean_all();
-
-
         vector<Lit> get_toplevel_units_internal(bool outer_numbering) const;
 
         #ifdef USE_GAUSS
@@ -304,6 +303,8 @@ class Solver : public Searcher
         #ifdef STATS_NEEDED
         void stats_del_cl(Clause* cl);
         void stats_del_cl(ClOffset offs);
+        SatZillaFeatures calculate_satzilla_features();
+        SatZillaFeatures last_solve_satzilla_feature;
         #endif
 
         //Helper

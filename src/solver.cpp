@@ -56,7 +56,6 @@ THE SOFTWARE.
 #include "intree.h"
 #include "satzilla_features_calc.h"
 #include "GitSHA1.h"
-#include "satzilla_features_to_reconf.h"
 #include "trim.h"
 #include "streambuffer.h"
 #include "gaussian.h"
@@ -3274,6 +3273,7 @@ uint32_t Solver::num_active_vars() const
     return numActive;
 }
 
+#ifdef STATS_NEEDED
 SatZillaFeatures Solver::calculate_satzilla_features()
 {
     latest_satzilla_feature_calc++;
@@ -3320,6 +3320,7 @@ SatZillaFeatures Solver::calculate_satzilla_features()
 
     return satzilla_feat;
 }
+#endif
 
 void Solver::check_implicit_stats(const bool onlypairs) const
 {

@@ -24,9 +24,12 @@ THE SOFTWARE.
 #define SQLITESTATS_H__
 
 #include "sqlstats.h"
-#include "satzilla_features.h"
 #include <sqlite3.h>
 #include <map>
+
+#ifdef STATS_NEEDED
+#include "satzilla_features.h"
+#endif
 
 namespace CMSat {
 
@@ -60,13 +63,13 @@ public:
         , uint64_t mem_used_mb
     ) override;
 
+    #ifdef STATS_NEEDED
     void satzilla_features(
         const Solver* solver
         , const Searcher* search
         , const SatZillaFeatures& satzilla_feat
     ) override;
 
-    #ifdef STATS_NEEDED
     virtual void restart(
         const uint32_t restartID
         , const Restart rest_type

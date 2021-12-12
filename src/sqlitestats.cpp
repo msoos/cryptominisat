@@ -467,6 +467,7 @@ void SQLiteStats::time_passed_min(
     run_sqlite_step(stmtTimePassed, "timepassed", bindAt);
 }
 
+#ifdef STATS_NEEDED
 void SQLiteStats::satzilla_features(
     const Solver* solver
     , const Searcher* search
@@ -558,7 +559,6 @@ void SQLiteStats::satzilla_features(
     run_sqlite_step(stmtFeat, "satzilla_features", bindAt);
 }
 
-#ifdef STATS_NEEDED
 void SQLiteStats::restart(
     const uint32_t restartID
     , const Restart rest_type

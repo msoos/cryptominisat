@@ -131,9 +131,6 @@ set(cryptoms_lib_files
     reducedb.cpp
     bva.cpp
     intree.cpp
-    satzilla_features_calc.cpp
-    satzilla_features_to_reconf.cpp
-    satzilla_features.cpp
     searchstats.cpp
     xorfinder.cpp
     cardfinder.cpp
@@ -188,6 +185,8 @@ if (STATS_NEEDED)
     set(cryptoms_lib_files
         ${cryptoms_lib_files}
         community_finder.cpp
+        satzilla_features_calc.cpp
+        satzilla_features.cpp
     )
 endif()
 

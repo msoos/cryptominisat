@@ -2489,7 +2489,7 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
 
 inline void Searcher::dump_search_loop_stats(double myTime)
 {
-    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+    #if defined(STATS_NEEDED)
     check_calc_satzilla_features();
     #if defined(STATS_NEEDED_BRANCH)
     check_calc_vardist_features();
