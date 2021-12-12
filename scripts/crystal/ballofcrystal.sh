@@ -110,7 +110,7 @@ if [ "$SKIP" != "1" ]; then
     rm -f $FNAMEOUT.lemma*
     )
 
-    set -x
+    set -e
 
     ########################
     # Build statistics-gathering CryptoMiniSat
@@ -154,6 +154,7 @@ if [ "$SKIP" != "1" ]; then
 fi
 
 (
+set -e
 cd "$FNAME-dir"
 
 ########################
