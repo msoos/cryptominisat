@@ -421,7 +421,8 @@ class QueryDatRem(helper.QueryHelper):
 
 
         print("Total: %d of which zero_use: %d" % (total, zero_use))
-        if zero_use == 0 or zero_use/total < 0.01:
+        # grain-53-80-0s0-seed-125-4-init-35.cnf.out actually has only 0.0098 use (i.e. 0.98%)
+        if zero_use == 0 or zero_use/total < 0.009:
             print("ERROR: Zero use is very low, this is almost surely a bug!")
             exit(-1)
 
