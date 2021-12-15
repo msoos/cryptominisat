@@ -211,6 +211,7 @@ void EGaussian::select_columnorder() {
 }
 
 void EGaussian::fill_matrix() {
+    assert(solver->trail_size() == solver->qhead);
     var_to_col.clear();
 
     // decide which variable in matrix column and the number of rows
@@ -288,20 +289,16 @@ bool EGaussian::clean_xors()
 bool EGaussian::full_init(bool& created) {
     assert(solver->ok);
     assert(solver->decisionLevel() == 0);
-    bool do_again_gauss = true;
     created = true;
-    if (!clean_xors()) {
-        return false;
-    }
 
-    while (do_again_gauss) {
-        do_again_gauss = false;
+    uint32_t trail_before;
+    while (true) {
+        trail_before = solver->trail_size();
 
         if (!solver->clauseCleaner->clean_xor_clauses(xorclauses)) {
             if (solver->conf.verbosity >= 5) {
                 cout << "c clean_xor_clauses lead to UNSAT" << endl;
             }
-            return false;
         }
 
         fill_matrix();
@@ -322,8 +319,6 @@ bool EGaussian::full_init(bool& created) {
                 return false;
                 break;
             case gret::prop:
-                do_again_gauss = true;
-
                 assert(solver->decisionLevel() == 0);
                 solver->ok = (solver->propagate<false>().isNULL());
                 if (!solver->ok) {
@@ -335,6 +330,20 @@ bool EGaussian::full_init(bool& created) {
                 break;
             default:
                 break;
+        }
+
+        //Let's make sure we do prop
+        solver->ok = (solver->propagate<false>().isNULL());
+        if (!solver->ok) {
+            if (solver->conf.verbosity >= 5) {
+                cout << "c eliminate & adjust matrix during init lead to UNSAT" << endl;
+            }
+            return false;
+        }
+
+        //Let's exit if nothing new happened
+        if (solver->trail_size() == trail_before) {
+            break;
         }
     }
 
@@ -435,7 +444,9 @@ void EGaussian::eliminate() {
                 if (k_row != row_i) {
                     if ((*k_row)[col]) {
                         (*k_row).xor_in(*row_i);
-                        xor_in_bdd(k, row);
+                        if (solver->drat->enabled()) {
+                            xor_in_bdd(k, row);
+                        }
                     }
                 }
             }
@@ -449,6 +460,7 @@ void EGaussian::eliminate() {
 
 xor_constraint* EGaussian::bdd_create(const uint32_t row_n)
 {
+    assert(solver->drat->enabled());
     solver->drat->flush();
     xor_set xset;
     cout << "XSET generation..." << endl;
@@ -510,23 +522,19 @@ gret EGaussian::adjust_matrix()
                 tmp_clause[0] = Lit(tmp_clause[0].var(), xorEqualFalse);
                 assert(solver->value(tmp_clause[0].var()) == l_Undef);
                 solver->enqueue<false>(tmp_clause[0]); // propagation
-                xor_constraint* bdd;
                 if (solver->drat->enabled()) {
-                    bdd = bdd_create(row_n);
-                }
-
-                ilist out = ilist_new(1);
-                ilist_resize(out, 1);
-                out[0] = (tmp_clause[0].var()+1) * (tmp_clause[0].sign() ? -1 :1);
-                assert_clause(out);
-                if (solver->drat->enabled()) {
+                    xor_constraint* bdd = bdd_create(row_n);
+                    ilist out = ilist_new(1);
+                    ilist_resize(out, 1);
+                    out[0] = (tmp_clause[0].var()+1) * (tmp_clause[0].sign() ? -1 :1);
+                    assert_clause(out);
                     delete bdd;
                 }
 
-                //#ifdef VERBOSE_DEBUG
+                #ifdef VERBOSE_DEBUG
                 cout << "-> UNIT during adjust: " << tmp_clause[0] << endl;
-                //cout << "-> Satisfied XORs set for row: " << row_n << endl;
-                //#endif
+                cout << "-> Satisfied XORs set for row: " << row_n << endl;
+                #endif
                 satisfied_xors[row_n] = 1;
                 #ifdef SLOW_DEBUG
                 assert(check_row_satisfied(row_n));

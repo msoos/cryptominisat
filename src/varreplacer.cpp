@@ -264,13 +264,20 @@ bool VarReplacer::perform_replace()
     }
     solver->clean_occur_from_removed_clauses_only_smudged();
     attach_delayed_attach();
+
+    //Replace XORs
     if (!replace_xor_clauses(solver->xorclauses)) {
         goto end;
     }
-
     if (!replace_xor_clauses(solver->xorclauses_unused)) {
         goto end;
     }
+
+    #ifdef USE_GAUSS
+    //nothing to replace on XORs in GJE
+    assert(solver->gmatrices.empty());
+    #endif
+
     for(auto& v: solver->removed_xorclauses_clash_vars) {
         v = get_var_replaced_with_fast(v);
     }

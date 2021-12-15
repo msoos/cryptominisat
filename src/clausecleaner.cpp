@@ -331,7 +331,9 @@ bool ClauseCleaner::clean_one_xor(Xor& x)
     bool rhs = x.rhs;
     size_t i = 0;
     size_t j = 0;
+    #ifdef VERBOSE_DEBUG
     cout << "Trying to clean XOR: " << x << endl;
+    #endif
     for(size_t size = x.size(); i < size; i++) {
         uint32_t var = x[i];
         if (solver->value(var) != l_Undef) {
@@ -344,9 +346,9 @@ bool ClauseCleaner::clean_one_xor(Xor& x)
         x.resize(j);
         x.rhs = rhs;
         //x.create_bdd_xor();
-//#ifdef VERBOSE_DEBUG
+        #ifdef VERBOSE_DEBUG
         cout << "cleaned XOR: " << x << endl;
-//#endif
+        #endif
     }
 
     switch(x.size()) {

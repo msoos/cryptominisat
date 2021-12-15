@@ -225,7 +225,7 @@ void XorFinder::find_xors()
 
 void XorFinder::print_found_xors()
 {
-    if (solver->conf.verbosity >= 1) {
+    if (solver->conf.verbosity >= 5) {
         cout << "c Found XORs: " << endl;
         for(vector<Xor>::const_iterator
             it = xors.begin(), end = xors.end()
@@ -678,12 +678,12 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                     x_new.bdd = xs.sum();
                 }
 
-                //#ifdef VERBOSE_DEBUG
+                #ifdef VERBOSE_DEBUG
                 cout << "x1: " << x0 << " -- at idx: " << idxes[0] << endl;
                 cout << "x2: " << x1 << " -- at idx: " << idxes[1] << endl;
                 cout << "clashed on var: " << clash_var+1 << endl;
                 cout << "final: " << x_new <<  " -- at idx: " << this_xors.size() << endl;
-                //#endif
+                #endif
                 changed = true;
                 this_xors.push_back(x_new);
                 for(uint32_t v2: x_new) {
@@ -705,7 +705,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
         }
     }
 
-    if (solver->conf.verbosity >= 1) {
+    if (solver->conf.verbosity >= 5) {
         cout << "c Finished XOR-ing together XORs. " << endl;
         size_t at = 0;
         for(const auto& x: this_xors) {
