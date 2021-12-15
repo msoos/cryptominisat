@@ -61,7 +61,7 @@ public:
                 l[i] = vars[i]+1;
             }
             bdd = new xor_constraint(l, rhs);
-            cout << "CREATE" << endl;
+//             cout << "CREATE" << endl;
         }
         return bdd;
     }

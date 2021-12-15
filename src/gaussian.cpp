@@ -463,14 +463,14 @@ xor_constraint* EGaussian::bdd_create(const uint32_t row_n)
     assert(solver->drat->enabled());
     solver->drat->flush();
     xor_set xset;
-    cout << "XSET generation..." << endl;
+//     cout << "XSET generation..." << endl;
     for(uint32_t i = 0; i < bdd_matrix[row_n].size(); i++) {
         if (bdd_matrix[row_n][i]) {
             xset.add(*xorclauses[i].create_bdd_xor());
-            cout << "Adding row: " << i << endl;
+//             cout << "Adding row: " << i << endl;
         }
     }
-    cout<< "XSET generation end." << endl;
+//     cout<< "XSET generation end." << endl;
     return xset.sum();
 }
 
