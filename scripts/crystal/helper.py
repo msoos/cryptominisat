@@ -32,7 +32,7 @@ import time
 import os.path
 import sqlite3
 import functools
-import ccg
+from ccg import *
 
 try:
     from termcolor import cprint

@@ -23,7 +23,7 @@ import numpy as np
 import pandas as pd
 import xgboost as xgb
 import os
-import ccg
+from ccg import *
 
 # to test memory safety
 #import gc
