@@ -123,4 +123,4 @@ exit 0
 
 # simple run:
 
-# ../cldata_predict.py forever-comb-cut1-3.0-cut2-25.0-limit-1000.dat --tier forever --regressor linear --xgboostest 10 --weight 0 --xgboostminchild 300 --xboostmaxdepth=4 --features "best_only" --bestfeatfile ../best_features-rdb0-only.txt
+# ./cryptominisat5 goldb-heqc-i10mul.cnf --simdrat 1 --printsol 0 --predloc ./data/15-dec-b1bd8f74bc2b42-cut1-3.0-cut2-25.0-limit-10000-est10-xbmin10-xbmd4-regxgb-subs1.0/ --predtype py --predbestfeats ../scripts/crystal/best_features-correlation2.txt --predtables 000
