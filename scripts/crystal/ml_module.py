@@ -25,6 +25,7 @@ import xgboost as xgb
 import ast
 import os
 import helper
+import ccg
 
 # to test memory safety
 #import gc
@@ -172,7 +173,7 @@ def set_up_features(features_fname):
     global feat_gen_funcs
     best_features = get_features(features_fname)
     for i, feat in zip(range(len(best_features)), best_features):
-        feat_gen_expr = helper.ccg.to_source(ast.parse(feat))
+        feat_gen_expr = ccg.to_source(ast.parse(feat))
         feat_gen_exprs.append(feat_gen_expr)
         create_function = "def a%d(df): return %s" % (i, feat_gen_expr)
         exec(create_function)
