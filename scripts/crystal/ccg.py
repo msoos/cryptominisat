@@ -18,6 +18,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
+import ast
+
 BINOP_SYMBOLS = {}
 BINOP_SYMBOLS[ast.Add] = '+'
 BINOP_SYMBOLS[ast.Sub] = '-'
