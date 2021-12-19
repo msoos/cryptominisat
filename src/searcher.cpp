@@ -2639,7 +2639,7 @@ lbool Searcher::distill_clauses_if_needed()
         if (!solver->distill_long_cls->distill(true, false)) {
             return l_False;
         }
-        next_distill = std::min<double>(
+        next_distill = std::max<double>(
             sumConflicts + sumConflicts * conf.distill_increase_conf_ratio + 7000,
             sumConflicts + conf.distill_min_confl);
     }
