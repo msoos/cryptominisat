@@ -353,7 +353,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         #ifdef FINAL_PREDICTOR
         , distill_sort(3)
         #else
-        , distill_sort(0)
+        , distill_sort(1)
         #endif
 
         //Memory savings
