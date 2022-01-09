@@ -30,7 +30,7 @@ THE SOFTWARE.
 #include <xgboost/c_api.h>
 #include "clause.h"
 
-#define PRED_COLS 20
+#define PRED_COLS 22
 
 using std::vector;
 
