@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required(VERSION 3.3 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 11)
 
@@ -756,8 +756,6 @@ if(NOT Boost_FOUND)
     message(STATUS "Only building executable with few command-line options because the boost program_options library were not available")
 else()
     message(STATUS "Boost -- found at library: ${Boost_LIBRARIES}")
-    message(STATUS "Boost -- adding '${Boost_LIBRARY_DIRS}' to link directories")
-    link_directories(${Boost_LIBRARY_DIRS})
 endif()
 
 # -----------------------------------------------------------------------------
