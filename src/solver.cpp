@@ -686,14 +686,14 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
     return true;
 }
 
-bool Solver::addClause(const vector<Lit>& lits, bool red)
+bool Solver::addClause(const vector<Lit>& lits)
 {
     vector<Lit> ps = lits;
-    return Solver::addClauseInt(ps, red);
+    return Solver::addClauseInt(ps);
 }
 
 //Takes OUTER (NOT *outside*) variables
-bool Solver::addClauseInt(vector<Lit>& ps, bool red)
+bool Solver::addClauseInt(vector<Lit>& ps)
 {
     if (conf.perform_occur_based_simp && occsimplifier->getAnythingHasBeenBlocked()) {
         std::cerr
@@ -721,7 +721,7 @@ bool Solver::addClauseInt(vector<Lit>& ps, bool red)
     }
     Clause *cl = add_clause_int(
         ps
-        , red
+        , false //redundant?
         , NULL //default stats
         , true //yes, attach
         , pFinalCl
@@ -758,24 +758,7 @@ bool Solver::addClauseInt(vector<Lit>& ps, bool red)
 
     if (cl != NULL) {
         ClOffset offset = cl_alloc.get_offset(cl);
-        if (!red) {
-            longIrredCls.push_back(offset);
-        } else {
-            #ifndef FINAL_PREDICTOR
-            assert(!cl->stats.locked_for_data_gen);
-            cl->stats.which_red_array = 2;
-            if (cl->stats.glue <= conf.glue_put_lev0_if_below_or_eq) {
-                cl->stats.which_red_array = 0;
-            } else if (cl->stats.glue <= conf.glue_put_lev1_if_below_or_eq
-                && conf.glue_put_lev1_if_below_or_eq != 0
-            ) {
-                cl->stats.which_red_array = 1;
-            }
-            #else
-            cl->stats.which_red_array = 2;
-            #endif
-            longRedCls[cl->stats.which_red_array].push_back(offset);
-        }
+        longIrredCls.push_back(offset);
     }
 
     zeroLevAssignsByCNF += trail.size() - origTrailSize;
@@ -2952,7 +2935,7 @@ void Solver::add_in_partial_solving_stats()
     sumPropStats += propStats;
 }
 
-bool Solver::add_clause_outside(const vector<Lit>& lits, bool red)
+bool Solver::add_clause_outside(const vector<Lit>& lits)
 {
     if (!ok) {
         return false;
@@ -2961,7 +2944,7 @@ bool Solver::add_clause_outside(const vector<Lit>& lits, bool red)
     check_too_large_variable_number(lits);
     #endif
     back_number_from_outside_to_outer(lits);
-    return addClauseInt(back_number_from_outside_to_outer_tmp, red);
+    return addClauseInt(back_number_from_outside_to_outer_tmp);
 }
 
 lbool Solver::probe_inter(Lit l, uint32_t& min_props)
