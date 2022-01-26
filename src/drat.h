@@ -33,10 +33,11 @@ using std::vector;
 
 namespace CMSat {
 
-enum DratFlag{fin, deldelay, del, findelay, add};
+enum DratFlag{fin, deldelay, del, findelay, add, origcl};
 
-struct Drat
+class Drat
 {
+public:
     Drat()
     {
     }
@@ -48,6 +49,10 @@ struct Drat
     virtual bool enabled()
     {
         return false;
+    }
+
+    virtual void set_sumconflicts_ptr(uint64_t*)
+    {
     }
 
     virtual void forget_delay()
@@ -107,8 +112,9 @@ struct Drat
 };
 
 template<bool add_ID, bool bindrat = false>
-struct DratFile: public Drat
+class DratFile: public Drat
 {
+public:
     DratFile(vector<uint32_t>& _interToOuterMain) :
         interToOuterMain(_interToOuterMain)
     {
@@ -128,14 +134,20 @@ struct DratFile: public Drat
         delete[] del_buf;
     }
 
-    #ifdef STATS_NEEDED
-    virtual Drat& operator<<(const uint64_t clauseID_or_sumConflicts) override
+    virtual void set_sumconflicts_ptr(uint64_t* _sumConflicts)
     {
-        if (!id_set) {
-            ID = clauseID_or_sumConflicts;
-            id_set = true;
+        sumConflicts = _sumConflicts;
+    }
+
+    #ifdef STATS_NEEDED
+    virtual Drat& operator<<(const uint64_t clauseID) override
+    {
+        if (must_delete_next) {
+            byteDRUPdID(clauseID);
+            byteDRUPdID(*sumConflicts);
         } else {
-            sumConflicts = clauseID_or_sumConflicts;
+            byteDRUPaID(clauseID);
+            byteDRUPaID(*sumConflicts);
         }
         return *this;
     }
@@ -144,57 +156,6 @@ struct DratFile: public Drat
     virtual FILE* getFile() override
     {
         return drup_file;
-    }
-
-    void byteDRUPa(const Lit l)
-    {
-        uint32_t v = l.var();
-        v = interToOuterMain[v];
-        if (bindrat) {
-            unsigned int u = 2 * (v + 1) + l.sign();
-            do {
-                *buf_ptr++ = (u & 0x7f) | 0x80;
-                buf_len++;
-                u = u >> 7;
-            } while (u);
-            // End marker of this unsigned number
-            *(buf_ptr - 1) &= 0x7f;
-        } else {
-            uint32_t num = sprintf(
-                (char*)buf_ptr, "%s%d ", (l.sign() ? "-": ""), l.var()+1);
-            buf_ptr+=num;
-            buf_len+=num;
-        }
-    }
-
-    void byteDRUPaID(const uint64_t id)
-    {
-        for(unsigned i = 0; i < 6; i++) {
-            *buf_ptr++ = (id>>(8*i))&0xff;
-            buf_len++;
-        }
-    }
-
-    void byteDRUPd(Lit l)
-    {
-        uint32_t v = l.var();
-        v = interToOuterMain[v];
-        if (bindrat) {
-            unsigned int u = 2 * (v + 1) + l.sign();
-            do {
-                *del_ptr++ = (u & 0x7f) | 0x80;
-                del_len++;
-                u = u >> 7;
-            } while (u);
-
-            // End marker of this unsigned number
-            *(del_ptr - 1) &= 0x7f;
-        } else {
-            uint32_t num = sprintf(
-                (char*)del_ptr, "%s%d ", (l.sign() ? "-": ""), l.var()+1);
-            del_ptr+=num;
-            del_len+=num;
-        }
     }
 
     void flush() override
@@ -242,40 +203,18 @@ struct DratFile: public Drat
     bool delete_filled = false;
     bool must_delete_next = false;
 
-    Drat& operator<<(const Lit lit) override
-    {
-        if (must_delete_next) {
-            byteDRUPd(lit);
-        } else {
-            byteDRUPa(lit);
-        }
-
-        return *this;
-    }
-
     Drat& operator<<(const Clause& cl) override
     {
         if (must_delete_next) {
+            byteDRUPdID(cl.stats.ID);
             for(const Lit l: cl) {
                 byteDRUPd(l);
             }
         } else {
+            byteDRUPaID(cl.stats.ID);
             for(const Lit l: cl) {
                 byteDRUPa(l);
             }
-            #ifdef STATS_NEEDED
-            id_set = true;
-            if (is_add && add_ID) {
-                ID = cl.stats.ID;
-
-                // actually... for on-the-fly subsumed irred clauses can have an ID.
-                //assert(!(ID != 0 && !cl.red()));
-
-                //redundant clauses MUST have a valid ID
-                //actually, they don't, in case they got merged
-                //assert(!(ID == 0 && cl.red()));
-            }
-            #endif
         }
 
         return *this;
@@ -320,17 +259,6 @@ struct DratFile: public Drat
                         *buf_ptr++ = '\n';
                         buf_len+=2;
                     }
-                    #ifdef STATS_NEEDED
-                    if (is_add && add_ID) {
-                        byteDRUPaID(ID);
-                        ID = 0;
-                        id_set = false;
-
-                        assert(sumConflicts != std::numeric_limits<int64_t>::max());
-                        byteDRUPaID(sumConflicts);
-                        sumConflicts = std::numeric_limits<int64_t>::max();
-                    }
-                    #endif
                     if (buf_len > 1048576) {
                         binDRUP_flush();
                     }
@@ -364,12 +292,6 @@ struct DratFile: public Drat
                 break;
 
             case DratFlag::add:
-                #ifdef STATS_NEEDED
-                is_add = true;
-                ID = 0;
-                id_set = false;
-                sumConflicts = std::numeric_limits<int64_t>::max();
-                #endif
                 if (bindrat) {
                     *buf_ptr++ = 'a';
                     buf_len++;
@@ -377,11 +299,6 @@ struct DratFile: public Drat
                 break;
 
             case DratFlag::del:
-                #ifdef STATS_NEEDED
-                is_add = false;
-                ID = 0;
-                id_set = false;
-                #endif
                 forget_delay();
                 *buf_ptr++ = 'd';
                 buf_len++;
@@ -390,18 +307,114 @@ struct DratFile: public Drat
                     buf_len++;
                 }
                 break;
+
+            case DratFlag::origcl:
+                forget_delay();
+                *buf_ptr++ = 'o';
+                buf_len++;
+                if (!bindrat) {
+                    *buf_ptr++ = ' ';
+                    buf_len++;
+                }
+
+                break;
+
         }
 
         return *this;
     }
 
+private:
+    Drat& operator<<(const Lit lit) override
+    {
+        if (must_delete_next) {
+            byteDRUPd(lit);
+        } else {
+            byteDRUPa(lit);
+        }
+
+        return *this;
+   }
+
+    void byteDRUPa(const Lit l)
+    {
+        uint32_t v = l.var();
+        v = interToOuterMain[v];
+        if (bindrat) {
+            unsigned int u = 2 * (v + 1) + l.sign();
+            do {
+                *buf_ptr++ = (u & 0x7f) | 0x80;
+                buf_len++;
+                u = u >> 7;
+            } while (u);
+            // End marker of this unsigned number
+            *(buf_ptr - 1) &= 0x7f;
+        } else {
+            uint32_t num = sprintf(
+                (char*)buf_ptr, "%s%d ", (l.sign() ? "-": ""), l.var()+1);
+            buf_ptr+=num;
+            buf_len+=num;
+        }
+    }
+
+    void byteDRUPaID(const uint64_t id)
+    {
+        if (bindrat) {
+            for(unsigned i = 0; i < 6; i++) {
+                *buf_ptr++ = (id>>(8*i))&0xff;
+                buf_len++;
+            }
+        } else {
+            uint32_t num = sprintf(
+                (char*)buf_ptr, "%d ", id);
+            buf_ptr+=num;
+            buf_len+=num;
+        }
+    }
+
+    void byteDRUPdID(const uint64_t id)
+    {
+        if (bindrat) {
+            for(unsigned i = 0; i < 6; i++) {
+                *del_ptr++ = (id>>(8*i))&0xff;
+                del_len++;
+            }
+        } else {
+            uint32_t num = sprintf(
+                (char*)del_ptr, "%d ", id);
+            del_ptr+=num;
+            del_len+=num;
+        }
+    }
+
+    void byteDRUPd(Lit l)
+    {
+        uint32_t v = l.var();
+        v = interToOuterMain[v];
+        if (bindrat) {
+            unsigned int u = 2 * (v + 1) + l.sign();
+            do {
+                *del_ptr++ = (u & 0x7f) | 0x80;
+                del_len++;
+                u = u >> 7;
+            } while (u);
+
+            // End marker of this unsigned number
+            *(del_ptr - 1) &= 0x7f;
+        } else {
+            uint32_t num = sprintf(
+                (char*)del_ptr, "%s%d ", (l.sign() ? "-": ""), l.var()+1);
+            del_ptr+=num;
+            del_len+=num;
+        }
+    }
+
     FILE* drup_file = NULL;
     vector<uint32_t>& interToOuterMain;
+    uint64_t* sumConflicts;
     #ifdef STATS_NEEDED
-    int64_t ID = 0;
-    int64_t sumConflicts = std::numeric_limits<int64_t>::max();
-    bool is_add = true;
-    bool id_set = false;
+    bool id_add_set = false;
+    bool id_del_set = false;
     #endif
 };
 

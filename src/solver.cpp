@@ -96,6 +96,7 @@ Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter
     Searcher(_conf, this, _must_interrupt_inter)
 {
     sqlStats = NULL;
+    drat->set_sumconflicts_ptr(&sumConflicts);
     intree = new InTree(this);
 
 #ifdef USE_BREAKID
@@ -445,11 +446,11 @@ Clause* Solver::add_clause_int(
             std::swap(ps[0], ps[i]);
         }
 
-        *drat << add << ps
+        *drat << add
         #ifdef STATS_NEEDED
-        << (cl_stats ? cl_stats->ID : 0)
-        << sumConflicts
+        << (cl_stats ? cl_stats->ID : clauseID)
         #endif
+        << ps
         << fin;
 
         if (drat_first != lit_Undef) {
@@ -692,7 +693,8 @@ bool Solver::addClause(const vector<Lit>& lits)
     return Solver::addClauseInt(ps);
 }
 
-//Takes OUTER (NOT *outside*) variables
+// Takes OUTER (NOT *outside*) variables
+// Input is ORIGINAL clause.
 bool Solver::addClauseInt(vector<Lit>& ps)
 {
     if (conf.perform_occur_based_simp && occsimplifier->getAnythingHasBeenBlocked()) {
@@ -701,6 +703,13 @@ bool Solver::addClauseInt(vector<Lit>& ps)
         << " enabled. Turn it off from conf.doBlockClauses"
         << endl;
         std::exit(-1);
+    }
+
+    ClauseStats stats;
+    if (drat->enabled()) {
+        stats.ID = clauseID;
+        *drat << origcl << clauseID << finalCl_tmp << fin;
+        clauseID++;
     }
 
     #ifdef VERBOSE_DEBUG
@@ -719,10 +728,11 @@ bool Solver::addClauseInt(vector<Lit>& ps)
         finalCl_tmp.clear();
         pFinalCl = &finalCl_tmp;
     }
+
     Clause *cl = add_clause_int(
         ps
         , false //redundant?
-        , NULL //default stats
+        , &stats
         , true //yes, attach
         , pFinalCl
         , false //add drat?

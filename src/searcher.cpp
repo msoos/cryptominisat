@@ -1742,20 +1742,17 @@ Clause* Searcher::handle_last_confl(
 
     Clause* cl;
     if (learnt_clause.size() <= 2) {
-        *drat << add << learnt_clause
-        #ifdef STATS_NEEDED
-        << (to_dump ? clauseID : 0)
-        << sumConflicts
-        #endif
+        *drat << add
+        << clauseID
+        << learnt_clause
+//         << sumConflicts
         << fin;
         cl = NULL;
     } else {
         cl = cl_alloc.Clause_new(learnt_clause
             , sumConflicts
-            #ifdef STATS_NEEDED
-            , to_dump ? clauseID : 0
-            #endif
-            );
+            , clauseID
+        );
         cl->isRed = true;
         cl->stats.glue = glue;
         #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
@@ -1803,9 +1800,7 @@ Clause* Searcher::handle_last_confl(
         solver->longRedCls[cl->stats.which_red_array].push_back(offset);
 
         *drat << add << *cl
-        #ifdef STATS_NEEDED
-        << sumConflicts
-        #endif
+//         << sumConflicts
         << fin;
     }
 
@@ -1826,11 +1821,8 @@ Clause* Searcher::handle_last_confl(
             , connects_num_communities
         );
     }
-
-    if (to_dump) {
-        clauseID++;
-    }
     #endif
+    clauseID++;
 
     if (cl) {
         #ifdef FINAL_PREDICTOR

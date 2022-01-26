@@ -146,7 +146,7 @@ struct ClauseStats
     };
     uint32_t last_touched = 0;
     #ifdef STATS_NEEDED
-    int64_t ID = 0;
+    int64_t ID;
     #endif
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
@@ -410,7 +410,7 @@ public:
 
         #ifdef STATS_NEEDED
         stats.ID = _ID;
-        assert(_ID >= 0);
+        assert(_ID > 0);
         #endif
         isFreed = false;
         mySize = ps.size();
