@@ -274,7 +274,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , num_conflicts_of_search_inc(1.4)
         , num_conflicts_of_search_inc_max(10)
         , max_num_simplify_per_solve_call(25)
-        /*, simplify_schedule_startup(
+        , simplify_schedule_startup(
             "sub-impl,"
             "breakid, "
             "distill-cls,distill-bins,"
@@ -286,11 +286,11 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "sub-cls-with-bin,"
             "bosphorus,"
             "sls,lucky"
-        )*/
-        , simplify_schedule_startup(
-            "breakid, "
-            "occ-bve,"
         )
+//         , simplify_schedule_startup(
+//             "breakid, "
+//             "occ-bve,"
+//         )
         //validated with run 8114195.wlm01
         , simplify_schedule_nonstartup(
             "scc-vrepl,"

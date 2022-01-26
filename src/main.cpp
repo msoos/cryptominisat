@@ -856,6 +856,9 @@ void Main::add_supported_options()
      ("maxmatrixrows", po::value(&conf.gaussconf.max_matrix_rows)->default_value(conf.gaussconf.max_matrix_rows)
         , "Set maximum no. of rows for gaussian matrix. Too large matrices"
         "should bee discarded for reasons of efficiency")
+     ("maxmatrixcols", po::value(&conf.gaussconf.max_matrix_columns)->default_value(conf.gaussconf.max_matrix_columns)
+        , "Set maximum no. of columns for gaussian matrix. Too large matrices"
+        "should bee discarded for reasons of efficiency")
     ("autodisablegauss", po::value(&conf.gaussconf.autodisable)->default_value(conf.gaussconf.autodisable)
         , "Automatically disable gauss when performing badly")
     ("minmatrixrows", po::value(&conf.gaussconf.min_matrix_rows)->default_value(conf.gaussconf.min_matrix_rows)
