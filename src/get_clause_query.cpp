@@ -301,7 +301,7 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
                         map_without_bva(tmp_cl);
                         out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
                         if (!all_in_one_go) {
-                            at++;
+                            xor_detached_at++;
                             return true;
                         } else {
                             out.push_back(lit_Undef);
