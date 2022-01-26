@@ -62,6 +62,7 @@ private:
     uint32_t comp_at_sum = std::numeric_limits<uint32_t>::max();
     uint32_t blocked_at = std::numeric_limits<uint32_t>::max();
     uint32_t blocked_at2 = std::numeric_limits<uint32_t>::max();
+    uint32_t xor_detached_at = std::numeric_limits<uint32_t>::max();
     uint32_t undef_at = std::numeric_limits<uint32_t>::max();
     bool simplified = false;
     bool bva_vars = false;

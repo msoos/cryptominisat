@@ -64,6 +64,7 @@ void GetClauseQuery::start_getting_small_clauses(
     blocked_at = 0;
     blocked_at2 = 0;
     undef_at = 0;
+    xor_detached_at = 0;
     bva_vars = _bva_vars;
     simplified = _simplified;
     if (simplified) {
@@ -278,6 +279,37 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
                 }
             }
             at++;
+        }
+
+        //Detached XOR clauses
+        if (solver->detached_xor_clauses) {
+            while(xor_detached_at < solver->detached_xor_repr_cls.size()) {
+                Clause* cl = solver->cl_alloc.ptr(
+                    solver->detached_xor_repr_cls[xor_detached_at]);
+                assert(cl->_xor_is_detached);
+                assert(cl->used_in_xor() && cl->used_in_xor_full());
+                if (cl->size() <= max_len) {
+                    if (!simplified) {
+                        tmp_cl = solver->clause_outer_numbered(*cl);
+                    } else {
+                        tmp_cl.clear();
+                        for(const auto& l: *cl) {
+                            tmp_cl.push_back(l);
+                        }
+                    }
+                    if (bva_vars || all_vars_outside(tmp_cl)) {
+                        map_without_bva(tmp_cl);
+                        out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
+                        if (!all_in_one_go) {
+                            at++;
+                            return true;
+                        } else {
+                            out.push_back(lit_Undef);
+                        }
+                    }
+                }
+                xor_detached_at++;
+            }
         }
 
         //Blocked clauses (already in OUTER notation)
