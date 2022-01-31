@@ -66,7 +66,6 @@ namespace CMSat {
         bool add_xor_clause(const std::vector<unsigned>& vars, bool rhs);
         bool add_bnn_clause(
             const std::vector<Lit>& lits,
-            const std::vector<signed>& int_ws,
             signed cutoff,
             unsigned out_var
         );

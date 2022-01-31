@@ -784,7 +784,6 @@ DLL_PUBLIC bool SATSolver::add_xor_clause(const std::vector<unsigned>& vars, boo
 
 DLL_PUBLIC bool SATSolver::add_bnn_clause(
     const std::vector<Lit>& lits,
-    const std::vector<signed>& int_ws,
     signed cutoff,
     unsigned out_var)
 {
@@ -801,7 +800,6 @@ DLL_PUBLIC bool SATSolver::add_bnn_clause(
 
         ret = data->solvers[0]->add_bnn_clause_outside(
             lits,
-            int_ws,
             cutoff,
             out_var);
         data->cls++;

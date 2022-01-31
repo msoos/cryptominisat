@@ -90,7 +90,6 @@ class DimacsParser
         //Reduce temp overhead
         vector<Lit> lits;
         vector<uint32_t> vars;
-        vector<int32_t> int_ws;
 
         size_t norm_clauses_added = 0;
         size_t xor_clauses_added = 0;
@@ -496,17 +495,6 @@ bool DimacsParser<C, S>::parse_and_add_bnn_clause(C& in)
         return false;
     }
 
-    // Read in integer weights
-    int_ws.clear();
-    for (uint32_t i = 0; i < lits.size(); i ++) {
-        int32_t parsed_w;
-        if (!in.parseInt(parsed_w, lineNum)) {
-            return false;
-        }
-        int_ws.push_back(parsed_w);
-    }
-    assert(lits.size() == int_ws.size());
-
     // Read cutoff
     int32_t cutoff;
     if (!in.parseInt(cutoff, lineNum)) {
@@ -531,7 +519,7 @@ bool DimacsParser<C, S>::parse_and_add_bnn_clause(C& in)
     }
     lineNum++;
 
-    solver->add_bnn_clause(lits, int_ws, cutoff, out_var);
+    solver->add_bnn_clause(lits, cutoff, out_var);
     bnn_clauses_added++;
     return true;
 }

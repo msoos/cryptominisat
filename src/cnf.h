@@ -245,17 +245,16 @@ public:
         int32_t val = 0;
         int32_t undefs = 0;
         for(const auto& p: bnn.in) {
-            assert(p.w >= 0);
-            if (value(p.lit) == l_Undef) {
-                undefs += p.w;
+            if (value(p) == l_Undef) {
+                undefs ++;
             }
-            if (value(p.lit) == l_True) {
-                val += p.w;
+            if (value(p) == l_True) {
+                val ++;
             }
         }
 
-        // we are over the cutoff no matter what undef is
-        if (val > bnn.cutoff) {
+        // we are at the cutoff no matter what undef is
+        if (val >= bnn.cutoff) {
             if (value(bnn.out) == l_False)
                 return l_False;
             if (value(bnn.out) == l_True)
@@ -263,7 +262,7 @@ public:
         }
 
         // we are under the cutoff no matter what undef is
-        if (val <= bnn.cutoff && val+undefs <= bnn.cutoff) {
+        if (val < bnn.cutoff && val+undefs < bnn.cutoff) {
             if (value(bnn.out) == l_True)
                 return l_False;
             if (value(bnn.out) == l_False)

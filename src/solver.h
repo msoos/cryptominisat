@@ -92,7 +92,6 @@ class Solver : public Searcher
         bool add_xor_clause_outside(const vector<uint32_t>& vars, bool rhs);
         bool add_bnn_clause_outside(
             const vector<Lit>& lits,
-            const vector<signed>& ws,
             const int32_t cutoff,
             uint32_t out_var);
         void set_var_weight(Lit lit, double weight);
@@ -270,8 +269,7 @@ class Solver : public Searcher
         );
         void add_bnn_clause_inter(
             vector<Lit>& lits,
-            const vector<int32_t>& ws,
-            const int32_t cutoff,
+            int32_t cutoff,
             Lit out
         );
 

@@ -145,13 +145,11 @@ void ClauseCleaner::clean_bnns_inter(vector<BNN*>& bnns)
         cout << "Cleaning clauses in vector<>" << endl;
     }
 
-    vector<ClOffset>::iterator s, ss, end;
-    size_t at = 0;
     for (auto& bnn: bnns) {
         if (clean_bnn(*bnn)) {
             for(const auto& l: bnn->in) {
-                solver->watches.smudge(l.lit);
-                solver->watches.smudge(~l.lit);
+                solver->watches.smudge(l);
+                solver->watches.smudge(~l);
             }
             solver->watches.smudge(bnn->out);
             solver->watches.smudge(~bnn->out);

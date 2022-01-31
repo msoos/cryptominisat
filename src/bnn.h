@@ -34,30 +34,6 @@ using std::make_pair;
 
 namespace CMSat {
 
-struct LitW {
-    LitW() {}
-
-    explicit LitW(Lit _lit, int32_t _w):
-        lit(_lit),
-        w(_w)
-    {}
-
-    Lit lit;
-    int32_t w;
-};
-
-struct BNN_Lit_Sorter {
-    bool operator()(const LitW& a, const LitW& b) {
-        return a.lit < b.lit;
-    }
-};
-
-struct BNN_Weight_Sorter {
-    bool operator()(const LitW& a, const LitW& b) {
-        return a.w > b.w;
-    }
-};
-
 class BNN
 {
 public:
@@ -66,29 +42,21 @@ public:
 
     explicit BNN(
         const vector<Lit>& _in,
-        const vector<int32_t>& _ws,
         const int32_t _cutoff,
         const Lit _out):
+        in(_in),
+        cutoff(_cutoff),
         out (_out)
     {
         assert(_in.size() > 0);
-
-        cutoff = (int32_t)_cutoff;
-        assert(_ws.size() == _in.size());
-        for(uint32_t i = 0; i < _ws.size(); i ++) {
-            LitW lw(_in[i], (int32_t)_ws[i]);
-            in.push_back(lw);
-        }
-
-//         std::sort(in.begin(), in.end(), BNN_Weight_Sorter);
     }
 
-    const LitW& operator[](const uint32_t at) const
+    const Lit& operator[](const uint32_t at) const
     {
         return in[at];
     }
 
-    LitW& operator[](const uint32_t at)
+    Lit& operator[](const uint32_t at)
     {
         return in[at];
     }
@@ -113,7 +81,7 @@ public:
         return in.empty();
     }
 
-    vector<LitW> in;
+    vector<Lit> in;
     int32_t cutoff;
     Lit out;
     bool isRemoved = false;
@@ -122,12 +90,12 @@ public:
 inline std::ostream& operator<<(std::ostream& os, const BNN& bnn)
 {
     for (uint32_t i = 0; i < bnn.size(); i++) {
-        os << "lit[" << bnn[i].lit << "]*" << bnn[i].w;
+        os << "lit[" << bnn[i] << "]";
 
         if (i+1 < bnn.size())
             os << " + ";
     }
-    os << " >  " << bnn.cutoff
+    os << " >=  " << bnn.cutoff
     << " -- outlit: " << bnn.out;
 
     return os;

@@ -276,6 +276,16 @@ void Searcher::normalClMinim()
             }
             #endif
 
+            case bnn_t: {
+                vector<Lit>* bnn_reason = get_bnn_reason(
+                    bnns[reason.getBNNidx()],
+                    learnt_clause[i]);
+                lits = bnn_reason->data();
+                size = bnn_reason->size()-1;
+                sumAntecedentsLits += size;
+                break;
+            }
+
             default:
                 release_assert(false);
                 std::exit(-1);
@@ -287,6 +297,7 @@ void Searcher::normalClMinim()
                 #ifdef USE_GAUSS
                 case xor_t:
                 #endif
+                case bnn_t:
                 case clause_t:
                     p = lits[k+1];
                     break;
@@ -632,16 +643,7 @@ void Searcher::create_learnt_clause(PropBy confl)
         case bnn_t : {
             BNN* bnn = bnns[confl.getBNNidx()];
             vector<Lit>* cl = get_bnn_reason(bnn, lit_Undef);
-            uint32_t last_dec_lev = 0;
-            for(const Lit& l: *cl) {
-                if (l == bnn->out) {
-                    continue;
-                }
-                if (varData[l.var()].level >= last_dec_lev) {
-                    last_dec_lev = varData[l.var()].level;
-                    lit0 = l;
-                }
-            }
+            lit0 = (*cl)[0];
             break;
         }
 
@@ -962,6 +964,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
         cout << "At point in litRedundant: " << analyze_stack.top() << endl;
         #endif
 
+        Lit p_analyze = analyze_stack.top();
         const PropBy reason = varData[analyze_stack.top().var()].reason;
         PropByType type = reason.getType();
         analyze_stack.pop();
@@ -991,7 +994,8 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
 
             case bnn_t: {
                 vector<Lit>* cl = get_bnn_reason(
-                    bnns[reason.getBNNidx()], p);
+                    bnns[reason.getBNNidx()],
+                    Lit(p_analyze.var(), value(p_analyze.var()) == l_False));
                 lits = cl->data();
                 size = cl->size()-1;
                 break;
@@ -1482,6 +1486,7 @@ lbool Searcher::new_decision()
     }
     #endif
     enqueue<update_bogoprops>(next);
+//     cout << "Picked " << next << endl;
 
     return l_Undef;
 }
@@ -1559,6 +1564,13 @@ void Searcher::attach_and_enqueue_learnt_clause(
 
         default:
             //Long learnt
+            /*cout << "cl: " << *cl << endl;
+            cout << "val: ";
+            for(const auto& l: *cl) {
+                cout << value(l) << " ";
+            }
+            cout << endl*/;
+
             stats.learntLongs++;
             solver->attachClause(*cl, enq);
             if (enq) enqueue<false>(learnt_clause[0], level, PropBy(cl_alloc.get_offset(cl)));
