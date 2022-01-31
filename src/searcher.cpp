@@ -1916,15 +1916,15 @@ bool Searcher::handle_conflict(PropBy confl)
     }
 
     // check chrono backtrack condition
-    if (conf.diff_declev_for_chrono > -1
-        && (((int)decisionLevel() - (int)backtrack_level) >= conf.diff_declev_for_chrono)
-    ) {
-        chrono_backtrack++;
-        cancelUntil(data.nHighestLevel -1);
-    } else {
+//     if (conf.diff_declev_for_chrono > -1
+//         && (((int)decisionLevel() - (int)backtrack_level) >= conf.diff_declev_for_chrono)
+//     ) {
+//         chrono_backtrack++;
+//         cancelUntil(data.nHighestLevel -1);
+//     } else {
         non_chrono_backtrack++;
         cancelUntil(backtrack_level);
-    }
+//     }
 
     print_learning_debug_info();
     assert(value(learnt_clause[0]) == l_Undef);

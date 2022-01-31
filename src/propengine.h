@@ -590,6 +590,7 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from)
     assigns[v] = boolToLBool(!sign);
     varData[v].reason = from;
     varData[v].level = level;
+    varData[v].sublevel = trail.size();
     if (!update_bogoprops) {
         if (polarity_mode == PolarityMode::polarmode_automatic) {
             varData[v].polarity = !sign;

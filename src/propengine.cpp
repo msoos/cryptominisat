@@ -316,6 +316,19 @@ lbool PropEngine::bnn_prop(const uint32_t bnn_idx, uint32_t level)
         enqueue<false>(~bnn->out, level, PropBy(bnn_idx, nullptr));
     }
 
+    // TODO more complete propagation
+//     if (value(bnn->out) == l_True) {
+//         for(const auto& l: bnn->in) {
+//             int32_t needed = bnn->cutoff-val;
+//             int32_t max_remain = undefs - l.w;
+//             if (max_remain < needed) {
+//                 enqueue<false>(l.lit, level, PropBy(bnn_idx, nullptr));
+//                 undefs -= l.w;
+//                 val += l.w;
+//             }
+//         }
+//     }
+
     return l_Undef;
 }
 
@@ -376,7 +389,6 @@ vector<Lit>* PropEngine::get_bnn_confl_reason(BNN* bnn)
 vector<Lit>* PropEngine::get_bnn_prop_reason(BNN* bnn, Lit lit)
 {
     assert(value(bnn->out) != l_Undef);
-    assert(bnn->out == lit);
 
     //It's set to TRUE
     if (value(bnn->out) == l_True) {
@@ -386,7 +398,7 @@ vector<Lit>* PropEngine::get_bnn_prop_reason(BNN* bnn, Lit lit)
         //take all TRUE ones at or below level, they caused it to meet cutoff
         for(const auto& l: bnn->in) {
             if (value(l.lit) == l_True &&
-                varData[l.lit.var()].level <= varData[lit.var()].level)
+                varData[l.lit.var()].sublevel <= varData[lit.var()].sublevel)
             {
                 bnn->reason.push_back(~l.lit);
             }
@@ -402,7 +414,7 @@ vector<Lit>* PropEngine::get_bnn_prop_reason(BNN* bnn, Lit lit)
         //take all FALSE ones at or below level, they caused it to go below cutoff
         for(const auto& l: bnn->in) {
             if (value(l.lit) == l_False &&
-                varData[l.lit.var()].level <= varData[lit.var()].level)
+                varData[l.lit.var()].sublevel <= varData[lit.var()].sublevel)
             {
                 bnn->reason.push_back(l.lit);
             }
