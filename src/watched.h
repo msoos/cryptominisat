@@ -77,8 +77,8 @@ class Watched {
         }
 
         Watched(const uint32_t idx, WatchType t):
-            type(t)
-            , data2(idx)
+            data1(idx)
+            , type(t)
         {
             assert(t == watch_idx_t || t == watch_bnn_t);
         }

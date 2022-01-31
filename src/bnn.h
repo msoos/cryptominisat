@@ -126,6 +126,7 @@ public:
     vector<LitW> in;
     int32_t cutoff;
     Lit out;
+    bool isRemoved = false;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const BNN& bnn)

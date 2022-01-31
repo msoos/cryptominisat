@@ -85,7 +85,7 @@ void ClauseCleaner::clean_implicit_watchlist(
     Watched* i = watch_list.begin();
     Watched* j = i;
     for (Watched* end2 = watch_list.end(); i != end2; i++) {
-        if (i->isClause()) {
+        if (i->isClause() || i->isBNN()) {
             *j++ = *i;
             continue;
         }
@@ -130,6 +130,34 @@ void ClauseCleaner::clean_implicit_clauses()
     #ifdef DEBUG_IMPLICIT_STATS
     solver->check_implicit_stats();
     #endif
+}
+
+bool ClauseCleaner::clean_bnn(BNN& bnn) {
+    assert(false);
+}
+
+void ClauseCleaner::clean_bnns_inter(vector<BNN*>& bnns)
+{
+    assert(solver->decisionLevel() == 0);
+    assert(solver->prop_at_head());
+
+    if (solver->conf.verbosity > 15) {
+        cout << "Cleaning clauses in vector<>" << endl;
+    }
+
+    vector<ClOffset>::iterator s, ss, end;
+    size_t at = 0;
+    for (auto& bnn: bnns) {
+        if (clean_bnn(*bnn)) {
+            for(const auto& l: bnn->in) {
+                solver->watches.smudge(l.lit);
+                solver->watches.smudge(~l.lit);
+            }
+            solver->watches.smudge(bnn->out);
+            solver->watches.smudge(~bnn->out);
+            bnn->isRemoved = true;
+        }
+    }
 }
 
 void ClauseCleaner::clean_clauses_inter(vector<ClOffset>& cs)
@@ -288,6 +316,7 @@ void ClauseCleaner::remove_and_clean_all()
     clean_implicit_clauses();
 
     clean_clauses_pre();
+    clean_bnns_inter(solver->bnns);
     clean_clauses_inter(solver->longIrredCls);
     for(auto& lredcls: solver->longRedCls) {
         clean_clauses_inter(lredcls);

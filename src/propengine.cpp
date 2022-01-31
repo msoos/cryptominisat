@@ -621,7 +621,7 @@ PropBy PropEngine::propagate_any_order_fast()
             }
 
             //propagate normal clause
-            //assert(i->isClause());
+            assert(i->isClause());
             Lit blocked = i->getBlockedLit();
             if (likely(value(blocked) == l_True)) {
                 *j++ = *i++;

@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include "watcharray.h"
 #include "clause.h"
 #include "xor.h"
+#include "bnn.h"
 #include <vector>
 using std::vector;
 
@@ -78,6 +79,8 @@ class ClauseCleaner
         void clean_clauses_pre();
         void clean_clauses_post();
         void clean_clauses_inter(vector<ClOffset>& cs);
+        bool clean_bnn(BNN& bnn);
+        void clean_bnns_inter(vector<BNN*>& bnns);
 
         bool satisfied(const Watched& watched, Lit lit);
         vector<ClOffset> delayed_free;
