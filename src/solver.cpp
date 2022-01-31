@@ -4026,8 +4026,7 @@ void Solver::stats_del_cl(ClOffset offs)
 
 #ifdef USE_GAUSS
 void Solver::detach_xor_clauses(
-    const set<uint32_t>& clash_vars_unused
-)
+    const set<uint32_t>& clash_vars_unused)
 {
     detached_xor_clauses = true;
     double myTime = cpuTime();

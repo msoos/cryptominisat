@@ -446,7 +446,8 @@ void PropEngine::get_bnn_prop_reason(
                 } else {
                     //for intermediate, take all
                     if (l.lit.var() != lit.var()) {
-                        ret->push_back(~l.lit);
+                        ret->push_back(l.lit ^
+                            (value(l.lit) == l_True));
                     }
                 }
             }
@@ -469,14 +470,15 @@ void PropEngine::get_bnn_prop_reason(
             if (varData[l.lit.var()].sublevel <= varData[lit.var()].sublevel)
             {
                 if (lit == ~bnn->out) {
-                    //for the output, only take the TRUE ones
-                    if (value(l.lit) == l_True) {
+                    //for the output, only take the FALSE ones
+                    if (value(l.lit) == l_False) {
                         ret->push_back(l.lit);
                     }
                 } else {
                     //for intermediate, take all
                     if (l.lit.var() != lit.var()) {
-                        ret->push_back(~l.lit);
+                        ret->push_back(l.lit ^
+                            (value(l.lit) == l_True));
                     }
                 }
             }
