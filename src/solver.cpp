@@ -566,6 +566,9 @@ bool Solver::sort_and_clean_bnn(BNN& bnn)
 void Solver::attach_bnn(const uint32_t bnn_idx)
 {
     BNN* bnn = bnns[bnn_idx];
+
+    cout << "Attaching BNN: " << *bnn << endl;
+
     for(const auto& l: bnn->in) {
         watches[l.lit].push(Watched(bnn_idx, watch_bnn_t));
         watches[~l.lit].push(Watched(bnn_idx, watch_bnn_t));
@@ -601,7 +604,7 @@ void Solver::add_bnn_clause_inter(
     }
 
     bnns.push_back(bnn);
-    attach_bnn(bnns.size());
+    attach_bnn(bnns.size()-1);
 }
 
 void Solver::attachClause(
@@ -3223,6 +3226,7 @@ bool Solver::add_bnn_clause_outside(
     const uint32_t cutoff,
     uint32_t out_var)
 {
+    assert(lits.size() == ws.size());
     if (!ok) {
         return false;
     }
@@ -3233,7 +3237,7 @@ bool Solver::add_bnn_clause_outside(
 
     vector<Lit> lits2(lits);
     lits2.push_back(Lit(out_var, false));
-    back_number_from_outside_to_outer(lits);
+    back_number_from_outside_to_outer(lits2);
     addClauseHelper(back_number_from_outside_to_outer_tmp);
     Lit out_lit = back_number_from_outside_to_outer_tmp.back();
     back_number_from_outside_to_outer_tmp.pop_back();

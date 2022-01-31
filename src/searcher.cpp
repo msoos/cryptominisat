@@ -165,6 +165,9 @@ inline void Searcher::add_lit_to_learnt(
     , uint32_t nDecisionLevel
 ) {
     const uint32_t var = lit.var();
+//     cout << "Lit to learnt lit: " << lit << " dec level: " << nDecisionLevel << endl;
+//     cout << "varData[var].removed: "
+//     << removed_type_to_string(varData[var].removed) << endl;
     assert(varData[var].removed == Removed::none);
 
     #ifdef STATS_NEEDED_BRANCH
@@ -497,6 +500,7 @@ void Searcher::add_literals_from_confl_to_learnt(
                 }
                 break;
 
+            case bnn_t:
             case clause_t:
             #ifdef USE_GAUSS
             case xor_t:
@@ -3692,11 +3696,19 @@ ConflictData Searcher::find_conflict_level(PropBy& pb)
             case PropByType::xor_t: {
                 vector<Lit>* cl = gmatrices[pb.get_matrix_num()]->
                     get_reason(pb.get_row_num());
-                    clause = cl->data();
-                    size = cl->size();
+                clause = cl->data();
+                size = cl->size();
                 break;
             }
             #endif
+
+            case PropByType::bnn_t: {
+                vector<Lit>* cl = get_bnn_confl_reason(
+                    bnns[pb.getBNNidx()]);
+                clause = cl->data();
+                size = cl->size();
+                break;
+            }
 
             case PropByType::binary_t:
             case PropByType::null_clause_t:

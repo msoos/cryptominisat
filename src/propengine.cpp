@@ -321,13 +321,21 @@ lbool PropEngine::bnn_prop(const uint32_t bnn_idx, uint32_t level)
 
 vector<Lit>* PropEngine::get_bnn_reason(BNN* bnn, Lit lit)
 {
-    lbool ret = bnn_eval(*bnn);
-    if (ret == l_False) {
-        return get_bnn_confl_reason(bnn);
+    vector<Lit>* ret;
+    lbool eval = bnn_eval(*bnn);
+    if (eval == l_False) {
+        ret = get_bnn_confl_reason(bnn);
     } else {
-        assert(ret == l_True);
-        return get_bnn_prop_reason(bnn, lit);
+        assert(eval == l_True);
+        ret = get_bnn_prop_reason(bnn, lit);
     }
+    cout << "get_bnn_reason (" << lit << ") returning: ";
+    for(const auto& l: *ret) {
+        cout << l << " ";
+    }
+    cout << "0" << endl;
+
+    return ret;
 }
 
 vector<Lit>* PropEngine::get_bnn_confl_reason(BNN* bnn)
@@ -597,8 +605,10 @@ PropBy PropEngine::propagate_any_order_fast()
 
             // propagate BNN constraint
             if (i->isBNN()) {
+                *j++ = *i;
                 const lbool val = bnn_prop(i->get_bnn(), currLevel);
                 if (val == l_False) {
+                    confl = PropBy(i->get_bnn(), nullptr);
                     i++;
                     while (i < end) {
                         *j++ = *i++;
@@ -749,6 +759,7 @@ PropBy PropEngine::propagate_any_order()
         }
         propStats.propagations++;
         for (; i != end; i++) {
+            // propagate binary clause
             if (likely(i->isBin())) {
                 *j++ = *i;
                 if (!red_also && i->red()) {
@@ -764,7 +775,20 @@ PropBy PropEngine::propagate_any_order()
                 continue;
             }
 
+            // propagate BNN constraint
+            if (i->isBNN()) {
+                *j++ = *i;
+                const lbool val = bnn_prop(i->get_bnn(), currLevel);
+                if (val == l_False) {
+                    confl = PropBy(i->get_bnn(), nullptr);
+                    i++;
+                    break;
+                }
+                continue;
+            }
+
             //propagate normal clause
+            assert(i->isClause());
             if (!prop_long_cl_any_order<update_bogoprops, red_also, use_disable>(i, j, p, confl, currLevel)) {
                 i++;
                 break;

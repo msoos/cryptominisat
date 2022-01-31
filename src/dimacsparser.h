@@ -537,6 +537,8 @@ bool DimacsParser<C, S>::parse_and_add_bnn_clause(C& in)
     if (!in.parseInt(out_var, lineNum)) {
         return false;
     }
+    //off-by-one internally.
+    out_var -= 1;
     if (!check_var(out_var)) {
         return false;
     }
