@@ -122,7 +122,6 @@ public:
         return in.empty();
     }
 
-    vector<Lit> reason;
     vector<LitW> in;
     int32_t cutoff;
     Lit out;
@@ -132,13 +131,13 @@ public:
 inline std::ostream& operator<<(std::ostream& os, const BNN& bnn)
 {
     for (uint32_t i = 0; i < bnn.size(); i++) {
-        os << bnn[i].lit << " * " << bnn[i].w;
+        os << "lit[" << bnn[i].lit << "]*" << bnn[i].w;
 
         if (i+1 < bnn.size())
             os << " + ";
     }
     os << " >  " << bnn.cutoff
-    << " -- out: " << bnn.out;
+    << " -- outlit: " << bnn.out;
 
     return os;
 }

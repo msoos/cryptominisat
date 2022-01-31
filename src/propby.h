@@ -85,12 +85,12 @@ class PropBy
 #endif
 
         //BNN prop
-        PropBy(uint32_t bnn_idx, void*) :
-            type(bnn_t)
+        PropBy(uint32_t bnn_idx, void*):
+            data1(0xfffffff)
+            , type(bnn_t)
             , data2(bnn_idx)
         {
         }
-
 
         //Binary prop
         PropBy(const Lit lit, const bool redStep) :
@@ -123,6 +123,24 @@ class PropBy
 
             data2 = ((uint32_t)hyperBin) << 1
                 | ((uint32_t)hyperBinNotAdded) << 2;
+        }
+
+        void set_bnn_reason(uint32_t idx)
+        {
+            assert(isBNN());
+            data1 = idx;
+        }
+
+        bool bnn_reason_set() const
+        {
+            assert(isBNN());
+            return data1 != 0xfffffff;
+        }
+
+        uint32_t get_bnn_reason() const
+        {
+            assert(bnn_reason_set());
+            return data1;
         }
 
         uint32_t isBNN() const

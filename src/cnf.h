@@ -182,6 +182,9 @@ public:
     vector<Xor> xorclauses;
     vector<Xor> xorclauses_unused;
     vector<BNN*> bnns;
+    vector<vector<Lit>> bnn_reasons;
+    vector<Lit> bnn_confl_reason;
+    vector<uint32_t> bnn_reasons_empty_slots;
     vector<uint32_t> removed_xorclauses_clash_vars;
     bool detached_xor_clauses = false;
     bool xor_clauses_updated = false;

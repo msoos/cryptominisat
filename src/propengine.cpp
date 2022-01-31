@@ -314,34 +314,72 @@ lbool PropEngine::bnn_prop(const uint32_t bnn_idx, uint32_t level)
 
         assert(value(bnn->out) == l_Undef);
         enqueue<false>(~bnn->out, level, PropBy(bnn_idx, nullptr));
+        cout << "BNN prop set BNN out " << ~bnn->out << " due to being under for sure" << endl;
     }
 
-    // TODO more complete propagation
-//     if (value(bnn->out) == l_True) {
-//         for(const auto& l: bnn->in) {
-//             int32_t needed = bnn->cutoff-val;
-//             int32_t max_remain = undefs - l.w;
-//             if (max_remain < needed) {
-//                 enqueue<false>(l.lit, level, PropBy(bnn_idx, nullptr));
-//                 undefs -= l.w;
-//                 val += l.w;
-//             }
-//         }
-//     }
+    //Stronger propagation
+    if (value(bnn->out) == l_True) {
+        // check if anything MUST be set for TRUE output
+        for(const auto& l: bnn->in) {
+            if (value(l.lit) == l_Undef) {
+                int32_t needed = bnn->cutoff-val+1;
+                int32_t tot_remain = undefs - l.w;
+                if (tot_remain < needed) {
+                    enqueue<false>(l.lit, level, PropBy(bnn_idx, nullptr));
+                    cout << "BNN prop set " << l.lit << " due to positive slack" << endl;
+                    undefs -= l.w;
+                    val += l.w;
+                }
+            }
+        }
+    } else if (value(bnn->out) == l_False) {
+        // check if anything MUST be unset for FALSE output
+        for(const auto& l: bnn->in) {
+            if (value(l.lit) == l_Undef) {
+                int32_t toomuch = bnn->cutoff-val+1;
+                if (l.w >= toomuch) {
+                    enqueue<false>(~l.lit, level, PropBy(bnn_idx, nullptr));
+                    cout << "BNN prop set " << ~l.lit << " due to negative slack" << endl;
+                    undefs -= l.w;
+                    val += l.w;
+                }
+            }
+        }
+    }
 
     return l_Undef;
 }
 
 vector<Lit>* PropEngine::get_bnn_reason(BNN* bnn, Lit lit)
 {
-    vector<Lit>* ret;
-    lbool eval = bnn_eval(*bnn);
-    if (eval == l_False) {
-        ret = get_bnn_confl_reason(bnn);
-    } else {
-        assert(eval == l_True);
-        ret = get_bnn_prop_reason(bnn, lit);
+    if (lit == lit_Undef) {
+        get_bnn_confl_reason(bnn, &bnn_confl_reason);
+        return &bnn_confl_reason;
     }
+
+    auto& reason = varData[lit.var()].reason;
+    assert(reason.isBNN());
+    if (reason.bnn_reason_set()) {
+        return &bnn_reasons[reason.get_bnn_reason()];
+    }
+
+    vector<Lit>* ret;
+
+    //Get an empty slot
+    uint32_t empty_slot;
+    if (bnn_reasons_empty_slots.empty()) {
+        bnn_reasons.push_back(vector<Lit>());
+        empty_slot = bnn_reasons.size()-1;
+    } else {
+        empty_slot = bnn_reasons_empty_slots.back();
+        bnn_reasons_empty_slots.pop_back();
+    }
+    ret = &bnn_reasons[empty_slot];
+    reason.set_bnn_reason(empty_slot);
+
+
+    //lbool eval = bnn_eval(*bnn);
+    get_bnn_prop_reason(bnn, lit, ret);
     cout << "get_bnn_reason (" << lit << ") returning: ";
     for(const auto& l: *ret) {
         cout << l << " ";
@@ -351,78 +389,106 @@ vector<Lit>* PropEngine::get_bnn_reason(BNN* bnn, Lit lit)
     return ret;
 }
 
-vector<Lit>* PropEngine::get_bnn_confl_reason(BNN* bnn)
+void PropEngine::get_bnn_confl_reason(BNN* bnn, vector<Lit>* ret)
 {
     assert(value(bnn->out) != l_Undef);
 
     //It's set to TRUE, but it's actually LESS than cutoff
     if (value(bnn->out) == l_True) {
-        bnn->reason.clear();
-        bnn->reason.push_back(~bnn->out);
+        ret->clear();
+        ret->push_back(~bnn->out);
 
-        //take all TRUE ones, they are causing to go over.
+        //take all FALSE ones, they are causing to go under.
         for(const auto& l: bnn->in) {
             if (value(l.lit) == l_False) {
-                bnn->reason.push_back(l.lit);
+                ret->push_back(l.lit);
             }
         }
-        return &bnn->reason;
+        return;
     }
 
     //it's set to FALSE but it's actually MORE than cutoff.
     if (value(bnn->out) == l_False) {
-        bnn->reason.clear();
-        bnn->reason.push_back(bnn->out);
+        ret->clear();
+        ret->push_back(bnn->out);
 
         //take all TRUE ones, they are causing to go over.
         for(const auto& l: bnn->in) {
             if (value(l.lit) == l_True) {
-                bnn->reason.push_back(l.lit);
+                ret->push_back(l.lit);
             }
         }
-        return &bnn->reason;
+        return;
     }
     assert(false);
-    return nullptr;
 }
 
-vector<Lit>* PropEngine::get_bnn_prop_reason(BNN* bnn, Lit lit)
+void PropEngine::get_bnn_prop_reason(
+    BNN* bnn, Lit lit, vector<Lit>* ret)
 {
     assert(value(bnn->out) != l_Undef);
 
     //It's set to TRUE
     if (value(bnn->out) == l_True) {
-        bnn->reason.clear();
-        bnn->reason.push_back(bnn->out);
+        ret->clear();
+        ret->push_back(lit); //this is what's propagated, must be 1st
 
         //take all TRUE ones at or below level, they caused it to meet cutoff
         for(const auto& l: bnn->in) {
-            if (value(l.lit) == l_True &&
-                varData[l.lit.var()].sublevel <= varData[lit.var()].sublevel)
+            if (varData[l.lit.var()].sublevel <= varData[lit.var()].sublevel)
             {
-                bnn->reason.push_back(~l.lit);
+                if (lit == bnn->out) {
+                    //for the output, only take the TRUE ones
+                    if (value(l.lit) == l_True) {
+                        ret->push_back(~l.lit);
+                    }
+                } else {
+                    //for intermediate, take all
+                    if (l.lit.var() != lit.var()) {
+                        ret->push_back(~l.lit);
+                    }
+                }
             }
         }
-        return &bnn->reason;
+
+        //Make sure bnn->out is inside
+        if (lit != bnn->out) {
+            ret->push_back(~bnn->out);
+        }
+        return;
     }
 
     //it's set to FALSE
     if (value(bnn->out) == l_False) {
-        bnn->reason.clear();
-        bnn->reason.push_back(~bnn->out);
+        ret->clear();
+        ret->push_back(lit); //this is what's propagated, must be 1st
 
         //take all FALSE ones at or below level, they caused it to go below cutoff
         for(const auto& l: bnn->in) {
-            if (value(l.lit) == l_False &&
-                varData[l.lit.var()].sublevel <= varData[lit.var()].sublevel)
+            if (varData[l.lit.var()].sublevel <= varData[lit.var()].sublevel)
             {
-                bnn->reason.push_back(l.lit);
+                if (lit == ~bnn->out) {
+                    //for the output, only take the TRUE ones
+                    if (value(l.lit) == l_True) {
+                        ret->push_back(l.lit);
+                    }
+                } else {
+                    //for intermediate, take all
+                    if (l.lit.var() != lit.var()) {
+                        ret->push_back(~l.lit);
+                    }
+                }
             }
         }
-        return &bnn->reason;
+
+        //Make sure bnn->out is inside
+        if (lit != ~bnn->out) {
+            ret->push_back(bnn->out);
+        }
+
+        return;
     }
     assert(false);
-    return nullptr;
 }
 
 

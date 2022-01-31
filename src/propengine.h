@@ -303,8 +303,8 @@ protected:
     // Operations on clauses:
     /////////////////
     vector<Lit>* get_bnn_reason(BNN* bnn, Lit lit);
-    vector<Lit>* get_bnn_confl_reason(BNN* bnn);
-    vector<Lit>* get_bnn_prop_reason(BNN* bnn, Lit lit);
+    void get_bnn_confl_reason(BNN* bnn, vector<Lit>* ret);
+    void get_bnn_prop_reason(BNN* bnn, Lit lit, vector<Lit>* ret);
     lbool bnn_prop(const uint32_t bnn_idx, uint32_t level);
     void attachClause(
         const Clause& c

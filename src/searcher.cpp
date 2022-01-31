@@ -631,7 +631,7 @@ void Searcher::create_learnt_clause(PropBy confl)
 
         case bnn_t : {
             BNN* bnn = bnns[confl.getBNNidx()];
-            vector<Lit>* cl = get_bnn_confl_reason(bnn);
+            vector<Lit>* cl = get_bnn_reason(bnn, lit_Undef);
             uint32_t last_dec_lev = 0;
             for(const Lit& l: *cl) {
                 if (l == bnn->out) {
@@ -3502,6 +3502,15 @@ void Searcher::cancelUntil(uint32_t blevel)
             const uint32_t var = trail[sublevel].lit.var();
             assert(value(var) != l_Undef);
 
+            //Clear out BNN reason on backtrack
+            if (varData[var].reason.isBNN() &&
+                varData[var].reason.bnn_reason_set())
+            {
+                uint32_t reason_idx = varData[var].reason.get_bnn_reason();
+                bnn_reasons_empty_slots.push_back(reason_idx);
+                varData[var].reason = PropBy();
+            }
+
             #ifdef STATS_NEEDED_BRANCH
             if (!update_bogoprops) {
                 varData[var].last_canceled = sumConflicts;
@@ -3703,8 +3712,8 @@ ConflictData Searcher::find_conflict_level(PropBy& pb)
             #endif
 
             case PropByType::bnn_t: {
-                vector<Lit>* cl = get_bnn_confl_reason(
-                    bnns[pb.getBNNidx()]);
+                vector<Lit>* cl = get_bnn_reason(
+                    bnns[pb.getBNNidx()], lit_Undef);
                 clause = cl->data();
                 size = cl->size();
                 break;
