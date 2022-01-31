@@ -39,6 +39,7 @@ namespace CMSat {
 enum WatchType {
     watch_clause_t = 0
     , watch_binary_t = 1
+    , watch_bnn_t = 2
     , watch_idx_t = 3
 };
 
@@ -75,6 +76,13 @@ class Watched {
         {
         }
 
+        Watched(const uint32_t idx, WatchType t):
+            type(t)
+            , data2(idx)
+        {
+            assert(t == watch_idx_t || t == watch_bnn_t);
+        }
+
         Watched() :
             data1 (std::numeric_limits<uint32_t>::max())
             , type(watch_clause_t) // initialize type with most generic type of clause
@@ -88,15 +96,6 @@ class Watched {
             data1(lit.toInt())
             , type(watch_binary_t)
             , data2(red)
-        {
-        }
-
-        /**
-        @brief Constructor for an Index value
-        */
-        explicit Watched(const uint32_t idx) :
-            data1(idx)
-            , type(watch_idx_t)
         {
         }
 
@@ -132,11 +131,24 @@ class Watched {
             return (type == watch_idx_t);
         }
 
+        bool isBNN() const
+        {
+            return (type == watch_bnn_t);
+        }
+
         uint32_t get_idx() const
         {
             #ifdef DEBUG_WATCHED
             assert(type == watch_idx_t);
             #endif
+            return data1;
+        }
+
+        uint32_t get_bnn() const
+        {
+//             #ifdef DEBUG_WATCHED
+            assert(type == watch_bnn_t);
+//             #endif
             return data1;
         }
 

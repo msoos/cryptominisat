@@ -64,6 +64,12 @@ namespace CMSat {
         unsigned nVars() const; //get number of variables inside the solver
         bool add_clause(const std::vector<Lit>& lits);
         bool add_xor_clause(const std::vector<unsigned>& vars, bool rhs);
+        bool add_bnn_clause(
+            const std::vector<Lit>& lits,
+            const std::vector<unsigned>& int_ws,
+            unsigned cutoff,
+            unsigned out_var
+        );
         void set_var_weight(Lit lit, double weight);
 
         ////////////////////////////

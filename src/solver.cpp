@@ -515,6 +515,95 @@ Clause* Solver::add_clause_int(
     }
 }
 
+//Deals with INTERNAL variables
+bool Solver::sort_and_clean_bnn(BNN& bnn)
+{
+    std::sort(bnn.in.begin(), bnn.in.end(), BNN_Lit_Sorter());
+    LitW p = LitW(lit_Undef, 0);
+    uint32_t i, j;
+    for (i = j = 0; i < bnn.in.size(); i++) {
+        if (value(bnn.in[i].lit) == l_True) {
+            bnn.cutoff -= bnn.in[i].w;
+            continue;
+        } else if (value(bnn.in[i].lit) == l_False) {
+            continue;
+        } else if (bnn.in[i].lit.var() == p.lit.var()) {
+            uint32_t var = p.lit.var();
+            var = map_inter_to_outer(var);
+            if (undef_must_set_vars.size() < var+1) {
+                undef_must_set_vars.resize(var+1, false);
+            }
+            undef_must_set_vars[var] = true;
+            if (bnn.in[i].lit.sign() == p.lit.sign()) {
+                assert(j > 0);
+                bnn.in[j-1].w += bnn.in[i].w;
+            } else {
+                assert(false);
+                //we'd need to change cutoff & weight at the same time
+            }
+        } else {
+            bnn.in[j++] = p = bnn.in[i];
+
+            if (!fresh_solver && varData[p.lit.var()].removed != Removed::none) {
+                cout << "ERROR: BNN " << bnn << " contains literal "
+                << p.lit << " whose variable has been removed (removal type: "
+                << removed_type_to_string(varData[p.lit.var()].removed)
+                << " var-updated lit: "
+                << varReplacer->get_var_replaced_with(p.lit)
+                << ")"
+                << endl;
+
+                //Variables that have been eliminated cannot be added internally
+                //as part of a clause. That's a bug
+                assert(varData[p.lit.var()].removed == Removed::none);
+            }
+        }
+    }
+    bnn.in.resize(bnn.in.size() - (i - j));
+    return true;
+}
+
+void Solver::attach_bnn(const uint32_t bnn_idx)
+{
+    BNN* bnn = bnns[bnn_idx];
+    for(const auto& l: bnn->in) {
+        watches[l.lit].push(Watched(bnn_idx, watch_bnn_t));
+        watches[~l.lit].push(Watched(bnn_idx, watch_bnn_t));
+    }
+}
+
+
+
+void Solver::add_bnn_clause_inter(
+    vector<Lit>& lits,
+    const vector<uint32_t>& ws,
+    const uint32_t cutoff,
+    Lit out)
+{
+    BNN* bnn = new BNN(lits, ws, cutoff, out);
+
+    if (!sort_and_clean_bnn(*bnn)) {
+        ok = false;
+        delete bnn;
+    }
+
+    lbool ret = bnn_eval(*bnn);
+    if (ret != l_Undef) {
+        if (ret == l_False) {
+            ok = false;
+        }
+        delete bnn;
+    }
+
+    ok = propagate<true>().isNULL();
+    if (!ok) {
+        delete bnn;
+    }
+
+    bnns.push_back(bnn);
+    attach_bnn(bnns.size());
+}
+
 void Solver::attachClause(
     const Clause& cl
     , const bool checkAttach
@@ -3124,6 +3213,33 @@ bool Solver::add_xor_clause_outside(const vector<uint32_t>& vars, bool rhs)
     back_number_from_outside_to_outer(lits);
     addClauseHelper(back_number_from_outside_to_outer_tmp);
     add_xor_clause_inter(back_number_from_outside_to_outer_tmp, rhs, true, false);
+
+    return ok;
+}
+
+bool Solver::add_bnn_clause_outside(
+    const vector<Lit>& lits,
+    const vector<unsigned>& ws,
+    const uint32_t cutoff,
+    uint32_t out_var)
+{
+    if (!ok) {
+        return false;
+    }
+
+    #ifdef SLOW_DEBUG //we check for this during back-numbering
+    check_too_large_variable_number(lits);
+    #endif
+
+    vector<Lit> lits2(lits);
+    lits2.push_back(Lit(out_var, false));
+    back_number_from_outside_to_outer(lits);
+    addClauseHelper(back_number_from_outside_to_outer_tmp);
+    Lit out_lit = back_number_from_outside_to_outer_tmp.back();
+    back_number_from_outside_to_outer_tmp.pop_back();
+
+    add_bnn_clause_inter(
+        back_number_from_outside_to_outer_tmp, ws, cutoff, out_lit);
 
     return ok;
 }

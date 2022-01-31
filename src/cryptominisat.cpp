@@ -782,6 +782,34 @@ DLL_PUBLIC bool SATSolver::add_xor_clause(const std::vector<unsigned>& vars, boo
     return ret;
 }
 
+DLL_PUBLIC bool SATSolver::add_bnn_clause(
+    const std::vector<Lit>& lits,
+    const std::vector<unsigned>& int_ws,
+    unsigned cutoff,
+    unsigned out_var)
+{
+    if (data->log) {
+       assert(false && "No logs for BNN yet");
+    }
+
+    bool ret = true;
+    if (data->solvers.size() > 1) {
+        assert(false && "No multithreading for BNN yet");
+    } else {
+        data->solvers[0]->new_vars(data->vars_to_add);
+        data->vars_to_add = 0;
+
+        ret = data->solvers[0]->add_bnn_clause_outside(
+            lits,
+            int_ws,
+            cutoff,
+            out_var);
+        data->cls++;
+    }
+
+    return ret;
+}
+
 enum class Todo {todo_solve, todo_simplify};
 
 struct OneThreadCalc

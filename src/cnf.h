@@ -38,6 +38,7 @@ THE SOFTWARE.
 #include "simplefile.h"
 #include "gausswatched.h"
 #include "xor.h"
+#include "bnn.h"
 
 using std::numeric_limits;
 
@@ -180,6 +181,7 @@ public:
     vector<ClOffset> detached_xor_repr_cls; //these are still in longIrredCls
     vector<Xor> xorclauses;
     vector<Xor> xorclauses_unused;
+    vector<BNN*> bnns;
     vector<uint32_t> removed_xorclauses_clash_vars;
     bool detached_xor_clauses = false;
     bool xor_clauses_updated = false;
@@ -233,6 +235,39 @@ public:
     std::atomic<bool>* get_must_interrupt_inter_asap_ptr()
     {
         return must_interrupt_inter;
+    }
+
+    lbool bnn_eval(const BNN& bnn)
+    {
+        int32_t val = 0;
+        int32_t undefs = 0;
+        for(const auto& p: bnn.in) {
+            assert(p.w >= 0);
+            if (value(p.lit) == l_Undef) {
+                undefs += p.w;
+            }
+            if (value(p.lit) == l_True) {
+                val += p.w;
+            }
+        }
+
+        // we are over the cutoff no matter what undef is
+        if (val > bnn.cutoff) {
+            if (value(bnn.out) == l_False)
+                return l_False;
+            if (value(bnn.out) == l_True)
+                return l_True;
+        }
+
+        // we are under the cutoff no matter what undef is
+        if (val <= bnn.cutoff && val+undefs <= bnn.cutoff) {
+            if (value(bnn.out) == l_True)
+                return l_False;
+            if (value(bnn.out) == l_False)
+                return l_True;
+        }
+
+        return l_Undef;
     }
 
     bool clause_locked(const Clause& c, const ClOffset offset) const;

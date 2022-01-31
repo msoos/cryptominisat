@@ -90,6 +90,11 @@ class Solver : public Searcher
         void new_external_vars(size_t n);
         bool add_clause_outside(const vector<Lit>& lits, bool red = false);
         bool add_xor_clause_outside(const vector<uint32_t>& vars, bool rhs);
+        bool add_bnn_clause_outside(
+            const vector<Lit>& lits,
+            const vector<unsigned>& ws,
+            const uint32_t cutoff,
+            uint32_t out_var);
         void set_var_weight(Lit lit, double weight);
 
         lbool solve_with_assumptions(
@@ -223,6 +228,7 @@ class Solver : public Searcher
             , const bool checkAttach = false
             #endif
         );
+        void attach_bnn(const uint32_t bnn_idx);
         void attach_bin_clause(
             const Lit lit1
             , const Lit lit2
@@ -262,6 +268,13 @@ class Solver : public Searcher
             , const Lit drat_first = lit_Undef
             , const bool sorted = false
         );
+        void add_bnn_clause_inter(
+            vector<Lit>& lits,
+            const vector<uint32_t>& ws,
+            const uint32_t cutoff,
+            Lit out
+        );
+
         template<class T> vector<Lit> clause_outer_numbered(const T& cl) const;
         template<class T> vector<uint32_t> xor_outer_numbered(const T& cl) const;
         size_t mem_used() const;
@@ -331,6 +344,7 @@ class Solver : public Searcher
             , const bool red
             , const bool sorted = false
         );
+        bool sort_and_clean_bnn(BNN& bnn);
         void set_up_sql_writer();
         vector<std::pair<string, string> > sql_tags;
 
@@ -360,6 +374,24 @@ class Solver : public Searcher
             }
         }
         vector<Lit> outside_assumptions;
+        Lit back_number_from_outside_to_outer(const Lit lit)
+        {
+            assert(lit.var() < nVarsOutside());
+            if (get_num_bva_vars() > 0 || !fresh_solver) {
+                Lit ret = map_to_with_bva(lit);
+                assert(ret.var() < nVarsOuter());
+                return ret;
+            } else {
+                return lit;
+            }
+        }
+
+        uint32_t back_number_from_outside_to_outer(const uint32_t var)
+        {
+            Lit lit = Lit(var, false);
+            return back_number_from_outside_to_outer(lit).var();
+        }
+
 
         //Stats printing
         void print_norm_stats(

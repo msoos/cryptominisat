@@ -277,6 +277,134 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
 }
 #endif //USE_GAUSS
 
+lbool PropEngine::bnn_prop(const uint32_t bnn_idx, uint32_t level)
+{
+    BNN* bnn = bnns[bnn_idx];
+
+    int32_t val = 0;
+    int32_t undefs = 0;
+    for(const auto& p: bnn->in) {
+        assert(p.w >= 0);
+        if (value(p.lit) == l_Undef) {
+            undefs += p.w;
+        }
+        if (value(p.lit) == l_True) {
+            val += p.w;
+        }
+    }
+
+    // we are over the cutoff no matter what undefs is
+    if (val > bnn->cutoff) {
+        if (value(bnn->out) == l_False)
+            return l_False;
+        if (value(bnn->out) == l_True)
+            return l_True;
+
+        assert(value(bnn->out) == l_Undef);
+        enqueue<false>(bnn->out, level, PropBy(bnn_idx, nullptr));
+        return l_Undef;
+    }
+
+    // we are under the cutoff no matter what undefs is
+    if (val <= bnn->cutoff && val+undefs <= bnn->cutoff) {
+        if (value(bnn->out) == l_True)
+            return l_False;
+        if (value(bnn->out) == l_False)
+            return l_True;
+
+        assert(value(bnn->out) == l_Undef);
+        enqueue<false>(~bnn->out, level, PropBy(bnn_idx, nullptr));
+    }
+
+    return l_Undef;
+}
+
+vector<Lit>* PropEngine::get_bnn_reason(BNN* bnn, Lit lit)
+{
+    lbool ret = bnn_eval(*bnn);
+    if (ret == l_False) {
+        return get_bnn_confl_reason(bnn);
+    } else {
+        assert(ret == l_True);
+        return get_bnn_prop_reason(bnn, lit);
+    }
+}
+
+vector<Lit>* PropEngine::get_bnn_confl_reason(BNN* bnn)
+{
+    assert(value(bnn->out) != l_Undef);
+
+    //It's set to TRUE, but it's actually LESS than cutoff
+    if (value(bnn->out) == l_True) {
+        bnn->reason.clear();
+        bnn->reason.push_back(~bnn->out);
+
+        //take all TRUE ones, they are causing to go over.
+        for(const auto& l: bnn->in) {
+            if (value(l.lit) == l_False) {
+                bnn->reason.push_back(l.lit);
+            }
+        }
+        return &bnn->reason;
+    }
+
+    //it's set to FALSE but it's actually MORE than cutoff.
+    if (value(bnn->out) == l_False) {
+        bnn->reason.clear();
+        bnn->reason.push_back(bnn->out);
+
+        //take all TRUE ones, they are causing to go over.
+        for(const auto& l: bnn->in) {
+            if (value(l.lit) == l_True) {
+                bnn->reason.push_back(l.lit);
+            }
+        }
+        return &bnn->reason;
+    }
+    assert(false);
+    return nullptr;
+}
+
+vector<Lit>* PropEngine::get_bnn_prop_reason(BNN* bnn, Lit lit)
+{
+    assert(value(bnn->out) != l_Undef);
+    assert(bnn->out == lit);
+
+    //It's set to TRUE
+    if (value(bnn->out) == l_True) {
+        bnn->reason.clear();
+        bnn->reason.push_back(bnn->out);
+
+        //take all TRUE ones at or below level, they caused it to meet cutoff
+        for(const auto& l: bnn->in) {
+            if (value(l.lit) == l_True &&
+                varData[l.lit.var()].level <= varData[lit.var()].level)
+            {
+                bnn->reason.push_back(~l.lit);
+            }
+        }
+        return &bnn->reason;
+    }
+
+    //it's set to FALSE
+    if (value(bnn->out) == l_False) {
+        bnn->reason.clear();
+        bnn->reason.push_back(~bnn->out);
+
+        //take all FALSE ones at or below level, they caused it to go below cutoff
+        for(const auto& l: bnn->in) {
+            if (value(l.lit) == l_False &&
+                varData[l.lit.var()].level <= varData[lit.var()].level)
+            {
+                bnn->reason.push_back(l.lit);
+            }
+        }
+        return &bnn->reason;
+    }
+    assert(false);
+    return nullptr;
+}
+
 
 /**
 @brief Propagates a binary clause
@@ -456,6 +584,21 @@ PropBy PropEngine::propagate_any_order_fast()
                     else
                         lastConflictCausedBy = ConflCausedBy::binirred;
                     #endif
+                    i++;
+                    while (i < end) {
+                        *j++ = *i++;
+                    }
+                    qhead = trail.size();
+                } else {
+                    i++;
+                }
+                continue;
+            }
+
+            // propagate BNN constraint
+            if (i->isBNN()) {
+                const lbool val = bnn_prop(i->get_bnn(), currLevel);
+                if (val == l_False) {
                     i++;
                     while (i < end) {
                         *j++ = *i++;

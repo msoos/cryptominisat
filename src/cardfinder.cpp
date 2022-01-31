@@ -268,7 +268,7 @@ void CardFinder::deal_with_clash(vector<uint32_t>& clash) {
 
                 //add the new cardinality constraint
                 for(Lit l: new_card) {
-                    solver->watches[l].push(Watched(cards.size()));
+                    solver->watches[l].push(Watched(cards.size(), watch_idx_t));
                 }
                 cards.push_back(new_card);
             }
@@ -339,7 +339,7 @@ void CardFinder::find_pairwise_atmost1()
                     toClear.push_back(l_c);
                 }
                 seen[l_c.toInt()]++;
-                solver->watches[l_c].push(Watched(cards.size()));
+                solver->watches[l_c].push(Watched(cards.size(), watch_idx_t));
                 solver->watches.smudge(l_c);
             }
             total_sizes+=lits_in_card.size();

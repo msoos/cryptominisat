@@ -37,6 +37,7 @@ enum PropByType {null_clause_t = 0, clause_t = 1, binary_t = 2
     #ifdef USE_GAUSS
     , xor_t = 3
     #endif
+    , bnn_t = 4
 };
 
 class PropBy
@@ -44,12 +45,13 @@ class PropBy
     private:
         uint32_t red_step:1;
         uint32_t data1:31;
-        uint32_t type:2;
+        uint32_t type:3;
         //0: clause, NULL
         //1: clause, non-null
         //2: binary
-        //3: tertiary
-        uint32_t data2:30;
+        //3: xor
+        //4: bnn
+        uint32_t data2:29;
 
     public:
         PropBy() :
@@ -82,6 +84,14 @@ class PropBy
         }
 #endif
 
+        //BNN prop
+        PropBy(uint32_t bnn_idx, void*) :
+            type(bnn_t)
+            , data2(bnn_idx)
+        {
+        }
+
+
         //Binary prop
         PropBy(const Lit lit, const bool redStep) :
             red_step(redStep)
@@ -113,6 +123,17 @@ class PropBy
 
             data2 = ((uint32_t)hyperBin) << 1
                 | ((uint32_t)hyperBinNotAdded) << 2;
+        }
+
+        uint32_t isBNN() const
+        {
+            return type == bnn_t;
+        }
+
+        uint32_t getBNNidx() const
+        {
+            assert(isBNN());
+            return data2;
         }
 
         bool isRedStep() const

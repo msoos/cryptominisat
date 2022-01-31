@@ -53,10 +53,12 @@ class DimacsParser
         bool readClause(C& in);
         bool parse_and_add_clause(C& in);
         bool parse_and_add_xor_clause(C& in);
+        bool parse_and_add_bnn_clause(C& in);
         bool match(C& in, const char* str);
         bool parse_header(C& in);
         bool parseComments(C& in, const std::string& str);
         std::string stringify(uint32_t x) const;
+        bool check_var(const uint32_t var);
 
         #ifdef DEBUG_DIMACSPARSER_CMS
         bool parseWeight(C& in);
@@ -88,9 +90,11 @@ class DimacsParser
         //Reduce temp overhead
         vector<Lit> lits;
         vector<uint32_t> vars;
+        vector<uint32_t> int_ws;
 
         size_t norm_clauses_added = 0;
         size_t xor_clauses_added = 0;
+        size_t bnn_clauses_added = 0;
 };
 
 #include <sstream>
@@ -129,6 +133,56 @@ std::string DimacsParser<C, S>::stringify(uint32_t x) const
 }
 
 template<class C, class S>
+bool DimacsParser<C, S>::check_var(const uint32_t var)
+{
+    if (var > max_var) {
+        std::cerr
+        << "ERROR! "
+        << "Variable requested is too large for DIMACS parser parameter: "
+        << var << endl
+        << "--> At line " << lineNum+1
+        << please_read_dimacs
+        << endl;
+        return false;
+    }
+
+    if (var >= (1ULL<<28)) {
+        std::cerr
+        << "ERROR! "
+        << "Variable requested is far too large: " << var + 1 << endl
+        << "--> At line " << lineNum+1
+        << please_read_dimacs
+        << endl;
+        return false;
+    }
+
+    if (strict_header && !header_found) {
+        std::cerr
+        << "ERROR! "
+        << "DIMACS header ('p cnf vars cls') never found!" << endl;
+        return false;
+    }
+
+    if ((int)var >= num_header_vars && strict_header) {
+        std::cerr
+        << "ERROR! "
+        << "Variable requested is larger than the header told us." << endl
+        << " -> var is : " << var + 1 << endl
+        << " -> header told us maximum will be : " << num_header_vars << endl
+        << " -> At line " << lineNum+1
+        << endl;
+        return false;
+    }
+
+    if (var >= solver->nVars()) {
+        assert(!strict_header);
+        solver->new_vars(var - solver->nVars() +1);
+    }
+
+    return true;
+}
+
+template<class C, class S>
 bool DimacsParser<C, S>::readClause(C& in)
 {
     int32_t parsed_lit;
@@ -144,48 +198,8 @@ bool DimacsParser<C, S>::readClause(C& in)
         var = std::abs(parsed_lit)-1;
         var += offset_vars;
 
-        if (var > max_var) {
-            std::cerr
-            << "ERROR! "
-            << "Variable requested is too large for DIMACS parser parameter: "
-            << var << endl
-            << "--> At line " << lineNum+1
-            << please_read_dimacs
-            << endl;
+        if (!check_var(var)) {
             return false;
-        }
-
-        if (var >= (1ULL<<28)) {
-            std::cerr
-            << "ERROR! "
-            << "Variable requested is far too large: " << var + 1 << endl
-            << "--> At line " << lineNum+1
-            << please_read_dimacs
-            << endl;
-            return false;
-        }
-
-        if (strict_header && !header_found) {
-            std::cerr
-            << "ERROR! "
-            << "DIMACS header ('p cnf vars cls') never found!" << endl;
-            return false;
-        }
-
-        if ((int)var >= num_header_vars && strict_header) {
-            std::cerr
-            << "ERROR! "
-            << "Variable requested is larger than the header told us." << endl
-            << " -> var is : " << var + 1 << endl
-            << " -> header told us maximum will be : " << num_header_vars << endl
-            << " -> At line " << lineNum+1
-            << endl;
-            return false;
-        }
-
-        if (var >= solver->nVars()) {
-            assert(!strict_header);
-            solver->new_vars(var - solver->nVars() +1);
         }
 
         lits.push_back( (parsed_lit > 0) ? Lit(var, false) : Lit(var, true) );
@@ -464,6 +478,80 @@ bool DimacsParser<C, S>::parse_and_add_clause(C& in)
     return true;
 }
 
+// b (lit1.. litn) 0 (weight1... weightn) 0 (output lit)
+template<class C, class S>
+bool DimacsParser<C, S>::parse_and_add_bnn_clause(C& in)
+{
+    // Read in inputs to BNN
+    lits.clear();
+    if (!readClause(in)) {
+        return false;
+    }
+    if (lits.empty()) {
+        std::cerr
+        << "ERROR! "
+        << "BNN constraint has empty set of inputs" << endl
+        << "--> At line " << lineNum+1
+        << endl;
+        return false;
+    }
+
+    // Read in integer weights
+    int_ws.clear();
+    int32_t parsed_w;
+    for (;;) {
+        if (!in.parseInt(parsed_w, lineNum)) {
+            return false;
+        }
+        if (parsed_w == 0) {
+            break;
+        }
+        if (parsed_w <= 0) {
+            std::cerr
+            << "ERROR! "
+            << "BNN constraint weight is <= 0!" << endl
+            << "--> At line " << lineNum+1
+            << endl;
+            return false;
+        }
+        int_ws.push_back(parsed_w);
+    }
+
+    if (lits.size() != int_ws.size()) {
+        std::cerr
+        << "ERROR! "
+        << "BNN constraint different number of lits and weights!" << endl
+        << "--> At line " << lineNum+1
+        << endl;
+        return false;
+    }
+
+    // Read cutoff
+    uint32_t cutoff;
+    if (!in.parseInt(cutoff, lineNum)) {
+        return false;
+    }
+
+    // Read in output var
+    uint32_t out_var;
+    if (!in.parseInt(out_var, lineNum)) {
+        return false;
+    }
+    if (!check_var(out_var)) {
+        return false;
+    }
+
+    // Line finished
+    if (!in.skipEOL(lineNum)) {
+        return false;
+    }
+    lineNum++;
+
+    solver->add_bnn_clause(lits, int_ws, cutoff, out_var);
+    bnn_clauses_added++;
+    return true;
+}
+
 template<class C, class S>
 bool DimacsParser<C, S>::parse_and_add_xor_clause(C& in)
 {
@@ -531,6 +619,13 @@ bool DimacsParser<C, S>::parse_DIMACS_main(C& in)
                 return false;
             }
             break;
+
+        case 'b':
+            ++in;
+            if (!parse_and_add_bnn_clause(in)) {
+                return false;
+            }
+            break;
         case '\n':
             if (verbosity) {
                 std::cout
@@ -574,6 +669,7 @@ bool DimacsParser<C, S>::parse_DIMACS(
         cout
         << "c -- clauses added: " << norm_clauses_added << endl
         << "c -- xor clauses added: " << xor_clauses_added << endl
+        << "c -- bnn clauses added: " << bnn_clauses_added << endl
         << "c -- vars added " << (solver->nVars() - origNumVars)
         << endl;
     }

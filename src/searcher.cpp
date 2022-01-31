@@ -469,6 +469,15 @@ void Searcher::add_literals_from_confl_to_learnt(
         }
         #endif
 
+        case bnn_t: {
+            vector<Lit>* bnn_reason = get_bnn_reason(
+                bnns[confl.getBNNidx()], p);
+            lits = bnn_reason->data();
+            size = bnn_reason->size();
+            sumAntecedentsLits += size;
+            break;
+        }
+
         case null_clause_t:
         default:
             assert(false && "Error in conflict analysis (otherwise should be UIP)");
@@ -615,6 +624,22 @@ void Searcher::create_learnt_clause(PropBy confl)
             break;
         }
         #endif
+
+        case bnn_t : {
+            BNN* bnn = bnns[confl.getBNNidx()];
+            vector<Lit>* cl = get_bnn_confl_reason(bnn);
+            uint32_t last_dec_lev = 0;
+            for(const Lit& l: *cl) {
+                if (l == bnn->out) {
+                    continue;
+                }
+                if (varData[l.var()].level >= last_dec_lev) {
+                    last_dec_lev = varData[l.var()].level;
+                    lit0 = l;
+                }
+            }
+            break;
+        }
 
         case clause_t : {
             lit0 = (*cl_alloc.ptr(confl.get_offset()))[0];
