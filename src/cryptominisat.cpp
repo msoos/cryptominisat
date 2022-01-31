@@ -784,8 +784,8 @@ DLL_PUBLIC bool SATSolver::add_xor_clause(const std::vector<unsigned>& vars, boo
 
 DLL_PUBLIC bool SATSolver::add_bnn_clause(
     const std::vector<Lit>& lits,
-    const std::vector<unsigned>& int_ws,
-    unsigned cutoff,
+    const std::vector<signed>& int_ws,
+    signed cutoff,
     unsigned out_var)
 {
     if (data->log) {

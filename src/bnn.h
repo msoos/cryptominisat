@@ -66,8 +66,8 @@ public:
 
     explicit BNN(
         const vector<Lit>& _in,
-        const vector<uint32_t>& _ws,
-        const uint32_t _cutoff,
+        const vector<int32_t>& _ws,
+        const int32_t _cutoff,
         const Lit _out):
         out (_out)
     {
@@ -76,20 +76,11 @@ public:
         cutoff = (int32_t)_cutoff;
         assert(_ws.size() == _in.size());
         for(uint32_t i = 0; i < _ws.size(); i ++) {
-            assert(_ws[i] > 0);
             LitW lw(_in[i], (int32_t)_ws[i]);
             in.push_back(lw);
         }
 
 //         std::sort(in.begin(), in.end(), BNN_Weight_Sorter);
-//         uint32_t total_weight = 0;
-//         for(const auto& x: in)
-//             total_weight+=x.w;
-//         for(int32_t i = in.size()-1; i >= 0; i--) {
-//             in[i].max_after = total_weight - in[i].w;
-//             total_weight -= in[i].w;
-//         }
-//         assert(total_weight == 0);
     }
 
     const LitW& operator[](const uint32_t at) const

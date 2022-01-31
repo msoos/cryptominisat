@@ -989,6 +989,14 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
             }
             #endif
 
+            case bnn_t: {
+                vector<Lit>* cl = get_bnn_reason(
+                    bnns[reason.getBNNidx()], p);
+                lits = cl->data();
+                size = cl->size()-1;
+                break;
+            }
+
             case binary_t:
                 size = 1;
                 break;
@@ -1006,6 +1014,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
             switch (type) {
                 #ifdef USE_GAUSS
                 case xor_t:
+                case bnn_t:
                 #endif
                 case clause_t:
                     p2 = lits[i+1];

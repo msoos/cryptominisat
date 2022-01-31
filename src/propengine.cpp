@@ -302,6 +302,7 @@ lbool PropEngine::bnn_prop(const uint32_t bnn_idx, uint32_t level)
 
         assert(value(bnn->out) == l_Undef);
         enqueue<false>(bnn->out, level, PropBy(bnn_idx, nullptr));
+//         cout << "BNN prop set BNN out " << bnn->out << " due to being over for sure" << endl;
         return l_Undef;
     }
 
@@ -314,7 +315,7 @@ lbool PropEngine::bnn_prop(const uint32_t bnn_idx, uint32_t level)
 
         assert(value(bnn->out) == l_Undef);
         enqueue<false>(~bnn->out, level, PropBy(bnn_idx, nullptr));
-        cout << "BNN prop set BNN out " << ~bnn->out << " due to being under for sure" << endl;
+//         cout << "BNN prop set BNN out " << ~bnn->out << " due to being under for sure" << endl;
     }
 
     //Stronger propagation
@@ -326,7 +327,7 @@ lbool PropEngine::bnn_prop(const uint32_t bnn_idx, uint32_t level)
                 int32_t tot_remain = undefs - l.w;
                 if (tot_remain < needed) {
                     enqueue<false>(l.lit, level, PropBy(bnn_idx, nullptr));
-                    cout << "BNN prop set " << l.lit << " due to positive slack" << endl;
+//                     cout << "BNN prop set " << l.lit << " due to positive slack" << endl;
                     undefs -= l.w;
                     val += l.w;
                 }
@@ -339,7 +340,7 @@ lbool PropEngine::bnn_prop(const uint32_t bnn_idx, uint32_t level)
                 int32_t toomuch = bnn->cutoff-val+1;
                 if (l.w >= toomuch) {
                     enqueue<false>(~l.lit, level, PropBy(bnn_idx, nullptr));
-                    cout << "BNN prop set " << ~l.lit << " due to negative slack" << endl;
+//                     cout << "BNN prop set " << ~l.lit << " due to negative slack" << endl;
                     undefs -= l.w;
                     val += l.w;
                 }
@@ -380,11 +381,11 @@ vector<Lit>* PropEngine::get_bnn_reason(BNN* bnn, Lit lit)
 
     //lbool eval = bnn_eval(*bnn);
     get_bnn_prop_reason(bnn, lit, ret);
-    cout << "get_bnn_reason (" << lit << ") returning: ";
-    for(const auto& l: *ret) {
-        cout << l << " ";
-    }
-    cout << "0" << endl;
+//     cout << "get_bnn_reason (" << lit << ") returning: ";
+//     for(const auto& l: *ret) {
+//         cout << l << " ";
+//     }
+//     cout << "0" << endl;
 
     return ret;
 }

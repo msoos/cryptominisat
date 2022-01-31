@@ -575,12 +575,10 @@ void Solver::attach_bnn(const uint32_t bnn_idx)
     }
 }
 
-
-
 void Solver::add_bnn_clause_inter(
     vector<Lit>& lits,
-    const vector<uint32_t>& ws,
-    const uint32_t cutoff,
+    const vector<int32_t>& ws,
+    const int32_t cutoff,
     Lit out)
 {
     BNN* bnn = new BNN(lits, ws, cutoff, out);
@@ -3222,8 +3220,8 @@ bool Solver::add_xor_clause_outside(const vector<uint32_t>& vars, bool rhs)
 
 bool Solver::add_bnn_clause_outside(
     const vector<Lit>& lits,
-    const vector<unsigned>& ws,
-    const uint32_t cutoff,
+    const vector<signed>& ws,
+    const int32_t cutoff,
     uint32_t out_var)
 {
     assert(lits.size() == ws.size());
@@ -4091,6 +4089,11 @@ void Solver::detach_xor_clauses(
                         continue;
                     }
                 }
+            }
+
+            if (w.isBNN()) {
+                watches[l][j++] = w;
+                continue;
             }
 
             assert(w.isClause());

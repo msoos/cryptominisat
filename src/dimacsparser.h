@@ -90,7 +90,7 @@ class DimacsParser
         //Reduce temp overhead
         vector<Lit> lits;
         vector<uint32_t> vars;
-        vector<uint32_t> int_ws;
+        vector<int32_t> int_ws;
 
         size_t norm_clauses_added = 0;
         size_t xor_clauses_added = 0;
@@ -498,45 +498,27 @@ bool DimacsParser<C, S>::parse_and_add_bnn_clause(C& in)
 
     // Read in integer weights
     int_ws.clear();
-    int32_t parsed_w;
-    for (;;) {
+    for (uint32_t i = 0; i < lits.size(); i ++) {
+        int32_t parsed_w;
         if (!in.parseInt(parsed_w, lineNum)) {
-            return false;
-        }
-        if (parsed_w == 0) {
-            break;
-        }
-        if (parsed_w <= 0) {
-            std::cerr
-            << "ERROR! "
-            << "BNN constraint weight is <= 0!" << endl
-            << "--> At line " << lineNum+1
-            << endl;
             return false;
         }
         int_ws.push_back(parsed_w);
     }
-
-    if (lits.size() != int_ws.size()) {
-        std::cerr
-        << "ERROR! "
-        << "BNN constraint different number of lits and weights!" << endl
-        << "--> At line " << lineNum+1
-        << endl;
-        return false;
-    }
+    assert(lits.size() == int_ws.size());
 
     // Read cutoff
-    uint32_t cutoff;
+    int32_t cutoff;
     if (!in.parseInt(cutoff, lineNum)) {
         return false;
     }
 
     // Read in output var
-    uint32_t out_var;
+    int32_t out_var;
     if (!in.parseInt(out_var, lineNum)) {
         return false;
     }
+    assert(out_var > 0 && "BNN is wrong, output var is 0");
     //off-by-one internally.
     out_var -= 1;
     if (!check_var(out_var)) {
