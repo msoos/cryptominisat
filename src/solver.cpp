@@ -555,7 +555,7 @@ void Solver::attach_bnn(const uint32_t bnn_idx)
 {
     BNN* bnn = bnns[bnn_idx];
 
-    cout << "Attaching BNN: " << *bnn << endl;
+//     cout << "Attaching BNN: " << *bnn << endl;
 
     for(const auto& l: bnn->in) {
         watches[l].push(Watched(bnn_idx, watch_bnn_t));

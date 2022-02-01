@@ -280,23 +280,23 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
 lbool PropEngine::bnn_prop(const uint32_t bnn_idx, uint32_t level)
 {
     BNN* bnn = bnns[bnn_idx];
+    //lbool outval = value(bnn->out);
 
-    int32_t val = 0;
+    int32_t ts = 0;
     int32_t undefs = 0;
+    int32_t unknowns = bnn->size();
     for(const auto& p: bnn->in) {
         if (value(p) == l_Undef) {
             undefs++;
         }
         if (value(p) == l_True) {
-            val++;
+            ts++;
         }
+        unknowns--;
     }
 
-    //TODO value == TRUE, and undefs ~= val-cutoff
-    //reverse as well?
-
     // we are under the cutoff no matter what undefs is
-    if (val+undefs < bnn->cutoff) {
+    if (unknowns+ts+undefs < bnn->cutoff) {
         if (value(bnn->out) == l_False)
             return l_True;
         if (value(bnn->out) == l_True)
@@ -305,11 +305,8 @@ lbool PropEngine::bnn_prop(const uint32_t bnn_idx, uint32_t level)
         assert(value(bnn->out) == l_Undef);
         enqueue<false>(~bnn->out, level, PropBy(bnn_idx, nullptr));
 //         cout << "BNN prop set BNN out " << ~bnn->out << " due to being under for sure" << endl;
-        return l_Undef;
-    }
-
-    // we are at the cutoff no matter what undefs is
-    if (val >= bnn->cutoff) {
+    } else if (ts >= bnn->cutoff) {
+        // we are at the cutoff no matter what undefs is
         if (value(bnn->out) == l_True)
             return l_True;
         if (value(bnn->out) == l_False)
