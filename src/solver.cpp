@@ -573,6 +573,7 @@ void Solver::add_bnn_clause_inter(
     if (!sort_and_clean_bnn(*bnn)) {
         ok = false;
         delete bnn;
+        return;
     }
 
     lbool ret = bnn_eval(*bnn);
@@ -581,11 +582,13 @@ void Solver::add_bnn_clause_inter(
             ok = false;
         }
         delete bnn;
+        return;
     }
 
     ok = propagate<true>().isNULL();
     if (!ok) {
         delete bnn;
+        return;
     }
 
     bnns.push_back(bnn);

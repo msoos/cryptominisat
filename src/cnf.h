@@ -38,7 +38,6 @@ THE SOFTWARE.
 #include "simplefile.h"
 #include "gausswatched.h"
 #include "xor.h"
-#include "bnn.h"
 
 using std::numeric_limits;
 
@@ -238,6 +237,11 @@ public:
     std::atomic<bool>* get_must_interrupt_inter_asap_ptr()
     {
         return must_interrupt_inter;
+    }
+
+    const vector<BNN*>& get_bnns() const
+    {
+        return bnns;
     }
 
     lbool bnn_eval(const BNN& bnn)

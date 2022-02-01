@@ -1442,6 +1442,11 @@ void DLL_PUBLIC SATSolver::set_up_for_arjun()
     }
 }
 
+DLL_PUBLIC const vector<BNN*>& SATSolver::get_bnns() const
+{
+    return data->solvers[0]->get_bnns();
+}
+
 DLL_PUBLIC void SATSolver::set_verbosity_detach_warning(bool verb)
 {
     for (size_t i = 0; i < data->solvers.size(); i++) {

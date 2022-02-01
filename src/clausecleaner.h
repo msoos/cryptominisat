@@ -28,7 +28,6 @@ THE SOFTWARE.
 #include "watcharray.h"
 #include "clause.h"
 #include "xor.h"
-#include "bnn.h"
 #include <vector>
 using std::vector;
 

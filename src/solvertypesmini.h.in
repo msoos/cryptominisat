@@ -275,6 +275,68 @@ struct FastBackwData {
     uint32_t indep_because_ran_out_of_confl = 0;
 };
 
+class BNN
+{
+public:
+    BNN()
+    {}
+
+    explicit BNN(
+        const std::vector<Lit>& _in,
+        const int32_t _cutoff,
+        const Lit _out):
+        in(_in),
+        cutoff(_cutoff),
+        out (_out)
+    {
+        assert(_in.size() > 0);
+    }
+
+    const Lit& operator[](const uint32_t at) const
+    {
+        return in[at];
+    }
+
+    Lit& operator[](const uint32_t at)
+    {
+        return in[at];
+    }
+
+    const Lit& get_out() const
+    {
+        return out;
+    }
+
+    size_t size() const
+    {
+        return in.size();
+    }
+
+    bool empty() const
+    {
+        return in.empty();
+    }
+
+    std::vector<Lit> in;
+    int32_t cutoff;
+    Lit out;
+    bool isRemoved = false;
+};
+
+inline std::ostream& operator<<(std::ostream& os, const BNN& bnn)
+{
+    for (uint32_t i = 0; i < bnn.size(); i++) {
+        os << "lit[" << bnn[i] << "]";
+
+        if (i+1 < bnn.size())
+            os << " + ";
+    }
+    os << " >=  " << bnn.cutoff
+    << " -- outlit: " << bnn.out;
+
+    return os;
+}
+
 }
 
 #endif //__SOLVERTYPESMINI_H__
