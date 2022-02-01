@@ -54,6 +54,30 @@ class Constr:
 
         return True
 
+    def translate(self, true_var):
+        assert self.simple()
+        ins = []
+        for l in self.lhs:
+            if l[0] == 1:
+                ins.append(l[1])
+                continue
+            else:
+                ins.append(-l[1])
+                self.cutoff+=1
+
+        pr = "b "
+        for l in ins:
+            pr += "%d " % l
+
+        pr += "0 "
+        pr += "%d " % self.cutoff
+
+        if self.rhs is not None:
+            pr += "%d " % self.rhs
+        else:
+            pr += "%d " % true_var
+        print("%s" % pr)
+
 
 def parse_constr(line):
     lhs = []
@@ -125,12 +149,19 @@ def parse_constr(line):
 
 ind = []
 constr = []
+maxvar = None
 with open(fname, "r") as f:
     # parse ind
     for line in f:
         line = line.strip()
         if len(line) == 0:
             continue
+
+        if "#variable" in line:
+            maxvar = int(line.split()[2])
+            print("c maxvar: ", maxvar)
+            continue
+
         if "* ind" in line:
             line = line[5:]
             for k in line.split(' '):
@@ -144,6 +175,9 @@ with open(fname, "r") as f:
 
         constr.append(parse_constr(line))
 
+true_var = maxvar+1
+print("%d 0" % true_var)
+
 # deal with independent
 pr = "c ind "
 for i in ind:
@@ -153,9 +187,8 @@ print("%s 0" % pr)
 for c in constr:
     print("c doing constraint: ", c)
     if c.simple():
-        pass
+        c.translate(true_var)
     else:
         print("c Can't deal with constraint: ", c)
-
 
 
