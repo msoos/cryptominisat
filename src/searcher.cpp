@@ -700,8 +700,8 @@ void Searcher::simple_create_learnt_clause(
     assert(decisionLevel() == 1);
 
     do {
-        if (!confl.isNULL()) {
-            if (confl.getType() == binary_t) {
+        switch (confl.getType()) {
+            case binary_t: {
                 if (p == lit_Undef && True_confl == false) {
                     Lit q = failBinLit;
                     if (!seen[q.var()]) {
@@ -714,12 +714,27 @@ void Searcher::simple_create_learnt_clause(
                     seen[q.var()] = 1;
                     mypathC++;
                 }
-            } else {
-                const Clause& c = *solver->cl_alloc.ptr(confl.get_offset());
+                break;
+            }
+
+            case bnn_t:
+            case clause_t: {
+                Lit* c;
+                uint32_t sz;
+                if (confl.getType() == clause_t) {
+                    auto cl = solver->cl_alloc.ptr(confl.get_offset());
+                    c = cl->getData();
+                    sz = cl->size();
+                } else {
+                    auto cl = get_bnn_reason(bnns[confl.getBNNidx()], p);
+                    c = cl->data();
+                    sz = cl->size();
+                }
+
 
                 // if True_confl==true, then choose p begin with the 1st index of c
                 for (uint32_t j = (p == lit_Undef && True_confl == false) ? 0 : 1
-                    ; j < c.size()
+                    ; j < sz
                     ; j++
                 ) {
                     Lit q = c[j];
@@ -729,10 +744,13 @@ void Searcher::simple_create_learnt_clause(
                         mypathC++;
                     }
                 }
+                break;
             }
-        } else {
-            assert(confl.isNULL());
-            out_learnt.push_back(~p);
+
+            case null_clause_t:
+                assert(confl.isNULL());
+                out_learnt.push_back(~p);
+                break;
         }
         // if not break, while() will come to the index of trail blow 0, and fatal error occur;
         if (mypathC == 0) {
