@@ -314,7 +314,23 @@ lbool PropEngine::bnn_prop(const uint32_t bnn_idx, uint32_t level)
 
         assert(value(bnn->out) == l_Undef);
         enqueue<false>(bnn->out, level, PropBy(bnn_idx, nullptr));
-//         cout << "BNN prop set BNN out " << bnn->out << " due to being over for sure" << endl;
+        //         cout << "BNN prop set BNN out " << bnn->out << " due to being over for sure" << endl;        }
+    } else if (value(bnn->out) == l_True &&
+        bnn->cutoff - ts == undefs)
+    {
+        for(const auto& p: bnn->in) {
+            if (value(p) == l_Undef) {
+                enqueue<false>(p, level, PropBy(bnn_idx, nullptr));
+            }
+        }
+    } else if (value(bnn->out) == l_False &&
+        bnn->cutoff == ts + 1)
+    {
+        for(const auto& p: bnn->in) {
+            if (value(p) == l_Undef) {
+                enqueue<false>(~p, level, PropBy(bnn_idx, nullptr));
+            }
+        }
     }
 
     return l_Undef;
@@ -355,7 +371,7 @@ vector<Lit>* PropEngine::get_bnn_reason(BNN* bnn, Lit lit)
     get_bnn_prop_reason(bnn, lit, ret);
 //     cout << "get_bnn_reason (" << lit << ") returning: ";
 //     for(const auto& l: *ret) {
-//         cout << l << " ";
+//         cout << l << " val(" << value(l) << ") ";
 //     }
 //     cout << "0" << endl;
 
@@ -406,36 +422,55 @@ void PropEngine::get_bnn_prop_reason(
     BNN* bnn, Lit lit, vector<Lit>* ret)
 {
     assert(value(bnn->out) != l_Undef);
-    assert(bnn->out.var() == lit.var());
     assert(value(lit) == l_True); //it's being propagated
 
-    //It's set to TRUE
-    if (value(bnn->out) == l_True) {
-        ret->clear();
-        ret->push_back(lit); //this is what's propagated, must be 1st
+    if (lit.var() == bnn->out.var()) {
+        //It's set to TRUE
+        if (value(bnn->out) == l_True) {
+            ret->clear();
+            ret->push_back(lit); //this is what's propagated, must be 1st
 
-        //Caused it to meet cutoff
-        for(const auto& l: bnn->in) {
-            if (varData[l.var()].sublevel <= varData[lit.var()].sublevel
-                && value(l) == l_True)
-            {
-                ret->push_back(~l);
+            //Caused it to meet cutoff
+            for(const auto& l: bnn->in) {
+                if (varData[l.var()].sublevel <= varData[lit.var()].sublevel
+                    && value(l) == l_True)
+                {
+                    ret->push_back(~l);
+                }
+            }
+        }
+
+        //it's set to FALSE
+        if (value(bnn->out) == l_False) {
+            ret->clear();
+            ret->push_back(lit); //this is what's propagated, must be 1st
+
+            //Caused it to meet cutoff
+            for(const auto& l: bnn->in) {
+                if (varData[l.var()].sublevel <= varData[lit.var()].sublevel
+                    && value(l) == l_False)
+                {
+                    ret->push_back(l);
+                }
             }
         }
         return;
-    }
-
-    //it's set to FALSE
-    if (value(bnn->out) == l_False) {
+    } else {
         ret->clear();
         ret->push_back(lit); //this is what's propagated, must be 1st
-
-        //Caused it to meet cutoff
+        ret->push_back(bnn->out ^ (value(bnn->out) == l_True));
         for(const auto& l: bnn->in) {
-            if (varData[l.var()].sublevel <= varData[lit.var()].sublevel
-                && value(l) == l_False)
-            {
-                ret->push_back(l);
+            if (varData[l.var()].sublevel < varData[lit.var()].sublevel) {
+                if (value(bnn->out) == l_True) {
+                    if (value(l) == l_False) {
+                        ret->push_back(l);
+                    }
+                }
+                if (value(bnn->out) == l_False) {
+                    if (value(l) == l_True) {
+                        ret->push_back(~l);
+                    }
+                }
             }
         }
         return;
