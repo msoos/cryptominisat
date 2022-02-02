@@ -19,12 +19,7 @@
 # 02110-1301, USA.
 
 import sys
-
-if len(sys.argv) != 2:
-    print("ERROR: must give: n v s seed")
-    exit(-1)
-
-fname = sys.argv[1]
+import subprocess
 
 def parse_lit(x):
     inv = 1
@@ -56,6 +51,22 @@ class Constr:
 
     def translate(self, true_var):
         assert self.simple()
+        if len(self.lhs) == 1 and self.lhs[0][0] == 1 and self.cutoff == 0:
+            print("%d %d 0" % (-self.lhs[0][1], self.rhs))
+            print("%d %d 0" % (self.lhs[0][1], -self.rhs))
+            return
+        #if len(self.lhs) == 1 and self.lhs[0][0] == -1 and self.cutoff == 1:
+            #print("%d %d 0" % (-self.lhs[0][1], self.rhs))
+            #print("%d %d 0" % (self.lhs[0][1], -self.rhs))
+            #return
+
+        if len(self.lhs) == 1 and self.rhs == None and self.cutoff == 1:
+            if self.lhs[0][0] == 1:
+                print("%d 0" % self.lhs[0][1])
+                return
+            sys.stderr.write("ERRROOOR\n")
+            exit(-1)
+
         ins = []
         for l in self.lhs:
             if l[0] == 1:
@@ -147,48 +158,128 @@ def parse_constr(line):
 
     return Constr(lhs, cutoff, rhs)
 
-ind = []
-constr = []
-maxvar = None
-with open(fname, "r") as f:
-    # parse ind
-    for line in f:
-        line = line.strip()
-        if len(line) == 0:
-            continue
 
-        if "#variable" in line:
-            maxvar = int(line.split()[2])
-            print("c maxvar: ", maxvar)
-            continue
+def do_pbsugar(constr, maxvar):
+    with open("sugarin", "w") as f:
+        f.write("* #variable= %d #constraint= 1\n" % maxvar)
+        for i in constr.lhs:
+            f.write("%d x%d " % (i[0],i[1]))
+        f.write(" >= %d ;\n" % constr.cutoff)
+    assert constr.rhs is None
 
-        if "* ind" in line:
-            line = line[5:]
-            for k in line.split(' '):
-                k = k.strip()
-                if k != "0" and k != '':
-                    ind.append(int(k))
-            continue
+    args = ("./pbsugar", "-map", "x", "-n", "sugarin", "-sat", "sugarout")
+    popen = subprocess.Popen(args, stdout=subprocess.PIPE)
+    popen.wait()
+    output = popen.stdout.read()
+    #print("c pbsugar output: ", output)
 
-        if line[0] == '*':
-            continue
+    # get map
+    varmap_end = 0
+    varmap = {}
+    with open("x", "r") as f:
+        first = True
+        for line in f:
+            if first:
+                num_max = int(line.strip())
+                assert num_max == maxvar # or it had to use some extra vars
+                first = False
+                continue
+            line=line.strip().split(' ')
+            assert line[0][0] == 'x'
+            new = int(line[1])
+            orig = int(line[0][1:])
+            varmap[new] = orig
+            if new > varmap_end:
+                varmap_end = new
 
-        constr.append(parse_constr(line))
+    towrite = ""
+    with open("sugarout", "r") as f:
+        for line in f:
+            if "p cnf" in line:
+                continue
+            line = line.strip().split()
+            for lit in line:
+                lit = int(lit)
+                sign = lit < 0
+                var = abs(lit)
+                if var == 0:
+                    towrite+= '0'
+                    print(towrite)
+                    towrite = ""
+                    continue
 
-true_var = maxvar+1
-print("%d 0" % true_var)
+                if var in varmap:
+                    # part of original formula
+                    var2 = varmap[var]
+                else:
+                    # fresh variable by pbsugar
+                    assert var > varmap_end
+                    maxvar+=1
+                    var2 = maxvar
 
-# deal with independent
-pr = "c ind "
-for i in ind:
-    pr += "%d " % i
-print("%s 0" % pr)
+                if sign:
+                    lit2 = -var2
+                else:
+                    lit2 = var2
+                towrite+="%d " % lit2
 
-for c in constr:
-    print("c doing constraint: ", c)
-    if c.simple():
-        c.translate(true_var)
-    else:
-        print("c Can't deal with constraint: ", c)
+    return maxvar
+
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("ERROR: must give: n v s seed")
+        exit(-1)
+
+    fname = sys.argv[1]
+
+    # parse input
+    ind = []
+    constr = []
+    maxvar = None
+    with open(fname, "r") as f:
+        # parse ind
+        for line in f:
+            line = line.strip()
+            if len(line) == 0:
+                continue
+
+            if "#variable" in line:
+                maxvar = int(line.split()[2])
+                print("c maxvar: ", maxvar)
+                continue
+
+            if "* ind" in line:
+                line = line[5:]
+                for k in line.split(' '):
+                    k = k.strip()
+                    if k != "0" and k != '':
+                        ind.append(int(k))
+                continue
+
+            if line[0] == '*':
+                continue
+
+            constr.append(parse_constr(line))
+
+    # create fake TRUE_VAR to be able to assign it to RHS
+    true_var = maxvar+1
+    print("%d 0" % true_var)
+    maxvar+=1
+
+    # deal with independent
+    pr = "c ind "
+    for i in ind:
+        pr += "%d " % i
+    print("%s 0" % pr)
+
+    # create output
+    for c in constr:
+        print("c doing constraint: ", c)
+        if c.simple():
+            c.translate(true_var)
+        else:
+            print("c Using pbsugar to deal with: ", c)
+            # maxvar = do_pbsugar(c, maxvar)
 
 
