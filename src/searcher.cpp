@@ -1375,9 +1375,9 @@ lbool Searcher::search()
             #endif
         } else {
             assert(ok);
-            /*if (decisionLevel() == 0) {
-                clean_clauses_if_needed();
-            }*/
+//             if (decisionLevel() == 0) {
+//                 clean_clauses_if_needed();
+//             }
             reduce_db_if_needed();
             lbool dec_ret;
             if (fast_backw.fast_backw_on) {

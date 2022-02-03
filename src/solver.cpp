@@ -548,6 +548,7 @@ bool Solver::sort_and_clean_bnn(BNN& bnn)
         }
     }
     bnn.in.resize(bnn.in.size() - (i - j));
+
     return true;
 }
 
@@ -593,6 +594,11 @@ void Solver::add_bnn_clause_inter(
 
     bnns.push_back(bnn);
     attach_bnn(bnns.size()-1);
+    ret = bnn_prop(bnns.size()-1, 0);
+    if (ret == l_False) {
+        ok = false;
+    }
+    ok = propagate<true>().isNULL();
 }
 
 void Solver::attachClause(

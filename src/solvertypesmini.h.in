@@ -319,7 +319,8 @@ public:
 
     std::vector<Lit> in;
     int32_t cutoff;
-    Lit out;
+    Lit out = l_Undef;
+    lbool val = l_False;
     bool isRemoved = false;
 };
 

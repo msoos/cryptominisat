@@ -132,8 +132,62 @@ void ClauseCleaner::clean_implicit_clauses()
     #endif
 }
 
-bool ClauseCleaner::clean_bnn(BNN& bnn) {
-    assert(false);
+//return True if it's to be removed.
+bool ClauseCleaner::clean_bnn(BNN& bnn, uint32_t bnn_idx) {
+    uint32_t cutoff = bnn.cutoff;
+    uint32_t i = 0;
+    uint32_t j = 0;
+    for(; i < bnn.in.size(); i++) {
+        Lit l = bnn.in[i];
+        if (solver->value(l) == l_Undef) {
+            bnn[j++] = bnn[i];
+            continue;
+        }
+        removeWBNN(solver->watches, l, bnn_idx);
+        removeWBNN(solver->watches, ~l, bnn_idx);
+
+        if (solver->value(l) == l_False) {
+            removeWBNN(solver->watches, l, bnn_idx);
+            removeWBNN(solver->watches, ~l, bnn_idx);
+            //nothing
+        } else if (solver->value(l) == l_True) {
+            cutoff--;
+        }
+    }
+    bnn.in.resize(j);
+
+    if (bnn.cutoff > (int)bnn.in.size()) {
+        assert(solver->value(bnn.out) == l_False);
+
+        //remove
+        return true;
+    }
+
+    if (bnn.in.size() == 0) {
+        assert(bnn.cutoff >= 0);
+        if (bnn.cutoff == 0)
+            assert(solver->value(bnn.out) == l_True);
+        else
+            assert(solver->value(bnn.out) == l_False);
+        return true;
+    }
+
+//     if (bnn.in.size() == 1) {
+//         assert(solver->value(bnn.out) != l_Undef);
+//         assert(bnn.cutoff >= 0);
+//
+//         if (bnn.cutoff == 0)
+//             assert(solver->value(bnn.out) == l_False);
+//
+//         if (bnn.cutoff > 1)
+//             assert(solver->value(bnn.out) == l_False);
+//
+//         assert(solver->value(bnn.out) == l_True);
+//         return true;
+//     }
+
+    //cannot be removed
+    return false;
 }
 
 void ClauseCleaner::clean_bnns_inter(vector<BNN*>& bnns)
@@ -145,8 +199,12 @@ void ClauseCleaner::clean_bnns_inter(vector<BNN*>& bnns)
         cout << "Cleaning clauses in vector<>" << endl;
     }
 
-    for (auto& bnn: bnns) {
-        if (clean_bnn(*bnn)) {
+    for (uint32_t i = 0; i < bnns.size(); i++) {
+        BNN* bnn = solver->bnns[i];
+        if (bnn->isRemoved)
+            continue;
+
+        if (clean_bnn(*bnn, i)) {
             for(const auto& l: bnn->in) {
                 solver->watches.smudge(l);
                 solver->watches.smudge(~l);

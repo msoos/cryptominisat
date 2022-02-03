@@ -514,9 +514,7 @@ bool DimacsParser<C, S>::parse_and_add_bnn_clause(C& in)
     }
 
     // Line finished
-    if (!in.skipEOL(lineNum)) {
-        return false;
-    }
+    in.skipLine();
     lineNum++;
 
     solver->add_bnn_clause(lits, cutoff, out_var);

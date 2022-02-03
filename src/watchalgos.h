@@ -167,6 +167,21 @@ static inline void removeWXCl(watch_array& wsFull
     ws.shrink_(1);
 }
 
+static inline void removeWBNN(watch_array& wsFull
+    , const Lit lit
+    , const uint32_t bnnIdx
+) {
+    watch_subarray ws = wsFull[lit];
+    Watched *i = ws.begin(), *end = ws.end();
+    for (; i != end && (!i->isBNN() || i->get_bnn() != bnnIdx); i++);
+    assert(i != end);
+    Watched *j = i;
+    i++;
+    for (; i != end; j++, i++) *j = *i;
+    ws.shrink_(1);
+}
+
+
 } //end namespace
 
 

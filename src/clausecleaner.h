@@ -78,7 +78,7 @@ class ClauseCleaner
         void clean_clauses_pre();
         void clean_clauses_post();
         void clean_clauses_inter(vector<ClOffset>& cs);
-        bool clean_bnn(BNN& bnn);
+        bool clean_bnn(BNN& bnn, uint32_t bnn_idx);
         void clean_bnns_inter(vector<BNN*>& bnns);
 
         bool satisfied(const Watched& watched, Lit lit);
