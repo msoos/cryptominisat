@@ -280,6 +280,6 @@ if __name__ == "__main__":
             c.translate(true_var)
         else:
             print("c Using pbsugar to deal with: ", c)
-            # maxvar = do_pbsugar(c, maxvar)
+            maxvar = do_pbsugar(c, maxvar)
 
 
