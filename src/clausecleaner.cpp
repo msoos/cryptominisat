@@ -155,11 +155,7 @@ bool ClauseCleaner::clean_bnn(BNN& bnn, uint32_t bnn_idx) {
     bnn.in.resize(j);
 
     if (bnn.val == l_Undef && solver->value(bnn.out) != l_Undef) {
-        if (solver->value(bnn.out) == l_True) {
-            bnn.val = l_True;
-        } else {
-            bnn.val = l_False;
-        }
+        bnn.val = solver->value(bnn.out);
         removeWBNN(solver->watches, bnn.out, bnn_idx);
         removeWBNN(solver->watches, ~bnn.out, bnn_idx);
         bnn.out = lit_Undef;

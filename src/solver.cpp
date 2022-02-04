@@ -562,6 +562,8 @@ void Solver::attach_bnn(const uint32_t bnn_idx)
         watches[l].push(Watched(bnn_idx, watch_bnn_t));
         watches[~l].push(Watched(bnn_idx, watch_bnn_t));
     }
+    watches[bnn->out].push(Watched(bnn_idx, watch_bnn_t));
+    watches[~bnn->out].push(Watched(bnn_idx, watch_bnn_t));
 }
 
 void Solver::add_bnn_clause_inter(
