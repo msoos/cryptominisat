@@ -741,7 +741,7 @@ void OccSimplifier::remove_all_longs_from_watches()
             if (i->isClause()) {
                 continue;
             } else {
-                assert(i->isBin());
+                assert(i->isBin() || i->isBNN());
                 *j++ = *i;
             }
         }

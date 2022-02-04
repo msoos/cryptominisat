@@ -228,7 +228,7 @@ def do_pbsugar(constr, maxvar):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("ERROR: must give: n v s seed")
+        print("ERROR: must give ONE input, the OPB file")
         exit(-1)
 
     fname = sys.argv[1]
