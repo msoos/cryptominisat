@@ -134,7 +134,7 @@ void ClauseCleaner::clean_implicit_clauses()
 
 //return True if it's to be removed.
 bool ClauseCleaner::clean_bnn(BNN& bnn, uint32_t bnn_idx) {
-    uint32_t cutoff = bnn.cutoff;
+    int32_t cutoff = bnn.cutoff;
     uint32_t i = 0;
     uint32_t j = 0;
     for(; i < bnn.in.size(); i++) {

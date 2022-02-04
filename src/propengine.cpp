@@ -807,7 +807,7 @@ PropBy PropEngine::propagate_any_order_fast()
         ws.shrink_(i-j);
 
         #ifdef USE_GAUSS
-        if (!all_matrices_disabled) {
+        if (!all_matrices_disabled && confl.isNULL()) {
             PropBy ret = gauss_jordan_elim(p, currLevel);
             //cout << "ret: " << ret << " -- " << endl;
             if (!ret.isNULL()) {

@@ -718,6 +718,7 @@ void Searcher::simple_create_learnt_clause(
             }
 
             case bnn_t:
+            case xor_t:
             case clause_t: {
                 Lit* c;
                 uint32_t sz;
@@ -725,12 +726,17 @@ void Searcher::simple_create_learnt_clause(
                     auto cl = solver->cl_alloc.ptr(confl.get_offset());
                     c = cl->getData();
                     sz = cl->size();
-                } else {
+                } else if (confl.getType() == bnn_t) {
                     auto cl = get_bnn_reason(bnns[confl.getBNNidx()], p);
                     c = cl->data();
                     sz = cl->size();
+                } else {
+                    assert(confl.getType() == xor_t);
+                    vector<Lit>* cl = gmatrices[confl.get_matrix_num()]->
+                    get_reason(confl.get_row_num());
+                    c = cl->data();
+                    sz = cl->size();
                 }
-
 
                 // if True_confl==true, then choose p begin with the 1st index of c
                 for (uint32_t j = (p == lit_Undef && True_confl == false) ? 0 : 1
@@ -1139,6 +1145,17 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
                         const Clause& cl = *cl_alloc.ptr(reason.get_offset());
                         assert(value(cl[0]) == l_True);
                         for(const Lit lit: cl) {
+                            if (varData[lit.var()].level > 0) {
+                                seen[lit.var()] = 1;
+                            }
+                        }
+                        break;
+                    }
+
+                    case PropByType::bnn_t : {
+                        vector<Lit>* cl = get_bnn_reason(
+                            bnns[reason.getBNNidx()], lit_Undef);
+                        for(const Lit lit: *cl) {
                             if (varData[lit.var()].level > 0) {
                                 seen[lit.var()] = 1;
                             }
