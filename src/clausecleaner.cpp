@@ -147,8 +147,6 @@ bool ClauseCleaner::clean_bnn(BNN& bnn, uint32_t bnn_idx) {
         removeWBNN(solver->watches, ~l, bnn_idx);
 
         if (solver->value(l) == l_False) {
-            removeWBNN(solver->watches, l, bnn_idx);
-            removeWBNN(solver->watches, ~l, bnn_idx);
             //nothing
         } else if (solver->value(l) == l_True) {
             cutoff--;

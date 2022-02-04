@@ -310,8 +310,9 @@ struct OccurClause {
             return ws.lit2() < other.ws.lit2();
         }
 
-        assert(ws.isClause());
-        assert(other.ws.isClause());
+        assert(ws.isClause()  || ws.isBNN());
+        assert(other.ws.isClause() || ws.isBNN());
+        assert(false);
         return ws.get_offset() < other.ws.get_offset();
     }
 };
@@ -323,11 +324,11 @@ struct WatchSorterBinTriLong {
             assert(!b.isIdx());
 
             //Anything but clause!
-            if (a.isClause()) {
+            if (a.isClause() || a.isBNN()) {
                 //A is definitely not better than B
                 return false;
             }
-            if (b.isClause()) {
+            if (b.isClause() || a.isBNN()) {
                 //B is clause, A is NOT a clause. So A is better than B.
                 return true;
             }

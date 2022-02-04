@@ -151,7 +151,7 @@ void DistillerLongWithImpl::str_and_sub_using_watch(
         ; wit++
     ) {
         //Can't do anything with a clause
-        if (wit->isClause())
+        if (!wit->isBin())
             continue;
 
         timeAvailable -= 5;
