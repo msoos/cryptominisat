@@ -156,9 +156,18 @@ bool ClauseCleaner::clean_bnn(BNN& bnn, uint32_t bnn_idx) {
     }
     bnn.in.resize(j);
 
-    if (bnn.cutoff > (int)bnn.in.size()) {
-        assert(solver->value(bnn.out) == l_False);
+    if (cutoff <= 0) {
+        assert(bnn.val == l_True  ||
+            (bnn.val == l_Undef && solver->value(bnn.out) == l_True)
+        );
+        //remove
+        return true;
+    }
 
+    if ((int)bnn.in.size() < cutoff) {
+        assert(bnn.val == l_False ||
+            (bnn.val == l_Undef && solver->value(bnn.out) == l_False)
+        );
         //remove
         return true;
     }
