@@ -156,28 +156,39 @@ bool ClauseCleaner::clean_bnn(BNN& bnn, uint32_t bnn_idx) {
     }
     bnn.in.resize(j);
 
+    if (bnn.val == l_Undef && solver->value(bnn.out) != l_Undef) {
+        if (solver->value(bnn.out) == l_True) {
+            bnn.val = l_True;
+        } else {
+            bnn.val = l_False;
+        }
+        removeWBNN(solver->watches, bnn.out, bnn_idx);
+        removeWBNN(solver->watches, ~bnn.out, bnn_idx);
+        bnn.out = lit_Undef;
+    }
+
+    // Always true
     if (cutoff <= 0) {
-        assert(bnn.val == l_True  ||
-            (bnn.val == l_Undef && solver->value(bnn.out) == l_True)
-        );
+        assert(bnn.val == l_True);
         //remove
         return true;
     }
 
+    // Always false
     if ((int)bnn.in.size() < cutoff) {
-        assert(bnn.val == l_False ||
-            (bnn.val == l_Undef && solver->value(bnn.out) == l_False)
-        );
+        assert(bnn.val == l_False);
         //remove
         return true;
     }
 
     if (bnn.in.size() == 0) {
         assert(bnn.cutoff >= 0);
-        if (bnn.cutoff == 0)
-            assert(solver->value(bnn.out) == l_True);
-        else
-            assert(solver->value(bnn.out) == l_False);
+        if (bnn.cutoff == 0) {
+            assert(bnn.val == l_True);
+        } else {
+            assert(bnn.val == l_False);
+        }
+        //remove
         return true;
     }
 
