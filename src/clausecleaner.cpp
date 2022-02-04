@@ -223,8 +223,10 @@ void ClauseCleaner::clean_bnns_inter(vector<BNN*>& bnns)
                 solver->watches.smudge(l);
                 solver->watches.smudge(~l);
             }
-            solver->watches.smudge(bnn->out);
-            solver->watches.smudge(~bnn->out);
+            if (bnn->out != lit_Undef) {
+                solver->watches.smudge(bnn->out);
+                solver->watches.smudge(~bnn->out);
+            }
             bnn->isRemoved = true;
         }
     }

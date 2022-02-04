@@ -494,12 +494,16 @@ void PropEngine::get_bnn_prop_reason(
         }
         for(const auto& l: bnn->in) {
             if (varData[l.var()].sublevel < varData[lit.var()].sublevel) {
-                if (value(bnn->out) == l_True) {
+                if (bnn->val == l_True ||
+                    (bnn->val == l_Undef && value(bnn->out) == l_True))
+                {
                     if (value(l) == l_False) {
                         ret->push_back(l);
                     }
                 }
-                if (value(bnn->out) == l_False) {
+                if (bnn->val == l_False ||
+                    (bnn->val == l_Undef && value(bnn->out) == l_False))
+                {
                     if (value(l) == l_True) {
                         ret->push_back(~l);
                     }
