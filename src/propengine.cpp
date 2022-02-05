@@ -290,43 +290,42 @@ lbool PropEngine::bnn_prop(const uint32_t bnn_idx, uint32_t level)
             ts++;
         }
         unknowns--;
+    }
 
-
-        if (unknowns+ts+undefs < bnn->cutoff) {
-            // we are under the cutoff no matter what undef+unknowns is
-            if (bnn->set) {
+    if (unknowns+ts+undefs < bnn->cutoff) {
+        // we are under the cutoff no matter what undef+unknowns is
+        if (bnn->set) {
 //                 cout << "returning l_False from bnn_prop" <<  "declev: " << decisionLevel() << endl;
-                return l_False;
-            }
+            return l_False;
+        }
 
-            if (value(bnn->out) == l_False)
-                return l_True;
-            if (value(bnn->out) == l_True)
-                return l_False;
+        if (value(bnn->out) == l_False)
+            return l_True;
+        if (value(bnn->out) == l_True)
+            return l_False;
 
-            assert(value(bnn->out) == l_Undef);
-            enqueue<false>(~bnn->out, level, PropBy(bnn_idx, nullptr));
-    //         cout << "BNN prop set BNN out " << ~bnn->out << " due to being under for sure" << endl;
+        assert(value(bnn->out) == l_Undef);
+        enqueue<false>(~bnn->out, level, PropBy(bnn_idx, nullptr));
+//         cout << "BNN prop set BNN out " << ~bnn->out << " due to being under for sure" << endl;
+        return l_True;
+    }
+
+    if (ts >= bnn->cutoff) {
+        // we are over the cutoff
+        if (bnn->set) {
             return l_True;
         }
 
-        if (ts >= bnn->cutoff) {
-            // we are over the cutoff
-            if (bnn->set) {
-                return l_True;
-            }
-
-            // we are at the cutoff no matter what undefs is
-            if (value(bnn->out) == l_True)
-                return l_True;
-            if (value(bnn->out) == l_False)
-                return l_False;
-
-            assert(value(bnn->out) == l_Undef);
-            enqueue<false>(bnn->out, level, PropBy(bnn_idx, nullptr));
-            //         cout << "BNN prop set BNN out " << bnn->out << " due to being over for sure" << endl;        }
+        // we are at the cutoff no matter what undefs is
+        if (value(bnn->out) == l_True)
             return l_True;
-        }
+        if (value(bnn->out) == l_False)
+            return l_False;
+
+        assert(value(bnn->out) == l_Undef);
+        enqueue<false>(bnn->out, level, PropBy(bnn_idx, nullptr));
+        //         cout << "BNN prop set BNN out " << bnn->out << " due to being over for sure" << endl;        }
+        return l_True;
     }
 
     if (
