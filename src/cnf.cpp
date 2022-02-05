@@ -223,6 +223,10 @@ inline void CNF::updateWatch(
             continue;
         }
 
+        if (it->isBNN()) {
+            continue;
+        }
+
         assert(it->isClause());
         const Clause &cl = *cl_alloc.ptr(it->get_offset());
         Lit blocked_lit = it->getBlockedLit();

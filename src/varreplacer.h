@@ -115,6 +115,9 @@ class VarReplacer
         SCCFinder* scc_finder;
         vector<Clause*> delayed_attach_or_free;
 
+        void replace_bnn_lit(Lit& l, uint32_t idx, bool& changed);
+        bool replace_bnns();
+
         void check_no_replaced_var_set() const;
         vector<Lit> fast_inter_replace_lookup;
         void build_fast_inter_replace_lookup();

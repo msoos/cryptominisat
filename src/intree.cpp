@@ -138,6 +138,13 @@ bool InTree::intree_probe()
     removedRedBin = 0;
     numCalls++;
 
+    if (!solver->conf.doFindAndReplaceEqLits) {
+        if (solver->conf.verbosity) {
+            cout << "c [intree] SCC is not allowed, intree cannot work this way, aborting" << endl;
+        }
+        return solver->okay();
+    }
+
     bool aborted = false;
     if (!replace_until_fixedpoint(aborted))
     {

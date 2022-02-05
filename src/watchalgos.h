@@ -167,6 +167,8 @@ static inline void removeWXCl(watch_array& wsFull
     ws.shrink_(1);
 }
 
+
+// Removes BNN *once*
 static inline void removeWBNN(watch_array& wsFull
     , const Lit lit
     , const uint32_t bnnIdx

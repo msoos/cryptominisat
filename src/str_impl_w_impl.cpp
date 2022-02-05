@@ -112,6 +112,7 @@ void StrImplWImpl::distill_implicit_with_implicit_lit(const Lit lit)
 
         switch(i->getType()) {
             case CMSat::watch_clause_t:
+            case CMSat::watch_bnn_t:
                 *j++ = *i;
                 break;
 

@@ -528,8 +528,13 @@ void Solver::sort_and_clean_bnn(BNN& bnn)
             continue;
         } else if (value(bnn.in[i]) == l_False) {
             continue;
-        } else if (bnn.in[i].var() == p.var()) {
-            assert(false);
+        } else if (bnn.in[i].var() == p.var()
+            && bnn.in[i].sign() == !p.sign()
+        ) {
+            p = lit_Undef;
+            bnn.cutoff--; //either way it's a +1 on the LHS
+            j--;
+            continue;
         } else {
             bnn.in[j++] = p = bnn.in[i];
 
@@ -964,6 +969,17 @@ void Solver::renumber_clauses(const vector<uint32_t>& outerToInter)
 
     for(auto& v: removed_xorclauses_clash_vars) {
         v = getUpdatedVar(v, outerToInter);
+    }
+
+    for(auto& bnn: bnns) {
+        if (bnn == NULL) {
+            continue;
+        }
+        assert(!bnn->isRemoved);
+        updateLitsMap(bnn->in, outerToInter);
+        if (!bnn->set) {
+            bnn->out = getUpdatedLit(bnn->out, outerToInter);
+        }
     }
 }
 

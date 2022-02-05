@@ -262,6 +262,8 @@ bool VarReplacer::perform_replace()
             goto end;
         }
     }
+    replace_bnns();
+
     solver->clean_occur_from_removed_clauses_only_smudged();
     attach_delayed_attach();
     if (!replace_xor_clauses(solver->xorclauses)) {
@@ -466,8 +468,8 @@ bool VarReplacer::replaceImplicit()
         Watched* i = ws.begin();
         Watched* j = i;
         for (Watched *end2 = ws.end(); i != end2; i++) {
-            //Don't bother clauses
-            if (i->isClause()) {
+            //Don't bother non-bin
+            if (!i->isBin()) {
                 *j++ = *i;
                 continue;
             }
@@ -513,6 +515,52 @@ bool VarReplacer::replaceImplicit()
     updateStatsFromImplStats();
     solver->watches.clear_smudged();
 
+    return solver->okay();
+}
+
+
+void VarReplacer::replace_bnn_lit(Lit& l, uint32_t idx, bool& changed)
+{
+    removeWBNN(solver->watches, l, idx);
+    removeWBNN(solver->watches, ~l, idx);
+    changed = true;
+    l = get_lit_replaced_with_fast(l);
+    solver->watches[l].push(Watched(idx, watch_bnn_t));
+    solver->watches[~l].push(Watched(idx, watch_bnn_t));
+    runStats.replacedLits++;
+}
+
+bool VarReplacer::replace_bnns()
+{
+    assert(!solver->drat->something_delayed());
+    for (uint32_t idx = 0; idx < solver->bnns.size(); idx++) {
+        BNN* bnn = solver->bnns[idx];
+        if (bnn == NULL) {
+            continue;
+        }
+        assert(!bnn->isRemoved);
+        runStats.bogoprops += 3;
+
+        bool changed = false;
+
+        for (Lit& l: bnn->in) {
+            if (isReplaced_fast(l)) {
+                replace_bnn_lit(l, idx, changed);
+            }
+        }
+        if (!bnn->set) {
+            if (isReplaced_fast(bnn->out)) {
+                replace_bnn_lit(bnn->out, idx, changed);
+            }
+        }
+
+        if (changed) {
+            // TODO fix up BNN: p + ~p
+        }
+
+    }
+
+    assert(solver->okay() && "Beware, we don't check return value of this function");
     return solver->okay();
 }
 

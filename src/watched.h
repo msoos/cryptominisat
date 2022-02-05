@@ -328,7 +328,7 @@ struct WatchSorterBinTriLong {
                 //A is definitely not better than B
                 return false;
             }
-            if (b.isClause() || a.isBNN()) {
+            if (b.isClause() || b.isBNN()) {
                 //B is clause, A is NOT a clause. So A is better than B.
                 return true;
             }
