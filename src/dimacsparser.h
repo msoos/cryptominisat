@@ -510,7 +510,9 @@ bool DimacsParser<C, S>::parse_and_add_bnn_clause(C& in)
             return false;
         }
         assert(out_var > 0 && "BNN is wrong, output var is 0");
+
         //off-by-one internally.
+        out_var-=1;
         if (!check_var(out_var)) {
             return false;
         }
