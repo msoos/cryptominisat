@@ -343,7 +343,7 @@ class Solver : public Searcher
             , const bool red
             , const bool sorted = false
         );
-        bool sort_and_clean_bnn(BNN& bnn);
+        void sort_and_clean_bnn(BNN& bnn);
         void set_up_sql_writer();
         vector<std::pair<string, string> > sql_tags;
 

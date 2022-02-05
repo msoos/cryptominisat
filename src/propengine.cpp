@@ -255,9 +255,6 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
                 gqd.num_conflicts++;
                 qhead = trail.size();
                 return gqd.confl;
-//                 bool ret = handle_conflict(gqd.confl);
-//                 if (!ret) return gauss_ret::g_false;
-//                 return gauss_ret::g_cont;
             }
 
             case gauss_res::prop:
@@ -914,6 +911,18 @@ PropBy PropEngine::propagate_any_order()
             *j++ = *i++;
         }
         ws.shrink_(end-j);
+
+        #ifdef USE_GAUSS
+        if (!all_matrices_disabled && confl.isNULL()) {
+            PropBy ret = gauss_jordan_elim(p, currLevel);
+            //cout << "ret: " << ret << " -- " << endl;
+            if (!ret.isNULL()) {
+                confl = ret;
+                break;
+            }
+        }
+        #endif //USE_GAUSS
+
         qhead++;
     }
 
