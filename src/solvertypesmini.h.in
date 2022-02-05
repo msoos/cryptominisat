@@ -289,6 +289,9 @@ public:
         cutoff(_cutoff),
         out (_out)
     {
+        if (out == lit_Undef) {
+            set = true;
+        }
         assert(_in.size() > 0);
     }
 
@@ -320,7 +323,7 @@ public:
     std::vector<Lit> in;
     int32_t cutoff;
     Lit out = lit_Undef;
-    lbool val = l_Undef;
+    bool set = false;
     bool isRemoved = false;
 };
 
@@ -332,8 +335,9 @@ inline std::ostream& operator<<(std::ostream& os, const BNN& bnn)
         if (i+1 < bnn.size())
             os << " + ";
     }
-    os << " >=  " << bnn.cutoff
-    << " -- outlit: " << bnn.out;
+    os << " >=  " << bnn.cutoff;
+    if (!bnn.set)
+        os << " <-> " << bnn.out;
 
     return os;
 }
