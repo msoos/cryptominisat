@@ -501,21 +501,25 @@ bool DimacsParser<C, S>::parse_and_add_bnn_clause(C& in)
         return false;
     }
 
-    // Read in output var
-    int32_t out_var;
-    if (!in.parseInt(out_var, lineNum)) {
-        return false;
-    }
-    assert(out_var > 0 && "BNN is wrong, output var is 0");
-    //off-by-one internally.
-    out_var -= 1;
-    if (!check_var(out_var)) {
-        return false;
+    in.skipWhitespace();
+
+    int32_t out_var = -1;
+    if (*in != '\n') {
+        // Read in output var
+        if (!in.parseInt(out_var, lineNum)) {
+            return false;
+        }
+        assert(out_var > 0 && "BNN is wrong, output var is 0");
+        //off-by-one internally.
+        if (!check_var(out_var)) {
+            return false;
+        }
     }
 
     // Line finished
     in.skipLine();
     lineNum++;
+//     cout << "out_var1:" << out_var << endl;
 
     solver->add_bnn_clause(lits, cutoff, out_var);
     bnn_clauses_added++;

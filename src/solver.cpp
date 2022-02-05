@@ -516,6 +516,7 @@ Clause* Solver::add_clause_int(
 }
 
 //Deals with INTERNAL variables
+// return TRUE if needs to be removed
 bool Solver::sort_and_clean_bnn(BNN& bnn)
 {
     std::sort(bnn.in.begin(), bnn.in.end());
@@ -549,6 +550,17 @@ bool Solver::sort_and_clean_bnn(BNN& bnn)
     }
     bnn.in.resize(bnn.in.size() - (i - j));
 
+    if (!bnn.set && value(bnn.out) != l_Undef) {
+        if (value(bnn.out) == l_False) {
+            for(auto& l: bnn.in) {
+                l = ~l;
+            }
+            bnn.cutoff = (int)bnn.in.size()+1-bnn.cutoff;
+        }
+        bnn.set = true;
+        bnn.out = lit_Undef;
+    }
+
     return true;
 }
 
@@ -562,8 +574,10 @@ void Solver::attach_bnn(const uint32_t bnn_idx)
         watches[l].push(Watched(bnn_idx, watch_bnn_t));
         watches[~l].push(Watched(bnn_idx, watch_bnn_t));
     }
-    watches[bnn->out].push(Watched(bnn_idx, watch_bnn_t));
-    watches[~bnn->out].push(Watched(bnn_idx, watch_bnn_t));
+    if (!bnn->set)  {
+        watches[bnn->out].push(Watched(bnn_idx, watch_bnn_t));
+        watches[~bnn->out].push(Watched(bnn_idx, watch_bnn_t));
+    }
 }
 
 void Solver::add_bnn_clause_inter(
@@ -571,6 +585,7 @@ void Solver::add_bnn_clause_inter(
     const int32_t cutoff,
     Lit out)
 {
+    assert(ok);
     BNN* bnn = new BNN(lits, cutoff, out);
 
     if (!sort_and_clean_bnn(*bnn)) {
@@ -583,22 +598,17 @@ void Solver::add_bnn_clause_inter(
     if (ret != l_Undef) {
         if (ret == l_False) {
             ok = false;
+            delete bnn;
+            return;
         }
         delete bnn;
-        return;
+        bnn = NULL;
     }
 
-    ok = propagate<true>().isNULL();
-    if (!ok) {
-        delete bnn;
-        return;
-    }
-
-    bnns.push_back(bnn);
-    attach_bnn(bnns.size()-1);
-    ret = bnn_prop(bnns.size()-1, 0);
-    if (ret == l_False) {
-        ok = false;
+    if (bnn != NULL) {
+        assert(check_bnn_sane(*bnn));
+        bnns.push_back(bnn);
+        attach_bnn(bnns.size()-1);
     }
     ok = propagate<true>().isNULL();
 }
@@ -3219,7 +3229,7 @@ bool Solver::add_xor_clause_outside(const vector<uint32_t>& vars, bool rhs)
 bool Solver::add_bnn_clause_outside(
     const vector<Lit>& lits,
     const int32_t cutoff,
-    uint32_t out_var)
+    int32_t out_var)
 {
     if (!ok) {
         return false;
@@ -3230,11 +3240,16 @@ bool Solver::add_bnn_clause_outside(
     #endif
 
     vector<Lit> lits2(lits);
-    lits2.push_back(Lit(out_var, false));
+    if (out_var != -1) {
+        lits2.push_back(Lit(out_var, false));
+    }
     back_number_from_outside_to_outer(lits2);
     addClauseHelper(back_number_from_outside_to_outer_tmp);
-    Lit out_lit = back_number_from_outside_to_outer_tmp.back();
-    back_number_from_outside_to_outer_tmp.pop_back();
+    Lit out_lit = lit_Undef;
+    if (out_var != -1) {
+        out_lit = back_number_from_outside_to_outer_tmp.back();
+        back_number_from_outside_to_outer_tmp.pop_back();
+    }
 
     add_bnn_clause_inter(
         back_number_from_outside_to_outer_tmp, cutoff, out_lit);
@@ -4653,6 +4668,53 @@ void Solver::set_max_confl(uint64_t max_confl)
       } else {
           conf.max_confl = get_stats().conflStats.numConflicts + max_confl;
       }
+}
+
+lbool Solver::bnn_eval(BNN& bnn)
+{
+    assert(decisionLevel() == 0);
+
+    for(const auto& p: bnn.in) {
+        assert(value(p) == l_Undef);
+    }
+
+    // we are at the cutoff no matter what undef is
+    if (bnn.cutoff <= 0) {
+        if (bnn.set) {
+            return l_True;
+        }
+        if (value(bnn.out) == l_False)
+            return l_False;
+        if (value(bnn.out) == l_True)
+            return l_True;
+
+        enqueue<false>(bnn.out, decisionLevel());
+        return l_True;
+    }
+
+    // we are under the cutoff no matter what undef is
+    if ((int)bnn.in.size() < bnn.cutoff) {
+        if (bnn.set) {
+            return l_False;
+        }
+        if (value(bnn.out) == l_True)
+            return l_False;
+        if (value(bnn.out) == l_False)
+            return l_True;
+
+        enqueue<false>(~bnn.out, decisionLevel());
+        return l_True;
+    }
+
+    //it's set and cutoff can ONLY be met by ALL TRUE
+    if (bnn.set && (int)bnn.in.size() == bnn.cutoff) {
+        for(const auto& l: bnn.in) {
+            enqueue<false>(l, decisionLevel());
+        }
+        return l_True;
+    }
+
+    return l_Undef;
 }
 
 #ifdef STATS_NEEDED

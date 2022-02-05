@@ -244,38 +244,7 @@ public:
         return bnns;
     }
 
-    lbool bnn_eval(const BNN& bnn)
-    {
-        int32_t val = 0;
-        int32_t undefs = 0;
-        for(const auto& p: bnn.in) {
-            if (value(p) == l_Undef) {
-                undefs ++;
-            }
-            if (value(p) == l_True) {
-                val ++;
-            }
-        }
-
-        // we are at the cutoff no matter what undef is
-        if (val >= bnn.cutoff) {
-            if (value(bnn.out) == l_False)
-                return l_False;
-            if (value(bnn.out) == l_True)
-                return l_True;
-        }
-
-        // we are under the cutoff no matter what undef is
-        if (val < bnn.cutoff && val+undefs < bnn.cutoff) {
-            if (value(bnn.out) == l_True)
-                return l_False;
-            if (value(bnn.out) == l_False)
-                return l_True;
-        }
-
-        return l_Undef;
-    }
-
+    bool check_bnn_sane(BNN& bnn);
     bool clause_locked(const Clause& c, const ClOffset offset) const;
     bool redundant(const Watched& ws) const;
     bool redundant_or_removed(const Watched& ws) const;
@@ -564,11 +533,20 @@ inline void CNF::clear_one_occur_from_removed_clauses(watch_subarray w)
     size_t end = w.size();
     for(; i < end; i++) {
         const Watched ws = w[i];
-        if (!ws.isClause()) {
+         if (ws.isBNN()) {
+            BNN* bnn = bnns[ws.get_bnn()];
+            if (!bnn->isRemoved) {
+                w[j++] = w[i];
+            }
+            continue;
+        }
+
+        if (ws.isBin()) {
             w[j++] = w[i];
             continue;
         }
 
+        assert(ws.isClause());
         Clause* cl = cl_alloc.ptr(ws.get_offset());
         if (!cl->getRemoved()) {
             w[j++] = w[i];

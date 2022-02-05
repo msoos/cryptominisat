@@ -879,3 +879,61 @@ vector<uint32_t> CNF::get_outside_var_incidence_also_red()
     }
     return inc_outer;
 }
+
+bool CNF::check_bnn_sane(BNN& bnn)
+{
+    //assert(decisionLevel() == 0);
+
+    int32_t ts = 0;
+    int32_t undefs = 0;
+    for(const auto& l: bnn.in) {
+        if (value(l) == l_True) {
+            ts++;
+        }
+
+        if (value(l) == l_Undef) {
+            undefs++;
+        }
+    }
+
+    if (bnn.in.empty()) {
+        return false;
+    }
+
+    // we are at the cutoff no matter what undef is
+    if (bnn.cutoff-ts <= 0) {
+        if (bnn.set) {
+            return true; //harmless, doesn't propagate
+        }
+        if (value(bnn.out) == l_False)
+            return false; //always true, BAD
+        if (value(bnn.out) == l_True)
+            return true; //harmless, doesn't propagate
+
+        //should have propagated bnn.out
+        return false;
+    }
+
+    // we are under the cutoff no matter what undef is
+    if (undefs < bnn.cutoff-ts) {
+        if (bnn.set) {
+            return false; //can never meet cutoff, BAD
+        }
+        if (value(bnn.out) == l_True)
+            return false;  //can never meet cutoff, BAD
+        if (value(bnn.out) == l_False)
+            return true;
+
+        //should have propagated bnn.out
+        return false;
+    }
+
+    //it's set and cutoff can ONLY be met by ALL TRUE
+    if (((!bnn.set && value(bnn.out) == l_True) || bnn.set) &&
+        undefs == bnn.cutoff-ts)
+    {
+        return false;
+    }
+
+    return true;
+}

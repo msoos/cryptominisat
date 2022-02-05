@@ -57,7 +57,7 @@ namespace CMSat {
 
         ////////////////////////////
         // Adding variables and clauses
-        ////////////////////////////
+        ///////////////`/////////////
 
         void new_var(); //add a new variable to the solver
         void new_vars(const size_t n); //and many new variables to the solver -- much faster
@@ -67,7 +67,7 @@ namespace CMSat {
         bool add_bnn_clause(
             const std::vector<Lit>& lits,
             signed cutoff,
-            unsigned out_var
+            int out_var = -1
         );
         void set_var_weight(Lit lit, double weight);
 

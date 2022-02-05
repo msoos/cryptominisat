@@ -338,6 +338,7 @@ inline std::ostream& operator<<(std::ostream& os, const BNN& bnn)
     os << " >=  " << bnn.cutoff;
     if (!bnn.set)
         os << " <-> " << bnn.out;
+    os << " [size: " << bnn.in.size() << "]";
 
     return os;
 }

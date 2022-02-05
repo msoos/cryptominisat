@@ -489,6 +489,12 @@ void Searcher::add_literals_from_confl_to_learnt(
             lits = bnn_reason->data();
             size = bnn_reason->size();
             sumAntecedentsLits += size;
+//             cout << "BNN to be resolved on: ";
+//             for(uint32_t i = 0; i < size; i++) {
+//                 cout << lits[i] << " ";
+//             }
+//             cout << endl;
+
             break;
         }
 
@@ -1393,7 +1399,14 @@ lbool Searcher::search()
         } else {
             assert(ok);
             if (decisionLevel() == 0) {
-                clean_clauses_if_needed();
+                //TODO remove later!! Slowdown.
+                for(const auto& bnn: bnns) {
+                    if (bnn) {
+                        assert(solver->check_bnn_sane(*bnn));
+                    }
+                }
+
+//                 clean_clauses_if_needed();
             }
             reduce_db_if_needed();
             lbool dec_ret;

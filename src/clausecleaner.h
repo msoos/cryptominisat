@@ -80,6 +80,7 @@ class ClauseCleaner
         void clean_clauses_inter(vector<ClOffset>& cs);
         bool clean_bnn(BNN& bnn, uint32_t bnn_idx);
         void clean_bnns_inter(vector<BNN*>& bnns);
+        void clean_bnns_post();
 
         bool satisfied(const Watched& watched, Lit lit);
         vector<ClOffset> delayed_free;

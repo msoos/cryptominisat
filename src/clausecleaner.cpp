@@ -134,7 +134,10 @@ void ClauseCleaner::clean_implicit_clauses()
 
 //return True if it's to be removed.
 bool ClauseCleaner::clean_bnn(BNN& bnn, uint32_t bnn_idx) {
-    int32_t cutoff = bnn.cutoff;
+    if (solver->conf.verbosity > 15) {
+        cout << "Cleaning BNN: " << bnn << endl;
+    }
+
     uint32_t i = 0;
     uint32_t j = 0;
     for(; i < bnn.in.size(); i++) {
@@ -149,38 +152,47 @@ bool ClauseCleaner::clean_bnn(BNN& bnn, uint32_t bnn_idx) {
         if (solver->value(l) == l_False) {
             //nothing
         } else if (solver->value(l) == l_True) {
-            cutoff--;
+            bnn.cutoff--;
         }
     }
     bnn.in.resize(j);
 
-    if (bnn.val == l_Undef && solver->value(bnn.out) != l_Undef) {
-        bnn.val = solver->value(bnn.out);
+    if (!bnn.set && solver->value(bnn.out) != l_Undef) {
         removeWBNN(solver->watches, bnn.out, bnn_idx);
         removeWBNN(solver->watches, ~bnn.out, bnn_idx);
+        if (solver->value(bnn.out) == l_False) {
+            for (auto& l: bnn.in) {
+                l = ~l;
+            }
+            bnn.cutoff = (int32_t)bnn.in.size()+1-bnn.cutoff;
+        }
+        bnn.set = true;
         bnn.out = lit_Undef;
     }
 
     // Always true
-    if (cutoff <= 0) {
-        assert(bnn.val == l_True);
+    if (bnn.cutoff <= 0) {
+        assert(bnn.set);
         //remove
         return true;
     }
 
     // Always false
-    if ((int)bnn.in.size() < cutoff) {
-        assert(bnn.val == l_False);
-        //remove
-        return true;
+    if ((int)bnn.in.size() < bnn.cutoff) {
+        assert(false);
     }
 
+    // should have propagated
+    if ((int)bnn.in.size() == bnn.cutoff) {
+        assert(false);
+    }
+
+    // Empty BNN
     if (bnn.in.size() == 0) {
-        assert(bnn.cutoff >= 0);
-        if (bnn.cutoff == 0) {
-            assert(bnn.val == l_True);
+        if (bnn.cutoff <= 0) {
+            assert(bnn.set);
         } else {
-            assert(bnn.val == l_False);
+            assert(false);
         }
         //remove
         return true;
@@ -210,12 +222,12 @@ void ClauseCleaner::clean_bnns_inter(vector<BNN*>& bnns)
     assert(solver->prop_at_head());
 
     if (solver->conf.verbosity > 15) {
-        cout << "Cleaning clauses in vector<>" << endl;
+        cout << "Cleaning BNNs" << endl;
     }
 
     for (uint32_t i = 0; i < bnns.size(); i++) {
         BNN* bnn = solver->bnns[i];
-        if (bnn->isRemoved)
+        if (!bnn || bnn->isRemoved)
             continue;
 
         if (clean_bnn(*bnn, i)) {
@@ -228,6 +240,7 @@ void ClauseCleaner::clean_bnns_inter(vector<BNN*>& bnns)
                 solver->watches.smudge(~bnn->out);
             }
             bnn->isRemoved = true;
+//             cout << "Removed BNN" << endl;
         }
     }
 }
@@ -371,11 +384,20 @@ void ClauseCleaner::clean_clauses_pre()
 
 void ClauseCleaner::clean_clauses_post()
 {
-    solver->clean_occur_from_removed_clauses_only_smudged();
     for(ClOffset off: delayed_free) {
         solver->free_cl(off);
     }
     delayed_free.clear();
+}
+
+void ClauseCleaner::clean_bnns_post()
+{
+    for(BNN*& bnn: solver->bnns) {
+        if (bnn && bnn->isRemoved) {
+            delete bnn;
+            bnn = NULL;
+        }
+    }
 }
 
 void ClauseCleaner::remove_and_clean_all()
@@ -393,7 +415,9 @@ void ClauseCleaner::remove_and_clean_all()
     for(auto& lredcls: solver->longRedCls) {
         clean_clauses_inter(lredcls);
     }
+    solver->clean_occur_from_removed_clauses_only_smudged();
     clean_clauses_post();
+    clean_bnns_post();
 
 
     #ifndef NDEBUG

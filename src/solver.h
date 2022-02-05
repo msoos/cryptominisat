@@ -93,7 +93,7 @@ class Solver : public Searcher
         bool add_bnn_clause_outside(
             const vector<Lit>& lits,
             const int32_t cutoff,
-            uint32_t out_var);
+            int32_t out_var);
         void set_var_weight(Lit lit, double weight);
 
         lbool solve_with_assumptions(
@@ -228,6 +228,7 @@ class Solver : public Searcher
             #endif
         );
         void attach_bnn(const uint32_t bnn_idx);
+        lbool bnn_eval(BNN& bnn);
         void attach_bin_clause(
             const Lit lit1
             , const Lit lit2
