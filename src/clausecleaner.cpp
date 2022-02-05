@@ -183,7 +183,7 @@ bool ClauseCleaner::clean_bnn(BNN& bnn, uint32_t bnn_idx) {
     }
 
     // should have propagated
-    if ((int)bnn.in.size() == bnn.cutoff) {
+    if (bnn.set && (int)bnn.in.size() == bnn.cutoff) {
         assert(false);
     }
 
