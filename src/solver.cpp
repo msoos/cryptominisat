@@ -581,6 +581,9 @@ void Solver::attach_bnn(const uint32_t bnn_idx)
 //Input BNN *must* be already clean
 bool Solver::special_bnn(BNN* bnn)
 {
+    // It must have already been evaluated
+    assert(bnn->set || value(bnn->out) == l_Undef);
+
     if (bnn->set && bnn->cutoff == 1) {
         assert(bnn->in.size() > 1);
         vector<Lit> lits(bnn->in);
@@ -4702,10 +4705,6 @@ lbool Solver::bnn_eval(BNN& bnn)
         if (bnn.set) {
             return l_True;
         }
-        if (value(bnn.out) == l_False)
-            return l_False;
-        if (value(bnn.out) == l_True)
-            return l_True;
 
         enqueue<false>(bnn.out, decisionLevel());
         return l_True;
@@ -4716,10 +4715,6 @@ lbool Solver::bnn_eval(BNN& bnn)
         if (bnn.set) {
             return l_False;
         }
-        if (value(bnn.out) == l_True)
-            return l_False;
-        if (value(bnn.out) == l_False)
-            return l_True;
 
         enqueue<false>(~bnn.out, decisionLevel());
         return l_True;
