@@ -229,6 +229,7 @@ class Solver : public Searcher
         );
         void attach_bnn(const uint32_t bnn_idx);
         lbool bnn_eval(BNN& bnn);
+        bool special_bnn(BNN* bnn);
         void attach_bin_clause(
             const Lit lit1
             , const Lit lit2

@@ -212,6 +212,10 @@ bool ClauseCleaner::clean_bnn(BNN& bnn, uint32_t bnn_idx) {
 //         return true;
 //     }
 
+    if (solver->special_bnn(&bnn)) {
+        return true;
+    }
+
     //cannot be removed
     return false;
 }

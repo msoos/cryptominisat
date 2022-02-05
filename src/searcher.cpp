@@ -1399,14 +1399,13 @@ lbool Searcher::search()
         } else {
             assert(ok);
             if (decisionLevel() == 0) {
-                //TODO remove later!! Slowdown.
+                #ifdef SLOW_DEBUG
                 for(const auto& bnn: bnns) {
-                    if (bnn) {
+                    if (bnn)
                         assert(solver->check_bnn_sane(*bnn));
-                    }
                 }
-
-//                 clean_clauses_if_needed();
+                #endif
+                clean_clauses_if_needed();
             }
             reduce_db_if_needed();
             lbool dec_ret;

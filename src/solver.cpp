@@ -578,6 +578,22 @@ void Solver::attach_bnn(const uint32_t bnn_idx)
     }
 }
 
+//Input BNN *must* be already clean
+bool Solver::special_bnn(BNN* bnn)
+{
+    if (bnn->set && bnn->cutoff == 1) {
+        assert(bnn->in.size() > 1);
+        vector<Lit> lits(bnn->in);
+        Clause* cl = add_clause_int(lits);
+        assert(ok);
+        if (cl != NULL) {
+            longIrredCls.push_back(cl_alloc.get_offset(cl));
+        }
+        return true;
+    }
+    return false;
+}
+
 void Solver::add_bnn_clause_inter(
     vector<Lit>& lits,
     const int32_t cutoff,
@@ -600,8 +616,13 @@ void Solver::add_bnn_clause_inter(
 
     if (bnn != NULL) {
         assert(check_bnn_sane(*bnn));
-        bnns.push_back(bnn);
-        attach_bnn(bnns.size()-1);
+        if (special_bnn(bnn)) {
+            delete bnn;
+            bnn = NULL;
+        } else {
+            bnns.push_back(bnn);
+            attach_bnn(bnns.size()-1);
+        }
     }
     ok = propagate<true>().isNULL();
 }
