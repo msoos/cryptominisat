@@ -93,7 +93,7 @@ class Solver : public Searcher
         bool add_bnn_clause_outside(
             const vector<Lit>& lits,
             const int32_t cutoff,
-            int32_t out_var);
+            Lit out);
         void set_var_weight(Lit lit, double weight);
 
         lbool solve_with_assumptions(

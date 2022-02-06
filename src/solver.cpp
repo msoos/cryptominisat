@@ -599,6 +599,25 @@ bool Solver::special_bnn(BNN* bnn)
         }
         return true;
     }
+
+    if (!bnn->set && bnn->cutoff == 1) {
+        vector<Lit> lits(bnn->in);
+        lits.push_back(~bnn->out);
+        Clause* cl = add_clause_int(lits);
+        if (cl != NULL) {
+            longIrredCls.push_back(cl_alloc.get_offset(cl));
+        }
+        for(Lit l: bnn->in) {
+            lits.clear();
+            lits.push_back(~l);
+            lits.push_back(bnn->out);
+            Clause* cl2 = add_clause_int(lits);
+            assert(cl2 == NULL);
+        }
+        return true;
+    }
+
+
     return false;
 }
 
@@ -2053,6 +2072,7 @@ lbool Solver::execute_inprocess_strategy(
         std::transform(token.begin(), token.end(), token.begin(), ::tolower);
         if (!occ_strategy_tokens.empty() && token.substr(0,3) != "occ") {
             if (conf.perform_occur_based_simp
+                && bnns.empty()
                 && occsimplifier
             ) {
                 occ_strategy_tokens = trim(occ_strategy_tokens);
@@ -2135,6 +2155,9 @@ lbool Solver::execute_inprocess_strategy(
                 }
             }
         } else if (token == "intree-probe") {
+            if (!bnns.empty()) {
+                conf.do_hyperbin_and_transred = false;
+            }
             if (conf.doIntreeProbe) {
                 intree->intree_probe();
             }
@@ -3262,7 +3285,7 @@ bool Solver::add_xor_clause_outside(const vector<uint32_t>& vars, bool rhs)
 bool Solver::add_bnn_clause_outside(
     const vector<Lit>& lits,
     const int32_t cutoff,
-    int32_t out_var)
+    Lit out)
 {
     if (!ok) {
         return false;
@@ -3273,19 +3296,18 @@ bool Solver::add_bnn_clause_outside(
     #endif
 
     vector<Lit> lits2(lits);
-    if (out_var != -1) {
-        lits2.push_back(Lit(out_var, false));
+    if (out != lit_Undef) {
+        lits2.push_back(out);
     }
     back_number_from_outside_to_outer(lits2);
     addClauseHelper(back_number_from_outside_to_outer_tmp);
-    Lit out_lit = lit_Undef;
-    if (out_var != -1) {
-        out_lit = back_number_from_outside_to_outer_tmp.back();
+    if (out != lit_Undef) {
+        out = back_number_from_outside_to_outer_tmp.back();
         back_number_from_outside_to_outer_tmp.pop_back();
     }
 
     add_bnn_clause_inter(
-        back_number_from_outside_to_outer_tmp, cutoff, out_lit);
+        back_number_from_outside_to_outer_tmp, cutoff, out);
 
     return ok;
 }

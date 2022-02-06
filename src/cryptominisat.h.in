@@ -67,7 +67,7 @@ namespace CMSat {
         bool add_bnn_clause(
             const std::vector<Lit>& lits,
             signed cutoff,
-            int out_var = -1
+            Lit out = lit_Undef
         );
         void set_var_weight(Lit lit, double weight);
 

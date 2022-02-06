@@ -785,14 +785,14 @@ DLL_PUBLIC bool SATSolver::add_xor_clause(const std::vector<unsigned>& vars, boo
 DLL_PUBLIC bool SATSolver::add_bnn_clause(
     const std::vector<Lit>& lits,
     signed cutoff,
-    signed out_var)
+    Lit out)
 {
     if (data->log) {
        assert(false && "No logs for BNN yet");
     }
 
-    //-1 is special, it means RHS is TRUE
-    assert(out_var >= -1);
+    //lit_Undef is == TRUE, but lit_Error is not accepted
+    assert(out != lit_Error);
 
     bool ret = true;
     if (data->solvers.size() > 1) {
@@ -804,7 +804,7 @@ DLL_PUBLIC bool SATSolver::add_bnn_clause(
         ret = data->solvers[0]->add_bnn_clause_outside(
             lits,
             cutoff,
-            out_var);
+            out);
         data->cls++;
     }
 

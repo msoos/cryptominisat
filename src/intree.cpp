@@ -39,6 +39,7 @@ InTree::InTree(Solver* _solver) :
 
 bool InTree::replace_until_fixedpoint(bool& aborted)
 {
+    assert(solver->conf.doFindAndReplaceEqLits);
     uint64_t time_limit =
         solver->conf.intree_scc_varreplace_time_limitM*1000ULL*1000ULL
         *solver->conf.global_timeout_multiplier

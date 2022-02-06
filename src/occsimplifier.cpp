@@ -1847,6 +1847,9 @@ bool OccSimplifier::setup()
 
 bool OccSimplifier::simplify(const bool _startup, const std::string& schedule)
 {
+    if (!solver->bnns.empty()) {
+        return solver->okay();
+    }
     #ifdef DEBUG_MARKED_CLAUSE
     assert(solver->no_marked_clauses());
     #endif
@@ -2858,10 +2861,10 @@ bool OccSimplifier::find_ite_gate(
     assert(toClear.empty());
     for(uint32_t i = 0; i < a.size() && limit >= 0; i++, limit--) {
         const Watched& w = a[i];
-        if (w.isBin()) {
-            #ifdef SLOW_DEBUG
-            assert(!w.red());
-            #endif
+        if (w.isBin() || w.isBNN()) {
+            if (w.isBin()) {
+                assert(!w.red());
+            }
             continue;
         }
 
