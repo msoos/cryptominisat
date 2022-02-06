@@ -297,7 +297,7 @@ public:
         assert(_in.size() > 0);
         sz = _in.size();
         for(uint32_t i = 0; i < _in.size(); i++) {
-            operator()[i] = _in[i];
+            getData()[i] = _in[i];
         }
     }
 
@@ -313,12 +313,12 @@ public:
 
     const Lit& operator[](const uint32_t at) const
     {
-        return getData();
+        return getData()[at];
     }
 
     Lit& operator[](const uint32_t at)
     {
-        return getData();
+        return getData()[at];
     }
 
     const Lit& get_out() const
@@ -348,11 +348,15 @@ public:
 
     bool empty() const
     {
-        return in.empty();
+        return sz == 0;
     }
 
     void resize(uint32_t _sz) {
         sz = _sz;
+    }
+
+    uint32_t size() const {
+        return sz;
     }
 
     int32_t cutoff;
@@ -373,7 +377,7 @@ inline std::ostream& operator<<(std::ostream& os, const BNN& bnn)
     os << " >=  " << bnn.cutoff;
     if (!bnn.set)
         os << " <-> " << bnn.out;
-    os << " [size: " << bnn.in.size() << "]";
+    os << " [size: " << bnn.size() << "]";
 
     return os;
 }
