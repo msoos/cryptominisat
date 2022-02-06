@@ -140,8 +140,8 @@ bool ClauseCleaner::clean_bnn(BNN& bnn, uint32_t bnn_idx) {
 
     uint32_t i = 0;
     uint32_t j = 0;
-    for(; i < bnn.in.size(); i++) {
-        Lit l = bnn.in[i];
+    for(; i < bnn.size(); i++) {
+        Lit l = bnn[i];
         if (solver->value(l) == l_Undef) {
             bnn[j++] = bnn[i];
             continue;
@@ -155,16 +155,16 @@ bool ClauseCleaner::clean_bnn(BNN& bnn, uint32_t bnn_idx) {
             bnn.cutoff--;
         }
     }
-    bnn.in.resize(j);
+    bnn.resize(j);
 
     if (!bnn.set && solver->value(bnn.out) != l_Undef) {
         removeWBNN(solver->watches, bnn.out, bnn_idx);
         removeWBNN(solver->watches, ~bnn.out, bnn_idx);
         if (solver->value(bnn.out) == l_False) {
-            for (auto& l: bnn.in) {
+            for (auto& l: bnn) {
                 l = ~l;
             }
-            bnn.cutoff = (int32_t)bnn.in.size()+1-bnn.cutoff;
+            bnn.cutoff = (int32_t)bnn.size()+1-bnn.cutoff;
         }
         bnn.set = true;
         bnn.out = lit_Undef;
@@ -178,17 +178,17 @@ bool ClauseCleaner::clean_bnn(BNN& bnn, uint32_t bnn_idx) {
     }
 
     // Always false
-    if ((int)bnn.in.size() < bnn.cutoff) {
+    if ((int)bnn.size() < bnn.cutoff) {
         assert(false);
     }
 
     // should have propagated
-    if (bnn.set && (int)bnn.in.size() == bnn.cutoff) {
+    if (bnn.set && (int)bnn.size() == bnn.cutoff) {
         assert(false);
     }
 
     // Empty BNN
-    if (bnn.in.size() == 0) {
+    if (bnn.size() == 0) {
         if (bnn.cutoff <= 0) {
             assert(bnn.set);
         } else {
@@ -235,7 +235,7 @@ void ClauseCleaner::clean_bnns_inter(vector<BNN*>& bnns)
             continue;
 
         if (clean_bnn(*bnn, i)) {
-            for(const auto& l: bnn->in) {
+            for(const auto& l: *bnn) {
                 solver->watches.smudge(l);
                 solver->watches.smudge(~l);
             }
@@ -398,7 +398,7 @@ void ClauseCleaner::clean_bnns_post()
 {
     for(BNN*& bnn: solver->bnns) {
         if (bnn && bnn->isRemoved) {
-            delete bnn;
+            free(bnn);
             bnn = NULL;
         }
     }

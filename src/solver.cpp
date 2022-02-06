@@ -519,24 +519,24 @@ Clause* Solver::add_clause_int(
 // return TRUE if needs to be removed
 void Solver::sort_and_clean_bnn(BNN& bnn)
 {
-    std::sort(bnn.in.begin(), bnn.in.end());
+    std::sort(bnn.begin(), bnn.end());
     Lit p = lit_Undef;
     uint32_t i, j;
-    for (i = j = 0; i < bnn.in.size(); i++) {
-        if (value(bnn.in[i]) == l_True) {
+    for (i = j = 0; i < bnn.size(); i++) {
+        if (value(bnn[i]) == l_True) {
             bnn.cutoff --;
             continue;
-        } else if (value(bnn.in[i]) == l_False) {
+        } else if (value(bnn[i]) == l_False) {
             continue;
-        } else if (bnn.in[i].var() == p.var()
-            && bnn.in[i].sign() == !p.sign()
+        } else if (bnn[i].var() == p.var()
+            && bnn[i].sign() == !p.sign()
         ) {
             p = lit_Undef;
             bnn.cutoff--; //either way it's a +1 on the LHS
             j--;
             continue;
         } else {
-            bnn.in[j++] = p = bnn.in[i];
+            bnn[j++] = p = bnn[i];
 
             if (!fresh_solver && varData[p.var()].removed != Removed::none) {
                 cout << "ERROR: BNN " << bnn << " contains literal "
@@ -553,14 +553,14 @@ void Solver::sort_and_clean_bnn(BNN& bnn)
             }
         }
     }
-    bnn.in.resize(j);
+    bnn.resize(j);
 
     if (!bnn.set && value(bnn.out) != l_Undef) {
         if (value(bnn.out) == l_False) {
-            for(auto& l: bnn.in) {
+            for(auto& l: bnn) {
                 l = ~l;
             }
-            bnn.cutoff = (int)bnn.in.size()+1-bnn.cutoff;
+            bnn.cutoff = (int)bnn.size()+1-bnn.cutoff;
         }
         bnn.set = true;
         bnn.out = lit_Undef;
@@ -573,7 +573,7 @@ void Solver::attach_bnn(const uint32_t bnn_idx)
 
 //     cout << "Attaching BNN: " << *bnn << endl;
 
-    for(const auto& l: bnn->in) {
+    for(const auto& l: *bnn) {
         watches[l].push(Watched(bnn_idx, watch_bnn_t));
         watches[~l].push(Watched(bnn_idx, watch_bnn_t));
     }
@@ -590,8 +590,8 @@ bool Solver::special_bnn(BNN* bnn)
     assert(bnn->set || value(bnn->out) == l_Undef);
 
     if (bnn->set && bnn->cutoff == 1) {
-        assert(bnn->in.size() > 1);
-        vector<Lit> lits(bnn->in);
+        assert(bnn->size() > 1);
+        vector<Lit> lits(bnn->begin(), bnn->end());
         Clause* cl = add_clause_int(lits);
         assert(ok);
         if (cl != NULL) {
@@ -601,13 +601,13 @@ bool Solver::special_bnn(BNN* bnn)
     }
 
     if (!bnn->set && bnn->cutoff == 1) {
-        vector<Lit> lits(bnn->in);
+        vector<Lit> lits(bnn->begin(), bnn->end());
         lits.push_back(~bnn->out);
         Clause* cl = add_clause_int(lits);
         if (cl != NULL) {
             longIrredCls.push_back(cl_alloc.get_offset(cl));
         }
-        for(Lit l: bnn->in) {
+        for(Lit l: *bnn) {
             lits.clear();
             lits.push_back(~l);
             lits.push_back(bnn->out);
@@ -627,24 +627,26 @@ void Solver::add_bnn_clause_inter(
     Lit out)
 {
     assert(ok);
-    BNN* bnn = new BNN(lits, cutoff, out);
+    uint32_t num_req = sizeof(BNN) + lits.size()*sizeof(Lit);
+    void* mem = malloc(num_req);
+    BNN* bnn = new (mem) BNN(lits, cutoff, out);
 
     sort_and_clean_bnn(*bnn);
     lbool ret = bnn_eval(*bnn);
     if (ret != l_Undef) {
         if (ret == l_False) {
             ok = false;
-            delete bnn;
+            free(bnn);
             return;
         }
-        delete bnn;
+        free(bnn);
         bnn = NULL;
     }
 
     if (bnn != NULL) {
         assert(check_bnn_sane(*bnn));
         if (special_bnn(bnn)) {
-            delete bnn;
+            free(bnn);
             bnn = NULL;
         } else {
             bnns.push_back(bnn);
@@ -995,7 +997,7 @@ void Solver::renumber_clauses(const vector<uint32_t>& outerToInter)
             continue;
         }
         assert(!bnn->isRemoved);
-        updateLitsMap(bnn->in, outerToInter);
+        updateLitsMap(*bnn, outerToInter);
         if (!bnn->set) {
             bnn->out = getUpdatedLit(bnn->out, outerToInter);
         }
@@ -4729,7 +4731,7 @@ lbool Solver::bnn_eval(BNN& bnn)
 {
     assert(decisionLevel() == 0);
 
-    for(const auto& p: bnn.in) {
+    for(const auto& p: bnn) {
         assert(value(p) == l_Undef);
     }
     if (bnn.set) {
@@ -4749,7 +4751,7 @@ lbool Solver::bnn_eval(BNN& bnn)
     }
 
     // we are under the cutoff no matter what undef is
-    if ((int)bnn.in.size() < bnn.cutoff) {
+    if ((int)bnn.size() < bnn.cutoff) {
         if (bnn.set) {
             return l_False;
         }
@@ -4759,8 +4761,8 @@ lbool Solver::bnn_eval(BNN& bnn)
     }
 
     //it's set and cutoff can ONLY be met by ALL TRUE
-    if (bnn.set && (int)bnn.in.size() == bnn.cutoff) {
-        for(const auto& l: bnn.in) {
+    if (bnn.set && (int)bnn.size() == bnn.cutoff) {
+        for(const auto& l: bnn) {
             enqueue<false>(l, decisionLevel());
         }
         return l_True;

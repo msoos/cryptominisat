@@ -278,6 +278,9 @@ struct FastBackwData {
 class BNN
 {
 public:
+    typedef Lit* iterator;
+    typedef const Lit* const_iterator;
+
     BNN()
     {}
 
@@ -285,7 +288,6 @@ public:
         const std::vector<Lit>& _in,
         const int32_t _cutoff,
         const Lit _out):
-        in(_in),
         cutoff(_cutoff),
         out (_out)
     {
@@ -293,16 +295,30 @@ public:
             set = true;
         }
         assert(_in.size() > 0);
+        sz = _in.size();
+        for(uint32_t i = 0; i < _in.size(); i++) {
+            operator()[i] = _in[i];
+        }
+    }
+
+    Lit* getData()
+    {
+        return (Lit*)((char*)this + sizeof(BNN));
+    }
+
+    const Lit* getData() const
+    {
+        return (Lit*)((char*)this + sizeof(BNN));
     }
 
     const Lit& operator[](const uint32_t at) const
     {
-        return in[at];
+        return getData();
     }
 
     Lit& operator[](const uint32_t at)
     {
-        return in[at];
+        return getData();
     }
 
     const Lit& get_out() const
@@ -310,9 +326,24 @@ public:
         return out;
     }
 
-    size_t size() const
+    const Lit* begin() const
     {
-        return in.size();
+        return getData();
+    }
+
+    Lit* begin()
+    {
+        return getData();
+    }
+
+    const Lit* end() const
+    {
+        return getData()+size();
+    }
+
+    Lit* end()
+    {
+        return getData()+size();
     }
 
     bool empty() const
@@ -320,11 +351,15 @@ public:
         return in.empty();
     }
 
-    std::vector<Lit> in;
+    void resize(uint32_t _sz) {
+        sz = _sz;
+    }
+
     int32_t cutoff;
     Lit out = lit_Undef;
     bool set = false;
     bool isRemoved = false;
+    uint32_t sz;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const BNN& bnn)

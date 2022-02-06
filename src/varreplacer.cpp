@@ -543,7 +543,7 @@ bool VarReplacer::replace_bnns()
 
         bool changed = false;
 
-        for (Lit& l: bnn->in) {
+        for (Lit& l: *bnn) {
             if (isReplaced_fast(l)) {
                 replace_bnn_lit(l, idx, changed);
             }

@@ -282,11 +282,10 @@ lbool PropEngine::bnn_prop(const uint32_t bnn_idx, uint32_t level)
     int32_t ts = 0;
     int32_t undefs = 0;
     int32_t unknowns = bnn->size();
-    for(const auto& p: bnn->in) {
+    for(const auto& p: *bnn) {
         if (value(p) == l_Undef) {
             undefs++;
-        }
-        if (value(p) == l_True) {
+        } else if (value(p) == l_True) {
             ts++;
         }
         unknowns--;
@@ -334,7 +333,7 @@ lbool PropEngine::bnn_prop(const uint32_t bnn_idx, uint32_t level)
     {
         //it's TRUE and UNDEF is exactly what's missing
 
-        for(const auto& p: bnn->in) {
+        for(const auto& p: *bnn) {
             if (value(p) == l_Undef) {
                 enqueue<false>(p, level, PropBy(bnn_idx, nullptr));
             }
@@ -348,7 +347,7 @@ lbool PropEngine::bnn_prop(const uint32_t bnn_idx, uint32_t level)
     {
         //it's FALSE and UNDEF must ALL be set to 0
 
-        for(const auto& p: bnn->in) {
+        for(const auto& p: *bnn) {
             if (value(p) == l_Undef) {
                 enqueue<false>(~p, level, PropBy(bnn_idx, nullptr));
             }
@@ -423,7 +422,7 @@ void PropEngine::get_bnn_confl_reason(BNN* bnn, vector<Lit>* ret)
         if (!bnn->set)
             ret->push_back(~bnn->out);
 
-        for(const auto& l: bnn->in) {
+        for(const auto& l: *bnn) {
             if (value(l) == l_False) {
                ret->push_back(l);
             }
@@ -437,7 +436,7 @@ void PropEngine::get_bnn_confl_reason(BNN* bnn, vector<Lit>* ret)
         if (!bnn->set)
             ret->push_back(bnn->out);
 
-        for(const auto& l: bnn->in) {
+        for(const auto& l: *bnn) {
             if (value(l) == l_True) {
                 ret->push_back(~l);
             }
@@ -471,7 +470,7 @@ void PropEngine::get_bnn_prop_reason(
             ret->push_back(lit); //this is what's propagated, must be 1st
 
             //Caused it to meet cutoff
-            for(const auto& l: bnn->in) {
+            for(const auto& l: *bnn) {
                 if (varData[l.var()].sublevel <= varData[lit.var()].sublevel
                     && value(l) == l_True)
                 {
@@ -486,7 +485,7 @@ void PropEngine::get_bnn_prop_reason(
             ret->push_back(lit); //this is what's propagated, must be 1st
 
             //Caused it to meet cutoff
-            for(const auto& l: bnn->in) {
+            for(const auto& l: *bnn) {
                 if (varData[l.var()].sublevel <= varData[lit.var()].sublevel
                     && value(l) == l_False)
                 {
@@ -503,7 +502,7 @@ void PropEngine::get_bnn_prop_reason(
         if (!bnn->set) {
             ret->push_back(bnn->out ^ (value(bnn->out) == l_True));
         }
-        for(const auto& l: bnn->in) {
+        for(const auto& l: *bnn) {
             if (varData[l.var()].sublevel < varData[lit.var()].sublevel) {
                 if (bnn->set ||
                     (!bnn->set && value(bnn->out) == l_True))
