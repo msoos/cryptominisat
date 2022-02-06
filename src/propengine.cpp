@@ -274,13 +274,39 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
 }
 #endif //USE_GAUSS
 
-lbool PropEngine::bnn_prop(const uint32_t bnn_idx, uint32_t level)
+lbool PropEngine::bnn_prop(
+    const uint32_t bnn_idx, uint32_t level, Lit l, BNNPropType prop_t)
 {
     BNN* bnn = bnns[bnn_idx];
-    //lbool outval = value(bnn->out);
+    switch(prop_t) {
+        case bnn_pos_t:
+            bnn->ts++;
+            bnn->undefs--;
+            break;
+        case bnn_neg_t:
+            bnn->undefs--;
+            break;
+        case bnn_out_t:
+            break;
+    }
+    int32_t& ts = bnn->ts;
+    int32_t undefs = bnn->undefs;
 
-    int32_t ts = 0;
-    int32_t undefs = 0;
+    if (
+        !(ts + undefs < bnn->cutoff) &&
+
+        !(ts >= bnn->cutoff) &&
+
+        !(((!bnn->set && value(bnn->out) == l_True) || bnn->set) &&
+            bnn->cutoff - ts == undefs) &&
+        !((!bnn->set && value(bnn->out) == l_False) &&
+            bnn->cutoff == ts + 1))
+    {
+        return l_Undef;
+    }
+
+    ts = 0;
+    undefs = 0;
     int32_t unknowns = bnn->size();
     for(const auto& p: bnn->in) {
         if (value(p) == l_Undef) {
@@ -717,7 +743,8 @@ PropBy PropEngine::propagate_any_order_fast()
             // propagate BNN constraint
             if (i->isBNN()) {
                 *j++ = *i;
-                const lbool val = bnn_prop(i->get_bnn(), currLevel);
+                const lbool val = bnn_prop(
+                    i->get_bnn(), currLevel, p, i->get_bnn_prop_t());
                 if (val == l_False) {
                     confl = PropBy(i->get_bnn(), nullptr);
                     i++;
@@ -889,7 +916,8 @@ PropBy PropEngine::propagate_any_order()
             // propagate BNN constraint
             if (i->isBNN()) {
                 *j++ = *i;
-                const lbool val = bnn_prop(i->get_bnn(), currLevel);
+                const lbool val = bnn_prop(
+                    i->get_bnn(), currLevel, p, i->get_bnn_prop_t());
                 if (val == l_False) {
                     confl = PropBy(i->get_bnn(), nullptr);
                     i++;

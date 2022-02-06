@@ -43,6 +43,12 @@ enum WatchType {
     , watch_idx_t = 3
 };
 
+enum BNNPropType {
+    bnn_pos_t = 0
+    , bnn_neg_t = 1
+    , bnn_out_t = 2
+};
+
 /**
 @brief An element in the watchlist. Natively contains 2- and 3-long clauses, others are referenced by pointer
 
@@ -80,7 +86,15 @@ class Watched {
             data1(idx)
             , type(t)
         {
-            assert(t == watch_idx_t || t == watch_bnn_t);
+            assert(t == watch_idx_t);
+        }
+
+        Watched(const uint32_t idx, WatchType t, BNNPropType bnn_p_t):
+            data1(idx)
+            , type(t)
+            , data2(bnn_p_t)
+        {
+            assert(t == watch_bnn_t);
         }
 
         Watched() :
@@ -150,6 +164,12 @@ class Watched {
             assert(type == watch_bnn_t);
 //             #endif
             return data1;
+        }
+
+        BNNPropType get_bnn_prop_t() const
+        {
+            assert(type == watch_bnn_t);
+            return (BNNPropType)data2;
         }
 
         /**

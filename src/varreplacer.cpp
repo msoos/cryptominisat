@@ -525,8 +525,6 @@ void VarReplacer::replace_bnn_lit(Lit& l, uint32_t idx, bool& changed)
     removeWBNN(solver->watches, ~l, idx);
     changed = true;
     l = get_lit_replaced_with_fast(l);
-    solver->watches[l].push(Watched(idx, watch_bnn_t));
-    solver->watches[~l].push(Watched(idx, watch_bnn_t));
     runStats.replacedLits++;
 }
 
@@ -546,11 +544,17 @@ bool VarReplacer::replace_bnns()
         for (Lit& l: bnn->in) {
             if (isReplaced_fast(l)) {
                 replace_bnn_lit(l, idx, changed);
+                solver->watches[l].push(Watched(idx, watch_bnn_t, bnn_pos_t));
+                solver->watches[~l].push(Watched(idx, watch_bnn_t, bnn_neg_t));
             }
         }
         if (!bnn->set) {
             if (isReplaced_fast(bnn->out)) {
                 replace_bnn_lit(bnn->out, idx, changed);
+                solver->watches[bnn->out].push(
+                    Watched(idx, watch_bnn_t, bnn_out_t));
+                solver->watches[~bnn->out].push(
+                    Watched(idx, watch_bnn_t, bnn_out_t));
             }
         }
 

@@ -293,6 +293,8 @@ public:
             set = true;
         }
         assert(_in.size() > 0);
+        undefs = in.size();
+        ts = 0;
     }
 
     const Lit& operator[](const uint32_t at) const
@@ -325,6 +327,8 @@ public:
     Lit out = lit_Undef;
     bool set = false;
     bool isRemoved = false;
+    int32_t ts = 0;
+    int32_t undefs = 0;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const BNN& bnn)

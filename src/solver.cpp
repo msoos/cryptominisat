@@ -574,12 +574,12 @@ void Solver::attach_bnn(const uint32_t bnn_idx)
 //     cout << "Attaching BNN: " << *bnn << endl;
 
     for(const auto& l: bnn->in) {
-        watches[l].push(Watched(bnn_idx, watch_bnn_t));
-        watches[~l].push(Watched(bnn_idx, watch_bnn_t));
+        watches[l].push(Watched(bnn_idx, watch_bnn_t, bnn_pos_t));
+        watches[~l].push(Watched(bnn_idx, watch_bnn_t, bnn_neg_t));
     }
     if (!bnn->set)  {
-        watches[bnn->out].push(Watched(bnn_idx, watch_bnn_t));
-        watches[~bnn->out].push(Watched(bnn_idx, watch_bnn_t));
+        watches[bnn->out].push(Watched(bnn_idx, watch_bnn_t, bnn_out_t));
+        watches[~bnn->out].push(Watched(bnn_idx, watch_bnn_t, bnn_out_t));
     }
 }
 
