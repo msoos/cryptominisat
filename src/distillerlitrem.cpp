@@ -50,7 +50,9 @@ bool DistillerLitRem::distill_lit_rem()
     runStats.clear();
 
 
-    solver->remove_and_clean_all();
+    if (!solver->remove_and_clean_all()) {
+        goto end;
+    }
     if (!distill_long_cls_all(solver->longIrredCls, 1)) {
         goto end;
     }

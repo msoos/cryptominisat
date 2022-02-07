@@ -170,49 +170,19 @@ bool ClauseCleaner::clean_bnn(BNN& bnn, uint32_t bnn_idx) {
         bnn.out = lit_Undef;
     }
 
-    // Always true
-    if (bnn.cutoff <= 0) {
-        assert(bnn.set);
-        //remove
-        return true;
-    }
-
-    // Always false
-    if ((int)bnn.size() < bnn.cutoff) {
-        assert(false);
-    }
-
-    // should have propagated
-    if (bnn.set && (int)bnn.size() == bnn.cutoff) {
-        assert(false);
-    }
-
-    // Empty BNN
-    if (bnn.size() == 0) {
-        if (bnn.cutoff <= 0) {
-            assert(bnn.set);
-        } else {
-            assert(false);
+    lbool ret = solver->bnn_eval(bnn);
+    if (ret != l_Undef) {
+        if (ret == l_False) {
+            assert(false && "Not handled yet, but it's possible!!");
+            solver->ok = false;
+            return true;
         }
         //remove
         return true;
     }
 
-//     if (bnn.in.size() == 1) {
-//         assert(solver->value(bnn.out) != l_Undef);
-//         assert(bnn.cutoff >= 0);
-//
-//         if (bnn.cutoff == 0)
-//             assert(solver->value(bnn.out) == l_False);
-//
-//         if (bnn.cutoff > 1)
-//             assert(solver->value(bnn.out) == l_False);
-//
-//         assert(solver->value(bnn.out) == l_True);
-//         return true;
-//     }
-
-    if (solver->special_bnn(&bnn)) {
+    //translate into clauses
+    if (solver->bnn_to_cnf(bnn)) {
         return true;
     }
 
@@ -229,7 +199,7 @@ void ClauseCleaner::clean_bnns_inter(vector<BNN*>& bnns)
         cout << "Cleaning BNNs" << endl;
     }
 
-    for (uint32_t i = 0; i < bnns.size(); i++) {
+    for (uint32_t i = 0; i < bnns.size() && solver->okay(); i++) {
         BNN* bnn = solver->bnns[i];
         if (!bnn || bnn->isRemoved)
             continue;
@@ -404,44 +374,55 @@ void ClauseCleaner::clean_bnns_post()
     }
 }
 
-void ClauseCleaner::remove_and_clean_all()
+bool ClauseCleaner::remove_and_clean_all()
 {
     double myTime = cpuTime();
     assert(solver->okay());
     assert(solver->prop_at_head());
     assert(solver->decisionLevel() == 0);
 
-    clean_implicit_clauses();
+    do {
+        solver->ok = solver->propagate<false>().isNULL();
+        if (!solver->okay()) {
+            break;
+        }
 
-    clean_clauses_pre();
-    clean_bnns_inter(solver->bnns);
-    clean_clauses_inter(solver->longIrredCls);
-    for(auto& lredcls: solver->longRedCls) {
-        clean_clauses_inter(lredcls);
-    }
-    solver->clean_occur_from_removed_clauses_only_smudged();
-    clean_clauses_post();
-    clean_bnns_post();
+        clean_implicit_clauses();
+        clean_clauses_pre();
+        clean_bnns_inter(solver->bnns);
+        if (!solver->okay()) {
+            break;
+        }
+        clean_clauses_inter(solver->longIrredCls);
+        for(auto& lredcls: solver->longRedCls) {
+            clean_clauses_inter(lredcls);
+        }
+        solver->clean_occur_from_removed_clauses_only_smudged();
+        clean_clauses_post();
+        clean_bnns_post();
+    } while (!solver->prop_at_head());
 
 
     #ifndef NDEBUG
-    //Once we have cleaned the watchlists
-    //no watchlist whose lit is set may be non-empty
-    size_t wsLit = 0;
-    for(watch_array::const_iterator
-        it = solver->watches.begin(), end = solver->watches.end()
-        ; it != end
-        ; ++it, wsLit++
-    ) {
-        const Lit lit = Lit::toLit(wsLit);
-        if (solver->value(lit) != l_Undef) {
-            if (!it->empty()) {
-                cout << "ERROR watches size: " << it->size() << endl;
-                for(const auto& w: *it) {
-                    cout << "ERROR w: " << w << endl;
+    if (solver->okay()) {
+        //Once we have cleaned the watchlists
+        //no watchlist whose lit is set may be non-empty
+        size_t wsLit = 0;
+        for(watch_array::const_iterator
+            it = solver->watches.begin(), end = solver->watches.end()
+            ; it != end
+            ; ++it, wsLit++
+        ) {
+            const Lit lit = Lit::toLit(wsLit);
+            if (solver->value(lit) != l_Undef) {
+                if (!it->empty()) {
+                    cout << "ERROR watches size: " << it->size() << endl;
+                    for(const auto& w: *it) {
+                        cout << "ERROR w: " << w << endl;
+                    }
                 }
+                assert(it->empty());
             }
-            assert(it->empty());
         }
     }
     #endif
@@ -452,6 +433,8 @@ void ClauseCleaner::remove_and_clean_all()
         << solver->conf.print_times(cpuTime() - myTime)
         << endl;
     }
+
+    return solver->okay();
 }
 
 

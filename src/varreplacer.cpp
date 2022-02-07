@@ -221,7 +221,9 @@ bool VarReplacer::perform_replace()
     const double myTime = cpuTime();
     const size_t origTrailSize = solver->trail_size();
 
-    solver->clauseCleaner->remove_and_clean_all();
+    if (!solver->clauseCleaner->remove_and_clean_all()) {
+        return false;
+    }
     #ifdef DEBUG_ATTACH_MORE
     solver->test_all_clause_attached();
     #endif

@@ -52,7 +52,9 @@ bool InTree::replace_until_fixedpoint(bool& aborted)
     uint32_t this_replace = solver->varReplacer->get_num_replaced_vars();
     while(last_replace != this_replace && !aborted) {
         last_replace = this_replace;
-        solver->clauseCleaner->remove_and_clean_all();
+        if (!solver->clauseCleaner->remove_and_clean_all()) {
+            return false;
+        }
         bool OK = solver->varReplacer->replace_if_enough_is_found(0, &bogoprops);
         if (!OK) {
             return false;

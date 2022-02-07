@@ -584,14 +584,16 @@ void Solver::attach_bnn(const uint32_t bnn_idx)
 }
 
 //Input BNN *must* be already clean
-bool Solver::special_bnn(BNN* bnn)
+bool Solver::bnn_to_cnf(BNN& bnn)
 {
     // It must have already been evaluated
-    assert(bnn->set || value(bnn->out) == l_Undef);
+    assert(bnn.set || value(bnn.out) == l_Undef);
 
-    if (bnn->set && bnn->cutoff == 1) {
-        assert(bnn->size() > 1);
-        vector<Lit> lits(bnn->begin(), bnn->end());
+    vector<Lit> lits;
+    if (bnn.set && bnn.cutoff == 1) {
+        assert(bnn.size() > 1);
+        lits.clear();
+        lits.insert(lits.end(), bnn.begin(), bnn.end());
         Clause* cl = add_clause_int(lits);
         assert(ok);
         if (cl != NULL) {
@@ -600,22 +602,60 @@ bool Solver::special_bnn(BNN* bnn)
         return true;
     }
 
-    if (!bnn->set && bnn->cutoff == 1) {
-        vector<Lit> lits(bnn->begin(), bnn->end());
-        lits.push_back(~bnn->out);
+    if (!bnn.set && bnn.cutoff == 1) {
+        lits.clear();
+        lits.insert(lits.end(), bnn.begin(), bnn.end());
+        lits.push_back(~bnn.out);
         Clause* cl = add_clause_int(lits);
         if (cl != NULL) {
             longIrredCls.push_back(cl_alloc.get_offset(cl));
         }
-        for(Lit l: *bnn) {
+        for(Lit l: bnn) {
             lits.clear();
             lits.push_back(~l);
-            lits.push_back(bnn->out);
+            lits.push_back(bnn.out);
             Clause* cl2 = add_clause_int(lits);
             assert(cl2 == NULL);
         }
         return true;
     }
+
+    /*if (bnn.cutoff == 2 && bnn.size() == 3) {
+        //input is a v b v c <-> d
+        //creates:
+        //a v b v -d
+        //a v c v -d
+        //b v c v -d
+        //----
+        //-a v -b v d
+        //-a v -c v d
+        //-b v -c v d
+        //------
+        //when bnn.set, we don't need the 2nd part
+        ///    (and -d is not in 1st part)
+
+        for(uint32_t rev = 0; rev < 2; rev++) {
+            //if it's set, don't do the rev
+            if (bnn.set && rev == 1) {
+                break;
+            }
+            for(uint32_t i = 0; i < 3; i++) {
+                lits.clear();
+                for (uint32_t i2 = 0; i2 < 3; i2++) {
+                    if (i != i2) {
+                        lits.push_back(bnn[i2] ^ (bool)rev);
+                    }
+                }
+                if (!bnn.set) {
+                    lits.push_back(~bnn.out ^ (bool)rev);
+                }
+                Clause* cl2 = add_clause_int(lits);
+                if (cl2 != NULL)
+                    longIrredCls.push_back(cl_alloc.get_offset(cl2));
+            }
+        }
+        return true;
+    }*/
 
 
     return false;
@@ -645,7 +685,7 @@ void Solver::add_bnn_clause_inter(
 
     if (bnn != NULL) {
         assert(check_bnn_sane(*bnn));
-        if (special_bnn(bnn)) {
+        if (bnn_to_cnf(*bnn)) {
             free(bnn);
             bnn = NULL;
         } else {
@@ -1161,7 +1201,9 @@ bool Solver::renumber_variables(bool must_renumber)
     #endif
 
     double myTime = cpuTime();
-    clauseCleaner->remove_and_clean_all();
+    if (!clauseCleaner->remove_and_clean_all()) {
+        return false;
+    }
     if (!xorclauses.empty()) {
         if (!clean_xor_clauses_from_duplicate_and_set_vars())
             return false;
@@ -4714,8 +4756,8 @@ vector<ITEGate> Solver::get_recovered_ite_gates()
     return or_gates;
 }
 
-void Solver::remove_and_clean_all() {
-    clauseCleaner->remove_and_clean_all();
+bool Solver::remove_and_clean_all() {
+    return clauseCleaner->remove_and_clean_all();
 }
 
 void Solver::set_max_confl(uint64_t max_confl)
@@ -4765,6 +4807,16 @@ lbool Solver::bnn_eval(BNN& bnn)
         for(const auto& l: bnn) {
             enqueue<false>(l, decisionLevel());
         }
+        return l_True;
+    }
+
+    if (bnn.size() == 0) {
+        if (bnn.cutoff <= 0) {
+            assert(bnn.set);
+        } else {
+            assert(false);
+        }
+        //remove
         return l_True;
     }
 

@@ -1405,7 +1405,15 @@ lbool Searcher::search()
                         assert(solver->check_bnn_sane(*bnn));
                 }
                 #endif
-                clean_clauses_if_needed();
+                if (!clean_clauses_if_needed()) {
+                    search_ret = l_False;
+                    goto end;
+                }
+//                 for(const auto& bnn: bnns) {
+//                     if (bnn)
+//                         cout << "BNN after clean: " << *bnn << endl;
+//                 }
+//                 cout << "END" << endl;
             }
             reduce_db_if_needed();
             lbool dec_ret;
@@ -2287,7 +2295,7 @@ void Searcher::reduce_db_if_needed()
     #endif
 }
 
-void Searcher::clean_clauses_if_needed()
+bool Searcher::clean_clauses_if_needed()
 {
     #ifdef SLOW_DEBUG
     assert(decisionLevel() == 0);
@@ -2307,7 +2315,9 @@ void Searcher::clean_clauses_if_needed()
             << endl;
         }
         lastCleanZeroDepthAssigns = trail.size();
-        solver->clauseCleaner->remove_and_clean_all();
+        if (!solver->clauseCleaner->remove_and_clean_all()) {
+            return false;
+        }
 
         cl_alloc.consolidate(solver);
         //TODO this is not needed, but seems to help speed
@@ -2316,6 +2326,8 @@ void Searcher::clean_clauses_if_needed()
 
         simpDB_props = (litStats.redLits + litStats.irredLits)<<5;
     }
+
+    return okay();
 }
 
 void Searcher::rebuildOrderHeap()
