@@ -84,7 +84,7 @@ int ClPredictorsXGB::load_models_from_buffers()
         handles[predict_type::long_pred], predictor_long_json, predictor_long_json_len));
     safe_xgboost(XGBoosterLoadModelFromBuffer(
         handles[predict_type::forever_pred], predictor_forever_json, predictor_forever_json_len))
-    return 1;
+    return 0;
 }
 
 void ClPredictorsXGB::predict_all(
