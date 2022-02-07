@@ -620,7 +620,27 @@ bool Solver::bnn_to_cnf(BNN& bnn)
         return true;
     }
 
-    /*if (bnn.cutoff == 2 && bnn.size() == 3) {
+    if (!bnn.set && bnn.cutoff == (int)bnn.size()) {
+        lits.clear();
+        for(const Lit& l: bnn) {
+            lits.push_back(~l);
+        }
+        lits.push_back(bnn.out);
+        Clause* cl = add_clause_int(lits);
+        if (cl != NULL) {
+            longIrredCls.push_back(cl_alloc.get_offset(cl));
+        }
+        for(const Lit& l: bnn) {
+            lits.clear();
+            lits.push_back(l);
+            lits.push_back(~bnn.out);
+            Clause* cl2 = add_clause_int(lits);
+            assert(cl2 == NULL);
+        }
+        return true;
+    }
+
+    if (bnn.cutoff == 2 && bnn.size() == 3) {
         //input is a v b v c <-> d
         //creates:
         //a v b v -d
@@ -655,7 +675,7 @@ bool Solver::bnn_to_cnf(BNN& bnn)
             }
         }
         return true;
-    }*/
+    }
 
 
     return false;
