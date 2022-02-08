@@ -221,7 +221,9 @@ bool BreakID::doit()
         return false;
     }
 
-    solver->clauseCleaner->remove_and_clean_all();
+    if (!solver->clauseCleaner->remove_and_clean_all()) {
+        return false;
+    }
     solver->subsumeImplicit->subsume_implicit(false, "-breakid");
 
     CompleteDetachReatacher reattacher(solver);

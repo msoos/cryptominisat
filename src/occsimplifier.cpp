@@ -1818,7 +1818,9 @@ bool OccSimplifier::setup()
     #endif
 
     //Clean the clauses before playing with them
-    solver->clauseCleaner->remove_and_clean_all();
+    if (!solver->clauseCleaner->remove_and_clean_all()) {
+        return false;
+    }
 
     //If too many clauses, don't do it
     if (solver->getNumLongClauses() > 40ULL*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult

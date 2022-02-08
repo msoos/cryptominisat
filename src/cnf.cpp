@@ -890,7 +890,7 @@ bool CNF::check_bnn_sane(BNN& bnn)
 
     int32_t ts = 0;
     int32_t undefs = 0;
-    for(const auto& l: bnn.in) {
+    for(const auto& l: bnn) {
         if (value(l) == l_True) {
             ts++;
         }
@@ -900,7 +900,7 @@ bool CNF::check_bnn_sane(BNN& bnn)
         }
     }
 
-    if (bnn.in.empty()) {
+    if (bnn.empty()) {
         return false;
     }
 

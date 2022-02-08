@@ -31,16 +31,57 @@ def parse_lit(x):
     v = int(x[1:])
     return v*inv
 
+def leq_translate(c):
+    #if len(c.lhs) == 1 and c.lhs[0][0] == 1 and c.cutoff == 0:
+        #print("%d %d 0" % (-c.lhs[0][1], c.rhs))
+        #print("%d %d 0" % (c.lhs[0][1], -c.rhs))
+        #return
+    #if len(c.lhs) == 1 and c.lhs[0][0] == -1 and c.cutoff == 1:
+        #print("%d %d 0" % (-c.lhs[0][1], c.rhs))
+        #print("%d %d 0" % (c.lhs[0][1], -c.rhs))
+        #return
+
+    #if len(c.lhs) == 1 and c.rhs == None and c.cutoff == 1:
+        #if c.lhs[0][0] == 1:
+            #print("%d 0" % c.lhs[0][1])
+            #return
+        #sys.stderr.write("ERRROOOR\n")
+        #exit(-1)
+
+    ins = []
+    for l in c.lhs:
+        if l[0] == 1:
+            ins.append(l[1])
+            continue
+        else:
+            ins.append(-l[1])
+            c.cutoff+=1
+
+    pr = "b "
+    for l in ins:
+        pr += "%d " % l
+
+    pr += "0 "
+    pr += "%d " % c.cutoff
+
+    if c.rhs is not None:
+        pr += "%d " % c.rhs
+    print("%s" % pr)
+
 class Constr:
-    def __init__(self, lhs, cutoff, rhs):
+    def __init__(self, lhs, cutoff, rhs, sign):
         self.lhs = lhs
         self.cutoff = cutoff
         self.rhs = rhs
+        self.sign = sign
 
     def __repr__(self):
-        return "lhs: %s cutoff: %s rhs: %s" % (self.lhs, self.cutoff, self.rhs)
+        return "lhs: %s cutoff: %s sign: %s rhs: %s" % (self.lhs, self.cutoff, self.sign, self.rhs)
 
     def simple(self):
+        if self.sign != "=" and self.sign != ">=":
+            return
+
         for l in self.lhs:
             if l[0] == 1 or l[0] == -1:
                 continue
@@ -49,51 +90,31 @@ class Constr:
 
         return True
 
-    def translate(self, true_var):
+    def translate(self):
+        print("c Doing simple:", self)
         assert self.simple()
-        if len(self.lhs) == 1 and self.lhs[0][0] == 1 and self.cutoff == 0:
-            print("%d %d 0" % (-self.lhs[0][1], self.rhs))
-            print("%d %d 0" % (self.lhs[0][1], -self.rhs))
-            return
-        #if len(self.lhs) == 1 and self.lhs[0][0] == -1 and self.cutoff == 1:
-            #print("%d %d 0" % (-self.lhs[0][1], self.rhs))
-            #print("%d %d 0" % (self.lhs[0][1], -self.rhs))
-            #return
-
-        if len(self.lhs) == 1 and self.rhs == None and self.cutoff == 1:
-            if self.lhs[0][0] == 1:
-                print("%d 0" % self.lhs[0][1])
-                return
-            sys.stderr.write("ERRROOOR\n")
+        if self.sign == ">=":
+            leq_translate(self)
+        elif self.sign == "=":
+            leq_translate(self)
+            c = Constr(self.lhs, self.cutoff, self.rhs, self.sign)
+            c.cutoff = len(c.lhs) - c.cutoff
+            for i in range(len(c.lhs)):
+                c.lhs[i][0] = -c.lhs[i][0]
+            leq_translate(c)
+        else:
+            print("ERRROR")
             exit(-1)
 
-        ins = []
-        for l in self.lhs:
-            if l[0] == 1:
-                ins.append(l[1])
-                continue
-            else:
-                ins.append(-l[1])
-                self.cutoff+=1
 
-        pr = "b "
-        for l in ins:
-            pr += "%d " % l
 
-        pr += "0 "
-        pr += "%d " % self.cutoff
-
-        if self.rhs is not None:
-            pr += "%d " % self.rhs
-        else:
-            pr += "%d " % true_var
-        print("%s" % pr)
 
 
 def parse_constr(line):
     lhs = []
     cutoff = None
     rhs = None
+    sign = ""
 
     at_lhs = True
     at_cutoff = False
@@ -111,11 +132,15 @@ def parse_constr(line):
             continue
 
         if at_lhs:
-            if k == ">=":
+            if k == ">=" or k == "=":
+                sign = k
                 at_lhs = False
                 at_cutoff= True
                 i+=1
                 continue
+            #else:
+                #sys.stderr.write("ERRROOOR: input has:" + k)
+                #exit(-1)
             coeff = int(k)
             assert i+1 < len(line)
             i+=1
@@ -156,7 +181,7 @@ def parse_constr(line):
     #else:
         #print("lhs: ", lhs, "cutoff: ", cutoff)
 
-    return Constr(lhs, cutoff, rhs)
+    return Constr(lhs, cutoff, rhs, sign)
 
 
 def do_pbsugar(constr, maxvar):
@@ -262,11 +287,6 @@ if __name__ == "__main__":
 
             constr.append(parse_constr(line))
 
-    # create fake TRUE_VAR to be able to assign it to RHS
-    true_var = maxvar+1
-    print("%d 0" % true_var)
-    maxvar+=1
-
     # deal with independent
     pr = "c ind "
     for i in ind:
@@ -277,7 +297,7 @@ if __name__ == "__main__":
     for c in constr:
         print("c doing constraint: ", c)
         if c.simple():
-            c.translate(true_var)
+            c.translate()
         else:
             print("c Using pbsugar to deal with: ", c)
             maxvar = do_pbsugar(c, maxvar)

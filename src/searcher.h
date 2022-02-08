@@ -77,7 +77,7 @@ class Searcher : public HyperEngine
         );
         void finish_up_solve(lbool status);
         void reduce_db_if_needed();
-        void clean_clauses_if_needed();
+        bool clean_clauses_if_needed();
         #ifdef STATS_NEEDED
         void check_calc_satzilla_features(bool force = false);
         #endif

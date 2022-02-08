@@ -229,7 +229,7 @@ class Solver : public Searcher
         );
         void attach_bnn(const uint32_t bnn_idx);
         lbool bnn_eval(BNN& bnn);
-        bool special_bnn(BNN* bnn);
+        bool bnn_to_cnf(BNN& bnn);
         void attach_bin_clause(
             const Lit lit1
             , const Lit lit2
@@ -286,7 +286,7 @@ class Solver : public Searcher
 
         vector<OrGate> get_recovered_or_gates();
         vector<ITEGate> get_recovered_ite_gates();
-        void remove_and_clean_all();
+        bool remove_and_clean_all();
         vector<Lit> get_toplevel_units_internal(bool outer_numbering) const;
 
         #ifdef USE_GAUSS

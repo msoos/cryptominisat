@@ -51,7 +51,9 @@ bool DistillerLongWithImpl::distill_long_with_implicit(const bool alsoStrengthen
     assert(solver->ok);
     numCalls++;
 
-    solver->clauseCleaner->remove_and_clean_all();
+    if (!solver->clauseCleaner->remove_and_clean_all()) {
+        goto end;
+    }
 
     runStats.redWatchBased.clear();
     runStats.irredWatchBased.clear();

@@ -1523,6 +1523,7 @@ DLL_PUBLIC lbool SATSolver::find_fast_backw(FastBackwData fast_backw)
 DLL_PUBLIC void SATSolver::remove_and_clean_all()
 {
     for(auto& s: data->solvers) {
+        if (!s->okay()) return;
         s->remove_and_clean_all();
     }
 }

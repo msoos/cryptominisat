@@ -278,6 +278,9 @@ struct FastBackwData {
 class BNN
 {
 public:
+    typedef Lit* iterator;
+    typedef const Lit* const_iterator;
+
     BNN()
     {}
 
@@ -285,7 +288,6 @@ public:
         const std::vector<Lit>& _in,
         const int32_t _cutoff,
         const Lit _out):
-        in(_in),
         cutoff(_cutoff),
         out (_out)
     {
@@ -293,18 +295,32 @@ public:
             set = true;
         }
         assert(_in.size() > 0);
-        undefs = in.size();
+        undefs = _in.size();
         ts = 0;
+        sz = _in.size();
+        for(uint32_t i = 0; i < _in.size(); i++) {
+            getData()[i] = _in[i];
+        }
+    }
+
+    Lit* getData()
+    {
+        return (Lit*)((char*)this + sizeof(BNN));
+    }
+
+    const Lit* getData() const
+    {
+        return (Lit*)((char*)this + sizeof(BNN));
     }
 
     const Lit& operator[](const uint32_t at) const
     {
-        return in[at];
+        return getData()[at];
     }
 
     Lit& operator[](const uint32_t at)
     {
-        return in[at];
+        return getData()[at];
     }
 
     const Lit& get_out() const
@@ -312,23 +328,46 @@ public:
         return out;
     }
 
-    size_t size() const
+    const Lit* begin() const
     {
-        return in.size();
+        return getData();
+    }
+
+    Lit* begin()
+    {
+        return getData();
+    }
+
+    const Lit* end() const
+    {
+        return getData()+size();
+    }
+
+    Lit* end()
+    {
+        return getData()+size();
     }
 
     bool empty() const
     {
-        return in.empty();
+        return sz == 0;
     }
 
-    std::vector<Lit> in;
+    void resize(uint32_t _sz) {
+        sz = _sz;
+    }
+
+    uint32_t size() const {
+        return sz;
+    }
+
     int32_t cutoff;
     Lit out = lit_Undef;
     bool set = false;
     bool isRemoved = false;
     int32_t ts = 0;
     int32_t undefs = 0;
+    uint32_t sz;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const BNN& bnn)
@@ -342,7 +381,7 @@ inline std::ostream& operator<<(std::ostream& os, const BNN& bnn)
     os << " >=  " << bnn.cutoff;
     if (!bnn.set)
         os << " <-> " << bnn.out;
-    os << " [size: " << bnn.in.size() << "]";
+    os << " [size: " << bnn.size() << "]";
 
     return os;
 }
