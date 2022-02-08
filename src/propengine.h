@@ -213,6 +213,7 @@ public:
 
     template<bool update_bogoprops>
     bool propagate_occur();
+    void reverse_prop(const Lit l);
     PropStats propStats;
     template<bool update_bogoprops>
     void enqueue(const Lit p, const uint32_t level, const PropBy from = PropBy());

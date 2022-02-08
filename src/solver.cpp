@@ -693,6 +693,8 @@ void Solver::add_bnn_clause_inter(
     BNN* bnn = new (mem) BNN(lits, cutoff, out);
 
     sort_and_clean_bnn(*bnn);
+    bnn->undefs = bnn->size();
+    bnn->ts = 0;
     lbool ret = bnn_eval(*bnn);
     if (ret != l_Undef) {
         if (ret == l_False) {

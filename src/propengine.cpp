@@ -279,45 +279,54 @@ lbool PropEngine::bnn_prop(
 {
     BNN* bnn = bnns[bnn_idx];
     switch(prop_t) {
-        case bnn_pos_t:
+        case bnn_neg_t:
             bnn->ts++;
             bnn->undefs--;
             break;
-        case bnn_neg_t:
+        case bnn_pos_t:
             bnn->undefs--;
             break;
         case bnn_out_t:
             break;
     }
-    int32_t& ts = bnn->ts;
+    assert (bnn->ts >= 0);
+    assert (bnn->undefs >= 0);
+    assert (bnn->ts <= (int32_t)bnn->size());
+    assert (bnn->undefs <= (int32_t)bnn->size());
+
+//     int32_t& ts = bnn->ts;
+//     int32_t& undefs = bnn->undefs;
+//     if (
+//         !(ts + undefs < bnn->cutoff) &&
+//
+//         !(ts >= bnn->cutoff) &&
+//
+//         !(((!bnn->set && value(bnn->out) == l_True) || bnn->set) &&
+//             bnn->cutoff - ts == undefs) &&
+//         !((!bnn->set && value(bnn->out) == l_False) &&
+//             bnn->cutoff == ts + 1))
+//     {
+//         return l_Undef;
+//     }
+
+    int32_t ts = bnn->ts;
     int32_t undefs = bnn->undefs;
-
-    if (
-        !(ts + undefs < bnn->cutoff) &&
-
-        !(ts >= bnn->cutoff) &&
-
-        !(((!bnn->set && value(bnn->out) == l_True) || bnn->set) &&
-            bnn->cutoff - ts == undefs) &&
-        !((!bnn->set && value(bnn->out) == l_False) &&
-            bnn->cutoff == ts + 1))
-    {
-        return l_Undef;
-    }
-
-    ts = 0;
-    undefs = 0;
-    int32_t unknowns = bnn->size();
-    for(const auto& p: *bnn) {
-        if (value(p) == l_Undef) {
+    /*for(const auto& p: *bnn) {
+        if (value(p) == l_Undef && varData[p.var()].sublevel <= varData[l.var()].sublevel) {
             undefs++;
-        } else if (value(p) == l_True) {
+        } else if (value(p) == l_True && varData[p.var()].sublevel <= varData[l.var()].sublevel) {
             ts++;
         }
-        unknowns--;
     }
 
-    if (unknowns+ts+undefs < bnn->cutoff) {
+    cout << "undefs: " << bnn->undefs << endl;
+    cout << "ts: " << bnn->ts<< endl;
+    cout << "real undefs: " << undefs << endl;
+    cout << "real ts: " << ts<< endl;
+    assert(undefs == bnn->undefs);
+    assert(ts == bnn->ts);*/
+
+    if (ts+undefs < bnn->cutoff) {
         // we are under the cutoff no matter what undef+unknowns is
         if (bnn->set) {
 //                 cout << "returning l_False from bnn_prop" <<  "declev: " << decisionLevel() << endl;
@@ -680,6 +689,52 @@ bool PropEngine::prop_long_cl_any_order(
     return true;
 }
 
+void CMSat::PropEngine::reverse_prop(const CMSat::Lit l)
+{
+    if (!varData[l.var()].propagated) return;
+    watch_subarray ws = watches[~l];
+    for (const auto& i: ws) {
+        //Prop bin clause
+        if (i.isBin()) {
+            continue;
+        }
+
+        // propagate BNN constraint
+        if (i.isBNN()) {
+            BNN* bnn= bnns[i.get_bnn()];
+            if (!bnn) {
+                continue;
+            }
+            switch(i.get_bnn_prop_t()) {
+                case bnn_neg_t:
+                    bnn->ts--;
+                    bnn->undefs++;
+                    break;
+                case bnn_pos_t:
+                    bnn->undefs++;
+                    break;
+                case bnn_out_t:
+                    break;
+            }
+//             cout << "reverse idx: " << i.get_bnn()
+//             << " bnn->undefs: " << bnn->undefs
+//             << " bnn->ts: " << bnn->ts
+//             << " bnn->sz: " << bnn->size()
+//             << " BNN: " << *bnn << " LIT: " << l << endl;
+
+            assert (bnn->ts >= 0);
+            assert (bnn->undefs >= 0);
+            assert (bnn->ts <= (int32_t)bnn->size());
+            assert (bnn->undefs <= (int32_t)bnn->size());
+            continue;
+        }
+
+        //propagate normal clause
+        assert(i.isClause());
+    }
+    varData[l.var()].propagated = false;
+}
+
 PropBy PropEngine::propagate_any_order_fast()
 {
     PropBy confl;
@@ -694,8 +749,9 @@ PropBy PropEngine::propagate_any_order_fast()
     const bool fast_confl_break = solver->conf.fast_confl_break;
 
     int64_t num_props = 0;
-    while (qhead < trail.size() && (!fast_confl_break || confl.isNULL())) {
+    while (qhead < trail.size() && confl.isNULL()) {
         const Lit p = trail[qhead].lit;     // 'p' is enqueued fact to propagate.
+        varData[p.var()].propagated = true;
         const uint32_t currLevel = trail[qhead].lev;
         qhead++;
         watch_subarray ws = watches[~p];
@@ -729,10 +785,10 @@ PropBy PropEngine::propagate_any_order_fast()
                         lastConflictCausedBy = ConflCausedBy::binirred;
                     #endif
                     i++;
-                    while (i < end) {
-                        *j++ = *i++;
-                    }
-                    qhead = trail.size();
+//                     while (i < end) {
+//                         *j++ = *i++;
+//                     }
+//                     qhead = trail.size();
                 } else {
                     i++;
                 }
@@ -747,10 +803,10 @@ PropBy PropEngine::propagate_any_order_fast()
                 if (val == l_False) {
                     confl = PropBy(i->get_bnn(), nullptr);
                     i++;
-                    while (i < end) {
-                        *j++ = *i++;
-                    }
-                    qhead = trail.size();
+//                     while (i < end) {
+//                         *j++ = *i++;
+//                     }
+//                     qhead = trail.size();
                 } else {
                     i++;
                 }
@@ -807,11 +863,11 @@ PropBy PropEngine::propagate_any_order_fast()
                 #ifdef VERBOSE_DEBUG
                 cout << "Conflicting on clause:" << c << endl;
                 #endif
-                while (i < end) {
-                    *j++ = *i++;
-                }
-                assert(j <= end);
-                qhead = trail.size();
+//                 while (i < end) {
+//                     *j++ = *i++;
+//                 }
+//                 assert(j <= end);
+//                 qhead = trail.size();
             } else {
                 #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
                 c.stats.props_made++;
@@ -825,6 +881,7 @@ PropBy PropEngine::propagate_any_order_fast()
                 if (currLevel == declevel) {
                     enqueue<false>(c[0], currLevel, PropBy(offset));
                 } else {
+                    assert(false && "Turned off");
                     uint32_t nMaxLevel = currLevel;
                     uint32_t nMaxInd = 1;
                     // pass over all the literals in the clause and find the one with the biggest level
@@ -864,6 +921,29 @@ PropBy PropEngine::propagate_any_order_fast()
     qhead = trail.size();
     simpDB_props -= num_props;
     propStats.propagations += (uint64_t)num_props;
+//     if (confl.isNULL()) {
+//         for(uint32_t idx = 0; idx < bnns.size(); idx++) {
+//             auto& bnn = bnns[idx];
+//             if (!bnn) continue;
+//             int32_t undefs = 0;
+//             int32_t ts = 0;
+//             for(const auto& l: *bnn) {
+//                 cout << " l: " << l << " v: " << value(l);
+//                 if (value(l) == l_True) {
+//                     ts++;
+//                 }
+//                 if (value(l) == l_Undef) {
+//                     undefs++;
+//                 }
+//             }
+//             cout << "u: " << undefs << " my u: " << bnn->undefs << " -- ";
+//             cout << "t: " << ts << " my t: " << bnn->ts << " idx: " << idx
+//             << " sz :" << bnn->size() << endl;
+//             assert(undefs == bnn->undefs);
+//             assert(ts == bnn->ts);
+//         }
+//         cout << "ALL BNNS CHECKED========" << endl;
+//     }
 
     #ifdef VERBOSE_DEBUG
     cout << "Propagation (propagate_any_order_fast) ended." << endl;
@@ -883,8 +963,9 @@ PropBy PropEngine::propagate_any_order()
 
     const bool fast_confl_break = solver->conf.fast_confl_break;
 
-    while (qhead < trail.size() && (!fast_confl_break || confl.isNULL())) {
+    while (qhead < trail.size() && confl.isNULL()) {
         const Lit p = trail[qhead].lit;     // 'p' is enqueued fact to propagate.
+        varData[p.var()].propagated = true;
         watch_subarray ws = watches[~p];
         uint32_t currLevel = trail[qhead].lev;
 
@@ -906,8 +987,8 @@ PropBy PropEngine::propagate_any_order()
                     continue;
                 }
                 if (!prop_bin_cl<update_bogoprops>(i, p, confl, currLevel)) {
-                    i++;
-                    break;
+//                     i++;
+//                     break;
                 }
                 continue;
             }
@@ -919,8 +1000,8 @@ PropBy PropEngine::propagate_any_order()
                     i->get_bnn(), currLevel, p, i->get_bnn_prop_t());
                 if (val == l_False) {
                     confl = PropBy(i->get_bnn(), nullptr);
-                    i++;
-                    break;
+//                     i++;
+//                     break;
                 }
                 continue;
             }
@@ -928,8 +1009,8 @@ PropBy PropEngine::propagate_any_order()
             //propagate normal clause
             assert(i->isClause());
             if (!prop_long_cl_any_order<update_bogoprops, red_also, use_disable>(i, j, p, confl, currLevel)) {
-                i++;
-                break;
+//                 i++;
+//                 break;
             }
             continue;
         }
@@ -951,6 +1032,29 @@ PropBy PropEngine::propagate_any_order()
 
         qhead++;
     }
+    //     if (confl.isNULL()) {
+//         for(uint32_t idx = 0; idx < bnns.size(); idx++) {
+//             auto& bnn = bnns[idx];
+//             if (!bnn) continue;
+//             int32_t undefs = 0;
+//             int32_t ts = 0;
+//             for(const auto& l: *bnn) {
+//                 if (value(l) == l_True) {
+//                     ts++;
+//                 }
+//                 if (value(l) == l_Undef) {
+//                     undefs++;
+//                 }
+//             }
+//             cout << "u: " << undefs << " my u: " << bnn->undefs << " -- ";
+//             cout << "t: " << ts << " my t: " << bnn->ts << " idx: " << idx
+//             << " sz :" << bnn->size() << endl;
+//             assert(undefs == bnn->undefs);
+//             assert(ts == bnn->ts);
+//         }
+//         cout << "ALL BNNS CHECKED========" << endl;
+//     }
+
 
     #ifdef VERBOSE_DEBUG
     cout << "Propagation (propagate_any_order) ended." << endl;

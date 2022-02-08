@@ -899,6 +899,8 @@ bool CNF::check_bnn_sane(BNN& bnn)
             undefs++;
         }
     }
+    assert(bnn.ts == ts);
+    assert(bnn.undefs == undefs);
 
     if (bnn.empty()) {
         return false;

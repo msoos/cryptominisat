@@ -60,6 +60,7 @@ struct VarData
     ///The preferred polarity of each variable.
     bool polarity = false;
     bool best_polarity = false;
+    bool propagated = false;
     uint8_t is_bva:1;
     uint8_t occ_simp_tried:1;
 

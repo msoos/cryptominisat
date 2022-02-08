@@ -3591,6 +3591,8 @@ void Searcher::cancelUntil(uint32_t blevel)
                 varData[var].reason = PropBy();
             }
 
+            reverse_prop(trail[sublevel].lit);
+
             #ifdef STATS_NEEDED_BRANCH
             if (!update_bogoprops) {
                 varData[var].last_canceled = sumConflicts;

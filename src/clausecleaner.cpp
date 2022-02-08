@@ -216,6 +216,8 @@ void ClauseCleaner::clean_bnns_inter(vector<BNN*>& bnns)
             bnn->isRemoved = true;
 //             cout << "Removed BNN" << endl;
         }
+        bnn->undefs = bnn->size();
+        bnn->ts = 0;
     }
 }
 
