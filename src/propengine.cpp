@@ -770,9 +770,6 @@ PropBy PropEngine::propagate_any_order_fast()
     #endif //SLOW_DEBUG
 
     while (qhead < trail.size() && confl.isNULL()) {
-
-
-
         const Lit p = trail[qhead].lit;     // 'p' is enqueued fact to propagate.
         varData[p.var()].propagated = true;
         const uint32_t currLevel = trail[qhead].lev;
@@ -950,28 +947,28 @@ PropBy PropEngine::propagate_any_order_fast()
     simpDB_props -= num_props;
     propStats.propagations += (uint64_t)num_props;
     #ifdef SLOW_DEBUG
-        for(uint32_t idx = 0; idx < bnns.size(); idx++) {
-            auto& bnn = bnns[idx];
-            if (!bnn) continue;
-            int32_t undefs = 0;
-            int32_t ts = 0;
-            for(const auto& l: *bnn) {
+    for(uint32_t idx = 0; idx < bnns.size(); idx++) {
+        auto& bnn = bnns[idx];
+        if (!bnn) continue;
+        int32_t undefs = 0;
+        int32_t ts = 0;
+        for(const auto& l: *bnn) {
 //                 cout << " l: " << l << " v: " << value(l);
-                if (value(l) == l_True && varData[l.var()].propagated) {
-                    ts++;
-                }
-                if (!varData[l.var()].propagated) {
-                    undefs++;
-                }
+            if (value(l) == l_True && varData[l.var()].propagated) {
+                ts++;
             }
-            if (undefs != bnn->undefs || ts != bnn->ts) {
-            cout << "u: " << undefs << " my u: " << bnn->undefs << " -- ";
-            cout << "t: " << ts << " my t: " << bnn->ts << " idx: " << idx
-            << " sz :" << bnn->size() << endl;
+            if (!varData[l.var()].propagated) {
+                undefs++;
             }
-            assert(undefs == bnn->undefs);
-            assert(ts == bnn->ts);
         }
+        if (undefs != bnn->undefs || ts != bnn->ts) {
+        cout << "u: " << undefs << " my u: " << bnn->undefs << " -- ";
+        cout << "t: " << ts << " my t: " << bnn->ts << " idx: " << idx
+        << " sz :" << bnn->size() << endl;
+        }
+        assert(undefs == bnn->undefs);
+        assert(ts == bnn->ts);
+    }
     #endif //SLOW_DEBUG
 
     #ifdef VERBOSE_DEBUG
