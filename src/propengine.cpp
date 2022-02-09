@@ -289,42 +289,15 @@ lbool PropEngine::bnn_prop(
         case bnn_out_t:
             break;
     }
+    #ifdef SLOW_DEBUG
     assert (bnn->ts >= 0);
     assert (bnn->undefs >= 0);
     assert (bnn->ts <= (int32_t)bnn->size());
     assert (bnn->undefs <= (int32_t)bnn->size());
+    #endif
 
-//     int32_t& ts = bnn->ts;
-//     int32_t& undefs = bnn->undefs;
-//     if (
-//         !(ts + undefs < bnn->cutoff) &&
-//
-//         !(ts >= bnn->cutoff) &&
-//
-//         !(((!bnn->set && value(bnn->out) == l_True) || bnn->set) &&
-//             bnn->cutoff - ts == undefs) &&
-//         !((!bnn->set && value(bnn->out) == l_False) &&
-//             bnn->cutoff == ts + 1))
-//     {
-//         return l_Undef;
-//     }
-
-    int32_t ts = bnn->ts;
-    int32_t undefs = bnn->undefs;
-    /*for(const auto& p: *bnn) {
-        if (value(p) == l_Undef && varData[p.var()].sublevel <= varData[l.var()].sublevel) {
-            undefs++;
-        } else if (value(p) == l_True && varData[p.var()].sublevel <= varData[l.var()].sublevel) {
-            ts++;
-        }
-    }
-
-    cout << "undefs: " << bnn->undefs << endl;
-    cout << "ts: " << bnn->ts<< endl;
-    cout << "real undefs: " << undefs << endl;
-    cout << "real ts: " << ts<< endl;
-    assert(undefs == bnn->undefs);
-    assert(ts == bnn->ts);*/
+    const int32_t ts = bnn->ts;
+    const int32_t undefs = bnn->undefs;
 
     if (ts+undefs < bnn->cutoff) {
         // we are under the cutoff no matter what undef+unknowns is
@@ -691,9 +664,9 @@ bool PropEngine::prop_long_cl_any_order(
 
 void CMSat::PropEngine::reverse_one_bnn(uint32_t idx, BNNPropType t) {
     BNN* bnn= bnns[idx];
-    if (!bnn) {
-        return;
-    }
+    #ifdef SLOW_DEBUG
+    assert(bnn != NULL);
+    #endif
     switch(t) {
         case bnn_neg_t:
             bnn->ts--;
@@ -711,10 +684,12 @@ void CMSat::PropEngine::reverse_one_bnn(uint32_t idx, BNNPropType t) {
 //             << " bnn->sz: " << bnn->size()
 //             << " BNN: " << *bnn << " LIT: " << l << endl;
 
+    #ifdef SLOW_DEBUG
     assert (bnn->ts >= 0);
     assert (bnn->undefs >= 0);
     assert (bnn->ts <= (int32_t)bnn->size());
     assert (bnn->undefs <= (int32_t)bnn->size());
+    #endif
 }
 
 void CMSat::PropEngine::reverse_prop(const CMSat::Lit l)
@@ -746,8 +721,8 @@ PropBy PropEngine::propagate_any_order_fast()
 
     #ifdef SLOW_DEBUG
     for(uint32_t idx = 0; idx < bnns.size(); idx++) {
-        auto& bnn = bnns[idx];
-        if (!bnn) continue;
+        const BNN* bnn = bnns[idx];
+        assert(bnn != NULL);
         int32_t undefs = 0;
         int32_t ts = 0;
         for(const auto& l: *bnn) {
@@ -949,7 +924,7 @@ PropBy PropEngine::propagate_any_order_fast()
     #ifdef SLOW_DEBUG
     for(uint32_t idx = 0; idx < bnns.size(); idx++) {
         auto& bnn = bnns[idx];
-        if (!bnn) continue;
+        assert(bnn != NULL);
         int32_t undefs = 0;
         int32_t ts = 0;
         for(const auto& l: *bnn) {

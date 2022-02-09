@@ -94,7 +94,9 @@ class Watched {
             , type(t)
             , data2(bnn_p_t)
         {
+            #ifdef DEBUG_WATCHED
             assert(t == watch_bnn_t);
+            #endif
         }
 
         Watched() :
@@ -160,15 +162,17 @@ class Watched {
 
         uint32_t get_bnn() const
         {
-//             #ifdef DEBUG_WATCHED
+            #ifdef DEBUG_WATCHED
             assert(type == watch_bnn_t);
-//             #endif
+            #endif
             return data1;
         }
 
         BNNPropType get_bnn_prop_t() const
         {
+            #ifdef DEBUG_WATCHED
             assert(type == watch_bnn_t);
+            #endif
             return (BNNPropType)data2;
         }
 
