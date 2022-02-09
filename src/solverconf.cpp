@@ -87,7 +87,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , polar_best_multip_n(1000)
 
         //Clause cleaning
-        , pred_short_size(7500)
+        , pred_short_size(5500)
         , pred_long_size(18500)
         , pred_forever_size(10500) // Used only if pred_forever_cutoff is 0
         , pred_forever_cutoff(0) //this sets a static cutoff
@@ -343,7 +343,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , do_distill_bin_clauses(true)
         , distill_long_cls_time_limitM(20ULL)
         , watch_based_str_time_limitM(30LL)
-        , distill_increase_conf_ratio(0.02)
+        , distill_increase_conf_ratio(0.10)
         , distill_min_confl(10000)
         , distill_red_tier0_ratio(10.0)
         , distill_red_tier1_ratio(0.03)
