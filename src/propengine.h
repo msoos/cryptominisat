@@ -387,7 +387,7 @@ private:
     void sql_dump_vardata_picktime(uint32_t v, PropBy from);
 
     #ifdef USE_GAUSS
-    PropBy gauss_jordan_elim();
+    PropBy gauss_jordan_elim(const Lit p, const uint32_t currLevel);
     #endif
 };
 

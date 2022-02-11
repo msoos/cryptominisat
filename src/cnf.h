@@ -121,7 +121,6 @@ public:
     watch_array watches;
     #ifdef USE_GAUSS
     vec<vec<GaussWatched>> gwatches;
-    uint32_t gqhead;
     bool all_matrices_disabled = false;
     #endif
     uint32_t num_sls_called = 0;

@@ -1248,11 +1248,9 @@ void Searcher::check_need_gauss_jordan_disable()
         gqd.reset();
         gmatrices[i]->update_cols_vals_set();
     }
-    assert(gqhead <= qhead);
 
     if (num_disabled == gqueuedata.size()) {
         all_matrices_disabled = true;
-        gqhead = qhead;
     }
 }
 #endif
@@ -1283,9 +1281,6 @@ lbool Searcher::search()
     while (!params.needToStopSearch
         || !confl.isNULL() //always finish the last conflict
     ) {
-        #ifdef USE_GAUSS
-        gqhead = qhead;
-        #endif
         confl = PropBy();
         #ifdef USE_GPU
         confl = solver->datasync->pop_clauses();
@@ -3586,9 +3581,6 @@ void Searcher::cancelUntil(uint32_t blevel)
             #endif
         }
         qhead = trail_lim[blevel];
-        #ifdef USE_GAUSS
-        gqhead = qhead;
-        #endif
         trail.resize(trail_lim[blevel]);
         trail_lim.resize(blevel);
 

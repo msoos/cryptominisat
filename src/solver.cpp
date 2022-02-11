@@ -3529,7 +3529,6 @@ bool Solver::find_and_init_all_matrices()
 
     bool can_detach;
     clear_gauss_matrices();
-    gqhead = trail.size();
 
     /*Reattach needed in case we are coming in again, after adding new XORs
     we might turn off a previously turned on matrix
