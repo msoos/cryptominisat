@@ -484,12 +484,15 @@ void PropEngine::get_bnn_prop_reason(
             ret->push_back(lit); //this is what's propagated, must be 1st
 
             //Caused it to meet cutoff
+            int32_t need = bnn->cutoff;
             for(const auto& l: *bnn) {
                 if (varData[l.var()].sublevel <= varData[lit.var()].sublevel
                     && value(l) == l_True)
                 {
+                    need--;
                     ret->push_back(~l);
                 }
+                if (need == 0) break;
             }
         }
 
@@ -499,12 +502,15 @@ void PropEngine::get_bnn_prop_reason(
             ret->push_back(lit); //this is what's propagated, must be 1st
 
             //Caused it to meet cutoff
+            int32_t need = bnn->size()-bnn->cutoff+1;
             for(const auto& l: *bnn) {
                 if (varData[l.var()].sublevel <= varData[lit.var()].sublevel
                     && value(l) == l_False)
                 {
+                    need--;
                     ret->push_back(l);
                 }
+                if (need == 0) break;
             }
         }
         return;
