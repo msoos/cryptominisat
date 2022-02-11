@@ -2568,6 +2568,10 @@ void Searcher::setup_polarity_strategy()
         }
     }
 
+    if (polarity_mode == PolarityMode::polarmode_best) {
+        polarity_mode = PolarityMode::polarmode_best_inv;
+    }
+
     //Stable polarities only make sense in case of automatic polarities
     if (polarity_mode == PolarityMode::polarmode_automatic) {
         if (

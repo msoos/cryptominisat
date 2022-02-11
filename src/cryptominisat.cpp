@@ -1371,8 +1371,8 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
 
         conf.simplify_at_startup = 1;
         conf.varElimRatioPerIter = 1;
-        conf.restartType = Restart::geom;
-        conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
+        conf.restartType = Restart::luby;
+        conf.polarity_mode = CMSat::PolarityMode::polarmode_best;
         conf.branch_strategy_setup = "vsids1";
         conf.bva_every_n = 1;
         conf.do_simplify_problem = true;
