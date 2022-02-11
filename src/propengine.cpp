@@ -430,10 +430,13 @@ void PropEngine::get_bnn_confl_reason(BNN* bnn, vector<Lit>* ret)
         if (!bnn->set)
             ret->push_back(~bnn->out);
 
+        int32_t need = bnn->size()-bnn->cutoff+1;
         for(const auto& l: *bnn) {
             if (value(l) == l_False) {
                ret->push_back(l);
+               need--;
             }
+            if (need == 0) break;
         }
     }
 
@@ -444,10 +447,13 @@ void PropEngine::get_bnn_confl_reason(BNN* bnn, vector<Lit>* ret)
         if (!bnn->set)
             ret->push_back(bnn->out);
 
+        int32_t need = bnn->cutoff;
         for(const auto& l: *bnn) {
             if (value(l) == l_True) {
                 ret->push_back(~l);
+                need--;
             }
+            if (need == 0) break;
         }
     }
 
