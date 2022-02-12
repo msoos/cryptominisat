@@ -412,7 +412,7 @@ void Main::add_supported_options()
     po::options_description polar_options("Polarity options");
     polar_options.add_options()
     ("polar", po::value<string>()->default_value("auto")
-        , "{true,false,rnd,auto} Selects polarity mode. 'true' -> selects only positive polarity when branching. 'false' -> selects only negative polarity when branching. 'auto' -> selects last polarity used (also called 'caching')")
+        , "{true,false,rnd,auto,stable} Selects polarity mode. 'true' -> selects only positive polarity when branching. 'false' -> selects only negative polarity when branching. 'auto' -> selects last polarity used (also called 'caching')")
     ("polarstablen", po::value(&conf.polar_stable_every_n)->default_value(conf.polar_stable_every_n)
         , "When to use stable polarities. 0 = always, otherwise every n. Negative is special, see code")
     ("lucky", po::value(&conf.do_lucky_polar_every_n)->default_value(conf.do_lucky_polar_every_n)
@@ -1087,6 +1087,7 @@ void Main::parse_polarity_type()
         else if (mode == "false") conf.polarity_mode = PolarityMode::polarmode_neg;
         else if (mode == "rnd") conf.polarity_mode = PolarityMode::polarmode_rnd;
         else if (mode == "auto") conf.polarity_mode = PolarityMode::polarmode_automatic;
+        else if (mode == "stable") conf.polarity_mode = PolarityMode::polarmode_best;
         else if (mode == "weight") conf.polarity_mode = PolarityMode::polarmode_weighted;
         else throw WrongParam(mode, "unknown polarity-mode");
     }
