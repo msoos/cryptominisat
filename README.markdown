@@ -518,6 +518,7 @@ The following arguments to cmake configure the generated build artifacts. To use
 - `-DENABLE_TESTING=<ON/OFF>` -- test suite support
 - `-DMIT=<ON/OFF>` -- MIT licensed components only
 - `-DNOM4RI=<ON/OFF>` -- without toplevel Gauss-Jordan Elimination support
+- `-DNOMPI=<ON/OFF>` -- without MPI support
 - `-DREQUIRE_M4RI=<ON/OFF>` -- abort if M4RI is not present
 - `-DNOZLIB=<ON/OFF>` -- no gzip DIMACS input support
 - `-DONLY_SIMPLE=<ON/OFF>` -- only the simple binary is built
