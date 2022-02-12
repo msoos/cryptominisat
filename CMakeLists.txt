@@ -685,14 +685,16 @@ endmacro()
 # -----------------------------------------------------------------------------
 # Look for MPI
 # -----------------------------------------------------------------------------
-find_package(MPI)
-if (MPI_FOUND)
-    add_definitions( -DUSE_MPI )
-    include_directories(${MPI_INCLUDE_PATH})
-    #set( CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER} )
-else (MPI_FOUND)
-     MESSAGE(STATUS "No suitable C++ MPI implementation found. CryptoMiniSat will not be distributed.")
-endif(MPI_FOUND)
+if (NOT NOMPI)
+    find_package(MPI)
+    if (MPI_FOUND)
+        add_definitions( -DUSE_MPI )
+        include_directories(${MPI_INCLUDE_PATH})
+        #set( CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER} )
+    else (MPI_FOUND)
+        MESSAGE(STATUS "No suitable C++ MPI implementation found. CryptoMiniSat will not be distributed.")
+    endif(MPI_FOUND)
+endif()
 
 # -----------------------------------------------------------------------------
 # Look for python
