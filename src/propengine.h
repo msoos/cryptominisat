@@ -326,7 +326,8 @@ protected:
         const Lit lit1
         , const Lit lit2
         , const bool red
-        , const bool checkUnassignedFirst = true
+        , const uint64_t ID
+        , [[maybe_unused]] const bool checkUnassignedFirst = true
     );
     void detach_modified_clause(
         const Lit lit1
@@ -601,10 +602,8 @@ inline void PropEngine::attach_bin_clause(
     const Lit lit1
     , const Lit lit2
     , const bool red
-    , const bool
-    #ifdef DEBUG_ATTACH
-    checkUnassignedFirst
-    #endif
+    , const uint64_t ID
+    , [[maybe_unused]] const bool checkUnassignedFirst
 ) {
     #ifdef DEBUG_ATTACH
     assert(lit1.var() != lit2.var());
@@ -617,8 +616,8 @@ inline void PropEngine::attach_bin_clause(
     assert(varData[lit2.var()].removed == Removed::none);
     #endif //DEBUG_ATTACH
 
-    watches[lit1].push(Watched(lit2, red));
-    watches[lit2].push(Watched(lit1, red));
+    watches[lit1].push(Watched(lit2, red, ID));
+    watches[lit2].push(Watched(lit1, red, ID));
 }
 
 } //end namespace

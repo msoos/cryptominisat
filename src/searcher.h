@@ -262,6 +262,7 @@ class Searcher : public HyperEngine
         // Learning
         /////////////////////
         vector<Lit> learnt_clause;
+        vector<uint64_t> chain;
         vector<Lit> decision_clause;
         template<bool update_bogoprops>
         void analyze_conflict(
@@ -276,7 +277,11 @@ class Searcher : public HyperEngine
             uint32_t glue,
             uint32_t connects_num_communities);
         template<bool update_bogoprops>
-        void  attach_and_enqueue_learnt_clause(Clause* cl, const uint32_t level, const bool enqueue);
+        void  attach_and_enqueue_learnt_clause(
+            Clause* cl,
+            const uint32_t level,
+            const bool enqueue,
+            const uint64_t ID);
         void  print_learning_debug_info() const;
         void  print_learnt_clause() const;
         template<bool update_bogoprops>
@@ -285,7 +290,7 @@ class Searcher : public HyperEngine
         void create_learnt_clause(PropBy confl);
         void debug_print_resolving_clause(const PropBy confl) const;
         template<bool update_bogoprops>
-        void add_lit_to_learnt(Lit lit, uint32_t nDecisionLevel);
+        void add_lit_to_learnt(Lit lit, const uint32_t nDecisionLevel, const uint64_t ID);
         void analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& out_conflict);
         void update_glue_from_analysis(Clause* cl);
         template<bool update_bogoprops>
@@ -306,6 +311,7 @@ class Searcher : public HyperEngine
             , const uint32_t glue_before_minim
             , const bool is_decision
             , const uint32_t connects_num_communities
+            , uint64_t& ID
         );
 
         /////////////////////

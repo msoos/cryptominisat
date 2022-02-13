@@ -185,10 +185,15 @@ inline std::string removed_type_to_string(const Removed removed) {
 
 class BinaryClause {
     public:
-        BinaryClause(const Lit _lit1, const Lit _lit2, const bool _red) :
-            lit1(_lit1)
-            , lit2(_lit2)
-            , red(_red)
+        BinaryClause(
+            const Lit _lit1,
+            const Lit _lit2,
+            const bool _red,
+            const uint64_t _ID):
+            lit1(_lit1),
+            lit2(_lit2),
+            red(_red),
+            ID(_ID)
         {
             if (lit1 > lit2) std::swap(lit1, lit2);
         }
@@ -225,10 +230,16 @@ class BinaryClause {
             return red;
         }
 
+        uint64_t getID() const
+        {
+            return ID;
+        }
+
     private:
         Lit lit1;
         Lit lit2;
         bool red;
+        uint64_t ID;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const BinaryClause val)

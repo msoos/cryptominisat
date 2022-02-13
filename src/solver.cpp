@@ -96,7 +96,6 @@ Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter
     Searcher(_conf, this, _must_interrupt_inter)
 {
     sqlStats = NULL;
-    drat->set_sumconflicts_ptr(&sumConflicts);
     intree = new InTree(this);
 
 #ifdef USE_BREAKID
@@ -432,6 +431,12 @@ Clause* Solver::add_clause_int(
         *finalLits = ps;
     }
 
+    uint64_t ID;
+    if (cl_stats) {
+        ID = cl_stats->ID;
+    } else {
+        ID = clauseID++;
+    }
     if (addDrat) {
         size_t i = 0;
         if (drat_first != lit_Undef) {
@@ -446,13 +451,7 @@ Clause* Solver::add_clause_int(
             std::swap(ps[0], ps[i]);
         }
 
-        *drat << add
-        #ifdef STATS_NEEDED
-        << (cl_stats ? cl_stats->ID : clauseID)
-        #endif
-        << ps
-        << fin;
-
+        *drat << add << ID << ps << fin;
         if (drat_first != lit_Undef) {
             std::swap(ps[0], ps[i]);
         }
@@ -481,16 +480,12 @@ Clause* Solver::add_clause_int(
 
             return NULL;
         case 2:
-            attach_bin_clause(ps[0], ps[1], red);
+            attach_bin_clause(ps[0], ps[1], red, ID);
             return NULL;
 
         default:
             Clause* c = cl_alloc.Clause_new(ps
-            , sumConflicts
-            #ifdef STATS_NEEDED
-            , (cl_stats ? cl_stats->ID : 0)
-            #endif
-            );
+            , sumConflicts, ID);
             c->isRed = red;
             if (cl_stats) {
                 c->stats = *cl_stats;
@@ -542,7 +537,8 @@ void Solver::attach_bin_clause(
     const Lit lit1
     , const Lit lit2
     , const bool red
-    , const bool checkUnassignedFirst
+    , const uint64_t ID
+    , [[maybe_unused]] const bool checkUnassignedFirst
 ) {
     #if defined(DRAT_DEBUG)
     *drat << add << lit1 << lit2 << fin;
@@ -749,7 +745,6 @@ bool Solver::addClauseInt(vector<Lit>& ps)
             *drat << add << finalCl_tmp
             #ifdef STATS_NEEDED
             << 0
-            << sumConflicts
             #endif
             << fin;
         }
@@ -759,7 +754,6 @@ bool Solver::addClauseInt(vector<Lit>& ps)
             *drat << add
             #ifdef STATS_NEEDED
             << 0
-            << sumConflicts
             #endif
             << fin;
         }

@@ -33,7 +33,7 @@ using std::vector;
 
 namespace CMSat {
 
-enum DratFlag{fin, deldelay, del, findelay, add, origcl};
+enum DratFlag{fin, deldelay, del, findelay, add, origcl, chain};
 
 class Drat
 {
@@ -134,24 +134,22 @@ public:
         delete[] del_buf;
     }
 
-    virtual void set_sumconflicts_ptr(uint64_t* _sumConflicts)
+    virtual void set_sumconflicts_ptr(uint64_t* _sumConflicts) override
     {
         sumConflicts = _sumConflicts;
     }
 
-    #ifdef STATS_NEEDED
     virtual Drat& operator<<(const uint64_t clauseID) override
     {
         if (must_delete_next) {
             byteDRUPdID(clauseID);
-            byteDRUPdID(*sumConflicts);
+//             byteDRUPdID(*sumConflicts);
         } else {
             byteDRUPaID(clauseID);
-            byteDRUPaID(*sumConflicts);
+//             byteDRUPaID(*sumConflicts);
         }
         return *this;
     }
-    #endif
 
     virtual FILE* getFile() override
     {
@@ -292,9 +290,19 @@ public:
                 break;
 
             case DratFlag::add:
-                if (bindrat) {
+                if (!bindrat) {
                     *buf_ptr++ = 'a';
                     buf_len++;
+                }
+                break;
+
+            case DratFlag::chain:
+                if (!bindrat) {
+                    *buf_ptr++ = '0';
+                    *buf_ptr++ = ' ';
+                    *buf_ptr++ = 'l';
+                    *buf_ptr++ = ' ';
+                    buf_len+=4;
                 }
                 break;
 
@@ -366,7 +374,7 @@ private:
             }
         } else {
             uint32_t num = sprintf(
-                (char*)buf_ptr, "%d ", id);
+                (char*)buf_ptr, "%lld ", id);
             buf_ptr+=num;
             buf_len+=num;
         }
@@ -381,7 +389,7 @@ private:
             }
         } else {
             uint32_t num = sprintf(
-                (char*)del_ptr, "%d ", id);
+                (char*)del_ptr, "%lld ", id);
             del_ptr+=num;
             del_len+=num;
         }
@@ -409,9 +417,9 @@ private:
         }
     }
 
-    FILE* drup_file = NULL;
+    FILE* drup_file = nullptr;
     vector<uint32_t>& interToOuterMain;
-    uint64_t* sumConflicts;
+    uint64_t* sumConflicts = nullptr;
     #ifdef STATS_NEEDED
     bool id_add_set = false;
     bool id_del_set = false;

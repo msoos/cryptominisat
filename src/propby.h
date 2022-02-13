@@ -50,6 +50,7 @@ class PropBy
         //2: binary
         //3: tertiary
         uint32_t data2:30;
+        uint64_t ID;
 
     public:
         PropBy() :
@@ -83,11 +84,12 @@ class PropBy
 #endif
 
         //Binary prop
-        PropBy(const Lit lit, const bool redStep) :
+        PropBy(const Lit lit, const bool redStep, uint64_t _ID) :
             red_step(redStep)
             , data1(lit.toInt())
             , type(binary_t)
             , data2(0)
+            , ID(_ID)
         {
         }
 
@@ -118,6 +120,11 @@ class PropBy
         bool isRedStep() const
         {
             return red_step;
+        }
+
+        uint64_t getID() const
+        {
+            return ID;
         }
 
         bool getHyperbin() const

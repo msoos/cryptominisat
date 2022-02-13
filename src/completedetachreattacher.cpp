@@ -209,7 +209,7 @@ bool CompleteDetachReatacher::clean_clause(Clause* cl)
             return false;
 
         case 2: {
-            solver->attach_bin_clause(ps[0], ps[1], ps.red());
+            solver->attach_bin_clause(ps[0], ps[1], ps.red(), solver->clauseID++);
             return false;
         }
 

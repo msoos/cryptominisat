@@ -654,7 +654,8 @@ void EGaussian::delete_gausswatch(
 
 uint32_t EGaussian::get_max_level(const GaussQData& gqd, const uint32_t row_n)
 {
-    auto cl = get_reason(row_n);
+    uint64_t ID;
+    auto cl = get_reason(row_n, ID);
     uint32_t nMaxLevel = gqd.currLevel;
     uint32_t nMaxInd = 1;
 
@@ -1278,7 +1279,7 @@ void EGaussian::print_matrix_stats(uint32_t verbosity)
     cout << std::setprecision(2);
 }
 
-vector<Lit>* EGaussian::get_reason(uint32_t row)
+vector<Lit>* EGaussian::get_reason(uint32_t row, uint64_t& out_ID)
 {
     if (!xor_reasons[row].must_recalc) {
         return &(xor_reasons[row].reason);

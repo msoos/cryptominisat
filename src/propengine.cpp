@@ -179,7 +179,8 @@ inline bool PropEngine::prop_bin_cl(
             propStats.propsBinIrred++;
         #endif
 
-        enqueue<update_bogoprops>(i->lit2(), currLevel, PropBy(~p, i->red()));
+        enqueue<update_bogoprops>(i->lit2(), currLevel, PropBy(
+            ~p, i->red(), i->get_ID()));
     } else if (val == l_False) {
         #ifdef STATS_NEEDED
         if (i->red())
@@ -188,7 +189,7 @@ inline bool PropEngine::prop_bin_cl(
             lastConflictCausedBy = ConflCausedBy::binirred;
         #endif
 
-        confl = PropBy(~p, i->red());
+        confl = PropBy(~p, i->red(), i->get_ID());
         failBinLit = i->lit2();
         qhead = trail.size();
         return false;
@@ -323,10 +324,11 @@ PropBy PropEngine::propagate_any_order_fast()
                     else
                         propStats.propsBinIrred++;
                     #endif
-                    enqueue<false>(i->lit2(), currLevel, PropBy(~p, i->red()));
+                    enqueue<false>(i->lit2(), currLevel, PropBy(
+                        ~p, i->red(), i->get_ID()));
                     i++;
                 } else if (val == l_False) {
-                    confl = PropBy(~p, i->red());
+                    confl = PropBy(~p, i->red(), i->get_ID());
                     failBinLit = i->lit2();
                     #ifdef STATS_NEEDED
                     if (i->red())

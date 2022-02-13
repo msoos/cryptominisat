@@ -508,7 +508,8 @@ bool VarReplacer::replaceImplicit()
     }
 
     for(const BinaryClause& bincl : delayed_attach_bin) {
-        solver->attach_bin_clause(bincl.getLit1(), bincl.getLit2(), bincl.isRed());
+        solver->attach_bin_clause(
+            bincl.getLit1(), bincl.getLit2(), bincl.isRed(), bincl.getID());
     }
     delayed_attach_bin.clear();
 
@@ -626,10 +627,9 @@ bool VarReplacer::handleUpdatedClause(
         c.setRemoved();
         return true;
     }
-    (*solver->drat) << add << c
-    #ifdef STATS_NEEDED
-    << solver->sumConflicts
-    #endif
+
+    const uint64_t ID = solver->clauseID++;
+    (*solver->drat) << add << ID << c
     << fin << findelay;
 
     runStats.bogoprops += 3;
@@ -651,7 +651,7 @@ bool VarReplacer::handleUpdatedClause(
         solver->watches.smudge(origLit1);
         solver->watches.smudge(origLit2);
 
-        solver->attach_bin_clause(c[0], c[1], c.red());
+        solver->attach_bin_clause(c[0], c[1], c.red(), ID);
         runStats.removedLongLits += origSize;
         return true;
 

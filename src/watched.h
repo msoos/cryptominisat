@@ -84,10 +84,10 @@ class Watched {
         /**
         @brief Constructor for a binary clause
         */
-        Watched(const Lit lit, const bool red) :
+        Watched(const Lit lit, const bool red, uint64_t ID) :
             data1(lit.toInt())
             , type(watch_binary_t)
-            , data2(red)
+            , data2((uint64_t)red | ID<<1)
         {
         }
 
@@ -168,6 +168,14 @@ class Watched {
             assert(isBin());
             #endif
             return data2 & 1;
+        }
+
+        bool get_ID() const
+        {
+            #ifdef DEBUG_WATCHED
+            assert(isBin());
+            #endif
+            return data2 >> 1;
         }
 
         void setRed(const bool toSet)

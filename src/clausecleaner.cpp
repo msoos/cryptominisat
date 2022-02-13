@@ -51,7 +51,7 @@ void ClauseCleaner::clean_binary_implicit(
     if (satisfied(ws, lit)) {
         //Only delete once
         if (lit < ws.lit2()) {
-            (*solver->drat) << del << lit << ws.lit2() << fin;
+            (*solver->drat) << del << j->get_ID() << fin;
         }
 
         if (ws.red()) {
@@ -60,7 +60,7 @@ void ClauseCleaner::clean_binary_implicit(
             impl_data.remNonLBin++;
         }
     } else {
-#ifdef SLOW_DEBUG
+        #ifdef SLOW_DEBUG
         if (solver->value(ws.lit2()) != l_Undef
             || solver->value(lit) != l_Undef
         ) {
@@ -70,7 +70,7 @@ void ClauseCleaner::clean_binary_implicit(
             << " " << solver->value(ws.lit2())
             << endl;
         }
-#endif
+        #endif
 
         assert(solver->value(ws.lit2()) == l_Undef);
         assert(solver->value(lit) == l_Undef);
@@ -206,13 +206,12 @@ bool ClauseCleaner::clean_clause(Clause& cl)
             return true;
         }
     }
+
+    uint64_t ID = solver->clauseID++;
     if (i != j) {
         cl.shrink(i-j);
-        (*solver->drat) << add << cl
-        #ifdef STATS_NEEDED
-        << solver->sumConflicts
-        #endif
-        << fin << findelay;
+        (*solver->drat) << add << ID << cl << fin << findelay;
+        cl.stats.ID = ID;
     } else {
         solver->drat->forget_delay();
     }
@@ -235,7 +234,7 @@ bool ClauseCleaner::clean_clause(Clause& cl)
     if (i != j) {
         cl.setStrenghtened();
         if (cl.size() == 2) {
-            solver->attach_bin_clause(cl[0], cl[1], cl.red());
+            solver->attach_bin_clause(cl[0], cl[1], cl.red(), ID);
             return true;
         } else {
             if (cl.red()) {
@@ -254,7 +253,10 @@ void ClauseCleaner::ImplicitData::update_solver_stats(Solver* solver)
     for(const BinaryClause& bincl: toAttach) {
         assert(solver->value(bincl.getLit1()) == l_Undef);
         assert(solver->value(bincl.getLit2()) == l_Undef);
-        solver->attach_bin_clause(bincl.getLit1(), bincl.getLit2(), bincl.isRed());
+        solver->attach_bin_clause(bincl.getLit1(),
+                                  bincl.getLit2(),
+                                  bincl.isRed(),
+                                  bincl.getID());
     }
 
     assert(remNonLBin % 2 == 0);
@@ -412,6 +414,8 @@ bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors)
 //returns TRUE if removed or solver is UNSAT
 bool ClauseCleaner::full_clean(Clause& cl)
 {
+    (*solver->drat) << deldelay << cl << fin;
+
     Lit *i = cl.begin();
     Lit *j = i;
     for (Lit *end = cl.end(); i != end; i++) {
@@ -423,7 +427,17 @@ bool ClauseCleaner::full_clean(Clause& cl)
             *j++ = *i;
         }
     }
-    cl.shrink(i-j);
+
+    uint64_t ID;
+    if (i != j) {
+        cl.shrink(i-j);
+        ID = solver->clauseID++;
+        (*solver->drat) << add << ID << cl << fin << findelay;
+        cl.stats.ID = ID;
+    } else {
+        solver->drat->forget_delay();
+        return false;
+    }
 
     if (cl.size() == 0) {
         solver->ok = false;
@@ -436,7 +450,7 @@ bool ClauseCleaner::full_clean(Clause& cl)
     }
 
     if (cl.size() == 2) {
-        solver->attach_bin_clause(cl[0], cl[1], cl.red());
+        solver->attach_bin_clause(cl[0], cl[1], cl.red(), ID);
         return true;
     }
 

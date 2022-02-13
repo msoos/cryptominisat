@@ -413,11 +413,10 @@ bool OccSimplifier::clean_clause(
         cout << "-> Clause became after cleaning:" << cl << endl;
     }
 
+    uint64_t ID;
     if (i-j > 0) {
-        (*solver->drat) << add << cl
-        #ifdef STATS_NEEDED
-        << solver->sumConflicts
-        #endif
+        ID = solver->clauseID++;
+        (*solver->drat) << add << ID << cl
         << fin << findelay;
     } else {
         solver->drat->forget_delay();
@@ -440,7 +439,7 @@ bool OccSimplifier::clean_clause(
         }
 
         case 2: {
-            solver->attach_bin_clause(cl[0], cl[1], cl.red());
+            solver->attach_bin_clause(cl[0], cl[1], cl.red(), ID);
             if (!cl.red()) {
                 std::pair<Lit, Lit> tmp = {cl[0], cl[1]};
                 added_irred_bin.push_back(tmp);
@@ -494,11 +493,10 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
     cl.recalc_abst_if_needed();
 
     //Drat
+    uint64_t ID;
     if (i - j > 0) {
-        (*solver->drat) << add << cl
-        #ifdef STATS_NEEDED
-        << solver->sumConflicts
-        #endif
+        ID = solver->clauseID++;
+        (*solver->drat) << add << ID << cl
         << fin << findelay;
     } else {
         solver->drat->forget_delay();
@@ -517,7 +515,7 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
             return false;
         }
         case 2:
-            solver->attach_bin_clause(cl[0], cl[1], cl.red());
+            solver->attach_bin_clause(cl[0], cl[1], cl.red(), ID);
             return false;
 
         default:
@@ -2812,7 +2810,7 @@ bool OccSimplifier::find_or_gate(
                 out_b.push(w);
                 for(const Lit lit: *cl) {
                     if (lit != ~elim_lit) {
-                        out_a.push(Watched(~lit, false));
+                        out_a.push(Watched(~lit, false, 0));
                     }
                 }
                 found = true;
@@ -3085,7 +3083,7 @@ bool OccSimplifier::find_equivalence_gate(
             #endif
             if (seen[(~w.lit2()).toInt()]) {
                 out_b.push(w);
-                out_a.push(Watched(~w.lit2(), false));
+                out_a.push(Watched(~w.lit2(), false, 0));
                 found = true;
                 break;
             }

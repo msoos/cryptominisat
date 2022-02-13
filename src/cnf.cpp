@@ -749,6 +749,7 @@ void CNF::add_drat(FILE* os, bool add_ID) {
         drat = new DratFile<false>(interToOuterMain);
     }
     drat->setFile(os);
+    drat->set_sumconflicts_ptr(&sumConflicts);
 }
 
 vector<uint32_t> CNF::get_outside_lit_incidence()

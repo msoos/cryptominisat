@@ -179,8 +179,9 @@ void HyperEngine::add_hyper_bin(const Lit p)
         #ifdef VERBOSE_DEBUG_FULLPROP
         cout << "Adding hyper-bin clause: " << p << " , " << ~deepestAncestor << endl;
         #endif
-        needToAddBinClause.insert(BinaryClause(p, ~deepestAncestor, true));
-        *drat << add << p << (~deepestAncestor)
+        uint64_t ID = clauseID++;
+        needToAddBinClause.insert(BinaryClause(p, ~deepestAncestor, true, ID));
+        *drat << add << ID << p << (~deepestAncestor)
         #ifdef STATS_NEEDED
         << 0
         << sumConflicts
@@ -523,14 +524,14 @@ Lit HyperEngine::deepest_common_ancestor()
     return foundLit;
 }
 
-void HyperEngine::remove_bin_clause(Lit lit)
+void HyperEngine::remove_bin_clause(Lit lit, const uint64_t ID)
 {
     //The binary clause we should remove
     const BinaryClause clauseToRemove(
-        ~varData[lit.var()].reason.getAncestor()
-        , lit
-        , varData[lit.var()].reason.isRedStep()
-    );
+        ~varData[lit.var()].reason.getAncestor(),
+        lit,
+        varData[lit.var()].reason.isRedStep(),
+        ID);
 
     //We now remove the clause
     //If it's hyper-bin, then we remove the to-be-added hyper-binary clause
@@ -586,7 +587,7 @@ PropResult HyperEngine::prop_bin_with_ancestor_info(
             lastConflictCausedBy = ConflCausedBy::binirred;
 
         failBinLit = lit;
-        confl = PropBy(~p, k->red());
+        confl = PropBy(~p, k->red(), k->get_ID());
         return PROP_FAIL;
 
     } else if (varData[lit.var()].level != 0 && perform_transitive_reduction) {
@@ -603,7 +604,7 @@ PropResult HyperEngine::prop_bin_with_ancestor_info(
             Lit origAnc = varData[lit.var()].reason.getAncestor();
             assert(origAnc != lit_Undef);
 
-            remove_bin_clause(lit);
+            remove_bin_clause(lit, k->get_ID());
 
             //Update data indicating what lead to lit
             varData[lit.var()].reason = PropBy(~p, k->red(), false, false);
@@ -619,7 +620,7 @@ PropResult HyperEngine::prop_bin_with_ancestor_info(
             cout << "Removing this bin clause" << endl;
             #endif
             propStats.otfHyperTime += 2;
-            uselessBin.insert(BinaryClause(~p, lit, k->red()));
+            uselessBin.insert(BinaryClause(~p, lit, k->red(), k->get_ID()));
         }
     }
 

@@ -159,10 +159,12 @@ void Searcher::updateVars(
     #endif
 }
 
+//TODO add hint here for FRAT
 template<bool update_bogoprops>
 inline void Searcher::add_lit_to_learnt(
     const Lit lit
-    , uint32_t nDecisionLevel
+    , const uint32_t nDecisionLevel
+    , const uint64_t ID
 ) {
     const uint32_t var = lit.var();
     assert(varData[var].removed == Removed::none);
@@ -244,6 +246,7 @@ void Searcher::normalClMinim()
         const PropBy& reason = varData[learnt_clause[i].var()].reason;
         size_t size;
         Lit *lits = NULL;
+        uint64_t ID;
         PropByType type = reason.getType();
         if (type == null_clause_t) {
             learnt_clause[j++] = learnt_clause[i];
@@ -253,19 +256,21 @@ void Searcher::normalClMinim()
         switch (type) {
             case binary_t:
                 size = 1;
+                ID = reason.getID();
                 break;
 
             case clause_t: {
                 Clause* cl2 = cl_alloc.ptr(reason.get_offset());
                 lits = cl2->begin();
                 size = cl2->size()-1;
+                ID = cl2->stats.ID;
                 break;
             }
 
             #ifdef USE_GAUSS
             case xor_t: {
                 vector<Lit>* xor_reason = gmatrices[reason.get_matrix_num()]->
-                get_reason(reason.get_row_num());
+                get_reason(reason.get_row_num(), ID);
                 lits = xor_reason->data();
                 size = xor_reason->size()-1;
                 sumAntecedentsLits += size;
@@ -385,6 +390,7 @@ void Searcher::add_literals_from_confl_to_learnt(
 
     Lit* lits = NULL;
     size_t size = 0;
+    uint64_t ID = 0;
     switch (confl.getType()) {
         case binary_t : {
             sumAntecedentsLits += 2;
@@ -404,6 +410,7 @@ void Searcher::add_literals_from_confl_to_learnt(
 
         case clause_t : {
             Clause* cl = cl_alloc.ptr(confl.get_offset());
+            ID = cl->stats.ID;
             assert(!cl->getRemoved());
             lits = cl->begin();
             size = cl->size();
@@ -461,7 +468,7 @@ void Searcher::add_literals_from_confl_to_learnt(
         #ifdef USE_GAUSS
         case xor_t: {
             vector<Lit>* xor_reason = gmatrices[confl.get_matrix_num()]->
-                get_reason(confl.get_row_num());
+                get_reason(confl.get_row_num(), ID);
             lits = xor_reason->data();
             size = xor_reason->size();
             sumAntecedentsLits += size;
@@ -503,7 +510,7 @@ void Searcher::add_literals_from_confl_to_learnt(
                 break;
         }
         if (p == lit_Undef || i > 0) {
-            add_lit_to_learnt<update_bogoprops>(x, nDecisionLevel);
+            add_lit_to_learnt<update_bogoprops>(x, nDecisionLevel, ID);
         }
         i++;
     }
@@ -600,24 +607,28 @@ void Searcher::create_learnt_clause(PropBy confl)
     pathC = 0;
     int index = trail.size() - 1;
     Lit p = lit_Undef;
+    uint64_t ID;
 
     Lit lit0 = lit_Error;
     switch (confl.getType()) {
         case binary_t : {
             lit0 = failBinLit;
+            ID = confl.getID();
             break;
         }
         #ifdef USE_GAUSS
         case xor_t: {
             vector<Lit>* cl = gmatrices[confl.get_matrix_num()]->
-                get_reason(confl.get_row_num());
+                get_reason(confl.get_row_num(), ID);
             lit0 = (*cl)[0];
             break;
         }
         #endif
 
         case clause_t : {
-            lit0 = (*cl_alloc.ptr(confl.get_offset()))[0];
+            Clause* cl = cl_alloc.ptr(confl.get_offset());
+            lit0 = (*cl)[0];
+            ID = cl->stats.ID;
             break;
         }
 
@@ -792,6 +803,7 @@ void Searcher::analyze_conflict(
     #endif
 
     learnt_clause.clear();
+    chain.clear();
     assert(toClear.empty());
     implied_by_learnts.clear();
     assert(decisionLevel() > 0);
@@ -940,6 +952,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
         //Must have a reason
         assert(!reason.isNULL());
 
+        uint64_t ID;
         size_t size;
         Lit* lits = NULL;
         switch (type) {
@@ -947,13 +960,14 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
                 Clause* cl = cl_alloc.ptr(reason.get_offset());
                 lits = cl->begin();
                 size = cl->size()-1;
+                ID = cl->stats.ID;
                 break;
             }
 
             #ifdef USE_GAUSS
             case xor_t: {
                 vector<Lit>* xcl = gmatrices[reason.get_matrix_num()]->
-                    get_reason(reason.get_row_num());
+                    get_reason(reason.get_row_num(), ID);
                 lits = xcl->data();
                 size = xcl->size()-1;
                 break;
@@ -962,6 +976,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
 
             case binary_t:
                 size = 1;
+                ID = reason.getID();
                 break;
 
             case null_clause_t:
@@ -1072,9 +1087,11 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
                 assert(varData[x].level > 0);
                 out_conflict.push_back(~trail[i].lit);
             } else {
+                uint64_t ID;
                 switch(reason.getType()) {
                     case PropByType::clause_t : {
                         const Clause& cl = *cl_alloc.ptr(reason.get_offset());
+                        ID = cl.stats.ID;
                         assert(value(cl[0]) == l_True);
                         for(const Lit lit: cl) {
                             if (varData[lit.var()].level > 0) {
@@ -1089,13 +1106,14 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
                         if (varData[lit.var()].level > 0) {
                             seen[lit.var()] = 1;
                         }
+                        ID = reason.getID();
                         break;
                     }
 
                     #ifdef USE_GAUSS
                     case PropByType::xor_t: {
                         vector<Lit>* cl = gmatrices[reason.get_matrix_num()]->
-                            get_reason(reason.get_row_num());
+                            get_reason(reason.get_row_num(), ID);
                         assert(value((*cl)[0]) == l_True);
                         for(const Lit lit: *cl) {
                             if (varData[lit.var()].level > 0) {
@@ -1515,7 +1533,8 @@ void Searcher::update_history_stats(
 
 template<bool update_bogoprops>
 void Searcher::attach_and_enqueue_learnt_clause(
-    Clause* cl, const uint32_t level, const bool enq)
+    Clause* cl, const uint32_t level, const bool enq,
+    const uint64_t ID)
 {
     switch (learnt_clause.size()) {
         case 0:
@@ -1535,7 +1554,7 @@ void Searcher::attach_and_enqueue_learnt_clause(
             stats.learntBins++;
             //solver->datasync->signalNewBinClause(learnt_clause);
             solver->attach_bin_clause(learnt_clause[0], learnt_clause[1], true, enq);
-            if (enq) enqueue<false>(learnt_clause[0], level, PropBy(learnt_clause[1], true));
+            if (enq) enqueue<false>(learnt_clause[0], level, PropBy(learnt_clause[1], true, ID));
 
             #ifdef STATS_NEEDED
             propStats.propsBinRed++;
@@ -1720,7 +1739,8 @@ Clause* Searcher::handle_last_confl(
     [[maybe_unused]] const uint32_t old_decision_level,
     [[maybe_unused]] const uint32_t glue_before_minim,
     [[maybe_unused]] const bool is_decision,
-    [[maybe_unused]] const uint32_t connects_num_communities
+    [[maybe_unused]] const uint32_t connects_num_communities,
+    uint64_t& ID
 ) {
     #ifdef STATS_NEEDED
     bool to_dump = false;
@@ -1741,11 +1761,11 @@ Clause* Searcher::handle_last_confl(
     #endif
 
     Clause* cl;
+    ID = clauseID;
     if (learnt_clause.size() <= 2) {
         *drat << add
         << clauseID
         << learnt_clause
-//         << sumConflicts
         << fin;
         cl = NULL;
     } else {
@@ -1800,7 +1820,6 @@ Clause* Searcher::handle_last_confl(
         solver->longRedCls[cl->stats.which_red_array].push_back(offset);
 
         *drat << add << *cl
-//         << sumConflicts
         << fin;
     }
 
@@ -1907,14 +1926,16 @@ bool Searcher::handle_conflict(PropBy confl)
     print_learning_debug_info();
     assert(value(learnt_clause[0]) == l_Undef);
     glue = std::min<uint32_t>(glue, std::numeric_limits<uint32_t>::max());
+    uint64_t ID;
     Clause* cl = handle_last_confl(
         glue,
         old_decision_level,
         glue_before_minim,
         false, // is decision?
-        connects_num_communities
+        connects_num_communities,
+        ID
     );
-    attach_and_enqueue_learnt_clause<false>(cl, backtrack_level, true);
+    attach_and_enqueue_learnt_clause<false>(cl, backtrack_level, true, ID);
 
     //Add decision-based clause
     if (decision_clause.size() > 0) {
@@ -1936,12 +1957,13 @@ bool Searcher::handle_conflict(PropBy confl)
             learnt_clause.size(), // minimized glue is the same as glue before minim
             true, // is decision?
             #ifdef STATS_NEEDED
-            calc_connects_num_communities(learnt_clause)
+            calc_connects_num_communities(learnt_clause),
             #else
-            0
+            0,
             #endif
+            ID
         );
-        attach_and_enqueue_learnt_clause<false>(cl, backtrack_level, false);
+        attach_and_enqueue_learnt_clause<false>(cl, backtrack_level, false, ID);
     }
 
     if (branch_strategy == branch::vsids) {
@@ -3781,7 +3803,7 @@ ConflictData Searcher::find_conflict_level(PropBy& pb)
         // we might want to swap here if highestID is not 0
         if (highestId != 0) {
             Lit back = pb.lit2();
-            pb = PropBy(failBinLit, pb.isRedStep());
+            pb = PropBy(failBinLit, pb.isRedStep(), pb.getID());
             failBinLit = back;
         }
 
@@ -3789,19 +3811,21 @@ ConflictData Searcher::find_conflict_level(PropBy& pb)
         Lit* clause = NULL;
         uint32_t size = 0;
         ClOffset offs;
+        uint64_t ID;
         switch(pb.getType()) {
             case PropByType::clause_t: {
                 offs = pb.get_offset();
                 Clause& conflCl = *cl_alloc.ptr(offs);
                 clause = conflCl.getData();
                 size = conflCl.size();
+                ID = conflCl.stats.ID;
                 break;
             }
 
             #ifdef USE_GAUSS
             case PropByType::xor_t: {
                 vector<Lit>* cl = gmatrices[pb.get_matrix_num()]->
-                    get_reason(pb.get_row_num());
+                    get_reason(pb.get_row_num(), ID);
                     clause = cl->data();
                     size = cl->size();
                 break;
