@@ -20,6 +20,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
+#ifndef HYPERENGINE_H
+#define HYPERENGINE_H
+
 #include "cnf.h"
 #include "propby.h"
 #include "solvertypes.h"
@@ -89,3 +92,5 @@ private:
 };
 
 }
+
+#endif //HYPERENGINE_H
