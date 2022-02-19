@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2009-2020 Authors of CryptoMiniSat, see AUTHORS file
+Copyright (C) 2009-2022 Authors of CryptoMiniSat, see AUTHORS file
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -1457,6 +1457,19 @@ int Main::solve()
     printResultFunc(&cout, false, ret);
     if (resultfile) {
         printResultFunc(resultfile, true, ret);
+    }
+    if (ret == l_True && max_nr_of_solutions > 1) {
+       // If ret is l_True then we must have hit the solution limit.
+       // Print final number of solutions when we hit the limit here
+       // as multi_solutions() doesn't. Don't print for a single solution.
+       if (conf.verbosity) {
+           cout
+           << "c Number of solutions found until now: "
+           << std::setw(6) << max_nr_of_solutions
+           << endl
+           << "c maxsol reached"
+           << endl;
+       }
     }
 
     return correctReturnValue(ret);
