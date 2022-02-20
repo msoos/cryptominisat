@@ -2388,7 +2388,7 @@ bool OccSimplifier::uneliminate(uint32_t var)
     while(bat < blockedClauses[at_blocked_cls].size()) {
         Lit l = blockedClauses[at_blocked_cls].at(bat, blkcls);
         if (l == lit_Undef) {
-            solver->addClause(lits);
+            solver->add_clause_outer_copylits(lits);
             if (!solver->okay()) {
                 return false;
             }

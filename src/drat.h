@@ -293,6 +293,10 @@ public:
                 if (!bindrat) {
                     *buf_ptr++ = 'a';
                     buf_len++;
+                    if (!bindrat) {
+                        *buf_ptr++ = ' ';
+                        buf_len++;
+                    }
                 }
                 break;
 

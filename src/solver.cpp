@@ -683,15 +683,15 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
     return true;
 }
 
-bool Solver::addClause(const vector<Lit>& lits)
+bool Solver::add_clause_outer_copylits(const vector<Lit>& lits)
 {
     vector<Lit> ps = lits;
-    return Solver::addClauseInt(ps);
+    return Solver::add_clause_outer(ps);
 }
 
 // Takes OUTER (NOT *outside*) variables
 // Input is ORIGINAL clause.
-bool Solver::addClauseInt(vector<Lit>& ps)
+bool Solver::add_clause_outer(vector<Lit>& ps)
 {
     if (conf.perform_occur_based_simp && occsimplifier->getAnythingHasBeenBlocked()) {
         std::cerr
@@ -704,7 +704,7 @@ bool Solver::addClauseInt(vector<Lit>& ps)
     ClauseStats stats;
     if (drat->enabled()) {
         stats.ID = clauseID;
-        *drat << origcl << clauseID << finalCl_tmp << fin;
+        *drat << origcl << clauseID << ps << fin;
         clauseID++;
     }
 
@@ -2948,7 +2948,7 @@ bool Solver::add_clause_outside(const vector<Lit>& lits)
     check_too_large_variable_number(lits);
     #endif
     back_number_from_outside_to_outer(lits);
-    return addClauseInt(back_number_from_outside_to_outer_tmp);
+    return add_clause_outer(back_number_from_outside_to_outer_tmp);
 }
 
 lbool Solver::probe_inter(Lit l, uint32_t& min_props)

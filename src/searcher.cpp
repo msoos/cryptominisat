@@ -1865,6 +1865,10 @@ bool Searcher::handle_conflict(PropBy confl)
 
     ConflictData data = find_conflict_level(confl);
     if (data.nHighestLevel == 0) {
+        if (conf.verbosity >= 10) {
+            cout << "c find_conflict_level() gives 0, so UNSAT for whole formula" << endl;
+        }
+        *drat << add << clauseID++ << fin;
         solver->ok = false;
         return false;
     }

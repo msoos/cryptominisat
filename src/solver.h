@@ -196,7 +196,7 @@ class Solver : public Searcher
         lbool load_solution_from_file(const string& fname);
 
         uint64_t getNumLongClauses() const;
-        bool addClause(const vector<Lit>& ps);
+        bool add_clause_outer_copylits(const vector<Lit>& ps);
         bool add_xor_clause_inter(
             const vector< Lit >& lits
             , bool rhs
@@ -420,7 +420,7 @@ class Solver : public Searcher
         /////////////////////
         // Clauses
         bool addClauseHelper(vector<Lit>& ps);
-        bool addClauseInt(vector<Lit>& ps);
+        bool add_clause_outer(vector<Lit>& ps);
 
         /////////////////
         // Debug
