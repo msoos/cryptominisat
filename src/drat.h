@@ -33,7 +33,7 @@ using std::vector;
 
 namespace CMSat {
 
-enum DratFlag{fin, deldelay, del, findelay, add, origcl, chain};
+enum DratFlag{fin, deldelay, del, findelay, add, origcl, chain, finalcl};
 
 class Drat
 {
@@ -313,6 +313,16 @@ public:
             case DratFlag::del:
                 forget_delay();
                 *buf_ptr++ = 'd';
+                buf_len++;
+                if (!bindrat) {
+                    *buf_ptr++ = ' ';
+                    buf_len++;
+                }
+                break;
+
+            case DratFlag::finalcl:
+                forget_delay();
+                *buf_ptr++ = 'f';
                 buf_len++;
                 if (!bindrat) {
                     *buf_ptr++ = ' ';

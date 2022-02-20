@@ -317,6 +317,10 @@ class Solver : public Searcher
         FRIEND_TEST(SearcherTest, pickpolar_auto_not_changed_by_simp);
         #endif
 
+        //FRAT
+        void write_final_frat_clauses();
+        void write_one_final_frat_cl(const ClOffset offs);
+
         lbool probe_inter(Lit l, uint32_t& min_props);
         void reset_for_solving();
         vector<Lit> add_clause_int_tmp_cl;

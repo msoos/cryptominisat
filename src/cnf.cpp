@@ -140,6 +140,7 @@ void CNF::swapVars(const uint32_t which, const int off_by)
 void CNF::enlarge_nonminimial_datastructs(size_t n)
 {
     assigns.insert(assigns.end(), n, l_Undef);
+    unit_cl_IDs.insert(unit_cl_IDs.end(), n, 0);
     varData.insert(varData.end(), n, VarData());
     depth.insert(depth.end(), n, 0);
 }

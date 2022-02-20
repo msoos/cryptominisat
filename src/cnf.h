@@ -365,6 +365,7 @@ protected:
     template<class T>
     vector<T> map_back_lits_to_without_bva(const vector<T>& val) const;
     vector<lbool> assigns;
+    vector<uint64_t> unit_cl_IDs;
 
     vector<uint32_t> outerToInterMain;
     vector<uint32_t> interToOuterMain;

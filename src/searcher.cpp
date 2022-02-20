@@ -1543,6 +1543,7 @@ void Searcher::attach_and_enqueue_learnt_clause(
             //Unitary learnt
             stats.learntUnits++;
             if (enq) enqueue<false>(learnt_clause[0], level, PropBy());
+            unit_cl_IDs[learnt_clause[0].var()] = ID;
 
             #ifdef STATS_NEEDED
             propStats.propsUnit++;
@@ -1553,7 +1554,7 @@ void Searcher::attach_and_enqueue_learnt_clause(
             //Binary learnt
             stats.learntBins++;
             //solver->datasync->signalNewBinClause(learnt_clause);
-            solver->attach_bin_clause(learnt_clause[0], learnt_clause[1], true, enq);
+            solver->attach_bin_clause(learnt_clause[0], learnt_clause[1], true, ID, enq);
             if (enq) enqueue<false>(learnt_clause[0], level, PropBy(learnt_clause[1], true, ID));
 
             #ifdef STATS_NEEDED
@@ -3224,7 +3225,7 @@ size_t Searcher::hyper_bin_res_all(const bool check_for_set_values)
             assert(val1 == l_Undef && val2 == l_Undef);
         }
 
-        solver->attach_bin_clause(it->getLit1(), it->getLit2(), true, false);
+        solver->attach_bin_clause(it->getLit1(), it->getLit2(), true, clauseID++, false);
         added++;
     }
     solver->needToAddBinClause.clear();
@@ -4294,7 +4295,7 @@ PropBy Searcher::learn_gpu_clause(Lit* lits, uint32_t count)
 
     //Binary, and lits[0] may be propagated due to lits[1]
     assert(count == 2);
-    attach_bin_clause(lits[0], lits[1], false, false);
+    attach_bin_clause(lits[0], lits[1], false, clauseID++, false);
     binTri.irredBins++;
     failBinLit = lits[0];
     return PropBy(lits[1], false);

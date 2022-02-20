@@ -471,6 +471,7 @@ Clause* Solver::add_clause_int(
             return NULL;
         case 1:
             enqueue<false>(ps[0]);
+            unit_cl_IDs[ps[0].var()] = ID;
             #ifdef STATS_NEEDED
             propStats.propsUnit++;
             #endif
@@ -552,7 +553,7 @@ void Solver::attach_bin_clause(
     }
 
     //Call Solver's function for heavy-lifting
-    PropEngine::attach_bin_clause(lit1, lit2, red, checkUnassignedFirst);
+    PropEngine::attach_bin_clause(lit1, lit2, red, ID, checkUnassignedFirst);
 }
 
 void Solver::detachClause(const Clause& cl, const bool removeDrat)
@@ -1600,8 +1601,54 @@ lbool Solver::solve_with_assumptions(
 
     if (drat->enabled()) {
         tbdd_done();
+        write_final_frat_clauses();
+        //tbdd_done();
+        drat->flush();
     }
     return status;
+}
+
+void Solver::write_final_frat_clauses()
+{
+    assert(drat->enabled());
+    assert(decisionLevel() == 0);
+
+    for(const auto& offs: longIrredCls) {
+        write_one_final_frat_cl(offs);
+    }
+    for(const auto& cls: longRedCls) {
+        for(const auto offs: cls) {
+            write_one_final_frat_cl(offs);
+        }
+    }
+    for(uint32_t i = 0; i < nVars()*2; i++) {
+        Lit l = Lit::toLit(i);
+        for(const auto& w: watches[l]) {
+            //only do once per binary
+            if (w.isBin() && w.lit2() < l) {
+                *drat << finalcl << w.get_ID() << l << w.lit2() << fin;
+            }
+        }
+    }
+    for(uint32_t i = 0; i < nVars(); i ++) {
+        if (unit_cl_IDs[i] != 0) {
+            assert(value(i) != l_Undef);
+            Lit l = Lit(i, value(i) == l_False);
+            *drat << finalcl << unit_cl_IDs[i] << l << fin;
+        }
+    }
+
+}
+
+void Solver::write_one_final_frat_cl(const ClOffset offs)
+{
+    Clause* cl = cl_alloc.ptr(offs);
+    *drat << finalcl << cl->stats.ID;
+    for(const Lit& l: *cl) {
+        *drat << l;
+    }
+    *drat << fin;
+
 }
 
 void Solver::dump_memory_stats_to_sql()
@@ -3686,13 +3733,14 @@ vector<uint32_t> Solver::translate_sampl_set(const vector<uint32_t>& sampl_set)
 
 void Solver::add_empty_cl_to_drat()
 {
-    *drat << add
-    #ifdef STATS_NEEDED
-    << 0
-    << sumConflicts
-    #endif
-    << fin;
-    drat->flush();
+    assert(false);
+//     *drat << add
+//     #ifdef STATS_NEEDED
+//     << 0
+//     << sumConflicts
+//     #endif
+//     << fin;
+//     drat->flush();
 }
 
 void Solver::check_assigns_for_assumptions() const
