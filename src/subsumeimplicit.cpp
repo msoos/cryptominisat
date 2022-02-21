@@ -65,7 +65,7 @@ void SubsumeImplicit::try_subsume_bin(
         } else {
             solver->binTri.irredBins--;
         }
-        (*solver->drat) << del << lit << i->lit2() << fin;
+        (*solver->drat) << del << i->get_ID() << lit << i->lit2() << fin;
 
         return;
     } else {

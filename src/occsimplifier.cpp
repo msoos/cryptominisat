@@ -917,6 +917,7 @@ bool OccSimplifier::clear_vars_from_cls_that_have_been_set()
                     elim_calc_need_update.touch(w.lit2());
                     solver->binTri.irredBins--;
                 }
+                assert(false && "FRAT is broken here");
                 *(solver->drat) << del << l << w.lit2() << fin;
                 continue;
             }
@@ -952,6 +953,7 @@ bool OccSimplifier::clear_vars_from_cls_that_have_been_set()
                     elim_calc_need_update.touch(w.lit2());
                     solver->binTri.irredBins--;
                 }
+                assert(false && "FRAT is broken here");
                 *(solver->drat) << del << l << w.lit2() << fin;
                 continue;
             }
@@ -2726,6 +2728,7 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(
             } else {
                 //If redundant, delayed blocked-based DRAT deletion will not work
                 //so delete explicitly
+                assert(false && "FRAT is broken here");
                 (*solver->drat) << del << lits[0] << lits[1] << fin;
             }
 

@@ -162,8 +162,8 @@ void CompleteDetachReatacher::cleanAndAttachClauses(
 */
 bool CompleteDetachReatacher::clean_clause(Clause* cl)
 {
+    (*solver->drat) << deldelay << *cl << fin;
     Clause& ps = *cl;
-    (*solver->drat) << deldelay << ps << fin;
     if (ps.size() <= 2) {
         cout
         << "ERROR, clause is too small, and linked in: "

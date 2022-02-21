@@ -459,6 +459,7 @@ void BVA::remove_matching_clause(
     switch(to_remove.size()) {
         case 2: {
             *simplifier->limit_to_decrease -= 2*(int64_t)solver->watches[to_remove[0]].size();
+            assert(false&& "frat is broken here");
             *(solver->drat) << del << to_remove << fin;
             solver->detach_bin_clause(to_remove[0], to_remove[1], false);
             simplifier->n_occurs[to_remove[0].toInt()]--;

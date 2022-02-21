@@ -70,7 +70,7 @@ class ClauseCleaner
             , const Lit lit
         );
         void clean_binary_implicit(
-           Watched& ws
+           const Watched* ws
             , Watched*& j
             , const Lit lit
         );

@@ -44,37 +44,37 @@ bool ClauseCleaner::satisfied(const Watched& watched, Lit lit)
 }
 
 void ClauseCleaner::clean_binary_implicit(
-    Watched& ws
+    const Watched* i
     , Watched*& j
     , const Lit lit
 ) {
-    if (satisfied(ws, lit)) {
+    if (satisfied(*i, lit)) {
         //Only delete once
-        if (lit < ws.lit2()) {
-            (*solver->drat) << del << j->get_ID() << fin;
+        if (lit < i->lit2()) {
+            (*solver->drat) << del << i->get_ID() << lit << i->lit2() << fin;
         }
 
-        if (ws.red()) {
+        if (i->red()) {
             impl_data.remLBin++;
         } else {
             impl_data.remNonLBin++;
         }
     } else {
         #ifdef SLOW_DEBUG
-        if (solver->value(ws.lit2()) != l_Undef
+        if (solver->value(i->lit2()) != l_Undef
             || solver->value(lit) != l_Undef
         ) {
             cout << "ERROR binary during cleaning has non-l-Undef "
-            << " Bin clause: " << lit << " " << ws.lit2() << endl
+            << " Bin clause: " << lit << " " << i->lit2() << endl
             << " values: " << solver->value(lit)
-            << " " << solver->value(ws.lit2())
+            << " " << solver->value(i->lit2())
             << endl;
         }
         #endif
 
-        assert(solver->value(ws.lit2()) == l_Undef);
+        assert(solver->value(i->lit2()) == l_Undef);
         assert(solver->value(lit) == l_Undef);
-        *j++ = ws;
+        *j++ = *i;
     }
 }
 
@@ -91,7 +91,7 @@ void ClauseCleaner::clean_implicit_watchlist(
         }
 
         if (i->isBin()) {
-            clean_binary_implicit(*i, j, lit);
+            clean_binary_implicit(i, j, lit);
             continue;
         }
     }

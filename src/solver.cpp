@@ -445,11 +445,7 @@ Clause* Solver::add_clause_int(
             *drat << del << old_ID << lits << fin;
         }
     } else {
-        if (cl_stats) {
-            ID = cl_stats->ID;
-        } else {
-            ID = clauseID++;
-        }
+        ID = clauseID++;
         if (addDrat) {
             size_t i = 0;
             if (drat_first != lit_Undef) {
@@ -503,6 +499,7 @@ Clause* Solver::add_clause_int(
             c->isRed = red;
             if (cl_stats) {
                 c->stats = *cl_stats;
+                c->stats.ID = ID;
             }
             if (red && cl_stats == NULL) {
                 assert(false && "does this happen at all? should it happen??");

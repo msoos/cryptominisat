@@ -161,6 +161,7 @@ bool VarReplacer::enqueueDelayedEnqueue()
 {
     for(Lit lit: delayedEnqueue) {
         lit = get_lit_replaced_with(lit);
+        assert(false && "this replacement of the unit is messed up for IDs");
         if (solver->value(lit) == l_Undef) {
             solver->enqueue<false>(lit);
             #ifdef STATS_NEEDED
@@ -387,25 +388,20 @@ inline void VarReplacer::updateBin(
     //Two lits are the same in BIN
     if (lit1 == lit2) {
         delayedEnqueue.push_back(lit2);
-        (*solver->drat) << add << lit2
-        #ifdef STATS_NEEDED
-        << 0
-        << solver->sumConflicts
-        #endif
-        << fin;
+        uint64_t ID = solver->clauseID++;
+        (*solver->drat) << add << ID << lit2 << fin;
+        solver->unit_cl_IDs[lit2.var()] = ID;
         remove = true;
     }
 
     //Tautology
-    if (lit1 == ~lit2)
-        remove = true;
-
+    if (lit1 == ~lit2) remove = true;
     if (remove) {
         impl_tmp_stats.remove(*i);
 
         //Drat -- Delete only once
         if (origLit1 < origLit2) {
-            (*solver->drat) << del << origLit1 << origLit2 << fin;
+            (*solver->drat) << del << i->get_ID() << origLit1 << origLit2 << fin;
         }
 
         return;
@@ -418,14 +414,11 @@ inline void VarReplacer::updateBin(
         //Delete&attach only once
         && (origLit1 < origLit2)
     ) {
+        uint64_t ID = solver->clauseID++;
         (*solver->drat)
-        << add << lit1 << lit2
-        #ifdef STATS_NEEDED
-        << 0
-        << solver->sumConflicts
-        #endif
-        << fin
-        << del << origLit1 << origLit2 << fin;
+        << add << ID << lit1 << lit2 << fin
+        << del << i->get_ID() << origLit1 << origLit2 << fin;
+        assert(false && "ID needs update in watchlists!!");
     }
 
     if (lit1 != origLit1) {
