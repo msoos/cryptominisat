@@ -1588,7 +1588,6 @@ lbool Solver::solve_with_assumptions(
     if (drat->enabled()) {
         tbdd_done();
         write_final_frat_clauses();
-        //tbdd_done();
         drat->flush();
     }
     return status;
