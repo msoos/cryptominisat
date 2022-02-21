@@ -405,6 +405,7 @@ Clause* Solver::add_clause_int(
     , bool addDrat
     , const Lit drat_first
     , const bool sorted
+    , const bool remove_drat
 ) {
     assert(okay());
     assert(decisionLevel() == 0);
@@ -432,28 +433,41 @@ Clause* Solver::add_clause_int(
     }
 
     uint64_t ID;
-    if (cl_stats) {
+    if (remove_drat) {
+        assert(cl_stats);
+        assert(drat_first == lit_Undef);
+        assert(addDrat);
         ID = cl_stats->ID;
+        if (ps != lits) {
+            uint64_t old_ID = ID;
+            ID = clauseID++;
+            *drat << add << ID << ps << fin;
+            *drat << del << old_ID << lits << fin;
+        }
     } else {
-        ID = clauseID++;
-    }
-    if (addDrat) {
-        size_t i = 0;
-        if (drat_first != lit_Undef) {
-            assert(ps.size() > 0);
+        if (cl_stats) {
+            ID = cl_stats->ID;
+        } else {
+            ID = clauseID++;
+        }
+        if (addDrat) {
+            size_t i = 0;
             if (drat_first != lit_Undef) {
-                for(i = 0; i < ps.size(); i++) {
-                    if (ps[i] == drat_first) {
-                        break;
+                assert(ps.size() > 0);
+                if (drat_first != lit_Undef) {
+                    for(i = 0; i < ps.size(); i++) {
+                        if (ps[i] == drat_first) {
+                            break;
+                        }
                     }
                 }
+                std::swap(ps[0], ps[i]);
             }
-            std::swap(ps[0], ps[i]);
-        }
 
-        *drat << add << ID << ps << fin;
-        if (drat_first != lit_Undef) {
-            std::swap(ps[0], ps[i]);
+            *drat << add << ID << ps << fin;
+            if (drat_first != lit_Undef) {
+                std::swap(ps[0], ps[i]);
+            }
         }
     }
 
@@ -485,8 +499,7 @@ Clause* Solver::add_clause_int(
             return NULL;
 
         default:
-            Clause* c = cl_alloc.Clause_new(ps
-            , sumConflicts, ID);
+            Clause* c = cl_alloc.Clause_new(ps, sumConflicts, ID);
             c->isRed = red;
             if (cl_stats) {
                 c->stats = *cl_stats;
@@ -732,34 +745,11 @@ bool Solver::add_clause_outer(vector<Lit>& ps)
         , &stats
         , true //yes, attach
         , pFinalCl
-        , false //add drat?
+        , true //add drat?
         , lit_Undef
-        , true
+        , true //sorted
+        , true //remove old clause from proof if we changed it
     );
-
-    //Drat -- We manipulated the clause, delete
-    if ((drat->enabled() || conf.simulate_drat)
-        && ps != finalCl_tmp
-    ) {
-        //Dump only if non-empty (UNSAT handled later)
-        if (!finalCl_tmp.empty()) {
-            *drat << add << finalCl_tmp
-            #ifdef STATS_NEEDED
-            << 0
-            #endif
-            << fin;
-        }
-
-        //Empty clause, it's UNSAT
-        if (!okay()) {
-            *drat << add
-            #ifdef STATS_NEEDED
-            << 0
-            #endif
-            << fin;
-        }
-        *drat << del << ps << fin;
-    }
 
     if (cl != NULL) {
         ClOffset offset = cl_alloc.get_offset(cl);

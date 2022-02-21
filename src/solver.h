@@ -260,6 +260,7 @@ class Solver : public Searcher
             , bool addDrat = true
             , const Lit drat_first = lit_Undef
             , const bool sorted = false
+            , const bool remove_drat = false
         );
         template<class T> vector<Lit> clause_outer_numbered(const T& cl) const;
         template<class T> vector<uint32_t> xor_outer_numbered(const T& cl) const;
