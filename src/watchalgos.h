@@ -130,10 +130,11 @@ inline const Watched& findWatchedOfBin(
     , const Lit lit1
     , const Lit lit2
     , const bool red
+    , const uint64_t ID
 ) {
     watch_subarray_const ws = wsFull[lit1];
     for (const Watched *i = ws.begin(), *end = ws.end(); i != end; i++) {
-        if (i->isBin() && i->lit2() == lit2 && i->red() == red)
+        if (i->isBin() && i->lit2() == lit2 && i->red() == red && i->get_ID() == ID)
             return *i;
     }
 
@@ -146,10 +147,11 @@ inline Watched& findWatchedOfBin(
     , const Lit lit1
     , const Lit lit2
     , const bool red
+    , const uint64_t ID
 ) {
     watch_subarray ws = wsFull[lit1];
     for (Watched *i = ws.begin(), *end = ws.end(); i != end; i++) {
-        if (i->isBin() && i->lit2() == lit2 && i->red() == red)
+        if (i->isBin() && i->lit2() == lit2 && i->red() == red && i->get_ID() == ID)
             return *i;
     }
 

@@ -87,7 +87,7 @@ class Watched {
         Watched(const Lit lit, const bool red, uint64_t ID) :
             data1(lit.toInt())
             , type(watch_binary_t)
-            , data2((uint64_t)red | ID<<1)
+            , data2((uint64_t)red | ID<<2) //marking is 2nd bit
         {
         }
 
@@ -175,7 +175,7 @@ class Watched {
             #ifdef DEBUG_WATCHED
             assert(isBin());
             #endif
-            return data2 >> 1;
+            return data2 >> 2;
         }
 
         void setRed(const bool toSet)
@@ -339,7 +339,8 @@ struct WatchSorterBinTriLong {
             if (a.red() != b.red()) {
                 return !a.red();
             }
-            return false;
+
+            return (a.get_ID() < b.get_ID());
         }
     };
 

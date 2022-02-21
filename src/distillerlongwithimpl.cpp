@@ -117,7 +117,7 @@ bool DistillerLongWithImpl::subsume_clause_with_watch(
         if (wit->red() && !cl.red()) {
             wit->setRed(false);
             timeAvailable -= (long)solver->watches[wit->lit2()].size()*3;
-            findWatchedOfBin(solver->watches, wit->lit2(), lit, true).setRed(false);
+            findWatchedOfBin(solver->watches, wit->lit2(), lit, true, wit->get_ID()).setRed(false);
             solver->binTri.redBins--;
             solver->binTri.irredBins++;
         }

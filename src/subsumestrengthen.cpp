@@ -977,8 +977,10 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins_watch(
                 simplifier->elim_calc_need_update.touch(tmpLits[1]);
                 simplifier->added_cl_to_var.touch(tmpLits[0]);
                 simplifier->added_cl_to_var.touch(tmpLits[1]);
-                findWatchedOfBin(solver->watches, tmpLits[1], tmpLits[0], true).setRed(false);
-                findWatchedOfBin(solver->watches, tmpLits[0], tmpLits[1], true).setRed(false);
+                findWatchedOfBin(
+                    solver->watches, tmpLits[1], tmpLits[0], true, tmp[i].get_ID()).setRed(false);
+                findWatchedOfBin(
+                    solver->watches, tmpLits[0], tmpLits[1], true, tmp[i].get_ID()).setRed(false);
             }
             continue;
         }

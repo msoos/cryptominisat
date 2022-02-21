@@ -216,8 +216,8 @@ bool DistillerBin::try_distill_bin(
     }
 
     //Disable this clause
-    findWatchedOfBin(solver->watches, lit1, lit2, false).mark_bin_cl();
-    findWatchedOfBin(solver->watches, lit2, lit1, false).mark_bin_cl();
+    findWatchedOfBin(solver->watches, lit1, lit2, false, w.get_ID()).mark_bin_cl();
+    findWatchedOfBin(solver->watches, lit2, lit1, false, w.get_ID()).mark_bin_cl();
 
     solver->new_decision_level();
     PropBy confl;
@@ -254,11 +254,11 @@ bool DistillerBin::try_distill_bin(
 
     //Nothing happened
     solver->cancelUntil<false, true>(0);
-    auto &w1 = findWatchedOfBin(solver->watches, lit1, lit2, false);
+    auto &w1 = findWatchedOfBin(solver->watches, lit1, lit2, false, w.get_ID());
     assert(w1.bin_cl_marked());
     w1.unmark_bin_cl();
 
-    auto &w2 = findWatchedOfBin(solver->watches, lit2, lit1, false);
+    auto &w2 = findWatchedOfBin(solver->watches, lit2, lit1, false, w.get_ID());
     assert(w2.bin_cl_marked());
     w2.unmark_bin_cl();
 
