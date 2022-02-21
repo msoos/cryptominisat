@@ -1574,7 +1574,6 @@ lbool Solver::solve_with_assumptions(
     assumptions.clear();
     conf.max_confl = std::numeric_limits<uint64_t>::max();
     conf.maxTime = std::numeric_limits<double>::max();
-    drat->flush();
     datasync->finish_up_mpi();
     conf.conf_needed = true;
     set_must_interrupt_asap();
@@ -1624,7 +1623,7 @@ void Solver::write_final_frat_clauses()
             *drat << finalcl << unit_cl_IDs[i] << l << fin;
         }
     }
-
+    *drat << finalcl << clauseID-1 << fin;
 }
 
 void Solver::write_one_final_frat_cl(const ClOffset offs)
