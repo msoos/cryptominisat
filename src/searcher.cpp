@@ -1277,6 +1277,7 @@ lbool Searcher::search()
 {
     assert(ok);
     #ifdef SLOW_DEBUG
+    check_no_zero_ID_bins();
     check_no_duplicate_lits_anywhere();
     check_order_heap_sanity();
     #endif
@@ -1387,6 +1388,11 @@ lbool Searcher::search()
         goto end;
     }
     assert(search_ret == l_Undef);
+    #ifdef SLOW_DEBUG
+    check_no_zero_ID_bins();
+    check_no_duplicate_lits_anywhere();
+    check_order_heap_sanity();
+    #endif
 
     end:
     dump_search_loop_stats(myTime);

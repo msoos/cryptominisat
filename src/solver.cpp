@@ -1918,6 +1918,7 @@ lbool Solver::execute_inprocess_strategy(
         assert(prop_at_head());
         assert(okay());
         #ifdef SLOW_DEBUG
+        check_no_zero_ID_bins();
         check_wrong_attach();
         check_stats();
         check_no_duplicate_lits_anywhere();
@@ -3355,8 +3356,8 @@ void Solver::check_implicit_stats(const bool onlypairs) const
                 lits[0] = Lit::toLit(wsLit);
                 lits[1] = it2->lit2();
                 std::sort(lits, lits + 2);
-                findWatchedOfBin(watches, lits[0], lits[1], it2->red());
-                findWatchedOfBin(watches, lits[1], lits[0], it2->red());
+                findWatchedOfBin(watches, lits[0], lits[1], it2->red(), it2->get_ID());
+                findWatchedOfBin(watches, lits[1], lits[0], it2->red(), it2->get_ID());
                 #endif
 
                 if (it2->red())

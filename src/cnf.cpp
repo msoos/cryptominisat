@@ -881,3 +881,19 @@ vector<uint32_t> CNF::get_outside_var_incidence_also_red()
     }
     return inc_outer;
 }
+
+void CNF::check_no_zero_ID_bins() const
+{
+    for(uint32_t i = 0; i < nVars()*2; i++) {
+        Lit l = Lit::toLit(i);
+        for(const auto& w: watches[l]) {
+            //only do once per binary
+            if (w.isBin()) {
+                if (w.get_ID() == 0) {
+                    cout << "ERROR, bin: " << l << " " << w.lit2() << " has ID " << w.get_ID() << endl;
+                }
+                assert(w.get_ID() > 0);
+            }
+        }
+    }
+}

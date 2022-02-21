@@ -338,6 +338,7 @@ public:
     bool satisfied(const T& cl) const;
     template<typename T> bool no_duplicate_lits(const T& lits) const;
     void check_no_duplicate_lits_anywhere() const;
+    void check_no_zero_ID_bins() const;
     void print_all_clauses() const;
     template<class T> void clean_xor_no_prop(T& ps, bool& rhs);
     template<class T> void clean_xor_vars_no_prop(T& ps, bool& rhs);

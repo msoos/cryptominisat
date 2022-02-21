@@ -201,7 +201,7 @@ class Watched {
             #ifdef DEBUG_WATCHED
             assert(isBin());
             #endif
-            data2 &= 1;
+            data2 &= (~(2ULL));
         }
 
         bool bin_cl_marked() const

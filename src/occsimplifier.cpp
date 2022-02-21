@@ -1687,7 +1687,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             if (!cl->red()) {
                 continue;
             }
-            assert(cl->stats.introduced_at_conflict != 0);
+            assert(solver->red_stats_extra[cl->stats.extra_pos].introduced_at_conflict != 0);
         }
         #endif
         solver->check_implicit_stats(true);
