@@ -1762,20 +1762,18 @@ Clause* Searcher::handle_last_confl(
     #endif
 
     Clause* cl;
-    ID = clauseID;
+    ID = clauseID++;
     if (learnt_clause.size() <= 2) {
-        *drat << add
-        << clauseID
-        << learnt_clause
-        << fin;
+        *drat << add << ID << learnt_clause << fin;
         cl = NULL;
     } else {
         cl = cl_alloc.Clause_new(learnt_clause
             , sumConflicts
-            , clauseID
+            , ID
         );
         cl->isRed = true;
         cl->stats.glue = glue;
+        cl->stats.ID = ID;
         #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
         red_stats_extra.push_back(ClauseStatsExtra());
         cl->stats.extra_pos = red_stats_extra.size()-1;
@@ -1819,9 +1817,7 @@ Clause* Searcher::handle_last_confl(
 
         cl->stats.which_red_array = which_arr;
         solver->longRedCls[cl->stats.which_red_array].push_back(offset);
-
-        *drat << add << *cl
-        << fin;
+        *drat << add << *cl << fin;
     }
 
     #ifdef STATS_NEEDED
@@ -1836,13 +1832,12 @@ Clause* Searcher::handle_last_confl(
             glue
             , glue_before_minim
             , old_decision_level
-            , clauseID
+            , ID
             , is_decision
             , connects_num_communities
         );
     }
     #endif
-    clauseID++;
 
     if (cl) {
         #ifdef FINAL_PREDICTOR
@@ -3420,8 +3415,7 @@ template<bool update_bogoprops, bool red_also, bool use_disable>
 PropBy Searcher::propagate() {
     const size_t origTrailSize = trail.size();
 
-    PropBy ret;
-    ret = propagate_any_order<update_bogoprops, red_also, use_disable>();
+    PropBy ret = propagate_any_order<update_bogoprops, red_also, use_disable>();
 
     //Drat -- If declevel 0 propagation, we have to add the unitaries
     if (decisionLevel() == 0 &&
@@ -3436,20 +3430,14 @@ PropBy Searcher::propagate() {
                 << endl;
             }
             #endif
-            *drat << add << trail[i].lit
-            #ifdef STATS_NEEDED
-            << 0
-            << sumConflicts
-            #endif
-            << fin;
+            const uint64_t ID = clauseID++;
+            *drat << add << ID << trail[i].lit << fin;
+            unit_cl_IDs[trail[i].lit.var()] = ID;
         }
+
+        //UNSAT
         if (!ret.isNULL()) {
-            *drat << add
-            #ifdef STATS_NEEDED
-            << 0
-            << sumConflicts
-            #endif
-            << fin;
+            *drat << add << clauseID++ << fin;
         }
     }
 

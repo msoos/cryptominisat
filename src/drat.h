@@ -290,13 +290,11 @@ public:
                 break;
 
             case DratFlag::add:
+                *buf_ptr++ = 'a';
+                buf_len++;
                 if (!bindrat) {
-                    *buf_ptr++ = 'a';
+                    *buf_ptr++ = ' ';
                     buf_len++;
-                    if (!bindrat) {
-                        *buf_ptr++ = ' ';
-                        buf_len++;
-                    }
                 }
                 break;
 

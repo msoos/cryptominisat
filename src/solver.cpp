@@ -3008,7 +3008,7 @@ lbool Solver::probe_inter(Lit l, uint32_t& min_props)
     //Check result
     if (!p.isNULL()) {
         enqueue<true>(~l);
-        p = propagate_any_order_fast();
+        p = propagate<true>();
         if (!p.isNULL()) {
             ok = false;
         }
@@ -3043,7 +3043,7 @@ lbool Solver::probe_inter(Lit l, uint32_t& min_props)
     //Check result
     if (!p.isNULL()) {
         enqueue<false>(l);
-        p = propagate_any_order_fast();
+        p = propagate<true>();
         if (!p.isNULL()) {
             ok = false;
         }
@@ -3060,7 +3060,7 @@ lbool Solver::probe_inter(Lit l, uint32_t& min_props)
             }
         } else {
             //First we must propagate all the enqueued facts
-            p = propagate_any_order_fast();
+            p = propagate<true>();
             if (!p.isNULL()) {
                 ok = false;
                 goto end;
@@ -3080,7 +3080,7 @@ lbool Solver::probe_inter(Lit l, uint32_t& min_props)
     }
 
     //Propagate all enqueued facts due to bprop
-    p = propagate_any_order_fast();
+    p = propagate<true>();
     if (!p.isNULL()) {
         ok = false;
         goto end;
