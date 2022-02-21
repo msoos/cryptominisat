@@ -2011,7 +2011,7 @@ lbool Solver::execute_inprocess_strategy(
                 }
             }
         } else if (token == "intree-probe") {
-            if (conf.doIntreeProbe) {
+            if (conf.doIntreeProbe && conf.doFindAndReplaceEqLits) {
                 intree->intree_probe();
             }
         } else if (token == "sub-str-cls-with-bin") {
