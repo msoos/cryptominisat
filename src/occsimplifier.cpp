@@ -908,7 +908,7 @@ bool OccSimplifier::clear_vars_from_cls_that_have_been_set()
         for (uint32_t i = 0; i < ws.size(); i ++) {
             Watched& w = ws[i];
             if (w.isBin()) {
-                removeWBin(solver->watches, w.lit2(), l, w.red());
+                removeWBin(solver->watches, w.lit2(), l, w.red(), w.get_ID());
                 if (w.red()) {
                     solver->binTri.redBins--;
                 } else {
@@ -917,8 +917,7 @@ bool OccSimplifier::clear_vars_from_cls_that_have_been_set()
                     elim_calc_need_update.touch(w.lit2());
                     solver->binTri.irredBins--;
                 }
-                assert(false && "FRAT is broken here");
-                *(solver->drat) << del << l << w.lit2() << fin;
+                *(solver->drat) << del << w.get_ID() << l << w.lit2() << fin;
                 continue;
             }
 
@@ -944,7 +943,7 @@ bool OccSimplifier::clear_vars_from_cls_that_have_been_set()
             Watched& w = ws2[i];
             if (w.isBin()) {
                 assert(solver->value(w.lit2()) == l_True); //we propagate and it'd be UNSAT otherwise
-                removeWBin(solver->watches, w.lit2(), l, w.red());
+                removeWBin(solver->watches, w.lit2(), l, w.red(), w.get_ID());
                 if (w.red()) {
                     solver->binTri.redBins--;
                 } else {
@@ -953,8 +952,7 @@ bool OccSimplifier::clear_vars_from_cls_that_have_been_set()
                     elim_calc_need_update.touch(w.lit2());
                     solver->binTri.irredBins--;
                 }
-                assert(false && "FRAT is broken here");
-                *(solver->drat) << del << l << w.lit2() << fin;
+                *(solver->drat) << del << w.get_ID() << l << w.lit2() << fin;
                 continue;
             }
 
@@ -2728,14 +2726,13 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(
             } else {
                 //If redundant, delayed blocked-based DRAT deletion will not work
                 //so delete explicitly
-                assert(false && "FRAT is broken here");
-                (*solver->drat) << del << lits[0] << lits[1] << fin;
+                (*solver->drat) << del << watch.get_ID() << lits[0] << lits[1] << fin;
             }
 
             //Remove
             //*limit_to_decrease -= (long)solver->watches[lits[0]].size()/4; //This is zero
             *limit_to_decrease -= (long)solver->watches[lits[1]].size()/4;
-            solver->detach_bin_clause(lits[0], lits[1], red, true, true);
+            solver->detach_bin_clause(lits[0], lits[1], red, watch.get_ID(), true, true);
         }
 
         if (solver->conf.verbosity >= 3 && !lits.empty()) {

@@ -844,7 +844,8 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
     ) {
         if (subs[j].ws.isBin()) {
             if (subsLits[j] == lit_Undef) { //subsume
-                solver->detach_bin_clause(subs[j].lit, subs[j].ws.lit2(), subs[j].ws.red());
+                solver->detach_bin_clause(
+                    subs[j].lit, subs[j].ws.lit2(), subs[j].ws.red(), subs[j].ws.get_ID());
                 if (!subs[j].ws.red()) {
                     simplifier->n_occurs[subs[j].lit.toInt()]--;
                     simplifier->n_occurs[subs[j].ws.lit2().toInt()]--;
@@ -871,7 +872,9 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
                         return false;
                     }
                 }
-                solver->detach_bin_clause(subs[j].lit, subs[j].ws.lit2(), subs[j].ws.red()); //this binary is definitely satisfied
+                //this binary is definitely satisfied
+                solver->detach_bin_clause(
+                    subs[j].lit, subs[j].ws.lit2(), subs[j].ws.red(), subs[j].ws.get_ID());
                 if (!subs[j].ws.red()) {
                     simplifier->n_occurs[subs[j].lit.toInt()]--;
                     simplifier->n_occurs[subs[j].ws.lit2().toInt()]--;

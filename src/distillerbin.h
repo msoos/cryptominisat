@@ -73,7 +73,8 @@ class DistillerBin {
 
         bool try_distill_bin(
             Lit lit1,
-            Lit lit2
+            Lit lit2,
+            const Watched& w
         );
         bool distill_bin_cls_all(double time_mult);
         bool go_through_bins(const Lit lit);

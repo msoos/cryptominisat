@@ -232,6 +232,7 @@ class Solver : public Searcher
             Lit lit1
             , Lit lit2
             , bool red
+            , const uint64_t ID
             , bool allow_empty_watch = false
             , bool allow_change_order = false
         ) {
@@ -241,7 +242,7 @@ class Solver : public Searcher
                 binTri.irredBins--;
             }
 
-            PropEngine::detach_bin_clause(lit1, lit2, red, allow_empty_watch, allow_change_order);
+            PropEngine::detach_bin_clause(lit1, lit2, red, ID, allow_empty_watch, allow_change_order);
         }
         void detachClause(const Clause& c, const bool removeDrat = true);
         void detachClause(const ClOffset offset, const bool removeDrat = true);

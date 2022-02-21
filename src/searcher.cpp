@@ -3380,8 +3380,8 @@ std::pair<size_t, size_t> Searcher::remove_useless_bins(bool except_marked)
                 assert(rem1 == rem2);
                 removed = rem1;
             } else {
-                removeWBin(solver->watches, it->getLit1(), it->getLit2(), it->isRed());
-                removeWBin(solver->watches, it->getLit2(), it->getLit1(), it->isRed());
+                removeWBin(solver->watches, it->getLit1(), it->getLit2(), it->isRed(), it->getID());
+                removeWBin(solver->watches, it->getLit2(), it->getLit1(), it->isRed(), it->getID());
                 removed = true;
             }
 

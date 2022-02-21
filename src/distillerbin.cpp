@@ -181,12 +181,13 @@ bool DistillerBin::go_through_bins(
         maxNumProps -= 2;
 
         if (solver->value(lit1) == l_True || solver->value(lit2) == l_True) {
-            solver->detach_bin_clause(lit1, lit2, w.red());
+            solver->detach_bin_clause(lit1, lit2, w.red(), w.get_ID());
+            (*solver->drat) << del << w.get_ID() << lit1 << lit2 << fin;
             continue;
         }
 
         //Try to distill clause
-        if (!try_distill_bin(lit1, lit2)) {
+        if (!try_distill_bin(lit1, lit2, w)) {
             //UNSAT
             return false;
         }
@@ -197,7 +198,8 @@ bool DistillerBin::go_through_bins(
 
 bool DistillerBin::try_distill_bin(
     Lit lit1,
-    Lit lit2
+    Lit lit2,
+    const Watched& w
 ) {
     assert(solver->okay());
     assert(solver->prop_at_head());
@@ -232,7 +234,8 @@ bool DistillerBin::try_distill_bin(
             vector<Lit> x(1);
             x[0] = lit1;
             solver->add_clause_int(x);
-            solver->detach_bin_clause(lit1, lit2, false);
+            solver->detach_bin_clause(lit1, lit2, false, w.get_ID());
+            (*solver->drat) << del << w.get_ID() << lit1 << lit2 << fin;
             runStats.numClShorten++;
             return solver->okay();
         } else if (solver->value(lit2) == l_Undef) {
@@ -243,7 +246,8 @@ bool DistillerBin::try_distill_bin(
 
     if (!confl.isNULL()) {
         solver->cancelUntil<false, true>(0);
-        solver->detach_bin_clause(lit1, lit2, false);
+        solver->detach_bin_clause(lit1, lit2, false, w.get_ID());
+        (*solver->drat) << del << w.get_ID() << lit1 << lit2 << fin;
         runStats.clRemoved++;
         return true;
     }

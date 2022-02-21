@@ -303,22 +303,23 @@ protected:
         Lit lit1
         , Lit lit2
         , bool red
+        , const uint64_t ID
         , bool allow_empty_watch = false
         , bool allow_change_order = false
     ) {
         if (!allow_change_order) {
             if (!(allow_empty_watch && watches[lit1].empty())) {
-                removeWBin(watches, lit1, lit2, red);
+                removeWBin(watches, lit1, lit2, red, ID);
             }
             if (!(allow_empty_watch && watches[lit2].empty())) {
-                removeWBin(watches, lit2, lit1, red);
+                removeWBin(watches, lit2, lit1, red, ID);
             }
         } else {
             if (!(allow_empty_watch && watches[lit1].empty())) {
-                removeWBin_change_order(watches, lit1, lit2, red);
+                removeWBin_change_order(watches, lit1, lit2, red, ID);
             }
             if (!(allow_empty_watch && watches[lit2].empty())) {
-                removeWBin_change_order(watches, lit2, lit1, red);
+                removeWBin_change_order(watches, lit2, lit1, red, ID);
             }
         }
     }

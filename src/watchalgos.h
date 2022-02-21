@@ -59,6 +59,7 @@ inline void removeWBin(
     , const Lit lit1
     , const Lit lit2
     , const bool red
+    , const uint64_t ID
 ) {
     watch_subarray ws = wsFull[lit1];
     Watched *i = ws.begin(), *end = ws.end();
@@ -66,6 +67,7 @@ inline void removeWBin(
         !i->isBin()
         || i->lit2() != lit2
         || i->red() != red
+        || i->get_ID() != ID
     ); i++);
 
     assert(i != end);
@@ -80,6 +82,7 @@ inline void removeWBin_change_order(
     , const Lit lit1
     , const Lit lit2
     , const bool red
+    , const uint64_t ID
 ) {
     watch_subarray ws = wsFull[lit1];
     Watched *i = ws.begin(), *end = ws.end();
@@ -87,6 +90,7 @@ inline void removeWBin_change_order(
         !i->isBin()
         || i->lit2() != lit2
         || i->red() != red
+        || i->get_ID() != ID
     ); i++);
 
     assert(i != end);
