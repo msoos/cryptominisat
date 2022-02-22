@@ -186,8 +186,8 @@ class Solver : public Searcher
 
         bool prop_at_head() const;
         void set_decision_var(const uint32_t var);
-        bool fully_enqueue_these(const vector<Lit>& toEnqueue);
-        bool fully_enqueue_this(const Lit lit);
+        bool fully_enqueue_these(const vector<LitEnqueue>& toEnqueue);
+        bool fully_enqueue_this(const LitEnqueue lit_ID);
         void update_assumptions_after_varreplace();
 
         //State load/unload

@@ -390,6 +390,7 @@ inline void VarReplacer::updateBin(
         delayedEnqueue.push_back(lit2);
         uint64_t ID = solver->clauseID++;
         (*solver->drat) << add << ID << lit2 << fin;
+        assert(solver->unit_cl_IDs[lit2.var()] == 0);
         solver->unit_cl_IDs[lit2.var()] = ID;
         remove = true;
     }
@@ -777,34 +778,12 @@ bool VarReplacer::handleAlreadyReplaced(const Lit lit1, const Lit lit2)
 {
     //OOps, already inside, but with inverse polarity, UNSAT
     if (lit1.sign() != lit2.sign()) {
+        assert(false && "FRAT needs ID here");
         (*solver->drat)
-        << add << ~lit1 << lit2
-        #ifdef STATS_NEEDED
-        << 0
-        << solver->sumConflicts
-        #endif
-        << fin
-
-        << add << lit1 << ~lit2
-        #ifdef STATS_NEEDED
-        << 0
-        << solver->sumConflicts
-        #endif
-        << fin
-
-        << add << lit1
-        #ifdef STATS_NEEDED
-        << 0
-        << solver->sumConflicts
-        #endif
-        << fin
-
-        << add << ~lit1
-        #ifdef STATS_NEEDED
-        << 0
-        << solver->sumConflicts
-        #endif
-        << fin;
+        << add << ~lit1 << lit2 << fin
+        << add << lit1 << ~lit2 << fin
+        << add << lit1 << fin
+        << add << ~lit1 << fin;
 
         solver->ok = false;
         return false;
@@ -821,20 +800,10 @@ bool VarReplacer::replace_vars_already_set(
     , const lbool val2
 ) {
     if (val1 != val2) {
+        assert(false && "FRAT IDs needed");
         (*solver->drat)
-        << add << ~lit1
-        #ifdef STATS_NEEDED
-        << 0
-        << solver->sumConflicts
-        #endif
-        << fin
-
-        << add << lit1
-        #ifdef STATS_NEEDED
-        << 0
-        << solver->sumConflicts
-        #endif
-        << fin;
+        << add << ~lit1 << fin
+        << add << lit1 << fin;
 
         solver->ok = false;
     }
@@ -857,12 +826,8 @@ bool VarReplacer::handleOneSet(
             toEnqueue = lit1 ^ (val2 == l_False);
         }
         solver->enqueue<false>(toEnqueue);
-        (*solver->drat) << add << toEnqueue
-        #ifdef STATS_NEEDED
-        << 0
-        << solver->sumConflicts
-        #endif
-        << fin;
+        assert(false && "FRAT needs ID here");
+        (*solver->drat) << add << toEnqueue << fin;
 
         #ifdef STATS_NEEDED
         solver->propStats.propsUnit++;
@@ -892,6 +857,7 @@ bool VarReplacer::replace(
     replaceChecks(var1, var2);
 
     #ifdef DRAT_DEBUG
+    assert(false && "FRAT IDs needed");
     (*solver->drat)
     << add << Lit(var1, true)  << (Lit(var2, false) ^ xor_is_true) << fin
     << add << Lit(var1, false) << (Lit(var2, true)  ^ xor_is_true) << fin
@@ -906,19 +872,10 @@ bool VarReplacer::replace(
     if (lit1.var() == lit2.var()) {
         return handleAlreadyReplaced(lit1, lit2);
     }
+    assert(false && "FRAT IDs needed");
     (*solver->drat)
-    << add << ~lit1 << lit2
-    #ifdef STATS_NEEDED
-    << 0
-    << solver->sumConflicts
-    #endif
-    << fin
-    << add << lit1 << ~lit2
-    #ifdef STATS_NEEDED
-    << 0
-    << solver->sumConflicts
-    #endif
-    << fin;
+    << add << ~lit1 << lit2 << fin
+    << add << lit1 << ~lit2 << fin;
 
     //None should be removed, only maybe queued for replacement
     assert(solver->varData[lit1.var()].removed == Removed::none);

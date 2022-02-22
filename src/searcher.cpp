@@ -1549,6 +1549,7 @@ void Searcher::attach_and_enqueue_learnt_clause(
             //Unitary learnt
             stats.learntUnits++;
             if (enq) enqueue<false>(learnt_clause[0], level, PropBy());
+            assert(unit_cl_IDs[learnt_clause[0].var()] == 0);
             unit_cl_IDs[learnt_clause[0].var()] = ID;
 
             #ifdef STATS_NEEDED
@@ -3439,6 +3440,7 @@ PropBy Searcher::propagate() {
             #endif
             const uint64_t ID = clauseID++;
             *drat << add << ID << trail[i].lit << fin;
+            assert(solver->unit_cl_IDs[trail[i].lit.var()] == 0);
             unit_cl_IDs[trail[i].lit.var()] = ID;
         }
 

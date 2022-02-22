@@ -190,6 +190,7 @@ bool Solver::add_xor_clause_inter(
     assert(ok);
     assert(!attach || qhead == trail.size());
     assert(decisionLevel() == 0);
+    assert(false && "FRAT IDs not checked");
 
     vector<Lit> ps(lits);
     for(Lit& lit: ps) {
@@ -207,12 +208,7 @@ bool Solver::add_xor_clause_inter(
 
     if (ps.empty()) {
         if (rhs) {
-            *drat << add
-            #ifdef STATS_NEEDED
-            << 0
-            << sumConflicts
-            #endif
-            << fin;
+            *drat << add << clauseID++ << fin;
             ok = false;
         }
         return ok;
@@ -481,6 +477,7 @@ Clause* Solver::add_clause_int(
             return NULL;
         case 1:
             enqueue<false>(ps[0]);
+            assert(unit_cl_IDs[ps[0].var()] == 0);
             unit_cl_IDs[ps[0].var()] = ID;
             #ifdef STATS_NEEDED
             propStats.propsUnit++;
@@ -552,6 +549,7 @@ void Solver::attach_bin_clause(
     , [[maybe_unused]] const bool checkUnassignedFirst
 ) {
     #if defined(DRAT_DEBUG)
+    assert(false && "FRAT needs ID");
     *drat << add << lit1 << lit2 << fin;
     #endif
 
@@ -714,9 +712,8 @@ bool Solver::add_clause_outer(vector<Lit>& ps)
 
     ClauseStats stats;
     if (drat->enabled()) {
-        stats.ID = clauseID;
-        *drat << origcl << clauseID << ps << fin;
-        clauseID++;
+        stats.ID = clauseID++;
+        *drat << origcl << stats.ID << ps << fin;
     }
 
     #ifdef VERBOSE_DEBUG
@@ -2924,12 +2921,12 @@ void Solver::free_unused_watches()
     }
 }
 
-bool Solver::fully_enqueue_these(const vector<Lit>& toEnqueue)
+bool Solver::fully_enqueue_these(const vector<LitEnqueue>& toEnqueue)
 {
     assert(ok);
     assert(decisionLevel() == 0);
-    for(const Lit lit: toEnqueue) {
-        if (!fully_enqueue_this(lit)) {
+    for(const auto& lit_ID: toEnqueue) {
+        if (!fully_enqueue_this(lit_ID)) {
             return false;
         }
     }
@@ -2937,20 +2934,25 @@ bool Solver::fully_enqueue_these(const vector<Lit>& toEnqueue)
     return true;
 }
 
-bool Solver::fully_enqueue_this(const Lit lit)
+bool Solver::fully_enqueue_this(const LitEnqueue lit_ID)
 {
-    const lbool val = value(lit);
+    const lbool val = value(lit_ID.lit);
     if (val == l_Undef) {
-        assert(varData[lit.var()].removed == Removed::none);
-        enqueue<false>(lit);
+        unit_cl_IDs[lit_ID.lit.var()] = lit_ID.ID;
+        assert(varData[lit_ID.lit.var()].removed == Removed::none);
+        enqueue<false>(lit_ID.lit);
         ok = propagate<true>().isNULL();
 
         if (!ok) {
             return false;
         }
     } else if (val == l_False) {
+        *drat << add << clauseID++ << fin;
         ok = false;
         return false;
+    } else {
+        //no need for duplicate units
+        *drat << del << lit_ID.ID << lit_ID.lit << fin;
     }
     return true;
 }

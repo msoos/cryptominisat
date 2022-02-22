@@ -860,12 +860,8 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
                     solver->ok = false;
                     return false;
                 } else if (val == l_Undef) {
-                    (*solver->drat) << add << subsLits[j]
-                    #ifdef STATS_NEEDED
-                    << 0
-                    << solver->sumConflicts
-                    #endif
-                    << fin;
+                    assert(false && "FRAT needs ID here");
+                    (*solver->drat) << add << subsLits[j] << fin;
                     solver->enqueue<false>(subsLits[j]);
                     solver->ok = solver->propagate_occur<false>();
                     if (!solver->okay()) {

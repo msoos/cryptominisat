@@ -383,30 +383,16 @@ bool InTree::empty_failed_list()
 
         if (solver->value(lit) == l_Undef) {
             solver->enqueue<true>(lit);
-            *(solver->drat) << add << lit
-            #ifdef STATS_NEEDED
-            << 0
-            << solver->sumConflicts
-            #endif
-            << fin;
+            assert(false && "FRAT needs ID");
+            *(solver->drat) << add << lit << fin;
             solver->ok = solver->propagate<true>().isNULL();
             if (!solver->ok) {
                 return false;
             }
         } else if (solver->value(lit) == l_False) {
-            *(solver->drat) << add << ~lit
-            #ifdef STATS_NEEDED
-            << 0
-            << solver->sumConflicts
-            #endif
-            << fin;
-
-            *(solver->drat) << add
-            #ifdef STATS_NEEDED
-            << 0
-            << solver->sumConflicts
-            #endif
-            << fin;
+            assert(false && "FRAT needs ID");
+            *(solver->drat) << add << ~lit << fin;
+            *(solver->drat) << add << fin;
             solver->ok = false;
             return false;
         }

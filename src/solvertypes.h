@@ -183,6 +183,17 @@ inline std::string removed_type_to_string(const Removed removed) {
     return "Oops, undefined!";
 }
 
+struct LitEnqueue
+{
+    LitEnqueue(Lit _lit, uint64_t _ID):
+        lit(_lit),
+        ID(_ID)
+    {}
+
+    Lit lit;
+    uint64_t ID;
+};
+
 class BinaryClause {
     public:
         BinaryClause(

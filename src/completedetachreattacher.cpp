@@ -187,11 +187,8 @@ bool CompleteDetachReatacher::clean_clause(Clause* cl)
 
     //Drat
     if (i != j) {
-        (*solver->drat) << add << *cl
-        #ifdef STATS_NEEDED
-        << solver->sumConflicts
-        #endif
-        << fin << findelay;
+        cl->stats.ID = solver->clauseID++;
+        (*solver->drat) << add << *cl << fin << findelay;
     } else {
         solver->drat->forget_delay();
     }
@@ -202,14 +199,16 @@ bool CompleteDetachReatacher::clean_clause(Clause* cl)
             return false;
 
         case 1:
+            assert(solver->unit_cl_IDs[ps[0].var()] == 0);
             solver->enqueue<true>(ps[0]);
+            solver->unit_cl_IDs[ps[0].var()] = cl->stats.ID;
             #ifdef STATS_NEEDED
             solver->propStats.propsUnit++;
             #endif
             return false;
 
         case 2: {
-            solver->attach_bin_clause(ps[0], ps[1], ps.red(), solver->clauseID++);
+            solver->attach_bin_clause(ps[0], ps[1], ps.red(), cl->stats.ID);
             return false;
         }
 
