@@ -541,7 +541,10 @@ struct sort_smallest_first {
 
         if (first.isBin() && second.isBin()) {
             //correct order if first has lit2() smaller.
-            return first.lit2() < second.lit2();
+            if (first.lit2() != second.lit2()) {
+                return first.lit2() < second.lit2();
+            }
+            return first.get_ID() < second.get_ID();
         }
 
         if (first.isClause() && second.isClause()) {
@@ -1714,7 +1717,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 XorFinder finder(this, solver);
                 finder.find_xors();
                 #ifdef USE_M4RI
-                if (topLevelGauss != NULL) {
+                if (topLevelGauss != NULL && !solver->drat->enabled()) {
                     auto xors = solver->xorclauses;
                     assert(solver->okay());
                     solver->ok = finder.xor_together_xors(xors);
@@ -2810,6 +2813,7 @@ bool OccSimplifier::find_or_gate(
                 out_b.push(w);
                 for(const Lit lit: *cl) {
                     if (lit != ~elim_lit) {
+                        assert(false && "FRAT ID needed, 0 is wrong");
                         out_a.push(Watched(~lit, false, 0));
                     }
                 }
@@ -3083,6 +3087,7 @@ bool OccSimplifier::find_equivalence_gate(
             #endif
             if (seen[(~w.lit2()).toInt()]) {
                 out_b.push(w);
+                assert(false && "FRAT ID needed");
                 out_a.push(Watched(~w.lit2(), false, 0));
                 found = true;
                 break;

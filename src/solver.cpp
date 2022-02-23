@@ -190,7 +190,6 @@ bool Solver::add_xor_clause_inter(
     assert(ok);
     assert(!attach || qhead == trail.size());
     assert(decisionLevel() == 0);
-    assert(false && "FRAT IDs not checked");
 
     vector<Lit> ps(lits);
     for(Lit& lit: ps) {
