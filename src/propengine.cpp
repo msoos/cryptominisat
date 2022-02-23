@@ -558,7 +558,9 @@ template<bool update_bogoprops>
 bool PropEngine::propagate_occur()
 {
     assert(ok);
-    while (qhead < trail_size()) {
+    uint64_t old_trail_size = trail.size();
+
+    while (qhead < trail.size()) {
         const Lit p = trail[qhead].lit;
         qhead++;
         watch_subarray ws = watches[~p];
@@ -577,6 +579,16 @@ bool PropEngine::propagate_occur()
                 if (!propagate_binary_clause_occur<update_bogoprops>(*it))
                     return false;
             }
+        }
+    }
+
+    if (decisionLevel() == 0) {
+        //We onlyl need to add the new ones, not the ones we came into this function with
+        for(uint32_t i = old_trail_size+1; i < trail.size(); i++) {
+            const Lit p = trail[i].lit;
+            uint64_t ID = clauseID++;
+            *drat << add << ID << p << fin;
+            unit_cl_IDs[p.var()] = ID;
         }
     }
 

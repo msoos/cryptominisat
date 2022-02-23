@@ -413,11 +413,9 @@ bool OccSimplifier::clean_clause(
         cout << "-> Clause became after cleaning:" << cl << endl;
     }
 
-    uint64_t ID;
     if (i-j > 0) {
-        ID = solver->clauseID++;
-        (*solver->drat) << add << ID << cl
-        << fin << findelay;
+        cl.stats.ID = solver->clauseID++;
+        (*solver->drat) << add << cl << fin << findelay;
     } else {
         solver->drat->forget_delay();
     }
@@ -430,16 +428,14 @@ bool OccSimplifier::clean_clause(
 
         case 1: {
             solver->enqueue<false>(cl[0]);
-            #ifdef STATS_NEEDED
-            solver->propStats.propsUnit++;
-            #endif
+            solver->unit_cl_IDs[cl[0].var()] = cl.stats.ID;
             unlink_clause(offset, false, false, only_set_is_removed);
             solver->ok = solver->propagate_occur<false>();
             return solver->okay();
         }
 
         case 2: {
-            solver->attach_bin_clause(cl[0], cl[1], cl.red(), ID);
+            solver->attach_bin_clause(cl[0], cl[1], cl.red(), cl.stats.ID);
             if (!cl.red()) {
                 std::pair<Lit, Lit> tmp = {cl[0], cl[1]};
                 added_irred_bin.push_back(tmp);
@@ -2213,7 +2209,7 @@ bool OccSimplifier::backward_sub_str()
     subsumption_time_limit = 0;
     limit_to_decrease = &subsumption_time_limit;
 
-    //Sub long with bins
+    //Sub-str long with bins
     subsumption_time_limit += (int64_t)
         ((double)backup*solver->conf.subsumption_time_limit_ratio_sub_str_w_bin);
     if (!sub_str->backw_sub_str_long_with_bins()
@@ -4714,11 +4710,9 @@ bool OccSimplifier::remove_literal(
     cl.strengthen(toRemoveLit);
     added_cl_to_var.touch(toRemoveLit.var());
     cl.recalc_abst_if_needed();
-    (*solver->drat) << add << cl
-    #ifdef STATS_NEEDED
-    << solver->sumConflicts
-    #endif
-    << fin << findelay;
+
+    cl.stats.ID = solver->clauseID++;
+    (*solver->drat) << add << cl << fin << findelay;
     if (!cl.red()) {
         n_occurs[toRemoveLit.toInt()]--;
         elim_calc_need_update.touch(toRemoveLit.var());
