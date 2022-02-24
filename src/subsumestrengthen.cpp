@@ -857,12 +857,13 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
             } else { //strengthen
                 lbool val = solver->value(subsLits[j]);
                 const uint64_t ID = solver->clauseID++;
-                (*solver->drat) << add << ID << subsLits[j] << fin;
                 if (val == l_False) {
+                    (*solver->drat) << add << ID << subsLits[j] << fin;
                     (*solver->drat) << add << solver->clauseID++ << fin;
                     solver->ok = false;
                     return false;
                 } else if (val == l_Undef) {
+                    (*solver->drat) << add << ID << subsLits[j] << fin;
                     solver->unit_cl_IDs[subsLits[j].var()] = ID;
                     solver->enqueue<false>(subsLits[j]);
                     solver->ok = solver->propagate_occur<false>();

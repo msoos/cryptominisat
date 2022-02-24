@@ -489,11 +489,9 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
     cl.recalc_abst_if_needed();
 
     //Drat
-    uint64_t ID;
     if (i - j > 0) {
-        ID = solver->clauseID++;
-        (*solver->drat) << add << ID << cl
-        << fin << findelay;
+        cl.stats.ID = solver->clauseID++;
+        (*solver->drat) << add << cl << fin << findelay;
     } else {
         solver->drat->forget_delay();
     }
@@ -505,13 +503,11 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
 
         case 1: {
             solver->enqueue<false>(cl[0]);
-            #ifdef STATS_NEEDED
-            solver->propStats.propsUnit++;
-            #endif
+            solver->unit_cl_IDs[cl[0].var()] = cl.stats.ID;
             return false;
         }
         case 2:
-            solver->attach_bin_clause(cl[0], cl[1], cl.red(), ID);
+            solver->attach_bin_clause(cl[0], cl[1], cl.red(), cl.stats.ID);
             return false;
 
         default:

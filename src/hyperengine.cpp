@@ -181,12 +181,8 @@ void HyperEngine::add_hyper_bin(const Lit p)
         #endif
         uint64_t ID = clauseID++;
         needToAddBinClause.insert(BinaryClause(p, ~deepestAncestor, true, ID));
-        *drat << add << ID << p << (~deepestAncestor)
-        #ifdef STATS_NEEDED
-        << 0
-        << sumConflicts
-        #endif
-        << fin;
+        assert(false && "FRAT will fail here");
+        *drat << add << ID << p << (~deepestAncestor) << fin;
 
         hyperBinNotAdded = false;
     } else {
