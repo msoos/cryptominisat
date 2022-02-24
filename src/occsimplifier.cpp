@@ -405,7 +405,7 @@ bool OccSimplifier::clean_clause(
 
     if (satisfied) {
         (*solver->drat) << findelay;
-        unlink_clause(offset, false);
+        unlink_clause(offset, false, false, only_set_is_removed);
         return true;
     }
 
@@ -2049,9 +2049,9 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
         #ifdef STATS_NEEDED
         double myrnd = solver->mtrand.randDblExc();
         if (myrnd <= solver->conf.dump_individual_cldata_ratio) {
-            stats.ID = solver->clauseID;
-            solver->clauseID++;
+            //TODO mark clause for dumping
         }
+        stats.ID = solver->clauseID++;
         #endif
 
         tmp_tern_res.clear();

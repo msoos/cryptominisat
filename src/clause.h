@@ -518,9 +518,6 @@ public:
     void makeIrred()
     {
         assert(isRed);
-        #if STATS_NEEDED
-        stats.ID = 0;
-        #endif
         isRed = false;
     }
 
