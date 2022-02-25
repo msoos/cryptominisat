@@ -846,6 +846,7 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
             if (subsLits[j] == lit_Undef) { //subsume
                 solver->detach_bin_clause(
                     subs[j].lit, subs[j].ws.lit2(), subs[j].ws.red(), subs[j].ws.get_ID());
+                (*solver->drat) << del << subs[j].ws.get_ID() << subs[j].lit << subs[j].ws.lit2() << fin;
                 if (!subs[j].ws.red()) {
                     simplifier->n_occurs[subs[j].lit.toInt()]--;
                     simplifier->n_occurs[subs[j].ws.lit2().toInt()]--;

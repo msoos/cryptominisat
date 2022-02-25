@@ -2407,6 +2407,7 @@ void OccSimplifier::remove_by_drat_recently_blocked_clauses(size_t origBlockedSi
     }
 
     for(size_t i = origBlockedSize; i < blockedClauses.size(); i++) {
+        assert(false && "FRAT -- this doesn't actually remove the clauses?? Maybe just remove them.");
         vector<Lit> lits;
         size_t at = 1;
         while(at < blockedClauses[i].size()) {

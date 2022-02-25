@@ -3364,6 +3364,7 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
 
 std::pair<size_t, size_t> Searcher::remove_useless_bins(bool except_marked)
 {
+    assert(false && "Does not work with FRAT");
     size_t removedIrred = 0;
     size_t removedRed = 0;
 
