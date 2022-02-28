@@ -148,7 +148,7 @@ DistillerLong::DistillerLong(Solver* _solver) :
     solver(_solver)
 {}
 
-bool DistillerLong::distill(const bool red, bool fullstats, bool only_rem_cl)
+bool DistillerLong::distill(const bool red, bool only_rem_cl)
 {
     assert(solver->ok);
     numCalls_red += (unsigned)red;

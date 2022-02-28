@@ -2031,12 +2031,12 @@ lbool Solver::execute_inprocess_strategy(
         } else if (token == "distill-cls") {
             //Enqueues literals in long + tri clauses two-by-two and propagates
             if (conf.do_distill_clauses) {
-                distill_long_cls->distill(false, true, false);
+                distill_long_cls->distill(false, false);
             }
         } else if (token == "distill-cls-onlyrem") {
             //Enqueues literals in long + tri clauses two-by-two and propagates
             if (conf.do_distill_clauses) {
-                distill_long_cls->distill(false, true, true);
+                distill_long_cls->distill(false, true);
             }
         } else if (token == "must-distill-cls") {
             //Enqueues literals in long + tri clauses two-by-two and propagates
@@ -2046,7 +2046,7 @@ lbool Solver::execute_inprocess_strategy(
                     cl->distilled = 0;
                     cl->tried_to_remove = 0;
                 }
-                distill_long_cls->distill(false, true, false);
+                distill_long_cls->distill(false, false);
             }
         } else if (token == "must-distill-cls-onlyrem") {
             //Enqueues literals in long + tri clauses two-by-two and propagates
@@ -2055,7 +2055,7 @@ lbool Solver::execute_inprocess_strategy(
                     Clause* cl = cl_alloc.ptr(offs);
                     cl->tried_to_remove = 0;
                 }
-                distill_long_cls->distill(false, true, true);
+                distill_long_cls->distill(false, true);
             }
         } else if (token == "str-impl") {
             if (conf.doStrSubImplicit) {
