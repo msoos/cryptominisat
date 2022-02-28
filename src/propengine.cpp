@@ -588,6 +588,7 @@ bool PropEngine::propagate_occur()
             const Lit p = trail[i].lit;
             uint64_t ID = clauseID++;
             *drat << add << ID << p << fin;
+            assert(unit_cl_IDs[p.var()] == 0);
             unit_cl_IDs[p.var()] = ID;
         }
     }

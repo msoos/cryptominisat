@@ -821,6 +821,7 @@ bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* ou
 
             case 1: {
                 cout << "WARNING -- could be a FRAT issue" << endl;
+                assert(false);
                 Lit lit = Lit(x[0], !x.rhs);
                 if (solver->value(lit) == l_False) {
                     solver->ok = false;

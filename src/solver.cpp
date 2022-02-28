@@ -1574,7 +1574,7 @@ lbool Solver::solve_with_assumptions(
     conf.conf_needed = true;
     set_must_interrupt_asap();
     assert(decisionLevel()== 0);
-    assert(!ok || solver->prop_at_head());
+    assert(!ok || prop_at_head());
     if (_assumptions == NULL || _assumptions->empty()) {
         if (status == l_False) {
             assert(!okay());
@@ -1856,7 +1856,7 @@ void Solver::handle_found_solution(const lbool status, const bool only_sampling_
     if (status == l_True) {
         extend_solution(only_sampling_solution);
         cancelUntil(0);
-        assert(solver->prop_at_head());
+        assert(prop_at_head());
 
         #ifdef DEBUG_ATTACH_MORE
         find_all_attach();
@@ -2069,13 +2069,14 @@ lbool Solver::execute_inprocess_strategy(
             comm_finder.compute();
             #endif
         } else if (token == "renumber" || token == "must-renumber") {
-            if (conf.doRenumberVars) {
+            if (conf.doRenumberVars && !drat->enabled()) {
                 if (!renumber_variables(token == "must-renumber" || conf.must_renumber)) {
                     return l_False;
                 }
             }
         } else if (token == "breakid") {
             if (conf.doBreakid
+                && !drat->enabled()
                 && (solveStats.num_simplify == 0 ||
                    (solveStats.num_simplify % conf.breakid_every_n == (conf.breakid_every_n-1)))
             ) {
@@ -2935,6 +2936,9 @@ bool Solver::fully_enqueue_these(const vector<LitEnqueue>& toEnqueue)
 
 bool Solver::fully_enqueue_this(const LitEnqueue lit_ID)
 {
+    assert(decisionLevel() == 0);
+    assert(ok);
+
     const lbool val = value(lit_ID.lit);
     if (val == l_Undef) {
         unit_cl_IDs[lit_ID.lit.var()] = lit_ID.ID;

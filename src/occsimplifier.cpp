@@ -260,7 +260,7 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
 
     //go through in reverse order
     vector<Lit> lits;
-    for (int i = (int)blockedClauses.size()-1; i >= 0; i--) {
+    for (long int i = (int)blockedClauses.size()-1; i >= 0; i--) {
         BlockedClauses* it = &blockedClauses[i];
         if (it->toRemove) {
             continue;
@@ -427,6 +427,7 @@ bool OccSimplifier::clean_clause(
             return false;
 
         case 1: {
+            assert(solver->unit_cl_IDs[cl[0].var()] == 0);
             solver->enqueue<false>(cl[0]);
             solver->unit_cl_IDs[cl[0].var()] = cl.stats.ID;
             unlink_clause(offset, false, false, only_set_is_removed);
@@ -502,6 +503,7 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
             return false;
 
         case 1: {
+            assert(solver->unit_cl_IDs[cl[0].var()] == 0);
             solver->enqueue<false>(cl[0]);
             solver->unit_cl_IDs[cl[0].var()] = cl.stats.ID;
             return false;
@@ -2406,13 +2408,16 @@ void OccSimplifier::remove_by_drat_recently_blocked_clauses(size_t origBlockedSi
         cout << "c Deleting blocked clauses for DRAT" << endl;
     }
 
+    uint32_t at_ID = 0;
+    vector<Lit> lits;
     for(size_t i = origBlockedSize; i < blockedClauses.size(); i++) {
-        assert(false && "FRAT -- this doesn't actually remove the clauses?? Maybe just remove them.");
-        vector<Lit> lits;
+        lits.clear();
         size_t at = 1;
         while(at < blockedClauses[i].size()) {
             const Lit l = blockedClauses[i].at(at, blkcls);
             if (l == lit_Undef) {
+                const uint64_t ID = newly_blocked_cls_IDs[at_ID];
+                (*solver->drat) << del << ID << lits << fin;
                 lits.clear();
             } else {
                 lits.push_back(solver->map_outer_to_inter(l));
@@ -2685,7 +2690,7 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(
 
                     lits.resize(cl.size());
                     std::copy(cl.begin(), cl.end(), lits.begin());
-                    add_clause_to_blck(lits);
+                    add_clause_to_blck(lits, cl.stats.ID);
                 } else {
                     red = true;
                 }
@@ -2711,7 +2716,7 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(
             lits[1] = watch.lit2();
             if (!watch.red()) {
                 if (add_to_block) {
-                    add_clause_to_blck(lits);
+                    add_clause_to_blck(lits, watch.get_ID());
                 }
                 n_occurs[lits[0].toInt()]--;
                 n_occurs[lits[1].toInt()]--;
@@ -2740,7 +2745,7 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(
     }
 }
 
-void OccSimplifier::add_clause_to_blck(const vector<Lit>& lits)
+void OccSimplifier::add_clause_to_blck(const vector<Lit>& lits, uint64_t ID)
 {
     for(const Lit& l: lits) {
         removed_cl_with_var.touch(l.var());
@@ -2754,6 +2759,7 @@ void OccSimplifier::add_clause_to_blck(const vector<Lit>& lits)
     }
     blkcls.push_back(lit_Undef);
     blockedClauses.back().end = blkcls.size();
+    newly_blocked_cls_IDs.push_back(ID);
 }
 
 bool OccSimplifier::find_or_gate(
@@ -3080,8 +3086,7 @@ bool OccSimplifier::find_equivalence_gate(
             #endif
             if (seen[(~w.lit2()).toInt()]) {
                 out_b.push(w);
-                assert(false && "FRAT ID needed");
-                out_a.push(Watched(~w.lit2(), false, 0));
+                out_a.push(Watched(~w.lit2(), false, w.get_ID()));
                 found = true;
                 break;
             }
