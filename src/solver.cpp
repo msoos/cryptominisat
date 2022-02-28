@@ -3769,8 +3769,8 @@ const Lit, const double
     #ifdef WEIGHTED_SAMPLING
     //cout << "set weight called lit: " << lit << " w: " << weight << endl;
     assert(lit.var() < nVars());
-    if (weights_given.size() < solver->nVars()) {
-        weights_given.resize(solver->nVars(), GivenW());
+    if (weights_given.size() < nVars()) {
+        weights_given.resize(nVars(), GivenW());
     }
 
     if ((weights_given[lit.var()].pos && !lit.sign())
@@ -4475,8 +4475,8 @@ bool Solver::assump_contains_xor_clash()
     }
 
     bool ret = false;
-    for(const auto& l: solver->assumptions) {
-        const Lit p = solver->map_outer_to_inter(l.lit_outer);
+    for(const auto& l: assumptions) {
+        const Lit p = map_outer_to_inter(l.lit_outer);
         if (seen[p.var()] == 1) {
             //We cannot have a clash variable that's an assumption
             //it would enqueue the assumption variable but it's a clash
