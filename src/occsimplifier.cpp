@@ -701,6 +701,7 @@ void OccSimplifier::add_back_to_solver()
             } else {
                 solver->litStats.irredLits -= cl->size();
             }
+            *solver->drat << del << *cl << fin;
             solver->free_cl(cl);
             continue;
         }
