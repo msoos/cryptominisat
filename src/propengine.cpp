@@ -559,6 +559,7 @@ bool PropEngine::propagate_occur()
 {
     assert(ok);
     uint64_t old_trail_size = trail.size();
+    bool ret = true;
 
     while (qhead < trail.size()) {
         const Lit p = trail[qhead].lit;
@@ -572,12 +573,12 @@ bool PropEngine::propagate_occur()
         ) {
             if (it->isClause()) {
                 if (!propagate_long_clause_occur<update_bogoprops>(it->get_offset()))
-                    return false;
+                    ret = false;
             }
 
             if (it->isBin()) {
                 if (!propagate_binary_clause_occur<update_bogoprops>(*it))
-                    return false;
+                    ret = false;
             }
         }
     }
@@ -593,7 +594,11 @@ bool PropEngine::propagate_occur()
         }
     }
 
-    return true;
+    if (!ret) {
+        *drat << add << clauseID++ << fin;
+    }
+
+    return ret;
 }
 
 template bool PropEngine::propagate_occur<true>();
