@@ -2700,9 +2700,7 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(
             //Remove -- only DRAT the ones that are redundant
             //The irred will be removed thanks to 'blocked' system
             unlink_clause(offset, cl.red(), true, true);
-        }
-
-        if (watch.isBin()) {
+        } else if (watch.isBin()) {
             //Update stats
             if (!watch.red()) {
                 bvestats.clauses_elimed_bin++;
@@ -2735,6 +2733,8 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(
             //*limit_to_decrease -= (long)solver->watches[lits[0]].size()/4; //This is zero
             *limit_to_decrease -= (long)solver->watches[lits[1]].size()/4;
             solver->detach_bin_clause(lits[0], lits[1], red, watch.get_ID(), true, true);
+        } else {
+            assert(false);
         }
 
         if (solver->conf.verbosity >= 3 && !lits.empty()) {
@@ -2746,7 +2746,7 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(
     }
 }
 
-void OccSimplifier::add_clause_to_blck(const vector<Lit>& lits, uint64_t ID)
+void OccSimplifier::add_clause_to_blck(const vector<Lit>& lits, const uint64_t ID)
 {
     for(const Lit& l: lits) {
         removed_cl_with_var.touch(l.var());
