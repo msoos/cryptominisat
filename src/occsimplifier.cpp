@@ -2416,7 +2416,7 @@ void OccSimplifier::remove_by_drat_recently_blocked_clauses(size_t origBlockedSi
         while(at < blockedClauses[i].size()) {
             const Lit l = blockedClauses[i].at(at, blkcls);
             if (l == lit_Undef) {
-                const uint64_t ID = newly_blocked_cls_IDs[at_ID];
+                const uint64_t ID = newly_blocked_cls_IDs[at_ID++];
                 (*solver->drat) << del << ID << lits << fin;
                 lits.clear();
             } else {
@@ -2425,6 +2425,7 @@ void OccSimplifier::remove_by_drat_recently_blocked_clauses(size_t origBlockedSi
             at++;
         }
     }
+    newly_blocked_cls_IDs.clear();
 }
 
 void OccSimplifier::buildBlockedMap()
