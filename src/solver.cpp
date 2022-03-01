@@ -415,6 +415,9 @@ Clause* Solver::add_clause_int(
         if (finalLits) {
             finalLits->clear();
         }
+        if (remove_drat) {
+            *drat << del << cl_stats->ID << lits << fin;
+        }
         return NULL;
     }
 
@@ -721,6 +724,7 @@ bool Solver::add_clause_outer(vector<Lit>& ps)
     const size_t origTrailSize = trail.size();
 
     if (!addClauseHelper(ps)) {
+        *drat << del << stats.ID << ps << fin;
         return false;
     }
 
