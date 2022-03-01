@@ -365,6 +365,8 @@ bool OccSimplifier::clean_clause(
 
     bool satisfied = false;
     Clause& cl = *solver->cl_alloc.ptr(offset);
+    assert(!cl.getRemoved());
+    assert(!cl.freed());
     (*solver->drat) << deldelay << cl << fin;
 
     Lit* i = cl.begin();
@@ -447,10 +449,12 @@ bool OccSimplifier::clean_clause(
             return true;
         }
         default:
-            cl.setStrenghtened();
-            cl.recalc_abst_if_needed();
-            if (!cl.red()) {
-                added_long_cl.push_back(offset);
+            if (i-j > 0) {
+                cl.setStrenghtened();
+                cl.recalc_abst_if_needed();
+                if (!cl.red()) {
+                    added_long_cl.push_back(offset);
+                }
             }
             return true;
     }
@@ -917,8 +921,8 @@ bool OccSimplifier::clear_vars_from_cls_that_have_been_set()
                 continue;
             }
 
-            ws[j++] = w;
             assert(w.isClause());
+            ws[j++] = w;
             ClOffset offs = w.get_offset();
             Clause* cl = solver->cl_alloc.ptr(offs);
             if (cl->getRemoved() || cl->freed()) {
@@ -2454,6 +2458,15 @@ void OccSimplifier::finishUp(
         if (solver->okay()) {
             solver->ok = solver->propagate<true>().isNULL();
         }
+    } else {
+        for(const auto& offs: clauses) {
+            Clause* cl = solver->cl_alloc.ptr(offs);
+            if (cl->getRemoved() || cl->freed()) {
+                continue;
+            }
+            *solver->drat << del << *cl << fin;
+            solver->free_cl(cl);
+        }
     }
 
     //Update global stats
@@ -3770,7 +3783,7 @@ bool OccSimplifier::add_varelim_resolvent(
         finalLits //Literals in new clause
         , false //Is the new clause redundant?
         , &backup_stats//Statistics for this new clause (usage, etc.)
-        , false //Should clause be attached?
+        , false //Should clause be attached if long?
         , &finalLits //Return final set of literals here
     );
 
