@@ -1184,6 +1184,7 @@ bool OccSimplifier::eliminate_vars()
                     limit_to_decrease = &norm_varelim_time_limit;
                     goto end;
                 }
+
                 limit_to_decrease = &norm_varelim_time_limit;
                 assert(solver->okay());
                 assert(solver->prop_at_head());

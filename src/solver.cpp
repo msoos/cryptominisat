@@ -1622,7 +1622,10 @@ void Solver::write_final_frat_clauses()
             *drat << finalcl << unit_cl_IDs[i] << l << fin;
         }
     }
-    *drat << finalcl << clauseID-1 << fin;
+    if (varReplacer) varReplacer->delete_frat_cls();
+    if (!okay()) {
+        *drat << finalcl << clauseID-1 << fin;
+    }
 }
 
 void Solver::write_one_final_frat_cl(const ClOffset offs)
