@@ -460,9 +460,9 @@ bool OccSimplifier::clean_clause(
 bool OccSimplifier::complete_clean_clause(Clause& cl)
 {
     assert(solver->okay());
-
     assert(!solver->drat->something_delayed());
     assert(cl.size() > 2);
+
     (*solver->drat) << deldelay << cl << fin;
 
     //Remove all lits from stats
@@ -477,7 +477,6 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
     Lit *j = i;
     for (Lit *end = cl.end(); i != end; i++) {
         if (solver->value(*i) == l_True) {
-
             (*solver->drat) << findelay;
             return false;
         }
@@ -750,7 +749,6 @@ void OccSimplifier::eliminate_empty_resolvent_vars()
     assert(solver->okay());
     assert(solver->prop_at_head());
     assert(added_irred_bin.empty());
-    assert(added_long_cl.empty());
 
     uint32_t var_elimed = 0;
     double myTime = cpuTime();
@@ -1860,9 +1858,9 @@ bool OccSimplifier::simplify(const bool _startup, const std::string& schedule)
     const size_t origBlockedSize = blockedClauses.size();
     const size_t origTrailSize = solver->trail_size();
 
-
     sampling_vars_occsimp.clear();
     if (solver->conf.sampling_vars) {
+        // sampling vars should not be eliminated
         assert(!solver->fast_backw.fast_backw_on);
         sampling_vars_occsimp.resize(solver->nVars(), false);
         for(uint32_t outside_var: *solver->conf.sampling_vars) {
@@ -1874,6 +1872,7 @@ bool OccSimplifier::simplify(const bool _startup, const std::string& schedule)
             }
         }
     } else if (solver->fast_backw.fast_backw_on) {
+        // fast backward arjun system
         sampling_vars_occsimp.resize(solver->nVars(), false);
         for(Lit p: *solver->fast_backw._assumptions) {
             uint32_t var = solver->fast_backw.indic_to_var->at(p.var());
@@ -1911,8 +1910,6 @@ bool OccSimplifier::simplify(const bool _startup, const std::string& schedule)
                 sampling_vars_occsimp[v] = true;
             }
         }
-
-
     } else {
         sampling_vars_occsimp.shrink_to_fit();
     }
