@@ -2014,7 +2014,7 @@ lbool Solver::execute_inprocess_strategy(
                 }
             }
         } else if (token == "intree-probe") {
-            if (conf.doIntreeProbe && conf.doFindAndReplaceEqLits) {
+            if (conf.doIntreeProbe && conf.doFindAndReplaceEqLits && !drat->enabled()) {
                 intree->intree_probe();
             }
         } else if (token == "sub-str-cls-with-bin") {
