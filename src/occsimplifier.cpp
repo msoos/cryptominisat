@@ -3604,18 +3604,22 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
 
     // see:  http://baldur.iti.kit.edu/sat/files/ex04.pdf
     bool gates = false;
-    if (find_equivalence_gate(lit, poss, negs, gates_poss, gates_negs)) {
-        gates = true;
-    } else if (find_or_gate(lit, poss, negs, gates_poss, gates_negs)) {
-        gates = true;
-    } else if (find_or_gate(~lit, negs, poss, gates_negs, gates_poss)) {
-        gates = true;
-    } else if (find_ite_gate(lit, poss, negs, gates_poss, gates_negs)) {
-        gates = true;
-    } else if (find_ite_gate(~lit, negs, poss, gates_negs, gates_poss)) {
-        gates = true;
-    } else if (find_xor_gate(lit, poss, negs, gates_poss, gates_negs)) {
-        gates = true;
+
+    //TODO fix to work with FRAT
+    if (!solver->drat->enabled()) {
+        if (find_equivalence_gate(lit, poss, negs, gates_poss, gates_negs)) {
+            gates = true;
+        } else if (find_or_gate(lit, poss, negs, gates_poss, gates_negs)) {
+            gates = true;
+        } else if (find_or_gate(~lit, negs, poss, gates_negs, gates_poss)) {
+            gates = true;
+        } else if (find_ite_gate(lit, poss, negs, gates_poss, gates_negs)) {
+            gates = true;
+        } else if (find_ite_gate(~lit, negs, poss, gates_negs, gates_poss)) {
+            gates = true;
+        } else if (find_xor_gate(lit, poss, negs, gates_poss, gates_negs)) {
+            gates = true;
+        }
     }
 
     if (gates && solver->conf.verbosity > 5) {

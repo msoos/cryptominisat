@@ -1517,7 +1517,7 @@ lbool Solver::solve_with_assumptions(
     const bool only_sampling_solution
 ) {
     if (drat->enabled()) {
-        tbdd_init_drat(drat->getFile(), nVars());
+        tbdd_init_frat(drat->getFile(), nVars());
     }
     move_to_outside_assumps(_assumptions);
     reset_for_solving();
