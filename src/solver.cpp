@@ -430,7 +430,7 @@ Clause* Solver::add_clause_int(
         *finalLits = ps;
     }
 
-    uint64_t ID;
+    uint32_t ID;
     if (remove_drat) {
         assert(cl_stats);
         assert(drat_first == lit_Undef);
@@ -1517,7 +1517,7 @@ lbool Solver::solve_with_assumptions(
     const bool only_sampling_solution
 ) {
     if (drat->enabled()) {
-        tbdd_init_frat(drat->getFile(), nVars());
+        //tbdd_init_frat(drat->getFile(), nVars());
     }
     move_to_outside_assumps(_assumptions);
     reset_for_solving();
@@ -1586,7 +1586,7 @@ lbool Solver::solve_with_assumptions(
     }
 
     if (drat->enabled()) {
-        tbdd_done();
+        //tbdd_done();
         write_final_frat_clauses();
         drat->flush();
     }

@@ -246,7 +246,7 @@ void Searcher::normalClMinim()
         const PropBy& reason = varData[learnt_clause[i].var()].reason;
         size_t size;
         Lit *lits = NULL;
-        uint64_t ID;
+        uint32_t ID;
         PropByType type = reason.getType();
         if (type == null_clause_t) {
             learnt_clause[j++] = learnt_clause[i];
@@ -390,7 +390,7 @@ void Searcher::add_literals_from_confl_to_learnt(
 
     Lit* lits = NULL;
     size_t size = 0;
-    uint64_t ID = 0;
+    uint32_t ID = 0;
     switch (confl.getType()) {
         case binary_t : {
             sumAntecedentsLits += 2;
@@ -607,7 +607,7 @@ void Searcher::create_learnt_clause(PropBy confl)
     pathC = 0;
     int index = trail.size() - 1;
     Lit p = lit_Undef;
-    uint64_t ID;
+    uint32_t ID;
 
     Lit lit0 = lit_Error;
     switch (confl.getType()) {
@@ -952,7 +952,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
         //Must have a reason
         assert(!reason.isNULL());
 
-        uint64_t ID;
+        uint32_t ID;
         size_t size;
         Lit* lits = NULL;
         switch (type) {
@@ -1087,7 +1087,7 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
                 assert(varData[x].level > 0);
                 out_conflict.push_back(~trail[i].lit);
             } else {
-                uint64_t ID;
+                uint32_t ID;
                 switch(reason.getType()) {
                     case PropByType::clause_t : {
                         const Clause& cl = *cl_alloc.ptr(reason.get_offset());
@@ -1748,7 +1748,7 @@ Clause* Searcher::handle_last_confl(
     [[maybe_unused]] const uint32_t glue_before_minim,
     [[maybe_unused]] const bool is_decision,
     [[maybe_unused]] const uint32_t connects_num_communities,
-    uint64_t& ID
+    uint32_t& ID
 ) {
     #ifdef STATS_NEEDED
     bool to_dump = false;
@@ -1933,7 +1933,7 @@ bool Searcher::handle_conflict(PropBy confl)
     print_learning_debug_info();
     assert(value(learnt_clause[0]) == l_Undef);
     glue = std::min<uint32_t>(glue, std::numeric_limits<uint32_t>::max());
-    uint64_t ID;
+    uint32_t ID;
     Clause* cl = handle_last_confl(
         glue,
         old_decision_level,
@@ -3439,7 +3439,7 @@ PropBy Searcher::propagate() {
                 << endl;
             }
             #endif
-            const uint64_t ID = clauseID++;
+            const uint32_t ID = clauseID++;
             *drat << add << ID << trail[i].lit << fin;
             assert(solver->unit_cl_IDs[trail[i].lit.var()] == 0);
             unit_cl_IDs[trail[i].lit.var()] = ID;
@@ -3814,7 +3814,7 @@ ConflictData Searcher::find_conflict_level(PropBy& pb)
         Lit* clause = NULL;
         uint32_t size = 0;
         ClOffset offs;
-        uint64_t ID;
+        uint32_t ID;
         switch(pb.getType()) {
             case PropByType::clause_t: {
                 offs = pb.get_offset();

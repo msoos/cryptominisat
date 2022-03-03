@@ -311,7 +311,7 @@ class Searcher : public HyperEngine
             , const uint32_t glue_before_minim
             , const bool is_decision
             , const uint32_t connects_num_communities
-            , uint64_t& ID
+            , uint32_t& ID
         );
 
         /////////////////////

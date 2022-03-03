@@ -187,7 +187,7 @@ public:
     bool xor_clauses_updated = false;
     BinTriStats binTri;
     LitStats litStats;
-    int64_t clauseID = 1;
+    int32_t clauseID = 1;
     int64_t restartID = 1;
 
     //Temporaries
@@ -352,7 +352,7 @@ public:
     that contained "lit, ~lit". So "lit" must be set to a value
     Contains OUTER variables */
     vector<bool> undef_must_set_vars;
-    vector<uint64_t> unit_cl_IDs;
+    vector<uint32_t> unit_cl_IDs;
 
 protected:
     virtual void new_var(

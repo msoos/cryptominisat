@@ -50,7 +50,7 @@ class PropBy
         //2: binary
         //3: tertiary
         uint32_t data2:30;
-        uint64_t ID;
+        uint32_t ID;
 
     public:
         PropBy() :

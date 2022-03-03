@@ -428,7 +428,7 @@ bool ClauseCleaner::full_clean(Clause& cl)
         }
     }
 
-    uint64_t ID;
+    uint32_t ID;
     if (i != j) {
         cl.shrink(i-j);
         ID = solver->clauseID++;

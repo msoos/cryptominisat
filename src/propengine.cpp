@@ -587,7 +587,7 @@ bool PropEngine::propagate_occur()
         //We onlyl need to add the new ones, not the ones we came into this function with
         for(uint32_t i = old_trail_size+1; i < trail.size(); i++) {
             const Lit p = trail[i].lit;
-            uint64_t ID = clauseID++;
+            uint32_t ID = clauseID++;
             *drat << add << ID << p << fin;
             assert(unit_cl_IDs[p.var()] == 0);
             unit_cl_IDs[p.var()] = ID;

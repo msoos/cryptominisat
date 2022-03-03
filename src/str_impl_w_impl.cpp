@@ -167,7 +167,7 @@ void StrImplWImpl::strengthen_bin_with_bin(
     //Enqeue literal
     if (rem) {
         str_impl_data.remLitFromBin++;
-        uint64_t ID = solver->clauseID++;
+        uint32_t ID = solver->clauseID++;
         str_impl_data.toEnqueue.push_back(LitEnqueue(lit, ID));
         (*solver->drat) << add << ID << lit << fin;
     }

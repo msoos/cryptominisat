@@ -191,7 +191,7 @@ struct LitEnqueue
     {}
 
     Lit lit;
-    uint64_t ID;
+    uint32_t ID;
 };
 
 class BinaryClause {
@@ -200,7 +200,7 @@ class BinaryClause {
             const Lit _lit1,
             const Lit _lit2,
             const bool _red,
-            const uint64_t _ID):
+            const uint32_t _ID):
             lit1(_lit1),
             lit2(_lit2),
             red(_red),
@@ -241,7 +241,7 @@ class BinaryClause {
             return red;
         }
 
-        uint64_t getID() const
+        uint32_t getID() const
         {
             return ID;
         }
@@ -250,7 +250,7 @@ class BinaryClause {
         Lit lit1;
         Lit lit2;
         bool red;
-        uint64_t ID;
+        uint32_t ID;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const BinaryClause val)

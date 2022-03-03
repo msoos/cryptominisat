@@ -80,7 +80,7 @@ class EGaussian {
         GaussQData& gqd
     );
 
-    vector<Lit>* get_reason(uint32_t row, uint64_t&  out_ID);
+    vector<Lit>* get_reason(uint32_t row, uint32_t&  out_ID);
 
     // when basic variable is touched , eliminate one col
     void eliminate_col(

@@ -405,7 +405,7 @@ inline void VarReplacer::updateBin(
 
     //Two lits are the same in BIN
     if (lit1 == lit2) {
-        uint64_t ID = solver->clauseID++;
+        uint32_t ID = solver->clauseID++;
         (*solver->drat) << add << ID << lit2 << fin;
         assert(solver->unit_cl_IDs[lit2.var()] == 0);
         solver->unit_cl_IDs[lit2.var()] = ID;
@@ -795,7 +795,7 @@ bool VarReplacer::handleAlreadyReplaced(const Lit lit1, const Lit lit2)
 {
     //OOps, already inside, but with inverse polarity, UNSAT
     if (lit1.sign() != lit2.sign()) {
-        uint64_t ID;
+        uint32_t ID;
 
         (*solver->drat)
         << add << solver->clauseID++ << ~lit1 << lit2 << fin
@@ -853,7 +853,7 @@ bool VarReplacer::handleOneSet(
             toEnqueue = lit1 ^ (val2 == l_False);
         }
         solver->enqueue<false>(toEnqueue);
-        uint64_t ID = solver->clauseID++;
+        uint32_t ID = solver->clauseID++;
         (*solver->drat) << add << ID << toEnqueue << fin;
         assert(solver->unit_cl_IDs[toEnqueue.var()] == 0);
         solver->unit_cl_IDs[toEnqueue.var()] = ID;
@@ -902,7 +902,7 @@ bool VarReplacer::replace(
         return handleAlreadyReplaced(lit1, lit2);
     }
 
-    uint64_t ID = solver->clauseID++;
+    uint32_t ID = solver->clauseID++;
     uint64_t ID2 = solver->clauseID++;
     (*solver->drat)
     << add << ID << ~lit1 << lit2 << fin
