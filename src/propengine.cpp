@@ -287,170 +287,6 @@ bool PropEngine::prop_long_cl_any_order(
     return true;
 }
 
-PropBy PropEngine::propagate_any_order_fast()
-{
-    PropBy confl;
-
-    #ifdef VERBOSE_DEBUG_PROP
-    cout << "Fast Propagation started" << endl;
-    #endif
-
-    //so we don't re-calculate it all the time
-    uint32_t declevel = decisionLevel();
-
-    const bool fast_confl_break = solver->conf.fast_confl_break;
-
-    int64_t num_props = 0;
-    while (qhead < trail.size() && (!fast_confl_break || confl.isNULL())) {
-        const Lit p = trail[qhead].lit;     // 'p' is enqueued fact to propagate.
-        const uint32_t currLevel = trail[qhead].lev;
-        qhead++;
-        watch_subarray ws = watches[~p];
-        Watched* i;
-        Watched* j;
-        Watched* end;
-        num_props++;
-
-        for (i = j = ws.begin(), end = ws.end(); unlikely(i != end);) {
-            //Prop bin clause
-            if (i->isBin()) {
-                assert(j < end);
-                *j++ = *i;
-                const lbool val = value(i->lit2());
-                if (val == l_Undef) {
-                    #ifdef STATS_NEEDED
-                    if (i->red())
-                        propStats.propsBinRed++;
-                    else
-                        propStats.propsBinIrred++;
-                    #endif
-                    enqueue<false>(i->lit2(), currLevel, PropBy(
-                        ~p, i->red(), i->get_ID()));
-                    i++;
-                } else if (val == l_False) {
-                    confl = PropBy(~p, i->red(), i->get_ID());
-                    failBinLit = i->lit2();
-                    #ifdef STATS_NEEDED
-                    if (i->red())
-                        lastConflictCausedBy = ConflCausedBy::binred;
-                    else
-                        lastConflictCausedBy = ConflCausedBy::binirred;
-                    #endif
-                    i++;
-                    while (i < end) {
-                        *j++ = *i++;
-                    }
-                    qhead = trail.size();
-                } else {
-                    i++;
-                }
-                continue;
-            }
-
-            //propagate normal clause
-            //assert(i->isClause());
-            Lit blocked = i->getBlockedLit();
-            if (likely(value(blocked) == l_True)) {
-                *j++ = *i++;
-                continue;
-            }
-
-            const ClOffset offset = i->get_offset();
-            Clause& c = *cl_alloc.ptr(offset);
-            Lit      false_lit = ~p;
-            if (c[0] == false_lit) {
-                c[0] = c[1], c[1] = false_lit;
-            }
-            assert(c[1] == false_lit);
-            i++;
-
-            Lit     first = c[0];
-            Watched w     = Watched(offset, first);
-            if (first != blocked && value(first) == l_True) {
-                *j++ = w;
-                continue;
-            }
-
-            // Look for new watch:
-            for (uint32_t k = 2; k < c.size(); k++) {
-                //Literal is either unset or satisfied, attach to other watchlist
-                if (likely(value(c[k]) != l_False)) {
-                    c[1] = c[k];
-                    c[k] = false_lit;
-                    watches[c[1]].push(w);
-                    goto nextClause;
-                }
-            }
-
-            // Did not find watch -- clause is unit under assignment:
-            *j++ = w;
-            if (value(c[0]) == l_False) {
-                confl = PropBy(offset);
-                #ifdef STATS_NEEDED
-                if (c.red()) {
-                    red_stats_extra[c.stats.extra_pos].conflicts_made++;
-                    lastConflictCausedBy = ConflCausedBy::longred;
-                } else {
-                    lastConflictCausedBy = ConflCausedBy::longirred;
-                }
-                #endif
-                #ifdef VERBOSE_DEBUG
-                cout << "Conflicting on clause:" << c << endl;
-                #endif
-                while (i < end) {
-                    *j++ = *i++;
-                }
-                assert(j <= end);
-                qhead = trail.size();
-            } else {
-                #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
-                c.stats.props_made++;
-                #endif
-                #ifdef STATS_NEEDED
-                if (c.red())
-                    propStats.propsLongRed++;
-                else
-                    propStats.propsLongIrred++;
-                #endif
-                if (currLevel == declevel) {
-                    enqueue<false>(c[0], currLevel, PropBy(offset));
-                } else {
-                    uint32_t nMaxLevel = currLevel;
-                    uint32_t nMaxInd = 1;
-                    // pass over all the literals in the clause and find the one with the biggest level
-                    for (uint32_t nInd = 2; nInd < c.size(); ++nInd) {
-                        uint32_t nLevel = varData[c[nInd].var()].level;
-                        if (nLevel > nMaxLevel) {
-                            nMaxLevel = nLevel;
-                            nMaxInd = nInd;
-                        }
-                    }
-
-                    if (nMaxInd != 1) {
-                        std::swap(c[1], c[nMaxInd]);
-                        j--; // undo last watch
-                        watches[c[1]].push(w);
-                    }
-
-                    enqueue<false>(c[0], nMaxLevel, PropBy(offset));
-                }
-            }
-
-            nextClause:;
-        }
-        ws.shrink_(i-j);
-    }
-    qhead = trail.size();
-    simpDB_props -= num_props;
-    propStats.propagations += (uint64_t)num_props;
-
-    #ifdef VERBOSE_DEBUG
-    cout << "Propagation (propagate_any_order_fast) ended." << endl;
-    #endif
-
-    return confl;
-}
-
 template<bool update_bogoprops, bool red_also, bool use_disable>
 PropBy PropEngine::propagate_any_order()
 {
@@ -472,6 +308,7 @@ PropBy PropEngine::propagate_any_order()
             propStats.bogoProps += ws.size()/4 + 1;
         }
         propStats.propagations++;
+        simpDB_props--;
         for (; i != end; i++) {
             if (likely(i->isBin())) {
                 *j++ = *i;
@@ -580,17 +417,6 @@ bool PropEngine::propagate_occur()
                 if (!propagate_binary_clause_occur<update_bogoprops>(*it))
                     ret = false;
             }
-        }
-    }
-
-    if (decisionLevel() == 0) {
-        //We onlyl need to add the new ones, not the ones we came into this function with
-        for(uint32_t i = old_trail_size+1; i < trail.size(); i++) {
-            const Lit p = trail[i].lit;
-            uint32_t ID = clauseID++;
-            *drat << add << ID << p << fin;
-            assert(unit_cl_IDs[p.var()] == 0);
-            unit_cl_IDs[p.var()] = ID;
         }
     }
 

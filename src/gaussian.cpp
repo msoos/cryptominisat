@@ -521,7 +521,6 @@ gret EGaussian::adjust_matrix()
                 bool xorEqualFalse = !mat[row_n].rhs();
                 tmp_clause[0] = Lit(tmp_clause[0].var(), xorEqualFalse);
                 assert(solver->value(tmp_clause[0].var()) == l_Undef);
-                solver->enqueue<false>(tmp_clause[0]); // propagation
                 if (solver->drat->enabled()) {
                     xor_constraint* bdd = bdd_create(row_n);
                     ilist out = ilist_new(1);
@@ -530,6 +529,7 @@ gret EGaussian::adjust_matrix()
                     assert_clause(out);
                     delete bdd;
                 }
+                solver->enqueue<false>(tmp_clause[0]); // propagation
 
                 #ifdef VERBOSE_DEBUG
                 cout << "-> UNIT during adjust: " << tmp_clause[0] << endl;

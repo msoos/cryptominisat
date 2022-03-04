@@ -278,19 +278,6 @@ protected:
 
     friend class EGaussian;
 
-    PropBy propagate_any_order_fast();
-    template<bool update_bogoprops, bool red_also = true, bool use_disable = false>
-    PropBy propagate_any_order();
-    template<bool update_bogoprops>
-    PropResult prop_normal_helper(
-        Clause& c
-        , ClOffset offset
-        , Watched*& j
-        , const Lit p
-    );
-    template<bool update_bogoprops>
-    PropResult handle_normal_prop_fail(Clause& c, ClOffset offset, PropBy& confl);
-
     /////////////////
     // Operations on clauses:
     /////////////////
@@ -357,8 +344,22 @@ protected:
         return mem;
     }
 
+protected:
+    template<bool update_bogoprops, bool red_also = true, bool use_disable = false>
+    PropBy propagate_any_order();
+    template<bool update_bogoprops>
+    PropResult prop_normal_helper(
+        Clause& c
+        , ClOffset offset
+        , Watched*& j
+        , const Lit p
+    );
+    template<bool update_bogoprops>
+    PropResult handle_normal_prop_fail(Clause& c, ClOffset offset, PropBy& confl);
+
 private:
     Solver* solver;
+
     template<bool update_bogoprops>
     bool propagate_binary_clause_occur(const Watched& ws);
     template<bool update_bogoprops>
@@ -525,6 +526,13 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from)
     assert(varData[p.var()].removed == Removed::none);
 
     const uint32_t v = p.var();
+    if (decisionLevel() == 0) {
+        const uint32_t ID = clauseID++;
+        *drat << add << ID << p << fin;
+        assert(unit_cl_IDs[v] == 0);
+        unit_cl_IDs[v] = ID;
+    }
+
     assert(value(v) == l_Undef);
     if (!watches[~p].empty()) {
         watches.prefetch((~p).toInt());

@@ -445,9 +445,8 @@ bool ClauseCleaner::full_clean(Clause& cl)
     }
 
     if (cl.size() == 1) {
-        assert(solver->unit_cl_IDs[cl[0].var()] == 0);
-        solver->unit_cl_IDs[cl[0].var()] = ID;
         solver->enqueue<true>(cl[0]);
+        *solver->drat << del << cl << del; // double unit delete
         return true;
     }
 

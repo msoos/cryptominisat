@@ -478,9 +478,9 @@ Clause* Solver::add_clause_int(
             }
             return NULL;
         case 1:
+            assert(decisionLevel() == 0);
             enqueue<false>(ps[0]);
-            assert(unit_cl_IDs[ps[0].var()] == 0);
-            unit_cl_IDs[ps[0].var()] = ID;
+            *drat << del << ID << ps[0] << fin; // double unit delete
             #ifdef STATS_NEEDED
             propStats.propsUnit++;
             #endif
@@ -2999,7 +2999,7 @@ lbool Solver::probe_inter(Lit l, uint32_t& min_props)
     uint32_t old_trail_size = trail.size();
     new_decision_level();
     enqueue<false>(l);
-    PropBy p = propagate_any_order_fast();
+    PropBy p = propagate<false>();
     min_props = trail.size() - old_trail_size;
     for(uint32_t i = old_trail_size+1; i < trail.size(); i++) {
         toClear.push_back(trail[i].lit);
@@ -3024,7 +3024,7 @@ lbool Solver::probe_inter(Lit l, uint32_t& min_props)
     old_trail_size = trail.size();
     new_decision_level();
     enqueue<true>(~l);
-    p = propagate_any_order_fast();
+    p = propagate<true>();
     min_props = std::min<uint32_t>(min_props, trail.size() - old_trail_size);
     probe_inter_tmp.clear();
     for(uint32_t i = old_trail_size+1; i < trail.size(); i++) {

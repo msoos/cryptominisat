@@ -864,9 +864,6 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
                     solver->ok = false;
                     return false;
                 } else if (val == l_Undef) {
-                    (*solver->drat) << add << ID << subsLits[j] << fin;
-                    assert(solver->unit_cl_IDs[subsLits[j].var()] == 0);
-                    solver->unit_cl_IDs[subsLits[j].var()] = ID;
                     solver->enqueue<false>(subsLits[j]);
                     solver->ok = solver->propagate_occur<false>();
                     if (!solver->okay()) {

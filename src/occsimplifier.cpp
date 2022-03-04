@@ -429,9 +429,8 @@ bool OccSimplifier::clean_clause(
             return false;
 
         case 1: {
-            assert(solver->unit_cl_IDs[cl[0].var()] == 0);
             solver->enqueue<false>(cl[0]);
-            solver->unit_cl_IDs[cl[0].var()] = cl.stats.ID;
+            *solver->drat << del << cl << fin; // double unit delete
             unlink_clause(offset, false, false, only_set_is_removed);
             solver->ok = solver->propagate_occur<false>();
             return solver->okay();
@@ -506,9 +505,8 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
             return false;
 
         case 1: {
-            assert(solver->unit_cl_IDs[cl[0].var()] == 0);
             solver->enqueue<false>(cl[0]);
-            solver->unit_cl_IDs[cl[0].var()] = cl.stats.ID;
+            *solver->drat << del << cl << fin; // double unit delete
             return false;
         }
         case 2:

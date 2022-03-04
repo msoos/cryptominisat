@@ -164,9 +164,9 @@ bool VarReplacer::enqueueDelayedEnqueue()
         l.first = get_lit_replaced_with(l.first);
 
         if (solver->value(l.first) == l_Undef) {
-            assert(solver->unit_cl_IDs[l.first.var()] == 0);
-            solver->unit_cl_IDs[l.first.var()] = l.second;
             solver->enqueue<false>(l.first);
+            *solver->drat << del << l.second << l.first << fin; // double unit delete
+
             #ifdef STATS_NEEDED
             solver->propStats.propsUnit++;
             #endif
@@ -407,8 +407,6 @@ inline void VarReplacer::updateBin(
     if (lit1 == lit2) {
         uint32_t ID = solver->clauseID++;
         (*solver->drat) << add << ID << lit2 << fin;
-        assert(solver->unit_cl_IDs[lit2.var()] == 0);
-        solver->unit_cl_IDs[lit2.var()] = ID;
         delayedEnqueue.push_back(make_pair(lit2, ID));
         remove = true;
     }
@@ -851,10 +849,6 @@ bool VarReplacer::handleOneSet(
             toEnqueue = lit1 ^ (val2 == l_False);
         }
         solver->enqueue<false>(toEnqueue);
-        uint32_t ID = solver->clauseID++;
-        (*solver->drat) << add << ID << toEnqueue << fin;
-        assert(solver->unit_cl_IDs[toEnqueue.var()] == 0);
-        solver->unit_cl_IDs[toEnqueue.var()] = ID;
 
         #ifdef STATS_NEEDED
         solver->propStats.propsUnit++;

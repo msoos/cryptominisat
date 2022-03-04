@@ -1314,7 +1314,7 @@ lbool Searcher::search()
             goto end;
         }
         if (confl.isNULL()) {
-            confl = propagate_any_order_fast();
+            confl = propagate<false>();
         }
 
         if (!confl.isNULL()) {
@@ -1548,11 +1548,17 @@ void Searcher::attach_and_enqueue_learnt_clause(
         case 0:
             assert(false);
         case 1:
-            //Unitary learnt
+            //Unit learnt
             stats.learntUnits++;
-            if (enq) enqueue<false>(learnt_clause[0], level, PropBy());
-            assert(unit_cl_IDs[learnt_clause[0].var()] == 0);
-            unit_cl_IDs[learnt_clause[0].var()] = ID;
+            if (enq) {
+                enqueue<false>(learnt_clause[0], level, PropBy());
+                if (decisionLevel() == 0) {
+                    *drat << del << ID << learnt_clause[0] << fin; // double unit delete
+                } else {
+                    assert(solver->unit_cl_IDs[learnt_clause[0].var()] == 0);
+                    solver->unit_cl_IDs[learnt_clause[0].var()] = ID;
+                }
+            }
 
             #ifdef STATS_NEEDED
             propStats.propsUnit++;
@@ -1772,14 +1778,15 @@ Clause* Searcher::handle_last_confl(
 
     Clause* cl;
     ID = clauseID++;
-    if (learnt_clause.size() <= 2) {
-        *drat << add << ID << learnt_clause
-        << fin;
+    *drat << add << ID << learnt_clause
+    << fin;
 //         << DratFlag::chain;
 //         for(auto const& b: chain) {
 //             *drat << b;
 //         }
 //         *drat << fin;
+
+    if (learnt_clause.size() <= 2) {
         cl = NULL;
     } else {
         cl = cl_alloc.Clause_new(learnt_clause
@@ -1832,13 +1839,6 @@ Clause* Searcher::handle_last_confl(
 
         cl->stats.which_red_array = which_arr;
         solver->longRedCls[cl->stats.which_red_array].push_back(offset);
-        *drat << add << *cl
-        << fin;
-//         << DratFlag::chain;
-//         for(auto const& b: chain) {
-//             *drat << b;
-//         }
-//         *drat << fin;
     }
 
     #ifdef STATS_NEEDED
@@ -1885,7 +1885,6 @@ bool Searcher::handle_conflict(PropBy confl)
         if (conf.verbosity >= 10) {
             cout << "c find_conflict_level() gives 0, so UNSAT for whole formula" << endl;
         }
-        *drat << add << clauseID++ << fin;
         solver->ok = false;
         return false;
     }
@@ -3445,22 +3444,6 @@ PropBy Searcher::propagate() {
     if (decisionLevel() == 0 &&
         (drat->enabled() || conf.simulate_drat)
     ) {
-        for(size_t i = origTrailSize; i < trail.size(); i++) {
-            #ifdef DEBUG_DRAT
-            if (conf.verbosity >= 6) {
-                cout
-                << "c 0-level enqueue:"
-                << trail[i]
-                << endl;
-            }
-            #endif
-            const uint32_t ID = clauseID++;
-            *drat << add << ID << trail[i].lit << fin;
-            assert(solver->unit_cl_IDs[trail[i].lit.var()] == 0);
-            unit_cl_IDs[trail[i].lit.var()] = ID;
-        }
-
-        //UNSAT
         if (!ret.isNULL()) {
             *drat << add << clauseID++ << fin;
         }

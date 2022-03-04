@@ -199,9 +199,8 @@ bool CompleteDetachReatacher::clean_clause(Clause* cl)
             return false;
 
         case 1:
-            assert(solver->unit_cl_IDs[ps[0].var()] == 0);
             solver->enqueue<true>(ps[0]);
-            solver->unit_cl_IDs[ps[0].var()] = cl->stats.ID;
+            (*solver->drat) << del << *cl << fin; //double unit delete
             #ifdef STATS_NEEDED
             solver->propStats.propsUnit++;
             #endif
