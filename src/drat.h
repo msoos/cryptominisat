@@ -307,7 +307,6 @@ public:
                 break;
 
             case DratFlag::del:
-                forget_delay();
                 *buf_ptr++ = 'd';
                 buf_len++;
                 if (!bindrat) {
