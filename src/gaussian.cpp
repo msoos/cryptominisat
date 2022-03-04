@@ -526,7 +526,8 @@ gret EGaussian::adjust_matrix()
                     ilist out = ilist_new(1);
                     ilist_resize(out, 1);
                     out[0] = (tmp_clause[0].var()+1) * (tmp_clause[0].sign() ? -1 :1);
-                    assert_clause(out);
+                    uint32_t ID = assert_clause(out);
+                    frat_ids.push_back(BDDCl{out, ID});
                     delete bdd;
                 }
                 solver->enqueue<false>(tmp_clause[0]); // propagation
@@ -565,7 +566,8 @@ gret EGaussian::adjust_matrix()
                         out[0] = (tmp_clause[0].var()+1)*-1;
                         out[1] = (tmp_clause[1].var()+1);
                     }
-                    assert_clause(out);
+                    uint32_t ID = assert_clause(out);
+                    frat_ids.push_back(BDDCl{out, ID});
 
                     ilist out2 = ilist_new(2);
                     ilist_resize(out2, 2);
@@ -576,7 +578,8 @@ gret EGaussian::adjust_matrix()
                         out2[0] = (tmp_clause[0].var()+1);
                         out2[1] = (tmp_clause[1].var()+1)*-1;
                     }
-                    assert_clause(out2);
+                    ID = assert_clause(out2);
+                    frat_ids.push_back(BDDCl{out2, ID});
                     delete bdd;
                 }
 
@@ -1303,7 +1306,8 @@ vector<Lit>* EGaussian::get_reason(uint32_t row, uint32_t& out_ID)
         for(uint32_t i = 0; i < tofill.size(); i++) {
             out[i] = (tofill[i].var()+1) * (tofill[i].sign() ? -1 :1);
         }
-        assert_clause(out);
+        out_ID = assert_clause(out);
+        frat_ids.push_back(BDDCl{out, out_ID});
         delete tmp;
     }
 
@@ -1523,4 +1527,17 @@ bool EGaussian::must_disable(GaussQData& gqd)
     }
 
     return false;
+}
+
+void CMSat::EGaussian::finalize_frat()
+{
+    for(auto const& bdd_cl: frat_ids) {
+        *solver->drat << finalcl << bdd_cl.ID;
+        for(uint32_t i = 0 ; i < (uint32_t)ilist_length(bdd_cl.cl); i++) {
+            auto const& l = Lit(abs(bdd_cl.cl[i])-1, bdd_cl.cl[i] < 0);
+            *solver->drat << l;
+        }
+        *solver->drat << fin;
+        ilist_free(bdd_cl.cl);
+    }
 }

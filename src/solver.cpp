@@ -1582,8 +1582,11 @@ lbool Solver::solve_with_assumptions(
     }
 
     if (drat->enabled()) {
-        tbdd_done();
         write_final_frat_clauses();
+        for(uint32_t i = 0; i < gqueuedata.size(); i++) {
+            gmatrices[i]->finalize_frat();
+        }
+        tbdd_done();
         drat->flush();
     }
     return status;

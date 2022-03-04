@@ -80,7 +80,7 @@ class EGaussian {
         GaussQData& gqd
     );
 
-    vector<Lit>* get_reason(uint32_t row, uint32_t&  out_ID);
+    vector<Lit>* get_reason(uint32_t row, uint32_t& out_ID);
 
     // when basic variable is touched , eliminate one col
     void eliminate_col(
@@ -97,6 +97,7 @@ class EGaussian {
     void update_matrix_no(uint32_t n);
     void check_watchlist_sanity();
     uint32_t get_matrix_no();
+    void finalize_frat();
 
     vector<Xor> xorclauses;
 
@@ -130,8 +131,13 @@ class EGaussian {
     double get_density();
 
     //BDD stuff
+    struct BDDCl {
+        ilist cl;
+        uint32_t ID;
+    };
     void xor_in_bdd(const uint32_t a, const uint32_t b);
     xor_constraint* bdd_create(const uint32_t row_n);
+    vector<BDDCl> frat_ids;
 
 
     ///////////////
