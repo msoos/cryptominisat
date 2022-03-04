@@ -180,7 +180,7 @@ void HyperEngine::add_hyper_bin(const Lit p)
         #ifdef VERBOSE_DEBUG_FULLPROP
         cout << "Adding hyper-bin clause: " << p << " , " << ~deepestAncestor << endl;
         #endif
-        uint32_t ID = clauseID++;
+        uint32_t ID = ++clauseID;
         needToAddBinClause.insert(BinaryClause(p, ~deepestAncestor, true, ID));
         // FRAT will fail here
         *drat << add << ID << p << (~deepestAncestor) << fin;

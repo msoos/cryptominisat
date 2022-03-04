@@ -187,7 +187,7 @@ bool CompleteDetachReatacher::clean_clause(Clause* cl)
 
     //Drat
     if (i != j) {
-        cl->stats.ID = solver->clauseID++;
+        cl->stats.ID = ++solver->clauseID;
         (*solver->drat) << add << *cl << fin << findelay;
     } else {
         solver->drat->forget_delay();

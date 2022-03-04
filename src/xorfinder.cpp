@@ -824,7 +824,7 @@ bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* ou
                 assert(false);
                 Lit lit = Lit(x[0], !x.rhs);
                 if (solver->value(lit) == l_False) {
-                    *solver->drat << solver->clauseID++ << fin;
+                    *solver->drat << ++solver->clauseID << fin;
                     solver->ok = false;
                 } else if (solver->value(lit) == l_Undef) {
                     solver->enqueue<true>(lit);

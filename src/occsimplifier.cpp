@@ -416,7 +416,7 @@ bool OccSimplifier::clean_clause(
     }
 
     if (i-j > 0) {
-        cl.stats.ID = solver->clauseID++;
+        cl.stats.ID = ++solver->clauseID;
         (*solver->drat) << add << cl << fin << findelay;
     } else {
         solver->drat->forget_delay();
@@ -493,7 +493,7 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
 
     //Drat
     if (i - j > 0) {
-        cl.stats.ID = solver->clauseID++;
+        cl.stats.ID = ++solver->clauseID;
         (*solver->drat) << add << cl << fin << findelay;
     } else {
         solver->drat->forget_delay();
@@ -2054,7 +2054,7 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
         if (myrnd <= solver->conf.dump_individual_cldata_ratio) {
             //TODO mark clause for dumping
         }
-        stats.ID = solver->clauseID++;
+        stats.ID = ++solver->clauseID;
         #endif
 
         tmp_tern_res.clear();
@@ -4728,7 +4728,7 @@ bool OccSimplifier::remove_literal(
     added_cl_to_var.touch(toRemoveLit.var());
     cl.recalc_abst_if_needed();
 
-    cl.stats.ID = solver->clauseID++;
+    cl.stats.ID = ++solver->clauseID;
     (*solver->drat) << add << cl << fin << findelay;
     if (!cl.red()) {
         n_occurs[toRemoveLit.toInt()]--;

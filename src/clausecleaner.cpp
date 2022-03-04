@@ -208,7 +208,7 @@ bool ClauseCleaner::clean_clause(Clause& cl)
     }
 
     if (i != j) {
-        cl.stats.ID = solver->clauseID++;
+        cl.stats.ID = ++solver->clauseID;
         cl.shrink(i-j);
         (*solver->drat) << add << cl << fin << findelay;
     } else {
@@ -431,7 +431,7 @@ bool ClauseCleaner::full_clean(Clause& cl)
     uint32_t ID;
     if (i != j) {
         cl.shrink(i-j);
-        ID = solver->clauseID++;
+        ID = ++solver->clauseID;
         (*solver->drat) << add << ID << cl << fin << findelay;
         cl.stats.ID = ID;
     } else {

@@ -172,7 +172,7 @@ bool VarReplacer::enqueueDelayedEnqueue()
             #endif
         } else if (solver->value(l.first) == l_False) {
             *solver->drat
-            << add << solver->clauseID++ << fin
+            << add << ++solver->clauseID << fin
             << del << l.second << l.first << fin;
             solver->ok = false;
             break;
@@ -405,7 +405,7 @@ inline void VarReplacer::updateBin(
 
     //Two lits are the same in BIN
     if (lit1 == lit2) {
-        uint32_t ID = solver->clauseID++;
+        uint32_t ID = ++solver->clauseID;
         (*solver->drat) << add << ID << lit2 << fin;
         delayedEnqueue.push_back(make_pair(lit2, ID));
         remove = true;
@@ -638,7 +638,7 @@ bool VarReplacer::handleUpdatedClause(
         return true;
     }
 
-    c.stats.ID = solver->clauseID++;
+    c.stats.ID = ++solver->clauseID;
     (*solver->drat) << add << c << fin << findelay;
 
     runStats.bogoprops += 3;
@@ -794,11 +794,11 @@ bool VarReplacer::handleAlreadyReplaced(const Lit lit1, const Lit lit2)
     //OOps, already inside, but with inverse polarity, UNSAT
     if (lit1.sign() != lit2.sign()) {
         (*solver->drat)
-        << add << solver->clauseID++ << ~lit1 << lit2 << fin
-        << add << solver->clauseID++ << lit1 << ~lit2 << fin
-        << add << solver->clauseID++ << lit1 << fin
-        << add << solver->clauseID++ << ~lit1 << fin
-        << add << solver->clauseID++ << fin
+        << add << ++solver->clauseID << ~lit1 << lit2 << fin
+        << add << ++solver->clauseID << lit1 << ~lit2 << fin
+        << add << ++solver->clauseID << lit1 << fin
+        << add << ++solver->clauseID << ~lit1 << fin
+        << add << ++solver->clauseID << fin
         << del << solver->clauseID-2 << ~lit1 << fin
         << del << solver->clauseID-3 << lit1 << fin
         << del << solver->clauseID-4 << lit1 << ~lit2 << fin
@@ -823,9 +823,9 @@ bool VarReplacer::replace_vars_already_set(
     if (val1 != val2) {
 
         (*solver->drat)
-        << add << solver->clauseID++ << ~lit1 << fin
-        << add << solver->clauseID++ << lit1 << fin
-        << add << solver->clauseID++ << fin
+        << add << ++solver->clauseID << ~lit1 << fin
+        << add << ++solver->clauseID << lit1 << fin
+        << add << ++solver->clauseID << fin
         << del << solver->clauseID-2 << lit1 << fin
         << del << solver->clauseID-3 << ~lit1 << fin;
         solver->ok = false;
@@ -886,8 +886,8 @@ bool VarReplacer::replace(
         return handleAlreadyReplaced(lit1, lit2);
     }
 
-    uint32_t ID = solver->clauseID++;
-    uint64_t ID2 = solver->clauseID++;
+    uint32_t ID = ++solver->clauseID;
+    uint64_t ID2 = ++solver->clauseID;
     (*solver->drat)
     << add << ID << ~lit1 << lit2 << fin
     << add << ID2 << lit1 << ~lit2 << fin;

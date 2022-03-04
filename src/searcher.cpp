@@ -1774,7 +1774,7 @@ Clause* Searcher::handle_last_confl(
     #endif
 
     Clause* cl;
-    ID = clauseID++;
+    ID = ++clauseID;
     *drat << add << ID << learnt_clause
     << fin;
 //         << DratFlag::chain;
@@ -1883,7 +1883,7 @@ bool Searcher::handle_conflict(PropBy confl)
             cout << "c find_conflict_level() gives 0, so UNSAT for whole formula. decLevel: " << decisionLevel() << endl;
         }
         // the propagate() will not add the UNSAT clause if it's not decision level 0
-        if (decisionLevel() != 0) *drat << add << clauseID++ << fin;
+        if (decisionLevel() != 0) *drat << add << ++clauseID << fin;
         solver->ok = false;
         return false;
     }
@@ -3240,7 +3240,7 @@ size_t Searcher::hyper_bin_res_all(const bool check_for_set_values)
             assert(val1 == l_Undef && val2 == l_Undef);
         }
 
-        solver->attach_bin_clause(it->getLit1(), it->getLit2(), true, clauseID++, false);
+        solver->attach_bin_clause(it->getLit1(), it->getLit2(), true, ++clauseID, false);
         added++;
     }
     solver->needToAddBinClause.clear();
@@ -3442,7 +3442,7 @@ PropBy Searcher::propagate() {
         (drat->enabled() || conf.simulate_drat)
     ) {
         if (!ret.isNULL()) {
-            *drat << add << clauseID++ << fin;
+            *drat << add << ++clauseID << fin;
         }
     }
 
@@ -4288,7 +4288,7 @@ PropBy Searcher::learn_gpu_clause(Lit* lits, uint32_t count)
 
     //Binary, and lits[0] may be propagated due to lits[1]
     assert(count == 2);
-    attach_bin_clause(lits[0], lits[1], false, clauseID++, false);
+    attach_bin_clause(lits[0], lits[1], false, ++clauseID, false);
     binTri.irredBins++;
     failBinLit = lits[0];
     return PropBy(lits[1], false);

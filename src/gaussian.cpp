@@ -1540,4 +1540,7 @@ void CMSat::EGaussian::finalize_frat()
         *solver->drat << fin;
         ilist_free(bdd_cl.cl);
     }
+    for(auto& x: xorclauses) {
+        delete x.bdd;
+    }
 }

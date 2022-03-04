@@ -420,7 +420,7 @@ bool PropEngine::propagate_occur()
     }
 
     if (!ret) {
-        *drat << add << clauseID++ << fin;
+        *drat << add << ++clauseID << fin;
     }
 
     return ret;

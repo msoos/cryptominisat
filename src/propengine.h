@@ -527,7 +527,7 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from)
 
     const uint32_t v = p.var();
     if (level == 0) {
-        const uint32_t ID = clauseID++;
+        const uint32_t ID = ++clauseID;
         *drat << add << ID << p << fin;
         assert(unit_cl_IDs[v] == 0);
         unit_cl_IDs[v] = ID;

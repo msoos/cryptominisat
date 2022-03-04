@@ -207,7 +207,7 @@ bool Solver::add_xor_clause_inter(
 
     if (ps.empty()) {
         if (rhs) {
-            *drat << add << clauseID++ << fin;
+            *drat << add << ++clauseID << fin;
             ok = false;
         }
         return ok;
@@ -438,12 +438,12 @@ Clause* Solver::add_clause_int(
         ID = cl_stats->ID;
         if (ps != lits) {
             uint64_t old_ID = ID;
-            ID = clauseID++;
+            ID = ++clauseID;
             *drat << add << ID << ps << fin;
             *drat << del << old_ID << lits << fin;
         }
     } else {
-        ID = clauseID++;
+        ID = ++clauseID;
         if (addDrat) {
             size_t i = 0;
             if (drat_first != lit_Undef) {
@@ -709,7 +709,7 @@ bool Solver::add_clause_outer(vector<Lit>& ps)
 
     ClauseStats stats;
     if (drat->enabled()) {
-        stats.ID = clauseID++;
+        stats.ID = ++clauseID;
         *drat << origcl << stats.ID << ps << fin;
     }
 
@@ -1598,7 +1598,7 @@ void Solver::write_final_frat_clauses()
     assert(decisionLevel() == 0);
 
     if (!okay()) {
-        *drat << finalcl << clauseID-1 << fin;
+        *drat << finalcl << clauseID << fin;
     }
 
     for(uint32_t i = 0; i < nVars(); i ++) {
@@ -2959,7 +2959,7 @@ bool Solver::fully_enqueue_this(const Lit lit)
             return false;
         }
     } else if (val == l_False) {
-        *drat << add << clauseID++ << fin;
+        *drat << add << ++clauseID << fin;
         ok = false;
         return false;
     }
