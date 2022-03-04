@@ -358,7 +358,7 @@ bool ClauseCleaner::clean_one_xor(Xor& x)
             return false;
 
         case 1: {
-            assert(false && "FRAT needs ID");
+            assert(!solver->drat->enabled()); // "FRAT needs ID);
             //(*solver->drat) << add << Lit(x[0], !x.rhs) << fin;
             //solver->fully_enqueue_this(Lit(x[0], !x.rhs));
             return false;

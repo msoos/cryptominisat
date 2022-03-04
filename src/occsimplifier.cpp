@@ -2404,7 +2404,7 @@ bool OccSimplifier::uneliminate(uint32_t var)
 
 void OccSimplifier::remove_by_drat_recently_blocked_clauses(size_t origBlockedSize)
 {
-    if (! ((*solver->drat).enabled() || solver->conf.simulate_drat) )
+    if (! (solver->drat->enabled() || solver->conf.simulate_drat) )
         return;
 
     if (solver->conf.verbosity >= 6) {
@@ -2825,7 +2825,7 @@ bool OccSimplifier::find_or_gate(
                 out_b.push(w);
                 for(const Lit lit: *cl) {
                     if (lit != ~elim_lit) {
-                        assert(false && "FRAT ID needed, 0 is wrong");
+                        // FRAT will fail here
                         out_a.push(Watched(~lit, false, 0));
                     }
                 }

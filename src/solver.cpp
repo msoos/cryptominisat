@@ -550,11 +550,6 @@ void Solver::attach_bin_clause(
     , const uint64_t ID
     , [[maybe_unused]] const bool checkUnassignedFirst
 ) {
-    #if defined(DRAT_DEBUG)
-    assert(false && "FRAT needs ID");
-    *drat << add << lit1 << lit2 << fin;
-    #endif
-
     //Update stats
     if (red) {
         binTri.redBins++;
@@ -1517,7 +1512,9 @@ lbool Solver::solve_with_assumptions(
     const bool only_sampling_solution
 ) {
     if (drat->enabled()) {
-        //tbdd_init_frat(drat->getFile(), nVars());
+        int32_t* v = new int;
+        *v = nVars();
+        tbdd_init_frat(drat->getFile(), v, &clauseID);
     }
     move_to_outside_assumps(_assumptions);
     reset_for_solving();
@@ -1586,7 +1583,7 @@ lbool Solver::solve_with_assumptions(
     }
 
     if (drat->enabled()) {
-        //tbdd_done();
+        tbdd_done();
         write_final_frat_clauses();
         drat->flush();
     }

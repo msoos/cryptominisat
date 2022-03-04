@@ -795,8 +795,6 @@ bool VarReplacer::handleAlreadyReplaced(const Lit lit1, const Lit lit2)
 {
     //OOps, already inside, but with inverse polarity, UNSAT
     if (lit1.sign() != lit2.sign()) {
-        uint32_t ID;
-
         (*solver->drat)
         << add << solver->clauseID++ << ~lit1 << lit2 << fin
         << add << solver->clauseID++ << lit1 << ~lit2 << fin
@@ -884,14 +882,6 @@ bool VarReplacer::replace(
     #endif
 
     replaceChecks(var1, var2);
-
-    #ifdef DRAT_DEBUG
-    assert(false && "FRAT IDs needed");
-    (*solver->drat)
-    << add << Lit(var1, true)  << (Lit(var2, false) ^ xor_is_true) << fin
-    << add << Lit(var1, false) << (Lit(var2, true)  ^ xor_is_true) << fin
-    ;
-    #endif
 
     //Move forward
     const Lit lit1 = get_lit_replaced_with(Lit(var1, false));

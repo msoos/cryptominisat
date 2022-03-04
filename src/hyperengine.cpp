@@ -169,6 +169,7 @@ Lit HyperEngine::propagate_bfs(const uint64_t timeout)
 //Add binary clause to deepest common ancestor
 void HyperEngine::add_hyper_bin(const Lit p)
 {
+    assert(!drat->enabled());
     propStats.otfHyperTime += 2;
 
     Lit deepestAncestor = lit_Undef;
@@ -181,7 +182,7 @@ void HyperEngine::add_hyper_bin(const Lit p)
         #endif
         uint32_t ID = clauseID++;
         needToAddBinClause.insert(BinaryClause(p, ~deepestAncestor, true, ID));
-        assert(false && "FRAT will fail here");
+        // FRAT will fail here
         *drat << add << ID << p << (~deepestAncestor) << fin;
 
         hyperBinNotAdded = false;

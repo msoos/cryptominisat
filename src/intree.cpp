@@ -375,6 +375,7 @@ bool InTree::handle_lit_popped_from_queue(const Lit lit, const Lit other_lit, co
 
 bool InTree::empty_failed_list()
 {
+    assert(!solver->drat->enabled());
     assert(solver->decisionLevel() == 0);
     for(const Lit lit: failed) {
         if (!solver->ok) {
@@ -383,14 +384,14 @@ bool InTree::empty_failed_list()
 
         if (solver->value(lit) == l_Undef) {
             solver->enqueue<true>(lit);
-            assert(false && "FRAT needs ID");
+            // FRAT will fail here
             *(solver->drat) << add << lit << fin;
             solver->ok = solver->propagate<true>().isNULL();
             if (!solver->ok) {
                 return false;
             }
         } else if (solver->value(lit) == l_False) {
-            assert(false && "FRAT needs ID");
+            // FRAT will fail here
             *(solver->drat) << add << ~lit << fin;
             *(solver->drat) << add << fin;
             solver->ok = false;
