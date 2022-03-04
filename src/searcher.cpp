@@ -1552,11 +1552,8 @@ void Searcher::attach_and_enqueue_learnt_clause(
             stats.learntUnits++;
             if (enq) {
                 enqueue<false>(learnt_clause[0], level, PropBy());
-                if (decisionLevel() == 0) {
+                if (level == 0) {
                     *drat << del << ID << learnt_clause[0] << fin; // double unit delete
-                } else {
-                    assert(solver->unit_cl_IDs[learnt_clause[0].var()] == 0);
-                    solver->unit_cl_IDs[learnt_clause[0].var()] = ID;
                 }
             }
 

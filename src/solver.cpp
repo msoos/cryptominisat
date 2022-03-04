@@ -2928,12 +2928,12 @@ void Solver::free_unused_watches()
     }
 }
 
-bool Solver::fully_enqueue_these(const vector<LitEnqueue>& toEnqueue)
+bool Solver::fully_enqueue_these(const vector<Lit>& toEnqueue)
 {
     assert(ok);
     assert(decisionLevel() == 0);
-    for(const auto& lit_ID: toEnqueue) {
-        if (!fully_enqueue_this(lit_ID)) {
+    for(const auto& lit: toEnqueue) {
+        if (!fully_enqueue_this(lit)) {
             return false;
         }
     }
@@ -2941,16 +2941,15 @@ bool Solver::fully_enqueue_these(const vector<LitEnqueue>& toEnqueue)
     return true;
 }
 
-bool Solver::fully_enqueue_this(const LitEnqueue lit_ID)
+bool Solver::fully_enqueue_this(const Lit lit)
 {
     assert(decisionLevel() == 0);
     assert(ok);
 
-    const lbool val = value(lit_ID.lit);
+    const lbool val = value(lit);
     if (val == l_Undef) {
-        unit_cl_IDs[lit_ID.lit.var()] = lit_ID.ID;
-        assert(varData[lit_ID.lit.var()].removed == Removed::none);
-        enqueue<false>(lit_ID.lit);
+        assert(varData[lit.var()].removed == Removed::none);
+        enqueue<false>(lit);
         ok = propagate<true>().isNULL();
 
         if (!ok) {
@@ -2960,9 +2959,6 @@ bool Solver::fully_enqueue_this(const LitEnqueue lit_ID)
         *drat << add << clauseID++ << fin;
         ok = false;
         return false;
-    } else {
-        //no need for duplicate units
-        *drat << del << lit_ID.ID << lit_ID.lit << fin;
     }
     return true;
 }

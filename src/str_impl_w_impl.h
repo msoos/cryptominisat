@@ -64,7 +64,7 @@ private:
 
         //For delayed enqueue and binary adding
         //Used for strengthening
-        vector<LitEnqueue> toEnqueue;
+        vector<Lit> toEnqueue;
         vector<BinaryClause> binsToAdd;
 
         void clear()
