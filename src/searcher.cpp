@@ -164,7 +164,6 @@ template<bool update_bogoprops>
 inline void Searcher::add_lit_to_learnt(
     const Lit lit
     , const uint32_t nDecisionLevel
-    , const uint64_t ID
 ) {
     const uint32_t var = lit.var();
     assert(varData[var].removed == Removed::none);
@@ -393,6 +392,7 @@ void Searcher::add_literals_from_confl_to_learnt(
     uint32_t ID = 0;
     switch (confl.getType()) {
         case binary_t : {
+            ID = confl.getID();
             sumAntecedentsLits += 2;
             if (confl.isRedStep()) {
                 #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
@@ -480,6 +480,7 @@ void Searcher::add_literals_from_confl_to_learnt(
         default:
             assert(false && "Error in conflict analysis (otherwise should be UIP)");
     }
+    chain.push_back((int32_t)ID);
 
     size_t i = 0;
     bool cont = true;
@@ -510,7 +511,7 @@ void Searcher::add_literals_from_confl_to_learnt(
                 break;
         }
         if (p == lit_Undef || i > 0) {
-            add_lit_to_learnt<update_bogoprops>(x, nDecisionLevel, ID);
+            add_lit_to_learnt<update_bogoprops>(x, nDecisionLevel);
         }
         i++;
     }
@@ -609,6 +610,7 @@ void Searcher::create_learnt_clause(PropBy confl)
     Lit p = lit_Undef;
     uint32_t ID;
 
+    // Get decision level to go back to
     Lit lit0 = lit_Error;
     switch (confl.getType()) {
         case binary_t : {
@@ -637,7 +639,7 @@ void Searcher::create_learnt_clause(PropBy confl)
     }
     uint32_t nDecisionLevel = varData[lit0.var()].level;
 
-
+    // 1st UIP clause generation
     learnt_clause.push_back(lit_Undef); //make space for ~p
     do {
         #ifdef DEBUG_RESOLV
@@ -1771,7 +1773,13 @@ Clause* Searcher::handle_last_confl(
     Clause* cl;
     ID = clauseID++;
     if (learnt_clause.size() <= 2) {
-        *drat << add << ID << learnt_clause << fin;
+        *drat << add << ID << learnt_clause
+        << fin;
+//         << DratFlag::chain;
+//         for(auto const& b: chain) {
+//             *drat << b;
+//         }
+//         *drat << fin;
         cl = NULL;
     } else {
         cl = cl_alloc.Clause_new(learnt_clause
@@ -1824,7 +1832,13 @@ Clause* Searcher::handle_last_confl(
 
         cl->stats.which_red_array = which_arr;
         solver->longRedCls[cl->stats.which_red_array].push_back(offset);
-        *drat << add << *cl << fin;
+        *drat << add << *cl
+        << fin;
+//         << DratFlag::chain;
+//         for(auto const& b: chain) {
+//             *drat << b;
+//         }
+//         *drat << fin;
     }
 
     #ifdef STATS_NEEDED
@@ -1946,6 +1960,7 @@ bool Searcher::handle_conflict(PropBy confl)
 
     //Add decision-based clause
     if (decision_clause.size() > 0) {
+        chain.clear();
         int i = decision_clause.size();
         while(--i >= 0) {
             if (value(decision_clause[i]) == l_True

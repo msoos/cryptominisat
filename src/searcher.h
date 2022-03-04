@@ -262,7 +262,7 @@ class Searcher : public HyperEngine
         // Learning
         /////////////////////
         vector<Lit> learnt_clause;
-        vector<uint64_t> chain;
+        vector<uint32_t> chain;
         vector<Lit> decision_clause;
         template<bool update_bogoprops>
         void analyze_conflict(
@@ -290,7 +290,7 @@ class Searcher : public HyperEngine
         void create_learnt_clause(PropBy confl);
         void debug_print_resolving_clause(const PropBy confl) const;
         template<bool update_bogoprops>
-        void add_lit_to_learnt(Lit lit, const uint32_t nDecisionLevel, const uint64_t ID);
+        void add_lit_to_learnt(Lit lit, const uint32_t nDecisionLevel);
         void analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& out_conflict);
         void update_glue_from_analysis(Clause* cl);
         template<bool update_bogoprops>
