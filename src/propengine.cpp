@@ -395,7 +395,6 @@ template<bool update_bogoprops>
 bool PropEngine::propagate_occur()
 {
     assert(ok);
-    uint64_t old_trail_size = trail.size();
     bool ret = true;
 
     while (qhead < trail.size()) {

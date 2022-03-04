@@ -1883,8 +1883,10 @@ bool Searcher::handle_conflict(PropBy confl)
     ConflictData data = find_conflict_level(confl);
     if (data.nHighestLevel == 0) {
         if (conf.verbosity >= 10) {
-            cout << "c find_conflict_level() gives 0, so UNSAT for whole formula" << endl;
+            cout << "c find_conflict_level() gives 0, so UNSAT for whole formula. decLevel: " << decisionLevel() << endl;
         }
+        // the propagate() will not add the UNSAT clause if it's not decision level 0
+        if (decisionLevel() != 0) *drat << add << clauseID++ << fin;
         solver->ok = false;
         return false;
     }
@@ -3436,8 +3438,6 @@ std::pair<size_t, size_t> Searcher::remove_useless_bins(bool except_marked)
 
 template<bool update_bogoprops, bool red_also, bool use_disable>
 PropBy Searcher::propagate() {
-    const size_t origTrailSize = trail.size();
-
     PropBy ret = propagate_any_order<update_bogoprops, red_also, use_disable>();
 
     //Drat -- If declevel 0 propagation, we have to add the unitaries

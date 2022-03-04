@@ -1560,7 +1560,6 @@ lbool Solver::solve_with_assumptions(
         status = iterate_until_solved();
     }
 
-
     end:
     if (sqlStats) {
         sqlStats->finishup(status);
@@ -1595,14 +1594,18 @@ void Solver::write_final_frat_clauses()
     assert(drat->enabled());
     assert(decisionLevel() == 0);
 
-    for(const auto& offs: longIrredCls) {
-        write_one_final_frat_cl(offs);
+    if (!okay()) {
+        *drat << finalcl << clauseID-1 << fin;
     }
-    for(const auto& cls: longRedCls) {
-        for(const auto offs: cls) {
-            write_one_final_frat_cl(offs);
+
+    for(uint32_t i = 0; i < nVars(); i ++) {
+        if (unit_cl_IDs[i] != 0) {
+            assert(value(i) != l_Undef);
+            Lit l = Lit(i, value(i) == l_False);
+            *drat << finalcl << unit_cl_IDs[i] << l << fin;
         }
     }
+
     for(uint32_t i = 0; i < nVars()*2; i++) {
         Lit l = Lit::toLit(i);
         for(const auto& w: watches[l]) {
@@ -1612,16 +1615,16 @@ void Solver::write_final_frat_clauses()
             }
         }
     }
-    for(uint32_t i = 0; i < nVars(); i ++) {
-        if (unit_cl_IDs[i] != 0) {
-            assert(value(i) != l_Undef);
-            Lit l = Lit(i, value(i) == l_False);
-            *drat << finalcl << unit_cl_IDs[i] << l << fin;
+
+    if (varReplacer) varReplacer->delete_frat_cls();
+
+    for(const auto& cls: longRedCls) {
+        for(const auto offs: cls) {
+            write_one_final_frat_cl(offs);
         }
     }
-    if (varReplacer) varReplacer->delete_frat_cls();
-    if (!okay()) {
-        *drat << finalcl << clauseID-1 << fin;
+    for(const auto& offs: longIrredCls) {
+        write_one_final_frat_cl(offs);
     }
 }
 
