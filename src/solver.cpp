@@ -468,6 +468,7 @@ Clause* Solver::add_clause_int(
     //Handle special cases
     switch (ps.size()) {
         case 0:
+            unsat_cl_ID = clauseID;
             ok = false;
             if (conf.verbosity >= 6) {
                 cout
@@ -1598,7 +1599,7 @@ void Solver::write_final_frat_clauses()
     assert(decisionLevel() == 0);
 
     if (!okay()) {
-        *drat << finalcl << clauseID << fin;
+        *drat << finalcl << unsat_cl_ID << fin;
     }
 
     for(uint32_t i = 0; i < nVars(); i ++) {

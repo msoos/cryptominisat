@@ -440,6 +440,7 @@ bool ClauseCleaner::full_clean(Clause& cl)
     }
 
     if (cl.size() == 0) {
+        solver->unsat_cl_ID = cl.stats.ID;
         solver->ok = false;
         return true;
     }

@@ -3443,6 +3443,7 @@ PropBy Searcher::propagate() {
     ) {
         if (!ret.isNULL()) {
             *drat << add << ++clauseID << fin;
+            unsat_cl_ID = clauseID;
         }
     }
 

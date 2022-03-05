@@ -353,6 +353,7 @@ public:
     Contains OUTER variables */
     vector<bool> undef_must_set_vars;
     vector<uint32_t> unit_cl_IDs;
+    uint32_t unsat_cl_ID = 0;
 
 protected:
     virtual void new_var(

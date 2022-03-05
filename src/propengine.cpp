@@ -421,6 +421,7 @@ bool PropEngine::propagate_occur()
 
     if (!ret) {
         *drat << add << ++clauseID << fin;
+        unsat_cl_ID = clauseID;
     }
 
     return ret;

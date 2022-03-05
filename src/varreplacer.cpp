@@ -174,6 +174,7 @@ bool VarReplacer::enqueueDelayedEnqueue()
             *solver->drat
             << add << ++solver->clauseID << fin
             << del << l.second << l.first << fin;
+            solver->unsat_cl_ID = solver->clauseID;
             solver->ok = false;
             break;
         } else {
@@ -357,6 +358,7 @@ void VarReplacer::delete_frat_cls()
 bool VarReplacer::replace_xor_clauses(vector<Xor>& xors)
 {
     for(Xor& x: xors) {
+        assert(!solver->drat->enabled()); //FRAT will fail here
         uint32_t j = 0;
         for(uint32_t i = 0; i < x.clash_vars.size(); i++) {
             uint32_t v = x.clash_vars[i];
@@ -431,11 +433,11 @@ inline void VarReplacer::updateBin(
         //Delete&attach only once
         && (origLit1 < origLit2)
     ) {
-        //solver->clauseID is used and then unused immediately
+        //solver->clauseID+1 is used and then unused immediately
         (*solver->drat)
-        << reloc << i->get_ID() << solver->clauseID << fin
+        << reloc << i->get_ID() << solver->clauseID+1 << fin
         << add << i->get_ID() << lit1 << lit2 << fin
-        << del << solver->clauseID << origLit1 << origLit2 << fin;
+        << del << solver->clauseID+1 << origLit1 << origLit2 << fin;
     }
 
     if (lit1 != origLit1) {
@@ -546,6 +548,12 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs)
         runStats.bogoprops += 3;
         assert(!solver->drat->something_delayed());
 
+        //Finish up if UNSAT
+        if (!solver->ok) {
+            *j++ = *i;
+            continue;
+        }
+
         Clause& c = *solver->cl_alloc.ptr(*i);
         assert(!c.getRemoved());
         assert(c.size() > 2);
@@ -567,7 +575,8 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs)
         if (changed && handleUpdatedClause(c, origLit1, origLit2)) {
             runStats.removedLongClauses++;
             if (!solver->ok) {
-                return false;
+                //if it became UNSAT, then don't delete.
+                *j++ = *i;
             }
         } else {
             *j++ = *i;
@@ -644,7 +653,7 @@ bool VarReplacer::handleUpdatedClause(
     runStats.bogoprops += 3;
     switch(c.size()) {
     case 0:
-        c.setRemoved();
+        solver->unsat_cl_ID = c.stats.ID;
         solver->ok = false;
         return true;
     case 1 :
@@ -799,13 +808,14 @@ bool VarReplacer::handleAlreadyReplaced(const Lit lit1, const Lit lit2)
         << add << ++solver->clauseID << lit1 << fin
         << add << ++solver->clauseID << ~lit1 << fin
         << add << ++solver->clauseID << fin
-        << del << solver->clauseID-2 << ~lit1 << fin
-        << del << solver->clauseID-3 << lit1 << fin
-        << del << solver->clauseID-4 << lit1 << ~lit2 << fin
-        << del << solver->clauseID-5 << ~lit1 << lit2 << fin;
+        << del << solver->clauseID-1 << ~lit1 << fin
+        << del << solver->clauseID-2 << lit1 << fin
+        << del << solver->clauseID-3 << lit1 << ~lit2 << fin
+        << del << solver->clauseID-4 << ~lit1 << lit2 << fin;
         // the UNSAT one, i.e. solver->clauseID-1 does not need to be deleted,
         //   it's automatically deleted
 
+        solver->unsat_cl_ID = solver->clauseID;
         solver->ok = false;
         return false;
     }
@@ -826,8 +836,9 @@ bool VarReplacer::replace_vars_already_set(
         << add << ++solver->clauseID << ~lit1 << fin
         << add << ++solver->clauseID << lit1 << fin
         << add << ++solver->clauseID << fin
-        << del << solver->clauseID-2 << lit1 << fin
-        << del << solver->clauseID-3 << ~lit1 << fin;
+        << del << solver->clauseID-1 << lit1 << fin
+        << del << solver->clauseID-2 << ~lit1 << fin;
+        solver->unsat_cl_ID = solver->clauseID;
         solver->ok = false;
     }
 

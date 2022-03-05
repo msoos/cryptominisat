@@ -315,6 +315,8 @@ bool EGaussian::full_init(bool& created) {
 
         switch (ret) {
             case gret::confl:
+                *solver->drat << add << ++solver->clauseID << fin;
+                solver->unsat_cl_ID = solver->clauseID;
                 solver->ok = false;
                 return false;
                 break;

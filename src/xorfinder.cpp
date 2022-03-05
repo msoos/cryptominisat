@@ -695,6 +695,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                     }
                 }
                 if (solver->drat->enabled()) {
+                    solver->drat->flush();
                     delete this_xors[idxes[0]].bdd;
                     delete this_xors[idxes[1]].bdd;
                 }
@@ -804,7 +805,7 @@ bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* ou
     for(size_t i = 0;i < this_xors.size(); i++) {
         Xor& x = this_xors[i];
         solver->clean_xor_vars_no_prop(x.get_vars(), x.rhs);
-        if (x.size() > 2) {
+        if (x.size() > 2 || !solver->ok) {
             this_xors[i2] = this_xors[i];
             i2++;
             continue;
@@ -813,18 +814,18 @@ bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* ou
         switch(x.size() ) {
             case 0: {
                 if (x.rhs == true) {
+                    *solver->drat << add << ++solver->clauseID << fin;
+                    solver->unsat_cl_ID = solver->clauseID;
                     solver->ok = false;
-                    return false;
                 }
                 break;
             }
 
             case 1: {
-                cout << "WARNING -- could be a FRAT issue" << endl;
-                assert(false);
                 Lit lit = Lit(x[0], !x.rhs);
                 if (solver->value(lit) == l_False) {
                     *solver->drat << ++solver->clauseID << fin;
+                    solver->unsat_cl_ID = solver->clauseID;
                     solver->ok = false;
                 } else if (solver->value(lit) == l_Undef) {
                     solver->enqueue<true>(lit);
@@ -834,9 +835,6 @@ bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* ou
                         solver->ok = solver->propagate<true>().isNULL();
                     }
                 }
-                if (!solver->ok) {
-                    goto end;
-                }
                 break;
             }
 
@@ -845,12 +843,12 @@ bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* ou
                 vector<Lit> lits{Lit(x[0], false), Lit(x[1], true^x.rhs)};
                 solver->add_clause_int(lits, true, NULL, out_changed_occur != NULL);
                 if (!solver->ok) {
-                    goto end;
+                    break;
                 }
                 lits = {Lit(x[0], true), Lit(x[1], false^x.rhs)};
                 solver->add_clause_int(lits, true, NULL, out_changed_occur != NULL);
                 if (!solver->ok) {
-                    goto end;
+                    break;
                 }
                 if (out_changed_occur) {
                     solver->ok = solver->propagate_occur<true>();
@@ -858,7 +856,7 @@ bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* ou
                     solver->ok = solver->propagate<true>().isNULL();
                 }
                 if (!solver->ok) {
-                    goto end;
+                    break;
                 }
 
                 if (out_changed_occur) {
@@ -872,9 +870,10 @@ bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* ou
                 assert(false && "Not possible");
             }
         }
+        solver->drat->flush();
+        delete x.bdd;
     }
     this_xors.resize(i2);
-    end:
     if (solver->conf.verbosity >= 5) {
         if (!solver->okay()) {
             cout << "c add_new_truths_from_xors lead to UNSAT" << endl;
