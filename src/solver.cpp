@@ -1584,11 +1584,16 @@ lbool Solver::solve_with_assumptions(
 
     if (drat->enabled()) {
         write_final_frat_clauses();
+
+        // TBDD finalization
+        drat->flush();
         for(uint32_t i = 0; i < gqueuedata.size(); i++) {
             gmatrices[i]->finalize_frat();
         }
+        cout << "xorclauses.size(): " << xorclauses.size() << endl;
+        cout << "xorclauses_unused.size(): " << xorclauses_unused.size() << endl;
+        for(const auto& x: xorclauses_unused) assert(x.bdd == NULL);
         tbdd_done();
-        drat->flush();
     }
     return status;
 }
@@ -3573,26 +3578,23 @@ bool Solver::find_and_init_all_matrices()
 
         cout
         << "c [gauss]"
-        << " unused_xors: " << mfinder.unused_xors.size()
+        << " unused_xors: " << xorclauses_unused.size()
         << " can detach: " << can_detach
         << " no irred with clash: " << no_irred_contains_clash
         << endl;
 
         cout << "c unused xors follow." << endl;
-        for(const auto& x: mfinder.unused_xors) {
+        for(const auto& x: xorclauses_unused) {
             cout << "c " << x << endl;
         }
         cout << "c FIN" << endl;
 
         cout << "c used xors follow." << endl;
-        for(const auto& x: mfinder.xors) {
+        for(const auto& x: xorclauses) {
             cout << "c " << x << endl;
         }
         cout << "c FIN" << endl;
     }
-
-    xorclauses_unused = mfinder.unused_xors;
-    xorclauses = mfinder.xors;
 
     bool ret_no_irred_nonxor_contains_clash_vars;
     if (can_detach &&
@@ -3601,7 +3603,7 @@ bool Solver::find_and_init_all_matrices()
         (ret_no_irred_nonxor_contains_clash_vars=no_irred_nonxor_contains_clash_vars())
     ) {
         detach_xor_clauses(mfinder.clash_vars_unused);
-        unset_clash_decision_vars(mfinder.xors);
+        unset_clash_decision_vars(xorclauses);
     } else {
         if (conf.xor_detach_reattach &&
             (conf.verbosity >= 1 || conf.xor_detach_verb) &&

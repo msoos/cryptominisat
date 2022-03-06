@@ -38,9 +38,7 @@ using std::cout;
 using std::endl;
 
 XorFinder::XorFinder(OccSimplifier* _occsimplifier, Solver* _solver) :
-    xors(_solver->xorclauses)
-    , unused_xors(_solver->xorclauses_unused)
-    , occsimplifier(_occsimplifier)
+    occsimplifier(_occsimplifier)
     , solver(_solver)
     , toClear(_solver->toClear)
     , seen(_solver->seen)
@@ -119,6 +117,8 @@ void XorFinder::clean_equivalent_xors(vector<Xor>& txors)
             if (j->vars == i->vars && i->rhs == j->rhs) {
                 j->merge_clash(*i, seen);
                 j->detached |= i->detached;
+                solver->drat->flush();
+                delete j->bdd;
             } else {
                 ++j;
                 *j = *i;
@@ -159,8 +159,12 @@ void XorFinder::find_xors()
         cl->set_used_in_xor(false);
         cl->set_used_in_xor_full(false);
     }
-    xors.clear();
-    unused_xors.clear();
+
+    solver->drat->flush();
+    for (auto const& x: solver->xorclauses) delete x.bdd;
+    for (auto const& x: solver->xorclauses_unused) delete x.bdd;
+    solver->xorclauses.clear();
+    solver->xorclauses_unused.clear();
 
     double myTime = cpuTime();
     const int64_t orig_xor_find_time_limit =
@@ -179,10 +183,10 @@ void XorFinder::find_xors()
     #endif
 
     find_xors_based_on_long_clauses();
-    assert(runStats.foundXors == xors.size());
+    assert(runStats.foundXors == solver->xorclauses.size());
 
     //clean them of equivalent XORs
-    clean_equivalent_xors(xors);
+    clean_equivalent_xors(solver->xorclauses);
 
     //Cleanup
     for(ClOffset offset: occsimplifier->clauses) {
@@ -195,7 +199,7 @@ void XorFinder::find_xors()
     const double time_remain = float_div(xor_find_time_limit, orig_xor_find_time_limit);
     runStats.findTime = cpuTime() - myTime;
     runStats.time_outs += time_out;
-    solver->sumSearchStats.num_xors_found_last = xors.size();
+    solver->sumSearchStats.num_xors_found_last = solver->xorclauses.size();
     print_found_xors();
 
     if (solver->conf.verbosity) {
@@ -215,7 +219,7 @@ void XorFinder::find_xors()
     solver->xor_clauses_updated = true;
 
     #if defined(SLOW_DEBUG) || defined(XOR_DEBUG)
-    for(const Xor& x: xors) {
+    for(const Xor& x: solver->xorclauses) {
         for(uint32_t v: x) {
             assert(solver->varData[v].removed == Removed::none);
         }
@@ -227,14 +231,8 @@ void XorFinder::print_found_xors()
 {
     if (solver->conf.verbosity >= 5) {
         cout << "c Found XORs: " << endl;
-        for(vector<Xor>::const_iterator
-            it = xors.begin(), end = xors.end()
-            ; it != end
-            ; ++it
-        ) {
-            cout << "c " << *it << endl;
-        }
-        cout << "c -> Total: " << xors.size() << " xors" << endl;
+        for(auto const& x: solver->xorclauses) cout << "c " << x << endl;
+        cout << "c -> Total: " << solver->xorclauses.size() << " xors" << endl;
     }
 }
 
@@ -299,7 +297,7 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
 
 void XorFinder::add_found_xor(const Xor& found_xor)
 {
-    xors.push_back(found_xor);
+    solver->xorclauses.push_back(found_xor);
     runStats.foundXors++;
     runStats.sumSizeXors += found_xor.size();
     runStats.maxsize = std::max<uint32_t>(runStats.maxsize, found_xor.size());
@@ -410,18 +408,17 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
     }
 }
 
-vector<Xor> XorFinder::remove_xors_without_connecting_vars(const vector<Xor>& this_xors)
+void XorFinder::move_xors_without_connecting_vars_to_unused()
 {
-    if (this_xors.empty())
-        return this_xors;
+    if (solver->xorclauses.empty()) return;
 
     double myTime = cpuTime();
-    vector<Xor> ret;
+    vector<Xor> cleaned;
     assert(toClear.empty());
 
     //Fill "seen" with vars used
     uint32_t non_empty = 0;
-    for(const Xor& x: this_xors) {
+    for(const Xor& x: solver->xorclauses) {
         if (x.size() != 0) {
             non_empty++;
         }
@@ -438,17 +435,17 @@ vector<Xor> XorFinder::remove_xors_without_connecting_vars(const vector<Xor>& th
     }
 
     //has at least 1 var with occur of 2
-    for(const Xor& x: this_xors) {
+    for(const Xor& x: solver->xorclauses) {
         if (xor_has_interesting_var(x) || x.detached) {
             #ifdef VERBOSE_DEBUG
             cout << "XOR has connecting var: " << x << endl;
             #endif
-            ret.push_back(x);
+            cleaned.push_back(x);
         } else {
             #ifdef VERBOSE_DEBUG
             cout << "XOR has no connecting var: " << x << endl;
             #endif
-            unused_xors.push_back(x);
+            solver->xorclauses_unused.push_back(x);
         }
     }
 
@@ -458,9 +455,11 @@ vector<Xor> XorFinder::remove_xors_without_connecting_vars(const vector<Xor>& th
     }
     toClear.clear();
 
+    solver->xorclauses = cleaned;
+
     double time_used = cpuTime() - myTime;
     if (solver->conf.verbosity) {
-        cout << "c [xor-rem-unconnected] left with " <<  ret.size()
+        cout << "c [xor-rem-unconnected] left with " <<  solver->xorclauses.size()
         << " xors from " << non_empty << " non-empty xors"
         << solver->conf.print_times(time_used)
         << endl;
@@ -472,8 +471,6 @@ vector<Xor> XorFinder::remove_xors_without_connecting_vars(const vector<Xor>& th
             , time_used
         );
     }
-
-    return ret;
 }
 
 bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
@@ -645,6 +642,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 #endif
 
                 //Equivalent, so delete one
+                delete x0.bdd;
                 x0 = Xor();
 
                 //Re-attach the other, remove the occur of the one we deleted
@@ -694,11 +692,9 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                         interesting.push_back(l.var());
                     }
                 }
-                if (solver->drat->enabled()) {
-                    solver->drat->flush();
-                    delete this_xors[idxes[0]].bdd;
-                    delete this_xors[idxes[1]].bdd;
-                }
+                solver->drat->flush();
+                delete this_xors[idxes[0]].bdd;
+                delete this_xors[idxes[1]].bdd;
                 this_xors[idxes[0]] = Xor();
                 this_xors[idxes[1]] = Xor();
                 xored++;
@@ -782,7 +778,7 @@ void XorFinder::clean_xors_from_empty(vector<Xor>& thisxors)
             && x.rhs == false
         ) {
             if (!x.clash_vars.empty()) {
-                unused_xors.push_back(x);
+                solver->xorclauses_unused.push_back(x);
             }
         } else {
             if (solver->conf.verbosity >= 4) {
@@ -813,6 +809,7 @@ bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* ou
 
         switch(x.size() ) {
             case 0: {
+                assert(false && "Should have propagated already");
                 if (x.rhs == true) {
                     *solver->drat << add << ++solver->clauseID << fin;
                     solver->unsat_cl_ID = solver->clauseID;
@@ -822,6 +819,7 @@ bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* ou
             }
 
             case 1: {
+                assert(false && "Should have propagated already");
                 Lit lit = Lit(x[0], !x.rhs);
                 if (solver->value(lit) == l_False) {
                     *solver->drat << ++solver->clauseID << fin;
@@ -990,7 +988,7 @@ bool XorFinder::xor_has_interesting_var(const Xor& x)
 size_t XorFinder::mem_used() const
 {
     size_t mem = 0;
-    mem += xors.capacity()*sizeof(Xor);
+    mem += solver->xorclauses.capacity()*sizeof(Xor);
 
     //Temporary
     mem += tmpClause.capacity()*sizeof(Lit);

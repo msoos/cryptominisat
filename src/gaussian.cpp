@@ -75,9 +75,9 @@ matrix_no(_matrix_no)
 
 EGaussian::~EGaussian() {
     delete_gauss_watch_this_matrix();
-    for(auto& x: tofree) {
-        delete[] x;
-    }
+    for(auto& x: tofree) delete[] x;
+    for(auto& x: xorclauses) assert(x.bdd == NULL && "GMatrix needs finalization before deletion");
+    assert(frat_ids.empty());
     tofree.clear();
 
     delete cols_unset;
@@ -1542,7 +1542,11 @@ void CMSat::EGaussian::finalize_frat()
         *solver->drat << fin;
         ilist_free(bdd_cl.cl);
     }
+    frat_ids.clear();
+
+    solver->drat->flush();
     for(auto& x: xorclauses) {
         delete x.bdd;
+        x.bdd = NULL;
     }
 }

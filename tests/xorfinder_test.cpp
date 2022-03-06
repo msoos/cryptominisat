@@ -62,7 +62,7 @@ TEST_F(xor_finder, find_none)
     XorFinder finder(occsimp, s);
     finder.grab_mem();
     finder.find_xors();
-    EXPECT_EQ(finder.xors.size(), 0U);
+    EXPECT_EQ(s->xorclauses.size(), 0U);
 }
 
 TEST_F(xor_finder, find_tri_1)
@@ -75,7 +75,7 @@ TEST_F(xor_finder, find_tri_1)
     occsimp->setup();
     XorFinder finder(occsimp, s);
     finder.find_xors();
-    check_xors_contains(finder.xors, "1, 2, 3 = 1");
+    check_xors_contains(s->xorclauses, "1, 2, 3 = 1");
 }
 
 TEST_F(xor_finder, find_tri_2)
@@ -88,7 +88,7 @@ TEST_F(xor_finder, find_tri_2)
     occsimp->setup();
     XorFinder finder(occsimp, s);
     finder.find_xors();
-    check_xors_eq(finder.xors, "1, 2, 3 = 0");
+    check_xors_eq(s->xorclauses, "1, 2, 3 = 0");
 }
 
 TEST_F(xor_finder, find_tri_3)
@@ -106,8 +106,8 @@ TEST_F(xor_finder, find_tri_3)
     occsimp->setup();
     XorFinder finder(occsimp, s);
     finder.find_xors();
-    check_xors_contains(finder.xors, "1, 2, 3 = 0");
-    check_xors_contains(finder.xors, "1, 2, 3 = 1");
+    check_xors_contains(s->xorclauses, "1, 2, 3 = 0");
+    check_xors_contains(s->xorclauses, "1, 2, 3 = 1");
 }
 
 
@@ -126,7 +126,7 @@ TEST_F(xor_finder, find_4_1)
     occsimp->setup();
     XorFinder finder(occsimp, s);
     finder.find_xors();
-    check_xors_eq(finder.xors, "1, 2, 3, 4 = 0;");
+    check_xors_eq(s->xorclauses, "1, 2, 3, 4 = 0;");
 }
 
 TEST_F(xor_finder, find_4_4)
@@ -143,7 +143,7 @@ TEST_F(xor_finder, find_4_4)
     occsimp->setup();
     XorFinder finder(occsimp, s);
     finder.find_xors();
-    check_xors_eq(finder.xors, "1, 2, 3, 4 = 1");
+    check_xors_eq(s->xorclauses, "1, 2, 3, 4 = 1");
 }
 
 /*
@@ -165,7 +165,7 @@ TEST_F(xor_finder, find_4_2)
     occsimp->setup();
     XorFinder finder(occsimp, s);
     finder.find_xors();
-    check_xors_eq(finder.xors, "1, 2, 3, 4 = 0;");
+    check_xors_eq(s->xorclauses, "1, 2, 3, 4 = 0;");
 }
 
 TEST_F(xor_finder, find_4_3)
@@ -183,7 +183,7 @@ TEST_F(xor_finder, find_4_3)
     occsimp->setup();
     XorFinder finder(occsimp, s);
     finder.find_xors();
-    check_xors_eq(finder.xors, "1, 2, 3, 4 = 0;");
+    check_xors_eq(s->xorclauses, "1, 2, 3, 4 = 0;");
 }
 
 /*
@@ -216,7 +216,7 @@ TEST_F(xor_finder, find_5_2)
     occsimp->setup();
     XorFinder finder(occsimp, s);
     finder.find_xors();
-    check_xors_eq(finder.xors, "1, 2, 3, 4, 5 = 1;");
+    check_xors_eq(s->xorclauses, "1, 2, 3, 4, 5 = 1;");
 }*/
 
 TEST_F(xor_finder, find_4_5)
@@ -243,7 +243,7 @@ TEST_F(xor_finder, find_4_5)
     occsimp->setup();
     XorFinder finder(occsimp, s);
     finder.find_xors();
-    check_xors_eq(finder.xors, "1, 2, 3, 4 = 1; 1, 2, 3, 4 = 0");
+    check_xors_eq(s->xorclauses, "1, 2, 3, 4 = 1; 1, 2, 3, 4 = 0");
 }
 /***
  * Specialty, non-matching XOR test end
@@ -278,7 +278,7 @@ TEST_F(xor_finder, find_5_1)
     occsimp->setup();
     XorFinder finder(occsimp, s);
     finder.find_xors();
-    check_xors_eq(finder.xors, "1, 2, 3, 4, 5 = 1;");
+    check_xors_eq(s->xorclauses, "1, 2, 3, 4, 5 = 1;");
 }
 
 
@@ -321,7 +321,7 @@ TEST_F(xor_finder, find_5_1)
     occsimp->setup();
     XorFinder finder(occsimp, s);
     finder.find_xors();
-    check_xors_eq(finder.xors, "1, 7, 3, 4, 5, 9 = 0;");
+    check_xors_eq(s->xorclauses, "1, 7, 3, 4, 5, 9 = 0;");
 }
 
 TEST_F(xor_finder, find_6_1)
@@ -362,7 +362,7 @@ TEST_F(xor_finder, find_6_1)
     occsimp->setup();
     XorFinder finder(occsimp, s);
     finder.find_xors();
-    check_xors_eq(finder.xors, "6, 7, 3, 4, 5, 9 = 1;");
+    check_xors_eq(s->xorclauses, "6, 7, 3, 4, 5, 9 = 1;");
 }*/
 
 struct xor_finder2 : public ::testing::Test {
@@ -399,212 +399,212 @@ struct xor_finder2 : public ::testing::Test {
 
 TEST_F(xor_finder2, clean_v1)
 {
-    finder->xors = str_to_xors("1, 2, 3 = 0;");
-    finder->xors = finder->remove_xors_without_connecting_vars(finder->xors);
-    EXPECT_EQ(finder->xors.size(), 0u);
+    s->xorclauses = str_to_xors("1, 2, 3 = 0;");
+    finder->move_xors_without_connecting_vars_to_unused();
+    EXPECT_EQ(s->xorclauses.size(), 0u);
 }
 
 TEST_F(xor_finder2, clean_v2)
 {
-    finder->xors = str_to_xors("1, 2, 3 = 0; 1, 4, 5, 6 = 0");
-    finder->xors = finder->remove_xors_without_connecting_vars(finder->xors);
-    EXPECT_EQ(finder->xors.size(), 2u);
+    s->xorclauses = str_to_xors("1, 2, 3 = 0; 1, 4, 5, 6 = 0");
+    finder->move_xors_without_connecting_vars_to_unused();
+    EXPECT_EQ(s->xorclauses.size(), 2u);
 }
 
 TEST_F(xor_finder2, clean_v3)
 {
-    finder->xors = str_to_xors("1, 2, 3 = 0; 1, 4, 5, 6 = 0; 10, 11, 12, 13 = 1");
-    finder->xors = finder->remove_xors_without_connecting_vars(finder->xors);
-    EXPECT_EQ(finder->xors.size(), 2u);
+    s->xorclauses = str_to_xors("1, 2, 3 = 0; 1, 4, 5, 6 = 0; 10, 11, 12, 13 = 1");
+    finder->move_xors_without_connecting_vars_to_unused();
+    EXPECT_EQ(s->xorclauses.size(), 2u);
 }
 
 TEST_F(xor_finder2, clean_v4)
 {
-    finder->xors = str_to_xors("1, 2, 3 = 0; 1, 4, 5, 6 = 0; 10, 11, 12, 13 = 1; 10, 15, 16, 17 = 0");
-    finder->xors = finder->remove_xors_without_connecting_vars(finder->xors);
-    EXPECT_EQ(finder->xors.size(), 4u);
+    s->xorclauses = str_to_xors("1, 2, 3 = 0; 1, 4, 5, 6 = 0; 10, 11, 12, 13 = 1; 10, 15, 16, 17 = 0");
+    finder->move_xors_without_connecting_vars_to_unused();
+    EXPECT_EQ(s->xorclauses.size(), 4u);
 }
 
 TEST_F(xor_finder2, xor_1)
 {
-    finder->xors = str_to_xors("1, 2, 3 = 1; 1, 4, 5, 6 = 0;");
-    finder->xor_together_xors(finder->xors);
-    check_xors_eq(finder->xors, "2, 3, 4, 5, 6 = 1 c 1;");
+    s->xorclauses = str_to_xors("1, 2, 3 = 1; 1, 4, 5, 6 = 0;");
+    finder->xor_together_xors(s->xorclauses);
+    check_xors_eq(s->xorclauses, "2, 3, 4, 5, 6 = 1 c 1;");
 }
 
 TEST_F(xor_finder2, xor_2)
 {
-    finder->xors = str_to_xors("1, 2, 3 = 0; 1, 4, 5, 6 = 0;");
-    finder->xor_together_xors(finder->xors);
-    check_xors_eq(finder->xors, "2, 3, 4, 5, 6 = 0 c 1;");
+    s->xorclauses = str_to_xors("1, 2, 3 = 0; 1, 4, 5, 6 = 0;");
+    finder->xor_together_xors(s->xorclauses);
+    check_xors_eq(s->xorclauses, "2, 3, 4, 5, 6 = 0 c 1;");
 }
 
 TEST_F(xor_finder2, xor_3)
 {
-    finder->xors = str_to_xors("1, 2, 3 = 0; 10, 4, 5, 6 = 0;");
-    finder->xor_together_xors(finder->xors);
-    check_xors_eq(finder->xors, "1, 2, 3 = 0; 10, 4, 5, 6 = 0;");
+    s->xorclauses = str_to_xors("1, 2, 3 = 0; 10, 4, 5, 6 = 0;");
+    finder->xor_together_xors(s->xorclauses);
+    check_xors_eq(s->xorclauses, "1, 2, 3 = 0; 10, 4, 5, 6 = 0;");
 }
 
 TEST_F(xor_finder2, xor_4)
 {
-    finder->xors = str_to_xors("1, 2, 3 = 0; 1, 4, 5, 6 = 0;"
+    s->xorclauses = str_to_xors("1, 2, 3 = 0; 1, 4, 5, 6 = 0;"
         "1, 9, 10, 11 = 0;");
-    finder->xor_together_xors(finder->xors);
-    EXPECT_EQ(finder->xors.size(), 3u);
+    finder->xor_together_xors(s->xorclauses);
+    EXPECT_EQ(s->xorclauses.size(), 3u);
 }
 
 TEST_F(xor_finder2, xor_5)
 {
-    finder->xors = str_to_xors(
+    s->xorclauses = str_to_xors(
         "2, 3, 1 = 0;"
         "1, 5, 6, 4 = 0;"
         "4, 10, 11 = 0;");
-    finder->xor_together_xors(finder->xors);
-    EXPECT_EQ(finder->xors.size(), 1u);
-    check_xors_contains(finder->xors, "2, 3, 5, 6, 10, 11 = 0 c 1, 4");
+    finder->xor_together_xors(s->xorclauses);
+    EXPECT_EQ(s->xorclauses.size(), 1u);
+    check_xors_contains(s->xorclauses, "2, 3, 5, 6, 10, 11 = 0 c 1, 4");
 }
 
 TEST_F(xor_finder2, xor_6)
 {
-    finder->xors = str_to_xors(
+    s->xorclauses = str_to_xors(
         "1, 2 = 0;"
         "1, 4 = 0;"
         "6, 7 = 0;"
         "6, 10 = 1");
-    finder->xor_together_xors(finder->xors);
-    EXPECT_EQ(finder->xors.size(), 2u);
-    check_xors_eq(finder->xors, "2, 4 = 0 c 1; 7, 10 = 1 c 6");
+    finder->xor_together_xors(s->xorclauses);
+    EXPECT_EQ(s->xorclauses.size(), 2u);
+    check_xors_eq(s->xorclauses, "2, 4 = 0 c 1; 7, 10 = 1 c 6");
 }
 
 TEST_F(xor_finder2, xor_7)
 {
-    finder->xors = str_to_xors(
+    s->xorclauses = str_to_xors(
         "1, 2 = 0 c 10;"
         "1, 4 = 0 c 11;"
         "6, 7 = 0;"
         "6, 9 = 1 c 18");
-    finder->xor_together_xors(finder->xors);
-    EXPECT_EQ(finder->xors.size(), 2u);
-    check_xors_eq(finder->xors,
+    finder->xor_together_xors(s->xorclauses);
+    EXPECT_EQ(s->xorclauses.size(), 2u);
+    check_xors_eq(s->xorclauses,
         "2, 4 = 0 c 10, 11, 1;"
         "7, 9 = 1 c 6, 18");
 }
 
 TEST_F(xor_finder2, xor_8)
 {
-    finder->xors = str_to_xors(
+    s->xorclauses = str_to_xors(
         "1, 2 = 0 c 10;"
         "1, 4, 7 = 0 c 11;"
         "7, 8, 9 = 0 c 12;");
-    finder->xor_together_xors(finder->xors);
-    EXPECT_EQ(finder->xors.size(), 1u);
-    check_xors_eq(finder->xors,
+    finder->xor_together_xors(s->xorclauses);
+    EXPECT_EQ(s->xorclauses.size(), 1u);
+    check_xors_eq(s->xorclauses,
         "2, 4, 8, 9 = 0 c 10, 11, 12, 1, 7;");
 }
 
 
 TEST_F(xor_finder2, dont_xor_together_when_clash_more_than_one)
 {
-    finder->xors = str_to_xors(
+    s->xorclauses = str_to_xors(
         "1, 2, 3, 4 = 0;"
         "1, 2, 5, 6 = 0;");
-    finder->xor_together_xors(finder->xors);
-    EXPECT_EQ(finder->xors.size(), 2u);
-    check_xors_eq(finder->xors,
+    finder->xor_together_xors(s->xorclauses);
+    EXPECT_EQ(s->xorclauses.size(), 2u);
+    check_xors_eq(s->xorclauses,
       "1, 2, 3, 4 = 0;"
       "1, 2, 5, 6 = 0;");
 }
 
 TEST_F(xor_finder2, clash_1)
 {
-    finder->xors = str_to_xors("1, 2, 3, 4 = 0; 1, 2, 5, 6= 0;");
-    finder->xor_together_xors(finder->xors);
-    EXPECT_EQ(finder->xors.size(), 2u);
-    check_xors_eq(finder->xors, "1, 2, 3, 4 = 0; 1, 2, 5, 6= 0;");
+    s->xorclauses = str_to_xors("1, 2, 3, 4 = 0; 1, 2, 5, 6= 0;");
+    finder->xor_together_xors(s->xorclauses);
+    EXPECT_EQ(s->xorclauses.size(), 2u);
+    check_xors_eq(s->xorclauses, "1, 2, 3, 4 = 0; 1, 2, 5, 6= 0;");
 }
 
 TEST_F(xor_finder2, dont_remove_xors)
 {
-    finder->xors = str_to_xors("1, 2 = 0; 1, 2= 0;");
-    finder->xor_together_xors(finder->xors);
-    EXPECT_EQ(finder->xors.size(), 1U);
+    s->xorclauses = str_to_xors("1, 2 = 0; 1, 2= 0;");
+    finder->xor_together_xors(s->xorclauses);
+    EXPECT_EQ(s->xorclauses.size(), 1U);
 }
 
 TEST_F(xor_finder2, dont_remove_xors2)
 {
-    finder->xors = str_to_xors("1, 2, 3 = 0; 1, 2, 3= 0;");
-    finder->xor_together_xors(finder->xors);
-    EXPECT_EQ(finder->xors.size(), 1U);
+    s->xorclauses = str_to_xors("1, 2, 3 = 0; 1, 2, 3= 0;");
+    finder->xor_together_xors(s->xorclauses);
+    EXPECT_EQ(s->xorclauses.size(), 1U);
 }
 
 TEST_F(xor_finder2, xor_pure_unit_unsat)
 {
-    finder->xors = str_to_xors("1 = 0; 1 = 1;");
-    finder->xor_together_xors(finder->xors);
-    bool ret = finder->add_new_truths_from_xors(finder->xors);
+    s->xorclauses = str_to_xors("1 = 0; 1 = 1;");
+    finder->xor_together_xors(s->xorclauses);
+    bool ret = finder->add_new_truths_from_xors(s->xorclauses);
     EXPECT_FALSE(ret);
 }
 
 TEST_F(xor_finder2, xor_add_truths)
 {
-    finder->xors = str_to_xors("1, 2 = 0; 1 = 1; 2 = 0");
-    bool ret = finder->xor_together_xors(finder->xors);
+    s->xorclauses = str_to_xors("1, 2 = 0; 1 = 1; 2 = 0");
+    bool ret = finder->xor_together_xors(s->xorclauses);
     EXPECT_TRUE(ret);
-    EXPECT_EQ(finder->xors.size(), 1U);
+    EXPECT_EQ(s->xorclauses.size(), 1U);
 
-    ret = finder->add_new_truths_from_xors(finder->xors);
+    ret = finder->add_new_truths_from_xors(s->xorclauses);
     EXPECT_FALSE(ret);
 }
 
 TEST_F(xor_finder2, xor_unit)
 {
-    finder->xors = str_to_xors("1 = 0; 1, 2, 3 = 1; 3 = 1");
-    finder->xor_together_xors(finder->xors);
-    bool ret = finder->add_new_truths_from_xors(finder->xors);
+    s->xorclauses = str_to_xors("1 = 0; 1, 2, 3 = 1; 3 = 1");
+    finder->xor_together_xors(s->xorclauses);
+    bool ret = finder->add_new_truths_from_xors(s->xorclauses);
     EXPECT_TRUE(ret);
-    EXPECT_EQ(finder->xors.size(), 0u);
+    EXPECT_EQ(s->xorclauses.size(), 0u);
 }
 
 #ifdef USE_M4RI
 TEST_F(xor_finder2, xor_unit2_2)
 {
     s->add_clause_outside(str_to_cl("-4"));
-    finder->xors = str_to_xors("1, 2, 3 = 0; 1, 2, 3, 4 = 1;");
+    s->xorclauses = str_to_xors("1, 2, 3 = 0; 1, 2, 3, 4 = 1;");
     vector<Lit> out_changed_occur;
-    bool ret = topLevelGauss->toplevelgauss(finder->xors, &out_changed_occur);
+    bool ret = topLevelGauss->toplevelgauss(s->xorclauses, &out_changed_occur);
     EXPECT_FALSE(ret);
 }
 #endif
 
 TEST_F(xor_finder2, xor_binx)
 {
-    finder->xors = str_to_xors("1, 2, 5 = 0; 1, 3 = 0; 2 = 0");
-    bool ret = finder->xor_together_xors(finder->xors);
+    s->xorclauses = str_to_xors("1, 2, 5 = 0; 1, 3 = 0; 2 = 0");
+    bool ret = finder->xor_together_xors(s->xorclauses);
     if (ret) {
-        ret &= finder->add_new_truths_from_xors(finder->xors);
+        ret &= finder->add_new_truths_from_xors(s->xorclauses);
     }
     EXPECT_TRUE(ret);
-    EXPECT_EQ(finder->xors.size(), 0u);
+    EXPECT_EQ(s->xorclauses.size(), 0u);
     check_red_cls_eq(s, "5, -3; -5, 3");
 }
 
 TEST_F(xor_finder2, xor_binx_inv_not_found)
 {
-    finder->xors = str_to_xors("3, 1 = 1; 1, 3 = 0;");
-    bool ret = finder->xor_together_xors(finder->xors);
+    s->xorclauses = str_to_xors("3, 1 = 1; 1, 3 = 0;");
+    bool ret = finder->xor_together_xors(s->xorclauses);
     if (ret) {
-        ret &= finder->add_new_truths_from_xors(finder->xors);
+        ret &= finder->add_new_truths_from_xors(s->xorclauses);
     }
     EXPECT_TRUE(ret);
 }
 
 TEST_F(xor_finder2, xor_recur_bug)
 {
-    finder->xors = str_to_xors("3, 7, 9 = 0; 1, 3, 4, 5 = 1;");
-    bool ret = finder->xor_together_xors(finder->xors);
+    s->xorclauses = str_to_xors("3, 7, 9 = 0; 1, 3, 4, 5 = 1;");
+    bool ret = finder->xor_together_xors(s->xorclauses);
     EXPECT_TRUE(ret);
-    check_xors_eq(finder->xors, "7, 9, 1, 4, 5 = 1 c 3;");
+    check_xors_eq(s->xorclauses, "7, 9, 1, 4, 5 = 1 c 3;");
 }
 
 

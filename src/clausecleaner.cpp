@@ -352,6 +352,12 @@ bool ClauseCleaner::clean_one_xor(Xor& x)
         #endif
     }
 
+    if (x.size() <= 2) {
+        solver->drat->flush();
+        delete x.bdd;
+        x.bdd = NULL;
+    }
+
     switch(x.size()) {
         case 0:
             solver->ok &= !x.rhs;

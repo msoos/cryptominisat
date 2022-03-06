@@ -1719,7 +1719,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                     solver->ok = finder.xor_together_xors(xors);
                     if (solver->ok) {
                         vector<Lit> out_changed_occur;
-                        finder.remove_xors_without_connecting_vars(xors);
+                        finder.move_xors_without_connecting_vars_to_unused(xors);
                         topLevelGauss->toplevelgauss(xors, &out_changed_occur);
                         //these may have changed, recalculating occur
                         for(Lit lit: out_changed_occur) {
@@ -1750,6 +1750,11 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             if (solver->conf.doVarElim) {
                 solver->removed_xorclauses_clash_vars.clear();
                 solver->xor_clauses_updated = true;
+
+                //Get rid of XOR clauses
+                solver->drat->flush();;
+                for(auto const& x: solver->xorclauses) delete x.bdd;
+                for(auto const& x: solver->xorclauses_unused) delete x.bdd;
                 solver->xorclauses.clear();
                 solver->xorclauses_unused.clear();
 
