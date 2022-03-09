@@ -332,9 +332,7 @@ bool ClauseCleaner::clean_one_xor(Xor& x)
     bool rhs = x.rhs;
     size_t i = 0;
     size_t j = 0;
-    #ifdef VERBOSE_DEBUG
-    cout << "Trying to clean XOR: " << x << endl;
-    #endif
+    VERBOSE_PRINT("Trying to clean XOR: " << x);
     for(size_t size = x.size(); i < size; i++) {
         uint32_t var = x[i];
         if (solver->value(var) != l_Undef) {
@@ -347,9 +345,7 @@ bool ClauseCleaner::clean_one_xor(Xor& x)
         x.resize(j);
         x.rhs = rhs;
         //x.create_bdd_xor();
-        #ifdef VERBOSE_DEBUG
-        cout << "cleaned XOR: " << x << endl;
-        #endif
+        VERBOSE_PRINT("cleaned XOR: " << x);
     }
 
     if (x.size() <= 2) {
@@ -360,22 +356,21 @@ bool ClauseCleaner::clean_one_xor(Xor& x)
 
     switch(x.size()) {
         case 0:
-            solver->ok &= !x.rhs;
+            assert(x.rhs == false); // "Should have propagated already, impossible to be false
             return false;
 
         case 1: {
-            assert(!solver->drat->enabled()); // "FRAT needs ID);
-            //(*solver->drat) << add << Lit(x[0], !x.rhs) << fin;
-            solver->fully_enqueue_this(Lit(x[0], !x.rhs));
+            assert(false); // should have alrady propagated
+//             assert(!solver->drat->enabled()); // "FRAT needs ID);
+//             bool ret = solver->fully_enqueue_this(Lit(x[0], !x.rhs));
+//             release_assert(ret); // should have propagated already, must not fail
             return false;
         }
-        case 2: {
-            solver->add_xor_clause_inter(vars_to_lits(x), x.rhs, true, true);
+        case 2:
+            solver->add_xor_clause_inter(vars_to_lits(x), x.rhs, true);
             return false;
-        }
-        default: {
+        default:
             return true;
-        }
     }
 }
 
@@ -395,7 +390,7 @@ bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors)
         size_t j = 0;
         for(size_t size = xors.size(); i < size; i++) {
             Xor& x = xors[i];
-            //cout << "Checking to keep xor: " << x << endl;
+            VERBOSE_PRINT("Checking to keep xor: " << x);
             const bool keep = clean_one_xor(x);
             if (!solver->ok) {
                 return false;
@@ -409,7 +404,7 @@ bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors)
                     , x.clash_vars.begin()
                     , x.clash_vars.end()
                 );
-                //cout << "NOT keeping XOR" << endl;
+                VERBOSE_PRINT("NOT keeping XOR");
             }
         }
         xors.resize(j);

@@ -87,6 +87,9 @@ THE SOFTWARE.
 //#define DRAT_DEBUG
 //#define VERBOSE_DEBUG
 
+#define VERBOSE_PRINT(x) \
+    do { std::cout << x << std::endl; } while (0)
+
 #ifdef VERBOSE_DEBUG
 #define FAST_DEBUG
 #define DEBUG_ATTACH_FULL

@@ -1514,7 +1514,8 @@ lbool Solver::solve_with_assumptions(
 ) {
     if (drat->enabled()) {
         int32_t* v = new int;
-        *v = nVars();
+        *v = nVars()+1;
+        drat->flush();
         tbdd_init_frat(drat->getFile(), v, &clauseID);
     }
     move_to_outside_assumps(_assumptions);

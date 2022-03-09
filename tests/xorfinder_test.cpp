@@ -538,7 +538,7 @@ TEST_F(xor_finder2, dont_remove_xors2)
     EXPECT_EQ(s->xorclauses.size(), 1U);
 }
 
-TEST_F(xor_finder2, xor_pure_unit_unsat)
+/*TEST_F(xor_finder2, xor_pure_unit_unsat)
 {
     s->xorclauses = str_to_xors("1 = 0; 1 = 1;");
     finder->xor_together_xors(s->xorclauses);
@@ -564,7 +564,7 @@ TEST_F(xor_finder2, xor_unit)
     bool ret = finder->add_new_truths_from_xors(s->xorclauses);
     EXPECT_TRUE(ret);
     EXPECT_EQ(s->xorclauses.size(), 0u);
-}
+}*/
 
 #ifdef USE_M4RI
 TEST_F(xor_finder2, xor_unit2_2)
@@ -577,27 +577,27 @@ TEST_F(xor_finder2, xor_unit2_2)
 }
 #endif
 
-TEST_F(xor_finder2, xor_binx)
-{
-    s->xorclauses = str_to_xors("1, 2, 5 = 0; 1, 3 = 0; 2 = 0");
-    bool ret = finder->xor_together_xors(s->xorclauses);
-    if (ret) {
-        ret &= finder->add_new_truths_from_xors(s->xorclauses);
-    }
-    EXPECT_TRUE(ret);
-    EXPECT_EQ(s->xorclauses.size(), 0u);
-    check_red_cls_eq(s, "5, -3; -5, 3");
-}
-
-TEST_F(xor_finder2, xor_binx_inv_not_found)
-{
-    s->xorclauses = str_to_xors("3, 1 = 1; 1, 3 = 0;");
-    bool ret = finder->xor_together_xors(s->xorclauses);
-    if (ret) {
-        ret &= finder->add_new_truths_from_xors(s->xorclauses);
-    }
-    EXPECT_TRUE(ret);
-}
+// TEST_F(xor_finder2, xor_binx)
+// {
+//     s->xorclauses = str_to_xors("1, 2, 5 = 0; 1, 3 = 0; 2 = 0");
+//     bool ret = finder->xor_together_xors(s->xorclauses);
+//     if (ret) {
+//         ret &= finder->add_new_truths_from_xors(s->xorclauses);
+//     }
+//     EXPECT_TRUE(ret);
+//     EXPECT_EQ(s->xorclauses.size(), 0u);
+//     check_red_cls_eq(s, "5, -3; -5, 3");
+// }
+//
+// TEST_F(xor_finder2, xor_binx_inv_not_found)
+// {
+//     s->xorclauses = str_to_xors("3, 1 = 1; 1, 3 = 0;");
+//     bool ret = finder->xor_together_xors(s->xorclauses);
+//     if (ret) {
+//         ret &= finder->add_new_truths_from_xors(s->xorclauses);
+//     }
+//     EXPECT_TRUE(ret);
+// }
 
 TEST_F(xor_finder2, xor_recur_bug)
 {

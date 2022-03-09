@@ -105,7 +105,6 @@ class EGaussian {
     Solver* solver;   // orignal sat solver
 
     //Cleanup
-    bool clean_xors();
     void clear_gwatches(const uint32_t var);
     void delete_gauss_watch_this_matrix();
     void delete_gausswatch(const uint32_t  row_n);

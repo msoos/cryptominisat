@@ -642,6 +642,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 #endif
 
                 //Equivalent, so delete one
+                solver->drat->flush();
                 delete x0.bdd;
                 x0 = Xor();
 
@@ -660,7 +661,6 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 //add back to ws, can't do much
                 ws.push(Watched(idxes[0]));
                 ws.push(Watched(idxes[1]));
-                continue;
             } else {
                 occcnt[v] -= 2;
                 assert(occcnt[v] == 0);
@@ -676,12 +676,11 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                     x_new.bdd = xs.sum();
                 }
 
-                #ifdef VERBOSE_DEBUG
-                cout << "x1: " << x0 << " -- at idx: " << idxes[0] << endl;
-                cout << "x2: " << x1 << " -- at idx: " << idxes[1] << endl;
-                cout << "clashed on var: " << clash_var+1 << endl;
-                cout << "final: " << x_new <<  " -- at idx: " << this_xors.size() << endl;
-                #endif
+                VERBOSE_PRINT("x1: " << x0 << " -- at idx: " << idxes[0]);
+                VERBOSE_PRINT("x2: " << x1 << " -- at idx: " << idxes[1]);
+                VERBOSE_PRINT("clashed on var: " << clash_var+1);
+                VERBOSE_PRINT("final: " << x_new <<  " -- at idx: " << this_xors.size());
+
                 changed = true;
                 this_xors.push_back(x_new);
                 for(uint32_t v2: x_new) {
@@ -788,118 +787,6 @@ void XorFinder::clean_xors_from_empty(vector<Xor>& thisxors)
         }
     }
     thisxors.resize(j);
-}
-
-bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* out_changed_occur)
-{
-    size_t origTrailSize  = solver->trail_size();
-    size_t origBins = solver->binTri.redBins;
-    double myTime = cpuTime();
-
-    assert(solver->ok);
-    size_t i2 = 0;
-    for(size_t i = 0;i < this_xors.size(); i++) {
-        Xor& x = this_xors[i];
-        solver->clean_xor_vars_no_prop(x.get_vars(), x.rhs);
-        if (x.size() > 2 || !solver->ok) {
-            this_xors[i2] = this_xors[i];
-            i2++;
-            continue;
-        }
-
-        switch(x.size() ) {
-            case 0: {
-                assert(false && "Should have propagated already");
-                if (x.rhs == true) {
-                    *solver->drat << add << ++solver->clauseID << fin;
-                    solver->unsat_cl_ID = solver->clauseID;
-                    solver->ok = false;
-                }
-                break;
-            }
-
-            case 1: {
-                assert(false && "Should have propagated already");
-                Lit lit = Lit(x[0], !x.rhs);
-                if (solver->value(lit) == l_False) {
-                    *solver->drat << ++solver->clauseID << fin;
-                    solver->unsat_cl_ID = solver->clauseID;
-                    solver->ok = false;
-                } else if (solver->value(lit) == l_Undef) {
-                    solver->enqueue<true>(lit);
-                    if (out_changed_occur) {
-                        solver->ok = solver->propagate_occur<false>();
-                    } else {
-                        solver->ok = solver->propagate<true>().isNULL();
-                    }
-                }
-                break;
-            }
-
-            case 2: {
-                //RHS == 1 means both same is not allowed
-                vector<Lit> lits{Lit(x[0], false), Lit(x[1], true^x.rhs)};
-                solver->add_clause_int(lits, true, NULL, out_changed_occur != NULL);
-                if (!solver->ok) {
-                    break;
-                }
-                lits = {Lit(x[0], true), Lit(x[1], false^x.rhs)};
-                solver->add_clause_int(lits, true, NULL, out_changed_occur != NULL);
-                if (!solver->ok) {
-                    break;
-                }
-                if (out_changed_occur) {
-                    solver->ok = solver->propagate_occur<true>();
-                } else {
-                    solver->ok = solver->propagate<true>().isNULL();
-                }
-                if (!solver->ok) {
-                    break;
-                }
-
-                if (out_changed_occur) {
-                    out_changed_occur->push_back(Lit(x[0], false));
-                    out_changed_occur->push_back(Lit(x[1], false));
-                }
-                break;
-            }
-
-            default: {
-                assert(false && "Not possible");
-            }
-        }
-        solver->drat->flush();
-        delete x.bdd;
-    }
-    this_xors.resize(i2);
-    if (solver->conf.verbosity >= 5) {
-        if (!solver->okay()) {
-            cout << "c add_new_truths_from_xors lead to UNSAT" << endl;
-        }
-    }
-
-    double add_time = cpuTime() - myTime;
-    uint32_t num_bins_added = solver->binTri.redBins - origBins;
-    uint32_t num_units_added = solver->trail_size() - origTrailSize;
-
-    if (solver->conf.verbosity) {
-        cout
-        << "c [xor-add-lem] added unit " << num_units_added
-        << " bin " << num_bins_added
-        << solver->conf.print_times(add_time)
-        << endl;
-    }
-
-
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed_min(
-            solver
-            , "xor-add-new-bin-unit"
-            , add_time
-        );
-    }
-
-    return solver->okay();
 }
 
 uint32_t XorFinder::xor_two(Xor const* x1_p, Xor const* x2_p, uint32_t& clash_var)
