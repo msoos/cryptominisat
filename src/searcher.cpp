@@ -1352,10 +1352,6 @@ void Searcher::check_need_gauss_jordan_disable()
         gqd.reset();
         gmatrices[i]->update_cols_vals_set();
     }
-
-    if (num_disabled == gqueuedata.size()) {
-        all_matrices_disabled = true;
-    }
 }
 #endif
 
@@ -1528,12 +1524,6 @@ lbool Searcher::new_decision()
         if (value(p) == l_True) {
             // Dummy decision level:
             new_decision_level();
-            #ifdef USE_GAUSS
-            for(uint32_t i = 0; i < gmatrices.size(); i++) {
-                assert(gmatrices[i]);
-                gmatrices[i]->new_decision_level(decisionLevel());
-            }
-            #endif
         } else if (value(p) == l_False) {
             analyze_final_confl_with_assumptions(~p, conflict);
             return l_False;
@@ -1561,12 +1551,6 @@ lbool Searcher::new_decision()
     // Increase decision level and enqueue 'next'
     assert(value(next) == l_Undef);
     new_decision_level();
-    #ifdef USE_GAUSS
-    for(uint32_t i = 0; i < gmatrices.size(); i++) {
-        assert(gmatrices[i]);
-        gmatrices[i]->new_decision_level(decisionLevel());
-    }
-    #endif
     enqueue<update_bogoprops>(next);
 
     return l_Undef;
@@ -3549,18 +3533,9 @@ void Searcher::cancelUntil(uint32_t blevel)
         }
 
         add_tmp_canceluntil.clear();
-        #ifdef USE_GAUSS
-        if (!all_matrices_disabled) {
-            for (uint32_t i = 0; i < gmatrices.size(); i++) {
-                if (gmatrices[i] && !gqueuedata[i].engaus_disable) {
-                    //cout << "->Gauss canceling" << endl;
-                    gmatrices[i]->canceling();
-                } else {
-                    //cout << "->Gauss NULL" << endl;
-                }
-            }
-        }
-        #endif //USE_GAUSS
+        for (uint32_t i = 0; i < gmatrices.size(); i++)
+            if (gmatrices[i] && !gqueuedata[i].engaus_disable)
+                gmatrices[i]->canceling();
 
         //Go through in reverse order, unassign & insert then
         //back to the vars to be branched upon

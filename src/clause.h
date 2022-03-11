@@ -396,20 +396,14 @@ public:
     uint32_t mySize;
 
     template<class V>
-    Clause(const V& ps, const uint32_t _introduced_at_conflict
-        #ifdef STATS_NEEDED
-        , const int64_t _ID
-        #endif
-        )
+    Clause(const V& ps, const uint32_t _introduced_at_conflict, const uint32_t _ID)
     {
         //assert(ps.size() > 2);
 
         stats.last_touched = _introduced_at_conflict;
-
-        #ifdef STATS_NEEDED
-        stats.ID = _ID;
         assert(_ID > 0);
-        #endif
+        stats.ID = _ID;
+
         isFreed = false;
         mySize = ps.size();
         isRed = false;

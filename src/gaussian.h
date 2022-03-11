@@ -87,7 +87,6 @@ class EGaussian {
         uint32_t p,
         GaussQData& gqd
     );
-    void new_decision_level(uint32_t new_dec_level);
     void canceling();
     bool full_init(bool& created);
     void update_cols_vals_set(bool force = false);
@@ -163,6 +162,7 @@ class EGaussian {
     // Internal data
     ///////////////
     uint32_t matrix_no;
+    bool initialized = false;
     bool cancelled_since_val_update = true;
     uint32_t last_val_update = 0;
 
@@ -206,16 +206,9 @@ class EGaussian {
 
 inline void EGaussian::canceling() {
     cancelled_since_val_update = true;
-    memset(satisfied_xors.data(), 0, satisfied_xors.size());
-}
 
-inline void EGaussian::new_decision_level(uint32_t /*dec_level*/)
-{
-    /*assert(dec_level > 0);
-    if (satisfied_xors.size() < dec_level+1) {
-        satisfied_xors.resize(dec_level+1);
-    }
-    satisfied_xors[dec_level] = satisfied_xors[dec_level-1];*/
+    //TODO this is an overstatement, coudl be improved
+    memset(satisfied_xors.data(), 0, satisfied_xors.size());
 }
 
 inline double EGaussian::get_density()

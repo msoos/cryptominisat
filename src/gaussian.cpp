@@ -277,6 +277,7 @@ void EGaussian::clear_gwatches(const uint32_t var)
 bool EGaussian::full_init(bool& created) {
     assert(solver->ok);
     assert(solver->decisionLevel() == 0);
+    assert(initialized == false);
     created = true;
 
     uint32_t trail_before;
@@ -327,10 +328,7 @@ bool EGaussian::full_init(bool& created) {
         //Let's exit if nothing new happened
         if (solver->trail_size() == trail_before) break;
     }
-
-#ifdef SLOW_DEBUG
-    check_watchlist_sanity();
-#endif
+    SLOW_DEBUG_DO(check_watchlist_sanity());
 
     if (solver->conf.verbosity >= 2) {
         cout << "c [gauss] initialised matrix " << matrix_no << endl;
@@ -370,10 +368,8 @@ bool EGaussian::full_init(bool& created) {
     after_init_density = get_density();
 
     update_cols_vals_set(true);
-    #ifdef SLOW_DEBUG
-    check_invariants();
-    #endif
-
+    initialized = true;
+    SLOW_DEBUG_DO(check_invariants());
 
     return true;
 }
@@ -888,6 +884,8 @@ inline void EGaussian::update_cols_vals_set(const Lit lit1)
 
 void EGaussian::update_cols_vals_set(bool force)
 {
+    if (!initialized) return;
+
     //cancelled_since_val_update = true;
     if (cancelled_since_val_update || force) {
         cols_vals->setZero();
@@ -1444,13 +1442,11 @@ void EGaussian::check_tracked_cols_only_one_set()
 
 void CMSat::EGaussian::check_invariants()
 {
+    assert(initialized);
     check_tracked_cols_only_one_set();
     check_no_prop_or_unsat_rows();
-    #ifdef VERBOSE_DEBUG
-    cout
-    << "mat[" << matrix_no << "] "
-    << "Checked invariants. Dec level: " << solver->decisionLevel() << endl;
-    #endif
+    VERBOSE_PRINT("mat[" << matrix_no << "] "
+    << "Checked invariants. Dec level: " << solver->decisionLevel());
 }
 
 bool EGaussian::check_row_satisfied(const uint32_t row)
@@ -1491,6 +1487,7 @@ void EGaussian::check_cols_unset_vals()
 
 bool EGaussian::must_disable(GaussQData& gqd)
 {
+    assert(initialized);
     gqd.engaus_disable_checks++;
     if ((gqd.engaus_disable_checks & 0x3ff) == 0x3ff //only check once in a while
     ) {

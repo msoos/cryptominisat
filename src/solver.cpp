@@ -1804,8 +1804,6 @@ lbool Solver::solve_with_assumptions(
         for(uint32_t i = 0; i < gqueuedata.size(); i++) {
             gmatrices[i]->finalize_frat();
         }
-        cout << "xorclauses.size(): " << xorclauses.size() << endl;
-        cout << "xorclauses_unused.size(): " << xorclauses_unused.size() << endl;
         for(const auto& x: xorclauses_unused) assert(x.bdd == NULL);
         tbdd_done();
     }
@@ -2005,7 +2003,6 @@ lbool Solver::iterate_until_solved()
             status = l_False;
             goto end;
         }
-        all_matrices_disabled = false;
         #endif //USE_GAUSS
         status = Searcher::solve(num_confl);
 
@@ -3812,18 +3809,12 @@ bool Solver::find_and_init_all_matrices()
 
     MatrixFinder mfinder(solver);
     ok = mfinder.findMatrixes(can_detach);
-    if (!ok) {
-        return false;
-    }
-
-    if (!init_all_matrices()) {
-        return false;
-    }
+    if (!ok) return false;
+    if (!init_all_matrices()) return false;
 
     if (conf.verbosity >= 2) {
         cout << "c calculating no_irred_contains_clash..." << endl;
         bool no_irred_contains_clash = no_irred_nonxor_contains_clash_vars();
-
 
         cout
         << "c [gauss]"
@@ -3890,8 +3881,6 @@ bool Solver::init_all_matrices()
     for (uint32_t i = 0; i < gmatrices.size(); i++) {
         auto& g = gmatrices[i];
         bool created = false;
-        //initial arrary. return true is fine,
-        //return false means solver already false;
         if (!g->full_init(created)) {
             return false;
         }

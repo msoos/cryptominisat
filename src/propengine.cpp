@@ -164,13 +164,10 @@ void PropEngine::detach_modified_clause(
 #ifdef USE_GAUSS
 PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
 {
+    VERBOSE_PRINT("Gauss searcher::gauss_jordan_elim called, declevel: " << decisionLevel());
     if (gmatrices.empty()) {
         return PropBy();
     }
-
-    #ifdef VERBOSE_DEBUG
-    cout << "Gauss searcher::Gauss_elimination called, declevel: " << decisionLevel() << endl;
-    #endif
 
     for(uint32_t i = 0; i < gqueuedata.size(); i++) {
         if (gqueuedata[i].engaus_disable) {
@@ -765,9 +762,8 @@ PropBy PropEngine::propagate_any_order()
         }
         ws.shrink_(end-j);
 
-        if (!all_matrices_disabled && confl.isNULL()) {
+        if (!confl.isNULL()) {
             PropBy ret = gauss_jordan_elim(p, currLevel);
-            //cout << "ret: " << ret << " -- " << endl;
             if (!ret.isNULL()) {
                 confl = ret;
                 break;
