@@ -335,8 +335,6 @@ void Main::add_supported_options()
         , "Time multiplier for all simplification cutoffs")
     ("memoutmult", po::value(&conf.var_and_mem_out_mult)->default_value(conf.var_and_mem_out_mult)
         , "Multiplier for memory-out checks on inprocessing functions. It limits things such as clause-link-in. Useful when you have limited memory but still want to do some inprocessing")
-    ("fastconfl", po::value(&conf.fast_confl_break)->default_value(conf.fast_confl_break)
-        ,"Should we break out fast from propagation if conflict is found, or find the last conflict?")
     #ifdef STATS_NEEDED
     ("clid", po::bool_switch(&clause_ID_needed)
         , "Add clause IDs to DRAT output")

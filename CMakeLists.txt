@@ -596,7 +596,7 @@ endif()
 # MIT option
 # -----------------------------------------------------------------------------
 option(REQUIRE_M4RI "Must use m4ri" OFF)
-option(NOM4RI "Don't use m4ri" OFF)
+option(NOM4RI "Don't use m4ri" ON)
 option(NOBOSPHORUS "Don't use Bosphorus" ON)
 option(REQUIRE_BOSPHORUS "Must use Bosphorus" OFF)
 option(MIT "Build with only MIT licensed components" OFF)

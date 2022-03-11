@@ -59,6 +59,7 @@ inline void removeWBin(
     , const Lit lit1
     , const Lit lit2
     , const bool red
+    , const uint64_t ID
 ) {
     watch_subarray ws = wsFull[lit1];
     Watched *i = ws.begin(), *end = ws.end();
@@ -66,6 +67,7 @@ inline void removeWBin(
         !i->isBin()
         || i->lit2() != lit2
         || i->red() != red
+        || i->get_ID() != ID
     ); i++);
 
     assert(i != end);
@@ -80,6 +82,7 @@ inline void removeWBin_change_order(
     , const Lit lit1
     , const Lit lit2
     , const bool red
+    , const uint64_t ID
 ) {
     watch_subarray ws = wsFull[lit1];
     Watched *i = ws.begin(), *end = ws.end();
@@ -87,6 +90,7 @@ inline void removeWBin_change_order(
         !i->isBin()
         || i->lit2() != lit2
         || i->red() != red
+        || i->get_ID() != ID
     ); i++);
 
     assert(i != end);
@@ -126,10 +130,11 @@ inline const Watched& findWatchedOfBin(
     , const Lit lit1
     , const Lit lit2
     , const bool red
+    , const uint64_t ID
 ) {
     watch_subarray_const ws = wsFull[lit1];
     for (const Watched *i = ws.begin(), *end = ws.end(); i != end; i++) {
-        if (i->isBin() && i->lit2() == lit2 && i->red() == red)
+        if (i->isBin() && i->lit2() == lit2 && i->red() == red && i->get_ID() == ID)
             return *i;
     }
 
@@ -142,10 +147,11 @@ inline Watched& findWatchedOfBin(
     , const Lit lit1
     , const Lit lit2
     , const bool red
+    , const uint64_t ID
 ) {
     watch_subarray ws = wsFull[lit1];
     for (Watched *i = ws.begin(), *end = ws.end(); i != end; i++) {
-        if (i->isBin() && i->lit2() == lit2 && i->red() == red)
+        if (i->isBin() && i->lit2() == lit2 && i->red() == red && i->get_ID() == ID)
             return *i;
     }
 
@@ -166,6 +172,23 @@ static inline void removeWXCl(watch_array& wsFull
     for (; i != end; j++, i++) *j = *i;
     ws.shrink_(1);
 }
+
+
+// Removes BNN *once*
+static inline void removeWBNN(watch_array& wsFull
+    , const Lit lit
+    , const uint32_t bnnIdx
+) {
+    watch_subarray ws = wsFull[lit];
+    Watched *i = ws.begin(), *end = ws.end();
+    for (; i != end && (!i->isBNN() || i->get_bnn() != bnnIdx); i++);
+    assert(i != end);
+    Watched *j = i;
+    i++;
+    for (; i != end; j++, i++) *j = *i;
+    ws.shrink_(1);
+}
+
 
 } //end namespace
 

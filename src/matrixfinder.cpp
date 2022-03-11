@@ -104,53 +104,42 @@ bool MatrixFinder::findMatrixes(bool& can_detach, bool simplify_xors)
     table.clear();
     table.resize(solver->nVars(), var_Undef);
     reverseTable.clear();
-    xors.clear();
-    unused_xors.clear();
     clash_vars_unused.clear();
     matrix_no = 0;
     double myTime = cpuTime();
-    for(const Xor& x: solver->xorclauses_unused) {
-        xors.push_back(x);
-    }
-    for(const Xor& x: solver->xorclauses) {
-        xors.push_back(x);
-    }
-    solver->xorclauses.clear();
-    solver->xorclauses_unused.clear();
 
     XorFinder finder(NULL, solver);
     if (simplify_xors) {
-        if (!solver->clauseCleaner->clean_xor_clauses(xors)) {
+        if (!solver->clauseCleaner->clean_xor_clauses(solver->xorclauses)) {
             return false;
         }
 
         finder.grab_mem();
-        xors = finder.remove_xors_without_connecting_vars(xors);
-        if (!finder.xor_together_xors(xors))
+        finder.move_xors_without_connecting_vars_to_unused();
+        if (!finder.xor_together_xors(solver->xorclauses))
             return false;
 
-        xors = finder.remove_xors_without_connecting_vars(xors);
+        finder.move_xors_without_connecting_vars_to_unused();
     }
-    finder.clean_equivalent_xors(xors);
+    finder.clean_equivalent_xors(solver->xorclauses);
 
     if (solver->conf.verbosity >= 1) {
-        cout << "c [matrix] unused xors from cleaning: " << finder.unused_xors.size() << endl;
+        cout << "c [matrix] unused xors from cleaning: " << solver->xorclauses_unused.size() << endl;
     }
 
-    for(const auto& x: finder.unused_xors) {
-        unused_xors.push_back(x);
+    for(const auto& x: solver->xorclauses_unused) {
         clash_vars_unused.insert(x.clash_vars.begin(), x.clash_vars.end());
     }
 
-    if (xors.size() < solver->conf.gaussconf.min_gauss_xor_clauses) {
+    if (solver->xorclauses.size() < solver->conf.gaussconf.min_gauss_xor_clauses) {
         can_detach = false;
         if (solver->conf.verbosity >= 4)
-            cout << "c [matrix] too few xor clauses for GJ: " << xors.size() << endl;
+            cout << "c [matrix] too few xor clauses for GJ: " << solver->xorclauses.size() << endl;
 
         return true;
     }
 
-    if (xors.size() > solver->conf.gaussconf.max_gauss_xor_clauses
+    if (solver->xorclauses.size() > solver->conf.gaussconf.max_gauss_xor_clauses
         && solver->conf.sampling_vars != NULL
     ) {
         can_detach = false;
@@ -167,14 +156,14 @@ bool MatrixFinder::findMatrixes(bool& can_detach, bool simplify_xors)
         if (solver->conf.verbosity >=1) {
             cout << "c Matrix finding disabled through switch. Putting all xors into matrix." << endl;
         }
-        solver->gmatrices.push_back(new EGaussian(solver, 0, xors));
+        solver->gmatrices.push_back(new EGaussian(solver, 0, solver->xorclauses));
         solver->gqueuedata.resize(solver->gmatrices.size());
         return true;
     }
 
     vector<uint32_t> newSet;
     set<uint32_t> tomerge;
-    for (const Xor& x : xors) {
+    for (const Xor& x : solver->xorclauses) {
         if (belong_same_matrix(x)) {
             continue;
         }
@@ -230,7 +219,7 @@ bool MatrixFinder::findMatrixes(bool& can_detach, bool simplify_xors)
     const double time_used = cpuTime() - myTime;
     if (solver->conf.verbosity) {
         cout << "c [matrix] Using " << numMatrixes
-        << " matrices recoverd from " << xors.size() << " xors"
+        << " matrices recoverd from " << solver->xorclauses.size() << " xors"
         << solver->conf.print_times(time_used, time_out)
         << endl;
     }
@@ -268,7 +257,7 @@ uint32_t MatrixFinder::setMatrixes()
         matrix_shape[i].cols = reverseTable[i].size();
     }
 
-    for (const Xor& x : xors) {
+    for (const Xor& x : solver->xorclauses) {
         //take 1st variable to check which matrix it's in.
         const uint32_t matrix = table[x[0]];
         assert(matrix < matrix_no);
@@ -278,7 +267,7 @@ uint32_t MatrixFinder::setMatrixes()
         matrix_shape[matrix].sum_xor_sizes += x.size();
         xorsInMatrix[matrix].push_back(x);
     }
-    xors.clear();
+    solver->xorclauses.clear();
 
     for(auto& m: matrix_shape) {
         if (m.tot_size() > 0) {
@@ -417,12 +406,9 @@ uint32_t MatrixFinder::setMatrixes()
             }
             realMatrixNum++;
             assert(solver->gmatrices.size() == realMatrixNum);
-            for(const auto& x: xorsInMatrix[i]) {
-                xors.push_back(x);
-            }
         } else {
             for(const auto& x: xorsInMatrix[i]) {
-                unused_xors.push_back(x);
+                solver->xorclauses_unused.push_back(x);
                 //cout<< "c [matrix]xor not in matrix, now unused_xors size: " << unused_xors.size() << endl;
                 clash_vars_unused.insert(x.clash_vars.begin(), x.clash_vars.end());
             }
@@ -438,9 +424,6 @@ uint32_t MatrixFinder::setMatrixes()
 
         if (solver->conf.verbosity) {
             double avg = (double)m.sum_xor_sizes/(double)m.rows;
-            if (!solver->conf.verbosity)
-                continue;
-
             if (!use_matrix &&
                     ((m.rows < solver->conf.gaussconf.min_matrix_rows &&
                     solver->conf.verbosity < 2) ||

@@ -260,7 +260,7 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
 
     //go through in reverse order
     vector<Lit> lits;
-    for (int i = (int)blockedClauses.size()-1; i >= 0; i--) {
+    for (long int i = (int)blockedClauses.size()-1; i >= 0; i--) {
         BlockedClauses* it = &blockedClauses[i];
         if (it->toRemove) {
             continue;
@@ -365,6 +365,8 @@ bool OccSimplifier::clean_clause(
 
     bool satisfied = false;
     Clause& cl = *solver->cl_alloc.ptr(offset);
+    assert(!cl.getRemoved());
+    assert(!cl.freed());
     (*solver->drat) << deldelay << cl << fin;
 
     Lit* i = cl.begin();
@@ -405,7 +407,7 @@ bool OccSimplifier::clean_clause(
 
     if (satisfied) {
         (*solver->drat) << findelay;
-        unlink_clause(offset, false);
+        unlink_clause(offset, false, false, only_set_is_removed);
         return true;
     }
 
@@ -414,11 +416,8 @@ bool OccSimplifier::clean_clause(
     }
 
     if (i-j > 0) {
-        (*solver->drat) << add << cl
-        #ifdef STATS_NEEDED
-        << solver->sumConflicts
-        #endif
-        << fin << findelay;
+        cl.stats.ID = ++solver->clauseID;
+        (*solver->drat) << add << cl << fin << findelay;
     } else {
         solver->drat->forget_delay();
     }
@@ -431,16 +430,14 @@ bool OccSimplifier::clean_clause(
 
         case 1: {
             solver->enqueue<false>(cl[0]);
-            #ifdef STATS_NEEDED
-            solver->propStats.propsUnit++;
-            #endif
+            *solver->drat << del << cl << fin; // double unit delete
             unlink_clause(offset, false, false, only_set_is_removed);
             solver->ok = solver->propagate_occur<false>();
             return solver->okay();
         }
 
         case 2: {
-            solver->attach_bin_clause(cl[0], cl[1], cl.red());
+            solver->attach_bin_clause(cl[0], cl[1], cl.red(), cl.stats.ID);
             if (!cl.red()) {
                 std::pair<Lit, Lit> tmp = {cl[0], cl[1]};
                 added_irred_bin.push_back(tmp);
@@ -451,10 +448,12 @@ bool OccSimplifier::clean_clause(
             return true;
         }
         default:
-            cl.setStrenghtened();
-            cl.recalc_abst_if_needed();
-            if (!cl.red()) {
-                added_long_cl.push_back(offset);
+            if (i-j > 0) {
+                cl.setStrenghtened();
+                cl.recalc_abst_if_needed();
+                if (!cl.red()) {
+                    added_long_cl.push_back(offset);
+                }
             }
             return true;
     }
@@ -464,9 +463,9 @@ bool OccSimplifier::clean_clause(
 bool OccSimplifier::complete_clean_clause(Clause& cl)
 {
     assert(solver->okay());
-
     assert(!solver->drat->something_delayed());
     assert(cl.size() > 2);
+
     (*solver->drat) << deldelay << cl << fin;
 
     //Remove all lits from stats
@@ -481,7 +480,6 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
     Lit *j = i;
     for (Lit *end = cl.end(); i != end; i++) {
         if (solver->value(*i) == l_True) {
-
             (*solver->drat) << findelay;
             return false;
         }
@@ -495,11 +493,8 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
 
     //Drat
     if (i - j > 0) {
-        (*solver->drat) << add << cl
-        #ifdef STATS_NEEDED
-        << solver->sumConflicts
-        #endif
-        << fin << findelay;
+        cl.stats.ID = ++solver->clauseID;
+        (*solver->drat) << add << cl << fin << findelay;
     } else {
         solver->drat->forget_delay();
     }
@@ -511,13 +506,11 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
 
         case 1: {
             solver->enqueue<false>(cl[0]);
-            #ifdef STATS_NEEDED
-            solver->propStats.propsUnit++;
-            #endif
+            *solver->drat << del << cl << fin; // double unit delete
             return false;
         }
         case 2:
-            solver->attach_bin_clause(cl[0], cl[1], cl.red());
+            solver->attach_bin_clause(cl[0], cl[1], cl.red(), cl.stats.ID);
             return false;
 
         default:
@@ -543,7 +536,10 @@ struct sort_smallest_first {
 
         if (first.isBin() && second.isBin()) {
             //correct order if first has lit2() smaller.
-            return first.lit2() < second.lit2();
+            if (first.lit2() != second.lit2()) {
+                return first.lit2() < second.lit2();
+            }
+            return first.get_ID() < second.get_ID();
         }
 
         if (first.isClause() && second.isClause()) {
@@ -707,6 +703,7 @@ void OccSimplifier::add_back_to_solver()
             } else {
                 solver->litStats.irredLits -= cl->size();
             }
+            *solver->drat << del << *cl << fin;
             solver->free_cl(cl);
             continue;
         }
@@ -741,7 +738,7 @@ void OccSimplifier::remove_all_longs_from_watches()
             if (i->isClause()) {
                 continue;
             } else {
-                assert(i->isBin());
+                assert(i->isBin() || i->isBNN());
                 *j++ = *i;
             }
         }
@@ -755,7 +752,6 @@ void OccSimplifier::eliminate_empty_resolvent_vars()
     assert(solver->okay());
     assert(solver->prop_at_head());
     assert(added_irred_bin.empty());
-    assert(added_long_cl.empty());
 
     uint32_t var_elimed = 0;
     double myTime = cpuTime();
@@ -910,7 +906,7 @@ bool OccSimplifier::clear_vars_from_cls_that_have_been_set()
         for (uint32_t i = 0; i < ws.size(); i ++) {
             Watched& w = ws[i];
             if (w.isBin()) {
-                removeWBin(solver->watches, w.lit2(), l, w.red());
+                removeWBin(solver->watches, w.lit2(), l, w.red(), w.get_ID());
                 if (w.red()) {
                     solver->binTri.redBins--;
                 } else {
@@ -919,12 +915,12 @@ bool OccSimplifier::clear_vars_from_cls_that_have_been_set()
                     elim_calc_need_update.touch(w.lit2());
                     solver->binTri.irredBins--;
                 }
-                *(solver->drat) << del << l << w.lit2() << fin;
+                *(solver->drat) << del << w.get_ID() << l << w.lit2() << fin;
                 continue;
             }
 
-            ws[j++] = w;
             assert(w.isClause());
+            ws[j++] = w;
             ClOffset offs = w.get_offset();
             Clause* cl = solver->cl_alloc.ptr(offs);
             if (cl->getRemoved() || cl->freed()) {
@@ -945,7 +941,7 @@ bool OccSimplifier::clear_vars_from_cls_that_have_been_set()
             Watched& w = ws2[i];
             if (w.isBin()) {
                 assert(solver->value(w.lit2()) == l_True); //we propagate and it'd be UNSAT otherwise
-                removeWBin(solver->watches, w.lit2(), l, w.red());
+                removeWBin(solver->watches, w.lit2(), l, w.red(), w.get_ID());
                 if (w.red()) {
                     solver->binTri.redBins--;
                 } else {
@@ -954,7 +950,7 @@ bool OccSimplifier::clear_vars_from_cls_that_have_been_set()
                     elim_calc_need_update.touch(w.lit2());
                     solver->binTri.irredBins--;
                 }
-                *(solver->drat) << del << l << w.lit2() << fin;
+                *(solver->drat) << del << w.get_ID() << l << w.lit2() << fin;
                 continue;
             }
 
@@ -1186,6 +1182,7 @@ bool OccSimplifier::eliminate_vars()
                     limit_to_decrease = &norm_varelim_time_limit;
                     goto end;
                 }
+
                 limit_to_decrease = &norm_varelim_time_limit;
                 assert(solver->okay());
                 assert(solver->prop_at_head());
@@ -1689,7 +1686,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             if (!cl->red()) {
                 continue;
             }
-            assert(cl->stats.introduced_at_conflict != 0);
+            assert(solver->red_stats_extra[cl->stats.extra_pos].introduced_at_conflict != 0);
         }
         #endif
         solver->check_implicit_stats(true);
@@ -1716,13 +1713,13 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 XorFinder finder(this, solver);
                 finder.find_xors();
                 #ifdef USE_M4RI
-                if (topLevelGauss != NULL) {
+                if (topLevelGauss != NULL && !solver->drat->enabled()) {
                     auto xors = solver->xorclauses;
                     assert(solver->okay());
                     solver->ok = finder.xor_together_xors(xors);
                     if (solver->ok) {
                         vector<Lit> out_changed_occur;
-                        finder.remove_xors_without_connecting_vars(xors);
+                        finder.move_xors_without_connecting_vars_to_unused();
                         topLevelGauss->toplevelgauss(xors, &out_changed_occur);
                         //these may have changed, recalculating occur
                         for(Lit lit: out_changed_occur) {
@@ -1753,6 +1750,11 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             if (solver->conf.doVarElim) {
                 solver->removed_xorclauses_clash_vars.clear();
                 solver->xor_clauses_updated = true;
+
+                //Get rid of XOR clauses
+                solver->drat->flush();;
+                for(auto const& x: solver->xorclauses) delete x.bdd;
+                for(auto const& x: solver->xorclauses_unused) delete x.bdd;
                 solver->xorclauses.clear();
                 solver->xorclauses_unused.clear();
 
@@ -1818,7 +1820,9 @@ bool OccSimplifier::setup()
     #endif
 
     //Clean the clauses before playing with them
-    solver->clauseCleaner->remove_and_clean_all();
+    if (!solver->clauseCleaner->remove_and_clean_all()) {
+        return false;
+    }
 
     //If too many clauses, don't do it
     if (solver->getNumLongClauses() > 40ULL*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult
@@ -1847,6 +1851,9 @@ bool OccSimplifier::setup()
 
 bool OccSimplifier::simplify(const bool _startup, const std::string& schedule)
 {
+    if (!solver->bnns.empty()) {
+        return solver->okay();
+    }
     #ifdef DEBUG_MARKED_CLAUSE
     assert(solver->no_marked_clauses());
     #endif
@@ -1865,9 +1872,9 @@ bool OccSimplifier::simplify(const bool _startup, const std::string& schedule)
     const size_t origBlockedSize = blockedClauses.size();
     const size_t origTrailSize = solver->trail_size();
 
-
     sampling_vars_occsimp.clear();
     if (solver->conf.sampling_vars) {
+        // sampling vars should not be eliminated
         assert(!solver->fast_backw.fast_backw_on);
         sampling_vars_occsimp.resize(solver->nVars(), false);
         for(uint32_t outside_var: *solver->conf.sampling_vars) {
@@ -1879,6 +1886,7 @@ bool OccSimplifier::simplify(const bool _startup, const std::string& schedule)
             }
         }
     } else if (solver->fast_backw.fast_backw_on) {
+        // fast backward arjun system
         sampling_vars_occsimp.resize(solver->nVars(), false);
         for(Lit p: *solver->fast_backw._assumptions) {
             uint32_t var = solver->fast_backw.indic_to_var->at(p.var());
@@ -1916,8 +1924,6 @@ bool OccSimplifier::simplify(const bool _startup, const std::string& schedule)
                 sampling_vars_occsimp[v] = true;
             }
         }
-
-
     } else {
         sampling_vars_occsimp.shrink_to_fit();
     }
@@ -2056,9 +2062,9 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
         #ifdef STATS_NEEDED
         double myrnd = solver->mtrand.randDblExc();
         if (myrnd <= solver->conf.dump_individual_cldata_ratio) {
-            stats.ID = solver->clauseID;
-            solver->clauseID++;
+            //TODO mark clause for dumping
         }
+        stats.ID = ++solver->clauseID;
         #endif
 
         tmp_tern_res.clear();
@@ -2212,7 +2218,7 @@ bool OccSimplifier::backward_sub_str()
     subsumption_time_limit = 0;
     limit_to_decrease = &subsumption_time_limit;
 
-    //Sub long with bins
+    //Sub-str long with bins
     subsumption_time_limit += (int64_t)
         ((double)backup*solver->conf.subsumption_time_limit_ratio_sub_str_w_bin);
     if (!sub_str->backw_sub_str_long_with_bins()
@@ -2390,7 +2396,7 @@ bool OccSimplifier::uneliminate(uint32_t var)
     while(bat < blockedClauses[at_blocked_cls].size()) {
         Lit l = blockedClauses[at_blocked_cls].at(bat, blkcls);
         if (l == lit_Undef) {
-            solver->addClause(lits);
+            solver->add_clause_outer_copylits(lits);
             if (!solver->okay()) {
                 return false;
             }
@@ -2406,19 +2412,23 @@ bool OccSimplifier::uneliminate(uint32_t var)
 
 void OccSimplifier::remove_by_drat_recently_blocked_clauses(size_t origBlockedSize)
 {
-    if (! ((*solver->drat).enabled() || solver->conf.simulate_drat) )
+    if (! (solver->drat->enabled() || solver->conf.simulate_drat) )
         return;
 
     if (solver->conf.verbosity >= 6) {
         cout << "c Deleting blocked clauses for DRAT" << endl;
     }
 
+    uint32_t at_ID = 0;
+    vector<Lit> lits;
     for(size_t i = origBlockedSize; i < blockedClauses.size(); i++) {
-        vector<Lit> lits;
+        lits.clear();
         size_t at = 1;
         while(at < blockedClauses[i].size()) {
             const Lit l = blockedClauses[i].at(at, blkcls);
             if (l == lit_Undef) {
+                const uint32_t ID = newly_blocked_cls_IDs[at_ID++];
+                (*solver->drat) << del << ID << lits << fin;
                 lits.clear();
             } else {
                 lits.push_back(solver->map_outer_to_inter(l));
@@ -2426,6 +2436,7 @@ void OccSimplifier::remove_by_drat_recently_blocked_clauses(size_t origBlockedSi
             at++;
         }
     }
+    newly_blocked_cls_IDs.clear();
 }
 
 void OccSimplifier::buildBlockedMap()
@@ -2455,6 +2466,15 @@ void OccSimplifier::finishUp(
         add_back_to_solver();
         if (solver->okay()) {
             solver->ok = solver->propagate<true>().isNULL();
+        }
+    } else {
+        for(const auto& offs: clauses) {
+            Clause* cl = solver->cl_alloc.ptr(offs);
+            if (cl->getRemoved() || cl->freed()) {
+                continue;
+            }
+            *solver->drat << del << *cl << fin;
+            solver->free_cl(cl);
         }
     }
 
@@ -2691,7 +2711,7 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(
 
                     lits.resize(cl.size());
                     std::copy(cl.begin(), cl.end(), lits.begin());
-                    add_clause_to_blck(lits);
+                    add_clause_to_blck(lits, cl.stats.ID);
                 } else {
                     red = true;
                 }
@@ -2700,9 +2720,7 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(
             //Remove -- only DRAT the ones that are redundant
             //The irred will be removed thanks to 'blocked' system
             unlink_clause(offset, cl.red(), true, true);
-        }
-
-        if (watch.isBin()) {
+        } else if (watch.isBin()) {
             //Update stats
             if (!watch.red()) {
                 bvestats.clauses_elimed_bin++;
@@ -2717,7 +2735,7 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(
             lits[1] = watch.lit2();
             if (!watch.red()) {
                 if (add_to_block) {
-                    add_clause_to_blck(lits);
+                    add_clause_to_blck(lits, watch.get_ID());
                 }
                 n_occurs[lits[0].toInt()]--;
                 n_occurs[lits[1].toInt()]--;
@@ -2728,13 +2746,15 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(
             } else {
                 //If redundant, delayed blocked-based DRAT deletion will not work
                 //so delete explicitly
-                (*solver->drat) << del << lits[0] << lits[1] << fin;
+                (*solver->drat) << del << watch.get_ID() << lits[0] << lits[1] << fin;
             }
 
             //Remove
             //*limit_to_decrease -= (long)solver->watches[lits[0]].size()/4; //This is zero
             *limit_to_decrease -= (long)solver->watches[lits[1]].size()/4;
-            solver->detach_bin_clause(lits[0], lits[1], red, true, true);
+            solver->detach_bin_clause(lits[0], lits[1], red, watch.get_ID(), true, true);
+        } else {
+            assert(false);
         }
 
         if (solver->conf.verbosity >= 3 && !lits.empty()) {
@@ -2746,7 +2766,7 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(
     }
 }
 
-void OccSimplifier::add_clause_to_blck(const vector<Lit>& lits)
+void OccSimplifier::add_clause_to_blck(const vector<Lit>& lits, const uint64_t ID)
 {
     for(const Lit& l: lits) {
         removed_cl_with_var.touch(l.var());
@@ -2760,6 +2780,7 @@ void OccSimplifier::add_clause_to_blck(const vector<Lit>& lits)
     }
     blkcls.push_back(lit_Undef);
     blockedClauses.back().end = blkcls.size();
+    newly_blocked_cls_IDs.push_back(ID);
 }
 
 bool OccSimplifier::find_or_gate(
@@ -2812,7 +2833,8 @@ bool OccSimplifier::find_or_gate(
                 out_b.push(w);
                 for(const Lit lit: *cl) {
                     if (lit != ~elim_lit) {
-                        out_a.push(Watched(~lit, false));
+                        // FRAT will fail here
+                        out_a.push(Watched(~lit, false, 0));
                     }
                 }
                 found = true;
@@ -2858,10 +2880,10 @@ bool OccSimplifier::find_ite_gate(
     assert(toClear.empty());
     for(uint32_t i = 0; i < a.size() && limit >= 0; i++, limit--) {
         const Watched& w = a[i];
-        if (w.isBin()) {
-            #ifdef SLOW_DEBUG
-            assert(!w.red());
-            #endif
+        if (w.isBin() || w.isBNN()) {
+            if (w.isBin()) {
+                assert(!w.red());
+            }
             continue;
         }
 
@@ -3085,7 +3107,7 @@ bool OccSimplifier::find_equivalence_gate(
             #endif
             if (seen[(~w.lit2()).toInt()]) {
                 out_b.push(w);
-                out_a.push(Watched(~w.lit2(), false));
+                out_a.push(Watched(~w.lit2(), false, w.get_ID()));
                 found = true;
                 break;
             }
@@ -3590,18 +3612,22 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
 
     // see:  http://baldur.iti.kit.edu/sat/files/ex04.pdf
     bool gates = false;
-    if (find_equivalence_gate(lit, poss, negs, gates_poss, gates_negs)) {
-        gates = true;
-    } else if (find_or_gate(lit, poss, negs, gates_poss, gates_negs)) {
-        gates = true;
-    } else if (find_or_gate(~lit, negs, poss, gates_negs, gates_poss)) {
-        gates = true;
-    } else if (find_ite_gate(lit, poss, negs, gates_poss, gates_negs)) {
-        gates = true;
-    } else if (find_ite_gate(~lit, negs, poss, gates_negs, gates_poss)) {
-        gates = true;
-    } else if (find_xor_gate(lit, poss, negs, gates_poss, gates_negs)) {
-        gates = true;
+
+    //TODO fix to work with FRAT
+    if (!solver->drat->enabled()) {
+        if (find_equivalence_gate(lit, poss, negs, gates_poss, gates_negs)) {
+            gates = true;
+        } else if (find_or_gate(lit, poss, negs, gates_poss, gates_negs)) {
+            gates = true;
+        } else if (find_or_gate(~lit, negs, poss, gates_negs, gates_poss)) {
+            gates = true;
+        } else if (find_ite_gate(lit, poss, negs, gates_poss, gates_negs)) {
+            gates = true;
+        } else if (find_ite_gate(~lit, negs, poss, gates_negs, gates_poss)) {
+            gates = true;
+        } else if (find_xor_gate(lit, poss, negs, gates_poss, gates_negs)) {
+            gates = true;
+        }
     }
 
     if (gates && solver->conf.verbosity > 5) {
@@ -3655,7 +3681,7 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
                 true //only irred
             );
         }
-        sort(tmp_subs.begin(), tmp_subs.end());
+        std::sort(tmp_subs.begin(), tmp_subs.end());
         tmp_subs.erase(unique(tmp_subs.begin(),tmp_subs.end()),tmp_subs.end());
         for(const auto& cl_off: tmp_subs) {
             if (cl_off.ws.isBin()) {
@@ -3770,7 +3796,7 @@ bool OccSimplifier::add_varelim_resolvent(
         finalLits //Literals in new clause
         , false //Is the new clause redundant?
         , &backup_stats//Statistics for this new clause (usage, etc.)
-        , false //Should clause be attached?
+        , false //Should clause be attached if long?
         , &finalLits //Return final set of literals here
     );
 
@@ -4711,11 +4737,9 @@ bool OccSimplifier::remove_literal(
     cl.strengthen(toRemoveLit);
     added_cl_to_var.touch(toRemoveLit.var());
     cl.recalc_abst_if_needed();
-    (*solver->drat) << add << cl
-    #ifdef STATS_NEEDED
-    << solver->sumConflicts
-    #endif
-    << fin << findelay;
+
+    cl.stats.ID = ++solver->clauseID;
+    (*solver->drat) << add << cl << fin << findelay;
     if (!cl.red()) {
         n_occurs[toRemoveLit.toInt()]--;
         elim_calc_need_update.touch(toRemoveLit.var());

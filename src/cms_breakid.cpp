@@ -196,6 +196,7 @@ bool BreakID::doit()
 {
     assert(solver->okay());
     assert(solver->decisionLevel() == 0);
+    assert(!solver->drat->enabled());
     num_lits_in_graph = 0;
 
     if (!solver->conf.doStrSubImplicit) {
@@ -221,7 +222,9 @@ bool BreakID::doit()
         return false;
     }
 
-    solver->clauseCleaner->remove_and_clean_all();
+    if (!solver->clauseCleaner->remove_and_clean_all()) {
+        return false;
+    }
     solver->subsumeImplicit->subsume_implicit(false, "-breakid");
 
     CompleteDetachReatacher reattacher(solver);

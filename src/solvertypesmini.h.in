@@ -275,6 +275,117 @@ struct FastBackwData {
     uint32_t indep_because_ran_out_of_confl = 0;
 };
 
+class BNN
+{
+public:
+    typedef Lit* iterator;
+    typedef const Lit* const_iterator;
+
+    BNN()
+    {}
+
+    explicit BNN(
+        const std::vector<Lit>& _in,
+        const int32_t _cutoff,
+        const Lit _out):
+        cutoff(_cutoff),
+        out (_out)
+    {
+        if (out == lit_Undef) {
+            set = true;
+        }
+        assert(_in.size() > 0);
+        undefs = _in.size();
+        ts = 0;
+        sz = _in.size();
+        for(uint32_t i = 0; i < _in.size(); i++) {
+            getData()[i] = _in[i];
+        }
+    }
+
+    Lit* getData()
+    {
+        return (Lit*)((char*)this + sizeof(BNN));
+    }
+
+    const Lit* getData() const
+    {
+        return (Lit*)((char*)this + sizeof(BNN));
+    }
+
+    const Lit& operator[](const uint32_t at) const
+    {
+        return getData()[at];
+    }
+
+    Lit& operator[](const uint32_t at)
+    {
+        return getData()[at];
+    }
+
+    const Lit& get_out() const
+    {
+        return out;
+    }
+
+    const Lit* begin() const
+    {
+        return getData();
+    }
+
+    Lit* begin()
+    {
+        return getData();
+    }
+
+    const Lit* end() const
+    {
+        return getData()+size();
+    }
+
+    Lit* end()
+    {
+        return getData()+size();
+    }
+
+    bool empty() const
+    {
+        return sz == 0;
+    }
+
+    void resize(uint32_t _sz) {
+        sz = _sz;
+    }
+
+    uint32_t size() const {
+        return sz;
+    }
+
+    int32_t cutoff;
+    Lit out = lit_Undef;
+    bool set = false;
+    bool isRemoved = false;
+    int32_t ts = 0;
+    int32_t undefs = 0;
+    uint32_t sz;
+};
+
+inline std::ostream& operator<<(std::ostream& os, const BNN& bnn)
+{
+    for (uint32_t i = 0; i < bnn.size(); i++) {
+        os << "lit[" << bnn[i] << "]";
+
+        if (i+1 < bnn.size())
+            os << " + ";
+    }
+    os << " >=  " << bnn.cutoff;
+    if (!bnn.set)
+        os << " <-> " << bnn.out;
+    os << " [size: " << bnn.size() << "]";
+
+    return os;
+}
+
 }
 
 #endif //__SOLVERTYPESMINI_H__

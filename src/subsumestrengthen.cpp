@@ -844,7 +844,9 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
     ) {
         if (subs[j].ws.isBin()) {
             if (subsLits[j] == lit_Undef) { //subsume
-                solver->detach_bin_clause(subs[j].lit, subs[j].ws.lit2(), subs[j].ws.red());
+                solver->detach_bin_clause(
+                    subs[j].lit, subs[j].ws.lit2(), subs[j].ws.red(), subs[j].ws.get_ID());
+                (*solver->drat) << del << subs[j].ws.get_ID() << subs[j].lit << subs[j].ws.lit2() << fin;
                 if (!subs[j].ws.red()) {
                     simplifier->n_occurs[subs[j].lit.toInt()]--;
                     simplifier->n_occurs[subs[j].ws.lit2().toInt()]--;
@@ -855,23 +857,24 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
                 }
             } else { //strengthen
                 lbool val = solver->value(subsLits[j]);
+                const uint32_t ID = ++solver->clauseID;
                 if (val == l_False) {
+                    (*solver->drat) << add << ID << subsLits[j] << fin;
+                    (*solver->drat) << add << ++solver->clauseID << fin;
+                    solver->unsat_cl_ID = solver->clauseID;
                     solver->ok = false;
                     return false;
                 } else if (val == l_Undef) {
-                    (*solver->drat) << add << subsLits[j]
-                    #ifdef STATS_NEEDED
-                    << 0
-                    << solver->sumConflicts
-                    #endif
-                    << fin;
                     solver->enqueue<false>(subsLits[j]);
                     solver->ok = solver->propagate_occur<false>();
                     if (!solver->okay()) {
                         return false;
                     }
                 }
-                solver->detach_bin_clause(subs[j].lit, subs[j].ws.lit2(), subs[j].ws.red()); //this binary is definitely satisfied
+                //this binary is definitely satisfied
+                solver->detach_bin_clause(
+                    subs[j].lit, subs[j].ws.lit2(), subs[j].ws.red(), subs[j].ws.get_ID());
+                (*solver->drat) << del << subs[j].ws.get_ID() << subs[j].lit << subs[j].ws.lit2() << fin;
                 if (!subs[j].ws.red()) {
                     simplifier->n_occurs[subs[j].lit.toInt()]--;
                     simplifier->n_occurs[subs[j].ws.lit2().toInt()]--;
@@ -974,8 +977,10 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins_watch(
                 simplifier->elim_calc_need_update.touch(tmpLits[1]);
                 simplifier->added_cl_to_var.touch(tmpLits[0]);
                 simplifier->added_cl_to_var.touch(tmpLits[1]);
-                findWatchedOfBin(solver->watches, tmpLits[1], tmpLits[0], true).setRed(false);
-                findWatchedOfBin(solver->watches, tmpLits[0], tmpLits[1], true).setRed(false);
+                findWatchedOfBin(
+                    solver->watches, tmpLits[1], tmpLits[0], true, tmp[i].get_ID()).setRed(false);
+                findWatchedOfBin(
+                    solver->watches, tmpLits[0], tmpLits[1], true, tmp[i].get_ID()).setRed(false);
             }
             continue;
         }

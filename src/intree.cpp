@@ -39,6 +39,7 @@ InTree::InTree(Solver* _solver) :
 
 bool InTree::replace_until_fixedpoint(bool& aborted)
 {
+    assert(solver->conf.doFindAndReplaceEqLits);
     uint64_t time_limit =
         solver->conf.intree_scc_varreplace_time_limitM*1000ULL*1000ULL
         *solver->conf.global_timeout_multiplier
@@ -51,7 +52,9 @@ bool InTree::replace_until_fixedpoint(bool& aborted)
     uint32_t this_replace = solver->varReplacer->get_num_replaced_vars();
     while(last_replace != this_replace && !aborted) {
         last_replace = this_replace;
-        solver->clauseCleaner->remove_and_clean_all();
+        if (!solver->clauseCleaner->remove_and_clean_all()) {
+            return false;
+        }
         bool OK = solver->varReplacer->replace_if_enough_is_found(0, &bogoprops);
         if (!OK) {
             return false;
@@ -137,6 +140,13 @@ bool InTree::intree_probe()
     removedIrredBin = 0;
     removedRedBin = 0;
     numCalls++;
+
+    if (!solver->conf.doFindAndReplaceEqLits) {
+        if (solver->conf.verbosity) {
+            cout << "c [intree] SCC is not allowed, intree cannot work this way, aborting" << endl;
+        }
+        return solver->okay();
+    }
 
     bool aborted = false;
     if (!replace_until_fixedpoint(aborted))
@@ -375,6 +385,7 @@ bool InTree::handle_lit_popped_from_queue(const Lit lit, const Lit other_lit, co
 
 bool InTree::empty_failed_list()
 {
+    assert(!solver->drat->enabled());
     assert(solver->decisionLevel() == 0);
     for(const Lit lit: failed) {
         if (!solver->ok) {
@@ -383,30 +394,16 @@ bool InTree::empty_failed_list()
 
         if (solver->value(lit) == l_Undef) {
             solver->enqueue<true>(lit);
-            *(solver->drat) << add << lit
-            #ifdef STATS_NEEDED
-            << 0
-            << solver->sumConflicts
-            #endif
-            << fin;
+            // FRAT will fail here
+            *(solver->drat) << add << lit << fin;
             solver->ok = solver->propagate<true>().isNULL();
             if (!solver->ok) {
                 return false;
             }
         } else if (solver->value(lit) == l_False) {
-            *(solver->drat) << add << ~lit
-            #ifdef STATS_NEEDED
-            << 0
-            << solver->sumConflicts
-            #endif
-            << fin;
-
-            *(solver->drat) << add
-            #ifdef STATS_NEEDED
-            << 0
-            << solver->sumConflicts
-            #endif
-            << fin;
+            // FRAT will fail here
+            *(solver->drat) << add << ~lit << fin;
+            *(solver->drat) << add << fin;
             solver->ok = false;
             return false;
         }
@@ -436,7 +433,8 @@ void InTree::enqueue(const Lit lit, const Lit other_lit, bool red_cl)
         ) {
             //Mark both
             w.mark_bin_cl();
-            Watched& other_w = findWatchedOfBin(solver->watches, w.lit2(), lit, w.red());
+            Watched& other_w = findWatchedOfBin(
+                solver->watches, w.lit2(), lit, w.red(), w.get_ID());
             other_w.mark_bin_cl();
 
             enqueue(~w.lit2(), lit, w.red());

@@ -38,6 +38,7 @@ THE SOFTWARE.
 #include "simplefile.h"
 #include "gausswatched.h"
 #include "xor.h"
+#include <pseudoboolean.h>
 
 using std::numeric_limits;
 
@@ -121,7 +122,6 @@ public:
     watch_array watches;
     #ifdef USE_GAUSS
     vec<vec<GaussWatched>> gwatches;
-    bool all_matrices_disabled = false;
     #endif
     uint32_t num_sls_called = 0;
     vector<VarData> varData;
@@ -180,12 +180,16 @@ public:
     vector<ClOffset> detached_xor_repr_cls; //these are still in longIrredCls
     vector<Xor> xorclauses;
     vector<Xor> xorclauses_unused;
+    vector<BNN*> bnns;
+    vector<vector<Lit>> bnn_reasons;
+    vector<Lit> bnn_confl_reason;
+    vector<uint32_t> bnn_reasons_empty_slots;
     vector<uint32_t> removed_xorclauses_clash_vars;
     bool detached_xor_clauses = false;
     bool xor_clauses_updated = false;
     BinTriStats binTri;
     LitStats litStats;
-    int64_t clauseID = 1;
+    int32_t clauseID = 1;
     int64_t restartID = 1;
 
     //Temporaries
@@ -235,6 +239,12 @@ public:
         return must_interrupt_inter;
     }
 
+    const vector<BNN*>& get_bnns() const
+    {
+        return bnns;
+    }
+
+    bool check_bnn_sane(BNN& bnn);
     bool clause_locked(const Clause& c, const ClOffset offset) const;
     bool redundant(const Watched& ws) const;
     bool redundant_or_removed(const Watched& ws) const;
@@ -336,6 +346,7 @@ public:
     bool satisfied(const T& cl) const;
     template<typename T> bool no_duplicate_lits(const T& lits) const;
     void check_no_duplicate_lits_anywhere() const;
+    void check_no_zero_ID_bins() const;
     void print_all_clauses() const;
     template<class T> void clean_xor_no_prop(T& ps, bool& rhs);
     template<class T> void clean_xor_vars_no_prop(T& ps, bool& rhs);
@@ -349,6 +360,8 @@ public:
     that contained "lit, ~lit". So "lit" must be set to a value
     Contains OUTER variables */
     vector<bool> undef_must_set_vars;
+    vector<uint32_t> unit_cl_IDs;
+    uint32_t unsat_cl_ID = 0;
 
 protected:
     virtual void new_var(
@@ -523,11 +536,20 @@ inline void CNF::clear_one_occur_from_removed_clauses(watch_subarray w)
     size_t end = w.size();
     for(; i < end; i++) {
         const Watched ws = w[i];
-        if (!ws.isClause()) {
+         if (ws.isBNN()) {
+            BNN* bnn = bnns[ws.get_bnn()];
+            if (!bnn->isRemoved) {
+                w[j++] = w[i];
+            }
+            continue;
+        }
+
+        if (ws.isBin()) {
             w[j++] = w[i];
             continue;
         }
 
+        assert(ws.isClause());
         Clause* cl = cl_alloc.ptr(ws.get_offset());
         if (!cl->getRemoved()) {
             w[j++] = w[i];
@@ -681,7 +703,10 @@ void CNF::clean_xor_vars_no_prop(T& ps, bool& rhs)
             rhs ^= value(ps[i]) == l_True;
         }
     }
-    ps.resize(ps.size() - (i - j));
+    if ((i - j) > 0) {
+        ps.resize(ps.size() - (i - j));
+        //TODO tbdd ?
+    }
 }
 
 template<class T>

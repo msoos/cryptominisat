@@ -27,7 +27,6 @@ THE SOFTWARE.
 #include <cassert>
 #include <time.h>
 
-#include <ios>
 #include <iostream>
 #include <fstream>
 #include <algorithm>

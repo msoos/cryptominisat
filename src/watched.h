@@ -39,7 +39,14 @@ namespace CMSat {
 enum WatchType {
     watch_clause_t = 0
     , watch_binary_t = 1
+    , watch_bnn_t = 2
     , watch_idx_t = 3
+};
+
+enum BNNPropType {
+    bnn_pos_t = 0
+    , bnn_neg_t = 1
+    , bnn_out_t = 2
 };
 
 /**
@@ -75,6 +82,23 @@ class Watched {
         {
         }
 
+        Watched(const uint32_t idx, WatchType t):
+            data1(idx)
+            , type(t)
+        {
+            assert(t == watch_idx_t);
+        }
+
+        Watched(const uint32_t idx, WatchType t, BNNPropType bnn_p_t):
+            data1(idx)
+            , type(t)
+            , data2(bnn_p_t)
+        {
+            #ifdef DEBUG_WATCHED
+            assert(t == watch_bnn_t);
+            #endif
+        }
+
         Watched() :
             data1 (std::numeric_limits<uint32_t>::max())
             , type(watch_clause_t) // initialize type with most generic type of clause
@@ -84,19 +108,10 @@ class Watched {
         /**
         @brief Constructor for a binary clause
         */
-        Watched(const Lit lit, const bool red) :
+        Watched(const Lit lit, const bool red, uint64_t ID) :
             data1(lit.toInt())
             , type(watch_binary_t)
-            , data2(red)
-        {
-        }
-
-        /**
-        @brief Constructor for an Index value
-        */
-        explicit Watched(const uint32_t idx) :
-            data1(idx)
-            , type(watch_idx_t)
+            , data2((uint64_t)red | ID<<2) //marking is 2nd bit
         {
         }
 
@@ -132,12 +147,33 @@ class Watched {
             return (type == watch_idx_t);
         }
 
+        bool isBNN() const
+        {
+            return (type == watch_bnn_t);
+        }
+
         uint32_t get_idx() const
         {
             #ifdef DEBUG_WATCHED
             assert(type == watch_idx_t);
             #endif
             return data1;
+        }
+
+        uint32_t get_bnn() const
+        {
+            #ifdef DEBUG_WATCHED
+            assert(type == watch_bnn_t);
+            #endif
+            return data1;
+        }
+
+        BNNPropType get_bnn_prop_t() const
+        {
+            #ifdef DEBUG_WATCHED
+            assert(type == watch_bnn_t);
+            #endif
+            return (BNNPropType)data2;
         }
 
         /**
@@ -170,6 +206,14 @@ class Watched {
             return data2 & 1;
         }
 
+        uint64_t get_ID() const
+        {
+            #ifdef DEBUG_WATCHED
+            assert(isBin());
+            #endif
+            return data2 >> 2;
+        }
+
         void setRed(const bool toSet)
         {
             #ifdef DEBUG_WATCHED
@@ -193,7 +237,7 @@ class Watched {
             #ifdef DEBUG_WATCHED
             assert(isBin());
             #endif
-            data2 &= 1;
+            data2 &= (~(2ULL));
         }
 
         bool bin_cl_marked() const
@@ -285,7 +329,7 @@ struct OccurClause {
     Lit lit;
     Watched ws;
 
-    bool operator<(const OccurClause& other) {
+    bool operator<(const OccurClause& other) const {
         if (ws.isBin() && !other.ws.isBin()) {
             return true;
         }
@@ -298,8 +342,9 @@ struct OccurClause {
             return ws.lit2() < other.ws.lit2();
         }
 
-        assert(ws.isClause());
-        assert(other.ws.isClause());
+        assert(ws.isClause()  || ws.isBNN());
+        assert(other.ws.isClause() || ws.isBNN());
+        assert(false);
         return ws.get_offset() < other.ws.get_offset();
     }
 };
@@ -311,11 +356,11 @@ struct WatchSorterBinTriLong {
             assert(!b.isIdx());
 
             //Anything but clause!
-            if (a.isClause()) {
+            if (a.isClause() || a.isBNN()) {
                 //A is definitely not better than B
                 return false;
             }
-            if (b.isClause()) {
+            if (b.isClause() || b.isBNN()) {
                 //B is clause, A is NOT a clause. So A is better than B.
                 return true;
             }
@@ -331,7 +376,8 @@ struct WatchSorterBinTriLong {
             if (a.red() != b.red()) {
                 return !a.red();
             }
-            return false;
+
+            return (a.get_ID() < b.get_ID());
         }
     };
 

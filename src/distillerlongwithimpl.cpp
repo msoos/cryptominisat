@@ -51,7 +51,9 @@ bool DistillerLongWithImpl::distill_long_with_implicit(const bool alsoStrengthen
     assert(solver->ok);
     numCalls++;
 
-    solver->clauseCleaner->remove_and_clean_all();
+    if (!solver->clauseCleaner->remove_and_clean_all()) {
+        goto end;
+    }
 
     runStats.redWatchBased.clear();
     runStats.irredWatchBased.clear();
@@ -117,7 +119,7 @@ bool DistillerLongWithImpl::subsume_clause_with_watch(
         if (wit->red() && !cl.red()) {
             wit->setRed(false);
             timeAvailable -= (long)solver->watches[wit->lit2()].size()*3;
-            findWatchedOfBin(solver->watches, wit->lit2(), lit, true).setRed(false);
+            findWatchedOfBin(solver->watches, wit->lit2(), lit, true, wit->get_ID()).setRed(false);
             solver->binTri.redBins--;
             solver->binTri.irredBins++;
         }
@@ -151,7 +153,7 @@ void DistillerLongWithImpl::str_and_sub_using_watch(
         ; wit++
     ) {
         //Can't do anything with a clause
-        if (wit->isClause())
+        if (!wit->isBin())
             continue;
 
         timeAvailable -= 5;

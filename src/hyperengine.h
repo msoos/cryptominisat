@@ -20,6 +20,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
+#ifndef HYPERENGINE_H
+#define HYPERENGINE_H
+
 #include "cnf.h"
 #include "propby.h"
 #include "solvertypes.h"
@@ -60,7 +63,7 @@ public:
 private:
     Lit   analyzeFail(PropBy propBy);
     Lit   remove_which_bin_due_to_trans_red(Lit conflict, Lit thisAncestor, const bool thisStepRed);
-    void  remove_bin_clause(Lit lit);
+    void  remove_bin_clause(Lit lit, const uint64_t ID);
     bool  is_ancestor_of(
         const Lit conflict
         , Lit thisAncestor
@@ -89,3 +92,5 @@ private:
 };
 
 }
+
+#endif //HYPERENGINE_H

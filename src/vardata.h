@@ -40,6 +40,7 @@ struct VarData
 
     ///contains the decision level at which the assignment was made.
     uint32_t level = 0;
+    uint32_t sublevel = std::numeric_limits<uint32_t>::max();
 
     uint32_t maple_cancelled = 0;
     uint32_t maple_last_picked = 0;
@@ -59,6 +60,7 @@ struct VarData
     ///The preferred polarity of each variable.
     bool polarity = false;
     bool best_polarity = false;
+    bool propagated = false;
     uint8_t is_bva:1;
     uint8_t occ_simp_tried:1;
 

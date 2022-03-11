@@ -44,7 +44,7 @@ class ClauseCleaner
         ClauseCleaner(Solver* solver);
 
         void clean_implicit_clauses();
-        void remove_and_clean_all();
+        bool remove_and_clean_all();
         bool clean_xor_clauses(vector<Xor>& xors);
         bool clean_clause(Clause& c);
         bool full_clean(Clause& cl);
@@ -70,7 +70,7 @@ class ClauseCleaner
             , const Lit lit
         );
         void clean_binary_implicit(
-           Watched& ws
+           const Watched* ws
             , Watched*& j
             , const Lit lit
         );
@@ -78,6 +78,9 @@ class ClauseCleaner
         void clean_clauses_pre();
         void clean_clauses_post();
         void clean_clauses_inter(vector<ClOffset>& cs);
+        bool clean_bnn(BNN& bnn, uint32_t bnn_idx);
+        void clean_bnns_inter(vector<BNN*>& bnns);
+        void clean_bnns_post();
 
         bool satisfied(const Watched& watched, Lit lit);
         vector<ClOffset> delayed_free;

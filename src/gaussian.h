@@ -80,14 +80,13 @@ class EGaussian {
         GaussQData& gqd
     );
 
-    vector<Lit>* get_reason(uint32_t row);
+    vector<Lit>* get_reason(uint32_t row, uint32_t& out_ID);
 
     // when basic variable is touched , eliminate one col
     void eliminate_col(
         uint32_t p,
         GaussQData& gqd
     );
-    void new_decision_level(uint32_t new_dec_level);
     void canceling();
     bool full_init(bool& created);
     void update_cols_vals_set(bool force = false);
@@ -97,6 +96,7 @@ class EGaussian {
     void update_matrix_no(uint32_t n);
     void check_watchlist_sanity();
     uint32_t get_matrix_no();
+    void finalize_frat();
 
     vector<Xor> xorclauses;
 
@@ -104,7 +104,6 @@ class EGaussian {
     Solver* solver;   // orignal sat solver
 
     //Cleanup
-    bool clean_xors();
     void clear_gwatches(const uint32_t var);
     void delete_gauss_watch_this_matrix();
     void delete_gausswatch(const uint32_t  row_n);
@@ -125,9 +124,18 @@ class EGaussian {
     //Initialisation
     void eliminate();
     void fill_matrix();
-    uint32_t select_columnorder();
+    void select_columnorder();
     gret adjust_matrix(); // adjust matrix, include watch, check row is zero, etc.
     double get_density();
+
+    //BDD stuff
+    struct BDDCl {
+        ilist cl;
+        uint32_t ID;
+    };
+    void xor_in_bdd(const uint32_t a, const uint32_t b);
+    xor_constraint* bdd_create(const uint32_t row_n);
+    vector<BDDCl> frat_ids;
 
 
     ///////////////
@@ -154,6 +162,7 @@ class EGaussian {
     // Internal data
     ///////////////
     uint32_t matrix_no;
+    bool initialized = false;
     bool cancelled_since_val_update = true;
     uint32_t last_val_update = 0;
 
@@ -171,6 +180,7 @@ class EGaussian {
 
 
     PackedMatrix mat;
+    vector<vector<char>> bdd_matrix;
     vector<uint32_t>  var_to_col; ///var->col mapping. Index with VAR
     vector<uint32_t> col_to_var; ///col->var mapping. Index with COL
     uint32_t num_rows = 0;
@@ -196,16 +206,9 @@ class EGaussian {
 
 inline void EGaussian::canceling() {
     cancelled_since_val_update = true;
-    memset(satisfied_xors.data(), 0, satisfied_xors.size());
-}
 
-inline void EGaussian::new_decision_level(uint32_t /*dec_level*/)
-{
-    /*assert(dec_level > 0);
-    if (satisfied_xors.size() < dec_level+1) {
-        satisfied_xors.resize(dec_level+1);
-    }
-    satisfied_xors[dec_level] = satisfied_xors[dec_level-1];*/
+    //TODO this is an overstatement, coudl be improved
+    memset(satisfied_xors.data(), 0, satisfied_xors.size());
 }
 
 inline double EGaussian::get_density()

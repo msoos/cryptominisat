@@ -581,13 +581,6 @@ DLL_PUBLIC void SATSolver::set_max_confl(uint64_t max_confl)
   }
 }
 
-DLL_PUBLIC void SATSolver::set_fast_confl_break(const bool fast_confl_break)
-{
-  for (Solver* s : data->solvers) {
-      s->conf.fast_confl_break = fast_confl_break;
-  }
-}
-
 DLL_PUBLIC void SATSolver::set_polarity_auto()
 {
     for (size_t i = 0; i < data->solvers.size(); ++i) {
@@ -776,6 +769,35 @@ DLL_PUBLIC bool SATSolver::add_xor_clause(const std::vector<unsigned>& vars, boo
         data->vars_to_add = 0;
 
         ret = data->solvers[0]->add_xor_clause_outside(vars, rhs);
+        data->cls++;
+    }
+
+    return ret;
+}
+
+DLL_PUBLIC bool SATSolver::add_bnn_clause(
+    const std::vector<Lit>& lits,
+    signed cutoff,
+    Lit out)
+{
+    if (data->log) {
+       assert(false && "No logs for BNN yet");
+    }
+
+    //lit_Undef is == TRUE, but lit_Error is not accepted
+    assert(out != lit_Error);
+
+    bool ret = true;
+    if (data->solvers.size() > 1) {
+        assert(false && "No multithreading for BNN yet");
+    } else {
+        data->solvers[0]->new_vars(data->vars_to_add);
+        data->vars_to_add = 0;
+
+        ret = data->solvers[0]->add_bnn_clause_outside(
+            lits,
+            cutoff,
+            out);
         data->cls++;
     }
 
@@ -1125,12 +1147,9 @@ DLL_PUBLIC void SATSolver::set_drat(FILE* os, bool add_ID)
         exit(-1);
     }
 
-    data->solvers[0]->conf.gaussconf.doMatrixFind = false;
     data->solvers[0]->conf.doBreakid = false;
     data->solvers[0]->add_drat(os, add_ID);
     data->solvers[0]->conf.do_hyperbin_and_transred = true;
-    data->solvers[0]->conf.doFindXors = false;
-
 }
 
 DLL_PUBLIC void SATSolver::interrupt_asap()
@@ -1416,6 +1435,11 @@ void DLL_PUBLIC SATSolver::set_up_for_arjun()
     }
 }
 
+DLL_PUBLIC const vector<BNN*>& SATSolver::get_bnns() const
+{
+    return data->solvers[0]->get_bnns();
+}
+
 DLL_PUBLIC void SATSolver::set_verbosity_detach_warning(bool verb)
 {
     for (size_t i = 0; i < data->solvers.size(); i++) {
@@ -1489,6 +1513,7 @@ DLL_PUBLIC lbool SATSolver::find_fast_backw(FastBackwData fast_backw)
 DLL_PUBLIC void SATSolver::remove_and_clean_all()
 {
     for(auto& s: data->solvers) {
+        if (!s->okay()) return;
         s->remove_and_clean_all();
     }
 }

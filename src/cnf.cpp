@@ -140,6 +140,7 @@ void CNF::swapVars(const uint32_t which, const int off_by)
 void CNF::enlarge_nonminimial_datastructs(size_t n)
 {
     assigns.insert(assigns.end(), n, l_Undef);
+    unit_cl_IDs.insert(unit_cl_IDs.end(), n, 0);
     varData.insert(varData.end(), n, VarData());
     depth.insert(depth.end(), n, 0);
 }
@@ -220,6 +221,10 @@ inline void CNF::updateWatch(
             it->setLit2(
                 getUpdatedLit(it->lit2(), outerToInter)
             );
+            continue;
+        }
+
+        if (it->isBNN()) {
             continue;
         }
 
@@ -749,6 +754,7 @@ void CNF::add_drat(FILE* os, bool add_ID) {
         drat = new DratFile<false>(interToOuterMain);
     }
     drat->setFile(os);
+    drat->set_sumconflicts_ptr(&sumConflicts);
 }
 
 vector<uint32_t> CNF::get_outside_lit_incidence()
@@ -878,4 +884,80 @@ vector<uint32_t> CNF::get_outside_var_incidence_also_red()
         inc_outer = map_back_vars_to_without_bva(inc_outer);
     }
     return inc_outer;
+}
+
+bool CNF::check_bnn_sane(BNN& bnn)
+{
+    //assert(decisionLevel() == 0);
+
+    int32_t ts = 0;
+    int32_t undefs = 0;
+    for(const auto& l: bnn) {
+        if (value(l) == l_True) {
+            ts++;
+        }
+
+        if (value(l) == l_Undef) {
+            undefs++;
+        }
+    }
+    assert(bnn.ts == ts);
+    assert(bnn.undefs == undefs);
+
+    if (bnn.empty()) {
+        return false;
+    }
+
+    // we are at the cutoff no matter what undef is
+    if (bnn.cutoff-ts <= 0) {
+        if (bnn.set) {
+            return true; //harmless, doesn't propagate
+        }
+        if (value(bnn.out) == l_False)
+            return false; //always true, BAD
+        if (value(bnn.out) == l_True)
+            return true; //harmless, doesn't propagate
+
+        //should have propagated bnn.out
+        return false;
+    }
+
+    // we are under the cutoff no matter what undef is
+    if (undefs < bnn.cutoff-ts) {
+        if (bnn.set) {
+            return false; //can never meet cutoff, BAD
+        }
+        if (value(bnn.out) == l_True)
+            return false;  //can never meet cutoff, BAD
+        if (value(bnn.out) == l_False)
+            return true;
+
+        //should have propagated bnn.out
+        return false;
+    }
+
+    //it's set and cutoff can ONLY be met by ALL TRUE
+    if (((!bnn.set && value(bnn.out) == l_True) || bnn.set) &&
+        undefs == bnn.cutoff-ts)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+void CNF::check_no_zero_ID_bins() const
+{
+    for(uint32_t i = 0; i < nVars()*2; i++) {
+        Lit l = Lit::toLit(i);
+        for(const auto& w: watches[l]) {
+            //only do once per binary
+            if (w.isBin()) {
+                if (w.get_ID() == 0) {
+                    cout << "ERROR, bin: " << l << " " << w.lit2() << " has ID " << w.get_ID() << endl;
+                }
+                assert(w.get_ID() > 0);
+            }
+        }
+    }
 }

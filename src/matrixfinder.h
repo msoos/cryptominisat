@@ -45,10 +45,7 @@ class MatrixFinder {
 
         //NOTE "simplify_xors" should always be true except during testing
         bool findMatrixes(bool& can_detach, bool simplify_xors = true);
-
-        vector<Xor> unused_xors;
         set<uint32_t> clash_vars_unused;
-        vector<Xor> xors;
 
     private:
         uint32_t setMatrixes();

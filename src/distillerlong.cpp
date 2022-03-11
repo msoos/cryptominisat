@@ -148,7 +148,7 @@ DistillerLong::DistillerLong(Solver* _solver) :
     solver(_solver)
 {}
 
-bool DistillerLong::distill(const bool red, bool fullstats, bool only_rem_cl)
+bool DistillerLong::distill(const bool red, bool only_rem_cl)
 {
     assert(solver->ok);
     numCalls_red += (unsigned)red;
@@ -615,7 +615,8 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     #endif
 
     bool lits_set = false;
-    if (red && j > 1 && (!confl.isNULL() || True_confl)) {
+    //TODO BNN removed this, but needs to be fixed.
+    /*if (red && j > 1 && (!confl.isNULL() || True_confl)) {
         #ifdef VERBOSE_DEBUG
         cout
         << "c Distillation even more effective." << endl
@@ -634,7 +635,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
             #endif
             lits_set = true;
         }
-    }
+    }*/
     solver->cancelUntil<false, true>(0);
     solver->detach_modified_clause(cl_lit1, cl_lit2, orig_size, &cl);
     runStats.numLitsRem += orig_size - cl.size();

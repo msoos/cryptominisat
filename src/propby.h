@@ -33,10 +33,9 @@ THE SOFTWARE.
 
 namespace CMSat {
 
-enum PropByType {null_clause_t = 0, clause_t = 1, binary_t = 2
-    #ifdef USE_GAUSS
-    , xor_t = 3
-    #endif
+enum PropByType {
+    null_clause_t = 0, clause_t = 1, binary_t = 2,
+    xor_t = 3, bnn_t = 4
 };
 
 class PropBy
@@ -44,12 +43,14 @@ class PropBy
     private:
         uint32_t red_step:1;
         uint32_t data1:31;
-        uint32_t type:2;
+        uint32_t type:3;
         //0: clause, NULL
         //1: clause, non-null
         //2: binary
-        //3: tertiary
-        uint32_t data2:30;
+        //3: xor
+        //4: bnn
+        uint32_t data2:29;
+        uint32_t ID;
 
     public:
         PropBy() :
@@ -82,12 +83,21 @@ class PropBy
         }
 #endif
 
+        //BNN prop
+        PropBy(uint32_t bnn_idx, void*):
+            data1(0xfffffff)
+            , type(bnn_t)
+            , data2(bnn_idx)
+        {
+        }
+
         //Binary prop
-        PropBy(const Lit lit, const bool redStep) :
+        PropBy(const Lit lit, const bool redStep, uint32_t _ID) :
             red_step(redStep)
             , data1(lit.toInt())
             , type(binary_t)
             , data2(0)
+            , ID(_ID)
         {
         }
 
@@ -115,9 +125,43 @@ class PropBy
                 | ((uint32_t)hyperBinNotAdded) << 2;
         }
 
+        void set_bnn_reason(uint32_t idx)
+        {
+            assert(isBNN());
+            data1 = idx;
+        }
+
+        bool bnn_reason_set() const
+        {
+            assert(isBNN());
+            return data1 != 0xfffffff;
+        }
+
+        uint32_t get_bnn_reason() const
+        {
+            assert(bnn_reason_set());
+            return data1;
+        }
+
+        uint32_t isBNN() const
+        {
+            return type == bnn_t;
+        }
+
+        uint32_t getBNNidx() const
+        {
+            assert(isBNN());
+            return data2;
+        }
+
         bool isRedStep() const
         {
             return red_step;
+        }
+
+        uint64_t getID() const
+        {
+            return ID;
         }
 
         bool getHyperbin() const

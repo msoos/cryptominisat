@@ -313,7 +313,7 @@ struct watch_array
 
     void prefetch(const size_t at) const
     {
-        __builtin_prefetch(mems[watches[at].num].base_ptr + watches[at].offset);
+        cmsat_prefetch(mems[watches[at].num].base_ptr + watches[at].offset);
     }
 
     struct iterator

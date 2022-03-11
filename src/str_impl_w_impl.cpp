@@ -112,6 +112,7 @@ void StrImplWImpl::distill_implicit_with_implicit_lit(const Lit lit)
 
         switch(i->getType()) {
             case CMSat::watch_clause_t:
+            case CMSat::watch_bnn_t:
                 *j++ = *i;
                 break;
 
@@ -168,12 +169,6 @@ void StrImplWImpl::strengthen_bin_with_bin(
     if (rem) {
         str_impl_data.remLitFromBin++;
         str_impl_data.toEnqueue.push_back(lit);
-        (*solver->drat) << add << lit
-        #ifdef STATS_NEEDED
-        << 0
-        << solver->sumConflicts
-        #endif
-        << fin;
     }
     *j++ = *i;
 }

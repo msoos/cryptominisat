@@ -275,22 +275,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , num_conflicts_of_search_inc_max(10)
         , max_num_simplify_per_solve_call(25)
         , simplify_schedule_startup(
-            "sub-impl,"
             "breakid, "
-            "distill-cls,distill-bins,"
-            "occ-backw-sub-str, occ-clean-implicit, occ-bve,"
-            "occ-ternary-res, occ-backw-sub-str, occ-xor,"
-            "card-find,"
-            "cl-consolidate," //consolidate after OCC
-            "scc-vrepl,"
-            "sub-cls-with-bin,"
-            "bosphorus,"
-            "sls,lucky"
+            "occ-bve,occ-xor"
         )
-//         , simplify_schedule_startup(
-//             "breakid, "
-//             "occ-bve,"
-//         )
         //validated with run 8114195.wlm01
         , simplify_schedule_nonstartup(
             "scc-vrepl,"
@@ -395,7 +382,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //misc
         , origSeed(0)
         , simulate_drat(false)
-        , fast_confl_break(false)
 {
     ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
     ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.44;

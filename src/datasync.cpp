@@ -188,6 +188,7 @@ bool DataSync::syncData()
 bool DataSync::shareUnitData()
 {
     assert(solver->okay());
+    assert(!solver->drat->enabled());
 
     uint32_t thisGotUnitData = 0;
     uint32_t thisSentUnitData = 0;

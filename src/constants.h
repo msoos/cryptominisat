@@ -51,8 +51,10 @@ THE SOFTWARE.
 #endif
 
 #if !defined(__GNUC__) && !defined(__clang__)
-#define __builtin_prefetch(x) (void)(x)
-#endif //__GNUC__
+#define cmsat_prefetch(x) (void)(x)
+#else
+#define cmsat_prefetch(x) __builtin_prefetch(x)
+#endif
 
 //We shift stuff around in Watched, so not all of 32 bits are useable.
 //for STATS we have 64b values in the Clauses, so they must be aligned to 64
@@ -84,6 +86,24 @@ THE SOFTWARE.
 
 //#define DRAT_DEBUG
 //#define VERBOSE_DEBUG
+
+// verbose print
+#ifdef VERBOSE_DEBUG
+#define VERBOSE_PRINT(x) \
+    do { std::cout << x << std::endl; } while (0)
+#else
+#define VERBOSE_PRINT(x) {}
+#endif
+/////
+
+// slow debug
+#ifdef SLOW_DEBUG
+#define SLOW_DEBUG_DO(x) \
+    do { x; } while (0)
+#else
+#define SLOW_DEBUG_DO(x) {}
+#endif
+/////
 
 #ifdef VERBOSE_DEBUG
 #define FAST_DEBUG

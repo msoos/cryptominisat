@@ -88,8 +88,12 @@ class Solver : public Searcher
         const vector<std::pair<string, string> >& get_sql_tags() const;
         void new_external_var();
         void new_external_vars(size_t n);
-        bool add_clause_outside(const vector<Lit>& lits, bool red = false);
+        bool add_clause_outside(const vector<Lit>& lits);
         bool add_xor_clause_outside(const vector<uint32_t>& vars, bool rhs);
+        bool add_bnn_clause_outside(
+            const vector<Lit>& lits,
+            const int32_t cutoff,
+            Lit out);
         void set_var_weight(Lit lit, double weight);
 
         lbool solve_with_assumptions(
@@ -189,7 +193,7 @@ class Solver : public Searcher
         bool prop_at_head() const;
         void set_decision_var(const uint32_t var);
         bool fully_enqueue_these(const vector<Lit>& toEnqueue);
-        bool fully_enqueue_this(const Lit lit);
+        bool fully_enqueue_this(const Lit lit_ID);
         void update_assumptions_after_varreplace();
 
         //State load/unload
@@ -198,7 +202,7 @@ class Solver : public Searcher
         lbool load_solution_from_file(const string& fname);
 
         uint64_t getNumLongClauses() const;
-        bool addClause(const vector<Lit>& ps, const bool red = false);
+        bool add_clause_outer_copylits(const vector<Lit>& ps);
         bool add_xor_clause_inter(
             const vector< Lit >& lits
             , bool rhs
@@ -223,16 +227,21 @@ class Solver : public Searcher
             , const bool checkAttach = false
             #endif
         );
+        void attach_bnn(const uint32_t bnn_idx);
+        lbool bnn_eval(BNN& bnn);
+        bool bnn_to_cnf(BNN& bnn);
         void attach_bin_clause(
             const Lit lit1
             , const Lit lit2
             , const bool red
-            , const bool checkUnassignedFirst = true
+            , const uint64_t ID
+            , [[maybe_unused]] const bool checkUnassignedFirst = true
         );
         void detach_bin_clause(
             Lit lit1
             , Lit lit2
             , bool red
+            , const uint64_t ID
             , bool allow_empty_watch = false
             , bool allow_change_order = false
         ) {
@@ -242,7 +251,7 @@ class Solver : public Searcher
                 binTri.irredBins--;
             }
 
-            PropEngine::detach_bin_clause(lit1, lit2, red, allow_empty_watch, allow_change_order);
+            PropEngine::detach_bin_clause(lit1, lit2, red, ID, allow_empty_watch, allow_change_order);
         }
         void detachClause(const Clause& c, const bool removeDrat = true);
         void detachClause(const ClOffset offset, const bool removeDrat = true);
@@ -261,7 +270,14 @@ class Solver : public Searcher
             , bool addDrat = true
             , const Lit drat_first = lit_Undef
             , const bool sorted = false
+            , const bool remove_drat = false
         );
+        void add_bnn_clause_inter(
+            vector<Lit>& lits,
+            int32_t cutoff,
+            Lit out
+        );
+
         template<class T> vector<Lit> clause_outer_numbered(const T& cl) const;
         template<class T> vector<uint32_t> xor_outer_numbered(const T& cl) const;
         size_t mem_used() const;
@@ -273,7 +289,7 @@ class Solver : public Searcher
 
         vector<OrGate> get_recovered_or_gates();
         vector<ITEGate> get_recovered_ite_gates();
-        void remove_and_clean_all();
+        bool remove_and_clean_all();
         vector<Lit> get_toplevel_units_internal(bool outer_numbering) const;
 
         #ifdef USE_GAUSS
@@ -317,6 +333,10 @@ class Solver : public Searcher
         FRIEND_TEST(SearcherTest, pickpolar_auto_not_changed_by_simp);
         #endif
 
+        //FRAT
+        void write_final_frat_clauses();
+        void write_one_final_frat_cl(const ClOffset offs);
+
         lbool probe_inter(Lit l, uint32_t& min_props);
         void reset_for_solving();
         vector<Lit> add_clause_int_tmp_cl;
@@ -331,6 +351,7 @@ class Solver : public Searcher
             , const bool red
             , const bool sorted = false
         );
+        void sort_and_clean_bnn(BNN& bnn);
         void set_up_sql_writer();
         vector<std::pair<string, string> > sql_tags;
 
@@ -360,6 +381,24 @@ class Solver : public Searcher
             }
         }
         vector<Lit> outside_assumptions;
+        Lit back_number_from_outside_to_outer(const Lit lit)
+        {
+            assert(lit.var() < nVarsOutside());
+            if (get_num_bva_vars() > 0 || !fresh_solver) {
+                Lit ret = map_to_with_bva(lit);
+                assert(ret.var() < nVarsOuter());
+                return ret;
+            } else {
+                return lit;
+            }
+        }
+
+        uint32_t back_number_from_outside_to_outer(const uint32_t var)
+        {
+            Lit lit = Lit(var, false);
+            return back_number_from_outside_to_outer(lit).var();
+        }
+
 
         //Stats printing
         void print_norm_stats(
@@ -420,7 +459,7 @@ class Solver : public Searcher
         /////////////////////
         // Clauses
         bool addClauseHelper(vector<Lit>& ps);
-        bool addClauseInt(vector<Lit>& ps, const bool red = false);
+        bool add_clause_outer(vector<Lit>& ps);
 
         /////////////////
         // Debug

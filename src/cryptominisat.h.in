@@ -57,13 +57,18 @@ namespace CMSat {
 
         ////////////////////////////
         // Adding variables and clauses
-        ////////////////////////////
+        ///////////////`/////////////
 
         void new_var(); //add a new variable to the solver
         void new_vars(const size_t n); //and many new variables to the solver -- much faster
         unsigned nVars() const; //get number of variables inside the solver
         bool add_clause(const std::vector<Lit>& lits);
         bool add_xor_clause(const std::vector<unsigned>& vars, bool rhs);
+        bool add_bnn_clause(
+            const std::vector<Lit>& lits,
+            signed cutoff,
+            Lit out = lit_Undef
+        );
         void set_var_weight(Lit lit, double weight);
 
         ////////////////////////////
@@ -218,7 +223,6 @@ namespace CMSat {
         lbool find_fast_backw(FastBackwData fast_backw);
         void remove_and_clean_all();
         lbool probe(Lit l, uint32_t& min_props);
-        void set_fast_confl_break(const bool fast_confl_break);
 
         //Given a set of literals to enqueue, returns:
         // 1) Whether they imply UNSAT. If "false": UNSAT
@@ -239,6 +243,7 @@ namespace CMSat {
         void end_getting_small_clauses();
         std::vector<uint32_t> translate_sampl_set(const std::vector<uint32_t>& sampl_set);
         void get_all_irred_clauses(std::vector<Lit>& ret);
+        const std::vector<BNN*>& get_bnns() const;
 
         /////////////////////
         // Backwards compatibility, implemented using the above "small clauses" functions

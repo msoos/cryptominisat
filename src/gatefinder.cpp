@@ -234,7 +234,7 @@ void GateFinder::link_in_gate(const OrGate& gate)
 {
     const size_t at = orGates.size();
     orGates.push_back(gate);
-    solver->watches[gate.rhs].push(Watched(at));
+    solver->watches[gate.rhs].push(Watched(at, watch_idx_t));
     solver->watches.smudge(gate.rhs);
 }
 
