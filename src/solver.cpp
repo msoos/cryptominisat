@@ -909,10 +909,8 @@ bool Solver::add_clause_outer(vector<Lit>& ps)
     }
 
     ClauseStats stats;
-    if (drat->enabled()) {
-        stats.ID = ++clauseID;
-        *drat << origcl << stats.ID << ps << fin;
-    }
+    stats.ID = ++clauseID;
+    *drat << origcl << stats.ID << ps << fin;
 
     #ifdef VERBOSE_DEBUG
     cout << "Adding clause " << ps << endl;
@@ -925,19 +923,12 @@ bool Solver::add_clause_outer(vector<Lit>& ps)
     }
 
     std::sort(ps.begin(), ps.end());
-
-    vector<Lit> *pFinalCl = NULL;
-    if (drat->enabled() || conf.simulate_drat) {
-        finalCl_tmp.clear();
-        pFinalCl = &finalCl_tmp;
-    }
-
     Clause *cl = add_clause_int(
         ps
         , false //redundant?
         , &stats
         , true //yes, attach
-        , pFinalCl
+        , NULL
         , true //add drat?
         , lit_Undef
         , true //sorted
@@ -3206,12 +3197,9 @@ void Solver::add_in_partial_solving_stats()
 
 bool Solver::add_clause_outside(const vector<Lit>& lits)
 {
-    if (!ok) {
-        return false;
-    }
-    #ifdef SLOW_DEBUG //we check for this during back-numbering
-    check_too_large_variable_number(lits);
-    #endif
+    if (!ok) return false;
+
+    SLOW_DEBUG_DO(check_too_large_variable_number(lits)); //we check for this during back-numbering
     back_number_from_outside_to_outer(lits);
     return add_clause_outer(back_number_from_outside_to_outer_tmp);
 }
@@ -3735,19 +3723,17 @@ vector<Lit> Solver::get_toplevel_units_internal(bool outer_numbering) const
 vector<Xor> Solver::get_recovered_xors(const bool xor_together_xors)
 {
     vector<Xor> xors_ret;
-    if (!okay()) {
-        return xors_ret;
-    }
+    if (!okay()) return xors_ret;
 
+    auto xors = xorclauses;
+        xors.insert(xors.end(), xorclauses_unused.begin(), xorclauses_unused.end());
     if (xor_together_xors) {
-        auto xors = xorclauses;
-
         XorFinder finder(NULL, this);
         finder.xor_together_xors(xors);
         renumber_xors_to_outside(xors, xors_ret);
         return xors_ret;
     } else {
-        renumber_xors_to_outside(xorclauses, xors_ret);
+        renumber_xors_to_outside(xors, xors_ret);
         return xors_ret;
     }
 }

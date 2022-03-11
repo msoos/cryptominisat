@@ -344,7 +344,6 @@ class Solver : public Searcher
         uint64_t mem_used_vardata() const;
         uint64_t calc_num_confl_to_do_this_iter(const size_t iteration_num) const;
 
-        vector<Lit> finalCl_tmp;
         bool sort_and_clean_clause(
             vector<Lit>& ps
             , const vector<Lit>& origCl

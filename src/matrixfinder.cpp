@@ -110,14 +110,12 @@ bool MatrixFinder::findMatrixes(bool& can_detach, bool simplify_xors)
 
     XorFinder finder(NULL, solver);
     if (simplify_xors) {
-        if (!solver->clauseCleaner->clean_xor_clauses(solver->xorclauses)) {
+        if (!solver->clauseCleaner->clean_xor_clauses(solver->xorclauses))
             return false;
-        }
 
         finder.grab_mem();
         finder.move_xors_without_connecting_vars_to_unused();
-        if (!finder.xor_together_xors(solver->xorclauses))
-            return false;
+        if (!finder.xor_together_xors(solver->xorclauses)) return false;
 
         finder.move_xors_without_connecting_vars_to_unused();
     }
