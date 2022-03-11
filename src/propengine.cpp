@@ -567,7 +567,8 @@ inline bool PropEngine::prop_bin_cl(
             propStats.propsBinIrred++;
         #endif
 
-        enqueue<update_bogoprops>(i->lit2(), currLevel, PropBy(~p, i->red()));
+        enqueue<update_bogoprops>(i->lit2(), currLevel, PropBy(
+            ~p, i->red(), i->get_ID()));
     } else if (val == l_False) {
         #ifdef STATS_NEEDED
         if (i->red())
@@ -576,7 +577,7 @@ inline bool PropEngine::prop_bin_cl(
             lastConflictCausedBy = ConflCausedBy::binirred;
         #endif
 
-        confl = PropBy(~p, i->red());
+        confl = PropBy(~p, i->red(), i->get_ID());
         failBinLit = i->lit2();
         qhead = trail.size();
         return false;
@@ -638,12 +639,6 @@ bool PropEngine::prop_long_cl_any_order(
             #endif
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             c.stats.props_made++;
-            #endif
-            #ifdef STATS_NEEDED
-            if (c.red())
-                propStats.propsLongRed++;
-            else
-                propStats.propsLongIrred++;
             #endif
         }
 
@@ -716,265 +711,12 @@ void CMSat::PropEngine::reverse_prop(const CMSat::Lit l)
     varData[l.var()].propagated = false;
 }
 
-PropBy PropEngine::propagate_any_order_fast()
-{
-    PropBy confl;
-
-    #ifdef VERBOSE_DEBUG_PROP
-    cout << "Fast Propagation started" << endl;
-    #endif
-
-    //so we don't re-calculate it all the time
-    uint32_t declevel = decisionLevel();
-
-    const bool fast_confl_break = solver->conf.fast_confl_break;
-
-    int64_t num_props = 0;
-
-    #ifdef SLOW_DEBUG
-    for(uint32_t idx = 0; idx < bnns.size(); idx++) {
-        const BNN* bnn = bnns[idx];
-        assert(bnn != NULL);
-        int32_t undefs = 0;
-        int32_t ts = 0;
-        for(const auto& l: *bnn) {
-//                 cout << " l: " << l << " v: " << value(l);
-            if (value(l) == l_True && varData[l.var()].propagated) {
-                ts++;
-            }
-            if (!varData[l.var()].propagated) {
-                undefs++;
-            }
-        }
-        if (undefs != bnn->undefs || ts != bnn->ts) {
-        cout << "u: " << undefs << " my u: " << bnn->undefs << " -- ";
-        cout << "t: " << ts << " my t: " << bnn->ts << " idx: " << idx
-        << " sz :" << bnn->size() << endl;
-        }
-        assert(undefs == bnn->undefs);
-        assert(ts == bnn->ts);
-    }
-    #endif //SLOW_DEBUG
-
-    while (qhead < trail.size() && confl.isNULL()) {
-        const Lit p = trail[qhead].lit;     // 'p' is enqueued fact to propagate.
-        varData[p.var()].propagated = true;
-        const uint32_t currLevel = trail[qhead].lev;
-        qhead++;
-        watch_subarray ws = watches[~p];
-        Watched* i;
-        Watched* j;
-        Watched* end;
-        Watched* last_i = NULL;
-        num_props++;
-
-        for (i = j = ws.begin(), end = ws.end(); unlikely(i != end);) {
-            //Prop bin clause
-            if (i->isBin()) {
-                assert(j < end);
-                *j++ = *i;
-                const lbool val = value(i->lit2());
-                if (val == l_Undef) {
-                    #ifdef STATS_NEEDED
-                    if (i->red())
-                        propStats.propsBinRed++;
-                    else
-                        propStats.propsBinIrred++;
-                    #endif
-                    enqueue<false>(i->lit2(), currLevel, PropBy(~p, i->red()));
-                    i++;
-                } else if (val == l_False) {
-                    confl = PropBy(~p, i->red());
-                    failBinLit = i->lit2();
-                    #ifdef STATS_NEEDED
-                    if (i->red())
-                        lastConflictCausedBy = ConflCausedBy::binred;
-                    else
-                        lastConflictCausedBy = ConflCausedBy::binirred;
-                    #endif
-                    i++;
-                    while (i < end) {
-                        *j++ = *i++;
-                    }
-                } else {
-                    i++;
-                }
-                continue;
-            }
-
-            // propagate BNN constraint
-            if (i->isBNN()) {
-                last_i = j;
-                *j++ = *i;
-                const lbool val = bnn_prop(
-                    i->get_bnn(), currLevel, p, i->get_bnn_prop_t());
-                if (val == l_False) {
-                    confl = PropBy(i->get_bnn(), nullptr);
-                    i++;
-                    while (i < end) {
-                        *j++ = *i++;
-                    }
-                } else {
-                    i++;
-                }
-                continue;
-            }
-
-            //propagate normal clause
-            assert(i->isClause());
-            Lit blocked = i->getBlockedLit();
-            if (likely(value(blocked) == l_True)) {
-                *j++ = *i++;
-                continue;
-            }
-
-            const ClOffset offset = i->get_offset();
-            Clause& c = *cl_alloc.ptr(offset);
-            Lit      false_lit = ~p;
-            if (c[0] == false_lit) {
-                c[0] = c[1], c[1] = false_lit;
-            }
-            assert(c[1] == false_lit);
-            i++;
-
-            Lit     first = c[0];
-            Watched w     = Watched(offset, first);
-            if (first != blocked && value(first) == l_True) {
-                *j++ = w;
-                continue;
-            }
-
-            // Look for new watch:
-            for (uint32_t k = 2; k < c.size(); k++) {
-                //Literal is either unset or satisfied, attach to other watchlist
-                if (likely(value(c[k]) != l_False)) {
-                    c[1] = c[k];
-                    c[k] = false_lit;
-                    watches[c[1]].push(w);
-                    goto nextClause;
-                }
-            }
-
-            // Did not find watch -- clause is unit under assignment:
-            *j++ = w;
-            if (value(c[0]) == l_False) {
-                confl = PropBy(offset);
-                #ifdef STATS_NEEDED
-                if (c.red()) {
-                    red_stats_extra[c.stats.extra_pos].conflicts_made++;
-                    lastConflictCausedBy = ConflCausedBy::longred;
-                } else {
-                    lastConflictCausedBy = ConflCausedBy::longirred;
-                }
-                #endif
-                #ifdef VERBOSE_DEBUG
-                cout << "Conflicting on clause:" << c << endl;
-                #endif
-                while (i < end) {
-                    *j++ = *i++;
-                }
-                assert(j <= end);
-            } else {
-                #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
-                c.stats.props_made++;
-                #endif
-                #ifdef STATS_NEEDED
-                if (c.red())
-                    propStats.propsLongRed++;
-                else
-                    propStats.propsLongIrred++;
-                #endif
-                if (currLevel == declevel) {
-                    enqueue<false>(c[0], currLevel, PropBy(offset));
-                } else {
-                    assert(false && "Turned off");
-                    uint32_t nMaxLevel = currLevel;
-                    uint32_t nMaxInd = 1;
-                    // pass over all the literals in the clause and find the one with the biggest level
-                    for (uint32_t nInd = 2; nInd < c.size(); ++nInd) {
-                        uint32_t nLevel = varData[c[nInd].var()].level;
-                        if (nLevel > nMaxLevel) {
-                            nMaxLevel = nLevel;
-                            nMaxInd = nInd;
-                        }
-                    }
-
-                    if (nMaxInd != 1) {
-                        std::swap(c[1], c[nMaxInd]);
-                        j--; // undo last watch
-                        watches[c[1]].push(w);
-                    }
-
-                    enqueue<false>(c[0], nMaxLevel, PropBy(offset));
-                }
-            }
-
-            nextClause:;
-        }
-        ws.shrink_(i-j);
-        if (!confl.isNULL()) {
-            if (last_i != NULL) {
-                for(Watched* w = ws.begin();; w++) {
-                    if (w->isBNN()) {
-                        reverse_one_bnn(w->get_bnn(), w->get_bnn_prop_t());
-                    }
-                    if (last_i == w) break;
-                }
-            }
-            varData[p.var()].propagated = false;
-        }
-
-        #ifdef USE_GAUSS
-        if (!all_matrices_disabled && confl.isNULL()) {
-            confl = gauss_jordan_elim(p, currLevel);
-        }
-        #endif //USE_GAUSS
-    }
-    qhead = trail.size();
-    simpDB_props -= num_props;
-    propStats.propagations += (uint64_t)num_props;
-    #ifdef SLOW_DEBUG
-    for(uint32_t idx = 0; idx < bnns.size(); idx++) {
-        auto& bnn = bnns[idx];
-        assert(bnn != NULL);
-        int32_t undefs = 0;
-        int32_t ts = 0;
-        for(const auto& l: *bnn) {
-//                 cout << " l: " << l << " v: " << value(l);
-            if (value(l) == l_True && varData[l.var()].propagated) {
-                ts++;
-            }
-            if (!varData[l.var()].propagated) {
-                undefs++;
-            }
-        }
-        if (undefs != bnn->undefs || ts != bnn->ts) {
-        cout << "u: " << undefs << " my u: " << bnn->undefs << " -- ";
-        cout << "t: " << ts << " my t: " << bnn->ts << " idx: " << idx
-        << " sz :" << bnn->size() << endl;
-        }
-        assert(undefs == bnn->undefs);
-        assert(ts == bnn->ts);
-    }
-    #endif //SLOW_DEBUG
-
-    #ifdef VERBOSE_DEBUG
-    cout << "Propagation (propagate_any_order_fast) ended." << endl;
-    #endif
-
-    return confl;
-}
 
 template<bool update_bogoprops, bool red_also, bool use_disable>
 PropBy PropEngine::propagate_any_order()
 {
     PropBy confl;
-
-    #ifdef VERBOSE_DEBUG_PROP
-    cout << "Fast Propagation started" << endl;
-    #endif
-
-    const bool fast_confl_break = solver->conf.fast_confl_break;
+    VERBOSE_PRINT("propagate_any_order started");
 
     while (qhead < trail.size() && confl.isNULL()) {
         const Lit p = trail[qhead].lit;     // 'p' is enqueued fact to propagate.
@@ -989,6 +731,7 @@ PropBy PropEngine::propagate_any_order()
             propStats.bogoProps += ws.size()/4 + 1;
         }
         propStats.propagations++;
+        simpDB_props--;
         for (; i != end; i++) {
             // propagate binary clause
             if (likely(i->isBin())) {
@@ -999,10 +742,7 @@ PropBy PropEngine::propagate_any_order()
                 if (use_disable && i->bin_cl_marked()) {
                     continue;
                 }
-                if (!prop_bin_cl<update_bogoprops>(i, p, confl, currLevel)) {
-//                     i++;
-//                     break;
-                }
+                prop_bin_cl<update_bogoprops>(i, p, confl, currLevel);
                 continue;
             }
 
@@ -1011,20 +751,13 @@ PropBy PropEngine::propagate_any_order()
                 *j++ = *i;
                 const lbool val = bnn_prop(
                     i->get_bnn(), currLevel, p, i->get_bnn_prop_t());
-                if (val == l_False) {
-                    confl = PropBy(i->get_bnn(), nullptr);
-//                     i++;
-//                     break;
-                }
+                if (val == l_False) confl = PropBy(i->get_bnn(), nullptr);
                 continue;
             }
 
             //propagate normal clause
             assert(i->isClause());
-            if (!prop_long_cl_any_order<update_bogoprops, red_also, use_disable>(i, j, p, confl, currLevel)) {
-//                 i++;
-//                 break;
-            }
+            prop_long_cl_any_order<update_bogoprops, red_also, use_disable>(i, j, p, confl, currLevel);
             continue;
         }
         while (i != end) {
@@ -1032,7 +765,6 @@ PropBy PropEngine::propagate_any_order()
         }
         ws.shrink_(end-j);
 
-        #ifdef USE_GAUSS
         if (!all_matrices_disabled && confl.isNULL()) {
             PropBy ret = gauss_jordan_elim(p, currLevel);
             //cout << "ret: " << ret << " -- " << endl;
@@ -1041,11 +773,12 @@ PropBy PropEngine::propagate_any_order()
                 break;
             }
         }
-        #endif //USE_GAUSS
 
         qhead++;
     }
-    //     if (confl.isNULL()) {
+
+// For BNN debugging
+//     if (confl.isNULL()) {
 //         for(uint32_t idx = 0; idx < bnns.size(); idx++) {
 //             auto& bnn = bnns[idx];
 //             if (!bnn) continue;
@@ -1069,9 +802,7 @@ PropBy PropEngine::propagate_any_order()
 //     }
 
 
-    #ifdef VERBOSE_DEBUG
-    cout << "Propagation (propagate_any_order) ended." << endl;
-    #endif
+    VERBOSE_PRINT("Propagation (propagate_any_order) ended.");
 
     return confl;
 }
@@ -1125,7 +856,9 @@ template<bool update_bogoprops>
 bool PropEngine::propagate_occur()
 {
     assert(ok);
-    while (qhead < trail_size()) {
+    bool ret = true;
+
+    while (qhead < trail.size()) {
         const Lit p = trail[qhead].lit;
         qhead++;
         watch_subarray ws = watches[~p];
@@ -1137,17 +870,22 @@ bool PropEngine::propagate_occur()
         ) {
             if (it->isClause()) {
                 if (!propagate_long_clause_occur<update_bogoprops>(it->get_offset()))
-                    return false;
+                    ret = false;
             }
 
             if (it->isBin()) {
                 if (!propagate_binary_clause_occur<update_bogoprops>(*it))
-                    return false;
+                    ret = false;
             }
         }
     }
 
-    return true;
+    if (!ret) {
+        *drat << add << ++clauseID << fin;
+        unsat_cl_ID = clauseID;
+    }
+
+    return ret;
 }
 
 template bool PropEngine::propagate_occur<true>();
@@ -1211,12 +949,6 @@ inline bool PropEngine::propagate_long_clause_occur(
         return true;
 
     enqueue<update_bogoprops>(lastUndef);
-    #ifdef STATS_NEEDED
-    if (cl.red())
-        propStats.propsLongRed++;
-    else
-        propStats.propsLongIrred++;
-    #endif
 
     return true;
 }

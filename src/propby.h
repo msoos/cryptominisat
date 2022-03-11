@@ -33,11 +33,9 @@ THE SOFTWARE.
 
 namespace CMSat {
 
-enum PropByType {null_clause_t = 0, clause_t = 1, binary_t = 2
-    #ifdef USE_GAUSS
-    , xor_t = 3
-    #endif
-    , bnn_t = 4
+enum PropByType {
+    null_clause_t = 0, clause_t = 1, binary_t = 2,
+    xor_t = 3, bnn_t = 4
 };
 
 class PropBy
@@ -52,6 +50,7 @@ class PropBy
         //3: xor
         //4: bnn
         uint32_t data2:29;
+        uint32_t ID;
 
     public:
         PropBy() :
@@ -93,11 +92,12 @@ class PropBy
         }
 
         //Binary prop
-        PropBy(const Lit lit, const bool redStep) :
+        PropBy(const Lit lit, const bool redStep, uint32_t _ID) :
             red_step(redStep)
             , data1(lit.toInt())
             , type(binary_t)
             , data2(0)
+            , ID(_ID)
         {
         }
 
@@ -157,6 +157,11 @@ class PropBy
         bool isRedStep() const
         {
             return red_step;
+        }
+
+        uint64_t getID() const
+        {
+            return ID;
         }
 
         bool getHyperbin() const

@@ -88,7 +88,7 @@ class Solver : public Searcher
         const vector<std::pair<string, string> >& get_sql_tags() const;
         void new_external_var();
         void new_external_vars(size_t n);
-        bool add_clause_outside(const vector<Lit>& lits, bool red = false);
+        bool add_clause_outside(const vector<Lit>& lits);
         bool add_xor_clause_outside(const vector<uint32_t>& vars, bool rhs);
         bool add_bnn_clause_outside(
             const vector<Lit>& lits,
@@ -193,7 +193,7 @@ class Solver : public Searcher
         bool prop_at_head() const;
         void set_decision_var(const uint32_t var);
         bool fully_enqueue_these(const vector<Lit>& toEnqueue);
-        bool fully_enqueue_this(const Lit lit);
+        bool fully_enqueue_this(const Lit lit_ID);
         void update_assumptions_after_varreplace();
 
         //State load/unload
@@ -202,7 +202,7 @@ class Solver : public Searcher
         lbool load_solution_from_file(const string& fname);
 
         uint64_t getNumLongClauses() const;
-        bool addClause(const vector<Lit>& ps, const bool red = false);
+        bool add_clause_outer_copylits(const vector<Lit>& ps);
         bool add_xor_clause_inter(
             const vector< Lit >& lits
             , bool rhs
@@ -234,12 +234,14 @@ class Solver : public Searcher
             const Lit lit1
             , const Lit lit2
             , const bool red
-            , const bool checkUnassignedFirst = true
+            , const uint64_t ID
+            , [[maybe_unused]] const bool checkUnassignedFirst = true
         );
         void detach_bin_clause(
             Lit lit1
             , Lit lit2
             , bool red
+            , const uint64_t ID
             , bool allow_empty_watch = false
             , bool allow_change_order = false
         ) {
@@ -249,7 +251,7 @@ class Solver : public Searcher
                 binTri.irredBins--;
             }
 
-            PropEngine::detach_bin_clause(lit1, lit2, red, allow_empty_watch, allow_change_order);
+            PropEngine::detach_bin_clause(lit1, lit2, red, ID, allow_empty_watch, allow_change_order);
         }
         void detachClause(const Clause& c, const bool removeDrat = true);
         void detachClause(const ClOffset offset, const bool removeDrat = true);
@@ -268,6 +270,7 @@ class Solver : public Searcher
             , bool addDrat = true
             , const Lit drat_first = lit_Undef
             , const bool sorted = false
+            , const bool remove_drat = false
         );
         void add_bnn_clause_inter(
             vector<Lit>& lits,
@@ -329,6 +332,10 @@ class Solver : public Searcher
         #ifdef CMS_TESTING_ENABLED
         FRIEND_TEST(SearcherTest, pickpolar_auto_not_changed_by_simp);
         #endif
+
+        //FRAT
+        void write_final_frat_clauses();
+        void write_one_final_frat_cl(const ClOffset offs);
 
         lbool probe_inter(Lit l, uint32_t& min_props);
         void reset_for_solving();
@@ -452,7 +459,7 @@ class Solver : public Searcher
         /////////////////////
         // Clauses
         bool addClauseHelper(vector<Lit>& ps);
-        bool addClauseInt(vector<Lit>& ps, const bool red = false);
+        bool add_clause_outer(vector<Lit>& ps);
 
         /////////////////
         // Debug

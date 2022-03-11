@@ -139,7 +139,7 @@ TEST_F(distill_test, remove_long)
     s->add_clause_outside(str_to_cl("1, 5, 6, 7"));
     check_irred_cls_contains(s, "1, 5, 6, 7");
 
-    distill_long_cls->distill(false, true, true);
+    distill_long_cls->distill(false, true);
     check_irred_cls_doesnt_contain(s, "1, 5, 6, 7");
 }
 
@@ -151,7 +151,7 @@ TEST_F(distill_test, remove_long_trans)
     s->add_clause_outside(str_to_cl("1, 5, 6, 7"));
     check_irred_cls_contains(s, "1, 5, 6, 7");
 
-    distill_long_cls->distill(false, true, true);
+    distill_long_cls->distill(false, true);
     check_irred_cls_doesnt_contain(s, "1, 5, 6, 7");
 }
 

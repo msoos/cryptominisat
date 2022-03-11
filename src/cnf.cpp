@@ -140,6 +140,7 @@ void CNF::swapVars(const uint32_t which, const int off_by)
 void CNF::enlarge_nonminimial_datastructs(size_t n)
 {
     assigns.insert(assigns.end(), n, l_Undef);
+    unit_cl_IDs.insert(unit_cl_IDs.end(), n, 0);
     varData.insert(varData.end(), n, VarData());
     depth.insert(depth.end(), n, 0);
 }
@@ -753,6 +754,7 @@ void CNF::add_drat(FILE* os, bool add_ID) {
         drat = new DratFile<false>(interToOuterMain);
     }
     drat->setFile(os);
+    drat->set_sumconflicts_ptr(&sumConflicts);
 }
 
 vector<uint32_t> CNF::get_outside_lit_incidence()
@@ -942,4 +944,20 @@ bool CNF::check_bnn_sane(BNN& bnn)
     }
 
     return true;
+}
+
+void CNF::check_no_zero_ID_bins() const
+{
+    for(uint32_t i = 0; i < nVars()*2; i++) {
+        Lit l = Lit::toLit(i);
+        for(const auto& w: watches[l]) {
+            //only do once per binary
+            if (w.isBin()) {
+                if (w.get_ID() == 0) {
+                    cout << "ERROR, bin: " << l << " " << w.lit2() << " has ID " << w.get_ID() << endl;
+                }
+                assert(w.get_ID() > 0);
+            }
+        }
+    }
 }

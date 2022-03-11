@@ -41,6 +41,8 @@ THE SOFTWARE.
 #include "time_mem.h"
 #include "varreplacer.h"
 #include "xorfinder.h"
+#include "tbdd.h"
+#include "prover.h"
 
 using std::cout;
 using std::endl;
@@ -70,15 +72,14 @@ EGaussian::EGaussian(
 xorclauses(_xorclauses),
 solver(_solver),
 matrix_no(_matrix_no)
-
 {
 }
 
 EGaussian::~EGaussian() {
     delete_gauss_watch_this_matrix();
-    for(auto& x: tofree) {
-        delete[] x;
-    }
+    for(auto& x: tofree) delete[] x;
+    for(auto& x: xorclauses) assert(x.bdd == NULL && "GMatrix needs finalization before deletion");
+    assert(frat_ids.empty());
     tofree.clear();
 
     delete cols_unset;
@@ -130,7 +131,7 @@ struct ColSorter {
     Solver* solver;
 };
 
-uint32_t EGaussian::select_columnorder() {
+void EGaussian::select_columnorder() {
     var_to_col.clear();
     var_to_col.resize(solver->nVars(), unassigned_col);
     vector<uint32_t> vars_needed;
@@ -148,17 +149,14 @@ uint32_t EGaussian::select_columnorder() {
     }
 
     if (vars_needed.size() >= std::numeric_limits<uint32_t>::max() / 2 - 1) {
-        if (solver->conf.verbosity) {
-            cout << "c Matrix has too many columns, exiting select_columnorder" << endl;
-        }
-
-        return 0;
+        cout << "c Matrix has too many rows, exiting select_columnorder" << endl;
+        assert(false);
+        exit(-1);
     }
     if (xorclauses.size() >= std::numeric_limits<uint32_t>::max() / 2 - 1) {
-        if (solver->conf.verbosity) {
-            cout << "c Matrix has too many rows, exiting select_columnorder" << endl;
-        }
-        return 0;
+        cout << "c Matrix has too many rows, exiting select_columnorder" << endl;
+        assert(false);
+        exit(-1);
     }
     var_to_col.resize(largest_used_var + 1);
 
@@ -201,7 +199,7 @@ uint32_t EGaussian::select_columnorder() {
         }
     }
 
-#ifdef VERBOSE_DEBUG_MORE
+    #ifdef VERBOSE_DEBUG_MORE
     cout << "(" << matrix_no << ") num_xorclauses: " << num_xorclauses << endl;
     cout << "(" << matrix_no << ") col_to_var: ";
     std::copy(col_to_var.begin(), col_to_var.end(),
@@ -211,29 +209,32 @@ uint32_t EGaussian::select_columnorder() {
     cout << "col is set:" << endl;
     std::copy(col_is_set.begin(), col_is_set.end(),
               std::ostream_iterator<char>(cout, ","));
-#endif
-
-    return xorclauses.size();
+    #endif
 }
 
 void EGaussian::fill_matrix() {
+    assert(solver->trail_size() == solver->qhead);
     var_to_col.clear();
 
     // decide which variable in matrix column and the number of rows
-    num_rows = select_columnorder();
+    select_columnorder();
+    num_rows = xorclauses.size();
     num_cols = col_to_var.size();
     if (num_rows == 0 || num_cols == 0) {
         return;
     }
     mat.resize(num_rows, num_cols); // initial gaussian matrix
 
-    uint32_t matrix_row = 0;
-    for (uint32_t i = 0; i != xorclauses.size(); i++) {
-        const Xor& c = xorclauses[i];
+    bdd_matrix.clear();
+    for (uint32_t matrix_row = 0; matrix_row < num_rows; matrix_row++) {
+        const Xor& c = xorclauses[matrix_row];
         mat[matrix_row].set(c, var_to_col, num_cols);
-        matrix_row++;
+        vector<char> line;
+        line.resize(num_rows, 0);
+        line[matrix_row] = 1;
+        bdd_matrix.push_back(line);
     }
-    assert(num_rows == matrix_row);
+    assert(bdd_matrix.size() == num_rows);
 
     // reset
     var_has_resp_row.clear();
@@ -273,32 +274,19 @@ void EGaussian::clear_gwatches(const uint32_t var)
     solver->gwatches[var].shrink(i-j);
 }
 
-bool EGaussian::clean_xors()
-{
-    for(Xor& x: xorclauses) {
-        solver->clean_xor_vars_no_prop(x.get_vars(), x.rhs);
-    }
-    XorFinder f(NULL, solver);
-    if (!f.add_new_truths_from_xors(xorclauses))
-        return false;
-
-    return true;
-}
-
 bool EGaussian::full_init(bool& created) {
     assert(solver->ok);
     assert(solver->decisionLevel() == 0);
-    bool do_again_gauss = true;
     created = true;
-    if (!clean_xors()) {
-        return false;
-    }
 
-    while (do_again_gauss) {
-        do_again_gauss = false;
+    uint32_t trail_before;
+    while (true) {
+        trail_before = solver->trail_size();
 
         if (!solver->clauseCleaner->clean_xor_clauses(xorclauses)) {
-            return false;
+            if (solver->conf.verbosity >= 5) {
+                cout << "c clean_xor_clauses lead to UNSAT" << endl;
+            }
         }
 
         fill_matrix();
@@ -315,21 +303,29 @@ bool EGaussian::full_init(bool& created) {
 
         switch (ret) {
             case gret::confl:
+                *solver->drat << add << ++solver->clauseID << fin;
+                solver->unsat_cl_ID = solver->clauseID;
                 solver->ok = false;
                 return false;
                 break;
             case gret::prop:
-                do_again_gauss = true;
-
                 assert(solver->decisionLevel() == 0);
-                solver->ok = (solver->propagate<false>().isNULL());
+                solver->ok = solver->propagate<false>().isNULL();
                 if (!solver->ok) {
+                    if (solver->conf.verbosity >= 5) {
+                        cout << "c eliminate & adjust matrix during init lead to UNSAT" << endl;
+                    }
                     return false;
                 }
                 break;
             default:
                 break;
         }
+
+        assert(solver->prop_at_head());
+
+        //Let's exit if nothing new happened
+        if (solver->trail_size() == trail_before) break;
     }
 
 #ifdef SLOW_DEBUG
@@ -382,6 +378,13 @@ bool EGaussian::full_init(bool& created) {
     return true;
 }
 
+void EGaussian::xor_in_bdd(const uint32_t a, const uint32_t b)
+{
+    for(uint32_t i = 0; i < bdd_matrix[a].size(); i ++) {
+        bdd_matrix[a][i] ^= bdd_matrix[b][i];
+    }
+}
+
 void EGaussian::eliminate() {
     uint32_t row = 0;
     uint32_t col = 0;
@@ -390,10 +393,11 @@ void EGaussian::eliminate() {
 
     // Gauss-Jordan Elimination
     while (row != num_rows && col != num_cols) {
+        uint32_t row_j = row;
         PackedMatrix::iterator row_with_1_in_col = row_i;
 
         //Find first "1" in column.
-        for (; row_with_1_in_col != end_row_it; ++row_with_1_in_col) {
+        for (; row_with_1_in_col != end_row_it; ++row_with_1_in_col, row_j++) {
             if ((*row_with_1_in_col)[col]) {
                 break;
             }
@@ -407,18 +411,23 @@ void EGaussian::eliminate() {
             // swap row row_with_1_in_col and rowIt
             if (row_with_1_in_col != row_i) {
                 (*row_i).swapBoth(*row_with_1_in_col);
+                std::swap(bdd_matrix[row], bdd_matrix[row_j]);
             }
 
             // XOR into *all* rows that have a "1" in column COL
             // Since we XOR into *all*, this is Gauss-Jordan (and not just Gauss)
+            uint32_t k = 0;
             for (PackedMatrix::iterator k_row = mat.begin()
                 ; k_row != end_row_it
-                ; ++k_row
+                ; ++k_row, k++
             ) {
                 // xor rows K and I
                 if (k_row != row_i) {
                     if ((*k_row)[col]) {
                         (*k_row).xor_in(*row_i);
+                        if (solver->drat->enabled()) {
+                            xor_in_bdd(k, row);
+                        }
                     }
                 }
             }
@@ -428,6 +437,22 @@ void EGaussian::eliminate() {
         col++;
     }
     //print_matrix();
+}
+
+xor_constraint* EGaussian::bdd_create(const uint32_t row_n)
+{
+    assert(solver->drat->enabled());
+    solver->drat->flush();
+    xor_set xset;
+//     cout << "XSET generation..." << endl;
+    for(uint32_t i = 0; i < bdd_matrix[row_n].size(); i++) {
+        if (bdd_matrix[row_n][i]) {
+            xset.add(*xorclauses[i].create_bdd_xor());
+//             cout << "Adding row: " << i << endl;
+        }
+    }
+//     cout<< "XSET generation end." << endl;
+    return xset.sum();
 }
 
 gret EGaussian::adjust_matrix()
@@ -458,34 +483,48 @@ gret EGaussian::adjust_matrix()
 
                 // conflict
                 if ((*rowIt).rhs()) {
-                    // printf("%d:Warring: this row is conflict in adjust matrix!!!",row_id);
-                    #ifdef VERBOSE_DEBUG
-                    cout << "-> conflict on row: " << row_n << endl;
-                    #endif
+                    if (solver->drat->enabled()) {
+                        xor_constraint* bdd = bdd_create(row_n);
+                        ilist out = ilist_new(1);
+                        ilist_resize(out, 0);
+                        uint32_t ID = assert_clause(out);
+                        frat_ids.push_back(BDDCl{out, ID});
+                        cout << "ID of this emtpy: " << ID << endl;
+                        delete bdd;
+                    }
+
+                    VERBOSE_PRINT("-> conflict on row: " << row_n);
                     return gret::confl;
                 }
-                #ifdef VERBOSE_DEBUG
-                cout << "-> empty on this row. " << endl;
-                cout << "-> Satisfied XORs set for row: " << row_n << endl;
-                #endif
+                VERBOSE_PRINT("-> empty on this row. ");
+                VERBOSE_PRINT("-> Satisfied XORs set for row: " << row_n);
                 satisfied_xors[row_n] = 1;
                 break;
 
-            //Normal propagation
+            //Unit (i.e. toplevel unit)
             case 1:
             {
-                // printf("%d:This row only one variable, need to propogation!!!! in adjust matrix
-                // n",row_id);
-
                 bool xorEqualFalse = !mat[row_n].rhs();
                 tmp_clause[0] = Lit(tmp_clause[0].var(), xorEqualFalse);
                 assert(solver->value(tmp_clause[0].var()) == l_Undef);
-                solver->enqueue<false>(tmp_clause[0]); // propagation
+                if (solver->drat->enabled()) {
+                    xor_constraint* bdd = bdd_create(row_n);
+                    ilist out = ilist_new(1);
+                    ilist_resize(out, 1);
+                    out[0] = (tmp_clause[0].var()+1) * (tmp_clause[0].sign() ? -1 :1);
+                    uint32_t ID = assert_clause(out);
+                    frat_ids.push_back(BDDCl{out, ID});
+                    VERBOSE_PRINT("ID of this unit: " << ID << " unit is: " << tmp_clause);
+                    delete bdd;
+                }
+                solver->enqueue<false>(tmp_clause[0]);
+//                 solver->drat->flush();
+//                 auto x = ilist_new(2);
+//                 delete_clauses(ilist_fill1(x, ID));
+//                 ilist_free(x);
 
-                #ifdef VERBOSE_DEBUG
-                cout << "-> Propagation for " << tmp_clause[0] << endl;
-                cout << "-> Satisfied XORs set for row: " << row_n << endl;
-                #endif
+                VERBOSE_PRINT("-> UNIT during adjust: " << tmp_clause[0]);
+                VERBOSE_PRINT("-> Satisfied XORs set for row: " << row_n);
                 satisfied_xors[row_n] = 1;
                 #ifdef SLOW_DEBUG
                 assert(check_row_satisfied(row_n));
@@ -498,19 +537,47 @@ gret EGaussian::adjust_matrix()
                 return gret::prop;
             }
 
-            //Binary XOR
+            //Binary XOR (i.e. toplevel binary XOR)
             case 2: {
                 // printf("%d:This row have two variable!!!! in adjust matrix    n",row_id);
                 bool xorEqualFalse = !mat[row_n].rhs();
 
                 tmp_clause[0] = tmp_clause[0].unsign();
                 tmp_clause[1] = tmp_clause[1].unsign();
+                if (solver->drat->enabled()) {
+                    xor_constraint* bdd = bdd_create(row_n);
+                    ilist out = ilist_new(2);
+                    ilist_resize(out, 2);
+                    if (mat[row_n].rhs()) {
+                        out[0] = (tmp_clause[0].var()+1);
+                        out[1] = (tmp_clause[1].var()+1);
+                    } else {
+                        out[0] = (tmp_clause[0].var()+1)*-1;
+                        out[1] = (tmp_clause[1].var()+1);
+                    }
+                    uint32_t ID = assert_clause(out);
+                    frat_ids.push_back(BDDCl{out, ID});
+
+                    ilist out2 = ilist_new(2);
+                    ilist_resize(out2, 2);
+                    if (mat[row_n].rhs()) {
+                        out2[0] = (tmp_clause[0].var()+1)*-1;
+                        out2[1] = (tmp_clause[1].var()+1)*-1;
+                    } else {
+                        out2[0] = (tmp_clause[0].var()+1);
+                        out2[1] = (tmp_clause[1].var()+1)*-1;
+                    }
+                    ID = assert_clause(out2);
+                    frat_ids.push_back(BDDCl{out2, ID});
+                    delete bdd;
+                }
+
                 solver->ok = solver->add_xor_clause_inter(tmp_clause, !xorEqualFalse, true);
                 release_assert(solver->ok);
 
-                #ifdef VERBOSE_DEBUG
-                cout << "-> bin-xor on row: " << row_n << endl;
-                #endif
+                //#ifdef VERBOSE_DEBUG
+                cout << "-> toplevel bin-xor on row: " << row_n << " cl2: " << tmp_clause << endl;
+                //#endif
 
                 // reset this row all zero, no need for this row
                 (*rowIt).rhs() = 0;
@@ -579,7 +646,8 @@ void EGaussian::delete_gausswatch(
 
 uint32_t EGaussian::get_max_level(const GaussQData& gqd, const uint32_t row_n)
 {
-    auto cl = get_reason(row_n);
+    uint32_t ID;
+    auto cl = get_reason(row_n, ID);
     uint32_t nMaxLevel = gqd.currLevel;
     uint32_t nMaxInd = 1;
 
@@ -1202,7 +1270,7 @@ void EGaussian::print_matrix_stats(uint32_t verbosity)
     cout << std::setprecision(2);
 }
 
-vector<Lit>* EGaussian::get_reason(uint32_t row)
+vector<Lit>* EGaussian::get_reason(uint32_t row, uint32_t& out_ID)
 {
     if (!xor_reasons[row].must_recalc) {
         return &(xor_reasons[row].reason);
@@ -1217,6 +1285,19 @@ vector<Lit>* EGaussian::get_reason(uint32_t row)
         *cols_vals,
         *tmp_col2,
         xor_reasons[row].propagated);
+
+    if (solver->drat->enabled()) {
+        solver->drat->flush();
+        xor_constraint* tmp = bdd_create(row);
+        ilist out = ilist_new(tofill.size());
+        ilist_resize(out, tofill.size());
+        for(uint32_t i = 0; i < tofill.size(); i++) {
+            out[i] = (tofill[i].var()+1) * (tofill[i].sign() ? -1 :1);
+        }
+        out_ID = assert_clause(out);
+        frat_ids.push_back(BDDCl{out, out_ID});
+        delete tmp;
+    }
 
     xor_reasons[row].must_recalc = false;
     return &tofill;
@@ -1434,4 +1515,30 @@ bool EGaussian::must_disable(GaussQData& gqd)
     }
 
     return false;
+}
+
+void CMSat::EGaussian::finalize_frat()
+{
+    auto x = ilist_new(frat_ids.size());
+    ilist_resize(x, frat_ids.size());
+    uint32_t i = 0;
+    for(auto const& bdd_cl: frat_ids) {
+        /*solver->drat << finalcl << bdd_cl.ID;
+        for(uint32_t i = 0 ; i < (uint32_t)ilist_length(bdd_cl.cl); i++) {
+            auto const& l = Lit(abs(bdd_cl.cl[i])-1, bdd_cl.cl[i] < 0);
+            *solver->drat << l;
+        }
+        *solver->drat << fin;
+        ilist_free(bdd_cl.cl);*/
+        x[i] = bdd_cl.ID;
+        i++;
+    }
+    frat_ids.clear();
+    delete_clauses(x);
+
+    solver->drat->flush();
+    for(auto& x2: xorclauses) {
+        delete x2.bdd;
+        x2.bdd = NULL;
+    }
 }

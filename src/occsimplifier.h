@@ -416,7 +416,7 @@ private:
         const Lit lit, bool add_to_block = true);
     vector<Lit> tmp_rem_lits;
     vec<Watched> tmp_rem_cls_copy;
-    void        add_clause_to_blck(const vector<Lit>& lits);
+    void        add_clause_to_blck(const vector<Lit>& lits, const uint64_t ID);
     void        set_var_as_eliminated(const uint32_t var);
     bool        can_eliminate_var(const uint32_t var) const;
     bool        mark_and_push_to_added_long_cl_cls_containing(const Lit lit);
@@ -597,6 +597,7 @@ private:
     vector<Lit> blkcls;
     vector<BlockedClauses> blockedClauses; ///<maps var(outer!!) to postion in blockedClauses
     vector<uint32_t> blk_var_to_cls;
+    vector<uint64_t> newly_blocked_cls_IDs; // temporary storage for newly blocked cls' IDs
     bool blockedMapBuilt;
     void buildBlockedMap();
     void cleanBlockedClauses();

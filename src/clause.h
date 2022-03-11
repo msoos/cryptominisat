@@ -145,9 +145,7 @@ struct ClauseStats
         uint32_t hash_val; //used in BreakID to remove equivalent clauses
     };
     uint32_t last_touched = 0;
-    #ifdef STATS_NEEDED
-    int64_t ID = 0;
-    #endif
+    uint32_t ID;
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
     uint32_t extra_pos = std::numeric_limits<uint32_t>::max();
@@ -410,7 +408,7 @@ public:
 
         #ifdef STATS_NEEDED
         stats.ID = _ID;
-        assert(_ID >= 0);
+        assert(_ID > 0);
         #endif
         isFreed = false;
         mySize = ps.size();
@@ -518,9 +516,6 @@ public:
     void makeIrred()
     {
         assert(isRed);
-        #if STATS_NEEDED
-        stats.ID = 0;
-        #endif
         isRed = false;
     }
 
@@ -621,6 +616,7 @@ inline std::ostream& operator<<(std::ostream& os, const Clause& cl)
         if (i+1 != cl.size())
             os << " ";
     }
+    cout << " -- ID: " << cl.stats.ID;
 
     return os;
 }

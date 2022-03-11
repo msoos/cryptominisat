@@ -196,6 +196,7 @@ bool BreakID::doit()
 {
     assert(solver->okay());
     assert(solver->decisionLevel() == 0);
+    assert(!solver->drat->enabled());
     num_lits_in_graph = 0;
 
     if (!solver->conf.doStrSubImplicit) {

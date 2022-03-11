@@ -108,10 +108,10 @@ class Watched {
         /**
         @brief Constructor for a binary clause
         */
-        Watched(const Lit lit, const bool red) :
+        Watched(const Lit lit, const bool red, uint64_t ID) :
             data1(lit.toInt())
             , type(watch_binary_t)
-            , data2(red)
+            , data2((uint64_t)red | ID<<2) //marking is 2nd bit
         {
         }
 
@@ -206,6 +206,14 @@ class Watched {
             return data2 & 1;
         }
 
+        uint64_t get_ID() const
+        {
+            #ifdef DEBUG_WATCHED
+            assert(isBin());
+            #endif
+            return data2 >> 2;
+        }
+
         void setRed(const bool toSet)
         {
             #ifdef DEBUG_WATCHED
@@ -229,7 +237,7 @@ class Watched {
             #ifdef DEBUG_WATCHED
             assert(isBin());
             #endif
-            data2 &= 1;
+            data2 &= (~(2ULL));
         }
 
         bool bin_cl_marked() const
@@ -321,7 +329,7 @@ struct OccurClause {
     Lit lit;
     Watched ws;
 
-    bool operator<(const OccurClause& other) {
+    bool operator<(const OccurClause& other) const {
         if (ws.isBin() && !other.ws.isBin()) {
             return true;
         }
@@ -368,7 +376,8 @@ struct WatchSorterBinTriLong {
             if (a.red() != b.red()) {
                 return !a.red();
             }
-            return false;
+
+            return (a.get_ID() < b.get_ID());
         }
     };
 

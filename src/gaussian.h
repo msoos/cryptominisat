@@ -80,7 +80,7 @@ class EGaussian {
         GaussQData& gqd
     );
 
-    vector<Lit>* get_reason(uint32_t row);
+    vector<Lit>* get_reason(uint32_t row, uint32_t& out_ID);
 
     // when basic variable is touched , eliminate one col
     void eliminate_col(
@@ -97,6 +97,7 @@ class EGaussian {
     void update_matrix_no(uint32_t n);
     void check_watchlist_sanity();
     uint32_t get_matrix_no();
+    void finalize_frat();
 
     vector<Xor> xorclauses;
 
@@ -104,7 +105,6 @@ class EGaussian {
     Solver* solver;   // orignal sat solver
 
     //Cleanup
-    bool clean_xors();
     void clear_gwatches(const uint32_t var);
     void delete_gauss_watch_this_matrix();
     void delete_gausswatch(const uint32_t  row_n);
@@ -125,9 +125,18 @@ class EGaussian {
     //Initialisation
     void eliminate();
     void fill_matrix();
-    uint32_t select_columnorder();
+    void select_columnorder();
     gret adjust_matrix(); // adjust matrix, include watch, check row is zero, etc.
     double get_density();
+
+    //BDD stuff
+    struct BDDCl {
+        ilist cl;
+        uint32_t ID;
+    };
+    void xor_in_bdd(const uint32_t a, const uint32_t b);
+    xor_constraint* bdd_create(const uint32_t row_n);
+    vector<BDDCl> frat_ids;
 
 
     ///////////////
@@ -171,6 +180,7 @@ class EGaussian {
 
 
     PackedMatrix mat;
+    vector<vector<char>> bdd_matrix;
     vector<uint32_t>  var_to_col; ///var->col mapping. Index with VAR
     vector<uint32_t> col_to_var; ///col->var mapping. Index with COL
     uint32_t num_rows = 0;

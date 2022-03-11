@@ -133,7 +133,7 @@ TEST_F(intree, trans_red_1)
     s->add_clause_outside(str_to_cl("-2,  3"));
     s->add_clause_outside(str_to_cl("-2,  4"));
     s->add_clause_outside(str_to_cl("-3, -4, 5"));
-    s->add_clause_outside(str_to_cl("1, 5"), false);
+    s->add_clause_outside(str_to_cl("1, 5"));
 
     inp->intree_probe();
     check_red_cls_doesnt_contain(s, "1, 5");
@@ -161,7 +161,7 @@ TEST_F(intree, trans_red_and_hyper_bin_1)
     s->add_clause_outside(str_to_cl("-3, 4"));
     s->add_clause_outside(str_to_cl("-4, 5"));
     s->add_clause_outside(str_to_cl("-3, -4, -5, 6"));
-    s->add_clause_outside(str_to_cl("1, 6"), false);
+    s->add_clause_outside(str_to_cl("1, 6"));
 
     inp->intree_probe();
     check_red_cls_doesnt_contain(s, "1, 6");

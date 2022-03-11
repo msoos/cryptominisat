@@ -44,37 +44,37 @@ bool ClauseCleaner::satisfied(const Watched& watched, Lit lit)
 }
 
 void ClauseCleaner::clean_binary_implicit(
-    Watched& ws
+    const Watched* i
     , Watched*& j
     , const Lit lit
 ) {
-    if (satisfied(ws, lit)) {
+    if (satisfied(*i, lit)) {
         //Only delete once
-        if (lit < ws.lit2()) {
-            (*solver->drat) << del << lit << ws.lit2() << fin;
+        if (lit < i->lit2()) {
+            (*solver->drat) << del << i->get_ID() << lit << i->lit2() << fin;
         }
 
-        if (ws.red()) {
+        if (i->red()) {
             impl_data.remLBin++;
         } else {
             impl_data.remNonLBin++;
         }
     } else {
-#ifdef SLOW_DEBUG
-        if (solver->value(ws.lit2()) != l_Undef
+        #ifdef SLOW_DEBUG
+        if (solver->value(i->lit2()) != l_Undef
             || solver->value(lit) != l_Undef
         ) {
             cout << "ERROR binary during cleaning has non-l-Undef "
-            << " Bin clause: " << lit << " " << ws.lit2() << endl
+            << " Bin clause: " << lit << " " << i->lit2() << endl
             << " values: " << solver->value(lit)
-            << " " << solver->value(ws.lit2())
+            << " " << solver->value(i->lit2())
             << endl;
         }
-#endif
+        #endif
 
-        assert(solver->value(ws.lit2()) == l_Undef);
+        assert(solver->value(i->lit2()) == l_Undef);
         assert(solver->value(lit) == l_Undef);
-        *j++ = ws;
+        *j++ = *i;
     }
 }
 
@@ -91,7 +91,7 @@ void ClauseCleaner::clean_implicit_watchlist(
         }
 
         if (i->isBin()) {
-            clean_binary_implicit(*i, j, lit);
+            clean_binary_implicit(i, j, lit);
             continue;
         }
     }
@@ -235,7 +235,7 @@ void ClauseCleaner::clean_clauses_inter(vector<ClOffset>& cs)
     for (s = ss = cs.begin(), end = cs.end();  s != end; ++s, ++at) {
         if (at + 1 < cs.size()) {
             Clause* pre_cl = solver->cl_alloc.ptr(cs[at+1]);
-            __builtin_prefetch(pre_cl);
+            cmsat_prefetch(pre_cl);
         }
 
         const ClOffset off = *s;
@@ -295,13 +295,11 @@ bool ClauseCleaner::clean_clause(Clause& cl)
             return true;
         }
     }
+
     if (i != j) {
+        cl.stats.ID = ++solver->clauseID;
         cl.shrink(i-j);
-        (*solver->drat) << add << cl
-        #ifdef STATS_NEEDED
-        << solver->sumConflicts
-        #endif
-        << fin << findelay;
+        (*solver->drat) << add << cl << fin << findelay;
     } else {
         solver->drat->forget_delay();
     }
@@ -324,7 +322,7 @@ bool ClauseCleaner::clean_clause(Clause& cl)
     if (i != j) {
         cl.setStrenghtened();
         if (cl.size() == 2) {
-            solver->attach_bin_clause(cl[0], cl[1], cl.red());
+            solver->attach_bin_clause(cl[0], cl[1], cl.red(), cl.stats.ID);
             return true;
         } else {
             if (cl.red()) {
@@ -343,7 +341,10 @@ void ClauseCleaner::ImplicitData::update_solver_stats(Solver* solver)
     for(const BinaryClause& bincl: toAttach) {
         assert(solver->value(bincl.getLit1()) == l_Undef);
         assert(solver->value(bincl.getLit2()) == l_Undef);
-        solver->attach_bin_clause(bincl.getLit1(), bincl.getLit2(), bincl.isRed());
+        solver->attach_bin_clause(bincl.getLit1(),
+                                  bincl.getLit2(),
+                                  bincl.isRed(),
+                                  bincl.getID());
     }
 
     assert(remNonLBin % 2 == 0);
@@ -445,6 +446,7 @@ bool ClauseCleaner::clean_one_xor(Xor& x)
     bool rhs = x.rhs;
     size_t i = 0;
     size_t j = 0;
+    VERBOSE_PRINT("Trying to clean XOR: " << x);
     for(size_t size = x.size(); i < size; i++) {
         uint32_t var = x[i];
         if (solver->value(var) != l_Undef) {
@@ -453,25 +455,36 @@ bool ClauseCleaner::clean_one_xor(Xor& x)
             x[j++] = var;
         }
     }
-    x.resize(j);
-    x.rhs = rhs;
+    if (j < x.size()) {
+        x.resize(j);
+        x.rhs = rhs;
+        //x.create_bdd_xor();
+        VERBOSE_PRINT("cleaned XOR: " << x);
+    }
+
+    if (x.size() <= 2) {
+        solver->drat->flush();
+        delete x.bdd;
+        x.bdd = NULL;
+    }
 
     switch(x.size()) {
         case 0:
-            solver->ok &= !x.rhs;
+            assert(x.rhs == false); // "Should have propagated already, impossible to be false
             return false;
 
         case 1: {
-            solver->fully_enqueue_this(Lit(x[0], !x.rhs));
+            assert(false); // should have alrady propagated
+//             assert(!solver->drat->enabled()); // "FRAT needs ID);
+//             bool ret = solver->fully_enqueue_this(Lit(x[0], !x.rhs));
+//             release_assert(ret); // should have propagated already, must not fail
             return false;
         }
-        case 2: {
+        case 2:
             solver->add_xor_clause_inter(vars_to_lits(x), x.rhs, true);
             return false;
-        }
-        default: {
+        default:
             return true;
-        }
     }
 }
 
@@ -491,7 +504,7 @@ bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors)
         size_t j = 0;
         for(size_t size = xors.size(); i < size; i++) {
             Xor& x = xors[i];
-            //cout << "Checking to keep xor: " << x << endl;
+            VERBOSE_PRINT("Checking to keep xor: " << x);
             const bool keep = clean_one_xor(x);
             if (!solver->ok) {
                 return false;
@@ -505,16 +518,10 @@ bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors)
                     , x.clash_vars.begin()
                     , x.clash_vars.end()
                 );
-                //cout << "NOT keeping XOR" << endl;
+                VERBOSE_PRINT("NOT keeping XOR");
             }
         }
         xors.resize(j);
-
-        #ifdef VERBOSE_DEBUG
-        for(Xor& x : xors) {
-            cout << "cleaned XOR: " << x << endl;
-        }
-        #endif
     }
     return solver->okay();
 }
@@ -522,6 +529,8 @@ bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors)
 //returns TRUE if removed or solver is UNSAT
 bool ClauseCleaner::full_clean(Clause& cl)
 {
+    (*solver->drat) << deldelay << cl << fin;
+
     Lit *i = cl.begin();
     Lit *j = i;
     for (Lit *end = cl.end(); i != end; i++) {
@@ -533,20 +542,32 @@ bool ClauseCleaner::full_clean(Clause& cl)
             *j++ = *i;
         }
     }
-    cl.shrink(i-j);
+
+    uint32_t ID;
+    if (i != j) {
+        cl.shrink(i-j);
+        ID = ++solver->clauseID;
+        (*solver->drat) << add << ID << cl << fin << findelay;
+        cl.stats.ID = ID;
+    } else {
+        solver->drat->forget_delay();
+        return false;
+    }
 
     if (cl.size() == 0) {
+        solver->unsat_cl_ID = cl.stats.ID;
         solver->ok = false;
         return true;
     }
 
     if (cl.size() == 1) {
         solver->enqueue<true>(cl[0]);
+        *solver->drat << del << cl << del; // double unit delete
         return true;
     }
 
     if (cl.size() == 2) {
-        solver->attach_bin_clause(cl[0], cl[1], cl.red());
+        solver->attach_bin_clause(cl[0], cl[1], cl.red(), ID);
         return true;
     }
 

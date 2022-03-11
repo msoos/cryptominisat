@@ -185,10 +185,15 @@ inline std::string removed_type_to_string(const Removed removed) {
 
 class BinaryClause {
     public:
-        BinaryClause(const Lit _lit1, const Lit _lit2, const bool _red) :
-            lit1(_lit1)
-            , lit2(_lit2)
-            , red(_red)
+        BinaryClause(
+            const Lit _lit1,
+            const Lit _lit2,
+            const bool _red,
+            const uint32_t _ID):
+            lit1(_lit1),
+            lit2(_lit2),
+            red(_red),
+            ID(_ID)
         {
             if (lit1 > lit2) std::swap(lit1, lit2);
         }
@@ -225,10 +230,16 @@ class BinaryClause {
             return red;
         }
 
+        uint32_t getID() const
+        {
+            return ID;
+        }
+
     private:
         Lit lit1;
         Lit lit2;
         bool red;
+        uint32_t ID;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const BinaryClause val)
@@ -430,13 +441,6 @@ struct PropStats
         otfHyperTime += other.otfHyperTime;
         otfHyperPropCalled += other.otfHyperPropCalled;
         #ifdef STATS_NEEDED
-        propsUnit += other.propsUnit;
-        propsBinIrred += other.propsBinIrred;
-        propsBinRed += other.propsBinRed;
-        propsLongIrred += other.propsLongIrred;
-        propsLongRed += other.propsLongRed;
-
-        //Var settings
         varSetPos += other.varSetPos;
         varSetNeg += other.varSetNeg;
         varFlipped += other.varFlipped;
@@ -452,13 +456,6 @@ struct PropStats
         otfHyperTime -= other.otfHyperTime;
         otfHyperPropCalled -= other.otfHyperPropCalled;
         #ifdef STATS_NEEDED
-        propsUnit -= other.propsUnit;
-        propsBinIrred -= other.propsBinIrred;
-        propsBinRed -= other.propsBinRed;
-        propsLongIrred -= other.propsLongIrred;
-        propsLongRed -= other.propsLongRed;
-
-        //Var settings
         varSetPos -= other.varSetPos;
         varSetNeg -= other.varSetNeg;
         varFlipped -= other.varFlipped;
@@ -505,26 +502,6 @@ struct PropStats
             , "% of propagations"
         );
 
-        print_stats_line("c propsBinIrred", propsBinIrred
-            , stats_line_percent(propsBinIrred, propagations)
-            , "% of propagations"
-        );
-
-        print_stats_line("c propsBinRed", propsBinRed
-            , stats_line_percent(propsBinRed, propagations)
-            , "% of propagations"
-        );
-
-        print_stats_line("c propsLongIrred", propsLongIrred
-            , stats_line_percent(propsLongIrred, propagations)
-            , "% of propagations"
-        );
-
-        print_stats_line("c propsLongRed", propsLongRed
-            , stats_line_percent(propsLongRed, propagations)
-            , "% of propagations"
-        );
-
         print_stats_line("c varSetPos", varSetPos
             , stats_line_percent(varSetPos, propagations)
             , "% of propagations"
@@ -549,14 +526,6 @@ struct PropStats
     uint32_t otfHyperPropCalled = 0;
 
     #ifdef STATS_NEEDED
-    //Stats for propagations
-    uint64_t propsUnit = 0;
-    uint64_t propsBinIrred = 0;
-    uint64_t propsBinRed = 0;
-    uint64_t propsLongIrred = 0;
-    uint64_t propsLongRed = 0;
-
-    //Var settings
     uint64_t varSetPos = 0;
     uint64_t varSetNeg = 0;
     uint64_t varFlipped = 0;

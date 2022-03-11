@@ -162,8 +162,8 @@ void CompleteDetachReatacher::cleanAndAttachClauses(
 */
 bool CompleteDetachReatacher::clean_clause(Clause* cl)
 {
+    (*solver->drat) << deldelay << *cl << fin;
     Clause& ps = *cl;
-    (*solver->drat) << deldelay << ps << fin;
     if (ps.size() <= 2) {
         cout
         << "ERROR, clause is too small, and linked in: "
@@ -187,29 +187,25 @@ bool CompleteDetachReatacher::clean_clause(Clause* cl)
 
     //Drat
     if (i != j) {
-        (*solver->drat) << add << *cl
-        #ifdef STATS_NEEDED
-        << solver->sumConflicts
-        #endif
-        << fin << findelay;
+        cl->stats.ID = ++solver->clauseID;
+        (*solver->drat) << add << *cl << fin << findelay;
     } else {
         solver->drat->forget_delay();
     }
 
     switch (ps.size()) {
         case 0:
+            solver->unsat_cl_ID = cl->stats.ID;
             solver->ok = false;
             return false;
 
         case 1:
             solver->enqueue<true>(ps[0]);
-            #ifdef STATS_NEEDED
-            solver->propStats.propsUnit++;
-            #endif
+            (*solver->drat) << del << *cl << fin; //double unit delete
             return false;
 
         case 2: {
-            solver->attach_bin_clause(ps[0], ps[1], ps.red());
+            solver->attach_bin_clause(ps[0], ps[1], ps.red(), cl->stats.ID);
             return false;
         }
 

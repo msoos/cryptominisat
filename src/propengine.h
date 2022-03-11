@@ -288,19 +288,6 @@ protected:
 
     friend class EGaussian;
 
-    PropBy propagate_any_order_fast();
-    template<bool update_bogoprops, bool red_also = true, bool use_disable = false>
-    PropBy propagate_any_order();
-    template<bool update_bogoprops>
-    PropResult prop_normal_helper(
-        Clause& c
-        , ClOffset offset
-        , Watched*& j
-        , const Lit p
-    );
-    template<bool update_bogoprops>
-    PropResult handle_normal_prop_fail(Clause& c, ClOffset offset, PropBy& confl);
-
     /////////////////
     // Operations on clauses:
     /////////////////
@@ -319,22 +306,23 @@ protected:
         Lit lit1
         , Lit lit2
         , bool red
+        , const uint64_t ID
         , bool allow_empty_watch = false
         , bool allow_change_order = false
     ) {
         if (!allow_change_order) {
             if (!(allow_empty_watch && watches[lit1].empty())) {
-                removeWBin(watches, lit1, lit2, red);
+                removeWBin(watches, lit1, lit2, red, ID);
             }
             if (!(allow_empty_watch && watches[lit2].empty())) {
-                removeWBin(watches, lit2, lit1, red);
+                removeWBin(watches, lit2, lit1, red, ID);
             }
         } else {
             if (!(allow_empty_watch && watches[lit1].empty())) {
-                removeWBin_change_order(watches, lit1, lit2, red);
+                removeWBin_change_order(watches, lit1, lit2, red, ID);
             }
             if (!(allow_empty_watch && watches[lit2].empty())) {
-                removeWBin_change_order(watches, lit2, lit1, red);
+                removeWBin_change_order(watches, lit2, lit1, red, ID);
             }
         }
     }
@@ -342,7 +330,8 @@ protected:
         const Lit lit1
         , const Lit lit2
         , const bool red
-        , const bool checkUnassignedFirst = true
+        , const uint64_t ID
+        , [[maybe_unused]] const bool checkUnassignedFirst = true
     );
     void detach_modified_clause(
         const Lit lit1
@@ -371,8 +360,22 @@ protected:
         return mem;
     }
 
+protected:
+    template<bool update_bogoprops, bool red_also = true, bool use_disable = false>
+    PropBy propagate_any_order();
+    template<bool update_bogoprops>
+    PropResult prop_normal_helper(
+        Clause& c
+        , ClOffset offset
+        , Watched*& j
+        , const Lit p
+    );
+    template<bool update_bogoprops>
+    PropResult handle_normal_prop_fail(Clause& c, ClOffset offset, PropBy& confl);
+
 private:
     Solver* solver;
+
     template<bool update_bogoprops>
     bool propagate_binary_clause_occur(const Watched& ws);
     template<bool update_bogoprops>
@@ -543,6 +546,13 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from)
     assert(varData[p.var()].removed == Removed::none);
 
     const uint32_t v = p.var();
+    if (level == 0) {
+        const uint32_t ID = ++clauseID;
+        *drat << add << ID << p << fin;
+        assert(unit_cl_IDs[v] == 0);
+        unit_cl_IDs[v] = ID;
+    }
+
     assert(value(v) == l_Undef);
     if (!watches[~p].empty()) {
         watches.prefetch((~p).toInt());
@@ -622,10 +632,8 @@ inline void PropEngine::attach_bin_clause(
     const Lit lit1
     , const Lit lit2
     , const bool red
-    , const bool
-    #ifdef DEBUG_ATTACH
-    checkUnassignedFirst
-    #endif
+    , const uint64_t ID
+    , [[maybe_unused]] const bool checkUnassignedFirst
 ) {
     #ifdef DEBUG_ATTACH
     assert(lit1.var() != lit2.var());
@@ -638,8 +646,8 @@ inline void PropEngine::attach_bin_clause(
     assert(varData[lit2.var()].removed == Removed::none);
     #endif //DEBUG_ATTACH
 
-    watches[lit1].push(Watched(lit2, red));
-    watches[lit2].push(Watched(lit1, red));
+    watches[lit1].push(Watched(lit2, red, ID));
+    watches[lit2].push(Watched(lit1, red, ID));
 }
 
 } //end namespace

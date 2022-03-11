@@ -385,6 +385,7 @@ bool InTree::handle_lit_popped_from_queue(const Lit lit, const Lit other_lit, co
 
 bool InTree::empty_failed_list()
 {
+    assert(!solver->drat->enabled());
     assert(solver->decisionLevel() == 0);
     for(const Lit lit: failed) {
         if (!solver->ok) {
@@ -393,30 +394,16 @@ bool InTree::empty_failed_list()
 
         if (solver->value(lit) == l_Undef) {
             solver->enqueue<true>(lit);
-            *(solver->drat) << add << lit
-            #ifdef STATS_NEEDED
-            << 0
-            << solver->sumConflicts
-            #endif
-            << fin;
+            // FRAT will fail here
+            *(solver->drat) << add << lit << fin;
             solver->ok = solver->propagate<true>().isNULL();
             if (!solver->ok) {
                 return false;
             }
         } else if (solver->value(lit) == l_False) {
-            *(solver->drat) << add << ~lit
-            #ifdef STATS_NEEDED
-            << 0
-            << solver->sumConflicts
-            #endif
-            << fin;
-
-            *(solver->drat) << add
-            #ifdef STATS_NEEDED
-            << 0
-            << solver->sumConflicts
-            #endif
-            << fin;
+            // FRAT will fail here
+            *(solver->drat) << add << ~lit << fin;
+            *(solver->drat) << add << fin;
             solver->ok = false;
             return false;
         }
@@ -446,7 +433,8 @@ void InTree::enqueue(const Lit lit, const Lit other_lit, bool red_cl)
         ) {
             //Mark both
             w.mark_bin_cl();
-            Watched& other_w = findWatchedOfBin(solver->watches, w.lit2(), lit, w.red());
+            Watched& other_w = findWatchedOfBin(
+                solver->watches, w.lit2(), lit, w.red(), w.get_ID());
             other_w.mark_bin_cl();
 
             enqueue(~w.lit2(), lit, w.red());

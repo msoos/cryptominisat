@@ -37,6 +37,7 @@ THE SOFTWARE.
 #include <set>
 using std::cout;
 using std::endl;
+using std::make_pair;
 
 #ifdef VERBOSE_DEBUG
 #define REPLACE_STATISTICS
@@ -159,16 +160,22 @@ void VarReplacer::update_vardata_and_activities(
 
 bool VarReplacer::enqueueDelayedEnqueue()
 {
-    for(Lit lit: delayedEnqueue) {
-        lit = get_lit_replaced_with(lit);
-        if (solver->value(lit) == l_Undef) {
-            solver->enqueue<false>(lit);
-            #ifdef STATS_NEEDED
-            solver->propStats.propsUnit++;
-            #endif
-        } else if (solver->value(lit) == l_False) {
+    for(auto& l: delayedEnqueue) {
+        l.first = get_lit_replaced_with(l.first);
+
+        if (solver->value(l.first) == l_Undef) {
+            solver->enqueue<false>(l.first);
+            *solver->drat << del << l.second << l.first << fin; // double unit delete
+        } else if (solver->value(l.first) == l_False) {
+            *solver->drat
+            << add << ++solver->clauseID << fin
+            << del << l.second << l.first << fin;
+            solver->unsat_cl_ID = solver->clauseID;
             solver->ok = false;
             break;
+        } else {
+            //it's already set, delete
+            *solver->drat << del << l.second << l.first << fin;
         }
     }
     delayedEnqueue.clear();
@@ -268,13 +275,20 @@ bool VarReplacer::perform_replace()
 
     solver->clean_occur_from_removed_clauses_only_smudged();
     attach_delayed_attach();
+
+    //Replace XORs
     if (!replace_xor_clauses(solver->xorclauses)) {
         goto end;
     }
-
     if (!replace_xor_clauses(solver->xorclauses_unused)) {
         goto end;
     }
+
+    #ifdef USE_GAUSS
+    //nothing to replace on XORs in GJE
+    assert(solver->gmatrices.empty());
+    #endif
+
     for(auto& v: solver->removed_xorclauses_clash_vars) {
         v = get_var_replaced_with_fast(v);
     }
@@ -328,13 +342,23 @@ end:
         #endif
         checkUnsetSanity();
     }
+    delete_frat_cls();
 
     return solver->okay();
+}
+
+void VarReplacer::delete_frat_cls()
+{
+    for(const auto& f: bins_for_frat) {
+        *solver->drat << del << std::get<0>(f) << std::get<1>(f) << std::get<2>(f) << fin;
+    }
+    bins_for_frat.clear();
 }
 
 bool VarReplacer::replace_xor_clauses(vector<Xor>& xors)
 {
     for(Xor& x: xors) {
+        assert(!solver->drat->enabled()); //FRAT will fail here
         uint32_t j = 0;
         for(uint32_t i = 0; i < x.clash_vars.size(); i++) {
             uint32_t v = x.clash_vars[i];
@@ -383,26 +407,20 @@ inline void VarReplacer::updateBin(
 
     //Two lits are the same in BIN
     if (lit1 == lit2) {
-        delayedEnqueue.push_back(lit2);
-        (*solver->drat) << add << lit2
-        #ifdef STATS_NEEDED
-        << 0
-        << solver->sumConflicts
-        #endif
-        << fin;
+        uint32_t ID = ++solver->clauseID;
+        (*solver->drat) << add << ID << lit2 << fin;
+        delayedEnqueue.push_back(make_pair(lit2, ID));
         remove = true;
     }
 
     //Tautology
-    if (lit1 == ~lit2)
-        remove = true;
-
+    if (lit1 == ~lit2) remove = true;
     if (remove) {
         impl_tmp_stats.remove(*i);
 
         //Drat -- Delete only once
         if (origLit1 < origLit2) {
-            (*solver->drat) << del << origLit1 << origLit2 << fin;
+            (*solver->drat) << del << i->get_ID() << origLit1 << origLit2 << fin;
         }
 
         return;
@@ -415,14 +433,11 @@ inline void VarReplacer::updateBin(
         //Delete&attach only once
         && (origLit1 < origLit2)
     ) {
+        //solver->clauseID+1 is used and then unused immediately
         (*solver->drat)
-        << add << lit1 << lit2
-        #ifdef STATS_NEEDED
-        << 0
-        << solver->sumConflicts
-        #endif
-        << fin
-        << del << origLit1 << origLit2 << fin;
+        << reloc << i->get_ID() << solver->clauseID+1 << fin
+        << add << i->get_ID() << lit1 << lit2 << fin
+        << del << solver->clauseID+1 << origLit1 << origLit2 << fin;
     }
 
     if (lit1 != origLit1) {
@@ -505,7 +520,8 @@ bool VarReplacer::replaceImplicit()
     }
 
     for(const BinaryClause& bincl : delayed_attach_bin) {
-        solver->attach_bin_clause(bincl.getLit1(), bincl.getLit2(), bincl.isRed());
+        solver->attach_bin_clause(
+            bincl.getLit1(), bincl.getLit2(), bincl.isRed(), bincl.getID());
     }
     delayed_attach_bin.clear();
 
@@ -582,6 +598,12 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs)
         runStats.bogoprops += 3;
         assert(!solver->drat->something_delayed());
 
+        //Finish up if UNSAT
+        if (!solver->ok) {
+            *j++ = *i;
+            continue;
+        }
+
         Clause& c = *solver->cl_alloc.ptr(*i);
         assert(!c.getRemoved());
         assert(c.size() > 2);
@@ -603,7 +625,8 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs)
         if (changed && handleUpdatedClause(c, origLit1, origLit2)) {
             runStats.removedLongClauses++;
             if (!solver->ok) {
-                return false;
+                //if it became UNSAT, then don't delete.
+                *j++ = *i;
             }
         } else {
             *j++ = *i;
@@ -673,16 +696,14 @@ bool VarReplacer::handleUpdatedClause(
         c.setRemoved();
         return true;
     }
-    (*solver->drat) << add << c
-    #ifdef STATS_NEEDED
-    << solver->sumConflicts
-    #endif
-    << fin << findelay;
+
+    c.stats.ID = ++solver->clauseID;
+    (*solver->drat) << add << c << fin << findelay;
 
     runStats.bogoprops += 3;
     switch(c.size()) {
     case 0:
-        c.setRemoved();
+        solver->unsat_cl_ID = c.stats.ID;
         solver->ok = false;
         return true;
     case 1 :
@@ -690,7 +711,7 @@ bool VarReplacer::handleUpdatedClause(
         solver->watches.smudge(origLit1);
         solver->watches.smudge(origLit2);
 
-        delayedEnqueue.push_back(c[0]);
+        delayedEnqueue.push_back(make_pair(c[0], c.stats.ID));
         runStats.removedLongLits += origSize;
         return true;
     case 2:
@@ -698,7 +719,7 @@ bool VarReplacer::handleUpdatedClause(
         solver->watches.smudge(origLit1);
         solver->watches.smudge(origLit2);
 
-        solver->attach_bin_clause(c[0], c[1], c.red());
+        solver->attach_bin_clause(c[0], c[1], c.red(), c.stats.ID);
         runStats.removedLongLits += origSize;
         return true;
 
@@ -832,34 +853,19 @@ bool VarReplacer::handleAlreadyReplaced(const Lit lit1, const Lit lit2)
     //OOps, already inside, but with inverse polarity, UNSAT
     if (lit1.sign() != lit2.sign()) {
         (*solver->drat)
-        << add << ~lit1 << lit2
-        #ifdef STATS_NEEDED
-        << 0
-        << solver->sumConflicts
-        #endif
-        << fin
+        << add << ++solver->clauseID << ~lit1 << lit2 << fin
+        << add << ++solver->clauseID << lit1 << ~lit2 << fin
+        << add << ++solver->clauseID << lit1 << fin
+        << add << ++solver->clauseID << ~lit1 << fin
+        << add << ++solver->clauseID << fin
+        << del << solver->clauseID-1 << ~lit1 << fin
+        << del << solver->clauseID-2 << lit1 << fin
+        << del << solver->clauseID-3 << lit1 << ~lit2 << fin
+        << del << solver->clauseID-4 << ~lit1 << lit2 << fin;
+        // the UNSAT one, i.e. solver->clauseID-1 does not need to be deleted,
+        //   it's automatically deleted
 
-        << add << lit1 << ~lit2
-        #ifdef STATS_NEEDED
-        << 0
-        << solver->sumConflicts
-        #endif
-        << fin
-
-        << add << lit1
-        #ifdef STATS_NEEDED
-        << 0
-        << solver->sumConflicts
-        #endif
-        << fin
-
-        << add << ~lit1
-        #ifdef STATS_NEEDED
-        << 0
-        << solver->sumConflicts
-        #endif
-        << fin;
-
+        solver->unsat_cl_ID = solver->clauseID;
         solver->ok = false;
         return false;
     }
@@ -875,21 +881,14 @@ bool VarReplacer::replace_vars_already_set(
     , const lbool val2
 ) {
     if (val1 != val2) {
+
         (*solver->drat)
-        << add << ~lit1
-        #ifdef STATS_NEEDED
-        << 0
-        << solver->sumConflicts
-        #endif
-        << fin
-
-        << add << lit1
-        #ifdef STATS_NEEDED
-        << 0
-        << solver->sumConflicts
-        #endif
-        << fin;
-
+        << add << ++solver->clauseID << ~lit1 << fin
+        << add << ++solver->clauseID << lit1 << fin
+        << add << ++solver->clauseID << fin
+        << del << solver->clauseID-1 << lit1 << fin
+        << del << solver->clauseID-2 << ~lit1 << fin;
+        solver->unsat_cl_ID = solver->clauseID;
         solver->ok = false;
     }
 
@@ -911,17 +910,6 @@ bool VarReplacer::handleOneSet(
             toEnqueue = lit1 ^ (val2 == l_False);
         }
         solver->enqueue<false>(toEnqueue);
-        (*solver->drat) << add << toEnqueue
-        #ifdef STATS_NEEDED
-        << 0
-        << solver->sumConflicts
-        #endif
-        << fin;
-
-        #ifdef STATS_NEEDED
-        solver->propStats.propsUnit++;
-        #endif
-
         solver->ok = (solver->propagate<false>().isNULL());
     }
     return solver->okay();
@@ -945,13 +933,6 @@ bool VarReplacer::replace(
 
     replaceChecks(var1, var2);
 
-    #ifdef DRAT_DEBUG
-    (*solver->drat)
-    << add << Lit(var1, true)  << (Lit(var2, false) ^ xor_is_true) << fin
-    << add << Lit(var1, false) << (Lit(var2, true)  ^ xor_is_true) << fin
-    ;
-    #endif
-
     //Move forward
     const Lit lit1 = get_lit_replaced_with(Lit(var1, false));
     const Lit lit2 = get_lit_replaced_with(Lit(var2, false)) ^ xor_is_true;
@@ -960,19 +941,14 @@ bool VarReplacer::replace(
     if (lit1.var() == lit2.var()) {
         return handleAlreadyReplaced(lit1, lit2);
     }
+
+    uint32_t ID = ++solver->clauseID;
+    uint64_t ID2 = ++solver->clauseID;
     (*solver->drat)
-    << add << ~lit1 << lit2
-    #ifdef STATS_NEEDED
-    << 0
-    << solver->sumConflicts
-    #endif
-    << fin
-    << add << lit1 << ~lit2
-    #ifdef STATS_NEEDED
-    << 0
-    << solver->sumConflicts
-    #endif
-    << fin;
+    << add << ID << ~lit1 << lit2 << fin
+    << add << ID2 << lit1 << ~lit2 << fin;
+    bins_for_frat.push_back(std::tuple<uint64_t, Lit, Lit>{ID, ~lit1, lit2});
+    bins_for_frat.push_back(std::tuple<uint64_t, Lit, Lit>{ID2, lit1, ~lit2});
 
     //None should be removed, only maybe queued for replacement
     assert(solver->varData[lit1.var()].removed == Removed::none);
@@ -1341,7 +1317,7 @@ vector<pair<Lit, Lit> > VarReplacer::get_all_binary_xors_outer() const
     vector<pair<Lit, Lit> > ret;
     for(size_t i = 0; i < table.size(); i++) {
         if (table[i] != Lit(i, false)) {
-            ret.push_back(std::make_pair(Lit(i, false), table[i]));
+            ret.push_back(make_pair(Lit(i, false), table[i]));
         }
     }
 

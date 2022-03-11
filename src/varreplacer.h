@@ -26,6 +26,7 @@ THE SOFTWARE.
 #include <map>
 #include <vector>
 #include <utility>
+#include <tuple>
 
 #include "constants.h"
 #include "solvertypes.h"
@@ -40,6 +41,7 @@ namespace CMSat {
 
 using std::map;
 using std::vector;
+using std::tuple;
 class Solver;
 class SCCFinder;
 
@@ -106,6 +108,7 @@ class VarReplacer
         vector<std::pair<Lit, Lit> > get_all_binary_xors_outer() const;
         vector<uint32_t> get_vars_replacing_others() const;
         bool get_scc_depth_warning_triggered() const;
+        void delete_frat_cls();
 
         void save_state(SimpleOutFile& f) const;
         void load_state(SimpleInFile& f);
@@ -219,7 +222,7 @@ class VarReplacer
         bool handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2);
 
          //While replacing the implicit clauses we cannot enqeue
-        vector<Lit> delayedEnqueue;
+        vector<std::pair<Lit, uint64_t>> delayedEnqueue;
         bool update_table_and_reversetable(const Lit lit1, const Lit lit2);
         void setAllThatPointsHereTo(const uint32_t var, const Lit lit);
 
@@ -236,6 +239,9 @@ class VarReplacer
         ///mapping of variable to set of variables it replaces
         //Everything is OUTER here.
         map<uint32_t, vector<uint32_t> > reverseTable;
+
+        //FRAT
+        vector<tuple<uint64_t, Lit, Lit>> bins_for_frat;
 
         //Stats
         void printReplaceStats() const;

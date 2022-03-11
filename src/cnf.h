@@ -38,6 +38,7 @@ THE SOFTWARE.
 #include "simplefile.h"
 #include "gausswatched.h"
 #include "xor.h"
+#include <pseudoboolean.h>
 
 using std::numeric_limits;
 
@@ -189,7 +190,7 @@ public:
     bool xor_clauses_updated = false;
     BinTriStats binTri;
     LitStats litStats;
-    int64_t clauseID = 1;
+    int32_t clauseID = 1;
     int64_t restartID = 1;
 
     //Temporaries
@@ -346,6 +347,7 @@ public:
     bool satisfied(const T& cl) const;
     template<typename T> bool no_duplicate_lits(const T& lits) const;
     void check_no_duplicate_lits_anywhere() const;
+    void check_no_zero_ID_bins() const;
     void print_all_clauses() const;
     template<class T> void clean_xor_no_prop(T& ps, bool& rhs);
     template<class T> void clean_xor_vars_no_prop(T& ps, bool& rhs);
@@ -359,6 +361,8 @@ public:
     that contained "lit, ~lit". So "lit" must be set to a value
     Contains OUTER variables */
     vector<bool> undef_must_set_vars;
+    vector<uint32_t> unit_cl_IDs;
+    uint32_t unsat_cl_ID = 0;
 
 protected:
     virtual void new_var(
@@ -700,7 +704,10 @@ void CNF::clean_xor_vars_no_prop(T& ps, bool& rhs)
             rhs ^= value(ps[i]) == l_True;
         }
     }
-    ps.resize(ps.size() - (i - j));
+    if ((i - j) > 0) {
+        ps.resize(ps.size() - (i - j));
+        //TODO tbdd ?
+    }
 }
 
 template<class T>
