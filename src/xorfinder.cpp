@@ -201,6 +201,7 @@ void XorFinder::find_xors()
     runStats.time_outs += time_out;
     solver->sumSearchStats.num_xors_found_last = solver->xorclauses.size();
     print_found_xors();
+    //for(auto& x: solver->xorclauses) x.create_bdd_xor();
 
     if (solver->conf.verbosity) {
         runStats.print_short(solver, time_remain);

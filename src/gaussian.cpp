@@ -507,16 +507,16 @@ gret EGaussian::adjust_matrix()
                 bool xorEqualFalse = !mat[row_n].rhs();
                 tmp_clause[0] = Lit(tmp_clause[0].var(), xorEqualFalse);
                 assert(solver->value(tmp_clause[0].var()) == l_Undef);
-                //if (solver->drat->enabled()) {
+                if (solver->drat->enabled()) {
                     xor_constraint* bdd = bdd_create(row_n);
                     ilist out = ilist_new(1);
                     ilist_resize(out, 1);
                     out[0] = (tmp_clause[0].var()+1) * (tmp_clause[0].sign() ? -1 :1);
                     uint32_t ID = assert_clause(out);
                     frat_ids.push_back(BDDCl{out, ID});
-                    cout << "ID of this unit: " << ID << " unit is: " << tmp_clause << endl;
+                    VERBOSE_PRINT("ID of this unit: " << ID << " unit is: " << tmp_clause);
                     delete bdd;
-                //}
+                }
                 solver->enqueue<false>(tmp_clause[0]);
 //                 solver->drat->flush();
 //                 auto x = ilist_new(2);
@@ -1052,7 +1052,6 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                         xor_reasons[row_n].must_recalc = true;
                         xor_reasons[row_n].propagated = ret_lit_prop;
                         assert(solver->value(ret_lit_prop.var()) == l_Undef);
-                        assert(solver->decisionLevel() != 0);
                         if (gqd.currLevel == solver->decisionLevel()) {
                             solver->enqueue<false>(ret_lit_prop, gqd.currLevel, PropBy(matrix_no, row_n));
                         } else {
