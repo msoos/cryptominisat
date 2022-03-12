@@ -75,8 +75,8 @@ void PropEngine::new_var(
 {
     CNF::new_var(bva, orig_outer, insert_varorder);
 
-    var_act_vsids.insert(var_act_vsids.end(), 1, ActAndOffset());
-    var_act_maple.insert(var_act_maple.end(), 1, ActAndOffset());
+    var_act_vsids.insert(var_act_vsids.end(), 1, 0);
+    var_act_maple.insert(var_act_maple.end(), 1, 0);
     #ifdef VMTF_NEEDED
     vmtf_btab.insert(vmtf_btab.end(), 1, 0);
     vmtf_links.insert(vmtf_links.end(), 1, Link());
@@ -90,8 +90,8 @@ void PropEngine::new_vars(size_t n)
 {
     CNF::new_vars(n);
 
-    var_act_vsids.insert(var_act_vsids.end(), n, ActAndOffset());
-    var_act_maple.insert(var_act_maple.end(), n, ActAndOffset());
+    var_act_vsids.insert(var_act_vsids.end(), n, 0);
+    var_act_maple.insert(var_act_maple.end(), n, 0);
     #ifdef VMTF_NEEDED
     vmtf_btab.insert(vmtf_btab.end(), n, 0);
     vmtf_links.insert(vmtf_links.end(), n, Link());
@@ -762,12 +762,8 @@ PropBy PropEngine::propagate_any_order()
         }
         ws.shrink_(end-j);
 
-        if (!confl.isNULL()) {
-            PropBy ret = gauss_jordan_elim(p, currLevel);
-            if (!ret.isNULL()) {
-                confl = ret;
-                break;
-            }
+        if (confl.isNULL()) {
+            confl = gauss_jordan_elim(p, currLevel);
         }
 
         qhead++;

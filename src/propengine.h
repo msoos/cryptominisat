@@ -225,19 +225,19 @@ public:
     /////////////////////
     // Branching
     /////////////////////
-    vector<ActAndOffset> var_act_vsids;
-    vector<ActAndOffset> var_act_maple;
+    vector<double> var_act_vsids;
+    vector<double> var_act_maple;
     double var_decay;
     double var_decay_max;
     double maple_step_size;
     struct VarOrderLt { ///Order variables according to their activities
-        const vector<ActAndOffset>&  activities;
+        const vector<double>&  activities;
         bool operator () (const uint32_t x, const uint32_t y) const
         {
-            return activities[x].combine() > activities[y].combine();
+            return activities[x] > activities[y];
         }
 
-        explicit VarOrderLt(const vector<ActAndOffset>& _activities) :
+        explicit VarOrderLt(const vector<double>& _activities) :
             activities(_activities)
         {}
     };
@@ -529,31 +529,36 @@ void PropEngine::enqueue(const Lit p)
 template<bool update_bogoprops>
 void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from)
 {
-    #ifdef DEBUG_ENQUEUE_LEVEL0
-    #ifndef VERBOSE_DEBUG
-    if (decisionLevel() == 0)
-    #endif //VERBOSE_DEBUG
-    cout << "enqueue var " << p.var()+1
-    << " to val " << !p.sign()
-    << " level: " << decisionLevel()
-    << " sublevel: " << trail.size()
-    << " by: " << from << endl;
+    #ifdef VERBOSE_DEBUG
+    if (level == 0) {
+        cout << "enqueue var " << p.var()+1
+        << " to val " << !p.sign()
+        << " level: " << level
+        << " decisonLevel(): " << decisionLevel()
+        << " sublevel: " << trail.size()
+        << " by: " << from << endl;
+        cout << "trail at level 0: ";
+        for(auto const& x: trail) {
+            cout << "(lit: " << x.lit << " lev: " << x.lev << ")";
+        }
+        cout << endl;
+    }
     #endif //DEBUG_ENQUEUE_LEVEL0
 
     #ifdef ENQUEUE_DEBUG
     assert(trail.size() <= nVarsOuter());
     #endif
-    assert(varData[p.var()].removed == Removed::none);
 
     const uint32_t v = p.var();
-    if (level == 0) {
+    assert(value(v) == l_Undef);
+    assert(varData[v].removed == Removed::none);
+    if (level == 0 && drat->enabled()) {
         const uint32_t ID = ++clauseID;
         *drat << add << ID << p << fin;
         assert(unit_cl_IDs[v] == 0);
         unit_cl_IDs[v] = ID;
     }
 
-    assert(value(v) == l_Undef);
     if (!watches[~p].empty()) {
         watches.prefetch((~p).toInt());
     }
@@ -569,7 +574,7 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from)
         uint32_t age = sumConflicts - varData[v].maple_cancelled;
         if (age > 0) {
             double decay = std::pow(var_decay, age);
-            var_act_maple[v].act *= decay;
+            var_act_maple[v] *= decay;
             if (order_heap_maple.inHeap(v))
                 order_heap_maple.increase(v);
         }

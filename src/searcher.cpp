@@ -64,12 +64,6 @@ using namespace CMSat;
 using std::cout;
 using std::endl;
 
-//#define VERBOSE_DEBUG_GEN_CONFL_DOT
-
-#ifdef VERBOSE_DEBUG
-#define VERBOSE_DEBUG_GEN_CONFL_DOT
-#endif
-
 /**
 @brief Sets a sane default config and allocates handler classes
 */
@@ -1299,7 +1293,7 @@ void Searcher::print_order_heap()
             cout << "vsids heap size: " << order_heap_vsids.size() << endl;
             cout << "vsids acts:";
             for(auto x: var_act_vsids) {
-                cout << std::setprecision(12) << x.str() << " ";
+                cout << std::setprecision(12) << x << " ";
             }
             cout << endl;
             cout << "VSID order heap:" << endl;
@@ -1309,7 +1303,7 @@ void Searcher::print_order_heap()
             cout << "maple heap size: " << order_heap_maple.size() << endl;
             cout << "maple acts:";
             for(auto x: var_act_maple) {
-                cout << std::setprecision(12) << x.str() << " ";
+                cout << std::setprecision(12) << x << " ";
             }
             cout << endl;
             cout << "MAPLE order heap:" << endl;
@@ -3194,7 +3188,7 @@ uint32_t Searcher::pick_var_vsids_maple()
             uint32_t age = sumConflicts - varData[v2].maple_cancelled;
             while (age > 0) {
                 double decay = pow(var_decay, age);
-                var_act_maple[v2].act *= decay;
+                var_act_maple[v2] *= decay;
                 if (order_heap_maple.inHeap(v2)) {
                     order_heap_maple.increase(v2);
                 }
@@ -3638,18 +3632,19 @@ void Searcher::cancelUntil(uint32_t blevel)
                         //adjusted reward -> higher if conflicted more or quicker
                         double adjusted_reward = ((double)(varData[var].maple_conflicted)) / ((double)age);
 
-                        double old_activity = var_act_maple[var].act;
-                        var_act_maple[var].act =
+                        double old_activity = var_act_maple[var];
+                        var_act_maple[var] =
                             maple_step_size * adjusted_reward + ((1.0 - maple_step_size ) * old_activity);
 
                         if (order_heap_maple.inHeap(var)) {
-                            if (var_act_maple[var].act > old_activity)
+                            if (var_act_maple[var] > old_activity)
                                 order_heap_maple.decrease(var);
                             else
                                 order_heap_maple.increase(var);
                         }
                         #ifdef VERBOSE_DEBUG
-                        cout << "Adjusting reward. Var: " << var+1 << " conflicted:" << std::setprecision(12) << varData[var].maple_conflicted
+                        cout << "Adjusting reward. Var: " << (var+1)
+                        << " conflicted:" << varData[var].maple_conflicted
                         << " old act: " << old_activity << " new act: " << var_act_maple[var] << endl
                         << " step_size: " << maple_step_size
                         << " age: " << age << " sumconflicts: " << sumConflicts << " last picked: " << varData[var].maple_last_picked
@@ -3665,10 +3660,7 @@ void Searcher::cancelUntil(uint32_t blevel)
                 }
             }
 
-            #ifdef VERBOSE_DEBUG
-            cout << "c Updating score by 2 for " << (trail[sublevel].lit)
-            << " "  << lit_ind << endl;
-            #endif
+            VERBOSE_PRINT("c Updating score by 2 for " << (trail[sublevel].lit) << " "  << lit_ind);
         }
         qhead = trail_lim[blevel];
         trail.resize(trail_lim[blevel]);

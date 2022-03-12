@@ -629,17 +629,17 @@ inline void Searcher::vsids_bump_var_act(uint32_t var, double mult, bool only_ad
         return;
     }
 
-    var_act_vsids[var].act += var_inc_vsids * mult;
-    max_vsids_act = std::max(max_vsids_act,  var_act_vsids[var].act);
+    var_act_vsids[var] += var_inc_vsids * mult;
+    max_vsids_act = std::max(max_vsids_act,  var_act_vsids[var]);
 
     #ifdef SLOW_DEBUG
     bool rescaled = false;
     #endif
-    if (var_act_vsids[var].act > 1e100) {
+    if (var_act_vsids[var] > 1e100) {
         // Rescale:
 
         for (auto& v: var_act_vsids) {
-            v.act *= 1e-100;
+            v *= 1e-100;
         }
         max_vsids_act *= 1e-100;
 

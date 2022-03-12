@@ -482,13 +482,15 @@ gret EGaussian::adjust_matrix()
                 // conflict
                 if ((*rowIt).rhs()) {
                     #ifdef USE_TBUDDY
-                    tbdd::xor_constraint* bdd = bdd_create(row_n);
-                    ilist out = ilist_new(1);
-                    ilist_resize(out, 0);
-                    uint32_t ID = assert_clause(out);
-                    frat_ids.push_back(BDDCl{out, ID});
-                    cout << "ID of this empty: " << ID << endl;
-                    delete bdd;
+                    if (solver->drat->enabled()) {
+                        tbdd::xor_constraint* bdd = bdd_create(row_n);
+                        ilist out = ilist_new(1);
+                        ilist_resize(out, 0);
+                        uint32_t ID = assert_clause(out);
+                        frat_ids.push_back(BDDCl{out, ID});
+                        cout << "ID of this empty: " << ID << endl;
+                        delete bdd;
+                    }
                     #endif
 
                     VERBOSE_PRINT("-> conflict on row: " << row_n);
@@ -507,14 +509,16 @@ gret EGaussian::adjust_matrix()
                 assert(solver->value(tmp_clause[0].var()) == l_Undef);
 
                 #ifdef USE_TBUDDY
-                tbdd::xor_constraint* bdd = bdd_create(row_n);
-                ilist out = ilist_new(1);
-                ilist_resize(out, 1);
-                out[0] = (tmp_clause[0].var()+1) * (tmp_clause[0].sign() ? -1 :1);
-                uint32_t ID = assert_clause(out);
-                frat_ids.push_back(BDDCl{out, ID});
-                VERBOSE_PRINT("ID of this unit: " << ID << " unit is: " << tmp_clause);
-                delete bdd;
+                if (solver->drat->enabled()) {
+                    tbdd::xor_constraint* bdd = bdd_create(row_n);
+                    ilist out = ilist_new(1);
+                    ilist_resize(out, 1);
+                    out[0] = (tmp_clause[0].var()+1) * (tmp_clause[0].sign() ? -1 :1);
+                    uint32_t ID = assert_clause(out);
+                    frat_ids.push_back(BDDCl{out, ID});
+                    VERBOSE_PRINT("ID of this unit: " << ID << " unit is: " << tmp_clause);
+                    delete bdd;
+                }
                 #endif
 
                 solver->enqueue<false>(tmp_clause[0]);
@@ -545,31 +549,33 @@ gret EGaussian::adjust_matrix()
                 tmp_clause[0] = tmp_clause[0].unsign();
                 tmp_clause[1] = tmp_clause[1].unsign();
                 #ifdef USE_TBUDDY
-                tbdd::xor_constraint* bdd = bdd_create(row_n);
-                ilist out = ilist_new(2);
-                ilist_resize(out, 2);
-                if (mat[row_n].rhs()) {
-                    out[0] = (tmp_clause[0].var()+1);
-                    out[1] = (tmp_clause[1].var()+1);
-                } else {
-                    out[0] = (tmp_clause[0].var()+1)*-1;
-                    out[1] = (tmp_clause[1].var()+1);
-                }
-                uint32_t ID = assert_clause(out);
-                frat_ids.push_back(BDDCl{out, ID});
+                if (solver->drat->enabled()) {
+                    tbdd::xor_constraint* bdd = bdd_create(row_n);
+                    ilist out = ilist_new(2);
+                    ilist_resize(out, 2);
+                    if (mat[row_n].rhs()) {
+                        out[0] = (tmp_clause[0].var()+1);
+                        out[1] = (tmp_clause[1].var()+1);
+                    } else {
+                        out[0] = (tmp_clause[0].var()+1)*-1;
+                        out[1] = (tmp_clause[1].var()+1);
+                    }
+                    uint32_t ID = assert_clause(out);
+                    frat_ids.push_back(BDDCl{out, ID});
 
-                ilist out2 = ilist_new(2);
-                ilist_resize(out2, 2);
-                if (mat[row_n].rhs()) {
-                    out2[0] = (tmp_clause[0].var()+1)*-1;
-                    out2[1] = (tmp_clause[1].var()+1)*-1;
-                } else {
-                    out2[0] = (tmp_clause[0].var()+1);
-                    out2[1] = (tmp_clause[1].var()+1)*-1;
+                    ilist out2 = ilist_new(2);
+                    ilist_resize(out2, 2);
+                    if (mat[row_n].rhs()) {
+                        out2[0] = (tmp_clause[0].var()+1)*-1;
+                        out2[1] = (tmp_clause[1].var()+1)*-1;
+                    } else {
+                        out2[0] = (tmp_clause[0].var()+1);
+                        out2[1] = (tmp_clause[1].var()+1)*-1;
+                    }
+                    ID = assert_clause(out2);
+                    frat_ids.push_back(BDDCl{out2, ID});
+                    delete bdd;
                 }
-                ID = assert_clause(out2);
-                frat_ids.push_back(BDDCl{out2, ID});
-                delete bdd;
                 #endif
 
                 solver->ok = solver->add_xor_clause_inter(tmp_clause, !xorEqualFalse, true);
@@ -1289,16 +1295,17 @@ vector<Lit>* EGaussian::get_reason(uint32_t row, uint32_t& out_ID)
         xor_reasons[row].propagated);
 
     #ifdef USE_TBUDDY
-    solver->drat->flush();
-    tbdd::xor_constraint* tmp = bdd_create(row);
-    ilist out = ilist_new(tofill.size());
-    ilist_resize(out, tofill.size());
-    for(uint32_t i = 0; i < tofill.size(); i++) {
-        out[i] = (tofill[i].var()+1) * (tofill[i].sign() ? -1 :1);
+    if (solver->drat->enabled()) {
+        tbdd::xor_constraint* tmp = bdd_create(row);
+        ilist out = ilist_new(tofill.size());
+        ilist_resize(out, tofill.size());
+        for(uint32_t i = 0; i < tofill.size(); i++) {
+            out[i] = (tofill[i].var()+1) * (tofill[i].sign() ? -1 :1);
+        }
+        out_ID = assert_clause(out);
+        frat_ids.push_back(BDDCl{out, out_ID});
+        delete tmp;
     }
-    out_ID = assert_clause(out);
-    frat_ids.push_back(BDDCl{out, out_ID});
-    delete tmp;
     #endif
 
     xor_reasons[row].must_recalc = false;

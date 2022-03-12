@@ -362,36 +362,17 @@ template<class T> void print_stats_line(
     << endl;
 }
 
-struct ActAndOffset {
-    double act = 0;
-    //double offset = 1.0;
-    double combine() const {
-        //return act*offset;
-        return act;
-    }
-    void add_in(const ActAndOffset& other) {
-        act += other.act;
-        //offset = std::max(offset, other.offset);
-    }
-    std::string str() const {
-        std::string ret;
-        std::stringstream ss;
-        ss << act; //<< "*" << offset;
-        return ret;
-    }
-};
-
 struct VSIDS_largest_first{
-    VSIDS_largest_first(const vector<ActAndOffset>& _vsids_act) :
+    VSIDS_largest_first(const vector<double>& _vsids_act) :
         vsids_act(_vsids_act)
     {
     }
 
     bool operator()(const Lit& a, const Lit& b) const {
-        return vsids_act[a.var()].act > vsids_act[b.var()].act;
+        return vsids_act[a.var()] > vsids_act[b.var()];
     }
 
-    const vector<ActAndOffset>& vsids_act;
+    const vector<double>& vsids_act;
 };
 
 struct AssignStats
