@@ -38,7 +38,9 @@ THE SOFTWARE.
 #include "simplefile.h"
 #include "gausswatched.h"
 #include "xor.h"
+#ifdef USE_TBUDDY
 #include <pseudoboolean.h>
+#endif
 
 using std::numeric_limits;
 

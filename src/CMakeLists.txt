@@ -22,8 +22,6 @@ include_directories( ${PROJECT_SOURCE_DIR} )
 include_directories( ${BOSPHORUS_INCLUDE_DIRS} )
 include_directories( ${LOUVAIN_COMMUNITIES_INCLUDE_DIRS} )
 include_directories( SYSTEM ${MPI_INCLUDE_PATH} )
-include_directories( "/home/soos/development/sat_solvers/tbuddy/buddy/include/" )
-link_directories("/home/soos/development/sat_solvers/tbuddy/buddy/lib/")
 
 if (NOT WIN32)
     add_cxx_flag_if_supported("-Wno-bitfield-constant-conversion")
@@ -170,6 +168,12 @@ endif()
 
 set(cryptoms_lib_link_libs "")
 
+if (TBUDDY)
+    set(cryptoms_lib_link_libs
+        ${cryptoms_lib_link_libs}
+        tbuddy)
+endif()
+
 if (FINAL_PREDICTOR)
     set(cryptoms_lib_files
         ${cryptoms_lib_files}
@@ -278,7 +282,6 @@ target_link_libraries(cryptominisat5
     LINK_PUBLIC ${cryptoms_lib_link_libs}
     LINK_PUBLIC ${LOUVAIN_COMMUNITIES_LIBRARIES}
     LINK_PUBLIC ${CMAKE_THREAD_LIBS_INIT}
-    LINK_PUBLIC tbuddy
 )
 
 if (NOT WIN32)

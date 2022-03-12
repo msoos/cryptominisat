@@ -40,7 +40,6 @@ THE SOFTWARE.
 #include "hasher.h"
 #include "solverconf.h"
 #include "distillerlong.h"
-#include "xorfinder.h"
 #include "vardistgen.h"
 #include "solvertypes.h"
 #ifdef USE_GAUSS

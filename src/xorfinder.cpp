@@ -30,7 +30,9 @@ THE SOFTWARE.
 
 #include <limits>
 #include <iostream>
+#ifdef USE_TBUDDY
 #include <pseudoboolean.h>
+#endif
 //#define XOR_DEBUG
 
 using namespace CMSat;
@@ -118,7 +120,7 @@ void XorFinder::clean_equivalent_xors(vector<Xor>& txors)
                 j->merge_clash(*i, seen);
                 j->detached |= i->detached;
                 solver->drat->flush();
-                delete j->bdd;
+                TBUDDY_DO(delete j->bdd);
             } else {
                 ++j;
                 *j = *i;
@@ -161,8 +163,8 @@ void XorFinder::find_xors()
     }
 
     solver->drat->flush();
-    for (auto const& x: solver->xorclauses) delete x.bdd;
-    for (auto const& x: solver->xorclauses_unused) delete x.bdd;
+    TBUDDY_DO(for (auto const& x: solver->xorclauses) delete x.bdd);
+    TBUDDY_DO(for (auto const& x: solver->xorclauses_unused) delete x.bdd);
     solver->xorclauses.clear();
     solver->xorclauses_unused.clear();
 
@@ -628,23 +630,19 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 && x0.rhs == x1.rhs
                 && clash_num == x0.size()
             ) {
-                #ifdef VERBOSE_DEBUG
-                cout << "x1: " << x0 << " -- at idx: " << idxes[0] << endl;
-                cout << "x2: " << x1 << " -- at idx: " << idxes[1] << endl;
-                cout << "equivalent. " << endl;
-                #endif
+                VERBOSE_PRINT("x1: " << x0 << " -- at idx: " << idxes[0]);
+                VERBOSE_PRINT("x2: " << x1 << " -- at idx: " << idxes[1]);
+                VERBOSE_PRINT("equivalent. ");
 
                 //Update clash values & detached values
                 x1.merge_clash(x0, seen);
                 x1.detached |= x0.detached;
 
-                #ifdef VERBOSE_DEBUG
-                cout << "after merge: " << x1 <<  " -- at idx: " << idxes[1] << endl;
-                #endif
+                VERBOSE_PRINT("after merge: " << x1 <<  " -- at idx: " << idxes[1]);
 
                 //Equivalent, so delete one
-                solver->drat->flush();
-                delete x0.bdd;
+                TBUDDY_DO(solver->drat->flush());
+                TBUDDY_DO(delete x0.bdd);
                 x0 = Xor();
 
                 //Re-attach the other, remove the occur of the one we deleted
@@ -670,13 +668,13 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 Xor x_new(tmp_vars_xor_two, x0.rhs ^ x1.rhs, clash_var);
                 x_new.merge_clash(x0, seen);
                 x_new.merge_clash(x1, seen);
-                if (solver->drat->enabled()) {
-                    solver->drat->flush();
-                    xor_set xs;
-                    xs.add(*x0.create_bdd_xor());
-                    xs.add(*x1.create_bdd_xor());
-                    x_new.bdd = xs.sum();
-                }
+                #ifdef USE_TBUDDY
+                solver->drat->flush();
+                tbdd::xor_set xs;
+                xs.add(*x0.create_bdd_xor());
+                xs.add(*x1.create_bdd_xor());
+                x_new.bdd = xs.sum();
+                #endif
 
                 VERBOSE_PRINT("x1: " << x0 << " -- at idx: " << idxes[0]);
                 VERBOSE_PRINT("x2: " << x1 << " -- at idx: " << idxes[1]);
@@ -694,8 +692,8 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                     }
                 }
                 solver->drat->flush();
-                delete this_xors[idxes[0]].bdd;
-                delete this_xors[idxes[1]].bdd;
+                TBUDDY_DO(delete this_xors[idxes[0]].bdd);
+                TBUDDY_DO(delete this_xors[idxes[1]].bdd);
                 this_xors[idxes[0]] = Xor();
                 this_xors[idxes[1]] = Xor();
                 xored++;

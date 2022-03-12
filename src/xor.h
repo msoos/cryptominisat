@@ -29,11 +29,14 @@ THE SOFTWARE.
 #include <set>
 #include <iostream>
 #include <algorithm>
+#ifdef USE_TBUDDY
 #include <pseudoboolean.h>
+namespace tbdd = trustbdd;
+#endif
 
 using std::vector;
 using std::set;
-using namespace trustbdd;
+
 
 namespace CMSat {
 
@@ -52,7 +55,8 @@ public:
         }
     }
 
-    xor_constraint* create_bdd_xor()
+#ifdef USE_TBUDDY
+    tbdd::xor_constraint* create_bdd_xor()
     {
         if (bdd == NULL) {
             ilist l = ilist_new(vars.size());
@@ -60,11 +64,11 @@ public:
             for (uint32_t i = 0; i < vars.size(); i++) {
                 l[i] = vars[i]+1;
             }
-            bdd = new xor_constraint(l, rhs);
-//             cout << "CREATE" << endl;
+            bdd = new tbdd::xor_constraint(l, rhs);
         }
         return bdd;
     }
+#endif
 
     template<typename T>
     explicit Xor(const T& cl, const bool _rhs, const vector<uint32_t>& _clash_vars):
@@ -192,7 +196,9 @@ public:
     vector<uint32_t> clash_vars;
     bool detached = false;
     vector<uint32_t> vars;
-    xor_constraint* bdd = NULL;
+    #ifdef USE_TBUDDY
+    tbdd::xor_constraint* bdd = NULL;
+    #endif
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Xor& thisXor)

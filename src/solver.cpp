@@ -1112,7 +1112,6 @@ bool Solver::clean_xor_clauses_from_duplicate_and_set_vars()
     xor_clauses_updated = true;
     assert(decisionLevel() == 0);
     double myTime = cpuTime();
-    XorFinder f(NULL, this);
 
     if (!update_vars_of_xors(xorclauses)) goto end;
     if (!update_vars_of_xors(xorclauses_unused)) goto end;
@@ -1720,7 +1719,9 @@ lbool Solver::solve_with_assumptions(
         int32_t* v = new int;
         *v = nVars()+1;
         drat->flush();
+        #ifdef USE_TBUDDY
         tbdd_init_frat(drat->getFile(), v, &clauseID);
+        #endif
     }
     move_to_outside_assumps(_assumptions);
     reset_for_solving();
@@ -1787,23 +1788,14 @@ lbool Solver::solve_with_assumptions(
         }
     }
 
-    if (drat->enabled()) {
-        write_final_frat_clauses();
+    write_final_frat_clauses();
 
-        // TBDD finalization
-        drat->flush();
-        for(uint32_t i = 0; i < gqueuedata.size(); i++) {
-            gmatrices[i]->finalize_frat();
-        }
-        for(const auto& x: xorclauses_unused) assert(x.bdd == NULL);
-        tbdd_done();
-    }
     return status;
 }
 
 void Solver::write_final_frat_clauses()
 {
-    assert(drat->enabled());
+    if (!drat->enabled()) return;
     assert(decisionLevel() == 0);
 
     if (!okay()) {
@@ -1838,6 +1830,16 @@ void Solver::write_final_frat_clauses()
     for(const auto& offs: longIrredCls) {
         write_one_final_frat_cl(offs);
     }
+    drat->flush();
+    #ifdef USE_TBUDDY
+    for(uint32_t i = 0; i < gqueuedata.size(); i++) {
+        gmatrices[i]->finalize_frat();
+    }
+    for(const auto& x: xorclauses_unused) assert(x.bdd == NULL);
+    tbdd_done();
+    drat->flush();
+    #endif
+
 }
 
 void Solver::write_one_final_frat_cl(const ClOffset offs)

@@ -105,6 +105,15 @@ THE SOFTWARE.
 #endif
 /////
 
+
+// tbudd
+#ifdef USE_TBUDDY
+#define TBUDDY_DO(x) \
+    do { x; } while (0)
+#else
+#define TBUDDY_DO(x) {}
+#endif
+
 #ifdef VERBOSE_DEBUG
 #define FAST_DEBUG
 #define DEBUG_ATTACH_FULL

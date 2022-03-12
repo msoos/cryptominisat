@@ -464,8 +464,8 @@ bool ClauseCleaner::clean_one_xor(Xor& x)
 
     if (x.size() <= 2) {
         solver->drat->flush();
-        delete x.bdd;
-        x.bdd = NULL;
+        TBUDDY_DO(delete x.bdd);
+        TBUDDY_DO(x.bdd = NULL);
     }
 
     switch(x.size()) {

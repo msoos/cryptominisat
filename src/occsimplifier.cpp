@@ -1709,7 +1709,13 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 ternary_res();
             }
         } else if (token == "occ-xor") {
-            if (solver->conf.doFindXors) {
+            if (solver->conf.doFindXors &&
+                #ifdef USE_TBUDDY
+                true)
+                #else
+                !solver->drat->enabled())
+                #endif
+            {
                 XorFinder finder(this, solver);
                 finder.find_xors();
                 #ifdef USE_M4RI
@@ -1730,16 +1736,6 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 }
                 #endif
                 runStats.xorTime += finder.get_stats().findTime;
-            } else {
-                //TODO this is something VERY fishy
-                if (solver->conf.verbosity) {
-                    cout << "c [occ-xor] simulating occ-xor with occur mangling and clause mark cleaning -- TODO very fishy" << endl;
-                }
-                sort_occurs_and_set_abst();
-                for(ClOffset offset: clauses) {
-                    Clause* cl = solver->cl_alloc.ptr(offset);
-                    cl->stats.marked_clause = 0;
-                }
             }
         } else if (token == "occ-lit-rem") {
             all_occ_based_lit_rem();
@@ -1752,9 +1748,10 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 solver->xor_clauses_updated = true;
 
                 //Get rid of XOR clauses
-                solver->drat->flush();;
-                for(auto const& x: solver->xorclauses) delete x.bdd;
-                for(auto const& x: solver->xorclauses_unused) delete x.bdd;
+                #ifdef USE_TBUDDY
+                for(auto const& x: solver->xorclauses) assert(x.bdd == NULL);
+                for(auto const& x: solver->xorclauses_unused) assert(x.bdd == NULL);
+                #endif
                 solver->xorclauses.clear();
                 solver->xorclauses_unused.clear();
 
@@ -1926,6 +1923,13 @@ bool OccSimplifier::simplify(const bool _startup, const std::string& schedule)
         }
     } else {
         sampling_vars_occsimp.shrink_to_fit();
+    }
+
+    //some sort of setup? TODO Check.
+    sort_occurs_and_set_abst();
+    for(ClOffset offset: clauses) {
+        Clause* cl = solver->cl_alloc.ptr(offset);
+        cl->stats.marked_clause = 0;
     }
 
     last_trail_cleared = solver->getTrailSize();
