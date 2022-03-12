@@ -669,11 +669,13 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 x_new.merge_clash(x0, seen);
                 x_new.merge_clash(x1, seen);
                 #ifdef USE_TBUDDY
-                solver->drat->flush();
-                tbdd::xor_set xs;
-                xs.add(*x0.create_bdd_xor());
-                xs.add(*x1.create_bdd_xor());
-                x_new.bdd = xs.sum();
+                if (solver->drat->enabled()) {
+                    solver->drat->flush();
+                    tbdd::xor_set xs;
+                    xs.add(*x0.create_bdd_xor());
+                    xs.add(*x1.create_bdd_xor());
+                    x_new.bdd = xs.sum();
+                }
                 #endif
 
                 VERBOSE_PRINT("x1: " << x0 << " -- at idx: " << idxes[0]);
@@ -691,7 +693,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                         interesting.push_back(l.var());
                     }
                 }
-                solver->drat->flush();
+                TBUDDY_DO(solver->drat->flush());
                 TBUDDY_DO(delete this_xors[idxes[0]].bdd);
                 TBUDDY_DO(delete this_xors[idxes[1]].bdd);
                 this_xors[idxes[0]] = Xor();
