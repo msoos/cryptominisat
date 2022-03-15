@@ -174,7 +174,7 @@ public:
         return true;
     }
 
-    void merge_clash(const Xor& other, vector<uint16_t>& seen) {
+    void merge_clash(const Xor& other, vector<uint32_t>& seen) {
         for(const auto& v: clash_vars) {
             seen[v] = 1;
         }

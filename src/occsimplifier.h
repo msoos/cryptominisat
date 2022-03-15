@@ -306,7 +306,7 @@ private:
 
     //Persistent data
     Solver*  solver;              ///<The solver this simplifier is connected to
-    vector<uint16_t>& seen;
+    vector<uint32_t>& seen;
     vector<uint8_t>& seen2;
     vector<Lit>& toClear;
     vector<bool> sampling_vars_occsimp;

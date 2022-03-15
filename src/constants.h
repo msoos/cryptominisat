@@ -105,8 +105,16 @@ THE SOFTWARE.
 #endif
 /////
 
+// debug watched
+#ifdef DEBUG_WATCHED
+#define DEBUG_WATCHED_DO(x) \
+    do { x; } while (0)
+#else
+#define DEBUG_WATCHED_DO(x) {}
+#endif
 
-// tbudd
+
+// tbuddy
 #ifdef USE_TBUDDY
 #define TBUDDY_DO(x) \
     do { x; } while (0)

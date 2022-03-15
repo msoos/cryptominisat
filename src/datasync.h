@@ -127,7 +127,7 @@ class DataSync
 
         //misc
         uint32_t numCalls = 0;
-        vector<uint16_t>& seen;
+        vector<uint32_t>& seen;
         vector<Lit>& toClear;
         vector<uint32_t> outer_to_without_bva_map;
         bool must_rebuild_bva_map = false;

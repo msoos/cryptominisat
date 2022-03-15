@@ -94,9 +94,7 @@ class Watched {
             , type(t)
             , data2(bnn_p_t)
         {
-            #ifdef DEBUG_WATCHED
-            assert(t == watch_bnn_t);
-            #endif
+            DEBUG_WATCHED_DO(assert(t == watch_bnn_t));
         }
 
         Watched() :
@@ -120,9 +118,7 @@ class Watched {
         */
         void setBlockedLit(const Lit blockedLit)
         {
-            #ifdef DEBUG_WATCHED
-            assert(type == watch_clause_t);
-            #endif
+            DEBUG_WATCHED_DO(assert(type == watch_clause_t));
             data1 = blockedLit.toInt();
         }
 
@@ -154,25 +150,19 @@ class Watched {
 
         uint32_t get_idx() const
         {
-            #ifdef DEBUG_WATCHED
-            assert(type == watch_idx_t);
-            #endif
+            DEBUG_WATCHED_DO(assert(type == watch_idx_t));
             return data1;
         }
 
         uint32_t get_bnn() const
         {
-            #ifdef DEBUG_WATCHED
-            assert(type == watch_bnn_t);
-            #endif
+            DEBUG_WATCHED_DO(assert(type == watch_bnn_t));
             return data1;
         }
 
         BNNPropType get_bnn_prop_t() const
         {
-            #ifdef DEBUG_WATCHED
-            assert(type == watch_bnn_t);
-            #endif
+            DEBUG_WATCHED_DO(assert(type == watch_bnn_t));
             return (BNNPropType)data2;
         }
 
@@ -181,9 +171,7 @@ class Watched {
         */
         Lit lit2() const
         {
-            #ifdef DEBUG_WATCHED
-            assert(isBin());
-            #endif
+            DEBUG_WATCHED_DO(assert(isBin()));
             return Lit::toLit(data1);
         }
 
@@ -192,59 +180,45 @@ class Watched {
         */
         void setLit2(const Lit lit)
         {
-            #ifdef DEBUG_WATCHED
-            assert(isBin());
-            #endif
+            DEBUG_WATCHED_DO(assert(isBin()));
             data1 = lit.toInt();
         }
 
         bool red() const
         {
-            #ifdef DEBUG_WATCHED
-            assert(isBin());
-            #endif
+            DEBUG_WATCHED_DO(assert(isBin()));
             return data2 & 1;
         }
 
         uint64_t get_ID() const
         {
-            #ifdef DEBUG_WATCHED
-            assert(isBin());
-            #endif
+            DEBUG_WATCHED_DO(assert(isBin()));
             return data2 >> 2;
         }
 
         void setRed(const bool toSet)
         {
-            #ifdef DEBUG_WATCHED
-            assert(isBin());
-            assert(red());
-            #endif
+            DEBUG_WATCHED_DO(assert(isBin()));
+            DEBUG_WATCHED_DO(assert(red()));
             assert(toSet == false);
             data2 &= (~(1U));
         }
 
         void mark_bin_cl()
         {
-            #ifdef DEBUG_WATCHED
-            assert(isBin());
-            #endif
+            DEBUG_WATCHED_DO(assert(isBin()));
             data2 |= 2;
         }
 
         void unmark_bin_cl()
         {
-            #ifdef DEBUG_WATCHED
-            assert(isBin());
-            #endif
+            DEBUG_WATCHED_DO(assert(isBin()));
             data2 &= (~(2ULL));
         }
 
         bool bin_cl_marked() const
         {
-            #ifdef DEBUG_WATCHED
-            assert(isBin());
-            #endif
+            DEBUG_WATCHED_DO(assert(isBin()));
             return data2&2;
         }
 
@@ -253,17 +227,13 @@ class Watched {
         */
         Lit getBlockedLit() const
         {
-            #ifdef DEBUG_WATCHED
-            assert(isClause());
-            #endif
+            DEBUG_WATCHED_DO(assert(isClause()));
             return Lit::toLit(data1);
         }
 
         cl_abst_type getAbst() const
         {
-            #ifdef DEBUG_WATCHED
-            assert(isClause());
-            #endif
+            DEBUG_WATCHED_DO(assert(isClause()));
             return data1;
         }
 
@@ -272,9 +242,7 @@ class Watched {
         */
         ClOffset get_offset() const
         {
-            #ifdef DEBUG_WATCHED
-            assert(isClause());
-            #endif
+            DEBUG_WATCHED_DO(assert(isClause()));
             return data2;
         }
 

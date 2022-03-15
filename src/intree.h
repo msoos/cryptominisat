@@ -96,7 +96,7 @@ private:
     size_t numCalls = 0;
 
     Solver* solver;
-    vector<uint16_t>& seen;
+    vector<uint32_t>& seen;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const InTree::QueueElem& elem)

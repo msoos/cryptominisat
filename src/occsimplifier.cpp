@@ -1925,13 +1925,6 @@ bool OccSimplifier::simplify(const bool _startup, const std::string& schedule)
         sampling_vars_occsimp.shrink_to_fit();
     }
 
-    //some sort of setup? TODO Check.
-    sort_occurs_and_set_abst();
-    for(ClOffset offset: clauses) {
-        Clause* cl = solver->cl_alloc.ptr(offset);
-        cl->stats.marked_clause = 0;
-    }
-
     last_trail_cleared = solver->getTrailSize();
     execute_simplifier_strategy(schedule);
 
@@ -2068,7 +2061,6 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
         if (myrnd <= solver->conf.dump_individual_cldata_ratio) {
             //TODO mark clause for dumping
         }
-        stats.ID = ++solver->clauseID;
         #endif
 
         tmp_tern_res.clear();
@@ -2801,10 +2793,8 @@ bool OccSimplifier::find_or_gate(
     assert(toClear.empty());
     for(const Watched w: a) {
         if (w.isBin()) {
-            #ifdef SLOW_DEBUG
-            assert(!w.red());
-            #endif
-            seen[(~w.lit2()).toInt()] = 1;
+            SLOW_DEBUG_DO(assert(!w.red()));
+            seen[(~w.lit2()).toInt()] = w.get_ID();
             toClear.push_back(~w.lit2());
         }
     }
@@ -2816,9 +2806,7 @@ bool OccSimplifier::find_or_gate(
         }
 
         if (w.isClause()) {
-            #ifdef SLOW_DEBUG
-            assert(!solver->redundant_or_removed(w));
-            #endif
+            SLOW_DEBUG_DO(assert(!solver->redundant_or_removed(w)));
             Clause* cl = solver->cl_alloc.ptr(w.get_offset());
 
             assert(cl->size() > 2);
@@ -2837,8 +2825,7 @@ bool OccSimplifier::find_or_gate(
                 out_b.push(w);
                 for(const Lit lit: *cl) {
                     if (lit != ~elim_lit) {
-                        // FRAT will fail here
-                        out_a.push(Watched(~lit, false, 0));
+                        out_a.push(Watched(~lit, false, seen[lit.toInt()]));
                     }
                 }
                 found = true;
@@ -2885,16 +2872,12 @@ bool OccSimplifier::find_ite_gate(
     for(uint32_t i = 0; i < a.size() && limit >= 0; i++, limit--) {
         const Watched& w = a[i];
         if (w.isBin() || w.isBNN()) {
-            if (w.isBin()) {
-                assert(!w.red());
-            }
+            SLOW_DEBUG_DO(if (w.isBin()) assert(!w.red()));
             continue;
         }
 
         assert(w.isClause());
-        #ifdef SLOW_DEBUG
-        assert(!solver->redundant_or_removed(w));
-        #endif
+        SLOW_DEBUG_DO(assert(!solver->redundant_or_removed(w)));
         Clause* cl = solver->cl_alloc.ptr(w.get_offset());
         if (cl->size() != 3) {
             continue;
@@ -3080,7 +3063,6 @@ bool OccSimplifier::find_ite_gate(
     return found;
 }
 
-
 bool OccSimplifier::find_equivalence_gate(
     [[maybe_unused]] Lit elim_lit
     , watch_subarray_const a
@@ -3096,38 +3078,28 @@ bool OccSimplifier::find_equivalence_gate(
 
     for(const Watched& w: a) {
         if (w.isBin()) {
-            #ifdef SLOW_DEBUG
-            assert(!w.red());
-            #endif
-            seen[w.lit2().toInt()] = 1;
+            SLOW_DEBUG_DO(assert(!w.red()));
+            seen[w.lit2().toInt()] = w.get_ID();
             toClear.push_back(w.lit2());
         }
     }
 
     for(const Watched& w: b) {
         if (w.isBin()) {
-            #ifdef SLOW_DEBUG
-            assert(!w.red());
-            #endif
+            SLOW_DEBUG_DO(assert(!w.red()));
             if (seen[(~w.lit2()).toInt()]) {
                 out_b.push(w);
-                out_a.push(Watched(~w.lit2(), false, w.get_ID()));
+                out_a.push(Watched(~w.lit2(), false, seen[(~w.lit2()).toInt()]));
                 found = true;
                 break;
             }
         }
     }
 
-    for(const auto& l: toClear) {
-        seen[l.toInt()] = 0;
-    }
+    for(const auto& l: toClear) seen[l.toInt()] = 0;
     toClear.clear();
 
-
-    if (found) {
-        //cout << "EQ gate" << endl;
-    }
-
+    if (found) VERBOSE_PRINT("EQ gate");
     return found;
 }
 
@@ -3197,17 +3169,13 @@ bool OccSimplifier::find_xor_gate(
 
         for(uint32_t i = j+1; i < a.size(); i++) {
             const Watched& w2 = a[i];
-            if (w2.isBin()) {
-                continue;
-            }
+            if (w2.isBin()) continue;
+
             assert(w2.isClause());
             Clause* cl2 = solver->cl_alloc.ptr(w2.get_offset());
-            #ifdef SLOW_DEBUG
-            assert(!cl2->red());
-            #endif
-            if (cl2->size() != size || cl2->stats.marked_clause) {
-                continue;
-            }
+            SLOW_DEBUG_DO(assert(!cl2->red()));
+            if (cl2->size() != size || cl2->stats.marked_clause) continue;
+
             bool this_cl_ok = true;
             bool myparity = 0;
             for(const auto& l2: *cl2) {
@@ -3217,6 +3185,7 @@ bool OccSimplifier::find_xor_gate(
                 }
                 myparity ^= l2.sign();
             }
+
             //cout << "Mypar: " << myparity << " real par: " << parity << " ok: " << this_cl_ok << endl;
             if (this_cl_ok && myparity == parity) {
                 cl2->stats.marked_clause = 1;
@@ -3249,9 +3218,7 @@ bool OccSimplifier::find_xor_gate(
             }
             assert(w2.isClause());
             Clause* cl2 = solver->cl_alloc.ptr(w2.get_offset());
-            #ifdef SLOW_DEBUG
-            assert(!cl2->red());
-            #endif
+            SLOW_DEBUG_DO(assert(!cl2->red()));
             if (cl2->size() != size || cl2->stats.marked_clause) {
                 continue;
             }
@@ -3298,7 +3265,7 @@ bool OccSimplifier::find_xor_gate(
     }
 
     if (limit < 0) {
-//         cout << "XOR Gate find limit reached" << endl;
+        VERBOSE_PRINT("XOR Gate find limit reached");
         bvestats.gatefind_timeouts++;
     }
 
@@ -3317,7 +3284,7 @@ bool OccSimplifier::find_xor_gate(
 
 
     if (found) {
-        //cout << "XOR gate" << endl;
+        VERBOSE_PRINT("XOR gate");
         assert(out_a.size() == tofind/2);
         assert(out_b.size() == tofind/2);
         std::sort(out_a.begin(), out_a.end(), sort_smallest_first(solver->cl_alloc));
@@ -3616,22 +3583,18 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
 
     // see:  http://baldur.iti.kit.edu/sat/files/ex04.pdf
     bool gates = false;
-
-    //TODO fix to work with FRAT
-    if (!solver->drat->enabled()) {
-        if (find_equivalence_gate(lit, poss, negs, gates_poss, gates_negs)) {
-            gates = true;
-        } else if (find_or_gate(lit, poss, negs, gates_poss, gates_negs)) {
-            gates = true;
-        } else if (find_or_gate(~lit, negs, poss, gates_negs, gates_poss)) {
-            gates = true;
-        } else if (find_ite_gate(lit, poss, negs, gates_poss, gates_negs)) {
-            gates = true;
-        } else if (find_ite_gate(~lit, negs, poss, gates_negs, gates_poss)) {
-            gates = true;
-        } else if (find_xor_gate(lit, poss, negs, gates_poss, gates_negs)) {
-            gates = true;
-        }
+    if (find_equivalence_gate(lit, poss, negs, gates_poss, gates_negs)) {
+        gates = true;
+    } else if (find_or_gate(lit, poss, negs, gates_poss, gates_negs)) {
+        gates = true;
+    } else if (find_or_gate(~lit, negs, poss, gates_negs, gates_poss)) {
+        gates = true;
+    } else if (find_ite_gate(lit, poss, negs, gates_poss, gates_negs)) {
+        gates = true;
+    } else if (find_ite_gate(~lit, negs, poss, gates_negs, gates_poss)) {
+        gates = true;
+    } else if (find_xor_gate(lit, poss, negs, gates_poss, gates_negs)) {
+        gates = true;
     }
 
     if (gates && solver->conf.verbosity > 5) {

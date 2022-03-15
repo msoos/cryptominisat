@@ -60,7 +60,7 @@ private:
 
     //from solver
     Solver* solver;
-    vector<uint16_t>& seen;
+    vector<uint32_t>& seen;
     vector<uint8_t>& seen2;
     vector<Lit>& toClear;
 

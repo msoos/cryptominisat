@@ -195,7 +195,7 @@ public:
     int64_t restartID = 1;
 
     //Temporaries
-    vector<uint16_t> seen;
+    vector<uint32_t> seen;
     vector<uint8_t> seen2;
     vector<uint64_t> permDiff;
     vector<Lit>      toClear;

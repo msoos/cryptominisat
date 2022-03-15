@@ -220,7 +220,7 @@ private:
     //Other temporaries
     vector<uint32_t> occcnt;
     vector<Lit>& toClear;
-    vector<uint16_t>& seen;
+    vector<uint32_t>& seen;
     vector<uint8_t>& seen2;
     vector<uint32_t> interesting;
 };
