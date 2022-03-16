@@ -1856,10 +1856,8 @@ bool OccSimplifier::simplify(const bool _startup, const std::string& schedule)
     #endif
 
     assert(solver->detached_xor_repr_cls.empty());
-    #ifdef USE_GAUSS
     assert(solver->gmatrices.empty());
     assert(solver->gqueuedata.empty());
-    #endif
 
     startup = _startup;
     if (!setup()) {

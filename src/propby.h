@@ -73,7 +73,6 @@ class PropBy
             #endif*/
         }
 
-#ifdef USE_GAUSS
         //XOR
         PropBy(const uint32_t matrix_num, const uint32_t row_num):
             data1(matrix_num)
@@ -81,7 +80,6 @@ class PropBy
             , data2(row_num)
         {
         }
-#endif
 
         //BNN prop
         PropBy(uint32_t bnn_idx, void*):

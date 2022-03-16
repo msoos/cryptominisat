@@ -612,10 +612,6 @@ DLL_PUBLIC void SATSolver::set_no_simplify()
 
 DLL_PUBLIC void SATSolver::set_allow_otf_gauss()
 {
-    #ifndef USE_GAUSS
-    std::cerr << "ERROR: CryptoMiniSat was not compiled with GAUSS" << endl;
-    exit(-1);
-    #else
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
         //s.conf.reconfigure_at = 0;
@@ -628,7 +624,6 @@ DLL_PUBLIC void SATSolver::set_allow_otf_gauss()
         s.conf.xor_detach_reattach = true;
         s.conf.allow_elim_xor_vars = false;
     }
-    #endif
 }
 
 DLL_PUBLIC void SATSolver::set_no_simplify_at_startup()
@@ -1091,10 +1086,8 @@ DLL_PUBLIC std::string SATSolver::get_text_version_info()
     ss << "c Using Bliss graph automorphism library (under LGPL) by Tommi Junttila" << endl;
     #endif
 
-    #ifdef USE_GAUSS
     ss << "c Using code from 'When Boolean Satisfiability Meets Gauss-E. in a Simplex Way'" << endl;
     ss << "c       by C.-S. Han and J.-H. Roland Jiang in CAV 2012. Fixes by M. Soos" << endl;
-    #endif
     ss << "c Using CCAnr from 'CCAnr: A Conf. Checking Based Local Search Solver [...]'" << endl;
     ss << "c       by Shaowei Cai, Chuan Luo, and Kaile Su, SAT 2015" << endl;
     ss << "c CMS compilation env " << get_compilation_env() << endl;

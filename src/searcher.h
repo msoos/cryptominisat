@@ -38,7 +38,6 @@ THE SOFTWARE.
 #include "gtest/gtest_prod.h"
 #endif
 
-
 namespace CMSat {
 
 class Solver;
@@ -46,7 +45,6 @@ class SQLStats;
 class VarReplacer;
 class EGaussian;
 class DistillerLong;
-class ClusteringImp;
 
 using std::string;
 using std::cout;
@@ -145,15 +143,12 @@ class Searcher : public HyperEngine
         uint32_t non_chrono_backtrack = 0;
 
         SQLStats* sqlStats = NULL;
-        ClusteringImp *clustering = NULL;
         void consolidate_watches(const bool full);
 
         //Gauss
-        #ifdef USE_GAUSS
         void clear_gauss_matrices();
         void print_matrix_stats();
         void check_need_gauss_jordan_disable();
-        #endif
 
         double get_cla_inc() const
         {

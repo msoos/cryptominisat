@@ -32,7 +32,6 @@ namespace CMSat {
 
 class Solver;
 class ClPredictors;
-class ClusteringImp;
 
 struct val_and_pos {
     float val;

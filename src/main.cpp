@@ -848,7 +848,6 @@ void Main::add_supported_options()
      ;
 #endif
 
-#ifdef USE_GAUSS
     po::options_description gaussOptions("Gauss options");
     gaussOptions.add_options()
      ("maxmatrixrows", po::value(&conf.gaussconf.max_matrix_rows)->default_value(conf.gaussconf.max_matrix_rows)
@@ -873,8 +872,6 @@ void Main::add_supported_options()
     ("gaussusefulcutoff", po::value(&conf.gaussconf.min_usefulness_cutoff)->default_value(conf.gaussconf.min_usefulness_cutoff)
         , "Turn off Gauss if less than this many usefulenss ratio is recorded")
     ;
-#endif //USE_GAUSS
-
     help_options_complicated
     .add(generalOptions)
     .add(polar_options)
@@ -910,9 +907,7 @@ void Main::add_supported_options()
     .add(mem_save_opts)
     .add(xorOptions)
     .add(gateOptions)
-    #ifdef USE_GAUSS
     .add(gaussOptions)
-    #endif
     .add(distillOptions)
     .add(miscOptions)
     ;

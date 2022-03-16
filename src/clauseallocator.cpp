@@ -34,9 +34,7 @@ THE SOFTWARE.
 #include "searcher.h"
 #include "time_mem.h"
 #include "sqlstats.h"
-#ifdef USE_GAUSS
 #include "gaussian.h"
-#endif
 
 #ifdef USE_VALGRIND
 #include "valgrind/valgrind.h"

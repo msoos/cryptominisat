@@ -175,13 +175,11 @@ bool SubsumeStrengthen::backw_sub_str_with_long(
         assert(subs[j].ws.isClause());
         ClOffset offset2 = subs[j].ws.get_offset();
         Clause& cl2 = *solver->cl_alloc.ptr(offset2);
-        #ifdef USE_GAUSS
         if (cl2.used_in_xor() &&
             solver->conf.force_preserve_xors)
         {
             continue;
         }
-        #endif
 
         if (subsLits[j] == lit_Undef) {  //Subsume
             #ifdef VERBOSE_DEBUG
@@ -222,18 +220,12 @@ bool SubsumeStrengthen::backw_sub_str_with_long(
             simplifier->unlink_clause(offset2, true, false, true);
             ret_sub_str.sub++;
         } else { //Strengthen
-            #ifdef VERBOSE_DEBUG
-            if (solver->conf.verbosity >= 6) {
-                cout << "strenghtened clause " << cl2 << endl;
-            }
-            #endif
-            #ifdef USE_GAUSS
+            VERBOSE_PRINT("strenghtened clause " << cl2);
             if (cl2.used_in_xor() &&
                 solver->conf.force_preserve_xors)
             {
                 continue;
             }
-            #endif
             if (!simplifier->remove_literal(offset2, subsLits[j], true)) {
                 return false;
             }
@@ -895,13 +887,11 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
             if (solver->conf.verbosity >= 6)
                 cout << "subsumed clause " << cl2 << endl;
             #endif
-            #ifdef USE_GAUSS
             if (cl2.used_in_xor() &&
                 solver->conf.force_preserve_xors)
             {
                 continue;
             }
-            #endif
 
             if (!cl2.red()) {
                 ret_sub_str.subsumedIrred = true;
@@ -915,14 +905,12 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
                 cout << "strenghtened clause " << cl2 << endl;
             }
             #endif
-            #ifdef USE_GAUSS
             if (cl2.used_in_xor() &&
                 solver->conf.force_preserve_xors)
             {
                 //cout << "str-ing used in XOR with bin" << endl;
                 continue;
             }
-            #endif
             if (!simplifier->remove_literal(offset2, subsLits[j], true)) {
                 return false;
             }

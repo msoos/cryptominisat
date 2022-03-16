@@ -339,9 +339,7 @@ bool DistillerLongWithImpl::sub_str_all_cl_with_watch(
     size_t i = 0;
     size_t j = i;
     ClOffset offset;
-    #ifdef USE_GAUSS
     Clause* cl;
-    #endif
     const size_t end = clauses.size();
     for (
         ; i < end
@@ -361,14 +359,12 @@ bool DistillerLongWithImpl::sub_str_all_cl_with_watch(
             goto copy;
         }
 
-        #ifdef USE_GAUSS
         cl = solver->cl_alloc.ptr(offset);
         if (cl->used_in_xor() &&
             solver->conf.force_preserve_xors)
         {
             goto copy;
         }
-        #endif
 
         if (sub_str_cl_with_watch(offset, alsoStrengthen)) {
             solver->detachClause(offset);

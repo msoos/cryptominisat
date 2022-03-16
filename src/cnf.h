@@ -122,9 +122,7 @@ public:
     bool ok = true; //If FALSE, state of CNF is UNSAT
 
     watch_array watches;
-    #ifdef USE_GAUSS
     vec<vec<GaussWatched>> gwatches;
-    #endif
     uint32_t num_sls_called = 0;
     vector<VarData> varData;
     branch branch_strategy = branch::vsids;

@@ -36,9 +36,7 @@ THE SOFTWARE.
 #include "varupdatehelper.h"
 #include "watchalgos.h"
 #include "sqlstats.h"
-#ifdef USE_GAUSS
 #include "gaussian.h"
-#endif
 
 using namespace CMSat;
 using std::cout;
@@ -159,9 +157,6 @@ void PropEngine::detach_modified_clause(
     removeWCl(watches[lit2], offset);
 }
 
-
-
-#ifdef USE_GAUSS
 PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
 {
     VERBOSE_PRINT("Gauss searcher::gauss_jordan_elim called, declevel: " << decisionLevel());
@@ -269,7 +264,6 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
     }
     return PropBy();
 }
-#endif //USE_GAUSS
 
 lbool PropEngine::bnn_prop(
     const uint32_t bnn_idx, uint32_t level, Lit l, BNNPropType prop_t)

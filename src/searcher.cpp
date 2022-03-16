@@ -42,16 +42,10 @@ THE SOFTWARE.
 #include "distillerlong.h"
 #include "vardistgen.h"
 #include "solvertypes.h"
-#ifdef USE_GAUSS
 #include "gaussian.h"
-#endif
 #ifdef USE_VALGRIND
 #include "valgrind/valgrind.h"
 #include "valgrind/memcheck.h"
-#endif
-
-#ifdef FINAL_PREDICTOR
-// #include "clustering.h"
 #endif
 
 #ifdef FINAL_PREDICTOR_BRANCH
@@ -85,21 +79,11 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
     set_branch_strategy(0);
     polarity_mode = conf.polarity_mode;
-
-    #ifdef FINAL_PREDICTOR
-//     clustering = new ClusteringImp;
-    #endif
 }
 
 Searcher::~Searcher()
 {
-    #ifdef USE_GAUSS
     clear_gauss_matrices();
-    #endif
-
-    #ifdef FINAL_PREDICTOR
-//     delete clustering;
-    #endif
 }
 
 void Searcher::new_var(
@@ -262,7 +246,6 @@ void Searcher::normalClMinim()
                 break;
             }
 
-            #ifdef USE_GAUSS
             case xor_t: {
                 vector<Lit>* xor_reason = gmatrices[reason.get_matrix_num()]->
                 get_reason(reason.get_row_num(), ID);
@@ -271,7 +254,6 @@ void Searcher::normalClMinim()
                 sumAntecedentsLits += size;
                 break;
             }
-            #endif
 
             case bnn_t: {
                 vector<Lit>* bnn_reason = get_bnn_reason(
@@ -291,9 +273,7 @@ void Searcher::normalClMinim()
         for (size_t k = 0; k < size; k++) {
             Lit p;
             switch (type) {
-                #ifdef USE_GAUSS
                 case xor_t:
-                #endif
                 case bnn_t:
                 case clause_t:
                     p = lits[k+1];
@@ -472,7 +452,6 @@ void Searcher::add_literals_from_confl_to_learnt(
             break;
         }
 
-        #ifdef USE_GAUSS
         case xor_t: {
             vector<Lit>* xor_reason = gmatrices[confl.get_matrix_num()]->
                 get_reason(confl.get_row_num(), ID);
@@ -481,7 +460,6 @@ void Searcher::add_literals_from_confl_to_learnt(
             sumAntecedentsLits += size;
             break;
         }
-        #endif
 
         case bnn_t: {
             vector<Lit>* bnn_reason = get_bnn_reason(
@@ -639,29 +617,24 @@ void Searcher::create_learnt_clause(PropBy confl)
             ID = confl.getID();
             break;
         }
-        #ifdef USE_GAUSS
         case xor_t: {
             vector<Lit>* cl = gmatrices[confl.get_matrix_num()]->
                 get_reason(confl.get_row_num(), ID);
             lit0 = (*cl)[0];
             break;
         }
-        #endif
-
         case bnn_t : {
             BNN* bnn = bnns[confl.getBNNidx()];
             vector<Lit>* cl = get_bnn_reason(bnn, lit_Undef);
             lit0 = (*cl)[0];
             break;
         }
-
         case clause_t : {
             Clause* cl = cl_alloc.ptr(confl.get_offset());
             lit0 = (*cl)[0];
             ID = cl->stats.ID;
             break;
         }
-
         default:
             assert(false);
     }
@@ -1020,7 +993,6 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
                 break;
             }
 
-            #ifdef USE_GAUSS
             case xor_t: {
                 vector<Lit>* xcl = gmatrices[reason.get_matrix_num()]->
                     get_reason(reason.get_row_num(), ID);
@@ -1028,7 +1000,6 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
                 size = xcl->size()-1;
                 break;
             }
-            #endif
 
             case bnn_t: {
                 vector<Lit>* cl = get_bnn_reason(
@@ -1055,10 +1026,8 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
         ) {
             Lit p2;
             switch (type) {
-                #ifdef USE_GAUSS
                 case xor_t:
                 case bnn_t:
-                #endif
                 case clause_t:
                     p2 = lits[i+1];
                     break;
@@ -1189,7 +1158,6 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
                         break;
                     }
 
-                    #ifdef USE_GAUSS
                     case PropByType::xor_t: {
                         vector<Lit>* cl = gmatrices[reason.get_matrix_num()]->
                             get_reason(reason.get_row_num(), ID);
@@ -1201,7 +1169,6 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
                         }
                         break;
                     }
-                    #endif
 
                     case PropByType::null_clause_t: {
                         assert(false);
@@ -1321,7 +1288,6 @@ void Searcher::print_order_heap()
     }
 }
 
-#ifdef USE_GAUSS
 void Searcher::check_need_gauss_jordan_disable()
 {
     uint32_t num_disabled = 0;
@@ -1344,7 +1310,6 @@ void Searcher::check_need_gauss_jordan_disable()
         gmatrices[i]->update_cols_vals_set();
     }
 }
-#endif
 
 lbool Searcher::search()
 {
@@ -1402,9 +1367,7 @@ lbool Searcher::search()
                 goto end;
             }
             check_need_restart();
-            #ifdef USE_GAUSS
             check_need_gauss_jordan_disable();
-            #endif
         } else {
             assert(ok);
             if (decisionLevel() == 0) {
@@ -1820,12 +1783,10 @@ Clause* Searcher::handle_last_confl(
     Clause* cl;
     ID = ++clauseID;
     *drat << add << ID << learnt_clause
-    << fin;
-//         << DratFlag::chain;
-//         for(auto const& b: chain) {
-//             *drat << b;
-//         }
-//         *drat << fin;
+//     << fin;
+    << DratFlag::chain;
+    for(auto const& b: chain) *drat << b;
+    *drat << fin;
 
     if (learnt_clause.size() <= 2) {
         cl = NULL;
@@ -3031,11 +2992,9 @@ void Searcher::print_solution_type(const lbool status) const
 void Searcher::finish_up_solve(const lbool status)
 {
     print_solution_type(status);
-    #ifdef USE_GAUSS
     if (conf.verbosity >= 2 && status != l_Undef) {
         print_matrix_stats();
     }
-    #endif
 
     if (status == l_True) {
         #ifdef SLOW_DEBUG
@@ -3834,7 +3793,6 @@ inline bool Searcher::check_order_heap_sanity() const
     return true;
 }
 
-#ifdef USE_GAUSS
 void Searcher::clear_gauss_matrices()
 {
     xor_clauses_updated = true;
@@ -3870,7 +3828,6 @@ void Searcher::print_matrix_stats()
         }
     }
 }
-#endif
 
 void Searcher::check_assumptions_sanity()
 {

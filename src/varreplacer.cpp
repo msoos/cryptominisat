@@ -284,10 +284,8 @@ bool VarReplacer::perform_replace()
         goto end;
     }
 
-    #ifdef USE_GAUSS
     //nothing to replace on XORs in GJE
     assert(solver->gmatrices.empty());
-    #endif
 
     for(auto& v: solver->removed_xorclauses_clash_vars) {
         v = get_var_replaced_with_fast(v);
@@ -1077,10 +1075,8 @@ bool VarReplacer::replace_if_enough_is_found(const size_t limit, uint64_t* bogop
         return solver->okay();
     }
 
-    #ifdef USE_GAUSS
     assert(solver->gmatrices.empty());
     assert(solver->gqueuedata.empty());
-    #endif
 
     if (replaced)
         *replaced = true;

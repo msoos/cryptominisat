@@ -858,7 +858,6 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         && (get_num_vars_elimed() > 0 || detached_xor_clauses)
     ) {
         for (const Lit lit: ps) {
-            #ifdef USE_GAUSS
             if (detached_xor_clauses
                 && varData[lit.var()].removed == Removed::clashed
             ) {
@@ -867,7 +866,6 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
                 }
                 assert(varData[lit.var()].removed == Removed::none);
             }
-            #endif
 
             if (conf.perform_occur_based_simp
                 && varData[lit.var()].removed == Removed::elimed
@@ -1177,9 +1175,7 @@ bool Solver::renumber_variables(bool must_renumber)
         return okay();
     }
 
-    #ifdef USE_GAUSS
     clear_gauss_matrices();
-    #endif
 
     double myTime = cpuTime();
     if (!clauseCleaner->remove_and_clean_all()) {
@@ -1499,11 +1495,9 @@ void Solver::extend_solution(const bool only_sampling_solution)
     }
     #endif
 
-    #ifdef USE_GAUSS
     if (detached_xor_clauses && !only_sampling_solution) {
         extend_model_to_detached_xors();
     }
-    #endif
 
     const double myTime = cpuTime();
     updateArrayRev(model, interToOuterMain);
@@ -1991,12 +1985,10 @@ lbool Solver::iterate_until_solved()
         if (num_confl == 0) {
             break;
         }
-        #ifdef USE_GAUSS
         if (!find_and_init_all_matrices()) {
             status = l_False;
             goto end;
         }
-        #endif //USE_GAUSS
         status = Searcher::solve(num_confl);
 
         //Check for effectiveness
@@ -2377,13 +2369,11 @@ lbool Solver::simplify_problem(const bool startup, const string& strategy)
     }
 
     clear_order_heap();
-    #ifdef USE_GAUSS
     set_clash_decision_vars();
     if (ret == l_Undef && !fully_undo_xor_detach()) {
         ret = l_False;
     }
     clear_gauss_matrices();
-    #endif
 
     if (conf.verbosity >= 6) {
         cout
@@ -3771,7 +3761,6 @@ void Solver::renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors
     }
 }
 
-#ifdef USE_GAUSS
 bool Solver::find_and_init_all_matrices()
 {
     if (!xor_clauses_updated && (!detached_xor_clauses || !assump_contains_xor_clash())) {
@@ -3915,8 +3904,6 @@ bool Solver::init_all_matrices()
 
     return okay();
 }
-#endif //USE_GAUSS
-
 
 void Solver::start_getting_small_clauses(
     const uint32_t max_len, const uint32_t max_glue, bool red, bool bva_vars,
@@ -4150,8 +4137,6 @@ void Solver::stats_del_cl(ClOffset offs)
 }
 #endif
 
-
-#ifdef USE_GAUSS
 void Solver::detach_xor_clauses(
     const set<uint32_t>& clash_vars_unused)
 {
@@ -4856,6 +4841,3 @@ void Solver::dump_clauses_at_finishup_as_last()
     }
 }
 #endif
-
-#endif
-

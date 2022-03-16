@@ -292,7 +292,7 @@ class Solver : public Searcher
         bool remove_and_clean_all();
         vector<Lit> get_toplevel_units_internal(bool outer_numbering) const;
 
-        #ifdef USE_GAUSS
+        // Gauss-Jordan
         bool init_all_matrices();
         void detach_xor_clauses(
             const set<uint32_t>& clash_vars_unused
@@ -304,7 +304,6 @@ class Solver : public Searcher
         void unset_clash_decision_vars(const vector<Xor>& xors);
         void set_clash_decision_vars();
         bool find_and_init_all_matrices();
-        #endif
 
         //assumptions
         void set_assumptions();

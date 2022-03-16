@@ -259,11 +259,9 @@ public:
     //Clause activities
     double max_cl_act = 0.0;
 
-    #ifdef USE_GAUSS
     enum class gauss_ret {g_cont, g_nothing, g_false};
     vector<EGaussian*> gmatrices;
     vector<GaussQData> gqueuedata;
-    #endif
 
 protected:
     friend class DataSync;
@@ -397,9 +395,7 @@ private:
     );
     void sql_dump_vardata_picktime(uint32_t v, PropBy from);
 
-    #ifdef USE_GAUSS
     PropBy gauss_jordan_elim(const Lit p, const uint32_t currLevel);
-    #endif
 };
 
 inline void PropEngine::new_decision_level()

@@ -9,12 +9,12 @@ AlignEscapedNewlinesLeft: true
 AlignOperands:   true
 AlignTrailingComments: true
 AllowAllParametersOfDeclarationOnNextLine: true
-AllowShortBlocksOnASingleLine: false
-AllowShortCaseLabelsOnASingleLine: false
-AllowShortFunctionsOnASingleLine: false
-AllowShortIfStatementsOnASingleLine: false
-AllowShortLoopsOnASingleLine: false
-AllowShortIfStatementsOnASingleLine: false
+AllowShortBlocksOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: true
+AllowShortIfStatementsOnASingleLine: true
+AllowShortLoopsOnASingleLine: true
+AllowShortIfStatementsOnASingleLine: true
 AlwaysBreakAfterDefinitionReturnType: None
 AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: true
@@ -23,11 +23,11 @@ BinPackArguments: true
 BinPackParameters: true
 BreakBeforeBraces: Custom
 BraceWrapping:
-  AfterClass:      true
-  AfterStruct:     true
+  AfterClass:      false
+  AfterStruct:     false
   AfterControlStatement: false
   AfterEnum:       false
-  AfterFunction:   true
+  AfterFunction:   false
   AfterNamespace:  false
   AfterObjCDeclaration: false
   AfterStruct:     false
