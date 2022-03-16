@@ -145,6 +145,9 @@ set(cryptoms_lib_files
     ccnr_cms.cpp
     lucky.cpp
     get_clause_query.cpp
+    gaussian.cpp
+    packedrow.cpp
+    matrixfinder.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
 
@@ -193,14 +196,6 @@ if (STATS_NEEDED)
         community_finder.cpp
         satzilla_features_calc.cpp
         satzilla_features.cpp
-    )
-endif()
-
-if (USE_GAUSS)
-    SET(cryptoms_lib_files ${cryptoms_lib_files}
-        gaussian.cpp
-        packedrow.cpp
-        matrixfinder.cpp
     )
 endif()
 

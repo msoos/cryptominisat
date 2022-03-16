@@ -196,12 +196,6 @@ if (SANITIZE)
 endif()
 endmacro()
 
-option(USE_GAUSS "Build with every-level GAUSS enabled" ON)
-if (USE_GAUSS)
-    add_definitions(-DUSE_GAUSS)
-    message(STATUS "Building with GAUSS enabled at every level")
-endif()
-
 option(ENABLE_ASSERTIONS "Build with assertions enabled" ON)
 message(STATUS "build type is ${CMAKE_BUILD_TYPE}")
 if(CMAKE_BUILD_TYPE STREQUAL "Release")

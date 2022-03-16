@@ -187,15 +187,10 @@ set (MY_TESTS
     lucky_test
     definability_test
     gatefinder_test
+    matrixfinder_test
+    # gauss_test
 #    undefine_test
 )
-
-if (USE_GAUSS)
-    set (MY_TESTS ${MY_TESTS}
-        # gauss_test
-        matrixfinder_test
-    )
-endif()
 
 foreach(F ${MY_TESTS})
     add_executable(${F}
