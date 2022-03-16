@@ -191,7 +191,7 @@ public:
     bool xor_clauses_updated = false;
     BinTriStats binTri;
     LitStats litStats;
-    int32_t clauseID = 1;
+    int32_t clauseID = 0;
     int64_t restartID = 1;
 
     //Temporaries

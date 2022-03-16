@@ -396,7 +396,7 @@ void Searcher::add_literals_from_confl_to_learnt(
 
     Lit* lits = NULL;
     size_t size = 0;
-    uint32_t ID = 0;
+    uint32_t ID;
     switch (confl.getType()) {
         case binary_t : {
             ID = confl.getID();
@@ -502,7 +502,7 @@ void Searcher::add_literals_from_confl_to_learnt(
         default:
             assert(false && "Error in conflict analysis (otherwise should be UIP)");
     }
-    chain.push_back((int32_t)ID);
+    chain.push_back(ID);
 
     size_t i = 0;
     bool cont = true;
@@ -520,9 +520,7 @@ void Searcher::add_literals_from_confl_to_learnt(
 
             case bnn_t:
             case clause_t:
-            #ifdef USE_GAUSS
             case xor_t:
-            #endif
                 x = lits[i];
                 if (i == size-1) {
                     cont = false;
