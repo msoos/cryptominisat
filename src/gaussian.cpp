@@ -613,10 +613,7 @@ gret EGaussian::adjust_matrix()
 
                 solver->ok = solver->add_xor_clause_inter(tmp_clause, !xorEqualFalse, true);
                 release_assert(solver->ok);
-
-                //#ifdef VERBOSE_DEBUG
-                cout << "-> toplevel bin-xor on row: " << row_n << " cl2: " << tmp_clause << endl;
-                //#endif
+                VERBOSE_PRINT("-> toplevel bin-xor on row: " << row_n << " cl2: " << tmp_clause);
 
                 // reset this row all zero, no need for this row
                 (*rowIt).rhs() = 0;
@@ -632,22 +629,18 @@ gret EGaussian::adjust_matrix()
                 assert(non_resp_var != std::numeric_limits<uint32_t>::max());
 
                 // insert watch list
-                #ifdef VERBOSE_DEBUG
-                cout << "-> watch 1: resp var " << tmp_clause[0].var()+1 << "for row " << row_n << endl;
-                cout << "-> watch 2: non-resp var " << non_resp_var+1 << "for row " << row_n << endl;
-                #endif
+                VERBOSE_PRINT("-> watch 1: resp var " << tmp_clause[0].var()+1 << " for row " << row_n);
+                VERBOSE_PRINT("-> watch 2: non-resp var " << non_resp_var+1 << " for row " << row_n);
                 solver->gwatches[tmp_clause[0].var()].push(
                     GaussWatched(row_n, matrix_no)); // insert basic variable
-
                 solver->gwatches[non_resp_var].push(
                     GaussWatched(row_n, matrix_no)); // insert non-basic variable
-                row_to_var_non_resp.push_back(non_resp_var);               // record in this row non-basic variable
+                row_to_var_non_resp.push_back(non_resp_var); // record in this row non-basic variable
                 break;
         }
         ++rowIt;
         row_n++;
     }
-    // printf("DD:nb_rows:%d %d %d    n",nb_rows.size() ,   row_n - adjust_zero  ,  adjust_zero);
     assert(row_to_var_non_resp.size() == row_n - adjust_zero);
 
     mat.resizeNumRows(row_n - adjust_zero);

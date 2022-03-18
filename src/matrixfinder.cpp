@@ -191,7 +191,7 @@ bool MatrixFinder::find_matrices(bool& can_detach, bool simplify_xors)
         ; it != end
         ; ++it
     ) {
-        cout << "-- set: " << endl;
+        cout << "XOR table set: " << endl;
         for (vector<uint32_t>::iterator it2 = it->second.begin(), end2 = it->second.end()
             ; it2 != end2
             ; it2++
