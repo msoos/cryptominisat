@@ -44,7 +44,9 @@ THE SOFTWARE.
 #include "tbdd.h"
 #include "prover.h"
 #endif
-
+#ifdef VERBOSE_DEBUG
+#include <iterator>
+#endif
 using std::cout;
 using std::endl;
 using std::ostream;
@@ -57,9 +59,7 @@ using std::set;
 //lazily delete then
 //#define LAZY_DELETE_HACK
 
-#ifdef VERBOSE_DEBUG
-#include <iterator>
-#endif
+
 
 using namespace CMSat;
 
