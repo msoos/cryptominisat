@@ -129,13 +129,13 @@ class EGaussian {
     double get_density();
 
     #ifdef USE_TBUDDY
-    //BDD stuff
     struct BDDCl {
         ilist cl;
         uint32_t ID;
     };
     void xor_in_bdd(const uint32_t a, const uint32_t b);
     tbdd::xor_constraint* bdd_create(const uint32_t row_n);
+    void create_unit_bdd_reason(const uint32_t row_n);
     vector<BDDCl> frat_ids;
     #endif
 

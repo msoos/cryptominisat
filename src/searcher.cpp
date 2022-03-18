@@ -1783,10 +1783,10 @@ Clause* Searcher::handle_last_confl(
     Clause* cl;
     ID = ++clauseID;
     *drat << add << ID << learnt_clause
-//     << fin;
-    << DratFlag::chain;
-    for(auto const& b: chain) *drat << b;
-    *drat << fin;
+    << fin;
+//     << DratFlag::chain;
+//     for(auto const& b: chain) *drat << b;
+//     *drat << fin;
 
     if (learnt_clause.size() <= 2) {
         cl = NULL;
@@ -3493,16 +3493,7 @@ void Searcher::cancelUntil(uint32_t blevel)
             ; sublevel >= (int)trail_lim[blevel]
             ; sublevel--
         ) {
-            #ifdef VERBOSE_DEBUG
-            cout
-            << "Canceling lit " << trail[sublevel].lit
-            << " sublevel: " << sublevel
-            << endl;
-            #endif
-
-            #ifdef ANIMATE3D
-            std:cerr << "u " << var << endl;
-            #endif
+            VERBOSE_PRINT("Canceling lit " << trail[sublevel].lit << " sublevel: " << sublevel);
 
             const uint32_t var = trail[sublevel].lit.var();
             assert(value(var) != l_Undef);
@@ -3515,8 +3506,7 @@ void Searcher::cancelUntil(uint32_t blevel)
                 bnn_reasons_empty_slots.push_back(reason_idx);
                 varData[var].reason = PropBy();
             }
-
-            reverse_prop(trail[sublevel].lit);
+            if (!bnns.empty()) reverse_prop(trail[sublevel].lit);
 
             #ifdef STATS_NEEDED_BRANCH
             if (!update_bogoprops) {
@@ -3616,8 +3606,6 @@ void Searcher::cancelUntil(uint32_t blevel)
                     insert_var_order(var);
                 }
             }
-
-            VERBOSE_PRINT("c Updating score by 2 for " << (trail[sublevel].lit) << " "  << lit_ind);
         }
         qhead = trail_lim[blevel];
         trail.resize(trail_lim[blevel]);

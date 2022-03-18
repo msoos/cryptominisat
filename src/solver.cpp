@@ -1705,6 +1705,11 @@ void Solver::reset_for_solving()
     datasync->rebuild_bva_map();
 }
 
+void my_bddinthandler(int)
+{
+    assert(false);
+}
+
 lbool Solver::solve_with_assumptions(
     const vector<Lit>* _assumptions,
     const bool only_sampling_solution
@@ -1715,6 +1720,7 @@ lbool Solver::solve_with_assumptions(
         drat->flush();
         #ifdef USE_TBUDDY
         tbdd_init_frat(drat->getFile(), v, &clauseID);
+        bdd_error_hook(my_bddinthandler);
         #endif
     }
     move_to_outside_assumps(_assumptions);

@@ -257,16 +257,24 @@ class PropBy
 inline std::ostream& operator<<(std::ostream& os, const PropBy& pb)
 {
     switch (pb.getType()) {
-        case binary_t :
+        case binary_t:
             os << " binary, other lit= " << pb.lit2();
             break;
 
-        case clause_t :
+        case clause_t:
             os << " clause, num= " << pb.get_offset();
             break;
 
-        case null_clause_t :
+        case null_clause_t:
             os << " NULL";
+            break;
+
+        case bnn_t:
+            os << " BNN reason, bnn idx: " << pb.get_bnn_reason();
+            break;
+
+        case xor_t:
+            os << " xor reason, matrix= " << pb.get_matrix_num() << " row: " << pb.get_row_num();
             break;
 
         default:

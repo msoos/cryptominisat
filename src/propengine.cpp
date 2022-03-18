@@ -179,9 +179,7 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
     GaussWatched* i = ws.begin();
     GaussWatched* j = i;
     const GaussWatched* end = ws.end();
-    #ifdef VERBOSE_DEBUG
-    cout << "New GQHEAD: " << p << endl;
-    #endif
+    VERBOSE_PRINT("New gauss lit to prop: " << p);
 
     for (; i != end; i++) {
         if (gqueuedata[i->matrix_num].engaus_disable) {
@@ -205,9 +203,7 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
         }
     }
 
-    for (; i != end; i++) {
-        *j++ = *i;
-    }
+    for (; i != end; i++) *j++ = *i;
     ws.shrink(i-j);
 
     for (size_t g = 0; g < gqueuedata.size(); g++) {
