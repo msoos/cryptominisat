@@ -357,7 +357,7 @@ void VarReplacer::delete_frat_cls()
 bool VarReplacer::replace_xor_clauses(vector<Xor>& xors)
 {
     for(Xor& x: xors) {
-        assert(!solver->drat->enabled()); //FRAT will fail here
+        assert(x.bdd == NULL); //FRAT could will fail here, actually...
         uint32_t j = 0;
         for(uint32_t i = 0; i < x.clash_vars.size(); i++) {
             uint32_t v = x.clash_vars[i];

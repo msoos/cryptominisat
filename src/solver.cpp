@@ -1832,15 +1832,9 @@ void Solver::write_final_frat_clauses()
         write_one_final_frat_cl(offs);
     }
     drat->flush();
-    #ifdef USE_TBUDDY
-    for(uint32_t i = 0; i < gqueuedata.size(); i++) {
-        gmatrices[i]->finalize_frat();
-    }
-    for(const auto& x: xorclauses_unused) assert(x.bdd == NULL);
-    tbdd_done();
-    drat->flush();
-    #endif
-
+    TBUDDY_DO(for(auto& g: gmatrices) g->finalize_frat());
+    TBUDDY_DO(for(const auto& x: xorclauses_unused) assert(x.bdd == NULL));
+    TBUDDY_DO(tbdd_done());
 }
 
 void Solver::write_one_final_frat_cl(const ClOffset offs)
@@ -2380,6 +2374,7 @@ lbool Solver::simplify_problem(const bool startup, const string& strategy)
     if (ret == l_Undef && !fully_undo_xor_detach()) {
         ret = l_False;
     }
+    TBUDDY_DO(for(auto& g: gmatrices) g->finalize_frat());
     clear_gauss_matrices();
 
     if (conf.verbosity >= 6) {
