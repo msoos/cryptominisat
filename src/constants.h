@@ -105,6 +105,11 @@ THE SOFTWARE.
 #endif
 /////
 
+// verb_print
+#define verb_print(a, x) \
+    do { if (solver->conf.verbosity >= a) {std::cout << x << std::endl;} } while (0)
+/////
+
 // debug watched
 #ifdef DEBUG_WATCHED
 #define DEBUG_WATCHED_DO(x) \

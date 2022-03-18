@@ -119,7 +119,7 @@ void XorFinder::clean_equivalent_xors(vector<Xor>& txors)
             if (j->vars == i->vars && i->rhs == j->rhs) {
                 j->merge_clash(*i, seen);
                 j->detached |= i->detached;
-                solver->drat->flush();
+                TBUDDY_DO(solver->drat->flush());
                 TBUDDY_DO(delete j->bdd);
             } else {
                 ++j;
@@ -203,11 +203,11 @@ void XorFinder::find_xors()
     runStats.time_outs += time_out;
     solver->sumSearchStats.num_xors_found_last = solver->xorclauses.size();
     print_found_xors();
-    //for(auto& x: solver->xorclauses) x.create_bdd_xor();
 
-    if (solver->conf.verbosity) {
-        runStats.print_short(solver, time_remain);
-    }
+    //TODO tbuddy is this needed?
+//     for(auto& x: solver->xorclauses) x.create_bdd_xor();
+
+    if (solver->conf.verbosity) runStats.print_short(solver, time_remain);
     globalStats += runStats;
 
     if (solver->sqlStats) {
@@ -221,13 +221,10 @@ void XorFinder::find_xors()
     }
     solver->xor_clauses_updated = true;
 
-    #if defined(SLOW_DEBUG) || defined(XOR_DEBUG)
-    for(const Xor& x: solver->xorclauses) {
-        for(uint32_t v: x) {
-            assert(solver->varData[v].removed == Removed::none);
-        }
-    }
-    #endif
+    SLOW_DEBUG_DO(
+        for(const Xor& x: solver->xorclauses)
+            for(uint32_t v: x) {
+                assert(solver->varData[v].removed == Removed::none));
 }
 
 void XorFinder::print_found_xors()
@@ -276,12 +273,7 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
     if (poss_xor.foundAll()) {
         std::sort(lits.begin(), lits.end());
         Xor found_xor(lits, poss_xor.getRHS(), vector<uint32_t>());
-
-        #if defined(SLOW_DEBUG) || defined(XOR_DEBUG)
-        for(Lit lit: lits) {
-            assert(solver->varData[lit.var()].removed == Removed::none);
-        }
-        #endif
+        SLOW_DEBUG_DO(for(Lit lit: lits) assert(solver->varData[lit.var()].removed == Removed::none));
 
         add_found_xor(found_xor);
         assert(poss_xor.get_fully_used().size() == poss_xor.get_offsets().size());
@@ -317,17 +309,9 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
         assert(poss_xor.getSize() > 2);
 
         if (w.isBin()) {
-            #ifdef SLOW_DEBUG
-            assert(occcnt[wlit.var()]);
-            #endif
-
-            if (w.red()) {
-                continue;
-            }
-
-            if (!occcnt[w.lit2().var()]) {
-                goto end;
-            }
+            SLOW_DEBUG_DO(assert(occcnt[wlit.var()]));
+            if (w.red()) continue;
+            if (!occcnt[w.lit2().var()]) goto end;
 
             binvec.clear();
             binvec.resize(2);
@@ -376,9 +360,7 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
             }
 
             //Doesn't contain variables not in the original clause
-            #if defined(SLOW_DEBUG) || defined(XOR_DEBUG)
-            assert(cl.abst == calcAbstraction(cl));
-            #endif
+            SLOW_DEBUG_DO(assert(cl.abst == calcAbstraction(cl)));
             if ((cl.abst | poss_xor.getAbst()) != poss_xor.getAbst())
                 continue;
 
@@ -712,15 +694,10 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
         }
     }
 
-    for(const Lit l: toClear) {
-        occcnt[l.var()] = 0;
-    }
+    //Clear
+    for(const Lit l: toClear) occcnt[l.var()] = 0;
     toClear.clear();
-
-    //Clear seen2
-    for(const auto& x: to_clear_2) {
-        seen2[x] = 0;
-    }
+    for(const auto& x: to_clear_2) seen2[x] = 0;
 
     solver->clean_occur_from_idx_types_only_smudged();
     clean_xors_from_empty(this_xors);

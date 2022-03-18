@@ -3791,7 +3791,7 @@ bool Solver::find_and_init_all_matrices()
     //fully_undo_xor_detach();
 
     MatrixFinder mfinder(solver);
-    ok = mfinder.findMatrixes(can_detach);
+    ok = mfinder.find_matrices(can_detach);
     if (!ok) return false;
     if (!init_all_matrices()) return false;
 
