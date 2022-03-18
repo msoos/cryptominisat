@@ -387,18 +387,18 @@ void EGaussian::xor_in_bdd(const uint32_t a, const uint32_t b)
 #endif
 
 void EGaussian::eliminate() {
-    uint32_t row = 0;
-    uint32_t col = 0;
     PackedMatrix::iterator end_row_it = mat.begin() + num_rows;
-    PackedMatrix::iterator row_i = mat.begin();
+    PackedMatrix::iterator rowI = mat.begin();
+    uint32_t row_i = 0;
+    uint32_t col = 0;
 
     // Gauss-Jordan Elimination
-    while (row != num_rows && col != num_cols) {
-        uint32_t row_j = row;
-        PackedMatrix::iterator row_with_1_in_col = row_i;
+    while (row_i != num_rows && col != num_cols) {
+        PackedMatrix::iterator row_with_1_in_col = rowI;
+        uint32_t row_with_1_in_col_n = row_i;
 
         //Find first "1" in column.
-        for (; row_with_1_in_col != end_row_it; ++row_with_1_in_col, row_j++) {
+        for (; row_with_1_in_col != end_row_it; ++row_with_1_in_col, row_with_1_in_col_n++) {
             if ((*row_with_1_in_col)[col]) {
                 break;
             }
@@ -410,9 +410,9 @@ void EGaussian::eliminate() {
             var_has_resp_row[col_to_var[col]] = 1;
 
             // swap row row_with_1_in_col and rowIt
-            if (row_with_1_in_col != row_i) {
-                (*row_i).swapBoth(*row_with_1_in_col);
-                std::swap(bdd_matrix[row], bdd_matrix[row_j]);
+            if (row_with_1_in_col != rowI) {
+                (*rowI).swapBoth(*row_with_1_in_col);
+                std::swap(bdd_matrix[row_i], bdd_matrix[row_with_1_in_col_n]);
             }
 
             // XOR into *all* rows that have a "1" in column COL
@@ -423,15 +423,15 @@ void EGaussian::eliminate() {
                 ; ++k_row, k++
             ) {
                 // xor rows K and I
-                if (k_row != row_i) {
+                if (k_row != rowI) {
                     if ((*k_row)[col]) {
-                        (*k_row).xor_in(*row_i);
-                        TBUDDY_DO(xor_in_bdd(k, row));
+                        (*k_row).xor_in(*rowI);
+                        TBUDDY_DO(xor_in_bdd(k, row_i));
                     }
                 }
             }
-            row++;
-            ++row_i;
+            row_i++;
+            ++rowI;
         }
         col++;
     }
@@ -497,13 +497,13 @@ gret EGaussian::adjust_matrix()
     #endif
 
     PackedMatrix::iterator end = mat.begin() + num_rows;
-    PackedMatrix::iterator rowIt = mat.begin();
-    uint32_t row_n = 0;      // row index
+    PackedMatrix::iterator rowI = mat.begin(); //row index iterator
+    uint32_t row_i = 0;      // row index
     uint32_t adjust_zero = 0; //  elimination row
 
-    while (rowIt != end) {
+    while (rowI != end) {
         uint32_t non_resp_var;
-        const uint32_t popcnt = (*rowIt).find_watchVar(
+        const uint32_t popcnt = (*rowI).find_watchVar(
             tmp_clause, col_to_var, var_has_resp_row, non_resp_var);
 
         switch (popcnt) {
@@ -514,10 +514,10 @@ gret EGaussian::adjust_matrix()
                 adjust_zero++;
 
                 // conflict
-                if ((*rowIt).rhs()) {
+                if ((*rowI).rhs()) {
                     #ifdef USE_TBUDDY
                     if (solver->drat->enabled()) {
-                        tbdd::xor_constraint* bdd = bdd_create(row_n);
+                        tbdd::xor_constraint* bdd = bdd_create(row_i);
                         ilist out = ilist_new(1);
                         ilist_resize(out, 0);
                         uint32_t ID = assert_clause(out);
@@ -527,23 +527,23 @@ gret EGaussian::adjust_matrix()
                     }
                     #endif
 
-                    VERBOSE_PRINT("-> conflict on row: " << row_n);
+                    VERBOSE_PRINT("-> conflict on row: " << row_i);
                     return gret::confl;
                 }
                 VERBOSE_PRINT("-> empty on this row. ");
-                VERBOSE_PRINT("-> Satisfied XORs set for row: " << row_n);
-                satisfied_xors[row_n] = 1;
+                VERBOSE_PRINT("-> Satisfied XORs set for row: " << row_i);
+                satisfied_xors[row_i] = 1;
                 break;
 
             //Unit (i.e. toplevel unit)
             case 1:
             {
-                bool xorEqualFalse = !mat[row_n].rhs();
+                bool xorEqualFalse = !mat[row_i].rhs();
                 tmp_clause[0] = Lit(tmp_clause[0].var(), xorEqualFalse);
                 assert(solver->value(tmp_clause[0].var()) == l_Undef);
                 #ifdef USE_TBUDDY
                 if (solver->drat->enabled()) {
-                    tbdd::xor_constraint* bdd = bdd_create(row_n);
+                    tbdd::xor_constraint* bdd = bdd_create(row_i);
                     ilist out = ilist_new(1);
                     ilist_resize(out, 1);
                     out[0] = (tmp_clause[0].var()+1) * (tmp_clause[0].sign() ? -1 :1);
@@ -561,14 +561,14 @@ gret EGaussian::adjust_matrix()
 //                 ilist_free(x);
 
                 VERBOSE_PRINT("-> UNIT during adjust: " << tmp_clause[0]);
-                VERBOSE_PRINT("-> Satisfied XORs set for row: " << row_n);
-                satisfied_xors[row_n] = 1;
+                VERBOSE_PRINT("-> Satisfied XORs set for row: " << row_i);
+                satisfied_xors[row_i] = 1;
                 #ifdef SLOW_DEBUG
-                assert(check_row_satisfied(row_n));
+                assert(check_row_satisfied(row_i));
                 #endif
 
                 //adjusting
-                (*rowIt).setZero(); // reset this row all zero
+                (*rowI).setZero(); // reset this row all zero
                 row_to_var_non_resp.push_back(std::numeric_limits<uint32_t>::max());
                 var_has_resp_row[tmp_clause[0].var()] = 0;
                 return gret::prop;
@@ -577,16 +577,16 @@ gret EGaussian::adjust_matrix()
             //Binary XOR (i.e. toplevel binary XOR)
             case 2: {
                 // printf("%d:This row have two variable!!!! in adjust matrix    n",row_id);
-                bool xorEqualFalse = !mat[row_n].rhs();
+                bool xorEqualFalse = !mat[row_i].rhs();
 
                 tmp_clause[0] = tmp_clause[0].unsign();
                 tmp_clause[1] = tmp_clause[1].unsign();
                 #ifdef USE_TBUDDY
                 if (solver->drat->enabled()) {
-                    tbdd::xor_constraint* bdd = bdd_create(row_n);
+                    tbdd::xor_constraint* bdd = bdd_create(row_i);
                     ilist out = ilist_new(2);
                     ilist_resize(out, 2);
-                    if (mat[row_n].rhs()) {
+                    if (mat[row_i].rhs()) {
                         out[0] = (tmp_clause[0].var()+1);
                         out[1] = (tmp_clause[1].var()+1);
                     } else {
@@ -598,7 +598,7 @@ gret EGaussian::adjust_matrix()
 
                     ilist out2 = ilist_new(2);
                     ilist_resize(out2, 2);
-                    if (mat[row_n].rhs()) {
+                    if (mat[row_i].rhs()) {
                         out2[0] = (tmp_clause[0].var()+1)*-1;
                         out2[1] = (tmp_clause[1].var()+1)*-1;
                     } else {
@@ -613,11 +613,11 @@ gret EGaussian::adjust_matrix()
 
                 solver->ok = solver->add_xor_clause_inter(tmp_clause, !xorEqualFalse, true);
                 release_assert(solver->ok);
-                VERBOSE_PRINT("-> toplevel bin-xor on row: " << row_n << " cl2: " << tmp_clause);
+                VERBOSE_PRINT("-> toplevel bin-xor on row: " << row_i << " cl2: " << tmp_clause);
 
                 // reset this row all zero, no need for this row
-                (*rowIt).rhs() = 0;
-                (*rowIt).setZero();
+                (*rowI).rhs() = 0;
+                (*rowI).setZero();
 
                 row_to_var_non_resp.push_back(std::numeric_limits<uint32_t>::max()); // delete non-basic value in this row
                 var_has_resp_row[tmp_clause[0].var()] = 0; // delete basic value in this row
@@ -629,22 +629,22 @@ gret EGaussian::adjust_matrix()
                 assert(non_resp_var != std::numeric_limits<uint32_t>::max());
 
                 // insert watch list
-                VERBOSE_PRINT("-> watch 1: resp var " << tmp_clause[0].var()+1 << " for row " << row_n);
-                VERBOSE_PRINT("-> watch 2: non-resp var " << non_resp_var+1 << " for row " << row_n);
+                VERBOSE_PRINT("-> watch 1: resp var " << tmp_clause[0].var()+1 << " for row " << row_i);
+                VERBOSE_PRINT("-> watch 2: non-resp var " << non_resp_var+1 << " for row " << row_i);
                 solver->gwatches[tmp_clause[0].var()].push(
-                    GaussWatched(row_n, matrix_no)); // insert basic variable
+                    GaussWatched(row_i, matrix_no)); // insert basic variable
                 solver->gwatches[non_resp_var].push(
-                    GaussWatched(row_n, matrix_no)); // insert non-basic variable
+                    GaussWatched(row_i, matrix_no)); // insert non-basic variable
                 row_to_var_non_resp.push_back(non_resp_var); // record in this row non-basic variable
                 break;
         }
-        ++rowIt;
-        row_n++;
+        ++rowI;
+        row_i++;
     }
-    assert(row_to_var_non_resp.size() == row_n - adjust_zero);
+    assert(row_to_var_non_resp.size() == row_i - adjust_zero);
 
-    mat.resizeNumRows(row_n - adjust_zero);
-    num_rows = row_n - adjust_zero;
+    mat.resizeNumRows(row_i - adjust_zero);
+    num_rows = row_i - adjust_zero;
 
     return gret::nothing_satisfied;
 }
@@ -953,11 +953,11 @@ void EGaussian::update_cols_vals_set(bool force)
 }
 
 void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
-    PackedMatrix::iterator new_resp_row = mat.begin() + gqd.new_resp_row;
+    const uint32_t new_resp_row_n = gqd.new_resp_row;
     PackedMatrix::iterator rowI = mat.begin();
     PackedMatrix::iterator end = mat.end();
     const uint32_t new_resp_col = var_to_col[gqd.new_resp_var];
-    uint32_t row_n = 0;
+    uint32_t row_i = 0;
 
     #ifdef VERBOSE_DEBUG
     cout
@@ -971,18 +971,20 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
 
     while (rowI != end) {
         //Row has a '1' in eliminating column, and it's not the row responsible
-        if (new_resp_row != rowI && (*rowI)[new_resp_col]) {
+        if (new_resp_row_n != row_i && (*rowI)[new_resp_col]) {
 
             // detect orignal non-basic watch list change or not
-            uint32_t orig_non_resp_var = row_to_var_non_resp[row_n];
+            uint32_t orig_non_resp_var = row_to_var_non_resp[row_i];
             uint32_t orig_non_resp_col = var_to_col[orig_non_resp_var];
             assert((*rowI)[orig_non_resp_col]);
-            VERBOSE_PRINT("--> This row " << row_n
+            VERBOSE_PRINT("--> This row " << row_i
                 << " is being watched on var: " << orig_non_resp_var + 1
                 << " i.e. it must contain '1' for this var's column");
 
-            assert(satisfied_xors[row_n] == 0);
-            (*rowI).xor_in(*new_resp_row);
+            assert(satisfied_xors[row_i] == 0);
+            (*rowI).xor_in(*(mat.begin() + new_resp_row_n));
+            TBUDDY_DO(xor_in_bdd(row_i, new_resp_row_n));
+
             elim_xored_rows++;
 
             //NOTE: responsible variable cannot be eliminated of course
@@ -993,7 +995,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
 
                 #ifdef VERBOSE_DEBUG
                 cout
-                << "--> This row " << row_n
+                << "--> This row " << row_i
                 << " can no longer be watched (non-responsible), it has no '1' at col " << orig_non_resp_col
                 << " (var " << col_to_var[orig_non_resp_col]+1 << ")"
                 << " fixing up..."<< endl;
@@ -1002,7 +1004,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                 // Delete orignal non-responsible var from watch list
                 if (orig_non_resp_var != gqd.new_resp_var) {
                     #ifndef LAZY_DELETE_HACK
-                    delete_gausswatch(row_n);
+                    delete_gausswatch(row_i);
                     #endif
                 } else {
                      //this does not need a delete, because during
@@ -1034,14 +1036,14 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                         VERBOSE_PRINT("---> conflict during fixup");
 
                         solver->gwatches[p].push(
-                            GaussWatched(row_n, matrix_no));
+                            GaussWatched(row_i, matrix_no));
 
                         // update in this row non-basic variable
-                        row_to_var_non_resp[row_n] = p;
+                        row_to_var_non_resp[row_i] = p;
 
-                        xor_reasons[row_n].must_recalc = true;
-                        xor_reasons[row_n].propagated = lit_Undef;
-                        gqd.confl = PropBy(matrix_no, row_n);
+                        xor_reasons[row_i].must_recalc = true;
+                        xor_reasons[row_i].propagated = lit_Undef;
+                        gqd.confl = PropBy(matrix_no, row_i);
                         gqd.ret = gauss_res::confl;
                         break;
                     }
@@ -1052,30 +1054,30 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                         // if conflicted already, just update non-basic variable
                         if (gqd.ret == gauss_res::confl) {
                             SLOW_DEBUG_DO(check_row_not_in_watch(p, row_n));
-                            solver->gwatches[p].push(GaussWatched(row_n, matrix_no));
-                            row_to_var_non_resp[row_n] = p;
+                            solver->gwatches[p].push(GaussWatched(row_i, matrix_no));
+                            row_to_var_non_resp[row_i] = p;
                             break;
                         }
 
                         // update no_basic information
                         SLOW_DEBUG_DO(check_row_not_in_watch(p, row_n));
-                        solver->gwatches[p].push(GaussWatched(row_n, matrix_no));
-                        row_to_var_non_resp[row_n] = p;
+                        solver->gwatches[p].push(GaussWatched(row_i, matrix_no));
+                        row_to_var_non_resp[row_i] = p;
 
-                        xor_reasons[row_n].must_recalc = true;
-                        xor_reasons[row_n].propagated = ret_lit_prop;
+                        xor_reasons[row_i].must_recalc = true;
+                        xor_reasons[row_i].propagated = ret_lit_prop;
                         assert(solver->value(ret_lit_prop.var()) == l_Undef);
                         if (gqd.currLevel == solver->decisionLevel()) {
-                            solver->enqueue<false>(ret_lit_prop, gqd.currLevel, PropBy(matrix_no, row_n));
+                            solver->enqueue<false>(ret_lit_prop, gqd.currLevel, PropBy(matrix_no, row_i));
                         } else {
-                            uint32_t nMaxLevel = get_max_level(gqd, row_n);
-                            solver->enqueue<false>(ret_lit_prop, nMaxLevel, PropBy(matrix_no, row_n));
+                            uint32_t nMaxLevel = get_max_level(gqd, row_i);
+                            solver->enqueue<false>(ret_lit_prop, nMaxLevel, PropBy(matrix_no, row_i));
                         }
                         update_cols_vals_set(ret_lit_prop);
                         gqd.ret = gauss_res::prop;
 
-                        VERBOSE_PRINT("---> Satisfied XORs set for row: " << row_n);
-                        satisfied_xors[row_n] = 1;
+                        VERBOSE_PRINT("---> Satisfied XORs set for row: " << row_i);
+                        satisfied_xors[row_i] = 1;
                         SLOW_DEBUG_DO(assert(check_row_satisfied(row_n)));
                         break;
                     }
@@ -1087,15 +1089,15 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                         cout
                         << "---> Nothing, clause NOT already satisfied, pushing in "
                         << new_non_resp_var+1 << " as non-responsible var ( "
-                        << row_n << " row) "
+                        << row_i << " row) "
                         << endl;
                         #endif
 
                         #ifdef SLOW_DEBUG
-                        check_row_not_in_watch(new_non_resp_var, row_n);
+                        check_row_not_in_watch(new_non_resp_var, row_i);
                         #endif
-                        solver->gwatches[new_non_resp_var].push(GaussWatched(row_n, matrix_no));
-                        row_to_var_non_resp[row_n] = new_non_resp_var;
+                        solver->gwatches[new_non_resp_var].push(GaussWatched(row_i, matrix_no));
+                        row_to_var_non_resp[row_i] = new_non_resp_var;
                         break;
 
                     // this row already satisfied
@@ -1103,17 +1105,17 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                         elim_ret_satisfied++;
                         VERBOSE_PRINT("---> Nothing to do, already satisfied , pushing in "
                         << p+1 << " as non-responsible var ( "
-                        << row_n << " row) ");
+                        << row_i << " row) ");
 
                         // printf("%d:This row is nothing( maybe already true) in eliminate col
                         // n",num_row);
 
                         SLOW_DEBUG_DO(check_row_not_in_watch(p, row_n));
-                        solver->gwatches[p].push(GaussWatched(row_n, matrix_no));
-                        row_to_var_non_resp[row_n] = p;
+                        solver->gwatches[p].push(GaussWatched(row_i, matrix_no));
+                        row_to_var_non_resp[row_i] = p;
 
-                        VERBOSE_PRINT("---> Satisfied XORs set for row: " << row_n);
-                        satisfied_xors[row_n] = 1;
+                        VERBOSE_PRINT("---> Satisfied XORs set for row: " << row_i);
+                        satisfied_xors[row_i] = 1;
                         SLOW_DEBUG_DO(assert(check_row_satisfied(row_n)));
                         break;
                     default:
@@ -1122,11 +1124,11 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
                         break;
                 }
             } else {
-                VERBOSE_PRINT("--> OK, this row " << row_n << " still contains '1', can still be responsible");
+                VERBOSE_PRINT("--> OK, this row " << row_i << " still contains '1', can still be responsible");
             }
         }
         ++rowI;
-        row_n++;
+        row_i++;
     }
 
     // Debug_funtion();
