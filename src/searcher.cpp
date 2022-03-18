@@ -1293,7 +1293,7 @@ void Searcher::check_need_gauss_jordan_disable()
     uint32_t num_disabled = 0;
     for(uint32_t i = 0; i < gqueuedata.size(); i++) {
         auto& gqd = gqueuedata[i];
-        if (gqd.engaus_disable) {
+        if (gqd.disabled) {
             num_disabled++;
             continue;
         }
@@ -1302,7 +1302,7 @@ void Searcher::check_need_gauss_jordan_disable()
             !conf.xor_detach_reattach &&
             gmatrices[i]->must_disable(gqd)
         ) {
-            gqd.engaus_disable = true;
+            gqd.disabled = true;
             num_disabled++;
         }
 
@@ -3323,9 +3323,9 @@ std::pair<size_t, size_t> Searcher::remove_useless_bins(bool except_marked)
     return std::make_pair(removedIrred, removedRed);
 }
 
-template<bool update_bogoprops, bool red_also, bool use_disable>
+template<bool update_bogoprops, bool red_also, bool distill_use>
 PropBy Searcher::propagate() {
-    PropBy ret = propagate_any_order<update_bogoprops, red_also, use_disable>();
+    PropBy ret = propagate_any_order<update_bogoprops, red_also, distill_use>();
 
     //Drat -- If declevel 0 propagation, we have to add the unitaries
     if (decisionLevel() == 0 &&
@@ -3333,6 +3333,7 @@ PropBy Searcher::propagate() {
     ) {
         if (!ret.isNULL()) {
             *drat << add << ++clauseID << fin;
+            assert(unsat_cl_ID == 0);
             unsat_cl_ID = clauseID;
         }
     }
@@ -3484,7 +3485,7 @@ void Searcher::cancelUntil(uint32_t blevel)
 
         add_tmp_canceluntil.clear();
         for (uint32_t i = 0; i < gmatrices.size(); i++)
-            if (gmatrices[i] && !gqueuedata[i].engaus_disable)
+            if (gmatrices[i] && !gqueuedata[i].disabled)
                 gmatrices[i]->canceling();
 
         //Go through in reverse order, unassign & insert then

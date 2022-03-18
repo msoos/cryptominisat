@@ -467,6 +467,7 @@ Clause* Solver::add_clause_int(
     //Handle special cases
     switch (ps.size()) {
         case 0:
+            assert(unsat_cl_ID == 0);
             unsat_cl_ID = clauseID;
             ok = false;
             if (conf.verbosity >= 6) {
@@ -3864,14 +3865,11 @@ bool Solver::init_all_matrices()
     for (uint32_t i = 0; i < gmatrices.size(); i++) {
         auto& g = gmatrices[i];
         bool created = false;
-        if (!g->full_init(created)) {
-            return false;
-        }
-        if (!ok) {
-            break;
-        }
+        if (!g->full_init(created)) return false;
+        assert(ok);
+
         if (!created) {
-            gqueuedata[i].engaus_disable = true;
+            gqueuedata[i].disabled = true;
             delete g;
             if (conf.verbosity > 5) {
                 cout << "DELETED matrix" << endl;

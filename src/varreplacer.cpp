@@ -170,6 +170,7 @@ bool VarReplacer::enqueueDelayedEnqueue()
             *solver->drat
             << add << ++solver->clauseID << fin
             << del << l.second << l.first << fin;
+            assert(solver->unsat_cl_ID == 0);
             solver->unsat_cl_ID = solver->clauseID;
             solver->ok = false;
             break;
@@ -701,6 +702,7 @@ bool VarReplacer::handleUpdatedClause(
     runStats.bogoprops += 3;
     switch(c.size()) {
     case 0:
+        assert(solver->unsat_cl_ID == 0);
         solver->unsat_cl_ID = c.stats.ID;
         solver->ok = false;
         return true;
@@ -862,7 +864,7 @@ bool VarReplacer::handleAlreadyReplaced(const Lit lit1, const Lit lit2)
         << del << solver->clauseID-4 << ~lit1 << lit2 << fin;
         // the UNSAT one, i.e. solver->clauseID-1 does not need to be deleted,
         //   it's automatically deleted
-
+        assert(solver->unsat_cl_ID == 0);
         solver->unsat_cl_ID = solver->clauseID;
         solver->ok = false;
         return false;
@@ -886,6 +888,7 @@ bool VarReplacer::replace_vars_already_set(
         << add << ++solver->clauseID << fin
         << del << solver->clauseID-1 << lit1 << fin
         << del << solver->clauseID-2 << ~lit1 << fin;
+        assert(solver->unsat_cl_ID == 0);
         solver->unsat_cl_ID = solver->clauseID;
         solver->ok = false;
     }

@@ -160,20 +160,15 @@ void PropEngine::detach_modified_clause(
 PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
 {
     VERBOSE_PRINT("Gauss searcher::gauss_jordan_elim called, declevel: " << decisionLevel());
-    if (gmatrices.empty()) {
-        return PropBy();
-    }
+    if (gmatrices.empty()) return PropBy();
 
     for(uint32_t i = 0; i < gqueuedata.size(); i++) {
-        if (gqueuedata[i].engaus_disable) {
-            continue;
-        }
+        if (gqueuedata[i].disabled || !gmatrices[i]->is_initialized()) continue;
         gqueuedata[i].reset();
         gmatrices[i]->update_cols_vals_set();
     }
 
     bool confl_in_gauss = false;
-
     assert(gwatches.size() > p.var());
     vec<GaussWatched>& ws = gwatches[p.var()];
     GaussWatched* i = ws.begin();
@@ -182,10 +177,8 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
     VERBOSE_PRINT("New gauss lit to prop: " << p);
 
     for (; i != end; i++) {
-        if (gqueuedata[i->matrix_num].engaus_disable) {
-            //remove watch and continue
-            continue;
-        }
+        if (gqueuedata[i->matrix_num].disabled || !gmatrices[i->matrix_num]->is_initialized())
+            continue; //remove watch and continue
 
         gqueuedata[i->matrix_num].new_resp_var = std::numeric_limits<uint32_t>::max();
         gqueuedata[i->matrix_num].new_resp_row = std::numeric_limits<uint32_t>::max();
@@ -207,7 +200,7 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
     ws.shrink(i-j);
 
     for (size_t g = 0; g < gqueuedata.size(); g++) {
-        if (gqueuedata[g].engaus_disable)
+        if (gqueuedata[g].disabled || !gmatrices[g]->is_initialized())
             continue;
 
         if (gqueuedata[g].do_eliminate) {
@@ -229,8 +222,7 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
     #endif
 
     for (GaussQData& gqd: gqueuedata) {
-        if (gqd.engaus_disable)
-            continue;
+        if (gqd.disabled) continue;
 
         //There was a conflict but this is not that matrix.
         //Just skip.
@@ -657,10 +649,8 @@ bool PropEngine::prop_long_cl_any_order(
 }
 
 void CMSat::PropEngine::reverse_one_bnn(uint32_t idx, BNNPropType t) {
-    BNN* bnn= bnns[idx];
-    #ifdef SLOW_DEBUG
-    assert(bnn != NULL);
-    #endif
+    BNN* const bnn= bnns[idx];
+    SLOW_DEBUG_DO(assert(bnn != NULL));
     switch(t) {
         case bnn_neg_t:
             bnn->ts--;
@@ -672,18 +662,16 @@ void CMSat::PropEngine::reverse_one_bnn(uint32_t idx, BNNPropType t) {
         case bnn_out_t:
             break;
     }
-//             cout << "reverse idx: " << i.get_bnn()
-//             << " bnn->undefs: " << bnn->undefs
-//             << " bnn->ts: " << bnn->ts
-//             << " bnn->sz: " << bnn->size()
-//             << " BNN: " << *bnn << " LIT: " << l << endl;
+    VERBOSE_PRINT("reverse bnn idx: " << idx
+        << " bnn->undefs: " << bnn->undefs
+        << " bnn->ts: " << bnn->ts
+        << " bnn->sz: " << bnn->size()
+        << " BNN: " << *bnn);
 
-    #ifdef SLOW_DEBUG
-    assert (bnn->ts >= 0);
-    assert (bnn->undefs >= 0);
-    assert (bnn->ts <= (int32_t)bnn->size());
-    assert (bnn->undefs <= (int32_t)bnn->size());
-    #endif
+    SLOW_DEBUG_DO(assert(bnn->ts >= 0));
+    SLOW_DEBUG_DO(assert(bnn->undefs >= 0));
+    SLOW_DEBUG_DO(assert(bnn->ts <= (int32_t)bnn->size()));
+    SLOW_DEBUG_DO(assert(bnn->undefs <= (int32_t)bnn->size()));
 }
 
 void CMSat::PropEngine::reverse_prop(const CMSat::Lit l)
@@ -699,7 +687,7 @@ void CMSat::PropEngine::reverse_prop(const CMSat::Lit l)
 }
 
 
-template<bool update_bogoprops, bool red_also, bool use_disable>
+template<bool update_bogoprops, bool red_also, bool distill_use>
 PropBy PropEngine::propagate_any_order()
 {
     PropBy confl;
@@ -726,7 +714,7 @@ PropBy PropEngine::propagate_any_order()
                 if (!red_also && i->red()) {
                     continue;
                 }
-                if (use_disable && i->bin_cl_marked()) {
+                if (distill_use && i->bin_cl_marked()) {
                     continue;
                 }
                 prop_bin_cl<update_bogoprops>(i, p, confl, currLevel);
@@ -744,7 +732,7 @@ PropBy PropEngine::propagate_any_order()
 
             //propagate normal clause
             assert(i->isClause());
-            prop_long_cl_any_order<update_bogoprops, red_also, use_disable>(i, j, p, confl, currLevel);
+            prop_long_cl_any_order<update_bogoprops, red_also, distill_use>(i, j, p, confl, currLevel);
             continue;
         }
         while (i != end) {
@@ -752,7 +740,8 @@ PropBy PropEngine::propagate_any_order()
         }
         ws.shrink_(end-j);
 
-        if (confl.isNULL()) {
+        //distillation would need to generate TBDD proofs to simplify clauses with GJ
+        if (confl.isNULL() && !distill_use) {
             confl = gauss_jordan_elim(p, currLevel);
         }
 
@@ -864,6 +853,7 @@ bool PropEngine::propagate_occur()
 
     if (!ret) {
         *drat << add << ++clauseID << fin;
+        assert(unsat_cl_ID == 0);
         unsat_cl_ID = clauseID;
     }
 

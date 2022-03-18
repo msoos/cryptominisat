@@ -278,7 +278,7 @@ void EGaussian::clear_gwatches(const uint32_t var)
 }
 
 bool EGaussian::full_init(bool& created) {
-    assert(solver->ok);
+    assert(solver->okay());
     assert(solver->decisionLevel() == 0);
     assert(initialized == false);
     created = true;
@@ -303,13 +303,10 @@ bool EGaussian::full_init(bool& created) {
         eliminate();
 
         // find some row already true false, and insert watch list
-        gret ret = adjust_matrix();
+        gret ret = init_adjust_matrix();
 
         switch (ret) {
             case gret::confl:
-                *solver->drat << add << ++solver->clauseID << fin;
-                solver->unsat_cl_ID = solver->clauseID;
-                solver->ok = false;
                 return false;
                 break;
             case gret::prop:
@@ -370,11 +367,11 @@ bool EGaussian::full_init(bool& created) {
     tmp_col2->rhs() = 0;
     after_init_density = get_density();
 
-    update_cols_vals_set(true);
     initialized = true;
+    update_cols_vals_set(true);
     SLOW_DEBUG_DO(check_invariants());
 
-    return true;
+    return solver->okay();
 }
 
 #ifdef USE_TBUDDY
@@ -487,7 +484,7 @@ tbdd::xor_constraint* EGaussian::bdd_create(const uint32_t row_n)
 }
 #endif
 
-gret EGaussian::adjust_matrix()
+gret EGaussian::init_adjust_matrix()
 {
     assert(solver->decisionLevel() == 0);
     assert(row_to_var_non_resp.empty());
@@ -518,12 +515,16 @@ gret EGaussian::adjust_matrix()
                     #ifdef USE_TBUDDY
                     if (solver->drat->enabled()) {
                         tbdd::xor_constraint* bdd = bdd_create(row_i);
-                        ilist out = ilist_new(1);
-                        ilist_resize(out, 0);
-                        uint32_t ID = assert_clause(out);
-                        frat_ids.push_back(BDDCl{out, ID});
-                        cout << "ID of this empty: " << ID << endl;
-                        delete bdd;
+                        *solver->drat << add << ++solver->clauseID << fin;
+                        assert(solver->unsat_cl_ID == 0);
+                        solver->unsat_cl_ID = solver->clauseID;
+                        solver->ok = false;
+//                         ilist out = ilist_new(1);
+//                         ilist_resize(out, 0);
+//                         uint32_t ID = assert_clause(out);
+//                         frat_ids.push_back(BDDCl{out, ID});
+//                         cout << "ID of this empty: " << ID << endl;
+                        //delete bdd;
                     }
                     #endif
 
@@ -707,6 +708,8 @@ bool EGaussian::find_truths(
     GaussQData& gqd
 ) {
     assert(gqd.ret != gauss_res::confl);
+    assert(initialized);
+
     #ifdef LAZY_DELETE_HACK
     if (!mat[row_n][var_to_col[var]]) {
         //lazy delete
@@ -725,15 +728,12 @@ bool EGaussian::find_truths(
 
     // this XOR is already satisfied
     if (satisfied_xors[row_n]) {
-        #ifdef VERBOSE_DEBUG
-        cout << "-> xor satisfied as per satisfied_xors[row_n]" << endl;
-        #endif
+        VERBOSE_PRINT("-> xor satisfied as per satisfied_xors[row_n]");
         SLOW_DEBUG_DO(assert(check_row_satisfied(row_n)));
         *j++ = *i;
         find_truth_ret_satisfied_precheck++;
         return true;
     }
-
 
     // swap resp and non-resp variable
     bool was_resp_var = false;
@@ -787,32 +787,7 @@ bool EGaussian::find_truths(
             xor_reasons[row_n].must_recalc = true;
             xor_reasons[row_n].propagated = ret_lit_prop;
             assert(solver->value(ret_lit_prop.var()) == l_Undef);
-
-            uint32_t lev;
-            if (gqd.currLevel == solver->decisionLevel()) lev = gqd.currLevel;
-            else lev = get_max_level(gqd, row_n);
-            #ifdef USE_TBUDDY
-            if (lev == 0 && solver->drat->enabled()) {
-                //we produce the reason, because we need it immediately, since it's toplevel
-                uint32_t out_ID;
-                VERBOSE_PRINT("--> BDD reason needed in prop due to lev 0 enqueue");
-                auto const x = get_reason(row_n, out_ID);
-                #ifdef SLOW_DEBUG
-                uint32_t num_unset = 0;
-                for(auto const& a: *x) {
-                    assert(solver->value(a) != l_True);
-                    if (solver->value(a) == l_False) {
-                        assert(solver->varData[a.var()].level == 0);
-                        assert(solver->unit_cl_IDs[a.var()] != 0);
-                    }
-                    if (solver->value(a) == l_Undef) num_unset ++;
-                }
-                assert(num_unset == 1);
-                #endif
-                VERBOSE_PRINT("--> reason clause: " << *x);
-            }
-            #endif
-            solver->enqueue<false>(ret_lit_prop, lev, PropBy(matrix_no, row_n));
+            prop_lit(gqd, row_n, ret_lit_prop);
 
             update_cols_vals_set(ret_lit_prop);
             gqd.ret = gauss_res::prop;
@@ -913,7 +888,7 @@ inline void EGaussian::update_cols_vals_set(const Lit lit1)
 
 void EGaussian::update_cols_vals_set(bool force)
 {
-    if (!initialized) return;
+    assert(initialized);
 
     //cancelled_since_val_update = true;
     if (cancelled_since_val_update || force) {
@@ -952,7 +927,39 @@ void EGaussian::update_cols_vals_set(bool force)
     last_val_update = solver->trail.size();
 }
 
-void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
+void EGaussian::prop_lit(
+    const GaussQData& gqd, const uint32_t row_i, const Lit ret_lit_prop)
+{
+    uint32_t lev;
+    if (gqd.currLevel == solver->decisionLevel()) lev = gqd.currLevel;
+    else lev = get_max_level(gqd, row_i);
+    #ifdef USE_TBUDDY
+    if (lev == 0 && solver->drat->enabled()) {
+        //we produce the reason, because we need it immediately, since it's toplevel
+        uint32_t out_ID;
+        VERBOSE_PRINT("--> BDD reason needed in prop due to lev 0 enqueue");
+
+        #ifdef SLOW_DEBUG
+        auto const x = get_reason(row_i, out_ID);
+        VERBOSE_PRINT("--> reason clause: " << *x);
+        uint32_t num_unset = 0;
+        for(auto const& a: *x) {
+            assert(solver->value(a) != l_True);
+            if (solver->value(a) == l_False) {
+                assert(solver->varData[a.var()].level == 0);
+                assert(solver->unit_cl_IDs[a.var()] != 0);
+            }
+            if (solver->value(a) == l_Undef) num_unset ++;
+        }
+        assert(num_unset == 1);
+        #endif
+    }
+    #endif
+    solver->enqueue<false>(ret_lit_prop, lev, PropBy(matrix_no, row_i));
+}
+
+void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
+{
     const uint32_t new_resp_row_n = gqd.new_resp_row;
     PackedMatrix::iterator rowI = mat.begin();
     PackedMatrix::iterator end = mat.end();
@@ -1053,26 +1060,22 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd) {
 
                         // if conflicted already, just update non-basic variable
                         if (gqd.ret == gauss_res::confl) {
-                            SLOW_DEBUG_DO(check_row_not_in_watch(p, row_n));
+                            SLOW_DEBUG_DO(check_row_not_in_watch(p, row_i));
                             solver->gwatches[p].push(GaussWatched(row_i, matrix_no));
                             row_to_var_non_resp[row_i] = p;
                             break;
                         }
 
                         // update no_basic information
-                        SLOW_DEBUG_DO(check_row_not_in_watch(p, row_n));
+                        SLOW_DEBUG_DO(check_row_not_in_watch(p, row_i));
                         solver->gwatches[p].push(GaussWatched(row_i, matrix_no));
                         row_to_var_non_resp[row_i] = p;
 
                         xor_reasons[row_i].must_recalc = true;
                         xor_reasons[row_i].propagated = ret_lit_prop;
                         assert(solver->value(ret_lit_prop.var()) == l_Undef);
-                        if (gqd.currLevel == solver->decisionLevel()) {
-                            solver->enqueue<false>(ret_lit_prop, gqd.currLevel, PropBy(matrix_no, row_i));
-                        } else {
-                            uint32_t nMaxLevel = get_max_level(gqd, row_i);
-                            solver->enqueue<false>(ret_lit_prop, nMaxLevel, PropBy(matrix_no, row_i));
-                        }
+                        prop_lit(gqd, row_i, ret_lit_prop);
+
                         update_cols_vals_set(ret_lit_prop);
                         gqd.ret = gauss_res::prop;
 

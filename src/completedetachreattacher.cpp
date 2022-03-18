@@ -195,6 +195,7 @@ bool CompleteDetachReatacher::clean_clause(Clause* cl)
 
     switch (ps.size()) {
         case 0:
+            assert(solver->unsat_cl_ID == 0);
             solver->unsat_cl_ID = cl->stats.ID;
             solver->ok = false;
             return false;

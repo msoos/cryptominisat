@@ -69,7 +69,7 @@ class EGaussian {
         const vector<Xor>& xorclauses
     );
     ~EGaussian();
-
+    bool is_initialized() const;
 
     ///returns FALSE in case of conflict
     bool  find_truths(
@@ -125,8 +125,12 @@ class EGaussian {
     void eliminate();
     void fill_matrix();
     void select_columnorder();
-    gret adjust_matrix(); // adjust matrix, include watch, check row is zero, etc.
+    gret init_adjust_matrix(); // adjust matrix, include watch, check row is zero, etc.
     double get_density();
+
+    //Helper functions
+    void prop_lit(
+        const GaussQData& gqd, const uint32_t row_i, const Lit ret_lit_prop);
 
     #ifdef USE_TBUDDY
     struct BDDCl {
@@ -234,6 +238,11 @@ inline void EGaussian::update_matrix_no(uint32_t n)
 inline uint32_t EGaussian::get_matrix_no()
 {
     return matrix_no;
+}
+
+inline bool EGaussian::is_initialized() const
+{
+    return initialized;
 }
 
 

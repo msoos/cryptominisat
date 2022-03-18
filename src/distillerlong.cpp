@@ -221,15 +221,8 @@ bool DistillerLong::distill_long_cls_all(
     , uint32_t red_lev
 ) {
     assert(solver->ok);
-    if (time_mult == 0.0) {
-        return solver->okay();
-    }
-
-    if (solver->conf.verbosity >= 6) {
-        cout
-        << "c Doing distillation branch for long clauses"
-        << endl;
-    }
+    if (time_mult == 0.0) return solver->okay();
+    verb_print(6, "c Doing distillation branch for long clauses");
 
     double myTime = cpuTime();
     const size_t origTrailSize = solver->trail_size();
@@ -304,9 +297,7 @@ bool DistillerLong::distill_long_cls_all(
         uint32_t j = 0;
         for(uint32_t i = 0; i < offs.size(); i ++) {
             Clause* cl = solver->cl_alloc.ptr(offs[i]);
-            #ifdef VERBOSE_DEBUG
-            cout << "Clause at " << i << " is:  " << *cl << endl;
-            #endif
+            VERBOSE_PRINT("Clause at " << i << " is:  " << *cl);
             bool ok = false;
             if (!cl->stats.is_ternary_resolvent
                 && !solver->satisfied(*cl)
@@ -323,13 +314,9 @@ bool DistillerLong::distill_long_cls_all(
             }
 
             if (ok) {
-                for(const auto& l: *cl) {
-                    lit_counts[l.toInt()]++;
-                }
+                for(const auto& l: *cl) lit_counts[l.toInt()]++;
                 todo.push_back(offs[i]);
-                #ifdef VERBOSE_DEBUG
-                cout << "Adding this one to TODO" << endl;
-                #endif
+                VERBOSE_PRINT("Adding this one to TODO")
             } else {
                 offs[j++] = offs[i];
                 continue;
@@ -344,9 +331,7 @@ bool DistillerLong::distill_long_cls_all(
     bool time_out = go_through_clauses(todo, also_remove);
 
     //Add back the prioritized clauses
-    for(const auto off: todo) {
-        offs.push_back(off);
-    }
+    for(const auto off: todo) offs.push_back(off);
 
     const double time_used = cpuTime() - myTime;
     const double time_remain = float_div(
@@ -393,9 +378,7 @@ bool DistillerLong::go_through_clauses(
         ; i != end
         ; ++i
     ) {
-        #ifdef VERBOSE_DEBUG
-        cout << "At offset: " << *i << endl;
-        #endif
+        VERBOSE_PRINT("At offset: " << *i);
 
         //Check if we are in state where we only copy offsets around
         if (time_out || !solver->ok) {
@@ -425,9 +408,7 @@ bool DistillerLong::go_through_clauses(
             solver->conf.force_preserve_xors
         ) {
             *j++ = *i;
-            #ifdef VERBOSE_DEBUG
-            cout << "Skipping offset for XOR " << *i << endl;
-            #endif
+            VERBOSE_PRINT("Skipping offset for XOR " << *i);
             continue;
         }
 
@@ -439,19 +420,16 @@ bool DistillerLong::go_through_clauses(
 
             //If it's a redundant that's not very good, let's not distill it
             (
-#ifdef FINAL_PREDICTOR
+                #ifdef FINAL_PREDICTOR
                 solver->conf.pred_distill_only_smallgue &&
-#else
+                #else
                 false &&
-#endif
-
+                #endif
                 cl.red() &&
                 cl.stats.glue > 3) //TODO I don't like this at all for FINAL_PREDICTOR !!!!
         ) {
             *j++ = *i;
-            #ifdef VERBOSE_DEBUG
-            cout << "Skipping offset " << *i << endl;
-            #endif
+            VERBOSE_PRINT("Skipping offset " << *i);
             continue;
         }
         if (also_remove) {
@@ -498,9 +476,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     if (red) {
         assert(!also_remove);
     }
-    #ifdef VERBOSE_DEBUG
-    cout << "Trying to distill clause:" << cl << endl;
-    #endif
+    VERBOSE_PRINT("Trying to distill clause:" << cl);
 
     uint32_t orig_size = cl.size();
     uint32_t i = 0;
@@ -567,17 +543,14 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     cl.resize(j);
 
     //Actually, we can remove the clause!
-    #ifdef VERBOSE_DEBUG
-    cout << "also_remove: " << also_remove
-    << "red: " << red
-    << "True_confl: " << True_confl
-    << "confl.isNULL(): " << confl.isNULL()
-    << endl;
-    #endif
+    VERBOSE_PRINT("also_remove: " << also_remove
+        << "red: " << red
+        << "True_confl: " << True_confl
+        << "confl.isNULL(): " << confl.isNULL());
+
+
     if (also_remove && !red && !True_confl && !confl.isNULL()) {
-        #ifdef VERBOSE_DEBUG
-        cout << "CL Removed." << endl;
-        #endif
+        VERBOSE_PRINT("CL Removed.");
         rem:
         solver->cancelUntil<false, true>(0);
         solver->detach_modified_clause(cl_lit1, cl_lit2, orig_size, &cl);
