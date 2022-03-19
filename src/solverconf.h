@@ -482,6 +482,7 @@ class DLL_PUBLIC SolverConf
         int       must_renumber; ///< if set, all "renumber" is treated as a "must-renumber"
         int       doSaveMem;
         uint64_t  full_watch_consolidate_every_n_confl;
+        int must_always_conslidate = 0; // only used for debugging
 
         //Misc Optimisations
         int      doStrSubImplicit;

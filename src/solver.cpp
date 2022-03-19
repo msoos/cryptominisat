@@ -2279,7 +2279,7 @@ lbool Solver::execute_inprocess_strategy(
                 dist_impl_with_impl->str_impl_w_impl();
             }
         } else if (token == "cl-consolidate") {
-            cl_alloc.consolidate(this, false, true);
+            cl_alloc.consolidate(this, conf.must_always_conslidate, true);
         } else if (token == "louvain-comms") {
             #ifdef STATS_NEEDED
             CommunityFinder comm_finder(this);

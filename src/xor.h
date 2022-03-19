@@ -50,9 +50,7 @@ public:
         rhs(_rhs)
         , clash_vars(_clash_vars)
     {
-        for (uint32_t i = 0; i < cl.size(); i++) {
-            vars.push_back(cl[i]);
-        }
+        for (uint32_t i = 0; i < cl.size(); i++) vars.push_back(cl[i]);
     }
 
 #ifdef USE_TBUDDY
@@ -61,9 +59,7 @@ public:
         if (bdd == NULL) {
             ilist l = ilist_new(vars.size());
             ilist_resize(l, vars.size());
-            for (uint32_t i = 0; i < vars.size(); i++) {
-                l[i] = vars[i]+1;
-            }
+            for (uint32_t i = 0; i < vars.size(); i++) l[i] = vars[i]+1;
             bdd = new tbdd::xor_constraint(l, rhs);
         }
         return bdd;
