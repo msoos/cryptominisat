@@ -524,7 +524,7 @@ gret EGaussian::init_adjust_matrix()
 //                         uint32_t ID = assert_clause(out);
 //                         frat_ids.push_back(BDDCl{out, ID});
 //                         cout << "ID of this empty: " << ID << endl;
-                        //delete bdd;
+                        delete bdd;
                         VERBOSE_PRINT("-> empty during init_adjust_matrix");
                     }
                     #endif
@@ -1501,8 +1501,9 @@ void CMSat::EGaussian::finalize_frat()
         x[i] = bdd_cl.ID;
         i++;
     }
-    frat_ids.clear();
     delete_clauses(x);
+    for(auto const& bdd_cl: frat_ids) ilist_free(bdd_cl.cl);
+    frat_ids.clear();
     ilist_free(x);
 
     solver->drat->flush();
