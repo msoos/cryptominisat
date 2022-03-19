@@ -525,6 +525,7 @@ gret EGaussian::init_adjust_matrix()
 //                         frat_ids.push_back(BDDCl{out, ID});
 //                         cout << "ID of this empty: " << ID << endl;
                         //delete bdd;
+                        VERBOSE_PRINT("-> empty during init_adjust_matrix");
                     }
                     #endif
 
