@@ -23,13 +23,12 @@ THE SOFTWARE.
 #ifndef __PROPENGINE_H__
 #define __PROPENGINE_H__
 
+// #define VERBOSE_DEBUG
 #include <cstdio>
 #include <string.h>
 #include <stack>
 #include <set>
 #include <cmath>
-
-//#define ANIMATE3D
 
 #include "constants.h"
 #include "propby.h"
@@ -620,10 +619,6 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from)
     if (update_bogoprops) {
         propStats.bogoProps += 1;
     }
-
-    #ifdef ANIMATE3D
-    std::cerr << "s " << v << " " << p.sign() << endl;
-    #endif
 }
 
 inline void PropEngine::attach_bin_clause(
