@@ -1502,6 +1502,7 @@ void CMSat::EGaussian::finalize_frat()
     }
     frat_ids.clear();
     delete_clauses(x);
+    ilist_free(x);
 
     solver->drat->flush();
     for(auto& x2: xorclauses) {

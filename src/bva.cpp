@@ -165,11 +165,11 @@ void BVA::remove_duplicates_from_m_cls()
                     }
                     return false;
                 }
-                case CMSat::watch_idx_t: {
+                case CMSat::watch_bnn_t: //no idea what to do here, error out
+                case CMSat::watch_idx_t:
                     // This should never be here
                     assert(false);
                     exit(-1);
-                }
             }
 
             assert(false);
@@ -216,11 +216,11 @@ void BVA::remove_duplicates_from_m_cls()
                 break;
             }
 
-            case CMSat::watch_idx_t: {
+            case CMSat::watch_bnn_t: //no idea what to do with BNN
+            case CMSat::watch_idx_t:
                 // This should never be here
                 assert(false);
                 exit(-1);
-            }
         }
 
         if (!del) {

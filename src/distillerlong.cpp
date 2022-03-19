@@ -316,7 +316,7 @@ bool DistillerLong::distill_long_cls_all(
             if (ok) {
                 for(const auto& l: *cl) lit_counts[l.toInt()]++;
                 todo.push_back(offs[i]);
-                VERBOSE_PRINT("Adding this one to TODO")
+                VERBOSE_PRINT("Adding this one to TODO");
             } else {
                 offs[j++] = offs[i];
                 continue;

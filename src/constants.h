@@ -92,7 +92,7 @@ THE SOFTWARE.
 #define VERBOSE_PRINT(x) \
     do { std::cout << x << std::endl; } while (0)
 #else
-#define VERBOSE_PRINT(x) {}
+#define VERBOSE_PRINT(x) do { } while (0)
 #endif
 /////
 
@@ -101,7 +101,7 @@ THE SOFTWARE.
 #define SLOW_DEBUG_DO(x) \
     do { x; } while (0)
 #else
-#define SLOW_DEBUG_DO(x) {}
+#define SLOW_DEBUG_DO(x) do { } while (0)
 #endif
 /////
 
@@ -115,7 +115,7 @@ THE SOFTWARE.
 #define DEBUG_WATCHED_DO(x) \
     do { x; } while (0)
 #else
-#define DEBUG_WATCHED_DO(x) {}
+#define DEBUG_WATCHED_DO(x) do { } while (0)
 #endif
 
 
@@ -124,7 +124,7 @@ THE SOFTWARE.
 #define TBUDDY_DO(x) \
     do { x; } while (0)
 #else
-#define TBUDDY_DO(x) {}
+#define TBUDDY_DO(x)  do { } while (0)
 #endif
 
 #ifdef VERBOSE_DEBUG
