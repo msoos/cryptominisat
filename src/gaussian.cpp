@@ -229,12 +229,12 @@ void EGaussian::fill_matrix() {
     mat.resize(num_rows, num_cols); // initial gaussian matrix
 
     bdd_matrix.clear();
-    for (uint32_t matrix_row = 0; matrix_row < num_rows; matrix_row++) {
-        const Xor& c = xorclauses[matrix_row];
-        mat[matrix_row].set(c, var_to_col, num_cols);
+    for (uint32_t row = 0; row < num_rows; row++) {
+        const Xor& c = xorclauses[row];
+        mat[row].set(c, var_to_col, num_cols);
         vector<char> line;
         line.resize(num_rows, 0);
-        line[matrix_row] = 1;
+        line[row] = 1;
         bdd_matrix.push_back(line);
     }
     assert(bdd_matrix.size() == num_rows);
