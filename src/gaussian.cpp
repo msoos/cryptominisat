@@ -32,7 +32,6 @@ THE SOFTWARE.
 #include <iostream>
 #include <set>
 
-#define VERBOSE_DEBUG
 #include "gaussian.h"
 #include "clause.h"
 #include "clausecleaner.h"
@@ -53,7 +52,8 @@ using std::endl;
 using std::ostream;
 using std::set;
 
-#define SLOW_DEBUG
+//#define VERBOSE_DEBUG
+//#define SLOW_DEBUG
 
 //don't delete gauss watches, but check when propagating and
 //lazily delete then
@@ -514,7 +514,7 @@ gret EGaussian::init_adjust_matrix()
                 if ((*rowI).rhs()) {
                     #ifdef USE_TBUDDY
                     if (solver->drat->enabled()) {
-                        unsat_bdd = bdd_create(row_i);
+                        tbdd::xor_constraint* bdd = bdd_create(row_i);
                         *solver->drat << add << ++solver->clauseID << fin;
                         assert(solver->unsat_cl_ID == 0);
                         solver->unsat_cl_ID = solver->clauseID;
@@ -524,7 +524,8 @@ gret EGaussian::init_adjust_matrix()
 //                         uint32_t ID = assert_clause(out);
 //                         frat_ids.push_back(BDDCl{out, ID});
 //                         cout << "ID of this empty: " << ID << endl;
-                        VERBOSE_PRINT("-> empty clause during init_adjust_matrix");
+                        delete bdd;
+                        VERBOSE_PRINT("-> empty during init_adjust_matrix");
                     }
                     #endif
 
@@ -770,14 +771,6 @@ bool EGaussian::find_truths(
             gqd.confl = PropBy(matrix_no, row_n);
             gqd.ret = gauss_res::confl;
             VERBOSE_PRINT("--> conflict");
-
-            #ifdef USE_TBUDDY
-            // have to get reason if toplevel (then reason will never be asked)
-            if (solver->decisionLevel() == 0 && solver->drat->enabled()) {
-                unsat_bdd = bdd_create(row_n);
-                VERBOSE_PRINT("-> empty clause during find_truths");
-            }
-            #endif
 
             if (was_resp_var) { // recover
                 var_has_resp_row[row_to_var_non_resp[row_n]] = 0;
@@ -1494,7 +1487,6 @@ bool EGaussian::must_disable(GaussQData& gqd)
 #ifdef USE_TBUDDY
 void CMSat::EGaussian::finalize_frat()
 {
-    delete unsat_bdd;
     auto x = ilist_new(frat_ids.size());
     ilist_resize(x, frat_ids.size());
     uint32_t i = 0;

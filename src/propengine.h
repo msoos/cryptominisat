@@ -23,7 +23,6 @@ THE SOFTWARE.
 #ifndef __PROPENGINE_H__
 #define __PROPENGINE_H__
 
-#define VERBOSE_DEBUG
 #include <cstdio>
 #include <string.h>
 #include <stack>
