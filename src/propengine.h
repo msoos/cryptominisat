@@ -511,13 +511,13 @@ inline PropResult PropEngine::handle_normal_prop_fail(
     return PROP_FAIL;
 }
 
-template<bool update_bogoprops>
+template<bool inprocess>
 void PropEngine::enqueue(const Lit p)
 {
-    enqueue<update_bogoprops>(p, decisionLevel(), PropBy());
+    enqueue<inprocess>(p, decisionLevel(), PropBy());
 }
 
-template<bool update_bogoprops>
+template<bool inprocess>
 void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from)
 {
     #ifdef VERBOSE_DEBUG
