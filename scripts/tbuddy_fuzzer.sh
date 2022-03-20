@@ -1,3 +1,6 @@
+#!/bin/bash
+set -x
+
 from=$1
 to=$((from+1000))
 i=$1

@@ -216,7 +216,8 @@ public:
     void reverse_one_bnn(uint32_t idx, BNNPropType t);
     PropStats propStats;
     template<bool inprocess>
-    void enqueue(const Lit p, const uint32_t level, const PropBy from = PropBy());
+    void enqueue(const Lit p, const uint32_t level,
+                 const PropBy from = PropBy(), const bool do_unit_frat = true);
     template<bool inprocess>
     void enqueue(const Lit p);
     void new_decision_level();
@@ -518,7 +519,7 @@ void PropEngine::enqueue(const Lit p)
 }
 
 template<bool inprocess>
-void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from)
+void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, bool do_unit_frat)
 {
     #ifdef VERBOSE_DEBUG
     if (level == 0) {
@@ -543,7 +544,7 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from)
     const uint32_t v = p.var();
     assert(value(v) == l_Undef);
     assert(varData[v].removed == Removed::none);
-    if (level == 0 && drat->enabled()) {
+    if (level == 0 && drat->enabled() && do_unit_frat) {
         const uint32_t ID = ++clauseID;
         *drat << add << ID << p << fin;
         VERBOSE_PRINT("unit " << p << " ID: " << ID);

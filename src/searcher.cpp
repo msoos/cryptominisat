@@ -374,9 +374,8 @@ void Searcher::add_lits_to_learnt(
     , const Lit p
     , uint32_t nDecisionLevel
 ) {
-    #ifdef VERBOSE_DEBUG
-    debug_print_resolving_clause(confl);
-    #endif
+    VERBOSE_DEBUG_DO(debug_print_resolving_clause(confl));
+    VERBOSE_DEBUG_DO(cout << "Clause ID next: " << clauseID+1 << " -- chain cl: ");
     sumAntecedents++;
 
     Lit* lits = NULL;
@@ -386,6 +385,8 @@ void Searcher::add_lits_to_learnt(
         case binary_t : {
             ID = confl.getID();
             sumAntecedentsLits += 2;
+            VERBOSE_PRINT(p << " , " << confl.lit2() << " -- ID: " << ID);
+
             if (confl.isRedStep()) {
                 #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
                 antec_data.binRed++;
@@ -407,6 +408,8 @@ void Searcher::add_lits_to_learnt(
             lits = cl->begin();
             size = cl->size();
             sumAntecedentsLits += cl->size();
+            VERBOSE_PRINT(*cl);
+
             if (cl->red()) {
                 stats.resolvs.longRed++;
                 #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
@@ -1551,10 +1554,11 @@ void Searcher::attach_and_enqueue_learnt_clause(
             //Unit learnt
             stats.learntUnits++;
             if (enq) {
-                enqueue<false>(learnt_clause[0], level, PropBy());
-                if (level == 0) {
-                    *drat << del << ID << learnt_clause[0] << fin; // double unit delete
-                }
+                assert(level == 0);
+                enqueue<false>(learnt_clause[0], level, PropBy(), false);
+                uint32_t v = learnt_clause[0].var();
+                assert(unit_cl_IDs[v] == 0);
+                unit_cl_IDs[v] = ID;
             }
             break;
         case 2:
