@@ -210,14 +210,14 @@ public:
         return trail[at].lit;
     }
 
-    template<bool update_bogoprops>
+    template<bool inprocess>
     bool propagate_occur();
     void reverse_prop(const Lit l);
     void reverse_one_bnn(uint32_t idx, BNNPropType t);
     PropStats propStats;
-    template<bool update_bogoprops>
+    template<bool inprocess>
     void enqueue(const Lit p, const uint32_t level, const PropBy from = PropBy());
-    template<bool update_bogoprops>
+    template<bool inprocess>
     void enqueue(const Lit p);
     void new_decision_level();
 
@@ -358,33 +358,33 @@ protected:
     }
 
 protected:
-    template<bool update_bogoprops, bool red_also = true, bool use_disable = false>
+    template<bool inprocess, bool red_also = true, bool use_disable = false>
     PropBy propagate_any_order();
-    template<bool update_bogoprops>
+    template<bool inprocess>
     PropResult prop_normal_helper(
         Clause& c
         , ClOffset offset
         , Watched*& j
         , const Lit p
     );
-    template<bool update_bogoprops>
+    template<bool inprocess>
     PropResult handle_normal_prop_fail(Clause& c, ClOffset offset, PropBy& confl);
 
 private:
     Solver* solver;
 
-    template<bool update_bogoprops>
+    template<bool inprocess>
     bool propagate_binary_clause_occur(const Watched& ws);
-    template<bool update_bogoprops>
+    template<bool inprocess>
     bool propagate_long_clause_occur(const ClOffset offset);
-    template<bool update_bogoprops>
+    template<bool inprocess>
     bool prop_bin_cl(
         const Watched* i
         , const Lit p
         , PropBy& confl
         , uint32_t currLevel
     );
-    template<bool update_bogoprops, bool red_also, bool use_disable>
+    template<bool inprocess, bool red_also, bool use_disable>
     bool prop_long_cl_any_order(
         Watched* i
         , Watched*& j
@@ -442,7 +442,7 @@ uint32_t PropEngine::calc_glue(const T& ps)
     return nblevels;
 }
 
-template<bool update_bogoprops>
+template<bool inprocess>
 inline PropResult PropEngine::prop_normal_helper(
     Clause& c
     , ClOffset offset
@@ -481,7 +481,7 @@ inline PropResult PropEngine::prop_normal_helper(
 }
 
 
-template<bool update_bogoprops>
+template<bool inprocess>
 inline PropResult PropEngine::handle_normal_prop_fail(
     Clause&
     #ifdef STATS_NEEDED
@@ -498,7 +498,7 @@ inline PropResult PropEngine::handle_normal_prop_fail(
 
     //Update stats
     #ifdef STATS_NEEDED
-    if (!update_bogoprops) {
+    if (!inprocess) {
         red_stats_extra[c.stats.extra_pos].conflicts_made++;
     }
     if (c.red())
@@ -555,7 +555,7 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from)
         watches.prefetch((~p).toInt());
     }
 
-    if (!update_bogoprops &&
+    if (!inprocess &&
         branch_strategy == branch::maple &&
         from != PropBy())
     {
@@ -573,7 +573,7 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from)
     }
 
     #if defined(STATS_NEEDED_BRANCH) || defined(FINAL_PREDICTOR_BRANCH)
-    if (!update_bogoprops) {
+    if (!inprocess) {
         varData[v].set++;
         if (from == PropBy()) {
             #ifdef STATS_NEEDED_BRANCH
@@ -602,7 +602,7 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from)
     varData[v].reason = from;
     varData[v].level = level;
     varData[v].sublevel = trail.size();
-    if (!update_bogoprops) {
+    if (!inprocess) {
         if (polarity_mode == PolarityMode::polarmode_automatic) {
             varData[v].polarity = !sign;
         }
@@ -616,7 +616,7 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from)
     }
     trail.push_back(Trail(p, level));
 
-    if (update_bogoprops) {
+    if (inprocess) {
         propStats.bogoProps += 1;
     }
 }

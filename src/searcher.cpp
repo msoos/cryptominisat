@@ -137,7 +137,7 @@ void Searcher::updateVars(
 }
 
 //TODO add hint here for FRAT
-template<bool update_bogoprops>
+template<bool inprocess>
 inline void Searcher::add_lit_to_learnt(
     const Lit lit
     , const uint32_t nDecisionLevel
@@ -149,7 +149,7 @@ inline void Searcher::add_lit_to_learnt(
     assert(varData[var].removed == Removed::none);
 
     #ifdef STATS_NEEDED_BRANCH
-    if (!update_bogoprops) {
+    if (!inprocess) {
         varData[var].inside_conflict_clause_antecedents++;
         varData[var].last_seen_in_1uip = sumConflicts;
     }
@@ -161,7 +161,7 @@ inline void Searcher::add_lit_to_learnt(
     }
     seen[var] = 1;
 
-    if (!update_bogoprops) {
+    if (!inprocess) {
         #ifdef STATS_NEEDED_BRANCH
         if (varData[var].level != 0 &&
             !level_used_for_cl_arr[varData[var].level]
@@ -173,7 +173,7 @@ inline void Searcher::add_lit_to_learnt(
 
         switch(branch_strategy) {
             case branch::vsids:
-                vsids_bump_var_act<update_bogoprops>(var, 0.5);
+                vsids_bump_var_act<inprocess>(var, 0.5);
                 implied_by_learnts.push_back(var);
                 break;
 
@@ -363,8 +363,8 @@ void Searcher::update_glue_from_analysis(Clause* cl)
      }
 }
 
-template<bool update_bogoprops>
-void Searcher::add_literals_from_confl_to_learnt(
+template<bool inprocess>
+void Searcher::add_lits_to_learnt(
     const PropBy confl
     , const Lit p
     , uint32_t nDecisionLevel
@@ -419,14 +419,14 @@ void Searcher::add_literals_from_confl_to_learnt(
             #endif
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             antec_data.size_longs.push(cl->size());
-            if (!update_bogoprops) {
+            if (!inprocess) {
                 cl->stats.uip1_used++;
             }
             #endif
 
             //If STATS_NEEDED then bump acitvity of ALL clauses
             //and set stats on all clauses
-            if (!update_bogoprops
+            if (!inprocess
                 && cl->red()
                 #if !defined(STATS_NEEDED) && !defined(FINAL_PREDICTOR)
                 && cl->stats.which_red_array != 0
@@ -447,7 +447,7 @@ void Searcher::add_literals_from_confl_to_learnt(
                 #if !defined(STATS_NEEDED) && !defined(FINAL_PREDICTOR)
                 if (cl->stats.which_red_array == 2)
                 #endif
-                    bump_cl_act<update_bogoprops>(cl);
+                    bump_cl_act<inprocess>(cl);
             }
             break;
         }
@@ -510,13 +510,13 @@ void Searcher::add_literals_from_confl_to_learnt(
                 break;
         }
         if (p == lit_Undef || i > 0) {
-            add_lit_to_learnt<update_bogoprops>(x, nDecisionLevel);
+            add_lit_to_learnt<inprocess>(x, nDecisionLevel);
         }
         i++;
     }
 }
 
-template<bool update_bogoprops>
+template<bool inprocess>
 inline void Searcher::minimize_learnt_clause()
 {
     const size_t origSize = learnt_clause.size();
@@ -601,7 +601,7 @@ size_t Searcher::find_backtrack_level_of_learnt()
     }
 }
 
-template<bool update_bogoprops>
+template<bool inprocess>
 void Searcher::create_learnt_clause(PropBy confl)
 {
     pathC = 0;
@@ -643,12 +643,8 @@ void Searcher::create_learnt_clause(PropBy confl)
     // 1st UIP clause generation
     learnt_clause.push_back(lit_Undef); //make space for ~p
     do {
-        #ifdef DEBUG_RESOLV
-        cout << "p is: " << p << endl;
-        #endif
-
-        add_literals_from_confl_to_learnt<update_bogoprops>(
-            confl, p, nDecisionLevel);
+        VERBOSE_PRINT("p is: " << p);
+        add_lits_to_learnt<inprocess>(confl, p, nDecisionLevel);
 
         // Select next implication to look at
         do {
@@ -806,7 +802,7 @@ struct analyze_bumped_smaller {
 };
 #endif
 
-template<bool update_bogoprops>
+template<bool inprocess>
 void Searcher::analyze_conflict(
     const PropBy confl,
     uint32_t& out_btlevel,
@@ -835,13 +831,13 @@ void Searcher::analyze_conflict(
     assert(decisionLevel() > 0);
 
     print_debug_resolution_data(confl);
-    create_learnt_clause<update_bogoprops>(confl);
+    create_learnt_clause<inprocess>(confl);
     stats.litsRedNonMin += learnt_clause.size();
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     glue_before_minim = calc_glue(learnt_clause);
     size_before_minim = learnt_clause.size();
     #endif
-    minimize_learnt_clause<update_bogoprops>();
+    minimize_learnt_clause<inprocess>();
     stats.litsRedFinal += learnt_clause.size();
 
     //further minimisation 1 -- short, small glue clauses
@@ -890,12 +886,12 @@ void Searcher::analyze_conflict(
     #endif
 
     out_btlevel = find_backtrack_level_of_learnt();
-    if (!update_bogoprops) {
+    if (!inprocess) {
         switch(branch_strategy) {
             case branch::vsids:
                 for (const uint32_t var :implied_by_learnts) {
                     if ((int32_t)varData[var].level >= (int32_t)out_btlevel-1) {
-                        vsids_bump_var_act<update_bogoprops>(var, 1.0);
+                        vsids_bump_var_act<inprocess>(var, 1.0);
                     }
                 }
                 implied_by_learnts.clear();
@@ -1461,7 +1457,7 @@ void Searcher::dump_search_sql(const double myTime)
 @returns l_Undef if it should restart instead. l_False if it reached UNSAT
          (through simplification)
 */
-template<bool update_bogoprops>
+template<bool inprocess>
 lbool Searcher::new_decision()
 {
 #ifdef SLOW_DEBUG
@@ -1505,7 +1501,7 @@ lbool Searcher::new_decision()
     // Increase decision level and enqueue 'next'
     assert(value(next) == l_Undef);
     new_decision_level();
-    enqueue<update_bogoprops>(next);
+    enqueue<inprocess>(next);
 
     return l_Undef;
 }
@@ -1552,7 +1548,7 @@ void Searcher::update_history_stats(
     sumClSize += learnt_clause.size();
 }
 
-template<bool update_bogoprops>
+template<bool inprocess>
 void Searcher::attach_and_enqueue_learnt_clause(
     Clause* cl, const uint32_t level, const bool enq,
     const uint64_t ID)
@@ -1586,7 +1582,7 @@ void Searcher::attach_and_enqueue_learnt_clause(
             #if !defined(STATS_NEEDED) && !defined(FINAL_PREDICTOR)
             if (cl->stats.which_red_array == 2)
             #endif
-                bump_cl_act<update_bogoprops>(cl);
+                bump_cl_act<inprocess>(cl);
 
             #ifdef STATS_NEEDED
             red_stats_extra[cl->stats.extra_pos].antec_data = antec_data;
@@ -1782,11 +1778,12 @@ Clause* Searcher::handle_last_confl(
 
     Clause* cl;
     ID = ++clauseID;
-    *drat << add << ID << learnt_clause
-    << fin;
-//     << DratFlag::chain;
-//     for(auto const& b: chain) *drat << b;
-//     *drat << fin;
+    *drat << add << ID << learnt_clause;
+    if (!chain.empty()) {
+        *drat << DratFlag::chain;
+        for(auto const& c: chain) *drat << c;
+    }
+    *drat << fin;
 
     if (learnt_clause.size() <= 2) {
         cl = NULL;
@@ -3324,9 +3321,9 @@ std::pair<size_t, size_t> Searcher::remove_useless_bins(bool except_marked)
     return std::make_pair(removedIrred, removedRed);
 }
 
-template<bool update_bogoprops, bool red_also, bool distill_use>
+template<bool inprocess, bool red_also, bool distill_use>
 PropBy Searcher::propagate() {
-    PropBy ret = propagate_any_order<update_bogoprops, red_also, distill_use>();
+    PropBy ret = propagate_any_order<inprocess, red_also, distill_use>();
 
     //Drat -- If declevel 0 propagation, we have to add the unitaries
     if (decisionLevel() == 0 &&
@@ -3467,7 +3464,7 @@ void Searcher::cancelUntil<true, false>(uint32_t level);
 template
 void Searcher::cancelUntil<false, true>(uint32_t level);
 
-template<bool do_insert_var_order, bool update_bogoprops>
+template<bool do_insert_var_order, bool inprocess>
 void Searcher::cancelUntil(uint32_t blevel)
 {
     #ifdef VERBOSE_DEBUG
@@ -3477,7 +3474,7 @@ void Searcher::cancelUntil(uint32_t blevel)
     #endif
 
     if (decisionLevel() > blevel) {
-        if (!update_bogoprops) {
+        if (!inprocess) {
             update_polarities_on_backtrack();
             #ifdef USE_GPU
             solver->datasync->unsetFromGpu(blevel);
@@ -3511,10 +3508,10 @@ void Searcher::cancelUntil(uint32_t blevel)
             if (!bnns.empty()) reverse_prop(trail[sublevel].lit);
 
             #ifdef STATS_NEEDED_BRANCH
-            if (!update_bogoprops) {
+            if (!inprocess) {
                 varData[var].last_canceled = sumConflicts;
             }
-            if (!update_bogoprops && varData[var].reason == PropBy()) {
+            if (!inprocess && varData[var].reason == PropBy()) {
                 //we want to dump & this was a decision var
                 uint64_t sumConflicts_during = sumConflicts - varData[var].sumConflicts_at_picktime;
                 uint64_t sumDecisions_during = sumDecisions - varData[var].sumDecisions_at_picktime;
@@ -3574,7 +3571,7 @@ void Searcher::cancelUntil(uint32_t blevel)
             if (trail[sublevel].lev <= blevel) {
                 add_tmp_canceluntil.push_back(trail[sublevel]);
             } else {
-                if (!update_bogoprops && branch_strategy == branch::maple) {
+                if (!inprocess && branch_strategy == branch::maple) {
                     assert(sumConflicts >= varData[var].maple_last_picked);
                     uint32_t age = sumConflicts - varData[var].maple_last_picked;
                     if (age > 0) {

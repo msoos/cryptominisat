@@ -516,7 +516,7 @@ Need to be somewhat tricky if the clause indicates that current assignment
 is incorrect (i.e. both literals evaluate to FALSE). If conflict if found,
 sets failBinLit
 */
-template<bool update_bogoprops>
+template<bool inprocess>
 inline bool PropEngine::prop_bin_cl(
     const Watched* i
     , const Lit p
@@ -532,7 +532,7 @@ inline bool PropEngine::prop_bin_cl(
             propStats.propsBinIrred++;
         #endif
 
-        enqueue<update_bogoprops>(i->lit2(), currLevel, PropBy(
+        enqueue<inprocess>(i->lit2(), currLevel, PropBy(
             ~p, i->red(), i->get_ID()));
     } else if (val == l_False) {
         #ifdef STATS_NEEDED
@@ -551,7 +551,7 @@ inline bool PropEngine::prop_bin_cl(
     return true;
 }
 
-template<bool update_bogoprops, bool red_also, bool use_disable>
+template<bool inprocess, bool red_also, bool use_disable>
 bool PropEngine::prop_long_cl_any_order(
     Watched* i
     , Watched*& j
@@ -564,7 +564,7 @@ bool PropEngine::prop_long_cl_any_order(
         *j++ = *i;
         return true;
     }
-    if (update_bogoprops) {
+    if (inprocess) {
         propStats.bogoProps += 4;
     }
     const ClOffset offset = i->get_offset();
@@ -588,17 +588,17 @@ bool PropEngine::prop_long_cl_any_order(
         return true;
     }
 
-    if (prop_normal_helper<update_bogoprops>(c, offset, j, p) == PROP_NOTHING) {
+    if (prop_normal_helper<inprocess>(c, offset, j, p) == PROP_NOTHING) {
         return true;
     }
 
     // Did not find watch -- clause is unit under assignment:
     *j++ = *i;
     if (value(c[0]) == l_False) {
-        handle_normal_prop_fail<update_bogoprops>(c, offset, confl);
+        handle_normal_prop_fail<inprocess>(c, offset, confl);
         return false;
     } else {
-        if (!update_bogoprops) {
+        if (!inprocess) {
             #if defined(NORMAL_CL_USE_STATS)
             c.stats.props_made++;
             #endif
@@ -608,7 +608,7 @@ bool PropEngine::prop_long_cl_any_order(
         }
 
         if (currLevel == decisionLevel()) {
-            enqueue<update_bogoprops>(c[0], currLevel, PropBy(offset));
+            enqueue<inprocess>(c[0], currLevel, PropBy(offset));
         } else {
             uint32_t nMaxLevel = currLevel;
             uint32_t nMaxInd = 1;
@@ -627,7 +627,7 @@ bool PropEngine::prop_long_cl_any_order(
                 watches[c[1]].push(*i);
             }
 
-            enqueue<update_bogoprops>(c[0], nMaxLevel, PropBy(offset));
+            enqueue<inprocess>(c[0], nMaxLevel, PropBy(offset));
         }
     }
 
@@ -673,7 +673,7 @@ void CMSat::PropEngine::reverse_prop(const CMSat::Lit l)
 }
 
 
-template<bool update_bogoprops, bool red_also, bool distill_use>
+template<bool inprocess, bool red_also, bool distill_use>
 PropBy PropEngine::propagate_any_order()
 {
     PropBy confl;
@@ -688,7 +688,7 @@ PropBy PropEngine::propagate_any_order()
         Watched* i = ws.begin();
         Watched* j = i;
         Watched* end = ws.end();
-        if (update_bogoprops) {
+        if (inprocess) {
             propStats.bogoProps += ws.size()/4 + 1;
         }
         propStats.propagations++;
@@ -703,7 +703,7 @@ PropBy PropEngine::propagate_any_order()
                 if (distill_use && i->bin_cl_marked()) {
                     continue;
                 }
-                prop_bin_cl<update_bogoprops>(i, p, confl, currLevel);
+                prop_bin_cl<inprocess>(i, p, confl, currLevel);
                 continue;
             }
 
@@ -718,7 +718,7 @@ PropBy PropEngine::propagate_any_order()
 
             //propagate normal clause
             assert(i->isClause());
-            prop_long_cl_any_order<update_bogoprops, red_also, distill_use>(i, j, p, confl, currLevel);
+            prop_long_cl_any_order<inprocess, red_also, distill_use>(i, j, p, confl, currLevel);
             continue;
         }
         while (i != end) {
@@ -819,7 +819,7 @@ void PropEngine::print_trail()
 }
 
 
-template<bool update_bogoprops>
+template<bool inprocess>
 bool PropEngine::propagate_occur()
 {
     assert(ok);
@@ -836,12 +836,12 @@ bool PropEngine::propagate_occur()
             ; ++it
         ) {
             if (it->isClause()) {
-                if (!propagate_long_clause_occur<update_bogoprops>(it->get_offset()))
+                if (!propagate_long_clause_occur<inprocess>(it->get_offset()))
                     ret = false;
             }
 
             if (it->isBin()) {
-                if (!propagate_binary_clause_occur<update_bogoprops>(*it))
+                if (!propagate_binary_clause_occur<inprocess>(*it))
                     ret = false;
             }
         }
@@ -859,7 +859,7 @@ bool PropEngine::propagate_occur()
 template bool PropEngine::propagate_occur<true>();
 template bool PropEngine::propagate_occur<false>();
 
-template<bool update_bogoprops>
+template<bool inprocess>
 inline bool PropEngine::propagate_binary_clause_occur(
     const Watched& ws)
 {
@@ -869,7 +869,7 @@ inline bool PropEngine::propagate_binary_clause_occur(
     }
 
     if (val == l_Undef) {
-        enqueue<update_bogoprops>(ws.lit2());
+        enqueue<inprocess>(ws.lit2());
         #ifdef STATS_NEEDED
         if (ws.red())
             propStats.propsBinRed++;
@@ -881,7 +881,7 @@ inline bool PropEngine::propagate_binary_clause_occur(
     return true;
 }
 
-template<bool update_bogoprops>
+template<bool inprocess>
 inline bool PropEngine::propagate_long_clause_occur(
     const ClOffset offset)
 {
@@ -916,7 +916,7 @@ inline bool PropEngine::propagate_long_clause_occur(
     if (numUndef > 1)
         return true;
 
-    enqueue<update_bogoprops>(lastUndef);
+    enqueue<inprocess>(lastUndef);
 
     return true;
 }

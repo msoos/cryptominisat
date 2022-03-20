@@ -92,7 +92,7 @@ class Searcher : public HyperEngine
 
         vector<lbool>  model;
         vector<Lit>   conflict;     ///<If problem is unsatisfiable (possibly under assumptions), this vector represent the final conflict clause expressed in the assumptions.
-        template<bool update_bogoprops, bool red_also = true, bool distill_use = false>
+        template<bool inprocess, bool red_also = true, bool distill_use = false>
         PropBy propagate();
 
         ///////////////////////////////
@@ -136,7 +136,7 @@ class Searcher : public HyperEngine
 
         //ChronoBT
         vector<Trail> add_tmp_canceluntil;
-        template<bool do_insert_var_order = true, bool update_bogoprops = false>
+        template<bool do_insert_var_order = true, bool inprocess = false>
         void cancelUntil(uint32_t level); ///<Backtrack until a certain level.
         ConflictData find_conflict_level(PropBy& pb);
         uint32_t chrono_backtrack = 0;
@@ -160,7 +160,7 @@ class Searcher : public HyperEngine
         void unfill_assumptions_set();
         bool check_order_heap_sanity() const;
 
-        template<bool update_bogoprops>
+        template<bool inprocess>
         void bump_cl_act(Clause* cl);
         void simple_create_learnt_clause(
             PropBy confl,
@@ -184,13 +184,13 @@ class Searcher : public HyperEngine
         void insert_var_order_all(const uint32_t x);
         vector<uint32_t> implied_by_learnts; //for glue-based extra var activity bumping
         void update_branch_params();
-        template<bool update_bogoprops>
+        template<bool inprocess>
         lbool new_decision();
         Lit pickBranchLit();
         uint32_t pick_var_vsids_maple();
         uint32_t pick_var_vmtf();
         void vsids_decay_var_act();
-        template<bool update_bogoprops>
+        template<bool inprocess>
         void vsids_bump_var_act(uint32_t v, double mult = 1.0, bool only_add = false);
         double backup_random_var_freq = -1; ///<if restart has full random var branch, we save old value here
         void check_var_in_branch_strategy(uint32_t var) const;
@@ -254,7 +254,7 @@ class Searcher : public HyperEngine
         vector<Lit> learnt_clause;
         vector<uint32_t> chain;
         vector<Lit> decision_clause;
-        template<bool update_bogoprops>
+        template<bool inprocess>
         void analyze_conflict(
             PropBy confl //The conflict that we are investigating
             , uint32_t& out_btlevel  //backtrack level
@@ -267,7 +267,7 @@ class Searcher : public HyperEngine
             size_t backtrack_level,
             uint32_t glue,
             uint32_t connects_num_communities);
-        template<bool update_bogoprops>
+        template<bool inprocess>
         void  attach_and_enqueue_learnt_clause(
             Clause* cl,
             const uint32_t level,
@@ -275,16 +275,16 @@ class Searcher : public HyperEngine
             const uint64_t ID);
         void  print_learning_debug_info() const;
         void  print_learnt_clause() const;
-        template<bool update_bogoprops>
-        void add_literals_from_confl_to_learnt(const PropBy confl, const Lit p, uint32_t nDecisionLevel);
-        template<bool update_bogoprops>
+        template<bool inprocess>
+        void add_lits_to_learnt(const PropBy confl, const Lit p, uint32_t nDecisionLevel);
+        template<bool inprocess>
         void create_learnt_clause(PropBy confl);
         void debug_print_resolving_clause(const PropBy confl) const;
-        template<bool update_bogoprops>
+        template<bool inprocess>
         void add_lit_to_learnt(Lit lit, const uint32_t nDecisionLevel);
         void analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& out_conflict);
         void update_glue_from_analysis(Clause* cl);
-        template<bool update_bogoprops>
+        template<bool inprocess>
         void minimize_learnt_clause();
         void minimize_using_bins();
         void print_fully_minimized_learnt_clause() const;
@@ -400,7 +400,7 @@ class Searcher : public HyperEngine
 
         //Clause activites
         double cla_inc;
-        template<bool update_bogoprops> void decayClauseAct();
+        template<bool inprocess> void decayClauseAct();
 
         //SQL
         void dump_search_sql(const double myTime);
@@ -536,10 +536,10 @@ inline void Searcher::insert_var_order_all(const uint32_t x)
     #endif
 }
 
-template<bool update_bogoprops>
+template<bool inprocess>
 inline void Searcher::bump_cl_act(Clause* cl)
 {
-    if (update_bogoprops)
+    if (inprocess)
         return;
 
     assert(!cl->getRemoved());
@@ -570,10 +570,10 @@ inline void Searcher::bump_cl_act(Clause* cl)
     }
 }
 
-template<bool update_bogoprops>
+template<bool inprocess>
 inline void Searcher::decayClauseAct()
 {
-    if (update_bogoprops)
+    if (inprocess)
         return;
 
     cla_inc *= (1 / conf.clause_decay);
@@ -617,10 +617,10 @@ inline bool Searcher::pick_polarity(const uint32_t var)
     return true;
 }
 
-template<bool update_bogoprops>
+template<bool inprocess>
 inline void Searcher::vsids_bump_var_act(uint32_t var, double mult, bool only_add)
 {
-    if (update_bogoprops) {
+    if (inprocess) {
         return;
     }
 
