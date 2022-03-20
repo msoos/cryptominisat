@@ -60,6 +60,8 @@ struct XorReason
     Lit propagated = lit_Undef;
     int32_t ID = 0;
     vector<Lit> reason;
+    tbdd::xor_constraint* constr = NULL;
+    ilist list = NULL;
 };
 
 class EGaussian {
@@ -81,7 +83,7 @@ class EGaussian {
         GaussQData& gqd
     );
 
-    vector<Lit>* get_reason(uint32_t row, int32_t& out_ID);
+    vector<Lit>* get_reason(const uint32_t row, int32_t& out_ID);
 
     // when basic variable is touched , eliminate one col
     void eliminate_col(
@@ -140,6 +142,8 @@ class EGaussian {
     };
     void xor_in_bdd(const uint32_t a, const uint32_t b);
     tbdd::xor_constraint* bdd_create(const uint32_t row_n, const uint32_t expected_size);
+    ilist one_len_ilist = NULL;
+    ilist ilist_tmp = NULL;
     void create_unit_bdd_reason(const uint32_t row_n);
     vector<BDDCl> frat_ids;
     tbdd::xor_constraint* unsat_bdd = NULL; //set if UNSAT is from GJ

@@ -72,6 +72,8 @@ xorclauses(_xorclauses),
 solver(_solver),
 matrix_no(_matrix_no)
 {
+    one_len_ilist = ilist_new(1);
+    ilist_resize(one_len_ilist, 1);
 }
 
 EGaussian::~EGaussian() {
@@ -87,6 +89,8 @@ EGaussian::~EGaussian() {
     delete cols_vals;
     delete tmp_col;
     delete tmp_col2;
+    ilist_free(one_len_ilist);
+    ilist_free(ilist_tmp);
 }
 
 struct ColSorter {
@@ -221,6 +225,7 @@ void EGaussian::fill_matrix() {
     select_columnorder();
     num_rows = xorclauses.size();
     num_cols = col_to_var.size();
+    ilist_tmp = ilist_new(num_cols);
     if (num_rows == 0 || num_cols == 0) {
         return;
     }
@@ -430,12 +435,21 @@ void EGaussian::eliminate() {
     //print_matrix();
 }
 
-vector<Lit>* EGaussian::get_reason(uint32_t row, int32_t& out_ID)
+vector<Lit>* EGaussian::get_reason(const uint32_t row, int32_t& out_ID)
 {
     if (!xor_reasons[row].must_recalc) {
         out_ID = xor_reasons[row].ID;
         return &(xor_reasons[row].reason);
     }
+
+    // Clean up previous one
+    if (xor_reasons[row].ID != 0) {
+        delete xor_reasons[row].constr;
+        one_len_ilist[0] = xor_reasons[row].ID;
+        VERBOSE_PRINT("calling tbuddy to delete clause ID " << xor_reasons[row].ID);
+        delete_clauses(one_len_ilist);
+    }
+
     vector<Lit>& tofill = xor_reasons[row].reason;
     tofill.clear();
 
@@ -449,15 +463,13 @@ vector<Lit>* EGaussian::get_reason(uint32_t row, int32_t& out_ID)
 
     #ifdef USE_TBUDDY
     if (solver->drat->enabled()) {
-        tbdd::xor_constraint* tmp = bdd_create(row, tofill.size());
-        ilist out = ilist_new(tofill.size());
-        ilist_resize(out, tofill.size());
+        VERBOSE_PRINT("Expecting tbuddy to prove: " << tofill);
+        xor_reasons[row].constr = bdd_create(row, tofill.size());
+        ilist_resize(ilist_tmp, tofill.size());
         for(uint32_t i = 0; i < tofill.size(); i++) {
-            out[i] = (tofill[i].var()+1) * (tofill[i].sign() ? -1 :1);
+            ilist_tmp[i] = (tofill[i].var()+1) * (tofill[i].sign() ? -1 :1);
         }
-        out_ID = assert_clause(out);
-        frat_ids.push_back(BDDCl{out, out_ID});
-        delete tmp;
+        out_ID = assert_clause(ilist_tmp);
     }
     #endif
 
@@ -1514,27 +1526,37 @@ bool EGaussian::must_disable(GaussQData& gqd)
 #ifdef USE_TBUDDY
 void CMSat::EGaussian::finalize_frat()
 {
+    solver->drat->flush();
     delete unsat_bdd;
-    auto x = ilist_new(frat_ids.size());
-    ilist_resize(x, frat_ids.size());
+
+    // clean frat_ids
+    auto todel = ilist_new(frat_ids.size());
+    ilist_resize(todel, frat_ids.size());
     uint32_t i = 0;
     for(auto const& bdd_cl: frat_ids) {
-        /*solver->drat << finalcl << bdd_cl.ID;
-        for(uint32_t i = 0 ; i < (uint32_t)ilist_length(bdd_cl.cl); i++) {
-            auto const& l = Lit(abs(bdd_cl.cl[i])-1, bdd_cl.cl[i] < 0);
-            *solver->drat << l;
-        }
-        *solver->drat << fin;
-        ilist_free(bdd_cl.cl);*/
-        x[i] = bdd_cl.ID;
+        VERBOSE_PRINT("calling tbuddy to delete clause ID " << bdd_cl.ID);
+        todel[i] = bdd_cl.ID;
         i++;
     }
-    delete_clauses(x);
+    delete_clauses(todel);
     for(auto const& bdd_cl: frat_ids) ilist_free(bdd_cl.cl);
     frat_ids.clear();
-    ilist_free(x);
+    ilist_free(todel);
 
-    solver->drat->flush();
+    // clean xor_reasons
+    ilist todel1 = ilist_new(xor_reasons.size());
+    ilist_resize(todel1, xor_reasons.size());
+    uint32_t at = 0;
+    for(auto const& x: xor_reasons) if (x.ID != 0) {
+        VERBOSE_PRINT("calling tbuddy to delete clause ID " << x.ID);
+        delete x.constr;
+        todel1[at++] = x.ID;
+    }
+    ilist_resize(todel1, at);
+    delete_clauses(todel1);
+    ilist_free(todel1);
+
+    // clean BDDs in xorclauses
     for(auto& x2: xorclauses) {
         delete x2.bdd;
         x2.bdd = NULL;

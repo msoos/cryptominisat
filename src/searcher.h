@@ -273,7 +273,7 @@ class Searcher : public HyperEngine
             const uint32_t level,
             const bool enqueue,
             const uint64_t ID);
-        void  print_learning_debug_info() const;
+        void  print_learning_debug_info(const int32_t ID) const;
         void  print_learnt_clause() const;
         template<bool inprocess>
         void add_lits_to_learnt(const PropBy confl, const Lit p, uint32_t nDecisionLevel);

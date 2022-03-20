@@ -376,7 +376,6 @@ void Searcher::add_lits_to_learnt(
     , uint32_t nDecisionLevel
 ) {
     VERBOSE_DEBUG_DO(debug_print_resolving_clause(confl));
-    VERBOSE_DEBUG_DO(cout << "Clause ID next: " << clauseID+1 << " -- chain cl: ");
     sumAntecedents++;
 
     Lit* lits = NULL;
@@ -386,7 +385,7 @@ void Searcher::add_lits_to_learnt(
         case binary_t : {
             ID = confl.getID();
             sumAntecedentsLits += 2;
-            VERBOSE_PRINT(p << " , " << confl.lit2() << " -- ID: " << ID);
+            VERBOSE_PRINT("resolving with cl:" << p << " , " << confl.lit2() << " -- ID: " << ID);
 
             if (confl.isRedStep()) {
                 #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
@@ -409,7 +408,7 @@ void Searcher::add_lits_to_learnt(
             lits = cl->begin();
             size = cl->size();
             sumAntecedentsLits += cl->size();
-            VERBOSE_PRINT(*cl);
+            VERBOSE_PRINT("resolving with cl:" << *cl);
 
             if (cl->red()) {
                 stats.resolvs.longRed++;
@@ -464,6 +463,7 @@ void Searcher::add_lits_to_learnt(
             lits = xor_reason->data();
             size = xor_reason->size();
             sumAntecedentsLits += size;
+            VERBOSE_PRINT("resolving with cl:" << *xor_reason << " -- ID: " << ID);
             break;
         }
 
@@ -1042,6 +1042,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
                     seen[p2.var()] = 1;
                     analyze_stack.push(p2);
                     toClear.push_back(p2);
+                    chain.push_back(ID);
                 } else {
                     //Return to where we started before function executed
                     for (size_t j = top; j < toClear.size(); j++) {
@@ -1550,6 +1551,7 @@ void Searcher::attach_and_enqueue_learnt_clause(
     Clause* cl, const uint32_t level, const bool enq,
     const uint64_t ID)
 {
+    print_learning_debug_info(ID);
     switch (learnt_clause.size()) {
         case 0:
             assert(false);
@@ -1590,15 +1592,14 @@ void Searcher::attach_and_enqueue_learnt_clause(
     }
 }
 
-inline void Searcher::print_learning_debug_info() const
+void Searcher::print_learning_debug_info(const int32_t ID) const
 {
     #ifndef VERBOSE_DEBUG
     return;
     #else
     cout
-    << "Learning: " << learnt_clause
-    << endl
-    << "reverting var " << learnt_clause[0].var()+1
+    << "Learning: " << learnt_clause << " ID: " << ID
+    << " -- reverting var " << learnt_clause[0].var()+1
     << " to " << !learnt_clause[0].sign()
     << endl;
     #endif
@@ -1946,7 +1947,6 @@ bool Searcher::handle_conflict(PropBy confl)
         cancelUntil(backtrack_level);
 //     }
 
-    print_learning_debug_info();
     assert(value(learnt_clause[0]) == l_Undef);
     glue = std::min<uint32_t>(glue, std::numeric_limits<uint32_t>::max());
     int32_t ID;
