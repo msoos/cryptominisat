@@ -15,12 +15,12 @@ while [[ ${to} -gt ${i} ]]; do
 
     ../utils/cnf-utils/xortester.py -s $i --varsmin 35 > test_FRAT-${i}.cnf
     # ../utils/cnf-utils/xortester.py -s $i --varsmin 35 > test_FRAT-${i}.cnf
-    timeout 30s ./cryptominisat5 test_FRAT-${i}.cnf b-${i} --distill 1 --scc 1 --varelim 1 --presimp 1 --xor 1 --confbtwsimp 1000000 --occsimp 1 --sls 0 --bva 0 --intree 0 --maxmatrixcols 10000 --maxmatrixrows 10000 --strmaxt 0 --mustconsolidate 1 > out_test-${i}
+    timeout 30s ./cryptominisat5 test_FRAT-${i}.cnf b-${i} --distill 1 --scc 1 --varelim 1 --presimp 1 --xor 1 --confbtwsimp 100 --occsimp 1 --sls 0 --bva 0 --intree 0 --maxmatrixcols 10000 --maxmatrixrows 10000 --strmaxt 0 --mustconsolidate 1 > out_test-${i}
 
     a=`grep "UNSATIS" out_test-${i}`
     if [[ $? -eq 0 ]]; then
         ./frat-rs stat b-${i}
-        ./frat-rs elab test_FRAT-${i}.cnf b-${i} ELAB-${i} -v
+        ./frat-rs elab test_FRAT-${i}.cnf b-${i} -m -v
         if [[ $? == 0 ]]; then
             echo "OK, verification good"
         else
@@ -33,5 +33,6 @@ while [[ ${to} -gt ${i} ]]; do
     rm -f b-${i}
     rm -f out_test-${i}
     rm -f ELAB-${i}
+    rm -f test_FRAT-${i}
     i=$((i+1))
 done
