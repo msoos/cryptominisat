@@ -155,10 +155,12 @@ inline void Searcher::add_lit_to_learnt(
     }
     #endif
 
-    //If var is at level 0, don't do anything with it, just skip
-    if (seen[var] || varData[var].level == 0) {
+    if (varData[var].level == 0) {
+        chain.push_back(unit_cl_IDs[var]);
         return;
     }
+
+    if (seen[var]) return;
     seen[var] = 1;
 
     if (!inprocess) {
@@ -228,6 +230,7 @@ void Searcher::normalClMinim()
         uint32_t ID;
         PropByType type = reason.getType();
         if (type == null_clause_t) {
+            //decision clause
             learnt_clause[j++] = learnt_clause[i];
             continue;
         }
@@ -291,6 +294,8 @@ void Searcher::normalClMinim()
             if (!seen[p.var()] && varData[p.var()].level > 0) {
                 learnt_clause[j++] = learnt_clause[i];
                 break;
+            } else {
+                chain.push_back(ID);
             }
         }
     }
@@ -419,9 +424,7 @@ void Searcher::add_lits_to_learnt(
             #endif
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             antec_data.size_longs.push(cl->size());
-            if (!inprocess) {
-                cl->stats.uip1_used++;
-            }
+            if (!inprocess) cl->stats.uip1_used++;
             #endif
 
             //If STATS_NEEDED then bump acitvity of ALL clauses
@@ -453,8 +456,7 @@ void Searcher::add_lits_to_learnt(
         }
 
         case xor_t: {
-            vector<Lit>* xor_reason = gmatrices[confl.get_matrix_num()]->
-                get_reason(confl.get_row_num(), ID);
+            vector<Lit>* xor_reason = gmatrices[confl.get_matrix_num()]->get_reason(confl.get_row_num(), ID);
             lits = xor_reason->data();
             size = xor_reason->size();
             sumAntecedentsLits += size;
@@ -462,17 +464,10 @@ void Searcher::add_lits_to_learnt(
         }
 
         case bnn_t: {
-            vector<Lit>* bnn_reason = get_bnn_reason(
-                bnns[confl.getBNNidx()], p);
+            vector<Lit>* bnn_reason = get_bnn_reason(bnns[confl.getBNNidx()], p);
             lits = bnn_reason->data();
             size = bnn_reason->size();
             sumAntecedentsLits += size;
-//             cout << "BNN to be resolved on: ";
-//             for(uint32_t i = 0; i < size; i++) {
-//                 cout << lits[i] << " ";
-//             }
-//             cout << endl;
-
             break;
         }
 
@@ -517,7 +512,7 @@ void Searcher::add_lits_to_learnt(
 }
 
 template<bool inprocess>
-inline void Searcher::minimize_learnt_clause()
+void Searcher::minimize_learnt_clause()
 {
     const size_t origSize = learnt_clause.size();
 
@@ -607,32 +602,28 @@ void Searcher::create_learnt_clause(PropBy confl)
     pathC = 0;
     int index = trail.size() - 1;
     Lit p = lit_Undef;
-    uint32_t ID;
 
     // Get decision level to go back to
     Lit lit0 = lit_Error;
     switch (confl.getType()) {
         case binary_t : {
             lit0 = failBinLit;
-            ID = confl.getID();
             break;
         }
         case xor_t: {
-            vector<Lit>* cl = gmatrices[confl.get_matrix_num()]->
-                get_reason(confl.get_row_num(), ID);
+            uint32_t ID;
+            auto cl = gmatrices[confl.get_matrix_num()]->get_reason(confl.get_row_num(), ID);
             lit0 = (*cl)[0];
             break;
         }
         case bnn_t : {
-            BNN* bnn = bnns[confl.getBNNidx()];
-            vector<Lit>* cl = get_bnn_reason(bnn, lit_Undef);
+            vector<Lit>* cl = get_bnn_reason(bnns[confl.getBNNidx()], lit_Undef);
             lit0 = (*cl)[0];
             break;
         }
         case clause_t : {
             Clause* cl = cl_alloc.ptr(confl.get_offset());
             lit0 = (*cl)[0];
-            ID = cl->stats.ID;
             break;
         }
         default:
