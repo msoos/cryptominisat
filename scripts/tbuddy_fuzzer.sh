@@ -10,11 +10,11 @@ while [[ ${to} -gt ${i} ]]; do
     # timeout 5s ./cryptominisat5 test_FRAT-${i}.cnf b --distill 0 --scc 0 --varelim 0 --presimp 0 --xor 0 --confbtwsimp 10000000 --occsimp 0 --sls 0 --bva 0 --intree 0 > out_test
     # timeout 5s ./cryptominisat5 test_FRAT-${i}.cnf b --distill 1 --scc 1 --varelim 1 --presimp 1 --xor 0 --confbtwsimp 100 --occsimp 1 --sls 0 --bva 0 --intree 0 > out_test
 
-    ../utils/cnf-utils/xortester.py -s $i --varsmin 45 > test_FRAT-${i}.cnf
+    ../utils/cnf-utils/xortester.py -s $i --varsmin 35 > test_FRAT-${i}.cnf
     # ../utils/cnf-utils/xortester.py -s $i --varsmin 35 > test_FRAT-${i}.cnf
-    timeout 30s ./cryptominisat5 test_FRAT-${i}.cnf b-${i} --distill 1 --scc 1 --varelim 1 --presimp 1 --xor 1 --confbtwsimp 100 --occsimp 1 --sls 0 --bva 0 --intree 0 --maxmatrixcols 10000 --maxmatrixrows 10000 --strmaxt 0 --mustconsolidate 1 > out_test-${i}
+    timeout 30s ./cryptominisat5 test_FRAT-${i}.cnf b-${i} --distill 1 --scc 1 --varelim 1 --presimp 1 --xor 1 --confbtwsimp 1000000 --occsimp 1 --sls 0 --bva 0 --intree 0 --maxmatrixcols 10000 --maxmatrixrows 10000 --strmaxt 0 --mustconsolidate 1 > out_test-${i}
 
-    a=`grep "UNSATIS" out_test`
+    a=`grep "UNSATIS" out_test-${i}`
     if [[ $? -eq 0 ]]; then
         ./frat-rs stat b-${i}
         ./frat-rs elab test_FRAT-${i}.cnf b-${i} ELAB-${i} -v
