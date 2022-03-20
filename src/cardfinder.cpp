@@ -20,6 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
+#include "constants.h"
 #include "cardfinder.h"
 #include "time_mem.h"
 #include "solver.h"
@@ -344,12 +345,7 @@ void CardFinder::find_pairwise_atmost1()
             }
             total_sizes+=lits_in_card.size();
             std::sort(lits_in_card.begin(), lits_in_card.end());
-
-            if (solver->conf.verbosity) {
-                cout << "c found simple card "
-                << print_card(lits_in_card)
-                << " on lit " << l << endl;
-            }
+            verb_print(1, "c found simple card " << print_card(lits_in_card) << " on lit " << l);
 
             //fast push-back
             cards.resize(cards.size()+1);
@@ -388,7 +384,7 @@ void CardFinder::find_cards()
     //print result
     clean_empty_cards();
     if (solver->conf.verbosity) {
-        cout << "c [cardfind] All constraints below:" << endl;
+        verb_print(1, "[cardfind] All constraints below:");
         print_cards(cards);
     }
 

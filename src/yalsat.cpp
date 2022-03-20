@@ -58,10 +58,7 @@ lbool Yalsat::main()
     //It might not work well with few number of variables
     //rnovelty could also die/exit(-1), etc.
     if (solver->nVars() < 50) {
-        if (solver->conf.verbosity) {
-            cout << "c [walksat] too few variables for walksat"
-            << endl;
-        }
+        verb_print(1, "[yalsat] too few variables for yalsat");
         return l_Undef;
     }
     double startTime = cpuTime();
@@ -69,17 +66,12 @@ lbool Yalsat::main()
     if (!init_problem()) {
         //it's actually l_False under assumptions
         //but we'll set the real SAT solver deal with that
-        if (solver->conf.verbosity) {
-            cout << "c [walksat] problem UNSAT under assumptions, returning to main solver"
-            << endl;
-        }
+        verb_print(1, "[yalsat] problem UNSAT under assumptions, returning to main solver");
         return l_Undef;
     }
     //yals_setflipslimit(yals, 5*1000*1000);
     uint64_t mils = solver->conf.yalsat_max_mems*solver->conf.global_timeout_multiplier;
-    if (solver->conf.verbosity) {
-        cout << "c [yalsat] mems limit M: " << mils << endl;
-    }
+    verb_print(1, "[yalsat] mems limit M: " << mils);
     yals_setmemslimit(yals, mils*1000*1000);
     yals_srand(yals, solver->mtrand.randInt() % 1000);
     for(int i = 0; i < (int)solver->nVars(); i++) {
@@ -149,9 +141,7 @@ Yalsat::add_cl_ret Yalsat::add_this_clause(const T& cl)
     }
     if (sz == 0) {
         //it's unsat because of assumptions
-        if (solver->conf.verbosity) {
-            cout << "c [walksat] UNSAT because of assumptions in clause: " << cl << endl;
-        }
+        verb_print(1, "[yalsat] UNSAT because of assumptions in clause: " << cl);
         return add_cl_ret::unsat;
     }
 
@@ -206,16 +196,13 @@ bool Yalsat::init_problem()
 lbool Yalsat::deal_with_solution(int res)
 {
     if (res == 20) {
-        if (solver->conf.verbosity) {
-            cout << "c [yalsat] says UNSAT -- strange" << endl;
-        }
+        verb_print(1, "[yalsat] says UNSAT -- strange");
         return l_Undef;
     }
 
     if (solver->conf.sls_get_phase || res == 10) {
-        if (solver->conf.verbosity) {
-            cout << "c [yalsat] saving best assignment phase -- it had " << yals_minimum(yals) << " clauses unsatisfied" << endl;
-        }
+        verb_print(1, "[yalsat] saving best assignment phase -- it had "
+            << yals_minimum(yals) << " clauses unsatisfied");
 
         for(size_t i = 0; i < solver->nVars(); i++) {
             solver->varData[i].polarity = (yals_deref(yals, i+1) >= 0);
@@ -223,15 +210,10 @@ lbool Yalsat::deal_with_solution(int res)
     }
 
     if (res != 10) {
-        if (solver->conf.verbosity >= 2) {
-            cout << "c [yalsat] ASSIGNMENT NOT FOUND" << endl;
-        }
+        verb_print(2, "[yalsat] ASSIGNMENT NOT FOUND");
         return l_Undef;
     }
 
-    if (solver->conf.verbosity) {
-        cout << "c [yalsat] ASSIGNMENT FOUND" << endl;
-    }
-
+    verb_print(1, "[yalsat] ASSIGNMENT FOUND");
     return l_Undef;
 }

@@ -104,16 +104,13 @@ void GateFinder::find_or_gates_and_update_stats()
         );
     }
 
-    if (solver->conf.verbosity) {
-        cout << "c [occ-gates]"
+    verb_print(1, "[occ-gates]"
         << " found: " << print_value_kilo_mega(runStats.num)
         << " avg-s: " << std::fixed << std::setprecision(1)
         << float_div(runStats.gatesSize, runStats.num)
         /*<< " avg-s: " << std::fixed << std::setprecision(1)
         << float_div(learntGatesSize, numRed)*/
-        << solver->conf.print_times(time_used, time_out, time_remain)
-        << endl;
-    }
+        << solver->conf.print_times(time_used, time_out, time_remain));
 }
 
 struct IncidenceSorter

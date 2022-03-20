@@ -67,12 +67,10 @@ lbool SLS::run_walksat()
         return ret;
     }
 
-    if (solver->conf.verbosity) {
-        cout << "c [sls] would need "
+    verb_print(1, "[sls] would need "
         << std::setprecision(2) << std::fixed << mem_needed_mb
         << " MB but that's over limit of " << std::fixed << maxmem
-        << " MB -- skipping" << endl;
-    }
+        << " MB -- skipping");
 
     return l_Undef;
 }
@@ -87,11 +85,10 @@ lbool SLS::run_yalsat()
         return ret;
     }
 
-    if (solver->conf.verbosity) {
-        cout << "c [sls] would need "
+    verb_print(1, "c [sls] would need "
         << std::setprecision(2) << std::fixed << mem_needed_mb
         << " MB but that's over limit of " << std::fixed << maxmem
-        << " MB -- skipping" << endl;
+        << " MB -- skipping");
     }
 
     return l_Undef;
@@ -107,12 +104,10 @@ lbool SLS::run_ccnr(const uint32_t num_sls_called)
         return ret;
     }
 
-    if (solver->conf.verbosity) {
-        cout << "c [sls] would need "
+    verb_print(1, "c [sls] would need "
         << std::setprecision(2) << std::fixed << mem_needed_mb
         << " MB but that's over limit of " << std::fixed << maxmem
-        << " MB -- skipping" << endl;
-    }
+        << " MB -- skipping");
 
     return l_Undef;
 }

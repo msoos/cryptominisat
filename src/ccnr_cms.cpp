@@ -55,10 +55,7 @@ lbool CMS_ccnr::main(const uint32_t num_sls_called)
     if (solver->nVars() < 50 ||
         solver->binTri.irredBins + solver->longIrredCls.size() < 10
     ) {
-        if (solver->conf.verbosity) {
-            cout << "c [ccnr] too few variables & clauses"
-            << endl;
-        }
+        verb_print(1, "[ccnr] too few variables & clauses");
         return l_Undef;
     }
     double startTime = cpuTime();

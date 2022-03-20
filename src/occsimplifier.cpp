@@ -20,6 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
+#include "constants.h"
 #include "time_mem.h"
 #include <cassert>
 #include <iomanip>
@@ -579,12 +580,8 @@ uint64_t OccSimplifier::calc_mem_usage_of_occur(const vector<ClOffset>& toAdd) c
 
 void OccSimplifier::print_mem_usage_of_occur(uint64_t memUsage) const
 {
-    if (solver->conf.verbosity) {
-        cout
-        << "c [occ] mem usage for occur "
-        << std::setw(6) << memUsage/(1024ULL*1024ULL) << " MB"
-        << endl;
-    }
+    verb_print(1, "[occ] mem usage for occur "
+        << std::setw(6) << memUsage/(1024ULL*1024ULL) << " MB");
 }
 
 void OccSimplifier::print_linkin_data(const LinkInData link_in_data) const
@@ -1315,14 +1312,11 @@ end:
     const bool time_out = (*limit_to_decrease <= 0);
     const double time_remain = float_div(*limit_to_decrease, orig_norm_varelim_time_limit);
 
-    if (solver->conf.verbosity) {
-        cout
-        << "c  #try to eliminate: "<< print_value_kilo_mega(wenThrough) << endl
-        << "c  #var-elim        : "<< print_value_kilo_mega(vars_elimed) << endl
-        << "c  #T-o: " << (time_out ? "Y" : "N") << endl
-        << "c  #T-r: " << std::fixed << std::setprecision(2) << (time_remain*100.0) << "%" << endl
-        << "c  #T  : " << time_used << endl;
-    }
+    verb_print(1, "#try to eliminate: "<< print_value_kilo_mega(wenThrough));
+    verb_print(1, "#var-elim        : "<< print_value_kilo_mega(vars_elimed));
+    verb_print(1, "#T-o: " << (time_out ? "Y" : "N"));
+    verb_print(1, "#T-r: " << std::fixed << std::setprecision(2) << (time_remain*100.0) << "%");
+    verb_print(1, "#T  : " << time_used);
     if (solver->conf.verbosity) {
         if (solver->conf.verbosity >= 3)
             runStats.print(solver->nVarsOuter(), this);
@@ -1637,13 +1631,10 @@ bool OccSimplifier::occ_rem_with_gates()
     //Update global stats
     const double time_used = cpuTime() - myTime;
     //const bool time_out = (*limit_to_decrease <= 0);
-    if (solver->conf.verbosity) {
-        cout
-        << "c [occ-gate-based-lit-rem]"
+    verb_print(1, "[occ-gate-based-lit-rem]"
         << " lit-rem: " << shortened
-        << solver->conf.print_times(time_used, false)
-        << endl;
-    }
+        << solver->conf.print_times(time_used, false));
+
     if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(
             solver

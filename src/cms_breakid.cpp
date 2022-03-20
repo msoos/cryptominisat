@@ -20,6 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
+#include "constants.h"
 #include "cms_breakid.h"
 #include "solver.h"
 #include "clausecleaner.h"
@@ -200,12 +201,8 @@ bool BreakID::doit()
     num_lits_in_graph = 0;
 
     if (!solver->conf.doStrSubImplicit) {
-        if (solver->conf.verbosity) {
-            cout
-            << "c [breakid] cannot run BreakID without implicit submsumption, "
-            << "it would find too many (bad) symmetries"
-            << endl;
-        }
+        verb_print(1, [breakid] cannot run BreakID without implicit submsumption, "
+            << "it would find too many (bad) symmetries");
         return false;
     }
 

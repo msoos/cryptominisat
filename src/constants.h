@@ -109,7 +109,7 @@ THE SOFTWARE.
 
 // verb_print
 #define verb_print(a, x) \
-    do { if (solver->conf.verbosity >= a) {std::cout << x << std::endl;} } while (0)
+    do { if (solver->conf.verbosity >= a) {std::cout << "c " << x << std::endl;} } while (0)
 /////
 
 // debug watched
