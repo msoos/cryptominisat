@@ -345,7 +345,7 @@ void CardFinder::find_pairwise_atmost1()
             }
             total_sizes+=lits_in_card.size();
             std::sort(lits_in_card.begin(), lits_in_card.end());
-            verb_print(1, "c found simple card " << print_card(lits_in_card) << " on lit " << l);
+            verb_print(1, "found simple card " << print_card(lits_in_card) << " on lit " << l);
 
             //fast push-back
             cards.resize(cards.size()+1);

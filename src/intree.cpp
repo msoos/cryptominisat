@@ -95,7 +95,7 @@ bool InTree::check_timeout_due_to_hyperbin()
     if (solver->timedOutPropagateFull
         && !(solver->drat->enabled() || solver->conf.simulate_drat)
     ) {
-        verb_print(1, "c [intree] intra-propagation timeout, turning off OTF hyper-bin&trans-red");
+        verb_print(1, "[intree] intra-propagation timeout, turning off OTF hyper-bin&trans-red");
         solver->conf.do_hyperbin_and_transred = false;
         return true;
     }

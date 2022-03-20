@@ -120,7 +120,7 @@ bool MatrixFinder::find_matrices(bool& can_detach, bool simplify_xors)
         finder.move_xors_without_connecting_vars_to_unused();
     }
     finder.clean_equivalent_xors(solver->xorclauses);
-    verb_print(1, "c [matrix] unused xors from cleaning: " << solver->xorclauses_unused.size());
+    verb_print(1, "[matrix] unused xors from cleaning: " << solver->xorclauses_unused.size());
 
     for(const auto& x: solver->xorclauses_unused)
         clash_vars_unused.insert(x.clash_vars.begin(), x.clash_vars.end());
@@ -206,7 +206,7 @@ bool MatrixFinder::find_matrices(bool& can_detach, bool simplify_xors)
 
     const bool time_out =  false;
     const double time_used = cpuTime() - myTime;
-    verb_print(1, "c [matrix] Using " << numMatrixes
+    verb_print(1, "[matrix] Using " << numMatrixes
         << " matrices recoverd from " << solver->xorclauses.size() << " xors"
         << solver->conf.print_times(time_used, time_out));
 
@@ -328,12 +328,12 @@ uint32_t MatrixFinder::setMatrixes()
 
         //Override in case sampling vars ratio is high
         if (solver->conf.sampling_vars) {
-            verb_print(1, "c [matrix] ratio_sampling: " << ratio_sampling);
+            verb_print(1, "[matrix] ratio_sampling: " << ratio_sampling);
             if (ratio_sampling >= 0.6) { //TODO Magic constant
-                verb_print(1, "c [matrix] sampling ratio good -> set usage to YES");
+                verb_print(1, "[matrix] sampling ratio good -> set usage to YES");
                 use_matrix = true;
             } else {
-                verb_print(1, "c [matrix] sampling ratio bad -> set usage to NO");
+                verb_print(1, "[matrix] sampling ratio bad -> set usage to NO");
                 use_matrix = false;
             }
         }
