@@ -138,7 +138,7 @@ class EGaussian {
         uint32_t ID;
     };
     void xor_in_bdd(const uint32_t a, const uint32_t b);
-    tbdd::xor_constraint* bdd_create(const uint32_t row_n);
+    tbdd::xor_constraint* bdd_create(const uint32_t row_n, const uint32_t expected_size);
     void create_unit_bdd_reason(const uint32_t row_n);
     vector<BDDCl> frat_ids;
     tbdd::xor_constraint* unsat_bdd = NULL; //set if UNSAT is from GJ

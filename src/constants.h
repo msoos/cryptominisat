@@ -91,8 +91,10 @@ THE SOFTWARE.
 #ifdef VERBOSE_DEBUG
 #define VERBOSE_PRINT(x) \
     do { std::cout << x << std::endl; } while (0)
+#define VERBOSE_DEBUG_DO(x) do { x; } while (0)
 #else
 #define VERBOSE_PRINT(x) do { } while (0)
+#define VERBOSE_DEBUG_DO(x) do { } while (0)
 #endif
 /////
 

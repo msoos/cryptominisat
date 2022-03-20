@@ -186,6 +186,7 @@ bool Solver::add_xor_clause_inter(
     , bool addDrat
     , bool red
 ) {
+    VERBOSE_PRINT("add_xor_clause_inter: " << lits << " rhs: " << rhs);
     assert(ok);
     assert(!attach || qhead == trail.size());
     assert(decisionLevel() == 0);
@@ -219,9 +220,7 @@ bool Solver::add_xor_clause_inter(
 
     //cout << "without rhs is: " << ps << endl;
     add_every_combination_xor(ps, attach, addDrat, red);
-    if (ps.size() > 2) {
-        xorclauses.push_back(Xor(ps, rhs, tmp_xor_clash_vars));
-    }
+    if (ps.size() > 2) xorclauses.push_back(Xor(ps, rhs, tmp_xor_clash_vars));
 
     return ok;
 }
@@ -232,7 +231,7 @@ void Solver::add_every_combination_xor(
     , const bool addDrat
     , const bool red
 ) {
-    //cout << "add_every_combination got: " << lits << endl;
+    VERBOSE_PRINT("add_every_combination: " << lits);
 
     size_t at = 0;
     size_t num = 0;
@@ -283,7 +282,7 @@ void Solver::add_xor_clause_inter_cleaned_cut(
     , const bool addDrat
     , const bool red
 ) {
-    //cout << "xor_inter_cleaned_cut got: " << lits << endl;
+    VERBOSE_PRINT("add_xor_clause_inter_cleaned_cut: " << lits);
     vector<Lit> new_lits;
     for(size_t i = 0; i < (1ULL<<lits.size()); i++) {
         unsigned bits_set = num_bits_set(i, lits.size());

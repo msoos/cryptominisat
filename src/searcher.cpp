@@ -3101,6 +3101,7 @@ inline Lit Searcher::pickBranchLit()
         assert(solver->varData[next.var()].removed == Removed::none);
     }
     #endif
+    VERBOSE_PRINT("Picked decision var: " << next);
 
     return next;
 }

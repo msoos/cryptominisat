@@ -278,15 +278,9 @@ bool VarReplacer::perform_replace()
     attach_delayed_attach();
 
     //Replace XORs
-    if (!replace_xor_clauses(solver->xorclauses)) {
-        goto end;
-    }
-    if (!replace_xor_clauses(solver->xorclauses_unused)) {
-        goto end;
-    }
-
-    //nothing to replace on XORs in GJE
-    assert(solver->gmatrices.empty());
+    if (!replace_xor_clauses(solver->xorclauses)) goto end;
+    if (!replace_xor_clauses(solver->xorclauses_unused)) goto end;
+    assert(solver->gmatrices.empty() && "Cannot replace vars inside GJ elim");
 
     for(auto& v: solver->removed_xorclauses_clash_vars) {
         v = get_var_replaced_with_fast(v);
@@ -357,7 +351,7 @@ void VarReplacer::delete_frat_cls()
 bool VarReplacer::replace_xor_clauses(vector<Xor>& xors)
 {
     for(Xor& x: xors) {
-        assert(x.bdd == NULL); //FRAT could will fail here, actually...
+        assert(x.bdd == NULL); //FRAT could fail here maybe? No idea.
         uint32_t j = 0;
         for(uint32_t i = 0; i < x.clash_vars.size(); i++) {
             uint32_t v = x.clash_vars[i];

@@ -1336,9 +1336,6 @@ lbool Main::multi_solutions()
                 << std::setw(6) << current_nr_of_solutions
                 << endl;
             }
-            #ifdef VERBOSE_DEBUG_RECONSTRUCT
-            solver->print_removed_vars();
-            #endif
 
             if (!dont_ban_solutions) {
                 ban_found_solution();

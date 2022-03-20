@@ -159,9 +159,10 @@ void PropEngine::detach_modified_clause(
 
 PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
 {
-    VERBOSE_PRINT("Gauss searcher::gauss_jordan_elim called, declevel: " << decisionLevel());
-    if (gmatrices.empty()) return PropBy();
+    VERBOSE_PRINT("PropEngine::gauss_jordan_elim called, declev: "
+        << decisionLevel() << " lit to prop: " << p);
 
+    if (gmatrices.empty()) return PropBy();
     for(uint32_t i = 0; i < gqueuedata.size(); i++) {
         if (gqueuedata[i].disabled || !gmatrices[i]->is_initialized()) continue;
         gqueuedata[i].reset();
@@ -174,7 +175,6 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
     GaussWatched* i = ws.begin();
     GaussWatched* j = i;
     const GaussWatched* end = ws.end();
-    VERBOSE_PRINT("New gauss lit to prop: " << p);
 
     for (; i != end; i++) {
         if (gqueuedata[i->matrix_num].disabled || !gmatrices[i->matrix_num]->is_initialized())
@@ -209,26 +209,12 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
         }
     }
 
-    #ifdef SLOW_DEBUG
-    if (!confl_in_gauss) {
-        for (size_t g = 0; g < gqueuedata.size(); g++) {
-            if (gqueuedata[g].engaus_disable)
-                continue;
-
-            assert(solver->gqhead == solver->trail.size());
-            gmatrices[g]->check_invariants();
-        }
-    }
-    #endif
-
     for (GaussQData& gqd: gqueuedata) {
         if (gqd.disabled) continue;
 
         //There was a conflict but this is not that matrix.
         //Just skip.
-        if (confl_in_gauss && gqd.ret != gauss_res::confl) {
-            continue;
-        }
+        if (confl_in_gauss && gqd.ret != gauss_res::confl) continue;
 
         switch (gqd.ret) {
             case gauss_res::confl :{
@@ -739,6 +725,7 @@ PropBy PropEngine::propagate_any_order()
             *j++ = *i++;
         }
         ws.shrink_(end-j);
+        VERBOSE_PRINT("prop went through watchlist of " << p);
 
         //distillation would need to generate TBDD proofs to simplify clauses with GJ
         if (confl.isNULL() && !distill_use) {
@@ -747,6 +734,15 @@ PropBy PropEngine::propagate_any_order()
 
         qhead++;
     }
+
+    #ifdef SLOW_DEBUG
+    if (confl.isNULL() && !distill_use) {
+        for (size_t g = 0; g < gqueuedata.size(); g++) {
+            if (gqueuedata[g].disabled) continue;
+            gmatrices[g]->check_invariants();
+        }
+    }
+    #endif
 
 // For BNN debugging
 //     if (confl.isNULL()) {

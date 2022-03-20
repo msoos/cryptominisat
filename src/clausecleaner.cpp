@@ -458,7 +458,9 @@ bool ClauseCleaner::clean_one_xor(Xor& x)
     if (j < x.size()) {
         x.resize(j);
         x.rhs = rhs;
-        //x.create_bdd_xor();
+        TBUDDY_DO(delete x.bdd);
+        TBUDDY_DO(x.bdd = NULL);
+        TBUDDY_DO(x.create_bdd_xor());
         VERBOSE_PRINT("cleaned XOR: " << x);
     }
 
@@ -475,9 +477,6 @@ bool ClauseCleaner::clean_one_xor(Xor& x)
 
         case 1: {
             assert(false); // should have alrady propagated
-//             assert(!solver->drat->enabled()); // "FRAT needs ID);
-//             bool ret = solver->fully_enqueue_this(Lit(x[0], !x.rhs));
-//             release_assert(ret); // should have propagated already, must not fail
             return false;
         }
         case 2:
@@ -491,11 +490,7 @@ bool ClauseCleaner::clean_one_xor(Xor& x)
 bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors)
 {
     assert(solver->ok);
-    #ifdef VERBOSE_DEBUG
-    for(Xor& x : xors) {
-        cout << "orig XOR: " << x << endl;
-    }
-    #endif
+    VERBOSE_DEBUG_DO(for(Xor& x : xors) cout << "orig XOR: " << x << endl);
 
     size_t last_trail = std::numeric_limits<size_t>::max();
     while(last_trail != solver->trail_size()) {
@@ -523,6 +518,7 @@ bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors)
         }
         xors.resize(j);
     }
+    VERBOSE_PRINT("clean_xor_clauses() finished");
     return solver->okay();
 }
 

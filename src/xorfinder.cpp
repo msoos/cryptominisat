@@ -221,10 +221,11 @@ void XorFinder::find_xors()
     }
     solver->xor_clauses_updated = true;
 
-    SLOW_DEBUG_DO(
-        for(const Xor& x: solver->xorclauses)
-            for(uint32_t v: x) {
-                assert(solver->varData[v].removed == Removed::none));
+    #ifdef SLOW_DEBUG
+    for(const Xor& x: solver->xorclauses)
+        for(uint32_t v: x)
+            assert(solver->varData[v].removed == Removed::none);
+    #endif
 }
 
 void XorFinder::print_found_xors()

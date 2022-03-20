@@ -254,7 +254,7 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
     }
 
     #ifdef VERBOSE_DEBUG_RECONSTRUCT
-    cout << "Number of blocked clauses:" << blockedClauses.size() << endl;
+    cout << "Number of blocked clauses: " << blockedClauses.size() << endl;
     print_blocked_clauses_reverse();
     #endif
 
@@ -1748,10 +1748,8 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 solver->xor_clauses_updated = true;
 
                 //Get rid of XOR clauses
-                #ifdef USE_TBUDDY
-                for(auto const& x: solver->xorclauses) assert(x.bdd == NULL);
-                for(auto const& x: solver->xorclauses_unused) assert(x.bdd == NULL);
-                #endif
+                TBUDDY_DO(for(auto const& x: solver->xorclauses) assert(x.bdd == NULL));
+                TBUDDY_DO(for(auto const& x: solver->xorclauses_unused) assert(x.bdd == NULL));
                 solver->xorclauses.clear();
                 solver->xorclauses_unused.clear();
 
