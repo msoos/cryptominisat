@@ -430,9 +430,10 @@ void EGaussian::eliminate() {
     //print_matrix();
 }
 
-vector<Lit>* EGaussian::get_reason(uint32_t row, uint32_t& out_ID)
+vector<Lit>* EGaussian::get_reason(uint32_t row, int32_t& out_ID)
 {
     if (!xor_reasons[row].must_recalc) {
+        out_ID = xor_reasons[row].ID;
         return &(xor_reasons[row].reason);
     }
     vector<Lit>& tofill = xor_reasons[row].reason;
@@ -461,6 +462,7 @@ vector<Lit>* EGaussian::get_reason(uint32_t row, uint32_t& out_ID)
     #endif
 
     xor_reasons[row].must_recalc = false;
+    xor_reasons[row].ID = out_ID;
     return &tofill;
 }
 
@@ -569,7 +571,7 @@ gret EGaussian::init_adjust_matrix()
                     ilist out = ilist_new(1);
                     ilist_resize(out, 1);
                     out[0] = (tmp_clause[0].var()+1) * (tmp_clause[0].sign() ? -1 :1);
-                    uint32_t ID = assert_clause(out);
+                    const int32_t ID = assert_clause(out);
                     frat_ids.push_back(BDDCl{out, ID});
                     VERBOSE_PRINT("ID of this unit: " << ID << " unit is: " << tmp_clause);
                     delete bdd;
@@ -613,7 +615,7 @@ gret EGaussian::init_adjust_matrix()
                         out[0] = (tmp_clause[0].var()+1)*-1;
                         out[1] = (tmp_clause[1].var()+1);
                     }
-                    const uint32_t ID = assert_clause(out);
+                    const int32_t ID = assert_clause(out);
                     frat_ids.push_back(BDDCl{out, ID});
                     VERBOSE_PRINT("ID of bin XOR found (part 1): " << ID);
 
@@ -626,7 +628,7 @@ gret EGaussian::init_adjust_matrix()
                         out2[0] = (tmp_clause[0].var()+1);
                         out2[1] = (tmp_clause[1].var()+1)*-1;
                     }
-                    const uint32_t ID2 = assert_clause(out2);
+                    const int32_t ID2 = assert_clause(out2);
                     frat_ids.push_back(BDDCl{out2, ID2});
                     VERBOSE_PRINT("ID of bin XOR found (part 2): " << ID2);
                     delete bdd;
@@ -700,7 +702,7 @@ void EGaussian::delete_gausswatch(
 
 uint32_t EGaussian::get_max_level(const GaussQData& gqd, const uint32_t row_n)
 {
-    uint32_t ID;
+    int32_t ID;
     auto cl = get_reason(row_n, ID);
     uint32_t nMaxLevel = gqd.currLevel;
     uint32_t nMaxInd = 1;
@@ -960,7 +962,7 @@ void EGaussian::prop_lit(
     #ifdef USE_TBUDDY
     if (lev == 0 && solver->drat->enabled()) {
         //we produce the reason, because we need it immediately, since it's toplevel
-        uint32_t out_ID;
+        int32_t out_ID;
         VERBOSE_PRINT("--> BDD reason needed in prop due to lev 0 enqueue");
         [[maybe_unused]] auto const x = get_reason(row_i, out_ID);
 

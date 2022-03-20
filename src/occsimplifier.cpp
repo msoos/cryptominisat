@@ -275,14 +275,12 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
             //built clause, reached marker, "lits" is now valid
             if (it->at(at, blkcls) == lit_Undef) {
                 if (!satisfied) {
-                    bool var_set = extender->addClause(lits, blockedOn.var());
+                    [[maybe_unused]] bool var_set = extender->addClause(lits, blockedOn.var());
 
                     #ifndef DEBUG_VARELIM
                     //all should be satisfied in fact
                     //no need to go any further
-                    if (var_set) {
-                        break;
-                    }
+                    if (var_set) break;
                     #endif
                 }
                 satisfied = false;
@@ -2410,7 +2408,7 @@ void OccSimplifier::remove_by_drat_recently_blocked_clauses(size_t origBlockedSi
         while(at < blockedClauses[i].size()) {
             const Lit l = blockedClauses[i].at(at, blkcls);
             if (l == lit_Undef) {
-                const uint32_t ID = newly_blocked_cls_IDs[at_ID++];
+                const int32_t ID = newly_blocked_cls_IDs[at_ID++];
                 (*solver->drat) << del << ID << lits << fin;
                 lits.clear();
             } else {

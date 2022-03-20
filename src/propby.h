@@ -50,7 +50,7 @@ class PropBy
         //3: xor
         //4: bnn
         uint32_t data2:29;
-        uint32_t ID;
+        int32_t ID;
 
     public:
         PropBy() :
@@ -90,7 +90,7 @@ class PropBy
         }
 
         //Binary prop
-        PropBy(const Lit lit, const bool redStep, uint32_t _ID) :
+        PropBy(const Lit lit, const bool redStep, int32_t _ID) :
             red_step(redStep)
             , data1(lit.toInt())
             , type(binary_t)
@@ -157,7 +157,7 @@ class PropBy
             return red_step;
         }
 
-        uint64_t getID() const
+        int32_t getID() const
         {
             return ID;
         }

@@ -239,7 +239,7 @@ class BinaryClause {
         Lit lit1;
         Lit lit2;
         bool red;
-        uint32_t ID;
+        int32_t ID;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const BinaryClause val)

@@ -68,7 +68,7 @@ public:
         return false;
     }
 
-    virtual Drat& operator<<(const uint32_t)
+    virtual Drat& operator<<(const int32_t)
     {
         return *this;
     }
@@ -137,7 +137,7 @@ public:
         sumConflicts = _sumConflicts;
     }
 
-    virtual Drat& operator<<(const uint32_t clauseID) override
+    virtual Drat& operator<<(const int32_t clauseID) override
     {
         if (must_delete_next) {
             byteDRUPdID(clauseID);
@@ -384,7 +384,7 @@ private:
         }
     }
 
-    void byteDRUPaID(const uint32_t id)
+    void byteDRUPaID(const int32_t id)
     {
         if (bindrat) {
             for(unsigned i = 0; i < 6; i++) {
@@ -393,13 +393,13 @@ private:
             }
         } else {
             uint32_t num = sprintf(
-                (char*)buf_ptr, "%lld ", id);
+                (char*)buf_ptr, "%d ", id);
             buf_ptr+=num;
             buf_len+=num;
         }
     }
 
-    void byteDRUPdID(const uint32_t id)
+    void byteDRUPdID(const int32_t id)
     {
         if (bindrat) {
             for(unsigned i = 0; i < 6; i++) {
@@ -408,7 +408,7 @@ private:
             }
         } else {
             uint32_t num = sprintf(
-                (char*)del_ptr, "%u ", id);
+                (char*)del_ptr, "%d ", id);
             del_ptr+=num;
             del_len+=num;
         }

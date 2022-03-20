@@ -252,7 +252,7 @@ class Searcher : public HyperEngine
         // Learning
         /////////////////////
         vector<Lit> learnt_clause;
-        vector<uint32_t> chain;
+        vector<int32_t> chain;
         vector<Lit> decision_clause;
         template<bool inprocess>
         void analyze_conflict(
@@ -303,7 +303,7 @@ class Searcher : public HyperEngine
             , const uint32_t size_before_minim
             , const bool is_decision
             , const uint32_t connects_num_communities
-            , uint32_t& ID
+            , int32_t& ID
         );
 
         /////////////////////

@@ -58,6 +58,7 @@ struct XorReason
 {
     bool must_recalc = true;
     Lit propagated = lit_Undef;
+    int32_t ID = 0;
     vector<Lit> reason;
 };
 
@@ -80,7 +81,7 @@ class EGaussian {
         GaussQData& gqd
     );
 
-    vector<Lit>* get_reason(uint32_t row, uint32_t& out_ID);
+    vector<Lit>* get_reason(uint32_t row, int32_t& out_ID);
 
     // when basic variable is touched , eliminate one col
     void eliminate_col(
@@ -135,7 +136,7 @@ class EGaussian {
     #ifdef USE_TBUDDY
     struct BDDCl {
         ilist cl;
-        uint32_t ID;
+        int32_t ID;
     };
     void xor_in_bdd(const uint32_t a, const uint32_t b);
     tbdd::xor_constraint* bdd_create(const uint32_t row_n, const uint32_t expected_size);

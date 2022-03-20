@@ -400,7 +400,7 @@ inline void VarReplacer::updateBin(
 
     //Two lits are the same in BIN
     if (lit1 == lit2) {
-        uint32_t ID = ++solver->clauseID;
+        int32_t ID = ++solver->clauseID;
         (*solver->drat) << add << ID << lit2 << fin;
         delayedEnqueue.push_back(make_pair(lit2, ID));
         remove = true;
@@ -937,7 +937,7 @@ bool VarReplacer::replace(
         return handleAlreadyReplaced(lit1, lit2);
     }
 
-    uint32_t ID = ++solver->clauseID;
+    int32_t ID = ++solver->clauseID;
     uint64_t ID2 = ++solver->clauseID;
     (*solver->drat)
     << add << ID << ~lit1 << lit2 << fin

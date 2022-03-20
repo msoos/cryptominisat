@@ -156,6 +156,7 @@ inline void Searcher::add_lit_to_learnt(
     #endif
 
     if (varData[var].level == 0) {
+        assert(unit_cl_IDs[var] != 0);
         chain.push_back(unit_cl_IDs[var]);
         return;
     }
@@ -227,7 +228,7 @@ void Searcher::normalClMinim()
         const PropBy& reason = varData[learnt_clause[i].var()].reason;
         size_t size;
         Lit *lits = NULL;
-        uint32_t ID;
+        int32_t ID;
         PropByType type = reason.getType();
         if (type == null_clause_t) {
             //decision clause
@@ -380,7 +381,7 @@ void Searcher::add_lits_to_learnt(
 
     Lit* lits = NULL;
     size_t size = 0;
-    uint32_t ID;
+    int32_t ID;
     switch (confl.getType()) {
         case binary_t : {
             ID = confl.getID();
@@ -459,7 +460,7 @@ void Searcher::add_lits_to_learnt(
         }
 
         case xor_t: {
-            vector<Lit>* xor_reason = gmatrices[confl.get_matrix_num()]->get_reason(confl.get_row_num(), ID);
+            auto xor_reason = gmatrices[confl.get_matrix_num()]->get_reason(confl.get_row_num(), ID);
             lits = xor_reason->data();
             size = xor_reason->size();
             sumAntecedentsLits += size;
@@ -471,6 +472,8 @@ void Searcher::add_lits_to_learnt(
             lits = bnn_reason->data();
             size = bnn_reason->size();
             sumAntecedentsLits += size;
+            ID = 0; // so we don't get a warning, assert below
+            assert(!drat->enabled());
             break;
         }
 
@@ -614,7 +617,7 @@ void Searcher::create_learnt_clause(PropBy confl)
             break;
         }
         case xor_t: {
-            uint32_t ID;
+            int32_t ID;
             auto cl = gmatrices[confl.get_matrix_num()]->get_reason(confl.get_row_num(), ID);
             lit0 = (*cl)[0];
             break;
@@ -704,7 +707,7 @@ void Searcher::simple_create_learnt_clause(
                     c = cl->data();
                     sz = cl->size();
                 } else {
-                    uint32_t ID;
+                    int32_t ID;
                     assert(confl.getType() == xor_t);
                     vector<Lit>* cl = gmatrices[confl.get_matrix_num()]->
                     get_reason(confl.get_row_num(), ID);
@@ -971,7 +974,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
         //Must have a reason
         assert(!reason.isNULL());
 
-        uint32_t ID;
+        int32_t ID;
         size_t size;
         Lit* lits = NULL;
         switch (type) {
@@ -1114,7 +1117,7 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
                 assert(varData[x].level > 0);
                 out_conflict.push_back(~trail[i].lit);
             } else {
-                uint32_t ID;
+                int32_t ID;
                 switch(reason.getType()) {
                     case PropByType::clause_t : {
                         const Clause& cl = *cl_alloc.ptr(reason.get_offset());
@@ -1593,7 +1596,7 @@ inline void Searcher::print_learning_debug_info() const
     return;
     #else
     cout
-    << "Learning:" << learnt_clause
+    << "Learning: " << learnt_clause
     << endl
     << "reverting var " << learnt_clause[0].var()+1
     << " to " << !learnt_clause[0].sign()
@@ -1751,7 +1754,7 @@ Clause* Searcher::handle_last_confl(
     [[maybe_unused]] const uint32_t size_before_minim,
     [[maybe_unused]] const bool is_decision,
     [[maybe_unused]] const uint32_t connects_num_communities,
-    uint32_t& ID
+    int32_t& ID
 ) {
     #ifdef STATS_NEEDED
     bool to_dump = false;
@@ -1946,7 +1949,7 @@ bool Searcher::handle_conflict(PropBy confl)
     print_learning_debug_info();
     assert(value(learnt_clause[0]) == l_Undef);
     glue = std::min<uint32_t>(glue, std::numeric_limits<uint32_t>::max());
-    uint32_t ID;
+    int32_t ID;
     Clause* cl = handle_last_confl(
         glue,
         old_decision_level,
@@ -3679,7 +3682,7 @@ ConflictData Searcher::find_conflict_level(PropBy& pb)
         Lit* clause = NULL;
         uint32_t size = 0;
         ClOffset offs;
-        uint32_t ID;
+        int32_t ID;
         switch(pb.getType()) {
             case PropByType::clause_t: {
                 offs = pb.get_offset();

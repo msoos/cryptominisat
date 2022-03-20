@@ -428,7 +428,7 @@ Clause* Solver::add_clause_int(
         *finalLits = ps;
     }
 
-    uint32_t ID;
+    int32_t ID;
     if (remove_drat) {
         assert(cl_stats);
         assert(drat_first == lit_Undef);

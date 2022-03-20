@@ -87,7 +87,9 @@ class DataSync
         void rebuild_bva_map_if_needed();
 
 
+        #ifdef USE_GPU
         uint32_t trailCopiedUntil = 0;
+        #endif
         int thread_id = -1;
 
         //stuff to sync

@@ -849,7 +849,7 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
                 }
             } else { //strengthen
                 lbool val = solver->value(subsLits[j]);
-                const uint32_t ID = ++solver->clauseID;
+                const int32_t ID = ++solver->clauseID;
                 if (val == l_False) {
                     (*solver->drat) << add << ID << subsLits[j] << fin;
                     (*solver->drat) << add << ++solver->clauseID << fin;

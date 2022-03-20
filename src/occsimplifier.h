@@ -597,7 +597,7 @@ private:
     vector<Lit> blkcls;
     vector<BlockedClauses> blockedClauses; ///<maps var(outer!!) to postion in blockedClauses
     vector<uint32_t> blk_var_to_cls;
-    vector<uint64_t> newly_blocked_cls_IDs; // temporary storage for newly blocked cls' IDs
+    vector<int32_t> newly_blocked_cls_IDs; // temporary storage for newly blocked cls' IDs
     bool blockedMapBuilt;
     void buildBlockedMap();
     void cleanBlockedClauses();

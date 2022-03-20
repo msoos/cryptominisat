@@ -145,7 +145,7 @@ struct ClauseStats
         uint32_t hash_val; //used in BreakID to remove equivalent clauses
     };
     uint32_t last_touched = 0;
-    uint32_t ID;
+    int32_t ID;
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
     uint32_t extra_pos = std::numeric_limits<uint32_t>::max();

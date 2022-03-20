@@ -360,8 +360,8 @@ public:
     that contained "lit, ~lit". So "lit" must be set to a value
     Contains OUTER variables */
     vector<bool> undef_must_set_vars;
-    vector<uint32_t> unit_cl_IDs;
-    uint32_t unsat_cl_ID = 0;
+    vector<int32_t> unit_cl_IDs;
+    int32_t unsat_cl_ID = 0;
 
 protected:
     virtual void new_var(
