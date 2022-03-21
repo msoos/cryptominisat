@@ -1085,18 +1085,20 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
                         // update in this row non-basic variable
                         row_to_var_non_resp[row_i] = p;
 
-                        #ifdef USE_TBUDDY
-                        // have to get reason if toplevel (reason will never be asked)
-                        if (solver->decisionLevel() == 0 && solver->drat->enabled()) {
-                            VERBOSE_PRINT("-> conflict at toplevel during find_truths");
-                            unsat_bdd = bdd_create(row_i, numeric_limits<uint32_t>::max());
-                        }
-                        #endif
-
                         xor_reasons[row_i].must_recalc = true;
                         xor_reasons[row_i].propagated = lit_Undef;
                         gqd.confl = PropBy(matrix_no, row_i);
                         gqd.ret = gauss_res::confl;
+
+                        #ifdef USE_TBUDDY
+                        // have to get reason if toplevel (reason will never be asked)
+                        if (solver->decisionLevel() == 0 && solver->drat->enabled()) {
+                            VERBOSE_PRINT("-> conflict at toplevel during eliminate_col");
+                            int32_t ID;
+                            get_reason(row_i, ID);
+                        }
+                        #endif
+
                         break;
                     }
                     case gret::prop: {
