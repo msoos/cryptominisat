@@ -443,12 +443,15 @@ vector<Lit>* EGaussian::get_reason(const uint32_t row, int32_t& out_ID)
     }
 
     // Clean up previous one
-    if (xor_reasons[row].ID != 0) {
+    #ifdef USE_TBUDDY
+    if (xor_reasons[row].ID != 0 && solver->drat->enabled()) {
+        solver->drat->flush();
         delete xor_reasons[row].constr;
         one_len_ilist[0] = xor_reasons[row].ID;
         VERBOSE_PRINT("calling tbuddy to delete clause ID " << xor_reasons[row].ID);
         delete_clauses(one_len_ilist);
     }
+    #endif
 
     vector<Lit>& tofill = xor_reasons[row].reason;
     tofill.clear();
@@ -463,6 +466,7 @@ vector<Lit>* EGaussian::get_reason(const uint32_t row, int32_t& out_ID)
 
     #ifdef USE_TBUDDY
     if (solver->drat->enabled()) {
+        solver->drat->flush();
         VERBOSE_PRINT("Expecting tbuddy to prove: " << tofill);
         xor_reasons[row].constr = bdd_create(row, tofill.size());
         ilist_resize(ilist_tmp, tofill.size());

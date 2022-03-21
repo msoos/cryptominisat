@@ -1798,9 +1798,12 @@ void Solver::write_final_frat_clauses()
     if (!drat->enabled()) return;
     assert(decisionLevel() == 0);
 
-    if (!okay()) {
-        *drat << finalcl << unsat_cl_ID << fin;
-    }
+    drat->flush();
+    TBUDDY_DO(for(auto& g: gmatrices) g->finalize_frat());
+    TBUDDY_DO(for(const auto& x: xorclauses_unused) assert(x.bdd == NULL));
+    TBUDDY_DO(tbdd_done());
+    if (varReplacer) varReplacer->delete_frat_cls();
+    if (!okay()) *drat << finalcl << unsat_cl_ID << fin;
 
     for(uint32_t i = 0; i < nVars(); i ++) {
         if (unit_cl_IDs[i] != 0) {
@@ -1820,8 +1823,6 @@ void Solver::write_final_frat_clauses()
         }
     }
 
-    if (varReplacer) varReplacer->delete_frat_cls();
-
     for(const auto& cls: longRedCls) {
         for(const auto offs: cls) {
             write_one_final_frat_cl(offs);
@@ -1830,10 +1831,8 @@ void Solver::write_final_frat_clauses()
     for(const auto& offs: longIrredCls) {
         write_one_final_frat_cl(offs);
     }
+
     drat->flush();
-    TBUDDY_DO(for(auto& g: gmatrices) g->finalize_frat());
-    TBUDDY_DO(for(const auto& x: xorclauses_unused) assert(x.bdd == NULL));
-    TBUDDY_DO(tbdd_done());
 }
 
 void Solver::write_one_final_frat_cl(const ClOffset offs)
