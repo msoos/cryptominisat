@@ -676,10 +676,7 @@ bool VarReplacer::handleUpdatedClause(
         solver->litStats.irredLits -= origSize;
     }
     delayed_attach_or_free.push_back(&c);
-
-    #ifdef VERBOSE_DEBUG
-    cout << "clause after replacing: " << c << endl;
-    #endif
+    VERBOSE_PRINT("clause after var-replacement: " << c);
 
     if (satisfied) {
         (*solver->drat) << findelay;

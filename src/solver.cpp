@@ -1720,6 +1720,7 @@ lbool Solver::solve_with_assumptions(
         drat->flush();
         #ifdef USE_TBUDDY
         tbdd_init_frat(drat->getFile(), v, &clauseID);
+        //tbdd_set_verbose(3);
         bdd_error_hook(my_bddinthandler);
         #endif
     }
@@ -1803,7 +1804,8 @@ void Solver::write_final_frat_clauses()
     TBUDDY_DO(for(const auto& x: xorclauses_unused) assert(x.bdd == NULL));
     TBUDDY_DO(tbdd_done());
     if (varReplacer) varReplacer->delete_frat_cls();
-    if (!okay()) *drat << finalcl << unsat_cl_ID << fin;
+    // -1 indicates tbuddy already added the empty clause
+    if (!okay() && unsat_cl_ID != -1) *drat << finalcl << unsat_cl_ID << fin;
 
     for(uint32_t i = 0; i < nVars(); i ++) {
         if (unit_cl_IDs[i] != 0) {

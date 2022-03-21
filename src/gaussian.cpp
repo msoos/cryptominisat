@@ -225,10 +225,10 @@ void EGaussian::fill_matrix() {
     select_columnorder();
     num_rows = xorclauses.size();
     num_cols = col_to_var.size();
-    ilist_tmp = ilist_new(num_cols);
     if (num_rows == 0 || num_cols == 0) {
         return;
     }
+    ilist_tmp = ilist_new(num_cols);
     mat.resize(num_rows, num_cols); // initial gaussian matrix
 
     bdd_matrix.clear();
@@ -474,6 +474,7 @@ vector<Lit>* EGaussian::get_reason(const uint32_t row, int32_t& out_ID)
             ilist_tmp[i] = (tofill[i].var()+1) * (tofill[i].sign() ? -1 :1);
         }
         out_ID = assert_clause(ilist_tmp);
+        VERBOSE_PRINT("ID of asserted get_reason ID: " << out_ID);
     }
     #endif
 
@@ -553,13 +554,13 @@ gret EGaussian::init_adjust_matrix()
                         assert(unsat_bdd->get_phase() == 1);
 //                         ilist out = ilist_new(1);
 //                         ilist_resize(out, 0);
-//                         uint32_t ID = assert_clause(out);
+//                         const int ID = assert_clause(out);
 //                         frat_ids.push_back(BDDCl{out, ID});
 //                         VERBOSE_PRINT("ID of this empty: " << ID);
 
-                        *solver->drat << add << ++solver->clauseID << fin;
+                        //*solver->drat << add << ++solver->clauseID << fin;
                         assert(solver->unsat_cl_ID == 0);
-                        solver->unsat_cl_ID = solver->clauseID;
+                        solver->unsat_cl_ID = -1;//solver->clauseID;
                         solver->ok = false;
 
                         VERBOSE_PRINT("-> empty clause during init_adjust_matrix");
@@ -569,7 +570,7 @@ gret EGaussian::init_adjust_matrix()
                     VERBOSE_PRINT("-> conflict on row: " << row_i);
                     return gret::confl;
                 }
-                VERBOSE_PRINT("-> empty on this row. ");
+                VERBOSE_PRINT("-> empty on row: " << row_i);
                 VERBOSE_PRINT("-> Satisfied XORs set for row: " << row_i);
                 satisfied_xors[row_i] = 1;
                 break;
@@ -595,10 +596,6 @@ gret EGaussian::init_adjust_matrix()
                 #endif
 
                 solver->enqueue<false>(tmp_clause[0]);
-//                 solver->drat->flush();
-//                 auto x = ilist_new(2);
-//                 tbdd::delete_clauses(ilist_fill1(x, ID));
-//                 ilist_free(x);
 
                 VERBOSE_PRINT("-> UNIT during adjust: " << tmp_clause[0]);
                 VERBOSE_PRINT("-> Satisfied XORs set for row: " << row_i);
