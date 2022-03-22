@@ -119,8 +119,10 @@ void XorFinder::clean_equivalent_xors(vector<Xor>& txors)
             if (j->vars == i->vars && i->rhs == j->rhs) {
                 j->merge_clash(*i, seen);
                 j->detached |= i->detached;
-                TBUDDY_DO(solver->drat->flush());
-                TBUDDY_DO(delete j->bdd);
+                if (solver->drat->enabled()) {
+                    TBUDDY_DO(solver->drat->flush());
+                    TBUDDY_DO(delete j->bdd);
+                }
             } else {
                 ++j;
                 *j = *i;
@@ -162,9 +164,11 @@ void XorFinder::find_xors()
         cl->set_used_in_xor_full(false);
     }
 
-    solver->drat->flush();
-    TBUDDY_DO(for (auto const& x: solver->xorclauses) delete x.bdd);
-    TBUDDY_DO(for (auto const& x: solver->xorclauses_unused) delete x.bdd);
+    if (solver->drat->enabled()) {
+        solver->drat->flush();
+        TBUDDY_DO(for (auto const& x: solver->xorclauses) delete x.bdd);
+        TBUDDY_DO(for (auto const& x: solver->xorclauses_unused) delete x.bdd);
+    }
     solver->xorclauses.clear();
     solver->xorclauses_unused.clear();
 
@@ -203,9 +207,6 @@ void XorFinder::find_xors()
     runStats.time_outs += time_out;
     solver->sumSearchStats.num_xors_found_last = solver->xorclauses.size();
     print_found_xors();
-
-    //TODO tbuddy is this needed?
-//     for(auto& x: solver->xorclauses) x.create_bdd_xor();
 
     if (solver->conf.verbosity) runStats.print_short(solver, time_remain);
     globalStats += runStats;
@@ -624,8 +625,10 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 VERBOSE_PRINT("after merge: " << x1 <<  " -- at idx: " << idxes[1]);
 
                 //Equivalent, so delete one
-                TBUDDY_DO(solver->drat->flush());
-                TBUDDY_DO(delete x0.bdd);
+                if (solver->drat->enabled()) {
+                    TBUDDY_DO(solver->drat->flush());
+                    TBUDDY_DO(delete x0.bdd);
+                }
                 x0 = Xor();
 
                 //Re-attach the other, remove the occur of the one we deleted
@@ -676,9 +679,11 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                         interesting.push_back(l.var());
                     }
                 }
-                TBUDDY_DO(solver->drat->flush());
-                TBUDDY_DO(delete this_xors[idxes[0]].bdd);
-                TBUDDY_DO(delete this_xors[idxes[1]].bdd);
+                if (solver->drat->enabled()) {
+                    TBUDDY_DO(solver->drat->flush());
+                    TBUDDY_DO(delete this_xors[idxes[0]].bdd);
+                    TBUDDY_DO(delete this_xors[idxes[1]].bdd);
+                }
                 this_xors[idxes[0]] = Xor();
                 this_xors[idxes[1]] = Xor();
                 xored++;

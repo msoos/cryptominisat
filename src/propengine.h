@@ -544,12 +544,16 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
     const uint32_t v = p.var();
     assert(value(v) == l_Undef);
     assert(varData[v].removed == Removed::none);
-    if (level == 0 && drat->enabled() && do_unit_frat) {
-        const uint32_t ID = ++clauseID;
-        *drat << add << ID << p << fin;
-        VERBOSE_PRINT("unit " << p << " ID: " << ID);
-        assert(unit_cl_IDs[v] == 0);
-        unit_cl_IDs[v] = ID;
+    if (level == 0 && drat->enabled())
+    {   if (do_unit_frat) {
+            const uint32_t ID = ++clauseID;
+            *drat << add << ID << p << fin;
+            VERBOSE_PRINT("unit " << p << " ID: " << ID);
+            assert(unit_cl_IDs[v] == 0);
+            unit_cl_IDs[v] = ID;
+        } else {
+            assert(unit_cl_IDs[v] != 0);
+        }
     }
 
     if (!watches[~p].empty()) {

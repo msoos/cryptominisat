@@ -79,10 +79,8 @@ matrix_no(_matrix_no)
 EGaussian::~EGaussian() {
     delete_gauss_watch_this_matrix();
     for(auto& x: tofree) delete[] x;
-    #ifdef USE_TBUDDY
-    for(auto& x: xorclauses) assert(x.bdd == NULL && "GMatrix needs finalization before deletion");
-    assert(frat_ids.empty());
-    #endif
+    TBUDDY_DO(for(auto& x: xorclauses) assert(x.bdd == NULL && "GMatrix needs finalization before deletion"));
+    TBUDDY_DO(assert(frat_ids.empty()));
     tofree.clear();
 
     delete cols_unset;
@@ -552,13 +550,6 @@ gret EGaussian::init_adjust_matrix()
                     if (solver->drat->enabled()) {
                         unsat_bdd = bdd_create(row_i, 0);
                         assert(unsat_bdd->get_phase() == 1);
-//                         ilist out = ilist_new(1);
-//                         ilist_resize(out, 0);
-//                         const int ID = assert_clause(out);
-//                         frat_ids.push_back(BDDCl{out, ID});
-//                         VERBOSE_PRINT("ID of this empty: " << ID);
-
-                        //*solver->drat << add << ++solver->clauseID << fin;
                         assert(solver->unsat_cl_ID == 0);
                         solver->unsat_cl_ID = -1;//solver->clauseID;
                         solver->ok = false;

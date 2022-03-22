@@ -460,10 +460,6 @@ bool ClauseCleaner::clean_one_xor(Xor& x)
         x.resize(j);
         x.rhs = rhs;
         VERBOSE_PRINT("cleaned XOR: " << x);
-
-        TBUDDY_DO(delete x.bdd);
-        TBUDDY_DO(x.bdd = NULL);
-        TBUDDY_DO(x.create_bdd_xor());
     }
 
     if (x.size() <= 2) {

@@ -1717,11 +1717,13 @@ lbool Solver::solve_with_assumptions(
     if (drat->enabled()) {
         int32_t* v = new int;
         *v = nVars()+1;
-        drat->flush();
         #ifdef USE_TBUDDY
-        tbdd_init_frat(drat->getFile(), v, &clauseID);
-        //tbdd_set_verbose(3);
-        bdd_error_hook(my_bddinthandler);
+        if (drat->enabled()) {
+            drat->flush();
+            tbdd_init_frat(drat->getFile(), v, &clauseID);
+            //tbdd_set_verbose(3);
+            bdd_error_hook(my_bddinthandler);
+        }
         #endif
     }
     move_to_outside_assumps(_assumptions);

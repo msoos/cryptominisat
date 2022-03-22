@@ -156,8 +156,11 @@ inline void Searcher::add_lit_to_learnt(
     #endif
 
     if (varData[var].level == 0) {
-        assert(unit_cl_IDs[var] != 0);
-        chain.push_back(unit_cl_IDs[var]);
+        if (drat->enabled()) {
+            assert(value(var) != l_Undef);
+            assert(unit_cl_IDs[var] != 0);
+            chain.push_back(unit_cl_IDs[var]);
+        }
         return;
     }
 
@@ -1560,10 +1563,11 @@ void Searcher::attach_and_enqueue_learnt_clause(
             stats.learntUnits++;
             if (enq) {
                 assert(level == 0);
-                enqueue<false>(learnt_clause[0], level, PropBy(), false);
                 uint32_t v = learnt_clause[0].var();
                 assert(unit_cl_IDs[v] == 0);
+                assert(ID != 0);
                 unit_cl_IDs[v] = ID;
+                enqueue<false>(learnt_clause[0], level, PropBy(), false);
             }
             break;
         case 2:
