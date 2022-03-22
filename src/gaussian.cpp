@@ -512,8 +512,13 @@ tbdd::xor_constraint* EGaussian::bdd_create(const uint32_t row_n, const uint32_t
     cout << "bdd_create expected size: " << expected_sz
     << " got sz: " << ilist_length(x->get_variables())
     << " without units: " << sz << endl;
-    if (expected_sz != numeric_limits<uint32_t>::max())
-        assert(ilist_length(x->get_variables()) == (int)expected_sz);
+
+    //NOTE
+    // Since during xor clause cleaning we don't re-generate the bdd-s
+    // the ilist_length(x->get_variables()) will contain stuff that is already unit
+    // hence we may need to check that the size of the generated XOR is zero, if not
+    // we need to add the empty clause ourselves.
+
     #endif
 
     return x;
@@ -549,9 +554,15 @@ gret EGaussian::init_adjust_matrix()
                     #ifdef USE_TBUDDY
                     if (solver->drat->enabled()) {
                         unsat_bdd = bdd_create(row_i, 0);
-                        assert(unsat_bdd->get_phase() == 1);
+
                         assert(solver->unsat_cl_ID == 0);
-                        solver->unsat_cl_ID = -1;//solver->clauseID;
+                        if (ilist_length(unsat_bdd->get_variables()) != 0) {
+                            *solver->drat << add << ++solver->clauseID << fin;
+                            solver->unsat_cl_ID = solver->clauseID;
+                        } else {
+                            assert(unsat_bdd->get_phase() == 1);
+                            solver->unsat_cl_ID = -1;//solver->clauseID;
+                        }
                         solver->ok = false;
 
                         VERBOSE_PRINT("-> empty clause during init_adjust_matrix");
