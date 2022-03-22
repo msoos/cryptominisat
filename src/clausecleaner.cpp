@@ -443,6 +443,7 @@ bool ClauseCleaner::remove_and_clean_all()
 
 bool ClauseCleaner::clean_one_xor(Xor& x)
 {
+    assert(x.size() > 2);
     bool rhs = x.rhs;
     size_t i = 0;
     size_t j = 0;
@@ -458,10 +459,11 @@ bool ClauseCleaner::clean_one_xor(Xor& x)
     if (j < x.size()) {
         x.resize(j);
         x.rhs = rhs;
+        VERBOSE_PRINT("cleaned XOR: " << x);
+
         TBUDDY_DO(delete x.bdd);
         TBUDDY_DO(x.bdd = NULL);
         TBUDDY_DO(x.create_bdd_xor());
-        VERBOSE_PRINT("cleaned XOR: " << x);
     }
 
     if (x.size() <= 2) {
