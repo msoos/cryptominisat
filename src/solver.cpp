@@ -2379,7 +2379,7 @@ lbool Solver::simplify_problem(const bool startup, const string& strategy)
     if (ret == l_Undef && !fully_undo_xor_detach()) {
         ret = l_False;
     }
-    TBUDDY_DO(for(auto& g: gmatrices) g->finalize_frat());
+    TBUDDY_DO(if (drat->enabled()) for(auto& g: gmatrices) g->finalize_frat());
     clear_gauss_matrices();
 
     if (conf.verbosity >= 6) {

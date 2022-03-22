@@ -442,7 +442,7 @@ vector<Lit>* EGaussian::get_reason(const uint32_t row, int32_t& out_ID)
 
     // Clean up previous one
     #ifdef USE_TBUDDY
-    if (xor_reasons[row].ID != 0 && solver->drat->enabled()) {
+    if (solver->drat->enabled() && xor_reasons[row].ID != 0) {
         solver->drat->flush();
         delete xor_reasons[row].constr;
         one_len_ilist[0] = xor_reasons[row].ID;
