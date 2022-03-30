@@ -375,9 +375,9 @@ private:
     Solver* solver;
 
     template<bool inprocess>
-    bool propagate_binary_clause_occur(const Watched& ws);
+    bool prop_bin_cl_occur(const Watched& ws);
     template<bool inprocess>
-    bool propagate_long_clause_occur(const ClOffset offset);
+    bool prop_long_cl_occur(const ClOffset offset);
     template<bool inprocess>
     bool prop_bin_cl(
         const Watched* i

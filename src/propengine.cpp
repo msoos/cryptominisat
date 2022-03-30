@@ -818,7 +818,6 @@ void PropEngine::print_trail()
     }
 }
 
-
 template<bool inprocess>
 bool PropEngine::propagate_occur()
 {
@@ -836,16 +835,15 @@ bool PropEngine::propagate_occur()
             ; ++it
         ) {
             if (it->isClause()) {
-                if (!propagate_long_clause_occur<inprocess>(it->get_offset()))
-                    ret = false;
+                if (!prop_long_cl_occur<inprocess>(it->get_offset())) ret = false;
             }
-
             if (it->isBin()) {
-                if (!propagate_binary_clause_occur<inprocess>(*it))
-                    ret = false;
+                if (!prop_bin_cl_occur<inprocess>(*it)) ret = false;
             }
+            assert(!it->isBNN());
         }
     }
+    assert(gmatrices.empty());
 
     if (decisionLevel() == 0 && !ret) {
         *drat << add << ++clauseID << fin;
@@ -860,7 +858,7 @@ template bool PropEngine::propagate_occur<true>();
 template bool PropEngine::propagate_occur<false>();
 
 template<bool inprocess>
-inline bool PropEngine::propagate_binary_clause_occur(
+inline bool PropEngine::prop_bin_cl_occur(
     const Watched& ws)
 {
     const lbool val = value(ws.lit2());
@@ -871,10 +869,8 @@ inline bool PropEngine::propagate_binary_clause_occur(
     if (val == l_Undef) {
         enqueue<inprocess>(ws.lit2());
         #ifdef STATS_NEEDED
-        if (ws.red())
-            propStats.propsBinRed++;
-        else
-            propStats.propsBinIrred++;
+        if (ws.red()) propStats.propsBinRed++;
+        else propStats.propsBinIrred++;
         #endif
     }
 
@@ -882,7 +878,7 @@ inline bool PropEngine::propagate_binary_clause_occur(
 }
 
 template<bool inprocess>
-inline bool PropEngine::propagate_long_clause_occur(
+inline bool PropEngine::prop_long_cl_occur(
     const ClOffset offset)
 {
     const Clause& cl = *cl_alloc.ptr(offset);

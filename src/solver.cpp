@@ -4360,6 +4360,7 @@ bool Solver::fully_undo_xor_detach()
         Clause* cl = cl_alloc.ptr(offs);
         assert(cl->_xor_is_detached);
         assert(cl->used_in_xor() && cl->used_in_xor_full());
+        assert(!cl->red());
 
         cl->_xor_is_detached = false;
         const uint32_t origSize = cl->size();
@@ -4370,9 +4371,7 @@ bool Solver::fully_undo_xor_detach()
             removed++;
             litStats.irredLits -= origSize;
             cl->setRemoved();
-            if (!okay()) {
-                break;
-            }
+            if (!okay()) break;
             continue;
         } else {
             litStats.irredLits -= origSize - cl->size();
