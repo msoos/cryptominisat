@@ -93,16 +93,13 @@ def set_up_parser():
     parser.add_option("--maxth", "-m", dest="max_threads", default=20,
                       type=int, help="Max number of threads")
 
-    parser.add_option("--tout", "-t", dest="maxtime", type=int, default=35,
+    parser.add_option("--tout", "-t", dest="maxtime", type=int, default=25,
                       help="Max time to run. Default: %default")
 
-    parser.add_option("--textra", dest="maxtimediff", type=int, default=10,
+    parser.add_option("--textra", dest="maxtimediff", type=int, default=5,
                       help="Extra time on top of timeout for processing."
                       " Default: %default")
 
-    parser.add_option("--rate", dest="rate", default=False,
-                      action="store_true",
-                      help="Use the 'rate' DRAT checker")
     return parser
 
 
@@ -204,10 +201,9 @@ class Tester:
     def __init__(self):
         self.ignoreNoSolution = False
         self.extra_opts_supported = self.list_options_if_supported(
-            ["xor", "autodisablegauss", "sql", "clid", "breakid", "predshort"])
+            ["xor", "autodisablegauss", "sql", "breakid", "predshort"])
         self.sol_parser = solution_parser(options)
         self.sqlitedbfname = None
-        self.clid_added = False
         self.only_sampling = False
         self.sampling_vars = []
         self.this_gauss_on = False
@@ -288,7 +284,6 @@ class Tester:
 
     def random_options(self):
         self.sqlitedbfname = None
-        self.clid_added = False
         cmd = " --zero-exit-status "
 
         # disable gauss when gauss is compiled in but asked not to be used
@@ -356,10 +351,6 @@ class Tester:
             cmd += "--terntimelim %d " % random.choice([1, 10, 100])
             cmd += "--ternkeep %d " % random.choice([0, 0.001, 0.5, 300])
             cmd += "--terncreate %d " % random.choice([0, 0.001, 0.5, 300])
-            if not options.rate and "clid" in self.extra_opts_supported:
-                if random.choice([True, True, True, False]):
-                    self.clid_added = True
-                    cmd += "--clid "
             cmd += "--locgmult %.12f " % random.gammavariate(0.5, 0.7)
             cmd += "--varelimover %d " % random.gammavariate(1, 20)
             cmd += "--memoutmult %0.12f " % random.gammavariate(0.05, 10)
@@ -423,7 +414,7 @@ class Tester:
 
         return cmd
 
-    def execute(self, fname, fname2=None, fixed_opts="", rnd_opts=None):
+    def execute(self, fname, fname_drat=None, fixed_opts="", rnd_opts=None):
         if os.path.isfile(options.solver) is not True:
             print("Error: Cannot find CryptoMiniSat executable.Searched in: '%s'" %
                   options.solver)
@@ -448,11 +439,8 @@ class Tester:
         command += fixed_opts + " "
         if fname is not None:
             command += "--input %s " % fname
-        if fname2:
-            if self.drat:
-                command += " --drat %s " % fname2
-            else:
-                command += " %s --savedstate %s-savedstate.dat " % (fname2, fname2)
+        if fname_drat:
+            command += " --drat %s " % fname_drat
 
         if options.verbose:
             print("Executing before doalarm/pipes: %s " % command)
@@ -531,7 +519,7 @@ class Tester:
         os.unlink(out_fname)
         return consoleOutput, retcode
 
-    def check(self, fname, fname2=None,
+    def check(self, fname, fname_drat=None,
               checkAgainst=None,
               fixed_opts="",
               rnd_opts=None):
@@ -543,7 +531,7 @@ class Tester:
 
         # Do we need to solve the problem, or is it already solved?
         consoleOutput, retcode = self.execute(
-            fname, fname2=fname2,
+            fname, fname_drat=fname_drat,
             fixed_opts=fixed_opts, rnd_opts=rnd_opts)
 
         # if time was limited, we need to know if we were over the time limit
@@ -582,21 +570,11 @@ class Tester:
 
             return
 
-        # it's UNSAT, let's check with DRAT
-        if fname2:
-            if not options.rate:
-                toexec = "../../build/utils/drat-trim/drat-trim {cnf} {dratf} {opt}"
-                opt = ""
-            else:
-                assert self.clid_added == False, "Error: 'rate' DRAT checker cannot handle clids"
-                toexec = "rate {cnf} {dratf} {opt}"
-                # opt = "--skip-unit-deletions "
-                opt = ""
-
-            if self.clid_added:
-                opt += "-i "
-            toexec = toexec.format(cnf=fname, dratf=fname2, opt=opt)
-            print("Checking DRAT...: ", toexec)
+        # it's UNSAT, let's check with FRAT
+        if fname_drat:
+            toexec = "./frat-rs elab {cnf} {fname_drat} -m -v"
+            toexec = toexec.format(cnf=fname, fname_drat=fname_drat)
+            print("Checking with FRAT.. ", toexec)
             p = subprocess.Popen(toexec.rsplit(),
                     stdout=subprocess.PIPE,
                     universal_newlines=True)
@@ -608,24 +586,17 @@ class Tester:
             foundVerif = False
             dratLine = ""
             for line in consoleOutput2.split('\n'):
-                if "deleted clause on" in line:
-                    print("ERROR: deleted clause cannot be found")
-                    exit()
-                if len(line) > 1 and line[:2] == "s ":
-                    # print("verif: " , line)
-                    foundVerif = True
-                    if line[2:10] != "VERIFIED" and line[2:] != "TRIVIAL UNSAT":
-                        print("DRAT verification error, it says: %s" % consoleOutput2)
-                    assert line[2:10] == "VERIFIED" or line[
-                        2:] == "TRIVIAL UNSAT", "DRAT didn't verify problem!"
-                    dratLine = line
+                if len(line) >= 8:
+                    if line[0:8] == "VERIFIED":
+                        dratLine = line
+                        foundVerif = True
 
             # Check whether we have found a verification code
             if foundVerif is False:
                 print("verifier error! It says: %s" % consoleOutput2)
-                assert foundVerif, "Cannot find DRAT verification code!"
+                assert foundVerif, "Cannot find FRAT verification code!"
             else:
-                print("OK, DRAT says: %s" % dratLine)
+                print("OK, FRAT says: %s" % dratLine)
 
         if options.gauss:
             if random.choice([True, True, True, True, False]):
@@ -711,7 +682,7 @@ class Tester:
             if len(self.sampling_vars) == 0:
                 self.only_sampling = False
 
-        self.check(fname=interspersed_fname, fname2=fname_drat)
+        self.check(fname=interspersed_fname, fname_drat=fname_drat)
 
         # remove temporary filenames
         os.unlink(interspersed_fname)
