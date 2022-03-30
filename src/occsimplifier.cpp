@@ -320,9 +320,9 @@ void OccSimplifier::unlink_clause(
     if (!cl.red()) {
         for (const Lit lit: cl) {
             elim_calc_need_update.touch(lit.var());
-#ifdef CHECK_N_OCCUR
+            #ifdef CHECK_N_OCCUR
             assert(n_occurs[lit.toInt()]>0);
-#endif
+            #endif
             n_occurs[lit.toInt()]--;
             removed_cl_with_var.touch(lit.var());
         }
@@ -1609,11 +1609,8 @@ bool OccSimplifier::occ_rem_with_gates()
             std::sort(cl->begin(), cl->end());
             removeWCl(solver->watches[l2], off);
             removeWCl(solver->watches[l1], off); //TODO we can NOT copy +get rid of this, speedup!
-            (*solver->drat) << add << *cl
-            #ifdef STATS_NEEDED
-            << solver->sumConflicts
-            #endif
-            << fin << findelay;
+            cl->stats.ID = ++solver->clauseID;
+            (*solver->drat) << add << *cl << fin << findelay;
             solver->watches[gate.rhs].push(Watched(off, cl->abst));
             n_occurs[l1.toInt()]--;
             n_occurs[l2.toInt()]--;
@@ -1737,8 +1734,10 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 solver->xor_clauses_updated = true;
 
                 //Get rid of XOR clauses
-                TBUDDY_DO(for(auto const& x: solver->xorclauses) assert(x.bdd == NULL));
-                TBUDDY_DO(for(auto const& x: solver->xorclauses_unused) assert(x.bdd == NULL));
+                if (solver->drat->enabled()) {
+                    TBUDDY_DO(solver->free_bdds(solver->xorclauses));
+                    TBUDDY_DO(solver->free_bdds(solver->xorclauses_unused));
+                }
                 solver->xorclauses.clear();
                 solver->xorclauses_unused.clear();
 
@@ -1755,7 +1754,8 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 }
             }
         } else if (token == "occ-bva") {
-            if (solver->conf.do_bva) {
+            if (solver->conf.do_bva && false) { //TODO due to IDs, this is BROKEN
+                assert(false && "due to clause IDs this is broken");
                 if (solver->conf.verbosity) {
                     cout << "c [occ-bva] global numcalls: " << globalStats.numCalls << endl;
                 }
@@ -3475,6 +3475,7 @@ void OccSimplifier::clean_from_red_or_removed(
 {
     out.clear();
     for(const auto& w: in) {
+        assert(w.getType() == watch_clause_t || w.getType() == watch_binary_t);
         if (!solver->redundant_or_removed(w)) {
             out.push(w);
         }
@@ -3911,18 +3912,7 @@ bool OccSimplifier::occ_based_lit_rem(uint32_t var, uint32_t& removed) {
             }
 
             if (try_remove_lit_via_occurrence_simpl(OccurClause(lit, w))) {
-// TODO Not sure if this is needed.... I think it is?
-//                 occ_based_lit_rem_tmp.clear();
-//                 for(const auto& l: *cl) {
-//                     if (l == lit) {
-//                         occ_based_lit_rem_tmp.push_back(~l);
-//                     } else {
-//                         occ_based_lit_rem_tmp.push_back(l);
-//                     }
-//                 }
-//                 (*solver->drat) << add << occ_based_lit_rem_tmp << fin;
                 remove_literal(offset, lit, true);
-//                 (*solver->drat) << del << occ_based_lit_rem_tmp << fin;
                 if (!solver->okay()) {
                     return false;
                 }

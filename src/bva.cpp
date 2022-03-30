@@ -461,7 +461,10 @@ void BVA::remove_matching_clause(
             *simplifier->limit_to_decrease -= 2*(int64_t)solver->watches[to_remove[0]].size();
             assert(!solver->drat->enabled()); //TODO FRAT is broken here"
             //*(solver->drat) << del << to_remove << fin;
-            //solver->detach_bin_clause(to_remove[0], to_remove[1], false); //TODO: ID is missing
+            solver->detach_bin_clause(
+                to_remove[0], to_remove[1],
+                false, //redundant
+                0);// TODO ID
             simplifier->n_occurs[to_remove[0].toInt()]--;
             simplifier->n_occurs[to_remove[1].toInt()]--;
             break;

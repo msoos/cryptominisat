@@ -206,6 +206,7 @@ public:
 
     bool okay() const
     {
+        assert(!(!ok && drat->enabled() && unsat_cl_ID == 0) && "If in UNSAT state, and we have DRAT, we MUST already know the unsat_cl_ID");
         return ok;
     }
 
@@ -347,6 +348,7 @@ public:
     template<typename T> bool no_duplicate_lits(const T& lits) const;
     void check_no_duplicate_lits_anywhere() const;
     void check_no_zero_ID_bins() const;
+    void free_bdds(vector<Xor>& xors);
     void print_all_clauses() const;
     template<class T> void clean_xor_no_prop(T& ps, bool& rhs);
     template<class T> void clean_xor_vars_no_prop(T& ps, bool& rhs);

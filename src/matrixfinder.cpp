@@ -207,7 +207,7 @@ bool MatrixFinder::find_matrices(bool& can_detach, bool simplify_xors)
     const bool time_out =  false;
     const double time_used = cpuTime() - myTime;
     verb_print(1, "[matrix] Using " << numMatrixes
-        << " matrices recoverd from " << solver->xorclauses.size() << " xors"
+        << " matrices recovered from " << solver->xorclauses.size() << " xors"
         << solver->conf.print_times(time_used, time_out));
 
     if (solver->sqlStats) {
@@ -369,7 +369,9 @@ uint32_t MatrixFinder::setMatrixes()
             realMatrixNum++;
             assert(solver->gmatrices.size() == realMatrixNum);
         } else {
-            for(const auto& x: xorsInMatrix[i]) {
+            for(auto& x: xorsInMatrix[i]) {
+                delete x.bdd;
+                x.bdd = NULL;
                 solver->xorclauses_unused.push_back(x);
                 //cout<< "c [matrix]xor not in matrix, now unused_xors size: " << unused_xors.size() << endl;
                 clash_vars_unused.insert(x.clash_vars.begin(), x.clash_vars.end());

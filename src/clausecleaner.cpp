@@ -504,6 +504,7 @@ bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors)
             }
 
             if (keep) {
+                assert(x.size() > 2);
                 xors[j++] = x;
             } else {
                 solver->removed_xorclauses_clash_vars.insert(

@@ -1564,9 +1564,11 @@ void Searcher::attach_and_enqueue_learnt_clause(
             if (enq) {
                 assert(level == 0);
                 uint32_t v = learnt_clause[0].var();
-                assert(unit_cl_IDs[v] == 0);
-                assert(ID != 0);
-                unit_cl_IDs[v] = ID;
+                if (drat->enabled()) {
+                    assert(unit_cl_IDs[v] == 0);
+                    assert(ID != 0);
+                    unit_cl_IDs[v] = ID;
+                }
                 enqueue<false>(learnt_clause[0], level, PropBy(), false);
             }
             break;

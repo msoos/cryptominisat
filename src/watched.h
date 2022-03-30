@@ -310,9 +310,8 @@ struct OccurClause {
             return ws.lit2() < other.ws.lit2();
         }
 
-        assert(ws.isClause()  || ws.isBNN());
-        assert(other.ws.isClause() || ws.isBNN());
-        assert(false);
+        assert(!ws.isBNN()); // no idea how this would work
+        assert(!other.ws.isBNN()); // no idea how this would work
         return ws.get_offset() < other.ws.get_offset();
     }
 };

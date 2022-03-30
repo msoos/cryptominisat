@@ -563,12 +563,10 @@ gret EGaussian::init_adjust_matrix()
                             assert(unsat_bdd->get_phase() == 1);
                             solver->unsat_cl_ID = -1;//solver->clauseID;
                         }
-                        solver->ok = false;
-
-                        VERBOSE_PRINT("-> empty clause during init_adjust_matrix");
                     }
                     #endif
-
+                    solver->ok = false;
+                    VERBOSE_PRINT("-> empty clause during init_adjust_matrix");
                     VERBOSE_PRINT("-> conflict on row: " << row_i);
                     return gret::confl;
                 }

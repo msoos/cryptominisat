@@ -847,7 +847,7 @@ bool PropEngine::propagate_occur()
         }
     }
 
-    if (!ret) {
+    if (decisionLevel() == 0 && !ret) {
         *drat << add << ++clauseID << fin;
         assert(unsat_cl_ID == 0);
         unsat_cl_ID = clauseID;

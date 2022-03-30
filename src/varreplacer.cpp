@@ -350,8 +350,8 @@ void VarReplacer::delete_frat_cls()
 
 bool VarReplacer::replace_xor_clauses(vector<Xor>& xors)
 {
+    bool updated = false;
     for(Xor& x: xors) {
-        assert(x.bdd == NULL); //FRAT could fail here maybe? No idea.
         uint32_t j = 0;
         for(uint32_t i = 0; i < x.clash_vars.size(); i++) {
             uint32_t v = x.clash_vars[i];
@@ -372,11 +372,19 @@ bool VarReplacer::replace_xor_clauses(vector<Xor>& xors)
 
             Lit l = Lit(v, false);
             if (get_lit_replaced_with_fast(l) != l) {
+                updated = true;
                 l = get_lit_replaced_with_fast(l);
                 x.rhs ^= l.sign();
                 v = l.var();
                 runStats.replacedLits++;
             }
+        }
+        if (updated) {
+            //FRAT could fail here maybe? No idea.
+            /*auto old = x.bdd;
+            x.bdd = NULL;
+            x.create_bdd_xor();
+            delete old;*/
         }
 
         solver->clean_xor_vars_no_prop(x.get_vars(), x.rhs);

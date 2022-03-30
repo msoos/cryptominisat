@@ -247,6 +247,7 @@ void CNF::updateVars(
 ) {
     updateArray(varData, interToOuter);
     updateArray(assigns, interToOuter);
+    updateArray(unit_cl_IDs, interToOuter);
     updateBySwap(watches, seen, interToOuter2);
 
     for(watch_subarray w: watches) {
@@ -952,5 +953,13 @@ void CNF::check_no_zero_ID_bins() const
                 assert(w.get_ID() > 0);
             }
         }
+    }
+}
+
+void CNF::free_bdds(vector<Xor>& xors)
+{
+    for(auto& x: xors) {
+        delete x.bdd;
+        x.bdd = NULL;
     }
 }

@@ -1114,6 +1114,7 @@ bool Solver::clean_xor_clauses_from_duplicate_and_set_vars()
     if (!update_vars_of_xors(xorclauses)) goto end;
     if (!update_vars_of_xors(xorclauses_unused)) goto end;
     {
+        // clean up removed_xorclauses_clash_vars
         uint32_t j = 0;
         for(uint32_t i = 0; i < removed_xorclauses_clash_vars.size(); i++) {
             if (value(removed_xorclauses_clash_vars[i]) == l_Undef) {
@@ -1803,7 +1804,7 @@ void Solver::write_final_frat_clauses()
 
     drat->flush();
     TBUDDY_DO(for(auto& g: gmatrices) g->finalize_frat());
-    TBUDDY_DO(for(const auto& x: xorclauses_unused) assert(x.bdd == NULL));
+    TBUDDY_DO(solver->free_bdds(solver->xorclauses_unused));
     TBUDDY_DO(tbdd_done());
     if (varReplacer) varReplacer->delete_frat_cls();
     // -1 indicates tbuddy already added the empty clause
@@ -1988,9 +1989,7 @@ lbool Solver::iterate_until_solved()
         dump_memory_stats_to_sql();
 
         const uint64_t num_confl = calc_num_confl_to_do_this_iter(iteration_num);
-        if (num_confl == 0) {
-            break;
-        }
+        if (num_confl == 0) break;
         if (!find_and_init_all_matrices()) {
             status = l_False;
             goto end;
@@ -2226,12 +2225,13 @@ lbool Solver::execute_inprocess_strategy(
                 }
             }
         } else if (token == "intree-probe") {
-            if (!bnns.empty()) {
+            //TODO broken! Due to clause IDs in binary clauses, this does NOT work
+            /*if (!bnns.empty()) {
                 conf.do_hyperbin_and_transred = false;
             }
             if (conf.doIntreeProbe && conf.doFindAndReplaceEqLits && !drat->enabled()) {
                 intree->intree_probe();
-            }
+            }*/
         } else if (token == "sub-str-cls-with-bin") {
             //Subsumes and strengthens long clauses with binary clauses
             if (conf.do_distill_clauses) {
@@ -3858,7 +3858,7 @@ bool Solver::find_and_init_all_matrices()
 
 bool Solver::init_all_matrices()
 {
-    assert(ok);
+    assert(okay());
     assert(decisionLevel() == 0);
 
     assert(gmatrices.size() == gqueuedata.size());
@@ -3866,7 +3866,7 @@ bool Solver::init_all_matrices()
         auto& g = gmatrices[i];
         bool created = false;
         if (!g->full_init(created)) return false;
-        assert(ok);
+        assert(okay());
 
         if (!created) {
             gqueuedata[i].disabled = true;
