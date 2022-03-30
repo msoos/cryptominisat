@@ -132,6 +132,7 @@ class VarReplacer
             return fast_inter_replace_lookup[var].var();
         }
         bool replace_xor_clauses(vector<Xor>& xors);
+        bool replace_one_xor_clause(Xor& x);
 
         vector<Lit> ps_tmp;
         bool perform_replace();

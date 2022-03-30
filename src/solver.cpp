@@ -1083,28 +1083,28 @@ double Solver::calc_renumber_saving()
     return saving;
 }
 
-bool Solver::update_vars_of_xors(vector<Xor>& xors)
-{
-    for(Xor& x: xors) {
-        clean_xor_vars_no_prop(x.get_vars(), x.rhs);
-        if (x.size() == 0 && x.rhs == true) {
-            ok = false;
-            break;
-        }
-
-        uint32_t j = 0;
-        for(uint32_t i = 0; i < x.clash_vars.size(); i++) {
-            uint32_t v = x.clash_vars[i];
-            if (value(v) == l_Undef) {
-                x.clash_vars[j++] = v;
-            }
-        }
-        x.clash_vars.resize(j);
-    }
-
-    return ok;
-}
-
+// bool Solver::update_vars_of_xors(vector<Xor>& xors)
+// {
+//     for(Xor& x: xors) {
+//         clean_xor_vars_no_prop(x.get_vars(), x.rhs);
+//         if (x.size() == 0 && x.rhs == true) {
+//             ok = false;
+//             break;
+//         }
+//
+//         uint32_t j = 0;
+//         for(uint32_t i = 0; i < x.clash_vars.size(); i++) {
+//             uint32_t v = x.clash_vars[i];
+//             if (value(v) == l_Undef) {
+//                 x.clash_vars[j++] = v;
+//             }
+//         }
+//         x.clash_vars.resize(j);
+//     }
+//
+//     return ok;
+// }
+/*
 bool Solver::clean_xor_clauses_from_duplicate_and_set_vars()
 {
     xor_clauses_updated = true;
@@ -1141,7 +1141,7 @@ bool Solver::clean_xor_clauses_from_duplicate_and_set_vars()
     }
 
     return okay();
-}
+}*/
 
 //Beware. Cannot be called while Searcher is running.
 bool Solver::renumber_variables(bool must_renumber)
@@ -1162,9 +1162,9 @@ bool Solver::renumber_variables(bool must_renumber)
     }
     #endif
 
-    if (!clean_xor_clauses_from_duplicate_and_set_vars()) {
-        return false;
-    }
+//     if (!clean_xor_clauses_from_duplicate_and_set_vars()) {
+//         return false;
+//     }
 
     if (nVars() == 0) {
         return okay();
@@ -1182,10 +1182,10 @@ bool Solver::renumber_variables(bool must_renumber)
     if (!clauseCleaner->remove_and_clean_all()) {
         return false;
     }
-    if (!xorclauses.empty()) {
-        if (!clean_xor_clauses_from_duplicate_and_set_vars())
-            return false;
-    }
+//     if (!xorclauses.empty()) {
+//         if (!clean_xor_clauses_from_duplicate_and_set_vars())
+//             return false;
+//     }
 
     //outerToInter[10] = 0 ---> what was 10 is now 0.
     vector<uint32_t> outerToInter(nVarsOuter());

@@ -348,50 +348,78 @@ void VarReplacer::delete_frat_cls()
     bins_for_frat.clear();
 }
 
-bool VarReplacer::replace_xor_clauses(vector<Xor>& xors)
+bool VarReplacer::replace_one_xor_clause(Xor& x)
 {
-    bool updated = false;
-    for(Xor& x: xors) {
-        uint32_t j = 0;
-        for(uint32_t i = 0; i < x.clash_vars.size(); i++) {
-            uint32_t v = x.clash_vars[i];
-            uint32_t upd = get_var_replaced_with_fast(v);
-            if (!solver->seen[upd]) {
-                solver->seen[upd] = 1;
-                x.clash_vars[j++] = upd;
-            }
-        }
-        x.clash_vars.resize(j);
-
-        for(auto& v: x.clash_vars) {
-            solver->seen[v] = 0;
-        }
-
-        for(uint32_t& v: x) {
-            assert(v < solver->nVars());
-
-            Lit l = Lit(v, false);
-            if (get_lit_replaced_with_fast(l) != l) {
-                updated = true;
-                l = get_lit_replaced_with_fast(l);
-                x.rhs ^= l.sign();
-                v = l.var();
-                runStats.replacedLits++;
-            }
-        }
-        if (updated) {
-            //FRAT could fail here maybe? No idea.
-            /*auto old = x.bdd;
-            x.bdd = NULL;
-            x.create_bdd_xor();
-            delete old;*/
-        }
-
-        solver->clean_xor_vars_no_prop(x.get_vars(), x.rhs);
-        if (x.size() == 0 && x.rhs == true) {
-            solver->ok = false;
+    uint32_t j = 0;
+    for(uint32_t i = 0; i < x.clash_vars.size(); i++) {
+        uint32_t v = x.clash_vars[i];
+        uint32_t upd = get_var_replaced_with_fast(v);
+        if (!solver->seen[upd]) {
+            solver->seen[upd] = 1;
+            x.clash_vars[j++] = upd;
         }
     }
+    x.clash_vars.resize(j);
+
+    for(auto& v: x.clash_vars) {
+        solver->seen[v] = 0;
+    }
+
+    bool updated;
+    for(uint32_t& v: x) {
+        assert(v < solver->nVars());
+
+        Lit l = Lit(v, false);
+        if (get_lit_replaced_with_fast(l) != l) {
+            updated = true;
+            l = get_lit_replaced_with_fast(l);
+            x.rhs ^= l.sign();
+            v = l.var();
+            runStats.replacedLits++;
+        }
+    }
+    if (updated) {
+        //FRAT could fail here maybe? No idea.
+        /*auto old = x.bdd;
+        x.bdd = NULL;
+        x.create_bdd_xor();
+        delete old;*/
+    }
+
+    solver->clean_xor_vars_no_prop(x.get_vars(), x.rhs);
+    switch (x.size()) {
+        case 0:
+            if (x.rhs == true) solver->ok = false;
+            return false;
+            break;
+        case 1: {
+            Lit l(x[0], !x.rhs);
+            *solver->drat << add << ++solver->clauseID << l << fin;
+            delayedEnqueue.push_back(make_pair(l, solver->clauseID));
+            return false;
+            break;
+        }
+        default:
+            return true;
+            break;
+    }
+}
+
+bool VarReplacer::replace_xor_clauses(vector<Xor>& xors)
+{
+    uint32_t j = 0;
+
+    for(uint32_t i = 0; i < xors.size(); i++) {
+        Xor& x = xors[i];
+        if (replace_one_xor_clause(x)) {
+            std::swap(xors[j], xors[i]);
+            j++;
+        } else {
+            TBUDDY_DO(delete x.bdd);
+            TBUDDY_DO(x.bdd = NULL);
+        }
+    }
+    xors.resize(j);
 
     return solver->okay();
 }
