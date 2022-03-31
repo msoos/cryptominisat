@@ -416,7 +416,7 @@ void EGaussian::eliminate() {
                 if (k_row != rowI) {
                     if ((*k_row)[col]) {
                         (*k_row).xor_in(*rowI);
-                        TBUDDY_DO(xor_in_bdd(k, row_i));
+                        if (solver->drat->enabled()) TBUDDY_DO(xor_in_bdd(k, row_i));
                     }
                 }
             }
@@ -1024,7 +1024,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
 
             assert(satisfied_xors[row_i] == 0);
             (*rowI).xor_in(*(mat.begin() + new_resp_row_n));
-            TBUDDY_DO(xor_in_bdd(row_i, new_resp_row_n));
+            if (solver->drat->enabled()) TBUDDY_DO(xor_in_bdd(row_i, new_resp_row_n));
 
             elim_xored_rows++;
 
