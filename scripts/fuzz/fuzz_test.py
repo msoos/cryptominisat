@@ -650,6 +650,13 @@ class Tester:
         if status != 0:
             fuzzer_call_failed(fname)
 
+        shuf_seed = random.randint(1, 100000)
+        fname_shuffled = unique_file("fuzzTest")
+        print("calling ./shuffle.py %s %s %s" % (fname, fname_shuffled, shuf_seed))
+        shuffle_cnf(fname, fname_shuffled, shuf_seed)
+        os.unlink(fname)
+        fname = fname_shuffled
+
         if not self.drat and not self.only_sampling:
             print("->Multipart test")
             self.needDebugLib = True
@@ -725,11 +732,11 @@ fuzzers_noxor_sls = [
 ]
 
 fuzzers_xor = [
-    ["../../utils/cnf-utils/xortester.py", "--seed"],
-    ["../../utils/cnf-utils/xortester.py", "--seed"],
-    ["../../utils/cnf-utils/xortester.py", "--seed"],
-    ["../../utils/cnf-utils/xortester.py", "--seed"],
-    ["../../utils/cnf-utils/xortester.py", "--seed"],
+    ["../../utils/cnf-utils/xortester.py --varsmin 40", "--seed"],
+    ["../../utils/cnf-utils/xortester.py --varsmin 60", "--seed"],
+    ["../../utils/cnf-utils/xortester.py --varsmin 80", "--seed"],
+    ["../../utils/cnf-utils/xortester.py --varsmin 100", "--seed"],
+    ["../../utils/cnf-utils/xortester.py --varsmin 200", "--seed"],
     ["../../utils/cnf-utils/spacer_test.py", "--seed"],
     ["../../build/tests/sha1-sat/sha1-gen --xor --attack preimage --rounds 21",
      "--hash-bits", "--seed"],
