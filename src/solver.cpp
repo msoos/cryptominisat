@@ -1657,8 +1657,39 @@ void Solver::reset_for_solving()
     datasync->rebuild_bva_map();
 }
 
-void my_bddinthandler(int)
+void my_bddinthandler(int e)
 {
+    switch(e) {
+        case -1:  cout << "tbuddy error: BDD_MEMORY (-1)   /* Out of memory */" << endl; break;
+        case -2:  cout << "tbuddy error: VAR (-2)      /* Unknown variable */" << endl; break;
+        case -3:  cout << "tbuddy error: RANGE (-3)    /* Variable value out of range (not in domain) */" << endl; break;
+        case -4:  cout << "tbuddy error: DEREF (-4)    /* Removing external reference to unknown node */" << endl; break;
+        case -5:  cout << "tbuddy error: RUNNING (-5)  /* Called bdd_init() twice whithout bdd_done() */" << endl; break;
+        case -6:  cout << "tbuddy error: FILE (-6)     /* Some file operation failed */" << endl; break;
+        case -7:  cout << "tbuddy error: FORMAT (-7)   /* Incorrect file format */" << endl; break;
+        case -8:  cout << "tbuddy error: ORDER (-8)    /* Vars. not in order for vector based functions */" << endl; break;
+        case -9:  cout << "tbuddy error: BREAK (-9)    /* User called break */" << endl; break;
+        case -10: cout << "tbuddy error: VARNUM (-10)  /* Different number of vars. for vector pair */" << endl; break;
+        case -11: cout << "tbuddy error: NODES (-11)   /* Tried to set max. number of nodes to be fewer than there already has been allocated */" << endl; break;
+        case -12: cout << "tbuddy error: BDD_OP (-12)      /* Unknown operator */" << endl; break;
+        case -13: cout << "tbuddy error: BDD_VARSET (-13)  /* Illegal variable set */" << endl; break;
+        case -14: cout << "tbuddy error: BDD_VARBLK (-14)  /* Bad variable block operation */" << endl; break;
+        case -15: cout << "tbuddy error: BDD_DECVNUM (-15) /* Trying to decrease the number of variables */" << endl; break;
+        case -16: cout << "tbuddy error: BDD_REPLACE (-16) /* Replacing to already existing variables */" << endl; break;
+        case -17: cout << "tbuddy error: BDD_NODENUM (-17) /* Number of nodes reached user defined maximum */" << endl; break;
+        case -18: cout << "tbuddy error: BDD_ILLBDD (-18)  /* Illegal bdd argument */" << endl; break;
+        case -19: cout << "tbuddy error: BDD_SIZE (-19)    /* Illegal size argument */" << endl; break;
+
+        case -20: cout << "tbuddy error: BVEC_SIZE (-20)    /* Mismatch in bitvector size */" << endl; break;
+        case -21: cout << "tbuddy error: BVEC_SHIFT (-21)   /* Illegal shift-left/right parameter */" << endl; break;
+        case -22: cout << "tbuddy error: BVEC_DIVZERO (-22) /* Division by zero */" << endl; break;
+
+
+        case -23: cout << "tbuddy error: ILIST_ALLOC (-23)  /* Invalid allocation for ilist */" << endl; break;
+        case -24: cout << "tbuddy error: TBDD_PROOF (-24)   /* Couldn't complete proof of justification */" << endl; break;
+        case -26: cout << "tbuddy error: BDD_ERRNUM 26 /* ?? */" << endl; break;
+    }
+
     assert(false);
 }
 
@@ -1757,6 +1788,7 @@ void Solver::write_final_frat_clauses()
     TBUDDY_DO(for(auto& g: gmatrices) g->finalize_frat());
     TBUDDY_DO(solver->free_bdds(solver->xorclauses_unused));
     TBUDDY_DO(tbdd_done());
+
     if (varReplacer) varReplacer->delete_frat_cls();
     // -1 indicates tbuddy already added the empty clause
     if (!okay() && unsat_cl_ID != -1) {
