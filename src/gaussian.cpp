@@ -1521,6 +1521,15 @@ bool EGaussian::must_disable(GaussQData& gqd)
     return false;
 }
 
+void CMSat::EGaussian::move_back_xor_clauses()
+{
+    for(const auto& x: xorclauses) {
+        assert(x.bdd == NULL && "Should have finalized matrix first");
+        solver->xorclauses.push_back(std::move(x));
+    }
+}
+
+
 #ifdef USE_TBUDDY
 void CMSat::EGaussian::finalize_frat()
 {

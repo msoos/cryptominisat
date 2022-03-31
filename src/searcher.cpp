@@ -3801,12 +3801,9 @@ void Searcher::clear_gauss_matrices()
     if (conf.verbosity >= 1) {
         print_matrix_stats();
     }
-    for(EGaussian* g: gmatrices) {
-        delete g;
-    }
-    for(auto& w: gwatches) {
-        w.clear();
-    }
+    for(EGaussian* g: gmatrices) g->move_back_xor_clauses();
+    for(EGaussian* g: gmatrices) delete g;
+    for(auto& w: gwatches) w.clear();
     gmatrices.clear();
     gqueuedata.clear();
 }

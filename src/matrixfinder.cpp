@@ -94,7 +94,7 @@ inline bool MatrixFinder::belong_same_matrix(const Xor& x)
     return true;
 }
 
-bool MatrixFinder::find_matrices(bool& can_detach, bool simplify_xors)
+bool MatrixFinder::find_matrices(bool& can_detach)
 {
     assert(solver->decisionLevel() == 0);
     assert(solver->ok);
@@ -109,14 +109,13 @@ bool MatrixFinder::find_matrices(bool& can_detach, bool simplify_xors)
     double myTime = cpuTime();
 
     XorFinder finder(NULL, solver);
-    if (simplify_xors) {
-        solver->clauseCleaner->clean_xor_clauses(solver->xorclauses);
-        finder.grab_mem();
-        finder.move_xors_without_connecting_vars_to_unused();
-        if (!finder.xor_together_xors(solver->xorclauses)) return false;
+    for(auto& x: solver->xorclauses_unused) solver->xorclauses.push_back(std::move(x));
+    solver->clauseCleaner->clean_xor_clauses(solver->xorclauses);
+    finder.grab_mem();
+    finder.move_xors_without_connecting_vars_to_unused();
+    if (!finder.xor_together_xors(solver->xorclauses)) return false;
 
-        finder.move_xors_without_connecting_vars_to_unused();
-    }
+    finder.move_xors_without_connecting_vars_to_unused();
     finder.clean_equivalent_xors(solver->xorclauses);
     verb_print(1, "[matrix] unused xors from cleaning: " << solver->xorclauses_unused.size());
 

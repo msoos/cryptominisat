@@ -861,18 +861,14 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
             if (detached_xor_clauses
                 && varData[lit.var()].removed == Removed::clashed
             ) {
-                if (!fully_undo_xor_detach()) {
-                    return false;
-                }
+                if (!fully_undo_xor_detach()) return false;
                 assert(varData[lit.var()].removed == Removed::none);
             }
 
             if (conf.perform_occur_based_simp
                 && varData[lit.var()].removed == Removed::elimed
             ) {
-                if (!occsimplifier->uneliminate(lit.var())) {
-                    return false;
-                }
+                if (!occsimplifier->uneliminate(lit.var())) return false;
             }
         }
     }
