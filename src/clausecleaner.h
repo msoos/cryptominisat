@@ -45,7 +45,8 @@ class ClauseCleaner
 
         void clean_implicit_clauses();
         bool remove_and_clean_all();
-        bool clean_xor_clauses(vector<Xor>& xors);
+        void clean_all_xor_clauses();
+        void clean_xor_clauses(vector<Xor>& xors);
         bool clean_clause(Clause& c);
         bool full_clean(Clause& cl);
 

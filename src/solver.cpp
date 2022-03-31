@@ -1104,44 +1104,6 @@ double Solver::calc_renumber_saving()
 //
 //     return ok;
 // }
-/*
-bool Solver::clean_xor_clauses_from_duplicate_and_set_vars()
-{
-    xor_clauses_updated = true;
-    assert(decisionLevel() == 0);
-    double myTime = cpuTime();
-
-    if (!update_vars_of_xors(xorclauses)) goto end;
-    if (!update_vars_of_xors(xorclauses_unused)) goto end;
-    {
-        // clean up removed_xorclauses_clash_vars
-        uint32_t j = 0;
-        for(uint32_t i = 0; i < removed_xorclauses_clash_vars.size(); i++) {
-            if (value(removed_xorclauses_clash_vars[i]) == l_Undef) {
-                removed_xorclauses_clash_vars[j++] = removed_xorclauses_clash_vars[i];
-            }
-        }
-        removed_xorclauses_clash_vars.resize(j);
-    }
-
-    end:
-    const double time_used = cpuTime() - myTime;
-    if (conf.verbosity) {
-        cout
-        << "c [xor-clean]"
-        << conf.print_times(time_used)
-        << endl;
-    }
-    if (sqlStats) {
-        sqlStats->time_passed_min(
-            solver
-            , "xor-clean"
-            , time_used
-        );
-    }
-
-    return okay();
-}*/
 
 //Beware. Cannot be called while Searcher is running.
 bool Solver::renumber_variables(bool must_renumber)
@@ -1162,10 +1124,6 @@ bool Solver::renumber_variables(bool must_renumber)
     }
     #endif
 
-//     if (!clean_xor_clauses_from_duplicate_and_set_vars()) {
-//         return false;
-//     }
-
     if (nVars() == 0) {
         return okay();
     }
@@ -1182,10 +1140,7 @@ bool Solver::renumber_variables(bool must_renumber)
     if (!clauseCleaner->remove_and_clean_all()) {
         return false;
     }
-//     if (!xorclauses.empty()) {
-//         if (!clean_xor_clauses_from_duplicate_and_set_vars())
-//             return false;
-//     }
+    clauseCleaner->clean_all_xor_clauses();
 
     //outerToInter[10] = 0 ---> what was 10 is now 0.
     vector<uint32_t> outerToInter(nVarsOuter());

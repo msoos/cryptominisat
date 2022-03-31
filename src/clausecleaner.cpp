@@ -447,6 +447,16 @@ bool ClauseCleaner::clean_one_xor(Xor& x)
     size_t i = 0;
     size_t j = 0;
     VERBOSE_PRINT("Trying to clean XOR: " << x);
+    for(size_t size = x.clash_vars.size(); i < size; i++) {
+        const auto& v = x.clash_vars[i];
+        if (solver->value(v) == l_Undef) {
+            x.clash_vars[j++] = v;
+        }
+    }
+    x.clash_vars.resize(j);
+
+    i = 0;
+    j = 0;
     for(size_t size = x.size(); i < size; i++) {
         uint32_t var = x[i];
         if (solver->value(var) != l_Undef) {
@@ -484,7 +494,25 @@ bool ClauseCleaner::clean_one_xor(Xor& x)
     }
 }
 
-bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors)
+void ClauseCleaner::clean_all_xor_clauses()
+{
+    assert(solver->okay());
+    assert(solver->decisionLevel() == 0);
+
+    clean_xor_clauses(solver->xorclauses);
+    clean_xor_clauses(solver->xorclauses_unused);
+
+    // clean up removed_xorclauses_clash_vars
+    uint32_t j = 0;
+    for(uint32_t i = 0; i < solver->removed_xorclauses_clash_vars.size(); i++) {
+        if (solver->value(solver->removed_xorclauses_clash_vars[i]) == l_Undef) {
+            solver->removed_xorclauses_clash_vars[j++] = solver->removed_xorclauses_clash_vars[i];
+        }
+    }
+    solver->removed_xorclauses_clash_vars.resize(j);
+}
+
+void ClauseCleaner::clean_xor_clauses(vector<Xor>& xors)
 {
     assert(solver->ok);
     VERBOSE_DEBUG_DO(for(Xor& x : xors) cout << "orig XOR: " << x << endl);
@@ -498,9 +526,6 @@ bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors)
             Xor& x = xors[i];
             VERBOSE_PRINT("Checking to keep xor: " << x);
             const bool keep = clean_one_xor(x);
-            if (!solver->ok) {
-                return false;
-            }
 
             if (keep) {
                 assert(x.size() > 2);
@@ -517,7 +542,6 @@ bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors)
         xors.resize(j);
     }
     VERBOSE_PRINT("clean_xor_clauses() finished");
-    return solver->okay();
 }
 
 //returns TRUE if removed or solver is UNSAT

@@ -287,12 +287,7 @@ bool EGaussian::full_init(bool& created) {
     uint32_t trail_before;
     while (true) {
         trail_before = solver->trail_size();
-
-        if (!solver->clauseCleaner->clean_xor_clauses(xorclauses)) {
-            if (solver->conf.verbosity >= 5) {
-                cout << "c clean_xor_clauses lead to UNSAT" << endl;
-            }
-        }
+        solver->clauseCleaner->clean_xor_clauses(xorclauses);
 
         fill_matrix();
         before_init_density = get_density();
@@ -1529,6 +1524,7 @@ bool EGaussian::must_disable(GaussQData& gqd)
 #ifdef USE_TBUDDY
 void CMSat::EGaussian::finalize_frat()
 {
+    assert(solver->drat->enabled());
     solver->drat->flush();
     delete unsat_bdd;
 
