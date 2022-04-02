@@ -96,9 +96,7 @@ public:
 
     //Resolution Stats
     AtecedentData<uint64_t> resolvs;
-
-    //Stat structs
-    ConflStats conflStats;
+    uint32_t conflicts = 0;
 
     //Time
     double cpu_time = 0.0;

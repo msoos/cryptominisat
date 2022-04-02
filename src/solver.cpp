@@ -578,13 +578,13 @@ void Solver::attach_bnn(const uint32_t bnn_idx)
 //     cout << "Attaching BNN: " << *bnn << endl;
 
     for(const auto& l: *bnn) {
-        watches[l].push(Watched(bnn_idx, watch_bnn_t, bnn_pos_t));
-        watches[~l].push(Watched(bnn_idx, watch_bnn_t, bnn_neg_t));
+        watches[l].push(Watched(bnn_idx, WatchType::watch_bnn_t, bnn_pos_t));
+        watches[~l].push(Watched(bnn_idx, WatchType::watch_bnn_t, bnn_neg_t));
 
     }
     if (!bnn->set)  {
-        watches[bnn->out].push(Watched(bnn_idx, watch_bnn_t, bnn_out_t));
-        watches[~bnn->out].push(Watched(bnn_idx, watch_bnn_t, bnn_out_t));
+        watches[bnn->out].push(Watched(bnn_idx, WatchType::watch_bnn_t, bnn_out_t));
+        watches[~bnn->out].push(Watched(bnn_idx, WatchType::watch_bnn_t, bnn_out_t));
     }
 }
 
@@ -1660,34 +1660,34 @@ void Solver::reset_for_solving()
 void my_bddinthandler(int e)
 {
     switch(e) {
-        case -1:  cout << "tbuddy error: BDD_MEMORY (-1)   /* Out of memory */" << endl; break;
-        case -2:  cout << "tbuddy error: VAR (-2)      /* Unknown variable */" << endl; break;
-        case -3:  cout << "tbuddy error: RANGE (-3)    /* Variable value out of range (not in domain) */" << endl; break;
-        case -4:  cout << "tbuddy error: DEREF (-4)    /* Removing external reference to unknown node */" << endl; break;
-        case -5:  cout << "tbuddy error: RUNNING (-5)  /* Called bdd_init() twice whithout bdd_done() */" << endl; break;
-        case -6:  cout << "tbuddy error: FILE (-6)     /* Some file operation failed */" << endl; break;
-        case -7:  cout << "tbuddy error: FORMAT (-7)   /* Incorrect file format */" << endl; break;
-        case -8:  cout << "tbuddy error: ORDER (-8)    /* Vars. not in order for vector based functions */" << endl; break;
-        case -9:  cout << "tbuddy error: BREAK (-9)    /* User called break */" << endl; break;
-        case -10: cout << "tbuddy error: VARNUM (-10)  /* Different number of vars. for vector pair */" << endl; break;
-        case -11: cout << "tbuddy error: NODES (-11)   /* Tried to set max. number of nodes to be fewer than there already has been allocated */" << endl; break;
-        case -12: cout << "tbuddy error: BDD_OP (-12)      /* Unknown operator */" << endl; break;
-        case -13: cout << "tbuddy error: BDD_VARSET (-13)  /* Illegal variable set */" << endl; break;
-        case -14: cout << "tbuddy error: BDD_VARBLK (-14)  /* Bad variable block operation */" << endl; break;
-        case -15: cout << "tbuddy error: BDD_DECVNUM (-15) /* Trying to decrease the number of variables */" << endl; break;
-        case -16: cout << "tbuddy error: BDD_REPLACE (-16) /* Replacing to already existing variables */" << endl; break;
-        case -17: cout << "tbuddy error: BDD_NODENUM (-17) /* Number of nodes reached user defined maximum */" << endl; break;
-        case -18: cout << "tbuddy error: BDD_ILLBDD (-18)  /* Illegal bdd argument */" << endl; break;
-        case -19: cout << "tbuddy error: BDD_SIZE (-19)    /* Illegal size argument */" << endl; break;
+        case -1:  cout << "ERROR reported by tbuddy: BDD_MEMORY (-1)   /* Out of memory */" << endl; break;
+        case -2:  cout << "ERROR reported by tbuddy: VAR (-2)      /* Unknown variable */" << endl; break;
+        case -3:  cout << "ERROR reported by tbuddy: RANGE (-3)    /* Variable value out of range (not in domain) */" << endl; break;
+        case -4:  cout << "ERROR reported by tbuddy: DEREF (-4)    /* Removing external reference to unknown node */" << endl; break;
+        case -5:  cout << "ERROR reported by tbuddy: RUNNING (-5)  /* Called bdd_init() twice whithout bdd_done() */" << endl; break;
+        case -6:  cout << "ERROR reported by tbuddy: FILE (-6)     /* Some file operation failed */" << endl; break;
+        case -7:  cout << "ERROR reported by tbuddy: FORMAT (-7)   /* Incorrect file format */" << endl; break;
+        case -8:  cout << "ERROR reported by tbuddy: ORDER (-8)    /* Vars. not in order for vector based functions */" << endl; break;
+        case -9:  cout << "ERROR reported by tbuddy: BREAK (-9)    /* User called break */" << endl; break;
+        case -10: cout << "ERROR reported by tbuddy: VARNUM (-10)  /* Different number of vars. for vector pair */" << endl; break;
+        case -11: cout << "ERROR reported by tbuddy: NODES (-11)   /* Tried to set max. number of nodes to be fewer than there already has been allocated */" << endl; break;
+        case -12: cout << "ERROR reported by tbuddy: BDD_OP (-12)      /* Unknown operator */" << endl; break;
+        case -13: cout << "ERROR reported by tbuddy: BDD_VARSET (-13)  /* Illegal variable set */" << endl; break;
+        case -14: cout << "ERROR reported by tbuddy: BDD_VARBLK (-14)  /* Bad variable block operation */" << endl; break;
+        case -15: cout << "ERROR reported by tbuddy: BDD_DECVNUM (-15) /* Trying to decrease the number of variables */" << endl; break;
+        case -16: cout << "ERROR reported by tbuddy: BDD_REPLACE (-16) /* Replacing to already existing variables */" << endl; break;
+        case -17: cout << "ERROR reported by tbuddy: BDD_NODENUM (-17) /* Number of nodes reached user defined maximum */" << endl; break;
+        case -18: cout << "ERROR reported by tbuddy: BDD_ILLBDD (-18)  /* Illegal bdd argument */" << endl; break;
+        case -19: cout << "ERROR reported by tbuddy: BDD_SIZE (-19)    /* Illegal size argument */" << endl; break;
 
-        case -20: cout << "tbuddy error: BVEC_SIZE (-20)    /* Mismatch in bitvector size */" << endl; break;
-        case -21: cout << "tbuddy error: BVEC_SHIFT (-21)   /* Illegal shift-left/right parameter */" << endl; break;
-        case -22: cout << "tbuddy error: BVEC_DIVZERO (-22) /* Division by zero */" << endl; break;
+        case -20: cout << "ERROR reported by tbuddy: BVEC_SIZE (-20)    /* Mismatch in bitvector size */" << endl; break;
+        case -21: cout << "ERROR reported by tbuddy: BVEC_SHIFT (-21)   /* Illegal shift-left/right parameter */" << endl; break;
+        case -22: cout << "ERROR reported by tbuddy: BVEC_DIVZERO (-22) /* Division by zero */" << endl; break;
 
 
-        case -23: cout << "tbuddy error: ILIST_ALLOC (-23)  /* Invalid allocation for ilist */" << endl; break;
-        case -24: cout << "tbuddy error: TBDD_PROOF (-24)   /* Couldn't complete proof of justification */" << endl; break;
-        case -26: cout << "tbuddy error: BDD_ERRNUM 26 /* ?? */" << endl; break;
+        case -23: cout << "ERROR reported by tbuddy: ILIST_ALLOC (-23)  /* Invalid allocation for ilist */" << endl; break;
+        case -24: cout << "ERROR reported by tbuddy: TBDD_PROOF (-24)   /* Couldn't complete proof of justification */" << endl; break;
+        case -26: cout << "ERROR reported by tbuddy: BDD_ERRNUM 26 /* ?? */" << endl; break;
     }
 
     assert(false);
@@ -4750,10 +4750,10 @@ bool Solver::remove_and_clean_all() {
 
 void Solver::set_max_confl(uint64_t max_confl)
 {
-    if (get_stats().conflStats.numConflicts + max_confl < max_confl) {
+    if (get_stats().conflicts + max_confl < max_confl) {
           conf.max_confl = std::numeric_limits<uint64_t>::max();
       } else {
-          conf.max_confl = get_stats().conflStats.numConflicts + max_confl;
+          conf.max_confl = get_stats().conflicts + max_confl;
       }
 }
 

@@ -3475,7 +3475,7 @@ void OccSimplifier::clean_from_red_or_removed(
 {
     out.clear();
     for(const auto& w: in) {
-        assert(w.getType() == watch_clause_t || w.getType() == watch_binary_t);
+        assert(w.getType() == WatchType::watch_clause_t || w.getType() == WatchType::watch_binary_t);
         if (!solver->redundant_or_removed(w)) {
             out.push(w);
         }
@@ -4166,11 +4166,11 @@ uint32_t OccSimplifier::calc_data_for_heuristic(const Lit lit)
             continue;
 
         switch(ws.getType()) {
-            case watch_binary_t:
+            case WatchType::watch_binary_t:
                 ret++;
                 break;
 
-            case watch_clause_t: {
+            case WatchType::watch_clause_t: {
                 const Clause* cl = solver->cl_alloc.ptr(ws.get_offset());
                 if (!cl->getRemoved()) {
                     assert(!cl->freed() && "Inside occur, so cannot be freed");
@@ -4197,11 +4197,11 @@ uint32_t OccSimplifier::calc_occ_data(const Lit lit)
             continue;
 
         switch(ws.getType()) {
-            case watch_binary_t:
+            case WatchType::watch_binary_t:
                 ret++;
                 break;
 
-            case watch_clause_t: {
+            case WatchType::watch_clause_t: {
                 const Clause* cl = solver->cl_alloc.ptr(ws.get_offset());
                 if (!cl->getRemoved()) {
                     assert(!cl->freed() && "Inside occur, so cannot be freed");

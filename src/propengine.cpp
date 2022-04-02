@@ -525,23 +525,8 @@ inline bool PropEngine::prop_bin_cl(
 ) {
     const lbool val = value(i->lit2());
     if (val == l_Undef) {
-        #ifdef STATS_NEEDED
-        if (i->red())
-            propStats.propsBinRed++;
-        else
-            propStats.propsBinIrred++;
-        #endif
-
-        enqueue<inprocess>(i->lit2(), currLevel, PropBy(
-            ~p, i->red(), i->get_ID()));
+        enqueue<inprocess>(i->lit2(), currLevel, PropBy(~p, i->red(), i->get_ID()));
     } else if (val == l_False) {
-        #ifdef STATS_NEEDED
-        if (i->red())
-            lastConflictCausedBy = ConflCausedBy::binred;
-        else
-            lastConflictCausedBy = ConflCausedBy::binirred;
-        #endif
-
         confl = PropBy(~p, i->red(), i->get_ID());
         failBinLit = i->lit2();
         qhead = trail.size();
@@ -862,18 +847,8 @@ inline bool PropEngine::prop_bin_cl_occur(
     const Watched& ws)
 {
     const lbool val = value(ws.lit2());
-    if (val == l_False) {
-        return false;
-    }
-
-    if (val == l_Undef) {
-        enqueue<inprocess>(ws.lit2());
-        #ifdef STATS_NEEDED
-        if (ws.red()) propStats.propsBinRed++;
-        else propStats.propsBinIrred++;
-        #endif
-    }
-
+    if (val == l_False) return false;
+    if (val == l_Undef) enqueue<inprocess>(ws.lit2());
     return true;
 }
 

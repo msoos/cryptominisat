@@ -181,16 +181,6 @@ CREATE TABLE `restart` (
   `trailDepthDeltaMin` int(20),
   `trailDepthDeltaMax` int(20),
 
-  `propBinIrred` bigint(20) NOT NULL,
-  `propBinRed` bigint(20) NOT NULL,
-  `propLongIrred` bigint(20) NOT NULL,
-  `propLongRed` bigint(20) NOT NULL,
-
-  `conflBinIrred` bigint(20) NOT NULL,
-  `conflBinRed` bigint(20) NOT NULL,
-  `conflLongIrred` bigint(20) NOT NULL,
-  `conflLongRed` bigint(20) NOT NULL,
-
   `learntUnits` int(20) NOT NULL,
   `learntBins` int(20) NOT NULL,
   `learntLongs` int(20) NOT NULL,

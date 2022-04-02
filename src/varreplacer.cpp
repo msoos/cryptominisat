@@ -591,17 +591,17 @@ bool VarReplacer::replace_bnns()
         for (Lit& l: *bnn) {
             if (isReplaced_fast(l)) {
                 replace_bnn_lit(l, idx, changed);
-                solver->watches[l].push(Watched(idx, watch_bnn_t, bnn_pos_t));
-                solver->watches[~l].push(Watched(idx, watch_bnn_t, bnn_neg_t));
+                solver->watches[l].push(Watched(idx, WatchType::watch_bnn_t, bnn_pos_t));
+                solver->watches[~l].push(Watched(idx, WatchType::watch_bnn_t, bnn_neg_t));
             }
         }
         if (!bnn->set) {
             if (isReplaced_fast(bnn->out)) {
                 replace_bnn_lit(bnn->out, idx, changed);
                 solver->watches[bnn->out].push(
-                    Watched(idx, watch_bnn_t, bnn_out_t));
+                    Watched(idx, WatchType::watch_bnn_t, bnn_out_t));
                 solver->watches[~bnn->out].push(
-                    Watched(idx, watch_bnn_t, bnn_out_t));
+                    Watched(idx, WatchType::watch_bnn_t, bnn_out_t));
             }
         }
 

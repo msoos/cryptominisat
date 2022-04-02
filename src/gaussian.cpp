@@ -72,8 +72,8 @@ xorclauses(_xorclauses),
 solver(_solver),
 matrix_no(_matrix_no)
 {
-    one_len_ilist = ilist_new(1);
-    ilist_resize(one_len_ilist, 1);
+    TBUDDY_DO(one_len_ilist = ilist_new(1));
+    TBUDDY_DO(ilist_resize(one_len_ilist, 1));
 }
 
 EGaussian::~EGaussian() {
@@ -87,8 +87,8 @@ EGaussian::~EGaussian() {
     delete cols_vals;
     delete tmp_col;
     delete tmp_col2;
-    ilist_free(one_len_ilist);
-    ilist_free(ilist_tmp);
+    TBUDDY_DO(ilist_free(one_len_ilist));
+    TBUDDY_DO(ilist_free(ilist_tmp));
 }
 
 struct ColSorter {
@@ -226,7 +226,7 @@ void EGaussian::fill_matrix() {
     if (num_rows == 0 || num_cols == 0) {
         return;
     }
-    ilist_tmp = ilist_new(num_cols);
+    TBUDDY_DO(ilist_tmp = ilist_new(num_cols));
     mat.resize(num_rows, num_cols); // initial gaussian matrix
 
     bdd_matrix.clear();
@@ -1524,11 +1524,10 @@ bool EGaussian::must_disable(GaussQData& gqd)
 void CMSat::EGaussian::move_back_xor_clauses()
 {
     for(const auto& x: xorclauses) {
-        assert(x.bdd == NULL && "Should have finalized matrix first");
+        TBUDDY_DO(assert(x.bdd == NULL && "Should have finalized matrix first"));
         solver->xorclauses.push_back(std::move(x));
     }
 }
-
 
 #ifdef USE_TBUDDY
 void CMSat::EGaussian::finalize_frat()

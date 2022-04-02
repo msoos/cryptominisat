@@ -102,12 +102,12 @@ uint32_t SubsumeImplicit::subsume_at_watch(const uint32_t at,
         }
 
         switch(i->getType()) {
-            case CMSat::watch_clause_t:
-            case CMSat::watch_bnn_t:
+            case WatchType::watch_clause_t:
+            case WatchType::watch_bnn_t:
                 *j++ = *i;
                 break;
 
-            case CMSat::watch_binary_t:
+            case WatchType::watch_binary_t:
                 try_subsume_bin(lit, i, j, timeAvail, touched);
                 break;
 

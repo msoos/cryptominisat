@@ -43,7 +43,7 @@ void SatZillaFeaturesCalc::for_one_clause(
     unsigned size = 0;
 
     switch (cl.getType()) {
-        case CMSat::watch_binary_t: {
+        case WatchType::watch_binary_t: {
             if (cl.red()) {
                 //only irred cls
                 break;
@@ -63,7 +63,7 @@ void SatZillaFeaturesCalc::for_one_clause(
             break;
         }
 
-        case CMSat::watch_clause_t: {
+        case WatchType::watch_clause_t: {
             const Clause& clause = *solver->cl_alloc.ptr(cl.get_offset());
             if (clause.red()) {
                 //only irred cls
@@ -86,7 +86,7 @@ void SatZillaFeaturesCalc::for_one_clause(
             break;
         }
 
-        case CMSat::watch_idx_t: {
+        case WatchType::watch_idx_t: {
              // This should never be here
             assert(false);
             exit(-1);

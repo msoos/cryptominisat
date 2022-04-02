@@ -111,12 +111,12 @@ void StrImplWImpl::distill_implicit_with_implicit_lit(const Lit lit)
         }
 
         switch(i->getType()) {
-            case CMSat::watch_clause_t:
-            case CMSat::watch_bnn_t:
+            case WatchType::watch_clause_t:
+            case WatchType::watch_bnn_t:
                 *j++ = *i;
                 break;
 
-            case CMSat::watch_binary_t:
+            case WatchType::watch_binary_t:
                 timeAvailable -= 20;
                 strengthen_bin_with_bin(lit, i, j, end);
                 break;

@@ -1349,11 +1349,6 @@ lbool Searcher::search()
 
         if (!confl.isNULL()) {
             update_branch_params();
-
-            #ifdef STATS_NEEDED
-            stats.conflStats.update(lastConflictCausedBy);
-            #endif
-
             print_restart_stat();
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             hist.trailDepthHist.push(trail.size());
@@ -1368,21 +1363,11 @@ lbool Searcher::search()
         } else {
             assert(ok);
             if (decisionLevel() == 0) {
-                #ifdef SLOW_DEBUG
-                for(const auto& bnn: bnns) {
-                    if (bnn)
-                        assert(solver->check_bnn_sane(*bnn));
-                }
-                #endif
+                SLOW_DEBUG_DO(for(const auto& bnn: bnns) if (bnn) assert(solver->check_bnn_sane(*bnn)););
                 if (!clean_clauses_if_needed()) {
                     search_ret = l_False;
                     goto end;
                 }
-//                 for(const auto& bnn: bnns) {
-//                     if (bnn)
-//                         cout << "BNN after clean: " << *bnn << endl;
-//                 }
-//                 cout << "END" << endl;
             }
             reduce_db_if_needed();
             lbool dec_ret;
@@ -1878,7 +1863,7 @@ Clause* Searcher::handle_last_confl(
 
 bool Searcher::handle_conflict(PropBy confl)
 {
-    stats.conflStats.numConflicts++;
+    stats.conflicts++;
     hist.num_conflicts_this_restart++;
     sumConflicts++;
     for(uint32_t i = 0; i < longRedCls.size(); i++) {
@@ -2572,7 +2557,7 @@ bool Searcher::must_abort(const lbool status) {
         return true;
     }
 
-    if (stats.conflStats.numConflicts >= max_confl_per_search_solve_call) {
+    if (stats.conflicts >= max_confl_per_search_solve_call) {
         if (conf.verbosity >= 3) {
             cout
             << "c search over max conflicts"
@@ -2723,7 +2708,7 @@ lbool Searcher::solve(
     #endif
     setup_polarity_strategy();
 
-    while(stats.conflStats.numConflicts < max_confl_per_search_solve_call
+    while(stats.conflicts < max_confl_per_search_solve_call
         && status == l_Undef
     ) {
         #ifdef SLOW_DEBUG
@@ -2732,7 +2717,7 @@ lbool Searcher::solve(
 
         assert(watches.get_smudged_list().empty());
         params.clear();
-        params.max_confl_to_do = max_confl_per_search_solve_call-stats.conflStats.numConflicts;
+        params.max_confl_to_do = max_confl_per_search_solve_call-stats.conflicts;
         status = search();
         if (status == l_Undef) {
             adjust_restart_strategy();
@@ -2906,7 +2891,7 @@ inline void Searcher::print_local_restart_budget()
 
 void Searcher::check_need_restart()
 {
-    if ((stats.conflStats.numConflicts & 0xff) == 0xff) {
+    if ((stats.conflicts & 0xff) == 0xff) {
         //It's expensive to check the time all the time
         if (cpuTime() > conf.maxTime) {
             params.needToStopSearch = true;
@@ -3032,7 +3017,7 @@ void Searcher::finish_up_solve(const lbool status)
     if (conf.verbosity >= 4) {
         cout << "c Searcher::solve() finished"
         << " status: " << status
-        << " numConflicts : " << stats.conflStats.numConflicts
+        << " numConflicts : " << stats.conflicts
         << " SumConfl: " << sumConflicts
         << " max_confl_per_search_solve_call:" << max_confl_per_search_solve_call
         << endl;
@@ -3051,7 +3036,7 @@ void Searcher::print_iteration_solving_stats()
             , float_div(propStats.propagations, stats.decisions)
         );
         print_stats_line("c props/conflict"
-            , float_div(propStats.propagations, stats.conflStats.numConflicts)
+            , float_div(propStats.propagations, stats.conflicts)
         );
         cout << "c ------ THIS ITERATION SOLVING STATS -------" << endl;
     }

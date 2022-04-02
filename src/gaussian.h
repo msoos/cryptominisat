@@ -60,8 +60,10 @@ struct XorReason
     Lit propagated = lit_Undef;
     int32_t ID = 0;
     vector<Lit> reason;
+    #ifdef USE_TBUDDY
     tbdd::xor_constraint* constr = NULL;
     ilist list = NULL;
+    #endif
 };
 
 class EGaussian {

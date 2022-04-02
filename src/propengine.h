@@ -274,9 +274,6 @@ protected:
     void save_on_var_memory();
     template<class T> uint32_t calc_glue(const T& ps);
 
-    //Stats for conflicts
-    ConflCausedBy lastConflictCausedBy;
-
     // Solver state:
     //
     vector<Trail>  trail; ///< Assignment stack; stores all assignments made in the order they were made.
@@ -502,10 +499,6 @@ inline PropResult PropEngine::handle_normal_prop_fail(
     if (!inprocess) {
         red_stats_extra[c.stats.extra_pos].conflicts_made++;
     }
-    if (c.red())
-        lastConflictCausedBy = ConflCausedBy::longred;
-    else
-        lastConflictCausedBy = ConflCausedBy::longirred;
     #endif
 
     qhead = trail.size();

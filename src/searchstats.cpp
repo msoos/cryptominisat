@@ -74,7 +74,7 @@ SearchStats& SearchStats::operator+=(const SearchStats& other)
 
     //Stat structs
     resolvs += other.resolvs;
-    conflStats += other.conflStats;
+    conflicts += other.conflicts;
 
     //Time
     cpu_time += other.cpu_time;
@@ -131,7 +131,7 @@ SearchStats& SearchStats::operator-=(const SearchStats& other)
 
     //Stat structs
     resolvs -= other.resolvs;
-    conflStats -= other.conflStats;
+    conflicts -= other.conflicts;
 
     //Time
     cpu_time -= other.cpu_time;
@@ -150,7 +150,7 @@ void SearchStats::printCommon(uint64_t props, bool do_print_times) const
 {
     print_stats_line("c restarts"
         , numRestarts
-        , float_div(conflStats.numConflicts, numRestarts)
+        , float_div(conflicts, numRestarts)
         , "confls per restart"
 
     );
@@ -173,7 +173,7 @@ void SearchStats::printCommon(uint64_t props, bool do_print_times) const
                      "props/s");
 
     print_stats_line("c decisions/conflicts"
-        , float_div(decisions, conflStats.numConflicts)
+        , float_div(decisions, conflicts)
     );
 }
 
@@ -181,21 +181,20 @@ void SearchStats::print_short(uint64_t props, bool do_print_times) const
 {
     //Restarts stats
     printCommon(props, do_print_times);
-    conflStats.print_short(cpu_time, do_print_times);
-
+    print_stats_line("c conficts", conflicts);
     print_stats_line("c conf lits non-minim"
         , litsRedNonMin
-        , float_div(litsRedNonMin, conflStats.numConflicts)
+        , float_div(litsRedNonMin, conflicts)
         , "lit/confl"
     );
 
     print_stats_line("c conf lits final"
-        , float_div(litsRedFinal, conflStats.numConflicts)
+        , float_div(litsRedFinal, conflicts)
     );
 
     print_stats_line("c red which0"
         , red_cl_in_which0
-        , stats_line_percent(red_cl_in_which0, conflStats.numConflicts)
+        , stats_line_percent(red_cl_in_which0, conflicts)
         , "% of confl"
     );
 }
@@ -203,7 +202,7 @@ void SearchStats::print_short(uint64_t props, bool do_print_times) const
 void SearchStats::print(uint64_t props, bool do_print_times) const
 {
     printCommon(props, do_print_times);
-    conflStats.print(cpu_time, do_print_times);
+    print_stats_line("c conficts", conflicts);
 
     /*assert(numConflicts
         == conflsBin + conflsTri + conflsLongIrred + conflsLongRed);*/
@@ -211,23 +210,23 @@ void SearchStats::print(uint64_t props, bool do_print_times) const
     cout << "c LEARNT stats" << endl;
     print_stats_line("c units learnt"
         , learntUnits
-        , stats_line_percent(learntUnits, conflStats.numConflicts)
+        , stats_line_percent(learntUnits, conflicts)
         , "% of conflicts");
 
     print_stats_line("c bins learnt"
         , learntBins
-        , stats_line_percent(learntBins, conflStats.numConflicts)
+        , stats_line_percent(learntBins, conflicts)
         , "% of conflicts");
 
     print_stats_line("c long learnt"
         , learntLongs
-        , stats_line_percent(learntLongs, conflStats.numConflicts)
+        , stats_line_percent(learntLongs, conflicts)
         , "% of conflicts"
     );
 
     print_stats_line("c red which0"
         , red_cl_in_which0
-        , stats_line_percent(red_cl_in_which0, conflStats.numConflicts)
+        , stats_line_percent(red_cl_in_which0, conflicts)
         , "% of confl"
     );
 
@@ -254,13 +253,13 @@ void SearchStats::print(uint64_t props, bool do_print_times) const
     cout << "c CONFL LITS stats" << endl;
     print_stats_line("c orig "
         , litsRedNonMin
-        , ratio_for_stat(litsRedNonMin, conflStats.numConflicts)
+        , ratio_for_stat(litsRedNonMin, conflicts)
         , "lit/confl"
     );
 
     print_stats_line("c recurs-min effective"
         , recMinCl
-        , stats_line_percent(recMinCl, conflStats.numConflicts)
+        , stats_line_percent(recMinCl, conflicts)
         , "% attempt successful"
     );
 
@@ -271,7 +270,7 @@ void SearchStats::print(uint64_t props, bool do_print_times) const
     );
 
     print_stats_line("c permDiff call%"
-        , stats_line_percent(permDiff_attempt, conflStats.numConflicts)
+        , stats_line_percent(permDiff_attempt, conflicts)
         , stats_line_percent(permDiff_success, permDiff_attempt)
         , "% attempt successful"
     );
@@ -284,7 +283,7 @@ void SearchStats::print(uint64_t props, bool do_print_times) const
 
 
     print_stats_line("c further-min call%"
-        , stats_line_percent(furtherShrinkAttempt, conflStats.numConflicts)
+        , stats_line_percent(furtherShrinkAttempt, conflicts)
         , stats_line_percent(furtherShrinkedSuccess, furtherShrinkAttempt)
         , "% attempt successful"
     );
@@ -296,7 +295,7 @@ void SearchStats::print(uint64_t props, bool do_print_times) const
     );
 
     print_stats_line("c final avg"
-        , ratio_for_stat(litsRedFinal, conflStats.numConflicts)
+        , ratio_for_stat(litsRedFinal, conflicts)
     );
 
     //General stats

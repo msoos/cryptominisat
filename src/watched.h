@@ -36,7 +36,7 @@ THE SOFTWARE.
 
 namespace CMSat {
 
-enum WatchType {
+enum class WatchType {
     watch_clause_t = 0
     , watch_binary_t = 1
     , watch_bnn_t = 2
@@ -49,49 +49,40 @@ enum BNNPropType {
     , bnn_out_t = 2
 };
 
-/**
-@brief An element in the watchlist. Natively contains 2- and 3-long clauses, others are referenced by pointer
-
-This class contains two 32-bit datapieces. They are either used as:
-\li One literal, in the case of binary clauses
-\li Two literals, in the case of tertiary clauses
-\li One blocking literal (i.e. an example literal from the clause) and a clause
-offset (as per ClauseAllocator ), in the case of long clauses
-*/
 class Watched {
     public:
         Watched(Watched const&) = default;
 
         /**
-        @brief Constructor for a long (>3) clause
+        @brief Constructor for a long (>2) clause
         */
         Watched(const ClOffset offset, Lit blockedLit) :
             data1(blockedLit.toInt())
-            , type(watch_clause_t)
+            , type(static_cast<int>(WatchType::watch_clause_t))
             , data2(offset)
         {
         }
 
         /**
-        @brief Constructor for a long (>3) clause
+        @brief Constructor for a long (>2) clause
         */
         Watched(const ClOffset offset, cl_abst_type abst) :
             data1(abst)
-            , type(watch_clause_t)
+            , type(static_cast<int>(WatchType::watch_clause_t))
             , data2(offset)
         {
         }
 
         Watched(const uint32_t idx, WatchType t):
             data1(idx)
-            , type(t)
+            , type(static_cast<int>(t))
         {
-            assert(t == watch_idx_t);
+            assert(t == WatchType::watch_idx_t);
         }
 
         Watched(const uint32_t idx, WatchType t, BNNPropType bnn_p_t):
             data1(idx)
-            , type(t)
+            , type(static_cast<int>(t))
             , data2(bnn_p_t)
         {
             DEBUG_WATCHED_DO(assert(t == watch_bnn_t));
@@ -99,7 +90,7 @@ class Watched {
 
         Watched() :
             data1 (std::numeric_limits<uint32_t>::max())
-            , type(watch_clause_t) // initialize type with most generic type of clause
+            , type(static_cast<int>(WatchType::watch_clause_t)) // initialize type with most generic type of clause
             , data2(std::numeric_limits<uint32_t>::max() >> 2)
         {}
 
@@ -108,7 +99,7 @@ class Watched {
         */
         Watched(const Lit lit, const bool red, uint64_t ID) :
             data1(lit.toInt())
-            , type(watch_binary_t)
+            , type(static_cast<int>(WatchType::watch_binary_t))
             , data2((uint64_t)red | ID<<2) //marking is 2nd bit
         {
         }
@@ -130,39 +121,39 @@ class Watched {
 
         bool isBin() const
         {
-            return (type == watch_binary_t);
+            return (type == static_cast<int>(WatchType::watch_binary_t));
         }
 
         bool isClause() const
         {
-            return (type == watch_clause_t);
+            return (type == static_cast<int>(WatchType::watch_clause_t));
         }
 
         bool isIdx() const
         {
-            return (type == watch_idx_t);
+            return (type == static_cast<int>(WatchType::watch_idx_t));
         }
 
         bool isBNN() const
         {
-            return (type == watch_bnn_t);
+            return (type == static_cast<int>(WatchType::watch_bnn_t));
         }
 
         uint32_t get_idx() const
         {
-            DEBUG_WATCHED_DO(assert(type == watch_idx_t));
+            DEBUG_WATCHED_DO(assert(type == static_cast<int>(WatchType::watch_idx_t)));
             return data1;
         }
 
         uint32_t get_bnn() const
         {
-            DEBUG_WATCHED_DO(assert(type == watch_bnn_t));
+            DEBUG_WATCHED_DO(assert(type == static_cast<int>(WatchType::watch_bnn_t)));
             return data1;
         }
 
         BNNPropType get_bnn_prop_t() const
         {
-            DEBUG_WATCHED_DO(assert(type == watch_bnn_t));
+            DEBUG_WATCHED_DO(assert(type == static_cast<int>(WatchType::watch_bnn_t)));
             return (BNNPropType)data2;
         }
 

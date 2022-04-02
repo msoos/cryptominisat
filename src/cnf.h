@@ -399,13 +399,13 @@ void CNF::for_each_lit(
     , int64_t* limit
 ) const {
     switch(cl.ws.getType()) {
-        case CMSat::watch_binary_t:
+        case WatchType::watch_binary_t:
             *limit -= 2;
             func(cl.lit);
             func(cl.ws.lit2());
             break;
 
-        case CMSat::watch_clause_t: {
+        case WatchType::watch_clause_t: {
             const Clause& clause = *cl_alloc.ptr(cl.ws.get_offset());
             *limit -= (int64_t)clause.size();
             for(const Lit lit: clause) {
@@ -414,8 +414,8 @@ void CNF::for_each_lit(
             break;
         }
 
-        case CMSat::watch_bnn_t :
-        case CMSat::watch_idx_t :
+        case WatchType::watch_bnn_t :
+        case WatchType::watch_idx_t :
             assert(false);
             break;
     }
@@ -428,12 +428,12 @@ void CNF::for_each_lit_except_watched(
     , int64_t* limit
 ) const {
     switch(cl.ws.getType()) {
-        case CMSat::watch_binary_t:
+        case WatchType::watch_binary_t:
             *limit -= 1;
             func(cl.ws.lit2());
             break;
 
-        case CMSat::watch_clause_t: {
+        case WatchType::watch_clause_t: {
             const Clause& clause = *cl_alloc.ptr(cl.ws.get_offset());
             *limit -= clause.size();
             for(const Lit lit: clause) {
@@ -444,8 +444,8 @@ void CNF::for_each_lit_except_watched(
             break;
         }
 
-        case CMSat::watch_bnn_t: //no idea what to do with this, let's error
-        case CMSat::watch_idx_t:
+        case WatchType::watch_bnn_t: //no idea what to do with this, let's error
+        case WatchType::watch_idx_t:
             assert(false);
             break;
     }

@@ -643,18 +643,6 @@ void SQLiteStats::restart(
     bind_null_or_double(stmt, bindAt,   searchHist.trailDepthDeltaHist,getMin)
     bind_null_or_double(stmt, bindAt,   searchHist.trailDepthDeltaHist,getMax)
 
-    //Prop
-    sqlite3_bind_int64(stmt, bindAt++, thisPropStats.propsBinIrred);
-    sqlite3_bind_int64(stmt, bindAt++, thisPropStats.propsBinRed);
-    sqlite3_bind_int64(stmt, bindAt++, thisPropStats.propsLongIrred);
-    sqlite3_bind_int64(stmt, bindAt++, thisPropStats.propsLongRed);
-
-    //Confl
-    sqlite3_bind_int64(stmt, bindAt++, thisStats.conflStats.conflsBinIrred);
-    sqlite3_bind_int64(stmt, bindAt++, thisStats.conflStats.conflsBinRed);
-    sqlite3_bind_int64(stmt, bindAt++, thisStats.conflStats.conflsLongIrred);
-    sqlite3_bind_int64(stmt, bindAt++, thisStats.conflStats.conflsLongRed);
-
     //Red
     sqlite3_bind_int64(stmt, bindAt++, thisStats.learntUnits);
     sqlite3_bind_int64(stmt, bindAt++, thisStats.learntBins);

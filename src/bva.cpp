@@ -135,21 +135,21 @@ void BVA::remove_duplicates_from_m_cls()
         = [&] (const OccurClause& a, const OccurClause& b) {
             WatchType atype = a.ws.getType();
             WatchType btype = b.ws.getType();
-            if (atype == watch_binary_t && btype != CMSat::watch_binary_t) {
+            if (atype == WatchType::watch_binary_t && btype != WatchType::watch_binary_t) {
                 return true;
             }
-            if (btype == watch_binary_t && atype != CMSat::watch_binary_t) {
+            if (btype == WatchType::watch_binary_t && atype != WatchType::watch_binary_t) {
                 return false;
             }
 
             assert(atype == btype);
             switch(atype) {
-                case CMSat::watch_binary_t: {
+                case WatchType::watch_binary_t: {
                     //subsumption could have time-outed
                     //assert(a.ws.lit2() != b.ws.lit2() && "Implicit has been cleaned of duplicates!!");
                     return a.ws.lit2() < b.ws.lit2();
                 }
-                case CMSat::watch_clause_t: {
+                case WatchType::watch_clause_t: {
                     *simplifier->limit_to_decrease -= 20;
                     const Clause& cl_a = *solver->cl_alloc.ptr(a.ws.get_offset());
                     const Clause& cl_b = *solver->cl_alloc.ptr(b.ws.get_offset());
@@ -165,8 +165,8 @@ void BVA::remove_duplicates_from_m_cls()
                     }
                     return false;
                 }
-                case CMSat::watch_bnn_t: //no idea what to do here, error out
-                case CMSat::watch_idx_t:
+                case WatchType::watch_bnn_t: //no idea what to do here, error out
+                case WatchType::watch_idx_t:
                     // This should never be here
                     assert(false);
                     exit(-1);
@@ -191,14 +191,14 @@ void BVA::remove_duplicates_from_m_cls()
 
         bool del = false;
         switch(prev.getType()) {
-            case CMSat::watch_binary_t: {
+            case WatchType::watch_binary_t: {
                 if (prev.lit2() == next.lit2()) {
                     del = true;
                 }
                 break;
             }
 
-            case CMSat::watch_clause_t: {
+            case WatchType::watch_clause_t: {
                 *simplifier->limit_to_decrease -= 10;
                 const Clause& cl1 = *solver->cl_alloc.ptr(prev.get_offset());
                 const Clause& cl2 = *solver->cl_alloc.ptr(next.get_offset());
@@ -216,8 +216,8 @@ void BVA::remove_duplicates_from_m_cls()
                 break;
             }
 
-            case CMSat::watch_bnn_t: //no idea what to do with BNN
-            case CMSat::watch_idx_t:
+            case WatchType::watch_bnn_t: //no idea what to do with BNN
+            case WatchType::watch_idx_t:
                 // This should never be here
                 assert(false);
                 exit(-1);
@@ -408,12 +408,12 @@ void BVA::fill_m_cls_lits_and_red()
         tmp.clear();
         bool red;
         switch(cl.ws.getType()) {
-            case CMSat::watch_binary_t: {
+            case WatchType::watch_binary_t: {
                 tmp.push_back(cl.ws.lit2());
                 red = cl.ws.red();
                 break;
             }
-            case CMSat::watch_clause_t: {
+            case WatchType::watch_clause_t: {
                 const Clause* cl_orig = solver->cl_alloc.ptr(cl.ws.get_offset());
                 for(const Lit lit: *cl_orig) {
                     if (cl.lit != lit) {
@@ -423,7 +423,7 @@ void BVA::fill_m_cls_lits_and_red()
                 red = cl_orig->red();
                 break;
             }
-            case CMSat::watch_idx_t:
+            case WatchType::watch_idx_t:
             default:
             {
                 // This should never be here
@@ -525,7 +525,7 @@ bool BVA::add_longer_clause(const Lit new_lit, const OccurClause& cl)
     vector<Lit>& lits = bva_tmp_lits;
     lits.clear();
     switch(cl.ws.getType()) {
-        case CMSat::watch_binary_t: {
+        case WatchType::watch_binary_t: {
             lits.resize(2);
             lits[0] = new_lit;
             lits[1] = cl.ws.lit2();
@@ -545,7 +545,7 @@ bool BVA::add_longer_clause(const Lit new_lit, const OccurClause& cl)
             break;
         }
 
-        case CMSat::watch_clause_t: {
+        case WatchType::watch_clause_t: {
             const Clause& orig_cl = *solver->cl_alloc.ptr(cl.ws.get_offset());
             lits.resize(orig_cl.size());
             for(size_t i = 0; i < orig_cl.size(); i++) {
@@ -577,11 +577,12 @@ bool BVA::add_longer_clause(const Lit new_lit, const OccurClause& cl)
             break;
         }
 
-        case CMSat::watch_idx_t: {
+        case WatchType::watch_bnn_t:
+        case WatchType::watch_idx_t:
             // This should never be here
             assert(false);
             exit(-1);
-        }
+            break;
     }
     touched.touch(lits);
 

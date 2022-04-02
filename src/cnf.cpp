@@ -286,10 +286,10 @@ uint64_t CNF::print_mem_used_longclauses(const size_t totalMem) const
 size_t CNF::cl_size(const Watched& ws) const
 {
     switch(ws.getType()) {
-        case watch_binary_t:
+        case WatchType::watch_binary_t:
             return 2;
 
-        case watch_clause_t: {
+        case WatchType::watch_clause_t: {
             const Clause* cl = cl_alloc.ptr(ws.get_offset());
             return cl->size();
         }
@@ -313,14 +313,14 @@ string CNF::watched_to_string(Lit otherLit, const Watched& ws) const
 {
     std::stringstream ss;
     switch(ws.getType()) {
-        case watch_binary_t:
+        case WatchType::watch_binary_t:
             ss << otherLit << ", " << ws.lit2();
             if (ws.red()) {
                 ss << "(red)";
             }
             break;
 
-        case watch_clause_t: {
+        case WatchType::watch_clause_t: {
             const Clause* cl = cl_alloc.ptr(ws.get_offset());
             for(size_t i = 0; i < cl->size(); i++) {
                 ss << (*cl)[i];
@@ -956,6 +956,7 @@ void CNF::check_no_zero_ID_bins() const
     }
 }
 
+#ifdef USE_TBUDDY
 void CNF::free_bdds(vector<Xor>& xors)
 {
     for(auto& x: xors) {
@@ -963,3 +964,4 @@ void CNF::free_bdds(vector<Xor>& xors)
         x.bdd = NULL;
     }
 }
+#endif

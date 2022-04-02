@@ -501,7 +501,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
 
             Lit l(v, false);
             assert(solver->watches.size() > l.toInt());
-            solver->watches[l].push(Watched(i, watch_idx_t));
+            solver->watches[l].push(Watched(i, WatchType::watch_idx_t));
             solver->watches.smudge(l);
         }
     }
@@ -632,7 +632,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 x0 = Xor();
 
                 //Re-attach the other, remove the occur of the one we deleted
-                solver->watches[Lit(v, false)].push(Watched(idxes[1], watch_idx_t));
+                solver->watches[Lit(v, false)].push(Watched(idxes[1], WatchType::watch_idx_t));
 
                 for(uint32_t v2: x1) {
                     Lit l(v2, false);
@@ -644,8 +644,8 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 }
             } else if (clash_num > 1 || x0.detached || x1.detached) {
                 //add back to ws, can't do much
-                ws.push(Watched(idxes[0], watch_idx_t));
-                ws.push(Watched(idxes[1], watch_idx_t));
+                ws.push(Watched(idxes[0], WatchType::watch_idx_t));
+                ws.push(Watched(idxes[1], WatchType::watch_idx_t));
                 continue;
             } else {
                 occcnt[v] -= 2;
@@ -673,7 +673,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 this_xors.push_back(x_new);
                 for(uint32_t v2: x_new) {
                     Lit l(v2, false);
-                    solver->watches[l].push(Watched(this_xors.size()-1, watch_idx_t));
+                    solver->watches[l].push(Watched(this_xors.size()-1, WatchType::watch_idx_t));
                     assert(occcnt[l.var()] >= 1);
                     if (occcnt[l.var()] == 2 && !seen2[l.var()]) {
                         interesting.push_back(l.var());

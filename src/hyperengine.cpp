@@ -575,12 +575,6 @@ PropResult HyperEngine::prop_bin_with_ancestor_info(
         cout << "Conflict from " << p << " , " << lit << endl;
         #endif //VERBOSE_DEBUG_FULLPROP
 
-        //Update stats
-        if (k->red())
-            lastConflictCausedBy = ConflCausedBy::binred;
-        else
-            lastConflictCausedBy = ConflCausedBy::binirred;
-
         failBinLit = lit;
         confl = PropBy(~p, k->red(), k->get_ID());
         return PROP_FAIL;
