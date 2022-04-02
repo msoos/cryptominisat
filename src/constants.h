@@ -27,7 +27,7 @@ THE SOFTWARE.
 #include <cstdlib>
 #include <stdio.h>
 
-#define VERBOSE_DEBUG
+//#define VERBOSE_DEBUG
 
 #if defined(_MSC_VER)
 #define release_assert(a) \
