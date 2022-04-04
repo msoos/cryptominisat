@@ -235,10 +235,10 @@ bool BreakID::doit()
         assert(ok);
         return solver->okay();
     }
-    breakid->end_dynamic_cnf();
 
     // Detect symmetries, detect subgroups
     set_up_time_lim();
+    breakid->end_dynamic_cnf();
     verb_print(1, "[breakid] Generators: " << breakid->get_num_generators());
     if (solver->conf.verbosity > 3) breakid->print_generators(std::cout);
     verb_print(2, "[breakid] Detecting subgroups...");
