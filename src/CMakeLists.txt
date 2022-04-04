@@ -171,6 +171,10 @@ endif()
 
 set(cryptoms_lib_link_libs "")
 
+set(cryptoms_lib_link_libs
+        ${cryptoms_lib_link_libs}
+        picosat)
+
 if (TBUDDY)
     set(cryptoms_lib_link_libs
         ${cryptoms_lib_link_libs}

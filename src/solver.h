@@ -115,8 +115,6 @@ class Solver : public Searcher
         lbool full_model_value (const uint32_t p) const;  ///<Found model value for var
         const vector<lbool>& get_model() const;
         const vector<Lit>& get_final_conflict() const;
-        vector<pair<Lit, Lit> > get_all_binary_xors() const;
-        vector<Xor> get_recovered_xors(const bool xor_together_xors);
         vector<double> get_vsids_scores() const;
         vector<Lit> implied_by_tmp_lits;
         bool implied_by(const std::vector<Lit>& lits,
@@ -287,8 +285,13 @@ class Solver : public Searcher
         //Not Private for testing (maybe could be called from outside)
         bool renumber_variables(bool must_renumber = true);
 
+        // Gates
         vector<OrGate> get_recovered_or_gates();
         vector<ITEGate> get_recovered_ite_gates();
+        vector<pair<Lit, Lit> > get_all_binary_xors() const;
+        vector<Xor> get_recovered_xors(const bool xor_together_xors);
+        vector<uint32_t> get_definable_vars(const vector<uint32_t>& vars);
+
         bool remove_and_clean_all();
         vector<Lit> get_toplevel_units_internal(bool outer_numbering) const;
 

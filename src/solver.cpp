@@ -1473,6 +1473,11 @@ void Solver::extend_solution(const bool only_sampling_solution)
                 cout << "NOTE: var " << var + 1 << " has removed value: "
                 << removed_type_to_string(varData[var].removed)
                 << " and is set to " << value(var) << endl;
+
+                if (varData[var].removed == Removed::replaced) {
+                    uint32_t v2 = varReplacer->get_var_replaced_with(var);
+                    cout << " --> replaced with var " << v2 + 1 << " whose value is: " << value(v2) << endl;
+                }
             }
             assert(model[var] != l_Undef);
         }
@@ -4714,7 +4719,7 @@ vector<OrGate> Solver::get_recovered_or_gates()
         return vector<OrGate>();
     }
 
-    vector<OrGate> or_gates = occsimplifier->get_recovered_or_gates();
+    vector<OrGate> or_gates = occsimplifier->recover_or_gates();
 
     for(auto& g: or_gates) {
         g.rhs = map_inter_to_outer(g.rhs);
@@ -4732,7 +4737,7 @@ vector<ITEGate> Solver::get_recovered_ite_gates()
         return vector<ITEGate>();
     }
 
-    vector<ITEGate> or_gates = occsimplifier->get_recovered_ite_gates();
+    vector<ITEGate> or_gates = occsimplifier->recover_ite_gates();
 
     for(auto& g: or_gates) {
         g.rhs = map_inter_to_outer(g.rhs);
@@ -4742,6 +4747,12 @@ vector<ITEGate> Solver::get_recovered_ite_gates()
     }
 
     return or_gates;
+}
+
+vector<uint32_t> Solver::get_definable_vars(const vector<uint32_t>& vars)
+{
+    if (!okay()) return vector<uint32_t>{};
+    return occsimplifier->recover_definable_vars(vars);
 }
 
 bool Solver::remove_and_clean_all() {

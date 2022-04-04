@@ -1490,6 +1490,11 @@ DLL_PUBLIC vector<ITEGate> SATSolver::get_recovered_ite_gates()
     return data->solvers[0]->get_recovered_ite_gates();
 }
 
+DLL_PUBLIC std::vector<uint32_t> SATSolver::get_definable_vars(const vector<uint32_t>& vars)
+{
+    return data->solvers[0]->get_definable_vars(vars);
+}
+
 DLL_PUBLIC lbool SATSolver::find_fast_backw(FastBackwData fast_backw)
 {
     assert(data->solvers.size() == 1);

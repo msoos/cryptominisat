@@ -41,6 +41,7 @@ THE SOFTWARE.
 #include "watched.h"
 #include "watcharray.h"
 #include "simplefile.h"
+struct PicoSAT;
 
 namespace CMSat {
 
@@ -193,8 +194,18 @@ public:
     ~OccSimplifier();
 
     //Called from main
-    vector<OrGate> get_recovered_or_gates();
-    vector<ITEGate> get_recovered_ite_gates();
+    vector<OrGate> recover_or_gates();
+    vector<ITEGate> recover_ite_gates();
+
+    // definable vars
+    vector<uint32_t> recover_definable_vars(const vector<uint32_t>& vars);
+    uint32_t add_cls_to_picosat(const Lit wsLit);
+    PicoSAT* picosat = NULL;
+    int picovarnum = 1;
+    int lit_to_picolit(const Lit l);
+    map<uint32_t, int> var_to_picovar;
+//     map<uint32_t, uint32_t> picovar_to_var;
+
     bool simplify(const bool _startup, const std::string& schedule);
     void new_var(const uint32_t orig_outer);
     void new_vars(const size_t n);
@@ -274,6 +285,7 @@ private:
     SubsumeStrengthen* sub_str;
     friend class BVA;
     BVA* bva;
+
     bool startup = false;
     bool backward_sub_str();
     void backward_sub();

@@ -57,6 +57,9 @@ THE SOFTWARE.
 #include "gatefinder.h"
 #include "bva.h"
 #include "trim.h"
+extern "C" {
+#include <picosat.h>
+}
 
 #ifdef USE_M4RI
 #include "toplevelgauss.h"
@@ -1445,7 +1448,7 @@ void OccSimplifier::sort_occurs_and_set_abst()
     }
 }
 
-vector<OrGate> OccSimplifier::get_recovered_or_gates()
+vector<OrGate> OccSimplifier::recover_or_gates()
 {
     vector<OrGate> or_gates;
     auto origTrailSize = solver->trail_size();
@@ -1471,7 +1474,122 @@ vector<OrGate> OccSimplifier::get_recovered_or_gates()
     return or_gates;
 }
 
-vector<ITEGate> OccSimplifier::get_recovered_ite_gates()
+int OccSimplifier::lit_to_picolit(const Lit l) {
+    auto f = var_to_picovar.find(l.var());
+    int picolit = 0;
+    if (f == var_to_picovar.end()) {
+        var_to_picovar[l.var()] = picovarnum;
+        picolit = picovarnum * (l.sign() ? -1 : 1);
+        picovarnum++;
+    } else {
+        picolit = f->second * (l.sign() ? -1 : 1);
+    }
+    return picolit;
+}
+
+uint32_t OccSimplifier::add_cls_to_picosat(const Lit wsLit) {
+    uint32_t added = 0;
+    for(const auto& w: solver->watches[wsLit]) {
+        if (w.isClause()) {
+            Clause& cl = *solver->cl_alloc.ptr(w.get_offset());
+            assert(!cl.getRemoved());
+            assert(!cl.red());
+            bool only_sampl = true;
+            for(const auto& l: cl) {
+                if (!seen[l.var()]) {
+                    only_sampl = false;
+                    break;
+                }
+            }
+            if (only_sampl) {
+                added++;
+                for(const auto& l: cl) {
+                    if (l != wsLit) picosat_add(picosat, lit_to_picolit(l));
+                }
+//                 cout << "Added cl: " << cl << endl;
+            }
+            picosat_add(picosat, 0);
+        } else if (w.isBin()) {
+            assert(!w.red());
+            bool only_sampl = seen[w.lit2().var()];
+            if (only_sampl) {
+                added++;
+                picosat_add(picosat, lit_to_picolit(w.lit2()));
+                picosat_add(picosat, 0);
+//                 cout << "Added cl: " << w.lit2() << " " << wsLit << endl;
+            }
+        } else {
+            assert(false);
+        }
+    }
+    return added;
+}
+
+vector<uint32_t>  OccSimplifier::recover_definable_vars(const vector<uint32_t>& vars)
+{
+    vector<uint32_t> ret;
+    auto origTrailSize = solver->trail_size();
+
+    startup = false;
+    double backup = solver->conf.maxOccurRedMB;
+    solver->conf.maxOccurRedMB = 0;
+    if (!setup()) return vars;
+    assert(picosat == NULL);
+
+    uint32_t found = 0;
+    uint32_t tried = 0;
+    uint32_t nothing = 0;
+    bool have_to_init_picosat = true;
+
+    for(const uint32_t v: vars) seen[v] = 1;
+//     cout << "here, sz: " << vars.size() << endl;
+    for(const auto& v: vars) {
+        const Lit l = Lit(v, false);
+        uint32_t total = solver->watches[l].size() + solver->watches[~l].size();
+        if (total > 50) {
+            ret.push_back(v);
+            continue; // too expensive
+        }
+        //cout << "trying var: " << v << endl;
+
+
+        if (have_to_init_picosat) {
+            picosat = picosat_init();
+            var_to_picovar.clear();
+            picovarnum = 1;
+        }
+
+        uint32_t added = add_cls_to_picosat(l);
+        added += add_cls_to_picosat(~l);
+        if (added == 0) {
+            nothing++;
+            ret.push_back(v);
+            have_to_init_picosat = false;
+            continue;
+        }
+        have_to_init_picosat = true;
+
+        int picoret = picosat_sat(picosat, -1);
+        tried++;
+        if (picoret == PICOSAT_UNSATISFIABLE) {
+            found++;
+//             cout << "unsat for var: " << v << endl;s
+            seen[v] = 0;
+        } else {
+            ret.push_back(v);
+        }
+        picosat_reset(picosat);
+        picosat = NULL;
+    }
+    cout << "pico tried: " << tried << " unsat: " << found << " nothing: " << nothing << endl;
+    for(const uint32_t v: vars) seen[v] = 0;
+
+    solver->conf.maxOccurRedMB = backup;
+    finishUp(origTrailSize);
+    return ret;
+}
+
+vector<ITEGate> OccSimplifier::recover_ite_gates()
 {
     vector<ITEGate> or_gates;
     auto origTrailSize = solver->trail_size();
@@ -1529,9 +1647,7 @@ vector<ITEGate> OccSimplifier::get_recovered_ite_gates()
             assert(at == 3);
 
             //Cleanup
-            for(const auto& l: gate.get_all()) {
-                seen[l.var()] = 0;
-            }
+            for(const auto& l: gate.get_all()) seen[l.var()] = 0;
             or_gates.push_back(gate);
         }
     }
