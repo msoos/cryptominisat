@@ -1489,6 +1489,7 @@ int OccSimplifier::lit_to_picolit(const Lit l) {
 
 uint32_t OccSimplifier::add_cls_to_picosat(const Lit wsLit) {
     uint32_t added = 0;
+    assert(seen[wsLit.var()] == 1);
     for(const auto& w: solver->watches[wsLit]) {
         if (w.isClause()) {
             Clause& cl = *solver->cl_alloc.ptr(w.get_offset());
@@ -1536,22 +1537,24 @@ vector<uint32_t>  OccSimplifier::recover_definable_vars(const vector<uint32_t>& 
     if (!setup()) return vars;
     assert(picosat == NULL);
 
-    uint32_t found = 0;
-    uint32_t tried = 0;
+    uint32_t unsat = 0;
+    uint32_t picosat_ran = 0;
     uint32_t nothing = 0;
     bool have_to_init_picosat = true;
 
     for(const uint32_t v: vars) seen[v] = 1;
 //     cout << "here, sz: " << vars.size() << endl;
-    for(const auto& v: vars) {
+
+    vector<uint32_t> vars2 = vars;
+    std::reverse(vars2.begin(), vars2.end());
+    for(const auto& v: vars2) {
         const Lit l = Lit(v, false);
         uint32_t total = solver->watches[l].size() + solver->watches[~l].size();
-        if (total > 50) {
-            ret.push_back(v);
-            continue; // too expensive
-        }
+//         if (total > 50) {
+//             ret.push_back(v);
+//             continue; // too expensive
+//         }
         //cout << "trying var: " << v << endl;
-
 
         if (have_to_init_picosat) {
             picosat = picosat_init();
@@ -1570,9 +1573,9 @@ vector<uint32_t>  OccSimplifier::recover_definable_vars(const vector<uint32_t>& 
         have_to_init_picosat = true;
 
         int picoret = picosat_sat(picosat, -1);
-        tried++;
+        picosat_ran++;
         if (picoret == PICOSAT_UNSATISFIABLE) {
-            found++;
+            unsat++;
 //             cout << "unsat for var: " << v << endl;s
             seen[v] = 0;
         } else {
@@ -1581,7 +1584,7 @@ vector<uint32_t>  OccSimplifier::recover_definable_vars(const vector<uint32_t>& 
         picosat_reset(picosat);
         picosat = NULL;
     }
-    cout << "pico tried: " << tried << " unsat: " << found << " nothing: " << nothing << endl;
+    cout << "nothing: " << nothing << " pico ran: " << picosat_ran << " unsat: " << unsat << endl;
     for(const uint32_t v: vars) seen[v] = 0;
 
     solver->conf.maxOccurRedMB = backup;
