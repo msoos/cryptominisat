@@ -148,6 +148,8 @@ set(cryptoms_lib_files
     gaussian.cpp
     packedrow.cpp
     matrixfinder.cpp
+    picosat/picosat.c
+    picosat/version.c
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
 
@@ -173,7 +175,7 @@ set(cryptoms_lib_link_libs "")
 
 set(cryptoms_lib_link_libs
         ${cryptoms_lib_link_libs}
-        picosat)
+)
 
 if (TBUDDY)
     set(cryptoms_lib_link_libs

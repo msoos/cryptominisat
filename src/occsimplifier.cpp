@@ -58,7 +58,7 @@ THE SOFTWARE.
 #include "bva.h"
 #include "trim.h"
 extern "C" {
-#include <picosat.h>
+#include "picosat/picosat.h"
 }
 
 #ifdef USE_M4RI

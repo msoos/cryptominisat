@@ -1,0 +1,162 @@
+news for release 965 since 959
+------------------------------
+
+* ADC code works again (spotted by Himanshu Jain)
+* include into R projects (with Christoph Muessel) (--rcode)
+* fixed 'undefined' + 'ptrdiff_' issues (thanks to Christoph Muessel)
+* added 'picosat_set_interrupt' and '-a <alarm>' command line option
+* fixed various issues pointed out by Stefan Hengelein:
+  - fixed incremental usage of 'picosat_adjust'
+  - added CPP fixes (STATS, NO_BINARY_CLAUSE versus TRACE mix-ups)
+  - removed redundant explicit set to zero on reset
+* fixed various usage bugs with 'picomus' (thanks to Stefan Hengelein)
+* removed '-fno-strict-aliasing' (thanks to Jerry James)
+
+news for release 959 since 953
+------------------------------
+
+* fixed header comments
+
+* fixed minor compilation issues
+
+* fixed unitialized memory access problem for 'picosat_deref_partial'
+  and another issue with partial models
+
+* added 'picosat_add_arg' and 'picosat_add_lits'
+
+* '--plain' and 'picosat_set_plain' to disable failed literal probing
+
+* new '#define PICOSAT_REENTRANT_API' in 'picosat.h'
+
+* added manager so no more global variables
+  (allows multiple instances, requires manager object)
+
+news for release 951 since 941
+------------------------------
+
+* cleaned up code (based on comments by Donald Knuth)
+
+* lreduce=O(conflicts^.5)
+
+* added 'picosat_visits' and 'picosat_decisions'
+
+* added '--partial' command line option
+
+* added 'picosat_deref_partial' and 'picosat_save_original_clauses'
+
+* added 'picomcs' as example for MSS computation
+
+news for release 941 since 936
+------------------------------
+
+* added 'picogcnf'
+
+* added All-SAT mode ('--all' command line option)
+
+* statistics include time spent in failed literal preprocessing (probing)
+
+* 'picosat_failed_context' for 'push & pop'
+   (and tested failed assumptions for 'push & pop')
+
+* 'picosat_simplify' for forced garbage collection
+
+* undefined NFL, defined NADC (= failed literals on, ADC's off)
+
+* 'picosat_push' and 'picosat_pop' (beta version)
+
+* fixed some issues related to binary clause handling and 
+  generating list of failed assumptions
+
+news for release 936 since 935
+------------------------------
+
+* simple minimal unsatisfiable core (MUS) extractor 'picomus'
+  (example for using 'picosat_mus_assumptions' and 'picosat_coreclause')
+
+* added 'picosat_mus_assumptions'
+
+* added 'picosat_{set_}propagations'
+
+* new 'int' return value for 'picosat_enable_trace_generation' to
+  check for trace code being compiled
+
+news for release 935 since 926
+------------------------------
+
+* added 'picosat_failed_assumptions' (plural)
+
+* new '-A <failedlits>' command line option
+
+* fixed failed assumption issues
+
+* added 'picosat_remove_learned'
+
+* added 'picosat_reset_{phases,scores}'
+
+* added 'picosat_set_less_important_lit'
+
+* added 'picosat_res'
+
+news for release 926 since 846
+------------------------------
+
+* random initial phase (API of 'picosat_set_default_phase' changed)
+
+* fixed accumulative failed assumption (multiple times)
+
+* fixed missing original clause in core generation with assumptions
+
+* fixed debugging code for memory allocation
+
+* shared library in addition to static library
+
+* removed potential UNKNOWN result without decision limit
+
+* added picosat_set_more_important_lit
+
+* added picosat_coreclause
+
+* propagation of binary clauses until completion
+
+* fixed API usage 'assume;sat;sat'
+
+* literals move to front (LMTF) during traversal of visited clauses
+
+* switched from inner/outer to Luby style restart scheduling
+
+* less agressive reduce schedule
+
+* replaced watched literals with head and tail pointers
+
+* add 'picosat_failed_assumption', which allows to avoid tracing and core
+  generation, if one is only interested in assumptions in the core
+
+* fixed a BUG in the generic iterator code of clauses
+  (should rarely happen unless you use a very sophisticated malloc lib)
+
+news for release 846 since 632
+------------------------------
+
+* cleaned up assumption handling (actually removed buggy optimization)
+
+* incremental core generation 
+
+* experimental 'all different constraint' handling as in our FMCAD'08 paper
+
+* new API calls: 
+
+  - picosat_add_ado_lit       (add all different object literal)
+  - picosat_deref_top_level   (deref top level assignment)
+  - picosat_changed           (check whether extension was possible)
+  - picosat_measure_all_calls (per default do not measure adding time)
+  - picosat_set_prefix        (set prefix for messages)
+
+* 64 bit port (and compilation options)
+
+* optional NVSIDS visualization code
+
+* resource controlled failed literal implementation
+
+* disconnect long clauses satisfied at lower decision level
+
+* controlling restarts
