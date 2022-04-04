@@ -62,7 +62,7 @@ public:
 private:
     void break_symms_in_cms();
     void get_outer_permutations();
-    bool remove_duplicates();
+    void remove_duplicates();
     void set_up_time_lim();
     bool add_clauses();
     bool check_limits();

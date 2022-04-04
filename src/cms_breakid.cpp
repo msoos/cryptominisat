@@ -192,7 +192,6 @@ bool BreakID::add_clauses()
     return true;
 }
 
-///returns whether we actually ran
 bool BreakID::doit()
 {
     assert(solver->okay());
@@ -201,36 +200,23 @@ bool BreakID::doit()
     num_lits_in_graph = 0;
 
     if (!solver->conf.doStrSubImplicit) {
-        verb_print(1, [breakid] cannot run BreakID without implicit submsumption, "
-            << "it would find too many (bad) symmetries");
-        return false;
+        verb_print(1, "[breakid] cannot run BreakID without implicit submsumption, it would find too many (bad) symmetries");
+        return solver->okay();
     }
 
     if (solver->check_assumptions_contradict_foced_assignment()) {
-        if (solver->conf.verbosity) {
-            cout
-            << "c [breakid] forced assignments contradicted by assumptions, cannot run"
-            << endl;
-        }
-        return false;
+        verb_print(1, "[breakid] forced assignments contradicted by assumptions, cannot run");
+        return solver->okay();
     }
 
-    if (!check_limits()) {
-        return false;
-    }
+    if (!check_limits()) return solver->okay();
+    if (!solver->clauseCleaner->remove_and_clean_all()) return solver->okay();
 
-    if (!solver->clauseCleaner->remove_and_clean_all()) {
-        return false;
-    }
+    // Clean up solver state so it's easier to find symmetries
     solver->subsumeImplicit->subsume_implicit(false, "-breakid");
-
     CompleteDetachReatacher reattacher(solver);
-    reattacher.detach_nonbins_nontris();
-
-    if (!remove_duplicates()) {
-        return false;
-    }
-
+    reattacher.detach_nonbins();
+    remove_duplicates();
     double myTime = cpuTime();
     assert(breakid == NULL);
     breakid = new BID::BreakID;
@@ -238,51 +224,39 @@ bool BreakID::doit()
     breakid->set_useMatrixDetection(solver->conf.breakid_matrix_detect);
     breakid->set_symBreakingFormLength(solver->conf.breakid_max_constr_per_permut);
     breakid->start_dynamic_cnf(solver->nVars());
-    if (solver->conf.verbosity) {
-        cout << "c [breakid] version " << breakid->get_sha1_version() << endl;
-    }
+    verb_print(1, "[breakid] version " << breakid->get_sha1_version());
 
+    // We can fail adding clauses if they are UNSAT under the current assumptions
     if (!add_clauses()) {
         delete breakid;
         breakid = NULL;
 
         bool ok = reattacher.reattachLongs();
         assert(ok);
-        return false;
+        return solver->okay();
     }
-    set_up_time_lim();
+    breakid->end_dynamic_cnf();
 
     // Detect symmetries, detect subgroups
-    breakid->end_dynamic_cnf();
-    if (solver->conf.verbosity) {
-        cout << "c [breakid] Generators: " << breakid->get_num_generators() << endl;
-    }
-    if (solver->conf.verbosity > 3) {
-        breakid->print_generators(std::cout);
-    }
-
-    if (solver->conf.verbosity >= 2) {
-        cout << "c [breakid] Detecting subgroups..." << endl;
-    }
+    set_up_time_lim();
+    verb_print(1, "[breakid] Generators: " << breakid->get_num_generators());
+    if (solver->conf.verbosity > 3) breakid->print_generators(std::cout);
+    verb_print(2, "[breakid] Detecting subgroups...");
     breakid->detect_subgroups();
+    if (solver->conf.verbosity > 3) breakid->print_subgroups(cout);
 
-    if (solver->conf.verbosity > 3) {
-        breakid->print_subgroups(cout);
-    }
-
-    // Break symmetries
+    // Break symmetries, in BreakID
     breakid->break_symm();
 
     //reattach clauses
     bool ok = reattacher.reattachLongs();
     assert(ok);
 
-    if (breakid->get_num_break_cls() != 0) {
-        break_symms_in_cms();
-    }
+    // Break symmetries in CMS, given clauses given by BreakID
+    if (breakid->get_num_break_cls() != 0) break_symms_in_cms();
 
-    get_outer_permutations();
-
+    // Not needed actually, only for debug
+    //get_outer_permutations();
 
     // Finish up
     double time_used = cpuTime() - myTime;
@@ -307,7 +281,7 @@ bool BreakID::doit()
     delete breakid;
     breakid = NULL;
 
-    return false;
+    return solver->okay();
 }
 
 void BreakID::get_outer_permutations()
@@ -365,7 +339,7 @@ bool BreakID::check_limits()
     return true;
 }
 
-bool BreakID::remove_duplicates()
+void BreakID::remove_duplicates()
 {
     double myTime = cpuTime();
     dedup_cls.clear();
@@ -414,8 +388,6 @@ bool BreakID::remove_duplicates()
             , time_used
         );
     }
-
-    return true;
 }
 
 void BreakID::break_symms_in_cms()
@@ -424,9 +396,7 @@ void BreakID::break_symms_in_cms()
         cout << "c [breakid] Breaking cls: "<< breakid->get_num_break_cls() << endl;
         cout << "c [breakid] Aux vars: "<< breakid->get_num_aux_vars() << endl;
     }
-    for(uint32_t i = 0; i < breakid->get_num_aux_vars(); i++) {
-        solver->new_var(true);
-    }
+    for(uint32_t i = 0; i < breakid->get_num_aux_vars(); i++) solver->new_var(true);
     if (solver->conf.breakid_use_assump) {
         if (symm_var == var_Undef) {
             solver->new_var(true);

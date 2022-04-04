@@ -2290,13 +2290,15 @@ lbool Solver::execute_inprocess_strategy(
                 && (solveStats.num_simplify == 0 ||
                    (solveStats.num_simplify % conf.breakid_every_n == (conf.breakid_every_n-1)))
             ) {
-#ifdef USE_BREAKID
-                breakid->doit();
-#else
+                #ifdef USE_BREAKID
+                if (!breakid->doit()) {
+                    return l_False;
+                }
+                #else
                 if (conf.verbosity) {
                     cout << "c [breakid] BreakID not compiled in, skipping" << endl;
                 }
-#endif
+                #endif
             }
         } else if (token == "bosphorus") {
             if (conf.do_bosphorus

@@ -49,7 +49,7 @@ class CompleteDetachReatacher
     public:
         explicit CompleteDetachReatacher(Solver* solver);
         bool reattachLongs(bool removeStatsFrist = false);
-        void detach_nonbins_nontris();
+        void detach_nonbins();
 
     private:
         void attachClauses(vector<ClOffset>& cs);

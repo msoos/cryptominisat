@@ -36,7 +36,7 @@ CompleteDetachReatacher::CompleteDetachReatacher(Solver* _solver) :
 /**
 @brief Completely detach all non-binary clauses
 */
-void CompleteDetachReatacher::detach_nonbins_nontris()
+void CompleteDetachReatacher::detach_nonbins()
 {
     assert(!solver->drat->something_delayed());
     ClausesStay stay;
