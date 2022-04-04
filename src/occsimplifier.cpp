@@ -1549,12 +1549,13 @@ vector<uint32_t>  OccSimplifier::recover_definable_vars(const vector<uint32_t>& 
     std::reverse(vars2.begin(), vars2.end());
     for(const auto& v: vars2) {
         const Lit l = Lit(v, false);
+
+        // too expensive?
         uint32_t total = solver->watches[l].size() + solver->watches[~l].size();
-//         if (total > 50) {
-//             ret.push_back(v);
-//             continue; // too expensive
-//         }
-        //cout << "trying var: " << v << endl;
+        if (total > 100) {
+            ret.push_back(v);
+            continue;
+        }
 
         if (have_to_init_picosat) {
             picosat = picosat_init();
@@ -1576,7 +1577,6 @@ vector<uint32_t>  OccSimplifier::recover_definable_vars(const vector<uint32_t>& 
         picosat_ran++;
         if (picoret == PICOSAT_UNSATISFIABLE) {
             unsat++;
-//             cout << "unsat for var: " << v << endl;s
             seen[v] = 0;
         } else {
             ret.push_back(v);
@@ -1584,7 +1584,8 @@ vector<uint32_t>  OccSimplifier::recover_definable_vars(const vector<uint32_t>& 
         picosat_reset(picosat);
         picosat = NULL;
     }
-    cout << "nothing: " << nothing << " pico ran: " << picosat_ran << " unsat: " << unsat << endl;
+    verb_print(1, " [gate-definable] nothing: " << nothing
+               << " pico ran: " << picosat_ran << " unsat: " << unsat);
     for(const uint32_t v: vars) seen[v] = 0;
 
     solver->conf.maxOccurRedMB = backup;
