@@ -1526,7 +1526,7 @@ uint32_t OccSimplifier::add_cls_to_picosat(const Lit wsLit) {
     return added;
 }
 
-vector<uint32_t>  OccSimplifier::recover_definable_vars(const vector<uint32_t>& vars)
+vector<uint32_t> OccSimplifier::recover_definable_vars(const vector<uint32_t>& vars, vector<uint32_t>* out_empty_occs)
 {
     vector<uint32_t> ret;
     auto origTrailSize = solver->trail_size();
@@ -1536,6 +1536,7 @@ vector<uint32_t>  OccSimplifier::recover_definable_vars(const vector<uint32_t>& 
     solver->conf.maxOccurRedMB = 0;
     if (!setup()) return vars;
     assert(picosat == NULL);
+    if (out_empty_occs) out_empty_occs->clear();
 
     uint32_t unsat = 0;
     uint32_t picosat_ran = 0;
@@ -1555,6 +1556,7 @@ vector<uint32_t>  OccSimplifier::recover_definable_vars(const vector<uint32_t>& 
 
         uint32_t total = solver->watches[l].size() + solver->watches[~l].size();
         if (total == 0) {
+            if (out_empty_occs) out_empty_occs->push_back(v);
             no_occ++;
             ret.push_back(v);
             continue;
