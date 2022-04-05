@@ -1563,7 +1563,7 @@ vector<uint32_t> OccSimplifier::recover_definable_vars(const vector<uint32_t>& v
         }
 
         // too expensive?
-        if (total > 200) {
+        if (total > 500) {
             too_many_occ++;
             ret.push_back(v);
             continue;
@@ -1591,6 +1591,9 @@ vector<uint32_t> OccSimplifier::recover_definable_vars(const vector<uint32_t>& v
             unsat++;
             seen[v] = 0;
         } else {
+            if (picoret == PICOSAT_UNKNOWN) {
+                cout << "UNKNOWN??" << endl;
+            }
             ret.push_back(v);
         }
         picosat_reset(picosat);
