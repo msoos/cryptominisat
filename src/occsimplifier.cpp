@@ -1540,6 +1540,8 @@ vector<uint32_t>  OccSimplifier::recover_definable_vars(const vector<uint32_t>& 
     uint32_t unsat = 0;
     uint32_t picosat_ran = 0;
     uint32_t nothing = 0;
+    uint32_t no_occ = 0;
+    uint32_t too_many_occ = 0;
     bool have_to_init_picosat = true;
 
     for(const uint32_t v: vars) seen[v] = 1;
@@ -1548,11 +1550,20 @@ vector<uint32_t>  OccSimplifier::recover_definable_vars(const vector<uint32_t>& 
     vector<uint32_t> vars2 = vars;
     std::reverse(vars2.begin(), vars2.end());
     for(const auto& v: vars2) {
+        //cout << "what? " << removed_type_to_string(solver->varData[v].removed) << endl;
         const Lit l = Lit(v, false);
 
-        // too expensive?
         uint32_t total = solver->watches[l].size() + solver->watches[~l].size();
+        if (total == 0) {
+            cout << "Lit not occurring: " << l << endl;
+            no_occ++;
+            ret.push_back(v);
+            continue;
+        }
+
+        // too expensive?
         if (total > 100) {
+            too_many_occ++;
             ret.push_back(v);
             continue;
         }
@@ -1584,8 +1595,9 @@ vector<uint32_t>  OccSimplifier::recover_definable_vars(const vector<uint32_t>& 
         picosat_reset(picosat);
         picosat = NULL;
     }
-    verb_print(1, " [gate-definable] nothing: " << nothing
-               << " pico ran: " << picosat_ran << " unsat: " << unsat);
+    verb_print(1, "[gate-definable] nothing: " << nothing
+               << " pico ran: " << picosat_ran << " unsat: " << unsat
+               << " 0-occ: " << no_occ << " too-many-occ:" << too_many_occ);
     for(const uint32_t v: vars) seen[v] = 0;
 
     solver->conf.maxOccurRedMB = backup;
