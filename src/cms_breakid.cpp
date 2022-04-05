@@ -423,8 +423,8 @@ void BreakID::break_symms_in_cms()
             , NULL //stats
             , true //attach
             , NULL //return simplified
-            , false //DRAT... oops does not work right now
-            , lit_Undef
+            , true
+            , Lit(symm_var, false)
         );
         if (newcl != NULL) {
             ClOffset offset = solver->cl_alloc.get_offset(newcl);
@@ -469,5 +469,14 @@ void BreakID::update_var_after_varreplace()
 {
     if (symm_var != var_Undef) {
         symm_var = solver->varReplacer->get_var_replaced_with(symm_var);
+    }
+}
+
+Lit BreakID::get_assumed_lit() const
+{
+    if (symm_var == var_Undef) {
+        return lit_Undef;
+    } else {
+        return Lit(symm_var, true);
     }
 }

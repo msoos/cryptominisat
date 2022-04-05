@@ -49,6 +49,7 @@ public:
     const vector<uint32_t>& outerToInter
     , const vector<uint32_t>& interToOuter);
     void update_var_after_varreplace();
+    Lit get_assumed_lit() const;
 
     static uint32_t hash_clause(const Lit* lits, const uint32_t size) {
         uint32_t seed = size;
