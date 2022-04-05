@@ -1539,7 +1539,7 @@ vector<uint32_t>  OccSimplifier::recover_definable_vars(const vector<uint32_t>& 
 
     uint32_t unsat = 0;
     uint32_t picosat_ran = 0;
-    uint32_t nothing = 0;
+    uint32_t no_cls_matching_filter = 0;
     uint32_t no_occ = 0;
     uint32_t too_many_occ = 0;
     bool have_to_init_picosat = true;
@@ -1555,14 +1555,13 @@ vector<uint32_t>  OccSimplifier::recover_definable_vars(const vector<uint32_t>& 
 
         uint32_t total = solver->watches[l].size() + solver->watches[~l].size();
         if (total == 0) {
-            cout << "Lit not occurring: " << l << endl;
             no_occ++;
             ret.push_back(v);
             continue;
         }
 
         // too expensive?
-        if (total > 100) {
+        if (total > 200) {
             too_many_occ++;
             ret.push_back(v);
             continue;
@@ -1577,7 +1576,7 @@ vector<uint32_t>  OccSimplifier::recover_definable_vars(const vector<uint32_t>& 
         uint32_t added = add_cls_to_picosat(l);
         added += add_cls_to_picosat(~l);
         if (added == 0) {
-            nothing++;
+            no_cls_matching_filter++;
             ret.push_back(v);
             have_to_init_picosat = false;
             continue;
@@ -1595,9 +1594,9 @@ vector<uint32_t>  OccSimplifier::recover_definable_vars(const vector<uint32_t>& 
         picosat_reset(picosat);
         picosat = NULL;
     }
-    verb_print(1, "[gate-definable] nothing: " << nothing
+    verb_print(1, "[gate-definable] no-cls-match-filt: " << no_cls_matching_filter
                << " pico ran: " << picosat_ran << " unsat: " << unsat
-               << " 0-occ: " << no_occ << " too-many-occ:" << too_many_occ);
+               << " 0-occ: " << no_occ << " too-many-occ: " << too_many_occ);
     for(const uint32_t v: vars) seen[v] = 0;
 
     solver->conf.maxOccurRedMB = backup;

@@ -3718,6 +3718,9 @@ vector<Xor> Solver::get_recovered_xors(const bool xor_together_xors)
     vector<Xor> xors_ret;
     if (!okay()) return xors_ret;
 
+    lbool ret = execute_inprocess_strategy(false, "occ-xor");
+    if (ret == l_False) return xors_ret;
+
     auto xors = xorclauses;
         xors.insert(xors.end(), xorclauses_unused.begin(), xorclauses_unused.end());
     if (xor_together_xors) {
