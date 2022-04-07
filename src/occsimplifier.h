@@ -198,7 +198,7 @@ public:
     vector<ITEGate> recover_ite_gates();
 
     // definable vars
-    vector<uint32_t> recover_definable_vars(const vector<uint32_t>& vars, vector<uint32_t>* out_empty_occ = NULL);
+    vector<uint32_t> recover_definable_by_irreg_gate_vars(const vector<uint32_t>& vars, vector<uint32_t>* out_empty_occ = NULL);
     uint32_t add_cls_to_picosat(const Lit wsLit);
     PicoSAT* picosat = NULL;
     int picovarnum = 1;

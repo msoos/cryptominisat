@@ -1526,7 +1526,7 @@ uint32_t OccSimplifier::add_cls_to_picosat(const Lit wsLit) {
     return added;
 }
 
-vector<uint32_t> OccSimplifier::recover_definable_vars(const vector<uint32_t>& vars, vector<uint32_t>* out_empty_occs)
+vector<uint32_t> OccSimplifier::recover_definable_by_irreg_gate_vars(const vector<uint32_t>& vars, vector<uint32_t>* out_empty_occs)
 {
     vector<uint32_t> ret;
     auto origTrailSize = solver->trail_size();
@@ -1599,6 +1599,11 @@ vector<uint32_t> OccSimplifier::recover_definable_vars(const vector<uint32_t>& v
         picosat_reset(picosat);
         picosat = NULL;
     }
+    if (picosat) {
+        picosat_reset(picosat);
+        picosat = NULL;
+    }
+
     verb_print(1, "[gate-definable] no-cls-match-filt: " << no_cls_matching_filter
                << " pico ran: " << picosat_ran << " unsat: " << unsat
                << " 0-occ: " << no_occ << " too-many-occ: " << too_many_occ);
