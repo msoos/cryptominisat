@@ -1774,9 +1774,12 @@ lbool Solver::solve_with_assumptions(
     assert(decisionLevel()== 0);
     assert(!ok || prop_at_head());
     if (_assumptions == NULL || _assumptions->empty()) {
+        #ifdef USE_BREAKID
         if (assumptions.empty()) {
             verb_print(1, "[breakid] Under BreakID it's UNSAT. Assumed lit: " << breakid->get_assumed_lit());
-        } else {
+        } else
+        #endif
+        {
             if (status == l_False) {
                 assert(!okay());
             }
