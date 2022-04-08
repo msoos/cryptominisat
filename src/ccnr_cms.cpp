@@ -362,12 +362,6 @@ lbool CMS_ccnr::deal_with_solution(int res, const uint32_t num_sls_called)
             exit(-1);
     }
 
-    for(uint32_t i = 0; i < solver->nVars(); i++) {
-//         solver->var_act_vsids[i].offset = 1.0;
-//         solver->var_act_maple[i].offset = 1.0;
-    }
-
-
     if (solver->conf.sls_set_offset == 0) {
         for(const auto& v: tobump) {
             solver->bump_var_importance_all(v.first, true, v.second/3.0);

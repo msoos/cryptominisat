@@ -153,7 +153,6 @@ void VarReplacer::update_vardata_and_activities(
 
     //Update activities
     solver->var_act_vsids[replaced_with_var] += solver->var_act_vsids[orig_var];
-    solver->var_act_maple[replaced_with_var] += solver->var_act_maple[orig_var];
 
     assert(orig_var <= solver->nVars() && replaced_with_var <= solver->nVars());
 }

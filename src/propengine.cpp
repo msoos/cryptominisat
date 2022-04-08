@@ -56,7 +56,6 @@ PropEngine::PropEngine(
 ) :
         CNF(_conf, _must_interrupt_inter)
         , order_heap_vsids(VarOrderLt(var_act_vsids))
-        , order_heap_maple(VarOrderLt(var_act_maple))
         , qhead(0)
         , solver(_solver)
 {
@@ -74,7 +73,6 @@ void PropEngine::new_var(
     CNF::new_var(bva, orig_outer, insert_varorder);
 
     var_act_vsids.insert(var_act_vsids.end(), 1, 0);
-    var_act_maple.insert(var_act_maple.end(), 1, 0);
     #ifdef VMTF_NEEDED
     vmtf_btab.insert(vmtf_btab.end(), 1, 0);
     vmtf_links.insert(vmtf_links.end(), 1, Link());
@@ -89,7 +87,6 @@ void PropEngine::new_vars(size_t n)
     CNF::new_vars(n);
 
     var_act_vsids.insert(var_act_vsids.end(), n, 0);
-    var_act_maple.insert(var_act_maple.end(), n, 0);
     #ifdef VMTF_NEEDED
     vmtf_btab.insert(vmtf_btab.end(), n, 0);
     vmtf_links.insert(vmtf_links.end(), n, Link());
@@ -104,11 +101,7 @@ void PropEngine::save_on_var_memory()
     CNF::save_on_var_memory();
 
     var_act_vsids.resize(nVars());
-    var_act_maple.resize(nVars());
-
     var_act_vsids.shrink_to_fit();
-    var_act_maple.shrink_to_fit();
-
 }
 
 /**

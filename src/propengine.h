@@ -226,10 +226,8 @@ public:
     // Branching
     /////////////////////
     vector<double> var_act_vsids;
-    vector<double> var_act_maple;
     double var_decay;
     double var_decay_max;
-    double maple_step_size;
     struct VarOrderLt { ///Order variables according to their activities
         const vector<double>&  activities;
         bool operator () (const uint32_t x, const uint32_t y) const
@@ -243,7 +241,6 @@ public:
     };
     ///activity-ordered heap of decision variables.
     Heap<VarOrderLt> order_heap_vsids; ///NOT VALID WHILE SIMPLIFYING
-    Heap<VarOrderLt> order_heap_maple; ///NOT VALID WHILE SIMPLIFYING
     RandHeap order_heap_rand;
     #ifdef VMTF_NEEDED
     Queue vmtf_queue;
@@ -549,26 +546,7 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
         }
     }
 
-    if (!watches[~p].empty()) {
-        watches.prefetch((~p).toInt());
-    }
-
-    if (!inprocess &&
-        branch_strategy == branch::maple &&
-        from != PropBy())
-    {
-        varData[v].maple_last_picked = sumConflicts;
-        varData[v].maple_conflicted = 0;
-
-        assert(sumConflicts >= varData[v].maple_cancelled);
-        uint32_t age = sumConflicts - varData[v].maple_cancelled;
-        if (age > 0) {
-            double decay = std::pow(var_decay, age);
-            var_act_maple[v] *= decay;
-            if (order_heap_maple.inHeap(v))
-                order_heap_maple.increase(v);
-        }
-    }
+    if (!watches[~p].empty()) watches.prefetch((~p).toInt());
 
     #if defined(STATS_NEEDED_BRANCH) || defined(FINAL_PREDICTOR_BRANCH)
     if (!inprocess) {

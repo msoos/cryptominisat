@@ -48,9 +48,6 @@ THE SOFTWARE.
 #include "valgrind/memcheck.h"
 #endif
 
-#ifdef FINAL_PREDICTOR_BRANCH
-#include "predict/maple_predictor_conf0_cluster0.h"
-#endif
 //#define DEBUG_RESOLV
 //#define VERBOSE_DEBUG
 
@@ -71,7 +68,6 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
         , cla_inc(1)
 {
     var_inc_vsids = 1;
-    maple_step_size = conf.orig_step_size;
 
     more_red_minim_limit_binary_actual = conf.more_red_minim_limit_binary;
     mtrand.seed(conf.origSeed);
@@ -127,9 +123,7 @@ void Searcher::updateVars(
     const vector<uint32_t>& /*outerToInter*/
     , const vector<uint32_t>& interToOuter
 ) {
-
     updateArray(var_act_vsids, interToOuter);
-    updateArray(var_act_maple, interToOuter);
 
     #ifdef VMTF_NEEDED
     rebuildOrderHeapVMTF();
@@ -181,10 +175,6 @@ inline void Searcher::add_lit_to_learnt(
             case branch::vsids:
                 vsids_bump_var_act<inprocess>(var, 0.5);
                 implied_by_learnts.push_back(var);
-                break;
-
-            case branch::maple:
-                varData[var].maple_conflicted++;
                 break;
 
             case branch::rand:
@@ -896,45 +886,6 @@ void Searcher::analyze_conflict(
                 }
                 implied_by_learnts.clear();
                 break;
-            case branch::maple: {
-                uint32_t bump_by = 2;
-                assert(toClear.empty());
-                const Lit p = learnt_clause[0];
-                seen[p.var()] = true;
-                toClear.push_back(p);
-                for (int i = learnt_clause.size() - 1; i >= 0; i--) {
-                    const uint32_t v = learnt_clause[i].var();
-                    if (varData[v].reason.isClause()) {
-                        ClOffset offs = varData[v].reason.get_offset();
-                        Clause* cl = cl_alloc.ptr(offs);
-                        for (const Lit l: *cl) {
-                            if (!seen[l.var()]) {
-                                seen[l.var()] = true;
-                                toClear.push_back(l);
-                                varData[l.var()].maple_conflicted+=bump_by;
-                            }
-                        }
-                    } else if (varData[v].reason.getType() == binary_t) {
-                        Lit l = varData[v].reason.lit2();
-                        if (!seen[l.var()]) {
-                            seen[l.var()] = true;
-                            toClear.push_back(l);
-                            varData[l.var()].maple_conflicted+=bump_by;
-                        }
-                        l = Lit(v, false);
-                        if (!seen[l.var()]) {
-                            seen[l.var()] = true;
-                            toClear.push_back(l);
-                            varData[l.var()].maple_conflicted+=bump_by;
-                        }
-                    }
-                }
-                for (Lit l: toClear) {
-                    seen[l.var()] = 0;
-                }
-                toClear.clear();
-                break;
-            }
             #ifdef VMTF_NEEDED
             case branch::vmtf:
                 std::sort(implied_by_learnts.begin(),
@@ -1261,16 +1212,6 @@ void Searcher::print_order_heap()
             cout << "VSID order heap:" << endl;
             order_heap_vsids.print_heap();
             break;
-        case branch::maple:
-            cout << "maple heap size: " << order_heap_maple.size() << endl;
-            cout << "maple acts:";
-            for(auto x: var_act_maple) {
-                cout << std::setprecision(12) << x << " ";
-            }
-            cout << endl;
-            cout << "MAPLE order heap:" << endl;
-            order_heap_maple.print_heap();
-            break;
 
         case branch::rand:
             cout << "rand heap size: " << order_heap_rand.size() << endl;
@@ -1410,20 +1351,7 @@ lbool Searcher::search()
 
 inline void Searcher::update_branch_params()
 {
-    if ((sumConflicts & 0xfff) == 0xfff &&
-        var_decay < var_decay_max)
-    {
-        var_decay += 0.01;
-    }
-
-    if (branch_strategy == branch::maple
-        && maple_step_size > conf.min_step_size)
-    {
-        maple_step_size -= conf.step_size_dec;
-        #ifdef VERBOSE_DEBUG
-        cout << "maple step size is now: " << std::setprecision(7) << maple_step_size << endl;
-        #endif
-    }
+    if ((sumConflicts & 0xfff) == 0xfff && var_decay < var_decay_max) var_decay += 0.01;
 }
 
 void Searcher::dump_search_sql(const double myTime)
@@ -2290,22 +2218,14 @@ void Searcher::rebuildOrderHeap()
         }
     }
 
-    #ifdef VERBOSE_DEBUG
-    cout << "c [branch] Building VSDIS order heap" << endl;
-    #endif
+    VERBOSE_PRINT("c [branch] Building VSDIS order heap");
     order_heap_vsids.build(vs);
 
-    #ifdef VERBOSE_DEBUG
-    cout << "c [branch] Building MAPLE order heap" << endl;
-    #endif
-    order_heap_maple.build(vs);
-
-    #ifdef VERBOSE_DEBUG
-    cout << "c [branch] Building RAND order heap" << endl;
-    #endif
+    VERBOSE_PRINT("c [branch] Building RAND order heap");
     order_heap_rand.build(vs);
 
     #ifdef VMTF_NEEDED
+    VERBOSE_PRINT("c [branch] Building VMTF order heap");
     rebuildOrderHeapVMTF();
     #endif
 }
@@ -2405,12 +2325,6 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
         smallest = std::min(vmtf, smallest);
         #endif
 
-        size_t maple1 = conf.branch_strategy_setup.find("maple1", start);
-        smallest = std::min(maple1, smallest);
-
-        size_t maple2 = conf.branch_strategy_setup.find("maple2", start);
-        smallest = std::min(maple2, smallest);
-
         size_t rand = conf.branch_strategy_setup.find("rand", start);
         smallest = std::min(rand, smallest);
 
@@ -2453,22 +2367,6 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
             }
         }
         #endif
-        else if (smallest == maple1) {
-            //TODO should we do this incremental stuff?
-            //maple_step_size = conf.orig_step_size;
-            select.push_back(branch_type_total(branch::maple, 0.70, 0.70, "MAPLE1", "mp1"));
-            if (conf.verbosity) {
-                cout << select[select.size()-1].descr;
-            }
-        }
-        else if (smallest == maple2) {
-            //TODO should we do this incremental stuff?
-            //maple_step_size = conf.orig_step_size;
-            select.push_back(branch_type_total(branch::maple, 0.90, 0.90, "MAPLE2", "mp2"));
-            if (conf.verbosity) {
-                cout << select[select.size()-1].descr;
-            }
-        }
         else if (smallest == rand) {
             select.push_back(branch_type_total(branch::rand, 1, 1, "RAND", "rand"));
             if (conf.verbosity) {
@@ -2506,12 +2404,7 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
     branch_strategy_str_short = select[which].descr_short;
     var_decay = select[which].decay_start;
     var_decay_max = select[which].decay_max;
-
-    if (branch_strategy == branch::maple) {
-        cur_rest_type = Restart::luby;
-    } else {
-        cur_rest_type = conf.restartType;
-    }
+    cur_rest_type = conf.restartType;
 
     if (conf.verbosity) {
         cout << "c [branch] adjusting to: "
@@ -2623,20 +2516,11 @@ void Searcher::setup_polarity_strategy()
             (conf.polar_stable_every_n == -1 &&
             branch_strategy == branch::vsids) ||
 
-            (conf.polar_stable_every_n == -2 &&
-            branch_strategy == branch::maple) ||
-
             (conf.polar_stable_every_n == -3 &&
             branch_strategy_str == "VSIDS1") ||
 
             (conf.polar_stable_every_n == -4 &&
-            branch_strategy_str == "VSIDS2") ||
-
-            (conf.polar_stable_every_n == -5 &&
-            branch_strategy_str == "MAPLE1") ||
-
-            (conf.polar_stable_every_n == -6 &&
-            branch_strategy_str == "MAPLE2"))
+            branch_strategy_str == "VSIDS2"))
         {
             polarity_mode = PolarityMode::polarmode_stable;
 
@@ -2877,7 +2761,6 @@ inline void Searcher::print_local_restart_budget()
         << std::left << std::setw(10) << getNameOfRestartType(params.rest_type)
         << " budget: " << std::setw(9) << max_confl_this_restart
         << std::right
-        << " maple step_size: " << maple_step_size
         << " branching: " << std::setw(2) << branch_type_to_string(branch_strategy)
         << "   decay: "
         << std::setw(4) << std::setprecision(4) << var_decay
@@ -3049,8 +2932,7 @@ inline Lit Searcher::pickBranchLit()
     uint32_t v = var_Undef;
     switch (branch_strategy) {
         case branch::vsids:
-        case branch::maple:
-            v = pick_var_vsids_maple();
+            v = pick_var_vsids();
             break;
         #ifdef VMTF_NEEDED
         case branch::vmtf:
@@ -3065,8 +2947,7 @@ inline Lit Searcher::pickBranchLit()
             break;
         }
         default: {
-            assert(false);
-            exit(-1);
+            release_assert(false);
             break;
         }
     }
@@ -3078,11 +2959,7 @@ inline Lit Searcher::pickBranchLit()
         next = lit_Undef;
     }
 
-    #ifdef SLOW_DEBUG
-    if (next != lit_Undef) {
-        assert(solver->varData[next.var()].removed == Removed::none);
-    }
-    #endif
+    SLOW_DEBUG_DO(assert(next == lit_Undef || solver->varData[next.var()].removed == Removed::none));
     VERBOSE_PRINT("Picked decision var: " << next);
 
     return next;
@@ -3112,32 +2989,12 @@ uint32_t Searcher::pick_var_vmtf()
 }
 #endif
 
-uint32_t Searcher::pick_var_vsids_maple()
+uint32_t Searcher::pick_var_vsids()
 {
-    Heap<VarOrderLt> &order_heap = (branch_strategy == branch::vsids) ? order_heap_vsids : order_heap_maple;
     uint32_t v = var_Undef;
     while (v == var_Undef || value(v) != l_Undef) {
-        //There is no more to branch on. Satisfying assignment found.
-        if (order_heap.empty()) {
-            return var_Undef;
-        }
-
-        //Adjust maple to account for time passed
-        if (branch_strategy == branch::maple) {
-            uint32_t v2 = order_heap_maple[0];
-            uint32_t age = sumConflicts - varData[v2].maple_cancelled;
-            while (age > 0) {
-                double decay = pow(var_decay, age);
-                var_act_maple[v2] *= decay;
-                if (order_heap_maple.inHeap(v2)) {
-                    order_heap_maple.increase(v2);
-                }
-                varData[v2].maple_cancelled = sumConflicts;
-                v2 = order_heap_maple[0];
-                age = sumConflicts - varData[v2].maple_cancelled;
-            }
-        }
-        v = order_heap.removeMin();
+        if (order_heap_vsids.empty()) return var_Undef; //Satisfying assignment found.
+        v = order_heap_vsids.removeMin();
     }
     return v;
 }
@@ -3332,9 +3189,7 @@ size_t Searcher::mem_used() const
 {
     size_t mem = HyperEngine::mem_used();
     mem += var_act_vsids.capacity()*sizeof(double);
-    mem += var_act_maple.capacity()*sizeof(double);
     mem += order_heap_vsids.mem_used();
-    mem += order_heap_maple.mem_used();
     mem += order_heap_rand.mem_used();
     #ifdef VMTF_NEEDED
     mem += vmtf_btab.capacity()*sizeof(uint64_t);
@@ -3556,35 +3411,6 @@ void Searcher::cancelUntil(uint32_t blevel)
             if (trail[sublevel].lev <= blevel) {
                 add_tmp_canceluntil.push_back(trail[sublevel]);
             } else {
-                if (!inprocess && branch_strategy == branch::maple) {
-                    assert(sumConflicts >= varData[var].maple_last_picked);
-                    uint32_t age = sumConflicts - varData[var].maple_last_picked;
-                    if (age > 0) {
-                        //adjusted reward -> higher if conflicted more or quicker
-                        double adjusted_reward = ((double)(varData[var].maple_conflicted)) / ((double)age);
-
-                        double old_activity = var_act_maple[var];
-                        var_act_maple[var] =
-                            maple_step_size * adjusted_reward + ((1.0 - maple_step_size ) * old_activity);
-
-                        if (order_heap_maple.inHeap(var)) {
-                            if (var_act_maple[var] > old_activity)
-                                order_heap_maple.decrease(var);
-                            else
-                                order_heap_maple.increase(var);
-                        }
-                        #ifdef VERBOSE_DEBUG
-                        cout << "Adjusting reward. Var: " << (var+1)
-                        << " conflicted:" << varData[var].maple_conflicted
-                        << " old act: " << old_activity << " new act: " << var_act_maple[var] << endl
-                        << " step_size: " << maple_step_size
-                        << " age: " << age << " sumconflicts: " << sumConflicts << " last picked: " << varData[var].maple_last_picked
-                        << endl;
-                        #endif
-                    }
-                    varData[var].maple_cancelled = sumConflicts;
-                }
-
                 assigns[var] = l_Undef;
                 if (do_insert_var_order) {
                     insert_var_order(var);
@@ -3616,10 +3442,6 @@ void Searcher::check_var_in_branch_strategy(uint32_t int_var) const
     switch(branch_strategy) {
         case branch::vsids:
             assert(order_heap_vsids.inHeap(int_var));
-            break;
-
-        case branch::maple:
-            assert(order_heap_maple.inHeap(int_var));
             break;
 
         case branch::rand:
@@ -3759,7 +3581,6 @@ inline bool Searcher::check_order_heap_sanity() const
         }
     }
     assert(order_heap_vsids.heap_property());
-    assert(order_heap_maple.heap_property());
     assert(order_heap_rand.heap_property());
 
     return true;
@@ -3815,7 +3636,6 @@ void Searcher::check_assumptions_sanity()
 void Searcher::bump_var_importance_all(const uint32_t var, bool only_add, double amount)
 {
     vsids_bump_var_act<false>(var, amount, only_add);
-    varData[var].maple_conflicted += int(2*amount);
     #ifdef VMTF_NEEDED
     vmtf_bump_queue(var);
     #endif
@@ -3827,10 +3647,6 @@ void Searcher::bump_var_importance(const uint32_t var)
     switch(branch_strategy) {
         case branch::vsids:
             vsids_bump_var_act<false>(var);
-            break;
-
-        case branch::maple:
-            varData[var].maple_conflicted+=2;
             break;
 
         case branch::rand:

@@ -47,12 +47,9 @@ using std::string;
 
 enum class gret      {confl, prop, nothing_satisfied, nothing_fnewwatch};
 enum class gauss_res {none, confl, prop};
-enum class branch {
-    vsids,
-    maple,
-    rand
+enum class branch {vsids=1, rand=2
 #ifdef VMTF_NEEDED
-    ,vmtf
+    ,vmtf=3
 #endif
 };
 
@@ -87,10 +84,7 @@ inline std::string branch_type_to_string(const branch type)
 {
     switch(type) {
         case branch::vsids:
-            return "vsid";
-
-        case branch::maple:
-            return "mapl";
+            return "vsid";;
 
         case branch::rand:
             return "rand";
@@ -104,29 +98,6 @@ inline std::string branch_type_to_string(const branch type)
     assert(false && "oops, one of the branch types has no string name");
 
     return "Ooops, undefined!";
-}
-
-inline int branch_type_to_int(const branch type)
-{
-    switch(type) {
-        case branch::vsids:
-            return 0;
-
-        case branch::maple:
-            return 1;
-
-        #ifdef VMTF_NEEDED
-        case branch::vmtf:
-            return 2;
-        #endif
-
-        case branch::rand:
-            return 3;
-    }
-
-    assert(false && "oops, one of the branch types has no int name");
-
-    return 0;
 }
 
 inline int restart_type_to_int(const Restart type)

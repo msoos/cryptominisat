@@ -42,9 +42,6 @@ struct VarData
     uint32_t level = std::numeric_limits<uint32_t>::max();
     uint32_t sublevel = std::numeric_limits<uint32_t>::max();
 
-    uint32_t maple_cancelled = 0;
-    uint32_t maple_last_picked = 0;
-    uint32_t maple_conflicted = 0;
     #ifdef WEIGHTED_SAMPLING
     double weight = 0.5;
     #endif

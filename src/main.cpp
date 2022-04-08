@@ -472,9 +472,8 @@ void Main::add_supported_options()
     varPickOptions.add_options()
     ("branchstr"
         , po::value(&conf.branch_strategy_setup)->default_value(conf.branch_strategy_setup)
-        , "Branch strategy string that switches between different branch strategies while solving e.g. 'maple1+maple2+vsids1+vsids2'")
+        , "Branch strategy string that switches between different branch strategies while solving e.g. 'vsids1+vsids2'")
     ;
-
 
     po::options_description iterativeOptions("Iterative solve options");
     iterativeOptions.add_options()

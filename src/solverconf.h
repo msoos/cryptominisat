@@ -338,11 +338,6 @@ class DLL_PUBLIC SolverConf
         int       sql_overwrite_file;
         double    lock_for_data_gen_ratio;
 
-        //Steps
-        double orig_step_size = 0.40;
-        double step_size_dec = 0.000001;
-        double min_step_size = 0.06;
-
         //Var-elim
         int      doVarElim;          ///<Perform variable elimination
         uint64_t varelim_cutoff_too_many_clauses;

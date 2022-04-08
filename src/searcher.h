@@ -187,7 +187,7 @@ class Searcher : public HyperEngine
         template<bool inprocess>
         lbool new_decision();
         Lit pickBranchLit();
-        uint32_t pick_var_vsids_maple();
+        uint32_t pick_var_vsids();
         uint32_t pick_var_vmtf();
         void vsids_decay_var_act();
         template<bool inprocess>
@@ -201,7 +201,6 @@ class Searcher : public HyperEngine
         void clear_order_heap()
         {
             order_heap_vsids.clear();
-            order_heap_maple.clear();
             order_heap_rand.clear();
         }
         uint32_t branch_strategy_num = 0;
@@ -480,11 +479,6 @@ inline void Searcher::insert_var_order(const uint32_t x, branch type)
                 order_heap_vsids.insert(x);
             }
             break;
-        case branch::maple:
-            if (!order_heap_maple.inHeap(x)) {
-                order_heap_maple.insert(x);
-            }
-            break;
         #ifdef VMTF_NEEDED
         case branch::vmtf:
             // For VMTF we need to update the 'queue.unassigned' pointer in case this
@@ -511,20 +505,9 @@ inline void Searcher::insert_var_order(const uint32_t x, branch type)
 inline void Searcher::insert_var_order_all(const uint32_t x)
 {
     if (!order_heap_vsids.inHeap(x)) {
-        #ifdef SLOW_DEUG
-        assert(varData[x].removed == Removed::none
-            && "All variables should be decision vars unless removed");
-        #endif
-
+        SLOW_DEBUG_DO(assert(varData[x].removed == Removed::none &&
+            "All variables should be decision vars unless removed"));
         order_heap_vsids.insert(x);
-    }
-    if (!order_heap_maple.inHeap(x)) {
-        #ifdef SLOW_DEUG
-        assert(varData[x].removed == Removed::none
-            && "All variables should be decision vars unless removed");
-        #endif
-
-        order_heap_maple.insert(x);
     }
 
     if (!order_heap_rand.inHeap(x)) {
