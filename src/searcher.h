@@ -196,7 +196,7 @@ class Searcher : public HyperEngine
         void check_var_in_branch_strategy(uint32_t var) const;
         void set_branch_strategy(uint32_t iteration_num);
         void rebuildOrderHeap();
-        void rebuildOrderHeapVMTF();
+        void rebuildOrderHeapVMTF(vector<uint32_t>& vs);
         void print_order_heap();
         void clear_order_heap()
         {
@@ -504,15 +504,13 @@ inline void Searcher::insert_var_order(const uint32_t x, branch type)
 
 inline void Searcher::insert_var_order_all(const uint32_t x)
 {
-    if (!order_heap_vsids.inHeap(x)) {
-        SLOW_DEBUG_DO(assert(varData[x].removed == Removed::none &&
-            "All variables should be decision vars unless removed"));
-        order_heap_vsids.insert(x);
-    }
+    assert(!order_heap_vsids.inHeap(x));
+    SLOW_DEBUG_DO(assert(varData[x].removed == Removed::none &&
+        "All variables should be decision vars unless removed"));
+    order_heap_vsids.insert(x);
 
-    if (!order_heap_rand.inHeap(x)) {
-        order_heap_rand.insert(x);
-    }
+    assert(!order_heap_rand.inHeap(x));
+    order_heap_rand.insert(x);
 
     #ifdef VMTF_NEEDED
     vmtf_init_enqueue(x);

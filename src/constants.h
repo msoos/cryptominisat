@@ -31,6 +31,7 @@ THE SOFTWARE.
 using std::numeric_limits;
 
 //#define VERBOSE_DEBUG
+#define VMTF_NEEDED
 
 #if defined(_MSC_VER)
 #define release_assert(a) \

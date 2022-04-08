@@ -124,10 +124,7 @@ void Searcher::updateVars(
     , const vector<uint32_t>& interToOuter
 ) {
     updateArray(var_act_vsids, interToOuter);
-
-    #ifdef VMTF_NEEDED
-    rebuildOrderHeapVMTF();
-    #endif
+    updateArray(vmtf_btab, interToOuter);
 }
 
 //TODO add hint here for FRAT
@@ -2207,9 +2204,6 @@ void Searcher::rebuildOrderHeap()
     vs.reserve(nVars());
     for (uint32_t v = 0; v < nVars(); v++) {
         if (varData[v].removed != Removed::none
-            //NOTE: the level==0 check is needed because SLS calls this
-            //when there is a solution already, but we should only skip
-            //level 0 assignments
             || (value(v) != l_Undef && varData[v].level == 0)
         ) {
             continue;
@@ -2218,56 +2212,34 @@ void Searcher::rebuildOrderHeap()
         }
     }
 
-    VERBOSE_PRINT("c [branch] Building VSDIS order heap");
+    VERBOSE_PRINT("c [branch] Rebuilding VSDIS order heap");
     order_heap_vsids.build(vs);
 
-    VERBOSE_PRINT("c [branch] Building RAND order heap");
+    VERBOSE_PRINT("c [branch] Rebuilding RAND order heap");
     order_heap_rand.build(vs);
 
     #ifdef VMTF_NEEDED
-    VERBOSE_PRINT("c [branch] Building VMTF order heap");
-    rebuildOrderHeapVMTF();
+    VERBOSE_PRINT("c [branch] Rebuilding VMTF order heap");
+    rebuildOrderHeapVMTF(vs);
     #endif
 }
 
 #ifdef VMTF_NEEDED
-void Searcher::rebuildOrderHeapVMTF()
+void Searcher::rebuildOrderHeapVMTF(vector<uint32_t>& vs)
 {
-    #ifdef VERBOSE_DEBUG
-    cout << "c [branch] Building VMTF order heap" << endl;
-    #endif
-    //TODO fix
-    return;
+    std::sort(vs.begin(), vs.end(),
+              [&](const uint32_t& a, const uint32_t& b) -> bool
+        {
+            return vmtf_btab[a] < vmtf_btab[b]; //reverse order is needed for enqueue alter
+        });
 
-    vector<uint32_t> vs;
-    vs.reserve(nVars());
-    uint32_t v = pick_var_vmtf();
-    while(v != var_Undef) {
-        if (varData[v].removed != Removed::none
-            //NOTE: the level==0 check is needed because SLS calls this
-            //when there is a solution already, but we should only skip
-            //level 0 assignments
-            || (value(v) != l_Undef && varData[v].level == 0)
-        ) {
-            //
-        } else {
-            vs.push_back(v);
-        }
-        v = pick_var_vmtf();
-        cout << "v: " << v << endl;
-    }
-
-    //Clear it out
     vmtf_queue = Queue();
     vmtf_btab.clear();
     vmtf_links.clear();
     vmtf_btab.insert(vmtf_btab.end(), nVars(), 0);
     vmtf_links.insert(vmtf_links.end(), nVars(), Link());
 
-    //Insert in reverse order
-    for(int i = (int)vs.size()-1; i >= 0; i--) {
-        vmtf_init_enqueue(vs[v]);
-    }
+    for(auto const& v: vs) vmtf_init_enqueue(v);
 }
 #endif
 
