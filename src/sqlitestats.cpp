@@ -738,7 +738,7 @@ void SQLiteStats::reduceDB(
     , const uint32_t reduceDB_called
 ) {
     const ClauseStatsExtra& stats_extra = solver->red_stats_extra[cl->stats.extra_pos];
-    assert(stats_extra.dump_no != std::numeric_limits<uint16_t>::max());
+    assert(stats_extra.dump_no != numeric_limits<uint16_t>::max());
 
     int bindAt = 1;
 

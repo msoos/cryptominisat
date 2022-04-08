@@ -170,7 +170,7 @@ class Searcher : public HyperEngine
 
         #ifdef STATS_NEEDED
         void dump_restart_sql(rst_dat_type type, int64_t clauseID = -1);
-        uint64_t last_dumped_conflict_rst_data_for_var = std::numeric_limits<uint64_t>::max();
+        uint64_t last_dumped_conflict_rst_data_for_var = numeric_limits<uint64_t>::max();
         template<class T>
         uint32_t calc_connects_num_communities(const T& cl);
         #endif

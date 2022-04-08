@@ -47,7 +47,7 @@ public:
     bool perform_transitive_reduction = true;
     bool timedOutPropagateFull = false;
     Lit propagate_bfs(
-        const uint64_t earlyAborTOut = std::numeric_limits<uint64_t>::max()
+        const uint64_t earlyAborTOut = numeric_limits<uint64_t>::max()
     );
     set<BinaryClause> needToAddBinClause;       ///<We store here hyper-binary clauses to be added at the end of propagateFull()
     set<BinaryClause> uselessBin;

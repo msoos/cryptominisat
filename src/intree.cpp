@@ -48,7 +48,7 @@ bool InTree::replace_until_fixedpoint(bool& aborted)
 
     aborted = false;
     uint64_t bogoprops = 0;
-    uint32_t last_replace = std::numeric_limits<uint32_t>::max();
+    uint32_t last_replace = numeric_limits<uint32_t>::max();
     uint32_t this_replace = solver->varReplacer->get_num_replaced_vars();
     while(last_replace != this_replace && !aborted) {
         last_replace = this_replace;
@@ -339,7 +339,7 @@ bool InTree::handle_lit_popped_from_queue(const Lit lit, const Lit other_lit, co
         //Should do HHBR here
         bool ok;
         if (solver->conf.do_hyperbin_and_transred) {
-            uint64_t max_hyper_time = std::numeric_limits<uint64_t>::max();
+            uint64_t max_hyper_time = numeric_limits<uint64_t>::max();
             if (!solver->drat->enabled() &&
                 !solver->conf.simulate_drat
             ) {

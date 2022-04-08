@@ -517,7 +517,7 @@ void ClauseCleaner::clean_xor_clauses(vector<Xor>& xors)
     assert(solver->ok);
     VERBOSE_DEBUG_DO(for(Xor& x : xors) cout << "orig XOR: " << x << endl);
 
-    size_t last_trail = std::numeric_limits<size_t>::max();
+    size_t last_trail = numeric_limits<size_t>::max();
     while(last_trail != solver->trail_size()) {
         last_trail = solver->trail_size();
         size_t i = 0;

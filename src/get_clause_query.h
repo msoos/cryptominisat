@@ -51,19 +51,19 @@ private:
     Solver* solver;
 
     bool red = true;
-    uint32_t max_len = std::numeric_limits<uint32_t>::max();
-    uint32_t max_glue = std::numeric_limits<uint32_t>::max();
-    uint32_t at = std::numeric_limits<uint32_t>::max();
-    uint32_t varreplace_at = std::numeric_limits<uint32_t>::max();
-    uint32_t units_at = std::numeric_limits<uint32_t>::max();
-    uint32_t watched_at = std::numeric_limits<uint32_t>::max();
-    uint32_t watched_at_sub = std::numeric_limits<uint32_t>::max();
-    uint32_t comp_at = std::numeric_limits<uint32_t>::max();
-    uint32_t comp_at_sum = std::numeric_limits<uint32_t>::max();
-    uint32_t blocked_at = std::numeric_limits<uint32_t>::max();
-    uint32_t blocked_at2 = std::numeric_limits<uint32_t>::max();
-    uint32_t xor_detached_at = std::numeric_limits<uint32_t>::max();
-    uint32_t undef_at = std::numeric_limits<uint32_t>::max();
+    uint32_t max_len = numeric_limits<uint32_t>::max();
+    uint32_t max_glue = numeric_limits<uint32_t>::max();
+    uint32_t at = numeric_limits<uint32_t>::max();
+    uint32_t varreplace_at = numeric_limits<uint32_t>::max();
+    uint32_t units_at = numeric_limits<uint32_t>::max();
+    uint32_t watched_at = numeric_limits<uint32_t>::max();
+    uint32_t watched_at_sub = numeric_limits<uint32_t>::max();
+    uint32_t comp_at = numeric_limits<uint32_t>::max();
+    uint32_t comp_at_sum = numeric_limits<uint32_t>::max();
+    uint32_t blocked_at = numeric_limits<uint32_t>::max();
+    uint32_t blocked_at2 = numeric_limits<uint32_t>::max();
+    uint32_t xor_detached_at = numeric_limits<uint32_t>::max();
+    uint32_t undef_at = numeric_limits<uint32_t>::max();
     bool simplified = false;
     bool bva_vars = false;
 

@@ -46,7 +46,7 @@ void CMSat::CommunityFinder::compute()
 {
     //Clean it
     for(auto& v: solver->varData) {
-        v.community_num = std::numeric_limits<uint32_t>::max();
+        v.community_num = numeric_limits<uint32_t>::max();
     }
 
     //Check for too large

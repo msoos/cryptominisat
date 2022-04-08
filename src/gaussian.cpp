@@ -57,7 +57,6 @@ using std::cout;
 using std::endl;
 using std::ostream;
 using std::set;
-using std::numeric_limits;
 
 using namespace CMSat;
 

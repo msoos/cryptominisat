@@ -1239,7 +1239,7 @@ void Solver::new_var(
         occsimplifier->new_var(orig_outer);
     }
 
-    if (orig_outer == std::numeric_limits<uint32_t>::max()) {
+    if (orig_outer == numeric_limits<uint32_t>::max()) {
         datasync->new_var(bva);
     }
 
@@ -1765,8 +1765,8 @@ lbool Solver::solve_with_assumptions(
     handle_found_solution(status, only_sampling_solution);
     unfill_assumptions_set();
     assumptions.clear();
-    conf.max_confl = std::numeric_limits<uint64_t>::max();
-    conf.maxTime = std::numeric_limits<double>::max();
+    conf.max_confl = numeric_limits<uint64_t>::max();
+    conf.maxTime = numeric_limits<double>::max();
     datasync->finish_up_mpi();
     conf.conf_needed = true;
     set_must_interrupt_asap();
@@ -4773,7 +4773,7 @@ bool Solver::remove_and_clean_all() {
 void Solver::set_max_confl(uint64_t max_confl)
 {
     if (get_stats().conflicts + max_confl < max_confl) {
-          conf.max_confl = std::numeric_limits<uint64_t>::max();
+          conf.max_confl = numeric_limits<uint64_t>::max();
       } else {
           conf.max_confl = get_stats().conflicts + max_confl;
       }

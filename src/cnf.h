@@ -42,8 +42,6 @@ THE SOFTWARE.
 #include <pseudoboolean.h>
 #endif
 
-using std::numeric_limits;
-
 namespace CMSat {
 
 class ClauseAllocator;

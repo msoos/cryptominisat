@@ -831,14 +831,14 @@ void Searcher::analyze_conflict(
     stats.litsRedFinal += learnt_clause.size();
 
     //further minimisation 1 -- short, small glue clauses
-    glue = std::numeric_limits<uint32_t>::max();
+    glue = numeric_limits<uint32_t>::max();
     if (learnt_clause.size() <= conf.max_size_more_minim) {
         glue = calc_glue(learnt_clause);
         if (glue <= conf.max_glue_more_minim) {
             minimize_using_bins();
         }
     }
-    if (glue == std::numeric_limits<uint32_t>::max()) {
+    if (glue == numeric_limits<uint32_t>::max()) {
         glue = calc_glue(learnt_clause);
     }
     print_fully_minimized_learnt_clause();
@@ -1645,7 +1645,7 @@ uint32_t Searcher::calc_connects_num_communities(const T& cl)
     uint32_t connects_num_communities = 0;
     for(const auto l: cl) {
         uint32_t comm = varData[l.var()].community_num;
-        if (comm == std::numeric_limits<uint32_t>::max()) {
+        if (comm == numeric_limits<uint32_t>::max()) {
             continue;
         }
         assert(comm < solver->nVars());
@@ -1867,7 +1867,7 @@ bool Searcher::handle_conflict(PropBy confl)
 //     }
 
     assert(value(learnt_clause[0]) == l_Undef);
-    glue = std::min<uint32_t>(glue, std::numeric_limits<uint32_t>::max());
+    glue = std::min<uint32_t>(glue, numeric_limits<uint32_t>::max());
     int32_t ID;
     Clause* cl = handle_last_confl(
         glue,
@@ -2970,21 +2970,17 @@ uint32_t Searcher::pick_var_vmtf()
 {
     uint64_t searched = 0;
     uint32_t res = vmtf_queue.unassigned;
-    while (res != std::numeric_limits<uint32_t>::max()
+    while (res != numeric_limits<uint32_t>::max()
         && value(res) != l_Undef
     ) {
         res = vmtf_link(res).prev;
         searched++;
     }
 
-    if (res == std::numeric_limits<uint32_t>::max()) {
-        return var_Undef;
-    }
+    if (res == numeric_limits<uint32_t>::max()) return var_Undef;
 
-    if (searched) {
-        vmtf_update_queue_unassigned(res);
-    }
-    //LOG ("next queue decision variable %d vmtf_bumped %" PRId64 "", res, vmtf_bumped (res));
+    if (searched) vmtf_update_queue_unassigned(res);
+    VERBOSE_PRINT("next queue decision variable " << res << " vmtf_bumped " << vmtf_bumped (res));
     return res;
 }
 #endif

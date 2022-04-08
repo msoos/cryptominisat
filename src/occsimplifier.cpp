@@ -1725,7 +1725,7 @@ bool OccSimplifier::occ_rem_with_gates()
             assert(!cl->freed());
 
             //TODO check calcAbst!
-            uint32_t at = std::numeric_limits<uint32_t>::max();
+            uint32_t at = numeric_limits<uint32_t>::max();
             for(uint32_t i = 0, sz = cl->size(); i < sz; i++) {
                 const Lit l = (*cl)[i];
                 if (l > l2) {
@@ -2415,8 +2415,8 @@ bool OccSimplifier::fill_occur()
     link_in_data_irred = link_in_clauses(
         solver->longIrredCls
         , true //add to occur list
-        , std::numeric_limits<uint32_t>::max()
-        , std::numeric_limits<int64_t>::max()
+        , numeric_limits<uint32_t>::max()
+        , numeric_limits<int64_t>::max()
     );
     solver->longIrredCls.clear();
     if (solver->conf.verbosity) {
@@ -2491,7 +2491,7 @@ bool OccSimplifier::uneliminate(uint32_t var)
     //Find if variable is really needed to be eliminated
     var = solver->map_inter_to_outer(var);
     uint32_t at_blocked_cls = blk_var_to_cls[var];
-    if (at_blocked_cls == std::numeric_limits<uint32_t>::max())
+    if (at_blocked_cls == numeric_limits<uint32_t>::max())
         return solver->okay();
 
     //Eliminate it in practice
@@ -2564,7 +2564,7 @@ void OccSimplifier::remove_by_drat_recently_blocked_clauses(size_t origBlockedSi
 void OccSimplifier::buildBlockedMap()
 {
     blk_var_to_cls.clear();
-    blk_var_to_cls.resize(solver->nVarsOuter(), std::numeric_limits<uint32_t>::max());
+    blk_var_to_cls.resize(solver->nVarsOuter(), numeric_limits<uint32_t>::max());
     for(size_t i = 0; i < blockedClauses.size(); i++) {
         const BlockedClauses& blocked = blockedClauses[i];
         uint32_t blockedon = blocked.at(0, blkcls).var();
@@ -2737,12 +2737,12 @@ void OccSimplifier::set_limits()
 //     norm_varelim_time_limit = 0;
 //     empty_varelim_time_limit = 0;
 //     varelim_num_limit = 0;
-//     subsumption_time_limit   = std::numeric_limits<int64_t>::max();
-//     strengthening_time_limit = std::numeric_limits<int64_t>::max();
-//     norm_varelim_time_limit  = std::numeric_limits<int64_t>::max();
-//     empty_varelim_time_limit = std::numeric_limits<int64_t>::max();
-//     varelim_num_limit        = std::numeric_limits<int64_t>::max();
-//     varelim_sub_str_limit    = std::numeric_limits<int64_t>::max();
+//     subsumption_time_limit   = numeric_limits<int64_t>::max();
+//     strengthening_time_limit = numeric_limits<int64_t>::max();
+//     norm_varelim_time_limit  = numeric_limits<int64_t>::max();
+//     empty_varelim_time_limit = numeric_limits<int64_t>::max();
+//     varelim_num_limit        = numeric_limits<int64_t>::max();
+//     varelim_sub_str_limit    = numeric_limits<int64_t>::max();
 }
 
 void OccSimplifier::cleanBlockedClauses()
@@ -2774,8 +2774,8 @@ void OccSimplifier::cleanBlockedClauses()
             blockedMapBuilt = false;
             i_blkcls += i->size();
             assert(i_blkcls == i->end);
-            i->start = std::numeric_limits<uint64_t>::max();
-            i->end = std::numeric_limits<uint64_t>::max();
+            i->start = numeric_limits<uint64_t>::max();
+            i->end = numeric_limits<uint64_t>::max();
         } else {
             assert(solver->varData[blockedOn].removed == Removed::elimed);
 
@@ -4371,7 +4371,7 @@ bool OccSimplifier::check_empty_resolvent(Lit lit)
         , 0
     );
 
-    int num_resolvents = std::numeric_limits<int>::max();
+    int num_resolvents = numeric_limits<int>::max();
 
     //Can only count if the POS was small enough
     //otherwise 'seen' cannot properly store the data
@@ -4518,7 +4518,7 @@ int OccSimplifier::check_empty_resolvent_action(
     }
 
     assert(false);
-    return std::numeric_limits<int>::max();
+    return numeric_limits<int>::max();
 }
 
 uint64_t OccSimplifier::heuristicCalcVarElimScore(const uint32_t var)

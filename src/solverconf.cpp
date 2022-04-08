@@ -165,8 +165,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , print_restart_line_every_n_confl(8192)
 
         //Limits
-        , maxTime          (std::numeric_limits<double>::max())
-        , max_confl         (std::numeric_limits<uint64_t>::max())
+        , maxTime          (numeric_limits<double>::max())
+        , max_confl         (numeric_limits<uint64_t>::max())
 
         //Glues
         , update_glues_on_analyze(true)

@@ -247,8 +247,8 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
     //Run findXorMatch for the 2 smallest watchlists
     Lit slit = lit_Undef;
     Lit slit2 = lit_Undef;
-    uint32_t smallest = std::numeric_limits<uint32_t>::max();
-    uint32_t smallest2 = std::numeric_limits<uint32_t>::max();
+    uint32_t smallest = numeric_limits<uint32_t>::max();
+    uint32_t smallest2 = numeric_limits<uint32_t>::max();
     for (size_t i = 0, end = lits.size(); i < end; i++) {
         const Lit lit = lits[i];
         uint32_t num = solver->watches[lit].size();
@@ -324,7 +324,7 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
             }
 
             xor_find_time_limit -= 1;
-            poss_xor.add(binvec, std::numeric_limits<ClOffset>::max(), varsMissing);
+            poss_xor.add(binvec, numeric_limits<ClOffset>::max(), varsMissing);
             if (poss_xor.foundAll())
                 break;
         } else {

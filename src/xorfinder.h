@@ -73,7 +73,7 @@ class PossibleXor
                     assert(cl[i-1] < cl[i]);
             }
             setup_seen_rhs_foundcomb(seen);
-            if (offset != std::numeric_limits<ClOffset>::max()) {
+            if (offset != numeric_limits<ClOffset>::max()) {
                 //this is the XOR that starts it all
                 //so it's fully used
                 offsets.push_back(offset);
@@ -173,8 +173,8 @@ public:
         //XOR stats
         uint64_t foundXors = 0;
         uint64_t sumSizeXors = 0;
-        uint32_t minsize = std::numeric_limits<uint32_t>::max();
-        uint32_t maxsize = std::numeric_limits<uint32_t>::min();
+        uint32_t minsize = numeric_limits<uint32_t>::max();
+        uint32_t maxsize = numeric_limits<uint32_t>::min();
     };
 
     const Stats& get_stats() const;
@@ -312,7 +312,7 @@ template<class T> void PossibleXor::add(
         }
         foundComb[thisWhichOne] = true;
     }
-    if (offset != std::numeric_limits<ClOffset>::max()) {
+    if (offset != numeric_limits<ClOffset>::max()) {
         offsets.push_back(offset);
         fully_used.push_back(varsMissing.empty());
     }

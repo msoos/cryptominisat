@@ -30,8 +30,8 @@ namespace CMSat {
 
 struct Link {
     // variable indices
-    uint32_t prev = std::numeric_limits<uint32_t>::max();
-    uint32_t next = std::numeric_limits<uint32_t>::max();
+    uint32_t prev = numeric_limits<uint32_t>::max();
+    uint32_t next = numeric_limits<uint32_t>::max();
 };
 
 typedef vector<Link> Links;
@@ -46,10 +46,10 @@ struct Queue {
   uint64_t vmtf_bumped;     // see vmtf_update_queue_unassigned
 
   Queue () :
-      first (std::numeric_limits<uint32_t>::max()),
-      last (std::numeric_limits<uint32_t>::max()),
-      unassigned (std::numeric_limits<uint32_t>::max()),
-      vmtf_bumped (std::numeric_limits<uint64_t>::max())
+      first (numeric_limits<uint32_t>::max()),
+      last (numeric_limits<uint32_t>::max()),
+      unassigned (numeric_limits<uint32_t>::max()),
+      vmtf_bumped (numeric_limits<uint64_t>::max())
   {}
 
   // We explicitly provide the mapping of integer indices to vmtf_links to the
@@ -61,13 +61,13 @@ struct Queue {
   inline void dequeue (Links & vmtf_links, uint32_t idx) {
     Link & l = vmtf_links[idx];
 
-    if (l.prev != std::numeric_limits<uint32_t>::max()) {
+    if (l.prev != numeric_limits<uint32_t>::max()) {
         vmtf_links[l.prev].next = l.next;
     } else {
         first = l.next;
     }
 
-    if (l.next != std::numeric_limits<uint32_t>::max()) {
+    if (l.next != numeric_limits<uint32_t>::max()) {
         vmtf_links[l.next].prev = l.prev;
     } else {
         last = l.prev;
@@ -77,13 +77,13 @@ struct Queue {
   inline void enqueue (Links & vmtf_links, uint32_t idx) {
     Link & l = vmtf_links[idx];
     l.prev = last;
-    if (l.prev != std::numeric_limits<uint32_t>::max()) {
+    if (l.prev != numeric_limits<uint32_t>::max()) {
         vmtf_links[last].next = idx;
     } else {
         first = idx;
     }
     last = idx;
-    l.next = std::numeric_limits<uint32_t>::max();
+    l.next = numeric_limits<uint32_t>::max();
   }
 };
 

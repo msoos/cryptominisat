@@ -42,9 +42,9 @@ void GetClauseQuery::start_getting_small_clauses(
         exit(-1);
     }
 
-    assert(at == std::numeric_limits<uint32_t>::max());
-    assert(watched_at == std::numeric_limits<uint32_t>::max());
-    assert(watched_at_sub == std::numeric_limits<uint32_t>::max());
+    assert(at == numeric_limits<uint32_t>::max());
+    assert(watched_at == numeric_limits<uint32_t>::max());
+    assert(watched_at_sub == numeric_limits<uint32_t>::max());
     assert(max_len >= 2);
 
     if (!red) {
@@ -105,8 +105,8 @@ vector<uint32_t> GetClauseQuery::translate_sampl_set(
 void GetClauseQuery::get_all_irred_clauses(vector<Lit>& out)
 {
     start_getting_small_clauses(
-        std::numeric_limits<uint32_t>::max(),
-        std::numeric_limits<uint32_t>::max(),
+        numeric_limits<uint32_t>::max(),
+        numeric_limits<uint32_t>::max(),
         false);
     bool ret = get_next_small_clause(out, true);
     assert(ret == false); //we must get all clauses, so nothing left

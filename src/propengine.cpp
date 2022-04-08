@@ -173,8 +173,8 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
         if (gqueuedata[i->matrix_num].disabled || !gmatrices[i->matrix_num]->is_initialized())
             continue; //remove watch and continue
 
-        gqueuedata[i->matrix_num].new_resp_var = std::numeric_limits<uint32_t>::max();
-        gqueuedata[i->matrix_num].new_resp_row = std::numeric_limits<uint32_t>::max();
+        gqueuedata[i->matrix_num].new_resp_var = numeric_limits<uint32_t>::max();
+        gqueuedata[i->matrix_num].new_resp_row = numeric_limits<uint32_t>::max();
         gqueuedata[i->matrix_num].do_eliminate = false;
         gqueuedata[i->matrix_num].currLevel = currLevel;
 
@@ -939,19 +939,19 @@ void PropEngine::sql_dump_vardata_picktime(uint32_t v, PropBy from)
 // inlined here since it occurs in several inner loops.
 //
 void PropEngine::vmtf_update_queue_unassigned (uint32_t idx) {
-    assert(idx != std::numeric_limits<uint32_t>::max());
+    assert(idx != numeric_limits<uint32_t>::max());
     vmtf_queue.unassigned = idx;
     vmtf_queue.vmtf_bumped = vmtf_btab[idx];
 }
 
 void PropEngine::vmtf_init_enqueue (uint32_t var) {
     Link & l = vmtf_links[var];
-    l.next = std::numeric_limits<uint32_t>::max();
-    if (vmtf_queue.last != std::numeric_limits<uint32_t>::max()) {
-        assert(vmtf_links[vmtf_queue.last].next == std::numeric_limits<uint32_t>::max());
+    l.next = numeric_limits<uint32_t>::max();
+    if (vmtf_queue.last != numeric_limits<uint32_t>::max()) {
+        assert(vmtf_links[vmtf_queue.last].next == numeric_limits<uint32_t>::max());
         vmtf_links[vmtf_queue.last].next = var;
     } else {
-        assert(vmtf_queue.first == std::numeric_limits<uint32_t>::max());
+        assert(vmtf_queue.first == numeric_limits<uint32_t>::max());
         vmtf_queue.first = var;
     }
     vmtf_btab[var] = ++vmtf_queue.vmtf_bumped;
@@ -965,14 +965,14 @@ void PropEngine::vmtf_init_enqueue (uint32_t var) {
 // whether the 'queue.assigned' pointer has to be moved in 'unassign'.
 
 void PropEngine::vmtf_bump_queue (uint32_t var) {
-    if (vmtf_links[var].next == std::numeric_limits<uint32_t>::max()) {
+    if (vmtf_links[var].next == numeric_limits<uint32_t>::max()) {
         return;
     }
     //Remove from wherever it is, put to the top
     vmtf_queue.dequeue (vmtf_links, var);
     vmtf_queue.enqueue (vmtf_links, var);
 
-    assert (vmtf_queue.vmtf_bumped != std::numeric_limits<uint32_t>::max());
+    assert (vmtf_queue.vmtf_bumped != numeric_limits<uint32_t>::max());
     vmtf_btab[var] = ++vmtf_queue.vmtf_bumped;
     //LOG ("moved to front variable %d and vmtf_bumped to %" PRId64 "", idx, vmtf_btab[idx]);
     if (value(var) == l_Undef) {

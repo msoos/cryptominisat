@@ -42,7 +42,7 @@ class DimacsParser
             T input_stream,
             const bool strict_header,
             uint32_t offset_vars = 0);
-        uint64_t max_var = std::numeric_limits<uint64_t>::max();
+        uint64_t max_var = numeric_limits<uint64_t>::max();
         vector<uint32_t> sampling_vars;
         vector<double> weights;
         const std::string dimacs_spec = "http://www.satcompetition.org/2009/format-benchmarks2009.html";

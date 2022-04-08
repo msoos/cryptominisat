@@ -45,7 +45,7 @@ void CNF::new_var(
 
     minNumVars++;
     enlarge_minimal_datastructs();
-    if (orig_outer == std::numeric_limits<uint32_t>::max()) {
+    if (orig_outer == numeric_limits<uint32_t>::max()) {
         //completely new var
         enlarge_nonminimial_datastructs();
 

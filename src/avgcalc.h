@@ -56,8 +56,8 @@ public:
         , sumSqare(0)
         #endif
         #ifdef AVGCALC_NEED_MIN_MAX
-        , min(std::numeric_limits<T>::max())
-        , max(std::numeric_limits<T>::min())
+        , min(numeric_limits<T>::max())
+        , max(numeric_limits<T>::min())
         #endif
     {}
 
@@ -120,7 +120,7 @@ public:
     #ifdef AVGCALC_NEED_MIN_MAX
     T getMin() const
     {
-        if (min == std::numeric_limits<T>::max())
+        if (min == numeric_limits<T>::max())
             return 0;
 
         return min;
@@ -128,7 +128,7 @@ public:
 
     T getMax() const
     {
-        if (max == std::numeric_limits<T>::min())
+        if (max == numeric_limits<T>::min())
             return 0;
 
         return max;

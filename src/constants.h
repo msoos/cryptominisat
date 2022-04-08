@@ -26,6 +26,9 @@ THE SOFTWARE.
 #include <cstdint>
 #include <cstdlib>
 #include <stdio.h>
+#include <limits>
+
+using std::numeric_limits;
 
 //#define VERBOSE_DEBUG
 

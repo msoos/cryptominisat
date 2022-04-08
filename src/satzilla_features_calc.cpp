@@ -328,29 +328,29 @@ void SatZillaFeaturesCalc::calculate_cl_distributions(
 
 void SatZillaFeaturesCalc::normalise_values()
 {
-    if (satzilla_feat.vcg_var_min == std::numeric_limits<double>::max())
+    if (satzilla_feat.vcg_var_min == numeric_limits<double>::max())
         satzilla_feat.vcg_var_min = -1;
-    if (satzilla_feat.vcg_var_max == std::numeric_limits<double>::min())
+    if (satzilla_feat.vcg_var_max == numeric_limits<double>::min())
         satzilla_feat.vcg_var_max = -1;
 
-    if (satzilla_feat.vcg_cls_min  == std::numeric_limits<double>::max())
+    if (satzilla_feat.vcg_cls_min  == numeric_limits<double>::max())
         satzilla_feat.vcg_cls_min = -1;
-    if (satzilla_feat.vcg_cls_max == std::numeric_limits<double>::min())
+    if (satzilla_feat.vcg_cls_max == numeric_limits<double>::min())
         satzilla_feat.vcg_cls_max = -1;
 
-    if (satzilla_feat.pnr_var_min == std::numeric_limits<double>::max())
+    if (satzilla_feat.pnr_var_min == numeric_limits<double>::max())
         satzilla_feat.pnr_var_min = -1;
-    if (satzilla_feat.pnr_var_max == std::numeric_limits<double>::min())
+    if (satzilla_feat.pnr_var_max == numeric_limits<double>::min())
         satzilla_feat.pnr_var_max = -1;
 
-    if (satzilla_feat.horn_min == std::numeric_limits<double>::max())
+    if (satzilla_feat.horn_min == numeric_limits<double>::max())
         satzilla_feat.horn_min = -1;
-    if (satzilla_feat.horn_max == std::numeric_limits<double>::min())
+    if (satzilla_feat.horn_max == numeric_limits<double>::min())
         satzilla_feat.horn_max = -1;
 
-    if (satzilla_feat.pnr_cls_min == std::numeric_limits<double>::max())
+    if (satzilla_feat.pnr_cls_min == numeric_limits<double>::max())
         satzilla_feat.pnr_cls_min = -1;
-    if (satzilla_feat.pnr_cls_max == std::numeric_limits<double>::min())
+    if (satzilla_feat.pnr_cls_max == numeric_limits<double>::min())
         satzilla_feat.pnr_cls_max = -1;
 }
 

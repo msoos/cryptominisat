@@ -39,8 +39,8 @@ struct VarData
     }
 
     ///contains the decision level at which the assignment was made.
-    uint32_t level = std::numeric_limits<uint32_t>::max();
-    uint32_t sublevel = std::numeric_limits<uint32_t>::max();
+    uint32_t level = numeric_limits<uint32_t>::max();
+    uint32_t sublevel = numeric_limits<uint32_t>::max();
 
     #ifdef WEIGHTED_SAMPLING
     double weight = 0.5;
@@ -63,7 +63,7 @@ struct VarData
 
 
     #if defined(STATS_NEEDED)
-    uint32_t community_num = std::numeric_limits<uint32_t>::max();
+    uint32_t community_num = numeric_limits<uint32_t>::max();
     #endif
 
     #if defined(STATS_NEEDED_BRANCH) || defined(FINAL_PREDICTOR_BRANCH)

@@ -91,7 +91,7 @@ lbool WalkSAT::main()
     print_statistics_header();
 
     uint32_t last_low_bad = 1000;
-    lowestbad = std::numeric_limits<uint32_t>::max();
+    lowestbad = numeric_limits<uint32_t>::max();
     while (!found_solution && numtry < solver->conf.walksat_max_runs) {
         numtry++;
         init_for_round();
@@ -290,7 +290,7 @@ void WalkSAT::init_for_round()
         walk_probability = 0.0;
         numerator = (uint32_t)(walk_probability * denominator);
         stagnation_timer = (uint32_t)(numclauses * adaptive_theta);
-        last_adaptive_objective = std::numeric_limits<uint32_t>::max();
+        last_adaptive_objective = numeric_limits<uint32_t>::max();
     }
 
     //reset makecount, breakcount and set random starting position
@@ -785,9 +785,9 @@ uint32_t WalkSAT::pickrnovelty()
         return clause[tofix][RANDMOD(clausesize)].var();
     }
 
-    int64_t youngest_birthdate = std::numeric_limits<int64_t>::min();
-    int64_t best_diff = std::numeric_limits<int64_t>::min();
-    int64_t second_best_diff = std::numeric_limits<int64_t>::min();
+    int64_t youngest_birthdate = numeric_limits<int64_t>::min();
+    int64_t best_diff = numeric_limits<int64_t>::min();
+    int64_t second_best_diff = numeric_limits<int64_t>::min();
     uint32_t bbest = var_Undef;
     uint32_t second_best = var_Undef;
     uint32_t youngest = var_Undef;

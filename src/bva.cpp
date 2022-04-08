@@ -328,7 +328,7 @@ bool BVA::bva_simplify_system()
     bva_worked++;
     bva_simp_size += simp_size;
 
-    solver->new_var(true, std::numeric_limits<uint32_t>::max(), false);
+    solver->new_var(true, numeric_limits<uint32_t>::max(), false);
     const uint32_t newvar = solver->nVars()-1;
     const Lit new_lit(newvar, false);
 
@@ -780,7 +780,7 @@ Lit BVA::least_occurring_except(const OccurClause& c)
     }
 
     Lit smallest = lit_Undef;
-    size_t smallest_val = std::numeric_limits<size_t>::max();
+    size_t smallest_val = numeric_limits<size_t>::max();
     const auto check_smallest = [&] (const Lit lit) {
         //Must not be in m_lits
         if (seen[lit.toInt()] != 0)

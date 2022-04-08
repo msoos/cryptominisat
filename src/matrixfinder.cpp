@@ -74,14 +74,14 @@ inline bool MatrixFinder::firstPartOfSecond(const Xor& c1, const Xor& c2) const
 
 inline bool MatrixFinder::belong_same_matrix(const Xor& x)
 {
-    uint32_t comp_num = std::numeric_limits<uint32_t>::max();
+    uint32_t comp_num = numeric_limits<uint32_t>::max();
     for (uint32_t v : x) {
         if (table[v] == var_Undef) {
             //Belongs to none, abort
             return false;
         }
 
-        if (comp_num == std::numeric_limits<uint32_t>::max()) {
+        if (comp_num == numeric_limits<uint32_t>::max()) {
             //Belongs to this one
             comp_num = table[v];
         } else {

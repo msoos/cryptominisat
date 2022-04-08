@@ -89,9 +89,9 @@ class Watched {
         }
 
         Watched() :
-            data1 (std::numeric_limits<uint32_t>::max())
+            data1 (numeric_limits<uint32_t>::max())
             , type(static_cast<int>(WatchType::watch_clause_t)) // initialize type with most generic type of clause
-            , data2(std::numeric_limits<uint32_t>::max() >> 2)
+            , data2(numeric_limits<uint32_t>::max() >> 2)
         {}
 
         /**

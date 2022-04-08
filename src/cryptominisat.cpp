@@ -83,7 +83,7 @@ namespace CMSat {
         ///????
         std::ofstream* log = NULL;
         int sql = 0;
-        double timeout = std::numeric_limits<double>::max();
+        double timeout = numeric_limits<double>::max();
         bool interrupted = false;
         uint64_t max_confl_for_backbone; //valid for BACKBONE ONLY
 
@@ -891,7 +891,7 @@ lbool calc(
     data->must_interrupt->store(false, std::memory_order_relaxed);
 
     //Set timeout information
-    if (data->timeout != std::numeric_limits<double>::max()) {
+    if (data->timeout != numeric_limits<double>::max()) {
         for (size_t i = 0; i < data->solvers.size(); ++i) {
             Solver& s = *data->solvers[i];
             s.conf.maxTime = cpuTime() + data->timeout;

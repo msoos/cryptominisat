@@ -65,7 +65,7 @@ VarReplacer::~VarReplacer()
 
 void VarReplacer::new_var(const uint32_t orig_outer)
 {
-    if (orig_outer == std::numeric_limits<uint32_t>::max()) {
+    if (orig_outer == numeric_limits<uint32_t>::max()) {
         table.push_back(Lit(table.size(), false));
     }
 }

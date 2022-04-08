@@ -56,12 +56,12 @@ class CSet {
         */
         bool add(const ClOffset offs) {
             //Don't check for special value
-            assert(offs != std::numeric_limits< uint32_t >::max());
+            assert(offs != numeric_limits< uint32_t >::max());
 
             if (where.size() < offs+1)
-                where.resize(offs+1, std::numeric_limits<uint32_t>::max());
+                where.resize(offs+1, numeric_limits<uint32_t>::max());
 
-            if (where[offs] != std::numeric_limits<uint32_t>::max()) {
+            if (where[offs] != numeric_limits<uint32_t>::max()) {
                 return false;
             }
             if (free.size() > 0){
@@ -78,12 +78,12 @@ class CSet {
         bool alreadyIn(const ClOffset offs) const
         {
             //Don't check for special value
-            assert(offs != std::numeric_limits< uint32_t >::max());
+            assert(offs != numeric_limits< uint32_t >::max());
 
             if (where.size() < offs+1)
                 return false;
 
-            return where[offs] != std::numeric_limits<uint32_t>::max();
+            return where[offs] != numeric_limits<uint32_t>::max();
         }
 
         /**

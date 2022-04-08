@@ -95,8 +95,8 @@ inline uint32_t getUpdatedVar(uint32_t toUpdate, const vector< uint32_t >& mappe
 
 inline uint32_t getUpdatedVarMaxToMax(uint32_t toUpdate, const vector< uint32_t >& mapper)
 {
-    if (toUpdate == std::numeric_limits<uint32_t>::max()) {
-        return std::numeric_limits<uint32_t>::max();
+    if (toUpdate == numeric_limits<uint32_t>::max()) {
+        return numeric_limits<uint32_t>::max();
     }
     return mapper.at(toUpdate);
 }

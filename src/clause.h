@@ -148,7 +148,7 @@ struct ClauseStats
     int32_t ID;
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
-    uint32_t extra_pos = std::numeric_limits<uint32_t>::max();
+    uint32_t extra_pos = numeric_limits<uint32_t>::max();
     uint32_t uip1_used = 0; ///N.o. times claue was used during 1st UIP generation in this RDB
     uint32_t props_made = 0; ///<Number of times caused propagation
     #endif
@@ -247,8 +247,8 @@ struct ClauseStatsExtra
     #endif
 
     //Features that are computed while running (not in SQL)
-    uint32_t orig_glue = std::numeric_limits<uint32_t>::max();
-    uint32_t orig_size = std::numeric_limits<uint32_t>::max();
+    uint32_t orig_glue = numeric_limits<uint32_t>::max();
+    uint32_t orig_size = numeric_limits<uint32_t>::max();
     uint32_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
     float discounted_props_made = 0;
     float discounted_uip1_used = 0;

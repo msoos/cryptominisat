@@ -58,7 +58,7 @@ uint32_t PackedRow::find_watchVar(
     uint32_t& non_resp_var
 ) {
     uint32_t popcnt = 0;
-    non_resp_var = std::numeric_limits<uint32_t>::max();
+    non_resp_var = numeric_limits<uint32_t>::max();
     tmp_clause.clear();
 
     for(int i = 0; i < size*64; i++) {
