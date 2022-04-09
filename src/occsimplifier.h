@@ -204,7 +204,7 @@ public:
     int picovarnum = 1;
     int lit_to_picolit(const Lit l);
     map<uint32_t, int> var_to_picovar;
-//     map<uint32_t, uint32_t> picovar_to_var;
+    bool check_equiv_subformua(Lit lit);
 
     bool simplify(const bool _startup, const std::string& schedule);
     void new_var(const uint32_t orig_outer);

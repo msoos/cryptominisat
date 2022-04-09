@@ -1526,9 +1526,109 @@ uint32_t OccSimplifier::add_cls_to_picosat(const Lit wsLit) {
     return added;
 }
 
+
+// check that (F | x = True) == (F | x = False)
+bool OccSimplifier::check_equiv_subformua(Lit lit)
+{
+    // This is not NECCESSARILY needed, due to subsumption & redundant clauses
+    if (solver->watches[lit].size() != solver->watches[~lit].size())
+        return false;
+
+    // Match binary clauses first
+    int num_bins = 0;
+    bool ok = true;
+    for(auto const& w: solver->watches[lit]) {
+        if (w.isBin() && !w.red()) {
+            seen[w.lit2().toInt()] = 1;
+            num_bins++;
+            cout << "equiv subformula: matching to bin: " << w.lit2() << endl;
+        }
+    }
+    for(auto const& w: solver->watches[~lit]) {
+        if (w.isBin() && !w.red()) {
+            if (!seen[w.lit2().toInt()]) {
+                cout << "Could not match bin." << endl;
+                ok = false;
+                break;
+            } else {
+                num_bins--;
+                cout << "equiv subformula: Matched bin: " << w.lit2() << endl;
+            }
+        }
+    }
+
+    // Cleanup
+    for(auto const& w: solver->watches[lit]) {
+        if (w.isBin() && !w.red()) seen[w.lit2().toInt()] = 0;
+    }
+
+    cout << "equiv subformula: Bins matched so far:" << ok << endl;
+    if (!ok) return false;
+
+    // Match long clauses, mark covered ~lit clauses
+    for(auto const& w: solver->watches[lit]) {
+        if (!w.isClause()) continue;
+        Clause* cl = solver->cl_alloc.ptr(w.get_offset());
+        if (cl->getRemoved() || cl->red()) continue;
+        assert(!cl->stats.marked_clause);
+        cout << "equiv subformula: Matching to: " << *cl << endl;
+
+        bool found = false;
+        for(auto const& w2: solver->watches[~lit]) {
+            if (!w2.isClause()) continue;
+            Clause* cl2 = solver->cl_alloc.ptr(w2.get_offset());
+            if (cl2->getRemoved() || cl2->red()) continue;
+            if (cl2->size() != cl->size()) continue;
+            if (cl2->abst != cl->abst) continue;
+
+            bool this_cl_ok = true;
+            for(uint32_t i = 0; i < cl->size(); i++) {
+                if ((*cl)[i] != (*cl2)[i]) {
+                    this_cl_ok = false;
+                    break;
+                }
+            }
+            if (this_cl_ok) {
+                cout << "equiv subformula: Match found: " << *cl2 << endl;
+                cl2->stats.marked_clause = true;
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            ok = false;
+            break;
+        }
+    }
+    cout << "ok so far: " << ok << endl;
+
+    // Check that the ~lit clauses have all beeen covered
+    // and clean up "marked_clause" markers
+    bool reverse_covered = true;
+    for(auto const& w2: solver->watches[~lit]) {
+        if (!w2.isClause()) continue;
+        Clause* cl2 = solver->cl_alloc.ptr(w2.get_offset());
+        if (cl2->getRemoved() || cl2->red()) continue;
+        cout << "rev match cl: " << *cl2 << endl;
+
+        if (!cl2->stats.marked_clause) {
+            cout << "Not covered" << endl;
+            reverse_covered = false;
+        } else {
+            cout << "Covered" << endl;
+        }
+        cl2->stats.marked_clause = false;
+    }
+
+    cout << "----- ok: " << ok << " reverse_covered: " << reverse_covered << endl;
+    return ok && reverse_covered;
+
+}
+
 vector<uint32_t> OccSimplifier::recover_definable_by_irreg_gate_vars(const vector<uint32_t>& vars, vector<uint32_t>* out_empty_occs)
 {
     vector<uint32_t> ret;
+    vector<uint32_t> check_for_emtpy_resolvents;
     auto origTrailSize = solver->trail_size();
 
     startup = false;
@@ -1543,14 +1643,16 @@ vector<uint32_t> OccSimplifier::recover_definable_by_irreg_gate_vars(const vecto
     uint32_t no_cls_matching_filter = 0;
     uint32_t no_occ = 0;
     uint32_t too_many_occ = 0;
+    uint32_t equiv_subformula = 0;
     bool have_to_init_picosat = true;
 
     for(const uint32_t v: vars) seen[v] = 1;
-//     cout << "here, sz: " << vars.size() << endl;
 
     vector<uint32_t> vars2 = vars;
     std::reverse(vars2.begin(), vars2.end());
     for(const auto& v: vars2) {
+        if (solver->value(v) != l_Undef)
+            continue;
         //cout << "what? " << removed_type_to_string(solver->varData[v].removed) << endl;
         const Lit l = Lit(v, false);
 
@@ -1580,6 +1682,7 @@ vector<uint32_t> OccSimplifier::recover_definable_by_irreg_gate_vars(const vecto
         if (added == 0) {
             no_cls_matching_filter++;
             ret.push_back(v);
+            check_for_emtpy_resolvents.push_back(v);
             have_to_init_picosat = false;
             continue;
         }
@@ -1591,10 +1694,8 @@ vector<uint32_t> OccSimplifier::recover_definable_by_irreg_gate_vars(const vecto
             unsat++;
             seen[v] = 0;
         } else {
-            if (picoret == PICOSAT_UNKNOWN) {
-                cout << "UNKNOWN??" << endl;
-            }
             ret.push_back(v);
+            check_for_emtpy_resolvents.push_back(v);
         }
         picosat_reset(picosat);
         picosat = NULL;
@@ -1603,11 +1704,22 @@ vector<uint32_t> OccSimplifier::recover_definable_by_irreg_gate_vars(const vecto
         picosat_reset(picosat);
         picosat = NULL;
     }
+    for(const uint32_t v: vars) seen[v] = 0;
+
+    if (out_empty_occs) {
+        for(auto const& v: check_for_emtpy_resolvents) {
+            const Lit lit = Lit(v, false);
+            if (!check_equiv_subformua(lit)) continue;
+            cout << "!!!!!!!! Found equivalent subformula with var: " << lit << endl;
+            out_empty_occs->push_back(v);
+            equiv_subformula++;
+        }
+    }
 
     verb_print(1, "[gate-definable] no-cls-match-filt: " << no_cls_matching_filter
                << " pico ran: " << picosat_ran << " unsat: " << unsat
-               << " 0-occ: " << no_occ << " too-many-occ: " << too_many_occ);
-    for(const uint32_t v: vars) seen[v] = 0;
+               << " 0-occ: " << no_occ << " too-many-occ: " << too_many_occ
+               << " empty-res: " << equiv_subformula);
 
     solver->conf.maxOccurRedMB = backup;
     finishUp(origTrailSize);
