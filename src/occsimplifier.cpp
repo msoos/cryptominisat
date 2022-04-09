@@ -1530,6 +1530,11 @@ uint32_t OccSimplifier::add_cls_to_picosat(const Lit wsLit) {
 // check that (F | x = True) == (F | x = False)
 bool OccSimplifier::check_equiv_subformua(Lit lit)
 {
+    // Too expensive to check these
+    if (solver->watches[lit].size() + solver->watches[~lit].size() > 100) {
+        return false;
+    }
+
     // This is not NECCESSARILY needed, due to subsumption & redundant clauses
     if (solver->watches[lit].size() != solver->watches[~lit].size())
         return false;
@@ -1541,28 +1546,29 @@ bool OccSimplifier::check_equiv_subformua(Lit lit)
         if (w.isBin() && !w.red()) {
             seen[w.lit2().toInt()] = 1;
             num_bins++;
-            cout << "equiv subformula: matching to bin: " << w.lit2() << endl;
         }
     }
     for(auto const& w: solver->watches[~lit]) {
         if (w.isBin() && !w.red()) {
-            if (!seen[w.lit2().toInt()]) {
-                cout << "Could not match bin." << endl;
+            if (seen[w.lit2().toInt()] == 0) {
                 ok = false;
                 break;
             } else {
                 num_bins--;
-                cout << "equiv subformula: Matched bin: " << w.lit2() << endl;
             }
+            seen[w.lit2().toInt()] = 0;
         }
     }
+    if (num_bins != 0) ok = false; // match must be exact
 
     // Cleanup
     for(auto const& w: solver->watches[lit]) {
-        if (w.isBin() && !w.red()) seen[w.lit2().toInt()] = 0;
+        if (w.isBin() && !w.red()) {
+            if (seen[w.lit2().toInt()] != 0) ok = false; // must match both
+            seen[w.lit2().toInt()] = 0;
+        }
     }
 
-    cout << "equiv subformula: Bins matched so far:" << ok << endl;
     if (!ok) return false;
 
     // Match long clauses, mark covered ~lit clauses
@@ -1571,7 +1577,6 @@ bool OccSimplifier::check_equiv_subformua(Lit lit)
         Clause* cl = solver->cl_alloc.ptr(w.get_offset());
         if (cl->getRemoved() || cl->red()) continue;
         assert(!cl->stats.marked_clause);
-        cout << "equiv subformula: Matching to: " << *cl << endl;
 
         bool found = false;
         for(auto const& w2: solver->watches[~lit]) {
@@ -1589,7 +1594,6 @@ bool OccSimplifier::check_equiv_subformua(Lit lit)
                 }
             }
             if (this_cl_ok) {
-                cout << "equiv subformula: Match found: " << *cl2 << endl;
                 cl2->stats.marked_clause = true;
                 found = true;
                 break;
@@ -1600,7 +1604,6 @@ bool OccSimplifier::check_equiv_subformua(Lit lit)
             break;
         }
     }
-    cout << "ok so far: " << ok << endl;
 
     // Check that the ~lit clauses have all beeen covered
     // and clean up "marked_clause" markers
@@ -1609,18 +1612,14 @@ bool OccSimplifier::check_equiv_subformua(Lit lit)
         if (!w2.isClause()) continue;
         Clause* cl2 = solver->cl_alloc.ptr(w2.get_offset());
         if (cl2->getRemoved() || cl2->red()) continue;
-        cout << "rev match cl: " << *cl2 << endl;
 
         if (!cl2->stats.marked_clause) {
-            cout << "Not covered" << endl;
             reverse_covered = false;
         } else {
-            cout << "Covered" << endl;
         }
         cl2->stats.marked_clause = false;
     }
 
-    cout << "----- ok: " << ok << " reverse_covered: " << reverse_covered << endl;
     return ok && reverse_covered;
 
 }
@@ -1646,14 +1645,34 @@ vector<uint32_t> OccSimplifier::recover_definable_by_irreg_gate_vars(const vecto
     uint32_t equiv_subformula = 0;
     bool have_to_init_picosat = true;
 
-    for(const uint32_t v: vars) seen[v] = 1;
-
     vector<uint32_t> vars2 = vars;
+    for(uint32_t& v: vars2) {
+        auto rem_val = solver->varData[v].removed;
+        assert(rem_val == Removed::none || rem_val == Removed::replaced);
+        v = solver->varReplacer->get_var_replaced_with(v);
+
+        rem_val = solver->varData[v].removed;
+        assert(rem_val == Removed::none);
+        assert(v < seen.size());
+
+        if (seen[v]) {
+            // variable is equivalent to another variable in the sampling set
+            continue;
+        }
+
+        seen[v] = 1;
+    }
+
     std::reverse(vars2.begin(), vars2.end());
     for(const auto& v: vars2) {
-        if (solver->value(v) != l_Undef)
+        assert(solver->varData[v].removed == Removed::none);
+        if (solver->value(v) != l_Undef ||
+            !seen[v])
+        {
+            // Already set, or equivalent to another one that has already been removed
             continue;
-        //cout << "what? " << removed_type_to_string(solver->varData[v].removed) << endl;
+        }
+
         const Lit l = Lit(v, false);
 
         uint32_t total = solver->watches[l].size() + solver->watches[~l].size();
@@ -1704,7 +1723,7 @@ vector<uint32_t> OccSimplifier::recover_definable_by_irreg_gate_vars(const vecto
         picosat_reset(picosat);
         picosat = NULL;
     }
-    for(const uint32_t v: vars) seen[v] = 0;
+    for(const uint32_t v: vars2) seen[v] = 0;
 
     if (out_empty_occs) {
         for(auto const& v: check_for_emtpy_resolvents) {
