@@ -2596,6 +2596,7 @@ bool OccSimplifier::uneliminate(uint32_t var)
     //Uneliminate it in theory
     bvestats_global.numVarsElimed--;
     solver->varData[var].removed = Removed::none;
+    cout << " solver->set_decision_var called with var: " << var << endl;
     solver->set_decision_var(var);
 
     //Find if variable is really needed to be eliminated

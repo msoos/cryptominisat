@@ -73,13 +73,8 @@ void PropEngine::new_var(
     CNF::new_var(bva, orig_outer, insert_varorder);
 
     var_act_vsids.insert(var_act_vsids.end(), 1, 0);
-    #ifdef VMTF_NEEDED
     vmtf_btab.insert(vmtf_btab.end(), 1, 0);
     vmtf_links.insert(vmtf_links.end(), 1, Link());
-    #endif
-
-    //TODO
-    //trail... update x->whatever
 }
 
 void PropEngine::new_vars(size_t n)
@@ -87,13 +82,8 @@ void PropEngine::new_vars(size_t n)
     CNF::new_vars(n);
 
     var_act_vsids.insert(var_act_vsids.end(), n, 0);
-    #ifdef VMTF_NEEDED
     vmtf_btab.insert(vmtf_btab.end(), n, 0);
     vmtf_links.insert(vmtf_links.end(), n, Link());
-    #endif
-
-    //TODO
-    //trail... update x->whatever
 }
 
 void PropEngine::save_on_var_memory()
@@ -932,7 +922,6 @@ void PropEngine::sql_dump_vardata_picktime(uint32_t v, PropBy from)
 }
 #endif
 
-#ifdef VMTF_NEEDED
 // Update queue to point to last potentially still unassigned variable.
 // All variables after 'queue.unassigned' in bump order are assumed to be
 // assigned.  Then update the 'queue.vmtf_bumped' field and log it.  This is
@@ -945,6 +934,15 @@ void PropEngine::vmtf_update_queue_unassigned (const uint32_t var) {
 }
 
 void PropEngine::vmtf_init_enqueue (const uint32_t var) {
+//     cout << "START: vmtf_init_enqueue called with var: " << var << endl;
+//     cout << "START: vmtf_queue.first: " << vmtf_queue.first << endl;
+//     cout << "START: vmtf_queue.last: " << vmtf_queue.last << endl;
+//
+//     for(uint32_t i = 0; i < vmtf_btab.size(); i++) {
+//         cout << "vmtf_btab[ " << i << " ]: " << vmtf_btab[i] << endl;
+//         cout << "vmtf_links[ " << i << " ].next: " << vmtf_links[i].next << endl;
+//         cout << "vmtf_links[ " << i << " ].prev: " << vmtf_links[i].prev << endl;
+//     }
     assert(var < nVars());
     assert(var < vmtf_links.size());
     Link & l = vmtf_links[var];
@@ -966,6 +964,9 @@ void PropEngine::vmtf_init_enqueue (const uint32_t var) {
     vmtf_btab[var] = ++vmtf_queue.vmtf_bumped; // set timestamp of enqueue
     vmtf_update_queue_unassigned(vmtf_queue.last);
 
+//     cout << "END: vmtf_queue.first: " << vmtf_queue.first << endl;
+//     cout << "END: vmtf_queue.last: " << vmtf_queue.last << endl;
+//     cout << " ---- " << endl;
 }
 
 // Move vmtf_bumped variables to the front of the (VMTF) decision queue.  The
@@ -985,4 +986,4 @@ void PropEngine::vmtf_bump_queue (uint32_t var) {
     VERBOSE_PRINT("moved to front variable " << var << " and vmtf_bumped to " << vmtf_btab[idx]);
     if (value(var) == l_Undef) vmtf_update_queue_unassigned(var);
 }
-#endif
+

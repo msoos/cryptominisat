@@ -47,11 +47,7 @@ using std::string;
 
 enum class gret      {confl, prop, nothing_satisfied, nothing_fnewwatch};
 enum class gauss_res {none, confl, prop};
-enum class branch {vsids=1, rand=2
-#ifdef VMTF_NEEDED
-    ,vmtf=3
-#endif
-};
+enum class branch {vsids=1, rand=2, vmtf=3};
 
 inline std::string restart_type_to_string(const Restart type)
 {
@@ -89,10 +85,8 @@ inline std::string branch_type_to_string(const branch type)
         case branch::rand:
             return "rand";
 
-        #ifdef VMTF_NEEDED
         case branch::vmtf:
             return "vmtf";
-        #endif
     }
 
     assert(false && "oops, one of the branch types has no string name");

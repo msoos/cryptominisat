@@ -177,11 +177,9 @@ inline void Searcher::add_lit_to_learnt(
             case branch::rand:
                 break;
 
-            #ifdef VMTF_NEEDED
             case branch::vmtf:
                 implied_by_learnts.push_back(var);
                 break;
-            #endif
         }
     }
 
@@ -768,7 +766,6 @@ void Searcher::print_debug_resolution_data(const PropBy confl)
 #endif
 }
 
-#ifdef VMTF_NEEDED
 struct analyze_bumped_rank {
   Searcher * internal;
   analyze_bumped_rank (Searcher * i) : internal (i) { }
@@ -787,7 +784,6 @@ struct analyze_bumped_smaller {
     return s < t;
   }
 };
-#endif
 
 template<bool inprocess>
 void Searcher::analyze_conflict(
@@ -883,7 +879,7 @@ void Searcher::analyze_conflict(
                 }
                 implied_by_learnts.clear();
                 break;
-            #ifdef VMTF_NEEDED
+
             case branch::vmtf:
                 std::sort(implied_by_learnts.begin(),
                           implied_by_learnts.end(),
@@ -894,7 +890,7 @@ void Searcher::analyze_conflict(
                 }
                 implied_by_learnts.clear();
                 break;
-            #endif
+
             default:
                 break;
         }
@@ -1215,11 +1211,10 @@ void Searcher::print_order_heap()
             cout << "rand order heap:" << endl;
             order_heap_rand.print_heap();
             break;
-        #ifdef VMTF_NEEDED
+
         case branch::vmtf:
-            assert(false && "Not implemented yet");
+            cout << "vmtf order printing not implemented yet:" << endl;
             break;
-        #endif
     }
 }
 
@@ -2218,13 +2213,10 @@ void Searcher::rebuildOrderHeap()
     VERBOSE_PRINT("c [branch] Rebuilding RAND order heap");
     order_heap_rand.build(vs);
 
-    #ifdef VMTF_NEEDED
     VERBOSE_PRINT("c [branch] Rebuilding VMTF order heap");
     rebuildOrderHeapVMTF(vs);
-    #endif
 }
 
-#ifdef VMTF_NEEDED
 void Searcher::rebuildOrderHeapVMTF(vector<uint32_t>& vs)
 {
     std::sort(vs.begin(), vs.end(),
@@ -2241,7 +2233,6 @@ void Searcher::rebuildOrderHeapVMTF(vector<uint32_t>& vs)
 
     for(auto const& v: vs) vmtf_init_enqueue(v);
 }
-#endif
 
 struct branch_type_total{
     branch_type_total() {}
@@ -2292,10 +2283,8 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
         size_t vsids2 = conf.branch_strategy_setup.find("vsids2", start);
         smallest = std::min(vsids2, smallest);
 
-        #ifdef VMTF_NEEDED
         size_t vmtf = conf.branch_strategy_setup.find("vmtf", start);
         smallest = std::min(vmtf, smallest);
-        #endif
 
         size_t rand = conf.branch_strategy_setup.find("rand", start);
         smallest = std::min(rand, smallest);
@@ -2331,14 +2320,12 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
                 cout << select[select.size()-1].descr;
             }
         }
-        #ifdef VMTF_NEEDED
         else if (smallest == vmtf) {
             select.push_back(branch_type_total(branch::vmtf, 0, 0, "VMTF", "vmt"));
             if (conf.verbosity) {
                 cout << select[select.size()-1].descr;
             }
         }
-        #endif
         else if (smallest == rand) {
             select.push_back(branch_type_total(branch::rand, 1, 1, "RAND", "rand"));
             if (conf.verbosity) {
@@ -2906,11 +2893,9 @@ inline Lit Searcher::pickBranchLit()
         case branch::vsids:
             v = pick_var_vsids();
             break;
-        #ifdef VMTF_NEEDED
         case branch::vmtf:
             v = pick_var_vmtf();
             break;
-        #endif
         case branch::rand: {
             v = order_heap_rand.get_random_element(mtrand);
             while (v != var_Undef && value(v) != l_Undef) {
@@ -2937,7 +2922,6 @@ inline Lit Searcher::pickBranchLit()
     return next;
 }
 
-#ifdef VMTF_NEEDED
 uint32_t Searcher::pick_var_vmtf()
 {
     uint64_t searched = 0;
@@ -2955,7 +2939,6 @@ uint32_t Searcher::pick_var_vmtf()
     VERBOSE_PRINT("next queue decision variable " << res << " vmtf_bumped " << vmtf_bumped (res));
     return res;
 }
-#endif
 
 uint32_t Searcher::pick_var_vsids()
 {
@@ -3159,10 +3142,8 @@ size_t Searcher::mem_used() const
     mem += var_act_vsids.capacity()*sizeof(double);
     mem += order_heap_vsids.mem_used();
     mem += order_heap_rand.mem_used();
-    #ifdef VMTF_NEEDED
     mem += vmtf_btab.capacity()*sizeof(uint64_t);
     mem += vmtf_links.capacity()*sizeof(Link);
-    #endif
     mem += learnt_clause.capacity()*sizeof(Lit);
     mem += hist.mem_used();
     mem += conflict.capacity()*sizeof(Lit);
@@ -3416,12 +3397,10 @@ void Searcher::check_var_in_branch_strategy(uint32_t int_var) const
             assert(order_heap_rand.inHeap(int_var));
             break;
 
-        #ifdef VMTF_NEEDED
         case branch::vmtf:
             assert(false);
             //TODO VMTF
             break;
-        #endif
     }
 }
 
@@ -3604,9 +3583,7 @@ void Searcher::check_assumptions_sanity()
 void Searcher::bump_var_importance_all(const uint32_t var, bool only_add, double amount)
 {
     vsids_bump_var_act<false>(var, amount, only_add);
-    #ifdef VMTF_NEEDED
     vmtf_bump_queue(var);
-    #endif
 }
 
 
@@ -3620,11 +3597,9 @@ void Searcher::bump_var_importance(const uint32_t var)
         case branch::rand:
             break;
 
-        #ifdef VMTF_NEEDED
         case branch::vmtf:
             vmtf_bump_queue(var);
             break;
-        #endif
     }
 }
 

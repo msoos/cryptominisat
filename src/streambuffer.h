@@ -29,6 +29,7 @@ static const unsigned chunk_limit = 148576;
 #include <string>
 #include <memory>
 #include <cmath>
+using std::numeric_limits;
 
 #ifdef USE_ZLIB
 #include <zlib.h>

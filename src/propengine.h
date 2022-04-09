@@ -242,7 +242,6 @@ public:
     ///activity-ordered heap of decision variables.
     Heap<VarOrderLt> order_heap_vsids; ///NOT VALID WHILE SIMPLIFYING
     RandHeap order_heap_rand;
-    #ifdef VMTF_NEEDED
     Queue vmtf_queue;
     vector<uint64_t> vmtf_btab; ///< Indexed by variable number. enqueue time stamps for queue
     void vmtf_update_queue_unassigned (const uint32_t var);
@@ -250,7 +249,6 @@ public:
     void vmtf_bump_queue (uint32_t var);
     Link & vmtf_link (uint32_t var) { return vmtf_links[var]; }
     vector<Link> vmtf_links; ///< Indexed by variable number. table of vmtf_links for decision queue.
-    #endif
     double max_vsids_act = 0.0;
 
     //Clause activities

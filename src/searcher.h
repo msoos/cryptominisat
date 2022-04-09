@@ -479,7 +479,7 @@ inline void Searcher::insert_var_order(const uint32_t x, branch type)
                 order_heap_vsids.insert(x);
             }
             break;
-        #ifdef VMTF_NEEDED
+
         case branch::vmtf:
             // For VMTF we need to update the 'queue.unassigned' pointer in case this
             // variables sits after the variable to which 'queue.unassigned' currently
@@ -489,7 +489,7 @@ inline void Searcher::insert_var_order(const uint32_t x, branch type)
                 vmtf_update_queue_unassigned (x);
             }
             break;
-        #endif
+
         case branch::rand:
             if (!order_heap_rand.inHeap(x)) {
                 order_heap_rand.insert(x);
@@ -512,9 +512,7 @@ inline void Searcher::insert_var_order_all(const uint32_t x)
     assert(!order_heap_rand.inHeap(x));
     order_heap_rand.insert(x);
 
-    #ifdef VMTF_NEEDED
     vmtf_init_enqueue(x);
-    #endif
 }
 
 template<bool inprocess>
