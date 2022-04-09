@@ -4512,23 +4512,18 @@ int OccSimplifier::check_empty_resolvent_action(
 ) {
     uint16_t at = 1;
     int count = 0;
-    size_t numCls = 0;
+    int numCls = 0;
 
     watch_subarray_const watch_list = solver->watches[lit];
     *limit_to_decrease -= (long)watch_list.size()*2;
     for (const Watched& ws: watch_list) {
-        if (numCls >= 16
-            && (action == ResolvCount::set
-                || action == ResolvCount::unset)
-        ) {
+        if (numCls >= 16 &&
+            (action == ResolvCount::set || action == ResolvCount::unset))
+        {
             break;
         }
 
-        if (count > 0
-            && action == ResolvCount::count
-        ) {
-            break;
-        }
+        if (count > 0 && action == ResolvCount::count) break;
 
         //Handle binary
         if (ws.isBin()){
@@ -4563,22 +4558,17 @@ int OccSimplifier::check_empty_resolvent_action(
 
         if (ws.isClause()) {
             const Clause* cl = solver->cl_alloc.ptr(ws.get_offset());
-            if (cl->getRemoved()) {
-                continue;
-            }
-
-            //If in occur then it cannot be freed
-            assert(!cl->freed());
+            if (cl->getRemoved()) continue;
+            assert(!cl->freed() && "If in occur then it cannot be freed");
 
             //Only irred is of relevance
             if (!cl->red()) {
                 *limit_to_decrease -= (long)cl->size()*2;
-                uint16_t tmp = 0;
+                uint32_t tmp = 0;
                 for(const Lit l: *cl) {
 
                     //Ignore orig
-                    if (l == lit)
-                        continue;
+                    if (l == lit) continue;
 
                     switch (action) {
                         case ResolvCount::set:
@@ -4626,9 +4616,7 @@ int OccSimplifier::check_empty_resolvent_action(
         case ResolvCount::unset:
             return 0;
     }
-
-    assert(false);
-    return numeric_limits<int>::max();
+    release_assert(false);
 }
 
 uint64_t OccSimplifier::heuristicCalcVarElimScore(const uint32_t var)
