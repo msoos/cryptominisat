@@ -929,6 +929,7 @@ void PropEngine::sql_dump_vardata_picktime(uint32_t v, PropBy from)
 //
 void PropEngine::vmtf_update_queue_unassigned (const uint32_t var) {
     assert(var != numeric_limits<uint32_t>::max());
+    assert(var < nVars());
     vmtf_queue.unassigned = var;
     vmtf_queue.vmtf_bumped = vmtf_btab[var];
 }

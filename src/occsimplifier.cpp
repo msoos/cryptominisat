@@ -2611,7 +2611,7 @@ bool OccSimplifier::uneliminate(uint32_t var)
     //Uneliminate it in theory
     bvestats_global.numVarsElimed--;
     solver->varData[var].removed = Removed::none;
-    cout << " solver->set_decision_var called with var: " << var << endl;
+//     cout << " solver->set_decision_var called with var: " << var << endl;
     solver->set_decision_var(var);
 
     //Find if variable is really needed to be eliminated
@@ -3094,7 +3094,7 @@ bool OccSimplifier::find_irreg_gate(
             if (picosat_coreclause(picosat, m.first))
                 out_b.push(m.second);
         }
-        cout << "PicoSAT UNSAT for var: " << elim_lit << " core size: " << out_a.size() + out_b.size() << " vs: " << a.size()+b.size() << endl;
+//         cout << "PicoSAT UNSAT for var: " << elim_lit << " core size: " << out_a.size() + out_b.size() << " vs: " << a.size()+b.size() << endl;
         found = true;
     }
     picosat_reset(picosat);
