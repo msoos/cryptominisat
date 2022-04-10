@@ -132,6 +132,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , restart_first(100)
         , restart_inc(1.1)
         , restartType(Restart::luby)
+//         , restartType(Restart::geom)
         , do_blocking_restart(1)
         , blocking_restart_trail_hist_length(5000)
         , blocking_restart_multip(1.4)
@@ -143,7 +144,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doAlwaysFMinim(false)
 
         //branch strategy
-        , branch_strategy_setup("vmtf") //vsidsx_once+vsids2+vsidsx")
+        , branch_strategy_setup("vmtf")
+//         , branch_strategy_setup("vsidsx_once+vsids2+vsidsx")
 
         //Clause minimisation
         , doRecursiveMinim (true)
