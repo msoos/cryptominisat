@@ -1727,7 +1727,7 @@ vector<uint32_t> OccSimplifier::recover_definable_by_irreg_gate_vars(const vecto
             const Lit lit = Lit(v, false);
             if (!check_equiv_subformua(lit)) continue;
             cout << "!!!!!!!! Found equivalent subformula with var: " << lit << endl;
-            out_empty_occs->push_back(v);
+//             out_empty_occs->push_back(v);
             equiv_subformula++;
         }
     }
