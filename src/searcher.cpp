@@ -73,7 +73,6 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     mtrand.seed(conf.origSeed);
     hist.setSize(conf.shortTermHistorySize, conf.blocking_restart_trail_hist_length);
     cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
-    set_branch_strategy(0);
     polarity_mode = conf.polarity_mode;
 }
 
@@ -125,6 +124,20 @@ void Searcher::updateVars(
 ) {
     updateArray(var_act_vsids, interToOuter);
     updateArray(vmtf_btab, interToOuter);
+    updateArray(vmtf_links, interToOuter);
+
+    auto upd = [&](uint32_t v) {
+        if (v != numeric_limits<uint32_t>::max())
+            v = interToOuter[v];
+    };
+
+    for(auto& l: vmtf_links) {
+        upd(l.next);
+        upd(l.prev);
+    }
+    upd(vmtf_queue.first);
+    upd(vmtf_queue.last);
+    upd(vmtf_queue.unassigned);
 }
 
 //TODO add hint here for FRAT
@@ -170,8 +183,7 @@ inline void Searcher::add_lit_to_learnt(
 
         switch(branch_strategy) {
             case branch::vsids:
-                vsids_bump_var_act<inprocess>(var, 0.5);
-//                 implied_by_learnts.push_back(var);
+                vsids_bump_var_act<inprocess>(var);
                 break;
 
             case branch::rand:
@@ -596,6 +608,7 @@ void Searcher::create_learnt_clause(PropBy confl)
     pathC = 0;
     int index = trail.size() - 1;
     Lit p = lit_Undef;
+    implied_by_learnts.clear();
 
     // Get decision level to go back to
     Lit lit0 = lit_Error;
@@ -774,7 +787,6 @@ struct analyze_bumped_rank {
   }
 };
 
-
 struct analyze_bumped_smaller {
   Searcher * internal;
   analyze_bumped_smaller (Searcher * i) : internal (i) { }
@@ -872,12 +884,6 @@ void Searcher::analyze_conflict(
     if (!inprocess) {
         switch(branch_strategy) {
             case branch::vsids:
-//                 for (const uint32_t var :implied_by_learnts) {
-//                     if ((int32_t)varData[var].level >= (int32_t)out_btlevel-1) {
-//                         vsids_bump_var_act<inprocess>(var, 1.0);
-//                     }
-//                 }
-//                 implied_by_learnts.clear();
                 break;
 
             case branch::vmtf:
@@ -1202,7 +1208,7 @@ void Searcher::print_order_heap()
                 cout << std::setprecision(12) << x << " ";
             }
             cout << endl;
-            cout << "VSID order heap:" << endl;
+            cout << "VSIDS order heap:" << endl;
             order_heap_vsids.print_heap();
             break;
 
@@ -2256,23 +2262,26 @@ struct branch_type_total{
     string descr_short;
 };
 
-void Searcher::set_branch_strategy(uint32_t iteration_num)
+void Searcher::setup_branch_strategy()
 {
+    if (sumConflicts >= branch_strategy_change) {
+        branch_strategy_change += 10000;
+        branch_strategy_change *= 1.1;
+        branch_strategy_at++;
+    } else {
+        return;
+    }
+
     size_t smallest = 0;
     size_t start = 0;
     vector<branch_type_total> select;
-    if (conf.verbosity) {
-        if (conf.verbosity >= 2) {
-            cout << "c [branch] orig text: " << conf.branch_strategy_setup << endl;
-        }
+    if (conf.verbosity >= 3) {
+        cout << "c [branch] orig text: " << conf.branch_strategy_setup << endl;
         cout << "c [branch] selection: ";
     }
 
     while(smallest !=std::string::npos) {
         smallest = std::string::npos;
-
-        size_t vsidsx_once = conf.branch_strategy_setup.find("vsidsx_once", start);
-        smallest = std::min(vsidsx_once, smallest);
 
         size_t vsidsx = conf.branch_strategy_setup.find("vsidsx", start);
         smallest = std::min(vsidsx, smallest);
@@ -2293,42 +2302,37 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
             break;
         }
 
-        if (conf.verbosity && !select.empty()) {
+        if (conf.verbosity >= 3 && !select.empty()) {
             cout << "+";
         }
 
-        if (smallest == vsidsx_once) {
-            select.push_back(branch_type_total(branch::vsids, 0.80, 0.95, "VSIDSXONCE", "vxo"));
-            if (conf.verbosity) {
-                cout << select[select.size()-1].descr;
-            }
-        } else if (smallest == vsidsx) {
+        if (smallest == vsidsx) {
             select.push_back(branch_type_total(branch::vsids, 0.80, 0.95, "VSIDSX", "vx"));
-            if (conf.verbosity) {
+            if (conf.verbosity >= 3) {
                 cout << select[select.size()-1].descr;
             }
         }
         else if (smallest == vsids1) {
             select.push_back(branch_type_total(branch::vsids, 0.92, 0.92, "VSIDS1", "vs1"));
-            if (conf.verbosity) {
+            if (conf.verbosity >= 3) {
                 cout << select[select.size()-1].descr;
             }
         }
         else if (smallest == vsids2) {
             select.push_back(branch_type_total(branch::vsids, 0.99, 0.99, "VSIDS2", "vs2"));
-            if (conf.verbosity) {
+            if (conf.verbosity >= 3) {
                 cout << select[select.size()-1].descr;
             }
         }
         else if (smallest == vmtf) {
             select.push_back(branch_type_total(branch::vmtf, 0, 0, "VMTF", "vmt"));
-            if (conf.verbosity) {
+            if (conf.verbosity >= 3) {
                 cout << select[select.size()-1].descr;
             }
         }
         else if (smallest == rand) {
             select.push_back(branch_type_total(branch::rand, 1, 1, "RAND", "rand"));
-            if (conf.verbosity) {
+            if (conf.verbosity >= 3) {
                 cout << select[select.size()-1].descr;
             }
         } else {
@@ -2338,34 +2342,20 @@ void Searcher::set_branch_strategy(uint32_t iteration_num)
         //Search for next one. The strings are quite distinct, this works.
         start = smallest + 3;
     }
-    if (conf.verbosity) {
+    if (conf.verbosity >= 3) {
         cout << " -- total: " << select.size() << endl;
     }
 
     assert(!select.empty());
 
-    //Deal with systems that are only meant to be done once
-    if (iteration_num >= select.size()) {
-        uint32_t j = 0;
-        for(uint32_t i = 0; i < select.size(); i ++) {
-            if (select[i].descr != "VSIDSXONCE") {
-                select[j++] = select[i];
-            } else {
-                iteration_num--;
-            }
-        }
-        select.resize(j);
-    }
-
-    uint32_t which = iteration_num % select.size();
+    uint32_t which = branch_strategy_at % select.size();
     branch_strategy = select[which].branch;
     branch_strategy_str = select[which].descr;
     branch_strategy_str_short = select[which].descr_short;
     var_decay = select[which].decay_start;
     var_decay_max = select[which].decay_max;
-    cur_rest_type = conf.restartType;
 
-    if (conf.verbosity) {
+    if (conf.verbosity >= 2) {
         cout << "c [branch] adjusting to: "
         << branch_type_to_string(branch_strategy)
         << " var_decay_max:" << var_decay << " var_decay:" << var_decay
@@ -2441,59 +2431,39 @@ bool Searcher::must_abort(const lbool status) {
 
 void Searcher::setup_polarity_strategy()
 {
+    if (sumConflicts < polarity_strategy_num*10000) return;
+    if ((polarity_strategy_num % 10) == 0) {
+        polar_stable_longest_trail_this_iter = 0;
+    }
+
     //Set to default first
     polarity_mode = conf.polarity_mode;
-    polar_stable_longest_trail_this_iter = 0;
+    if (conf.polarity_mode == PolarityMode::polarmode_automatic) {
+        polarity_mode = PolarityMode::polarmode_best;
 
-    if (polarity_mode == PolarityMode::polarmode_automatic) {
-        if (branch_strategy_num > 0 &&
-            conf.polar_stable_every_n > 0 &&
-            ((branch_strategy_num % (conf.polar_stable_every_n*conf.polar_best_inv_multip_n)) == 0))
+        if (polarity_strategy_num > 0 &&
+            conf.polar_best_inv_multip_n > 0 &&
+            ((polarity_strategy_num % conf.polar_best_inv_multip_n) == 0))
         {
             polarity_mode = PolarityMode::polarmode_best_inv;
         }
-    }
 
-    if (polarity_mode == PolarityMode::polarmode_automatic) {
-        if (branch_strategy_num > 0 &&
+        if (polarity_strategy_num > 0 &&
             conf.polar_stable_every_n > 0 &&
-            ((branch_strategy_num % (conf.polar_stable_every_n*conf.polar_best_multip_n)) == 0))
-        {
-            polarity_mode = PolarityMode::polarmode_best;
-        }
-    }
-
-    //Stable polarities only make sense in case of automatic polarities
-    if (polarity_mode == PolarityMode::polarmode_automatic) {
-        if (
-            (branch_strategy_num > 0 &&
-            conf.polar_stable_every_n > 0 &&
-            ((branch_strategy_num % conf.polar_stable_every_n) == 0)) ||
-
-            conf.polar_stable_every_n == 0 ||
-
-            (conf.polar_stable_every_n == -1 &&
-            branch_strategy == branch::vsids) ||
-
-            (conf.polar_stable_every_n == -3 &&
-            branch_strategy_str == "VSIDS1") ||
-
-            (conf.polar_stable_every_n == -4 &&
-            branch_strategy_str == "VSIDS2"))
+            ((polarity_strategy_num % conf.polar_stable_every_n) == 0))
         {
             polarity_mode = PolarityMode::polarmode_stable;
-
         }
     }
 
-    if (conf.verbosity) {
+    if (conf.verbosity >= 2) {
         cout << "c [polar]"
         << " polar mode: " << getNameOfPolarmodeType(polarity_mode)
-        << " branch strategy num: " << branch_strategy_num
-        << " branch strategy: " << branch_strategy_str
+        << " polarity_strategy_num: " << polarity_strategy_num
 
         << endl;
     }
+    polarity_strategy_num++;
 }
 
 lbool Searcher::distill_clauses_if_needed()
@@ -2537,15 +2507,15 @@ lbool Searcher::solve(
     resetStats();
     lbool status = l_Undef;
 
-    set_branch_strategy(branch_strategy_num);
+    setup_branch_strategy();
     setup_restart_strategy();
+    setup_polarity_strategy();
     #ifdef STATS_NEEDED
     check_calc_satzilla_features(true);
     #endif
     #ifdef STATS_NEEDED_BRANCH
     check_calc_vardist_features(true);
     #endif
-    setup_polarity_strategy();
 
     while(stats.conflicts < max_confl_per_search_solve_call
         && status == l_Undef
@@ -2559,7 +2529,10 @@ lbool Searcher::solve(
         params.max_confl_to_do = max_confl_per_search_solve_call-stats.conflicts;
         status = search();
         if (status == l_Undef) {
-            adjust_restart_strategy();
+            setup_branch_strategy();
+            setup_restart_strategy();
+            setup_polarity_strategy();
+            adjust_restart_strategy_cutoffs();
         }
 
         if (must_abort(status)) {
@@ -2574,9 +2547,6 @@ lbool Searcher::solve(
 
     end:
     finish_up_solve(status);
-    if (status == l_Undef) {
-        branch_strategy_num++;
-    }
 
     return status;
 }
@@ -2603,80 +2573,48 @@ double Searcher::luby(double y, int x)
 
 void Searcher::setup_restart_strategy()
 {
-//     if (conf.verbosity) {
-//         cout << "c [restart] strategy: "
-//         << restart_type_to_string(cur_rest_type)
-//         << endl;
-//     }
+    if (sumConflicts >= restart_strategy_change) {
+        restart_strategy++;
+        restart_strategy %= 3;
+        restart_strategy_change+=1000;
+        restart_strategy_change *= 1.2;
+    } else {
+        return;
+    }
 
     increasing_phase_size = conf.restart_first;
     max_confl_this_restart = conf.restart_first;
-    switch(cur_rest_type) {
-        case Restart::glue:
-            params.rest_type = Restart::glue;
-            break;
+    if (conf.restartType == Restart::fixed) {
+        params.rest_type = Restart::fixed;
+        max_confl_this_restart = conf.fixed_restart_num_confl;
+    } else {
+        if (params.rest_type == Restart::luby) restart_strategy = 0;
+        if (params.rest_type == Restart::geom) restart_strategy = 1;
+        if (params.rest_type == Restart::glue) restart_strategy = 2;
 
-        case Restart::geom:
-            params.rest_type = Restart::geom;
-            break;
-
-        case Restart::glue_geom:
-            params.rest_type = Restart::glue;
-            break;
-
-        case Restart::luby:
+        if (restart_strategy == 0) {
             params.rest_type = Restart::luby;
-            break;
-
-        case Restart::fixed:
-            params.rest_type = Restart::fixed;
-            max_confl_this_restart = conf.fixed_restart_num_confl;
-            break;
-
-        case Restart::never:
-            params.rest_type = Restart::never;
-            break;
+            luby_loop_num = 0;
+            max_confl_this_restart = luby(2, luby_loop_num) * (double)conf.restart_first;
+            luby_loop_num++;
+        } else if (restart_strategy == 1) {
+            params.rest_type = Restart::geom;
+            increasing_phase_size = (double)increasing_phase_size * conf.restart_inc;
+            max_confl_this_restart = increasing_phase_size;
+        } else if (restart_strategy == 2) {
+            params.rest_type = Restart::glue;
+            max_confl_this_restart = conf.ratio_glue_geom *increasing_phase_size;
+        }
     }
 
     print_local_restart_budget();
 }
 
-void Searcher::adjust_restart_strategy()
+void Searcher::adjust_restart_strategy_cutoffs()
 {
     //Haven't finished the phase. Keep rolling.
     if (max_confl_this_restart > 0)
         return;
-
-    //Note that all of this will be overridden by params.max_confl_to_do
-    switch(cur_rest_type) {
-        case Restart::never:
-            params.rest_type = Restart::never;
-            break;
-
-        case Restart::glue:
-            params.rest_type = Restart::glue;
-            break;
-
-        case Restart::geom:
-            params.rest_type = Restart::geom;
-            break;
-
-        case Restart::luby:
-            params.rest_type = Restart::luby;
-            break;
-
-        case Restart::fixed:
-            params.rest_type = Restart::fixed;
-            break;
-
-        case Restart::glue_geom:
-            if (params.rest_type == Restart::glue) {
-                params.rest_type = Restart::geom;
-            } else {
-                params.rest_type = Restart::glue;
-            }
-            break;
-    }
 
     switch (params.rest_type) {
         //max_confl_this_restart -- for this phase of search
@@ -2920,27 +2858,6 @@ inline Lit Searcher::pickBranchLit()
     VERBOSE_PRINT("Picked decision var: " << next);
 
     return next;
-}
-
-uint32_t Searcher::pick_var_vmtf()
-{
-    uint64_t searched = 0;
-    uint32_t res = vmtf_queue.unassigned;
-    cout << "start unassigned: " << res << endl;
-    while (res != numeric_limits<uint32_t>::max()
-        && value(res) != l_Undef
-    ) {
-        res = vmtf_link(res).prev;
-        cout << "prev: " << res;
-        if (res != numeric_limits<uint32_t>::max()) cout << " val: " << value(res);
-        cout << endl;
-        searched++;
-    }
-
-    if (res == numeric_limits<uint32_t>::max()) return var_Undef;
-    if (searched) vmtf_update_queue_unassigned(res);
-    cout << "next queue decision variable " << res << " btab value: " << vmtf_bumped(res) << endl;
-    return res;
 }
 
 uint32_t Searcher::pick_var_vsids()
@@ -3273,20 +3190,18 @@ void Searcher::cancelUntil(uint32_t blevel)
             #endif
         }
 
-        add_tmp_canceluntil.clear();
         for (uint32_t i = 0; i < gmatrices.size(); i++)
             if (gmatrices[i] && !gqueuedata[i].disabled)
                 gmatrices[i]->canceling();
 
-        //Go through in reverse order, unassign & insert then
-        //back to the vars to be branched upon
-        for (int sublevel = trail.size()-1
-            ; sublevel >= (int)trail_lim[blevel]
-            ; sublevel--
+        uint32_t i = trail_lim[blevel];
+        uint32_t j = i;
+        for (; i < trail.size()
+            ; i++
         ) {
-            VERBOSE_PRINT("Canceling lit " << trail[sublevel].lit << " sublevel: " << sublevel);
+            VERBOSE_PRINT("Canceling lit " << trail[i].lit << " sublevel: " << i);
 
-            const uint32_t var = trail[sublevel].lit.var();
+            const uint32_t var = trail[i].lit.var();
             assert(value(var) != l_Undef);
 
             //Clear out BNN reason on backtrack
@@ -3297,7 +3212,7 @@ void Searcher::cancelUntil(uint32_t blevel)
                 bnn_reasons_empty_slots.push_back(reason_idx);
                 varData[var].reason = PropBy();
             }
-            if (!bnns.empty()) reverse_prop(trail[sublevel].lit);
+            if (!bnns.empty()) reverse_prop(trail[i].lit);
 
             #ifdef STATS_NEEDED_BRANCH
             if (!inprocess) {
@@ -3360,8 +3275,8 @@ void Searcher::cancelUntil(uint32_t blevel)
             #endif
 
 
-            if (trail[sublevel].lev <= blevel) {
-                add_tmp_canceluntil.push_back(trail[sublevel]);
+            if (trail[i].lev <= blevel) {
+                trail[j++] = trail[i];
             } else {
                 assigns[var] = l_Undef;
                 if (do_insert_var_order) {
@@ -3369,15 +3284,9 @@ void Searcher::cancelUntil(uint32_t blevel)
                 }
             }
         }
+        trail.resize(j);
         qhead = trail_lim[blevel];
-        trail.resize(trail_lim[blevel]);
         trail_lim.resize(blevel);
-
-        for (int nLitId = (int)add_tmp_canceluntil.size() - 1; nLitId >= 0; --nLitId) {
-            trail.push_back(add_tmp_canceluntil[nLitId]);
-        }
-
-        add_tmp_canceluntil.clear();
     }
 
     #ifdef VERBOSE_DEBUG
@@ -3601,7 +3510,8 @@ void Searcher::bump_var_importance(const uint32_t var)
             break;
 
         case branch::vmtf:
-            vmtf_bump_queue(var);
+            // TODO this cannot be done, due to btab sorting requirements
+            //vmtf_bump_queue(var);
             break;
     }
 }

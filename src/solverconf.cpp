@@ -82,9 +82,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         // Polarities
         do_lucky_polar_every_n(0)
         , polarity_mode(PolarityMode::polarmode_automatic)
-        , polar_stable_every_n(4)
-        , polar_best_inv_multip_n(9)
-        , polar_best_multip_n(1000)
+        , polar_stable_every_n(3)
+        , polar_best_inv_multip_n(2)
 
         //Clause cleaning
         , pred_short_size(5500)
@@ -144,7 +143,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doAlwaysFMinim(false)
 
         //branch strategy
-        , branch_strategy_setup("vmtf")
+        , branch_strategy_setup("vmtf+vsidsx")
 //         , branch_strategy_setup("vsidsx_once+vsids2+vsidsx")
 
         //Clause minimisation

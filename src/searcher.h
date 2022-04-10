@@ -135,7 +135,6 @@ class Searcher : public HyperEngine
         }
 
         //ChronoBT
-        vector<Trail> add_tmp_canceluntil;
         template<bool do_insert_var_order = true, bool inprocess = false>
         void cancelUntil(uint32_t level); ///<Backtrack until a certain level.
         ConflictData find_conflict_level(PropBy& pb);
@@ -188,13 +187,14 @@ class Searcher : public HyperEngine
         lbool new_decision();
         Lit pickBranchLit();
         uint32_t pick_var_vsids();
-        uint32_t pick_var_vmtf();
         void vsids_decay_var_act();
         template<bool inprocess>
         void vsids_bump_var_act(uint32_t v, double mult = 1.0, bool only_add = false);
         double backup_random_var_freq = -1; ///<if restart has full random var branch, we save old value here
         void check_var_in_branch_strategy(uint32_t var) const;
-        void set_branch_strategy(uint32_t iteration_num);
+        uint32_t branch_strategy_change = 0;
+        uint32_t branch_strategy_at = 0;
+        void setup_branch_strategy();
         void rebuildOrderHeap();
         void rebuildOrderHeapVMTF(vector<uint32_t>& vs);
         void print_order_heap();
@@ -212,7 +212,7 @@ class Searcher : public HyperEngine
         bool   pick_polarity(const uint32_t var);
         void   setup_polarity_strategy();
         void   update_polarities_on_backtrack();
-
+        uint32_t polarity_strategy_num = 0;
 
         //Stats
         SearchStats stats;
@@ -352,7 +352,9 @@ class Searcher : public HyperEngine
         uint32_t num_search_called = 0;
         double luby(double y, int x);
         CMSat::Restart cur_rest_type;
-        void adjust_restart_strategy();
+        uint32_t restart_strategy_change = 0;
+        uint32_t restart_strategy = 0;
+        void adjust_restart_strategy_cutoffs();
         void setup_restart_strategy();
 
 
@@ -472,7 +474,6 @@ inline void Searcher::insert_var_order(const uint32_t var, const branch type)
     assert(varData[x].removed == Removed::none
         && "All variables should be decision vars unless removed");
     #endif
-    assert(type == branch::vmtf);
 
     switch(type) {
         case branch::vsids:
@@ -486,7 +487,10 @@ inline void Searcher::insert_var_order(const uint32_t var, const branch type)
             // variables sits after the variable to which 'queue.unassigned' currently
             // points.  See our SAT'15 paper for more details on this aspect.
             //
-            cout << "Inserting back: " << var << " vmtf_queue.vmtf_bumped: " << vmtf_queue.vmtf_bumped << " vmtf_btab[var]: " << vmtf_btab[var] << endl;
+            VERBOSE_PRINT("vmtf Inserting back: " << var
+                << " vmtf_queue.vmtf_bumped: " << vmtf_queue.vmtf_bumped
+                << " vmtf_btab[var]: " << vmtf_btab[var]);
+
             if (vmtf_queue.vmtf_bumped < vmtf_btab[var]) {
                 vmtf_update_queue_unassigned(var);
             }
@@ -502,6 +506,7 @@ inline void Searcher::insert_var_order(const uint32_t var, const branch type)
             exit(-1);
             break;
     }
+
 }
 
 inline void Searcher::insert_var_order_all(const uint32_t x)
@@ -574,7 +579,7 @@ inline bool Searcher::pick_polarity(const uint32_t var)
             return mtrand.randInt(1);
 
         case PolarityMode::polarmode_automatic:
-            return varData[var].polarity;
+            assert(false);
 
         case PolarityMode::polarmode_stable:
             return varData[var].polarity;

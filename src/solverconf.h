@@ -61,6 +61,7 @@ enum class Restart {
     , luby
     , fixed
     , never
+    , automatic
 };
 
 inline std::string getNameOfPolarmodeType(PolarityMode polarmode)
@@ -228,7 +229,6 @@ class DLL_PUBLIC SolverConf
         PolarityMode polarity_mode;
         int polar_stable_every_n;
         int polar_best_inv_multip_n;
-        int polar_best_multip_n;
 
         //Clause cleaning
         uint32_t pred_short_size;

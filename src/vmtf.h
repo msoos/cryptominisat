@@ -43,7 +43,7 @@ struct Queue {
   uint32_t first;  ///< VARIABLE NUMBER. anchor (head/tail) for doubly linked list.
   uint32_t last;   ///< VARIABLE NUMBER. anchor (head/tail) for doubly linked list.
   uint32_t unassigned;     ///< VARIABLE NUMBER. All variables after this one are assigned
-  uint64_t vmtf_bumped;     ///< bumping value. Monotonically increasing. See vmtf_update_queue_unassigned
+  uint64_t vmtf_bumped;     ///< Last unassigned variable's btab value
 
   Queue () :
       first (numeric_limits<uint32_t>::max()),
@@ -56,6 +56,7 @@ struct Queue {
   // following two (inlined) functions.  They are just ordinary doubly
   // linked list 'dequeue' and 'enqueue' operations.
 
+  // Removes from the list
   inline void dequeue (vector<Link>& vmtf_links, const uint32_t var) {
     auto& l = vmtf_links[var];
 
@@ -74,6 +75,7 @@ struct Queue {
     }
   }
 
+  // Puts varible at the head of the list
   inline void enqueue (vector<Link>& vmtf_links, const uint32_t var) {
     auto& l = vmtf_links[var];
     l.prev = last;

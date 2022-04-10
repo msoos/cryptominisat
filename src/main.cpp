@@ -417,8 +417,6 @@ void Main::add_supported_options()
         , "Try computing lucky polarities")
     ("polarbestinvmult", po::value(&conf.polar_best_inv_multip_n)->default_value(conf.polar_best_inv_multip_n)
         , "How often should we use inverted best polarities instead of stable")
-    ("polarbestmult", po::value(&conf.polar_best_multip_n)->default_value(conf.polar_best_multip_n)
-        , "How often should we use best polarities instead of stable")
     ;
 
 

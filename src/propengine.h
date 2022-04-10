@@ -243,12 +243,13 @@ public:
     Heap<VarOrderLt> order_heap_vsids; ///NOT VALID WHILE SIMPLIFYING
     RandHeap order_heap_rand;
     Queue vmtf_queue;
+    uint64_t stats_bumped = 0;
     vector<uint64_t> vmtf_btab; ///< Indexed by variable number. enqueue time stamps for queue
-    const uint64_t& vmtf_bumped (uint32_t var) const { return vmtf_btab[var]; }
     void vmtf_update_queue_unassigned (const uint32_t var);
     void vmtf_init_enqueue (const uint32_t var);
     void vmtf_bump_queue (const uint32_t var);
-    Link & vmtf_link (uint32_t var) { return vmtf_links[var]; }
+    void check_unassigned_vmtf();
+    uint32_t pick_var_vmtf();
     vector<Link> vmtf_links; ///< Indexed by variable number. table of vmtf_links for decision queue.
     double max_vsids_act = 0.0;
 

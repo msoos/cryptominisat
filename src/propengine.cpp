@@ -922,6 +922,50 @@ void PropEngine::sql_dump_vardata_picktime(uint32_t v, PropBy from)
 }
 #endif
 
+///// VMTF ////
+
+void PropEngine::check_unassigned_vmtf()
+{
+    uint32_t at = vmtf_queue.unassigned;
+    uint32_t unassigned = 0;
+    while (at  != numeric_limits<uint32_t>::max()) {
+        at = vmtf_links[at].next;
+        if (at != numeric_limits<uint32_t>::max()) {
+            if (value(at) == l_Undef) {
+                cout << "vmtf OOOPS, var " << at+1 << " would have been unassigned. btab[var]: " << vmtf_btab[at] << endl;
+                unassigned++;
+            }
+        }
+    }
+    if (unassigned) {
+        cout << "unassigned total: " << unassigned << endl;
+        assert(unassigned == 0);
+    }
+}
+
+uint32_t PropEngine::pick_var_vmtf()
+{
+    uint64_t searched = 0;
+    uint32_t res = vmtf_queue.unassigned;
+    VERBOSE_PRINT("vmtf start unassigned: " << res);
+
+    SLOW_DEBUG_DO(check_unassigned_vmtf());
+    while (res != numeric_limits<uint32_t>::max()
+        && value(res) != l_Undef
+    ) {
+        res = vmtf_links[res].prev;
+        searched++;
+    }
+
+    if (res == numeric_limits<uint32_t>::max()) {
+        check_unassigned_vmtf();
+        return var_Undef;
+    }
+    if (searched) vmtf_update_queue_unassigned(res);
+    VERBOSE_PRINT("vmtf next queue decision variable " << res << " btab value: " << vmtf_btab[res]);
+    return res;
+}
+
 // Update queue to point to last potentially still unassigned variable.
 // All variables after 'queue.unassigned' in bump order are assumed to be
 // assigned.  Then update the 'queue.vmtf_bumped' field and log it.  This is
@@ -930,21 +974,13 @@ void PropEngine::sql_dump_vardata_picktime(uint32_t v, PropBy from)
 void PropEngine::vmtf_update_queue_unassigned (const uint32_t var) {
     assert(var != numeric_limits<uint32_t>::max());
     assert(var < nVars());
-    cout << "vmtf_queue.unassigned set to: " << var << " vmtf_queue.vmtf_bumped set to: " << vmtf_btab[var] << endl;
+    VERBOSE_PRINT("vmtf_queue.unassigned set to: " << var+1
+        << " vmtf_queue.vmtf_bumped set to: " << vmtf_btab[var]);
     vmtf_queue.unassigned = var;
     vmtf_queue.vmtf_bumped = vmtf_btab[var];
 }
 
 void PropEngine::vmtf_init_enqueue (const uint32_t var) {
-//     cout << "START: vmtf_init_enqueue called with var: " << var << endl;
-//     cout << "START: vmtf_queue.first: " << vmtf_queue.first << endl;
-//     cout << "START: vmtf_queue.last: " << vmtf_queue.last << endl;
-//
-//     for(uint32_t i = 0; i < vmtf_btab.size(); i++) {
-//         cout << "vmtf_btab[ " << i << " ]: " << vmtf_btab[i] << endl;
-//         cout << "vmtf_links[ " << i << " ].next: " << vmtf_links[i].next << endl;
-//         cout << "vmtf_links[ " << i << " ].prev: " << vmtf_links[i].prev << endl;
-//     }
     assert(var < nVars());
     assert(var < vmtf_links.size());
     Link & l = vmtf_links[var];
@@ -963,12 +999,8 @@ void PropEngine::vmtf_init_enqueue (const uint32_t var) {
     l.prev = vmtf_queue.last;
     vmtf_queue.last = var;
 
-    vmtf_btab[var] = ++vmtf_queue.vmtf_bumped; // set timestamp of enqueue
+    vmtf_btab[var] = ++stats_bumped; // set timestamp of enqueue
     vmtf_update_queue_unassigned(vmtf_queue.last);
-
-//     cout << "END: vmtf_queue.first: " << vmtf_queue.first << endl;
-//     cout << "END: vmtf_queue.last: " << vmtf_queue.last << endl;
-//     cout << " ---- " << endl;
 }
 
 // Move vmtf_bumped variables to the front of the (VMTF) decision queue.  The
@@ -983,9 +1015,8 @@ void PropEngine::vmtf_bump_queue (const uint32_t var) {
     vmtf_queue.dequeue (vmtf_links, var);
     vmtf_queue.enqueue (vmtf_links, var);
 
-    assert (vmtf_queue.vmtf_bumped != numeric_limits<uint64_t>::max());
-    vmtf_btab[var] = ++vmtf_queue.vmtf_bumped;
-    cout << "moved to front variable " << var << " and vmtf_bumped to " << vmtf_btab[var] << endl;
+    assert (stats_bumped != numeric_limits<uint64_t>::max());
+    vmtf_btab[var] = ++stats_bumped;
+    VERBOSE_PRINT("vmtf moved to front variable " << var+1 << " and vmtf_bumped to " << vmtf_btab[var]);
     if (value(var) == l_Undef) vmtf_update_queue_unassigned(var);
 }
-
