@@ -1478,9 +1478,10 @@ int OccSimplifier::lit_to_picolit(const Lit l) {
     auto f = var_to_picovar.find(l.var());
     int picolit = 0;
     if (f == var_to_picovar.end()) {
-        var_to_picovar[l.var()] = picovarnum;
-        picolit = picovarnum * (l.sign() ? -1 : 1);
-        picovarnum++;
+        int v = picosat_inc_max_var(picosat);
+        var_to_picovar[l.var()] = v;
+        picolit = v * (l.sign() ? -1 : 1);
+
     } else {
         picolit = f->second * (l.sign() ? -1 : 1);
     }
@@ -1508,8 +1509,8 @@ uint32_t OccSimplifier::add_cls_to_picosat(const Lit wsLit) {
                     if (l != wsLit) picosat_add(picosat, lit_to_picolit(l));
                 }
 //                 cout << "Added cl: " << cl << endl;
+                picosat_add(picosat, 0);
             }
-            picosat_add(picosat, 0);
         } else if (w.isBin()) {
             assert(!w.red());
             bool only_sampl = seen[w.lit2().var()];
@@ -1643,7 +1644,6 @@ vector<uint32_t> OccSimplifier::recover_definable_by_irreg_gate_vars(const vecto
     uint32_t no_occ = 0;
     uint32_t too_many_occ = 0;
     uint32_t equiv_subformula = 0;
-    bool have_to_init_picosat = true;
 
     vector<uint32_t> vars2 = vars;
     for(uint32_t& v: vars2) {
@@ -1690,10 +1690,9 @@ vector<uint32_t> OccSimplifier::recover_definable_by_irreg_gate_vars(const vecto
             continue;
         }
 
-        if (have_to_init_picosat) {
+        if (picosat == NULL) {
             picosat = picosat_init();
             var_to_picovar.clear();
-            picovarnum = 1;
         }
 
         uint32_t added = add_cls_to_picosat(l);
@@ -1702,12 +1701,10 @@ vector<uint32_t> OccSimplifier::recover_definable_by_irreg_gate_vars(const vecto
             no_cls_matching_filter++;
             ret.push_back(v);
             check_for_emtpy_resolvents.push_back(v);
-            have_to_init_picosat = false;
             continue;
         }
-        have_to_init_picosat = true;
 
-        int picoret = picosat_sat(picosat, -1);
+        int picoret = picosat_sat(picosat, 100);
         picosat_ran++;
         if (picoret == PICOSAT_UNSATISFIABLE) {
             unsat++;

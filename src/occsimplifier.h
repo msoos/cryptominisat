@@ -201,7 +201,6 @@ public:
     vector<uint32_t> recover_definable_by_irreg_gate_vars(const vector<uint32_t>& vars, vector<uint32_t>* out_empty_occ = NULL);
     uint32_t add_cls_to_picosat(const Lit wsLit);
     PicoSAT* picosat = NULL;
-    int picovarnum = 1;
     int lit_to_picolit(const Lit l);
     map<uint32_t, int> var_to_picovar;
     bool check_equiv_subformua(Lit lit);
