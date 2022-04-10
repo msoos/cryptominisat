@@ -1488,7 +1488,7 @@ int OccSimplifier::lit_to_picolit(const Lit l) {
     return picolit;
 }
 
-uint32_t OccSimplifier::add_cls_to_picosat(const Lit wsLit) {
+uint32_t OccSimplifier::add_cls_to_picosat_definable(const Lit wsLit) {
     uint32_t added = 0;
     assert(seen[wsLit.var()] == 1);
     for(const auto& w: solver->watches[wsLit]) {
@@ -1526,7 +1526,6 @@ uint32_t OccSimplifier::add_cls_to_picosat(const Lit wsLit) {
     }
     return added;
 }
-
 
 // check that (F | x = True) == (F | x = False)
 bool OccSimplifier::check_equiv_subformua(Lit lit)
@@ -1695,8 +1694,8 @@ vector<uint32_t> OccSimplifier::recover_definable_by_irreg_gate_vars(const vecto
             var_to_picovar.clear();
         }
 
-        uint32_t added = add_cls_to_picosat(l);
-        added += add_cls_to_picosat(~l);
+        uint32_t added = add_cls_to_picosat_definable(l);
+        added += add_cls_to_picosat_definable(~l);
         if (added == 0) {
             no_cls_matching_filter++;
             ret.push_back(v);
@@ -3032,6 +3031,78 @@ void OccSimplifier::add_clause_to_blck(const vector<Lit>& lits, const uint64_t I
     newly_blocked_cls_IDs.push_back(ID);
 }
 
+void OccSimplifier::add_picosat_cls(const vec<Watched>& ws, const Lit elim_lit,
+                                    map<int, Watched>& picosat_cl_to_cms_cl)
+{
+    picosat_cl_to_cms_cl.clear();
+    var_to_picovar.clear();
+    for(const auto& w: ws) {
+        if (w.isClause()) {
+            Clause& cl = *solver->cl_alloc.ptr(w.get_offset());
+            assert(!cl.getRemoved());
+            assert(!cl.red());
+            for(const auto& l: cl) {
+                if (l.var() != elim_lit.var()) picosat_add(picosat, lit_to_picolit(l));
+            }
+//             cout << "Added cl (except " << elim_lit.unsign() << "): " << cl << endl;
+            int pico_cl_id = picosat_add(picosat, 0);
+            picosat_cl_to_cms_cl[pico_cl_id] = w;
+        } else if (w.isBin()) {
+            assert(!w.red());
+            picosat_add(picosat, lit_to_picolit(w.lit2()));
+            int pico_cl_id = picosat_add(picosat, 0);
+            picosat_cl_to_cms_cl[pico_cl_id] = w;
+//             cout << "Added cl: " << w.lit2() << endl;
+        } else {
+            assert(false);
+        }
+    }
+}
+
+bool OccSimplifier::find_irreg_gate(
+    Lit elim_lit
+    , watch_subarray_const a
+    , watch_subarray_const b
+    , vec<Watched>& out_a
+    , vec<Watched>& out_b
+) {
+    // Too expensive
+    if (a.size() + b.size() > 1000) return false;
+
+    bool found = false;
+    out_a.clear();
+    out_b.clear();
+
+    assert(picosat == NULL);
+    picosat = picosat_init();
+    int ret = picosat_enable_trace_generation(picosat);
+    assert(ret != 0 && "Traces cannot be generated in PicoSAT, wrongly configured&built");
+
+    map<int, Watched> a_map;
+    map<int, Watched> b_map;
+    add_picosat_cls(a, elim_lit, a_map);
+    add_picosat_cls(b, elim_lit, b_map);
+    ret = picosat_sat(picosat, 300);
+    if (ret == PICOSAT_UNSATISFIABLE) {
+        for(const auto& m: a_map) {
+//             cout << "Pico core contains: " << m.first << endl;
+            if (picosat_coreclause(picosat, m.first))
+                out_a.push(m.second);
+        }
+        for(const auto& m: b_map) {
+//             cout << "Pico core contains: " << m.first << endl;
+            if (picosat_coreclause(picosat, m.first))
+                out_b.push(m.second);
+        }
+        cout << "PicoSAT UNSAT for var: " << elim_lit << " core size: " << out_a.size() + out_b.size() << " vs: " << a.size()+b.size() << endl;
+        found = true;
+    }
+    picosat_reset(picosat);
+    picosat = NULL;
+
+    return found;
+}
+
 bool OccSimplifier::find_or_gate(
     Lit elim_lit
     , watch_subarray_const a
@@ -3848,6 +3919,8 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
     } else if (find_ite_gate(~lit, negs, poss, gates_negs, gates_poss)) {
         gates = true;
     } else if (find_xor_gate(lit, poss, negs, gates_poss, gates_negs)) {
+        gates = true;
+    } else if (find_irreg_gate(lit, poss, negs, gates_poss, gates_negs)) {
         gates = true;
     }
 

@@ -104,6 +104,9 @@ if (FINAL_PREDICTOR)
     add_custom_target(pred_forever ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/pred_forever.cpp)
 endif()
 
+# Needed for PicoSAT trace generation
+add_definitions( -DTRACE )
+
 set(cryptoms_lib_files
     cnf.cpp
     drat.cpp

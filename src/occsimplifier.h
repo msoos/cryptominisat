@@ -199,7 +199,7 @@ public:
 
     // definable vars
     vector<uint32_t> recover_definable_by_irreg_gate_vars(const vector<uint32_t>& vars, vector<uint32_t>* out_empty_occ = NULL);
-    uint32_t add_cls_to_picosat(const Lit wsLit);
+    uint32_t add_cls_to_picosat_definable(const Lit wsLit);
     PicoSAT* picosat = NULL;
     int lit_to_picolit(const Lit l);
     map<uint32_t, int> var_to_picovar;
@@ -474,6 +474,13 @@ private:
         vec<Watched>& out_a,
         vec<Watched>& out_b
     );
+    void add_picosat_cls(const vec<Watched>& ws, const Lit elim_lit, map<int, Watched>& picosat_cl_to_cms_cl);
+    bool find_irreg_gate(
+        Lit elim_lit,
+        watch_subarray_const a,
+        watch_subarray_const b,
+        vec<Watched>& out_a,
+        vec<Watched>& out_b);
     bool find_equivalence_gate(
         Lit lit
         , watch_subarray_const a
