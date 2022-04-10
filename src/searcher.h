@@ -179,7 +179,7 @@ class Searcher : public HyperEngine
         // Branching
         /////////////////////
         double var_inc_vsids;
-        void insert_var_order(const uint32_t x, branch type);
+        void insert_var_order(const uint32_t x, const branch type);
         void insert_var_order(const uint32_t x);
         void insert_var_order_all(const uint32_t x);
         vector<uint32_t> implied_by_learnts; //for glue-based extra var activity bumping
@@ -466,17 +466,18 @@ inline void Searcher::insert_var_order(const uint32_t x)
     insert_var_order(x, branch_strategy);
 }
 
-inline void Searcher::insert_var_order(const uint32_t x, branch type)
+inline void Searcher::insert_var_order(const uint32_t var, const branch type)
 {
     #ifdef SLOW_DEUG
     assert(varData[x].removed == Removed::none
         && "All variables should be decision vars unless removed");
     #endif
+    assert(type == branch::vmtf);
 
     switch(type) {
         case branch::vsids:
-            if (!order_heap_vsids.inHeap(x)) {
-                order_heap_vsids.insert(x);
+            if (!order_heap_vsids.inHeap(var)) {
+                order_heap_vsids.insert(var);
             }
             break;
 
@@ -485,14 +486,15 @@ inline void Searcher::insert_var_order(const uint32_t x, branch type)
             // variables sits after the variable to which 'queue.unassigned' currently
             // points.  See our SAT'15 paper for more details on this aspect.
             //
-            if (vmtf_queue.vmtf_bumped < vmtf_btab[x]) {
-                vmtf_update_queue_unassigned (x);
+            cout << "Inserting back: " << var << " vmtf_queue.vmtf_bumped: " << vmtf_queue.vmtf_bumped << " vmtf_btab[var]: " << vmtf_btab[var] << endl;
+            if (vmtf_queue.vmtf_bumped < vmtf_btab[var]) {
+                vmtf_update_queue_unassigned(var);
             }
             break;
 
         case branch::rand:
-            if (!order_heap_rand.inHeap(x)) {
-                order_heap_rand.insert(x);
+            if (!order_heap_rand.inHeap(var)) {
+                order_heap_rand.insert(var);
             }
             break;
         default:
@@ -512,6 +514,7 @@ inline void Searcher::insert_var_order_all(const uint32_t x)
     assert(!order_heap_rand.inHeap(x));
     order_heap_rand.insert(x);
 
+//     cout << " init_enqueue " << x+1 << endl;
     vmtf_init_enqueue(x);
 }
 

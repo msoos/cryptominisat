@@ -930,6 +930,7 @@ void PropEngine::sql_dump_vardata_picktime(uint32_t v, PropBy from)
 void PropEngine::vmtf_update_queue_unassigned (const uint32_t var) {
     assert(var != numeric_limits<uint32_t>::max());
     assert(var < nVars());
+    cout << "vmtf_queue.unassigned set to: " << var << " vmtf_queue.vmtf_bumped set to: " << vmtf_btab[var] << endl;
     vmtf_queue.unassigned = var;
     vmtf_queue.vmtf_bumped = vmtf_btab[var];
 }
@@ -974,17 +975,17 @@ void PropEngine::vmtf_init_enqueue (const uint32_t var) {
 // 'vmtf_bumped' time stamp is updated accordingly.  It is used to determine
 // whether the 'queue.assigned' pointer has to be moved in 'unassign'.
 
-void PropEngine::vmtf_bump_queue (uint32_t var) {
+void PropEngine::vmtf_bump_queue (const uint32_t var) {
     if (vmtf_links[var].next == numeric_limits<uint32_t>::max()) {
         return;
     }
-    //Remove from wherever it is, put to the top
+    //Remove from wherever it is, put to the end
     vmtf_queue.dequeue (vmtf_links, var);
     vmtf_queue.enqueue (vmtf_links, var);
 
-    assert (vmtf_queue.vmtf_bumped != numeric_limits<uint32_t>::max());
+    assert (vmtf_queue.vmtf_bumped != numeric_limits<uint64_t>::max());
     vmtf_btab[var] = ++vmtf_queue.vmtf_bumped;
-    VERBOSE_PRINT("moved to front variable " << var << " and vmtf_bumped to " << vmtf_btab[idx]);
+    cout << "moved to front variable " << var << " and vmtf_bumped to " << vmtf_btab[var] << endl;
     if (value(var) == l_Undef) vmtf_update_queue_unassigned(var);
 }
 

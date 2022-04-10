@@ -171,7 +171,7 @@ inline void Searcher::add_lit_to_learnt(
         switch(branch_strategy) {
             case branch::vsids:
                 vsids_bump_var_act<inprocess>(var, 0.5);
-                implied_by_learnts.push_back(var);
+//                 implied_by_learnts.push_back(var);
                 break;
 
             case branch::rand:
@@ -872,12 +872,12 @@ void Searcher::analyze_conflict(
     if (!inprocess) {
         switch(branch_strategy) {
             case branch::vsids:
-                for (const uint32_t var :implied_by_learnts) {
-                    if ((int32_t)varData[var].level >= (int32_t)out_btlevel-1) {
-                        vsids_bump_var_act<inprocess>(var, 1.0);
-                    }
-                }
-                implied_by_learnts.clear();
+//                 for (const uint32_t var :implied_by_learnts) {
+//                     if ((int32_t)varData[var].level >= (int32_t)out_btlevel-1) {
+//                         vsids_bump_var_act<inprocess>(var, 1.0);
+//                     }
+//                 }
+//                 implied_by_learnts.clear();
                 break;
 
             case branch::vmtf:
@@ -2926,17 +2926,20 @@ uint32_t Searcher::pick_var_vmtf()
 {
     uint64_t searched = 0;
     uint32_t res = vmtf_queue.unassigned;
+    cout << "start unassigned: " << res << endl;
     while (res != numeric_limits<uint32_t>::max()
         && value(res) != l_Undef
     ) {
         res = vmtf_link(res).prev;
+        cout << "prev: " << res;
+        if (res != numeric_limits<uint32_t>::max()) cout << " val: " << value(res);
+        cout << endl;
         searched++;
     }
 
     if (res == numeric_limits<uint32_t>::max()) return var_Undef;
-
     if (searched) vmtf_update_queue_unassigned(res);
-    VERBOSE_PRINT("next queue decision variable " << res << " vmtf_bumped " << vmtf_bumped (res));
+    cout << "next queue decision variable " << res << " btab value: " << vmtf_bumped(res) << endl;
     return res;
 }
 
