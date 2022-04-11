@@ -255,6 +255,7 @@ public:
 
     //Clause activities
     double max_cl_act = 0.0;
+    vector<int32_t> chain; ///< For resolution chains
 
     enum class gauss_ret {g_cont, g_nothing, g_false};
     vector<EGaussian*> gmatrices;
@@ -537,7 +538,22 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
     if (level == 0 && drat->enabled())
     {   if (do_unit_frat) {
             const uint32_t ID = ++clauseID;
-            *drat << add << ID << p << fin;
+            chain.clear();
+            if (from.getType() == PropByType::binary_t) {
+                chain.push_back(from.getID());
+                chain.push_back(unit_cl_IDs[from.lit2().var()]);
+            } else if (from.getType() == PropByType::clause_t) {
+                Clause* cl = cl_alloc.ptr(from.get_offset());
+                chain.push_back(cl->stats.ID);
+                for(auto const& l: *cl) if (l != p) chain.push_back(unit_cl_IDs[l.var()]);
+            } else {
+                // These are too difficult and not worth it
+            }
+
+            *drat << add << ID << p << DratFlag::chain;
+            for(auto const& id: chain) *drat << id;
+            *drat << fin;
+
             VERBOSE_PRINT("unit " << p << " ID: " << ID);
             assert(unit_cl_IDs[v] == 0);
             unit_cl_IDs[v] = ID;

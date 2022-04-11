@@ -130,8 +130,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Restarting
         , restart_first(100)
         , restart_inc(1.1)
-        , restartType(Restart::luby)
-//         , restartType(Restart::geom)
+        , restartType(Restart::automatic)
         , do_blocking_restart(1)
         , blocking_restart_trail_hist_length(5000)
         , blocking_restart_multip(1.4)

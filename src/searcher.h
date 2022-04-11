@@ -252,7 +252,6 @@ class Searcher : public HyperEngine
         // Learning
         /////////////////////
         vector<Lit> learnt_clause;
-        vector<int32_t> chain;
         vector<Lit> decision_clause;
         template<bool inprocess>
         void analyze_conflict(

@@ -1079,28 +1079,6 @@ double Solver::calc_renumber_saving()
     return saving;
 }
 
-// bool Solver::update_vars_of_xors(vector<Xor>& xors)
-// {
-//     for(Xor& x: xors) {
-//         clean_xor_vars_no_prop(x.get_vars(), x.rhs);
-//         if (x.size() == 0 && x.rhs == true) {
-//             ok = false;
-//             break;
-//         }
-//
-//         uint32_t j = 0;
-//         for(uint32_t i = 0; i < x.clash_vars.size(); i++) {
-//             uint32_t v = x.clash_vars[i];
-//             if (value(v) == l_Undef) {
-//                 x.clash_vars[j++] = v;
-//             }
-//         }
-//         x.clash_vars.resize(j);
-//     }
-//
-//     return ok;
-// }
-
 //Beware. Cannot be called while Searcher is running.
 bool Solver::renumber_variables(bool must_renumber)
 {

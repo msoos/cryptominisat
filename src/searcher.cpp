@@ -33,6 +33,8 @@ THE SOFTWARE.
 #include <cstddef>
 #include <cmath>
 #include <ratio>
+
+
 #include "sqlstats.h"
 #include "datasync.h"
 #include "reducedb.h"
@@ -164,6 +166,7 @@ inline void Searcher::add_lit_to_learnt(
             assert(value(var) != l_Undef);
             assert(unit_cl_IDs[var] != 0);
             chain.push_back(unit_cl_IDs[var]);
+            VERBOSE_PRINT("Chain adding ID: " << unit_cl_IDs[var] << " due to unit clause, var: " << var+1);
         }
         return;
     }
@@ -296,6 +299,7 @@ void Searcher::normalClMinim()
                 learnt_clause[j++] = learnt_clause[i];
                 break;
             } else {
+                VERBOSE_PRINT("Chain adding ID: " << ID << " due to normal CL minim, lit: " << p <<  " removed");
                 chain.push_back(ID);
             }
         }
@@ -481,6 +485,7 @@ void Searcher::add_lits_to_learnt(
         default:
             assert(false && "Error in conflict analysis (otherwise should be UIP)");
     }
+    VERBOSE_PRINT("Chain adding ID: " << ID << " due to resolution on lit: " << p);
     chain.push_back(ID);
 
     size_t i = 0;
@@ -912,6 +917,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
 
     analyze_stack.clear();
     analyze_stack.push(p);
+    uint32_t old_chain_size = chain.size();
 
     size_t top = toClear.size();
     while (!analyze_stack.empty()) {
@@ -995,7 +1001,9 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
                     seen[p2.var()] = 1;
                     analyze_stack.push(p2);
                     toClear.push_back(p2);
+
                     chain.push_back(ID);
+                    VERBOSE_PRINT("TMP Chain adding ID: " << ID << " due to minimization, litRed on var: " << p2);
                 } else {
                     //Return to where we started before function executed
                     for (size_t j = top; j < toClear.size(); j++) {
@@ -1003,11 +1011,14 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
                     }
                     toClear.resize(top);
 
+                    VERBOSE_PRINT("Chain clearing past " << chain.size()-old_chain_size << " TMPs.");
+                    chain.resize(old_chain_size);
                     return false;
                 }
             }
         }
     }
+    VERBOSE_PRINT("Chain TMPs were OK, not clearing");
 
     return true;
 }
@@ -1203,23 +1214,23 @@ void Searcher::print_order_heap()
     switch(branch_strategy) {
         case branch::vsids:
             cout << "vsids heap size: " << order_heap_vsids.size() << endl;
-            cout << "vsids acts:";
+            cout << "vsids acts: ";
             for(auto x: var_act_vsids) {
                 cout << std::setprecision(12) << x << " ";
             }
             cout << endl;
-            cout << "VSIDS order heap:" << endl;
+            cout << "VSIDS order heap: " << endl;
             order_heap_vsids.print_heap();
             break;
 
         case branch::rand:
             cout << "rand heap size: " << order_heap_rand.size() << endl;
-            cout << "rand order heap:" << endl;
+            cout << "rand order heap: " << endl;
             order_heap_rand.print_heap();
             break;
 
         case branch::vmtf:
-            cout << "vmtf order printing not implemented yet:" << endl;
+            cout << "vmtf order printing not implemented yet." << endl;
             break;
     }
 }
@@ -1268,9 +1279,7 @@ lbool Searcher::search()
     PropBy confl;
     lbool search_ret = l_Undef;
 
-    #ifdef VERBOSE_DEBUG
-    print_order_heap();
-    #endif
+//     VERBOSE_PRINT(print_order_heap());
     while (!params.needToStopSearch
         || !confl.isNULL() //always finish the last conflict
     ) {
@@ -1288,7 +1297,6 @@ lbool Searcher::search()
 
         if (!confl.isNULL()) {
             update_branch_params();
-            print_restart_stat();
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             hist.trailDepthHist.push(trail.size());
             #endif
@@ -1321,6 +1329,7 @@ lbool Searcher::search()
             }
         }
     }
+    print_restart_stat();
     max_confl_this_restart -= (int64_t)params.conflictsDoneThisRestart;
 
     cancelUntil(0);
@@ -1700,6 +1709,7 @@ Clause* Searcher::handle_last_confl(
         for(auto const& c: chain) *drat << c;
     }
     *drat << fin;
+    VERBOSE_PRINT("Chain ID created: " << ID);
 
     if (learnt_clause.size() <= 2) {
         cl = NULL;
@@ -1840,6 +1850,7 @@ bool Searcher::handle_conflict(PropBy confl)
         && decisionLevel() <= conf.decision_based_cl_max_levels
         && decisionLevel() >= 2
     ) {
+        chain.clear();
         for(int i = (int)trail_lim.size()-1; i >= 0; i--) {
             Lit l = ~trail[trail_lim[i]].lit;
             if (!seen[l.toInt()]) {
@@ -1854,15 +1865,16 @@ bool Searcher::handle_conflict(PropBy confl)
     }
 
     // check chrono backtrack condition
-//     if (conf.diff_declev_for_chrono > -1
-//         && (((int)decisionLevel() - (int)backtrack_level) >= conf.diff_declev_for_chrono)
-//     ) {
-//         chrono_backtrack++;
-//         cancelUntil(data.nHighestLevel -1);
-//     } else {
+    if (conf.diff_declev_for_chrono > -1
+        && bnns.empty()
+        && (((int)decisionLevel() - (int)backtrack_level) >= conf.diff_declev_for_chrono)
+    ) {
+        chrono_backtrack++;
+        cancelUntil(data.nHighestLevel -1);
+    } else {
         non_chrono_backtrack++;
         cancelUntil(backtrack_level);
-//     }
+    }
 
     assert(value(learnt_clause[0]) == l_Undef);
     glue = std::min<uint32_t>(glue, numeric_limits<uint32_t>::max());
@@ -2095,8 +2107,8 @@ void Searcher::print_restart_stat()
     //Print restart stat
     if (conf.verbosity
         && !conf.print_all_restarts
-        && ((lastRestartPrint + conf.print_restart_line_every_n_confl)
-          < sumConflicts)
+//         && ((lastRestartPrint + conf.print_restart_line_every_n_confl)
+//           < sumConflicts)
     ) {
         print_restart_stat_line();
         lastRestartPrint = sumConflicts;
@@ -2185,10 +2197,6 @@ bool Searcher::clean_clauses_if_needed()
         }
 
         cl_alloc.consolidate(solver);
-        //TODO this is not needed, but seems to help speed
-        //     perhaps because it re-shuffles
-        rebuildOrderHeap();
-
         simpDB_props = (litStats.redLits + litStats.irredLits)<<5;
     }
 
@@ -2265,7 +2273,7 @@ struct branch_type_total{
 void Searcher::setup_branch_strategy()
 {
     if (sumConflicts < branch_strategy_change) return;
-    branch_strategy_change += 10000;
+    branch_strategy_change += 5000;
     branch_strategy_change *= 1.1;
     branch_strategy_at++;
 
@@ -2473,9 +2481,7 @@ lbool Searcher::distill_clauses_if_needed()
         if (!solver->distill_long_cls->distill(true, false)) {
             return l_False;
         }
-        next_distill = std::max<double>(
-            sumConflicts + sumConflicts * conf.distill_increase_conf_ratio + 7000,
-            sumConflicts + conf.distill_min_confl);
+        next_distill = sumConflicts + 15000;
     }
 
     return l_Undef;
@@ -2571,14 +2577,11 @@ double Searcher::luby(double y, int x)
 
 void Searcher::setup_restart_strategy()
 {
-    if (sumConflicts >= restart_strategy_change) {
-        restart_strategy_at++;
-        restart_strategy_at %= 3;
-        restart_strategy_change+=1000;
-        restart_strategy_change *= 1.2;
-    } else {
-        return;
-    }
+    if (sumConflicts < restart_strategy_change) return;
+    restart_strategy_at++;
+    restart_strategy_at %= 3;
+    restart_strategy_change+=30000;
+    restart_strategy_change *= 1.2;
 
     increasing_phase_size = conf.restart_first;
     max_confl_this_restart = conf.restart_first;
@@ -2589,9 +2592,9 @@ void Searcher::setup_restart_strategy()
         params.rest_type = Restart::never;
         max_confl_this_restart = numeric_limits<int64_t>::max();
     } else {
-        if (params.rest_type == Restart::luby) restart_strategy_at = 0;
-        if (params.rest_type == Restart::geom) restart_strategy_at = 1;
-        if (params.rest_type == Restart::glue) restart_strategy_at = 2;
+        if (conf.restartType == Restart::luby) restart_strategy_at = 0;
+        if (conf.restartType == Restart::geom) restart_strategy_at = 1;
+        if (conf.restartType == Restart::glue) restart_strategy_at = 2;
 
         if (restart_strategy_at == 0) {
             params.rest_type = Restart::luby;
@@ -2607,6 +2610,11 @@ void Searcher::setup_restart_strategy()
             max_confl_this_restart = conf.ratio_glue_geom *increasing_phase_size;
         }
     }
+
+    verb_print(2, "[restart] adjusting strategy. "
+    << " restart_strategy_change:" << restart_strategy_change
+    << " restart_strategy_at: " << restart_strategy_at
+    << " chosen: " << restart_type_to_string(params.rest_type));
 
     print_local_restart_budget();
 }
@@ -2655,7 +2663,7 @@ inline void Searcher::print_local_restart_budget()
 {
     if (conf.verbosity >= 2 || conf.print_all_restarts) {
         cout << "c [restart] at confl " << solver->sumConflicts << " -- "
-        << "adjusting local restart type: "
+        << " local restart type: "
         << std::left << std::setw(10) << getNameOfRestartType(params.rest_type)
         << " budget: " << std::setw(9) << max_confl_this_restart
         << std::right
@@ -2778,7 +2786,7 @@ void Searcher::finish_up_solve(const lbool status)
             ok = false;
         }
         cancelUntil(0);
-        if (ok) {
+        if (okay()) {
             //due to chrono BT we need to propagate once more
             PropBy confl = propagate<false>();
             assert(confl.isNULL());
@@ -2819,11 +2827,9 @@ void Searcher::print_iteration_solving_stats()
 
 inline Lit Searcher::pickBranchLit()
 {
-    #ifdef VERBOSE_DEBUG
-    print_order_heap();
-    cout << "picking decision variable, dec. level: "
-    << decisionLevel() << endl;
-    #endif
+
+//     VERBOSE_PRINT(print_order_heap());
+    VERBOSE_PRINT("picking decision variable, dec. level: " << decisionLevel());
 
     uint32_t v = var_Undef;
     switch (branch_strategy) {

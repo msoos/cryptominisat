@@ -272,6 +272,7 @@ bool ClauseCleaner::clean_clause(Clause& cl)
 
     assert(cl.size() > 2);
     (*solver->drat) << deldelay << cl << fin;
+    solver->chain.clear();
 
     #ifdef SLOW_DEBUG
     uint32_t num_false_begin = 0;
@@ -293,13 +294,18 @@ bool ClauseCleaner::clean_clause(Clause& cl)
         if (val == l_True) {
             (*solver->drat) << findelay;
             return true;
+        } else {
+            solver->chain.push_back(solver->unit_cl_IDs[i->var()]);
         }
     }
 
     if (i != j) {
+        const auto orig_ID = cl.stats.ID;
         cl.stats.ID = ++solver->clauseID;
         cl.shrink(i-j);
-        (*solver->drat) << add << cl << fin << findelay;
+        (*solver->drat) << add << cl << chain << orig_ID;
+        for(auto const& id: solver->chain) (*solver->drat) << id;
+        (*solver->drat) << fin << findelay;
     } else {
         solver->drat->forget_delay();
     }
