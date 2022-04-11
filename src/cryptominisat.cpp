@@ -221,7 +221,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
         case 2: {
             conf.branch_strategy_setup = "vsidsx";
-            conf.polar_best_inv_multip_n = 100;
+            conf.polar_best_inv_every_n = 100;
             break;
         }
         case 3: {
@@ -301,7 +301,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.branch_strategy_setup = "maple1";
             conf.inc_max_temp_lev2_red_cls = 1.001;
             conf.polar_stable_every_n = 7;
-            conf.polar_best_inv_multip_n = 6;
+            conf.polar_best_inv_every_n = 6;
             break;
         }
 

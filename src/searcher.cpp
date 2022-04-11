@@ -2264,13 +2264,10 @@ struct branch_type_total{
 
 void Searcher::setup_branch_strategy()
 {
-    if (sumConflicts >= branch_strategy_change) {
-        branch_strategy_change += 10000;
-        branch_strategy_change *= 1.1;
-        branch_strategy_at++;
-    } else {
-        return;
-    }
+    if (sumConflicts < branch_strategy_change) return;
+    branch_strategy_change += 10000;
+    branch_strategy_change *= 1.1;
+    branch_strategy_at++;
 
     size_t smallest = 0;
     size_t start = 0;
@@ -2431,8 +2428,12 @@ bool Searcher::must_abort(const lbool status) {
 
 void Searcher::setup_polarity_strategy()
 {
-    if (sumConflicts < polarity_strategy_num*10000) return;
-    if ((polarity_strategy_num % 10) == 0) {
+    if (sumConflicts < polarity_strategy_change) return;
+    polarity_strategy_change += 20000;
+    polarity_strategy_change *= 1.1;
+    polarity_strategy_at++;
+
+    if ((polarity_strategy_at % 10) == 0) {
         polar_stable_longest_trail_this_iter = 0;
     }
 
@@ -2441,16 +2442,14 @@ void Searcher::setup_polarity_strategy()
     if (conf.polarity_mode == PolarityMode::polarmode_automatic) {
         polarity_mode = PolarityMode::polarmode_best;
 
-        if (polarity_strategy_num > 0 &&
-            conf.polar_best_inv_multip_n > 0 &&
-            ((polarity_strategy_num % conf.polar_best_inv_multip_n) == 0))
+        if (conf.polar_best_inv_every_n > 0 &&
+            ((polarity_strategy_at % conf.polar_best_inv_every_n) == 0))
         {
             polarity_mode = PolarityMode::polarmode_best_inv;
         }
 
-        if (polarity_strategy_num > 0 &&
-            conf.polar_stable_every_n > 0 &&
-            ((polarity_strategy_num % conf.polar_stable_every_n) == 0))
+        if (conf.polar_stable_every_n > 0 &&
+            ((polarity_strategy_at % conf.polar_stable_every_n) == 0))
         {
             polarity_mode = PolarityMode::polarmode_stable;
         }
@@ -2459,11 +2458,10 @@ void Searcher::setup_polarity_strategy()
     if (conf.verbosity >= 2) {
         cout << "c [polar]"
         << " polar mode: " << getNameOfPolarmodeType(polarity_mode)
-        << " polarity_strategy_num: " << polarity_strategy_num
+        << " polarity_strategy: " << polarity_strategy_at
 
         << endl;
     }
-    polarity_strategy_num++;
 }
 
 lbool Searcher::distill_clauses_if_needed()
@@ -2574,8 +2572,8 @@ double Searcher::luby(double y, int x)
 void Searcher::setup_restart_strategy()
 {
     if (sumConflicts >= restart_strategy_change) {
-        restart_strategy++;
-        restart_strategy %= 3;
+        restart_strategy_at++;
+        restart_strategy_at %= 3;
         restart_strategy_change+=1000;
         restart_strategy_change *= 1.2;
     } else {
@@ -2587,21 +2585,24 @@ void Searcher::setup_restart_strategy()
     if (conf.restartType == Restart::fixed) {
         params.rest_type = Restart::fixed;
         max_confl_this_restart = conf.fixed_restart_num_confl;
+    } else if (conf.restartType == Restart::never) {
+        params.rest_type = Restart::never;
+        max_confl_this_restart = numeric_limits<int64_t>::max();
     } else {
-        if (params.rest_type == Restart::luby) restart_strategy = 0;
-        if (params.rest_type == Restart::geom) restart_strategy = 1;
-        if (params.rest_type == Restart::glue) restart_strategy = 2;
+        if (params.rest_type == Restart::luby) restart_strategy_at = 0;
+        if (params.rest_type == Restart::geom) restart_strategy_at = 1;
+        if (params.rest_type == Restart::glue) restart_strategy_at = 2;
 
-        if (restart_strategy == 0) {
+        if (restart_strategy_at == 0) {
             params.rest_type = Restart::luby;
             luby_loop_num = 0;
             max_confl_this_restart = luby(2, luby_loop_num) * (double)conf.restart_first;
             luby_loop_num++;
-        } else if (restart_strategy == 1) {
+        } else if (restart_strategy_at == 1) {
             params.rest_type = Restart::geom;
             increasing_phase_size = (double)increasing_phase_size * conf.restart_inc;
             max_confl_this_restart = increasing_phase_size;
-        } else if (restart_strategy == 2) {
+        } else if (restart_strategy_at == 2) {
             params.rest_type = Restart::glue;
             max_confl_this_restart = conf.ratio_glue_geom *increasing_phase_size;
         }
@@ -2679,8 +2680,6 @@ void Searcher::check_need_restart()
             params.needToStopSearch = true;
         }
     }
-
-    assert(params.rest_type != Restart::glue_geom);
 
     //dynamic
     if (params.rest_type == Restart::glue) {

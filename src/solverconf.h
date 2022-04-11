@@ -57,7 +57,6 @@ inline unsigned clean_to_int(ClauseClean t)
 enum class Restart {
     glue
     , geom
-    , glue_geom
     , luby
     , fixed
     , never
@@ -100,14 +99,15 @@ inline std::string restart_type_to_short_string(const Restart type)
         case Restart::luby:
             return "luby";
 
-        case Restart::glue_geom:
-            return "gl/g";
-
         case Restart::fixed:
             return "fixd";
 
         case Restart::never:
             return "neve";
+
+        case Restart::automatic:
+            release_assert(false);
+            return "";
     }
 
     assert(false && "oops, one of the restart types has no string name");
@@ -146,9 +146,6 @@ inline std::string getNameOfRestartType(Restart rest_type)
 
         case Restart::geom:
             return "geometric";
-
-        case Restart::glue_geom:
-            return "regularly switch between glue and geometric";
 
         case Restart::luby:
             return "luby";
@@ -228,7 +225,7 @@ class DLL_PUBLIC SolverConf
         int do_lucky_polar_every_n;
         PolarityMode polarity_mode;
         int polar_stable_every_n;
-        int polar_best_inv_multip_n;
+        int polar_best_inv_every_n;
 
         //Clause cleaning
         uint32_t pred_short_size;

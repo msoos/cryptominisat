@@ -212,7 +212,8 @@ class Searcher : public HyperEngine
         bool   pick_polarity(const uint32_t var);
         void   setup_polarity_strategy();
         void   update_polarities_on_backtrack();
-        uint32_t polarity_strategy_num = 0;
+        uint32_t polarity_strategy_at = 0;
+        uint32_t polarity_strategy_change = 0;
 
         //Stats
         SearchStats stats;
@@ -353,7 +354,7 @@ class Searcher : public HyperEngine
         double luby(double y, int x);
         CMSat::Restart cur_rest_type;
         uint32_t restart_strategy_change = 0;
-        uint32_t restart_strategy = 0;
+        uint32_t restart_strategy_at = 0;
         void adjust_restart_strategy_cutoffs();
         void setup_restart_strategy();
 

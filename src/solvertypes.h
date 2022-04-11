@@ -55,14 +55,15 @@ inline std::string restart_type_to_string(const Restart type)
         case Restart::glue:
             return "glue";
 
+        case Restart::automatic:
+            release_assert(false);
+            return "";
+
         case Restart::geom:
             return "geometric";
 
         case Restart::luby:
             return "luby";
-
-        case Restart::glue_geom:
-            return "glue-geom";
 
         case Restart::fixed:
             return "fixed";
@@ -92,33 +93,6 @@ inline std::string branch_type_to_string(const branch type)
     assert(false && "oops, one of the branch types has no string name");
 
     return "Ooops, undefined!";
-}
-
-inline int restart_type_to_int(const Restart type)
-{
-    switch(type) {
-        case Restart::glue:
-            return 1;
-
-        case Restart::geom:
-            return 2;
-
-        case Restart::luby:
-            return 3;
-
-        case Restart::glue_geom:
-            return 4;
-
-        case Restart::fixed:
-            return 5;
-
-        case Restart::never:
-            return 6;
-    }
-
-        assert(false && "oops, one of the restart types has no string name");
-
-        return 0;
 }
 
 //Removed by which algorithm. NONE = not eliminated

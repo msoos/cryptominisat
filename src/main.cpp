@@ -415,7 +415,7 @@ void Main::add_supported_options()
         , "When to use stable polarities. 0 = always, otherwise every n. Negative is special, see code")
     ("lucky", po::value(&conf.do_lucky_polar_every_n)->default_value(conf.do_lucky_polar_every_n)
         , "Try computing lucky polarities")
-    ("polarbestinvmult", po::value(&conf.polar_best_inv_multip_n)->default_value(conf.polar_best_inv_multip_n)
+    ("polarbestinvmult", po::value(&conf.polar_best_inv_every_n)->default_value(conf.polar_best_inv_every_n)
         , "How often should we use inverted best polarities instead of stable")
     ;
 
@@ -1064,8 +1064,6 @@ void Main::parse_restart_type()
             conf.restartType = Restart::luby;
         else if (type == "glue")
             conf.restartType = Restart::glue;
-        else if (type == "glue-geom")
-            conf.restartType = Restart::glue_geom;
         else throw WrongParam("restart", "unknown restart type");
     }
 }
