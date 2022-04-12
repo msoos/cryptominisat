@@ -56,7 +56,7 @@ void VarDistGen::calc()
         for(Lit l: *cl) {
             data[l.var()].irred.num_times_in_long_clause++;
             data[l.var()].irred.tot_num_lit_of_long_cls_it_appears_in+=cl->size();
-            if (solver->varData[l.var()].polarity ^ !l.sign()) {
+            if (solver->varData[l.var()].stable_polarity ^ !l.sign()) {
                 data[l.var()].irred.satisfies_cl++;
             } else {
                 data[l.var()].irred.falsifies_cl++;
@@ -78,7 +78,7 @@ void VarDistGen::calc()
                             /std::log2(solver->max_cl_act+10e-300);
                 }
 
-                if (solver->varData[l.var()].polarity ^ !l.sign()) {
+                if (solver->varData[l.var()].stable_polarity ^ !l.sign()) {
                     data[l.var()].red.satisfies_cl++;
                 } else {
                     data[l.var()].red.falsifies_cl++;
@@ -95,7 +95,7 @@ void VarDistGen::calc()
                 if (w.red()) {
                     data[l.var()].red.num_times_in_bin_clause++;
                     data[l.var()].red.tot_num_lit_of_bin_it_appears_in+=2;
-                    if (solver->varData[l.var()].polarity ^ !l.sign()) {
+                    if (solver->varData[l.var()].stable_polarity ^ !l.sign()) {
                         data[l.var()].red.satisfies_cl++;
                     } else {
                         data[l.var()].red.falsifies_cl++;
@@ -103,7 +103,7 @@ void VarDistGen::calc()
                 } else {
                     data[l.var()].irred.num_times_in_bin_clause++;
                     data[l.var()].irred.tot_num_lit_of_bin_it_appears_in+=2;
-                    if (solver->varData[l.var()].polarity ^ !l.sign()) {
+                    if (solver->varData[l.var()].stable_polarity ^ !l.sign()) {
                         data[l.var()].irred.satisfies_cl++;
                     } else {
                         data[l.var()].irred.falsifies_cl++;

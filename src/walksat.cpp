@@ -708,7 +708,7 @@ void WalkSAT::print_statistics_final()
         }
 
         for(size_t i = 0; i < solver->nVars(); i++) {
-            solver->varData[i].polarity = best_assigns[i] == l_True;
+            solver->varData[i].best_polarity = best_assigns[i] == l_True;
         }
     }
 }

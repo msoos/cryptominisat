@@ -81,7 +81,7 @@ lbool Yalsat::main()
                 v *= -1;
             }
         } else {
-            if (!solver->varData[i].polarity) {
+            if (!solver->varData[i].best_polarity) {
                 v *= -1;
             }
         }
@@ -205,7 +205,7 @@ lbool Yalsat::deal_with_solution(int res)
             << yals_minimum(yals) << " clauses unsatisfied");
 
         for(size_t i = 0; i < solver->nVars(); i++) {
-            solver->varData[i].polarity = (yals_deref(yals, i+1) >= 0);
+            solver->varData[i].best_polarity = (yals_deref(yals, i+1) >= 0);
         }
     }
 

@@ -36,6 +36,9 @@ struct VarData
     {
         is_bva = 0;
         occ_simp_tried = 0;
+        stable_polarity = false;
+        best_polarity = false;
+        inv_polarity = false;
     }
 
     ///contains the decision level at which the assignment was made.
@@ -55,8 +58,9 @@ struct VarData
     Removed removed = Removed::none;
 
     ///The preferred polarity of each variable.
-    bool polarity = false;
-    bool best_polarity = false;
+    uint8_t stable_polarity:1;
+    uint8_t best_polarity:1;
+    uint8_t inv_polarity:1;
     bool propagated = false;
     uint8_t is_bva:1;
     uint8_t occ_simp_tried:1;

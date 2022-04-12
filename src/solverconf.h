@@ -118,13 +118,14 @@ inline std::string polarity_mode_to_short_string(PolarityMode polarmode)
 {
     switch(polarmode) {
         case PolarityMode::polarmode_automatic :
-            return "auto";
+            release_assert(false);
+            return "";
         case PolarityMode::polarmode_stable :
             return "stb";
         case PolarityMode::polarmode_best_inv :
-            return "istb";
+            return "ibes";
         case PolarityMode::polarmode_best :
-            return "bstb";
+            return "best";
         case PolarityMode::polarmode_neg :
             return "neg";
         case PolarityMode::polarmode_pos :

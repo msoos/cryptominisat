@@ -595,9 +595,6 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
     varData[v].level = level;
     varData[v].sublevel = trail.size();
     if (!inprocess) {
-        if (polarity_mode == PolarityMode::polarmode_automatic) {
-            varData[v].polarity = !sign;
-        }
         #ifdef STATS_NEEDED
         if (sign) {
             propStats.varSetNeg++;

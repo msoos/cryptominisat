@@ -142,10 +142,8 @@ bool CMSat::Lucky::check_all(bool polar)
         cout << "c [lucky] all " << (int)polar << " worked. Saving phases." << endl;
     }
     for(auto& x: solver->varData) {
-        x.polarity = polar;
         x.best_polarity = polar;
     }
-    solver->longest_trail_ever = solver->nVarsOuter();
     return true;
 }
 
@@ -153,10 +151,9 @@ bool CMSat::Lucky::check_all(bool polar)
 void Lucky::set_polarities_to_enq_val()
 {
     for(uint32_t i = 0; i < solver->nVars(); i++) {
-        solver->varData[i].polarity = solver->value(i) == l_True;
-        solver->varData[i].best_polarity = solver->varData[i].polarity;
+        solver->varData[i].stable_polarity = solver->value(i) == l_True;
+        solver->varData[i].best_polarity = solver->value(i) == l_True;
     }
-    solver->longest_trail_ever = solver->nVarsOuter();
 }
 
 bool CMSat::Lucky::search_fwd_sat(bool polar)

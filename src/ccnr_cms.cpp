@@ -72,7 +72,7 @@ lbool CMS_ccnr::main(const uint32_t num_sls_called)
 
     vector<bool> phases(solver->nVars()+1);
     for(uint32_t i = 0; i < solver->nVars(); i++) {
-        phases[i+1] = solver->varData[i].polarity;
+        phases[i+1] = solver->varData[i].best_polarity;
     }
 
     int res = ls_s->local_search(&phases, solver->conf.yalsat_max_mems*2*1000*1000);
@@ -320,10 +320,9 @@ lbool CMS_ccnr::deal_with_solution(int res, const uint32_t num_sls_called)
         }
 
         for(size_t i = 0; i < solver->nVars(); i++) {
-            solver->varData[i].polarity = ls_s->_best_solution[i+1];
+            solver->varData[i].stable_polarity = ls_s->_best_solution[i+1];
             if (res) {
-                solver->varData[i].best_polarity = solver->varData[i].polarity;
-                solver->longest_trail_ever = solver->nVarsOuter();
+                solver->varData[i].best_polarity = ls_s->_best_solution[i+1];
             }
         }
     }

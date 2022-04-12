@@ -1329,7 +1329,6 @@ lbool Searcher::search()
             }
         }
     }
-    print_restart_stat();
     max_confl_this_restart -= (int64_t)params.conflictsDoneThisRestart;
 
     cancelUntil(0);
@@ -1352,6 +1351,7 @@ lbool Searcher::search()
     #endif
 
     end:
+    print_restart_stat();
     dump_search_loop_stats(myTime);
     return search_ret;
 }
@@ -2030,7 +2030,7 @@ void Searcher::print_restart_stat_line() const
 
 void Searcher::print_restart_stats_base() const
 {
-    cout << "c"
+    cout << "c rst "
          << " " << std::setw(4) << restart_type_to_short_string(params.rest_type)
          << " " << std::setw(4) << polarity_mode_to_short_string(polarity_mode)
          << " " << std::setw(4) << branch_strategy_str_short
@@ -2441,10 +2441,6 @@ void Searcher::setup_polarity_strategy()
     polarity_strategy_change *= 1.1;
     polarity_strategy_at++;
 
-    if ((polarity_strategy_at % 10) == 0) {
-        polar_stable_longest_trail_this_iter = 0;
-    }
-
     //Set to default first
     polarity_mode = conf.polarity_mode;
     if (conf.polarity_mode == PolarityMode::polarmode_automatic) {
@@ -2460,6 +2456,7 @@ void Searcher::setup_polarity_strategy()
             ((polarity_strategy_at % conf.polar_stable_every_n) == 0))
         {
             polarity_mode = PolarityMode::polarmode_stable;
+            longest_trail_ever_stable = 0;
         }
     }
 
@@ -3145,27 +3142,33 @@ void Searcher::consolidate_watches(const bool full)
 inline void Searcher::update_polarities_on_backtrack()
 {
     if (polarity_mode == PolarityMode::polarmode_stable &&
-        polar_stable_longest_trail_this_iter < trail.size())
+        longest_trail_ever_stable < trail.size())
     {
         for(const auto t: trail) {
-            if (t.lit == lit_Undef) {
-                continue;
-            }
-            varData[t.lit.var()].polarity = !t.lit.sign();
+            if (t.lit == lit_Undef) continue;
+            varData[t.lit.var()].stable_polarity = !t.lit.sign();
         }
-        polar_stable_longest_trail_this_iter = trail.size();
-        //cout << "polar_stable_longest_trail: " << polar_stable_longest_trail << endl;
+        longest_trail_ever_stable = trail.size();
     }
 
-    //Just update in case it's the longest
-    if (longest_trail_ever < trail.size()) {
+    if (polarity_mode == PolarityMode::polarmode_best
+        && longest_trail_ever_best < trail.size())
+    {
         for(const auto t: trail) {
-            if (t.lit == lit_Undef) {
-                continue;
-            }
+            if (t.lit == lit_Undef) continue;
             varData[t.lit.var()].best_polarity = !t.lit.sign();
         }
-        longest_trail_ever = trail.size();
+        longest_trail_ever_best = trail.size();
+    }
+
+    if (polarity_mode == PolarityMode::polarmode_best_inv
+        && longest_trail_ever_inv < trail.size())
+    {
+        for(const auto t: trail) {
+            if (t.lit == lit_Undef) continue;
+            varData[t.lit.var()].inv_polarity = !t.lit.sign();
+        }
+        longest_trail_ever_inv = trail.size();
     }
 }
 

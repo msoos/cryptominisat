@@ -1614,7 +1614,8 @@ lbool Solver::simplify_problem_outside(const string* strategy)
 
 void Solver::reset_for_solving()
 {
-    longest_trail_ever = 0; //reset: probably new clauses, changed assumptions
+    longest_trail_ever_best = 0;
+    longest_trail_ever_inv = 0;
     fresh_solver = false;
     set_assumptions();
     #ifdef SLOW_DEBUG
@@ -1631,7 +1632,6 @@ void Solver::reset_for_solving()
 
     //Reset parameters
     luby_loop_num = 0;
-    polar_stable_longest_trail_this_iter = 0;
     conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
     solveStats.num_simplify_this_solve_call = 0;
     if (conf.verbosity >= 6) {

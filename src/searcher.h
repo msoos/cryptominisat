@@ -582,10 +582,10 @@ inline bool Searcher::pick_polarity(const uint32_t var)
             assert(false);
 
         case PolarityMode::polarmode_stable:
-            return varData[var].polarity;
+            return varData[var].stable_polarity;
 
         case PolarityMode::polarmode_best_inv:
-            return !varData[var].best_polarity;
+            return !varData[var].inv_polarity;
 
         case PolarityMode::polarmode_best:
             return varData[var].best_polarity;
