@@ -55,12 +55,12 @@ inline unsigned clean_to_int(ClauseClean t)
 }
 
 enum class Restart {
-    glue
-    , geom
-    , luby
-    , fixed
-    , never
-    , automatic
+    glue = 0
+    , geom = 1
+    , luby = 2
+    , fixed = 3
+    , never = 4
+    , automatic = 5
 };
 
 inline std::string getNameOfPolarmodeType(PolarityMode polarmode)

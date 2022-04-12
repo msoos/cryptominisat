@@ -668,8 +668,8 @@ void SQLiteStats::restart(
     sqlite3_bind_int64(stmt, bindAt++, search->getTrailSize());
 
     //strategy
-    sqlite3_bind_int(stmt, bindAt++, branch_type_to_int(solver->branch_strategy));
-    sqlite3_bind_int(stmt, bindAt++, restart_type_to_int(rest_type));
+    sqlite3_bind_int(stmt, bindAt++, (int)solver->branch_strategy);
+    sqlite3_bind_int(stmt, bindAt++, (int)rest_type);
 
     run_sqlite_step(stmt, rst_dat_type_to_str(type), bindAt);
 }

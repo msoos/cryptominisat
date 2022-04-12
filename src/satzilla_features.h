@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include <cstdint>
 #include <string>
 #include <cmath>
+#include "constants.h"
 
 namespace CMSat {
 
