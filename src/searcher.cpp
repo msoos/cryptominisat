@@ -1684,7 +1684,7 @@ Clause* Searcher::handle_last_confl(
     int32_t& ID
 ) {
     #ifdef STATS_NEEDED
-    bool to_dump = false;
+    bool to_track = false;
     double myrnd = mtrand.randDblExc();
     //Unfortunately, we have to change the ratio data dumped as time goes on
     //or we run out of space on CNFs that take millions(!) of conflicts
@@ -1697,7 +1697,7 @@ Clause* Searcher::handle_last_confl(
         decaying_ratio = ::pow(decaying_ratio, 1.1);
     }
     if (learnt_clause.size() > 2 && myrnd <= (conf.dump_individual_cldata_ratio*decaying_ratio)) {
-        to_dump = true;
+        to_track = true;
     }
     #endif
 
@@ -1721,6 +1721,7 @@ Clause* Searcher::handle_last_confl(
         cl->isRed = true;
         cl->stats.glue = glue;
         cl->stats.ID = ID;
+        cl->stats.is_tracked = to_track;
         #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
         red_stats_extra.push_back(ClauseStatsExtra());
         cl->stats.extra_pos = red_stats_extra.size()-1;
@@ -1770,7 +1771,7 @@ Clause* Searcher::handle_last_confl(
     if (solver->sqlStats
         && drat
         && conf.dump_individual_restarts_and_clauses
-        && to_dump
+        && to_track
     ) {
         assert(cl); //we only dump non-binaries to SQL
         dump_this_many_cldata_in_stream--;

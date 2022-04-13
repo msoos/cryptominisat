@@ -514,11 +514,7 @@ void ReduceDB::dump_sql_cl_data(
     for(size_t i = 0; i < all_learnt.size(); i++) {
         ClOffset offs = all_learnt[i];
         Clause* cl = solver->cl_alloc.ptr(offs);
-
-        //Only if selected to be dumped
-        if (cl->stats.ID == 0) {
-            continue;
-        }
+        if (!cl->stats.is_tracked) continue;
 
         const bool locked = solver->clause_locked(*cl, offs);
         ClauseStatsExtra& stats_extra = solver->red_stats_extra[cl->stats.extra_pos];

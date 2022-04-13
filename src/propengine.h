@@ -494,7 +494,7 @@ inline PropResult PropEngine::handle_normal_prop_fail(
 
     //Update stats
     #ifdef STATS_NEEDED
-    if (!inprocess) {
+    if (!inprocess && c.red()) {
         red_stats_extra[c.stats.extra_pos].conflicts_made++;
     }
     #endif
