@@ -52,8 +52,10 @@ def set_up_parser():
                       help="Number of samples")
     parser.add_option("--noise", "-k", dest="noise", default=0.1, type=float,
                       help="Ratio of noise")
-    parser.add_option("--tolerance", "-i", dest="tolerance", default=1, type=int,
-                      help="Threshold")
+    parser.add_option("--tolerance", "-t", dest="tolerance", default=None, type=int,
+                      help="Tolerance for error. It is set AUTOMATICALLY if you don't set it here. It will be set to EXACTLY the actual error, so you will get a SAT instance.")
+    #parser.add_option("--autotolerance", dest="autotolerance", action="store_true", default=False,
+                      #help="Set tolerance automatically to PERFECT match. Default.")
 
     return parser
 
@@ -64,11 +66,10 @@ if __name__ == "__main__":
     parser = set_up_parser()
     (opts, args) = parser.parse_args()
 
-    print("c Seed:      %3d" % opts.seed)
-    print("c n:         %3d" % opts.n)
-    print("c Samples:   %3d" % opts.samples)
-    print("c Noise:       %-3.2f" % opts.noise)
-    print("c Tolerance: %3d" % opts.tolerance)
+    print("c Seed:          %3d" % opts.seed)
+    print("c n:             %3d" % opts.n)
+    print("c Samples:       %3d" % opts.samples)
+    print("c Noise:           %-3.2f" % opts.noise)
     random.seed(opts.seed)
 
     # y[i] = set randomly [[output]]
@@ -106,6 +107,15 @@ if __name__ == "__main__":
         else:
             correct_eqs.append(True)
         outputs.append(out)
+
+    print("c Tncorrect eqs: %3d" %num_incorrect_eqs)
+    tolerance=None
+    if opts.tolerance is None:
+        tolerance = num_incorrect_eqs
+        print("c -------------------- setting tolerance AUTOMATICALLY, since '--tolerance' was not set")
+    else:
+        tolerance = opts.tolerance
+    print("c Tolerance:     %3d" % tolerance)
 
     # print
     print("c equations. FUN[i2]*INPUT[i][i2]")
@@ -171,9 +181,29 @@ if __name__ == "__main__":
         out +="0"
         print(out)
 
-    # make noise zero
+    # get noise
+    print("c Num equations: ", opts.samples)
+    print("c Incorrect equations: ", num_incorrect_eqs)
+    print("c Tolerance: ", tolerance)
+    if num_incorrect_eqs > tolerance:
+        print("c this will be UNSAT for sure. Tolerance is smaller than the number of Incorrect euqations.")
+
+    out = "b "
     for i in range(opts.samples):
-        print("-%d 0" % vars_noise[i])
+        out +="-%d " % vars_noise[i]
+    out += "0 %d" % (opts.samples-tolerance)
+    print(out)
+
+    # print correct output
+    out = "c correct output is: "
+    for i in range(opts.n):
+        val = fun[i]
+        if val:
+            out+= "%d " % vars_fun[i]
+        else:
+            out+= "-%d " % vars_fun[i]
+    out+="0"
+    print(out)
 
 
 
