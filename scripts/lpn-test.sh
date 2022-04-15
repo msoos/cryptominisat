@@ -12,9 +12,10 @@ echo "noise  : $noise"
 
 
 for seed in {1..20}; do
-  ./lpn-gen.py -m $outputs -n $funlen --noise $noise -s $seed > tmp
-  ../build/cryptominisat5 tmp > tmp_out
-  ./check_lpn_solution.py tmp tmp_out
+  tmpfname="tmp-$1-$2-$3"
+  ./lpn-gen.py -m $outputs -n $funlen --noise $noise -s $seed > "$tmpfname-$seed"
+  /usr/bin/time --verbose ../build/cryptominisat5 "$tmpfname-$seed" > "$tmpfname-$seed-out"
+  ./check_lpn_solution.py "$tmpfname-$seed" "$tmpfname-$seed-out"
   out=$?
   
   if [[ "$out" -eq "0" ]]; then

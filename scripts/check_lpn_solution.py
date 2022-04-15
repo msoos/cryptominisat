@@ -105,5 +105,5 @@ for v,val in corr_sol.items():
         exit(-1)
     assert sol[v] == corr_sol[v]
 
-print("OK, checked all solution values: %s" % corr_sol)
+print("OK, SAT, checked all solution values") #: %s" % corr_sol)
 exit(0)
