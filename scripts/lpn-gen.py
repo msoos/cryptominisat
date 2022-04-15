@@ -196,14 +196,18 @@ if __name__ == "__main__":
 
     # print correct output
     out = "c correct output is: "
-    for i in range(opts.n):
-        val = fun[i]
-        if val:
-            out+= "%d " % vars_fun[i]
-        else:
-            out+= "-%d " % vars_fun[i]
-    out+="0"
+    if num_incorrect_eqs <= tolerance:
+        out += "SAT "
+        for i in range(opts.n):
+            val = fun[i]
+            if val:
+                out+= "%d " % vars_fun[i]
+            else:
+                out+= "-%d " % vars_fun[i]
+    else:
+        out += "UNSAT "
     print(out)
+
 
 
 
