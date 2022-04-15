@@ -190,6 +190,7 @@ public:
     LitStats litStats;
     int32_t clauseID = 0;
     int64_t restartID = 1;
+    SQLStats* sqlStats = NULL;
 
     //Temporaries
     vector<uint32_t> seen;

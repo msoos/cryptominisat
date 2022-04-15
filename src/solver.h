@@ -281,7 +281,7 @@ class Solver : public Searcher
         size_t mem_used() const;
         void dump_memory_stats_to_sql();
         void dump_clauses_at_finishup_as_last();
-        void set_sqlite(string filename);
+        void set_sqlite(const string filename);
         //Not Private for testing (maybe could be called from outside)
         bool renumber_variables(bool must_renumber = true);
 

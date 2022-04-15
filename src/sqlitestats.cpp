@@ -30,10 +30,14 @@ THE SOFTWARE.
 #include <string>
 #include <cmath>
 #include <time.h>
+#include <utility>
+
 #include "constants.h"
 #include "reducedb.h"
 #include "sql_tablestructure.h"
 #include "varreplacer.h"
+
+using std::make_pair;
 
 #define bind_null_or_double(stmt,bindat,stucture,func) \
 { \
@@ -137,6 +141,8 @@ SQLiteStats::~SQLiteStats()
     if (!setup_ok)
         return;
 
+    dump_id_confl_cache();
+
     //Free all the prepared statements
     del_prepared_stmt(stmtRst);
     del_prepared_stmt(stmtVarRst);
@@ -150,6 +156,7 @@ SQLiteStats::~SQLiteStats()
     del_prepared_stmt(stmt_delete_cl);
     del_prepared_stmt(stmt_update_id);
     del_prepared_stmt(stmt_set_id_confl);
+    del_prepared_stmt(stmt_set_id_confl_1000);
     del_prepared_stmt(stmt_var_data_picktime);
     del_prepared_stmt(stmt_var_data_fintime);
     del_prepared_stmt(stmt_dec_var_clid);
@@ -185,6 +192,7 @@ bool SQLiteStats::setup(const Solver* solver)
     init("restart_dat_for_cl", &stmtClRst);
     init("reduceDB", &stmtReduceDB);
     init("reduceDB_common", &stmtReduceDB_common);
+    init("set_id_confl", &stmt_set_id_confl_1000, 1000);
     init("set_id_confl", &stmt_set_id_confl);
     #ifdef STATS_NEEDED
     init("var_data_fintime", &stmt_var_data_fintime);
@@ -353,9 +361,11 @@ void SQLiteStats::run_sqlite_step(
     const char* name,
     const uint32_t bindAt)
 {
-    assert(query_to_size.find(name) != query_to_size.end());
-    //SQLite numbers them from 1, so it's off-by-one
-    assert(query_to_size[name]+1 == bindAt);
+    if (name != NULL) {
+        assert(query_to_size.find(name) != query_to_size.end());
+        //SQLite numbers them from 1, so it's off-by-one
+        assert(query_to_size[name]+1 == bindAt);
+    }
 
     int rc = sqlite3_step(stmt);
     if (rc != SQLITE_DONE) {
@@ -382,8 +392,7 @@ void SQLiteStats::run_sqlite_step(
     }
 }
 
-
-void SQLiteStats::init(const char* name, sqlite3_stmt** stmt)
+void SQLiteStats::init(const char* name, sqlite3_stmt** stmt, uint32_t num)
 {
     vector<string> cols = get_columns(name);
     query_to_size[string(name)] = cols.size();
@@ -398,10 +407,10 @@ void SQLiteStats::init(const char* name, sqlite3_stmt** stmt)
         ss << "`" << cols[i] << "`";
     }
     ss << ") values ";
-    writeQuestionMarks(
-        numElems
-        , ss
-    );
+    for(uint32_t i = 0; i < num; i++) {
+        writeQuestionMarks(numElems, ss);
+        if (i+1 < num) ss << ",";
+    }
     ss << ";";
 
     //Prepare the statement
@@ -471,17 +480,34 @@ void SQLiteStats::time_passed_min(
     run_sqlite_step(stmtTimePassed, "timepassed", bindAt);
 }
 
+void SQLiteStats::dump_id_confl_cache()
+{
+    if (id_conf_cache.size() == 1000) {
+        int bindAt = 1;
+        for(auto const& elem: id_conf_cache) {
+            sqlite3_bind_int64(stmt_set_id_confl_1000, bindAt++, elem.first);
+            sqlite3_bind_int64(stmt_set_id_confl_1000, bindAt++, elem.second);
+        }
+        run_sqlite_step(stmt_set_id_confl_1000, NULL, 0);
+    } else {
+        for(auto const& elem: id_conf_cache) {
+            int bindAt = 1;
+            sqlite3_bind_int64(stmt_set_id_confl, bindAt++, elem.first);
+            sqlite3_bind_int64(stmt_set_id_confl, bindAt++, elem.second);
+            run_sqlite_step(stmt_set_id_confl, "set_id_confl", bindAt);
+        }
+    }
+    id_conf_cache.clear();
+}
+
 void SQLiteStats::set_id_confl(
-        const uint32_t id
+        const int32_t id
         , const uint64_t sumConflicts)
 {
     assert(id != 0);
-
-    int bindAt = 1;
-    sqlite3_bind_int64(stmt_set_id_confl, bindAt++, id);
-    sqlite3_bind_int64(stmt_set_id_confl, bindAt++, sumConflicts);
-
-    run_sqlite_step(stmt_set_id_confl, "set_id_confl", bindAt);
+    id_conf_cache.push_back(make_pair(id, sumConflicts));
+    if (id_conf_cache.size() < 1000) return;
+    else dump_id_confl_cache();
 }
 
 #ifdef STATS_NEEDED

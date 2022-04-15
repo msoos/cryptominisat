@@ -68,7 +68,7 @@ public:
     ) = 0;
 
     virtual void set_id_confl(
-        const uint32_t id
+        const int32_t id
         , const uint64_t sumConflicts
     ) = 0;
 

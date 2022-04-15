@@ -26,6 +26,9 @@ THE SOFTWARE.
 #include "sqlstats.h"
 #include <sqlite3.h>
 #include <map>
+#include <utility>
+
+using std::pair;
 
 #ifdef STATS_NEEDED
 #include "satzilla_features.h"
@@ -63,8 +66,10 @@ public:
         , uint64_t mem_used_mb
     ) override;
 
+    vector<pair<int32_t, uint64_t>> id_conf_cache;
+    void dump_id_confl_cache();
     virtual void set_id_confl(
-        const uint32_t id
+        const int32_t id
         , const uint64_t sumConflicts
     ) override;
 
@@ -168,7 +173,7 @@ private:
 
     bool connectServer(const Solver* solver);
     bool add_solverrun(const Solver* solver);
-    void init(const char* name, sqlite3_stmt** stmt);
+    void init(const char* name, sqlite3_stmt** stmt, uint32_t num = 1);
     vector<string> get_columns(const char* tablename);
 
     void addStartupData();
@@ -201,6 +206,7 @@ private:
     sqlite3_stmt *stmt_delete_cl = NULL;
     sqlite3_stmt *stmt_update_id = NULL;
     sqlite3_stmt *stmt_set_id_confl = NULL;
+    sqlite3_stmt *stmt_set_id_confl_1000 = NULL;
     sqlite3_stmt *stmt_var_data_fintime = NULL;
     sqlite3_stmt *stmt_var_data_picktime = NULL;
     sqlite3_stmt *stmt_dec_var_clid = NULL;

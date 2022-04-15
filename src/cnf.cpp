@@ -749,7 +749,7 @@ void CNF::add_drat(FILE* os, bool add_ID) {
     }
     drat->setFile(os);
     drat->set_sumconflicts_ptr(&sumConflicts);
-    drat->set_sqlstats_ptr(NULL);
+    drat->set_sqlstats_ptr(sqlStats);
 }
 
 vector<uint32_t> CNF::get_outside_lit_incidence()

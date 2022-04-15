@@ -140,8 +140,6 @@ class Searcher : public HyperEngine
         ConflictData find_conflict_level(PropBy& pb);
         uint32_t chrono_backtrack = 0;
         uint32_t non_chrono_backtrack = 0;
-
-        SQLStats* sqlStats = NULL;
         void consolidate_watches(const bool full);
 
         //Gauss

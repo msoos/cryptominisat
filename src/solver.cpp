@@ -154,16 +154,12 @@ Solver::~Solver()
     delete card_finder;
 }
 
-void Solver::set_sqlite(string
-    #ifdef USE_SQLITE3
-    filename
-    #endif
+void Solver::set_sqlite(
+    [[maybe_unused]] const string filename
 ) {
     #ifdef USE_SQLITE3
     sqlStats = new SQLiteStats(filename);
-    if (!sqlStats->setup(this)) {
-        exit(-1);
-    }
+    if (!sqlStats->setup(this)) exit(-1);
     if (conf.verbosity >= 4) {
         cout << "c Connected to SQLite server" << endl;
     }
@@ -172,6 +168,8 @@ void Solver::set_sqlite(string
     << endl;
     std::exit(-1);
     #endif
+
+    if (drat->enabled()) drat->set_sqlstats_ptr(sqlStats);
 }
 
 void Solver::set_shared_data(SharedData* shared_data)

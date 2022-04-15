@@ -34,6 +34,18 @@ THE SOFTWARE.
 using std::vector;
 //#define DEBUG_DRAT
 
+#if 0
+#define DRAT_DEBUG(...) \
+    do { \
+        const uint32_t tmp_num = sprintf((char*)buf_ptr, __VA_ARGS__); \
+        buf_ptr+=tmp_num; \
+        buf_len+=tmp_num; \
+    } while (0)
+#else
+#define DRAT_DEBUG(...) do {} while (0)
+#endif
+
+
 namespace CMSat {
 
 enum DratFlag{fin, deldelay, del, findelay, add, origcl, chain, finalcl, reloc};
@@ -154,7 +166,6 @@ public:
         if (must_delete_next) {
             byteDRUPdID(clauseID);
         } else {
-            if (sqlStats) sqlStats->set_id_confl(clauseID, *sumConflicts);
             byteDRUPaID(clauseID);
         }
         return *this;
@@ -216,7 +227,6 @@ public:
             byteDRUPdID(cl.stats.ID);
             for(const Lit l: cl) byteDRUPd(l);
         } else {
-            if (sqlStats) sqlStats->set_id_confl(cl.stats.ID, *sumConflicts);
             byteDRUPaID(cl.stats.ID);
             for(const Lit l: cl) byteDRUPa(l);
         }
@@ -266,11 +276,15 @@ public:
                     if (buf_len > 1048576) {
                         binDRUP_flush();
                     }
+                    if (adding && sqlStats) sqlStats->set_id_confl(cl_id, *sumConflicts);
+                    DRAT_DEBUG("c set_id_confl (%d, %lld), adding: %d\n", cl_id, *sumConflicts, adding);
                 }
+                cl_id = 0;
                 must_delete_next = false;
                 break;
 
             case DratFlag::deldelay:
+                adding = false;
                 assert(!delete_filled);
                 forget_delay();
                 *del_ptr++ = 'd';
@@ -296,6 +310,8 @@ public:
                 break;
 
             case DratFlag::add:
+                adding = true;
+                cl_id = 0;
                 *buf_ptr++ = 'a';
                 buf_len++;
                 if (!bindrat) {
@@ -315,6 +331,7 @@ public:
                 break;
 
             case DratFlag::del:
+                adding = false;
                 *buf_ptr++ = 'd';
                 buf_len++;
                 if (!bindrat) {
@@ -324,6 +341,7 @@ public:
                 break;
 
             case DratFlag::reloc:
+                adding = false;
                 forget_delay();
                 *buf_ptr++ = 'r';
                 buf_len++;
@@ -334,6 +352,7 @@ public:
                 break;
 
             case DratFlag::finalcl:
+                adding = false;
                 forget_delay();
                 *buf_ptr++ = 'f';
                 buf_len++;
@@ -344,6 +363,7 @@ public:
                 break;
 
             case DratFlag::origcl:
+                adding = false;
                 forget_delay();
                 *buf_ptr++ = 'o';
                 buf_len++;
@@ -394,14 +414,14 @@ private:
 
     void byteDRUPaID(const int32_t id)
     {
+        if (adding && cl_id == 0) cl_id = id;
         if (bindrat) {
             for(unsigned i = 0; i < 6; i++) {
                 *buf_ptr++ = (id>>(8*i))&0xff;
                 buf_len++;
             }
         } else {
-            uint32_t num = sprintf(
-                (char*)buf_ptr, "%d ", id);
+            uint32_t num = sprintf((char*)buf_ptr, "%d ", id);
             buf_ptr+=num;
             buf_len+=num;
         }
@@ -415,8 +435,7 @@ private:
                 del_len++;
             }
         } else {
-            uint32_t num = sprintf(
-                (char*)del_ptr, "%d ", id);
+            uint32_t num = sprintf((char*)del_ptr, "%d ", id);
             del_ptr+=num;
             del_len+=num;
         }
@@ -444,6 +463,8 @@ private:
         }
     }
 
+    bool adding = false;
+    int32_t cl_id = 0;
     FILE* drup_file = nullptr;
     vector<uint32_t>& interToOuterMain;
     uint64_t* sumConflicts = nullptr;
