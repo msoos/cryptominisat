@@ -418,7 +418,7 @@ bool OccSimplifier::clean_clause(
     }
 
     if (i-j > 0) {
-        cl.stats.ID = ++solver->clauseID;
+        INC_ID(cl.stats.ID);
         (*solver->drat) << add << cl << fin << findelay;
     } else {
         solver->drat->forget_delay();
@@ -495,7 +495,7 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
 
     //Drat
     if (i - j > 0) {
-        cl.stats.ID = ++solver->clauseID;
+        INC_ID(cl.stats.ID);
         (*solver->drat) << add << cl << fin << findelay;
     } else {
         solver->drat->forget_delay();
@@ -1809,7 +1809,8 @@ vector<ITEGate> OccSimplifier::recover_ite_gates()
     return or_gates;
 }
 
-bool OccSimplifier::occ_rem_with_gates()
+// Checks that both inputs l1 & l2 are in the Clause. If so, replaces it with the RHS
+bool OccSimplifier::lit_rem_with_or_gates()
 {
     assert(solver->okay());
     assert(solver->prop_at_head());
@@ -1877,7 +1878,7 @@ bool OccSimplifier::occ_rem_with_gates()
             std::sort(cl->begin(), cl->end());
             removeWCl(solver->watches[l2], off);
             removeWCl(solver->watches[l1], off); //TODO we can NOT copy +get rid of this, speedup!
-            cl->stats.ID = ++solver->clauseID;
+            INC_ID(cl->stats.ID);
             (*solver->drat) << add << *cl << fin << findelay;
             solver->watches[gate.rhs].push(Watched(off, cl->abst));
             n_occurs[l1.toInt()]--;
@@ -2016,7 +2017,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                     if (!eliminate_vars()) {
                         continue;
                     }
-                    if (solver->conf.varelim_check_resolvent_subs && !occ_rem_with_gates()) {
+                    if (solver->conf.varelim_check_resolvent_subs && !lit_rem_with_or_gates()) {
                         continue;
                     }
                 }
@@ -5009,7 +5010,7 @@ bool OccSimplifier::remove_literal(
     added_cl_to_var.touch(toRemoveLit.var());
     cl.recalc_abst_if_needed();
 
-    cl.stats.ID = ++solver->clauseID;
+    INC_ID(cl.stats.ID);
     (*solver->drat) << add << cl << fin << findelay;
     if (!cl.red()) {
         n_occurs[toRemoveLit.toInt()]--;

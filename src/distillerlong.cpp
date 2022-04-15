@@ -471,7 +471,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     Lit cl_lit1 = cl[0];
     Lit cl_lit2 = cl[1];
     cl.disabled = true;
-    (*solver->drat) << deldelay << cl << fin;
+    *solver->drat << deldelay << cl << fin;
     const bool red = cl.red();
     if (red) {
         assert(!also_remove);
@@ -627,7 +627,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     // deleted as per cl_last_in_solver
     solver->free_cl(offset, false);
     Clause *cl2 = solver->add_clause_int(lits, red, &backup_stats);
-    (*solver->drat) << findelay;
+    *solver->drat << findelay;
 
     if (cl2 != NULL) {
         //This new, distilled clause has been distilled now.

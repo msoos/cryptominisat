@@ -67,6 +67,11 @@ public:
         , uint64_t mem_used_mb
     ) = 0;
 
+    virtual void set_id_confl(
+        const uint32_t id
+        , const uint64_t sumConflicts
+    ) = 0;
+
     #ifdef STATS_NEEDED
     virtual void satzilla_features(
         const Solver* solver
@@ -132,6 +137,11 @@ public:
     virtual void cl_last_in_solver(
         const Solver* solver
         , const uint64_t clid
+    ) = 0;
+
+    virtual void update_id(
+        const uint32_t old_id
+        , const uint32_t new_id
     ) = 0;
 
     virtual void clause_stats(

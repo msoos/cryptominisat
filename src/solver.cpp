@@ -200,10 +200,7 @@ bool Solver::add_xor_clause_inter(
     }
     clean_xor_no_prop(ps, rhs);
 
-    if (ps.size() >= (0x01UL << 28)) {
-        throw CMSat::TooLongClauseError();
-    }
-    //cout << "Cleaned ps is: " << ps << endl;
+    if (ps.size() >= (0x01UL << 28)) throw CMSat::TooLongClauseError();
 
     if (ps.empty()) {
         if (rhs) {
@@ -403,9 +400,7 @@ Clause* Solver::add_clause_int(
     assert(okay());
     assert(decisionLevel() == 0);
     assert(!attach_long || qhead == trail.size());
-    #ifdef VERBOSE_DEBUG
-    cout << "add_clause_int clause " << lits << endl;
-    #endif //VERBOSE_DEBUG
+    VERBOSE_PRINT("add_clause_int clause " << lits);
 
     add_clause_int_tmp_cl = lits;
     vector<Lit>& ps = add_clause_int_tmp_cl;
@@ -418,15 +413,10 @@ Clause* Solver::add_clause_int(
         }
         return NULL;
     }
-
-    #ifdef VERBOSE_DEBUG
-    cout << "add_clause_int final clause: " << ps << endl;
-    #endif
+    VERBOSE_PRINT("add_clause_int final clause: " << ps);
 
     //If caller required final set of lits, return it.
-    if (finalLits) {
-        *finalLits = ps;
-    }
+    if (finalLits) *finalLits = ps;
 
     int32_t ID;
     if (remove_drat) {
@@ -495,6 +485,7 @@ Clause* Solver::add_clause_int(
             c->isRed = red;
             if (cl_stats) {
                 c->stats = *cl_stats;
+                STATS_DO(if (ID != c->stats.ID && sqlStats) sqlStats->update_id(c->stats.ID, ID));
                 c->stats.ID = ID;
             }
             if (red && cl_stats == NULL) {
@@ -1681,6 +1672,7 @@ lbool Solver::solve_with_assumptions(
     const bool only_sampling_solution
 ) {
     if (drat->enabled()) {
+        drat->set_sqlstats_ptr(sqlStats);
         int32_t* v = new int;
         *v = nVars()+1;
         #ifdef USE_TBUDDY

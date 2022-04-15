@@ -23,7 +23,10 @@ THE SOFTWARE.
 #ifndef __DRAT_H__
 #define __DRAT_H__
 
+#include "constants.h"
 #include "clause.h"
+#include "sqlstats.h"
+
 #include <vector>
 #include <iostream>
 #include <stdio.h>
@@ -52,6 +55,10 @@ public:
     }
 
     virtual void set_sumconflicts_ptr(uint64_t*)
+    {
+    }
+
+    virtual void set_sqlstats_ptr(SQLStats*)
     {
     }
 
@@ -137,14 +144,18 @@ public:
         sumConflicts = _sumConflicts;
     }
 
+    virtual void set_sqlstats_ptr(SQLStats* _sqlStats) override
+    {
+        sqlStats = _sqlStats;
+    }
+
     virtual Drat& operator<<(const int32_t clauseID) override
     {
         if (must_delete_next) {
             byteDRUPdID(clauseID);
-//             byteDRUPdID(*sumConflicts);
         } else {
+            if (sqlStats) sqlStats->set_id_confl(clauseID, *sumConflicts);
             byteDRUPaID(clauseID);
-//             byteDRUPaID(*sumConflicts);
         }
         return *this;
     }
@@ -203,14 +214,11 @@ public:
     {
         if (must_delete_next) {
             byteDRUPdID(cl.stats.ID);
-            for(const Lit l: cl) {
-                byteDRUPd(l);
-            }
+            for(const Lit l: cl) byteDRUPd(l);
         } else {
+            if (sqlStats) sqlStats->set_id_confl(cl.stats.ID, *sumConflicts);
             byteDRUPaID(cl.stats.ID);
-            for(const Lit l: cl) {
-                byteDRUPa(l);
-            }
+            for(const Lit l: cl) byteDRUPa(l);
         }
 
         return *this;
@@ -439,10 +447,7 @@ private:
     FILE* drup_file = nullptr;
     vector<uint32_t>& interToOuterMain;
     uint64_t* sumConflicts = nullptr;
-    #ifdef STATS_NEEDED
-    bool id_add_set = false;
-    bool id_del_set = false;
-    #endif
+    SQLStats* sqlStats = NULL;
 };
 
 }

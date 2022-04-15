@@ -61,12 +61,8 @@ Sub0Ret SubsumeStrengthen::backw_sub_with_long(const ClOffset offset)
     );
 
     //If irred is subsumed by redundant, make the redundant into irred
-    if (cl.red()
-        && ret.subsumedIrred
-    ) {
-        #ifdef STATS_NEEDED
-        solver->stats_del_cl(&cl);
-        #endif
+    if (cl.red() && ret.subsumedIrred) {
+        STATS_DO(solver->stats_del_cl(&cl));
         cl.makeIrred();
         solver->litStats.redLits -= cl.size();
         solver->litStats.irredLits += cl.size();
@@ -131,9 +127,7 @@ Sub0Ret SubsumeStrengthen::subsume_and_unlink(
                 ret.stats_extra);
         }
         #endif
-        #ifdef VERBOSE_DEBUG
-        cout << "-> subsume removing:" << *tmpcl << endl;
-        #endif
+        VERBOSE_PRINT("-> subsume removing:" << *tmpcl);
 
         ret.subsumedIrred |= !tmpcl->red();
         simplifier->unlink_clause(off, true, false, true);

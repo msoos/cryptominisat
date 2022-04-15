@@ -722,7 +722,7 @@ bool VarReplacer::handleUpdatedClause(
         return true;
     }
 
-    c.stats.ID = ++solver->clauseID;
+    INC_ID(c.stats.ID);
     (*solver->drat) << add << c << fin << findelay;
 
     runStats.bogoprops += 3;
@@ -970,12 +970,12 @@ bool VarReplacer::replace(
     }
 
     int32_t ID = ++solver->clauseID;
-    uint64_t ID2 = ++solver->clauseID;
+    int32_t ID2 = ++solver->clauseID;
     (*solver->drat)
     << add << ID << ~lit1 << lit2 << fin
     << add << ID2 << lit1 << ~lit2 << fin;
-    bins_for_frat.push_back(std::tuple<uint64_t, Lit, Lit>{ID, ~lit1, lit2});
-    bins_for_frat.push_back(std::tuple<uint64_t, Lit, Lit>{ID2, lit1, ~lit2});
+    bins_for_frat.push_back(std::tuple<int32_t, Lit, Lit>{ID, ~lit1, lit2});
+    bins_for_frat.push_back(std::tuple<int32_t, Lit, Lit>{ID2, lit1, ~lit2});
 
     //None should be removed, only maybe queued for replacement
     assert(solver->varData[lit1.var()].removed == Removed::none);
@@ -1079,16 +1079,12 @@ bool VarReplacer::add_xor_as_bins(const BinaryXor& bin_xor)
     ps_tmp[0] = Lit(bin_xor.vars[0], false);
     ps_tmp[1] = Lit(bin_xor.vars[1], true ^ bin_xor.rhs);
     solver->add_clause_int(ps_tmp);
-    if (!solver->ok) {
-        return false;
-    }
+    if (!solver->ok) return false;
 
     ps_tmp[0] = Lit(bin_xor.vars[0], true);
     ps_tmp[1] = Lit(bin_xor.vars[1], false ^ bin_xor.rhs);
     solver->add_clause_int(ps_tmp);
-    if (!solver->ok) {
-        return false;
-    }
+    if (!solver->ok) return false;
 
     return true;
 }
@@ -1112,9 +1108,7 @@ bool VarReplacer::replace_if_enough_is_found(const size_t limit, uint64_t* bogop
 
     const set<BinaryXor>& xors_found = scc_finder->get_binxors();
     for(BinaryXor bin_xor: xors_found) {
-        if (!add_xor_as_bins(bin_xor)) {
-            return false;
-        }
+        if (!add_xor_as_bins(bin_xor)) return false;
 
         if (solver->value(bin_xor.vars[0]) == l_Undef
             && solver->value(bin_xor.vars[1]) == l_Undef

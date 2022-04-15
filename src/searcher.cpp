@@ -1721,8 +1721,8 @@ Clause* Searcher::handle_last_confl(
         cl->isRed = true;
         cl->stats.glue = glue;
         cl->stats.ID = ID;
-        cl->stats.is_tracked = to_track;
         #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+        cl->stats.is_tracked = to_track;
         red_stats_extra.push_back(ClauseStatsExtra());
         cl->stats.extra_pos = red_stats_extra.size()-1;
         auto& ext_stats = red_stats_extra[cl->stats.extra_pos];

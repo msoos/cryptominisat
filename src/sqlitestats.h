@@ -63,6 +63,11 @@ public:
         , uint64_t mem_used_mb
     ) override;
 
+    virtual void set_id_confl(
+        const uint32_t id
+        , const uint64_t sumConflicts
+    ) override;
+
     #ifdef STATS_NEEDED
     void satzilla_features(
         const Solver* solver
@@ -100,6 +105,11 @@ public:
     virtual void cl_last_in_solver(
         const Solver* solver
         , const uint64_t clid
+    ) override;
+
+    virtual void update_id(
+        const uint32_t old_id
+        , const uint32_t new_id
     ) override;
 
     void clause_stats(
@@ -189,6 +199,8 @@ private:
     sqlite3_stmt *stmtFeat = NULL;
     sqlite3_stmt *stmt_clause_stats = NULL;
     sqlite3_stmt *stmt_delete_cl = NULL;
+    sqlite3_stmt *stmt_update_id = NULL;
+    sqlite3_stmt *stmt_set_id_confl = NULL;
     sqlite3_stmt *stmt_var_data_fintime = NULL;
     sqlite3_stmt *stmt_var_data_picktime = NULL;
     sqlite3_stmt *stmt_dec_var_clid = NULL;

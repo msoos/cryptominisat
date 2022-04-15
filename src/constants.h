@@ -66,6 +66,19 @@ using std::numeric_limits;
 
 #if defined(STATS_NEEDED)
 #define LARGE_OFFSETS
+#define STATS_DO(x) do {x;} while (0)
+#define INC_ID(id) \
+    do { \
+        auto prev_id = id; \
+        id = ++solver->clauseID; \
+        if (solver->sqlStats) solver->sqlStats->update_id(prev_id, id); \
+    } while (0)
+#else
+#define STATS_DO(x) do {} while (0)
+#define INC_ID(id) \
+    do { \
+        id = ++solver->clauseID; \
+    } while (0)
 #endif
 
 #if defined(LARGE_OFFSETS)

@@ -62,6 +62,9 @@ void SatZillaFeaturesCalc::for_one_clause(
             func_each_lit(cl.lit2(), size, pos_vars, neg_vars);
             break;
         }
+        case WatchType::watch_bnn_t:
+            release_assert(false && "Not implemented");
+            break;
 
         case WatchType::watch_clause_t: {
             const Clause& clause = *solver->cl_alloc.ptr(cl.get_offset());

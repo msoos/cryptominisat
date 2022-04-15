@@ -242,7 +242,7 @@ class VarReplacer
         map<uint32_t, vector<uint32_t> > reverseTable;
 
         //FRAT
-        vector<tuple<uint64_t, Lit, Lit>> bins_for_frat;
+        vector<tuple<int32_t, Lit, Lit>> bins_for_frat;
 
         //Stats
         void printReplaceStats() const;

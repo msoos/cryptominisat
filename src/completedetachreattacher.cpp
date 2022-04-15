@@ -22,6 +22,7 @@ THE SOFTWARE.
 
 #include "completedetachreattacher.h"
 #include "solver.h"
+#include "sqlstats.h"
 #include "varreplacer.h"
 #include "clausecleaner.h"
 #include "clauseallocator.h"
@@ -187,7 +188,7 @@ bool CompleteDetachReatacher::clean_clause(Clause* cl)
 
     //Drat
     if (i != j) {
-        cl->stats.ID = ++solver->clauseID;
+        INC_ID(cl->stats.ID);
         (*solver->drat) << add << *cl << fin << findelay;
     } else {
         solver->drat->forget_delay();

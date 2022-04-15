@@ -148,6 +148,8 @@ SQLiteStats::~SQLiteStats()
     del_prepared_stmt(stmtMemUsed);
     del_prepared_stmt(stmt_clause_stats);
     del_prepared_stmt(stmt_delete_cl);
+    del_prepared_stmt(stmt_update_id);
+    del_prepared_stmt(stmt_set_id_confl);
     del_prepared_stmt(stmt_var_data_picktime);
     del_prepared_stmt(stmt_var_data_fintime);
     del_prepared_stmt(stmt_dec_var_clid);
@@ -183,11 +185,13 @@ bool SQLiteStats::setup(const Solver* solver)
     init("restart_dat_for_cl", &stmtClRst);
     init("reduceDB", &stmtReduceDB);
     init("reduceDB_common", &stmtReduceDB_common);
+    init("set_id_confl", &stmt_set_id_confl);
     #ifdef STATS_NEEDED
     init("var_data_fintime", &stmt_var_data_fintime);
     init("var_data_picktime", &stmt_var_data_picktime);
     init("dec_var_clid", &stmt_dec_var_clid);
     init("cl_last_in_solver", &stmt_delete_cl);
+    init("update_id", &stmt_update_id);
     init("var_dist", &stmt_var_dist);
     #endif
 
@@ -465,6 +469,19 @@ void SQLiteStats::time_passed_min(
     sqlite3_bind_null(stmtTimePassed, bindAt++);
 
     run_sqlite_step(stmtTimePassed, "timepassed", bindAt);
+}
+
+void SQLiteStats::set_id_confl(
+        const uint32_t id
+        , const uint64_t sumConflicts)
+{
+    assert(id != 0);
+
+    int bindAt = 1;
+    sqlite3_bind_int64(stmt_set_id_confl, bindAt++, id);
+    sqlite3_bind_int64(stmt_set_id_confl, bindAt++, sumConflicts);
+
+    run_sqlite_step(stmt_set_id_confl, "set_id_confl", bindAt);
 }
 
 #ifdef STATS_NEEDED
@@ -1031,5 +1048,21 @@ void SQLiteStats::cl_last_in_solver(
 
     run_sqlite_step(stmt_delete_cl, "cl_last_in_solver", bindAt);
 }
+
+void SQLiteStats::update_id(
+    const uint32_t old_id,
+    const uint32_t new_id)
+{
+    assert(old_id != 0);
+    assert(new_id != 0);
+    assert(new_id > old_id && "not neccessary, but I think we have this always");
+
+    int bindAt = 1;
+    sqlite3_bind_int64(stmt_update_id, bindAt++, old_id);
+    sqlite3_bind_int64(stmt_update_id, bindAt++, new_id);
+
+    run_sqlite_step(stmt_update_id, "update_id", bindAt);
+}
+
 
 #endif

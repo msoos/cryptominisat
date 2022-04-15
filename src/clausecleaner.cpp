@@ -23,6 +23,7 @@ THE SOFTWARE.
 #include "clausecleaner.h"
 #include "clauseallocator.h"
 #include "solver.h"
+#include "sqlstats.h"
 #include "cryptominisat5/solvertypesmini.h"
 
 using namespace CMSat;
@@ -301,7 +302,7 @@ bool ClauseCleaner::clean_clause(Clause& cl)
 
     if (i != j) {
         const auto orig_ID = cl.stats.ID;
-        cl.stats.ID = ++solver->clauseID;
+        INC_ID(cl.stats.ID);
         cl.shrink(i-j);
         (*solver->drat) << add << cl << chain << orig_ID;
         for(auto const& id: solver->chain) (*solver->drat) << id;

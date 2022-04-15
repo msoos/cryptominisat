@@ -442,6 +442,18 @@ create table `cl_last_in_solver` (
   , `clauseID` bigint(20) NOT NULL
 );
 
+DROP TABLE IF EXISTS `update_id`;
+create table `update_id` (
+  `old_id` bigint(20) NOT NULL
+  , `new_id` bigint(20) NOT NULL
+);
+
+DROP TABLE IF EXISTS `set_id_confl`;
+create table `set_id_confl` (
+  `id` bigint(20) NOT NULL
+  , `conflicts` bigint(20) NOT NULL
+);
+
 
 DROP TABLE IF EXISTS `var_dist`;
 create table `var_dist` (

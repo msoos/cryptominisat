@@ -432,7 +432,7 @@ private:
     bool        can_eliminate_var(const uint32_t var) const;
     bool        mark_and_push_to_added_long_cl_cls_containing(const Lit lit);
     bool        simulate_frw_sub_str_with_added_cl_to_var();
-    bool        occ_rem_with_gates();
+    bool        lit_rem_with_or_gates();
 
 
     TouchList   elim_calc_need_update;
