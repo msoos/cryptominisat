@@ -44,7 +44,7 @@ def set_up_parser():
                       dest="verbose", help="Print more output")
 
     # for fuzz-testing
-    parser.add_option("--seed", dest="seed", default=1,
+    parser.add_option("--seed", "-s", dest="seed", default=1,
                       help="Genereate with this seed", type=int)
     parser.add_option("-n", dest="n", default=8, type=int,
                       help="Functiion width")
@@ -108,10 +108,11 @@ if __name__ == "__main__":
         outputs.append(out)
 
     # print
+    print("c equations. FUN[i2]*INPUT[i][i2]")
     for i in range(opts.samples):
         toprint = ""
         for i2 in range(opts.n):
-            toprint += "%d" % fun[i2]
+            toprint += "c %d" % fun[i2]
             toprint += "*"
             toprint += "%d" % inputs[i][i2]
             if i2 != opts.n-1:
@@ -119,6 +120,64 @@ if __name__ == "__main__":
         toprint += " = %d" % outputs[i]
         toprint += "  -- correct: %s" % correct_eqs[i]
         print(toprint)
+
+
+    # variable table (sequential):
+    # n: function we need to figure out
+    # inputs -- n+n+n...n exactly opts.samples times. Total: opts.samples*opts.n
+    # outputs -- opts.samples
+    # helper functions come here
+
+    v = 1
+    vars_fun = []
+    for _ in range(opts.n):
+        vars_fun.append(v)
+        v+=1
+
+    #vars_inputs = []
+    #for _ in range(opts.samples):
+        #tmp = []
+        #for _ in range(opts.n):
+            #tmp.append(v)
+            #v+=1
+        #vars_inputs.append(tmp)
+
+    vars_noise = []
+    for _ in range(opts.samples):
+        vars_noise.append(v)
+        v+=1
+
+    ####################
+    ####### Generate CNF
+    ####################
+
+    # compute outputs
+    for i in range(opts.samples):
+        vs = []
+        for i2 in range(opts.n):
+            # v = inputs[i][i2] * fun[i]
+            if inputs[i][i2] == 1:
+                vs.append(vars_fun[i2])
+
+        out = "x "
+        for x in vs:
+            out += "%d " % x
+
+        if outputs[i]:
+            out+="%d " % vars_noise[i]
+        else:
+            out+="-%d " % vars_noise[i]
+
+        out +="0"
+        print(out)
+
+    # make noise zero
+    for i in range(opts.samples):
+        print("-%d 0" % vars_noise[i])
+
+
+
+
 
 
 
