@@ -20,16 +20,16 @@
 
 import optparse
 import random
-import os
+import sys
 
-lpnfile = os.argv[1]
-satout = os.argv[2]
+lpnfile = sys.argv[1]
+satout = sys.argv[2]
 
 sat = None
 sol = {}
 with open(satout, "r") as f:
     for line in f:
-        line = strip(line)
+        line = line.strip()
         if len(line) < 1:
             continue
 
@@ -44,7 +44,7 @@ with open(satout, "r") as f:
             exit(-1)
 
         if line[0] == "v":
-            line=strip(line)
+            line=line.strip()
             line=line[1:]
             for lit in line.split():
                 lit = int(lit)
@@ -53,23 +53,24 @@ with open(satout, "r") as f:
                     continue
                 sol[var] = lit > 0
 
-if SAT is None:
+if sat is None:
     print("ERRROR could not recover solution from SAT output")
     exit(-1)
 
-print("SAT: ", sat)
-print("Solution recovered: ", sol)
+# print("Recovered SAT: ", sat)
+# print("Recovered Solution : ", sol)
 
 corr_sat = None
 corr_sol = {}
 with open(lpnfile, "r") as f:
     for line in f:
-        line=strip(line)
+        line=line.strip()
         if "correct output" not in line:
             continue
         if "UNSAT" in line:
-            corr_sol = False
+            corr_sat = False
             break
+        corr_sat = True
         assert "SAT" in line
 
         line = line.split(":")[1]
@@ -93,16 +94,16 @@ if corr_sat is False:
 assert corr_sat == True
 if sat == False:
     print("ERROR: buuuug!!! Should be SAT but it's UNSAT!!")
-        exit(-1)
+    exit(-1)
 
 for v,val in corr_sol.items():
     if v not in sol:
         print("ERROR: Var %d is in problem, but not in solution" % v)
         exit(-1)
     if sol[v] != corr_sol[v]:
-        print("ERROR: Var %d is %s in problem, but %s in solution" % (sol[v], corr_sol[v]))
+        print("ERROR: Var %d is %s in problem, but %s in solution" % (v, corr_sol[v], sol[v]))
         exit(-1)
     assert sol[v] == corr_sol[v]
 
-print("OK, checked all solution values: %s", sol)
+print("OK, checked all solution values: %s" % corr_sol)
 exit(0)
