@@ -221,7 +221,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
         case 2: {
             conf.branch_strategy_setup = "vsidsx";
-            conf.polar_best_inv_every_n = 100;
+//             conf.polar_best_inv_every_n = 100;
             break;
         }
         case 3: {
@@ -256,7 +256,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         case 6: {
             //Maple with backtrack
             conf.branch_strategy_setup = "vsids1";
-            conf.polar_stable_every_n = 10000;
+//             conf.polar_stable_every_n = 10000;
             break;
         }
         case 7: {
@@ -278,13 +278,13 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
         case 9: {
             conf.branch_strategy_setup = "vsids1";
-            conf.polar_stable_every_n = 1;
+//             conf.polar_stable_every_n = 1;
             break;
         }
         case 10: {
             conf.branch_strategy_setup = "vsids1";
             conf.polarity_mode = CMSat::PolarityMode::polarmode_pos;
-            conf.polar_stable_every_n = 100000;
+//             conf.polar_stable_every_n = 100000;
             break;
         }
         case 11: {
@@ -300,8 +300,8 @@ void update_config(SolverConf& conf, unsigned thread_num)
         case 12: {
             conf.branch_strategy_setup = "maple1";
             conf.inc_max_temp_lev2_red_cls = 1.001;
-            conf.polar_stable_every_n = 7;
-            conf.polar_best_inv_every_n = 6;
+//             conf.polar_stable_every_n = 7;
+//             conf.polar_best_inv_every_n = 6;
             break;
         }
 
@@ -334,7 +334,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0;
             conf.glue_put_lev0_if_below_or_eq = 0;
             conf.inc_max_temp_lev2_red_cls = 1.03;
-            conf.polar_stable_every_n = 2;
+//             conf.polar_stable_every_n = 2;
             break;
         }
         case 16: {
@@ -370,7 +370,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.num_conflicts_of_search_inc = 1.15;
             conf.more_red_minim_limit_binary = 600;
             conf.max_num_lits_more_more_red_min = 20;
-            conf.polar_stable_every_n = 4;
+//             conf.polar_stable_every_n = 4;
             //conf.max_temporary_learnt_clauses = 10000;
             break;
         }
@@ -381,7 +381,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.restart_inc = 1.5;
             conf.restart_first = 100;
             conf.restartType = Restart::luby;
-            conf.polar_stable_every_n = 2;
+//             conf.polar_stable_every_n = 2;
             break;
         }
 
@@ -1367,7 +1367,7 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
         conf.orig_global_timeout_multiplier = 1.5;
         conf.min_bva_gain = 2;
         conf.xor_finder_time_limitM = 400;
-        conf.polar_stable_every_n = 100000; //i.e. never
+//         conf.polar_stable_every_n = 100000; //i.e. never
         uint32_t xor_cut = 4;
         assert(xor_cut >= 3);
         conf.xor_var_per_cut = xor_cut-2;
@@ -1406,7 +1406,7 @@ void DLL_PUBLIC SATSolver::set_up_for_arjun()
         conf.global_multiplier_multiplier_max = 1;
         conf.orig_global_timeout_multiplier = 2.5;
         conf.do_bva = false;
-        conf.polar_stable_every_n = 100000; //i.e. never use stable polarities
+//         conf.polar_stable_every_n = 100000; //i.e. never use stable polarities
         conf.do_hyperbin_and_transred = false;
         conf.doTransRed = false;
 

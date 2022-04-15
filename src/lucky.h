@@ -32,7 +32,7 @@ class Lucky
 {
 public:
     Lucky(Solver* solver);
-    bool doit();
+    void doit();
 
 //private:
     bool check_all(bool polar);

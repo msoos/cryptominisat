@@ -223,10 +223,7 @@ class DLL_PUBLIC SolverConf
         ) const;
 
         //Variable polarities
-        int do_lucky_polar_every_n;
         PolarityMode polarity_mode;
-        int polar_stable_every_n;
-        int polar_best_inv_every_n;
 
         //Clause cleaning
         uint32_t pred_short_size;

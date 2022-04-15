@@ -80,10 +80,7 @@ using namespace CMSat;
 
 DLL_PUBLIC SolverConf::SolverConf() :
         // Polarities
-        do_lucky_polar_every_n(0)
-        , polarity_mode(PolarityMode::polarmode_automatic)
-        , polar_stable_every_n(3)
-        , polar_best_inv_every_n(2)
+        polarity_mode(PolarityMode::polarmode_automatic)
 
         //Clause cleaning
         , pred_short_size(5500)

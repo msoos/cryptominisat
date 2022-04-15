@@ -2445,20 +2445,13 @@ void Searcher::setup_polarity_strategy()
     //Set to default first
     polarity_mode = conf.polarity_mode;
     if (conf.polarity_mode == PolarityMode::polarmode_automatic) {
-        polarity_mode = PolarityMode::polarmode_best;
+        longest_trail_ever_stable = 0;
 
-        if (conf.polar_best_inv_every_n > 0 &&
-            ((polarity_strategy_at % conf.polar_best_inv_every_n) == 0))
-        {
-            polarity_mode = PolarityMode::polarmode_best_inv;
-        }
-
-        if (conf.polar_stable_every_n > 0 &&
-            ((polarity_strategy_at % conf.polar_stable_every_n) == 0))
-        {
-            polarity_mode = PolarityMode::polarmode_stable;
-            longest_trail_ever_stable = 0;
-        }
+        if ((polarity_strategy_at % 5) == 0) polarity_mode = PolarityMode::polarmode_best;
+        if ((polarity_strategy_at % 5) == 1) polarity_mode = PolarityMode::polarmode_best_inv;
+        if ((polarity_strategy_at % 5) == 2) polarity_mode = PolarityMode::polarmode_stable;
+        if ((polarity_strategy_at % 5) == 3) polarity_mode = PolarityMode::polarmode_neg;
+        if ((polarity_strategy_at % 5) == 4) polarity_mode = PolarityMode::polarmode_pos;
     }
 
     if (conf.verbosity >= 2) {

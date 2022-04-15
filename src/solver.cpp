@@ -2180,15 +2180,8 @@ lbool Solver::execute_inprocess_strategy(
                 }
             }
         } else if (token == "lucky") {
-            if (conf.do_lucky_polar_every_n != 0 &&
-                (solveStats.num_simplify % conf.do_lucky_polar_every_n) ==
-                    (unsigned)(conf.do_lucky_polar_every_n-1)
-            ) {
-                Lucky lucky(solver);
-                if (lucky.doit()) {
-                    return l_Undef;
-                }
-            }
+            Lucky lucky(solver);
+            lucky.doit();
         } else if (token == "intree-probe") {
             //TODO broken! Due to clause IDs in binary clauses, this does NOT work
             /*if (!bnns.empty()) {
