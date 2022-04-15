@@ -4754,21 +4754,13 @@ lbool Solver::bnn_eval(BNN& bnn)
 {
     assert(decisionLevel() == 0);
 
-    for(const auto& p: bnn) {
-        assert(value(p) == l_Undef);
-    }
-    if (bnn.set) {
-        assert(bnn.out == lit_Undef);
-    } else {
-        assert(value(bnn.out) == l_Undef);
-    }
+    for(const auto& p: bnn) assert(value(p) == l_Undef);
+    if (bnn.set) assert(bnn.out == lit_Undef);
+    else assert(value(bnn.out) == l_Undef);
 
     // we are at the cutoff no matter what undef is
     if (bnn.cutoff <= 0) {
-        if (bnn.set) {
-            return l_True;
-        }
-
+        if (bnn.set) return l_True;
         enqueue<false>(bnn.out, decisionLevel());
         return l_True;
     }
