@@ -44,13 +44,13 @@ def set_up_parser():
                       dest="verbose", help="Print more output")
 
     # for fuzz-testing
-    parser.add_option("--seed", "-s", dest="seed", default=1,
+    parser.add_option("--seed", "-s", dest="seed", default=None,
                       help="Genereate with this seed", type=int)
-    parser.add_option("-n", dest="n", default=20, type=int,
+    parser.add_option("-n", dest="n", default=None, type=int,
                       help="Functiion width")
-    parser.add_option("--output", "-o", dest="samples", default=40, type=int,
+    parser.add_option("-m", dest="samples", default=None, type=int,
                       help="Number of samples")
-    parser.add_option("--noise", "-k", dest="noise", default=0.1, type=float,
+    parser.add_option("--noise", dest="noise", default=0.1, type=float,
                       help="Ratio of noise")
     parser.add_option("--tolerance", "-t", dest="tolerance", default=None, type=int,
                       help="Tolerance for error. It is set AUTOMATICALLY if you don't set it here. It will be set to EXACTLY the actual error, so you will get a SAT instance.")
@@ -65,6 +65,10 @@ if __name__ == "__main__":
     # parse opts
     parser = set_up_parser()
     (opts, args) = parser.parse_args()
+
+    if opts.seed is None or opts.n is None or opts.samples is None or opts.noise is None:
+        print("ERROR: You MUST give all of: --seed, -n, -m")
+        exit(-1)
 
     print("c Seed:          %3d" % opts.seed)
     print("c n:             %3d" % opts.n)
@@ -207,17 +211,3 @@ if __name__ == "__main__":
     else:
         out += "UNSAT "
     print(out)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
