@@ -18,6 +18,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
+import optparse
+import random
+import os
+
 class PlainHelpFormatter(optparse.IndentedHelpFormatter):
 
     def format_description(self, description):
@@ -27,8 +31,8 @@ class PlainHelpFormatter(optparse.IndentedHelpFormatter):
             return ""
 
 
-usage = "usage: %prog [options] --fuzz/--regtest/--checkdir/filetocheck"
-desc = """Fuzz the solver with fuzz-generator: ./fuzz_test.py
+usage = "usage: %prog [options] "
+desc = """Generates an LPN problem
 """
 
 
@@ -40,17 +44,15 @@ def set_up_parser():
                       dest="verbose", help="Print more output")
 
     # for fuzz-testing
-    parser.add_option("--seed", dest="seed", default=1
+    parser.add_option("--seed", dest="seed", default=1,
                       help="Genereate with this seed", type=int)
-
-
-    parser.add_option("-n", dest="n", default=8, type=int
+    parser.add_option("-n", dest="n", default=8, type=int,
                       help="Functiion width")
-    parser.add_option("--output", "-o", dest="samples", default=8, type=int
+    parser.add_option("--output", "-o", dest="samples", default=8, type=int,
                       help="Number of samples")
-    parser.add_option("--noise", "-k", dest="noise", default=0.1, type=float
+    parser.add_option("--noise", "-k", dest="noise", default=0.1, type=float,
                       help="Ratio of noise")
-    parser.add_option("--tolerance", "-i", dest="tolerance", default=1, type=int
+    parser.add_option("--tolerance", "-i", dest="tolerance", default=1, type=int,
                       help="Threshold")
 
     return parser
@@ -58,19 +60,15 @@ def set_up_parser():
 
 
 if __name__ == "__main__":
-    if not os.path.isdir("out"):
-        print("Directory for outputs, 'out' not present, creating it.")
-        os.mkdir("out")
-
     # parse opts
     parser = set_up_parser()
     (opts, args) = parser.parse_args()
 
-    print("c Seed: ", opts.seed)
-    print("c N: ", opts.n)
-    print("c Samples: ", opts.samples)
-    print("c Noise: ", opts.noise)
-    print("c Tolerance: ", opts.tolerance)
+    print("c Seed:      %3d" % opts.seed)
+    print("c n:         %3d" % opts.n)
+    print("c Samples:   %3d" % opts.samples)
+    print("c Noise:       %-3.2f" % opts.noise)
+    print("c Tolerance: %3d" % opts.tolerance)
     random.seed(opts.seed)
 
     # y[i] = set randomly [[output]]
@@ -80,20 +78,20 @@ if __name__ == "__main__":
 
     fun = []
     for i in range(opts.n):
-        fun.append(random.randint(1, 0))
+        fun.append(random.randint(0, 1))
 
     inputs = []
     for i in range(opts.samples):
         inp = []
         for i2 in range(opts.n):
-            inp.append(random.randint(1, 0))
+            inp.append(random.randint(0, 1))
         inputs.append(inp)
 
     real_outputs = []
     for i in range(opts.samples):
         out = 0
         for a,b in zip(fun, inputs[i]):
-            out ^= fun*inputs[i]
+            out ^= a*b
         real_outputs.append(out)
 
     num_incorrect_eqs = 0
@@ -102,11 +100,11 @@ if __name__ == "__main__":
     for i in range(opts.samples):
         out = real_outputs[i]
         if random.random() < opts.noise:
-             out = out ^ 1
-             incorrect_eqs+=1
-             correct_eqs.append(False)
-         else:
-             correct_eqs.append(True)
+            out = out ^ 1
+            num_incorrect_eqs+=1
+            correct_eqs.append(False)
+        else:
+            correct_eqs.append(True)
         outputs.append(out)
 
     # print
@@ -118,7 +116,7 @@ if __name__ == "__main__":
             toprint += "%d" % inputs[i][i2]
             if i2 != opts.n-1:
                 toprint += " + "
-        toprint += " %d" % outputs[i]
+        toprint += " = %d" % outputs[i]
         toprint += "  -- correct: %s" % correct_eqs[i]
         print(toprint)
 
