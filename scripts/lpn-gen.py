@@ -48,6 +48,8 @@ def set_up_parser():
                       help="Genereate with this seed", type=int)
     parser.add_option("-n", dest="n", default=None, type=int,
                       help="Functiion width")
+    parser.add_option("--pb", dest="pb", default=False, action="store_true",
+                      help="Functiion width")
     parser.add_option("-m", dest="samples", default=None, type=int,
                       help="Number of samples")
     parser.add_option("--noise", dest="noise", default=0.1, type=float,
@@ -165,6 +167,9 @@ if __name__ == "__main__":
     ####### Generate CNF
     ####################
 
+    if opts.pb:
+        print("* #variable= %d #constraint= 1" % (opts.n+opts.samples))
+
     # compute outputs
     for i in range(opts.samples):
         vs = []
@@ -174,16 +179,24 @@ if __name__ == "__main__":
                 vs.append(vars_fun[i2])
 
         out = "x "
+        out_pb = "* xor "
         for x in vs:
             out += "%d " % x
+            out_pb += "x%d " % x
 
+        out_pb += "x%d " % vars_noise[i]
         if outputs[i]:
             out+="%d " % vars_noise[i]
+            out_pb+=" 0"
         else:
             out+="-%d " % vars_noise[i]
+            out_pb+=" 1"
 
         out +="0"
-        print(out)
+        if opts.pb:
+            print(out_pb)
+        else:
+            print(out)
 
     # get noise
     print("c Num equations: ", opts.samples)
@@ -192,11 +205,18 @@ if __name__ == "__main__":
     if num_incorrect_eqs > tolerance:
         print("c this will be UNSAT for sure. Tolerance is smaller than the number of Incorrect euqations.")
 
-    out = "b "
-    for i in range(opts.samples):
-        out +="-%d " % vars_noise[i]
-    out += "0 %d" % (opts.samples-tolerance)
-    print(out)
+    if opts.pb:
+        out = ""
+        for i in range(opts.samples):
+            out +="-1 x%d " % vars_noise[i]
+        out += " >= %d" % (opts.samples-tolerance)
+        print(out)
+    else:
+        out = "b "
+        for i in range(opts.samples):
+            out +="-%d " % vars_noise[i]
+        out += "0 %d" % (opts.samples-tolerance)
+        print(out)
 
     # print correct output
     out = "c correct output is: "
