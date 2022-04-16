@@ -3789,7 +3789,7 @@ bool Solver::find_and_init_all_matrices()
     ) {
         detach_xor_clauses(mfinder.clash_vars_unused);
         unset_clash_decision_vars(xorclauses);
-        VERBOSE_PRINT(print_watchlist_stats());
+        if (conf.xor_detach_verb) print_watchlist_stats();
 
     } else {
         if (conf.xor_detach_reattach &&

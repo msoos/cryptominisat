@@ -709,8 +709,8 @@ void CNF::print_watchlist_stats() const
             }
         }
     }
-    cout << "c [watchlist] avg watchlist size: " << (double)total_size/(double)watches.size();
-    cout << " Avg cl size: " << (double)total_size_lits/(double)total_cls;
+    cout << "c [watchlist] avg watchlist size: " << float_div(total_size, watches.size());
+    cout << " Avg cl size: " << float_div(total_size_lits, total_cls);
     cout << " Cls: " << total_cls;
     cout << " Total WS size: " << total_size;
     cout << " used_in_xor: " << used_in_xor;
