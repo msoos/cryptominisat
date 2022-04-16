@@ -350,6 +350,7 @@ public:
     void check_no_zero_ID_bins() const;
     void free_bdds(vector<Xor>& xors);
     void print_all_clauses() const;
+    void print_watchlist_stats() const;
     template<class T> void clean_xor_no_prop(T& ps, bool& rhs);
     template<class T> void clean_xor_vars_no_prop(T& ps, bool& rhs);
     uint64_t count_lits(

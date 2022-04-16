@@ -3789,10 +3789,11 @@ bool Solver::find_and_init_all_matrices()
     ) {
         detach_xor_clauses(mfinder.clash_vars_unused);
         unset_clash_decision_vars(xorclauses);
+        VERBOSE_PRINT(print_watchlist_stats());
+
     } else {
         if (conf.xor_detach_reattach &&
-            (conf.verbosity >= 1 || conf.xor_detach_verb) &&
-            conf.doFindXors)
+            (conf.verbosity >= 1 || conf.xor_detach_verb) && conf.doFindXors)
         {
             cout
             << "c WHAAAAT Detach issue. All below must be 1 to work ---" << endl
@@ -3801,6 +3802,7 @@ bool Solver::find_and_init_all_matrices()
             << ret_no_irred_nonxor_contains_clash_vars << endl
             << "c -- !conf.gaussconf.autodisable: " << (bool)(!conf.gaussconf.autodisable) << endl
             << "c -- conf.xor_detach_reattach: " << (bool)conf.xor_detach_reattach << endl;
+            print_watchlist_stats();
         }
     }
 

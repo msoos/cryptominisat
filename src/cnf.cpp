@@ -684,6 +684,41 @@ uint64_t CNF::count_lits(
     return lits;
 }
 
+void CNF::print_watchlist_stats() const
+{
+    uint64_t total_size = 0;
+    uint64_t total_size_lits = 0;
+    uint64_t total_cls = 0;
+    uint64_t bin_cls = 0;
+    uint64_t used_in_xor = 0;
+    uint64_t used_in_xor_full = 0;
+    for(auto const& ws: watches) {
+        for(auto const& w: ws) {
+            total_size+=1;
+            if (w.isBin()) {
+                total_size_lits+=2;
+                total_cls++;
+                bin_cls++;
+            } else if (w.isClause()) {
+                Clause* cl = cl_alloc.ptr(w.get_offset());
+                assert(!cl->getRemoved());
+                used_in_xor+=cl->used_in_xor();
+                used_in_xor_full+=cl->used_in_xor_full();
+                total_size_lits+=cl->size();
+                total_cls++;
+            }
+        }
+    }
+    cout << "c [watchlist] avg watchlist size: " << (double)total_size/(double)watches.size();
+    cout << " Avg cl size: " << (double)total_size_lits/(double)total_cls;
+    cout << " Cls: " << total_cls;
+    cout << " Total WS size: " << total_size;
+    cout << " used_in_xor: " << used_in_xor;
+    cout << " used_in_xor_full: " << used_in_xor_full;
+    cout << " bin cl: " << bin_cls;
+    cout << endl;
+}
+
 void CNF::print_all_clauses() const
 {
     for(vector<ClOffset>::const_iterator
