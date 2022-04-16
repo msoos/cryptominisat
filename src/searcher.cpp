@@ -1729,6 +1729,7 @@ Clause* Searcher::handle_last_confl(
         ext_stats.introduced_at_conflict = sumConflicts;
         ext_stats.orig_glue = glue;
         ext_stats.orig_size = cl->size();
+        sqlStats->update_id(ID, ID); // this is how we know it's tracked
         #endif
         cl->stats.activity = 0.0f;
         ClOffset offset = cl_alloc.get_offset(cl);

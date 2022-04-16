@@ -1081,7 +1081,7 @@ void SQLiteStats::update_id(
 {
     assert(old_id != 0);
     assert(new_id != 0);
-    assert(new_id > old_id && "not neccessary, but I think we have this always");
+    assert((new_id == old_id || new_id > old_id) && "not neccessary, but I think we have this always");
 
     int bindAt = 1;
     sqlite3_bind_int64(stmt_update_id, bindAt++, old_id);

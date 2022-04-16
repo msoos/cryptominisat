@@ -71,7 +71,7 @@ using std::numeric_limits;
     do { \
         auto prev_id = (cl).stats.ID; \
         (cl).stats.ID = ++solver->clauseID; \
-        if (solver->sqlStats && (cl).stats.is_tracked) solver->sqlStats->update_id(prev_id, id); \
+        if (solver->sqlStats && (cl).stats.is_tracked) solver->sqlStats->update_id(prev_id, (cl).stats.ID); \
     } while (0)
 #else
 #define STATS_DO(x) do {} while (0)
