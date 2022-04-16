@@ -110,6 +110,7 @@ bool MatrixFinder::find_matrices(bool& can_detach)
 
     XorFinder finder(NULL, solver);
     for(auto& x: solver->xorclauses_unused) solver->xorclauses.push_back(std::move(x));
+    solver->xorclauses_unused.clear();
     solver->clauseCleaner->clean_xor_clauses(solver->xorclauses);
     finder.grab_mem();
     finder.move_xors_without_connecting_vars_to_unused();
