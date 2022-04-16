@@ -67,17 +67,17 @@ using std::numeric_limits;
 #if defined(STATS_NEEDED)
 #define LARGE_OFFSETS
 #define STATS_DO(x) do {x;} while (0)
-#define INC_ID(id) \
+#define INC_ID(cl) \
     do { \
-        auto prev_id = id; \
-        id = ++solver->clauseID; \
-        if (solver->sqlStats) solver->sqlStats->update_id(prev_id, id); \
+        auto prev_id = (cl).stats.ID; \
+        (cl).stats.ID = ++solver->clauseID; \
+        if (solver->sqlStats && (cl).stats.is_tracked) solver->sqlStats->update_id(prev_id, id); \
     } while (0)
 #else
 #define STATS_DO(x) do {} while (0)
-#define INC_ID(id) \
+#define INC_ID(cl) \
     do { \
-        id = ++solver->clauseID; \
+        (cl).stats.ID = ++solver->clauseID; \
     } while (0)
 #endif
 

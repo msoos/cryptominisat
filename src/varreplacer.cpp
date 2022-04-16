@@ -722,7 +722,7 @@ bool VarReplacer::handleUpdatedClause(
         return true;
     }
 
-    INC_ID(c.stats.ID);
+    INC_ID(c);
     (*solver->drat) << add << c << fin << findelay;
 
     runStats.bogoprops += 3;

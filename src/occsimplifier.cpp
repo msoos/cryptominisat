@@ -418,7 +418,7 @@ bool OccSimplifier::clean_clause(
     }
 
     if (i-j > 0) {
-        INC_ID(cl.stats.ID);
+        INC_ID(cl);
         (*solver->drat) << add << cl << fin << findelay;
     } else {
         solver->drat->forget_delay();
@@ -495,7 +495,7 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
 
     //Drat
     if (i - j > 0) {
-        INC_ID(cl.stats.ID);
+        INC_ID(cl);
         (*solver->drat) << add << cl << fin << findelay;
     } else {
         solver->drat->forget_delay();
@@ -1878,7 +1878,7 @@ bool OccSimplifier::lit_rem_with_or_gates()
             std::sort(cl->begin(), cl->end());
             removeWCl(solver->watches[l2], off);
             removeWCl(solver->watches[l1], off); //TODO we can NOT copy +get rid of this, speedup!
-            INC_ID(cl->stats.ID);
+            INC_ID(*cl);
             (*solver->drat) << add << *cl << fin << findelay;
             solver->watches[gate.rhs].push(Watched(off, cl->abst));
             n_occurs[l1.toInt()]--;
@@ -5010,7 +5010,7 @@ bool OccSimplifier::remove_literal(
     added_cl_to_var.touch(toRemoveLit.var());
     cl.recalc_abst_if_needed();
 
-    INC_ID(cl.stats.ID);
+    INC_ID(cl);
     (*solver->drat) << add << cl << fin << findelay;
     if (!cl.red()) {
         n_occurs[toRemoveLit.toInt()]--;

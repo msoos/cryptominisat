@@ -302,7 +302,7 @@ bool ClauseCleaner::clean_clause(Clause& cl)
 
     if (i != j) {
         const auto orig_ID = cl.stats.ID;
-        INC_ID(cl.stats.ID);
+        INC_ID(cl);
         cl.shrink(i-j);
         (*solver->drat) << add << cl << chain << orig_ID;
         for(auto const& id: solver->chain) (*solver->drat) << id;
