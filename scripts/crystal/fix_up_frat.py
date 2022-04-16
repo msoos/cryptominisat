@@ -84,11 +84,11 @@ DROP TABLE IF EXISTS `{table}`;
             old_id = n[0]
             new_id = n[1]
             if old_id in new_id_to_old_id:
-                real_old_id = new_id_to_old_id[old_id]
+                real_old_id = new_id_to_old_id[old_id][0]
             else:
                 real_old_id = old_id
 
-            new_id_to_old_id[new_id] = real_old_id
+            new_id_to_old_id[new_id] = [real_old_id, 1.0]
 
 def fix_up_frat(fratfile):
     with open(fratfile, "r") as f:
@@ -108,17 +108,19 @@ def fix_up_frat(fratfile):
 
             ID = int(line[1])
             line = line[2:]
+            tracked_already = False
 
             if ID not in new_id_to_old_id:
                 print("ID %8d is not tracked" % ID)
             else:
-                print("ID %8d is tracked, it is: %d" % (ID, new_id_to_old_id[ID]))
+                print("ID %8d is tracked, it is: %s" % (ID, new_id_to_old_id[ID]))
+                tracked_already = True
 
             if ID not in cl_to_conflict:
                 print("ERROR: ID %8d not in cl_to_conflict" % ID)
                 exit(-1)
-            else:
-                print("%d is generated at confl %d" % (ID, cl_to_conflict[ID]))
+
+            print("%d is generated at confl %d" % (ID, cl_to_conflict[ID]))
 
             found = False
             cl_len = 0
@@ -140,7 +142,17 @@ def fix_up_frat(fratfile):
                 chain_ID = int(cl)
                 print("Chain %8d for ID %8d, cl_len: %8d" % (chain_ID, ID, cl_len))
                 if chain_ID in new_id_to_old_id:
-                    print("--> tracked as ID %8d" % new_id_to_old_id[chain_ID])
+                    print("--> tracked as %s" % new_id_to_old_id[chain_ID])
+
+                    if tracked_already:
+                        print("-----> Can't track extra, already tracked by one :S")
+                    else:
+                        chain_ID_upd = new_id_to_old_id[chain_ID][0]
+                        val = new_id_to_old_id[chain_ID][1]
+                        val *= 0.5
+                        print("-----> Therefore, we will track ID %d with val %f to count as ID %d" % (ID, val, chain_ID_upd))
+                        new_id_to_old_id[ID] = [chain_ID_upd, val]
+                        tracked_already = True
 
 
 
