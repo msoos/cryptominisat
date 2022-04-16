@@ -749,7 +749,7 @@ TEST(statistics, zero)
     EXPECT_EQ(s.get_sum_decisions(), 10);
 }
 
-TEST(statistics, one_confl)
+TEST(statistics, two_confl)
 {
     SATSolver s;
     s.set_no_simplify();
@@ -757,10 +757,11 @@ TEST(statistics, one_confl)
     s.add_clause(str_to_cl("1, 2"));
     s.add_clause(str_to_cl("1, -2"));
     s.add_clause(str_to_cl("-1, 2"));
+    s.add_clause(str_to_cl("-1, -2"));
 
     lbool ret = s.solve();
-    EXPECT_EQ(ret, l_True);
-    EXPECT_EQ(s.get_sum_conflicts(), 1);
+    EXPECT_EQ(ret, l_False);
+    EXPECT_EQ(s.get_sum_conflicts(), 2);
 }
 
 TEST(statistics, unsat)
