@@ -26,14 +26,12 @@ import struct
 import time
 import line_profiler
 
-
 cl_to_conflict = {}
 new_id_to_old_id = {}
 class Query:
     def __init__(self, dbfname):
         self.conn = sqlite3.connect(dbfname)
         self.c = self.conn.cursor()
-
         self.cl_used = []
         self.cl_used_num = 0
         self.cl_used_total = 0
@@ -48,6 +46,7 @@ class Query:
     def delete_tbls(self, table):
         queries = """
 DROP TABLE IF EXISTS `{table}`;
+create table `{table}` ( `clauseID` bigint(20) NOT NULL, `used_at` bigint(20) NOT NULL, `weight` float NOT NULL);
 """.format(table=table)
 
         for l in queries.split('\n'):
@@ -74,6 +73,9 @@ DROP TABLE IF EXISTS `{table}`;
                 exit(-1)
             cl_to_conflict[ID] = confl
 
+        if opts.verbose:
+            print("Got ID-conflict data")
+
     def get_updates(self):
         query= """select old_id, new_id from update_id order by old_id;"""
         self.c.execute(query)
@@ -89,85 +91,136 @@ DROP TABLE IF EXISTS `{table}`;
             else:
                 real_old_id = old_id
 
-            new_id_to_old_id[new_id] = [real_old_id, 1.0]
+            new_id_to_old_id[new_id] = [real_old_id, 1.0, None]
 
-# @profile
-def fix_up_frat(fratfile):
-    with open(fratfile, "r") as f:
-        for line in f:
-            line=line.strip()
-            if len(line) == 0:
-                continue
-            if line[0] != "a":
-                continue
+        if opts.verbose:
+            print("Got ID-update data")
 
-            if opts.verbose:
-                print("-------------****----------------------")
-                print("New line: %s" % line)
-            line = line.split()
-            if len(line) < 3:
-                print("ERROR: Line contains 1 or 2 elements??? It needs a/o/d/l/t + at least ID")
-                exit(-1)
-
-            ID = int(line[1])
-            line = line[2:]
-            tracked_already = False
-
-            if ID not in new_id_to_old_id:
-                if opts.verbose:
-                    print("ID %8d is not tracked" % ID)
+    def dump_used_clauses(self):
+        for table in ("used_clauses_anc", "used_clauses"):
+            if table == "used_clauses":
+                todump = filter(lambda c: c[1] == 1.0, self.cl_used)
             else:
+                todump = self.cl_used
+
+            self.c.executemany("""
+            INSERT INTO %s (
+            `clauseID`,
+            `weight`,
+            `used_at`)
+            VALUES (?, ?, ?);""" % table, todump)
+
+        self.cl_used = []
+        self.cl_used_num = 0
+
+    def deal_with_chain(self, line, ID, cl_len, tracked_already, confl):
+        for chain_str in line:
+            if chain_str[0] == '0':
+                break
+            chain_ID = int(chain_str)
+            if opts.verbose:
+                print("Cl ID %8d used for Cl ID %8d, cl_len: %8d" % (chain_ID, ID, cl_len))
+            if chain_ID in new_id_to_old_id:
                 if opts.verbose:
-                    print("ID %8d is tracked, it is: %s" % (ID, new_id_to_old_id[ID]))
+                    print("--> tracked as %s" % new_id_to_old_id[chain_ID])
+                data = new_id_to_old_id[chain_ID]
+                if data[2] == None:
+                    # this is an original parent
+                    count_as_confl = confl
+                    assert data[1] == 1.0
+                else:
+                    # this is a child
+                    count_as_confl = data[2]
+                    assert data[1] < 1.0
+
+                new_item = [data[0], data[1], count_as_confl]
+                self.cl_used.append(new_item)
+                self.cl_used_num+=1
+                self.cl_used_total+=1
+                if opts.verbose:
+                    print("--> USED: %s" % new_item)
+                if self.cl_used_num > 10000:
+                    self.dump_used_clauses()
+
+                # This chain_ID is tracked. Let's track Clause "ID", it will be a child
+                if tracked_already:
+                    if opts.verbose:
+                        print("-----> Can't track Cl ID %d as child, already tracked either as MAIN or as a child" % ID)
+                    continue
+
+                data = new_id_to_old_id[chain_ID]
+                chain_ID_upd = data[0]
+                val = 0.5*data[1]
+                if data[2] is not None:
+                    # This is a child of a child, so parent's conf needs to be bumped
+                    anc_confl = data[2]
+                else:
+
+                    # Children of this will need confl to be bumped
+                    anc_confl = confl
+
+                # Don't bother if it's less than 0.05
+                if val <= 0.05:
+                    continue
+
+                if opts.verbose:
+                    print("-----> Therefore, we will track ID %d with val %f to count as ID %d, confl %d" % (ID, val, chain_ID_upd, anc_confl))
+                new_id_to_old_id[ID] = [chain_ID_upd, val, anc_confl]
                 tracked_already = True
 
-            if ID not in cl_to_conflict:
-                print("ERROR: ID %8d not in cl_to_conflict" % ID)
-                exit(-1)
+        # @profile
+    def fix_up_frat(self, fratfile):
+        with open(fratfile, "r") as f:
+            for line in f:
+                line=line.strip()
+                if len(line) == 0:
+                    continue
+                if line[0] != "a":
+                    continue
 
-            if opts.verbose:
-                print("%d is generated at confl %d" % (ID, cl_to_conflict[ID]))
-
-            found = False
-            cl_len = 0
-            for i in range(len(line)):
-                if line[i] == "l":
-                    cl_len = i-1
-                    line = line[i+1:]
-                    found = True
-                    break
-
-            if not found:
                 if opts.verbose:
-                    print("No explanation on line.")
-                continue
+                    print("-------------****----------------------")
+                    print("New line: %s" % line)
+                line = line.split()
+                if len(line) < 3:
+                    print("ERROR: Line contains 1 or 2 elements??? It needs a/o/d/l/t + at least ID")
+                    exit(-1)
 
-            for cl in line:
-                if cl[0] == '0':
-                    break
-                chain_ID = int(cl)
-                if opts.verbose:
-                    print("Cl ID %8d used for cl ID %8d, cl_len: %8d" % (chain_ID, ID, cl_len))
-                if chain_ID in new_id_to_old_id:
+                ID = int(line[1])
+                line = line[2:]
+                tracked_already = False
+
+                if ID not in new_id_to_old_id:
                     if opts.verbose:
-                        print("--> tracked as %s" % new_id_to_old_id[chain_ID])
+                        print("MAIN: Cl ID %8d is not tracked" % ID)
+                else:
+                    if opts.verbose:
+                        print("MAIN: Cl ID %8d is tracked, it is: %s" % (ID, new_id_to_old_id[ID]))
+                    tracked_already = True
 
-                    if tracked_already:
-                        if opts.verbose:
-                            print("-----> Can't track extra, already tracked by one :S")
-                    else:
-                        chain_ID_upd = new_id_to_old_id[chain_ID][0]
-                        val = new_id_to_old_id[chain_ID][1]
-                        val *= 0.5
-                        if opts.verbose:
-                            print("-----> Therefore, we will track ID %d with val %f to count as ID %d" % (ID, val, chain_ID_upd))
-                        new_id_to_old_id[ID] = [chain_ID_upd, val]
-                        tracked_already = True
+                if ID not in cl_to_conflict:
+                    print("ERROR: ID %8d not in cl_to_conflict" % ID)
+                    exit(-1)
 
+                confl = cl_to_conflict[ID]
+                if opts.verbose:
+                    print("MAIN: Cl ID %8d is generated at confl %d" % (ID, confl))
 
+                found = False
+                cl_len = 0
+                for i in range(len(line)):
+                    if line[i] == "l":
+                        cl_len = i-1
+                        line = line[i+1:]
+                        found = True
+                        break
 
+                if not found:
+                    #if opts.verbose:
+                    print("No explanation on line %s for ID %d" % (line, ID))
+                    continue
 
-
+                self.deal_with_chain(line, ID, cl_len, tracked_already, confl)
 
 
 if __name__ == "__main__":
@@ -200,9 +253,11 @@ Adds used_clauses to the SQLite database"""
 
     with Query(opts.sqlitedb) as q:
         q.delete_tbls("used_clauses")
+        q.delete_tbls("used_clauses_anc")
         q.get_conflicts()
         q.get_updates()
-
-    fix_up_frat(opts.fratfile)
+        q.fix_up_frat(opts.fratfile)
+        # dump remaining ones (we dump 1000-by-1000)
+        q.dump_used_clauses()
 
     exit(0)
