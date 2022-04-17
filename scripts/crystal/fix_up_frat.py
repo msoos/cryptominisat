@@ -24,6 +24,7 @@ import argparse
 import os
 import struct
 import time
+import line_profiler
 
 
 cl_to_conflict = {}
@@ -52,10 +53,10 @@ DROP TABLE IF EXISTS `{table}`;
         for l in queries.split('\n'):
             t2 = time.time()
 
-            if options.verbose:
+            if opts.verbose:
                 print("Running query: ", l)
             self.c.execute(l)
-            if options.verbose:
+            if opts.verbose:
                 print("Query T: %-3.2f s" % (time.time() - t2))
 
     def get_conflicts(self):
@@ -90,6 +91,7 @@ DROP TABLE IF EXISTS `{table}`;
 
             new_id_to_old_id[new_id] = [real_old_id, 1.0]
 
+# @profile
 def fix_up_frat(fratfile):
     with open(fratfile, "r") as f:
         for line in f:
@@ -99,8 +101,9 @@ def fix_up_frat(fratfile):
             if line[0] != "a":
                 continue
 
-            print("-------------****----------------------")
-            print("New line: %s" % line)
+            if opts.verbose:
+                print("-------------****----------------------")
+                print("New line: %s" % line)
             line = line.split()
             if len(line) < 3:
                 print("ERROR: Line contains 1 or 2 elements??? It needs a/o/d/l/t + at least ID")
@@ -111,46 +114,53 @@ def fix_up_frat(fratfile):
             tracked_already = False
 
             if ID not in new_id_to_old_id:
-                print("ID %8d is not tracked" % ID)
+                if opts.verbose:
+                    print("ID %8d is not tracked" % ID)
             else:
-                print("ID %8d is tracked, it is: %s" % (ID, new_id_to_old_id[ID]))
+                if opts.verbose:
+                    print("ID %8d is tracked, it is: %s" % (ID, new_id_to_old_id[ID]))
                 tracked_already = True
 
             if ID not in cl_to_conflict:
                 print("ERROR: ID %8d not in cl_to_conflict" % ID)
                 exit(-1)
 
-            print("%d is generated at confl %d" % (ID, cl_to_conflict[ID]))
+            if opts.verbose:
+                print("%d is generated at confl %d" % (ID, cl_to_conflict[ID]))
 
             found = False
             cl_len = 0
             for i in range(len(line)):
-                if line[i].strip() == "l":
+                if line[i] == "l":
                     cl_len = i-1
                     line = line[i+1:]
                     found = True
                     break
 
             if not found:
-                print("No explanation on line.")
+                if opts.verbose:
+                    print("No explanation on line.")
                 continue
 
             for cl in line:
-                cl = cl.strip()
-                if cl == "0":
+                if cl[0] == '0':
                     break
                 chain_ID = int(cl)
-                print("Chain %8d for ID %8d, cl_len: %8d" % (chain_ID, ID, cl_len))
+                if opts.verbose:
+                    print("Cl ID %8d used for cl ID %8d, cl_len: %8d" % (chain_ID, ID, cl_len))
                 if chain_ID in new_id_to_old_id:
-                    print("--> tracked as %s" % new_id_to_old_id[chain_ID])
+                    if opts.verbose:
+                        print("--> tracked as %s" % new_id_to_old_id[chain_ID])
 
                     if tracked_already:
-                        print("-----> Can't track extra, already tracked by one :S")
+                        if opts.verbose:
+                            print("-----> Can't track extra, already tracked by one :S")
                     else:
                         chain_ID_upd = new_id_to_old_id[chain_ID][0]
                         val = new_id_to_old_id[chain_ID][1]
                         val *= 0.5
-                        print("-----> Therefore, we will track ID %d with val %f to count as ID %d" % (ID, val, chain_ID_upd))
+                        if opts.verbose:
+                            print("-----> Therefore, we will track ID %d with val %f to count as ID %d" % (ID, val, chain_ID_upd))
                         new_id_to_old_id[ID] = [chain_ID_upd, val]
                         tracked_already = True
 
@@ -161,7 +171,7 @@ def fix_up_frat(fratfile):
 
 
 if __name__ == "__main__":
-    usage = """usage: %(prog)s [options] sqlite_db usedCls
+    usage = """usage: %(prog)s [opts] sqlite_db usedCls
 
 Adds used_clauses to the SQLite database"""
 
@@ -173,26 +183,26 @@ Adds used_clauses to the SQLite database"""
     parser.add_argument("--verbose", "-v", action="store_true", default=False,
                       dest="verbose", help="Print more output")
 
-    options = parser.parse_args()
+    opts = parser.parse_args()
 
-    if options.sqlitedb is None:
+    if opts.sqlitedb is None:
         print("Error you must give an SQLite DB. Please follow usage.")
         print(usage)
         exit(-1)
 
-    if options.fratfile is None:
+    if opts.fratfile is None:
         print("Error you must give the minimized FRAT file.")
         print(usage)
         exit(-1)
 
-    print("Using FRAT file %s" % options.fratfile)
-    print("Using sqlite3db file %s" % options.sqlitedb)
+    print("Using FRAT file %s" % opts.fratfile)
+    print("Using sqlite3db file %s" % opts.sqlitedb)
 
-    with Query(options.sqlitedb) as q:
+    with Query(opts.sqlitedb) as q:
         q.delete_tbls("used_clauses")
         q.get_conflicts()
         q.get_updates()
 
-    fix_up_frat(options.fratfile)
+    fix_up_frat(opts.fratfile)
 
     exit(0)
