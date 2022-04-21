@@ -2448,11 +2448,11 @@ void Searcher::setup_polarity_strategy()
     if (conf.polarity_mode == PolarityMode::polarmode_automatic) {
         longest_trail_ever_stable = 0;
 
-        if ((polarity_strategy_at % 5) == 0) polarity_mode = PolarityMode::polarmode_best;
-        if ((polarity_strategy_at % 5) == 1) polarity_mode = PolarityMode::polarmode_best_inv;
-        if ((polarity_strategy_at % 5) == 2) polarity_mode = PolarityMode::polarmode_stable;
-        if ((polarity_strategy_at % 5) == 3) polarity_mode = PolarityMode::polarmode_neg;
-        if ((polarity_strategy_at % 5) == 4) polarity_mode = PolarityMode::polarmode_pos;
+        if ((polarity_strategy_at % 3) == 0) polarity_mode = PolarityMode::polarmode_best;
+        if ((polarity_strategy_at % 3) == 1) polarity_mode = PolarityMode::polarmode_best_inv;
+        if ((polarity_strategy_at % 3) == 2) polarity_mode = PolarityMode::polarmode_stable;
+//         if ((polarity_strategy_at % 5) == 3) polarity_mode = PolarityMode::polarmode_neg;
+//         if ((polarity_strategy_at % 5) == 4) polarity_mode = PolarityMode::polarmode_pos;
     }
 
     if (conf.verbosity >= 2) {
