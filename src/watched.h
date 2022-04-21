@@ -181,7 +181,7 @@ class Watched {
             return data2 & 1;
         }
 
-        uint64_t get_ID() const
+        int32_t get_ID() const
         {
             DEBUG_WATCHED_DO(assert(isBin()));
             return data2 >> 2;

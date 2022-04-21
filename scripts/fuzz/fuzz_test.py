@@ -332,8 +332,6 @@ class Tester:
 
         # polarities
         cmd += "--polar %s " % random.choice(["true", "false", "rnd", "auto"])
-        cmd += "--lucky %s " % random.choice([1, 1, 1, 0])
-        cmd += "--polarstablen %d " % random.choice([0, 1, 2, -1, 10000])
 
         cmd += "--mustrenumber %d " % random.choice([0, 1])
         cmd += "--diffdeclevelchrono %d " % random.choice([1, random.randint(1, 1000), -1])

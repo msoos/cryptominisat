@@ -58,12 +58,13 @@ public:
     ///Add hyper-binary clause given this large clause
     void  add_hyper_bin(Lit p, const Clause& cl);
 
-    void  enqueue_with_acestor_info(const Lit p, const Lit ancestor, const bool redStep);
+    void  enqueue_with_acestor_info(
+        const Lit p, const Lit ancestor, const bool redStep, const int32_t ID);
 
 private:
     Lit   analyzeFail(PropBy propBy);
     Lit   remove_which_bin_due_to_trans_red(Lit conflict, Lit thisAncestor, const bool thisStepRed);
-    void  remove_bin_clause(Lit lit, const uint64_t ID);
+    void  remove_bin_clause(Lit lit, const int32_t ID);
     bool  is_ancestor_of(
         const Lit conflict
         , Lit thisAncestor

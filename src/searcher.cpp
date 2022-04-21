@@ -2937,22 +2937,14 @@ size_t Searcher::hyper_bin_res_all(const bool check_for_set_values)
 {
     size_t added = 0;
 
-    for(std::set<BinaryClause>::const_iterator
-        it = solver->needToAddBinClause.begin()
-        , end = solver->needToAddBinClause.end()
-        ; it != end
-        ; ++it
-    ) {
-        lbool val1 = value(it->getLit1());
-        lbool val2 = value(it->getLit2());
+    for(auto const& b: solver->needToAddBinClause) {
+        lbool val1 = value(b.getLit1());
+        lbool val2 = value(b.getLit2());
 
-        if (conf.verbosity >= 6) {
-            cout
-            << "c Attached hyper-bin: "
-            << it->getLit1() << "(val: " << val1 << " )"
-            << ", " << it->getLit2() << "(val: " << val2 << " )"
-            << endl;
-        }
+        verb_print(6,
+            "Attached hyper-bin: "
+            << b.getLit1() << "(val: " << val1 << " )"
+            << ", " << b.getLit2() << "(val: " << val2 << " )");
 
         //If binary is satisfied, skip
         if (check_for_set_values
@@ -2965,7 +2957,9 @@ size_t Searcher::hyper_bin_res_all(const bool check_for_set_values)
             assert(val1 == l_Undef && val2 == l_Undef);
         }
 
-        solver->attach_bin_clause(it->getLit1(), it->getLit2(), true, ++clauseID, false);
+        auto const ID = ++clauseID;
+        *solver->drat << add << ID << b.getLit1() << b.getLit2() << fin;
+        solver->attach_bin_clause(b.getLit1(), b.getLit2(), true, ID, false);
         added++;
     }
     solver->needToAddBinClause.clear();
@@ -2975,54 +2969,45 @@ size_t Searcher::hyper_bin_res_all(const bool check_for_set_values)
 
 std::pair<size_t, size_t> Searcher::remove_useless_bins(bool except_marked)
 {
-    assert(!drat->enabled()); // Does not work with FRAT yet
     size_t removedIrred = 0;
     size_t removedRed = 0;
 
     if (conf.doTransRed) {
-        for(std::set<BinaryClause>::iterator
-            it = uselessBin.begin()
-            , end = uselessBin.end()
-            ; it != end
-            ; ++it
-        ) {
+        for(auto const& b: uselessBin) {
             propStats.otfHyperTime += 2;
-            if (conf.verbosity >= 10) {
-                cout << "Removing binary clause: " << *it << endl;
-            }
-            propStats.otfHyperTime += solver->watches[it->getLit1()].size()/2;
-            propStats.otfHyperTime += solver->watches[it->getLit2()].size()/2;
+            verb_print(10, "Removing binary clause: " << b
+                << " except marked: " << except_marked);
+            propStats.otfHyperTime += solver->watches[b.getLit1()].size()/2;
+            propStats.otfHyperTime += solver->watches[b.getLit2()].size()/2;
             bool removed;
             if (except_marked) {
-                bool rem1 = removeWBin_except_marked(solver->watches, it->getLit1(), it->getLit2(), it->isRed());
-                bool rem2 = removeWBin_except_marked(solver->watches, it->getLit2(), it->getLit1(), it->isRed());
+                bool rem1 = removeWBin_except_marked(
+                    solver->watches, b.getLit1(), b.getLit2(), b.isRed(), b.getID());
+                bool rem2 = removeWBin_except_marked(
+                    solver->watches, b.getLit2(), b.getLit1(), b.isRed(), b.getID());
                 assert(rem1 == rem2);
                 removed = rem1;
             } else {
-                removeWBin(solver->watches, it->getLit1(), it->getLit2(), it->isRed(), it->getID());
-                removeWBin(solver->watches, it->getLit2(), it->getLit1(), it->isRed(), it->getID());
+                removeWBin(solver->watches, b.getLit1(), b.getLit2(), b.isRed(), b.getID());
+                removeWBin(solver->watches, b.getLit2(), b.getLit1(), b.isRed(), b.getID());
                 removed = true;
             }
-
-            if (!removed) {
-                continue;
-            }
+            if (!removed) continue;
 
             //Update stats
-            if (it->isRed()) {
+            if (b.isRed()) {
                 solver->binTri.redBins--;
                 removedRed++;
             } else {
                 solver->binTri.irredBins--;
                 removedIrred++;
             }
-            // FRAT will fail here
-            *drat << del << it->getLit1() << it->getLit2() << fin;
+            *drat << del << b.getID() << b.getLit1() << b.getLit2() << fin;
 
             #ifdef VERBOSE_DEBUG_FULLPROP
             cout << "Removed bin: "
-            << it->getLit1() << " , " << it->getLit2()
-            << " , red: " << it->isRed() << endl;
+            << b.getLit1() << " , " << b.getLit2()
+            << " , red: " << b.isRed() << endl;
             #endif
         }
     }

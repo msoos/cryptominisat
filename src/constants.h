@@ -30,7 +30,9 @@ THE SOFTWARE.
 
 using std::numeric_limits;
 
-//#define VERBOSE_DEBUG
+// #define VERBOSE_DEBUG
+// #define VERBOSE_DEBUG_FULLPROP
+// #define DEBUG_DEPTH
 
 #if defined(_MSC_VER)
 #define release_assert(a) \

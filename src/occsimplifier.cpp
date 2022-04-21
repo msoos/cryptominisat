@@ -3032,8 +3032,9 @@ void OccSimplifier::add_clause_to_blck(const vector<Lit>& lits, const uint64_t I
     newly_blocked_cls_IDs.push_back(ID);
 }
 
-void OccSimplifier::add_picosat_cls(const vec<Watched>& ws, const Lit elim_lit,
-                                    map<int, Watched>& picosat_cl_to_cms_cl)
+void OccSimplifier::add_picosat_cls(
+    const vec<Watched>& ws, const Lit elim_lit,
+    map<int, Watched>& picosat_cl_to_cms_cl)
 {
     picosat_cl_to_cms_cl.clear();
     var_to_picovar.clear();

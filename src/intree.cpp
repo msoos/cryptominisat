@@ -143,10 +143,7 @@ bool InTree::intree_probe()
     }
 
     bool aborted = false;
-    if (!replace_until_fixedpoint(aborted))
-    {
-        return solver->okay();
-    }
+    if (!replace_until_fixedpoint(aborted)) return solver->okay();
     if (aborted) {
         if (solver->conf.verbosity) {
             cout
@@ -169,9 +166,7 @@ bool InTree::intree_probe()
     randomize_roots();
 
     //Let's enqueue all ~root -s.
-    for(Lit lit: roots) {
-        enqueue(~lit, lit_Undef, false);
-    }
+    for(Lit lit: roots) enqueue(~lit, lit_Undef, false, 0);
 
     //clear seen
     for(QueueElem elem: queue) {
@@ -265,7 +260,8 @@ void InTree::tree_look()
         }
 
         if (elem.propagated != lit_Undef) {
-            timeout = handle_lit_popped_from_queue(elem.propagated, elem.other_lit, elem.red);
+            timeout = handle_lit_popped_from_queue(
+                elem.propagated, elem.other_lit, elem.red, elem.ID);
         } else {
             assert(solver->decisionLevel() > 0);
             solver->cancelUntil<false, true>(solver->decisionLevel()-1);
@@ -301,7 +297,8 @@ void InTree::tree_look()
     empty_failed_list();
 }
 
-bool InTree::handle_lit_popped_from_queue(const Lit lit, const Lit other_lit, const bool red)
+bool InTree::handle_lit_popped_from_queue(
+    const Lit lit, const Lit other_lit, const bool red, const int32_t ID)
 {
     solver->new_decision_level();
     depth_failed.push_back(depth_failed.back());
@@ -316,10 +313,7 @@ bool InTree::handle_lit_popped_from_queue(const Lit lit, const Lit other_lit, co
     ) {
         //l is failed.
         failed.push_back(~lit);
-        if (solver->conf.verbosity >= 10) {
-            cout << "Failed :" << ~lit << " level: " << solver->decisionLevel() << endl;
-        }
-
+        verb_print(10,"Failed :" << ~lit << " level: " << solver->decisionLevel());
         return false;
     }
 
@@ -327,10 +321,9 @@ bool InTree::handle_lit_popped_from_queue(const Lit lit, const Lit other_lit, co
         //update 'other_lit' 's ancestor to 'lit'
         assert(solver->value(other_lit) == l_True);
         reset_reason_stack.back() = ResetReason(other_lit.var(), solver->varData[other_lit.var()].reason);
-        solver->varData[other_lit.var()].reason = PropBy(~lit, red, false, false);
-        if (solver->conf.verbosity >= 10) {
-            cout << "Set reason for VAR " << other_lit.var()+1 << " to: " << ~lit << " red: " << (int)red << endl;
-        }
+        solver->varData[other_lit.var()].reason = PropBy(~lit, red, false, false, ID);
+        verb_print(10, "Set reason for VAR " << other_lit.var()+1
+        << " to: " << ~lit << " red: " << (int)red);
     }
 
     if (solver->value(lit) == l_Undef) {
@@ -349,9 +342,7 @@ bool InTree::handle_lit_popped_from_queue(const Lit lit, const Lit other_lit, co
                 + 1600ULL*1000ULL*1000ULL;
             }
 
-            Lit ret = solver->propagate_bfs(
-                max_hyper_time //early-abort timeout
-            );
+            Lit ret = solver->propagate_bfs(max_hyper_time);
             ok = (ret == lit_Undef);
             timeout = check_timeout_due_to_hyperbin();
         } else {
@@ -366,9 +357,9 @@ bool InTree::handle_lit_popped_from_queue(const Lit lit, const Lit other_lit, co
             }
         } else {
             hyperbin_added += solver->hyper_bin_res_all(false);
-            std::pair<size_t, size_t> tmp = solver->remove_useless_bins(true);
-            removedIrredBin += tmp.first;
-            removedRedBin += tmp.second;
+            auto [a, b] = solver->remove_useless_bins(true);
+            removedIrredBin += a;
+            removedRedBin += b;
         }
         solver->uselessBin.clear();
         solver->needToAddBinClause.clear();
@@ -379,7 +370,6 @@ bool InTree::handle_lit_popped_from_queue(const Lit lit, const Lit other_lit, co
 
 bool InTree::empty_failed_list()
 {
-    assert(!solver->drat->enabled());
     assert(solver->decisionLevel() == 0);
     for(const Lit lit: failed) {
         if (!solver->ok) {
@@ -388,16 +378,14 @@ bool InTree::empty_failed_list()
 
         if (solver->value(lit) == l_Undef) {
             solver->enqueue<true>(lit);
-            // FRAT will fail here
-            *(solver->drat) << add << lit << fin;
             solver->ok = solver->propagate<true>().isNULL();
             if (!solver->ok) {
                 return false;
             }
         } else if (solver->value(lit) == l_False) {
-            // FRAT will fail here
-            *(solver->drat) << add << ~lit << fin;
-            *(solver->drat) << add << fin;
+            //*(solver->drat) << add << solver->clauseID++ << ~lit << fin;
+            solver->unsat_cl_ID = solver->clauseID;
+            *(solver->drat) << add << solver->clauseID++ <<fin;
             solver->ok = false;
             return false;
         }
@@ -412,9 +400,9 @@ bool InTree::empty_failed_list()
 // Next: (~otherLit, lit2) exists -> (~lit2, ~otherLit) in queue
 // --> original ~otherlit got enqueued by lit2 = False (--> PropBy(lit2) ).
 
-void InTree::enqueue(const Lit lit, const Lit other_lit, bool red_cl)
+void InTree::enqueue(const Lit lit, const Lit other_lit, const bool red_cl, const int32_t ID)
 {
-    queue.push_back(QueueElem(lit, other_lit, red_cl));
+    queue.push_back(QueueElem(lit, other_lit, red_cl, ID));
     assert(!seen[lit.toInt()]);
     seen[lit.toInt()] = 1;
     assert(solver->value(lit) == l_Undef);
@@ -431,10 +419,10 @@ void InTree::enqueue(const Lit lit, const Lit other_lit, bool red_cl)
                 solver->watches, w.lit2(), lit, w.red(), w.get_ID());
             other_w.mark_bin_cl();
 
-            enqueue(~w.lit2(), lit, w.red());
+            enqueue(~w.lit2(), lit, w.red(), w.get_ID());
         }
     }
-    queue.push_back(QueueElem(lit_Undef, lit_Undef, false));
+    queue.push_back(QueueElem(lit_Undef, lit_Undef, false, 0));
 }
 
 

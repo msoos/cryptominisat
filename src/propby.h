@@ -105,11 +105,13 @@ class PropBy
             , bool redStep //Step that lead here from ancestor is redundant
             , bool hyperBin //It's a hyper-binary clause
             , bool hyperBinNotAdded //It's a hyper-binary clause, but was never added because all the rest was zero-level
+            , int32_t _ID
         ) :
             red_step(redStep)
             , data1(lit.toInt())
             , type(binary_t)
             , data2(0)
+            , ID(_ID)
         {
             //HACK: if we are doing seamless hyper-bin and transitive reduction
             //then if we are at toplevel, .getAncestor()

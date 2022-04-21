@@ -184,7 +184,8 @@ class BinaryClause {
 inline std::ostream& operator<<(std::ostream& os, const BinaryClause val)
 {
     os << val.getLit1() << " , " << val.getLit2()
-    << " red: " << std::boolalpha << val.isRed() << std::noboolalpha;
+    << " red: " << std::boolalpha << val.isRed() << std::noboolalpha
+    << " ID: " << val.getID();
     return os;
 }
 

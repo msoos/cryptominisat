@@ -737,7 +737,7 @@ void Solver::attach_bin_clause(
     const Lit lit1
     , const Lit lit2
     , const bool red
-    , const uint64_t ID
+    , const int32_t ID
     , [[maybe_unused]] const bool checkUnassignedFirst
 ) {
     //Update stats
@@ -2181,13 +2181,8 @@ lbool Solver::execute_inprocess_strategy(
             Lucky lucky(solver);
             lucky.doit();
         } else if (token == "intree-probe") {
-            //TODO broken! Due to clause IDs in binary clauses, this does NOT work
-            /*if (!bnns.empty()) {
-                conf.do_hyperbin_and_transred = false;
-            }
-            if (conf.doIntreeProbe && conf.doFindAndReplaceEqLits && !drat->enabled()) {
-                intree->intree_probe();
-            }*/
+            if (!bnns.empty()) conf.do_hyperbin_and_transred = false;
+            if (conf.doIntreeProbe && conf.doFindAndReplaceEqLits) intree->intree_probe();
         } else if (token == "sub-str-cls-with-bin") {
             //Subsumes and strengthens long clauses with binary clauses
             if (conf.do_distill_clauses) {
