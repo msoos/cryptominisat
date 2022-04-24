@@ -85,7 +85,6 @@ namespace CMSat {
         int sql = 0;
         double timeout = numeric_limits<double>::max();
         bool interrupted = false;
-        uint64_t max_confl_for_backbone; //valid for BACKBONE ONLY
 
         //variables and clauses added/to add.
         //This is to make it faster to add variables/clasues
@@ -151,7 +150,6 @@ struct DataForThread
         , assumptions(_assumptions)
         , update_mutex(new std::mutex)
         , which_solved(&(data->which_solved))
-        , max_confl_for_backbone(data->max_confl_for_backbone)
         , ret(new lbool(l_Undef))
     {
     }
@@ -168,7 +166,6 @@ struct DataForThread
     const vector<Lit> *assumptions;
     std::mutex* update_mutex;
     int *which_solved;
-    uint64_t max_confl_for_backbone; //valid for BACKBONE ONLY
     lbool* ret;
 };
 
