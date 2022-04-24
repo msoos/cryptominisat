@@ -578,14 +578,6 @@ DLL_PUBLIC void SATSolver::set_max_confl(uint64_t max_confl)
   }
 }
 
-DLL_PUBLIC void SATSolver::set_polarity_auto()
-{
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
-        s.conf.polarity_mode = PolarityMode::polarmode_automatic;
-    }
-}
-
 DLL_PUBLIC void SATSolver::set_default_polarity(bool polarity)
 {
     for (size_t i = 0; i < data->solvers.size(); ++i) {
@@ -1603,6 +1595,11 @@ DLL_PUBLIC void SATSolver::set_polarity_mode(CMSat::PolarityMode mode)
         Solver& s = *data->solvers[i];
         s.conf.polarity_mode = mode;
     }
+}
+
+DLL_PUBLIC CMSat::PolarityMode SATSolver::get_polarity_mode() const
+{
+    return data->solvers[0]->conf.polarity_mode;
 }
 
 DLL_PUBLIC void SATSolver::set_full_bve_iter_ratio(double val)
