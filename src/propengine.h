@@ -534,7 +534,7 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
 
     const uint32_t v = p.var();
     assert(value(v) == l_Undef);
-    assert(varData[v].removed == Removed::none);
+    SLOW_DEBUG_DO(assert(varData[v].removed == Removed::none));
     if (level == 0 && drat->enabled())
     {   if (do_unit_frat) {
             const uint32_t ID = ++clauseID;

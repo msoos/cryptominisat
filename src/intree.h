@@ -95,7 +95,7 @@ private:
     deque<QueueElem> queue;
     vector<char> depth_failed;
     int64_t bogoprops_to_use;
-    int64_t bogoprops_remain;
+    int64_t start_bogoprops;
 
     size_t hyperbin_added;
     size_t removedIrredBin;

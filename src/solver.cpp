@@ -2144,17 +2144,7 @@ lbool Solver::execute_inprocess_strategy(
                 varReplacer->replace_if_enough_is_found();
             }
         } else if (token == "full-probe") {
-            for(uint32_t i = 0; i < nVars(); i++) {
-                uint32_t min_props;
-                Lit l(i, false);
-                if (value(l) == l_Undef &&
-                    varData[i].removed == Removed::none)
-                {
-                    if (probe_inter(l, min_props) == l_False) {
-                        break;
-                    }
-                }
-            }
+            if (!full_probe()) return l_False;
         } else if (token == "card-find") {
             if (conf.doFindCard) {
                 card_finder->find_cards();
@@ -3156,20 +3146,105 @@ bool Solver::add_clause_outside(const vector<Lit>& lits)
     return add_clause_outer(back_number_from_outside_to_outer_tmp);
 }
 
+bool Solver::full_probe()
+{
+    assert(okay());
+    assert(decisionLevel() == 0);
+    const size_t orig_num_free_vars = solver->get_num_free_vars();
+    double myTime = cpuTime();
+    int64_t start_bogoprops = solver->propStats.bogoProps;
+    int64_t bogoprops_to_use =
+        solver->conf.intree_time_limitM*1000ULL*1000ULL
+        * 0.02
+        *solver->conf.global_timeout_multiplier;
+    uint64_t probed = 0;
+    auto orig_repl = varReplacer->get_num_replaced_vars();
+
+    vector<uint32_t> vars;
+    for(uint32_t i = 0; i < nVars(); i++) {
+        Lit l(i, false);
+        if (value(l) == l_Undef &&
+            varData[i].removed == Removed::none)
+        {
+            vars.push_back(i);
+        }
+    }
+    std::random_shuffle(vars.begin(), vars.end());
+
+    for(auto const& v: vars) {
+        if ((int64_t)solver->propStats.bogoProps > start_bogoprops + bogoprops_to_use)
+            break;
+
+        uint32_t min_props;
+        Lit l(v, false);
+
+        //we have seen it in every combination, nothing will be learnt
+        if (seen2[l.var()] == 3) continue;
+
+        if (value(l) == l_Undef &&
+            varData[v].removed == Removed::none)
+        {
+            probed++;
+            if (probe_inter(l, min_props) == l_False) {
+                goto cleanup;
+            }
+
+            const double time_remain = 1.0-float_div(
+            (int64_t)solver->propStats.bogoProps-start_bogoprops, bogoprops_to_use);
+//             cout << "time remain: " << time_remain << " probed: " << probed
+//             << " set: "  << (orig_num_free_vars - solver->get_num_free_vars())
+//             << " T: " << (cpuTime() - myTime)
+//             << endl;
+        }
+    }
+
+    cleanup:
+    std::fill(seen2.begin(), seen2.end(), 0);
+
+    const double time_used = cpuTime() - myTime;
+    const double time_remain = 1.0-float_div(
+        (int64_t)solver->propStats.bogoProps-start_bogoprops, bogoprops_to_use);
+    const bool time_out = ((int64_t)solver->propStats.bogoProps > start_bogoprops + bogoprops_to_use);
+
+    verb_print(0,
+        "[full-probe] Set: "
+        << (orig_num_free_vars - solver->get_num_free_vars())
+        << " repl: " << (varReplacer->get_num_replaced_vars() - orig_repl)
+        << solver->conf.print_times(time_used,  time_out, time_remain));
+
+
+    if (solver->sqlStats) {
+        solver->sqlStats->time_passed(
+            solver
+            , "full-probe"
+            , time_used
+            , time_out
+            , time_remain
+        );
+    }
+
+
+    return okay();
+}
+
 lbool Solver::probe_inter(Lit l, uint32_t& min_props)
 {
+    propStats.bogoProps+=2;
+
     //Probe l
     uint32_t old_trail_size = trail.size();
     new_decision_level();
-    enqueue<false>(l);
-    PropBy p = propagate<false>();
+    enqueue<true>(l);
+    PropBy p = propagate<true>();
     min_props = trail.size() - old_trail_size;
     for(uint32_t i = old_trail_size+1; i < trail.size(); i++) {
         toClear.push_back(trail[i].lit);
         //seen[x] == 0 -> not propagated
         //seen[x] == 1 -> propagated as POS
         //seen[x] == 2 -> propagated as NEG
-        seen[trail[i].lit.var()] = 1+(int)trail[i].lit.sign();
+        const auto var = trail[i].lit.var();
+        seen[var] = 1+(int)trail[i].lit.sign();
+        seen2[var] |= 1+(int)trail[i].lit.sign();
     }
     cancelUntil<false, true> (0);
 
@@ -3193,6 +3268,7 @@ lbool Solver::probe_inter(Lit l, uint32_t& min_props)
     for(uint32_t i = old_trail_size+1; i < trail.size(); i++) {
         Lit lit = trail[i].lit;
         uint32_t var = trail[i].lit.var();
+        seen2[var] |= 1+(int)trail[i].lit.sign();
         if (seen[var] == 0) {
             continue;
         }
@@ -3210,7 +3286,7 @@ lbool Solver::probe_inter(Lit l, uint32_t& min_props)
 
     //Check result
     if (!p.isNULL()) {
-        enqueue<false>(l);
+        enqueue<true>(l);
         p = propagate<true>();
         if (!p.isNULL()) {
             ok = false;
@@ -3224,7 +3300,7 @@ lbool Solver::probe_inter(Lit l, uint32_t& min_props)
         if (bp_lit != lit_Undef) {
             //I am not going to deal with the messy version of it already being set
             if (value(bp_lit) == l_Undef) {
-                enqueue<false>(bp_lit);
+                enqueue<true>(bp_lit);
             }
         } else {
             //First we must propagate all the enqueued facts
@@ -3270,7 +3346,6 @@ lbool Solver::probe_outside(Lit l, uint32_t& min_props)
     if (!ok) {
         return l_False;
     }
-
 
     l = map_to_with_bva(l);
     l = varReplacer->get_lit_replaced_with_outer(l);

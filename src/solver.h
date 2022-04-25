@@ -340,6 +340,7 @@ class Solver : public Searcher
         void write_one_final_frat_cl(const ClOffset offs);
 
         lbool probe_inter(Lit l, uint32_t& min_props);
+        bool full_probe();
         void reset_for_solving();
         vector<Lit> add_clause_int_tmp_cl;
         lbool iterate_until_solved();

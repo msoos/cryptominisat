@@ -160,7 +160,7 @@ bool InTree::intree_probe()
         solver->conf.intree_time_limitM*1000ULL*1000ULL
         *solver->conf.global_timeout_multiplier;
     bogoprops_to_use = (double)bogoprops_to_use * std::pow((double)(numCalls+1), 0.3);
-    bogoprops_remain = bogoprops_to_use;
+    start_bogoprops = solver->propStats.bogoProps;
 
     fill_roots();
     randomize_roots();
@@ -180,19 +180,18 @@ bool InTree::intree_probe()
     unmark_all_bins();
 
     const double time_used = cpuTime() - myTime;
-    const double time_remain = float_div(bogoprops_remain, bogoprops_to_use);
-    const bool time_out = (bogoprops_remain < 0);
+    const double time_remain = float_div(
+        (int64_t)solver->propStats.bogoProps-start_bogoprops, bogoprops_to_use);
+    const bool time_out = ((int64_t)solver->propStats.bogoProps > start_bogoprops + bogoprops_to_use);
 
-    if (solver->conf.verbosity) {
-        cout << "c [intree] Set "
+    verb_print(1,
+        "[intree] Set "
         << (orig_num_free_vars - solver->get_num_free_vars())
         << " vars"
         << " hyper-added: " << hyperbin_added
         << " trans-irred: " << removedIrredBin
         << " trans-red: " << removedRedBin
-        << solver->conf.print_times(time_used,  time_out, time_remain)
-        << endl;
-    }
+        << solver->conf.print_times(time_used,  time_out, time_remain));
 
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
@@ -243,9 +242,9 @@ void InTree::tree_look()
     bool timeout = false;
     while(!queue.empty())
     {
-        if ((int64_t)solver->propStats.bogoProps
+        if (start_bogoprops + bogoprops_to_use <
+            (int64_t)solver->propStats.bogoProps
             + (int64_t)solver->propStats.otfHyperTime
-            > bogoprops_remain
             || timeout
         ) {
             break;
@@ -290,8 +289,6 @@ void InTree::tree_look()
             }
         }
     }
-
-    bogoprops_remain -= (int64_t)solver->propStats.bogoProps + (int64_t)solver->propStats.otfHyperTime;
 
     solver->cancelUntil<false, true>(0);
     empty_failed_list();
