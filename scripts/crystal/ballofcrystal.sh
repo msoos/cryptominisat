@@ -22,6 +22,7 @@
 
 set -e
 set -x
+set -o pipefail  # needed so  " | tee xyz " doesn't swallow the last command's error
 
 . ./setparams_ballofcrystal.sh
 
@@ -86,6 +87,7 @@ else
 fi
 
 set -e
+set -o pipefail
 
 echo "--> Running on file                   $FNAME"
 echo "--> Outputting to data                $FNAMEOUT"
@@ -137,16 +139,18 @@ if [ "$SKIP" != "1" ]; then
     retval=$?
     set -e
     if [[ retval -eq 1 ]]; then
-        rm -f $FNAMEOUT.usedCls-*
-        /usr/bin/time -v $NOBUF ../utils/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -o "$FNAMEOUT.usedCls" -i -O 4 -m | tee drat.out-newO4
+        /usr/bin/time -v ../frat-rs elab "../$FNAME" "$FNAMEOUT.drat" -m -v
+
+        set +e
+        /usr/bin/time -v ../frat-rs elab - "$FNAMEOUT.drat" test.frat
+        /usr/bin/time -v ../frat-rs refrat "$FNAMEOUT.drat.temp" correct
+        set -e
+        #/usr/bin/time -v $NOBUF ../utils/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -o "$FNAMEOUT.usedCls" -i -O 4 -m | tee drat.out-newO4
+
+
     else
-        rm -f final.cnf
-        touch final.cnf
-        cat "../$FNAME" >> final.cnf
-        cat dec_list >> final.cnf
-        grep ^v cms-pred-run.out | sed "s/v//" | tr -d "\n" | sed "s/  / /g" | sed -e "s/ -/X/g" -e "s/ /Y/g" | sed "s/X/ /g" | sed -E "s/Y([1-9])/ -\1/g" | sed "s/Y0/ 0\n/" >> final.cnf
-        ../../utils/cnf-utils/xor_to_cnf.py final.cnf final_good.cnf
-        ../tests/drat-trim/drat-trim final_good.cnf "$FNAMEOUT.drat" -o "$FNAMEOUT.usedCls" -i
+        echo "Not UNSAT!!!"
+        exit -1
     fi
     echo "CMS+DRAT done now"
     )
@@ -169,12 +173,13 @@ rm -f check_quality.out
 rm -f clean_update.out
 rm -f fill_clauses.out
 
-../fill_used_clauses.py "$FNAMEOUT.db-raw" "$FNAMEOUT.usedCls" | tee fill_used_clauses.out
+../fix_up_frat.py correct $FNAMEOUT.db-raw | tee fill_used_clauses.out
 cp "$FNAMEOUT.db-raw" "$FNAMEOUT.db"
 /usr/bin/time -v ../clean_update_data.py "$FNAMEOUT.db"  | tee clean_update_data.out
 ../check_data_quality.py --slow "$FNAMEOUT.db" | tee check_data_quality.out
 cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 /usr/bin/time -v ../sample_data.py "$FNAMEOUT-min.db" | tee sample_data.out
+
 
 ########################
 # Denormalize the data into a Pandas Table, label it and sample it
@@ -198,6 +203,8 @@ cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 #../vardata_predict.py mydata.db-vardata.dat --picktimeonly -q 2 --only 0.99
 #../vardata_predict.py vardata-comb --final -q 20 --basedir ../src/predict/ --depth 7 --tree
 
+set -e
+set -o pipefail
 rm -f .*.json
 regressors=("xgb") # "lgbm" )
 tiers=("short" "long" "forever")

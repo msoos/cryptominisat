@@ -794,7 +794,7 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.which_red_array);
 
     //data
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.ID);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, stats_extra.orig_ID);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, stats_extra.dump_no);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, stats_extra.conflicts_made);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.props_made);

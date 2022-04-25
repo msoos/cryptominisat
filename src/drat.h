@@ -128,7 +128,7 @@ public:
     unsigned char* buf_ptr = NULL;
 };
 
-template<bool add_ID, bool bindrat = false>
+template<bool bindrat = false>
 class DratFile: public Drat
 {
 public:
@@ -190,10 +190,6 @@ public:
     void setFile(FILE* _file) override
     {
         drup_file = _file;
-    }
-
-    bool get_conf_id() override {
-        return add_ID;
     }
 
     bool something_delayed() override

@@ -1722,14 +1722,17 @@ Clause* Searcher::handle_last_confl(
         cl->stats.glue = glue;
         cl->stats.ID = ID;
         #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-        cl->stats.is_tracked = to_track;
         red_stats_extra.push_back(ClauseStatsExtra());
         cl->stats.extra_pos = red_stats_extra.size()-1;
         auto& ext_stats = red_stats_extra[cl->stats.extra_pos];
         ext_stats.introduced_at_conflict = sumConflicts;
         ext_stats.orig_glue = glue;
         ext_stats.orig_size = cl->size();
-        sqlStats->update_id(ID, ID); // this is how we know it's tracked
+        #endif
+        #ifdef STATS_NEEDED
+        cl->stats.is_tracked = to_track;
+        if (cl->stats.is_tracked) ext_stats.orig_ID = ID;
+        if (sqlStats) sqlStats->update_id(ID, ID); // this is how we know it's tracked
         #endif
         cl->stats.activity = 0.0f;
         ClOffset offset = cl_alloc.get_offset(cl);

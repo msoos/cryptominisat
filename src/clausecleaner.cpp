@@ -568,12 +568,10 @@ bool ClauseCleaner::full_clean(Clause& cl)
         }
     }
 
-    int32_t ID;
     if (i != j) {
         cl.shrink(i-j);
-        ID = ++solver->clauseID;
-        (*solver->drat) << add << ID << cl << fin << findelay;
-        cl.stats.ID = ID;
+        INC_ID(cl);
+        (*solver->drat) << add << cl << fin << findelay;
     } else {
         solver->drat->forget_delay();
         return false;
@@ -593,7 +591,7 @@ bool ClauseCleaner::full_clean(Clause& cl)
     }
 
     if (cl.size() == 2) {
-        solver->attach_bin_clause(cl[0], cl[1], cl.red(), ID);
+        solver->attach_bin_clause(cl[0], cl[1], cl.red(), cl.stats.ID);
         return true;
     }
 

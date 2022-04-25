@@ -53,7 +53,8 @@ else:
     mlflow_avail = True
 
 ver = sklearn.__version__.split(".")
-if int(ver[1]) < 20:
+print("version: ", ver)
+if int(ver[0]) == 0 and int(ver[1]) < 20:
     from sklearn.cross_validation import train_test_split
 else:
     from sklearn.model_selection import train_test_split

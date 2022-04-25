@@ -35,6 +35,7 @@ class Query:
         self.cl_used = []
         self.cl_used_num = 0
         self.cl_used_total = 0
+        self.children_set = 0
 
     def __enter__(self):
         return self
@@ -113,6 +114,7 @@ create table `{table}` ( `clauseID` bigint(20) NOT NULL, `used_at` bigint(20) NO
         self.cl_used = []
         self.cl_used_num = 0
 
+    #@profile
     def deal_with_chain(self, line, ID, cl_len, tracked_already, confl):
         for chain_str in line:
             if chain_str[0] == '0':
@@ -167,8 +169,9 @@ create table `{table}` ( `clauseID` bigint(20) NOT NULL, `used_at` bigint(20) NO
                     print("-----> Therefore, we will track ID %d with val %f to count as ID %d, confl %d" % (ID, val, chain_ID_upd, anc_confl))
                 new_id_to_old_id[ID] = [chain_ID_upd, val, anc_confl]
                 tracked_already = True
+                self.children_set += 1
 
-        # @profile
+    #@profile
     def fix_up_frat(self, fratfile):
         with open(fratfile, "r") as f:
             for line in f:
@@ -259,5 +262,8 @@ Adds used_clauses to the SQLite database"""
         q.fix_up_frat(opts.fratfile)
         # dump remaining ones (we dump 1000-by-1000)
         q.dump_used_clauses()
+
+        print("Total num:    %10d" % q.cl_used_total)
+        print("Children set: %10d" % q.children_set)
 
     exit(0)
