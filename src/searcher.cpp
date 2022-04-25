@@ -92,7 +92,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
 
 Searcher::~Searcher()
 {
-    clear_gauss_matrices();
+    clear_gauss_matrices(true);
 }
 
 void Searcher::new_var(
@@ -3559,10 +3559,13 @@ inline bool Searcher::check_order_heap_sanity() const
     return true;
 }
 
-bool Searcher::clear_gauss_matrices()
+bool Searcher::clear_gauss_matrices(const bool destruct)
 {
-    if (!solver->fully_undo_xor_detach()) return false;
-    TBUDDY_DO(if (drat->enabled()) for(auto& g: gmatrices) g->finalize_frat());
+    if (!destruct) {
+        if (!solver->fully_undo_xor_detach()) return false;
+        TBUDDY_DO(if (drat->enabled()) for(auto& g: gmatrices) g->finalize_frat());
+    }
+
     xor_clauses_updated = true;
     for(uint32_t i = 0; i < gqueuedata.size(); i++) {
         auto gqd = gqueuedata[i];

@@ -1103,7 +1103,7 @@ TEST(get_small_clauses, full_bins)
 
     vector<Lit> lits;
     s.get_all_irred_clauses(lits);
-    ASSERT_EQ(str_to_cl("5, 6, U, 7, 8, U", false), lits);
+    ASSERT_EQ(str_to_cl("6, 5, U, 7, 8, U", false), lits);
 }
 
 TEST(get_small_clauses, full_units)
@@ -1234,15 +1234,17 @@ TEST(xor_recovery, find_2_3_xor_2)
 
     s.add_clause(str_to_cl("1,2,3,4,5"));
     s.add_xor_clause(str_to_vars("1, 2, 3"), false);
-    s.add_xor_clause(str_to_vars("1, 4, 5"), false);
+    s.add_xor_clause(str_to_vars("4, 5, 6"), false);
     s.simplify();
 
     vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(true);
     EXPECT_EQ(xors.size(), 2);
-    EXPECT_EQ(xors[0].first, str_to_vars("1, 2, 3"));
-    EXPECT_EQ(xors[1].first, str_to_vars("1, 4, 5"));
-    EXPECT_EQ(xors[0].second, false);
-    EXPECT_EQ(xors[1].second, false);
+    if (xors.size() == 2) {
+        EXPECT_EQ(xors[0].first, str_to_vars("1, 2, 3"));
+        EXPECT_EQ(xors[1].first, str_to_vars("4, 5, 6"));
+        EXPECT_EQ(xors[0].second, false);
+        EXPECT_EQ(xors[1].second, false);
+    }
 }
 
 TEST(xor_recovery, find_1_3_xor_exact)
