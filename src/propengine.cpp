@@ -640,7 +640,6 @@ void CMSat::PropEngine::reverse_prop(const CMSat::Lit l)
     varData[l.var()].propagated = false;
 }
 
-
 template<bool inprocess, bool red_also, bool distill_use>
 PropBy PropEngine::propagate_any_order()
 {
@@ -968,9 +967,7 @@ uint32_t PropEngine::pick_var_vmtf()
 
 // Update queue to point to last potentially still unassigned variable.
 // All variables after 'queue.unassigned' in bump order are assumed to be
-// assigned.  Then update the 'queue.vmtf_bumped' field and log it.  This is
-// inlined here since it occurs in several inner loops.
-//
+// assigned.  Then update the 'queue.vmtf_bumped' field and log it.
 void PropEngine::vmtf_update_queue_unassigned (const uint32_t var) {
     assert(var != numeric_limits<uint32_t>::max());
     assert(var < nVars());
@@ -1003,6 +1000,17 @@ void PropEngine::vmtf_init_enqueue (const uint32_t var) {
     vmtf_update_queue_unassigned(vmtf_queue.last);
 }
 
+void PropEngine::vmtf_dequeue (const uint32_t var) {
+    Link & l = vmtf_links[var];
+    if (vmtf_queue.unassigned == var) {
+        vmtf_queue.unassigned = l.prev;
+        if (vmtf_queue.unassigned != numeric_limits<uint32_t>::max()) {
+            vmtf_update_queue_unassigned(vmtf_queue.unassigned);
+        }
+    }
+    vmtf_queue.dequeue (vmtf_links, var);
+}
+
 // Move vmtf_bumped variables to the front of the (VMTF) decision queue.  The
 // 'vmtf_bumped' time stamp is updated accordingly.  It is used to determine
 // whether the 'queue.assigned' pointer has to be moved in 'unassign'.
@@ -1017,6 +1025,6 @@ void PropEngine::vmtf_bump_queue (const uint32_t var) {
 
     assert (stats_bumped != numeric_limits<uint64_t>::max());
     vmtf_btab[var] = ++stats_bumped;
-    VERBOSE_PRINT("vmtf moved to front variable " << var+1 << " and vmtf_bumped to " << vmtf_btab[var]);
+    VERBOSE_PRINT("vmtf moved to last element in queue the variable " << var+1 << " and vmtf_bumped to " << vmtf_btab[var]);
     if (value(var) == l_Undef) vmtf_update_queue_unassigned(var);
 }

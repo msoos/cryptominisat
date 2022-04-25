@@ -1946,9 +1946,7 @@ lbool Solver::iterate_until_solved()
         && sumConflicts < conf.max_confl
     ) {
         iteration_num++;
-        if (conf.verbosity) {
-            print_clause_size_distrib();
-        }
+        if (conf.verbosity >= 2) print_clause_size_distrib();
         dump_memory_stats_to_sql();
 
         const uint64_t num_confl = calc_num_confl_to_do_this_iter(iteration_num);
@@ -2144,7 +2142,7 @@ lbool Solver::execute_inprocess_strategy(
                 varReplacer->replace_if_enough_is_found();
             }
         } else if (token == "full-probe") {
-            if (!full_probe()) return l_False;
+            if (!full_probe(false)) return l_False;
         } else if (token == "card-find") {
             if (conf.doFindCard) {
                 card_finder->find_cards();
@@ -2295,7 +2293,7 @@ lbool Solver::execute_inprocess_strategy(
 */
 lbool Solver::simplify_problem(const bool startup, const string& strategy)
 {
-    assert(ok);
+    assert(okay());
     #ifdef DEBUG_IMPLICIT_STATS
     check_stats();
     #endif
@@ -2313,17 +2311,9 @@ lbool Solver::simplify_problem(const bool startup, const string& strategy)
     }
 
     lbool ret = l_Undef;
-    if (!okay()) {
-        ret = l_False;
-    }
-
     clear_order_heap();
     set_clash_decision_vars();
-    if (ret == l_Undef && !fully_undo_xor_detach()) {
-        ret = l_False;
-    }
-    TBUDDY_DO(if (drat->enabled()) for(auto& g: gmatrices) g->finalize_frat());
-    clear_gauss_matrices();
+    if (!clear_gauss_matrices()) return l_False;
 
     if (conf.verbosity >= 6) {
         cout
@@ -3146,7 +3136,7 @@ bool Solver::add_clause_outside(const vector<Lit>& lits)
     return add_clause_outer(back_number_from_outside_to_outer_tmp);
 }
 
-bool Solver::full_probe()
+bool Solver::full_probe(const bool bin_only)
 {
     assert(okay());
     assert(decisionLevel() == 0);
@@ -3185,16 +3175,19 @@ bool Solver::full_probe()
             varData[v].removed == Removed::none)
         {
             probed++;
-            if (probe_inter(l, min_props) == l_False) {
-                goto cleanup;
-            }
+            lbool ret;
+            if (bin_only) ret = probe_inter<true>(l, min_props);
+            else ret = probe_inter<false>(l, min_props);
+            if (ret == l_False) goto cleanup;
 
-            const double time_remain = 1.0-float_div(
-            (int64_t)solver->propStats.bogoProps-start_bogoprops, bogoprops_to_use);
-//             cout << "time remain: " << time_remain << " probed: " << probed
-//             << " set: "  << (orig_num_free_vars - solver->get_num_free_vars())
-//             << " T: " << (cpuTime() - myTime)
-//             << endl;
+            if (conf.verbosity >= 5) {
+                const double time_remain = 1.0-float_div(
+                (int64_t)solver->propStats.bogoProps-start_bogoprops, bogoprops_to_use);
+                cout << "c probe time remain: " << time_remain << " probed: " << probed
+                << " set: "  << (orig_num_free_vars - solver->get_num_free_vars())
+                << " T: " << (cpuTime() - myTime)
+                << endl;
+            }
         }
     }
 
@@ -3206,8 +3199,10 @@ bool Solver::full_probe()
         (int64_t)solver->propStats.bogoProps-start_bogoprops, bogoprops_to_use);
     const bool time_out = ((int64_t)solver->propStats.bogoProps > start_bogoprops + bogoprops_to_use);
 
-    verb_print(0,
-        "[full-probe] Set: "
+    verb_print(1,
+        "[full-probe] "
+        << " bin_only: " << bin_only
+        << " set: "
         << (orig_num_free_vars - solver->get_num_free_vars())
         << " repl: " << (varReplacer->get_num_replaced_vars() - orig_repl)
         << solver->conf.print_times(time_used,  time_out, time_remain));
@@ -3227,6 +3222,7 @@ bool Solver::full_probe()
     return okay();
 }
 
+template<bool bin_only>
 lbool Solver::probe_inter(Lit l, uint32_t& min_props)
 {
     propStats.bogoProps+=2;
@@ -3234,8 +3230,8 @@ lbool Solver::probe_inter(Lit l, uint32_t& min_props)
     //Probe l
     uint32_t old_trail_size = trail.size();
     new_decision_level();
-    enqueue<true>(l);
-    PropBy p = propagate<true>();
+    enqueue_light(l);
+    PropBy p = propagate_light<bin_only>();
     min_props = trail.size() - old_trail_size;
     for(uint32_t i = old_trail_size+1; i < trail.size(); i++) {
         toClear.push_back(trail[i].lit);
@@ -3246,7 +3242,7 @@ lbool Solver::probe_inter(Lit l, uint32_t& min_props)
         seen[var] = 1+(int)trail[i].lit.sign();
         seen2[var] |= 1+(int)trail[i].lit.sign();
     }
-    cancelUntil<false, true> (0);
+    cancelUntil_light();
 
     //Check result
     if (!p.isNULL()) {
@@ -3261,8 +3257,8 @@ lbool Solver::probe_inter(Lit l, uint32_t& min_props)
     //Probe ~l
     old_trail_size = trail.size();
     new_decision_level();
-    enqueue<true>(~l);
-    p = propagate<true>();
+    enqueue_light(~l);
+    p = propagate_light<bin_only>();
     min_props = std::min<uint32_t>(min_props, trail.size() - old_trail_size);
     probe_inter_tmp.clear();
     for(uint32_t i = old_trail_size+1; i < trail.size(); i++) {
@@ -3282,7 +3278,7 @@ lbool Solver::probe_inter(Lit l, uint32_t& min_props)
             probe_inter_tmp.push_back(~lit);
         }
     }
-    cancelUntil<false, true>(0);
+    cancelUntil_light();
 
     //Check result
     if (!p.isNULL()) {
@@ -3358,7 +3354,7 @@ lbool Solver::probe_outside(Lit l, uint32_t& min_props)
         return l_Undef;
     }
 
-    return probe_inter(l, min_props);
+    return probe_inter<false>(l, min_props);
 }
 
 bool Solver::add_xor_clause_outside(const vector<uint32_t>& vars, bool rhs)
@@ -3802,7 +3798,7 @@ void Solver::renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors
 bool Solver::find_and_init_all_matrices()
 {
     if (!xor_clauses_updated && (!detached_xor_clauses || !assump_contains_xor_clash())) {
-        if (conf.verbosity >= 1) {
+        if (conf.verbosity >= 2) {
             cout << "c [find&init matx] XORs not updated, and either (XORs are not detached OR assumps does not contain clash variable) -> or not performing matrix init. Matrices: " << gmatrices.size() << endl;
         }
         return true;
@@ -3859,6 +3855,7 @@ bool Solver::find_and_init_all_matrices()
     ) {
         detach_xor_clauses(mfinder.clash_vars_unused);
         unset_clash_decision_vars(xorclauses);
+        rebuildOrderHeap();
         if (conf.xor_detach_verb) print_watchlist_stats();
 
     } else {
@@ -4383,11 +4380,19 @@ void Solver::detach_xor_clauses(
 
 bool Solver::fully_undo_xor_detach()
 {
-    if (!detached_xor_clauses)
+    if (!detached_xor_clauses) {
+        assert(detached_xor_repr_cls.empty());
+        if (conf.verbosity >= 1 || conf.xor_detach_verb) {
+            cout
+            << "c [gauss] XOR-encoding clauses are not detached, so no need to reattach them."
+            << endl;
+        }
         return okay();
+    }
 
     assert(okay());
     set_clash_decision_vars();
+    rebuildOrderHeap();
 
     double myTime = cpuTime();
     uint32_t reattached = 0;
@@ -4465,7 +4470,6 @@ void Solver::unset_clash_decision_vars(const vector<Xor>& xors)
         seen[v] = 0;
         varData[v].removed = Removed::clashed;
     }
-    rebuildOrderHeap();
 }
 
 void Solver::set_clash_decision_vars()
@@ -4475,7 +4479,6 @@ void Solver::set_clash_decision_vars()
             v.removed = Removed::none;
         }
     }
-    rebuildOrderHeap();
 }
 
 //TODO: this is horrifically SLOW!!!

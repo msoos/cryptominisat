@@ -154,8 +154,8 @@ class VarReplacer
 
         bool replace_set(vector<ClOffset>& cs);
         void attach_delayed_attach();
-        void update_all_vardata_activities();
-        void update_vardata_and_activities(
+        void update_all_vardata();
+        void update_vardata(
             const Lit orig
             , const Lit replaced
         );

@@ -45,6 +45,11 @@ THE SOFTWARE.
 #include "vardistgen.h"
 #include "solvertypes.h"
 #include "gaussian.h"
+#include "distillerbin.h"
+#include "distillerlongwithimpl.h"
+#include "intree.h"
+#include "str_impl_w_impl.h"
+#include "subsumeimplicit.h"
 #ifdef USE_VALGRIND
 #include "valgrind/valgrind.h"
 #include "valgrind/memcheck.h"
@@ -76,6 +81,13 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     hist.setSize(conf.shortTermHistorySize, conf.blocking_restart_trail_hist_length);
     cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
     polarity_mode = conf.polarity_mode;
+
+    next_cls_distill = 5000;
+    next_bins_distill = 12000;
+    next_full_probe = 20000;
+    next_sub_str_with_bin = 25000;
+    next_intree = 65000;
+    next_str_impl_with_impl = 40000;
 }
 
 Searcher::~Searcher()
@@ -2467,16 +2479,80 @@ void Searcher::setup_polarity_strategy()
     }
 }
 
+bool Searcher::intree_if_needed()
+{
+    assert(okay());
+    bool ret = okay();
+
+    if (!bnns.empty()) conf.do_hyperbin_and_transred = false;
+    if (conf.doIntreeProbe && conf.doFindAndReplaceEqLits &&
+        sumConflicts > next_intree
+    ) {
+        ret &= solver->clear_gauss_matrices();
+        if (ret) ret &= solver->intree->intree_probe();
+        if (ret) ret &= solver->find_and_init_all_matrices();
+        next_intree = sumConflicts + 85000;
+    }
+
+    return ret;
+}
+
+bool Searcher::str_impl_with_impl_if_needed()
+{
+    assert(okay());
+    bool ret = okay();
+
+    if (conf.doStrSubImplicit &&
+        sumConflicts > next_str_impl_with_impl)
+    {
+        ret &= solver->dist_impl_with_impl->str_impl_w_impl();
+        if (ret) solver->subsumeImplicit->subsume_implicit();
+        next_str_impl_with_impl = sumConflicts + 60000;
+    }
+
+    return ret;
+}
+
+bool Searcher::distill_bins_if_needed()
+{
+    assert(okay());
+    bool ret = okay();
+
+    if (conf.do_distill_bin_clauses &&
+        sumConflicts > next_bins_distill)
+    {
+        ret = solver->distill_bin_cls->distill();
+        next_bins_distill = sumConflicts + 20000;
+    }
+    return ret;
+}
+
+bool Searcher::sub_str_with_bin_if_needed()
+{
+    assert(okay());
+    bool ret = okay();
+
+    //Subsumes and strengthens long clauses with binary clauses
+    if (conf.do_distill_clauses &&
+        sumConflicts > next_sub_str_with_bin)
+    {
+        ret = solver->dist_long_with_impl->distill_long_with_implicit(true);
+        next_sub_str_with_bin = sumConflicts + 25000;
+    }
+
+    return ret;
+}
+
 lbool Searcher::distill_clauses_if_needed()
 {
     assert(decisionLevel() == 0);
     if (conf.do_distill_clauses &&
-        sumConflicts > next_distill
-    ) {
+        sumConflicts > next_cls_distill)
+    {
         if (!solver->distill_long_cls->distill(true, false)) {
             return l_False;
         }
-        next_distill = sumConflicts + 15000;
+        next_cls_distill = sumConflicts + 15000;
     }
 
     return l_Undef;
@@ -2523,6 +2599,17 @@ lbool Searcher::solve(
         assert(solver->check_order_heap_sanity());
         #endif
 
+        if (distill_clauses_if_needed() == l_False
+            || full_probe_if_needed() == l_False
+            || !distill_bins_if_needed()
+            || !sub_str_with_bin_if_needed()
+            || !str_impl_with_impl_if_needed()
+            //|| !intree_if_needed()
+        ) {
+            status = l_False;
+            goto end;
+        }
+
         assert(watches.get_smudged_list().empty());
         params.clear();
         params.max_confl_to_do = max_confl_per_search_solve_call-stats.conflicts;
@@ -2537,17 +2624,28 @@ lbool Searcher::solve(
         if (must_abort(status)) {
             goto end;
         }
-
-        if (status == l_Undef && distill_clauses_if_needed() == l_False) {
-            status = l_False;
-            goto end;
-        }
     }
 
     end:
     finish_up_solve(status);
 
     return status;
+}
+
+lbool Searcher::full_probe_if_needed()
+{
+    assert(decisionLevel() == 0);
+    if (conf.do_full_probe &&
+        sumConflicts > next_full_probe
+    ) {
+        full_probe_iter++;
+        if (!solver->full_probe(full_probe_iter % 2)) {
+            return l_False;
+        }
+        next_full_probe = sumConflicts + 20000;
+    }
+
+    return l_Undef;
 }
 
 double Searcher::luby(double y, int x)
@@ -2822,29 +2920,37 @@ void Searcher::print_iteration_solving_stats()
 
 inline Lit Searcher::pickBranchLit()
 {
-
-//     VERBOSE_PRINT(print_order_heap());
     VERBOSE_PRINT("picking decision variable, dec. level: " << decisionLevel());
 
     uint32_t v = var_Undef;
-    switch (branch_strategy) {
-        case branch::vsids:
-            v = pick_var_vsids();
-            break;
-        case branch::vmtf:
-            v = pick_var_vmtf();
-            break;
-        case branch::rand: {
-            v = order_heap_rand.get_random_element(mtrand);
-            while (v != var_Undef && value(v) != l_Undef) {
+    while(true) {
+        switch (branch_strategy) {
+            case branch::vsids:
+                v = pick_var_vsids();
+                break;
+            case branch::vmtf:
+                v = pick_var_vmtf();
+                break;
+            case branch::rand: {
                 v = order_heap_rand.get_random_element(mtrand);
+                while (v != var_Undef && value(v) != l_Undef) {
+                    v = order_heap_rand.get_random_element(mtrand);
+                }
+                break;
             }
-            break;
+            default: {
+                release_assert(false);
+                break;
+            }
         }
-        default: {
-            release_assert(false);
-            break;
+        if (v == var_Undef) break;
+        if (varData[v].removed == Removed::replaced) {
+            //cout << "v: " << v << endl;
+            vmtf_dequeue(v);
+            continue;
         }
+        assert(varData[v].removed == Removed::none);
+        break;
     }
 
     Lit next;
@@ -3289,6 +3395,23 @@ void Searcher::cancelUntil(uint32_t blevel)
     #endif
 }
 
+void Searcher::cancelUntil_light()
+{
+    assert(decisionLevel() == 1);
+    uint32_t i = trail_lim[0];
+    for (; i < trail.size()
+        ; i++
+    ) {
+        VERBOSE_PRINT("Canceling lit " << trail[i].lit << " sublevel: " << i);
+        const uint32_t var = trail[i].lit.var();
+        assert(value(var) != l_Undef);
+        assigns[var] = l_Undef;
+    }
+    trail.resize(trail_lim[0]);
+    qhead = trail_lim[0];
+    trail_lim.resize(0);
+}
+
 void Searcher::check_var_in_branch_strategy(uint32_t int_var) const
 {
     switch(branch_strategy) {
@@ -3436,8 +3559,10 @@ inline bool Searcher::check_order_heap_sanity() const
     return true;
 }
 
-void Searcher::clear_gauss_matrices()
+bool Searcher::clear_gauss_matrices()
 {
+    if (!solver->fully_undo_xor_detach()) return false;
+    TBUDDY_DO(if (drat->enabled()) for(auto& g: gmatrices) g->finalize_frat());
     xor_clauses_updated = true;
     for(uint32_t i = 0; i < gqueuedata.size(); i++) {
         auto gqd = gqueuedata[i];
@@ -3450,14 +3575,14 @@ void Searcher::clear_gauss_matrices()
         }
     }
 
-    if (conf.verbosity >= 1) {
-        print_matrix_stats();
-    }
+    if (conf.verbosity) print_matrix_stats();
     for(EGaussian* g: gmatrices) g->move_back_xor_clauses();
     for(EGaussian* g: gmatrices) delete g;
     for(auto& w: gwatches) w.clear();
     gmatrices.clear();
     gqueuedata.clear();
+
+    return okay();
 }
 
 void Searcher::print_matrix_stats()

@@ -74,7 +74,6 @@ class Searcher : public HyperEngine
             uint64_t max_confls
         );
         void finish_up_solve(lbool status);
-        void reduce_db_if_needed();
         bool clean_clauses_if_needed();
         #ifdef STATS_NEEDED
         void check_calc_satzilla_features(bool force = false);
@@ -137,13 +136,14 @@ class Searcher : public HyperEngine
         //ChronoBT
         template<bool do_insert_var_order = true, bool inprocess = false>
         void cancelUntil(uint32_t level); ///<Backtrack until a certain level.
+        void cancelUntil_light();
         ConflictData find_conflict_level(PropBy& pb);
         uint32_t chrono_backtrack = 0;
         uint32_t non_chrono_backtrack = 0;
         void consolidate_watches(const bool full);
 
         //Gauss
-        void clear_gauss_matrices();
+        bool clear_gauss_matrices();
         void print_matrix_stats();
         void check_need_gauss_jordan_disable();
 
@@ -220,7 +220,31 @@ class Searcher : public HyperEngine
     protected:
         Solver* solver;
         lbool search();
+
+        // Distill
+        uint64_t next_cls_distill = 0;
         lbool distill_clauses_if_needed();
+        uint64_t next_bins_distill = 0;
+        bool distill_bins_if_needed();
+
+        // Str impl with impl
+        uint64_t next_str_impl_with_impl = 0;
+        bool str_impl_with_impl_if_needed();
+
+        // Full Probe
+        uint64_t next_full_probe = 0;
+        uint64_t full_probe_iter = 0;
+        lbool full_probe_if_needed();
+
+        // sub-str with bin
+        uint64_t next_sub_str_with_bin = 0;
+        bool sub_str_with_bin_if_needed();
+
+        // sub-str with bin
+        uint64_t next_intree = 0;
+        bool intree_if_needed();
+
+        // Fast backward for Arjun
         lbool new_decision_fast_backw();
         void create_new_fast_backw_assumption();
 
@@ -315,6 +339,7 @@ class Searcher : public HyperEngine
         /////////////////////
         // Clause database reduction
         /////////////////////
+        void reduce_db_if_needed();
         uint64_t next_lev1_reduce;
         uint64_t next_lev2_reduce;
         uint64_t next_pred_reduce;
@@ -355,7 +380,6 @@ class Searcher : public HyperEngine
         void adjust_restart_strategy_cutoffs();
         void setup_restart_strategy();
 
-
         ///////
         // GPU
         //////
@@ -375,17 +399,9 @@ class Searcher : public HyperEngine
         void normalClMinim();
         MyStack<Lit> analyze_stack;
         uint32_t abstractLevel(const uint32_t x) const;
-        /*void create_otf_subsuming_implicit_clause(const Clause& cl);
-        void create_otf_subsuming_long_clause(Clause& cl, ClOffset offset);*/
-
-
         bool subset(const vector<Lit>& A, const Clause& B); //Used for on-the-fly subsumption. Does A subsume B? Uses 'seen' to do its work
-
-        ////////////
-        // Transitive on-the-fly self-subsuming resolution
         void   minimise_redundant_more_more(vector<Lit>& cl);
         void   binary_based_morem_minim(vector<Lit>& cl);
-
 
         friend class Gaussian;
         friend class DistillerLong;
@@ -435,7 +451,6 @@ class Searcher : public HyperEngine
 
         //Other
         void print_solution_type(const lbool status) const;
-        uint64_t next_distill = 0;
 
         //Last time we clean()-ed the clauses, the number of zero-depth assigns was this many
         size_t   lastCleanZeroDepthAssigns;

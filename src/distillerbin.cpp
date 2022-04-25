@@ -90,7 +90,7 @@ bool DistillerBin::distill_bin_cls_all(
 
     //Time-limiting
     maxNumProps =
-        solver->conf.distill_long_cls_time_limitM*1000LL*1000ULL
+        solver->conf.distill_long_cls_time_limitM*200LL*1000ULL
         *solver->conf.global_timeout_multiplier;
 
     if (solver->litStats.irredLits + solver->litStats.redLits <
@@ -125,7 +125,7 @@ bool DistillerBin::distill_bin_cls_all(
     const double time_remain = float_div(
         maxNumProps - ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps),
         orig_maxNumProps);
-    if (solver->conf.verbosity >= 1) {
+    if (solver->conf.verbosity >= 2) {
         cout << "c [distill-bin] cls"
         << " tried: " << runStats.checkedClauses << "/" << potential_size
         << endl;

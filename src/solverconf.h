@@ -384,6 +384,7 @@ class DLL_PUBLIC SolverConf
         uint32_t  bva_every_n;
 
         //Probing
+        int      do_full_probe;
         int      doIntreeProbe;
         int      doTransRed;   ///<carry out transitive reduction
         unsigned long long   intree_time_limitM;

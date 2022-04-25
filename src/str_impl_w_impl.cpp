@@ -184,7 +184,7 @@ void StrImplWImpl::StrImplicitData::print(
     const double time_remain = float_div(timeAvailable, orig_time);
 
     cout
-    << "c [impl str]"
+    << "c [impl-str]"
     << " lit bin: " << remLitFromBin
     << " set-var: " << trail_diff
     << _solver->conf.print_times(time_used, time_out, time_remain)

@@ -187,7 +187,7 @@ SubsumeImplicit::Stats SubsumeImplicit::Stats::operator+=(const SubsumeImplicit:
 void SubsumeImplicit::Stats::print_short(const Solver* _solver, const char* caller) const
 {
     cout
-    << "c [impl sub" << caller << "]"
+    << "c [impl-sub" << caller << "]"
     << " bin: " << remBins
     << _solver->conf.print_times(time_used, time_out)
     << " w-visit: " << numWatchesLooked

@@ -218,8 +218,8 @@ public:
     template<bool inprocess>
     void enqueue(const Lit p, const uint32_t level,
                  const PropBy from = PropBy(), const bool do_unit_frat = true);
-    template<bool inprocess>
-    void enqueue(const Lit p);
+    template<bool inprocess> void enqueue(const Lit p);
+    void enqueue_light(const Lit p);
     void new_decision_level();
 
     /////////////////////
@@ -247,6 +247,7 @@ public:
     vector<uint64_t> vmtf_btab; ///< Indexed by variable number. enqueue time stamps for queue
     void vmtf_update_queue_unassigned (const uint32_t var);
     void vmtf_init_enqueue (const uint32_t var);
+    void vmtf_dequeue (const uint32_t var);
     void vmtf_bump_queue (const uint32_t var);
     void check_unassigned_vmtf();
     uint32_t pick_var_vmtf();
@@ -356,6 +357,7 @@ protected:
 protected:
     template<bool inprocess, bool red_also = true, bool use_disable = false>
     PropBy propagate_any_order();
+    template<bool bin_only=true> PropBy propagate_light();
     template<bool inprocess>
     PropResult prop_normal_helper(
         Clause& c
@@ -608,6 +610,111 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
     if (inprocess) {
         propStats.bogoProps += 1;
     }
+}
+
+template<bool bin_only>
+PropBy PropEngine::propagate_light()
+{
+    PropBy confl;
+    VERBOSE_PRINT("propagate_light started");
+
+    while (qhead < trail.size() && confl.isNULL()) {
+        const Lit p = trail[qhead].lit;
+        watch_subarray ws = watches[~p];
+
+        Watched* i = ws.begin();
+        Watched* j = i;
+        Watched* end = ws.end();
+        propStats.bogoProps += ws.size()/4 + 1;
+        for (; i != end; i++) {
+            if (bin_only && !confl.isNULL()) break;
+
+            // propagate binary clause
+            if (i->isBin()) {
+                if (!bin_only) *j++ = *i;
+
+                const lbool val = value(i->lit2());
+                if (val == l_Undef) {
+                    enqueue_light(i->lit2());
+                } else if (val == l_False) {
+                    confl = PropBy(~p, i->red(), i->get_ID());
+                }
+                continue;
+            }
+
+            if (!bin_only && i->isClause()) {
+                if (value(i->getBlockedLit()) == l_True) {
+                    *j++ = *i;
+                    continue;
+                }
+                propStats.bogoProps += 4;
+                const ClOffset offset = i->get_offset();
+                Clause& c = *cl_alloc.ptr(offset);
+
+                if (c[0] == ~p) std::swap(c[0], c[1]);
+                assert(c[1] == ~p);
+
+                // If 0th watch is true, then clause is already satisfied.
+                if (value(c[0]) == l_True) {
+                    *j = Watched(offset, c[0]);
+                    j++;
+                    continue;
+                }
+
+                // Look for new watch:
+                bool cont = false;
+                for (Lit *k = c.begin() + 2, *end2 = c.end()
+                    ; k != end2
+                    ; k++
+                ) {
+                    //Literal is either unset or satisfied, attach to other watchlist
+                    if (value(*k) != l_False) {
+                        c[1] = *k;
+                        *k = ~p;
+                        watches[c[1]].push(Watched(offset, c[0]));
+                        cont = true;
+                        break;
+                    }
+                }
+                if (cont) continue;
+
+                // Did not find watch -- clause is unit under assignment:
+                *j++ = *i;
+                if (value(c[0]) == l_False) confl = PropBy(offset);
+                else enqueue_light(c[0]);
+                continue;
+            }
+
+            if (!bin_only) {
+                *j++=*i;
+            }
+        }
+
+        if (!bin_only) {
+            while (i != end) {
+                *j++ = *i++;
+            }
+            ws.shrink_(end-j);
+        }
+
+        VERBOSE_PRINT("propagate_light went through watchlist of " << p);
+        qhead++;
+    }
+    VERBOSE_PRINT("propagate_light ended.");
+    return confl;
+}
+
+inline void PropEngine::enqueue_light(const Lit p)
+{
+    const uint32_t v = p.var();
+    assert(value(v) == l_Undef);
+    SLOW_DEBUG_DO(assert(varData[v].removed == Removed::none));
+    if (!watches[~p].empty()) watches.prefetch((~p).toInt());
+
+    const bool sign = p.sign();
+    assigns[v] = boolToLBool(!sign);
+    trail.push_back(Trail(p, 1));
+    propStats.bogoProps += 1;
 }
 
 inline void PropEngine::attach_bin_clause(

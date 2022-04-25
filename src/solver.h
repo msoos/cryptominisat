@@ -328,6 +328,7 @@ class Solver : public Searcher
         //Helper
         void renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors_ret);
         void testing_set_solver_not_fresh();
+        bool full_probe(const bool bin_only);
 
     private:
         friend class ClauseDumper;
@@ -339,8 +340,7 @@ class Solver : public Searcher
         void write_final_frat_clauses();
         void write_one_final_frat_cl(const ClOffset offs);
 
-        lbool probe_inter(Lit l, uint32_t& min_props);
-        bool full_probe();
+        template<bool bin_only> lbool probe_inter(Lit l, uint32_t& min_props);
         void reset_for_solving();
         vector<Lit> add_clause_int_tmp_cl;
         lbool iterate_until_solved();

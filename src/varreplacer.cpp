@@ -119,14 +119,7 @@ void VarReplacer::printReplaceStats() const
     }
 }
 
-// Updating activities/data about variables.
-// Given: a V b
-//       -a V -b
-// Means: a = ~b
-//        a is replaced by ~b
-// Then:  orig = a
-//        replaced_with = ~b
-void VarReplacer::update_vardata_and_activities(
+void VarReplacer::update_vardata(
     const Lit orig
     , const Lit replaced_with
 ) {
@@ -150,10 +143,6 @@ void VarReplacer::update_vardata_and_activities(
     solver->varData[orig_var].removed = Removed::replaced;
     assert(solver->varData[replaced_with_var].removed == Removed::none);
     assert(solver->value(replaced_with_var) == l_Undef);
-
-    //Update activities
-    solver->var_act_vsids[replaced_with_var] += solver->var_act_vsids[orig_var];
-
     assert(orig_var <= solver->nVars() && replaced_with_var <= solver->nVars());
 }
 
@@ -200,7 +189,7 @@ void VarReplacer::attach_delayed_attach()
     delayed_attach_or_free.clear();
 }
 
-void VarReplacer::update_all_vardata_activities()
+void VarReplacer::update_all_vardata()
 {
     uint32_t var = 0;
     for (vector<Lit>::const_iterator
@@ -213,7 +202,7 @@ void VarReplacer::update_all_vardata_activities()
         const uint32_t repl = solver->map_outer_to_inter(it->var());
         const Lit repl_lit = Lit(repl, it->sign());
 
-        update_vardata_and_activities(orig_lit, repl_lit);
+        update_vardata(orig_lit, repl_lit);
     }
 }
 
@@ -239,7 +228,7 @@ bool VarReplacer::perform_replace()
     if (solver->conf.verbosity >= 5)
         printReplaceStats();
 
-    update_all_vardata_activities();
+    update_all_vardata();
     check_no_replaced_var_set();
 
     runStats.actuallyReplacedVars = replacedVars -lastReplacedVars;

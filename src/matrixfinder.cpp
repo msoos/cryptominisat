@@ -324,15 +324,17 @@ uint32_t MatrixFinder::setMatrixes()
             use_matrix = false;
         }
 
-        //Override in case sampling vars ratio is high
-        if (solver->conf.sampling_vars) {
-            verb_print(1, "[matrix] ratio_sampling: " << ratio_sampling);
-            if (ratio_sampling >= 0.6) { //TODO Magic constant
-                verb_print(1, "[matrix] sampling ratio good -> set usage to YES");
-                use_matrix = true;
-            } else {
-                verb_print(1, "[matrix] sampling ratio bad -> set usage to NO");
-                use_matrix = false;
+        if (m.rows > solver->conf.gaussconf.min_matrix_rows) {
+            //Override in case sampling vars ratio is high
+            if (solver->conf.sampling_vars) {
+                verb_print(2, "[matrix] ratio_sampling: " << ratio_sampling);
+                if (ratio_sampling >= 0.6) { //TODO Magic constant
+                    verb_print(1, "[matrix] sampling ratio good -> set usage to YES");
+                    use_matrix = true;
+                } else {
+                    verb_print(2, "[matrix] sampling ratio bad -> set usage to NO");
+                    use_matrix = false;
+                }
             }
         }
 

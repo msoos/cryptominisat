@@ -236,6 +236,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , bva_every_n(7)
 
         //Probing
+        , do_full_probe    (true)
         , doIntreeProbe    (true)
         , doTransRed       (true)
         , intree_time_limitM(1200ULL)
@@ -276,10 +277,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //validated with run 8114195.wlm01
         , simplify_schedule_nonstartup(
             "scc-vrepl,"
-            "sub-impl,"
             "intree-probe,"
-            "sub-str-cls-with-bin,distill-cls,distill-bins,"
-            "scc-vrepl,sub-impl,str-impl,sub-impl,"
+            "scc-vrepl,sub-impl,"
             "breakid,"
             //occurrence based
             "occ-backw-sub-str,occ-clean-implicit,occ-bve,"//occ-gates,"
@@ -287,11 +286,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
             //consolidate after OCC
             "cl-consolidate,"
             //strengthen again
-            "str-impl,sub-str-cls-with-bin,distill-cls,distill-bins,"
             "scc-vrepl,"
             //renumber then it's time for SLS
             "renumber,"
-            "sub-impl,"
             "bosphorus,"
             "louvain-comms,"
             "sls,lucky"
@@ -324,7 +321,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , do_distill_clauses(true)
         , do_distill_bin_clauses(true)
         , distill_long_cls_time_limitM(20ULL)
-        , watch_based_str_time_limitM(30LL)
+        , watch_based_str_time_limitM(20LL)
         , distill_increase_conf_ratio(0.10)
         , distill_min_confl(10000)
         , distill_red_tier0_ratio(10.0)
