@@ -100,8 +100,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //
         , pred_long_check_every_n(3)
         , pred_forever_check_every_n(12)
-        , pred_adjust_for_cl_size(0)
-        , pred_adjust_for_cl_size_onlyforever(0)
         , pred_distill_only_smallgue(false)
         , pred_dontmove_until_timeinside(1) //always move, don't wait
 

@@ -181,7 +181,7 @@ void SearchStats::print_short(uint64_t props, bool do_print_times) const
 {
     //Restarts stats
     printCommon(props, do_print_times);
-    print_stats_line("c conficts", conflicts);
+    print_stats_line("c conflicts", conflicts);
     print_stats_line("c conf lits non-minim"
         , litsRedNonMin
         , float_div(litsRedNonMin, conflicts)
@@ -202,7 +202,7 @@ void SearchStats::print_short(uint64_t props, bool do_print_times) const
 void SearchStats::print(uint64_t props, bool do_print_times) const
 {
     printCommon(props, do_print_times);
-    print_stats_line("c conficts", conflicts);
+    print_stats_line("c conflicts", conflicts);
 
     /*assert(numConflicts
         == conflsBin + conflsTri + conflsLongIrred + conflsLongRed);*/

@@ -774,14 +774,8 @@ bool CNF::no_marked_clauses() const
 }
 
 void CNF::add_drat(FILE* os, bool add_ID) {
-    if (drat)
-        delete drat;
-
-    if (add_ID) {
-        drat = new DratFile<true, true>(interToOuterMain);
-    } else {
-        drat = new DratFile<false>(interToOuterMain);
-    }
+    if (drat) delete drat;
+    drat = new DratFile<false>(interToOuterMain);
     drat->setFile(os);
     drat->set_sumconflicts_ptr(&sumConflicts);
     drat->set_sqlstats_ptr(sqlStats);
