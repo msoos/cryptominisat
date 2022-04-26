@@ -1103,7 +1103,24 @@ TEST(get_small_clauses, full_bins)
 
     vector<Lit> lits;
     s.get_all_irred_clauses(lits);
-    ASSERT_EQ(str_to_cl("6, 5, U, 7, 8, U", false), lits);
+
+    vector<Lit> cl;
+    uint32_t found = 0;
+    for(const auto& l: lits) {
+        if (l != lit_Undef) {
+            cl.push_back(l);
+        } else {
+            std::sort(cl.begin(), cl.end());
+            if (std::find(cl.begin(), cl.end(), Lit(5, false)) != cl.end()) {
+                ASSERT_EQ(str_to_cl("5, 6", false), cl);
+            } else {
+                ASSERT_EQ(str_to_cl("7, 8", false), cl);
+            }
+            cl.clear();
+            found++;
+        }
+    }
+    ASSERT_EQ(2, found);
 }
 
 TEST(get_small_clauses, full_units)
