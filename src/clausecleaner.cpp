@@ -508,6 +508,7 @@ void ClauseCleaner::clean_all_xor_clauses()
 
     clean_xor_clauses(solver->xorclauses);
     clean_xor_clauses(solver->xorclauses_unused);
+    clean_xor_clauses(solver->xorclauses_orig);
 
     // clean up removed_xorclauses_clash_vars
     uint32_t j = 0;

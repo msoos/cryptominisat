@@ -178,6 +178,7 @@ public:
     #endif
     vector<ClOffset> detached_xor_repr_cls; //these are still in longIrredCls
     vector<Xor> xorclauses;
+    vector<Xor> xorclauses_orig;
     vector<Xor> xorclauses_unused;
     vector<BNN*> bnns;
     vector<vector<Lit>> bnn_reasons;

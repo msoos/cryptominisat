@@ -215,7 +215,10 @@ bool Solver::add_xor_clause_inter(
 
     //cout << "without rhs is: " << ps << endl;
     add_every_combination_xor(ps, attach, addDrat, red);
-    if (ps.size() > 2) xorclauses.push_back(Xor(ps, rhs, tmp_xor_clash_vars));
+    if (ps.size() > 2) {
+        xorclauses.push_back(Xor(ps, rhs, tmp_xor_clash_vars));
+        xorclauses_orig.push_back(Xor(ps, rhs, tmp_xor_clash_vars));
+    }
 
     return ok;
 }
@@ -981,16 +984,17 @@ void Solver::renumber_clauses(const vector<uint32_t>& outerToInter)
     xor_clauses_updated = true;
     for(Xor& x: xorclauses) {
         updateVarsMap(x.vars, outerToInter);
-        for(uint32_t& v: x.clash_vars) {
-            v = getUpdatedVar(v, outerToInter);
-        }
+        for(uint32_t& v: x.clash_vars) v = getUpdatedVar(v, outerToInter);
     }
 
     for(Xor& x: xorclauses_unused) {
         updateVarsMap(x.vars, outerToInter);
-        for(uint32_t& v: x.clash_vars) {
-            v = getUpdatedVar(v, outerToInter);
-        }
+        for(uint32_t& v: x.clash_vars) v = getUpdatedVar(v, outerToInter);
+    }
+
+    for(Xor& x: xorclauses_orig) {
+        updateVarsMap(x.vars, outerToInter);
+        for(uint32_t& v: x.clash_vars) v = getUpdatedVar(v, outerToInter);
     }
 
     for(auto& v: removed_xorclauses_clash_vars) {
@@ -1074,30 +1078,14 @@ bool Solver::renumber_variables(bool must_renumber)
     assert(okay());
     assert(decisionLevel() == 0);
     #ifdef SLOWDEBUG
-    for(const auto& x: xorclauses) {
-        for(const auto& v: x) {
-            assert(v < nVars());
-        }
-    }
-
-    for(const auto& x: xorclauses_unused) {
-        for(const auto& v: x) {
-            assert(v < nVars());
-        }
-    }
+    for(const auto& x: xorclauses) for(const auto& v: x) assert(v < nVars());
+    for(const auto& x: xorclauses_unused) for(const auto& v: x) assert(v < nVars());
+    for(const auto& x: xorclauses_orig) for(const auto& v: x) assert(v < nVars());
     #endif
 
-    if (nVars() == 0) {
-        return okay();
-    }
-
-    if (!must_renumber
-        && calc_renumber_saving() < 0.2
-    ) {
-        return okay();
-    }
-
-    clear_gauss_matrices();
+    if (nVars() == 0) return okay();
+    if (!must_renumber && calc_renumber_saving() < 0.2) return okay();
+    if (!clear_gauss_matrices()) return false;
 
     double myTime = cpuTime();
     if (!clauseCleaner->remove_and_clean_all()) {
@@ -3808,7 +3796,7 @@ bool Solver::find_and_init_all_matrices()
     }
 
     bool can_detach;
-    clear_gauss_matrices();
+    if (!clear_gauss_matrices()) return false;
 
     /*Reattach needed in case we are coming in again, after adding new XORs
     we might turn off a previously turned on matrix
@@ -4380,6 +4368,9 @@ void Solver::detach_xor_clauses(
 
 bool Solver::fully_undo_xor_detach()
 {
+    assert(okay());
+    assert(decisionLevel() == 0);
+
     if (!detached_xor_clauses) {
         assert(detached_xor_repr_cls.empty());
         if (conf.verbosity >= 1 || conf.xor_detach_verb) {
@@ -4389,8 +4380,6 @@ bool Solver::fully_undo_xor_detach()
         }
         return okay();
     }
-
-    assert(okay());
     set_clash_decision_vars();
     rebuildOrderHeap();
 
@@ -4420,6 +4409,7 @@ bool Solver::fully_undo_xor_detach()
             PropEngine::attachClause(*cl, true);
         }
     }
+    detached_xor_repr_cls.clear();
 
     if (removed > 0) {
         uint32_t j = 0;
@@ -4435,14 +4425,9 @@ bool Solver::fully_undo_xor_detach()
         longIrredCls.resize(j);
     }
 
-    for(auto& x: xorclauses) {
-        x.detached = false;
-    }
-
-    detached_xor_repr_cls.clear();
+    for(auto& x: xorclauses) x.detached = false;
     detached_xor_clauses = false;
-    assert(okay());
-    ok = propagate<false>().isNULL();
+    if (okay()) ok = propagate<false>().isNULL();
 
     if (conf.verbosity >= 1 || conf.xor_detach_verb) {
         cout

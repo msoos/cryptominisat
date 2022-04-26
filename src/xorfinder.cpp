@@ -168,8 +168,10 @@ void XorFinder::find_xors()
         solver->drat->flush();
         TBUDDY_DO(for (auto const& x: solver->xorclauses) delete x.bdd);
         TBUDDY_DO(for (auto const& x: solver->xorclauses_unused) delete x.bdd);
+        TBUDDY_DO(for (auto const& x: solver->xorclauses_orig) assert(x.bdd == NULL));
     }
     solver->xorclauses.clear();
+    solver->xorclauses_orig.clear();
     solver->xorclauses_unused.clear();
 
     double myTime = cpuTime();
@@ -193,6 +195,7 @@ void XorFinder::find_xors()
 
     //clean them of equivalent XORs
     clean_equivalent_xors(solver->xorclauses);
+    solver->xorclauses_orig = solver->xorclauses;
 
     //Cleanup
     for(ClOffset offset: occsimplifier->clauses) {

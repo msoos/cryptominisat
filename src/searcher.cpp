@@ -3584,6 +3584,9 @@ bool Searcher::clear_gauss_matrices(const bool destruct)
     for(auto& w: gwatches) w.clear();
     gmatrices.clear();
     gqueuedata.clear();
+    solver->xorclauses.clear(); // we rely on xorclauses_orig now
+    solver->xorclauses_unused.clear();
+    solver->xorclauses = solver->xorclauses_orig;
 
     return okay();
 }

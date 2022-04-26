@@ -2008,6 +2008,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                     TBUDDY_DO(solver->free_bdds(solver->xorclauses_unused));
                 }
                 solver->xorclauses.clear();
+                solver->xorclauses_orig.clear();
                 solver->xorclauses_unused.clear();
 
                 if (solver->conf.do_empty_varelim) {
