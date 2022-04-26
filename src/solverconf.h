@@ -387,6 +387,7 @@ class DLL_PUBLIC SolverConf
         int      do_full_probe;
         int      doIntreeProbe;
         int      doTransRed;   ///<carry out transitive reduction
+        unsigned long long   full_probe_time_limitM;
         unsigned long long   intree_time_limitM;
         unsigned long long intree_scc_varreplace_time_limitM;
         int       do_hyperbin_and_transred;
@@ -428,6 +429,7 @@ class DLL_PUBLIC SolverConf
         uint32_t max_num_simplify_per_solve_call;
         string   simplify_schedule_startup;
         string   simplify_schedule_nonstartup;
+        string   simplify_schedule_external;
 
         //Simplification
         int      perform_occur_based_simp;

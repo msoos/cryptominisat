@@ -86,7 +86,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     next_bins_distill = 12000;
     next_full_probe = 20000;
     next_sub_str_with_bin = 25000;
-    next_intree = 65000;
+    next_intree = 55000;
     next_str_impl_with_impl = 40000;
 }
 
@@ -2491,7 +2491,7 @@ bool Searcher::intree_if_needed()
         ret &= solver->clear_gauss_matrices();
         if (ret) ret &= solver->intree->intree_probe();
         if (ret) ret &= solver->find_and_init_all_matrices();
-        next_intree = sumConflicts + 85000;
+        next_intree = sumConflicts + 45000;
     }
 
     return ret;
@@ -2604,7 +2604,7 @@ lbool Searcher::solve(
             || !distill_bins_if_needed()
             || !sub_str_with_bin_if_needed()
             || !str_impl_with_impl_if_needed()
-            //|| !intree_if_needed()
+            || !intree_if_needed()
         ) {
             status = l_False;
             goto end;

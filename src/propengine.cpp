@@ -1008,7 +1008,7 @@ void PropEngine::vmtf_dequeue (const uint32_t var) {
             vmtf_update_queue_unassigned(vmtf_queue.unassigned);
         }
     }
-    vmtf_queue.dequeue (vmtf_links, var);
+    //vmtf_queue.dequeue (vmtf_links, var);
 }
 
 // Move vmtf_bumped variables to the front of the (VMTF) decision queue.  The

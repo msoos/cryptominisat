@@ -3132,8 +3132,7 @@ bool Solver::full_probe(const bool bin_only)
     double myTime = cpuTime();
     int64_t start_bogoprops = solver->propStats.bogoProps;
     int64_t bogoprops_to_use =
-        solver->conf.intree_time_limitM*1000ULL*1000ULL
-        * 0.02
+        solver->conf.full_probe_time_limitM*1000ULL*1000ULL
         *solver->conf.global_timeout_multiplier;
     uint64_t probed = 0;
     auto orig_repl = varReplacer->get_num_replaced_vars();

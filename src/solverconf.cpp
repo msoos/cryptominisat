@@ -239,7 +239,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , do_full_probe    (true)
         , doIntreeProbe    (true)
         , doTransRed       (true)
-        , intree_time_limitM(1200ULL)
+        , full_probe_time_limitM(20ULL)
+        , intree_time_limitM(400ULL)
         , intree_scc_varreplace_time_limitM(30ULL)
         , do_hyperbin_and_transred(true)
 
@@ -276,8 +277,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         )
         //validated with run 8114195.wlm01
         , simplify_schedule_nonstartup(
-            "scc-vrepl,"
-            "intree-probe,"
+            //"scc-vrepl,"
+            //"intree-probe,"
             "scc-vrepl,sub-impl,"
             "breakid,"
             //occurrence based
@@ -289,6 +290,29 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "scc-vrepl,"
             //renumber then it's time for SLS
             "renumber,"
+            "bosphorus,"
+            "louvain-comms,"
+            "sls,lucky"
+        )
+
+        , simplify_schedule_external(
+            "scc-vrepl,"
+            "sub-impl,"
+            "intree-probe,"
+            "sub-str-cls-with-bin,distill-cls,distill-bins,"
+            "scc-vrepl,sub-impl,str-impl,sub-impl,"
+            "breakid,"
+            //occurrence based
+            "occ-backw-sub-str,occ-clean-implicit,occ-bve,"//occ-gates,"
+            "occ-bva,occ-ternary-res,occ-xor,card-find,"
+            //consolidate after OCC
+            "cl-consolidate,"
+            //strengthen again
+            "str-impl,sub-str-cls-with-bin,distill-cls,distill-bins,"
+            "scc-vrepl,"
+            //renumber then it's time for SLS
+            "renumber,"
+            "sub-impl,"
             "bosphorus,"
             "louvain-comms,"
             "sls,lucky"
