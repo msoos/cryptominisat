@@ -37,57 +37,57 @@ struct Link {
 
 struct Queue {
 
-  // We use integers instead of variable pointers.  This is more compact and
-  // also avoids issues due to moving the variable table during 'resize'.
+    // We use integers instead of variable pointers.  This is more compact and
+    // also avoids issues due to moving the variable table during 'resize'.
 
-  uint32_t first;  ///< VARIABLE NUMBER. anchor (head/tail) for doubly linked list.
-  uint32_t last;   ///< VARIABLE NUMBER. anchor (head/tail) for doubly linked list.
-  uint32_t unassigned;     ///< VARIABLE NUMBER. All variables after this one are assigned
-  uint64_t vmtf_bumped;     ///< Last unassigned variable's btab value
+    uint32_t first;  ///< VARIABLE NUMBER. anchor (head/tail) for doubly linked list.
+    uint32_t last;   ///< VARIABLE NUMBER. anchor (head/tail) for doubly linked list.
+    uint32_t unassigned;     ///< VARIABLE NUMBER. All variables after this one are assigned
+    uint64_t vmtf_bumped;     ///< Last unassigned variable's btab value
 
-  Queue () :
-      first (numeric_limits<uint32_t>::max()),
-      last (numeric_limits<uint32_t>::max()),
-      unassigned (numeric_limits<uint32_t>::max()),
-      vmtf_bumped (0)
-  {}
+    Queue () :
+        first (numeric_limits<uint32_t>::max()),
+        last (numeric_limits<uint32_t>::max()),
+        unassigned (numeric_limits<uint32_t>::max()),
+        vmtf_bumped (0)
+    {}
 
-  // We explicitly provide the mapping of integer indices to vmtf_links to the
-  // following two (inlined) functions.  They are just ordinary doubly
-  // linked list 'dequeue' and 'enqueue' operations.
+    // We explicitly provide the mapping of integer indices to vmtf_links to the
+    // following two (inlined) functions.  They are just ordinary doubly
+    // linked list 'dequeue' and 'enqueue' operations.
 
-  // Removes from the list
-  inline void dequeue (vector<Link>& vmtf_links, const uint32_t var) {
-    auto& l = vmtf_links[var];
+    // Removes from the list
+    void dequeue (vector<Link>& vmtf_links, const uint32_t var) {
+        auto& l = vmtf_links[var];
 
-    if (l.prev != numeric_limits<uint32_t>::max()) {
-        // Not the first one in the list
-        vmtf_links[l.prev].next = l.next;
-    } else {
-        first = l.next;
+        if (l.prev != numeric_limits<uint32_t>::max()) {
+            // Not the first one in the list
+            vmtf_links[l.prev].next = l.next;
+        } else {
+            first = l.next;
+        }
+
+        if (l.next != numeric_limits<uint32_t>::max()) {
+            // No the last one in the list
+            vmtf_links[l.next].prev = l.prev;
+        } else {
+            last = l.prev;
+        }
     }
 
-    if (l.next != numeric_limits<uint32_t>::max()) {
-        // No the last one in the list
-        vmtf_links[l.next].prev = l.prev;
-    } else {
-        last = l.prev;
+    // Puts varible at the head of the list
+    void enqueue (vector<Link>& vmtf_links, const uint32_t var) {
+        auto& l = vmtf_links[var];
+        l.prev = last;
+        if (l.prev != numeric_limits<uint32_t>::max()) {
+            // Not the first one in the list
+            vmtf_links[last].next = var;
+        } else {
+            first = var;
+        }
+        last = var;
+        l.next = numeric_limits<uint32_t>::max();
     }
-  }
-
-  // Puts varible at the head of the list
-  inline void enqueue (vector<Link>& vmtf_links, const uint32_t var) {
-    auto& l = vmtf_links[var];
-    l.prev = last;
-    if (l.prev != numeric_limits<uint32_t>::max()) {
-        // Not the first one in the list
-        vmtf_links[last].next = var;
-    } else {
-        first = var;
-    }
-    last = var;
-    l.next = numeric_limits<uint32_t>::max();
-  }
 };
 
 } //namespace

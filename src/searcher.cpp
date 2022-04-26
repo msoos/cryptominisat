@@ -796,22 +796,17 @@ void Searcher::print_debug_resolution_data(const PropBy confl)
 #endif
 }
 
-struct analyze_bumped_rank {
-  Searcher * internal;
-  analyze_bumped_rank (Searcher * i) : internal (i) { }
-  uint64_t operator () (const int & a) const {
-    return internal->vmtf_btab[a];
-  }
-};
+struct vmtf_bump_sort {
+    vmtf_bump_sort (const vector<uint64_t>& _vmtf_btab):
+        vmtf_btab(_vmtf_btab)
+    {}
 
-struct analyze_bumped_smaller {
-  Searcher * internal;
-  analyze_bumped_smaller (Searcher * i) : internal (i) { }
-  bool operator () (const int & a, const int & b) const {
-    const auto s = analyze_bumped_rank (internal) (a);
-    const auto t = analyze_bumped_rank (internal) (b);
-    return s < t;
-  }
+    bool operator () (const uint32_t & a, const uint32_t & b) const
+    {
+        return vmtf_btab[a] < vmtf_btab[b];
+    }
+
+    const vector<uint64_t>& vmtf_btab;
 };
 
 template<bool inprocess>
@@ -906,11 +901,9 @@ void Searcher::analyze_conflict(
             case branch::vmtf:
                 std::sort(implied_by_learnts.begin(),
                           implied_by_learnts.end(),
-                          analyze_bumped_smaller(this));
+                          vmtf_bump_sort(vmtf_btab));
 
-                for (const uint32_t var :implied_by_learnts) {
-                    vmtf_bump_queue(var);
-                }
+                for (const auto& v: implied_by_learnts) vmtf_bump_queue(v);
                 implied_by_learnts.clear();
                 break;
 
