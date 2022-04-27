@@ -5,6 +5,7 @@ echo "Usage: ./todo.sh OUTPUTS FUNLEN NOISE"
 outputs=$1
 funlen=$2
 noise=$3
+cont=$4
 mkdir -p "lpn-out"
 
 echo "outputs: $outputs"
@@ -22,7 +23,11 @@ for seed in {1..20}; do
       echo "OK, test: $seed"
   else
       echo "NOT OK!!"
-      exit -1
+      if [[ "$cont" -eq "1" ]]; then
+        echo "continuing, as requested"
+      else
+        exit -1
+      fi
   fi
 done
 echo "Finished"
@@ -41,7 +46,11 @@ for seed in {1..20}; do
       echo "OK, test: $seed"
   else
       echo "NOT OK!!"
-      exit -1
+      if [[ "$cont" -eq "1" ]]; then
+        echo "continuing, as requested"
+      else
+        exit -1
+      fi
   fi
 done
 echo "Finished"
