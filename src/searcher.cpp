@@ -2479,6 +2479,11 @@ void Searcher::sls_if_needed()
     assert(okay());
     assert(decisionLevel() == 0);
     if (conf.doSLS &&
+        // If XORs are detached, or there are BNNs, SLS will not work as intended
+        // HOWEVER, it seems to STILL help, likely by setting values randomly
+//         detached_xor_clauses &&
+//         detached_xor_repr_cls.empty() &&
+//         bnns.empty() &&
         sumConflicts > next_sls)
     {
         SLS sls(solver);
