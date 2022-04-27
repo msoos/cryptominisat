@@ -50,6 +50,7 @@ THE SOFTWARE.
 #include "intree.h"
 #include "str_impl_w_impl.h"
 #include "subsumeimplicit.h"
+#include "sls.h"
 #ifdef USE_VALGRIND
 #include "valgrind/valgrind.h"
 #include "valgrind/memcheck.h"
@@ -88,6 +89,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     next_sub_str_with_bin = 25000;
     next_intree = 55000;
     next_str_impl_with_impl = 40000;
+    next_sls = 44000;
 }
 
 Searcher::~Searcher()
@@ -2472,9 +2474,25 @@ void Searcher::setup_polarity_strategy()
     }
 }
 
+void Searcher::sls_if_needed()
+{
+    assert(okay());
+    assert(decisionLevel() == 0);
+    if (conf.doSLS &&
+        sumConflicts > next_sls)
+    {
+        SLS sls(solver);
+        const lbool ret = sls.run(num_sls_called);
+        assert(ret != l_False);
+        num_sls_called++;
+        next_sls = sumConflicts + 44000;
+    }
+}
+
 bool Searcher::intree_if_needed()
 {
     assert(okay());
+    assert(decisionLevel() == 0);
     bool ret = okay();
 
     if (!bnns.empty()) conf.do_hyperbin_and_transred = false;
@@ -2602,6 +2620,7 @@ lbool Searcher::solve(
             status = l_False;
             goto end;
         }
+        sls_if_needed();
 
         assert(watches.get_smudged_list().empty());
         params.clear();
@@ -3607,9 +3626,9 @@ void Searcher::check_assumptions_sanity()
     }
 }
 
-void Searcher::bump_var_importance_all(const uint32_t var, bool only_add, double amount)
+void Searcher::bump_var_importance_all(const uint32_t var)
 {
-    vsids_bump_var_act<false>(var, amount, only_add);
+    vsids_bump_var_act<false>(var);
     vmtf_bump_queue(var);
 }
 

@@ -187,10 +187,10 @@ if __name__ == "__main__":
         out_pb += "x%d " % vars_noise[i]
         if outputs[i]:
             out+="%d " % vars_noise[i]
-            out_pb+=" 0"
+            out_pb+=" 1"
         else:
             out+="-%d " % vars_noise[i]
-            out_pb+=" 1"
+            out_pb+=" 0"
 
         out +="0"
         if opts.pb:
@@ -209,7 +209,7 @@ if __name__ == "__main__":
         out = ""
         for i in range(opts.samples):
             out +="-1 x%d " % vars_noise[i]
-        out += " >= %d" % (opts.samples-tolerance)
+        out += " >= %d" % (-tolerance)
         print(out)
     else:
         out = "b "

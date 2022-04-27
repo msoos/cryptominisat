@@ -138,9 +138,6 @@ set(cryptoms_lib_files
     xorfinder.cpp
     cardfinder.cpp
     cryptominisat_c.cpp
-    yalsat.cpp
-    yals.c
-    walksat.cpp
     sls.cpp
     sqlstats.cpp
     vardistgen.cpp

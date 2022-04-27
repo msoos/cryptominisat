@@ -222,16 +222,11 @@ struct VarValSorter
 
 vector<pair<uint32_t, double>> CMS_ccnr::get_bump_based_on_cls()
 {
-    if (solver->conf.verbosity) {
-        cout << "c [ccnr] bumping based on clause weights" << endl;
-    }
+    verb_print(1,"[ccnr] bumping based on clause weights");
+
     //Check prerequisites
     assert(toClear.empty());
-    #ifdef SLOW_DEBUG
-    for(const auto x: seen) {
-        assert(x == 0);
-    }
-    #endif
+    SLOW_DEBUG_DO(for(const auto x: seen) assert(x == 0));
 
     vector<pair<uint32_t, double>> tobump_cl_var;
     std::sort(ls_s->_clauses.begin(), ls_s->_clauses.end(), ClWeightSorter());
@@ -246,11 +241,9 @@ vector<pair<uint32_t, double>> CMS_ccnr::get_bump_based_on_cls()
             if (v < solver->nVars() &&
                 solver->varData[v].removed == Removed::none &&
                 solver->value(v) == l_Undef &&
-                seen[v] < solver->conf.sls_bump_var_max_n_times
-            ) {
-                if (seen[v] == 0) {
-                    individual_vars_bumped++;
-                }
+                seen[v] < solver->conf.sls_bump_var_max_n_times)
+            {
+                if (seen[v] == 0) individual_vars_bumped++;
                 seen[v]++;
                 toClear.push_back(Lit(v, false));
                 tobump_cl_var.push_back(std::make_pair(v, 3.0));
@@ -259,10 +252,7 @@ vector<pair<uint32_t, double>> CMS_ccnr::get_bump_based_on_cls()
         }
     }
 
-    //Clear up
-    for(const auto x: toClear) {
-        seen[x.var()] = 0;
-    }
+    for(const auto x: toClear) seen[x.var()] = 0;
     toClear.clear();
 
     return tobump_cl_var;
@@ -315,8 +305,9 @@ lbool CMS_ccnr::deal_with_solution(int res, const uint32_t num_sls_called)
     if (solver->conf.sls_get_phase || res) {
         if (solver->conf.verbosity) {
             cout
-            << "c [ccnr] saving best assignment phase"
-            << endl;
+            << "c [ccnr] saving best assignment phase to stable_polar";
+            if (res) cout << " + best_polar";
+            cout << endl;
         }
 
         for(size_t i = 0; i < solver->nVars(); i++) {
@@ -361,33 +352,18 @@ lbool CMS_ccnr::deal_with_solution(int res, const uint32_t num_sls_called)
             exit(-1);
     }
 
-    if (solver->conf.sls_set_offset == 0) {
-        for(const auto& v: tobump) {
-            solver->bump_var_importance_all(v.first, true, v.second/3.0);
-        }
 
-        if (solver->branch_strategy == branch::vsids) {
-            solver->vsids_decay_var_act();
-        }
-    } else {
-        assert(false && "No such sls_set_offset variabt");
+    for(const auto& v: tobump) solver->bump_var_importance_all(v.first);
+    if (solver->branch_strategy == branch::vsids) {
+        solver->vsids_decay_var_act();
     }
 
-    if (solver->conf.verbosity) {
-        cout << "c [ccnr] Bumped/set offset to vars: " << tobump.size()
-        << " offset type: " << solver->conf.sls_set_offset
-        << " bump type: " << solver->conf.sls_bump_type
-        << endl;
-    }
-    if (!res) {
-        if (solver->conf.verbosity >= 2) {
-            cout << "c [ccnr] ASSIGNMENT NOT FOUND" << endl;
-        }
-    } else {
-        if (solver->conf.verbosity) {
-            cout << "c [ccnr] ASSIGNMENT FOUND" << endl;
-        }
-    }
+
+    verb_print(1, "[ccnr] Bumped vars: " << tobump.size()
+        << " bump type: " << solver->conf.sls_bump_type);
+
+    if (!res) verb_print(2, "[ccnr] ASSIGNMENT NOT FOUND");
+    else verb_print(1, "[ccnr] ASSIGNMENT FOUND");
 
     return l_Undef;
 }

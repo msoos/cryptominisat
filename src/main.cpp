@@ -517,8 +517,6 @@ void Main::add_supported_options()
         , "How many times to bump an individual variable's activity in CCNR")
     ("slsbumptype", po::value(&conf.sls_bump_type)->default_value(conf.sls_bump_type)
         , "How to calculate what variable to bump. 1 = clause-based, 2 = var-flip-based, 3 = var-score-based")
-    ("slsoffset", po::value(&conf.sls_set_offset)->default_value(conf.sls_set_offset)
-        , "Should SLS set the VSIDS/Maple offsetsd")
     ;
 
     po::options_description probeOptions("Probing options");

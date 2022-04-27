@@ -22,8 +22,6 @@ THE SOFTWARE.
 
 #include "sls.h"
 #include "solver.h"
-#include "yalsat.h"
-#include "walksat.h"
 #include "ccnr_cms.h"
 
 using namespace CMSat;
@@ -37,60 +35,7 @@ SLS::~SLS()
 
 lbool SLS::run(const uint32_t num_sls_called)
 {
-    if (solver->conf.which_sls == "yalsat") {
-        return run_yalsat();
-    } else if (solver->conf.which_sls == "ccnr") {
-        return run_ccnr(num_sls_called);
-    } else if (solver->conf.which_sls == "walksat") {
-        return run_walksat();
-    } else if (solver->conf.which_sls == "ccnr_yalsat") {
-        if ((num_sls_called % 2) == 0) {
-            return run_ccnr(num_sls_called);
-        } else {
-            return run_yalsat();
-        }
-    } else {
-        cout << "ERROR: SLS configuration '" << solver->conf.which_sls
-        << "' does not exist. Only 'walksat', 'yalsat' and 'ccnr' are acceptable."
-        << endl;
-        exit(-1);
-    }
-}
-
-lbool SLS::run_walksat()
-{
-    WalkSAT walksat(solver);
-    double mem_needed_mb = (double)approx_mem_needed()/(1000.0*1000.0);
-    double maxmem = solver->conf.sls_memoutMB*solver->conf.var_and_mem_out_mult;
-    if (mem_needed_mb < maxmem) {
-        lbool ret = walksat.main();
-        return ret;
-    }
-
-    verb_print(1, "[sls] would need "
-        << std::setprecision(2) << std::fixed << mem_needed_mb
-        << " MB but that's over limit of " << std::fixed << maxmem
-        << " MB -- skipping");
-
-    return l_Undef;
-}
-
-lbool SLS::run_yalsat()
-{
-    Yalsat yalsat(solver);
-    double mem_needed_mb = (double)approx_mem_needed()/(1000.0*1000.0);
-    double maxmem = solver->conf.sls_memoutMB*solver->conf.var_and_mem_out_mult;
-    if (mem_needed_mb < maxmem) {
-        lbool ret = yalsat.main();
-        return ret;
-    }
-
-    verb_print(1, "[sls] would need "
-        << std::setprecision(2) << std::fixed << mem_needed_mb
-        << " MB but that's over limit of " << std::fixed << maxmem
-        << " MB -- skipping");
-
-    return l_Undef;
+    return run_ccnr(num_sls_called);
 }
 
 lbool SLS::run_ccnr(const uint32_t num_sls_called)

@@ -292,7 +292,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "renumber,"
             "bosphorus,"
             "louvain-comms,"
-            "sls,lucky"
         )
 
         , simplify_schedule_external(
@@ -315,7 +314,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "sub-impl,"
             "bosphorus,"
             "louvain-comms,"
-            "sls,lucky"
         )
 
         //Occur based simplification
@@ -330,7 +328,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //WalkSAT
         , doSLS(true)
         , sls_every_n(2)
-        , yalsat_max_mems(40)
+        , yalsat_max_mems(10)
         , sls_memoutMB(500)
         , walksat_max_runs(50)
         , sls_get_phase(1)
@@ -339,7 +337,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , sls_how_many_to_bump(100)
         , sls_bump_var_max_n_times(100)
         , sls_bump_type(6)
-        , sls_set_offset(0)
 
         //Distillation
         , do_distill_clauses(true)

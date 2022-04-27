@@ -186,8 +186,7 @@ class Searcher : public HyperEngine
         Lit pickBranchLit();
         uint32_t pick_var_vsids();
         void vsids_decay_var_act();
-        template<bool inprocess>
-        void vsids_bump_var_act(uint32_t v, double mult = 1.0, bool only_add = false);
+        template<bool inprocess> void vsids_bump_var_act(const uint32_t v);
         double backup_random_var_freq = -1; ///<if restart has full random var branch, we save old value here
         void check_var_in_branch_strategy(uint32_t var) const;
         uint32_t branch_strategy_change = 0;
@@ -203,7 +202,7 @@ class Searcher : public HyperEngine
         }
         uint32_t branch_strategy_num = 0;
         void bump_var_importance(const uint32_t var);
-        void bump_var_importance_all(const uint32_t var, bool only_add = false, double amount = 1.0);
+        void bump_var_importance_all(const uint32_t var);
 
         /////////////////
         // Polarities
@@ -243,6 +242,10 @@ class Searcher : public HyperEngine
         // sub-str with bin
         uint64_t next_intree = 0;
         bool intree_if_needed();
+
+        // SLS
+        uint64_t next_sls = 0;
+        void sls_if_needed();
 
         // Fast backward for Arjun
         lbool new_decision_fast_backw();
@@ -618,44 +621,26 @@ inline bool Searcher::pick_polarity(const uint32_t var)
 }
 
 template<bool inprocess>
-inline void Searcher::vsids_bump_var_act(uint32_t var, double mult, bool only_add)
+inline void Searcher::vsids_bump_var_act(const uint32_t var)
 {
-    if (inprocess) {
-        return;
-    }
-
-    var_act_vsids[var] += var_inc_vsids * mult;
+    if (inprocess) return;
+    var_act_vsids[var] += var_inc_vsids;
     max_vsids_act = std::max(max_vsids_act,  var_act_vsids[var]);
 
-    #ifdef SLOW_DEBUG
-    bool rescaled = false;
-    #endif
+    SLOW_DEBUG_DO(bool rescaled = false);
     if (var_act_vsids[var] > 1e100) {
-        // Rescale:
-
-        for (auto& v: var_act_vsids) {
-            v *= 1e-100;
-        }
+        SLOW_DEBUG_DO(rescaled = true);
+        for (auto& v: var_act_vsids) v *= 1e-100;
         max_vsids_act *= 1e-100;
-
-        #ifdef SLOW_DEBUG
-        rescaled = true;
-        #endif
-
-        //Reset var_inc
         var_inc_vsids *= 1e-100;
     }
 
-    // Update order_heap with respect to new activity:
-    if (!only_add && order_heap_vsids.inHeap(var)) {
+    // Update order_heap with respect to new activity
+    if (order_heap_vsids.inHeap(var)) {
         order_heap_vsids.decrease(var);
     }
 
-    #ifdef SLOW_DEBUG
-    if (rescaled) {
-        assert(order_heap_vsids.heap_property());
-    }
-    #endif
+    SLOW_DEBUG_DO(if (rescaled) assert(order_heap_vsids.heap_property()));
 }
 
 } //end namespace

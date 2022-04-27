@@ -2142,20 +2142,11 @@ lbool Solver::execute_inprocess_strategy(
                 subsumeImplicit->subsume_implicit();
             }
         } else if (token == "sls") {
-            assert(conf.sls_every_n > 0);
-            if (conf.doSLS
-                && solveStats.num_simplify % conf.sls_every_n == (conf.sls_every_n-1)
-            ) {
-                SLS sls(this);
-                const lbool ret = sls.run(num_sls_called);
-                num_sls_called++;
-                if (ret == l_True) {
-                    return l_Undef;
-                }
-            }
+            assert(false && "unsupported");
         } else if (token == "lucky") {
-            Lucky lucky(solver);
-            lucky.doit();
+            assert(false && "unsupported");
+//             Lucky lucky(solver);
+//             lucky.doit();
         } else if (token == "intree-probe") {
             if (!bnns.empty()) conf.do_hyperbin_and_transred = false;
             if (conf.doIntreeProbe && conf.doFindAndReplaceEqLits) intree->intree_probe();
