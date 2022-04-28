@@ -1109,8 +1109,6 @@ bool OccSimplifier::eliminate_vars()
     while(varelim_num_limit > 0
         && varelim_linkin_limit_bytes > 0
         && *limit_to_decrease > 0
-        && grow < (uint32_t)solver->conf.min_bva_gain
-        //&& grow < 1 //solver->conf.min_bva_gain
     ) {
         if (solver->conf.verbosity >= 2) {
             cout << "c x n vars       : " << solver->get_num_free_vars() << endl;
@@ -1181,6 +1179,11 @@ bool OccSimplifier::eliminate_vars()
                     goto end;
                 }
 
+                if (!simulate_frw_sub_str_with_added_cl_to_var()) {
+                    limit_to_decrease = &norm_varelim_time_limit;
+                    goto end;
+                }
+
                 limit_to_decrease = &norm_varelim_time_limit;
                 assert(solver->okay());
                 assert(solver->prop_at_head());
@@ -1195,11 +1198,6 @@ bool OccSimplifier::eliminate_vars()
             if (solver->conf.verbosity >= 2) {
                 cout <<"c size of added_cl_to_var    : " << added_cl_to_var.getTouchedList().size() << endl;
                 cout <<"c size of removed_cl_with_var: " << removed_cl_with_var.getTouchedList().size() << endl;
-            }
-
-            if (!simulate_frw_sub_str_with_added_cl_to_var()) {
-                limit_to_decrease = &norm_varelim_time_limit;
-                goto end;
             }
 
             //These WILL ADD VARS BACK even though it's not changed.
@@ -1277,11 +1275,10 @@ bool OccSimplifier::eliminate_vars()
         n_cls_last = n_cls_now;
         n_vars_last = n_vars_now;
 
-        if (grow == 0) {
-            grow = 8;
-        } else {
-            grow *= 2;
-        }
+        if ((int)grow == solver->conf.min_bva_gain) break;
+        if (grow == 0) grow = 8;
+        else grow *= 2;
+        grow = std::min<uint32_t>(grow, solver->conf.min_bva_gain);
         assert(solver->prop_at_head());
         assert(added_long_cl.empty());
         assert(added_irred_bin.empty());
@@ -1827,9 +1824,7 @@ bool OccSimplifier::lit_rem_with_or_gates()
 
     uint32_t shortened = 0;
     for(const auto& gate: gates) {
-        if (solver->value(gate.rhs) != l_Undef) {
-            continue;
-        }
+        if (solver->value(gate.rhs) != l_Undef) continue;
 
         Lit l1 = gate.lit1;
         Lit l2 = gate.lit2;
@@ -1838,9 +1833,7 @@ bool OccSimplifier::lit_rem_with_or_gates()
         }
         solver->watches[l1].copyTo(poss);
         for(const auto& w: poss) {
-            if (w.isBin()) {
-                continue;
-            }
+            if (w.isBin() || w. isBNN()) continue;
             assert(w.isClause());
             const auto off = w.get_offset();
             Clause* cl = solver->cl_alloc.ptr(w.get_offset());
@@ -1866,9 +1859,7 @@ bool OccSimplifier::lit_rem_with_or_gates()
                     break;
                 }
             }
-            if (at == numeric_limits<uint32_t>::max()) {
-                continue;
-            }
+            if (at == numeric_limits<uint32_t>::max()) continue;
 
             (*solver->drat) << deldelay << *cl << fin;
             shortened++;
@@ -3948,28 +3939,44 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
     //TODO We could just filter negs, poss below
     get_antecedents(gates_negs, negs, antec_negs);
     get_antecedents(gates_poss, poss, antec_poss);
-    const uint32_t limit = pos+neg+grow;
 
+    uint32_t limit = pos+neg+grow;
+    bool ret = true;
     if (gates) {
         if (!generate_resolvents(gates_poss, antec_negs, lit, limit)) {
-            return false;
+            ret = false;
         } else if (!generate_resolvents(gates_negs, antec_poss, ~lit, limit)) {
-            return false;
-//         } else if (!generate_resolvents(gates_poss, gates_negs, lit, limit)) {
-//             return false;
+            ret = false;
         }
     } else {
         if (!generate_resolvents(antec_poss, antec_negs, lit, limit)) {
-            return false;
+            ret = false;
         }
     }
 
     if (solver->conf.varelim_check_resolvent_subs) {
+        uint64_t orig_lits = 0;
+        vector<OccurClause> orig_cls;
+        for(auto& c: solver->watches[lit]) if (c.isClause()) {
+            Clause* cl = solver->cl_alloc.ptr(c.get_offset());
+            if (!cl->red()) {
+                orig_cls.push_back(OccurClause(lit_Undef, c));
+                orig_lits += cl->size();
+            }
+        }
+        for(auto& c: solver->watches[~lit]) if (c.isClause()) {
+            Clause* cl = solver->cl_alloc.ptr(c.get_offset());
+            if (!cl->red()) {
+                orig_cls.push_back(OccurClause(lit_Undef, c));
+                orig_lits += cl->size();
+            }
+        }
+
         tmp_subs.clear();
-        int64_t total_lits = 0;
+        uint64_t new_lits = 0;
         for(uint32_t i = 0; i < resolvents.at; i++) {
             const auto& lits = resolvents.resolvents_lits[i];
-            total_lits += lits.size();
+            if (lits.size() > 2) new_lits += lits.size();
             sub_str->find_subsumed(
                 CL_OFFSET_MAX,
                 lits,
@@ -3980,37 +3987,60 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
         }
         std::sort(tmp_subs.begin(), tmp_subs.end());
         tmp_subs.erase(unique(tmp_subs.begin(),tmp_subs.end()),tmp_subs.end());
-        for(const auto& cl_off: tmp_subs) {
-            if (cl_off.ws.isBin()) {
-                total_lits -= 2;
-                continue;
+        std::sort(orig_cls.begin(), orig_cls.end());
+        auto it = std::set_difference(
+            tmp_subs.begin(), tmp_subs.end(), orig_cls.begin(), orig_cls.end(), tmp_subs.begin());
+        tmp_subs.resize(it-tmp_subs.begin());
+
+        for (const auto& occ_cl: tmp_subs) {
+            if (occ_cl.ws.isBin()) {
+                solver->detach_bin_clause(
+                    occ_cl.lit, occ_cl.ws.lit2(), occ_cl.ws.red(), occ_cl.ws.get_ID());
+                (*solver->drat) << del << occ_cl.ws.get_ID() << occ_cl.lit << occ_cl.ws.lit2() << fin;
+                if (!occ_cl.ws.red()) {
+                    n_occurs[occ_cl.lit.toInt()]--;
+                    n_occurs[occ_cl.ws.lit2().toInt()]--;
+                    elim_calc_need_update.touch(occ_cl.lit);
+                    elim_calc_need_update.touch(occ_cl.ws.lit2());
+                    removed_cl_with_var.touch(occ_cl.lit);
+                    removed_cl_with_var.touch(occ_cl.ws.lit2());
+                }
+                new_lits -= 2;
             }
-            assert(cl_off.ws.isClause());
-            Clause* cl = solver->cl_alloc.ptr(cl_off.ws.get_offset());
-            total_lits -= cl->size();
+
+            if (occ_cl.ws.isClause()) {
+                ClOffset off = occ_cl.ws.get_offset();
+                Clause* cl = solver->cl_alloc.ptr(off);
+                if (!cl->getRemoved() && !cl->freed()) {
+                    unlink_clause(off, true, true, true);
+                    new_lits -= cl->size();
+                }
+            }
         }
+
         for(const auto& w: poss) {
             if (w.isBin()) {
-                total_lits -= 2;
+                new_lits -= 2;
                 continue;
             }
             assert(w.isClause());
             Clause* cl = solver->cl_alloc.ptr(w.get_offset());
-            total_lits -= cl->size();
+            new_lits -= cl->size();
         }
         for(const auto& w: negs) {
             if (w.isBin()) {
-                total_lits -= 2;
+                new_lits -= 2;
                 continue;
             }
             assert(w.isClause());
             Clause* cl = solver->cl_alloc.ptr(w.get_offset());
-            total_lits -= cl->size();
+            new_lits -= cl->size();
         }
 
         //TODO some of the subsumed clauses could be the clauses in POSS and NEGS. Have to check.
-        if ((int)resolvents.size() - (int)tmp_subs.size() < (int)limit-15
-            || (int)total_lits < std::min<int>(grow-20, -10)
+        if (ret &&
+            ((int)resolvents.size() - (int)tmp_subs.size() < (int)limit-15
+                || (int)new_lits < std::min<int>(grow-20, -10))
         ) {
             return true;
         } else {
@@ -4018,7 +4048,7 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
         }
     }
 
-    return true;
+    return ret;
 }
 
 void OccSimplifier::printOccur(const Lit lit) const

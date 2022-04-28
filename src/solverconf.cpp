@@ -228,7 +228,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Bounded variable addition
         , do_bva(true)
-        , min_bva_gain(32)
+        , min_bva_gain(16)
         , bva_limit_per_call(250000)
         , bva_also_twolit_diff(true)
         , bva_extra_lit_and_red_start(0)

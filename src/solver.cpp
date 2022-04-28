@@ -2173,6 +2173,8 @@ lbool Solver::execute_inprocess_strategy(
             if (conf.do_distill_clauses) {
                 distill_long_cls->distill(false, false);
             }
+        } else if (token == "clean-cls") {
+            clauseCleaner->remove_and_clean_all();
         } else if (token == "distill-cls-onlyrem") {
             //Enqueues literals in long + tri clauses two-by-two and propagates
             if (conf.do_distill_clauses) {
