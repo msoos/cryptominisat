@@ -15,7 +15,9 @@ while [[ ${to} -gt ${i} ]]; do
 
     ../utils/cnf-utils/xortester.py -s $i --varsmin 35 > test_FRAT-${i}.cnf
     # ../utils/cnf-utils/xortester.py -s $i --varsmin 35 > test_FRAT-${i}.cnf
-    timeout 30s ./cryptominisat5 test_FRAT-${i}.cnf b-${i} --distill 1 --scc 1 --varelim 1 --presimp 1 --xor 1 --confbtwsimp 100 --occsimp 1 --sls 0 --bva 0 --intree 0 --maxmatrixcols 10000 --maxmatrixrows 10000 --strmaxt 0 --mustconsolidate 1 > out_test-${i}
+    # timeout 30s ./cryptominisat5 test_FRAT-${i}.cnf b-${i} --distill 1 --scc 1 --varelim 1 --presimp 1 --xor 1 --confbtwsimp 100 --occsimp 1 --sls 1 --bva 1 --intree 1 --maxmatrixcols 10000 --maxmatrixrows 10000 --strmaxt 0 --mustconsolidate 1 > out_test-${i}
+
+    timeout 30s ./cryptominisat5 test_FRAT-${i}.cnf b-${i} --presimp 1 --maxmatrixcols 10000 --maxmatrixrows 10000 > out_test-${i}
 
     a=`grep "UNSATIS" out_test-${i}`
     if [[ $? -eq 0 ]]; then
