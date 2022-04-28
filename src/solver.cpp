@@ -1757,12 +1757,13 @@ void Solver::write_final_frat_clauses()
     TBUDDY_DO(solver->free_bdds(solver->xorclauses_unused));
     TBUDDY_DO(tbdd_done());
 
-    if (varReplacer) varReplacer->delete_frat_cls();
     // -1 indicates tbuddy already added the empty clause
     if (!okay() && unsat_cl_ID != -1) {
         assert(unsat_cl_ID != 0);
         *drat << finalcl << unsat_cl_ID << fin;
     }
+
+    if (varReplacer) varReplacer->delete_frat_cls();
 
     for(uint32_t i = 0; i < nVars(); i ++) {
         if (unit_cl_IDs[i] != 0) {
