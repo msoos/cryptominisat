@@ -84,9 +84,6 @@ def set_up_parser():
     parser.add_option("--gauss", dest="gauss", default=False,
                       action="store_true",
                       help="Concentrate fuzzing gauss")
-    parser.add_option("--sls", dest="sls", default=False,
-                      action="store_true",
-                      help="Concentrate fuzzing sls")
     parser.add_option("--sampling", dest="only_sampling", default=False,
                       action="store_true",
                       help="Concentrate fuzzing sampling variables")
@@ -250,11 +247,6 @@ class Tester:
         if "autodisablegauss" in self.extra_opts_supported:
             sched.append("occ-xor")
 
-        if options.sls:
-            sched.append("sls")
-        elif random.randint(0,10) < 3:
-            sched.append("sls")
-
         return sched
 
     def rnd_schedule_all(self):
@@ -265,7 +257,7 @@ class Tester:
         sched_opts += "str-impl, sub-str-cls-with-bin, distill-cls, scc-vrepl,"
         sched_opts += "occ-backw-sub-str, occ-backw-sub, occ-xor, occ-clean-implicit, occ-bve, occ-bva,"
         sched_opts += "renumber, must-renumber,"
-        sched_opts += "sls, card-find, breakid,"
+        sched_opts += "card-find, breakid,"
         sched_opts += "occ-lit-rem, distill-bins"
 
         # type of schedule
@@ -302,13 +294,6 @@ class Tester:
             cmd += "--breakidcls %d " % random.choice([0, 1, 2, 3, 10]+[50]*4)
             cmd += "--breakidtime %d " % random.choice([10000]*5+[1])
 
-        sls = 0
-        if options.sls:
-            sls = 1
-        else:
-            # it's kinda slow and using it all the time is probably not a good idea
-            sls = random.choice([0]*2+[1])
-
         if options.gauss:
             sls = 0
             cmd += "--autodisablegauss %s " % random.choice([0]*15+[1])
@@ -320,15 +305,10 @@ class Tester:
             cmd += "--maxnummatrices %s " % int(random.gammavariate(1.5, 20.0))
 
         # SLS
-        cmd += "--sls %d " % sls
+        cmd += "--sls %d " % random.choice([0, 1])
         cmd += "--slsgetphase %d " % random.choice([0, 0, 0, 1])
-        if options.sls:
-            cmd += "--slseveryn 1 "
-        else:
-            cmd += "--slseveryn %d " % random.randint(1, 3)
         cmd += "--yalsatmems %d " % random.choice([1, 10, 100])
         cmd += "--walksatruns %d " % random.choice([2, 15, 20])
-        cmd += "--slstype %s " % random.choice(["walksat", "yalsat", "ccnr", "ccnr_yalsat"])
 
         # polarities
         cmd += "--polar %s " % random.choice(["true", "false", "rnd", "auto"])
@@ -355,7 +335,7 @@ class Tester:
             cmd += "--verb %d " % random.choice([0, 0, 0, 0, 1, 2])
             cmd += "--detachxor %d " % random.choice([0, 1, 1, 1, 1])
             cmd += "--restart %s " % random.choice(
-                ["geom", "glue", "luby", "glue-geom"])
+                ["geom", "glue", "luby"])
             cmd += "--adjustglue %f " % random.choice([0, 0.5, 0.7, 1.0])
             cmd += "--gluehist %s " % random.randint(1, 500)
             cmd += "--updateglueonanalysis %s " % random.randint(0, 1)
@@ -725,9 +705,6 @@ fuzzers_noxor = [
     ["../../utils/cnf-utils/cnf-fuzz-xor.py", "--seed"],
     ["../../utils/cnf-utils/multipart.py", "special"]
 ]
-fuzzers_noxor_sls = [
-    ["../../build/tests/cnf-utils/makewff -cnf 3 250 1060", "-seed"],
-]
 
 fuzzers_xor = [
     ["../../utils/cnf-utils/xortester.py --varsmin 40", "--seed"],
@@ -755,9 +732,6 @@ if __name__ == "__main__":
 
     fuzzers_drat = fuzzers_noxor
     fuzzers_nodrat = fuzzers_noxor + fuzzers_xor
-    if options.sls:
-        fuzzers_drat = fuzzers_noxor_sls
-        fuzzers_nodrat = fuzzers_noxor_sls
 
     print_version()
     tester = Tester()
@@ -775,8 +749,6 @@ if __name__ == "__main__":
             toexec += "--valgrindfreq %d " % options.valgrind_freq
         if options.gauss:
             toexec += "--gauss "
-        if options.sls:
-            toexec += "--sls "
         if options.only_sampling:
             toexec += "--sampling "
         toexec += "-m %d " % options.max_threads
