@@ -32,6 +32,7 @@ THE SOFTWARE.
 #include <vector>
 #include <complex>
 #include <locale>
+#include <random>
 
 #include "varreplacer.h"
 #include "time_mem.h"
@@ -1665,7 +1666,7 @@ lbool Solver::solve_with_assumptions(
         if (drat->enabled()) {
             drat->flush();
             tbdd_init_frat(drat->getFile(), v, &clauseID);
-            //tbdd_set_verbose(3);
+            tbdd_set_verbose(0);
             bdd_error_hook(my_bddinthandler);
         }
         #endif
@@ -3140,7 +3141,8 @@ bool Solver::full_probe(const bool bin_only)
             vars.push_back(i);
         }
     }
-    std::random_shuffle(vars.begin(), vars.end());
+    std::mt19937 g(mtrand.randInt());
+    std::shuffle(vars.begin(), vars.end(), g);
 
     for(auto const& v: vars) {
         if ((int64_t)solver->propStats.bogoProps > start_bogoprops + bogoprops_to_use)
