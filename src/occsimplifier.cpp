@@ -1509,13 +1509,14 @@ uint32_t OccSimplifier::add_cls_to_picosat_definable(const Lit wsLit) {
                 picosat_add(picosat, 0);
             }
         } else if (w.isBin()) {
-            assert(!w.red());
-            bool only_sampl = seen[w.lit2().var()];
-            if (only_sampl) {
-                added++;
-                picosat_add(picosat, lit_to_picolit(w.lit2()));
-                picosat_add(picosat, 0);
-//                 cout << "Added cl: " << w.lit2() << " " << wsLit << endl;
+            if (!w.red()) {
+                bool only_sampl = seen[w.lit2().var()];
+                if (only_sampl) {
+                    added++;
+                    picosat_add(picosat, lit_to_picolit(w.lit2()));
+                    picosat_add(picosat, 0);
+    //                 cout << "Added cl: " << w.lit2() << " " << wsLit << endl;
+                }
             }
         } else {
             assert(false);
