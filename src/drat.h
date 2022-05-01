@@ -107,6 +107,11 @@ public:
         return *this;
     }
 
+    virtual Drat& operator<<(const char*)
+    {
+        return *this;
+    }
+
     virtual Drat& operator<<(const DratFlag)
     {
         return *this;
@@ -406,6 +411,19 @@ private:
             buf_ptr+=num;
             buf_len+=num;
         }
+    }
+
+    virtual Drat& operator<<(const char* str)
+    {
+        #ifdef DEBUG_DRAT
+        this->flush();
+        uint32_t num = sprintf((char*)buf_ptr, "c %s", str);
+        buf_ptr+=num;
+        buf_len+=num;
+        this->flush();
+        #endif
+
+        return *this;
     }
 
     void byteDRUPaID(const int32_t id)

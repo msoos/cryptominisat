@@ -1752,10 +1752,19 @@ void Solver::write_final_frat_clauses()
 {
     if (!drat->enabled()) return;
     assert(decisionLevel() == 0);
+    *drat << "write final start\n";
 
     drat->flush();
+    *drat << "vrepl finalize begin\n";
+    if (varReplacer) varReplacer->delete_frat_cls();
+
+    *drat << "gmatrix finalize frat begin\n";
     TBUDDY_DO(for(auto& g: gmatrices) g->finalize_frat());
+
+    *drat << "free bdds begin\n";
     TBUDDY_DO(solver->free_bdds(solver->xorclauses_unused));
+
+    *drat << "tbdd_done() next\n";
     TBUDDY_DO(tbdd_done());
 
     // -1 indicates tbuddy already added the empty clause
@@ -1763,8 +1772,6 @@ void Solver::write_final_frat_clauses()
         assert(unsat_cl_ID != 0);
         *drat << finalcl << unsat_cl_ID << fin;
     }
-
-    if (varReplacer) varReplacer->delete_frat_cls();
 
     for(uint32_t i = 0; i < nVars(); i ++) {
         if (unit_cl_IDs[i] != 0) {

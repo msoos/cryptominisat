@@ -1545,6 +1545,8 @@ void CMSat::EGaussian::finalize_frat()
         i++;
     }
     delete_clauses(todel);
+    *solver->drat << "delete end\n";
+
     for(auto const& bdd_cl: frat_ids) ilist_free(bdd_cl.cl);
     frat_ids.clear();
     ilist_free(todel);
@@ -1560,6 +1562,7 @@ void CMSat::EGaussian::finalize_frat()
     }
     ilist_resize(todel1, at);
     delete_clauses(todel1);
+    *solver->drat << "delete end\n";
     ilist_free(todel1);
 
     // clean BDDs in xorclauses
@@ -1567,5 +1570,6 @@ void CMSat::EGaussian::finalize_frat()
         delete x2.bdd;
         x2.bdd = NULL;
     }
+    *solver->drat << "delete x2s end\n";
 }
 #endif
