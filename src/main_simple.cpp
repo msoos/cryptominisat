@@ -146,7 +146,7 @@ public:
         SATSolver S(&conf);
         solver = &S;
         if (dratf) {
-            solver->set_drat(dratf, false);
+            solver->set_drat(dratf);
             if (num_threads > 1) {
                 cout << "ERROR: Cannot have DRAT and multiple threads." << endl;
                 exit(-1);
