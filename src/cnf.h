@@ -352,6 +352,7 @@ public:
     void free_bdds(vector<Xor>& xors);
     void print_all_clauses() const;
     void print_watchlist_stats() const;
+    bool zero_irred_cls(const Lit lit) const;
     template<class T> void clean_xor_no_prop(T& ps, bool& rhs);
     template<class T> void clean_xor_vars_no_prop(T& ps, bool& rhs);
     uint64_t count_lits(

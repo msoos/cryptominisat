@@ -986,6 +986,29 @@ void CNF::check_no_zero_ID_bins() const
     }
 }
 
+bool CNF::zero_irred_cls(const CMSat::Lit lit) const
+{
+    for(auto const& w: watches[lit]) {
+        switch(w.getType()) {
+            case WatchType::watch_binary_t:
+                if (w.red()) continue;
+                else return false;
+            case WatchType::watch_clause_t: {
+                Clause* cl = cl_alloc.ptr(w.get_offset());
+                if (cl->red()) continue;
+                else return false;
+            }
+            case WatchType::watch_idx_t:
+                release_assert(false);
+                continue;
+            case WatchType::watch_bnn_t:
+                return false;
+        }
+    }
+    return true;
+}
+
+
 #ifdef USE_TBUDDY
 void CNF::free_bdds(vector<Xor>& xors)
 {

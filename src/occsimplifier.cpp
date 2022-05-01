@@ -1630,7 +1630,9 @@ bool OccSimplifier::check_equiv_subformua(Lit lit)
 
 }
 
-vector<uint32_t> OccSimplifier::recover_definable_by_irreg_gate_vars(const vector<uint32_t>& vars, vector<uint32_t>* out_empty_occs)
+// Returns new set that doesn't contain variables that are definable
+vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(
+    const vector<uint32_t>& vars, vector<uint32_t>* out_empty_occs)
 {
     vector<uint32_t> ret;
     vector<uint32_t> check_for_emtpy_resolvents;
@@ -1650,38 +1652,31 @@ vector<uint32_t> OccSimplifier::recover_definable_by_irreg_gate_vars(const vecto
     uint32_t too_many_occ = 0;
     uint32_t equiv_subformula = 0;
 
-    vector<uint32_t> vars2 = vars;
-    for(uint32_t& v: vars2) {
+    vector<uint32_t> vars2;
+    for(const uint32_t& v: vars) {
         auto rem_val = solver->varData[v].removed;
         assert(rem_val == Removed::none || rem_val == Removed::replaced);
-        v = solver->varReplacer->get_var_replaced_with(v);
+        const uint32_t v2 = solver->varReplacer->get_var_replaced_with(v);
 
-        rem_val = solver->varData[v].removed;
+        rem_val = solver->varData[v2].removed;
         assert(rem_val == Removed::none);
-        assert(v < seen.size());
+        assert(v2 < seen.size());
 
-        if (seen[v]) {
-            // variable is equivalent to another variable in the sampling set
-            continue;
-        }
-
-        seen[v] = 1;
+        if (seen[v2]) continue;
+        seen[v2] = 1;
+        vars2.push_back(v2);
     }
 
     std::reverse(vars2.begin(), vars2.end());
     for(const auto& v: vars2) {
         assert(solver->varData[v].removed == Removed::none);
-        if (solver->value(v) != l_Undef ||
-            !seen[v])
-        {
-            // Already set, or equivalent to another one that has already been removed
-            continue;
-        }
-
+        if (solver->value(v) != l_Undef) continue;
         const Lit l = Lit(v, false);
 
         uint32_t total = solver->watches[l].size() + solver->watches[~l].size();
-        if (total == 0) {
+        bool empty_occ = total == 0 ||
+            (solver->zero_irred_cls(l) == 0 && solver->zero_irred_cls(~l) == 0);
+        if (empty_occ == 0) {
             if (out_empty_occs) out_empty_occs->push_back(v);
             no_occ++;
             ret.push_back(v);
