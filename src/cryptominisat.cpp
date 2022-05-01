@@ -1118,7 +1118,7 @@ DLL_PUBLIC void SATSolver::set_find_xors(bool do_find_xors)
     }
 }
 
-DLL_PUBLIC void SATSolver::set_drat(FILE* os, bool add_ID)
+DLL_PUBLIC void SATSolver::set_drat(FILE* os)
 {
     if (data->solvers.size() > 1) {
         std::cerr << "ERROR: DRAT cannot be used in multi-threaded mode" << endl;
@@ -1130,7 +1130,7 @@ DLL_PUBLIC void SATSolver::set_drat(FILE* os, bool add_ID)
     }
 
     data->solvers[0]->conf.doBreakid = false;
-    data->solvers[0]->add_drat(os, add_ID);
+    data->solvers[0]->add_drat(os);
     data->solvers[0]->conf.do_hyperbin_and_transred = true;
 }
 

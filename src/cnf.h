@@ -158,7 +158,7 @@ public:
 
     //drat
     Drat* drat;
-    void add_drat(FILE* os, bool add_ID);
+    void add_drat(FILE* os);
 
     //Clauses
     vector<ClOffset> longIrredCls;

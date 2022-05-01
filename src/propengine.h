@@ -552,8 +552,11 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
                 // These are too difficult and not worth it
             }
 
-            *drat << add << ID << p << DratFlag::chain;
-            for(auto const& id: chain) *drat << id;
+            *drat << add << ID << p;
+            if (!chain.empty()) {
+                *drat << DratFlag::chain;
+                for(auto const& id: chain) *drat << id;
+            }
             *drat << fin;
 
             VERBOSE_PRINT("unit " << p << " ID: " << ID);

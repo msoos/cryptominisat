@@ -338,7 +338,6 @@ class Solver : public Searcher
 
         //FRAT
         void write_final_frat_clauses();
-        void write_one_final_frat_cl(const ClOffset offs);
 
         template<bool bin_only> lbool probe_inter(Lit l, uint32_t& min_props);
         void reset_for_solving();

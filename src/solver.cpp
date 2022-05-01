@@ -1786,25 +1786,15 @@ void Solver::write_final_frat_clauses()
 
     for(const auto& cls: longRedCls) {
         for(const auto offs: cls) {
-            write_one_final_frat_cl(offs);
+            Clause* cl = cl_alloc.ptr(offs);
+            *drat << finalcl << *cl << fin;
         }
     }
     for(const auto& offs: longIrredCls) {
-        write_one_final_frat_cl(offs);
+        Clause* cl = cl_alloc.ptr(offs);
+        *drat << finalcl << *cl << fin;
     }
-
     drat->flush();
-}
-
-void Solver::write_one_final_frat_cl(const ClOffset offs)
-{
-    Clause* cl = cl_alloc.ptr(offs);
-    *drat << finalcl << cl->stats.ID;
-    for(const Lit& l: *cl) {
-        *drat << l;
-    }
-    *drat << fin;
-
 }
 
 void Solver::dump_memory_stats_to_sql()

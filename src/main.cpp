@@ -1216,15 +1216,9 @@ int Main::solve()
     wallclock_time_started = real_time_sec();
     solver = new SATSolver((void*)&conf);
     solverToInterrupt = solver;
-    if (dratf) {
-        solver->set_drat(dratf, clause_ID_needed);
-    }
-    if (vm.count("maxtime")) {
-        solver->set_max_time(maxtime);
-    }
-    if (vm.count("maxconfl")) {
-        solver->set_max_confl(maxconfl);
-    }
+    if (dratf) solver->set_drat(dratf);
+    if (vm.count("maxtime")) solver->set_max_time(maxtime);
+    if (vm.count("maxconfl")) solver->set_max_confl(maxconfl);
 
     check_num_threads_sanity(num_threads);
     solver->set_num_threads(num_threads);
