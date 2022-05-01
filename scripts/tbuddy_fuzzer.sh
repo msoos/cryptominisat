@@ -22,7 +22,7 @@ while [[ ${to} -gt ${i} ]]; do
     a=`grep "UNSATIS" out_test-${i}`
     if [[ $? -eq 0 ]]; then
         ./frat-rs stat b-${i}
-        ./frat-rs elab b-${i} test_FRAT-${i}.cnf -m -v
+        ./frat-rs elab b-${i} -m test_FRAT-${i}.cnf -v
         if [[ $? == 0 ]]; then
             echo "OK, verification good"
         else

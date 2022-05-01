@@ -35,14 +35,14 @@ using std::vector;
 //#define DEBUG_DRAT
 
 #if 0
-#define DRAT_DEBUG(...) \
+#define DRAT_PRINT((...) \
     do { \
         const uint32_t tmp_num = sprintf((char*)buf_ptr, __VA_ARGS__); \
         buf_ptr+=tmp_num; \
         buf_len+=tmp_num; \
     } while (0)
 #else
-#define DRAT_DEBUG(...) do {} while (0)
+#define DRAT_PRINT(...) do {} while (0)
 #endif
 
 
@@ -152,6 +152,7 @@ public:
 
     virtual ~DratFile()
     {
+        flush();
         delete[] drup_buf;
         delete[] del_buf;
     }
@@ -278,7 +279,7 @@ public:
                         binDRUP_flush();
                     }
                     if (adding && sqlStats) sqlStats->set_id_confl(cl_id, *sumConflicts);
-                    DRAT_DEBUG("c set_id_confl (%d, %lld), adding: %d\n", cl_id, *sumConflicts, adding);
+                    DRAT_PRINT("c set_id_confl (%d, %lld), adding: %d\n", cl_id, *sumConflicts, adding);
                 }
                 cl_id = 0;
                 must_delete_next = false;

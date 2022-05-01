@@ -989,6 +989,7 @@ void CNF::check_no_zero_ID_bins() const
 #ifdef USE_TBUDDY
 void CNF::free_bdds(vector<Xor>& xors)
 {
+    drat->flush();
     for(auto& x: xors) {
         delete x.bdd;
         x.bdd = NULL;
