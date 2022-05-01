@@ -1179,9 +1179,12 @@ bool OccSimplifier::eliminate_vars()
                     goto end;
                 }
 
-                if (!simulate_frw_sub_str_with_added_cl_to_var()) {
-                    limit_to_decrease = &norm_varelim_time_limit;
-                    goto end;
+                // This is expensive, only do it if we are in Arjun's E mode
+                if (solver->conf.varelim_check_resolvent_subs) {
+                    if (!simulate_frw_sub_str_with_added_cl_to_var()) {
+                        limit_to_decrease = &norm_varelim_time_limit;
+                        goto end;
+                    }
                 }
 
                 limit_to_decrease = &norm_varelim_time_limit;
@@ -1198,6 +1201,11 @@ bool OccSimplifier::eliminate_vars()
             if (solver->conf.verbosity >= 2) {
                 cout <<"c size of added_cl_to_var    : " << added_cl_to_var.getTouchedList().size() << endl;
                 cout <<"c size of removed_cl_with_var: " << removed_cl_with_var.getTouchedList().size() << endl;
+            }
+
+            if (!simulate_frw_sub_str_with_added_cl_to_var()) {
+                limit_to_decrease = &norm_varelim_time_limit;
+                goto end;
             }
 
             //These WILL ADD VARS BACK even though it's not changed.
