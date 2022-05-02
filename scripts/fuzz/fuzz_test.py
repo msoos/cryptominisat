@@ -551,7 +551,7 @@ class Tester:
 
         # it's UNSAT, let's check with FRAT
         if fname_drat:
-            toexec = "./frat-rs elab {cnf} {fname_drat} -m -v"
+            toexec = "./frat-rs elab {fname_drat} {cnf} -m -v"
             toexec = toexec.format(cnf=fname, fname_drat=fname_drat)
             print("Checking with FRAT.. ", toexec)
             p = subprocess.Popen(toexec.rsplit(),
