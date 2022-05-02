@@ -1479,6 +1479,13 @@ DLL_PUBLIC vector<ITEGate> SATSolver::get_recovered_ite_gates()
     return data->solvers[0]->get_recovered_ite_gates();
 }
 
+DLL_PUBLIC void SATSolver::set_renumber(const bool renumber)
+{
+    for(auto& s: data->solvers) {
+        s->conf.doRenumberVars = renumber;
+    }
+}
+
 DLL_PUBLIC std::vector<uint32_t> SATSolver::remove_definable_by_irreg_gate(const vector<uint32_t>& vars, vector<uint32_t>* out_empty_occs)
 {
     return data->solvers[0]->remove_definable_by_irreg_gate(vars, out_empty_occs);

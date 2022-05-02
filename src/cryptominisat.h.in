@@ -155,6 +155,7 @@ namespace CMSat {
         void set_varelim_check_resolvent_subs(bool varelim_check_resolvent_subs); //check subumption and literal during varelim
         void set_max_red_linkin_size(uint32_t sz);
         void set_seed(const uint32_t seed);
+        void set_renumber(const bool renumber);
 
         ////////////////////////////
         // Predictive system tuning
