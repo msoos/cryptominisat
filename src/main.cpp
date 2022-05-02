@@ -333,6 +333,8 @@ void Main::add_supported_options()
         "Stop solving after this many conflicts")
     ("mult,m", po::value(&conf.orig_global_timeout_multiplier)->default_value(conf.orig_global_timeout_multiplier)
         , "Time multiplier for all simplification cutoffs")
+    ("nextm", po::value(&conf.global_next_multiplier)->default_value(conf.global_next_multiplier)
+        , "Global multiplier when the next inprocessing should take place")
     ("memoutmult", po::value(&conf.var_and_mem_out_mult)->default_value(conf.var_and_mem_out_mult)
         , "Multiplier for memory-out checks on inprocessing functions. It limits things such as clause-link-in. Useful when you have limited memory but still want to do some inprocessing")
     #ifdef STATS_NEEDED

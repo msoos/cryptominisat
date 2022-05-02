@@ -493,6 +493,7 @@ class DLL_PUBLIC SolverConf
         std::vector<uint32_t>* sampling_vars;
 
         //Timeouts
+        double global_next_multiplier;
         double orig_global_timeout_multiplier;
         double global_timeout_multiplier;
         double global_timeout_multiplier_multiplier;

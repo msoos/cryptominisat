@@ -380,6 +380,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , sampling_vars(NULL)
 
         //Timeouts
+        , global_next_multiplier(1.0)
         , orig_global_timeout_multiplier(3.0)
         , global_timeout_multiplier(1.0) // WILL BE UNSET, NOT RELEVANT
         , global_timeout_multiplier_multiplier(1.1)

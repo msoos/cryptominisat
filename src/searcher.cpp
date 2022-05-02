@@ -83,13 +83,13 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
     polarity_mode = conf.polarity_mode;
 
-    next_cls_distill = 5000;
-    next_bins_distill = 12000;
-    next_full_probe = 20000;
-    next_sub_str_with_bin = 25000;
-    next_intree = 55000;
-    next_str_impl_with_impl = 40000;
-    next_sls = 44000;
+    next_cls_distill = 5000.0*conf.global_next_multiplier;
+    next_bins_distill = 12000.0*conf.global_next_multiplier;
+    next_full_probe = 20000.0*conf.global_next_multiplier;
+    next_sub_str_with_bin = 25000.0*conf.global_next_multiplier;
+    next_intree = 55000.0*conf.global_next_multiplier;
+    next_str_impl_with_impl = 40000.0*conf.global_next_multiplier;
+    next_sls = 44000.0*conf.global_next_multiplier;
 }
 
 Searcher::~Searcher()
@@ -2490,7 +2490,7 @@ void Searcher::sls_if_needed()
         const lbool ret = sls.run(num_sls_called);
         assert(ret != l_False);
         num_sls_called++;
-        next_sls = sumConflicts + 44000;
+        next_sls = sumConflicts + 44000.0*conf.global_next_multiplier;
     }
 }
 
@@ -2507,7 +2507,7 @@ bool Searcher::intree_if_needed()
         ret &= solver->clear_gauss_matrices();
         if (ret) ret &= solver->intree->intree_probe();
         if (ret) ret &= solver->find_and_init_all_matrices();
-        next_intree = sumConflicts + 45000;
+        next_intree = sumConflicts + 45000.0*conf.global_next_multiplier;
     }
 
     return ret;
@@ -2523,7 +2523,7 @@ bool Searcher::str_impl_with_impl_if_needed()
     {
         ret &= solver->dist_impl_with_impl->str_impl_w_impl();
         if (ret) solver->subsumeImplicit->subsume_implicit();
-        next_str_impl_with_impl = sumConflicts + 60000;
+        next_str_impl_with_impl = sumConflicts + 60000.0*conf.global_next_multiplier;
     }
 
     return ret;
@@ -2538,7 +2538,7 @@ bool Searcher::distill_bins_if_needed()
         sumConflicts > next_bins_distill)
     {
         ret = solver->distill_bin_cls->distill();
-        next_bins_distill = sumConflicts + 20000;
+        next_bins_distill = sumConflicts + 20000.0*conf.global_next_multiplier;
     }
     return ret;
 }
@@ -2553,7 +2553,7 @@ bool Searcher::sub_str_with_bin_if_needed()
         sumConflicts > next_sub_str_with_bin)
     {
         ret = solver->dist_long_with_impl->distill_long_with_implicit(true);
-        next_sub_str_with_bin = sumConflicts + 25000;
+        next_sub_str_with_bin = sumConflicts + 25000.0*conf.global_next_multiplier;
     }
 
     return ret;
@@ -2568,7 +2568,23 @@ lbool Searcher::distill_clauses_if_needed()
         if (!solver->distill_long_cls->distill(true, false)) {
             return l_False;
         }
-        next_cls_distill = sumConflicts + 15000;
+        next_cls_distill = sumConflicts + 15000.0*conf.global_next_multiplier;
+    }
+
+    return l_Undef;
+}
+
+lbool Searcher::full_probe_if_needed()
+{
+    assert(decisionLevel() == 0);
+    if (conf.do_full_probe &&
+        sumConflicts > next_full_probe
+    ) {
+        full_probe_iter++;
+        if (!solver->full_probe(full_probe_iter % 2)) {
+            return l_False;
+        }
+        next_full_probe = sumConflicts + 20000.0*conf.global_next_multiplier;
     }
 
     return l_Undef;
@@ -2647,22 +2663,6 @@ lbool Searcher::solve(
     finish_up_solve(status);
 
     return status;
-}
-
-lbool Searcher::full_probe_if_needed()
-{
-    assert(decisionLevel() == 0);
-    if (conf.do_full_probe &&
-        sumConflicts > next_full_probe
-    ) {
-        full_probe_iter++;
-        if (!solver->full_probe(full_probe_iter % 2)) {
-            return l_False;
-        }
-        next_full_probe = sumConflicts + 20000;
-    }
-
-    return l_Undef;
 }
 
 double Searcher::luby(double y, int x)
