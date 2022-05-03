@@ -290,7 +290,9 @@ class Solver : public Searcher
         vector<ITEGate> get_recovered_ite_gates();
         vector<pair<Lit, Lit> > get_all_binary_xors() const;
         vector<Xor> get_recovered_xors(const bool xor_together_xors);
-        vector<uint32_t> remove_definable_by_irreg_gate(const vector<uint32_t>& vars, vector<uint32_t>* out_empty_occs = NULL);
+        vector<uint32_t> remove_definable_by_irreg_gate(
+            const vector<uint32_t>& vars, vector<uint32_t>* out_empty_occs = NULL,
+            const bool mirror_empty = true);
 
         bool remove_and_clean_all();
         vector<Lit> get_toplevel_units_internal(bool outer_numbering) const;

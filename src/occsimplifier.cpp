@@ -1594,7 +1594,7 @@ bool OccSimplifier::check_equiv_subformua(Lit lit)
 
             bool this_cl_ok = true;
             for(uint32_t i = 0; i < cl->size(); i++) {
-                if ((*cl)[i] != (*cl2)[i]) {
+                if ((*cl)[i] != (*cl2)[i] && (*cl)[i].var() != lit.var()) {
                     this_cl_ok = false;
                     break;
                 }
@@ -1632,7 +1632,7 @@ bool OccSimplifier::check_equiv_subformua(Lit lit)
 
 // Returns new set that doesn't contain variables that are definable
 vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(
-    const vector<uint32_t>& vars, vector<uint32_t>* out_empty_occs)
+    const vector<uint32_t>& vars, vector<uint32_t>* out_empty_occs, bool mirror_empty)
 {
     vector<uint32_t> ret;
     vector<uint32_t> check_for_equiv_subform;
@@ -1722,15 +1722,16 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(
     }
     for(const uint32_t v: vars2) seen[v] = 0;
 
-    if (out_empty_occs) {
+    if (out_empty_occs && mirror_empty) {
         for(auto const& v: check_for_equiv_subform) {
             const Lit lit = Lit(v, false);
             if (!check_equiv_subformua(lit)) continue;
-            cout << "!!!!!!!! Found equivalent subformula with var: " << lit << endl;
-//             out_empty_occs->push_back(v);
+            //cout << "!!!!!!!! Found equivalent subformula with var: " << lit << endl;
+            out_empty_occs->push_back(v);
             equiv_subformula++;
         }
     }
+    cout << "c [cms-irreg] equiv_subformula: " << equiv_subformula << endl;
 
     verb_print(1, "[gate-definable] no-cls-match-filt: " << no_cls_matching_filter
                << " pico ran: " << picosat_ran << " unsat: " << unsat

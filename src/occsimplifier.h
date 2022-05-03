@@ -199,7 +199,8 @@ public:
 
     // definable vars
     vector<uint32_t> remove_definable_by_irreg_gate(
-        const vector<uint32_t>& vars, vector<uint32_t>* out_empty_occ = NULL);
+        const vector<uint32_t>& vars, vector<uint32_t>* out_empty_occ = NULL,
+        bool mirror_empty = true);
     uint32_t add_cls_to_picosat_definable(const Lit wsLit);
     PicoSAT* picosat = NULL;
     int lit_to_picolit(const Lit l);

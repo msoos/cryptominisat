@@ -4783,10 +4783,10 @@ vector<ITEGate> Solver::get_recovered_ite_gates()
 }
 
 vector<uint32_t> Solver::remove_definable_by_irreg_gate(
-    const vector<uint32_t>& vars, vector<uint32_t>* out_empty_occs)
+    const vector<uint32_t>& vars, vector<uint32_t>* out_empty_occs, bool mirror_empty)
 {
     if (!okay()) return vector<uint32_t>{};
-    return occsimplifier->remove_definable_by_irreg_gate(vars, out_empty_occs);
+    return occsimplifier->remove_definable_by_irreg_gate(vars, out_empty_occs, mirror_empty);
 }
 
 bool Solver::remove_and_clean_all() {

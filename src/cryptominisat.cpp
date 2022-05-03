@@ -1486,9 +1486,10 @@ DLL_PUBLIC void SATSolver::set_renumber(const bool renumber)
     }
 }
 
-DLL_PUBLIC std::vector<uint32_t> SATSolver::remove_definable_by_irreg_gate(const vector<uint32_t>& vars, vector<uint32_t>* out_empty_occs)
+DLL_PUBLIC std::vector<uint32_t> SATSolver::remove_definable_by_irreg_gate(
+    const vector<uint32_t>& vars, vector<uint32_t>* out_empty_occs, bool mirror_empty)
 {
-    return data->solvers[0]->remove_definable_by_irreg_gate(vars, out_empty_occs);
+    return data->solvers[0]->remove_definable_by_irreg_gate(vars, out_empty_occs, mirror_empty);
 }
 
 DLL_PUBLIC lbool SATSolver::find_fast_backw(FastBackwData fast_backw)
