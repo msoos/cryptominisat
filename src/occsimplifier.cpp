@@ -1635,7 +1635,7 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(
     const vector<uint32_t>& vars, vector<uint32_t>* out_empty_occs)
 {
     vector<uint32_t> ret;
-    vector<uint32_t> check_for_emtpy_resolvents;
+    vector<uint32_t> check_for_equiv_subform;
     auto origTrailSize = solver->trail_size();
 
     startup = false;
@@ -1700,7 +1700,7 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(
         if (added == 0) {
             no_cls_matching_filter++;
             ret.push_back(v);
-            check_for_emtpy_resolvents.push_back(v);
+            check_for_equiv_subform.push_back(v);
             continue;
         }
 
@@ -1711,7 +1711,7 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(
             seen[v] = 0;
         } else {
             ret.push_back(v);
-            check_for_emtpy_resolvents.push_back(v);
+            check_for_equiv_subform.push_back(v);
         }
         picosat_reset(picosat);
         picosat = NULL;
@@ -1723,7 +1723,7 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(
     for(const uint32_t v: vars2) seen[v] = 0;
 
     if (out_empty_occs) {
-        for(auto const& v: check_for_emtpy_resolvents) {
+        for(auto const& v: check_for_equiv_subform) {
             const Lit lit = Lit(v, false);
             if (!check_equiv_subformua(lit)) continue;
             cout << "!!!!!!!! Found equivalent subformula with var: " << lit << endl;
