@@ -1594,9 +1594,13 @@ bool OccSimplifier::check_equiv_subformua(Lit lit)
 
             bool this_cl_ok = true;
             for(uint32_t i = 0; i < cl->size(); i++) {
-                if ((*cl)[i] != (*cl2)[i] && (*cl)[i].var() != lit.var()) {
-                    this_cl_ok = false;
-                    break;
+                if ((*cl)[i] != (*cl2)[i]) {
+                    if ((*cl)[i] == ~(*cl2)[i] && (*cl)[i] == lit) {
+                        // the expected difference, on lit. ignore.
+                    } else {
+                        this_cl_ok = false;
+                        break;
+                    }
                 }
             }
             if (this_cl_ok) {
@@ -1621,7 +1625,6 @@ bool OccSimplifier::check_equiv_subformua(Lit lit)
 
         if (!cl2->stats.marked_clause) {
             reverse_covered = false;
-        } else {
         }
         cl2->stats.marked_clause = false;
     }
@@ -1722,7 +1725,7 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(
     }
     for(const uint32_t v: vars2) seen[v] = 0;
 
-    if (out_empty_occs && mirror_empty) {
+    if (out_empty_occs && mirror_empty && solver->bnns.empty()) {
         for(auto const& v: check_for_equiv_subform) {
             const Lit lit = Lit(v, false);
             if (!check_equiv_subformua(lit)) continue;
