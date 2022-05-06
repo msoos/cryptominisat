@@ -1008,7 +1008,6 @@ bool CNF::zero_irred_cls(const CMSat::Lit lit) const
     return true;
 }
 
-
 #ifdef USE_TBUDDY
 void CNF::free_bdds(vector<Xor>& xors)
 {

@@ -198,9 +198,8 @@ public:
     vector<ITEGate> recover_ite_gates();
 
     // definable vars
-    vector<uint32_t> remove_definable_by_irreg_gate(
-        const vector<uint32_t>& vars, vector<uint32_t>* out_empty_occ = NULL,
-        bool mirror_empty = true);
+    vector<uint32_t> remove_definable_by_irreg_gate(const vector<uint32_t>& vars);
+    vector<uint32_t> find_equiv_subformula(const vector<uint32_t>& vars, bool mirror_empty);
     uint32_t add_cls_to_picosat_definable(const Lit wsLit);
     PicoSAT* picosat = NULL;
     int lit_to_picolit(const Lit l);

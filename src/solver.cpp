@@ -4782,11 +4782,16 @@ vector<ITEGate> Solver::get_recovered_ite_gates()
     return or_gates;
 }
 
-vector<uint32_t> Solver::remove_definable_by_irreg_gate(
-    const vector<uint32_t>& vars, vector<uint32_t>* out_empty_occs, bool mirror_empty)
+vector<uint32_t> Solver::remove_definable_by_irreg_gate(const vector<uint32_t>& vars)
 {
     if (!okay()) return vector<uint32_t>{};
-    return occsimplifier->remove_definable_by_irreg_gate(vars, out_empty_occs, mirror_empty);
+    return occsimplifier->remove_definable_by_irreg_gate(vars);
+}
+
+vector<uint32_t> Solver::find_equiv_subformula(const vector<uint32_t>& vars, const bool mirror_empty)
+{
+    if (!okay()) return vector<uint32_t>{};
+    return occsimplifier->find_equiv_subformula(vars, mirror_empty);
 }
 
 bool Solver::remove_and_clean_all() {

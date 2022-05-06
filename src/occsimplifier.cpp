@@ -1596,6 +1596,7 @@ bool OccSimplifier::check_equiv_subformua(Lit lit)
             for(uint32_t i = 0; i < cl->size(); i++) {
                 if ((*cl)[i] != (*cl2)[i]) {
                     if ((*cl)[i] == ~(*cl2)[i] && (*cl)[i] == lit) {
+                        //cout << "*cl: " << *cl << " cl2: " << *cl2 << " lit: " << lit << endl;
                         // the expected difference, on lit. ignore.
                     } else {
                         this_cl_ok = false;
@@ -1630,15 +1631,15 @@ bool OccSimplifier::check_equiv_subformua(Lit lit)
     }
 
     return ok && reverse_covered;
-
 }
 
 // Returns new set that doesn't contain variables that are definable
-vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(
-    const vector<uint32_t>& vars, vector<uint32_t>* out_empty_occs, bool mirror_empty)
+vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(const vector<uint32_t>& vars)
 {
+    assert(solver->okay());
+    assert(solver->prop_at_head());
+
     vector<uint32_t> ret;
-    vector<uint32_t> check_for_equiv_subform;
     auto origTrailSize = solver->trail_size();
 
     startup = false;
@@ -1646,7 +1647,6 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(
     solver->conf.maxOccurRedMB = 0;
     if (!setup()) return vars;
     assert(picosat == NULL);
-    if (out_empty_occs) out_empty_occs->clear();
 
     uint32_t unsat = 0;
     uint32_t picosat_ran = 0;
@@ -1678,9 +1678,8 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(
 
         uint32_t total = solver->watches[l].size() + solver->watches[~l].size();
         bool empty_occ = total == 0 ||
-            (solver->zero_irred_cls(l) == 0 && solver->zero_irred_cls(~l) == 0);
-        if (empty_occ == 0) {
-            if (out_empty_occs) out_empty_occs->push_back(v);
+            (solver->zero_irred_cls(l) && solver->zero_irred_cls(~l));
+        if (empty_occ) {
             no_occ++;
             ret.push_back(v);
             continue;
@@ -1703,7 +1702,6 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(
         if (added == 0) {
             no_cls_matching_filter++;
             ret.push_back(v);
-            check_for_equiv_subform.push_back(v);
             continue;
         }
 
@@ -1714,7 +1712,6 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(
             seen[v] = 0;
         } else {
             ret.push_back(v);
-            check_for_equiv_subform.push_back(v);
         }
         picosat_reset(picosat);
         picosat = NULL;
@@ -1725,17 +1722,6 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(
     }
     for(const uint32_t v: vars2) seen[v] = 0;
 
-    if (out_empty_occs && mirror_empty && solver->bnns.empty()) {
-        for(auto const& v: check_for_equiv_subform) {
-            const Lit lit = Lit(v, false);
-            if (!check_equiv_subformua(lit)) continue;
-            //cout << "!!!!!!!! Found equivalent subformula with var: " << lit << endl;
-            out_empty_occs->push_back(v);
-            equiv_subformula++;
-        }
-    }
-    cout << "c [cms-irreg] equiv_subformula: " << equiv_subformula << endl;
-
     verb_print(1, "[gate-definable] no-cls-match-filt: " << no_cls_matching_filter
                << " pico ran: " << picosat_ran << " unsat: " << unsat
                << " 0-occ: " << no_occ << " too-many-occ: " << too_many_occ
@@ -1744,6 +1730,57 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(
     solver->conf.maxOccurRedMB = backup;
     finishUp(origTrailSize);
     return ret;
+}
+
+vector<uint32_t> OccSimplifier::find_equiv_subformula(const vector<uint32_t>& vars, bool mirror_empty)
+{
+    assert(solver->okay());
+    assert(solver->prop_at_head());
+    if (!setup()) return vector<uint32_t>();
+
+    auto origTrailSize = solver->trail_size();
+    startup = false;
+    double backup = solver->conf.maxOccurRedMB;
+    solver->conf.maxOccurRedMB = 0;
+    double myTime = cpuTime();
+
+    vector<uint32_t> out_empty_occs;
+    uint32_t mirror = 0;
+    uint32_t empty_occ = 0;
+    for(uint32_t orig_v: vars) {
+        assert(orig_v < solver->nVarsOutside());
+        auto rem_val = solver->varData[orig_v].removed;
+        assert(rem_val == Removed::none || rem_val == Removed::replaced);
+        uint32_t v2 = solver->varReplacer->get_var_replaced_with(orig_v);
+        rem_val = solver->varData[v2].removed;
+        assert(rem_val == Removed::none);
+        assert(v2 < solver->nVars());
+
+        assert(solver->varData[v2].removed == Removed::none);
+        if (solver->value(v2) != l_Undef) continue;
+        const Lit l = Lit(v2, false);
+
+        uint32_t total = solver->watches[l].size() + solver->watches[~l].size();
+        if (total == 0 || (solver->zero_irred_cls(l) && solver->zero_irred_cls(~l))) {
+            empty_occ++;
+            out_empty_occs.push_back(orig_v);
+            continue;
+        }
+
+        if (mirror_empty && solver->bnns.empty()) {
+            const Lit lit = Lit(v2, false);
+            if (!check_equiv_subformua(lit)) continue;
+            out_empty_occs.push_back(orig_v);
+            mirror++;
+        }
+    }
+    double time_used = cpuTime() - myTime;
+    verb_print(1, "[cms-equiv-sub] equiv_subformula: " << mirror
+        << " empty_occ: " << empty_occ << solver->conf.print_times(time_used));
+
+    solver->conf.maxOccurRedMB = backup;
+    finishUp(origTrailSize);
+    return out_empty_occs;
 }
 
 vector<ITEGate> OccSimplifier::recover_ite_gates()
