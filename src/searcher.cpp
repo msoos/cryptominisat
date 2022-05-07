@@ -456,9 +456,7 @@ void Searcher::add_lits_to_learnt(
                 && cl->stats.which_red_array != 0
                 #endif
             ) {
-                if (conf.update_glues_on_analyze) {
-                    update_glue_from_analysis(cl);
-                }
+                if (conf.update_glues_on_analyze) update_glue_from_analysis(cl);
 
                 #if !defined(STATS_NEEDED) && !defined(FINAL_PREDICTOR)
                 if (cl->stats.which_red_array == 1)
@@ -1303,7 +1301,6 @@ lbool Searcher::search()
         }
 
         if (!confl.isNULL()) {
-            update_branch_params();
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             hist.trailDepthHist.push(trail.size());
             #endif
@@ -1361,11 +1358,6 @@ lbool Searcher::search()
     print_restart_stat();
     dump_search_loop_stats(myTime);
     return search_ret;
-}
-
-inline void Searcher::update_branch_params()
-{
-    if ((sumConflicts & 0xfff) == 0xfff && var_decay < var_decay_max) var_decay += 0.01;
 }
 
 void Searcher::dump_search_sql(const double myTime)
@@ -2263,11 +2255,8 @@ void Searcher::rebuildOrderHeapVMTF(vector<uint32_t>& vs)
 struct branch_type_total{
     branch_type_total() {}
     branch_type_total (CMSat::branch _branch,
-                       double _decay_start, double _decay_max,
                        string _descr, string _descr_short) :
         branch(_branch),
-        decay_start(_decay_start),
-        decay_max(_decay_max),
         descr(_descr),
         descr_short(_descr_short)
     {}
@@ -2276,8 +2265,6 @@ struct branch_type_total{
     {}
 
     CMSat::branch branch = CMSat::branch::vsids;
-    double decay_start = 0.95;
-    double decay_max = 0.95;
     string descr;
     string descr_short;
 };
@@ -2300,14 +2287,8 @@ void Searcher::setup_branch_strategy()
     while(smallest !=std::string::npos) {
         smallest = std::string::npos;
 
-        size_t vsidsx = conf.branch_strategy_setup.find("vsidsx", start);
-        smallest = std::min(vsidsx, smallest);
-
-        size_t vsids1 = conf.branch_strategy_setup.find("vsids1", start);
-        smallest = std::min(vsids1, smallest);
-
-        size_t vsids2 = conf.branch_strategy_setup.find("vsids2", start);
-        smallest = std::min(vsids2, smallest);
+        size_t vsids = conf.branch_strategy_setup.find("vsids", start);
+        smallest = std::min(vsids, smallest);
 
         size_t vmtf = conf.branch_strategy_setup.find("vmtf", start);
         smallest = std::min(vmtf, smallest);
@@ -2323,35 +2304,18 @@ void Searcher::setup_branch_strategy()
             cout << "+";
         }
 
-        if (smallest == vsidsx) {
-            select.push_back(branch_type_total(branch::vsids, 0.80, 0.95, "VSIDSX", "vx"));
-            if (conf.verbosity >= 3) {
-                cout << select[select.size()-1].descr;
-            }
-        }
-        else if (smallest == vsids1) {
-            select.push_back(branch_type_total(branch::vsids, 0.92, 0.92, "VSIDS1", "vs1"));
-            if (conf.verbosity >= 3) {
-                cout << select[select.size()-1].descr;
-            }
-        }
-        else if (smallest == vsids2) {
-            select.push_back(branch_type_total(branch::vsids, 0.99, 0.99, "VSIDS2", "vs2"));
-            if (conf.verbosity >= 3) {
-                cout << select[select.size()-1].descr;
-            }
+
+        if (smallest == vsids) {
+            select.push_back(branch_type_total(branch::vsids, "VSIDS", "vs"));
+            if (conf.verbosity >= 3) cout << select[select.size()-1].descr;
         }
         else if (smallest == vmtf) {
-            select.push_back(branch_type_total(branch::vmtf, 0, 0, "VMTF", "vmt"));
-            if (conf.verbosity >= 3) {
-                cout << select[select.size()-1].descr;
-            }
+            select.push_back(branch_type_total(branch::vmtf, "VMTF", "vmt"));
+            if (conf.verbosity >= 3) cout << select[select.size()-1].descr;
         }
         else if (smallest == rand) {
-            select.push_back(branch_type_total(branch::rand, 1, 1, "RAND", "rand"));
-            if (conf.verbosity >= 3) {
-                cout << select[select.size()-1].descr;
-            }
+            select.push_back(branch_type_total(branch::rand, "RAND", "rand"));
+            if (conf.verbosity >= 3) cout << select[select.size()-1].descr;
         } else {
             assert(false);
         }
@@ -2369,8 +2333,7 @@ void Searcher::setup_branch_strategy()
     branch_strategy = select[which].branch;
     branch_strategy_str = select[which].descr;
     branch_strategy_str_short = select[which].descr_short;
-    var_decay = select[which].decay_start;
-    var_decay_max = select[which].decay_max;
+    setup_restart_strategy(true);
 
     if (conf.verbosity >= 2) {
         cout << "c [branch] adjusting to: "
@@ -2449,8 +2412,8 @@ bool Searcher::must_abort(const lbool status) {
 void Searcher::setup_polarity_strategy()
 {
     if (sumConflicts < polarity_strategy_change) return;
-    polarity_strategy_change += 20000;
-    polarity_strategy_change *= 1.1;
+    polarity_strategy_change = sumConflicts + 5000;
+    polarity_strategy_change *= 1.01;
     polarity_strategy_at++;
 
     if ((polarity_strategy_at % 8) == 0) {
@@ -2629,7 +2592,7 @@ lbool Searcher::solve(
     lbool status = l_Undef;
 
     setup_branch_strategy();
-    setup_restart_strategy();
+    setup_restart_strategy(false);
     setup_polarity_strategy();
     #ifdef STATS_NEEDED
     check_calc_satzilla_features(true);
@@ -2663,7 +2626,7 @@ lbool Searcher::solve(
         status = search();
         if (status == l_Undef) {
             setup_branch_strategy();
-            setup_restart_strategy();
+            setup_restart_strategy(false);
             setup_polarity_strategy();
             adjust_restart_strategy_cutoffs();
         }
@@ -2699,12 +2662,11 @@ double Searcher::luby(double y, int x)
     return std::pow(y, seq);
 }
 
-void Searcher::setup_restart_strategy()
+void Searcher::setup_restart_strategy(bool force)
 {
-    if (sumConflicts < restart_strategy_change) return;
+    if (!force && sumConflicts < restart_strategy_change) return;
     restart_strategy_at++;
-    restart_strategy_at %= 2; //we do geometric on best phase only
-    restart_strategy_change+=30000;
+    restart_strategy_change = sumConflicts + 30000;
     restart_strategy_change *= 1.2;
 
     increasing_phase_size = conf.restart_first;
@@ -2716,6 +2678,9 @@ void Searcher::setup_restart_strategy()
         params.rest_type = Restart::never;
         max_confl_this_restart = numeric_limits<int64_t>::max();
     } else {
+        if (branch_strategy == branch::vsids) restart_strategy_at = 2;
+        if (branch_strategy == branch::vmtf) restart_strategy_at = (restart_strategy_at % 2);
+
         if (conf.restartType == Restart::glue) restart_strategy_at = 0;
         if (conf.restartType == Restart::luby) restart_strategy_at = 1;
         if (conf.restartType == Restart::geom) restart_strategy_at = 2;

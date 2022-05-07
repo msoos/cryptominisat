@@ -226,8 +226,7 @@ public:
     // Branching
     /////////////////////
     vector<double> var_act_vsids;
-    double var_decay;
-    double var_decay_max;
+    double var_decay = 0.95;
     struct VarOrderLt { ///Order variables according to their activities
         const vector<double>&  activities;
         bool operator () (const uint32_t x, const uint32_t y) const

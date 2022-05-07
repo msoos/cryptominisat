@@ -137,8 +137,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doAlwaysFMinim(false)
 
         //branch strategy
-        , branch_strategy_setup("vmtf+vsidsx")
-//         , branch_strategy_setup("vsidsx_once+vsids2+vsidsx")
+        , branch_strategy_setup("vmtf+vsids")
 
         //Clause minimisation
         , doRecursiveMinim (true)

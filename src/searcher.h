@@ -180,7 +180,6 @@ class Searcher : public HyperEngine
         void insert_var_order(const uint32_t x);
         void insert_var_order_all(const uint32_t x);
         vector<uint32_t> implied_by_learnts; //for glue-based extra var activity bumping
-        void update_branch_params();
         template<bool inprocess>
         lbool new_decision();
         Lit pickBranchLit();
@@ -381,7 +380,7 @@ class Searcher : public HyperEngine
         uint32_t restart_strategy_change = 0;
         uint32_t restart_strategy_at = 0;
         void adjust_restart_strategy_cutoffs();
-        void setup_restart_strategy();
+        void setup_restart_strategy(const bool force);
 
         ///////
         // GPU
