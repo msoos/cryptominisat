@@ -36,6 +36,7 @@ struct VarData
     {
         is_bva = 0;
         occ_simp_tried = 0;
+        saved_polarity = false;
         stable_polarity = false;
         best_polarity = false;
         inv_polarity = false;
@@ -59,6 +60,7 @@ struct VarData
 
     ///The preferred polarity of each variable.
     uint8_t stable_polarity:1;
+    uint8_t saved_polarity:1;
     uint8_t best_polarity:1;
     uint8_t inv_polarity:1;
     bool propagated = false;

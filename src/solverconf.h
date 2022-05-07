@@ -63,7 +63,7 @@ enum class Restart {
     , automatic = 5
 };
 
-inline std::string getNameOfPolarmodeType(PolarityMode polarmode)
+inline std::string polarity_mode_to_long_string(PolarityMode polarmode)
 {
     switch(polarmode) {
         case PolarityMode::polarmode_automatic :
@@ -71,13 +71,15 @@ inline std::string getNameOfPolarmodeType(PolarityMode polarmode)
         case PolarityMode::polarmode_stable :
             return "stb";
         case PolarityMode::polarmode_best_inv :
-            return "ibst";
+            return "inv-bst";
         case PolarityMode::polarmode_best :
-            return "bst";
+            return "best";
         case PolarityMode::polarmode_neg :
             return "neg";
         case PolarityMode::polarmode_pos :
             return "pos";
+        case PolarityMode::polarmode_saved :
+            return "saved-polar";
         case PolarityMode::polarmode_weighted :
             return "weighted";
         case PolarityMode::polarmode_rnd :
@@ -132,6 +134,8 @@ inline std::string polarity_mode_to_short_string(PolarityMode polarmode)
             return "pos";
         case PolarityMode::polarmode_weighted :
             return "wght";
+        case PolarityMode::polarmode_saved :
+            return "svd";
         case PolarityMode::polarmode_rnd :
             return "rnd";
     }

@@ -208,7 +208,7 @@ class Searcher : public HyperEngine
         // Polarities
         bool   pick_polarity(const uint32_t var);
         void   setup_polarity_strategy();
-        void   update_polarities_on_backtrack();
+        void   update_polarities_on_backtrack(const uint32_t btlevel);
         uint32_t polarity_strategy_at = 0;
         uint32_t polarity_strategy_change = 0;
 
@@ -605,6 +605,9 @@ inline bool Searcher::pick_polarity(const uint32_t var)
 
         case PolarityMode::polarmode_best:
             return varData[var].best_polarity;
+
+        case PolarityMode::polarmode_saved:
+            return varData[var].saved_polarity;
 
         #ifdef WEIGHTED_SAMPLING
         case PolarityMode::polarmode_weighted: {

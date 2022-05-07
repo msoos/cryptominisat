@@ -267,7 +267,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , do_simplify_problem(true)
         , full_simplify_at_startup(false)
         , never_stop_search(false)
-        , num_conflicts_of_search(50ULL*1000ULL)
+        , num_conflicts_of_search(40ULL*1000ULL)
         , num_conflicts_of_search_inc(1.4)
         , num_conflicts_of_search_inc_max(10)
         , max_num_simplify_per_solve_call(25)

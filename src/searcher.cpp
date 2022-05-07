@@ -2453,21 +2453,35 @@ void Searcher::setup_polarity_strategy()
     polarity_strategy_change *= 1.1;
     polarity_strategy_at++;
 
+    if ((polarity_strategy_at % 8) == 0) {
+        for(auto& v: varData) {
+            v.best_polarity = mtrand.randInt(1);
+            v.stable_polarity = mtrand.randInt(1);
+            v.saved_polarity = mtrand.randInt(1);
+        }
+    }
+
     //Set to default first
     polarity_mode = conf.polarity_mode;
     if (conf.polarity_mode == PolarityMode::polarmode_automatic) {
         longest_trail_ever_stable = 0;
 
-        if ((polarity_strategy_at % 3) == 0) polarity_mode = PolarityMode::polarmode_best;
-        if ((polarity_strategy_at % 3) == 1) polarity_mode = PolarityMode::polarmode_best_inv;
-        if ((polarity_strategy_at % 3) == 2) polarity_mode = PolarityMode::polarmode_stable;
-//         if ((polarity_strategy_at % 5) == 3) polarity_mode = PolarityMode::polarmode_neg;
+        if ((polarity_strategy_at % 4) == 0) {
+            polarity_mode = PolarityMode::polarmode_best;
+            params.rest_type = Restart::geom;
+            increasing_phase_size = (double)increasing_phase_size * conf.restart_inc;
+            max_confl_this_restart = increasing_phase_size;
+        }
+        if ((polarity_strategy_at % 4) == 1) polarity_mode = PolarityMode::polarmode_stable;
+        if ((polarity_strategy_at % 4) == 2) polarity_mode = PolarityMode::polarmode_best_inv;
+        if ((polarity_strategy_at % 4) == 3) polarity_mode = PolarityMode::polarmode_saved;
+//         if ((polarity_strategy_at % 5) == 4) polarity_mode = PolarityMode::polarmode_neg;
 //         if ((polarity_strategy_at % 5) == 4) polarity_mode = PolarityMode::polarmode_pos;
     }
 
     if (conf.verbosity >= 2) {
         cout << "c [polar]"
-        << " polar mode: " << getNameOfPolarmodeType(polarity_mode)
+        << " polar mode: " << polarity_mode_to_long_string(polarity_mode)
         << " polarity_strategy: " << polarity_strategy_at
 
         << endl;
@@ -2689,7 +2703,7 @@ void Searcher::setup_restart_strategy()
 {
     if (sumConflicts < restart_strategy_change) return;
     restart_strategy_at++;
-    restart_strategy_at %= 3;
+    restart_strategy_at %= 2; //we do geometric on best phase only
     restart_strategy_change+=30000;
     restart_strategy_change *= 1.2;
 
@@ -2702,22 +2716,22 @@ void Searcher::setup_restart_strategy()
         params.rest_type = Restart::never;
         max_confl_this_restart = numeric_limits<int64_t>::max();
     } else {
-        if (conf.restartType == Restart::luby) restart_strategy_at = 0;
-        if (conf.restartType == Restart::geom) restart_strategy_at = 1;
-        if (conf.restartType == Restart::glue) restart_strategy_at = 2;
+        if (conf.restartType == Restart::glue) restart_strategy_at = 0;
+        if (conf.restartType == Restart::luby) restart_strategy_at = 1;
+        if (conf.restartType == Restart::geom) restart_strategy_at = 2;
 
         if (restart_strategy_at == 0) {
+            params.rest_type = Restart::glue;
+            max_confl_this_restart = conf.ratio_glue_geom *increasing_phase_size;
+        } else if (restart_strategy_at == 1) {
             params.rest_type = Restart::luby;
             luby_loop_num = 0;
             max_confl_this_restart = luby(2, luby_loop_num) * (double)conf.restart_first;
             luby_loop_num++;
-        } else if (restart_strategy_at == 1) {
+        } else if (restart_strategy_at == 2) {
             params.rest_type = Restart::geom;
             increasing_phase_size = (double)increasing_phase_size * conf.restart_inc;
             max_confl_this_restart = increasing_phase_size;
-        } else if (restart_strategy_at == 2) {
-            params.rest_type = Restart::glue;
-            max_confl_this_restart = conf.ratio_glue_geom *increasing_phase_size;
         }
     }
 
@@ -3245,7 +3259,7 @@ void Searcher::consolidate_watches(const bool full)
     }
 }
 
-inline void Searcher::update_polarities_on_backtrack()
+inline void Searcher::update_polarities_on_backtrack(const uint32_t btlevel)
 {
     if (polarity_mode == PolarityMode::polarmode_stable &&
         longest_trail_ever_stable < trail.size())
@@ -3276,6 +3290,14 @@ inline void Searcher::update_polarities_on_backtrack()
         }
         longest_trail_ever_inv = trail.size();
     }
+
+    if (polarity_mode == PolarityMode::polarmode_saved) {
+        for(uint32_t i = trail_lim[btlevel]; i < trail.size(); i++) {
+            const auto t = trail[i];
+            if (t.lit == lit_Undef) continue;
+            varData[t.lit.var()].saved_polarity = !t.lit.sign();
+        }
+    }
 }
 
 
@@ -3298,7 +3320,7 @@ void Searcher::cancelUntil(uint32_t blevel)
 
     if (decisionLevel() > blevel) {
         if (!inprocess) {
-            update_polarities_on_backtrack();
+            update_polarities_on_backtrack(blevel);
             #ifdef USE_GPU
             solver->datasync->unsetFromGpu(blevel);
             #endif

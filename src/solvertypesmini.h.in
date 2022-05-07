@@ -256,6 +256,7 @@ enum class PolarityMode {
     , polarmode_stable
     , polarmode_best_inv
     , polarmode_best
+    , polarmode_saved
     , polarmode_weighted
 };
 
