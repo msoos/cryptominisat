@@ -390,6 +390,7 @@ bool ClauseCleaner::remove_and_clean_all()
     assert(solver->okay());
     assert(solver->prop_at_head());
     assert(solver->decisionLevel() == 0);
+    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
 
     do {
         solver->ok = solver->propagate<false>().isNULL();
@@ -437,12 +438,8 @@ bool ClauseCleaner::remove_and_clean_all()
     }
     #endif
 
-    if (solver->conf.verbosity >= 2) {
-        cout
-        << "c [clean]"
-        << solver->conf.print_times(cpuTime() - myTime)
-        << endl;
-    }
+    verb_print(2, "[clean]" << solver->conf.print_times(cpuTime() - myTime));
+    *solver->drat << __PRETTY_FUNCTION__ << " end\n";
 
     return solver->okay();
 }

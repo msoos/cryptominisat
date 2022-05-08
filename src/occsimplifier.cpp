@@ -2095,6 +2095,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
 
 bool OccSimplifier::setup()
 {
+    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
     assert(solver->okay());
     assert(toClear.empty());
     added_long_cl.clear();
@@ -2776,6 +2777,7 @@ void OccSimplifier::finishUp(
     }
     globalStats += runStats;
     sub_str->finishedRun();
+    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
 
     //Sanity checks
     if (solver->okay()
@@ -2791,9 +2793,7 @@ void OccSimplifier::finishUp(
         #endif
     }
 
-    if (solver->ok) {
-        check_elimed_vars_are_unassignedAndStats();
-    }
+    if (solver->ok) check_elimed_vars_are_unassignedAndStats();
 
     //Let's just clean up ourselves a bit
     clauses.clear();

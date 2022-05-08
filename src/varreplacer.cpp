@@ -210,6 +210,7 @@ bool VarReplacer::perform_replace()
 {
     assert(solver->ok);
     checkUnsetSanity();
+    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
 
     //Set up stats
     runStats.clear();
@@ -313,6 +314,7 @@ end:
             , time_used
         );
     }
+    *solver->drat << __PRETTY_FUNCTION__ << " end\n";
 
     if (solver->okay()) {
         #ifdef DEBUG_ATTACH_MORE

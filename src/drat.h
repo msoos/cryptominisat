@@ -32,7 +32,7 @@ THE SOFTWARE.
 #include <stdio.h>
 
 using std::vector;
-//#define DEBUG_DRAT
+// #define DEBUG_DRAT
 
 #if 0
 #define DRAT_PRINT((...) \

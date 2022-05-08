@@ -308,7 +308,7 @@ class Tester:
         # SLS
         cmd += "--sls %d " % random.choice([0, 1])
         cmd += "--slsgetphase %d " % random.choice([0, 0, 0, 1])
-        cmd += "--yalsatmems %d " % random.choice([1, 10, 100])
+        cmd += "--yalsatmems %d " % random.choice([1, 2, 5])
         cmd += "--walksatruns %d " % random.choice([2, 15, 20])
 
         # polarities

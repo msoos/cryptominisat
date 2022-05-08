@@ -52,6 +52,7 @@ bool DistillerBin::distill()
     assert(solver->ok);
     numCalls++;
     runStats.clear();
+    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
 
     if (!distill_bin_cls_all(1.0)) {
         goto end;
@@ -66,6 +67,7 @@ end:
             runStats.print_short(solver);
     }
     runStats.clear();
+    *solver->drat << __PRETTY_FUNCTION__ << " end\n";
 
     return solver->okay();
 }
@@ -75,18 +77,12 @@ bool DistillerBin::distill_bin_cls_all(
     double time_mult
 ) {
     assert(solver->ok);
-    if (time_mult == 0.0) {
-        return solver->okay();
-    }
-
-    if (solver->conf.verbosity >= 6) {
-        cout
-        << "c Doing distillation branch for long clauses"
-        << endl;
-    }
+    if (time_mult == 0.0) return solver->okay();
+    verb_print(6, "Doing distillation branch for long clauses");
 
     double myTime = cpuTime();
     const size_t origTrailSize = solver->trail_size();
+    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
 
     //Time-limiting
     maxNumProps =
@@ -139,6 +135,7 @@ bool DistillerBin::distill_bin_cls_all(
             , time_remain
         );
     }
+    *solver->drat << __PRETTY_FUNCTION__ << " end\n";
 
     //Update stats
     runStats.time_used += time_used;

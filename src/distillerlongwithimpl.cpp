@@ -50,10 +50,8 @@ bool DistillerLongWithImpl::distill_long_with_implicit(const bool alsoStrengthen
 {
     assert(solver->ok);
     numCalls++;
-
-    if (!solver->clauseCleaner->remove_and_clean_all()) {
-        goto end;
-    }
+    if (!solver->clauseCleaner->remove_and_clean_all()) goto end;
+    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
 
     runStats.redWatchBased.clear();
     runStats.irredWatchBased.clear();
@@ -87,6 +85,7 @@ end:
             runStats.print_short(solver);
     }
     runStats.clear();
+    *solver->drat << __PRETTY_FUNCTION__ << " end\n";
 
     return solver->okay();
 }

@@ -340,7 +340,7 @@ class Solver : public Searcher
         //FRAT
         void write_final_frat_clauses();
 
-        template<bool bin_only> lbool probe_inter(Lit l, uint32_t& min_props);
+        template<bool bin_only> lbool probe_inter(const Lit l, uint32_t& min_props);
         void reset_for_solving();
         vector<Lit> add_clause_int_tmp_cl;
         lbool iterate_until_solved();

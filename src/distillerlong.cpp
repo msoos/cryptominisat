@@ -154,6 +154,7 @@ bool DistillerLong::distill(const bool red, bool only_rem_cl)
     numCalls_red += (unsigned)red;
     numCalls_irred += (unsigned)!red;
     runStats.clear();
+    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
 
     if (!red) {
         if (!distill_long_cls_all(
@@ -209,6 +210,7 @@ bool DistillerLong::distill(const bool red, bool only_rem_cl)
 end:
     lit_counts.clear();
     lit_counts.shrink_to_fit();
+    *solver->drat << __PRETTY_FUNCTION__ << " end\n";
 
     return solver->okay();
 }

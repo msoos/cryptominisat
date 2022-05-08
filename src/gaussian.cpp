@@ -503,9 +503,9 @@ tbdd::xor_constraint* EGaussian::bdd_create(const uint32_t row_n, const uint32_t
         assert(v <= (int)solver->unit_cl_IDs.size());
         if (solver->unit_cl_IDs[v-1] != 0) sz--;
     }
-    cout << "bdd_create expected size: " << expected_sz
+    /*cout << "bdd_create expected size: " << expected_sz
     << " got sz: " << ilist_length(x->get_variables())
-    << " without units: " << sz << endl;
+    << " without units: " << sz << endl;*/
 
     //NOTE
     // Since during xor clause cleaning we don't re-generate the bdd-s
@@ -1532,6 +1532,7 @@ void CMSat::EGaussian::move_back_xor_clauses()
 void CMSat::EGaussian::finalize_frat()
 {
     assert(solver->drat->enabled());
+    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
     solver->drat->flush();
     delete unsat_bdd;
 
@@ -1545,7 +1546,6 @@ void CMSat::EGaussian::finalize_frat()
         i++;
     }
     delete_clauses(todel);
-    *solver->drat << "delete end\n";
 
     for(auto const& bdd_cl: frat_ids) ilist_free(bdd_cl.cl);
     frat_ids.clear();
@@ -1562,7 +1562,6 @@ void CMSat::EGaussian::finalize_frat()
     }
     ilist_resize(todel1, at);
     delete_clauses(todel1);
-    *solver->drat << "delete end\n";
     ilist_free(todel1);
 
     // clean BDDs in xorclauses
@@ -1570,6 +1569,6 @@ void CMSat::EGaussian::finalize_frat()
         delete x2.bdd;
         x2.bdd = NULL;
     }
-    *solver->drat << "delete x2s end\n";
+    *solver->drat << __PRETTY_FUNCTION__ << " end\n";
 }
 #endif

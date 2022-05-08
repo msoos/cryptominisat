@@ -45,6 +45,7 @@ bool InTree::replace_until_fixedpoint(bool& aborted)
         *solver->conf.global_timeout_multiplier
         *0.5;
     time_limit = (double)time_limit * std::min(std::pow((double)(numCalls+1), 0.2), 3.0);
+    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
 
     aborted = false;
     uint64_t bogoprops = 0;
@@ -72,6 +73,7 @@ bool InTree::replace_until_fixedpoint(bool& aborted)
         }
     }
 
+    *solver->drat << __PRETTY_FUNCTION__ << " end\n";
     return true;
 }
 
@@ -134,6 +136,7 @@ bool InTree::intree_probe()
     removedIrredBin = 0;
     removedRedBin = 0;
     numCalls++;
+    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
 
     if (!solver->conf.doFindAndReplaceEqLits) {
         if (solver->conf.verbosity) {
@@ -203,6 +206,7 @@ bool InTree::intree_probe()
         );
     }
 
+    *solver->drat << __PRETTY_FUNCTION__ << " end\n";
     solver->use_depth_trick = true;
     solver->perform_transitive_reduction = true;
     return solver->okay();

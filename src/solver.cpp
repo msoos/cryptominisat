@@ -3125,6 +3125,7 @@ bool Solver::full_probe(const bool bin_only)
 {
     assert(okay());
     assert(decisionLevel() == 0);
+
     const size_t orig_num_free_vars = solver->get_num_free_vars();
     double myTime = cpuTime();
     int64_t start_bogoprops = solver->propStats.bogoProps;
@@ -3132,16 +3133,14 @@ bool Solver::full_probe(const bool bin_only)
         solver->conf.full_probe_time_limitM*1000ULL*1000ULL
         *solver->conf.global_timeout_multiplier;
     uint64_t probed = 0;
-    auto orig_repl = varReplacer->get_num_replaced_vars();
+    const auto orig_repl = varReplacer->get_num_replaced_vars();
+    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
 
     vector<uint32_t> vars;
     for(uint32_t i = 0; i < nVars(); i++) {
         Lit l(i, false);
-        if (value(l) == l_Undef &&
-            varData[i].removed == Removed::none)
-        {
+        if (value(l) == l_Undef && varData[i].removed == Removed::none)
             vars.push_back(i);
-        }
     }
     std::mt19937 g(mtrand.randInt());
     std::shuffle(vars.begin(), vars.end(), g);
@@ -3202,13 +3201,13 @@ bool Solver::full_probe(const bool bin_only)
             , time_remain
         );
     }
-
+    *solver->drat << __PRETTY_FUNCTION__ << " end\n";
 
     return okay();
 }
 
 template<bool bin_only>
-lbool Solver::probe_inter(Lit l, uint32_t& min_props)
+lbool Solver::probe_inter(const Lit l, uint32_t& min_props)
 {
     propStats.bogoProps+=2;
 
@@ -3250,9 +3249,7 @@ lbool Solver::probe_inter(Lit l, uint32_t& min_props)
         Lit lit = trail[i].lit;
         uint32_t var = trail[i].lit.var();
         seen2[var] |= 1+(int)trail[i].lit.sign();
-        if (seen[var] == 0) {
-            continue;
-        }
+        if (seen[var] == 0) continue;
 
         if (lit.sign() == seen[var]-1) {
             //Same sign both times (set value of literal)
@@ -3281,7 +3278,13 @@ lbool Solver::probe_inter(Lit l, uint32_t& min_props)
         if (bp_lit != lit_Undef) {
             //I am not going to deal with the messy version of it already being set
             if (value(bp_lit) == l_Undef) {
+                *solver->drat << add << ++clauseID << ~l << bp_lit << fin;
+                const int32_t c1 = clauseID;
+                *solver->drat << add << ++clauseID << l << bp_lit << fin;
+                const int32_t c2 = clauseID;
                 enqueue<true>(bp_lit);
+                *solver->drat << del << c1 << ~l << bp_lit << fin;
+                *solver->drat << del << c2 << l << bp_lit << fin;
             }
         } else {
             //First we must propagate all the enqueued facts
