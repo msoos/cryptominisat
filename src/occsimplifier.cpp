@@ -4000,20 +4000,17 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
     }
 
     if (solver->conf.varelim_check_resolvent_subs) {
-        uint64_t orig_lits = 0;
         vector<OccurClause> orig_cls;
         for(auto& c: solver->watches[lit]) if (c.isClause()) {
             Clause* cl = solver->cl_alloc.ptr(c.get_offset());
             if (!cl->red()) {
                 orig_cls.push_back(OccurClause(lit_Undef, c));
-                orig_lits += cl->size();
             }
         }
         for(auto& c: solver->watches[~lit]) if (c.isClause()) {
             Clause* cl = solver->cl_alloc.ptr(c.get_offset());
             if (!cl->red()) {
                 orig_cls.push_back(OccurClause(lit_Undef, c));
-                orig_lits += cl->size();
             }
         }
 
@@ -4022,6 +4019,7 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
         for(uint32_t i = 0; i < resolvents.at; i++) {
             const auto& lits = resolvents.resolvents_lits[i];
             if (lits.size() > 2) new_lits += lits.size();
+            if (lits.size() == 1) continue;
             sub_str->find_subsumed(
                 CL_OFFSET_MAX,
                 lits,

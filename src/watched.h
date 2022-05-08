@@ -280,13 +280,18 @@ struct OccurClause {
         lit(lit_Undef)
     {}
 
-    bool operator==(const OccurClause& other) const
-    {
-        return lit == other.lit && ws == other.ws;
-    }
-
     Lit lit;
     Watched ws;
+
+    // will be equal even if one is removing a literal, and the other is subsuming the whole clause
+    bool operator==(const OccurClause& other) const {
+        if (ws.getType() != other.ws.getType()) return false;
+        if (ws.isBin()) return ws.get_ID() == other.ws.get_ID();
+        if (ws.isBNN()) return ws.get_bnn() == other.ws.get_bnn();
+        if (ws.isClause()) return ws.get_offset() == other.ws.get_offset();
+        release_assert(false);
+        return false;
+    }
 
     bool operator<(const OccurClause& other) const {
         if (ws.isBin() && !other.ws.isBin()) {
