@@ -930,7 +930,7 @@ void PropEngine::vmtf_check_unassigned()
     while (at  != numeric_limits<uint32_t>::max()) {
         at = vmtf_links[at].next;
         if (at != numeric_limits<uint32_t>::max()) {
-            if (value(at) == l_Undef) {
+            if (value(at) == l_Undef && varData[at].removed == Removed::none) {
                 cout << "vmtf OOOPS, var " << at+1 << " would have been unassigned. btab[var]: " << vmtf_btab[at] << endl;
                 unassigned++;
             }
