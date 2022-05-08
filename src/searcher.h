@@ -155,7 +155,7 @@ class Searcher : public HyperEngine
         //assumptions
         void check_assumptions_sanity();
         void unfill_assumptions_set();
-        bool check_order_heap_sanity() const;
+        bool check_order_heap_sanity();
 
         template<bool inprocess>
         void bump_cl_act(Clause* cl);
@@ -187,7 +187,8 @@ class Searcher : public HyperEngine
         void vsids_decay_var_act();
         template<bool inprocess> void vsids_bump_var_act(const uint32_t v);
         double backup_random_var_freq = -1; ///<if restart has full random var branch, we save old value here
-        void check_var_in_branch_strategy(uint32_t var) const;
+        void check_var_in_branch_strategy(const uint32_t var, const branch str) const;
+        void check_all_in_vmtf_branch_strategy(const vector<uint32_t>& vars);
         uint32_t branch_strategy_change = 0;
         uint32_t branch_strategy_at = 0;
         void setup_branch_strategy();
@@ -534,7 +535,6 @@ inline void Searcher::insert_var_order_all(const uint32_t x)
     assert(!order_heap_rand.inHeap(x));
     order_heap_rand.insert(x);
 
-//     cout << " init_enqueue " << x+1 << endl;
     vmtf_init_enqueue(x);
 }
 
@@ -629,7 +629,9 @@ inline void Searcher::vsids_bump_var_act(const uint32_t var)
     var_act_vsids[var] += var_inc_vsids;
     max_vsids_act = std::max(max_vsids_act,  var_act_vsids[var]);
 
-    SLOW_DEBUG_DO(bool rescaled = false);
+    #ifdef SLOW_DEBUG
+    bool rescaled = false;
+    #endif
     if (var_act_vsids[var] > 1e100) {
         SLOW_DEBUG_DO(rescaled = true);
         for (auto& v: var_act_vsids) v *= 1e-100;

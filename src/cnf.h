@@ -124,8 +124,8 @@ public:
     uint32_t num_sls_called = 0;
     vector<VarData> varData;
     branch branch_strategy = branch::vsids;
-    string branch_strategy_str = "VSIDSX";
-    string branch_strategy_str_short = "vsx";
+    string branch_strategy_str = "VSIDS";
+    string branch_strategy_str_short = "vs";
     PolarityMode polarity_mode = PolarityMode::polarmode_automatic; //current polarity mode
     uint32_t longest_trail_ever_stable = 0;
     uint32_t longest_trail_ever_best = 0;
@@ -207,7 +207,8 @@ public:
 
     bool okay() const
     {
-        assert(!(!ok && drat->enabled() && unsat_cl_ID == 0) && "If in UNSAT state, and we have DRAT, we MUST already know the unsat_cl_ID");
+        assert(!
+        (!ok && drat->enabled() && unsat_cl_ID == 0 && unsat_cl_ID != -1) && "If in UNSAT state, and we have DRAT, we MUST already know the unsat_cl_ID or it must be -1, i.e. known by tbuddy");
         return ok;
     }
 

@@ -275,17 +275,17 @@ uint32_t MatrixFinder::setMatrixes()
         //Over- or undersized
         if (use_matrix && m.rows > solver->conf.gaussconf.max_matrix_rows) {
             use_matrix = false;
-            verb_print(1,"c [matrix] Too many rows in matrix: " << m.rows << " -> set usage to NO");
+            verb_print(1,"[matrix] Too many rows in matrix: " << m.rows << " -> set usage to NO");
         }
         if (use_matrix && m.cols > solver->conf.gaussconf.max_matrix_columns) {
             use_matrix = false;
-            verb_print(1,"c [matrix] Too many columns in matrix: " << m.cols << " -> set usage to NO");
+            verb_print(1,"[matrix] Too many columns in matrix: " << m.cols << " -> set usage to NO");
         }
 
         if (use_matrix && m.rows < solver->conf.gaussconf.min_matrix_rows) {
             use_matrix = false;
             too_few_rows_matrix++;
-            verb_print(2,"c [matrix] Too few rows in matrix: " << m.rows << " -> set usage to NO");
+            verb_print(2,"[matrix] Too few rows in matrix: " << m.rows << " -> set usage to NO");
         }
 
         //calculate sampling var ratio

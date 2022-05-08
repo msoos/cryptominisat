@@ -923,7 +923,7 @@ void PropEngine::sql_dump_vardata_picktime(uint32_t v, PropBy from)
 
 ///// VMTF ////
 
-void PropEngine::check_unassigned_vmtf()
+void PropEngine::vmtf_check_unassigned()
 {
     uint32_t at = vmtf_queue.unassigned;
     uint32_t unassigned = 0;
@@ -942,13 +942,13 @@ void PropEngine::check_unassigned_vmtf()
     }
 }
 
-uint32_t PropEngine::pick_var_vmtf()
+uint32_t PropEngine::vmtf_pick_var()
 {
     uint64_t searched = 0;
     uint32_t res = vmtf_queue.unassigned;
     VERBOSE_PRINT("vmtf start unassigned: " << res);
 
-    SLOW_DEBUG_DO(check_unassigned_vmtf());
+    SLOW_DEBUG_DO(vmtf_check_unassigned());
     while (res != numeric_limits<uint32_t>::max()
         && value(res) != l_Undef
     ) {
@@ -957,7 +957,7 @@ uint32_t PropEngine::pick_var_vmtf()
     }
 
     if (res == numeric_limits<uint32_t>::max()) {
-        check_unassigned_vmtf();
+        vmtf_check_unassigned();
         return var_Undef;
     }
     if (searched) vmtf_update_queue_unassigned(res);

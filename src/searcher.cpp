@@ -1348,11 +1348,9 @@ lbool Searcher::search()
         goto end;
     }
     assert(search_ret == l_Undef);
-    #ifdef SLOW_DEBUG
-    check_no_zero_ID_bins();
-    check_no_duplicate_lits_anywhere();
-    check_order_heap_sanity();
-    #endif
+    SLOW_DEBUG_DO(check_no_zero_ID_bins());
+    SLOW_DEBUG_DO(check_no_duplicate_lits_anywhere());
+    SLOW_DEBUG_DO(assert(check_order_heap_sanity()));
 
     end:
     print_restart_stat();
@@ -1817,7 +1815,10 @@ bool Searcher::handle_conflict(PropBy confl)
             cout << "c find_conflict_level() gives 0, so UNSAT for whole formula. decLevel: " << decisionLevel() << endl;
         }
         // the propagate() will not add the UNSAT clause if it's not decision level 0
-        if (decisionLevel() != 0) *drat << add << ++clauseID << fin;
+        if (decisionLevel() != 0) {
+            *drat << add << ++clauseID << fin;
+            unsat_cl_ID = clauseID;
+        }
         solver->ok = false;
         return false;
     }
@@ -2330,18 +2331,17 @@ void Searcher::setup_branch_strategy()
     assert(!select.empty());
 
     uint32_t which = branch_strategy_at % select.size();
+    const auto old_branch_strategy = branch_strategy;
     branch_strategy = select[which].branch;
     branch_strategy_str = select[which].descr;
     branch_strategy_str_short = select[which].descr_short;
     setup_restart_strategy(true);
 
-    if (conf.verbosity >= 2) {
-        cout << "c [branch] adjusting to: "
-        << branch_type_to_string(branch_strategy)
-        << " var_decay_max:" << var_decay << " var_decay:" << var_decay
-        << " descr: " << select[which].descr
-        << endl;
-    }
+    verb_print(1, "[branch]"
+        <<  " adjusting to: " << branch_type_to_string(branch_strategy)
+        <<  " (from: " << branch_type_to_string(old_branch_strategy) << ")"
+        << " var_decay:" << var_decay
+        << " descr: " << select[which].descr);
 }
 
 inline void Searcher::dump_search_loop_stats(double myTime)
@@ -2601,13 +2601,10 @@ lbool Searcher::solve(
     check_calc_vardist_features(true);
     #endif
 
+    SLOW_DEBUG_DO(assert(solver->check_order_heap_sanity()));
     while(stats.conflicts < max_confl_per_search_solve_call
         && status == l_Undef
     ) {
-        #ifdef SLOW_DEBUG
-        assert(solver->check_order_heap_sanity());
-        #endif
-
         if (distill_clauses_if_needed() == l_False
             || full_probe_if_needed() == l_False
             || !distill_bins_if_needed()
@@ -2618,6 +2615,7 @@ lbool Searcher::solve(
             status = l_False;
             goto end;
         }
+        SLOW_DEBUG_DO(assert(solver->check_order_heap_sanity()));
         sls_if_needed();
 
         assert(watches.get_smudged_list().empty());
@@ -2630,10 +2628,9 @@ lbool Searcher::solve(
             setup_polarity_strategy();
             adjust_restart_strategy_cutoffs();
         }
+        SLOW_DEBUG_DO(assert(solver->check_order_heap_sanity()));
 
-        if (must_abort(status)) {
-            goto end;
-        }
+        if (must_abort(status)) goto end;
     }
 
     end:
@@ -2855,9 +2852,7 @@ void Searcher::finish_up_solve(const lbool status)
     }
 
     if (status == l_True) {
-        #ifdef SLOW_DEBUG
-        check_order_heap_sanity();
-        #endif
+        SLOW_DEBUG_DO(assert(check_order_heap_sanity()));
         assert(solver->prop_at_head());
         model = assigns;
         cancelUntil(0);
@@ -2925,7 +2920,7 @@ inline Lit Searcher::pickBranchLit()
                 v = pick_var_vsids();
                 break;
             case branch::vmtf:
-                v = pick_var_vmtf();
+                v = vmtf_pick_var();
                 break;
             case branch::rand: {
                 v = order_heap_rand.get_random_element(mtrand);
@@ -3380,9 +3375,7 @@ void Searcher::cancelUntil(uint32_t blevel)
                 trail[j++] = trail[i];
             } else {
                 assigns[var] = l_Undef;
-                if (do_insert_var_order) {
-                    insert_var_order(var);
-                }
+                if (do_insert_var_order) insert_var_order(var);
             }
         }
         trail.resize(j);
@@ -3416,24 +3409,58 @@ void Searcher::cancelUntil_light()
     trail_lim.resize(0);
 }
 
-void Searcher::check_var_in_branch_strategy(uint32_t int_var) const
+void Searcher::check_var_in_branch_strategy(const uint32_t var, const branch str) const
 {
-    switch(branch_strategy) {
+    bool found = false;
+    switch(str) {
         case branch::vsids:
-            assert(order_heap_vsids.inHeap(int_var));
+            found = order_heap_vsids.inHeap(var);
             break;
 
         case branch::rand:
-            assert(order_heap_rand.inHeap(int_var));
+            found = order_heap_rand.inHeap(var);
             break;
 
         case branch::vmtf:
-            assert(false);
-            //TODO VMTF
+            uint32_t at = vmtf_queue.unassigned;
+            while (at != numeric_limits<uint32_t>::max()) {
+                if (at == var) {
+                    found = true;
+                    break;
+                }
+                at = vmtf_links[at].prev;
+            }
             break;
     }
+
+    if (!found) {
+        cout << "ERROR: cannot find internal var " << var+1
+        << " in branch strategy: " << branch_type_to_string(str) << endl;
+    }
+    release_assert(found);
 }
 
+void Searcher::check_all_in_vmtf_branch_strategy(const vector<uint32_t>& vars)
+{
+    for(auto const& v: vars) {
+        assert(v < seen.size());
+        seen[v] = 1;
+    }
+
+    uint32_t at = vmtf_queue.unassigned;
+    while (at != numeric_limits<uint32_t>::max()) {
+        seen[at] = 0;
+        at = vmtf_links[at].prev;
+    }
+
+    for(auto const&v: vars) {
+        if (seen[v] == 1) {
+            cout << "ERROR: cannot find internal var " << v+1
+            << " in VMTF" << endl;
+            release_assert(false);
+        }
+    }
+}
 
 ConflictData Searcher::find_conflict_level(PropBy& pb)
 {
@@ -3530,7 +3557,7 @@ ConflictData Searcher::find_conflict_level(PropBy& pb)
     return data;
 }
 
-inline bool Searcher::check_order_heap_sanity() const
+inline bool Searcher::check_order_heap_sanity()
 {
     if (conf.sampling_vars) {
         for(uint32_t outside_var: *conf.sampling_vars) {
@@ -3544,19 +3571,24 @@ inline bool Searcher::check_order_heap_sanity() const
                 varData[int_var].removed == Removed::none &&
                 value(int_var) == l_Undef
             ) {
-                check_var_in_branch_strategy(int_var);
+                check_var_in_branch_strategy(int_var, branch::vsids);
+                check_var_in_branch_strategy(int_var, branch::rand);
+                check_var_in_branch_strategy(int_var, branch::vmtf);
             }
         }
     }
 
+    vector<uint32_t> tmp;
     for(size_t i = 0; i < nVars(); i++)
     {
-        if (varData[i].removed == Removed::none
-            && value(i) == l_Undef)
-        {
-            check_var_in_branch_strategy(i);
+        if (varData[i].removed == Removed::none && value(i) == l_Undef) {
+            tmp.push_back(i);
+            check_var_in_branch_strategy(i, branch::vsids);
+            check_var_in_branch_strategy(i, branch::rand);
         }
     }
+    check_all_in_vmtf_branch_strategy(tmp);
+
     assert(order_heap_vsids.heap_property());
     assert(order_heap_rand.heap_property());
 

@@ -248,8 +248,8 @@ public:
     void vmtf_init_enqueue (const uint32_t var);
     void vmtf_dequeue (const uint32_t var);
     void vmtf_bump_queue (const uint32_t var);
-    void check_unassigned_vmtf();
-    uint32_t pick_var_vmtf();
+    void vmtf_check_unassigned();
+    uint32_t vmtf_pick_var();
     vector<Link> vmtf_links; ///< Indexed by variable number. table of vmtf_links for decision queue.
     double max_vsids_act = 0.0;
 
