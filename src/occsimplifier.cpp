@@ -1891,6 +1891,7 @@ bool OccSimplifier::lit_rem_with_or_gates()
             assert(!cl->freed());
 
             //TODO check calcAbst!
+            bool contains_rhs = false;
             uint32_t at = numeric_limits<uint32_t>::max();
             for(uint32_t i = 0, sz = cl->size(); i < sz; i++) {
                 const Lit l = (*cl)[i];
@@ -1899,33 +1900,37 @@ bool OccSimplifier::lit_rem_with_or_gates()
                     break;
                 }
 
-                if (l == l2) {
-                    at = i;
-                    break;
-                }
+                if (l == l2) at = i;
+                if (l == gate.rhs) contains_rhs = true;
             }
             if (at == numeric_limits<uint32_t>::max()) continue;
 
             (*solver->drat) << deldelay << *cl << fin;
             shortened++;
-            (*cl)[at] = gate.rhs; //replace l2
-            cl->strengthen(l1); //remove l1
+            cl->strengthen(l1);
+            if (contains_rhs) cl->strengthen(l2);
+            else (*cl)[at] = gate.rhs; //replace l2
+
             cl->reCalcAbstraction(); //abst is wrong
             std::sort(cl->begin(), cl->end());
             removeWCl(solver->watches[l2], off);
-            removeWCl(solver->watches[l1], off); //TODO we can NOT copy +get rid of this, speedup!
+            removeWCl(solver->watches[l1], off);
             INC_ID(*cl);
             (*solver->drat) << add << *cl << fin << findelay;
-            solver->watches[gate.rhs].push(Watched(off, cl->abst));
+            if (!contains_rhs) {
+                solver->watches[gate.rhs].push(Watched(off, cl->abst));
+                n_occurs[gate.rhs.toInt()]++;
+                elim_calc_need_update.touch(gate.rhs);
+                solver->litStats.irredLits--;
+            } else {
+                solver->litStats.irredLits-=2;
+            }
             n_occurs[l1.toInt()]--;
             n_occurs[l2.toInt()]--;
-            n_occurs[gate.rhs.toInt()]++;
             elim_calc_need_update.touch(l1);
             elim_calc_need_update.touch(l2);
-            elim_calc_need_update.touch(gate.rhs);
             removed_cl_with_var.touch(l1);
             removed_cl_with_var.touch(l2);
-            solver->litStats.irredLits--;
         }
     }
     //Update global stats
@@ -2797,9 +2802,10 @@ void OccSimplifier::finishUp(
 
     //Let's just clean up ourselves a bit
     clauses.clear();
+    solver->conf.verbosity = 0;
 }
 
-void OccSimplifier::sanityCheckElimedVars()
+void OccSimplifier::sanityCheckElimedVars() const
 {
     //First, sanity-check the long clauses
     for (vector<ClOffset>::const_iterator
@@ -5100,4 +5106,19 @@ bool OccSimplifier::remove_literal(
         solver->litStats.irredLits--;
 
     return clean_clause(offset, only_set_is_removed);
+}
+
+
+void OccSimplifier::check_clauses_no_duplicate_lits() const
+{
+    for (const auto & offset: clauses) {
+        Clause* cl = solver->cl_alloc.ptr(offset);
+        if (cl->freed() || cl->getRemoved()) continue;
+        for(uint32_t i = 1; i < cl->size(); i++) {
+            if ((*cl)[i-1] >= (*cl)[i]) {
+                cout << "ERRROR cl: " << *cl << endl;
+                assert(false);
+            }
+        }
+    }
 }

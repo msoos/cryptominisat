@@ -280,6 +280,11 @@ public:
     //Ternary resolution. Should be private but testing needs it to be public
     bool ternary_res();
 
+    //validity checking
+    void sanityCheckElimedVars() const;
+    void printOccur(const Lit lit) const;
+    void check_clauses_no_duplicate_lits() const;
+
 private:
     friend class SubsumeStrengthen;
     SubsumeStrengthen* sub_str;
@@ -620,10 +625,6 @@ private:
     void buildBlockedMap();
     void cleanBlockedClauses();
     bool can_remove_blocked_clauses = false;
-
-    //validity checking
-    void sanityCheckElimedVars();
-    void printOccur(const Lit lit) const;
 
     ///Stats from this run
     Stats runStats;
