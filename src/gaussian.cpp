@@ -281,6 +281,7 @@ bool EGaussian::full_init(bool& created) {
     assert(solver->okay());
     assert(solver->decisionLevel() == 0);
     assert(initialized == false);
+    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
     created = true;
 
     uint32_t trail_before;
@@ -363,6 +364,7 @@ bool EGaussian::full_init(bool& created) {
     update_cols_vals_set(true);
     SLOW_DEBUG_DO(check_invariants());
 
+    *solver->drat << __PRETTY_FUNCTION__ << " end\n";
     return solver->okay();
 }
 
@@ -429,6 +431,7 @@ void EGaussian::eliminate() {
 
 vector<Lit>* EGaussian::get_reason(const uint32_t row, int32_t& out_ID)
 {
+    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
     if (!xor_reasons[row].must_recalc) {
         out_ID = xor_reasons[row].ID;
         return &(xor_reasons[row].reason);
@@ -472,6 +475,7 @@ vector<Lit>* EGaussian::get_reason(const uint32_t row, int32_t& out_ID)
 
     xor_reasons[row].must_recalc = false;
     xor_reasons[row].ID = out_ID;
+    *solver->drat << __PRETTY_FUNCTION__ << " end\n";
     return &tofill;
 }
 
@@ -479,6 +483,8 @@ vector<Lit>* EGaussian::get_reason(const uint32_t row, int32_t& out_ID)
 tbdd::xor_constraint* EGaussian::bdd_create(const uint32_t row_n, const uint32_t expected_sz)
 {
     assert(solver->drat->enabled());
+    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
+
     solver->drat->flush();
     tbdd::xor_set xset;
     for(uint32_t i = 0; i < bdd_matrix[row_n].size(); i++) {
@@ -515,6 +521,7 @@ tbdd::xor_constraint* EGaussian::bdd_create(const uint32_t row_n, const uint32_t
 
     #endif
 
+    *solver->drat << __PRETTY_FUNCTION__ << " end\n";
     return x;
 }
 #endif
@@ -524,6 +531,7 @@ gret EGaussian::init_adjust_matrix()
     assert(solver->decisionLevel() == 0);
     assert(row_to_var_non_resp.empty());
     assert(satisfied_xors.size() >= num_rows);
+    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
     VERBOSE_PRINT("mat[" << matrix_no << "] init adjusting matrix");
 
     PackedMatrix::iterator end = mat.begin() + num_rows;
@@ -677,6 +685,7 @@ gret EGaussian::init_adjust_matrix()
     mat.resizeNumRows(row_i - adjust_zero);
     num_rows = row_i - adjust_zero;
 
+    *solver->drat << __PRETTY_FUNCTION__ << " end\n";
     return gret::nothing_satisfied;
 }
 
