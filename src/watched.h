@@ -97,11 +97,12 @@ class Watched {
         /**
         @brief Constructor for a binary clause
         */
-        Watched(const Lit lit, const bool red, uint64_t ID) :
+        Watched(const Lit lit, const bool red, int32_t ID) :
             data1(lit.toInt())
             , type(static_cast<int>(WatchType::watch_binary_t))
-            , data2((uint64_t)red | ID<<2) //marking is 2nd bit
+            , data2((int32_t)red | ID<<2) //marking is 2nd bit
         {
+            assert(ID < 1LL<<28);
         }
 
         /**
@@ -249,9 +250,6 @@ class Watched {
 
     private:
         uint32_t data1;
-        // binary, tertiary or long, as per WatchType
-        // currently WatchType is enum with range [0..3] and fits in type
-        // in case if WatchType extended type size won't be enough.
         ClOffset type:2;
         ClOffset data2:EFFECTIVELY_USEABLE_BITS;
 };
