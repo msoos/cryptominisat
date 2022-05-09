@@ -56,13 +56,9 @@ void XorFinder::find_xors_based_on_long_clauses()
     #endif
 
     vector<Lit> lits;
-    for (vector<ClOffset>::iterator
-        it = occsimplifier->clauses.begin()
-        , end = occsimplifier->clauses.end()
-        ; it != end && xor_find_time_limit > 0
-        ; ++it
-    ) {
-        ClOffset offset = *it;
+    for (const auto & offset: occsimplifier->clauses) {
+        if (xor_find_time_limit <= 0) break;
+
         Clause* cl = solver->cl_alloc.ptr(offset);
         xor_find_time_limit -= 1;
 

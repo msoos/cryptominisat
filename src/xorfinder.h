@@ -66,7 +66,7 @@ class PossibleXor
             #endif
 
             assert(cl.size() <= sizeof(origCl)/sizeof(Lit)
-            && "The XOR being recovered is larger than MAX_XOR_RECOVER_SIZE");
+                && "The XOR being recovered is larger than MAX_XOR_RECOVER_SIZE");
             for(size_t i = 0; i < size; i++) {
                 origCl[i] = cl[i];
                 if (i > 0)

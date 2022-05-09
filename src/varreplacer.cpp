@@ -151,6 +151,12 @@ bool VarReplacer::enqueueDelayedEnqueue()
     for(auto& l: delayedEnqueue) {
         l.first = get_lit_replaced_with(l.first);
 
+        if (!solver->ok) {
+            //if we are UNSAT, just delete them
+            *solver->drat << del << l.second << l.first << fin;
+            continue;
+        }
+
         if (solver->value(l.first) == l_Undef) {
             solver->enqueue<false>(l.first);
             *solver->drat << del << l.second << l.first << fin; // double unit delete
@@ -161,7 +167,6 @@ bool VarReplacer::enqueueDelayedEnqueue()
             assert(solver->unsat_cl_ID == 0);
             solver->unsat_cl_ID = solver->clauseID;
             solver->ok = false;
-            break;
         } else {
             //it's already set, delete
             *solver->drat << del << l.second << l.first << fin;
@@ -169,8 +174,7 @@ bool VarReplacer::enqueueDelayedEnqueue()
     }
     delayedEnqueue.clear();
 
-    if (!solver->ok)
-        return false;
+    if (!solver->ok) return false;
 
     solver->ok = solver->propagate<false>().isNULL();
     return solver->okay();
@@ -448,8 +452,7 @@ inline void VarReplacer::updateBin(
 
     //Drat
     if (//Changed
-        (lit1 != origLit1
-            || lit2 != origLit2)
+        (lit1 != origLit1 || lit2 != origLit2)
         //Delete&attach only once
         && (origLit1 < origLit2)
     ) {
