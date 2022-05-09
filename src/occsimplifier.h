@@ -283,7 +283,7 @@ public:
     //validity checking
     void sanityCheckElimedVars() const;
     void printOccur(const Lit lit) const;
-    void check_clauses_no_duplicate_lits() const;
+    void check_clauses_lits_ordered() const;
 
 private:
     friend class SubsumeStrengthen;

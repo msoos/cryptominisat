@@ -1988,6 +1988,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         solver->check_implicit_stats(true);
         solver->check_assumptions_sanity();
         check_no_marked_clauses();
+        check_clauses_lits_ordered();
         #endif
 
         token = trim(token);
@@ -5109,7 +5110,7 @@ bool OccSimplifier::remove_literal(
 }
 
 
-void OccSimplifier::check_clauses_no_duplicate_lits() const
+void OccSimplifier::check_clauses_lits_ordered() const
 {
     for (const auto & offset: clauses) {
         Clause* cl = solver->cl_alloc.ptr(offset);
