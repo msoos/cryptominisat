@@ -2803,7 +2803,6 @@ void OccSimplifier::finishUp(
 
     //Let's just clean up ourselves a bit
     clauses.clear();
-    solver->conf.verbosity = 0;
 }
 
 void OccSimplifier::sanityCheckElimedVars() const
