@@ -44,6 +44,7 @@ class DimacsParser
             uint32_t offset_vars = 0);
         uint64_t max_var = numeric_limits<uint64_t>::max();
         vector<uint32_t> sampling_vars;
+        bool sampling_vars_found = false;
         vector<double> weights;
         const std::string dimacs_spec = "http://www.satcompetition.org/2009/format-benchmarks2009.html";
         const std::string please_read_dimacs = "\nPlease read DIMACS specification at http://www.satcompetition.org/2009/format-benchmarks2009.html";
@@ -444,6 +445,7 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
             cout << "c Parsed Solver::new_vars( " << n << " )" << endl;
         }
     } else if (str == "ind") {
+        sampling_vars_found = true;
         if (!parseIndependentSet(in)) {
             return false;
         }
