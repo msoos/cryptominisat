@@ -493,10 +493,13 @@ bool ClauseCleaner::clean_one_xor(Xor& x)
             }
             return false;
         case 1: {
+            assert(solver->okay());
             solver->enqueue<true>(Lit(x[0], !x.rhs));
+            solver->ok = solver->propagate<true>().isNULL();
             return false;
         }
         case 2:
+            assert(solver->okay());
             solver->add_xor_clause_inter(vars_to_lits(x), x.rhs, true);
             return false;
         default:
