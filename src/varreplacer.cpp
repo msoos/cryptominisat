@@ -272,7 +272,6 @@ bool VarReplacer::perform_replace()
 
     //Replace XORs
     if (!replace_xor_clauses(solver->xorclauses)) goto end;
-    if (!replace_xor_clauses(solver->xorclauses_orig)) goto end;
     if (!replace_xor_clauses(solver->xorclauses_unused)) goto end;
     assert(solver->gmatrices.empty() && "Cannot replace vars inside GJ elim");
 
@@ -355,31 +354,40 @@ bool VarReplacer::replace_one_xor_clause(Xor& x)
         }
     }
     x.clash_vars.resize(j);
+    for(auto& v: x.clash_vars) solver->seen[v] = 0;
 
-    for(auto& v: x.clash_vars) {
-        solver->seen[v] = 0;
-    }
-
-    bool updated;
     for(uint32_t& v: x) {
         assert(v < solver->nVars());
 
         Lit l = Lit(v, false);
         if (get_lit_replaced_with_fast(l) != l) {
-            updated = true;
-            l = get_lit_replaced_with_fast(l);
-            x.rhs ^= l.sign();
-            v = l.var();
+            const Lit l2 = get_lit_replaced_with_fast(l);
+            #ifdef USE_TBUDDY
+            if (solver->drat->enabled()) {
+                ilist bin = ilist_new(2);
+                ilist_resize(bin, 2);
+                bin[0] = v+1;
+                bin[1] = l2.var()+1;
+                tbdd::xor_constraint* bdd2 = new tbdd::xor_constraint(bin, l2.sign());
+                tbdd::xor_set xs;
+                xs.add(*x.bdd);
+                xs.add(*bdd2);
+                const auto new_bdd = xs.sum();
+                delete bdd2;
+                delete x.bdd;
+                x.bdd = new_bdd;
+            }
+            #endif
+            x.rhs ^= l2.sign();
+            v = l2.var();
             runStats.replacedLits++;
         }
     }
-    if (updated) {
-        //FRAT could fail here maybe? No idea.
-        /*auto old = x.bdd;
-        x.bdd = NULL;
-        x.create_bdd_xor();
-        delete old;*/
-    }
+//     if (updated) {
+//         //TODO
+//         //FRAT could fail here maybe? No idea.
+//         // we'd need to create a BDD representing the XOR, then XOR them together.
+//     }
 
     solver->clean_xor_vars_no_prop(x.get_vars(), x.rhs);
     switch (x.size()) {

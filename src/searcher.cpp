@@ -3615,14 +3615,12 @@ bool Searcher::clear_gauss_matrices(const bool destruct)
     }
 
     if (conf.verbosity) print_matrix_stats();
-    for(EGaussian* g: gmatrices) g->move_back_xor_clauses();
     for(EGaussian* g: gmatrices) delete g;
     for(auto& w: gwatches) w.clear();
     gmatrices.clear();
     gqueuedata.clear();
-    solver->xorclauses.clear(); // we rely on xorclauses_orig now
-    solver->xorclauses_unused.clear();
-    solver->xorclauses = solver->xorclauses_orig;
+    for(auto& x: solver->xorclauses) solver->xorclauses_unused.push_back(std::move(x));
+    solver->xorclauses.clear();
 
     return okay();
 }

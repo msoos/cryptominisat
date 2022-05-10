@@ -239,6 +239,8 @@ uint32_t MatrixFinder::setMatrixes()
     }
 
     for (const Xor& x : solver->xorclauses) {
+        TBUDDY_DO(if (solver->drat->enabled()) assert(x.bdd));
+
         //take 1st variable to check which matrix it's in.
         const uint32_t matrix = table[x[0]];
         assert(matrix < matrix_no);
@@ -370,8 +372,6 @@ uint32_t MatrixFinder::setMatrixes()
             assert(solver->gmatrices.size() == realMatrixNum);
         } else {
             for(auto& x: xorsInMatrix[i]) {
-                TBUDDY_DO(delete x.bdd);
-                TBUDDY_DO(x.bdd = NULL);
                 solver->xorclauses_unused.push_back(x);
                 //cout<< "c [matrix]xor not in matrix, now unused_xors size: " << unused_xors.size() << endl;
                 clash_vars_unused.insert(x.clash_vars.begin(), x.clash_vars.end());

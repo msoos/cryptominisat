@@ -2018,7 +2018,6 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 if (topLevelGauss != NULL && !solver->drat->enabled()) {
                     auto xors = solver->xorclauses;
                     assert(solver->okay());
-                    solver->ok = finder.xor_together_xors(xors);
                     if (solver->ok) {
                         vector<Lit> out_changed_occur;
                         finder.move_xors_without_connecting_vars_to_unused();
@@ -2049,7 +2048,6 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                     TBUDDY_DO(solver->free_bdds(solver->xorclauses_unused));
                 }
                 solver->xorclauses.clear();
-                solver->xorclauses_orig.clear();
                 solver->xorclauses_unused.clear();
 
                 if (solver->conf.do_empty_varelim) {

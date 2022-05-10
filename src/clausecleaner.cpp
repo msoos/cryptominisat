@@ -392,27 +392,24 @@ bool ClauseCleaner::remove_and_clean_all()
     assert(solver->decisionLevel() == 0);
     *solver->drat << __PRETTY_FUNCTION__ << " start\n";
 
-    do {
+    size_t last_trail = numeric_limits<size_t>::max();
+    while(last_trail != solver->trail_size()) {
+        last_trail = solver->trail_size();
         solver->ok = solver->propagate<false>().isNULL();
-        if (!solver->okay()) {
-            break;
-        }
+        if (!solver->okay()) break;
+        if (!clean_all_xor_clauses()) break;
 
         clean_implicit_clauses();
         clean_clauses_pre();
         clean_bnns_inter(solver->bnns);
-        if (!solver->okay()) {
-            break;
-        }
+        if (!solver->okay()) break;
+
         clean_clauses_inter(solver->longIrredCls);
-        for(auto& lredcls: solver->longRedCls) {
-            clean_clauses_inter(lredcls);
-        }
+        for(auto& lredcls: solver->longRedCls) clean_clauses_inter(lredcls);
         solver->clean_occur_from_removed_clauses_only_smudged();
         clean_clauses_post();
         clean_bnns_post();
-    } while (!solver->prop_at_head());
-
+    }
 
     #ifndef NDEBUG
     if (solver->okay()) {
@@ -447,6 +444,10 @@ bool ClauseCleaner::remove_and_clean_all()
 
 bool ClauseCleaner::clean_one_xor(Xor& x)
 {
+    // they encode information (see NOTE in cnf.h) so they MUST be in BDDs
+    //      otherwise FRAT will fail
+    TBUDDY_DO(if (solver->drat->enabled()) assert(x.bdd));
+
     bool rhs = x.rhs;
     size_t i = 0;
     size_t j = 0;
@@ -483,11 +484,16 @@ bool ClauseCleaner::clean_one_xor(Xor& x)
 
     switch(x.size()) {
         case 0:
-            assert(x.rhs == false); // "Should have propagated already, impossible to be false
+            if (x.rhs == true) solver->ok = false;
+            if (!solver->ok) {
+                assert(solver->unsat_cl_ID == 0);
+                *solver->drat << add << ++solver->clauseID << fin;
+                solver->unsat_cl_ID = solver->clauseID;
+                solver->ok = false;
+            }
             return false;
-
         case 1: {
-            assert(false); // should have alrady propagated
+            solver->enqueue<true>(Lit(x[0], !x.rhs));
             return false;
         }
         case 2:
@@ -498,14 +504,18 @@ bool ClauseCleaner::clean_one_xor(Xor& x)
     }
 }
 
-void ClauseCleaner::clean_all_xor_clauses()
+bool ClauseCleaner::clean_all_xor_clauses()
 {
     assert(solver->okay());
     assert(solver->decisionLevel() == 0);
 
-    clean_xor_clauses(solver->xorclauses);
-    clean_xor_clauses(solver->xorclauses_unused);
-    clean_xor_clauses(solver->xorclauses_orig);
+    size_t last_trail = numeric_limits<size_t>::max();
+    while(last_trail != solver->trail_size()) {
+        last_trail = solver->trail_size();
+        if (!clean_xor_clauses(solver->xorclauses)) return false;
+        if (!clean_xor_clauses(solver->xorclauses_unused)) return false;
+        solver->ok = solver->propagate<false>().isNULL();
+    }
 
     // clean up removed_xorclauses_clash_vars
     uint32_t j = 0;
@@ -515,9 +525,11 @@ void ClauseCleaner::clean_all_xor_clauses()
         }
     }
     solver->removed_xorclauses_clash_vars.resize(j);
+
+    return solver->okay();
 }
 
-void ClauseCleaner::clean_xor_clauses(vector<Xor>& xors)
+bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors)
 {
     assert(solver->ok);
     VERBOSE_DEBUG_DO(for(Xor& x : xors) cout << "orig XOR: " << x << endl);
@@ -529,9 +541,13 @@ void ClauseCleaner::clean_xor_clauses(vector<Xor>& xors)
         size_t j = 0;
         for(size_t size = xors.size(); i < size; i++) {
             Xor& x = xors[i];
+            if (!solver->okay()) {
+                xors[j++] = x;
+                continue;
+            }
+
             VERBOSE_PRINT("Checking to keep xor: " << x);
             const bool keep = clean_one_xor(x);
-
             if (keep) {
                 assert(x.size() > 2);
                 xors[j++] = x;
@@ -545,8 +561,12 @@ void ClauseCleaner::clean_xor_clauses(vector<Xor>& xors)
             }
         }
         xors.resize(j);
+        if (!solver->okay()) break;
+        solver->ok = solver->propagate<false>().isNULL();
     }
     VERBOSE_PRINT("clean_xor_clauses() finished");
+
+    return solver-> okay();
 }
 
 //returns TRUE if removed or solver is UNSAT

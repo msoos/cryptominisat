@@ -216,10 +216,7 @@ bool Solver::add_xor_clause_inter(
 
     //cout << "without rhs is: " << ps << endl;
     add_every_combination_xor(ps, attach, addDrat, red);
-    if (ps.size() > 2) {
-        xorclauses.push_back(Xor(ps, rhs, tmp_xor_clash_vars));
-        xorclauses_orig.push_back(Xor(ps, rhs, tmp_xor_clash_vars));
-    }
+    if (ps.size() > 2) xorclauses.push_back(Xor(ps, rhs, tmp_xor_clash_vars));
 
     return ok;
 }
@@ -985,17 +982,12 @@ void Solver::renumber_clauses(const vector<uint32_t>& outerToInter)
     xor_clauses_updated = true;
     for(Xor& x: xorclauses) {
         updateVarsMap(x.vars, outerToInter);
-        for(uint32_t& v: x.clash_vars) v = getUpdatedVar(v, outerToInter);
+        updateVarsMap(x.clash_vars, outerToInter);
     }
 
     for(Xor& x: xorclauses_unused) {
         updateVarsMap(x.vars, outerToInter);
-        for(uint32_t& v: x.clash_vars) v = getUpdatedVar(v, outerToInter);
-    }
-
-    for(Xor& x: xorclauses_orig) {
-        updateVarsMap(x.vars, outerToInter);
-        for(uint32_t& v: x.clash_vars) v = getUpdatedVar(v, outerToInter);
+        updateVarsMap(x.clash_vars, outerToInter);
     }
 
     for(auto& v: removed_xorclauses_clash_vars) {
@@ -1081,18 +1073,14 @@ bool Solver::renumber_variables(bool must_renumber)
     #ifdef SLOWDEBUG
     for(const auto& x: xorclauses) for(const auto& v: x) assert(v < nVars());
     for(const auto& x: xorclauses_unused) for(const auto& v: x) assert(v < nVars());
-    for(const auto& x: xorclauses_orig) for(const auto& v: x) assert(v < nVars());
     #endif
 
     if (nVars() == 0) return okay();
     if (!must_renumber && calc_renumber_saving() < 0.2) return okay();
-    if (!clear_gauss_matrices()) return false;
 
     double myTime = cpuTime();
-    if (!clauseCleaner->remove_and_clean_all()) {
-        return false;
-    }
-    clauseCleaner->clean_all_xor_clauses();
+    if (!clear_gauss_matrices()) return false;
+    if (!clauseCleaner->remove_and_clean_all()) return false;
 
     //outerToInter[10] = 0 ---> what was 10 is now 0.
     vector<uint32_t> outerToInter(nVarsOuter());
@@ -1761,6 +1749,7 @@ void Solver::write_final_frat_clauses()
     TBUDDY_DO(for(auto& g: gmatrices) g->finalize_frat());
 
     *drat << "free bdds begin\n";
+    TBUDDY_DO(solver->free_bdds(solver->xorclauses));
     TBUDDY_DO(solver->free_bdds(solver->xorclauses_unused));
 
     *drat << "tbdd_done() next\n";
@@ -2260,14 +2249,9 @@ lbool Solver::execute_inprocess_strategy(
             exit(-1);
         }
 
-        #ifdef SLOW_DEBUG
-        check_stats();
-        #endif
-
-        if (!okay()) {
-            return l_False;
-        }
-        check_wrong_attach();
+        SLOW_DEBUG_DO(check_stats());
+        if (!okay()) return l_False;
+        SLOW_DEBUG_DO(check_wrong_attach());
     }
 
     return okay() ? l_Undef : l_False;
@@ -3785,6 +3769,7 @@ void Solver::renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors
 
 bool Solver::find_and_init_all_matrices()
 {
+    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
     if (!xor_clauses_updated && (!detached_xor_clauses || !assump_contains_xor_clash())) {
         if (conf.verbosity >= 2) {
             cout << "c [find&init matx] XORs not updated, and either (XORs are not detached OR assumps does not contain clash variable) -> or not performing matrix init. Matrices: " << gmatrices.size() << endl;
@@ -3871,6 +3856,7 @@ bool Solver::find_and_init_all_matrices()
     #endif
 
     xor_clauses_updated = false;
+    *solver->drat << __PRETTY_FUNCTION__ << " end\n";
     return true;
 }
 

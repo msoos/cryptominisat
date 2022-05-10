@@ -110,22 +110,20 @@ void XorFinder::clean_equivalent_xors(vector<Xor>& txors)
         vector<Xor>::iterator i = txors.begin();
         vector<Xor>::iterator j = i;
         ++i;
-        uint64_t size = 1;
         for(vector<Xor>::iterator end = txors.end(); i != end; ++i) {
-            if (j->vars == i->vars && i->rhs == j->rhs) {
+            if (j->vars == i->vars && j->rhs == i->rhs) {
                 j->merge_clash(*i, seen);
                 j->detached |= i->detached;
                 if (solver->drat->enabled()) {
+                    verb_print(5, "Cleaning equivalent XOR at: " << (i - txors.begin()) << " xor: " << *i);
                     TBUDDY_DO(solver->drat->flush());
-                    TBUDDY_DO(delete j->bdd);
+                    TBUDDY_DO(delete i->bdd);
                 }
             } else {
-                ++j;
-                *j = *i;
-                size++;
+                *j++ = *i;
             }
         }
-        txors.resize(size);
+        txors.resize(j-txors.begin());
 
         if (solver->conf.verbosity) {
             cout << "c [xor-clean-equiv] removed equivalent xors: "
@@ -164,10 +162,8 @@ void XorFinder::find_xors()
         solver->drat->flush();
         TBUDDY_DO(for (auto const& x: solver->xorclauses) delete x.bdd);
         TBUDDY_DO(for (auto const& x: solver->xorclauses_unused) delete x.bdd);
-        TBUDDY_DO(for (auto const& x: solver->xorclauses_orig) assert(x.bdd == NULL));
     }
     solver->xorclauses.clear();
-    solver->xorclauses_orig.clear();
     solver->xorclauses_unused.clear();
 
     double myTime = cpuTime();
@@ -188,10 +184,11 @@ void XorFinder::find_xors()
 
     find_xors_based_on_long_clauses();
     assert(runStats.foundXors == solver->xorclauses.size());
-
-    //clean them of equivalent XORs
     clean_equivalent_xors(solver->xorclauses);
-    solver->xorclauses_orig = solver->xorclauses;
+
+    // Need to do this due to XORs encoding new info
+    //    see NOTE in cnf.h
+    TBUDDY_DO(for(auto& x: solver->xorclauses) if (solver->drat->enabled()) x.create_bdd_xor());
 
     //Cleanup
     for(ClOffset offset: occsimplifier->clauses) {
@@ -757,16 +754,14 @@ void XorFinder::clean_xors_from_empty(vector<Xor>& thisxors)
     size_t j = 0;
     for(size_t i = 0;i < thisxors.size(); i++) {
         Xor& x = thisxors[i];
-        if (x.size() == 0
-            && x.rhs == false
-        ) {
-            if (!x.clash_vars.empty()) {
-                solver->xorclauses_unused.push_back(x);
-            }
+        if (x.size() == 0 && x.rhs == false) {
+            solver->removed_xorclauses_clash_vars.insert(
+                solver->removed_xorclauses_clash_vars.end(),
+                x.clash_vars.begin(),
+                x.clash_vars.end());
+            TBUDDY_DO(delete x.bdd);
         } else {
-            if (solver->conf.verbosity >= 4) {
-                cout << "c xor after clean: " << thisxors[i] << endl;
-            }
+            verb_print(4, "xor after clean: " << thisxors[i]);
             thisxors[j++] = thisxors[i];
         }
     }
