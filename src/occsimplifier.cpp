@@ -1064,7 +1064,6 @@ bool OccSimplifier::eliminate_vars()
     assert(added_irred_bin.empty());
     assert(added_long_cl.empty());
 
-    //solver->conf.verbosity = 1;
     //Set-up
     double myTime = cpuTime();
     size_t vars_elimed = 0;
