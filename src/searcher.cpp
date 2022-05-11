@@ -3620,8 +3620,8 @@ bool Searcher::clear_gauss_matrices(const bool destruct)
     for(auto& w: gwatches) w.clear();
     gmatrices.clear();
     gqueuedata.clear();
-    free_bdds(xorclauses);
-    free_bdds(xorclauses_unused);
+    TBUDDY_DO(free_bdds(xorclauses));
+    TBUDDY_DO(free_bdds(xorclauses_unused));
     xorclauses.clear(); // we rely on xorclauses_orig now
     xorclauses_unused.clear();
     if (!destruct) {

@@ -358,7 +358,9 @@ public:
     template<typename T> bool no_duplicate_lits(const T& lits) const;
     void check_no_duplicate_lits_anywhere() const;
     void check_no_zero_ID_bins() const;
+    #ifdef USE_TBUDDY
     void free_bdds(vector<Xor>& xors);
+    #endif
     void print_all_clauses() const;
     void print_watchlist_stats() const;
     bool zero_irred_cls(const Lit lit) const;
