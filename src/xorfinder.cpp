@@ -193,6 +193,7 @@ void XorFinder::find_xors()
 
     // Need to do this due to XORs encoding new info
     //    see NOTE in cnf.h
+    TBUDDY_DO(solver->drat->flush());
     TBUDDY_DO(for(auto& x: solver->xorclauses) if (solver->drat->enabled()) x.create_bdd_xor());
     TBUDDY_DO(for(auto& x: solver->xorclauses_orig) if (solver->drat->enabled()) x.create_bdd_xor());
 

@@ -489,7 +489,6 @@ bool ClauseCleaner::clean_one_xor(Xor& x)
                 assert(solver->unsat_cl_ID == 0);
                 *solver->drat << add << ++solver->clauseID << fin;
                 solver->unsat_cl_ID = solver->clauseID;
-                solver->ok = false;
             }
             return false;
         case 1: {
