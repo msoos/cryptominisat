@@ -3809,8 +3809,8 @@ bool Solver::find_and_init_all_matrices()
         << " no irred with clash: " << no_irred_contains_clash
         << endl;
 
-        cout << "c xorclauses_orig follow." << endl;
-        for(const auto& x: xorclauses_orig) {
+        cout << "c unused xors follow." << endl;
+        for(const auto& x: xorclauses_unused) {
             cout << "c " << x << endl;
         }
         cout << "c FIN" << endl;

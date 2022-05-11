@@ -2015,22 +2015,23 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             {
                 XorFinder finder(this, solver);
                 finder.find_xors();
-//                 #ifdef USE_M4RI
-//                 if (topLevelGauss != NULL && !solver->drat->enabled()) {
-//                     auto xors = solver->xorclauses;
-//                     assert(solver->okay());
-//                     if (solver->ok) {
-//                         vector<Lit> out_changed_occur;
-//                         finder.move_xors_without_connecting_vars_to_unused();
-//                         topLevelGauss->toplevelgauss(xors, &out_changed_occur);
-//                         //these may have changed, recalculating occur
-//                         for(Lit lit: out_changed_occur) {
-//                             n_occurs[lit.toInt()] = calc_occ_data(lit);
-//                             n_occurs[(~lit).toInt()] = calc_occ_data(~lit);
-//                         }
-//                     }
-//                 }
-//                 #endif
+                #ifdef USE_M4RI
+                if (topLevelGauss != NULL && !solver->drat->enabled()) {
+                    auto xors = solver->xorclauses;
+                    assert(solver->okay());
+                    solver->ok = finder.xor_together_xors(xors);
+                    if (solver->ok) {
+                        vector<Lit> out_changed_occur;
+                        finder.move_xors_without_connecting_vars_to_unused();
+                        topLevelGauss->toplevelgauss(xors, &out_changed_occur);
+                        //these may have changed, recalculating occur
+                        for(Lit lit: out_changed_occur) {
+                            n_occurs[lit.toInt()] = calc_occ_data(lit);
+                            n_occurs[(~lit).toInt()] = calc_occ_data(~lit);
+                        }
+                    }
+                }
+                #endif
                 runStats.xorTime += finder.get_stats().findTime;
             }
         } else if (token == "occ-lit-rem") {
