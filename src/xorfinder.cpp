@@ -107,6 +107,7 @@ void XorFinder::clean_equivalent_xors(vector<Xor>& txors)
         }
         std::sort(txors.begin(), txors.end());
 
+        size_t sz = 1;
         vector<Xor>::iterator i = txors.begin();
         vector<Xor>::iterator j = i;
         ++i;
@@ -120,10 +121,12 @@ void XorFinder::clean_equivalent_xors(vector<Xor>& txors)
                     TBUDDY_DO(delete i->bdd);
                 }
             } else {
-                *j++ = *i;
+                j++;
+                *j = *i;
+                sz++;
             }
         }
-        txors.resize(j-txors.begin());
+        txors.resize(sz);
 
         if (solver->conf.verbosity) {
             cout << "c [xor-clean-equiv] removed equivalent xors: "
