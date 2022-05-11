@@ -2601,7 +2601,7 @@ lbool Searcher::solve(
     check_calc_vardist_features(true);
     #endif
 
-    SLOW_DEBUG_DO(assert(solver->check_order_heap_sanity()));
+    SLOW_DEBUG_DO(assert(fast_backw.fast_backw_on || solver->check_order_heap_sanity()));
     while(stats.conflicts < max_confl_per_search_solve_call
         && status == l_Undef
     ) {
@@ -2628,7 +2628,7 @@ lbool Searcher::solve(
             setup_polarity_strategy();
             adjust_restart_strategy_cutoffs();
         }
-        SLOW_DEBUG_DO(assert(solver->check_order_heap_sanity()));
+        SLOW_DEBUG_DO(assert(fast_backw.fast_backw_on || solver->check_order_heap_sanity()));
 
         if (must_abort(status)) goto end;
     }
@@ -2852,7 +2852,7 @@ void Searcher::finish_up_solve(const lbool status)
     }
 
     if (status == l_True) {
-        SLOW_DEBUG_DO(assert(check_order_heap_sanity()));
+        SLOW_DEBUG_DO(assert(fast_backw.fast_backw_on || solver->check_order_heap_sanity()));
         assert(solver->prop_at_head());
         model = assigns;
         cancelUntil(0);
@@ -3615,12 +3615,16 @@ bool Searcher::clear_gauss_matrices(const bool destruct)
     }
 
     if (conf.verbosity) print_matrix_stats();
+    for(EGaussian* g: gmatrices) g->move_back_xor_clauses();
     for(EGaussian* g: gmatrices) delete g;
     for(auto& w: gwatches) w.clear();
     gmatrices.clear();
     gqueuedata.clear();
-    for(auto& x: solver->xorclauses) solver->xorclauses_unused.push_back(std::move(x));
-    solver->xorclauses.clear();
+    TBUDDY_DO(for(auto& x: solver->xorclauses) delete x.bdd);
+    TBUDDY_DO(for(auto& x: solver->xorclauses_unused) delete x.bdd);
+    solver->xorclauses.clear(); // we rely on xorclauses_orig now
+    solver->xorclauses_unused.clear();
+    solver->xorclauses = solver->xorclauses_orig;
 
     return okay();
 }

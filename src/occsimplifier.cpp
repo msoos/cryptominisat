@@ -1857,6 +1857,7 @@ bool OccSimplifier::lit_rem_with_or_gates()
     assert(solver->prop_at_head());
     assert(added_irred_bin.empty());
     assert(added_long_cl.empty());
+    assert(!solver->drat->enabled() && "below is NOT ok with FRAT");
 
     double myTime = cpuTime();
     gateFinder = new GateFinder(this, solver);
@@ -2014,22 +2015,22 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             {
                 XorFinder finder(this, solver);
                 finder.find_xors();
-                #ifdef USE_M4RI
-                if (topLevelGauss != NULL && !solver->drat->enabled()) {
-                    auto xors = solver->xorclauses;
-                    assert(solver->okay());
-                    if (solver->ok) {
-                        vector<Lit> out_changed_occur;
-                        finder.move_xors_without_connecting_vars_to_unused();
-                        topLevelGauss->toplevelgauss(xors, &out_changed_occur);
-                        //these may have changed, recalculating occur
-                        for(Lit lit: out_changed_occur) {
-                            n_occurs[lit.toInt()] = calc_occ_data(lit);
-                            n_occurs[(~lit).toInt()] = calc_occ_data(~lit);
-                        }
-                    }
-                }
-                #endif
+//                 #ifdef USE_M4RI
+//                 if (topLevelGauss != NULL && !solver->drat->enabled()) {
+//                     auto xors = solver->xorclauses;
+//                     assert(solver->okay());
+//                     if (solver->ok) {
+//                         vector<Lit> out_changed_occur;
+//                         finder.move_xors_without_connecting_vars_to_unused();
+//                         topLevelGauss->toplevelgauss(xors, &out_changed_occur);
+//                         //these may have changed, recalculating occur
+//                         for(Lit lit: out_changed_occur) {
+//                             n_occurs[lit.toInt()] = calc_occ_data(lit);
+//                             n_occurs[(~lit).toInt()] = calc_occ_data(~lit);
+//                         }
+//                     }
+//                 }
+//                 #endif
                 runStats.xorTime += finder.get_stats().findTime;
             }
         } else if (token == "occ-lit-rem") {
@@ -2044,10 +2045,12 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
 
                 //Get rid of XOR clauses
                 if (solver->drat->enabled()) {
+                    TBUDDY_DO(solver->free_bdds(solver->xorclauses_orig));
                     TBUDDY_DO(solver->free_bdds(solver->xorclauses));
                     TBUDDY_DO(solver->free_bdds(solver->xorclauses_unused));
                 }
                 solver->xorclauses.clear();
+                solver->xorclauses_orig.clear();
                 solver->xorclauses_unused.clear();
 
                 if (solver->conf.do_empty_varelim) {
@@ -2057,9 +2060,9 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                     if (!eliminate_vars()) {
                         continue;
                     }
-                    if (solver->conf.varelim_check_resolvent_subs && !lit_rem_with_or_gates()) {
+                    /*if (solver->conf.varelim_check_resolvent_subs && !lit_rem_with_or_gates()) {
                         continue;
-                    }
+                    }*/
                 }
             }
         } else if (token == "occ-bva") {

@@ -209,14 +209,17 @@ bool Solver::add_xor_clause_inter(
         return ok;
     }
 
-    if (ps.size() > 2) {
-        xor_clauses_updated = true;
-    }
     ps[0] ^= rhs;
 
     //cout << "without rhs is: " << ps << endl;
     add_every_combination_xor(ps, attach, addDrat, red);
-    if (ps.size() > 2) xorclauses.push_back(Xor(ps, rhs, tmp_xor_clash_vars));
+    if (ps.size() > 2) {
+        xor_clauses_updated = true;
+        xorclauses.push_back(Xor(ps, rhs, tmp_xor_clash_vars));
+        xorclauses_orig.push_back(Xor(ps, rhs, tmp_xor_clash_vars));
+        TBUDDY_DO(if (drat->enabled()) xorclauses.back().create_bdd_xor());
+        TBUDDY_DO(if (drat->enabled()) xorclauses_orig.back().create_bdd_xor());
+    }
 
     return ok;
 }
@@ -990,6 +993,11 @@ void Solver::renumber_clauses(const vector<uint32_t>& outerToInter)
         updateVarsMap(x.clash_vars, outerToInter);
     }
 
+    for(Xor& x: xorclauses_orig) {
+        updateVarsMap(x.vars, outerToInter);
+        updateVarsMap(x.clash_vars, outerToInter);
+    }
+
     for(auto& v: removed_xorclauses_clash_vars) {
         v = getUpdatedVar(v, outerToInter);
     }
@@ -1073,13 +1081,14 @@ bool Solver::renumber_variables(bool must_renumber)
     #ifdef SLOWDEBUG
     for(const auto& x: xorclauses) for(const auto& v: x) assert(v < nVars());
     for(const auto& x: xorclauses_unused) for(const auto& v: x) assert(v < nVars());
+    for(const auto& x: xorclauses_orig) for(const auto& v: x) assert(v < nVars());
     #endif
 
     if (nVars() == 0) return okay();
     if (!must_renumber && calc_renumber_saving() < 0.2) return okay();
+    if (!clear_gauss_matrices()) return false;
 
     double myTime = cpuTime();
-    if (!clear_gauss_matrices()) return false;
     if (!clauseCleaner->remove_and_clean_all()) return false;
 
     //outerToInter[10] = 0 ---> what was 10 is now 0.
@@ -1675,9 +1684,7 @@ lbool Solver::solve_with_assumptions(
     assert(prop_at_head());
     assert(okay());
     #ifdef USE_BREAKID
-    if (breakid) {
-        breakid->start_new_solving();
-    }
+    if (breakid) breakid->start_new_solving();
     #endif
 
     //Simplify in case simplify_at_startup is set
@@ -1699,15 +1706,10 @@ lbool Solver::solve_with_assumptions(
     }
     #endif
 
-    if (status == l_Undef) {
-        status = iterate_until_solved();
-    }
+    if (status == l_Undef) status = iterate_until_solved();
 
     end:
-    if (sqlStats) {
-        sqlStats->finishup(status);
-    }
-
+    if (sqlStats) sqlStats->finishup(status);
     handle_found_solution(status, only_sampling_solution);
     unfill_assumptions_set();
     assumptions.clear();
@@ -1749,8 +1751,10 @@ void Solver::write_final_frat_clauses()
     TBUDDY_DO(for(auto& g: gmatrices) g->finalize_frat());
 
     *drat << "free bdds begin\n";
+    TBUDDY_DO(solver->free_bdds(solver->xorclauses_orig));
     TBUDDY_DO(solver->free_bdds(solver->xorclauses));
     TBUDDY_DO(solver->free_bdds(solver->xorclauses_unused));
+
 
     *drat << "tbdd_done() next\n";
     drat->flush();
@@ -3724,7 +3728,7 @@ vector<Xor> Solver::get_recovered_xors(const bool xor_together_xors)
     if (ret == l_False) return xors_ret;
 
     auto xors = xorclauses;
-        xors.insert(xors.end(), xorclauses_unused.begin(), xorclauses_unused.end());
+    xors.insert(xors.end(), xorclauses_unused.begin(), xorclauses_unused.end());
     if (xor_together_xors) {
         XorFinder finder(NULL, this);
         finder.xor_together_xors(xors);
@@ -3776,9 +3780,7 @@ bool Solver::find_and_init_all_matrices()
         }
         return true;
     }
-    if (conf.verbosity >= 1) {
-        cout << "c [find&init matx] performing matrix init" << endl;
-    }
+    if (conf.verbosity >= 1) cout << "c [find&init matx] performing matrix init" << endl;
 
     bool can_detach;
     if (!clear_gauss_matrices()) return false;
@@ -3802,13 +3804,13 @@ bool Solver::find_and_init_all_matrices()
 
         cout
         << "c [gauss]"
-        << " unused_xors: " << xorclauses_unused.size()
+        << " xorclauses_unused: " << xorclauses_unused.size()
         << " can detach: " << can_detach
         << " no irred with clash: " << no_irred_contains_clash
         << endl;
 
-        cout << "c unused xors follow." << endl;
-        for(const auto& x: xorclauses_unused) {
+        cout << "c xorclauses_orig follow." << endl;
+        for(const auto& x: xorclauses_orig) {
             cout << "c " << x << endl;
         }
         cout << "c FIN" << endl;
@@ -4235,18 +4237,13 @@ void Solver::detach_xor_clauses(
                 //Except if if it's part of an unused XOR. Then skip
                 //TODO: we should use the same check as in no_irred
                 for(const Lit lit: *cl) {
-                    if (seen[lit.var()] == 1) {
-                        torem = false;
-                    }
+                    if (seen[lit.var()] == 1) torem = false;
                 }
             } else {
                 //It has a USED XOR's clash var, delete
                 //obviously, must be redundant
                 for(const Lit lit: *cl) {
-                    if (seen[lit.var()] == 2) {
-                        //cout << "lit problem: " << lit << endl;
-                        todel = true;
-                    }
+                    if (seen[lit.var()] == 2) todel = true;
                 }
                 if (todel) {
                     //cout << "cl: " << *cl << endl;
@@ -4254,7 +4251,7 @@ void Solver::detach_xor_clauses(
                 }
             }
 
-            //XOR can be removed
+            //CL can be detached
             if (torem) {
                 assert(!cl->_xor_is_detached);
                 detached++;
@@ -4412,6 +4409,7 @@ bool Solver::fully_undo_xor_detach()
     }
 
     for(auto& x: xorclauses) x.detached = false;
+
     detached_xor_clauses = false;
     if (okay()) ok = propagate<false>().isNULL();
 

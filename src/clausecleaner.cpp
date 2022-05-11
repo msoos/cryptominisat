@@ -517,6 +517,7 @@ bool ClauseCleaner::clean_all_xor_clauses()
         last_trail = solver->trail_size();
         if (!clean_xor_clauses(solver->xorclauses)) return false;
         if (!clean_xor_clauses(solver->xorclauses_unused)) return false;
+        if (!clean_xor_clauses(solver->xorclauses_orig)) return false;
         solver->ok = solver->propagate<false>().isNULL();
     }
 

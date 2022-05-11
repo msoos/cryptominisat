@@ -184,8 +184,9 @@ public:
     //       binary with e.g. irred-bin-removal, which then leads to nothing representing
     //       the XOR clause! Then FRAT fails. This ALSO means that when cleaning the XOR clauses
     //       we can actually encounter UNSAT. Since it encodes information that's nowhere else.
-    vector<Xor> xorclauses;
-    vector<Xor> xorclauses_unused;
+    vector<Xor> xorclauses; // working set. Should be empty most of the time.
+    vector<Xor> xorclauses_orig; // used to re-generate the matrix
+    vector<Xor> xorclauses_unused; // used to help knowing when can we detach. Only makes sense when matrixes are set up.
 
     vector<BNN*> bnns;
     vector<vector<Lit>> bnn_reasons;

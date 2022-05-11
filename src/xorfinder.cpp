@@ -162,8 +162,10 @@ void XorFinder::find_xors()
         solver->drat->flush();
         TBUDDY_DO(for (auto const& x: solver->xorclauses) delete x.bdd);
         TBUDDY_DO(for (auto const& x: solver->xorclauses_unused) delete x.bdd);
+        TBUDDY_DO(for (auto const& x: solver->xorclauses_orig) delete x.bdd);
     }
     solver->xorclauses.clear();
+    solver->xorclauses_orig.clear();
     solver->xorclauses_unused.clear();
 
     double myTime = cpuTime();
@@ -184,11 +186,15 @@ void XorFinder::find_xors()
 
     find_xors_based_on_long_clauses();
     assert(runStats.foundXors == solver->xorclauses.size());
+
+    //clean them of equivalent XORs
     clean_equivalent_xors(solver->xorclauses);
+    solver->xorclauses_orig = solver->xorclauses;
 
     // Need to do this due to XORs encoding new info
     //    see NOTE in cnf.h
     TBUDDY_DO(for(auto& x: solver->xorclauses) if (solver->drat->enabled()) x.create_bdd_xor());
+    TBUDDY_DO(for(auto& x: solver->xorclauses_orig) if (solver->drat->enabled()) x.create_bdd_xor());
 
     //Cleanup
     for(ClOffset offset: occsimplifier->clauses) {
@@ -433,9 +439,7 @@ void XorFinder::move_xors_without_connecting_vars_to_unused()
     }
 
     //clear "seen"
-    for(Lit l: toClear) {
-        solver->seen[l.var()] = 0;
-    }
+    for(Lit l: toClear) solver->seen[l.var()] = 0;
     toClear.clear();
 
     solver->xorclauses = cleaned;
@@ -755,11 +759,11 @@ void XorFinder::clean_xors_from_empty(vector<Xor>& thisxors)
     for(size_t i = 0;i < thisxors.size(); i++) {
         Xor& x = thisxors[i];
         if (x.size() == 0 && x.rhs == false) {
-            solver->removed_xorclauses_clash_vars.insert(
-                solver->removed_xorclauses_clash_vars.end(),
-                x.clash_vars.begin(),
-                x.clash_vars.end());
-            TBUDDY_DO(delete x.bdd);
+            if (!x.clash_vars.empty()) {
+                solver->xorclauses_unused.push_back(x);
+            } else {
+                TBUDDY_DO(delete x.bdd);
+            }
         } else {
             verb_print(4, "xor after clean: " << thisxors[i]);
             thisxors[j++] = thisxors[i];

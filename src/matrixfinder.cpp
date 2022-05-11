@@ -109,9 +109,11 @@ bool MatrixFinder::find_matrices(bool& can_detach)
     double myTime = cpuTime();
 
     XorFinder finder(NULL, solver);
+
     for(auto& x: solver->xorclauses_unused) solver->xorclauses.push_back(std::move(x));
     solver->xorclauses_unused.clear();
     solver->clauseCleaner->clean_xor_clauses(solver->xorclauses);
+
     finder.grab_mem();
     finder.move_xors_without_connecting_vars_to_unused();
     if (!finder.xor_together_xors(solver->xorclauses)) return false;
@@ -119,7 +121,6 @@ bool MatrixFinder::find_matrices(bool& can_detach)
     finder.move_xors_without_connecting_vars_to_unused();
     finder.clean_equivalent_xors(solver->xorclauses);
     verb_print(1, "[matrix] unused xors from cleaning: " << solver->xorclauses_unused.size());
-
     for(const auto& x: solver->xorclauses_unused)
         clash_vars_unused.insert(x.clash_vars.begin(), x.clash_vars.end());
 

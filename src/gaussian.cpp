@@ -1529,6 +1529,14 @@ bool EGaussian::must_disable(GaussQData& gqd)
     return false;
 }
 
+void CMSat::EGaussian::move_back_xor_clauses()
+{
+    for(const auto& x: xorclauses) {
+        TBUDDY_DO(assert(x.bdd == NULL && "Should have finalized matrix first"));
+        solver->xorclauses.push_back(std::move(x));
+    }
+}
+
 #ifdef USE_TBUDDY
 void CMSat::EGaussian::finalize_frat()
 {
@@ -1565,8 +1573,12 @@ void CMSat::EGaussian::finalize_frat()
     delete_clauses(todel1);
     ilist_free(todel1);
 
-    for(auto& x2: xorclauses) solver->xorclauses.push_back(std::move(x2));
-    xorclauses.clear();
+    // clean BDDs in xorclauses
+    for(auto& x2: xorclauses) {
+        delete x2.bdd;
+        x2.bdd = NULL;
+    }
+
     *solver->drat << __PRETTY_FUNCTION__ << " end\n";
 }
 #endif

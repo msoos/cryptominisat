@@ -272,7 +272,9 @@ bool VarReplacer::perform_replace()
 
     //Replace XORs
     if (!replace_xor_clauses(solver->xorclauses)) goto end;
+    if (!replace_xor_clauses(solver->xorclauses_orig)) goto end;
     if (!replace_xor_clauses(solver->xorclauses_unused)) goto end;
+
     assert(solver->gmatrices.empty() && "Cannot replace vars inside GJ elim");
 
     for(auto& v: solver->removed_xorclauses_clash_vars) {
@@ -383,11 +385,6 @@ bool VarReplacer::replace_one_xor_clause(Xor& x)
             runStats.replacedLits++;
         }
     }
-//     if (updated) {
-//         //TODO
-//         //FRAT could fail here maybe? No idea.
-//         // we'd need to create a BDD representing the XOR, then XOR them together.
-//     }
 
     solver->clean_xor_vars_no_prop(x.get_vars(), x.rhs);
     switch (x.size()) {
