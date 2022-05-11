@@ -366,6 +366,7 @@ bool VarReplacer::replace_one_xor_clause(Xor& x)
             const Lit l2 = get_lit_replaced_with_fast(l);
             #ifdef USE_TBUDDY
             if (solver->drat->enabled()) {
+                solver->drat->flush();
                 ilist bin = ilist_new(2);
                 ilist_resize(bin, 2);
                 bin[0] = v+1;

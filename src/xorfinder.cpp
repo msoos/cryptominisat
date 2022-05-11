@@ -762,6 +762,7 @@ void XorFinder::clean_xors_from_empty(vector<Xor>& thisxors)
             if (!x.clash_vars.empty()) {
                 solver->xorclauses_unused.push_back(x);
             } else {
+                TBUDDY_DO(solver->drat->flush());
                 TBUDDY_DO(delete x.bdd);
             }
         } else {
