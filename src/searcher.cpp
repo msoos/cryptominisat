@@ -3620,11 +3620,20 @@ bool Searcher::clear_gauss_matrices(const bool destruct)
     for(auto& w: gwatches) w.clear();
     gmatrices.clear();
     gqueuedata.clear();
-    free_bdds(solver->xorclauses);
-    free_bdds(solver->xorclauses_unused);
-    solver->xorclauses.clear(); // we rely on xorclauses_orig now
-    solver->xorclauses_unused.clear();
-    solver->xorclauses = solver->xorclauses_orig;
+    free_bdds(xorclauses);
+    free_bdds(xorclauses_unused);
+    xorclauses.clear(); // we rely on xorclauses_orig now
+    xorclauses_unused.clear();
+    if (!destruct) {
+        for(const auto& x: xorclauses_orig) {
+            xorclauses.push_back(x);
+            #ifdef USE_TBUDDY
+            xorclauses.back().bdd = NULL;
+            drat->flush();
+            if (drat->enabled()) solver->xorclauses.back().create_bdd_xor();
+            #endif
+        }
+    }
 
     return okay();
 }
