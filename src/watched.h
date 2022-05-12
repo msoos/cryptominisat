@@ -301,7 +301,7 @@ struct OccurClause {
 
         if (ws.isBin()) {
             assert(other.ws.isBin());
-            return ws.lit2() < other.ws.lit2();
+            return ws.get_ID() < other.ws.get_ID();
         }
 
         assert(!ws.isBNN()); // no idea how this would work
