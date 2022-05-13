@@ -808,6 +808,21 @@ size_t SubsumeStrengthen::mem_used() const
     return b;
 }
 
+void SubsumeStrengthen::remove_binary_cl(const OccurClause& cl)
+{
+    solver->detach_bin_clause(
+        cl.lit, cl.ws.lit2(), cl.ws.red(), cl.ws.get_ID());
+    (*solver->drat) << del << cl.ws.get_ID() << cl.lit << cl.ws.lit2() << fin;
+    if (!cl.ws.red()) {
+        simplifier->n_occurs[cl.lit.toInt()]--;
+        simplifier->n_occurs[cl.ws.lit2().toInt()]--;
+        simplifier->elim_calc_need_update.touch(cl.lit);
+        simplifier->elim_calc_need_update.touch(cl.ws.lit2());
+        simplifier->removed_cl_with_var.touch(cl.lit);
+        simplifier->removed_cl_with_var.touch(cl.ws.lit2());
+    }
+}
+
 //Implicit input here is ALWAY irred
 bool SubsumeStrengthen::backw_sub_str_with_impl(
     const vector<Lit>& lits,
@@ -830,17 +845,7 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
     ) {
         if (subs[j].ws.isBin()) {
             if (subsLits[j] == lit_Undef) { //subsume
-                solver->detach_bin_clause(
-                    subs[j].lit, subs[j].ws.lit2(), subs[j].ws.red(), subs[j].ws.get_ID());
-                (*solver->drat) << del << subs[j].ws.get_ID() << subs[j].lit << subs[j].ws.lit2() << fin;
-                if (!subs[j].ws.red()) {
-                    simplifier->n_occurs[subs[j].lit.toInt()]--;
-                    simplifier->n_occurs[subs[j].ws.lit2().toInt()]--;
-                    simplifier->elim_calc_need_update.touch(subs[j].lit);
-                    simplifier->elim_calc_need_update.touch(subs[j].ws.lit2());
-                    simplifier->removed_cl_with_var.touch(subs[j].lit);
-                    simplifier->removed_cl_with_var.touch(subs[j].ws.lit2());
-                }
+                remove_binary_cl(subs[j]);
             } else { //strengthen
                 lbool val = solver->value(subsLits[j]);
                 const int32_t ID = ++solver->clauseID;

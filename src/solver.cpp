@@ -4743,8 +4743,7 @@ vector<OrGate> Solver::get_recovered_or_gates()
 
     for(auto& g: or_gates) {
         g.rhs = map_inter_to_outer(g.rhs);
-        g.lit1 = map_inter_to_outer(g.lit1);
-        g.lit2 = map_inter_to_outer(g.lit2);
+        for(auto& l: g.lits) l = map_inter_to_outer(l);
     }
 
     return or_gates;

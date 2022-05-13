@@ -470,6 +470,13 @@ public:
         setStrenghtened();
     }
 
+    //We MUST have just strengthen-ed the clause!
+    void enlarge_one()
+    {
+        mySize+=1;
+        must_recalc_abst = true;
+    }
+
     bool red() const
     {
         return isRed;

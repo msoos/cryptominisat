@@ -58,18 +58,10 @@ void GateFinder::find_all()
 
     assert(solver->watches.get_smudged_list().empty());
     find_or_gates_and_update_stats();
-    if (solver->conf.doPrintGateDot) {
-        print_graphviz_dot();
-    }
-//     if (true) {
-//         for(auto g: orGates) {
-//             cout << "found: " << g << endl;
-//         }
-//     }
+    if (solver->conf.doPrintGateDot) print_graphviz_dot();
+    VERBOSE_DEBUG_DO(for(auto g: orGates) cout << "found: OR gate" << g << endl;);
 
-    if (solver->conf.verbosity >= 3) {
-        runStats.print(solver->nVars());
-    }
+    if (solver->conf.verbosity >= 3) runStats.print(solver->nVars());
     globalStats += runStats;
     solver->sumSearchStats.num_gates_found_last = orGates.size();
 }
@@ -171,52 +163,34 @@ void GateFinder::find_or_gates_in_sweep_mode(const Lit lit)
     *simplifier->limit_to_decrease -= ws2.size();
     for(const Watched w: ws2) {
         //Looking for tri or longer
-        if (!w.isClause()) {
-            continue;
-        }
-
+        if (!w.isClause()) continue;
         ClOffset offset = w.get_offset();
         const Clause& cl = *solver->cl_alloc.ptr(offset);
-        if (cl.size() > 3 || cl.red() || cl.getRemoved()) {
-            continue;
-        }
-        assert(cl.size() == 3);
-
+        if (cl.red() || cl.getRemoved() || cl.size() > 5) continue;
+        tmp_lhs.clear();
 
         bool ok = true;
-        int at = 0;
-        Lit lits[2];
-        for(int i = 0; i < 3; i++) {
-            if (cl[i] != ~lit && !seen[cl[i].toInt()]) {
+        for(auto const& l: cl) {
+            if (l != ~lit && !seen[l.toInt()]) {
                 ok = false;
                 break;
             }
-            if (cl[i] != ~lit) {
-                assert(at < 2);
-                lits[at++] = cl[i];
-            }
+            if (l != ~lit) tmp_lhs.push_back(l);
         }
-        if (!ok) {
-            break;
-        }
-
-        add_gate_if_not_already_inside(lit, lits[0], lits[1]);
+        if (!ok) continue;
+        add_gate_if_not_already_inside(lit, tmp_lhs);
     }
 
     *simplifier->limit_to_decrease -= toClear.size();
-    for(const Lit toclear: toClear) {
-        seen[toclear.toInt()] = 0;
-    }
+    for(const Lit toclear: toClear) seen[toclear.toInt()] = 0;
     toClear.clear();
 }
 
 
 void GateFinder::add_gate_if_not_already_inside(
-    const Lit rhs
-    , const Lit lit1
-    , const Lit lit2
-) {
-    OrGate gate(rhs, lit1, lit2);
+    const Lit rhs , const vector<Lit>& lhs)
+{
+    OrGate gate(rhs, lhs);
     for (Watched ws: solver->watches[gate.rhs]) {
         if (ws.isIdx()
             && orGates[ws.get_idx()] == gate
@@ -247,7 +221,7 @@ void GateFinder::print_graphviz_dot()
     vector<bool> gateUsed;
     gateUsed.resize(orGates.size(), false);
     size_t index = 0;
-    for (const OrGate orGate: orGates) {
+    for (const OrGate& orGate: orGates) {
         index++;
         for (const Lit lit: orGate.get_lhs()) {
             for (Watched ws: solver->watches[lit]) {

@@ -48,6 +48,7 @@ public:
     bool backw_sub_str_long_with_bins();
     bool backw_sub_str_long_with_bins_watch(const Lit lit, bool both_bins = false);
     bool handle_added_long_cl(const bool main_run);
+    void remove_binary_cl(const OccurClause& cl);
 
 
     Sub0Ret backw_sub_with_long(const ClOffset offset);

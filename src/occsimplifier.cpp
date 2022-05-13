@@ -1057,6 +1057,92 @@ void OccSimplifier::check_no_marked_clauses()
     }
 }
 
+void OccSimplifier::subs_with_resolvent_clauses()
+{
+    assert(solver->okay());
+    assert(solver->prop_at_head());
+    double myTime = cpuTime();
+    uint64_t removed = 0;
+    uint64_t resolvents_checked = 0;
+    limit_to_decrease = &norm_varelim_time_limit;
+
+    for(uint32_t var = 0; var < solver->nVars(); var++) {
+        if (solver->value(var) != l_Undef || solver->varData[var].removed != Removed::none) continue;
+
+        const Lit lit(var, false);
+        const auto& tmp_poss = solver->watches[lit];
+        const auto& tmp_negs = solver->watches[~lit];
+        int32_t ID1;
+        int32_t ID2;
+        for (auto const& pos: tmp_poss) {
+            *limit_to_decrease -= 3;
+            if (pos.isBin()) {
+                if (pos.red()) continue;
+                ID1 = pos.get_ID();
+            }
+            else if (pos.isClause()) {
+                const Clause *cl = solver->cl_alloc.ptr(pos.get_offset());
+                if (cl->getRemoved() || cl->red()) continue;
+                ID1 = cl->stats.ID;
+            }
+
+            for (auto const& neg: tmp_negs) {
+                *limit_to_decrease -= 3;
+                if (neg.isBin()) {
+                    if (neg.red()) continue;
+                    ID2 = neg.get_ID();
+                } else if (neg.isClause()) {
+                    const Clause *cl = solver->cl_alloc.ptr(neg.get_offset());
+                    if (cl->getRemoved() || cl->red()) continue;
+                    ID2 = cl->stats.ID;
+                }
+
+                //Resolve the two clauses
+                bool tautological = resolve_clauses(pos, neg, lit);
+                if (tautological) continue;
+                if (solver->satisfied(dummy)) continue;
+                if (dummy.size() == 1) {
+                    // could remove binary subsumed, which would lead watchlist manipulated
+                    // which would lead to memory error, since we are going thorugh it
+                    // just skip.
+                    continue;
+                }
+                if (*limit_to_decrease < -10LL*1000LL) return;
+
+                resolvents_checked++;
+                tmp_subs.clear();
+                std::sort(dummy.begin(), dummy.end());
+                sub_str->find_subsumed(
+                    CL_OFFSET_MAX,
+                    dummy,
+                    calcAbstraction(dummy),
+                    tmp_subs,
+                    true //only irred
+                );
+                for(const auto& sub: tmp_subs) {
+                    if (sub.ws.isBin()) {
+                        const auto ID3 = sub.ws.get_ID();
+                        if (ID3 == ID1 || ID3 == ID2 || sub.ws.red()) continue;
+                        sub_str->remove_binary_cl(sub);
+                        removed++;
+                    } else if (sub.ws.isClause()) {
+                        const Clause* cl = solver->cl_alloc.ptr(sub.ws.get_offset());
+                        const auto ID3 = cl->stats.ID;
+                        if (ID3 == ID1 || ID3 == ID2 || cl->red()) continue;
+                        unlink_clause(sub.ws.get_offset(), true, false, true);
+                        removed++;
+                    }
+                }
+            }
+        }
+    }
+    solver->clean_occur_from_removed_clauses_only_smudged();
+    free_clauses_to_free();
+    verb_print(1, "[occ-resolv-subs] removed: " << removed
+    << " checked: " << resolvents_checked
+    << " T: " << (cpuTime()-myTime));
+}
+
 bool OccSimplifier::eliminate_vars()
 {
     assert(solver->okay());
@@ -1867,77 +1953,95 @@ bool OccSimplifier::lit_rem_with_or_gates()
     delete gateFinder;
     gateFinder = NULL;
 
-    uint32_t shortened = 0;
+    uint64_t shortened = 0;
+    uint64_t removed = 0;
     for(const auto& gate: gates) {
         if (solver->value(gate.rhs) != l_Undef) continue;
+        for(auto const& l: gate.lits) seen[l.toInt()] = 1;
 
-        Lit l1 = gate.lit1;
-        Lit l2 = gate.lit2;
-        if (solver->watches[l1].size() > solver->watches[l1].size()) {
-            std::swap(l1, l2);
+        Lit smallest = gate.lits[0];
+        uint32_t smallest_val = solver->watches[gate.lits[0]].size();
+        for(uint32_t i = 1; i < gate.lits.size(); i++) {
+            const Lit l = gate.lits[i];
+            const uint32_t sz = solver->watches[l].size();
+            if (sz < smallest_val) {
+                smallest = l;
+                smallest_val = sz;
+            }
         }
-        solver->watches[l1].copyTo(poss);
+        solver->watches[smallest].copyTo(poss);
+
+        VERBOSE_PRINT("Checking to shorten with gate: " << gate);
         for(const auto& w: poss) {
             if (w.isBin() || w. isBNN()) continue;
             assert(w.isClause());
             const auto off = w.get_offset();
             Clause* cl = solver->cl_alloc.ptr(w.get_offset());
-            if (cl->size() == 3 || //could be the gate definition, skip
+            if (cl->size() == gate.lits.size()+1 || //could be the gate definition, skip
                 cl->red()) //no need, slow
             {
                 continue;
             }
             assert(!cl->getRemoved());
             assert(!cl->freed());
+            assert(cl->getOccurLinked());
 
             //TODO check calcAbst!
             bool contains_rhs = false;
-            uint32_t at = numeric_limits<uint32_t>::max();
+            bool contains_inv_rhs = false;
+            uint32_t found = 0;
             for(uint32_t i = 0, sz = cl->size(); i < sz; i++) {
                 const Lit l = (*cl)[i];
-                if (l > l2) {
-                    //lits are sorted, early-abort
-                    break;
-                }
-
-                if (l == l2) at = i;
                 if (l == gate.rhs) contains_rhs = true;
+                if (l == ~gate.rhs) contains_inv_rhs = true;
+                if (seen[l.toInt()]) found++;
             }
-            if (at == numeric_limits<uint32_t>::max()) continue;
+            if (found < gate.lits.size()) continue;
+            assert(found == gate.lits.size());
+            VERBOSE_PRINT("Gate LHS matches clause: " << *cl);
 
             (*solver->drat) << deldelay << *cl << fin;
+            if (contains_inv_rhs) {
+                (*solver->drat) << DratFlag::deldelay;
+                unlink_clause(off);
+                removed++;
+                continue;
+            }
             shortened++;
-            cl->strengthen(l1);
-            if (contains_rhs) cl->strengthen(l2);
-            else (*cl)[at] = gate.rhs; //replace l2
 
-            cl->reCalcAbstraction(); //abst is wrong
-            std::sort(cl->begin(), cl->end());
-            removeWCl(solver->watches[l2], off);
-            removeWCl(solver->watches[l1], off);
-            INC_ID(*cl);
-            (*solver->drat) << add << *cl << fin << findelay;
+            for(auto const& l: gate.lits) {
+                removeWCl(solver->watches[l], off);
+                n_occurs[l.toInt()]--;
+                elim_calc_need_update.touch(l);
+                removed_cl_with_var.touch(l);
+                cl->strengthen(l);
+            }
+
+            solver->litStats.irredLits-=gate.lits.size();
             if (!contains_rhs) {
+                cl->enlarge_one();
+                (*cl)[cl->size()-1] = gate.rhs;
+                cl->reCalcAbstraction();
                 solver->watches[gate.rhs].push(Watched(off, cl->abst));
                 n_occurs[gate.rhs.toInt()]++;
                 elim_calc_need_update.touch(gate.rhs);
-                solver->litStats.irredLits--;
+                solver->litStats.irredLits++;
             } else {
-                solver->litStats.irredLits-=2;
+                cl->reCalcAbstraction();
             }
-            n_occurs[l1.toInt()]--;
-            n_occurs[l2.toInt()]--;
-            elim_calc_need_update.touch(l1);
-            elim_calc_need_update.touch(l2);
-            removed_cl_with_var.touch(l1);
-            removed_cl_with_var.touch(l2);
+            std::sort(cl->begin(), cl->end());
+            INC_ID(*cl);
+            (*solver->drat) << add << *cl << fin << findelay;
+            cout << "New cl: " << *cl << endl;
         }
+        for(auto const& l: gate.lits) seen[l.toInt()] = 0;
     }
     //Update global stats
     const double time_used = cpuTime() - myTime;
     //const bool time_out = (*limit_to_decrease <= 0);
     verb_print(1, "[occ-gate-based-lit-rem]"
         << " lit-rem: " << shortened
+        << " cl-rem: " << removed
         << solver->conf.print_times(time_used, false));
 
     if (solver->sqlStats) {
@@ -2061,10 +2165,12 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                     if (!eliminate_vars()) {
                         continue;
                     }
-                    /*if (solver->conf.varelim_check_resolvent_subs && !lit_rem_with_or_gates()) {
-                        continue;
-                    }*/
                 }
+            }
+        } else if (token == "occ-rem-with-orgates") {
+            //TODO FIX -- should work with DRAT enabled too
+            if (!solver->drat->enabled()) {
+                lit_rem_with_or_gates();
             }
         } else if (token == "occ-bva") {
             if (solver->conf.do_bva && false) { //TODO due to IDs, this is BROKEN
@@ -2081,6 +2187,8 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                     added_long_cl.clear();
                 }
             }
+        } else if (token == "occ-resolv-subs") {
+            subs_with_resolvent_clauses();
         } else if (token == "") {
             //nothing, ignore empty token
         } else {

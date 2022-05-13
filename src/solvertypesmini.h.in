@@ -190,35 +190,24 @@ inline std::ostream& operator<<(std::ostream& cout, const lbool val)
 
 class OrGate {
     public:
-        OrGate(const Lit& _rhs, Lit _lit1, Lit _lit2) :
-            lit1(_lit1)
-            , lit2(_lit2)
+        OrGate(const Lit& _rhs, const std::vector<Lit>& _lits) :
+            lits(_lits)
             , rhs(_rhs)
         {
-            if (lit1 > lit2)
-                std::swap(lit1, lit2);
+            std::sort(lits.begin(), lits.end());
         }
 
         bool operator==(const OrGate& other) const
         {
-            return
-                rhs == other.rhs
-                && lit1 == other.lit1
-                && lit2 == other.lit2
-                ;
+            return rhs == other.rhs && lits == other.lits;
         }
-        std::array<Lit, 2> get_lhs() const
+        const std::vector<Lit>& get_lhs() const
         {
-            return std::array<Lit, 2>{{lit1, lit2}};
-        }
-        std::array<Lit, 3> get_all() const
-        {
-            return std::array<Lit, 3>{{lit1, lit2, rhs}};
+            return lits;
         }
 
         //LHS
-        Lit lit1;
-        Lit lit2;
+        std::vector<Lit> lits;
 
         //RHS
         Lit rhs;

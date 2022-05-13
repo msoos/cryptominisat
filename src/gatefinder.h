@@ -35,27 +35,13 @@ class Solver;
 class OccSimplifier;
 using std::set;
 
-struct GateCompareForEq
-{
-    bool operator()(const OrGate& a, const OrGate& b) const
-    {
-        if (a.lit1 != b.lit1) {
-            return (a.lit1 < b.lit1);
-        }
-
-        if (a.lit2 != b.lit2) {
-            return (a.lit2 < b.lit2);
-        }
-        return (a.rhs < b.rhs);
-    }
-};
-
 inline std::ostream& operator<<(std::ostream& os, const OrGate& gate)
 {
     os
     << " gate "
-    << " lits: " << gate.lit1 << ", " << gate.lit2
-    << " rhs: " << gate.rhs;
+    << " lits: ";
+    for(auto const& l: gate.lits) os << l << ",";
+    os << " rhs: " << gate.rhs;
     return os;
 }
 
@@ -123,10 +109,11 @@ private:
 
     //Setup
     void link_in_gate(const OrGate& gate);
-    void add_gate_if_not_already_inside(Lit rhs, Lit lit1, Lit lit2);
+    void add_gate_if_not_already_inside(const Lit rhs, const vector<Lit>& lhs);
     void find_or_gates_in_sweep_mode(Lit lit);
 
     //Finding
+    vector<Lit> tmp_lhs;
     void find_or_gates_and_update_stats();
     void find_or_gates();
     void findOrGate(
