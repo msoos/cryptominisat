@@ -178,7 +178,8 @@ void GateFinder::find_or_gates_in_sweep_mode(const Lit lit)
             if (l != ~lit) tmp_lhs.push_back(l);
         }
         if (!ok) continue;
-        add_gate_if_not_already_inside(lit, tmp_lhs);
+        SLOW_DEBUG_DO(assert(std::is_sorted(tmp_lhs.begin(), tmp_lhs.end())));
+        add_gate_if_not_already_inside(lit, tmp_lhs, cl.stats.ID);
     }
 
     *simplifier->limit_to_decrease -= toClear.size();
@@ -188,9 +189,9 @@ void GateFinder::find_or_gates_in_sweep_mode(const Lit lit)
 
 
 void GateFinder::add_gate_if_not_already_inside(
-    const Lit rhs , const vector<Lit>& lhs)
+    const Lit rhs , const vector<Lit>& lhs, const int32_t ID)
 {
-    OrGate gate(rhs, lhs);
+    OrGate gate(rhs, lhs, ID);
     for (Watched ws: solver->watches[gate.rhs]) {
         if (ws.isIdx()
             && orGates[ws.get_idx()] == gate

@@ -37,11 +37,9 @@ using std::set;
 
 inline std::ostream& operator<<(std::ostream& os, const OrGate& gate)
 {
-    os
-    << " gate "
-    << " lits: ";
+    os << " gate " << " lits: ";
     for(auto const& l: gate.lits) os << l << ",";
-    os << " rhs: " << gate.rhs;
+    os << " rhs: " << gate.rhs << " ID: " << gate.ID;
     return os;
 }
 
@@ -109,7 +107,7 @@ private:
 
     //Setup
     void link_in_gate(const OrGate& gate);
-    void add_gate_if_not_already_inside(const Lit rhs, const vector<Lit>& lhs);
+    void add_gate_if_not_already_inside(const Lit rhs, const vector<Lit>& lhs, const int32_t ID);
     void find_or_gates_in_sweep_mode(Lit lit);
 
     //Finding

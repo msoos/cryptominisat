@@ -1936,6 +1936,30 @@ vector<ITEGate> OccSimplifier::recover_ite_gates()
     return or_gates;
 }
 
+struct OrGateSorterLHS {
+    bool operator()(const OrGate& a, const OrGate& b)
+    {
+        if (a.lits.size() != b.lits.size()) return a.lits.size() < b.lits.size();
+        for(uint32_t i = 0; i < a.lits.size(); i++) {
+            if (a.lits[i] != b.lits[i]) return a.lits[i] < b.lits[i];
+        }
+        return a.rhs < b.rhs;
+    }
+};
+
+
+struct GateLHSEq {
+    bool operator()(const OrGate& a, const OrGate& b)
+    {
+        if (a.lits.size() != b.lits.size()) return false;
+        for(uint32_t i = 0; i < a.lits.size(); i++) {
+            if (a.lits[i] != b.lits[i]) return false;
+        }
+        return true;
+    }
+};
+
+
 // Checks that both inputs l1 & l2 are in the Clause. If so, replaces it with the RHS
 bool OccSimplifier::lit_rem_with_or_gates()
 {
@@ -1948,10 +1972,19 @@ bool OccSimplifier::lit_rem_with_or_gates()
     double myTime = cpuTime();
     gateFinder = new GateFinder(this, solver);
     gateFinder->find_all();
-    const auto gates = gateFinder->get_gates();
+    auto gates = gateFinder->get_gates();
     gateFinder->cleanup();
     delete gateFinder;
     gateFinder = NULL;
+
+    // we can't have 2 definitions of the same gate with different RHS
+    // Otherwise, we have a V b = c  --> i.e. a V b V -c exists
+    //           and have a V b = d  --> i.e. a V b V -d exists
+    //      and we could replace (a V b V -c) with d V -c
+    //      and we could replace (a V b V -d) with c V -d
+    //      which would loose the definiton of c->a V b and d-> a V b
+    std::sort(gates.begin(), gates.end(), OrGateSorterLHS());
+    gates.erase(unique(gates.begin(), gates.end(), GateLHSEq()),gates.end());
 
     uint64_t shortened = 0;
     uint64_t removed = 0;
@@ -1977,12 +2010,12 @@ bool OccSimplifier::lit_rem_with_or_gates()
             assert(w.isClause());
             const auto off = w.get_offset();
             Clause* cl = solver->cl_alloc.ptr(w.get_offset());
-            if (cl->size() == gate.lits.size()+1 || //could be the gate definition, skip
-                cl->red()) //no need, slow
+            if (cl->stats.ID == gate.ID || //the gate definition, skip
+                cl->red() || //no need, slow
+                cl->getRemoved())
             {
                 continue;
             }
-            assert(!cl->getRemoved());
             assert(!cl->freed());
             assert(cl->getOccurLinked());
 
@@ -1990,26 +2023,28 @@ bool OccSimplifier::lit_rem_with_or_gates()
             bool contains_rhs = false;
             bool contains_inv_rhs = false;
             uint32_t found = 0;
-            for(uint32_t i = 0, sz = cl->size(); i < sz; i++) {
-                const Lit l = (*cl)[i];
+            for(auto const& l: *cl) {
                 if (l == gate.rhs) contains_rhs = true;
                 if (l == ~gate.rhs) contains_inv_rhs = true;
                 if (seen[l.toInt()]) found++;
             }
             if (found < gate.lits.size()) continue;
             assert(found == gate.lits.size());
-            VERBOSE_PRINT("Gate LHS matches clause: " << *cl);
+//             cout << "Gate LHS matches clause: " << *cl << " gate: " << gate << endl;
 
-            (*solver->drat) << deldelay << *cl << fin;
             if (contains_inv_rhs) {
-                (*solver->drat) << DratFlag::deldelay;
-                unlink_clause(off);
+//                 cout << "Removing cl: " << *cl << endl;
+                (*solver->drat) << del << *cl << fin;
+                unlink_clause(off, true, false, true);
                 removed++;
                 continue;
             }
             shortened++;
+            (*solver->drat) << deldelay << *cl << fin;
 
+//             cout << "Shortening cl: " << *cl << endl;
             for(auto const& l: gate.lits) {
+                solver->watches.smudge(l);
                 removeWCl(solver->watches[l], off);
                 n_occurs[l.toInt()]--;
                 elim_calc_need_update.touch(l);
@@ -2032,10 +2067,27 @@ bool OccSimplifier::lit_rem_with_or_gates()
             std::sort(cl->begin(), cl->end());
             INC_ID(*cl);
             (*solver->drat) << add << *cl << fin << findelay;
-            cout << "New cl: " << *cl << endl;
+//             cout << "Shortened cl: " << *cl << endl;
+
+            if (cl->size() == 2) {
+                n_occurs[(*cl)[0].toInt()]++;
+                n_occurs[(*cl)[1].toInt()]++;
+                solver->attach_bin_clause((*cl)[0], (*cl)[1], false, cl->stats.ID, false);
+                unlink_clause(off, false, false, true);
+//                 cout << "Became bin." << endl;
+            }
         }
         for(auto const& l: gate.lits) seen[l.toInt()] = 0;
     }
+    if (!deal_with_added_long_and_bin(true)) goto end;
+
+    end:
+    solver->clean_occur_from_removed_clauses_only_smudged();
+    free_clauses_to_free();
+
+    SLOW_DEBUG_DO(check_n_occur());
+    SLOW_DEBUG_DO(check_clauses_lits_ordered());
+
     //Update global stats
     const double time_used = cpuTime() - myTime;
     //const bool time_out = (*limit_to_decrease <= 0);
@@ -2051,7 +2103,6 @@ bool OccSimplifier::lit_rem_with_or_gates()
             , time_used
         );
     }
-
 
     assert(solver->okay());
     assert(solver->prop_at_head());
