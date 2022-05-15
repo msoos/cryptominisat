@@ -4311,8 +4311,6 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
         weaken(lit, antec_poss,  antec_poss_weakened);
         weaken(~lit, antec_negs,  antec_negs_weakened);
     }
-    /*weaken(lit, gates_poss,  gates_poss_weakened);
-    weaken(lit, gates_negs,  gates_negs_weakened);*/
 
     uint32_t limit = pos+neg+grow;
     bool ret = true;
@@ -4334,98 +4332,6 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
             if (!generate_resolvents(antec_poss, antec_negs, lit, limit)) {
                 ret = false;
             }
-        }
-    }
-
-    if (solver->conf.varelim_check_resolvent_subs) {
-        vector<OccurClause> orig_cls;
-        for(auto& c: solver->watches[lit]) if (c.isClause()) {
-            Clause* cl = solver->cl_alloc.ptr(c.get_offset());
-            if (!cl->red()) {
-                orig_cls.push_back(OccurClause(lit_Undef, c));
-            }
-        }
-        for(auto& c: solver->watches[~lit]) if (c.isClause()) {
-            Clause* cl = solver->cl_alloc.ptr(c.get_offset());
-            if (!cl->red()) {
-                orig_cls.push_back(OccurClause(lit_Undef, c));
-            }
-        }
-
-        tmp_subs.clear();
-        uint64_t new_lits = 0;
-        for(uint32_t i = 0; i < resolvents.at; i++) {
-            const auto& lits = resolvents.resolvents_lits[i];
-            if (lits.size() > 2) new_lits += lits.size();
-            if (lits.size() == 1) continue;
-            sub_str->find_subsumed(
-                CL_OFFSET_MAX,
-                lits,
-                calcAbstraction(lits),
-                tmp_subs,
-                true //only irred
-            );
-        }
-        std::sort(tmp_subs.begin(), tmp_subs.end());
-        tmp_subs.erase(unique(tmp_subs.begin(),tmp_subs.end()),tmp_subs.end());
-        std::sort(orig_cls.begin(), orig_cls.end());
-        auto it = std::set_difference(
-            tmp_subs.begin(), tmp_subs.end(), orig_cls.begin(), orig_cls.end(), tmp_subs.begin());
-        tmp_subs.resize(it-tmp_subs.begin());
-
-        for (const auto& occ_cl: tmp_subs) {
-            if (occ_cl.ws.isBin()) {
-                solver->detach_bin_clause(
-                    occ_cl.lit, occ_cl.ws.lit2(), occ_cl.ws.red(), occ_cl.ws.get_ID());
-                (*solver->drat) << del << occ_cl.ws.get_ID() << occ_cl.lit << occ_cl.ws.lit2() << fin;
-                if (!occ_cl.ws.red()) {
-                    n_occurs[occ_cl.lit.toInt()]--;
-                    n_occurs[occ_cl.ws.lit2().toInt()]--;
-                    elim_calc_need_update.touch(occ_cl.lit);
-                    elim_calc_need_update.touch(occ_cl.ws.lit2());
-                    removed_cl_with_var.touch(occ_cl.lit);
-                    removed_cl_with_var.touch(occ_cl.ws.lit2());
-                }
-                new_lits -= 2;
-            }
-
-            if (occ_cl.ws.isClause()) {
-                ClOffset off = occ_cl.ws.get_offset();
-                Clause* cl = solver->cl_alloc.ptr(off);
-                if (!cl->getRemoved() && !cl->freed()) {
-                    unlink_clause(off, true, true, true);
-                    new_lits -= cl->size();
-                }
-            }
-        }
-
-        for(const auto& w: poss) {
-            if (w.isBin()) {
-                new_lits -= 2;
-                continue;
-            }
-            assert(w.isClause());
-            Clause* cl = solver->cl_alloc.ptr(w.get_offset());
-            new_lits -= cl->size();
-        }
-        for(const auto& w: negs) {
-            if (w.isBin()) {
-                new_lits -= 2;
-                continue;
-            }
-            assert(w.isClause());
-            Clause* cl = solver->cl_alloc.ptr(w.get_offset());
-            new_lits -= cl->size();
-        }
-
-        //TODO some of the subsumed clauses could be the clauses in POSS and NEGS. Have to check.
-        if (ret &&
-            ((int)resolvents.size() - (int)tmp_subs.size() < (int)limit-15
-                || (int)new_lits < std::min<int>(grow-20, -10))
-        ) {
-            return true;
-        } else {
-            return false;
         }
     }
 
