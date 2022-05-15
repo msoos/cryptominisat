@@ -211,7 +211,7 @@ public:
     }
 
     template<bool inprocess>
-    bool propagate_occur();
+    bool propagate_occur(int64_t* limit_to_decrease);
     void reverse_prop(const Lit l);
     void reverse_one_bnn(uint32_t idx, BNNPropType t);
     PropStats propStats;

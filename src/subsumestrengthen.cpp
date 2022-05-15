@@ -858,7 +858,7 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
                     return false;
                 } else if (val == l_Undef) {
                     solver->enqueue<false>(subsLits[j]);
-                    solver->ok = solver->propagate_occur<false>();
+                    solver->ok = solver->propagate_occur<false>(simplifier->limit_to_decrease);
                     if (!solver->okay()) {
                         return false;
                     }

@@ -217,6 +217,7 @@ public:
     uint32_t dump_blocked_clauses(std::ostream* outfile) const;
     bool get_blocked_clause_at(uint32_t& at,uint32_t& at2, vector<Lit>& out) const;
     void subs_with_resolvent_clauses();
+    void strengthen_dummy_with_bins();
 
     //UnElimination
     void print_blocked_clauses_reverse() const;
@@ -344,6 +345,7 @@ private:
     int64_t  ternary_res_cls_limit;
     int64_t  occ_based_lit_rem_time_limit;
     int64_t  weaken_time_limit;
+    int64_t  dummy_str_time_limit;
     int64_t* limit_to_decrease;
 
     //Memory limits

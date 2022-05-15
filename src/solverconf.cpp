@@ -197,7 +197,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Subs, str limits for simplifier
         , subsumption_time_limitM(300)
-        , weaken_time_limitM(600)
+        , weaken_time_limitM(300)
+        , dummy_str_time_limitM(20)
         , subsumption_time_limit_ratio_sub_str_w_bin(0.1)
         , subsumption_time_limit_ratio_sub_w_long(0.9)
         , strengthening_time_limitM(300)

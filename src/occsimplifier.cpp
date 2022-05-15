@@ -434,7 +434,7 @@ bool OccSimplifier::clean_clause(
             solver->enqueue<false>(cl[0]);
             *solver->drat << del << cl << fin; // double unit delete
             unlink_clause(offset, false, false, only_set_is_removed);
-            solver->ok = solver->propagate_occur<false>();
+            solver->ok = solver->propagate_occur<false>(limit_to_decrease);
             return solver->okay();
         }
 
@@ -1057,6 +1057,36 @@ void OccSimplifier::check_no_marked_clauses()
     }
 }
 
+void OccSimplifier::strengthen_dummy_with_bins()
+{
+    int64_t* old_limit_to_decrease = limit_to_decrease;
+    limit_to_decrease = &dummy_str_time_limit;
+    uint32_t j;
+
+    if (*limit_to_decrease < 0) goto end;
+    for(auto const&l: dummy) seen[l.toInt()] = 1;
+    for(auto const&l: dummy) {
+        *limit_to_decrease -= 1;
+        for(auto const& w: solver->watches[l]) {
+            if (!w.isBin()) continue;
+            const Lit lit2 = w.lit2();
+            if (seen[(~lit2).toInt()]) seen[(~lit2).toInt()] = 0;
+        }
+    }
+
+    j = 0;
+    for(uint32_t i = 0; i < dummy.size(); i++) {
+        if (seen[dummy[i].toInt()]) {
+            dummy[j++] = dummy[i];
+        }
+        seen[dummy[i].toInt()] = 0;
+    }
+    dummy.resize(j);
+
+    end:
+    limit_to_decrease = old_limit_to_decrease;
+}
+
 void OccSimplifier::subs_with_resolvent_clauses()
 {
     assert(solver->okay());
@@ -1112,6 +1142,8 @@ void OccSimplifier::subs_with_resolvent_clauses()
                 resolvents_checked++;
                 tmp_subs.clear();
                 std::sort(dummy.begin(), dummy.end());
+                strengthen_dummy_with_bins();
+
                 sub_str->find_subsumed(
                     CL_OFFSET_MAX,
                     dummy,
@@ -3038,6 +3070,8 @@ void OccSimplifier::set_limits()
     ternary_res_cls_limit = link_in_data_irred.cl_linked * solver->conf.ternary_max_create;
     weaken_time_limit = 1000ULL*1000ULL*solver->conf.weaken_time_limitM
         *solver->conf.global_timeout_multiplier;
+    dummy_str_time_limit = 1000ULL*1000ULL*solver->conf.dummy_str_time_limitM
+        *solver->conf.global_timeout_multiplier;
 
     //If variable elimination isn't going so well
     if (bvestats_global.testedToElimVars > 0
@@ -3833,11 +3867,10 @@ bool OccSimplifier::try_remove_lit_via_occurrence_simpl(
 {
     assert(solver->decisionLevel() == 0);
     assert(solver->prop_at_head());
-    if (occ_cl.ws.isBin()) {
-        return false;
-    }
+    if (occ_cl.ws.isBin()) return false;
 
     solver->new_decision_level();
+    *limit_to_decrease -= 1;
     Clause* cl = solver->cl_alloc.ptr(occ_cl.ws.get_offset());
     assert(!cl->getRemoved());
     assert(!cl->freed());
@@ -3846,11 +3879,8 @@ bool OccSimplifier::try_remove_lit_via_occurrence_simpl(
     bool found_it = false;
     bool can_remove_cl = false;
     for(Lit l: *cl) {
-        if (l != occ_cl.lit) {
-            l = ~l;
-        } else {
-            found_it = true;
-        }
+        if (l != occ_cl.lit) l = ~l;
+        else found_it = true;
 
         const lbool val = solver->value(l);
         if (val == l_False) {
@@ -3870,7 +3900,7 @@ bool OccSimplifier::try_remove_lit_via_occurrence_simpl(
     //No conflict at decision level 0, let's propagate
     if (!conflicted && !can_remove_cl) {
         assert(found_it);
-        conflicted = !solver->propagate_occur<true>();
+        conflicted = !solver->propagate_occur<true>(limit_to_decrease);
     }
     solver->cancelUntil<false, true>(0);
 
@@ -4060,6 +4090,7 @@ bool OccSimplifier::generate_resolvents(
                 is_xor |= c2->used_in_xor();
             }
             //must clear marking that has been set due to gate
+            strengthen_dummy_with_bins();
             resolvents.add_resolvent(dummy, stats, is_xor);
         }
     }
@@ -4415,7 +4446,7 @@ bool OccSimplifier::add_varelim_resolvent(
     );
 
     if (solver->okay()) {
-        solver->ok = solver->propagate_occur<false>();
+        solver->ok = solver->propagate_occur<false>(limit_to_decrease);
     }
     if (!solver->okay()) {
         return false;
@@ -4550,21 +4581,20 @@ void OccSimplifier::create_dummy_blocked_clause(const Lit lit)
 bool OccSimplifier::occ_based_lit_rem(uint32_t var, uint32_t& removed) {
     assert(solver->decisionLevel() == 0);
 
+    int64_t* old_limit_to_decrease = limit_to_decrease;
+    limit_to_decrease = &occ_based_lit_rem_time_limit;
     removed = 0;
     for(int i = 0; i < 2; i++) {
         Lit lit(var, i);
+        *limit_to_decrease -= 1;
         solver->watches[lit].copyTo(poss);
 
         for(const auto& w: poss) {
-            if (!w.isClause()) {
-                continue;
-            }
+            if (!w.isClause()) continue;
 
             const ClOffset offset = w.get_offset();
             Clause* cl = solver->cl_alloc.ptr(offset);
-            if (cl->getRemoved() || cl->red()) {
-                continue;
-            }
+            if (cl->getRemoved() || cl->red()) continue;
             assert(!cl->freed());
 
             if (solver->satisfied(*cl)) {
@@ -4582,6 +4612,8 @@ bool OccSimplifier::occ_based_lit_rem(uint32_t var, uint32_t& removed) {
             }
         }
     }
+
+    limit_to_decrease = old_limit_to_decrease;
     return solver->okay();
 }
 
@@ -4666,7 +4698,9 @@ bool OccSimplifier::maybe_eliminate(const uint32_t var)
     bvestats.testedToElimVars++;
     const Lit lit = Lit(var, false);
 
-
+    //NOTE this is **TIED TO** the forward subsumption during eliminate
+    //     if this is NOT on, but the FRW subsumption is ON, then
+    //     the E part of Arjun is working terribly!!
     if (solver->conf.varelim_check_resolvent_subs &&
         !solver->varData[var].occ_simp_tried &&
         (n_occurs[lit.toInt()] + n_occurs[(~lit).toInt()] < 20))
@@ -4675,6 +4709,7 @@ bool OccSimplifier::maybe_eliminate(const uint32_t var)
         uint32_t rem = 0;
         occ_based_lit_rem(var, rem);
     }
+
     if (solver->value(var) != l_Undef ||
         !solver->okay()
     ) {
@@ -5290,7 +5325,7 @@ Clause* OccSimplifier::full_add_clause(
     );
 
     if (solver->okay()) {
-        solver->ok = solver->propagate_occur<false>();
+        solver->ok = solver->propagate_occur<false>(limit_to_decrease);
     }
     if (!solver->okay()) {
         return NULL;

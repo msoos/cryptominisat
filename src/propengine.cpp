@@ -786,7 +786,7 @@ void PropEngine::print_trail()
 }
 
 template<bool inprocess>
-bool PropEngine::propagate_occur()
+bool PropEngine::propagate_occur(int64_t* limit_to_decrease)
 {
     assert(ok);
     bool ret = true;
@@ -797,11 +797,13 @@ bool PropEngine::propagate_occur()
         watch_subarray ws = watches[~p];
 
         //Go through each occur
+        *limit_to_decrease -= 1;
         for (const Watched* it = ws.begin(), *end = ws.end()
             ; it != end
             ; ++it
         ) {
             if (it->isClause()) {
+                *limit_to_decrease -= 1;
                 if (!prop_long_cl_occur<inprocess>(it->get_offset())) ret = false;
             }
             if (it->isBin()) {
@@ -821,8 +823,8 @@ bool PropEngine::propagate_occur()
     return ret;
 }
 
-template bool PropEngine::propagate_occur<true>();
-template bool PropEngine::propagate_occur<false>();
+template bool PropEngine::propagate_occur<true>(int64_t*);
+template bool PropEngine::propagate_occur<false>(int64_t*);
 
 template<bool inprocess>
 inline bool PropEngine::prop_bin_cl_occur(
