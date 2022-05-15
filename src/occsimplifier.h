@@ -343,6 +343,7 @@ private:
     int64_t  ternary_res_time_limit;
     int64_t  ternary_res_cls_limit;
     int64_t  occ_based_lit_rem_time_limit;
+    int64_t  weaken_time_limit;
     int64_t* limit_to_decrease;
 
     //Memory limits
@@ -449,9 +450,20 @@ private:
         const Lit lit,
         cl_abst_type abs,
         const uint32_t size);
+    bool weaken_dummy();
+    vector<Lit> antec_poss_weakened;
+    vector<Lit> antec_negs_weakened;
+    void weaken(const Lit lit, const vec<Watched>& in, vector<Lit>& out);
     bool generate_resolvents(
         vec<Watched>& tmp_poss,
         vec<Watched>& tmp_negs,
+        Lit lit,
+        const uint32_t limit);
+    bool generate_resolvents_weakened(
+        vector<Lit>& tmp_poss,
+        vector<Lit>& tmp_negs,
+        vec<Watched>& tmp_poss2,
+        vec<Watched>& tmp_negs2,
         Lit lit,
         const uint32_t limit);
     void get_antecedents(

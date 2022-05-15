@@ -156,6 +156,7 @@ namespace CMSat {
         void set_max_red_linkin_size(uint32_t sz);
         void set_seed(const uint32_t seed);
         void set_renumber(const bool renumber);
+        void set_weaken_time_limitM(const uint32_t lim);
 
         ////////////////////////////
         // Predictive system tuning

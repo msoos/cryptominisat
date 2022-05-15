@@ -161,6 +161,7 @@ bool DistillerLong::distill(const bool red, bool only_rem_cl)
             solver->longIrredCls,
             solver->conf.distill_irred_alsoremove_ratio,
             true, //also remove
+            only_rem_cl,
             red))
         {
             goto end;
@@ -173,6 +174,7 @@ bool DistillerLong::distill(const bool red, bool only_rem_cl)
                 solver->longIrredCls,
                 solver->conf.distill_irred_noremove_ratio,
                 false, //also remove
+                only_rem_cl,
                 red))
             {
                 goto end;
@@ -186,6 +188,7 @@ bool DistillerLong::distill(const bool red, bool only_rem_cl)
             solver->longRedCls[0],
             solver->conf.distill_red_tier0_ratio,
             false, //dont' remove (it's always redundant)
+            only_rem_cl,
             red,
             0)) //red lev (only to print)
         {
@@ -198,6 +201,7 @@ bool DistillerLong::distill(const bool red, bool only_rem_cl)
             solver->longRedCls[1],
             solver->conf.distill_red_tier1_ratio,
             false, //dont' remove (it's always redundant)
+            only_rem_cl,
             red,
             1))  // //red lev (only to print)
         {
@@ -219,6 +223,7 @@ bool DistillerLong::distill_long_cls_all(
     vector<ClOffset>& offs
     , double time_mult
     , bool also_remove
+    , bool only_remove
     , bool red
     , uint32_t red_lev
 ) {
@@ -330,7 +335,7 @@ bool DistillerLong::distill_long_cls_all(
     runStats.potentialClauses += orig_todo_size;
 
     assert(runStats.checkedClauses == 0);
-    bool time_out = go_through_clauses(todo, also_remove);
+    bool time_out = go_through_clauses(todo, also_remove, only_remove);
 
     //Add back the prioritized clauses
     for(const auto off: todo) offs.push_back(off);
@@ -371,7 +376,8 @@ bool DistillerLong::distill_long_cls_all(
 
 bool DistillerLong::go_through_clauses(
     vector<ClOffset>& cls,
-    bool also_remove
+    bool also_remove, bool only_remove
+
 ) {
     bool time_out = false;
     vector<ClOffset>::iterator i, j;
@@ -444,9 +450,8 @@ bool DistillerLong::go_through_clauses(
 
         //Try to distill clause
         ClOffset offset2 = try_distill_clause_and_return_new(
-            offset
-            , &cl.stats
-            , also_remove
+            offset, &cl.stats
+            , also_remove, only_remove
         );
 
         if (offset2 != CL_OFFSET_MAX) {
@@ -459,9 +464,8 @@ bool DistillerLong::go_through_clauses(
 }
 
 ClOffset DistillerLong::try_distill_clause_and_return_new(
-    ClOffset offset
-    , const ClauseStats* const stats
-    , const bool also_remove
+    ClOffset offset, const ClauseStats* const stats,
+    const bool also_remove, const bool only_remove
 ) {
     assert(solver->prop_at_head());
     assert(solver->decisionLevel() == 0);
@@ -475,9 +479,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     cl.disabled = true;
     *solver->drat << deldelay << cl << fin;
     const bool red = cl.red();
-    if (red) {
-        assert(!also_remove);
-    }
+    if (red) assert(!also_remove);
     VERBOSE_PRINT("Trying to distill clause:" << cl);
 
     uint32_t orig_size = cl.size();
@@ -532,7 +534,8 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
                 break;
             }
         } else if (val == l_False) {
-            // skip
+            // if we don't want to shorten, then don't remove literals
+            if (only_remove) cl[j++] = cl[i];
         } else {
             assert(val == l_True);
             cl[j++] = cl[i];

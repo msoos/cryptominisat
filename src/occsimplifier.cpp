@@ -3036,6 +3036,8 @@ void OccSimplifier::set_limits()
     occ_based_lit_rem_time_limit = 1000ULL*1000ULL*solver->conf.occ_based_lit_rem_time_limitM
         *solver->conf.global_timeout_multiplier;
     ternary_res_cls_limit = link_in_data_irred.cl_linked * solver->conf.ternary_max_create;
+    weaken_time_limit = 1000ULL*1000ULL*solver->conf.weaken_time_limitM
+        *solver->conf.global_timeout_multiplier;
 
     //If variable elimination isn't going so well
     if (bvestats_global.testedToElimVars > 0
@@ -3912,6 +3914,86 @@ bool OccSimplifier::forward_subsume_irred(
     return false;
 }
 
+bool OccSimplifier::generate_resolvents_weakened(
+    vector<Lit>& tmp_poss,
+    vector<Lit>& tmp_negs,
+    vec<Watched>& tmp_poss2,
+    vec<Watched>& tmp_negs2,
+    Lit lit,
+    uint32_t limit)
+{
+    size_t poss_start = 0;
+    size_t pos_at = 0;
+    for (uint32_t i = 0; i < tmp_poss.size(); i++, pos_at++) {
+        poss_start = i;
+        while (tmp_poss[i] != lit_Undef) i++;
+        *limit_to_decrease -= 3;
+
+        size_t negs_start = 0;
+        size_t negs_at = 0;
+        for (uint32_t i2 = 0; i2 < tmp_negs.size(); i2++, negs_at++) {
+            negs_start = i2;
+            while (tmp_negs[i2] != lit_Undef) i2++;
+            *limit_to_decrease -= 3;
+
+            //Resolve the two weakened clauses
+            dummy.clear();
+            for (uint32_t x = poss_start; x < i; x++) {
+                const Lit l = tmp_poss[x];
+                if (l == lit) continue;
+                seen[l.toInt()] = 1;
+                dummy.push_back(l);
+            }
+
+            bool tautological = false;
+            for (uint32_t x = negs_start; x < i2; x++) {
+                const Lit l = tmp_negs[x];
+                if (l == ~lit) continue;
+                if (seen[(~l).toInt()]) {
+                    tautological = true;
+                    break;
+                }
+
+                if (!seen[l.toInt()]) {
+                    dummy.push_back(l);
+                    seen[l.toInt()] = 1;
+                }
+            }
+            #ifdef VERBOSE_DEBUG
+            cout << "Dummy after neg: ";
+            for(auto const& l: dummy) cout << l << ", ";
+            cout << " taut: " << tautological << endl;
+            #endif
+
+            for (uint32_t x = poss_start; x < i; x++) seen[tmp_poss[x].toInt()] = 0;
+            for (uint32_t x = negs_start; x < i2; x++) seen[tmp_negs[x].toInt()] = 0;
+            if (tautological) continue;
+            if (solver->satisfied(dummy)) continue;
+
+            tautological = resolve_clauses(tmp_poss2[pos_at], tmp_negs2[negs_at], lit);
+            if (tautological) continue;
+            VERBOSE_PRINT("Adding new varelim resolvent clause: " << dummy);
+
+            //Early-abort or over time
+            if (resolvents.size()+1 > limit
+                //Too long resolvent
+                || (solver->conf.velim_resolvent_too_large != -1
+                    && ((int)dummy.size() > solver->conf.velim_resolvent_too_large))
+                //Over-time
+                || *limit_to_decrease < -10LL*1000LL
+
+            ) {
+                return false;
+            }
+
+            ClauseStats stats;
+            resolvents.add_resolvent(dummy, stats, false);
+        }
+    }
+
+    return true;
+}
+
 bool OccSimplifier::generate_resolvents(
     vec<Watched>& tmp_poss,
     vec<Watched>& tmp_negs,
@@ -3938,13 +4020,9 @@ bool OccSimplifier::generate_resolvents(
 
             //Resolve the two clauses
             bool tautological = resolve_clauses(*it, *it2, lit);
-            if (tautological) {
-                continue;
-            }
-
-            if (solver->satisfied(dummy)) {
-                continue;
-            }
+            if (tautological) continue;
+            if (solver->satisfied(dummy)) continue;
+//             if (weaken_dummy()) continue;
 
             #ifdef VERBOSE_DEBUG_VARELIM
             cout << "Adding new clause due to varelim: " << dummy << endl;
@@ -4046,6 +4124,82 @@ void OccSimplifier::clean_from_satisfied(vec<Watched>& in)
         continue;
     }
     in.shrink(i-j);
+}
+
+void OccSimplifier::weaken(
+    const Lit lit, const vec<Watched>& in, vector<Lit>& out)
+{
+    int64_t* old_limit_to_decrease = limit_to_decrease;
+    limit_to_decrease = &weaken_time_limit;
+
+    out.clear();
+    uint32_t at = 0;
+    for(const auto& c: in) {
+        if (c.isBin()) {
+            out.push_back(lit);
+            out.push_back(c.lit2());
+            seen[c.lit2().toInt()] = 1;
+            toClear.push_back(c.lit2());
+        } else if (c.isClause()) {
+            const Clause* cl = solver->cl_alloc.ptr(c.get_offset());
+            for(auto const& l: *cl) {
+                if (l != lit) {
+                    seen[l.toInt()] = 1;
+                    toClear.push_back(l);
+                }
+                out.push_back(l);
+            }
+        } else release_assert(false);
+        for(uint32_t i = at; i < out.size() && *limit_to_decrease > 0; i++) {
+            const Lit l = out[i];
+            if (l == lit) continue;
+            *limit_to_decrease-=50;
+            *limit_to_decrease-=solver->watches[l].size();
+            for(auto const& w: solver->watches[l]) {
+                if (!w.isBin() || w.red()) continue;
+                if (w.lit2().var() == lit.var()) continue;
+                if (seen[(~w.lit2()).toInt()] || seen[w.lit2().toInt()]) continue;
+                Lit toadd = ~w.lit2();
+                out.push_back(toadd);
+                seen[(toadd).toInt()] = 1;
+                toClear.push_back(toadd);
+            }
+        }
+        out.push_back(lit_Undef);
+        for(auto const &l: toClear) seen[l.toInt()] = 0;
+        toClear.clear();
+        at = out.size();
+    }
+
+    limit_to_decrease = old_limit_to_decrease;
+}
+
+bool OccSimplifier::weaken_dummy()
+{
+    for(auto const& l: dummy) seen[l.toInt()] = 1;
+    toClear = dummy;
+    vector<Lit> new_dummy = dummy;
+
+    bool taut = false;
+    for(uint32_t i = 0; i < new_dummy.size(); i++) {
+        const Lit l = new_dummy[i];
+        if (taut) break;
+        for(auto const& w: solver->watches[l]) {
+            if (!w.isBin() || w.red()) continue;
+            const Lit toadd = ~w.lit2();
+            if (seen[toadd.toInt()]) continue;
+            if (seen[(~toadd).toInt()]) {
+                taut = true;
+                break;
+            }
+            seen[(toadd).toInt()] = 1;
+            toClear.push_back(toadd);
+            new_dummy.push_back(toadd);
+        }
+    }
+    for(auto const& l: toClear) seen[l.toInt()] = 0;
+    toClear.clear();
+    return taut;
 }
 
 //Return true if it worked
@@ -4151,6 +4305,15 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
     get_antecedents(gates_negs, negs, antec_negs);
     get_antecedents(gates_poss, poss, antec_poss);
 
+    bool weakened = false;
+    if (weaken_time_limit > 0) {
+        weakened = true;
+        weaken(lit, antec_poss,  antec_poss_weakened);
+        weaken(~lit, antec_negs,  antec_negs_weakened);
+    }
+    /*weaken(lit, gates_poss,  gates_poss_weakened);
+    weaken(lit, gates_negs,  gates_negs_weakened);*/
+
     uint32_t limit = pos+neg+grow;
     bool ret = true;
     if (gates) {
@@ -4160,8 +4323,17 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
             ret = false;
         }
     } else {
-        if (!generate_resolvents(antec_poss, antec_negs, lit, limit)) {
-            ret = false;
+        if (weakened) {
+            if (!generate_resolvents_weakened(
+                antec_poss_weakened, antec_negs_weakened,
+                antec_poss, antec_negs,
+                lit, limit)) {
+                ret = false;
+            }
+        } else {
+            if (!generate_resolvents(antec_poss, antec_negs, lit, limit)) {
+                ret = false;
+            }
         }
     }
 
