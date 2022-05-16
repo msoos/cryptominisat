@@ -217,6 +217,9 @@ public:
     uint32_t dump_blocked_clauses(std::ostream* outfile) const;
     bool get_blocked_clause_at(uint32_t& at,uint32_t& at2, vector<Lit>& out) const;
     void subs_with_resolvent_clauses();
+    void fill_tocheck_seen(const vec<Watched>& ws, vector<uint32_t>& tocheck);
+    void delete_blocked_clauses(); ///< This REMOVES them, not blocks them. For Arjun.
+    void delete_component_unconnected_to_assumps(); //for arjun
     void strengthen_dummy_with_bins();
 
     //UnElimination

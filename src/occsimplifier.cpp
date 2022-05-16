@@ -2189,6 +2189,10 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             backward_sub_str();
         } else if (token == "occ-backw-sub") {
             backward_sub();
+        } else if (token == "occ-del-blocked") {
+            delete_blocked_clauses();
+        } else if (token == "occ-rem-unconn-assumps") {
+            delete_component_unconnected_to_assumps();
         } else if (token == "occ-ternary-res") {
             if (solver->conf.doTernary) {
                 ternary_res();
@@ -2667,6 +2671,143 @@ void OccSimplifier::check_ternary_cl(Clause* cl, ClOffset offs, watch_subarray w
     }
 }
 
+void OccSimplifier::fill_tocheck_seen(const vec<Watched>& ws, vector<uint32_t>& tocheck)
+{
+    for(const auto& w: ws) {
+        assert(!w.isBNN());
+        if (w.isBin()) {
+            if (w.red()) continue;
+            const uint32_t v = w.lit2().var();
+            if (!seen[v]) {
+                tocheck.push_back(v);
+                seen[v] = 1;
+            }
+        } else if (w.isClause()) {
+            const Clause& cl2 = *solver->cl_alloc.ptr(w.get_offset());
+            if (cl2.getRemoved() || cl2.red()) continue;
+            for(auto const& l: cl2) {
+                if (!seen[l.var()]) {
+                    tocheck.push_back(l.var());
+                    seen[l.var()] = 1;
+                }
+            }
+        }
+    }
+}
+
+void OccSimplifier::delete_component_unconnected_to_assumps()
+{
+    assert(solver->okay());
+    uint64_t removed = 0;
+
+    vector<uint32_t> tocheck;
+    for(uint32_t i = 0; i < solver->nVars(); i++) {
+        if (solver->varData[i].assumption != l_Undef) {
+            tocheck.push_back(i);
+            seen[i] = 1;
+        }
+    }
+
+    vector<uint32_t> tocheck2;
+    while(!tocheck.empty()) {
+        cout << "block-rem -- tocheck size: " << tocheck.size() << endl;
+        std::swap(tocheck, tocheck2);
+        tocheck.clear();
+        for(auto const& v: tocheck2) {
+            Lit l = Lit(v, true);
+            fill_tocheck_seen(solver->watches[l], tocheck);
+            fill_tocheck_seen(solver->watches[~l], tocheck);
+        }
+    }
+
+    for(uint32_t i = 0; i < solver->nVars()*2; i++) {
+        Lit l = Lit::toLit(i);
+        if (seen[l.var()]) continue;
+
+        vec<Watched> tmp;
+        solver->watches[l].copyTo(tmp);
+        for(auto const& w: tmp) {
+            assert(!w.isBNN());
+            if (w.isBin()) {
+                if (w.red()) continue;
+                if (!seen[w.lit2().var()]) {
+                    solver->detach_bin_clause(l, w.lit2(), false, w.get_ID(), false, true);
+                    removed++;
+                }
+            } else if (w.isClause()) {
+                const Clause& cl2 = *solver->cl_alloc.ptr(w.get_offset());
+                if (cl2.getRemoved() || cl2.red()) continue;
+                bool ok = true;
+                for(auto const&l2: cl2) {
+                    if (seen[l2.var()]) {ok = false; break;}
+                }
+                if (ok) {
+                    unlink_clause(w.get_offset(), true, false, true);
+                    removed++;
+                }
+            }
+        }
+    }
+
+    for(uint32_t i = 0; i < solver->nVars(); i++) seen[i] = 0;
+
+    solver->clean_occur_from_removed_clauses_only_smudged();
+    free_clauses_to_free();
+
+    verb_print(1, "[occ-rem-unconn-assumps] Removed cls: " << removed);
+}
+
+void OccSimplifier::delete_blocked_clauses()
+{
+    return; //broken below
+    assert(solver->okay());
+    assert(solver->prop_at_head());
+    uint32_t removed = 0;
+
+    for(auto const& off: clauses) {
+        const Clause& cl = *solver->cl_alloc.ptr(off);
+        if (cl.getRemoved() || cl.red()) continue;
+
+        bool doit = true;
+        for(auto const& l: cl) {
+            if (solver->var_inside_assumptions(l.var()) != l_Undef) {doit = false; break;}
+        }
+        if (!doit) continue;
+
+        for(auto const& l: cl) seen[l.toInt()] = 1;
+        for(auto const& l: cl) {
+            if (solver->var_inside_assumptions(l.var()) != l_Undef) continue; // Don't block on these
+            bool ok = true;
+            for(auto const& w: solver->watches[~l]) {
+                assert(!w.isIdx());
+                if (w.isBNN()) {ok = false; break;}
+                else if (w.isBin()) {
+                    if (w.red()) continue;
+                    if (!seen[(~w.lit2()).toInt()]) {ok = false; break;}
+                } else if (w.isClause()) {
+                    const Clause& cl2 = *solver->cl_alloc.ptr(w.get_offset());
+                    if (cl2.getRemoved() || cl2.red()) continue;
+                    bool ok2 = false;
+                    for(auto const& l2: cl2) {
+                        if (seen[(~l2).toInt()]) {ok2 = true; break;}
+                    }
+                    if (!ok2) {ok = false; break;}
+                }
+            }
+            if (ok) {
+                unlink_clause(off, true, false, true);
+                removed++;
+                break;
+            }
+        }
+        for(auto const& l: cl) seen[l.toInt()] = 0;
+    }
+
+    verb_print(1, "[occ-del-blocked] Removed: " << removed);
+
+    solver->clean_occur_from_removed_clauses_only_smudged();
+    free_clauses_to_free();
+}
 
 
 void OccSimplifier::backward_sub()
@@ -4591,6 +4732,7 @@ bool OccSimplifier::occ_based_lit_rem(uint32_t var, uint32_t& removed) {
         solver->watches[lit].copyTo(poss);
 
         for(const auto& w: poss) {
+            *limit_to_decrease -= 1;
             if (!w.isClause()) continue;
 
             const ClOffset offset = w.get_offset();
@@ -4603,7 +4745,7 @@ bool OccSimplifier::occ_based_lit_rem(uint32_t var, uint32_t& removed) {
                 continue;
             }
 
-            if (try_remove_lit_via_occurrence_simpl(OccurClause(lit, w))) {
+            if (*limit_to_decrease > 0 && try_remove_lit_via_occurrence_simpl(OccurClause(lit, w))) {
                 remove_literal(offset, lit, true);
                 if (!solver->okay()) {
                     return false;

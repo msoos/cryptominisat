@@ -202,7 +202,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , subsumption_time_limit_ratio_sub_str_w_bin(0.1)
         , subsumption_time_limit_ratio_sub_w_long(0.9)
         , strengthening_time_limitM(300)
-        , occ_based_lit_rem_time_limitM(300)
+        , occ_based_lit_rem_time_limitM(50)
 
 
         //Ternary resolution
