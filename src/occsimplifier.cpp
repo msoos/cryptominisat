@@ -1057,7 +1057,7 @@ void OccSimplifier::check_no_marked_clauses()
     }
 }
 
-void OccSimplifier::strengthen_dummy_with_bins()
+void OccSimplifier::strengthen_dummy_with_bins(bool avoid_redundant)
 {
     int64_t* old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &dummy_str_time_limit;
@@ -1070,6 +1070,7 @@ void OccSimplifier::strengthen_dummy_with_bins()
         *limit_to_decrease -= 1;
         for(auto const& w: solver->watches[l]) {
             if (!w.isBin()) continue;
+            if (avoid_redundant && w.red()) continue;
             const Lit lit2 = w.lit2();
             if (seen[(~lit2).toInt()]) seen[(~lit2).toInt()] = 0;
         }
@@ -1143,7 +1144,7 @@ void OccSimplifier::subs_with_resolvent_clauses()
                 resolvents_checked++;
                 tmp_subs.clear();
                 std::sort(dummy.begin(), dummy.end());
-                strengthen_dummy_with_bins();
+                strengthen_dummy_with_bins(true);
 
                 sub_str->find_subsumed(
                     CL_OFFSET_MAX,
@@ -2774,7 +2775,8 @@ void OccSimplifier::delete_blocked_clauses()
         }
         if (!doit) continue;
 
-        for(auto const& l: cl) seen[l.toInt()] = 1;
+        toClear.clear();
+        for(auto const& l: cl) {seen[l.toInt()] = 1; toClear.push_back(l);}
         for(auto const& l: cl) {
             if (solver->var_inside_assumptions(l.var()) != l_Undef) continue; // Don't block on these
             bool ok = true;
@@ -2800,7 +2802,8 @@ void OccSimplifier::delete_blocked_clauses()
                 break;
             }
         }
-        for(auto const& l: cl) seen[l.toInt()] = 0;
+        for(auto const& l: toClear) seen[l.toInt()] = 0;
+        toClear.clear();
     }
 
     verb_print(1, "[occ-del-blocked] Removed: " << removed);
@@ -4232,7 +4235,7 @@ bool OccSimplifier::generate_resolvents(
                 is_xor |= c2->used_in_xor();
             }
             //must clear marking that has been set due to gate
-            strengthen_dummy_with_bins();
+            strengthen_dummy_with_bins(false);
             resolvents.add_resolvent(dummy, stats, is_xor);
         }
     }

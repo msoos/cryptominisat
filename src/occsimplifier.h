@@ -220,7 +220,7 @@ public:
     void fill_tocheck_seen(const vec<Watched>& ws, vector<uint32_t>& tocheck);
     void delete_blocked_clauses(); ///< This REMOVES them, not blocks them. For Arjun.
     void delete_component_unconnected_to_assumps(); //for arjun
-    void strengthen_dummy_with_bins();
+    void strengthen_dummy_with_bins(bool avoid_redundant);
 
     //UnElimination
     void print_blocked_clauses_reverse() const;
