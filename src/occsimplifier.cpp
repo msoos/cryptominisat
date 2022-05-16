@@ -4332,6 +4332,27 @@ void OccSimplifier::weaken(
             *limit_to_decrease-=50;
             *limit_to_decrease-=solver->watches[l].size();
             for(auto const& w: solver->watches[l]) {
+                if (w.isClause()) {
+                    *limit_to_decrease -= 1;
+                    const Clause& cl = *solver->cl_alloc.ptr(w.get_offset());
+                    if (cl.getRemoved() || cl.red() || cl.size() >= out.size() || cl.size() > 10) continue;
+                    uint32_t num_inside = 0;
+                    bool wrong = false;
+                    Lit toadd = lit_Undef;
+                    for(auto const& l2: cl) {
+                        if (seen[l2.toInt()]) num_inside++;
+                        else toadd = ~l2;
+
+                        if (seen[(~l2).toInt()] || l2.var() == lit.var()) {wrong = true; break;}
+                    }
+                    if (!wrong && num_inside == cl.size()-1) {
+                        out.push_back(toadd);
+                        seen[(toadd).toInt()] = 1;
+                        toClear.push_back(toadd);
+                    }
+                    continue;
+                }
+
                 if (!w.isBin() || w.red()) continue;
                 if (w.lit2().var() == lit.var()) continue;
                 if (seen[(~w.lit2()).toInt()] || seen[w.lit2().toInt()]) continue;
