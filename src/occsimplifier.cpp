@@ -1066,6 +1066,7 @@ void OccSimplifier::strengthen_dummy_with_bins()
     if (*limit_to_decrease < 0) goto end;
     for(auto const&l: dummy) seen[l.toInt()] = 1;
     for(auto const&l: dummy) {
+        if (!seen[l.toInt()]) continue; //avoid loops
         *limit_to_decrease -= 1;
         for(auto const& w: solver->watches[l]) {
             if (!w.isBin()) continue;
