@@ -455,7 +455,8 @@ private:
         const Lit lit,
         cl_abst_type abs,
         const uint32_t size);
-    bool weaken_dummy();
+    vector<Lit> weaken_dummy;
+    bool check_taut_weaken_dummy(const uint32_t dontuse);
     vector<Lit> antec_poss_weakened;
     vector<Lit> antec_negs_weakened;
     void weaken(const Lit lit, const vec<Watched>& in, vector<Lit>& out);

@@ -4197,7 +4197,7 @@ bool OccSimplifier::generate_resolvents(
             bool tautological = resolve_clauses(*it, *it2, lit);
             if (tautological) continue;
             if (solver->satisfied(dummy)) continue;
-//             if (weaken_dummy()) continue;
+            if (check_taut_weaken_dummy(lit.var())) continue;
 
             #ifdef VERBOSE_DEBUG_VARELIM
             cout << "Adding new clause due to varelim: " << dummy << endl;
@@ -4350,15 +4350,15 @@ void OccSimplifier::weaken(
     limit_to_decrease = old_limit_to_decrease;
 }
 
-bool OccSimplifier::weaken_dummy()
+bool OccSimplifier::check_taut_weaken_dummy(const uint32_t dontuse)
 {
-    for(auto const& l: dummy) seen[l.toInt()] = 1;
-    toClear = dummy;
-    vector<Lit> new_dummy = dummy;
+    weaken_dummy = dummy;
+    for(auto const& l: weaken_dummy) seen[l.toInt()] = 1;
 
     bool taut = false;
-    for(uint32_t i = 0; i < new_dummy.size(); i++) {
-        const Lit l = new_dummy[i];
+    for(uint32_t i = 0; i < weaken_dummy.size(); i++) {
+        const Lit l = weaken_dummy[i];
+        assert(l.var() != dontuse);
         if (taut) break;
         for(auto const& w: solver->watches[l]) {
             if (!w.isBin() || w.red()) continue;
@@ -4368,13 +4368,12 @@ bool OccSimplifier::weaken_dummy()
                 taut = true;
                 break;
             }
+            if (toadd.var() == dontuse) continue;
             seen[(toadd).toInt()] = 1;
-            toClear.push_back(toadd);
-            new_dummy.push_back(toadd);
+            weaken_dummy.push_back(toadd);
         }
     }
-    for(auto const& l: toClear) seen[l.toInt()] = 0;
-    toClear.clear();
+    for(auto const& l: weaken_dummy) seen[l.toInt()] = 0;
     return taut;
 }
 
