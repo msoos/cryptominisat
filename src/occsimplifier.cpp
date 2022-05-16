@@ -2711,7 +2711,7 @@ void OccSimplifier::delete_component_unconnected_to_assumps()
 
     vector<uint32_t> tocheck2;
     while(!tocheck.empty()) {
-        cout << "block-rem -- tocheck size: " << tocheck.size() << endl;
+        verb_print(3, __PRETTY_FUNCTION__ << "-- tocheck size: " << tocheck.size());
         std::swap(tocheck, tocheck2);
         tocheck.clear();
         for(auto const& v: tocheck2) {
