@@ -69,6 +69,9 @@ THE SOFTWARE.
 #include "lucky.h"
 #include "get_clause_query.h"
 #include "community_finder.h"
+extern "C" {
+#include "picosat/picosat.h"
+}
 
 #ifdef USE_BREAKID
 #include "cms_breakid.h"
@@ -2122,7 +2125,9 @@ lbool Solver::execute_inprocess_strategy(
                 varReplacer->replace_if_enough_is_found(
                     std::floor((double)get_num_free_vars()*0.001));
             }
-        }  else if (token == "must-scc-vrepl") {
+        } else if (token == "eqlit-find") {
+            find_equivs();
+        } else if (token == "must-scc-vrepl") {
             if (conf.doFindAndReplaceEqLits) {
                 varReplacer->replace_if_enough_is_found();
             }
@@ -4837,6 +4842,94 @@ lbool Solver::bnn_eval(BNN& bnn)
     }
 
     return l_Undef;
+}
+
+#define PICOLIT(x) ((x).var() * ((x).sign() ? -1:1))
+
+bool Solver::find_equivs()
+{
+    double myTime = cpuTime();
+    PicoSAT* picosat = picosat_init();
+    for(uint32_t i = 0; i < nVars(); i++) picosat_inc_max_var(picosat);
+
+    vector<vector<char>> tocheck(nVars());
+    for(uint32_t v = 0; v < nVars(); v++) tocheck[v].resize(nVars(), 0);
+    for(auto const& off: longIrredCls) {
+        Clause* cl = cl_alloc.ptr(off);
+        for(auto const& l1: *cl) {
+            picosat_add(picosat, PICOLIT(l1));
+            for(auto const& l2: *cl) {
+                if (l1.var() < l2.var()) tocheck[l1.var()][l2.var()] = 1;
+            }
+        }
+        picosat_add(picosat, 0);
+    }
+    for(uint32_t i = 0; i < nVars()*2; i++) {
+        Lit l1 = Lit::toLit(i);
+        for(auto const& w: watches[l1]) {
+            if (!w.isBin() || w.red()) continue;
+            const Lit l2 = w.lit2();
+            if (l1 > l2) continue;
+
+            picosat_add(picosat, PICOLIT(l1));
+            picosat_add(picosat, PICOLIT(l2));
+            picosat_add(picosat, 0);
+            if (l1.var() < l2.var()) tocheck[l1.var()][l2.var()] = 1;
+        }
+    }
+    double build_time =  (cpuTime()-myTime);
+
+    uint32_t checked = 0;
+    uint32_t added = 0;
+    for(uint32_t i = 0; i < nVars(); i++) {
+        for(uint32_t i2 = 0; i2 < nVars(); i2++) {
+            if (i >= i2) continue;
+            if (i == i2) continue;
+            if (!tocheck[i][i2]) continue;
+
+            Lit lit1 = Lit(i, false);
+            Lit lit2 = Lit(i2, false);
+            if (value(lit1) != l_Undef || value(lit2) != l_Undef ||
+                varData[i].removed != Removed::none || varData[i2].removed != Removed::none)
+                continue;
+
+            checked++;
+            assert(decisionLevel() == 0);
+            assert(prop_at_head());
+
+            int ret;
+            picosat_assume(picosat, PICOLIT(lit1));
+            picosat_assume(picosat, PICOLIT(lit2));
+            ret = picosat_sat(picosat, 30);
+            if (ret != PICOSAT_UNSATISFIABLE) goto next;
+
+            picosat_assume(picosat, PICOLIT(~lit1));
+            picosat_assume(picosat, PICOLIT(~lit2));
+            ret = picosat_sat(picosat, 30);
+            if (ret != PICOSAT_UNSATISFIABLE) goto next;
+            added++;
+            if (!add_xor_clause_inter(vector<Lit>{lit1, lit2}, true, true)) goto fin;
+            continue;
+
+            next:;
+            picosat_assume(picosat, PICOLIT(lit1));
+            picosat_assume(picosat, PICOLIT(~lit2));
+            ret = picosat_sat(picosat, 30);
+            if (ret != PICOSAT_UNSATISFIABLE) continue;
+
+            picosat_assume(picosat, PICOLIT(~lit1));
+            picosat_assume(picosat, PICOLIT(lit2));
+            ret = picosat_sat(picosat, 30);
+            if (ret != PICOSAT_UNSATISFIABLE) continue;
+            added++;
+            if (!add_xor_clause_inter(vector<Lit>{lit1, lit2}, false, true)) goto fin;
+        }
+    }
+    fin:
+    picosat_reset(picosat);
+
+    verb_print(1, "[find-equivs] checked: " << checked << " added: " << added << " T: " << (cpuTime()-myTime) << " buildT: " << build_time);
+    return solver->okay();
 }
 
 #ifdef STATS_NEEDED
