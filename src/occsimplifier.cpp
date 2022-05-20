@@ -754,25 +754,20 @@ void OccSimplifier::eliminate_empty_resolvent_vars()
     uint32_t var_elimed = 0;
     double myTime = cpuTime();
     const int64_t orig_empty_varelim_time_limit = empty_varelim_time_limit;
+    auto old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &empty_varelim_time_limit;
     assert(cl_to_free_later.empty());
     assert(solver->watches.get_smudged_list().empty());
-
-    ///Nothing to do
-    if (solver->nVars() == 0)
-        return;
+    if (solver->nVars() == 0) goto end;
 
     for(size_t var = solver->mtrand.randInt(solver->nVars()-1), num = 0
         ; num < solver->nVars() && *limit_to_decrease > 0
         ; var = (var + 1) % solver->nVars(), num++
     ) {
         assert(var == var % solver->nVars());
-        if (!can_eliminate_var(var))
-            continue;
-
+        if (!can_eliminate_var(var)) continue;
         const Lit lit = Lit(var, false);
-        if (!check_empty_resolvent(lit))
-            continue;
+        if (!check_empty_resolvent(lit)) continue;
 
         create_dummy_blocked_clause(lit);
         rem_cls_from_watch_due_to_varelim(lit);
@@ -781,8 +776,11 @@ void OccSimplifier::eliminate_empty_resolvent_vars()
         var_elimed++;
     }
 
+    end:
     solver->clean_occur_from_removed_clauses_only_smudged();
     free_clauses_to_free();
+    limit_to_decrease = old_limit_to_decrease;
+
     const double time_used = cpuTime() - myTime;
     const bool time_out = (*limit_to_decrease <= 0);
     const double time_remain =  float_div(*limit_to_decrease, orig_empty_varelim_time_limit);
@@ -1005,6 +1003,7 @@ bool OccSimplifier::mark_and_push_to_added_long_cl_cls_containing(const Lit lit)
 
 bool OccSimplifier::simulate_frw_sub_str_with_added_cl_to_var()
 {
+    auto old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &varelim_sub_str_limit;
 
     //during the mark_and_push_to_added_long_cl_cls_containing() below, we mark the clauses
@@ -1017,34 +1016,22 @@ bool OccSimplifier::simulate_frw_sub_str_with_added_cl_to_var()
     ) {
         uint32_t var = added_cl_to_var.getTouchedList()[i];
         Lit lit = Lit(var, true);
-        if (!sub_str->backw_sub_str_long_with_bins_watch(lit, true)) {
-            return false;
-        }
-        if (!mark_and_push_to_added_long_cl_cls_containing(lit)) {
-            return false;
-        }
+        if (!sub_str->backw_sub_str_long_with_bins_watch(lit, true)) goto end;
+        if (!mark_and_push_to_added_long_cl_cls_containing(lit)) goto end;
 
         lit = ~lit;
-        if (!sub_str->backw_sub_str_long_with_bins_watch(lit, true)) {
-            return false;
-        }
-        if (!mark_and_push_to_added_long_cl_cls_containing(lit)) {
-            return false;
-        }
+        if (!sub_str->backw_sub_str_long_with_bins_watch(lit, true)) goto end;
+        if (!mark_and_push_to_added_long_cl_cls_containing(lit)) goto end;
     }
     added_cl_to_var.clear();
 
     //here, we clean the marks on the clauses, even in case of timeout/abort
-    if (!deal_with_added_long_and_bin(false)) {
-        return false;
-    }
+    if (!deal_with_added_long_and_bin(false)) return false;
+    SLOW_DEBUG_DO(check_no_marked_clauses());
 
-    limit_to_decrease = &norm_varelim_time_limit;
-    #ifdef SLOW_DEBUG
-    check_no_marked_clauses();
-    #endif
-
-    return true;
+    end:
+    limit_to_decrease = old_limit_to_decrease;
+    return solver->okay();
 }
 
 void OccSimplifier::check_no_marked_clauses()
@@ -1059,7 +1046,7 @@ void OccSimplifier::check_no_marked_clauses()
 
 void OccSimplifier::strengthen_dummy_with_bins(bool avoid_redundant)
 {
-    int64_t* old_limit_to_decrease = limit_to_decrease;
+    auto old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &dummy_str_time_limit;
     uint32_t j;
 
@@ -1096,6 +1083,7 @@ void OccSimplifier::subs_with_resolvent_clauses()
     double myTime = cpuTime();
     uint64_t removed = 0;
     uint64_t resolvents_checked = 0;
+    auto old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &norm_varelim_time_limit;
 
     for(uint32_t var = 0; var < solver->nVars(); var++) {
@@ -1173,8 +1161,9 @@ void OccSimplifier::subs_with_resolvent_clauses()
     solver->clean_occur_from_removed_clauses_only_smudged();
     free_clauses_to_free();
     verb_print(1, "[occ-resolv-subs] removed: " << removed
-    << " checked: " << resolvents_checked
-    << " T: " << (cpuTime()-myTime));
+        << " checked: " << resolvents_checked
+        << " T: " << (cpuTime()-myTime));
+    limit_to_decrease = old_limit_to_decrease;
 }
 
 bool OccSimplifier::eliminate_vars()
@@ -1191,6 +1180,7 @@ bool OccSimplifier::eliminate_vars()
     time_spent_on_calc_otf_update = 0;
     num_otf_update_until_now = 0;
     int64_t orig_norm_varelim_time_limit = norm_varelim_time_limit;
+    auto old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &norm_varelim_time_limit;
     assert(cl_to_free_later.empty());
     assert(solver->watches.get_smudged_list().empty());
@@ -1457,8 +1447,9 @@ end:
             , time_remain
         );
     }
-
     assert(limit_to_decrease == &norm_varelim_time_limit);
+    limit_to_decrease = old_limit_to_decrease;
+
     bvestats.varElimTimeOut += time_out;
     bvestats.timeUsed = cpuTime() - myTime;
     bvestats_global += bvestats;
@@ -2442,6 +2433,7 @@ bool OccSimplifier::ternary_res()
 
     double myTime = cpuTime();
     int64_t orig_ternary_res_time_limit = ternary_res_time_limit;
+    auto old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &ternary_res_time_limit;
     Sub1Ret sub1_ret;
 
@@ -2496,6 +2488,7 @@ bool OccSimplifier::ternary_res()
     runStats.triresolveTime += time_used;
     solver->clean_occur_from_removed_clauses_only_smudged();
     free_clauses_to_free();
+    limit_to_decrease = old_limit_to_decrease;
 
     return solver->okay();
 }
@@ -2817,6 +2810,7 @@ void OccSimplifier::backward_sub()
 {
     auto backup = subsumption_time_limit;
     subsumption_time_limit = 0;
+    auto old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &subsumption_time_limit;
     assert(cl_to_free_later.empty());
 
@@ -2838,6 +2832,7 @@ void OccSimplifier::backward_sub()
 
     solver->clean_occur_from_removed_clauses_only_smudged();
     free_clauses_to_free();
+    limit_to_decrease = old_limit_to_decrease;
 }
 
 bool OccSimplifier::backward_sub_str()
@@ -2847,6 +2842,7 @@ bool OccSimplifier::backward_sub_str()
 
     auto backup = subsumption_time_limit;
     subsumption_time_limit = 0;
+    auto old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &subsumption_time_limit;
 
     //Sub-str long with bins
@@ -2883,6 +2879,7 @@ bool OccSimplifier::backward_sub_str()
     end:
     solver->clean_occur_from_removed_clauses_only_smudged();
     free_clauses_to_free();
+    limit_to_decrease = old_limit_to_decrease;
 
     return solver->okay();
 }
@@ -4770,15 +4767,13 @@ bool OccSimplifier::occ_based_lit_rem(uint32_t var, uint32_t& removed) {
 
             if (*limit_to_decrease > 0 && try_remove_lit_via_occurrence_simpl(OccurClause(lit, w))) {
                 remove_literal(offset, lit, true);
-                if (!solver->okay()) {
-                    return false;
-                }
-
+                if (!solver->okay()) goto end;
                 removed++;
             }
         }
     }
 
+    end:
     limit_to_decrease = old_limit_to_decrease;
     return solver->okay();
 }
@@ -4790,6 +4785,7 @@ bool OccSimplifier::all_occ_based_lit_rem()
 
     double myTime = cpuTime();
     //TODO this is not being used, bogoprops is not checked here
+    auto old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &occ_based_lit_rem_time_limit;
 
     //Order them for removal
@@ -4824,9 +4820,7 @@ bool OccSimplifier::all_occ_based_lit_rem()
         }
     }
 
-    if (!deal_with_added_long_and_bin(false)) {
-        goto end;
-    }
+    if (!deal_with_added_long_and_bin(false)) goto end;
 
     end:
     solver->clean_occur_from_removed_clauses_only_smudged();
@@ -4851,6 +4845,7 @@ bool OccSimplifier::all_occ_based_lit_rem()
             , time_used
         );
     }
+    limit_to_decrease = old_limit_to_decrease;
 
     return solver->okay();
 }
@@ -4905,7 +4900,6 @@ bool OccSimplifier::maybe_eliminate(const uint32_t var)
         }
         resolvents.pop();
     }
-    limit_to_decrease = &norm_varelim_time_limit;
 
 end:
     set_var_as_eliminated(var);
