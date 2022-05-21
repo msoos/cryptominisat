@@ -925,6 +925,45 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
     return true;
 }
 
+//Implicit input here is ALWAYS irred
+void SubsumeStrengthen::backw_sub_with_impl(
+    const vector<Lit>& lits,
+    Sub1Ret& ret_sub_str
+) {
+    subs.clear();
+
+    find_subsumed(
+        CL_OFFSET_MAX
+        , lits
+        , calcAbstraction(lits)
+        , subs
+        , true
+    );
+
+    for (size_t j = 0
+        ; j < subs.size() && solver->okay()
+        ; j++
+    ) {
+        if (subs[j].ws.isBin()) {
+            remove_binary_cl(subs[j]);
+            continue;
+        }
+
+        assert(subs[j].ws.isClause());
+        ClOffset offset2 = subs[j].ws.get_offset();
+        Clause& cl2 = *solver->cl_alloc.ptr(offset2);
+        if (subsLits[j] == lit_Undef) {  //Subsume
+            if (cl2.used_in_xor() && solver->conf.force_preserve_xors)
+                continue;
+
+            if (!cl2.red()) ret_sub_str.subsumedIrred = true;
+            simplifier->unlink_clause(offset2, true, false, true);
+            ret_sub_str.sub++;
+        }
+    }
+    runStats.sub1 += ret_sub_str;
+}
+
 bool SubsumeStrengthen::backw_sub_str_long_with_bins_watch(
     const Lit lit,
     bool both_bins

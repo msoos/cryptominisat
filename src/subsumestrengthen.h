@@ -53,6 +53,10 @@ public:
 
     Sub0Ret backw_sub_with_long(const ClOffset offset);
 
+    void backw_sub_with_impl(
+        const vector<Lit>& lits,
+        Sub1Ret& ret_sub_str
+    );
     bool backw_sub_str_with_impl(
         const vector<Lit>& lits,
         Sub1Ret& ret_sub_str);
