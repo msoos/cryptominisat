@@ -1128,11 +1128,12 @@ void OccSimplifier::subs_with_resolvent_clauses()
                     // just skip.
                     continue;
                 }
+                if (dummy.size() > 10) continue; //likely not useful
 
                 resolvents_checked++;
                 tmp_subs.clear();
                 std::sort(dummy.begin(), dummy.end());
-                strengthen_dummy_with_bins(true);
+//                 strengthen_dummy_with_bins(true); //too expensive
 
                 sub_str->find_subsumed(
                     CL_OFFSET_MAX,
