@@ -5079,7 +5079,10 @@ bool Solver::sparsify()
     uint32_t last_printed = 0;
     for (uint32_t i = 0; i < tot_cls; i++) {
         if ((10*i)/(tot_cls) != last_printed) {
-            cout << "c done with " << ((10*i)/(tot_cls))*10 << " %" << endl;
+            verb_print(1, "[sparsify] done with " << ((10*i)/(tot_cls))*10 << " %"
+                << " oracle props: "
+                << print_value_kilo_mega(oracle.getStats().mems)
+                << " T: " << (cpuTime()-myTime));
             last_printed = (10*i)/(tot_cls);
         }
 
@@ -5096,7 +5099,6 @@ bool Solver::sparsify()
 
         if (oracle.Solve(tmp, false)) {
             oracle.SetAssumpLit(ORCLIT(Lit(nVars()+i, true)), true);
-//             cout << "NOT Removed " << i << endl;
         } else {
             oracle.SetAssumpLit(ORCLIT(Lit(nVars()+i, false)), true);
             removed++;
@@ -5112,9 +5114,11 @@ bool Solver::sparsify()
                 findWatchedOfBin(watches, lit2, lit1, false, std::get<MyBin>(c.cl).ID).mark_bin_cl();
                 binTri.irredBins--;
             }
-            //learned_clauses.push_back(clauses[i]);
-//             cout << "Removed " << i << endl;
-            //if (clauses[i].size() == 2) cout << "REMOVED TWO" << endl;
+        }
+
+        if (oracle.getStats().mems > 600LL*1000LL*1000LL) {
+            verb_print(1, "[sparsify] too many props in oracle, aborting");
+            goto fin;
         }
     }
 

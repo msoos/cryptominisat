@@ -27,7 +27,7 @@
 namespace sspp {
 namespace oracle {
 struct Stats {
- 	int64_t propagations = 0;
+ 	int64_t mems = 0;
  	int64_t decisions = 0;
  	int64_t learned_clauses = 0;
  	int64_t learned_bin_clauses = 0;
@@ -83,6 +83,7 @@ class Oracle {
 
   int CurLevel() const;
   int LitVal(Lit lit) const;
+  const Stats& getStats() {return stats;}
  private:
  	void ForgetLearned();
  	void AddOrigClause(vector<Lit> clause, bool entailed);

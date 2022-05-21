@@ -34,7 +34,7 @@ const double EPS = 1e-150;
 } // namespace
 
 void Stats::Print() const {
-	cerr<<"Decisions/Propagations "<<decisions<<"/"<<propagations<<endl;
+	cerr<<"Decisions/Propagations "<<decisions<<"/"<<mems<<endl;
 	cerr<<"Conflicts: "<<conflicts<<endl;
 	cerr<<"Learned clauses/bin/unit: "<<learned_clauses<<"/"<<learned_bin_clauses<<"/"<<learned_units<<endl;
 	cerr<<"Forgot clauses: "<<forgot_clauses<<endl;
@@ -633,6 +633,7 @@ vector<Lit> Oracle::LearnUip(size_t conflict_clause) {
 		assert(vs[v].level == level);
 		open--;
 		if (open) {
+			stats.mems++;
 			BumpClause(vs[v].reason);
 			for (size_t j = vs[v].reason; clauses[j]; j++) {
 				Var tv = VarOf(clauses[j]);
@@ -656,6 +657,7 @@ vector<Lit> Oracle::LearnUip(size_t conflict_clause) {
 	}
 	for (size_t i = 1; i < clause.size(); i++) {
 		if (vs[VarOf(clause[i])].reason) {
+			stats.mems++;
 			if (LitReduntant(clause[i])) {
 				assert(in_cc[clause[i]]);
 				in_cc[clause[i]] = false;
@@ -685,7 +687,7 @@ size_t Oracle::Propagate(int level) {
 	stats.prop_timer.start();
 	size_t conflict = 0;
 	for (size_t i = 0; i < prop_q.size(); i++) {
-		stats.propagations++;
+		stats.mems++;
 		// ff short for falsified
 		const Lit ff = prop_q[i];
 		assert(vs[VarOf(ff)].level == level);
@@ -710,6 +712,7 @@ size_t Oracle::Propagate(int level) {
 			if (conflict) break;
 			// Check if satisfied by the other watched literal
 			// fun xor swap trick
+			stats.mems++;
 			const Lit other = clauses[w.cls]^clauses[w.cls+1]^ff;
 			int ov = LitVal(other);
 			if (ov > 0) { // SAT by other watch - change blit
