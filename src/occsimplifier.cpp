@@ -779,7 +779,6 @@ void OccSimplifier::eliminate_empty_resolvent_vars()
     end:
     solver->clean_occur_from_removed_clauses_only_smudged();
     free_clauses_to_free();
-    limit_to_decrease = old_limit_to_decrease;
 
     const double time_used = cpuTime() - myTime;
     const bool time_out = (*limit_to_decrease <= 0);
@@ -799,6 +798,7 @@ void OccSimplifier::eliminate_empty_resolvent_vars()
             , time_remain
         );
     }
+    limit_to_decrease = old_limit_to_decrease;
 }
 
 bool OccSimplifier::can_eliminate_var(const uint32_t var) const
