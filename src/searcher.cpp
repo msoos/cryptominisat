@@ -87,7 +87,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     next_bins_distill = 12000.0*conf.global_next_multiplier;
     next_full_probe = 20000.0*conf.global_next_multiplier;
     next_sub_str_with_bin = 25000.0*conf.global_next_multiplier;
-    next_intree = 55000.0*conf.global_next_multiplier;
+    next_intree = 50000.0*conf.global_next_multiplier;
     next_str_impl_with_impl = 40000.0*conf.global_next_multiplier;
     next_sls = 44000.0*conf.global_next_multiplier;
 }
@@ -2484,7 +2484,7 @@ bool Searcher::intree_if_needed()
         ret &= solver->clear_gauss_matrices();
         if (ret) ret &= solver->intree->intree_probe();
         if (ret) ret &= solver->find_and_init_all_matrices();
-        next_intree = sumConflicts + 45000.0*conf.global_next_multiplier;
+        next_intree = sumConflicts + 65000.0*conf.global_next_multiplier;
     }
 
     return ret;

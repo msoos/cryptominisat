@@ -852,14 +852,14 @@ uint32_t OccSimplifier::sum_irred_cls_longs_lits() const
 }
 
 //backward subsumes with added long and bin
-bool OccSimplifier::deal_with_added_long_and_bin(const bool main)
+bool OccSimplifier::deal_with_added_long_and_bin(const bool verbose)
 {
     assert(solver->okay());
     assert(solver->prop_at_head());
 
     while (!added_long_cl.empty() || !added_irred_bin.empty())
     {
-        if (!sub_str->handle_added_long_cl(main)) {
+        if (!sub_str->handle_added_long_cl(verbose)) {
             return false;
         }
         assert(solver->okay());
@@ -1026,7 +1026,7 @@ bool OccSimplifier::simulate_frw_sub_str_with_added_cl_to_var()
     added_cl_to_var.clear();
 
     //here, we clean the marks on the clauses, even in case of timeout/abort
-    if (!deal_with_added_long_and_bin(false)) return false;
+    if (!deal_with_added_long_and_bin(false)) goto end;
     SLOW_DEBUG_DO(check_no_marked_clauses());
 
     end:
@@ -1044,7 +1044,7 @@ void OccSimplifier::check_no_marked_clauses()
     }
 }
 
-void OccSimplifier::strengthen_dummy_with_bins(bool avoid_redundant)
+void OccSimplifier::strengthen_dummy_with_bins(const bool avoid_redundant)
 {
     auto old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &dummy_str_time_limit;
@@ -1108,6 +1108,7 @@ void OccSimplifier::subs_with_resolvent_clauses()
 
             for (auto const& neg: tmp_negs) {
                 *limit_to_decrease -= 3;
+                if (*limit_to_decrease < 0) goto end;
                 if (neg.isBin()) {
                     if (neg.red()) continue;
                     ID2 = neg.get_ID();
@@ -1127,7 +1128,6 @@ void OccSimplifier::subs_with_resolvent_clauses()
                     // just skip.
                     continue;
                 }
-                if (*limit_to_decrease < -10LL*1000LL) return;
 
                 resolvents_checked++;
                 tmp_subs.clear();
@@ -1158,6 +1158,8 @@ void OccSimplifier::subs_with_resolvent_clauses()
             }
         }
     }
+
+    end:
     solver->clean_occur_from_removed_clauses_only_smudged();
     free_clauses_to_free();
     verb_print(1, "[occ-resolv-subs] removed: " << removed
@@ -1262,41 +1264,24 @@ bool OccSimplifier::eliminate_vars()
                 *limit_to_decrease -= 20;
                 wenThrough++;
 
-                if (!can_eliminate_var(var))
-                    continue;
-
-                //Try to eliminate
+                if (!can_eliminate_var(var)) continue;
                 if (maybe_eliminate(var)) {
                     vars_elimed++;
                     varelim_num_limit--;
                     last_elimed++;
                 }
-                if (!solver->okay()) {
-                    goto end;
-                }
+                if (!solver->okay()) goto end;
                 assert(solver->prop_at_head());
-                assert(solver->okay());
 
-                if (!clear_vars_from_cls_that_have_been_set()) {
-                    goto end;
-                }
+                if (!clear_vars_from_cls_that_have_been_set()) goto end;
 
                 //SUB and STR for newly added long and short cls
-                limit_to_decrease = &varelim_sub_str_limit;
-                if (!deal_with_added_long_and_bin(false)) {
-                    limit_to_decrease = &norm_varelim_time_limit;
-                    goto end;
-                }
+                if (!deal_with_added_long_and_bin(false)) goto end;
 
                 // This is expensive, only do it if we are in Arjun's E mode
-                if (solver->conf.varelim_check_resolvent_subs) {
-                    if (!simulate_frw_sub_str_with_added_cl_to_var()) {
-                        limit_to_decrease = &norm_varelim_time_limit;
-                        goto end;
-                    }
-                }
+                if (solver->conf.varelim_check_resolvent_subs
+                     && !simulate_frw_sub_str_with_added_cl_to_var()) goto end;
 
-                limit_to_decrease = &norm_varelim_time_limit;
                 assert(solver->okay());
                 assert(solver->prop_at_head());
                 update_varelim_complexity_heap();
@@ -1312,20 +1297,14 @@ bool OccSimplifier::eliminate_vars()
                 cout <<"c size of removed_cl_with_var: " << removed_cl_with_var.getTouchedList().size() << endl;
             }
 
-            if (!simulate_frw_sub_str_with_added_cl_to_var()) {
-                limit_to_decrease = &norm_varelim_time_limit;
-                goto end;
-            }
+            if (!simulate_frw_sub_str_with_added_cl_to_var()) goto end;
 
             //These WILL ADD VARS BACK even though it's not changed.
             for(uint32_t var: removed_cl_with_var.getTouchedList()) {
-                if (!can_eliminate_var(var)) {
-                    continue;
-                }
+                if (!can_eliminate_var(var)) continue;
                 varElimComplexity[var] = heuristicCalcVarElimScore(var);
                 velim_order.update(var);
             }
-
 
             if (solver->conf.verbosity >= 2) {
                 cout << "c x n vars       : " << solver->get_num_free_vars() << endl;
@@ -1972,7 +1951,6 @@ struct OrGateSorterLHS {
     }
 };
 
-
 struct GateLHSEq {
     bool operator()(const OrGate& a, const OrGate& b)
     {
@@ -1984,7 +1962,6 @@ struct GateLHSEq {
     }
 };
 
-
 // Checks that both inputs l1 & l2 are in the Clause. If so, replaces it with the RHS
 bool OccSimplifier::lit_rem_with_or_gates()
 {
@@ -1992,7 +1969,6 @@ bool OccSimplifier::lit_rem_with_or_gates()
     assert(solver->prop_at_head());
     assert(added_irred_bin.empty());
     assert(added_long_cl.empty());
-    assert(!solver->drat->enabled() && "below is NOT ok with FRAT");
 
     double myTime = cpuTime();
     gateFinder = new GateFinder(this, solver);
@@ -2248,10 +2224,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 }
             }
         } else if (token == "occ-rem-with-orgates") {
-            //TODO FIX -- should work with DRAT enabled too
-            if (!solver->drat->enabled()) {
-                lit_rem_with_or_gates();
-            }
+            lit_rem_with_or_gates();
         } else if (token == "occ-bva") {
             if (solver->conf.do_bva && false) { //TODO due to IDs, this is BROKEN
                 assert(false && "due to clause IDs this is broken");
@@ -2689,6 +2662,7 @@ void OccSimplifier::fill_tocheck_seen(const vec<Watched>& ws, vector<uint32_t>& 
     }
 }
 
+//WARNING we MUST be sure there is at least ONE solution!
 void OccSimplifier::delete_component_unconnected_to_assumps()
 {
     assert(solver->okay());
@@ -2725,7 +2699,7 @@ void OccSimplifier::delete_component_unconnected_to_assumps()
             if (w.isBin()) {
                 if (w.red()) continue;
                 if (!seen[w.lit2().var()]) {
-                    solver->detach_bin_clause(l, w.lit2(), false, w.get_ID(), false, true);
+                    solver->detach_bin_clause(l, w.lit2(), w.red(), w.get_ID(), false, true);
                     removed++;
                 }
             } else if (w.isClause()) {
@@ -4194,7 +4168,7 @@ bool OccSimplifier::generate_resolvents(
             bool tautological = resolve_clauses(*it, *it2, lit);
             if (tautological) continue;
             if (solver->satisfied(dummy)) continue;
-            if (check_taut_weaken_dummy(lit.var())) continue;
+            if (weaken_time_limit > 0 && check_taut_weaken_dummy(lit.var())) continue;
 
             #ifdef VERBOSE_DEBUG_VARELIM
             cout << "Adding new clause due to varelim: " << dummy << endl;
@@ -4329,7 +4303,7 @@ void OccSimplifier::weaken(
             *limit_to_decrease-=50;
             *limit_to_decrease-=solver->watches[l].size();
             for(auto const& w: solver->watches[l]) {
-                if (w.isClause()) {
+                /*if (w.isClause()) {
                     *limit_to_decrease -= 1;
                     const Clause& cl = *solver->cl_alloc.ptr(w.get_offset());
                     if (cl.getRemoved() || cl.red() || cl.size() >= out.size() || cl.size() > 10) continue;
@@ -4348,7 +4322,7 @@ void OccSimplifier::weaken(
                         toClear.push_back(toadd);
                     }
                     continue;
-                }
+                }*/
 
                 if (!w.isBin() || w.red()) continue;
                 if (w.lit2().var() == lit.var()) continue;
@@ -4378,6 +4352,7 @@ bool OccSimplifier::check_taut_weaken_dummy(const uint32_t dontuse)
         const Lit l = weaken_dummy[i];
         assert(l.var() != dontuse);
         if (taut) break;
+        weaken_time_limit-=1;
         for(auto const& w: solver->watches[l]) {
             if (!w.isBin() || w.red()) continue;
             const Lit toadd = ~w.lit2();

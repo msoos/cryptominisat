@@ -523,7 +523,7 @@ void SubsumeStrengthen::find_subsumed_and_strengthened(
 }
 
 //must be called from deal_with_added_long_and_bin
-bool SubsumeStrengthen::handle_added_long_cl(const bool main_run)
+bool SubsumeStrengthen::handle_added_long_cl(const bool verbose)
 {
     assert(solver->prop_at_head());
 
@@ -574,7 +574,7 @@ bool SubsumeStrengthen::handle_added_long_cl(const bool main_run)
     }
     simplifier->added_long_cl.clear();
 
-    if (main_run) {
+    if (verbose) {
         const bool time_out =  *simplifier->limit_to_decrease <= 0;
         const double time_used = cpuTime() - start_time;
         const double time_remain = float_div(*simplifier->limit_to_decrease, orig_limit);
