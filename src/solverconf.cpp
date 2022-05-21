@@ -188,7 +188,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , do_full_varelim(true)
         , empty_varelim_time_limitM(300LL)
         , varelim_time_limitM(750)
-        , varelim_sub_str_limit(600)
+        , varelim_sub_str_limitM(600)
         , varElimRatioPerIter(1.60)
         , velim_resolvent_too_large(20)
         , var_linkin_limit_MB(1000)
@@ -197,7 +197,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Subs, str limits for simplifier
         , subsumption_time_limitM(300)
-        , weaken_time_limitM(30)
+        , weaken_time_limitM(300)
         , dummy_str_time_limitM(20)
         , subsumption_time_limit_ratio_sub_str_w_bin(0.1)
         , subsumption_time_limit_ratio_sub_w_long(0.9)
@@ -282,12 +282,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
             //"intree-probe,"
             "scc-vrepl,sub-impl,"
             "breakid,"
-            "sub-cls-with-bin, sub-impl,"
-            "distill-cls-onlyrem,"
-            //occurrence based
-            "occ-backw-sub, occ-bve,"//occ-gates,"
-            "occ-backw-sub-str, occ-bva, occ-ternary-res, occ-xor, card-find,"
-            "distill-cls,"
+             //occurrence based
+            "occ-backw-sub-str,occ-clean-implicit,occ-bve,"//occ-gates,"
+            "occ-bva,occ-ternary-res,occ-xor,card-find,"
             //consolidate after OCC
             "cl-consolidate,"
             //strengthen again

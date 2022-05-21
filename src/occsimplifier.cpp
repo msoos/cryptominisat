@@ -1128,7 +1128,8 @@ void OccSimplifier::subs_with_resolvent_clauses()
                     // just skip.
                     continue;
                 }
-                if (dummy.size() > 10) continue; //likely not useful
+                if (*limit_to_decrease < -10LL*1000LL) return;
+//                 if (dummy.size() > 10) continue; //likely not useful
 
                 resolvents_checked++;
                 tmp_subs.clear();
@@ -3178,7 +3179,7 @@ void OccSimplifier::set_limits()
         *solver->conf.global_timeout_multiplier;
     empty_varelim_time_limit   = 200LL*1000LL*solver->conf.empty_varelim_time_limitM
         *solver->conf.global_timeout_multiplier;
-    varelim_sub_str_limit      = 1000ULL*1000ULL*solver->conf.varelim_sub_str_limit
+    varelim_sub_str_limit      = 1000ULL*1000ULL*solver->conf.varelim_sub_str_limitM
         *solver->conf.global_timeout_multiplier;
     ternary_res_time_limit     = 1000ULL*1000ULL*solver->conf.ternary_res_time_limitM
         *solver->conf.global_timeout_multiplier;

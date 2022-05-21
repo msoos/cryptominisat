@@ -649,6 +649,14 @@ DLL_PUBLIC void SATSolver::set_weaken_time_limitM(const uint32_t lim)
     }
 }
 
+DLL_PUBLIC void SATSolver::set_occ_based_lit_rem_time_limitM(const uint32_t lim)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.occ_based_lit_rem_time_limitM = lim;
+    }
+}
+
 DLL_PUBLIC void SATSolver::set_no_bve()
 {
     for (size_t i = 0; i < data->solvers.size(); ++i) {

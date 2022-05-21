@@ -342,7 +342,7 @@ class DLL_PUBLIC SolverConf
         int      do_full_varelim;
         long long empty_varelim_time_limitM;
         long long varelim_time_limitM;
-        long long varelim_sub_str_limit;
+        long long varelim_sub_str_limitM;
         double    varElimRatioPerIter;
         int velim_resolvent_too_large; //-1 == no limit
         int var_linkin_limit_MB;
