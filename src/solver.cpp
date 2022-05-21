@@ -33,6 +33,7 @@ THE SOFTWARE.
 #include <complex>
 #include <locale>
 #include <random>
+#include <variant>
 
 #include "varreplacer.h"
 #include "time_mem.h"
@@ -69,6 +70,7 @@ THE SOFTWARE.
 #include "lucky.h"
 #include "get_clause_query.h"
 #include "community_finder.h"
+#include "oracle/oracle.hpp"
 extern "C" {
 #include "picosat/picosat.h"
 }
@@ -84,6 +86,7 @@ extern "C" {
 using namespace CMSat;
 using std::cout;
 using std::endl;
+using std::variant;
 
 #ifdef USE_SQLITE3
 #include "sqlitestats.h"
@@ -2127,6 +2130,8 @@ lbool Solver::execute_inprocess_strategy(
             }
         } else if (token == "eqlit-find") {
             find_equivs();
+        } else if (token == "sparsify") {
+            sparsify();
         } else if (token == "must-scc-vrepl") {
             if (conf.doFindAndReplaceEqLits) {
                 varReplacer->replace_if_enough_is_found();
@@ -4929,6 +4934,230 @@ bool Solver::find_equivs()
     picosat_reset(picosat);
 
     verb_print(1, "[find-equivs] checked: " << checked << " added: " << added << " T: " << (cpuTime()-myTime) << " buildT: " << build_time);
+    return solver->okay();
+}
+
+struct MyBin {
+    MyBin (const Lit _l1, const Lit _l2, const int32_t _ID):
+        l1(_l1), l2(_l2), ID(_ID) {}
+
+    Lit l1;
+    Lit l2;
+    int32_t ID;
+};
+
+struct MyDat {
+    MyDat(vector<int>& _val, ClOffset _off) :
+        val(_val), cl(_off) {which = 0;}
+    MyDat(vector<int>& _val, MyBin _bin) :
+        val(_val), cl(_bin) {which = 1;}
+
+
+    vector<int> val;
+    int which;
+    variant<ClOffset, MyBin> cl;
+
+    bool operator<(const MyDat& other) const {
+        return val < other.val;
+    }
+};
+
+#define ORCLIT(x) ((x).sign() ? ((x).var()+1)*2+1 : ((x).var()+1)*2)
+
+bool Solver::sparsify()
+{
+    if (!clauseCleaner->remove_and_clean_all()) return false;
+
+    double myTime = cpuTime();
+    uint32_t removed = 0;
+    uint32_t removed_bin = 0;
+
+    vector<vector<int>> edgew(nVars());
+    for (uint32_t i = 0; i < nVars(); i++) edgew[i].resize(nVars());
+
+    for (const auto& off: longIrredCls) {
+        Clause& cl = *cl_alloc.ptr(off);
+        for (auto const& l1 : cl) {
+            for (auto const& l2 : cl) {
+                uint32_t v1 = l1.var();
+                uint32_t v2 = l2.var();
+                if (v1 < v2) {
+                    edgew[v1][v2]++;
+                    //assert(edgew[v1][v2] <= (int)clauses.size());
+                }
+            }
+        }
+    }
+    for (uint32_t i = 0; i < nVars()*2; i++) {
+        Lit l = Lit::toLit(i);
+        for(auto const& ws: watches[l]) {
+            if (!ws.isBin() || ws.red())  continue;
+            uint32_t v1 = l.var();
+            uint32_t v2 = ws.lit2().var();
+            if (v1 < v2) {
+                edgew[v1][v2]++;
+                //assert(edgew[v1][v2] <= (int)clauses.size());
+            }
+        }
+    }
+
+    //[vector<int>, clause] pairs. vector<INT> =
+    vector<MyDat> cs;
+    for (const auto& off: longIrredCls) {
+        Clause& cl = *cl_alloc.ptr(off);
+        assert(!cl.red());
+        vector<int> ww;
+        for (auto const& l1 : cl) {
+            for (auto const& l2: cl) {
+                uint32_t v1 = l1.var();
+                uint32_t v2 = l2.var();
+                if (v1 < v2) {
+                    assert(edgew[v1][v2] >= 1);
+                    if ((int)ww.size() < edgew[v1][v2]) {
+                        ww.resize(edgew[v1][v2]);
+                    }
+                    ww[edgew[v1][v2]-1]--;
+                }
+            }
+        }
+//         cout << "CL is: " << cl << endl;
+        cs.push_back(MyDat(ww, off));
+    }
+
+    for (uint32_t i = 0; i < nVars()*2; i++) {
+        Lit l = Lit::toLit(i);
+        vector<int> ww;
+        for(auto const& ws: watches[l]) {
+            if (!ws.isBin() || ws.red())  continue;
+            uint32_t v1 = l.var();
+            uint32_t v2 = ws.lit2().var();
+            if (v1 < v2) {
+                assert(edgew[v1][v2] >= 1);
+                if ((int)ww.size() < edgew[v1][v2]) {
+                    ww.resize(edgew[v1][v2]);
+                }
+                ww[edgew[v1][v2]-1]--;
+//                 cout << "WW is (sz: " << ww.size() << "): ";
+//                 for(uint32_t i2 = 0; i2 < ww.size(); i2++) cout << ww[i2] << ",";
+//                 cout << endl;
+//                 cout << "Bin is: " << l << " " << ws.lit2() << endl;
+                cs.push_back(MyDat(ww, MyBin(l, ws.lit2(), ws.get_ID())));
+            }
+        }
+    }
+
+
+    std::sort(cs.begin(), cs.end());
+    const uint32_t tot_cls = longIrredCls.size() + binTri.irredBins;
+    assert(cs.size() == tot_cls);
+
+    sspp::oracle::Oracle oracle(nVars()+tot_cls+1, {});
+    vector<sspp::Lit> tmp;
+    for(uint32_t i = 0; i < cs.size(); i++) {
+        const auto& c = cs[i];
+        tmp.clear();
+        if (c.which == 0) {
+            Clause& cl = *cl_alloc.ptr(std::get<ClOffset>(c.cl));
+            for(auto const& l: cl) tmp.push_back(ORCLIT(l));
+        } else {
+            const MyBin& b = std::get<MyBin>(c.cl);
+            tmp.push_back(ORCLIT(b.l1));
+            tmp.push_back(ORCLIT(b.l2));
+        }
+        tmp.push_back(ORCLIT(Lit(nVars()+i, false)));
+//         cout << "tmp is: ";
+//         for(auto const& t: tmp) cout << ((t%2 == 0) ? "" : "-") << (t/2-1) << " ";
+//         cout << endl;
+        oracle.AddClause(tmp, false);
+    }
+    const double build_time = cpuTime() - myTime;
+
+    for (uint32_t i = 0; i < tot_cls; i++) {
+        oracle.SetAssumpLit(ORCLIT(Lit(nVars()+i, true)), false);
+    }
+
+    uint32_t last_printed = 0;
+    for (uint32_t i = 0; i < tot_cls; i++) {
+        if ((10*i)/(tot_cls) != last_printed) {
+            cout << "c done with " << ((10*i)/(tot_cls))*10 << " %" << endl;
+            last_printed = (10*i)/(tot_cls);
+        }
+
+        oracle.SetAssumpLit(ORCLIT(Lit(nVars()+i, false)), false);
+        tmp.clear();
+        const auto& c = cs[i];
+        if (c.which == 0) {
+            Clause& cl = *cl_alloc.ptr(std::get<ClOffset>(c.cl));
+            for(auto const& l: cl) tmp.push_back(ORCLIT(~l));
+        } else {
+            tmp.push_back(ORCLIT(~(std::get<MyBin>(c.cl).l1)));
+            tmp.push_back(ORCLIT(~(std::get<MyBin>(c.cl).l2)));
+        }
+
+        if (oracle.Solve(tmp, false)) {
+            oracle.SetAssumpLit(ORCLIT(Lit(nVars()+i, true)), true);
+//             cout << "NOT Removed " << i << endl;
+        } else {
+            oracle.SetAssumpLit(ORCLIT(Lit(nVars()+i, false)), true);
+            removed++;
+            if (c.which == 0) {
+                Clause& cl = *cl_alloc.ptr(std::get<ClOffset>(c.cl));
+                assert(!cl.stats.marked_clause);
+                cl.stats.marked_clause = 1;
+            } else {
+                removed_bin++;
+                Lit lit1 = std::get<MyBin>(c.cl).l1;
+                Lit lit2 = std::get<MyBin>(c.cl).l2;
+                findWatchedOfBin(watches, lit1, lit2, false, std::get<MyBin>(c.cl).ID).mark_bin_cl();
+                findWatchedOfBin(watches, lit2, lit1, false, std::get<MyBin>(c.cl).ID).mark_bin_cl();
+                binTri.irredBins--;
+            }
+            //learned_clauses.push_back(clauses[i]);
+//             cout << "Removed " << i << endl;
+            //if (clauses[i].size() == 2) cout << "REMOVED TWO" << endl;
+        }
+    }
+
+    fin:
+    for(auto& ws: watches) {
+        uint32_t j = 0;
+        for(uint32_t i = 0; i < ws.size(); i++) {
+            if (ws[i].isBNN()) {
+                ws[j++] = ws[i];
+                continue;
+            } else if (ws[i].isBin()) {
+                if (!ws[i].bin_cl_marked()) ws[j++] = ws[i];
+                continue;
+            } else if (ws[i].isClause()) {
+                Clause* cl = cl_alloc.ptr(ws[i].get_offset());
+                if (!cl->stats.marked_clause) ws[j++] = ws[i];
+                continue;
+            }
+        }
+        ws.shrink(ws.size()-j);
+    }
+
+    uint32_t j = 0;
+    for(uint32_t i = 0; i < longIrredCls.size(); i++) {
+        ClOffset off = longIrredCls[i];
+        Clause* cl = cl_alloc.ptr(off);
+        if (!cl->stats.marked_clause) {
+            longIrredCls[j++] = longIrredCls[i];
+        } else {
+            litStats.irredLits -= cl->size();
+            cl_alloc.clauseFree(off);
+        }
+    }
+    longIrredCls.resize(j);
+
+    //cout << "New cls size: " << clauses.size() << endl;
+    //Subsume();
+
+    verb_print(1, "[sparsify] removed: " << removed
+        << " of which bin: " << removed_bin
+        << " tot considered: " << tot_cls
+        << " T: " << (cpuTime()-myTime) << " buildT: " << build_time);
+
     return solver->okay();
 }
 

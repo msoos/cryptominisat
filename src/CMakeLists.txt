@@ -150,6 +150,7 @@ set(cryptoms_lib_files
     matrixfinder.cpp
     picosat/picosat.c
     picosat/version.c
+    oracle/oracle.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
 
