@@ -4170,7 +4170,7 @@ bool OccSimplifier::generate_resolvents(
             bool tautological = resolve_clauses(*it, *it2, lit);
             if (tautological) continue;
             if (solver->satisfied(dummy)) continue;
-            if (weaken_time_limit > 0 && check_taut_weaken_dummy(lit.var())) continue;
+//             if (weaken_time_limit > 0 && check_taut_weaken_dummy(lit.var())) continue;
 
             #ifdef VERBOSE_DEBUG_VARELIM
             cout << "Adding new clause due to varelim: " << dummy << endl;
@@ -4208,7 +4208,7 @@ bool OccSimplifier::generate_resolvents(
                 is_xor |= c2->used_in_xor();
             }
             //must clear marking that has been set due to gate
-            strengthen_dummy_with_bins(false);
+            //strengthen_dummy_with_bins(false);
             resolvents.add_resolvent(dummy, stats, is_xor);
         }
     }
