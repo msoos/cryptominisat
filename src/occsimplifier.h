@@ -200,11 +200,13 @@ public:
     // definable vars
     vector<uint32_t> remove_definable_by_irreg_gate(const vector<uint32_t>& vars);
     vector<uint32_t> find_equiv_subformula(const vector<uint32_t>& vars, bool mirror_empty);
+    bool elim_var_by_str(uint32_t var, const vector<pair<ClOffset, ClOffset>>& cls);
     uint32_t add_cls_to_picosat_definable(const Lit wsLit);
     PicoSAT* picosat = NULL;
     int lit_to_picolit(const Lit l);
     map<uint32_t, int> var_to_picovar;
-    bool check_equiv_subformua(Lit lit);
+    vector<std::pair<ClOffset, ClOffset>> equiv_subformula_cls;
+    bool check_equiv_subformula(Lit lit);
 
     bool simplify(const bool _startup, const std::string& schedule);
     void new_var(const uint32_t orig_outer);

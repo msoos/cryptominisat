@@ -1625,7 +1625,7 @@ uint32_t OccSimplifier::add_cls_to_picosat_definable(const Lit wsLit) {
 }
 
 // check that (F | x = True) == (F | x = False)
-bool OccSimplifier::check_equiv_subformua(Lit lit)
+bool OccSimplifier::check_equiv_subformula(Lit lit)
 {
     // Too expensive to check these
     if (solver->watches[lit].size() + solver->watches[~lit].size() > 100) {
@@ -1669,6 +1669,7 @@ bool OccSimplifier::check_equiv_subformua(Lit lit)
     if (!ok) return false;
 
     // Match long clauses, mark covered ~lit clauses
+    equiv_subformula_cls.clear();
     for(auto const& w: solver->watches[lit]) {
         if (!w.isClause()) continue;
         Clause* cl = solver->cl_alloc.ptr(w.get_offset());
@@ -1696,6 +1697,7 @@ bool OccSimplifier::check_equiv_subformua(Lit lit)
                 }
             }
             if (this_cl_ok) {
+                equiv_subformula_cls.push_back(std::make_pair(w.get_offset(), w2.get_offset()));
                 cl2->stats.marked_clause = true;
                 found = true;
                 break;
@@ -1721,7 +1723,73 @@ bool OccSimplifier::check_equiv_subformua(Lit lit)
         cl2->stats.marked_clause = false;
     }
 
-    return ok && reverse_covered;
+    if (ok && reverse_covered) {
+        elim_var_by_str(lit.var(), equiv_subformula_cls);
+        return true;
+    }
+    return false;
+}
+
+bool OccSimplifier::elim_var_by_str(uint32_t var, const vector<pair<ClOffset, ClOffset>>& cls)
+{
+    Lit l(var, false);
+
+    // Remove binaries, add units.
+    solver->watches[l].copyTo(poss);
+    for(auto const& w: poss) {
+        if (!w.isBin()) continue;
+
+        solver->detach_bin_clause(l, w.lit2(), w.red(), w.get_ID());
+        solver->detach_bin_clause(w.lit2(), l , w.red(), w.get_ID());
+        if (w.red()) continue;
+        n_occurs[l.toInt()]--;
+        n_occurs[w.lit2().toInt()]--;
+
+        dummy.clear();
+        dummy.push_back(w.lit2());
+        if (!solver->add_clause_int(dummy)) goto end;
+    }
+    solver->watches[~l].copyTo(negs);
+    for(auto const& w: negs) {
+        if (!w.isBin()) continue;
+        solver->detach_bin_clause(l, w.lit2(), w.red(), w.get_ID());
+        solver->detach_bin_clause(w.lit2(), l , w.red(), w.get_ID());
+        if (w.red()) continue;
+        n_occurs[l.toInt()]--;
+        n_occurs[w.lit2().toInt()]--;
+        // No need to add the unit, already added above.
+    }
+
+    // Add resolvent, remove pair of cls
+    for(auto const& p: cls) {
+        dummy.clear();
+        Clause* cl = solver->cl_alloc.ptr(p.first);
+        for(auto const& lit: *cl) {
+            if (lit.var() != var) dummy.push_back(lit);
+        }
+        if (!full_add_clause(dummy, weaken_dummy, NULL, false)) goto end;
+        unlink_clause(p.first);
+        unlink_clause(p.second);
+    }
+
+    //Remove remaining redundant clauses
+    solver->watches[l].copyTo(poss);
+    for(auto const& w: poss) {
+        assert(w.isClause());
+        Clause* cl = solver->cl_alloc.ptr(w.get_offset());
+        assert(cl->red());
+        unlink_clause(w.get_offset());
+    }
+    solver->watches[~l].copyTo(negs);
+    for(auto const& w: negs) {
+        assert(w.isClause());
+        Clause* cl = solver->cl_alloc.ptr(w.get_offset());
+        assert(cl->red());
+        unlink_clause(w.get_offset());
+    }
+
+    end:
+    return solver->okay();
 }
 
 // Returns new set that doesn't contain variables that are definable
@@ -1839,10 +1907,11 @@ vector<uint32_t> OccSimplifier::find_equiv_subformula(const vector<uint32_t>& va
     uint32_t mirror = 0;
     uint32_t empty_occ = 0;
     for(uint32_t orig_v: vars) {
+        if (!solver->okay()) goto end;
         assert(orig_v < solver->nVarsOutside());
         auto rem_val = solver->varData[orig_v].removed;
         assert(rem_val == Removed::none || rem_val == Removed::replaced);
-        uint32_t v2 = solver->varReplacer->get_var_replaced_with(orig_v);
+        const uint32_t v2 = solver->varReplacer->get_var_replaced_with(orig_v);
         rem_val = solver->varData[v2].removed;
         assert(rem_val == Removed::none);
         assert(v2 < solver->nVars());
@@ -1855,16 +1924,20 @@ vector<uint32_t> OccSimplifier::find_equiv_subformula(const vector<uint32_t>& va
         if (total == 0 || (solver->zero_irred_cls(l) && solver->zero_irred_cls(~l))) {
             empty_occ++;
             out_empty_occs.push_back(orig_v);
+            elim_var_by_str(l.var(), {});
+            assert(solver->watches[l].empty() && solver->watches[~l].empty());
             continue;
         }
 
         if (mirror_empty && solver->bnns.empty()) {
-            const Lit lit = Lit(v2, false);
-            if (!check_equiv_subformua(lit)) continue;
+            if (!check_equiv_subformula(l)) continue;
+            assert(solver->watches[l].empty() && solver->watches[~l].empty());
             out_empty_occs.push_back(orig_v);
             mirror++;
         }
     }
+
+    end:
     double time_used = cpuTime() - myTime;
     verb_print(1, "[cms-equiv-sub] equiv_subformula: " << mirror
         << " empty_occ: " << empty_occ << solver->conf.print_times(time_used));

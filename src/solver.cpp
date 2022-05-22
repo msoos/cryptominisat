@@ -4933,7 +4933,7 @@ bool Solver::find_equivs()
     fin:
     picosat_reset(picosat);
 
-    verb_print(1, "[find-equivs] checked: " << checked << " added: " << added << " T: " << (cpuTime()-myTime) << " buildT: " << build_time);
+    verb_print(1, "[eqlit-find] checked: " << checked << " added: " << added << " T: " << (cpuTime()-myTime) << " buildT: " << build_time);
     return solver->okay();
 }
 
