@@ -1668,6 +1668,13 @@ DLL_PUBLIC lbool SATSolver::probe(Lit l, uint32_t& min_props)
     return s.probe_outside(l, min_props);
 }
 
+DLL_PUBLIC uint32_t SATSolver::simplified_nvars()
+{
+    assert(data->solvers.size() >= 1);
+    Solver& s = *data->solvers[0];
+    return s.nVars();
+}
+
 DLL_PUBLIC void SATSolver::set_varelim_check_resolvent_subs(bool varelim_check_resolvent_subs)
 {
     for (size_t i = 0; i < data->solvers.size(); ++i) {
