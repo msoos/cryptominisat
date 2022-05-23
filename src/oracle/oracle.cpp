@@ -1043,7 +1043,7 @@ bool Oracle::Solve(const vector<Lit>& assumps, bool usecache) {
 				assert(unsat);
 			}
 		} else {
-			assert(FalseByProp(assumps));
+			//assert(FalseByProp(assumps));
 		}
 	}
 	stats.solve_timer.stop();

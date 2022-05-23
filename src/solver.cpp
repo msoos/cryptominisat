@@ -5052,7 +5052,7 @@ bool Solver::sparsify()
     const uint32_t tot_cls = longIrredCls.size() + binTri.irredBins;
     assert(cs.size() == tot_cls);
 
-    sspp::oracle::Oracle oracle(nVars()+tot_cls+1, {});
+    sspp::oracle::Oracle oracle(nVars()+tot_cls, {});
     vector<sspp::Lit> tmp;
     for(uint32_t i = 0; i < cs.size(); i++) {
         const auto& c = cs[i];
