@@ -4968,6 +4968,7 @@ struct MyDat {
 bool Solver::sparsify()
 {
     if (!clauseCleaner->remove_and_clean_all()) return false;
+    subsumeImplicit->subsume_implicit();
 
     double myTime = cpuTime();
     uint32_t removed = 0;
