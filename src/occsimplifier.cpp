@@ -1953,7 +1953,10 @@ void OccSimplifier::find_equiv_subformula(
     }
 
     sampl_vars.clear();
-    for(auto const& v: sampl_vars_set) sampl_vars.push_back(v);
+    for(auto const& v: sampl_vars_set) {
+        if (empty_vars_set.find(v) == empty_vars_set.end())
+            sampl_vars.push_back(v);
+    }
     empty_vars.clear();
     for(auto const& v: empty_vars_set) empty_vars.push_back(v);
 
