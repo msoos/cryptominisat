@@ -1739,24 +1739,23 @@ bool OccSimplifier::elim_var_by_str(uint32_t var, const vector<pair<ClOffset, Cl
     for(auto const& w: poss) {
         if (!w.isBin()) continue;
 
-        solver->detach_bin_clause(l, w.lit2(), w.red(), w.get_ID());
-        solver->detach_bin_clause(w.lit2(), l , w.red(), w.get_ID());
-        if (w.red()) continue;
-        n_occurs[l.toInt()]--;
-        n_occurs[w.lit2().toInt()]--;
+        auto val = solver->value(w.lit2());
+        assert(val == l_Undef);
+        solver->enqueue<false>(w.lit2());
+        solver->ok = solver->propagate_occur<false>(limit_to_decrease);
+        if (!solver->okay()) goto end;
 
-        dummy.clear();
-        dummy.push_back(w.lit2());
-        if (!solver->add_clause_int(dummy)) goto end;
+        if (!solver->okay()) goto end;
+
+        sub_str->remove_binary_cl(OccurClause(l, w));
+        if (w.red()) continue;
     }
     solver->watches[~l].copyTo(negs);
     for(auto const& w: negs) {
         if (!w.isBin()) continue;
-        solver->detach_bin_clause(l, w.lit2(), w.red(), w.get_ID());
-        solver->detach_bin_clause(w.lit2(), l , w.red(), w.get_ID());
+
+        sub_str->remove_binary_cl(OccurClause(~l, w));
         if (w.red()) continue;
-        n_occurs[l.toInt()]--;
-        n_occurs[w.lit2().toInt()]--;
         // No need to add the unit, already added above.
     }
 
@@ -1787,6 +1786,8 @@ bool OccSimplifier::elim_var_by_str(uint32_t var, const vector<pair<ClOffset, Cl
         assert(cl->red());
         unlink_clause(w.get_offset());
     }
+    assert(solver->watches[l].empty());
+    assert(solver->watches[~l].empty());
 
     end:
     return solver->okay();
@@ -1891,11 +1892,12 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(const vector<uint
     return ret;
 }
 
-vector<uint32_t> OccSimplifier::find_equiv_subformula(const vector<uint32_t>& vars, bool mirror_empty)
+void OccSimplifier::find_equiv_subformula(
+    vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars, bool mirror_empty)
 {
     assert(solver->okay());
     assert(solver->prop_at_head());
-    if (!setup()) return vector<uint32_t>();
+    if (!setup()) return;
 
     auto origTrailSize = solver->trail_size();
     startup = false;
@@ -1903,39 +1905,57 @@ vector<uint32_t> OccSimplifier::find_equiv_subformula(const vector<uint32_t>& va
     solver->conf.maxOccurRedMB = 0;
     double myTime = cpuTime();
 
-    vector<uint32_t> out_empty_occs;
+    set<uint32_t> empty_vars_set;
+    for(auto& v: empty_vars) {
+        v = solver->varReplacer->get_var_replaced_with(v);
+        empty_vars_set.insert(v);
+    }
+
+    set<uint32_t> sampl_vars_set;
+    for(uint32_t& v: sampl_vars) {
+        assert(v < solver->nVarsOutside());
+        auto rem_val = solver->varData[v].removed;
+        assert(rem_val == Removed::none || rem_val == Removed::replaced);
+        v = solver->varReplacer->get_var_replaced_with(v);
+        rem_val = solver->varData[v].removed;
+        assert(rem_val == Removed::none);
+        assert(v < solver->nVars());
+
+        assert(solver->varData[v].removed == Removed::none);
+        if (solver->value(v) != l_Undef) continue;
+
+        if (empty_vars_set.find(v) != empty_vars_set.end()) continue;
+        sampl_vars_set.insert(v);
+    }
+
     uint32_t mirror = 0;
     uint32_t empty_occ = 0;
-    for(uint32_t orig_v: vars) {
+    for(auto& v: sampl_vars_set) {
         if (!solver->okay()) goto end;
-        assert(orig_v < solver->nVarsOutside());
-        auto rem_val = solver->varData[orig_v].removed;
-        assert(rem_val == Removed::none || rem_val == Removed::replaced);
-        const uint32_t v2 = solver->varReplacer->get_var_replaced_with(orig_v);
-        rem_val = solver->varData[v2].removed;
-        assert(rem_val == Removed::none);
-        assert(v2 < solver->nVars());
-
-        assert(solver->varData[v2].removed == Removed::none);
-        if (solver->value(v2) != l_Undef) continue;
-        const Lit l = Lit(v2, false);
+        const Lit l = Lit(v, false);
 
         uint32_t total = solver->watches[l].size() + solver->watches[~l].size();
         if (total == 0 || (solver->zero_irred_cls(l) && solver->zero_irred_cls(~l))) {
             empty_occ++;
-            out_empty_occs.push_back(orig_v);
+            empty_vars_set.insert(v);
             elim_var_by_str(l.var(), {});
             assert(solver->watches[l].empty() && solver->watches[~l].empty());
             continue;
         }
 
-        if (mirror_empty && solver->bnns.empty()) {
+        /*if (mirror_empty && solver->bnns.empty()) {
             if (!check_equiv_subformula(l)) continue;
+            if (!solver->okay()) goto end;
             assert(solver->watches[l].empty() && solver->watches[~l].empty());
-            out_empty_occs.push_back(orig_v);
+            empty_vars.push_back(orig_v);
             mirror++;
-        }
+        }*/
     }
+
+    sampl_vars.clear();
+    for(auto const& v: sampl_vars_set) sampl_vars.push_back(v);
+    empty_vars.clear();
+    for(auto const& v: empty_vars_set) empty_vars.push_back(v);
 
     end:
     double time_used = cpuTime() - myTime;
@@ -1944,7 +1964,6 @@ vector<uint32_t> OccSimplifier::find_equiv_subformula(const vector<uint32_t>& va
 
     solver->conf.maxOccurRedMB = backup;
     finishUp(origTrailSize);
-    return out_empty_occs;
 }
 
 vector<ITEGate> OccSimplifier::recover_ite_gates()

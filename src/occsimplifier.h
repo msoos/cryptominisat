@@ -199,7 +199,7 @@ public:
 
     // definable vars
     vector<uint32_t> remove_definable_by_irreg_gate(const vector<uint32_t>& vars);
-    vector<uint32_t> find_equiv_subformula(const vector<uint32_t>& vars, bool mirror_empty);
+    void find_equiv_subformula(vector<uint32_t>& empty_vars, vector<uint32_t>& sampl_vars, bool mirror_empty);
     bool elim_var_by_str(uint32_t var, const vector<pair<ClOffset, ClOffset>>& cls);
     uint32_t add_cls_to_picosat_definable(const Lit wsLit);
     PicoSAT* picosat = NULL;
