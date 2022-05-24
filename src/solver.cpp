@@ -2131,6 +2131,7 @@ lbool Solver::execute_inprocess_strategy(
         } else if (token == "eqlit-find") {
             find_equivs();
         } else if (token == "sparsify") {
+            oracle_vivif();
             sparsify();
         } else if (token == "must-scc-vrepl") {
             if (conf.doFindAndReplaceEqLits) {
@@ -4938,37 +4939,151 @@ bool Solver::find_equivs()
     return solver->okay();
 }
 
-struct MyBin {
-    MyBin (const Lit _l1, const Lit _l2, const int32_t _ID):
-        l1(_l1), l2(_l2), ID(_ID) {}
+inline int orclit(const Lit x) {
+    return ((x).sign() ? (((x).var()+1)*2+1) : ((x).var()+1)*2);
+}
 
-    Lit l1;
-    Lit l2;
-    int32_t ID;
-};
+inline int Neg(int x) {
+	return x^1;
+}
 
-struct MyDat {
-    MyDat(vector<int>& _val, ClOffset _off) :
-        val(_val), cl(_off) {which = 0;}
-    MyDat(vector<int>& _val, MyBin _bin) :
-        val(_val), cl(_bin) {which = 1;}
+inline Lit orc_to_lit(int x) {
+    uint32_t var = x/2-1;
+    bool neg = x&1;
+    return Lit(var, neg);
+}
 
 
-    vector<int> val;
-    int which;
-    variant<ClOffset, MyBin> cl;
+inline vector<int> Negate(vector<int> vec) {
+	for (int& lit : vec) {
+		lit = Neg(lit);
+	}
+	return vec;
+}
 
-    bool operator<(const MyDat& other) const {
-        return val < other.val;
+template<typename T>
+void SwapDel(vector<T>& vec, size_t i) {
+	assert(i < vec.size());
+	std::swap(vec[i], vec.back());
+	vec.pop_back();
+}
+
+bool Solver::oracle_vivif()
+{
+    assert(!drat->enabled());
+    assert(solver->okay());
+    double myTime = cpuTime();
+
+    vector<vector<int>> clauses;
+    vector<int> tmp;
+    for (const auto& off: longIrredCls) {
+        Clause& cl = *cl_alloc.ptr(off);
+        tmp.clear();
+        for (auto const& l: cl) {
+            tmp.push_back(orclit(l));
+        }
+        std::sort(tmp.begin(), tmp.end());
+        clauses.push_back(tmp);
     }
-};
+    for (uint32_t i = 0; i < nVars()*2; i++) {
+        Lit l = Lit::toLit(i);
+        for(auto const& ws: watches[l]) {
+            if (!ws.isBin() || ws.red())  continue;
+            if (l < ws.lit2()) {
+                tmp.clear();
+                tmp.push_back(orclit(l));
+                tmp.push_back(orclit(ws.lit2()));
+                clauses.push_back(tmp);
+            }
+        }
+    }
 
-#define ORCLIT(x) ((x).sign() ? ((x).var()+1)*2+1 : ((x).var()+1)*2)
+    for(auto& ws: watches) {
+        uint32_t j = 0;
+        for(uint32_t i = 0; i < ws.size(); i++) {
+            if (ws[i].isBin()) {
+                if (ws[i].red()) ws[j++] = ws[i];
+                continue;
+            }
+            assert(!ws[i].isBNN());
+            assert(ws[i].isClause());
+            Clause* cl = cl_alloc.ptr(ws[i].get_offset());
+            if (cl->red()) ws[j++] = ws[i];
+            continue;
+        }
+        ws.resize(j);
+    }
+    binTri.irredBins = 0;
+    for(auto& c: longIrredCls) free_cl(c);
+    longIrredCls.clear();
+    litStats.irredLits = 0;
+    cl_alloc.consolidate(this, true);
+
+    sspp::oracle::Oracle oracle(nVars(), clauses, {});
+    bool sat = false;
+    for (int i = 0; i < (int)clauses.size(); i++) {
+        for (int j = 0; j < (int)clauses[i].size(); j++) {
+                auto assump = Negate(clauses[i]);
+                SwapDel(assump, j);
+                if (!oracle.Solve(assump)) {
+                        sort(assump.begin(), assump.end());
+                        auto clause = Negate(assump);
+                        oracle.AddClauseIfNeeded(clause, true);
+                        clauses[i] = clause;
+                        j = -1;
+                        if (clause.empty()) {
+                                ok = false;
+                                cout<<"c o UNSAT"<<endl;
+                                return false;
+                        }
+                } else if(!sat) {
+                        sat = true;
+                        cout<<"c o SAT"<<endl;
+                }
+        }
+    }
+
+    vector<Lit> tmp2;
+    for(const auto& cl: clauses) {
+        tmp2.clear();
+        for(const auto& l: cl) tmp2.push_back(orc_to_lit(l));
+        Clause* cl2 = solver->add_clause_int(tmp2);
+        if (cl2) longIrredCls.push_back(cl_alloc.get_offset(cl2));
+        if (!okay()) return false;
+    }
+
+    verb_print(1, "[oracle-vivif] finished. T: " << (cpuTime()-myTime));
+    return solver->okay();
+}
+
+void Solver::dump_cls_oracle(const string fname, const vector<OracleDat>& cs)
+{
+    vector<sspp::Lit> tmp;
+    std::ofstream fout(fname.c_str());
+    fout << nVars() << endl;
+    for(uint32_t i = 0; i < cs.size(); i++) {
+        const auto& c = cs[i];
+        tmp.clear();
+        if (c.which == 0) {
+            Clause& cl = *cl_alloc.ptr(std::get<ClOffset>(c.cl));
+            for(auto const& l: cl) assert(l.var() < nVars());
+            for(auto const& l: cl) tmp.push_back(orclit(l));
+        } else {
+            const OracleBin& b = std::get<OracleBin>(c.cl);
+            assert(b.l1.var() < nVars());
+            assert(b.l2.var() < nVars());
+            tmp.push_back(orclit(b.l1));
+            tmp.push_back(orclit(b.l2));
+        }
+        for(auto const& l: tmp) fout << l << " ";
+        fout << endl;
+    }
+}
 
 bool Solver::sparsify()
 {
-    if (!clauseCleaner->remove_and_clean_all()) return false;
-    subsumeImplicit->subsume_implicit();
+    assert(!drat->enabled());
+    simplify_problem(false, "occ-backw-sub, sub-impl, must-renumber");
 
     double myTime = cpuTime();
     uint32_t removed = 0;
@@ -5004,7 +5119,7 @@ bool Solver::sparsify()
     }
 
     //[vector<int>, clause] pairs. vector<INT> =
-    vector<MyDat> cs;
+    vector<OracleDat> cs;
     for (const auto& off: longIrredCls) {
         Clause& cl = *cl_alloc.ptr(off);
         assert(!cl.red());
@@ -5023,7 +5138,7 @@ bool Solver::sparsify()
             }
         }
 //         cout << "CL is: " << cl << endl;
-        cs.push_back(MyDat(ww, off));
+        cs.push_back(OracleDat(ww, off));
     }
 
     for (uint32_t i = 0; i < nVars()*2; i++) {
@@ -5039,11 +5154,7 @@ bool Solver::sparsify()
                     ww.resize(edgew[v1][v2]);
                 }
                 ww[edgew[v1][v2]-1]--;
-//                 cout << "WW is (sz: " << ww.size() << "): ";
-//                 for(uint32_t i2 = 0; i2 < ww.size(); i2++) cout << ww[i2] << ",";
-//                 cout << endl;
-//                 cout << "Bin is: " << l << " " << ws.lit2() << endl;
-                cs.push_back(MyDat(ww, MyBin(l, ws.lit2(), ws.get_ID())));
+                cs.push_back(OracleDat(ww, OracleBin(l, ws.lit2(), ws.get_ID())));
             }
         }
     }
@@ -5052,6 +5163,7 @@ bool Solver::sparsify()
     std::sort(cs.begin(), cs.end());
     const uint32_t tot_cls = longIrredCls.size() + binTri.irredBins;
     assert(cs.size() == tot_cls);
+    //dump_cls_oracle("debug.xt");
 
     sspp::oracle::Oracle oracle(nVars()+tot_cls, {});
     vector<sspp::Lit> tmp;
@@ -5060,13 +5172,17 @@ bool Solver::sparsify()
         tmp.clear();
         if (c.which == 0) {
             Clause& cl = *cl_alloc.ptr(std::get<ClOffset>(c.cl));
-            for(auto const& l: cl) tmp.push_back(ORCLIT(l));
+            for(auto const& l: cl) assert(l.var() < nVars());
+            for(auto const& l: cl) tmp.push_back(orclit(l));
         } else {
-            const MyBin& b = std::get<MyBin>(c.cl);
-            tmp.push_back(ORCLIT(b.l1));
-            tmp.push_back(ORCLIT(b.l2));
+            const OracleBin& b = std::get<OracleBin>(c.cl);
+            assert(b.l1.var() < nVars());
+            assert(b.l2.var() < nVars());
+            tmp.push_back(orclit(b.l1));
+            tmp.push_back(orclit(b.l2));
         }
-        tmp.push_back(ORCLIT(Lit(nVars()+i, false)));
+        std::sort(tmp.begin(), tmp.end());
+        tmp.push_back(orclit(Lit(nVars()+i, false)));
 //         cout << "tmp is: ";
 //         for(auto const& t: tmp) cout << ((t%2 == 0) ? "" : "-") << (t/2-1) << " ";
 //         cout << endl;
@@ -5075,7 +5191,7 @@ bool Solver::sparsify()
     const double build_time = cpuTime() - myTime;
 
     for (uint32_t i = 0; i < tot_cls; i++) {
-        oracle.SetAssumpLit(ORCLIT(Lit(nVars()+i, true)), false);
+        oracle.SetAssumpLit(orclit(Lit(nVars()+i, true)), false);
     }
 
     uint32_t last_printed = 0;
@@ -5088,21 +5204,22 @@ bool Solver::sparsify()
             last_printed = (10*i)/(tot_cls);
         }
 
-        oracle.SetAssumpLit(ORCLIT(Lit(nVars()+i, false)), false);
+        oracle.SetAssumpLit(orclit(Lit(nVars()+i, false)), false);
         tmp.clear();
         const auto& c = cs[i];
         if (c.which == 0) {
             Clause& cl = *cl_alloc.ptr(std::get<ClOffset>(c.cl));
-            for(auto const& l: cl) tmp.push_back(ORCLIT(~l));
+            for(auto const& l: cl) tmp.push_back(orclit(~l));
         } else {
-            tmp.push_back(ORCLIT(~(std::get<MyBin>(c.cl).l1)));
-            tmp.push_back(ORCLIT(~(std::get<MyBin>(c.cl).l2)));
+            tmp.push_back(orclit(~(std::get<OracleBin>(c.cl).l1)));
+            tmp.push_back(orclit(~(std::get<OracleBin>(c.cl).l2)));
         }
+        std::sort(tmp.begin(), tmp.end());
 
         if (oracle.Solve(tmp, false)) {
-            oracle.SetAssumpLit(ORCLIT(Lit(nVars()+i, true)), true);
+            oracle.SetAssumpLit(orclit(Lit(nVars()+i, true)), true);
         } else {
-            oracle.SetAssumpLit(ORCLIT(Lit(nVars()+i, false)), true);
+            oracle.SetAssumpLit(orclit(Lit(nVars()+i, false)), true);
             removed++;
             if (c.which == 0) {
                 Clause& cl = *cl_alloc.ptr(std::get<ClOffset>(c.cl));
@@ -5110,10 +5227,10 @@ bool Solver::sparsify()
                 cl.stats.marked_clause = 1;
             } else {
                 removed_bin++;
-                Lit lit1 = std::get<MyBin>(c.cl).l1;
-                Lit lit2 = std::get<MyBin>(c.cl).l2;
-                findWatchedOfBin(watches, lit1, lit2, false, std::get<MyBin>(c.cl).ID).mark_bin_cl();
-                findWatchedOfBin(watches, lit2, lit1, false, std::get<MyBin>(c.cl).ID).mark_bin_cl();
+                Lit lit1 = std::get<OracleBin>(c.cl).l1;
+                Lit lit2 = std::get<OracleBin>(c.cl).l2;
+                findWatchedOfBin(watches, lit1, lit2, false, std::get<OracleBin>(c.cl).ID).mark_bin_cl();
+                findWatchedOfBin(watches, lit2, lit1, false, std::get<OracleBin>(c.cl).ID).mark_bin_cl();
                 binTri.irredBins--;
             }
         }
