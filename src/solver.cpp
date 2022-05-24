@@ -5052,6 +5052,14 @@ bool Solver::oracle_vivif()
         if (!okay()) return false;
     }
 
+//     for (const auto& cl: oracle.LearnedClauses()) {
+//         tmp2.clear();
+//         for(const auto& l: cl) tmp2.push_back(orc_to_lit(l));
+//         Clause* cl2 = solver->add_clause_int(tmp2, true);
+//         if (cl2) longIrredCls.push_back(cl_alloc.get_offset(cl2));
+//         if (!okay()) return false;
+//     }
+
     verb_print(1, "[oracle-vivif] finished. T: " << (cpuTime()-myTime));
     return solver->okay();
 }
