@@ -239,6 +239,7 @@ void Oracle::ResizeClauseDb() {
 		// This sets new_clauses and fixes reasons
 		const size_t good_size = min(cla_info.size()/2, (size_t)1000000);
 		for (size_t i = 0; i < cla_info.size(); i++) {
+			stats.mems++;
 			Lit impll = 0;
 			size_t cls = cla_info[i].pt;
 			if (vs[VarOf(clauses[cls+1])].reason == cls) {
@@ -412,6 +413,7 @@ void Oracle::ActivateActivity(Var v) {
 }
 
 void Oracle::BumpVar(Var v) {
+	stats.mems++;
 	if (var_act_heap[heap_N + v] < 0) {
 		var_act_heap[heap_N + v] -= var_inc;
 	} else {
@@ -423,6 +425,7 @@ void Oracle::BumpVar(Var v) {
 	}
 	var_inc = var_inc * var_fact;
 	if (var_inc > 10000.0) {
+		stats.mems+=10;
 		var_inc /= 10000.0;
 		for (Var i = 1; i <= vars; i++) {
 			double& act = var_act_heap[heap_N + i];
@@ -528,6 +531,7 @@ void Oracle::Decide(Lit dec, int level) {
 
 void Oracle::UnDecide(int level) {
 	while (!decided.empty() && vs[decided.back()].level >= level) {
+		stats.mems++;
 		Var v = decided.back();
 		decided.pop_back();
 		lit_val[PosLit(v)] = 0;
@@ -577,6 +581,7 @@ bool Oracle::LitReduntant(Lit lit) {
 	int its = 0;
 	while (!redu_s.empty()) {
 		its++;
+		stats.mems++;
 		lit = redu_s.back();
 		redu_s.pop_back();
 		Var v = VarOf(lit);

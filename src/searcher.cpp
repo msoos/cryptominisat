@@ -2575,6 +2575,7 @@ lbool Searcher::solve(
     max_confl_per_search_solve_call = _max_confls;
     if (fast_backw.fast_backw_on && fast_backw.cur_max_confl == 0) {
         fast_backw.cur_max_confl = sumConflicts + fast_backw.max_confl;
+        fast_backw.start_sumConflicts = sumConflicts;
     }
     num_search_called++;
     #ifdef SLOW_DEBUG
@@ -3763,6 +3764,15 @@ lbool Searcher::new_decision_fast_backw()
             if (sumConflicts >  fast_backw.cur_max_confl) {
                 fast_backw.indep_because_ran_out_of_confl++;
             }
+            if (sumConflicts-fast_backw.start_sumConflicts > 250ULL*1000ULL) {
+                fast_backw.max_confl /= 2;
+                fast_backw.start_sumConflicts = sumConflicts;
+                if (fast_backw.max_confl < 50) fast_backw.max_confl = 50;
+//                 cout << "HALF" << endl;
+            } else {
+//                 cout << "DIFF: " << (sumConflicts-fast_backw.start_sumConflicts)/1000 << " k" << endl;
+            }
+
             //Let's fix this up.
             //backtrack until last.
             fast_backw._assumptions->pop_back();

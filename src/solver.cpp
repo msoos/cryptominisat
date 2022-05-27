@@ -2131,7 +2131,7 @@ lbool Solver::execute_inprocess_strategy(
         } else if (token == "eqlit-find") {
             find_equivs();
         } else if (token == "sparsify") {
-            bool finished = false;
+            bool finished = true;
             if (oracle_vivif(finished)) {
                 if (finished) sparsify();
             }
@@ -4984,7 +4984,7 @@ bool Solver::oracle_vivif(bool& finished)
         for (auto const& l: cl) {
             tmp.push_back(orclit(l));
         }
-        std::sort(tmp.begin(), tmp.end());
+//         std::sort(tmp.begin(), tmp.end());
         clauses.push_back(tmp);
     }
     for (uint32_t i = 0; i < nVars()*2; i++) {
@@ -5025,7 +5025,7 @@ bool Solver::oracle_vivif(bool& finished)
     bool sat = false;
     for (int i = 0; i < (int)clauses.size(); i++) {
         for (int j = 0; j < (int)clauses[i].size(); j++) {
-            if (oracle.getStats().mems > 600LL*1000LL*1000LL) {
+            if (oracle.getStats().mems > 1LL*1000LL*1000LL*1000LL) {
                 finished = false;
                 goto end;
             }
@@ -5197,7 +5197,7 @@ bool Solver::sparsify()
             tmp.push_back(orclit(b.l1));
             tmp.push_back(orclit(b.l2));
         }
-        std::sort(tmp.begin(), tmp.end());
+//         std::sort(tmp.begin(), tmp.end());
         tmp.push_back(orclit(Lit(nVars()+i, false)));
 //         cout << "tmp is: ";
 //         for(auto const& t: tmp) cout << ((t%2 == 0) ? "" : "-") << (t/2-1) << " ";
@@ -5230,7 +5230,7 @@ bool Solver::sparsify()
             tmp.push_back(orclit(~(std::get<OracleBin>(c.cl).l1)));
             tmp.push_back(orclit(~(std::get<OracleBin>(c.cl).l2)));
         }
-        std::sort(tmp.begin(), tmp.end());
+//         std::sort(tmp.begin(), tmp.end());
 
         if (oracle.Solve(tmp, false)) {
             oracle.SetAssumpLit(orclit(Lit(nVars()+i, true)), true);
@@ -5251,7 +5251,7 @@ bool Solver::sparsify()
             }
         }
 
-        if (oracle.getStats().mems > 600LL*1000LL*1000LL) {
+        if (oracle.getStats().mems > 1LL*1000LL*1000LL*1000LL) {
             verb_print(1, "[sparsify] too many props in oracle, aborting");
             goto fin;
         }
