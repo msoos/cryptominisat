@@ -5025,7 +5025,7 @@ bool Solver::oracle_vivif(bool& finished)
     bool sat = false;
     for (int i = 0; i < (int)clauses.size(); i++) {
         for (int j = 0; j < (int)clauses[i].size(); j++) {
-            if (oracle.getStats().mems > 1LL*1000LL*1000LL*1000LL) {
+            if (oracle.getStats().mems > 800LL*1000LL*1000LL) {
                 finished = false;
                 goto end;
             }
@@ -5251,7 +5251,7 @@ bool Solver::sparsify()
             }
         }
 
-        if (oracle.getStats().mems > 1LL*1000LL*1000LL*1000LL) {
+        if (oracle.getStats().mems > 700LL*1000LL*1000LL) {
             verb_print(1, "[sparsify] too many props in oracle, aborting");
             goto fin;
         }
