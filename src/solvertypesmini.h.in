@@ -266,6 +266,7 @@ struct FastBackwData {
     uint32_t max_confl = 500;
     uint32_t cur_max_confl = 0;
     uint32_t indep_because_ran_out_of_confl = 0;
+    uint64_t start_sumConflicts;
 };
 
 class BNN
