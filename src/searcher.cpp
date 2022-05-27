@@ -3764,7 +3764,7 @@ lbool Searcher::new_decision_fast_backw()
             if (sumConflicts >  fast_backw.cur_max_confl) {
                 fast_backw.indep_because_ran_out_of_confl++;
             }
-            if (sumConflicts-fast_backw.start_sumConflicts > 250ULL*1000ULL) {
+            if (sumConflicts-fast_backw.start_sumConflicts > 150ULL*1000ULL) {
                 fast_backw.max_confl /= 2;
                 fast_backw.start_sumConflicts = sumConflicts;
                 if (fast_backw.max_confl < 50) fast_backw.max_confl = 50;
