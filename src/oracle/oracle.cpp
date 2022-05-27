@@ -68,7 +68,7 @@ void Oracle::ClearSolCache() {
 }
 
 bool Oracle::SatByCache(const vector<Lit>& assumps) {
-	stats.cache_timer.start();
+// 	stats.cache_timer.start();
 	int cs = sol_cache[1].size();
 	for (int i = 0; i < cs; i++) {
 		bool ok = true;
@@ -86,11 +86,11 @@ bool Oracle::SatByCache(const vector<Lit>& assumps) {
 			}
 		}
 		if (ok) {
-			stats.cache_timer.stop();
+// 			stats.cache_timer.stop();
 			return true;
 		}
 	}
-	stats.cache_timer.stop();
+// 	stats.cache_timer.stop();
 	return false;
 }
 
@@ -608,7 +608,7 @@ bool Oracle::LitReduntant(Lit lit) {
 }
 
 vector<Lit> Oracle::LearnUip(size_t conflict_clause) {
-	stats.learn_timer.start();
+// 	stats.learn_timer.start();
 	assert(conflict_clause > 0);
 	BumpClause(conflict_clause);
 	vector<Lit> clause = {0};
@@ -678,13 +678,13 @@ vector<Lit> Oracle::LearnUip(size_t conflict_clause) {
 		assert(in_cc[clause[i]]);
 		in_cc[clause[i]] = false;
 	}
-	stats.learn_timer.stop();
+// 	stats.learn_timer.stop();
 	return clause;
 }
 
 // Returns id of conflict clause or 0 if no conflict
 size_t Oracle::Propagate(int level) {
-	stats.prop_timer.start();
+// 	stats.prop_timer.start();
 	size_t conflict = 0;
 	for (size_t i = 0; i < prop_q.size(); i++) {
 		stats.mems++;
@@ -757,7 +757,7 @@ size_t Oracle::Propagate(int level) {
 	}
 	//stats.propagations += (int)prop_q.size();
 	prop_q.clear();
-	stats.prop_timer.stop();
+// 	stats.prop_timer.stop();
 	return conflict;
 }
 

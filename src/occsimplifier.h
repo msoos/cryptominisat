@@ -448,6 +448,7 @@ private:
     bool        mark_and_push_to_added_long_cl_cls_containing(const Lit lit);
     bool        simulate_frw_sub_str_with_added_cl_to_var();
     bool        lit_rem_with_or_gates();
+    bool        cl_rem_with_or_gates();
 
 
     TouchList   elim_calc_need_update;

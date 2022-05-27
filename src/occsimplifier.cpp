@@ -2059,6 +2059,110 @@ struct GateLHSEq {
     }
 };
 
+bool OccSimplifier::cl_rem_with_or_gates()
+{
+    assert(solver->okay());
+    assert(solver->prop_at_head());
+    assert(added_irred_bin.empty());
+    assert(added_long_cl.empty());
+
+    double myTime = cpuTime();
+    gateFinder = new GateFinder(this, solver);
+    gateFinder->find_all();
+    auto gates = gateFinder->get_gates();
+    gateFinder->cleanup();
+    delete gateFinder;
+    gateFinder = NULL;
+
+    uint64_t removed = 0;
+
+    for(auto const&g: gates) {
+        if (g.lits.size() != 2) continue;
+
+        solver->watches[~g.lits[0]].copyTo(poss);
+        for(const auto& w: poss) {
+            if (!w.isClause()) continue;
+            Clause* cl1 = solver->cl_alloc.ptr(w.get_offset());
+            if (cl1->getRemoved() || cl1->red()) continue;
+            if (cl1->size() <= 3) continue; // we could mess with definition of gates
+            if (cl1->stats.ID == g.ID) continue;
+
+            bool found = false;
+            for(auto const&l: *cl1) {
+                if (l == ~g.lits[0]) {found = true; continue;}
+                seen[l.toInt()] = 1;
+            }
+            assert(found);
+
+            solver->watches[~g.lits[1]].copyTo(negs);
+            for(const auto& w2: negs) {
+                if (!w2.isClause()) continue;
+                Clause* cl2 = solver->cl_alloc.ptr(w2.get_offset());
+                if (cl1->getRemoved()) continue; // COULD HAVE BEEN REMOVED BELOW
+                if (cl2->getRemoved() || cl2->red()) continue;
+                if (cl2->stats.ID == g.ID) continue;
+                if (cl2->size() != cl1->size()) continue;
+                auto myabst1 = cl1->abst | abst_var(g.lits[1].var());
+                auto myabst2 = cl2->abst | abst_var(g.lits[0].var());
+                if (myabst1 != myabst2) continue;
+
+                bool ok = true;
+                found = false;
+                for(auto const&l: *cl2) {
+                    if (l == ~g.lits[1]) {found = true; continue;}
+                    if (!seen[l.toInt()]) {ok = false; break;}
+                }
+                if (ok) {
+                    assert(found);
+                    dummy.clear();
+                    for(auto const&l: *cl2) {
+                        if (l == ~g.lits[1]) {dummy.push_back(~g.rhs); continue;}
+                        dummy.push_back(l);
+                    }
+
+                    auto s = ClauseStats::combineStats(cl1->stats, cl2->stats);
+                    full_add_clause(dummy, weaken_dummy, &s, false);
+                    unlink_clause(w.get_offset(), true, false, true);
+                    unlink_clause(w2.get_offset(), true, false, true);
+                    removed++;
+                    verb_print(2,"[cl-rem-gates] We could remove clauses: "
+                        << *cl1 << " -- " << *cl2 << " based on gate: " << g);
+                    if (!solver->okay()) goto end;
+                    break;
+                }
+            }
+            for(auto const&l: *cl1) seen[l.toInt()] = 0;
+        }
+    }
+
+    if (!deal_with_added_long_and_bin(true)) goto end;
+
+    end:
+    solver->clean_occur_from_removed_clauses_only_smudged();
+    free_clauses_to_free();
+
+    SLOW_DEBUG_DO(check_n_occur());
+    SLOW_DEBUG_DO(check_clauses_lits_ordered());
+
+    //Update global stats
+    const double time_used = cpuTime() - myTime;
+    //const bool time_out = (*limit_to_decrease <= 0);
+    verb_print(1, "[occ-cl-rem-gates] removed: " << removed << " T: " << cpuTime()-myTime);
+
+
+    if (solver->sqlStats) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "occ-cl-rem-gates"
+            , time_used
+        );
+    }
+
+    assert(solver->okay());
+    assert(solver->prop_at_head());
+    return solver->okay();
+}
+
 // Checks that both inputs l1 & l2 are in the Clause. If so, replaces it with the RHS
 bool OccSimplifier::lit_rem_with_or_gates()
 {
@@ -2322,6 +2426,8 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             }
         } else if (token == "occ-rem-with-orgates") {
             lit_rem_with_or_gates();
+        } else if (token == "occ-cl-rem-with-orgates") {
+            cl_rem_with_or_gates();
         } else if (token == "occ-bva") {
             if (solver->conf.do_bva && false) { //TODO due to IDs, this is BROKEN
                 assert(false && "due to clause IDs this is broken");
