@@ -2131,8 +2131,7 @@ lbool Solver::execute_inprocess_strategy(
         } else if (token == "eqlit-find") {
             find_equivs();
         } else if (token == "sparsify") {
-            oracle_vivif();
-            sparsify();
+            if (oracle_vivif()) sparsify();
         } else if (token == "must-scc-vrepl") {
             if (conf.doFindAndReplaceEqLits) {
                 varReplacer->replace_if_enough_is_found();
@@ -5091,7 +5090,8 @@ void Solver::dump_cls_oracle(const string fname, const vector<OracleDat>& cs)
 bool Solver::sparsify()
 {
     assert(!drat->enabled());
-    simplify_problem(false, "occ-backw-sub, sub-impl, must-renumber");
+    execute_inprocess_strategy(false, "occ-backw-sub, sub-impl, must-renumber");
+    if (!solver->okay()) return solver->okay();
 
     double myTime = cpuTime();
     uint32_t removed = 0;
