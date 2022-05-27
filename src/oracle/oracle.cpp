@@ -471,6 +471,7 @@ void Oracle::SetAssumpLit(Lit lit, bool freeze) {
 	assert(vs[v].level != 1);
 	for (Lit tl : {PosLit(v), NegLit(v)}) {
 		for (const Watch w : watches[tl]) {
+			stats.mems++;
 			assert(w.size > 2);
 			size_t pos = w.cls;
 			size_t opos = w.cls+1;
