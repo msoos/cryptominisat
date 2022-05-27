@@ -2131,7 +2131,10 @@ lbool Solver::execute_inprocess_strategy(
         } else if (token == "eqlit-find") {
             find_equivs();
         } else if (token == "sparsify") {
-            if (oracle_vivif()) sparsify();
+            bool finished = false;
+            if (oracle_vivif(finished)) {
+                if (finished) sparsify();
+            }
         } else if (token == "must-scc-vrepl") {
             if (conf.doFindAndReplaceEqLits) {
                 varReplacer->replace_if_enough_is_found();
@@ -4967,7 +4970,7 @@ void SwapDel(vector<T>& vec, size_t i) {
 	vec.pop_back();
 }
 
-bool Solver::oracle_vivif()
+bool Solver::oracle_vivif(bool& finished)
 {
     assert(!drat->enabled());
     assert(solver->okay());
@@ -5022,26 +5025,31 @@ bool Solver::oracle_vivif()
     bool sat = false;
     for (int i = 0; i < (int)clauses.size(); i++) {
         for (int j = 0; j < (int)clauses[i].size(); j++) {
-                auto assump = Negate(clauses[i]);
-                SwapDel(assump, j);
-                if (!oracle.Solve(assump)) {
-                        sort(assump.begin(), assump.end());
-                        auto clause = Negate(assump);
-                        oracle.AddClauseIfNeeded(clause, true);
-                        clauses[i] = clause;
-                        j = -1;
-                        if (clause.empty()) {
-                                ok = false;
-                                cout<<"c o UNSAT"<<endl;
-                                return false;
-                        }
-                } else if(!sat) {
-                        sat = true;
-                        cout<<"c o SAT"<<endl;
-                }
+            if (oracle.getStats().mems > 600LL*1000LL*1000LL) {
+                finished = false;
+                goto end;
+            }
+            auto assump = Negate(clauses[i]);
+            SwapDel(assump, j);
+            if (!oracle.Solve(assump)) {
+                    sort(assump.begin(), assump.end());
+                    auto clause = Negate(assump);
+                    oracle.AddClauseIfNeeded(clause, true);
+                    clauses[i] = clause;
+                    j = -1;
+                    if (clause.empty()) {
+                            ok = false;
+                            cout<<"c o UNSAT"<<endl;
+                            return false;
+                    }
+            } else if(!sat) {
+                    sat = true;
+                    cout<<"c o SAT"<<endl;
+            }
         }
     }
 
+    end:
     vector<Lit> tmp2;
     for(const auto& cl: clauses) {
         tmp2.clear();
@@ -5059,7 +5067,7 @@ bool Solver::oracle_vivif()
 //         if (!okay()) return false;
 //     }
 
-    verb_print(1, "[oracle-vivif] finished. T: " << (cpuTime()-myTime));
+    verb_print(1, "[oracle-vivif] finished: " << finished << " T: " << (cpuTime()-myTime));
     return solver->okay();
 }
 
