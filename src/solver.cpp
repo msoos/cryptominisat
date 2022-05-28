@@ -5100,6 +5100,7 @@ bool Solver::sparsify()
     assert(!drat->enabled());
     execute_inprocess_strategy(false, "occ-backw-sub, sub-impl, must-renumber");
     if (!solver->okay()) return solver->okay();
+    if (nVars() < 10) return solver->okay();
 
     double myTime = cpuTime();
     uint32_t removed = 0;
