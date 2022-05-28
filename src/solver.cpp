@@ -2132,7 +2132,7 @@ lbool Solver::execute_inprocess_strategy(
             find_equivs();
         } else if (token == "sparsify") {
             bool finished = true;
-            if (oracle_vivif(finished)) {
+            if (nVars() > 10 &&  oracle_vivif(finished)) {
                 if (finished) sparsify();
             }
         } else if (token == "must-scc-vrepl") {
