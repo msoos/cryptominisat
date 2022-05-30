@@ -116,67 +116,6 @@ void Oracle::UpdVarAssEma() {
 	}
 }
 
-bool Oracle::RemoveIfPossible(const vector<Lit>& clause) {
-	assert(CurLevel() == 1);
-	ClearSolCache();
-	ForgetLearned();
-	vector<char> tlits(vars*2+2);
-	for (Lit lit : clause) {
-		assert(LitVal(lit) == 0);
-		tlits[lit] = true;
-	}
-	size_t pt = 0;
-	for (Lit lit : clause) {
-		for (Watch w : watches[lit]) {
-			if (w.size != (int)clause.size()) continue;
-			if (!BS(clause, w.blit)) continue;
-			bool ok = true;
-			for (size_t i = w.cls; clauses[i]; i++) {
-				if (!tlits[clauses[i]]) {
-					ok = false;
-					break;
-				}
-			}
-			if (ok) {
-				pt = w.cls;
-				break;
-			}
-		}
-		if (pt) break;
-	}
-	assert(pt);
-	for (Lit lit : {clauses[pt], clauses[pt+1]}) {
-		assert(lit);
-		bool fo = false;
-		for (int i = 0; i < (int)watches[lit].size(); i++) {
-			if (watches[lit][i].cls == pt) {
-				SwapDel(watches[lit], i);
-				fo = true;
-				break;
-			}
-		}
-		assert(fo);
-	}
-	for (Lit lit : clause) {
-		assert(LitVal(lit) == 0);
-		Decide(Neg(lit), 2);
-	}
-	size_t confl = Propagate(2);
-	if (confl) {
-		UnDecide(2);
-		return true;
-	}
-	if (HardSolve()) {
-		UnDecide(2);
-		watches[clauses[pt]].push_back({pt, clauses[pt+1], (int)clause.size()});
-		watches[clauses[pt+1]].push_back({pt, clauses[pt], (int)clause.size()});
-		return false;
-	} else {
-		UnDecide(2);
-		return true;
-	}
-}
-
 void Oracle::ForgetLearned() {
 	assert(CurLevel() == 1);
 	if (cla_info.empty()) return;
@@ -830,7 +769,7 @@ int Oracle::CDCLBT(size_t confl_clause, int min_level) {
 }
 
 
-bool Oracle::HardSolve() {
+TriState Oracle::HardSolve(int64_t max_mems) {
 	InitLuby();
 	int64_t confls = 0;
 	int64_t next_restart = 1;
@@ -842,11 +781,13 @@ bool Oracle::HardSolve() {
 	var_ass_a = 1;
 	long_a = 1;
 	short_a = 1;
+	int64_t mems_startup = stats.mems;
 	int cur_level = 2;
 	int last_var_ass_size = 0;
 	Var nv = 1;
 	while (true) {
 		size_t confl_clause = Propagate(cur_level);
+		if (stats.mems > mems_startup+max_mems) return TriState::unknown();
 		if (confl_clause) {
 			confls++;
 			UpdVarAssEma();
@@ -1004,7 +945,7 @@ bool Oracle::FalseByProp(const vector<Lit>& assumps) {
 	return confl_clause;
 }
 
-bool Oracle::Solve(const vector<Lit>& assumps, bool usecache) {
+TriState Oracle::Solve(const vector<Lit>& assumps, bool usecache, int64_t max_mems) {
 	if (unsat) return false;
 	if (usecache && SatByCache(assumps)) return true;
 	stats.solve_timer.start();
@@ -1025,7 +966,7 @@ bool Oracle::Solve(const vector<Lit>& assumps, bool usecache) {
 		stats.solve_timer.stop();
 		return false;
 	}
-	bool sol = HardSolve();
+	TriState sol = HardSolve(max_mems);
 	UnDecide(2);
 	if (!unsat) {
 		while (!learned_units.empty()) {
@@ -1034,14 +975,14 @@ bool Oracle::Solve(const vector<Lit>& assumps, bool usecache) {
 		}
 		if (Propagate(1)) {
 			unsat = true;
-			assert(!sol);
+			assert(sol.isFalse());
 		}
 	}
-	if (sol) {
+	if (sol.isTrue()) {
 		if (usecache) {
 			AddSolToCache();
 		}
-	} else {
+	} else if (sol.isFalse()) {
 		// UNSAT
 		if (assumps.size() == 1) {
 			bool ok = FreezeUnit(Neg(assumps[0]));
@@ -1100,7 +1041,9 @@ vector<Lit> Oracle::InferUnits(const vector<Lit>& assumps) {
 		UnDecide(2);
 		return {NegLit(1), PosLit(1)};
 	}
-	if (!HardSolve()) {
+	auto sol = HardSolve();
+	assert(!sol.isUnknown());
+	if (sol.isFalse()) {
 		UnDecide(2);
 		return {NegLit(1), PosLit(1)};
 	}

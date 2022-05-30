@@ -5031,7 +5031,12 @@ bool Solver::oracle_vivif(bool& finished)
             }
             auto assump = Negate(clauses[i]);
             SwapDel(assump, j);
-            if (!oracle.Solve(assump)) {
+            auto ret = oracle.Solve(assump, true, 100LL*1000LL*1000LL);
+            if (ret.isUnknown()) {
+                finished = false;
+                goto end;
+            }
+            if (ret.isFalse()) {
                     sort(assump.begin(), assump.end());
                     auto clause = Negate(assump);
                     oracle.AddClauseIfNeeded(clause, true);
@@ -5198,11 +5203,7 @@ bool Solver::sparsify()
             tmp.push_back(orclit(b.l1));
             tmp.push_back(orclit(b.l2));
         }
-//         std::sort(tmp.begin(), tmp.end());
         tmp.push_back(orclit(Lit(nVars()+i, false)));
-//         cout << "tmp is: ";
-//         for(auto const& t: tmp) cout << ((t%2 == 0) ? "" : "-") << (t/2-1) << " ";
-//         cout << endl;
         oracle.AddClause(tmp, false);
     }
     const double build_time = cpuTime() - myTime;
@@ -5231,11 +5232,16 @@ bool Solver::sparsify()
             tmp.push_back(orclit(~(std::get<OracleBin>(c.cl).l1)));
             tmp.push_back(orclit(~(std::get<OracleBin>(c.cl).l2)));
         }
-//         std::sort(tmp.begin(), tmp.end());
 
-        if (oracle.Solve(tmp, false)) {
+        auto ret = oracle.Solve(tmp, false, 100LL*1000LL*1000LL);
+        if (ret.isUnknown()) {
+            goto fin;
+        }
+
+        if (ret.isTrue()) {
             oracle.SetAssumpLit(orclit(Lit(nVars()+i, true)), true);
         } else {
+            assert(ret.isFalse());
             oracle.SetAssumpLit(orclit(Lit(nVars()+i, false)), true);
             removed++;
             if (c.which == 0) {

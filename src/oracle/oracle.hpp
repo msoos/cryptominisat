@@ -26,6 +26,29 @@
 
 namespace sspp {
 namespace oracle {
+
+struct TriState {
+    TriState()
+    {}
+
+    TriState(bool _b) {
+	if (_b) val = 1;
+	else val = 0;
+    }
+
+    static TriState unknown()
+    {
+	TriState tmp;
+	tmp.val = 2;
+	return tmp;
+    }
+
+    bool isTrue() const {return val == 1;}
+    bool isFalse() const {return val == 0;}
+    bool isUnknown() const {return val == 2;}
+    int val;
+};
+
 struct Stats {
  	int64_t mems = 0;
  	int64_t decisions = 0;
@@ -66,7 +89,7 @@ class Oracle {
   Oracle(int vars_, const vector<vector<Lit>>& clauses_, const vector<vector<Lit>>& learned_clauses_);
 
   void SetAssumpLit(Lit lit, bool freeze);
-  bool Solve(const vector<Lit>& assumps, bool usecache=true);
+  TriState Solve(const vector<Lit>& assumps, bool usecache=true, int64_t max_mems = 1000ULL*1000LL*1000LL);
   bool FalseByProp(const vector<Lit>& assumps);
   bool FreezeUnit(Lit unit);
   bool FreezeUnits(const vector<Lit>& units);
@@ -76,7 +99,6 @@ class Oracle {
   double ConflictRate(int samples);
   vector<vector<Lit>> AllClauses() const;
   vector<vector<Lit>> LearnedClauses() const;
-  bool RemoveIfPossible(const vector<Lit>& clause);
 
   vector<Lit> InferUnits(const vector<Lit>& assumps);
   int PropDg(const vector<Lit>& assumps);
@@ -149,7 +171,7 @@ class Oracle {
  	void Decide(Lit dec, int level);
  	void UnDecide(int level);
 
- 	bool HardSolve();
+ 	TriState HardSolve(int64_t max_mems = 1000LL*1000LL*1000LL);
  	// True if conflict
  	size_t Propagate(int level);
 
