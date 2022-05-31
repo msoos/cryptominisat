@@ -1911,7 +1911,7 @@ uint64_t Solver::calc_num_confl_to_do_this_iter(const size_t iteration_num) cons
     mult = std::min(mult, conf.num_conflicts_of_search_inc_max);
     uint64_t num_conflicts_of_search = (double)conf.num_conflicts_of_search*mult;
     if (conf.never_stop_search) {
-        num_conflicts_of_search = 500ULL*1000ULL*1000ULL;
+        num_conflicts_of_search = 600ULL*1000ULL*1000ULL;
     }
     if (conf.max_confl >= sumConflicts) {
         num_conflicts_of_search = std::min<uint64_t>(
@@ -5031,7 +5031,7 @@ bool Solver::oracle_vivif(bool& finished)
             }
             auto assump = Negate(clauses[i]);
             SwapDel(assump, j);
-            auto ret = oracle.Solve(assump, true, 100LL*1000LL*1000LL);
+            auto ret = oracle.Solve(assump, true, 500LL*1000LL*1000LL);
             if (ret.isUnknown()) {
                 finished = false;
                 goto end;
@@ -5233,7 +5233,7 @@ bool Solver::sparsify()
             tmp.push_back(orclit(~(std::get<OracleBin>(c.cl).l2)));
         }
 
-        auto ret = oracle.Solve(tmp, false, 100LL*1000LL*1000LL);
+        auto ret = oracle.Solve(tmp, false, 600LL*1000LL*1000LL);
         if (ret.isUnknown()) {
             goto fin;
         }
