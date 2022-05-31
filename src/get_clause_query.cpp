@@ -94,8 +94,12 @@ vector<uint32_t> GetClauseQuery::translate_sampl_set(
             v = solver->varReplacer->get_var_replaced_with_outer(v);
             v = solver->map_outer_to_inter(v);
             assert(solver->varData[v].removed == Removed::none);
-            ret.push_back(v);
+            if (!solver->seen[v]) {
+                ret.push_back(v);
+                solver->seen[v] = 1;
+            }
         }
+        for(auto const& v: sampl_set) solver->seen[v] = 0;
         return ret;
     } else {
         return sampl_set;
