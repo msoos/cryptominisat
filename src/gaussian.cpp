@@ -281,7 +281,7 @@ bool EGaussian::full_init(bool& created) {
     assert(solver->okay());
     assert(solver->decisionLevel() == 0);
     assert(initialized == false);
-    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
+    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
     created = true;
 
     uint32_t trail_before;
@@ -364,7 +364,7 @@ bool EGaussian::full_init(bool& created) {
     update_cols_vals_set(true);
     SLOW_DEBUG_DO(check_invariants());
 
-    *solver->drat << __PRETTY_FUNCTION__ << " end\n";
+    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
     return solver->okay();
 }
 
@@ -417,7 +417,7 @@ void EGaussian::eliminate() {
                 if (k_row != rowI) {
                     if ((*k_row)[col]) {
                         (*k_row).xor_in(*rowI);
-                        if (solver->drat->enabled()) TBUDDY_DO(xor_in_bdd(k, row_i));
+                        if (solver->frat->enabled()) TBUDDY_DO(xor_in_bdd(k, row_i));
                     }
                 }
             }
@@ -431,7 +431,7 @@ void EGaussian::eliminate() {
 
 vector<Lit>* EGaussian::get_reason(const uint32_t row, int32_t& out_ID)
 {
-    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
+    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
     if (!xor_reasons[row].must_recalc) {
         out_ID = xor_reasons[row].ID;
         return &(xor_reasons[row].reason);
@@ -439,8 +439,8 @@ vector<Lit>* EGaussian::get_reason(const uint32_t row, int32_t& out_ID)
 
     // Clean up previous one
     #ifdef USE_TBUDDY
-    if (solver->drat->enabled() && xor_reasons[row].ID != 0) {
-        solver->drat->flush();
+    if (solver->frat->enabled() && xor_reasons[row].ID != 0) {
+        solver->frat->flush();
         delete xor_reasons[row].constr;
         one_len_ilist[0] = xor_reasons[row].ID;
         VERBOSE_PRINT("calling tbuddy to delete clause ID " << xor_reasons[row].ID);
@@ -460,8 +460,8 @@ vector<Lit>* EGaussian::get_reason(const uint32_t row, int32_t& out_ID)
         xor_reasons[row].propagated);
 
     #ifdef USE_TBUDDY
-    if (solver->drat->enabled()) {
-        solver->drat->flush();
+    if (solver->frat->enabled()) {
+        solver->frat->flush();
         VERBOSE_PRINT("Expecting tbuddy to prove: " << tofill);
         xor_reasons[row].constr = bdd_create(row, tofill.size());
         ilist_resize(ilist_tmp, tofill.size());
@@ -475,17 +475,17 @@ vector<Lit>* EGaussian::get_reason(const uint32_t row, int32_t& out_ID)
 
     xor_reasons[row].must_recalc = false;
     xor_reasons[row].ID = out_ID;
-    *solver->drat << __PRETTY_FUNCTION__ << " end\n";
+    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
     return &tofill;
 }
 
 #ifdef USE_TBUDDY
 tbdd::xor_constraint* EGaussian::bdd_create(const uint32_t row_n, const uint32_t expected_sz)
 {
-    assert(solver->drat->enabled());
-    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
+    assert(solver->frat->enabled());
+    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
 
-    solver->drat->flush();
+    solver->frat->flush();
     tbdd::xor_set xset;
     for(uint32_t i = 0; i < bdd_matrix[row_n].size(); i++) {
         if (bdd_matrix[row_n][i]) {
@@ -521,7 +521,7 @@ tbdd::xor_constraint* EGaussian::bdd_create(const uint32_t row_n, const uint32_t
 
     #endif
 
-    *solver->drat << __PRETTY_FUNCTION__ << " end\n";
+    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
     return x;
 }
 #endif
@@ -531,7 +531,7 @@ gret EGaussian::init_adjust_matrix()
     assert(solver->decisionLevel() == 0);
     assert(row_to_var_non_resp.empty());
     assert(satisfied_xors.size() >= num_rows);
-    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
+    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
     VERBOSE_PRINT("mat[" << matrix_no << "] init adjusting matrix");
 
     PackedMatrix::iterator end = mat.begin() + num_rows;
@@ -554,12 +554,12 @@ gret EGaussian::init_adjust_matrix()
                 // conflict
                 if ((*rowI).rhs()) {
                     #ifdef USE_TBUDDY
-                    if (solver->drat->enabled()) {
+                    if (solver->frat->enabled()) {
                         unsat_bdd = bdd_create(row_i, 0);
 
                         assert(solver->unsat_cl_ID == 0);
                         if (ilist_length(unsat_bdd->get_variables()) != 0) {
-                            *solver->drat << add << ++solver->clauseID << fin;
+                            *solver->frat << add << ++solver->clauseID << fin;
                             solver->unsat_cl_ID = solver->clauseID;
                         } else {
                             assert(unsat_bdd->get_phase() == 1);
@@ -585,7 +585,7 @@ gret EGaussian::init_adjust_matrix()
                 tmp_clause[0] = Lit(tmp_clause[0].var(), xorEqualFalse);
                 assert(solver->value(tmp_clause[0].var()) == l_Undef);
                 #ifdef USE_TBUDDY
-                if (solver->drat->enabled()) {
+                if (solver->frat->enabled()) {
                     tbdd::xor_constraint* bdd = bdd_create(row_i, 1);
                     ilist out = ilist_new(1);
                     ilist_resize(out, 1);
@@ -619,7 +619,7 @@ gret EGaussian::init_adjust_matrix()
                 tmp_clause[0] = tmp_clause[0].unsign();
                 tmp_clause[1] = tmp_clause[1].unsign();
                 #ifdef USE_TBUDDY
-                if (solver->drat->enabled()) {
+                if (solver->frat->enabled()) {
                     tbdd::xor_constraint* bdd = bdd_create(row_i, 2);
                     ilist out = ilist_new(2);
                     ilist_resize(out, 2);
@@ -685,7 +685,7 @@ gret EGaussian::init_adjust_matrix()
     mat.resizeNumRows(row_i - adjust_zero);
     num_rows = row_i - adjust_zero;
 
-    *solver->drat << __PRETTY_FUNCTION__ << " end\n";
+    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
     return gret::nothing_satisfied;
 }
 
@@ -812,7 +812,7 @@ bool EGaussian::find_truths(
 
             #ifdef USE_TBUDDY
             // have to get reason if toplevel (reason will never be asked)
-            if (solver->decisionLevel() == 0 && solver->drat->enabled()) {
+            if (solver->decisionLevel() == 0 && solver->frat->enabled()) {
                 VERBOSE_PRINT("-> conflict at toplevel during find_truths");
                 unsat_bdd = bdd_create(row_n, numeric_limits<uint32_t>::max());
             }
@@ -976,7 +976,7 @@ void EGaussian::prop_lit(
     if (gqd.currLevel == solver->decisionLevel()) lev = gqd.currLevel;
     else lev = get_max_level(gqd, row_i);
     #ifdef USE_TBUDDY
-    if (lev == 0 && solver->drat->enabled()) {
+    if (lev == 0 && solver->frat->enabled()) {
         //we produce the reason, because we need it immediately, since it's toplevel
         int32_t out_ID;
         VERBOSE_PRINT("--> BDD reason needed in prop due to lev 0 enqueue");
@@ -1032,7 +1032,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
 
             assert(satisfied_xors[row_i] == 0);
             (*rowI).xor_in(*(mat.begin() + new_resp_row_n));
-            if (solver->drat->enabled()) TBUDDY_DO(xor_in_bdd(row_i, new_resp_row_n));
+            if (solver->frat->enabled()) TBUDDY_DO(xor_in_bdd(row_i, new_resp_row_n));
 
             elim_xored_rows++;
 
@@ -1095,7 +1095,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
 
                         #ifdef USE_TBUDDY
                         // have to get reason if toplevel (reason will never be asked)
-                        if (solver->decisionLevel() == 0 && solver->drat->enabled()) {
+                        if (solver->decisionLevel() == 0 && solver->frat->enabled()) {
                             VERBOSE_PRINT("-> conflict at toplevel during eliminate_col");
                             int32_t ID;
                             get_reason(row_i, ID);
@@ -1540,9 +1540,9 @@ void CMSat::EGaussian::move_back_xor_clauses()
 #ifdef USE_TBUDDY
 void CMSat::EGaussian::finalize_frat()
 {
-    assert(solver->drat->enabled());
-    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
-    solver->drat->flush();
+    assert(solver->frat->enabled());
+    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
+    solver->frat->flush();
     delete unsat_bdd;
 
     // clean frat_ids
@@ -1579,6 +1579,6 @@ void CMSat::EGaussian::finalize_frat()
         x2.bdd = NULL;
     }
 
-    *solver->drat << __PRETTY_FUNCTION__ << " end\n";
+    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
 }
 #endif

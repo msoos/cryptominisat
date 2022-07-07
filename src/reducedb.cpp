@@ -840,7 +840,7 @@ void ReduceDB::clean_lev0_once_in_a_while()
                 solver->watches.smudge((*cl)[1]);
                 solver->litStats.redLits -= cl->size();
 
-                *solver->drat << del << *cl << fin;
+                *solver->frat << del << *cl << fin;
                 cl->setRemoved();
                 delayed_clause_free.push_back(offset);
             }
@@ -918,7 +918,7 @@ void ReduceDB::clean_lev1_once_in_a_while()
                 solver->watches.smudge((*cl)[1]);
                 solver->litStats.redLits -= cl->size();
 
-                *solver->drat << del << *cl << fin;
+                *solver->frat << del << *cl << fin;
                 cl->setRemoved();
                 delayed_clause_free.push_back(offset);
             }
@@ -979,7 +979,7 @@ void ReduceDB::delete_from_lev2()
             solver->watches.smudge((*cl)[1]);
             solver->litStats.redLits -= cl->size();
 
-            *solver->drat << del << *cl << fin;
+            *solver->frat << del << *cl << fin;
             cl->setRemoved();
             delayed_clause_free.push_back(offset);
         }
@@ -1310,7 +1310,7 @@ void ReduceDB::remove_cl_from_lev2() {
         solver->watches.smudge((*cl)[1]);
         solver->litStats.redLits -= cl->size();
 
-        *solver->drat << del << *cl << fin;
+        *solver->frat << del << *cl << fin;
         cl->setRemoved();
         #ifdef VERBOSE_DEBUG
         cout << "REMOVING offset: " << offset << " cl->stats.last_touched: " << cl->stats.last_touched

@@ -105,7 +105,7 @@ using std::numeric_limits;
 // Verbose Debug
 ///////////////////
 
-//#define DRAT_DEBUG
+//#define FRAT_DEBUG
 //#define VERBOSE_DEBUG
 
 // verbose print

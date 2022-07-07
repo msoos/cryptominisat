@@ -62,7 +62,7 @@ THE SOFTWARE.
 #include "streambuffer.h"
 #include "gaussian.h"
 #include "sqlstats.h"
-#include "drat.h"
+#include "frat.h"
 #include "xorfinder.h"
 #include "cardfinder.h"
 #include "sls.h"
@@ -92,7 +92,7 @@ using std::variant;
 #include "sqlitestats.h"
 #endif
 
-//#define DRAT_DEBUG
+//#define FRAT_DEBUG
 
 //#define DEBUG_RENUMBER
 
@@ -176,7 +176,7 @@ void Solver::set_sqlite(
     std::exit(-1);
     #endif
 
-    if (drat->enabled()) drat->set_sqlstats_ptr(sqlStats);
+    if (frat->enabled()) frat->set_sqlstats_ptr(sqlStats);
 }
 
 void Solver::set_shared_data(SharedData* shared_data)
@@ -209,7 +209,7 @@ bool Solver::add_xor_clause_inter(
 
     if (ps.empty()) {
         if (rhs) {
-            *drat << add << ++clauseID << fin;
+            *frat << add << ++clauseID << fin;
             ok = false;
         }
         return ok;
@@ -223,8 +223,8 @@ bool Solver::add_xor_clause_inter(
         xor_clauses_updated = true;
         xorclauses.push_back(Xor(ps, rhs, tmp_xor_clash_vars));
         xorclauses_orig.push_back(Xor(ps, rhs, tmp_xor_clash_vars));
-        TBUDDY_DO(if (drat->enabled()) xorclauses.back().create_bdd_xor());
-        TBUDDY_DO(if (drat->enabled()) xorclauses_orig.back().create_bdd_xor());
+        TBUDDY_DO(if (frat->enabled()) xorclauses.back().create_bdd_xor());
+        TBUDDY_DO(if (frat->enabled()) xorclauses_orig.back().create_bdd_xor());
     }
 
     return ok;
@@ -307,7 +307,7 @@ void Solver::add_xor_clause_inter_cleaned_cut(
             NULL, //clause stats
             attach, //attach it?
             NULL,  //get back the final set of literals
-            addDrat //add to DRAT?
+            addDrat //add to FRAT?
         );
 
         if (cl) {
@@ -401,9 +401,9 @@ Clause* Solver::add_clause_int(
     , const bool attach_long
     , vector<Lit>* finalLits
     , bool addDrat
-    , const Lit drat_first
+    , const Lit frat_first
     , const bool sorted
-    , const bool remove_drat
+    , const bool remove_frat
 ) {
     assert(okay());
     assert(decisionLevel() == 0);
@@ -416,8 +416,8 @@ Clause* Solver::add_clause_int(
         if (finalLits) {
             finalLits->clear();
         }
-        if (remove_drat) {
-            *drat << del << cl_stats->ID << lits << fin;
+        if (remove_frat) {
+            *frat << del << cl_stats->ID << lits << fin;
         }
         return NULL;
     }
@@ -427,26 +427,26 @@ Clause* Solver::add_clause_int(
     if (finalLits) *finalLits = ps;
 
     int32_t ID;
-    if (remove_drat) {
+    if (remove_frat) {
         assert(cl_stats);
-        assert(drat_first == lit_Undef);
+        assert(frat_first == lit_Undef);
         assert(addDrat);
         ID = cl_stats->ID;
         if (ps != lits) {
             uint64_t old_ID = ID;
             ID = ++clauseID;
-            *drat << add << ID << ps << fin;
-            *drat << del << old_ID << lits << fin;
+            *frat << add << ID << ps << fin;
+            *frat << del << old_ID << lits << fin;
         }
     } else {
         ID = ++clauseID;
         if (addDrat) {
             size_t i = 0;
-            if (drat_first != lit_Undef) {
+            if (frat_first != lit_Undef) {
                 assert(ps.size() > 0);
-                if (drat_first != lit_Undef) {
+                if (frat_first != lit_Undef) {
                     for(i = 0; i < ps.size(); i++) {
-                        if (ps[i] == drat_first) {
+                        if (ps[i] == frat_first) {
                             break;
                         }
                     }
@@ -454,8 +454,8 @@ Clause* Solver::add_clause_int(
                 std::swap(ps[0], ps[i]);
             }
 
-            *drat << add << ID << ps << fin;
-            if (drat_first != lit_Undef) {
+            *frat << add << ID << ps << fin;
+            if (frat_first != lit_Undef) {
                 std::swap(ps[0], ps[i]);
             }
         }
@@ -478,7 +478,7 @@ Clause* Solver::add_clause_int(
         case 1:
             assert(decisionLevel() == 0);
             enqueue<false>(ps[0]);
-            *drat << del << ID << ps[0] << fin; // double unit delete
+            *frat << del << ID << ps[0] << fin; // double unit delete
             if (attach_long) {
                 ok = (propagate<true>().isNULL());
             }
@@ -726,9 +726,9 @@ void Solver::attachClause(
     const Clause& cl
     , const bool checkAttach
 ) {
-    #if defined(DRAT_DEBUG) && defined(DRAT)
-    if (drat) {
-        *drat << add << cl << fin;
+    #if defined(FRAT_DEBUG)
+    if (frat) {
+        *frat << add << cl << fin;
     }
     #endif
 
@@ -764,7 +764,7 @@ void Solver::attach_bin_clause(
 void Solver::detachClause(const Clause& cl, const bool removeDrat)
 {
     if (removeDrat) {
-        *drat << del << cl << fin;
+        *frat << del << cl << fin;
     }
 
     assert(cl.size() > 2);
@@ -903,7 +903,7 @@ bool Solver::add_clause_outer(vector<Lit>& ps)
 
     ClauseStats stats;
     stats.ID = ++clauseID;
-    *drat << origcl << stats.ID << ps << fin;
+    *frat << origcl << stats.ID << ps << fin;
 
     #ifdef VERBOSE_DEBUG
     cout << "Adding clause " << ps << endl;
@@ -911,7 +911,7 @@ bool Solver::add_clause_outer(vector<Lit>& ps)
     const size_t origTrailSize = trail.size();
 
     if (!addClauseHelper(ps)) {
-        *drat << del << stats.ID << ps << fin;
+        *frat << del << stats.ID << ps << fin;
         return false;
     }
 
@@ -922,7 +922,7 @@ bool Solver::add_clause_outer(vector<Lit>& ps)
         , &stats
         , true //yes, attach
         , NULL
-        , true //add drat?
+        , true //add frat?
         , lit_Undef
         , true //sorted
         , true //remove old clause from proof if we changed it
@@ -1496,11 +1496,11 @@ void Solver::check_and_upd_config_parameters()
         exit(-1);
     }
 
-    if ((drat->enabled() || conf.simulate_drat))  {
+    if ((frat->enabled() || conf.simulate_frat))  {
         if (!conf.do_hyperbin_and_transred) {
             if (conf.verbosity) {
                 cout
-                << "c OTF hyper-bin is needed for BProp in DRAT, turning it back"
+                << "c OTF hyper-bin is needed for BProp in FRAT, turning it back"
                 << endl;
             }
             conf.do_hyperbin_and_transred = true;
@@ -1510,7 +1510,7 @@ void Solver::check_and_upd_config_parameters()
         if (conf.doBreakid) {
             if (conf.verbosity) {
                 cout
-                << "c BreakID is not supported with DRAT, turning it off"
+                << "c BreakID is not supported with FRAT, turning it off"
                 << endl;
             }
             conf.doBreakid = false;
@@ -1521,7 +1521,7 @@ void Solver::check_and_upd_config_parameters()
         if (conf.do_bosphorus) {
             if (conf.verbosity) {
                 cout
-                << "c Bosphorus is not supported with DRAT, turning it off"
+                << "c Bosphorus is not supported with FRAT, turning it off"
                 << endl;
             }
             conf.do_bosphorus = false;
@@ -1661,14 +1661,14 @@ lbool Solver::solve_with_assumptions(
     const vector<Lit>* _assumptions,
     const bool only_sampling_solution
 ) {
-    if (drat->enabled()) {
-        drat->set_sqlstats_ptr(sqlStats);
+    if (frat->enabled()) {
+        frat->set_sqlstats_ptr(sqlStats);
         int32_t* v = new int;
         *v = nVars()+1;
         #ifdef USE_TBUDDY
-        if (drat->enabled()) {
-            drat->flush();
-            tbdd_init_frat(drat->getFile(), v, &clauseID);
+        if (frat->enabled()) {
+            frat->flush();
+            tbdd_init_frat(frat->getFile(), v, &clauseID);
             tbdd_set_verbose(0);
             bdd_error_hook(my_bddinthandler);
         }
@@ -1746,66 +1746,66 @@ lbool Solver::solve_with_assumptions(
 
 void Solver::write_final_frat_clauses()
 {
-    if (!drat->enabled()) return;
+    if (!frat->enabled()) return;
     assert(decisionLevel() == 0);
-    *drat << "write final start\n";
+    *frat << "write final start\n";
 
-    *drat << "vrepl finalize begin\n";
+    *frat << "vrepl finalize begin\n";
     if (varReplacer) varReplacer->delete_frat_cls();
 
-    *drat << "gmatrix finalize frat begin\n";
+    *frat << "gmatrix finalize frat begin\n";
     TBUDDY_DO(for(auto& g: gmatrices) g->finalize_frat());
 
-    *drat << "free bdds begin\n";
+    *frat << "free bdds begin\n";
     TBUDDY_DO(solver->free_bdds(solver->xorclauses_orig));
     TBUDDY_DO(solver->free_bdds(solver->xorclauses));
     TBUDDY_DO(solver->free_bdds(solver->xorclauses_unused));
 
 
-    *drat << "tbdd_done() next\n";
-    drat->flush();
+    *frat << "tbdd_done() next\n";
+    frat->flush();
     TBUDDY_DO(tbdd_done());
 
     // -1 indicates tbuddy already added the empty clause
-    *drat << "empty clause next (if we found it)\n";
+    *frat << "empty clause next (if we found it)\n";
     if (!okay() && unsat_cl_ID != -1) {
         assert(unsat_cl_ID != 0);
-        *drat << finalcl << unsat_cl_ID << fin;
+        *frat << finalcl << unsat_cl_ID << fin;
     }
 
-    *drat << "finalization of unit clauses next\n";
+    *frat << "finalization of unit clauses next\n";
     for(uint32_t i = 0; i < nVars(); i ++) {
         if (unit_cl_IDs[i] != 0) {
             assert(value(i) != l_Undef);
             Lit l = Lit(i, value(i) == l_False);
-            *drat << finalcl << unit_cl_IDs[i] << l << fin;
+            *frat << finalcl << unit_cl_IDs[i] << l << fin;
         }
     }
 
-    *drat << "finalization of binary clauses next\n";
+    *frat << "finalization of binary clauses next\n";
     for(uint32_t i = 0; i < nVars()*2; i++) {
         Lit l = Lit::toLit(i);
         for(const auto& w: watches[l]) {
             //only do once per binary
             if (w.isBin() && w.lit2() < l) {
-                *drat << finalcl << w.get_ID() << l << w.lit2() << fin;
+                *frat << finalcl << w.get_ID() << l << w.lit2() << fin;
             }
         }
     }
 
-    *drat << "finalization of redundant clauses next\n";
+    *frat << "finalization of redundant clauses next\n";
     for(const auto& cls: longRedCls) {
         for(const auto offs: cls) {
             Clause* cl = cl_alloc.ptr(offs);
-            *drat << finalcl << *cl << fin;
+            *frat << finalcl << *cl << fin;
         }
     }
-    *drat << "finalization of irredundant clauses next\n";
+    *frat << "finalization of irredundant clauses next\n";
     for(const auto& offs: longIrredCls) {
         Clause* cl = cl_alloc.ptr(offs);
-        *drat << finalcl << *cl << fin;
+        *frat << finalcl << *cl << fin;
     }
-    drat->flush();
+    frat->flush();
 }
 
 void Solver::dump_memory_stats_to_sql()
@@ -2221,14 +2221,14 @@ lbool Solver::execute_inprocess_strategy(
             comm_finder.compute();
             #endif
         } else if (token == "renumber" || token == "must-renumber") {
-            if (conf.doRenumberVars && !drat->enabled()) {
+            if (conf.doRenumberVars && !frat->enabled()) {
                 if (!renumber_variables(token == "must-renumber" || conf.must_renumber)) {
                     return l_False;
                 }
             }
         } else if (token == "breakid") {
             if (conf.doBreakid
-                && !drat->enabled()
+                && !frat->enabled()
                 && (solveStats.num_simplify == 0 ||
                    (solveStats.num_simplify % conf.breakid_every_n == (conf.breakid_every_n-1)))
             ) {
@@ -3089,7 +3089,7 @@ bool Solver::fully_enqueue_this(const Lit lit)
             return false;
         }
     } else if (val == l_False) {
-        *drat << add << ++clauseID << fin;
+        *frat << add << ++clauseID << fin;
         ok = false;
         return false;
     }
@@ -3135,7 +3135,7 @@ bool Solver::full_probe(const bool bin_only)
         *solver->conf.global_timeout_multiplier;
     uint64_t probed = 0;
     const auto orig_repl = varReplacer->get_num_replaced_vars();
-    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
+    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
 
     vector<uint32_t> vars;
     for(uint32_t i = 0; i < nVars(); i++) {
@@ -3202,7 +3202,7 @@ bool Solver::full_probe(const bool bin_only)
             , time_remain
         );
     }
-    *solver->drat << __PRETTY_FUNCTION__ << " end\n";
+    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
 
     return okay();
 }
@@ -3279,13 +3279,13 @@ lbool Solver::probe_inter(const Lit l, uint32_t& min_props)
         if (bp_lit != lit_Undef) {
             //I am not going to deal with the messy version of it already being set
             if (value(bp_lit) == l_Undef) {
-                *solver->drat << add << ++clauseID << ~l << bp_lit << fin;
+                *solver->frat << add << ++clauseID << ~l << bp_lit << fin;
                 const int32_t c1 = clauseID;
-                *solver->drat << add << ++clauseID << l << bp_lit << fin;
+                *solver->frat << add << ++clauseID << l << bp_lit << fin;
                 const int32_t c2 = clauseID;
                 enqueue<true>(bp_lit);
-                *solver->drat << del << c1 << ~l << bp_lit << fin;
-                *solver->drat << del << c2 << l << bp_lit << fin;
+                *solver->frat << del << c1 << ~l << bp_lit << fin;
+                *solver->frat << del << c2 << l << bp_lit << fin;
             }
         } else {
             //First we must propagate all the enqueued facts
@@ -3786,7 +3786,7 @@ void Solver::renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors
 
 bool Solver::find_and_init_all_matrices()
 {
-    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
+    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
     if (!xor_clauses_updated && (!detached_xor_clauses || !assump_contains_xor_clash())) {
         if (conf.verbosity >= 2) {
             cout << "c [find&init matx] XORs not updated, and either (XORs are not detached OR assumps does not contain clash variable) -> or not performing matrix init. Matrices: " << gmatrices.size() << endl;
@@ -3871,7 +3871,7 @@ bool Solver::find_and_init_all_matrices()
     #endif
 
     xor_clauses_updated = false;
-    *solver->drat << __PRETTY_FUNCTION__ << " end\n";
+    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
     return true;
 }
 
@@ -3967,16 +3967,16 @@ vector<uint32_t> Solver::translate_sampl_set(const vector<uint32_t>& sampl_set)
     return get_clause_query->translate_sampl_set(sampl_set);
 }
 
-void Solver::add_empty_cl_to_drat()
+void Solver::add_empty_cl_to_frat()
 {
     assert(false);
-//     *drat << add
+//     *frat << add
 //     #ifdef STATS_NEEDED
 //     << 0
 //     << sumConflicts
 //     #endif
 //     << fin;
-//     drat->flush();
+//     frat->flush();
 }
 
 void Solver::check_assigns_for_assumptions() const
@@ -4972,7 +4972,7 @@ void SwapDel(vector<T>& vec, size_t i) {
 
 bool Solver::oracle_vivif(bool& finished)
 {
-    assert(!drat->enabled());
+    assert(!frat->enabled());
     assert(solver->okay());
     double myTime = cpuTime();
 
@@ -5102,7 +5102,7 @@ void Solver::dump_cls_oracle(const string fname, const vector<OracleDat>& cs)
 
 bool Solver::sparsify()
 {
-    assert(!drat->enabled());
+    assert(!frat->enabled());
     execute_inprocess_strategy(false, "occ-backw-sub, sub-impl, must-renumber");
     if (!solver->okay()) return solver->okay();
     if (nVars() < 10) return solver->okay();

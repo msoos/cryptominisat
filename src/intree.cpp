@@ -45,7 +45,7 @@ bool InTree::replace_until_fixedpoint(bool& aborted)
         *solver->conf.global_timeout_multiplier
         *0.5;
     time_limit = (double)time_limit * std::min(std::pow((double)(numCalls+1), 0.2), 3.0);
-    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
+    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
 
     aborted = false;
     uint64_t bogoprops = 0;
@@ -73,7 +73,7 @@ bool InTree::replace_until_fixedpoint(bool& aborted)
         }
     }
 
-    *solver->drat << __PRETTY_FUNCTION__ << " end\n";
+    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
     return true;
 }
 
@@ -91,11 +91,11 @@ bool InTree::watches_only_contains_nonbin(const Lit lit) const
 
 bool InTree::check_timeout_due_to_hyperbin()
 {
-    assert(!(solver->timedOutPropagateFull && solver->drat->enabled()));
-    assert(!(solver->timedOutPropagateFull && solver->conf.simulate_drat));
+    assert(!(solver->timedOutPropagateFull && solver->frat->enabled()));
+    assert(!(solver->timedOutPropagateFull && solver->conf.simulate_frat));
 
     if (solver->timedOutPropagateFull
-        && !(solver->drat->enabled() || solver->conf.simulate_drat)
+        && !(solver->frat->enabled() || solver->conf.simulate_frat)
     ) {
         verb_print(1, "[intree] intra-propagation timeout, turning off OTF hyper-bin&trans-red");
         solver->conf.do_hyperbin_and_transred = false;
@@ -136,7 +136,7 @@ bool InTree::intree_probe()
     removedIrredBin = 0;
     removedRedBin = 0;
     numCalls++;
-    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
+    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
 
     if (!solver->conf.doFindAndReplaceEqLits) {
         if (solver->conf.verbosity) {
@@ -206,7 +206,7 @@ bool InTree::intree_probe()
         );
     }
 
-    *solver->drat << __PRETTY_FUNCTION__ << " end\n";
+    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
     solver->use_depth_trick = true;
     solver->perform_transitive_reduction = true;
     return solver->okay();
@@ -334,8 +334,8 @@ bool InTree::handle_lit_popped_from_queue(
         bool ok;
         if (solver->conf.do_hyperbin_and_transred) {
             uint64_t max_hyper_time = numeric_limits<uint64_t>::max();
-            if (!solver->drat->enabled() &&
-                !solver->conf.simulate_drat
+            if (!solver->frat->enabled() &&
+                !solver->conf.simulate_frat
             ) {
                 max_hyper_time =
                 solver->propStats.otfHyperTime
@@ -384,9 +384,9 @@ bool InTree::empty_failed_list()
                 return false;
             }
         } else if (solver->value(lit) == l_False) {
-            //*(solver->drat) << add << solver->clauseID++ << ~lit << fin;
+            //*(solver->frat) << add << solver->clauseID++ << ~lit << fin;
             solver->unsat_cl_ID = solver->clauseID;
-            *(solver->drat) << add << solver->clauseID++ <<fin;
+            *(solver->frat) << add << solver->clauseID++ <<fin;
             solver->ok = false;
             return false;
         }

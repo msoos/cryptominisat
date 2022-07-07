@@ -346,8 +346,8 @@ bool BVA::bva_simplify_system()
             NULL, //stats
             false, //attach if long?
             &bva_tmp_lits, //put final lits back here
-            true, //add DRAT
-            new_lit //the first literal in DRAT
+            true, //add FRAT
+            new_lit //the first literal in FRAT
         );
 
         if (newCl != NULL) {
@@ -459,8 +459,8 @@ void BVA::remove_matching_clause(
     switch(to_remove.size()) {
         case 2: {
             *simplifier->limit_to_decrease -= 2*(int64_t)solver->watches[to_remove[0]].size();
-            assert(!solver->drat->enabled()); //TODO FRAT is broken here"
-            //*(solver->drat) << del << to_remove << fin;
+            assert(!solver->frat->enabled()); //TODO FRAT is broken here"
+            //*(solver->frat) << del << to_remove << fin;
             solver->detach_bin_clause(
                 to_remove[0], to_remove[1],
                 false, //redundant
@@ -535,8 +535,8 @@ bool BVA::add_longer_clause(const Lit new_lit, const OccurClause& cl)
                 NULL,
                 false, //attach?
                 &lits, //put back cls here
-                true, //DRAT?
-                new_lit //first DRAT literal
+                true, //FRAT?
+                new_lit //first FRAT literal
             );
             for(Lit l: lits) {
                 simplifier->n_occurs[l.toInt()]++;
@@ -562,8 +562,8 @@ bool BVA::add_longer_clause(const Lit new_lit, const OccurClause& cl)
                 &backup_stats,
                 false, //attach?
                 &lits, //put back final lits here
-                true, //DRAT
-                new_lit //first DRAT literal
+                true, //FRAT
+                new_lit //first FRAT literal
             );
             if (newCl != NULL) {
                 simplifier->link_in_clause(*newCl);

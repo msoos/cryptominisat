@@ -35,10 +35,10 @@ public:
     uint32_t print_model(CMSat::SATSolver* solver,
                          std::ostream* os,
                          std::vector<uint32_t>* only = NULL);
-    void handle_drat_option();
+    void handle_frat_option();
 
-    string dratfilname;
-    FILE* dratf = NULL;
+    string fratfilname;
+    FILE* fratf = NULL;
     bool zero_exit_status = false;
     CMSat::SolverConf conf;
     unsigned num_threads = 1;

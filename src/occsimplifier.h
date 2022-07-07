@@ -274,7 +274,7 @@ public:
     vector<ClOffset> clauses;
     void check_elimed_vars_are_unassignedAndStats() const;
     void unlink_clause(ClOffset cc
-        , bool drat = true
+        , bool frat = true
         , bool allow_empty_watch = false
         , bool only_set_is_removed = false
     );
@@ -393,7 +393,7 @@ private:
     void set_limits();
 
     //Finish-up
-    void remove_by_drat_recently_blocked_clauses(size_t origBlockedSize);
+    void remove_by_frat_recently_blocked_clauses(size_t origBlockedSize);
     void add_back_to_solver();
     bool check_varelim_when_adding_back_cl(const Clause* cl) const;
     void remove_all_longs_from_watches();

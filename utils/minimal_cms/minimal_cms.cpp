@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
   dimacs_stream >> p >> cnf >> n_vars >> n_clauses;
   assert(p == "p");
   assert(cnf == "cnf");
-  solver.set_drat(proof_stream);
+  solver.set_frat(proof_stream);
   solver.new_vars(n_vars);
   solver.set_verbosity(1);
 

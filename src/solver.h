@@ -107,8 +107,8 @@ class Solver : public Searcher
         lbool probe_outside(Lit l, uint32_t& min_props);
         void set_max_confl(uint64_t max_confl);
 
-        //drat for SAT problems
-        void add_empty_cl_to_drat();
+        //frat for SAT problems
+        void add_empty_cl_to_frat();
 
         //Querying model
         lbool model_value (const Lit p) const;  ///<Found model value for lit
@@ -268,9 +268,9 @@ class Solver : public Searcher
             , const bool attach = true
             , vector<Lit>* finalLits = NULL
             , bool addDrat = true
-            , const Lit drat_first = lit_Undef
+            , const Lit frat_first = lit_Undef
             , const bool sorted = false
-            , const bool remove_drat = false
+            , const bool remove_frat = false
         );
         void add_bnn_clause_inter(
             vector<Lit>& lits,

@@ -317,7 +317,7 @@ ClOffset DistillerLitRem::try_distill_clause_and_return_new(
 //     << endl;
 
     //We can remove the literal
-    (*solver->drat) << deldelay << cl << fin;
+    (*solver->frat) << deldelay << cl << fin;
     solver->detachClause(cl, false);
     runStats.numLitsRem += orig_size - lits.size();
     runStats.numClShorten++;
@@ -329,7 +329,7 @@ ClOffset DistillerLitRem::try_distill_clause_and_return_new(
     // deleted as per cl_last_in_solver
     solver->free_cl(offset, false);
     Clause *cl2 = solver->add_clause_int(lits, red, &backup_stats);
-    (*solver->drat) << findelay;
+    (*solver->frat) << findelay;
     assert(solver->trail_size() == origTrailSize);
 
     if (cl2 != NULL) {

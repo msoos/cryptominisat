@@ -52,7 +52,7 @@ void ClauseCleaner::clean_binary_implicit(
     if (satisfied(*i, lit)) {
         //Only delete once
         if (lit < i->lit2()) {
-            (*solver->drat) << del << i->get_ID() << lit << i->lit2() << fin;
+            (*solver->frat) << del << i->get_ID() << lit << i->lit2() << fin;
         }
 
         if (i->red()) {
@@ -272,7 +272,7 @@ bool ClauseCleaner::clean_clause(Clause& cl)
     }
 
     assert(cl.size() > 2);
-    (*solver->drat) << deldelay << cl << fin;
+    (*solver->frat) << deldelay << cl << fin;
     solver->chain.clear();
 
     #ifdef SLOW_DEBUG
@@ -293,7 +293,7 @@ bool ClauseCleaner::clean_clause(Clause& cl)
         }
 
         if (val == l_True) {
-            (*solver->drat) << findelay;
+            (*solver->frat) << findelay;
             return true;
         } else {
             solver->chain.push_back(solver->unit_cl_IDs[i->var()]);
@@ -304,11 +304,11 @@ bool ClauseCleaner::clean_clause(Clause& cl)
         const auto orig_ID = cl.stats.ID;
         INC_ID(cl);
         cl.shrink(i-j);
-        (*solver->drat) << add << cl << chain << orig_ID;
-        for(auto const& id: solver->chain) (*solver->drat) << id;
-        (*solver->drat) << fin << findelay;
+        (*solver->frat) << add << cl << chain << orig_ID;
+        for(auto const& id: solver->chain) (*solver->frat) << id;
+        (*solver->frat) << fin << findelay;
     } else {
-        solver->drat->forget_delay();
+        solver->frat->forget_delay();
     }
 
     assert(cl.size() != 0);
@@ -390,7 +390,7 @@ bool ClauseCleaner::remove_and_clean_all()
     assert(solver->okay());
     assert(solver->prop_at_head());
     assert(solver->decisionLevel() == 0);
-    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
+    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
 
     size_t last_trail = numeric_limits<size_t>::max();
     while(last_trail != solver->trail_size()) {
@@ -436,7 +436,7 @@ bool ClauseCleaner::remove_and_clean_all()
     #endif
 
     verb_print(2, "[clean]" << solver->conf.print_times(cpuTime() - myTime));
-    *solver->drat << __PRETTY_FUNCTION__ << " end\n";
+    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
 
     return solver->okay();
 }
@@ -446,7 +446,7 @@ bool ClauseCleaner::clean_one_xor(Xor& x)
 {
     // they encode information (see NOTE in cnf.h) so they MUST be in BDDs
     //      otherwise FRAT will fail
-    TBUDDY_DO(if (solver->drat->enabled()) assert(x.bdd));
+    TBUDDY_DO(if (solver->frat->enabled()) assert(x.bdd));
 
     bool rhs = x.rhs;
     size_t i = 0;
@@ -477,7 +477,7 @@ bool ClauseCleaner::clean_one_xor(Xor& x)
     }
 
     if (x.size() <= 2) {
-        solver->drat->flush();
+        solver->frat->flush();
         TBUDDY_DO(delete x.bdd);
         TBUDDY_DO(x.bdd = NULL);
     }
@@ -487,7 +487,7 @@ bool ClauseCleaner::clean_one_xor(Xor& x)
             if (x.rhs == true) solver->ok = false;
             if (!solver->ok) {
                 assert(solver->unsat_cl_ID == 0);
-                *solver->drat << add << ++solver->clauseID << fin;
+                *solver->frat << add << ++solver->clauseID << fin;
                 solver->unsat_cl_ID = solver->clauseID;
             }
             return false;
@@ -575,7 +575,7 @@ bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors)
 //returns TRUE if removed or solver is UNSAT
 bool ClauseCleaner::full_clean(Clause& cl)
 {
-    (*solver->drat) << deldelay << cl << fin;
+    (*solver->frat) << deldelay << cl << fin;
 
     Lit *i = cl.begin();
     Lit *j = i;
@@ -592,9 +592,9 @@ bool ClauseCleaner::full_clean(Clause& cl)
     if (i != j) {
         cl.shrink(i-j);
         INC_ID(cl);
-        (*solver->drat) << add << cl << fin << findelay;
+        (*solver->frat) << add << cl << fin << findelay;
     } else {
-        solver->drat->forget_delay();
+        solver->frat->forget_delay();
         return false;
     }
 
@@ -607,7 +607,7 @@ bool ClauseCleaner::full_clean(Clause& cl)
 
     if (cl.size() == 1) {
         solver->enqueue<true>(cl[0]);
-        *solver->drat << del << cl << del; // double unit delete
+        *solver->frat << del << cl << del; // double unit delete
         return true;
     }
 

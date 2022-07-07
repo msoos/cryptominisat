@@ -536,7 +536,7 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
     const uint32_t v = p.var();
     assert(value(v) == l_Undef);
     SLOW_DEBUG_DO(assert(varData[v].removed == Removed::none));
-    if (level == 0 && drat->enabled())
+    if (level == 0 && frat->enabled())
     {   if (do_unit_frat) {
             const uint32_t ID = ++clauseID;
             chain.clear();
@@ -551,12 +551,12 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
                 // These are too difficult and not worth it
             }
 
-            *drat << add << ID << p;
+            *frat << add << ID << p;
             if (!chain.empty()) {
-                *drat << DratFlag::chain;
-                for(auto const& id: chain) *drat << id;
+                *frat << DratFlag::chain;
+                for(auto const& id: chain) *frat << id;
             }
-            *drat << fin;
+            *frat << fin;
 
             VERBOSE_PRINT("unit " << p << " ID: " << ID);
             assert(unit_cl_IDs[v] == 0);

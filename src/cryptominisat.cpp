@@ -23,7 +23,7 @@ THE SOFTWARE.
 #include "constants.h"
 #include "cryptominisat.h"
 #include "solver.h"
-#include "drat.h"
+#include "frat.h"
 #include "shareddata.h"
 
 #include <fstream>
@@ -431,10 +431,10 @@ DLL_PUBLIC void SATSolver::set_num_threads(unsigned num)
         throw std::runtime_error(err);
     }
 
-    if (data->solvers[0]->drat->enabled() ||
-        data->solvers[0]->conf.simulate_drat
+    if (data->solvers[0]->frat->enabled() ||
+        data->solvers[0]->conf.simulate_frat
     ) {
-        const char err[] = "ERROR: DRAT cannot be used in multi-threaded mode";
+        const char err[] = "ERROR: FRAT cannot be used in multi-threaded mode";
         std::cerr << err << endl;
         throw std::runtime_error(err);
     }
@@ -1134,19 +1134,19 @@ DLL_PUBLIC void SATSolver::set_find_xors(bool do_find_xors)
     }
 }
 
-DLL_PUBLIC void SATSolver::set_drat(FILE* os)
+DLL_PUBLIC void SATSolver::set_frat(FILE* os)
 {
     if (data->solvers.size() > 1) {
-        std::cerr << "ERROR: DRAT cannot be used in multi-threaded mode" << endl;
+        std::cerr << "ERROR: FRAT cannot be used in multi-threaded mode" << endl;
         exit(-1);
     }
     if (nVars() > 0) {
-        std::cerr << "ERROR: DRAT cannot be set after variables have been added" << endl;
+        std::cerr << "ERROR: FRAT cannot be set after variables have been added" << endl;
         exit(-1);
     }
 
     data->solvers[0]->conf.doBreakid = false;
-    data->solvers[0]->add_drat(os);
+    data->solvers[0]->add_frat(os);
     data->solvers[0]->conf.do_hyperbin_and_transred = true;
 }
 
@@ -1447,9 +1447,9 @@ DLL_PUBLIC void SATSolver::set_verbosity_detach_warning(bool verb)
     }
 }
 
-DLL_PUBLIC void SATSolver::add_empty_cl_to_drat()
+DLL_PUBLIC void SATSolver::add_empty_cl_to_frat()
 {
-    data->solvers[data->which_solved]->add_empty_cl_to_drat();
+    data->solvers[data->which_solved]->add_empty_cl_to_frat();
 }
 
 DLL_PUBLIC void SATSolver::set_single_run()

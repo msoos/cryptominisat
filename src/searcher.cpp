@@ -176,7 +176,7 @@ inline void Searcher::add_lit_to_learnt(
     #endif
 
     if (varData[var].level == 0) {
-        if (drat->enabled()) {
+        if (frat->enabled()) {
             assert(value(var) != l_Undef);
             assert(unit_cl_IDs[var] != 0);
             chain.push_back(unit_cl_IDs[var]);
@@ -489,7 +489,7 @@ void Searcher::add_lits_to_learnt(
             size = bnn_reason->size();
             sumAntecedentsLits += size;
             ID = 0; // so we don't get a warning, assert below
-            assert(!drat->enabled());
+            assert(!frat->enabled());
             break;
         }
 
@@ -1481,7 +1481,7 @@ void Searcher::attach_and_enqueue_learnt_clause(
             if (enq) {
                 assert(level == 0);
                 uint32_t v = learnt_clause[0].var();
-                if (drat->enabled()) {
+                if (frat->enabled()) {
                     assert(unit_cl_IDs[v] == 0);
                     assert(ID != 0);
                     unit_cl_IDs[v] = ID;
@@ -1700,12 +1700,12 @@ Clause* Searcher::handle_last_confl(
 
     Clause* cl;
     ID = ++clauseID;
-    *drat << add << ID << learnt_clause;
+    *frat << add << ID << learnt_clause;
     if (!chain.empty()) {
-        *drat << DratFlag::chain;
-        for(auto const& c: chain) *drat << c;
+        *frat << DratFlag::chain;
+        for(auto const& c: chain) *frat << c;
     }
-    *drat << fin;
+    *frat << fin;
     VERBOSE_PRINT("Chain ID created: " << ID);
 
     if (learnt_clause.size() <= 2) {
@@ -1770,7 +1770,7 @@ Clause* Searcher::handle_last_confl(
 
     #ifdef STATS_NEEDED
     if (solver->sqlStats
-        && drat
+        && frat
         && conf.dump_individual_restarts_and_clauses
         && to_track
     ) {
@@ -1816,7 +1816,7 @@ bool Searcher::handle_conflict(PropBy confl)
         }
         // the propagate() will not add the UNSAT clause if it's not decision level 0
         if (decisionLevel() != 0) {
-            *drat << add << ++clauseID << fin;
+            *frat << add << ++clauseID << fin;
             unsat_cl_ID = clauseID;
         }
         solver->ok = false;
@@ -3059,7 +3059,7 @@ size_t Searcher::hyper_bin_res_all(const bool check_for_set_values)
         }
 
         auto const ID = ++clauseID;
-        *solver->drat << add << ID << b.getLit1() << b.getLit2() << fin;
+        *solver->frat << add << ID << b.getLit1() << b.getLit2() << fin;
         solver->attach_bin_clause(b.getLit1(), b.getLit2(), true, ID, false);
         added++;
     }
@@ -3103,7 +3103,7 @@ std::pair<size_t, size_t> Searcher::remove_useless_bins(bool except_marked)
                 solver->binTri.irredBins--;
                 removedIrred++;
             }
-            *drat << del << b.getID() << b.getLit1() << b.getLit2() << fin;
+            *frat << del << b.getID() << b.getLit1() << b.getLit2() << fin;
 
             #ifdef VERBOSE_DEBUG_FULLPROP
             cout << "Removed bin: "
@@ -3123,10 +3123,10 @@ PropBy Searcher::propagate() {
 
     //Drat -- If declevel 0 propagation, we have to add the unitaries
     if (decisionLevel() == 0 &&
-        (drat->enabled() || conf.simulate_drat)
+        (frat->enabled() || conf.simulate_frat)
     ) {
         if (!ret.isNULL()) {
-            *drat << add << ++clauseID << fin;
+            *frat << add << ++clauseID << fin;
             assert(unsat_cl_ID == 0);
             unsat_cl_ID = clauseID;
         }
@@ -3600,7 +3600,7 @@ bool Searcher::clear_gauss_matrices(const bool destruct)
 {
     if (!destruct) {
         if (!solver->fully_undo_xor_detach()) return false;
-        TBUDDY_DO(if (drat->enabled()) for(auto& g: gmatrices) g->finalize_frat());
+        TBUDDY_DO(if (frat->enabled()) for(auto& g: gmatrices) g->finalize_frat());
     }
 
     xor_clauses_updated = true;
@@ -3630,8 +3630,8 @@ bool Searcher::clear_gauss_matrices(const bool destruct)
             xorclauses.push_back(x);
             #ifdef USE_TBUDDY
             xorclauses.back().bdd = NULL;
-            drat->flush();
-            if (drat->enabled()) solver->xorclauses.back().create_bdd_xor();
+            frat->flush();
+            if (frat->enabled()) solver->xorclauses.back().create_bdd_xor();
             #endif
         }
     }

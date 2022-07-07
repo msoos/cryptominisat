@@ -45,9 +45,9 @@ class Main: public MainCommon
         Main(int argc, char** argv);
         ~Main()
         {
-            if (dratf) {
-                fflush(dratf);
-                fclose(dratf);
+            if (fratf) {
+                fflush(fratf);
+                fclose(fratf);
             }
 
             delete solver;

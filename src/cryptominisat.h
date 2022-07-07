@@ -195,8 +195,8 @@ namespace CMSat {
         uint64_t get_sum_decisions() const; //!< Returns sum of all decisions since construction across all the threads
 
         void print_stats(double wallclock_time_started = 0) const; //print solving stats. Call after solve()/simplify()
-        void set_drat(FILE* os); //set drat to ostream, e.g. stdout or a file
-        void add_empty_cl_to_drat(); // allows to treat SAT as UNSAT and perform learning
+        void set_frat(FILE* os); //set frat to ostream, e.g. stdout or a file
+        void add_empty_cl_to_frat(); // allows to treat SAT as UNSAT and perform learning
         void interrupt_asap(); //call this asynchronously, and the solver will try to cleanly abort asap
         void add_in_partial_solving_stats(); //used only by Ctrl+C handler. Ignore.
 

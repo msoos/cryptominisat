@@ -316,8 +316,8 @@ void OccSimplifier::unlink_clause(
     , bool only_set_is_removed
 ) {
     Clause& cl = *solver->cl_alloc.ptr(offset);
-    if (doDrat && (solver->drat->enabled() || solver->conf.simulate_drat)) {
-       (*solver->drat) << del << cl << fin;
+    if (doDrat && (solver->frat->enabled() || solver->conf.simulate_frat)) {
+       (*solver->frat) << del << cl << fin;
     }
 
     if (!cl.red()) {
@@ -362,14 +362,14 @@ bool OccSimplifier::clean_clause(
     ClOffset offset,
     bool only_set_is_removed)
 {
-    assert(!solver->drat->something_delayed());
+    assert(!solver->frat->something_delayed());
     assert(solver->okay());
 
     bool satisfied = false;
     Clause& cl = *solver->cl_alloc.ptr(offset);
     assert(!cl.getRemoved());
     assert(!cl.freed());
-    (*solver->drat) << deldelay << cl << fin;
+    (*solver->frat) << deldelay << cl << fin;
 
     Lit* i = cl.begin();
     Lit* j = cl.begin();
@@ -408,7 +408,7 @@ bool OccSimplifier::clean_clause(
     }
 
     if (satisfied) {
-        (*solver->drat) << findelay;
+        (*solver->frat) << findelay;
         unlink_clause(offset, false, false, only_set_is_removed);
         return true;
     }
@@ -419,9 +419,9 @@ bool OccSimplifier::clean_clause(
 
     if (i-j > 0) {
         INC_ID(cl);
-        (*solver->drat) << add << cl << fin << findelay;
+        (*solver->frat) << add << cl << fin << findelay;
     } else {
-        solver->drat->forget_delay();
+        solver->frat->forget_delay();
     }
 
     switch(cl.size()) {
@@ -432,7 +432,7 @@ bool OccSimplifier::clean_clause(
 
         case 1: {
             solver->enqueue<false>(cl[0]);
-            *solver->drat << del << cl << fin; // double unit delete
+            *solver->frat << del << cl << fin; // double unit delete
             unlink_clause(offset, false, false, only_set_is_removed);
             solver->ok = solver->propagate_occur<false>(limit_to_decrease);
             return solver->okay();
@@ -465,10 +465,10 @@ bool OccSimplifier::clean_clause(
 bool OccSimplifier::complete_clean_clause(Clause& cl)
 {
     assert(solver->okay());
-    assert(!solver->drat->something_delayed());
+    assert(!solver->frat->something_delayed());
     assert(cl.size() > 2);
 
-    (*solver->drat) << deldelay << cl << fin;
+    (*solver->frat) << deldelay << cl << fin;
 
     //Remove all lits from stats
     //we will re-attach the clause either way
@@ -482,7 +482,7 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
     Lit *j = i;
     for (Lit *end = cl.end(); i != end; i++) {
         if (solver->value(*i) == l_True) {
-            (*solver->drat) << findelay;
+            (*solver->frat) << findelay;
             return false;
         }
 
@@ -496,9 +496,9 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
     //Drat
     if (i - j > 0) {
         INC_ID(cl);
-        (*solver->drat) << add << cl << fin << findelay;
+        (*solver->frat) << add << cl << fin << findelay;
     } else {
-        solver->drat->forget_delay();
+        solver->frat->forget_delay();
     }
 
     switch (cl.size()) {
@@ -508,7 +508,7 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
 
         case 1: {
             solver->enqueue<false>(cl[0]);
-            *solver->drat << del << cl << fin; // double unit delete
+            *solver->frat << del << cl << fin; // double unit delete
             return false;
         }
         case 2:
@@ -701,7 +701,7 @@ void OccSimplifier::add_back_to_solver()
             } else {
                 solver->litStats.irredLits -= cl->size();
             }
-            *solver->drat << del << *cl << fin;
+            *solver->frat << del << *cl << fin;
             solver->free_cl(cl);
             continue;
         }
@@ -911,7 +911,7 @@ bool OccSimplifier::clear_vars_from_cls_that_have_been_set()
                     elim_calc_need_update.touch(w.lit2());
                     solver->binTri.irredBins--;
                 }
-                *(solver->drat) << del << w.get_ID() << l << w.lit2() << fin;
+                *(solver->frat) << del << w.get_ID() << l << w.lit2() << fin;
                 continue;
             }
 
@@ -946,7 +946,7 @@ bool OccSimplifier::clear_vars_from_cls_that_have_been_set()
                     elim_calc_need_update.touch(w.lit2());
                     solver->binTri.irredBins--;
                 }
-                *(solver->drat) << del << w.get_ID() << l << w.lit2() << fin;
+                *(solver->frat) << del << w.get_ID() << l << w.lit2() << fin;
                 continue;
             }
 
@@ -2236,13 +2236,13 @@ bool OccSimplifier::lit_rem_with_or_gates()
 
             if (contains_inv_rhs) {
 //                 cout << "Removing cl: " << *cl << endl;
-                (*solver->drat) << del << *cl << fin;
+                (*solver->frat) << del << *cl << fin;
                 unlink_clause(off, true, false, true);
                 removed++;
                 continue;
             }
             shortened++;
-            (*solver->drat) << deldelay << *cl << fin;
+            (*solver->frat) << deldelay << *cl << fin;
 
 //             cout << "Shortening cl: " << *cl << endl;
             for(auto const& l: gate.lits) {
@@ -2268,7 +2268,7 @@ bool OccSimplifier::lit_rem_with_or_gates()
             }
             std::sort(cl->begin(), cl->end());
             INC_ID(*cl);
-            (*solver->drat) << add << *cl << fin << findelay;
+            (*solver->frat) << add << *cl << fin << findelay;
 //             cout << "Shortened cl: " << *cl << endl;
 
             if (cl->size() == 2) {
@@ -2371,13 +2371,13 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 #ifdef USE_TBUDDY
                 true)
                 #else
-                !solver->drat->enabled())
+                !solver->frat->enabled())
                 #endif
             {
                 XorFinder finder(this, solver);
                 finder.find_xors();
                 #ifdef USE_M4RI
-                if (topLevelGauss != NULL && !solver->drat->enabled()) {
+                if (topLevelGauss != NULL && !solver->frat->enabled()) {
                     auto xors = solver->xorclauses;
                     assert(solver->okay());
                     solver->ok = finder.xor_together_xors(xors);
@@ -2406,7 +2406,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 solver->xor_clauses_updated = true;
 
                 //Get rid of XOR clauses
-                if (solver->drat->enabled()) {
+                if (solver->frat->enabled()) {
                     TBUDDY_DO(solver->free_bdds(solver->xorclauses_orig));
                     TBUDDY_DO(solver->free_bdds(solver->xorclauses));
                     TBUDDY_DO(solver->free_bdds(solver->xorclauses_unused));
@@ -2466,7 +2466,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
 
 bool OccSimplifier::setup()
 {
-    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
+    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
     assert(solver->okay());
     assert(toClear.empty());
     added_long_cl.clear();
@@ -2591,7 +2591,7 @@ bool OccSimplifier::simplify(const bool _startup, const std::string& schedule)
     last_trail_cleared = solver->getTrailSize();
     execute_simplifier_strategy(schedule);
 
-    remove_by_drat_recently_blocked_clauses(origBlockedSize);
+    remove_by_frat_recently_blocked_clauses(origBlockedSize);
     finishUp(origTrailSize);
 
     return solver->okay();
@@ -3214,13 +3214,13 @@ bool OccSimplifier::uneliminate(uint32_t var)
     return solver->okay();
 }
 
-void OccSimplifier::remove_by_drat_recently_blocked_clauses(size_t origBlockedSize)
+void OccSimplifier::remove_by_frat_recently_blocked_clauses(size_t origBlockedSize)
 {
-    if (! (solver->drat->enabled() || solver->conf.simulate_drat) )
+    if (! (solver->frat->enabled() || solver->conf.simulate_frat) )
         return;
 
     if (solver->conf.verbosity >= 6) {
-        cout << "c Deleting blocked clauses for DRAT" << endl;
+        cout << "c Deleting blocked clauses for FRAT" << endl;
     }
 
     uint32_t at_ID = 0;
@@ -3232,7 +3232,7 @@ void OccSimplifier::remove_by_drat_recently_blocked_clauses(size_t origBlockedSi
             const Lit l = blockedClauses[i].at(at, blkcls);
             if (l == lit_Undef) {
                 const int32_t ID = newly_blocked_cls_IDs[at_ID++];
-                (*solver->drat) << del << ID << lits << fin;
+                (*solver->frat) << del << ID << lits << fin;
                 lits.clear();
             } else {
                 lits.push_back(solver->map_outer_to_inter(l));
@@ -3277,7 +3277,7 @@ void OccSimplifier::finishUp(
             if (cl->getRemoved() || cl->freed()) {
                 continue;
             }
-            *solver->drat << del << *cl << fin;
+            *solver->frat << del << *cl << fin;
             solver->free_cl(cl);
         }
     }
@@ -3294,7 +3294,7 @@ void OccSimplifier::finishUp(
     }
     globalStats += runStats;
     sub_str->finishedRun();
-    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
+    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
 
     //Sanity checks
     if (solver->okay()
@@ -3524,7 +3524,7 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(
                 }
             }
 
-            //Remove -- only DRAT the ones that are redundant
+            //Remove -- only FRAT the ones that are redundant
             //The irred will be removed thanks to 'blocked' system
             unlink_clause(offset, cl.red(), true, true);
         } else if (watch.isBin()) {
@@ -3551,9 +3551,9 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(
                 elim_calc_need_update.touch(lits[0]);
                 elim_calc_need_update.touch(lits[1]);
             } else {
-                //If redundant, delayed blocked-based DRAT deletion will not work
+                //If redundant, delayed blocked-based FRAT deletion will not work
                 //so delete explicitly
-                (*solver->drat) << del << watch.get_ID() << lits[0] << lits[1] << fin;
+                (*solver->frat) << del << watch.get_ID() << lits[0] << lits[1] << fin;
             }
 
             //Remove
@@ -5697,13 +5697,13 @@ bool OccSimplifier::remove_literal(
 
     *limit_to_decrease -= 5;
 
-    (*solver->drat) << deldelay << cl << fin;
+    (*solver->frat) << deldelay << cl << fin;
     cl.strengthen(toRemoveLit);
     added_cl_to_var.touch(toRemoveLit.var());
     cl.recalc_abst_if_needed();
 
     INC_ID(cl);
-    (*solver->drat) << add << cl << fin << findelay;
+    (*solver->frat) << add << cl << fin << findelay;
     if (!cl.red()) {
         n_occurs[toRemoveLit.toInt()]--;
         elim_calc_need_update.touch(toRemoveLit.var());

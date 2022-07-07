@@ -339,7 +339,7 @@ void Main::add_supported_options()
         , "Multiplier for memory-out checks on inprocessing functions. It limits things such as clause-link-in. Useful when you have limited memory but still want to do some inprocessing")
     #ifdef STATS_NEEDED
     ("clid", po::bool_switch(&clause_ID_needed)
-        , "Add clause IDs to DRAT output")
+        , "Add clause IDs to FRAT output")
     #endif
     ;
 
@@ -812,8 +812,8 @@ void Main::add_supported_options()
         , "Print time it took for each simplification run. If set to 0, logs are easier to compare")
     ("maxsccdepth", po::value(&conf.max_scc_depth)->default_value(conf.max_scc_depth)
         , "The maximum for scc search depth")
-    ("simdrat", po::value(&conf.simulate_drat)->default_value(conf.simulate_drat)
-        , "Simulate DRAT")
+    ("simfrat", po::value(&conf.simulate_frat)->default_value(conf.simulate_frat)
+        , "Simulate FRAT")
     ("sampling", po::value(&sampling_vars_str)->default_value(sampling_vars_str)
         , "Sampling vars, separated by comma")
     ("onlysampling", po::bool_switch(&only_sampling_solution)
@@ -823,8 +823,8 @@ void Main::add_supported_options()
 
     //these a kind of special and determine positional options' meanings
     ("input", po::value< vector<string> >(), "file(s) to read")
-    ("drat,d", po::value(&dratfilname)
-        , "Put DRAT verification information into this file")
+    ("frat,d", po::value(&fratfilname)
+        , "Put FRAT verification information into this file")
     ;
 
 #ifdef USE_BOSPHORUS
@@ -928,7 +928,7 @@ void Main::check_options_correctness()
             << " DIMACS with XOR extension" << endl << endl;
 
             cout
-            << "cryptominisat5 [options] inputfile [drat-trim-file]" << endl << endl;
+            << "cryptominisat5 [options] inputfile [frat-trim-file]" << endl << endl;
 
             cout << "Preprocessor usage:" << endl
             << "  cryptominisat5 --preproc 1 [options] inputfile simplified-cnf-file" << endl << endl
@@ -946,7 +946,7 @@ void Main::check_options_correctness()
         if (vm.count("help"))
         {
             cout
-            << "USAGE 1: " << argv[0] << " [options] inputfile [drat-trim-file]" << endl
+            << "USAGE 1: " << argv[0] << " [options] inputfile [frat-trim-file]" << endl
             << "USAGE 2: " << argv[0] << " --preproc 1 [options] inputfile simplified-cnf-file" << endl
             << "USAGE 2: " << argv[0] << " --preproc 2 [options] solution-file" << endl
 
@@ -1009,7 +1009,7 @@ void Main::check_options_correctness()
     ) {
         cerr
         << "ERROR: You gave too many positional arguments. Only at most two can be given:" << endl
-        << "       the 1st the CNF file input, and optionally, the 2nd the DRAT file output" << endl
+        << "       the 1st the CNF file input, and optionally, the 2nd the FRAT file output" << endl
         << "    OR (pre-processing)  1st for the input CNF, 2nd for the simplified CNF" << endl
         << "    OR (post-processing) 1st for the solution file" << endl
         ;
@@ -1153,8 +1153,8 @@ void Main::manually_parse_some_options()
         fileNamePresent = false;
     }
 
-    if (vm.count("drat") || conf.simulate_drat) {
-        handle_drat_option();
+    if (vm.count("frat") || conf.simulate_frat) {
+        handle_frat_option();
     }
 
     if (conf.verbosity >= 3) {
@@ -1176,7 +1176,7 @@ void Main::parseCommandLine()
 
     add_supported_options();
     p.add("input", 1);
-    p.add("drat", 1);
+    p.add("frat", 1);
     all_options.add(help_options_complicated);
     all_options.add(hiddenOptions);
 
@@ -1220,7 +1220,7 @@ int Main::solve()
     wallclock_time_started = real_time_sec();
     solver = new SATSolver((void*)&conf);
     solverToInterrupt = solver;
-    if (dratf) solver->set_drat(dratf);
+    if (fratf) solver->set_frat(fratf);
     if (vm.count("maxtime")) solver->set_max_time(maxtime);
     if (vm.count("maxconfl")) solver->set_max_confl(maxconfl);
 
@@ -1290,8 +1290,8 @@ int Main::solve()
 lbool Main::multi_solutions()
 {
     if (max_nr_of_solutions == 1
-        && dratf == NULL
-        && !conf.simulate_drat
+        && fratf == NULL
+        && !conf.simulate_frat
         && debugLib.empty()
     ) {
         solver->set_single_run();

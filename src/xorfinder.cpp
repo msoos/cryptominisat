@@ -115,9 +115,9 @@ void XorFinder::clean_equivalent_xors(vector<Xor>& txors)
             if (j->vars == i->vars && j->rhs == i->rhs) {
                 j->merge_clash(*i, seen);
                 j->detached |= i->detached;
-                if (solver->drat->enabled()) {
+                if (solver->frat->enabled()) {
                     verb_print(5, "Cleaning equivalent XOR at: " << (i - txors.begin()) << " xor: " << *i);
-                    TBUDDY_DO(solver->drat->flush());
+                    TBUDDY_DO(solver->frat->flush());
                     TBUDDY_DO(delete i->bdd);
                 }
             } else {
@@ -161,8 +161,8 @@ void XorFinder::find_xors()
         cl->set_used_in_xor_full(false);
     }
 
-    if (solver->drat->enabled()) {
-        solver->drat->flush();
+    if (solver->frat->enabled()) {
+        solver->frat->flush();
         TBUDDY_DO(for (auto const& x: solver->xorclauses) delete x.bdd);
         TBUDDY_DO(for (auto const& x: solver->xorclauses_unused) delete x.bdd);
         TBUDDY_DO(for (auto const& x: solver->xorclauses_orig) delete x.bdd);
@@ -196,9 +196,9 @@ void XorFinder::find_xors()
 
     // Need to do this due to XORs encoding new info
     //    see NOTE in cnf.h
-    TBUDDY_DO(solver->drat->flush());
-    TBUDDY_DO(for(auto& x: solver->xorclauses) if (solver->drat->enabled()) x.create_bdd_xor());
-    TBUDDY_DO(for(auto& x: solver->xorclauses_orig) if (solver->drat->enabled()) x.create_bdd_xor());
+    TBUDDY_DO(solver->frat->flush());
+    TBUDDY_DO(for(auto& x: solver->xorclauses) if (solver->frat->enabled()) x.create_bdd_xor());
+    TBUDDY_DO(for(auto& x: solver->xorclauses_orig) if (solver->frat->enabled()) x.create_bdd_xor());
 
     //Cleanup
     for(ClOffset offset: occsimplifier->clauses) {
@@ -629,8 +629,8 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 VERBOSE_PRINT("after merge: " << x1 <<  " -- at idx: " << idxes[1]);
 
                 //Equivalent, so delete one
-                if (solver->drat->enabled()) {
-                    TBUDDY_DO(solver->drat->flush());
+                if (solver->frat->enabled()) {
+                    TBUDDY_DO(solver->frat->flush());
                     TBUDDY_DO(delete x0.bdd);
                 }
                 x0 = Xor();
@@ -659,8 +659,8 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 x_new.merge_clash(x0, seen);
                 x_new.merge_clash(x1, seen);
                 #ifdef USE_TBUDDY
-                if (solver->drat->enabled()) {
-                    solver->drat->flush();
+                if (solver->frat->enabled()) {
+                    solver->frat->flush();
                     tbdd::xor_set xs;
                     xs.add(*x0.create_bdd_xor());
                     xs.add(*x1.create_bdd_xor());
@@ -683,8 +683,8 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                         interesting.push_back(l.var());
                     }
                 }
-                if (solver->drat->enabled()) {
-                    TBUDDY_DO(solver->drat->flush());
+                if (solver->frat->enabled()) {
+                    TBUDDY_DO(solver->frat->flush());
                     TBUDDY_DO(delete this_xors[idxes[0]].bdd);
                     TBUDDY_DO(delete this_xors[idxes[1]].bdd);
                 }
@@ -766,7 +766,7 @@ void XorFinder::clean_xors_from_empty(vector<Xor>& thisxors)
             if (!x.clash_vars.empty()) {
                 solver->xorclauses_unused.push_back(x);
             } else {
-                TBUDDY_DO(solver->drat->flush());
+                TBUDDY_DO(solver->frat->flush());
                 TBUDDY_DO(delete x.bdd);
             }
         } else {

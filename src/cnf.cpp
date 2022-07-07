@@ -773,12 +773,12 @@ bool CNF::no_marked_clauses() const
     return true;
 }
 
-void CNF::add_drat(FILE* os) {
-    if (drat) delete drat;
-    drat = new DratFile<false>(interToOuterMain);
-    drat->setFile(os);
-    drat->set_sumconflicts_ptr(&sumConflicts);
-    drat->set_sqlstats_ptr(sqlStats);
+void CNF::add_frat(FILE* os) {
+    if (frat) delete frat;
+    frat = new DratFile<false>(interToOuterMain);
+    frat->setFile(os);
+    frat->set_sumconflicts_ptr(&sumConflicts);
+    frat->set_sqlstats_ptr(sqlStats);
 }
 
 vector<uint32_t> CNF::get_outside_lit_incidence()
@@ -1011,7 +1011,7 @@ bool CNF::zero_irred_cls(const CMSat::Lit lit) const
 #ifdef USE_TBUDDY
 void CNF::free_bdds(vector<Xor>& xors)
 {
-    drat->flush();
+    frat->flush();
     for(auto& x: xors) {
         delete x.bdd;
         x.bdd = NULL;

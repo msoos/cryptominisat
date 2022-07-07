@@ -52,7 +52,7 @@ bool DistillerBin::distill()
     assert(solver->ok);
     numCalls++;
     runStats.clear();
-    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
+    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
 
     if (!distill_bin_cls_all(1.0)) {
         goto end;
@@ -67,7 +67,7 @@ end:
             runStats.print_short(solver);
     }
     runStats.clear();
-    *solver->drat << __PRETTY_FUNCTION__ << " end\n";
+    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
 
     return solver->okay();
 }
@@ -82,7 +82,7 @@ bool DistillerBin::distill_bin_cls_all(
 
     double myTime = cpuTime();
     const size_t origTrailSize = solver->trail_size();
-    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
+    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
 
     //Time-limiting
     maxNumProps =
@@ -135,7 +135,7 @@ bool DistillerBin::distill_bin_cls_all(
             , time_remain
         );
     }
-    *solver->drat << __PRETTY_FUNCTION__ << " end\n";
+    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
 
     //Update stats
     runStats.time_used += time_used;
@@ -179,7 +179,7 @@ bool DistillerBin::go_through_bins(
 
         if (solver->value(lit1) == l_True || solver->value(lit2) == l_True) {
             solver->detach_bin_clause(lit1, lit2, w.red(), w.get_ID());
-            (*solver->drat) << del << w.get_ID() << lit1 << lit2 << fin;
+            (*solver->frat) << del << w.get_ID() << lit1 << lit2 << fin;
             continue;
         }
 
@@ -201,7 +201,7 @@ bool DistillerBin::try_distill_bin(
     assert(solver->okay());
     assert(solver->prop_at_head());
     assert(solver->decisionLevel() == 0);
-    #ifdef DRAT_DEBUG
+    #ifdef FRAT_DEBUG
     if (solver->conf.verbosity >= 6) {
         cout << "Trying to distill clause:" << lits << endl;
     }
@@ -232,7 +232,7 @@ bool DistillerBin::try_distill_bin(
             x[0] = lit1;
             solver->add_clause_int(x);
             solver->detach_bin_clause(lit1, lit2, false, w.get_ID());
-            (*solver->drat) << del << w.get_ID() << lit1 << lit2 << fin;
+            (*solver->frat) << del << w.get_ID() << lit1 << lit2 << fin;
             runStats.numClShorten++;
             return solver->okay();
         } else if (solver->value(lit2) == l_Undef) {
@@ -244,7 +244,7 @@ bool DistillerBin::try_distill_bin(
     if (!confl.isNULL()) {
         solver->cancelUntil<false, true>(0);
         solver->detach_bin_clause(lit1, lit2, false, w.get_ID());
-        (*solver->drat) << del << w.get_ID() << lit1 << lit2 << fin;
+        (*solver->frat) << del << w.get_ID() << lit1 << lit2 << fin;
         runStats.clRemoved++;
         return true;
     }

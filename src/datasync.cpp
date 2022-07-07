@@ -188,7 +188,7 @@ bool DataSync::syncData()
 bool DataSync::shareUnitData()
 {
     assert(solver->okay());
-    assert(!solver->drat->enabled());
+    assert(!solver->frat->enabled());
 
     uint32_t thisGotUnitData = 0;
     uint32_t thisSentUnitData = 0;
@@ -489,7 +489,7 @@ bool DataSync::syncBinFromOthers(
             lits[0] = lit;
             lits[1] = otherLit;
 
-            //Don't add DRAT: it would add to the thread data, too
+            //Don't add FRAT: it would add to the thread data, too
             solver->add_clause_int(lits, true, NULL, true, NULL, false);
             if (!solver->okay()) {
                 goto end;

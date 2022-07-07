@@ -686,7 +686,7 @@ TEST(error_throw, multithread_drat)
 {
     SATSolver s;
     FILE* os = NULL;
-    s.set_drat(os);
+    s.set_frat(os);
 
     EXPECT_THROW({
         s.set_num_threads(3);}

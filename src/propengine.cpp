@@ -815,7 +815,7 @@ bool PropEngine::propagate_occur(int64_t* limit_to_decrease)
     assert(gmatrices.empty());
 
     if (decisionLevel() == 0 && !ret) {
-        *drat << add << ++clauseID << fin;
+        *frat << add << ++clauseID << fin;
         assert(unsat_cl_ID == 0);
         unsat_cl_ID = clauseID;
     }

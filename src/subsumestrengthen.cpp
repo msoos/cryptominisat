@@ -812,7 +812,7 @@ void SubsumeStrengthen::remove_binary_cl(const OccurClause& cl)
 {
     solver->detach_bin_clause(
         cl.lit, cl.ws.lit2(), cl.ws.red(), cl.ws.get_ID());
-    (*solver->drat) << del << cl.ws.get_ID() << cl.lit << cl.ws.lit2() << fin;
+    (*solver->frat) << del << cl.ws.get_ID() << cl.lit << cl.ws.lit2() << fin;
     if (!cl.ws.red()) {
         simplifier->n_occurs[cl.lit.toInt()]--;
         simplifier->n_occurs[cl.ws.lit2().toInt()]--;
@@ -850,8 +850,8 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
                 lbool val = solver->value(subsLits[j]);
                 const int32_t ID = ++solver->clauseID;
                 if (val == l_False) {
-                    (*solver->drat) << add << ID << subsLits[j] << fin;
-                    (*solver->drat) << add << ++solver->clauseID << fin;
+                    (*solver->frat) << add << ID << subsLits[j] << fin;
+                    (*solver->frat) << add << ++solver->clauseID << fin;
                     assert(solver->unsat_cl_ID == 0);
                     solver->unsat_cl_ID = solver->clauseID;
                     solver->ok = false;
@@ -866,7 +866,7 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
                 //this binary is definitely satisfied
                 solver->detach_bin_clause(
                     subs[j].lit, subs[j].ws.lit2(), subs[j].ws.red(), subs[j].ws.get_ID());
-                (*solver->drat) << del << subs[j].ws.get_ID() << subs[j].lit << subs[j].ws.lit2() << fin;
+                (*solver->frat) << del << subs[j].ws.get_ID() << subs[j].lit << subs[j].ws.lit2() << fin;
                 if (!subs[j].ws.red()) {
                     simplifier->n_occurs[subs[j].lit.toInt()]--;
                     simplifier->n_occurs[subs[j].ws.lit2().toInt()]--;

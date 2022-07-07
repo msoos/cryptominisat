@@ -32,7 +32,7 @@ THE SOFTWARE.
 #include "solverconf.h"
 #include "solvertypes.h"
 #include "watcharray.h"
-#include "drat.h"
+#include "frat.h"
 #include "clauseallocator.h"
 #include "varupdatehelper.h"
 #include "simplefile.h"
@@ -102,7 +102,7 @@ public:
         if (_conf != NULL) {
             conf = *_conf;
         }
-        drat = new Drat;
+        frat = new Drat;
         assert(_must_interrupt_inter != NULL);
         must_interrupt_inter = _must_interrupt_inter;
         longRedCls.resize(3);
@@ -111,7 +111,7 @@ public:
 
     virtual ~CNF()
     {
-        delete drat;
+        delete frat;
     }
 
     ClauseAllocator cl_alloc;
@@ -156,9 +156,9 @@ public:
     //insided this array twice, once it needs to be set to TRUE and once FALSE
     vector<AssumptionPair> assumptions;
 
-    //drat
-    Drat* drat;
-    void add_drat(FILE* os);
+    //frat
+    Drat* frat;
+    void add_frat(FILE* os);
 
     //Clauses
     vector<ClOffset> longIrredCls;
@@ -216,7 +216,7 @@ public:
     bool okay() const
     {
         assert(!
-        (!ok && drat->enabled() && unsat_cl_ID == 0 && unsat_cl_ID != -1) && "If in UNSAT state, and we have DRAT, we MUST already know the unsat_cl_ID or it must be -1, i.e. known by tbuddy");
+        (!ok && frat->enabled() && unsat_cl_ID == 0 && unsat_cl_ID != -1) && "If in UNSAT state, and we have FRAT, we MUST already know the unsat_cl_ID or it must be -1, i.e. known by tbuddy");
         return ok;
     }
 

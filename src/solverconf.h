@@ -514,7 +514,7 @@ class DLL_PUBLIC SolverConf
 
         //Misc
         unsigned origSeed;
-        int      simulate_drat;
+        int      simulate_frat;
         int      conf_needed = true;
 };
 

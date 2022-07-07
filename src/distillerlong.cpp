@@ -154,7 +154,7 @@ bool DistillerLong::distill(const bool red, bool only_rem_cl)
     numCalls_red += (unsigned)red;
     numCalls_irred += (unsigned)!red;
     runStats.clear();
-    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
+    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
 
     if (!red) {
         if (!distill_long_cls_all(
@@ -214,7 +214,7 @@ bool DistillerLong::distill(const bool red, bool only_rem_cl)
 end:
     lit_counts.clear();
     lit_counts.shrink_to_fit();
-    *solver->drat << __PRETTY_FUNCTION__ << " end\n";
+    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
 
     return solver->okay();
 }
@@ -477,7 +477,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     Lit cl_lit1 = cl[0];
     Lit cl_lit2 = cl[1];
     cl.disabled = true;
-    *solver->drat << deldelay << cl << fin;
+    *solver->frat << deldelay << cl << fin;
     const bool red = cl.red();
     if (red) assert(!also_remove);
     VERBOSE_PRINT("Trying to distill clause:" << cl);
@@ -559,7 +559,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
         rem:
         solver->cancelUntil<false, true>(0);
         solver->detach_modified_clause(cl_lit1, cl_lit2, orig_size, &cl);
-        (*solver->drat) << findelay;
+        (*solver->frat) << findelay;
         solver->free_cl(offset);
         runStats.clRemoved++;
         return CL_OFFSET_MAX;
@@ -574,7 +574,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
         solver->cancelUntil<false, true>(0);
         std::swap(*std::find(cl.begin(), cl.end(), cl_lit1), cl[0]);
         std::swap(*std::find(cl.begin(), cl.end(), cl_lit2), cl[1]);
-        solver->drat->forget_delay();
+        solver->frat->forget_delay();
         return offset;
     }
 
@@ -632,7 +632,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     // deleted as per cl_last_in_solver
     solver->free_cl(offset, false);
     Clause *cl2 = solver->add_clause_int(lits, red, &backup_stats);
-    *solver->drat << findelay;
+    *solver->frat << findelay;
 
     if (cl2 != NULL) {
         //This new, distilled clause has been distilled now.

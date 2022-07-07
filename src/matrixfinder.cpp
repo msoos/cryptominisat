@@ -240,7 +240,7 @@ uint32_t MatrixFinder::setMatrixes()
     }
 
     for (const Xor& x : solver->xorclauses) {
-        TBUDDY_DO(if (solver->drat->enabled()) assert(x.bdd));
+        TBUDDY_DO(if (solver->frat->enabled()) assert(x.bdd));
 
         //take 1st variable to check which matrix it's in.
         const uint32_t matrix = table[x[0]];

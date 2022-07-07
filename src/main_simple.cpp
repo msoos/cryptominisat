@@ -73,7 +73,7 @@ public:
         cout << "Options:\n";
         cout << "  --verb          = [0...]  Sets verbosity level. Anything higher\n";
         cout << "                            than 2 will give debug log\n";
-        cout << "  --drat          = {fname} DRAT dumped to file\n";
+        cout << "  --frat          = {fname} FRAT dumped to file\n";
         cout << "  --sls           = {walksat,yalsat} Which SLS solver to use\n";
         cout << "  --threads       = [1...]  Sets number of threads\n";
         cout << "\n";
@@ -95,9 +95,9 @@ public:
         int i, j;
         for (i = j = 0; i < argc; i++){
             const char* value;
-            if ((value = hasPrefix(argv[i], "--drat="))){
-                dratfilname = std::string(value);
-                handle_drat_option();
+            if ((value = hasPrefix(argv[i], "--frat="))){
+                fratfilname = std::string(value);
+                handle_frat_option();
             }else if ((value = hasPrefix(argv[i], "--verb="))){
                 long int verbosity = (int)strtol(value, NULL, 10);
                 if (verbosity == 0 && errno == EINVAL){
@@ -105,9 +105,9 @@ public:
                     exit(0);
                 }
                 conf.verbosity = verbosity;
-            }else if ((value = hasPrefix(argv[i], "--simdrat="))){
-                int drat_sim  = (int)strtol(value, NULL, 10);
-                conf.simulate_drat = drat_sim;
+            }else if ((value = hasPrefix(argv[i], "--simfrat="))){
+                int frat_sim  = (int)strtol(value, NULL, 10);
+                conf.simulate_frat = frat_sim;
             }else if ((value = hasPrefix(argv[i], "--threads="))){
                 num_threads  = (int)strtol(value, NULL, 10);
                 if (num_threads == 0 && errno == EINVAL){
@@ -145,10 +145,10 @@ public:
 
         SATSolver S(&conf);
         solver = &S;
-        if (dratf) {
-            solver->set_drat(dratf);
+        if (fratf) {
+            solver->set_frat(fratf);
             if (num_threads > 1) {
-                cout << "ERROR: Cannot have DRAT and multiple threads." << endl;
+                cout << "ERROR: Cannot have FRAT and multiple threads." << endl;
                 exit(-1);
             }
         }
@@ -237,9 +237,9 @@ public:
             print_model(solver, &std::cout);
         }
 
-        if (dratf) {
-            fflush(dratf);
-            fclose(dratf);
+        if (fratf) {
+            fflush(fratf);
+            fclose(fratf);
         }
 
         if (zero_exit_status)

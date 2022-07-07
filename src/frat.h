@@ -20,8 +20,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef __DRAT_H__
-#define __DRAT_H__
+#ifndef __FRAT_H__
+#define __FRAT_H__
 
 #include "constants.h"
 #include "clause.h"
@@ -32,17 +32,17 @@ THE SOFTWARE.
 #include <stdio.h>
 
 using std::vector;
-// #define DEBUG_DRAT
+// #define DEBUG_FRAT
 
 #if 0
-#define DRAT_PRINT((...) \
+#define FRAT_PRINT((...) \
     do { \
         const uint32_t tmp_num = sprintf((char*)buf_ptr, __VA_ARGS__); \
         buf_ptr+=tmp_num; \
         buf_len+=tmp_num; \
     } while (0)
 #else
-#define DRAT_PRINT(...) do {} while (0)
+#define FRAT_PRINT(...) do {} while (0)
 #endif
 
 
@@ -133,7 +133,7 @@ public:
     unsigned char* buf_ptr = NULL;
 };
 
-template<bool bindrat = false>
+template<bool binfrat = false>
 class DratFile: public Drat
 {
 public:
@@ -257,7 +257,7 @@ public:
         {
             case DratFlag::fin:
                 if (must_delete_next) {
-                    if (bindrat) {
+                    if (binfrat) {
                         *del_ptr++ = 0;
                         del_len++;
                     } else {
@@ -267,7 +267,7 @@ public:
                     }
                     delete_filled = true;
                 } else {
-                    if (bindrat) {
+                    if (binfrat) {
                         *buf_ptr++ = 0;
                         buf_len++;
                     } else {
@@ -279,7 +279,7 @@ public:
                         binDRUP_flush();
                     }
                     if (adding && sqlStats) sqlStats->set_id_confl(cl_id, *sumConflicts);
-                    DRAT_PRINT("c set_id_confl (%d, %lld), adding: %d\n", cl_id, *sumConflicts, adding);
+                    FRAT_PRINT("c set_id_confl (%d, %lld), adding: %d\n", cl_id, *sumConflicts, adding);
                 }
                 cl_id = 0;
                 must_delete_next = false;
@@ -291,7 +291,7 @@ public:
                 forget_delay();
                 *del_ptr++ = 'd';
                 del_len++;
-                if (!bindrat)  {
+                if (!binfrat)  {
                     *del_ptr++ = ' ';
                     del_len++;
                 }
@@ -316,14 +316,14 @@ public:
                 cl_id = 0;
                 *buf_ptr++ = 'a';
                 buf_len++;
-                if (!bindrat) {
+                if (!binfrat) {
                     *buf_ptr++ = ' ';
                     buf_len++;
                 }
                 break;
 
             case DratFlag::chain:
-                if (!bindrat) {
+                if (!binfrat) {
                     *buf_ptr++ = '0';
                     *buf_ptr++ = ' ';
                     *buf_ptr++ = 'l';
@@ -336,7 +336,7 @@ public:
                 adding = false;
                 *buf_ptr++ = 'd';
                 buf_len++;
-                if (!bindrat) {
+                if (!binfrat) {
                     *buf_ptr++ = ' ';
                     buf_len++;
                 }
@@ -347,7 +347,7 @@ public:
                 forget_delay();
                 *buf_ptr++ = 'r';
                 buf_len++;
-                if (!bindrat) {
+                if (!binfrat) {
                     *buf_ptr++ = ' ';
                     buf_len++;
                 }
@@ -358,7 +358,7 @@ public:
                 forget_delay();
                 *buf_ptr++ = 'f';
                 buf_len++;
-                if (!bindrat) {
+                if (!binfrat) {
                     *buf_ptr++ = ' ';
                     buf_len++;
                 }
@@ -369,7 +369,7 @@ public:
                 forget_delay();
                 *buf_ptr++ = 'o';
                 buf_len++;
-                if (!bindrat) {
+                if (!binfrat) {
                     *buf_ptr++ = ' ';
                     buf_len++;
                 }
@@ -397,7 +397,7 @@ private:
     {
         uint32_t v = l.var();
         v = interToOuterMain[v];
-        if (bindrat) {
+        if (binfrat) {
             unsigned int u = 2 * (v + 1) + l.sign();
             do {
                 *buf_ptr++ = (u & 0x7f) | 0x80;
@@ -416,7 +416,7 @@ private:
 
     virtual Drat& operator<<(const char* str)
     {
-        #ifdef DEBUG_DRAT
+        #ifdef DEBUG_FRAT
         this->flush();
         uint32_t num = sprintf((char*)buf_ptr, "c %s", str);
         buf_ptr+=num;
@@ -430,7 +430,7 @@ private:
     void byteDRUPaID(const int32_t id)
     {
         if (adding && cl_id == 0) cl_id = id;
-        if (bindrat) {
+        if (binfrat) {
             for(unsigned i = 0; i < 6; i++) {
                 *buf_ptr++ = (id>>(8*i))&0xff;
                 buf_len++;
@@ -444,7 +444,7 @@ private:
 
     void byteDRUPdID(const int32_t id)
     {
-        if (bindrat) {
+        if (binfrat) {
             for(unsigned i = 0; i < 6; i++) {
                 *del_ptr++ = (id>>(8*i))&0xff;
                 del_len++;
@@ -460,7 +460,7 @@ private:
     {
         uint32_t v = l.var();
         v = interToOuterMain[v];
-        if (bindrat) {
+        if (binfrat) {
             unsigned int u = 2 * (v + 1) + l.sign();
             do {
                 *del_ptr++ = (u & 0x7f) | 0x80;
@@ -488,4 +488,4 @@ private:
 
 }
 
-#endif //__DRAT_H__
+#endif //__FRAT_H__

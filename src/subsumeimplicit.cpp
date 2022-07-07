@@ -65,7 +65,7 @@ void SubsumeImplicit::try_subsume_bin(
         } else {
             solver->binTri.irredBins--;
         }
-        (*solver->drat) << del << i->get_ID() << lit << i->lit2() << fin;
+        (*solver->frat) << del << i->get_ID() << lit << i->lit2() << fin;
 
         return;
     } else {
@@ -129,7 +129,7 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats, std::string calle
         *solver->conf.global_timeout_multiplier;
     timeAvailable = orig_timeAvailable;
     runStats.clear();
-    *solver->drat << __PRETTY_FUNCTION__ << " start\n";
+    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
 
     //For randomization, we must have at least 1
     if (solver->watches.size() == 0) {
@@ -164,7 +164,7 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats, std::string calle
             , time_remain
         );
     }
-    *solver->drat << __PRETTY_FUNCTION__ << " end\n";
+    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
 
     if (check_stats) {
         #ifdef DEBUG_IMPLICIT_STATS
