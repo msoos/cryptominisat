@@ -22,7 +22,7 @@ install:
 	@echo Install the package...
 	cd .. && python setup.py install --record files.txt
 
-uninstall: files.txt
+uninstall: ../files.txt
 	@echo Uninstalling the package...
 	cat ../files.txt | xargs rm -rf
 	rm ../files.txt
