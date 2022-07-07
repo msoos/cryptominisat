@@ -2351,6 +2351,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         std::transform(token.begin(), token.end(), token.begin(), ::tolower);
         if (token != "" && solver->conf.verbosity) {
             cout << "c --> Executing OCC strategy token: " << token << '\n';
+            *solver->frat << __PRETTY_FUNCTION__ << " Executing OCC strategy token:" << token.c_str() << "\n";
         }
 
         if (token == "occ-backw-sub-str") {
