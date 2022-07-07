@@ -30,7 +30,7 @@ from distutils.core import setup, Extension
 import sysconfig
 from distutils.cmd import Command
 
-__PACKAGE_VERSION__ = "0.2.0"
+__PACKAGE_VERSION__ = "1.0.0"
 __LIBRARY_VERSION__ = "5.9.0"
 #os.environ["CC"] = "${CMAKE_C_COMPILER}"
 #os.environ["CXX"] = "${CMAKE_CXX_COMPILER}"
@@ -68,8 +68,8 @@ def _init_posix(init):
             config_vars['CC'] = 'gcc'
             config_vars['CXX'] = 'g++'
 
-        config_vars['CFLAGS'] = '-g -W -Wall -Wno-deprecated -std=c++11'
-        config_vars['OPT'] = '-g -W -Wall -Wno-deprecated -std=c++11'
+        config_vars['CFLAGS'] = '-g -W -Wall -Wno-deprecated'
+        config_vars['OPT'] = '-g -W -Wall -Wno-deprecated'
 
     return wrapper
 
@@ -112,66 +112,83 @@ if platform.system() == 'Darwin':
     extra_link_args.append('-Wl,-rpath,')
     # NOTE: below apparently could be obtained via: "xcrun --show-sdk-path"
 
+
+myclib = ('myclib', {'sources': [
+               ### picosat ####
+               "src/picosat/app.c",
+               "src/picosat/picogcnf.c",
+               "src/picosat/picomcs.c",
+               "src/picosat/picomus.c",
+               "src/picosat/picosat.c",
+               "src/picosat/version.c"],
+    'language' : "c",
+    'extra_compile_args' : [],
+    })
+
+
 modules = dict(
     name = "pycryptosat",
-    sources = ["src/pycryptosat.cpp",
-               "src/GitSHA1.cpp",
-               "../src/bva.cpp",
-               "../src/cardfinder.cpp",
-               "../src/ccnr_cms.cpp",
-               "../src/ccnr.cpp",
-               "../src/clauseallocator.cpp",
-               "../src/clausecleaner.cpp",
-               #"../src/cl_predictors_abs.cpp",
-               #"../src/cl_predictors_lgbm.cpp",
-               #"../src/cl_predictors_py.cpp",
-               #"../src/cl_predictors_xgb.cpp",
-               #"../src/cms_bosphorus.cpp",
-               #"../src/cms_breakid.cpp",
-               "../src/cnf.cpp",
-               #"../src/community_finder.cpp",
-               "../src/completedetachreattacher.cpp",
-               "../src/cryptominisat_c.cpp",
-               "../src/cryptominisat.cpp",
-               #"../src/datasync.cpp",
-               #"../src/datasyncserver.cpp",
-               "../src/distillerbin.cpp",
-               "../src/distillerlitrem.cpp",
-               "../src/distillerlong.cpp",
-               "../src/distillerlongwithimpl.cpp",
-               "../src/drat.cpp",
-               #"../src/fuzz.cpp",
-               "../src/gatefinder.cpp",
-               "../src/gaussian.cpp",
-               #"../src/get_clause_query.cpp",
-               "../src/hyperengine.cpp",
-               "../src/intree.cpp",
-               #"../src/ipasir.cpp",
-               "../src/lucky.cpp",
-               "../src/matrixfinder.cpp",
-               "../src/occsimplifier.cpp",
-               "../src/packedrow.cpp",
-               "../src/propengine.cpp",
-               "../src/reducedb.cpp",
-               "../src/satzilla_features_calc.cpp",
-               "../src/satzilla_features.cpp",
-               "../src/sccfinder.cpp",
-               "../src/searcher.cpp",
-               #"../src/searchstats.cpp",
-               #"../src/simple.cpp",
-               "../src/sls.cpp",
-               "../src/solutionextender.cpp",
-               "../src/solverconf.cpp",
-               "../src/solver.cpp",
-               "../src/str_impl_w_impl.cpp",
-               "../src/subsumeimplicit.cpp",
-               "../src/subsumestrengthen.cpp",
-               #"../src/toplevelgauss.cpp",
-               "../src/vardistgen.cpp",
-               "../src/varreplacer.cpp",
-               "../src/xorfinder.cpp"],
+    sources = ["python/src/pycryptosat.cpp",
+               "python/src/GitSHA1.cpp",
+               "src/bva.cpp",
+               "src/cardfinder.cpp",
+               "src/ccnr_cms.cpp",
+               "src/ccnr.cpp",
+               "src/clauseallocator.cpp",
+               "src/clausecleaner.cpp",
+               #"src/cl_predictors_abs.cpp",
+               #"src/cl_predictors_lgbm.cpp",
+               #"src/cl_predictors_py.cpp",
+               #"src/cl_predictors_xgb.cpp",
+               #"src/cms_bosphorus.cpp",
+               #"src/cms_breakid.cpp",
+               "src/cnf.cpp",
+               #"src/community_finder.cpp",
+               "src/completedetachreattacher.cpp",
+               "src/cryptominisat_c.cpp",
+               "src/cryptominisat.cpp",
+               "src/datasync.cpp",
+               #"src/datasyncserver.cpp",
+               "src/distillerbin.cpp",
+               "src/distillerlitrem.cpp",
+               "src/distillerlong.cpp",
+               "src/distillerlongwithimpl.cpp",
+               "src/frat.cpp",
+               #"src/fuzz.cpp",
+               "src/gatefinder.cpp",
+               "src/gaussian.cpp",
+               "src/get_clause_query.cpp",
+               "src/hyperengine.cpp",
+               "src/intree.cpp",
+               #"src/ipasir.cpp",
+               "src/lucky.cpp",
+               "src/matrixfinder.cpp",
+               "src/occsimplifier.cpp",
+               "src/packedrow.cpp",
+               "src/propengine.cpp",
+               "src/reducedb.cpp",
+               "src/satzilla_features_calc.cpp",
+               "src/satzilla_features.cpp",
+               "src/sccfinder.cpp",
+               "src/searcher.cpp",
+               "src/searchstats.cpp",
+               #"src/simple.cpp",
+               "src/sls.cpp",
+               "src/solutionextender.cpp",
+               "src/solverconf.cpp",
+               "src/solver.cpp",
+               "src/str_impl_w_impl.cpp",
+               "src/subsumeimplicit.cpp",
+               "src/subsumestrengthen.cpp",
+               #"src/toplevelgauss.cpp",
+               "src/vardistgen.cpp",
+               "src/varreplacer.cpp",
+               "src/xorfinder.cpp",
+               ### oracle ###
+               "src/oracle/oracle.cpp",
+               ],
     define_macros = [('LIBRARY_VERSION', '"' + __LIBRARY_VERSION__ + '"')],
-    extra_compile_args = ['-I../', '-I../src/', '-std=c++17'],
+    extra_compile_args = ['-I../', '-Isrc/', '-std=c++17'],
     #extra_link_args = extra_link_args,
     language = "c++",
     #library_dirs=['.', '${PROJECT_BINARY_DIR}/lib', '${PROJECT_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}'],
@@ -203,7 +220,8 @@ setup(
     description = "Bindings to CryptoMiniSat {} (a SAT solver)".\
         format(__LIBRARY_VERSION__),
 #    py_modules = ['pycryptosat'],
-    long_description = open('README.rst').read(),
+    libraries = [myclib],
+    long_description = open('python/README.rst').read(),
     cmdclass={
         'test': TestCommand
     }
