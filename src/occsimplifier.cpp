@@ -2525,9 +2525,7 @@ bool OccSimplifier::simplify(const bool _startup, const std::string& schedule)
     assert(solver->gqueuedata.empty());
 
     startup = _startup;
-    if (!setup()) {
-        return solver->okay();
-    }
+    if (!setup()) return solver->okay();
 
     const size_t origBlockedSize = blockedClauses.size();
     const size_t origTrailSize = solver->trail_size();
