@@ -393,7 +393,7 @@ class Tester:
 
         return cmd
 
-    def execute(self, fname, fname_drat=None, fixed_opts="", rnd_opts=None):
+    def execute(self, fname, fname_frat=None, fixed_opts="", rnd_opts=None):
         if os.path.isfile(options.solver) is not True:
             print("Error: Cannot find CryptoMiniSat executable.Searched in: '%s'" %
                   options.solver)
@@ -418,8 +418,8 @@ class Tester:
         command += fixed_opts + " "
         if fname is not None:
             command += "--input %s " % fname
-        if fname_drat:
-            command += " --drat %s " % fname_drat
+        if fname_frat:
+            command += " --frat %s " % fname_frat
 
         if options.verbose:
             print("Executing before doalarm/pipes: %s " % command)
@@ -498,7 +498,7 @@ class Tester:
         os.unlink(out_fname)
         return consoleOutput, retcode
 
-    def check(self, fname, fname_drat=None,
+    def check(self, fname, fname_frat=None,
               checkAgainst=None,
               fixed_opts="",
               rnd_opts=None):
@@ -510,7 +510,7 @@ class Tester:
 
         # Do we need to solve the problem, or is it already solved?
         consoleOutput, retcode = self.execute(
-            fname, fname_drat=fname_drat,
+            fname, fname_frat=fname_frat,
             fixed_opts=fixed_opts, rnd_opts=rnd_opts)
 
         # if time was limited, we need to know if we were over the time limit
@@ -550,9 +550,9 @@ class Tester:
             return
 
         # it's UNSAT, let's check with FRAT
-        if fname_drat:
-            toexec = "./frat-rs elab {fname_drat} {cnf} -v"
-            toexec = toexec.format(cnf=fname, fname_drat=fname_drat)
+        if fname_frat:
+            toexec = "./frat-rs elab {fname_frat} {cnf} -v"
+            toexec = toexec.format(cnf=fname, fname_frat=fname_frat)
             print("Checking with FRAT.. ", toexec)
             p = subprocess.Popen(toexec.rsplit(),
                     stdout=subprocess.PIPE,
@@ -563,11 +563,11 @@ class Tester:
 
             # find verification code
             foundVerif = False
-            dratLine = ""
+            fratLine = ""
             for line in consoleOutput2.split('\n'):
                 if len(line) >= 8:
                     if line[0:8] == "VERIFIED":
-                        dratLine = line
+                        fratLine = line
                         foundVerif = True
 
             # Check whether we have found a verification code
@@ -575,7 +575,7 @@ class Tester:
                 print("verifier error! It says: %s" % consoleOutput2)
                 assert foundVerif, "Cannot find FRAT verification code!"
             else:
-                print("OK, FRAT says: %s" % dratLine)
+                print("OK, FRAT says: %s" % fratLine)
 
         if options.gauss:
             if random.choice([True, True, True, True, False]):
@@ -598,28 +598,28 @@ class Tester:
         self.num_threads = min(options.max_threads, self.num_threads)
         self.this_gauss_on = "autodisablegauss" in self.extra_opts_supported
 
-        # drat turns off a bunch of systems, like symmetry breaking so use it about 50% of time
-        self.drat = self.num_threads == 1 and (random.randint(0, 10) < 5)
+        # frat turns off a bunch of systems, like symmetry breaking so use it about 50% of time
+        self.frat = self.num_threads == 1 and (random.randint(0, 10) < 5)
 
         self.sqlitedbfname = None
-        self.only_sampling = random.choice([True, False, False, False, False]) and not self.drat
+        self.only_sampling = random.choice([True, False, False, False, False]) and not self.frat
 
         if options.only_sampling:
-            self.drat = False
+            self.frat = False
             self.only_sampling = True
 
-        if self.drat:
-            fuzzers = fuzzers_drat
+        if self.frat:
+            fuzzers = fuzzers_frat
         elif options.gauss:
             fuzzers = fuzzers_xor
         else:
-            fuzzers = fuzzers_nodrat
+            fuzzers = fuzzers_nofrat
         fuzzer = random.choice(fuzzers)
 
         fname = unique_file("fuzzTest")
-        fname_drat = None
-        if self.drat:
-            fname_drat = unique_file("fuzzTest-drat")
+        fname_frat = None
+        if self.frat:
+            fname_frat = unique_file("fuzzTest-frat")
 
         # create the fuzz file
         cf = create_fuzz()
@@ -636,7 +636,7 @@ class Tester:
         os.unlink(fname)
         fname = fname_shuffled
 
-        if not self.drat and not self.only_sampling:
+        if not self.frat and not self.only_sampling:
             print("->Multipart test")
             self.needDebugLib = True
             interspersed_fname = unique_file("fuzzTest-interspersed")
@@ -668,12 +668,12 @@ class Tester:
             if len(self.sampling_vars) == 0:
                 self.only_sampling = False
 
-        self.check(fname=interspersed_fname, fname_drat=fname_drat)
+        self.check(fname=interspersed_fname, fname_frat=fname_frat)
 
         # remove temporary filenames
         os.unlink(interspersed_fname)
-        if fname_drat:
-            os.unlink(fname_drat)
+        if fname_frat:
+            os.unlink(fname_frat)
         for name in todel:
             os.unlink(name)
 
@@ -731,8 +731,8 @@ if __name__ == "__main__":
         print("Valgrind Frequency must be at least 1")
         exit(-1)
 
-    fuzzers_drat = fuzzers_noxor
-    fuzzers_nodrat = fuzzers_noxor + fuzzers_xor
+    fuzzers_frat = fuzzers_noxor
+    fuzzers_nofrat = fuzzers_noxor + fuzzers_xor
 
     print_version()
     tester = Tester()
