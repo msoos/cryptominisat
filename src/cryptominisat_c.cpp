@@ -20,9 +20,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#include "cryptominisat5/cryptominisat_c.h"
+#include "cryptominisat_c.h"
 #include "constants.h"
-#include "cryptominisat5/cryptominisat.h"
+#include "cryptominisat.h"
 
 
 // C wrappers for SATSolver so that it can be used from other languages (e.g. Rust)

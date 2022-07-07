@@ -21,7 +21,7 @@ THE SOFTWARE.
 ***********************************************/
 
 #include "constants.h"
-#include "cryptominisat5/cryptominisat.h"
+#include "cryptominisat.h"
 #include "solver.h"
 #include "drat.h"
 #include "shareddata.h"

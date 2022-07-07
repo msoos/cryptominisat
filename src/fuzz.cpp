@@ -21,7 +21,7 @@ THE SOFTWARE.
 ***************************************************************/
 
 #include <string.h>
-#include "cryptominisat5/cryptominisat.h"
+#include "cryptominisat.h"
 #include "dimacsparser.h"
 
 struct MyText {

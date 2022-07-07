@@ -20,8 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef __SOLVERTYPESMINI_H__
-#define __SOLVERTYPESMINI_H__
+#pragma once
 
 #include <cstdint>
 #include <iostream>
@@ -381,5 +380,3 @@ inline std::ostream& operator<<(std::ostream& os, const BNN& bnn)
 }
 
 }
-
-#endif //__SOLVERTYPESMINI_H__

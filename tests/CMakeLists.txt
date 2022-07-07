@@ -22,9 +22,6 @@ if (NOT WIN32)
     add_cxx_flag_if_supported("-Wno-sign-compare")
 endif()
 
-include_directories( "/home/soos/development/sat_solvers/tbuddy/buddy/include/" )
-link_directories("/home/soos/development/sat_solvers/tbuddy/buddy/lib/")
-
 set (LIT_TOOL "${Python3_EXECUTABLE} -m lit.main")
 execute_process(
     COMMAND "${Python3_EXECUTABLE}" "-m" "lit.main" "--version"
@@ -91,7 +88,8 @@ include_directories(
     ${PROJECT_SOURCE_DIR}
 )
 include_directories(
-    ${PROJECT_BINARY_DIR}/cmsat5-src
+    #${PROJECT_BINARY_DIR}/cmsat5-src
+    ${PROJECT_BINARY_DIR}/include
 )
 
 # README test

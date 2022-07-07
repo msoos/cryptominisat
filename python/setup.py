@@ -27,16 +27,16 @@ import sys
 import os
 import platform
 from distutils.core import setup, Extension
-from distutils import sysconfig
+import sysconfig
 from distutils.cmd import Command
 
 __PACKAGE_VERSION__ = "0.2.0"
-__LIBRARY_VERSION__ = "${CMS_FULL_VERSION}"
-os.environ["CC"] = "${CMAKE_C_COMPILER}"
-os.environ["CXX"] = "${CMAKE_CXX_COMPILER}"
+__LIBRARY_VERSION__ = "5.9.0"
+#os.environ["CC"] = "${CMAKE_C_COMPILER}"
+#os.environ["CXX"] = "${CMAKE_CXX_COMPILER}"
 
-cconf = """${PY_C_CONFIG}""".split(" ")
-is_apple = """${APPLE}"""
+#cconf = """${PY_C_CONFIG}""".split(" ")
+#is_apple = """${APPLE}"""
 
 
 def cleanup(dat):
@@ -50,7 +50,7 @@ def cleanup(dat):
 
     return ret
 
-cconf = cleanup(cconf)
+#cconf = cleanup(cconf)
 # print "Extra C flags from python-config:", cconf
 
 
@@ -59,8 +59,8 @@ def _init_posix(init):
     Forces g++ instead of gcc on most systems
     credits to eric jones (eric@enthought.com) (found at Google Groups)
     """
-    def wrapper():
-        init()
+    def wrapper(vars):
+        init(vars)
 
         config_vars = sysconfig.get_config_vars()  # by reference
         if config_vars["MACHDEP"].startswith("sun"):
@@ -109,24 +109,74 @@ __version__ = '@PROJECT_VERSION@'
 # needed because Mac doesn't make use of runtime_library_dirs
 extra_link_args = []
 if platform.system() == 'Darwin':
-    extra_link_args.append('-Wl,-rpath,'+"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+    extra_link_args.append('-Wl,-rpath,')
     # NOTE: below apparently could be obtained via: "xcrun --show-sdk-path"
-
-if platform.system() == 'Windows':
-    libname = "cryptominisat5win"
-else:
-    libname = "cryptominisat5"
 
 modules = dict(
     name = "pycryptosat",
-    sources = ["${CMAKE_CURRENT_BINARY_DIR}/src/pycryptosat.cpp"],
+    sources = ["src/pycryptosat.cpp",
+               "src/GitSHA1.cpp",
+               "../src/bva.cpp",
+               "../src/cardfinder.cpp",
+               "../src/ccnr_cms.cpp",
+               "../src/ccnr.cpp",
+               "../src/clauseallocator.cpp",
+               "../src/clausecleaner.cpp",
+               #"../src/cl_predictors_abs.cpp",
+               #"../src/cl_predictors_lgbm.cpp",
+               #"../src/cl_predictors_py.cpp",
+               #"../src/cl_predictors_xgb.cpp",
+               #"../src/cms_bosphorus.cpp",
+               #"../src/cms_breakid.cpp",
+               "../src/cnf.cpp",
+               #"../src/community_finder.cpp",
+               "../src/completedetachreattacher.cpp",
+               "../src/cryptominisat_c.cpp",
+               "../src/cryptominisat.cpp",
+               #"../src/datasync.cpp",
+               #"../src/datasyncserver.cpp",
+               "../src/distillerbin.cpp",
+               "../src/distillerlitrem.cpp",
+               "../src/distillerlong.cpp",
+               "../src/distillerlongwithimpl.cpp",
+               "../src/drat.cpp",
+               #"../src/fuzz.cpp",
+               "../src/gatefinder.cpp",
+               "../src/gaussian.cpp",
+               #"../src/get_clause_query.cpp",
+               "../src/hyperengine.cpp",
+               "../src/intree.cpp",
+               #"../src/ipasir.cpp",
+               "../src/lucky.cpp",
+               "../src/matrixfinder.cpp",
+               "../src/occsimplifier.cpp",
+               "../src/packedrow.cpp",
+               "../src/propengine.cpp",
+               "../src/reducedb.cpp",
+               "../src/satzilla_features_calc.cpp",
+               "../src/satzilla_features.cpp",
+               "../src/sccfinder.cpp",
+               "../src/searcher.cpp",
+               #"../src/searchstats.cpp",
+               #"../src/simple.cpp",
+               "../src/sls.cpp",
+               "../src/solutionextender.cpp",
+               "../src/solverconf.cpp",
+               "../src/solver.cpp",
+               "../src/str_impl_w_impl.cpp",
+               "../src/subsumeimplicit.cpp",
+               "../src/subsumestrengthen.cpp",
+               #"../src/toplevelgauss.cpp",
+               "../src/vardistgen.cpp",
+               "../src/varreplacer.cpp",
+               "../src/xorfinder.cpp"],
     define_macros = [('LIBRARY_VERSION', '"' + __LIBRARY_VERSION__ + '"')],
-    extra_compile_args = cconf + ['-I${PROJECT_SOURCE_DIR}', '-I${PROJECT_BINARY_DIR}/cmsat5-src'],
-    extra_link_args = extra_link_args,
+    extra_compile_args = ['-I../', '-I../src/', '-std=c++17'],
+    #extra_link_args = extra_link_args,
     language = "c++",
-    library_dirs=['.', '${PROJECT_BINARY_DIR}/lib', '${PROJECT_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}'],
-    runtime_library_dirs=['${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}'],
-    libraries = [libname]
+    #library_dirs=['.', '${PROJECT_BINARY_DIR}/lib', '${PROJECT_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}'],
+    #runtime_library_dirs=['${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}'],
+    #libraries = []
 )
 
 if platform.system() == 'Windows':
@@ -153,9 +203,10 @@ setup(
     description = "Bindings to CryptoMiniSat {} (a SAT solver)".\
         format(__LIBRARY_VERSION__),
 #    py_modules = ['pycryptosat'],
-    long_description = open('${CMAKE_CURRENT_SOURCE_DIR}/README.rst').read(),
+    long_description = open('README.rst').read(),
     cmdclass={
         'test': TestCommand
     }
 
 )
+

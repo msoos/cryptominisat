@@ -36,7 +36,7 @@ using std::endl;
 #include "main_common.h"
 
 #include "solverconf.h"
-#include "cryptominisat5/cryptominisat.h"
+#include "cryptominisat.h"
 #include "dimacsparser.h"
 
 #if defined(_MSC_VER)

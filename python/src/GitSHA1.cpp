@@ -1,6 +1,5 @@
-/*************************************************************
-MiniSat       --- Copyright (c) 2003-2006, Niklas Een, Niklas Sorensson
-CryptoMiniSat --- Copyright (C) 2009-2020 Authors of CryptoMiniSat, see AUTHORS file
+/******************************************
+Copyright (c) 2022, Mate Soos
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,29 +18,24 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-***************************************************************/
+***********************************************/
 
-#ifndef __MAIN_COMMON_H__
-#define __MAIN_COMMON_H__
+#include "../src/GitSHA1.h"
 
-#include "cryptominisat.h"
-#include "solverconf.h"
-#include <iostream>
-#include <cmath>
-
-class MainCommon
+const char* CMSat::get_version_sha1()
 {
-public:
-    uint32_t print_model(CMSat::SATSolver* solver,
-                         std::ostream* os,
-                         std::vector<uint32_t>* only = NULL);
-    void handle_drat_option();
+    static const char myversion_sha1[] = "NOT-GIT";
+    return myversion_sha1;
+}
 
-    string dratfilname;
-    FILE* dratf = NULL;
-    bool zero_exit_status = false;
-    CMSat::SolverConf conf;
-    unsigned num_threads = 1;
-};
+const char* CMSat::get_version_tag()
+{
+    static const char myversion_tag[] = "5.9.0";
+    return myversion_tag;
+}
 
-#endif //__MAIN_COMMON_H__
+const char* CMSat::get_compilation_env()
+{
+    static const char compilation_env[] = "UNKNOWN";
+    return compilation_env;
+}

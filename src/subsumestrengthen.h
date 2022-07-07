@@ -24,7 +24,7 @@ THE SOFTWARE.
 #define __SUBSUMESTRENGTHEN_H__
 
 #include "cloffset.h"
-#include "cryptominisat5/solvertypesmini.h"
+#include "solvertypesmini.h"
 #include "clabstraction.h"
 #include "clause.h"
 #include "Vec.h"

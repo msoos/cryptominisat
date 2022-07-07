@@ -29,7 +29,7 @@ THE SOFTWARE.
 #include <limits>
 #include <cassert>
 #include <algorithm>
-#include <cryptominisat5/cryptominisat.h>
+#include "cryptominisat.h"
 using namespace CMSat;
 
 #define MODULE_NAME "pycryptosat"

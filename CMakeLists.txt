@@ -138,13 +138,11 @@ if (FORCETBUDDY AND NOT TBUDDY)
     MESSAGE(FATAL_ERROR "tbuddy was required but not found. Please install tbuddy.")
 endif ()
 
-option(ENABLE_PYTHON_INTERFACE "Enable Python interface" ON)
 option(EMSCRIPTEN "Generate only emscripten JS" OFF)
 if (EMSCRIPTEN)
     set(ONLY_SIMPLE ON)
     set(BUILD_SHARED_LIBS ON)
     set(NOZLIB ON)
-    set(ENABLE_PYTHON_INTERFACE OFF)
 else()
     set(THREADS_PREFER_PTHREAD_FLAG ON)
     find_package (Threads REQUIRED)
@@ -709,10 +707,6 @@ endmacro()
 # -----------------------------------------------------------------------------
 # Look for python
 # -----------------------------------------------------------------------------
-if (STATICCOMPILE OR SANITIZE)
-    set(ENABLE_PYTHON_INTERFACE OFF)
-endif()
-
 message(STATUS "In case your Python interpreter is not found, or a wrong one is found, please set it with '-DPYTHON_EXECUTABLE:FILEPATH=your path here'")
 
 if (FINAL_PREDICTOR)
@@ -804,16 +798,6 @@ if (ENABLE_TESTING)
 
 else()
     message(WARNING "Testing is disabled")
-endif()
-
-if (ENABLE_PYTHON_INTERFACE)
-    if (Python3_FOUND AND Python3_Interpreter_FOUND AND Python3_NumPy_FOUND AND NOT COVERAGE)
-        message(STATUS "Found python interpreter, libs and header files")
-        message(STATUS "Building python interface")
-        add_subdirectory(python pycryptosat)
-    else()
-        message(WARNING "Cannot find python interpreter, libs and header files, cannot build python interface")
-    endif()
 endif()
 
 # -----------------------------------------------------------------------------

@@ -51,7 +51,7 @@ THE SOFTWARE.
 #include "main_common.h"
 #include "time_mem.h"
 #include "dimacsparser.h"
-#include "cryptominisat5/cryptominisat.h"
+#include "cryptominisat.h"
 #include "signalcode.h"
 
 #include <boost/lexical_cast.hpp>

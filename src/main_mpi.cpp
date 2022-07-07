@@ -24,7 +24,7 @@ THE SOFTWARE.
 #include <unistd.h>
 #include <mpi.h>
 #include "datasyncserver.h"
-#include "cryptominisat5/cryptominisat.h"
+#include "cryptominisat.h"
 #include "solverconf.h"
 #include "zlib.h"
 #include "dimacsparser.h"

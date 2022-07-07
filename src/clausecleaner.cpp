@@ -24,7 +24,7 @@ THE SOFTWARE.
 #include "clauseallocator.h"
 #include "solver.h"
 #include "sqlstats.h"
-#include "cryptominisat5/solvertypesmini.h"
+#include "solvertypesmini.h"
 
 using namespace CMSat;
 

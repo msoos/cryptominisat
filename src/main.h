@@ -30,7 +30,7 @@ THE SOFTWARE.
 
 #include "main_common.h"
 #include "solverconf.h"
-#include "cryptominisat5/cryptominisat.h"
+#include "cryptominisat.h"
 
 using std::string;
 using std::vector;

@@ -28,7 +28,7 @@ THE SOFTWARE.
 #include <cstdlib>
 #include <cassert>
 #include "constants.h"
-#include "cryptominisat5/solvertypesmini.h"
+#include "solvertypesmini.h"
 
 using std::string;
 

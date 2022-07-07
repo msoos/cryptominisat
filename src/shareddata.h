@@ -23,7 +23,7 @@ THE SOFTWARE.
 #ifndef SHARED_DATA_H
 #define SHARED_DATA_H
 
-#include "cryptominisat5/solvertypesmini.h"
+#include "solvertypesmini.h"
 #ifdef USE_GPU
 #include "gpuShareLib/GpuClauseSharer.h"
 #endif
