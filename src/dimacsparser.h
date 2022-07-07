@@ -54,7 +54,9 @@ class DimacsParser
         bool readClause(C& in);
         bool parse_and_add_clause(C& in);
         bool parse_and_add_xor_clause(C& in);
+        #ifdef ENABLE_BNN
         bool parse_and_add_bnn_clause(C& in);
+        #endif
         bool match(C& in, const char* str);
         bool parse_header(C& in);
         bool parseComments(C& in, const std::string& str);
@@ -94,7 +96,9 @@ class DimacsParser
 
         size_t norm_clauses_added = 0;
         size_t xor_clauses_added = 0;
+        #ifdef ENABLE_BNN
         size_t bnn_clauses_added = 0;
+        #endif
 };
 
 #include <sstream>
@@ -479,6 +483,7 @@ bool DimacsParser<C, S>::parse_and_add_clause(C& in)
     return true;
 }
 
+#ifdef ENABLE_BNN
 // b (lit1.. litn) 0 (weight1... weightn) 0 (output lit)
 template<class C, class S>
 bool DimacsParser<C, S>::parse_and_add_bnn_clause(C& in)
@@ -532,6 +537,7 @@ bool DimacsParser<C, S>::parse_and_add_bnn_clause(C& in)
     bnn_clauses_added++;
     return true;
 }
+#endif
 
 template<class C, class S>
 bool DimacsParser<C, S>::parse_and_add_xor_clause(C& in)
@@ -600,12 +606,16 @@ bool DimacsParser<C, S>::parse_DIMACS_main(C& in)
                 return false;
             }
             break;
-
         case 'b':
+            #ifdef ENABLE_BNN
             ++in;
             if (!parse_and_add_bnn_clause(in)) {
                 return false;
             }
+            #else
+            std::cout << "ERROR: BNN encounered but not enabled in parsing. Exiting." << endl;
+            exit(-1);
+            #endif
             break;
         case '\n':
             if (verbosity) {
@@ -650,7 +660,9 @@ bool DimacsParser<C, S>::parse_DIMACS(
         cout
         << "c -- clauses added: " << norm_clauses_added << endl
         << "c -- xor clauses added: " << xor_clauses_added << endl
+        #ifdef ENABLE_BNN
         << "c -- bnn clauses added: " << bnn_clauses_added << endl
+        #endif
         << "c -- vars added " << (solver->nVars() - origNumVars)
         << endl;
     }
