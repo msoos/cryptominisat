@@ -2236,7 +2236,6 @@ bool OccSimplifier::lit_rem_with_or_gates()
 
             if (contains_inv_rhs) {
 //                 cout << "Removing cl: " << *cl << endl;
-                (*solver->frat) << del << *cl << fin;
                 unlink_clause(off, true, false, true);
                 removed++;
                 continue;
