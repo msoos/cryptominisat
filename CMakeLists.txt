@@ -438,7 +438,7 @@ else()
   set(GIT_SHA "GIT-hash-notfound")
 endif()
 
-set(CMS_FULL_VERSION "5.8.0")
+set(CMS_FULL_VERSION "5.9.0")
 
 string(REPLACE "." ";" CMS_FULL_VERSION_LIST ${CMS_FULL_VERSION})
 SetVersionNumber("PROJECT" ${CMS_FULL_VERSION_LIST})
@@ -517,56 +517,11 @@ endif()
 # ----------
 # manpage
 # ----------
-option(MANPAGE "Create manpage" ON)
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND MANPAGE)
-    find_program(HELP2MAN_FOUND help2man)
-    if (HELP2MAN_FOUND)
-
-        set(mandir ${CMAKE_INSTALL_PREFIX}/share/man/man1)
-        # INSTALL(CODE "FILE(MAKE_DIRECTORY ${mandir})")
-
-
-        if (NOT ONLY_SIMPLE)
-            ADD_CUSTOM_TARGET(man_cms5
-                ALL
-                DEPENDS cryptominisat5-bin
-            )
-
-            ADD_CUSTOM_COMMAND(
-                TARGET man_cms5
-                COMMAND help2man
-                ARGS --version-string=${CMS_FULL_VERSION} --help-option="--hhelp" --include ${PROJECT_SOURCE_DIR}/manpage-extras \"$<TARGET_FILE:cryptominisat5-bin>\" -o "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5.1" --name="SAT solver"
-            )
-
-            INSTALL(
-                FILES ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5.1
-                DESTINATION ${mandir}
-            )
-
-        endif()
-        ADD_CUSTOM_TARGET(man_cms5_simple
-            ALL
-            DEPENDS cryptominisat5_simple-bin
-        )
-
-        ADD_CUSTOM_COMMAND(
-            TARGET man_cms5_simple
-            COMMAND help2man
-            ARGS --version-string=${CMS_FULL_VERSION} --help-option="-h" --include ${PROJECT_SOURCE_DIR}/manpage-extras \"$<TARGET_FILE:cryptominisat5_simple-bin>\" -o "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5_simple.1" --name="SAT solver"
-        )
-
-        INSTALL(
-            FILES ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5_simple.1
-            DESTINATION ${mandir}
-        )
-
-        message(STATUS "Manpage will be created and installed")
-    else()
-        MESSAGE(STATUS "Cannot find help2man, not creating manpage")
-    endif()
-else()
-    MESSAGE(STATUS "Not on Linux, not creating manpage")
-endif()
+set(mandir ${CMAKE_INSTALL_PREFIX}/share/man/man1)
+INSTALL(
+    FILES ${CMAKE_SOURCE_DIR}/man/cryptominisat5.1
+    DESTINATION ${mandir}
+)
 
 # -----------------------------------------------------------------------------
 # Look for ZLIB (For reading zipped CNFs)
