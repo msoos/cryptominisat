@@ -843,6 +843,7 @@ endif()
 # -----------------------------------------------------------------------------
 set(CRYPTOMINISAT5_TARGETS_FILENAME "cryptominisat5Targets.cmake")
 set(CRYPTOMINISAT5_CONFIG_FILENAME "cryptominisat5Config.cmake")
+set(CRYPTOMINISAT5_VERSION_FILENAME "cryptominisat5ConfigVersion.cmake")
 set(CRYPTOMINISAT5_STATIC_DEPS
     ${SQLITE3_LIBRARIES}
 )
@@ -882,6 +883,16 @@ set(EXPORT_TYPE "installed")
 set(CONF_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/include")
 configure_file(cryptominisat5Config.cmake.in
    "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/${CRYPTOMINISAT5_CONFIG_FILENAME}" @ONLY
+)
+
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/${CRYPTOMINISAT5_VERSION_FILENAME}"
+  COMPATIBILITY SameMajorVersion)
+
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/${CRYPTOMINISAT5_VERSION_FILENAME}"
+    DESTINATION "${CRYPTOMINISAT5_INSTALL_CMAKE_DIR}"
 )
 
 install(FILES
