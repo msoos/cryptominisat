@@ -38,8 +38,6 @@ public:
 private:
     Solver* solver;
 
-    lbool run_walksat();
-    lbool run_yalsat();
     lbool run_ccnr(const uint32_t num_sls_called);
     uint64_t approx_mem_needed();
 };

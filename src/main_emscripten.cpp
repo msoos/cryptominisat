@@ -60,7 +60,7 @@ DLL_PUBLIC int start_solve(const char* input)
         printVersionInfo();
     }
 
-    DimacsParser<StreamBuffer<const char*, CH>> parser(solver, NULL, conf.verbosity);
+    DimacsParser<StreamBuffer<const char*, CH>, SATSolver> parser(solver, NULL, conf.verbosity);
     if (!parser.parse_DIMACS(input, false)) {
         exit(-1);
     }
@@ -99,7 +99,7 @@ DLL_PUBLIC int continue_solve()
     }
 
     if (ret == l_True) {
-        print_model(&std::cout, solver);
+        MainCommon::print_model(solver, &std::cout);
     }
 
     if (ret == l_True) {

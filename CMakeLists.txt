@@ -27,6 +27,11 @@ enable_language( CXX )
 message(STATUS "LIB directory is '${CMAKE_INSTALL_LIBDIR}'")
 message(STATUS "BIN directory is '${CMAKE_INSTALL_BINDIR}'")
 
+if(POLICY CMP0092)
+    # Disable passing /W3 by default on MSVC
+    cmake_policy(SET CMP0092 NEW)
+endif()
+
 if(POLICY CMP0048)
     #policy for VERSION in cmake 3.0
     cmake_policy(SET CMP0048 NEW)
@@ -249,7 +254,7 @@ else()
 
     add_compile_options("$<$<CONFIG:DEBUG>:/Od>")
 
-    if (NOT BUILD_SHARED_LIBS)
+    if (STATICCOMPILE)
         # We statically link to reduce dependencies
         foreach(flag_var CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
             # /MD -- Causes the application to use the multithread-specific
@@ -307,10 +312,6 @@ endif()
 
 option(ENABLE_TESTING "Enable testing" OFF)
 option(COVERAGE "Build with coverage check" OFF)
-if (STATICCOMPILE)
-    set(ENABLE_TESTING OFF)
-    set(Boost_USE_STATIC_LIBS ON)
-endif()
 
 if (COVERAGE AND BUILD_SHARED_LIBS)
     MESSAGE(FATAL_ERROR "Coverage can only be computed on static compilation")
@@ -404,7 +405,7 @@ if ((${CMAKE_SYSTEM_NAME} MATCHES "Linux") OR (${CMAKE_SYSTEM_NAME} MATCHES "Dar
     endif()
 endif()
 
-if ((${CMAKE_SYSTEM_NAME} MATCHES "Windows") AND (NOT BUILD_SHARED_LIBS))
+if (STATICCOMPILE)
     set(Boost_USE_STATIC_LIBS ON)
 endif()
 
@@ -541,13 +542,13 @@ if (NOT NOZLIB AND NOT ((NOT BUILD_SHARED_LIBS) AND WIN32))
     ENDIF (ZLIB_FOUND)
 endif()
 
+
 include(CheckFloatPrecision)
 check_float_precision()
 if (HAVE__FPU_SETCW)
     add_definitions(-DYALSAT_FPU)
     message(STATUS "Found FPU code for yalsat: fpu_control.h, _FPU_SINGLE, _FPU_DOUBLE")
 endif()
-
 
 option(WEIGHTED_SAMPLING "Allow for weighted sampling" OFF)
 if (WEIGHTED_SAMPLING)
@@ -660,9 +661,19 @@ macro(cmsat_add_public_header LIBTARGET HEADER)
 endmacro()
 
 # -----------------------------------------------------------------------------
-# Look for python
+# Look for MPI
 # -----------------------------------------------------------------------------
-message(STATUS "In case your Python interpreter is not found, or a wrong one is found, please set it with '-DPYTHON_EXECUTABLE:FILEPATH=your path here'")
+option(NOMPI "Disable MPI" ON)
+if (NOT NOMPI)
+    find_package(MPI)
+    if (MPI_FOUND)
+        add_definitions( -DUSE_MPI )
+        set(NOBREAKID ON)
+        #set( CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER} )
+    else (MPI_FOUND)
+         MESSAGE(STATUS "No suitable C++ MPI implementation found. CryptoMiniSat will not be distributed.")
+    endif(MPI_FOUND)
+endif()
 
 if (FINAL_PREDICTOR)
     find_package(Python3 COMPONENTS NumPy Interpreter Development REQUIRED)
@@ -685,8 +696,6 @@ if(NOT Boost_FOUND)
     message(STATUS "Only building executable with few command-line options because the boost program_options library were not available")
 else()
     message(STATUS "Boost -- found at library: ${Boost_LIBRARIES}")
-    message(STATUS "Boost -- adding '${Boost_LIBRARY_DIRS}' to link directories")
-    link_directories(${Boost_LIBRARY_DIRS})
 endif()
 
 # -----------------------------------------------------------------------------

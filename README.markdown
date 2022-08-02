@@ -506,12 +506,13 @@ CMake Arguments
 -----
 The following arguments to cmake configure the generated build artifacts. To use, specify options prior to running make in a clean subdirectory: `cmake <options> ..`
 
-- `-DSTATICCOMPILE=<ON/OFF>` -- statically linked library and binary
+- `-DSTATICCOMPILE=<ON/OFF>` -- statically linked library and binary. You must build&link `BreakID` with the same `DSTATICCOMPILE=<ON/OFF>` setting as well. You can get the BreakID library from [our GitHub repository](https://github.com/meelgroup/breakid)
 - `-DUSE_GAUSS=<ON/OFF>` -- Gauss-Jordan Elimination support. On by default.
 - `-DSTATS=<ON/OFF>` -- advanced statistics (slower)
 - `-DENABLE_TESTING=<ON/OFF>` -- test suite support
 - `-DMIT=<ON/OFF>` -- MIT licensed components only
 - `-DNOM4RI=<ON/OFF>` -- without toplevel Gauss-Jordan Elimination support
+- `-DNOMPI=<ON/OFF>` -- without MPI support
 - `-DREQUIRE_M4RI=<ON/OFF>` -- abort if M4RI is not present
 - `-DNOZLIB=<ON/OFF>` -- no gzip DIMACS input support
 - `-DONLY_SIMPLE=<ON/OFF>` -- only the simple binary is built

@@ -40,16 +40,23 @@ enum PropByType {
 
 class PropBy
 {
+    enum bitFieldSizes {
+        bitsize_red_step = 1,
+        bitsize_data1 = 31,
+        bitsize_type = 3,
+        bitsize_data2 = 29
+    };
+
     private:
-        uint32_t red_step:1;
-        uint32_t data1:31;
-        uint32_t type:3;
+        uint32_t red_step:bitsize_red_step;
+        uint32_t data1:bitsize_data1;
+        uint32_t type:bitsize_type;
         //0: clause, NULL
         //1: clause, non-null
         //2: binary
         //3: xor
         //4: bnn
-        uint32_t data2:29;
+        uint32_t data2:bitsize_data2;
         int32_t ID;
 
     public:
@@ -60,6 +67,7 @@ class PropBy
             , data2(0)
         {}
 
+#ifndef LARGE_OFFSETS
         //Normal clause prop
         explicit PropBy(const ClOffset offset) :
             red_step(0)
@@ -72,6 +80,20 @@ class PropBy
             assert(offset == get_offset());
             #endif*/
         }
+#else
+        //Normal clause prop
+        explicit PropBy(const ClOffset offset) :
+            red_step(0)
+            , type(clause_t)
+        {
+            //No roll-over
+            data1 = offset & ((((ClOffset)1) << bitsize_data1) - 1);
+            data2 = offset >> bitsize_data1;
+            /*#ifdef DEBUG_PROPAGATEFROM
+            assert(offset == get_offset());
+            #endif*/
+        }
+#endif
 
         //XOR
         PropBy(const uint32_t matrix_num, const uint32_t row_num):
@@ -233,7 +255,14 @@ class PropBy
             #ifdef DEBUG_PROPAGATEFROM
             assert(isClause());
             #endif
+#ifndef LARGE_OFFSETS
             return data1;
+#else
+            ClOffset offset = data2;
+            offset <<= bitsize_data1;
+            offset |= data1;
+            return offset;
+#endif
         }
 
         bool isNULL() const
