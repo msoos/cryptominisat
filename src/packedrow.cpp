@@ -58,7 +58,7 @@ uint32_t PackedRow::find_watchVar(
     uint32_t& non_resp_var
 ) {
     uint32_t popcnt = 0;
-    non_resp_var = std::numeric_limits<uint32_t>::max();
+    non_resp_var = numeric_limits<uint32_t>::max();
     tmp_clause.clear();
 
     for(int i = 0; i < size*64; i++) {
@@ -84,7 +84,7 @@ uint32_t PackedRow::find_watchVar(
 
 void PackedRow::get_reason(
     vector<Lit>& tmp_clause,
-    const vector<lbool>& assigns,
+    [[maybe_unused]] const vector<lbool>& assigns,
     const vector<uint32_t>& col_to_var,
     PackedRow& cols_vals,
     PackedRow& tmp_col2,
@@ -137,8 +137,6 @@ gret PackedRow::propGause(
     PackedRow& cols_unset,
     Lit& ret_lit_prop
 ) {
-    //cout << "start" << endl;
-    //cout << "line: " << *this << endl;
     uint32_t pop = tmp_col.set_and_until_popcnt_atleast2(*this, cols_unset);
     #ifdef VERBOSE_DEBUG
     cout << "POP in GausE: " << pop << " row: " << endl;

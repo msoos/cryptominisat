@@ -32,12 +32,20 @@ namespace CMSat
 
 struct VarData
 {
-    ///contains the decision level at which the assignment was made.
-    uint32_t level = 0;
+    VarData()
+    {
+        is_bva = 0;
+        occ_simp_tried = 0;
+        saved_polarity = false;
+        stable_polarity = false;
+        best_polarity = false;
+        inv_polarity = false;
+    }
 
-    uint32_t maple_cancelled = 0;
-    uint32_t maple_last_picked = 0;
-    uint32_t maple_conflicted = 0;
+    ///contains the decision level at which the assignment was made.
+    uint32_t level = numeric_limits<uint32_t>::max();
+    uint32_t sublevel = numeric_limits<uint32_t>::max();
+
     #ifdef WEIGHTED_SAMPLING
     double weight = 0.5;
     #endif
@@ -51,9 +59,19 @@ struct VarData
     Removed removed = Removed::none;
 
     ///The preferred polarity of each variable.
-    bool polarity = false;
-    bool best_polarity = false;
-    bool is_bva = false;
+    uint8_t stable_polarity:1;
+    uint8_t saved_polarity:1;
+    uint8_t best_polarity:1;
+    uint8_t inv_polarity:1;
+    bool propagated = false;
+    uint8_t is_bva:1;
+    uint8_t occ_simp_tried:1;
+
+
+    #if defined(STATS_NEEDED)
+    uint32_t community_num = numeric_limits<uint32_t>::max();
+    #endif
+
     #if defined(STATS_NEEDED_BRANCH) || defined(FINAL_PREDICTOR_BRANCH)
     uint32_t set = 0;
     uint64_t num_propagated = 0;

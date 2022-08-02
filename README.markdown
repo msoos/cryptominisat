@@ -151,17 +151,11 @@ Incremental Python Usage
 The python module works with both Python 2 and Python 3. It must be compiled as per (notice "python-dev"):
 
 ```
-sudo apt-get install build-essential cmake
-sudo apt-get install zlib1g-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev help2man
+sudo apt-get install build-essential
 sudo apt-get install python3-setuptools python3-dev
 tar xzvf cryptominisat-version.tar.gz
-cd cryptominisat-version
-mkdir build && cd build
-cmake ..
-make
+cd cryptominisat-version/python
 sudo make install
-sudo ldconfig
-
 ```
 
 You can then use it in incremental mode as:

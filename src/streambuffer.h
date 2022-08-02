@@ -29,6 +29,7 @@ static const unsigned chunk_limit = 148576;
 #include <string>
 #include <memory>
 #include <cmath>
+using std::numeric_limits;
 
 #ifdef USE_ZLIB
 #include <zlib.h>
@@ -190,7 +191,7 @@ public:
 
         char c = value();
         if (allow_eol && c == '\n') {
-            ret = std::numeric_limits<T>::max();
+            ret = numeric_limits<T>::max();
             return true;
         }
         if (c < '0' || c > '9') {

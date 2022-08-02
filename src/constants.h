@@ -26,6 +26,14 @@ THE SOFTWARE.
 #include <cstdint>
 #include <cstdlib>
 #include <stdio.h>
+#include <limits>
+
+using std::numeric_limits;
+
+// #define VERBOSE_DEBUG
+// #define VERBOSE_DEBUG_FULLPROP
+// #define DEBUG_DEPTH
+// #define SLOW_DEBUG
 
 #if defined(_MSC_VER)
 #define release_assert(a) \
@@ -51,14 +59,29 @@ THE SOFTWARE.
 #endif
 
 #if !defined(__GNUC__) && !defined(__clang__)
-#define __builtin_prefetch(x) (void)(x)
-#endif //__GNUC__
+#define cmsat_prefetch(x) (void)(x)
+#else
+#define cmsat_prefetch(x) __builtin_prefetch(x)
+#endif
 
 //We shift stuff around in Watched, so not all of 32 bits are useable.
 //for STATS we have 64b values in the Clauses, so they must be aligned to 64
 
 #if defined(STATS_NEEDED)
 #define LARGE_OFFSETS
+#define STATS_DO(x) do {x;} while (0)
+#define INC_ID(cl) \
+    do { \
+        auto prev_id = (cl).stats.ID; \
+        (cl).stats.ID = ++solver->clauseID; \
+        if (solver->sqlStats && (cl).stats.is_tracked) solver->sqlStats->update_id(prev_id, (cl).stats.ID); \
+    } while (0)
+#else
+#define STATS_DO(x) do {} while (0)
+#define INC_ID(cl) \
+    do { \
+        (cl).stats.ID = ++solver->clauseID; \
+    } while (0)
 #endif
 
 #if defined(LARGE_OFFSETS)
@@ -82,8 +105,50 @@ THE SOFTWARE.
 // Verbose Debug
 ///////////////////
 
-//#define DRAT_DEBUG
+//#define FRAT_DEBUG
 //#define VERBOSE_DEBUG
+
+// verbose print
+#ifdef VERBOSE_DEBUG
+#define VERBOSE_PRINT(x) \
+    do { std::cout << x << std::endl; } while (0)
+#define VERBOSE_DEBUG_DO(x) do { x; } while (0)
+#else
+#define VERBOSE_PRINT(x) do { } while (0)
+#define VERBOSE_DEBUG_DO(x) do { } while (0)
+#endif
+/////
+
+// slow debug
+#ifdef SLOW_DEBUG
+#define SLOW_DEBUG_DO(x) \
+    do { x; } while (0)
+#else
+#define SLOW_DEBUG_DO(x) do { } while (0)
+#endif
+/////
+
+// verb_print
+#define verb_print(a, x) \
+    do { if (solver->conf.verbosity >= a) {std::cout << "c " << x << std::endl;} } while (0)
+/////
+
+// debug watched
+#ifdef DEBUG_WATCHED
+#define DEBUG_WATCHED_DO(x) \
+    do { x; } while (0)
+#else
+#define DEBUG_WATCHED_DO(x) do { } while (0)
+#endif
+
+
+// tbuddy
+#ifdef USE_TBUDDY
+#define TBUDDY_DO(x) \
+    do { x; } while (0)
+#else
+#define TBUDDY_DO(x)  do { } while (0)
+#endif
 
 #ifdef VERBOSE_DEBUG
 #define FAST_DEBUG

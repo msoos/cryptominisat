@@ -41,6 +41,7 @@ struct SearchHist {
 
     AvgCalc<uint32_t>   backtrackLevelHistLT;
     AvgCalc<uint32_t>   trailDepthHistLT;
+    AvgCalc<uint32_t>   connects_num_communities_histLT;
 
     bqueue<uint32_t>    trailDepthHistLonger; ///<total depth, incl. props, decisions and assumps
     AvgCalc<uint32_t>   trailDepthDeltaHist; ///<for THIS restart only
@@ -100,7 +101,7 @@ struct SearchHist {
         #endif
     }
 
-    void reset_glue_hist_size(size_t shortTermHistorySize)
+    void reset_glueHist_size(size_t shortTermHistorySize)
     {
         glueHist.clearAndResize(shortTermHistorySize);
         #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)

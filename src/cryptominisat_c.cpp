@@ -20,9 +20,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#include "cryptominisat5/cryptominisat_c.h"
+#include "cryptominisat_c.h"
 #include "constants.h"
-#include "cryptominisat5/cryptominisat.h"
+#include "cryptominisat.h"
 
 
 // C wrappers for SATSolver so that it can be used from other languages (e.g. Rust)
@@ -134,10 +134,6 @@ extern "C"
         self->set_default_polarity(polarity);
     } NOEXCEPT_END
 
-    DLL_PUBLIC void cmsat_set_polarity_auto(SATSolver* self) NOEXCEPT_START {
-        self->set_polarity_auto();
-    } NOEXCEPT_END
-
     DLL_PUBLIC void cmsat_set_no_simplify(SATSolver* self) NOEXCEPT_START {
         self->set_no_simplify();
     } NOEXCEPT_END
@@ -160,11 +156,9 @@ extern "C"
     DLL_PUBLIC void cmsat_set_up_for_scalmc(SATSolver* self)  NOEXCEPT_START {
         self->set_up_for_scalmc();
     } NOEXCEPT_END
-
-    DLL_PUBLIC void cmsat_set_yes_comphandler(SATSolver* self)  NOEXCEPT_START {
-        self->set_yes_comphandler();
+    DLL_PUBLIC void cmsat_set_up_for_arjun(SATSolver* self)  NOEXCEPT_START {
+        self->set_up_for_arjun();
     } NOEXCEPT_END
-
     DLL_PUBLIC c_lbool cmsat_simplify(SATSolver* self, const c_Lit* assumptions, size_t num_assumptions) NOEXCEPT_START {
         auto temp = wrap(fromc(assumptions), num_assumptions);
         return toc(self->simplify(&temp));

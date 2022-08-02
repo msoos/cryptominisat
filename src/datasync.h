@@ -20,22 +20,27 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
+#ifndef _DATASYNC_H_
+#define _DATASYNC_H_
+
 #include "solvertypes.h"
 #include "watched.h"
+#include "propby.h"
 #include "watcharray.h"
 #ifdef USE_MPI
 #include "mpi.h"
 #endif //USE_MPI
 
-
 namespace CMSat {
 
+class Clause;
 class SharedData;
 class Solver;
 class DataSync
 {
     public:
-        DataSync(Solver* solver, SharedData* sharedData, bool is_mpi);
+        DataSync(Solver* solver, SharedData* sharedData);
+        void finish_up_mpi();
         bool enabled();
         void set_shared_data(SharedData* sharedData);
         void new_var(const bool bva);
@@ -47,9 +52,17 @@ class DataSync
            const vector<uint32_t>& outerToInter
             , const vector<uint32_t>& interToOuter
         );
+        void signal_new_long_clause(const vector<Lit>& clause);
 
-        template <class T> void signalNewBinClause(T& ps);
-        void signalNewBinClause(Lit lit1, Lit lit2);
+        #ifdef USE_GPU
+        vector<Lit> clause_tmp;
+        vector<Lit> trail_tmp;
+        void unsetFromGpu(uint32_t level);
+        void trySendAssignmentToGpu();
+        PropBy pop_clauses();
+        uint32_t signalled_gpu_long_cls = 0;
+        uint32_t popped_clause = 0;
+        #endif
 
         struct Stats
         {
@@ -62,14 +75,22 @@ class DataSync
 
     private:
         void extend_bins_if_needed();
-        Lit map_outside_without_bva(Lit lit) const;
+        Lit map_outer_to_outside(Lit lit) const;
         bool shareUnitData();
+        bool shareBinData();
         bool syncBinFromOthers();
         bool syncBinFromOthers(const Lit lit, const vector<Lit>& bins, uint32_t& finished, watch_subarray ws);
         void syncBinToOthers();
         void clear_set_binary_values();
-        void addOneBinToOthers(const Lit lit1, const Lit lit2);
-        bool shareBinData();
+        bool add_bin_to_threads(const Lit lit1, const Lit lit2);
+        void signal_new_bin_clause(Lit lit1, Lit lit2);
+        void rebuild_bva_map_if_needed();
+
+
+        #ifdef USE_GPU
+        uint32_t trailCopiedUntil = 0;
+        #endif
+        int thread_id = -1;
 
         //stuff to sync
         vector<std::pair<Lit, Lit> > newBinClauses;
@@ -80,38 +101,35 @@ class DataSync
         Stats stats;
 
         //Other systems
-        Solver* solver;
-        SharedData* sharedData;
-
+        Solver* solver = NULL;
+        SharedData* sharedData = NULL;
 
         //MPI
-        bool is_mpi;
         #ifdef USE_MPI
-        bool syncFromMPI();
-        void syncToMPI();
-        void getNeedToInterruptFromMPI();
-        bool sync_mpi_unit(
+        void set_up_for_mpi();
+        bool mpi_recv_from_others();
+        void mpi_send_to_others();
+        bool mpi_get_interrupt();
+        bool mpi_get_unit(
             const lbool otherVal,
             const uint32_t var,
-            SharedData* shared,
-            uint32_t& thisGotUnitData,
-            uint32_t& thisSentUnitData
+            uint32_t& thisGotUnitData
         );
         vector<uint32_t> syncMPIFinish;
         MPI_Request   sendReq;
-        uint32_t*     mpiSendData;
+        uint32_t*     mpiSendData = NULL;
 
         int           mpiRank = 0;
         int           mpiSize = 0;
-        uint32_t      mpiRecvUnitData;
-        uint32_t      mpiRecvBinData;
-        uint32_t      mpiSentBinData;
+        uint32_t      mpiRecvUnitData = 0;
+        uint32_t      mpiRecvBinData = 0;
+        uint32_t      mpiSentBinData = 0;
         #endif
 
 
         //misc
         uint32_t numCalls = 0;
-        vector<uint16_t>& seen;
+        vector<uint32_t>& seen;
         vector<Lit>& toClear;
         vector<uint32_t> outer_to_without_bva_map;
         bool must_rebuild_bva_map = false;
@@ -122,17 +140,7 @@ inline const DataSync::Stats& DataSync::get_stats() const
     return stats;
 }
 
-template <class T>
-inline void DataSync::signalNewBinClause(T& ps)
-{
-    if (sharedData == NULL) {
-        return;
-    }
-    //assert(ps.size() == 2);
-    signalNewBinClause(ps[0], ps[1]);
-}
-
-inline Lit DataSync::map_outside_without_bva(const Lit lit) const
+inline Lit DataSync::map_outer_to_outside(const Lit lit) const
 {
     return Lit(outer_to_without_bva_map[lit.var()], lit.sign());
 
@@ -144,3 +152,5 @@ inline bool DataSync::enabled()
 }
 
 }
+
+#endif

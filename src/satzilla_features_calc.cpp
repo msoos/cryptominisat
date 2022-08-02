@@ -43,7 +43,7 @@ void SatZillaFeaturesCalc::for_one_clause(
     unsigned size = 0;
 
     switch (cl.getType()) {
-        case CMSat::watch_binary_t: {
+        case WatchType::watch_binary_t: {
             if (cl.red()) {
                 //only irred cls
                 break;
@@ -62,8 +62,11 @@ void SatZillaFeaturesCalc::for_one_clause(
             func_each_lit(cl.lit2(), size, pos_vars, neg_vars);
             break;
         }
+        case WatchType::watch_bnn_t:
+            release_assert(false && "Not implemented");
+            break;
 
-        case CMSat::watch_clause_t: {
+        case WatchType::watch_clause_t: {
             const Clause& clause = *solver->cl_alloc.ptr(cl.get_offset());
             if (clause.red()) {
                 //only irred cls
@@ -86,7 +89,7 @@ void SatZillaFeaturesCalc::for_one_clause(
             break;
         }
 
-        case CMSat::watch_idx_t: {
+        case WatchType::watch_idx_t: {
              // This should never be here
             assert(false);
             exit(-1);
@@ -328,29 +331,29 @@ void SatZillaFeaturesCalc::calculate_cl_distributions(
 
 void SatZillaFeaturesCalc::normalise_values()
 {
-    if (satzilla_feat.vcg_var_min == std::numeric_limits<double>::max())
+    if (satzilla_feat.vcg_var_min == numeric_limits<double>::max())
         satzilla_feat.vcg_var_min = -1;
-    if (satzilla_feat.vcg_var_max == std::numeric_limits<double>::min())
+    if (satzilla_feat.vcg_var_max == numeric_limits<double>::min())
         satzilla_feat.vcg_var_max = -1;
 
-    if (satzilla_feat.vcg_cls_min  == std::numeric_limits<double>::max())
+    if (satzilla_feat.vcg_cls_min  == numeric_limits<double>::max())
         satzilla_feat.vcg_cls_min = -1;
-    if (satzilla_feat.vcg_cls_max == std::numeric_limits<double>::min())
+    if (satzilla_feat.vcg_cls_max == numeric_limits<double>::min())
         satzilla_feat.vcg_cls_max = -1;
 
-    if (satzilla_feat.pnr_var_min == std::numeric_limits<double>::max())
+    if (satzilla_feat.pnr_var_min == numeric_limits<double>::max())
         satzilla_feat.pnr_var_min = -1;
-    if (satzilla_feat.pnr_var_max == std::numeric_limits<double>::min())
+    if (satzilla_feat.pnr_var_max == numeric_limits<double>::min())
         satzilla_feat.pnr_var_max = -1;
 
-    if (satzilla_feat.horn_min == std::numeric_limits<double>::max())
+    if (satzilla_feat.horn_min == numeric_limits<double>::max())
         satzilla_feat.horn_min = -1;
-    if (satzilla_feat.horn_max == std::numeric_limits<double>::min())
+    if (satzilla_feat.horn_max == numeric_limits<double>::min())
         satzilla_feat.horn_max = -1;
 
-    if (satzilla_feat.pnr_cls_min == std::numeric_limits<double>::max())
+    if (satzilla_feat.pnr_cls_min == numeric_limits<double>::max())
         satzilla_feat.pnr_cls_min = -1;
-    if (satzilla_feat.pnr_cls_max == std::numeric_limits<double>::min())
+    if (satzilla_feat.pnr_cls_max == numeric_limits<double>::min())
         satzilla_feat.pnr_cls_max = -1;
 }
 

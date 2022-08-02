@@ -178,6 +178,10 @@ public:
     template<typename T>
     void build(const T& ns)
     {
+        for (int i = 0; i < (int)ns.size(); i++) {
+            indices.growTo(ns[i]+1, -1);
+        }
+
         for (int i = 0; i < (int)heap.size(); i++) {
             indices[heap[i]] = -1;
         }

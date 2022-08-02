@@ -8,10 +8,11 @@ Python process itself.
 
 Compiling
 -----
-The pycryptosat python package compiles while compiling CryptoMiniSat. It
-cannotbe compiled on its own, it must be compiled at the same time as
-CryptoMiniSat. You will need the python development libraries in order to
-compile:
+The pycryptosat python package compiles separately from the CryptoMiniSat library,
+so if you have special flags included with CryptoMiniSat, it will NOT be reflected
+in the python package.
+
+In order to compile, install the python developer tools:
 
 ```
 apt-get install python-dev
@@ -20,24 +21,10 @@ apt-get install python-dev
 After this, cmake then indicate that pycryptosat will be compiled:
 
 ```
-cd cryptominisat
-mkdir build
-cd build
-cmake ..
-[...]
--- Found PythonInterp: /usr/bin/python2.7 (found suitable version "2.7.9", minimum required is "2.7")
--- Found PythonLibs: /usr/lib/x86_64-linux-gnu/libpython2.7.so (found suitable version "2.7.9", minimum required is "2.7")
--- PYTHON_EXECUTABLE:FILEPATH=/usr/bin/python2.7
--- PYTHON_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libpython2.7.so
--- PYTHON_INCLUDE_DIR:FILEPATH=/usr/include/python2.7
--- PYTHONLIBS_VERSION_STRING=2.7.9
--- OK, found python interpreter, libs and header files
--- Building python interface
-[...]
+cd cryptominisat/python
+make
+sudo make install
 ```
-
-It will then generate the pycryptosat library and install it when calling
-`make install`.
 
 Usage
 -----

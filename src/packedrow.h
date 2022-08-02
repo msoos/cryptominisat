@@ -60,6 +60,7 @@ inline void SetBit(int64_t *array, int bit) {
 class PackedRow
 {
 public:
+    PackedRow() = delete;
     PackedRow& operator=(const PackedRow& b)
     {
         #ifdef DEBUG_ROW
@@ -246,7 +247,7 @@ public:
         setZero();
         for (uint32_t i = 0; i != v.size(); i++) {
             const uint32_t toset_var = var_to_col[v[i]];
-            assert(toset_var != std::numeric_limits<uint32_t>::max());
+            assert(toset_var != numeric_limits<uint32_t>::max());
 
             setBit(toset_var);
         }

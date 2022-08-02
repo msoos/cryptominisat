@@ -24,67 +24,70 @@ THE SOFTWARE.
 
 #include <vector>
 #include <cstdint>
+#include "constants.h"
 using std::vector;
 
 namespace CMSat {
 
+// variable indices
 struct Link {
-    // variable indices
-    uint32_t prev = std::numeric_limits<uint32_t>::max();
-    uint32_t next = std::numeric_limits<uint32_t>::max();
+    uint32_t prev = numeric_limits<uint32_t>::max(); ///< VARIABLE NUMBER
+    uint32_t next = numeric_limits<uint32_t>::max(); ///< VARIABLE NUMBER
 };
-
-typedef vector<Link> Links;
 
 struct Queue {
 
-  // We use integers instead of variable pointers.  This is more compact and
-  // also avoids issues due to moving the variable table during 'resize'.
+    // We use integers instead of variable pointers.  This is more compact and
+    // also avoids issues due to moving the variable table during 'resize'.
 
-  uint32_t first, last;    // anchors (head/tail) for doubly linked list
-  uint32_t unassigned;     // all variables after this one are assigned
-  uint64_t vmtf_bumped;     // see vmtf_update_queue_unassigned
+    uint32_t first;  ///< VARIABLE NUMBER. anchor (head/tail) for doubly linked list.
+    uint32_t last;   ///< VARIABLE NUMBER. anchor (head/tail) for doubly linked list.
+    uint32_t unassigned;     ///< VARIABLE NUMBER. All variables after this one are assigned
+    uint64_t vmtf_bumped;     ///< Last unassigned variable's btab value
 
-  Queue () :
-      first (std::numeric_limits<uint32_t>::max()),
-      last (std::numeric_limits<uint32_t>::max()),
-      unassigned (std::numeric_limits<uint32_t>::max()),
-      vmtf_bumped (std::numeric_limits<uint64_t>::max())
-  {}
+    Queue () :
+        first (numeric_limits<uint32_t>::max()),
+        last (numeric_limits<uint32_t>::max()),
+        unassigned (numeric_limits<uint32_t>::max()),
+        vmtf_bumped (0)
+    {}
 
-  // We explicitly provide the mapping of integer indices to vmtf_links to the
-  // following two (inlined) functions.  This avoids including
-  // 'internal.hpp' and breaks a cyclic dependency, so we can keep their
-  // code here in this header file.  Otherwise they are just ordinary doubly
-  // linked list 'dequeue' and 'enqueue' operations.
+    // We explicitly provide the mapping of integer indices to vmtf_links to the
+    // following two (inlined) functions.  They are just ordinary doubly
+    // linked list 'dequeue' and 'enqueue' operations.
 
-  inline void dequeue (Links & vmtf_links, uint32_t idx) {
-    Link & l = vmtf_links[idx];
+    // Removes from the list
+    void dequeue (vector<Link>& vmtf_links, const uint32_t var) {
+        auto& l = vmtf_links[var];
 
-    if (l.prev != std::numeric_limits<uint32_t>::max()) {
-        vmtf_links[l.prev].next = l.next;
-    } else {
-        first = l.next;
+        if (l.prev != numeric_limits<uint32_t>::max()) {
+            // Not the first one in the list
+            vmtf_links[l.prev].next = l.next;
+        } else {
+            first = l.next;
+        }
+
+        if (l.next != numeric_limits<uint32_t>::max()) {
+            // No the last one in the list
+            vmtf_links[l.next].prev = l.prev;
+        } else {
+            last = l.prev;
+        }
     }
 
-    if (l.next != std::numeric_limits<uint32_t>::max()) {
-        vmtf_links[l.next].prev = l.prev;
-    } else {
-        last = l.prev;
+    // Puts varible at the head of the list
+    void enqueue (vector<Link>& vmtf_links, const uint32_t var) {
+        auto& l = vmtf_links[var];
+        l.prev = last;
+        if (l.prev != numeric_limits<uint32_t>::max()) {
+            // Not the first one in the list
+            vmtf_links[last].next = var;
+        } else {
+            first = var;
+        }
+        last = var;
+        l.next = numeric_limits<uint32_t>::max();
     }
-  }
-
-  inline void enqueue (Links & vmtf_links, uint32_t idx) {
-    Link & l = vmtf_links[idx];
-    l.prev = last;
-    if (l.prev != std::numeric_limits<uint32_t>::max()) {
-        vmtf_links[last].next = idx;
-    } else {
-        first = idx;
-    }
-    last = idx;
-    l.next = std::numeric_limits<uint32_t>::max();
-  }
 };
 
 } //namespace

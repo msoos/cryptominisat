@@ -65,7 +65,7 @@ TEST_F(SearcherTest, pickpolar_rnd)
     s->new_vars(30);
     ss = (Searcher*)s;
 
-    s->add_clause_outer(str_to_cl(" 1,  2"));
+    s->add_clause_outside(str_to_cl(" 1,  2"));
 
     uint32_t num = 0;
     for(uint32_t i = 0 ; i < 1000000; i++)
@@ -82,7 +82,7 @@ TEST_F(SearcherTest, pickpolar_pos)
     s = new Solver(&conf, &must_inter);
     s->new_vars(30);
     ss = (Searcher*)s;
-    s->add_clause_outer(str_to_cl(" 1,  2"));
+    s->add_clause_outside(str_to_cl(" 1,  2"));
 
     uint32_t num = 0;
     for(uint32_t i = 0 ; i < 100000; i++)
@@ -97,81 +97,13 @@ TEST_F(SearcherTest, pickpolar_neg)
     s = new Solver(&conf, &must_inter);
     s->new_vars(30);
     ss = (Searcher*)s;
-    s->add_clause_outer(str_to_cl(" 1,  2"));
+    s->add_clause_outside(str_to_cl(" 1,  2"));
 
     uint32_t num = 0;
     for(uint32_t i = 0 ; i < 100000; i++)
         num += (unsigned)ss->pick_polarity(0);
 
     ASSERT_EQ(num, 0U);
-}
-
-TEST_F(SearcherTest, pickpolar_auto)
-{
-    conf.polarity_mode = PolarityMode::polarmode_automatic;
-    s = new Solver(&conf, &must_inter);
-    s->new_vars(30);
-    ss = (Searcher*)s;
-    s->add_clause_outer(str_to_cl(" 1,  2"));
-
-    s->new_decision_level();
-    set_var_polar(0, true);
-    //we expect TRUE
-    ASSERT_EQ(ss->pick_polarity(0), true);
-
-
-    set_var_polar(0, false);
-    //we expect FALSE
-    ASSERT_EQ(ss->pick_polarity(0), false);
-
-    //for unset variables, it must all be FALSE
-    for(uint32_t i = 1; i < 10; i++) {
-        ASSERT_EQ(ss->pick_polarity(i), false);
-    }
-}
-
-TEST_F(SearcherTest, pickpolar_auto_not_changed_by_simp)
-{
-    conf.polarity_mode = PolarityMode::polarmode_automatic;
-    conf.doVarElim = false;
-    //conf.verbosity = 2;
-    conf.do_lucky_polar_every_n = 0;
-    conf.doSLS = false;
-    s = new Solver(&conf, &must_inter);
-    s->new_vars(30);
-    ss = (Searcher*)s;
-    s->add_clause_outer(str_to_cl(" 1,  2"));
-    s->add_clause_outer(str_to_cl(" -1,  2"));
-    s->add_clause_outer(str_to_cl(" 3,  4, 5"));
-    s->add_clause_outer(str_to_cl(" -3,  4, 5"));
-    s->add_clause_outer(str_to_cl(" -3,  -4, 5"));
-    s->add_clause_outer(str_to_cl(" 2, -3,  -4, 5"));
-    s->add_clause_outer(str_to_cl(" 2, -3,  4, 5"));
-    s->add_clause_outer(str_to_cl(" 4, 5"));
-    s->add_clause_outer(str_to_cl(" -4, 5"));
-    s->add_clause_outer(str_to_cl(" -4, -5"));
-
-
-    //The mod%3 is only to set it kinda randomly.
-    for(size_t i = 0; i < 30; i++) {
-        set_var_polar(i, i%3);
-    }
-
-    //for unset variables, it must all be FALSE
-    for(uint32_t i = 0; i < 30; i++) {
-        ASSERT_EQ(ss->pick_polarity(i), (bool)(i%3));
-    }
-
-    s->simplify_problem(true);
-    //for unset variables, it must all be FALSE
-    for(uint32_t i = 0; i < 30; i++) {
-        ASSERT_EQ(ss->pick_polarity(i), (bool)(i%3));
-    }
-
-    s->simplify_problem(false);
-    for(uint32_t i = 0; i < 30; i++) {
-        ASSERT_EQ(ss->pick_polarity(i), (bool)(i%3));
-    }
 }
 
 }

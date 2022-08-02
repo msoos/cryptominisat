@@ -30,7 +30,7 @@ THE SOFTWARE.
 
 #include "main_common.h"
 #include "solverconf.h"
-#include "cryptominisat5/cryptominisat.h"
+#include "cryptominisat.h"
 
 using std::string;
 using std::vector;
@@ -45,11 +45,9 @@ class Main: public MainCommon
         Main(int argc, char** argv);
         ~Main()
         {
-            if (dratf) {
-                *dratf << std::flush;
-                if (dratf != &std::cout) {
-                    delete dratf;
-                }
+            if (fratf) {
+                fflush(fratf);
+                fclose(fratf);
             }
 
             delete solver;
@@ -99,7 +97,6 @@ class Main: public MainCommon
         void printVersionInfo();
         int correctReturnValue(const lbool ret) const;
         lbool multi_solutions();
-        void dump_red_file();
         void ban_found_solution();
 
         //Config
@@ -126,9 +123,6 @@ class Main: public MainCommon
         bool fileNamePresent;
         vector<string> filesToRead;
         std::ofstream* resultfile = NULL;
-        string dump_red_fname;
-        uint32_t dump_red_max_len = 10000;
-        uint32_t dump_red_max_glue = 1000;
 
         //Drat checker
         bool clause_ID_needed = false;

@@ -36,68 +36,73 @@ THE SOFTWARE.
 
 namespace CMSat {
 
-enum WatchType {
+enum class WatchType {
     watch_clause_t = 0
     , watch_binary_t = 1
+    , watch_bnn_t = 2
     , watch_idx_t = 3
 };
 
-/**
-@brief An element in the watchlist. Natively contains 2- and 3-long clauses, others are referenced by pointer
+enum BNNPropType {
+    bnn_pos_t = 0
+    , bnn_neg_t = 1
+    , bnn_out_t = 2
+};
 
-This class contains two 32-bit datapieces. They are either used as:
-\li One literal, in the case of binary clauses
-\li Two literals, in the case of tertiary clauses
-\li One blocking literal (i.e. an example literal from the clause) and a clause
-offset (as per ClauseAllocator ), in the case of long clauses
-*/
 class Watched {
     public:
         Watched(Watched const&) = default;
 
         /**
-        @brief Constructor for a long (>3) clause
+        @brief Constructor for a long (>2) clause
         */
         Watched(const ClOffset offset, Lit blockedLit) :
             data1(blockedLit.toInt())
-            , type(watch_clause_t)
+            , type(static_cast<int>(WatchType::watch_clause_t))
             , data2(offset)
         {
         }
 
         /**
-        @brief Constructor for a long (>3) clause
+        @brief Constructor for a long (>2) clause
         */
         Watched(const ClOffset offset, cl_abst_type abst) :
             data1(abst)
-            , type(watch_clause_t)
+            , type(static_cast<int>(WatchType::watch_clause_t))
             , data2(offset)
         {
         }
 
+        Watched(const uint32_t idx, WatchType t):
+            data1(idx)
+            , type(static_cast<int>(t))
+        {
+            assert(t == WatchType::watch_idx_t);
+        }
+
+        Watched(const uint32_t idx, WatchType t, BNNPropType bnn_p_t):
+            data1(idx)
+            , type(static_cast<int>(t))
+            , data2(bnn_p_t)
+        {
+            DEBUG_WATCHED_DO(assert(t == watch_bnn_t));
+        }
+
         Watched() :
-            data1 (std::numeric_limits<uint32_t>::max())
-            , type(watch_clause_t) // initialize type with most generic type of clause
-            , data2(std::numeric_limits<uint32_t>::max() >> 2)
+            data1 (numeric_limits<uint32_t>::max())
+            , type(static_cast<int>(WatchType::watch_clause_t)) // initialize type with most generic type of clause
+            , data2(numeric_limits<uint32_t>::max() >> 2)
         {}
 
         /**
         @brief Constructor for a binary clause
         */
-        Watched(const Lit lit, const bool red) :
+        Watched(const Lit lit, const bool red, int32_t ID) :
             data1(lit.toInt())
-            , type(watch_binary_t)
-            , data2(red)
+            , type(static_cast<int>(WatchType::watch_binary_t))
+            , data2((int32_t)red | ID<<2) //marking is 2nd bit
         {
-        }
-
-        /**
-        @brief Constructor for an Index value
-        */
-        explicit Watched(const uint32_t idx) :
-            data1(idx)
-            , type(watch_idx_t)
-        {
+            assert(ID < 1LL<< (EFFECTIVELY_USEABLE_BITS-2));
         }
 
         /**
@@ -105,9 +110,7 @@ class Watched {
         */
         void setBlockedLit(const Lit blockedLit)
         {
-            #ifdef DEBUG_WATCHED
-            assert(type == watch_clause_t);
-            #endif
+            DEBUG_WATCHED_DO(assert(type == watch_clause_t));
             data1 = blockedLit.toInt();
         }
 
@@ -119,25 +122,40 @@ class Watched {
 
         bool isBin() const
         {
-            return (type == watch_binary_t);
+            return (type == static_cast<int>(WatchType::watch_binary_t));
         }
 
         bool isClause() const
         {
-            return (type == watch_clause_t);
+            return (type == static_cast<int>(WatchType::watch_clause_t));
         }
 
         bool isIdx() const
         {
-            return (type == watch_idx_t);
+            return (type == static_cast<int>(WatchType::watch_idx_t));
+        }
+
+        bool isBNN() const
+        {
+            return (type == static_cast<int>(WatchType::watch_bnn_t));
         }
 
         uint32_t get_idx() const
         {
-            #ifdef DEBUG_WATCHED
-            assert(type == watch_idx_t);
-            #endif
+            DEBUG_WATCHED_DO(assert(type == static_cast<int>(WatchType::watch_idx_t)));
             return data1;
+        }
+
+        uint32_t get_bnn() const
+        {
+            DEBUG_WATCHED_DO(assert(type == static_cast<int>(WatchType::watch_bnn_t)));
+            return data1;
+        }
+
+        BNNPropType get_bnn_prop_t() const
+        {
+            DEBUG_WATCHED_DO(assert(type == static_cast<int>(WatchType::watch_bnn_t)));
+            return (BNNPropType)data2;
         }
 
         /**
@@ -145,9 +163,7 @@ class Watched {
         */
         Lit lit2() const
         {
-            #ifdef DEBUG_WATCHED
-            assert(isBin());
-            #endif
+            DEBUG_WATCHED_DO(assert(isBin()));
             return Lit::toLit(data1);
         }
 
@@ -156,51 +172,45 @@ class Watched {
         */
         void setLit2(const Lit lit)
         {
-            #ifdef DEBUG_WATCHED
-            assert(isBin());
-            #endif
+            DEBUG_WATCHED_DO(assert(isBin()));
             data1 = lit.toInt();
         }
 
         bool red() const
         {
-            #ifdef DEBUG_WATCHED
-            assert(isBin());
-            #endif
+            DEBUG_WATCHED_DO(assert(isBin()));
             return data2 & 1;
+        }
+
+        int32_t get_ID() const
+        {
+            DEBUG_WATCHED_DO(assert(isBin()));
+            return data2 >> 2;
         }
 
         void setRed(const bool toSet)
         {
-            #ifdef DEBUG_WATCHED
-            assert(isBin());
-            assert(red());
-            #endif
+            DEBUG_WATCHED_DO(assert(isBin()));
+            DEBUG_WATCHED_DO(assert(red()));
             assert(toSet == false);
             data2 &= (~(1U));
         }
 
         void mark_bin_cl()
         {
-            #ifdef DEBUG_WATCHED
-            assert(isBin());
-            #endif
+            DEBUG_WATCHED_DO(assert(isBin()));
             data2 |= 2;
         }
 
         void unmark_bin_cl()
         {
-            #ifdef DEBUG_WATCHED
-            assert(isBin());
-            #endif
-            data2 &= 1;
+            DEBUG_WATCHED_DO(assert(isBin()));
+            data2 &= (~(2ULL));
         }
 
         bool bin_cl_marked() const
         {
-            #ifdef DEBUG_WATCHED
-            assert(isBin());
-            #endif
+            DEBUG_WATCHED_DO(assert(isBin()));
             return data2&2;
         }
 
@@ -209,17 +219,13 @@ class Watched {
         */
         Lit getBlockedLit() const
         {
-            #ifdef DEBUG_WATCHED
-            assert(isClause());
-            #endif
+            DEBUG_WATCHED_DO(assert(isClause()));
             return Lit::toLit(data1);
         }
 
         cl_abst_type getAbst() const
         {
-            #ifdef DEBUG_WATCHED
-            assert(isClause());
-            #endif
+            DEBUG_WATCHED_DO(assert(isClause()));
             return data1;
         }
 
@@ -228,9 +234,7 @@ class Watched {
         */
         ClOffset get_offset() const
         {
-            #ifdef DEBUG_WATCHED
-            assert(isClause());
-            #endif
+            DEBUG_WATCHED_DO(assert(isClause()));
             return data2;
         }
 
@@ -246,9 +250,6 @@ class Watched {
 
     private:
         uint32_t data1;
-        // binary, tertiary or long, as per WatchType
-        // currently WatchType is enum with range [0..3] and fits in type
-        // in case if WatchType extended type size won't be enough.
         ClOffset type:2;
         ClOffset data2:EFFECTIVELY_USEABLE_BITS;
 };
@@ -268,7 +269,7 @@ inline std::ostream& operator<<(std::ostream& os, const Watched& ws)
 }
 
 struct OccurClause {
-    OccurClause(const Lit _lit, const Watched _ws) :
+    OccurClause(const Lit& _lit, const Watched& _ws) :
         lit(_lit)
         , ws(_ws)
     {}
@@ -277,13 +278,36 @@ struct OccurClause {
         lit(lit_Undef)
     {}
 
-    bool operator==(const OccurClause& other) const
-    {
-        return lit == other.lit && ws == other.ws;
-    }
-
     Lit lit;
     Watched ws;
+
+    // will be equal even if one is removing a literal, and the other is subsuming the whole clause
+    bool operator==(const OccurClause& other) const {
+        if (ws.getType() != other.ws.getType()) return false;
+        if (ws.isBin()) return ws.get_ID() == other.ws.get_ID();
+        if (ws.isBNN()) return ws.get_bnn() == other.ws.get_bnn();
+        if (ws.isClause()) return ws.get_offset() == other.ws.get_offset();
+        release_assert(false);
+        return false;
+    }
+
+    bool operator<(const OccurClause& other) const {
+        if (ws.isBin() && !other.ws.isBin()) {
+            return true;
+        }
+        if (!ws.isBin() && other.ws.isBin()) {
+            return false;
+        }
+
+        if (ws.isBin()) {
+            assert(other.ws.isBin());
+            return ws.get_ID() < other.ws.get_ID();
+        }
+
+        assert(!ws.isBNN()); // no idea how this would work
+        assert(!other.ws.isBNN()); // no idea how this would work
+        return ws.get_offset() < other.ws.get_offset();
+    }
 };
 
 struct WatchSorterBinTriLong {
@@ -293,11 +317,11 @@ struct WatchSorterBinTriLong {
             assert(!b.isIdx());
 
             //Anything but clause!
-            if (a.isClause()) {
+            if (a.isClause() || a.isBNN()) {
                 //A is definitely not better than B
                 return false;
             }
-            if (b.isClause()) {
+            if (b.isClause() || b.isBNN()) {
                 //B is clause, A is NOT a clause. So A is better than B.
                 return true;
             }
@@ -313,7 +337,8 @@ struct WatchSorterBinTriLong {
             if (a.red() != b.red()) {
                 return !a.red();
             }
-            return false;
+
+            return (a.get_ID() < b.get_ID());
         }
     };
 

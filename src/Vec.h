@@ -26,7 +26,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <cstdint>
 #include <limits>
 #include <utility>
-
+#include "constants.h"
 #include "XAlloc.h"
 
 namespace CMSat {
@@ -247,7 +247,7 @@ void vec<T>::capacity(int32_t min_cap)
 
     // NOTE: grow by approximately 3/2
     uint32_t add = imax((min_cap - (int32_t)cap + 1) & ~1, (((int32_t)cap >> 1) + 2) & ~1);
-    if (add > std::numeric_limits<uint32_t>::max() - cap) {
+    if (add > numeric_limits<uint32_t>::max() - cap) {
         throw std::bad_alloc();
     }
     cap += (uint32_t)add;

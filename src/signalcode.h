@@ -32,8 +32,7 @@ using namespace CMSat;
 
 extern SATSolver* solverToInterrupt;
 extern int need_clean_exit;
-extern std::string redDumpFname;
-extern std::string irredDumpFname;
+extern double wallclock_time_started;
 void SIGINT_handler(int);
 
 #endif //SIGNALCODE_H_

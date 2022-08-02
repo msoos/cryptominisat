@@ -685,8 +685,8 @@ TEST(error_throw, multithread_0)
 TEST(error_throw, multithread_drat)
 {
     SATSolver s;
-    std::ostream* os = NULL;
-    s.set_drat(os, false);
+    FILE* os = NULL;
+    s.set_frat(os);
 
     EXPECT_THROW({
         s.set_num_threads(3);}
@@ -743,13 +743,13 @@ TEST(statistics, zero)
     s.new_vars(10);
 
     lbool ret = s.solve();
-    EXPECT_EQ(ret, l_True);;
+    EXPECT_EQ(ret, l_True);
     EXPECT_EQ(s.get_sum_conflicts(), 0);
     EXPECT_EQ(s.get_sum_propagations(), 10);
     EXPECT_EQ(s.get_sum_decisions(), 10);
 }
 
-TEST(statistics, one_confl)
+TEST(statistics, two_confl)
 {
     SATSolver s;
     s.set_no_simplify();
@@ -757,10 +757,11 @@ TEST(statistics, one_confl)
     s.add_clause(str_to_cl("1, 2"));
     s.add_clause(str_to_cl("1, -2"));
     s.add_clause(str_to_cl("-1, 2"));
+    s.add_clause(str_to_cl("-1, -2"));
 
     lbool ret = s.solve();
-    EXPECT_EQ(ret, l_True);
-    EXPECT_EQ(s.get_sum_conflicts(), 1);
+    EXPECT_EQ(ret, l_False);
+    EXPECT_EQ(s.get_sum_conflicts(), 2);
 }
 
 TEST(statistics, unsat)
@@ -904,6 +905,269 @@ TEST(propagate, prop_complex)
     EXPECT_EQ(lits.size(), 5);
 }
 
+TEST(get_small_clauses, mixed)
+{
+    SATSolver s;
+    s.new_vars(30);
+    s.set_no_bve();
+    s.set_no_bva();
+
+    s.add_clause(str_to_cl("1, 2"));
+    s.add_clause(str_to_cl("-5, 6"));
+    s.add_clause(str_to_cl("10"));
+    s.add_clause(str_to_cl("1, -2, -5, -6, 7"));
+
+    s.start_getting_small_clauses(10000000, 10000000, false);
+
+    vector<Lit> lits;
+    bool ret;
+
+    ret = s.get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(str_to_cl("10"), lits);
+
+    ret = s.get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(str_to_cl(" 1,  2"), lits);
+
+    ret = s.get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(str_to_cl(" -5,  6"), lits);
+
+    ret = s.get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(str_to_cl("1, -2, -5, -6, 7"), lits);
+
+    ret = s.get_next_small_clause(lits);
+    ASSERT_FALSE(ret);
+
+    s.end_getting_small_clauses();
+}
+
+TEST(get_small_clauses, scc)
+{
+    SATSolver s;
+    s.new_vars(30);
+    s.set_no_bve();
+    s.set_no_bva();
+
+    s.add_clause(str_to_cl("5, -6"));
+    s.add_clause(str_to_cl("-5, 6"));
+    s.simplify();
+    auto x = s.get_all_binary_xors();
+    ASSERT_EQ(1, x.size());
+
+    s.start_getting_small_clauses(10000000, 10000000, false);
+
+    vector<Lit> lits;
+    bool ret = s.get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(str_to_cl(" 5,  -6"), lits);
+
+    ret = s.get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(str_to_cl(" -5,  6"), lits);
+
+    ret = s.get_next_small_clause(lits);
+    ASSERT_FALSE(ret);
+
+    s.end_getting_small_clauses();
+}
+
+TEST(get_small_clauses, units)
+{
+    SATSolver s;
+    s.new_vars(30);
+    s.add_clause(str_to_cl("5"));
+    s.add_clause(str_to_cl("-6"));
+    s.simplify();
+
+    s.start_getting_small_clauses(10000000, 10000000, false);
+
+    vector<Lit> lits;
+    bool ret = s.get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(str_to_cl(" 5"), lits);
+
+    ret = s.get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(str_to_cl("-6"), lits);
+
+    ret = s.get_next_small_clause(lits);
+    ASSERT_FALSE(ret);
+
+    s.end_getting_small_clauses();
+}
+
+TEST(get_small_clauses, unsat)
+{
+    SATSolver s;
+    s.new_vars(30);
+    s.add_clause(str_to_cl("5"));
+    s.add_clause(str_to_cl("-5"));
+    s.simplify();
+
+    s.start_getting_small_clauses(10000000, 10000000, false);
+
+    vector<Lit> lits;
+    bool ret = s.get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    ASSERT_EQ(str_to_cl(""), lits);
+
+    ret = s.get_next_small_clause(lits);
+    ASSERT_FALSE(ret);
+
+    s.end_getting_small_clauses();
+}
+
+TEST(get_small_clauses, unsat_all)
+{
+    SATSolver s;
+    s.new_vars(30);
+    s.add_clause(str_to_cl("5"));
+    s.add_clause(str_to_cl("-5"));
+    s.simplify();
+
+    vector<Lit> lits;
+    s.get_all_irred_clauses(lits);
+    ASSERT_EQ(str_to_cl("U"), lits);
+}
+
+TEST(get_small_clauses, undef)
+{
+    SATSolver s;
+    s.new_vars(30);
+    s.add_clause(str_to_cl("5, -5"));
+    s.simplify();
+
+    vector<Lit> lits;
+    s.get_all_irred_clauses(lits);
+    ASSERT_EQ(str_to_cl("5, -5, U"), lits);
+}
+
+TEST(get_small_clauses, bve)
+{
+    SATSolver s;
+    s.new_vars(30);
+    s.add_clause(str_to_cl("5, 6"));
+    s.add_clause(str_to_cl("7, 8"));
+    s.simplify();
+
+    s.start_getting_small_clauses(10000000, 10000000, false);
+
+    vector<Lit> lits;
+    bool ret = s.get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(str_to_cl(" 5, 6"), lits);
+
+    ret = s.get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(str_to_cl("7, 8"), lits);
+
+    ret = s.get_next_small_clause(lits);
+    ASSERT_FALSE(ret);
+
+    s.end_getting_small_clauses();
+}
+
+TEST(get_small_clauses, full)
+{
+    SATSolver s;
+    s.new_vars(30);
+    s.add_clause(str_to_cl("5, 6"));
+    s.add_clause(str_to_cl("7, 8"));
+    s.simplify();
+
+    vector<Lit> lits;
+    s.get_all_irred_clauses(lits);
+    ASSERT_EQ(6, lits.size());
+}
+
+TEST(get_small_clauses, full_bins)
+{
+    SATSolver s;
+    s.new_vars(30);
+    s.add_clause(str_to_cl("5, 6"));
+    s.add_clause(str_to_cl("7, 8"));
+    s.simplify();
+
+    vector<Lit> lits;
+    s.get_all_irred_clauses(lits);
+
+    vector<Lit> cl;
+    uint32_t found = 0;
+    for(const auto& l: lits) {
+        if (l != lit_Undef) {
+            cl.push_back(l);
+        } else {
+            std::sort(cl.begin(), cl.end());
+            if (std::find(cl.begin(), cl.end(), Lit(5, false)) != cl.end()) {
+                ASSERT_EQ(str_to_cl("5, 6", false), cl);
+            } else {
+                ASSERT_EQ(str_to_cl("7, 8", false), cl);
+            }
+            cl.clear();
+            found++;
+        }
+    }
+    ASSERT_EQ(2, found);
+}
+
+TEST(get_small_clauses, full_units)
+{
+    SATSolver s;
+    s.new_vars(30);
+    s.add_clause(str_to_cl("5"));
+    s.add_clause(str_to_cl("7"));
+    s.simplify();
+
+    vector<Lit> lits;
+    s.get_all_irred_clauses(lits);
+    ASSERT_EQ(str_to_cl("5, U, 7, U", false), lits);
+}
+
+TEST(get_small_clauses, unit)
+{
+    SATSolver s;
+    s.new_vars(30);
+    s.set_no_bve();
+    s.set_no_bva();
+
+    s.add_clause(str_to_cl("5"));
+    s.add_clause(str_to_cl("6"));
+    s.simplify();
+    auto x = s.get_zero_assigned_lits();
+    ASSERT_EQ(2, x.size());
+
+    s.start_getting_small_clauses(10000000, 10000000, false);
+
+    vector<Lit> lits;
+    bool ret = s.get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(str_to_cl(" 5"), lits);
+
+    ret = s.get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(str_to_cl(" 6"), lits);
+
+    ret = s.get_next_small_clause(lits);
+    ASSERT_FALSE(ret);
+
+    s.end_getting_small_clauses();
+}
+
 TEST(sampling, indep1)
 {
     SolverConf conf;
@@ -940,7 +1204,7 @@ TEST(sampling, indep2)
     s.add_clause(str_to_cl("1, 2, 3, 4"));
     s.add_clause(str_to_cl("-5, 6"));
 
-    vector<uint32_t> x{0U,1U,2U,3U,4U,5U};
+    vector<uint32_t> x = str_to_vars("1, 2, 3, 4, 5, 6");
     s.set_sampling_vars(&x);
 
     lbool ret = s.solve(NULL, true);
@@ -959,7 +1223,7 @@ TEST(xor_recovery, find_1_3_xor)
     s.new_vars(30);
     s.set_no_bve();
 
-    s.add_xor_clause(vector<unsigned>{0U, 1U, 2U}, false);
+    s.add_xor_clause(str_to_vars("1, 2, 3"), false);
     s.simplify();
 
     vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(false);
@@ -972,7 +1236,7 @@ TEST(xor_recovery, find_1_3_xor2)
     s.new_vars(30);
     s.set_no_bve();
 
-    s.add_xor_clause(vector<unsigned>{0U, 1U, 2U}, true);
+    s.add_xor_clause(str_to_vars("1, 2, 3"), true);
     s.simplify();
 
     vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(false);
@@ -986,16 +1250,18 @@ TEST(xor_recovery, find_2_3_xor_2)
     s.set_no_bve();
 
     s.add_clause(str_to_cl("1,2,3,4,5"));
-    s.add_xor_clause(vector<unsigned>{0U, 1U, 2U}, false);
-    s.add_xor_clause(vector<unsigned>{0U, 3U, 4U}, false);
+    s.add_xor_clause(str_to_vars("1, 2, 3"), false);
+    s.add_xor_clause(str_to_vars("4, 5, 6"), false);
     s.simplify();
 
     vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(true);
     EXPECT_EQ(xors.size(), 2);
-    EXPECT_EQ(xors[0].first.size(), 3);
-    EXPECT_EQ(xors[1].first.size(), 3);
-    EXPECT_EQ(xors[0].second, false);
-    EXPECT_EQ(xors[1].second, false);
+    if (xors.size() == 2) {
+        EXPECT_EQ(xors[0].first, str_to_vars("1, 2, 3"));
+        EXPECT_EQ(xors[1].first, str_to_vars("4, 5, 6"));
+        EXPECT_EQ(xors[0].second, false);
+        EXPECT_EQ(xors[1].second, false);
+    }
 }
 
 TEST(xor_recovery, find_1_3_xor_exact)
@@ -1004,12 +1270,12 @@ TEST(xor_recovery, find_1_3_xor_exact)
     s.new_vars(30);
     s.set_no_bve();
 
-    s.add_xor_clause(vector<unsigned>{0U, 1U, 2U}, false);
+    s.add_xor_clause(str_to_vars("1, 2, 3"), false);
     s.simplify();
 
     vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(false);
     EXPECT_EQ(xors.size(), 1);
-    EXPECT_EQ(xors[0].first, (vector<uint32_t>{0U, 1U, 2U}));
+    EXPECT_EQ(xors[0].first, str_to_vars("1, 2, 3"));
     EXPECT_EQ(xors[0].second, false);
 }
 
@@ -1019,12 +1285,12 @@ TEST(xor_recovery, find_1_3_xor_exact2)
     s.new_vars(30);
     s.set_no_bve();
 
-    s.add_xor_clause(vector<unsigned>{0U, 1U, 2U}, true);
+    s.add_xor_clause(str_to_vars("1, 2, 3"), true);
     s.simplify();
 
     vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(false);
     EXPECT_EQ(xors.size(), 1);
-    EXPECT_EQ(xors[0].first, (vector<uint32_t>{0U, 1U, 2U}));
+    EXPECT_EQ(xors[0].first, str_to_vars("1, 2, 3"));
     EXPECT_EQ(xors[0].second, true);
 }
 
@@ -1034,12 +1300,12 @@ TEST(xor_recovery, find_1_4_xor_exact)
     s.new_vars(30);
     s.set_no_bve();
 
-    s.add_xor_clause(vector<unsigned>{0U, 1U, 2U, 3U}, false);
+    s.add_xor_clause(str_to_vars("1, 2, 3, 4"), false);
     s.simplify();
 
     vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(false);
     EXPECT_EQ(xors.size(), 1);
-    EXPECT_EQ(xors[0].first, (vector<uint32_t>{0U, 1U, 2U, 3U}));
+    EXPECT_EQ(xors[0].first, str_to_vars("1, 2, 3, 4"));
 }
 
 TEST(xor_recovery, find_xor_one_only)
@@ -1048,13 +1314,13 @@ TEST(xor_recovery, find_xor_one_only)
     s.new_vars(30);
     s.set_no_bve();
 
-    s.add_xor_clause(vector<unsigned>{0U, 1U, 2U, 3U, 4U, 5U}, false);
+    s.add_xor_clause(str_to_vars("1, 2, 3, 4, 6"), false);
     s.simplify();
 
     vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(true);
     EXPECT_EQ(xors.size(), 1);
     std::sort(xors[0].first.begin(), xors[0].first.end());
-    EXPECT_EQ(xors[0].first, (vector<uint32_t>{0U, 1U, 2U, 3U, 4U, 5U}));
+    EXPECT_EQ(xors[0].first, str_to_vars("1, 2, 3, 4, 6"));
     EXPECT_EQ(xors[0].second, false);
 }
 
@@ -1064,13 +1330,13 @@ TEST(xor_recovery, find_xor_one_only_inv)
     s.new_vars(30);
     s.set_no_bve();
 
-    s.add_xor_clause(vector<unsigned>{0U, 1U, 2U, 3U, 4U, 5U}, true);
+    s.add_xor_clause(str_to_vars("1, 2, 3, 4, 6"), true);
     s.simplify();
 
     vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(true);
     EXPECT_EQ(xors.size(), 1);
     std::sort(xors[0].first.begin(), xors[0].first.end());
-    EXPECT_EQ(xors[0].first, (vector<uint32_t>{0U, 1U, 2U, 3U, 4U, 5U}));
+    EXPECT_EQ(xors[0].first, str_to_vars("1, 2, 3, 4, 6"));
     EXPECT_EQ(xors[0].second, true);
 }
 
@@ -1080,7 +1346,7 @@ TEST(xor_recovery, find_xor_one_only_inv_external)
     s.new_vars(30);
     s.set_no_bve();
 
-    s.add_xor_clause(vector<unsigned>{0U, 1U, 2U, 3U, 4U, 5U}, true);
+    s.add_xor_clause(str_to_vars("1, 2, 3, 4, 6"), true);
     s.simplify();
 
     vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(false);
@@ -1096,14 +1362,14 @@ TEST(xor_recovery, find_xor_one_that_is_xor_of_2)
     s.new_vars(30);
     s.set_no_bve();
 
-    s.add_xor_clause(vector<unsigned>{0U, 2U, 3U, 4U}, true);
-    s.add_xor_clause(vector<unsigned>{0U, 6U, 7U, 8U}, true);
+    s.add_xor_clause(str_to_vars("1, 3, 4, 5"), true);
+    s.add_xor_clause(str_to_vars("1, 7, 8, 9"), true);
     s.simplify();
 
     vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(true);
     EXPECT_EQ(xors.size(), 1);
     std::sort(xors[0].first.begin(), xors[0].first.end());
-    EXPECT_EQ(xors[0].first, (vector<uint32_t>{2U, 3U, 4U, 6U, 7U, 8U}));
+    EXPECT_EQ(xors[0].first, str_to_vars("3, 4, 5, 7, 8, 9"));
     EXPECT_EQ(xors[0].second, false);
 }
 
@@ -1115,14 +1381,14 @@ TEST(xor_recovery, DISABLED_find_xor_renumber)
     s.set_no_bve();
     s.set_verbosity(5);
 
-    s.add_xor_clause(vector<unsigned>{0U, 1U}, false);
-    s.add_xor_clause(vector<unsigned>{0U, 1U, 2U, 3U, 4U, 5U, 6U, 7U, 8U, 9U}, true);
+    s.add_xor_clause(str_to_vars("1, 2"), false);
+    s.add_xor_clause(str_to_vars("1, 2, 3, 4, 5, 6, 7,8, 9, 10"), true);
     s.simplify();
     s.simplify();
 
     vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(true);
     EXPECT_EQ(xors.size(), 1);
-    EXPECT_EQ(xors[0].first, (vector<uint32_t>{1U, 2U, 3U, 4U, 5U, 6U, 7U, 8U, 9U}));
+    EXPECT_EQ(xors[0].first, str_to_vars("2, 3, 4, 5, 6, 7,8, 9, 10"));
 }
 
 

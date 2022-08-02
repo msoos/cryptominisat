@@ -66,14 +66,14 @@ class PossibleXor
             #endif
 
             assert(cl.size() <= sizeof(origCl)/sizeof(Lit)
-            && "The XOR being recovered is larger than MAX_XOR_RECOVER_SIZE");
+                && "The XOR being recovered is larger than MAX_XOR_RECOVER_SIZE");
             for(size_t i = 0; i < size; i++) {
                 origCl[i] = cl[i];
                 if (i > 0)
                     assert(cl[i-1] < cl[i]);
             }
             setup_seen_rhs_foundcomb(seen);
-            if (offset != std::numeric_limits<ClOffset>::max()) {
+            if (offset != numeric_limits<ClOffset>::max()) {
                 //this is the XOR that starts it all
                 //so it's fully used
                 offsets.push_back(offset);
@@ -173,20 +173,16 @@ public:
         //XOR stats
         uint64_t foundXors = 0;
         uint64_t sumSizeXors = 0;
-        uint32_t minsize = std::numeric_limits<uint32_t>::max();
-        uint32_t maxsize = std::numeric_limits<uint32_t>::min();
+        uint32_t minsize = numeric_limits<uint32_t>::max();
+        uint32_t maxsize = numeric_limits<uint32_t>::min();
     };
 
     const Stats& get_stats() const;
     size_t mem_used() const;
     void grab_mem();
-    vector<Xor> remove_xors_without_connecting_vars(const vector<Xor>& this_xors);
+    void move_xors_without_connecting_vars_to_unused();
     bool xor_together_xors(vector<Xor>& xors);
-    bool add_new_truths_from_xors(vector<Xor>& xors, vector<Lit>* out_changed_occur = NULL);
     void clean_equivalent_xors(vector<Xor>& txors);
-
-    vector<Xor>& xors;
-    vector<Xor>& unused_xors;
 
 private:
     PossibleXor poss_xor;
@@ -224,7 +220,7 @@ private:
     //Other temporaries
     vector<uint32_t> occcnt;
     vector<Lit>& toClear;
-    vector<uint16_t>& seen;
+    vector<uint32_t>& seen;
     vector<uint8_t>& seen2;
     vector<uint32_t> interesting;
 };
@@ -284,7 +280,7 @@ template<class T> void PossibleXor::add(
     for (typename T::const_iterator
         l = cl.begin(), end = cl.end()
         ; l != end
-        ; l++, i++, origI++
+        ; ++l, i++, origI++
     ) {
         thisRhs ^= l->sign();
 
@@ -316,7 +312,7 @@ template<class T> void PossibleXor::add(
         }
         foundComb[thisWhichOne] = true;
     }
-    if (offset != std::numeric_limits<ClOffset>::max()) {
+    if (offset != numeric_limits<ClOffset>::max()) {
         offsets.push_back(offset);
         fully_used.push_back(varsMissing.empty());
     }

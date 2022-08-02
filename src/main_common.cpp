@@ -31,25 +31,20 @@ using std::endl;
 
 using namespace CMSat;
 
-void MainCommon::handle_drat_option()
+void MainCommon::handle_frat_option()
 {
-    if (!conf.simulate_drat) {
-        if (dratDebug) {
-            dratf = &cout;
-        } else {
-            std::ofstream* dratfTmp = new std::ofstream;
-            dratfTmp->open(dratfilname.c_str(), std::ofstream::out | std::ofstream::binary);
-            if (!*dratfTmp) {
-                std::cerr
-                << "ERROR: Could not open DRAT file "
-                << dratfilname
-                << " for writing"
-                << endl;
+    if (!conf.simulate_frat) {
+        FILE* fratfTmp = fopen(fratfilname.c_str(), "wb");
+        if (fratfTmp == NULL) {
+            std::cerr
+            << "ERROR: Could not open FRAT file "
+            << fratfilname
+            << " for writing"
+            << endl;
 
-                std::exit(-1);
-            }
-            dratf = dratfTmp;
+            std::exit(-1);
         }
+        fratf = fratfTmp;
     }
 }
 

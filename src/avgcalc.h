@@ -40,7 +40,7 @@ template <class T, class T2 = uint64_t>
 class AvgCalc {
     T2      sum;
     size_t  num;
-    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+    #if defined(STATS_NEEDED)
     double  sumSqare;
     #endif
     #ifdef AVGCALC_NEED_MIN_MAX
@@ -52,12 +52,12 @@ public:
     AvgCalc(void) :
         sum(0)
         , num(0)
-        #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+        #if defined(STATS_NEEDED)
         , sumSqare(0)
         #endif
         #ifdef AVGCALC_NEED_MIN_MAX
-        , min(std::numeric_limits<T>::max())
-        , max(std::numeric_limits<T>::min())
+        , min(numeric_limits<T>::max())
+        , max(numeric_limits<T>::min())
         #endif
     {}
 
@@ -66,7 +66,7 @@ public:
         sum /= val;
         min /= val;
         max /= val;
-        #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+        #if defined(STATS_NEEDED)
         sumSqare /= val*val;
         #endif
 
@@ -79,7 +79,7 @@ public:
         num += other.num;
         min = std::min(min, other.min);
         max = std::min(min, other.max);
-        #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+        #if defined(STATS_NEEDED)
         sumSqare += other.sumSqare;
         #endif
 
@@ -92,7 +92,7 @@ public:
         num += other.num;
         min = std::min(min, other.min);
         max = std::min(min, other.max);
-        #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+        #if defined(STATS_NEEDED)
         sumSqare += other.sumSqare;
         #endif
 
@@ -108,7 +108,7 @@ public:
         sum += x;
         num++;
 
-        #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+        #if defined(STATS_NEEDED)
         sumSqare += (double)x*(double)x;
         #endif
         #ifdef AVGCALC_NEED_MIN_MAX
@@ -120,7 +120,7 @@ public:
     #ifdef AVGCALC_NEED_MIN_MAX
     T getMin() const
     {
-        if (min == std::numeric_limits<T>::max())
+        if (min == numeric_limits<T>::max())
             return 0;
 
         return min;
@@ -128,13 +128,13 @@ public:
 
     T getMax() const
     {
-        if (max == std::numeric_limits<T>::min())
+        if (max == numeric_limits<T>::min())
             return 0;
 
         return max;
     }
     #endif
-    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+    #if defined(STATS_NEEDED)
     double var() const
     {
         if (num == 0)
@@ -181,7 +181,7 @@ public:
         sum += other.sum;
         num += other.num;
 
-        #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+        #if defined(STATS_NEEDED)
         sumSqare += other.sumSqare;
         #endif
         #ifdef AVGCALC_NEED_MIN_MAX

@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include <cstdint>
 #include <string>
 #include <cmath>
+#include "constants.h"
 
 namespace CMSat {
 
@@ -48,32 +49,32 @@ struct SatZillaFeatures
     double horn = 0;
     double horn_mean = 0;
     double horn_std = 0;
-    double horn_min = std::numeric_limits<double>::max();
-    double horn_max = std::numeric_limits<double>::min();
+    double horn_min = numeric_limits<double>::max();
+    double horn_max = numeric_limits<double>::min();
     double horn_spread = 0;
 
     double vcg_var_mean = 0;
     double vcg_var_std = 0;
-    double vcg_var_min = std::numeric_limits<double>::max();
-    double vcg_var_max = std::numeric_limits<double>::min();
+    double vcg_var_min = numeric_limits<double>::max();
+    double vcg_var_max = numeric_limits<double>::min();
     double vcg_var_spread = 0;
 
     double vcg_cls_mean = 0;
     double vcg_cls_std = 0;
-    double vcg_cls_min = std::numeric_limits<double>::max();
-    double vcg_cls_max = std::numeric_limits<double>::min();
+    double vcg_cls_min = numeric_limits<double>::max();
+    double vcg_cls_max = numeric_limits<double>::min();
     double vcg_cls_spread = 0;
 
     double pnr_var_mean = 0;
     double pnr_var_std = 0;
-    double pnr_var_min = std::numeric_limits<double>::max();
-    double pnr_var_max = std::numeric_limits<double>::min();
+    double pnr_var_min = numeric_limits<double>::max();
+    double pnr_var_max = numeric_limits<double>::min();
     double pnr_var_spread = 0;
 
     double pnr_cls_mean = 0;
     double pnr_cls_std = 0;
-    double pnr_cls_min = std::numeric_limits<double>::max();
-    double pnr_cls_max = std::numeric_limits<double>::min();
+    double pnr_cls_min = numeric_limits<double>::max();
+    double pnr_cls_max = numeric_limits<double>::min();
     double pnr_cls_spread = 0;
 
     //Conflict clauses

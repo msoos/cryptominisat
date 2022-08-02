@@ -44,11 +44,8 @@ class MatrixFinder {
         MatrixFinder(Solver* solver);
 
         //NOTE "simplify_xors" should always be true except during testing
-        bool findMatrixes(bool& can_detach, bool simplify_xors = true);
-
-        vector<Xor> unused_xors;
+        bool find_matrices(bool& can_detach);
         set<uint32_t> clash_vars_unused;
-        vector<Xor> xors;
 
     private:
         uint32_t setMatrixes();
@@ -90,7 +87,6 @@ class MatrixFinder {
         uint32_t matrix_no;
 
         Solver* solver;
-        vector<uint16_t>& seen;
 };
 
 }

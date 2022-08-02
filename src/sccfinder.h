@@ -125,7 +125,7 @@ class SCCFinder {
 
 inline void SCCFinder::doit(const Lit lit, const uint32_t vertex) {
     // Was successor v' visited?
-    if (index[lit.toInt()] ==  std::numeric_limits<uint32_t>::max()) {
+    if (index[lit.toInt()] ==  numeric_limits<uint32_t>::max()) {
         tarjan(lit.toInt());
         depth--;
         lowlink[vertex] = std::min(lowlink[vertex], lowlink[lit.toInt()]);

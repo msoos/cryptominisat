@@ -72,7 +72,7 @@ class DistillerLongWithImpl {
                     *this = tmp;
                 }
 
-                void print_short(const string type, const Solver* solver) const;
+                void print_short(const string& type, const Solver* solver) const;
                 void print() const;
 
                 WatchBased& operator+=(const WatchBased& other)
@@ -105,7 +105,7 @@ class DistillerLongWithImpl {
             bool alsoStrengthen
             , Clause& cl
         );
-        void dump_stats_for_shorten_all_cl_with_watch(
+        void dump_stats_for_sub_str_all_cl_with_watch(
             bool red
             , bool alsoStrengthen
             , double myTime
@@ -142,7 +142,6 @@ class DistillerLongWithImpl {
         //bool needToFinish;
         bool sub_str_cl_with_watch(
             ClOffset& offset
-            , bool red
             , const bool alsoStrengthen
         );
         void randomise_order_of_clauses(vector<ClOffset>& clauses);
@@ -151,7 +150,7 @@ class DistillerLongWithImpl {
             , const bool red
         ) const;
 
-        bool shorten_all_cl_with_watch(
+        bool sub_str_all_cl_with_watch(
             vector<ClOffset>& clauses
             , bool red
             , bool alsoStrengthen
@@ -162,7 +161,7 @@ class DistillerLongWithImpl {
         Solver* solver;
         vector<Lit> lits;
         vector<Lit> lits2;
-        vector<uint16_t>& seen;
+        vector<uint32_t>& seen;
         vector<uint8_t>& seen2;
 
         //Global status

@@ -33,7 +33,10 @@ THE SOFTWARE.
 
 using namespace CMSat;
 
-void CNF::new_var(const bool bva, const uint32_t orig_outer)
+void CNF::new_var(
+    const bool bva,
+    const uint32_t orig_outer,
+    const bool /*insert_varorder*/)
 {
     if (nVars() >= 1ULL<<28) {
         cout << "ERROR! Variable requested is far too large" << endl;
@@ -42,7 +45,7 @@ void CNF::new_var(const bool bva, const uint32_t orig_outer)
 
     minNumVars++;
     enlarge_minimal_datastructs();
-    if (orig_outer == std::numeric_limits<uint32_t>::max()) {
+    if (orig_outer == numeric_limits<uint32_t>::max()) {
         //completely new var
         enlarge_nonminimial_datastructs();
 
@@ -137,6 +140,7 @@ void CNF::swapVars(const uint32_t which, const int off_by)
 void CNF::enlarge_nonminimial_datastructs(size_t n)
 {
     assigns.insert(assigns.end(), n, l_Undef);
+    unit_cl_IDs.insert(unit_cl_IDs.end(), n, 0);
     varData.insert(varData.end(), n, VarData());
     depth.insert(depth.end(), n, 0);
 }
@@ -144,9 +148,7 @@ void CNF::enlarge_nonminimial_datastructs(size_t n)
 void CNF::enlarge_minimal_datastructs(size_t n)
 {
     watches.insert(2*n);
-    #ifdef USE_GAUSS
     gwatches.insert(2*n);
-    #endif
     seen.insert(seen.end(), 2*n, 0);
     seen2.insert(seen2.end(), 2*n, 0);
     permDiff.insert(permDiff.end(), 2*n, 0);
@@ -160,12 +162,7 @@ void CNF::save_on_var_memory()
 
     watches.resize(nVars()*2);
     watches.consolidate();
-
-    #ifdef USE_GAUSS
     gwatches.resize(nVars()*2);
-    //TODO
-    //gwatches.consolidate();
-    #endif
 
     for(auto& l: longRedCls) {
         l.shrink_to_fit();
@@ -220,6 +217,10 @@ inline void CNF::updateWatch(
             continue;
         }
 
+        if (it->isBNN()) {
+            continue;
+        }
+
         assert(it->isClause());
         const Clause &cl = *cl_alloc.ptr(it->get_offset());
         Lit blocked_lit = it->getBlockedLit();
@@ -246,6 +247,7 @@ void CNF::updateVars(
 ) {
     updateArray(varData, interToOuter);
     updateArray(assigns, interToOuter);
+    updateArray(unit_cl_IDs, interToOuter);
     updateBySwap(watches, seen, interToOuter2);
 
     for(watch_subarray w: watches) {
@@ -284,10 +286,10 @@ uint64_t CNF::print_mem_used_longclauses(const size_t totalMem) const
 size_t CNF::cl_size(const Watched& ws) const
 {
     switch(ws.getType()) {
-        case watch_binary_t:
+        case WatchType::watch_binary_t:
             return 2;
 
-        case watch_clause_t: {
+        case WatchType::watch_clause_t: {
             const Clause* cl = cl_alloc.ptr(ws.get_offset());
             return cl->size();
         }
@@ -311,14 +313,14 @@ string CNF::watched_to_string(Lit otherLit, const Watched& ws) const
 {
     std::stringstream ss;
     switch(ws.getType()) {
-        case watch_binary_t:
+        case WatchType::watch_binary_t:
             ss << otherLit << ", " << ws.lit2();
             if (ws.red()) {
                 ss << "(red)";
             }
             break;
 
-        case watch_clause_t: {
+        case WatchType::watch_clause_t: {
             const Clause* cl = cl_alloc.ptr(ws.get_offset());
             for(size_t i = 0; i < cl->size(); i++) {
                 ss << (*cl)[i];
@@ -371,6 +373,26 @@ vector<uint32_t> CNF::build_outer_to_without_bva_map() const
     return ret;
 }
 
+vector<uint32_t> CNF::build_outer_to_without_bva_map_extended() const
+{
+    assert(nVarsOutside() <= nVarsOuter());
+    vector<uint32_t> ret;
+    size_t at = 0;
+    uint32_t extra_map = nVarsOutside();
+    for(size_t i = 0; i < nVarsOuter(); i++) {
+        if (!varData[map_outer_to_inter(i)].is_bva) {
+            ret.push_back(at);
+            at++;
+        } else {
+            ret.push_back(extra_map);
+            extra_map++;
+        }
+    }
+    assert(extra_map == nVarsOuter());
+
+    return ret;
+}
+
 size_t CNF::mem_used() const
 {
     size_t mem = 0;
@@ -382,42 +404,6 @@ size_t CNF::mem_used() const
 
     return mem;
 }
-
-void CNF::save_state(SimpleOutFile& f) const
-{
-    /*assert(!seen.empty());
-    assert(!varData.empty());
-    assert(watches.size() != 0);*/
-
-    f.put_vector(interToOuterMain);
-    f.put_vector(outerToInterMain);
-
-    f.put_vector(assigns);
-    f.put_vector(varData);
-    f.put_uint32_t(minNumVars);
-    f.put_uint32_t(num_bva_vars);
-    f.put_uint32_t(ok);
-}
-
-void CNF::load_state(SimpleInFile& f)
-{
-    assert(seen.empty());
-    assert(varData.empty());
-    assert(watches.size() == 0);
-
-    f.get_vector(interToOuterMain);
-    f.get_vector(outerToInterMain);
-    build_outer_to_without_bva_map();
-
-    f.get_vector(assigns);
-    f.get_vector(varData);
-    minNumVars = f.get_uint32_t();
-    num_bva_vars = f.get_uint32_t();
-    ok = f.get_uint32_t();
-
-    watches.resize(nVars()*2);
-}
-
 
 void CNF::test_all_clause_attached() const
 {
@@ -460,11 +446,11 @@ bool CNF::normClauseIsAttached(const ClOffset offset) const
         return !attached;
     }
 
-    bool satisfied = satisfied_cl(cl);
+    bool satcl = satisfied(cl);
     uint32_t num_false2 = 0;
     num_false2 += value(cl[0]) == l_False;
     num_false2 += value(cl[1]) == l_False;
-    if (!satisfied) {
+    if (!satcl) {
         if (num_false2 != 0) {
             cout << "Clause failed: " << cl << endl;
             for(Lit l: cl) {
@@ -504,8 +490,8 @@ void CNF::find_all_attach() const
             Clause* cl = cl_alloc.ptr(w.get_offset());
             assert(!cl->freed());
 
-            bool satisfied = satisfied_cl(*cl);
-            if (!satisfied) {
+            bool satcl = satisfied(*cl);
+            if (!satcl) {
                 if (value(w.getBlockedLit())  == l_True) {
                     cout << "ERROR: Clause " << *cl << " not satisfied, but its blocked lit, "
                     << w.getBlockedLit() << " is." << endl;
@@ -646,14 +632,14 @@ void CNF::check_watchlist(watch_subarray_const ws) const
         Lit blockedLit = w.getBlockedLit();
         /*cout << "Clause " << c << " blocked lit:  "<< blockedLit << " val: " << value(blockedLit)
         << " blocked removed:" << !(varData[blockedLit.var()].removed == Removed::none)
-        << " cl satisfied: " << satisfied_cl(&c)
+        << " cl satisfied: " << satisfied(&c)
         << endl;*/
         assert(blockedLit.var() < nVars());
 
         if (varData[blockedLit.var()].removed == Removed::none
             //0-level FALSE --> clause cleaner removed it from clause, that's OK
             && value(blockedLit) != l_False
-            && !satisfied_cl(c)
+            && !satisfied(c)
         ) {
             bool found = false;
             for(Lit l: c) {
@@ -696,6 +682,41 @@ uint64_t CNF::count_lits(
     }
 
     return lits;
+}
+
+void CNF::print_watchlist_stats() const
+{
+    uint64_t total_size = 0;
+    uint64_t total_size_lits = 0;
+    uint64_t total_cls = 0;
+    uint64_t bin_cls = 0;
+    uint64_t used_in_xor = 0;
+    uint64_t used_in_xor_full = 0;
+    for(auto const& ws: watches) {
+        for(auto const& w: ws) {
+            total_size+=1;
+            if (w.isBin()) {
+                total_size_lits+=2;
+                total_cls++;
+                bin_cls++;
+            } else if (w.isClause()) {
+                Clause* cl = cl_alloc.ptr(w.get_offset());
+                assert(!cl->getRemoved());
+                used_in_xor+=cl->used_in_xor();
+                used_in_xor_full+=cl->used_in_xor_full();
+                total_size_lits+=cl->size();
+                total_cls++;
+            }
+        }
+    }
+    cout << "c [watchlist] avg watchlist size: " << float_div(total_size, watches.size());
+    cout << " Avg cl size: " << float_div(total_size_lits, total_cls);
+    cout << " Cls: " << total_cls;
+    cout << " Total WS size: " << total_size;
+    cout << " used_in_xor: " << used_in_xor;
+    cout << " used_in_xor_full: " << used_in_xor_full;
+    cout << " bin cl: " << bin_cls;
+    cout << endl;
 }
 
 void CNF::print_all_clauses() const
@@ -752,26 +773,72 @@ bool CNF::no_marked_clauses() const
     return true;
 }
 
-void CNF::add_drat(std::ostream* os, bool add_ID) {
-    if (drat)
-        delete drat;
+void CNF::add_frat(FILE* os) {
+    if (frat) delete frat;
+    frat = new DratFile<false>(interToOuterMain);
+    frat->setFile(os);
+    frat->set_sumconflicts_ptr(&sumConflicts);
+    frat->set_sqlstats_ptr(sqlStats);
+}
 
-    if (add_ID) {
-        drat = new DratFile<true>(interToOuterMain);
-    } else {
-        drat = new DratFile<false>(interToOuterMain);
+vector<uint32_t> CNF::get_outside_lit_incidence()
+{
+    assert(get_num_bva_vars() == 0);
+    vector<uint32_t> inc;
+    inc.resize(nVarsOuter()*2, 0);
+    if (!okay()) {
+        return inc;
     }
-    drat->setFile(os);
+
+    for(uint32_t i = 0; i < nVars()*2; i++) {
+        const Lit l = Lit::toLit(i);
+        for(const auto& x: watches[l]) {
+            if (x.isBin() &&
+                !x.red() &&
+                l.var() < x.lit2().var()) //don't count twice
+            {
+                inc[x.lit2().toInt()]++;
+                inc[l.toInt()]++;
+            }
+        }
+    }
+
+    for(const auto& offs: longIrredCls) {
+        Clause* cl = cl_alloc.ptr(offs);
+        for(const auto& l: *cl) {
+            inc[l.toInt()]++;
+        }
+    }
+
+    //Map to outer
+    vector<uint32_t> inc_outer(nVarsOuter()*2, 0);
+    for(uint32_t i = 0; i < inc.size(); i ++) {
+        Lit outer = map_inter_to_outer(Lit::toLit(i));
+        inc_outer[outer.toInt()] = inc[i];
+    }
+
+    //Map to outside
+    if (get_num_bva_vars() != 0) {
+        inc_outer = map_back_lits_to_without_bva(inc_outer);
+    }
+    return inc_outer;
 }
 
 vector<uint32_t> CNF::get_outside_var_incidence()
 {
+    assert(get_num_bva_vars() == 0);
+    assert(okay());
+
+
     vector<uint32_t> inc;
-    inc.resize(nVars(), 0);
+    inc.resize(nVarsOuter(), 0);
     for(uint32_t i = 0; i < nVars()*2; i++) {
         const Lit l = Lit::toLit(i);
         for(const auto& x: watches[l]) {
-            if (x.isBin() && !x.red()) {
+            if (x.isBin() &&
+                !x.red() &&
+                l.var() < x.lit2().var()) //don't count twice
+            {
                 inc[x.lit2().var()]++;
                 inc[l.var()]++;
             }
@@ -842,3 +909,112 @@ vector<uint32_t> CNF::get_outside_var_incidence_also_red()
     }
     return inc_outer;
 }
+
+bool CNF::check_bnn_sane(BNN& bnn)
+{
+    //assert(decisionLevel() == 0);
+
+    int32_t ts = 0;
+    int32_t undefs = 0;
+    for(const auto& l: bnn) {
+        if (value(l) == l_True) {
+            ts++;
+        }
+
+        if (value(l) == l_Undef) {
+            undefs++;
+        }
+    }
+    assert(bnn.ts == ts);
+    assert(bnn.undefs == undefs);
+
+    if (bnn.empty()) {
+        return false;
+    }
+
+    // we are at the cutoff no matter what undef is
+    if (bnn.cutoff-ts <= 0) {
+        if (bnn.set) {
+            return true; //harmless, doesn't propagate
+        }
+        if (value(bnn.out) == l_False)
+            return false; //always true, BAD
+        if (value(bnn.out) == l_True)
+            return true; //harmless, doesn't propagate
+
+        //should have propagated bnn.out
+        return false;
+    }
+
+    // we are under the cutoff no matter what undef is
+    if (undefs < bnn.cutoff-ts) {
+        if (bnn.set) {
+            return false; //can never meet cutoff, BAD
+        }
+        if (value(bnn.out) == l_True)
+            return false;  //can never meet cutoff, BAD
+        if (value(bnn.out) == l_False)
+            return true;
+
+        //should have propagated bnn.out
+        return false;
+    }
+
+    //it's set and cutoff can ONLY be met by ALL TRUE
+    if (((!bnn.set && value(bnn.out) == l_True) || bnn.set) &&
+        undefs == bnn.cutoff-ts)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+void CNF::check_no_zero_ID_bins() const
+{
+    for(uint32_t i = 0; i < nVars()*2; i++) {
+        Lit l = Lit::toLit(i);
+        for(const auto& w: watches[l]) {
+            //only do once per binary
+            if (w.isBin()) {
+                if (w.get_ID() == 0) {
+                    cout << "ERROR, bin: " << l << " " << w.lit2() << " has ID " << w.get_ID() << endl;
+                }
+                assert(w.get_ID() > 0);
+            }
+        }
+    }
+}
+
+bool CNF::zero_irred_cls(const CMSat::Lit lit) const
+{
+    for(auto const& w: watches[lit]) {
+        switch(w.getType()) {
+            case WatchType::watch_binary_t:
+                if (w.red()) continue;
+                else return false;
+            case WatchType::watch_clause_t: {
+                Clause* cl = cl_alloc.ptr(w.get_offset());
+                if (cl->red()) continue;
+                else return false;
+            }
+            case WatchType::watch_idx_t:
+                release_assert(false);
+                continue;
+            case WatchType::watch_bnn_t:
+                return false;
+        }
+    }
+    return true;
+}
+
+#ifdef USE_TBUDDY
+void CNF::free_bdds(vector<Xor>& xors)
+{
+    frat->flush();
+    for(auto& x: xors) {
+        delete x.bdd;
+        x.bdd = NULL;
+    }
+}
+#endif

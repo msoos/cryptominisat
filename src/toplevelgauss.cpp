@@ -122,9 +122,9 @@ bool TopLevelGauss::extractInfo()
     //These mappings will be needed for the matrices, which will have far less
     //variables than solver->nVars()
     outerToInterVarMap.clear();
-    outerToInterVarMap.resize(solver->nVars(), std::numeric_limits<uint32_t>::max());
+    outerToInterVarMap.resize(solver->nVars(), numeric_limits<uint32_t>::max());
     interToOUterVarMap.clear();
-    interToOUterVarMap.resize(solver->nVars(), std::numeric_limits<uint32_t>::max());
+    interToOUterVarMap.resize(solver->nVars(), numeric_limits<uint32_t>::max());
 
     //Go through all blocks, and extract info
     i = 0;
@@ -144,7 +144,7 @@ bool TopLevelGauss::extractInfo()
         if (!extractInfoFromBlock(*it, i))
             goto end;
 
-        if (solver->conf.verbosity >= 2) {
+        if (solver->conf.verbosity >= 3) {
             cout << "c [toplevel-xor] Block size: " << it->size() << endl;
             cout << "c [toplevel-xor] New units this round: " << (runStats.newUnits - oldNewUnits) << endl;
             cout << "c [toplevel-xor] New bins this round: " << (runStats.newBins - oldNewBins) << endl;
@@ -172,7 +172,7 @@ bool TopLevelGauss::extractInfoFromBlock(
     for(vector<uint32_t>::const_iterator
         it2 = block.begin(), end2 = block.end()
         ; it2 != end2
-        ; it2++, num++
+        ; ++it2, num++
     ) {
         //Used to put XOR into matrix
         outerToInterVarMap[*it2] = num;
@@ -253,17 +253,26 @@ bool TopLevelGauss::extractInfoFromBlock(
             case 1: {
                 runStats.newUnits++;
                 solver->add_xor_clause_inter(lits, rhs, false);
-                if (!solver->okay())
+                if (solver->okay()) {
+                    solver->ok = solver->propagate_occur<false>();
+                }
+                if (!solver->okay()) {
                     goto end;
+                }
+
                 break;
             }
 
             case 2: {
                 runStats.newBins++;
                 out_changed_occur->insert(out_changed_occur->end(), lits.begin(), lits.end());
-                solver->add_xor_clause_inter(lits, rhs, false);
-                if (!solver->okay())
+                solver->add_xor_clause_inter(lits, rhs, false, true, true);
+                if (solver->okay()) {
+                    solver->ok = solver->propagate_occur<false>();
+                }
+                if (!solver->okay()) {
                     goto end;
+                }
                 break;
             }
 
@@ -290,7 +299,7 @@ void TopLevelGauss::move_xors_into_blocks()
         assert(thisXor.size() > 2 && "XORs are always at least 3-long!");
 
         uint32_t block = varToBlock[thisXor[0]];
-        if (block != std::numeric_limits<uint32_t>::max()) {
+        if (block != numeric_limits<uint32_t>::max()) {
             assert(block < xors_in_blocks.size());
             xors_in_blocks[block].push_back(i);
         }
@@ -301,7 +310,7 @@ void TopLevelGauss::cutIntoBlocks(const vector<size_t>& xorsToUse)
 {
     //Clearing data we will fill below
     varToBlock.clear();
-    varToBlock.resize(solver->nVars(), std::numeric_limits<uint32_t>::max());
+    varToBlock.resize(solver->nVars(), numeric_limits<uint32_t>::max());
     blocks.clear();
 
     //Go through each XOR, and either make a new block for it
@@ -314,7 +323,7 @@ void TopLevelGauss::cutIntoBlocks(const vector<size_t>& xorsToUse)
         set<size_t> blocksBelongTo;
         for(uint32_t v: thisXor) {
             assert(solver->varData[v].removed == Removed::none);
-            if (varToBlock[v] != std::numeric_limits<uint32_t>::max())
+            if (varToBlock[v] != numeric_limits<uint32_t>::max())
                 blocksBelongTo.insert(varToBlock[v]);
         }
 
@@ -337,7 +346,7 @@ void TopLevelGauss::cutIntoBlocks(const vector<size_t>& xorsToUse)
                 const size_t blockNum = *blocksBelongTo.begin();
                 vector<uint32_t>& block = blocks[blockNum];
                 for(uint32_t v :thisXor) {
-                    if (varToBlock[v] == std::numeric_limits<uint32_t>::max()) {
+                    if (varToBlock[v] == numeric_limits<uint32_t>::max()) {
                         block.push_back(v);
                         varToBlock[v] = blockNum;
                     }
@@ -350,12 +359,12 @@ void TopLevelGauss::cutIntoBlocks(const vector<size_t>& xorsToUse)
                 const size_t blockNum = *blocksBelongTo.begin();
                 set<size_t>::const_iterator it2 = blocksBelongTo.begin();
                 vector<uint32_t>& finalBlock = blocks[blockNum];
-                it2++; //don't merge the first into the first
-                for(set<size_t>::const_iterator end2 = blocksBelongTo.end(); it2 != end2; it2++) {
+                ++it2; //don't merge the first into the first
+                for(set<size_t>::const_iterator end2 = blocksBelongTo.end(); it2 != end2; ++it2) {
                     for(vector<uint32_t>::const_iterator
                         it3 = blocks[*it2].begin(), end3 = blocks[*it2].end()
                         ; it3 != end3
-                        ; it3++
+                        ; ++it3
                     ) {
                         finalBlock.push_back(*it3);
                         varToBlock[*it3] = blockNum;
@@ -366,7 +375,7 @@ void TopLevelGauss::cutIntoBlocks(const vector<size_t>& xorsToUse)
 
                 //add remaining vars
                 for(uint32_t v: thisXor) {
-                    if (varToBlock[v] == std::numeric_limits<uint32_t>::max()) {
+                    if (varToBlock[v] == numeric_limits<uint32_t>::max()) {
                         finalBlock.push_back(v);
                         varToBlock[v] = blockNum;
                     }

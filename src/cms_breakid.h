@@ -49,6 +49,7 @@ public:
     const vector<uint32_t>& outerToInter
     , const vector<uint32_t>& interToOuter);
     void update_var_after_varreplace();
+    Lit get_assumed_lit() const;
 
     static uint32_t hash_clause(const Lit* lits, const uint32_t size) {
         uint32_t seed = size;
@@ -62,7 +63,7 @@ public:
 private:
     void break_symms_in_cms();
     void get_outer_permutations();
-    bool remove_duplicates();
+    void remove_duplicates();
     void set_up_time_lim();
     bool add_clauses();
     bool check_limits();

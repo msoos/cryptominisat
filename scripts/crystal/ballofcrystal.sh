@@ -20,22 +20,18 @@
 # This file wraps CMake invocation for TravisCI
 # so we can set different configurations via environment variables.
 
-FNAMEOUT="mydata"
-FIXED="6000"
-RATIO="0.99"
-CONF=1
-EXTRA_CMS_OPTS=""
-SHORTPERC=50
-LONGPERC=40
-EXTRA_GEN_PANDAS_OPTS=""
-bestf="../../scripts/crystal/best_features.txt"
-bestf="../../scripts/crystal/best_features.txt-ext"
+set -e
+set -x
+set -o pipefail  # needed so  " | tee xyz " doesn't swallow the last command's error
 
-if [ "$1" == "--csv" ]; then
-    EXTRA_GEN_PANDAS_OPTS="--csv"
-    echo "CSV will be generated (may take some disk space)"
+. ./setparams_ballofcrystal.sh
+
+if [ "$1" == "--skip" ]; then
+    echo "Will skip running CMS stats + DRAT"
+    SKIP="1"
     NEXT_OP="$2"
 else
+    SKIP="0"
     NEXT_OP="$1"
 fi
 
@@ -43,9 +39,9 @@ if [ "$NEXT_OP" == "" ]; then
     while true; do
         echo "No CNF command line parameter, running predefined CNFs"
         echo "Options are:"
-        echo "1 -- countbitswegner064.cnf"
+        echo "1 -- velev-pipe-uns-1.0-9.cnf"
         echo "2 -- goldb-heqc-i10mul.cnf"
-        echo "3 -- goldb-heqc-alu4mul.cnf"
+        echo "3 -- Haystacks-ext-13_c18.cnf"
         echo "4 -- NONE"
         echo "5 -- AProVE07-16.cnf"
         echo "6 -- UTI-20-10p0.cnf-unz"
@@ -54,30 +50,24 @@ if [ "$NEXT_OP" == "" ]; then
         read -p "Which CNF do you want to run? " myinput
         case $myinput in
             ["1"]* )
-                ORIGTIME="101";
-                FNAME="countbitswegner064.cnf";
+                FNAME="velev-pipe-uns-1.0-9.cnf"
                 break;;
             [2]* )
-                ORIGTIME="16";
-                EXTRA_CMS_OPTS=" --confbtwsimp 100000 "
                 FNAME="goldb-heqc-i10mul.cnf";
                 break;;
             [3]* )
-                ORIGTIME="70.84";
-                FNAME="goldb-heqc-alu4mul.cnf";
+                FNAME="dist6.c-sc2018.cnf";
                 break;;
             [5]* )
-                ORIGTIME="98s";
                 FNAME="AProVE07-16.cnf";
                 break;;
             [6]* )
+                DUMPRATIO="0.01"
                 FNAME="UTI-20-10p0.cnf-unz";
-                RATIO="0.20"
                 FIXED="20000";
                 break;;
             [7]* )
-                ORIGTIME="197";
-                RATIO="0.50"
+                DUMPRATIO="0.50"
                 FNAME="UCG-20-5p0.cnf";
                 break;;
             * ) echo "Please answer 1-7";;
@@ -97,10 +87,12 @@ else
 fi
 
 set -e
+set -o pipefail
 
 echo "--> Running on file                   $FNAME"
 echo "--> Outputting to data                $FNAMEOUT"
-echo "--> Using clause gather ratio of      $RATIO"
+echo "--> Using clause gather ratio of      $DUMPRATIO"
+echo "--> Locking in ratio of               $CLLOCK"
 echo "--> with fixed number of data points  $FIXED"
 
 if [ "$FNAMEOUT" == "" ]; then
@@ -108,72 +100,93 @@ if [ "$FNAMEOUT" == "" ]; then
     exit -1
 fi
 
-echo "Cleaning up"
-(
-rm -rf "$FNAME-dir"
-mkdir "$FNAME-dir"
-cd "$FNAME-dir"
-rm -f $FNAMEOUT.d*
-rm -f $FNAMEOUT.lemma*
-)
 
-set -x
+if [ "$SKIP" != "1" ]; then
+    echo "Cleaning up"
+    (
+    rm -rf "$FNAME-dir"
+    mkdir "$FNAME-dir"
+    cd "$FNAME-dir"
+    rm -f $FNAMEOUT.d*
+    rm -f $FNAMEOUT.lemma*
+    )
+
+    set -e
+
+    ########################
+    # Build statistics-gathering CryptoMiniSat
+    ########################
+    if [[ SANITIZE -eq 0 ]]; then
+        ./build_stats.sh
+    else
+        ./build_stats_sanitize.sh
+    fi
+
+    (
+    ########################
+    # Obtain dynamic data in SQLite and DRAT info
+    ########################
+    cd "$FNAME-dir"
+    # for var, we need: --bva 0 --scc 0
+    $NOBUF ../cryptominisat5 --presimp 1 -n1 --sqlitedbover 1 --cldatadumpratio "$DUMPRATIO" --cllockdatagen $CLLOCK --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
+    grep "c conflicts" cms-pred-run.out
+
+    ########################
+    # Run our own DRAT-Trim
+    ########################
+    set +e
+    a=$(grep "s SATIS" cms-pred-run.out)
+    retval=$?
+    set -e
+    if [[ retval -eq 1 ]]; then
+        /usr/bin/time -v ../frat-rs elab "../$FNAME" "$FNAMEOUT.drat" -m -v
+
+        set +e
+        /usr/bin/time -v ../frat-rs elab - "$FNAMEOUT.drat" test.frat
+        /usr/bin/time -v ../frat-rs refrat "$FNAMEOUT.drat.temp" correct
+        set -e
+        #/usr/bin/time -v $NOBUF ../utils/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -o "$FNAMEOUT.usedCls" -i -O 4 -m | tee drat.out-newO4
 
 
-########################
-# Build statistics-gathering CryptoMiniSat
-########################
-./build_stats.sh
-
-
-(
-########################
-# Obtain dynamic data in SQLite and DRAT info
-########################
-cd "$FNAME-dir"
-# to be removed: --tern 0
-# for var, we need: --bva 0 --scc 0
-../cryptominisat5 ${EXTRA_CMS_OPTS} --maxgluehistltlimited 100000 --tern 0 --sqlitedbover 1 --cldatadumpratio "$RATIO" --cllockdatagen 0.5 --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
-grep "c conflicts" cms-pred-run.out
-
-########################
-# Run our own DRAT-Trim
-########################
-set +e
-a=$(grep "s SATIS" cms-pred-run.out)
-retval=$?
-set -e
-if [[ retval -eq 1 ]]; then
-    ../utils/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -o "$FNAMEOUT.usedCls" -i
-else
-    rm -f final.cnf
-    touch final.cnf
-    cat "../$FNAME" >> final.cnf
-    cat dec_list >> final.cnf
-    grep ^v cms-pred-run.out | sed "s/v//" | tr -d "\n" | sed "s/  / /g" | sed -e "s/ -/X/g" -e "s/ /Y/g" | sed "s/X/ /g" | sed -E "s/Y([1-9])/ -\1/g" | sed "s/Y0/ 0\n/" >> final.cnf
-    ../../utils/cnf-utils/xor_to_cnf.py final.cnf final_good.cnf
-    ../tests/drat-trim/drat-trim final_good.cnf "$FNAMEOUT.drat" -o "$FNAMEOUT.usedCls" -i
+    else
+        echo "Not UNSAT!!!"
+        exit -1
+    fi
+    echo "CMS+DRAT done now"
+    )
 fi
+
+(
+set -e
+cd "$FNAME-dir"
 
 ########################
 # Augment, fix up and sample the SQLite data
 ########################
-/usr/bin/time -v ../fill_used_clauses.py "$FNAMEOUT.db-raw" "$FNAMEOUT.usedCls"
+
+rm -f "$FNAMEOUT.db"
+rm -f "$FNAMEOUT-min.db"
+rm -f "${FNAMEOUT}-min.db-cldata-*"
+rm -f out_pred_*
+rm -f sample.out
+rm -f check_quality.out
+rm -f clean_update.out
+rm -f fill_clauses.out
+
+../fix_up_frat.py correct $FNAMEOUT.db-raw | tee fill_used_clauses.out
 cp "$FNAMEOUT.db-raw" "$FNAMEOUT.db"
-/usr/bin/time -v ../clean_update_data.py "$FNAMEOUT.db"
-/usr/bin/time -v ../check_data_quality.py "$FNAMEOUT.db"
+/usr/bin/time -v ../clean_update_data.py "$FNAMEOUT.db"  | tee clean_update_data.out
+../check_data_quality.py --slow "$FNAMEOUT.db" | tee check_data_quality.out
 cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
-/usr/bin/time -v ../sample_data.py "$FNAMEOUT-min.db"
+/usr/bin/time -v ../sample_data.py "$FNAMEOUT-min.db" | tee sample_data.out
+
 
 ########################
 # Denormalize the data into a Pandas Table, label it and sample it
 ########################
-../cldata_gen_pandas.py "${FNAMEOUT}-min.db" --limit "$FIXED" ${EXTRA_GEN_PANDAS_OPTS}
+../cldata_gen_pandas.py "${FNAMEOUT}-min.db" --cut1 $cut1 --cut2 $cut2 --limit "$FIXED" ${EXTRA_GEN_PANDAS_OPTS} | tee cldata_gen_pandas.out
 # ../vardata_gen_pandas.py "${FNAMEOUT}.db" --limit 1000
 
-mkdir -p ../../src/predict
-rm -f ../../src/predict/*.boost
-rm -f ../../src/predict/*.h
 
 ####################################
 # Clustering for cldata, using cldata dataframe
@@ -190,18 +203,80 @@ rm -f ../../src/predict/*.h
 #../vardata_predict.py mydata.db-vardata.dat --picktimeonly -q 2 --only 0.99
 #../vardata_predict.py vardata-comb --final -q 20 --basedir ../src/predict/ --depth 7 --tree
 
-../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short.dat" --tier short --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf
-../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long.dat" --tier long --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf
-../cldata_predict.py "${FNAMEOUT}-min.db-cldata-forever.dat" --tier forever --final --xgboost --basedir ../../src/predict/ --bestfeatfile $bestf
+set -e
+set -o pipefail
+rm -f .*.json
+regressors=("xgb") # "lgbm" )
+tiers=("short" "long" "forever")
+tables=("used_later" "used_later_anc")
+for tier in "${tiers[@]}"; do
+    for table in "${tables[@]}"; do
+        for regressor in "${regressors[@]}"; do
+            $NOBUF ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-${table}-${tier}-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier ${tier} --table ${table} --features best_only --regressor $regressor --basedir "." --bestfeatfile $bestf | tee "cldata_predict_${tier}-${table}-${regressor}.out"
+        done
+    done
+done
+
+############################
+# To get feature importances
+############################
+# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier long --top 200 --xgb --allcomputed > output_long
+# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-long-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier long --top 200 --xgb --nocomputed > output_long_nocomputed
+# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier short --top 200 --xgb --allcomputed > output_short
+# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-short-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier short --top 200 --xgb --nocomputed > output_short_nocomputed
+# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-forever-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier forever --top 2000 --xgb --nocomputed --topperc > "output_forever_nocomputed"
+# ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-forever-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier forever --top 2000 --xgb --allcomputed --topperc > "output_forever"
+
 
 )
+
 
 ########################
 # Build final CryptoMiniSat with the classifier
 ########################
-./build_final_predictor.sh
+if [[ $SANITIZE -eq 1 ]]; then
+    ./build_final_predictor_sanitize.sh
+else
+    ./build_final_predictor.sh
+fi
+
 (
 cd "$FNAME-dir"
-../cryptominisat5 "../$FNAME" ${EXTRA_CMS_OPTS} --maxgluehistltlimited 100000 --tern 0 --printsol 0 | tee cms-final-run.out
+ln -fs ../ml_module.py .
+
+TODO="000"
+../cryptominisat5 "../$FNAME" --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
+
+TODO="001"
+../cryptominisat5 "../$FNAME" --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
+
+TODO="010"
+../cryptominisat5 "../$FNAME" --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
+
+TODO="011"
+../cryptominisat5 "../$FNAME" --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
+
+TODO="100"
+../cryptominisat5 "../$FNAME" --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
+
+TODO="101"
+../cryptominisat5 "../$FNAME" --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
+
+TODO="110"
+../cryptominisat5 "../$FNAME" --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
+
+TODO="111"
+../cryptominisat5 "../$FNAME" --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
+
 )
 exit
+
+
+# old
+# ./cryptominisat5 goldb-heqc-i10mul.cnf --simdrat 1 --printsol 0 --predloc ./data/14-april-2021-69bad529f962c-cut1-3.0-cut2-25.0-limit-1000-est10-w0-xbmin50-xbmd6/ --predtype py --predbestfeats ./best_features-b93210018231ab04d2.txt
+
+# current
+# ./cryptominisat5 goldb-heqc-i10mul.cnf --simdrat 1 --printsol 0 --predloc ./data/18-sept-2021-a408d53c665f9305b-cut1-3.0-cut2-25.0-limit-1000-est15-w0-xbmin50-xbmd4-regxgb/ --predtype py --predbestfeats ./best_features-rdb0-only.txt
+
+# newest
+# ./cryptominisat5 goldb-heqc-i10mul.cnf --simdrat 1 --printsol 0 --predloc ./data/29-sept-a408d53c665f9305b-ccf121255372-cut1-3.0-cut2-25.0-limit-3000-est8-w0-xbmin10-xbmd6-regxgb/ --predtype py --predbestfeats ./best_features-correlaton.txt

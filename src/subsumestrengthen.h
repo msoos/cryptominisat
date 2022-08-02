@@ -24,9 +24,10 @@ THE SOFTWARE.
 #define __SUBSUMESTRENGTHEN_H__
 
 #include "cloffset.h"
-#include "cryptominisat5/solvertypesmini.h"
+#include "solvertypesmini.h"
 #include "clabstraction.h"
 #include "clause.h"
+#include "Vec.h"
 #include <vector>
 using std::vector;
 
@@ -45,37 +46,23 @@ public:
     void backw_sub_long_with_long();
     bool backw_str_long_with_long();
     bool backw_sub_str_long_with_bins();
+    bool backw_sub_str_long_with_bins_watch(const Lit lit, bool both_bins = false);
+    bool handle_added_long_cl(const bool main_run);
+    void remove_binary_cl(const OccurClause& cl);
 
-    //Called from simplifier at resolvent-adding of var-elim
-    uint32_t subsume_and_unlink_and_markirred(const ClOffset offset);
-    bool backw_sub_str_long_with_bins_watch(
-        const Lit lit
-        , const bool redundant_too = false
+
+    Sub0Ret backw_sub_with_long(const ClOffset offset);
+
+    void backw_sub_with_impl(
+        const vector<Lit>& lits,
+        Sub1Ret& ret_sub_str
     );
-    bool handle_added_long_cl(int64_t* limit, const bool main_run);
-
-    struct Sub0Ret {
-        ClauseStats stats;
-        bool subsumedIrred = 0;
-        uint32_t numSubsumed = 0;
-    };
-
-    struct Sub1Ret {
-        Sub1Ret& operator+=(const Sub1Ret& other)
-        {
-            sub += other.sub;
-            str += other.str;
-
-            return *this;
-        }
-
-        size_t sub = 0;
-        size_t str = 0;
-        bool subsumedIrred = false;
-    };
-
-    Sub1Ret backw_sub_str_long_with_implicit(const vector<Lit>& lits);
-    Sub1Ret strengthen_subsume_and_unlink_and_markirred(ClOffset offset);
+    bool backw_sub_str_with_impl(
+        const vector<Lit>& lits,
+        Sub1Ret& ret_sub_str);
+    bool backw_sub_str_with_long(
+        ClOffset offset,
+        Sub1Ret& ret_sub_str);
 
     struct Stats
     {
@@ -83,9 +70,8 @@ public:
         void print_short(const Solver* solver) const;
         void print() const;
 
-        uint64_t subsumedBySub = 0;
-        uint64_t subsumedByStr = 0;
-        uint64_t litsRemStrengthen = 0;
+        Sub0Ret sub0;
+        Sub1Ret sub1;
 
         double subsumeTime = 0.0;
         double strengthenTime = 0.0;
@@ -100,8 +86,8 @@ public:
         const ClOffset offset
         , const T& ps
         , const cl_abst_type abs
-        , vector<ClOffset>& out_subsumed
-        , const bool removeImplicit = false
+        , vector<OccurClause>& out_subsumed
+        , const bool only_irred = false
     );
 
 private:
@@ -117,32 +103,31 @@ private:
         const ClOffset offset
         , const T& ps
         , const cl_abst_type abs
-        , const bool removeImplicit = false
     );
 
     void randomise_clauses_order();
-    void remove_literal(ClOffset c, const Lit toRemoveLit);
 
     template<class T>
-    size_t find_smallest_watchlist_for_clause(const T& ps) const;
+    uint32_t find_smallest_watchlist_for_clause(const T& ps) const;
 
     template<class T>
-    void findStrengthened(
+    void find_subsumed_and_strengthened(
         const ClOffset offset
         , const T& ps
         , const cl_abst_type abs
-        , vector<ClOffset>& out_subsumed
+        , vector<OccurClause>& out_subsumed
         , vector<Lit>& out_lits
     );
 
     template<class T>
-    void fillSubs(
+    void fill_sub_str(
         const ClOffset offset
         , const T& ps
         , cl_abst_type abs
-        , vector<ClOffset>& out_subsumed
+        , vector<OccurClause>& out_subsumed
         , vector<Lit>& out_lits
         , const Lit lit
+        , const bool inverted
     );
 
     template<class T1, class T2>
@@ -150,9 +135,9 @@ private:
 
     template<class T1, class T2>
     Lit subset1(const T1& A, const T2& B);
-    bool subsetAbst(const cl_abst_type A, const cl_abst_type B);
 
-    vector<ClOffset> subs;
+    vector<OccurClause> subs;
+    vec<Watched> tmp;
     vector<Lit> subsLits;
     vector<Lit> tmpLits;
     size_t tried_bin_tri = 0;

@@ -37,6 +37,7 @@ struct ternary_resolv : public ::testing::Test {
     {
         must_inter.store(false, std::memory_order_relaxed);
         SolverConf conf;
+        conf.ternary_max_create = 2.0;
         s = new Solver(&conf, &must_inter);
         s->new_vars(50);
         occsimp = s->occsimplifier;
@@ -52,8 +53,8 @@ struct ternary_resolv : public ::testing::Test {
 
 TEST_F(ternary_resolv, do_1)
 {
-    s->add_clause_outer(str_to_cl("1, 2, 3"));
-    s->add_clause_outer(str_to_cl("1, -2, 4"));
+    s->add_clause_outside(str_to_cl("1, 2, 3"));
+    s->add_clause_outside(str_to_cl("1, -2, 4"));
 
     occsimp->setup();
     occsimp->ternary_res();
@@ -63,9 +64,9 @@ TEST_F(ternary_resolv, do_1)
 
 TEST_F(ternary_resolv, do_2)
 {
-    s->add_clause_outer(str_to_cl("1, 2, 3"));
-    s->add_clause_outer(str_to_cl("1, -2, 4"));
-    s->add_clause_outer(str_to_cl("2, -3, 5"));
+    s->add_clause_outside(str_to_cl("1, 2, 3"));
+    s->add_clause_outside(str_to_cl("1, -2, 4"));
+    s->add_clause_outside(str_to_cl("2, -3, 5"));
 
     occsimp->setup();
     occsimp->ternary_res();
@@ -76,12 +77,12 @@ TEST_F(ternary_resolv, do_2)
 
 TEST_F(ternary_resolv, do_2_v2)
 {
-    s->add_clause_outer(str_to_cl("1, 2, 3"));
-    s->add_clause_outer(str_to_cl("1, -2, 4"));
+    s->add_clause_outside(str_to_cl("1, 2, 3"));
+    s->add_clause_outside(str_to_cl("1, -2, 4"));
 
 
-    s->add_clause_outer(str_to_cl("10, 20, 30"));
-    s->add_clause_outer(str_to_cl("10, -20, 40"));
+    s->add_clause_outside(str_to_cl("10, 20, 30"));
+    s->add_clause_outside(str_to_cl("10, -20, 40"));
 
     occsimp->setup();
     occsimp->ternary_res();
@@ -92,8 +93,8 @@ TEST_F(ternary_resolv, do_2_v2)
 
 TEST_F(ternary_resolv, do_1_v2)
 {
-    s->add_clause_outer(str_to_cl("-1, 2, 3"));
-    s->add_clause_outer(str_to_cl("-1, -2, 4"));
+    s->add_clause_outside(str_to_cl("-1, 2, 3"));
+    s->add_clause_outside(str_to_cl("-1, -2, 4"));
 
     occsimp->setup();
     occsimp->ternary_res();
@@ -103,8 +104,8 @@ TEST_F(ternary_resolv, do_1_v2)
 
 TEST_F(ternary_resolv, do_1_v3)
 {
-    s->add_clause_outer(str_to_cl("-1, 2, 3"));
-    s->add_clause_outer(str_to_cl("-1, -2, -4"));
+    s->add_clause_outside(str_to_cl("-1, 2, 3"));
+    s->add_clause_outside(str_to_cl("-1, -2, -4"));
 
     occsimp->setup();
     occsimp->ternary_res();
@@ -114,8 +115,8 @@ TEST_F(ternary_resolv, do_1_v3)
 
 TEST_F(ternary_resolv, do_1_v4)
 {
-    s->add_clause_outer(str_to_cl("-1, 2, -3"));
-    s->add_clause_outer(str_to_cl("-1, -2, -4"));
+    s->add_clause_outside(str_to_cl("-1, 2, -3"));
+    s->add_clause_outside(str_to_cl("-1, -2, -4"));
 
     occsimp->setup();
     occsimp->ternary_res();
@@ -125,8 +126,8 @@ TEST_F(ternary_resolv, do_1_v4)
 
 TEST_F(ternary_resolv, only_one_v1)
 {
-    s->add_clause_outer(str_to_cl("1, 2, 3"));
-    s->add_clause_outer(str_to_cl("1, -2, 4"));
+    s->add_clause_outside(str_to_cl("1, 2, 3"));
+    s->add_clause_outside(str_to_cl("1, -2, 4"));
 
     occsimp->setup();
     occsimp->ternary_res();

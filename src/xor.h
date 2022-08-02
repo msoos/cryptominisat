@@ -29,9 +29,14 @@ THE SOFTWARE.
 #include <set>
 #include <iostream>
 #include <algorithm>
+#ifdef USE_TBUDDY
+#include <pseudoboolean.h>
+namespace tbdd = trustbdd;
+#endif
 
 using std::vector;
 using std::set;
+
 
 namespace CMSat {
 
@@ -45,10 +50,21 @@ public:
         rhs(_rhs)
         , clash_vars(_clash_vars)
     {
-        for (uint32_t i = 0; i < cl.size(); i++) {
-            vars.push_back(cl[i]);
-        }
+        for (uint32_t i = 0; i < cl.size(); i++) vars.push_back(cl[i]);
     }
+
+#ifdef USE_TBUDDY
+    tbdd::xor_constraint* create_bdd_xor()
+    {
+        if (bdd == NULL) {
+            ilist l = ilist_new(vars.size());
+            ilist_resize(l, vars.size());
+            for (uint32_t i = 0; i < vars.size(); i++) l[i] = vars[i]+1;
+            bdd = new tbdd::xor_constraint(l, rhs);
+        }
+        return bdd;
+    }
+#endif
 
     template<typename T>
     explicit Xor(const T& cl, const bool _rhs, const vector<uint32_t>& _clash_vars):
@@ -67,6 +83,10 @@ public:
         for (uint32_t i = 0; i < cl.size(); i++) {
             vars.push_back(cl[i]);
         }
+    }
+
+    ~Xor()
+    {
     }
 
     vector<uint32_t>::const_iterator begin() const
@@ -150,7 +170,7 @@ public:
         return true;
     }
 
-    void merge_clash(const Xor& other, vector<uint16_t>& seen) {
+    void merge_clash(const Xor& other, vector<uint32_t>& seen) {
         for(const auto& v: clash_vars) {
             seen[v] = 1;
         }
@@ -172,6 +192,9 @@ public:
     vector<uint32_t> clash_vars;
     bool detached = false;
     vector<uint32_t> vars;
+    #ifdef USE_TBUDDY
+    tbdd::xor_constraint* bdd = NULL;
+    #endif
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Xor& thisXor)

@@ -24,7 +24,7 @@ THE SOFTWARE.
 #ifndef __MAIN_COMMON_H__
 #define __MAIN_COMMON_H__
 
-#include "cryptominisat5/cryptominisat.h"
+#include "cryptominisat.h"
 #include "solverconf.h"
 #include <iostream>
 #include <cmath>
@@ -35,11 +35,10 @@ public:
     static uint32_t print_model(CMSat::SATSolver* solver,
                          std::ostream* os,
                          std::vector<uint32_t>* only = NULL);
-    void handle_drat_option();
+    void handle_frat_option();
 
-    string dratfilname;
-    bool dratDebug = false;
-    std::ostream* dratf = NULL;
+    string fratfilname;
+    FILE* fratf = NULL;
     bool zero_exit_status = false;
     CMSat::SolverConf conf;
     unsigned num_threads = 1;

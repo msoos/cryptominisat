@@ -35,6 +35,7 @@ SolutionExtender::SolutionExtender(Solver* _solver, OccSimplifier* _simplifier) 
 {
 }
 
+//Model at this point has OUTER variables
 void SolutionExtender::extend()
 {
     if (solver->conf.verbosity >= 10) {
@@ -48,7 +49,6 @@ void SolutionExtender::extend()
             //decomposed's solution has beed added already, it SHOULD be set
             //but everything else is NOT OK
             (solver->varData[v_inter].removed != Removed::none
-                && solver->varData[v_inter].removed != Removed::decomposed
                 && solver->varData[v_inter].removed != Removed::clashed
             )
             && solver->model[i] != l_Undef

@@ -22,7 +22,7 @@
 # if (ENABLE_TESTING AND NOT MSVC AND NOT SLOW_DEBUG)
 #     add_test (
 #         NAME simp_checks
-#         COMMAND "${PYTHON_EXECUTABLE}"
+#         COMMAND "${Python3_EXECUTABLE}"
 #             "${CMAKE_CURRENT_SOURCE_DIR}/check_bve.py"
 #             "--minisat" $<TARGET_FILE:minisatoeas_simp>
 #             "--cms" $<TARGET_FILE:cryptominisat5-bin>

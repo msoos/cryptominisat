@@ -33,10 +33,9 @@ THE SOFTWARE.
 
 namespace CMSat {
 
-enum PropByType {null_clause_t = 0, clause_t = 1, binary_t = 2
-    #ifdef USE_GAUSS
-    , xor_t = 3
-    #endif
+enum PropByType {
+    null_clause_t = 0, clause_t = 1, binary_t = 2,
+    xor_t = 3, bnn_t = 4
 };
 
 class PropBy
@@ -44,10 +43,10 @@ class PropBy
     enum bitFieldSizes {
         bitsize_red_step = 1,
         bitsize_data1 = 31,
-        bitsize_type = 2,
-        bitsize_data2 = 30
+        bitsize_type = 3,
+        bitsize_data2 = 29
     };
-    
+
     private:
         uint32_t red_step:bitsize_red_step;
         uint32_t data1:bitsize_data1;
@@ -55,8 +54,10 @@ class PropBy
         //0: clause, NULL
         //1: clause, non-null
         //2: binary
-        //3: tertiary
+        //3: xor
+        //4: bnn
         uint32_t data2:bitsize_data2;
+        int32_t ID;
 
     public:
         PropBy() :
@@ -66,7 +67,7 @@ class PropBy
             , data2(0)
         {}
 
-#ifndef LARGE_OFFSETS 
+#ifndef LARGE_OFFSETS
         //Normal clause prop
         explicit PropBy(const ClOffset offset) :
             red_step(0)
@@ -87,14 +88,13 @@ class PropBy
         {
             //No roll-over
             data1 = offset & ((((ClOffset)1) << bitsize_data1) - 1);
-            data2 = offset >> bitsize_data1; 
+            data2 = offset >> bitsize_data1;
             /*#ifdef DEBUG_PROPAGATEFROM
             assert(offset == get_offset());
             #endif*/
         }
 #endif
 
-#ifdef USE_GAUSS
         //XOR
         PropBy(const uint32_t matrix_num, const uint32_t row_num):
             data1(matrix_num)
@@ -102,14 +102,22 @@ class PropBy
             , data2(row_num)
         {
         }
-#endif
+
+        //BNN prop
+        PropBy(uint32_t bnn_idx, void*):
+            data1(0xfffffff)
+            , type(bnn_t)
+            , data2(bnn_idx)
+        {
+        }
 
         //Binary prop
-        PropBy(const Lit lit, const bool redStep) :
+        PropBy(const Lit lit, const bool redStep, int32_t _ID) :
             red_step(redStep)
             , data1(lit.toInt())
             , type(binary_t)
             , data2(0)
+            , ID(_ID)
         {
         }
 
@@ -119,11 +127,13 @@ class PropBy
             , bool redStep //Step that lead here from ancestor is redundant
             , bool hyperBin //It's a hyper-binary clause
             , bool hyperBinNotAdded //It's a hyper-binary clause, but was never added because all the rest was zero-level
+            , int32_t _ID
         ) :
             red_step(redStep)
             , data1(lit.toInt())
             , type(binary_t)
             , data2(0)
+            , ID(_ID)
         {
             //HACK: if we are doing seamless hyper-bin and transitive reduction
             //then if we are at toplevel, .getAncestor()
@@ -137,9 +147,43 @@ class PropBy
                 | ((uint32_t)hyperBinNotAdded) << 2;
         }
 
+        void set_bnn_reason(uint32_t idx)
+        {
+            assert(isBNN());
+            data1 = idx;
+        }
+
+        bool bnn_reason_set() const
+        {
+            assert(isBNN());
+            return data1 != 0xfffffff;
+        }
+
+        uint32_t get_bnn_reason() const
+        {
+            assert(bnn_reason_set());
+            return data1;
+        }
+
+        uint32_t isBNN() const
+        {
+            return type == bnn_t;
+        }
+
+        uint32_t getBNNidx() const
+        {
+            assert(isBNN());
+            return data2;
+        }
+
         bool isRedStep() const
         {
             return red_step;
+        }
+
+        int32_t getID() const
+        {
+            return ID;
         }
 
         bool getHyperbin() const
@@ -211,7 +255,7 @@ class PropBy
             #ifdef DEBUG_PROPAGATEFROM
             assert(isClause());
             #endif
-#ifndef LARGE_OFFSETS 
+#ifndef LARGE_OFFSETS
             return data1;
 #else
             ClOffset offset = data2;
@@ -244,16 +288,24 @@ class PropBy
 inline std::ostream& operator<<(std::ostream& os, const PropBy& pb)
 {
     switch (pb.getType()) {
-        case binary_t :
+        case binary_t:
             os << " binary, other lit= " << pb.lit2();
             break;
 
-        case clause_t :
+        case clause_t:
             os << " clause, num= " << pb.get_offset();
             break;
 
-        case null_clause_t :
+        case null_clause_t:
             os << " NULL";
+            break;
+
+        case bnn_t:
+            os << " BNN reason, bnn idx: " << pb.get_bnn_reason();
+            break;
+
+        case xor_t:
+            os << " xor reason, matrix= " << pb.get_matrix_num() << " row: " << pb.get_row_num();
             break;
 
         default:

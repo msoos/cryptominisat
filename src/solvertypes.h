@@ -36,7 +36,7 @@ THE SOFTWARE.
 #include <limits>
 #include <cassert>
 #include "solverconf.h"
-#include "cryptominisat5/solvertypesmini.h"
+#include "solvertypesmini.h"
 
 namespace CMSat {
 
@@ -47,13 +47,7 @@ using std::string;
 
 enum class gret      {confl, prop, nothing_satisfied, nothing_fnewwatch};
 enum class gauss_res {none, confl, prop};
-enum class branch {
-    vsids,
-    maple
-#ifdef VMTF_NEEDED
-    ,vmtf
-#endif
-};
+enum class branch {vsids=1, rand=2, vmtf=3};
 
 inline std::string restart_type_to_string(const Restart type)
 {
@@ -61,14 +55,18 @@ inline std::string restart_type_to_string(const Restart type)
         case Restart::glue:
             return "glue";
 
+        case Restart::automatic:
+            release_assert(false);
+            return "";
+
         case Restart::geom:
             return "geometric";
 
         case Restart::luby:
             return "luby";
 
-        case Restart::glue_geom:
-            return "glue-geom";
+        case Restart::fixed:
+            return "fixed";
 
         case Restart::never:
             return "never";
@@ -83,15 +81,13 @@ inline std::string branch_type_to_string(const branch type)
 {
     switch(type) {
         case branch::vsids:
-            return "vsid";
+            return "vsid";;
 
-        case branch::maple:
-            return "mapl";
+        case branch::rand:
+            return "rand";
 
-        #ifdef VMTF_NEEDED
         case branch::vmtf:
             return "vmtf";
-        #endif
     }
 
     assert(false && "oops, one of the branch types has no string name");
@@ -99,56 +95,11 @@ inline std::string branch_type_to_string(const branch type)
     return "Ooops, undefined!";
 }
 
-inline int branch_type_to_int(const branch type)
-{
-    switch(type) {
-        case branch::vsids:
-            return 0;
-
-        case branch::maple:
-            return 1;
-
-        #ifdef VMTF_NEEDED
-        case branch::vmtf:
-            return 2;
-        #endif
-    }
-
-    assert(false && "oops, one of the branch types has no int name");
-
-    return 0;
-}
-
-inline int restart_type_to_int(const Restart type)
-{
-    switch(type) {
-        case Restart::glue:
-            return 1;
-
-        case Restart::geom:
-            return 2;
-
-        case Restart::luby:
-            return 3;
-
-        case Restart::glue_geom:
-            return 4;
-
-        case Restart::never:
-            return 6;
-    }
-
-        assert(false && "oops, one of the restart types has no string name");
-
-        return 0;
-}
-
 //Removed by which algorithm. NONE = not eliminated
 enum class Removed : unsigned char {
     none
     , elimed
     , replaced
-    , decomposed
     , clashed
 };
 
@@ -163,9 +114,6 @@ inline std::string removed_type_to_string(const Removed removed) {
         case Removed::replaced:
             return "variable replacement";
 
-        case Removed::decomposed:
-            return "decomposed into another component";
-
         case Removed::clashed:
             return "clashed on XOR and temporarily removed";
     }
@@ -176,10 +124,15 @@ inline std::string removed_type_to_string(const Removed removed) {
 
 class BinaryClause {
     public:
-        BinaryClause(const Lit _lit1, const Lit _lit2, const bool _red) :
-            lit1(_lit1)
-            , lit2(_lit2)
-            , red(_red)
+        BinaryClause(
+            const Lit _lit1,
+            const Lit _lit2,
+            const bool _red,
+            const uint32_t _ID):
+            lit1(_lit1),
+            lit2(_lit2),
+            red(_red),
+            ID(_ID)
         {
             if (lit1 > lit2) std::swap(lit1, lit2);
         }
@@ -216,17 +169,23 @@ class BinaryClause {
             return red;
         }
 
+        uint32_t getID() const
+        {
+            return ID;
+        }
+
     private:
         Lit lit1;
         Lit lit2;
         bool red;
+        int32_t ID;
 };
-
 
 inline std::ostream& operator<<(std::ostream& os, const BinaryClause val)
 {
     os << val.getLit1() << " , " << val.getLit2()
-    << " red: " << std::boolalpha << val.isRed() << std::noboolalpha;
+    << " red: " << std::boolalpha << val.isRed() << std::noboolalpha
+    << " ID: " << val.getID();
     return os;
 }
 
@@ -270,10 +229,10 @@ inline string print_value_kilo_mega(const int64_t value, bool setw = true)
 }
 
 template<class T, class T2> void print_stats_line(
-    string left
+    const string& left
     , T value
     , T2 value2
-    , string extra
+    , const string& extra
 ) {
     cout
     << std::fixed << std::left << std::setw(27) << left
@@ -285,7 +244,7 @@ template<class T, class T2> void print_stats_line(
 }
 
 inline void print_stats_line(
-    string left
+    const string& left
     , uint64_t value
     , uint64_t value2
     , uint64_t value3
@@ -300,11 +259,11 @@ inline void print_stats_line(
 }
 
 template<class T, class T2> void print_stats_line(
-    string left
+    const string& left
     , T value
-    , string extra1
+    , const string& extra1
     , T2 value2
-    , string extra2
+    , const string& extra2
 ) {
     cout
     << std::fixed << std::left << std::setw(27) << left
@@ -317,9 +276,22 @@ template<class T, class T2> void print_stats_line(
 }
 
 template<class T> void print_stats_line(
-    string left
+    const string& left
     , T value
-    , string extra = ""
+) {
+    cout
+    << std::fixed << std::left << std::setw(27) << left
+    << ": " << std::setw(11) << std::setprecision(2)
+    << value
+    << " "
+    << std::right
+    << endl;
+}
+
+template<class T> void print_stats_line(
+    const string& left
+    , T value
+    , const string& extra
 ) {
     cout
     << std::fixed << std::left << std::setw(27) << left
@@ -330,22 +302,17 @@ template<class T> void print_stats_line(
     << endl;
 }
 
-struct ActAndOffset {
-    double act = 0;
-    double offset = 1.0;
-    double combine() const {
-        return act*offset;
+struct VSIDS_largest_first{
+    VSIDS_largest_first(const vector<double>& _vsids_act) :
+        vsids_act(_vsids_act)
+    {
     }
-    void add_in(const ActAndOffset& other) {
-        act += other.act;
-        offset = std::max(offset, other.offset);
+
+    bool operator()(const Lit& a, const Lit& b) const {
+        return vsids_act[a.var()] > vsids_act[b.var()];
     }
-    std::string str() const {
-        std::string ret;
-        std::stringstream ss;
-        ss << act << "*" << offset;
-        return ret;
-    }
+
+    const vector<double>& vsids_act;
 };
 
 struct AssignStats
@@ -364,6 +331,22 @@ struct AssignStats
 
 };
 
+struct MedianCommonDataRDB {
+    uint32_t median_props;
+    uint32_t median_uip1_used;
+    double median_sum_uip1_per_time;
+    double median_sum_props_per_time;
+    float median_act;
+};
+
+struct AverageCommonDataRDB {
+    //double avg_glue = 0; CANNOT CALCULATE! ternaries have no glues
+    double avg_props = 0;
+    double avg_uip1_used = 0;
+    double avg_sum_uip1_per_time = 0;
+    double avg_sum_props_per_time = 0;
+};
+
 struct PropStats
 {
     void clear()
@@ -379,13 +362,6 @@ struct PropStats
         otfHyperTime += other.otfHyperTime;
         otfHyperPropCalled += other.otfHyperPropCalled;
         #ifdef STATS_NEEDED
-        propsUnit += other.propsUnit;
-        propsBinIrred += other.propsBinIrred;
-        propsBinRed += other.propsBinRed;
-        propsLongIrred += other.propsLongIrred;
-        propsLongRed += other.propsLongRed;
-
-        //Var settings
         varSetPos += other.varSetPos;
         varSetNeg += other.varSetNeg;
         varFlipped += other.varFlipped;
@@ -401,13 +377,6 @@ struct PropStats
         otfHyperTime -= other.otfHyperTime;
         otfHyperPropCalled -= other.otfHyperPropCalled;
         #ifdef STATS_NEEDED
-        propsUnit -= other.propsUnit;
-        propsBinIrred -= other.propsBinIrred;
-        propsBinRed -= other.propsBinRed;
-        propsLongIrred -= other.propsLongIrred;
-        propsLongRed -= other.propsLongRed;
-
-        //Var settings
         varSetPos -= other.varSetPos;
         varSetNeg -= other.varSetNeg;
         varFlipped -= other.varFlipped;
@@ -449,31 +418,6 @@ struct PropStats
         );
 
         #ifdef STATS_NEEDED
-        print_stats_line("c propsUnit", propsUnit
-            , stats_line_percent(propsUnit, propagations)
-            , "% of propagations"
-        );
-
-        print_stats_line("c propsBinIrred", propsBinIrred
-            , stats_line_percent(propsBinIrred, propagations)
-            , "% of propagations"
-        );
-
-        print_stats_line("c propsBinRed", propsBinRed
-            , stats_line_percent(propsBinRed, propagations)
-            , "% of propagations"
-        );
-
-        print_stats_line("c propsLongIrred", propsLongIrred
-            , stats_line_percent(propsLongIrred, propagations)
-            , "% of propagations"
-        );
-
-        print_stats_line("c propsLongRed", propsLongRed
-            , stats_line_percent(propsLongRed, propagations)
-            , "% of propagations"
-        );
-
         print_stats_line("c varSetPos", varSetPos
             , stats_line_percent(varSetPos, propagations)
             , "% of propagations"
@@ -498,155 +442,10 @@ struct PropStats
     uint32_t otfHyperPropCalled = 0;
 
     #ifdef STATS_NEEDED
-    //Stats for propagations
-    uint64_t propsUnit = 0;
-    uint64_t propsBinIrred = 0;
-    uint64_t propsBinRed = 0;
-    uint64_t propsLongIrred = 0;
-    uint64_t propsLongRed = 0;
-
-    //Var settings
     uint64_t varSetPos = 0;
     uint64_t varSetNeg = 0;
     uint64_t varFlipped = 0;
     #endif
-};
-
-enum class ConflCausedBy {
-    longirred
-    , longred
-    , binred
-    , binirred
-};
-
-struct ConflStats
-{
-    void clear()
-    {
-        ConflStats tmp;
-        *this = tmp;
-    }
-
-    ConflStats& operator+=(const ConflStats& other)
-    {
-        #ifdef STATS_NEEDED
-        conflsBinIrred += other.conflsBinIrred;
-        conflsBinRed += other.conflsBinRed;
-        conflsLongIrred += other.conflsLongIrred;
-        conflsLongRed += other.conflsLongRed;
-        #endif
-
-        numConflicts += other.numConflicts;
-
-        return *this;
-    }
-
-    ConflStats& operator-=(const ConflStats& other)
-    {
-        #ifdef STATS_NEEDED
-        conflsBinIrred -= other.conflsBinIrred;
-        conflsBinRed -= other.conflsBinRed;
-        conflsLongIrred -= other.conflsLongIrred;
-        conflsLongRed -= other.conflsLongRed;
-        #endif
-
-        numConflicts -= other.numConflicts;
-
-        return *this;
-    }
-
-    #ifdef STATS_NEEDED
-    void update(const ConflCausedBy lastConflictCausedBy)
-    {
-        switch(lastConflictCausedBy) {
-            case ConflCausedBy::binirred :
-                conflsBinIrred++;
-                break;
-            case ConflCausedBy::binred :
-                conflsBinRed++;
-                break;
-            case ConflCausedBy::longirred :
-                conflsLongIrred++;
-                break;
-            case ConflCausedBy::longred :
-                conflsLongRed++;
-                break;
-            default:
-                assert(false);
-        }
-    }
-    #endif
-
-    void print_short(double cpu_time, bool do_print_times) const
-    {
-        //Search stats
-        if (!do_print_times) {
-            print_stats_line("c conflicts", numConflicts);
-        } else {
-            print_stats_line("c conflicts", numConflicts
-                , ratio_for_stat(numConflicts, cpu_time)
-                , "/ sec"
-            );
-        }
-    }
-
-    void print(double cpu_time, bool do_print_times) const
-    {
-        //Search stats
-        cout << "c CONFLS stats" << endl;
-        print_short(cpu_time, do_print_times);
-
-        #ifdef STATS_NEEDED
-        print_stats_line("c conflsBinIrred", conflsBinIrred
-            , stats_line_percent(conflsBinIrred, numConflicts)
-            , "%"
-        );
-
-        print_stats_line("c conflsBinRed", conflsBinRed
-            , stats_line_percent(conflsBinRed, numConflicts)
-            , "%"
-        );
-
-        print_stats_line("c conflsLongIrred" , conflsLongIrred
-            , stats_line_percent(conflsLongIrred, numConflicts)
-            , "%"
-        );
-
-        print_stats_line("c conflsLongRed", conflsLongRed
-            , stats_line_percent(conflsLongRed, numConflicts)
-            , "%"
-        );
-
-        long diff = (long)numConflicts
-            - (long)(conflsBinIrred + (long)conflsBinRed
-                + (long)conflsLongIrred + (long)conflsLongRed
-            );
-
-        if (diff != 0) {
-            cout
-            << "c DEBUG"
-            << "((int)numConflicts - (int)(conflsBinIrred + conflsBinRed"
-            << endl
-            << "c  + conflsLongIrred + conflsLongRed)"
-            << " = "
-            << (((int)numConflicts - (int)(conflsBinIrred + conflsBinRed
-                + conflsLongIrred + conflsLongRed)))
-            << endl;
-
-            //assert(diff == 0);
-        }
-        #endif
-    }
-
-    #ifdef STATS_NEEDED
-    uint64_t conflsBinIrred = 0;
-    uint64_t conflsBinRed = 0;
-    uint64_t conflsLongIrred = 0;
-    uint64_t conflsLongRed = 0;
-    #endif
-
-    ///Number of conflicts
-    uint64_t  numConflicts = 0;
 };
 
 inline void orderLits(

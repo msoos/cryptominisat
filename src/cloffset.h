@@ -32,7 +32,7 @@ typedef uint32_t ClOffset;
 #else
 typedef uint64_t ClOffset;
 #endif
-#define CL_OFFSET_MAX (std::numeric_limits<ClOffset>::max())
+#define CL_OFFSET_MAX (numeric_limits<ClOffset>::max())
 
 
 

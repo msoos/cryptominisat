@@ -38,11 +38,24 @@ THE SOFTWARE.
 #include "clabstraction.h"
 #include "avgcalc.h"
 #include "constants.h"
-#include "searchhist.h"
 
 namespace CMSat {
 
 class ClauseAllocator;
+
+/**
+@brief Decides only using abstraction if clause A could subsume clause B
+
+@note: It can give false positives. Never gives false negatives.
+
+For A to subsume B, everything that is in A MUST be in B. So, if (A & ~B)
+contains even one bit, it means that A contains something that B doesn't. So
+A may be a subset of B only if (A & ~B) == 0
+*/
+inline bool subsetAbst(const cl_abst_type A, const cl_abst_type B)
+{
+    return ((A & ~B) == 0);
+}
 
 template <class T>
 struct AtecedentData
@@ -67,7 +80,6 @@ struct AtecedentData
 
         glue_long_reds += other.glue_long_reds;
         size_longs += other.size_longs;
-        age_long_reds += other.age_long_reds;
 
         return *this;
     }
@@ -82,7 +94,6 @@ struct AtecedentData
 
         glue_long_reds -= other.glue_long_reds;
         size_longs -= other.size_longs;
-        age_long_reds -= other.age_long_reds;
 
         return *this;
     }
@@ -103,100 +114,45 @@ struct AtecedentData
     T longRed = 0;
     AvgCalc<uint32_t> glue_long_reds;
     AvgCalc<uint32_t> size_longs;
-    AvgCalc<uint32_t> age_long_reds;
 };
 
 struct ClauseStats
 {
     ClauseStats()
     {
+        //NOTE: we *MUST* set values to high default, as we do
+        //combineStats(default, newclause) to get combined stats.
         glue = 1000;
+        is_decision = false;
         marked_clause = false;
         ttl = 0;
-        which_red_array = 2;
+        which_red_array = 7; //intentionally breaking it so we catch bugs, 7 NEVER exists
         locked_for_data_gen = 0;
-        is_decision = false;
-        //TODO it's weird, it has been tested to be better with "1"
-        activity = 1;
-        last_touched = 0;
+        is_ternary_resolvent = 0;
+        activity = 0;
+        is_tracked = false;
     }
 
     //Stored data
     uint32_t glue:20;  //currently in code limited to 100'000
-    uint32_t is_decision:1;
+    uint32_t is_decision:1; //a "decision clause", i.e. made out of decisions leading to conflict, not resolution
     uint32_t marked_clause:1;
-    uint32_t ttl:2;
+    uint32_t ttl:1;
     uint32_t which_red_array:3;
     uint32_t locked_for_data_gen:1;
+    uint32_t is_ternary_resolvent:1;
+    uint32_t is_tracked:1;
     union {
         float   activity;
         uint32_t hash_val; //used in BreakID to remove equivalent clauses
     };
-    uint32_t last_touched;
-    #ifdef FINAL_PREDICTOR
-#ifdef EXTENDED_FEATURES
-    uint32_t    rdb1_last_touched;
-#endif
-    float       glue_hist_long;
-    float       glue_hist_queue;
-#ifdef EXTENDED_FEATURES
-    float       glue_hist;
-#endif
-    float       confl_size_hist_lt;
-    uint32_t    glue_before_minim;
-//     uint32_t    num_overlap_literals;
-    float       antec_overlap_hist;
-    uint32_t    num_total_lits_antecedents;
-//     uint32_t    rdb1_last_touched_diff;
-    uint32_t    num_antecedents;
-    float       branch_depth_hist_queue;
-    float       num_resolutions_hist_lt;
-//     uint32_t    trail_depth_hist_longer;
-#ifdef EXTENDED_FEATURES
-    float       rdb1_act_ranking_rel = 0;
-#endif
-//     uint8_t     rdb1_act_ranking_top_10 = 0;
-    float pred_short_use;
-    float pred_long_use;
-    float pred_forever_use;
-    #endif
+    uint32_t last_touched = 0;
+    int32_t ID;
 
-    #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
-    uint16_t dump_no = 0;
-    uint32_t orig_glue;
-    uint32_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
-
-    //for average and sum stats
-    uint32_t sum_uip1_used = 0; ///N.o. times claue was used during 1st UIP generation for ALL TIME
-
-    //below resets
-    uint32_t used_for_uip_creation = 0; ///N.o. times claue was used during 1st UIP generation in this RDB
-//     uint32_t rdb1_used_for_uip_creation = 0; ///N.o. times claue was used during 1st UIP generation in previous RDB
-    uint32_t propagations_made = 0; ///<Number of times caused propagation
-    uint32_t rdb1_propagations_made = 0; ///<Number of times caused propagation, last round
-    #endif
-
-    #ifdef STATS_NEEDED
-    int32_t ID = 0;
-    uint32_t sum_propagations_made = 0; ///<Number of times caused propagation
-
-    AtecedentData<uint16_t> antec_data;
-    uint32_t conflicts_made = 0; ///<Number of times caused conflict
-    uint32_t clause_looked_at = 0; ///<Number of times the clause has been deferenced during propagation
-    #endif
-
-    #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
-    void reset_rdb_stats()
-    {
-        ttl = 0;
-        used_for_uip_creation = 0;
-        propagations_made = 0;
-        #if defined(STATS_NEEDED)
-        clause_looked_at = 0;
-        conflicts_made = 0;
-        antec_data.clear();
-        #endif
-    }
+    #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
+    uint32_t extra_pos = numeric_limits<uint32_t>::max();
+    uint32_t uip1_used = 0; ///N.o. times claue was used during 1st UIP generation in this RDB
+    uint32_t props_made = 0; ///<Number of times caused propagation
     #endif
 
     static ClauseStats combineStats(const ClauseStats& first, const ClauseStats& second)
@@ -207,6 +163,158 @@ struct ClauseStats
         //Combine stats
         ret.glue = std::min(first.glue, second.glue);
         ret.activity = std::max(first.activity, second.activity);
+        ret.last_touched = std::max(first.last_touched, second.last_touched);
+        ret.locked_for_data_gen = std::max(first.locked_for_data_gen, second.locked_for_data_gen);
+        ret.is_ternary_resolvent = first.is_ternary_resolvent;
+        ret.ttl = std::max(first.ttl, second.ttl);
+
+        #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
+        ret.uip1_used = first.uip1_used + second.uip1_used;
+        ret.props_made = first.props_made + second.props_made;
+        #endif
+
+        #ifdef FINAL_PREDICTOR
+        ret.which_red_array = std::min(first.which_red_array, second.which_red_array);
+        #endif
+
+        if (ret.locked_for_data_gen) {
+            ret.which_red_array = 0;
+        }
+
+        return ret;
+    }
+
+    #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
+    void update_rdb_stats()
+    {
+    }
+
+    void reset_rdb_stats()
+    {
+        uip1_used = 0;
+        props_made = 0;
+    }
+    #endif
+};
+
+#if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
+struct ClauseStatsExtra
+{
+    //TODO add new LBD definitions:
+    //LBD computed over assigned TRUE literals only
+    //LBD computed over assigned FALSE literals only
+
+    //Used in RDB
+    uint32_t act_ranking;
+    uint32_t prop_ranking;
+    uint32_t uip1_ranking;
+    uint32_t sum_uip1_per_time_ranking;
+    uint32_t sum_props_per_time_ranking;
+    double pred_short_use;
+    double pred_long_use;
+    double pred_forever_use;
+    double calc_sum_uip1_per_time(const uint64_t sumConflicts) const {
+        assert(introduced_at_conflict <= sumConflicts);
+        const uint64_t time = sumConflicts - introduced_at_conflict;
+        if (time == 0) {
+            assert(sum_uip1_used <= 1);
+            return 0;
+        }
+        return (double)sum_uip1_used/(double)time;
+    }
+
+    double calc_sum_props_per_time(const uint64_t sumConflicts) const {
+        assert(introduced_at_conflict <= sumConflicts);
+        const uint64_t time = sumConflicts - introduced_at_conflict;
+        if (time == 0) {
+            return 0;
+        }
+        return (double)sum_props_made/(double)time;
+    }
+
+    //Features that are normally available through SQL
+    #ifdef FINAL_PREDICTOR
+    uint32_t    trail_depth_level;
+    float       glueHist_longterm_avg;
+    float       glueHist_avg;
+    uint32_t    glue_before_minim;
+    float       overlapHistLT_avg;
+    uint32_t    num_total_lits_antecedents;
+    uint32_t    num_antecedents;
+    float       numResolutionsHistLT_avg;
+    float       conflSizeHist_avg;
+    float       glueHistLT_avg;
+    uint32_t    antecedents_binred;
+    uint32_t    antecedents_binIrred;
+    #endif
+
+    //Features that are computed while running (not in SQL)
+    uint32_t orig_glue = numeric_limits<uint32_t>::max();
+    uint32_t orig_size = numeric_limits<uint32_t>::max();
+    uint32_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
+    float discounted_props_made = 0;
+    float discounted_uip1_used = 0;
+    uint32_t sum_uip1_used = 0; ///N.o. times claue was used during 1st UIP generation for ALL TIME
+    uint32_t sum_props_made = 0; ///<Number of times caused propagation
+    float discounted_uip1_used3 = 0;
+    float discounted_uip1_used2 = 0;
+    float discounted_props_made2 = 0;
+    float discounted_props_made3 = 0;
+    #ifdef STATS_NEEDED
+    uint32_t dump_no = 0;
+    uint32_t orig_ID = 0;
+    uint32_t orig_connects_num_communities = 0;
+    uint32_t connects_num_communities = 0;
+    uint32_t conflicts_made = 0; ///<Number of times caused conflict
+    uint32_t ttl_stats = 0;
+    AtecedentData<uint16_t> antec_data;
+    #endif
+
+    float discount(
+        float discount_factor,
+        float orig,
+        uint32_t val
+    ) {
+        orig *= discount_factor;
+        orig += (float)val * (1.0f-discount_factor);
+        return orig;
+    }
+
+    void update_rdb_stats(ClauseStats& stats)
+    {
+        sum_uip1_used += stats.uip1_used;
+        sum_props_made += stats.props_made;
+
+        discounted_props_made = discount(0.8, discounted_props_made, stats.props_made);
+        discounted_uip1_used =  discount(0.8, discounted_uip1_used, stats.uip1_used);
+        discounted_uip1_used3 =  discount(0.9, discounted_uip1_used3, stats.uip1_used);
+        discounted_uip1_used2 =  discount(0.4, discounted_uip1_used2, stats.uip1_used);
+        discounted_props_made2 = discount(0.4, discounted_props_made2, stats.props_made);
+        discounted_props_made3 = discount(0.9, discounted_props_made3, stats.props_made);
+
+        #ifdef STATS_NEEDED
+        //unused discounted ones come here
+        #endif
+
+        stats.update_rdb_stats();
+    }
+
+    void reset_rdb_stats(ClauseStats& stats)
+    {
+        #ifdef STATS_NEEDED
+        antec_data.clear();
+        conflicts_made = 0;
+        ttl_stats = 0;
+        dump_no++;
+        #endif
+
+        stats.reset_rdb_stats();
+    }
+
+    static ClauseStatsExtra combineStats(const ClauseStatsExtra& first, const ClauseStatsExtra& second)
+    {
+        //Create to-be-returned data
+        ClauseStatsExtra ret = first;
 
         #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
         if (first.introduced_at_conflict == 0) {
@@ -216,36 +324,35 @@ struct ClauseStats
         } else {
             ret.introduced_at_conflict = std::min(first.introduced_at_conflict, second.introduced_at_conflict);
         }
-        ret.used_for_uip_creation = first.used_for_uip_creation + second.used_for_uip_creation;
-        ret.propagations_made = first.propagations_made + second.propagations_made;
+        ret.sum_uip1_used = first.sum_uip1_used + second.sum_uip1_used;
+        ret.sum_props_made = first.sum_props_made + second.sum_props_made;
+        ret.discounted_props_made = first.discounted_props_made + second.discounted_props_made;
+        ret.discounted_uip1_used =  first.discounted_uip1_used  + second.discounted_uip1_used;
+        ret.orig_glue = std::min(first.orig_glue, second.orig_glue);
+        ret.discounted_uip1_used3 = first.discounted_uip1_used3 + second.discounted_uip1_used3;
+        ret.discounted_props_made2 = first.discounted_props_made2 + second.discounted_props_made2;
+        ret.discounted_uip1_used2 =  first.discounted_uip1_used2  + second.discounted_uip1_used2;
+        ret.discounted_props_made3 = first.discounted_props_made3 + second.discounted_props_made3;
         #endif
 
         #ifdef STATS_NEEDED
-        ret.ID = 0; //don't track combined clauses
+        ret.dump_no = std::max(first.dump_no, second.dump_no);
+        ret.ttl_stats = std::max(first.ttl_stats, second.ttl_stats);
         ret.conflicts_made = first.conflicts_made + second.conflicts_made;
-        ret.clause_looked_at = first.clause_looked_at + second.clause_looked_at;
+        ret.orig_connects_num_communities = std::max(
+            first.orig_connects_num_communities,
+            second.orig_connects_num_communities);
         #endif
-
-        ret.which_red_array = std::min(first.which_red_array, second.which_red_array);
 
         return ret;
     }
 };
+#endif
 
 inline std::ostream& operator<<(std::ostream& os, const ClauseStats& stats)
 {
 
     os << "glue " << stats.glue << " ";
-    #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
-    os << "conflIntro " << stats.introduced_at_conflict<< " ";
-    os << "used_for_uip_creation " << stats.used_for_uip_creation << " ";
-    os << "numProp " << stats.propagations_made<< " ";
-    #endif
-    #ifdef STATS_NEEDED
-    os << "numConfl " << stats.conflicts_made<< " ";
-    os << "numLook " << stats.clause_looked_at<< " ";
-    #endif
-
     return os;
 }
 
@@ -260,19 +367,21 @@ to hold the clause.
 class Clause
 {
 public:
-    uint16_t isRed:1; ///<Is the clause a redundant clause?
-    uint16_t isRemoved:1; ///<Is this clause queued for removal?
-    uint16_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
-    uint16_t is_distilled:1;
-    uint16_t is_ternary_resolved:1;
-    uint16_t is_ternary_resolvent:1;
-    uint16_t occurLinked:1;
-    uint16_t must_recalc_abst:1;
-    uint16_t _used_in_xor:1;
-    uint16_t _used_in_xor_full:1;
-    uint16_t _xor_is_detached:1;
-    uint16_t _gauss_temp_cl:1; ///Used ONLY by Gaussian elimination to incicate where a proagation is coming from
-    uint16_t reloced:1;
+    ClauseStats stats;
+    uint32_t isRed:1; ///<Is the clause a redundant clause?
+    uint32_t isRemoved:1; ///<Is this clause queued for removal?
+    uint32_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
+    uint32_t distilled:1;
+    uint32_t is_ternary_resolved:1;
+    uint32_t occurLinked:1;
+    uint32_t must_recalc_abst:1;
+    uint32_t _used_in_xor:1;
+    uint32_t _used_in_xor_full:1;
+    uint32_t _xor_is_detached:1;
+    uint32_t _gauss_temp_cl:1; ///Used ONLY by Gaussian elimination to incicate where a proagation is coming from
+    uint32_t reloced:1;
+    uint32_t disabled:1;
+    uint32_t tried_to_remove:1;
 
 
     Lit* getData()
@@ -287,40 +396,30 @@ public:
 
 public:
     cl_abst_type abst;
-    ClauseStats stats;
     uint32_t mySize;
 
     template<class V>
-    Clause(const V& ps, const uint32_t _introduced_at_conflict
-        #ifdef STATS_NEEDED
-        , const int64_t _ID
-        #endif
-        )
+    Clause(const V& ps, const uint32_t _introduced_at_conflict, const uint32_t _ID)
     {
         //assert(ps.size() > 2);
 
         stats.last_touched = _introduced_at_conflict;
-        #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-        stats.introduced_at_conflict = _introduced_at_conflict;
-        #endif
-
-        #ifdef STATS_NEEDED
+        assert(_ID > 0);
         stats.ID = _ID;
-        assert(_ID >= 0);
-        #endif
-        stats.glue = std::min<uint32_t>(stats.glue, ps.size());
+
         isFreed = false;
         mySize = ps.size();
         isRed = false;
         isRemoved = false;
-        is_distilled = false;
+        distilled = 0;
         is_ternary_resolved = false;
-        is_ternary_resolvent = false;
         must_recalc_abst = true;
         _used_in_xor = false;
         _used_in_xor_full = false;
         _xor_is_detached = false;
         reloced = false;
+        disabled = false;
+        tried_to_remove = 0;
 
         for (uint32_t i = 0; i < ps.size(); i++) {
             getData()[i] = ps[i];
@@ -371,6 +470,13 @@ public:
         setStrenghtened();
     }
 
+    //We MUST have just strengthen-ed the clause!
+    void enlarge_one()
+    {
+        mySize+=1;
+        must_recalc_abst = true;
+    }
+
     bool red() const
     {
         return isRed;
@@ -414,22 +520,7 @@ public:
     void makeIrred()
     {
         assert(isRed);
-        #if STATS_NEEDED
-        stats.ID = 0;
-        #endif
         isRed = false;
-    }
-
-    void makeRed(uint64_t
-    #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-    confl_num
-    #endif
-    )
-    {
-        isRed = true;
-        #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-        stats.introduced_at_conflict = confl_num;
-        #endif
     }
 
     void strengthen(const Lit p)
@@ -493,21 +584,6 @@ public:
         isFreed = true;
     }
 
-    void combineStats(const ClauseStats& other)
-    {
-        stats = ClauseStats::combineStats(stats, other);
-    }
-
-    void set_distilled(bool distilled)
-    {
-        is_distilled = distilled;
-    }
-
-    bool getdistilled() const
-    {
-        return is_distilled;
-    }
-
     bool getOccurLinked() const
     {
         return occurLinked;
@@ -525,14 +601,14 @@ public:
         if (red()) {
             cout << " glue : " << std::setw(4) << stats.glue;
         }
-        #ifdef STATS_NEEDED
-        cout
-        << " Confls: " << std::setw(10) << stats.conflicts_made
-        << " Props: " << std::setw(10) << stats.propagations_made
-        << " Looked at: " << std::setw(10)<< stats.clause_looked_at
-        << " UIP used: " << std::setw(10)<< stats.used_for_uip_creation;
-        #endif
         cout << endl;
+    }
+
+    void copy_to(vector<Lit>& lits) {
+        lits.clear();
+        for(const Lit l: *this) {
+            lits.push_back(l);
+        }
     }
 };
 
@@ -544,6 +620,7 @@ inline std::ostream& operator<<(std::ostream& os, const Clause& cl)
         if (i+1 != cl.size())
             os << " ";
     }
+    cout << " -- ID: " << cl.stats.ID;
 
     return os;
 }
@@ -577,6 +654,44 @@ struct BinaryXor
         }
         return false;
     }
+};
+
+struct Sub0Ret {
+    ClauseStats stats;
+    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+    ClauseStatsExtra stats_extra;
+    #endif
+    bool subsumedIrred = 0;
+    uint32_t numSubsumed = 0;
+
+    void clear() {
+        *this = Sub0Ret();
+    }
+
+    Sub0Ret& operator+=(const Sub0Ret& other)
+    {
+        numSubsumed += other.numSubsumed;
+        return *this;
+    }
+
+};
+
+struct Sub1Ret {
+    Sub1Ret& operator+=(const Sub1Ret& other)
+    {
+        sub += other.sub;
+        str += other.str;
+
+        return *this;
+    }
+
+    void clear() {
+        *this = Sub1Ret();
+    }
+
+    size_t sub = 0;
+    size_t str = 0;
+    bool subsumedIrred = false;
 };
 
 } //end namespace

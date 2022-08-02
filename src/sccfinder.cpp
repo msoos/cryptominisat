@@ -50,9 +50,9 @@ bool SCCFinder::performSCC(uint64_t* bogoprops_given)
 
     globalIndex = 0;
     index.clear();
-    index.resize(solver->nVars()*2, std::numeric_limits<uint32_t>::max());
+    index.resize(solver->nVars()*2, numeric_limits<uint32_t>::max());
     lowlink.clear();
-    lowlink.resize(solver->nVars()*2, std::numeric_limits<uint32_t>::max());
+    lowlink.resize(solver->nVars()*2, numeric_limits<uint32_t>::max());
     stackIndicator.clear();
     stackIndicator.resize(solver->nVars()*2, false);
     assert(stack.empty());
@@ -65,7 +65,7 @@ bool SCCFinder::performSCC(uint64_t* bogoprops_given)
             continue;
         }
         assert(depth == 0);
-        if (index[vertex] == std::numeric_limits<uint32_t>::max()) {
+        if (index[vertex] == numeric_limits<uint32_t>::max()) {
             tarjan(vertex);
             depth--;
             assert(stack.empty());

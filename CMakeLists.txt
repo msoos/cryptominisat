@@ -18,9 +18,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 set(CMAKE_C_STANDARD 99)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 enable_language( CXX )
 
@@ -49,6 +49,11 @@ endif()
 if(POLICY CMP0026)
     cmake_policy(SET CMP0026 NEW)
 endif()
+
+if(POLICY CMP0104)
+    cmake_policy(SET CMP0104 NEW)
+endif()
+
 
 # -----------------------------------------------------------------------------
 # Provide scripts dir for included cmakes to use
@@ -116,25 +121,42 @@ if (STATICCOMPILE)
 #     endif()
 endif()
 
-option(NOVALGRIND "Don't use valgrind" ON)
-option(ENABLE_PYTHON_INTERFACE "Enable Python interface" ON)
+option(GPU "Use GPU based setup" OFF)
+if (GPU)
+    add_definitions( -DUSE_GPU )
+    enable_language( CUDA )
+endif()
+
+option(NOTBUDDY "Disable the use of tbuddy, even if installed" OFF)
+option(FORCETBUDDY "For the use of tbuddy" OFF)
+if (NOT NOTBUDDY)
+    find_library (TBUDDY tbuddy)
+    if (TBUDDY)
+        MESSAGE(STATUS "OK, found tbuddy: ${TBUDDY}")
+        add_definitions(-DUSE_TBUDDY)
+    else()
+        MESSAGE(STATUS "tbuddy not found, not compiling with tbuddy-based GJ FRAT proofs")
+    endif()
+endif()
+
+if (FORCETBUDDY AND NOT TBUDDY)
+    MESSAGE(FATAL_ERROR "tbuddy was required but not found. Please install tbuddy.")
+endif ()
+
 option(EMSCRIPTEN "Generate only emscripten JS" OFF)
 if (EMSCRIPTEN)
     set(ONLY_SIMPLE ON)
     set(BUILD_SHARED_LIBS ON)
     set(NOZLIB ON)
-    set(NOVALGRIND ON)
-    set(ENABLE_PYTHON_INTERFACE OFF)
 else()
     set(THREADS_PREFER_PTHREAD_FLAG ON)
     find_package (Threads REQUIRED)
 endif()
 
+option(SANITIZE "Use Clang sanitizers. You MUST use clang++ as the compiler for this to work" OFF)
 option(FEEDBACKFUZZ "Use Clang coverage sanitizers" OFF)
 if (FEEDBACKFUZZ)
-    SET (CMAKE_CXX_COMPILER "clang++")
-    add_compile_options("-fsanitize=address")
-    add_compile_options("-fsanitize-coverage=edge,indirect-calls,8bit-counters")
+    set(SANITIZE ON)
 endif()
 
 option(LARGEMEM "Allow memory usage to grow to Terabyte values -- uses 64b offsets. Slower, but allows the solver to run for much longer." OFF)
@@ -142,7 +164,12 @@ if (LARGEMEM)
     add_definitions(-DLARGE_OFFSETS)
 endif()
 
-option(EXTFEAT "Use extended features" ON)
+option(RDB0ONLY "Use only RDB0 features only" ON)
+if (RDB0ONLY)
+    add_definitions(-DRDB0_ONLY_FEATURES)
+endif()
+
+option(EXTFEAT "Use extended features" OFF)
 if (EXTFEAT)
     add_definitions(-DEXTENDED_FEATURES)
 endif()
@@ -150,8 +177,6 @@ endif()
 macro(add_sanitize_option flagname)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${flagname}" )
 endmacro()
-
-option(SANITIZE "Use Clang sanitizers. You MUST use clang++ as the compiler for this to work" OFF)
 
 include(CheckCXXCompilerFlag)
 macro(add_cxx_flag_if_supported flagname)
@@ -173,37 +198,13 @@ endmacro()
 
 macro(add_sanitize_flags)
 if (SANITIZE)
-    MESSAGE(WARNING "Using clang sanitizers -- you MUST use clang++ or the compile WILL fail")
+    #MESSAGE(WARNING "Using clang sanitizers -- you MUST use clang++ or the compile WILL fail")
+    add_sanitize_option("-fsanitize-trap=undefined,float-divide-by-zero,unsigned-integer-overflow,implicit-conversion,local-bounds,bounds,return,alignment,null,integer,enum,bool,float-cast-overflow,integer-divide-by-zero,signed-integer-overflow")
     add_sanitize_option("-fsanitize=address")
-    add_sanitize_option("-fsanitize=undefined")
-
-    add_sanitize_option("-fsanitize=null")
-    add_sanitize_option("-fsanitize=alignment")
-    #add_sanitize_option("-fno-sanitize-recover")
-
-    add_sanitize_option("-fsanitize=return")
-    add_sanitize_option("-fsanitize=bounds")
-    add_sanitize_option("-fsanitize=float-divide-by-zero")
-    add_sanitize_option("-fsanitize=integer-divide-by-zero")
-    add_sanitize_option("-fsanitize=signed-integer-overflow")
-    add_sanitize_option("-fsanitize=bool")
-    add_sanitize_option("-fsanitize=enum")
-    add_sanitize_option("-fsanitize=float-cast-overflow")
+    add_sanitize_option("-fno-sanitize-recover")
     add_compile_options("$<$<CONFIG:RELWITHDEBINFO>:-D_GLIBCXX_ASSERTIONS>")
-
-    #add_sanitize_option("-Weverything")
-    #add_sanitize_option("-Wshorten-64-to-32")
-    #add_sanitize_option("-Wweak-vtables")
-    #add_sanitize_option("-Wsign-conversion")
-    #add_sanitize_option("-Wconversion")
 endif()
 endmacro()
-
-option(USE_GAUSS "Build with every-level GAUSS enabled" ON)
-if (USE_GAUSS)
-    add_definitions(-DUSE_GAUSS)
-    message(STATUS "Building with GAUSS enabled at every level")
-endif()
 
 option(ENABLE_ASSERTIONS "Build with assertions enabled" ON)
 message(STATUS "build type is ${CMAKE_BUILD_TYPE}")
@@ -351,7 +352,7 @@ if (NOT WIN32)
         add_cxx_flag_if_supported("-mpopcnt")
         add_cxx_flag_if_supported("-msse4.2")
         add_cxx_flag_if_supported("-Wextra-semi-stmt")
-        add_cxx_flag_if_supported("-Wweak-vtables")
+        add_cxx_flag_if_supported("-Wnoweak-vtables")
         add_cxx_flag_if_supported("-ggdb3")
 
         # Apparently needed before OS X Maverics (2013)
@@ -438,7 +439,7 @@ else()
   set(GIT_SHA "GIT-hash-notfound")
 endif()
 
-set(CMS_FULL_VERSION "5.8.0")
+set(CMS_FULL_VERSION "5.11.0")
 
 string(REPLACE "." ";" CMS_FULL_VERSION_LIST ${CMS_FULL_VERSION})
 SetVersionNumber("PROJECT" ${CMS_FULL_VERSION_LIST})
@@ -455,10 +456,13 @@ endif()
 option(FINAL_PREDICTOR "Use final predictor" OFF)
 option(FINAL_PREDICTOR_BRANCH "Use final predictor" OFF)
 if (FINAL_PREDICTOR)
-    message(STATUS "You have to build xgboost with 'cmake -DBUILD_STATIC_LIB=ON -DUSE_OPENMP=OFF ..' for static linking")
+    message(STATUS "You HAVE to build xgboost and LightGBM with 'cmake -DBUILD_STATIC_LIB=ON -DUSE_OPENMP=OFF ..' for static linking")
     find_package(dmlc REQUIRED)
     find_package(rabit REQUIRED)
     find_package(xgboost REQUIRED)
+    find_library(lightgbm
+    NAMES _lightgbm lightgbm LightGBM
+    REQUIRED)
     add_definitions( -DFINAL_PREDICTOR )
 endif()
 
@@ -477,11 +481,18 @@ if (NOT NOSQLITE)
     endif ()
 endif()
 
+option(NORMAL_CL_USE_STATS "Only prop and uip stats for NORM" OFF)
+if (NORMAL_CL_USE_STATS)
+    add_definitions( -DNORMAL_CL_USE_STATS )
+    MESSAGE(STATUS "Adding uip + props to normal run")
+endif()
+
 option(STATS "Don't use statistics at all" OFF)
 if (STATS)
     if (FINAL_PREDICTOR)
         message(FATAL_ERROR "Cannot have stats and final predictor on both")
     endif()
+    set(STATS_NEEDED ON)
     add_definitions( -DSTATS_NEEDED )
     if (NOT SQLITE3_FOUND)
         message(FATAL_ERROR "SQLite needed for STATS")
@@ -490,59 +501,28 @@ ELSE ()
     MESSAGE(STATUS "Not compiling detailed statistics. The system is faster without them")
 ENDIF ()
 
+if (STATS_NEEDED)
+    find_package(louvain_communities CONFIG)
+    if (louvain_communities_FOUND)
+        message(STATUS "Found Community Louvain library")
+        message(STATUS "Community Louvain dynamic lib: ${COMMLOUVAIN_LIBRARIES}")
+        message(STATUS "Community Louvain include dirs: ${COMMLOUVAIN_INCLUDE_DIRS}")
+    else()
+        message(STATUS "Cannot find Community Louvain. Please install it!")
+        if (STATS_NEEDED OR FINAL_PREDICTOR)
+            message(FATAL_ERROR "For STATS we must have louvain communities installed!")
+        endif()
+    endif()
+endif()
+
 # ----------
 # manpage
 # ----------
-option(MANPAGE "Create manpage" ON)
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND MANPAGE)
-    find_program(HELP2MAN_FOUND help2man)
-    if (HELP2MAN_FOUND)
-
-        set(mandir ${CMAKE_INSTALL_PREFIX}/share/man/man1)
-        # INSTALL(CODE "FILE(MAKE_DIRECTORY ${mandir})")
-
-
-        if (NOT ONLY_SIMPLE)
-            ADD_CUSTOM_TARGET(man_cms5
-                ALL
-                DEPENDS cryptominisat5-bin
-            )
-
-            ADD_CUSTOM_COMMAND(
-                TARGET man_cms5
-                COMMAND help2man
-                ARGS --version-string=${CMS_FULL_VERSION} --help-option="--hhelp" --include ${PROJECT_SOURCE_DIR}/manpage-extras \"$<TARGET_FILE:cryptominisat5-bin>\" -o "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5.1" --name="SAT solver"
-            )
-
-            INSTALL(
-                FILES ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5.1
-                DESTINATION ${mandir}
-            )
-
-        endif()
-        ADD_CUSTOM_TARGET(man_cms5_simple
-            ALL
-            DEPENDS cryptominisat5_simple-bin
-        )
-
-        ADD_CUSTOM_COMMAND(
-            TARGET man_cms5_simple
-            COMMAND help2man
-            ARGS --version-string=${CMS_FULL_VERSION} --help-option="-h" --include ${PROJECT_SOURCE_DIR}/manpage-extras \"$<TARGET_FILE:cryptominisat5_simple-bin>\" -o "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5_simple.1" --name="SAT solver"
-        )
-
-        INSTALL(
-            FILES ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5_simple.1
-            DESTINATION ${mandir}
-        )
-
-        message(STATUS "Manpage will be created and installed")
-    else()
-        MESSAGE(STATUS "Cannot find help2man, not creating manpage")
-    endif()
-else()
-    MESSAGE(STATUS "Not on Linux, not creating manpage")
-endif()
+set(mandir ${CMAKE_INSTALL_PREFIX}/share/man/man1)
+INSTALL(
+    FILES ${CMAKE_SOURCE_DIR}/man/cryptominisat5.1
+    DESTINATION ${mandir}
+)
 
 # -----------------------------------------------------------------------------
 # Look for ZLIB (For reading zipped CNFs)
@@ -562,29 +542,13 @@ if (NOT NOZLIB AND NOT ((NOT BUILD_SHARED_LIBS) AND WIN32))
     ENDIF (ZLIB_FOUND)
 endif()
 
-if (NOT NOVALGRIND)
-    find_package(Valgrind)
-    if (VALGRIND_FOUND )
-        message(STATUS "OK, Found Valgrind. Using valgrind client requests to mark freed clauses in pool as undefined")
-        add_definitions(-DUSE_VALGRIND)
-        include_directories(${VALGRIND_INCLUDE_DIR})
-    else()
-        message(STATUS "Cannot find valgrind or it's disabled, we will not be able to mark memory pool objects as undefined")
-    endif()
+
+include(CheckFloatPrecision)
+check_float_precision()
+if (HAVE__FPU_SETCW)
+    add_definitions(-DYALSAT_FPU)
+    message(STATUS "Found FPU code for yalsat: fpu_control.h, _FPU_SINGLE, _FPU_DOUBLE")
 endif()
-
-
-option(REQUIRE_YALSAT "Try to use YALSAT (not normally needed)" OFF)
-if (REQUIRE_YALSAT)
-    add_definitions(-DUSE_YALSAT)
-    include(CheckFloatPrecision)
-    check_float_precision()
-    if (HAVE__FPU_SETCW)
-        add_definitions(-DYALSAT_FPU)
-        message(STATUS "Found FPU code for yalsat: fpu_control.h, _FPU_SINGLE, _FPU_DOUBLE")
-    endif()
-endif()
-
 
 option(WEIGHTED_SAMPLING "Allow for weighted sampling" OFF)
 if (WEIGHTED_SAMPLING)
@@ -596,7 +560,7 @@ endif()
 # MIT option
 # -----------------------------------------------------------------------------
 option(REQUIRE_M4RI "Must use m4ri" OFF)
-option(NOM4RI "Don't use m4ri" OFF)
+option(NOM4RI "Don't use m4ri" ON)
 option(NOBOSPHORUS "Don't use Bosphorus" ON)
 option(REQUIRE_BOSPHORUS "Must use Bosphorus" OFF)
 option(MIT "Build with only MIT licensed components" OFF)
@@ -647,9 +611,24 @@ if (NOT NOBOSPHORUS)
 endif()
 
 # -----------------------------------------------------------------------------
+# Look for MPI
+# -----------------------------------------------------------------------------
+option(NOBREAKID "Disable BreakID" ON)
+option(NOMPI "Disable MPI" ON)
+if (NOT NOMPI)
+    find_package(MPI)
+    if (MPI_FOUND)
+        add_definitions( -DUSE_MPI )
+        set(NOBREAKID ON)
+        #set( CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER} )
+    else (MPI_FOUND)
+         MESSAGE(STATUS "No suitable C++ MPI implementation found. CryptoMiniSat will not be distributed.")
+    endif(MPI_FOUND)
+endif()
+
+# -----------------------------------------------------------------------------
 # Look for BreakID
 # -----------------------------------------------------------------------------
-option(NOBREAKID "Disable BreakID" OFF)
 if (NOT NOBREAKID)
     find_package(breakid)
     if (NOT BREAKID_LIBRARIES)
@@ -681,7 +660,6 @@ macro(cmsat_add_public_header LIBTARGET HEADER)
      )
 endmacro()
 
-
 # -----------------------------------------------------------------------------
 # Look for MPI
 # -----------------------------------------------------------------------------
@@ -697,60 +675,19 @@ if (NOT NOMPI)
     endif(MPI_FOUND)
 endif()
 
-# -----------------------------------------------------------------------------
-# Look for python
-# -----------------------------------------------------------------------------
-if (NOT BUILD_SHARED_LIBS)
-    set(ENABLE_PYTHON_INTERFACE OFF)
+if (FINAL_PREDICTOR)
+    find_package(Python3 COMPONENTS NumPy Interpreter Development REQUIRED)
+else()
+    find_package(Python3 COMPONENTS NumPy Interpreter Development)
 endif()
 
-option(FORCE_PYTHON2 OFF)
-option(FORCE_PYTHON3 OFF)
-
-if (FORCE_PYTHON3 AND FORCE_PYTHON2)
-    message(FATAL_ERROR "Cannot force both Python2 and Python3. Wrong options given.")
-endif()
-
-message(STATUS "In case your Python interpreter is not found, or a wrong one is found, please set it with '-DPYTHON_EXECUTABLE:FILEPATH=your path here'")
-if (NOT FORCE_PYTHON2)
-    find_package(PythonInterp 3)
-    find_package(PythonLibs 3)
-    if (PYTHONINTERP_FOUND AND PYTHONLIBS_FOUND AND PYTHON_INCLUDE_DIRS)
-        message(STATUS "Python 3 -- PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}")
-        message(STATUS "Python 3 -- PYTHON_LIBRARIES=${PYTHON_LIBRARIES}")
-        message(STATUS "Python 3 -- PYTHON_INCLUDE_DIRS=${PYTHON_INCLUDE_DIRS}")
-        message(STATUS "Python 3 -- PYTHONLIBS_VERSION_STRING=${PYTHONLIBS_VERSION_STRING}")
-    endif()
-endif()
-
-if (NOT (PYTHONINTERP_FOUND AND PYTHONLIBS_FOUND AND PYTHON_INCLUDE_DIRS) AND FORCE_PYTHON3)
-    message(FATAL_ERROR "Forced Python3 but did not find Python3")
-endif()
-
-if (NOT (PYTHONINTERP_FOUND AND PYTHONLIBS_FOUND AND PYTHON_INCLUDE_DIRS) AND NOT FORCE_PYTHON3)
-    unset(PYTHONLIBS_FOUND CACHE)
-    unset(PYTHON_LIBRARIES CACHE)
-    unset(PYTHON_INCLUDE_PATH CACHE)
-    unset(PYTHON_INCLUDE_DIRS CACHE)
-    unset(PYTHON_DEBUG_LIBRARIES CACHE)
-    unset(PYTHONLIBS_VERSION_STRING CACHE)
-
-    unset(PYTHONINTERP_FOUND CACHE)
-    unset(PYTHON_EXECUTABLE CACHE)
-    unset(PYTHON_VERSION_STRING CACHE)
-
-    message(STATUS "Python 3 not fully found or Python 2 has been forced -- trying Python 2.7")
-    find_package(PythonInterp 2.7)
-    find_package(PythonLibs 2.7)
-
-    message(STATUS "Python 2.7 -- PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}")
-    message(STATUS "Python 2.7 -- PYTHON_LIBRARIES=${PYTHON_LIBRARIES}")
-    message(STATUS "Python 2.7 -- PYTHON_INCLUDE_DIRS=${PYTHON_INCLUDE_DIRS}")
-    message(STATUS "Python 2.7 -- PYTHONLIBS_VERSION_STRING=${PYTHONLIBS_VERSION_STRING}")
-endif()
-
-if (NOT (PYTHONINTERP_FOUND AND PYTHONLIBS_FOUND AND PYTHON_INCLUDE_DIRS) AND FORCE_PYTHON2)
-    message(FATAL_ERROR "Forced Python2 but did not find Python2")
+if (Python3_FOUND AND Python3_Interpreter_FOUND AND Python3_NumPy_FOUND)
+    message(STATUS "Python 3 -- Python3_EXECUTABLE=${Python3_EXECUTABLE}")
+    message(STATUS "Python 3 -- Python3_LIBRARIES=${Python3_LIBRARIES}")
+    message(STATUS "Python 3 -- Python3_INCLUDE_DIRS=${Python3_INCLUDE_DIRS}")
+    message(STATUS "Python 3 -- Python3_VERSION=${Python3_VERSION}")
+    message(STATUS "Python 3 -- Python3_NumPy_INCLUDE_DIRS=${Python3_NumPy_INCLUDE_DIRS}")
+    message(STATUS "Python 3 -- Python3_NumPy_VERSION=${Python3_NumPy_VERSION}")
 endif()
 
 #command-line parsing executable needs boost program-options
@@ -776,7 +713,7 @@ endforeach()
 message(STATUS "All defines at startup: ${COMPILE_DEFINES}")
 
 add_subdirectory(src cmsat5-src)
-if(EXISTS "${PROJECT_SOURCE_DIR}/utils/drat-trim/drat-trim.c")
+if(EXISTS "${PROJECT_SOURCE_DIR}/utils/drat-trim/drat-trim.cpp")
     add_subdirectory(${PROJECT_SOURCE_DIR}/utils/drat-trim utils/drat-trim)
 else()
     message(STATUS "GIT Subprojects not initialized, not building drat-trim")
@@ -793,7 +730,6 @@ configure_file(
 
 add_custom_target(uninstall
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake
-    DEPENDS uninstall_pycryptosat
 )
 
 # -----------------------------------------------------------------------------
@@ -825,16 +761,6 @@ if (ENABLE_TESTING)
 
 else()
     message(WARNING "Testing is disabled")
-endif()
-
-if (ENABLE_PYTHON_INTERFACE)
-    if (PYTHONINTERP_FOUND AND PYTHONLIBS_FOUND AND PYTHON_INCLUDE_DIRS AND NOT COVERAGE)
-        message(STATUS "Found python interpreter, libs and header files")
-        message(STATUS "Building python interface")
-        add_subdirectory(python pycryptosat)
-    else()
-        message(WARNING "Cannot find python interpreter, libs and header files, cannot build python interface")
-    endif()
 endif()
 
 # -----------------------------------------------------------------------------

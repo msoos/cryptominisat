@@ -41,35 +41,88 @@ CREATE TABLE `finishup` (
   `status` varchar(255) NOT NULL
 );
 
--- TODO Add more features here!
-DROP TABLE IF EXISTS `reduceDB`;
-CREATE TABLE `reduceDB` (
+DROP TABLE IF EXISTS `reduceDB_common`;
+CREATE TABLE `reduceDB_common` (
+  `reduceDB_called` int(20) NOT NULL,
+
   `simplifications` int(20) NOT NULL,
   `restarts` int(20) NOT NULL,
   `conflicts` bigint(20) NOT NULL,
   `latest_satzilla_feature_calc` int(20) NOT NULL,
-  `cur_restart_type` varchar(6) NOT NULL,
+  `cur_restart_type` int(20) NOT NULL,
   `runtime` float NOT NULL,
+  `tot_cls_in_db` int(20) NOT NULL,
+
+  `median_act` float NOT NULL,
+  `median_uip1_used` int(20) NOT NULL,
+  `median_props` int(20) NOT NULL,
+  `median_sum_uip1_per_time` float NOT NULL,
+  `median_sum_props_per_time` float NOT NULL,
+
+  -- `avg_glue` float NOT NULL, CANNOT do this, ternaries don't have a glue!
+  `avg_props` float NOT NULL,
+  `avg_uip1_used` float NOT NULL,
+  `avg_sum_uip1_per_time` float NOT NULL,
+  `avg_sum_props_per_time` float NOT NULL,
+
+  num_vars int(20) NOT NULL,
+  num_long_irred_cls int(20) NOT NULL,
+  num_long_irred_cls_lits int(20) NOT NULL,
+  num_long_red_cls int(20) NOT NULL,
+  num_long_red_cls_lits int(20) NOT NULL,
+  num_bin_irred_cls int(20) NOT NULL,
+  num_bin_red_cls int(20) NOT NULL,
+
+  trailDepthHistLT_avg float NOT NULL,
+  backtrackLevelHistLT_avg float NOT NULL,
+  conflSizeHistLT_avg float NOT NULL,
+  numResolutionsHistLT_avg float NOT NULL,
+  glueHistLT_avg float NOT NULL,
+  antec_data_sum_sizeHistLT_avg float NOT NULL,
+  overlapHistLT_avg float NOT NULL
+);
+
+DROP TABLE IF EXISTS `reduceDB`;
+CREATE TABLE `reduceDB` (
+  `reduceDB_called` int(20) NOT NULL,
+  `conflicts` bigint(20) NOT NULL,
+  `introduced_at_conflict` bigint(20) NOT NULL, -- this is BAD but for ternary clauses we need this
+  `which_red_array` int(20) NOT NULL,
 
   `clauseID` int(20) NOT NULL,
   `dump_no` int(20) NOT NULL,
   `conflicts_made` bigint(20) NOT NULL,
-  `propagations_made` bigint(20) NOT NULL,
-  `sum_propagations_made` bigint(20) NOT NULL,
-  `clause_looked_at` bigint(20) NOT NULL,
-  `used_for_uip_creation` bigint(20) NOT NULL,
+  `props_made` bigint(20) NOT NULL,
+  `sum_props_made` bigint(20) NOT NULL,
+  `uip1_used` bigint(20) NOT NULL,
+  `sum_uip1_used`  int(20) NOT NULL,
+
   `last_touched_diff` bigint(20) NOT NULL,
   `activity_rel` float(20) NOT NULL,
   `locked` int(20) NOT NULL,
   `in_xor` int(20) NOT NULL,
-  `glue` int(20) NOT NULL,
+  `glue` int(20) DEFAULT NULL,
   `size` int(20) NOT NULL,
-  `ttl` int(20) NOT NULL,
+  `ttl_stats` int(20) NOT NULL,
   `is_ternary_resolvent` int(20) NOT NULL,
-  `act_ranking_top_10` int(20) NOT NULL,
+  `is_decision` int(20) NOT NULL,
+  `is_distilled` int(20) NOT NULL,
+  `connects_num_communities` int(20) NOT NULL,
+
+  -- ranking
   `act_ranking` int(20) NOT NULL,
-  `tot_cls_in_db` int(20) NOT NULL,
-  `sum_uip1_used`  int(20) NOT NULL
+  `prop_ranking` int(20) NOT NULL,
+  `uip1_ranking` int(20) NOT NULL,
+  `sum_uip1_per_time_ranking` int(20) NOT NULL,
+  `sum_props_per_time_ranking` int(20) NOT NULL,
+
+  -- discounted
+  `discounted_uip1_used` float(20) NOT NULL,
+  `discounted_props_made` float(20) NOT NULL,
+  `discounted_uip1_used2` float(20) NOT NULL,
+  `discounted_props_made2` float(20) NOT NULL,
+  `discounted_uip1_used3` float(20) NOT NULL,
+  `discounted_props_made3` float(20) NOT NULL
 );
 
 DROP TABLE IF EXISTS `restart`;
@@ -128,16 +181,6 @@ CREATE TABLE `restart` (
   `trailDepthDeltaMin` int(20),
   `trailDepthDeltaMax` int(20),
 
-  `propBinIrred` bigint(20) NOT NULL,
-  `propBinRed` bigint(20) NOT NULL,
-  `propLongIrred` bigint(20) NOT NULL,
-  `propLongRed` bigint(20) NOT NULL,
-
-  `conflBinIrred` bigint(20) NOT NULL,
-  `conflBinRed` bigint(20) NOT NULL,
-  `conflLongIrred` bigint(20) NOT NULL,
-  `conflLongRed` bigint(20) NOT NULL,
-
   `learntUnits` int(20) NOT NULL,
   `learntBins` int(20) NOT NULL,
   `learntLongs` int(20) NOT NULL,
@@ -159,7 +202,7 @@ CREATE TABLE `restart` (
   `set` int(20) NOT NULL,
 
   `branch_strategy` int NOT NULL,
-  `restart_type` int NOT NULL
+  `restart_type` int(20) NOT NULL
 );
 
 DROP TABLE IF EXISTS `restart_dat_for_var`;
@@ -181,6 +224,7 @@ CREATE TABLE `clause_stats` (
   `orig_glue` int(20) NOT NULL,
   `glue_before_minim` int(20) NOT NULL,
   `orig_size` int(20) NOT NULL,
+  `size_before_minim` int(20) NOT NULL,
   `conflicts_this_restart` bigint(20) NOT NULL,
   `num_overlap_literals` int(20) NOT NULL,
   `num_antecedents` int(20) NOT NULL,
@@ -192,42 +236,34 @@ CREATE TABLE `clause_stats` (
   `decision_level_pre1` int(20) NOT NULL,
   `decision_level_pre2` int(20) NOT NULL,
   `trail_depth_level` int(20) NOT NULL,
-  `cur_restart_type` varchar(6) NOT NULL,
+  `cur_restart_type` int(20) NOT NULL,
 
   `atedecents_binIrred` int(20) NOT NULL,
   `atedecents_binRed` int(20) NOT NULL,
   `atedecents_longIrred` int(20) NOT NULL,
   `atedecents_longRed` int(20) NOT NULL,
 
-  `antecedents_glue_long_reds_avg` float,
-  `antecedents_glue_long_reds_var` float,
-  `antecedents_glue_long_reds_min` int(20),
-  `antecedents_glue_long_reds_max` int(20),
+  `decisionLevelHistLT_avg` float,
+  `backtrackLevelHistLT_avg` float,
+  `trailDepthHistLT_avg` float,
+  `conflSizeHistlt_avg` float,
+  `glueHistLT_avg` float,
+  `connects_num_communities_histLT_avg` float,
+  `numResolutionsHistLT_avg` float,
 
-  `antecedents_long_red_age_avg` float,
-  `antecedents_long_red_age_var` float,
-  `antecedents_long_red_age_min` bigint(20),
-  `antecedents_long_red_age_max` bigint(20),
+  `antec_data_sum_sizeHistLT_avg` float,
+  `overlapHistLT_avg` float,
 
-  `decision_level_hist` float,
-  `backtrack_level_hist_lt` float,
-  `trail_depth_level_hist` float,
-  `size_hist` float,
-  `glue_hist` float,
-  `num_resolutions_hist_lt` float,
-
-  `antec_sum_size_hist` float,
-  `antec_overlap_hist` float,
-
-  `branch_depth_hist_queue` float NOT NULL,
-  `trail_depth_hist` float NOT NULL,
-  `trail_depth_hist_longer` float NOT NULL,
-  `num_resolutions_hist` float,
-  `confl_size_hist` float,
-  `trail_depth_delta_hist` float,
-  `backtrack_level_hist` float,
-  `glue_hist_queue` float NOT NULL,
-  `glue_hist_long` float
+  `branchDepthHistQueue_avg` float,
+  `trailDepthHist_avg` float,
+  `trailDepthHistLonger_avg` float,
+  `numResolutionsHist_avg` float,
+  `conflSizeHist_avg` float,
+  `trailDepthDeltaHist_avg` float,
+  `backtrackLevelHist_avg` float,
+  `glueHist_avg` float,
+  `glueHist_longterm_avg` float,
+  `orig_connects_num_communities` int(20) NOT NULL
 );
 
 DROP TABLE IF EXISTS `satzilla_features`;
@@ -312,12 +348,6 @@ CREATE TABLE `satzilla_features` (
   `irred_size_distr_var` double NOT NULL,
   `irred_activity_distr_mean` double NOT NULL,
   `irred_activity_distr_var` double NOT NULL
-);
-
-DROP TABLE IF EXISTS `used_clauses`;
-create table `used_clauses` (
-    `clauseID` bigint(20) NOT NULL
-    , `used_at` bigint(20) NOT NULL
 );
 
 DROP TABLE IF EXISTS `var_data_fintime`;
@@ -410,6 +440,18 @@ DROP TABLE IF EXISTS `cl_last_in_solver`;
 create table `cl_last_in_solver` (
   `conflicts` bigint(20) NOT NULL
   , `clauseID` bigint(20) NOT NULL
+);
+
+DROP TABLE IF EXISTS `update_id`;
+create table `update_id` (
+  `old_id` bigint(20) NOT NULL
+  , `new_id` bigint(20) NOT NULL
+);
+
+DROP TABLE IF EXISTS `set_id_confl`;
+create table `set_id_confl` (
+  `id` bigint(20) NOT NULL
+  , `conflicts` bigint(20) NOT NULL
 );
 
 

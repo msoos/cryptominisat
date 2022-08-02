@@ -28,7 +28,7 @@ THE SOFTWARE.
 #include <cstdlib>
 #include <cassert>
 #include "constants.h"
-#include "cryptominisat5/solvertypesmini.h"
+#include "solvertypesmini.h"
 
 using std::string;
 
@@ -54,26 +54,16 @@ inline unsigned clean_to_int(ClauseClean t)
     return 255;
 }
 
-enum class PolarityMode {
-    polarmode_pos
-    , polarmode_neg
-    , polarmode_rnd
-    , polarmode_automatic
-    , polarmode_stable
-    , polarmode_best_inv
-    , polarmode_best
-    , polarmode_weighted
-};
-
 enum class Restart {
-    glue
-    , geom
-    , glue_geom
-    , luby
-    , never
+    glue = 0
+    , geom = 1
+    , luby = 2
+    , fixed = 3
+    , never = 4
+    , automatic = 5
 };
 
-inline std::string getNameOfPolarmodeType(PolarityMode polarmode)
+inline std::string polarity_mode_to_long_string(PolarityMode polarmode)
 {
     switch(polarmode) {
         case PolarityMode::polarmode_automatic :
@@ -81,13 +71,15 @@ inline std::string getNameOfPolarmodeType(PolarityMode polarmode)
         case PolarityMode::polarmode_stable :
             return "stb";
         case PolarityMode::polarmode_best_inv :
-            return "ibst";
+            return "inv-bst";
         case PolarityMode::polarmode_best :
-            return "bst";
+            return "best";
         case PolarityMode::polarmode_neg :
             return "neg";
         case PolarityMode::polarmode_pos :
             return "pos";
+        case PolarityMode::polarmode_saved :
+            return "saved-polar";
         case PolarityMode::polarmode_weighted :
             return "weighted";
         case PolarityMode::polarmode_rnd :
@@ -109,11 +101,15 @@ inline std::string restart_type_to_short_string(const Restart type)
         case Restart::luby:
             return "luby";
 
-        case Restart::glue_geom:
-            return "gl/g";
+        case Restart::fixed:
+            return "fixd";
 
         case Restart::never:
             return "neve";
+
+        case Restart::automatic:
+            release_assert(false);
+            return "";
     }
 
     assert(false && "oops, one of the restart types has no string name");
@@ -124,19 +120,22 @@ inline std::string polarity_mode_to_short_string(PolarityMode polarmode)
 {
     switch(polarmode) {
         case PolarityMode::polarmode_automatic :
-            return "auto";
+            release_assert(false);
+            return "";
         case PolarityMode::polarmode_stable :
             return "stb";
         case PolarityMode::polarmode_best_inv :
-            return "istb";
+            return "ibes";
         case PolarityMode::polarmode_best :
-            return "bstb";
+            return "best";
         case PolarityMode::polarmode_neg :
             return "neg";
         case PolarityMode::polarmode_pos :
             return "pos";
         case PolarityMode::polarmode_weighted :
             return "wght";
+        case PolarityMode::polarmode_saved :
+            return "svd";
         case PolarityMode::polarmode_rnd :
             return "rnd";
     }
@@ -152,9 +151,6 @@ inline std::string getNameOfRestartType(Restart rest_type)
 
         case Restart::geom:
             return "geometric";
-
-        case Restart::glue_geom:
-            return "regularly switch between glue and geometric";
 
         case Restart::luby:
             return "luby";
@@ -193,7 +189,8 @@ class GaussConf
     GaussConf() :
         autodisable(true)
         , min_usefulness_cutoff(0.2)
-        , max_matrix_rows(5000)
+        , max_matrix_columns(1000)
+        , max_matrix_rows(2000)
         , min_matrix_rows(3)
         , max_num_matrices(5)
     {
@@ -201,6 +198,7 @@ class GaussConf
 
     bool autodisable;
     double min_usefulness_cutoff;
+    uint32_t max_matrix_columns;
     uint32_t max_matrix_rows; //The maximum matrix size -- no. of rows
     uint32_t min_matrix_rows; //The minimum matrix size -- no. of rows
     uint32_t max_num_matrices; //Maximum number of matrices
@@ -229,18 +227,27 @@ class DLL_PUBLIC SolverConf
         ) const;
 
         //Variable polarities
-        int do_lucky_polar_every_n;
         PolarityMode polarity_mode;
-        int polar_stable_every_n;
-        int polar_best_inv_multip_n;
-        int polar_best_multip_n;
 
         //Clause cleaning
-        float pred_short_size_mult;
-        float pred_long_size_mult;
-        float pred_forever_size_mult;
-        float pred_long_chunk_mult;
-        float pred_forever_chunk_mult;
+        uint32_t pred_short_size;
+        uint32_t pred_long_size;
+        uint32_t pred_forever_size;
+        uint32_t pred_forever_cutoff;
+        uint32_t order_tier2_by;
+        double pred_forever_size_pow;
+
+        uint32_t pred_long_chunk;
+        uint32_t pred_forever_chunk;
+        int      pred_forever_chunk_mult; //true or false
+
+        int move_from_tier0;
+        int move_from_tier1;
+
+        uint32_t pred_long_check_every_n;
+        uint32_t pred_forever_check_every_n;
+        int   pred_distill_only_smallgue;
+        int   pred_dontmove_until_timeinside;
 
         //if non-zero, we reduce at every X conflicts.
         //Reduced according to whether it's been used recently
@@ -250,10 +257,7 @@ class DLL_PUBLIC SolverConf
         //if non-zero, we reduce at every X conflicts.
         //Otherwise we geometrically keep around max_temp_lev2_learnt_clauses*(inc**N)
         unsigned every_lev2_reduce;
-
-        #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-        unsigned every_lev3_reduce;
-        #endif
+        unsigned every_pred_reduce;
 
         uint32_t must_touch_lev1_within;
         unsigned  max_temp_lev2_learnt_clauses;
@@ -262,11 +266,12 @@ class DLL_PUBLIC SolverConf
         unsigned protect_cl_if_improved_glue_below_this_glue_for_one_turn;
         unsigned glue_put_lev0_if_below_or_eq;
         unsigned glue_put_lev1_if_below_or_eq;
+        int      dump_pred_distrib;
         double    ratio_keep_clauses[2]; ///< Remove this ratio of clauses at every database reduction round
         double    clause_decay;
 
         //If too many (in percentage) low glues after min_num_confl_adjust_glue_cutoff, adjust glue lower
-        double   adjust_glue_if_too_many_low;
+        double   adjust_glue_if_too_many_tier0;
         uint64_t min_num_confl_adjust_glue_cutoff;
 
         //For restarting
@@ -276,6 +281,8 @@ class DLL_PUBLIC SolverConf
         int      do_blocking_restart;
         unsigned blocking_restart_trail_hist_length;
         double   blocking_restart_multip;
+        uint32_t fixed_restart_num_confl;
+
 
         double   local_glue_multiplier;
         unsigned  shortTermHistorySize; ///< Rolling avg. glue window size
@@ -308,7 +315,7 @@ class DLL_PUBLIC SolverConf
 
         //Limits
         double   maxTime;
-        long max_confl;
+        uint64_t max_confl;
 
         //Glues
         int       update_glues_on_analyze;
@@ -328,11 +335,6 @@ class DLL_PUBLIC SolverConf
         int       sql_overwrite_file;
         double    lock_for_data_gen_ratio;
 
-        //Steps
-        double orig_step_size = 0.40;
-        double step_size_dec = 0.000001;
-        double min_step_size = 0.06;
-
         //Var-elim
         int      doVarElim;          ///<Perform variable elimination
         uint64_t varelim_cutoff_too_many_clauses;
@@ -340,17 +342,21 @@ class DLL_PUBLIC SolverConf
         int      do_full_varelim;
         long long empty_varelim_time_limitM;
         long long varelim_time_limitM;
-        long long varelim_sub_str_limit;
+        long long varelim_sub_str_limitM;
         double    varElimRatioPerIter;
-        int      skip_some_bve_resolvents;
         int velim_resolvent_too_large; //-1 == no limit
         int var_linkin_limit_MB;
+        int varelim_gate_find_limit;
+        int varelim_check_resolvent_subs;
 
         //Subs, str limits for simplifier
         long long subsumption_time_limitM;
+        long long weaken_time_limitM;
+        long long dummy_str_time_limitM;
         double subsumption_time_limit_ratio_sub_str_w_bin;
         double subsumption_time_limit_ratio_sub_w_long;
         long long strengthening_time_limitM;
+        long long occ_based_lit_rem_time_limitM;
 
         //Ternary resolution
         bool doTernary;
@@ -384,8 +390,10 @@ class DLL_PUBLIC SolverConf
         uint32_t  bva_every_n;
 
         //Probing
+        int      do_full_probe;
         int      doIntreeProbe;
         int      doTransRed;   ///<carry out transitive reduction
+        unsigned long long   full_probe_time_limitM;
         unsigned long long   intree_time_limitM;
         unsigned long long intree_scc_varreplace_time_limitM;
         int       do_hyperbin_and_transred;
@@ -405,10 +413,10 @@ class DLL_PUBLIC SolverConf
 
         #ifdef FINAL_PREDICTOR
         //Predictor system
-        std::string pred_conf_short;
-        std::string pred_conf_long;
-        std::string pred_conf_forever;
-        float pred_keep_above;
+        std::string pred_conf_location;
+        std::string pred_tables = "110";
+        std::string predictor_type = "xgb";
+        std::string predict_best_feat_fname;
         #endif
 
         //Var-replacement
@@ -427,7 +435,7 @@ class DLL_PUBLIC SolverConf
         uint32_t max_num_simplify_per_solve_call;
         string   simplify_schedule_startup;
         string   simplify_schedule_nonstartup;
-        string   simplify_schedule_preproc;
+        string   simplify_schedule_external;
 
         //Simplification
         int      perform_occur_based_simp;
@@ -450,29 +458,27 @@ class DLL_PUBLIC SolverConf
         uint32_t sls_how_many_to_bump;
         uint32_t sls_bump_var_max_n_times;
         uint32_t sls_bump_type;
-        int      sls_set_offset;
 
         //Distillation
         int      do_distill_clauses;
+        int      do_distill_bin_clauses;
         unsigned long long distill_long_cls_time_limitM;
         long watch_based_str_time_limitM;
-        long long distill_time_limitM;
         double distill_increase_conf_ratio;
         long distill_min_confl;
+        double distill_red_tier0_ratio;
         double distill_red_tier1_ratio;
+        double distill_irred_alsoremove_ratio;
+        double distill_irred_noremove_ratio;
+        int    distill_rand_shuffle_order_every_n;
+        int    distill_sort;
 
         //Memory savings
         int       doRenumberVars;
         int       must_renumber; ///< if set, all "renumber" is treated as a "must-renumber"
         int       doSaveMem;
         uint64_t  full_watch_consolidate_every_n_confl;
-
-        //Component handling
-        int       doCompHandler;
-        unsigned  handlerFromSimpNum;
-        size_t    compVarLimit;
-        unsigned long long  comp_find_time_limitM;
-
+        int must_always_conslidate = 0; // only used for debugging
 
         //Misc Optimisations
         int      doStrSubImplicit;
@@ -480,14 +486,8 @@ class DLL_PUBLIC SolverConf
         long long  distill_implicit_with_implicit_time_limitM;
 
         //Gates
-        int      doGateFind; ///< Find OR gates
-        unsigned maxGateBasedClReduceSize;
-        int      doShortenWithOrGates; ///<Shorten clauses with or gates during subsumption
-        int      doRemClWithAndGates; ///<Remove clauses using and gates during subsumption
-        int      doFindEqLitsWithGates; ///<Find equivalent literals using gates during subsumption
+        int doGateFind; ///< Find OR gates
         long long gatefinder_time_limitM;
-        long long shorten_with_gates_time_limitM;
-        long long remove_cl_with_gates_time_limitM;
 
         //Gauss
         GaussConf gaussconf;
@@ -499,6 +499,7 @@ class DLL_PUBLIC SolverConf
         std::vector<uint32_t>* sampling_vars;
 
         //Timeouts
+        double global_next_multiplier;
         double orig_global_timeout_multiplier;
         double global_timeout_multiplier;
         double global_timeout_multiplier_multiplier;
@@ -507,18 +508,14 @@ class DLL_PUBLIC SolverConf
 
         //Multi-thread, MPI
         unsigned long long sync_every_confl;
+        uint32_t every_n_mpi_sync;
         unsigned thread_num;
+        uint32_t is_mpi;
 
         //Misc
         unsigned origSeed;
-        unsigned reconfigure_val;
-        unsigned reconfigure_at;
-        unsigned preprocess;
-        int      simulate_drat;
+        int      simulate_frat;
         int      conf_needed = true;
-        std::string simplified_cnf;
-        std::string solution_file;
-        std::string saved_state_file;
 };
 
 } //end namespace

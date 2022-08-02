@@ -119,7 +119,7 @@ public:
 
     void prefetch(const size_t at) const
     {
-        __builtin_prefetch(watches[at].data);
+        cmsat_prefetch(watches[at].data);
     }
     typedef vec<Watched>* iterator;
     typedef const vec<Watched>* const_iterator;

@@ -27,12 +27,13 @@ THE SOFTWARE.
 
 int main(int argc, char** argv)
 {
-    #if defined(__GLIBC__) && defined(__linux__)
-    feenableexcept(FE_INVALID   |
-                   FE_DIVBYZERO |
-                   FE_OVERFLOW
-    );
-    #endif
+// --> HAD to be disabled due to python module
+//     #if defined(__GNUC__) && defined(__linux__)
+//     feenableexcept(FE_INVALID   |
+//                    FE_DIVBYZERO |
+//                    FE_OVERFLOW
+//     );
+//     #endif
 
     int ret = -1;
     try {

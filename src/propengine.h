@@ -23,13 +23,12 @@ THE SOFTWARE.
 #ifndef __PROPENGINE_H__
 #define __PROPENGINE_H__
 
+// #define VERBOSE_DEBUG
 #include <cstdio>
 #include <string.h>
 #include <stack>
 #include <set>
 #include <cmath>
-
-//#define ANIMATE3D
 
 #include "constants.h"
 #include "propby.h"
@@ -43,12 +42,14 @@ THE SOFTWARE.
 #include "boundedqueue.h"
 #include "cnf.h"
 #include "watchalgos.h"
+#include "gqueuedata.h"
 
 namespace CMSat {
 
 using std::set;
 class Solver;
 class SQLStats;
+class DataSync;
 
 //#define VERBOSE_DEBUG_FULLPROP
 //#define VERBOSE_DEBUG
@@ -62,6 +63,7 @@ class SQLStats;
 class Solver;
 class ClauseAllocator;
 class Gaussian;
+class EGaussian;
 
 enum PropResult {
     PROP_FAIL = 0
@@ -84,6 +86,98 @@ struct Trail {
     uint32_t lev;
 };
 
+
+struct RandHeap
+{
+    vector<unsigned char> in_heap;
+    vector<uint32_t> vars;
+
+    bool inHeap(uint32_t x) const {
+        if (in_heap.size() <= x) {
+            return false;
+        }
+        return in_heap[x];
+    }
+
+    void clear() {
+        in_heap.clear();
+        vars.clear();
+    }
+
+    void insert(uint32_t x) {
+        assert(!inHeap(x));
+        if (in_heap.size() <= x) {
+            uint32_t n = x - in_heap.size() + 1;
+            in_heap.insert(in_heap.end(), n, false);
+        }
+        in_heap[x] = true;
+        vars.push_back(x);
+    }
+
+    size_t size() const {
+        return vars.size();
+    }
+
+    void print_heap() const {
+        for(const auto& x: vars) {
+            cout << x << ", ";
+        }
+        cout << endl;
+    }
+
+    uint32_t mem_used() const {
+        uint32_t ret = 0;
+        ret += in_heap.capacity() * sizeof(unsigned char);
+        //ret += vars.capacity() * sizeof(uint32_t);
+        return ret;
+    }
+
+    void build(const vector<uint32_t>& vs) {
+        in_heap.clear();
+        uint32_t max = 0;
+        for(const auto x: vs) {
+            max = std::max(x, max);
+        }
+        in_heap.resize(max+1, false);
+        vars.clear();
+        std::copy(
+            vs.begin(),
+            vs.end(),
+            std::inserter(vars, vars.end()));
+        for(const auto& x: vars) {
+            in_heap[x] = true;
+        }
+    }
+
+    bool heap_property() const
+    {
+        for(const auto& x: vars) {
+            if (!in_heap[x]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    uint32_t get_random_element(MTRand& mtrand)
+    {
+        if (vars.empty()) {
+            return var_Undef;
+        }
+
+        uint32_t which = mtrand.randInt(vars.size()-1);
+        uint32_t picked = vars[which];
+        std::swap(vars[which], vars[vars.size()-1]);
+        vars.pop_back();
+        assert(inHeap(picked));
+        in_heap[picked] = false;
+
+        return picked;
+    }
+};
+
+
 /**
 @brief The propagating and conflict generation class
 
@@ -100,7 +194,7 @@ public:
         , Solver* solver
         , std::atomic<bool>* _must_interrupt_inter
     );
-    ~PropEngine();
+    virtual ~PropEngine();
 
     // Read state:
     //
@@ -115,63 +209,68 @@ public:
     Lit trail_at(size_t at) const {
         return trail[at].lit;
     }
-    bool propagate_occur();
+
+    template<bool inprocess>
+    bool propagate_occur(int64_t* limit_to_decrease);
+    void reverse_prop(const Lit l);
+    void reverse_one_bnn(uint32_t idx, BNNPropType t);
     PropStats propStats;
-    template<bool update_bogoprops = true>
-    void enqueue(const Lit p, const uint32_t level, const PropBy from = PropBy());
-    template<bool update_bogoprops = true>
-    void enqueue(const Lit p);
+    template<bool inprocess>
+    void enqueue(const Lit p, const uint32_t level,
+                 const PropBy from = PropBy(), const bool do_unit_frat = true);
+    template<bool inprocess> void enqueue(const Lit p);
+    void enqueue_light(const Lit p);
     void new_decision_level();
 
     /////////////////////
     // Branching
     /////////////////////
-    vector<ActAndOffset> var_act_vsids;
-    vector<ActAndOffset> var_act_maple;
-    double var_decay;
-    double var_decay_max;
-    double maple_step_size;
+    vector<double> var_act_vsids;
+    double var_decay = 0.95;
     struct VarOrderLt { ///Order variables according to their activities
-        const vector<ActAndOffset>&  activities;
+        const vector<double>&  activities;
         bool operator () (const uint32_t x, const uint32_t y) const
         {
-            return activities[x].combine() > activities[y].combine();
+            return activities[x] > activities[y];
         }
 
-        explicit VarOrderLt(const vector<ActAndOffset>& _activities) :
+        explicit VarOrderLt(const vector<double>& _activities) :
             activities(_activities)
         {}
     };
     ///activity-ordered heap of decision variables.
     Heap<VarOrderLt> order_heap_vsids; ///NOT VALID WHILE SIMPLIFYING
-    Heap<VarOrderLt> order_heap_maple; ///NOT VALID WHILE SIMPLIFYING
-    #ifdef VMTF_NEEDED
+    RandHeap order_heap_rand;
     Queue vmtf_queue;
-    vector<uint64_t> vmtf_btab; // enqueue time stamps for queue
-    void vmtf_update_queue_unassigned (uint32_t idx);
-    void vmtf_init_enqueue (uint32_t idx);
-    void vmtf_bump_queue (uint32_t var);
-    Link & vmtf_link (uint32_t var) { return vmtf_links[var]; }
-    Links vmtf_links; // table of vmtf_links for decision queue
-    #endif
+    uint64_t stats_bumped = 0;
+    vector<uint64_t> vmtf_btab; ///< Indexed by variable number. enqueue time stamps for queue
+    void vmtf_update_queue_unassigned (const uint32_t var);
+    void vmtf_init_enqueue (const uint32_t var);
+    void vmtf_dequeue (const uint32_t var);
+    void vmtf_bump_queue (const uint32_t var);
+    void vmtf_check_unassigned();
+    uint32_t vmtf_pick_var();
+    vector<Link> vmtf_links; ///< Indexed by variable number. table of vmtf_links for decision queue.
     double max_vsids_act = 0.0;
 
     //Clause activities
     double max_cl_act = 0.0;
+    vector<int32_t> chain; ///< For resolution chains
+
+    enum class gauss_ret {g_cont, g_nothing, g_false};
+    vector<EGaussian*> gmatrices;
+    vector<GaussQData> gqueuedata;
 
 protected:
+    friend class DataSync;
     int64_t simpDB_props = 0;
-    void new_var(const bool bva, const uint32_t orig_outer) override;
+    void new_var(
+        const bool bva,
+        const uint32_t orig_outer,
+        const bool insert_varorder = true) override;
     void new_vars(const size_t n) override;
     void save_on_var_memory();
     template<class T> uint32_t calc_glue(const T& ps);
-
-    //For state saving
-    void save_state(SimpleOutFile& f) const;
-    void load_state(SimpleInFile& f);
-
-    //Stats for conflicts
-    ConflCausedBy lastConflictCausedBy;
 
     // Solver state:
     //
@@ -182,20 +281,15 @@ protected:
 
     friend class EGaussian;
 
-    PropBy propagate_any_order_fast();
-    template<bool update_bogoprops>
-    PropBy propagate_any_order();
-    PropResult prop_normal_helper(
-        Clause& c
-        , ClOffset offset
-        , Watched*& j
-        , const Lit p
-    );
-    PropResult handle_normal_prop_fail(Clause& c, ClOffset offset, PropBy& confl);
-
     /////////////////
     // Operations on clauses:
     /////////////////
+    vector<Lit>* get_bnn_reason(BNN* bnn, Lit lit);
+    void get_bnn_confl_reason(BNN* bnn, vector<Lit>* ret);
+    void get_bnn_prop_reason(BNN* bnn, Lit lit, vector<Lit>* ret);
+    lbool bnn_prop(
+        const uint32_t bnn_idx, uint32_t level,
+        Lit l, BNNPropType prop_t);
     void attachClause(
         const Clause& c
         , const bool checkAttach = true
@@ -205,22 +299,23 @@ protected:
         Lit lit1
         , Lit lit2
         , bool red
+        , const uint64_t ID
         , bool allow_empty_watch = false
         , bool allow_change_order = false
     ) {
         if (!allow_change_order) {
             if (!(allow_empty_watch && watches[lit1].empty())) {
-                removeWBin(watches, lit1, lit2, red);
+                removeWBin(watches, lit1, lit2, red, ID);
             }
             if (!(allow_empty_watch && watches[lit2].empty())) {
-                removeWBin(watches, lit2, lit1, red);
+                removeWBin(watches, lit2, lit1, red, ID);
             }
         } else {
             if (!(allow_empty_watch && watches[lit1].empty())) {
-                removeWBin_change_order(watches, lit1, lit2, red);
+                removeWBin_change_order(watches, lit1, lit2, red, ID);
             }
             if (!(allow_empty_watch && watches[lit2].empty())) {
-                removeWBin_change_order(watches, lit2, lit1, red);
+                removeWBin_change_order(watches, lit2, lit1, red, ID);
             }
         }
     }
@@ -228,7 +323,8 @@ protected:
         const Lit lit1
         , const Lit lit2
         , const bool red
-        , const bool checkUnassignedFirst = true
+        , const uint64_t ID
+        , [[maybe_unused]] const bool checkUnassignedFirst = true
     );
     void detach_modified_clause(
         const Lit lit1
@@ -239,7 +335,6 @@ protected:
     // Debug & etc:
     void     print_all_clauses();
     void     printWatchList(const Lit lit) const;
-    bool     satisfied(const BinaryClause& bin);
     void     print_trail();
 
     //Var selection, activity, etc.
@@ -258,18 +353,35 @@ protected:
         return mem;
     }
 
+protected:
+    template<bool inprocess, bool red_also = true, bool use_disable = false>
+    PropBy propagate_any_order();
+    template<bool bin_only=true> PropBy propagate_light();
+    template<bool inprocess>
+    PropResult prop_normal_helper(
+        Clause& c
+        , ClOffset offset
+        , Watched*& j
+        , const Lit p
+    );
+    template<bool inprocess>
+    PropResult handle_normal_prop_fail(Clause& c, ClOffset offset, PropBy& confl);
+
 private:
     Solver* solver;
-    bool propagate_binary_clause_occur(const Watched& ws);
-    bool propagate_long_clause_occur(const ClOffset offset);
-    template<bool update_bogoprops = true>
+
+    template<bool inprocess>
+    bool prop_bin_cl_occur(const Watched& ws);
+    template<bool inprocess>
+    bool prop_long_cl_occur(const ClOffset offset);
+    template<bool inprocess>
     bool prop_bin_cl(
         const Watched* i
         , const Lit p
         , PropBy& confl
         , uint32_t currLevel
-    ); ///<Propagate 2-long clause
-    template<bool update_bogoprops>
+    );
+    template<bool inprocess, bool red_also, bool use_disable>
     bool prop_long_cl_any_order(
         Watched* i
         , Watched*& j
@@ -278,6 +390,8 @@ private:
         , uint32_t currLevel
     );
     void sql_dump_vardata_picktime(uint32_t v, PropBy from);
+
+    PropBy gauss_jordan_elim(const Lit p, const uint32_t currLevel);
 };
 
 inline void PropEngine::new_decision_level()
@@ -307,12 +421,6 @@ inline size_t PropEngine::getTrailSize() const
     }
 }
 
-inline bool PropEngine::satisfied(const BinaryClause& bin)
-{
-    return ((value(bin.getLit1()) == l_True)
-            || (value(bin.getLit2()) == l_True));
-}
-
 template<class T> inline
 uint32_t PropEngine::calc_glue(const T& ps)
 {
@@ -323,7 +431,7 @@ uint32_t PropEngine::calc_glue(const T& ps)
         if (l != 0 && permDiff[l] != MYFLAG) {
             permDiff[l] = MYFLAG;
             nblevels++;
-            if (nblevels >= conf.max_glue_cutoff_gluehistltlimited) {
+            if (nblevels >= 1000) {
                 return nblevels;
             }
         }
@@ -331,16 +439,13 @@ uint32_t PropEngine::calc_glue(const T& ps)
     return nblevels;
 }
 
+template<bool inprocess>
 inline PropResult PropEngine::prop_normal_helper(
     Clause& c
     , ClOffset offset
     , Watched*& j
     , const Lit p
 ) {
-    #ifdef STATS_NEEDED
-    c.stats.clause_looked_at++;
-    #endif
-
     // Make sure the false literal is data[1]:
     if (c[0] == ~p) {
         std::swap(c[0], c[1]);
@@ -373,6 +478,7 @@ inline PropResult PropEngine::prop_normal_helper(
 }
 
 
+template<bool inprocess>
 inline PropResult PropEngine::handle_normal_prop_fail(
     Clause&
     #ifdef STATS_NEEDED
@@ -383,77 +489,87 @@ inline PropResult PropEngine::handle_normal_prop_fail(
 ) {
     confl = PropBy(offset);
     #ifdef VERBOSE_DEBUG_FULLPROP
-    cout << "Conflict from ";
     Clause& c = *cl_alloc.ptr(offset);
-    for(size_t i = 0; i < c.size(); i++) {
-        cout  << c[i] << " , ";
-    }
-    cout << endl;
-    #endif //VERBOSE_DEBUG_FULLPROP
+    cout << "Conflict from cl: " << c << endl;
+    #endif
 
     //Update stats
     #ifdef STATS_NEEDED
-    c.stats.conflicts_made++;
-    if (c.red())
-        lastConflictCausedBy = ConflCausedBy::longred;
-    else
-        lastConflictCausedBy = ConflCausedBy::longirred;
+    if (!inprocess && c.red()) {
+        red_stats_extra[c.stats.extra_pos].conflicts_made++;
+    }
     #endif
 
     qhead = trail.size();
     return PROP_FAIL;
 }
 
-template<bool update_bogoprops>
+template<bool inprocess>
 void PropEngine::enqueue(const Lit p)
 {
-    enqueue<update_bogoprops>(p, decisionLevel(), PropBy());
+    enqueue<inprocess>(p, decisionLevel(), PropBy());
 }
 
-template<bool update_bogoprops>
-void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from)
+template<bool inprocess>
+void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, bool do_unit_frat)
 {
-    #ifdef DEBUG_ENQUEUE_LEVEL0
-    #ifndef VERBOSE_DEBUG
-    if (decisionLevel() == 0)
-    #endif //VERBOSE_DEBUG
-    cout << "enqueue var " << p.var()+1
-    << " to val " << !p.sign()
-    << " level: " << decisionLevel()
-    << " sublevel: " << trail.size()
-    << " by: " << from << endl;
+    #ifdef VERBOSE_DEBUG
+    if (level == 0) {
+        cout << "enqueue var " << p.var()+1
+        << " to val " << !p.sign()
+        << " level: " << level
+        << " decisonLevel(): " << decisionLevel()
+        << " sublevel: " << trail.size()
+        << " by: " << from << endl;
+        cout << "trail at level 0: ";
+        for(auto const& x: trail) {
+            cout << "(lit: " << x.lit << " lev: " << x.lev << ")";
+        }
+        cout << endl;
+    }
     #endif //DEBUG_ENQUEUE_LEVEL0
 
     #ifdef ENQUEUE_DEBUG
     assert(trail.size() <= nVarsOuter());
     #endif
-    assert(varData[p.var()].removed == Removed::none);
 
     const uint32_t v = p.var();
     assert(value(v) == l_Undef);
-    if (!watches[~p].empty()) {
-        watches.prefetch((~p).toInt());
-    }
+    SLOW_DEBUG_DO(assert(varData[v].removed == Removed::none));
+    if (level == 0 && frat->enabled())
+    {   if (do_unit_frat) {
+            const uint32_t ID = ++clauseID;
+            chain.clear();
+            if (from.getType() == PropByType::binary_t) {
+                chain.push_back(from.getID());
+                chain.push_back(unit_cl_IDs[from.lit2().var()]);
+            } else if (from.getType() == PropByType::clause_t) {
+                Clause* cl = cl_alloc.ptr(from.get_offset());
+                chain.push_back(cl->stats.ID);
+                for(auto const& l: *cl) if (l != p) chain.push_back(unit_cl_IDs[l.var()]);
+            } else {
+                // These are too difficult and not worth it
+            }
 
-    if (!update_bogoprops &&
-        branch_strategy == branch::maple &&
-        from != PropBy())
-    {
-        varData[v].maple_last_picked = sumConflicts;
-        varData[v].maple_conflicted = 0;
+            *frat << add << ID << p;
+            if (!chain.empty()) {
+                *frat << DratFlag::chain;
+                for(auto const& id: chain) *frat << id;
+            }
+            *frat << fin;
 
-        assert(sumConflicts >= varData[v].maple_cancelled);
-        uint32_t age = sumConflicts - varData[v].maple_cancelled;
-        if (age > 0) {
-            double decay = std::pow(var_decay, age);
-            var_act_maple[v].act *= decay;
-            if (order_heap_maple.inHeap(v))
-                order_heap_maple.increase(v);
+            VERBOSE_PRINT("unit " << p << " ID: " << ID);
+            assert(unit_cl_IDs[v] == 0);
+            unit_cl_IDs[v] = ID;
+        } else {
+            assert(unit_cl_IDs[v] != 0);
         }
     }
 
+    if (!watches[~p].empty()) watches.prefetch((~p).toInt());
+
     #if defined(STATS_NEEDED_BRANCH) || defined(FINAL_PREDICTOR_BRANCH)
-    if (!update_bogoprops) {
+    if (!inprocess) {
         varData[v].set++;
         if (from == PropBy()) {
             #ifdef STATS_NEEDED_BRANCH
@@ -481,10 +597,8 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from)
     assigns[v] = boolToLBool(!sign);
     varData[v].reason = from;
     varData[v].level = level;
-    if (!update_bogoprops) {
-        if (polarity_mode == PolarityMode::polarmode_automatic) {
-            varData[v].polarity = !sign;
-        }
+    varData[v].sublevel = trail.size();
+    if (!inprocess) {
         #ifdef STATS_NEEDED
         if (sign) {
             propStats.varSetNeg++;
@@ -495,23 +609,122 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from)
     }
     trail.push_back(Trail(p, level));
 
-    if (update_bogoprops) {
+    if (inprocess) {
         propStats.bogoProps += 1;
     }
+}
 
-    #ifdef ANIMATE3D
-    std::cerr << "s " << v << " " << p.sign() << endl;
-    #endif
+template<bool bin_only>
+PropBy PropEngine::propagate_light()
+{
+    PropBy confl;
+    VERBOSE_PRINT("propagate_light started");
+
+    while (qhead < trail.size() && confl.isNULL()) {
+        const Lit p = trail[qhead].lit;
+        watch_subarray ws = watches[~p];
+
+        Watched* i = ws.begin();
+        Watched* j = i;
+        Watched* end = ws.end();
+        propStats.bogoProps += ws.size()/4 + 1;
+        for (; i != end; i++) {
+            if (bin_only && !confl.isNULL()) break;
+
+            // propagate binary clause
+            if (i->isBin()) {
+                if (!bin_only) *j++ = *i;
+
+                const lbool val = value(i->lit2());
+                if (val == l_Undef) {
+                    enqueue_light(i->lit2());
+                } else if (val == l_False) {
+                    confl = PropBy(~p, i->red(), i->get_ID());
+                }
+                continue;
+            }
+
+            if (!bin_only && i->isClause()) {
+                if (value(i->getBlockedLit()) == l_True) {
+                    *j++ = *i;
+                    continue;
+                }
+                propStats.bogoProps += 4;
+                const ClOffset offset = i->get_offset();
+                Clause& c = *cl_alloc.ptr(offset);
+
+                if (c[0] == ~p) std::swap(c[0], c[1]);
+                assert(c[1] == ~p);
+
+                // If 0th watch is true, then clause is already satisfied.
+                if (value(c[0]) == l_True) {
+                    *j = Watched(offset, c[0]);
+                    j++;
+                    continue;
+                }
+
+                // Look for new watch:
+                bool cont = false;
+                for (Lit *k = c.begin() + 2, *end2 = c.end()
+                    ; k != end2
+                    ; k++
+                ) {
+                    //Literal is either unset or satisfied, attach to other watchlist
+                    if (value(*k) != l_False) {
+                        c[1] = *k;
+                        *k = ~p;
+                        watches[c[1]].push(Watched(offset, c[0]));
+                        cont = true;
+                        break;
+                    }
+                }
+                if (cont) continue;
+
+                // Did not find watch -- clause is unit under assignment:
+                *j++ = *i;
+                if (value(c[0]) == l_False) confl = PropBy(offset);
+                else enqueue_light(c[0]);
+                continue;
+            }
+
+            if (!bin_only) {
+                *j++=*i;
+            }
+        }
+
+        if (!bin_only) {
+            while (i != end) {
+                *j++ = *i++;
+            }
+            ws.shrink_(end-j);
+        }
+
+        VERBOSE_PRINT("propagate_light went through watchlist of " << p);
+        qhead++;
+    }
+    VERBOSE_PRINT("propagate_light ended.");
+    return confl;
+}
+
+inline void PropEngine::enqueue_light(const Lit p)
+{
+    const uint32_t v = p.var();
+    assert(value(v) == l_Undef);
+    SLOW_DEBUG_DO(assert(varData[v].removed == Removed::none));
+    if (!watches[~p].empty()) watches.prefetch((~p).toInt());
+
+    const bool sign = p.sign();
+    assigns[v] = boolToLBool(!sign);
+    trail.push_back(Trail(p, 1));
+    propStats.bogoProps += 1;
 }
 
 inline void PropEngine::attach_bin_clause(
     const Lit lit1
     , const Lit lit2
     , const bool red
-    , const bool
-    #ifdef DEBUG_ATTACH
-    checkUnassignedFirst
-    #endif
+    , const uint64_t ID
+    , [[maybe_unused]] const bool checkUnassignedFirst
 ) {
     #ifdef DEBUG_ATTACH
     assert(lit1.var() != lit2.var());
@@ -524,8 +737,8 @@ inline void PropEngine::attach_bin_clause(
     assert(varData[lit2.var()].removed == Removed::none);
     #endif //DEBUG_ATTACH
 
-    watches[lit1].push(Watched(lit2, red));
-    watches[lit2].push(Watched(lit1, red));
+    watches[lit1].push(Watched(lit2, red, ID));
+    watches[lit2].push(Watched(lit1, red, ID));
 }
 
 } //end namespace

@@ -20,6 +20,8 @@
 
 include_directories( ${PROJECT_SOURCE_DIR} )
 include_directories( ${BOSPHORUS_INCLUDE_DIRS} )
+include_directories( ${LOUVAIN_COMMUNITIES_INCLUDE_DIRS} )
+include_directories( SYSTEM ${MPI_INCLUDE_PATH} )
 
 if (NOT WIN32)
     add_cxx_flag_if_supported("-Wno-bitfield-constant-conversion")
@@ -52,101 +54,152 @@ if (ENABLE_TESTING)
 endif()
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/GitSHA1.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp" @ONLY)
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cryptominisat.h.in" "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat.h" @ONLY)
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/solvertypesmini.h.in" "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/solvertypesmini.h" @ONLY)
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cryptominisat_c.h.in" "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat_c.h" @ONLY)
 
 if (SQLITE3_FOUND)
-    if (NOT PYTHON_EXECUTABLE)
+    if (NOT Python3_EXECUTABLE)
         MESSAGE(FATAL_ERROR "Unfortunately, the python interpreter is needed for statistics because of SQL text generation")
     endif()
 
     add_custom_command(
         OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        COMMAND ${PYTHON_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py cmsat_tablestructure.sql ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp
-        DEPENDS ${CMAKE_SOURCE_DIR}/cmsat_tablestructure.sql
+        COMMAND ${Python3_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py cmsat_tablestructure.sql ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp
+        DEPENDS ${CMAKE_SOURCE_DIR}/cmsat_tablestructure.sql ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py
     )
     add_custom_target(tablestruct ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp)
 endif()
 
+if (FINAL_PREDICTOR)
+    include_directories(${Python3_INCLUDE_DIRS})
+    include_directories(${Python3_NumPy_INCLUDE_DIRS})
+    add_custom_command(
+        OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/pred_short.cpp
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMAND ${Python3_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py src/predict/predictor_short.json ${CMAKE_CURRENT_BINARY_DIR}/pred_short.cpp
+        DEPENDS ${CMAKE_SOURCE_DIR}/src/predict/predictor_short.json ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py
+    )
+    add_custom_target(pred_short ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/pred_short.cpp)
+
+    add_custom_command(
+        OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/pred_long.cpp
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMAND ${Python3_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py src/predict/predictor_long.json ${CMAKE_CURRENT_BINARY_DIR}/pred_long.cpp
+        DEPENDS ${CMAKE_SOURCE_DIR}/src/predict/predictor_long.json ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py
+    )
+    add_custom_target(pred_long ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/pred_long.cpp)
+
+    add_custom_command(
+        OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/pred_forever.cpp
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMAND ${Python3_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py src/predict/predictor_forever.json ${CMAKE_CURRENT_BINARY_DIR}/pred_forever.cpp
+        DEPENDS ${CMAKE_SOURCE_DIR}/src/predict/predictor_forever.json ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py
+    )
+    add_custom_target(pred_forever ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/pred_forever.cpp)
+endif()
+
+# Needed for PicoSAT trace generation
+add_definitions( -DTRACE )
+
 set(cryptoms_lib_files
     cnf.cpp
-    drat.cpp
+    frat.cpp
     propengine.cpp
     varreplacer.cpp
     clausecleaner.cpp
     occsimplifier.cpp
+    gatefinder.cpp
     subsumestrengthen.cpp
     clauseallocator.cpp
     sccfinder.cpp
     solverconf.cpp
     distillerlong.cpp
+    distillerlitrem.cpp
+    distillerbin.cpp
     distillerlongwithimpl.cpp
     str_impl_w_impl.cpp
     solutionextender.cpp
     completedetachreattacher.cpp
     searcher.cpp
     solver.cpp
-    compfinder.cpp
-    comphandler.cpp
     hyperengine.cpp
     subsumeimplicit.cpp
     datasync.cpp
     reducedb.cpp
-    clausedumper.cpp
     bva.cpp
     intree.cpp
-    satzilla_features_calc.cpp
-    satzilla_features_to_reconf.cpp
-    satzilla_features.cpp
     searchstats.cpp
     xorfinder.cpp
     cardfinder.cpp
     cryptominisat_c.cpp
-    walksat.cpp
     sls.cpp
+    sqlstats.cpp
     vardistgen.cpp
     ccnr.cpp
     ccnr_cms.cpp
     lucky.cpp
-#    watcharray.cpp
+    get_clause_query.cpp
+    gaussian.cpp
+    packedrow.cpp
+    matrixfinder.cpp
+    picosat/picosat.c
+    picosat/version.c
+    oracle/oracle.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
 
-if (REQUIRE_YALSAT)
+if (GPU)
     set(cryptoms_lib_files
         ${cryptoms_lib_files}
-        yalsat.cpp
-        yals.c
+        gpuShareLib/Utils.cc
+        gpuShareLib/Assigs.cu
+        gpuShareLib/BaseTypes.cu
+        gpuShareLib/Clauses.cu
+        gpuShareLib/ClauseUpdates.cu
+        gpuShareLib/CorrespArr.cu
+        gpuShareLib/GpuClauseSharerImpl.cu
+        gpuShareLib/GpuRunner.cu
+        gpuShareLib/GpuUtils.cu
+        gpuShareLib/Helper.cu
+        gpuShareLib/Reported.cu
+        gpuShareLib/Reporter.cu
     )
 endif()
-
 
 set(cryptoms_lib_link_libs "")
 
-if (FINAL_PREDICTOR)
+set(cryptoms_lib_link_libs
+        ${cryptoms_lib_link_libs}
+)
 
+if (TBUDDY)
+    set(cryptoms_lib_link_libs
+        ${cryptoms_lib_link_libs}
+        tbuddy)
+endif()
+
+if (FINAL_PREDICTOR)
     set(cryptoms_lib_files
         ${cryptoms_lib_files}
 #         predict/clustering_imp.cpp
-        cl_predictors.cpp
+        cl_predictors_xgb.cpp
+        cl_predictors_py.cpp
+        cl_predictors_lgbm.cpp
+        cl_predictors_abs.cpp
     )
-    SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} xgboost dmlc rabit rt)
+    SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs}
+        _lightgbm xgboost dmlc rabit rt ${Python3_LIBRARIES})
 endif()
 
-if (USE_GAUSS)
-    SET(cryptoms_lib_files ${cryptoms_lib_files}
-        gaussian.cpp
-        packedrow.cpp
-        matrixfinder.cpp
+if (STATS_NEEDED)
+    set(cryptoms_lib_files
+        ${cryptoms_lib_files}
+        community_finder.cpp
+        satzilla_features_calc.cpp
+        satzilla_features.cpp
     )
 endif()
 
 if (MPI_FOUND)
-    SET(cryptoms_lib_files ${cryptoms_lib_files}
-        datasyncserver.cpp
-    )
     SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${MPI_CXX_LIBRARIES})
 endif()
 
@@ -179,6 +232,14 @@ if (SQLITE3_FOUND)
     SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${SQLITE3_LIBRARIES})
 endif ()
 
+if (FINAL_PREDICTOR)
+    SET(cryptoms_lib_files ${cryptoms_lib_files}
+        ${CMAKE_CURRENT_BINARY_DIR}/pred_short.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/pred_long.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/pred_forever.cpp
+    )
+endif()
+
 add_library(cryptominisat5
     ${cryptoms_lib_files}
     cryptominisat.cpp
@@ -187,6 +248,12 @@ add_library(cryptominisat5
 target_include_directories(cryptominisat5 PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include>
+)
+
+set_target_properties(cryptominisat5
+    PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+set_property(TARGET cryptominisat5
+    PROPERTY CUDA_ARCHITECTURES 35 50 72
 )
 
 GENERATE_EXPORT_HEADER(cryptominisat5
@@ -202,9 +269,18 @@ if (SQLITE3_FOUND AND STATS)
     )
 endif()
 
+if (FINAL_PREDICTOR)
+    add_dependencies(cryptominisat5
+        pred_short
+        pred_long
+        pred_forever
+    )
+endif()
+
 # indicate that we depend on pthread, and compile in the actual library
 target_link_libraries(cryptominisat5
     LINK_PUBLIC ${cryptoms_lib_link_libs}
+    LINK_PUBLIC ${LOUVAIN_COMMUNITIES_LIBRARIES}
     LINK_PUBLIC ${CMAKE_THREAD_LIBS_INIT}
 )
 
@@ -261,6 +337,7 @@ if (IPASIR)
         VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
         SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     )
+    GENERATE_EXPORT_HEADER(ipasircryptominisat5)
     install(TARGETS ipasircryptominisat5
         EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
         LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
@@ -272,9 +349,9 @@ if (IPASIR)
 
 endif()
 
-cmsat_add_public_header(cryptominisat5 ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat_c.h )
-cmsat_add_public_header(cryptominisat5 ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat.h )
-cmsat_add_public_header(cryptominisat5 ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/solvertypesmini.h )
+cmsat_add_public_header(cryptominisat5 ${CMAKE_CURRENT_SOURCE_DIR}/cryptominisat_c.h )
+cmsat_add_public_header(cryptominisat5 ${CMAKE_CURRENT_SOURCE_DIR}/cryptominisat.h )
+cmsat_add_public_header(cryptominisat5 ${CMAKE_CURRENT_SOURCE_DIR}/solvertypesmini.h )
 cmsat_add_public_header(cryptominisat5 ${CMAKE_CURRENT_SOURCE_DIR}/dimacsparser.h )
 cmsat_add_public_header(cryptominisat5 ${CMAKE_CURRENT_SOURCE_DIR}/streambuffer.h )
 
@@ -300,6 +377,7 @@ foreach(public_header ${cryptominisat5_public_headers})
                       )
 endforeach()
 
+GENERATE_EXPORT_HEADER(cryptominisat5)
 install(TARGETS cryptominisat5
     EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
     LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
@@ -324,9 +402,9 @@ if (EMSCRIPTEN)
     )
 
     set_target_properties(cryptominisat5_simple-bin
-    PROPERTIES
-    OUTPUT_NAME cryptominisat5_simple
-    LINK_FLAGS "-s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'  -s LINKABLE=1 -s EXPORT_ALL=1"
+        PROPERTIES
+        OUTPUT_NAME cryptominisat5_simple
+        LINK_FLAGS "-s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'  -s LINKABLE=1 -s EXPORT_ALL=1"
     )
 
     SET_SOURCE_FILES_PROPERTIES(main_emscripten.cpp
@@ -339,6 +417,13 @@ else()
     )
 endif()
 
+if (MPI_FOUND)
+    add_executable(cryptominisat5_mpi-bin
+        main_mpi.cpp
+        datasyncserver.cpp
+    )
+endif()
+
 set(cryptoms_exec_link_libs
     cryptominisat5
 )
@@ -347,10 +432,15 @@ IF (ZLIB_FOUND)
     SET(cryptoms_exec_link_libs ${cryptoms_exec_link_libs} ${ZLIB_LIBRARY})
 ENDIF()
 
+
+##########################
+### Deal with binaries
+##########################
 set_target_properties(cryptominisat5_simple-bin PROPERTIES
     OUTPUT_NAME cryptominisat5_simple
     RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
-    INSTALL_RPATH_USE_LINK_PATH TRUE)
+    INSTALL_RPATH_USE_LINK_PATH TRUE
+)
 target_link_libraries(cryptominisat5_simple-bin
     ${cryptoms_exec_link_libs}
 )
@@ -359,6 +449,23 @@ install(TARGETS cryptominisat5_simple-bin
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5_simple")
+
+if (MPI_FOUND)
+    set_target_properties(cryptominisat5_mpi-bin PROPERTIES
+        OUTPUT_NAME cryptominisat5_mpi
+        RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
+        INSTALL_RPATH_USE_LINK_PATH TRUE
+    )
+    target_link_libraries(cryptominisat5_mpi-bin
+        ${cryptoms_exec_link_libs}
+        ${MPI_C_LIBRARIES}
+    )
+    install(TARGETS cryptominisat5_mpi-bin
+        # EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+    SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5_mpi")
+endif()
 
 if (NOT ONLY_SIMPLE)
     set_target_properties(cryptominisat5-bin PROPERTIES

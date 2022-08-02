@@ -41,15 +41,21 @@ public:
 
     struct QueueElem
     {
-        QueueElem(Lit _propagated, Lit _other_lit, bool _red) :
-            propagated(_propagated)
-            , other_lit(_other_lit)
-            , red(_red)
+        QueueElem(
+            const Lit _propagated,
+            const Lit _other_lit,
+            const bool _red,
+            const int32_t _ID) :
+            propagated(_propagated),
+            other_lit(_other_lit),
+            red(_red),
+            ID(_ID)
         {}
 
         Lit propagated;
         Lit other_lit;
         bool red;
+        int32_t ID;
     };
 
     struct ResetReason
@@ -70,12 +76,13 @@ private:
     bool check_timeout_due_to_hyperbin();
     void unmark_all_bins();
     void randomize_roots();
-    bool handle_lit_popped_from_queue(const Lit lit, const Lit propagating, const bool red);
+    bool handle_lit_popped_from_queue(
+        const Lit lit, const Lit propagating, const bool red, const int32_t ID);
     bool empty_failed_list();
     void fill_roots();
     bool watches_only_contains_nonbin(const Lit lit) const;
     bool replace_until_fixedpoint(bool& aborted);
-    void enqueue(const Lit lit, const Lit other_lit, bool red_cl);
+    void enqueue(const Lit lit, const Lit other_lit, const bool red_cl, const int32_t ID);
 
     void setup();
     void build_intree();
@@ -88,7 +95,7 @@ private:
     deque<QueueElem> queue;
     vector<char> depth_failed;
     int64_t bogoprops_to_use;
-    int64_t bogoprops_remain;
+    int64_t start_bogoprops;
 
     size_t hyperbin_added;
     size_t removedIrredBin;
@@ -96,7 +103,7 @@ private:
     size_t numCalls = 0;
 
     Solver* solver;
-    vector<uint16_t>& seen;
+    vector<uint32_t>& seen;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const InTree::QueueElem& elem)
@@ -106,7 +113,8 @@ inline std::ostream& operator<<(std::ostream& os, const InTree::QueueElem& elem)
     } else {
         os << "prop:" << elem.propagated
         << " other_lit:" << elem.other_lit
-        << " red: " << elem.red;
+        << " red: " << elem.red
+        << " ID: " << elem.ID;
     }
 
     return os;

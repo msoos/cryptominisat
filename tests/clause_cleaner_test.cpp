@@ -50,8 +50,8 @@ struct clause_clean_test : public ::testing::Test {
 
 TEST_F(clause_clean_test, no_clean)
 {
-    s->add_clause_outer(str_to_cl("1, 2, 3"));
-    s->add_clause_outer(str_to_cl("1, 2"));
+    s->add_clause_outside(str_to_cl("1, 2, 3"));
+    s->add_clause_outside(str_to_cl("1, 2"));
 
     cc->remove_and_clean_all();
     EXPECT_EQ(s->binTri.irredBins, 1U);
@@ -61,8 +61,8 @@ TEST_F(clause_clean_test, no_clean)
 
 TEST_F(clause_clean_test, clean_bin_pos)
 {
-    s->add_clause_outer(str_to_cl("1, 2"));
-    s->add_clause_outer(str_to_cl("1"));
+    s->add_clause_outside(str_to_cl("1, 2"));
+    s->add_clause_outside(str_to_cl("1"));
     check_irred_cls_eq(s, "1, 2");
 
     cc->remove_and_clean_all();
@@ -71,8 +71,8 @@ TEST_F(clause_clean_test, clean_bin_pos)
 
 TEST_F(clause_clean_test, clean_bin_neg)
 {
-    s->add_clause_outer(str_to_cl("1, 2"));
-    s->add_clause_outer(str_to_cl("-1"));
+    s->add_clause_outside(str_to_cl("1, 2"));
+    s->add_clause_outside(str_to_cl("-1"));
     check_irred_cls_eq(s, "1, 2");
 
     cc->remove_and_clean_all();
@@ -81,8 +81,8 @@ TEST_F(clause_clean_test, clean_bin_neg)
 
 TEST_F(clause_clean_test, clean_tri_pos)
 {
-    s->add_clause_outer(str_to_cl("1, 2, 3"));
-    s->add_clause_outer(str_to_cl("1"));
+    s->add_clause_outside(str_to_cl("1, 2, 3"));
+    s->add_clause_outside(str_to_cl("1"));
     check_irred_cls_eq(s, "1, 2, 3");
 
     cc->remove_and_clean_all();
@@ -91,8 +91,8 @@ TEST_F(clause_clean_test, clean_tri_pos)
 
 TEST_F(clause_clean_test, clean_tri_neg)
 {
-    s->add_clause_outer(str_to_cl("1, 2, 3"));
-    s->add_clause_outer(str_to_cl("-1"));
+    s->add_clause_outside(str_to_cl("1, 2, 3"));
+    s->add_clause_outside(str_to_cl("-1"));
     check_irred_cls_eq(s, "1, 2, 3");
 
     cc->remove_and_clean_all();
@@ -102,8 +102,8 @@ TEST_F(clause_clean_test, clean_tri_neg)
 
 TEST_F(clause_clean_test, clean_long_pos)
 {
-    s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
-    s->add_clause_outer(str_to_cl("1"));
+    s->add_clause_outside(str_to_cl("1, 2, 3, 4"));
+    s->add_clause_outside(str_to_cl("1"));
     check_irred_cls_eq(s, "1, 2, 3, 4");
 
     cc->remove_and_clean_all();
@@ -112,8 +112,8 @@ TEST_F(clause_clean_test, clean_long_pos)
 
 TEST_F(clause_clean_test, clean_long_neg)
 {
-    s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
-    s->add_clause_outer(str_to_cl("-1"));
+    s->add_clause_outside(str_to_cl("1, 2, 3, 4"));
+    s->add_clause_outside(str_to_cl("-1"));
     check_irred_cls_eq(s, "1, 2, 3, 4");
 
     cc->remove_and_clean_all();
@@ -122,10 +122,10 @@ TEST_F(clause_clean_test, clean_long_neg)
 
 TEST_F(clause_clean_test, clean_mix)
 {
-    s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
-    s->add_clause_outer(str_to_cl("1, 2, 3"));
-    s->add_clause_outer(str_to_cl("1, 9"));
-    s->add_clause_outer(str_to_cl("-1"));
+    s->add_clause_outside(str_to_cl("1, 2, 3, 4"));
+    s->add_clause_outside(str_to_cl("1, 2, 3"));
+    s->add_clause_outside(str_to_cl("1, 9"));
+    s->add_clause_outside(str_to_cl("-1"));
     check_irred_cls_eq(s, "1, 2, 3, 4; 1, 2, 3; 1, 9");
 
     cc->remove_and_clean_all();

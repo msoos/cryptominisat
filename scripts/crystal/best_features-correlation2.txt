@@ -1,0 +1,44 @@
+#ranking
+rdb0.sum_uip1_per_time_ranking_rel
+rdb0.sum_props_per_time_ranking_rel
+rdb0.act_ranking_rel
+rdb0.uip1_ranking_rel
+rdb0.prop_ranking_rel
+#
+#
+# discounted and raw
+rdb0.props_made
+rdb0.uip1_used
+rdb0.discounted_props_made
+rdb0.discounted_props_made2
+rdb0.discounted_props_made3
+rdb0.discounted_uip1_used
+rdb0.discounted_uip1_used2
+rdb0.discounted_uip1_used3
+#
+# rdb80
+# rdb80.sum_discounted_uip1_used
+# rdb80.sum_discounted_props_made
+# rdb80.sum_uip1_used
+# rdb80.sum_props_made
+# rdb80.sum_conflicts_made
+
+# sum features
+# rdb0.sum_uip1_used
+# rdb0.sum_props_made
+
+#
+# relative features
+(cl.glue_before_minim/cl.glueHist_longterm_avg)
+(rdb0.uip1_used/rdb0_common.avg_uip1_used)
+(rdb0.glue/rdb0_common.glueHistLT_avg)
+(rdb0.props_made/rdb0_common.avg_props)
+(rdb0.sum_props_made/cl.time_inside_solver)
+(rdb0.sum_uip1_used/cl.time_inside_solver)
+(cl.num_antecedents/cl.num_total_lits_antecedents)
+#
+#
+# other
+(rdb0.glue/cl.trail_depth_level)
+cl.orig_glue
+

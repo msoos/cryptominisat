@@ -42,10 +42,12 @@ class Query:
         self.conn.commit()
         self.conn.close()
 
-    def delete_tbls(self):
+    def delete_tbls(self, table):
         queries = """
-        delete from used_clauses;
-        """
+DROP TABLE IF EXISTS `{table}`;
+create table `{table}` ( `clauseID` bigint(20) NOT NULL, `used_at` bigint(20) NOT NULL, `weight` float NOT NULL);
+""".format(table=table)
+
         for l in queries.split('\n'):
             t2 = time.time()
 
@@ -60,9 +62,8 @@ class Query:
         for i in range(100):
             tfname = "%s-%d" % (basefname, i)
             print("Checking if file %s exists" % tfname)
-            if not os.path.isfile(tfname):
-                break
-            last_good = i
+            if os.path.isfile(tfname):
+              last_good = i
 
         if last_good == -1:
             print("ERROR: file does not exist at all")
@@ -73,35 +74,51 @@ class Query:
     def add_used_clauses(self, usedClFname):
         last_good = self.get_last_good(usedClFname)
         tfname = "%s-%d" % (usedClFname, last_good)
-        print("Adding data from used_clauses file ", tfname)
-        t = time.time()
+        tfname_anc = tfname.replace("usedCls", "usedCls-anc")
 
-        self.cl_used = []
-        self.cl_used_num = 0
-        self.cl_used_total = 0
-        with open(tfname, "rb") as f:
-            while True:
-                b1 = f.read(8)
-                if not b1:
-                    break
-                b2 = f.read(8)
-                cl_id = struct.unpack("<q", b1)[0]
-                conf = struct.unpack("<q", b2)[0]
-                self.cl_used.append((cl_id, conf))
-                self.cl_used_num += 1
-                self.cl_used_total += 1
-                if self.cl_used_num > 10000:
-                    self.dump_used_clauses()
 
-        self.dump_used_clauses()
-        print("Added use data: %d time: T: %-3.2f s" % (self.cl_used_total, time.time() - t))
+        for fname,table in [(tfname, "used_clauses"), (tfname_anc, "used_clauses_anc")]:
+            t = time.time()
+            print("Adding data from file %s to DB %s" % (fname, table))
 
-    def dump_used_clauses(self):
+            self.cl_used = []
+            self.cl_used_num = 0
+            self.cl_used_total = 0
+            with open(fname, "rb") as f:
+                while True:
+                    b1 = f.read(8)
+                    if not b1:
+                        # end of file
+                        break
+                    b2 = f.read(8)
+                    cl_id = struct.unpack("<q", b1)[0]
+                    conf = struct.unpack("<q", b2)[0]
+
+                    weight = 1.0
+                    if "used_clauses_anc" in table:
+                        b3 = f.read(4)
+                        weight = struct.unpack("<f", b3)[0]
+
+                    dat = (cl_id, conf, weight)
+                    if options.verbose:
+                        print("Use:", dat)
+                    self.cl_used.append(dat)
+                    self.cl_used_num += 1
+                    self.cl_used_total += 1
+                    if self.cl_used_num > 10000:
+                        self.dump_used_clauses(table)
+
+            self.dump_used_clauses(table)
+            print("Added use data to table %s from file %s: %d time: T: %-3.2f s" %
+                  (table, fname, self.cl_used_total, time.time() - t))
+
+    def dump_used_clauses(self, table):
         self.c.executemany("""
-        INSERT INTO used_clauses (
-        `clauseID`
-        , `used_at`)
-        VALUES (?, ?);""", self.cl_used)
+        INSERT INTO %s (
+        `clauseID`,
+        `used_at`,
+        `weight`)
+        VALUES (?, ?, ?);""" % table, self.cl_used)
         self.cl_used = []
         self.cl_used_num = 0
 
@@ -135,7 +152,8 @@ Adds used_clauses to the SQLite database"""
     print("Base used_clauses file is %s" % options.usedcls)
 
     with Query(options.sqlitedb) as q:
-        q.delete_tbls()
+        q.delete_tbls("used_clauses")
+        q.delete_tbls("used_clauses_anc")
         q.add_used_clauses(options.usedcls)
 
     print("Finished adding good lemma indicators to db %s" % options.sqlitedb)

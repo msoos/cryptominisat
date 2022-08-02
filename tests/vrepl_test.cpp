@@ -51,11 +51,11 @@ struct varreplace : public ::testing::Test {
 
 TEST_F(varreplace, find_one_1)
 {
-    s->add_clause_outer(str_to_cl("1, 2"));
-    s->add_clause_outer(str_to_cl("-1, -2"));
+    s->add_clause_outside(str_to_cl("1, 2"));
+    s->add_clause_outside(str_to_cl("-1, -2"));
 
-    s->add_clause_outer(str_to_cl("1, 3, 4, 5"));
-    s->add_clause_outer(str_to_cl("2, 3, 4, 5"));
+    s->add_clause_outside(str_to_cl("1, 3, 4, 5"));
+    s->add_clause_outside(str_to_cl("2, 3, 4, 5"));
 
     repl->replace_if_enough_is_found();
     EXPECT_EQ(repl->get_num_replaced_vars(), 1);
@@ -65,11 +65,11 @@ TEST_F(varreplace, find_one_1)
 
 TEST_F(varreplace, find_one_2)
 {
-    s->add_clause_outer(str_to_cl("1, -3"));
-    s->add_clause_outer(str_to_cl("-1, 3"));
+    s->add_clause_outside(str_to_cl("1, -3"));
+    s->add_clause_outside(str_to_cl("-1, 3"));
 
-    s->add_clause_outer(str_to_cl("1, 4, 5"));
-    s->add_clause_outer(str_to_cl("2, 3, 4, 5"));
+    s->add_clause_outside(str_to_cl("1, 4, 5"));
+    s->add_clause_outside(str_to_cl("2, 3, 4, 5"));
 
     repl->replace_if_enough_is_found();
     EXPECT_EQ(repl->get_num_replaced_vars(), 1);
@@ -78,10 +78,10 @@ TEST_F(varreplace, find_one_2)
 
 TEST_F(varreplace, remove_lit)
 {
-    s->add_clause_outer(str_to_cl("1, -2"));
-    s->add_clause_outer(str_to_cl("-1, 2"));
+    s->add_clause_outside(str_to_cl("1, -2"));
+    s->add_clause_outside(str_to_cl("-1, 2"));
 
-    s->add_clause_outer(str_to_cl("1, 2, 5"));
+    s->add_clause_outside(str_to_cl("1, 2, 5"));
 
     repl->replace_if_enough_is_found();
     EXPECT_EQ(repl->get_num_replaced_vars(), 1);
@@ -90,10 +90,10 @@ TEST_F(varreplace, remove_lit)
 
 TEST_F(varreplace, remove_cl)
 {
-    s->add_clause_outer(str_to_cl("1, -2"));
-    s->add_clause_outer(str_to_cl("-1, 2"));
+    s->add_clause_outside(str_to_cl("1, -2"));
+    s->add_clause_outside(str_to_cl("-1, 2"));
 
-    s->add_clause_outer(str_to_cl("1, -2, 5"));
+    s->add_clause_outside(str_to_cl("1, -2, 5"));
 
     repl->replace_if_enough_is_found();
     EXPECT_EQ(repl->get_num_replaced_vars(), 1);
@@ -102,55 +102,55 @@ TEST_F(varreplace, remove_cl)
 
 TEST_F(varreplace, replace_twice)
 {
-    s->add_clause_outer(str_to_cl("1, -2"));
-    s->add_clause_outer(str_to_cl("-1, 2"));
+    s->add_clause_outside(str_to_cl("1, -2"));
+    s->add_clause_outside(str_to_cl("-1, 2"));
 
     repl->replace_if_enough_is_found();
     EXPECT_EQ(repl->get_num_replaced_vars(), 1);
 
-    s->add_clause_outer(str_to_cl("3, -2"));
-    s->add_clause_outer(str_to_cl("-3, 2"));
+    s->add_clause_outside(str_to_cl("3, -2"));
+    s->add_clause_outside(str_to_cl("-3, 2"));
 
     repl->replace_if_enough_is_found();
     EXPECT_EQ(repl->get_num_replaced_vars(), 2);
 
-    s->add_clause_outer(str_to_cl("1, -2, 3"));
-    s->add_clause_outer(str_to_cl("1, 2, 3, 5"));
+    s->add_clause_outside(str_to_cl("1, -2, 3"));
+    s->add_clause_outside(str_to_cl("1, 2, 3, 5"));
     check_irred_cls_eq(s, "2, 5");
 }
 
 TEST_F(varreplace, replace_thrice)
 {
-    s->add_clause_outer(str_to_cl("1, -2"));
-    s->add_clause_outer(str_to_cl("-1, 2"));
+    s->add_clause_outside(str_to_cl("1, -2"));
+    s->add_clause_outside(str_to_cl("-1, 2"));
 
     repl->replace_if_enough_is_found();
     EXPECT_EQ(repl->get_num_replaced_vars(), 1);
 
-    s->add_clause_outer(str_to_cl("3, -2"));
-    s->add_clause_outer(str_to_cl("-3, 2"));
+    s->add_clause_outside(str_to_cl("3, -2"));
+    s->add_clause_outside(str_to_cl("-3, 2"));
 
     repl->replace_if_enough_is_found();
     EXPECT_EQ(repl->get_num_replaced_vars(), 2);
 
-    s->add_clause_outer(str_to_cl("4, -2"));
-    s->add_clause_outer(str_to_cl("-4, 2"));
+    s->add_clause_outside(str_to_cl("4, -2"));
+    s->add_clause_outside(str_to_cl("-4, 2"));
 
     repl->replace_if_enough_is_found();
     EXPECT_EQ(repl->get_num_replaced_vars(), 3);
 
-    s->add_clause_outer(str_to_cl("1, -2, 3"));
-    s->add_clause_outer(str_to_cl("1, 2, 4, 5"));
+    s->add_clause_outside(str_to_cl("1, -2, 3"));
+    s->add_clause_outside(str_to_cl("1, 2, 4, 5"));
     check_irred_cls_eq(s, "2, 5");
 }
 
 TEST_F(varreplace, replace_limit_check_below)
 {
-    s->add_clause_outer(str_to_cl("1, -2"));
-    s->add_clause_outer(str_to_cl("-1, 2"));
+    s->add_clause_outside(str_to_cl("1, -2"));
+    s->add_clause_outside(str_to_cl("-1, 2"));
 
-    s->add_clause_outer(str_to_cl("3, -2"));
-    s->add_clause_outer(str_to_cl("-3, 2"));
+    s->add_clause_outside(str_to_cl("3, -2"));
+    s->add_clause_outside(str_to_cl("-3, 2"));
 
     repl->replace_if_enough_is_found(3);
     EXPECT_EQ(repl->get_num_replaced_vars(), 0);
@@ -158,11 +158,11 @@ TEST_F(varreplace, replace_limit_check_below)
 
 TEST_F(varreplace, replace_limit_check_above)
 {
-    s->add_clause_outer(str_to_cl("1, -2"));
-    s->add_clause_outer(str_to_cl("-1, 2"));
+    s->add_clause_outside(str_to_cl("1, -2"));
+    s->add_clause_outside(str_to_cl("-1, 2"));
 
-    s->add_clause_outer(str_to_cl("3, -2"));
-    s->add_clause_outer(str_to_cl("-3, 2"));
+    s->add_clause_outside(str_to_cl("3, -2"));
+    s->add_clause_outside(str_to_cl("-3, 2"));
 
     repl->replace_if_enough_is_found(2);
     EXPECT_EQ(repl->get_num_replaced_vars(), 2);

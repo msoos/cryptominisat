@@ -36,7 +36,7 @@ using std::endl;
 #include "main_common.h"
 
 #include "solverconf.h"
-#include "cryptominisat5/cryptominisat.h"
+#include "cryptominisat.h"
 #include "dimacsparser.h"
 
 #if defined(_MSC_VER)
@@ -48,11 +48,12 @@ using std::endl;
 using namespace CMSat;
 
 SATSolver* solver;
+double wallclock_time_started = 0.0;
 
 static void SIGINT_handler(int) {
     cout << "\n*** INTERRUPTED ***\n";
     solver->add_in_partial_solving_stats();
-    solver->print_stats();
+    solver->print_stats(wallclock_time_started);
     cout << "\n*** INTERRUPTED ***\n";
     exit(1);
 }
@@ -72,7 +73,7 @@ public:
         cout << "Options:\n";
         cout << "  --verb          = [0...]  Sets verbosity level. Anything higher\n";
         cout << "                            than 2 will give debug log\n";
-        cout << "  --drat          = {fname} DRAT dumped to file\n";
+        cout << "  --frat          = {fname} FRAT dumped to file\n";
         cout << "  --sls           = {walksat,yalsat} Which SLS solver to use\n";
         cout << "  --threads       = [1...]  Sets number of threads\n";
         cout << "\n";
@@ -89,13 +90,14 @@ public:
 
     int main(int argc, const char** argv) {
         conf.verbosity = 1;
+        wallclock_time_started = real_time_sec();
 
         int i, j;
         for (i = j = 0; i < argc; i++){
             const char* value;
-            if ((value = hasPrefix(argv[i], "--drat="))){
-                dratfilname = std::string(value);
-                handle_drat_option();
+            if ((value = hasPrefix(argv[i], "--frat="))){
+                fratfilname = std::string(value);
+                handle_frat_option();
             }else if ((value = hasPrefix(argv[i], "--verb="))){
                 long int verbosity = (int)strtol(value, NULL, 10);
                 if (verbosity == 0 && errno == EINVAL){
@@ -103,9 +105,9 @@ public:
                     exit(0);
                 }
                 conf.verbosity = verbosity;
-            }else if ((value = hasPrefix(argv[i], "--simdrat="))){
-                int drat_sim  = (int)strtol(value, NULL, 10);
-                conf.simulate_drat = drat_sim;
+            }else if ((value = hasPrefix(argv[i], "--simfrat="))){
+                int frat_sim  = (int)strtol(value, NULL, 10);
+                conf.simulate_frat = frat_sim;
             }else if ((value = hasPrefix(argv[i], "--threads="))){
                 num_threads  = (int)strtol(value, NULL, 10);
                 if (num_threads == 0 && errno == EINVAL){
@@ -123,13 +125,6 @@ public:
                 sls = sls.substr(6, 100);
                 conf.which_sls = sls;
                 cout << "c using SLS: '" << sls << "'" << endl;
-            }else if ((value = hasPrefix(argv[i], "--reconf="))){
-                long int reconf  = (int)strtol(value, NULL, 10);
-                if (reconf == 0 && errno == EINVAL){
-                    cout << "ERROR! illegal threads " << value << endl;
-                    exit(0);
-                }
-                conf.reconfigure_val = reconf;
             }else if (strcmp(argv[i], "--zero-exit-status") == 0){
                 zero_exit_status = true;
             }else if (strcmp(argv[i], "--version") == 0){
@@ -150,10 +145,10 @@ public:
 
         SATSolver S(&conf);
         solver = &S;
-        if (dratf) {
-            solver->set_drat(dratf, false);
+        if (fratf) {
+            solver->set_frat(fratf);
             if (num_threads > 1) {
-                cout << "ERROR: Cannot have DRAT and multiple threads." << endl;
+                cout << "ERROR: Cannot have FRAT and multiple threads." << endl;
                 exit(-1);
             }
         }
@@ -229,7 +224,7 @@ public:
 
         lbool ret = S.solve();
         if (conf.verbosity) {
-            S.print_stats();
+            S.print_stats(wallclock_time_started);
         }
 
         if (ret == l_True) {
@@ -242,11 +237,9 @@ public:
             print_model(solver, &std::cout);
         }
 
-        if (dratf) {
-            *dratf << std::flush;
-            if (dratf != &std::cout) {
-                delete dratf;
-            }
+        if (fratf) {
+            fflush(fratf);
+            fclose(fratf);
         }
 
         if (zero_exit_status)

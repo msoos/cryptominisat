@@ -51,17 +51,17 @@ TEST_F(SolverTest, get_bin)
 {
     s = new Solver(&conf, &must_inter);
     s->new_vars(30);
-    s->add_clause_outer(str_to_cl(" 2,  3"));
+    s->add_clause_outside(str_to_cl(" 2,  3"));
     s->add_clause_int(str_to_cl(" 1,  2"), true);
 
     s->start_getting_small_clauses(2, 100);
     vector<Lit> lits;
-    bool ret = s->get_next_small_clause(lits);
+    bool ret = s->get_next_small_clause(lits, false);
     ASSERT_TRUE(ret);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(lits, str_to_cl(" 1,  2"));
 
-    ret = s->get_next_small_clause(lits);
+    ret = s->get_next_small_clause(lits, false);
     ASSERT_FALSE(ret);
 
     s->end_getting_small_clauses();
@@ -75,20 +75,20 @@ TEST_F(SolverTest, get_long_lev0)
     ClauseStats stats;
     stats.glue = 5;
 
-    s->add_clause_outer(str_to_cl(" 2,  3"));
-    c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true, stats);
+    s->add_clause_outside(str_to_cl(" 2,  3"));
+    c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true, &stats);
     assert(c != NULL);
     s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
 
     s->start_getting_small_clauses(10, 100);
     vector<Lit> lits;
 
-    bool ret = s->get_next_small_clause(lits);
+    bool ret = s->get_next_small_clause(lits, false);
     ASSERT_TRUE(ret);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(lits, str_to_cl(" 1,  2, 3, 4"));
 
-    ret = s->get_next_small_clause(lits);
+    ret = s->get_next_small_clause(lits, false);
     ASSERT_FALSE(ret);
 
     s->end_getting_small_clauses();
@@ -103,20 +103,20 @@ TEST_F(SolverTest, get_long_lev1)
     ClauseStats stats;
     stats.glue = 5;
 
-    s->add_clause_outer(str_to_cl(" 2,  3"));
-    c = s->add_clause_int(str_to_cl(" 6,  2, 3, 4"), true, stats);
+    s->add_clause_outside(str_to_cl(" 2,  3"));
+    c = s->add_clause_int(str_to_cl(" 6,  2, 3, 4"), true, &stats);
     assert(c != NULL);
     s->longRedCls[1].push_back(s->cl_alloc.get_offset(c));
 
     s->start_getting_small_clauses(10, 100);
     vector<Lit> lits;
 
-    bool ret = s->get_next_small_clause(lits);
+    bool ret = s->get_next_small_clause(lits, false);
     ASSERT_TRUE(ret);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(lits, str_to_cl(" 6,  2, 3, 4"));
 
-    ret = s->get_next_small_clause(lits);
+    ret = s->get_next_small_clause(lits, false);
     ASSERT_FALSE(ret);
 
     s->end_getting_small_clauses();
@@ -130,13 +130,13 @@ TEST_F(SolverTest, get_long_lev0_and_lev1)
     ClauseStats stats;
     stats.glue = 5;
 
-    s->add_clause_outer(str_to_cl(" 2,  3"));
+    s->add_clause_outside(str_to_cl(" 2,  3"));
 
-    c = s->add_clause_int(str_to_cl(" 3, -4, -7"), true, stats);
+    c = s->add_clause_int(str_to_cl(" 3, -4, -7"), true, &stats);
     assert(c != NULL);
     s->longRedCls[1].push_back(s->cl_alloc.get_offset(c));
 
-    c = s->add_clause_int(str_to_cl(" 2, 4, 5, 6"), true, stats);
+    c = s->add_clause_int(str_to_cl(" 2, 4, 5, 6"), true, &stats);
     assert(c != NULL);
     s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
 
@@ -144,17 +144,17 @@ TEST_F(SolverTest, get_long_lev0_and_lev1)
     vector<Lit> lits;
 
     //Order is reverse because we get lev0 then lev1
-    bool ret = s->get_next_small_clause(lits);
+    bool ret = s->get_next_small_clause(lits, false);
     ASSERT_TRUE(ret);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(lits, str_to_cl(" 2, 4, 5, 6"));
 
-    ret = s->get_next_small_clause(lits);
+    ret = s->get_next_small_clause(lits, false);
     ASSERT_TRUE(ret);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(lits, str_to_cl(" 3, -4, -7"));
 
-    ret = s->get_next_small_clause(lits);
+    ret = s->get_next_small_clause(lits, false);
     ASSERT_FALSE(ret);
 
     s->end_getting_small_clauses();
@@ -168,15 +168,15 @@ TEST_F(SolverTest, get_long_toolarge)
     ClauseStats stats;
     stats.glue = 5;
 
-    s->add_clause_outer(str_to_cl(" 2,  3"));
-    c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true, stats);
+    s->add_clause_outside(str_to_cl(" 2,  3"));
+    c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true, &stats);
     assert(c != NULL);
     s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
 
     s->start_getting_small_clauses(2, 100);
     vector<Lit> lits;
 
-    bool ret = s->get_next_small_clause(lits);
+    bool ret = s->get_next_small_clause(lits, false);
     ASSERT_FALSE(ret);
 
     s->end_getting_small_clauses();
@@ -190,15 +190,15 @@ TEST_F(SolverTest, get_glue_toolarge)
     ClauseStats stats;
     stats.glue = 20;
 
-    s->add_clause_outer(str_to_cl(" 2,  3"));
-    c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true, stats);
+    s->add_clause_outside(str_to_cl(" 2,  3"));
+    c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true, &stats);
     assert(c != NULL);
     s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
 
     s->start_getting_small_clauses(100, 2);
     vector<Lit> lits;
 
-    bool ret = s->get_next_small_clause(lits);
+    bool ret = s->get_next_small_clause(lits, false);
     ASSERT_FALSE(ret);
 
     s->end_getting_small_clauses();
@@ -211,28 +211,59 @@ TEST_F(SolverTest, get_bin_and_long)
     ClauseStats stats;
     stats.glue = 5;
 
-    s->add_clause_outer(str_to_cl(" 2,  3"));
+    s->add_clause_outside(str_to_cl(" 2,  3"));
     Clause* c;
     c = s->add_clause_int(str_to_cl(" 1,  5 "), true);
     assert(c == NULL);
-    c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true, stats);
+    c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true, &stats);
     assert(c != NULL);
     s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
 
     s->start_getting_small_clauses(4, 100);
     vector<Lit> lits;
 
-    bool ret = s->get_next_small_clause(lits);
+    bool ret = s->get_next_small_clause(lits, false);
     ASSERT_TRUE(ret);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(lits, str_to_cl(" 1,  5"));
 
-    ret = s->get_next_small_clause(lits);
+    ret = s->get_next_small_clause(lits, false);
     ASSERT_TRUE(ret);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(lits, str_to_cl(" 1,  2, 3, 4"));
 
-    ret = s->get_next_small_clause(lits);
+    ret = s->get_next_small_clause(lits, false);
+    ASSERT_FALSE(ret);
+
+    s->end_getting_small_clauses();
+}
+
+TEST_F(SolverTest, get_irred_bin_and_long)
+{
+    s = new Solver(&conf, &must_inter);
+    s->new_vars(30);
+
+    Clause* c;
+    c = s->add_clause_int(str_to_cl(" 1,  5 "));
+    assert(c == NULL);
+    c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"));
+    assert(c != NULL);
+    s->longIrredCls.push_back(s->cl_alloc.get_offset(c));
+
+    s->start_getting_small_clauses(4, 100, false);
+    vector<Lit> lits;
+
+    bool ret = s->get_next_small_clause(lits, false);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(str_to_cl(" 1,  5"), lits);
+
+    ret = s->get_next_small_clause(lits, false);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(str_to_cl(" 1,  2, 3, 4"), lits);
+
+    ret = s->get_next_small_clause(lits, false);
     ASSERT_FALSE(ret);
 
     s->end_getting_small_clauses();

@@ -37,7 +37,7 @@ struct GaussQData {
     uint32_t num_props = 0;  // total gauss propogation time for DPLL
     uint32_t num_conflicts = 0;   // total gauss conflict    time for DPLL
     uint32_t engaus_disable_checks = 0;
-    bool engaus_disable = false;     // decide to do gaussian elimination
+    bool disabled = false;     // decide to do gaussian elimination
 
     void reset()
     {

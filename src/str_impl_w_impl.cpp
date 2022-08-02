@@ -111,11 +111,12 @@ void StrImplWImpl::distill_implicit_with_implicit_lit(const Lit lit)
         }
 
         switch(i->getType()) {
-            case CMSat::watch_clause_t:
+            case WatchType::watch_clause_t:
+            case WatchType::watch_bnn_t:
                 *j++ = *i;
                 break;
 
-            case CMSat::watch_binary_t:
+            case WatchType::watch_binary_t:
                 timeAvailable -= 20;
                 strengthen_bin_with_bin(lit, i, j, end);
                 break;
@@ -168,12 +169,6 @@ void StrImplWImpl::strengthen_bin_with_bin(
     if (rem) {
         str_impl_data.remLitFromBin++;
         str_impl_data.toEnqueue.push_back(lit);
-        (*solver->drat) << add << lit
-        #ifdef STATS_NEEDED
-        << 0
-        << solver->sumConflicts
-        #endif
-        << fin;
     }
     *j++ = *i;
 }
@@ -189,7 +184,7 @@ void StrImplWImpl::StrImplicitData::print(
     const double time_remain = float_div(timeAvailable, orig_time);
 
     cout
-    << "c [impl str]"
+    << "c [impl-str]"
     << " lit bin: " << remLitFromBin
     << " set-var: " << trail_diff
     << _solver->conf.print_times(time_used, time_out, time_remain)

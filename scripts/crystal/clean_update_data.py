@@ -53,26 +53,6 @@ class QueryFill (helper.QueryHelper):
 
         print("indexes created T: %-3.2f s" % (time.time() - t))
 
-    # the clause can be deleted multiple times, because of clause being
-    # minimized. In these cases, a new clause with an identical ID is
-    # created, that is smaller. This clause ID would then be in the DB more
-    # than once. So here we clean the "cl_last_in_solver" from the bogus
-    # deletes, and keep the last one only
-    def only_keep_last_conf_from_cl_last_in_solver(self):
-        print("Keeping only last one from cl_last_in_solver...")
-
-        t = time.time()
-        q = """
-        DROP TABLE IF EXISTS `cl_last_in_solver2`;
-        CREATE TABLE `cl_last_in_solver2` AS SELECT clauseID,max(conflicts) as conflicts FROM `cl_last_in_solver` group by clauseID;
-        DROP TABLE IF EXISTS `cl_last_in_solver`;
-        ALTER TABLE `cl_last_in_solver2` RENAME TO `cl_last_in_solver`;
-        """
-
-        for l in q.split('\n'):
-            self.c.execute(l)
-        print("cl_last_in_solver has been made unique T: %-3.2f s" % (time.time() - t))
-
     def fill_sum_cl_use(self):
         print("Filling sum_cl_use...")
 
@@ -82,7 +62,7 @@ class QueryFill (helper.QueryHelper):
         q = """
         create table `sum_cl_use` (
             `clauseID` bigint(20) NOT NULL,
-            `num_used` bigint(20) NOT NULL,
+            `num_used` float(20) NOT NULL,
             `first_confl_used` bigint(20),
             `last_confl_used` bigint(20)
         );"""
@@ -99,10 +79,11 @@ class QueryFill (helper.QueryHelper):
         )
         select
         clauseID
-        , count()
+        , sum(weight)
         , min(used_at)
         , max(used_at)
-        from used_clauses as c group by clauseID;"""
+        from used_clauses as c
+        group by clauseID;"""
         self.c.execute(q)
         print("sum_cl_use filled T: %-3.2f s" % (time.time() - t))
 
@@ -137,27 +118,6 @@ class QueryFill (helper.QueryHelper):
         self.c.execute(q)
         print("sum_cl_use added bad claues T: %-3.2f s" % (time.time() - t))
 
-    def drop_idxs_tables(self):
-        helper.drop_idxs(self.c)
-
-        print("Dropping tables...")
-        t = time.time()
-        q = """
-        drop table if exists `goodClauses`;
-        drop table if exists `idxused_clauses`;
-        """
-
-        for l in q.split('\n'):
-            t2 = time.time()
-
-            if options.verbose:
-                print("Dropping table: ", l)
-            self.c.execute(l)
-            if options.verbose:
-                print("Dopped table T: %-3.2f s" % (time.time() - t2))
-
-        print("Tables dropped T: %-3.2f s" % (time.time() - t))
-
 
 if __name__ == "__main__":
     usage = "usage: %prog [options] sqlitedb"
@@ -173,8 +133,7 @@ if __name__ == "__main__":
 
     with QueryFill(args[0]) as q:
         q.create_indexes()
-        q.only_keep_last_conf_from_cl_last_in_solver()
         q.fill_sum_cl_use()
-        q.drop_idxs_tables()
+        helper.drop_idxs(q.c)
 
     print("Done.")

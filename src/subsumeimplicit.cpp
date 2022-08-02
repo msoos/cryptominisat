@@ -49,14 +49,14 @@ void SubsumeImplicit::try_subsume_bin(
     //Subsume bin with bin
     if (i->lit2() == lastLit2) {
         //The sorting algorithm prefers irred to red, so it is
-        //impossible to have irred before red
+        //impossible to have red before irred
         assert(!(i->red() == false && lastRed == true));
 
         runStats.remBins++;
         assert(i->lit2().var() != lit.var());
         *timeAvail -= 30;
         *timeAvail -= solver->watches[i->lit2()].size();
-        removeWBin(solver->watches, i->lit2(), lit, i->red());
+        removeWBin(solver->watches, i->lit2(), lit, i->red(), i->get_ID());
         if (touched) {
             touched->touch(i->lit2());
         }
@@ -65,7 +65,7 @@ void SubsumeImplicit::try_subsume_bin(
         } else {
             solver->binTri.irredBins--;
         }
-        (*solver->drat) << del << lit << i->lit2() << fin;
+        (*solver->frat) << del << i->get_ID() << lit << i->lit2() << fin;
 
         return;
     } else {
@@ -102,11 +102,12 @@ uint32_t SubsumeImplicit::subsume_at_watch(const uint32_t at,
         }
 
         switch(i->getType()) {
-            case CMSat::watch_clause_t:
+            case WatchType::watch_clause_t:
+            case WatchType::watch_bnn_t:
                 *j++ = *i;
                 break;
 
-            case CMSat::watch_binary_t:
+            case WatchType::watch_binary_t:
                 try_subsume_bin(lit, i, j, timeAvail, touched);
                 break;
 
@@ -128,6 +129,7 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats, std::string calle
         *solver->conf.global_timeout_multiplier;
     timeAvailable = orig_timeAvailable;
     runStats.clear();
+    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
 
     //For randomization, we must have at least 1
     if (solver->watches.size() == 0) {
@@ -162,6 +164,7 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats, std::string calle
             , time_remain
         );
     }
+    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
 
     if (check_stats) {
         #ifdef DEBUG_IMPLICIT_STATS
@@ -186,7 +189,7 @@ SubsumeImplicit::Stats SubsumeImplicit::Stats::operator+=(const SubsumeImplicit:
 void SubsumeImplicit::Stats::print_short(const Solver* _solver, const char* caller) const
 {
     cout
-    << "c [impl sub" << caller << "]"
+    << "c [impl-sub" << caller << "]"
     << " bin: " << remBins
     << _solver->conf.print_times(time_used, time_out)
     << " w-visit: " << numWatchesLooked

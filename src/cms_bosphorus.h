@@ -25,8 +25,6 @@ THE SOFTWARE.
 
 #include <limits>
 
-using std::numeric_limits;
-
 namespace Bosph {
     class Bosphorus;
     class DIMACS;

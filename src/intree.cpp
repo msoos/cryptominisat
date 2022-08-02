@@ -39,19 +39,23 @@ InTree::InTree(Solver* _solver) :
 
 bool InTree::replace_until_fixedpoint(bool& aborted)
 {
+    assert(solver->conf.doFindAndReplaceEqLits);
     uint64_t time_limit =
         solver->conf.intree_scc_varreplace_time_limitM*1000ULL*1000ULL
         *solver->conf.global_timeout_multiplier
         *0.5;
     time_limit = (double)time_limit * std::min(std::pow((double)(numCalls+1), 0.2), 3.0);
+    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
 
     aborted = false;
     uint64_t bogoprops = 0;
-    uint32_t last_replace = std::numeric_limits<uint32_t>::max();
+    uint32_t last_replace = numeric_limits<uint32_t>::max();
     uint32_t this_replace = solver->varReplacer->get_num_replaced_vars();
     while(last_replace != this_replace && !aborted) {
         last_replace = this_replace;
-        solver->clauseCleaner->remove_and_clean_all();
+        if (!solver->clauseCleaner->remove_and_clean_all()) {
+            return false;
+        }
         bool OK = solver->varReplacer->replace_if_enough_is_found(0, &bogoprops);
         if (!OK) {
             return false;
@@ -69,6 +73,7 @@ bool InTree::replace_until_fixedpoint(bool& aborted)
         }
     }
 
+    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
     return true;
 }
 
@@ -86,19 +91,13 @@ bool InTree::watches_only_contains_nonbin(const Lit lit) const
 
 bool InTree::check_timeout_due_to_hyperbin()
 {
-    assert(!(solver->timedOutPropagateFull && solver->drat->enabled()));
-    assert(!(solver->timedOutPropagateFull && solver->conf.simulate_drat));
+    assert(!(solver->timedOutPropagateFull && solver->frat->enabled()));
+    assert(!(solver->timedOutPropagateFull && solver->conf.simulate_frat));
 
     if (solver->timedOutPropagateFull
-        && !(solver->drat->enabled() || solver->conf.simulate_drat)
+        && !(solver->frat->enabled() || solver->conf.simulate_frat)
     ) {
-        if (solver->conf.verbosity) {
-            cout
-            << "c [intree] intra-propagation timeout,"
-            << " turning off OTF hyper-bin&trans-red"
-            << endl;
-        }
-
+        verb_print(1, "[intree] intra-propagation timeout, turning off OTF hyper-bin&trans-red");
         solver->conf.do_hyperbin_and_transred = false;
         return true;
     }
@@ -137,12 +136,17 @@ bool InTree::intree_probe()
     removedIrredBin = 0;
     removedRedBin = 0;
     numCalls++;
+    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
 
-    bool aborted = false;
-    if (!replace_until_fixedpoint(aborted))
-    {
+    if (!solver->conf.doFindAndReplaceEqLits) {
+        if (solver->conf.verbosity) {
+            cout << "c [intree] SCC is not allowed, intree cannot work this way, aborting" << endl;
+        }
         return solver->okay();
     }
+
+    bool aborted = false;
+    if (!replace_until_fixedpoint(aborted)) return solver->okay();
     if (aborted) {
         if (solver->conf.verbosity) {
             cout
@@ -159,15 +163,13 @@ bool InTree::intree_probe()
         solver->conf.intree_time_limitM*1000ULL*1000ULL
         *solver->conf.global_timeout_multiplier;
     bogoprops_to_use = (double)bogoprops_to_use * std::pow((double)(numCalls+1), 0.3);
-    bogoprops_remain = bogoprops_to_use;
+    start_bogoprops = solver->propStats.bogoProps;
 
     fill_roots();
     randomize_roots();
 
     //Let's enqueue all ~root -s.
-    for(Lit lit: roots) {
-        enqueue(~lit, lit_Undef, false);
-    }
+    for(Lit lit: roots) enqueue(~lit, lit_Undef, false, 0);
 
     //clear seen
     for(QueueElem elem: queue) {
@@ -181,19 +183,18 @@ bool InTree::intree_probe()
     unmark_all_bins();
 
     const double time_used = cpuTime() - myTime;
-    const double time_remain = float_div(bogoprops_remain, bogoprops_to_use);
-    const bool time_out = (bogoprops_remain < 0);
+    const double time_remain = float_div(
+        (int64_t)solver->propStats.bogoProps-start_bogoprops, bogoprops_to_use);
+    const bool time_out = ((int64_t)solver->propStats.bogoProps > start_bogoprops + bogoprops_to_use);
 
-    if (solver->conf.verbosity) {
-        cout << "c [intree] Set "
+    verb_print(1,
+        "[intree] Set "
         << (orig_num_free_vars - solver->get_num_free_vars())
         << " vars"
         << " hyper-added: " << hyperbin_added
         << " trans-irred: " << removedIrredBin
         << " trans-red: " << removedRedBin
-        << solver->conf.print_times(time_used,  time_out, time_remain)
-        << endl;
-    }
+        << solver->conf.print_times(time_used,  time_out, time_remain));
 
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
@@ -205,6 +206,7 @@ bool InTree::intree_probe()
         );
     }
 
+    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
     solver->use_depth_trick = true;
     solver->perform_transitive_reduction = true;
     return solver->okay();
@@ -244,9 +246,9 @@ void InTree::tree_look()
     bool timeout = false;
     while(!queue.empty())
     {
-        if ((int64_t)solver->propStats.bogoProps
+        if (start_bogoprops + bogoprops_to_use <
+            (int64_t)solver->propStats.bogoProps
             + (int64_t)solver->propStats.otfHyperTime
-            > bogoprops_remain
             || timeout
         ) {
             break;
@@ -261,7 +263,8 @@ void InTree::tree_look()
         }
 
         if (elem.propagated != lit_Undef) {
-            timeout = handle_lit_popped_from_queue(elem.propagated, elem.other_lit, elem.red);
+            timeout = handle_lit_popped_from_queue(
+                elem.propagated, elem.other_lit, elem.red, elem.ID);
         } else {
             assert(solver->decisionLevel() > 0);
             solver->cancelUntil<false, true>(solver->decisionLevel()-1);
@@ -291,13 +294,12 @@ void InTree::tree_look()
         }
     }
 
-    bogoprops_remain -= (int64_t)solver->propStats.bogoProps + (int64_t)solver->propStats.otfHyperTime;
-
     solver->cancelUntil<false, true>(0);
     empty_failed_list();
 }
 
-bool InTree::handle_lit_popped_from_queue(const Lit lit, const Lit other_lit, const bool red)
+bool InTree::handle_lit_popped_from_queue(
+    const Lit lit, const Lit other_lit, const bool red, const int32_t ID)
 {
     solver->new_decision_level();
     depth_failed.push_back(depth_failed.back());
@@ -312,10 +314,7 @@ bool InTree::handle_lit_popped_from_queue(const Lit lit, const Lit other_lit, co
     ) {
         //l is failed.
         failed.push_back(~lit);
-        if (solver->conf.verbosity >= 10) {
-            cout << "Failed :" << ~lit << " level: " << solver->decisionLevel() << endl;
-        }
-
+        verb_print(10,"Failed :" << ~lit << " level: " << solver->decisionLevel());
         return false;
     }
 
@@ -323,21 +322,20 @@ bool InTree::handle_lit_popped_from_queue(const Lit lit, const Lit other_lit, co
         //update 'other_lit' 's ancestor to 'lit'
         assert(solver->value(other_lit) == l_True);
         reset_reason_stack.back() = ResetReason(other_lit.var(), solver->varData[other_lit.var()].reason);
-        solver->varData[other_lit.var()].reason = PropBy(~lit, red, false, false);
-        if (solver->conf.verbosity >= 10) {
-            cout << "Set reason for VAR " << other_lit.var()+1 << " to: " << ~lit << " red: " << (int)red << endl;
-        }
+        solver->varData[other_lit.var()].reason = PropBy(~lit, red, false, false, ID);
+        verb_print(10, "Set reason for VAR " << other_lit.var()+1
+        << " to: " << ~lit << " red: " << (int)red);
     }
 
     if (solver->value(lit) == l_Undef) {
-        solver->enqueue(lit);
+        solver->enqueue<true>(lit);
 
         //Should do HHBR here
         bool ok;
         if (solver->conf.do_hyperbin_and_transred) {
-            uint64_t max_hyper_time = std::numeric_limits<uint64_t>::max();
-            if (!solver->drat->enabled() &&
-                !solver->conf.simulate_drat
+            uint64_t max_hyper_time = numeric_limits<uint64_t>::max();
+            if (!solver->frat->enabled() &&
+                !solver->conf.simulate_frat
             ) {
                 max_hyper_time =
                 solver->propStats.otfHyperTime
@@ -345,9 +343,7 @@ bool InTree::handle_lit_popped_from_queue(const Lit lit, const Lit other_lit, co
                 + 1600ULL*1000ULL*1000ULL;
             }
 
-            Lit ret = solver->propagate_bfs(
-                max_hyper_time //early-abort timeout
-            );
+            Lit ret = solver->propagate_bfs(max_hyper_time);
             ok = (ret == lit_Undef);
             timeout = check_timeout_due_to_hyperbin();
         } else {
@@ -362,9 +358,9 @@ bool InTree::handle_lit_popped_from_queue(const Lit lit, const Lit other_lit, co
             }
         } else {
             hyperbin_added += solver->hyper_bin_res_all(false);
-            std::pair<size_t, size_t> tmp = solver->remove_useless_bins(true);
-            removedIrredBin += tmp.first;
-            removedRedBin += tmp.second;
+            auto [a, b] = solver->remove_useless_bins(true);
+            removedIrredBin += a;
+            removedRedBin += b;
         }
         solver->uselessBin.clear();
         solver->needToAddBinClause.clear();
@@ -382,31 +378,15 @@ bool InTree::empty_failed_list()
         }
 
         if (solver->value(lit) == l_Undef) {
-            solver->enqueue(lit);
-            *(solver->drat) << add << lit
-            #ifdef STATS_NEEDED
-            << 0
-            << solver->sumConflicts
-            #endif
-            << fin;
+            solver->enqueue<true>(lit);
             solver->ok = solver->propagate<true>().isNULL();
             if (!solver->ok) {
                 return false;
             }
         } else if (solver->value(lit) == l_False) {
-            *(solver->drat) << add << ~lit
-            #ifdef STATS_NEEDED
-            << 0
-            << solver->sumConflicts
-            #endif
-            << fin;
-
-            *(solver->drat) << add
-            #ifdef STATS_NEEDED
-            << 0
-            << solver->sumConflicts
-            #endif
-            << fin;
+            //*(solver->frat) << add << solver->clauseID++ << ~lit << fin;
+            solver->unsat_cl_ID = solver->clauseID;
+            *(solver->frat) << add << solver->clauseID++ <<fin;
             solver->ok = false;
             return false;
         }
@@ -421,9 +401,9 @@ bool InTree::empty_failed_list()
 // Next: (~otherLit, lit2) exists -> (~lit2, ~otherLit) in queue
 // --> original ~otherlit got enqueued by lit2 = False (--> PropBy(lit2) ).
 
-void InTree::enqueue(const Lit lit, const Lit other_lit, bool red_cl)
+void InTree::enqueue(const Lit lit, const Lit other_lit, const bool red_cl, const int32_t ID)
 {
-    queue.push_back(QueueElem(lit, other_lit, red_cl));
+    queue.push_back(QueueElem(lit, other_lit, red_cl, ID));
     assert(!seen[lit.toInt()]);
     seen[lit.toInt()] = 1;
     assert(solver->value(lit) == l_Undef);
@@ -436,13 +416,14 @@ void InTree::enqueue(const Lit lit, const Lit other_lit, bool red_cl)
         ) {
             //Mark both
             w.mark_bin_cl();
-            Watched& other_w = findWatchedOfBin(solver->watches, w.lit2(), lit, w.red());
+            Watched& other_w = findWatchedOfBin(
+                solver->watches, w.lit2(), lit, w.red(), w.get_ID());
             other_w.mark_bin_cl();
 
-            enqueue(~w.lit2(), lit, w.red());
+            enqueue(~w.lit2(), lit, w.red(), w.get_ID());
         }
     }
-    queue.push_back(QueueElem(lit_Undef, lit_Undef, false));
+    queue.push_back(QueueElem(lit_Undef, lit_Undef, false, 0));
 }
 
 

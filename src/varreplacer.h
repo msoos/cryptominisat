@@ -26,6 +26,7 @@ THE SOFTWARE.
 #include <map>
 #include <vector>
 #include <utility>
+#include <tuple>
 
 #include "constants.h"
 #include "solvertypes.h"
@@ -40,6 +41,7 @@ namespace CMSat {
 
 using std::map;
 using std::vector;
+using std::tuple;
 class Solver;
 class SCCFinder;
 
@@ -106,6 +108,7 @@ class VarReplacer
         vector<std::pair<Lit, Lit> > get_all_binary_xors_outer() const;
         vector<uint32_t> get_vars_replacing_others() const;
         bool get_scc_depth_warning_triggered() const;
+        void delete_frat_cls();
 
         void save_state(SimpleOutFile& f) const;
         void load_state(SimpleInFile& f);
@@ -114,6 +117,9 @@ class VarReplacer
         Solver* solver;
         SCCFinder* scc_finder;
         vector<Clause*> delayed_attach_or_free;
+
+        void replace_bnn_lit(Lit& l, uint32_t idx, bool& changed);
+        bool replace_bnns();
 
         void check_no_replaced_var_set() const;
         vector<Lit> fast_inter_replace_lookup;
@@ -126,6 +132,7 @@ class VarReplacer
             return fast_inter_replace_lookup[var].var();
         }
         bool replace_xor_clauses(vector<Xor>& xors);
+        bool replace_one_xor_clause(Xor& x);
 
         vector<Lit> ps_tmp;
         bool perform_replace();
@@ -147,8 +154,8 @@ class VarReplacer
 
         bool replace_set(vector<ClOffset>& cs);
         void attach_delayed_attach();
-        void update_all_vardata_activities();
-        void update_vardata_and_activities(
+        void update_all_vardata();
+        void update_vardata(
             const Lit orig
             , const Lit replaced
         );
@@ -216,7 +223,7 @@ class VarReplacer
         bool handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2);
 
          //While replacing the implicit clauses we cannot enqeue
-        vector<Lit> delayedEnqueue;
+        vector<std::pair<Lit, uint64_t>> delayedEnqueue;
         bool update_table_and_reversetable(const Lit lit1, const Lit lit2);
         void setAllThatPointsHereTo(const uint32_t var, const Lit lit);
 
@@ -233,6 +240,9 @@ class VarReplacer
         ///mapping of variable to set of variables it replaces
         //Everything is OUTER here.
         map<uint32_t, vector<uint32_t> > reverseTable;
+
+        //FRAT
+        vector<tuple<int32_t, Lit, Lit>> bins_for_frat;
 
         //Stats
         void printReplaceStats() const;

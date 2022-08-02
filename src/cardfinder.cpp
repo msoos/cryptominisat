@@ -20,6 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
+#include "constants.h"
 #include "cardfinder.h"
 #include "time_mem.h"
 #include "solver.h"
@@ -268,7 +269,7 @@ void CardFinder::deal_with_clash(vector<uint32_t>& clash) {
 
                 //add the new cardinality constraint
                 for(Lit l: new_card) {
-                    solver->watches[l].push(Watched(cards.size()));
+                    solver->watches[l].push(Watched(cards.size(), WatchType::watch_idx_t));
                 }
                 cards.push_back(new_card);
             }
@@ -339,17 +340,12 @@ void CardFinder::find_pairwise_atmost1()
                     toClear.push_back(l_c);
                 }
                 seen[l_c.toInt()]++;
-                solver->watches[l_c].push(Watched(cards.size()));
+                solver->watches[l_c].push(Watched(cards.size(), WatchType::watch_idx_t));
                 solver->watches.smudge(l_c);
             }
             total_sizes+=lits_in_card.size();
             std::sort(lits_in_card.begin(), lits_in_card.end());
-
-            if (solver->conf.verbosity) {
-                cout << "c found simple card "
-                << print_card(lits_in_card)
-                << " on lit " << l << endl;
-            }
+            verb_print(1, "found simple card " << print_card(lits_in_card) << " on lit " << l);
 
             //fast push-back
             cards.resize(cards.size()+1);
@@ -388,7 +384,7 @@ void CardFinder::find_cards()
     //print result
     clean_empty_cards();
     if (solver->conf.verbosity) {
-        cout << "c [cardfind] All constraints below:" << endl;
+        verb_print(1, "[cardfind] All constraints below:");
         print_cards(cards);
     }
 

@@ -81,7 +81,16 @@ long int str_to_long_int(string& token)
     return i;
 }
 
-vector<Lit> str_to_cl(const string& data)
+Lit str_to_lit(const std::string& str)
+{
+    string mycopy = str;
+    long int i = str_to_long_int(mycopy);
+    assert(i == (int)i);
+    Lit lit(std::abs(i)-1, i < 0);
+    return lit;
+}
+
+vector<Lit> str_to_cl(const string& data, bool sort = true)
 {
     vector<string> tokens;
     stringstream ss(data);
@@ -93,6 +102,11 @@ vector<Lit> str_to_cl(const string& data)
 
     vector<Lit> ret;
     for(string& token2: tokens) {
+        token2.erase(remove_if(token2.begin(), token2.end(), isspace), token2.end());
+        if (token2 == "U") {
+            ret.push_back(lit_Undef);
+            continue;
+        }
         long int i = str_to_long_int(token2);
         assert(i == (int)i);
         Lit lit(std::abs(i)-1, i < 0);
@@ -100,7 +114,9 @@ vector<Lit> str_to_cl(const string& data)
     }
     //cout << "input is: " << data << " LITs is: " << ret << endl;
 
-    std::sort(ret.begin(), ret.end());
+    if (sort) {
+        std::sort(ret.begin(), ret.end());
+    }
     return ret;
 }
 
@@ -271,7 +287,7 @@ void check_fuzzy_equal(
 string print(const vector<vector<Lit> >& cls)
 {
     std::stringstream ss;
-    for(auto cl: cls) {
+    for(const auto& cl: cls) {
         ss << cl << endl;
     }
     return ss.str();
@@ -299,7 +315,7 @@ void check_irred_cls_contains(const Solver* s, const string& data)
     vector<vector<Lit> > cls = get_irred_cls(s);
 
     bool found_cl = false;
-    for(auto cl: cls) {
+    for(const auto& cl: cls) {
         if (cl == looking_for) {
             found_cl = true;
             break;
@@ -309,7 +325,7 @@ void check_irred_cls_contains(const Solver* s, const string& data)
     if (!found_cl) {
         cout << "Expected to find: " << looking_for << endl;
         cout << "But only found  : ";
-        for(auto cl: cls) {
+        for(const auto& cl: cls) {
             cout << cl << ", ";
         }
         cout << endl;
@@ -324,7 +340,7 @@ void check_red_cls_contains(const Solver* s, const string& data)
     vector<vector<Lit> > cls = get_red_cls(s);
 
     bool found_cl = false;
-    for(auto cl: cls) {
+    for(const auto& cl: cls) {
         if (cl == looking_for) {
             found_cl = true;
             break;
@@ -334,7 +350,7 @@ void check_red_cls_contains(const Solver* s, const string& data)
     if (!found_cl) {
         cout << "Expected to find: " << looking_for << endl;
         cout << "But only found  : ";
-        for(auto cl: cls) {
+        for(const auto& cl: cls) {
             cout << cl << ", ";
         }
         cout << endl;
@@ -348,7 +364,7 @@ unsigned get_num_red_cls_contains(const Solver* s, const string& data)
     vector<Lit> looking_for = str_to_cl(data);
     vector<vector<Lit> > cls = get_red_cls(s);
 
-    for(auto cl: cls) {
+    for(const auto& cl: cls) {
         if (cl == looking_for) {
             found_cl++;
         }
@@ -364,7 +380,7 @@ void check_irred_cls_doesnt_contain(const Solver* s, const string& data)
     vector<vector<Lit> > cls = get_irred_cls(s);
 
     bool not_found_cl = true;
-    for(auto cl: cls) {
+    for(const auto& cl: cls) {
         //cout << "irred cl inside: "  << cl << endl;
         if (cl == not_inside) {
             cout << "Expected not to find irred: " << not_inside << endl;
@@ -383,7 +399,7 @@ void check_red_cls_doesnt_contain(const Solver* s, const string& data)
     vector<vector<Lit> > cls = get_red_cls(s);
 
     bool not_found_cl = true;
-    for(auto cl: cls) {
+    for(const auto& cl: cls) {
         //cout << "red cl inside: "  << cl << endl;
         if (cl == not_inside) {
             cout << "Expected not to find red: " << not_inside << endl;
@@ -633,6 +649,12 @@ bool cl_exists(const vector<vector<Lit> >& cls, const vector<Lit>& cl) {
         }
     }
     return false;
+}
+
+template<class T>
+bool find_lit(const T& where, const string& lit) {
+    Lit l = str_to_lit(lit);
+    return std::find(where.begin(), where.end(), l) != where.end();
 }
 
 // string print(const vector<Lit>& dat) {

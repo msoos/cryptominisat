@@ -34,9 +34,7 @@ THE SOFTWARE.
 #include "searcher.h"
 #include "time_mem.h"
 #include "sqlstats.h"
-#ifdef USE_GAUSS
 #include "gaussian.h"
-#endif
 
 #ifdef USE_VALGRIND
 #include "valgrind/valgrind.h"
@@ -146,6 +144,9 @@ void* ClauseAllocator::allocEnough(
     size += needed;
     currentlyUsedSize += needed;
 
+    #ifdef USE_VALGRIND
+    VALGRIND_MAKE_MEM_UNDEFINED((char*)pointer, neededbytes);
+    #endif
     return pointer;
 }
 

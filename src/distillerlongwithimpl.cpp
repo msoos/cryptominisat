@@ -50,27 +50,27 @@ bool DistillerLongWithImpl::distill_long_with_implicit(const bool alsoStrengthen
 {
     assert(solver->ok);
     numCalls++;
-
-    solver->clauseCleaner->remove_and_clean_all();
+    if (!solver->clauseCleaner->remove_and_clean_all()) goto end;
+    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
 
     runStats.redWatchBased.clear();
     runStats.irredWatchBased.clear();
 
-    if (!shorten_all_cl_with_watch(solver->longIrredCls, false, false))
+    if (!sub_str_all_cl_with_watch(solver->longIrredCls, false, false))
         goto end;
 
     if (solver->longRedCls[0].size() > 0
-        && !shorten_all_cl_with_watch(solver->longRedCls[0], true, false)
+        && !sub_str_all_cl_with_watch(solver->longRedCls[0], true, false)
     ) {
         goto end;
     }
 
     if (alsoStrengthen) {
-        if (!shorten_all_cl_with_watch(solver->longIrredCls, false, true))
+        if (!sub_str_all_cl_with_watch(solver->longIrredCls, false, true))
             goto end;
 
         if (solver->longRedCls[0].size() > 0
-            && !shorten_all_cl_with_watch(solver->longRedCls[0], true, true)
+            && !sub_str_all_cl_with_watch(solver->longRedCls[0], true, true)
         ) {
             goto end;
         }
@@ -85,6 +85,7 @@ end:
             runStats.print_short(solver);
     }
     runStats.clear();
+    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
 
     return solver->okay();
 }
@@ -117,7 +118,7 @@ bool DistillerLongWithImpl::subsume_clause_with_watch(
         if (wit->red() && !cl.red()) {
             wit->setRed(false);
             timeAvailable -= (long)solver->watches[wit->lit2()].size()*3;
-            findWatchedOfBin(solver->watches, wit->lit2(), lit, true).setRed(false);
+            findWatchedOfBin(solver->watches, wit->lit2(), lit, true, wit->get_ID()).setRed(false);
             solver->binTri.redBins--;
             solver->binTri.irredBins++;
         }
@@ -151,7 +152,7 @@ void DistillerLongWithImpl::str_and_sub_using_watch(
         ; wit++
     ) {
         //Can't do anything with a clause
-        if (wit->isClause())
+        if (!wit->isBin())
             continue;
 
         timeAvailable -= 5;
@@ -188,7 +189,6 @@ void DistillerLongWithImpl::strsub_with_watch(
 
 bool DistillerLongWithImpl::sub_str_cl_with_watch(
     ClOffset& offset
-    , bool red
     , const bool alsoStrengthen
 ) {
     Clause& cl = *solver->cl_alloc.ptr(offset);
@@ -251,10 +251,14 @@ bool DistillerLongWithImpl::remove_or_shrink_clause(Clause& cl, ClOffset& offset
     watch_based_data.remLitBin += thisremLitBin;
     tmpStats.shrinked++;
     timeAvailable -= (long)lits.size()*2 + 50;
-    Clause* c2 = solver->add_clause_int(lits, cl.red(), cl.stats);
+    ClauseStats backup_stats(cl.stats);
+    Clause* c2 = solver->add_clause_int(lits, cl.red(), &backup_stats);
     if (c2 != NULL) {
         solver->detachClause(offset);
-        solver->free_cl(offset);
+        // new clause will inherit this clause's ID
+        // so let's set this to 0, this way, when we free() it, it won't be
+        // deleted as per cl_last_in_solver
+        solver->free_cl(offset, false);
         offset = solver->cl_alloc.get_offset(c2);
         return false;
     }
@@ -308,7 +312,7 @@ uint64_t DistillerLongWithImpl::calc_time_available(
     return maxCountTime;
 }
 
-bool DistillerLongWithImpl::shorten_all_cl_with_watch(
+bool DistillerLongWithImpl::sub_str_all_cl_with_watch(
     vector<ClOffset>& clauses
     , bool red
     , bool alsoStrengthen
@@ -334,9 +338,7 @@ bool DistillerLongWithImpl::shorten_all_cl_with_watch(
     size_t i = 0;
     size_t j = i;
     ClOffset offset;
-    #ifdef USE_GAUSS
     Clause* cl;
-    #endif
     const size_t end = clauses.size();
     for (
         ; i < end
@@ -356,16 +358,14 @@ bool DistillerLongWithImpl::shorten_all_cl_with_watch(
             goto copy;
         }
 
-        #ifdef USE_GAUSS
         cl = solver->cl_alloc.ptr(offset);
         if (cl->used_in_xor() &&
             solver->conf.force_preserve_xors)
         {
             goto copy;
         }
-        #endif
 
-        if (sub_str_cl_with_watch(offset, red, alsoStrengthen)) {
+        if (sub_str_cl_with_watch(offset, alsoStrengthen)) {
             solver->detachClause(offset);
             solver->free_cl(offset);
             continue;
@@ -379,7 +379,7 @@ bool DistillerLongWithImpl::shorten_all_cl_with_watch(
     solver->check_implicit_stats();
     #endif
 
-    dump_stats_for_shorten_all_cl_with_watch(red
+    dump_stats_for_sub_str_all_cl_with_watch(red
         , alsoStrengthen
         , myTime
         , orig_time_available
@@ -388,7 +388,7 @@ bool DistillerLongWithImpl::shorten_all_cl_with_watch(
     return solver->okay();
 }
 
-void DistillerLongWithImpl::dump_stats_for_shorten_all_cl_with_watch(
+void DistillerLongWithImpl::dump_stats_for_sub_str_all_cl_with_watch(
     bool red
     , bool alsoStrengthen
     , double myTime
@@ -483,7 +483,8 @@ void DistillerLongWithImpl::Stats::print() const
 }
 
 
-void DistillerLongWithImpl::Stats::WatchBased::print_short(const string type, const Solver* _solver) const
+void DistillerLongWithImpl::Stats::WatchBased::print_short(
+    const string& type, const Solver* _solver) const
 {
     cout << "c [distill] watch-based "
     << std::setw(5) << type

@@ -20,6 +20,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
+#ifndef HYPERENGINE_H
+#define HYPERENGINE_H
+
 #include "cnf.h"
 #include "propby.h"
 #include "solvertypes.h"
@@ -37,14 +40,14 @@ namespace CMSat {
 class HyperEngine : public PropEngine {
 public:
     HyperEngine(const SolverConf *_conf, Solver* solver, std::atomic<bool>* _must_interrupt_inter);
-    ~HyperEngine() override;
+    virtual ~HyperEngine() override;
     size_t mem_used() const;
 
     bool use_depth_trick = true;
     bool perform_transitive_reduction = true;
     bool timedOutPropagateFull = false;
     Lit propagate_bfs(
-        const uint64_t earlyAborTOut = std::numeric_limits<uint64_t>::max()
+        const uint64_t earlyAborTOut = numeric_limits<uint64_t>::max()
     );
     set<BinaryClause> needToAddBinClause;       ///<We store here hyper-binary clauses to be added at the end of propagateFull()
     set<BinaryClause> uselessBin;
@@ -55,12 +58,13 @@ public:
     ///Add hyper-binary clause given this large clause
     void  add_hyper_bin(Lit p, const Clause& cl);
 
-    void  enqueue_with_acestor_info(const Lit p, const Lit ancestor, const bool redStep);
+    void  enqueue_with_acestor_info(
+        const Lit p, const Lit ancestor, const bool redStep, const int32_t ID);
 
 private:
     Lit   analyzeFail(PropBy propBy);
     Lit   remove_which_bin_due_to_trans_red(Lit conflict, Lit thisAncestor, const bool thisStepRed);
-    void  remove_bin_clause(Lit lit);
+    void  remove_bin_clause(Lit lit, const int32_t ID);
     bool  is_ancestor_of(
         const Lit conflict
         , Lit thisAncestor
@@ -89,3 +93,5 @@ private:
 };
 
 }
+
+#endif //HYPERENGINE_H

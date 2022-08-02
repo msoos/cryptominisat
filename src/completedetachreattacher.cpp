@@ -22,6 +22,7 @@ THE SOFTWARE.
 
 #include "completedetachreattacher.h"
 #include "solver.h"
+#include "sqlstats.h"
 #include "varreplacer.h"
 #include "clausecleaner.h"
 #include "clauseallocator.h"
@@ -36,9 +37,9 @@ CompleteDetachReatacher::CompleteDetachReatacher(Solver* _solver) :
 /**
 @brief Completely detach all non-binary clauses
 */
-void CompleteDetachReatacher::detach_nonbins_nontris()
+void CompleteDetachReatacher::detach_nonbins()
 {
-    assert(!solver->drat->something_delayed());
+    assert(!solver->frat->something_delayed());
     ClausesStay stay;
 
     for (watch_array::iterator
@@ -95,7 +96,7 @@ bool CompleteDetachReatacher::reattachLongs(bool removeStatsFirst)
         cleanAndAttachClauses(lredcls, removeStatsFirst);
     }
     solver->clauseCleaner->clean_implicit_clauses();
-    assert(!solver->drat->something_delayed());
+    assert(!solver->frat->something_delayed());
 
     if (solver->ok) {
         solver->ok = (solver->propagate<true>().isNULL());
@@ -134,8 +135,8 @@ void CompleteDetachReatacher::cleanAndAttachClauses(
 ) {
     vector<ClOffset>::iterator i = cs.begin();
     vector<ClOffset>::iterator j = i;
-    for (vector<ClOffset>::iterator end = cs.end(); i != end; i++) {
-        assert(!solver->drat->something_delayed());
+    for (vector<ClOffset>::iterator end = cs.end(); i != end; ++i) {
+        assert(!solver->frat->something_delayed());
         Clause* cl = solver->cl_alloc.ptr(*i);
 
         //Handle stat removal if need be
@@ -162,8 +163,8 @@ void CompleteDetachReatacher::cleanAndAttachClauses(
 */
 bool CompleteDetachReatacher::clean_clause(Clause* cl)
 {
+    (*solver->frat) << deldelay << *cl << fin;
     Clause& ps = *cl;
-    (*solver->drat) << deldelay << ps << fin;
     if (ps.size() <= 2) {
         cout
         << "ERROR, clause is too small, and linked in: "
@@ -176,7 +177,7 @@ bool CompleteDetachReatacher::clean_clause(Clause* cl)
     Lit *j = i;
     for (Lit *end = ps.end(); i != end; i++) {
         if (solver->value(*i) == l_True) {
-            (*solver->drat) << findelay;
+            (*solver->frat) << findelay;
             return false;
         }
         if (solver->value(*i) == l_Undef) {
@@ -187,29 +188,26 @@ bool CompleteDetachReatacher::clean_clause(Clause* cl)
 
     //Drat
     if (i != j) {
-        (*solver->drat) << add << *cl
-        #ifdef STATS_NEEDED
-        << solver->sumConflicts
-        #endif
-        << fin << findelay;
+        INC_ID(*cl);
+        (*solver->frat) << add << *cl << fin << findelay;
     } else {
-        solver->drat->forget_delay();
+        solver->frat->forget_delay();
     }
 
     switch (ps.size()) {
         case 0:
+            assert(solver->unsat_cl_ID == 0);
+            solver->unsat_cl_ID = cl->stats.ID;
             solver->ok = false;
             return false;
 
         case 1:
-            solver->enqueue(ps[0]);
-            #ifdef STATS_NEEDED
-            solver->propStats.propsUnit++;
-            #endif
+            solver->enqueue<true>(ps[0]);
+            (*solver->frat) << del << *cl << fin; //double unit delete
             return false;
 
         case 2: {
-            solver->attach_bin_clause(ps[0], ps[1], ps.red());
+            solver->attach_bin_clause(ps[0], ps[1], ps.red(), cl->stats.ID);
             return false;
         }
 

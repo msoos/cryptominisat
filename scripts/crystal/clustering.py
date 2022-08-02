@@ -171,7 +171,7 @@ double ClusteringImp::norm_dist(const SatZillaFeatures& a, const std::vector<dou
 
         f.write("""
 int ClusteringImp::which_is_closest(const SatZillaFeatures& p) const {
-    double closest_dist = std::numeric_limits<double>::max();
+    double closest_dist = numeric_limits<double>::max();
     int closest = -1;
     for (int i: used_clusters) {
         double dist = norm_dist(p, centers[i]);

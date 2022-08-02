@@ -22,6 +22,26 @@ from __future__ import with_statement  # Required in 2.5
 from __future__ import print_function
 import random
 
+def shuffle_cnf(fname1, fname2, seed):
+    random.seed(int(seed))
+
+    with open(fname1, "r") as f1:
+        headers = []
+        lines = []
+        for line in f1:
+            line = line.strip()
+            if len(line) > 1 and line[0] == 'p':
+                headers.append(line)
+            else:
+                lines.append(line)
+
+    random.shuffle(lines)
+
+    with open(fname2, "w") as f2:
+        for line in headers:
+            f2.write(line+"\n")
+        for line in lines:
+            f2.write(line+"\n")
 
 def get_max_var_from_clause(line):
     maxvar = 0

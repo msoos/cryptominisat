@@ -44,10 +44,7 @@ Lit HyperEngine::propagate_bfs(const uint64_t timeout)
     #endif
 
     PropBy confl;
-
-    //Assert startup: only 1 enqueued, uselessBin is empty
     assert(uselessBin.empty());
-    //assert(decisionLevel() == 1);
 
     //The toplevel decision has to be set specifically
     //If we came here as part of a backtrack to decision level 1, then
@@ -55,7 +52,7 @@ Lit HyperEngine::propagate_bfs(const uint64_t timeout)
     if (trail.size() - trail_lim.back() == 1) {
         //Set up root node
         Lit root = trail[qhead].lit;
-        varData[root.var()].reason = PropBy(~lit_Undef, false, false, false);
+        varData[root.var()].reason = PropBy(~lit_Undef, false, false, false, 0);
     }
 
     uint32_t nlBinQHead = qhead;
@@ -80,11 +77,8 @@ Lit HyperEngine::propagate_bfs(const uint64_t timeout)
             ; k != end
             ; k++
         ) {
-
             //If something other than irred binary, skip
-            if (!k->isBin() || k->red())
-                continue;
-
+            if (!k->isBin() || k->red()) continue;
             ret = prop_bin_with_ancestor_info(p, k, confl);
             if (ret == PROP_FAIL)
                 return analyzeFail(confl);
@@ -173,19 +167,15 @@ void HyperEngine::add_hyper_bin(const Lit p)
 
     Lit deepestAncestor = lit_Undef;
     bool hyperBinNotAdded = true;
+    const int32_t ID = ++clauseID;
     if (currAncestors.size() > 1) {
         deepestAncestor = deepest_common_ancestor();
 
         #ifdef VERBOSE_DEBUG_FULLPROP
-        cout << "Adding hyper-bin clause: " << p << " , " << ~deepestAncestor << endl;
+        cout << "Adding hyper-bin clause: " << p << " , "
+        << ~deepestAncestor << " ID: " << ID << endl;
         #endif
-        needToAddBinClause.insert(BinaryClause(p, ~deepestAncestor, true));
-        *drat << add << p << (~deepestAncestor)
-        #ifdef STATS_NEEDED
-        << 0
-        << sumConflicts
-        #endif
-        << fin;
+        needToAddBinClause.insert(BinaryClause(p, ~deepestAncestor, true, ID));
 
         hyperBinNotAdded = false;
     } else {
@@ -202,7 +192,7 @@ void HyperEngine::add_hyper_bin(const Lit p)
         hyperBinNotAdded = true;
     }
 
-    enqueue_with_acestor_info(p, deepestAncestor, true);
+    enqueue_with_acestor_info(p, deepestAncestor, true, ID);
     varData[p.var()].reason.setHyperbin(true);
     varData[p.var()].reason.setHyperbinNotAdded(hyperBinNotAdded);
 }
@@ -441,9 +431,8 @@ Lit HyperEngine::analyzeFail(const PropBy propBy)
             break;
         }
 
-#ifdef USE_GAUSS
         case xor_t:
-#endif
+        case bnn_t:
         case null_clause_t:
             assert(false);
             break;
@@ -523,14 +512,14 @@ Lit HyperEngine::deepest_common_ancestor()
     return foundLit;
 }
 
-void HyperEngine::remove_bin_clause(Lit lit)
+void HyperEngine::remove_bin_clause(Lit lit, const int32_t ID)
 {
     //The binary clause we should remove
     const BinaryClause clauseToRemove(
-        ~varData[lit.var()].reason.getAncestor()
-        , lit
-        , varData[lit.var()].reason.isRedStep()
-    );
+        ~varData[lit.var()].reason.getAncestor(),
+        lit,
+        varData[lit.var()].reason.isRedStep(),
+        ID);
 
     //We now remove the clause
     //If it's hyper-bin, then we remove the to-be-added hyper-binary clause
@@ -570,23 +559,17 @@ PropResult HyperEngine::prop_bin_with_ancestor_info(
     const lbool val = value(lit);
     if (val == l_Undef) {
         //Never propagated before
-        enqueue_with_acestor_info(lit, p, k->red());
+        enqueue_with_acestor_info(lit, p, k->red(), k->get_ID());
         return PROP_SOMETHING;
 
     } else if (val == l_False) {
         //Conflict
         #ifdef VERBOSE_DEBUG_FULLPROP
         cout << "Conflict from " << p << " , " << lit << endl;
-        #endif //VERBOSE_DEBUG_FULLPROP
-
-        //Update stats
-        if (k->red())
-            lastConflictCausedBy = ConflCausedBy::binred;
-        else
-            lastConflictCausedBy = ConflCausedBy::binirred;
+        #endif
 
         failBinLit = lit;
-        confl = PropBy(~p, k->red());
+        confl = PropBy(~p, k->red(), k->get_ID());
         return PROP_FAIL;
 
     } else if (varData[lit.var()].level != 0 && perform_transitive_reduction) {
@@ -600,13 +583,17 @@ PropResult HyperEngine::prop_bin_with_ancestor_info(
 
         //Remove this one
         if (remove == p) {
-            Lit origAnc = varData[lit.var()].reason.getAncestor();
+            const Lit origAnc = varData[lit.var()].reason.getAncestor();
+            const int32_t origID = varData[lit.var()].reason.getID();
             assert(origAnc != lit_Undef);
+            #ifdef VERBOSE_DEBUG_FULLPROP
+            cout << "ID of k: " << k->get_ID() << " ID of orig: " << origID << " removing latter, origAnc: " << origAnc << endl;
+            #endif
 
-            remove_bin_clause(lit);
+            remove_bin_clause(lit, origID);
 
             //Update data indicating what lead to lit
-            varData[lit.var()].reason = PropBy(~p, k->red(), false, false);
+            varData[lit.var()].reason = PropBy(~p, k->red(), false, false, k->get_ID());
             assert(varData[p.var()].level != 0);
             depth[lit.var()] = depth[p.var()] + 1;
             //NOTE: we don't update the levels of other literals... :S
@@ -616,10 +603,10 @@ PropResult HyperEngine::prop_bin_with_ancestor_info(
 
         } else if (remove != lit_Undef) {
             #ifdef VERBOSE_DEBUG_FULLPROP
-            cout << "Removing this bin clause" << endl;
+            cout << "Removing this bin clause, ID: " << k->get_ID() << endl;
             #endif
             propStats.otfHyperTime += 2;
-            uselessBin.insert(BinaryClause(~p, lit, k->red()));
+            uselessBin.insert(BinaryClause(~p, lit, k->red(), k->get_ID()));
         }
     }
 
@@ -644,14 +631,14 @@ PropResult HyperEngine::prop_normal_cl_with_ancestor_info(
     const ClOffset offset = i->get_offset();
     Clause& c = *cl_alloc.ptr(offset);
 
-    PropResult ret = prop_normal_helper(c, offset, j, p);
+    PropResult ret = prop_normal_helper<true>(c, offset, j, p);
     if (ret != PROP_TODO)
         return ret;
 
     // Did not find watch -- clause is unit under assignment:
     *j++ = *i;
     if (value(c[0]) == l_False) {
-        return handle_normal_prop_fail(c, offset, confl);
+        return handle_normal_prop_fail<true>(c, offset, confl);
     }
 
     add_hyper_bin(c[0], c);
@@ -672,10 +659,11 @@ void HyperEngine::enqueue_with_acestor_info(
     const Lit p
     , const Lit ancestor
     , const bool redStep
+    , const int32_t ID
 ) {
     //only called at decision level 1 during solving OR
     //during intree probing
-    enqueue(p, decisionLevel(), PropBy(~ancestor, redStep, false, false));
+    enqueue<true>(p, decisionLevel(), PropBy(~ancestor, redStep, false, false, ID));
 
     assert(varData[ancestor.var()].level != 0);
 
@@ -686,9 +674,9 @@ void HyperEngine::enqueue_with_acestor_info(
     }
     #if defined(DEBUG_DEPTH) || defined(VERBOSE_DEBUG_FULLPROP)
     cout
-    << "Enqueued "
-    << std::setw(6) << (p)
+    << "Enqueued " << std::setw(6) << (p)
     << " by " << std::setw(6) << (~ancestor)
+    << " ID: " << ID
     << " at depth " << std::setw(4) << depth[p.var()]
     << " at dec level: " << decisionLevel()
     << endl;

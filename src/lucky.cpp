@@ -34,7 +34,7 @@ Lucky::Lucky(Solver* _solver) :
 {
 }
 
-bool CMSat::Lucky::doit()
+void CMSat::Lucky::doit()
 {
     assert(solver->okay());
     assert(solver->decisionLevel() == 0);
@@ -42,44 +42,14 @@ bool CMSat::Lucky::doit()
     bool ret = false;
     double myTime = cpuTime();
 
-    if (check_all(true)) {
-        ret = true;
-        goto end;
-    }
-
-    if (check_all(false)) {
-        ret = true;
-        goto end;
-    }
-
-    if (search_fwd_sat(true)) {
-        ret = true;
-        goto end;
-    }
-
-    if (search_fwd_sat(false)) {
-        ret = true;
-        goto end;
-    }
-
-    if (search_backw_sat(true)) {
-        ret = true;
-        goto end;
-    }
-    if (search_backw_sat(false)) {
-        ret = true;
-        goto end;
-    }
-
-    if (horn_sat(true)) {
-        ret = true;
-        goto end;
-    }
-
-    if (horn_sat(false)) {
-        ret = true;
-        goto end;
-    }
+    if (check_all(true)) goto end;
+    if (check_all(false)) goto end;
+    if (search_fwd_sat(true)) goto end;
+    if (search_fwd_sat(false)) goto end;
+    if (search_backw_sat(true)) goto end;
+    if (search_backw_sat(false)) goto end;
+    if (horn_sat(true)) goto end;
+    if (horn_sat(false)) goto end;
 
     end:
     double time_used = cpuTime() - myTime;
@@ -96,7 +66,6 @@ bool CMSat::Lucky::doit()
         );
     }
     assert(solver->decisionLevel() == 0);
-    return ret;
 }
 
 bool CMSat::Lucky::check_all(bool polar)
@@ -142,10 +111,8 @@ bool CMSat::Lucky::check_all(bool polar)
         cout << "c [lucky] all " << (int)polar << " worked. Saving phases." << endl;
     }
     for(auto& x: solver->varData) {
-        x.polarity = polar;
         x.best_polarity = polar;
     }
-    solver->longest_trail_ever = solver->nVarsOuter();
     return true;
 }
 
@@ -153,10 +120,8 @@ bool CMSat::Lucky::check_all(bool polar)
 void Lucky::set_polarities_to_enq_val()
 {
     for(uint32_t i = 0; i < solver->nVars(); i++) {
-        solver->varData[i].polarity = solver->value(i) == l_True;
-        solver->varData[i].best_polarity = solver->varData[i].polarity;
+        solver->varData[i].stable_polarity = solver->value(i) == l_True;
     }
-    solver->longest_trail_ever = solver->nVarsOuter();
 }
 
 bool CMSat::Lucky::search_fwd_sat(bool polar)

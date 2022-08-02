@@ -23,9 +23,13 @@ THE SOFTWARE.
 #ifndef __SQLSTATS_H__
 #define __SQLSTATS_H__
 
-#include "satzilla_features.h"
 #include "searchstats.h"
 #include "vardata.h"
+#include "searchhist.h"
+
+#ifdef STATS_NEEDED
+#include "satzilla_features.h"
+#endif
 
 namespace CMSat {
 
@@ -37,7 +41,7 @@ class SQLStats
 {
 public:
 
-    virtual ~SQLStats() {}
+    virtual ~SQLStats();
 
     virtual void end_transaction() = 0;
     virtual void begin_transaction() = 0;
@@ -63,13 +67,18 @@ public:
         , uint64_t mem_used_mb
     ) = 0;
 
+    virtual void set_id_confl(
+        const int32_t id
+        , const uint64_t sumConflicts
+    ) = 0;
+
+    #ifdef STATS_NEEDED
     virtual void satzilla_features(
         const Solver* solver
         , const Searcher* search
         , const SatZillaFeatures& satzilla_feat
     ) = 0;
 
-    #ifdef STATS_NEEDED
     virtual void restart(
         const uint32_t restartID
         , const Restart rest_type
@@ -85,10 +94,16 @@ public:
         const Solver* solver
         , const bool locked
         , const Clause* cl
-        , const string& cur_restart_type
-        , const uint32_t act_ranking_top_10
-        , const uint32_t act_ranking
-        , const uint32_t tot_cls_in_db
+        , const uint32_t reduceDB_called
+    ) = 0;
+
+    virtual void reduceDB_common(
+        const Solver* solver,
+        const uint32_t reduceDB_called,
+        const uint32_t tot_cls_in_db,
+        const uint32_t cur_rst_type,
+        const MedianCommonDataRDB& median_data,
+        const AverageCommonDataRDB& avg_data
     ) = 0;
 
     #ifdef STATS_NEEDED_BRANCH
@@ -124,21 +139,28 @@ public:
         , const uint64_t clid
     ) = 0;
 
-    virtual void dump_clause_stats(
+    virtual void update_id(
+        const uint32_t old_id
+        , const uint32_t new_id
+    ) = 0;
+
+    virtual void clause_stats(
         const Solver* solver
         , uint64_t clid
         , uint64_t restartID
-        , uint32_t orig_glue
+        , uint32_t glue
         , uint32_t glue_before_minim
-        , uint32_t backtrack_level
         , uint32_t size
+        , uint32_t size_before_minim
+        , uint32_t backtrack_level
         , AtecedentData<uint16_t> resoltypes
         , size_t decision_level
         , size_t trail_depth
         , uint64_t conflicts_this_restart
-        , const std::string& rest_type
+        , const uint32_t restart_type
         , const SearchHist& hist
         , const bool is_decision
+        , const uint32_t orig_connects_num_communities
     ) = 0;
     #endif
 

@@ -23,6 +23,12 @@ include_directories(
 )
 add_sanitize_flags()
 
+
+include_directories(
+    #${PROJECT_BINARY_DIR}/cmsat5-src
+    ${PROJECT_BINARY_DIR}/include
+)
+
 # Minimal DRAT-enabled CMS binary
 add_executable(minimal_cms
     minimal_cms.cpp

@@ -38,8 +38,8 @@ TEST(scc_test, find_1)
     std::unique_ptr<std::atomic<bool>> tmp(new std::atomic<bool>(false));
     Solver s(&conf, tmp.get());
     s.new_vars(2);
-    s.add_clause_outer(str_to_cl("1, 2"));
-    s.add_clause_outer(str_to_cl("-1, -2"));
+    s.add_clause_outside(str_to_cl("1, 2"));
+    s.add_clause_outside(str_to_cl("-1, -2"));
 
     SCCFinder scc(&s);
     scc.performSCC();
@@ -53,11 +53,11 @@ TEST(scc_test, find_2)
     std::unique_ptr<std::atomic<bool>> tmp(new std::atomic<bool>(false));
     Solver s(&conf, tmp.get());
     s.new_vars(4);
-    s.add_clause_outer(str_to_cl("1, 2"));
-    s.add_clause_outer(str_to_cl("-1, -2"));
+    s.add_clause_outside(str_to_cl("1, 2"));
+    s.add_clause_outside(str_to_cl("-1, -2"));
 
-    s.add_clause_outer(str_to_cl("3, 4"));
-    s.add_clause_outer(str_to_cl("-3, -4"));
+    s.add_clause_outside(str_to_cl("3, 4"));
+    s.add_clause_outside(str_to_cl("-3, -4"));
 
     SCCFinder scc(&s);
     scc.performSCC();
@@ -71,9 +71,9 @@ TEST(scc_test, find_circle_3)
     std::unique_ptr<std::atomic<bool>> tmp(new std::atomic<bool>(false));
     Solver s(&conf, tmp.get());
     s.new_vars(4);
-    s.add_clause_outer(str_to_cl("1, -2"));
-    s.add_clause_outer(str_to_cl("2, -3"));
-    s.add_clause_outer(str_to_cl("3, -1"));
+    s.add_clause_outside(str_to_cl("1, -2"));
+    s.add_clause_outside(str_to_cl("2, -3"));
+    s.add_clause_outside(str_to_cl("3, -1"));
 
     SCCFinder scc(&s);
     scc.performSCC();
@@ -87,13 +87,13 @@ TEST(scc_test, find_two_circle2_3)
     std::unique_ptr<std::atomic<bool>> tmp(new std::atomic<bool>(false));
     Solver s(&conf, tmp.get());
     s.new_vars(6);
-    s.add_clause_outer(str_to_cl("1, -2"));
-    s.add_clause_outer(str_to_cl("2, -3"));
-    s.add_clause_outer(str_to_cl("3, -1"));
+    s.add_clause_outside(str_to_cl("1, -2"));
+    s.add_clause_outside(str_to_cl("2, -3"));
+    s.add_clause_outside(str_to_cl("3, -1"));
 
-    s.add_clause_outer(str_to_cl("4, -5"));
-    s.add_clause_outer(str_to_cl("5, -6"));
-    s.add_clause_outer(str_to_cl("6, -4"));
+    s.add_clause_outside(str_to_cl("4, -5"));
+    s.add_clause_outside(str_to_cl("5, -6"));
+    s.add_clause_outside(str_to_cl("6, -4"));
 
     SCCFinder scc(&s);
     scc.performSCC();
@@ -107,9 +107,9 @@ TEST(scc_test, find_1_diff)
     std::unique_ptr<std::atomic<bool>> tmp(new std::atomic<bool>(false));
     Solver s(&conf, tmp.get());
     s.new_vars(2);
-    s.add_clause_outer(str_to_cl("1, 2"));
-    s.add_clause_outer(str_to_cl("-1, -2"));
-    s.add_clause_outer(str_to_cl("1, -2"));
+    s.add_clause_outside(str_to_cl("1, 2"));
+    s.add_clause_outside(str_to_cl("-1, -2"));
+    s.add_clause_outside(str_to_cl("1, -2"));
 
     SCCFinder scc(&s);
     scc.performSCC();
@@ -123,9 +123,9 @@ TEST(scc_test, find_0)
     std::unique_ptr<std::atomic<bool>> tmp(new std::atomic<bool>(false));
     Solver s(&conf, tmp.get());
     s.new_vars(4);
-    s.add_clause_outer(str_to_cl("1, 2"));
-    s.add_clause_outer(str_to_cl("1, -2"));
-    s.add_clause_outer(str_to_cl("3, -4"));
+    s.add_clause_outside(str_to_cl("1, 2"));
+    s.add_clause_outside(str_to_cl("1, -2"));
+    s.add_clause_outside(str_to_cl("3, -4"));
 
     SCCFinder scc(&s);
     scc.performSCC();
@@ -141,9 +141,9 @@ TEST(scc_test, limit_test4)
     std::unique_ptr<std::atomic<bool>> tmp(new std::atomic<bool>(false));
     Solver s(&conf, tmp.get());
     s.new_vars(4);
-    s.add_clause_outer(str_to_cl("1, 2"));
-    s.add_clause_outer(str_to_cl("-2, 3"));
-    s.add_clause_outer(str_to_cl("-3, -1"));
+    s.add_clause_outside(str_to_cl("1, 2"));
+    s.add_clause_outside(str_to_cl("-2, 3"));
+    s.add_clause_outside(str_to_cl("-3, -1"));
 
     SCCFinder scc(&s);
     scc.performSCC();
@@ -158,9 +158,9 @@ TEST(scc_test, limit_test3)
     std::unique_ptr<std::atomic<bool>> tmp(new std::atomic<bool>(false));
     Solver s(&conf, tmp.get());
     s.new_vars(4);
-    s.add_clause_outer(str_to_cl("1, 2"));
-    s.add_clause_outer(str_to_cl("-2, 3"));
-    s.add_clause_outer(str_to_cl("-3, -1"));
+    s.add_clause_outside(str_to_cl("1, 2"));
+    s.add_clause_outside(str_to_cl("-2, 3"));
+    s.add_clause_outside(str_to_cl("-3, -1"));
 
     SCCFinder scc(&s);
     scc.performSCC();
@@ -175,9 +175,9 @@ TEST(scc_test, limit_test2)
     std::unique_ptr<std::atomic<bool>> tmp(new std::atomic<bool>(false));
     Solver s(&conf, tmp.get());
     s.new_vars(4);
-    s.add_clause_outer(str_to_cl("1, 2"));
-    s.add_clause_outer(str_to_cl("-2, 3"));
-    s.add_clause_outer(str_to_cl("-3, -1"));
+    s.add_clause_outside(str_to_cl("1, 2"));
+    s.add_clause_outside(str_to_cl("-2, 3"));
+    s.add_clause_outside(str_to_cl("-3, -1"));
 
     SCCFinder scc(&s);
     scc.performSCC();

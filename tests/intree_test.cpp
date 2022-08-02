@@ -58,9 +58,9 @@ struct intree : public ::testing::Test {
 TEST_F(intree, fail_1)
 {
     //s->conf.verbosity = 20;
-    s->add_clause_outer(str_to_cl(" 1,  2"));
-    s->add_clause_outer(str_to_cl("-2,  3"));
-    s->add_clause_outer(str_to_cl("-2, -3"));
+    s->add_clause_outside(str_to_cl(" 1,  2"));
+    s->add_clause_outside(str_to_cl("-2,  3"));
+    s->add_clause_outside(str_to_cl("-2, -3"));
 
     inp->intree_probe();
     check_zero_assigned_lits_contains(s, "-2");
@@ -70,11 +70,11 @@ TEST_F(intree, fail_1)
 TEST_F(intree, fail_2)
 {
     //s->conf.verbosity = 20;
-    s->add_clause_outer(str_to_cl(" 1,  2"));
-    s->add_clause_outer(str_to_cl("-2,  3"));
-    s->add_clause_outer(str_to_cl("-2,  4"));
-    s->add_clause_outer(str_to_cl("-2,  5"));
-    s->add_clause_outer(str_to_cl("-3, -4, -5, 1"));
+    s->add_clause_outside(str_to_cl(" 1,  2"));
+    s->add_clause_outside(str_to_cl("-2,  3"));
+    s->add_clause_outside(str_to_cl("-2,  4"));
+    s->add_clause_outside(str_to_cl("-2,  5"));
+    s->add_clause_outside(str_to_cl("-3, -4, -5, 1"));
 
     inp->intree_probe();
     check_zero_assigned_lits_contains(s, "1");
@@ -83,12 +83,12 @@ TEST_F(intree, fail_2)
 TEST_F(intree, fail_3)
 {
     //s->conf.verbosity = 20;
-    s->add_clause_outer(str_to_cl(" 1,  2"));
-    s->add_clause_outer(str_to_cl("-2,  3"));
-    s->add_clause_outer(str_to_cl("-2,  4"));
-    s->add_clause_outer(str_to_cl("-2,  5"));
-    s->add_clause_outer(str_to_cl("-3, -4, -5, 6"));
-    s->add_clause_outer(str_to_cl("-4, -5, -6"));
+    s->add_clause_outside(str_to_cl(" 1,  2"));
+    s->add_clause_outside(str_to_cl("-2,  3"));
+    s->add_clause_outside(str_to_cl("-2,  4"));
+    s->add_clause_outside(str_to_cl("-2,  5"));
+    s->add_clause_outside(str_to_cl("-3, -4, -5, 6"));
+    s->add_clause_outside(str_to_cl("-4, -5, -6"));
 
     inp->intree_probe();
     check_zero_assigned_lits_contains(s, "1");
@@ -99,10 +99,10 @@ TEST_F(intree, fail_3)
 TEST_F(intree, hyper_bin_1)
 {
     //s->conf.verbosity = 20;
-    s->add_clause_outer(str_to_cl(" 1,  2"));
-    s->add_clause_outer(str_to_cl("-2,  3"));
-    s->add_clause_outer(str_to_cl("-2,  4"));
-    s->add_clause_outer(str_to_cl("-3, -4, 5"));
+    s->add_clause_outside(str_to_cl(" 1,  2"));
+    s->add_clause_outside(str_to_cl("-2,  3"));
+    s->add_clause_outside(str_to_cl("-2,  4"));
+    s->add_clause_outside(str_to_cl("-3, -4, 5"));
 
     inp->intree_probe();
     check_red_cls_contains(s, "-2, 5");
@@ -111,13 +111,13 @@ TEST_F(intree, hyper_bin_1)
 TEST_F(intree, hyper_bin_2)
 {
     //s->conf.verbosity = 20;
-    s->add_clause_outer(str_to_cl(" 1,  2"));
-    s->add_clause_outer(str_to_cl("-2,  3"));
-    s->add_clause_outer(str_to_cl("-2,  4"));
-    s->add_clause_outer(str_to_cl("-3, -4, 5"));
-    s->add_clause_outer(str_to_cl("-5,  6"));
-    s->add_clause_outer(str_to_cl("-5,  7"));
-    s->add_clause_outer(str_to_cl("-6, -7, 8"));
+    s->add_clause_outside(str_to_cl(" 1,  2"));
+    s->add_clause_outside(str_to_cl("-2,  3"));
+    s->add_clause_outside(str_to_cl("-2,  4"));
+    s->add_clause_outside(str_to_cl("-3, -4, 5"));
+    s->add_clause_outside(str_to_cl("-5,  6"));
+    s->add_clause_outside(str_to_cl("-5,  7"));
+    s->add_clause_outside(str_to_cl("-6, -7, 8"));
 
     inp->intree_probe();
     check_red_cls_contains(s, "-2, 5");
@@ -129,11 +129,11 @@ TEST_F(intree, hyper_bin_2)
 TEST_F(intree, trans_red_1)
 {
     //s->conf.verbosity = 20;
-    s->add_clause_outer(str_to_cl(" 1,  2"));
-    s->add_clause_outer(str_to_cl("-2,  3"));
-    s->add_clause_outer(str_to_cl("-2,  4"));
-    s->add_clause_outer(str_to_cl("-3, -4, 5"));
-    s->add_clause_outer(str_to_cl("1, 5"), false);
+    s->add_clause_outside(str_to_cl(" 1,  2"));
+    s->add_clause_outside(str_to_cl("-2,  3"));
+    s->add_clause_outside(str_to_cl("-2,  4"));
+    s->add_clause_outside(str_to_cl("-3, -4, 5"));
+    s->add_clause_outside(str_to_cl("1, 5"));
 
     inp->intree_probe();
     check_red_cls_doesnt_contain(s, "1, 5");
@@ -142,11 +142,11 @@ TEST_F(intree, trans_red_1)
 TEST_F(intree, trans_red_2)
 {
     //s->conf.verbosity = 20;
-    s->add_clause_outer(str_to_cl(" 1, 2"));
-    s->add_clause_outer(str_to_cl("-2, 3"));
-    s->add_clause_outer(str_to_cl("-3, 4"));
-    s->add_clause_outer(str_to_cl("-4, 5"));
-    s->add_clause_outer(str_to_cl("1, 5"));
+    s->add_clause_outside(str_to_cl(" 1, 2"));
+    s->add_clause_outside(str_to_cl("-2, 3"));
+    s->add_clause_outside(str_to_cl("-3, 4"));
+    s->add_clause_outside(str_to_cl("-4, 5"));
+    s->add_clause_outside(str_to_cl("1, 5"));
 
     inp->intree_probe();
     check_irred_cls_doesnt_contain(s, "1, 5");
@@ -156,12 +156,12 @@ TEST_F(intree, trans_red_2)
 TEST_F(intree, trans_red_and_hyper_bin_1)
 {
     //s->conf.verbosity = 20;
-    s->add_clause_outer(str_to_cl(" 1, 2"));
-    s->add_clause_outer(str_to_cl("-2, 3"));
-    s->add_clause_outer(str_to_cl("-3, 4"));
-    s->add_clause_outer(str_to_cl("-4, 5"));
-    s->add_clause_outer(str_to_cl("-3, -4, -5, 6"));
-    s->add_clause_outer(str_to_cl("1, 6"), false);
+    s->add_clause_outside(str_to_cl(" 1, 2"));
+    s->add_clause_outside(str_to_cl("-2, 3"));
+    s->add_clause_outside(str_to_cl("-3, 4"));
+    s->add_clause_outside(str_to_cl("-4, 5"));
+    s->add_clause_outside(str_to_cl("-3, -4, -5, 6"));
+    s->add_clause_outside(str_to_cl("1, 6"));
 
     inp->intree_probe();
     check_red_cls_doesnt_contain(s, "1, 6");

@@ -32,14 +32,15 @@ THE SOFTWARE.
 #include "solverconf.h"
 #include "solvertypes.h"
 #include "watcharray.h"
-#include "drat.h"
+#include "frat.h"
 #include "clauseallocator.h"
 #include "varupdatehelper.h"
 #include "simplefile.h"
 #include "gausswatched.h"
 #include "xor.h"
-
-using std::numeric_limits;
+#ifdef USE_TBUDDY
+#include <pseudoboolean.h>
+#endif
 
 namespace CMSat {
 
@@ -85,6 +86,7 @@ struct LitStats
 class CNF
 {
 public:
+    FastBackwData fast_backw;
     void save_on_var_memory();
     void updateWatch(watch_subarray ws, const vector<uint32_t>& outerToInter);
     void updateVars(
@@ -100,15 +102,16 @@ public:
         if (_conf != NULL) {
             conf = *_conf;
         }
-        drat = new Drat;
+        frat = new Drat;
         assert(_must_interrupt_inter != NULL);
         must_interrupt_inter = _must_interrupt_inter;
         longRedCls.resize(3);
+        longRedClsSizes.resize(3, 0);
     }
 
     virtual ~CNF()
     {
-        delete drat;
+        delete frat;
     }
 
     ClauseAllocator cl_alloc;
@@ -117,19 +120,16 @@ public:
     bool ok = true; //If FALSE, state of CNF is UNSAT
 
     watch_array watches;
-    #ifdef USE_GAUSS
     vec<vec<GaussWatched>> gwatches;
-    uint32_t gqhead;
-    bool all_matrices_disabled = false;
-    #endif
     uint32_t num_sls_called = 0;
     vector<VarData> varData;
     branch branch_strategy = branch::vsids;
-    string branch_strategy_str = "VSIDSX";
-    string branch_strategy_str_short = "vsx";
+    string branch_strategy_str = "VSIDS";
+    string branch_strategy_str_short = "vs";
     PolarityMode polarity_mode = PolarityMode::polarmode_automatic; //current polarity mode
-    uint32_t polar_stable_longest_trail_this_iter = 0;
-    uint32_t longest_trail_ever = 0;
+    uint32_t longest_trail_ever_stable = 0;
+    uint32_t longest_trail_ever_best = 0;
+    uint32_t longest_trail_ever_inv = 0;
     vector<uint32_t> depth; //for ancestors in intree probing
     uint32_t minNumVars = 0;
 
@@ -156,9 +156,9 @@ public:
     //insided this array twice, once it needs to be set to TRUE and once FALSE
     vector<AssumptionPair> assumptions;
 
-    //drat
-    Drat* drat;
-    void add_drat(std::ostream* os, bool add_ID);
+    //frat
+    Drat* frat;
+    void add_frat(FILE* os);
 
     //Clauses
     vector<ClOffset> longIrredCls;
@@ -172,26 +172,51 @@ public:
     level 2 = check often
     **/
     vector<vector<ClOffset> > longRedCls;
+    vector<uint64_t> longRedClsSizes;
+    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+    vector<ClauseStatsExtra> red_stats_extra;
+    #endif
     vector<ClOffset> detached_xor_repr_cls; //these are still in longIrredCls
-    vector<Xor> xorclauses;
-    vector<Xor> xorclauses_unused;
+
+    // NOTE: xorclauses and xorclauses_unused ENCODE INFORMATION THAT's NOWHERE ELSE
+    //       that's right. We can discover an XOR clause then strengthen the
+    //       representing clauses to a binary, and then remove the
+    //       binary with e.g. irred-bin-removal, which then leads to nothing representing
+    //       the XOR clause! Then FRAT fails. This ALSO means that when cleaning the XOR clauses
+    //       we can actually encounter UNSAT. Since it encodes information that's nowhere else.
+    vector<Xor> xorclauses; // working set. Should be empty most of the time.
+    vector<Xor> xorclauses_orig; // used to re-generate the matrix
+    vector<Xor> xorclauses_unused; // used to help knowing when can we detach. Only makes sense when matrixes are set up.
+
+    vector<BNN*> bnns;
+    vector<vector<Lit>> bnn_reasons;
+    vector<Lit> bnn_confl_reason;
+    vector<uint32_t> bnn_reasons_empty_slots;
     vector<uint32_t> removed_xorclauses_clash_vars;
     bool detached_xor_clauses = false;
     bool xor_clauses_updated = false;
     BinTriStats binTri;
     LitStats litStats;
-    int64_t clauseID = 1;
+    int32_t clauseID = 0;
     int64_t restartID = 1;
+    SQLStats* sqlStats = NULL;
 
     //Temporaries
-    vector<uint16_t> seen;
+    vector<uint32_t> seen;
     vector<uint8_t> seen2;
     vector<uint64_t> permDiff;
     vector<Lit>      toClear;
     uint64_t MYFLAG = 1;
 
+    uint32_t level(Lit l) const
+    {
+        return varData[l.var()].level;
+    }
+
     bool okay() const
     {
+        assert(!
+        (!ok && frat->enabled() && unsat_cl_ID == 0 && unsat_cl_ID != -1) && "If in UNSAT state, and we have FRAT, we MUST already know the unsat_cl_ID or it must be -1, i.e. known by tbuddy");
         return ok;
     }
 
@@ -207,8 +232,7 @@ public:
 
     bool must_interrupt_asap() const
     {
-        std::atomic_thread_fence(std::memory_order_acquire);
-        return *must_interrupt_inter;
+        return must_interrupt_inter->load(std::memory_order_relaxed);
     }
 
     void set_must_interrupt_asap()
@@ -226,15 +250,19 @@ public:
         return must_interrupt_inter;
     }
 
-    bool clause_locked(const Clause& c, const ClOffset offset) const;
-    void unmark_all_irred_clauses();
-    void unmark_all_red1_clauses();
+    const vector<BNN*>& get_bnns() const
+    {
+        return bnns;
+    }
 
+    bool check_bnn_sane(BNN& bnn);
+    bool clause_locked(const Clause& c, const ClOffset offset) const;
     bool redundant(const Watched& ws) const;
     bool redundant_or_removed(const Watched& ws) const;
     size_t cl_size(const Watched& ws) const;
     string watched_to_string(Lit otherLit, const Watched& ws) const;
     string watches_to_string(const Lit lit, watch_subarray_const ws) const;
+    bool satisfied(const ClOffset& off) const;
 
     uint64_t print_mem_used_longclauses(size_t totalMem) const;
     uint64_t mem_used_longclauses() const;
@@ -305,9 +333,11 @@ public:
         return num_bva_vars;
     }
     vector<uint32_t> get_outside_var_incidence();
+    vector<uint32_t> get_outside_lit_incidence();
     vector<uint32_t> get_outside_var_incidence_also_red();
 
     vector<uint32_t> build_outer_to_without_bva_map() const;
+    vector<uint32_t> build_outer_to_without_bva_map_extended() const;
     void clean_occur_from_removed_clauses();
     void clean_occur_from_removed_clauses_only_smudged();
     void clean_occur_from_idx_types_only_smudged();
@@ -324,10 +354,16 @@ public:
     void check_wrong_attach() const;
     void check_watchlist(watch_subarray_const ws) const;
     template<class T>
-    bool satisfied_cl(const T& cl) const;
+    bool satisfied(const T& cl) const;
     template<typename T> bool no_duplicate_lits(const T& lits) const;
     void check_no_duplicate_lits_anywhere() const;
+    void check_no_zero_ID_bins() const;
+    #ifdef USE_TBUDDY
+    void free_bdds(vector<Xor>& xors);
+    #endif
     void print_all_clauses() const;
+    void print_watchlist_stats() const;
+    bool zero_irred_cls(const Lit lit) const;
     template<class T> void clean_xor_no_prop(T& ps, bool& rhs);
     template<class T> void clean_xor_vars_no_prop(T& ps, bool& rhs);
     uint64_t count_lits(
@@ -336,17 +372,27 @@ public:
         , const bool allowFreed
     ) const;
 
+    /** if set to TRUE, a clause has been removed during add_clause_int
+    that contained "lit, ~lit". So "lit" must be set to a value
+    Contains OUTER variables */
+    vector<bool> undef_must_set_vars;
+    vector<int32_t> unit_cl_IDs;
+    int32_t unsat_cl_ID = 0;
+
 protected:
-    virtual void new_var(const bool bva, const uint32_t orig_outer);
+    virtual void new_var(
+        const bool bva,
+        const uint32_t orig_outer,
+        const bool insert_varorder = true);
     virtual void new_vars(const size_t n);
     void test_reflectivity_of_renumbering() const;
 
     template<class T>
     vector<T> map_back_vars_to_without_bva(const vector<T>& val) const;
+    template<class T>
+    vector<T> map_back_lits_to_without_bva(const vector<T>& val) const;
     vector<lbool> assigns;
 
-    void save_state(SimpleOutFile& f) const;
-    void load_state(SimpleInFile& f);
     vector<uint32_t> outerToInterMain;
     vector<uint32_t> interToOuterMain;
 
@@ -367,13 +413,13 @@ void CNF::for_each_lit(
     , int64_t* limit
 ) const {
     switch(cl.ws.getType()) {
-        case CMSat::watch_binary_t:
+        case WatchType::watch_binary_t:
             *limit -= 2;
             func(cl.lit);
             func(cl.ws.lit2());
             break;
 
-        case CMSat::watch_clause_t: {
+        case WatchType::watch_clause_t: {
             const Clause& clause = *cl_alloc.ptr(cl.ws.get_offset());
             *limit -= (int64_t)clause.size();
             for(const Lit lit: clause) {
@@ -382,7 +428,8 @@ void CNF::for_each_lit(
             break;
         }
 
-        case watch_idx_t :
+        case WatchType::watch_bnn_t :
+        case WatchType::watch_idx_t :
             assert(false);
             break;
     }
@@ -395,12 +442,12 @@ void CNF::for_each_lit_except_watched(
     , int64_t* limit
 ) const {
     switch(cl.ws.getType()) {
-        case CMSat::watch_binary_t:
+        case WatchType::watch_binary_t:
             *limit -= 1;
             func(cl.ws.lit2());
             break;
 
-        case CMSat::watch_clause_t: {
+        case WatchType::watch_clause_t: {
             const Clause& clause = *cl_alloc.ptr(cl.ws.get_offset());
             *limit -= clause.size();
             for(const Lit lit: clause) {
@@ -411,7 +458,8 @@ void CNF::for_each_lit_except_watched(
             break;
         }
 
-        case CMSat::watch_idx_t:
+        case WatchType::watch_bnn_t: //no idea what to do with this, let's error
+        case WatchType::watch_idx_t:
             assert(false);
             break;
     }
@@ -457,6 +505,18 @@ inline void CNF::clean_occur_from_removed_clauses_only_smudged()
         clear_one_occur_from_removed_clauses(watches[l]);
     }
     watches.clear_smudged();
+
+    #ifdef SLOW_DEBUG
+    for(const auto& ws: watches) {
+        for(const auto& w: ws) {
+            if (!w.isClause()) {
+                continue;
+            }
+            Clause* cl = cl_alloc.ptr(w.get_offset());
+            assert(!cl->isRemoved);
+        }
+    }
+    #endif
 }
 
 inline void CNF::clean_occur_from_idx_types_only_smudged()
@@ -494,33 +554,26 @@ inline void CNF::clear_one_occur_from_removed_clauses(watch_subarray w)
     size_t end = w.size();
     for(; i < end; i++) {
         const Watched ws = w[i];
-        if (!ws.isClause()) {
+         if (ws.isBNN()) {
+            BNN* bnn = bnns[ws.get_bnn()];
+            if (!bnn->isRemoved) {
+                w[j++] = w[i];
+            }
+            continue;
+        }
+
+        if (ws.isBin()) {
             w[j++] = w[i];
             continue;
         }
 
+        assert(ws.isClause());
         Clause* cl = cl_alloc.ptr(ws.get_offset());
         if (!cl->getRemoved()) {
             w[j++] = w[i];
         }
     }
     w.shrink(i-j);
-}
-
-inline void CNF::unmark_all_irred_clauses()
-{
-    for(ClOffset offset: longIrredCls) {
-        Clause* cl = cl_alloc.ptr(offset);
-        cl->stats.marked_clause = false;
-    }
-}
-
-inline void CNF::unmark_all_red1_clauses()
-{
-    for(ClOffset offset: longRedCls[1]) {
-        Clause* cl = cl_alloc.ptr(offset);
-        cl->stats.marked_clause = false;
-    }
 }
 
 inline void CNF::renumber_outer_to_inter_lits(vector<Lit>& ps) const
@@ -570,7 +623,7 @@ inline void CNF::check_no_removed_or_freed_cl_in_watch() const
 }
 
 template<class T>
-bool CNF::satisfied_cl(const T& cl) const {
+bool CNF::satisfied(const T& cl) const {
     for(Lit lit: cl) {
         if (value(lit) == l_True) {
             return true;
@@ -668,8 +721,28 @@ void CNF::clean_xor_vars_no_prop(T& ps, bool& rhs)
             rhs ^= value(ps[i]) == l_True;
         }
     }
-    ps.resize(ps.size() - (i - j));
+    if ((i - j) > 0) {
+        ps.resize(ps.size() - (i - j));
+        //TODO tbdd ?
+    }
 }
+
+template<class T>
+vector<T> CNF::map_back_lits_to_without_bva(const vector<T>& val) const
+{
+    vector<T> ret;
+    assert(val.size() == nVarsOuter()*2);
+    ret.reserve(nVarsOutside()*2);
+    for(size_t i = 0; i < nVarsOuter()*2; i++) {
+        Lit l = Lit::toLit(i);
+        if (!varData[map_outer_to_inter(l).var()].is_bva) {
+            ret.push_back(val[i]);
+        }
+    }
+    assert(ret.size() == nVarsOutside()*2);
+    return ret;
+}
+
 
 template<class T>
 vector<T> CNF::map_back_vars_to_without_bva(const vector<T>& val) const
@@ -684,6 +757,12 @@ vector<T> CNF::map_back_vars_to_without_bva(const vector<T>& val) const
     }
     assert(ret.size() == nVarsOutside());
     return ret;
+}
+
+inline bool CNF::satisfied(const ClOffset& off) const
+{
+    Clause* cl = cl_alloc.ptr(off);
+    return satisfied(*cl);
 }
 
 }

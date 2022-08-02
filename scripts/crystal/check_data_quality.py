@@ -83,10 +83,32 @@ class Queries (helper.QueryHelper):
             print("Checked for {tbl} only containing at most one of the same {elem} in {t:2.3f} seconds".
                   format(**only_one, t=(time.time()-t)))
 
+    def check_all_clauses_have_at_most_one_del(self):
+        t = time.time()
+        q = """
+        select f.clid, f.cnt, cl_min, cl_max
+        from (
+        select cl_last_in_solver.clauseID as clid, count(cl_last_in_solver.clauseID) as cnt, min(conflicts) as cl_min, max(conflicts) as cl_max
+        from cl_last_in_solver
+        group by clauseID) as f
+        where f.cnt != 1
+        order by cl_max
+        """
+        cursor = self.c.execute(q)
+        bad = False
+        for row in cursor:
+            bad = True
+            print("ERROR: Clause deleted more than once! ClauseID: {clid}, times deleted: {num}, first deleted: {first}, last deleted: {last}".format(
+                clid=row[0], num=row[1], first=row[2], last=row[3]))
+
+        if bad:
+            exit(-1)
+
+        print("Checked all clauses have exactly one delete point. T: %-2.3f" % (time.time()-t))
+
     def check_all_clauses_have_N(self):
-        Ns = [{"tbl1":"reduceDB", "tbl2":"restart_dat_for_cl", "elem":"clauseID"},
-              {"tbl1":"reduceDB", "tbl2":"cl_last_in_solver", "elem":"clauseID"},
-              {"tbl1":"reduceDB", "tbl2":"clause_stats", "elem":"clauseID"}
+        Ns = [
+            {"tbl1":"reduceDB", "tbl2":"cl_last_in_solver", "elem":"clauseID"},
           ]
         for n in Ns:
             t = time.time()
@@ -95,18 +117,68 @@ class Queries (helper.QueryHelper):
             from {tbl1} left join {tbl2}
             on {tbl1}.{elem}={tbl2}.{elem}
             where {tbl2}.{elem} is NULL
+            order by {tbl1}.{elem}
             """.format(**n)
             cursor = self.c.execute(q)
             bad = False
             for row in cursor:
                 bad = True
-                print("ERROR: {elem}={clid} has {tbl1} not no corresponding {tbl2}:".format(
+                print("ERROR: {elem}={clid} has {tbl1} but no corresponding {tbl2}:".format(
                     **n, clid=row[0]))
 
             if bad:
                 exit(-1)
 
         print("Checked all clauses have a %s. T: %-2.3f" % (Ns, time.time()-t))
+
+    def check_glue_sizes(self):
+        if options.slow:
+
+            queries = """
+            create index `idx-check-qual1` on `reduceDB` (`clauseID`);
+            create index `idx-check-qual2` on `clause_stats` ( `clauseID`);
+            """
+            for l in queries.split('\n'):
+                self.c.execute(l)
+
+            t = time.time()
+            q = """
+            select * from `clause_stats`,`reduceDB`
+            where clause_stats.clauseID = reduceDB.clauseID
+            and glue > orig_glue"""
+            cursor = self.c.execute(q)
+            for row in cursor:
+                print("ERROR: glue is larger than orig_glue!")
+                print(row)
+                exit(-1)
+
+            queries = """
+            drop index `idx-check-qual1`;
+            drop index `idx-check-qual2`;
+            """
+            for l in queries.split('\n'):
+                self.c.execute(l)
+
+
+            print("Checked for glue vs orig_glue in %-2.3f seconds" % (time.time()-t))
+
+        t = time.time()
+        q = """select * from `clause_stats` where orig_glue > glue_before_minim"""
+        cursor = self.c.execute(q)
+        for row in cursor:
+            print("ERROR: orig_glue is larger than glue_before_minim!")
+            print(row)
+            exit(-1)
+        print("Checked for orig_glue vs glue_before_minim in %-2.3f seconds" % (time.time()-t))
+
+        t = time.time()
+        q = """select * from `clause_stats` where orig_glue > orig_size"""
+        cursor = self.c.execute(q)
+        for row in cursor:
+            print("ERROR: orig_glue is larger than orig_size!")
+            print(row)
+            exit(-1)
+        print("Checked for orig_glue vs orig_size in %-2.3f seconds" % (time.time()-t))
 
     def check_is_null(self):
 
@@ -139,7 +211,6 @@ class Queries (helper.QueryHelper):
             {"table":"reduceDB", "cond":" glue > 100000"},
             {"table":"clause_stats", "cond":" glue_before_minim = 0 and orig_size >= 2"},
             {"table":"clause_stats", "cond":" glue_before_minim = 1 and orig_size >= 2"},
-            {"table":"reduceDB", "cond":" act_ranking > tot_cls_in_db"},
             {"table":"reduceDB", "cond":" act_ranking < 0"},
         ]
         for incorr in incorrect:
@@ -151,6 +222,26 @@ class Queries (helper.QueryHelper):
                 print(row)
                 exit(-1)
             print("Checked for %s in %-2.3f seconds" % (q, time.time()-t))
+
+    def check_is_decision_unchanged(self):
+        print("Checking if is_decision hasn't changed while solving...")
+
+        q = """
+        select clstats.clauseID, rdb.is_decision, clstats.is_decision from
+        reduceDB as rdb
+        join clause_stats as clstats
+        on rdb.clauseID = clstats.clauseID
+        where rdb.is_decision != clstats.is_decision
+        """
+        cursor = self.c.execute(q)
+        for row in cursor:
+            clid = int(row[0])
+            is_dec_rdb = int(row[1])
+            is_dec_clstats = int(row[2])
+            print("OOps, for clauseID {clid}, RDB's is_decision is {is_dec_rdb}, while clause_stats's is_decision is {is_dec_clstats}".format(clid=clid, is_dec_rdb=is_dec_rdb, is_dec_clstats=is_dec_clstats))
+            exit(-1)
+
+        print("Check for is_decision change finished, all good, it never changed")
 
 
     def check_at_least_n(self):
@@ -173,20 +264,21 @@ class Queries (helper.QueryHelper):
 
 
     def check_non_negative(self):
-        table = "reduceDB"
-        cols = helper.get_columns(table, options.verbose, self.c)
-        for col in cols:
-            t = time.time()
-            q = """
-            select * from `%s` where `%s` < 0
-            """ % (table, col)
-            cursor = self.c.execute(q)
-            for row in cursor:
-                print("ERROR: following data has %s < 0 in table %s: " % (col , table))
-                print(row)
-                exit(-1)
-            print("Checked for %s < 0 in table %s. All are >= 0. T: %-3.2f s" %
-                  (col, table, time.time() - t))
+        tables = ["reduceDB", "clause_stats", "reduceDB_common"]
+        for table in tables:
+            cols = helper.get_columns(table, options.verbose, self.c)
+            for col in cols:
+                t = time.time()
+                q = """
+                select * from `%s` where `%s` < 0
+                """ % (table, col)
+                cursor = self.c.execute(q)
+                for row in cursor:
+                    print("ERROR: following data has %s < 0 in table %s: " % (col , table))
+                    print(row)
+                    exit(-1)
+                print("Checked for %s < 0 in table %s. All are >= 0. T: %-3.2f s" %
+                      (col, table, time.time() - t))
 
 
     def check_positive(self):
@@ -196,8 +288,9 @@ class Queries (helper.QueryHelper):
             ["orig_size", "clause_stats"],
             ["size", "reduceDB"],
             ["glue", "reduceDB"],
-            ["act_ranking", "reduceDB"], #act ranking starts at 1, not 0
-            ["act_ranking_top_10", "reduceDB"]
+            ["act_ranking", "reduceDB"], # all ranking starts at 1, not 0
+            ["uip1_ranking", "reduceDB"],
+            ["prop_ranking", "reduceDB"]
             ]
 
         for col,table in check_zero:
@@ -207,7 +300,7 @@ class Queries (helper.QueryHelper):
             """ % (table, col)
             cursor = self.c.execute(q)
             for row in cursor:
-                print("ERROR: Following data from table %s has %s as non-positive: " % (col, table))
+                print("ERROR: Following data from table %s has %s as non-positive: " % (table, col))
                 print(row)
                 exit(-1)
             print("Checked for %s in table %s. All are positive T: %-3.2f s" %
@@ -221,6 +314,8 @@ if __name__ == "__main__":
     parser = optparse.OptionParser(usage=usage)
     parser.add_option("--verbose", "-v", action="store_true", default=False,
                       dest="verbose", help="Print more output")
+    parser.add_option("--slow", action="store_true", default=False,
+                      dest="slow", help="Do more checks")
 
     (options, args) = parser.parse_args()
 
@@ -230,12 +325,15 @@ if __name__ == "__main__":
 
     with Queries(args[0]) as q:
         #q.create_indexes()
+        q.check_all_clauses_have_at_most_one_del()
         q.check_all_clauses_have_N()
         q.check_only_one()
+        q.check_glue_sizes()
         q.check_non_negative()
         q.check_positive()
         q.check_incorrect_data_values()
         q.check_at_least_n()
+        q.check_is_decision_unchanged()
         #q.drop_idxs()
 
     print("Done.")

@@ -62,7 +62,7 @@ public:
 private:
     Solver* solver;
     OccSimplifier* simplifier;
-    vector<uint16_t>& seen;
+    vector<uint32_t>& seen;
     vector<uint8_t>& seen2;
 
     Stats runStats;
@@ -112,7 +112,7 @@ private:
         Lit lit2;
     };
     struct PotentialClause {
-        PotentialClause(const lit_pair _lits, const OccurClause cl) :
+        PotentialClause(const lit_pair& _lits, const OccurClause& cl) :
             lits(_lits)
             , occur_cl(cl)
         {}

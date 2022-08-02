@@ -90,6 +90,11 @@ public:
             first = 0;
     }
 
+    size_t num_data_elements() const
+    {
+        return queuesize;
+    }
+
     double avg() const
     {
         if (queuesize == 0)
