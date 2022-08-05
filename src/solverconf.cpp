@@ -273,6 +273,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , num_conflicts_of_search_inc_max(10)
         , max_num_simplify_per_solve_call(25)
         , simplify_schedule_startup(
+            "sub-impl, occ-backw-sub,"
+            "scc-vrepl,"
             "breakid, "
             "occ-bve,occ-xor"
         )
