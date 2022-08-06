@@ -23,7 +23,7 @@ When citing, always reference our [SAT 2009 conference paper](https://link.sprin
 License
 -----
 
-Please read LICENSE.txt for a discussion. Everything that is needed to build is MIT licensed. The M4RI library (not included) is GPL, so in case you have M4RI installed, you must build with `-DNOM4RI=ON` or `-DMIT=ON` in case you need a pure MIT build.
+Please read LICENSE.txt for a discussion. Everything that is needed to build by default is MIT licensed. If you specifically instruct the system it can build with M4RI and Bliss, which are both GLP. However, by default CryptoMiniSat will not build with these.
 
 
 Docker usage
@@ -50,7 +50,7 @@ To build and install, issue:
 ```
 sudo apt-get install build-essential cmake
 # not required but very useful
-sudo apt-get install zlib1g-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev help2man
+sudo apt-get install zlib1g-dev libboost-program-options-dev libsqlite3-dev
 tar xzvf cryptominisat-version.tar.gz
 cd cryptominisat-version
 mkdir build && cd build
@@ -412,7 +412,7 @@ For testing you will need the GIT checkout and build as per:
 
 ```
 sudo apt-get install build-essential cmake git
-sudo apt-get install zlib1g-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev help2man
+sudo apt-get install zlib1g-dev libboost-program-options-dev libsqlite3-dev
 sudo apt-get install git python3-pip python3-setuptools python3-dev
 sudo pip3 install --upgrade pip
 sudo pip3 install lit
@@ -499,7 +499,7 @@ Configuring a build for a minimal binary&library
 The following configures the system to build a bare minimal binary&library. It needs a compiler, but nothing much else:
 
 ```
-cmake -DONLY_SIMPLE=ON -DNOZLIB=ON -DNOM4RI=ON -DSTATS=OFF -DNOVALGRIND=ON -DENABLE_TESTING=OFF .
+cmake -DONLY_SIMPLE=ON -DNOZLIB=ON -DSTATS=OFF -DNOVALGRIND=ON -DENABLE_TESTING=OFF .
 ```
 
 CMake Arguments
@@ -511,7 +511,7 @@ The following arguments to cmake configure the generated build artifacts. To use
 - `-DSTATS=<ON/OFF>` -- advanced statistics (slower)
 - `-DENABLE_TESTING=<ON/OFF>` -- test suite support
 - `-DMIT=<ON/OFF>` -- MIT licensed components only
-- `-DNOM4RI=<ON/OFF>` -- without toplevel Gauss-Jordan Elimination support
+- `-DNOM4RI=<ON/OFF>` -- without M4RI-based toplevel Gauss-Jordan Elimination support. Otherweise, we use the built-in one.
 - `-DNOMPI=<ON/OFF>` -- without MPI support
 - `-DREQUIRE_M4RI=<ON/OFF>` -- abort if M4RI is not present
 - `-DNOZLIB=<ON/OFF>` -- no gzip DIMACS input support
