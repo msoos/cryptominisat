@@ -99,7 +99,11 @@ vector<uint32_t> GetClauseQuery::translate_sampl_set(
                 solver->seen[v] = 1;
             }
         }
-        for(auto const& v: sampl_set) solver->seen[v] = 0;
+        for(uint32_t v: sampl_set) {
+            v = solver->varReplacer->get_var_replaced_with_outer(v);
+            v = solver->map_outer_to_inter(v);
+            solver->seen[v] = 0;
+        }
         return ret;
     } else {
         return sampl_set;
