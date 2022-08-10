@@ -785,10 +785,8 @@ vector<uint32_t> CNF::get_outside_lit_incidence()
 {
     assert(get_num_bva_vars() == 0);
     vector<uint32_t> inc;
-    inc.resize(nVarsOuter()*2, 0);
-    if (!okay()) {
-        return inc;
-    }
+    inc.resize(nVars()*2, 0);
+    if (!okay()) return inc;
 
     for(uint32_t i = 0; i < nVars()*2; i++) {
         const Lit l = Lit::toLit(i);
