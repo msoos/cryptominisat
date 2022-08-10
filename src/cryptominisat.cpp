@@ -1477,21 +1477,25 @@ DLL_PUBLIC void SATSolver::set_var_weight(Lit lit, double weight)
 
 DLL_PUBLIC std::vector<uint32_t> SATSolver::get_lit_incidence()
 {
+    actually_add_clauses_to_threads(data);
     return data->solvers[data->which_solved]->get_outside_lit_incidence();
 }
 
 DLL_PUBLIC vector<uint32_t> SATSolver::get_var_incidence()
 {
+    actually_add_clauses_to_threads(data);
     return data->solvers[data->which_solved]->get_outside_var_incidence();
 }
 
 DLL_PUBLIC vector<OrGate> SATSolver::get_recovered_or_gates()
 {
+    actually_add_clauses_to_threads(data);
     return data->solvers[0]->get_recovered_or_gates();
 }
 
 DLL_PUBLIC vector<ITEGate> SATSolver::get_recovered_ite_gates()
 {
+    actually_add_clauses_to_threads(data);
     return data->solvers[0]->get_recovered_ite_gates();
 }
 
