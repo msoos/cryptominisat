@@ -1176,6 +1176,10 @@ bool OccSimplifier::eliminate_vars()
     assert(solver->prop_at_head());
     assert(added_irred_bin.empty());
     assert(added_long_cl.empty());
+    assert(picovars_used.empty());
+    var_to_picovar.clear();
+    var_to_picovar.resize(solver->nVars(), 0);
+    picolits_added = 0;
 
     //Set-up
     double myTime = cpuTime();
@@ -1571,22 +1575,24 @@ vector<OrGate> OccSimplifier::recover_or_gates()
 }
 
 int OccSimplifier::lit_to_picolit(const Lit l) {
-    auto f = var_to_picovar.find(l.var());
+    picolits_added++;
+    auto f = var_to_picovar[l.var()];
     int picolit = 0;
-    if (f == var_to_picovar.end()) {
+    if (f == 0) {
         int v = picosat_inc_max_var(picosat);
         var_to_picovar[l.var()] = v;
+        picovars_used.push_back(l.var());
         picolit = v * (l.sign() ? -1 : 1);
-
     } else {
-        picolit = f->second * (l.sign() ? -1 : 1);
+        picolit = f * (l.sign() ? -1 : 1);
     }
     return picolit;
 }
 
 uint32_t OccSimplifier::add_cls_to_picosat_definable(const Lit wsLit) {
-    uint32_t added = 0;
     assert(seen[wsLit.var()] == 1);
+
+    uint32_t added = 0;
     for(const auto& w: solver->watches[wsLit]) {
         if (w.isClause()) {
             Clause& cl = *solver->cl_alloc.ptr(w.get_offset());
@@ -1798,6 +1804,9 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(const vector<uint
 {
     assert(solver->okay());
     assert(solver->prop_at_head());
+    assert(picovars_used.empty());
+    var_to_picovar.clear();
+    var_to_picovar.resize(solver->nVars(), 0);
 
     vector<uint32_t> ret;
     auto origTrailSize = solver->trail_size();
@@ -1857,8 +1866,12 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(const vector<uint
             var_to_picovar.clear();
         }
 
+        assert(picovars_used.empty());
         uint32_t added = add_cls_to_picosat_definable(l);
         added += add_cls_to_picosat_definable(~l);
+        for(const auto x: picovars_used) var_to_picovar[x] = 0;
+        picovars_used.clear();
+
         if (added == 0) {
             no_cls_matching_filter++;
             ret.push_back(v);
@@ -3625,7 +3638,13 @@ bool OccSimplifier::find_irreg_gate(
     , vec<Watched>& out_b
 ) {
     // Too expensive
-    if (a.size() + b.size() > 1000) return false;
+    if (picolits_added > 200*1000) {
+        if (solver->conf.verbosity) {
+            cout << "c [occ-bve] turning off picosat-based irreg gate detection" << endl;
+        }
+        return false;
+    }
+    if (a.size() + b.size() > 100) return false;
 
     bool found = false;
     out_a.clear();
@@ -3634,12 +3653,17 @@ bool OccSimplifier::find_irreg_gate(
     assert(picosat == NULL);
     picosat = picosat_init();
     int ret = picosat_enable_trace_generation(picosat);
+    picosat_adjust(picosat, 100);
     assert(ret != 0 && "Traces cannot be generated in PicoSAT, wrongly configured&built");
 
     map<int, Watched> a_map;
     map<int, Watched> b_map;
+    assert(picovars_used.empty());
     add_picosat_cls(a, elim_lit, a_map);
     add_picosat_cls(b, elim_lit, b_map);
+    for(const auto v: picovars_used) var_to_picovar[v] = 0;
+    picovars_used.clear();
+
     ret = picosat_sat(picosat, 300);
     if (ret == PICOSAT_UNSATISFIABLE) {
         for(const auto& m: a_map) {
