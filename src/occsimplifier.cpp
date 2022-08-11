@@ -3613,9 +3613,10 @@ void OccSimplifier::add_picosat_cls(
             assert(!cl.getRemoved());
             assert(!cl.red());
             for(const auto& l: cl) {
-                if (l.var() != elim_lit.var()) picosat_add(picosat, lit_to_picolit(l));
+                if (l.var() != elim_lit.var())
+                    picosat_add(picosat, lit_to_picolit(l));
             }
-//             cout << "Added cl (except " << elim_lit.unsign() << "): " << cl << endl;
+//          cout << "Added cl (except " << elim_lit.unsign() << "): " << cl << endl;
             int pico_cl_id = picosat_add(picosat, 0);
             picosat_cl_to_cms_cl[pico_cl_id] = w;
         } else if (w.isBin()) {
@@ -3623,7 +3624,7 @@ void OccSimplifier::add_picosat_cls(
             picosat_add(picosat, lit_to_picolit(w.lit2()));
             int pico_cl_id = picosat_add(picosat, 0);
             picosat_cl_to_cms_cl[pico_cl_id] = w;
-//             cout << "Added cl: " << w.lit2() << endl;
+//          cout << "Added cl: " << w.lit2() << endl;
         } else {
             assert(false);
         }
