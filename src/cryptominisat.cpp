@@ -549,9 +549,7 @@ static bool actually_add_clauses_to_threads(CMSatPrivateData* data)
         for(std::thread& t: thds){
             t.join();
         }
-        cout << "Setting var count to : " << data->total_num_vars << endl;
     }
-    cout << "Set var count to : " << data->total_num_vars << endl;
     bool ret = (*data_for_thread.ret == l_True);
 
     //clear what has been added
