@@ -655,6 +655,21 @@ DLL_PUBLIC void SATSolver::set_occ_based_lit_rem_time_limitM(const uint32_t lim)
     }
 }
 
+DLL_PUBLIC double SATSolver::get_orig_global_timeout_multiplier()
+{
+    return data->solvers[0]->conf.orig_global_timeout_multiplier;
+}
+
+
+DLL_PUBLIC void SATSolver::set_orig_global_timeout_multiplier(const double mult)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.orig_global_timeout_multiplier = mult;
+    }
+}
+
+
 DLL_PUBLIC void SATSolver::set_no_bve()
 {
     for (size_t i = 0; i < data->solvers.size(); ++i) {
