@@ -25,6 +25,7 @@ THE SOFTWARE.
 #include "cryptominisat5/cryptominisat.h"
 #include "src/solverconf.h"
 #include <vector>
+#include <algorithm>
 using std::vector;
 using namespace CMSat;
 
