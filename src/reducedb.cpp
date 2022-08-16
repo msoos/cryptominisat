@@ -212,7 +212,7 @@ void ReduceDB::sort_red_cls(ClauseClean clean_type)
     for(const auto& x: solver->longRedCls[2]) {
         const ClOffset offset = x;
         Clause* cl = solver->cl_alloc.ptr(offset);
-        cout << i << " offset: " << offset << " cl->stats.last_touched: " << cl->stats.last_touched
+        cout << i << " offset: " << offset << " cl->stats.last_touched_any: " << cl->stats.last_touched_any
         << " act:" << std::setprecision(9) << cl->stats.activity
         << " which_red_array:" << cl->stats.which_red_array << endl
         << " -- cl:" << *cl << " tern:" << cl->stats.is_ternary_resolvent
@@ -564,7 +564,7 @@ void ReduceDB::handle_lev1()
         const ClOffset offset = solver->longRedCls[1][i];
         Clause* cl = solver->cl_alloc.ptr(offset);
         #ifdef VERBOSE_DEBUG
-        cout << "offset: " << offset << " cl->stats.last_touched: " << cl->stats.last_touched
+        cout << "offset: " << offset << " cl->stats.last_touched_any: " << cl->stats.last_touched_any
         << " act:" << std::setprecision(9) << cl->stats.activity
         << " which_red_array:" << cl->stats.which_red_array << endl
         << " -- cl:" << *cl << " tern:" << cl->stats.is_ternary_resolvent
@@ -583,7 +583,7 @@ void ReduceDB::handle_lev1()
                 must_touch *= solver->conf.ternary_keep_mult; //this multiplier is 6 by default
             }
             if (!solver->clause_locked(*cl, offset)
-                && cl->stats.last_touched + must_touch < solver->sumConflicts
+                && cl->stats.last_touched_any + must_touch < solver->sumConflicts
             ) {
                 solver->longRedCls[2].push_back(offset);
                 cl->stats.which_red_array = 2;
@@ -1231,7 +1231,7 @@ void ReduceDB::mark_top_N_clauses_lev2(const uint64_t keep_num)
         const ClOffset offset = solver->longRedCls[2][i];
         Clause* cl = solver->cl_alloc.ptr(offset);
         #ifdef VERBOSE_DEBUG
-        cout << "offset: " << offset << " cl->stats.last_touched: " << cl->stats.last_touched
+        cout << "offset: " << offset << " cl->stats.last_touched_any: " << cl->stats.last_touched_any
         << " act:" << std::setprecision(9) << cl->stats.activity
         << " which_red_array:" << cl->stats.which_red_array << endl
         << " -- cl:" << *cl << " tern:" << cl->stats.is_ternary_resolvent
@@ -1313,7 +1313,7 @@ void ReduceDB::remove_cl_from_lev2() {
         *solver->frat << del << *cl << fin;
         cl->setRemoved();
         #ifdef VERBOSE_DEBUG
-        cout << "REMOVING offset: " << offset << " cl->stats.last_touched: " << cl->stats.last_touched
+        cout << "REMOVING offset: " << offset << " cl->stats.last_touched_any: " << cl->stats.last_touched_any
         << " act:" << std::setprecision(9) << cl->stats.activity
         << " which_red_array:" << cl->stats.which_red_array << endl
         << " -- cl:" << *cl << " tern:" << cl->stats.is_ternary_resolvent

@@ -58,9 +58,9 @@ int ClPredictorsAbst::set_up_input(
     const ClauseStatsExtra& extra_stats = solver->red_stats_extra[cl->stats.extra_pos];
     assert(extra_stats.orig_glue != 1);
 
-    assert(cl->stats.last_touched <= sumConflicts);
+    assert(cl->stats.last_touched_any <= sumConflicts);
     assert(extra_stats.introduced_at_conflict <= sumConflicts);
-    uint32_t last_touched_diff = sumConflicts - (uint64_t)cl->stats.last_touched;
+    uint32_t last_touched_any_diff = sumConflicts - (uint64_t)cl->stats.last_touched_any;
     double time_inside_solver = sumConflicts - (uint64_t)extra_stats.introduced_at_conflict;
 
     //To protect against unset values being used

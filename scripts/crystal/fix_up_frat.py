@@ -24,7 +24,7 @@ import argparse
 import os
 import struct
 import time
-import line_profiler
+#import line_profiler
 
 cl_to_conflict = {}
 new_id_to_old_id = {}
@@ -71,7 +71,7 @@ create table `{table}` ( `clauseID` bigint(20) NOT NULL, `used_at` bigint(20) NO
             confl = n[1]
             if ID in cl_to_conflict:
                 print("ERROR: ID %d in cl_to_conflict already. Old value: %d new value: %d" % (ID, cl_to_conflict[ID], confl))
-                exit(-1)
+                #exit(-1)
             cl_to_conflict[ID] = confl
 
         if opts.verbose:
@@ -115,13 +115,13 @@ create table `{table}` ( `clauseID` bigint(20) NOT NULL, `used_at` bigint(20) NO
         self.cl_used_num = 0
 
     #@profile
-    def deal_with_chain(self, line, ID, cl_len, tracked_already, confl):
+    def deal_with_chain(self, line, final_resolvent_ID, tracked_already, confl):
         for chain_str in line:
             if chain_str[0] == '0':
                 break
             chain_ID = int(chain_str)
             if opts.verbose:
-                print("Cl ID %8d used for Cl ID %8d, cl_len: %8d" % (chain_ID, ID, cl_len))
+                print("Cl ID %8d used for Cl ID %8d" % (chain_ID, final_resolvent_ID))
             if chain_ID in new_id_to_old_id:
                 if opts.verbose:
                     print("--> tracked as %s" % new_id_to_old_id[chain_ID])
@@ -144,12 +144,14 @@ create table `{table}` ( `clauseID` bigint(20) NOT NULL, `used_at` bigint(20) NO
                 if self.cl_used_num > 10000:
                     self.dump_used_clauses()
 
-                # This chain_ID is tracked. Let's track Clause "ID", it will be a child
+                # This chain_ID is tracked. Let's track Clause "final_resolvent_ID", it will be a child
+                # NOTE: we only track it as ONE of the children... which is not ideal.
                 if tracked_already:
                     if opts.verbose:
-                        print("-----> Can't track Cl ID %d as child, already tracked either as MAIN or as a child" % ID)
+                        print("-----> Can't track Cl ID %d as child, already tracked either as MAIN or as a child" % final_resolvent_ID)
                     continue
 
+                # final_resolvent_ID is not tracked already. We'll track it according to its ancestor
                 data = new_id_to_old_id[chain_ID]
                 chain_ID_upd = data[0]
                 val = 0.5*data[1]
@@ -157,7 +159,6 @@ create table `{table}` ( `clauseID` bigint(20) NOT NULL, `used_at` bigint(20) NO
                     # This is a child of a child, so parent's conf needs to be bumped
                     anc_confl = data[2]
                 else:
-
                     # Children of this will need confl to be bumped
                     anc_confl = confl
 
@@ -166,8 +167,8 @@ create table `{table}` ( `clauseID` bigint(20) NOT NULL, `used_at` bigint(20) NO
                     continue
 
                 if opts.verbose:
-                    print("-----> Therefore, we will track ID %d with val %f to count as ID %d, confl %d" % (ID, val, chain_ID_upd, anc_confl))
-                new_id_to_old_id[ID] = [chain_ID_upd, val, anc_confl]
+                    print("-----> Therefore, we will track ID %d with val %f to count as ID %d, confl %d" % (final_resolvent_ID, val, chain_ID_upd, anc_confl))
+                new_id_to_old_id[final_resolvent_ID] = [chain_ID_upd, val, anc_confl]
                 tracked_already = True
                 self.children_set += 1
 
@@ -189,41 +190,39 @@ create table `{table}` ( `clauseID` bigint(20) NOT NULL, `used_at` bigint(20) NO
                     print("ERROR: Line contains 1 or 2 elements??? It needs a/o/d/l/t + at least ID")
                     exit(-1)
 
-                ID = int(line[1])
+                final_resolvent_ID = int(line[1])
                 line = line[2:]
                 tracked_already = False
 
-                if ID not in new_id_to_old_id:
+                if final_resolvent_ID not in new_id_to_old_id:
                     if opts.verbose:
-                        print("MAIN: Cl ID %8d is not tracked" % ID)
+                        print("MAIN: Cl ID %8d is not tracked" % final_resolvent_ID)
                 else:
                     if opts.verbose:
-                        print("MAIN: Cl ID %8d is tracked, it is: %s" % (ID, new_id_to_old_id[ID]))
+                        print("MAIN: Cl ID %8d is tracked, it is: %s" % (final_resolvent_ID, new_id_to_old_id[final_resolvent_ID]))
                     tracked_already = True
 
-                if ID not in cl_to_conflict:
-                    print("ERROR: ID %8d not in cl_to_conflict" % ID)
+                if final_resolvent_ID not in cl_to_conflict:
+                    print("ERROR: ID %8d not in cl_to_conflict" % final_resolvent_ID)
                     exit(-1)
 
-                confl = cl_to_conflict[ID]
+                confl = cl_to_conflict[final_resolvent_ID]
                 if opts.verbose:
-                    print("MAIN: Cl ID %8d is generated at confl %d" % (ID, confl))
+                    print("MAIN: Cl ID %8d is generated at confl %d" % (final_resolvent_ID, confl))
 
                 found = False
-                cl_len = 0
                 for i in range(len(line)):
                     if line[i] == "l":
-                        cl_len = i-1
                         line = line[i+1:]
                         found = True
                         break
 
                 if not found:
                     #if opts.verbose:
-                    print("No explanation on line %s for ID %d" % (line, ID))
+                    print("No explanation on line %s for ID %d" % (line, final_resolvent_ID))
                     continue
 
-                self.deal_with_chain(line, ID, cl_len, tracked_already, confl)
+                self.deal_with_chain(line, final_resolvent_ID, tracked_already, confl)
 
 
 if __name__ == "__main__":

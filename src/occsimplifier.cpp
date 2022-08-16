@@ -2718,7 +2718,7 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
     //Add new ternary resolvents
     for(const Tri& newcl: cl_to_add_ternary) {
         ClauseStats stats;
-        stats.last_touched = solver->sumConflicts;
+        stats.last_touched_any = solver->sumConflicts;
         stats.is_ternary_resolvent = true;
         #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
         ClauseStatsExtra stats_extra;
@@ -3641,7 +3641,7 @@ bool OccSimplifier::find_irreg_gate(
     // Too expensive
     if (picolits_added > 200*1000) {
         if (solver->conf.verbosity) {
-            cout << "c [occ-bve] turning off picosat-based irreg gate detection" << endl;
+            //cout << "c [occ-bve] turning off picosat-based irreg gate detection" << endl;
         }
         return false;
     }

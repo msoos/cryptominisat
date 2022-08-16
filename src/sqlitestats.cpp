@@ -802,9 +802,9 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.uip1_used);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, stats_extra.sum_uip1_used);
 
-    assert(cl->stats.last_touched <= solver->sumConflicts);
-    int64_t last_touched_diff = solver->sumConflicts - cl->stats.last_touched;
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, last_touched_diff);
+    assert(cl->stats.last_touched_any <= solver->sumConflicts);
+    int64_t last_touched_any_diff = solver->sumConflicts - cl->stats.last_touched_any;
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, last_touched_any_diff);
     sqlite3_bind_double(stmtReduceDB, bindAt++, (double)cl->stats.activity/(double)solver->get_cla_inc());
     sqlite3_bind_int(stmtReduceDB, bindAt++, locked);
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->used_in_xor());

@@ -572,6 +572,7 @@ bool PropEngine::prop_long_cl_any_order(
             #endif
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             c.stats.props_made++;
+            c.stats.last_touched_any = sumConflicts;
             #endif
         }
 

@@ -461,7 +461,7 @@ void Searcher::add_lits_to_learnt(
                 #if !defined(STATS_NEEDED) && !defined(FINAL_PREDICTOR)
                 if (cl->stats.which_red_array == 1)
                 #endif
-                    cl->stats.last_touched = sumConflicts;
+                    cl->stats.last_touched_any = sumConflicts;
 
                 //If stats or predictor, bump all because during final
                 //we will need this data and during dump when stats is on
@@ -2478,7 +2478,7 @@ bool Searcher::intree_if_needed()
     bool ret = okay();
 
     if (!bnns.empty()) conf.do_hyperbin_and_transred = false;
-    if (conf.doIntreeProbe && conf.doFindAndReplaceEqLits &&
+    if (conf.doIntreeProbe && conf.doFindAndReplaceEqLits && !conf.never_stop_search &&
         sumConflicts > next_intree
     ) {
         ret &= solver->clear_gauss_matrices();
@@ -2554,7 +2554,7 @@ lbool Searcher::distill_clauses_if_needed()
 lbool Searcher::full_probe_if_needed()
 {
     assert(decisionLevel() == 0);
-    if (conf.do_full_probe &&
+    if (conf.do_full_probe && !conf.never_stop_search &&
         sumConflicts > next_full_probe
     ) {
         full_probe_iter++;

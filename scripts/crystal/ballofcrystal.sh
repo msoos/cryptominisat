@@ -27,7 +27,7 @@ set -o pipefail  # needed so  " | tee xyz " doesn't swallow the last command's e
 . ./setparams_ballofcrystal.sh
 
 if [ "$1" == "--skip" ]; then
-    echo "Will skip running CMS stats + DRAT"
+    echo "Will skip running CMS stats + FRAT"
     SKIP="1"
     NEXT_OP="$2"
 else
@@ -124,26 +124,26 @@ if [ "$SKIP" != "1" ]; then
 
     (
     ########################
-    # Obtain dynamic data in SQLite and DRAT info
+    # Obtain dynamic data in SQLite and FRAT info
     ########################
     cd "$FNAME-dir"
     # for var, we need: --bva 0 --scc 0
-    $NOBUF ../cryptominisat5 --presimp 1 -n1 --sqlitedbover 1 --cldatadumpratio "$DUMPRATIO" --cllockdatagen $CLLOCK --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
+    $NOBUF ../cryptominisat5 --maxnummatrices 0 --presimp 1 -n1 --sqlitedbover 1 --cldatadumpratio "$DUMPRATIO" --cllockdatagen $CLLOCK --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --frat "$FNAMEOUT.frat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
     grep "c conflicts" cms-pred-run.out
 
     ########################
-    # Run our own DRAT-Trim
+    # Run frat-rs
     ########################
     set +e
     a=$(grep "s SATIS" cms-pred-run.out)
     retval=$?
     set -e
     if [[ retval -eq 1 ]]; then
-        /usr/bin/time -v ../frat-rs elab "../$FNAME" "$FNAMEOUT.drat" -m -v
+        /usr/bin/time -v ../frat-rs elab "../$FNAME" "$FNAMEOUT.frat" -m -v
 
         set +e
-        /usr/bin/time -v ../frat-rs elab - "$FNAMEOUT.drat" test.frat
-        /usr/bin/time -v ../frat-rs refrat "$FNAMEOUT.drat.temp" correct
+        /usr/bin/time -v ../frat-rs elab "$FNAMEOUT.frat" - tmp.lrat
+        /usr/bin/time -v ../frat-rs refrat "$FNAMEOUT.frat.temp" correct
         set -e
         #/usr/bin/time -v $NOBUF ../utils/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -o "$FNAMEOUT.usedCls" -i -O 4 -m | tee drat.out-newO4
 
@@ -152,7 +152,7 @@ if [ "$SKIP" != "1" ]; then
         echo "Not UNSAT!!!"
         exit -1
     fi
-    echo "CMS+DRAT done now"
+    echo "CMS+FRAT done now"
     )
 fi
 
@@ -245,38 +245,38 @@ cd "$FNAME-dir"
 ln -fs ../ml_module.py .
 
 TODO="000"
-../cryptominisat5 "../$FNAME" --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
+../cryptominisat5 "../$FNAME" --predtype py --simfrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
 
 TODO="001"
-../cryptominisat5 "../$FNAME" --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
+../cryptominisat5 "../$FNAME" --predtype py --simfrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
 
 TODO="010"
-../cryptominisat5 "../$FNAME" --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
+../cryptominisat5 "../$FNAME" --predtype py --simfrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
 
 TODO="011"
-../cryptominisat5 "../$FNAME" --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
+../cryptominisat5 "../$FNAME" --predtype py --simfrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
 
 TODO="100"
-../cryptominisat5 "../$FNAME" --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
+../cryptominisat5 "../$FNAME" --predtype py --simfrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
 
 TODO="101"
-../cryptominisat5 "../$FNAME" --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
+../cryptominisat5 "../$FNAME" --predtype py --simfrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
 
 TODO="110"
-../cryptominisat5 "../$FNAME" --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
+../cryptominisat5 "../$FNAME" --predtype py --simfrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
 
 TODO="111"
-../cryptominisat5 "../$FNAME" --predtype py --simdrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
+../cryptominisat5 "../$FNAME" --predtype py --simfrat 1 --printsol 0 --predloc "./" --predbestfeats "$bestf" --predtables $TODO --distillsort 3 > cms-final-run.out-${TODO}-distillsort3 &
 
 )
 exit
 
 
 # old
-# ./cryptominisat5 goldb-heqc-i10mul.cnf --simdrat 1 --printsol 0 --predloc ./data/14-april-2021-69bad529f962c-cut1-3.0-cut2-25.0-limit-1000-est10-w0-xbmin50-xbmd6/ --predtype py --predbestfeats ./best_features-b93210018231ab04d2.txt
+# ./cryptominisat5 goldb-heqc-i10mul.cnf --simfrat 1 --printsol 0 --predloc ./data/14-april-2021-69bad529f962c-cut1-3.0-cut2-25.0-limit-1000-est10-w0-xbmin50-xbmd6/ --predtype py --predbestfeats ./best_features-b93210018231ab04d2.txt
 
 # current
-# ./cryptominisat5 goldb-heqc-i10mul.cnf --simdrat 1 --printsol 0 --predloc ./data/18-sept-2021-a408d53c665f9305b-cut1-3.0-cut2-25.0-limit-1000-est15-w0-xbmin50-xbmd4-regxgb/ --predtype py --predbestfeats ./best_features-rdb0-only.txt
+# ./cryptominisat5 goldb-heqc-i10mul.cnf --simfrat 1 --printsol 0 --predloc ./data/18-sept-2021-a408d53c665f9305b-cut1-3.0-cut2-25.0-limit-1000-est15-w0-xbmin50-xbmd4-regxgb/ --predtype py --predbestfeats ./best_features-rdb0-only.txt
 
 # newest
-# ./cryptominisat5 goldb-heqc-i10mul.cnf --simdrat 1 --printsol 0 --predloc ./data/29-sept-a408d53c665f9305b-ccf121255372-cut1-3.0-cut2-25.0-limit-3000-est8-w0-xbmin10-xbmd6-regxgb/ --predtype py --predbestfeats ./best_features-correlaton.txt
+# ./cryptominisat5 goldb-heqc-i10mul.cnf --simfrat 1 --printsol 0 --predloc ./data/29-sept-a408d53c665f9305b-ccf121255372-cut1-3.0-cut2-25.0-limit-3000-est8-w0-xbmin10-xbmd6-regxgb/ --predtype py --predbestfeats ./best_features-correlaton.txt

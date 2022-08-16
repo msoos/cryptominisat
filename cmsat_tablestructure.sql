@@ -97,7 +97,7 @@ CREATE TABLE `reduceDB` (
   `uip1_used` bigint(20) NOT NULL,
   `sum_uip1_used`  int(20) NOT NULL,
 
-  `last_touched_diff` bigint(20) NOT NULL,
+  `last_touched_any_diff` bigint(20) NOT NULL,
   `activity_rel` float(20) NOT NULL,
   `locked` int(20) NOT NULL,
   `in_xor` int(20) NOT NULL,

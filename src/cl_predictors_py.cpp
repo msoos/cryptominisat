@@ -62,16 +62,16 @@ int ClPredictorsPy::set_up_input(
     int x = 0;
 
     const ClauseStatsExtra& extra_stats = solver->red_stats_extra[cl->stats.extra_pos];
-    uint32_t last_touched_diff = sumConflicts - (uint64_t)cl->stats.last_touched;
+    uint32_t last_touched_any_diff = sumConflicts - (uint64_t)cl->stats.last_touched_any;
     double time_inside_solver = sumConflicts - (uint64_t)extra_stats.introduced_at_conflict;
 
     at[x++] = cl->stats.is_ternary_resolvent;
     at[x++] = cl->stats.which_red_array;
-    at[x++] = cl->stats.last_touched;
+    at[x++] = cl->stats.last_touched_any;
     at[x++] = act_ranking_rel;
     at[x++] = uip1_ranking_rel;
     at[x++] = prop_ranking_rel;
-    at[x++] = last_touched_diff;
+    at[x++] = last_touched_any_diff;
     at[x++] = time_inside_solver;
     at[x++] = cl->stats.props_made;
     at[x++] = commdata.avg_props;

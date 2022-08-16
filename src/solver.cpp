@@ -433,10 +433,9 @@ Clause* Solver::add_clause_int(
         assert(addDrat);
         ID = cl_stats->ID;
         if (ps != lits) {
-            uint64_t old_ID = ID;
             ID = ++clauseID;
             *frat << add << ID << ps << fin;
-            *frat << del << old_ID << lits << fin;
+            *frat << del << cl_stats->ID << lits << fin;
         }
     } else {
         ID = ++clauseID;

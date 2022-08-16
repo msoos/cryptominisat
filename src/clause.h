@@ -146,7 +146,7 @@ struct ClauseStats
         float   activity;
         uint32_t hash_val; //used in BreakID to remove equivalent clauses
     };
-    uint32_t last_touched = 0;
+    uint32_t last_touched_any = 0;
     int32_t ID;
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR) || defined(NORMAL_CL_USE_STATS)
@@ -163,7 +163,7 @@ struct ClauseStats
         //Combine stats
         ret.glue = std::min(first.glue, second.glue);
         ret.activity = std::max(first.activity, second.activity);
-        ret.last_touched = std::max(first.last_touched, second.last_touched);
+        ret.last_touched_any = std::max(first.last_touched_any, second.last_touched_any);
         ret.locked_for_data_gen = std::max(first.locked_for_data_gen, second.locked_for_data_gen);
         ret.is_ternary_resolvent = first.is_ternary_resolvent;
         ret.ttl = std::max(first.ttl, second.ttl);
@@ -403,7 +403,7 @@ public:
     {
         //assert(ps.size() > 2);
 
-        stats.last_touched = _introduced_at_conflict;
+        stats.last_touched_any = _introduced_at_conflict;
         assert(_ID > 0);
         stats.ID = _ID;
 
