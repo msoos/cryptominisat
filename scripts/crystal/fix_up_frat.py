@@ -71,7 +71,8 @@ create table `{table}` ( `clauseID` bigint(20) NOT NULL, `used_at` bigint(20) NO
             confl = n[1]
             if ID in cl_to_conflict:
                 print("ERROR: ID %d in cl_to_conflict already. Old value: %d new value: %d" % (ID, cl_to_conflict[ID], confl))
-                #exit(-1)
+                print("Likely, the issue is with `reloc` in FRAT, which is used in varreplacer. That is NOT understood by this system");
+                exit(-1)
             cl_to_conflict[ID] = confl
 
         if opts.verbose:
