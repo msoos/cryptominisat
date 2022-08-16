@@ -462,6 +462,8 @@ inline void VarReplacer::updateBin(
         //Delete&attach only once
         && (origLit1 < origLit2)
     ) {
+        //WARNING TODO beware, this make post-FRAT parsing for ML fail.
+        //we need a better mechanism than reloc, or we need to teach the tool reloc
         //solver->clauseID+1 is used and then unused immediately
         (*solver->frat)
         << reloc << i->get_ID() << solver->clauseID+1 << fin
