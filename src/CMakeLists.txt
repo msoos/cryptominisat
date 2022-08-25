@@ -55,7 +55,7 @@ endif()
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/GitSHA1.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp" @ONLY)
 
-if (SQLITE3_FOUND)
+if (STATS OR FINAL_PREDICTOR)
     if (NOT Python3_EXECUTABLE)
         MESSAGE(FATAL_ERROR "Unfortunately, the python interpreter is needed for statistics because of SQL text generation")
     endif()
@@ -224,7 +224,7 @@ if (BREAKID_LIBRARIES)
     SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${BREAKID_LIBRARIES})
 endif()
 
-if (SQLITE3_FOUND)
+if (STATS OR FINAL_PREDICTOR)
     SET(cryptoms_lib_files ${cryptoms_lib_files}
         sqlitestats.cpp
         ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp

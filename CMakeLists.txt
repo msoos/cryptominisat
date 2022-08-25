@@ -671,7 +671,7 @@ if (NOT NOMPI)
     endif(MPI_FOUND)
 endif()
 
-if (FINAL_PREDICTOR)
+if (FINAL_PREDICTOR OR STATS OR ENABLE_TESTING)
     find_package(Python3 COMPONENTS NumPy Interpreter Development REQUIRED)
     if (Python3_FOUND AND Python3_Interpreter_FOUND AND Python3_NumPy_FOUND)
         message(STATUS "Python 3 -- Python3_EXECUTABLE=${Python3_EXECUTABLE}")
