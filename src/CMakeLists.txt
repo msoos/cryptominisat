@@ -404,7 +404,7 @@ if (EMSCRIPTEN)
     set_target_properties(cryptominisat5_simple-bin
         PROPERTIES
         OUTPUT_NAME cryptominisat5_simple
-        LINK_FLAGS "-s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'  -s LINKABLE=1 -s EXPORT_ALL=1"
+        LINK_FLAGS "-s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'  -s LINKABLE=1 -s EXPORT_ALL=1 --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/pre.js"
     )
 
     SET_SOURCE_FILES_PROPERTIES(main_emscripten.cpp
