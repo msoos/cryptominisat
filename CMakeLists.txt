@@ -455,7 +455,6 @@ if (NOT ONLY_SIMPLE)
 endif()
 
 option(FINAL_PREDICTOR "Use final predictor" OFF)
-option(FINAL_PREDICTOR_BRANCH "Use final predictor" OFF)
 if (FINAL_PREDICTOR)
     message(STATUS "You HAVE to build xgboost and LightGBM with 'cmake -DBUILD_STATIC_LIB=ON -DUSE_OPENMP=OFF ..' for static linking")
     find_package(dmlc REQUIRED)
@@ -465,10 +464,6 @@ if (FINAL_PREDICTOR)
     NAMES _lightgbm lightgbm LightGBM
     REQUIRED)
     add_definitions( -DFINAL_PREDICTOR )
-endif()
-
-if (FINAL_PREDICTOR_BRANCH)
-    add_definitions( -DFINAL_PREDICTOR_BRANCH )
 endif()
 
 if (NOT NOSQLITE)
