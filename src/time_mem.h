@@ -48,6 +48,11 @@ static inline double realTimeSec() {
     return 0;
 }
 
+static inline double real_time_sec() {
+    return 0;
+}
+
+
 #else //Linux or POSIX
 #include <sys/time.h>
 #include <sys/resource.h>
