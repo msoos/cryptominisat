@@ -69,11 +69,13 @@ DLL_PUBLIC int start_solve(const char* input)
     lbool ret = solver->simplify();
 
     if (ret == l_True) {
+        cout << "c "<< endl << "c "<< endl;
         cout << "s SATISFIABLE" << endl;
-        solver->print_stats();
+        cout << "c conflicts: " << solver->get_sum_conflicts() << endl;
     } else if (ret == l_False) {
+        cout << "c "<< endl << "c "<< endl;
         cout << "s UNSATISFIABLE"<< endl;
-        solver->print_stats();
+        cout << "c conflicts: " << solver->get_sum_conflicts() << endl;
     }
 
     if (ret == l_True) {
@@ -91,11 +93,13 @@ DLL_PUBLIC int continue_solve()
     lbool ret = solver->solve();
 
     if (ret == l_True) {
+        cout << "c "<< endl << "c "<< endl;
         cout << "s SATISFIABLE" << endl;
-        solver->print_stats();
+        cout << "c conflicts: " << solver->get_sum_conflicts() << endl;
     } else if (ret == l_False) {
+        cout << "c "<< endl << "c "<< endl;
         cout << "s UNSATISFIABLE"<< endl;
-        solver->print_stats();
+        cout << "c conflicts: " << solver->get_sum_conflicts() << endl;
     }
 
     if (ret == l_True) {
