@@ -224,7 +224,7 @@ if (BREAKID_LIBRARIES)
     SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${BREAKID_LIBRARIES})
 endif()
 
-if (STATS OR FINAL_PREDICTOR)
+if (STATS)
     SET(cryptoms_lib_files ${cryptoms_lib_files}
         sqlitestats.cpp
         ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp

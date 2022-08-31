@@ -170,13 +170,12 @@ void Solver::set_sqlite(
     if (conf.verbosity >= 4) {
         cout << "c Connected to SQLite server" << endl;
     }
+    if (frat->enabled()) frat->set_sqlstats_ptr(sqlStats);
     #else
     std::cerr << "SQLite support was not compiled in, cannot use it. Exiting."
     << endl;
     std::exit(-1);
     #endif
-
-    if (frat->enabled()) frat->set_sqlstats_ptr(sqlStats);
 }
 
 void Solver::set_shared_data(SharedData* shared_data)
