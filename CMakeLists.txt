@@ -466,10 +466,6 @@ if (FINAL_PREDICTOR)
     add_definitions( -DFINAL_PREDICTOR )
 endif()
 
-if (NOSQLITE AND STATS)
-    MESSAGE(FATAL_ERROR "You must not set NOSQLITE for STATS")
-endif()
-
 if (STATS)
     find_package (SQLITE3 REQUIRED)
     MESSAGE(STATUS "OK, Found SQLITE3!")
