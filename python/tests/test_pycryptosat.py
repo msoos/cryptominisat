@@ -23,6 +23,7 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 from array import array as _array
+import os
 import sys
 import unittest
 import time
@@ -31,6 +32,7 @@ import time
 import pycryptosat
 from pycryptosat import Solver
 
+_MODULE_DIR = os.path.dirname(os.path.realpath(__file__))+os.path.sep
 
 def array(typecode, initializer=()):
     return _array(str(typecode), initializer)
@@ -160,7 +162,7 @@ class TestDump(unittest.TestCase):
                           self.solver.start_getting_small_clauses, 4)
 
     def test_one_dump(self):
-        with open("tests/test.cnf", "r") as x:
+        with open(_MODULE_DIR+"test.cnf", "r") as x:
             for line in x:
                 line = line.strip()
                 if "p" in line or "c" in line:
@@ -299,7 +301,8 @@ class TestSolveTimeLimit(unittest.TestCase):
 
     def get_clauses(self):
         cls = []
-        with open("tests/f400-r425-x000.cnf", "r") as f:
+        print(__file__)
+        with open(_MODULE_DIR+"f400-r425-x000.cnf", "r") as f:
             for line in f:
                 line = line.strip()
                 if len(line) == 0:
