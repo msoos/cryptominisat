@@ -301,7 +301,6 @@ class TestSolveTimeLimit(unittest.TestCase):
 
     def get_clauses(self):
         cls = []
-        print(__file__)
         with open(_MODULE_DIR+"f400-r425-x000.cnf", "r") as f:
             for line in f:
                 line = line.strip()
