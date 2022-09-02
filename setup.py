@@ -100,7 +100,7 @@ class TestCommand(Command):
         sys.path.append(path2)
         print("our sys.path is", sys.path)
 
-        import tests as tp
+        import python.tests as tp
         return tp.run()
 
 
