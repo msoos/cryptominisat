@@ -1,0 +1,16 @@
+#ranking
+rdb0.sum_uip1_per_time_ranking_rel
+rdb0.sum_props_per_time_ranking_rel
+rdb0.uip1_ranking_rel
+rdb0.prop_ranking_rel
+#
+# discounted and raw
+rdb0.props_made
+rdb0.uip1_used
+rdb0.discounted_props_made
+rdb0.discounted_props_made2
+rdb0.discounted_uip1_used
+rdb0.discounted_uip1_used2
+
+rdb0.glue
+rdb0.last_touched_diff
