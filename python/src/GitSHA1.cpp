@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#include "../src/GitSHA1.h"
+#include "../../src/GitSHA1.h"
 
 const char* CMSat::get_version_sha1()
 {
