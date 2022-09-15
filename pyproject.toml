@@ -3,5 +3,5 @@ requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pycryptosat-test"
+name = "pycryptosat"
 version = "5.11.0"
