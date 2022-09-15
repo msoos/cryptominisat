@@ -27,6 +27,11 @@ jobs:
       with:
         python-versions: 'cp36-cp36m cp37-cp37m'
         build-requirements: 'cython numpy'
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+       name: python-wheel-artifact
+       path: "dist/*-manylinux*.whl"
 #    - name: Publish wheels to PyPI
 #      env:
 #        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
