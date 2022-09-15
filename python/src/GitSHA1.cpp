@@ -30,7 +30,7 @@ const char* CMSat::get_version_sha1()
 
 const char* CMSat::get_version_tag()
 {
-    static const char myversion_tag[] = "5.11.0";
+    static const char myversion_tag[] = CMS_LIBRARY_VERSION;
     return myversion_tag;
 }
 

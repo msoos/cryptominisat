@@ -26,18 +26,9 @@
 import sys
 import os
 import platform
-from distutils.core import setup, Extension
+import setuptools
 import sysconfig
 from distutils.cmd import Command
-
-__PACKAGE_VERSION__ = "1.0.0"
-__LIBRARY_VERSION__ = "5.9.0"
-#os.environ["CC"] = "${CMAKE_C_COMPILER}"
-#os.environ["CXX"] = "${CMAKE_CXX_COMPILER}"
-
-#cconf = """${PY_C_CONFIG}""".split(" ")
-#is_apple = """${APPLE}"""
-
 
 def cleanup(dat):
     ret = []
@@ -49,9 +40,6 @@ def cleanup(dat):
             ret.append(elem)
 
     return ret
-
-#cconf = cleanup(cconf)
-# print "Extra C flags from python-config:", cconf
 
 
 def _init_posix(init):
@@ -104,18 +92,8 @@ class TestCommand(Command):
         return tp.run()
 
 
-__version__ = '@PROJECT_VERSION@'
-
-# needed because Mac doesn't make use of runtime_library_dirs
-extra_link_args = []
-if platform.system() == 'Darwin':
-    extra_link_args.append('-Wl,-rpath,')
-    # NOTE: below apparently could be obtained via: "xcrun --show-sdk-path"
-
-
-myclib = ('myclib', {'sources': [
-               ### picosat ####
-               "src/picosat/app.c",
+picosatlib = ('picosatlib', {
+    'sources': [
                "src/picosat/picogcnf.c",
                "src/picosat/picomcs.c",
                "src/picosat/picomus.c",
@@ -123,56 +101,45 @@ myclib = ('myclib', {'sources': [
                "src/picosat/version.c"],
     'language' : "c",
     'extra_compile_args' : [],
+    'include_dirs' : ["src/picosat/"]
     })
 
 
-modules = dict(
+modules = setuptools.Extension(
     name = "pycryptosat",
+    include_dirs = ["src/"],
     sources = ["python/src/pycryptosat.cpp",
                "python/src/GitSHA1.cpp",
                "src/bva.cpp",
                "src/cardfinder.cpp",
                "src/ccnr_cms.cpp",
                "src/ccnr.cpp",
-               "src/clauseallocator.cpp",
+                   "src/clauseallocator.cpp",
                "src/clausecleaner.cpp",
-               #"src/cl_predictors_abs.cpp",
-               #"src/cl_predictors_lgbm.cpp",
-               #"src/cl_predictors_py.cpp",
-               #"src/cl_predictors_xgb.cpp",
-               #"src/cms_bosphorus.cpp",
-               #"src/cms_breakid.cpp",
                "src/cnf.cpp",
-               #"src/community_finder.cpp",
                "src/completedetachreattacher.cpp",
                "src/cryptominisat_c.cpp",
                "src/cryptominisat.cpp",
                "src/datasync.cpp",
-               #"src/datasyncserver.cpp",
                "src/distillerbin.cpp",
                "src/distillerlitrem.cpp",
                "src/distillerlong.cpp",
                "src/distillerlongwithimpl.cpp",
                "src/frat.cpp",
-               #"src/fuzz.cpp",
                "src/gatefinder.cpp",
                "src/gaussian.cpp",
                "src/get_clause_query.cpp",
                "src/hyperengine.cpp",
                "src/intree.cpp",
-               #"src/ipasir.cpp",
                "src/lucky.cpp",
                "src/matrixfinder.cpp",
                "src/occsimplifier.cpp",
                "src/packedrow.cpp",
                "src/propengine.cpp",
                "src/reducedb.cpp",
-               "src/satzilla_features_calc.cpp",
-               "src/satzilla_features.cpp",
                "src/sccfinder.cpp",
                "src/searcher.cpp",
                "src/searchstats.cpp",
-               #"src/simple.cpp",
                "src/sls.cpp",
                "src/solutionextender.cpp",
                "src/solverconf.cpp",
@@ -180,51 +147,19 @@ modules = dict(
                "src/str_impl_w_impl.cpp",
                "src/subsumeimplicit.cpp",
                "src/subsumestrengthen.cpp",
-               #"src/toplevelgauss.cpp",
-               "src/vardistgen.cpp",
                "src/varreplacer.cpp",
                "src/xorfinder.cpp",
-               ### oracle ###
                "src/oracle/oracle.cpp",
-               ],
-    define_macros = [('LIBRARY_VERSION', '"' + __LIBRARY_VERSION__ + '"')],
+           ],
+    define_macros = [('CMS_LIBRARY_VERSION', '"5.11.0"')],
     extra_compile_args = ['-I../', '-Isrc/', '-std=c++17'],
-    #extra_link_args = extra_link_args,
     language = "c++",
-    #library_dirs=['.', '${PROJECT_BINARY_DIR}/lib', '${PROJECT_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}'],
-    #runtime_library_dirs=['${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}'],
-    #libraries = []
 )
 
-if platform.system() == 'Windows':
-    del modules['runtime_library_dirs']
 
-setup(
-    name = "pycryptosat",
-    version = __PACKAGE_VERSION__,
-    author = "Mate Soos",
-    author_email = "soos.mate@gmail.com",
-    url = "https://github.com/msoos/cryptominisat",
-    license = "MIT",
-    classifiers = [
-        "Development Status :: 4 - Beta",
-        "Intended Audience :: Developers",
-        "Operating System :: OS Independent",
-        "Programming Language :: C++",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
-        "License :: OSI Approved :: MIT License",
-        "Topic :: Utilities",
-    ],
-    ext_modules =  [Extension(**modules)],
-    description = "Bindings to CryptoMiniSat {} (a SAT solver)".\
-        format(__LIBRARY_VERSION__),
-#    py_modules = ['pycryptosat'],
-    libraries = [myclib],
-    long_description = open('python/README.rst').read(),
-    cmdclass={
-        'test': TestCommand
-    }
-
-)
-
+if __name__ == '__main__':
+    setuptools.setup(
+        ext_modules =  [modules],
+    #    py_modules = ['pycryptosat'],
+        libraries = [picosatlib],
+    )

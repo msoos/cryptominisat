@@ -1,0 +1,9 @@
+global-exclude *.json
+global-exclude *.timeout
+global-exclude *.in
+global-exclude *.txt
+graft python/src/
+graft src/
+graft src/picosat/
+prune src/predict/
+prune src/gpuShareLib/
