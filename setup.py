@@ -26,70 +26,8 @@
 import sys
 import os
 import platform
-import setuptools
+from setuptools import Extension, setup
 import sysconfig
-from distutils.cmd import Command
-
-def cleanup(dat):
-    ret = []
-    for elem in dat:
-        elem = elem.strip()
-        #if is_apple != "" and "-ldl" in elem:
-            #continue
-        if elem != "" and not "flto" in elem:
-            ret.append(elem)
-
-    return ret
-
-
-def _init_posix(init):
-    """
-    Forces g++ instead of gcc on most systems
-    credits to eric jones (eric@enthought.com) (found at Google Groups)
-    """
-    def wrapper(vars):
-        init(vars)
-
-        config_vars = sysconfig.get_config_vars()  # by reference
-        if config_vars["MACHDEP"].startswith("sun"):
-            # Sun needs forced gcc/g++ compilation
-            config_vars['CC'] = 'gcc'
-            config_vars['CXX'] = 'g++'
-
-        config_vars['CFLAGS'] = '-g -W -Wall -Wno-deprecated'
-        config_vars['OPT'] = '-g -W -Wall -Wno-deprecated'
-
-    return wrapper
-
-sysconfig._init_posix = _init_posix(sysconfig._init_posix)
-
-
-class TestCommand(Command):
-    """Call tests with the custom 'python setup.py test' command."""
-
-    user_options = []
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-    def run(self):
-
-        import os
-        import glob
-        print("our CWD is:", os.getcwd(), "files here: ", glob.glob("*"))
-        sys.path.append(os.getcwd())
-        path2 = os.path.join(os.getcwd(), "..")
-        path2 = os.path.join(path2, "lib")
-        path2 = os.path.normpath(path2)
-        print("path2 is:", path2)
-        sys.path.append(path2)
-        print("our sys.path is", sys.path)
-
-        import python.tests as tp
-        return tp.run()
 
 
 picosatlib = ('picosatlib', {
@@ -105,7 +43,7 @@ picosatlib = ('picosatlib', {
     })
 
 
-modules = setuptools.Extension(
+modules = Extension(
     name = "pycryptosat",
     include_dirs = ["src/"],
     sources = ["python/src/pycryptosat.cpp",
@@ -156,10 +94,8 @@ modules = setuptools.Extension(
     language = "c++",
 )
 
-
 if __name__ == '__main__':
-    setuptools.setup(
+    setup(
         ext_modules =  [modules],
-    #    py_modules = ['pycryptosat'],
         libraries = [picosatlib],
     )
