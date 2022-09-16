@@ -5,3 +5,20 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pycryptosat"
 version = "5.11.1"
+description = "Bindings to CryptoMiniSat, an advanced SAT solver"
+keywords = ["sat", "cryptography"]
+license = { file = "LICENSE.txt" }
+maintainers = [{name="Mate Soos", email="soos.mate@gmail.com"}]
+authors = [{name="Mate Soos", email="soos.mate@gmail.com"}]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: C++",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.5",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Utilities"
+    ]
+requires-python = ">=3.5"
+
