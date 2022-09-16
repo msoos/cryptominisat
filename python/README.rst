@@ -18,12 +18,10 @@ In order to compile, install the python developer tools:
 apt-get install python-dev
 ```
 
-After this, cmake then indicate that pycryptosat will be compiled:
+Then run
 
 ```
-cd cryptominisat/python
-make
-sudo make install
+python -m build
 ```
 
 Usage

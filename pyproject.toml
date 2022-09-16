@@ -21,4 +21,4 @@ classifiers = [
     "Topic :: Utilities"
     ]
 requires-python = ">=3.5"
-
+readme = "python/README.rst"
