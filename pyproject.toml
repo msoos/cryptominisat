@@ -4,4 +4,4 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pycryptosat"
-version = "5.11.0"
+version = "5.11.1"
