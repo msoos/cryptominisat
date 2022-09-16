@@ -484,7 +484,11 @@ bool DimacsParser<C, S>::parse_and_add_clause(C& in)
 }
 
 #ifdef ENABLE_BNN
-// b (lit1.. litn) 0 (weight1... weightn) 0 (output lit)
+// This parses a threshold constraint of the form:
+// b lit1..litn 0 cutoff 0 [output_lit]
+// where output_lit is optional and if missing is assumed to be TRUE
+// basically, lit1+lit2+litN >= cutoff  <=> output_lit=TRUE
+// where lit1 is 1 if it's TRUE and 0 otherwise
 template<class C, class S>
 bool DimacsParser<C, S>::parse_and_add_bnn_clause(C& in)
 {
@@ -531,7 +535,6 @@ bool DimacsParser<C, S>::parse_and_add_bnn_clause(C& in)
     // Line finished
     in.skipLine();
     lineNum++;
-//     cout << "out_var1:" << out_var << endl;
 
     solver->add_bnn_clause(lits, cutoff, out);
     bnn_clauses_added++;
