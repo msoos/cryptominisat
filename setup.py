@@ -89,7 +89,7 @@ modules = Extension(
                "src/xorfinder.cpp",
                "src/oracle/oracle.cpp",
            ],
-    define_macros = [('CMS_LIBRARY_VERSION', '"5.11.0"')],
+    define_macros = [('CMS_LIBRARY_VERSION', '"5.11.1"')],
     extra_compile_args = ['-I../', '-Isrc/', '-std=c++17'],
     language = "c++",
 )
