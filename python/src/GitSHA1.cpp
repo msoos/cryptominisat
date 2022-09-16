@@ -24,18 +24,18 @@ THE SOFTWARE.
 
 const char* CMSat::get_version_sha1()
 {
-    static const char myversion_sha1[] = "NOT-GIT";
+    static const char myversion_sha1[] = "python";
     return myversion_sha1;
 }
 
 const char* CMSat::get_version_tag()
 {
-    static const char myversion_tag[] = CMS_LIBRARY_VERSION;
+    static const char myversion_tag[] = "see-python-package-version";
     return myversion_tag;
 }
 
 const char* CMSat::get_compilation_env()
 {
-    static const char compilation_env[] = "UNKNOWN";
+    static const char compilation_env[] = "python";
     return compilation_env;
 }
