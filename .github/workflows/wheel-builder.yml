@@ -31,7 +31,9 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
        name: python-wheel-artifact
-       path: "dist/*-manylinux*.whl"
+       path: |
+         path: "dist/*-manylinux*.whl"
+         path: "dist/*.tar.gz"
 #    - name: Publish wheels to PyPI
 #      env:
 #        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
