@@ -86,7 +86,6 @@ extern "C" {
 using namespace CMSat;
 using std::cout;
 using std::endl;
-using std::variant;
 
 #ifdef USE_SQLITE3
 #include "sqlitestats.h"
@@ -2421,11 +2420,11 @@ void Solver::print_norm_stats(
     //OccSimplifier stats
     if (conf.perform_occur_based_simp) {
         if (conf.do_print_times)
-        print_stats_line("c OccSimplifier time"
-            , occsimplifier->get_stats().total_time(occsimplifier)
-            , stats_line_percent(occsimplifier->get_stats().total_time(occsimplifier) ,cpu_time)
-            , "% time"
-        );
+            print_stats_line("c OccSimplifier time"
+                , occsimplifier->get_stats().total_time(occsimplifier)
+                , stats_line_percent(occsimplifier->get_stats().total_time(occsimplifier) ,cpu_time)
+                , "% time"
+            );
         occsimplifier->get_stats().print_extra_times();
         occsimplifier->get_sub_str()->get_stats().print_short(this);
     }
