@@ -141,7 +141,7 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
         (!simplified && units_at < solver->nVarsOuter()) ||
         (simplified && units_at < solver->nVars())
     ) {
-        uint32_t v = units_at;
+        const uint32_t v = units_at;
         if (solver->value(v) != l_Undef) {
             tmp_cl.clear();
             tmp_cl.push_back(Lit(v, solver->value(v) == l_False));
