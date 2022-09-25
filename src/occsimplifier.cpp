@@ -1180,6 +1180,7 @@ bool OccSimplifier::eliminate_vars()
     var_to_picovar.clear();
     var_to_picovar.resize(solver->nVars(), 0);
     picolits_added = 0;
+    turned_off_irreg_gate = false;
 
     //Set-up
     double myTime = cpuTime();
@@ -1863,7 +1864,6 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(const vector<uint
 
         if (picosat == NULL) {
             picosat = picosat_init();
-            var_to_picovar.clear();
         }
 
         assert(picovars_used.empty());
@@ -3606,7 +3606,6 @@ void OccSimplifier::add_picosat_cls(
     map<int, Watched>& picosat_cl_to_cms_cl)
 {
     picosat_cl_to_cms_cl.clear();
-    var_to_picovar.clear();
     for(const auto& w: ws) {
         if (w.isClause()) {
             Clause& cl = *solver->cl_alloc.ptr(w.get_offset());
@@ -3639,10 +3638,11 @@ bool OccSimplifier::find_irreg_gate(
     , vec<Watched>& out_b
 ) {
     // Too expensive
-    if (picolits_added > 200*1000) {
-        if (solver->conf.verbosity) {
-            //cout << "c [occ-bve] turning off picosat-based irreg gate detection" << endl;
+    if (turned_off_irreg_gate || picolits_added > 200*1000) {
+        if (solver->conf.verbosity && !turned_off_irreg_gate) {
+            cout << "c [occ-bve] turning off picosat-based irreg gate detection" << endl;
         }
+        turned_off_irreg_gate = true;
         return false;
     }
     if (a.size() + b.size() > 100) return false;
@@ -3654,7 +3654,6 @@ bool OccSimplifier::find_irreg_gate(
     assert(picosat == NULL);
     picosat = picosat_init();
     int ret = picosat_enable_trace_generation(picosat);
-    picosat_adjust(picosat, 100);
     assert(ret != 0 && "Traces cannot be generated in PicoSAT, wrongly configured&built");
 
     map<int, Watched> a_map;
@@ -3668,17 +3667,18 @@ bool OccSimplifier::find_irreg_gate(
     ret = picosat_sat(picosat, 300);
     if (ret == PICOSAT_UNSATISFIABLE) {
         for(const auto& m: a_map) {
-//             cout << "Pico core contains: " << m.first << endl;
-            if (picosat_coreclause(picosat, m.first))
+            if (picosat_coreclause(picosat, m.first)) {
                 out_a.push(m.second);
+            }
         }
         for(const auto& m: b_map) {
-//             cout << "Pico core contains: " << m.first << endl;
-            if (picosat_coreclause(picosat, m.first))
+            if (picosat_coreclause(picosat, m.first)) {
                 out_b.push(m.second);
+            }
         }
 //         cout << "PicoSAT UNSAT for var: " << elim_lit << " core size: " << out_a.size() + out_b.size() << " vs: " << a.size()+b.size() << endl;
         found = true;
+        resolve_gate = true;
     }
     picosat_reset(picosat);
     picosat = NULL;
@@ -4661,6 +4661,7 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
 
     // see:  http://baldur.iti.kit.edu/sat/files/ex04.pdf
     bool gates = false;
+    resolve_gate = false;
     if (find_equivalence_gate(lit, poss, negs, gates_poss, gates_negs)) {
         gates = true;
     } else if (find_or_gate(lit, poss, negs, gates_poss, gates_negs)) {
@@ -4712,6 +4713,9 @@ bool OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
         if (!generate_resolvents(gates_poss, antec_negs, lit, limit)) {
             ret = false;
         } else if (!generate_resolvents(gates_negs, antec_poss, ~lit, limit)) {
+            ret = false;
+        } else if (resolve_gate &&
+            !generate_resolvents(gates_poss, gates_negs, lit, limit)) {
             ret = false;
         }
     } else {

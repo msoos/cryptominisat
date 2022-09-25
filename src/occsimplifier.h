@@ -505,6 +505,8 @@ private:
         vec<Watched>& out_b
     );
     void add_picosat_cls(const vec<Watched>& ws, const Lit elim_lit, map<int, Watched>& picosat_cl_to_cms_cl);
+    bool turned_off_irreg_gate = false;
+    bool resolve_gate;
     bool find_irreg_gate(
         Lit elim_lit,
         watch_subarray_const a,
