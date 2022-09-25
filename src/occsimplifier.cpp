@@ -3967,6 +3967,7 @@ bool OccSimplifier::find_ite_gate(
         std::sort(out_b.begin(), out_b.end(), sort_smallest_first(solver->cl_alloc));
     }
 
+    if (found) resolve_gate = true;
     return found;
 }
 
