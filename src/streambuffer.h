@@ -20,8 +20,6 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #ifndef STREAMBUFFER_H
 #define STREAMBUFFER_H
 
-static const unsigned chunk_limit = 148576;
-
 #include <stdio.h>
 #include <iostream>
 #include <iomanip>
@@ -29,7 +27,11 @@ static const unsigned chunk_limit = 148576;
 #include <string>
 #include <memory>
 #include <cmath>
+
 using std::numeric_limits;
+
+namespace CMSat {
+static const unsigned chunk_limit = 148576;
 
 #ifdef USE_ZLIB
 #include <zlib.h>
@@ -229,5 +231,7 @@ public:
         }
     }
 };
+
+}
 
 #endif //STREAMBUFFER_H

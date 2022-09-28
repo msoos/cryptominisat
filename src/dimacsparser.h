@@ -28,9 +28,19 @@ THE SOFTWARE.
 #include "streambuffer.h"
 #include <cstdlib>
 #include <cmath>
+#include <sstream>
+#include <iostream>
+#include <iomanip>
+#include <vector>
+#include <fstream>
+#include <complex>
+#include <cassert>
 
-using namespace CMSat;
 using std::vector;
+using std::cout;
+using std::endl;
+
+namespace CMSat {
 
 template <class C, class S>
 class DimacsParser
@@ -101,17 +111,6 @@ class DimacsParser
         #endif
 };
 
-#include <sstream>
-#include <iostream>
-#include <iomanip>
-#include <vector>
-#include <fstream>
-#include <complex>
-#include <cassert>
-
-using std::vector;
-using std::cout;
-using std::endl;
 
 template<class C, class S>
 DimacsParser<C, S>::DimacsParser(
@@ -688,6 +687,8 @@ bool DimacsParser<C, S>::parseIndependentSet(C& in)
         sampling_vars.push_back(var);
     }
     return true;
+}
+
 }
 
 #endif //DIMACSPARSER_H
