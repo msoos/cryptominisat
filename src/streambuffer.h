@@ -17,8 +17,7 @@ DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *******************************************************************************/
 
-#ifndef STREAMBUFFER_H
-#define STREAMBUFFER_H
+#pragma once
 
 #include <stdio.h>
 #include <iostream>
@@ -30,18 +29,20 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 using std::numeric_limits;
 
-namespace CMSat {
-static const unsigned chunk_limit = 148576;
-
 #ifdef USE_ZLIB
 #include <zlib.h>
+namespace CMSat {
 struct GZ {
     static inline int read(void* buf, size_t num, size_t count, gzFile f)
     {
         return gzread(f, buf, num*count);
     }
 };
+}
 #endif
+
+namespace CMSat {
+static const unsigned chunk_limit = 148576;
 
 struct FN {
     static inline int read(void* buf, size_t num, size_t count, FILE* f)
@@ -233,5 +234,3 @@ public:
 };
 
 }
-
-#endif //STREAMBUFFER_H

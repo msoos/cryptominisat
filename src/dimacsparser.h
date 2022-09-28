@@ -21,11 +21,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ******************************************************************************/
 
-#ifndef DIMACSPARSER_H
-#define DIMACSPARSER_H
+#pragma once
 
 #include <string.h>
 #include "streambuffer.h"
+#include "solvertypesmini.h"
 #include <cstdlib>
 #include <cmath>
 #include <sstream>
@@ -690,5 +690,3 @@ bool DimacsParser<C, S>::parseIndependentSet(C& in)
 }
 
 }
-
-#endif //DIMACSPARSER_H
