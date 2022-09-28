@@ -20,8 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef SOLVERCONF_H
-#define SOLVERCONF_H
+#pragma once
 
 #include <string>
 #include <vector>
@@ -519,5 +518,3 @@ class DLL_PUBLIC SolverConf
 };
 
 } //end namespace
-
-#endif //SOLVERCONF_H
