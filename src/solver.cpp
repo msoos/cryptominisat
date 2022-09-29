@@ -33,7 +33,6 @@ THE SOFTWARE.
 #include <complex>
 #include <locale>
 #include <random>
-#include <variant>
 
 #include "varreplacer.h"
 #include "time_mem.h"
@@ -5082,11 +5081,11 @@ void Solver::dump_cls_oracle(const string fname, const vector<OracleDat>& cs)
         const auto& c = cs[i];
         tmp.clear();
         if (c.which == 0) {
-            Clause& cl = *cl_alloc.ptr(std::get<ClOffset>(c.cl));
+            Clause& cl = *cl_alloc.ptr(c.off);
             for(auto const& l: cl) assert(l.var() < nVars());
             for(auto const& l: cl) tmp.push_back(orclit(l));
         } else {
-            const OracleBin& b = std::get<OracleBin>(c.cl);
+            const OracleBin& b = c.bin;
             assert(b.l1.var() < nVars());
             assert(b.l2.var() < nVars());
             tmp.push_back(orclit(b.l1));
@@ -5190,11 +5189,11 @@ bool Solver::sparsify()
         const auto& c = cs[i];
         tmp.clear();
         if (c.which == 0) {
-            Clause& cl = *cl_alloc.ptr(std::get<ClOffset>(c.cl));
+            Clause& cl = *cl_alloc.ptr(c.off);
             for(auto const& l: cl) assert(l.var() < nVars());
             for(auto const& l: cl) tmp.push_back(orclit(l));
         } else {
-            const OracleBin& b = std::get<OracleBin>(c.cl);
+            const OracleBin& b = c.bin;
             assert(b.l1.var() < nVars());
             assert(b.l2.var() < nVars());
             tmp.push_back(orclit(b.l1));
@@ -5223,11 +5222,11 @@ bool Solver::sparsify()
         tmp.clear();
         const auto& c = cs[i];
         if (c.which == 0) {
-            Clause& cl = *cl_alloc.ptr(std::get<ClOffset>(c.cl));
+            Clause& cl = *cl_alloc.ptr(c.off);
             for(auto const& l: cl) tmp.push_back(orclit(~l));
         } else {
-            tmp.push_back(orclit(~(std::get<OracleBin>(c.cl).l1)));
-            tmp.push_back(orclit(~(std::get<OracleBin>(c.cl).l2)));
+            tmp.push_back(orclit(~(c.bin.l1)));
+            tmp.push_back(orclit(~(c.bin.l2)));
         }
 
         auto ret = oracle.Solve(tmp, false, 600LL*1000LL*1000LL);
@@ -5242,15 +5241,15 @@ bool Solver::sparsify()
             oracle.SetAssumpLit(orclit(Lit(nVars()+i, false)), true);
             removed++;
             if (c.which == 0) {
-                Clause& cl = *cl_alloc.ptr(std::get<ClOffset>(c.cl));
+                Clause& cl = *cl_alloc.ptr(c.off);
                 assert(!cl.stats.marked_clause);
                 cl.stats.marked_clause = 1;
             } else {
                 removed_bin++;
-                Lit lit1 = std::get<OracleBin>(c.cl).l1;
-                Lit lit2 = std::get<OracleBin>(c.cl).l2;
-                findWatchedOfBin(watches, lit1, lit2, false, std::get<OracleBin>(c.cl).ID).mark_bin_cl();
-                findWatchedOfBin(watches, lit2, lit1, false, std::get<OracleBin>(c.cl).ID).mark_bin_cl();
+                Lit lit1 = c.bin.l1;
+                Lit lit2 = c.bin.l2;
+                findWatchedOfBin(watches, lit1, lit2, false, c.bin.ID).mark_bin_cl();
+                findWatchedOfBin(watches, lit2, lit1, false, c.bin.ID).mark_bin_cl();
                 binTri.irredBins--;
             }
         }

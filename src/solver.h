@@ -30,7 +30,6 @@ THE SOFTWARE.
 #include <utility>
 #include <string>
 #include <algorithm>
-#include <variant>
 
 #include "constants.h"
 #include "solvertypes.h"
@@ -49,7 +48,6 @@ namespace CMSat {
 using std::vector;
 using std::pair;
 using std::string;
-using std::variant;
 
 class VarReplacer;
 class ClauseCleaner;
@@ -348,6 +346,8 @@ class Solver : public Searcher
             OracleBin (const Lit _l1, const Lit _l2, const int32_t _ID):
                 l1(_l1), l2(_l2), ID(_ID) {}
 
+            OracleBin() {}
+
             Lit l1;
             Lit l2;
             int32_t ID;
@@ -355,14 +355,15 @@ class Solver : public Searcher
 
         struct OracleDat {
             OracleDat(vector<int>& _val, ClOffset _off) :
-                val(_val), cl(_off) {which = 0;}
+                val(_val), off(_off) {which = 0;}
             OracleDat(vector<int>& _val, OracleBin _bin) :
-                val(_val), cl(_bin) {which = 1;}
+                val(_val), bin(_bin) {which = 1;}
 
 
             vector<int> val;
+            ClOffset off;
+            OracleBin bin;
             int which;
-            variant<ClOffset, OracleBin> cl;
 
             bool operator<(const OracleDat& other) const {
                 return val < other.val;
