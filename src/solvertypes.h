@@ -81,7 +81,7 @@ inline std::string branch_type_to_string(const branch type)
 {
     switch(type) {
         case branch::vsids:
-            return "vsid";;
+            return "vsid";
 
         case branch::rand:
             return "rand";
