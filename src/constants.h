@@ -36,6 +36,7 @@ using std::numeric_limits;
 // #define SLOW_DEBUG
 
 #if defined(_MSC_VER)
+#include "cms_windows_includes.h"
 #define release_assert(a) \
     do { \
     __pragma(warning(push)) \
