@@ -914,12 +914,10 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
 
                 // Iterate on var_selected (instead of iterate on all vars in solver)
                 for (unsigned long i = 0; i < var_lits.size(); i++) {
-                    if (var_lits[i].sign() == false) {
-                        assert(var_lits[i].var() <= (uint32_t)self->cmsat->nVars());
-                        ban_solution.push_back(
-                            Lit(var_lits[i].var(), (model[var_lits[i].var()] == l_True) ? true : false)
-                        );
-                    }
+                    assert(var_lits[i].var() < (uint32_t)self->cmsat->nVars());
+                    ban_solution.push_back(
+                        Lit(var_lits[i].var(), (model[var_lits[i].var()] == l_True) ? true : false)
+                    );
                 }
 
                 // Ban current solution for the next run
