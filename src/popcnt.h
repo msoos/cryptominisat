@@ -23,9 +23,5 @@ THE SOFTWARE.
 #ifndef POPCNT__H
 #define POPCNT__H
 
-#ifdef _MSC_VER
-#  include <nmmintrin.h>
-#  define __builtin_popcountll _mm_popcnt_u64
-#endif
 
 #endif //POPCNT__H

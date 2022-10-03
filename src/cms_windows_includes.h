@@ -65,40 +65,15 @@ THE SOFTWARE.
 #endif
 
 //  https://gist.github.com/pps83/3210a2f980fd02bb2ba2e5a1fc4a2ef0
-//  int __builtin_clzll(unsigned long long x) {
-#define __builtin_clzll(x) (int)__lzcnt64(x)
-
-//  https://gist.github.com/pps83/3210a2f980fd02bb2ba2e5a1fc4a2ef0
 static inline int __builtin_ctzll(unsigned long long x) {
 	unsigned long ret;
 	_BitScanForward64(&ret, x);
 	return (int)ret;
 }
 
-//  https://clickhouse.com/codebrowser/ClickHouse/contrib/croaring/include/roaring/portability.h.html
-static inline int __builtin_popcountll(unsigned long long input_num) {
-	const uint64_t m1 = 0x5555555555555555; //binary: 0101...
-	const uint64_t m2 = 0x3333333333333333; //binary: 00110011..
-	const uint64_t m4 = 0x0f0f0f0f0f0f0f0f; //binary:  4 zeros,  4 ones ...
-	const uint64_t h01 = 0x0101010101010101; //the sum of 256 to the power of 0,1,2,3...
-	input_num -= (input_num >> 1) & m1;
-	input_num = (input_num & m2) + ((input_num >> 2) & m2);
-	input_num = (input_num + (input_num >> 4)) & m4;
-	return (input_num * h01) >> 56;
-}
-
-#define NO_DRUP 1
-#define NO_USE_ZLIB 1
-#define USE_OPENMP 1
-#define NO_USE_GAUSS 1
-#define NO_STATS_NEEDED 1
-#define NO_USE_MYSQL 1
-
+#include <nmmintrin.h>
+#define __builtin_popcountll _mm_popcnt_u64
 #define NO_DLL_EXPORT 1
-
-#define HAVE_OPENMP 1
-
-#define USE_M4RI 1
 
 //  picosat
 #define isatty(x) _isatty(x)
