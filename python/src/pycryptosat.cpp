@@ -868,7 +868,7 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
     if (!parse_clause(self, var_selected, var_lits)) {
         return 0;
     }
-    if (var_selected.empty()) {
+    if (var_lits.empty()) {
         PyErr_SetString(PyExc_SystemError, "var_selected must not be empty. Projecting over an empty array is not permitted.");
         return NULL;
     }
