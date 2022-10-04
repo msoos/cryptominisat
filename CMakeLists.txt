@@ -540,7 +540,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND NOT EMSCRIPTEN AND NOT ONLY_SIMPLE)
 
         INSTALL(
             FILES ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5.1
-            DESTINATION ${CMAKE_INSTALL_PREFIX}/man/man1)
+            DESTINATION ${CMAKE_INSTALL_PREFIX}/share/man/man1)
 
         message(STATUS "Manpage will be created and installed")
     else()
