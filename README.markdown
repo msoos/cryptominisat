@@ -1,10 +1,6 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Liunux&Mac build](https://travis-ci.org/msoos/cryptominisat.svg?branch=master)](https://travis-ci.org/msoos/cryptominisat)
 [![Windows build](https://ci.appveyor.com/api/projects/status/8d000iy63xu7eau5?svg=true)](https://ci.appveyor.com/project/msoos/cryptominisat)
 ![build](https://github.com/msoos/cryptominisat/workflows/build/badge.svg)
-[![Coverity](https://scan.coverity.com/projects/507/badge.svg)](https://scan.coverity.com/projects/507)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/f7b6a138a30c47378343fe2ef13d0f0d)](https://www.codacy.com/gh/msoos/cryptominisat/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=msoos/cryptominisat&amp;utm_campaign=Badge_Grade)
-[![Docker Hub](https://img.shields.io/badge/docker-latest-blue.svg)](https://hub.docker.com/r/msoos/cryptominisat/)
 
 
 CryptoMiniSat SAT solver
@@ -23,23 +19,7 @@ When citing, always reference our [SAT 2009 conference paper](https://link.sprin
 License
 -----
 
-Please read LICENSE.txt for a discussion. Everything that is needed to build by default is MIT licensed. If you specifically instruct the system it can build with M4RI and Bliss, which are both GLP. However, by default CryptoMiniSat will not build with these.
-
-
-Docker usage
------
-
-To run on file `myfile.cnf`:
-
-```
-cat myfile.cnf | docker run --rm -i msoos/cryptominisat
-```
-
-To run on the file `/home/myfolder/myfile.cnf.gz` by mounting it (may be faster):
-
-```
-docker run --rm -v /home/myfolder/myfile.cnf.gz:/f msoos/cryptominisat f
-```
+Everything that is needed to build by default is MIT licensed. If you specifically instruct the system it can build with M4RI and Bliss, which are both GPL. However, by default CryptoMiniSat will not build with these.
 
 
 Compiling in Linux
@@ -78,7 +58,7 @@ sudo make install
 Compiling in Windows
 -----
 
-You will need python installed, then for Visual Studio 2015:
+You will need python installed, then for Visual Studio 2022:
 
 ```
 C:\> [ download cryptominisat-version.zip ]
