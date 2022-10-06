@@ -60,8 +60,7 @@ configuration:
   - Release
 
 before_build:
-  - IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2017" ( SET CMAKE_GENERATOR="Visual Studio 15 2017 Win64")
-  - IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2015" ( SET CMAKE_GENERATOR="Visual Studio 14 2015 Win64")
+  - SET CMAKE_GENERATOR="Visual Studio 17 2022 x64"
   - echo "APPVEYOR_BUILD_WORKER_IMAGE:"
   - echo %APPVEYOR_BUILD_WORKER_IMAGE%
   - echo "cmake generator:"
