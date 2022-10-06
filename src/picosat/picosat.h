@@ -23,6 +23,8 @@ IN THE SOFTWARE.
 #ifndef picosat_h_INCLUDED
 #define picosat_h_INCLUDED
 
+#define TRACE
+
 /*------------------------------------------------------------------------*/
 
 #include <stdlib.h>
