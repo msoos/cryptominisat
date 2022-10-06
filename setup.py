@@ -90,6 +90,7 @@ modules = Extension(
                "src/oracle/oracle.cpp",
            ],
     extra_compile_args = ['-I../', '-Isrc/', '-std=c++17'],
+    define_macros=[("TRACE", "")],
     language = "c++",
 )
 
