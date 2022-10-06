@@ -38,7 +38,7 @@ picosatlib = ('picosatlib', {
                "src/picosat/picosat.c",
                "src/picosat/version.c"],
     'language' : "c",
-    'extra_compile_args' : [],
+    'extra_compile_args' : ["-DTRACE"],
     'include_dirs' : ["src/picosat/"]
     })
 
