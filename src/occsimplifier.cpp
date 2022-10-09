@@ -1924,6 +1924,7 @@ void OccSimplifier::find_equiv_subformula(
         empty_vars_set.insert(v);
     }
 
+    // Clean out
     set<uint32_t> sampl_vars_set;
     for(uint32_t& v: sampl_vars) {
         assert(v < solver->nVarsOutside());
@@ -1941,6 +1942,7 @@ void OccSimplifier::find_equiv_subformula(
         sampl_vars_set.insert(v);
     }
 
+    // Find empties
     uint32_t mirror = 0;
     uint32_t empty_occ = 0;
     for(auto& v: sampl_vars_set) {
@@ -1965,6 +1967,7 @@ void OccSimplifier::find_equiv_subformula(
         }*/
     }
 
+    // Replace what we were given with cleaned + empty removed
     sampl_vars.clear();
     for(auto const& v: sampl_vars_set) {
         if (empty_vars_set.find(v) == empty_vars_set.end())
