@@ -28,7 +28,13 @@ import os
 import platform
 from setuptools import Extension, setup
 import sysconfig
+import toml
+import pathlib
 
+def _parse_toml(pyproject_path):
+    pyproject_text = pyproject_path.read_text()
+    pyproject_data = toml.loads(pyproject_text)
+    return pyproject_data['project']['version']
 
 picosatlib = ('picosatlib', {
     'sources': [
@@ -43,58 +49,63 @@ picosatlib = ('picosatlib', {
     })
 
 
-modules = Extension(
-    name = "pycryptosat",
-    include_dirs = ["src/"],
-    sources = ["python/src/pycryptosat.cpp",
-               "python/src/GitSHA1.cpp",
-               "src/bva.cpp",
-               "src/cardfinder.cpp",
-               "src/ccnr_cms.cpp",
-               "src/ccnr.cpp",
+def gen_modules(version):
+    modules = Extension(
+        name = "pycryptosat",
+        include_dirs = ["src/"],
+        sources = ["python/src/pycryptosat.cpp",
+                   "python/src/GitSHA1.cpp",
+                   "src/bva.cpp",
+                   "src/cardfinder.cpp",
+                   "src/ccnr_cms.cpp",
+                   "src/ccnr.cpp",
                    "src/clauseallocator.cpp",
-               "src/clausecleaner.cpp",
-               "src/cnf.cpp",
-               "src/completedetachreattacher.cpp",
-               "src/cryptominisat_c.cpp",
-               "src/cryptominisat.cpp",
-               "src/datasync.cpp",
-               "src/distillerbin.cpp",
-               "src/distillerlitrem.cpp",
-               "src/distillerlong.cpp",
-               "src/distillerlongwithimpl.cpp",
-               "src/frat.cpp",
-               "src/gatefinder.cpp",
-               "src/gaussian.cpp",
-               "src/get_clause_query.cpp",
-               "src/hyperengine.cpp",
-               "src/intree.cpp",
-               "src/lucky.cpp",
-               "src/matrixfinder.cpp",
-               "src/occsimplifier.cpp",
-               "src/packedrow.cpp",
-               "src/propengine.cpp",
-               "src/reducedb.cpp",
-               "src/sccfinder.cpp",
-               "src/searcher.cpp",
-               "src/searchstats.cpp",
-               "src/sls.cpp",
-               "src/solutionextender.cpp",
-               "src/solverconf.cpp",
-               "src/solver.cpp",
-               "src/str_impl_w_impl.cpp",
-               "src/subsumeimplicit.cpp",
-               "src/subsumestrengthen.cpp",
-               "src/varreplacer.cpp",
-               "src/xorfinder.cpp",
-               "src/oracle/oracle.cpp",
-           ],
-    extra_compile_args = ['-I../', '-Isrc/', '-std=c++17'],
-    define_macros=[("TRACE", "")],
-    language = "c++",
-)
+                   "src/clausecleaner.cpp",
+                   "src/cnf.cpp",
+                   "src/completedetachreattacher.cpp",
+                   "src/cryptominisat_c.cpp",
+                   "src/cryptominisat.cpp",
+                   "src/datasync.cpp",
+                   "src/distillerbin.cpp",
+                   "src/distillerlitrem.cpp",
+                   "src/distillerlong.cpp",
+                   "src/distillerlongwithimpl.cpp",
+                   "src/frat.cpp",
+                   "src/gatefinder.cpp",
+                   "src/gaussian.cpp",
+                   "src/get_clause_query.cpp",
+                   "src/hyperengine.cpp",
+                   "src/intree.cpp",
+                   "src/lucky.cpp",
+                   "src/matrixfinder.cpp",
+                   "src/occsimplifier.cpp",
+                   "src/packedrow.cpp",
+                   "src/propengine.cpp",
+                   "src/reducedb.cpp",
+                   "src/sccfinder.cpp",
+                   "src/searcher.cpp",
+                   "src/searchstats.cpp",
+                   "src/sls.cpp",
+                   "src/solutionextender.cpp",
+                   "src/solverconf.cpp",
+                   "src/solver.cpp",
+                   "src/str_impl_w_impl.cpp",
+                   "src/subsumeimplicit.cpp",
+                   "src/subsumestrengthen.cpp",
+                   "src/varreplacer.cpp",
+                   "src/xorfinder.cpp",
+                   "src/oracle/oracle.cpp",
+               ],
+        extra_compile_args = ['-I../', '-Isrc/', '-std=c++17'],
+        define_macros=[("TRACE", ""), ("CMS_FULL_VERSION", "\""+version+"\"")],
+        language = "c++",
+    )
+    return modules
 
 if __name__ == '__main__':
+    pyproject_path = pathlib.Path('pyproject.toml')
+    version = _parse_toml(pyproject_path)
+    modules = gen_modules(version)
     setup(
         ext_modules =  [modules],
         libraries = [picosatlib],

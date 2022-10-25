@@ -957,7 +957,11 @@ MODULE_INIT_FUNC(pycryptosat)
 
     // Add the version string so users know what version of CryptoMiniSat
     // they're using.
-    if (PyModule_AddStringConstant(m, "__version__", "${CMS_FULL_VERSION}") == -1) {
+    if (PyModule_AddStringConstant(m, "__version__", CMS_FULL_VERSION) == -1) {
+        Py_DECREF(m);
+        return NULL;
+    }
+    if (PyModule_AddStringConstant(m, "VERSION", CMS_FULL_VERSION) == -1) {
         Py_DECREF(m);
         return NULL;
     }
