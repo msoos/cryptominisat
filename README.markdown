@@ -128,14 +128,10 @@ Then there is no solution and the solver returns `s UNSATISFIABLE`.
 
 Incremental Python Usage
 -----
-The python module works with both Python 2 and Python 3. It must be compiled as per (notice "python-dev"):
+The python module works with both Python 3. Just execute:
 
 ```
-sudo apt-get install build-essential
-sudo apt-get install python3-setuptools python3-dev
-git clone https://github.com/msoos/cryptominisat
-python -m build
-pip install dist/pycryptosat-*.whl
+pip3 install pcryptosat
 ```
 
 You can then use it in incremental mode as:
@@ -161,7 +157,6 @@ True
 >>> sat, solution = s.solve()
 >>> print sat
 False
-
 ```
 
 We can also try to assume any variable values for a single solver run:
@@ -177,9 +172,15 @@ True
 >>> print solution
 (None, True, False, True)
 ```
+If you want to build the python module, you can do this:
 
-For more detailed usage instructions, please see the README.rst under the `python`
-directory.
+```
+sudo apt-get install build-essential
+sudo apt-get install python3-setuptools python3-dev
+git clone https://github.com/msoos/cryptominisat
+python -m build
+pip install dist/pycryptosat-*.whl
+```
 
 Incremental Library Usage
 -----
