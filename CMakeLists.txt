@@ -203,6 +203,7 @@ if (SANITIZE)
     SET( CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS}  -lasan -lubsan " )
     SET( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lasan -lubsan ")
     add_compile_options("-fsanitize=address")
+    # below warns on overflows EVEN when that's OK, because it's well-defined, disabling
     #    add_compile_options("-fsanitize=integer")
     add_compile_options("-fsanitize=undefined")
     add_compile_options("-fsanitize=null")
