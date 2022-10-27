@@ -133,9 +133,9 @@ The python module works with both Python 2 and Python 3. It must be compiled as 
 ```
 sudo apt-get install build-essential
 sudo apt-get install python3-setuptools python3-dev
-tar xzvf cryptominisat-version.tar.gz
-cd cryptominisat-version/python
-sudo make install
+git clone https://github.com/msoos/cryptominisat
+python -m build
+pip install dist/pycryptosat-*.whl
 ```
 
 You can then use it in incremental mode as:
