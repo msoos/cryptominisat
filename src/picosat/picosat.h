@@ -120,7 +120,7 @@ void picosat_set_verbosity (PicoSAT *, int new_verbosity_level);
  */
 void picosat_set_plain (PicoSAT *, int new_plain_value);
 
-/* Set default initial phase: 
+/* Set default initial phase:
  *
  *   0 = false
  *   1 = true
@@ -153,7 +153,7 @@ void picosat_set_default_phase_lit (PicoSAT *, int lit, int phase);
  */
 void picosat_reset_phases (PicoSAT *);
 
-/* Scores can be erased as well.  Note, however, that even after erasing 
+/* Scores can be erased as well.  Note, however, that even after erasing
  * scores and phases, learned clauses are kept.  In addition head tail
  * pointers for literals are not moved either.  So expect a difference
  * between calling the solver in incremental mode or with a fresh copy of
@@ -194,7 +194,7 @@ void picosat_set_seed (PicoSAT *, unsigned random_number_generator_seed);
  *
  * NOTE, trace generation code is not necessarily included, e.g. if you
  * configure PicoSAT with full optimzation as './configure.sh -O' or with
- 
+
  * you do not get any results by trying to generate traces.
  *
  * The return value is non-zero if code for generating traces is included
@@ -259,7 +259,7 @@ int picosat_failed_context (PicoSAT *, int lit);
 /* Returns the literal that assumes the current context or zero if the
  * outer context has been reached.
  */
-int picosat_context (PicoSAT *);	
+int picosat_context (PicoSAT *);
 
 /* Closes the current context and recycles the literal generated for
  * assuming this context.  The return value is the literal for the new
@@ -330,7 +330,7 @@ void picosat_print (PicoSAT *, FILE *);
 /* You can add arbitrary many assumptions before the next 'picosat_sat'
  * call.  This is similar to the using assumptions in MiniSAT, except that
  * for PicoSAT you do not have to collect all your assumptions in a vector
- * yourself.  In PicoSAT you can add one after the other, to be used in the 
+ * yourself.  In PicoSAT you can add one after the other, to be used in the
  * next call to 'picosat_sat'.
  *
  * These assumptions can be interpreted as adding unit clauses with those
@@ -345,7 +345,7 @@ void picosat_print (PicoSAT *, FILE *);
  * internally until a call to 'picosat_add', 'picosat_assume', or a second
  * 'picosat_sat', following the first 'picosat_sat'.  The reason for keeping
  * them valid is to allow 'picosat_failed_assumption' to return correct
- * values.  
+ * values.
  *
  * Example:
  *
@@ -354,7 +354,7 @@ void picosat_print (PicoSAT *, FILE *);
  *   res = picosat_sat (1000);  // assumes 1 and -2 to hold
  *                              // 1000 decisions max.
  *
- *   if (res == PICOSAT_UNSATISFIABLE) 
+ *   if (res == PICOSAT_UNSATISFIABLE)
  *     {
  *       if (picosat_failed_assumption (1))
  *         // unit clause '1 0' was necessary to derive UNSAT
@@ -547,7 +547,7 @@ const int * picosat_maximal_satisfiable_subset_of_assumptions (PicoSAT *);
  * It could be beneficial to set the default phase of assumptions
  * to true (positive).  This might speed up the computation.
  */
-const int * 
+const int *
 picosat_next_maximal_satisfiable_subset_of_assumptions (PicoSAT *);
 
 /* Similarly we can iterate over all minimal correcting assumption sets.
@@ -592,7 +592,7 @@ picosat_humus (PicoSAT *,
  * 'picosat_sat' also returns 'SATISFIABLE'. If this function
  * 'picosat_changed' returns '0', then the assignment to the old variables
  * is guaranteed to not have changed.  Otherwise it might have changed.
- * 
+ *
  * The return value to this function is only valid until new clauses are
  * added through 'picosat_add', an assumption is made through
  * 'picosat_assume', or again 'picosat_sat' is called.  This is the same
@@ -621,7 +621,7 @@ int picosat_changed (PicoSAT *);
 /* This function determines whether the i'th added original clause is in the
  * core.  The 'i' is the return value of 'picosat_add', which starts at zero
  * and is incremented by one after a original clause is added (that is after
- * 'picosat_add (0)').  For the index 'i' the following has to hold: 
+ * 'picosat_add (0)').  For the index 'i' the following has to hold:
  *
  *   0 <= i < picosat_added_original_clauses ()
  */

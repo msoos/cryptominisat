@@ -106,7 +106,7 @@ namespace CMSat {
          * Because the elapsed CPU time depends on both the number of
          * threads, and the activity of these threads, the elapsed time
          * can wildly differ from wall clock time.
-         * 
+         *
          * \pre max_time >= 0
          */
         void set_max_time(double max_time);
