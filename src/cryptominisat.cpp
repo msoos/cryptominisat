@@ -1525,9 +1525,9 @@ DLL_PUBLIC std::vector<uint32_t> SATSolver::remove_definable_by_irreg_gate(const
 }
 
 DLL_PUBLIC void SATSolver::find_equiv_subformula(
-    std::vector<uint32_t>& sampl_vars, std::vector<uint32_t>& empty_vars, const bool mirror)
+    std::vector<uint32_t>& sampl_vars, std::vector<uint32_t>& empty_vars)
 {
-    return data->solvers[0]->find_equiv_subformula(sampl_vars, empty_vars, mirror);
+    return data->solvers[0]->find_equiv_subformula(sampl_vars, empty_vars);
 }
 
 DLL_PUBLIC lbool SATSolver::find_fast_backw(FastBackwData fast_backw)

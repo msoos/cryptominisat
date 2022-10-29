@@ -4784,10 +4784,10 @@ vector<uint32_t> Solver::remove_definable_by_irreg_gate(const vector<uint32_t>& 
 }
 
 void Solver::find_equiv_subformula(
-    vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars, const bool mirror_empty)
+    vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars)
 {
     if (!okay()) return;
-    return occsimplifier->find_equiv_subformula(sampl_vars, empty_vars, mirror_empty);
+    return occsimplifier->find_equiv_subformula(sampl_vars, empty_vars);
 }
 
 bool Solver::remove_and_clean_all() {

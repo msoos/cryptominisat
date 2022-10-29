@@ -79,9 +79,7 @@ extern "C" {
 using namespace CMSat;
 using std::cout;
 using std::endl;
-using std::sort;
 using std::unique;
-using std::array;
 
 //#define VERBOSE_DEBUG_VARELIM
 //#define VERBOSE_DEBUG_XOR_FINDER
@@ -1631,112 +1629,6 @@ uint32_t OccSimplifier::add_cls_to_picosat_definable(const Lit wsLit) {
     return added;
 }
 
-// check that (F | x = True) == (F | x = False)
-bool OccSimplifier::check_equiv_subformula(Lit lit)
-{
-    // Too expensive to check these
-    if (solver->watches[lit].size() + solver->watches[~lit].size() > 100) {
-        return false;
-    }
-
-    // This is not NECCESSARILY needed, due to subsumption & redundant clauses
-    if (solver->watches[lit].size() != solver->watches[~lit].size())
-        return false;
-
-    // Match binary clauses first
-    int num_bins = 0;
-    bool ok = true;
-    for(auto const& w: solver->watches[lit]) {
-        if (w.isBin() && !w.red()) {
-            seen[w.lit2().toInt()] = 1;
-            num_bins++;
-        }
-    }
-    for(auto const& w: solver->watches[~lit]) {
-        if (w.isBin() && !w.red()) {
-            if (seen[w.lit2().toInt()] == 0) {
-                ok = false;
-                break;
-            } else {
-                num_bins--;
-            }
-            seen[w.lit2().toInt()] = 0;
-        }
-    }
-    if (num_bins != 0) ok = false; // match must be exact
-
-    // Cleanup
-    for(auto const& w: solver->watches[lit]) {
-        if (w.isBin() && !w.red()) {
-            if (seen[w.lit2().toInt()] != 0) ok = false; // must match both
-            seen[w.lit2().toInt()] = 0;
-        }
-    }
-
-    if (!ok) return false;
-
-    // Match long clauses, mark covered ~lit clauses
-    equiv_subformula_cls.clear();
-    for(auto const& w: solver->watches[lit]) {
-        if (!w.isClause()) continue;
-        Clause* cl = solver->cl_alloc.ptr(w.get_offset());
-        if (cl->getRemoved() || cl->red()) continue;
-        assert(!cl->stats.marked_clause);
-
-        bool found = false;
-        for(auto const& w2: solver->watches[~lit]) {
-            if (!w2.isClause()) continue;
-            Clause* cl2 = solver->cl_alloc.ptr(w2.get_offset());
-            if (cl2->getRemoved() || cl2->red()) continue;
-            if (cl2->size() != cl->size()) continue;
-            if (cl2->abst != cl->abst) continue;
-
-            bool this_cl_ok = true;
-            for(uint32_t i = 0; i < cl->size(); i++) {
-                if ((*cl)[i] != (*cl2)[i]) {
-                    if ((*cl)[i] == ~(*cl2)[i] && (*cl)[i] == lit) {
-                        //cout << "*cl: " << *cl << " cl2: " << *cl2 << " lit: " << lit << endl;
-                        // the expected difference, on lit. ignore.
-                    } else {
-                        this_cl_ok = false;
-                        break;
-                    }
-                }
-            }
-            if (this_cl_ok) {
-                equiv_subformula_cls.push_back(std::make_pair(w.get_offset(), w2.get_offset()));
-                cl2->stats.marked_clause = true;
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            ok = false;
-            break;
-        }
-    }
-
-    // Check that the ~lit clauses have all beeen covered
-    // and clean up "marked_clause" markers
-    bool reverse_covered = true;
-    for(auto const& w2: solver->watches[~lit]) {
-        if (!w2.isClause()) continue;
-        Clause* cl2 = solver->cl_alloc.ptr(w2.get_offset());
-        if (cl2->getRemoved() || cl2->red()) continue;
-
-        if (!cl2->stats.marked_clause) {
-            reverse_covered = false;
-        }
-        cl2->stats.marked_clause = false;
-    }
-
-    if (ok && reverse_covered) {
-        elim_var_by_str(lit.var(), equiv_subformula_cls);
-        return true;
-    }
-    return false;
-}
-
 bool OccSimplifier::elim_var_by_str(uint32_t var, const vector<pair<ClOffset, ClOffset>>& cls)
 {
     Lit l(var, false);
@@ -1906,7 +1798,7 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(const vector<uint
 }
 
 void OccSimplifier::find_equiv_subformula(
-    vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars, bool mirror_empty)
+    vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars)
 {
     assert(solver->okay());
     assert(solver->prop_at_head());

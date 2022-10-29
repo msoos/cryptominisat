@@ -292,7 +292,7 @@ class Solver : public Searcher
         vector<Xor> get_recovered_xors(const bool xor_together_xors);
         vector<uint32_t> remove_definable_by_irreg_gate(const vector<uint32_t>& vars);
         void find_equiv_subformula(
-            vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars, const bool mirror_empty);
+            vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars);
 
         bool remove_and_clean_all();
         vector<Lit> get_toplevel_units_internal(bool outer_numbering) const;
