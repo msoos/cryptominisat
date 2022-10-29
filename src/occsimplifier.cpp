@@ -2656,6 +2656,7 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
                 return false;
             }
         } else {
+            if (!solver->okay()) return false;
             //We'd need to check sub1_ret and see if it subsumed an irred
             // then fix it up. Can't be bothered.
 //             if (!sub_str->backw_sub_str_with_impl(finalLits_ternary, sub1_ret)) {
