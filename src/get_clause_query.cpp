@@ -93,6 +93,7 @@ vector<uint32_t> GetClauseQuery::translate_sampl_set(
         for(uint32_t v: sampl_set) {
             v = solver->varReplacer->get_var_replaced_with_outer(v);
             v = solver->map_outer_to_inter(v);
+            if (solver->value(v) != l_Undef) continue;
             assert(solver->varData[v].removed == Removed::none);
             if (!solver->seen[v]) {
                 ret.push_back(v);
