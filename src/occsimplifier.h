@@ -49,7 +49,6 @@ using std::vector;
 using std::map;
 using std::set;
 using std::pair;
-using std::priority_queue;
 
 class ClauseCleaner;
 class SolutionExtender;

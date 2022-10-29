@@ -2509,9 +2509,7 @@ bool OccSimplifier::ternary_res()
     assert(cl_to_add_ternary.empty());
     assert(solver->prop_at_head());
     assert(cl_to_free_later.empty());
-    if (clauses.empty()) {
-        return solver->okay();
-    }
+    if (clauses.empty()) return solver->okay();
 
     double myTime = cpuTime();
     int64_t orig_ternary_res_time_limit = ternary_res_time_limit;
@@ -2579,6 +2577,7 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
 {
     assert(cl->size() == 3);
     assert(!cl->red());
+    assert(solver->okay());
 
     cl->is_ternary_resolved = 1;
     *limit_to_decrease -= 3;
