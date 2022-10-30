@@ -30,6 +30,7 @@
 #include <limits>
 #include <cassert>
 #include <functional>
+#include "../cms_windows_includes.h"
 
 #define BITS 64
 
