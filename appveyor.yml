@@ -60,7 +60,7 @@ configuration:
   - Release
 
 before_build:
-  - SET CMAKE_GENERATOR="Visual Studio 17 2022 x64"
+  - SET CMAKE_GENERATOR="Visual Studio 17 2022"
   - echo "APPVEYOR_BUILD_WORKER_IMAGE:"
   - echo %APPVEYOR_BUILD_WORKER_IMAGE%
   - echo "cmake generator:"
