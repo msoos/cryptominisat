@@ -1,4 +1,4 @@
-# pycryptosat: bindings to the CryptoMiniSat SAT solver
+# pycryptosatiniSat SAT solver
 
 This directory provides Python bindings to CryptoMiniSat on the C++ level,
 i.e. when importing pycryptosat, the CryptoMiniSat solver becomes part of the
@@ -100,3 +100,7 @@ absolute value corresponds to i\ :sup:`th` variable::
 
 This solution translates to: x\ :sub:`1` = x\ :sub:`4` = x\ :sub:`5` = True,
 x\ :sub:`2` = x\ :sub:`3` = False
+
+# Special options (e.g. LARGEMEM, etc)
+
+In case you need to e.g. have LARGEMEM, you must modify `setup.py` and add `'-DLARGE_OFFSETS'` to `extra_compile_args`. Similarly for other options.
