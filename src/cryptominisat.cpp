@@ -206,7 +206,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
 
         case 1: {
             //Minisat-like
-            conf.branch_strategy_setup = "vsids1";
+            conf.branch_strategy_setup = "vsids";
             conf.varElimRatioPerIter = 1;
             conf.restartType = Restart::geom;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
@@ -217,14 +217,14 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 2: {
-            conf.branch_strategy_setup = "vsidsx";
+            conf.branch_strategy_setup = "vsids";
 //             conf.polar_best_inv_every_n = 100;
             break;
         }
         case 3: {
             //Similar to CMS 2.9 except we look at learnt DB size insteead
             //of conflicts to see if we need to clean.
-            conf.branch_strategy_setup = "vsids1";
+            conf.branch_strategy_setup = "vsids";
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0.5;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0;
             conf.glue_put_lev0_if_below_or_eq = 0;
@@ -233,7 +233,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
         case 4: {
             //Similar to CMS 5.0
-            conf.branch_strategy_setup = "vsids1";
+            conf.branch_strategy_setup = "vsids";
             conf.varElimRatioPerIter = 0.4;
             conf.every_lev1_reduce = 0;
             conf.every_lev2_reduce = 0;
@@ -246,18 +246,18 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 5: {
-            conf.branch_strategy_setup = "vsids1";
+            conf.branch_strategy_setup = "vsids";
             conf.never_stop_search = true;
             break;
         }
         case 6: {
             //Maple with backtrack
-            conf.branch_strategy_setup = "vsids1";
+            conf.branch_strategy_setup = "vsids";
 //             conf.polar_stable_every_n = 10000;
             break;
         }
         case 7: {
-            conf.branch_strategy_setup = "vsids1";
+            conf.branch_strategy_setup = "vsids";
             conf.do_bva = false;
             conf.glue_put_lev0_if_below_or_eq = 2;
             conf.varElimRatioPerIter = 1;
@@ -268,24 +268,24 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
         case 8: {
             //Different glue limit
-            conf.branch_strategy_setup = "maple2";
+            conf.branch_strategy_setup = "vmtf";
             conf.glue_put_lev0_if_below_or_eq = 2;
             conf.glue_put_lev1_if_below_or_eq = 2;
             break;
         }
         case 9: {
-            conf.branch_strategy_setup = "vsids1";
+            conf.branch_strategy_setup = "vsids";
 //             conf.polar_stable_every_n = 1;
             break;
         }
         case 10: {
-            conf.branch_strategy_setup = "vsids1";
+            conf.branch_strategy_setup = "vsids";
             conf.polarity_mode = CMSat::PolarityMode::polarmode_pos;
 //             conf.polar_stable_every_n = 100000;
             break;
         }
         case 11: {
-            conf.branch_strategy_setup = "vsids1";
+            conf.branch_strategy_setup = "vsids";
             conf.varElimRatioPerIter = 1;
             conf.restartType = Restart::geom;
 
@@ -295,7 +295,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 12: {
-            conf.branch_strategy_setup = "maple1";
+            conf.branch_strategy_setup = "vmtf";
             conf.inc_max_temp_lev2_red_cls = 1.001;
 //             conf.polar_stable_every_n = 7;
 //             conf.polar_best_inv_every_n = 6;
@@ -315,7 +315,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
         case 14: {
             //Different glue limit
-            conf.branch_strategy_setup = "vsids1";
+            conf.branch_strategy_setup = "vsids";
             conf.do_bva = false;
             conf.doMinimRedMoreMore = 1;
             conf.glue_put_lev0_if_below_or_eq = 4;
@@ -352,7 +352,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 18: {
-            conf.branch_strategy_setup = "vsids1+vsids2";
+            conf.branch_strategy_setup = "vsids";
             conf.every_lev1_reduce = 0;
             conf.every_lev2_reduce = 0;
             conf.glue_put_lev1_if_below_or_eq = 0;
@@ -374,7 +374,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
 
         case 20: {
             //Luby
-            conf.branch_strategy_setup = "maple2";
+            conf.branch_strategy_setup = "vmtf";
             conf.restart_inc = 1.5;
             conf.restart_first = 100;
             conf.restartType = Restart::luby;
@@ -383,14 +383,14 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
 
         case 21: {
-            conf.branch_strategy_setup = "vsids2";
+            conf.branch_strategy_setup = "vsids";
             conf.glue_put_lev0_if_below_or_eq = 3;
             conf.glue_put_lev1_if_below_or_eq = 5;
             break;
         }
 
         case 22: {
-            conf.branch_strategy_setup = "maple1";
+            conf.branch_strategy_setup = "vmtf";
             conf.doMinimRedMoreMore = 0;
             conf.orig_global_timeout_multiplier = 5;
             conf.num_conflicts_of_search_inc = 1.15;
