@@ -261,7 +261,7 @@ else()
     # /ZI = include debug info
     # /Wall = all warnings
 
-    add_definitions(NGETRUSAGE)
+    add_definitions(-DNGETRUSAGE)
     add_compile_options("$<$<CONFIG:RELWITHDEBINFO>:/O2>")
     add_compile_options("$<$<CONFIG:RELWITHDEBINFO>:/ZI>")
 
