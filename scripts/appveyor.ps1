@@ -8,6 +8,6 @@ function Unzip
 }
 
 $wc = New-Object System.Net.WebClient
-$wc.DownloadFile("http://bit.ly/1JPHkL3", "C:\projects\cryptominisat\boost_1_59_0.zip")
+$wc.DownloadFile("https://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.zip", "C:\projects\cryptominisat\boost_1_80_0.zip")
 
 Unzip "C:\projects\cryptominisat\boost_1_59_0.zip" "C:\projects\cryptominisat"
