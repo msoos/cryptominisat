@@ -4,20 +4,17 @@ This directory provides Python bindings to CryptoMiniSat on the C++ level,
 i.e. when importing pycryptosat, the CryptoMiniSat solver becomes part of the
 Python process itself.
 
-## Compiling
-The pycryptosat python package compiles separately from the CryptoMiniSat library,
-so if you have special flags included with CryptoMiniSat, it will NOT be reflected
-in the python package.
+## Installing
 
-In order to compile, install the python developer tools:
+```
+pip install pycryptosat
+```
+
+## Compiling
+If you don't want to use the pip package, you can compile it as:
 
 ```
 apt-get install python-dev
-```
-
-Then run
-
-```
 python -m build
 ```
 
