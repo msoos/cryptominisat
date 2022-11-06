@@ -21,6 +21,11 @@ Then run
 python -m build
 ```
 
+To help with debug, you can also:
+```
+python setup.py bdist_wheel
+```
+
 ## Usage
 
 The `pycryptosat` module has one object, `Solver` that has two functions
