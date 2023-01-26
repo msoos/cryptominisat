@@ -23,6 +23,7 @@ THE SOFTWARE.
 #ifndef CCNR_H
 #define CCNR_H
 
+#include <cstdint>
 #include <string>
 #include <vector>
 #include "ccnr_mersenne.h"

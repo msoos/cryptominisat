@@ -25,6 +25,7 @@ THE SOFTWARE.
 
 #include "solvertypes.h"
 
+#include <cstdint>
 #include <vector>
 #include <set>
 #include <iostream>

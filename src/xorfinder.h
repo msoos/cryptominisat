@@ -23,6 +23,7 @@ THE SOFTWARE.
 #ifndef _XORFINDER_H_
 #define _XORFINDER_H_
 
+#include <cstdint>
 #include <vector>
 #include <set>
 #include <iostream>

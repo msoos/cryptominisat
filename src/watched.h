@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include "cloffset.h"
 #include "solvertypes.h"
 
+#include <cstdint>
 #include <limits>
 #include <string.h>
 

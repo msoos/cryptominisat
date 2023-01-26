@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 #include "watched.h"
 #include "Vec.h"
+#include <cstdint>
 #include <vector>
 
 namespace CMSat {

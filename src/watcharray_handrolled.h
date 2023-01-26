@@ -23,6 +23,7 @@ THE SOFTWARE.
 #ifndef __WATCHARRAY_H__
 #define __WATCHARRAY_H__
 
+#include <cstdint>
 #include <stdlib.h>
 #include "watched.h"
 #include <vector>

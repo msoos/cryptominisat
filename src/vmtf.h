@@ -22,6 +22,7 @@ THE SOFTWARE.
 
 #ifndef VMTF_H
 
+#include <cstdint>
 #include <vector>
 #include <cstdint>
 #include "constants.h"
