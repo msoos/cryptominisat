@@ -23,6 +23,7 @@ THE SOFTWARE.
 #ifndef _CLPREDICTORS_ABST_H__
 #define _CLPREDICTORS_ABST_H__
 
+#include <cstdint>
 #include <vector>
 #include <cassert>
 #include <string>

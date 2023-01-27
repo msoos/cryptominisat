@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include <cassert>
 #include <vector>
 #include <cstring>
+#include <cstdint>
 #include <sstream>
 #include <iomanip>
 

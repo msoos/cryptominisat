@@ -25,6 +25,7 @@ THE SOFTWARE.
 #define CLAUSE_H
 
 #include <cstdio>
+#include <cstdint>
 #include <vector>
 #include <sys/types.h>
 #include <string.h>

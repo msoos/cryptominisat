@@ -20,6 +20,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #ifndef Alg_h
 #define Alg_h
 
+#include <cstdint>
 #include <iostream>
 #include "solvertypes.h"
 #include "watched.h"

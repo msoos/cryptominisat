@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include "watched.h"
 #include "clause.h"
 #include "touchlist.h"
+#include <cstdint>
 #include <vector>
 using std::vector;
 

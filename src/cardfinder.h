@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include <set>
 #include <iostream>
 #include <algorithm>
+#include <cstdint>
 #include <set>
 #include <limits>
 #include "xor.h"

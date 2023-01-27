@@ -24,6 +24,8 @@ THE SOFTWARE.
 #ifndef __CL_ABSTRACTION__H__
 #define __CL_ABSTRACTION__H__
 
+#include <cstdint>
+
 typedef uint32_t cl_abst_type;
 static const int cl_abst_modulo = 29;
 
