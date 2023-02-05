@@ -3732,6 +3732,7 @@ vector<Xor> Solver::get_recovered_xors(const bool xor_together_xors)
 {
     vector<Xor> xors_ret;
     if (!okay()) return xors_ret;
+    if (!clear_gauss_matrices()) return xors_ret;
 
     lbool ret = execute_inprocess_strategy(false, "occ-xor");
     if (ret == l_False) return xors_ret;
