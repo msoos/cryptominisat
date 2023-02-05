@@ -72,9 +72,9 @@ class DimacsParser
         bool parseComments(C& in, const std::string& str);
         std::string stringify(uint32_t x) const;
         bool check_var(const uint32_t var);
+        bool parseWeight(C& in);
 
         #ifdef DEBUG_DIMACSPARSER_CMS
-        bool parseWeight(C& in);
         bool parse_solve_simp_comment(C& in, const bool solve);
         void write_solution_to_debuglib_file(const lbool ret) const;
         #endif
