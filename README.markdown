@@ -131,7 +131,7 @@ Incremental Python Usage
 The python module works with both Python 3. Just execute:
 
 ```
-pip3 install pcryptosat
+pip3 install pycryptosat
 ```
 
 You can then use it in incremental mode as:
