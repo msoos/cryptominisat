@@ -32,9 +32,9 @@ jobs:
       with:
        name: python-wheel-artifact
        path: dist/*
-#    - name: Publish wheels to PyPI
-#      env:
-#        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-#        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-#      run: |
-#        twine upload dist/*-manylinux*.whl
+    - name: Publish wheels to PyPI
+      env:
+        TWINE_USERNAME: "__token__"
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: |
+        twine upload dist/*
