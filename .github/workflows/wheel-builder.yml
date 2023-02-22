@@ -37,4 +37,4 @@ jobs:
         TWINE_USERNAME: "__token__"
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
-        twine upload dist/*
+        twine upload dist/pycryptosat-*manylinux*.whl
