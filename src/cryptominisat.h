@@ -216,7 +216,7 @@ namespace CMSat {
         std::vector<OrGate> get_recovered_or_gates();
         std::vector<ITEGate> get_recovered_ite_gates();
         std::vector<uint32_t> remove_definable_by_irreg_gate(const std::vector<uint32_t>& vars);
-        void find_equiv_subformula(std::vector<uint32_t>& sampl_vars, std::vector<uint32_t>& empty_vars);
+        void clean_sampl_and_get_empties(std::vector<uint32_t>& sampl_vars, std::vector<uint32_t>& empty_vars);
         std::vector<uint32_t> get_var_incidence();
         std::vector<uint32_t> get_lit_incidence();
         std::vector<uint32_t> get_var_incidence_also_red();

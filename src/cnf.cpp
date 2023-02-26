@@ -811,7 +811,7 @@ vector<uint32_t> CNF::get_outside_lit_incidence()
     //Map to outer
     vector<uint32_t> inc_outer(nVarsOuter()*2, 0);
     for(uint32_t i = 0; i < inc.size(); i ++) {
-        Lit outer = map_inter_to_outer(Lit::toLit(i));
+        const Lit outer = map_inter_to_outer(Lit::toLit(i));
         inc_outer[outer.toInt()] = inc[i];
     }
 
@@ -984,6 +984,7 @@ void CNF::check_no_zero_ID_bins() const
     }
 }
 
+// This requires occurrence lists to be linked in
 bool CNF::zero_irred_cls(const CMSat::Lit lit) const
 {
     for(auto const& w: watches[lit]) {

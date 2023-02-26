@@ -291,7 +291,7 @@ class Solver : public Searcher
         vector<pair<Lit, Lit> > get_all_binary_xors() const;
         vector<Xor> get_recovered_xors(const bool xor_together_xors);
         vector<uint32_t> remove_definable_by_irreg_gate(const vector<uint32_t>& vars);
-        void find_equiv_subformula(
+        void clean_sampl_and_get_empties(
             vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars);
 
         bool remove_and_clean_all();
