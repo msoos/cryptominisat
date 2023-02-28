@@ -328,43 +328,6 @@ cryptominisat = { git = "https://github.com/msoos/cryptominisat-rs", branch= "ma
 
 You can see an example project using CryptoMiniSat in Rust [here](https://github.com/msoos/caqe/).
 
-
-Preprocessor usage
------
-
-Run cryptominisat5 as:
-
-```
-./cryptominisat5 -p1 input.cnf simplified.cnf
-some_sat_solver simplified.cnf > output
-./cryptominisat5 -p2 output
-```
-
-where `some_sat_solver` is a SAT solver of your choice that outputs a solution in the format of:
-
-```
-s SATISFIABLE
-v [solution] 0
-```
-
-or
-
-```
-s UNSATISFIABLE
-```
-
-You can tune the schedule of simplifications by issuing `--sched "X,Y,Z..."`. The default schedule for preprocessing is:
-
-```
-handle-comps,scc-vrepl, cache-clean, cache-tryboth,sub-impl, intree-probe, probe,
-sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,occ-backw-sub-str,
-occ-xor, occ-clean-implicit, occ-bve, occ-bva, occ-gates,str-impl, cache-clean,
-sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,str-impl, sub-impl,
-sub-str-cls-with-bin, occ-backw-sub-str, occ-bve,check-cache-size, renumber
-```
-
-It is a good idea to put `renumber` as late as possible, as it renumbers the variables for memory usage reduction.
-
 Gauss-Jordan elimination
 -----
 Since CryptoMiniSat 5.8, Gauss-Jordan elimination is compiled into the solver by default. However, it will turn off automatically in case the solver observes GJ not to perform too well. To use Gaussian elimination, provide a CNF with xors in it (either in CNF or XOR+CNF form) and either run with default setup, or, tune it to your heart's desire:

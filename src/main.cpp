@@ -928,11 +928,7 @@ void Main::check_options_correctness()
             << " DIMACS with XOR extension" << endl << endl;
 
             cout
-            << "cryptominisat5 [options] inputfile [frat-trim-file]" << endl << endl;
-
-            cout << "Preprocessor usage:" << endl
-            << "  cryptominisat5 --preproc 1 [options] inputfile simplified-cnf-file" << endl << endl
-            << "  cryptominisat5 --preproc 2 [options] solution-file" << endl;
+            << "cryptominisat5 [options] inputfile [frat-file]" << endl << endl;
 
             cout << help_options_complicated << endl;
             cout << "Normal run schedules:" << endl;
@@ -946,9 +942,7 @@ void Main::check_options_correctness()
         if (vm.count("help"))
         {
             cout
-            << "USAGE 1: " << argv[0] << " [options] inputfile [frat-trim-file]" << endl
-            << "USAGE 2: " << argv[0] << " --preproc 1 [options] inputfile simplified-cnf-file" << endl
-            << "USAGE 2: " << argv[0] << " --preproc 2 [options] solution-file" << endl
+            << "USAGE: " << argv[0] << " [options] inputfile [frat-trim-file]" << endl
 
             << " where input is "
             #ifndef USE_ZLIB
