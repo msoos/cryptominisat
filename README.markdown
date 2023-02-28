@@ -328,6 +328,19 @@ cryptominisat = { git = "https://github.com/msoos/cryptominisat-rs", branch= "ma
 
 You can see an example project using CryptoMiniSat in Rust [here](https://github.com/msoos/caqe/).
 
+Preprocessing
+-----
+If you wish to use CryptoMiniSat as a preprocessor, we encourage you
+to try out our model counting preprocessing framework
+(Arjun)[https://www.github.com/meelgroup/arjun]. Arjun was conceived to
+minimize input formulas for model counting, but it can also be used for
+non-model-counting purposes. However, it cannot produce a solution to the
+original CNF given a solution to the simplified CNF. This current limitation
+will eventually be lifted for Arjun.
+
+Please see the README of Arjun for more details. The basic usage of Arjun is:
+`./arjun --renumber 0 original.cnf simplified.cnf`
+
 Gauss-Jordan elimination
 -----
 Since CryptoMiniSat 5.8, Gauss-Jordan elimination is compiled into the solver by default. However, it will turn off automatically in case the solver observes GJ not to perform too well. To use Gaussian elimination, provide a CNF with xors in it (either in CNF or XOR+CNF form) and either run with default setup, or, tune it to your heart's desire:
