@@ -297,28 +297,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "louvain-comms,"
         )
 
-        , simplify_schedule_external(
-            "scc-vrepl,"
-            "sub-impl,"
-            "intree-probe,"
-            "sub-str-cls-with-bin,distill-cls,distill-bins,"
-            "scc-vrepl,sub-impl,str-impl,sub-impl,"
-            "breakid,"
-            //occurrence based
-            "occ-backw-sub-str,occ-clean-implicit,occ-bve,"//occ-gates,"
-            "occ-bva,occ-ternary-res,occ-xor,card-find,"
-            //consolidate after OCC
-            "cl-consolidate,"
-            //strengthen again
-            "str-impl,sub-str-cls-with-bin,distill-cls,distill-bins,"
-            "scc-vrepl,"
-            //renumber then it's time for SLS
-            "renumber,"
-            "sub-impl,"
-            "bosphorus,"
-            "louvain-comms,"
-        )
-
         //Occur based simplification
         , perform_occur_based_simp(true)
         , do_strengthen_with_occur       (true)

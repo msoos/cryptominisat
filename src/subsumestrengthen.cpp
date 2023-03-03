@@ -540,26 +540,10 @@ bool SubsumeStrengthen::handle_added_long_cl(const bool verbose)
     ) {
         const ClOffset offs = simplifier->added_long_cl[i];
         Clause* cl = solver->cl_alloc.ptr(offs);
-        if (cl->freed() || cl->getRemoved())
-            continue;
-
+        if (cl->freed() || cl->getRemoved()) continue;
         cl->stats.marked_clause = 0;
-        if (!backw_sub_str_with_long(offs, stat)) {
-            goto end;
-        }
-
-//         if (cl->size() == 3 &&
-//             !cl->red() &&
-//             !simplifier->perform_ternary(cl, offs, stat))
-//         {
-//             goto end;
-//         }
-
-        if ((i&0xfff) == 0xfff
-            && solver->must_interrupt_asap()
-        ) {
-            goto end;
-        }
+        if (!backw_sub_str_with_long(offs, stat)) goto end;
+        if ((i&0xfff) == 0xfff && solver->must_interrupt_asap()) goto end;
     }
 
     end:
@@ -567,9 +551,7 @@ bool SubsumeStrengthen::handle_added_long_cl(const bool verbose)
     for(; i < simplifier->added_long_cl.size(); i ++) {
         ClOffset off = simplifier->added_long_cl[i];
         Clause* cl = solver->cl_alloc.ptr(off);
-        if (cl->freed() || cl->getRemoved())
-            continue;
-
+        if (cl->freed() || cl->getRemoved()) continue;
         cl->stats.marked_clause = 0;
     }
     simplifier->added_long_cl.clear();

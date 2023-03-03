@@ -434,7 +434,6 @@ class DLL_PUBLIC SolverConf
         uint32_t max_num_simplify_per_solve_call;
         string   simplify_schedule_startup;
         string   simplify_schedule_nonstartup;
-        string   simplify_schedule_external;
 
         //Simplification
         int      perform_occur_based_simp;

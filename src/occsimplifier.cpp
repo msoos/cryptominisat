@@ -849,17 +849,15 @@ uint32_t OccSimplifier::sum_irred_cls_longs_lits() const
     return sum;
 }
 
-//backward subsumes with added long and bin
-bool OccSimplifier::deal_with_added_long_and_bin(const bool verbose)
+//backward subsumes & strengthens with added long and bin
+bool OccSimplifier::sub_str_with_added_long_and_bin(const bool verbose)
 {
     assert(solver->okay());
     assert(solver->prop_at_head());
 
     while (!added_long_cl.empty() || !added_irred_bin.empty())
     {
-        if (!sub_str->handle_added_long_cl(verbose)) {
-            return false;
-        }
+        if (!sub_str->handle_added_long_cl(verbose)) return false;
         assert(solver->okay());
         assert(solver->prop_at_head());
 
@@ -869,9 +867,7 @@ bool OccSimplifier::deal_with_added_long_and_bin(const bool verbose)
             tmp_bin_cl[1] = added_irred_bin[i].second;
 
             Sub1Ret ret; //TODO use this in the stats
-            if (!sub_str->backw_sub_str_with_impl(tmp_bin_cl, ret)) {
-                return false;
-            }
+            if (!sub_str->backw_sub_str_with_impl(tmp_bin_cl, ret)) return false;
         }
         added_irred_bin.clear();
     }
@@ -969,7 +965,7 @@ bool OccSimplifier::clear_vars_from_cls_that_have_been_set()
         }
     }
 
-    if (!deal_with_added_long_and_bin(false)) {
+    if (!sub_str_with_added_long_and_bin(false)) {
         return false;
     }
 
@@ -1024,7 +1020,7 @@ bool OccSimplifier::simulate_frw_sub_str_with_added_cl_to_var()
     added_cl_to_var.clear();
 
     //here, we clean the marks on the clauses, even in case of timeout/abort
-    if (!deal_with_added_long_and_bin(false)) goto end;
+    if (!sub_str_with_added_long_and_bin(false)) goto end;
     SLOW_DEBUG_DO(check_no_marked_clauses());
 
     end:
@@ -1281,7 +1277,7 @@ bool OccSimplifier::eliminate_vars()
                 if (!clear_vars_from_cls_that_have_been_set()) goto end;
 
                 //SUB and STR for newly added long and short cls
-                if (!deal_with_added_long_and_bin(false)) goto end;
+                if (!sub_str_with_added_long_and_bin(false)) goto end;
 
                 // This is expensive, only do it if we are in Arjun's E mode
                 if (solver->conf.varelim_check_resolvent_subs
@@ -2042,7 +2038,7 @@ bool OccSimplifier::cl_rem_with_or_gates()
         }
     }
 
-    if (!deal_with_added_long_and_bin(true)) goto end;
+    if (!sub_str_with_added_long_and_bin(true)) goto end;
 
     end:
     solver->clean_occur_from_removed_clauses_only_smudged();
@@ -2187,7 +2183,7 @@ bool OccSimplifier::lit_rem_with_or_gates()
         }
         for(auto const& l: gate.lits) seen[l.toInt()] = 0;
     }
-    if (!deal_with_added_long_and_bin(true)) goto end;
+    if (!sub_str_with_added_long_and_bin(true)) goto end;
 
     end:
     solver->clean_occur_from_removed_clauses_only_smudged();
@@ -2535,7 +2531,7 @@ bool OccSimplifier::ternary_res()
         }
     }
 
-    if (!deal_with_added_long_and_bin(false)) {
+    if (!sub_str_with_added_long_and_bin(false)) {
         goto end;
     }
     assert(added_long_cl.empty());
@@ -2952,7 +2948,7 @@ bool OccSimplifier::backward_sub_str()
     }
 
     //Deal with added long and bin
-    if (!deal_with_added_long_and_bin(true)
+    if (!sub_str_with_added_long_and_bin(true)
         || solver->must_interrupt_asap()
     ) {
         goto end;
@@ -4920,7 +4916,7 @@ bool OccSimplifier::all_occ_based_lit_rem()
         }
     }
 
-    if (!deal_with_added_long_and_bin(false)) goto end;
+    if (!sub_str_with_added_long_and_bin(false)) goto end;
 
     end:
     solver->clean_occur_from_removed_clauses_only_smudged();
@@ -4971,17 +4967,8 @@ bool OccSimplifier::maybe_eliminate(const uint32_t var)
         occ_based_lit_rem(var, rem);
     }
 
-    if (solver->value(var) != l_Undef ||
-        !solver->okay()
-    ) {
-        return false;
-    }
-
-    if (!test_elim_and_fill_resolvents(var)
-        || *limit_to_decrease < 0
-    ) {
-        return false;  //didn't eliminate :(
-    }
+    if (solver->value(var) != l_Undef || !solver->okay()) return false;
+    if (!test_elim_and_fill_resolvents(var) || *limit_to_decrease < 0) return false;  //didn't eliminate :( }
     bvestats.triedToElimVars++;
 
     print_var_eliminate_stat(lit);

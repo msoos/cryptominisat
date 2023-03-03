@@ -268,7 +268,9 @@ public:
     /// Used ONLY for XOR, changes occur setup
     void sort_occurs_and_set_abst();
     vector<ClOffset> added_long_cl;
-    TouchList added_cl_to_var;
+    TouchList added_cl_to_var; // to perform forward-subsumption of clauses added as part of BVE
+                               // contains a list of literals that have been added as part of
+                               // the clauses that have been added as resolvents
     vector<uint32_t> n_occurs;
     TouchList removed_cl_with_var;
     vector<std::pair<Lit, Lit> > added_irred_bin;
@@ -313,11 +315,7 @@ private:
     struct Tri {
         Lit lits[3];
         uint32_t size = 0;
-
-        Tri () :
-            size(0)
-        {}
-
+        Tri () : size(0) {}
         Tri(const Tri & other)
         {
             memcpy(lits, other.lits, sizeof(Lit)*3);
@@ -454,7 +452,7 @@ private:
 
     TouchList   elim_calc_need_update;
     vector<ClOffset> cl_to_free_later;
-    bool        maybe_eliminate(const uint32_t x);
+    bool        maybe_eliminate(const uint32_t var);
     bool        forward_subsume_irred(
         const Lit lit,
         cl_abst_type abs,
@@ -480,7 +478,7 @@ private:
         const vec<Watched>& gates,
         const vec<Watched>& full_set,
         vec<Watched>& output);
-    bool deal_with_added_long_and_bin(const bool verbose = true);
+    bool sub_str_with_added_long_and_bin(const bool verbose = true);
     vector<Lit> tmp_bin_cl;
     vec<Watched> gates_poss;
     vec<Watched> gates_negs;
