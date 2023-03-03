@@ -422,10 +422,6 @@ if ((${CMAKE_SYSTEM_NAME} MATCHES "Linux") OR (${CMAKE_SYSTEM_NAME} MATCHES "Dar
     endif()
 endif()
 
-if (STATICCOMPILE)
-    set(Boost_USE_STATIC_LIBS ON)
-endif()
-
 if(NOT MSVC)
   set(DEF_INSTALL_CMAKE_DIR lib/cmake/cryptominisat5)
 endif()
