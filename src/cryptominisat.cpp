@@ -693,7 +693,7 @@ DLL_PUBLIC void SATSolver::set_greedy_undef()
     exit(-1);
 }
 
-DLL_PUBLIC void SATSolver::set_sampling_vars(vector<uint32_t>* sampl_vars)
+DLL_PUBLIC void SATSolver::set_sampling_vars(const vector<uint32_t>* sampl_vars)
 {
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];

@@ -128,7 +128,7 @@ namespace CMSat {
         void set_no_bve(); //No bounded variable elimination
         void set_bve(int bve);
         void set_greedy_undef(); //Try to set variables to l_Undef in solution
-        void set_sampling_vars(std::vector<uint32_t>* sampl_vars);
+        void set_sampling_vars(const std::vector<uint32_t>* sampl_vars);
         void set_timeout_all_calls(double secs); //max timeout on all subsequent solve() or simplify
         void set_up_for_scalmc(); //used to set the solver up for ScalMC configuration
         void set_up_for_arjun();
@@ -173,7 +173,7 @@ namespace CMSat {
         static const char* get_version(); //get solver version in string format
         static const char* get_version_sha1(); //get SHA1 version string of the solver
         static const char* get_compilation_env(); //get compilation environment string
-        std::string get_text_version_info();  //get printable version and copyright text
+        static std::string get_text_version_info();  //get printable version and copyright text
 
 
         ////////////////////////////

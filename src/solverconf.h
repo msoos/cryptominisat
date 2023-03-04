@@ -494,7 +494,7 @@ class DLL_PUBLIC SolverConf
         bool force_use_all_matrixes;
 
         //Sampling
-        std::vector<uint32_t>* sampling_vars;
+        const std::vector<uint32_t>* sampling_vars;
 
         //Timeouts
         double global_next_multiplier;
