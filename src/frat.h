@@ -414,7 +414,7 @@ private:
         }
     }
 
-    virtual Drat& operator<<(const char* str)
+    virtual Drat& operator<<(const char* str) override
     {
         #ifdef DEBUG_FRAT
         this->flush();
