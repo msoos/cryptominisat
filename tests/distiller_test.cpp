@@ -22,10 +22,10 @@ THE SOFTWARE.
 
 #include "gtest/gtest.h"
 
-#include "src/solver.h"
-#include "src/distillerlong.h"
-#include "src/distillerlitrem.h"
-#include "src/solverconf.h"
+#include "solver.h"
+#include "distillerlong.h"
+#include "distillerlitrem.h"
+#include "solverconf.h"
 using namespace CMSat;
 #include "test_helper.h"
 
