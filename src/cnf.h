@@ -361,9 +361,10 @@ public:
     #ifdef USE_TBUDDY
     void free_bdds(vector<Xor>& xors);
     #endif
+
+    size_t get_num_long_cls() const;
     size_t get_num_long_irred_cls() const;
     size_t get_num_long_red_cls() const;
-    size_t getNumLongClauses() const;
     void print_all_clauses() const;
     void print_watchlist_stats() const;
     bool zero_irred_cls(const Lit lit) const;
@@ -778,7 +779,7 @@ inline size_t CNF::get_num_long_red_cls() const
     return longRedCls.size();
 }
 
-inline uint64_t CNF::getNumLongClauses() const
+inline size_t CNF::get_num_long_cls() const
 {
     return longIrredCls.size() + longRedCls.size();
 }

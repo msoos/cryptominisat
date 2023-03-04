@@ -84,9 +84,7 @@ add_sanitize_flags()
 # endif()
 
 
-include_directories(
-    ${PROJECT_SOURCE_DIR}
-)
+include_directories( ${PROJECT_SOURCE_DIR} )
 include_directories(
     #${PROJECT_BINARY_DIR}/cmsat5-src
     ${PROJECT_BINARY_DIR}/include

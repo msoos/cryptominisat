@@ -236,7 +236,6 @@ void Solver::add_every_combination_xor(
     VERBOSE_PRINT("add_every_combination: " << lits);
 
     size_t at = 0;
-    size_t num = 0;
     vector<Lit> xorlits;
     tmp_xor_clash_vars.clear();
     Lit lastlit_added = lit_Undef;
@@ -271,10 +270,7 @@ void Solver::add_every_combination_xor(
         }
 
         add_xor_clause_inter_cleaned_cut(xorlits, attach, addDrat, red);
-        if (!ok)
-            break;
-
-        num++;
+        if (!ok) break;
     }
 }
 

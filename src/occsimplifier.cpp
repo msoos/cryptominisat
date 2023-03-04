@@ -2390,7 +2390,7 @@ bool OccSimplifier::setup()
     }
 
     //If too many clauses, don't do it
-    if (solver->getNumLongClauses() > 40ULL*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult
+    if (solver->get_num_long_cls() > 40ULL*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult
         || solver->litStats.irredLits > 100ULL*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult
     ) {
         if (solver->conf.verbosity) {

@@ -194,7 +194,7 @@ class Solver : public Searcher
 
         //State load/unload
 
-        uint64_t getNumLongClauses() const;
+        // Clauses
         bool add_clause_outer_copylits(const vector<Lit>& ps);
         bool add_xor_clause_inter(
             const vector< Lit >& lits
