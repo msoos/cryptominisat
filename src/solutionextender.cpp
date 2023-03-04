@@ -64,10 +64,7 @@ void SolutionExtender::extend()
 
     //Extend variables already set
     solver->varReplacer->extend_model_already_set();
-
-    if (simplifier) {
-        simplifier->extend_model(this);
-    }
+    if (simplifier) simplifier->extend_model(this);
 
     //clause has been added with "lit, ~lit" so var must be set
     for(size_t i = 0; i < solver->undef_must_set_vars.size(); i++) {

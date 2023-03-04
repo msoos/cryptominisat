@@ -223,7 +223,7 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
 }
 
 lbool PropEngine::bnn_prop(
-    const uint32_t bnn_idx, uint32_t level, Lit l, BNNPropType prop_t)
+    const uint32_t bnn_idx, uint32_t level, Lit /*l*/, BNNPropType prop_t)
 {
     BNN* bnn = bnns[bnn_idx];
     switch(prop_t) {

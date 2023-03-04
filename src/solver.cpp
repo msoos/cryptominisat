@@ -893,9 +893,9 @@ bool Solver::add_clause_outer(vector<Lit>& ps)
         std::exit(-1);
     }
 
-    ClauseStats stats;
-    stats.ID = ++clauseID;
-    *frat << origcl << stats.ID << ps << fin;
+    ClauseStats clstats;
+    clstats.ID = ++clauseID;
+    *frat << origcl << clstats.ID << ps << fin;
 
     #ifdef VERBOSE_DEBUG
     cout << "Adding clause " << ps << endl;
@@ -903,7 +903,7 @@ bool Solver::add_clause_outer(vector<Lit>& ps)
     const size_t origTrailSize = trail.size();
 
     if (!addClauseHelper(ps)) {
-        *frat << del << stats.ID << ps << fin;
+        *frat << del << clstats.ID << ps << fin;
         return false;
     }
 
@@ -911,7 +911,7 @@ bool Solver::add_clause_outer(vector<Lit>& ps)
     Clause *cl = add_clause_int(
         ps
         , false //redundant?
-        , &stats
+        , &clstats
         , true //yes, attach
         , NULL
         , true //add frat?

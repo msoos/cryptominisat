@@ -47,8 +47,6 @@ class EGaussian;
 class DistillerLong;
 
 using std::string;
-using std::cout;
-using std::endl;
 
 struct VariableVariance
 {
