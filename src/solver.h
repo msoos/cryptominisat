@@ -150,8 +150,6 @@ class Solver : public Searcher
         const SolverConf& getConf() const;
         void setConf(const SolverConf& conf);
         const BinTriStats& getBinTriStats() const;
-        size_t   get_num_long_irred_cls() const;
-        size_t   get_num_long_red_cls() const;
         size_t get_num_vars_elimed() const;
         uint32_t num_active_vars() const;
         void print_mem_stats() const;
@@ -195,9 +193,6 @@ class Solver : public Searcher
         void update_assumptions_after_varreplace();
 
         //State load/unload
-        template<typename A>
-        void parse_v_line(A* in, const size_t lineNum);
-        lbool load_solution_from_file(const string& fname);
 
         uint64_t getNumLongClauses() const;
         bool add_clause_outer_copylits(const vector<Lit>& ps);
@@ -509,11 +504,6 @@ inline void Solver::set_decision_var(const uint32_t var)
     insert_var_order_all(var);
 }
 
-inline uint64_t Solver::getNumLongClauses() const
-{
-    return longIrredCls.size() + longRedCls.size();
-}
-
 inline const SearchStats& Solver::get_stats() const
 {
     return sumSearchStats;
@@ -522,16 +512,6 @@ inline const SearchStats& Solver::get_stats() const
 inline const SolveStats& Solver::get_solve_stats() const
 {
     return solveStats;
-}
-
-inline size_t Solver::get_num_long_irred_cls() const
-{
-    return longIrredCls.size();
-}
-
-inline size_t Solver::get_num_long_red_cls() const
-{
-    return longRedCls.size();
 }
 
 inline const SolverConf& Solver::getConf() const
