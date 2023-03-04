@@ -22,9 +22,6 @@ THE SOFTWARE.
 
 #include "gtest/gtest.h"
 
-#include <set>
-using std::set;
-
 #include "src/solver.h"
 #include "src/distillerlong.h"
 #include "src/distillerlitrem.h"
