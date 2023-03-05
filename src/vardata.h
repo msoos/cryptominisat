@@ -85,12 +85,18 @@ struct VarData
         ar << removed;
 
         //bitfield
-        ar << (bool)stable_polarity;
-        ar << (bool)saved_polarity;
-        ar << (bool)best_polarity;
-        ar << (bool)inv_polarity;
-        ar << (bool)is_bva;
-        ar << (bool)occ_simp_tried;
+        const bool my_stable_polarity = stable_polarity;
+        const bool my_saved_polarity  = saved_polarity;
+        const bool my_best_polarity   = best_polarity;
+        const bool my_inv_polarity    = inv_polarity;
+        const bool my_is_bva          = is_bva;
+        const bool my_occ_simp_tried  = occ_simp_tried;
+        ar << my_stable_polarity;
+        ar << my_saved_polarity;
+        ar << my_best_polarity;
+        ar << my_inv_polarity;
+        ar << my_is_bva;
+        ar << my_occ_simp_tried;
 
         #if defined(STATS_NEEDED)
         ar << community_num;

@@ -70,10 +70,14 @@ class PropBy
 
         template<class Archive>
         void save(Archive& ar, const unsigned int /*version*/) const {
-            ar << (uint32_t)red_step;
-            ar << (uint32_t)data1;
-            ar << (uint32_t)type;
-            ar << (uint32_t)data2;
+            const uint32_t my_red_step = red_step;
+            const uint32_t my_data1    = data1;
+            const uint32_t my_type     = type;
+            const uint32_t my_data2    = data2;
+            ar << my_red_step;
+            ar << my_data1;
+            ar << my_type;
+            ar << my_data2;
             ar << ID;
         }
 
