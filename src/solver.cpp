@@ -5312,7 +5312,8 @@ string Solver::serialize_solution_reconstruction_data() const
     boost::archive::text_oarchive ar(archive_stream);
     ar << ok;
     if (ok) {
-        ar << nVars();
+        uint32_t nvars = nVars();
+        ar << nvars;
         ar << assigns;
         ar << interToOuterMain;
         ar << outerToInterMain;
