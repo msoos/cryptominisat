@@ -35,7 +35,6 @@ THE SOFTWARE.
 #include <cmath>
 #include <functional>
 
-
 #include "popcnt.h"
 #include "occsimplifier.h"
 #include "clause.h"

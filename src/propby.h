@@ -26,10 +26,11 @@ THE SOFTWARE.
 #include "constants.h"
 #include "solvertypes.h"
 #include "clause.h"
+#include "cloffset.h"
+
+#include <boost/serialization/split_member.hpp>
 
 //#define DEBUG_PROPAGATEFROM
-
-#include "cloffset.h"
 
 namespace CMSat {
 
@@ -66,6 +67,26 @@ class PropBy
             , type(null_clause_t)
             , data2(0)
         {}
+
+        template<class Archive>
+        void save(Archive& ar, const unsigned int /*version*/) const {
+            ar << (uint32_t)red_step;
+            ar << (uint32_t)data1;
+            ar << (uint32_t)type;
+            ar << (uint32_t)data2;
+            ar << ID;
+        }
+
+        template<class Archive>
+        void load(Archive& ar, const unsigned int /*version*/) {
+            uint32_t tmp;
+            ar >> tmp; red_step = tmp;
+            ar >> tmp; data1 = tmp;
+            ar >> tmp; type = tmp;
+            ar >> tmp; data2 = tmp;
+            ar >> ID;
+        }
+        BOOST_SERIALIZATION_SPLIT_MEMBER()
 
 #ifndef LARGE_OFFSETS
         //Normal clause prop

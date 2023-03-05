@@ -26,7 +26,6 @@ THE SOFTWARE.
 #include <iostream>
 #include <fstream>
 
-using std::cout;
 using std::endl;
 
 using namespace CMSat;

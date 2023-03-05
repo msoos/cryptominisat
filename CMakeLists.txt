@@ -463,7 +463,7 @@ MESSAGE(STATUS "PROJECT_VERSION_PATCH: ${PROJECT_VERSION_PATCH}")
 
 option(ONLY_SIMPLE "Only build very simplistic executable -- no Boost needed" OFF)
 if (NOT ONLY_SIMPLE)
-    find_package( Boost 1.46 COMPONENTS program_options)
+    find_package( Boost 1.46 COMPONENTS program_options serialization)
 endif()
 
 option(FINAL_PREDICTOR "Use final predictor" OFF)

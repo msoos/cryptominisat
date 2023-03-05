@@ -1864,3 +1864,32 @@ DLL_PUBLIC void SATSolver::set_seed(const uint32_t seed)
         s.set_seed(seed);
     }
 }
+
+DLL_PUBLIC std::string SATSolver::serialize_solution_reconstruction_data() const
+{
+    Solver& s = *data->solvers[0];
+    return s.serialize_solution_reconstruction_data();
+}
+
+
+DLL_PUBLIC void* SATSolver::create_extend_solution_setup(std::string& dat)
+{
+    std::atomic<bool>* must_inter = new std::atomic<bool>;
+    Solver* solver = new CMSat::Solver(NULL, must_inter);
+    solver->create_from_solution_reconstruction_data(dat);
+
+   return (void*)solver;
+}
+
+DLL_PUBLIC pair<lbool, vector<lbool>> SATSolver::extend_solution(void* s, const vector<lbool>& simp_sol)
+{
+    CMSat::Solver* solver = (CMSat::Solver*)s;
+    return solver->extend_minimized_model(simp_sol);
+}
+
+DLL_PUBLIC void SATSolver::delete_extend_solution_setup(void* s)
+{
+    CMSat::Solver* solver = (CMSat::Solver*)s;
+    delete solver->get_must_interrupt_inter_asap_ptr();
+    delete solver;
+}

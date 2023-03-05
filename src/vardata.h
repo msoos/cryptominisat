@@ -23,6 +23,8 @@ THE SOFTWARE.
 #ifndef __VARDATA_H__
 #define __VARDATA_H__
 
+#include <boost/serialization/split_member.hpp>
+
 #include "constants.h"
 #include "propby.h"
 #include "avgcalc.h"
@@ -63,14 +65,65 @@ struct VarData
     uint8_t saved_polarity:1;
     uint8_t best_polarity:1;
     uint8_t inv_polarity:1;
-    bool propagated = false;
     uint8_t is_bva:1;
     uint8_t occ_simp_tried:1;
-
+    bool propagated = false;
 
     #if defined(STATS_NEEDED)
     uint32_t community_num = numeric_limits<uint32_t>::max();
     #endif
+
+    template<class Archive>
+    void save(Archive& ar, const unsigned int /*version*/) const {
+        ar << level;
+        ar << sublevel;
+        #ifdef WEIGHTED_SAMPLING
+        ar << weight;
+        #endif
+        ar << reason;
+        ar << assumption;
+        ar << removed;
+
+        //bitfield
+        ar << (bool)stable_polarity;
+        ar << (bool)saved_polarity;
+        ar << (bool)best_polarity;
+        ar << (bool)inv_polarity;
+        ar << (bool)is_bva;
+        ar << (bool)occ_simp_tried;
+
+        #if defined(STATS_NEEDED)
+        ar << community_num;
+        #endif
+        ar << propagated;
+    }
+
+    template<class Archive>
+    void load(Archive& ar, const unsigned int /*version*/) {
+        ar >> level;
+        ar >> sublevel;
+        #ifdef WEIGHTED_SAMPLING
+        ar >> weight;
+        #endif
+        ar >> reason;
+        ar >> assumption;
+        ar >> removed;
+
+        //bitfield
+        bool bit;
+        ar >> bit; stable_polarity = bit;
+        ar >> bit; saved_polarity = bit;
+        ar >> bit; best_polarity = bit;
+        ar >> bit; inv_polarity = bit;
+        ar >> bit; is_bva = bit;
+        ar >> bit; occ_simp_tried = bit;
+
+        #if defined(STATS_NEEDED)
+        ar >> community_num;
+        #endif
+        ar >> propagated;
+    }
+    BOOST_SERIALIZATION_SPLIT_MEMBER()
 
     #if defined(STATS_NEEDED_BRANCH) || defined(FINAL_PREDICTOR_BRANCH)
     uint32_t set = 0;

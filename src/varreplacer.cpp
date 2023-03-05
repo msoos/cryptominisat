@@ -783,6 +783,8 @@ bool VarReplacer::handleUpdatedClause(
 
 void VarReplacer::set_sub_var_during_solution_extension(uint32_t var, const uint32_t sub_var)
 {
+    assert(table.size() > sub_var);
+    assert(solver->model.size() > var);
     const lbool to_set = solver->model[var] ^ table[sub_var].sign();
     const uint32_t sub_var_inter = solver->map_outer_to_inter(sub_var);
     assert(solver->varData[sub_var_inter].removed == Removed::replaced);
@@ -805,14 +807,11 @@ void VarReplacer::extend_model(const uint32_t var)
 {
     assert(solver->model[var] != l_Undef);
     auto it = reverseTable.find(var);
-    if (it == reverseTable.end())
-        return;
+    if (it == reverseTable.end()) return;
 
     assert(it->first == var);
     for(const uint32_t sub_var: it->second)
-    {
         set_sub_var_during_solution_extension(var, sub_var);
-    }
 }
 
 void VarReplacer::extend_pop_queue(vector<Lit>& pop)

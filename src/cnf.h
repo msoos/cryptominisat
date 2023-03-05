@@ -41,6 +41,7 @@ THE SOFTWARE.
 #ifdef USE_TBUDDY
 #include <pseudoboolean.h>
 #endif
+#include <boost/serialization/vector.hpp>
 
 namespace CMSat {
 
@@ -362,6 +363,8 @@ public:
     void free_bdds(vector<Xor>& xors);
     #endif
 
+    template<class T> void unserialize(T& ar);
+    template<class T> void serialize(T& ar) const;
     size_t get_num_long_cls() const;
     size_t get_num_long_irred_cls() const;
     size_t get_num_long_red_cls() const;
@@ -782,6 +785,18 @@ inline size_t CNF::get_num_long_red_cls() const
 inline size_t CNF::get_num_long_cls() const
 {
     return longIrredCls.size() + longRedCls.size();
+}
+
+template<class T> void CNF::unserialize(T& ar)
+{
+    ar >> outer_to_with_bva_map;
+    ar >> num_bva_vars;
+}
+
+template<class T> void CNF::serialize(T& ar) const
+{
+    ar << outer_to_with_bva_map;
+    ar << num_bva_vars;
 }
 
 }

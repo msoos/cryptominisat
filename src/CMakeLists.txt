@@ -282,6 +282,7 @@ target_link_libraries(cryptominisat5
     LINK_PUBLIC ${cryptoms_lib_link_libs}
     LINK_PUBLIC ${LOUVAIN_COMMUNITIES_LIBRARIES}
     LINK_PUBLIC ${CMAKE_THREAD_LIBS_INIT}
+    Boost::serialization
 )
 
 if (NOT WIN32)

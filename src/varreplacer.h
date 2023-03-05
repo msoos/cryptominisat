@@ -27,6 +27,8 @@ THE SOFTWARE.
 #include <vector>
 #include <utility>
 #include <tuple>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/map.hpp>
 
 #include "constants.h"
 #include "solvertypes.h"
@@ -72,6 +74,9 @@ class VarReplacer
         Lit get_lit_replaced_with_outer(Lit lit) const;
         uint32_t get_var_replaced_with_outer(uint32_t var) const;
         bool var_is_replacing(const uint32_t var);
+
+        template<class T> void unserialize_tables(T& ar);
+        template<class T> void serialize_tables  (T& ar) const;
 
         vector<uint32_t> get_vars_replacing(uint32_t var) const;
         void updateVars(
@@ -321,6 +326,20 @@ inline Lit VarReplacer::get_lit_replaced_with_outer(Lit lit) const
 inline uint32_t VarReplacer::get_var_replaced_with_outer(uint32_t var) const
 {
     return table[var].var();
+}
+
+template<class T>
+void VarReplacer::serialize_tables(T& ar) const
+{
+    ar << table;
+    ar << reverseTable;
+}
+
+template<class T>
+void VarReplacer::unserialize_tables(T& ar)
+{
+    ar >> table;
+    ar >> reverseTable;
 }
 
 } //end namespace

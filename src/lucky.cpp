@@ -39,7 +39,6 @@ void CMSat::Lucky::doit()
     assert(solver->okay());
     assert(solver->decisionLevel() == 0);
 
-    bool ret = false;
     double myTime = cpuTime();
 
     if (check_all(true)) goto end;

@@ -33,6 +33,12 @@ THE SOFTWARE.
 #include <complex>
 #include <locale>
 #include <random>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/serialization/vector.hpp>
+
 
 #include "varreplacer.h"
 #include "time_mem.h"
@@ -5296,6 +5302,93 @@ bool Solver::sparsify()
         << " T: " << (cpuTime()-myTime) << " buildT: " << build_time);
 
     return solver->okay();
+}
+
+string Solver::serialize_solution_reconstruction_data() const
+{
+    assert(!detached_xor_clauses && "Otherwise we need to extend to detached XORs too");
+
+    std::ostringstream archive_stream;
+    boost::archive::text_oarchive ar(archive_stream);
+    ar << ok;
+    if (ok) {
+        ar << nVars();
+        ar << assigns;
+        ar << interToOuterMain;
+        ar << outerToInterMain;
+        ar << varData;
+        ar << minNumVars;
+        CNF::serialize(ar);
+        occsimplifier->serialize_blocked_cls(ar);
+        varReplacer->serialize_tables(ar);
+    }
+    return archive_stream.str();
+}
+
+void Solver::create_from_solution_reconstruction_data(const string& data)
+{
+    std::istringstream ss(data);
+    boost::archive::text_iarchive ar(ss);
+    ar >> ok;
+    if (ok) {
+        uint32_t nvars;
+        ar >> nvars;
+        new_vars(nvars);
+        ar >> assigns;
+        ar >> interToOuterMain;
+        ar >> outerToInterMain;
+        ar >> varData;
+        ar >> minNumVars;
+        CNF::unserialize(ar);
+        occsimplifier->unserialize_blocked_cls(ar);
+        varReplacer->unserialize_tables(ar);
+    }
+}
+
+pair<lbool, vector<lbool>> Solver::extend_minimized_model(const vector<lbool>& m)
+{
+    if (!ok) return make_pair(l_False, vector<lbool>());
+
+    verb_print(3, "Size of m: " << m.size());
+    verb_print(2, "Size of nVars(): " << nVars());
+
+    assert (get_num_bva_vars() == 0 && "Otherwise we'd need to map outer to outside. Not impossible, but can't be bothered right now");
+    assert(m.size() == nVars());
+
+    for (uint32_t i = 0; i < nVars(); i++) {
+        if (m[i] == l_Undef) {
+            cout << "ERROR: the solution given does NOT contain a value for variable: " << i+1
+                << " which was part of the minimized set of variables."
+                << " This var corresponds to external: " << map_inter_to_outer(Lit(i, false))
+                << endl;
+            exit(-1);
+        } else {
+            verb_print(2, "OK, var " << i+1 \
+                    << " set, which was part of the internal set of variables." \
+                    << " This var corresponds to external: " << map_outer_to_inter(Lit(i, false)));
+        }
+    }
+
+    // set values from model given
+    for(size_t i = 0; i < m.size(); i++) {
+        assigns[i] = m[i];
+        assert(varData[i].removed == Removed::none);
+    }
+
+    // checking
+    for(size_t i = 0; i < assigns.size(); i++) {
+        if (varData[i].removed == Removed::none) {
+            assert(assigns[i] != l_Undef);
+        } else {
+            assert(assigns[i] == l_Undef);
+        }
+    }
+    model = assigns;
+    updateArrayRev(model, interToOuterMain);
+
+    SolutionExtender extender(this, occsimplifier);
+    extender.extend();
+    return make_pair(l_True, model);
 }
 
 #ifdef STATS_NEEDED

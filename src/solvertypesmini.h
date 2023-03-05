@@ -91,6 +91,10 @@ public:
     {
         return Lit(data);
     }
+    template <class Archive>
+    void serialize(Archive& ar, const unsigned int /*version*/) {
+        ar & x;
+    }
 };
 
 static const Lit lit_Undef(var_Undef, false);  // Useful special constants.
@@ -146,6 +150,11 @@ public:
         uint8_t sel = (value << 1) | (b.value << 3);
         uint8_t v   = (0xFCFCF400 >> sel) & 3;
         return lbool(v);
+    }
+
+    template<class Archive>
+    void serialize(Archive& ar, const unsigned int /*version*/) {
+        ar & value;
     }
 
     constexpr uint8_t getValue() const { return value; }

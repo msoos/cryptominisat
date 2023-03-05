@@ -193,6 +193,9 @@ class Solver : public Searcher
         void update_assumptions_after_varreplace();
 
         //State load/unload
+        string serialize_solution_reconstruction_data() const;
+        void create_from_solution_reconstruction_data(const string& str);
+        pair<lbool, vector<lbool>> extend_minimized_model(const vector<lbool>& m);
 
         // Clauses
         bool add_clause_outer_copylits(const vector<Lit>& ps);

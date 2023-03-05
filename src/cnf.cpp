@@ -373,6 +373,7 @@ vector<uint32_t> CNF::build_outer_to_without_bva_map() const
     return ret;
 }
 
+// ONLY used during getting clauses for external uses. NOT sane
 vector<uint32_t> CNF::build_outer_to_without_bva_map_extended() const
 {
     assert(nVarsOutside() <= nVarsOuter());

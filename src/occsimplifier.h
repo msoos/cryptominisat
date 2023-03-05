@@ -32,6 +32,7 @@ THE SOFTWARE.
 #include <map>
 #include <iomanip>
 #include <fstream>
+#include <boost/serialization/vector.hpp>
 
 #include "clause.h"
 #include "solvertypes.h"
@@ -94,6 +95,14 @@ struct BlockedClauses {
 
     uint64_t size() const {
         return end-start;
+    }
+
+    template<class Archive>
+    void serialize(Archive& ar, const unsigned int /*version*/)
+    {
+        ar & start;
+        ar & end;
+        ar & toRemove;
     }
 
     uint64_t start;
@@ -261,9 +270,14 @@ public:
 
     const Stats& get_stats() const;
     const SubsumeStrengthen* get_sub_str() const;
+
+    //validity checking
     void check_elimed_vars_are_unassigned() const;
     void check_no_marked_clauses();
     bool getAnythingHasBeenBlocked() const;
+    void sanityCheckElimedVars() const;
+    void printOccur(const Lit lit) const;
+    void check_clauses_lits_ordered() const;
 
     /// Used ONLY for XOR, changes occur setup
     void sort_occurs_and_set_abst();
@@ -290,10 +304,10 @@ public:
     //Ternary resolution. Should be private but testing needs it to be public
     bool ternary_res();
 
-    //validity checking
-    void sanityCheckElimedVars() const;
-    void printOccur(const Lit lit) const;
-    void check_clauses_lits_ordered() const;
+    template<class T>
+    void serialize_blocked_cls  (T& ar) const;
+    template<class T>
+    void unserialize_blocked_cls(T& ar);
 
 private:
     friend class SubsumeStrengthen;
@@ -685,6 +699,20 @@ inline bool OccSimplifier::subsetReverse(const Clause& B) const
 inline const SubsumeStrengthen* OccSimplifier::get_sub_str() const
 {
     return sub_str;
+}
+
+template<class T>
+void OccSimplifier::unserialize_blocked_cls(T& ar)
+{
+    ar >> blkcls;
+    ar >> blockedClauses;
+}
+
+template<class T>
+void OccSimplifier::serialize_blocked_cls(T& ar) const
+{
+    ar << blkcls;
+    ar << blockedClauses;
 }
 
 } //end namespace

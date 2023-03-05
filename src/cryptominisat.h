@@ -248,6 +248,13 @@ namespace CMSat {
         void get_all_irred_clauses(std::vector<Lit>& ret);
         const std::vector<BNN*>& get_bnns() const;
 
+
+        // Solution reconstruction after minimization
+        std::string serialize_solution_reconstruction_data() const;
+        static void* create_extend_solution_setup(std::string& data);
+        static std::pair<lbool, std::vector<lbool>> extend_solution(void* s, const std::vector<lbool>& simp_sol);
+        static void delete_extend_solution_setup(void* s);
+
         /////////////////////
         // Backwards compatibility, implemented using the above "small clauses" functions
         void open_file_and_dump_irred_clauses(const char* fname);

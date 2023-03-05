@@ -1242,21 +1242,14 @@ void Searcher::print_order_heap()
 
 void Searcher::check_need_gauss_jordan_disable()
 {
-    uint32_t num_disabled = 0;
     for(uint32_t i = 0; i < gqueuedata.size(); i++) {
         auto& gqd = gqueuedata[i];
-        if (gqd.disabled) {
-            num_disabled++;
-            continue;
-        }
+        if (gqd.disabled) continue;
 
         if (conf.gaussconf.autodisable &&
             !conf.xor_detach_reattach &&
             gmatrices[i]->must_disable(gqd)
-        ) {
-            gqd.disabled = true;
-            num_disabled++;
-        }
+        ) gqd.disabled = true;
 
         gqd.reset();
         gmatrices[i]->update_cols_vals_set();

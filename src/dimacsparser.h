@@ -49,7 +49,7 @@ class DimacsParser
         DimacsParser(S* solver, const std::string* debugLib, unsigned _verbosity);
 
         template <class T> bool parse_DIMACS(
-            T input_stream,
+            T input_stpeam,
             const bool strict_header,
             uint32_t offset_vars = 0);
         uint64_t max_var = numeric_limits<uint64_t>::max();
