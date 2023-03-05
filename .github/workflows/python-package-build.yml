@@ -42,7 +42,7 @@ jobs:
       uses: RalfG/python-wheels-manylinux-build@v0.7.1
       with:
         build-requirements: 'cython numpy'
-        system-packages: 'lrzip-devel zlib-devel libboost-all-dev'
+        system-packages: 'zlib-devel boost-devel boost-progra-options boost-serialization'
     - name: Upload Artifacts
       uses: actions/upload-artifact@v2
       with:
