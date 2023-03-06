@@ -30,7 +30,7 @@ To build and install, issue:
 ```
 sudo apt-get install build-essential cmake
 # not required but very useful
-sudo apt-get install zlib1g-dev libboost-program-options-dev libsqlite3-dev
+sudo apt-get install zlib1g-dev libboost-program-options-dev libboost-serialization-dev
 tar xzvf cryptominisat-version.tar.gz
 cd cryptominisat-version
 mkdir build && cd build
