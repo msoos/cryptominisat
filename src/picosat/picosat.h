@@ -24,7 +24,7 @@ IN THE SOFTWARE.
 #define picosat_h_INCLUDED
 
 #undef TRACE
-#define TRACE
+#define TRACE ON
 
 /*------------------------------------------------------------------------*/
 
