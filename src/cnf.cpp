@@ -233,9 +233,9 @@ inline void CNF::updateWatch(
             }
         }
         if (!found) {
-            it->setBlockedLit(cl[2]);
+            it->setElimedLit(cl[2]);
         } else {
-            it->setBlockedLit(blocked_lit);
+            it->setElimedLit(blocked_lit);
         }
     }
 }

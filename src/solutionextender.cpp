@@ -89,34 +89,34 @@ inline bool SolutionExtender::satisfied(const vector< Lit >& lits) const
     return false;
 }
 
-//called with _outer_ variable in "blockedOn"
-void SolutionExtender::dummyBlocked(const uint32_t blockedOn)
+//called with _outer_ variable in "elimedOn"
+void SolutionExtender::dummyElimed(const uint32_t elimedOn)
 {
     #ifdef VERBOSE_DEBUG_SOLUTIONEXTENDER
     cout
-    << "dummy blocked lit (outer) "
-    << blockedOn + 1
+    << "dummy elimed lit (outer) "
+    << elimedOn + 1
     << endl;
     #endif
 
     #ifdef SLOW_DEBUG
-    const uint32_t blockedOn_inter = solver->map_outer_to_inter(blockedOn);
-    assert(solver->varData[blockedOn_inter].removed == Removed::elimed);
+    const uint32_t elimedOn_inter = solver->map_outer_to_inter(elimedOn);
+    assert(solver->varData[elimedOn_inter].removed == Removed::elimed);
     #endif
 
-    //Blocked clauses set its value already
-    if (solver->model_value(blockedOn) != l_Undef)
+    //Elimed clauses set its value already
+    if (solver->model_value(elimedOn) != l_Undef)
         return;
 
-    solver->model[blockedOn] = l_False;
+    solver->model[elimedOn] = l_False;
 
     //If var is replacing something else, it MUST be set.
-    if (solver->varReplacer->var_is_replacing(blockedOn)) {
-        solver->varReplacer->extend_model(blockedOn);
+    if (solver->varReplacer->var_is_replacing(elimedOn)) {
+        solver->varReplacer->extend_model(elimedOn);
     }
 }
 
-bool SolutionExtender::addClause(const vector<Lit>& lits, const uint32_t blockedOn)
+bool SolutionExtender::addClause(const vector<Lit>& lits, const uint32_t elimedOn)
 {
     #ifdef VERBOSE_DEBUG_SOLUTIONEXTENDER
     cout
@@ -126,16 +126,16 @@ bool SolutionExtender::addClause(const vector<Lit>& lits, const uint32_t blocked
     #endif
 
     #ifdef SLOW_DEBUG
-    const uint32_t blocked_on_inter = solver->map_outer_to_inter(blockedOn);
-    assert(solver->varData[blocked_on_inter].removed == Removed::elimed);
-    assert(contains_var(lits, blockedOn));
+    const uint32_t elimed_on_inter = solver->map_outer_to_inter(elimedOn);
+    assert(solver->varData[elimed_on_inter].removed == Removed::elimed);
+    assert(contains_var(lits, elimedOn));
     #endif
 
-    //Try to extend through setting variables that have been blocked but
+    //Try to extend through setting variables that have been elimed but
     //were not required to be set until now
     /*for(Lit l: lits) {
         if (solver->model_value(l) == l_Undef
-            && var_has_been_blocked[l.var()]
+            && var_has_been_elimed[l.var()]
         ) {
             solver->model[l.var()] = l.sign() ? l_False : l_True;
             solver->varReplacer->extend_model(l.var());
@@ -163,12 +163,12 @@ bool SolutionExtender::addClause(const vector<Lit>& lits, const uint32_t blocked
             << "(elim: " << removed_type_to_string(solver->varData[lit_inter.var()].removed) << ")"
             << ", ";
         }
-        cout << "blocked on: " <<  blockedOn+1 << endl;
+        cout << "elimed on: " <<  elimedOn+1 << endl;
     }
 
-    if (solver->model_value(blockedOn) != l_Undef) {
-        cout << "ERROR: Model value for var " << blockedOn+1 << " is "
-        << solver->model_value(blockedOn)
+    if (solver->model_value(elimedOn) != l_Undef) {
+        cout << "ERROR: Model value for var " << elimedOn+1 << " is "
+        << solver->model_value(elimedOn)
         << " but that doesn't satisfy a v-elim clause on the stack!"
         << " clause is: " << lits
         << endl;
@@ -180,14 +180,14 @@ bool SolutionExtender::addClause(const vector<Lit>& lits, const uint32_t blocked
             << endl;
         }
     }
-    assert(solver->model_value(blockedOn) == l_Undef);
+    assert(solver->model_value(elimedOn) == l_Undef);
 
     //satisfy this one clause
     Lit actual_lit = lit_Undef;
     for(Lit l: lits) {
         lbool model_value = solver-> model_value(l);
         assert(model_value != l_True);
-        if (l.var() == blockedOn) {
+        if (l.var() == elimedOn) {
             actual_lit = l;
         } else {
             if (model_value == l_Undef) {
@@ -198,13 +198,13 @@ bool SolutionExtender::addClause(const vector<Lit>& lits, const uint32_t blocked
     }
     assert(actual_lit != lit_Undef);
     lbool val = actual_lit.sign() ? l_False : l_True;
-    solver->model[blockedOn] = val;
+    solver->model[elimedOn] = val;
 
     if (solver->conf.verbosity >= 10) {
         cout << "Extending VELIM cls. -- setting model for var "
-        << blockedOn + 1 << " to " << solver->model[blockedOn] << endl;
+        << elimedOn + 1 << " to " << solver->model[elimedOn] << endl;
     }
-    solver->varReplacer->extend_model(blockedOn);
+    solver->varReplacer->extend_model(elimedOn);
 
     assert(satisfied(lits));
 

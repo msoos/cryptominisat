@@ -41,8 +41,8 @@ class SolutionExtender
     public:
         SolutionExtender(Solver* _solver, OccSimplifier* simplifier);
         void extend();
-        bool addClause(const vector<Lit>& lits, const uint32_t blockedOn);
-        void dummyBlocked(const uint32_t blockedOn);
+        bool addClause(const vector<Lit>& lits, const uint32_t elimedOn);
+        void dummyElimed(const uint32_t elimedOn);
 
     private:
         Solver* solver;

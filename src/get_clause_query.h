@@ -60,8 +60,8 @@ private:
     uint32_t watched_at_sub = numeric_limits<uint32_t>::max();
     uint32_t comp_at = numeric_limits<uint32_t>::max();
     uint32_t comp_at_sum = numeric_limits<uint32_t>::max();
-    uint32_t blocked_at = numeric_limits<uint32_t>::max();
-    uint32_t blocked_at2 = numeric_limits<uint32_t>::max();
+    uint32_t elimed_at = numeric_limits<uint32_t>::max();
+    uint32_t elimed_at2 = numeric_limits<uint32_t>::max();
     uint32_t xor_detached_at = numeric_limits<uint32_t>::max();
     uint32_t undef_at = numeric_limits<uint32_t>::max();
     bool simplified = false;

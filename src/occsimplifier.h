@@ -59,11 +59,11 @@ class SubsumeStrengthen;
 class BVA;
 class GateFinder;
 
-struct BlockedClauses {
-    BlockedClauses()
+struct ElimedClauses {
+    ElimedClauses()
     {}
 
-    explicit BlockedClauses(size_t _start, size_t _end) :
+    explicit ElimedClauses(size_t _start, size_t _end) :
         start(_start)
         , end(_end)
         , toRemove(false)
@@ -83,14 +83,14 @@ struct BlockedClauses {
         end = f.get_uint64_t();
     }
 
-    const Lit& at(const uint64_t at, const vector<Lit>& blkcls) const
+    const Lit& at(const uint64_t at, const vector<Lit>& eClsLits) const
     {
-        return blkcls[start+at];
+        return eClsLits[start+at];
     }
 
-    Lit& at(const uint64_t at, vector<Lit>& blkcls)
+    Lit& at(const uint64_t at, vector<Lit>& eClsLits)
     {
-        return blkcls[start+at];
+        return eClsLits[start+at];
     }
 
     uint64_t size() const {
@@ -226,16 +226,16 @@ public:
     size_t mem_used() const;
     size_t mem_used_xor() const;
     size_t mem_used_bva() const;
-    uint32_t dump_blocked_clauses(std::ostream* outfile) const;
-    bool get_blocked_clause_at(uint32_t& at,uint32_t& at2, vector<Lit>& out) const;
+    uint32_t dump_elimed_clauses(std::ostream* outfile) const;
+    bool get_elimed_clause_at(uint32_t& at,uint32_t& at2, vector<Lit>& out) const;
     void subs_with_resolvent_clauses();
     void fill_tocheck_seen(const vec<Watched>& ws, vector<uint32_t>& tocheck);
-    void delete_blocked_clauses(); ///< This REMOVES them, not blocks them. For Arjun.
+    void delete_elimed_clauses(); ///< This REMOVES them, not blocks them. For Arjun.
     void delete_component_unconnected_to_assumps(); //for arjun
     void strengthen_dummy_with_bins(const bool avoid_redundant);
 
     //UnElimination
-    void print_blocked_clauses_reverse() const;
+    void print_elimed_clauses_reverse() const;
     void extend_model(SolutionExtender* extender);
     uint32_t get_num_elimed_vars() const
     {
@@ -274,7 +274,7 @@ public:
     //validity checking
     void check_elimed_vars_are_unassigned() const;
     void check_no_marked_clauses();
-    bool getAnythingHasBeenBlocked() const;
+    bool getAnythingHasBeenElimed() const;
     void sanityCheckElimedVars() const;
     void printOccur(const Lit lit) const;
     void check_clauses_lits_ordered() const;
@@ -305,9 +305,9 @@ public:
     bool ternary_res();
 
     template<class T>
-    void serialize_blocked_cls  (T& ar) const;
+    void serialize_elimed_cls  (T& ar) const;
     template<class T>
-    void unserialize_blocked_cls(T& ar);
+    void unserialize_elimed_cls(T& ar);
 
 private:
     friend class SubsumeStrengthen;
@@ -406,7 +406,7 @@ private:
     void set_limits();
 
     //Finish-up
-    void remove_by_frat_recently_blocked_clauses(size_t origBlockedSize);
+    void remove_by_frat_recently_elimed_clauses(size_t origElimedSize);
     void add_back_to_solver();
     bool check_varelim_when_adding_back_cl(const Clause* cl) const;
     void remove_all_longs_from_watches();
@@ -504,7 +504,7 @@ private:
     void clean_from_red_or_removed(
         const vec<Watched>& in,
         vec<Watched>& out);
-    void        create_dummy_blocked_clause(const Lit lit);
+    void        create_dummy_elimed_clause(const Lit lit);
     vector<OccurClause> tmp_subs;
     bool        test_elim_and_fill_resolvents(uint32_t var);
     void        get_gate(Lit elim_lit, watch_subarray_const poss, watch_subarray_const negs);
@@ -652,16 +652,16 @@ private:
     GateFinder *gateFinder;
 
     /////////////////////
-    //Blocked clause elimination
-    bool anythingHasBeenBlocked;
-    vector<Lit> blkcls;
-    vector<BlockedClauses> blockedClauses; ///<maps var(outer!!) to postion in blockedClauses
+    //Elimed clause elimination
+    bool anythingHasBeenElimed;
+    vector<Lit> eClsLits;
+    vector<ElimedClauses> elimedClauses; ///<maps var(outer!!) to postion in elimedClauses
     vector<uint32_t> blk_var_to_cls;
-    vector<int32_t> newly_blocked_cls_IDs; // temporary storage for newly blocked cls' IDs
-    bool blockedMapBuilt;
-    void buildBlockedMap();
-    void cleanBlockedClauses();
-    bool can_remove_blocked_clauses = false;
+    vector<int32_t> newly_elimed_cls_IDs; // temporary storage for newly elimed cls' IDs
+    bool elimedMapBuilt;
+    void buildElimedMap();
+    void cleanElimedClauses();
+    bool can_remove_elimed_clauses = false;
 
     ///Stats from this run
     Stats runStats;
@@ -675,12 +675,12 @@ inline const OccSimplifier::Stats& OccSimplifier::get_stats() const
     return globalStats;
 }
 
-inline bool OccSimplifier::getAnythingHasBeenBlocked() const
+inline bool OccSimplifier::getAnythingHasBeenElimed() const
 {
-    return anythingHasBeenBlocked;
+    return anythingHasBeenElimed;
 }
 
-/*inline std::ostream& operator<<(std::ostream& os, const BlockedClauses& bl)
+/*inline std::ostream& operator<<(std::ostream& os, const ElimedClauses& bl)
 {
     os << bl.lits << " to remove: " << bl.toRemove;
 
@@ -702,17 +702,17 @@ inline const SubsumeStrengthen* OccSimplifier::get_sub_str() const
 }
 
 template<class T>
-void OccSimplifier::unserialize_blocked_cls(T& ar)
+void OccSimplifier::unserialize_elimed_cls(T& ar)
 {
-    ar >> blkcls;
-    ar >> blockedClauses;
+    ar >> eClsLits;
+    ar >> elimedClauses;
 }
 
 template<class T>
-void OccSimplifier::serialize_blocked_cls(T& ar) const
+void OccSimplifier::serialize_elimed_cls(T& ar) const
 {
-    ar << blkcls;
-    ar << blockedClauses;
+    ar << eClsLits;
+    ar << elimedClauses;
 }
 
 } //end namespace

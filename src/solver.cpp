@@ -891,7 +891,7 @@ bool Solver::add_clause_outer_copylits(const vector<Lit>& lits)
 // Input is ORIGINAL clause.
 bool Solver::add_clause_outer(vector<Lit>& ps)
 {
-    if (conf.perform_occur_based_simp && occsimplifier->getAnythingHasBeenBlocked()) {
+    if (conf.perform_occur_based_simp && occsimplifier->getAnythingHasBeenElimed()) {
         std::cerr
         << "ERROR: Cannot add new clauses to the system if blocking was"
         << " enabled. Turn it off from conf.doBlockClauses"
@@ -5320,7 +5320,7 @@ string Solver::serialize_solution_reconstruction_data() const
         ar << varData;
         ar << minNumVars;
         CNF::serialize(ar);
-        occsimplifier->serialize_blocked_cls(ar);
+        occsimplifier->serialize_elimed_cls(ar);
         varReplacer->serialize_tables(ar);
     }
     return archive_stream.str();
@@ -5341,7 +5341,7 @@ void Solver::create_from_solution_reconstruction_data(const string& data)
         ar >> varData;
         ar >> minNumVars;
         CNF::unserialize(ar);
-        occsimplifier->unserialize_blocked_cls(ar);
+        occsimplifier->unserialize_elimed_cls(ar);
         varReplacer->unserialize_tables(ar);
     }
 }

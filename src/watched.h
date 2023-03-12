@@ -109,7 +109,7 @@ class Watched {
         /**
         @brief To update the blocked literal of a >3-long normal clause
         */
-        void setBlockedLit(const Lit blockedLit)
+        void setElimedLit(const Lit blockedLit)
         {
             DEBUG_WATCHED_DO(assert(type == watch_clause_t));
             data1 = blockedLit.toInt();
@@ -216,7 +216,7 @@ class Watched {
         }
 
         /**
-        @brief Get example literal (blocked lit) of a normal >3-long clause
+        @brief Get example literal (blocked lit) of a normal long clause
         */
         Lit getBlockedLit() const
         {

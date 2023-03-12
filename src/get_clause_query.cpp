@@ -48,7 +48,7 @@ void GetClauseQuery::start_getting_small_clauses(
     assert(max_len >= 2);
 
     if (!red) {
-        //We'd need to implement getting blocked clauses
+        //We'd need to implement getting elimed clauses
         assert(solver->occsimplifier->get_num_elimed_vars() == 0);
     }
     red = _red;
@@ -61,8 +61,8 @@ void GetClauseQuery::start_getting_small_clauses(
     units_at = 0;
     comp_at = 0;
     comp_at_sum = 0;
-    blocked_at = 0;
-    blocked_at2 = 0;
+    elimed_at = 0;
+    elimed_at2 = 0;
     undef_at = 0;
     xor_detached_at = 0;
     bva_vars = _bva_vars;
@@ -321,10 +321,10 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
             }
         }
 
-        //Blocked clauses (already in OUTER notation)
+        //Elimed clauses (already in OUTER notation)
         bool ret = true;
         while (ret && solver->occsimplifier && !simplified) {
-            ret = solver->occsimplifier->get_blocked_clause_at(blocked_at, blocked_at2, tmp_cl);
+            ret = solver->occsimplifier->get_elimed_clause_at(elimed_at, elimed_at2, tmp_cl);
             if (ret && all_vars_outside(tmp_cl)) {
                 map_without_bva(tmp_cl);
                 out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
