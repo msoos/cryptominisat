@@ -233,6 +233,7 @@ public:
     void delete_elimed_clauses(); ///< This REMOVES them, not blocks them. For Arjun.
     void delete_component_unconnected_to_assumps(); //for arjun
     void strengthen_dummy_with_bins(const bool avoid_redundant);
+    void blocked_clause_elim();
 
     //UnElimination
     void print_elimed_clauses_reverse() const;
