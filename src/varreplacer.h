@@ -115,9 +115,6 @@ class VarReplacer
         bool get_scc_depth_warning_triggered() const;
         void delete_frat_cls();
 
-        void save_state(SimpleOutFile& f) const;
-        void load_state(SimpleInFile& f);
-
     private:
         Solver* solver;
         SCCFinder* scc_finder;
