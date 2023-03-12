@@ -152,7 +152,8 @@ bool SubsumeStrengthen::backw_sub_str_with_long(
     assert(!cl.freed());
 
     if (solver->conf.verbosity >= 6)
-        cout << "backw_sub_str_with_long-ing with clause:" << cl << endl;
+        cout << "backw_sub_str_with_long-ing with clause:" << cl
+            << " offset: " << offset << endl;
 
     find_subsumed_and_strengthened(
         offset
@@ -176,18 +177,13 @@ bool SubsumeStrengthen::backw_sub_str_with_long(
         }
 
         if (subsLits[j] == lit_Undef) {  //Subsume
-            #ifdef VERBOSE_DEBUG
-            if (solver->conf.verbosity >= 6)
-                cout << "subsumed clause " << cl2 << endl;
-            #endif
+            VERBOSE_PRINT("subsumed clause " << cl2);
 
             //If subsumes a irred, and is redundant, make it irred
             if (cl.red()
                 && !cl2.red()
             ) {
-                #ifdef STATS_NEEDED
-                solver->stats_del_cl(&cl);
-                #endif
+                STATS_DO(solver->stats_del_cl(&cl));
                 cl.makeIrred();
                 solver->litStats.redLits -= cl.size();
                 solver->litStats.irredLits += cl.size();

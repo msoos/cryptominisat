@@ -646,28 +646,24 @@ OccSimplifier::LinkInData OccSimplifier::link_in_clauses(
 bool OccSimplifier::check_varelim_when_adding_back_cl(const Clause* cl) const
 {
     bool notLinkedNeedFree = false;
-    for (Clause::const_iterator
-        it2 = cl->begin(), end2 = cl->end()
-        ; it2 != end2
-        ; ++it2
-    ) {
+    for (const Lit& l: *cl) {
         //The clause was too long, and wasn't linked in
         //but has been var-elimed, so remove it
         if (!cl->getOccurLinked()
-            && solver->varData[it2->var()].removed == Removed::elimed
+            && solver->varData[l.var()].removed == Removed::elimed
         ) {
             notLinkedNeedFree = true;
         }
 
         if (cl->getOccurLinked()
-            && solver->varData[it2->var()].removed != Removed::none
+            && solver->varData[l.var()].removed != Removed::none
         ) {
             std::cerr
             << "ERROR! Clause " << *cl
             << " red: " << cl->red()
-            << " contains lit " << *it2
+            << " contains lit " << l
             << " which has removed status"
-            << removed_type_to_string(solver->varData[it2->var()].removed)
+            << removed_type_to_string(solver->varData[l.var()].removed)
             << endl;
 
             assert(false);
@@ -683,11 +679,9 @@ void OccSimplifier::add_back_to_solver()
     solver->clean_occur_from_removed_clauses_only_smudged();
     free_clauses_to_free();
 
-    for (ClOffset offs: clauses) {
+    for (const ClOffset offs: clauses) {
         Clause* cl = solver->cl_alloc.ptr(offs);
-        if (cl->getRemoved() || cl->freed()) {
-            continue;
-        }
+        if (cl->getRemoved() || cl->freed()) continue;
         assert(!cl->stats.marked_clause);
         assert(cl->size() > 2);
 
