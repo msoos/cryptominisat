@@ -291,6 +291,14 @@ public:
     {
         return outerToInterMain[outer];
     }
+    void map_outer_to_inter(vector<uint32_t>& outer) const
+    {
+        for(auto& v: outer) v = outerToInterMain[v];
+    }
+    void map_inter_to_outer(vector<uint32_t>& inter) const
+    {
+        for(auto& v: inter) v = interToOuterMain[v];
+    }
     Lit map_outer_to_inter(const Lit outer) const
     {
         return Lit(outerToInterMain[outer.var()], outer.sign());

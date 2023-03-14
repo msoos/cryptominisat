@@ -4788,7 +4788,11 @@ void Solver::clean_sampl_and_get_empties(
     vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars)
 {
     if (!okay()) return;
-    return occsimplifier->clean_sampl_and_get_empties(sampl_vars, empty_vars);
+    assert(get_num_bva_vars() == 0);
+    map_outer_to_inter(sampl_vars);
+    occsimplifier->clean_sampl_and_get_empties(sampl_vars, empty_vars);
+    map_inter_to_outer(sampl_vars);
+    map_inter_to_outer(empty_vars);
 }
 
 bool Solver::remove_and_clean_all() {

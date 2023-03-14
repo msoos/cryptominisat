@@ -2298,6 +2298,14 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         } else if (token == "occ-clean-implicit") {
             //BUG TODO
             //solver->clauseCleaner->clean_implicit_clauses();
+        } else if (token == "occ-bve-empty") {
+            //Get rid of XOR clauses
+            if (solver->frat->enabled()) {
+                TBUDDY_DO(solver->free_bdds(solver->xorclauses_orig));
+                TBUDDY_DO(solver->free_bdds(solver->xorclauses));
+                TBUDDY_DO(solver->free_bdds(solver->xorclauses_unused));
+            }
+            if (solver->conf.do_empty_varelim) eliminate_empty_resolvent_vars();
         } else if (token == "occ-bve") {
             if (solver->conf.doVarElim) {
                 solver->removed_xorclauses_clash_vars.clear();
