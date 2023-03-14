@@ -2321,13 +2321,9 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 solver->xorclauses_orig.clear();
                 solver->xorclauses_unused.clear();
 
-                if (solver->conf.do_empty_varelim) {
-                    eliminate_empty_resolvent_vars();
-                }
+                if (solver->conf.do_empty_varelim) eliminate_empty_resolvent_vars();
                 if (solver->conf.do_full_varelim) {
-                    if (!eliminate_vars()) {
-                        continue;
-                    }
+                    if (!eliminate_vars()) continue;
                 }
             }
         } else if (token == "occ-rem-with-orgates") {
