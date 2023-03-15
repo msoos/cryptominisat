@@ -56,6 +56,7 @@ class DimacsParser
         vector<uint32_t> sampling_vars;
         bool sampling_vars_found = false;
         vector<double> weights;
+        uint32_t must_mult_exp2 = 0;
         const std::string dimacs_spec = "http://www.satcompetition.org/2009/format-benchmarks2009.html";
         const std::string please_read_dimacs = "\nPlease read DIMACS specification at http://www.satcompetition.org/2009/format-benchmarks2009.html";
 
@@ -430,6 +431,28 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
         }
     } else
     #endif
+    if (str == "MUST") {
+        std::string str2;
+        in.skipWhitespace();
+        in.parseString(str2);
+        if (str2 != "MULTIPLY") {
+            cout << "ERROR: expected 'MULTIPLY' after 'MUST'" << endl;
+            return false;
+        }
+        in.skipWhitespace();
+        in.parseString(str2);
+        if (str2 != "BY") {
+            cout << "ERROR: expected 'BY' after 'MUST MULTIPLY'" << endl;
+            return false;
+        }
+        in.skipWhitespace();
+        assert(*in == '2');++in;
+        assert(*in == '*');++in;
+        assert(*in == '*');++in;
+        if (!in.parseInt(must_mult_exp2, lineNum)) {
+            return false;
+        }
+    }
     if (!debugLib.empty() && str == "Solver::new_var()") {
         solver->new_var();
 
