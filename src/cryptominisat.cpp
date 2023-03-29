@@ -1322,6 +1322,7 @@ void DLL_PUBLIC SATSolver::start_getting_small_clauses(
     bool bva_vars,
     bool simplified)
 {
+    actually_add_clauses_to_threads(data);
     assert(data->solvers.size() >= 1);
     data->solvers[0]->start_getting_small_clauses(max_len, max_glue, red, bva_vars, simplified);
 }
