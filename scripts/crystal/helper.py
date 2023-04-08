@@ -147,7 +147,7 @@ class QueryFill (QueryHelper):
         SELECT
         rdb0.clauseID
         , rdb0.conflicts
-        , sum(ucl.weight* (({duration}*{mult}-(ucl.used_at-rdb0.conflicts)+0.001)/({duration}*{mult}+0.001)) ) as `used_later`
+        , sum(ucl.weight) as `used_later`
 
         FROM
         reduceDB as rdb0
@@ -172,7 +172,6 @@ class QueryFill (QueryHelper):
             tier=tier, used_clauses=used_clauses,
             duration=duration,
             table=table,
-            mult=mult,
             min_del_distance=min_del_distance)
         self.c.execute(q)
 
