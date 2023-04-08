@@ -24,7 +24,7 @@ set -e
 set -x
 set -o pipefail  # needed so  " | tee xyz " doesn't swallow the last command's error
 
-. ./setparams_ballofcrystal.sh
+source ./setparams_ballofcrystal.sh
 
 if [ "$1" == "--skip" ]; then
     echo "Will skip running CMS stats + FRAT"
@@ -47,7 +47,7 @@ if [ "$NEXT_OP" == "" ]; then
         echo "6 -- UTI-20-10p0.cnf-unz"
         echo "7 -- UCG-20-5p0.cnf"
 
-        read -p "Which CNF do you want to run? " myinput
+        read -r -p "Which CNF do you want to run? " myinput
         case $myinput in
             ["1"]* )
                 FNAME="velev-pipe-uns-1.0-9.cnf"
@@ -213,7 +213,7 @@ tables=("used_later" "used_later_anc")
 for tier in "${tiers[@]}"; do
     for table in "${tables[@]}"; do
         for regressor in "${regressors[@]}"; do
-            $NOBUF ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-${table}-${tier}-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier ${tier} --table ${table} --features best_only --regressor $regressor --basedir "." --bestfeatfile $bestf | tee "cldata_predict_${tier}-${table}-${regressor}.out"
+            $NOBUF ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-${table}-${tier}-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier ${tier} --table ${table} --features best_only --regressor $regressor --basedir "." --bestfeatfile "$bestf" | tee "cldata_predict_${tier}-${table}-${regressor}.out"
         done
     done
 done
