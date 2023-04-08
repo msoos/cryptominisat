@@ -403,9 +403,27 @@ Build and use instructions below. Please see the [associated blog post](https://
 # prerequisites on a modern Debian/Ubuntu installation
 sudo apt-get install build-essential cmake git
 sudo apt-get install zlib1g-dev libsqlite3-dev
-sudo apt-get install libboost-program-options-dev
+sudo apt-get install libboost-program-options-dev libboost-serialization-dev
 sudo apt-get install python3-pip
 sudo pip3 install sklearn pandas numpy lit matplotlib
+
+# build and install XGBoost
+git clone https://github.com/dmlc/xgboost
+cd xgboost
+mkdir build && cd build
+cmake ..
+make -j10
+sudo make install
+cd ../..
+
+# build and install LightGBM
+git clone https://github.com/microsoft/LightGBM
+cd LightGBM
+mkdir build && cd build
+cmake ..
+make -j10
+sudo make install
+cd ../..
 
 # getting the code
 git clone https://github.com/msoos/cryptominisat
@@ -420,15 +438,14 @@ ln -s ../scripts/build_scripts/* .
 wget https://www.msoos.org/largefiles/goldb-heqc-i10mul.cnf.gz
 gunzip goldb-heqc-i10mul.cnf.gz
 
-# Gather the data, denormalize, label, output CSV,
+# Gather the data, denormalize, label,
 # create the classifier, generate C++,
 # and build the final SAT solver
-./ballofcrystal.sh --csv goldb-heqc-i10mul.cnf
+./ballofcrystal.sh goldb-heqc-i10mul.cnf
 [...compilations and the full data pipeline...]
 
 # let's use our newly built tool
-# we are using configuration number short:3 long:3
-./cryptominisat5 --predshort 3 --predlong 3 goldb-heqc-i10mul.cnf
+./cryptominisat5 goldb-heqc-i10mul.cnf
 [ ... ]
 s UNSATISFIABLE
 
