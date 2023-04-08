@@ -81,7 +81,7 @@ else
     initial="$(echo ${NEXT_OP} | head -c 1)"
     if [ "$1" == "-" ]; then
         echo "Cannot understand opion, there are no options"
-        exit -1
+        exit 255
     fi
     FNAME="${NEXT_OP}"
 fi
@@ -97,7 +97,7 @@ echo "--> with fixed number of data points  $FIXED"
 
 if [ "$FNAMEOUT" == "" ]; then
     echo "Error: FNAMEOUT is not set, it's empty. Exiting."
-    exit -1
+    exit 255
 fi
 
 
@@ -116,7 +116,7 @@ if [ "$SKIP" != "1" ]; then
     ########################
     # Build statistics-gathering CryptoMiniSat
     ########################
-    if [[ SANITIZE -eq 0 ]]; then
+    if [[ $SANITIZE -eq 0 ]]; then
         ./build_stats.sh
     else
         ./build_stats_sanitize.sh
