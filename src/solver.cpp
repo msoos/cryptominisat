@@ -4145,7 +4145,7 @@ void Solver::reset_vsids()
 #ifdef STATS_NEEDED
 void Solver::stats_del_cl(Clause* cl)
 {
-    if (cl->stats.is_tracked != 0 && sqlStats) {
+    if (cl->stats.is_tracked && sqlStats) {
         const ClauseStatsExtra& stats_extra = solver->red_stats_extra[cl->stats.extra_pos];
         assert(stats_extra.orig_ID != 0);
         assert(stats_extra.orig_ID <= cl->stats.ID);

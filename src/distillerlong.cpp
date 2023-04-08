@@ -643,9 +643,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
         }
         return solver->cl_alloc.get_offset(cl2);
     } else {
-        #ifdef STATS_NEEDED
-        solver->stats_del_cl(offset);
-        #endif
+        STATS_DO(solver->stats_del_cl(offset));
         //it became a bin/unit/zero
         return CL_OFFSET_MAX;
     }

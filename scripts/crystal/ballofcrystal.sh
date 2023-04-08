@@ -128,21 +128,22 @@ if [ "$SKIP" != "1" ]; then
     ########################
     cd "$FNAME-dir"
     # for var, we need: --bva 0 --scc 0
-    $NOBUF ../cryptominisat5 --maxnummatrices 0 --presimp 1 -n1 --sqlitedbover 1 --cldatadumpratio "$DUMPRATIO" --cllockdatagen $CLLOCK --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --frat "$FNAMEOUT.frat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
+    $NOBUF ../cryptominisat5 --maxnummatrices 0 --presimp 1 -n1 --sqlitedbover 1 --cldatadumpratio "$DUMPRATIO" --cllockdatagen "$CLLOCK" --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --frat "$FNAMEOUT.frat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
     grep "c conflicts" cms-pred-run.out
 
     ########################
     # Run frat-rs
     ########################
     set +e
-    a=$(grep "s SATIS" cms-pred-run.out)
+    grep "s SATIS" cms-pred-run.out > /dev/null
     retval=$?
     set -e
     if [[ retval -eq 1 ]]; then
         /usr/bin/time -v ../frat-rs elab "$FNAMEOUT.frat" "../$FNAME" -m -v
 
+        echo "If the following fails, you MUST compile frat-rs with 'ascii' feature through 'cargo build --features=ascii --release' !"
         set +e
-        /usr/bin/time -v ../frat-rs elab "$FNAMEOUT.frat" - tmp.lrat
+        /usr/bin/time -v ../frat-rs elab "$FNAMEOUT.frat"
         /usr/bin/time -v ../frat-rs refrat "$FNAMEOUT.frat.temp" correct
         set -e
         #/usr/bin/time -v $NOBUF ../utils/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -o "$FNAMEOUT.usedCls" -i -O 4 -m | tee drat.out-newO4
@@ -173,7 +174,7 @@ rm -f check_quality.out
 rm -f clean_update.out
 rm -f fill_clauses.out
 
-../fix_up_frat.py correct $FNAMEOUT.db-raw | tee fill_used_clauses.out
+../fix_up_frat.py correct "$FNAMEOUT.db-raw" | tee fill_used_clauses.out
 cp "$FNAMEOUT.db-raw" "$FNAMEOUT.db"
 /usr/bin/time -v ../clean_update_data.py "$FNAMEOUT.db"  | tee clean_update_data.out
 ../check_data_quality.py --slow "$FNAMEOUT.db" | tee check_data_quality.out

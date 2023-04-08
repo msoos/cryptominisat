@@ -19,10 +19,8 @@
 # 02110-1301, USA.
 
 from __future__ import print_function
-import sqlite3
 import optparse
 import time
-import os.path
 import helper
 
 
@@ -107,11 +105,11 @@ class Queries (helper.QueryHelper):
         print("Checked all clauses have exactly one delete point. T: %-2.3f" % (time.time()-t))
 
     def check_all_clauses_have_N(self):
+        t = time.time()
         Ns = [
             {"tbl1":"reduceDB", "tbl2":"cl_last_in_solver", "elem":"clauseID"},
           ]
         for n in Ns:
-            t = time.time()
             q = """
             select {tbl1}.{elem}
             from {tbl1} left join {tbl2}

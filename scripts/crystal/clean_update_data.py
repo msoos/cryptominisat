@@ -19,10 +19,8 @@
 # 02110-1301, USA.
 
 from __future__ import print_function
-import sqlite3
 import optparse
 import time
-import os.path
 import helper
 
 
