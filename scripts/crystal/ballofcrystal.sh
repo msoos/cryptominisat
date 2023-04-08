@@ -139,7 +139,7 @@ if [ "$SKIP" != "1" ]; then
     retval=$?
     set -e
     if [[ retval -eq 1 ]]; then
-        /usr/bin/time -v ../frat-rs elab "../$FNAME" "$FNAMEOUT.frat" -m -v
+        /usr/bin/time -v ../frat-rs elab "$FNAMEOUT.frat" "../$FNAME" -m -v
 
         set +e
         /usr/bin/time -v ../frat-rs elab "$FNAMEOUT.frat" - tmp.lrat
@@ -150,7 +150,7 @@ if [ "$SKIP" != "1" ]; then
 
     else
         echo "Not UNSAT!!!"
-        exit -1
+        exit 255
     fi
     echo "CMS+FRAT done now"
     )

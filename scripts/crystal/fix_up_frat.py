@@ -21,8 +21,6 @@
 from __future__ import print_function
 import sqlite3
 import argparse
-import os
-import struct
 import time
 #import line_profiler
 
