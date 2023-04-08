@@ -263,7 +263,7 @@ struct ClauseStatsExtra
     float discounted_props_made3 = 0;
     #ifdef STATS_NEEDED
     uint32_t dump_no = 0;
-    uint32_t orig_ID = 0;
+    int32_t orig_ID = 0;
     uint32_t orig_connects_num_communities = 0;
     uint32_t connects_num_communities = 0;
     uint32_t conflicts_made = 0; ///<Number of times caused conflict

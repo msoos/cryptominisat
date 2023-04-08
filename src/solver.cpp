@@ -5405,8 +5405,9 @@ void Solver::dump_clauses_at_finishup_as_last()
     for(auto& red_cls: longRedCls) {
         for(auto& offs: red_cls) {
             Clause* cl = cl_alloc.ptr(offs);
-            if (cl->stats.ID != 0) {
-                sqlStats->cl_last_in_solver(solver, cl->stats.ID);
+            if (cl->stats.is_tracked) {
+                ClauseStatsExtra& stats_extra = solver->red_stats_extra[cl->stats.extra_pos];
+                sqlStats->cl_last_in_solver(solver, stats_extra.orig_ID);
             }
         }
     }
