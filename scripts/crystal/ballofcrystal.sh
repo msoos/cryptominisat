@@ -185,7 +185,7 @@ cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 ########################
 # Denormalize the data into a Pandas Table, label it and sample it
 ########################
-../cldata_gen_pandas.py "${FNAMEOUT}-min.db" --cut1 $cut1 --cut2 $cut2 --limit "$FIXED" ${EXTRA_GEN_PANDAS_OPTS} | tee cldata_gen_pandas.out
+../cldata_gen_pandas.py "${FNAMEOUT}-min.db" --cut1 "$cut1" --cut2 "$cut2" --limit "$FIXED" ${EXTRA_GEN_PANDAS_OPTS} | tee cldata_gen_pandas.out
 # ../vardata_gen_pandas.py "${FNAMEOUT}.db" --limit 1000
 
 

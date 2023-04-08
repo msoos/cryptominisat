@@ -94,7 +94,6 @@ bool DistillerLitRem::go_through_clauses(
 ) {
     double myTime = cpuTime();
     bool time_out = false;
-    uint32_t tried = 0;
     vector<ClOffset>::iterator i, j;
     i = j = cls.begin();
     for (vector<ClOffset>::iterator end = cls.end()
@@ -169,7 +168,6 @@ bool DistillerLitRem::go_through_clauses(
         }
 
         //Try to distill clause
-        tried++;
         offset2 = try_distill_clause_and_return_new(
             offset
             , &cl.stats
