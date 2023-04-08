@@ -213,7 +213,7 @@ tables=("used_later" "used_later_anc")
 for tier in "${tiers[@]}"; do
     for table in "${tables[@]}"; do
         for regressor in "${regressors[@]}"; do
-            $NOBUF ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-${table}-${tier}-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier ${tier} --table ${table} --features best_only --regressor $regressor --basedir "." --bestfeatfile "$bestf" | tee "cldata_predict_${tier}-${table}-${regressor}.out"
+            $NOBUF ../cldata_predict.py "${FNAMEOUT}-min.db-cldata-${table}-${tier}-cut1-$cut1-cut2-$cut2-limit-${FIXED}.dat" --tier "${tier}" --table "${table}" --features best_only --regressor "$regressor" --basedir "." --bestfeatfile "$bestf"| tee "cldata_predict_${tier}-${table}-${regressor}.out"
         done
     done
 done

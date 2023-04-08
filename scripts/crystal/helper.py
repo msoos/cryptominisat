@@ -134,6 +134,9 @@ class QueryFill (QueryHelper):
 
         mult = 1.2
 
+        # Note: "weight" below is because a child has less weight than a parent
+        #       discount is 0.5 (as per fix_up_frat), so a child is 0.5, a grand-child
+        #       is 0.25 etc. Below 0.05 we don't care and it's a 0.
         q_fill = """
         insert into {table}_{tier}
         (

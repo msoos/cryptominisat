@@ -19,14 +19,12 @@
 # 02110-1301, USA.
 
 from __future__ import print_function
-import sqlite3
 import optparse
 import time
 import pickle
 import re
 import pandas as pd
 import numpy as np
-import os.path
 import sys
 import helper
 
@@ -36,14 +34,12 @@ class QueryAddIdxes (helper.QueryHelper):
         super(QueryAddIdxes, self).__init__(dbfname)
 
     def measure_size(self):
-        t = time.time()
-        ret = self.c.execute("select count() from reduceDB")
+        self.c.execute("select count() from reduceDB")
         rows = self.c.fetchall()
         rdb_rows = rows[0][0]
         print("We have %d lines of RDB" % (rdb_rows))
 
-        t = time.time()
-        ret = self.c.execute("select count() from clause_stats")
+        self.c.execute("select count() from clause_stats")
         rows = self.c.fetchall()
         clss_rows = rows[0][0]
         print("We have %d lines of clause_stats" % (clss_rows))
@@ -271,7 +267,6 @@ class QueryCls (helper.QueryHelper):
     # tier == forever/long/short
     def run_stratified_queries(self, limit, perc, tier, table):
         dfs = []
-        final_limit = limit
         # NOTE: these are NON-ZERO percentages, but we replace 100 with "0", so the LAST chunk contains ALL, including 0, which is a large part of the data
         for beg_perc, end_perc in [(0.0, options.cut1), (options.cut1, options.cut2), (options.cut2, 100.0)]:
             beg = perc["top_non_zero_{perc}_perc".format(perc=beg_perc)]
