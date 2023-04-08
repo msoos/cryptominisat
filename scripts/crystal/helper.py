@@ -132,8 +132,6 @@ class QueryFill (QueryHelper):
         if min_del_distance > 2*1000*1000:
             min_del_distance = 100*1000
 
-        mult = 1.2
-
         # Note: "weight" below is because a child has less weight than a parent
         #       discount is 0.5 (as per fix_up_frat), so a child is 0.5, a grand-child
         #       is 0.25 etc. Below 0.05 we don't care and it's a 0.
@@ -418,8 +416,7 @@ def check_too_large_or_nan_values(df, features=None):
 
 def print_confusion_matrix(cm,
                            normalize=False,
-                           title='Confusion matrix',
-                           cmap=plt.cm.Blues):
+                           title='Confusion matrix'):
     """
     This function prints and plots the confusion matrix.
     Normalization can be applied by setting `normalize=True`.
