@@ -1894,3 +1894,9 @@ DLL_PUBLIC void SATSolver::delete_extend_solution_setup(void* s)
     delete solver->get_must_interrupt_inter_asap_ptr();
     delete solver;
 }
+
+DLL_PUBLIC bool SATSolver::minimize_clause(std::vector<Lit>& cl)
+{
+    Solver& s = *data->solvers[0];
+    return s.minimize_clause(cl);
+}

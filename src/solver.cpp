@@ -5396,6 +5396,41 @@ pair<lbool, vector<lbool>> Solver::extend_minimized_model(const vector<lbool>& m
     return make_pair(l_True, model);
 }
 
+
+// returns whether it can be removed
+bool Solver::minimize_clause(vector<Lit>& cl) {
+    assert(get_num_bva_vars() == 0);
+
+    addClauseHelper(cl);
+    new_decision_level();
+    uint32_t i = 0;
+    uint32_t j = 0;
+    PropBy confl;
+
+    for (uint32_t sz = cl.size(); i < sz; i++) {
+        const Lit lit = cl[i];
+        lbool val = value(lit);
+        if (val == l_Undef) {
+            enqueue<true>(~lit);
+            cl[j++] = cl[i];
+            confl = solver->propagate<true, true, true>();
+            if (!confl.isNULL()) break;
+        } else if (val == l_False) {
+        } else {
+            assert(val == l_True);
+            cl[j++] = cl[i];
+            break;
+        }
+    }
+    assert(solver->ok);
+    cl.resize(j);
+    cancelUntil<false, true>(0);
+    map_inter_to_outer(cl);
+
+    bool can_be_removed = !confl.isNULL();
+    return can_be_removed;
+}
+
 #ifdef STATS_NEEDED
 void Solver::dump_clauses_at_finishup_as_last()
 {

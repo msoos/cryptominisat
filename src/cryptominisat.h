@@ -155,6 +155,7 @@ namespace CMSat {
         void set_occ_based_lit_rem_time_limitM(const uint32_t lim);
         void set_orig_global_timeout_multiplier(const double mult);
         double get_orig_global_timeout_multiplier();
+        bool minimize_clause(std::vector<Lit>& cl);
 
         ////////////////////////////
         // Predictive system tuning

@@ -160,7 +160,7 @@ class Solver : public Searcher
         void check_implicit_stats(const bool onlypairs = false) const;
         void check_stats(const bool allowFreed = false) const;
         void reset_vsids();
-
+        bool minimize_clause(vector<Lit>& cl);
 
         //Checks
         void check_implicit_propagated() const;
