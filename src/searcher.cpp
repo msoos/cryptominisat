@@ -2599,12 +2599,13 @@ lbool Searcher::solve(
     while(stats.conflicts < max_confl_per_search_solve_call
         && status == l_Undef
     ) {
-        if (distill_clauses_if_needed() == l_False
-            || full_probe_if_needed() == l_False
-            || !distill_bins_if_needed()
-            || !sub_str_with_bin_if_needed()
-            || !str_impl_with_impl_if_needed()
-            || !intree_if_needed()
+        if (!conf.never_stop_search &&
+                (distill_clauses_if_needed() == l_False
+                || full_probe_if_needed() == l_False
+                || !distill_bins_if_needed()
+                || !sub_str_with_bin_if_needed()
+                || !str_impl_with_impl_if_needed()
+                || !intree_if_needed())
         ) {
             status = l_False;
             goto end;
