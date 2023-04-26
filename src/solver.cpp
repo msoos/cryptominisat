@@ -33,12 +33,12 @@ THE SOFTWARE.
 #include <complex>
 #include <locale>
 #include <random>
+
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/serialization/vector.hpp>
-
 
 #include "varreplacer.h"
 #include "time_mem.h"
@@ -5395,7 +5395,6 @@ pair<lbool, vector<lbool>> Solver::extend_minimized_model(const vector<lbool>& m
     extender.extend();
     return make_pair(l_True, model);
 }
-
 
 // returns whether it can be removed
 bool Solver::minimize_clause(vector<Lit>& cl) {

@@ -1,4 +1,4 @@
-# pycryptosatiniSat SAT solver
+# pycryptosat SAT solver
 
 This directory provides Python bindings to CryptoMiniSat on the C++ level,
 i.e. when importing pycryptosat, the CryptoMiniSat solver becomes part of the

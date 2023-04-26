@@ -20,8 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef __CNF_H__
-#define __CNF_H__
+#pragma once
 
 #include <atomic>
 #include <limits>
@@ -808,5 +807,3 @@ template<class T> void CNF::serialize(T& ar) const
 }
 
 }
-
-#endif //__CNF_H__

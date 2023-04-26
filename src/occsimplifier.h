@@ -20,9 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef SIMPLIFIER_H
-#define SIMPLIFIER_H
-
+#pragma once
 
 #include <map>
 #include <vector>
@@ -681,13 +679,6 @@ inline bool OccSimplifier::getAnythingHasBeenElimed() const
     return anythingHasBeenElimed;
 }
 
-/*inline std::ostream& operator<<(std::ostream& os, const ElimedClauses& bl)
-{
-    os << bl.lits << " to remove: " << bl.toRemove;
-
-    return os;
-}*/
-
 inline bool OccSimplifier::subsetReverse(const Clause& B) const
 {
     for (uint32_t i = 0; i != B.size(); i++) {
@@ -717,5 +708,3 @@ void OccSimplifier::serialize_elimed_cls(T& ar) const
 }
 
 } //end namespace
-
-#endif //SIMPLIFIER_H

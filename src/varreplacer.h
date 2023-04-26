@@ -20,8 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef VARREPLACER_H
-#define VARREPLACER_H
+#pragma once
 
 #include <map>
 #include <vector>
@@ -340,5 +339,3 @@ void VarReplacer::unserialize_tables(T& ar)
 }
 
 } //end namespace
-
-#endif //VARREPLACER_H

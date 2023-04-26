@@ -249,7 +249,6 @@ namespace CMSat {
         void get_all_irred_clauses(std::vector<Lit>& ret);
         const std::vector<BNN*>& get_bnns() const;
 
-
         // Solution reconstruction after minimization
         std::string serialize_solution_reconstruction_data() const;
         static void* create_extend_solution_setup(std::string& data);

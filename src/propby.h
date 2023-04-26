@@ -20,8 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef PROPBY_H
-#define PROPBY_H
+#pragma once
 
 #include "constants.h"
 #include "solvertypes.h"
@@ -341,5 +340,3 @@ inline std::ostream& operator<<(std::ostream& os, const PropBy& pb)
 }
 
 } //end namespace
-
-#endif //PROPBY_H
