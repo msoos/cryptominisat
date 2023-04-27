@@ -154,6 +154,9 @@ inline std::string getNameOfRestartType(Restart rest_type)
         case Restart::luby:
             return "luby";
 
+        case Restart::fixed:
+            return "fixed";
+
         case Restart::never:
             return "never";
 
