@@ -5443,6 +5443,7 @@ struct VarOrderBackbone
 
 bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen)
 {
+    if (!okay()) return false;
     assert(get_num_bva_vars() == 0);
     verb_print(1, "[backbone-simpl] starting backbone simplification...");
     uint64_t last_sum_conflicts = 0;
