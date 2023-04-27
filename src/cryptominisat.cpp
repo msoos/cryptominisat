@@ -1906,3 +1906,10 @@ DLL_PUBLIC bool SATSolver::minimize_clause(std::vector<Lit>& cl)
     Solver& s = *data->solvers[0];
     return s.minimize_clause(cl);
 }
+
+
+DLL_PUBLIC bool SATSolver::backbone_simpl(int64_t max_confl, bool cmsgen)
+{
+    Solver& s = *data->solvers[0];
+    return s.backbone_simpl(max_confl, cmsgen);
+}

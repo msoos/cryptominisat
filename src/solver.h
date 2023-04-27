@@ -125,7 +125,7 @@ class Solver : public Searcher
         void start_getting_small_clauses(
             uint32_t max_len, uint32_t max_glue, bool red = true,
             bool bva_vars = false, bool simplified = false);
-        bool get_next_small_clause(std::vector<Lit>& out, bool all_in_one);
+        bool get_next_small_clause(std::vector<Lit>& out, bool all_in_one = false);
         void end_getting_small_clauses();
         void get_all_irred_clauses(vector<Lit>& out);
         vector<uint32_t> translate_sampl_set(const vector<uint32_t>& sampl_set);
@@ -329,6 +329,7 @@ class Solver : public Searcher
         void renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors_ret);
         void testing_set_solver_not_fresh();
         bool full_probe(const bool bin_only);
+        bool backbone_simpl(int64_t max_confl, bool cmsgen);
 
     private:
         friend class ClauseDumper;

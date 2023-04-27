@@ -79,6 +79,7 @@ THE SOFTWARE.
 extern "C" {
 #include "picosat/picosat.h"
 }
+#include "cryptominisat.h"
 
 #ifdef USE_BREAKID
 #include "cms_breakid.h"
@@ -5428,6 +5429,197 @@ bool Solver::minimize_clause(vector<Lit>& cl) {
 
     bool can_be_removed = !confl.isNULL();
     return can_be_removed;
+}
+
+struct VarOrderBackbone
+{
+    VarOrderBackbone(uint32_t _var, uint32_t _occ) : var(_var), occ(_occ) {}
+    uint32_t var;
+    uint32_t occ = 0;
+    bool operator<(const VarOrderBackbone& other) {
+        return occ > other.occ;
+    }
+};
+
+bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen)
+{
+    assert(get_num_bva_vars() == 0);
+    verb_print(1, "[backbone-simpl] starting backbone simplification...");
+    uint64_t last_sum_conflicts = 0;
+
+    double myTime = cpuTime();
+    bool finished = false;
+    Lit l;
+    uint32_t undefs = 0;
+    uint32_t tried = 0;
+    const auto orig_trail_size = trail.size();
+
+    vector<Lit> tmp_clause;
+    vector<lbool> old_model;
+    uint32_t num_seen_flipped = 0;
+    vector<char> seen_flipped;
+    seen_flipped.resize(nVars(), 0);
+    const auto old_verb = conf.verbosity;
+    conf.verbosity = 1;
+
+    if (cmsgen) {
+        //CMSGen-based seen_flipped detection, so we don't need to query so much
+        SATSolver s2;
+        s2.set_up_for_sample_counter(100);
+        s2.new_vars(nVars());
+        s2.set_verbosity(0);
+        bool ret = true;
+        start_getting_small_clauses(
+            std::numeric_limits<uint32_t>::max(),
+            std::numeric_limits<uint32_t>::max(),
+            false,
+            false,
+            true);
+        vector<Lit> clause;
+        while (ret) {
+            ret = get_next_small_clause(clause);
+            if (!ret) break;
+            s2.add_clause(clause);
+        }
+        end_getting_small_clauses();
+
+        uint64_t last_num_conflicts = 0;
+        int64_t remaining_confls = orig_max_confl;
+        s2.set_max_confl(remaining_confls/4);
+        uint32_t num_runs = 0;
+        auto s2_ret = s2.solve();
+        remaining_confls -= (s2.get_sum_conflicts() - last_num_conflicts);
+        if (s2_ret == l_True) {
+            old_model = s2.get_model();
+            for(uint32_t i = 0; i < 30 && remaining_confls > 0; i++) {
+                last_num_conflicts = s2.get_sum_conflicts();
+                s2.set_max_confl(remaining_confls);
+                s2_ret = s2.solve();
+                remaining_confls -= (s2.get_sum_conflicts() - last_num_conflicts);
+                if (s2_ret == l_Undef) break;
+                num_runs++;
+                const auto& this_model = s2.get_model();
+                for(uint32_t i2 = 0, max = s2.nVars(); i2 < max; i2++) {
+                    if (seen_flipped[i2]) continue;
+                    if (this_model[i2] != old_model[i2]) {
+                        seen_flipped[i2] = 1;
+                        num_seen_flipped++;
+                    }
+                }
+            }
+        }
+        if (old_verb >=1) cout << "c [backbone-simpl] num seen flipped: "
+            << num_seen_flipped
+            << " conflicts used: " << print_value_kilo_mega(s2.get_sum_conflicts())
+            << " num runs succeeded: " << num_runs
+            << " T: " << std::fixed << std::setprecision(2) << (cpuTime() - myTime) << endl;
+    }
+
+    // Sort according to occurrence
+    vector<VarOrderBackbone> var_order;
+    for(uint32_t i = 0; i < nVars(); i++) var_order.push_back(VarOrderBackbone(i, 0));
+    for(const auto& off: longIrredCls) {
+        Clause* cl = cl_alloc.ptr(off);
+        for(const auto& lit: *cl) var_order[lit.var()].occ++;
+    }
+    for(uint32_t i = 0; i < nVars()*2; i ++) {
+        Lit lit = Lit::toLit(i);
+        for(const auto& w: watches[lit]) {
+            if (w.isBin()) {
+                var_order[lit.var()].occ++;
+                var_order[w.lit2().var()].occ++;
+            }
+        }
+    }
+    std::sort(var_order.begin(), var_order.end());
+    std::mt19937 g;
+    g.seed(18337);
+    std::shuffle(var_order.begin(), var_order.end(), g);
+
+    int64_t remaining_confl = orig_max_confl;
+    set_max_confl(remaining_confl);
+    last_sum_conflicts = sumConflicts;
+    cout << " Sum confl before: " << sumConflicts << endl;
+
+    const auto old_polar_mode = conf.polarity_mode;
+    conf.polarity_mode = PolarityMode::polarmode_neg;
+    lbool ret = iterate_until_solved();
+    old_model = assigns;
+    cancelUntil(0);
+    if (ret == l_False) goto end;
+    if (ret == l_Undef || remaining_confl < 0) goto end;
+    assert(last_sum_conflicts <= sumConflicts);
+    remaining_confl -= (sumConflicts - last_sum_conflicts);
+
+    for(const auto& var_b: var_order) {
+        const uint32_t var = var_b.var;
+        if (seen_flipped[var]) continue;
+        if (value(var) != l_Undef) continue;
+        if (varData[var].removed != Removed::none) continue;
+        cout << "Tring var: " << var << " occ: " << var_b.occ << endl;
+
+        l = Lit(var, old_model[var] == l_False);
+
+        //There is definitely a solution with "l". Let's see if ~l fails.
+        assert(assumptions.empty());
+        assumptions.push_back(AssumptionPair(map_inter_to_outer(~l), lit_Undef));
+        fill_assumptions_set();
+        set_max_confl(remaining_confl/20);
+        ret = iterate_until_solved();
+        auto new_model = assigns;
+        cancelUntil(0);
+        unfill_assumptions_set();
+        assumptions.clear();
+        tried++;
+
+        //Update max confl
+        assert(last_sum_conflicts <= sumConflicts);
+        remaining_confl -= (sumConflicts - last_sum_conflicts);
+        last_sum_conflicts = sumConflicts;
+
+        if (ret == l_True) {
+            cout << "True" << endl;
+            for(uint32_t i2 = 0; i2 < nVars(); i2++) {
+                if (seen_flipped[i2] ||
+                        value(i2) != l_Undef || new_model[i2] == l_Undef ||
+                        varData[i2].removed != Removed::none) continue;
+                if (new_model[i2] != old_model[i2]) {
+                    seen_flipped[i2] = 1;
+                    num_seen_flipped++;
+                }
+            }
+        } else if (ret == l_False) {
+            cout << "False" << endl;
+            tmp_clause.clear();
+            tmp_clause.push_back(l);
+            Clause* ptr = add_clause_int(tmp_clause);
+            assert(ptr == 0);
+            if (!okay()) goto end;
+        } else {
+            cout << "Undef" << endl;
+            undefs++;
+        }
+        if (remaining_confl < 0) goto end;
+    }
+    finished = true;
+    assert(okay());
+
+    end:
+    uint32_t num_set = trail.size() - orig_trail_size;
+    double time_used = cpuTime() - myTime;
+    conf.polarity_mode = old_polar_mode;
+    conf.verbosity = old_verb;
+
+    cout << " Sum confl after: " << sumConflicts << endl;
+    verb_print(1,
+        "[backbone-simpl]"
+        << " finished: " << finished
+        << " undefs: " << undefs
+        << " tried: "  << tried
+        << " set: " << num_set
+        << " T: " << std::setprecision(2) << time_used);
+
+    return okay();
 }
 
 #ifdef STATS_NEEDED
