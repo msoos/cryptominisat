@@ -1597,6 +1597,7 @@ void Solver::reset_for_solving()
     longest_trail_ever_best = 0;
     longest_trail_ever_inv = 0;
     fresh_solver = false;
+    polarity_strategy_change = 0;
     set_assumptions();
     #ifdef SLOW_DEBUG
     if (ok) {
