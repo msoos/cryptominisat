@@ -5461,7 +5461,7 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen)
     vector<char> seen_flipped;
     seen_flipped.resize(nVars(), 0);
     const auto old_verb = conf.verbosity;
-    conf.verbosity = 1;
+    conf.verbosity = 0;
 
     if (cmsgen) {
         //CMSGen-based seen_flipped detection, so we don't need to query so much
@@ -5557,7 +5557,6 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen)
         if (seen_flipped[var]) continue;
         if (value(var) != l_Undef) continue;
         if (varData[var].removed != Removed::none) continue;
-        cout << "Tring var: " << var << " occ: " << var_b.occ << endl;
 
         l = Lit(var, old_model[var] == l_False);
 
@@ -5579,7 +5578,6 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen)
         last_sum_conflicts = sumConflicts;
 
         if (ret == l_True) {
-            cout << "True" << endl;
             for(uint32_t i2 = 0; i2 < nVars(); i2++) {
                 if (seen_flipped[i2] ||
                         value(i2) != l_Undef || new_model[i2] == l_Undef ||
@@ -5590,14 +5588,12 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen)
                 }
             }
         } else if (ret == l_False) {
-            cout << "False" << endl;
             tmp_clause.clear();
             tmp_clause.push_back(l);
             Clause* ptr = add_clause_int(tmp_clause);
             assert(ptr == 0);
             if (!okay()) goto end;
         } else {
-            cout << "Undef" << endl;
             undefs++;
         }
         if (remaining_confl < 0) goto end;
@@ -5611,7 +5607,6 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen)
     conf.polarity_mode = old_polar_mode;
     conf.verbosity = old_verb;
 
-    cout << " Sum confl after: " << sumConflicts << endl;
     verb_print(1,
         "[backbone-simpl]"
         << " finished: " << finished
