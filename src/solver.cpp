@@ -5467,7 +5467,6 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen)
     if (cmsgen) {
         //CMSGen-based seen_flipped detection, so we don't need to query so much
         SATSolver s2;
-        s2.set_up_for_sample_counter(100);
         s2.new_vars(nVars());
         s2.set_verbosity(0);
         bool ret = true;
@@ -5487,12 +5486,13 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen)
 
         uint64_t last_num_conflicts = 0;
         int64_t remaining_confls = orig_max_confl;
-        s2.set_max_confl(remaining_confls/4);
+        s2.set_max_confl(remaining_confls*2);
         uint32_t num_runs = 0;
         auto s2_ret = s2.solve();
         remaining_confls -= (s2.get_sum_conflicts() - last_num_conflicts);
         if (s2_ret == l_True) {
             old_model = s2.get_model();
+            s2.set_up_for_sample_counter(100);
             for(uint32_t i = 0; i < 30 && remaining_confls > 0; i++) {
                 last_num_conflicts = s2.get_sum_conflicts();
                 s2.set_max_confl(remaining_confls);
@@ -5541,7 +5541,6 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen)
     int64_t remaining_confl = orig_max_confl;
     set_max_confl(remaining_confl);
     last_sum_conflicts = sumConflicts;
-    cout << " Sum confl before: " << sumConflicts << endl;
 
     const auto old_polar_mode = conf.polarity_mode;
     conf.polarity_mode = PolarityMode::polarmode_neg;
