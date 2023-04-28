@@ -1791,6 +1791,7 @@ void OccSimplifier::clean_sampl_and_get_empties(
 {
     assert(solver->okay());
     assert(solver->prop_at_head());
+    release_assert(empty_vars.empty());
     if (!setup()) return;
 
     auto origTrailSize = solver->trail_size();
@@ -1800,10 +1801,6 @@ void OccSimplifier::clean_sampl_and_get_empties(
     const double myTime = cpuTime();
 
     set<uint32_t> empty_vars_set;
-    for(auto& v: empty_vars) {
-        v = solver->varReplacer->get_var_replaced_with(v);
-        empty_vars_set.insert(v);
-    }
 
     // Clean up sampl_vars from replaced and set variables
     set<uint32_t> sampl_vars_set;
@@ -1818,7 +1815,6 @@ void OccSimplifier::clean_sampl_and_get_empties(
         assert(solver->varData[v].removed == Removed::none);
 
         if (solver->value(v) != l_Undef) continue;
-        if (empty_vars_set.find(v) != empty_vars_set.end()) continue;
         sampl_vars_set.insert(v);
     }
 
@@ -1829,22 +1825,14 @@ void OccSimplifier::clean_sampl_and_get_empties(
         if (!solver->okay()) goto end;
         const Lit l = Lit(v, false);
 
-        uint32_t total = solver->watches[l].size() + solver->watches[~l].size();
-        if (total == 0 || (solver->zero_irred_cls(l) && solver->zero_irred_cls(~l))) {
+        uint32_t irred_and_red = solver->watches[l].size() + solver->watches[~l].size();
+        if (irred_and_red == 0 || (solver->zero_irred_cls(l) && solver->zero_irred_cls(~l))) {
             empty_occ++;
             empty_vars_set.insert(v);
             elim_var_by_str(l.var(), {});
             assert(solver->watches[l].empty() && solver->watches[~l].empty());
             continue;
         }
-
-        /*if (mirror_empty && solver->bnns.empty()) {
-            if (!check_equiv_subformula(l)) continue;
-            if (!solver->okay()) goto end;
-            assert(solver->watches[l].empty() && solver->watches[~l].empty());
-            empty_vars.push_back(orig_v);
-            mirror++;
-        }*/
     }
 
     // Replace what we were given with cleaned + empty removed

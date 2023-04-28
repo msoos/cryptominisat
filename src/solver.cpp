@@ -4789,6 +4789,7 @@ vector<uint32_t> Solver::remove_definable_by_irreg_gate(const vector<uint32_t>& 
 void Solver::clean_sampl_and_get_empties(
     vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars)
 {
+    release_assert(empty_vars.empty());
     if (!okay()) return;
     assert(get_num_bva_vars() == 0);
     map_outer_to_inter(sampl_vars);
