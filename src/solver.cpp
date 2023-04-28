@@ -5433,16 +5433,6 @@ bool Solver::minimize_clause(vector<Lit>& cl) {
     return can_be_removed;
 }
 
-struct VarOrderBackbone
-{
-    VarOrderBackbone(uint32_t _var, uint32_t _occ) : var(_var), occ(_occ) {}
-    uint32_t var;
-    uint32_t occ = 0;
-    bool operator<(const VarOrderBackbone& other) {
-        return occ > other.occ;
-    }
-};
-
 bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen)
 {
     if (!okay()) return false;
@@ -5519,22 +5509,13 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen)
     }
 
     // Sort according to occurrence
-    vector<VarOrderBackbone> var_order;
-    for(uint32_t i = 0; i < nVars(); i++) var_order.push_back(VarOrderBackbone(i, 0));
-    for(const auto& off: longIrredCls) {
-        Clause* cl = cl_alloc.ptr(off);
-        for(const auto& lit: *cl) var_order[lit.var()].occ++;
+    vector<uint32_t> var_order;
+    for(uint32_t var = 0; var < nVars(); var++) {
+        if (seen_flipped[var]) continue;
+        if (value(var) != l_Undef) continue;
+        if (varData[var].removed != Removed::none) continue;
+        var_order.push_back(var);
     }
-    for(uint32_t i = 0; i < nVars()*2; i ++) {
-        Lit lit = Lit::toLit(i);
-        for(const auto& w: watches[lit]) {
-            if (w.isBin()) {
-                var_order[lit.var()].occ++;
-                var_order[w.lit2().var()].occ++;
-            }
-        }
-    }
-    std::sort(var_order.begin(), var_order.end());
     std::mt19937 g;
     g.seed(18337);
     std::shuffle(var_order.begin(), var_order.end(), g);
@@ -5553,8 +5534,7 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen)
     assert(last_sum_conflicts <= sumConflicts);
     remaining_confl -= (sumConflicts - last_sum_conflicts);
 
-    for(const auto& var_b: var_order) {
-        const uint32_t var = var_b.var;
+    for(const auto& var: var_order) {
         if (seen_flipped[var]) continue;
         if (value(var) != l_Undef) continue;
         if (varData[var].removed != Removed::none) continue;
