@@ -475,6 +475,18 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
         if (!parseIndependentSet(in)) {
             return false;
         }
+    } else if (str == "p") {
+        in.skipWhitespace();
+        std::string str2;
+        in.parseString(str2);
+        if (str2 == "show") {
+            in.skipWhitespace();
+            sampling_vars_found = true;
+            if (!parseIndependentSet(in)) { return false; }
+        } else {
+            cout << "ERROR, 'c p' followed by unknown text: '" << str2 << "'" << endl;
+            exit(-1);
+        }
     } else {
         if (verbosity >= 6) {
             cout
