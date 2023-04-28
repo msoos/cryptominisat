@@ -330,6 +330,7 @@ class Solver : public Searcher
         void testing_set_solver_not_fresh();
         bool full_probe(const bool bin_only);
         bool backbone_simpl(int64_t max_confl, bool cmsgen);
+        bool removed_var_ext(uint32_t var) const;
 
     private:
         friend class ClauseDumper;
@@ -677,6 +678,13 @@ inline void Solver::free_cl(
     }
     #endif
     cl_alloc.clauseFree(offs);
+}
+
+inline bool Solver::removed_var_ext(uint32_t var) const
+{
+    assert(get_num_bva_vars() == 0);
+    var = map_outer_to_inter(var);
+    return value(var) != l_Undef || varData[var].removed != Removed::none;
 }
 
 } //end namespace

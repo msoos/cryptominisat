@@ -1913,3 +1913,8 @@ DLL_PUBLIC bool SATSolver::backbone_simpl(int64_t max_confl, bool cmsgen)
     Solver& s = *data->solvers[0];
     return s.backbone_simpl(max_confl, cmsgen);
 }
+
+DLL_PUBLIC bool SATSolver::removed_var(uint32_t var) const{
+    Solver& s = *data->solvers[0];
+    return s.removed_var_ext(var);
+}

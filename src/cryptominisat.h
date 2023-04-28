@@ -260,6 +260,7 @@ namespace CMSat {
         /////////////////////
         // Backwards compatibility, implemented using the above "small clauses" functions
         void open_file_and_dump_irred_clauses(const char* fname);
+        bool removed_var(uint32_t var) const;
 
     private:
 
