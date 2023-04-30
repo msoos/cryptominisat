@@ -1,4 +1,4 @@
-name: Build
+name: better-python-build
 
 on: [push, pull_request]
 
@@ -30,3 +30,9 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           path: ./wheelhouse/*.whl
+      - name: Publish wheels to PyPI 
+        env:
+          TWINE_USERNAME: "__token__"
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: |
+          twine upload --skip-existing --disable-progress-bar ./wheelhouse/pycryptosat-*manylinux*x86_64.whl
