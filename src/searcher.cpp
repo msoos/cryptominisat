@@ -3688,7 +3688,7 @@ void Searcher::create_new_fast_backw_assumption()
 
     //Remove indic
     const Lit indic = fast_backw._assumptions->at(fast_backw._assumptions->size()-1);
-    assert(indic.sign());
+    assert(!indic.sign());
     fast_backw._assumptions->pop_back();
 
     //Backtrack
@@ -3782,7 +3782,7 @@ lbool Searcher::new_decision_fast_backw()
                     backup.push_back(fast_backw._assumptions->at(i));
                 }
                 fast_backw.indep_vars->push_back(*fast_backw.test_var);
-                backup.push_back(Lit(*fast_backw.test_indic, true));
+                backup.push_back(Lit(*fast_backw.test_indic, false));
                 for(uint32_t i = splice_into; i < fast_backw._assumptions->size(); i++) {
                     const auto x = fast_backw._assumptions->at(i);
                     backup.push_back(x);
