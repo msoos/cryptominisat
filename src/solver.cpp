@@ -1598,6 +1598,7 @@ void Solver::reset_for_solving()
     longest_trail_ever_inv = 0;
     fresh_solver = false;
     polarity_strategy_change = 0;
+    increasing_phase_size = conf.restart_first;
     set_assumptions();
     #ifdef SLOW_DEBUG
     if (ok) {
@@ -5496,6 +5497,8 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen)
                 num_runs++;
                 const auto& this_model = s2.get_model();
                 for(uint32_t i2 = 0, max = s2.nVars(); i2 < max; i2++) {
+                    if (value(i2) != l_Undef) continue;
+                    if (varData[i2].removed != Removed::none) continue;
                     if (seen_flipped[i2]) continue;
                     if (this_model[i2] != old_model[i2]) {
                         seen_flipped[i2] = 1;
