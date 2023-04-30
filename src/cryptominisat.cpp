@@ -1904,6 +1904,7 @@ DLL_PUBLIC void SATSolver::delete_extend_solution_setup(void* s)
 DLL_PUBLIC bool SATSolver::minimize_clause(std::vector<Lit>& cl)
 {
     Solver& s = *data->solvers[0];
+    actually_add_clauses_to_threads(data);
     return s.minimize_clause(cl);
 }
 
@@ -1911,10 +1912,12 @@ DLL_PUBLIC bool SATSolver::minimize_clause(std::vector<Lit>& cl)
 DLL_PUBLIC bool SATSolver::backbone_simpl(int64_t max_confl, bool cmsgen)
 {
     Solver& s = *data->solvers[0];
+    actually_add_clauses_to_threads(data);
     return s.backbone_simpl(max_confl, cmsgen);
 }
 
 DLL_PUBLIC bool SATSolver::removed_var(uint32_t var) const{
     Solver& s = *data->solvers[0];
+    actually_add_clauses_to_threads(data);
     return s.removed_var_ext(var);
 }
