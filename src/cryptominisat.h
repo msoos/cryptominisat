@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include <iostream>
 #include <utility>
 #include <string>
+#include <limits>
 #include <stdio.h>
 #include "solvertypesmini.h"
 
@@ -270,4 +271,40 @@ namespace CMSat {
 
         CMSatPrivateData *data;
     };
+
+    template<class T, class T2>
+    void copy_solver_to_solver(T* solver, T2* solver2) {
+        solver2->new_vars(solver->nVars());
+        solver->start_getting_small_clauses(
+            std::numeric_limits<uint32_t>::max(),
+            std::numeric_limits<uint32_t>::max(),
+            false);
+        std::vector<Lit> clause;
+        bool ret = true;
+        while (ret) {
+            ret = solver->get_next_small_clause(clause);
+            if (!ret) break;
+            solver2->add_clause(clause);
+        }
+        solver->end_getting_small_clauses();
+    }
+
+    template<class T, class T2>
+    void copy_simp_solver_to_solver(T* solver, T2* solver2) {
+        solver2->new_vars(solver->simplified_nvars());
+        solver->start_getting_small_clauses(
+            std::numeric_limits<uint32_t>::max(),
+            std::numeric_limits<uint32_t>::max(),
+            false,
+            false,
+            true); //simplified
+        std::vector<Lit> clause;
+        bool ret = true;
+        while (ret) {
+            ret = solver->get_next_small_clause(clause);
+            if (!ret) break;
+            solver2->add_clause(clause);
+        }
+        solver->end_getting_small_clauses();
+    }
 }
