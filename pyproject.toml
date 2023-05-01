@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pycryptosat"
-version = "5.11.8"
+version = "5.11.9"
 description = "Bindings to CryptoMiniSat, an advanced SAT solver"
 keywords = ["sat", "cryptography"]
 license = { file = "LICENSE.txt" }
