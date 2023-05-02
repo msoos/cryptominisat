@@ -45,7 +45,6 @@ THE SOFTWARE.
 
 namespace CMSat {
 
-using std::set;
 class Solver;
 class SQLStats;
 class DataSync;
