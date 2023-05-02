@@ -5049,19 +5049,19 @@ bool Solver::oracle_vivif(bool& finished)
                 goto end;
             }
             if (ret.isFalse()) {
-                    sort(assump.begin(), assump.end());
-                    auto clause = Negate(assump);
-                    oracle.AddClauseIfNeeded(clause, true);
-                    clauses[i] = clause;
-                    j = -1;
-                    if (clause.empty()) {
-                            ok = false;
-                            cout<<"c o UNSAT"<<endl;
-                            return false;
-                    }
+                sort(assump.begin(), assump.end());
+                auto clause = Negate(assump);
+                oracle.AddClauseIfNeeded(clause, true);
+                clauses[i] = clause;
+                j = -1;
+                if (clause.empty()) {
+                        ok = false;
+                        cout<<"c o UNSAT"<<endl;
+                        return false;
+                }
             } else if(!sat) {
-                    sat = true;
-                    cout<<"c o SAT"<<endl;
+                sat = true;
+                cout<<"c o SAT"<<endl;
             }
         }
     }
