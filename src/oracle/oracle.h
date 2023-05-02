@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "utils.hpp"
+#include "utils.h"
 
 namespace sspp {
 namespace oracle {
@@ -201,6 +201,10 @@ inline void Oracle::AddClause(const vector<Lit>& clause, bool entailed) {
 
 inline void Oracle::PrintStats() const {
 	stats.Print();
+}
+
+inline bool CInfo::Keep() const {
+	return glue <= 2 || used == 1;
 }
 
 } // namespace oracle

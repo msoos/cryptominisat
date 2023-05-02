@@ -77,7 +77,7 @@ THE SOFTWARE.
 #include "lucky.h"
 #include "get_clause_query.h"
 #include "community_finder.h"
-#include "oracle/oracle.hpp"
+#include "oracle/oracle.h"
 extern "C" {
 #include "picosat/picosat.h"
 }

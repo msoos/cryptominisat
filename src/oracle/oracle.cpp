@@ -20,13 +20,13 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
 // OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include "oracle.hpp"
+#include "oracle.h"
 
 #include <set>
 #include <queue>
 #include <iostream>
 
-#include "utils.hpp"
+#include "utils.h"
 using std::cerr;
 using std::endl;
 using std::max;
@@ -37,7 +37,7 @@ using std::swap;
 namespace sspp {
 namespace oracle {
 namespace {
-const double EPS = 1e-150;
+constexpr const double EPS = 1e-150;
 } // namespace
 
 void Stats::Print() const {
@@ -47,10 +47,6 @@ void Stats::Print() const {
 	cerr<<"Forgot clauses: "<<forgot_clauses<<endl;
 	cerr<<"Nontriv redu: "<<nontriv_redu<<endl;
 	cerr<<"Restarts "<<restarts<<endl;
-}
-
-bool CInfo::Keep() const {
-	return glue <= 2 || used == 1;
 }
 
 void Oracle::AddSolToCache() {
