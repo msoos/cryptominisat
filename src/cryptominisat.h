@@ -157,6 +157,8 @@ namespace CMSat {
         void set_weaken_time_limitM(const uint32_t lim);
         void set_occ_based_lit_rem_time_limitM(const uint32_t lim);
         void set_orig_global_timeout_multiplier(const double mult);
+        void set_oracle_get_learnts(bool val);
+        void set_oracle_removed_is_learnt(bool val);
         double get_orig_global_timeout_multiplier();
         bool minimize_clause(std::vector<Lit>& cl);
 

@@ -1934,3 +1934,14 @@ DLL_PUBLIC bool SATSolver::removed_var(uint32_t var) const{
     actually_add_clauses_to_threads(data);
     return s.removed_var_ext(var);
 }
+
+
+DLL_PUBLIC void SATSolver::set_oracle_get_learnts(bool val) {
+    Solver& s = *data->solvers[0];
+    s.conf.oracle_get_learnts = val;
+}
+
+DLL_PUBLIC void SATSolver::set_oracle_removed_is_learnt(bool val) {
+    Solver& s = *data->solvers[0];
+    s.conf.oracle_removed_is_learnt = val;
+}

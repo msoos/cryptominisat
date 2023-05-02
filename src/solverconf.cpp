@@ -375,6 +375,10 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , thread_num(0)
         , is_mpi(false)
 
+        // Oracle
+        , oracle_get_learnts(false) // get oracle learnt clauses
+        , oracle_removed_is_learnt(false) // clauses removed by Oracle should be learnt
+
         //misc
         , origSeed(0)
         , simulate_frat(false)

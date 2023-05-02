@@ -5076,13 +5076,15 @@ bool Solver::oracle_vivif(bool& finished)
         if (!okay()) return false;
     }
 
-//     for (const auto& cl: oracle.LearnedClauses()) {
-//         tmp2.clear();
-//         for(const auto& l: cl) tmp2.push_back(orc_to_lit(l));
-//         Clause* cl2 = solver->add_clause_int(tmp2, true);
-//         if (cl2) longIrredCls.push_back(cl_alloc.get_offset(cl2));
-//         if (!okay()) return false;
-//     }
+    if (conf.oracle_get_learnts) {
+        for (const auto& cl: oracle.LearnedClauses()) {
+            tmp2.clear();
+            for(const auto& l: cl) tmp2.push_back(orc_to_lit(l));
+            Clause* cl2 = solver->add_clause_int(tmp2, true);
+            if (cl2) longRedCls[2].push_back(cl_alloc.get_offset(cl2));
+            if (!okay()) return false;
+        }
+    }
 
     verb_print(1, "[oracle-vivif] finished: " << finished << " T: " << (cpuTime()-myTime));
     return solver->okay();
@@ -5301,8 +5303,7 @@ bool Solver::sparsify()
             longIrredCls[j++] = longIrredCls[i];
         } else {
             litStats.irredLits -= cl->size();
-            // TODO for red in GANAK
-            if (false) {
+            if (conf.oracle_removed_is_learnt) {
                 litStats.redLits += cl->size();
                 longRedCls[2].push_back(longIrredCls[i]);
             } else {
