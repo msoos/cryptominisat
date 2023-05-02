@@ -38,14 +38,6 @@ typedef int Var;
 
 using std::vector;
 using std::string;
-using std::cout;
-using std::cerr;
-using std::endl;
-using std::max;
-using std::min;
-using std::pair;
-using std::to_string;
-using std::swap;
 
 inline bool Subsumes(const vector<Lit>& a, const vector<Lit>& b) {
 	if (a.size() == b.size()) return a == b;

@@ -85,7 +85,7 @@ struct CInfo {
 
 class Oracle {
  public:
- 	Oracle(int vars_, const vector<vector<Lit>>& clauses_);
+  Oracle(int vars_, const vector<vector<Lit>>& clauses_);
   Oracle(int vars_, const vector<vector<Lit>>& clauses_, const vector<vector<Lit>>& learned_clauses_);
 
   void SetAssumpLit(Lit lit, bool freeze);
@@ -99,8 +99,6 @@ class Oracle {
   double ConflictRate(int samples);
   vector<vector<Lit>> AllClauses() const;
   vector<vector<Lit>> LearnedClauses() const;
-
-  vector<Lit> InferUnits(const vector<Lit>& assumps);
   int PropDg(const vector<Lit>& assumps);
 
   int CurLevel() const;

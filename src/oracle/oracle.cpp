@@ -24,8 +24,15 @@
 
 #include <set>
 #include <queue>
+#include <iostream>
 
 #include "utils.hpp"
+using std::cerr;
+using std::endl;
+using std::max;
+using std::min;
+using std::pair;
+using std::swap;
 
 namespace sspp {
 namespace oracle {
@@ -1010,70 +1017,6 @@ int Oracle::PropDg(const vector<Lit>& assumps) {
 	for (Var v = 1; v <= vars; v++) {
 		if (LitVal(PosLit(v)) != 0) {
 			ret++;
-		}
-	}
-	UnDecide(2);
-	return ret;
-}
-
-vector<Lit> Oracle::InferUnits(const vector<Lit>& assumps) {
-	if (unsat) return {NegLit(1), PosLit(1)};
-	for (Lit lit : assumps) {
-		if (LitVal(lit) == -1) {
-			prop_q.clear();
-			UnDecide(2);
-			return {NegLit(1), PosLit(1)};
-		}
-		if (LitVal(lit) == 0) {
-			Decide(lit, 2);
-		}
-	}
-	size_t confl_clause = Propagate(2);
-	if (confl_clause) {
-		UnDecide(2);
-		return {NegLit(1), PosLit(1)};
-	}
-	auto sol = HardSolve();
-	assert(!sol.isUnknown());
-	if (sol.isFalse()) {
-		UnDecide(2);
-		return {NegLit(1), PosLit(1)};
-	}
-	vector<char> sol_val(vars+1);
-	for (Var v = 1; v <= vars; v++) {
-		sol_val[v] = vs[v].phase;
-	}
-	UnDecide(3);
-	for (Lit lit : assumps) {
-		assert(LitVal(lit) == 1);
-	}
-	// Failed literal propagation
-	bool fo = true;
-	while (fo) {
-		fo = false;
-		for (Var v = 1; v <= vars; v++) {
-			Lit lit = MkLit(v, sol_val[v]);
-			if (LitVal(lit) != 0) {
-				assert(LitVal(lit) == 1);
-				continue;
-			}
-			Decide(Neg(lit), 3);
-			confl_clause = Propagate(3);
-			UnDecide(3);
-			if (confl_clause) {
-				Decide(lit, 2);
-				assert(Propagate(2) == 0);
-			}
-		}
-	}
-	// Collect
-	vector<Lit> ret;
-	for (Var v = 1; v <= vars; v++) {
-		Lit lit = MkLit(v, sol_val[v]);
-		if (LitVal(lit) != 0) {
-			assert(LitVal(lit) == 1);
-			ret.push_back(lit);
-			continue;
 		}
 	}
 	UnDecide(2);
