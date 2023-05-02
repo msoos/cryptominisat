@@ -92,11 +92,9 @@ class Oracle {
   TriState Solve(const vector<Lit>& assumps, bool usecache=true, int64_t max_mems = 1000ULL*1000LL*1000LL);
   bool FalseByProp(const vector<Lit>& assumps);
   bool FreezeUnit(Lit unit);
-  bool FreezeUnits(const vector<Lit>& units);
   bool AddClauseIfNeeded(vector<Lit> clause, bool entailed);
   void AddClause(const vector<Lit>& clause, bool entailed);
   void PrintStats() const;
-  double ConflictRate(int samples);
   vector<vector<Lit>> AllClauses() const;
   vector<vector<Lit>> LearnedClauses() const;
   int PropDg(const vector<Lit>& assumps);

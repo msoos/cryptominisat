@@ -297,7 +297,7 @@ void Oracle::BumpClause(size_t cls) {
 	}
 	assert(cla_info[i].pt == cls);
 	if (cla_info[i].glue == -1) {
-		// Special added clause 
+		// Special added clause
 		assert(cla_info[i].used == -1);
 		return;
 	}
@@ -605,7 +605,7 @@ vector<Lit> Oracle::LearnUip(size_t conflict_clause) {
 		seen[v] = false;
 	}
 	for (size_t i = 1; i < clause.size(); i++) {
-		assert(VarOf(clause[i]) != VarOf(clause[i-1]));	
+		assert(VarOf(clause[i]) != VarOf(clause[i-1]));
 	}
 	for (size_t i = 1; i < clause.size(); i++) {
 		if (vs[VarOf(clause[i])].reason) {
@@ -1023,25 +1023,6 @@ int Oracle::PropDg(const vector<Lit>& assumps) {
 	return ret;
 }
 
-bool Oracle::FreezeUnits(const vector<Lit>& units) {
-	if (unsat) return false;
-	assert(CurLevel() == 1);
-	for (Lit unit : units) {
-		if (LitVal(unit) == -1) {
-			return false;
-		}
-		if (LitVal(unit) == 0) {
-			Decide(unit, 1);
-			stats.learned_units++;
-		}
-	}
-	size_t confl = Propagate(1);
-	if (confl) {
-		unsat = true;
-	}
-	return confl == 0;
-}
-
 bool Oracle::FreezeUnit(Lit unit) {
 	if (unsat) return false;
 	assert(CurLevel() == 1);
@@ -1108,37 +1089,6 @@ bool Oracle::AddClauseIfNeeded(vector<Lit> clause, bool entailed) {
 		}
 	}
 	return false;
-}
-
-double Oracle::ConflictRate(int samples) {
-	if (unsat) {
-		return 0;
-	}
-	vector<Var> var_list;
-	for (Var v = 1; v <= vars; v++) {
-		if (LitVal(PosLit(v)) == 0) {
-			var_list.push_back(v);
-		}
-	}
-	int confls = 0;
-	for (int sample = 0; sample < samples; sample++) {
-		Shuffle(var_list, rand_gen);
-		bool cf = false;
-		for (Var v : var_list) {
-			if (LitVal(PosLit(v)) != 0) continue;
-			Decide(MkLit(v, RandBool(rand_gen)), 2);
-			size_t confl = Propagate(2);
-			if (confl) {
-				cf = true;
-				break;
-			}
-		}
-		UnDecide(2);
-		if (cf) {
-			confls++;
-		}
-	}
-	return (double)confls/(double)samples;
 }
 
 vector<vector<Lit>> Oracle::LearnedClauses() const {
