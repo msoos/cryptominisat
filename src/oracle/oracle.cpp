@@ -46,13 +46,6 @@ void Stats::Print() const {
 	cerr<<"Learned clauses/bin/unit: "<<learned_clauses<<"/"<<learned_bin_clauses<<"/"<<learned_units<<endl;
 	cerr<<"Forgot clauses: "<<forgot_clauses<<endl;
 	cerr<<"Nontriv redu: "<<nontriv_redu<<endl;
-	cerr<<"Timers:"<<endl;
-	cerr<<"Setup "<<setup_timer.get()<<endl;
-	cerr<<"Solve "<<solve_timer.get()<<endl;
-	cerr<<"Propagation "<<prop_timer.get()<<endl;
-	cerr<<"Learn "<<learn_timer.get()<<endl;
-	cerr<<"Maint "<<maint_time.get()<<endl;
-	cerr<<"Cache "<<cache_timer.get()<<endl;
 	cerr<<"Restarts "<<restarts<<endl;
 }
 
@@ -69,13 +62,10 @@ void Oracle::AddSolToCache() {
 
 void Oracle::ClearSolCache() {
 	if (sol_cache[1].size() == 0) return;
-	for (Var v = 1; v <= vars; v++) {
-		sol_cache[v].clear();
-	}
+	for (Var v = 1; v <= vars; v++) sol_cache[v].clear();
 }
 
 bool Oracle::SatByCache(const vector<Lit>& assumps) {
-// 	stats.cache_timer.start();
 	int cs = sol_cache[1].size();
 	for (int i = 0; i < cs; i++) {
 		bool ok = true;
@@ -93,30 +83,10 @@ bool Oracle::SatByCache(const vector<Lit>& assumps) {
 			}
 		}
 		if (ok) {
-// 			stats.cache_timer.stop();
 			return true;
 		}
 	}
-// 	stats.cache_timer.stop();
 	return false;
-}
-
-void Oracle::UpdGlueEma(int glue) {
-	glue_long_ema = ((long double)1.0-long_a)*glue_long_ema + long_a*(long double)glue;
-	glue_short_ema = ((long double)1.0-short_a)*glue_short_ema + short_a*(long double)glue;
-	if (long_a > 1.0L/5000.0L) {
-		long_a /= 2.0L;
-	}
-	if (short_a > 1.0L/50.0L) {
-		short_a /= 2.0L;
-	}
-}
-
-void Oracle::UpdVarAssEma() {
-	var_ass_ema = ((long double)1.0-var_ass_a)*var_ass_ema + var_ass_a*(long double)decided.size();
-	if (var_ass_a > 1.0L/5000.0L) {
-		var_ass_a /= 2.0L;
-	}
 }
 
 void Oracle::ForgetLearned() {
@@ -158,7 +128,6 @@ void Oracle::ForgetLearned() {
 }
 
 void Oracle::ResizeClauseDb() {
-	stats.maint_time.start();
 	std::sort(cla_info.begin(), cla_info.end(), [](const CInfo& a, const CInfo& b){
 		if (a.glue == b.glue) { return a.used > b.used; }
 		return a.glue < b.glue;
@@ -250,14 +219,10 @@ void Oracle::ResizeClauseDb() {
 			}
 		}
 	}
-	stats.maint_time.stop();
 }
 
 void Oracle::BumpClause(size_t cls) {
-	if (cls < orig_clauses_size) {
-		og_bump++;
-		return;
-	}
+	if (cls < orig_clauses_size) return;
 	assert(cla_info.size() > 0);
 	size_t i = 0;
 	for (size_t b = cla_info.size()/2; b >= 1; b /= 2) {
@@ -460,7 +425,6 @@ size_t Oracle::AddLearnedClause(const vector<Lit>& clause) {
 	}
 	clauses.push_back(0);
 	cla_info.push_back({pt, glue, 0});
-	UpdGlueEma(glue);
 	return pt;
 }
 
@@ -505,7 +469,6 @@ bool Oracle::LitReduntant(Lit lit) {
 }
 
 vector<Lit> Oracle::LearnUip(size_t conflict_clause) {
-// 	stats.learn_timer.start();
 	assert(conflict_clause > 0);
 	BumpClause(conflict_clause);
 	vector<Lit> clause = {0};
@@ -575,13 +538,11 @@ vector<Lit> Oracle::LearnUip(size_t conflict_clause) {
 		assert(in_cc[clause[i]]);
 		in_cc[clause[i]] = false;
 	}
-// 	stats.learn_timer.stop();
 	return clause;
 }
 
 // Returns id of conflict clause or 0 if no conflict
 size_t Oracle::Propagate(int level) {
-// 	stats.prop_timer.start();
 	size_t conflict = 0;
 	for (size_t i = 0; i < prop_q.size(); i++) {
 		stats.mems++;
@@ -654,7 +615,6 @@ size_t Oracle::Propagate(int level) {
 	}
 	//stats.propagations += (int)prop_q.size();
 	prop_q.clear();
-// 	stats.prop_timer.stop();
 	return conflict;
 }
 
@@ -725,12 +685,6 @@ TriState Oracle::HardSolve(int64_t max_mems) {
 	int64_t confls = 0;
 	int64_t next_restart = 1;
 	int64_t next_db_clean = 1;
-	glue_long_ema = 0;
-	glue_short_ema = 0;
-	var_ass_ema = 0;
-	var_ass_a = 1;
-	long_a = 1;
-	short_a = 1;
 	int64_t mems_startup = stats.mems;
 	int cur_level = 2;
 	Var nv = 1;
@@ -739,15 +693,11 @@ TriState Oracle::HardSolve(int64_t max_mems) {
 		if (stats.mems > mems_startup+max_mems) return TriState::unknown();
 		if (confl_clause) {
 			confls++;
-			UpdVarAssEma();
-			if (cur_level <= 2) {
-				return false;
-			}
+			if (cur_level <= 2) return false;
 			cur_level = CDCLBT(confl_clause);
 			assert(cur_level >= 2);
 			continue;
 		}
-		//if (stats.conflicts > next_restart) {
 		if (confls >= next_restart) {
 			int nl = NextLuby();
 			next_restart = confls + nl*restart_factor;
@@ -761,23 +711,15 @@ TriState Oracle::HardSolve(int64_t max_mems) {
 		}
 		Var decv = 0;
 		if (confls == 0) {
-			while (nv <= vars && LitVal(PosLit(nv)) != 0) {
-				nv++;
-			}
-			if (nv <= vars) {
-				decv = nv;
-			}
+			while (nv <= vars && LitVal(PosLit(nv)) != 0) nv++;
+			if (nv <= vars) decv = nv;
 		} else {
-			while (1) {
+			while (true) {
 				decv = PopVarHeap();
-				if (decv == 0 || LitVal(PosLit(decv)) == 0) {
-					break;
-				}
+				if (decv == 0 || LitVal(PosLit(decv)) == 0) break;
 			}
 		}
-		if (decv == 0) {
-			return true;
-		}
+		if (decv == 0) return true;
 		cur_level++;
 		Decide(MkLit(decv, vs[decv].phase), cur_level);
 	}
@@ -793,12 +735,8 @@ void Oracle::AddOrigClause(vector<Lit> clause, bool entailed) {
 			i--;
 		}
 	}
-	for (Lit lit : clause) {
-		assert(LitVal(lit) == 0);
-	}
-	if (!entailed) {
-		ClearSolCache();
-	}
+	for (Lit lit : clause) assert(LitVal(lit) == 0);
+	if (!entailed) ClearSolCache();
 	if (clause.size() == 0) {
 		unsat = true;
 		return;
@@ -812,9 +750,7 @@ void Oracle::AddOrigClause(vector<Lit> clause, bool entailed) {
 	size_t pt = clauses.size();
 	watches[clause[0]].push_back({clauses.size(), clause[1], (int)clause.size()});
 	watches[clause[1]].push_back({clauses.size(), clause[0], (int)clause.size()});
-	for (Lit lit : clause) {
-		clauses.push_back(lit);
-	}
+	for (Lit lit : clause) clauses.push_back(lit);
 	clauses.push_back(0);
 	// If we have no learned clauses then this is original clause
 	// Otherwise this is "learned" clause with glue -1 and used -1
@@ -833,7 +769,6 @@ Oracle::Oracle(int vars_, const vector<vector<Lit>>& clauses_, const vector<vect
 
 Oracle::Oracle(int vars_, const vector<vector<Lit>>& clauses_) : vars(vars_), rand_gen(1337) {
 	assert(vars >= 1);
-	stats.setup_timer.start();
 	vs.resize(vars+1);
 	seen.resize(vars+1);
 	lvl_seen.resize(vars+3);
@@ -866,7 +801,6 @@ Oracle::Oracle(int vars_, const vector<vector<Lit>>& clauses_) : vars(vars_), ra
 	for (int i = heap_N-1; i >= 1; i--) {
 		var_act_heap[i] = max(var_act_heap[i*2], var_act_heap[i*2+1]);
 	}
-	stats.setup_timer.stop();
 }
 
 bool Oracle::FalseByProp(const vector<Lit>& assumps) {
@@ -892,13 +826,11 @@ bool Oracle::FalseByProp(const vector<Lit>& assumps) {
 TriState Oracle::Solve(const vector<Lit>& assumps, bool usecache, int64_t max_mems) {
 	if (unsat) return false;
 	if (usecache && SatByCache(assumps)) return true;
-	stats.solve_timer.start();
 	// TODO: solution caching
 	for (Lit lit : assumps) {
 		if (LitVal(lit) == -1) {
 			prop_q.clear();
 			UnDecide(2);
-			stats.solve_timer.stop();
 			return false;
 		} else if (LitVal(lit) == 0) {
 			Decide(lit, 2);
@@ -907,7 +839,6 @@ TriState Oracle::Solve(const vector<Lit>& assumps, bool usecache, int64_t max_me
 	size_t confl_clause = Propagate(2);
 	if (confl_clause) {
 		UnDecide(2);
-		stats.solve_timer.stop();
 		return false;
 	}
 	TriState sol = HardSolve(max_mems);
@@ -937,7 +868,6 @@ TriState Oracle::Solve(const vector<Lit>& assumps, bool usecache, int64_t max_me
 			//assert(FalseByProp(assumps));
 		}
 	}
-	stats.solve_timer.stop();
 	return sol;
 }
 

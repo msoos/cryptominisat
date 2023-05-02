@@ -229,49 +229,4 @@ bool BS(const std::vector<T>& a, const T x) {
   return std::binary_search(a.begin(), a.end(), x);
 }
 
-class Timer {
- private:
-  bool timing;
-  std::chrono::duration<double> elapsedTime;
-  std::chrono::time_point<std::chrono::steady_clock> startTime;
- public:
-  Timer();
-  void start();
-  void stop();
-  void clear();
-  double get() const;
-};
-
-inline Timer::Timer() {
-  timing = false;
-  elapsedTime = std::chrono::duration<double>(std::chrono::duration_values<double>::zero());
-}
-
-inline void Timer::start() {
-  if (timing) return;
-  timing = true;
-  startTime = std::chrono::steady_clock::now();
-}
-
-inline void Timer::stop() {
-  if (!timing) return;
-  timing = false;
-  std::chrono::time_point<std::chrono::steady_clock> endTime = std::chrono::steady_clock::now();
-  elapsedTime += (endTime - startTime);
-}
-
-inline double Timer::get() const {
-  if (timing) {
-  	auto tela = elapsedTime;
-  	tela += (std::chrono::steady_clock::now() - startTime);
-    return tela.count();
-  }
-  else {
-    return elapsedTime.count();
-  }
-}
-
-inline void Timer::clear() {
-  elapsedTime = std::chrono::duration<double>(std::chrono::duration_values<double>::zero());
-}
 } // namespace sspp

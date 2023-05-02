@@ -59,7 +59,6 @@ struct Stats {
  	int64_t nontriv_redu = 0;
  	int64_t forgot_clauses = 0;
  	int64_t restarts = 0;
- 	Timer setup_timer, solve_timer, prop_timer, learn_timer, maint_time, cache_timer;
   void Print() const;
 };
 
@@ -119,18 +118,6 @@ class Oracle {
  	vector<char> in_cc;
 
  	std::mt19937 rand_gen;
-
- 	int64_t og_bump = 0;
-
- 	long double glue_long_ema = 0;
- 	long double glue_short_ema = 0;
- 	long double long_a = 1;
- 	long double short_a = 1;
- 	void UpdGlueEma(int glue);
-
- 	long double var_ass_ema = 0;
- 	long double var_ass_a = 1;
- 	void UpdVarAssEma();
 
  	int64_t redu_it = 1;
  	vector<char> seen;
