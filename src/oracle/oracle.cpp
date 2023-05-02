@@ -101,10 +101,6 @@ bool Oracle::SatByCache(const vector<Lit>& assumps) {
 	return false;
 }
 
-void Oracle::PrintStats() const {
-	stats.Print();
-}
-
 void Oracle::UpdGlueEma(int glue) {
 	glue_long_ema = ((long double)1.0-long_a)*glue_long_ema + long_a*(long double)glue;
 	glue_short_ema = ((long double)1.0-short_a)*glue_short_ema + short_a*(long double)glue;
@@ -156,9 +152,7 @@ void Oracle::ForgetLearned() {
 		assert(pos < watches[l].size());
 		watches[l].resize(pos);
 	}
-	for (const auto& clause : to_add) {
-		AddOrigClause(clause, false);
-	}
+	for (const auto& clause : to_add) AddOrigClause(clause, false);
 	assert(clauses.size() == orig_clauses_size);
 	assert(cla_info.empty());
 }
@@ -166,21 +160,15 @@ void Oracle::ForgetLearned() {
 void Oracle::ResizeClauseDb() {
 	stats.maint_time.start();
 	std::sort(cla_info.begin(), cla_info.end(), [](const CInfo& a, const CInfo& b){
-		if (a.glue == b.glue) {
-			return a.used > b.used;
-		}
+		if (a.glue == b.glue) { return a.used > b.used; }
 		return a.glue < b.glue;
 	});
 	{
 		vector<size_t> new_reason(vars+2);
-		for (Var v = 1; v <= vars; v++) {
-			new_reason[v] = vs[v].reason;
-		}
+		for (Var v = 1; v <= vars; v++) { new_reason[v] = vs[v].reason; }
 		size_t prev_orig_clauses_size = orig_clauses_size;
 		vector<Lit> new_clauses(orig_clauses_size);
-		for (size_t i = 0; i < orig_clauses_size; i++) {
-			new_clauses[i] = clauses[i];
-		}
+		for (size_t i = 0; i < orig_clauses_size; i++) { new_clauses[i] = clauses[i]; }
 		vector<CInfo> new_cla_info;
 		// This sets new_clauses and fixes reasons
 		const size_t good_size = min(cla_info.size()/2, (size_t)1000000);
@@ -210,52 +198,34 @@ void Oracle::ResizeClauseDb() {
 			while (clauses[cls+len]) {
 				if (LitVal(clauses[cls+len]) == 1) {
 					Var v = VarOf(clauses[cls+len]);
-					if (vs[v].level == 1) {
-						frozen_sat = true;
-					}
+					if (vs[v].level == 1) frozen_sat = true;
 				}
 				len++;
 			}
 			assert(len >= 2);
-			if (frozen_sat) {
-				assert(!impll);
-			}
+			if (frozen_sat) assert(!impll);
 			if (frozen_sat || (impll == 0 && !added && !cla_info[i].Keep() && i > good_size)) {
 				stats.forgot_clauses++;
 				clauses[cls] = 0;
 				continue;
 			}
 			size_t new_pt = new_clauses.size();
-			if (impll) {
-				new_reason[VarOf(impll)] = new_pt;
-			}
-			if (added) {
-				assert(new_clauses.size() == orig_clauses_size);
-			} else {
-				new_cla_info.push_back({new_clauses.size(), cla_info[i].glue, cla_info[i].used-1});
-			}
-			for (size_t k = cls; clauses[k]; k++) {
-				new_clauses.push_back(clauses[k]);
-			}
+			if (impll) new_reason[VarOf(impll)] = new_pt;
+			if (added) assert(new_clauses.size() == orig_clauses_size);
+			else new_cla_info.push_back({new_clauses.size(), cla_info[i].glue, cla_info[i].used-1});
+			for (size_t k = cls; clauses[k]; k++) new_clauses.push_back(clauses[k]);
 			new_clauses.push_back(0);
-			if (added) {
-				orig_clauses_size = new_clauses.size();
-			}
+			if (added) orig_clauses_size = new_clauses.size();
 			clauses[cls] = new_pt;
 		}
-		for (Var v = 1; v <= vars; v++) {
-			vs[v].reason = new_reason[v];
-		}
+		for (Var v = 1; v <= vars; v++) vs[v].reason = new_reason[v];
 		for (Lit l = 2; l <= vars*2+1; l++) {
 			size_t pos = 0;
 			for (size_t i = 0; i < watches[l].size(); i++) {
 				watches[l][pos++] = watches[l][i];
 				if (watches[l][pos-1].cls >= prev_orig_clauses_size) {
-					if (clauses[watches[l][pos-1].cls] == 0) {
-						pos--;
-					} else {
-						watches[l][pos-1].cls = clauses[watches[l][pos-1].cls];
-					}
+					if (clauses[watches[l][pos-1].cls] == 0) pos--;
+					else watches[l][pos-1].cls = clauses[watches[l][pos-1].cls];
 				}
 			}
 			watches[l].resize(pos);
@@ -391,25 +361,6 @@ void Oracle::BumpVar(Var v) {
 	}
 }
 
-int Oracle::LitVal(Lit lit) const {
-	return lit_val[lit];
-}
-
-bool Oracle::LitSat(Lit lit) const {
-	return LitVal(lit) > 0;
-}
-
-bool Oracle::LitAssigned(Lit lit) const {
-	return LitVal(lit) != 0;
-}
-
-int Oracle::CurLevel() const {
-	if (decided.empty()) {
-		return 1;
-	}
-	return vs[decided.back()].level;
-}
-
 void Oracle::SetAssumpLit(Lit lit, bool freeze) {
 	assert(CurLevel() == 1);
 	Var v = VarOf(lit);
@@ -468,12 +419,6 @@ void Oracle::Assign(Lit dec, size_t reason_clause, int level) {
 	vs[v].level = level;
 	decided.push_back(v);
 	prop_q.push_back(Neg(dec));
-}
-
-void Oracle::Decide(Lit dec, int level) {
-	assert(LitVal(dec) == 0);
-	stats.decisions++;
-	Assign(dec, 0, level);
 }
 
 void Oracle::UnDecide(int level) {
@@ -1014,10 +959,6 @@ bool Oracle::FreezeUnit(Lit unit) {
 		return false;
 	}
 	return true;
-}
-
-void Oracle::AddClause(const vector<Lit>& clause, bool entailed) {
-	AddOrigClause(clause, entailed);
 }
 
 bool Oracle::AddClauseIfNeeded(vector<Lit> clause, bool entailed) {

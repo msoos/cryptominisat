@@ -181,5 +181,40 @@ class Oracle {
  	bool SatByCache(const vector<Lit>& assumps);
  	void ClearSolCache();
 };
+
+
+inline int Oracle::LitVal(Lit lit) const {
+	return lit_val[lit];
+}
+
+inline bool Oracle::LitSat(Lit lit) const {
+	return LitVal(lit) > 0;
+}
+
+inline bool Oracle::LitAssigned(Lit lit) const {
+	return LitVal(lit) != 0;
+}
+
+inline int Oracle::CurLevel() const {
+	if (decided.empty()) {
+		return 1;
+	}
+	return vs[decided.back()].level;
+}
+
+inline void Oracle::Decide(Lit dec, int level) {
+	assert(LitVal(dec) == 0);
+	stats.decisions++;
+	Assign(dec, 0, level);
+}
+
+inline void Oracle::AddClause(const vector<Lit>& clause, bool entailed) {
+	AddOrigClause(clause, entailed);
+}
+
+inline void Oracle::PrintStats() const {
+	stats.Print();
+}
+
 } // namespace oracle
 } // namespace sspp
