@@ -550,7 +550,7 @@ static bool actually_add_clauses_to_threads(CMSatPrivateData* data)
             t.join();
         }
     }
-    bool ret = (*data_for_thread.ret == l_True);
+    bool ret = (*data_for_thread.ret != l_False);
 
     //clear what has been added
     data->cls_lits.clear();
