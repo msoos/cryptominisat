@@ -232,6 +232,12 @@ if (STATS)
     SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${SQLITE3_LIBRARIES})
 endif ()
 
+if (ARJUN_SERIALIZE)
+    SET(cryptoms_lib_link_libs
+        ${cryptoms_lib_link_libs}
+        Boost::serialization)
+endif()
+
 if (FINAL_PREDICTOR)
     SET(cryptoms_lib_files ${cryptoms_lib_files}
         ${CMAKE_CURRENT_BINARY_DIR}/pred_short.cpp
@@ -282,7 +288,6 @@ target_link_libraries(cryptominisat5
     LINK_PUBLIC ${cryptoms_lib_link_libs}
     LINK_PUBLIC ${LOUVAIN_COMMUNITIES_LIBRARIES}
     LINK_PUBLIC ${CMAKE_THREAD_LIBS_INIT}
-    Boost::serialization
 )
 
 if (NOT WIN32)

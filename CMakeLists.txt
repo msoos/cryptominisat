@@ -461,10 +461,21 @@ MESSAGE(STATUS "PROJECT_VERSION_MAJOR: ${PROJECT_VERSION_MAJOR}")
 MESSAGE(STATUS "PROJECT_VERSION_MINOR: ${PROJECT_VERSION_MINOR}")
 MESSAGE(STATUS "PROJECT_VERSION_PATCH: ${PROJECT_VERSION_PATCH}")
 
+set(boost_comps "")
+option(ARJUN_SERIALIZE "Arjun solution reconstruction" OFF)
+if (ARJUN_SERIALIZE)
+    add_definitions( -DARJUN_SERIALIZE )
+    set(boost_comps
+        ${boost_comps}
+        serialization)
+endif()
 option(ONLY_SIMPLE "Only build very simplistic executable -- no Boost needed" OFF)
 if (NOT ONLY_SIMPLE)
-    find_package( Boost 1.46 COMPONENTS program_options serialization)
+    set(boost_comps 
+        ${boost_comps}
+        program_options)
 endif()
+find_package( Boost 1.46.0 COMPONENTS ${boost_comps})
 
 option(FINAL_PREDICTOR "Use final predictor" OFF)
 if (FINAL_PREDICTOR)
@@ -714,6 +725,7 @@ endif()
 #command-line parsing executable needs boost program-options
 if(NOT Boost_FOUND)
     set(ONLY_SIMPLE ON)
+    set(ARJUN_SERIALIZE OFF)
     message(STATUS "Only building executable with few command-line options because the boost program_options library were not available")
 else()
     message(STATUS "Boost -- found at library: ${Boost_LIBRARIES}")

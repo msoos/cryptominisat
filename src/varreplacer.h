@@ -26,8 +26,10 @@ THE SOFTWARE.
 #include <vector>
 #include <utility>
 #include <tuple>
+#ifdef ARJUN_SERIALIZE
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/map.hpp>
+#endif
 
 #include "constants.h"
 #include "solvertypes.h"
@@ -74,8 +76,10 @@ class VarReplacer
         uint32_t get_var_replaced_with_outer(uint32_t var) const;
         bool var_is_replacing(const uint32_t var);
 
+#ifdef ARJUN_SERIALIZE
         template<class T> void unserialize_tables(T& ar);
         template<class T> void serialize_tables  (T& ar) const;
+#endif
 
         vector<uint32_t> get_vars_replacing(uint32_t var) const;
         void updateVars(
@@ -324,6 +328,7 @@ inline uint32_t VarReplacer::get_var_replaced_with_outer(uint32_t var) const
     return table[var].var();
 }
 
+#ifdef ARJUN_SERIALIZE
 template<class T>
 void VarReplacer::serialize_tables(T& ar) const
 {
@@ -337,5 +342,6 @@ void VarReplacer::unserialize_tables(T& ar)
     ar >> table;
     ar >> reverseTable;
 }
+#endif
 
 } //end namespace

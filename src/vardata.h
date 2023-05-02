@@ -23,7 +23,9 @@ THE SOFTWARE.
 #ifndef __VARDATA_H__
 #define __VARDATA_H__
 
+#ifdef ARJUN_SERIALIZE
 #include <boost/serialization/split_member.hpp>
+#endif
 
 #include "constants.h"
 #include "propby.h"
@@ -129,7 +131,9 @@ struct VarData
         #endif
         ar >> propagated;
     }
+#ifdef ARJUN_SERIALIZE
     BOOST_SERIALIZATION_SPLIT_MEMBER()
+#endif
 
     #if defined(STATS_NEEDED_BRANCH) || defined(FINAL_PREDICTOR_BRANCH)
     uint32_t set = 0;

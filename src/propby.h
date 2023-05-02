@@ -27,7 +27,9 @@ THE SOFTWARE.
 #include "clause.h"
 #include "cloffset.h"
 
+#ifdef ARJUN_SERIALIZE
 #include <boost/serialization/split_member.hpp>
+#endif
 
 //#define DEBUG_PROPAGATEFROM
 
@@ -89,7 +91,9 @@ class PropBy
             ar >> tmp; data2 = tmp;
             ar >> ID;
         }
+#ifdef ARJUN_SERIALIZE
         BOOST_SERIALIZATION_SPLIT_MEMBER()
+#endif
 
 #ifndef LARGE_OFFSETS
         //Normal clause prop

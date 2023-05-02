@@ -30,7 +30,9 @@ THE SOFTWARE.
 #include <map>
 #include <iomanip>
 #include <fstream>
+#ifdef ARJUN_SERIALIZE
 #include <boost/serialization/vector.hpp>
+#endif
 
 #include "clause.h"
 #include "solvertypes.h"
@@ -303,10 +305,12 @@ public:
     //Ternary resolution. Should be private but testing needs it to be public
     bool ternary_res();
 
+#ifdef ARJUN_SERIALIZE
     template<class T>
     void serialize_elimed_cls  (T& ar) const;
     template<class T>
     void unserialize_elimed_cls(T& ar);
+#endif
 
 private:
     friend class SubsumeStrengthen;
@@ -693,6 +697,7 @@ inline const SubsumeStrengthen* OccSimplifier::get_sub_str() const
     return sub_str;
 }
 
+#ifdef ARJUN_SERIALIZE
 template<class T>
 void OccSimplifier::unserialize_elimed_cls(T& ar)
 {
@@ -706,5 +711,6 @@ void OccSimplifier::serialize_elimed_cls(T& ar) const
     ar << eClsLits;
     ar << elimedClauses;
 }
+#endif
 
 } //end namespace

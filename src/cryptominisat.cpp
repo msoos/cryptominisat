@@ -1872,12 +1872,12 @@ DLL_PUBLIC void SATSolver::set_seed(const uint32_t seed)
     }
 }
 
+#ifdef ARJUN_SERIALIZE
 DLL_PUBLIC std::string SATSolver::serialize_solution_reconstruction_data() const
 {
     Solver& s = *data->solvers[0];
     return s.serialize_solution_reconstruction_data();
 }
-
 
 DLL_PUBLIC void* SATSolver::create_extend_solution_setup(std::string& dat)
 {
@@ -1900,6 +1900,7 @@ DLL_PUBLIC void SATSolver::delete_extend_solution_setup(void* s)
     delete solver->get_must_interrupt_inter_asap_ptr();
     delete solver;
 }
+#endif
 
 DLL_PUBLIC bool SATSolver::minimize_clause(std::vector<Lit>& cl)
 {

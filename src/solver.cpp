@@ -34,11 +34,13 @@ THE SOFTWARE.
 #include <locale>
 #include <random>
 
+#ifdef ARJUN_SERIALIZE
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/serialization/vector.hpp>
+#endif
 
 #include "varreplacer.h"
 #include "time_mem.h"
@@ -5315,6 +5317,7 @@ bool Solver::sparsify()
     return solver->okay();
 }
 
+#ifdef ARJUN_SERIALIZE
 string Solver::serialize_solution_reconstruction_data() const
 {
     assert(!detached_xor_clauses && "Otherwise we need to extend to detached XORs too");
@@ -5356,6 +5359,7 @@ void Solver::create_from_solution_reconstruction_data(const string& data)
         varReplacer->unserialize_tables(ar);
     }
 }
+#endif
 
 pair<lbool, vector<lbool>> Solver::extend_minimized_model(const vector<lbool>& m)
 {
