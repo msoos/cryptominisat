@@ -657,18 +657,18 @@ int Oracle::CDCLBT(size_t confl_clause, int min_level) {
 			int level = ass_level;
 			std::reverse(decs.begin(), decs.end());
 			for (int i = 0; i < (int)decs.size(); i++) {
-				if (LitVal(decs[i].F) == -1) {
+				if (LitVal(decs[i].first) == -1) {
 					return min_level-1;
 				}
-				if (LitVal(decs[i].F) == 0) {
-					Decide(decs[i].F, decs[i].S);
-					if (Propagate(decs[i].S)) {
+				if (LitVal(decs[i].first) == 0) {
+					Decide(decs[i].first, decs[i].second);
+					if (Propagate(decs[i].second)) {
 						return min_level-1;
 					}
-					level = decs[i].S;
+					level = decs[i].second;
 				}
 				if (i) {
-					assert(decs[i].S >= decs[i-1].S);
+					assert(decs[i].second >= decs[i-1].second);
 				}
 			}
 			return max(level, min_level);

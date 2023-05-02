@@ -31,8 +31,6 @@
 #include <random>
 
 namespace sspp {
-#define F first
-#define S second
 typedef int Lit;
 typedef int Var;
 
