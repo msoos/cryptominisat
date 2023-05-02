@@ -94,7 +94,6 @@ class Oracle {
   bool AddClauseIfNeeded(vector<Lit> clause, bool entailed);
   void AddClause(const vector<Lit>& clause, bool entailed);
   void PrintStats() const;
-  vector<vector<Lit>> AllClauses() const;
   vector<vector<Lit>> LearnedClauses() const;
 
   int CurLevel() const;

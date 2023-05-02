@@ -956,22 +956,5 @@ vector<vector<Lit>> Oracle::LearnedClauses() const {
 	return ret;
 }
 
-vector<vector<Lit>> Oracle::AllClauses() const {
-	vector<vector<Lit>> ret = LearnedClauses();
-	ret.push_back({});
-	for (size_t i = 1; i < orig_clauses_size; i++) {
-		if (clauses[i] == 0) {
-			assert(ret.back().size() >= 2);
-			sort(ret.back().begin(), ret.back().end());
-			ret.push_back({});
-		} else {
-			ret.back().push_back(clauses[i]);
-		}
-	}
-	assert(ret.back().empty());
-	ret.pop_back();
-	return ret;
-}
-
 } // namespace oracle
 } // namespace sspp
