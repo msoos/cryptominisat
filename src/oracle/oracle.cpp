@@ -996,33 +996,6 @@ TriState Oracle::Solve(const vector<Lit>& assumps, bool usecache, int64_t max_me
 	return sol;
 }
 
-int Oracle::PropDg(const vector<Lit>& assumps) {
-	if (unsat) return vars;
-	for (Lit lit : assumps) {
-		if (LitVal(lit) == -1) {
-			prop_q.clear();
-			UnDecide(2);
-			return vars;
-		}
-		if (LitVal(lit) == 0) {
-			Decide(lit, 2);
-		}
-	}
-	size_t confl_clause = Propagate(2);
-	if (confl_clause) {
-		UnDecide(2);
-		return vars;
-	}
-	int ret = 0;
-	for (Var v = 1; v <= vars; v++) {
-		if (LitVal(PosLit(v)) != 0) {
-			ret++;
-		}
-	}
-	UnDecide(2);
-	return ret;
-}
-
 bool Oracle::FreezeUnit(Lit unit) {
 	if (unsat) return false;
 	assert(CurLevel() == 1);

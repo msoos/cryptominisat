@@ -97,7 +97,6 @@ class Oracle {
   void PrintStats() const;
   vector<vector<Lit>> AllClauses() const;
   vector<vector<Lit>> LearnedClauses() const;
-  int PropDg(const vector<Lit>& assumps);
 
   int CurLevel() const;
   int LitVal(Lit lit) const;
