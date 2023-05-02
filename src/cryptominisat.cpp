@@ -716,11 +716,23 @@ DLL_PUBLIC void SATSolver::set_timeout_all_calls(double timeout)
     data->timeout = timeout;
 }
 
-DLL_PUBLIC bool SATSolver::add_clause(const vector< Lit >& lits)
-{
-    if (data->log) {
-        (*data->log) << lits << " 0" << endl;
+DLL_PUBLIC bool SATSolver::add_red_clause(const vector< Lit >& lits) {
+    // TODO: use the bulk-adding maybe... but lit_Undef is used for clauses
+    //       and lit_Error for XOR clauses, so... it's a bit crowded
+    if (data->log) { (*data->log) << "c red " << lits << " 0" << endl; }
+    bool ret = actually_add_clauses_to_threads(data);
+
+    if (!ret) return false;
+    for(auto& s: data->solvers) {
+        ret &= s->add_clause_outside(lits, true);
     }
+    return ret;
+}
+
+DLL_PUBLIC bool SATSolver::add_clause(const vector< Lit >& lits, bool red)
+{
+    if (red == true)  return add_red_clause(lits);
+    if (data->log) { (*data->log) << lits << " 0" << endl; }
 
     bool ret = true;
     if (data->solvers.size() > 1) {

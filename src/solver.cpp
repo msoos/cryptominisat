@@ -892,7 +892,7 @@ bool Solver::add_clause_outer_copylits(const vector<Lit>& lits)
 
 // Takes OUTER (NOT *outside*) variables
 // Input is ORIGINAL clause.
-bool Solver::add_clause_outer(vector<Lit>& ps)
+bool Solver::add_clause_outer(vector<Lit>& ps, bool red)
 {
     if (conf.perform_occur_based_simp && occsimplifier->getAnythingHasBeenElimed()) {
         std::cerr
@@ -917,9 +917,10 @@ bool Solver::add_clause_outer(vector<Lit>& ps)
     }
 
     std::sort(ps.begin(), ps.end());
+    if (red) assert(!frat->enabled() && "Cannot have both FRAT and adding of redundant clauses");
     Clause *cl = add_clause_int(
         ps
-        , false //redundant?
+        , red //redundant?
         , &clstats
         , true //yes, attach
         , NULL
@@ -931,7 +932,8 @@ bool Solver::add_clause_outer(vector<Lit>& ps)
 
     if (cl != NULL) {
         ClOffset offset = cl_alloc.get_offset(cl);
-        longIrredCls.push_back(offset);
+        if (!red) longIrredCls.push_back(offset);
+        else longRedCls[2].push_back(offset);
     }
 
     zeroLevAssignsByCNF += trail.size() - origTrailSize;
@@ -3116,13 +3118,13 @@ void Solver::add_in_partial_solving_stats()
     sumPropStats += propStats;
 }
 
-bool Solver::add_clause_outside(const vector<Lit>& lits)
+bool Solver::add_clause_outside(const vector<Lit>& lits, bool red)
 {
     if (!ok) return false;
 
     SLOW_DEBUG_DO(check_too_large_variable_number(lits)); //we check for this during back-numbering
     back_number_from_outside_to_outer(lits);
-    return add_clause_outer(back_number_from_outside_to_outer_tmp);
+    return add_clause_outer(back_number_from_outside_to_outer_tmp, red);
 }
 
 bool Solver::full_probe(const bool bin_only)

@@ -73,7 +73,6 @@ void GetClauseQuery::start_getting_small_clauses(
             cout << "ERRROR! You must not have BVA variables for simplified CNF getting" << endl;
             exit(-1);
         }
-        release_assert(red == false);
         release_assert(solver->get_num_bva_vars() == 0);
     }
     if (bva_vars) {
@@ -219,14 +218,14 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
     }
 
     if (red) {
-        assert(!simplified);
         while(at < solver->longRedCls[0].size()) {
             const ClOffset offs = solver->longRedCls[0][at];
             const Clause* cl = solver->cl_alloc.ptr(offs);
             if (cl->size() <= max_len
                 && cl->stats.glue <= max_glue
             ) {
-                tmp_cl = solver->clause_outer_numbered(*cl);
+                if (!simplified) tmp_cl = solver->clause_outer_numbered(*cl);
+                else {tmp_cl.clear(); for(const auto& l: *cl) tmp_cl.push_back(l);}
                 if (bva_vars || all_vars_outside(tmp_cl)) {
                     map_without_bva(tmp_cl);
                     out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
@@ -247,7 +246,8 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
             const ClOffset offs = solver->longRedCls[1][at_lev1];
             const Clause* cl = solver->cl_alloc.ptr(offs);
             if (cl->size() <= max_len) {
-                tmp_cl = solver->clause_outer_numbered(*cl);
+                if (!simplified) tmp_cl = solver->clause_outer_numbered(*cl);
+                else {tmp_cl.clear(); for(const auto& l: *cl) tmp_cl.push_back(l);}
                 if (bva_vars || all_vars_outside(tmp_cl)) {
                     map_without_bva(tmp_cl);
                     out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());

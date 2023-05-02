@@ -88,7 +88,7 @@ class Solver : public Searcher
         const vector<std::pair<string, string> >& get_sql_tags() const;
         void new_external_var();
         void new_external_vars(size_t n);
-        bool add_clause_outside(const vector<Lit>& lits);
+        bool add_clause_outside(const vector<Lit>& lits, bool red = false);
         bool add_xor_clause_outside(const vector<uint32_t>& vars, bool rhs);
         bool add_bnn_clause_outside(
             const vector<Lit>& lits,
@@ -494,7 +494,7 @@ class Solver : public Searcher
         /////////////////////
         // Clauses
         bool addClauseHelper(vector<Lit>& ps);
-        bool add_clause_outer(vector<Lit>& ps);
+        bool add_clause_outer(vector<Lit>& ps, bool red = false);
 
         /////////////////
         // Debug
