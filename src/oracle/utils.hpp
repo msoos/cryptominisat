@@ -1,4 +1,3 @@
-// SharpSAT-TD is a modification of SharpSAT (MIT License, 2019 Marc Thurley).
 //
 // SharpSAT-TD -- Copyright (c) 2021 Tuukka Korhonen
 //
@@ -30,8 +29,6 @@
 #include <algorithm>
 #include <chrono>
 #include <random>
-
-#include "bitset.hpp"
 
 namespace sspp {
 #define F first
@@ -204,16 +201,6 @@ std::vector<T> PermInverse(const std::vector<T>& perm) {
     ret[perm[i]] = i;
   }
   return ret;
-}
-
-inline Bitset ToBitset(const std::vector<int>& a, int n) {
-  assert(n>=0);
-  Bitset bs(n);
-  for (int x : a) {
-    assert(x>=0&&x<n);
-    bs.SetTrue(x);
-  }
-  return bs;
 }
 
 template<typename T>

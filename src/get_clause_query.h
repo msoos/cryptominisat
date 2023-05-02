@@ -73,6 +73,4 @@ private:
     void map_without_bva(vector<Lit>& cl);
     vector<Lit> tmp_cl;
 };
-
-
 }
