@@ -20,17 +20,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-
-#ifndef GET_CLAUSE_QUERY_H
-#define GET_CLAUSE_QUERY_H
+#pragma once
 
 #include "constants.h"
 #include <vector>
 #include <string>
+#include <limits>
 #include <algorithm>
 
 #include "constants.h"
 #include "solvertypes.h"
+
+using std::numeric_limits;
 
 namespace CMSat {
 
@@ -75,6 +76,3 @@ private:
 
 
 }
-
-#endif
-

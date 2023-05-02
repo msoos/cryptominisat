@@ -20,20 +20,20 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef WATCHED_H
-#define WATCHED_H
+#pragma once
 
 //#define DEBUG_WATCHED
+
+#include <limits>
+#include <cstdint>
+#include <cstring>
 
 #include "clabstraction.h"
 #include "constants.h"
 #include "cloffset.h"
 #include "solvertypes.h"
 
-#include <cstdint>
-#include <limits>
-#include <string.h>
-
+using std::numeric_limits;
 
 namespace CMSat {
 
@@ -345,5 +345,3 @@ struct WatchSorterBinTriLong {
 
 
 } //end namespace
-
-#endif //WATCHED_H

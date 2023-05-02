@@ -20,13 +20,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef VMTF_H
+#pragma once
 
 #include <cstdint>
 #include <vector>
+#include <limits>
 #include <cstdint>
 #include "constants.h"
 using std::vector;
+using std::numeric_limits;
 
 namespace CMSat {
 
@@ -92,5 +94,3 @@ struct Queue {
 };
 
 } //namespace
-
-#endif //VMTF_H

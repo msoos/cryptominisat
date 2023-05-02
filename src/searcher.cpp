@@ -1464,7 +1464,7 @@ void Searcher::attach_and_enqueue_learnt_clause(
     Clause* cl, const uint32_t level, const bool enq,
     const uint64_t ID)
 {
-    print_learning_debug_info(ID);
+    VERBOSE_DEBUG_DO(print_learning_debug_info(ID));
     switch (learnt_clause.size()) {
         case 0:
             assert(false);
@@ -1510,15 +1510,11 @@ void Searcher::attach_and_enqueue_learnt_clause(
 
 void Searcher::print_learning_debug_info(const int32_t ID) const
 {
-    #ifndef VERBOSE_DEBUG
-    return;
-    #else
     cout
     << "Learning: " << learnt_clause << " ID: " << ID
     << " -- reverting var " << learnt_clause[0].var()+1
     << " to " << !learnt_clause[0].sign()
     << endl;
-    #endif
 }
 
 void Searcher::print_learnt_clause() const

@@ -20,8 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef SOLVER_H
-#define SOLVER_H
+#pragma once
 
 #include "constants.h"
 #include <vector>
@@ -688,5 +687,3 @@ inline bool Solver::removed_var_ext(uint32_t var) const
 }
 
 } //end namespace
-
-#endif //SOLVER_H

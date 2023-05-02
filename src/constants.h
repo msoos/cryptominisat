@@ -28,8 +28,6 @@ THE SOFTWARE.
 #include <stdio.h>
 #include <limits>
 
-using std::numeric_limits;
-
 // #define VERBOSE_DEBUG
 // #define VERBOSE_DEBUG_FULLPROP
 // #define DEBUG_DEPTH

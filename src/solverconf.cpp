@@ -26,6 +26,7 @@ THE SOFTWARE.
 #include <iomanip>
 #include <sstream>
 using namespace CMSat;
+using std::numeric_limits;
 
 //UPDATEs for DEVEL
 //Fixing to:

@@ -101,18 +101,18 @@ void Oracle::PrintStats() const {
 void Oracle::UpdGlueEma(int glue) {
 	glue_long_ema = ((long double)1.0-long_a)*glue_long_ema + long_a*(long double)glue;
 	glue_short_ema = ((long double)1.0-short_a)*glue_short_ema + short_a*(long double)glue;
-	if (long_a > 1.0/5000.0) {
-		long_a /= 2.0;
+	if (long_a > 1.0L/5000.0L) {
+		long_a /= 2.0L;
 	}
-	if (short_a > 1.0/50.0) {
-		short_a /= 2.0;
+	if (short_a > 1.0L/50.0L) {
+		short_a /= 2.0L;
 	}
 }
 
 void Oracle::UpdVarAssEma() {
 	var_ass_ema = ((long double)1.0-var_ass_a)*var_ass_ema + var_ass_a*(long double)decided.size();
-	if (var_ass_a > 1.0/5000.0) {
-		var_ass_a /= 2.0;
+	if (var_ass_a > 1.0L/5000.0L) {
+		var_ass_a /= 2.0L;
 	}
 }
 
@@ -768,13 +768,11 @@ int Oracle::CDCLBT(size_t confl_clause, int min_level) {
 	}
 }
 
-
 TriState Oracle::HardSolve(int64_t max_mems) {
 	InitLuby();
 	int64_t confls = 0;
 	int64_t next_restart = 1;
 	int64_t next_db_clean = 1;
-	int64_t db_cleans = 0;
 	glue_long_ema = 0;
 	glue_short_ema = 0;
 	var_ass_ema = 0;
@@ -783,7 +781,6 @@ TriState Oracle::HardSolve(int64_t max_mems) {
 	short_a = 1;
 	int64_t mems_startup = stats.mems;
 	int cur_level = 2;
-	int last_var_ass_size = 0;
 	Var nv = 1;
 	while (true) {
 		size_t confl_clause = Propagate(cur_level);
@@ -791,7 +788,6 @@ TriState Oracle::HardSolve(int64_t max_mems) {
 		if (confl_clause) {
 			confls++;
 			UpdVarAssEma();
-			last_var_ass_size = decided.size();
 			if (cur_level <= 2) {
 				return false;
 			}
@@ -801,17 +797,13 @@ TriState Oracle::HardSolve(int64_t max_mems) {
 		}
 		//if (stats.conflicts > next_restart) {
 		if (confls >= next_restart) {
-			// cerr<<"restart "<<cla_info.size()<<" "<<glue_long_ema<<" "<<glue_short_ema<<" "<<var_ass_ema<<" "<<last_var_ass_size<<" "<<og_bump<<endl;
 			int nl = NextLuby();
 			next_restart = confls + nl*restart_factor;
 			UnDecide(3);
 			cur_level = 2;
 			stats.restarts++;
 			if (confls >= next_db_clean) {
-				db_cleans++;
-				//next_db_clean = stats.conflicts + 500*(db_cleans*db_cleans+3);
 				next_db_clean = confls + ideal_clause_db_size;
-				//cerr<<"resize clause DB "<<cla_info.size()<<endl;
 				ResizeClauseDb();
 			}
 		}
@@ -909,7 +901,7 @@ Oracle::Oracle(int vars_, const vector<vector<Lit>>& clauses_) : vars(vars_), ra
 	}
 
 	// variable activity
-	var_fact = powl((long double)2, (long double)(1.0/(long double)vars));
+	var_fact = powl((long double)2, (long double)(1.0L/(long double)vars));
 	assert(var_fact > 1.0);
 	heap_N = 1;
 	while (heap_N <= (size_t)vars) {

@@ -26,8 +26,11 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include <cstdint>
 #include <limits>
 #include <utility>
+
 #include "constants.h"
 #include "XAlloc.h"
+
+using std::numeric_limits;
 
 namespace CMSat {
 

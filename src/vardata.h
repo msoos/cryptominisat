@@ -23,6 +23,7 @@ THE SOFTWARE.
 #ifndef __VARDATA_H__
 #define __VARDATA_H__
 
+#include <limits>
 #ifdef ARJUN_SERIALIZE
 #include <boost/serialization/split_member.hpp>
 #endif
@@ -30,6 +31,8 @@ THE SOFTWARE.
 #include "constants.h"
 #include "propby.h"
 #include "avgcalc.h"
+
+using std::numeric_limits;
 
 namespace CMSat
 {

@@ -5246,9 +5246,7 @@ bool Solver::sparsify()
         }
 
         auto ret = oracle.Solve(tmp, false, 600LL*1000LL*1000LL);
-        if (ret.isUnknown()) {
-            goto fin;
-        }
+        if (ret.isUnknown()) { goto fin; }
 
         if (ret.isTrue()) {
             oracle.SetAssumpLit(orclit(Lit(nVars()+i, true)), true);
@@ -5303,7 +5301,13 @@ bool Solver::sparsify()
             longIrredCls[j++] = longIrredCls[i];
         } else {
             litStats.irredLits -= cl->size();
-            cl_alloc.clauseFree(off);
+            // TODO for red in GANAK
+            if (false) {
+                litStats.redLits += cl->size();
+                longRedCls[2].push_back(longIrredCls[i]);
+            } else {
+                cl_alloc.clauseFree(off);
+            }
         }
     }
     longIrredCls.resize(j);

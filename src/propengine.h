@@ -20,8 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef __PROPENGINE_H__
-#define __PROPENGINE_H__
+#pragma once
 
 // #define VERBOSE_DEBUG
 #include <cstdio>
@@ -742,5 +741,3 @@ inline void PropEngine::attach_bin_clause(
 }
 
 } //end namespace
-
-#endif //__PROPENGINE_H__

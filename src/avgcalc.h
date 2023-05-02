@@ -20,19 +20,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef __AVGCALC_H__
-#define __AVGCALC_H__
+#pragma once
 
 #include "constants.h"
 #include <limits>
 #include <cassert>
-#include <vector>
 #include <cstring>
 #include <sstream>
 #include <iomanip>
 
+using std::numeric_limits;
+
 namespace CMSat {
-using std::vector;
 
 #define AVGCALC_NEED_MIN_MAX
 
@@ -197,5 +196,3 @@ public:
 };
 
 } //end namespace
-
-#endif //__AVGCALC_H__

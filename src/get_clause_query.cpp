@@ -20,14 +20,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#include "get_clause_query.h"
-
-using namespace CMSat;
-
 #include <limits>
+
+#include "get_clause_query.h"
 #include "solver.h"
 #include "occsimplifier.h"
 #include "varreplacer.h"
+
+using namespace CMSat;
 
 GetClauseQuery::GetClauseQuery(Solver* _solver) :
     solver(_solver)
