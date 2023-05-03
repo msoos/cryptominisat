@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include <structmember.h>
 #include <limits>
 #include <cassert>
+#include <signal.h>
 #include <algorithm>
 #include "../../src/cryptominisat.h"
 using namespace CMSat;
@@ -50,6 +51,7 @@ typedef struct {
     double time_limit;
     long confl_limit;
 } Solver;
+typedef void (*sighandler_t)(int);
 
 static const char solver_create_docstring[] = \
 "Solver(verbose=0, time_limit=max_numeric_limits, confl_limit=max_numeric_limits, threads=1)\n\
@@ -702,9 +704,21 @@ Solve the system of equations that have been added with add_clause();\n\
 :rtype: <tuple <tuple>>"
 );
 
+
+static SATSolver* solverToInterrupt = NULL;
+void SIGINT_handler(int)
+{
+    SATSolver* solver = solverToInterrupt;
+    if (solverToInterrupt == NULL) { exit(-1); }
+    solver->interrupt_asap();
+}
+
 static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
 {
     PyObject* assumptions = NULL;
+    solverToInterrupt = self->cmsat;
+    sighandler_t old_sig_int_handler = signal(SIGINT, SIGINT_handler);
+    sighandler_t old_sig_term_handler = signal(SIGTERM, SIGINT_handler);
 
     int verbose = self->verbose;
     double time_limit = self->time_limit;
@@ -747,6 +761,8 @@ static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
     lbool res;
     Py_BEGIN_ALLOW_THREADS      /* release GIL */
     res = self->cmsat->solve(&assumption_lits);
+    signal(SIGINT, old_sig_int_handler);
+    signal(SIGTERM, old_sig_term_handler);
     Py_END_ALLOW_THREADS
 
     self->cmsat->set_verbosity(self->verbose);
