@@ -646,7 +646,7 @@ if (NOT NOBOSPHORUS)
 endif()
 
 # -----------------------------------------------------------------------------
-# Look for MPI
+# Look for BreakID
 # -----------------------------------------------------------------------------
 option(NOBREAKID "Disable BreakID" ON)
 option(NOMPI "Disable MPI" ON)
