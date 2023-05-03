@@ -85,44 +85,6 @@ bool Oracle::SatByCache(const vector<Lit>& assumps) {
 	return false;
 }
 
-void Oracle::ForgetLearned() {
-	assert(CurLevel() == 1);
-	if (cla_info.empty()) return;
-	vector<char> watch_res(vars*2+2);
-	vector<vector<Lit>> to_add;
-	for (const auto& ci : cla_info) {
-		assert(ci.pt >= orig_clauses_size);
-		watch_res[clauses[ci.pt]] = true;
-		watch_res[clauses[ci.pt+1]] = true;
-		if (ci.glue == -1) {
-			assert(ci.used <= -1);
-			// Added clause
-			to_add.push_back({});
-			for (size_t i = ci.pt; clauses[i]; i++) {
-				to_add.back().push_back(clauses[i]);
-			}
-			assert(to_add.back().size() >= 2);
-		}
-	}
-	cla_info.clear();
-	clauses.resize(orig_clauses_size);
-	for (Lit l = 2; l <= vars*2+1; l++) {
-		if (!watch_res[l]) continue;
-		size_t pos = 0;
-		for (size_t i = 0; i < watches[l].size(); i++) {
-			watches[l][pos++] = watches[l][i];
-			if (watches[l][pos-1].cls >= orig_clauses_size) {
-				pos--;
-			}
-		}
-		assert(pos < watches[l].size());
-		watches[l].resize(pos);
-	}
-	for (const auto& clause : to_add) AddOrigClause(clause, false);
-	assert(clauses.size() == orig_clauses_size);
-	assert(cla_info.empty());
-}
-
 void Oracle::ResizeClauseDb() {
 	std::sort(cla_info.begin(), cla_info.end(), [](const CInfo& a, const CInfo& b){
 		if (a.glue == b.glue) { return a.used > b.used; }
@@ -398,10 +360,11 @@ void Oracle::UnDecide(int level) {
 
 size_t Oracle::AddLearnedClause(const vector<Lit>& clause) {
 	stats.learned_clauses++;
-	if (clause.size() == 2) {
-		stats.learned_bin_clauses++;
-	}
+	if (clause.size() == 2) stats.learned_bin_clauses++;
 	assert(clause.size() >= 2);
+
+    // Compute LBD. Notice that the clause has been sorted already in terms of decision
+    // levels of its literals, before this function is called.
 	int glue = 2;
 	assert(!LitAssigned(clause[0]));
 	for (size_t i = 1; i < clause.size(); i++) {
@@ -413,12 +376,12 @@ size_t Oracle::AddLearnedClause(const vector<Lit>& clause) {
 			}
 		}
 	}
+
+    // Attach
 	size_t pt = clauses.size();
 	watches[clause[0]].push_back({pt, clause[1], (int)clause.size()});
 	watches[clause[1]].push_back({pt, clause[0], (int)clause.size()});
-	for (Lit lit : clause) {
-		clauses.push_back(lit);
-	}
+	for (Lit lit : clause) clauses.push_back(lit);
 	clauses.push_back(0);
 	cla_info.push_back({pt, glue, 0});
 	return pt;
@@ -511,6 +474,9 @@ vector<Lit> Oracle::LearnUip(size_t conflict_clause) {
 	for (size_t i = 1; i < clause.size(); i++) {
 		assert(VarOf(clause[i]) != VarOf(clause[i-1]));
 	}
+
+
+    // Conflict minimization
 	for (size_t i = 1; i < clause.size(); i++) {
 		if (vs[VarOf(clause[i])].reason) {
 			stats.mems++;
@@ -757,9 +723,10 @@ void Oracle::AddOrigClause(vector<Lit> clause, bool entailed) {
 	cla_info.push_back({pt, -1, -1});
 }
 
-Oracle::Oracle(int vars_, const vector<vector<Lit>>& clauses_, const vector<vector<Lit>>& learned_clauses_) : Oracle(vars_, clauses_) {
+Oracle::Oracle(int vars_, const vector<vector<Lit>>& clauses_,
+        const vector<vector<Lit>>& learned_clauses_) : Oracle(vars_, clauses_) {
 	for (const auto& clause : learned_clauses_) {
-		AddClauseIfNeeded(clause, true);
+		AddClauseIfNeededAndStr(clause, true);
 	}
 }
 
@@ -787,9 +754,7 @@ Oracle::Oracle(int vars_, const vector<vector<Lit>>& clauses_) : vars(vars_), ra
 	var_fact = powl((long double)2, (long double)(1.0L/(long double)vars));
 	assert(var_fact > 1.0);
 	heap_N = 1;
-	while (heap_N <= (size_t)vars) {
-		heap_N *= 2;
-	}
+	while (heap_N <= (size_t)vars) heap_N *= 2;
 	var_act_heap.resize(heap_N*2);
 	for (Var v = 1; v <= vars; v++) {
 		var_act_heap[heap_N + v] = var_inc * RandInt(95, 105, rand_gen);
@@ -797,26 +762,6 @@ Oracle::Oracle(int vars_, const vector<vector<Lit>>& clauses_) : vars(vars_), ra
 	for (int i = heap_N-1; i >= 1; i--) {
 		var_act_heap[i] = max(var_act_heap[i*2], var_act_heap[i*2+1]);
 	}
-}
-
-bool Oracle::FalseByProp(const vector<Lit>& assumps) {
-	if (unsat) return true;
-	for (Lit lit : assumps) {
-		if (LitVal(lit) == -1) {
-			return true;
-		}
-	}
-	for (Lit lit : assumps) {
-		if (LitVal(lit) == 0) {
-			Decide(lit, 2);
-		}
-	}
-	size_t confl_clause = Propagate(2);
-	UnDecide(2);
-	if (confl_clause && assumps.size() == 1) {
-		FreezeUnit(Neg(assumps[0]));
-	}
-	return confl_clause;
 }
 
 TriState Oracle::Solve(const vector<Lit>& assumps, bool usecache, int64_t max_mems) {
@@ -860,8 +805,6 @@ TriState Oracle::Solve(const vector<Lit>& assumps, bool usecache, int64_t max_me
 			if (!ok) {
 				assert(unsat);
 			}
-		} else {
-			//assert(FalseByProp(assumps));
 		}
 	}
 	return sol;
@@ -887,7 +830,9 @@ bool Oracle::FreezeUnit(Lit unit) {
 	return true;
 }
 
-bool Oracle::AddClauseIfNeeded(vector<Lit> clause, bool entailed) {
+// Checks if the clause is SAT & then does strengthening on the clause
+// before adding it to the CNF
+bool Oracle::AddClauseIfNeededAndStr(vector<Lit> clause, bool entailed) {
 	if (unsat) return false;
 	assert(CurLevel() == 1);
 	for (int i = 0; i < (int)clause.size(); i++) {
@@ -902,6 +847,10 @@ bool Oracle::AddClauseIfNeeded(vector<Lit> clause, bool entailed) {
 		AddOrigClause(clause, entailed);
 		return true;
 	}
+
+    // We are now going to do strengthening, lit-by-lit, recursively.
+    // For example, a V b V c. Enqueue (!a && !b) and propagate. If UNSAT,
+    // then we know (a V b) is also true. We just removed a literal.
 	for (int i = 0; i < (int)clause.size(); i++) {
 		Lit tp = clause[i];
 		assert(LitVal(tp) == 0);
@@ -914,13 +863,15 @@ bool Oracle::AddClauseIfNeeded(vector<Lit> clause, bool entailed) {
 		if (confl || LitVal(tp) == -1) {
 			UnDecide(2);
 			SwapDel(clause, i);
-			return AddClauseIfNeeded(clause, true);
+			return AddClauseIfNeededAndStr(clause, true);
 		}
+
+        // No conflict.
 		if (LitVal(tp) == 1) {
 			// Propagation as intended
 			UnDecide(2);
 		} else if (LitVal(tp) == 0) {
-			// No propagation
+			// No propagation -- we need to add the clause
 			UnDecide(2);
 			AddOrigClause(clause, entailed);
 			return true;
@@ -946,6 +897,8 @@ vector<vector<Lit>> Oracle::LearnedClauses() const {
 	}
 	assert(ret.back().empty());
 	ret.pop_back();
+
+    // Units
 	for (Var v = 1; v <= vars; v++) {
 		if (LitVal(PosLit(v)) == 1) {
 			ret.push_back({PosLit(v)});

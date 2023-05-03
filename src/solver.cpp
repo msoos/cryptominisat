@@ -4969,9 +4969,7 @@ inline Lit orc_to_lit(int x) {
 
 
 inline vector<int> Negate(vector<int> vec) {
-	for (int& lit : vec) {
-		lit = Neg(lit);
-	}
+	for (int& lit : vec) lit = Neg(lit);
 	return vec;
 }
 
@@ -5051,7 +5049,7 @@ bool Solver::oracle_vivif(bool& finished)
             if (ret.isFalse()) {
                 sort(assump.begin(), assump.end());
                 auto clause = Negate(assump);
-                oracle.AddClauseIfNeeded(clause, true);
+                oracle.AddClauseIfNeededAndStr(clause, true);
                 clauses[i] = clause;
                 j = -1;
                 if (clause.empty()) {

@@ -89,9 +89,8 @@ class Oracle {
 
   void SetAssumpLit(Lit lit, bool freeze);
   TriState Solve(const vector<Lit>& assumps, bool usecache=true, int64_t max_mems = 1000ULL*1000LL*1000LL);
-  bool FalseByProp(const vector<Lit>& assumps);
   bool FreezeUnit(Lit unit);
-  bool AddClauseIfNeeded(vector<Lit> clause, bool entailed);
+  bool AddClauseIfNeededAndStr(vector<Lit> clause, bool entailed);
   void AddClause(const vector<Lit>& clause, bool entailed);
   void PrintStats() const;
   vector<vector<Lit>> LearnedClauses() const;
@@ -100,7 +99,6 @@ class Oracle {
   int LitVal(Lit lit) const;
   const Stats& getStats() {return stats;}
  private:
- 	void ForgetLearned();
  	void AddOrigClause(vector<Lit> clause, bool entailed);
  	vector<Lit> clauses;
  	vector<vector<Watch>> watches;
