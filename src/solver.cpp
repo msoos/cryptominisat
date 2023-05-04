@@ -5115,8 +5115,8 @@ bool Solver::sparsify()
     uint32_t removed = 0;
     uint32_t removed_bin = 0;
 
-    vector<vector<int>> edgew(nVars());
-    for (uint32_t i = 0; i < nVars(); i++) edgew[i].resize(nVars());
+    vector<vector<uint32_t>> edgew(nVars());
+    for (uint32_t i = 0; i < nVars(); i++) edgew[i].resize(nVars(), 0);
 
     for (const auto& off: longIrredCls) {
         Clause& cl = *cl_alloc.ptr(off);
@@ -5156,14 +5156,14 @@ bool Solver::sparsify()
 
     for (uint32_t i = 0; i < nVars()*2; i++) {
         Lit l = Lit::toLit(i);
-        ww = {};
         for(auto const& ws: watches[l]) {
             if (!ws.isBin() || ws.red())  continue;
             const uint32_t v1 = l.var();
             const uint32_t v2 = ws.lit2().var();
             if (v1 < v2) {
+                ww = {};
+                assert(edgew[v1][v2] >= 1);
                 if (edgew[v1][v2] <= (int)ww.size()) {
-                    assert(edgew[v1][v2] >= 1);
                     ww[edgew[v1][v2]-1]--;
                 }
                 cs.push_back(OracleDat(ww, OracleBin(l, ws.lit2(), ws.get_ID())));
