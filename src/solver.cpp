@@ -5075,7 +5075,7 @@ bool Solver::oracle_vivif(bool& finished)
     }
 
     if (conf.oracle_get_learnts) {
-        for (const auto& cl: oracle.LearnedClauses()) {
+        for (const auto& cl: oracle.GetLearnedClauses()) {
             tmp2.clear();
             for(const auto& l: cl) tmp2.push_back(orc_to_lit(l));
             Clause* cl2 = solver->add_clause_int(tmp2, true);

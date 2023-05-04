@@ -882,7 +882,7 @@ bool Oracle::AddClauseIfNeededAndStr(vector<Lit> clause, bool entailed) {
 	return false;
 }
 
-vector<vector<Lit>> Oracle::LearnedClauses() const {
+vector<vector<Lit>> Oracle::GetLearnedClauses() const {
 	assert(CurLevel() == 1);
 	vector<vector<Lit>> ret;
 	ret.push_back({});
