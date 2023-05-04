@@ -2132,10 +2132,13 @@ lbool Solver::execute_inprocess_strategy(
                     std::floor((double)get_num_free_vars()*0.001));
             }
         } else if (token == "sparsify") {
-            bool finished = true;
+            bool finished = false;
             if (nVars() > 10 &&  oracle_vivif(finished)) {
                 if (finished) oracle_sparsify();
             }
+        } else if (token == "backbone") {
+            bool finished = false;
+            backbone_simpl(30LL*1000LL, true, finished);
         } else if (token == "must-scc-vrepl") {
             if (conf.doFindAndReplaceEqLits) {
                 varReplacer->replace_if_enough_is_found();
@@ -4950,7 +4953,7 @@ bool Solver::oracle_vivif(bool& finished)
     assert(solver->okay());
     finished = false;
 
-    backbone_simpl(std::numeric_limits<int64_t>::max(), true, finished);
+    backbone_simpl(30LL*1000LL, true, finished);
     execute_inprocess_strategy(false, "must-renumber");
     if (!okay()) return okay();
     if (nVars() < 10) return okay();
@@ -5392,6 +5395,26 @@ bool Solver::minimize_clause(vector<Lit>& cl) {
     return can_be_removed;
 }
 
+void Solver::copy_to_simp(SATSolver* s2)
+{
+    s2->new_vars(nVars());
+    s2->set_verbosity(0);
+    bool ret = true;
+    start_getting_small_clauses(
+        std::numeric_limits<uint32_t>::max(),
+        std::numeric_limits<uint32_t>::max(),
+        false,
+        false,
+        true);
+    vector<Lit> clause;
+    while (ret) {
+        ret = get_next_small_clause(clause);
+        if (!ret) break;
+        s2->add_clause(clause);
+    }
+    end_getting_small_clauses();
+}
+
 bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen, bool& finished)
 {
     execute_inprocess_strategy(false, "must-renumber");
@@ -5414,26 +5437,11 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen, bool& finished)
     if (cmsgen) {
         //CMSGen-based seen_flipped detection, so we don't need to query so much
         SATSolver s2;
-        s2.new_vars(nVars());
-        s2.set_verbosity(0);
-        bool ret = true;
-        start_getting_small_clauses(
-            std::numeric_limits<uint32_t>::max(),
-            std::numeric_limits<uint32_t>::max(),
-            false,
-            false,
-            true);
-        vector<Lit> clause;
-        while (ret) {
-            ret = get_next_small_clause(clause);
-            if (!ret) break;
-            s2.add_clause(clause);
-        }
-        end_getting_small_clauses();
+        copy_to_simp(&s2);
 
         uint64_t last_num_conflicts = 0;
         int64_t remaining_confls = orig_max_confl;
-        s2.set_max_confl(remaining_confls*2);
+        s2.set_max_confl(remaining_confls);
         uint32_t num_runs = 0;
         auto s2_ret = s2.solve();
         remaining_confls -= (s2.get_sum_conflicts() - last_num_conflicts);
@@ -5465,6 +5473,7 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen, bool& finished)
             << " num runs succeeded: " << num_runs
             << " T: " << std::fixed << std::setprecision(2) << (cpuTime() - myTime));
     }
+    myTime = cpuTime();
 
     // Sort according to occurrence
     vector<uint32_t> var_order;
@@ -5478,13 +5487,12 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen, bool& finished)
     g.seed(18337);
     std::shuffle(var_order.begin(), var_order.end(), g);
 
-    int64_t orig_max_props = std::max<int64_t>(orig_max_confl*50,
-            std::numeric_limits<int64_t>::max());
+    int64_t orig_max_props = orig_max_confl*1000LL;
+    if (orig_max_props < orig_max_confl) orig_max_props = orig_max_confl;
     vector<int> old_model2(nVars(), 0);
     PicoSAT* picosat = build_picosat();
     picosat_set_propagation_limit(picosat, orig_max_props);
     auto ret = picosat_sat(picosat, -1);
-    int64_t remaining_props = orig_max_confl*20-picosat_propagations(picosat);
     if (ret == PICOSAT_UNKNOWN || ret == PICOSAT_UNSATISFIABLE) goto end;
     if (ret == PICOSAT_SATISFIABLE) {
         for(uint32_t i = 0; i < nVars(); i++) {
@@ -5498,12 +5506,16 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen, bool& finished)
         if (varData[var].removed != Removed::none) continue;
 
         l = Lit(var, old_model2[var]==-1);
+        auto top_val = picosat_deref_toplevel(picosat, l.var()+1);
+        if (top_val != 0) {
+            if (l.sign()) assert(top_val == -1);
+            else assert(top_val == 1);
+            goto next;
+        }
 
         //There is definitely a solution with "l". Let's see if ~l fails.
         picosat_assume(picosat, PICOLIT(~l));
-        picosat_set_propagation_limit(picosat, remaining_props/10);
         ret = picosat_sat(picosat, -1);
-        remaining_props = orig_max_props-picosat_propagations(picosat);
         tried++;
 
         if (ret == PICOSAT_SATISFIABLE) {
@@ -5518,21 +5530,25 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen, bool& finished)
                 }
             }
         } else if (ret == PICOSAT_UNSATISFIABLE) {
+            next:
             tmp_clause.clear();
             tmp_clause.push_back(l);
             Clause* ptr = add_clause_int(tmp_clause);
             assert(ptr == 0);
             falses++;
-            if (!okay()) {
-                goto end;
-            }
-        } else { undefs++; }
-        if (remaining_props < 0) goto end;
+            if (orig_max_props + 5000 > orig_max_props) orig_max_props += 5000;
+            picosat_set_propagation_limit(picosat, orig_max_props);
+            if (!okay()) goto end;
+        } else {
+            assert(ret == PICOSAT_UNKNOWN);
+            undefs++;
+        }
     }
     if (undefs==0) finished = true;
     assert(okay());
 
     end:
+    const auto used_props = picosat_propagations(picosat);
     picosat_reset(picosat);
     uint32_t num_set = trail.size() - orig_trail_size;
     double time_used = cpuTime() - myTime;
@@ -5544,6 +5560,7 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen, bool& finished)
         << " undefs: " << undefs
         << " tried: "  << tried
         << " set: " << num_set
+        << " props used: " << print_value_kilo_mega(used_props)
         << " T: " << std::setprecision(2) << time_used);
 
     return okay();
