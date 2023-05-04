@@ -366,7 +366,6 @@ class Solver : public Searcher
             int binary;
 
             bool operator<(const OracleDat& other) const {
-                return val > other.val;
                 return val < other.val;
             }
         };

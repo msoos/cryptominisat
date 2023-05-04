@@ -5138,13 +5138,11 @@ bool Solver::sparsify()
 
     //[vector<int>, clause] pairs. vector<INT> =
     vector<OracleDat> cs;
-    array<int, ORACLE_DAT_SIZE> zeroww;
-    std::fill(std::begin(zeroww), std::end(zeroww), 0);
     array<int, ORACLE_DAT_SIZE> ww;
     for (const auto& off: longIrredCls) {
         Clause& cl = *cl_alloc.ptr(off);
         assert(!cl.red());
-        ww = zeroww;
+        ww = {};
         for (auto const& l1 : cl) { for (auto const& l2: cl) {
             const uint32_t v1 = l1.var();
             const uint32_t v2 = l2.var();
@@ -5158,7 +5156,7 @@ bool Solver::sparsify()
 
     for (uint32_t i = 0; i < nVars()*2; i++) {
         Lit l = Lit::toLit(i);
-        ww = zeroww;
+        ww = {};
         for(auto const& ws: watches[l]) {
             if (!ws.isBin() || ws.red())  continue;
             const uint32_t v1 = l.var();
