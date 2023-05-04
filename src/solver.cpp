@@ -4954,7 +4954,7 @@ bool Solver::find_equivs()
 }
 
 inline int orclit(const Lit x) {
-    return ((x).sign() ? (((x).var()+1)*2+1) : ((x).var()+1)*2);
+    return (x.sign() ? ((x.var()+1)*2+1) : (x.var()+1)*2);
 }
 
 inline int Neg(int x) {
@@ -4980,16 +4980,12 @@ void SwapDel(vector<T>& vec, size_t i) {
 	vec.pop_back();
 }
 
-bool Solver::oracle_vivif(bool& finished)
+vector<vector<int>> Solver::get_irred_cls_for_oracle() const
 {
-    assert(!frat->enabled());
-    assert(solver->okay());
-    double myTime = cpuTime();
-
     vector<vector<int>> clauses;
     vector<int> tmp;
     for (const auto& off: longIrredCls) {
-        Clause& cl = *cl_alloc.ptr(off);
+        const Clause& cl = *cl_alloc.ptr(off);
         tmp.clear();
         for (auto const& l: cl) {
             tmp.push_back(orclit(l));
@@ -5008,6 +5004,20 @@ bool Solver::oracle_vivif(bool& finished)
             }
         }
     }
+    return clauses;
+}
+
+bool Solver::oracle_vivif(bool& finished)
+{
+    assert(!frat->enabled());
+    assert(solver->okay());
+
+    execute_inprocess_strategy(false, "must-renumber");
+    if (!okay()) return okay();
+    if (nVars() < 10) return okay();
+    double myTime = cpuTime();
+
+    auto clauses = get_irred_cls_for_oracle();
     detach_and_free_all_irred_cls();
 
     sspp::oracle::Oracle oracle(nVars(), clauses, {});
@@ -5104,20 +5114,10 @@ void Solver::print_cs_ordering(const vector<OracleDat>& cs) const
     }
 }
 
-bool Solver::sparsify()
+vector<vector<uint32_t>> Solver::compute_edge_weights() const
 {
-    assert(!frat->enabled());
-    execute_inprocess_strategy(false, "occ-backw-sub, sub-impl, must-renumber");
-    if (!solver->okay()) return solver->okay();
-    if (nVars() < 10) return solver->okay();
-
-    double myTime = cpuTime();
-    uint32_t removed = 0;
-    uint32_t removed_bin = 0;
-
     vector<vector<uint32_t>> edgew(nVars());
     for (uint32_t i = 0; i < nVars(); i++) edgew[i].resize(nVars(), 0);
-
     for (const auto& off: longIrredCls) {
         Clause& cl = *cl_alloc.ptr(off);
         for (auto const& l1 : cl) { for (auto const& l2 : cl) {
@@ -5136,6 +5136,12 @@ bool Solver::sparsify()
         }
     }
 
+    return edgew;
+}
+
+vector<Solver::OracleDat> Solver::order_clauses_for_oracle() const
+{
+    auto edgew = compute_edge_weights();
     vector<OracleDat> cs;
     array<int, ORACLE_DAT_SIZE> ww;
     for (const auto& off: longIrredCls) {
@@ -5169,17 +5175,31 @@ bool Solver::sparsify()
     }
     std::sort(cs.begin(), cs.end());
     /* print_cs_ordering(cs); */
+    return cs;
+}
 
+bool Solver::sparsify()
+{
+    assert(!frat->enabled());
+    execute_inprocess_strategy(false, "occ-backw-sub, sub-impl, must-renumber");
+    if (!okay()) return okay();
+    if (nVars() < 10) return okay();
+
+    double myTime = cpuTime();
+    uint32_t removed = 0;
+    uint32_t removed_bin = 0;
+    auto cs = order_clauses_for_oracle();
     const uint32_t tot_cls = longIrredCls.size() + binTri.irredBins;
     assert(cs.size() == tot_cls);
-    //dump_cls_oracle("debug.xt");
+    //dump_cls_oracle("debug.xt", cs);
 
+    // The "+tot_cls" is for indicator variables
     sspp::oracle::Oracle oracle(nVars()+tot_cls, {});
     vector<sspp::Lit> tmp;
     for(uint32_t i = 0; i < cs.size(); i++) {
         const auto& c = cs[i];
         tmp.clear();
-        if (c.binary == 0) {
+        if (!c.binary) {
             Clause& cl = *cl_alloc.ptr(c.off);
             for(auto const& l: cl) assert(l.var() < nVars());
             for(auto const& l: cl) tmp.push_back(orclit(l));
@@ -5190,6 +5210,7 @@ bool Solver::sparsify()
             tmp.push_back(orclit(b.l1));
             tmp.push_back(orclit(b.l2));
         }
+        // Indicator variable
         tmp.push_back(orclit(Lit(nVars()+i, false)));
         oracle.AddClause(tmp, false);
     }
@@ -5202,7 +5223,7 @@ bool Solver::sparsify()
     uint32_t last_printed = 0;
     for (uint32_t i = 0; i < tot_cls; i++) {
         if ((10*i)/(tot_cls) != last_printed) {
-            verb_print(1, "[sparsify] done with " << ((10*i)/(tot_cls))*10 << " %"
+            verb_print(1, "[oracle-sparsify] done with " << ((10*i)/(tot_cls))*10 << " %"
                 << " oracle props: "
                 << print_value_kilo_mega(oracle.getStats().mems)
                 << " T: " << (cpuTime()-myTime));
@@ -5244,7 +5265,7 @@ bool Solver::sparsify()
         }
 
         if (oracle.getStats().mems > 700LL*1000LL*1000LL) {
-            verb_print(1, "[sparsify] too many props in oracle, aborting");
+            verb_print(1, "[oracle-sparsify] too many props in oracle, aborting");
             goto fin;
         }
     }
@@ -5289,7 +5310,7 @@ bool Solver::sparsify()
     //cout << "New cls size: " << clauses.size() << endl;
     //Subsume();
 
-    verb_print(1, "[sparsify] removed: " << removed
+    verb_print(1, "[oracle-sparsify] removed: " << removed
         << " of which bin: " << removed_bin
         << " tot considered: " << tot_cls
         << " T: " << (cpuTime()-myTime) << " buildT: " << build_time);
