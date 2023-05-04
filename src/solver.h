@@ -48,6 +48,7 @@ using std::vector;
 using std::pair;
 using std::string;
 using std::array;
+struct PicoSAT;
 
 namespace CMSat {
 
@@ -331,7 +332,8 @@ class Solver : public Searcher
         void renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors_ret);
         void testing_set_solver_not_fresh();
         bool full_probe(const bool bin_only);
-        bool backbone_simpl(int64_t max_confl, bool cmsgen);
+        PicoSAT* build_picosat();
+        bool backbone_simpl(int64_t max_confl, bool cmsgen, bool& finished);
         bool removed_var_ext(uint32_t var) const;
 
     private:

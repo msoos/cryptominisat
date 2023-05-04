@@ -27,7 +27,7 @@
 #include <iostream>
 
 #include "utils.h"
-using std::cerr;
+using std::cout;
 using std::endl;
 using std::max;
 using std::min;
@@ -41,12 +41,12 @@ constexpr const double EPS = 1e-150;
 } // namespace
 
 void Stats::Print() const {
-	cerr<<"Decisions/Propagations "<<decisions<<"/"<<mems<<endl;
-	cerr<<"Conflicts: "<<conflicts<<endl;
-	cerr<<"Learned clauses/bin/unit: "<<learned_clauses<<"/"<<learned_bin_clauses<<"/"<<learned_units<<endl;
-	cerr<<"Forgot clauses: "<<forgot_clauses<<endl;
-	cerr<<"Nontriv redu: "<<nontriv_redu<<endl;
-	cerr<<"Restarts "<<restarts<<endl;
+	cout <<"Decisions/Propagations "<<decisions<<"/"<<mems<<endl;
+	cout <<"Conflicts: "<<conflicts<<endl;
+	cout <<"Learned clauses/bin/unit: "<<learned_clauses<<"/"<<learned_bin_clauses<<"/"<<learned_units<<endl;
+	cout <<"Forgot clauses: "<<forgot_clauses<<endl;
+	cout <<"Nontriv redu: "<<nontriv_redu<<endl;
+	cout <<"Restarts "<<restarts<<endl;
 }
 
 void Oracle::AddSolToCache() {
@@ -54,6 +54,7 @@ void Oracle::AddSolToCache() {
 		assert(vs[i].phase == 0 || vs[i].phase == 1);
 		sol_cache[i].push_back(vs[i].phase);
 	}
+    stats.cache_added++;
 }
 
 void Oracle::ClearSolCache() {
@@ -61,7 +62,7 @@ void Oracle::ClearSolCache() {
 	for (Var v = 1; v <= vars; v++) sol_cache[v].clear();
 }
 
-bool Oracle::SatByCache(const vector<Lit>& assumps) {
+bool Oracle::SatByCache(const vector<Lit>& assumps) const {
     // 1st variable's cache size is the same as all the rest
 	int cs = sol_cache[1].size();
 
@@ -420,11 +421,13 @@ bool Oracle::LitReduntant(Lit lit) {
 vector<Lit> Oracle::LearnUip(size_t conflict_clause) {
 	assert(conflict_clause > 0);
 	BumpClause(conflict_clause);
+#ifdef DEBUG_ORACLE_VERB
     oclv2("Conflict clause NUM: " << conflict_clause << " cl:");
-    for(int i = conflict_clause; clauses[i]; i++) {
+    for(size_t i = conflict_clause; clauses[i]; i++) {
         oclv2(" v: " << VarOf(clauses[i]) << " val: " << LitVal(clauses[i]));
     }
     oclv2(endl);
+#endif
 
 	vector<Lit> clause = {0};
 	int level = vs[VarOf(clauses[conflict_clause])].level;
@@ -432,7 +435,9 @@ vector<Lit> Oracle::LearnUip(size_t conflict_clause) {
     oclv("---");
 	for (size_t i = conflict_clause; clauses[i]; i++) {
 		assert(LitVal(clauses[i]) == -1);
-        oclv("clauses[i]: " << VarOf(clauses[i]) << " val: " << LitVal(clauses[i]) << " vs[VarOf(clauses[i])].level: " << vs[VarOf(clauses[i])].level << " level: " << level);
+        oclv("clauses[i]: " << VarOf(clauses[i]) << " val: " << LitVal(clauses[i])
+                << " vs[VarOf(clauses[i])].level: " << vs[VarOf(clauses[i])].level
+                << " level: " << level);
 		assert(vs[VarOf(clauses[i])].level <= level);
 		BumpVar(VarOf(clauses[i]));
 		if (vs[VarOf(clauses[i])].level == level) {
@@ -765,7 +770,7 @@ Oracle::Oracle(int vars_, const vector<vector<Lit>>& clauses_) : vars(vars_), ra
 
 TriState Oracle::Solve(const vector<Lit>& assumps, bool usecache, int64_t max_mems) {
 	if (unsat) return false;
-	if (usecache && SatByCache(assumps)) return true;
+	if (usecache && SatByCache(assumps)) {stats.cache_useful++; return true;}
     oclv("SOLVE called ");
 	// TODO: solution caching
 	for (const auto& lit : assumps) {
@@ -821,6 +826,7 @@ bool Oracle::FreezeUnit(Lit unit) {
 	}
 	Decide(unit, 1);
 	stats.learned_units++;
+    oclv("[oracle] learnt unit: " << VarOf(unit) << " val: " << LitVal(unit));
 	size_t confl = Propagate(1);
 	if (confl) {
 		unsat = true;

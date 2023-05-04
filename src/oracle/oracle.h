@@ -22,12 +22,13 @@
 
 #pragma once
 
+#include <iostream>
 #include "utils.h"
-#define DEBUG_ORACLE_VERB
+/* #define DEBUG_ORACLE_VERB */
 
 #ifdef DEBUG_ORACLE_VERB
-#define oclv(x) do {std::cout << x << endl;} while(0)
-#define oclv2(x) do {std::cout << x;} while(0)
+#define oclv(x) do {cout << x << endl;} while(0)
+#define oclv2(x) do {cout << x;} while(0)
 #else
 #define oclv(x) do {} while(0)
 #define oclv2(x) do {} while(0)
@@ -66,6 +67,8 @@ struct Stats {
  	int64_t nontriv_redu = 0;
  	int64_t forgot_clauses = 0;
  	int64_t restarts = 0;
+    int64_t cache_useful = 0;
+    int64_t cache_added = 0;
   void Print() const;
 };
 
@@ -104,7 +107,8 @@ class Oracle {
 
   int CurLevel() const;
   int LitVal(Lit lit) const;
-  const Stats& getStats() {return stats;}
+  const Stats& getStats() const {return stats;}
+
  private:
  	void AddOrigClause(vector<Lit> clause, bool entailed);
  	vector<Lit> clauses;
@@ -169,7 +173,7 @@ class Oracle {
 
  	vector<vector<char>> sol_cache; // Caches found FULL solutions
  	void AddSolToCache();
- 	bool SatByCache(const vector<Lit>& assumps);
+ 	bool SatByCache(const vector<Lit>& assumps) const;
  	void ClearSolCache();
 };
 

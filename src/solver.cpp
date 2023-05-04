@@ -1238,9 +1238,7 @@ void Solver::set_assumptions()
 {
     assert(assumptions.empty());
     #ifdef SLOW_DEBUG
-    for(auto x: varData) {
-        assert(x.assumption == l_Undef);
-    }
+    for(const auto& x: varData) { assert(x.assumption == l_Undef); }
     #endif
 
     conflict.clear();
@@ -2133,11 +2131,8 @@ lbool Solver::execute_inprocess_strategy(
                 varReplacer->replace_if_enough_is_found(
                     std::floor((double)get_num_free_vars()*0.001));
             }
-        } else if (token == "eqlit-find") {
-            find_equivs();
         } else if (token == "sparsify") {
             bool finished = true;
-            oracle_sparsify();
             if (nVars() > 10 &&  oracle_vivif(finished)) {
                 if (finished) oracle_sparsify();
             }
@@ -4866,23 +4861,17 @@ lbool Solver::bnn_eval(BNN& bnn)
     return l_Undef;
 }
 
-#define PICOLIT(x) ((x).var() * ((x).sign() ? -1:1))
+#define PICOLIT(x) ((((int)(x).var()+1)) * ((x).sign() ? -1:1))
 
-bool Solver::find_equivs()
+PicoSAT* Solver::build_picosat()
 {
-    double myTime = cpuTime();
     PicoSAT* picosat = picosat_init();
     for(uint32_t i = 0; i < nVars(); i++) picosat_inc_max_var(picosat);
 
-    vector<vector<char>> tocheck(nVars());
-    for(uint32_t v = 0; v < nVars(); v++) tocheck[v].resize(nVars(), 0);
     for(auto const& off: longIrredCls) {
         Clause* cl = cl_alloc.ptr(off);
         for(auto const& l1: *cl) {
             picosat_add(picosat, PICOLIT(l1));
-            for(auto const& l2: *cl) {
-                if (l1.var() < l2.var()) tocheck[l1.var()][l2.var()] = 1;
-            }
         }
         picosat_add(picosat, 0);
     }
@@ -4896,62 +4885,9 @@ bool Solver::find_equivs()
             picosat_add(picosat, PICOLIT(l1));
             picosat_add(picosat, PICOLIT(l2));
             picosat_add(picosat, 0);
-            if (l1.var() < l2.var()) tocheck[l1.var()][l2.var()] = 1;
         }
     }
-    double build_time =  (cpuTime()-myTime);
-
-    uint32_t checked = 0;
-    uint32_t added = 0;
-    for(uint32_t i = 0; i < nVars(); i++) {
-        for(uint32_t i2 = 0; i2 < nVars(); i2++) {
-            if (i >= i2) continue;
-            if (i == i2) continue;
-            if (!tocheck[i][i2]) continue;
-
-            Lit lit1 = Lit(i, false);
-            Lit lit2 = Lit(i2, false);
-            if (value(lit1) != l_Undef || value(lit2) != l_Undef ||
-                varData[i].removed != Removed::none || varData[i2].removed != Removed::none)
-                continue;
-
-            checked++;
-            assert(decisionLevel() == 0);
-            assert(prop_at_head());
-
-            int ret;
-            picosat_assume(picosat, PICOLIT(lit1));
-            picosat_assume(picosat, PICOLIT(lit2));
-            ret = picosat_sat(picosat, 30);
-            if (ret != PICOSAT_UNSATISFIABLE) goto next;
-
-            picosat_assume(picosat, PICOLIT(~lit1));
-            picosat_assume(picosat, PICOLIT(~lit2));
-            ret = picosat_sat(picosat, 30);
-            if (ret != PICOSAT_UNSATISFIABLE) goto next;
-            added++;
-            if (!add_xor_clause_inter(vector<Lit>{lit1, lit2}, true, true)) goto fin;
-            continue;
-
-            next:;
-            picosat_assume(picosat, PICOLIT(lit1));
-            picosat_assume(picosat, PICOLIT(~lit2));
-            ret = picosat_sat(picosat, 30);
-            if (ret != PICOSAT_UNSATISFIABLE) continue;
-
-            picosat_assume(picosat, PICOLIT(~lit1));
-            picosat_assume(picosat, PICOLIT(lit2));
-            ret = picosat_sat(picosat, 30);
-            if (ret != PICOSAT_UNSATISFIABLE) continue;
-            added++;
-            if (!add_xor_clause_inter(vector<Lit>{lit1, lit2}, false, true)) goto fin;
-        }
-    }
-    fin:
-    picosat_reset(picosat);
-
-    verb_print(1, "[eqlit-find] checked: " << checked << " added: " << added << " T: " << (cpuTime()-myTime) << " buildT: " << build_time);
-    return solver->okay();
+    return picosat;
 }
 
 inline int orclit(const Lit x) {
@@ -5012,7 +4948,9 @@ bool Solver::oracle_vivif(bool& finished)
 {
     assert(!frat->enabled());
     assert(solver->okay());
+    finished = false;
 
+    backbone_simpl(std::numeric_limits<int64_t>::max(), true, finished);
     execute_inprocess_strategy(false, "must-renumber");
     if (!okay()) return okay();
     if (nVars() < 10) return okay();
@@ -5026,14 +4964,12 @@ bool Solver::oracle_vivif(bool& finished)
     for (int i = 0; i < (int)clauses.size(); i++) {
         for (int j = 0; j < (int)clauses[i].size(); j++) {
             if (oracle.getStats().mems > 800LL*1000LL*1000LL) {
-                finished = false;
                 goto end;
             }
             auto assump = Negate(clauses[i]);
             SwapDel(assump, j);
             auto ret = oracle.Solve(assump, true, 500LL*1000LL*1000LL);
             if (ret.isUnknown()) {
-                finished = false;
                 goto end;
             }
             if (ret.isFalse()) {
@@ -5051,6 +4987,7 @@ bool Solver::oracle_vivif(bool& finished)
             }
         }
     }
+    finished |= true;
 
     end:
     vector<Lit> tmp2;
@@ -5072,7 +5009,12 @@ bool Solver::oracle_vivif(bool& finished)
         }
     }
 
-    verb_print(1, "[oracle-vivif] finished: " << finished << " T: " << (cpuTime()-myTime));
+    verb_print(1, "[oracle-vivif] finished: " << finished
+            << " cache-used: " << oracle.getStats().cache_useful
+            << " cache-added: " << oracle.getStats().cache_added
+            << " learnt-units: " << oracle.getStats().learned_units
+            << " finished (vivif or backbone): " << finished
+            << " T: " << std::setprecision(2) << (cpuTime()-myTime));
     return solver->okay();
 }
 
@@ -5227,8 +5169,7 @@ bool Solver::oracle_sparsify()
     for (uint32_t i = 0; i < tot_cls; i++) {
         if ((10*i)/(tot_cls) != last_printed) {
             verb_print(1, "[oracle-sparsify] done with " << ((10*i)/(tot_cls))*10 << " %"
-                << " oracle props: "
-                << print_value_kilo_mega(oracle.getStats().mems)
+                << " oracle props: " << print_value_kilo_mega(oracle.getStats().mems)
                 << " T: " << (cpuTime()-myTime));
             last_printed = (10*i)/(tot_cls);
         }
@@ -5319,6 +5260,9 @@ bool Solver::oracle_sparsify()
     verb_print(1, "[oracle-sparsify] removed: " << removed
         << " of which bin: " << removed_bin
         << " tot considered: " << tot_cls
+        << " cache-used: " << oracle.getStats().cache_useful
+        << " cache-added: " << oracle.getStats().cache_added
+        << " learnt-units: " << oracle.getStats().learned_units
         << " T: " << (cpuTime()-myTime) << " buildT: " << build_time);
 
     return solver->okay();
@@ -5448,27 +5392,24 @@ bool Solver::minimize_clause(vector<Lit>& cl) {
     return can_be_removed;
 }
 
-bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen)
+bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen, bool& finished)
 {
+    execute_inprocess_strategy(false, "must-renumber");
     if (!okay()) return false;
     assert(get_num_bva_vars() == 0);
     verb_print(1, "[backbone-simpl] starting backbone simplification...");
-    uint64_t last_sum_conflicts = 0;
 
     double myTime = cpuTime();
-    bool finished = false;
     Lit l;
     uint32_t undefs = 0;
+    uint32_t falses = 0;
     uint32_t tried = 0;
     const auto orig_trail_size = trail.size();
 
     vector<Lit> tmp_clause;
     vector<lbool> old_model;
     uint32_t num_seen_flipped = 0;
-    vector<char> seen_flipped;
-    seen_flipped.resize(nVars(), 0);
-    const auto old_verb = conf.verbosity;
-    conf.verbosity = 0;
+    vector<char> seen_flipped(nVars(), 0);
 
     if (cmsgen) {
         //CMSGen-based seen_flipped detection, so we don't need to query so much
@@ -5518,11 +5459,11 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen)
                 }
             }
         }
-        if (old_verb >=1) cout << "c [backbone-simpl] num seen flipped: "
+        verb_print(1, "[backbone-simpl] num seen flipped: "
             << num_seen_flipped
             << " conflicts used: " << print_value_kilo_mega(s2.get_sum_conflicts())
             << " num runs succeeded: " << num_runs
-            << " T: " << std::fixed << std::setprecision(2) << (cpuTime() - myTime) << endl;
+            << " T: " << std::fixed << std::setprecision(2) << (cpuTime() - myTime));
     }
 
     // Sort according to occurrence
@@ -5537,77 +5478,69 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen)
     g.seed(18337);
     std::shuffle(var_order.begin(), var_order.end(), g);
 
-    int64_t remaining_confl = orig_max_confl;
-    set_max_confl(remaining_confl);
-    last_sum_conflicts = sumConflicts;
-
-    const auto old_polar_mode = conf.polarity_mode;
-    conf.polarity_mode = PolarityMode::polarmode_neg;
-    lbool ret = iterate_until_solved();
-    old_model = assigns;
-    cancelUntil(0);
-    if (ret == l_False) goto end;
-    if (ret == l_Undef || remaining_confl < 0) goto end;
-    assert(last_sum_conflicts <= sumConflicts);
-    remaining_confl -= (sumConflicts - last_sum_conflicts);
+    int64_t orig_max_props = std::max<int64_t>(orig_max_confl*50,
+            std::numeric_limits<int64_t>::max());
+    vector<int> old_model2(nVars(), 0);
+    PicoSAT* picosat = build_picosat();
+    picosat_set_propagation_limit(picosat, orig_max_props);
+    auto ret = picosat_sat(picosat, -1);
+    int64_t remaining_props = orig_max_confl*20-picosat_propagations(picosat);
+    if (ret == PICOSAT_UNKNOWN || ret == PICOSAT_UNSATISFIABLE) goto end;
+    if (ret == PICOSAT_SATISFIABLE) {
+        for(uint32_t i = 0; i < nVars(); i++) {
+            old_model2[i] = picosat_deref(picosat, i+1);
+        }
+    }
 
     for(const auto& var: var_order) {
         if (seen_flipped[var]) continue;
         if (value(var) != l_Undef) continue;
         if (varData[var].removed != Removed::none) continue;
 
-        l = Lit(var, old_model[var] == l_False);
+        l = Lit(var, old_model2[var]==-1);
 
         //There is definitely a solution with "l". Let's see if ~l fails.
-        assert(assumptions.empty());
-        assumptions.push_back(AssumptionPair(map_inter_to_outer(~l), lit_Undef));
-        fill_assumptions_set();
-        set_max_confl(remaining_confl/20);
-        ret = iterate_until_solved();
-        auto new_model = assigns;
-        cancelUntil(0);
-        unfill_assumptions_set();
-        assumptions.clear();
+        picosat_assume(picosat, PICOLIT(~l));
+        picosat_set_propagation_limit(picosat, remaining_props/10);
+        ret = picosat_sat(picosat, -1);
+        remaining_props = orig_max_props-picosat_propagations(picosat);
         tried++;
 
-        //Update max confl
-        assert(last_sum_conflicts <= sumConflicts);
-        remaining_confl -= (sumConflicts - last_sum_conflicts);
-        last_sum_conflicts = sumConflicts;
-
-        if (ret == l_True) {
+        if (ret == PICOSAT_SATISFIABLE) {
             for(uint32_t i2 = 0; i2 < nVars(); i2++) {
+                auto val = picosat_deref(picosat, i2+1);
                 if (seen_flipped[i2] ||
-                        value(i2) != l_Undef || new_model[i2] == l_Undef ||
+                        value(i2) != l_Undef || val == 0 ||
                         varData[i2].removed != Removed::none) continue;
-                if (new_model[i2] != old_model[i2]) {
+                if (val != old_model2[i2]) {
                     seen_flipped[i2] = 1;
                     num_seen_flipped++;
                 }
             }
-        } else if (ret == l_False) {
+        } else if (ret == PICOSAT_UNSATISFIABLE) {
             tmp_clause.clear();
             tmp_clause.push_back(l);
             Clause* ptr = add_clause_int(tmp_clause);
             assert(ptr == 0);
-            if (!okay()) goto end;
-        } else {
-            undefs++;
-        }
-        if (remaining_confl < 0) goto end;
+            falses++;
+            if (!okay()) {
+                goto end;
+            }
+        } else { undefs++; }
+        if (remaining_props < 0) goto end;
     }
-    finished = true;
+    if (undefs==0) finished = true;
     assert(okay());
 
     end:
+    picosat_reset(picosat);
     uint32_t num_set = trail.size() - orig_trail_size;
     double time_used = cpuTime() - myTime;
-    conf.polarity_mode = old_polar_mode;
-    conf.verbosity = old_verb;
 
     verb_print(1,
         "[backbone-simpl]"
         << " finished: " << finished
+        << " falses: " << falses
         << " undefs: " << undefs
         << " tried: "  << tried
         << " set: " << num_set
