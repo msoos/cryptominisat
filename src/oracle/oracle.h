@@ -160,7 +160,7 @@ class Oracle {
  	vector<Lit> LearnUip(size_t conflict_clause);
  	int CDCLBT(size_t confl_clause, int min_level=0);
 
- 	vector<vector<char>> sol_cache;
+ 	vector<vector<char>> sol_cache; // Caches found FULL solutions
  	void AddSolToCache();
  	bool SatByCache(const vector<Lit>& assumps);
  	void ClearSolCache();
@@ -179,6 +179,7 @@ inline bool Oracle::LitAssigned(Lit lit) const {
 	return LitVal(lit) != 0;
 }
 
+// TOP level is 1.
 inline int Oracle::CurLevel() const {
 	if (decided.empty()) {
 		return 1;

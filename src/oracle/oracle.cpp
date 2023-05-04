@@ -57,31 +57,28 @@ void Oracle::AddSolToCache() {
 }
 
 void Oracle::ClearSolCache() {
-	if (sol_cache[1].size() == 0) return;
+	if (sol_cache[1].empty()) return;
 	for (Var v = 1; v <= vars; v++) sol_cache[v].clear();
 }
 
 bool Oracle::SatByCache(const vector<Lit>& assumps) {
+    // 1st variable's cache size is the same as all the rest
 	int cs = sol_cache[1].size();
+
+    // Try all cache lines
 	for (int i = 0; i < cs; i++) {
 		bool ok = true;
-		for (Lit l : assumps) {
+        // all our assumptions must be in the solution
+		for (const Lit& l : assumps) {
 			if (IsPos(l)) {
-				if (sol_cache[VarOf(l)][i] == 0) {
-					ok = false;
-					break;
-				}
+				if (sol_cache[VarOf(l)][i] == 0) { ok = false; break; }
 			} else {
-				if (sol_cache[VarOf(l)][i] == 1) {
-					ok = false;
-					break;
-				}
+				if (sol_cache[VarOf(l)][i] == 1) { ok = false; break; }
 			}
 		}
-		if (ok) {
-			return true;
-		}
+		if (ok) return true;
 	}
+    // Not in the cache
 	return false;
 }
 
@@ -327,17 +324,11 @@ void Oracle::SetAssumpLit(Lit lit, bool freeze) {
 }
 
 void Oracle::Assign(Lit dec, size_t reason_clause, int level) {
-	if (level <= 1) {
-		reason_clause = 0;
-	}
+	if (level <= 1) reason_clause = 0;
 	Var v = VarOf(dec);
 	lit_val[dec] = 1;
 	lit_val[Neg(dec)] = -1;
-	if (IsPos(dec)) {
-		vs[v].phase = 1;
-	} else {
-		vs[v].phase = 0;
-	}
+    vs[v].phase = IsPos(dec) ? 1 : 0;
 	vs[v].reason = reason_clause;
 	vs[v].level = level;
 	decided.push_back(v);

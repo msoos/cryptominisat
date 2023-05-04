@@ -26,6 +26,7 @@ THE SOFTWARE.
 #include <vector>
 #include <fstream>
 #include <iostream>
+#include <array>
 #include <utility>
 #include <string>
 #include <algorithm>
@@ -41,12 +42,14 @@ THE SOFTWARE.
 #ifdef STATS_NEEDED
 #include "satzilla_features.h"
 #endif
-
-namespace CMSat {
+#define ORACLE_DAT_SIZE 4
 
 using std::vector;
 using std::pair;
 using std::string;
+using std::array;
+
+namespace CMSat {
 
 class VarReplacer;
 class ClauseCleaner;
@@ -340,7 +343,6 @@ class Solver : public Searcher
         //FRAT
         void write_final_frat_clauses();
 
-
         struct OracleBin {
             OracleBin (const Lit _l1, const Lit _l2, const int32_t _ID):
                 l1(_l1), l2(_l2), ID(_ID) {}
@@ -353,18 +355,18 @@ class Solver : public Searcher
         };
 
         struct OracleDat {
-            OracleDat(vector<int>& _val, ClOffset _off) :
-                val(_val), off(_off) {which = 0;}
-            OracleDat(vector<int>& _val, OracleBin _bin) :
-                val(_val), bin(_bin) {which = 1;}
+            OracleDat(array<int, ORACLE_DAT_SIZE>& _val, ClOffset _off) :
+                val(_val), off(_off) {binary = 0;}
+            OracleDat(array<int, ORACLE_DAT_SIZE>& _val, OracleBin _bin) :
+                val(_val), bin(_bin) {binary = 1;}
 
-
-            vector<int> val;
+            array<int, ORACLE_DAT_SIZE> val;
             ClOffset off;
             OracleBin bin;
-            int which;
+            int binary;
 
             bool operator<(const OracleDat& other) const {
+                return val > other.val;
                 return val < other.val;
             }
         };
@@ -372,12 +374,14 @@ class Solver : public Searcher
         bool find_equivs();
         bool oracle_vivif(bool& finished);
         bool sparsify();
+        void print_cs_ordering(const vector<OracleDat>& cs) const;
         template<bool bin_only> lbool probe_inter(const Lit l, uint32_t& min_props);
         void reset_for_solving();
         vector<Lit> add_clause_int_tmp_cl;
         lbool iterate_until_solved();
         uint64_t mem_used_vardata() const;
         uint64_t calc_num_confl_to_do_this_iter(const size_t iteration_num) const;
+        void detach_and_free_all_irred_cls();
 
         bool sort_and_clean_clause(
             vector<Lit>& ps

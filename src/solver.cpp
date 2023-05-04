@@ -4994,7 +4994,6 @@ bool Solver::oracle_vivif(bool& finished)
         for (auto const& l: cl) {
             tmp.push_back(orclit(l));
         }
-//         std::sort(tmp.begin(), tmp.end());
         clauses.push_back(tmp);
     }
     for (uint32_t i = 0; i < nVars()*2; i++) {
@@ -5009,27 +5008,7 @@ bool Solver::oracle_vivif(bool& finished)
             }
         }
     }
-
-    for(auto& ws: watches) {
-        uint32_t j = 0;
-        for(uint32_t i = 0; i < ws.size(); i++) {
-            if (ws[i].isBin()) {
-                if (ws[i].red()) ws[j++] = ws[i];
-                continue;
-            }
-            assert(!ws[i].isBNN());
-            assert(ws[i].isClause());
-            Clause* cl = cl_alloc.ptr(ws[i].get_offset());
-            if (cl->red()) ws[j++] = ws[i];
-            continue;
-        }
-        ws.resize(j);
-    }
-    binTri.irredBins = 0;
-    for(auto& c: longIrredCls) free_cl(c);
-    longIrredCls.clear();
-    litStats.irredLits = 0;
-    cl_alloc.consolidate(this, true);
+    detach_and_free_all_irred_cls();
 
     sspp::oracle::Oracle oracle(nVars(), clauses, {});
     bool sat = false;
@@ -5051,15 +5030,13 @@ bool Solver::oracle_vivif(bool& finished)
                 auto clause = Negate(assump);
                 oracle.AddClauseIfNeededAndStr(clause, true);
                 clauses[i] = clause;
-                j = -1;
+                j = -1; //start from beginning
                 if (clause.empty()) {
-                        ok = false;
-                        cout<<"c o UNSAT"<<endl;
-                        return false;
+                    ok = false;
+                    return false;
                 }
             } else if(!sat) {
                 sat = true;
-                cout<<"c o SAT"<<endl;
             }
         }
     }
@@ -5096,7 +5073,7 @@ void Solver::dump_cls_oracle(const string fname, const vector<OracleDat>& cs)
     for(uint32_t i = 0; i < cs.size(); i++) {
         const auto& c = cs[i];
         tmp.clear();
-        if (c.which == 0) {
+        if (!c.binary) {
             Clause& cl = *cl_alloc.ptr(c.off);
             for(auto const& l: cl) assert(l.var() < nVars());
             for(auto const& l: cl) tmp.push_back(orclit(l));
@@ -5109,6 +5086,21 @@ void Solver::dump_cls_oracle(const string fname, const vector<OracleDat>& cs)
         }
         for(auto const& l: tmp) fout << l << " ";
         fout << endl;
+    }
+}
+
+void Solver::print_cs_ordering(const vector<OracleDat>& cs) const
+{
+    for(const auto& c: cs) {
+        cout << "c.bin:" << c.binary;
+        if (!c.binary) cout << " offs: " << c.off;
+        else {
+            cout << " bincl: " << c.bin.l1 << "," << c.bin.l2;
+        }
+
+        cout << " c.val: ";
+        for(const auto& v: c.val) cout << v << " ";
+        cout << endl;
     }
 }
 
@@ -5128,16 +5120,11 @@ bool Solver::sparsify()
 
     for (const auto& off: longIrredCls) {
         Clause& cl = *cl_alloc.ptr(off);
-        for (auto const& l1 : cl) {
-            for (auto const& l2 : cl) {
-                uint32_t v1 = l1.var();
-                uint32_t v2 = l2.var();
-                if (v1 < v2) {
-                    edgew[v1][v2]++;
-                    //assert(edgew[v1][v2] <= (int)clauses.size());
-                }
-            }
-        }
+        for (auto const& l1 : cl) { for (auto const& l2 : cl) {
+            uint32_t v1 = l1.var();
+            uint32_t v2 = l2.var();
+            if (v1 < v2) edgew[v1][v2]++;
+        } }
     }
     for (uint32_t i = 0; i < nVars()*2; i++) {
         Lit l = Lit::toLit(i);
@@ -5145,49 +5132,42 @@ bool Solver::sparsify()
             if (!ws.isBin() || ws.red())  continue;
             uint32_t v1 = l.var();
             uint32_t v2 = ws.lit2().var();
-            if (v1 < v2) {
-                edgew[v1][v2]++;
-                //assert(edgew[v1][v2] <= (int)clauses.size());
-            }
+            if (v1 < v2) edgew[v1][v2]++;
         }
     }
 
     //[vector<int>, clause] pairs. vector<INT> =
     vector<OracleDat> cs;
+    array<int, ORACLE_DAT_SIZE> zeroww;
+    std::fill(std::begin(zeroww), std::end(zeroww), 0);
+    array<int, ORACLE_DAT_SIZE> ww;
     for (const auto& off: longIrredCls) {
         Clause& cl = *cl_alloc.ptr(off);
         assert(!cl.red());
-        vector<int> ww;
-        for (auto const& l1 : cl) {
-            for (auto const& l2: cl) {
-                uint32_t v1 = l1.var();
-                uint32_t v2 = l2.var();
-                if (v1 < v2) {
-                    assert(edgew[v1][v2] >= 1);
-                    if ((int)ww.size() < edgew[v1][v2]) {
-                        ww.resize(edgew[v1][v2]);
-                    }
-                    ww[edgew[v1][v2]-1]--;
-                }
+        ww = zeroww;
+        for (auto const& l1 : cl) { for (auto const& l2: cl) {
+            const uint32_t v1 = l1.var();
+            const uint32_t v2 = l2.var();
+            if (v1 < v2 && edgew[v1][v2] <= (int)ww.size()) {
+                assert(edgew[v1][v2] >= 1);
+                ww[edgew[v1][v2]-1]--;
             }
-        }
-//         cout << "CL is: " << cl << endl;
+        } }
         cs.push_back(OracleDat(ww, off));
     }
 
     for (uint32_t i = 0; i < nVars()*2; i++) {
         Lit l = Lit::toLit(i);
-        vector<int> ww;
+        ww = zeroww;
         for(auto const& ws: watches[l]) {
             if (!ws.isBin() || ws.red())  continue;
-            uint32_t v1 = l.var();
-            uint32_t v2 = ws.lit2().var();
+            const uint32_t v1 = l.var();
+            const uint32_t v2 = ws.lit2().var();
             if (v1 < v2) {
-                assert(edgew[v1][v2] >= 1);
-                if ((int)ww.size() < edgew[v1][v2]) {
-                    ww.resize(edgew[v1][v2]);
+                if (edgew[v1][v2] <= (int)ww.size()) {
+                    assert(edgew[v1][v2] >= 1);
+                    ww[edgew[v1][v2]-1]--;
                 }
-                ww[edgew[v1][v2]-1]--;
                 cs.push_back(OracleDat(ww, OracleBin(l, ws.lit2(), ws.get_ID())));
             }
         }
@@ -5195,6 +5175,8 @@ bool Solver::sparsify()
 
 
     std::sort(cs.begin(), cs.end());
+    print_cs_ordering(cs);
+
     const uint32_t tot_cls = longIrredCls.size() + binTri.irredBins;
     assert(cs.size() == tot_cls);
     //dump_cls_oracle("debug.xt");
@@ -5204,7 +5186,7 @@ bool Solver::sparsify()
     for(uint32_t i = 0; i < cs.size(); i++) {
         const auto& c = cs[i];
         tmp.clear();
-        if (c.which == 0) {
+        if (c.binary == 0) {
             Clause& cl = *cl_alloc.ptr(c.off);
             for(auto const& l: cl) assert(l.var() < nVars());
             for(auto const& l: cl) tmp.push_back(orclit(l));
@@ -5237,7 +5219,7 @@ bool Solver::sparsify()
         oracle.SetAssumpLit(orclit(Lit(nVars()+i, false)), false);
         tmp.clear();
         const auto& c = cs[i];
-        if (c.which == 0) {
+        if (!c.binary) {
             Clause& cl = *cl_alloc.ptr(c.off);
             for(auto const& l: cl) tmp.push_back(orclit(~l));
         } else {
@@ -5254,7 +5236,7 @@ bool Solver::sparsify()
             assert(ret.isFalse());
             oracle.SetAssumpLit(orclit(Lit(nVars()+i, false)), true);
             removed++;
-            if (c.which == 0) {
+            if (!c.binary) {
                 Clause& cl = *cl_alloc.ptr(c.off);
                 assert(!cl.stats.marked_clause);
                 cl.stats.marked_clause = 1;
@@ -5612,6 +5594,30 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen)
         << " T: " << std::setprecision(2) << time_used);
 
     return okay();
+}
+
+void Solver::detach_and_free_all_irred_cls()
+{
+    for(auto& ws: watches) {
+        uint32_t j = 0;
+        for(uint32_t i = 0; i < ws.size(); i++) {
+            if (ws[i].isBin()) {
+                if (ws[i].red()) ws[j++] = ws[i];
+                continue;
+            }
+            assert(!ws[i].isBNN());
+            assert(ws[i].isClause());
+            Clause* cl = cl_alloc.ptr(ws[i].get_offset());
+            if (cl->red()) ws[j++] = ws[i];
+            continue;
+        }
+        ws.resize(j);
+    }
+    binTri.irredBins = 0;
+    for(auto& c: longIrredCls) free_cl(c);
+    longIrredCls.clear();
+    litStats.irredLits = 0;
+    cl_alloc.consolidate(this, true);
 }
 
 #ifdef STATS_NEEDED
