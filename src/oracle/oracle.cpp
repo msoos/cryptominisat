@@ -312,11 +312,8 @@ void Oracle::SetAssumpLit(Lit lit, bool freeze) {
 	assert(watches[lit].empty());
 	assert(watches[Neg(lit)].empty());
 	assert(prop_q.empty());
-	if (freeze) {
-		Assign(lit, 0, 1);
-	} else {
-		Assign(lit, 0, 2);
-	}
+	if (freeze) { Assign(lit, 0, 1); }
+	else { Assign(lit, 0, 2); }
 	assert(decided.back() == VarOf(lit));
 	decided.pop_back();
 	assert(prop_q.back() == Neg(lit));
@@ -759,7 +756,7 @@ TriState Oracle::Solve(const vector<Lit>& assumps, bool usecache, int64_t max_me
 	if (unsat) return false;
 	if (usecache && SatByCache(assumps)) return true;
 	// TODO: solution caching
-	for (Lit lit : assumps) {
+	for (const auto& lit : assumps) {
 		if (LitVal(lit) == -1) {
 			prop_q.clear();
 			UnDecide(2);

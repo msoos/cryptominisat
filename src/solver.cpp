@@ -2138,7 +2138,7 @@ lbool Solver::execute_inprocess_strategy(
         } else if (token == "sparsify") {
             bool finished = true;
             if (nVars() > 10 &&  oracle_vivif(finished)) {
-                if (finished) sparsify();
+                if (finished) oracle_sparsify();
             }
         } else if (token == "must-scc-vrepl") {
             if (conf.doFindAndReplaceEqLits) {
@@ -5178,10 +5178,10 @@ vector<Solver::OracleDat> Solver::order_clauses_for_oracle() const
     return cs;
 }
 
-bool Solver::sparsify()
+bool Solver::oracle_sparsify()
 {
     assert(!frat->enabled());
-    execute_inprocess_strategy(false, "occ-backw-sub, sub-impl, must-renumber");
+    execute_inprocess_strategy(false, "sub-impl, occ-backw-sub, must-renumber");
     if (!okay()) return okay();
     if (nVars() < 10) return okay();
 
@@ -5216,10 +5216,12 @@ bool Solver::sparsify()
     }
     const double build_time = cpuTime() - myTime;
 
+    // Set all assumptions to FALSE, i.e. all clauses are active
     for (uint32_t i = 0; i < tot_cls; i++) {
         oracle.SetAssumpLit(orclit(Lit(nVars()+i, true)), false);
     }
 
+    // Now try to remove clauses one-by-one
     uint32_t last_printed = 0;
     for (uint32_t i = 0; i < tot_cls; i++) {
         if ((10*i)/(tot_cls) != last_printed) {
@@ -5230,6 +5232,7 @@ bool Solver::sparsify()
             last_printed = (10*i)/(tot_cls);
         }
 
+        // Try removing this clause, making its indicator TRUE (i.e. removed)
         oracle.SetAssumpLit(orclit(Lit(nVars()+i, false)), false);
         tmp.clear();
         const auto& c = cs[i];
@@ -5242,12 +5245,14 @@ bool Solver::sparsify()
         }
 
         auto ret = oracle.Solve(tmp, false, 600LL*1000LL*1000LL);
-        if (ret.isUnknown()) { goto fin; }
+        if (ret.isUnknown()) { /*out of time*/ goto fin; }
 
         if (ret.isTrue()) {
+            // We need this clause, can't remove
             oracle.SetAssumpLit(orclit(Lit(nVars()+i, true)), true);
         } else {
             assert(ret.isFalse());
+            // We can freeze(!) this clause to be disabled.
             oracle.SetAssumpLit(orclit(Lit(nVars()+i, false)), true);
             removed++;
             if (!c.binary) {
