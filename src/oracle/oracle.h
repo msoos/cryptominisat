@@ -23,24 +23,31 @@
 #pragma once
 
 #include "utils.h"
+#define DEBUG_ORACLE_VERB
+
+#ifdef DEBUG_ORACLE_VERB
+#define oclv(x) do {std::cout << x << endl;} while(0)
+#define oclv2(x) do {std::cout << x;} while(0)
+#else
+#define oclv(x) do {} while(0)
+#define oclv2(x) do {} while(0)
+#endif
 
 namespace sspp {
 namespace oracle {
 
 struct TriState {
-    TriState()
-    {}
+    TriState() {}
 
     TriState(bool _b) {
-	if (_b) val = 1;
-	else val = 0;
+        if (_b) val = 1;
+        else val = 0;
     }
 
-    static TriState unknown()
-    {
-	TriState tmp;
-	tmp.val = 2;
-	return tmp;
+    static TriState unknown() {
+        TriState tmp;
+        tmp.val = 2;
+        return tmp;
     }
 
     bool isTrue() const {return val == 1;}
@@ -122,7 +129,7 @@ class Oracle {
  	vector<Lit> redu_s;
 
  	int64_t lvl_it = 1;
- 	vector<int64_t> lvl_seen;
+ 	vector<int64_t> lvl_seen; // for computing LBD
 
  	vector<Lit> learned_units;
 

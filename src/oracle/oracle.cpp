@@ -328,6 +328,7 @@ void Oracle::Assign(Lit dec, size_t reason_clause, int level) {
     vs[v].phase = IsPos(dec) ? 1 : 0;
 	vs[v].reason = reason_clause;
 	vs[v].level = level;
+    oclv("Assigning " << v << " to: " << IsPos(dec) << " at level: " << level << " reason: " << reason_clause);
 	decided.push_back(v);
 	prop_q.push_back(Neg(dec));
 }
@@ -342,6 +343,7 @@ void Oracle::UnDecide(int level) {
 		vs[v].reason = 0;
 		vs[v].level = 0;
 		ActivateActivity(v);
+        oclv("UNAss " << v);
 	}
 	assert(prop_q.empty());
 }
@@ -418,11 +420,19 @@ bool Oracle::LitReduntant(Lit lit) {
 vector<Lit> Oracle::LearnUip(size_t conflict_clause) {
 	assert(conflict_clause > 0);
 	BumpClause(conflict_clause);
+    oclv2("Conflict clause NUM: " << conflict_clause << " cl:");
+    for(int i = conflict_clause; clauses[i]; i++) {
+        oclv2(" v: " << VarOf(clauses[i]) << " val: " << LitVal(clauses[i]));
+    }
+    oclv2(endl);
+
 	vector<Lit> clause = {0};
 	int level = vs[VarOf(clauses[conflict_clause])].level;
 	int open = 0;
+    oclv("---");
 	for (size_t i = conflict_clause; clauses[i]; i++) {
 		assert(LitVal(clauses[i]) == -1);
+        oclv("clauses[i]: " << VarOf(clauses[i]) << " val: " << LitVal(clauses[i]) << " vs[VarOf(clauses[i])].level: " << vs[VarOf(clauses[i])].level << " level: " << level);
 		assert(vs[VarOf(clauses[i])].level <= level);
 		BumpVar(VarOf(clauses[i]));
 		if (vs[VarOf(clauses[i])].level == level) {
@@ -584,12 +594,15 @@ int Oracle::CDCLBT(size_t confl_clause, int min_level) {
 		int ass_level = vs[VarOf(clause[1])].level;
 		assert(ass_level >= 2);
 		assert(ass_level < vs[VarOf(clause[0])].level);
+        oclv("ass_level: " << ass_level << " min_level: " << min_level);
 		if (ass_level >= min_level) {
+            oclv("if (ass_level >= min_level) ");
 			UnDecide(ass_level+1);
 			size_t cl_id = AddLearnedClause(clause);
 			Assign(clause[0], cl_id, ass_level);
 			return ass_level;
 		} else {
+            oclv("NOT if (ass_level >= min_level)");
 			assert(prop_q.empty());
 			UnDecide(min_level+1);
 			vector<pair<Lit, int>> decs;
@@ -605,9 +618,7 @@ int Oracle::CDCLBT(size_t confl_clause, int min_level) {
 			UnDecide(ass_level+1);
 			size_t cl_id = AddLearnedClause(clause);
 			Assign(clause[0], cl_id, ass_level);
-			if (Propagate(ass_level)) {
-				return min_level-1;
-			}
+			if (Propagate(ass_level)) return min_level-1;
 			int level = ass_level;
 			std::reverse(decs.begin(), decs.end());
 			for (int i = 0; i < (int)decs.size(); i++) {
@@ -755,6 +766,7 @@ Oracle::Oracle(int vars_, const vector<vector<Lit>>& clauses_) : vars(vars_), ra
 TriState Oracle::Solve(const vector<Lit>& assumps, bool usecache, int64_t max_mems) {
 	if (unsat) return false;
 	if (usecache && SatByCache(assumps)) return true;
+    oclv("SOLVE called ");
 	// TODO: solution caching
 	for (const auto& lit : assumps) {
 		if (LitVal(lit) == -1) {
@@ -770,6 +782,7 @@ TriState Oracle::Solve(const vector<Lit>& assumps, bool usecache, int64_t max_me
 		UnDecide(2);
 		return false;
 	}
+    oclv("HARD SOLVING");
 	TriState sol = HardSolve(max_mems);
 	UnDecide(2);
 	if (!unsat) {
@@ -783,9 +796,7 @@ TriState Oracle::Solve(const vector<Lit>& assumps, bool usecache, int64_t max_me
 		}
 	}
 	if (sol.isTrue()) {
-		if (usecache) {
-			AddSolToCache();
-		}
+		if (usecache) { AddSolToCache(); }
 	} else if (sol.isFalse()) {
 		// UNSAT
 		if (assumps.size() == 1) {
