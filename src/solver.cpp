@@ -5136,7 +5136,6 @@ bool Solver::sparsify()
         }
     }
 
-    //[vector<int>, clause] pairs. vector<INT> =
     vector<OracleDat> cs;
     array<int, ORACLE_DAT_SIZE> ww;
     for (const auto& off: longIrredCls) {
@@ -5146,9 +5145,9 @@ bool Solver::sparsify()
         for (auto const& l1 : cl) { for (auto const& l2: cl) {
             const uint32_t v1 = l1.var();
             const uint32_t v2 = l2.var();
-            if (v1 < v2 && edgew[v1][v2] <= (int)ww.size()) {
+            if (v1 < v2) {
                 assert(edgew[v1][v2] >= 1);
-                ww[edgew[v1][v2]-1]--;
+                if (edgew[v1][v2] <= ww.size()) ww[edgew[v1][v2]-1]--;
             }
         } }
         cs.push_back(OracleDat(ww, off));
@@ -5163,17 +5162,13 @@ bool Solver::sparsify()
             if (v1 < v2) {
                 ww = {};
                 assert(edgew[v1][v2] >= 1);
-                if (edgew[v1][v2] <= (int)ww.size()) {
-                    ww[edgew[v1][v2]-1]--;
-                }
+                if (edgew[v1][v2] <= ww.size()) ww[edgew[v1][v2]-1]--;
                 cs.push_back(OracleDat(ww, OracleBin(l, ws.lit2(), ws.get_ID())));
             }
         }
     }
-
-
     std::sort(cs.begin(), cs.end());
-    print_cs_ordering(cs);
+    /* print_cs_ordering(cs); */
 
     const uint32_t tot_cls = longIrredCls.size() + binTri.irredBins;
     assert(cs.size() == tot_cls);
