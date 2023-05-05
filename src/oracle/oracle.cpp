@@ -387,7 +387,7 @@ size_t Oracle::AddLearnedClause(const vector<Lit>& clause) {
 	watches[clause[1]].push_back({pt, clause[0], (int)clause.size()});
 	for (Lit lit : clause) clauses.push_back(lit);
 	clauses.push_back(0);
-	cla_info.push_back({pt, glue, 0, 0});
+	cla_info.push_back({pt, glue, 1, 0});
 	return pt;
 }
 

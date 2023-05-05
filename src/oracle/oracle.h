@@ -89,7 +89,7 @@ struct CInfo {
 	size_t pt;
 	int glue;
 	int used;
-    int total_used;
+    uint32_t total_used;
 	bool Keep() const;
 };
 
