@@ -75,7 +75,7 @@ struct Stats {
 struct Watch {
 	// should align to 8+4+4=16 bytes
 	size_t cls;
-	Lit blit;
+	Lit blit; // blocked literal
 	int size;
 };
 
@@ -98,6 +98,7 @@ class Oracle {
   Oracle(int vars_, const vector<vector<Lit>>& clauses_, const vector<vector<Lit>>& learned_clauses_);
 
   void SetAssumpLit(Lit lit, bool freeze);
+  void SetVerbosity(uint32_t _verb) { verb=_verb;}
   TriState Solve(const vector<Lit>& assumps, bool usecache=true, int64_t max_mems = 1000ULL*1000LL*1000LL);
   bool FreezeUnit(Lit unit);
   bool AddClauseIfNeededAndStr(vector<Lit> clause, bool entailed);
@@ -110,6 +111,8 @@ class Oracle {
   const Stats& getStats() const {return stats;}
 
  private:
+    uint32_t verb = 0;
+
  	void AddOrigClause(vector<Lit> clause, bool entailed);
  	vector<Lit> clauses;
  	vector<vector<Watch>> watches;
@@ -143,6 +146,7 @@ class Oracle {
  	int NextLuby();
 
  	size_t ideal_clause_db_size = 0;
+    size_t num_lbd2_clauses = 0;
  	void ResizeClauseDb();
  	void BumpClause(size_t cls);
  	vector<CInfo> cla_info;

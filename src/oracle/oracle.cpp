@@ -84,6 +84,7 @@ bool Oracle::SatByCache(const vector<Lit>& assumps) const {
 }
 
 void Oracle::ResizeClauseDb() {
+    num_lbd2_clauses = 0;
 	std::sort(cla_info.begin(), cla_info.end(), [](const CInfo& a, const CInfo& b){
 		if (a.glue == b.glue) { return a.used > b.used; }
 		return a.glue < b.glue;
@@ -98,6 +99,9 @@ void Oracle::ResizeClauseDb() {
 		// This sets new_clauses and fixes reasons
 		const size_t good_size = min(cla_info.size()/2, (size_t)1000000);
 		for (size_t i = 0; i < cla_info.size(); i++) {
+            if (i+1 < cla_info.size()) {
+                __builtin_prefetch(clauses.data() + cla_info[i+1].pt);
+            }
 			stats.mems++;
 			Lit impll = 0;
 			size_t cls = cla_info[i].pt;
@@ -121,7 +125,7 @@ void Oracle::ResizeClauseDb() {
 			size_t len = 0;
 			bool frozen_sat = false;
 			while (clauses[cls+len]) {
-				if (LitVal(clauses[cls+len]) == 1) {
+				if (!frozen_sat && LitVal(clauses[cls+len]) == 1) {
 					Var v = VarOf(clauses[cls+len]);
 					if (vs[v].level == 1) frozen_sat = true;
 				}
@@ -134,6 +138,7 @@ void Oracle::ResizeClauseDb() {
 				clauses[cls] = 0;
 				continue;
 			}
+            if (cla_info[i].glue == 2) num_lbd2_clauses++;
 			size_t new_pt = new_clauses.size();
 			if (impll) new_reason[VarOf(impll)] = new_pt;
 			if (added) assert(new_clauses.size() == orig_clauses_size);
@@ -157,11 +162,13 @@ void Oracle::ResizeClauseDb() {
 		}
 		clauses = new_clauses;
 		cla_info = new_cla_info;
+#ifdef SLOW_DEBUG
 		for (Lit l = 2; l <= vars*2+1; l++) {
-			for (Watch w : watches[l]) {
+			for (const auto& Watch w : watches[l]) {
 				assert(clauses[w.cls] == l || clauses[w.cls+1] == l);
 			}
 		}
+#endif
 	}
 	for (Var v = 1; v <= vars; v++) {
 		if (vs[v].reason) {
@@ -332,6 +339,7 @@ void Oracle::Assign(Lit dec, size_t reason_clause, int level) {
     oclv("Assigning " << v << " to: " << IsPos(dec) << " at level: " << level << " reason: " << reason_clause);
 	decided.push_back(v);
 	prop_q.push_back(Neg(dec));
+    __builtin_prefetch(watches[Neg(dec)].data());
 }
 
 void Oracle::UnDecide(int level) {
@@ -650,7 +658,6 @@ TriState Oracle::HardSolve(int64_t max_mems) {
 	InitLuby();
 	int64_t confls = 0;
 	int64_t next_restart = 1;
-	int64_t next_db_clean = 1;
 	int64_t mems_startup = stats.mems;
 	int cur_level = 2;
 	Var nv = 1;
@@ -670,9 +677,14 @@ TriState Oracle::HardSolve(int64_t max_mems) {
 			UnDecide(3);
 			cur_level = 2;
 			stats.restarts++;
-			if (confls >= next_db_clean) {
-				next_db_clean = confls + ideal_clause_db_size;
+			if (cla_info.size() >= num_lbd2_clauses + ideal_clause_db_size) {
+                if (verb) cout << "c [oracle] Resizing cldb"
+                    << " ideal: " << ideal_clause_db_size
+                    << " num_lbd2_clauses: " << num_lbd2_clauses
+                    << " cla_info.size(): " << cla_info.size() << endl;
 				ResizeClauseDb();
+                if (verb > 2) cout << "c [oracle] after cla_info.size(): "
+                    << cla_info.size() << endl;
 			}
 		}
 		Var decv = 0;
@@ -745,7 +757,7 @@ Oracle::Oracle(int vars_, const vector<vector<Lit>>& clauses_) : vars(vars_), ra
 	redu_seen.resize(vars*2+2);
 	in_cc.resize(vars*2+2);
 	// setting magic constants
-	ideal_clause_db_size = vars*4;
+	ideal_clause_db_size = 20000;
 	restart_factor = 100;
 
 	clauses.push_back(0);

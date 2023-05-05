@@ -4963,6 +4963,7 @@ bool Solver::oracle_vivif(bool& finished)
     detach_and_free_all_irred_cls();
 
     sspp::oracle::Oracle oracle(nVars(), clauses, {});
+    oracle.SetVerbosity(conf.verbosity);
     bool sat = false;
     for (int i = 0; i < (int)clauses.size(); i++) {
         for (int j = 0; j < (int)clauses[i].size(); j++) {
@@ -5141,6 +5142,7 @@ bool Solver::oracle_sparsify()
 
     // The "+tot_cls" is for indicator variables
     sspp::oracle::Oracle oracle(nVars()+tot_cls, {});
+    oracle.SetVerbosity(conf.verbosity);
     vector<sspp::Lit> tmp;
     for(uint32_t i = 0; i < cs.size(); i++) {
         const auto& c = cs[i];
