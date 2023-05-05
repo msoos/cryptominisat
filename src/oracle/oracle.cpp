@@ -685,16 +685,15 @@ TriState Oracle::HardSolve(int64_t max_mems) {
 			stats.restarts++;
 			if (total_confls > last_db_clean + 10000) {
                 last_db_clean = total_confls;
-                if (verb) cout << "c [oracle] Resizing cldb"
+                oclv("c [oracle] Resizing cldb"
                     << " num_lbd2_red_cls: " << num_lbd2_red_cls
                     << " num_used_red_cls: " << num_used_red_cls
-                    << " cla_info.size(): " << cla_info.size() << endl;
+                    << " cla_info.size(): " << cla_info.size());
 				ResizeClauseDb();
-                if (verb) cout << "c [oracle] after"
+                oclv("c [oracle] after cldb resize"
                     << " num_lbd2_red_cls: " << num_lbd2_red_cls
                     << " num_used_red_cls: " << num_used_red_cls
-                    << " cla_info.size(): " << cla_info.size()
-                    << endl;
+                    << " cla_info.size(): " << cla_info.size());
 			}
 		}
 		Var decv = 0;
