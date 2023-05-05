@@ -89,6 +89,7 @@ struct CInfo {
 	size_t pt;
 	int glue;
 	int used;
+    int total_used;
 	bool Keep() const;
 };
 
@@ -112,6 +113,8 @@ class Oracle {
 
  private:
     uint32_t verb = 0;
+    size_t total_confls = 0;
+    size_t last_db_clean = 0;
 
  	void AddOrigClause(vector<Lit> clause, bool entailed);
  	vector<Lit> clauses;
@@ -145,8 +148,8 @@ class Oracle {
  	void InitLuby();
  	int NextLuby();
 
- 	size_t ideal_clause_db_size = 0;
-    size_t num_lbd2_clauses = 0;
+    size_t num_lbd2_red_cls = 0;
+    size_t num_used_red_cls = 0;
  	void ResizeClauseDb();
  	void BumpClause(size_t cls);
  	vector<CInfo> cla_info;
@@ -217,7 +220,7 @@ inline void Oracle::PrintStats() const {
 }
 
 inline bool CInfo::Keep() const {
-	return glue <= 2 || used == 1;
+	return glue <= 2;
 }
 
 } // namespace oracle

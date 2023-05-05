@@ -4967,9 +4967,7 @@ bool Solver::oracle_vivif(bool& finished)
     bool sat = false;
     for (int i = 0; i < (int)clauses.size(); i++) {
         for (int j = 0; j < (int)clauses[i].size(); j++) {
-            if (oracle.getStats().mems > 800LL*1000LL*1000LL) {
-                goto end;
-            }
+            if (oracle.getStats().mems > 800LL*1000LL*1000LL) goto end;
             auto assump = Negate(clauses[i]);
             SwapDel(assump, j);
             auto ret = oracle.Solve(assump, true, 500LL*1000LL*1000LL);
@@ -5174,7 +5172,7 @@ bool Solver::oracle_sparsify()
     for (uint32_t i = 0; i < tot_cls; i++) {
         if ((10*i)/(tot_cls) != last_printed) {
             verb_print(1, "[oracle-sparsify] done with " << ((10*i)/(tot_cls))*10 << " %"
-                << " oracle props: " << print_value_kilo_mega(oracle.getStats().mems)
+                << " oracle mems: " << print_value_kilo_mega(oracle.getStats().mems)
                 << " T: " << (cpuTime()-myTime));
             last_printed = (10*i)/(tot_cls);
         }
@@ -5216,8 +5214,8 @@ bool Solver::oracle_sparsify()
             }
         }
 
-        if (oracle.getStats().mems > 700LL*1000LL*1000LL) {
-            verb_print(1, "[oracle-sparsify] too many props in oracle, aborting");
+        if (oracle.getStats().mems > 900LL*1000LL*1000LL) {
+            verb_print(1, "[oracle-sparsify] too many mems in oracle, aborting");
             goto fin;
         }
     }

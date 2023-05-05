@@ -84,10 +84,10 @@ bool Oracle::SatByCache(const vector<Lit>& assumps) const {
 }
 
 void Oracle::ResizeClauseDb() {
-    num_lbd2_clauses = 0;
 	std::sort(cla_info.begin(), cla_info.end(), [](const CInfo& a, const CInfo& b){
-		if (a.glue == b.glue) { return a.used > b.used; }
-		return a.glue < b.glue;
+        if (a.glue == -1 || b.glue == -1) return a.glue < b.glue;
+		if (a.used != b.used) return a.used > b.used;
+        return a.total_used > b.total_used;
 	});
 	{
 		vector<size_t> new_reason(vars+2);
@@ -97,7 +97,9 @@ void Oracle::ResizeClauseDb() {
 		for (size_t i = 0; i < orig_clauses_size; i++) { new_clauses[i] = clauses[i]; }
 		vector<CInfo> new_cla_info;
 		// This sets new_clauses and fixes reasons
-		const size_t good_size = min(cla_info.size()/2, (size_t)1000000);
+		const size_t good_size = 10000;
+        num_lbd2_red_cls = 0;
+        num_used_red_cls = 0;
 		for (size_t i = 0; i < cla_info.size(); i++) {
             if (i+1 < cla_info.size()) {
                 __builtin_prefetch(clauses.data() + cla_info[i+1].pt);
@@ -133,16 +135,18 @@ void Oracle::ResizeClauseDb() {
 			}
 			assert(len >= 2);
 			if (frozen_sat) assert(!impll);
-			if (frozen_sat || (impll == 0 && !added && !cla_info[i].Keep() && i > good_size)) {
+            if (cla_info[i].glue <= 2) num_lbd2_red_cls++;
+            else if (cla_info[i].used) num_used_red_cls++;
+			if (frozen_sat || (impll == 0 && !added && !cla_info[i].Keep()
+                        && i > good_size+num_lbd2_red_cls)) {
 				stats.forgot_clauses++;
 				clauses[cls] = 0;
 				continue;
 			}
-            if (cla_info[i].glue == 2) num_lbd2_clauses++;
 			size_t new_pt = new_clauses.size();
 			if (impll) new_reason[VarOf(impll)] = new_pt;
 			if (added) assert(new_clauses.size() == orig_clauses_size);
-			else new_cla_info.push_back({new_clauses.size(), cla_info[i].glue, cla_info[i].used-1});
+			else new_cla_info.push_back({new_clauses.size(), cla_info[i].glue, cla_info[i].used-1, cla_info[i].total_used});
 			for (size_t k = cls; clauses[k]; k++) new_clauses.push_back(clauses[k]);
 			new_clauses.push_back(0);
 			if (added) orig_clauses_size = new_clauses.size();
@@ -209,6 +213,7 @@ void Oracle::BumpClause(size_t cls) {
 	}
 	cla_info[i].glue = glue;
 	cla_info[i].used = 1;
+	cla_info[i].total_used++;
 	return;
 }
 
@@ -382,7 +387,7 @@ size_t Oracle::AddLearnedClause(const vector<Lit>& clause) {
 	watches[clause[1]].push_back({pt, clause[0], (int)clause.size()});
 	for (Lit lit : clause) clauses.push_back(lit);
 	clauses.push_back(0);
-	cla_info.push_back({pt, glue, 0});
+	cla_info.push_back({pt, glue, 0, 0});
 	return pt;
 }
 
@@ -666,6 +671,7 @@ TriState Oracle::HardSolve(int64_t max_mems) {
 		if (stats.mems > mems_startup+max_mems) return TriState::unknown();
 		if (confl_clause) {
 			confls++;
+            total_confls++;
 			if (cur_level <= 2) return false;
 			cur_level = CDCLBT(confl_clause);
 			assert(cur_level >= 2);
@@ -677,14 +683,18 @@ TriState Oracle::HardSolve(int64_t max_mems) {
 			UnDecide(3);
 			cur_level = 2;
 			stats.restarts++;
-			if (cla_info.size() >= num_lbd2_clauses + ideal_clause_db_size) {
+			if (total_confls > last_db_clean + 10000) {
+                last_db_clean = total_confls;
                 if (verb) cout << "c [oracle] Resizing cldb"
-                    << " ideal: " << ideal_clause_db_size
-                    << " num_lbd2_clauses: " << num_lbd2_clauses
+                    << " num_lbd2_red_cls: " << num_lbd2_red_cls
+                    << " num_used_red_cls: " << num_used_red_cls
                     << " cla_info.size(): " << cla_info.size() << endl;
 				ResizeClauseDb();
-                if (verb > 2) cout << "c [oracle] after cla_info.size(): "
-                    << cla_info.size() << endl;
+                if (verb) cout << "c [oracle] after"
+                    << " num_lbd2_red_cls: " << num_lbd2_red_cls
+                    << " num_used_red_cls: " << num_used_red_cls
+                    << " cla_info.size(): " << cla_info.size()
+                    << endl;
 			}
 		}
 		Var decv = 0;
@@ -736,7 +746,7 @@ void Oracle::AddOrigClause(vector<Lit> clause, bool entailed) {
 		orig_clauses_size = clauses.size();
 		return;
 	}
-	cla_info.push_back({pt, -1, -1});
+	cla_info.push_back({pt, -1, -1, 0});
 }
 
 Oracle::Oracle(int vars_, const vector<vector<Lit>>& clauses_,
@@ -757,7 +767,6 @@ Oracle::Oracle(int vars_, const vector<vector<Lit>>& clauses_) : vars(vars_), ra
 	redu_seen.resize(vars*2+2);
 	in_cc.resize(vars*2+2);
 	// setting magic constants
-	ideal_clause_db_size = 20000;
 	restart_factor = 100;
 
 	clauses.push_back(0);
