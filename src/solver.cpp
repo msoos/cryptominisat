@@ -905,6 +905,7 @@ bool Solver::add_clause_outer(vector<Lit>& ps, bool red)
     ClauseStats clstats;
     clstats.ID = ++clauseID;
     *frat << origcl << clstats.ID << ps << fin;
+    if (red) clstats.which_red_array = 2;
 
     #ifdef VERBOSE_DEBUG
     cout << "Adding clause " << ps << endl;
