@@ -1805,16 +1805,11 @@ void OccSimplifier::clean_sampl_and_get_empties(
     // Clean up sampl_vars from replaced and set variables
     set<uint32_t> sampl_vars_set;
     for(uint32_t& v: sampl_vars) {
-        assert(v < solver->nVarsOutside());
-        auto rem_val = solver->varData[v].removed;
-        assert(rem_val == Removed::none || rem_val == Removed::replaced);
         v = solver->varReplacer->get_var_replaced_with(v);
-        rem_val = solver->varData[v].removed;
+        auto rem_val = solver->varData[v].removed;
         assert(rem_val == Removed::none);
-        assert(v < solver->nVars());
-        assert(solver->varData[v].removed == Removed::none);
-
         if (solver->value(v) != l_Undef) continue;
+        assert(v < solver->nVars());
         sampl_vars_set.insert(v);
     }
 
