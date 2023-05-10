@@ -2238,7 +2238,6 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         } else if (token == "occ-backw-sub") {
             backward_sub();
         } else if (token == "occ-del-elimed") {
-            delete_elimed_clauses();
         } else if (token == "occ-rem-unconn-assumps") {
             delete_component_unconnected_to_assumps();
         } else if (token == "occ-ternary-res") {
@@ -2810,61 +2809,6 @@ void OccSimplifier::delete_component_unconnected_to_assumps()
 
     verb_print(1, "[occ-rem-unconn-assumps] Removed cls: " << removed);
 }
-
-void OccSimplifier::delete_elimed_clauses()
-{
-    return; //broken below
-    assert(solver->okay());
-    assert(solver->prop_at_head());
-    uint32_t removed = 0;
-
-    for(auto const& off: clauses) {
-        const Clause& cl = *solver->cl_alloc.ptr(off);
-        if (cl.getRemoved() || cl.red()) continue;
-
-        bool doit = true;
-        for(auto const& l: cl) {
-            if (solver->var_inside_assumptions(l.var()) != l_Undef) {doit = false; break;}
-        }
-        if (!doit) continue;
-
-        toClear.clear();
-        for(auto const& l: cl) {seen[l.toInt()] = 1; toClear.push_back(l);}
-        for(auto const& l: cl) {
-            if (solver->var_inside_assumptions(l.var()) != l_Undef) continue; // Don't block on these
-            bool ok = true;
-            for(auto const& w: solver->watches[~l]) {
-                assert(!w.isIdx());
-                if (w.isBNN()) {ok = false; break;}
-                else if (w.isBin()) {
-                    if (w.red()) continue;
-                    if (!seen[(~w.lit2()).toInt()]) {ok = false; break;}
-                } else if (w.isClause()) {
-                    const Clause& cl2 = *solver->cl_alloc.ptr(w.get_offset());
-                    if (cl2.getRemoved() || cl2.red()) continue;
-                    bool ok2 = false;
-                    for(auto const& l2: cl2) {
-                        if (seen[(~l2).toInt()]) {ok2 = true; break;}
-                    }
-                    if (!ok2) {ok = false; break;}
-                }
-            }
-            if (ok) {
-                unlink_clause(off, true, false, true);
-                removed++;
-                break;
-            }
-        }
-        for(auto const& l: toClear) seen[l.toInt()] = 0;
-        toClear.clear();
-    }
-
-    verb_print(1, "[occ-del-elimed] Removed: " << removed);
-
-    solver->clean_occur_from_removed_clauses_only_smudged();
-    free_clauses_to_free();
-}
-
 
 void OccSimplifier::backward_sub()
 {
