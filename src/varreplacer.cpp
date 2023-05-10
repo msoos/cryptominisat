@@ -1312,6 +1312,7 @@ Lit VarReplacer::get_lit_replaced_with(Lit lit) const
     return solver->map_outer_to_inter(lit2);
 }
 
+// Takes inter, outputs inter
 uint32_t VarReplacer::get_var_replaced_with(uint32_t var) const
 {
     var = solver->map_inter_to_outer(var);
