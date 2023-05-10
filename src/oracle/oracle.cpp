@@ -803,10 +803,7 @@ TriState Oracle::Solve(const vector<Lit>& assumps, bool usecache, int64_t max_me
 		}
 	}
 	size_t confl_clause = Propagate(2);
-	if (confl_clause) {
-		UnDecide(2);
-		return false;
-	}
+	if (confl_clause) { UnDecide(2); return false; }
     oclv("HARD SOLVING");
 	TriState sol = HardSolve(max_mems);
 	UnDecide(2);
