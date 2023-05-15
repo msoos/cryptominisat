@@ -5060,9 +5060,9 @@ void Solver::print_cs_ordering(const vector<OracleDat>& cs) const
     }
 }
 
-vector<vector<uint32_t>> Solver::compute_edge_weights() const
+vector<vector<uint16_t>> Solver::compute_edge_weights() const
 {
-    vector<vector<uint32_t>> edgew(nVars());
+    vector<vector<uint16_t>> edgew(nVars());
     for (uint32_t i = 0; i < nVars(); i++) edgew[i].resize(nVars(), 0);
     for (const auto& off: longIrredCls) {
         Clause& cl = *cl_alloc.ptr(off);
@@ -5081,27 +5081,31 @@ vector<vector<uint32_t>> Solver::compute_edge_weights() const
             if (v1 < v2) edgew[v1][v2]++;
         }
     }
-
     return edgew;
 }
 
 vector<Solver::OracleDat> Solver::order_clauses_for_oracle() const
 {
-    auto edgew = compute_edge_weights();
+    vector<vector<uint16_t>> edgew;
+    bool edgew_avail = false;
+    // Cutoff to limit memory usage. Otherwise it's n**2 memory usage
+    if (nVars() < 35000) { edgew = compute_edge_weights(); edgew_avail = true; }
     vector<OracleDat> cs;
     array<int, ORACLE_DAT_SIZE> ww;
     for (const auto& off: longIrredCls) {
         Clause& cl = *cl_alloc.ptr(off);
         assert(!cl.red());
         ww = {};
-        for (auto const& l1 : cl) { for (auto const& l2: cl) {
-            const uint32_t v1 = l1.var();
-            const uint32_t v2 = l2.var();
-            if (v1 < v2) {
-                assert(edgew[v1][v2] >= 1);
-                if (edgew[v1][v2] <= ww.size()) ww[edgew[v1][v2]-1]--;
-            }
-        } }
+        if (edgew_avail) {
+            for (auto const& l1 : cl) { for (auto const& l2: cl) {
+                const uint32_t v1 = l1.var();
+                const uint32_t v2 = l2.var();
+                if (v1 < v2) {
+                    assert(edgew[v1][v2] >= 1);
+                    if (edgew[v1][v2] <= ww.size()) ww[edgew[v1][v2]-1]--;
+                }
+            } }
+        } else ww[0] = cl.size();
         cs.push_back(OracleDat(ww, off));
     }
 
@@ -5113,8 +5117,10 @@ vector<Solver::OracleDat> Solver::order_clauses_for_oracle() const
             const uint32_t v2 = ws.lit2().var();
             if (v1 < v2) {
                 ww = {};
-                assert(edgew[v1][v2] >= 1);
-                if (edgew[v1][v2] <= ww.size()) ww[edgew[v1][v2]-1]--;
+                if (edgew_avail) {
+                    assert(edgew[v1][v2] >= 1);
+                    if (edgew[v1][v2] <= ww.size()) ww[edgew[v1][v2]-1]--;
+                } else ww[0] = 2;
                 cs.push_back(OracleDat(ww, OracleBin(l, ws.lit2(), ws.get_ID())));
             }
         }

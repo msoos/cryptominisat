@@ -377,7 +377,7 @@ class Solver : public Searcher
         };
 
         vector<vector<int>> get_irred_cls_for_oracle() const;
-        vector<vector<uint32_t>> compute_edge_weights() const;
+        vector<vector<uint16_t>> compute_edge_weights() const;
         vector<OracleDat> order_clauses_for_oracle() const;
         void dump_cls_oracle(const string fname, const vector<OracleDat>& cs);
         bool find_equivs();
