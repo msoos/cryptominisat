@@ -2132,10 +2132,18 @@ lbool Solver::execute_inprocess_strategy(
                 varReplacer->replace_if_enough_is_found(
                     std::floor((double)get_num_free_vars()*0.001));
             }
-        } else if (token == "sparsify") {
+        } else if (token == "oracle-vivif-sparsify") {
             bool finished = false;
-            if (nVars() > 10 &&  oracle_vivif(finished)) {
+            if (nVars() > 10 && oracle_vivif(finished)) {
                 if (finished) oracle_sparsify();
+            }
+        } else if (token == "oracle-vivif") {
+            bool finished = false;
+            if (nVars() > 10) oracle_vivif(finished);
+        } else if (token == "oracle-sparsify") {
+            bool finished = false;
+            backbone_simpl(30LL*1000LL, true, finished);
+            if (nVars() > 10) { if (finished) oracle_sparsify();
             }
         } else if (token == "backbone") {
             bool finished = false;
