@@ -5236,6 +5236,8 @@ bool Solver::oracle_sparsify()
     }
 
     fin:
+    uint32_t bin_red_added = 0;
+    uint32_t bin_irred_removed = 0;
     for(auto& ws: watches) {
         uint32_t j = 0;
         for(uint32_t i = 0; i < ws.size(); i++) {
@@ -5243,7 +5245,17 @@ bool Solver::oracle_sparsify()
                 ws[j++] = ws[i];
                 continue;
             } else if (ws[i].isBin()) {
-                if (!ws[i].bin_cl_marked()) ws[j++] = ws[i];
+                if (!ws[i].bin_cl_marked()) {
+                    ws[j++] = ws[i];
+                    continue;
+                }
+                bin_irred_removed++;
+                if (conf.oracle_removed_is_learnt) {
+                    ws[i].unmark_bin_cl();
+                    ws[i].setRed(true);
+                    bin_red_added++;
+                    ws[j++] = ws[i];
+                }
                 continue;
             } else if (ws[i].isClause()) {
                 Clause* cl = cl_alloc.ptr(ws[i].get_offset());
@@ -5253,6 +5265,8 @@ bool Solver::oracle_sparsify()
         }
         ws.shrink(ws.size()-j);
     }
+    binTri.redBins+=bin_red_added/2;
+    binTri.irredBins-=bin_irred_removed/2;
 
     uint32_t j = 0;
     for(uint32_t i = 0; i < longIrredCls.size(); i++) {
@@ -5265,8 +5279,9 @@ bool Solver::oracle_sparsify()
             if (conf.oracle_removed_is_learnt) {
                 cl->stats.marked_clause = false;
                 litStats.redLits += cl->size();
-                longRedCls[2].push_back(longIrredCls[i]);
+                longRedCls[2].push_back(off);
                 cl->stats.which_red_array = 2;
+                cl->isRed = true;
             } else {
                 cl_alloc.clauseFree(off);
             }
