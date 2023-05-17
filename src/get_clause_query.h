@@ -55,6 +55,7 @@ private:
     uint32_t max_len = numeric_limits<uint32_t>::max();
     uint32_t max_glue = numeric_limits<uint32_t>::max();
     uint32_t at = numeric_limits<uint32_t>::max();
+    uint32_t at_lev[3];
     uint32_t varreplace_at = numeric_limits<uint32_t>::max();
     uint32_t units_at = numeric_limits<uint32_t>::max();
     uint32_t watched_at = numeric_limits<uint32_t>::max();

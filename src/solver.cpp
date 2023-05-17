@@ -5247,7 +5247,7 @@ bool Solver::oracle_sparsify()
                 continue;
             } else if (ws[i].isClause()) {
                 Clause* cl = cl_alloc.ptr(ws[i].get_offset());
-                if (!cl->stats.marked_clause) ws[j++] = ws[i];
+                if (conf.oracle_removed_is_learnt || !cl->stats.marked_clause) ws[j++] = ws[i];
                 continue;
             }
         }
@@ -5263,8 +5263,10 @@ bool Solver::oracle_sparsify()
         } else {
             litStats.irredLits -= cl->size();
             if (conf.oracle_removed_is_learnt) {
+                cl->stats.marked_clause = false;
                 litStats.redLits += cl->size();
                 longRedCls[2].push_back(longIrredCls[i]);
+                cl->stats.which_red_array = 2;
             } else {
                 cl_alloc.clauseFree(off);
             }

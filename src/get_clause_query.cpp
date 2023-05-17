@@ -53,6 +53,9 @@ void GetClauseQuery::start_getting_small_clauses(
     }
     red = _red;
     at = 0;
+    at_lev[0] = 0;
+    at_lev[1] = 0;
+    at_lev[2] = 0;
     watched_at = 0;
     watched_at_sub = 0;
     max_len = _max_len;
@@ -137,9 +140,9 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
     }
 
     //Adding units
-    while (
+    while (!red &&(
         (!simplified && units_at < solver->nVarsOuter()) ||
-        (simplified && units_at < solver->nVars())
+        (simplified && units_at < solver->nVars()))
     ) {
         const uint32_t v = units_at;
         if (solver->value(v) != l_Undef) {
@@ -218,50 +221,28 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
     }
 
     if (red) {
-        while(at < solver->longRedCls[0].size()) {
-            const ClOffset offs = solver->longRedCls[0][at];
-            const Clause* cl = solver->cl_alloc.ptr(offs);
-            if (cl->size() <= max_len
-                && cl->stats.glue <= max_glue
-            ) {
-                if (!simplified) tmp_cl = solver->clause_outer_numbered(*cl);
-                else {tmp_cl.clear(); for(const auto& l: *cl) tmp_cl.push_back(l);}
-                if (bva_vars || all_vars_outside(tmp_cl)) {
-                    map_without_bva(tmp_cl);
-                    out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
-                    if (!all_in_one_go) {
-                        at++;
-                        return true;
-                    } else {
-                        out.push_back(lit_Undef);
+        for(uint32_t lev = 0; lev < 3; lev++)
+            while(at_lev[lev] < solver->longRedCls[lev].size()) {
+                const ClOffset offs = solver->longRedCls[lev][at_lev[lev]];
+                const Clause* cl = solver->cl_alloc.ptr(offs);
+                if (cl->size() <= max_len
+                    && cl->stats.glue <= max_glue
+                ) {
+                    if (!simplified) tmp_cl = solver->clause_outer_numbered(*cl);
+                    else {tmp_cl.clear(); for(const auto& l: *cl) tmp_cl.push_back(l);}
+                    if (bva_vars || all_vars_outside(tmp_cl)) {
+                        map_without_bva(tmp_cl);
+                        out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
+                        if (!all_in_one_go) {
+                            at_lev[lev]++;
+                            return true;
+                        } else {
+                            out.push_back(lit_Undef);
+                        }
                     }
                 }
+                at_lev[lev]++;
             }
-            at++;
-        }
-
-        assert(at >= solver->longRedCls[0].size());
-        uint32_t at_lev1 = at-solver->longRedCls[0].size();
-        while(at_lev1 < solver->longRedCls[1].size()) {
-            const ClOffset offs = solver->longRedCls[1][at_lev1];
-            const Clause* cl = solver->cl_alloc.ptr(offs);
-            if (cl->size() <= max_len) {
-                if (!simplified) tmp_cl = solver->clause_outer_numbered(*cl);
-                else {tmp_cl.clear(); for(const auto& l: *cl) tmp_cl.push_back(l);}
-                if (bva_vars || all_vars_outside(tmp_cl)) {
-                    map_without_bva(tmp_cl);
-                    out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
-                    if (!all_in_one_go) {
-                        at++;
-                        return true;
-                    } else {
-                        out.push_back(lit_Undef);
-                    }
-                }
-            }
-            at++;
-            at_lev1++;
-        }
     } else {
         //Irred long clauses
         while(at < solver->longIrredCls.size()) {
