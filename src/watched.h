@@ -197,6 +197,14 @@ class Watched {
             data2 &= (~(1U));
         }
 
+        void setReallyRed()
+        {
+            DEBUG_WATCHED_DO(assert(isBin()));
+            DEBUG_WATCHED_DO(assert(!red()));
+            data2 |= 1U;
+            assert(red());
+        }
+
         void mark_bin_cl()
         {
             DEBUG_WATCHED_DO(assert(isBin()));

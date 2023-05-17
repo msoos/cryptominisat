@@ -5014,7 +5014,11 @@ bool Solver::oracle_vivif(bool& finished)
         for (const auto& cl: oracle.GetLearnedClauses()) {
             tmp2.clear();
             for(const auto& l: cl) tmp2.push_back(orc_to_lit(l));
-            Clause* cl2 = solver->add_clause_int(tmp2, true);
+            ClauseStats stats;
+            stats.which_red_array = 2;
+            stats.ID = clauseID++;
+            stats.glue = cl.size();
+            Clause* cl2 = solver->add_clause_int(tmp2, true, &stats);
             if (cl2) longRedCls[2].push_back(cl_alloc.get_offset(cl2));
             if (!okay()) return false;
         }
@@ -5225,7 +5229,6 @@ bool Solver::oracle_sparsify()
                 Lit lit2 = c.bin.l2;
                 findWatchedOfBin(watches, lit1, lit2, false, c.bin.ID).mark_bin_cl();
                 findWatchedOfBin(watches, lit2, lit1, false, c.bin.ID).mark_bin_cl();
-                binTri.irredBins--;
             }
         }
 
@@ -5252,7 +5255,7 @@ bool Solver::oracle_sparsify()
                 bin_irred_removed++;
                 if (conf.oracle_removed_is_learnt) {
                     ws[i].unmark_bin_cl();
-                    ws[i].setRed(true);
+                    ws[i].setReallyRed();
                     bin_red_added++;
                     ws[j++] = ws[i];
                 }
