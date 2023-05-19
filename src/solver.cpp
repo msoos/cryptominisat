@@ -4962,7 +4962,7 @@ bool Solver::oracle_vivif(bool& finished)
     assert(solver->okay());
     finished = false;
 
-    backbone_simpl(30LL*1000LL, true, finished);
+    backbone_simpl(300LL*1000LL, true, finished);
     execute_inprocess_strategy(false, "must-renumber");
     if (!okay()) return okay();
     if (nVars() < 10) return okay();
@@ -4976,7 +4976,7 @@ bool Solver::oracle_vivif(bool& finished)
     bool sat = false;
     for (int i = 0; i < (int)clauses.size(); i++) {
         for (int j = 0; j < (int)clauses[i].size(); j++) {
-            if (oracle.getStats().mems > 800LL*1000LL*1000LL) goto end;
+            if (oracle.getStats().mems > 1600LL*1000LL*1000LL) goto end;
             auto assump = Negate(clauses[i]);
             SwapDel(assump, j);
             auto ret = oracle.Solve(assump, true, 500LL*1000LL*1000LL);
@@ -5475,7 +5475,7 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen, bool& finished)
         copy_to_simp(&s2);
 
         uint64_t last_num_conflicts = 0;
-        int64_t remaining_confls = orig_max_confl;
+        int64_t remaining_confls = orig_max_confl/10;
         s2.set_max_confl(remaining_confls);
         uint32_t num_runs = 0;
         auto s2_ret = s2.solve();

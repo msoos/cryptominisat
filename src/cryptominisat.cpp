@@ -686,6 +686,15 @@ DLL_PUBLIC void SATSolver::set_bve(int bve)
     }
 }
 
+
+DLL_PUBLIC void SATSolver::set_bve_too_large_resolvent(int too_large_resolvent)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.velim_resolvent_too_large = too_large_resolvent;
+    }
+}
+
 DLL_PUBLIC void SATSolver::set_greedy_undef()
 {
     assert(false && "ERROR: Unfortunately, greedy undef is broken, please don't use it");

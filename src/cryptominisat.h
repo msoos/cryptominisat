@@ -130,6 +130,7 @@ namespace CMSat {
         void set_no_bva(); //No bounded variable addition
         void set_no_bve(); //No bounded variable elimination
         void set_bve(int bve);
+        void set_bve_too_large_resolvent(int too_large_resolvent);
         void set_greedy_undef(); //Try to set variables to l_Undef in solution
         void set_sampling_vars(const std::vector<uint32_t>* sampl_vars);
         void set_timeout_all_calls(double secs); //max timeout on all subsequent solve() or simplify
