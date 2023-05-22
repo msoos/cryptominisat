@@ -5510,7 +5510,7 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen, bool& finished)
     }
     myTime = cpuTime();
 
-    // Sort according to occurrence
+    // random order
     vector<uint32_t> var_order;
     for(uint32_t var = 0; var < nVars(); var++) {
         if (seen_flipped[var]) continue;
@@ -5519,7 +5519,7 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen, bool& finished)
         var_order.push_back(var);
     }
     std::mt19937 g;
-    g.seed(18337);
+    g.seed(mtrand.randInt());
     std::shuffle(var_order.begin(), var_order.end(), g);
 
     int64_t orig_max_props = orig_max_confl*1000LL;
