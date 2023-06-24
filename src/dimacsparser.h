@@ -435,7 +435,7 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
         in.skipWhitespace();
         lits.clear();
         if (!readClause(in)) return false;
-        solver->add_clause(lits, true);
+        solver->add_red_clause(lits);
     }
     if (str == "MUST") {
         std::string str2;
