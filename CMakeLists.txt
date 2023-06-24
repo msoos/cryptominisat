@@ -471,7 +471,7 @@ if (ARJUN_SERIALIZE)
 endif()
 option(ONLY_SIMPLE "Only build very simplistic executable -- no Boost needed" OFF)
 if (NOT ONLY_SIMPLE)
-    set(boost_comps 
+    set(boost_comps
         ${boost_comps}
         program_options)
 endif()
