@@ -738,9 +738,8 @@ DLL_PUBLIC bool SATSolver::add_red_clause(const vector< Lit >& lits) {
     return ret;
 }
 
-DLL_PUBLIC bool SATSolver::add_clause(const vector< Lit >& lits, bool red)
+DLL_PUBLIC bool SATSolver::add_clause(const vector< Lit >& lits)
 {
-    if (red == true)  return add_red_clause(lits);
     if (data->log) { (*data->log) << lits << " 0" << endl; }
 
     bool ret = true;
