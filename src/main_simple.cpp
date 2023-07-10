@@ -167,7 +167,7 @@ public:
         #endif
 
         if (argc == 1) {
-            cout << "Reading from standard input... Use '-h' or '--help' for help.\n";
+            cout << "c Reading from standard input... Use '-h' or '--help' for help.\n";
             #ifndef USE_ZLIB
             FILE* in = stdin;
             DimacsParser<StreamBuffer<FILE*, FN>, SATSolver> parser(solver, NULL, conf.verbosity);
