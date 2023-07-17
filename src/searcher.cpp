@@ -72,13 +72,13 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
             , _solver
             , _must_interrupt_inter
         )
+        , mtrand(conf.origSeed)
         , solver(_solver)
         , cla_inc(1)
 {
     var_inc_vsids = 1;
 
     more_red_minim_limit_binary_actual = conf.more_red_minim_limit_binary;
-    mtrand.seed(conf.origSeed);
     hist.setSize(conf.shortTermHistorySize, conf.blocking_restart_trail_hist_length);
     cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
     polarity_mode = conf.polarity_mode;
