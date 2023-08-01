@@ -22,8 +22,11 @@ THE SOFTWARE.
 
 #include "src/ipasir.h"
 #include "assert.h"
+#include "stdio.h"
 
 int main () {
+    printf("signaure: %s\n", ipasir_signature());
+
     void* s = ipasir_init();
     ipasir_add(s, 1);
     ipasir_add(s, 0);
