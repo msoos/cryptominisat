@@ -492,6 +492,7 @@ The following arguments to cmake configure the generated build artifacts. To use
 - `-DONLY_SIMPLE=<ON/OFF>` -- only the simple binary is built
 - `-DNOVALGRIND=<ON/OFF>` -- no extended valgrind memory checking support
 - `-DLARGEMEM=<ON/OFF>` -- more memory available for clauses (but slower on most problems)
+- `-DIPASIR=<ON/OFF>` -- Build `libipasircryptominisat.so` for [IPASIR](https://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/IPASIR____IPASIR) interface support
 
 Getting learnt clauses
 -----
