@@ -28,7 +28,6 @@ THE SOFTWARE.
 #include <structmember.h>
 #include <limits>
 #include <cassert>
-#include <signal.h>
 #include <algorithm>
 #include "../../src/cryptominisat.h"
 using namespace CMSat;
@@ -642,20 +641,9 @@ Solve the system of equations that have been added with add_clause();\n\
 );
 
 
-static SATSolver* solverToInterrupt = NULL;
-void SIGINT_handler(int)
-{
-    SATSolver* solver = solverToInterrupt;
-    if (solverToInterrupt == NULL) { exit(-1); }
-    solver->interrupt_asap();
-}
-
 static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
 {
     PyObject* assumptions = NULL;
-    solverToInterrupt = self->cmsat;
-    sighandler_t old_sig_int_handler = signal(SIGINT, SIGINT_handler);
-    sighandler_t old_sig_term_handler = signal(SIGTERM, SIGINT_handler);
 
     int verbose = self->verbose;
     double time_limit = self->time_limit;
