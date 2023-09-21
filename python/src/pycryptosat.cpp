@@ -686,8 +686,6 @@ static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
     lbool res;
     Py_BEGIN_ALLOW_THREADS      /* release GIL */
     res = self->cmsat->solve(&assumption_lits);
-    signal(SIGINT, old_sig_int_handler);
-    signal(SIGTERM, old_sig_term_handler);
     Py_END_ALLOW_THREADS
 
     self->cmsat->set_verbosity(self->verbose);
