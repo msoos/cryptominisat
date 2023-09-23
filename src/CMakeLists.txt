@@ -203,13 +203,6 @@ if (MPI_FOUND)
     SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${MPI_CXX_LIBRARIES})
 endif()
 
-if (M4RI_FOUND)
-    include_directories(${M4RI_INCLUDE_DIRS})
-
-    SET(cryptoms_lib_files ${cryptoms_lib_files} toplevelgauss.cpp)
-    SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${M4RI_LIBRARIES})
-endif (M4RI_FOUND)
-
 if (BOSPHORUS_LIBRARIES)
     include_directories( ${BOSPHORUS_INCLUDE_DIRS} )
 

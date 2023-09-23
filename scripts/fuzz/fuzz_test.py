@@ -299,9 +299,6 @@ class Tester:
             sls = 0
             cmd += "--autodisablegauss %s " % random.choice([0]*15+[1])
 
-            # Don't always use M4RI -- let G-J do toplevel, so fuzzing is more complete
-            cmd += "--m4ri %d " % random.choice([0, 0, 0, 0, 1])
-
             # "Maximum number of matrixes to treat.")
             cmd += "--maxnummatrices %s " % int(random.gammavariate(1.5, 20.0))
 

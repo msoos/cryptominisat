@@ -9,15 +9,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y software-proper
 RUN add-apt-repository -y ppa:ubuntu-toolchain-r/test && rm -rf /var/lib/apt/lists/*
 RUN apt-get update && apt-get install --no-install-recommends -y libboost-program-options-dev gcc g++ make cmake zlib1g-dev wget && rm -rf /var/lib/apt/lists/*
 
-# get M4RI
-RUN wget https://bitbucket.org/malb/m4ri/downloads/m4ri-20140914.tar.gz \
-    && tar -xvf m4ri-20140914.tar.gz
-WORKDIR m4ri-20140914
-RUN ./configure \
-    && make \
-    && make install \
-    && make clean
-
 # set up build env
 RUN groupadd -r solver -g 433
 RUN useradd -u 431 -r -g solver -d /home/solver -s /sbin/nologin -c "Docker image user" solver

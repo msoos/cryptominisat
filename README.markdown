@@ -19,7 +19,7 @@ When citing, always reference our [SAT 2009 conference paper](https://link.sprin
 License
 -----
 
-Everything that is needed to build by default is MIT licensed. If you specifically instruct the system it can build with M4RI and Bliss, which are both GPL. However, by default CryptoMiniSat will not build with these.
+Everything that is needed to build by default is MIT licensed. If you specifically instruct the system it can build with Bliss, which are both GPL. However, by default CryptoMiniSat will not build with these.
 
 
 Compiling in Linux
@@ -485,9 +485,7 @@ The following arguments to cmake configure the generated build artifacts. To use
 - `-DSTATS=<ON/OFF>` -- advanced statistics (slower)
 - `-DENABLE_TESTING=<ON/OFF>` -- test suite support
 - `-DMIT=<ON/OFF>` -- MIT licensed components only
-- `-DNOM4RI=<ON/OFF>` -- without M4RI-based toplevel Gauss-Jordan Elimination support. Otherweise, we use the built-in one.
 - `-DNOMPI=<ON/OFF>` -- without MPI support
-- `-DREQUIRE_M4RI=<ON/OFF>` -- abort if M4RI is not present
 - `-DNOZLIB=<ON/OFF>` -- no gzip DIMACS input support
 - `-DONLY_SIMPLE=<ON/OFF>` -- only the simple binary is built
 - `-DNOVALGRIND=<ON/OFF>` -- no extended valgrind memory checking support

@@ -662,10 +662,6 @@ void Main::add_supported_options()
         , "Maximum matrix size (=num elements) that we should try to echelonize")
     ("forcepreservexors", po::value(&conf.force_preserve_xors)->default_value(conf.force_preserve_xors)
         , "Force preserving XORs when they have been found. Easier to make sure XORs are not lost through simplifiactions such as strenghtening")
-#ifdef USE_M4RI
-    ("m4ri", po::value(&conf.doM4RI)->default_value(conf.doM4RI)
-        , "Use M4RI")
-#endif
     //Not implemented yet
     //("mix", po::value(&conf.doMixXorAndGates)->default_value(conf.doMixXorAndGates)
     //    , "Mix XORs and OrGates for new truths")

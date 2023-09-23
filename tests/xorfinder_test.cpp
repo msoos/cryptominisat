@@ -30,10 +30,6 @@ THE SOFTWARE.
 #include "src/occsimplifier.h"
 using namespace CMSat;
 #include "test_helper.h"
-#include "src/toplevelgaussabst.h"
-#ifdef USE_M4RI
-#include "src/toplevelgauss.h"
-#endif
 
 struct xor_finder : public ::testing::Test {
     xor_finder()
@@ -375,25 +371,16 @@ struct xor_finder2 : public ::testing::Test {
         occsimp = s->occsimplifier;
         finder = new XorFinder(occsimp, s);
         finder->grab_mem();
-        #ifdef USE_M4RI
-        topLevelGauss = new TopLevelGauss(s);
-        #endif
     }
     ~xor_finder2()
     {
         delete s;
         delete finder;
-        #ifdef USE_M4RI
-        delete topLevelGauss;
-        #endif
     }
     Solver* s = NULL;
     OccSimplifier* occsimp = NULL;
     std::atomic<bool> must_inter;
     XorFinder* finder;
-    #ifdef USE_M4RI
-    TopLevelGaussAbst *topLevelGauss;
-    #endif
 };
 
 
@@ -565,17 +552,6 @@ TEST_F(xor_finder2, xor_unit)
     EXPECT_TRUE(ret);
     EXPECT_EQ(s->xorclauses.size(), 0u);
 }*/
-
-#ifdef USE_M4RI
-TEST_F(xor_finder2, xor_unit2_2)
-{
-    s->add_clause_outside(str_to_cl("-4"));
-    s->xorclauses = str_to_xors("1, 2, 3 = 0; 1, 2, 3, 4 = 1;");
-    vector<Lit> out_changed_occur;
-    bool ret = topLevelGauss->toplevelgauss(s->xorclauses, &out_changed_occur);
-    EXPECT_FALSE(ret);
-}
-#endif
 
 // TEST_F(xor_finder2, xor_binx)
 // {

@@ -354,7 +354,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , gatefinder_time_limitM(200)
 
         //Gauss
-        , doM4RI(true)
         , xor_detach_reattach(false)
         , force_use_all_matrixes(false)
 

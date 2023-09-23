@@ -48,7 +48,6 @@ THE SOFTWARE.
 #include "subsumestrengthen.h"
 #include "watchalgos.h"
 #include "clauseallocator.h"
-#include "toplevelgaussabst.h"
 #include "subsumeimplicit.h"
 #include "sqlstats.h"
 #include "datasync.h"
@@ -59,10 +58,6 @@ THE SOFTWARE.
 extern "C" {
 #include "picosat/picosat.h"
 }
-
-#ifdef USE_M4RI
-#include "toplevelgauss.h"
-#endif
 
 //#define VERBOSE_DEBUG
 #ifdef VERBOSE_DEBUG
@@ -97,17 +92,11 @@ OccSimplifier::OccSimplifier(Solver* _solver):
     , seen2(solver->seen2)
     , toClear(solver->toClear)
     , velim_order(VarOrderLt(varElimComplexity))
-    , topLevelGauss(NULL)
     , gateFinder(NULL)
     , anythingHasBeenElimed(false)
     , elimedMapBuilt(false)
 {
     bva = new BVA(solver, this);
-    topLevelGauss = new TopLevelGaussAbst;
-    #ifdef USE_M4RI
-    delete topLevelGauss;
-    topLevelGauss = new TopLevelGauss(solver);
-    #endif
     sub_str = new SubsumeStrengthen(this, solver);
 
     tmp_bin_cl.resize(2);
@@ -116,7 +105,6 @@ OccSimplifier::OccSimplifier(Solver* _solver):
 OccSimplifier::~OccSimplifier()
 {
     delete bva;
-    delete topLevelGauss;
     delete sub_str;
     delete gateFinder;
 }
@@ -2254,23 +2242,6 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             {
                 XorFinder finder(this, solver);
                 finder.find_xors();
-                #ifdef USE_M4RI
-                if (topLevelGauss != NULL && !solver->frat->enabled()) {
-                    auto xors = solver->xorclauses;
-                    assert(solver->okay());
-                    solver->ok = finder.xor_together_xors(xors);
-                    if (solver->ok) {
-                        vector<Lit> out_changed_occur;
-                        finder.move_xors_without_connecting_vars_to_unused();
-                        topLevelGauss->toplevelgauss(xors, &out_changed_occur);
-                        //these may have changed, recalculating occur
-                        for(Lit lit: out_changed_occur) {
-                            n_occurs[lit.toInt()] = calc_occ_data(lit);
-                            n_occurs[(~lit).toInt()] = calc_occ_data(~lit);
-                        }
-                    }
-                }
-                #endif
                 runStats.xorTime += finder.get_stats().findTime;
             }
         } else if (token == "occ-lit-rem") {
@@ -5344,14 +5315,6 @@ size_t OccSimplifier::mem_used() const
     b += sampling_vars_occsimp.capacity();
 
     return b;
-}
-
-size_t OccSimplifier::mem_used_xor() const
-{
-    if (topLevelGauss)
-        return topLevelGauss->mem_used();
-    else
-        return 0;
 }
 
 size_t OccSimplifier::mem_used_bva() const

@@ -1111,17 +1111,15 @@ DLL_PUBLIC std::string SATSolver::get_text_version_info()
     ss << "c CryptoMiniSat version " << get_version() << endl;
     ss << "c CMS Copyright (C) 2009-2020 Authors of CryptoMiniSat, see AUTHORS file" << endl;
     ss << "c CMS SHA revision " << get_version_sha1() << endl;
-    #ifdef USE_M4RI
-    ss << "c CMS is GPL licensed due to M4RI being linked. Build without M4RI to get MIT version" << endl;
-    #else
-    ss << "c CMS is MIT licensed" << endl;
-    #endif
     ss << "c Using VMTF code by Armin Biere from CaDiCaL" << endl;
     ss << "c Using Yalsat by Armin Biere, see Balint et al. Improving implementation of SLS solvers [...], SAT'14" << endl;
     ss << "c Using WalkSAT by Henry Kautz, see Kautz and Selman Pushing the envelope: planning, propositional logic, and stochastic search, AAAI'96," << endl;
     #ifdef USE_BREAKID
     ss << "c Using BreakID by Devriendt, Bogaerts, Bruynooghe and Denecker" << endl;
     ss << "c Using Bliss graph automorphism library (under LGPL) by Tommi Junttila" << endl;
+    ss << "c CMS is GPL licensed due to Bliss being linked. Build without Bliss to get MIT version" << endl;
+    #else
+    ss << "c CMS is MIT licensed" << endl;
     #endif
 
     ss << "c Using code from 'When Boolean Satisfiability Meets Gauss-E. in a Simplex Way'" << endl;

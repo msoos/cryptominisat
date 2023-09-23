@@ -48,8 +48,6 @@ const char* CMSat::get_compilation_env()
     "ZLIB_FOUND = @ZLIB_FOUND@ | "
     "VALGRIND_FOUND = @VALGRIND_FOUND@ | "
     "ENABLE_TESTING = @ENABLE_TESTING@ | "
-    "M4RI_FOUND = @M4RI_FOUND@ | "
-    "NOM4RI = @NOM4RI@ | "
     "SLOW_DEBUG = @SLOW_DEBUG@ | "
     "ENABLE_ASSERTIONS = @ENABLE_ASSERTIONS@ | "
     "PYTHON_EXECUTABLE = @PYTHON_EXECUTABLE@ | "

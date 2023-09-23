@@ -54,7 +54,6 @@ using std::pair;
 class ClauseCleaner;
 class SolutionExtender;
 class Solver;
-class TopLevelGaussAbst;
 class SubsumeStrengthen;
 class BVA;
 class GateFinder;
@@ -224,7 +223,6 @@ public:
     void save_on_var_memory();
     bool uneliminate(const uint32_t var);
     size_t mem_used() const;
-    size_t mem_used_xor() const;
     size_t mem_used_bva() const;
     uint32_t dump_elimed_clauses(std::ostream* outfile) const;
     bool get_elimed_clause_at(uint32_t& at,uint32_t& at2, vector<Lit>& out) const;
@@ -648,9 +646,7 @@ private:
 
     /////////////////////
     //Helpers
-    friend class TopLevelGaussAbst;
     friend class GateFinder;
-    TopLevelGaussAbst *topLevelGauss;
     GateFinder *gateFinder;
 
     /////////////////////

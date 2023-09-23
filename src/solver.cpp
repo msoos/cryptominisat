@@ -1872,13 +1872,6 @@ void Solver::dump_memory_stats_to_sql()
 
         sqlStats->mem_used(
             this
-            , "xor"
-            , my_time
-            , occsimplifier->mem_used_xor()/(1024*1024)
-        );
-
-        sqlStats->mem_used(
-            this
             , "bva"
             , my_time
             , occsimplifier->mem_used_bva()/(1024*1024)
@@ -2642,15 +2635,6 @@ void Solver::print_mem_stats() const
     if (occsimplifier) {
         mem = occsimplifier->mem_used();
         print_stats_line("c Mem for occsimplifier"
-            , mem/(1024UL*1024UL)
-            , "MB"
-            , stats_line_percent(mem, rss_mem_used)
-            , "%"
-        );
-        account += mem;
-
-        mem = occsimplifier->mem_used_xor();
-        print_stats_line("c Mem for xor-finder"
             , mem/(1024UL*1024UL)
             , "MB"
             , stats_line_percent(mem, rss_mem_used)

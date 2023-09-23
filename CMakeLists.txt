@@ -148,7 +148,6 @@ if (EMSCRIPTEN)
     set(ONLY_SIMPLE ON)
     set(BUILD_SHARED_LIBS ON)
     set(NOZLIB ON)
-    set(NOM4RI ON)
 else()
     set(THREADS_PREFER_PTHREAD_FLAG ON)
     find_package (Threads REQUIRED)
@@ -594,36 +593,14 @@ endif()
 # -----------------------------------------------------------------------------
 # MIT option
 # -----------------------------------------------------------------------------
-option(REQUIRE_M4RI "Must use m4ri" OFF)
-option(NOM4RI "Don't use m4ri" ON)
 option(NOBOSPHORUS "Don't use Bosphorus" ON)
 option(REQUIRE_BOSPHORUS "Must use Bosphorus" OFF)
 option(MIT "Build with only MIT licensed components" OFF)
 if (MIT)
-    set(NOM4RI ON)
     set(NOBOSPHORUS ON)
-    if(REQUIRE_M4RI)
-        message(FATAL_ERROR "Cannot have both MIT and REQUIRE_M4RI at the same time")
-    endif()
     if(REQUIRE_BOSPHORUS)
         message(FATAL_ERROR "Cannot have both MIT and REQUIRE_BOSPHORUS at the same time")
     endif()
-endif()
-
-# -----------------------------------------------------------------------------
-# Look for M4RI (for Gauss)
-# -----------------------------------------------------------------------------
-if (NOT NOM4RI)
-    find_package(M4RI)
-    IF (M4RI_FOUND)
-        MESSAGE(STATUS "OK, Found M4RI lib at ${M4RI_LIBRARIES} and includes at ${M4RI_INCLUDE_DIRS}")
-        add_definitions( -DUSE_M4RI )
-    ELSE (M4RI_FOUND)
-        MESSAGE(WARNING "Did not find M4RI, XOR detection&manipulation disabled")
-        if (REQUIRE_M4RI)
-            MESSAGE(FATAL_ERROR "REQUIRE_M4RI was set but M4RI was not found!")
-        endif()
-    ENDIF (M4RI_FOUND)
 endif()
 
 # -----------------------------------------------------------------------------
@@ -806,11 +783,6 @@ set(CRYPTOMINISAT5_VERSION_FILENAME "cryptominisat5ConfigVersion.cmake")
 set(CRYPTOMINISAT5_STATIC_DEPS
     ${SQLITE3_LIBRARIES}
 )
-IF (M4RI_FOUND)
-    set(CRYPTOMINISAT5_STATIC_DEPS
-        ${CRYPTOMINISAT5_STATIC_DEPS} ${M4RI_LIBRARIES}
-        )
-endif()
 
 # Export targets
 set(MY_TARGETS cryptominisat5)
