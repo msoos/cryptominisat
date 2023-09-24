@@ -53,7 +53,7 @@ IN THE SOFTWARE.
 
 /* Enabling this define, will use gnuplot to visualize how the scores evolve.
  *
-#define VISCORES 
+#define VISCORES
  */
 #ifdef VISCORES
 // #define WRITEGIF		/* ... to generate a video */
@@ -516,7 +516,7 @@ enum Phase
   RNDPHASE,
 };
 
-struct PicoSAT 
+struct PicoSAT
 {
   enum State state;
   enum Phase defaultphase;
@@ -705,7 +705,7 @@ struct PicoSAT
   unsigned staticphasedecisions;
   unsigned skippedrestarts;
 #endif
-  int * indices, * ihead, *eoi; 
+  int * indices, * ihead, *eoi;
   unsigned sdflips;
 
   unsigned long long saved_flips;
@@ -964,7 +964,7 @@ new (PS * ps, size_t size)
 {
   size_t bytes;
   Blk *b;
-  
+
   if (!size)
     return 0;
 
@@ -1092,7 +1092,7 @@ dumplits (PS * ps, Lit ** l, Lit ** end)
       fprintf (ps->out, "%d ", LIT2INT (l[0]));
     }
   else
-    { 
+    {
       assert (l + 2 <= end);
       first = (abs (LIT2INT (l[0])) > abs (LIT2INT (l[1])));
       fprintf (ps->out, "%d ", LIT2INT (l[first]));
@@ -1157,7 +1157,7 @@ delete_prefix (PS * ps)
 {
   if (!ps->prefix)
     return;
-    
+
   delete (ps, ps->prefix, strlen (ps->prefix) + 1);
   ps->prefix = 0;
 }
@@ -1172,7 +1172,7 @@ new_prefix (PS * ps, const char * str)
 }
 
 static PS *
-init (void * pmgr, 
+init (void * pmgr,
       picosat_malloc pnew, picosat_realloc presize, picosat_free pdelete)
 {
   PS * ps;
@@ -1218,7 +1218,7 @@ init (void * pmgr,
 
   /* because '0' pos denotes not on heap
    */
-  ENLARGE (ps->heap, ps->hhead, ps->eoh); 
+  ENLARGE (ps->heap, ps->hhead, ps->eoh);
   ps->hhead = ps->heap + 1;
 
   ps->vinc = base2flt (1, 0);		/* initial var activity */
@@ -1274,7 +1274,7 @@ init (void * pmgr,
            "set terminal gif giant animate opt size 1024,768 x000000 xffffff"
 	   "\n");
 
-  fprintf (ps->fviscores, 
+  fprintf (ps->fviscores,
            "set output \"/tmp/picosat-viscores/gif/animated.gif\"\n");
 #endif
 #endif
@@ -1480,7 +1480,7 @@ reset_ados (PS * ps)
 static void
 reset (PS * ps)
 {
-  ABORTIF (!ps || 
+  ABORTIF (!ps ||
            ps->state == RESET, "API usage: reset without initialization");
 
   delete_clauses (ps);
@@ -1605,7 +1605,7 @@ assign_phase (PS * ps, Lit * lit)
 	      if (idx < ps->min_flipped)
 		ps->min_flipped = idx;
 
-              NOLOG (fprintf (ps->out, 
+              NOLOG (fprintf (ps->out,
 	                      "%sflipped %d\n",
 			       ps->prefix, LIT2INT (lit)));
 	    }
@@ -1984,7 +1984,7 @@ assign_forced (PS * ps, Lit * lit, Cls * reason)
 
 #ifdef NO_BINARY_CLAUSES
   assert (reason != &ps->impl);
-  if (ISLITREASON (reason)) 
+  if (ISLITREASON (reason))
     {
       reason = setimpl (ps, lit, NOTLIT (REASON2LIT (reason)));
       assert (reason);
@@ -2045,7 +2045,7 @@ lpush (PS * ps, Lit * lit, Cls * c)
       assert (!s->ldsize);
       NEWN (s->start, 1);
     }
-  else 
+  else
     {
       oldsize = (1 << (s->ldsize));
       assert (s->count <= oldsize);
@@ -2329,7 +2329,7 @@ REENTER:
   else
 #endif
     {
-      sortlits (ps, ps->added, size); 
+      sortlits (ps, ps->added, size);
 
       if (learned)
 	{
@@ -2344,7 +2344,7 @@ REENTER:
 	       * idiom 'for (p = SOC; p != EOC; p = NXC(p))' immediately.
 	       * Unfortunately this occurred in 'fix_clause_lits' after
 	       * using a recent version of the memory allocator of 'Google'
-	       * perftools in the context of one large benchmark for 
+	       * perftools in the context of one large benchmark for
 	       * our SMT solver 'Boolector'.
 	       */
 	      if (ps->EOL == ps->oclauses)
@@ -2379,7 +2379,7 @@ REENTER:
 	{
 	  assert (ps->dusedhead == ps->dused);
 
-	  for (p = ps->added; p < ps->ahead; p++) 
+	  for (p = ps->added; p < ps->ahead; p++)
 	    {
 	      lit = *p;
 	      if (lit->val)
@@ -2407,7 +2407,7 @@ REENTER:
 		glue++;
 	    }
 
-	  while (ps->dusedhead > ps->dused) 
+	  while (ps->dusedhead > ps->dused)
 	    {
 	      litlevel = *--ps->dusedhead;
 	      assert (ps->levels + litlevel < ps->levelshead);
@@ -2598,7 +2598,7 @@ trivial_clause (PS * ps)
       if (prev == this)		/* skip repeated literals */
 	continue;
 
-      /* Top level satisfied ? 
+      /* Top level satisfied ?
        */
       if (this->val == TRUE && !v->level)
 	 return 1;
@@ -2638,7 +2638,7 @@ simplify_and_add_original_clause (PS * ps)
 	add_lit (ps, NOTLIT (ps->clshead[-1]));
 
 #ifdef NO_BINARY_CLAUSES
-      c = 
+      c =
 #endif
       add_simplified_clause (ps, 0);
 #ifdef NO_BINARY_CLAUSES
@@ -2676,7 +2676,7 @@ add_ado (PS * ps)
     {
       lit = *p++;
       v = LIT2VAR (lit);
-      ABORTIF (v->inado, 
+      ABORTIF (v->inado,
                "internal: variable in multiple all different objects");
       v->inado = ado;
       if (!u && !lit->val)
@@ -3229,7 +3229,7 @@ relemdata (PS * ps)
 
   if (ps->reports < 0)
     {
-      /* strip trailing white space 
+      /* strip trailing white space
        */
       for (x = 0; x <= 1; x++)
 	{
@@ -3507,7 +3507,7 @@ push (PS * ps, Var * v)
   *ps->dhead++ = v;
 }
 
-static Var * 
+static Var *
 pop (PS * ps)
 {
   assert (ps->dfs < ps->dhead);
@@ -3557,7 +3557,7 @@ analyze (PS * ps)
 	  u = LIT2VAR (other);
 	  if (u->mark)
 	    continue;
-	  
+
 	  u->mark = 1;
 	  inc_score (ps, u);
 	  use_var (ps, u);
@@ -3566,7 +3566,7 @@ analyze (PS * ps)
 	    {
 	      open++;
 	    }
-	  else 
+	  else
 	    {
 	      push_var_as_marked (ps, u);
 
@@ -3676,8 +3676,8 @@ DONE_FIRST_UIP:
 	  if (c == &ps->impl)
 	    resetimpl (ps);
 #endif
-	  if (!c || 
-	      ((l = u->level) && 
+	  if (!c ||
+	      ((l = u->level) &&
 	       (l < minlevel || ((hashlevel (l) & ~siglevels)))))
 	    {
 	      while (ps->mhead > ps->marked + old)	/* reset all marked */
@@ -3833,7 +3833,7 @@ fanalyze (PS * ps)
 	  if (lit->val == TRUE) lit = NOTLIT (lit);
 	  add_lit (ps, lit);
 	}
-    } 
+    }
   while (ps->marked + next < ps->mhead);
 
   c = add_simplified_clause (ps, 1);
@@ -3876,7 +3876,7 @@ fanalyze (PS * ps)
     (*--ps->mhead)->mark = 0;
 
   if (ps->verbosity)
-     fprintf (ps->out, "%sfanalyze took %.1f seconds\n", 
+     fprintf (ps->out, "%sfanalyze took %.1f seconds\n",
 	     ps->prefix, picosat_time_stamp () - start);
 }
 
@@ -3951,7 +3951,7 @@ prop2 (PS * ps, Lit * this)
       assert (!c->collected);
 #endif
       assert (c->size == 2);
-      
+
       other = c->lits[0];
       if (other == this)
 	{
@@ -4117,7 +4117,7 @@ propl (PS * ps, Lit * this)
 
       if (l == eol)
 	{
-	  while (l > c->lits + 2) 
+	  while (l > c->lits + 2)
 	    {
 	      new_lit = *--l;
 	      *l = prev;
@@ -4246,7 +4246,7 @@ enlarge_adotab (PS * ps)
 {
   /* TODO make this generic */
 
-  ABORTIF (ps->szadotab, 
+  ABORTIF (ps->szadotab,
            "internal: all different objects table needs larger initial size");
   assert (!ps->nadotab);
   ps->szadotab = 10000;
@@ -4419,8 +4419,8 @@ viscores (PS * ps)
   fprintf (ps->fviscores, "plot [0:%u] 0, 100 * (1 - 1/1.1), 100", ps->max_var);
 
   for (i = 0; i < 8; i++)
-    fprintf (ps->fviscores, 
-             ", \"%s.%d\" using 1:2:3 with labels tc lt %d", 
+    fprintf (ps->fviscores,
+             ", \"%s.%d\" using 1:2:3 with labels tc lt %d",
 	     name, i, i + 1);
 
   fputc ('\n', ps->fviscores);
@@ -4575,7 +4575,7 @@ backtrack (PS * ps)
 
   if (
 #ifndef NFL
-      !ps->simplifying && 
+      !ps->simplifying &&
 #endif
       !--ps->lreduceadjustcnt)
     {
@@ -4744,7 +4744,7 @@ collect_clauses (PS * ps)
 #ifndef NDSC
   for (lit = ps->lits + 2; lit <= eol; lit++)
     {
-      p = LIT2DHTPS (lit); 
+      p = LIT2DHTPS (lit);
       while ((c = *p))
 	{
 	  Lit * other = c->lits[0];
@@ -4896,11 +4896,11 @@ init_restart (PS * ps)
 static void
 restart (PS * ps)
 {
-  int skip; 
+  int skip;
 #ifdef NLUBY
   char kind;
   int outer;
- 
+
   inc_drestart (ps);
   outer = (ps->drestart >= ps->ddrestart);
 
@@ -5008,7 +5008,7 @@ rnk2jwh (PS * ps, Rnk * r)
 
   plit = RNK2LIT (r);
   nlit = plit + 1;
-  
+
   pjwh = *LIT2JWH (plit);
   njwh = *LIT2JWH (nlit);
 
@@ -5198,14 +5198,14 @@ CONTRADICTION:
       undo (ps, 0);
 
       LOG (if (common)
-	     fprintf (ps->out, 
+	     fprintf (ps->out,
 		      "%sfound %d literals implied by %d and %d\n",
-		      ps->prefix, common, 
+		      ps->prefix, common,
 		      LIT2INT (NOTLIT (lit)), LIT2INT (lit)));
 
 #if 1 // set to zero to disable 'lifting'
-      for (j = 0; 
-	   j < common 
+      for (j = 0;
+	   j < common
 	  /* TODO: For some Velev benchmarks, extracting the common implicit
 	   * failed literals took quite some time.  This needs to be fixed by
 	   * a dedicated analyzer.  Up to then we bound the number of
@@ -5221,7 +5221,7 @@ CONTRADICTION:
 
 	  assert (!other->val);
 
-	  LOG ( fprintf (ps->out, 
+	  LOG ( fprintf (ps->out,
 			"%sforcing %d as forced implicitly failed literal\n",
 			ps->prefix, LIT2INT (other)));
 
@@ -5410,7 +5410,7 @@ simplify (PS * ps, int forced)
 
       if (c->locked)
 	continue;
-      
+
       assert (!c->collect);
       if (clause_is_toplevel_satisfied (ps, c))
 	{
@@ -5421,7 +5421,7 @@ simplify (PS * ps, int forced)
 
   LOG ( fprintf (ps->out, "%scollecting %d clauses\n", ps->prefix, collect));
 #ifdef STATS
-  bytes_collected = 
+  bytes_collected =
 #endif
   collect_clauses (ps);
 #ifdef STATS
@@ -5526,7 +5526,7 @@ reduce (PS * ps, unsigned percentage)
   ps->lastreduceconflicts = ps->conflicts;
 
   assert (percentage <= 100);
-  LOG ( fprintf (ps->out, 
+  LOG ( fprintf (ps->out,
                 "%sreducing %u%% learned clauses\n",
 		ps->prefix, percentage));
 
@@ -5601,7 +5601,7 @@ reduce (PS * ps, unsigned percentage)
     {
       ps->reductions++;
 #ifdef STATS
-      bytes_collected = 
+      bytes_collected =
 #endif
       collect_clauses (ps);
 #ifdef STATS
@@ -5626,7 +5626,7 @@ init_reduce (PS * ps)
     ps->lreduce = 100;
 
   if (ps->verbosity)
-     fprintf (ps->out, 
+     fprintf (ps->out,
              "%s\n%sinitial reduction limit %u clauses\n%s\n",
 	     ps->prefix, ps->prefix, ps->lreduce, ps->prefix);
 }
@@ -5702,7 +5702,7 @@ decide_phase (PS * ps, Lit * lit)
 	{
 	  /* assign to FALSE (Jeroslow-Wang says there are more short
 	   * clauses with negative occurence of this variable, so satisfy
-	   * those, to minimize BCP) 
+	   * those, to minimize BCP)
 	   */
 	  lit = not_lit;
 	}
@@ -5711,7 +5711,7 @@ decide_phase (PS * ps, Lit * lit)
 	  /* assign to TRUE (... but strictly more positive occurrences) */
 	}
     }
-  else 
+  else
     {
       /* repeat last phase: phase saving heuristic */
 
@@ -5807,7 +5807,7 @@ sdecide (PS * ps)
       res = RNK2LIT (r);
       if (res->val == UNDEF) break;
       (void) hpop (ps);
-      NOLOG ( fprintf (ps->out, 
+      NOLOG ( fprintf (ps->out,
                       "%shpop %u %u %u\n",
 		      ps->prefix, r - ps->rnks,
 		      FLTMANTISSA(r->score),
@@ -6020,11 +6020,11 @@ rebias (PS * ps)
 
   memset (ps->jwh, 0, 2 * (ps->max_var + 1) * sizeof *ps->jwh);
 
-  for (p = ps->oclauses; p < ps->ohead; p++) 
+  for (p = ps->oclauses; p < ps->ohead; p++)
     {
       c = *p;
 
-      if (!c) 
+      if (!c)
 	continue;
 
       if (c->learned)
@@ -6477,7 +6477,7 @@ reset_incremental_usage (PS * ps)
   reset_assumptions (ps);
 
   if (ps->conflict)
-    { 
+    {
       num_non_false = 0;
       for (q = ps->conflict->lits; q < end_of_lits (ps->conflict); q++)
 	{
@@ -6533,7 +6533,7 @@ leave (PS * ps)
 
 static void
 check_trace_support_and_execute (PS * ps,
-                                 FILE * file, 
+                                 FILE * file,
 				 void (*f)(PS*,FILE*,int), int fmt)
 {
   check_ready (ps);
@@ -6619,7 +6619,7 @@ picosat_init (void)
   return init (0, 0, 0, 0);
 }
 
-PicoSAT * 
+PicoSAT *
 picosat_minit (void * pmgr,
 	       picosat_malloc pnew,
 	       picosat_realloc presize,
@@ -6723,7 +6723,7 @@ picosat_push (PS * ps)
   return res;
 }
 
-int 
+int
 picosat_pop (PS * ps)
 {
   Lit * lit;
@@ -6764,7 +6764,7 @@ picosat_pop (PS * ps)
 
   if (ps->measurealltimeinlib)
     leave (ps);
-  
+
   return res;
 }
 
@@ -6788,7 +6788,7 @@ picosat_enable_trace_generation (PS * ps)
   int res = 0;
   check_ready (ps);
 #ifdef TRACE
-  ABORTIF (ps->addedclauses, 
+  ABORTIF (ps->addedclauses,
            "API usage: trace generation enabled after adding clauses");
   res = ps->trace = 1;
 #endif
@@ -6854,7 +6854,7 @@ picosat_add (PS * ps, int int_lit)
   ABORTIF (ps->rup && ps->rupstarted && ps->oadded >= (unsigned)ps->rupclauses,
            "API usage: adding too many clauses after RUP header written");
 #ifndef NADC
-  ABORTIF (ps->addingtoado, 
+  ABORTIF (ps->addingtoado,
            "API usage: 'picosat_add' and 'picosat_add_ado_lit' mixed");
 #endif
   if (ps->state != READY)
@@ -7041,12 +7041,12 @@ minautarky (PS * ps)
     occs[*p]++;
   assert (occs[0] == ps->oadded);
 
-  for (c = ps->soclauses; c < ps->sohead; c = p + 1) 
+  for (c = ps->soclauses; c < ps->sohead; c = p + 1)
     {
 #ifdef LOGGING
       tl = 0;
 #endif
-      best = 0; 
+      best = 0;
       maxoccs = 0;
       for (p = c; (lit = *p); p++)
 	{
@@ -7080,7 +7080,7 @@ minautarky (PS * ps)
       if (!lit)
 	{
 	  assert (best);
-	  LOG ( fprintf (ps->out, "%sautark %d with %d occs%s\n", 
+	  LOG ( fprintf (ps->out, "%sautark %d with %d occs%s\n",
 	       ps->prefix, best, maxoccs, tl ? " (top)" : ""));
 	  ps->vars[abs (best)].partial = 1;
 	  npartial++;
@@ -7290,7 +7290,7 @@ picosat_coreclause (PS * ps, int ocls)
     clsptr = ps->oclauses + ocls;
     assert (clsptr < ps->ohead);
     c = *clsptr;
-    if (c) 
+    if (c)
       res = c->core;
     if (ps->measurealltimeinlib)
       leave (ps);
@@ -7350,7 +7350,7 @@ picosat_failed_assumptions (PS * ps)
   ps->falshead = ps->fals;
   check_ready (ps);
   check_unsat_state (ps);
-  if (!ps->mtcls) 
+  if (!ps->mtcls)
     {
       assert (ps->failed_assumption);
       if (!ps->extracted_all_failed_assumptions)
@@ -7386,13 +7386,13 @@ picosat_mus_assumptions (PS * ps, void * s, void (*cb)(void*,const int*), int fi
   int oldlen;
 #endif
 #ifndef RCODE
-  int norig = ps->alshead - ps->als; 
+  int norig = ps->alshead - ps->als;
 #endif
 
   check_ready (ps);
   check_unsat_state (ps);
   len = 0;
-  if (!ps->mtcls) 
+  if (!ps->mtcls)
     {
       assert (ps->failed_assumption);
       if (!ps->extracted_all_failed_assumptions)
@@ -7422,7 +7422,7 @@ picosat_mus_assumptions (PS * ps, void * s, void (*cb)(void*,const int*), int fi
   assert (i == len);
   ps->mass[i] = 0;
   if (ps->verbosity)
-     fprintf (ps->out, 
+     fprintf (ps->out,
       "%sinitial set of failed assumptions of size %d out of %d (%.0f%%)\n",
       ps->prefix, len, norig, PERCENT (len, norig));
   if (cb)
@@ -7443,7 +7443,7 @@ picosat_mus_assumptions (PS * ps, void * s, void (*cb)(void*,const int*), int fi
 
       if (ps->verbosity > 1)
 	 fprintf (ps->out,
-	         "%strying to drop %d%s assumption %d\n", 
+	         "%strying to drop %d%s assumption %d\n",
 		 ps->prefix, i, enumstr (i), work[i]);
       for (j = 0; j < nwork; j++)
 	{
@@ -7458,7 +7458,7 @@ picosat_mus_assumptions (PS * ps, void * s, void (*cb)(void*,const int*), int fi
 	{
 	  if (ps->verbosity > 1)
 	     fprintf (ps->out,
-		     "%sfailed to drop %d%s assumption %d\n", 
+		     "%sfailed to drop %d%s assumption %d\n",
 		     ps->prefix, i, enumstr (i), work[i]);
 
 	  if (fix)
@@ -7472,13 +7472,13 @@ picosat_mus_assumptions (PS * ps, void * s, void (*cb)(void*,const int*), int fi
 	  assert (res == 20);
 	  if (ps->verbosity > 1)
 	     fprintf (ps->out,
-		     "%ssuceeded to drop %d%s assumption %d\n", 
+		     "%ssuceeded to drop %d%s assumption %d\n",
 		     ps->prefix, i, enumstr (i), work[i]);
 	  redundant[i] = 1;
 	  for (j = 0; j < nwork; j++)
 	    {
 	      failed = picosat_failed_assumption (ps, work[j]);
-	      if (j <= i) 
+	      if (j <= i)
 		{
 		  assert ((j < i && fix) || redundant[j] == !failed);
 		  continue;
@@ -7489,7 +7489,7 @@ picosat_mus_assumptions (PS * ps, void * s, void (*cb)(void*,const int*), int fi
 		  redundant[j] = -1;
 		  if (ps->verbosity > 1)
 		     fprintf (ps->out,
-			     "%salso suceeded to drop %d%s assumption %d\n", 
+			     "%salso suceeded to drop %d%s assumption %d\n",
 			     ps->prefix, j, enumstr (j), work[j]);
 		}
 	    }
@@ -7514,7 +7514,7 @@ picosat_mus_assumptions (PS * ps, void * s, void (*cb)(void*,const int*), int fi
 	    for (j = 0; j <= i; j++)
 	      assert (redundant[j] >= 0);
 #endif
-	    for (j = i + 1; j < nwork; j++) 
+	    for (j = i + 1; j < nwork; j++)
 	      {
 		if (redundant[j] >= 0)
 		  continue;
@@ -7529,7 +7529,7 @@ picosat_mus_assumptions (PS * ps, void * s, void (*cb)(void*,const int*), int fi
 	      }
 
 	    if (ps->verbosity)
-	       fprintf (ps->out, 
+	       fprintf (ps->out,
 	"%sreduced set of failed assumptions of size %d out of %d (%.0f%%)\n",
 		ps->prefix, len, norig, PERCENT (len, norig));
 	    if (cb)
@@ -7550,7 +7550,7 @@ picosat_mus_assumptions (PS * ps, void * s, void (*cb)(void*,const int*), int fi
     picosat_assume (ps, ps->mass[i]);
 
 #ifndef NDEBUG
-  res = 
+  res =
 #endif
   picosat_sat (ps, -1);
   assert (res == 20);
@@ -7588,17 +7588,17 @@ mss (PS * ps, int * a, int size)
       for (j = 0; j < k; j++)
 	picosat_assume (ps, ps->mssass[j]);
 
-      LOG ( fprintf (ps->out, 
-             "%strying to add assumption %d to MSS : %d\n", 
-	     ps->prefix, i, a[i])); 
+      LOG ( fprintf (ps->out,
+             "%strying to add assumption %d to MSS : %d\n",
+	     ps->prefix, i, a[i]));
 
       picosat_assume (ps, a[i]);
 
       res = picosat_sat (ps, -1);
       if (res == 10)
 	{
-	  LOG ( fprintf (ps->out, 
-		 "%sadding assumption %d to MSS : %d\n", ps->prefix, i, a[i])); 
+	  LOG ( fprintf (ps->out,
+		 "%sadding assumption %d to MSS : %d\n", ps->prefix, i, a[i]));
 
 	  ps->mssass[k++] = a[i];
 
@@ -7607,9 +7607,9 @@ mss (PS * ps, int * a, int size)
 	      if (picosat_deref (ps, a[j]) <= 0)
 		continue;
 
-	      LOG ( fprintf (ps->out, 
-		     "%salso adding assumption %d to MSS : %d\n", 
-		     ps->prefix, j, a[j])); 
+	      LOG ( fprintf (ps->out,
+		     "%salso adding assumption %d to MSS : %d\n",
+		     ps->prefix, j, a[j]));
 
 	      ps->mssass[k++] = a[j];
 
@@ -7625,8 +7625,8 @@ mss (PS * ps, int * a, int size)
 	{
 	  assert (res == 20);
 
-	  LOG ( fprintf (ps->out, 
-		 "%signoring assumption %d in MSS : %d\n", ps->prefix, i, a[i])); 
+	  LOG ( fprintf (ps->out,
+		 "%signoring assumption %d in MSS : %d\n", ps->prefix, i, a[i]));
 	}
     }
   ps->mssass[k] = 0;
@@ -7741,7 +7741,7 @@ next_mss (PS * ps, int mcs)
       goto DONE;
     }
 
-  for (p = res; (lit = *p); p++) 
+  for (p = res; (lit = *p); p++)
     {
       v = ps->vars + abs (lit);
       if (lit < 0)
@@ -7767,7 +7767,7 @@ next_mss (PS * ps, int mcs)
 	inmss = 1;
       else if (lit < 0 && v->mssneg)
 	inmss = 1;
-      else 
+      else
 	inmss = 0;
 
       if (mssize < mcsize)
@@ -7826,7 +7826,7 @@ picosat_next_minimal_correcting_subset_of_assumptions (PS * ps)
 }
 
 const int *
-picosat_humus (PS * ps, 
+picosat_humus (PS * ps,
                void (*callback)(void*state,int nmcs,int nhumus),
 	       void * state)
 {
@@ -7867,7 +7867,7 @@ picosat_humus (PS * ps,
 	    }
 	}
       nmcs++;
-      LOG ( fprintf (ps->out, 
+      LOG ( fprintf (ps->out,
              "%smcs %d of size %d humus %d\n",
 	     ps->prefix, nmcs, (int)(p - mcs), nhumus));
       if (callback)
@@ -8026,9 +8026,9 @@ picosat_stats (PS * ps)
 #endif
   fputc ('\n', ps->out);
 #ifdef STATS
-   fprintf (ps->out, 
-    "%sfl: %u = %.1f%% implicit, %llu oopsed, %llu tried, %llu skipped\n", 
-    ps->prefix, 
+   fprintf (ps->out,
+    "%sfl: %u = %.1f%% implicit, %llu oopsed, %llu tried, %llu skipped\n",
+    ps->prefix,
     ps->ifailedlits, PERCENT (ps->ifailedlits, ps->failedlits),
     ps->floopsed, ps->fltried, ps->flskipped);
 #endif
@@ -8082,29 +8082,29 @@ picosat_stats (PS * ps)
            ps->prefix, ps->propagations, AVERAGE (ps->propagations, ps->decisions));
    fprintf (ps->out, "%s%llu visits (%.1f per propagation)\n",
 	   ps->prefix, ps->visits, AVERAGE (ps->visits, ps->propagations));
-   fprintf (ps->out, 
+   fprintf (ps->out,
            "%s%llu binary clauses visited (%.1f%% %.1f per propagation)\n",
-	   ps->prefix, ps->bvisits, 
+	   ps->prefix, ps->bvisits,
 	   PERCENT (ps->bvisits, ps->visits),
 	   AVERAGE (ps->bvisits, ps->propagations));
-   fprintf (ps->out, 
+   fprintf (ps->out,
            "%s%llu ternary clauses visited (%.1f%% %.1f per propagation)\n",
-	   ps->prefix, ps->tvisits, 
+	   ps->prefix, ps->tvisits,
 	   PERCENT (ps->tvisits, ps->visits),
 	   AVERAGE (ps->tvisits, ps->propagations));
-   fprintf (ps->out, 
+   fprintf (ps->out,
            "%s%llu large clauses visited (%.1f%% %.1f per propagation)\n",
-	   ps->prefix, ps->lvisits, 
+	   ps->prefix, ps->lvisits,
 	   PERCENT (ps->lvisits, ps->visits),
 	   AVERAGE (ps->lvisits, ps->propagations));
    fprintf (ps->out, "%s%llu other true (%.1f%% of visited clauses)\n",
 	   ps->prefix, ps->othertrue, PERCENT (ps->othertrue, ps->visits));
-   fprintf (ps->out, 
+   fprintf (ps->out,
            "%s%llu other true in binary clauses (%.1f%%)"
 	   ", %llu upper (%.1f%%)\n",
            ps->prefix, ps->othertrue2, PERCENT (ps->othertrue2, ps->othertrue),
 	   ps->othertrue2u, PERCENT (ps->othertrue2u, ps->othertrue2));
-   fprintf (ps->out, 
+   fprintf (ps->out,
            "%s%llu other true in large clauses (%.1f%%)"
 	   ", %llu upper (%.1f%%)\n",
            ps->prefix, ps->othertruel, PERCENT (ps->othertruel, ps->othertrue),
@@ -8144,7 +8144,8 @@ picosat_stats (PS * ps)
 	    ps->prefix, picosat_max_bytes_allocated (ps) / (double) (1 << 20));
 }
 
-#ifndef NGETRUSAGE
+#if defined (_MSC_VER) || defined (__MINGW32__) || defined(_WIN32) || defined(EMSCRIPTEN)
+#else
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/unistd.h>
@@ -8154,9 +8155,10 @@ double
 picosat_time_stamp (void)
 {
   double res = -1;
-#ifndef NGETRUSAGE
   struct rusage u;
   res = 0;
+#if defined (_MSC_VER) || defined (__MINGW32__) || defined(_WIN32) || defined(EMSCRIPTEN)
+#else
   if (!getrusage (RUSAGE_SELF, &u))
     {
       res += u.ru_utime.tv_sec + 1e-6 * u.ru_utime.tv_usec;
@@ -8378,7 +8380,7 @@ picosat_set_more_important_lit (PS * ps, int int_lit)
   v = LIT2VAR (lit);
   r = VAR2RNK (v);
 
-  ABORTIF (r->lessimportant, "can not mark variable more and less important"); 
+  ABORTIF (r->lessimportant, "can not mark variable more and less important");
 
   if (r->moreimportant)
     return;
@@ -8402,7 +8404,7 @@ picosat_set_less_important_lit (PS * ps, int int_lit)
   v = LIT2VAR (lit);
   r = VAR2RNK (v);
 
-  ABORTIF (r->moreimportant, "can not mark variable more and less important"); 
+  ABORTIF (r->moreimportant, "can not mark variable more and less important");
 
   if (r->lessimportant)
     return;
@@ -8415,7 +8417,7 @@ picosat_set_less_important_lit (PS * ps, int int_lit)
 
 #ifndef NADC
 
-unsigned 
+unsigned
 picosat_ado_conflicts (PS * ps)
 {
   check_ready (ps);
@@ -8476,14 +8478,14 @@ picosat_save_original_clauses (PS * ps)
 
 void picosat_set_interrupt (PicoSAT * ps,
                             void * external_state,
-			    int (*interrupted)(void * external_state)) 
+			    int (*interrupted)(void * external_state))
 {
   ps->interrupt.state = external_state;
   ps->interrupt.function = interrupted;
 }
 
 int
-picosat_deref_partial (PS * ps, int int_lit) 
+picosat_deref_partial (PS * ps, int int_lit)
 {
   check_ready (ps);
   check_sat_state (ps);

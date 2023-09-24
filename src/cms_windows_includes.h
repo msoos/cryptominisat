@@ -79,7 +79,6 @@ static inline int __builtin_ctzll(unsigned long long x) {
 #define isatty(x) _isatty(x)
 #define NO_USE_GZ  1
 #define NO_USE_PIPES 1
-#define NGETRUSAGE 1
 #define NALLSIGNALS 1
 
 #endif
