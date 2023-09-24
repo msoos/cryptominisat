@@ -1,8 +1,9 @@
 name: Python package build
 
-on: [push, pull_request]
-#  release:
-#    types: [created]
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   deploy:
