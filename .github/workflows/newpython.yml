@@ -1,6 +1,9 @@
 name: better-python-build
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   build_wheels:
