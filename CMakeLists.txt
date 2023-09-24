@@ -722,11 +722,6 @@ endforeach()
 message(STATUS "All defines at startup: ${COMPILE_DEFINES}")
 
 add_subdirectory(src cmsat5-src)
-if(EXISTS "${PROJECT_SOURCE_DIR}/utils/drat-trim/drat-trim.cpp")
-    add_subdirectory(${PROJECT_SOURCE_DIR}/utils/drat-trim utils/drat-trim)
-else()
-    message(STATUS "GIT Subprojects not initialized, not building drat-trim")
-endif()
 
 # -----------------------------------------------------------------------------
 # Add uninstall target for makefiles

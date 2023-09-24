@@ -146,7 +146,6 @@ if [ "$SKIP" != "1" ]; then
         /usr/bin/time -v ../frat-rs elab "$FNAMEOUT.frat"
         /usr/bin/time -v ../frat-rs refrat "$FNAMEOUT.frat.temp" correct
         set -e
-        #/usr/bin/time -v $NOBUF ../utils/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -o "$FNAMEOUT.usedCls" -i -O 4 -m | tee drat.out-newO4
 
 
     else

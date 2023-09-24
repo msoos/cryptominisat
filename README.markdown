@@ -456,18 +456,6 @@ sqlite> select count() from sum_cl_use;
 94507
 ```
 
-The CNFs go through the following set of transformations to become the generated code:
-
-1. `./cryptominisat` dumps the data. Options: `--cldatadumpratio 0.08`, `--gluecut0 100`
-2. `./drat-trim`
-3. `./add_lemma_ind.py`
-4. `./clean_update_data.py`
-5. `./rem_data.py` Options: `--fair`, etc.
-6. `./vardata_gen_pandas.py`. Options: `--limit`
-7. `./gen_pandas.py` Options: `--limit`, `--confs`
-8. `./concat_pandas.py`
-9. `./predict.py` Options: `--forest/--tree/etc`, `--depth/--split/etc`
-
 Configuring a build for a minimal binary&library
 -----
 The following configures the system to build a bare minimal binary&library. It needs a compiler, but nothing much else:
