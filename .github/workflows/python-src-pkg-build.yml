@@ -1,9 +1,9 @@
-name: Python package build
+name: Python source package build
 
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   deploy:

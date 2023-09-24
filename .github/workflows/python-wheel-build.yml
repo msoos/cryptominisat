@@ -1,9 +1,9 @@
-name: better-python-build
+name: python wheel package build
 
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   build_wheels:
