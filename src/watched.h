@@ -103,7 +103,7 @@ class Watched {
             , type(static_cast<int>(WatchType::watch_binary_t))
             , data2((int32_t)red | ID<<2) //marking is 2nd bit
         {
-            assert(ID < 1LL<< (EFFECTIVELY_USEABLE_BITS-2));
+            assert(ID < 1LL<< (EFFECTIVELY_USEABLE_BITS-2) && "Please compile with -DLARGEMEM");
         }
 
         /**
