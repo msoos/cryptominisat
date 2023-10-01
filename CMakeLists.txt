@@ -489,6 +489,7 @@ endif()
 
 if (STATS)
     find_package (SQLITE3 REQUIRED)
+    find_package(louvain_communities CONFIG REQUIRED)
     MESSAGE(STATUS "OK, Found SQLITE3!")
     include_directories(${SQLITE3_INCLUDE_DIR})
     add_definitions( -DUSE_SQLITE3 )

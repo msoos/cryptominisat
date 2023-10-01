@@ -470,7 +470,7 @@ The following arguments to cmake configure the generated build artifacts. To use
 
 - `-DSTATICCOMPILE=<ON/OFF>` -- statically linked library and binary. You must build&link `BreakID` with the same `DSTATICCOMPILE=<ON/OFF>` setting as well. You can get the BreakID library from [our GitHub repository](https://github.com/meelgroup/breakid)
 - `-DUSE_GAUSS=<ON/OFF>` -- Gauss-Jordan Elimination support. On by default.
-- `-DSTATS=<ON/OFF>` -- advanced statistics (slower)
+- `-DSTATS=<ON/OFF>` -- advanced statistics (slower). Needs [louvain communities](https://github.com/meelgroup/louvain-community) installed.
 - `-DENABLE_TESTING=<ON/OFF>` -- test suite support
 - `-DMIT=<ON/OFF>` -- MIT licensed components only
 - `-DNOMPI=<ON/OFF>` -- without MPI support
