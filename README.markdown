@@ -407,6 +407,15 @@ sudo apt-get install libboost-program-options-dev libboost-serialization-dev
 sudo apt-get install python3-pip
 sudo pip3 install sklearn pandas numpy lit matplotlib
 
+# build and install Louvain Communities
+git clone https://github.com/meelgroup/louvain-community
+cd louvain-community
+mkdir build && cd build
+cmake ..
+make -j10
+sudo make install
+cd ../..
+
 # build and install XGBoost
 git clone https://github.com/dmlc/xgboost
 cd xgboost
