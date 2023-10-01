@@ -29,6 +29,8 @@ THE SOFTWARE.
 #include <cmath>
 #include "constants.h"
 
+using std::numeric_limits;
+
 namespace CMSat {
 
 struct SatZillaFeatures
