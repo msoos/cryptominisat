@@ -251,6 +251,11 @@ namespace CMSat {
         void start_getting_small_clauses(uint32_t max_len, uint32_t max_glue, bool red = true, bool bva_vars = false, bool simplified = false);
         bool get_next_small_clause(std::vector<Lit>& ret, bool all_in_one = false); //returns FALSE if no more
         void end_getting_small_clauses();
+
+        void start_getting_clauses(bool red = false, bool simplified = true);
+        bool get_next_clause(std::vector<Lit> &ret);
+        void end_getting_clauses();
+
         uint32_t simplified_nvars();
         std::vector<uint32_t> translate_sampl_set(const std::vector<uint32_t>& sampl_set);
         void get_all_irred_clauses(std::vector<Lit>& ret);
