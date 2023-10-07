@@ -335,6 +335,8 @@ class Solver : public Searcher
         void renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors_ret);
         void testing_set_solver_not_fresh();
         bool full_probe(const bool bin_only);
+
+        int PICOLIT(const Lit x) { return ((((int)(x).var()+1)) * ((x).sign() ? -1:1)); }
         PicoSAT* build_picosat();
         void copy_to_simp(SATSolver* s2);
         bool backbone_simpl(int64_t max_confl, bool cmsgen, bool& finished);
