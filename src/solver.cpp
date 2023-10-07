@@ -222,13 +222,14 @@ bool Solver::add_xor_clause_inter(
 
     ps[0] ^= rhs;
 
-
     if (ps.size() > 2) {
         xor_clauses_updated = true;
         xorclauses.push_back(Xor(ps, rhs, tmp_xor_clash_vars));
         xorclauses_orig.push_back(Xor(ps, rhs, tmp_xor_clash_vars));
         TBUDDY_DO(if (frat->enabled()) xorclauses.back().create_bdd_xor());
         TBUDDY_DO(if (frat->enabled()) xorclauses_orig.back().create_bdd_xor());
+        attach_xor_clause(xorclauses.back());
+    } else {
     }
 
     return ok;
@@ -618,6 +619,11 @@ void Solver::add_bnn_clause_inter(
     ok = propagate<true>().isNULL();
 }
 
+void Solver::attach_xor_clause(const Xor& x, const bool checkAttack) {
+    PropEngine::attach_xor_clause(cl);
+}
+
+
 void Solver::attachClause(
     const Clause& cl
     , const bool checkAttach
@@ -749,14 +755,10 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
     #endif
 
     //Uneliminate vars
-    if (!fresh_solver
-        && (get_num_vars_elimed() > 0 || detached_xor_clauses)
-    ) {
+    if (!fresh_solver && (get_num_vars_elimed() > 0)) {
         for (const Lit lit: ps) {
-            if (detached_xor_clauses
-                && varData[lit.var()].removed == Removed::clashed
-            ) {
-                if (!fully_undo_xor_detach()) return false;
+            if (varData[lit.var()].removed == Removed::clashed) {
+                if (clear_gauss_matrices()) return false;
                 assert(varData[lit.var()].removed == Removed::none);
             }
 
@@ -1302,10 +1304,6 @@ void Solver::extend_solution(const bool only_sampling_solution)
         }
     }
     #endif
-
-    if (detached_xor_clauses && !only_sampling_solution) {
-        extend_model_to_detached_xors();
-    }
 
     const double myTime = cpuTime();
     updateArrayRev(model, interToOuterMain);
@@ -2849,17 +2847,10 @@ void Solver::print_watch_list(watch_subarray_const ws, const Lit lit) const
     ) {
         if (it->isClause()) {
             Clause* cl = cl_alloc.ptr(it->get_offset());
-            cout
-            << "-> Clause: " << *cl
-            << " red: " << cl->red()
-            << " xor: " << cl->used_in_xor()
-            << " full-xor: " << cl->used_in_xor_full()
-            << " xor-detached: " << cl->_xor_is_detached;
+            cout << "-> Clause: " << *cl << " red: " << cl->red();
         }
         if (it->isBin()) {
-            cout
-            << "-> BIN: " << lit << ", " << it->lit2()
-            << " red: " << it->red();
+            cout << "-> BIN: " << lit << ", " << it->lit2() << " red: " << it->red();
         }
         cout << endl;
     }
@@ -3830,279 +3821,6 @@ void Solver::stats_del_cl(ClOffset offs)
 }
 #endif
 
-void Solver::detach_xor_clauses(
-    const set<uint32_t>& clash_vars_unused)
-{
-    detached_xor_clauses = true;
-    double myTime = cpuTime();
-
-    ///////////////
-    //Set up seen
-    //  '1' means it's part of an UNUSED xor
-    //  '2' means it's a CLASH of a USED xor
-    ///////////////
-    for(const auto& x: xorclauses_unused) {
-        for(const uint32_t v: x) {
-            seen[v] = 1;
-        }
-    }
-    for(const auto& v: clash_vars_unused) {
-        seen[v] = 1;
-    }
-    for(uint32_t v: removed_xorclauses_clash_vars) {
-        seen[v] = 1;
-    }
-
-    //Clash on USED xor
-    for(auto& x: xorclauses) {
-        x.detached = true;
-        for(const uint32_t v: x.clash_vars) {
-            assert(seen[v] == 0);
-            seen[v] = 2;
-        }
-    }
-
-    ///////////////
-    //Go through watchlist
-    ///////////////
-    uint32_t detached = 0;
-    uint32_t deleted = 0;
-    vector<ClOffset> delayed_clause_free;
-    for(uint32_t x = 0; x < nVars()*2; x++) {
-        Lit l = Lit::toLit(x);
-        uint32_t j = 0;
-        for(uint32_t i = 0; i < watches[l].size(); i++) {
-            const Watched& w = watches[l][i];
-            assert(!w.isIdx());
-            if (w.isBin()) {
-                if (!w.red()) {
-                    watches[l][j++] = w;
-                    continue;
-                } else {
-                    //Redundant. let's check if it deals with clash vars of
-                    //           XORs that will be removed.
-                    if (seen[l.var()] == 2 || seen[w.lit2().var()] == 2) {
-                        if (l < w.lit2()) {
-                            //Only once, hence the check
-                            binTri.redBins--;
-                            deleted++;
-                        }
-                        continue;
-                    } else {
-                        watches[l][j++] = w;
-                        continue;
-                    }
-                }
-            }
-
-            if (w.isBNN()) {
-                watches[l][j++] = w;
-                continue;
-            }
-
-            assert(w.isClause());
-            ClOffset offs = w.get_offset();
-            Clause* cl = cl_alloc.ptr(offs);
-            assert(!cl->freed());
-            if (cl->getRemoved() || cl->_xor_is_detached) {
-                //We have already went through this clause, and set it to be removed/detached
-                continue;
-            }
-
-            bool torem = false;
-            bool todel = false;
-            if (cl->used_in_xor() && cl->used_in_xor_full()) {
-                torem = true;
-
-                //Except if if it's part of an unused XOR. Then skip
-                //TODO: we should use the same check as in no_irred
-                for(const Lit lit: *cl) {
-                    if (seen[lit.var()] == 1) torem = false;
-                }
-            } else {
-                //It has a USED XOR's clash var, delete
-                //obviously, must be redundant
-                for(const Lit lit: *cl) {
-                    if (seen[lit.var()] == 2) todel = true;
-                }
-                if (todel) {
-                    //cout << "cl: " << *cl << endl;
-                    assert(cl->red());
-                }
-            }
-
-            //CL can be detached
-            if (torem) {
-                assert(!cl->_xor_is_detached);
-                detached++;
-                detached_xor_repr_cls.push_back(offs);
-                cl->_xor_is_detached = true;
-                //cout << "XOR-detaching cl: " << *cl << endl;
-                continue;
-            }
-
-            //This is a rendundant clause that has to be removed
-            //for things to be correct (it clashes with an XOR)
-            if (todel) {
-                assert(cl->red());
-                cl->setRemoved();
-                litStats.redLits -= cl->size();
-                delayed_clause_free.push_back(offs);
-                deleted++;
-                continue;
-            }
-
-            watches[l][j++] = w;
-        }
-        watches[l].resize(j);
-    }
-
-    if (deleted > 0) {
-        uint32_t j = 0;
-        for(uint32_t i = 0; i < longIrredCls.size(); i++) {
-            ClOffset offs = longIrredCls[i];
-            Clause* cl = cl_alloc.ptr(offs);
-            if (!cl->getRemoved()) {
-                longIrredCls[j++] = offs;
-            }
-        }
-        longIrredCls.resize(j);
-
-        for(auto& cls: longRedCls) {
-            j = 0;
-            for(uint32_t i = 0; i < cls.size(); i++) {
-                ClOffset offs = cls[i];
-                Clause* cl = cl_alloc.ptr(offs);
-                if (!cl->getRemoved()) {
-                    cls[j++] = offs;
-                }
-            }
-            cls.resize(j);
-        }
-
-        for(ClOffset offset: delayed_clause_free) {
-            free_cl(offset);
-        }
-        delayed_clause_free.clear();
-    }
-    assert(delayed_clause_free.empty());
-
-    ///////////////
-    //Reset seen
-    ///////////////
-    for(const auto& x: xorclauses_unused) {
-        for(const uint32_t v: x) {
-            seen[v] = 0;
-        }
-    }
-
-    for(const auto& v: clash_vars_unused) {
-        seen[v] = 0;
-    }
-
-    for(uint32_t v: removed_xorclauses_clash_vars) {
-        seen[v] = 0;
-    }
-
-    for(const auto& x: xorclauses) {
-        for(const uint32_t v: x.clash_vars) {
-            seen[v] = 0;
-
-            if (!watches[Lit(v, false)].empty()) {
-                print_watch_list(watches[Lit(v, false)], Lit(v, false));
-            }
-            if (!watches[Lit(v, true)].empty()) {
-                print_watch_list(watches[Lit(v, true)], Lit(v, true));
-            }
-            assert(watches[Lit(v, false)].empty());
-            assert(watches[Lit(v, true)].empty());
-        }
-    }
-
-    if (conf.verbosity >= 1 || conf.xor_detach_verb) {
-        cout
-        << "c [gauss] XOR-encoding clauses"
-        << " detached: " << detached
-        << " deleted: " << deleted
-        << conf.print_times(cpuTime() - myTime)
-        << endl;
-    }
-}
-
-bool Solver::fully_undo_xor_detach()
-{
-    assert(okay());
-    assert(decisionLevel() == 0);
-
-    if (!detached_xor_clauses) {
-        assert(detached_xor_repr_cls.empty());
-        if (conf.verbosity >= 1 || conf.xor_detach_verb) {
-            cout
-            << "c [gauss] XOR-encoding clauses are not detached, so no need to reattach them."
-            << endl;
-        }
-        return okay();
-    }
-    set_clash_decision_vars();
-    rebuildOrderHeap();
-
-    double myTime = cpuTime();
-    uint32_t reattached = 0;
-    uint32_t removed = 0;
-    for(const auto& offs: detached_xor_repr_cls) {
-        Clause* cl = cl_alloc.ptr(offs);
-        assert(cl->_xor_is_detached);
-        assert(cl->used_in_xor() && cl->used_in_xor_full());
-        assert(!cl->red());
-
-        cl->_xor_is_detached = false;
-        const uint32_t origSize = cl->size();
-
-        reattached++;
-        const bool rem_or_unsat = clauseCleaner->full_clean(*cl);
-        if (rem_or_unsat) {
-            removed++;
-            litStats.irredLits -= origSize;
-            cl->setRemoved();
-            if (!okay()) break;
-            continue;
-        } else {
-            litStats.irredLits -= origSize - cl->size();
-            assert(cl->size() > 2);
-            PropEngine::attachClause(*cl, true);
-        }
-    }
-    detached_xor_repr_cls.clear();
-
-    if (removed > 0) {
-        uint32_t j = 0;
-        for(uint32_t i = 0; i < longIrredCls.size(); i ++) {
-            ClOffset offs = longIrredCls[i];
-            Clause* cl = cl_alloc.ptr(offs);
-            if (cl->getRemoved()) {
-                cl_alloc.clauseFree(offs);
-            } else {
-                longIrredCls[j++] = offs;
-            }
-        }
-        longIrredCls.resize(j);
-    }
-
-    for(auto& x: xorclauses) x.detached = false;
-
-    detached_xor_clauses = false;
-    if (okay()) ok = propagate<false>().isNULL();
-
-    if (conf.verbosity >= 1 || conf.xor_detach_verb) {
-        cout
-        << "c [gauss] XOR-encoding clauses reattached: " << reattached
-        << conf.print_times(cpuTime() - myTime)
-        << endl;
-    }
-
-    return okay();
-}
-
 void Solver::unset_clash_decision_vars(const vector<Xor>& xors)
 {
     vector<uint32_t> clash_vars;
@@ -4130,104 +3848,6 @@ void Solver::set_clash_decision_vars()
     }
 }
 
-//TODO: this is horrifically SLOW!!!
-void Solver::extend_model_to_detached_xors()
-{
-    double myTime = cpuTime();
-
-    uint32_t set_var = 0;
-    uint32_t more_vars_unset = 1;
-    uint32_t iter = 0;
-    while (more_vars_unset > 0) {
-        more_vars_unset = 0;
-        iter++;
-        for(const auto& offs: detached_xor_repr_cls) {
-            const Clause* cl = cl_alloc.ptr(offs);
-            assert(cl->_xor_is_detached);
-            uint32_t unset_vars = 0;
-            Lit unset = lit_Undef;
-            for(Lit l: *cl) {
-                if (model_value(l) == l_True) {
-                    unset_vars = 0;
-                    break;
-                }
-                if (model_value(l) == l_Undef) {
-                    unset = l;
-                    unset_vars++;
-                }
-            }
-            if (unset_vars == 1) {
-                model[unset.var()] = unset.sign() ? l_False : l_True;
-                set_var++;
-            }
-            if (unset_vars > 1) {
-                more_vars_unset++;
-            }
-        }
-    }
-
-    #ifdef SLOW_DEBUG
-    for(const auto& offs: detached_xor_repr_cls) {
-        const Clause* cl = cl_alloc.ptr(offs);
-        bool val = false;
-        uint32_t undef_present = false;
-        for(const auto l: *cl) {
-            if (model_value(l) == l_Undef) {
-                undef_present++;
-            }
-            if (model_value(l) == l_True) {
-                val = true;
-                break;
-            }
-        }
-        if (!val) {
-            cout << "ERROR: XOR-Detached clause not satisfied: " << *cl << " -- undef present: " << undef_present << endl;
-            assert(false);
-        }
-    }
-
-    for(const auto& x: xorclauses) {
-        bool val = !x.rhs;
-        for(uint32_t v: x) {
-            if (model_value(v) == l_Undef) {
-                cout << "ERROR: variable " << v+1 << " in XOR: " << x << " is UNDEF!" << endl;
-                assert(false);
-            }
-            assert(model_value(v) != l_Undef);
-            val ^= model_value(v) == l_True;
-        }
-        if (!val) {
-            cout << "ERROR:Value of following XOR is not TRUE: " << x << endl;
-            assert(false);
-        }
-    }
-    #endif
-
-    //Set the rest randomly
-    uint32_t random_set = 0;
-    for(const auto& offs: detached_xor_repr_cls) {
-        const Clause* cl = cl_alloc.ptr(offs);
-        assert(cl->_xor_is_detached);
-        for(Lit l: *cl) {
-            if (model_value(l) == l_Undef) {
-                model[l.var()] = l_False;
-                random_set++;
-            }
-        }
-    }
-
-    if (conf.verbosity >= 1) {
-        cout
-        << "c [gauss] extended XOR clash vars."
-        << " set: " << set_var
-        << " double-undef: " << more_vars_unset
-        << " iters: " << iter
-        << " random_set: " << random_set
-        << conf.print_times(cpuTime() - myTime)
-        << endl;
-    }
-}
-
 bool Solver::no_irred_nonxor_contains_clash_vars()
 {
     bool ret = true;
@@ -4250,7 +3870,7 @@ bool Solver::no_irred_nonxor_contains_clash_vars()
             //assert(seen[v] != 2); -- actually, it could be (weird, but possible)
             //in these cases, we should treat it as a clash var (more safe)
             seen[v] = 1;
-//                 cout << "c clash var: " << v + 1 << endl;
+            /* cout << "c clash var: " << v + 1 << endl; */
         }
     }
 
@@ -4699,7 +4319,6 @@ void Solver::copy_to_simp(SATSolver* s2)
     }
     end_getting_small_clauses();
 }
-
 
 #ifdef STATS_NEEDED
 void Solver::dump_clauses_at_finishup_as_last()

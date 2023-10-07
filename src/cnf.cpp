@@ -434,19 +434,6 @@ bool CNF::normClauseIsAttached(const ClOffset offset) const
     attached &= findWCl(watches[cl[0]], offset);
     attached &= findWCl(watches[cl[1]], offset);
 
-    if (detached_xor_clauses && cl._xor_is_detached) {
-        //We expect this NOT to be attached, actually.
-        if (attached) {
-            cout
-            << "Failed. XOR-representing clause is NOT supposed to be attached"
-            << " clause: " << cl
-            << " _xor_is_detached: " << cl._xor_is_detached
-            << " detached_xor_clauses: " << detached_xor_clauses
-            << endl;
-        }
-        return !attached;
-    }
-
     bool satcl = satisfied(cl);
     uint32_t num_false2 = 0;
     num_false2 += value(cl[0]) == l_False;
@@ -526,37 +513,21 @@ void CNF::find_all_attach() const
     }
 
     find_all_attach(longIrredCls);
-    for(auto& lredcls: longRedCls) {
-        find_all_attach(lredcls);
-    }
+    for(auto& lredcls: longRedCls) find_all_attach(lredcls);
 }
 
 void CNF::find_all_attach(const vector<ClOffset>& cs) const
 {
-    for(vector<ClOffset>::const_iterator
-        it = cs.begin(), end = cs.end()
-        ; it != end
-        ; ++it
-    ) {
+    for(vector<ClOffset>::const_iterator it = cs.begin(), end = cs.end() ; it != end ; ++it) {
         Clause& cl = *cl_alloc.ptr(*it);
-        bool should_be_attached = true;
-        if (detached_xor_clauses && cl._xor_is_detached) {
-            should_be_attached = false;
-        }
         bool ret = findWCl(watches[cl[0]], *it);
-        if (ret != should_be_attached) {
+        if (!ret) {
             cout
             << "Clause " << cl
             << " (red: " << cl.red()
-            << " used in xor: " << cl.used_in_xor()
-            << " detached xor: " << cl._xor_is_detached
-            << " should be attached: " << should_be_attached
             << " )";
-            if (ret) {
-                cout << " doesn't have its 1st watch attached!";
-            } else {
-                cout << " HAS its 1st watch attached (but it should NOT)!";
-            }
+            if (ret) { cout << " doesn't have its 1st watch attached!"; }
+            else { cout << " HAS its 1st watch attached (but it should NOT)!"; }
             cout << endl;
 
             assert(false);
@@ -564,19 +535,13 @@ void CNF::find_all_attach(const vector<ClOffset>& cs) const
         }
 
         ret = findWCl(watches[cl[1]], *it);
-        if (ret != should_be_attached) {
+        if (!ret) {
             cout
             << "Clause " << cl
             << " (red: " << cl.red()
-            << " used in xor: " << cl.used_in_xor()
-            << " detached xor: " << cl._xor_is_detached
-            << " should be attached: " << should_be_attached
             << " )";
-            if (ret) {
-                cout << " doesn't have its 2nd watch attached!";
-            } else {
-                cout << " HAS its 2nd watch attached (but it should NOT)!";
-            }
+            if (ret) { cout << " doesn't have its 2nd watch attached!"; }
+            else { cout << " HAS its 2nd watch attached (but it should NOT)!"; }
             cout << endl;
 
             assert(false);
@@ -691,8 +656,6 @@ void CNF::print_watchlist_stats() const
     uint64_t total_size_lits = 0;
     uint64_t total_cls = 0;
     uint64_t bin_cls = 0;
-    uint64_t used_in_xor = 0;
-    uint64_t used_in_xor_full = 0;
     for(auto const& ws: watches) {
         for(auto const& w: ws) {
             total_size+=1;
@@ -703,8 +666,6 @@ void CNF::print_watchlist_stats() const
             } else if (w.isClause()) {
                 Clause* cl = cl_alloc.ptr(w.get_offset());
                 assert(!cl->getRemoved());
-                used_in_xor+=cl->used_in_xor();
-                used_in_xor_full+=cl->used_in_xor_full();
                 total_size_lits+=cl->size();
                 total_cls++;
             }
@@ -714,8 +675,6 @@ void CNF::print_watchlist_stats() const
     cout << " Avg cl size: " << float_div(total_size_lits, total_cls);
     cout << " Cls: " << total_cls;
     cout << " Total WS size: " << total_size;
-    cout << " used_in_xor: " << used_in_xor;
-    cout << " used_in_xor_full: " << used_in_xor_full;
     cout << " bin cl: " << bin_cls;
     cout << endl;
 }

@@ -147,7 +147,6 @@ namespace CMSat {
         void set_distill(int val);
         void reset_vsids();
         void set_no_confl_needed(); //assumptions-based conflict will NOT be calculated for next solve run
-        void set_xor_detach(bool val);
         void set_simplify(const bool simp);
         void set_find_xors(bool do_find_xors);
         void set_min_bva_gain(uint32_t min_bva_gain);

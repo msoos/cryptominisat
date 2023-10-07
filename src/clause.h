@@ -376,9 +376,6 @@ public:
     uint32_t is_ternary_resolved:1;
     uint32_t occurLinked:1;
     uint32_t must_recalc_abst:1;
-    uint32_t _used_in_xor:1;
-    uint32_t _used_in_xor_full:1;
-    uint32_t _xor_is_detached:1;
     uint32_t _gauss_temp_cl:1; ///Used ONLY by Gaussian elimination to incicate where a proagation is coming from
     uint32_t reloced:1;
     uint32_t disabled:1;
@@ -415,9 +412,6 @@ public:
         distilled = 0;
         is_ternary_resolved = false;
         must_recalc_abst = true;
-        _used_in_xor = false;
-        _used_in_xor_full = false;
-        _xor_is_detached = false;
         reloced = false;
         disabled = false;
         tried_to_remove = 0;
@@ -430,31 +424,7 @@ public:
     typedef Lit* iterator;
     typedef const Lit* const_iterator;
 
-    uint32_t size() const
-    {
-        return mySize;
-    }
-
-    bool used_in_xor() const
-    {
-        return _used_in_xor;
-    }
-
-    void set_used_in_xor(const bool val)
-    {
-        _used_in_xor = val;
-    }
-
-    bool used_in_xor_full() const
-    {
-        return _used_in_xor_full;
-    }
-
-    void set_used_in_xor_full(const bool val)
-    {
-        _used_in_xor_full = val;
-    }
-
+    uint32_t size() const { return mySize; }
     void shrink(const uint32_t i)
     {
         assert(i <= size());

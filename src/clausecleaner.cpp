@@ -266,11 +266,6 @@ void ClauseCleaner::clean_clauses_inter(vector<ClOffset>& cs)
 
 bool ClauseCleaner::clean_clause(Clause& cl)
 {
-    //Don't clean if detached. We'll deal with it during re-attach.
-    if (cl._xor_is_detached) {
-        return false;
-    }
-
     assert(cl.size() > 2);
     (*solver->frat) << deldelay << cl << fin;
     solver->chain.clear();
@@ -515,7 +510,6 @@ bool ClauseCleaner::clean_all_xor_clauses()
     while(last_trail != solver->trail_size()) {
         last_trail = solver->trail_size();
         if (!clean_xor_clauses(solver->xorclauses)) return false;
-        if (!clean_xor_clauses(solver->xorclauses_unused)) return false;
         if (!clean_xor_clauses(solver->xorclauses_orig)) return false;
         solver->ok = solver->propagate<false>().isNULL();
     }

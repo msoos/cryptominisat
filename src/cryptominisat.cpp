@@ -609,7 +609,6 @@ DLL_PUBLIC void SATSolver::set_allow_otf_gauss()
         s.conf.gaussconf.max_matrix_columns = 10000000;
         s.conf.gaussconf.max_matrix_rows = 10000;
         s.conf.gaussconf.autodisable = false;
-        s.conf.xor_detach_reattach = true;
         s.conf.allow_elim_xor_vars = false;
     }
 }
@@ -1419,7 +1418,6 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
         conf.gaussconf.max_matrix_rows = 10000;
         conf.gaussconf.max_num_matrices = 2;
         conf.gaussconf.autodisable = false;
-        conf.xor_detach_reattach = true;
         conf.global_multiplier_multiplier_max = 1;
         conf.orig_global_timeout_multiplier = 1.5;
         conf.min_bva_gain = 1;
@@ -1698,14 +1696,6 @@ DLL_PUBLIC void SATSolver::set_full_bve_iter_ratio(double val)
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
         s.conf.varElimRatioPerIter = val;
-    }
-}
-
-DLL_PUBLIC void SATSolver::set_xor_detach(bool val)
-{
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
-        s.conf.xor_detach_reattach = val;
     }
 }
 

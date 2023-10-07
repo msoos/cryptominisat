@@ -189,14 +189,12 @@ public:
     //       we can actually encounter UNSAT. Since it encodes information that's nowhere else.
     vector<Xor> xorclauses; // working set. Should be empty most of the time.
     vector<Xor> xorclauses_orig; // used to re-generate the matrix
-    vector<Xor> xorclauses_unused; // used to help knowing when can we detach. Only makes sense when matrixes are set up.
 
     vector<BNN*> bnns;
     vector<vector<Lit>> bnn_reasons;
     vector<Lit> bnn_confl_reason;
     vector<uint32_t> bnn_reasons_empty_slots;
     vector<uint32_t> removed_xorclauses_clash_vars;
-    bool detached_xor_clauses = false;
     bool xor_clauses_updated = false;
     BinTriStats binTri;
     LitStats litStats;

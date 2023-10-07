@@ -408,7 +408,6 @@ class DLL_PUBLIC SolverConf
         uint64_t xor_finder_time_limitM;
         int      allow_elim_xor_vars;
         unsigned xor_var_per_cut;
-        int      force_preserve_xors;
 
         //Cardinality
         int      doFindCard;
@@ -492,8 +491,6 @@ class DLL_PUBLIC SolverConf
 
         //Gauss
         GaussConf gaussconf;
-        bool xor_detach_reattach;
-        bool force_use_all_matrixes;
 
         //Sampling
         const std::vector<uint32_t>* sampling_vars;

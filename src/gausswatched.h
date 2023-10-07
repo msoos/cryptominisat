@@ -27,14 +27,19 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef GAUSSWATCHED_H
-#define GAUSSWATCHED_H
+#pragma once
+#include <cstdint>
+#include <limits>
 
 namespace CMSat {
     struct GaussWatched{
         GaussWatched(uint32_t r ,uint32_t m):
             row_n(r) , matrix_num(m)
         {}
+        bool in_matrix() { return matrix_num == 1000; }
+        static GaussWatched plain_xor(uint32_t at) {
+            return GaussWatched(at, 1000);
+        }
 
         uint32_t row_n;        // watch row
         uint32_t matrix_num;   // watch matrix
@@ -52,5 +57,3 @@ namespace CMSat {
         }
     };
 }
-
-#endif //GAUSSWATCHED_H

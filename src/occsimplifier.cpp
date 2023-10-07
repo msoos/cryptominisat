@@ -2272,7 +2272,6 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 }
                 solver->xorclauses.clear();
                 solver->xorclauses_orig.clear();
-                solver->xorclauses_unused.clear();
 
                 if (solver->conf.do_empty_varelim) eliminate_empty_resolvent_vars();
                 if (solver->conf.do_full_varelim) {
@@ -4202,26 +4201,21 @@ bool OccSimplifier::generate_resolvents(
 
             //Calculate new clause stats
             ClauseStats stats;
-            bool is_xor = false;
             if (it->isBin() && it2->isClause()) {
                 Clause* c = solver->cl_alloc.ptr(it2->get_offset());
                 stats = c->stats;
-                is_xor |= c->used_in_xor();
             } else if (it2->isBin() && it->isClause()) {
                 Clause* c = solver->cl_alloc.ptr(it->get_offset());
                 stats = c->stats;
-                is_xor |= c->used_in_xor();
             } else if (it2->isClause() && it->isClause()) {
                 Clause* c1 = solver->cl_alloc.ptr(it->get_offset());
                 Clause* c2 = solver->cl_alloc.ptr(it2->get_offset());
                 //Neither are redundant, this works.
                 stats = ClauseStats::combineStats(c1->stats, c2->stats);
-                is_xor |= c1->used_in_xor();
-                is_xor |= c2->used_in_xor();
             }
             //must clear marking that has been set due to gate
             //strengthen_dummy_with_bins(false);
-            resolvents.add_resolvent(dummy, stats, is_xor);
+            resolvents.add_resolvent(dummy, stats);
         }
     }
 
@@ -4608,7 +4602,6 @@ bool OccSimplifier::add_varelim_resolvent(
     }
 
     if (newCl != NULL) {
-        newCl->set_used_in_xor(is_xor);
         link_in_clause(*newCl);
         ClOffset offset = solver->cl_alloc.get_offset(newCl);
         clauses.push_back(offset);

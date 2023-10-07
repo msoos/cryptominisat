@@ -94,6 +94,7 @@ inline bool MatrixFinder::belong_same_matrix(const Xor& x)
     return true;
 }
 
+// Returns SAT/UNSAT
 bool MatrixFinder::find_matrices(bool& can_detach)
 {
     assert(solver->decisionLevel() == 0);
@@ -341,29 +342,8 @@ uint32_t MatrixFinder::setMatrixes()
             }
         }
 
-        //if already detached, we MUST use the matrix
-        for(const auto& x: xorsInMatrix[i]) {
-            if (x.detached) {
-                use_matrix = true;
-                if (solver->conf.verbosity) {
-                    cout << "c we MUST use the matrix, it contains a previously detached XOR"
-                    << " -> set usage to YES" << endl;
-                }
-                break;
-            }
-        }
-
-        if (solver->conf.force_use_all_matrixes) {
-            use_matrix = true;
-            if (solver->conf.verbosity) {
-                cout << "c solver configured to force use all matrixes"
-                << " -> set usage to YES" << endl;
-            }
-        }
-
         if (use_matrix) {
-            solver->gmatrices.push_back(
-                new EGaussian(solver, realMatrixNum, xorsInMatrix[i]));
+            solver->gmatrices.push_back(new EGaussian(solver, realMatrixNum, xorsInMatrix[i]));
             solver->gqueuedata.resize(solver->gmatrices.size());
 
             if (solver->conf.verbosity) {
@@ -393,14 +373,9 @@ uint32_t MatrixFinder::setMatrixes()
                     ((m.rows < solver->conf.gaussconf.min_matrix_rows &&
                     solver->conf.verbosity < 2) ||
                     (unused_matrix_printed >= 10))
-                )
-            {
-                continue;
-            }
+                ) continue;
 
-            if (!use_matrix) {
-                unused_matrix_printed++;
-            }
+            if (!use_matrix) unused_matrix_printed++;
 
             cout << std::setw(7) << m.rows << " x"
             << std::setw(5) << reverseTable[i].size()

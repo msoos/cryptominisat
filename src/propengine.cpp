@@ -123,6 +123,23 @@ void PropEngine::attachClause(
     watches[c[1]].push(Watched(offset, blocked_lit));
 }
 
+void PropEngine::attach_xor_clause(uint32_t at) {
+    Xor& x = xorclauses[at];
+    assert(x.size() > 2);
+
+    #ifdef DEBUG_ATTACH
+    for (uint32_t i = 0; i < c.size(); i++) {
+        assert(varData[c[i].var()].removed == Removed::none);
+    }
+    #endif //DEBUG_ATTACH
+
+    auto w = GaussWatched::plain_xor(at);
+    gwatches[x[0]].push(w);
+    gwatches[x[1]].push(w);
+    x.watched[0] = 0;
+    x.watched[1] = 1;
+}
+
 /**
 @brief Detaches a (potentially) modified clause
 
@@ -145,7 +162,7 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
     VERBOSE_PRINT("PropEngine::gauss_jordan_elim called, declev: "
         << decisionLevel() << " lit to prop: " << p);
 
-    if (gmatrices.empty()) return PropBy();
+    if (gmatrices.empty() && xorclauses.empty()) return PropBy();
     for(uint32_t i = 0; i < gqueuedata.size(); i++) {
         if (gqueuedata[i].disabled || !gmatrices[i]->is_initialized()) continue;
         gqueuedata[i].reset();
@@ -159,10 +176,43 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
     GaussWatched* j = i;
     const GaussWatched* end = ws.end();
 
+    PropBy confl;
     for (; i != end; i++) {
-        if (gqueuedata[i->matrix_num].disabled || !gmatrices[i->matrix_num]->is_initialized())
-            continue; //remove watch and continue
+        if (!i->in_matrix()) {
+            auto& x = xorclauses[i->row_n];
+            uint32_t which;
+            if (p.var() == x.watched[0]) which = 0;
+            else {which = 1;assert(x.watched[1] == p.var());}
 
+            uint32_t unknown = 0;
+            uint32_t unknown_at = 0;
+            bool rhs = x.rhs;
+            for(uint32_t i2= 0; i2 < x.size(); i2++) {
+                if (solver->value(x[i2]) == l_Undef) {
+                    unknown ++; unknown_at=i2;
+                }
+                else rhs ^= solver->value(x[i2]) == l_True;
+                if (unknown > 1) break;
+            }
+            if (unknown == 1) {
+                enqueue<false>(Lit(x.vars[unknown_at], !rhs), decisionLevel(), PropBy(1000, i->row_n));
+                *j++ = *i;
+            }
+            if (unknown == 0 && !rhs) {
+                confl = PropBy(1000, i->row_n);
+                *j++ = *i;
+                break;
+            }
+            if (unknown >= 2) {
+                if (x[unknown_at] != x.watched[!which]) {
+                    // it's not the other watch. So we can update current
+                    // watch to this
+                    gwatches[x.vars[unknown_at]].push(GaussWatched::plain_xor(i->row_n));
+                }
+            }
+            continue;
+        }
+        if (!gmatrices[i->matrix_num]->is_initialized()) continue; //remove watch and continue
         gqueuedata[i->matrix_num].new_resp_var = numeric_limits<uint32_t>::max();
         gqueuedata[i->matrix_num].new_resp_row = numeric_limits<uint32_t>::max();
         gqueuedata[i->matrix_num].do_eliminate = false;
@@ -181,6 +231,7 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
 
     for (; i != end; i++) *j++ = *i;
     ws.shrink(i-j);
+    if (confl != PropBy()) return confl;
 
     for (size_t g = 0; g < gqueuedata.size(); g++) {
         if (gqueuedata[g].disabled || !gmatrices[g]->is_initialized())
@@ -799,18 +850,13 @@ bool PropEngine::propagate_occur(int64_t* limit_to_decrease)
 
         //Go through each occur
         *limit_to_decrease -= 1;
-        for (const Watched* it = ws.begin(), *end = ws.end()
-            ; it != end
-            ; ++it
-        ) {
-            if (it->isClause()) {
+        for (const auto& w: ws) {
+            if (w.isClause()) {
                 *limit_to_decrease -= 1;
-                if (!prop_long_cl_occur<inprocess>(it->get_offset())) ret = false;
+                if (!prop_long_cl_occur<inprocess>(w.get_offset())) ret = false;
             }
-            if (it->isBin()) {
-                if (!prop_bin_cl_occur<inprocess>(*it)) ret = false;
-            }
-            assert(!it->isBNN());
+            if (w.isBin()) if (!prop_bin_cl_occur<inprocess>(w)) ret = false;
+            assert(!w.isBNN());
         }
     }
     assert(gmatrices.empty());
@@ -838,13 +884,10 @@ inline bool PropEngine::prop_bin_cl_occur(
 }
 
 template<bool inprocess>
-inline bool PropEngine::prop_long_cl_occur(
-    const ClOffset offset)
-{
+inline bool PropEngine::prop_long_cl_occur(const ClOffset offset) {
     const Clause& cl = *cl_alloc.ptr(offset);
     assert(!cl.freed() && "Cannot be already freed in occur");
-    if (cl.getRemoved())
-        return true;
+    if (cl.getRemoved()) return true;
 
     Lit lastUndef = lit_Undef;
     uint32_t numUndef = 0;
@@ -861,19 +904,11 @@ inline bool PropEngine::prop_long_cl_occur(
             lastUndef = lit;
         }
     }
-    if (satcl)
-        return true;
-
-    //Problem is UNSAT
-    if (numUndef == 0) {
-        return false;
-    }
-
-    if (numUndef > 1)
-        return true;
+    if (satcl) return true;
+    if (numUndef == 0) return false; //Problem is UNSAT
+    if (numUndef > 1) return true;
 
     enqueue<inprocess>(lastUndef);
-
     return true;
 }
 

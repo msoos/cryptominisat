@@ -170,12 +170,6 @@ bool SubsumeStrengthen::backw_sub_str_with_long(
         assert(subs[j].ws.isClause());
         ClOffset offset2 = subs[j].ws.get_offset();
         Clause& cl2 = *solver->cl_alloc.ptr(offset2);
-        if (cl2.used_in_xor() &&
-            solver->conf.force_preserve_xors)
-        {
-            continue;
-        }
-
         if (subsLits[j] == lit_Undef) {  //Subsume
             VERBOSE_PRINT("subsumed clause " << cl2);
 
@@ -211,11 +205,6 @@ bool SubsumeStrengthen::backw_sub_str_with_long(
             ret_sub_str.sub++;
         } else { //Strengthen
             VERBOSE_PRINT("strenghtened clause " << cl2);
-            if (cl2.used_in_xor() &&
-                solver->conf.force_preserve_xors)
-            {
-                continue;
-            }
             if (!simplifier->remove_literal(offset2, subsLits[j], true)) {
                 return false;
             }
@@ -865,15 +854,7 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
             if (solver->conf.verbosity >= 6)
                 cout << "subsumed clause " << cl2 << endl;
             #endif
-            if (cl2.used_in_xor() &&
-                solver->conf.force_preserve_xors)
-            {
-                continue;
-            }
-
-            if (!cl2.red()) {
-                ret_sub_str.subsumedIrred = true;
-            }
+            if (!cl2.red()) ret_sub_str.subsumedIrred = true;
 
             simplifier->unlink_clause(offset2, true, false, true);
             ret_sub_str.sub++;
@@ -883,15 +864,7 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
                 cout << "strenghtened clause " << cl2 << endl;
             }
             #endif
-            if (cl2.used_in_xor() &&
-                solver->conf.force_preserve_xors)
-            {
-                //cout << "str-ing used in XOR with bin" << endl;
-                continue;
-            }
-            if (!simplifier->remove_literal(offset2, subsLits[j], true)) {
-                return false;
-            }
+            if (!simplifier->remove_literal(offset2, subsLits[j], true)) return false;
             ret_sub_str.str++;
 
             //If we are waaay over time, just exit
@@ -931,9 +904,6 @@ void SubsumeStrengthen::backw_sub_with_impl(
         ClOffset offset2 = subs[j].ws.get_offset();
         Clause& cl2 = *solver->cl_alloc.ptr(offset2);
         if (subsLits[j] == lit_Undef) {  //Subsume
-            if (cl2.used_in_xor() && solver->conf.force_preserve_xors)
-                continue;
-
             if (!cl2.red()) ret_sub_str.subsumedIrred = true;
             simplifier->unlink_clause(offset2, true, false, true);
             ret_sub_str.sub++;

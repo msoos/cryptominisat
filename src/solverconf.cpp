@@ -353,10 +353,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doGateFind       (false)
         , gatefinder_time_limitM(200)
 
-        //Gauss
-        , xor_detach_reattach(false)
-        , force_use_all_matrixes(false)
-
         //Sampling
         , sampling_vars(NULL)
 

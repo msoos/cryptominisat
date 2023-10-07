@@ -1246,11 +1246,7 @@ void Searcher::check_need_gauss_jordan_disable()
         auto& gqd = gqueuedata[i];
         if (gqd.disabled) continue;
 
-        if (conf.gaussconf.autodisable &&
-            !conf.xor_detach_reattach &&
-            gmatrices[i]->must_disable(gqd)
-        ) gqd.disabled = true;
-
+        if (conf.gaussconf.autodisable && gmatrices[i]->must_disable(gqd)) gqd.disabled = true;
         gqd.reset();
         gmatrices[i]->update_cols_vals_set();
     }
@@ -3586,10 +3582,8 @@ inline bool Searcher::check_order_heap_sanity()
     return true;
 }
 
-bool Searcher::clear_gauss_matrices(const bool destruct)
-{
+bool Searcher::clear_gauss_matrices(const bool destruct) {
     if (!destruct) {
-        if (!solver->fully_undo_xor_detach()) return false;
         TBUDDY_DO(if (frat->enabled()) for(auto& g: gmatrices) g->finalize_frat());
     }
 
@@ -3612,9 +3606,7 @@ bool Searcher::clear_gauss_matrices(const bool destruct)
     gmatrices.clear();
     gqueuedata.clear();
     TBUDDY_DO(free_bdds(xorclauses));
-    TBUDDY_DO(free_bdds(xorclauses_unused));
     xorclauses.clear(); // we rely on xorclauses_orig now
-    xorclauses_unused.clear();
     if (!destruct) {
         for(const auto& x: xorclauses_orig) {
             xorclauses.push_back(x);
@@ -3625,6 +3617,7 @@ bool Searcher::clear_gauss_matrices(const bool destruct)
             #endif
         }
     }
+    attach_xor_clauses(xorclauses);
 
     return okay();
 }

@@ -273,7 +273,6 @@ bool VarReplacer::perform_replace()
     //Replace XORs
     if (!replace_xor_clauses(solver->xorclauses)) goto end;
     if (!replace_xor_clauses(solver->xorclauses_orig)) goto end;
-    if (!replace_xor_clauses(solver->xorclauses_unused)) goto end;
 
     assert(solver->gmatrices.empty() && "Cannot replace vars inside GJ elim");
 

@@ -303,13 +303,8 @@ class Solver : public Searcher
 
         // Gauss-Jordan
         bool init_all_matrices();
-        void detach_xor_clauses(
-            const set<uint32_t>& clash_vars_unused
-        );
-        bool fully_undo_xor_detach();
         bool no_irred_nonxor_contains_clash_vars();
         bool assump_contains_xor_clash();
-        void extend_model_to_detached_xors();
         void unset_clash_decision_vars(const vector<Xor>& xors);
         void set_clash_decision_vars();
         bool find_and_init_all_matrices();

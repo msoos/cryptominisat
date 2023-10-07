@@ -156,20 +156,15 @@ void XorFinder::find_xors()
         if (cl->getRemoved() || cl->freed()) {
             continue;
         }
-
-        cl->set_used_in_xor(false);
-        cl->set_used_in_xor_full(false);
     }
 
     if (solver->frat->enabled()) {
         solver->frat->flush();
         TBUDDY_DO(for (auto const& x: solver->xorclauses) delete x.bdd);
-        TBUDDY_DO(for (auto const& x: solver->xorclauses_unused) delete x.bdd);
         TBUDDY_DO(for (auto const& x: solver->xorclauses_orig) delete x.bdd);
     }
     solver->xorclauses.clear();
     solver->xorclauses_orig.clear();
-    solver->xorclauses_unused.clear();
 
     double myTime = cpuTime();
     const int64_t orig_xor_find_time_limit =
@@ -291,8 +286,6 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
 
             Clause* cl = solver->cl_alloc.ptr(offs);
             assert(!cl->getRemoved());
-            cl->set_used_in_xor(true);
-            cl->set_used_in_xor_full(fully_used);
         }
     }
     poss_xor.clear_seen(occcnt);

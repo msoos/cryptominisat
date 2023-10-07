@@ -557,34 +557,22 @@ private:
     bool        occ_based_lit_rem(uint32_t var, uint32_t& removed);
     bool        all_occ_based_lit_rem();
 
-    struct ResolventData {
-        ResolventData()
-        {}
-
-        ResolventData(const ClauseStats& cls, const bool _is_xor) :
-            stats(cls),
-            is_xor(_is_xor)
-        {}
-
-        ClauseStats stats;
-        bool is_xor;
-    };
 
     struct Resolvents {
         uint32_t at = 0;
         vector<vector<Lit>> resolvents_lits;
-        vector<ResolventData> resolvents_stats;
+        vector<ClauseStats> resolvents_stats;
         void clear() {
             at = 0;
         }
-        void add_resolvent(const vector<Lit>& res, const ClauseStats& stats, bool is_xor) {
+        void add_resolvent(const vector<Lit>& res, const ClauseStats& stats) {
             if (resolvents_lits.size() < at+1) {
                 resolvents_lits.resize(at+1);
                 resolvents_stats.resize(at+1);
             }
 
             resolvents_lits[at] = res;
-            resolvents_stats[at] = ResolventData(stats, is_xor);
+            resolvents_stats[at] = stats;
             at++;
         }
         vector<Lit>& back_lits() {
@@ -593,11 +581,7 @@ private:
         }
         const ClauseStats& back_stats() const {
             assert(at > 0);
-            return resolvents_stats[at-1].stats;
-        }
-        bool back_xor() const {
-            assert(at > 0);
-            return resolvents_stats[at-1].is_xor;
+            return resolvents_stats[at-1];
         }
         void pop() {
             at--;

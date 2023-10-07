@@ -191,8 +191,8 @@ public:
 
     bool rhs = false;
     vector<uint32_t> clash_vars;
-    bool detached = false;
     vector<uint32_t> vars;
+    uint32_t watched[2];
     #ifdef USE_TBUDDY
     tbdd::xor_constraint* bdd = NULL;
     #endif

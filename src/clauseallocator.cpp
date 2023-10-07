@@ -348,8 +348,6 @@ void ClauseAllocator::update_offsets(
     for(ClOffset& offs: offsets) {
         Clause* old = ptr(offs);
         if (!old->reloced) {
-            assert(old->used_in_xor() && old->used_in_xor_full());
-            assert(old->_xor_is_detached);
             offs = move_cl(newDataStart, new_ptr, old);
         } else {
             offs = (*old)[0].toInt();

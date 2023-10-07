@@ -208,8 +208,7 @@ public:
         return trail[at].lit;
     }
 
-    template<bool inprocess>
-    bool propagate_occur(int64_t* limit_to_decrease);
+    template<bool inprocess> bool propagate_occur(int64_t* limit_to_decrease);
     void reverse_prop(const Lit l);
     void reverse_one_bnn(uint32_t idx, BNNPropType t);
     PropStats propStats;
@@ -292,6 +291,7 @@ protected:
         const Clause& c
         , const bool checkAttach = true
     );
+    void attach_xor_clause(uint32_t at);
 
     void detach_bin_clause(
         Lit lit1
