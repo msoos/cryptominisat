@@ -44,8 +44,8 @@ class MatrixFinder {
         MatrixFinder(Solver* solver);
 
         //NOTE "simplify_xors" should always be true except during testing
-        bool find_matrices(bool& can_detach);
-        set<uint32_t> clash_vars_unused;
+        bool find_matrices(bool& matrix_created);
+        set<uint32_t> clash_vars;
 
     private:
         uint32_t setMatrixes();

@@ -230,8 +230,6 @@ class Solver : public Searcher
             #endif
         );
         void attach_bnn(const uint32_t bnn_idx);
-        lbool bnn_eval(BNN& bnn);
-        bool bnn_to_cnf(BNN& bnn);
         void attach_bin_clause(
             const Lit lit1
             , const Lit lit2
@@ -280,6 +278,8 @@ class Solver : public Searcher
             Lit out
         );
 
+        lbool bnn_eval(BNN& bnn);
+        bool bnn_to_cnf(BNN& bnn);
         template<class T> vector<Lit> clause_outer_numbered(const T& cl) const;
         template<class T> vector<uint32_t> xor_outer_numbered(const T& cl) const;
         size_t mem_used() const;

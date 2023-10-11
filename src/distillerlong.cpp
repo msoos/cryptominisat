@@ -411,35 +411,9 @@ bool DistillerLong::go_through_clauses(
             time_out = true;
         }
 
-        //check XOR
-        if (cl.used_in_xor() &&
-            solver->conf.force_preserve_xors
-        ) {
-            *j++ = *i;
-            VERBOSE_PRINT("Skipping offset for XOR " << *i);
-            continue;
-        }
-
         //Time to dereference
         maxNumProps -= 5;
 
-        //If we already tried this clause, then move to next
-        if (cl._xor_is_detached ||
-
-            //If it's a redundant that's not very good, let's not distill it
-            (
-                #ifdef FINAL_PREDICTOR
-                solver->conf.pred_distill_only_smallgue &&
-                #else
-                false &&
-                #endif
-                cl.red() &&
-                cl.stats.glue > 3) //TODO I don't like this at all for FINAL_PREDICTOR !!!!
-        ) {
-            *j++ = *i;
-            VERBOSE_PRINT("Skipping offset " << *i);
-            continue;
-        }
         if (also_remove) {
             cl.tried_to_remove = 1;
         } else {

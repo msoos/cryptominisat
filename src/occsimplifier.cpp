@@ -4146,7 +4146,7 @@ bool OccSimplifier::generate_resolvents_weakened(
             }
 
             ClauseStats stats;
-            resolvents.add_resolvent(dummy, stats, false);
+            resolvents.add_resolvent(dummy, stats);
         }
     }
 
@@ -4570,7 +4570,6 @@ void OccSimplifier::print_var_eliminate_stat(const Lit lit) const
 bool OccSimplifier::add_varelim_resolvent(
     vector<Lit>& finalLits
     , const ClauseStats& stats
-    , const bool is_xor
 ) {
     assert(solver->okay());
     assert(solver->prop_at_head());
@@ -4870,11 +4869,7 @@ bool OccSimplifier::maybe_eliminate(const uint32_t var)
 
     //Add resolvents
     while(!resolvents.empty()) {
-        if (!add_varelim_resolvent(resolvents.back_lits(),
-            resolvents.back_stats(), resolvents.back_xor())
-        ) {
-            goto end;
-        }
+        if (!add_varelim_resolvent(resolvents.back_lits(), resolvents.back_stats())) goto end;
         resolvents.pop();
     }
 

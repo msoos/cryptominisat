@@ -338,7 +338,6 @@ bool DistillerLongWithImpl::sub_str_all_cl_with_watch(
     size_t i = 0;
     size_t j = i;
     ClOffset offset;
-    Clause* cl;
     const size_t end = clauses.size();
     for (
         ; i < end
@@ -354,17 +353,7 @@ bool DistillerLongWithImpl::sub_str_all_cl_with_watch(
 
         //Check status
         offset = clauses[i];
-        if (need_to_finish) {
-            goto copy;
-        }
-
-        cl = solver->cl_alloc.ptr(offset);
-        if (cl->used_in_xor() &&
-            solver->conf.force_preserve_xors)
-        {
-            goto copy;
-        }
-
+        if (need_to_finish) goto copy;
         if (sub_str_cl_with_watch(offset, alsoStrengthen)) {
             solver->detachClause(offset);
             solver->free_cl(offset);

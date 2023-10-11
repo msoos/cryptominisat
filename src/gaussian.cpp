@@ -254,25 +254,15 @@ void EGaussian::fill_matrix() {
 
 void EGaussian::delete_gauss_watch_this_matrix()
 {
-    for (size_t ii = 0; ii < solver->gwatches.size(); ii++) {
-        clear_gwatches(ii);
-    }
+    for (size_t i = 0; i < solver->gwatches.size(); i++) clear_gwatches(i);
 }
 
 void EGaussian::clear_gwatches(const uint32_t var)
 {
-    //if there is only one matrix, don't check, just empty it
-    if (solver->gmatrices.size() == 0) {
-        solver->gwatches[var].clear();
-        return;
-    }
-
     GaussWatched* i = solver->gwatches[var].begin();
     GaussWatched* j = i;
     for(GaussWatched* end = solver->gwatches[var].end(); i != end; i++) {
-        if (i->matrix_num != matrix_no) {
-            *j++ = *i;
-        }
+        if (i->matrix_num != matrix_no) *j++ = *i;
     }
     solver->gwatches[var].shrink(i-j);
 }
@@ -329,9 +319,7 @@ bool EGaussian::full_init(bool& created) {
 
     xor_reasons.resize(num_rows);
     uint32_t num_64b = num_cols/64+(bool)(num_cols%64);
-    for(auto& x: tofree) {
-        delete[] x;
-    }
+    for(auto& x: tofree) delete[] x;
     tofree.clear();
     delete cols_unset;
     delete cols_vals;

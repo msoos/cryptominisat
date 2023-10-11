@@ -128,31 +128,8 @@ bool DistillerLitRem::go_through_clauses(
             continue;
         }
 
-        if (cl.used_in_xor() &&
-            solver->conf.force_preserve_xors
-        ) {
-            *j++ = *i;
-            continue;
-        }
-
         //Time to dereference
         maxNumProps -= 5;
-
-        if (cl._xor_is_detached
-
-            //If it's a redundant that's not very good, let's not distill it
-            || (
-#ifdef FINAL_PREDICTOR
-                solver->conf.pred_distill_only_smallgue &&
-#else
-                false &&
-#endif
-                cl.red() &&
-                cl.stats.glue > 3)
-        ) {
-            *j++ = *i;
-            continue;
-        }
         runStats.checkedClauses++;
         assert(cl.size() > 2);
 

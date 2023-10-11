@@ -3617,7 +3617,10 @@ bool Searcher::clear_gauss_matrices(const bool destruct) {
             #endif
         }
     }
-    attach_xor_clauses(xorclauses);
+    for(const auto& x: xorclauses) {
+        solver->xorclauses.push_back(x);
+        solver->attach_xor_clause(solver->xorclauses.size());
+    }
 
     return okay();
 }

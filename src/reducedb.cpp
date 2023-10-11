@@ -1238,8 +1238,7 @@ void ReduceDB::mark_top_N_clauses_lev2(const uint64_t keep_num)
         << endl;
         #endif
 
-        if (cl->used_in_xor()
-            || cl->stats.ttl > 0
+        if (cl->stats.ttl > 0
             || solver->clause_locked(*cl, offset)
             || cl->stats.which_red_array != 2
         ) {
@@ -1263,8 +1262,7 @@ void ReduceDB::mark_top_N_clauses_lev2(const uint64_t keep_num)
 bool ReduceDB::cl_needs_removal(const Clause* cl, const ClOffset offset) const
 {
     assert(cl->red());
-    return !cl->used_in_xor()
-         && !cl->stats.marked_clause
+    return !cl->stats.marked_clause
          && cl->stats.ttl == 0
          && !solver->clause_locked(*cl, offset);
 }

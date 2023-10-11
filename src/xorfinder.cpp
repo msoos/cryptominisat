@@ -21,6 +21,7 @@ THE SOFTWARE.
 ***********************************************/
 
 #include "xorfinder.h"
+#include "constants.h"
 #include "time_mem.h"
 #include "solver.h"
 #include "occsimplifier.h"
@@ -114,7 +115,6 @@ void XorFinder::clean_equivalent_xors(vector<Xor>& txors)
         for(vector<Xor>::iterator end = txors.end(); i != end; ++i) {
             if (j->vars == i->vars && j->rhs == i->rhs) {
                 j->merge_clash(*i, seen);
-                j->detached |= i->detached;
                 if (solver->frat->enabled()) {
                     verb_print(5, "Cleaning equivalent XOR at: " << (i - txors.begin()) << " xor: " << *i);
                     TBUDDY_DO(solver->frat->flush());
@@ -174,9 +174,7 @@ void XorFinder::find_xors()
     xor_find_time_limit = orig_xor_find_time_limit;
 
     occsimplifier->sort_occurs_and_set_abst();
-    if (solver->conf.verbosity) {
-        cout << "c [occ-xor] sort occur list T: " << (cpuTime()-myTime) << endl;
-    }
+    verb_print(1, "[occ-xor] sort occur list T: " << (cpuTime()-myTime));
 
     #ifdef DEBUG_MARKED_CLAUSE
     assert(solver->no_marked_clauses());
@@ -282,8 +280,6 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
         assert(poss_xor.get_fully_used().size() == poss_xor.get_offsets().size());
         for(uint32_t i = 0; i < poss_xor.get_offsets().size() ; i++) {
             ClOffset offs = poss_xor.get_offsets()[i];
-            bool fully_used = poss_xor.get_fully_used()[i];
-
             Clause* cl = solver->cl_alloc.ptr(offs);
             assert(!cl->getRemoved());
         }
@@ -422,7 +418,7 @@ void XorFinder::move_xors_without_connecting_vars_to_unused()
 
     //has at least 1 var with occur of 2
     for(const Xor& x: solver->xorclauses) {
-        if (xor_has_interesting_var(x) || x.detached) {
+        if (xor_has_interesting_var(x)) {
             #ifdef VERBOSE_DEBUG
             cout << "XOR has connecting var: " << x << endl;
             #endif

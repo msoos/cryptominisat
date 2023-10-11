@@ -180,7 +180,7 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
     for (; i != end; i++) {
         if (!i->in_matrix()) {
             auto& x = xorclauses[i->row_n];
-            uint32_t which;
+            uint32_t which; // which watch is this
             if (p.var() == x.watched[0]) which = 0;
             else {which = 1;assert(x.watched[1] == p.var());}
 
@@ -190,6 +190,11 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
             for(uint32_t i2= 0; i2 < x.size(); i2++) {
                 if (solver->value(x[i2]) == l_Undef) {
                     unknown ++; unknown_at=i2;
+                    if (x.vars[i2] != x.watched[!which]) {
+                        // it's not the other watch. So we can update current
+                        // watch to this
+                        gwatches[x.vars[i2]].push(GaussWatched::plain_xor(i->row_n));
+                    }
                 }
                 else rhs ^= solver->value(x[i2]) == l_True;
                 if (unknown > 1) break;
@@ -203,13 +208,7 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
                 *j++ = *i;
                 break;
             }
-            if (unknown >= 2) {
-                if (x[unknown_at] != x.watched[!which]) {
-                    // it's not the other watch. So we can update current
-                    // watch to this
-                    gwatches[x.vars[unknown_at]].push(GaussWatched::plain_xor(i->row_n));
-                }
-            }
+            // unknown is >=2, we can remove this watch
             continue;
         }
         if (!gmatrices[i->matrix_num]->is_initialized()) continue; //remove watch and continue

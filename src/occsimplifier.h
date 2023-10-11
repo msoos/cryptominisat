@@ -547,7 +547,7 @@ private:
     vector<Clause*> toclear_marked_cls;
     set<uint32_t> parities_found;
     void        print_var_eliminate_stat(Lit lit) const;
-    bool        add_varelim_resolvent(vector<Lit>& finalLits, const ClauseStats& stats, bool is_xor);
+    bool        add_varelim_resolvent(vector<Lit>& finalLits, const ClauseStats& stats);
     void        update_varelim_complexity_heap();
     void        print_var_elim_complexity_stats(const uint32_t var) const;
 

@@ -95,24 +95,21 @@ inline bool MatrixFinder::belong_same_matrix(const Xor& x)
 }
 
 // Returns SAT/UNSAT
-bool MatrixFinder::find_matrices(bool& can_detach)
+bool MatrixFinder::find_matrices(bool& matrix_created)
 {
     assert(solver->decisionLevel() == 0);
     assert(solver->ok);
     assert(solver->gmatrices.empty());
-    can_detach = true;
+    matrix_created = true;
 
     table.clear();
     table.resize(solver->nVars(), var_Undef);
     reverseTable.clear();
-    clash_vars_unused.clear();
+    clash_vars.clear();
     matrix_no = 0;
     double myTime = cpuTime();
 
     XorFinder finder(NULL, solver);
-
-    for(auto& x: solver->xorclauses_unused) solver->xorclauses.push_back(std::move(x));
-    solver->xorclauses_unused.clear();
     solver->clauseCleaner->clean_xor_clauses(solver->xorclauses);
 
     finder.grab_mem();
@@ -121,12 +118,10 @@ bool MatrixFinder::find_matrices(bool& can_detach)
 
     finder.move_xors_without_connecting_vars_to_unused();
     finder.clean_equivalent_xors(solver->xorclauses);
-    verb_print(1, "[matrix] unused xors from cleaning: " << solver->xorclauses_unused.size());
-    for(const auto& x: solver->xorclauses_unused)
-        clash_vars_unused.insert(x.clash_vars.begin(), x.clash_vars.end());
+    for(const auto& x: solver->xorclauses) clash_vars.insert(x.clash_vars.begin(), x.clash_vars.end());
 
     if (solver->xorclauses.size() < solver->conf.gaussconf.min_gauss_xor_clauses) {
-        can_detach = false;
+        matrix_created = false;
         verb_print(4, "c [matrix] too few xor clauses for GJ: " << solver->xorclauses.size());
         return true;
     }
@@ -134,7 +129,7 @@ bool MatrixFinder::find_matrices(bool& can_detach)
     if (solver->xorclauses.size() > solver->conf.gaussconf.max_gauss_xor_clauses
         && solver->conf.sampling_vars != NULL
     ) {
-        can_detach = false;
+        matrix_created = false;
         verb_print(1,
             "c WARNING sampling vars have been given but there"
             "are too many XORs and it would take too much time to put them"
@@ -153,10 +148,7 @@ bool MatrixFinder::find_matrices(bool& can_detach)
     vector<uint32_t> newSet;
     set<uint32_t> tomerge;
     for (const Xor& x : solver->xorclauses) {
-        if (belong_same_matrix(x)) {
-            continue;
-        }
-
+        if (belong_same_matrix(x)) continue;
         tomerge.clear();
         newSet.clear();
         for (uint32_t v : x) {
@@ -269,12 +261,8 @@ uint32_t MatrixFinder::setMatrixes()
     for (int a = matrix_no-1; a >= 0; a--) {
         MatrixShape& m = matrix_shape[a];
         uint32_t i = m.num;
-        if (m.rows == 0) {
-            continue;
-        }
-
+        if (m.rows == 0) continue;
         bool use_matrix = true;
-
 
         //Over- or undersized
         if (use_matrix && m.rows > solver->conf.gaussconf.max_matrix_rows) {
@@ -345,24 +333,16 @@ uint32_t MatrixFinder::setMatrixes()
         if (use_matrix) {
             solver->gmatrices.push_back(new EGaussian(solver, realMatrixNum, xorsInMatrix[i]));
             solver->gqueuedata.resize(solver->gmatrices.size());
-
-            if (solver->conf.verbosity) {
-                cout << "c [matrix] Good   matrix " << std::setw(2) << realMatrixNum;
-            }
+            verb_print(1, "[matrix] Good   matrix " << std::setw(2) << realMatrixNum);
             realMatrixNum++;
             assert(solver->gmatrices.size() == realMatrixNum);
+            for(auto& x: xorsInMatrix[i]) x.in_matrix = 1000;
         } else {
-            for(auto& x: xorsInMatrix[i]) {
-                solver->xorclauses_unused.push_back(x);
-                //cout<< "c [matrix]xor not in matrix, now unused_xors size: " << unused_xors.size() << endl;
-                clash_vars_unused.insert(x.clash_vars.begin(), x.clash_vars.end());
-            }
+            for(auto& x: xorsInMatrix[i]) clash_vars.insert(x.clash_vars.begin(), x.clash_vars.end());
             if (solver->conf.verbosity && unused_matrix_printed < 10) {
                 if (m.rows >= solver->conf.gaussconf.min_matrix_rows ||
                     solver->conf.verbosity >= 2)
-                {
-                    cout << "c [matrix] UNused matrix   ";
-                }
+                cout << "c [matrix] UNused matrix   ";
             }
             unusedMatrix++;
         }

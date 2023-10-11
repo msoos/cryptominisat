@@ -193,6 +193,7 @@ public:
     vector<uint32_t> clash_vars;
     vector<uint32_t> vars;
     uint32_t watched[2];
+    uint32_t in_matrix = 1000;
     #ifdef USE_TBUDDY
     tbdd::xor_constraint* bdd = NULL;
     #endif

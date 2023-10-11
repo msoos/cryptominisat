@@ -619,11 +619,6 @@ void Solver::add_bnn_clause_inter(
     ok = propagate<true>().isNULL();
 }
 
-void Solver::attach_xor_clause(const Xor& x, const bool checkAttack) {
-    PropEngine::attach_xor_clause(cl);
-}
-
-
 void Solver::attachClause(
     const Clause& cl
     , const bool checkAttach
@@ -3445,7 +3440,7 @@ void Solver::renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors
 bool Solver::find_and_init_all_matrices()
 {
     *solver->frat << __PRETTY_FUNCTION__ << " start\n";
-    if (!xor_clauses_updated && (!detached_xor_clauses || !assump_contains_xor_clash())) {
+    if (!xor_clauses_updated && (!assump_contains_xor_clash())) {
         if (conf.verbosity >= 2) {
             cout << "c [find&init matx] XORs not updated, and either (XORs are not detached OR assumps does not contain clash variable) -> or not performing matrix init. Matrices: " << gmatrices.size() << endl;
         }
@@ -3453,19 +3448,11 @@ bool Solver::find_and_init_all_matrices()
     }
     if (conf.verbosity >= 1) cout << "c [find&init matx] performing matrix init" << endl;
 
-    bool can_detach;
+    bool matrix_created;
     if (!clear_gauss_matrices()) return false;
 
-    /*Reattach needed in case we are coming in again, after adding new XORs
-    we might turn off a previously turned on matrix
-    which means we wouldn't re-attach those XORs
-    -> but we fixed this in matrixfinder, where we FORCE a Gauss to be ON
-       in case it contains a previously detached XOR
-    */
-    //fully_undo_xor_detach();
-
     MatrixFinder mfinder(solver);
-    ok = mfinder.find_matrices(can_detach);
+    ok = mfinder.find_matrices(matrix_created);
     if (!ok) return false;
     if (!init_all_matrices()) return false;
 
@@ -3474,49 +3461,13 @@ bool Solver::find_and_init_all_matrices()
         bool no_irred_contains_clash = no_irred_nonxor_contains_clash_vars();
 
         cout
-        << "c [gauss]"
-        << " xorclauses_unused: " << xorclauses_unused.size()
-        << " can detach: " << can_detach
+        << "c [gauss] matrix_created: " << matrix_created
         << " no irred with clash: " << no_irred_contains_clash
         << endl;
 
-        cout << "c unused xors follow." << endl;
-        for(const auto& x: xorclauses_unused) {
-            cout << "c " << x << endl;
-        }
+        cout << "c xors follow." << endl;
+        for(const auto& x: xorclauses) cout << "c " << x << endl;
         cout << "c FIN" << endl;
-
-        cout << "c used xors follow." << endl;
-        for(const auto& x: xorclauses) {
-            cout << "c " << x << endl;
-        }
-        cout << "c FIN" << endl;
-    }
-
-    bool ret_no_irred_nonxor_contains_clash_vars;
-    if (can_detach &&
-        conf.xor_detach_reattach &&
-        !conf.gaussconf.autodisable &&
-        (ret_no_irred_nonxor_contains_clash_vars=no_irred_nonxor_contains_clash_vars())
-    ) {
-        detach_xor_clauses(mfinder.clash_vars_unused);
-        unset_clash_decision_vars(xorclauses);
-        rebuildOrderHeap();
-        if (conf.xor_detach_verb) print_watchlist_stats();
-
-    } else {
-        if (conf.xor_detach_reattach &&
-            (conf.verbosity >= 1 || conf.xor_detach_verb) && conf.doFindXors)
-        {
-            cout
-            << "c WHAAAAT Detach issue. All below must be 1 to work ---" << endl
-            << "c -- can_detach: " << (bool)can_detach << endl
-            << "c -- mfinder.no_irred_nonxor_contains_clash_vars(): "
-            << ret_no_irred_nonxor_contains_clash_vars << endl
-            << "c -- !conf.gaussconf.autodisable: " << (bool)(!conf.gaussconf.autodisable) << endl
-            << "c -- conf.xor_detach_reattach: " << (bool)conf.xor_detach_reattach << endl;
-            print_watchlist_stats();
-        }
     }
 
     #ifdef SLOW_DEBUG
