@@ -8155,10 +8155,10 @@ double
 picosat_time_stamp (void)
 {
   double res = -1;
-  struct rusage u;
   res = 0;
 #if defined (_MSC_VER) || defined (__MINGW32__) || defined(_WIN32) || defined(EMSCRIPTEN)
 #else
+  struct rusage u;
   if (!getrusage (RUSAGE_SELF, &u))
     {
       res += u.ru_utime.tv_sec + 1e-6 * u.ru_utime.tv_usec;
