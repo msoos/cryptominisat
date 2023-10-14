@@ -35,6 +35,9 @@ THE SOFTWARE.
 using namespace CMSat;
 
 #ifdef _MSC_VER
+#include <intrin.h>
+#pragma intrinsic(_BitScanForward)
+#pragma intrinsic(_BitScanForward64)
 inline int scan_fwd_64b(int64_t value)
 {
     unsigned long at;

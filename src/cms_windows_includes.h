@@ -64,13 +64,6 @@ THE SOFTWARE.
 #define __PRETTY_FUNCTION__ __FUNCSIG__
 #endif
 
-//  https://gist.github.com/pps83/3210a2f980fd02bb2ba2e5a1fc4a2ef0
-static inline int __builtin_ctzll(unsigned long long x) {
-	unsigned long ret;
-	_BitScanForward64(&ret, x);
-	return (int)ret;
-}
-
 #include <nmmintrin.h>
 #define __builtin_popcountll _mm_popcnt_u64
 #define NO_DLL_EXPORT 1
