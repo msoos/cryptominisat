@@ -897,7 +897,7 @@ MODULE_INIT_FUNC(pycryptosat)
     // Add the version string so users know what version of CryptoMiniSat
     // they're using.
 #if defined(_MSC_VER)
-    if (PyModule_AddStringConstant(m, "__version__", "unknown -- can't use /D to define strings in Windows, pypi and Windows CLI are both broken") {
+    if (PyModule_AddStringConstant(m, "__version__", "unknown -- can't use /D to define strings in Windows, pypi and Windows CLI are both broken") == -1 {
         Py_DECREF(m);
         return NULL;
     }
