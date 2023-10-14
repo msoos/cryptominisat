@@ -21,11 +21,11 @@
 // OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "oracle.h"
+#include "constants.h"
 
 #include <set>
 #include <queue>
 #include <iostream>
-#include "constants.h"
 #include "utils.h"
 using std::cout;
 using std::endl;

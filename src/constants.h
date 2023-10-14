@@ -20,8 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef __CONSTANTS_H__
-#define __CONSTANTS_H__
+#pragma once
 
 #include <cstdint>
 #include <cstdlib>
@@ -32,6 +31,12 @@ THE SOFTWARE.
 // #define VERBOSE_DEBUG_FULLPROP
 // #define DEBUG_DEPTH
 // #define SLOW_DEBUG
+
+#if !defined(__GNUC__) && !defined(__clang__)
+#define cmsat_prefetch(x) (void)(x)
+#else
+#define cmsat_prefetch(x) __builtin_prefetch(x)
+#endif
 
 #if defined(_MSC_VER)
 #include "cms_windows_includes.h"
@@ -55,12 +60,6 @@ THE SOFTWARE.
             abort(); \
         } \
     } while (0)
-#endif
-
-#if !defined(__GNUC__) && !defined(__clang__)
-#define cmsat_prefetch(x) (void)(x)
-#else
-#define cmsat_prefetch(x) __builtin_prefetch(x)
 #endif
 
 //We shift stuff around in Watched, so not all of 32 bits are useable.
@@ -193,5 +192,3 @@ THE SOFTWARE.
 #endif
 
 //#define DEBUG_ATTACH_FULL
-
-#endif //__CONSTANTS_H__

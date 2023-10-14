@@ -31,7 +31,6 @@ THE SOFTWARE.
 #include <string>
 #include <algorithm>
 
-#include "constants.h"
 #include "solvertypes.h"
 #include "propengine.h"
 #include "searcher.h"
