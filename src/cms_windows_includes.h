@@ -64,8 +64,8 @@ THE SOFTWARE.
 #define __PRETTY_FUNCTION__ __FUNCSIG__
 #endif
 
-#include <nmmintrin.h>
-#define __builtin_popcountll _mm_popcnt_u64
+#include <intrin.h>
+#define __builtin_popcountll __popcnt64
 #define NO_DLL_EXPORT 1
 
 //  picosat
