@@ -40,4 +40,4 @@ jobs:
           TWINE_USERNAME: "__token__"
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
-          twine upload --skip-existing --disable-progress-bar ./wheelhouse/pycryptosat-*manylinux*x86_64.whl
+          twine upload --skip-existing --disable-progress-bar ./wheelhouse/pycryptosat-*.whl
