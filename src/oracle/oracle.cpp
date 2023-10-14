@@ -34,12 +34,6 @@ using std::min;
 using std::pair;
 using std::swap;
 
-#if !defined(__GNUC__) && !defined(__clang__)
-#define cmsat_prefetch(x) (void)(x)
-#else
-#define cmsat_prefetch(x) __builtin_prefetch(x)
-#endif
-
 namespace sspp {
 namespace oracle {
 namespace {

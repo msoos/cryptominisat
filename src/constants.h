@@ -32,7 +32,7 @@ THE SOFTWARE.
 // #define DEBUG_DEPTH
 // #define SLOW_DEBUG
 
-#if !defined(__GNUC__) && !defined(__clang__)
+#if defined(_MSC_VER)
 #define cmsat_prefetch(x) (void)(x)
 #else
 #define cmsat_prefetch(x) __builtin_prefetch(x)
