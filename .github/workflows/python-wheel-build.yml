@@ -28,6 +28,7 @@ jobs:
         env:
           CIBW_BEFORE_ALL_LINUX: yum install -y boost-devel zlib-devel
           CIBW_SKIP: "*musl*"
+          CIBW_ARCHS: "auto64"
 
       - uses: actions/upload-artifact@v3
         with:

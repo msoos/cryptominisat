@@ -29,20 +29,9 @@ THE SOFTWARE.
 #include <intrin.h>
 #include "stdint.h"
 
-#define UINT32_MAX _UI32_MAX
-#define UINT64_MAX _UI64_MAX
-
 #if !defined(INTMAX_MAX)
 #define INTMAX_MAX _I32_MAX
 #endif
-
-#ifdef _WIN64 // [
-#  define PTRDIFF_MIN  _I64_MIN
-#  define PTRDIFF_MAX  _I64_MAX
-#else  // _WIN64 ][
-#  define PTRDIFF_MIN  _I32_MIN
-#  define PTRDIFF_MAX  _I32_MAX
-#endif  // _WIN64 ]
 
 #pragma warning(disable : 4244)  //  C4244 : 'Argument': Konvertierung von 'const uint64_t' in 'double', möglicher Datenverlust
 #pragma warning(disable : 4267)  //  C4267 : 'return': Konvertierung von 'size_t' nach 'uint32_t', Datenverlust möglich
@@ -64,7 +53,6 @@ THE SOFTWARE.
 #define __PRETTY_FUNCTION__ __FUNCSIG__
 #endif
 
-#include <intrin.h>
 #define __builtin_popcountll __popcnt64
 #define NO_DLL_EXPORT 1
 
