@@ -49,12 +49,12 @@ picosatlib = ('picosatlib', {
 def gen_modules(version):
 
     if platform == "win32" or platform == "cygwin":
-        extra_compile_args_val = ['-I../', '-Isrc/', '/std:c++17', "/DCMS_FULL_VERSION=\""+version+"\""]
+        extra_compile_args_val = ['-I../', '-Isrc/', '/std:c++17', "/DCMS_FULL_VERSION=\"cms-"+version+"\""]
         define_macros_val = [("TRACE", "")]
 
     else:
         extra_compile_args_val = ['-I../', '-Isrc/', '-std=c++17']
-        define_macros_val = [("TRACE", ""), ("CMS_FULL_VERSION", "\""+version+"\"")]
+        define_macros_val = [("TRACE", ""), ("CMS_FULL_VERSION", "cms-\""+version+"\"")]
 
     modules = Extension(
         name = "pycryptosat",
