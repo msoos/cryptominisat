@@ -25,11 +25,11 @@
 
 import sys
 import os
-import platform
 from setuptools import Extension, setup
 import sysconfig
 import toml
 import pathlib
+from sys import platform
 
 def _parse_toml(pyproject_path):
     pyproject_text = pyproject_path.read_text()
