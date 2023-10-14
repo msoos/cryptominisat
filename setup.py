@@ -54,7 +54,7 @@ def gen_modules(version):
 
     else:
         extra_compile_args_val = ['-I../', '-Isrc/', '-std=c++17']
-        define_macros_val = [("TRACE", ""), ("CMS_FULL_VERSION", "cms-\""+version+"\"")]
+        define_macros_val = [("TRACE", ""), ("CMS_FULL_VERSION", "\"cms-"+version+"\"")]
 
     modules = Extension(
         name = "pycryptosat",
