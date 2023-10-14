@@ -344,7 +344,7 @@ void Oracle::Assign(Lit dec, size_t reason_clause, int level) {
     oclv("Assigning " << v << " to: " << IsPos(dec) << " at level: " << level << " reason: " << reason_clause);
 	decided.push_back(v);
 	prop_q.push_back(Neg(dec));
-    __builtin_prefetch(watches[Neg(dec)].data());
+    cmsat_prefetch(watches[Neg(dec)].data());
 }
 
 void Oracle::UnDecide(int level) {
