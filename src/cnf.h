@@ -181,14 +181,14 @@ public:
     #endif
     vector<ClOffset> detached_xor_repr_cls; //these are still in longIrredCls
 
-    // NOTE: xorclauses and xorclauses_unused ENCODE INFORMATION THAT's NOWHERE ELSE
-    //       that's right. We can discover an XOR clause then strengthen the
-    //       representing clauses to a binary, and then remove the
-    //       binary with e.g. irred-bin-removal, which then leads to nothing representing
-    //       the XOR clause! Then FRAT fails. This ALSO means that when cleaning the XOR clauses
-    //       we can actually encounter UNSAT. Since it encodes information that's nowhere else.
-    vector<Xor> xorclauses; // working set. Should be empty most of the time.
-    vector<Xor> xorclauses_orig; // used to re-generate the matrix
+    // xorclauses -- current, attached XORs. Some XORs may be XOR'ed together
+    //               however, they are never in a matrix.
+    // xorclause_orig -- definitive XORs, not XOR'ed together, never attached.
+    //
+    // NOTE: XORs that are currently in matrixes are not in xorclauses.
+    //       they may be different from xorclauses_orig
+    vector<Xor> xorclauses;
+    vector<Xor> xorclauses_orig;
 
     vector<BNN*> bnns;
     vector<vector<Lit>> bnn_reasons;

@@ -3582,6 +3582,21 @@ inline bool Searcher::check_order_heap_sanity()
     return true;
 }
 
+// detach & clear xorclauses
+bool Searcher::clear_xorclauses() {
+    if (solver->frat->enabled()) {
+        solver->frat->flush();
+        TBUDDY_DO(for (auto const& x: solver->xorclauses) delete x.bdd);
+    }
+    for(auto& gw: solver->gwatches) gw.clear();
+    solver->xorclauses.clear();
+
+    bool ok = solver->remove_and_clean_all();
+    if (!ok) return okay();
+    for(uint32_t i = 0; i < xorclauses.size(); i ++) attach_xor_clause(i);
+    return okay();
+}
+
 bool Searcher::clear_gauss_matrices(const bool destruct) {
     if (!destruct) {
         TBUDDY_DO(if (frat->enabled()) for(auto& g: gmatrices) g->finalize_frat());

@@ -2235,12 +2235,14 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         } else if (token == "occ-xor") {
             if (solver->conf.doFindXors &&
                 #ifdef USE_TBUDDY
-                true)
+                true
                 #else
-                !solver->frat->enabled())
+                !solver->frat->enabled()
                 #endif
+               )
             {
                 XorFinder finder(this, solver);
+                // beware, below can set UNSAT flag (ok = false)
                 finder.find_xors();
                 runStats.xorTime += finder.get_stats().findTime;
             }

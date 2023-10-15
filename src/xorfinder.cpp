@@ -50,11 +50,10 @@ XorFinder::XorFinder(OccSimplifier* _occsimplifier, Solver* _solver) :
     tmp_vars_xor_two.reserve(2000);
 }
 
-void XorFinder::find_xors_based_on_long_clauses()
-{
-    #ifdef DEBUG_MARKED_CLAUSE
+void XorFinder::find_xors_based_on_long_clauses() {
+    /* #ifdef DEBUG_MARKED_CLAUSE */
     assert(solver->no_marked_clauses());
-    #endif
+    /* #endif */
 
     vector<Lit> lits;
     for (const auto & offset: occsimplifier->clauses) {
@@ -64,14 +63,10 @@ void XorFinder::find_xors_based_on_long_clauses()
         xor_find_time_limit -= 1;
 
         //Already freed
-        if (cl->freed() || cl->getRemoved() || cl->red()) {
-            continue;
-        }
+        if (cl->freed() || cl->getRemoved() || cl->red()) continue;
 
         //Too large -> too expensive
-        if (cl->size() > solver->conf.maxXorToFind) {
-            continue;
-        }
+        if (cl->size() > solver->conf.maxXorToFind) continue;
 
         //If not tried already, find an XOR with it
         if (!cl->stats.marked_clause ) {
@@ -99,13 +94,11 @@ void XorFinder::find_xors_based_on_long_clauses()
     }
 }
 
-void XorFinder::clean_equivalent_xors(vector<Xor>& txors)
-{
+// NOTE: all in `xorclauses` must be detached at this point
+void XorFinder::clean_equivalent_xors(vector<Xor>& txors) {
     if (!txors.empty()) {
         size_t orig_size = txors.size();
-        for(Xor& x: txors) {
-            std::sort(x.begin(), x.end());
-        }
+        for(Xor& x: txors) std::sort(x.begin(), x.end());
         std::sort(txors.begin(), txors.end());
 
         size_t sz = 1;
@@ -114,7 +107,7 @@ void XorFinder::clean_equivalent_xors(vector<Xor>& txors)
         ++i;
         for(vector<Xor>::iterator end = txors.end(); i != end; ++i) {
             if (j->vars == i->vars && j->rhs == i->rhs) {
-                j->merge_clash(*i, seen);
+                j->merge_clashing_vars(*i, seen);
                 if (solver->frat->enabled()) {
                     verb_print(5, "Cleaning equivalent XOR at: " << (i - txors.begin()) << " xor: " << *i);
                     TBUDDY_DO(solver->frat->flush());
@@ -136,35 +129,17 @@ void XorFinder::clean_equivalent_xors(vector<Xor>& txors)
     }
 }
 
-void XorFinder::find_xors()
-{
+bool XorFinder::find_xors() {
     runStats.clear();
     runStats.numCalls = 1;
     grab_mem();
     if ((solver->conf.xor_var_per_cut + 2) > solver->conf.maxXorToFind) {
-        if (solver->conf.verbosity) {
-            cout << "c WARNING updating max XOR to find to "
-            << (solver->conf.xor_var_per_cut + 2)
-            << " as the current number was lower than the cutting number" << endl;
-        }
+        verb_print(0, "WARNING updating max XOR to find to "
+                << (solver->conf.xor_var_per_cut + 2)
+                << " as the current number was lower than the cutting number");
         solver->conf.maxXorToFind = solver->conf.xor_var_per_cut + 2;
     }
-
-    //Clear flags. This is super-important.
-    for(auto& offs: occsimplifier->clauses) {
-        Clause* cl = solver->cl_alloc.ptr(offs);
-        if (cl->getRemoved() || cl->freed()) {
-            continue;
-        }
-    }
-
-    if (solver->frat->enabled()) {
-        solver->frat->flush();
-        TBUDDY_DO(for (auto const& x: solver->xorclauses) delete x.bdd);
-        TBUDDY_DO(for (auto const& x: solver->xorclauses_orig) delete x.bdd);
-    }
-    solver->xorclauses.clear();
-    solver->xorclauses_orig.clear();
+    if (!solver->clear_xorclauses()) return false;
 
     double myTime = cpuTime();
     const int64_t orig_xor_find_time_limit =
@@ -185,7 +160,7 @@ void XorFinder::find_xors()
 
     //clean them of equivalent XORs
     clean_equivalent_xors(solver->xorclauses);
-    solver->xorclauses_orig = solver->xorclauses;
+    for(const auto& x: solver->xorclauses) solver->xorclauses_orig.push_back(x);
 
     // Need to do this due to XORs encoding new info
     //    see NOTE in cnf.h
@@ -226,6 +201,7 @@ void XorFinder::find_xors()
         for(uint32_t v: x)
             assert(solver->varData[v].removed == Removed::none);
     #endif
+    return solver->okay();
 }
 
 void XorFinder::print_found_xors()
@@ -387,69 +363,6 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
                 break;
         }
         end:;
-    }
-}
-
-void XorFinder::move_xors_without_connecting_vars_to_unused()
-{
-    if (solver->xorclauses.empty()) return;
-
-    double myTime = cpuTime();
-    vector<Xor> cleaned;
-    assert(toClear.empty());
-
-    //Fill "seen" with vars used
-    uint32_t non_empty = 0;
-    for(const Xor& x: solver->xorclauses) {
-        if (x.size() != 0) {
-            non_empty++;
-        }
-
-        for(uint32_t v: x) {
-            if (solver->seen[v] == 0) {
-                toClear.push_back(Lit(v, false));
-            }
-
-            if (solver->seen[v] < 2) {
-                solver->seen[v]++;
-            }
-        }
-    }
-
-    //has at least 1 var with occur of 2
-    for(const Xor& x: solver->xorclauses) {
-        if (xor_has_interesting_var(x)) {
-            #ifdef VERBOSE_DEBUG
-            cout << "XOR has connecting var: " << x << endl;
-            #endif
-            cleaned.push_back(x);
-        } else {
-            #ifdef VERBOSE_DEBUG
-            cout << "XOR has no connecting var: " << x << endl;
-            #endif
-            solver->xorclauses_unused.push_back(x);
-        }
-    }
-
-    //clear "seen"
-    for(Lit l: toClear) solver->seen[l.var()] = 0;
-    toClear.clear();
-
-    solver->xorclauses = cleaned;
-
-    double time_used = cpuTime() - myTime;
-    if (solver->conf.verbosity) {
-        cout << "c [xor-rem-unconnected] left with " <<  solver->xorclauses.size()
-        << " xors from " << non_empty << " non-empty xors"
-        << solver->conf.print_times(time_used)
-        << endl;
-    }
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed_min(
-            solver
-            , "xor-rem-no-connecting-vars"
-            , time_used
-        );
     }
 }
 

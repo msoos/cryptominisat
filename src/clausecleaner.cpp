@@ -379,6 +379,7 @@ void ClauseCleaner::clean_bnns_post()
     }
 }
 
+// Force cleans everything, recursively
 bool ClauseCleaner::remove_and_clean_all()
 {
     double myTime = cpuTime();

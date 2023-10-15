@@ -107,7 +107,7 @@ class Watched {
         }
 
         /**
-        @brief To update the blocked literal of a >3-long normal clause
+        @brief To update the blocked literal of a long normal clause
         */
         void setElimedLit(const Lit blockedLit)
         {

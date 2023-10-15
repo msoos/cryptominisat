@@ -153,7 +153,7 @@ class XorFinder
 {
 public:
     XorFinder(OccSimplifier* occsimplifier, Solver* solver);
-    void find_xors();
+    bool find_xors();
 
     struct Stats
     {
@@ -181,7 +181,6 @@ public:
     const Stats& get_stats() const;
     size_t mem_used() const;
     void grab_mem();
-    void move_xors_without_connecting_vars_to_unused();
     bool xor_together_xors(vector<Xor>& xors);
     void clean_equivalent_xors(vector<Xor>& txors);
 

@@ -228,7 +228,7 @@ bool Solver::add_xor_clause_inter(
         xorclauses_orig.push_back(Xor(ps, rhs, tmp_xor_clash_vars));
         TBUDDY_DO(if (frat->enabled()) xorclauses.back().create_bdd_xor());
         TBUDDY_DO(if (frat->enabled()) xorclauses_orig.back().create_bdd_xor());
-        attach_xor_clause(xorclauses.back());
+        attach_xor_clause(xorclauses.size()-1);
     } else {
     }
 
@@ -890,29 +890,18 @@ void Solver::renumber_clauses(const vector<uint32_t>& outerToInter)
         updateVarsMap(x.clash_vars, outerToInter);
     }
 
-    for(Xor& x: xorclauses_unused) {
-        updateVarsMap(x.vars, outerToInter);
-        updateVarsMap(x.clash_vars, outerToInter);
-    }
-
     for(Xor& x: xorclauses_orig) {
         updateVarsMap(x.vars, outerToInter);
         updateVarsMap(x.clash_vars, outerToInter);
     }
 
-    for(auto& v: removed_xorclauses_clash_vars) {
-        v = getUpdatedVar(v, outerToInter);
-    }
+    for(auto& v: removed_xorclauses_clash_vars) v = getUpdatedVar(v, outerToInter);
 
     for(auto& bnn: bnns) {
-        if (bnn == NULL) {
-            continue;
-        }
+        if (bnn == NULL) continue;
         assert(!bnn->isRemoved);
         updateLitsMap(*bnn, outerToInter);
-        if (!bnn->set) {
-            bnn->out = getUpdatedLit(bnn->out, outerToInter);
-        }
+        if (!bnn->set) bnn->out = getUpdatedLit(bnn->out, outerToInter);
     }
 }
 
@@ -4040,6 +4029,7 @@ void Solver::clean_sampl_and_get_empties(
     map_inter_to_outer(empty_vars);
 }
 
+// Force cleans everything, recursively
 bool Solver::remove_and_clean_all() {
     return clauseCleaner->remove_and_clean_all();
 }

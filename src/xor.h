@@ -171,10 +171,8 @@ public:
         return true;
     }
 
-    void merge_clash(const Xor& other, vector<uint32_t>& seen) {
-        for(const auto& v: clash_vars) {
-            seen[v] = 1;
-        }
+    void merge_clashing_vars(const Xor& other, vector<uint32_t>& seen) {
+        for(const auto& v: clash_vars) seen[v] = 1;
 
         for(const auto& v: other.clash_vars) {
             if (!seen[v]) {
@@ -183,9 +181,7 @@ public:
             }
         }
 
-        for(const auto& v: clash_vars) {
-            seen[v] = 0;
-        }
+        for(const auto& v: clash_vars) seen[v] = 0;
     }
 
 

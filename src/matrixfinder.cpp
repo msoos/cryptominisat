@@ -113,11 +113,7 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
     solver->clauseCleaner->clean_xor_clauses(solver->xorclauses);
 
     finder.grab_mem();
-    finder.move_xors_without_connecting_vars_to_unused();
     if (!finder.xor_together_xors(solver->xorclauses)) return false;
-
-    finder.move_xors_without_connecting_vars_to_unused();
-    finder.clean_equivalent_xors(solver->xorclauses);
     for(const auto& x: solver->xorclauses) clash_vars.insert(x.clash_vars.begin(), x.clash_vars.end());
 
     if (solver->xorclauses.size() < solver->conf.gaussconf.min_gauss_xor_clauses) {
@@ -202,14 +198,7 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
         << " matrices recovered from " << solver->xorclauses.size() << " xors"
         << solver->conf.print_times(time_used, time_out));
 
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed_min(
-            solver
-            , "matrix find"
-            , time_used
-        );
-    }
-
+    if (solver->sqlStats) solver->sqlStats->time_passed_min( solver , "matrix find" , time_used);
     return solver->okay();
 }
 
@@ -246,11 +235,8 @@ uint32_t MatrixFinder::setMatrixes()
     }
     solver->xorclauses.clear();
 
-    for(auto& m: matrix_shape) {
-        if (m.tot_size() > 0) {
-            m.density = (double)m.sum_xor_sizes / (double)(m.tot_size());
-        }
-    }
+    for(auto& m: matrix_shape)
+        if (m.tot_size() > 0) m.density = (double)m.sum_xor_sizes / (double)(m.tot_size());
 
     std::sort(matrix_shape.begin(), matrix_shape.end(), mysorter());
 
@@ -285,9 +271,7 @@ uint32_t MatrixFinder::setMatrixes()
         double ratio_sampling;
         if (solver->conf.sampling_vars) {
             //'seen' with what is in Matrix
-            for(uint32_t int_var: reverseTable[i]) {
-                solver->seen[int_var] = 1;
-            }
+            for(uint32_t int_var: reverseTable[i]) solver->seen[int_var] = 1;
 
             uint32_t tot_sampling_vars  = 0;
             uint32_t sampling_var_inside_matrix = 0;
@@ -336,9 +320,12 @@ uint32_t MatrixFinder::setMatrixes()
             verb_print(1, "[matrix] Good   matrix " << std::setw(2) << realMatrixNum);
             realMatrixNum++;
             assert(solver->gmatrices.size() == realMatrixNum);
-            for(auto& x: xorsInMatrix[i]) x.in_matrix = 1000;
         } else {
-            for(auto& x: xorsInMatrix[i]) clash_vars.insert(x.clash_vars.begin(), x.clash_vars.end());
+            for(auto& x: xorsInMatrix[i]) {
+                clash_vars.insert(x.clash_vars.begin(), x.clash_vars.end());
+                x.in_matrix = 1000;
+                solver->xorclauses.push_back(x);
+            }
             if (solver->conf.verbosity && unused_matrix_printed < 10) {
                 if (m.rows >= solver->conf.gaussconf.min_matrix_rows ||
                     solver->conf.verbosity >= 2)
