@@ -151,7 +151,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Verbosity
         , verbosity        (0)
-        , xor_detach_verb  (0)
         , doPrintGateDot   (false)
         , print_full_restart_stat   (false)
         , print_all_restarts (false)
@@ -254,7 +253,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , xor_finder_time_limitM(400)
         , allow_elim_xor_vars(1)
         , xor_var_per_cut(2)
-        , force_preserve_xors(true)
 
         //Cardinality
         , doFindCard(0)

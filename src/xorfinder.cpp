@@ -366,19 +366,14 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
     }
 }
 
+// It manipulates this_xors ONLY. It assumes those XORs are
+// detached.
 bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
 {
-    if (occcnt.size() != solver->nVars())
-        grab_mem();
+    if (occcnt.size() != solver->nVars()) grab_mem();
+    if (this_xors.empty()) return solver->okay();
 
-    if (this_xors.empty())
-        return solver->okay();
-
-    #ifdef SLOW_DEBUG
-    for(auto x: occcnt) {
-        assert(x == 0);
-    }
-    #endif
+    SLOW_DEBUG_DO(for(auto x: occcnt) assert(x == 0););
 
     if (solver->conf.verbosity >= 5) {
         cout << "c XOR-ing together XORs. Starting with: " << endl;
@@ -444,9 +439,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
 
     for(const auto& offs: solver->longIrredCls) {
         Clause* cl = solver->cl_alloc.ptr(offs);
-        if (cl->red() || cl->used_in_xor()) {
-            continue;
-        }
+        if (cl->red()) continue;
         for(Lit l: *cl) {
             if (!seen2[l.var()]) {
                 seen2[l.var()] = 1;
@@ -487,8 +480,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
             //Pop and check if it can be XOR-ed together
             const uint32_t v = interesting.back();
             interesting.resize(interesting.size()-1);
-            if (occcnt[v] != 2)
-                continue;
+            if (occcnt[v] != 2) continue;
 
             size_t idxes[2];
             unsigned at = 0;
@@ -525,8 +517,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 VERBOSE_PRINT("equivalent. ");
 
                 //Update clash values & detached values
-                x1.merge_clash(x0, seen);
-                x1.detached |= x0.detached;
+                x1.merge_clashing_vars(x0, seen);
 
                 VERBOSE_PRINT("after merge: " << x1 <<  " -- at idx: " << idxes[1]);
 
@@ -548,7 +539,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                         interesting.push_back(l.var());
                     }
                 }
-            } else if (clash_num > 1 || x0.detached || x1.detached) {
+            } else if (clash_num > 1) {
                 //add back to ws, can't do much
                 ws.push(Watched(idxes[0], WatchType::watch_idx_t));
                 ws.push(Watched(idxes[1], WatchType::watch_idx_t));
@@ -558,8 +549,8 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 assert(occcnt[v] == 0);
 
                 Xor x_new(tmp_vars_xor_two, x0.rhs ^ x1.rhs, clash_var);
-                x_new.merge_clash(x0, seen);
-                x_new.merge_clash(x1, seen);
+                x_new.merge_clashing_vars(x0, seen);
+                x_new.merge_clashing_vars(x1, seen);
                 #ifdef USE_TBUDDY
                 if (solver->frat->enabled()) {
                     solver->frat->flush();
@@ -665,12 +656,8 @@ void XorFinder::clean_xors_from_empty(vector<Xor>& thisxors)
     for(size_t i = 0;i < thisxors.size(); i++) {
         Xor& x = thisxors[i];
         if (x.size() == 0 && x.rhs == false) {
-            if (!x.clash_vars.empty()) {
-                solver->xorclauses_unused.push_back(x);
-            } else {
-                TBUDDY_DO(solver->frat->flush());
-                TBUDDY_DO(delete x.bdd);
-            }
+            TBUDDY_DO(solver->frat->flush());
+            TBUDDY_DO(delete x.bdd);
         } else {
             verb_print(4, "xor after clean: " << thisxors[i]);
             thisxors[j++] = thisxors[i];

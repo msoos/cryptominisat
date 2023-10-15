@@ -306,7 +306,6 @@ class DLL_PUBLIC SolverConf
 
         //Verbosity
         int  verbosity;  ///<Verbosity level 0-2: normal  3+ extreme
-        int  xor_detach_verb; ///to debug XOR detach issues
 
         int  doPrintGateDot; ///< Print DOT file of gates
         int  print_full_restart_stat;

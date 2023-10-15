@@ -3383,7 +3383,6 @@ vector<Xor> Solver::get_recovered_xors(const bool xor_together_xors)
     if (ret == l_False) return xors_ret;
 
     auto xors = xorclauses;
-    xors.insert(xors.end(), xorclauses_unused.begin(), xorclauses_unused.end());
     if (xor_together_xors) {
         XorFinder finder(NULL, this);
         finder.xor_together_xors(xors);
@@ -3793,30 +3792,16 @@ bool Solver::no_irred_nonxor_contains_clash_vars()
     bool ret = true;
 
     //seen 1: it's a variable that's a clash variable
-    //seen 2: it's a variable in an XOR
-
-    //Set variables that are part of an XOR
-    for(const auto& x: xorclauses) {
-        //REAL vars
-        for(uint32_t v: x) {
-            seen[v] = 2;
-        }
-    }
-
     //Set variables that are clashing
     for(const auto& x: xorclauses) {
-        //CLASH vars
         for(uint32_t v: x.clash_vars) {
             //assert(seen[v] != 2); -- actually, it could be (weird, but possible)
             //in these cases, we should treat it as a clash var (more safe)
             seen[v] = 1;
-            /* cout << "c clash var: " << v + 1 << endl; */
         }
     }
 
-    for(const auto& v: removed_xorclauses_clash_vars) {
-        seen[v] = 1;
-    }
+    for(const auto& v: removed_xorclauses_clash_vars) seen[v] = 1;
 
     for(const auto& l: assumptions) {
         const Lit p = map_outer_to_inter(l.lit_outer);
@@ -3838,11 +3823,8 @@ bool Solver::no_irred_nonxor_contains_clash_vars()
         //contains at least 1 clash var AND some not all real vars--> MUST be an issue
         //contains at least 1 clash var AND only real vars--> must be a FULL XOR to be OK
 
-        if (cl->red()) {
-            continue;
-        }
+        if (cl->red()) continue;
 
-        uint32_t num_real_vars = 0;
         uint32_t num_clash_vars = 0;
         for(const Lit l: *cl) {
             if (seen[l.var()] == 1) {
@@ -3851,34 +3833,15 @@ bool Solver::no_irred_nonxor_contains_clash_vars()
 //                     cout << "clash : " << l << endl;
 //                 }
             }
-            else if (seen[l.var()] == 2) {
-                num_real_vars++;
-//                 if (!(cl->used_in_xor() && cl->used_in_xor_full())) {
-//                     cout << "real : " << l << endl;
-//                 }
-            }
-            else if (value(l) != l_Undef) {
-                num_real_vars++;
-            }
         }
-        if (num_clash_vars == 0) {
-            continue;
-        }
-
-        if (cl->used_in_xor() && cl->used_in_xor_full() && num_clash_vars+num_real_vars == cl->size()) {
-            continue;
-        }
+        if (num_clash_vars == 0) continue;
 
         //non-full XORs or other non-XOR clause
-        if (conf.verbosity >= 3 || conf.xor_detach_verb) {
+        if (conf.verbosity >= 3) {
             cout << "c CL with clash: " << *cl
             << " red: " << cl->red()
-            << " xor: " << cl->used_in_xor()
-            << " full-xor: " << cl->used_in_xor_full()
             << " num_clash_vars: " << num_clash_vars
-            << " num_real_vars: " << num_real_vars
             << " size: " << cl->size()
-            << " missing: " << (cl->size()-num_clash_vars-num_real_vars)
             << endl;
             for(const Lit l: *cl) {
                 if (seen[l.var()] == 1) {
@@ -3888,11 +3851,10 @@ bool Solver::no_irred_nonxor_contains_clash_vars()
             }
             for(const Lit l: *cl) {
                 if (seen[l.var()] == 0) {
-                    cout << "c neither clash nor real: " << l
+                    cout << "c not clash: " << l
                     << " value: " << value(l) << endl;
                 }
             }
-
         }
         ret = false;
     }
@@ -3903,9 +3865,8 @@ bool Solver::no_irred_nonxor_contains_clash_vars()
         for(const auto& w: ws) {
             if (w.isBin() && !w.red()) {
                 if (seen[l.var()]==1 || seen[w.lit2().var()]==1) {
-                    if (conf.verbosity >= 3 || conf.xor_detach_verb) {
+                    if (conf.verbosity >= 3)
                         cout << "c BIN with clash: " << l << " " << w.lit2() << endl;
-                    }
                     ret = false;
                     break;
                 }
@@ -3914,38 +3875,20 @@ bool Solver::no_irred_nonxor_contains_clash_vars()
     }
 
     for(const auto& x: xorclauses) {
-        //REAL vars
-        for(uint32_t v: x) {
-            seen[v] = 0;
-        }
-
-        //CLASH vars
-        for(uint32_t v: x.clash_vars) {
-            seen[v] = 0;
-//                 cout << "c clash var: " << v + 1 << endl;
-        }
+        for(uint32_t v: x.clash_vars) seen[v] = 0;
     }
-
-    for(const auto& v: removed_xorclauses_clash_vars) {
-        seen[v] = 0;
-    }
+    for(const auto& v: removed_xorclauses_clash_vars) seen[v] = 0;
 
     return ret;
 }
 
 bool Solver::assump_contains_xor_clash()
 {
-    assert(detached_xor_clauses);
     //Set variables that are clashing
     for(const auto& x: xorclauses) {
-        for(uint32_t v: x.clash_vars) {
-            seen[v] = 1;
-        }
+        for(uint32_t v: x.clash_vars) seen[v] = 1;
     }
-
-    for(const auto& v: removed_xorclauses_clash_vars) {
-        seen[v] = 1;
-    }
+    for(const auto& v: removed_xorclauses_clash_vars) seen[v] = 1;
 
     bool ret = false;
     for(const auto& l: assumptions) {
@@ -3959,16 +3902,11 @@ bool Solver::assump_contains_xor_clash()
         }
     }
 
+    // Cleanup
     for(const auto& x: xorclauses) {
-        for(uint32_t v: x.clash_vars) {
-            seen[v] = 0;
-        }
+        for(uint32_t v: x.clash_vars) seen[v] = 0;
     }
-
-    for(const auto& v: removed_xorclauses_clash_vars) {
-        seen[v] = 0;
-    }
-
+    for(const auto& v: removed_xorclauses_clash_vars) seen[v] = 0;
     return ret;
 }
 
