@@ -3584,19 +3584,22 @@ inline bool Searcher::check_order_heap_sanity()
 
 // detach & clear xorclauses
 bool Searcher::clear_xorclauses() {
-    if (solver->frat->enabled()) {
-        solver->frat->flush();
-        TBUDDY_DO(for (auto const& x: solver->xorclauses) delete x.bdd);
+    if (frat->enabled()) {
+        frat->flush();
+        TBUDDY_DO(free_bdds(xorclauses));
     }
     for(auto& gw: solver->gwatches) gw.clear();
-    solver->xorclauses.clear();
+    xorclauses.clear();
 
     bool ok = solver->remove_and_clean_all();
     if (!ok) return okay();
+    xorclauses = xorclauses_orig;
     for(uint32_t i = 0; i < xorclauses.size(); i ++) attach_xor_clause(i);
     return okay();
 }
 
+// Moves XORs from matrixes back to xorclauses. This allows rapid matrix
+// regeneration, etc. However, this does NOT add back clash variables, etc.
 bool Searcher::clear_gauss_matrices(const bool destruct) {
     if (!destruct) {
         TBUDDY_DO(if (frat->enabled()) for(auto& g: gmatrices) g->finalize_frat());
@@ -3620,21 +3623,14 @@ bool Searcher::clear_gauss_matrices(const bool destruct) {
     for(auto& w: gwatches) w.clear();
     gmatrices.clear();
     gqueuedata.clear();
-    TBUDDY_DO(free_bdds(xorclauses));
-    xorclauses.clear(); // we rely on xorclauses_orig now
     if (!destruct) {
         for(const auto& x: xorclauses_orig) {
-            xorclauses.push_back(x);
             #ifdef USE_TBUDDY
-            xorclauses.back().bdd = NULL;
+            x.bdd = NULL;
             frat->flush();
             if (frat->enabled()) solver->xorclauses.back().create_bdd_xor();
             #endif
         }
-    }
-    for(const auto& x: xorclauses) {
-        solver->xorclauses.push_back(x);
-        solver->attach_xor_clause(solver->xorclauses.size());
     }
 
     return okay();

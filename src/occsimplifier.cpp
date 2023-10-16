@@ -2241,6 +2241,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 #endif
                )
             {
+                solver->clear_gauss_matrices();
                 XorFinder finder(this, solver);
                 // beware, below can set UNSAT flag (ok = false)
                 finder.find_xors();

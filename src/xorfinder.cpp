@@ -130,6 +130,8 @@ void XorFinder::clean_equivalent_xors(vector<Xor>& txors) {
 }
 
 bool XorFinder::find_xors() {
+    assert(solver->gmatrices.empty());
+
     runStats.clear();
     runStats.numCalls = 1;
     grab_mem();
@@ -156,11 +158,11 @@ bool XorFinder::find_xors() {
     #endif
 
     find_xors_based_on_long_clauses();
-    assert(runStats.foundXors == solver->xorclauses.size());
+    assert(runStats.foundXors == solver->xorclauses_orig.size());
 
     //clean them of equivalent XORs
-    clean_equivalent_xors(solver->xorclauses);
-    for(const auto& x: solver->xorclauses) solver->xorclauses_orig.push_back(x);
+    clean_equivalent_xors(solver->xorclauses_orig);
+    for(const auto& x: solver->xorclauses_orig) solver->xorclauses.push_back(x);
 
     // Need to do this due to XORs encoding new info
     //    see NOTE in cnf.h
@@ -265,7 +267,7 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
 
 void XorFinder::add_found_xor(const Xor& found_xor)
 {
-    solver->xorclauses.push_back(found_xor);
+    solver->xorclauses_orig.push_back(found_xor);
     runStats.foundXors++;
     runStats.sumSizeXors += found_xor.size();
     runStats.maxsize = std::max<uint32_t>(runStats.maxsize, found_xor.size());

@@ -133,6 +133,8 @@ void PropEngine::attach_xor_clause(uint32_t at) {
     }
     #endif //DEBUG_ATTACH
 
+    assert(value(x[0]) == l_Undef);
+    assert(value(x[1]) == l_Undef);
     auto w = GaussWatched::plain_xor(at);
     gwatches[x[0]].push(w);
     gwatches[x[1]].push(w);
@@ -163,6 +165,8 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
         << decisionLevel() << " lit to prop: " << p);
 
     if (gmatrices.empty() && xorclauses.empty()) return PropBy();
+
+    // reset gqueuedata and update set vars in gmatrices
     for(uint32_t i = 0; i < gqueuedata.size(); i++) {
         if (gqueuedata[i].disabled || !gmatrices[i]->is_initialized()) continue;
         gqueuedata[i].reset();
@@ -186,14 +190,16 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
 
             uint32_t unknown = 0;
             uint32_t unknown_at = 0;
+            bool updated = false;
             bool rhs = x.rhs;
-            for(uint32_t i2= 0; i2 < x.size(); i2++) {
+            for(uint32_t i2 = 0; i2 < x.size(); i2++) {
                 if (solver->value(x[i2]) == l_Undef) {
                     unknown ++; unknown_at=i2;
-                    if (x.vars[i2] != x.watched[!which]) {
+                    if (x.vars[i2] != x.watched[!which] && updated) {
                         // it's not the other watch. So we can update current
                         // watch to this
                         gwatches[x.vars[i2]].push(GaussWatched::plain_xor(i->row_n));
+                        updated = true;
                     }
                 }
                 else rhs ^= solver->value(x[i2]) == l_True;
@@ -211,6 +217,7 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
             // unknown is >=2, we can remove this watch
             continue;
         }
+
         if (!gmatrices[i->matrix_num]->is_initialized()) continue; //remove watch and continue
         gqueuedata[i->matrix_num].new_resp_var = numeric_limits<uint32_t>::max();
         gqueuedata[i->matrix_num].new_resp_row = numeric_limits<uint32_t>::max();
