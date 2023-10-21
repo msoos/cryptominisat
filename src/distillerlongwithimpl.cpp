@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include "clauseallocator.h"
 #include "sqlstats.h"
 
+#include <algorithm>
 #include <iomanip>
 using namespace CMSat;
 using std::cout;
@@ -267,19 +268,9 @@ bool DistillerLongWithImpl::remove_or_shrink_clause(Clause& cl, ClOffset& offset
     return true;
 }
 
-void DistillerLongWithImpl::randomise_order_of_clauses(
-    vector<ClOffset>& clauses
-) {
-    if (clauses.empty())
-        return;
-
+void DistillerLongWithImpl::randomise_order_of_clauses(vector<ClOffset>& clauses) {
     timeAvailable -= (long)clauses.size()*2;
-    for(size_t i = 0; i < clauses.size()-1; i++) {
-        std::swap(
-            clauses[i]
-            , clauses[i + solver->mtrand.randInt(clauses.size()-i-1)]
-        );
-    }
+    std::shuffle(clauses.begin(), clauses.end(), solver->mtrand);
 }
 
 uint64_t DistillerLongWithImpl::calc_time_available(

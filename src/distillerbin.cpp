@@ -109,7 +109,7 @@ bool DistillerBin::distill_bin_cls_all(
         const Lit lit = Lit::toLit(i);
         todo.push_back(lit);
     }
-    std::shuffle(todo.begin(), todo.end(), std::default_random_engine(solver->mtrand.randInt()));
+    std::shuffle(todo.begin(), todo.end(), solver->mtrand);
     for(const auto& lit: todo) {
         time_out = go_through_bins(lit);
         if (time_out || !solver->okay()) {
@@ -208,9 +208,7 @@ bool DistillerBin::try_distill_bin(
     #endif
 
     //Try different ordering
-    if (solver->mtrand.randInt(1) == 1) {
-        std::swap(lit1, lit2);
-    }
+    if (rnd_uint(solver->mtrand, 1) == 1) std::swap(lit1, lit2);
 
     //Disable this clause
     findWatchedOfBin(solver->watches, lit1, lit2, false, w.get_ID()).mark_bin_cl();

@@ -3140,8 +3140,7 @@ bool Solver::full_probe(const bool bin_only)
         if (value(l) == l_Undef && varData[i].removed == Removed::none)
             vars.push_back(i);
     }
-    std::mt19937 g(mtrand.randInt());
-    std::shuffle(vars.begin(), vars.end(), g);
+    std::shuffle(vars.begin(), vars.end(), mtrand);
 
     for(auto const& v: vars) {
         if ((int64_t)solver->propStats.bogoProps > start_bogoprops + bogoprops_to_use)
@@ -5502,9 +5501,7 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen, bool& finished)
         if (varData[var].removed != Removed::none) continue;
         var_order.push_back(var);
     }
-    std::mt19937 g;
-    g.seed(mtrand.randInt());
-    std::shuffle(var_order.begin(), var_order.end(), g);
+    std::shuffle(var_order.begin(), var_order.end(), mtrand);
 
     int64_t orig_max_props = orig_max_confl*1000LL;
     if (orig_max_props < orig_max_confl) orig_max_props = orig_max_confl;

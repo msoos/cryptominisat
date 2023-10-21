@@ -75,7 +75,6 @@ private:
 
     bool check_timeout_due_to_hyperbin();
     void unmark_all_bins();
-    void randomize_roots();
     bool handle_lit_popped_from_queue(
         const Lit lit, const Lit propagating, const bool red, const int32_t ID);
     bool empty_failed_list();

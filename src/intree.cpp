@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include "sqlstats.h"
 #include "watchalgos.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cassert>
 
@@ -166,7 +167,8 @@ bool InTree::intree_probe()
     start_bogoprops = solver->propStats.bogoProps;
 
     fill_roots();
-    randomize_roots();
+    //randomize_roots
+    std::shuffle(roots.begin(), roots.end(), solver->mtrand);
 
     //Let's enqueue all ~root -s.
     for(Lit lit: roots) enqueue(~lit, lit_Undef, false, 0);
@@ -220,19 +222,6 @@ void InTree::unmark_all_bins()
                 w.unmark_bin_cl();
             }
         }
-    }
-}
-
-void InTree::randomize_roots()
-{
-    for (size_t i = 0
-        ; i + 1< roots.size()
-        ; i++
-    ) {
-        std::swap(
-            roots[i]
-            , roots[i+solver->mtrand.randInt(roots.size()-1-i)]
-        );
     }
 }
 

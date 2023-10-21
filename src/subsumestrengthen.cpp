@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include "solver.h"
 #include "solvertypes.h"
 #include "subsumeimplicit.h"
+#include <algorithm>
 #include <array>
 
 //#define VERBOSE_DEBUG
@@ -226,20 +227,6 @@ bool SubsumeStrengthen::backw_sub_str_with_long(
     return solver->okay();
 }
 
-void SubsumeStrengthen::randomise_clauses_order()
-{
-    const size_t sz = simplifier->clauses.size();
-    for (size_t i = 0
-        ; i + 1 < sz
-        ; i++
-    ) {
-        std::swap(
-            simplifier->clauses[i]
-            , simplifier->clauses[i+solver->mtrand.randInt(simplifier->clauses.size()-1-i)]
-        );
-    }
-}
-
 void SubsumeStrengthen::backw_sub_long_with_long()
 {
     //If clauses are empty, the system below segfaults
@@ -250,7 +237,7 @@ void SubsumeStrengthen::backw_sub_long_with_long()
     size_t wenThrough = 0;
     Sub0Ret sub0ret;
     const int64_t orig_limit = simplifier->subsumption_time_limit;
-    randomise_clauses_order();
+    std::shuffle(simplifier->clauses.begin(), simplifier->clauses.end(), solver->mtrand);
     const size_t max_go_through =
         solver->conf.subsume_gothrough_multip*(double)simplifier->clauses.size();
 
@@ -317,7 +304,7 @@ bool SubsumeStrengthen::backw_str_long_with_long()
     const int64_t orig_limit = *simplifier->limit_to_decrease;
     Sub1Ret ret;
 
-    randomise_clauses_order();
+    std::shuffle(simplifier->clauses.begin(), simplifier->clauses.end(), solver->mtrand);
     while(*simplifier->limit_to_decrease > 0
         && wenThrough < 1.5*(double)2*simplifier->clauses.size()
         && solver->okay()
@@ -1009,7 +996,7 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins()
 
     //Randomize start in the watchlist
     size_t upI;
-    upI = solver->mtrand.randInt(solver->watches.size()-1);
+    upI = rnd_uint(solver->mtrand, solver->watches.size()-1);
 
     size_t numDone = 0;
     for (; numDone < solver->watches.size() && *simplifier->limit_to_decrease > 0

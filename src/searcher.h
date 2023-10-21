@@ -25,11 +25,11 @@ THE SOFTWARE.
 
 #include <array>
 
+#include "constants.h"
 #include "propengine.h"
 #include "solvertypes.h"
 #include "time_mem.h"
 #include "hyperengine.h"
-#include "MersenneTwister.h"
 #include "simplefile.h"
 #include "searchstats.h"
 #include "searchhist.h"
@@ -83,7 +83,6 @@ class Searcher : public HyperEngine
         bool must_abort(lbool status);
         PropBy insert_gpu_clause(Lit* lits, uint32_t count);
         uint64_t luby_loop_num = 0;
-        MTRand mtrand; ///< random number generator
         void set_seed(const uint32_t seed);
 
 
@@ -588,8 +587,9 @@ inline bool Searcher::pick_polarity(const uint32_t var)
         case PolarityMode::polarmode_pos:
             return true;
 
-        case PolarityMode::polarmode_rnd:
-            return mtrand.randInt(1);
+        case PolarityMode::polarmode_rnd: {
+            return rnd_uint(mtrand, 1);
+        }
 
         case PolarityMode::polarmode_automatic:
             assert(false);
