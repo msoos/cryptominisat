@@ -179,7 +179,6 @@ public:
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     vector<ClauseStatsExtra> red_stats_extra;
     #endif
-    vector<ClOffset> detached_xor_repr_cls; //these are still in longIrredCls
 
     // xorclauses -- current, attached XORs. Some XORs may be XOR'ed together
     //               however, they are never in a matrix.
@@ -189,13 +188,18 @@ public:
     //       they may be different from xorclauses_orig
     vector<Xor> xorclauses;
     vector<Xor> xorclauses_orig;
+    void print_xors(const vector<Xor>& xors);
+
+    // variables that have been removed due to them being ONLY in XORs
+    // that have beeen XOR-ed together and hence the variable is no longer
+    // part of the CNF
+    vector<uint32_t> removed_xorclauses_clash_vars;
+    bool xor_clauses_updated = false;
 
     vector<BNN*> bnns;
     vector<vector<Lit>> bnn_reasons;
     vector<Lit> bnn_confl_reason;
     vector<uint32_t> bnn_reasons_empty_slots;
-    vector<uint32_t> removed_xorclauses_clash_vars;
-    bool xor_clauses_updated = false;
     BinTriStats binTri;
     LitStats litStats;
     int32_t clauseID = 0;

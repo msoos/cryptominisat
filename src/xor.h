@@ -44,9 +44,7 @@ namespace CMSat {
 class Xor
 {
 public:
-    Xor()
-    {}
-
+    Xor() {}
     explicit Xor(const vector<uint32_t>& cl, const bool _rhs, const vector<uint32_t>& _clash_vars):
         rhs(_rhs)
         , clash_vars(_clash_vars)
@@ -77,7 +75,8 @@ public:
         }
     }
 
-    explicit Xor(const vector<uint32_t>& cl, const bool _rhs, const uint32_t clash_var):
+    template<typename T>
+    explicit Xor(const T& cl, const bool _rhs, const uint32_t clash_var):
         rhs(_rhs)
     {
         clash_vars.push_back(clash_var);
@@ -85,30 +84,12 @@ public:
             vars.push_back(cl[i]);
         }
     }
+    ~Xor() {}
 
-    ~Xor()
-    {
-    }
-
-    vector<uint32_t>::const_iterator begin() const
-    {
-        return vars.begin();
-    }
-
-    vector<uint32_t>::const_iterator end() const
-    {
-        return vars.end();
-    }
-
-    vector<uint32_t>::iterator begin()
-    {
-        return vars.begin();
-    }
-
-    vector<uint32_t>::iterator end()
-    {
-        return vars.end();
-    }
+    vector<uint32_t>::const_iterator begin() const { return vars.begin(); }
+    vector<uint32_t>::const_iterator end() const { return vars.end(); }
+    vector<uint32_t>::iterator begin() { return vars.begin(); }
+    vector<uint32_t>::iterator end() { return vars.end(); }
 
     bool operator<(const Xor& other) const
     {
@@ -126,48 +107,18 @@ public:
         return false;
     }
 
-    const uint32_t& operator[](const uint32_t at) const
-    {
-        return vars[at];
-    }
-
-    uint32_t& operator[](const uint32_t at)
-    {
-        return vars[at];
-    }
-
-    void resize(const uint32_t newsize)
-    {
-        vars.resize(newsize);
-    }
-
-    vector<uint32_t>& get_vars()
-    {
-        return vars;
-    }
-
-    const vector<uint32_t>& get_vars() const
-    {
-        return vars;
-    }
-
-    size_t size() const
-    {
-        return vars.size();
-    }
+    const uint32_t& operator[](const uint32_t at) const { return vars[at]; }
+    uint32_t& operator[](const uint32_t at) { return vars[at]; }
+    void resize(const uint32_t newsize) { vars.resize(newsize); }
+    vector<uint32_t>& get_vars() { return vars; }
+    const vector<uint32_t>& get_vars() const { return vars; }
+    size_t size() const { return vars.size(); }
 
     bool empty() const
     {
-        if (!vars.empty())
-            return false;
-
-        if (!clash_vars.empty())
-            return false;
-
-        if (rhs != false) {
-            return false;
-        }
-
+        if (!vars.empty()) return false;
+        if (!clash_vars.empty()) return false;
+        if (rhs != false) return false;
         return true;
     }
 

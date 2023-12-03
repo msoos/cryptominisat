@@ -1443,7 +1443,6 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
 //         conf.branch_strategy_setup = "vsids1";
         conf.bva_every_n = 1;
         conf.do_simplify_problem = true;
-        conf.force_preserve_xors = true;
         conf.diff_declev_for_chrono = -1;
         conf.do_bosphorus = false;
         data->solvers[i]->setConf(conf);
@@ -1498,7 +1497,6 @@ DLL_PUBLIC void SATSolver::set_verbosity_detach_warning(bool verb)
 {
     for (size_t i = 0; i < data->solvers.size(); i++) {
         SolverConf conf = data->solvers[i]->getConf();
-        conf.xor_detach_verb = verb;
         data->solvers[i]->setConf(conf);
     }
 }

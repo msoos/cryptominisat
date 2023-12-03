@@ -33,6 +33,8 @@ THE SOFTWARE.
 #include <complex>
 #include <locale>
 #include <random>
+#include <unordered_map>
+#include "constants.h"
 
 #ifdef ARJUN_SERIALIZE
 #include <boost/archive/text_iarchive.hpp>
@@ -1820,6 +1822,7 @@ lbool Solver::iterate_until_solved()
             status = l_False;
             goto end;
         }
+        detach_clauses_in_xors();
         status = Searcher::solve(num_confl);
 
         //Check for effectiveness
@@ -2181,7 +2184,7 @@ lbool Solver::simplify_problem(const bool startup, const string& strategy)
 
     lbool ret = l_Undef;
     clear_order_heap();
-    set_clash_decision_vars();
+    unset_clash_decision_vars();
     if (!clear_gauss_matrices()) return l_False;
 
     if (conf.verbosity >= 6) {
@@ -3373,6 +3376,7 @@ vector<Lit> Solver::get_toplevel_units_internal(bool outer_numbering) const
     return units;
 }
 
+// ONLY used externally
 vector<Xor> Solver::get_recovered_xors(const bool xor_together_xors)
 {
     vector<Xor> xors_ret;
@@ -3425,6 +3429,9 @@ void Solver::renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors
     }
 }
 
+// This detaches all xor clauses, and re-attaches them
+// with ONLY the ones attached that are not in a matrix
+// and the matrices are created and initialized
 bool Solver::find_and_init_all_matrices()
 {
     *solver->frat << __PRETTY_FUNCTION__ << " start\n";
@@ -3435,11 +3442,10 @@ bool Solver::find_and_init_all_matrices()
         return true;
     }
     if (conf.verbosity >= 1) cout << "c [find&init matx] performing matrix init" << endl;
-
-    bool matrix_created;
     if (!clear_gauss_matrices()) return false;
 
     MatrixFinder mfinder(solver);
+    bool matrix_created;
     ok = mfinder.find_matrices(matrix_created);
     if (!ok) return false;
     if (!init_all_matrices()) return false;
@@ -3472,6 +3478,8 @@ bool Solver::find_and_init_all_matrices()
     return true;
 }
 
+// Runs init on all matrices. Note that the XORs inside the matrices
+// are at this point not attached.
 bool Solver::init_all_matrices()
 {
     assert(okay());
@@ -3760,7 +3768,7 @@ void Solver::stats_del_cl(ClOffset offs)
 }
 #endif
 
-void Solver::unset_clash_decision_vars(const vector<Xor>& xors)
+void Solver::set_clash_decision_vars(const vector<Xor>& xors)
 {
     vector<uint32_t> clash_vars;
     for(const auto& x: xors) {
@@ -3778,7 +3786,7 @@ void Solver::unset_clash_decision_vars(const vector<Xor>& xors)
     }
 }
 
-void Solver::set_clash_decision_vars()
+void Solver::unset_clash_decision_vars()
 {
     for(auto& v: varData) {
         if (v.removed == Removed::clashed) {
@@ -4198,6 +4206,143 @@ void Solver::copy_to_simp(SATSolver* s2)
     }
     end_getting_small_clauses();
 }
+
+void hash_uint32_t(const uint32_t v, uint32_t& hash) {
+    uint8_t* s = (uint8_t*)(&v);
+    for(uint32_t i = 0; i < 4; i++, s++)
+    {
+        hash += *s;
+        hash += (hash << 10);
+        hash ^= (hash >> 6);
+    }
+}
+
+uint32_t hash_xcl(const Xor& x)
+{
+    uint32_t hash = 0;
+    for(const auto& v: x) hash_uint32_t(v, hash);
+    hash += (hash << 3);
+    hash ^= (hash >> 11);
+    hash += (hash << 15);
+
+    return hash;
+}
+
+
+uint32_t hash_xcl(const Clause& cl)
+{
+    uint32_t hash = 0;
+    for(const auto& l: cl) hash_uint32_t(l.var(), hash);
+    hash += (hash << 3);
+    hash ^= (hash >> 11);
+    hash += (hash << 15);
+
+    return hash;
+}
+
+bool Solver::check_clause_represented_by_xor(const Clause& cl) {
+    for(const auto& l: cl) if (!seen[l.var()]) return false;
+
+    bool rhs = false;
+    for(const auto& l: cl) {seen2[l.var()] = 1; rhs ^= l.sign();}
+    rhs ^= (cl.size() % 2);
+
+    Lit minlit = *std::min_element(cl.begin(), cl.end());
+    bool found = false;
+    for(const auto& w: watches[minlit.unsign()]) {
+        if (!w.isIdx()) continue;
+        assert(w.isIdx());
+        const Xor& x = xorclauses_orig[w.get_idx()];
+        if (x.size() != cl.size()) continue;
+        if (x.rhs != rhs) continue;
+        bool ok = true;
+        for(const auto& v: x) if (!seen2[v]) {ok = false; break;}
+        if (!ok) continue;
+    }
+
+    for(const auto& l: cl) seen2[l.var()] = 0;
+    return found;
+}
+
+// Detaches clauses that are the XORs
+// TODO must do this once in a while
+void Solver::detach_clauses_in_xors() {
+    double myTime = cpuTime();
+
+    // Setup
+    uint32_t maxsize_xor = 0;
+    std::set<uint32_t> xor_hashes;
+    for(uint32_t i = 0; i < xorclauses_orig.size(); i++) {
+        const auto& x = xorclauses_orig[i];
+        maxsize_xor = std::max<uint32_t>(maxsize_xor, x.size());
+        for(const uint32_t v: x) seen[v] = 1;
+        xor_hashes.insert(hash_xcl(x));
+
+        auto v = *std::min_element(x.begin(), x.end());
+        watches[Lit(v, false)].push(Watched(i, WatchType::watch_idx_t));
+        watches.smudge(Lit(v, false));
+    }
+
+    // Go through watchlist
+    uint32_t deleted = 0;
+    vector<ClOffset> delayed_clause_free;
+    for(uint32_t x = 0; x < nVars()*2; x++) {
+        Lit l = Lit::toLit(x);
+        uint32_t j = 0;
+        for(uint32_t i = 0; i < watches[l].size(); i++) {
+            const Watched& w = watches[l][i];
+            if (w.isBin() || w.isBNN() || w.isIdx()) {
+                watches[l][j++] = w;
+                continue;
+            }
+
+            assert(w.isClause());
+            ClOffset offs = w.get_offset();
+            Clause* cl = cl_alloc.ptr(offs);
+            assert(!cl->freed());
+            //We have already went through this clause, and set it to be removed/detached
+            //
+            if (cl->getRemoved()) continue;
+            if (cl->red()) continue;
+
+            if (!cl->red() && cl->size() <= maxsize_xor &&
+                    xor_hashes.count(hash_xcl(*cl)) == 1 &&
+                    check_clause_represented_by_xor(*cl)) {
+                cl->setRemoved();
+                delayed_clause_free.push_back(offs);
+                deleted++;
+                continue;
+            }
+            watches[l][j++] = w;
+        }
+        watches[l].resize(j);
+    }
+
+    if (deleted > 0) {
+        uint32_t j = 0;
+        for(uint32_t i = 0; i < longIrredCls.size(); i++) {
+            ClOffset offs = longIrredCls[i];
+            Clause* cl = cl_alloc.ptr(offs);
+            if (!cl->getRemoved()) {
+                longIrredCls[j++] = offs;
+            }
+        }
+        longIrredCls.resize(j);
+
+        for(ClOffset offset: delayed_clause_free) free_cl(offset);
+        delayed_clause_free.clear();
+    }
+    assert(delayed_clause_free.empty());
+
+    // Cleanup
+    for(const auto& x: xorclauses_orig) {
+        for(const uint32_t v: x) seen[v] = 0;
+    }
+    solver->clean_occur_from_idx_types_only_smudged();
+    verb_print(1, "[gauss] clauses deleted that are represented by XORs: " << deleted
+        << "T: " << conf.print_times(cpuTime() - myTime));
+}
+
 
 #ifdef STATS_NEEDED
 void Solver::dump_clauses_at_finishup_as_last()

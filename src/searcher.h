@@ -141,7 +141,8 @@ class Searcher : public HyperEngine
         void consolidate_watches(const bool full);
 
         //Gauss
-        bool clear_xorclauses();
+        bool attach_xorclauses();
+        bool detach_clear_xorclauses();
         bool clear_gauss_matrices(const bool destruct = false);
         void print_matrix_stats();
         void check_need_gauss_jordan_disable();

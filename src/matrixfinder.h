@@ -48,7 +48,7 @@ class MatrixFinder {
         set<uint32_t> clash_vars;
 
     private:
-        uint32_t setMatrixes();
+        uint32_t setup_matrices_attach_remaining_cls();
         struct MatrixShape
         {
             MatrixShape(uint32_t matrix_num) :

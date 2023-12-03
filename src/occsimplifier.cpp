@@ -2246,6 +2246,9 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 // beware, below can set UNSAT flag (ok = false)
                 finder.find_xors();
                 runStats.xorTime += finder.get_stats().findTime;
+                solver->xorclauses = solver->xorclauses_orig;
+                finder.xor_together_xors(solver->xorclauses);
+                solver->attach_xorclauses();
             }
         } else if (token == "occ-lit-rem") {
             all_occ_based_lit_rem();
@@ -2377,7 +2380,6 @@ bool OccSimplifier::simplify(const bool _startup, const std::string& schedule)
     assert(solver->no_marked_clauses());
     #endif
 
-    assert(solver->detached_xor_repr_cls.empty());
     assert(solver->gmatrices.empty());
     assert(solver->gqueuedata.empty());
 

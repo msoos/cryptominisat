@@ -660,11 +660,6 @@ void Main::add_supported_options()
         , "Number of _real_ variables per XOR when cutting them. So 2 will have XORs of size 4 because 1 = connecting to previous, 1 = connecting to next, 2 in the midde. If the XOR is 4 long, it will be just one 4-long XOR, no connectors")
     ("maxxormat", po::value(&conf.maxXORMatrix)->default_value(conf.maxXORMatrix)
         , "Maximum matrix size (=num elements) that we should try to echelonize")
-    ("forcepreservexors", po::value(&conf.force_preserve_xors)->default_value(conf.force_preserve_xors)
-        , "Force preserving XORs when they have been found. Easier to make sure XORs are not lost through simplifiactions such as strenghtening")
-    //Not implemented yet
-    //("mix", po::value(&conf.doMixXorAndGates)->default_value(conf.doMixXorAndGates)
-    //    , "Mix XORs and OrGates for new truths")
     ;
 
     po::options_description eqLitOpts("Equivalent literal options");
@@ -848,10 +843,6 @@ void Main::add_supported_options()
         " matrices are discarded for reasons of efficiency")
     ("maxnummatrices", po::value(&conf.gaussconf.max_num_matrices)->default_value(conf.gaussconf.max_num_matrices)
         , "Maximum number of matrices to treat.")
-    ("detachxor", po::value(&conf.xor_detach_reattach)->default_value(conf.xor_detach_reattach)
-        , "Detach and reattach XORs")
-    ("detachverb", po::value(&conf.xor_detach_verb)->default_value(conf.xor_detach_verb)
-        , "If set, verbosity for XOR detach code is upped, ignoring normal verbosity")
     ("gaussusefulcutoff", po::value(&conf.gaussconf.min_usefulness_cutoff)->default_value(conf.gaussconf.min_usefulness_cutoff)
         , "Turn off Gauss if less than this many usefulenss ratio is recorded")
     ;

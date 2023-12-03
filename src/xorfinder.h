@@ -153,7 +153,6 @@ class XorFinder
 {
 public:
     XorFinder(OccSimplifier* occsimplifier, Solver* solver);
-    bool find_xors();
 
     struct Stats
     {
@@ -178,6 +177,7 @@ public:
         uint32_t maxsize = numeric_limits<uint32_t>::min();
     };
 
+    bool find_xors();
     const Stats& get_stats() const;
     size_t mem_used() const;
     void grab_mem();
@@ -188,7 +188,6 @@ private:
     PossibleXor poss_xor;
     void add_found_xor(const Xor& found_xor);
     void find_xors_based_on_long_clauses();
-    void print_found_xors();
     bool xor_has_interesting_var(const Xor& x);
     void clean_xors_from_empty(vector<Xor>& thisxors);
 

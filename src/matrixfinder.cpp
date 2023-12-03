@@ -94,12 +94,15 @@ inline bool MatrixFinder::belong_same_matrix(const Xor& x)
     return true;
 }
 
+// Puts XORs from xorclauses into matrices. Matrices are created but not initialized
+// Detaches XORs that have been put into matrices
 // Returns SAT/UNSAT
 bool MatrixFinder::find_matrices(bool& matrix_created)
 {
     assert(solver->decisionLevel() == 0);
     assert(solver->ok);
     assert(solver->gmatrices.empty());
+    solver->detach_clear_xorclauses();
     matrix_created = true;
 
     table.clear();
@@ -133,11 +136,9 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
         return true;
     }
 
-    //Just one giant matrix.
     if (!solver->conf.gaussconf.doMatrixFind) {
-        verb_print(1,"c Matrix finding disabled through switch. Putting all xors into matrix.");
-        solver->gmatrices.push_back(new EGaussian(solver, 0, solver->xorclauses));
-        solver->gqueuedata.resize(solver->gmatrices.size());
+        verb_print(1,"c Matrix finding disabled through switch. Not using matrixes");
+        solver->gqueuedata.clear();
         return true;
     }
 
@@ -148,10 +149,8 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
         tomerge.clear();
         newSet.clear();
         for (uint32_t v : x) {
-            if (table[v] != var_Undef)
-                tomerge.insert(table[v]);
-            else
-                newSet.push_back(v);
+            if (table[v] != var_Undef) tomerge.insert(table[v]);
+            else newSet.push_back(v);
         }
         if (tomerge.size() == 1) {
             const uint32_t into = *tomerge.begin();
@@ -167,8 +166,7 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
             newSet.insert(newSet.end(), reverseTable[v].begin(), reverseTable[v].end());
             reverseTable.erase(v);
         }
-        for (uint32_t i = 0; i < newSet.size(); i++)
-            table[newSet[i]] = matrix_no;
+        for (uint32_t i = 0; i < newSet.size(); i++) table[newSet[i]] = matrix_no;
         reverseTable[matrix_no] = newSet;
         matrix_no++;
     }
@@ -190,7 +188,7 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
     }
     #endif
 
-    uint32_t numMatrixes = setMatrixes();
+    uint32_t numMatrixes = setup_matrices_attach_remaining_cls();
 
     const bool time_out =  false;
     const double time_used = cpuTime() - myTime;
@@ -202,7 +200,7 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
     return solver->okay();
 }
 
-uint32_t MatrixFinder::setMatrixes()
+uint32_t MatrixFinder::setup_matrices_attach_remaining_cls()
 {
     if (solver->conf.sampling_vars) {
         uint32_t size_at_least = (double)solver->conf.sampling_vars->size()*3;
@@ -358,6 +356,7 @@ uint32_t MatrixFinder::setMatrixes()
             cout  << endl;
         }
     }
+    solver->attach_xorclauses();
 
     if (solver->conf.verbosity && unusedMatrix > 0) {
         cout << "c [matrix] unused matrices: " << unusedMatrix

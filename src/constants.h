@@ -203,6 +203,12 @@ THE SOFTWARE.
 #define CHECK_N_OCCUR
 #endif
 
+#if defined(DEBUG_MARKED_CLAUSE)
+#define DEBUG_MARKED_CLAUSE_DO(x) do {x;} while (0)
+#else
+#define DEBUG_MARKED_CLAUSE_DO(x) do {} while (0)
+#endif
+
 //#define DEBUG_ATTACH_FULL
 
 #endif //__CONSTANTS_H__

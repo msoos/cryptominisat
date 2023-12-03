@@ -305,9 +305,12 @@ class Solver : public Searcher
         bool init_all_matrices();
         bool no_irred_nonxor_contains_clash_vars();
         bool assump_contains_xor_clash();
-        void unset_clash_decision_vars(const vector<Xor>& xors);
-        void set_clash_decision_vars();
+        void set_clash_decision_vars(const vector<Xor>& xors);
+        void unset_clash_decision_vars();
         bool find_and_init_all_matrices();
+        void detach_clauses_in_xors();
+        vector<Lit> tmp_repr;
+        bool check_clause_represented_by_xor(const Clause& cl);
 
         //assumptions
         void set_assumptions();
@@ -547,9 +550,7 @@ template<class T>
 inline vector<Lit> Solver::clause_outer_numbered(const T& cl) const
 {
     tmpCl.clear();
-    for(size_t i = 0; i < cl.size(); i++) {
-        tmpCl.push_back(map_inter_to_outer(cl[i]));
-    }
+    for(const auto& l: cl) tmpCl.push_back(map_inter_to_outer(l));
 
     return tmpCl;
 }

@@ -3582,24 +3582,30 @@ inline bool Searcher::check_order_heap_sanity()
     return true;
 }
 
-// detach & clear xorclauses
-bool Searcher::clear_xorclauses() {
+// clear xorclauses
+bool Searcher::detach_clear_xorclauses() {
     if (frat->enabled()) {
         frat->flush();
         TBUDDY_DO(free_bdds(xorclauses));
     }
-    for(auto& gw: solver->gwatches) gw.clear();
+    for(auto& gw: solver->gwatches) gw.clear(); // detach every XOR
     xorclauses.clear();
 
+    solver->remove_and_clean_all();
+    xorclauses = xorclauses_orig;
+    return okay();
+}
+
+bool Searcher::attach_xorclauses() {
     bool ok = solver->remove_and_clean_all();
     if (!ok) return okay();
-    xorclauses = xorclauses_orig;
     for(uint32_t i = 0; i < xorclauses.size(); i ++) attach_xor_clause(i);
     return okay();
 }
 
-// Moves XORs from matrixes back to xorclauses. This allows rapid matrix
-// regeneration, etc. However, this does NOT add back clash variables, etc.
+// Moves XORs from matrixes back to xorclauses, and attaches them.
+// Deletes all matrices.
+// TODO: this does NOT add back clash variables
 bool Searcher::clear_gauss_matrices(const bool destruct) {
     if (!destruct) {
         TBUDDY_DO(if (frat->enabled()) for(auto& g: gmatrices) g->finalize_frat());
@@ -3618,7 +3624,6 @@ bool Searcher::clear_gauss_matrices(const bool destruct) {
     }
 
     if (conf.verbosity) print_matrix_stats();
-    for(EGaussian* g: gmatrices) g->move_back_xor_clauses();
     for(EGaussian* g: gmatrices) delete g;
     for(auto& w: gwatches) w.clear();
     gmatrices.clear();
@@ -3632,7 +3637,8 @@ bool Searcher::clear_gauss_matrices(const bool destruct) {
             #endif
         }
     }
-
+    detach_clear_xorclauses();
+    attach_xorclauses();
     return okay();
 }
 

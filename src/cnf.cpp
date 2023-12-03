@@ -967,6 +967,15 @@ bool CNF::zero_irred_cls(const CMSat::Lit lit) const
     return true;
 }
 
+void CNF::print_xors(const vector<Xor>& xors)
+{
+    if (conf.verbosity >= 5) {
+        cout << "c Orig XORs: " << endl;
+        for(auto const& x: xors) cout << "c " << x << endl;
+        cout << "c -> Total: " << xors.size() << " xors" << endl;
+    }
+}
+
 #ifdef USE_TBUDDY
 void CNF::free_bdds(vector<Xor>& xors)
 {
