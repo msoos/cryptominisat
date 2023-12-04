@@ -1091,7 +1091,7 @@ void OccSimplifier::subs_with_resolvent_clauses()
                     const Clause *cl = solver->cl_alloc.ptr(neg.get_offset());
                     if (cl->getRemoved() || cl->red()) continue;
                     ID2 = cl->stats.ID;
-                }
+                } else { assert(false); }
 
                 //Resolve the two clauses
                 bool tautological = resolve_clauses(pos, neg, lit);
