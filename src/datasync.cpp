@@ -104,8 +104,8 @@ void DataSync::rebuild_bva_map()
 }
 
 void DataSync::updateVars(
-    const vector<uint32_t>& /*outerToInter*/
-    , const vector<uint32_t>& /*interToOuter*/
+    [[maybe_unused]] const vector<uint32_t>&  outerToInter
+    , [[maybe_unused]] const vector<uint32_t>& interToOuter
 ) {
 }
 
