@@ -21,6 +21,7 @@ THE SOFTWARE.
 ***********************************************/
 
 #include "searcher.h"
+#include "constants.h"
 #include "occsimplifier.h"
 #include "time_mem.h"
 #include "solver.h"
@@ -1278,9 +1279,6 @@ lbool Searcher::search()
         || !confl.isNULL() //always finish the last conflict
     ) {
         confl = PropBy();
-        #ifdef USE_GPU
-        confl = solver->datasync->pop_clauses();
-        #endif
         if (!solver->okay()) {
             search_ret = l_False;
             goto end;
@@ -1820,14 +1818,9 @@ bool Searcher::handle_conflict(PropBy confl)
         , size_before_minim         //return glue before minimization here
     );
     solver->datasync->signal_new_long_clause(learnt_clause);
-    #ifdef USE_GPU
-    solver->datasync->trySendAssignmentToGpu();
-    #endif
 
     uint32_t connects_num_communities = 0;
-    #ifdef STATS_NEEDED
-    connects_num_communities = calc_connects_num_communities(learnt_clause);
-    #endif
+    STATS_DO(connects_num_communities = calc_connects_num_communities(learnt_clause));
     print_learnt_clause();
 
     update_history_stats(backtrack_level, glue, connects_num_communities);
@@ -2441,10 +2434,9 @@ void Searcher::sls_if_needed()
     assert(okay());
     assert(decisionLevel() == 0);
     if (conf.doSLS &&
-        // If XORs are detached, or there are BNNs, SLS will not work as intended
+        // If XORs are available, or there are BNNs, SLS will not work as intended
         // HOWEVER, it seems to STILL help, likely by setting values randomly
-//         detached_xor_clauses &&
-//         detached_xor_repr_cls.empty() &&
+//         xorclause_orig.empty() &&
 //         bnns.empty() &&
         sumConflicts > next_sls)
     {
@@ -2563,16 +2555,8 @@ lbool Searcher::solve(
         fast_backw.start_sumConflicts = sumConflicts;
     }
     num_search_called++;
-    #ifdef SLOW_DEBUG
-    //When asking for a lot of simple soluitons, search() gets called a lot
-    check_no_removed_or_freed_cl_in_watch();
-    #endif
-
-    if (conf.verbosity >= 6) {
-        cout
-        << "c Searcher::solve() called"
-        << endl;
-    }
+    SLOW_DEBUG_DO(check_no_removed_or_freed_cl_in_watch());
+    verb_print(6, "Searcher::solve() called");
 
     resetStats();
     lbool status = l_Undef;
@@ -2580,9 +2564,7 @@ lbool Searcher::solve(
     setup_branch_strategy();
     setup_restart_strategy(false);
     setup_polarity_strategy();
-    #ifdef STATS_NEEDED
-    check_calc_satzilla_features(true);
-    #endif
+    STATS_DO(check_calc_satzilla_features(true));
     #ifdef STATS_NEEDED_BRANCH
     check_calc_vardist_features(true);
     #endif
@@ -2849,9 +2831,7 @@ void Searcher::finish_up_solve(const lbool status)
         PropBy confl = propagate<false>();
         assert(confl.isNULL());
         assert(solver->prop_at_head());
-        #ifdef SLOW_DEBUG
-        print_solution_varreplace_status();
-        #endif
+        SLOW_DEBUG_DO(print_solution_varreplace_status());
     } else if (status == l_False) {
         if (conflict.size() == 0) {
             ok = false;
@@ -2868,14 +2848,11 @@ void Searcher::finish_up_solve(const lbool status)
     }
 
     stats.cpu_time = cpuTime() - startTime;
-    if (conf.verbosity >= 4) {
-        cout << "c Searcher::solve() finished"
+    verb_print(4, "Searcher::solve() finished"
         << " status: " << status
         << " numConflicts : " << stats.conflicts
         << " SumConfl: " << sumConflicts
-        << " max_confl_per_search_solve_call:" << max_confl_per_search_solve_call
-        << endl;
-    }
+        << " max_confl_per_search_solve_call:" << max_confl_per_search_solve_call);
 
     print_iteration_solving_stats();
 }
@@ -3266,12 +3243,7 @@ void Searcher::cancelUntil(uint32_t blevel)
     #endif
 
     if (decisionLevel() > blevel) {
-        if (!inprocess) {
-            update_polarities_on_backtrack(blevel);
-            #ifdef USE_GPU
-            solver->datasync->unsetFromGpu(blevel);
-            #endif
-        }
+        if (!inprocess) update_polarities_on_backtrack(blevel);
 
         for (uint32_t i = 0; i < gmatrices.size(); i++)
             if (gmatrices[i] && !gqueuedata[i].disabled)
@@ -3279,9 +3251,7 @@ void Searcher::cancelUntil(uint32_t blevel)
 
         uint32_t i = trail_lim[blevel];
         uint32_t j = i;
-        for (; i < trail.size()
-            ; i++
-        ) {
+        for (; i < trail.size() ; i++) {
             VERBOSE_PRINT("Canceling lit " << trail[i].lit << " sublevel: " << i);
 
             const uint32_t var = trail[i].lit.var();
@@ -3614,13 +3584,8 @@ bool Searcher::clear_gauss_matrices(const bool destruct) {
     xor_clauses_updated = true;
     for(uint32_t i = 0; i < gqueuedata.size(); i++) {
         auto gqd = gqueuedata[i];
-        if (conf.verbosity >= 2) {
-            cout
-            << "c [mat" << i << "] num_props       : "
-            << print_value_kilo_mega(gqd.num_props) << endl
-            << "c [mat" << i << "] num_conflicts   : "
-            << print_value_kilo_mega(gqd.num_conflicts)  << endl;
-        }
+        verb_print(2, "[mat" << i << "] num_props       : " << print_value_kilo_mega(gqd.num_props));
+        verb_print(2, "[mat" << i << "] num_conflicts   : " << print_value_kilo_mega(gqd.num_conflicts));
     }
 
     if (conf.verbosity) print_matrix_stats();
@@ -3642,13 +3607,8 @@ bool Searcher::clear_gauss_matrices(const bool destruct) {
     return okay();
 }
 
-void Searcher::print_matrix_stats()
-{
-    for(EGaussian* g: gmatrices) {
-        if (g) {
-            g->print_matrix_stats(conf.verbosity);
-        }
-    }
+void Searcher::print_matrix_stats() {
+    for(EGaussian* g: gmatrices) if (g) g->print_matrix_stats(conf.verbosity);
 }
 
 void Searcher::check_assumptions_sanity()
@@ -3670,7 +3630,6 @@ void Searcher::bump_var_importance_all(const uint32_t var)
     vsids_bump_var_act<false>(var);
     vmtf_bump_queue(var);
 }
-
 
 void Searcher::bump_var_importance(const uint32_t var)
 {
@@ -3841,172 +3800,3 @@ void Searcher::set_seed(const uint32_t seed)
 {
     mtrand.seed(seed);
 }
-
-#ifdef USE_GPU
-// Learns the clause, and attach it
-// May lead to canceling to backtracking if this clause leads to an implication at a level strictly lower
-// than the current level
-// returns a non-undef cref if this clause is in conflict
-PropBy Searcher::insert_gpu_clause(Lit* lits, uint32_t count)
-{
-    std::sort(lits, lits+count);
-    uint32_t j = 0;
-    for(uint32_t i = 1; i < count; i ++) {
-        if (lits[i] == lits[j]) {
-            continue;
-        }
-        if (lits[i] == ~lits[j]) {
-            //already satisfied
-            return PropBy();
-        }
-        j++;
-        lits[j] = lits[i];
-    }
-    count = j+1;
-
-    //Clear it of 0-level assigned literals
-    j = 0;
-    for(uint32_t i = 0; i < count; i ++) {
-        const Lit l = lits[i];
-        if (varData[l.var()].level == 0) {
-            if (value(l) == l_True) {
-                return PropBy();
-            }
-            if (value(l) == l_False) {
-                continue;
-            }
-        }
-        lits[j] = lits[i];
-        j++;
-    }
-    count = j;
-
-    // if only one literal isn't false, it will be in 0 of lits
-    // if only two literals aren't set, they will be in 0 and 1 of lits
-    find_largest_level(lits, count, 0);
-    if (count > 1) {
-        find_largest_level(lits, count, 1);
-    }
-
-    //Make sure it doesn't have BVA/elimed/etc. variables
-    //Make sure TRUE literal is at the beginning
-    bool sat = false;
-    for(uint32_t i = 0; i < count; i ++) {
-        //Variable has been removed already
-        if (varData[lits[i].var()].removed != Removed::none) {
-            return PropBy();
-        }
-
-        //Can't deal with BVA variables
-        if (varData[lits[i].var()].is_bva) {
-            assert(false && "This should not be possible, other threads should not be sending BVA vars!");
-            return PropBy();
-        }
-
-        if (value(lits[i]) == l_True) {
-            std::swap(lits[i], lits[0]);
-            sat = true;
-        }
-    }
-
-//     cout << "cl-aft: ";
-//     for(uint32_t i = 0; i < count; i ++) {
-//         cout << lits[i] << ":" << value(lits[i]) << "(" << level(lits[i]) << ")  ";
-//     }
-//     cout << endl;
-
-
-    //Empty clause
-    if (count == 0) {
-        cancelUntil(0);
-        solver->ok = false;
-        return PropBy();
-    }
-
-    //Unit clause
-    if (count == 1) {
-        /*cancelUntil(0);
-        enqueue<false>(lits[0]);*/
-        return PropBy();
-    }
-
-    // It's already satisfied
-    // Or at least 2 are unset
-    // ---> We only attach the clause
-    if (sat ||
-        (value(lits[0]) == l_Undef && value(lits[1]) == l_Undef) )
-    {
-        learn_gpu_clause(lits, count);
-        return PropBy();
-    }
-
-    // All are l_False, this is a conflict
-    if (value(lits[0]) == l_False)
-    {
-        #ifdef SLOW_DEBUG
-        for (uint32_t i = 0; i < count; i++) {
-            assert(value(lits[i]) == l_False);
-        }
-        #endif
-
-        //Go back to highest level
-        cancelUntil(level(lits[0]));
-
-        #ifdef SLOW_DEBUG
-        for (uint32_t i = 0; i < count; i++) {
-            assert(value(lits[i]) == l_False);
-        }
-        #endif
-        return learn_gpu_clause(lits, count);
-    }
-
-    // lit 0 is implied by the rest -- i.e. lit[0] is l_Undef, rest is l_False
-    cancelUntil(level(lits[1]));
-
-    #ifdef SLOW_DEBUG
-    assert(value(lits[0]) == l_Undef);
-    for (uint32_t i = 1; i < count; i++) {
-        assert(value(lits[i]) == l_False);
-    }
-    #endif
-
-    PropBy by = learn_gpu_clause(lits, count);
-    enqueue<false>(lits[0], decisionLevel(), by);
-    return PropBy();
-}
-
-PropBy Searcher::learn_gpu_clause(Lit* lits, uint32_t count)
-{
-    if (count > 2) {
-        tmp_gpu_clause.resize(count);
-        for(uint32_t i = 0; i < count; i++) {
-            tmp_gpu_clause[i] = lits[i];
-        }
-
-        Clause* cl = cl_alloc.Clause_new(tmp_gpu_clause, sumConflicts);
-        ClOffset off = cl_alloc.get_offset(cl);
-
-        cl->stats.glue = count;
-        cl->stats.which_red_array = 2;
-        cl->stats.activity = 0.0f;
-        cl->isRed = true;
-
-        longRedCls[cl->stats.which_red_array].push_back(off);
-        bump_cl_act<false>(cl);
-        litStats.redLits += count;
-
-        attachClause(*cl, false);
-        //TODO red_stats_extra
-
-        return PropBy(cl_alloc.get_offset(cl));
-    }
-
-    //Binary, and lits[0] may be propagated due to lits[1]
-    assert(count == 2);
-    attach_bin_clause(lits[0], lits[1], false, ++clauseID, false);
-    binTri.irredBins++;
-    failBinLit = lits[0];
-    return PropBy(lits[1], false);
-}
-
-#endif

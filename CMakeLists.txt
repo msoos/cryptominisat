@@ -121,12 +121,6 @@ if (STATICCOMPILE)
 #     endif()
 endif()
 
-option(GPU "Use GPU based setup" OFF)
-if (GPU)
-    add_definitions( -DUSE_GPU )
-    enable_language( CUDA )
-endif()
-
 option(NOTBUDDY "Disable the use of tbuddy, even if installed" OFF)
 option(FORCETBUDDY "For the use of tbuddy" OFF)
 if (NOT NOTBUDDY)

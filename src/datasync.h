@@ -54,18 +54,7 @@ class DataSync
         );
         void signal_new_long_clause(const vector<Lit>& clause);
 
-        #ifdef USE_GPU
-        vector<Lit> clause_tmp;
-        vector<Lit> trail_tmp;
-        void unsetFromGpu(uint32_t level);
-        void trySendAssignmentToGpu();
-        PropBy pop_clauses();
-        uint32_t signalled_gpu_long_cls = 0;
-        uint32_t popped_clause = 0;
-        #endif
-
-        struct Stats
-        {
+        struct Stats {
             uint32_t sentUnitData = 0;
             uint32_t recvUnitData = 0;
             uint32_t sentBinData = 0;
@@ -86,10 +75,6 @@ class DataSync
         void signal_new_bin_clause(Lit lit1, Lit lit2);
         void rebuild_bva_map_if_needed();
 
-
-        #ifdef USE_GPU
-        uint32_t trailCopiedUntil = 0;
-        #endif
         int thread_id = -1;
 
         //stuff to sync
@@ -104,7 +89,6 @@ class DataSync
         Solver* solver = NULL;
         SharedData* sharedData = NULL;
 
-        //MPI
         #ifdef USE_MPI
         void set_up_for_mpi();
         bool mpi_recv_from_others();
@@ -125,7 +109,6 @@ class DataSync
         uint32_t      mpiRecvBinData = 0;
         uint32_t      mpiSentBinData = 0;
         #endif
-
 
         //misc
         uint32_t numCalls = 0;

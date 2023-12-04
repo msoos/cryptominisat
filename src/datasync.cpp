@@ -258,171 +258,11 @@ bool DataSync::shareUnitData()
 
 void CMSat::DataSync::signal_new_long_clause(const vector<Lit>& cl)
 {
-    if (!enabled()) {
-        return;
-    }
+    if (!enabled()) return;
     assert(thread_id != -1);
-    //cout << "thread ID: " << thread_id << endl;
-
-    #ifdef USE_GPU
-    rebuild_bva_map_if_needed();
-
-    //Don't signal clauses with BVA variables
-    clause_tmp.clear();
-    for(Lit lit: cl) {
-        if (solver->varData[lit.var()].is_bva) {
-            return;
-        }
-        lit = solver->map_inter_to_outer(lit);
-        lit = map_outer_to_outside(lit);
-        clause_tmp.push_back(lit);
-    }
-
-    signalled_gpu_long_cls++;
-    sharedData->gpuClauseSharer->addClause(thread_id, (int*)clause_tmp.data(), clause_tmp.size());
-    #else
-    if (cl.size() == 2) {
-        signal_new_bin_clause(cl[0], cl[1]);
-    }
-    #endif
+    if (cl.size() == 2) signal_new_bin_clause(cl[0], cl[1]);
 }
 
-#ifdef USE_GPU
-void DataSync::unsetFromGpu(uint32_t level) {
-    if (!enabled()) {
-        return;
-    }
-    rebuild_bva_map_if_needed();
-
-    trail_tmp.clear();
-    //assert(trailCopiedUntil < solver->trail.size());
-    for(int i = ((int)solver->trail.size())-1; i >= (int)solver->trail_lim[level]; i--) {
-        Lit lit = solver->trail_at(i);
-        if (lit == lit_Undef) {
-            //This can happen because variables set at level 0
-            //     are cleared from the trail and set to lit_Undef
-            continue;
-        }
-        //cout << "lit: " << lit << endl;
-        if (solver->varData[lit.var()].is_bva) {
-            continue;
-        }
-        lit = solver->map_inter_to_outer(lit);
-        lit = map_outer_to_outside(lit);
-        trail_tmp.push_back(lit);
-    }
-
-    if (!trail_tmp.empty()) {
-        sharedData->gpuClauseSharer->unsetSolverValues(
-            thread_id,
-            (int*)trail_tmp.data(),
-            trail_tmp.size());
-    }
-    trailCopiedUntil = solver->trail_lim[level];
-}
-
-void DataSync::trySendAssignmentToGpu() {
-    if (!enabled()) {
-        return;
-    }
-    rebuild_bva_map_if_needed();
-
-    uint32_t sendUntil = solver->trail_size();
-    if (sendUntil == 0) {
-        return;
-    }
-    if (trailCopiedUntil >= sendUntil) {
-        return;
-    }
-
-//     if (thread_id == 0) {
-//         cout
-//         << "Set from point " << solver->trail_lim[level]
-//         << " count: " << sendUntil - trailCopiedUntil
-//         << " level: " << level
-//         << endl;
-//     }
-
-    trail_tmp.clear();
-    for(uint32_t i = trailCopiedUntil; i < sendUntil; i++) {
-        Lit lit = solver->trail_at(i);
-        if (lit == lit_Undef) {
-            //This can happen because variables set at level 0
-            //     are cleared from the trail and set to lit_Undef
-            continue;
-        }
-        if (solver->varData[lit.var()].is_bva) {
-            continue;
-        }
-        lit = solver->map_inter_to_outer(lit);
-        lit = map_outer_to_outside(lit);
-        trail_tmp.push_back(lit);
-    }
-
-    bool success = sharedData->gpuClauseSharer->trySetSolverValues(
-        thread_id,
-        (int*)trail_tmp.data(),
-        trail_tmp.size());
-
-
-    if (success) {
-        trailCopiedUntil = sendUntil-1;
-        sharedData->gpuClauseSharer->trySendAssignment(thread_id);
-    }
-}
-
-PropBy CMSat::DataSync::pop_clauses()
-{
-    if (!enabled()) {
-        return PropBy();
-    }
-    assert(thread_id != -1);
-    //cout << "thread ID: " << thread_id << endl;
-
-    //cout << "Trying to pop." << thread_id << endl;
-    int* litsAsInt;
-    int count;
-    long gpuClauseId;
-    int decisionLevelAtConflict = -1;
-    PropBy by = PropBy();
-
-    while (sharedData->gpuClauseSharer->popReportedClause(
-        thread_id, litsAsInt, count, gpuClauseId))
-    {
-        popped_clause++;
-//         if ((popped_clause & 0xfff) == 0xfff) {
-//             cout << "popped_clause: " << popped_clause
-//             << " thread id: " << thread_id
-//             << endl;
-//         }
-
-        Lit *lits = (Lit*) litsAsInt;
-        for(int i = 0; i < count; i ++) {
-            lits[i] = solver->map_to_with_bva(lits[i]);
-            lits[i] = solver->varReplacer->get_lit_replaced_with_outer(lits[i]);
-            lits[i] = solver->map_outer_to_inter(lits[i]);
-        }
-
-        by = solver->insert_gpu_clause(lits, count);
-        if (!solver->okay()) {
-            return PropBy();
-        }
-        if (!by.isNULL()) {
-            decisionLevelAtConflict = solver->decisionLevel();
-        }
-    }
-
-    if ((int)solver->decisionLevel() == decisionLevelAtConflict) {
-        return by;
-    }
-    return PropBy();
-}
-#endif
-
-////////////////////////////////////////
-// Non-GPU
-////////////////////////////////////////
-#ifndef USE_GPU
 bool DataSync::syncBinFromOthers()
 {
     for (uint32_t wsLit = 0; wsLit < sharedData->bins.size(); wsLit++) {
@@ -606,11 +446,7 @@ void DataSync::signal_new_bin_clause(Lit lit1, Lit lit2)
     }
     newBinClauses.push_back(std::make_pair(lit1, lit2));
 }
-#endif
 
-///////////////////////////////////////
-// MPI
-///////////////////////////////////////
 #ifdef USE_MPI
 void DataSync::set_up_for_mpi()
 {
