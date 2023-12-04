@@ -423,4 +423,3 @@ bool Solver::oracle_sparsify()
 
     return solver->okay();
 }
-

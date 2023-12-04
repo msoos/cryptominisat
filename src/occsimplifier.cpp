@@ -1079,7 +1079,7 @@ void OccSimplifier::subs_with_resolvent_clauses()
                 const Clause *cl = solver->cl_alloc.ptr(pos.get_offset());
                 if (cl->getRemoved() || cl->red()) continue;
                 ID1 = cl->stats.ID;
-            }
+            } else { assert(false); }
 
             for (auto const& neg: tmp_negs) {
                 *limit_to_decrease -= 3;

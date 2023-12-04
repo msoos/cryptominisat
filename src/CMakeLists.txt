@@ -103,7 +103,7 @@ add_definitions( -DTRACE )
 set(cryptoms_lib_files
     cnf.cpp
     probe.cpp
-    oracle.cpp
+    oracle_use.cpp
     backbone.cpp
     frat.cpp
     propengine.cpp

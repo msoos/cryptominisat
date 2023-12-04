@@ -858,9 +858,8 @@ bool Oracle::AddClauseIfNeededAndStr(vector<Lit> clause, bool entailed) {
 	if (unsat) return false;
 	assert(CurLevel() == 1);
 	for (int i = 0; i < (int)clause.size(); i++) {
-		if (LitVal(clause[i]) == 1) {
-			return false;
-		} else if (LitVal(clause[i]) == -1) {
+		if (LitVal(clause[i]) == 1) return false;
+		else if (LitVal(clause[i]) == -1) {
 			SwapDel(clause, i);
 			i--;
 		}

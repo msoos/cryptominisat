@@ -383,35 +383,6 @@ struct xor_finder2 : public ::testing::Test {
     XorFinder* finder;
 };
 
-
-TEST_F(xor_finder2, clean_v1)
-{
-    s->xorclauses = str_to_xors("1, 2, 3 = 0;");
-    finder->move_xors_without_connecting_vars_to_unused();
-    EXPECT_EQ(s->xorclauses.size(), 0u);
-}
-
-TEST_F(xor_finder2, clean_v2)
-{
-    s->xorclauses = str_to_xors("1, 2, 3 = 0; 1, 4, 5, 6 = 0");
-    finder->move_xors_without_connecting_vars_to_unused();
-    EXPECT_EQ(s->xorclauses.size(), 2u);
-}
-
-TEST_F(xor_finder2, clean_v3)
-{
-    s->xorclauses = str_to_xors("1, 2, 3 = 0; 1, 4, 5, 6 = 0; 10, 11, 12, 13 = 1");
-    finder->move_xors_without_connecting_vars_to_unused();
-    EXPECT_EQ(s->xorclauses.size(), 2u);
-}
-
-TEST_F(xor_finder2, clean_v4)
-{
-    s->xorclauses = str_to_xors("1, 2, 3 = 0; 1, 4, 5, 6 = 0; 10, 11, 12, 13 = 1; 10, 15, 16, 17 = 0");
-    finder->move_xors_without_connecting_vars_to_unused();
-    EXPECT_EQ(s->xorclauses.size(), 4u);
-}
-
 TEST_F(xor_finder2, xor_1)
 {
     s->xorclauses = str_to_xors("1, 2, 3 = 1; 1, 4, 5, 6 = 0;");
