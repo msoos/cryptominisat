@@ -266,7 +266,7 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls()
 
         //calculate sampling var ratio
         //for statistics ONLY
-        double ratio_sampling;
+        double ratio_sampling = 0.0;
         if (solver->conf.sampling_vars) {
             //'seen' with what is in Matrix
             for(uint32_t int_var: reverseTable[i]) solver->seen[int_var] = 1;
@@ -315,7 +315,7 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls()
         if (use_matrix) {
             solver->gmatrices.push_back(new EGaussian(solver, realMatrixNum, xorsInMatrix[i]));
             solver->gqueuedata.resize(solver->gmatrices.size());
-            verb_print(1, "[matrix] Good   matrix " << std::setw(2) << realMatrixNum);
+            if (solver->conf.verbosity) cout << "c [matrix] Good   matrix " << std::setw(2) << realMatrixNum;
             realMatrixNum++;
             assert(solver->gmatrices.size() == realMatrixNum);
         } else {
@@ -325,8 +325,7 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls()
                 solver->xorclauses.push_back(x);
             }
             if (solver->conf.verbosity && unused_matrix_printed < 10) {
-                if (m.rows >= solver->conf.gaussconf.min_matrix_rows ||
-                    solver->conf.verbosity >= 2)
+                if (m.rows >= solver->conf.gaussconf.min_matrix_rows || solver->conf.verbosity >= 2)
                 cout << "c [matrix] UNused matrix   ";
             }
             unusedMatrix++;

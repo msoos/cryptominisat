@@ -120,7 +120,6 @@ namespace CMSat {
         void set_max_confl(uint64_t max_confl);
         void set_verbosity(unsigned verbosity = 0); //default is 0, silent
         uint32_t get_verbosity() const;
-        void set_verbosity_detach_warning(bool verb); //default is 0, silent
         void set_default_polarity(bool polarity); //default polarity when branching for all vars
         void set_polarity_mode(CMSat::PolarityMode mode); //set polarity type
         CMSat::PolarityMode get_polarity_mode() const;

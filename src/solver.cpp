@@ -4209,22 +4209,14 @@ void Solver::copy_to_simp(SATSolver* s2)
 
 void hash_uint32_t(const uint32_t v, uint32_t& hash) {
     uint8_t* s = (uint8_t*)(&v);
-    for(uint32_t i = 0; i < 4; i++, s++)
-    {
-        hash += *s;
-        hash += (hash << 10);
-        hash ^= (hash >> 6);
-    }
+    for(uint32_t i = 0; i < 4; i++, s++) { hash += *s; }
+    for(uint32_t i = 0; i < 4; i++, s++) { hash ^= *s; }
 }
 
 uint32_t hash_xcl(const Xor& x)
 {
     uint32_t hash = 0;
     for(const auto& v: x) hash_uint32_t(v, hash);
-    hash += (hash << 3);
-    hash ^= (hash >> 11);
-    hash += (hash << 15);
-
     return hash;
 }
 
@@ -4233,10 +4225,6 @@ uint32_t hash_xcl(const Clause& cl)
 {
     uint32_t hash = 0;
     for(const auto& l: cl) hash_uint32_t(l.var(), hash);
-    hash += (hash << 3);
-    hash ^= (hash >> 11);
-    hash += (hash << 15);
-
     return hash;
 }
 
@@ -4258,6 +4246,7 @@ bool Solver::check_clause_represented_by_xor(const Clause& cl) {
         bool ok = true;
         for(const auto& v: x) if (!seen2[v]) {ok = false; break;}
         if (!ok) continue;
+        if (ok) { found = true; break; }
     }
 
     for(const auto& l: cl) seen2[l.var()] = 0;
@@ -4335,12 +4324,13 @@ void Solver::detach_clauses_in_xors() {
     assert(delayed_clause_free.empty());
 
     // Cleanup
-    for(const auto& x: xorclauses_orig) {
-        for(const uint32_t v: x) seen[v] = 0;
-    }
+    for(const auto& x: xorclauses_orig) for(const uint32_t v: x) seen[v] = 0;
     solver->clean_occur_from_idx_types_only_smudged();
     verb_print(1, "[gauss] clauses deleted that are represented by XORs: " << deleted
-        << "T: " << conf.print_times(cpuTime() - myTime));
+        << " xorclauses: " << xorclauses.size()
+        << " xorclauses_orig: " << xorclauses_orig.size()
+        << " GJ matrices: " << gmatrices.size()
+        << conf.print_times(cpuTime() - myTime));
 }
 
 

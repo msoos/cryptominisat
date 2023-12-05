@@ -163,6 +163,7 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
 {
     VERBOSE_PRINT("PropEngine::gauss_jordan_elim called, declev: "
         << decisionLevel() << " lit to prop: " << p);
+    const uint32_t pv = p.var();
 
     if (gmatrices.empty() && xorclauses.empty()) return PropBy();
 
@@ -174,8 +175,8 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
     }
 
     bool confl_in_gauss = false;
-    assert(gwatches.size() > p.var());
-    vec<GaussWatched>& ws = gwatches[p.var()];
+    assert(gwatches.size() > pv);
+    vec<GaussWatched>& ws = gwatches[pv];
     GaussWatched* i = ws.begin();
     GaussWatched* j = i;
     const GaussWatched* end = ws.end();
@@ -183,10 +184,14 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
     PropBy confl;
     for (; i != end; i++) {
         if (!i->in_matrix()) {
-            auto& x = xorclauses[i->row_n];
-            uint32_t which; // which watch is this
-            if (p.var() == x.watched[0]) which = 0;
-            else {which = 1;assert(x.watched[1] == p.var());}
+            const uint32_t at = i->row_n;
+            auto& x = xorclauses[at];
+            bool which; // which watch is this
+            cout << "xcl: "; for(const auto& v: x) cout << v+1 << " "; cout << endl;
+            cout << "Watched[0]: " << x.watched[0] << endl;
+            cout << "Watched[1]: " << x.watched[1] << endl;
+            if (pv == x[x.watched[0]]) which = 0;
+            else {which = 1; assert(x[x.watched[1]] == pv);}
 
             uint32_t unknown = 0;
             uint32_t unknown_at = 0;
@@ -195,38 +200,42 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
             for(uint32_t i2 = 0; i2 < x.size(); i2++) {
                 if (solver->value(x[i2]) == l_Undef) {
                     unknown ++; unknown_at=i2;
-                    if (x.vars[i2] != x.watched[!which] && updated) {
+                    if (i2 != x.watched[!which] && !updated) {
                         // it's not the other watch. So we can update current
                         // watch to this
-                        gwatches[x.vars[i2]].push(GaussWatched::plain_xor(i->row_n));
+                        gwatches[x.vars[i2]].push(GaussWatched::plain_xor(at));
+                        x.watched[which] = i2;
                         updated = true;
                     }
                 }
                 else rhs ^= solver->value(x[i2]) == l_True;
-                if (unknown > 1) break;
+                if (unknown > 1) break; // we need to compute rhs for unknown == 0 and 1
             }
             if (unknown == 1) {
-                enqueue<false>(Lit(x.vars[unknown_at], !rhs), decisionLevel(), PropBy(1000, i->row_n));
+                enqueue<false>(Lit(x.vars[unknown_at], !rhs), decisionLevel(), PropBy(1000, at));
                 *j++ = *i;
             }
-            if (unknown == 0 && !rhs) {
-                confl = PropBy(1000, i->row_n);
-                *j++ = *i;
+            else if (unknown == 0 && !rhs) {
+                confl = PropBy(1000, at);
                 break;
             }
             // unknown is >=2, we can remove this watch
             continue;
         }
+        if (!confl.isNULL()) {
+            i++;
+            break;
+        }
 
+        cout << "m num: " << i->matrix_num << endl;
+        cout << "gm.size(): " << gmatrices.size() << endl;
         if (!gmatrices[i->matrix_num]->is_initialized()) continue; //remove watch and continue
         gqueuedata[i->matrix_num].new_resp_var = numeric_limits<uint32_t>::max();
         gqueuedata[i->matrix_num].new_resp_row = numeric_limits<uint32_t>::max();
         gqueuedata[i->matrix_num].do_eliminate = false;
         gqueuedata[i->matrix_num].currLevel = currLevel;
 
-        if (gmatrices[i->matrix_num]->find_truths(
-            i, j, p.var(), i->row_n, gqueuedata[i->matrix_num])
-        ) {
+        if (gmatrices[i->matrix_num]->find_truths( i, j, pv, i->row_n, gqueuedata[i->matrix_num])) {
             continue;
         } else {
             confl_in_gauss = true;
@@ -244,7 +253,7 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
             continue;
 
         if (gqueuedata[g].do_eliminate) {
-            gmatrices[g]->eliminate_col(p.var(), gqueuedata[g]);
+            gmatrices[g]->eliminate_col(pv, gqueuedata[g]);
             confl_in_gauss |= (gqueuedata[g].ret == gauss_res::confl);
         }
     }

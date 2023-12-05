@@ -41,8 +41,7 @@ using std::set;
 
 namespace CMSat {
 
-class Xor
-{
+class Xor {
 public:
     Xor() {}
     explicit Xor(const vector<uint32_t>& cl, const bool _rhs, const vector<uint32_t>& _clash_vars):
@@ -139,6 +138,7 @@ public:
     bool rhs = false;
     vector<uint32_t> clash_vars;
     vector<uint32_t> vars;
+    vector<Lit> cl;
     uint32_t watched[2];
     uint32_t in_matrix = 1000;
     #ifdef USE_TBUDDY

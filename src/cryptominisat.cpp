@@ -1443,14 +1443,6 @@ DLL_PUBLIC uint32_t SATSolver::get_verbosity() const
    return conf.verbosity;
 }
 
-DLL_PUBLIC void SATSolver::set_verbosity_detach_warning(bool verb)
-{
-    for (size_t i = 0; i < data->solvers.size(); i++) {
-        SolverConf conf = data->solvers[i]->getConf();
-        data->solvers[i]->setConf(conf);
-    }
-}
-
 DLL_PUBLIC void SATSolver::add_empty_cl_to_frat()
 {
     data->solvers[data->which_solved]->add_empty_cl_to_frat();

@@ -269,18 +269,15 @@ void Searcher::normalClMinim()
             }
 
             case xor_t: {
-                vector<Lit>* xor_reason = gmatrices[reason.get_matrix_num()]->
-                get_reason(reason.get_row_num(), ID);
-                lits = xor_reason->data();
-                size = xor_reason->size()-1;
+                auto cl = gmatrices[reason.get_matrix_num()]->get_reason(reason.get_row_num(), ID);
+                lits = cl->data();
+                size = cl->size()-1;
                 sumAntecedentsLits += size;
                 break;
             }
 
             case bnn_t: {
-                vector<Lit>* bnn_reason = get_bnn_reason(
-                    bnns[reason.getBNNidx()],
-                    learnt_clause[i]);
+                auto bnn_reason = get_bnn_reason(bnns[reason.getBNNidx()], learnt_clause[i]);
                 lits = bnn_reason->data();
                 size = bnn_reason->size()-1;
                 sumAntecedentsLits += size;
@@ -476,16 +473,16 @@ void Searcher::add_lits_to_learnt(
         }
 
         case xor_t: {
-            auto xor_reason = gmatrices[confl.get_matrix_num()]->get_reason(confl.get_row_num(), ID);
-            lits = xor_reason->data();
-            size = xor_reason->size();
+            auto cl = gmatrices[confl.get_matrix_num()]->get_reason(confl.get_row_num(), ID);
+            lits = cl->data();
+            size = cl->size();
             sumAntecedentsLits += size;
             VERBOSE_PRINT("resolving with cl:" << *xor_reason << " -- ID: " << ID);
             break;
         }
 
         case bnn_t: {
-            vector<Lit>* bnn_reason = get_bnn_reason(bnns[confl.getBNNidx()], p);
+            auto bnn_reason = get_bnn_reason(bnns[confl.getBNNidx()], p);
             lits = bnn_reason->data();
             size = bnn_reason->size();
             sumAntecedentsLits += size;
@@ -642,7 +639,7 @@ void Searcher::create_learnt_clause(PropBy confl)
             break;
         }
         case bnn_t : {
-            vector<Lit>* cl = get_bnn_reason(bnns[confl.getBNNidx()], lit_Undef);
+            auto cl = get_bnn_reason(bnns[confl.getBNNidx()], lit_Undef);
             lit0 = (*cl)[0];
             break;
         }
@@ -715,31 +712,27 @@ void Searcher::simple_create_learnt_clause(
             case bnn_t:
             case xor_t:
             case clause_t: {
-                Lit* c;
-                uint32_t sz;
+                Lit* lits;
+                uint32_t size;
                 if (confl.getType() == clause_t) {
                     auto cl = solver->cl_alloc.ptr(confl.get_offset());
-                    c = cl->getData();
-                    sz = cl->size();
+                    lits = cl->getData();
+                    size = cl->size();
                 } else if (confl.getType() == bnn_t) {
                     auto cl = get_bnn_reason(bnns[confl.getBNNidx()], p);
-                    c = cl->data();
-                    sz = cl->size();
+                    lits = cl->data();
+                    size = cl->size();
                 } else {
                     int32_t ID;
                     assert(confl.getType() == xor_t);
-                    vector<Lit>* cl = gmatrices[confl.get_matrix_num()]->
-                    get_reason(confl.get_row_num(), ID);
-                    c = cl->data();
-                    sz = cl->size();
+                    auto cl = gmatrices[confl.get_matrix_num()]->get_reason(confl.get_row_num(), ID);
+                    lits = cl->data();
+                    size = cl->size();
                 }
 
-                // if True_confl==true, then choose p begin with the 1st index of c
-                for (uint32_t j = (p == lit_Undef && True_confl == false) ? 0 : 1
-                    ; j < sz
-                    ; j++
-                ) {
-                    Lit q = c[j];
+                // if True_confl==true, then choose p begin with the 1st index of lits
+                for (uint32_t j = (p == lit_Undef && True_confl == false) ? 0 : 1 ; j < size ; j++) {
+                    Lit q = lits[j];
                     assert(q.var() < seen.size());
                     if (!seen[q.var()]) {
                         seen[q.var()] = 1;
@@ -952,16 +945,14 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
             }
 
             case xor_t: {
-                vector<Lit>* xcl = gmatrices[reason.get_matrix_num()]->
-                    get_reason(reason.get_row_num(), ID);
-                lits = xcl->data();
-                size = xcl->size()-1;
+                auto cl = gmatrices[reason.get_matrix_num()]->get_reason(reason.get_row_num(), ID);
+                lits = cl->data();
+                size = cl->size()-1;
                 break;
             }
 
             case bnn_t: {
-                vector<Lit>* cl = get_bnn_reason(
-                    bnns[reason.getBNNidx()],
+                vector<Lit>* cl = get_bnn_reason(bnns[reason.getBNNidx()],
                     Lit(p_analyze.var(), value(p_analyze.var()) == l_False));
                 lits = cl->data();
                 size = cl->size()-1;
@@ -974,8 +965,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
                 break;
 
             case null_clause_t:
-            default:
-                release_assert(false);
+            default: release_assert(false);
         }
 
         for (size_t i = 0
@@ -1056,8 +1046,7 @@ bool Searcher::subset(const vector<Lit>& A, const Clause& B)
     }
 
     //Clear seen
-    for (uint32_t i = 0; i != B.size(); i++)
-        seen[B[i].toInt()] = 0;
+    for (uint32_t i = 0; i != B.size(); i++) seen[B[i].toInt()] = 0;
 
     return ret;
 }
@@ -1090,7 +1079,7 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
             } else {
                 int32_t ID;
                 switch(reason.getType()) {
-                    case PropByType::clause_t : {
+                    case clause_t : {
                         const Clause& cl = *cl_alloc.ptr(reason.get_offset());
                         ID = cl.stats.ID;
                         assert(value(cl[0]) == l_True);
@@ -1102,41 +1091,31 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
                         break;
                     }
 
-                    case PropByType::bnn_t : {
-                        vector<Lit>* cl = get_bnn_reason(
-                            bnns[reason.getBNNidx()], lit_Undef);
+                    case bnn_t : {
+                        vector<Lit>* cl = get_bnn_reason(bnns[reason.getBNNidx()], lit_Undef);
                         for(const Lit lit: *cl) {
-                            if (varData[lit.var()].level > 0) {
-                                seen[lit.var()] = 1;
-                            }
+                            if (varData[lit.var()].level > 0)seen[lit.var()] = 1;
                         }
                         break;
                     }
 
-                    case PropByType::binary_t: {
+                    case binary_t: {
                         const Lit lit = reason.lit2();
-                        if (varData[lit.var()].level > 0) {
-                            seen[lit.var()] = 1;
-                        }
+                        if (varData[lit.var()].level > 0) seen[lit.var()] = 1;
                         ID = reason.getID();
                         break;
                     }
 
-                    case PropByType::xor_t: {
-                        vector<Lit>* cl = gmatrices[reason.get_matrix_num()]->
-                            get_reason(reason.get_row_num(), ID);
+                    case xor_t: {
+                        auto cl = gmatrices[reason.get_matrix_num()]->get_reason(reason.get_row_num(), ID);
                         assert(value((*cl)[0]) == l_True);
                         for(const Lit lit: *cl) {
-                            if (varData[lit.var()].level > 0) {
-                                seen[lit.var()] = 1;
-                            }
+                            if (varData[lit.var()].level > 0) seen[lit.var()] = 1;
                         }
                         break;
                     }
 
-                    case PropByType::null_clause_t: {
-                        assert(false);
-                    }
+                    case null_clause_t: release_assert(false);
                 }
             }
             seen[x] = 0;
@@ -3449,32 +3428,29 @@ ConflictData Searcher::find_conflict_level(PropBy& pb)
         }
 
     } else {
-        Lit* clause = NULL;
+        Lit* lits = NULL;
         uint32_t size = 0;
         ClOffset offs;
         int32_t ID;
         switch(pb.getType()) {
             case PropByType::clause_t: {
-                offs = pb.get_offset();
-                Clause& conflCl = *cl_alloc.ptr(offs);
-                clause = conflCl.getData();
+                Clause& conflCl = *cl_alloc.ptr(pb.get_offset());
+                lits = conflCl.getData();
                 size = conflCl.size();
                 ID = conflCl.stats.ID;
                 break;
             }
 
             case PropByType::xor_t: {
-                vector<Lit>* cl = gmatrices[pb.get_matrix_num()]->
-                    get_reason(pb.get_row_num(), ID);
-                    clause = cl->data();
-                    size = cl->size();
+                auto cl = gmatrices[pb.get_matrix_num()]->get_reason(pb.get_row_num(), ID);
+                lits = cl->data();
+                size = cl->size();
                 break;
             }
 
             case PropByType::bnn_t: {
-                vector<Lit>* cl = get_bnn_reason(
-                    bnns[pb.getBNNidx()], lit_Undef);
-                clause = cl->data();
+                auto cl = get_bnn_reason(bnns[pb.getBNNidx()], lit_Undef);
+                lits = cl->data();
                 size = cl->size();
                 break;
             }
@@ -3485,17 +3461,17 @@ ConflictData Searcher::find_conflict_level(PropBy& pb)
                 break;
         }
 
-        data.nHighestLevel = varData[clause[0].var()].level;
+        data.nHighestLevel = varData[lits[0].var()].level;
         if (data.nHighestLevel == decisionLevel()
-            && varData[clause[1].var()].level == decisionLevel()
+            && varData[lits[1].var()].level == decisionLevel()
         ) {
             return data;
         }
 
         uint32_t highestId = 0;
-        // find the largest decision level in the clause
+        // find the largest decision level in the lits
         for (uint32_t nLitId = 1; nLitId < size; ++nLitId) {
-            uint32_t nLevel = varData[clause[nLitId].var()].level;
+            uint32_t nLevel = varData[lits[nLitId].var()].level;
             if (nLevel > data.nHighestLevel) {
                 highestId = nLitId;
                 data.nHighestLevel = nLevel;
@@ -3503,10 +3479,10 @@ ConflictData Searcher::find_conflict_level(PropBy& pb)
         }
 
         if (highestId != 0) {
-            std::swap(clause[0], clause[highestId]);
+            std::swap(lits[0], lits[highestId]);
             if (highestId > 1 && pb.getType() == clause_t) {
-                removeWCl(watches[clause[highestId]], pb.get_offset());
-                watches[clause[0]].push(Watched(offs, clause[1]));
+                removeWCl(watches[lits[highestId]], pb.get_offset());
+                watches[lits[0]].push(Watched(offs, lits[1]));
             }
         }
     }

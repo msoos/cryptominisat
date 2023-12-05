@@ -36,7 +36,7 @@ namespace CMSat {
         GaussWatched(uint32_t r ,uint32_t m):
             row_n(r) , matrix_num(m)
         {}
-        bool in_matrix() { return matrix_num == 1000; }
+        bool in_matrix() { return matrix_num != 1000; }
         static GaussWatched plain_xor(uint32_t at) {
             return GaussWatched(at, 1000);
         }
