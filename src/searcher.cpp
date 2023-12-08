@@ -269,6 +269,7 @@ void Searcher::normalClMinim()
             }
 
             case xor_t: {
+                //TODO make work for matrixnum 1000
                 auto cl = gmatrices[reason.get_matrix_num()]->get_reason(reason.get_row_num(), ID);
                 lits = cl->data();
                 size = cl->size()-1;
@@ -284,9 +285,7 @@ void Searcher::normalClMinim()
                 break;
             }
 
-            default:
-                release_assert(false);
-                std::exit(-1);
+            default: release_assert(false);
         }
 
         for (size_t k = 0; k < size; k++) {
@@ -302,9 +301,7 @@ void Searcher::normalClMinim()
                     p = reason.lit2();
                     break;
 
-                default:
-                    release_assert(false);
-                    std::exit(-1);
+                default: release_assert(false);
             }
 
             if (!seen[p.var()] && varData[p.var()].level > 0) {
@@ -473,6 +470,7 @@ void Searcher::add_lits_to_learnt(
         }
 
         case xor_t: {
+            //TODO make work for matrixnum 1000
             auto cl = gmatrices[confl.get_matrix_num()]->get_reason(confl.get_row_num(), ID);
             lits = cl->data();
             size = cl->size();
@@ -492,8 +490,7 @@ void Searcher::add_lits_to_learnt(
         }
 
         case null_clause_t:
-        default:
-            assert(false && "Error in conflict analysis (otherwise should be UIP)");
+        default: release_assert(false && "Error in conflict analysis (otherwise should be UIP)");
     }
     VERBOSE_PRINT("Chain adding ID: " << ID << " due to resolution on lit: " << p);
     chain.push_back(ID);
@@ -634,6 +631,7 @@ void Searcher::create_learnt_clause(PropBy confl)
         }
         case xor_t: {
             int32_t ID;
+            //TODO make work for matrixnum 1000
             auto cl = gmatrices[confl.get_matrix_num()]->get_reason(confl.get_row_num(), ID);
             lit0 = (*cl)[0];
             break;
@@ -648,8 +646,7 @@ void Searcher::create_learnt_clause(PropBy confl)
             lit0 = (*cl)[0];
             break;
         }
-        default:
-            assert(false);
+        default: release_assert(false);
     }
     uint32_t nDecisionLevel = varData[lit0.var()].level;
 
@@ -725,6 +722,7 @@ void Searcher::simple_create_learnt_clause(
                 } else {
                     int32_t ID;
                     assert(confl.getType() == xor_t);
+                    //TODO make work for matrixnum 1000
                     auto cl = gmatrices[confl.get_matrix_num()]->get_reason(confl.get_row_num(), ID);
                     lits = cl->data();
                     size = cl->size();
@@ -945,6 +943,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
             }
 
             case xor_t: {
+                //TODO make work for matrixnum 1000
                 auto cl = gmatrices[reason.get_matrix_num()]->get_reason(reason.get_row_num(), ID);
                 lits = cl->data();
                 size = cl->size()-1;
@@ -1107,6 +1106,7 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
                     }
 
                     case xor_t: {
+                        //TODO make work for matrixnum 1000
                         auto cl = gmatrices[reason.get_matrix_num()]->get_reason(reason.get_row_num(), ID);
                         assert(value((*cl)[0]) == l_True);
                         for(const Lit lit: *cl) {
@@ -3442,6 +3442,7 @@ ConflictData Searcher::find_conflict_level(PropBy& pb)
             }
 
             case PropByType::xor_t: {
+                //TODO make work for matrixnum 1000
                 auto cl = gmatrices[pb.get_matrix_num()]->get_reason(pb.get_row_num(), ID);
                 lits = cl->data();
                 size = cl->size();
@@ -3456,9 +3457,7 @@ ConflictData Searcher::find_conflict_level(PropBy& pb)
             }
 
             case PropByType::binary_t:
-            case PropByType::null_clause_t:
-                assert(false);
-                break;
+            case PropByType::null_clause_t: release_assert(false);
         }
 
         data.nHighestLevel = varData[lits[0].var()].level;
