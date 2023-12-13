@@ -194,6 +194,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , velim_resolvent_too_large(20)
         , var_linkin_limit_MB(1000)
         , varelim_gate_find_limit(800)
+        , picosat_gate_limitK(70)
         , varelim_check_resolvent_subs(false)
 
         //Subs, str limits for simplifier

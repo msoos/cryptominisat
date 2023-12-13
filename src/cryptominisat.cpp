@@ -639,6 +639,13 @@ DLL_PUBLIC void SATSolver::set_simplify(const bool simp)
         s.conf.do_simplify_problem = simp;
     }
 }
+DLL_PUBLIC void SATSolver::set_picosat_gate_limitK(const uint32_t lim)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.picosat_gate_limitK = lim;
+    }
+}
 
 DLL_PUBLIC void SATSolver::set_weaken_time_limitM(const uint32_t lim)
 {
