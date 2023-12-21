@@ -138,8 +138,8 @@ public:
     bool rhs = false;
     vector<uint32_t> clash_vars;
     vector<uint32_t> vars;
-    vector<Lit> cl;
-    uint32_t watched[2];
+    vector<Lit> reason_cl;
+    uint32_t watched[2] = {0,0};
     uint32_t in_matrix = 1000;
     #ifdef USE_TBUDDY
     tbdd::xor_constraint* bdd = NULL;

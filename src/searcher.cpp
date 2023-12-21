@@ -239,6 +239,16 @@ inline void Searcher::recursiveConfClauseMin()
     learnt_clause.resize(j);
 }
 
+//TODO make work for matrixnum 1000
+vector<Lit>* Searcher::get_xor_reason(const PropBy& reason, int32_t& ID) {
+    if (reason.get_matrix_num() == 1000) {
+        assert(false);
+        return NULL;
+    } else {
+        return gmatrices[reason.get_matrix_num()]->get_reason(reason.get_row_num(), ID);
+    }
+}
+
 void Searcher::normalClMinim()
 {
     size_t i,j;
@@ -269,8 +279,7 @@ void Searcher::normalClMinim()
             }
 
             case xor_t: {
-                //TODO make work for matrixnum 1000
-                auto cl = gmatrices[reason.get_matrix_num()]->get_reason(reason.get_row_num(), ID);
+                auto cl = get_xor_reason(reason, ID);
                 lits = cl->data();
                 size = cl->size()-1;
                 sumAntecedentsLits += size;
@@ -470,8 +479,7 @@ void Searcher::add_lits_to_learnt(
         }
 
         case xor_t: {
-            //TODO make work for matrixnum 1000
-            auto cl = gmatrices[confl.get_matrix_num()]->get_reason(confl.get_row_num(), ID);
+            auto cl = get_xor_reason(confl, ID);
             lits = cl->data();
             size = cl->size();
             sumAntecedentsLits += size;
@@ -631,8 +639,7 @@ void Searcher::create_learnt_clause(PropBy confl)
         }
         case xor_t: {
             int32_t ID;
-            //TODO make work for matrixnum 1000
-            auto cl = gmatrices[confl.get_matrix_num()]->get_reason(confl.get_row_num(), ID);
+            auto cl = get_xor_reason(confl, ID);
             lit0 = (*cl)[0];
             break;
         }
@@ -722,8 +729,7 @@ void Searcher::simple_create_learnt_clause(
                 } else {
                     int32_t ID;
                     assert(confl.getType() == xor_t);
-                    //TODO make work for matrixnum 1000
-                    auto cl = gmatrices[confl.get_matrix_num()]->get_reason(confl.get_row_num(), ID);
+                    auto cl = get_xor_reason(confl, ID);
                     lits = cl->data();
                     size = cl->size();
                 }
@@ -943,8 +949,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
             }
 
             case xor_t: {
-                //TODO make work for matrixnum 1000
-                auto cl = gmatrices[reason.get_matrix_num()]->get_reason(reason.get_row_num(), ID);
+                auto cl = get_xor_reason(reason, ID);
                 lits = cl->data();
                 size = cl->size()-1;
                 break;
@@ -1106,8 +1111,7 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
                     }
 
                     case xor_t: {
-                        //TODO make work for matrixnum 1000
-                        auto cl = gmatrices[reason.get_matrix_num()]->get_reason(reason.get_row_num(), ID);
+                        auto cl = get_xor_reason(reason, ID);
                         assert(value((*cl)[0]) == l_True);
                         for(const Lit lit: *cl) {
                             if (varData[lit.var()].level > 0) seen[lit.var()] = 1;
@@ -3442,8 +3446,7 @@ ConflictData Searcher::find_conflict_level(PropBy& pb)
             }
 
             case PropByType::xor_t: {
-                //TODO make work for matrixnum 1000
-                auto cl = gmatrices[pb.get_matrix_num()]->get_reason(pb.get_row_num(), ID);
+                auto cl = get_xor_reason(pb, ID);
                 lits = cl->data();
                 size = cl->size();
                 break;

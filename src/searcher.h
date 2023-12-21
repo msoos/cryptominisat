@@ -397,6 +397,7 @@ class Searcher : public HyperEngine
 
         //////////////
         // Conflict minimisation
+        vector<Lit>* get_xor_reason(const PropBy& reason, int32_t& ID);
         bool litRedundant(Lit p, uint32_t abstract_levels);
         void recursiveConfClauseMin();
         void normalClMinim();
