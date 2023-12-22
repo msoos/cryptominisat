@@ -34,6 +34,30 @@ THE SOFTWARE.
 // #define SLOW_DEBUG
 //#define DEBUG_ATTACH_FULL
 
+#ifndef NDEBUG
+//#define FAST_DEBUG
+#endif
+
+#ifdef SLOW_DEBUG
+#define FAST_DEBUG
+#define DEBUG_PROPAGATEFROM
+#define ENQUEUE_DEBUG
+#define DEBUG_ATTACH_MORE
+#define DEBUG_IMPLICIT_PAIRS_TRIPLETS
+#define DEBUG_IMPLICIT_STATS
+#define DEBUG_GAUSS
+#define XOR_DEBUG
+#endif
+
+#ifdef FAST_DEBUG
+#define DEBUG_VARELIM
+#define DEBUG_WATCHED
+#define DEBUG_ATTACH
+#define DEBUG_REPLACER
+#define DEBUG_MARKED_CLAUSE
+#define CHECK_N_OCCUR
+#endif
+
 #if defined(_MSC_VER)
 #include "cms_windows_includes.h"
 #define release_assert(a) \
@@ -186,33 +210,6 @@ THE SOFTWARE.
     #define unlikely(x) x
 #endif
 
-///////////////////
-// Silent Debug
-///////////////////
-
-#ifndef NDEBUG
-//#define FAST_DEBUG
-#endif
-
-#ifdef SLOW_DEBUG
-#define FAST_DEBUG
-#define DEBUG_PROPAGATEFROM
-#define ENQUEUE_DEBUG
-#define DEBUG_ATTACH_MORE
-#define DEBUG_IMPLICIT_PAIRS_TRIPLETS
-#define DEBUG_IMPLICIT_STATS
-#define DEBUG_GAUSS
-#define XOR_DEBUG
-#endif
-
-#ifdef FAST_DEBUG
-#define DEBUG_VARELIM
-#define DEBUG_WATCHED
-#define DEBUG_ATTACH
-#define DEBUG_REPLACER
-#define DEBUG_MARKED_CLAUSE
-#define CHECK_N_OCCUR
-#endif
 
 #ifdef DEBUG_MARKED_CLAUSE
 #define DEBUG_MARKED_CLAUSE_DO(x) do {x;} while (0)

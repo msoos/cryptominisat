@@ -86,7 +86,7 @@ class Watched {
             , type(static_cast<int>(t))
             , data2(bnn_p_t)
         {
-            DEBUG_WATCHED_DO(assert(t == watch_bnn_t));
+            DEBUG_WATCHED_DO(assert(t == WatchType::watch_bnn_t));
         }
 
         Watched() :
@@ -111,7 +111,7 @@ class Watched {
         */
         void setElimedLit(const Lit blockedLit)
         {
-            DEBUG_WATCHED_DO(assert(type == watch_clause_t));
+            DEBUG_WATCHED_DO(assert(type == static_cast<int>(WatchType::watch_clause_t)));
             data1 = blockedLit.toInt();
         }
 
