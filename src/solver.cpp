@@ -4191,10 +4191,11 @@ bool Solver::check_clause_represented_by_xor(const Clause& cl) {
         const Xor& x = xorclauses_orig[w.get_idx()];
         if (x.size() != cl.size()) continue;
         if (x.rhs != rhs) continue;
-        bool ok = true;
-        for(const auto& v: x) if (!seen2[v]) {ok = false; break;}
-        if (!ok) continue;
-        if (ok) { found = true; break; }
+
+        bool ret = true;
+        for(const auto& v: x) if (!seen2[v]) {ret = false; break;}
+        if (!ret) continue;
+        if (ret) { found = true; break; }
     }
 
     for(const auto& l: cl) seen2[l.var()] = 0;

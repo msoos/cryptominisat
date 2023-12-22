@@ -3455,7 +3455,6 @@ ConflictData Searcher::find_conflict_level(PropBy& pb)
     } else {
         Lit* lits = NULL;
         uint32_t size = 0;
-        ClOffset offs;
         int32_t ID;
         switch(pb.getType()) {
             case PropByType::clause_t: {
@@ -3505,7 +3504,7 @@ ConflictData Searcher::find_conflict_level(PropBy& pb)
             std::swap(lits[0], lits[highestId]);
             if (highestId > 1 && pb.getType() == clause_t) {
                 removeWCl(watches[lits[highestId]], pb.get_offset());
-                watches[lits[0]].push(Watched(offs, lits[1]));
+                watches[lits[0]].push(Watched(pb.get_offset(), lits[1]));
             }
         }
     }
@@ -3563,8 +3562,8 @@ bool Searcher::detach_clear_xorclauses() {
 }
 
 bool Searcher::attach_xorclauses() {
-    bool ok = solver->remove_and_clean_all();
-    if (!ok) return okay();
+    bool ret = solver->remove_and_clean_all();
+    if (!ret) return okay();
     for(uint32_t i = 0; i < xorclauses.size(); i ++) attach_xor_clause(i);
     return okay();
 }
