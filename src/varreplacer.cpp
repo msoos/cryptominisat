@@ -246,7 +246,7 @@ bool VarReplacer::perform_replace() {
 
     // XOR
     assert(solver->gmatrices.empty() && "Cannot replace vars inside GJ elim");
-    solver->detach_clear_xorclauses();
+    for(auto& gw: solver->gwatches) gw.clear();
     if (!replace_xor_clauses(solver->xorclauses)) goto end;
     if (!replace_xor_clauses(solver->xorclauses_orig)) goto end;
     solver->attach_xorclauses();

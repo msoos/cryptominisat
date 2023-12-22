@@ -182,9 +182,6 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
             const uint32_t at = i->row_n;
             auto& x = xorclauses[at];
             bool which; // which watch is this
-            VERBOSE_DEBUG_DO(cout << "xcl: "; for(const auto& v: x) cout << v+1 << " "; cout << endl);
-            VERBOSE_DEBUG_DO(cout << "Watched[0]: " << x.watched[0] << endl);
-            VERBOSE_DEBUG_DO(cout << "Watched[1]: " << x.watched[1] << endl);
             if (pv == x[x.watched[0]]) which = 0;
             else {which = 1; assert(x[x.watched[1]] == pv);}
 
@@ -206,7 +203,6 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
             assert(unknown < 2);
             if (unknown == 1) {
                 // this is the OTHER watch for sure
-                VERBOSE_DEBUG_DO(cout << "Prop from XOR" << endl);
                 assert(unknown_at == x.watched[!which]);
                 enqueue<false>(Lit(x.vars[unknown_at], rhs == x.rhs), decisionLevel(), PropBy(1000, at));
                 x.propagating_watch = !which;
@@ -215,15 +211,12 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
             }
             assert(unknown == 0);
             if (rhs != x.rhs) {
-                VERBOSE_DEBUG_DO(cout << "Confl from XOR" << endl);
                 x.propagating_watch = 2 + which;
                 confl = PropBy(1000, at);
                 i++;
                 break;
             } else  *j++ = *i;
         } else {
-            VERBOSE_DEBUG_DO(cout << "m num: " << i->matrix_num << endl);
-            VERBOSE_DEBUG_DO(cout << "gm.size(): " << gmatrices.size() << endl);
             if (!gmatrices[i->matrix_num]->is_initialized()) continue; //remove watch and continue
             gqueuedata[i->matrix_num].new_resp_var = numeric_limits<uint32_t>::max();
             gqueuedata[i->matrix_num].new_resp_row = numeric_limits<uint32_t>::max();
