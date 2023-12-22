@@ -638,7 +638,7 @@ gret EGaussian::init_adjust_matrix()
                 }
                 #endif
 
-                solver->ok = solver->add_xor_clause_inter(tmp_clause, !xorEqualFalse, true);
+                solver->ok = solver->add_xor_clause_inter(tmp_clause, !xorEqualFalse, true, true);
                 release_assert(solver->ok);
                 VERBOSE_PRINT("-> toplevel bin-xor on row: " << row_i << " cl2: " << tmp_clause);
 
@@ -1517,8 +1517,7 @@ bool EGaussian::must_disable(GaussQData& gqd)
     return false;
 }
 
-void CMSat::EGaussian::move_back_xor_clauses()
-{
+void CMSat::EGaussian::move_back_xor_clauses() {
     for(const auto& x: xorclauses) {
         TBUDDY_DO(assert(x.bdd == NULL && "Should have finalized matrix first"));
         solver->xorclauses.push_back(std::move(x));

@@ -114,9 +114,7 @@ inline std::ostream& operator<<(std::ostream& co, const std::vector<Lit>& lits)
 {
     for (uint32_t i = 0; i < lits.size(); i++) {
         co << lits[i];
-
-        if (i != lits.size()-1)
-            co << " ";
+        if (i != lits.size()-1) co << " ";
     }
 
     return co;

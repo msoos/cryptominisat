@@ -205,7 +205,7 @@ lbool Solver::probe_inter(const Lit l, uint32_t& min_props)
             vector<Lit> lits(2);
             lits[0] = l;
             lits[1] = bp_lit;
-            ok = add_xor_clause_inter(lits, false, true, true, true);
+            ok = add_xor_clause_inter(lits, false, true, true);
             if (!ok) {
                 goto end;
             }

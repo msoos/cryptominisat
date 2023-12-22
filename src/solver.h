@@ -209,8 +209,7 @@ class Solver : public Searcher
             const vector< Lit >& lits
             , bool rhs
             , bool attach
-            , bool addDrat = true
-            , bool red = false
+            , bool addDrat
         );
         void new_var(
             const bool bva = false,
@@ -406,8 +405,6 @@ class Solver : public Searcher
         vector<uint32_t> tmp_xor_clash_vars;
         void check_xor_cut_config_sanity() const;
         void handle_found_solution(const lbool status, const bool only_indep_solution);
-        void add_every_combination_xor(const vector<Lit>& lits, bool attach, const bool addDrat, const bool red);
-        void add_xor_clause_inter_cleaned_cut(const vector<Lit>& lits, bool attach, bool addDrat, const bool red);
         unsigned num_bits_set(const size_t x, const unsigned max_size) const;
         void check_too_large_variable_number(const vector<Lit>& lits) const;
 

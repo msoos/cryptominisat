@@ -33,7 +33,7 @@ THE SOFTWARE.
 
 namespace CMSat {
     struct GaussWatched{
-        GaussWatched(uint32_t r ,uint32_t m):
+        GaussWatched(uint32_t r, uint32_t m):
             row_n(r) , matrix_num(m)
         {}
         bool in_matrix() { return matrix_num != 1000; }

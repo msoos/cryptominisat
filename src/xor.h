@@ -147,20 +147,16 @@ public:
     #endif
 };
 
-inline std::ostream& operator<<(std::ostream& os, const Xor& thisXor)
+inline std::ostream& operator<<(std::ostream& os, const Xor& x)
 {
-    for (uint32_t i = 0; i < thisXor.size(); i++) {
-        os << Lit(thisXor[i], false);
-
-        if (i+1 < thisXor.size())
-            os << " + ";
+    for (uint32_t i = 0; i < x.size(); i++) {
+        os << Lit(x[i], false);
+        if (i+1 < x.size()) os << " + ";
     }
-    os << " =  " << std::boolalpha << thisXor.rhs << std::noboolalpha;
+    os << " =  " << std::boolalpha << x.rhs << std::noboolalpha;
 
-    os << " -- clash: ";
-    for(const auto& c: thisXor.clash_vars) {
-        os << c+1 << ", ";
-    }
+    os << " -- clash vars: "; for(const auto& c: x.clash_vars) os << c+1 << ", ";
+    os << " -- watch vars: "; for(const auto& at: {0, 1}) os << x[x.watched[at]]+1 << ", ";
 
     return os;
 }

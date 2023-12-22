@@ -197,7 +197,7 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
                     if (i2 != x.watched[!which]) {
                         // it's not the other watch. So we can update current
                         // watch to this
-                        gwatches[x.vars[i2]].push(GaussWatched::plain_xor(at));
+                        gwatches[x[i2]].push(GaussWatched::plain_xor(at));
                         x.watched[which] = i2;
                         goto next;
                     }
@@ -211,14 +211,16 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
                 enqueue<false>(Lit(x.vars[unknown_at], rhs == x.rhs), decisionLevel(), PropBy(1000, at));
                 x.propagating_watch = !which;
                 *j++ = *i;
+                goto next;
             }
-            if (unknown == 0 && rhs != x.rhs) {
+            assert(unknown == 0);
+            if (rhs != x.rhs) {
                 VERBOSE_DEBUG_DO(cout << "Confl from XOR" << endl);
                 x.propagating_watch = 2 + which;
                 confl = PropBy(1000, at);
                 i++;
                 break;
-            }
+            } else  *j++ = *i;
         } else {
             VERBOSE_DEBUG_DO(cout << "m num: " << i->matrix_num << endl);
             VERBOSE_DEBUG_DO(cout << "gm.size(): " << gmatrices.size() << endl);

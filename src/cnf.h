@@ -364,7 +364,7 @@ public:
     void check_no_removed_or_freed_cl_in_watch() const;
     void check_all_clause_attached() const;
     void check_all_clause_attached(const vector<ClOffset>& offsets) const;
-    void check_xor_attached(const Xor& x, uint32_t i) const;
+    void check_xor_attached(const Xor& x, const uint32_t i) const;
     void check_wrong_attach() const;
     void check_watchlist(watch_subarray_const ws) const;
     template<class T> bool satisfied(const T& cl) const;
@@ -683,9 +683,7 @@ inline void CNF::check_no_duplicate_lits_anywhere() const
     }
 }
 
-template<class T>
-void CNF::clean_xor_no_prop(T& ps, bool& rhs)
-{
+template<class T> void CNF::clean_xor_no_prop(T& ps, bool& rhs) {
     std::sort(ps.begin(), ps.end());
     Lit p;
     uint32_t i, j;

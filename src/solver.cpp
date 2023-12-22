@@ -195,23 +195,17 @@ bool Solver::add_xor_clause_inter(
     const vector<Lit>& lits
     , bool rhs
     , const bool attach
-    , bool addDrat
-    , bool red
+    , const bool addDrat
 ) {
     VERBOSE_PRINT("add_xor_clause_inter: " << lits << " rhs: " << rhs);
-    assert(ok);
+    assert(okay());
     assert(!attach || qhead == trail.size());
     assert(decisionLevel() == 0);
+    if (frat->enabled() && addDrat)  assert(false && "not working, sorry");
 
     vector<Lit> ps(lits);
-    for(Lit& lit: ps) {
-        if (lit.sign()) {
-            rhs ^= true;
-            lit ^= true;
-        }
-    }
+    for(Lit& lit: ps) if (lit.sign()) {rhs ^= true; lit ^= true;}
     clean_xor_no_prop(ps, rhs);
-
     if (ps.size() >= (0x01UL << 28)) throw CMSat::TooLongClauseError();
 
     if (ps.empty()) {
@@ -219,10 +213,8 @@ bool Solver::add_xor_clause_inter(
             *frat << add << ++clauseID << fin;
             ok = false;
         }
-        return ok;
+        return okay();
     }
-
-    ps[0] ^= rhs;
 
     if (ps.size() > 2) {
         xor_clauses_updated = true;
@@ -232,9 +224,11 @@ bool Solver::add_xor_clause_inter(
         TBUDDY_DO(if (frat->enabled()) xorclauses_orig.back().create_bdd_xor());
         attach_xor_clause(xorclauses.size()-1);
     } else {
+        ps[0] ^= !rhs;
+        add_clause_int(ps);
     }
 
-    return ok;
+    return okay();
 }
 
 //Deals with INTERNAL variables
@@ -2955,17 +2949,10 @@ bool Solver::add_clause_outside(const vector<Lit>& lits, bool red)
 
 bool Solver::add_xor_clause_outside(const vector<uint32_t>& vars, bool rhs)
 {
-    if (!ok) {
-        return false;
-    }
-
+    if (!ok) return false;
     vector<Lit> lits(vars.size());
-    for(size_t i = 0; i < vars.size(); i++) {
-        lits[i] = Lit(vars[i], false);
-    }
-    #ifdef SLOW_DEBUG //we check for this during back-numbering
-    check_too_large_variable_number(lits);
-    #endif
+    for(size_t i = 0; i < vars.size(); i++) lits[i] = Lit(vars[i], false);
+    SLOW_DEBUG_DO(check_too_large_variable_number(lits));
 
     back_number_from_outside_to_outer(lits);
     addClauseHelper(back_number_from_outside_to_outer_tmp);
