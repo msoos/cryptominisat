@@ -181,12 +181,10 @@ bool VarReplacer::enqueueDelayedEnqueue()
     return solver->okay();
 }
 
-void VarReplacer::attach_delayed_attach()
-{
+void VarReplacer::attach_delayed_attach() {
     for(Clause* c: delayed_attach_or_free) {
-        if (c->size() <= 2) {
-            solver->free_cl(c);
-        } else {
+        if (c->size() <= 2) solver->free_cl(c);
+        else {
             c->unset_removed();
             solver->attachClause(*c);
         }
@@ -211,8 +209,7 @@ void VarReplacer::update_all_vardata()
     }
 }
 
-bool VarReplacer::perform_replace()
-{
+bool VarReplacer::perform_replace() {
     assert(solver->ok);
     checkUnsetSanity();
     *solver->frat << __PRETTY_FUNCTION__ << " start\n";
@@ -223,16 +220,9 @@ bool VarReplacer::perform_replace()
     const double myTime = cpuTime();
     const size_t origTrailSize = solver->trail_size();
 
-    if (!solver->clauseCleaner->remove_and_clean_all()) {
-        return false;
-    }
-    #ifdef DEBUG_ATTACH_MORE
-    solver->check_all_clause_attached();
-    #endif
-
-    //Printing stats
-    if (solver->conf.verbosity >= 5)
-        printReplaceStats();
+    if (!solver->clauseCleaner->remove_and_clean_all()) return false;
+    DEBUG_ATTACH_MORE_DO(solver->check_all_clause_attached());
+    if (solver->conf.verbosity >= 5) printReplaceStats();
 
     update_all_vardata();
     check_no_replaced_var_set();
@@ -240,61 +230,36 @@ bool VarReplacer::perform_replace()
     runStats.actuallyReplacedVars = replacedVars -lastReplacedVars;
     lastReplacedVars = replacedVars;
 
-    #ifdef DEBUG_ATTACH_MORE
-    solver->check_all_clause_attached();
-    #endif
     assert(solver->prop_at_head());
+    DEBUG_ATTACH_MORE_DO( solver->check_all_clause_attached());
+    DEBUG_IMPLICIT_STATS_DO(solver->check_implicit_stats());
 
-    #ifdef DEBUG_IMPLICIT_STATS
-    solver->check_implicit_stats();
-    #endif
     build_fast_inter_replace_lookup();
-
-    //Replace implicits
-    if (!replaceImplicit()) {
-        goto end;
-    }
-
-    //Replace longs
+    if (!replaceImplicit()) goto end;
     assert(solver->watches.get_smudged_list().empty());
     assert(delayed_attach_or_free.empty());
-    if (!replace_set(solver->longIrredCls)) {
-        goto end;
-    }
-    for(auto& lredcls: solver->longRedCls) {
-        if (!replace_set(lredcls)) {
-            goto end;
-        }
-    }
+    if (!replace_set(solver->longIrredCls)) goto end;
+    for(auto& lredcls: solver->longRedCls) if (!replace_set(lredcls)) goto end;
     replace_bnns();
-
     solver->clean_occur_from_removed_clauses_only_smudged();
     attach_delayed_attach();
 
-    //Replace XORs
+    // XOR
+    assert(solver->gmatrices.empty() && "Cannot replace vars inside GJ elim");
+    solver->detach_clear_xorclauses();
     if (!replace_xor_clauses(solver->xorclauses)) goto end;
     if (!replace_xor_clauses(solver->xorclauses_orig)) goto end;
-
-    assert(solver->gmatrices.empty() && "Cannot replace vars inside GJ elim");
-
-    for(auto& v: solver->removed_xorclauses_clash_vars) {
-        v = get_var_replaced_with_fast(v);
-    }
+    solver->attach_xorclauses();
+    for(auto& v: solver->removed_xorclauses_clash_vars) v = get_var_replaced_with_fast(v);
 
     //While replacing the clauses
     //we cannot(for implicits) and/or shouldn't (for implicit & long cls) enqueue
     //* We cannot because we are going through a struct and we might change it
     //* We shouldn't because then non-dominators would end up in the 'trail'
-    if (!enqueueDelayedEnqueue()) {
-        goto end;
-    }
+    if (!enqueueDelayedEnqueue()) goto end;
 
     solver->update_assumptions_after_varreplace();
-#ifdef USE_BREAKID
-    if (solver->breakid) {
-        solver->breakid->update_var_after_varreplace();
-    }
-#endif
+    USE_BREAKID_DO(if (solver->breakid) solver->breakid->update_var_after_varreplace());
 
 end:
     delayed_attach_or_free.clear();
@@ -322,13 +287,10 @@ end:
     *solver->frat << __PRETTY_FUNCTION__ << " end\n";
 
     if (solver->okay()) {
-        #ifdef DEBUG_ATTACH_MORE
-        solver->check_all_clause_attached();
-        solver->check_wrong_attach();
-        #endif
-        #ifdef DEBUG_IMPLICIT_STATS
-        solver->check_stats();
-        #endif
+        DEBUG_ATTACH_MORE_DO(solver->check_wrong_attach());
+        DEBUG_ATTACH_MORE_DO(solver->find_all_attached());
+        DEBUG_ATTACH_MORE_DO(solver->check_all_clause_attached());
+        DEBUG_IMPLICIT_STATS_DO(solver->check_stats());
         checkUnsetSanity();
     }
     delete_frat_cls();
@@ -344,8 +306,8 @@ void VarReplacer::delete_frat_cls()
     bins_for_frat.clear();
 }
 
-bool VarReplacer::replace_one_xor_clause(Xor& x)
-{
+// Returns FALSE if the XOR needs to be removed
+bool VarReplacer::replace_one_xor_clause(Xor& x) {
     uint32_t j = 0;
     for(uint32_t i = 0; i < x.clash_vars.size(); i++) {
         uint32_t v = x.clash_vars[i];
@@ -406,22 +368,18 @@ bool VarReplacer::replace_one_xor_clause(Xor& x)
     }
 }
 
-bool VarReplacer::replace_xor_clauses(vector<Xor>& xors)
-{
+bool VarReplacer::replace_xor_clauses(vector<Xor>& xors) {
     uint32_t j = 0;
-
     for(uint32_t i = 0; i < xors.size(); i++) {
         Xor& x = xors[i];
         if (replace_one_xor_clause(x)) {
-            std::swap(xors[j], xors[i]);
-            j++;
+            xors[j++] = xors[i];
         } else {
             TBUDDY_DO(delete x.bdd);
             TBUDDY_DO(x.bdd = NULL);
         }
     }
     xors.resize(j);
-
     return solver->okay();
 }
 
@@ -577,8 +535,7 @@ void VarReplacer::replace_bnn_lit(Lit& l, uint32_t idx, bool& changed)
     runStats.replacedLits++;
 }
 
-bool VarReplacer::replace_bnns()
-{
+bool VarReplacer::replace_bnns() {
     assert(!solver->frat->something_delayed());
     for (uint32_t idx = 0; idx < solver->bnns.size(); idx++) {
         BNN* bnn = solver->bnns[idx];
@@ -620,8 +577,7 @@ bool VarReplacer::replace_bnns()
 /**
 @brief Replaces variables in long clauses
 */
-bool VarReplacer::replace_set(vector<ClOffset>& cs)
-{
+bool VarReplacer::replace_set(vector<ClOffset>& cs) {
     assert(!solver->frat->something_delayed());
     vector<ClOffset>::iterator i = cs.begin();
     vector<ClOffset>::iterator j = i;
