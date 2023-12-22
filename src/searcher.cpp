@@ -878,10 +878,14 @@ void Searcher::analyze_conflict(
     print_debug_resolution_data(confl);
     create_learnt_clause<inprocess>(confl);
     stats.litsRedNonMin += learnt_clause.size();
-    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+#if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     glue_before_minim = calc_glue(learnt_clause);
     size_before_minim = learnt_clause.size();
-    #endif
+#else
+    glue_before_minim = 0; //to silence warnings
+    size_before_minim = 0; //to silence warnings
+
+#endif
     minimize_learnt_clause<inprocess>();
     stats.litsRedFinal += learnt_clause.size();
 
