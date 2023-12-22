@@ -465,14 +465,13 @@ bool CNF::normClauseIsAttached(const ClOffset offset) const
     return attached;
 }
 
-void CNF::find_all_attach() const
-{
+/// Makes sure all that is attached is actually a clause in one of the DBs
+void CNF::find_all_attached() const {
     for (size_t i = 0; i < watches.size(); i++) {
         const Lit lit = Lit::toLit(i);
         for (uint32_t i2 = 0; i2 < watches[lit].size(); i2++) {
             const Watched& w = watches[lit][i2];
-            if (!w.isClause())
-                continue;
+            if (!w.isClause()) continue;
 
             //Get clause
             Clause* cl = cl_alloc.ptr(w.get_offset());
@@ -488,64 +487,48 @@ void CNF::find_all_attach() const
             }
 
             //Assert watch correctness
-            if ((*cl)[0] != lit
-                && (*cl)[1] != lit
-            ) {
-                std::cerr
-                << "ERROR! Clause " << (*cl)
-                << " not attached?"
-                << endl;
-
-                assert(false);
-                std::exit(-1);
+            if ((*cl)[0] != lit && (*cl)[1] != lit) {
+                std::cerr << "ERROR! Clause " << (*cl) << " not attached?" << endl;
+                assert(false); std::exit(-1);
             }
 
             //Clause in one of the lists
             if (!find_clause(w.get_offset())) {
-                std::cerr
-                << "ERROR! did not find clause " << *cl
-                << endl;
-
-                assert(false);
-                std::exit(1);
+                std::cerr << "ERROR! did not find clause " << *cl << endl;
+                assert(false); std::exit(1);
             }
         }
     }
-
-    find_all_attach(longIrredCls);
-    for(auto& lredcls: longRedCls) find_all_attach(lredcls);
+    for(size_t var = 0; var < gwatches.size(); var++) {
+        for(const auto& w: gwatches[var]) {
+            if (w.matrix_num < 1000) {
+                /* assert(gmatrices.size() > w.matrix_num); */
+            } else {
+                assert(w.row_n < xorclauses.size());
+                const Xor& x = xorclauses[w.row_n];
+                uint32_t v0 = x[x.watched[0]];
+                uint32_t v1 = x[x.watched[1]];
+                assert(var == v0 || var == v1);
+            }
+        }
+    }
 }
 
-void CNF::find_all_attach(const vector<ClOffset>& cs) const
-{
+void CNF::find_all_attached(const vector<ClOffset>& cs) const {
     for(vector<ClOffset>::const_iterator it = cs.begin(), end = cs.end() ; it != end ; ++it) {
         Clause& cl = *cl_alloc.ptr(*it);
         bool ret = findWCl(watches[cl[0]], *it);
         if (!ret) {
-            cout
-            << "Clause " << cl
-            << " (red: " << cl.red()
-            << " )";
-            if (ret) { cout << " doesn't have its 1st watch attached!"; }
-            else { cout << " HAS its 1st watch attached (but it should NOT)!"; }
-            cout << endl;
-
-            assert(false);
-            std::exit(-1);
+            cout << "Clause " << cl << " (red: " << cl.red() << " )";
+            cout << " does NOT have its 1st watch attached!" << endl;
+            assert(false); std::exit(-1);
         }
 
         ret = findWCl(watches[cl[1]], *it);
         if (!ret) {
-            cout
-            << "Clause " << cl
-            << " (red: " << cl.red()
-            << " )";
-            if (ret) { cout << " doesn't have its 2nd watch attached!"; }
-            else { cout << " HAS its 2nd watch attached (but it should NOT)!"; }
-            cout << endl;
-
-            assert(false);
-            std::exit(-1);
+            cout << "Clause " << cl << " (red: " << cl.red() << " )";
+            cout << " does NOT have its 2nd watch attached!" << endl;
+            assert(false); std::exit(-1);
         }
     }
 }

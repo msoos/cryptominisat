@@ -1810,9 +1810,7 @@ bool Searcher::handle_conflict(PropBy confl)
     stats.conflicts++;
     hist.num_conflicts_this_restart++;
     sumConflicts++;
-    for(uint32_t i = 0; i < longRedCls.size(); i++) {
-        longRedClsSizes[i] += longRedCls[i].size();
-    }
+    for(uint32_t i = 0; i < longRedCls.size(); i++)  longRedClsSizes[i] += longRedCls[i].size();
     params.conflictsDoneThisRestart++;
 
     ConflictData data = find_conflict_level(confl);
@@ -2557,9 +2555,7 @@ lbool Searcher::full_probe_if_needed()
     return l_Undef;
 }
 
-lbool Searcher::solve(
-    const uint64_t _max_confls
-) {
+lbool Searcher::solve(const uint64_t _max_confls) {
     assert(ok);
     assert(qhead == trail.size());
     max_confl_per_search_solve_call = _max_confls;
@@ -2583,9 +2579,7 @@ lbool Searcher::solve(
     #endif
 
     SLOW_DEBUG_DO(assert(fast_backw.fast_backw_on || solver->check_order_heap_sanity()));
-    while(stats.conflicts < max_confl_per_search_solve_call
-        && status == l_Undef
-    ) {
+    while(stats.conflicts < max_confl_per_search_solve_call && status == l_Undef) {
         if (!conf.never_stop_search &&
                 (distill_clauses_if_needed() == l_False
                 || full_probe_if_needed() == l_False
@@ -2826,12 +2820,9 @@ void Searcher::print_solution_type(const lbool status) const
     }
 }
 
-void Searcher::finish_up_solve(const lbool status)
-{
+void Searcher::finish_up_solve(const lbool status) {
     print_solution_type(status);
-    if (conf.verbosity >= 2 && status != l_Undef) {
-        print_matrix_stats();
-    }
+    if (conf.verbosity >= 2 && status != l_Undef) print_matrix_stats();
 
     if (status == l_True) {
         SLOW_DEBUG_DO(assert(fast_backw.fast_backw_on || solver->check_order_heap_sanity()));

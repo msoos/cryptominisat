@@ -1429,7 +1429,7 @@ lbool Solver::simplify_problem_outside(const string* strategy)
         assert(check_order_heap_sanity());
         check_implicit_stats();
         check_wrong_attach();
-        find_all_attach();
+        find_all_attached();
         check_all_clause_attached();
     }
     #endif
@@ -1480,7 +1480,8 @@ void Solver::reset_for_solving() {
     if (ok) {
         assert(check_order_heap_sanity());
         check_implicit_stats();
-        find_all_attach();
+        find_all_attached();
+        check_all_clause_attached();
         check_no_duplicate_lits_anywhere();
     }
     #endif
@@ -1561,6 +1562,7 @@ lbool Solver::solve_with_assumptions(
         goto end;
     } else {
         SLOW_DEBUG_DO(check_wrong_attach());
+        SLOW_DEBUG_DO(check_all_clause_attached());
     }
     assert(prop_at_head());
     assert(okay());
@@ -1887,10 +1889,8 @@ void Solver::handle_found_solution(const lbool status, const bool only_sampling_
         cancelUntil(0);
         assert(prop_at_head());
 
-        #ifdef DEBUG_ATTACH_MORE
-        find_all_attach();
-        check_all_clause_attached();
-        #endif
+        DEBUG_ATTACH_MORE_DO(find_all_attached());
+        DEBUG_ATTACH_MORE_DO(check_all_clause_attached());
     } else if (status == l_False) {
         cancelUntil(0);
 
@@ -2133,7 +2133,9 @@ lbool Solver::execute_inprocess_strategy(
 
         SLOW_DEBUG_DO(check_stats());
         if (!okay()) return l_False;
-        SLOW_DEBUG_DO(check_wrong_attach());
+        DEBUG_ATTACH_MORE_DO(check_wrong_attach());
+        DEBUG_ATTACH_MORE_DO(find_all_attached());
+        DEBUG_ATTACH_MORE_DO(check_all_clause_attached());
     }
 
     return okay() ? l_Undef : l_False;
@@ -2144,9 +2146,10 @@ lbool Solver::execute_inprocess_strategy(
 */
 lbool Solver::simplify_problem(const bool startup, const string& strategy) {
     assert(okay());
+    verb_print(6,  __func__ << " called");
     DEBUG_IMPLICIT_STATS_DO(check_stats());
+    DEBUG_ATTACH_MORE_DO(find_all_attached());
     DEBUG_ATTACH_MORE_DO(check_all_clause_attached());
-    DEBUG_ATTACH_MORE_DO(find_all_attach());
     DEBUG_ATTACH_MORE_DO(assert(check_order_heap_sanity()));
     DEBUG_MARKED_CLAUSE_DO(assert(no_marked_clauses()));
 
@@ -2159,21 +2162,12 @@ lbool Solver::simplify_problem(const bool startup, const string& strategy) {
     unset_clash_decision_vars();
     if (!clear_gauss_matrices()) return l_False;
 
-    if (conf.verbosity >= 6) {
-        cout
-        << "c " <<  __func__ << " called"
-        << endl;
-    }
-
     if (ret == l_Undef) ret = execute_inprocess_strategy(startup, strategy);
     assert(ret != l_True);
 
     //Free unused watch memory
     free_unused_watches();
 
-    if (conf.verbosity >= 6) {
-        cout << "c " << __func__ << " finished" << endl;
-    }
     conf.global_timeout_multiplier *= conf.global_timeout_multiplier_multiplier;
     conf.global_timeout_multiplier =
         std::min<double>(
@@ -2185,11 +2179,10 @@ lbool Solver::simplify_problem(const bool startup, const string& strategy) {
 
     solveStats.num_simplify++;
     solveStats.num_simplify_this_solve_call++;
+    verb_print(6, __func__ << " finished");
 
     assert(!(ok == false && ret != l_False));
-    if (ret == l_False) {
-        return l_False;
-    }
+    if (ret == l_False) return l_False;
 
     assert(ret == l_Undef);
     check_stats();
@@ -2199,11 +2192,9 @@ lbool Solver::simplify_problem(const bool startup, const string& strategy) {
     // is called, which is called form the outside, sometimes 1000x
     // in one second
     rebuildOrderHeap();
-    #ifdef DEBUG_ATTACH_MORE
-    find_all_attach();
-    check_all_clause_attached();
-    #endif
-    check_wrong_attach();
+    DEBUG_ATTACH_MORE_DO(find_all_attached());
+    DEBUG_ATTACH_MORE_DO(check_all_clause_attached());
+    DEBUG_ATTACH_MORE_DO(check_wrong_attach());
 
     return ret;
 }
@@ -4260,9 +4251,8 @@ void Solver::detach_clauses_in_xors() {
             Clause* cl = cl_alloc.ptr(offs);
             assert(!cl->freed());
             //We have already went through this clause, and set it to be removed/detached
-            //
+            if (cl->red()) goto next;
             if (cl->getRemoved()) continue;
-            if (cl->red()) continue;
 
             if (!cl->red() && cl->size() <= maxsize_xor &&
                     xor_hashes.count(hash_xcl(*cl)) == 1 &&
@@ -4272,6 +4262,7 @@ void Solver::detach_clauses_in_xors() {
                 deleted++;
                 continue;
             }
+            next:
             watches[l][j++] = w;
         }
         watches[l].resize(j);
@@ -4282,9 +4273,7 @@ void Solver::detach_clauses_in_xors() {
         for(uint32_t i = 0; i < longIrredCls.size(); i++) {
             ClOffset offs = longIrredCls[i];
             Clause* cl = cl_alloc.ptr(offs);
-            if (!cl->getRemoved()) {
-                longIrredCls[j++] = offs;
-            }
+            if (!cl->getRemoved()) longIrredCls[j++] = offs;
         }
         longIrredCls.resize(j);
 
