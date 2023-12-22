@@ -1940,7 +1940,7 @@ fixvar (PS * ps, Var * v)
 {
   Rnk * r;
 
-  assert (VAR2LIT (v) != UNDEF);
+  assert (VAR2LIT (v)->val != UNDEF);
   assert (!v->level);
 
   ps->fixed++;
