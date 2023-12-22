@@ -406,23 +406,23 @@ size_t CNF::mem_used() const
     return mem;
 }
 
-void CNF::check_all_clause_attached() const
-{
+void CNF::check_all_clause_attached() const {
     check_all_clause_attached(longIrredCls);
-    for(const vector<ClOffset>& l: longRedCls) {
-        check_all_clause_attached(l);
-    }
+    for(const vector<ClOffset>& l: longRedCls) check_all_clause_attached(l);
+    for(uint32_t i = 0; i < xorclauses.size(); i++) check_xor_attached(xorclauses[i], i);
 }
 
-void CNF::check_all_clause_attached(const vector<ClOffset>& offsets) const
-{
-    for (vector<ClOffset>::const_iterator
-        it = offsets.begin(), end = offsets.end()
-        ; it != end
-        ; ++it
-    ) {
-        assert(normClauseIsAttached(*it));
+void CNF::check_xor_attached(const Xor& x, uint32_t i) const {
+    bool attached = true;
+    for(const int wi: {0, 1}) {
+        auto v = x[x.watched[wi]];
+        attached &= findWXCl(gwatches[v], i);
     }
+    assert(attached);
+}
+
+void CNF::check_all_clause_attached(const vector<ClOffset>& offsets) const {
+    for (const auto& off: offsets) assert(normClauseIsAttached(off));
 }
 
 bool CNF::normClauseIsAttached(const ClOffset offset) const

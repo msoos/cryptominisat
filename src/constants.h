@@ -32,6 +32,7 @@ THE SOFTWARE.
 // #define VERBOSE_DEBUG_FULLPROP
 // #define DEBUG_DEPTH
 // #define SLOW_DEBUG
+//#define DEBUG_ATTACH_FULL
 
 #if defined(_MSC_VER)
 #include "cms_windows_includes.h"
@@ -136,21 +137,22 @@ THE SOFTWARE.
 #endif
 
 
-// verb_print
 #define verb_print(a, x) \
     do { if (solver->conf.verbosity >= a) {std::cout << "c " << x << std::endl;} } while (0)
-/////
 
-// debug watched
 #ifdef DEBUG_WATCHED
-#define DEBUG_WATCHED_DO(x) \
-    do { x; } while (0)
+#define DEBUG_WATCHED_DO(x) do { x; } while (0)
 #else
 #define DEBUG_WATCHED_DO(x) do { } while (0)
 #endif
 
+#ifdef DEBUG_IMPLICIT_STATS
+#define DEBUG_IMPLICIT_STATS_DO(x) do { x; } while (0)
+#else
+#define DEBUG_IMPLICIT_STATS_DO(x) do { } while (0)
+#endif
 
-// tbuddy
+
 #ifdef USE_TBUDDY
 #define TBUDDY_DO(x) \
     do { x; } while (0)
@@ -212,12 +214,11 @@ THE SOFTWARE.
 #define CHECK_N_OCCUR
 #endif
 
-#if defined(DEBUG_MARKED_CLAUSE)
+#ifdef DEBUG_MARKED_CLAUSE
 #define DEBUG_MARKED_CLAUSE_DO(x) do {x;} while (0)
 #else
 #define DEBUG_MARKED_CLAUSE_DO(x) do {} while (0)
 #endif
 
-//#define DEBUG_ATTACH_FULL
 
 #endif //__CONSTANTS_H__

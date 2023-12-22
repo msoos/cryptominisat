@@ -3522,8 +3522,7 @@ ConflictData Searcher::find_conflict_level(PropBy& pb)
     return data;
 }
 
-inline bool Searcher::check_order_heap_sanity()
-{
+inline bool Searcher::check_order_heap_sanity() {
     if (conf.sampling_vars) {
         for(uint32_t outside_var: *conf.sampling_vars) {
             uint32_t outer_var = map_to_with_bva(outside_var);

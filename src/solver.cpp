@@ -1469,8 +1469,7 @@ lbool Solver::simplify_problem_outside(const string* strategy)
     return status;
 }
 
-void Solver::reset_for_solving()
-{
+void Solver::reset_for_solving() {
     longest_trail_ever_best = 0;
     longest_trail_ever_inv = 0;
     fresh_solver = false;
@@ -1791,8 +1790,7 @@ uint64_t Solver::calc_num_confl_to_do_this_iter(const size_t iteration_num) cons
 }
 
 
-lbool Solver::iterate_until_solved()
-{
+lbool Solver::iterate_until_solved() {
     lbool status = l_Undef;
     size_t iteration_num = 0;
 
@@ -1826,17 +1824,13 @@ lbool Solver::iterate_until_solved()
         check_too_many_in_tier0();
 
         //Solution has been found
-        if (status != l_Undef) {
-            break;
-        }
+        if (status != l_Undef) break;
 
         //If we are over the limit, exit
         if (sumConflicts >= conf.max_confl
             || cpuTime() > conf.maxTime
             || must_interrupt_asap()
-        ) {
-            break;
-        }
+        ) break;
 
         if (conf.do_simplify_problem) {
             status = simplify_problem(false, conf.simplify_schedule_nonstartup);
@@ -1930,7 +1924,6 @@ lbool Solver::execute_inprocess_strategy(
     const bool startup
     , const string& strategy
 ) {
-    //std::string input = "abc,def,ghi";
     std::istringstream ss(strategy + ", ");
     std::string token;
     std::string occ_strategy_tokens;
@@ -1941,9 +1934,7 @@ lbool Solver::execute_inprocess_strategy(
             || must_interrupt_asap()
             || nVars() == 0
             || !okay()
-        ) {
-            break;
-        }
+        ) break;
 
         assert(watches.get_smudged_list().empty());
         assert(prop_at_head());
@@ -1951,6 +1942,7 @@ lbool Solver::execute_inprocess_strategy(
         #ifdef SLOW_DEBUG
         check_no_zero_ID_bins();
         check_wrong_attach();
+        check_all_clause_attached();
         check_stats();
         check_no_duplicate_lits_anywhere();
         check_assumptions_sanity();
@@ -1979,10 +1971,8 @@ lbool Solver::execute_inprocess_strategy(
             ) {
                 break;
             }
-            #ifdef SLOW_DEBUG
-            check_stats();
-            check_assumptions_sanity();
-            #endif
+            SLOW_DEBUG_DO(check_stats());
+            SLOW_DEBUG_DO(check_assumptions_sanity());
         }
 
         if (conf.verbosity && token.substr(0,3) != "occ" && token != "") {
@@ -2152,20 +2142,13 @@ lbool Solver::execute_inprocess_strategy(
 /**
 @brief The function that brings together almost all CNF-simplifications
 */
-lbool Solver::simplify_problem(const bool startup, const string& strategy)
-{
+lbool Solver::simplify_problem(const bool startup, const string& strategy) {
     assert(okay());
-    #ifdef DEBUG_IMPLICIT_STATS
-    check_stats();
-    #endif
-    #ifdef DEBUG_ATTACH_MORE
-    check_all_clause_attached();
-    find_all_attach();
-    assert(check_order_heap_sanity());
-    #endif
-    #ifdef DEBUG_MARKED_CLAUSE
-    assert(no_marked_clauses());
-    #endif
+    DEBUG_IMPLICIT_STATS_DO(check_stats());
+    DEBUG_ATTACH_MORE_DO(check_all_clause_attached());
+    DEBUG_ATTACH_MORE_DO(find_all_attach());
+    DEBUG_ATTACH_MORE_DO(assert(check_order_heap_sanity()));
+    DEBUG_MARKED_CLAUSE_DO(assert(no_marked_clauses()));
 
     if (solveStats.num_simplify_this_solve_call >= conf.max_num_simplify_per_solve_call) {
         return l_Undef;
