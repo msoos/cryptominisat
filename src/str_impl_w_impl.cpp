@@ -32,10 +32,7 @@ using namespace CMSat;
 
 bool StrImplWImpl::str_impl_w_impl()
 {
-    #ifdef DEBUG_IMPLICIT_STATS
-    solver->check_stats();
-    #endif
-
+    DEBUG_IMPLICIT_STATS_DO(solver->check_stats());
     str_impl_data.clear();
 
     const size_t origTrailSize = solver->trail_size();

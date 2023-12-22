@@ -2497,9 +2497,7 @@ bool Searcher::str_impl_with_impl_if_needed()
     assert(okay());
     bool ret = okay();
 
-    if (conf.doStrSubImplicit &&
-        sumConflicts > next_str_impl_with_impl)
-    {
+    if (conf.doStrSubImplicit && sumConflicts > next_str_impl_with_impl) {
         ret &= solver->dist_impl_with_impl->str_impl_w_impl();
         if (ret) solver->subsumeImplicit->subsume_implicit();
         next_str_impl_with_impl = sumConflicts + 60000.0*conf.global_next_multiplier;
@@ -2508,8 +2506,7 @@ bool Searcher::str_impl_with_impl_if_needed()
     return ret;
 }
 
-bool Searcher::distill_bins_if_needed()
-{
+bool Searcher::distill_bins_if_needed() {
     assert(okay());
     bool ret = okay();
 
@@ -3427,8 +3424,7 @@ void Searcher::check_all_in_vmtf_branch_strategy(const vector<uint32_t>& vars)
     }
 }
 
-ConflictData Searcher::find_conflict_level(PropBy& pb)
-{
+ConflictData Searcher::find_conflict_level(PropBy& pb) {
     ConflictData data;
 
     if (pb.getType() == PropByType::binary_t) {
@@ -3593,13 +3589,13 @@ bool Searcher::clear_gauss_matrices(const bool destruct) {
     gmatrices.clear();
     gqueuedata.clear();
     if (!destruct) {
+        #ifdef USE_TBUDDY
         for(const auto& x: xorclauses_orig) {
-            #ifdef USE_TBUDDY
             x.bdd = NULL;
             frat->flush();
             if (frat->enabled()) solver->xorclauses.back().create_bdd_xor();
-            #endif
         }
+        #endif
     }
     detach_clear_xorclauses();
     if (!destruct) attach_xorclauses();

@@ -4246,6 +4246,7 @@ void Solver::detach_clauses_in_xors() {
                     xor_hashes.count(hash_xcl(*cl)) == 1 &&
                     check_clause_represented_by_xor(*cl)) {
                 cl->setRemoved();
+                litStats.irredLits -= cl->size();
                 delayed_clause_free.push_back(offs);
                 deleted++;
                 continue;
