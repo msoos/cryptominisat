@@ -72,6 +72,7 @@ public:
         assert(watches.size() > pos);
         return watches[pos];
     }
+    watch_subarray operator[](size_t pos) { return at(pos); }
 
     watch_subarray_const operator[](Lit at) const
     {

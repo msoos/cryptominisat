@@ -3045,7 +3045,9 @@ void OccSimplifier::buildElimedMap()
 }
 
 void OccSimplifier::finishUp( size_t origTrailSize) {
+#ifdef SLOW_DEBUG
     bool somethingSet = (solver->trail_size() - origTrailSize) > 0;
+#endif
     runStats.zeroDepthAssings = solver->trail_size() - origTrailSize;
     const double myTime = cpuTime();
 

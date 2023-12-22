@@ -822,9 +822,7 @@ void PropEngine::updateVars(
     [[maybe_unused]] const vector<uint32_t>& interToOuter
 ) {
     //Trail is NOT correct, only its length is correct
-    for(Trail& t: trail) {
-        t.lit = lit_Undef;
-    }
+    for(Trail& t: trail) t.lit = lit_Undef;
 }
 
 void PropEngine::print_trail()

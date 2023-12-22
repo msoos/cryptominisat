@@ -885,7 +885,6 @@ void Solver::renumber_clauses(const vector<uint32_t>& outerToInter)
         updateVarsMap(x.vars, outerToInter);
         updateVarsMap(x.clash_vars, outerToInter);
     }
-
     for(auto& v: removed_xorclauses_clash_vars) v = getUpdatedVar(v, outerToInter);
 
     for(auto& bnn: bnns) {
@@ -960,10 +959,8 @@ bool Solver::renumber_variables(bool must_renumber)
 {
     assert(okay());
     assert(decisionLevel() == 0);
-    #ifdef SLOW_DEBUG
-    for(const auto& x: xorclauses) for(const auto& v: x) assert(v < nVars());
-    for(const auto& x: xorclauses_orig) for(const auto& v: x) assert(v < nVars());
-    #endif
+    SLOW_DEBUG_DO(for(const auto& x: xorclauses) for(const auto& v: x) assert(v < nVars()));
+    SLOW_DEBUG_DO(for(const auto& x: xorclauses_orig) for(const auto& v: x) assert(v < nVars()));
 
     if (nVars() == 0) return okay();
     if (!must_renumber && calc_renumber_saving() < 0.2) return okay();
@@ -976,8 +973,7 @@ bool Solver::renumber_variables(bool must_renumber)
     vector<uint32_t> outerToInter(nVarsOuter());
     vector<uint32_t> interToOuter(nVarsOuter());
 
-    size_t numEffectiveVars =
-        calculate_interToOuter_and_outerToInter(outerToInter, interToOuter);
+    size_t numEffectiveVars = calculate_interToOuter_and_outerToInter(outerToInter, interToOuter);
 
     //Create temporary outerToInter2
     vector<uint32_t> interToOuter2(nVarsOuter()*2);
@@ -990,11 +986,7 @@ bool Solver::renumber_variables(bool must_renumber)
     CNF::updateVars(outerToInter, interToOuter, interToOuter2);
     PropEngine::updateVars(outerToInter, interToOuter);
     Searcher::updateVars(outerToInter, interToOuter);
-#ifdef USE_BREAKID
-    if (breakid) {
-        breakid->updateVars(outerToInter, interToOuter);
-    }
-#endif
+    USE_BREAKID_DO(if (breakid) breakid->updateVars(outerToInter, interToOuter));
 
     //Update sub-elements' vars
     varReplacer->updateVars(outerToInter, interToOuter);

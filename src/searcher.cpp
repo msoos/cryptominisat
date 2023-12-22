@@ -134,7 +134,7 @@ void Searcher::save_on_var_memory()
 }
 
 void Searcher::updateVars(
-    const vector<uint32_t>& /*outerToInter*/
+    [[maybe_unused]] const vector<uint32_t>& outerToInter
     , const vector<uint32_t>& interToOuter
 ) {
     updateArray(var_act_vsids, interToOuter);

@@ -30,6 +30,7 @@ THE SOFTWARE.
 #pragma once
 #include <cstdint>
 #include <limits>
+#include "Vec.h"
 
 namespace CMSat {
     struct GaussWatched{
@@ -56,4 +57,8 @@ namespace CMSat {
             return row_n < other.row_n;
         }
     };
+
+    inline void swap(vec<GaussWatched>& a, vec<GaussWatched>& b) {
+        a.swap(b);
+    }
 }

@@ -148,7 +148,7 @@ void CNF::enlarge_nonminimial_datastructs(size_t n)
 void CNF::enlarge_minimal_datastructs(size_t n)
 {
     watches.insert(2*n);
-    gwatches.insert(2*n);
+    gwatches.insert(n);
     seen.insert(seen.end(), 2*n, 0);
     seen2.insert(seen2.end(), 2*n, 0);
     permDiff.insert(permDiff.end(), 2*n, 0);
@@ -162,7 +162,7 @@ void CNF::save_on_var_memory()
 
     watches.resize(nVars()*2);
     watches.consolidate();
-    gwatches.resize(nVars()*2);
+    gwatches.resize(nVars());
 
     for(auto& l: longRedCls) {
         l.shrink_to_fit();
@@ -202,7 +202,7 @@ void CNF::test_reflectivity_of_renumbering() const
     #endif
 }
 
-inline void CNF::updateWatch(
+void CNF::updateWatch(
     watch_subarray ws
     , const vector<uint32_t>& outerToInter
 ) {
@@ -248,14 +248,12 @@ void CNF::updateVars(
     updateArray(varData, interToOuter);
     updateArray(assigns, interToOuter);
     updateArray(unit_cl_IDs, interToOuter);
+
     updateBySwap(watches, seen, interToOuter2);
-
-    for(watch_subarray w: watches) {
-        if (!w.empty())
-            updateWatch(w, outerToInter);
-    }
-
+    updateBySwap(gwatches, seen, interToOuter);
+    for(watch_subarray w: watches) if (!w.empty()) updateWatch(w, outerToInter);
     updateArray(interToOuterMain, interToOuter);
+
     updateArrayMapCopy(outerToInterMain, outerToInter);
 }
 
