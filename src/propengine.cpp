@@ -187,61 +187,61 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
             const uint32_t at = i->row_n;
             auto& x = xorclauses[at];
             bool which; // which watch is this
-            cout << "xcl: "; for(const auto& v: x) cout << v+1 << " "; cout << endl;
-            cout << "Watched[0]: " << x.watched[0] << endl;
-            cout << "Watched[1]: " << x.watched[1] << endl;
+            VERBOSE_DEBUG_DO(cout << "xcl: "; for(const auto& v: x) cout << v+1 << " "; cout << endl);
+            VERBOSE_DEBUG_DO(cout << "Watched[0]: " << x.watched[0] << endl);
+            VERBOSE_DEBUG_DO(cout << "Watched[1]: " << x.watched[1] << endl);
             if (pv == x[x.watched[0]]) which = 0;
             else {which = 1; assert(x[x.watched[1]] == pv);}
 
             uint32_t unknown = 0;
             uint32_t unknown_at = 0;
-            bool updated = false;
-            bool rhs = x.rhs;
+            bool rhs = false;
             for(uint32_t i2 = 0; i2 < x.size(); i2++) {
                 if (solver->value(x[i2]) == l_Undef) {
-                    unknown ++; unknown_at=i2;
-                    if (i2 != x.watched[!which] && !updated) {
+                    unknown ++; unknown_at = i2;
+                    if (i2 != x.watched[!which]) {
                         // it's not the other watch. So we can update current
                         // watch to this
                         gwatches[x.vars[i2]].push(GaussWatched::plain_xor(at));
                         x.watched[which] = i2;
-                        updated = true;
+                        goto next;
                     }
-                }
-                else rhs ^= solver->value(x[i2]) == l_True;
-                if (unknown > 1) break; // we need to compute rhs for unknown == 0 and 1
+                } else rhs ^= solver->value(x[i2]) == l_True;
             }
+            assert(unknown < 2);
             if (unknown == 1) {
-                enqueue<false>(Lit(x.vars[unknown_at], !rhs), decisionLevel(), PropBy(1000, at));
+                // this is the OTHER watch for sure
+                VERBOSE_DEBUG_DO(cout << "Prop from XOR" << endl);
+                assert(unknown_at == x.watched[!which]);
+                enqueue<false>(Lit(x.vars[unknown_at], rhs == x.rhs), decisionLevel(), PropBy(1000, at));
+                x.propagating_watch = !which;
                 *j++ = *i;
             }
-            else if (unknown == 0 && !rhs) {
+            if (unknown == 0 && rhs != x.rhs) {
+                VERBOSE_DEBUG_DO(cout << "Confl from XOR" << endl);
+                x.propagating_watch = 2 + which;
                 confl = PropBy(1000, at);
+                i++;
                 break;
             }
-            // unknown is >=2, we can remove this watch
-            continue;
-        }
-        if (!confl.isNULL()) {
-            i++;
-            break;
-        }
-
-        cout << "m num: " << i->matrix_num << endl;
-        cout << "gm.size(): " << gmatrices.size() << endl;
-        if (!gmatrices[i->matrix_num]->is_initialized()) continue; //remove watch and continue
-        gqueuedata[i->matrix_num].new_resp_var = numeric_limits<uint32_t>::max();
-        gqueuedata[i->matrix_num].new_resp_row = numeric_limits<uint32_t>::max();
-        gqueuedata[i->matrix_num].do_eliminate = false;
-        gqueuedata[i->matrix_num].currLevel = currLevel;
-
-        if (gmatrices[i->matrix_num]->find_truths( i, j, pv, i->row_n, gqueuedata[i->matrix_num])) {
-            continue;
         } else {
-            confl_in_gauss = true;
-            i++;
-            break;
+            VERBOSE_DEBUG_DO(cout << "m num: " << i->matrix_num << endl);
+            VERBOSE_DEBUG_DO(cout << "gm.size(): " << gmatrices.size() << endl);
+            if (!gmatrices[i->matrix_num]->is_initialized()) continue; //remove watch and continue
+            gqueuedata[i->matrix_num].new_resp_var = numeric_limits<uint32_t>::max();
+            gqueuedata[i->matrix_num].new_resp_row = numeric_limits<uint32_t>::max();
+            gqueuedata[i->matrix_num].do_eliminate = false;
+            gqueuedata[i->matrix_num].currLevel = currLevel;
+
+            if (gmatrices[i->matrix_num]->find_truths( i, j, pv, i->row_n, gqueuedata[i->matrix_num])) {
+                continue;
+            } else {
+                confl_in_gauss = true;
+                i++;
+                break;
+            }
         }
+        next:;
     }
 
     for (; i != end; i++) *j++ = *i;
@@ -598,9 +598,7 @@ bool PropEngine::prop_long_cl_any_order(
         *j++ = *i;
         return true;
     }
-    if (inprocess) {
-        propStats.bogoProps += 4;
-    }
+    if (inprocess) propStats.bogoProps += 4;
     const ClOffset offset = i->get_offset();
     Clause& c = *cl_alloc.ptr(offset);
 
@@ -622,9 +620,8 @@ bool PropEngine::prop_long_cl_any_order(
         return true;
     }
 
-    if (prop_normal_helper<inprocess>(c, offset, j, p) == PROP_NOTHING) {
+    if (prop_normal_helper<inprocess>(c, offset, j, p) == PROP_NOTHING)
         return true;
-    }
 
     // Did not find watch -- clause is unit under assignment:
     *j++ = *i;

@@ -23,6 +23,7 @@ THE SOFTWARE.
 #include "searcher.h"
 #include "constants.h"
 #include "occsimplifier.h"
+#include "solvertypesmini.h"
 #include "time_mem.h"
 #include "solver.h"
 #include <iomanip>
@@ -93,10 +94,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     next_sls = 44000.0*conf.global_next_multiplier;
 }
 
-Searcher::~Searcher()
-{
-    clear_gauss_matrices(true);
-}
+Searcher::~Searcher() { clear_gauss_matrices(true); }
 
 void Searcher::new_var(
     const bool bva,
@@ -239,11 +237,53 @@ inline void Searcher::recursiveConfClauseMin()
     learnt_clause.resize(j);
 }
 
-//TODO make work for matrixnum 1000
 vector<Lit>* Searcher::get_xor_reason(const PropBy& reason, int32_t& ID) {
     if (reason.get_matrix_num() == 1000) {
-        assert(false);
-        return NULL;
+        auto& x = xorclauses[reason.get_row_num()];
+        x.reason_cl.clear();
+        uint32_t pc_var;
+        if (x.propagating_watch < 2) {
+            const auto prop_at = x.watched[x.propagating_watch];
+            pc_var = x.vars[prop_at];
+            assert(value(pc_var) != l_Undef);
+            const auto prop = Lit(pc_var, value(pc_var) == l_False);
+            assert(value(prop) == l_True);
+            x.reason_cl.push_back(prop);
+        } else {
+            assert(x.propagating_watch < 4);
+            const auto confl_at = x.watched[x.propagating_watch-2];
+            pc_var = x.vars[confl_at];
+            assert(value(pc_var) != l_Undef);
+            const auto confl = Lit(pc_var, value(pc_var) == l_True);
+            assert(value(confl) == l_False);
+            x.reason_cl.push_back(confl);
+        }
+        bool rhs = false;
+        for(const auto& v: x.vars) {
+            rhs ^= value(v) == l_True;
+            if (v == pc_var) continue;
+            assert(value(v) != l_Undef);
+            auto lit = Lit(v, value(v) == l_True);
+            assert(value(lit) == l_False);
+            x.reason_cl.push_back(lit);
+        }
+#ifdef VERBOSE_DEBUG
+        cout << "XOR Reason: " << x.reason_cl << endl;
+        for(const auto& l: x.reason_cl) {
+            cout
+            << "l: " << l
+            << " value: " << value(l)
+            << " level:" << varData[l.var()].level
+            << " type: " << removed_type_to_string(varData[l.var()].removed)
+            << endl;
+        }
+        cout << "XOR Propagating? " << (int)(x.propagating_watch<2) << endl;
+#endif
+
+        if (x.propagating_watch < 2) assert(rhs == x.rhs);
+        else assert(rhs != x.rhs);
+
+        return &x.reason_cl;
     } else {
         return gmatrices[reason.get_matrix_num()]->get_reason(reason.get_row_num(), ID);
     }
@@ -3538,8 +3578,6 @@ bool Searcher::detach_clear_xorclauses() {
     }
     for(auto& gw: solver->gwatches) gw.clear(); // detach every XOR
     xorclauses.clear();
-
-    solver->remove_and_clean_all();
     xorclauses = xorclauses_orig;
     return okay();
 }
@@ -3581,7 +3619,7 @@ bool Searcher::clear_gauss_matrices(const bool destruct) {
         }
     }
     detach_clear_xorclauses();
-    attach_xorclauses();
+    if (!destruct) attach_xorclauses();
     return okay();
 }
 

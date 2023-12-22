@@ -632,13 +632,9 @@ PropBy PropEngine::propagate_light()
             // propagate binary clause
             if (i->isBin()) {
                 if (!bin_only) *j++ = *i;
-
                 const lbool val = value(i->lit2());
-                if (val == l_Undef) {
-                    enqueue_light(i->lit2());
-                } else if (val == l_False) {
-                    confl = PropBy(~p, i->red(), i->get_ID());
-                }
+                if (val == l_Undef) enqueue_light(i->lit2());
+                else if (val == l_False) confl = PropBy(~p, i->red(), i->get_ID());
                 continue;
             }
 

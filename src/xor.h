@@ -136,6 +136,7 @@ public:
 
 
     bool rhs = false;
+    uint8_t propagating_watch = 0;
     vector<uint32_t> clash_vars;
     vector<uint32_t> vars;
     vector<Lit> reason_cl;
