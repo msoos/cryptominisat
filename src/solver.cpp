@@ -2165,9 +2165,7 @@ lbool Solver::simplify_problem(const bool startup, const string& strategy) {
         << endl;
     }
 
-    if (ret == l_Undef) {
-        ret = execute_inprocess_strategy(startup, strategy);
-    }
+    if (ret == l_Undef) ret = execute_inprocess_strategy(startup, strategy);
     assert(ret != l_True);
 
     //Free unused watch memory
