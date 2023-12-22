@@ -1423,9 +1423,7 @@ bool OccSimplifier::fill_occur_and_print_stats()
 {
     double myTime = cpuTime();
     remove_all_longs_from_watches();
-    if (!fill_occur()) {
-        return false;
-    }
+    if (!fill_occur()) return false;
     sanityCheckElimedVars();
     const double linkInTime = cpuTime() - myTime;
     runStats.linkInTime += linkInTime;
@@ -2866,13 +2864,10 @@ bool OccSimplifier::fill_occur()
     ) {
         Lit lit = Lit::toLit(wsLit);
         watch_subarray_const ws = *it;
-        for (const Watched* it2 = ws.begin(), *end2 = ws.end()
-            ; it2 != end2
-            ; it2++
-        ) {
-            if (it2->isBin() && !it2->red() && lit < it2->lit2()) {
+        for (const auto& w: ws) {
+            if (w.isBin() && !w.red() && lit < w.lit2()) {
                 n_occurs[lit.toInt()]++;
-                n_occurs[it2->lit2().toInt()]++;
+                n_occurs[w.lit2().toInt()]++;
             }
         }
     }
