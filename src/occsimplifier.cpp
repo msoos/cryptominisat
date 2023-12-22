@@ -700,21 +700,13 @@ void OccSimplifier::add_back_to_solver()
     }
 }
 
-void OccSimplifier::remove_all_longs_from_watches()
-{
-    for (watch_array::iterator
-        it = solver->watches.begin(), end = solver->watches.end()
-        ; it != end
-        ; ++it
-    ) {
-        watch_subarray ws = *it;
-
+void OccSimplifier::remove_all_longs_from_watches() {
+    for (auto& ws : solver->watches) {
         Watched* i = ws.begin();
         Watched* j = i;
         for (Watched *end2 = ws.end(); i != end2; i++) {
-            if (i->isClause()) {
-                continue;
-            } else {
+            if (i->isClause()) continue;
+            else {
                 assert(i->isBin() || i->isBNN());
                 *j++ = *i;
             }
@@ -3058,9 +3050,7 @@ void OccSimplifier::buildElimedMap()
     elimedMapBuilt = true;
 }
 
-void OccSimplifier::finishUp(
-    size_t origTrailSize
-) {
+void OccSimplifier::finishUp( size_t origTrailSize) {
     bool somethingSet = (solver->trail_size() - origTrailSize) > 0;
     runStats.zeroDepthAssings = solver->trail_size() - origTrailSize;
     const double myTime = cpuTime();
