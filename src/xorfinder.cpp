@@ -131,6 +131,7 @@ void XorFinder::clean_equivalent_xors(vector<Xor>& txors) {
 // does NOT detach or delete the corresponding clauses
 bool XorFinder::find_xors() {
     assert(solver->gmatrices.empty());
+    const auto orig_num_xors = solver->xorclauses_orig.size();
 
     runStats.clear();
     runStats.numCalls = 1;
@@ -155,7 +156,7 @@ bool XorFinder::find_xors() {
     DEBUG_MARKED_CLAUSE_DO(assert(solver->no_marked_clauses()));
 
     find_xors_based_on_long_clauses();
-    assert(runStats.foundXors == solver->xorclauses_orig.size());
+    assert(orig_num_xors + runStats.foundXors == solver->xorclauses_orig.size());
     clean_equivalent_xors(solver->xorclauses_orig);
 
     // Need to do this due to XORs encoding new info
