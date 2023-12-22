@@ -960,9 +960,8 @@ bool Solver::renumber_variables(bool must_renumber)
 {
     assert(okay());
     assert(decisionLevel() == 0);
-    #ifdef SLOWDEBUG
+    #ifdef SLOW_DEBUG
     for(const auto& x: xorclauses) for(const auto& v: x) assert(v < nVars());
-    for(const auto& x: xorclauses_unused) for(const auto& v: x) assert(v < nVars());
     for(const auto& x: xorclauses_orig) for(const auto& v: x) assert(v < nVars());
     #endif
 
@@ -1020,28 +1019,13 @@ bool Solver::renumber_variables(bool must_renumber)
             , time_used
         );
     }
+    if (conf.doSaveMem) save_on_var_memory(numEffectiveVars);
 
-    if (conf.doSaveMem) {
-        save_on_var_memory(numEffectiveVars);
-    }
+    SLOW_DEBUG_DO(for(const auto& x: xorclauses) for(const auto& v: x.vars) assert(v < nVars()));
+    SLOW_DEBUG_DO(for(const auto& x: xorclauses_orig) for(const auto& v: x.vars) assert(v < nVars()));
 
-    #ifdef SLOWDEBUG
-    for(const auto& x: xorclauses) {
-        for(const auto& v: x.vars) {
-            assert(v < nVars());
-        }
-    }
-
-    for(const auto& x: xorclauses_unused) {
-        for(const auto& v: x.vars) {
-            assert(v < nVars());
-        }
-    }
-    #endif
-
-    //NOTE order heap is now wrong, but that's OK, it will be restored from
+    //NOTE order_heap is now wrong, but that's OK, it will be restored from
     //backed up activities and then rebuilt at the start of Searcher
-
     return okay();
 }
 

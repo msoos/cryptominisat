@@ -142,13 +142,8 @@ CMS_ccnr::add_cl_ret CMS_ccnr::add_this_clause(const T& cl)
 
 bool CMS_ccnr::init_problem()
 {
-    if (solver->check_assumptions_contradict_foced_assignment())
-    {
-        return false;
-    }
-    #ifdef SLOWDEBUG
-    solver->check_stats();
-    #endif
+    if (solver->check_assumptions_contradict_foced_assignment()) return false;
+    SLOW_DEBUG_DO(solver->check_stats());
 
     ls_s->_num_vars = solver->nVars();
     ls_s->_num_clauses = solver->longIrredCls.size() + solver->binTri.irredBins;
@@ -204,11 +199,7 @@ struct ClWeightSorter
 };
 
 struct VarAndVal {
-    VarAndVal(uint32_t _var, long long _score) :
-        var(_var),
-        val(_score)
-    {
-    }
+    VarAndVal(uint32_t _var, long long _score) : var(_var), val(_score) {}
     uint32_t var;
     long long val;
 };
