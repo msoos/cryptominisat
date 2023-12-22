@@ -21,6 +21,7 @@ THE SOFTWARE.
 ***********************************************/
 
 #include "varreplacer.h"
+#include "constants.h"
 #include "varupdatehelper.h"
 #include "solver.h"
 #include "clausecleaner.h"
@@ -226,7 +227,7 @@ bool VarReplacer::perform_replace()
         return false;
     }
     #ifdef DEBUG_ATTACH_MORE
-    solver->test_all_clause_attached();
+    solver->check_all_clause_attached();
     #endif
 
     //Printing stats
@@ -240,7 +241,7 @@ bool VarReplacer::perform_replace()
     lastReplacedVars = replacedVars;
 
     #ifdef DEBUG_ATTACH_MORE
-    solver->test_all_clause_attached();
+    solver->check_all_clause_attached();
     #endif
     assert(solver->prop_at_head());
 
@@ -322,9 +323,9 @@ end:
 
     if (solver->okay()) {
         #ifdef DEBUG_ATTACH_MORE
-        solver->test_all_clause_attached();
-        #endif
+        solver->check_all_clause_attached();
         solver->check_wrong_attach();
+        #endif
         #ifdef DEBUG_IMPLICIT_STATS
         solver->check_stats();
         #endif

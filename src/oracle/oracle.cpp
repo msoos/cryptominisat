@@ -168,9 +168,7 @@ void Oracle::ResizeClauseDb() {
 		cla_info = new_cla_info;
 #ifdef SLOW_DEBUG
 		for (Lit l = 2; l <= vars*2+1; l++) {
-			for (const auto& Watch w : watches[l]) {
-				assert(clauses[w.cls] == l || clauses[w.cls+1] == l);
-			}
+			for (const auto& w : watches[l]) assert(clauses[w.cls] == l || clauses[w.cls+1] == l);
 		}
 #endif
 	}

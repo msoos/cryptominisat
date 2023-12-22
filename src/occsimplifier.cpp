@@ -2327,7 +2327,7 @@ bool OccSimplifier::setup()
 
     //Test & debug
     #ifdef DEBUG_ATTACH_MORE
-    solver->test_all_clause_attached();
+    solver->check_all_clause_attached();
     solver->check_wrong_attach();
     #endif
 
@@ -2853,8 +2853,7 @@ bool OccSimplifier::backward_sub_str()
     return solver->okay();
 }
 
-bool OccSimplifier::fill_occur()
-{
+bool OccSimplifier::fill_occur() {
     //Calculate binary clauses' contribution to n_occurs
     size_t wsLit = 0;
     for (watch_array::const_iterator
@@ -3090,7 +3089,7 @@ void OccSimplifier::finishUp( size_t origTrailSize) {
         #endif
     ) {
         #ifdef SLOW_DEBUG
-        solver->test_all_clause_attached();
+        solver->check_all_clause_attached();
         solver->check_wrong_attach();
         solver->check_stats();
         solver->check_implicit_propagated();

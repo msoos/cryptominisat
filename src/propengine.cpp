@@ -126,12 +126,7 @@ void PropEngine::attachClause(
 void PropEngine::attach_xor_clause(uint32_t at) {
     Xor& x = xorclauses[at];
     assert(x.size() > 2);
-
-    #ifdef DEBUG_ATTACH
-    for (uint32_t i = 0; i < c.size(); i++) {
-        assert(varData[c[i].var()].removed == Removed::none);
-    }
-    #endif //DEBUG_ATTACH
+    DEBUG_ATTACH_MORE_DO(for (const auto& v: x) assert(varData[c[i].var()].removed == Removed::none));
 
     assert(value(x[0]) == l_Undef);
     assert(value(x[1]) == l_Undef);

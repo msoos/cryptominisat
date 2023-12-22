@@ -406,15 +406,15 @@ size_t CNF::mem_used() const
     return mem;
 }
 
-void CNF::test_all_clause_attached() const
+void CNF::check_all_clause_attached() const
 {
-    test_all_clause_attached(longIrredCls);
+    check_all_clause_attached(longIrredCls);
     for(const vector<ClOffset>& l: longRedCls) {
-        test_all_clause_attached(l);
+        check_all_clause_attached(l);
     }
 }
 
-void CNF::test_all_clause_attached(const vector<ClOffset>& offsets) const
+void CNF::check_all_clause_attached(const vector<ClOffset>& offsets) const
 {
     for (vector<ClOffset>::const_iterator
         it = offsets.begin(), end = offsets.end()
@@ -568,9 +568,7 @@ bool CNF::find_clause(const ClOffset offset) const
     return false;
 }
 
-void CNF::check_wrong_attach() const
-{
-#ifdef SLOW_DEBUG
+void CNF::check_wrong_attach() const {
     for(auto& lredcls: longRedCls) {
         for (ClOffset offs: lredcls) {
             const Clause& cl = *cl_alloc.ptr(offs);
@@ -580,10 +578,7 @@ void CNF::check_wrong_attach() const
             }
         }
     }
-    for(watch_subarray_const ws: watches) {
-        check_watchlist(ws);
-    }
-#endif
+    for(watch_subarray_const ws: watches) check_watchlist(ws);
 }
 
 void CNF::check_watchlist(watch_subarray_const ws) const

@@ -1430,7 +1430,7 @@ lbool Solver::simplify_problem_outside(const string* strategy)
         check_implicit_stats();
         check_wrong_attach();
         find_all_attach();
-        test_all_clause_attached();
+        check_all_clause_attached();
     }
     #endif
 
@@ -1493,9 +1493,7 @@ void Solver::reset_for_solving()
     luby_loop_num = 0;
     conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
     solveStats.num_simplify_this_solve_call = 0;
-    if (conf.verbosity >= 6) {
-        cout << "c " << __func__ << " called" << endl;
-    }
+    verb_print(6, __func__ << " called");
     datasync->rebuild_bva_map();
 }
 
@@ -1560,16 +1558,14 @@ lbool Solver::solve_with_assumptions(
     if (!ok) {
         assert(conflict.empty());
         status = l_False;
-        if (conf.verbosity >= 6) {
-            cout << "c Solver status " << status << " on startup of solve()" << endl;
-        }
+        verb_print(6, "Solver status " << status << " on startup of solve()");
         goto end;
+    } else {
+        SLOW_DEBUG_DO(check_wrong_attach());
     }
     assert(prop_at_head());
     assert(okay());
-    #ifdef USE_BREAKID
-    if (breakid) breakid->start_new_solving();
-    #endif
+    USE_BREAKID_DO(if (breakid) breakid->start_new_solving());
 
     //Simplify in case simplify_at_startup is set
     if (status == l_Undef
@@ -1611,9 +1607,7 @@ lbool Solver::solve_with_assumptions(
         } else
         #endif
         {
-            if (status == l_False) {
-                assert(!okay());
-            }
+            if (status == l_False)  assert(!okay());
         }
     }
 
@@ -1901,7 +1895,7 @@ void Solver::handle_found_solution(const lbool status, const bool only_sampling_
 
         #ifdef DEBUG_ATTACH_MORE
         find_all_attach();
-        test_all_clause_attached();
+        check_all_clause_attached();
         #endif
     } else if (status == l_False) {
         cancelUntil(0);
@@ -2165,7 +2159,7 @@ lbool Solver::simplify_problem(const bool startup, const string& strategy)
     check_stats();
     #endif
     #ifdef DEBUG_ATTACH_MORE
-    test_all_clause_attached();
+    check_all_clause_attached();
     find_all_attach();
     assert(check_order_heap_sanity());
     #endif
@@ -2226,7 +2220,7 @@ lbool Solver::simplify_problem(const bool startup, const string& strategy)
     rebuildOrderHeap();
     #ifdef DEBUG_ATTACH_MORE
     find_all_attach();
-    test_all_clause_attached();
+    check_all_clause_attached();
     #endif
     check_wrong_attach();
 

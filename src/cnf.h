@@ -362,8 +362,8 @@ public:
     void find_all_attach() const;
     void find_all_attach(const vector<ClOffset>& cs) const;
     bool find_clause(const ClOffset offset) const;
-    void test_all_clause_attached() const;
-    void test_all_clause_attached(const vector<ClOffset>& offsets) const;
+    void check_all_clause_attached() const;
+    void check_all_clause_attached(const vector<ClOffset>& offsets) const;
     void check_wrong_attach() const;
     void check_watchlist(watch_subarray_const ws) const;
     template<class T>

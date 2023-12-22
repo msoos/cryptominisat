@@ -116,16 +116,25 @@ THE SOFTWARE.
 #define VERBOSE_PRINT(x) do { } while (0)
 #define VERBOSE_DEBUG_DO(x) do { } while (0)
 #endif
-/////
 
-// slow debug
+#ifdef USE_BREAKID
+#define USE_BREAKID_DO(x) do { x; } while (0)
+#else
+#define USE_BREAKID_DO(x) do { } while (0)
+#endif
+
 #ifdef SLOW_DEBUG
-#define SLOW_DEBUG_DO(x) \
-    do { x; } while (0)
+#define SLOW_DEBUG_DO(x) do { x; } while (0)
 #else
 #define SLOW_DEBUG_DO(x) do { } while (0)
 #endif
-/////
+
+#ifdef DEBUG_ATTACH_MORE
+#define DEBUG_ATTACH_MORE_DO(x) do { x; } while (0)
+#else
+#define DEBUG_ATTACH_MORE_DO(x) do { } while (0)
+#endif
+
 
 // verb_print
 #define verb_print(a, x) \
