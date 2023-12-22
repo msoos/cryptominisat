@@ -682,13 +682,8 @@ void Solver::detach_modified_clause(
     , const uint32_t origSize
     , const Clause* address
 ) {
-    //Update stats
-    if (address->red())
-        litStats.redLits -= origSize;
-    else
-        litStats.irredLits -= origSize;
-
-    //Call heavy-lifter
+    if (address->red()) litStats.redLits -= origSize;
+    else litStats.irredLits -= origSize;
     PropEngine::detach_modified_clause(lit1, lit2, address);
 }
 

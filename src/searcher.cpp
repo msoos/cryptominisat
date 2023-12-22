@@ -2526,9 +2526,7 @@ bool Searcher::sub_str_with_bin_if_needed()
     bool ret = okay();
 
     //Subsumes and strengthens long clauses with binary clauses
-    if (conf.do_distill_clauses &&
-        sumConflicts > next_sub_str_with_bin)
-    {
+    if (conf.do_distill_clauses && sumConflicts > next_sub_str_with_bin) {
         ret = solver->dist_long_with_impl->distill_long_with_implicit(true);
         next_sub_str_with_bin = sumConflicts + 25000.0*conf.global_next_multiplier;
     }
@@ -2539,12 +2537,8 @@ bool Searcher::sub_str_with_bin_if_needed()
 lbool Searcher::distill_clauses_if_needed()
 {
     assert(decisionLevel() == 0);
-    if (conf.do_distill_clauses &&
-        sumConflicts > next_cls_distill)
-    {
-        if (!solver->distill_long_cls->distill(true, false)) {
-            return l_False;
-        }
+    if (conf.do_distill_clauses && sumConflicts > next_cls_distill) {
+        if (!solver->distill_long_cls->distill(true, false)) return l_False;
         next_cls_distill = sumConflicts + 15000.0*conf.global_next_multiplier;
     }
 
@@ -2554,13 +2548,9 @@ lbool Searcher::distill_clauses_if_needed()
 lbool Searcher::full_probe_if_needed()
 {
     assert(decisionLevel() == 0);
-    if (conf.do_full_probe && !conf.never_stop_search &&
-        sumConflicts > next_full_probe
-    ) {
+    if (conf.do_full_probe && !conf.never_stop_search && sumConflicts > next_full_probe) {
         full_probe_iter++;
-        if (!solver->full_probe(full_probe_iter % 2)) {
-            return l_False;
-        }
+        if (!solver->full_probe(full_probe_iter % 2)) return l_False;
         next_full_probe = sumConflicts + 20000.0*conf.global_next_multiplier;
     }
 

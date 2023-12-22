@@ -374,11 +374,7 @@ bool DistillerLong::distill_long_cls_all(
     return solver->okay();
 }
 
-bool DistillerLong::go_through_clauses(
-    vector<ClOffset>& cls,
-    bool also_remove, bool only_remove
-
-) {
+bool DistillerLong::go_through_clauses(vector<ClOffset>& cls, bool also_remove, bool only_remove) {
     bool time_out = false;
     vector<ClOffset>::iterator i, j;
     i = j = cls.begin();
@@ -460,12 +456,8 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     uint32_t i = 0;
     uint32_t j = 0;
     for (uint32_t sz = cl.size(); i < sz; i++) {
-        if (solver->value(cl[i]) == l_True) {
-            goto rem;
-        }
-        if (solver->value(cl[i]) == l_Undef) {
-            cl[j++] = cl[i];
-        }
+        if (solver->value(cl[i]) == l_True) goto rem;
+        if (solver->value(cl[i]) == l_Undef) cl[j++] = cl[i];
     }
     cl.resize(j);
     assert(cl.size() > 1); //this must have already been propagated
@@ -473,7 +465,6 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     solver->new_decision_level();
     i = 0;
     j = 0;
-
 
     // Sort them differently once in a while, so all literals have a chance of
     // being removed
@@ -504,9 +495,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
                 //Normal propagation, on all clauses
                 confl = solver->propagate<true, true, true>();
             }
-            if (!confl.isNULL()) {
-                break;
-            }
+            if (!confl.isNULL()) break;
         } else if (val == l_False) {
             // if we don't want to shorten, then don't remove literals
             if (only_remove) cl[j++] = cl[i];
