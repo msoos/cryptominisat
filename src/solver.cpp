@@ -226,6 +226,9 @@ bool Solver::add_xor_clause_inter(
     } else {
         ps[0] ^= !rhs;
         add_clause_int(ps);
+        ps[0] ^= true;
+        ps[1] ^= true;
+        add_clause_int(ps);
     }
 
     return okay();
@@ -3404,8 +3407,7 @@ bool Solver::find_and_init_all_matrices()
 
 // Runs init on all matrices. Note that the XORs inside the matrices
 // are at this point not attached.
-bool Solver::init_all_matrices()
-{
+bool Solver::init_all_matrices() {
     assert(okay());
     assert(decisionLevel() == 0);
 
@@ -3899,10 +3901,8 @@ void Solver::clean_sampl_and_get_empties(
     map_inter_to_outer(empty_vars);
 }
 
-// Force cleans everything, recursively
-bool Solver::remove_and_clean_all() {
-    return clauseCleaner->remove_and_clean_all();
-}
+bool Solver::remove_and_clean_all() { return clauseCleaner->remove_and_clean_all(); }
+bool Solver::remove_and_clean_detached_xors() { return clauseCleaner->clean_xor_clauses(xorclauses, false); }
 
 void Solver::set_max_confl(uint64_t max_confl)
 {

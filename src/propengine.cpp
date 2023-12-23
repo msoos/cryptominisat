@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include <iomanip>
 #include <algorithm>
 
+#include "constants.h"
 #include "solver.h"
 #include "clauseallocator.h"
 #include "clause.h"
@@ -178,10 +179,11 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
 
     PropBy confl;
     for (; i != end; i++) {
-        if (!i->in_matrix()) {
+        if (i->matrix_num == 1000) {
             const uint32_t at = i->row_n;
             auto& x = xorclauses[at];
             bool which; // which watch is this
+            SLOW_DEBUG_DO(assert(!x.trivial()));
             SLOW_DEBUG_DO(assert(x.watched[0] < x.size()));
             SLOW_DEBUG_DO(assert(x.watched[1] < x.size()));
             if (pv == x[x.watched[0]]) which = 0;
@@ -230,6 +232,7 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
                 *j++ = *i;
             }
         } else {
+            SLOW_DEBUG_DO(assert(i->matrix_num < gmatrices.size()));
             if (!gmatrices[i->matrix_num]->is_initialized()) continue; //remove watch and continue
             gqueuedata[i->matrix_num].new_resp_var = numeric_limits<uint32_t>::max();
             gqueuedata[i->matrix_num].new_resp_row = numeric_limits<uint32_t>::max();

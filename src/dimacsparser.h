@@ -494,7 +494,7 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
             exit(-1);
         }
     } else {
-        if (verbosity >= 6) {
+        if (verbosity >= 30) {
             cout
             << "didn't understand in CNF file comment line:"
             << "'c " << str << "'"

@@ -3553,9 +3553,27 @@ bool Searcher::detach_clear_xorclauses() {
 }
 
 bool Searcher::attach_xorclauses() {
-    bool ret = solver->remove_and_clean_all();
-    if (!ret) return okay();
-    for(uint32_t i = 0; i < xorclauses.size(); i ++) attach_xor_clause(i);
+    SLOW_DEBUG_DO(for(const auto& gw: gwatches) assert(gw.empty()));
+    solver->remove_and_clean_detached_xors();
+    if (!okay()) return okay();
+
+    uint32_t j = 0;
+    for(uint32_t i = 0; i < xorclauses.size(); i ++) {
+        Xor& x = xorclauses[i];
+        if (x.trivial()) continue;
+        if (x.size() == 2) {
+            vector<Lit> lits = vector<Lit>{Lit(x[0], false), Lit(x[1], x.rhs)};
+            solver->add_clause_int(lits);
+            lits[0] ^= true;
+            lits[1] ^= true;
+            solver->add_clause_int(lits);
+            continue;
+        }
+        assert(x.size() > 2);
+        xorclauses[j++] = xorclauses[i];
+        attach_xor_clause(j-1);
+    }
+    xorclauses.resize(j);
     return okay();
 }
 
@@ -3563,9 +3581,7 @@ bool Searcher::attach_xorclauses() {
 // Deletes all matrices.
 // TODO: this does NOT add back clash variables
 bool Searcher::clear_gauss_matrices(const bool destruct) {
-    if (!destruct) {
-        TBUDDY_DO(if (frat->enabled()) for(auto& g: gmatrices) g->finalize_frat());
-    }
+    TBUDDY_DO(if (!destruct && frat->enabled()) for(auto& g: gmatrices) g->finalize_frat());
 
     xor_clauses_updated = true;
     for(uint32_t i = 0; i < gqueuedata.size(); i++) {

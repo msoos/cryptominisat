@@ -166,6 +166,20 @@ static inline bool findWXCl(const vec<GaussWatched>& gws, const uint32_t at) {
     return false;
 }
 
+static inline void removeWXCl(vec<vec<GaussWatched>>& wsFull
+    , const uint32_t var
+    , const uint32_t at
+) {
+    auto& gws = wsFull[var];
+    auto i = gws.begin(), end = gws.end();
+    for (; i != end && !(i->matrix_num == 1000 && i->row_n == at); i++);
+    assert(i != end);
+    auto j = i;
+    i++;
+    for (; i != end; j++, i++) *j = *i;
+    gws.shrink_(1);
+}
+
 
 // Removes BNN *once*
 static inline void removeWBNN(watch_array& wsFull

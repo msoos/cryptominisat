@@ -78,7 +78,7 @@ matrix_no(_matrix_no)
 EGaussian::~EGaussian() {
     delete_gauss_watch_this_matrix();
     for(auto& x: tofree) delete[] x;
-    TBUDDY_DO(for(auto& x: xorclauses) assert(x.bdd == NULL && "GMatrix needs finalization before deletion"));
+    TBUDDY_DO(for(auto& x: xorclauses) assert(x.bdd == NULL && "GMatrix needs finalization before del"));
     TBUDDY_DO(assert(frat_ids.empty()));
     tofree.clear();
 
@@ -277,7 +277,7 @@ bool EGaussian::full_init(bool& created) {
     uint32_t trail_before;
     while (true) {
         trail_before = solver->trail_size();
-        solver->clauseCleaner->clean_xor_clauses(xorclauses);
+        solver->clauseCleaner->clean_xor_clauses(xorclauses, true);
 
         fill_matrix();
         before_init_density = get_density();
@@ -1389,9 +1389,7 @@ void EGaussian::check_watchlist_sanity()
 {
     for(size_t i = 0; i < solver->nVars(); i++) {
         for(auto w: solver->gwatches[i]) {
-            if (w.matrix_num == matrix_no) {
-                assert(i < var_to_col.size());
-            }
+            if (w.matrix_num == matrix_no) assert(i < var_to_col.size());
         }
     }
 }
@@ -1517,6 +1515,7 @@ bool EGaussian::must_disable(GaussQData& gqd)
 }
 
 void CMSat::EGaussian::move_back_xor_clauses() {
+    assert(false && "WHAT??? how about attaching them??");
     for(const auto& x: xorclauses) {
         TBUDDY_DO(assert(x.bdd == NULL && "Should have finalized matrix first"));
         solver->xorclauses.push_back(std::move(x));

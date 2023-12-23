@@ -226,10 +226,7 @@ void ClauseCleaner::clean_clauses_inter(vector<ClOffset>& cs)
 {
     assert(solver->decisionLevel() == 0);
     assert(solver->prop_at_head());
-
-    if (solver->conf.verbosity > 15) {
-        cout << "Cleaning clauses in vector<>" << endl;
-    }
+    verb_print(15, "Cleaning clauses in vector<ClOffset>");
 
     vector<ClOffset>::iterator s, ss, end;
     size_t at = 0;
@@ -438,8 +435,7 @@ bool ClauseCleaner::remove_and_clean_all()
 }
 
 
-bool ClauseCleaner::clean_one_xor(Xor& x)
-{
+bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached) {
     // they encode information (see NOTE in cnf.h) so they MUST be in BDDs
     //      otherwise FRAT will fail
     TBUDDY_DO(if (solver->frat->enabled()) assert(x.bdd));
@@ -447,12 +443,11 @@ bool ClauseCleaner::clean_one_xor(Xor& x)
     bool rhs = x.rhs;
     size_t i = 0;
     size_t j = 0;
+    uint32_t orig[2] = {x[x.watched[0]], x[x.watched[1]]};
     VERBOSE_PRINT("Trying to clean XOR: " << x);
     for(size_t size = x.clash_vars.size(); i < size; i++) {
         const auto& v = x.clash_vars[i];
-        if (solver->value(v) == l_Undef) {
-            x.clash_vars[j++] = v;
-        }
+        if (solver->value(v) == l_Undef) x.clash_vars[j++] = v;
     }
     x.clash_vars.resize(j);
 
@@ -460,28 +455,33 @@ bool ClauseCleaner::clean_one_xor(Xor& x)
     j = 0;
     for(size_t size = x.size(); i < size; i++) {
         uint32_t var = x[i];
-        if (solver->value(var) != l_Undef) {
-            rhs ^= solver->value(var) == l_True;
-        } else {
-            x[j++] = var;
-        }
+        if (solver->value(var) != l_Undef) rhs ^= solver->value(var) == l_True;
+        else x[j++] = var;
     }
     if (j < x.size()) {
-        x.resize(j);
         x.rhs = rhs;
-        VERBOSE_PRINT("cleaned XOR: " << x);
-    }
-
-    if (x.size() <= 2) {
-        solver->frat->flush();
-        TBUDDY_DO(delete x.bdd);
-        TBUDDY_DO(x.bdd = NULL);
+        x.resize(j);
+        if (x.size() <= 2) {
+            solver->frat->flush();
+            TBUDDY_DO(delete x.bdd);
+            TBUDDY_DO(x.bdd = NULL);
+            if (attached) {
+                removeWXCl(solver->gwatches, orig[0], at);
+                removeWXCl(solver->gwatches, orig[1], at);
+            }
+        } else if (attached) {
+            for(int i2: {0, 1}) {
+                if (x.watched[i2] < x.size() && x[x.watched[i2]] == orig[i2]) continue;
+                for(uint32_t i3 = 0; i3 < x.size(); i3++)
+                    if (x[i3] == orig[i2]) {x.watched[i2] = i3; break;}
+            }
+        }
     }
 
     switch(x.size()) {
         case 0:
             if (x.rhs == true) solver->ok = false;
-            if (!solver->ok) {
+            if (!solver->okay()) {
                 assert(solver->unsat_cl_ID == 0);
                 *solver->frat << add << ++solver->clauseID << fin;
                 solver->unsat_cl_ID = solver->clauseID;
@@ -510,8 +510,8 @@ bool ClauseCleaner::clean_all_xor_clauses()
     size_t last_trail = numeric_limits<size_t>::max();
     while(last_trail != solver->trail_size()) {
         last_trail = solver->trail_size();
-        if (!clean_xor_clauses(solver->xorclauses)) return false;
-        if (!clean_xor_clauses(solver->xorclauses_orig)) return false;
+        if (!clean_xor_clauses(solver->xorclauses, true)) return false;
+        if (!clean_xor_clauses(solver->xorclauses_orig, false)) return false;
         solver->ok = solver->propagate<false>().isNULL();
     }
 
@@ -527,43 +527,39 @@ bool ClauseCleaner::clean_all_xor_clauses()
     return solver->okay();
 }
 
-bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors)
-{
+bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors, const bool attached) {
     assert(solver->ok);
-    VERBOSE_DEBUG_DO(for(Xor& x : xors) cout << "orig XOR: " << x << endl);
+    VERBOSE_DEBUG_DO(for(Xor& x : xors) cout << "Cleaning XOR: " << x << endl);
 
     size_t last_trail = numeric_limits<size_t>::max();
     while(last_trail != solver->trail_size()) {
         last_trail = solver->trail_size();
-        size_t i = 0;
-        size_t j = 0;
-        for(size_t size = xors.size(); i < size; i++) {
+        for(size_t i = 0, size = xors.size(); i < size; i++) {
             Xor& x = xors[i];
-            if (!solver->okay()) {
-                xors[j++] = x;
-                continue;
-            }
+            if (x.trivial()) continue;
 
-            VERBOSE_PRINT("Checking to keep xor: " << x);
-            const bool keep = clean_one_xor(x);
-            if (keep) {
-                assert(x.size() > 2);
-                xors[j++] = x;
-            } else {
+            const bool keep = clean_one_xor(x, i, attached);
+            if (!keep) {
+                x = Xor();
                 solver->removed_xorclauses_clash_vars.insert(
                     solver->removed_xorclauses_clash_vars.end()
                     , x.clash_vars.begin()
                     , x.clash_vars.end()
                 );
-                VERBOSE_PRINT("NOT keeping XOR");
             }
+            if (!solver->okay()) return false;
         }
-        xors.resize(j);
-        if (!solver->okay()) break;
         solver->ok = solver->propagate<false>().isNULL();
     }
-    VERBOSE_PRINT("clean_xor_clauses() finished");
-
+    if (!attached) {
+        uint32_t j = 0;
+        for(uint32_t i = 0; i < xors.size(); i++) {
+            if (xors[i].trivial()) continue;
+            xors[j++] = xors[i];
+        }
+        xors.resize(j);
+    }
+    VERBOSE_PRINT(__PRETTY_FUNCTION__ << " finished");
     return solver-> okay();
 }
 

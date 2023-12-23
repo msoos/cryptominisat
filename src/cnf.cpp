@@ -421,6 +421,7 @@ void CNF::check_all_xorclause_attached() const {
 }
 
 bool CNF::check_xor_attached(const Xor& x, const uint32_t i) const {
+    if (x.trivial()) return true;
     bool attached = true;
     for(const int wi: {0, 1}) {
         auto v = x[x.watched[wi]];
@@ -518,6 +519,7 @@ void CNF::find_all_attached() const {
             } else {
                 assert(w.row_n < xorclauses.size());
                 const Xor& x = xorclauses[w.row_n];
+                assert(!x.trivial());
                 assert(x.watched[0] < x.size());
                 assert(x.watched[1] < x.size());
                 uint32_t v0 = x[x.watched[0]];
@@ -578,18 +580,19 @@ void CNF::check_wrong_attach() const {
     for(watch_subarray_const ws: watches) check_watchlist(ws);
     for(uint32_t i = 0; i < xorclauses.size(); i++) {
         const Xor& x = xorclauses[i];
+        if (x.trivial()) continue;
         for(int at: {0,1}) {
             assert(x.watched[at] < x.size());
             bool found = false;
-            const uint32_t v = x.watched[at];
+            const uint32_t v = x[x.watched[at]];
             for(const auto& w: gwatches[v]) if (w.matrix_num ==  1000 && w.row_n == i) {found=true;break;}
+            if (!found) cout << "ERROR. var " << v+1 << " not in watch for XOR: " << x << endl;
             assert(found);
         }
     }
 }
 
-void CNF::check_watchlist(watch_subarray_const ws) const
-{
+void CNF::check_watchlist(watch_subarray_const ws) const {
     for(const Watched& w: ws) {
         if (!w.isClause()) continue;
 

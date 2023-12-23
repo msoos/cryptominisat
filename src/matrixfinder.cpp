@@ -21,6 +21,7 @@ THE SOFTWARE.
 ***********************************************/
 
 #include "matrixfinder.h"
+#include "constants.h"
 #include "solver.h"
 #include "gaussian.h"
 #include "clausecleaner.h"
@@ -113,7 +114,7 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
     double myTime = cpuTime();
 
     XorFinder finder(NULL, solver);
-    solver->clauseCleaner->clean_xor_clauses(solver->xorclauses);
+    solver->clauseCleaner->clean_xor_clauses(solver->xorclauses, true);
 
     finder.grab_mem();
     if (!finder.xor_together_xors(solver->xorclauses)) return false;
@@ -200,8 +201,7 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
     return solver->okay();
 }
 
-uint32_t MatrixFinder::setup_matrices_attach_remaining_cls()
-{
+uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
     if (solver->conf.sampling_vars) {
         uint32_t size_at_least = (double)solver->conf.sampling_vars->size()*3;
         if (solver->conf.gaussconf.max_matrix_rows < size_at_least) {
@@ -219,6 +219,7 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls()
         matrix_shape[i].cols = reverseTable[i].size();
     }
 
+    // Move xorclauses temporarily
     for (const Xor& x : solver->xorclauses) {
         TBUDDY_DO(if (solver->frat->enabled()) assert(x.bdd));
 
@@ -361,6 +362,5 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls()
         cout << "c [matrix] unused matrices: " << unusedMatrix
         <<  " of which too few rows: " << too_few_rows_matrix << endl;
     }
-
     return realMatrixNum;
 }

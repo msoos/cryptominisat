@@ -46,12 +46,12 @@ class ClauseCleaner
         void clean_implicit_clauses();
         bool remove_and_clean_all();
         bool clean_all_xor_clauses();
-        bool clean_xor_clauses(vector<Xor>& xors);
+        bool clean_xor_clauses(vector<Xor>& xors, const bool attached);
         bool clean_clause(Clause& c);
         bool full_clean(Clause& cl);
 
     private:
-        bool clean_one_xor(Xor& x);
+        bool clean_one_xor(Xor& x, const uint32_t at, const bool attached);
 
         //Implicit cleaning
         struct ImplicitData
