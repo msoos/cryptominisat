@@ -362,9 +362,10 @@ public:
     void find_all_attached(const vector<ClOffset>& cs) const;
     bool find_clause(const ClOffset offset) const;
     void check_no_removed_or_freed_cl_in_watch() const;
+    void check_all_xorclause_attached() const;
     void check_all_clause_attached() const;
     void check_all_clause_attached(const vector<ClOffset>& offsets) const;
-    void check_xor_attached(const Xor& x, const uint32_t i) const;
+    bool check_xor_attached(const Xor& x, const uint32_t i) const;
     void check_wrong_attach() const;
     void check_watchlist(watch_subarray_const ws) const;
     template<class T> bool satisfied(const T& cl) const;

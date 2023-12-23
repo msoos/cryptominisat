@@ -196,6 +196,7 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
                         // watch to this
                         gwatches[x[i2]].push(GaussWatched::plain_xor(at));
                         x.watched[which] = i2;
+                        /* cout << "found new watch for xor: " << x << endl; */
                         goto next;
                     }
                 } else rhs ^= solver->value(x[i2]) == l_True;
@@ -203,6 +204,7 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
             assert(unknown < 2);
             if (unknown == 1) {
                 // this is the OTHER watch for sure
+                /* cout << "propagating because of xor: " << x << endl; */
                 assert(unknown_at == x.watched[!which]);
                 enqueue<false>(Lit(x.vars[unknown_at], rhs == x.rhs), decisionLevel(), PropBy(1000, at));
                 x.propagating_watch = !which;
@@ -211,11 +213,16 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
             }
             assert(unknown == 0);
             if (rhs != x.rhs) {
+                /* cout << "conflict because of xor: " << x << endl; */
                 x.propagating_watch = 2 + which;
                 confl = PropBy(1000, at);
+                *j++ = *i;
                 i++;
                 break;
-            } else  *j++ = *i;
+            } else {
+                /* cout << "satisfied xor: " << x << endl; */
+                *j++ = *i;
+            }
         } else {
             if (!gmatrices[i->matrix_num]->is_initialized()) continue; //remove watch and continue
             gqueuedata[i->matrix_num].new_resp_var = numeric_limits<uint32_t>::max();

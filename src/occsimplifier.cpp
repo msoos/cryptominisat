@@ -3045,9 +3045,6 @@ void OccSimplifier::buildElimedMap()
 }
 
 void OccSimplifier::finishUp( size_t origTrailSize) {
-#ifdef SLOW_DEBUG
-    bool somethingSet = (solver->trail_size() - origTrailSize) > 0;
-#endif
     runStats.zeroDepthAssings = solver->trail_size() - origTrailSize;
     const double myTime = cpuTime();
 
@@ -3085,11 +3082,7 @@ void OccSimplifier::finishUp( size_t origTrailSize) {
     *solver->frat << __PRETTY_FUNCTION__ << " start\n";
 
     //Sanity checks
-    if (solver->okay()
-        #ifndef SLOW_DEBUG
-         && somethingSet
-        #endif
-    ) {
+    if (solver->okay()) {
         #ifdef SLOW_DEBUG
         solver->check_all_clause_attached();
         solver->check_wrong_attach();

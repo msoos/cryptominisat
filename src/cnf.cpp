@@ -407,10 +407,16 @@ size_t CNF::mem_used() const
 void CNF::check_all_clause_attached() const {
     check_all_clause_attached(longIrredCls);
     for(const vector<ClOffset>& l: longRedCls) check_all_clause_attached(l);
-    for(uint32_t i = 0; i < xorclauses.size(); i++) check_xor_attached(xorclauses[i], i);
+    check_all_xorclause_attached();
 }
 
-void CNF::check_xor_attached(const Xor& x, const uint32_t i) const {
+void CNF::check_all_xorclause_attached() const {
+    bool ret = true;
+    for(uint32_t i = 0; i < xorclauses.size(); i++) ret &= check_xor_attached(xorclauses[i], i);
+    assert(ret);
+}
+
+bool CNF::check_xor_attached(const Xor& x, const uint32_t i) const {
     bool attached = true;
     for(const int wi: {0, 1}) {
         auto v = x[x.watched[wi]];
@@ -419,7 +425,7 @@ void CNF::check_xor_attached(const Xor& x, const uint32_t i) const {
         if (!val) cout << "Not attached var " << x[x.watched[wi]]+1 << endl;
     }
     if (!attached) cout << "XOR clause:" << x << " not (fully) attached" << endl;
-    assert(attached);
+    return attached;
 }
 
 void CNF::check_all_clause_attached(const vector<ClOffset>& offsets) const {

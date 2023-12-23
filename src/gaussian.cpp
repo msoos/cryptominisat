@@ -810,7 +810,6 @@ bool EGaussian::find_truths(
                 var_has_resp_row[row_to_var_non_resp[row_n]] = 0;
                 var_has_resp_row[var] = 1;
             }
-
             return false;
         }
 

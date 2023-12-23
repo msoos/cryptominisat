@@ -1274,9 +1274,12 @@ void Searcher::check_need_gauss_jordan_disable()
         auto& gqd = gqueuedata[i];
         if (gqd.disabled) continue;
 
-        if (conf.gaussconf.autodisable && gmatrices[i]->must_disable(gqd)) gqd.disabled = true;
-        gqd.reset();
-        gmatrices[i]->update_cols_vals_set();
+        if (conf.gaussconf.autodisable && gmatrices[i]->must_disable(gqd)) {
+            assert(false && "can't deal with this right now");
+            gqd.disabled = true;
+            gqd.reset();
+            gmatrices[i]->update_cols_vals_set();
+        }
     }
 }
 
@@ -1301,7 +1304,6 @@ lbool Searcher::search()
     PropBy confl;
     lbool search_ret = l_Undef;
 
-//     VERBOSE_PRINT(print_order_heap());
     while (!params.needToStopSearch
         || !confl.isNULL() //always finish the last conflict
     ) {
@@ -1310,10 +1312,7 @@ lbool Searcher::search()
             search_ret = l_False;
             goto end;
         }
-        if (confl.isNULL()) {
-            confl = propagate<false>();
-        }
-
+        if (confl.isNULL()) confl = propagate<false>();
         if (!confl.isNULL()) {
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             hist.trailDepthHist.push(trail.size());
@@ -1336,11 +1335,8 @@ lbool Searcher::search()
             }
             reduce_db_if_needed();
             lbool dec_ret;
-            if (fast_backw.fast_backw_on) {
-                dec_ret = new_decision_fast_backw();
-            } else {
-                dec_ret = new_decision<false>();
-            }
+            if (fast_backw.fast_backw_on) dec_ret = new_decision_fast_backw();
+            else dec_ret = new_decision<false>();
             if (dec_ret != l_Undef) {
                 search_ret = dec_ret;
                 goto end;
@@ -1351,16 +1347,12 @@ lbool Searcher::search()
 
     cancelUntil(0);
     confl = propagate<false>();
-    if (!confl.isNULL()) {
+    if (!confl.isNULL() || !solver->datasync->syncData()) {
         ok = false;
         search_ret = l_False;
         goto end;
     }
     assert(solver->prop_at_head());
-    if (!solver->datasync->syncData()) {
-        search_ret = l_False;
-        goto end;
-    }
     assert(search_ret == l_Undef);
     SLOW_DEBUG_DO(check_no_zero_ID_bins());
     SLOW_DEBUG_DO(check_no_duplicate_lits_anywhere());
@@ -2612,7 +2604,6 @@ lbool Searcher::solve(const uint64_t _max_confls) {
 
     end:
     finish_up_solve(status);
-
     return status;
 }
 
