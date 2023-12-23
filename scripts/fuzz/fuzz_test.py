@@ -255,7 +255,7 @@ class Tester:
         sched_opts += "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
         sched_opts += "sub-cls-with-bin,"
         sched_opts += "str-impl, sub-str-cls-with-bin, distill-cls, scc-vrepl,"
-        sched_opts += "occ-backw-sub-str, occ-backw-sub, occ-xor, occ-clean-implicit, occ-bve, occ-bva,"
+        sched_opts += "occ-backw-sub-str, occ-backw-sub, occ-xor, occ-clean-implicit, occ-bve,"
         sched_opts += "renumber, must-renumber,"
         sched_opts += "card-find, breakid,"
         sched_opts += "occ-lit-rem, distill-bins, occ-resolv-subs,occ-rem-with-orgates"
@@ -313,7 +313,6 @@ class Tester:
 
         cmd += "--mustrenumber %d " % random.choice([0, 1])
         cmd += "--diffdeclevelchrono %d " % random.choice([1, random.randint(1, 1000), -1])
-        cmd += "--bva %d " % random.choice([1, 1, 1, 0])
         cmd += "--bvaeveryn %d " % random.choice([1, random.randint(1, 20)])
 
         if self.only_sampling:

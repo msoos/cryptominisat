@@ -2324,12 +2324,8 @@ bool OccSimplifier::setup()
     added_cl_to_var.clear();
     n_occurs.clear();
     n_occurs.resize(solver->nVars()*2, 0);
-
-    //Test & debug
-    #ifdef DEBUG_ATTACH_MORE
-    solver->check_all_clause_attached();
-    solver->check_wrong_attach();
-    #endif
+    DEBUG_ATTACH_MORE_DO(solver->check_all_clause_attached());
+    DEBUG_ATTACH_MORE_DO(solver->check_wrong_attach());
 
     //Clean the clauses before playing with them
     if (!solver->clauseCleaner->remove_and_clean_all()) {

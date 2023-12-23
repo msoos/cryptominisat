@@ -182,8 +182,14 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
             const uint32_t at = i->row_n;
             auto& x = xorclauses[at];
             bool which; // which watch is this
+            SLOW_DEBUG_DO(assert(x.watched[0] < x.size()));
+            SLOW_DEBUG_DO(assert(x.watched[1] < x.size()));
             if (pv == x[x.watched[0]]) which = 0;
-            else {which = 1; assert(x[x.watched[1]] == pv);}
+            else {which = 1;
+                if (x[x.watched[1]] != pv) {
+                    cout << "ERROR. Going through pv: " << pv+1 << " xor: " << x << endl;
+                }
+                assert(x[x.watched[1]] == pv);}
 
             uint32_t unknown = 0;
             uint32_t unknown_at = 0;

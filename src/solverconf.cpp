@@ -228,7 +228,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , breakid_matrix_detect(true)
 
         //Bounded variable addition
-        , do_bva(true)
+        , do_bva(false)
         , min_bva_gain(16)
         , bva_limit_per_call(250000)
         , bva_also_twolit_diff(true)

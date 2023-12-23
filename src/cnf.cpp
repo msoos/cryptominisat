@@ -510,6 +510,7 @@ void CNF::find_all_attached() const {
             }
         }
     }
+
     for(size_t var = 0; var < gwatches.size(); var++) {
         for(const auto& w: gwatches[var]) {
             if (w.matrix_num < 1000) {
@@ -575,14 +576,22 @@ void CNF::check_wrong_attach() const {
         }
     }
     for(watch_subarray_const ws: watches) check_watchlist(ws);
+    for(uint32_t i = 0; i < xorclauses.size(); i++) {
+        const Xor& x = xorclauses[i];
+        for(int at: {0,1}) {
+            assert(x.watched[at] < x.size());
+            bool found = false;
+            const uint32_t v = x.watched[at];
+            for(const auto& w: gwatches[v]) if (w.matrix_num ==  1000 && w.row_n == i) {found=true;break;}
+            assert(found);
+        }
+    }
 }
 
 void CNF::check_watchlist(watch_subarray_const ws) const
 {
     for(const Watched& w: ws) {
-        if (!w.isClause()) {
-            continue;
-        }
+        if (!w.isClause()) continue;
 
         const ClOffset offs = w.get_offset();
         const Clause& c = *cl_alloc.ptr(offs);
