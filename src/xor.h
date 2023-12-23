@@ -20,8 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef _XOR_H_
-#define _XOR_H_
+#pragma once
 
 #include "solvertypes.h"
 
@@ -123,14 +122,12 @@ public:
 
     void merge_clashing_vars(const Xor& other, vector<uint32_t>& seen) {
         for(const auto& v: clash_vars) seen[v] = 1;
-
         for(const auto& v: other.clash_vars) {
             if (!seen[v]) {
                 seen[v] = 1;
                 clash_vars.push_back(v);
             }
         }
-
         for(const auto& v: clash_vars) seen[v] = 0;
     }
 
@@ -156,11 +153,11 @@ inline std::ostream& operator<<(std::ostream& os, const Xor& x)
     os << " =  " << std::boolalpha << x.rhs << std::noboolalpha;
 
     os << " -- clash vars: "; for(const auto& c: x.clash_vars) os << c+1 << ", ";
-    os << " -- watch vars: "; for(const auto& at: {0, 1}) os << x[x.watched[at]]+1 << ", ";
+    if (x.watched[0] < x.size() && x.watched[1] < x.size()) {
+        os << " -- watch vars: "; for(const auto& at: {0, 1}) os << x[x.watched[at]]+1 << ", ";
+    }
 
     return os;
 }
 
 }
-
-#endif //_XOR_H_

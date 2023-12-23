@@ -410,6 +410,10 @@ void CNF::check_all_clause_attached() const {
     check_all_xorclause_attached();
 }
 
+void CNF::check_no_idx_in_watchlist() const {
+    for(const auto& ws: watches) for(const auto& w: ws) assert(!w.isIdx());
+}
+
 void CNF::check_all_xorclause_attached() const {
     bool ret = true;
     for(uint32_t i = 0; i < xorclauses.size(); i++) ret &= check_xor_attached(xorclauses[i], i);
@@ -513,6 +517,8 @@ void CNF::find_all_attached() const {
             } else {
                 assert(w.row_n < xorclauses.size());
                 const Xor& x = xorclauses[w.row_n];
+                assert(x.watched[0] < x.size());
+                assert(x.watched[1] < x.size());
                 uint32_t v0 = x[x.watched[0]];
                 uint32_t v1 = x[x.watched[1]];
                 assert(var == v0 || var == v1);

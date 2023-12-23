@@ -217,7 +217,7 @@ private:
     vector<Lit> binvec;
 
     //Other temporaries
-    vector<uint32_t> occcnt;
+    vector<uint32_t> occ_cnt;
     vector<Lit>& toClear;
     vector<uint32_t>& seen;
     vector<uint8_t>& seen2;

@@ -238,10 +238,8 @@ if (NOT MSVC)
     #NOTE: out-satrace19-8373595 has confirmed that O3+flto only hurts compared to O2
     #      on gcc version 7.3.0
     add_compile_options("$<$<CONFIG:RELWITHDEBINFO>:-O2>")
-
     add_compile_options("$<$<CONFIG:RELEASE>:-O2>")
     add_compile_options("$<$<CONFIG:RELEASE>:-g0>")
-
     add_compile_options("$<$<CONFIG:DEBUG>:-O0>")
 
     if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")

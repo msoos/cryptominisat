@@ -361,6 +361,7 @@ public:
     void find_all_attached() const;
     void find_all_attached(const vector<ClOffset>& cs) const;
     bool find_clause(const ClOffset offset) const;
+    void check_no_idx_in_watchlist() const;
     void check_no_removed_or_freed_cl_in_watch() const;
     void check_all_xorclause_attached() const;
     void check_all_clause_attached() const;
