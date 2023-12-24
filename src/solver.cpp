@@ -1854,8 +1854,7 @@ void Solver::check_too_many_in_tier0()
     }
 }
 
-void Solver::handle_found_solution(const lbool status, const bool only_sampling_solution)
-{
+void Solver::handle_found_solution(const lbool status, const bool only_sampling_solution) {
     double mytime = cpuTime();
     if (status == l_True) {
         extend_solution(only_sampling_solution);
@@ -1868,29 +1867,14 @@ void Solver::handle_found_solution(const lbool status, const bool only_sampling_
         cancelUntil(0);
 
         for(const Lit lit: conflict) {
-            if (value(lit) == l_Undef) {
-                assert(var_inside_assumptions(lit.var()) != l_Undef);
-            }
+            if (value(lit) == l_Undef) assert(var_inside_assumptions(lit.var()) != l_Undef);
         }
-        if (conf.conf_needed) {
-            update_assump_conflict_to_orig_outside(conflict);
-        }
+        if (conf.conf_needed) update_assump_conflict_to_orig_outside(conflict);
     }
 
-    #ifdef USE_BREAKID
-    if (breakid) {
-        breakid->finished_solving();
-    }
-    #endif
-
-    //Too slow when running lots of small queries
-    #ifdef DEBUG_IMPLICIT_STATS
-    check_implicit_stats();
-    #endif
-
-    if (sqlStats) {
-        sqlStats->time_passed_min(this, "solution extend", cpuTime() - mytime);
-    }
+    USE_BREAKID_DO( if (breakid) breakid->finished_solving());
+    DEBUG_IMPLICIT_STATS_DO(check_implicit_stats());
+    if (sqlStats) sqlStats->time_passed_min(this, "solution extend", cpuTime() - mytime);
 }
 
 lbool Solver::execute_inprocess_strategy(
@@ -3362,13 +3346,13 @@ void Solver::renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors
 bool Solver::find_and_init_all_matrices()
 {
     *solver->frat << __PRETTY_FUNCTION__ << " start\n";
-    if (!xor_clauses_updated && (!assump_contains_xor_clash())) {
+    if (!xor_clauses_updated && !assump_contains_xor_clash()) {
         if (conf.verbosity >= 2) {
             cout << "c [find&init matx] XORs not updated, and either (XORs are not detached OR assumps does not contain clash variable) -> or not performing matrix init. Matrices: " << gmatrices.size() << endl;
         }
         return true;
     }
-    if (conf.verbosity >= 1) cout << "c [find&init matx] performing matrix init" << endl;
+    verb_print(1, "[find&init matx] performing matrix init");
     if (!clear_gauss_matrices()) return false;
 
     MatrixFinder mfinder(solver);
@@ -3902,7 +3886,9 @@ void Solver::clean_sampl_and_get_empties(
 }
 
 bool Solver::remove_and_clean_all() { return clauseCleaner->remove_and_clean_all(); }
-bool Solver::remove_and_clean_detached_xors() { return clauseCleaner->clean_xor_clauses(xorclauses, false); }
+bool Solver::remove_and_clean_detached_xors(vector<Xor>& xors) {
+    return clauseCleaner->clean_xor_clauses(xors, false);
+}
 
 void Solver::set_max_confl(uint64_t max_confl)
 {

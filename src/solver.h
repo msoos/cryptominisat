@@ -298,7 +298,7 @@ class Solver : public Searcher
             vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars);
 
         bool remove_and_clean_all();
-        bool remove_and_clean_detached_xors();
+        bool remove_and_clean_detached_xors(vector<Xor>& xors);
         vector<Lit> get_toplevel_units_internal(bool outer_numbering) const;
 
         // Gauss-Jordan

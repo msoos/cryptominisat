@@ -3546,7 +3546,7 @@ bool Searcher::detach_clear_xorclauses() {
         frat->flush();
         TBUDDY_DO(free_bdds(xorclauses));
     }
-    for(auto& gw: solver->gwatches) gw.clear(); // detach every XOR
+    for(auto& gw: solver->gwatches) gw.clear();
     xorclauses.clear();
     xorclauses = xorclauses_orig;
     return okay();
@@ -3554,7 +3554,7 @@ bool Searcher::detach_clear_xorclauses() {
 
 bool Searcher::attach_xorclauses() {
     SLOW_DEBUG_DO(for(const auto& gw: gwatches) assert(gw.empty()));
-    solver->remove_and_clean_detached_xors();
+    solver->remove_and_clean_detached_xors(xorclauses);
     if (!okay()) return okay();
 
     uint32_t j = 0;
@@ -3591,6 +3591,7 @@ bool Searcher::clear_gauss_matrices(const bool destruct) {
     }
 
     if (conf.verbosity) print_matrix_stats();
+    for(EGaussian* g: gmatrices) g->move_back_xor_clauses();
     for(EGaussian* g: gmatrices) delete g;
     for(auto& w: gwatches) w.clear();
     gmatrices.clear();

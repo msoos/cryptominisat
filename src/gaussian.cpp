@@ -277,7 +277,7 @@ bool EGaussian::full_init(bool& created) {
     uint32_t trail_before;
     while (true) {
         trail_before = solver->trail_size();
-        solver->clauseCleaner->clean_xor_clauses(xorclauses, true);
+        solver->clauseCleaner->clean_xor_clauses(xorclauses, false);
 
         fill_matrix();
         before_init_density = get_density();
@@ -1515,10 +1515,11 @@ bool EGaussian::must_disable(GaussQData& gqd)
 }
 
 void CMSat::EGaussian::move_back_xor_clauses() {
-    assert(false && "WHAT??? how about attaching them??");
+    bool ok = solver->remove_and_clean_detached_xors(xorclauses);
     for(const auto& x: xorclauses) {
         TBUDDY_DO(assert(x.bdd == NULL && "Should have finalized matrix first"));
         solver->xorclauses.push_back(std::move(x));
+        if (ok) solver->attach_xor_clause(solver->xorclauses.size()-1);
     }
 }
 

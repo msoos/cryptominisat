@@ -73,19 +73,12 @@ inline bool MatrixFinder::firstPartOfSecond(const Xor& c1, const Xor& c2) const
     return (i1 == c1.size());
 }
 
-inline bool MatrixFinder::belong_same_matrix(const Xor& x)
-{
+inline bool MatrixFinder::belong_same_matrix(const Xor& x) {
     uint32_t comp_num = numeric_limits<uint32_t>::max();
-    for (uint32_t v : x) {
-        if (table[v] == var_Undef) {
-            //Belongs to none, abort
-            return false;
-        }
-
-        if (comp_num == numeric_limits<uint32_t>::max()) {
-            //Belongs to this one
-            comp_num = table[v];
-        } else {
+    for (const auto& v: x.vars) {
+        if (table[v] == var_Undef) return false; //Belongs to none, abort
+        if (comp_num == numeric_limits<uint32_t>::max()) comp_num = table[v]; //Belongs to this one
+        else {
             if (comp_num != table[v]) {
                 //Another var in this XOR belongs to another component
                 return false;
@@ -122,10 +115,11 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
 
     if (solver->xorclauses.size() < solver->conf.gaussconf.min_gauss_xor_clauses) {
         matrix_created = false;
-        verb_print(4, "c [matrix] too few xor clauses for GJ: " << solver->xorclauses.size());
+        verb_print(4, "[matrix] too few xor clauses for GJ: " << solver->xorclauses.size());
+        solver->gqueuedata.clear();
+        solver->attach_xorclauses();
         return true;
     }
-
     if (solver->xorclauses.size() > solver->conf.gaussconf.max_gauss_xor_clauses
         && solver->conf.sampling_vars != NULL
     ) {
@@ -134,12 +128,14 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
             "c WARNING sampling vars have been given but there"
             "are too many XORs and it would take too much time to put them"
             "into matrices. Skipping!");
+        solver->gqueuedata.clear();
+        solver->attach_xorclauses();
         return true;
     }
-
     if (!solver->conf.gaussconf.doMatrixFind) {
         verb_print(1,"c Matrix finding disabled through switch. Not using matrixes");
         solver->gqueuedata.clear();
+        solver->attach_xorclauses();
         return true;
     }
 
@@ -149,43 +145,35 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
         if (belong_same_matrix(x)) continue;
         tomerge.clear();
         newSet.clear();
-        for (uint32_t v : x) {
+        for (const uint32_t& v : x) {
             if (table[v] != var_Undef) tomerge.insert(table[v]);
             else newSet.push_back(v);
         }
+
+        // Move new elements to the one the other(s) belong to
         if (tomerge.size() == 1) {
             const uint32_t into = *tomerge.begin();
             auto intoReverse = reverseTable.find(into);
-            for (uint32_t i = 0; i < newSet.size(); i++) {
-                intoReverse->second.push_back(newSet[i]);
-                table[newSet[i]] = into;
+            for (const auto& elem: newSet) {
+                intoReverse->second.push_back(elem);
+                table[elem] = into;
             }
             continue;
         }
 
-        for (uint32_t v: tomerge) {
+        //Move all to a new set
+        for (const uint32_t& v: tomerge) {
             newSet.insert(newSet.end(), reverseTable[v].begin(), reverseTable[v].end());
             reverseTable.erase(v);
         }
-        for (uint32_t i = 0; i < newSet.size(); i++) table[newSet[i]] = matrix_no;
+        for (const auto& elem: newSet) table[elem] = matrix_no;
         reverseTable[matrix_no] = newSet;
         matrix_no++;
     }
 
     #ifdef VERBOSE_DEBUG
-    for (map<uint32_t, vector<uint32_t> >::iterator it = reverseTable.begin()
-        , end = reverseTable.end()
-        ; it != end
-        ; ++it
-    ) {
-        cout << "XOR table set: " << endl;
-        for (vector<uint32_t>::iterator it2 = it->second.begin(), end2 = it->second.end()
-            ; it2 != end2
-            ; it2++
-        ) {
-            cout << *it2 << ", ";
-        }
-        cout << "-------" << endl;
+    for (const auto& m : reverseTable) {
+        cout << "XOR table set: "; for (const auto& a: m.second) cout << a << ", "; cout << "----" << endl;
     }
     #endif
 
@@ -212,7 +200,6 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
 
     vector<MatrixShape> matrix_shape;
     vector<vector<Xor> > xorsInMatrix(matrix_no);
-
     for (uint32_t i = 0; i < matrix_no; i++) {
         matrix_shape.push_back(MatrixShape(i));
         matrix_shape[i].num = i;
@@ -221,6 +208,7 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
 
     // Move xorclauses temporarily
     for (const Xor& x : solver->xorclauses) {
+        if (x.trivial()) continue;
         TBUDDY_DO(if (solver->frat->enabled()) assert(x.bdd));
 
         //take 1st variable to check which matrix it's in.
