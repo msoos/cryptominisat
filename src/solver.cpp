@@ -3343,8 +3343,7 @@ void Solver::renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors
 // This detaches all xor clauses, and re-attaches them
 // with ONLY the ones attached that are not in a matrix
 // and the matrices are created and initialized
-bool Solver::find_and_init_all_matrices()
-{
+bool Solver::find_and_init_all_matrices() {
     *solver->frat << __PRETTY_FUNCTION__ << " start\n";
     if (!xor_clauses_updated && !assump_contains_xor_clash()) {
         if (conf.verbosity >= 2) {

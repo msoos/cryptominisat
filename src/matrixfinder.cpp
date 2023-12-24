@@ -107,7 +107,7 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
     double myTime = cpuTime();
 
     XorFinder finder(NULL, solver);
-    solver->clauseCleaner->clean_xor_clauses(solver->xorclauses, true);
+    solver->clauseCleaner->clean_xor_clauses(solver->xorclauses, false);
 
     finder.grab_mem();
     if (!finder.xor_together_xors(solver->xorclauses)) return false;

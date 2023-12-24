@@ -3591,7 +3591,7 @@ bool Searcher::clear_gauss_matrices(const bool destruct) {
     }
 
     if (conf.verbosity) print_matrix_stats();
-    for(EGaussian* g: gmatrices) g->move_back_xor_clauses();
+    if (okay()) for(EGaussian* g: gmatrices) g->move_back_xor_clauses();
     for(EGaussian* g: gmatrices) delete g;
     for(auto& w: gwatches) w.clear();
     gmatrices.clear();
