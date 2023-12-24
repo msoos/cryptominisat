@@ -812,6 +812,7 @@ void VarReplacer::extend_model_set_undef()
     ) {
         if (solver->model_value(it->first) == l_Undef) {
             solver->model[it->first] = l_False;
+            verb_print(10, "Forced " << it->first << " to some value (false, but could be anything)");
             for(const uint32_t sub_var: it->second)
             {
                 set_sub_var_during_solution_extension(it->first, sub_var);

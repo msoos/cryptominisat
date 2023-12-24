@@ -21,6 +21,7 @@ THE SOFTWARE.
 ***********************************************/
 
 #include "solutionextender.h"
+#include "constants.h"
 #include "solver.h"
 #include "varreplacer.h"
 #include "occsimplifier.h"
@@ -38,9 +39,7 @@ SolutionExtender::SolutionExtender(Solver* _solver, OccSimplifier* _simplifier) 
 //Model at this point has OUTER variables
 void SolutionExtender::extend()
 {
-    if (solver->conf.verbosity >= 10) {
-        cout << "c Exteding solution -- SolutionExtender::extend()" << endl;
-    }
+    verb_print(10, "Exteding solution -- SolutionExtender::extend()");
 
     #ifdef SLOW_DEBUG
     for(uint32_t i = 0; i < solver->varData.size(); i++) {

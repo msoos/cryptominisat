@@ -523,7 +523,7 @@ void Searcher::add_lits_to_learnt(
             lits = cl->data();
             size = cl->size();
             sumAntecedentsLits += size;
-            VERBOSE_PRINT("resolving with cl:" << *xor_reason << " -- ID: " << ID);
+            VERBOSE_PRINT("resolving with cl:" << *cl << " -- ID: " << ID);
             break;
         }
 
@@ -3563,7 +3563,8 @@ bool Searcher::attach_xorclauses() {
         Xor& x = xorclauses[i];
         if (x.trivial()) continue;
         if (x.size() == 2) {
-            vector<Lit> lits = vector<Lit>{Lit(x[0], false), Lit(x[1], x.rhs)};
+            vector<Lit> lits = vector<Lit>{Lit(x[0], false), Lit(x[1], false)};
+            lits[0] ^= !x.rhs;
             solver->add_clause_int(lits);
             lits[0] ^= true;
             lits[1] ^= true;
@@ -3592,7 +3593,7 @@ bool Searcher::clear_gauss_matrices(const bool destruct) {
     }
 
     if (conf.verbosity) print_matrix_stats();
-    if (okay()) for(EGaussian* g: gmatrices) g->move_back_xor_clauses();
+    if (!destruct && okay()) for(EGaussian* g: gmatrices) g->move_back_xor_clauses();
     for(EGaussian* g: gmatrices) delete g;
     for(auto& w: gwatches) w.clear();
     gmatrices.clear();

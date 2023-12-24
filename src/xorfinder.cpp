@@ -371,18 +371,22 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
     assert(toClear.empty());
 
     //Link in xors into watchlist
+    size_t j = 0;
     for(size_t i = 0; i < this_xors.size(); i++) {
         const Xor& x = this_xors[i];
+        if (x.trivial()) continue;
         for(uint32_t v: x) {
             if (occ_cnt[v] == 0) toClear.push_back(Lit(v, false));
             occ_cnt[v]++;
 
             Lit l(v, false);
             assert(solver->watches.size() > l.toInt());
-            solver->watches[l].push(Watched(i, WatchType::watch_idx_t));
+            solver->watches[l].push(Watched(j, WatchType::watch_idx_t));
             solver->watches.smudge(l);
         }
+        this_xors[j++] = x;
     }
+    this_xors.resize(j);
 
     //Don't XOR together over the sampling vars
     //or variables that are in regular clauses
@@ -458,10 +462,13 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
             for(size_t i = 0; i < ws.size(); i++) {
                 const Watched& w = ws[i];
                 if (!w.isIdx()) ws[i2++] = ws[i];
-                else if (!this_xors[w.get_idx()].empty()) {
-                    assert(at < 2);
-                    idxes[at] = w.get_idx();
-                    at++;
+                else {
+                    assert(w.get_idx() < this_xors.size());
+                    if (this_xors[w.get_idx()].size() >= 2) {
+                        assert(at < 2);
+                        idxes[at] = w.get_idx();
+                        at++;
+                    }
                 }
             }
             assert(idxes[0] != idxes[1]);
@@ -611,7 +618,7 @@ void XorFinder::clean_xors_from_empty(vector<Xor>& thisxors)
     size_t j = 0;
     for(size_t i = 0;i < thisxors.size(); i++) {
         Xor& x = thisxors[i];
-        if (x.size() == 0 && x.rhs == false) {
+        if (x.trivial()) {
             TBUDDY_DO(solver->frat->flush());
             TBUDDY_DO(delete x.bdd);
         } else {

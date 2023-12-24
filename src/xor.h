@@ -49,7 +49,7 @@ public:
     {
         for (const auto& l: cl) vars.push_back(l);
     }
-    bool trivial() const { return size() == 0 && rhs == true; }
+    bool trivial() const { return size() == 0 && rhs == false; }
 
 #ifdef USE_TBUDDY
     tbdd::xor_constraint* create_bdd_xor()
@@ -133,7 +133,7 @@ public:
     }
 
 
-    bool rhs = true;
+    bool rhs = false;
     uint8_t propagating_watch = 0;
     vector<uint32_t> clash_vars;
     vector<uint32_t> vars;

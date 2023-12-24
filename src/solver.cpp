@@ -1240,9 +1240,7 @@ void Solver::check_minimization_effectiveness(const lbool status)
 
 void Solver::extend_solution(const bool only_sampling_solution)
 {
-    #ifdef DEBUG_IMPLICIT_STATS
-    check_stats();
-    #endif
+    DEBUG_IMPLICIT_STATS_DO(check_stats());
 
     #ifdef SLOW_DEBUG
     //Check that sampling vars are all assigned
@@ -4142,9 +4140,8 @@ uint32_t hash_xcl(const Clause& cl)
 bool Solver::check_clause_represented_by_xor(const Clause& cl) {
     for(const auto& l: cl) if (!seen[l.var()]) return false;
 
-    bool rhs = false;
+    bool rhs = true;
     for(const auto& l: cl) {seen2[l.var()] = 1; rhs ^= l.sign();}
-    rhs ^= (cl.size() % 2);
 
     Lit minlit = *std::min_element(cl.begin(), cl.end());
     bool found = false;
@@ -4166,9 +4163,9 @@ bool Solver::check_clause_represented_by_xor(const Clause& cl) {
 }
 
 // Detaches clauses that are the XORs
-// TODO must do this once in a while
 void Solver::detach_clauses_in_xors() {
     double myTime = cpuTime();
+    SLOW_DEBUG_DO(check_no_idx_in_watchlist());
 
     // Setup
     uint32_t maxsize_xor = 0;
@@ -4206,7 +4203,7 @@ void Solver::detach_clauses_in_xors() {
             if (cl->getRemoved()) continue;
 
             if (!cl->red() && cl->size() <= maxsize_xor &&
-                    xor_hashes.count(hash_xcl(*cl)) == 1 &&
+                    xor_hashes.count(hash_xcl(*cl)) &&
                     check_clause_represented_by_xor(*cl)) {
                 cl->setRemoved();
                 litStats.irredLits -= cl->size();
