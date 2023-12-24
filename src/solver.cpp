@@ -215,22 +215,24 @@ bool Solver::add_xor_clause_inter(
         }
         return okay();
     }
-
-    if (ps.size() > 2) {
+    else if (ps.size() == 1) {
+        ps[0] ^= !rhs;
+        add_clause_int(ps);
+    } else if (ps.size() == 2) {
+        ps[0] ^= !rhs;
+        add_clause_int(ps);
+        ps[0] ^= true;
+        ps[1] ^= true;
+        add_clause_int(ps);
+    } else {
+        assert(ps.size() > 2);
         xor_clauses_updated = true;
         xorclauses.push_back(Xor(ps, rhs, tmp_xor_clash_vars));
         xorclauses_orig.push_back(Xor(ps, rhs, tmp_xor_clash_vars));
         TBUDDY_DO(if (frat->enabled()) xorclauses.back().create_bdd_xor());
         TBUDDY_DO(if (frat->enabled()) xorclauses_orig.back().create_bdd_xor());
         attach_xor_clause(xorclauses.size()-1);
-    } else {
-        ps[0] ^= !rhs;
-        add_clause_int(ps);
-        ps[0] ^= true;
-        ps[1] ^= true;
-        add_clause_int(ps);
     }
-
     return okay();
 }
 
@@ -1528,7 +1530,7 @@ lbool Solver::solve_with_assumptions(
 
     //Check if adding the clauses caused UNSAT
     lbool status = l_Undef;
-    if (!ok) {
+    if (!okay()) {
         assert(conflict.empty());
         status = l_False;
         verb_print(6, "Solver status " << status << " on startup of solve()");
@@ -2912,7 +2914,7 @@ bool Solver::add_clause_outside(const vector<Lit>& lits, bool red)
 
 bool Solver::add_xor_clause_outside(const vector<uint32_t>& vars, bool rhs)
 {
-    if (!ok) return false;
+    if (!okay()) return false;
     vector<Lit> lits(vars.size());
     for(size_t i = 0; i < vars.size(); i++) lits[i] = Lit(vars[i], false);
     SLOW_DEBUG_DO(check_too_large_variable_number(lits));
@@ -2921,7 +2923,7 @@ bool Solver::add_xor_clause_outside(const vector<uint32_t>& vars, bool rhs)
     addClauseHelper(back_number_from_outside_to_outer_tmp);
     add_xor_clause_inter(back_number_from_outside_to_outer_tmp, rhs, true, false);
 
-    return ok;
+    return okay();
 }
 
 bool Solver::add_bnn_clause_outside(

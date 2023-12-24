@@ -1275,10 +1275,11 @@ void Searcher::check_need_gauss_jordan_disable()
         if (gqd.disabled) continue;
 
         if (conf.gaussconf.autodisable && gmatrices[i]->must_disable(gqd)) {
-            assert(false && "can't deal with this right now");
-            gqd.disabled = true;
-            gqd.reset();
-            gmatrices[i]->update_cols_vals_set();
+            verb_print(1, "TODO disable matrix, performing badly");
+            /* assert(false && "can't deal with this right now"); */
+            /* gqd.disabled = true; */
+            /* gqd.reset(); */
+            /* gmatrices[i]->update_cols_vals_set(); */
         }
     }
 }
