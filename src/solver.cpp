@@ -1418,11 +1418,7 @@ lbool Solver::simplify_problem_outside(const string* strategy)
     }
     check_and_upd_config_parameters();
     datasync->rebuild_bva_map();
-    #ifdef USE_BREAKID
-    if (breakid) {
-        breakid->start_new_solving();
-    }
-    #endif
+    USE_BREAKID_DO(if (breakid) breakid->start_new_solving());
 
     //ignore "no simplify" if explicitly called
     if (nVars() > 0 /*&& conf.do_simplify_problem*/) {
