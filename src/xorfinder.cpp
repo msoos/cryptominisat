@@ -430,9 +430,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
         changed = false;
         interesting.clear();
         for(const Lit l: toClear) {
-            if (occ_cnt[l.var()] == 2 && !seen2[l.var()]) {
-                interesting.push_back(l.var());
-            }
+            if (occ_cnt[l.var()] == 2 && !seen2[l.var()]) interesting.push_back(l.var());
         }
 
         while(!interesting.empty()) {
@@ -459,9 +457,8 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
             //Remove the 2 indexes from the watchlist
             for(size_t i = 0; i < ws.size(); i++) {
                 const Watched& w = ws[i];
-                if (!w.isIdx()) {
-                    ws[i2++] = ws[i];
-                } else if (!this_xors[w.get_idx()].empty()) {
+                if (!w.isIdx()) ws[i2++] = ws[i];
+                else if (!this_xors[w.get_idx()].empty()) {
                     assert(at < 2);
                     idxes[at] = w.get_idx();
                     at++;
@@ -501,9 +498,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                     Lit l(v2, false);
                     assert(occ_cnt[l.var()] >= 2);
                     occ_cnt[l.var()]--;
-                    if (occ_cnt[l.var()] == 2 && !seen2[l.var()]) {
-                        interesting.push_back(l.var());
-                    }
+                    if (occ_cnt[l.var()] == 2 && !seen2[l.var()]) interesting.push_back(l.var());
                 }
             } else if (clash_num > 1) {
                 //add back to ws, can't do much
@@ -601,7 +596,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
     for(const Lit c: toClear) {
         /*This is now possible because we don't XOR them together
         in case they clash on more than 1 variable */
-        //assert(occcnt[c.var()] != 2);
+        //assert(occ_cnt[c.var()] != 2);
 
         occ_cnt[c.var()] = 0;
     }

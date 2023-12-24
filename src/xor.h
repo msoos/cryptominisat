@@ -117,7 +117,7 @@ public:
     {
         if (!vars.empty()) return false;
         if (!clash_vars.empty()) return false;
-        if (rhs != false) return false;
+        if (rhs != true) return false;
         return true;
     }
 
