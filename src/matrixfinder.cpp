@@ -117,8 +117,7 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
         matrix_created = false;
         verb_print(4, "[matrix] too few xor clauses for GJ: " << solver->xorclauses.size());
         solver->gqueuedata.clear();
-        solver->attach_xorclauses();
-        return true;
+        return solver->attach_xorclauses();
     }
     if (solver->xorclauses.size() > solver->conf.gaussconf.max_gauss_xor_clauses
         && solver->conf.sampling_vars != NULL
@@ -129,14 +128,12 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
             "are too many XORs and it would take too much time to put them"
             "into matrices. Skipping!");
         solver->gqueuedata.clear();
-        solver->attach_xorclauses();
-        return true;
+        return solver->attach_xorclauses();
     }
     if (!solver->conf.gaussconf.doMatrixFind) {
         verb_print(1,"c Matrix finding disabled through switch. Not using matrixes");
         solver->gqueuedata.clear();
-        solver->attach_xorclauses();
-        return true;
+        return solver->attach_xorclauses();
     }
 
     vector<uint32_t> newSet;

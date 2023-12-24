@@ -347,6 +347,7 @@ private:
     vector<uint8_t>& seen2;
     vector<Lit>& toClear;
     vector<bool> sampling_vars_occsimp;
+    vector<bool> xorclauses_vars;
 
     //Temporaries
     vector<Lit>     dummy;       ///<Used by merge()

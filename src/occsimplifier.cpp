@@ -785,6 +785,7 @@ bool OccSimplifier::can_eliminate_var(const uint32_t var) const
     if (solver->value(var) != l_Undef ||
         solver->varData[var].removed != Removed::none ||
         solver->var_inside_assumptions(var) != l_Undef ||
+        xorclauses_vars[var] ||
         ((solver->conf.sampling_vars || solver->fast_backw.fast_backw_on) &&
             sampling_vars_occsimp[var])
     ) {
@@ -2233,8 +2234,9 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             {
                 solver->clear_gauss_matrices();
                 XorFinder finder(this, solver);
-                // beware, below can set UNSAT flag (ok = false)
-                finder.find_xors();
+                finder.find_xors(); // beware can set UNSAT flag (ok = false)
+                for(const auto& x: solver->xorclauses_orig) for(const auto& v: x) xorclauses_vars[v] = 1;
+
                 runStats.xorTime += finder.get_stats().findTime;
                 solver->xorclauses = solver->xorclauses_orig;
                 finder.xor_together_xors(solver->xorclauses);
@@ -2248,31 +2250,11 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             //BUG TODO
             //solver->clauseCleaner->clean_implicit_clauses();
         } else if (token == "occ-bve-empty") {
-            //Get rid of XOR clauses
-            if (solver->frat->enabled()) {
-                TBUDDY_DO(solver->free_bdds(solver->xorclauses_orig));
-                TBUDDY_DO(solver->free_bdds(solver->xorclauses));
-                TBUDDY_DO(solver->free_bdds(solver->xorclauses_unused));
-            }
             if (solver->conf.do_empty_varelim) eliminate_empty_resolvent_vars();
         } else if (token == "occ-bve") {
             if (solver->conf.doVarElim) {
-                solver->removed_xorclauses_clash_vars.clear();
-                solver->xor_clauses_updated = true;
-
-                //Get rid of XOR clauses
-                if (solver->frat->enabled()) {
-                    TBUDDY_DO(solver->free_bdds(solver->xorclauses_orig));
-                    TBUDDY_DO(solver->free_bdds(solver->xorclauses));
-                    TBUDDY_DO(solver->free_bdds(solver->xorclauses_unused));
-                }
-                solver->xorclauses.clear();
-                solver->xorclauses_orig.clear();
-
                 if (solver->conf.do_empty_varelim) eliminate_empty_resolvent_vars();
-                if (solver->conf.do_full_varelim) {
-                    if (!eliminate_vars()) continue;
-                }
+                if (solver->conf.do_full_varelim) if (!eliminate_vars()) continue;
             }
         } else if (token == "occ-rem-with-orgates") {
             lit_rem_with_or_gates();
@@ -2324,13 +2306,14 @@ bool OccSimplifier::setup()
     added_cl_to_var.clear();
     n_occurs.clear();
     n_occurs.resize(solver->nVars()*2, 0);
+    xorclauses_vars.clear();
+    xorclauses_vars.resize(solver->nVars(), 0);
     DEBUG_ATTACH_MORE_DO(solver->check_all_clause_attached());
     DEBUG_ATTACH_MORE_DO(solver->check_wrong_attach());
 
     //Clean the clauses before playing with them
-    if (!solver->clauseCleaner->remove_and_clean_all()) {
-        return false;
-    }
+    if (!solver->clauseCleaner->remove_and_clean_all()) return false;
+    for(const auto& x: solver->xorclauses_orig) for(const auto& v: x) xorclauses_vars[v] = 1;
 
     //If too many clauses, don't do it
     if (solver->get_num_long_cls() > 40ULL*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult
@@ -5213,8 +5196,7 @@ void OccSimplifier::order_vars_for_elim()
         ; var < solver->nVars() && *limit_to_decrease > 0
         ; var++
     ) {
-        if (!can_eliminate_var(var))
-            continue;
+        if (!can_eliminate_var(var)) continue;
 
         *limit_to_decrease -= 50;
         assert(!velim_order.inHeap(var));

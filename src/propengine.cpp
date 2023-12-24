@@ -765,9 +765,7 @@ PropBy PropEngine::propagate_any_order()
         VERBOSE_PRINT("prop went through watchlist of " << p);
 
         //distillation would need to generate TBDD proofs to simplify clauses with GJ
-        if (confl.isNULL() && !distill_use) {
-            confl = gauss_jordan_elim(p, currLevel);
-        }
+        if (confl.isNULL() && !distill_use) confl = gauss_jordan_elim(p, currLevel);
 
         qhead++;
     }
