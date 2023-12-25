@@ -169,6 +169,12 @@ THE SOFTWARE.
 #define DEBUG_WATCHED_DO(x) do { } while (0)
 #endif
 
+#ifdef CHECK_N_OCCUR
+#define CHECK_N_OCCUR_DO(x) do { x; } while (0)
+#else
+#define CHECK_N_OCCUR_DO(x) do { } while (0)
+#endif
+
 #ifdef DEBUG_IMPLICIT_STATS
 #define DEBUG_IMPLICIT_STATS_DO(x) do { x; } while (0)
 #else

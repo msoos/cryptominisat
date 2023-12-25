@@ -62,7 +62,7 @@ TEST_F(gauss, min_rows)
     s->conf.gaussconf.min_matrix_rows = 2;
     xs.push_back(str_to_xors("1, 2, 3 = 0")[0]);
     xs.push_back(str_to_xors("1, 2, 3, 4 = 0")[0]);
-    s->xor_clauses_updated = true;
+    s->xorclauses_updated = true;
     s->xorclauses = xs;
 
     mf->find_matrices(can_detach);
@@ -76,7 +76,7 @@ TEST_F(gauss, min_rows_2)
     s->conf.gaussconf.min_matrix_rows = 3;
     xs.push_back(str_to_xors("1, 2, 3 = 0")[0]);
     xs.push_back(str_to_xors("1, 2, 3, 4 = 0")[0]);
-    s->xor_clauses_updated = true;
+    s->xorclauses_updated = true;
     s->xorclauses = xs;
 
     mf->find_matrices(can_detach);
@@ -92,7 +92,7 @@ TEST_F(gauss, separate_1)
     xs.push_back(str_to_xors("1, 2, 4, 5 = 0")[0]);
     xs.push_back(str_to_xors("6, 7, 8 = 0")[0]);
     xs.push_back(str_to_xors("6, 7, 9, 10 = 0")[0]);
-    s->xor_clauses_updated = true;
+    s->xorclauses_updated = true;
     s->xorclauses = xs;
 
     mf->find_matrices(can_detach);
@@ -112,7 +112,7 @@ TEST_F(gauss, separate_2)
     xs.push_back(str_to_xors("15, 16, 17, 18 = 0")[0]);
     xs.push_back(str_to_xors("11, 15, 19 = 0")[0]);
     xs.push_back(str_to_xors("19, 20, 12, 15 = 0")[0]);
-    s->xor_clauses_updated = true;
+    s->xorclauses_updated = true;
     s->xorclauses = xs;
 
     mf->find_matrices(can_detach);
@@ -135,7 +135,7 @@ TEST_F(gauss, separate_3)
     xs.push_back(str_to_xors("21, 22, 23, 28, 29 = 0")[0]);
     xs.push_back(str_to_xors("28, 29 = 0")[0]);
     xs.push_back(str_to_xors("25, 21, 22, 27 = 0")[0]);
-    s->xor_clauses_updated = true;
+    s->xorclauses_updated = true;
     s->xorclauses = xs;
 
     mf->find_matrices(can_detach);

@@ -189,7 +189,7 @@ bool XorFinder::find_xors() {
             , time_remain
         );
     }
-    solver->xor_clauses_updated = true;
+    solver->xorclauses_updated = true;
     return solver->okay();
 }
 

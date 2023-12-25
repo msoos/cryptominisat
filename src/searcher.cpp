@@ -3566,9 +3566,11 @@ bool Searcher::attach_xorclauses() {
             vector<Lit> lits = vector<Lit>{Lit(x[0], false), Lit(x[1], false)};
             lits[0] ^= !x.rhs;
             solver->add_clause_int(lits);
+            if (!okay()) return false;
             lits[0] ^= true;
             lits[1] ^= true;
             solver->add_clause_int(lits);
+            if (!okay()) return false;
             continue;
         }
         assert(x.size() > 2);
@@ -3585,7 +3587,7 @@ bool Searcher::attach_xorclauses() {
 bool Searcher::clear_gauss_matrices(const bool destruct) {
     TBUDDY_DO(if (!destruct && frat->enabled()) for(auto& g: gmatrices) g->finalize_frat());
 
-    xor_clauses_updated = true;
+    xorclauses_updated = true;
     for(uint32_t i = 0; i < gqueuedata.size(); i++) {
         auto gqd = gqueuedata[i];
         verb_print(2, "[mat" << i << "] num_props       : " << print_value_kilo_mega(gqd.num_props));

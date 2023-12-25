@@ -194,7 +194,7 @@ public:
     // that have beeen XOR-ed together and hence the variable is no longer
     // part of the CNF
     vector<uint32_t> removed_xorclauses_clash_vars;
-    bool xor_clauses_updated = false;
+    bool xorclauses_updated = false;
 
     vector<BNN*> bnns;
     vector<vector<Lit>> bnn_reasons;

@@ -226,7 +226,7 @@ bool Solver::add_xor_clause_inter(
         add_clause_int(ps);
     } else {
         assert(ps.size() > 2);
-        xor_clauses_updated = true;
+        xorclauses_updated = true;
         xorclauses.push_back(Xor(ps, rhs, tmp_xor_clash_vars));
         xorclauses_orig.push_back(Xor(ps, rhs, tmp_xor_clash_vars));
         TBUDDY_DO(if (frat->enabled()) xorclauses.back().create_bdd_xor());
@@ -880,7 +880,7 @@ void Solver::renumber_clauses(const vector<uint32_t>& outerToInter)
     }
 
     //Clauses' abstractions have to be re-calculated
-    xor_clauses_updated = true;
+    xorclauses_updated = true;
     for(Xor& x: xorclauses) {
         updateVarsMap(x.vars, outerToInter);
         updateVarsMap(x.clash_vars, outerToInter);
@@ -3340,7 +3340,7 @@ void Solver::renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors
 // and the matrices are created and initialized
 bool Solver::find_and_init_all_matrices() {
     *solver->frat << __PRETTY_FUNCTION__ << " start\n";
-    if (!xor_clauses_updated && !assump_contains_xor_clash()) {
+    if (!xorclauses_updated && !assump_contains_xor_clash()) {
         if (conf.verbosity >= 2) {
             cout << "c [find&init matx] XORs not updated, and either (XORs are not detached OR assumps does not contain clash variable) -> or not performing matrix init. Matrices: " << gmatrices.size() << endl;
         }
@@ -3378,7 +3378,7 @@ bool Solver::find_and_init_all_matrices() {
     }
     #endif
 
-    xor_clauses_updated = false;
+    xorclauses_updated = false;
     *solver->frat << __PRETTY_FUNCTION__ << " end\n";
     return true;
 }

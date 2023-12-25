@@ -110,7 +110,7 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
     solver->clauseCleaner->clean_xor_clauses(solver->xorclauses, false);
 
     finder.grab_mem();
-    if (!finder.xor_together_xors(solver->xorclauses)) return false;
+    /* if (!finder.xor_together_xors(solver->xorclauses)) return false; */
     for(const auto& x: solver->xorclauses) clash_vars.insert(x.clash_vars.begin(), x.clash_vars.end());
 
     if (solver->xorclauses.size() < solver->conf.gaussconf.min_gauss_xor_clauses) {

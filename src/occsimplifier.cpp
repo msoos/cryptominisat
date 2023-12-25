@@ -308,9 +308,7 @@ void OccSimplifier::unlink_clause(
     if (!cl.red()) {
         for (const Lit lit: cl) {
             elim_calc_need_update.touch(lit.var());
-            #ifdef CHECK_N_OCCUR
-            assert(n_occurs[lit.toInt()]>0);
-            #endif
+            CHECK_N_OCCUR_DO(assert(n_occurs[lit.toInt()]>0));
             n_occurs[lit.toInt()]--;
             removed_cl_with_var.touch(lit.var());
         }
@@ -2224,6 +2222,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 ternary_res();
             }
         } else if (token == "occ-xor") {
+            CHECK_N_OCCUR_DO(check_n_occur());
             if (solver->conf.doFindXors &&
                 #ifdef USE_TBUDDY
                 true
@@ -2232,15 +2231,11 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 #endif
                )
             {
-                solver->clear_gauss_matrices();
                 XorFinder finder(this, solver);
                 finder.find_xors(); // beware can set UNSAT flag (ok = false)
                 for(const auto& x: solver->xorclauses_orig) for(const auto& v: x) xorclauses_vars[v] = 1;
-
                 runStats.xorTime += finder.get_stats().findTime;
                 solver->xorclauses = solver->xorclauses_orig;
-                finder.xor_together_xors(solver->xorclauses);
-                solver->attach_xorclauses();
             }
         } else if (token == "occ-lit-rem") {
             all_occ_based_lit_rem();
@@ -2283,10 +2278,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
              cout << "ERROR: occur strategy '" << token << "' not recognised!" << endl;
             exit(-1);
         }
-
-        #ifdef CHECK_N_OCCUR
-        check_n_occur();
-        #endif //CHECK_N_OCCUR
+        CHECK_N_OCCUR_DO(check_n_occur());
     }
 
     if (solver->okay()) {
@@ -2310,9 +2302,11 @@ bool OccSimplifier::setup()
     xorclauses_vars.resize(solver->nVars(), 0);
     DEBUG_ATTACH_MORE_DO(solver->check_all_clause_attached());
     DEBUG_ATTACH_MORE_DO(solver->check_wrong_attach());
+    if (!solver->clauseCleaner->remove_and_clean_all()) return false;
+    solver->clear_gauss_matrices();
+    solver->detach_clear_xorclauses();
 
     //Clean the clauses before playing with them
-    if (!solver->clauseCleaner->remove_and_clean_all()) return false;
     for(const auto& x: solver->xorclauses_orig) for(const auto& v: x) xorclauses_vars[v] = 1;
 
     //If too many clauses, don't do it
@@ -2332,9 +2326,7 @@ bool OccSimplifier::setup()
     clauses.clear();
     set_limits(); //to calculate strengthening_time_limit
     limit_to_decrease = &strengthening_time_limit;
-    if (!fill_occur_and_print_stats()) {
-        return false;
-    }
+    if (!fill_occur_and_print_stats()) return false;
 
     set_limits();
     return solver->okay();
@@ -3032,9 +3024,9 @@ void OccSimplifier::finishUp( size_t origTrailSize) {
     if (solver->ok) {
         assert(solver->prop_at_head());
         add_back_to_solver();
-        if (solver->okay()) {
-            solver->ok = solver->propagate<true>().isNULL();
-        }
+        if (solver->okay()) solver->ok = solver->propagate<true>().isNULL();
+        /* if (solver->okay()) finder.xor_together_xors(solver->xorclauses); */
+        if (solver->okay()) solver->attach_xorclauses();
     } else {
         for(const auto& offs: clauses) {
             Clause* cl = solver->cl_alloc.ptr(offs);
@@ -4601,8 +4593,7 @@ bool OccSimplifier::add_varelim_resolvent(
     return true;
 }
 
-void OccSimplifier::check_n_occur()
-{
+void OccSimplifier::check_n_occur() {
     for (size_t i=0; i < solver->nVars(); i++) {
         Lit lit(i, false);
         const uint32_t pos = calc_occ_data(lit);
@@ -4983,10 +4974,7 @@ uint32_t OccSimplifier::calc_occ_data(const Lit lit)
     uint32_t ret = 0;
     watch_subarray_const ws_list = solver->watches[lit];
     for (const Watched ws: ws_list) {
-        //Skip redundant clauses
-        if (solver->redundant(ws))
-            continue;
-
+        if (solver->redundant(ws)) continue;
         switch(ws.getType()) {
             case WatchType::watch_binary_t:
                 ret++;
