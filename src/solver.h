@@ -304,6 +304,7 @@ class Solver : public Searcher
         // Gauss-Jordan
         bool init_all_matrices();
         bool no_irred_nonxor_contains_clash_vars();
+        void detach_clash_vars_clauses();
         bool assump_contains_xor_clash();
         void set_clash_decision_vars(const vector<Xor>& xors);
         void unset_clash_decision_vars();
@@ -461,6 +462,7 @@ class Solver : public Searcher
         void check_minimization_effectiveness(lbool status);
         void check_recursive_minimization_effectiveness(const lbool status);
         void extend_solution(const bool only_indep_solution);
+        void extend_model_to_xorclauses_orig();
         void check_too_many_in_tier0();
         bool adjusted_glue_cutoff_if_too_many = false;
 

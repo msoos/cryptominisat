@@ -125,8 +125,7 @@ void InTree::fill_roots()
     }
 }
 
-bool InTree::intree_probe()
-{
+bool InTree::intree_probe() {
     assert(solver->okay());
     queue.clear();
     reset_reason_stack.clear();

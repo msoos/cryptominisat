@@ -2204,22 +2204,16 @@ bool Searcher::clean_clauses_if_needed()
     return okay();
 }
 
-void Searcher::rebuildOrderHeap()
-{
-    if (conf.verbosity) {
-        cout << "c [branch] rebuilding order heap for all branchings. Current branching: " <<
-        branch_type_to_string(branch_strategy) << endl;
-    }
+void Searcher::rebuildOrderHeap() {
+    verb_print(1, "[branch] rebuilding order heap for all branchings. Current branching: " <<
+        branch_type_to_string(branch_strategy));
+
     vector<uint32_t> vs;
     vs.reserve(nVars());
     for (uint32_t v = 0; v < nVars(); v++) {
         if (varData[v].removed != Removed::none
-            || (value(v) != l_Undef && varData[v].level == 0)
-        ) {
-            continue;
-        } else {
-            vs.push_back(v);
-        }
+                || (value(v) != l_Undef && varData[v].level == 0)) continue;
+        else vs.push_back(v);
     }
 
     VERBOSE_PRINT("c [branch] Rebuilding VSDIS order heap");
@@ -2476,9 +2470,7 @@ bool Searcher::intree_if_needed()
     if (conf.doIntreeProbe && conf.doFindAndReplaceEqLits && !conf.never_stop_search &&
         sumConflicts > next_intree
     ) {
-        ret &= solver->clear_gauss_matrices();
         if (ret) ret &= solver->intree->intree_probe();
-        if (ret) ret &= solver->find_and_init_all_matrices();
         next_intree = sumConflicts + 65000.0*conf.global_next_multiplier;
     }
 
@@ -2870,8 +2862,7 @@ void Searcher::print_iteration_solving_stats()
     }
 }
 
-inline Lit Searcher::pickBranchLit()
-{
+inline Lit Searcher::pickBranchLit() {
     VERBOSE_PRINT("picking decision variable, dec. level: " << decisionLevel());
 
     uint32_t v = var_Undef;

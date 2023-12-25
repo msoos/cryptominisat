@@ -2307,6 +2307,7 @@ bool OccSimplifier::setup() {
     }
 
     if (!solver->clauseCleaner->remove_and_clean_all()) return false;
+    solver->unset_clash_decision_vars();
     solver->clear_gauss_matrices();
     solver->detach_clear_xorclauses();
     for(const auto& x: solver->xorclauses_orig) for(const auto& v: x) xorclauses_vars[v] = 1;
@@ -3013,7 +3014,6 @@ void OccSimplifier::finishUp( size_t origTrailSize) {
         add_back_to_solver();
         assert(solver->okay());
         solver->ok = solver->propagate<true>().isNULL();
-        /* if (solver->okay()) finder.xor_together_xors(solver->xorclauses); */
         if (solver->okay()) solver->attach_xorclauses();
         SLOW_DEBUG_DO(if (solver->okay()) solver->check_wrong_attach());
     } else {
