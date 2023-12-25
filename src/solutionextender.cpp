@@ -23,6 +23,7 @@ THE SOFTWARE.
 #include "solutionextender.h"
 #include "constants.h"
 #include "solver.h"
+#include "solvertypesmini.h"
 #include "varreplacer.h"
 #include "occsimplifier.h"
 
@@ -33,12 +34,10 @@ using namespace CMSat;
 SolutionExtender::SolutionExtender(Solver* _solver, OccSimplifier* _simplifier) :
     solver(_solver)
     , simplifier(_simplifier)
-{
-}
+{}
 
 //Model at this point has OUTER variables
-void SolutionExtender::extend()
-{
+void SolutionExtender::extend() {
     verb_print(10, "Exteding solution -- SolutionExtender::extend()");
 
     #ifdef SLOW_DEBUG
@@ -52,14 +51,16 @@ void SolutionExtender::extend()
             )
             && solver->model[i] != l_Undef
         ) {
-            cout << "ERROR: variable " << i + 1
-            << " set even though it's removed: "
+            cout << "ERROR: variable " << i + 1 << " set even though it's removed: "
             << removed_type_to_string(solver->varData[v_inter].removed) << endl;
-            //solver->model[i] = l_Undef;
             assert(solver->model[i] == l_Undef);
         }
     }
     #endif
+
+    for(const auto& x: solver->xorclauses_orig) {
+        for(const auto& v: x) assert(solver->value(v) != l_Undef);
+    }
 
     //Extend variables already set
     solver->varReplacer->extend_model_already_set();
@@ -67,24 +68,15 @@ void SolutionExtender::extend()
 
     //clause has been added with "lit, ~lit" so var must be set
     for(size_t i = 0; i < solver->undef_must_set_vars.size(); i++) {
-        if (solver->undef_must_set_vars[i]
-            && solver->model_value(i) == l_Undef
-        ) {
+        if (solver->undef_must_set_vars[i] && solver->model_value(i) == l_Undef) {
             solver->model[i] = l_False;
         }
     }
-
-    //All variables, not just those set
-    solver->varReplacer->extend_model_set_undef();
+    solver->varReplacer->extend_model_all();
 }
 
-inline bool SolutionExtender::satisfied(const vector< Lit >& lits) const
-{
-    for(const Lit lit: lits) {
-        if (solver->model_value(lit) == l_True)
-            return true;
-    }
-
+inline bool SolutionExtender::satisfied(const vector< Lit >& lits) const {
+    for(const Lit lit: lits) if (solver->model_value(lit) == l_True) return true;
     return false;
 }
 
@@ -92,10 +84,7 @@ inline bool SolutionExtender::satisfied(const vector< Lit >& lits) const
 void SolutionExtender::dummyElimed(const uint32_t elimedOn)
 {
     #ifdef VERBOSE_DEBUG_SOLUTIONEXTENDER
-    cout
-    << "dummy elimed lit (outer) "
-    << elimedOn + 1
-    << endl;
+    cout << "dummy elimed lit (outer) " << elimedOn + 1 << endl;
     #endif
 
     #ifdef SLOW_DEBUG
@@ -104,8 +93,7 @@ void SolutionExtender::dummyElimed(const uint32_t elimedOn)
     #endif
 
     //Elimed clauses set its value already
-    if (solver->model_value(elimedOn) != l_Undef)
-        return;
+    if (solver->model_value(elimedOn) != l_Undef) return;
 
     solver->model[elimedOn] = l_False;
 
@@ -118,10 +106,7 @@ void SolutionExtender::dummyElimed(const uint32_t elimedOn)
 bool SolutionExtender::addClause(const vector<Lit>& lits, const uint32_t elimedOn)
 {
     #ifdef VERBOSE_DEBUG_SOLUTIONEXTENDER
-    cout
-    << "outer clause: "
-    << lits
-    << endl;
+    cout << "outer clause: " << lits << endl;
     #endif
 
     #ifdef SLOW_DEBUG

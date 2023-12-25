@@ -802,20 +802,14 @@ void VarReplacer::extend_model_already_set()
     }
 }
 
-void VarReplacer::extend_model_set_undef()
-{
+void VarReplacer::extend_model_all() {
     assert(solver->model.size() == solver->nVarsOuter());
-    for (auto it = reverseTable.begin() , end = reverseTable.end()
-        ; it != end
-        ; ++it
-    ) {
-        if (solver->model_value(it->first) == l_Undef) {
-            solver->model[it->first] = l_False;
-            verb_print(10, "Forced " << it->first << " to some value (false, but could be anything)");
-            for(const uint32_t sub_var: it->second)
-            {
-                set_sub_var_during_solution_extension(it->first, sub_var);
-            }
+    for (const auto& m: reverseTable) {
+        if (solver->model_value(m.first) == l_Undef) {
+            solver->model[m.first] = l_False;
+            verb_print(10, "Forced " << m.first << " to some value (false, but could be anything)");
+            for(const uint32_t sub_var: m.second)
+                set_sub_var_during_solution_extension(m.first, sub_var);
         }
     }
 }

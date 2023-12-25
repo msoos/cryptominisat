@@ -65,7 +65,7 @@ class VarReplacer
         const SCCFinder* get_scc_finder() const;
 
         void extend_model_already_set();
-        void extend_model_set_undef();
+        void extend_model_all();
         void extend_model(const uint32_t var);
         void extend_pop_queue(vector<Lit>& pop);
 

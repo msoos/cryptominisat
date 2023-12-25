@@ -1904,33 +1904,23 @@ lbool Solver::execute_inprocess_strategy(
         token = trim(token);
         std::transform(token.begin(), token.end(), token.begin(), ::tolower);
         if (!occ_strategy_tokens.empty() && token.substr(0,3) != "occ") {
-            if (conf.perform_occur_based_simp
-                && bnns.empty()
-                && occsimplifier
-            ) {
+            if (conf.perform_occur_based_simp && bnns.empty() && occsimplifier) {
                 occ_strategy_tokens = trim(occ_strategy_tokens);
-                if (conf.verbosity) {
-                    cout << "c --> Executing OCC strategy token(s): '"
-                    << occ_strategy_tokens << "'\n";
-                }
+                verb_print(1, "Executing OCC strategy token(s): '" << occ_strategy_tokens);
                 occsimplifier->simplify(startup, occ_strategy_tokens);
             }
             occ_strategy_tokens.clear();
-            if (sumConflicts >= conf.max_confl
-                || cpuTime() > conf.maxTime
-                || must_interrupt_asap()
-                || nVars() == 0
-                || !ok
-            ) {
+            if (sumConflicts >= conf.max_confl || cpuTime() > conf.maxTime
+                || must_interrupt_asap() || nVars() == 0 || !ok) {
                 break;
             }
             SLOW_DEBUG_DO(check_stats());
             SLOW_DEBUG_DO(check_assumptions_sanity());
         }
+        if (okay()) SLOW_DEBUG_DO(check_wrong_attach());
 
-        if (conf.verbosity && token.substr(0,3) != "occ" && token != "") {
-            cout << "c --> Executing strategy token: " << token << '\n';
-        }
+        if (token.substr(0,3) != "occ" && token != "")
+            verb_print(1, "--> Executing strategy token: " << token);
 
         if (token == "scc-vrepl") {
             if (conf.doFindAndReplaceEqLits) {

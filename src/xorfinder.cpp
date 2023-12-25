@@ -347,18 +347,15 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
 
 // It manipulates this_xors ONLY. It assumes those XORs are
 // detached.
-bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
-{
-    if (occ_cnt.size() != solver->nVars()) grab_mem();
+bool XorFinder::xor_together_xors(vector<Xor>& this_xors) {
+    grab_mem();
     if (this_xors.empty()) return solver->okay();
     SLOW_DEBUG_DO(for(auto x: occ_cnt) assert(x == 0););
     SLOW_DEBUG_DO(solver->check_no_idx_in_watchlist());
 
     if (solver->conf.verbosity >= 5) {
         cout << "c XOR-ing together XORs. Starting with: " << endl;
-        for(const auto& x: this_xors) {
-            cout << "c XOR before xor-ing together: " << x << endl;
-        }
+        for(const auto& x: this_xors) cout << "c XOR before xor-ing together: " << x << endl;
     }
 
     assert(solver->okay());
@@ -404,7 +401,6 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
             }
         }
     }
-
     for(const auto& ws: solver->watches) {
         for(const auto& w: ws) {
             if (w.isBin() && !w.red()) {
@@ -416,10 +412,9 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
             }
         }
     }
-
     for(const auto& offs: solver->longIrredCls) {
         Clause* cl = solver->cl_alloc.ptr(offs);
-        if (cl->red()) continue;
+        assert(!cl->red());
         for(Lit l: *cl) {
             if (!seen2[l.var()]) {
                 seen2[l.var()] = 1;
@@ -448,14 +443,12 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
             #endif
 
             //Pop and check if it can be XOR-ed together
-            const uint32_t v = interesting.back();
-            interesting.resize(interesting.size()-1);
+            const uint32_t v = interesting.back(); interesting.pop_back();
             if (occ_cnt[v] != 2) continue;
 
             size_t idxes[2] = {0,0}; // init only to silence warning
             unsigned at = 0;
             size_t i2 = 0;
-            assert(solver->watches.size() > Lit(v, false).toInt());
             watch_subarray ws = solver->watches[Lit(v, false)];
 
             //Remove the 2 indexes from the watchlist
@@ -487,9 +480,8 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 && x0.rhs == x1.rhs
                 && clash_num == x0.size()
             ) {
-                VERBOSE_PRINT("equivalent. ");
                 x1.merge_clashing_vars(x0, seen); //Update clash values & detached values
-                VERBOSE_PRINT("after merge: " << x1 <<  " -- at idx: " << idxes[1]);
+                VERBOSE_PRINT("equivalent. After merge: " << x1 <<  " -- at idx: " << idxes[1]);
 
                 //Equivalent, so delete one
                 if (solver->frat->enabled()) {
@@ -561,8 +553,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
     }
 
     //Clear
-    for(const Lit l: toClear) occ_cnt[l.var()] = 0;
-    toClear.clear();
+    for(const Lit l: toClear) occ_cnt[l.var()] = 0; toClear.clear();
     for(const auto& x: to_clear_2) seen2[x] = 0;
 
     solver->clean_occur_from_idx_types_only_smudged();

@@ -660,8 +660,7 @@ bool OccSimplifier::check_varelim_when_adding_back_cl(const Clause* cl) const
     return notLinkedNeedFree;
 }
 
-void OccSimplifier::add_back_to_solver()
-{
+void OccSimplifier::add_back_to_solver() {
     solver->clean_occur_from_removed_clauses_only_smudged();
     free_clauses_to_free();
 
@@ -673,11 +672,8 @@ void OccSimplifier::add_back_to_solver()
 
         if (check_varelim_when_adding_back_cl(cl)) {
             //The clause wasn't linked in but needs removal now
-            if (cl->red()) {
-                solver->litStats.redLits -= cl->size();
-            } else {
-                solver->litStats.irredLits -= cl->size();
-            }
+            if (cl->red()) solver->litStats.redLits -= cl->size();
+            else solver->litStats.irredLits -= cl->size();
             *solver->frat << del << *cl << fin;
             solver->free_cl(cl);
             continue;
@@ -2288,8 +2284,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
     return solver->okay();
 }
 
-bool OccSimplifier::setup()
-{
+bool OccSimplifier::setup() {
     *solver->frat << __PRETTY_FUNCTION__ << " start\n";
     assert(solver->okay());
     assert(toClear.empty());
@@ -2302,22 +2297,19 @@ bool OccSimplifier::setup()
     xorclauses_vars.resize(solver->nVars(), 0);
     DEBUG_ATTACH_MORE_DO(solver->check_all_clause_attached());
     DEBUG_ATTACH_MORE_DO(solver->check_wrong_attach());
-    if (!solver->clauseCleaner->remove_and_clean_all()) return false;
-    solver->clear_gauss_matrices();
-    solver->detach_clear_xorclauses();
-
-    //Clean the clauses before playing with them
-    for(const auto& x: solver->xorclauses_orig) for(const auto& v: x) xorclauses_vars[v] = 1;
 
     //If too many clauses, don't do it
     if (solver->get_num_long_cls() > 40ULL*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult
         || solver->litStats.irredLits > 100ULL*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult
     ) {
-        if (solver->conf.verbosity) {
-            cout << "c [occ] will not link in occur, CNF has too many clauses/irred lits" << endl;
-        }
+        verb_print(1, "[occ] will not link in occur, CNF has too many clauses/irred lits");
         return false;
     }
+
+    if (!solver->clauseCleaner->remove_and_clean_all()) return false;
+    solver->clear_gauss_matrices();
+    solver->detach_clear_xorclauses();
+    for(const auto& x: solver->xorclauses_orig) for(const auto& v: x) xorclauses_vars[v] = 1;
 
     //Setup
     clause_lits_added = 0;
@@ -2332,14 +2324,9 @@ bool OccSimplifier::setup()
     return solver->okay();
 }
 
-bool OccSimplifier::simplify(const bool _startup, const std::string& schedule)
-{
-    if (!solver->bnns.empty()) {
-        return solver->okay();
-    }
-    #ifdef DEBUG_MARKED_CLAUSE
-    assert(solver->no_marked_clauses());
-    #endif
+bool OccSimplifier::simplify(const bool _startup, const std::string& schedule) {
+    if (!solver->bnns.empty()) return solver->okay();
+    DEBUG_MARKED_CLAUSE_DO(assert(solver->no_marked_clauses()));
 
     assert(solver->gmatrices.empty());
     assert(solver->gqueuedata.empty());
@@ -3021,18 +3008,18 @@ void OccSimplifier::finishUp( size_t origTrailSize) {
 
     //Add back clauses to solver
     remove_all_longs_from_watches();
-    if (solver->ok) {
+    if (solver->okay()) {
         assert(solver->prop_at_head());
         add_back_to_solver();
-        if (solver->okay()) solver->ok = solver->propagate<true>().isNULL();
+        assert(solver->okay());
+        solver->ok = solver->propagate<true>().isNULL();
         /* if (solver->okay()) finder.xor_together_xors(solver->xorclauses); */
         if (solver->okay()) solver->attach_xorclauses();
+        SLOW_DEBUG_DO(if (solver->okay()) solver->check_wrong_attach());
     } else {
         for(const auto& offs: clauses) {
             Clause* cl = solver->cl_alloc.ptr(offs);
-            if (cl->getRemoved() || cl->freed()) {
-                continue;
-            }
+            if (cl->getRemoved() || cl->freed()) continue;
             *solver->frat << del << *cl << fin;
             solver->free_cl(cl);
         }

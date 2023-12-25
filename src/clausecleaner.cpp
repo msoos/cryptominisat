@@ -377,8 +377,7 @@ void ClauseCleaner::clean_bnns_post()
 }
 
 // Force cleans everything, recursively
-bool ClauseCleaner::remove_and_clean_all()
-{
+bool ClauseCleaner::remove_and_clean_all() {
     double myTime = cpuTime();
     assert(solver->okay());
     assert(solver->prop_at_head());
