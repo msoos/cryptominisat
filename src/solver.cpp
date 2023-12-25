@@ -1238,8 +1238,7 @@ void Solver::check_minimization_effectiveness(const lbool status)
     }
 }
 
-void Solver::extend_solution(const bool only_sampling_solution)
-{
+void Solver::extend_solution(const bool only_sampling_solution) {
     DEBUG_IMPLICIT_STATS_DO(check_stats());
 
     #ifdef SLOW_DEBUG

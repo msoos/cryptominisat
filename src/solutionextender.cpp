@@ -46,20 +46,23 @@ void SolutionExtender::extend() {
         if (
             //decomposed's solution has beed added already, it SHOULD be set
             //but everything else is NOT OK
-            (solver->varData[v_inter].removed != Removed::none
-                && solver->varData[v_inter].removed != Removed::clashed
-            )
-            && solver->model[i] != l_Undef
+            solver->varData[v_inter].removed != Removed::none
+            && solver->varData[v_inter].removed != Removed::clashed
         ) {
-            cout << "ERROR: variable " << i + 1 << " set even though it's removed: "
-            << removed_type_to_string(solver->varData[v_inter].removed) << endl;
+            if (solver->model[i] != l_Undef)
+                cout << "ERROR: variable " << i + 1 << " set even though it's removed: "
+                << removed_type_to_string(solver->varData[v_inter].removed) << endl;
             assert(solver->model[i] == l_Undef);
         }
     }
     #endif
 
     for(const auto& x: solver->xorclauses_orig) {
-        for(const auto& v: x) assert(solver->value(v) != l_Undef);
+        for(auto v: x) {
+            v = solver->map_inter_to_outer(v);
+            assert(solver->varData[v].removed == Removed::none);
+            assert(solver->model_value(v) != l_Undef);
+        }
     }
 
     //Extend variables already set
