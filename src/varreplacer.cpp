@@ -288,7 +288,6 @@ end:
 
     if (solver->okay()) {
         DEBUG_ATTACH_MORE_DO(solver->check_wrong_attach());
-        DEBUG_ATTACH_MORE_DO(solver->find_all_attached());
         DEBUG_ATTACH_MORE_DO(solver->check_all_clause_attached());
         DEBUG_IMPLICIT_STATS_DO(solver->check_stats());
         checkUnsetSanity();

@@ -442,7 +442,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
             {
                 vector<uint32_t> check;
                 check.resize(solver->nVars(), 0);
-                for(Xor& x: this_xors) for(uint32_t v: x) check[v]++;
+                for(Xor& x: this_xors) for(const uint32_t& v: x) check[v]++;
                 for(size_t i = 0; i < solver->nVars(); i++) assert(check[i] == occ_cnt[i]);
             }
             #endif

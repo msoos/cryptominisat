@@ -2087,9 +2087,9 @@ lbool Solver::execute_inprocess_strategy(
         SLOW_DEBUG_DO(check_stats());
         if (!okay()) return l_False;
         DEBUG_ATTACH_MORE_DO(check_wrong_attach());
-        DEBUG_ATTACH_MORE_DO(find_all_attached());
         DEBUG_ATTACH_MORE_DO(check_all_clause_attached());
     }
+    DEBUG_ATTACH_MORE_DO(find_all_attached());
 
     return okay() ? l_Undef : l_False;
 }
@@ -2145,7 +2145,6 @@ lbool Solver::simplify_problem(const bool startup, const string& strategy) {
     // is called, which is called form the outside, sometimes 1000x
     // in one second
     rebuildOrderHeap();
-    DEBUG_ATTACH_MORE_DO(find_all_attached());
     DEBUG_ATTACH_MORE_DO(check_all_clause_attached());
     DEBUG_ATTACH_MORE_DO(check_wrong_attach());
 
