@@ -96,13 +96,13 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
     assert(solver->decisionLevel() == 0);
     assert(solver->ok);
     assert(solver->gmatrices.empty());
+
     solver->detach_clear_xorclauses();
     matrix_created = true;
 
     table.clear();
     table.resize(solver->nVars(), var_Undef);
     reverseTable.clear();
-    clash_vars.clear();
     matrix_no = 0;
     double myTime = cpuTime();
 
@@ -111,7 +111,9 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
 
     finder.grab_mem();
     if (!finder.xor_together_xors(solver->xorclauses)) return false;
+    set<uint32_t> clash_vars;
     for(const auto& x: solver->xorclauses) clash_vars.insert(x.clash_vars.begin(), x.clash_vars.end());
+    solver->set_clash_decision_vars(clash_vars);
 
     if (solver->xorclauses.size() < solver->conf.gaussconf.min_gauss_xor_clauses) {
         matrix_created = false;
@@ -280,7 +282,7 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
 
         //Over the max number of matrixes
         if (use_matrix && realMatrixNum >= solver->conf.gaussconf.max_num_matrices) {
-            verb_print(3, "c [matrix] above max number of matrixes -> set usage to NO");
+            verb_print(3, "[matrix] above max number of matrixes -> set usage to NO");
             use_matrix = false;
         }
 
@@ -306,7 +308,6 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
             assert(solver->gmatrices.size() == realMatrixNum);
         } else {
             for(auto& x: xorsInMatrix[i]) {
-                clash_vars.insert(x.clash_vars.begin(), x.clash_vars.end());
                 x.in_matrix = 1000;
                 solver->xorclauses.push_back(x);
             }

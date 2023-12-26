@@ -163,6 +163,7 @@ class Solver : public Searcher
         const SolveStats& get_solve_stats() const;
         const SearchStats& get_stats() const;
         void add_in_partial_solving_stats();
+        bool check_xor_clause_satisfied_model(const Xor& x) const;
         void check_implicit_stats(const bool onlypairs = false) const;
         void check_stats(const bool allowFreed = false) const;
         void reset_vsids();
@@ -306,7 +307,7 @@ class Solver : public Searcher
         bool no_irred_nonxor_contains_clash_vars();
         void detach_clash_vars_clauses();
         bool assump_contains_xor_clash();
-        void set_clash_decision_vars(const vector<Xor>& xors);
+        void set_clash_decision_vars(const set<uint32_t>& clash_vars);
         void unset_clash_decision_vars();
         bool find_and_init_all_matrices();
         void detach_clauses_in_xors();

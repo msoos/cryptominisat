@@ -250,7 +250,6 @@ bool VarReplacer::perform_replace() {
     if (!replace_xor_clauses(solver->xorclauses)) goto end;
     if (!replace_xor_clauses(solver->xorclauses_orig)) goto end;
     solver->attach_xorclauses();
-    for(auto& v: solver->removed_xorclauses_clash_vars) v = get_var_replaced_with_fast(v);
 
     //While replacing the clauses
     //we cannot(for implicits) and/or shouldn't (for implicit & long cls) enqueue

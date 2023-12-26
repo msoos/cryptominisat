@@ -513,16 +513,6 @@ bool ClauseCleaner::clean_all_xor_clauses()
         if (!clean_xor_clauses(solver->xorclauses_orig, false)) return false;
         solver->ok = solver->propagate<false>().isNULL();
     }
-
-    // clean up removed_xorclauses_clash_vars
-    uint32_t j = 0;
-    for(uint32_t i = 0; i < solver->removed_xorclauses_clash_vars.size(); i++) {
-        if (solver->value(solver->removed_xorclauses_clash_vars[i]) == l_Undef) {
-            solver->removed_xorclauses_clash_vars[j++] = solver->removed_xorclauses_clash_vars[i];
-        }
-    }
-    solver->removed_xorclauses_clash_vars.resize(j);
-
     return solver->okay();
 }
 
@@ -538,14 +528,7 @@ bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors, const bool attached) {
             if (x.trivial()) continue;
 
             const bool keep = clean_one_xor(x, i, attached);
-            if (!keep) {
-                x = Xor();
-                solver->removed_xorclauses_clash_vars.insert(
-                    solver->removed_xorclauses_clash_vars.end()
-                    , x.clash_vars.begin()
-                    , x.clash_vars.end()
-                );
-            }
+            if (!keep) x = Xor();
             if (!solver->okay()) return false;
         }
         solver->ok = solver->propagate<false>().isNULL();

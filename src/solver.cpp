@@ -891,7 +891,6 @@ void Solver::renumber_clauses(const vector<uint32_t>& outerToInter)
         updateVarsMap(x.vars, outerToInter);
         updateVarsMap(x.clash_vars, outerToInter);
     }
-    for(auto& v: removed_xorclauses_clash_vars) v = getUpdatedVar(v, outerToInter);
 
     for(auto& bnn: bnns) {
         if (bnn == NULL) continue;
@@ -1240,31 +1239,40 @@ void Solver::check_minimization_effectiveness(const lbool status)
     }
 }
 
+bool Solver::check_xor_clause_satisfied_model(const Xor& x) const {
+    bool good = true;
+
+    bool rhs = false;
+    for(const auto& v: x) {
+        if (model_value(v) == l_Undef) {
+            cout << "ERROR: variable " << v+1 << " in xorclauses: " << x << " is UNDEF!" << endl;
+            good = false;
+        } else rhs ^= model_value(v) == l_True;
+    }
+    if (rhs != x.rhs) {
+        cout << "ERROR XOR in xorclauses not satisfied: " << x << endl;
+        good = false;
+    }
+
+    return good;
+}
+
 void Solver::extend_model_to_xorclauses_orig() {
     double myTime = cpuTime();
 
 /* #ifdef SLOW_DEBUG */
+    check_all_clause_attached();
     bool all_good = true;
     for(uint32_t v = 0; v < nVars(); v++) {
+        if (varData[v].removed == Removed::clashed) cout << "Clashed: " << v+1 << endl;
         if (varData[v].removed == Removed::clashed && model_value(v) != l_Undef) {
             cout << "ERROR: var " << v+1 << " set but it's meant to be clashed!" << endl;
             all_good = false;
         }
     }
-
-    for(const auto& x: xorclauses) {
-        bool rhs = false;
-        for(const auto& v: x) {
-            if (model_value(v) == l_Undef) {
-                cout << "ERROR: variable " << v+1 << " in xorclauses: " << x << " is UNDEF!" << endl;
-                all_good = false;
-            } else rhs ^= model_value(v) == l_True;
-        }
-        if (rhs != x.rhs) {
-            cout << "ERROR XOR in xorclauses not satisfied: " << x << endl;
-            all_good = false;
-        }
-    }
+    for(const auto& x: xorclauses) all_good &= check_xor_clause_satisfied_model(x);
+    for(const auto& gj: gmatrices) for(const auto& x: gj->xorclauses)
+        all_good &= check_xor_clause_satisfied_model(x);
     assert(all_good);
 /* #endif */
 
@@ -3458,23 +3466,19 @@ bool Solver::find_and_init_all_matrices() {
         return true;
     }
     verb_print(1, "[find&init matx] performing matrix init");
-    if (!clear_gauss_matrices()) return false;
+    if (!clear_gauss_matrices()) return false; //attaches XORs actually
 
     MatrixFinder mfinder(solver);
     bool matrix_created;
-    ok = mfinder.find_matrices(matrix_created);
+    ok = mfinder.find_matrices(matrix_created); //runs xor_together_xors, sets clash vars
     if (!ok) return false;
     if (!init_all_matrices()) return false;
 
-    bool no_irred_contains_clash = no_irred_nonxor_contains_clash_vars();
-    verb_print(2, "[gauss] matrix_created: " << matrix_created
-        << " no irred with clash: " << no_irred_contains_clash);
+    assert(no_irred_nonxor_contains_clash_vars());
+    verb_print(2, "[gauss] matrix_created: " << matrix_created);
 
-    if (no_irred_contains_clash) {
-        set_clash_decision_vars(xorclauses);
-        detach_clash_vars_clauses();
-        rebuildOrderHeap();
-    }
+    detach_clash_vars_clauses();
+    rebuildOrderHeap();
 
     #ifdef SLOW_DEBUG
     for(size_t i = 0; i< gmatrices.size(); i++) {
@@ -3779,13 +3783,10 @@ void Solver::stats_del_cl(ClOffset offs)
 }
 #endif
 
-void Solver::set_clash_decision_vars(const vector<Xor>& xors) {
-    set<uint32_t> clash_vars;
-    for(const auto& x: xors) for(const auto& v: x.clash_vars) clash_vars.insert(v);
-    for(const auto& v: clash_vars) {
-        seen[v] = 0;
-        varData[v].removed = Removed::clashed;
-    }
+void Solver::set_clash_decision_vars(const set<uint32_t>& clash_vars) {
+    for(const auto& v: clash_vars) varData[v].removed = Removed::clashed;
+    for(const auto& gj: gmatrices) for(const auto& x: gj->xorclauses)
+        for(uint32_t v: x.clash_vars) varData[v].removed = Removed::clashed;
 }
 
 void Solver::unset_clash_decision_vars() {
@@ -3794,9 +3795,9 @@ void Solver::unset_clash_decision_vars() {
 
 bool Solver::no_irred_nonxor_contains_clash_vars() {
     bool ret = true;
-
     for(const auto& x: xorclauses) for(uint32_t v: x.clash_vars) seen[v] = 1;
-    for(const auto& v: removed_xorclauses_clash_vars) seen[v] = 1;
+    for(const auto& gj: gmatrices) for(const auto& x: gj->xorclauses)
+        for(uint32_t v: x.clash_vars) seen[v] = 1;
 
     for(const auto& l: assumptions) {
         const Lit p = map_outer_to_inter(l.lit_outer);
@@ -3863,17 +3864,17 @@ bool Solver::no_irred_nonxor_contains_clash_vars() {
     }
 
     for(const auto& x: xorclauses) for(uint32_t v: x.clash_vars) seen[v] = 0;
-    for(const auto& v: removed_xorclauses_clash_vars) seen[v] = 0;
+    for(const auto& gj: gmatrices) for(const auto& x: gj->xorclauses)
+        for(uint32_t v: x.clash_vars) seen[v] = 0;
     return ret;
 }
 
 bool Solver::assump_contains_xor_clash()
 {
     //Set variables that are clashing
-    for(const auto& x: xorclauses) {
+    for(const auto& x: xorclauses) for(uint32_t v: x.clash_vars) seen[v] = 1;
+    for(const auto& gj: gmatrices) for(const auto& x: gj->xorclauses)
         for(uint32_t v: x.clash_vars) seen[v] = 1;
-    }
-    for(const auto& v: removed_xorclauses_clash_vars) seen[v] = 1;
 
     bool ret = false;
     for(const auto& l: assumptions) {
@@ -3887,11 +3888,9 @@ bool Solver::assump_contains_xor_clash()
         }
     }
 
-    // Cleanup
-    for(const auto& x: xorclauses) {
+    for(const auto& x: xorclauses) for(uint32_t v: x.clash_vars) seen[v] = 0;
+    for(const auto& gj: gmatrices) for(const auto& x: gj->xorclauses)
         for(uint32_t v: x.clash_vars) seen[v] = 0;
-    }
-    for(const auto& v: removed_xorclauses_clash_vars) seen[v] = 0;
     return ret;
 }
 

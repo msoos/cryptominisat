@@ -501,6 +501,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors) {
                 }
             } else if (clash_num > 1) {
                 //add back to ws, can't do much
+                VERBOSE_PRINT("more than one clash");
                 ws.push(Watched(idxes[0], WatchType::watch_idx_t));
                 ws.push(Watched(idxes[1], WatchType::watch_idx_t));
                 continue;
@@ -520,8 +521,8 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors) {
                     x_new.bdd = xs.sum();
                 }
                 #endif
-                VERBOSE_PRINT("clashed on var: " << clash_var+1);
-                VERBOSE_PRINT("final: " << x_new <<  " -- at idx: " << this_xors.size());
+                VERBOSE_PRINT("clashed on var: " << clash_var+1 <<
+                    " final: " << x_new <<  " -- at idx: " << this_xors.size());
 
                 changed = true;
                 this_xors.push_back(x_new);
@@ -620,8 +621,8 @@ void XorFinder::clean_xors_from_empty(vector<Xor>& thisxors)
     thisxors.resize(j);
 }
 
-uint32_t XorFinder::xor_two(Xor const* x1_p, Xor const* x2_p, uint32_t& clash_var)
-{
+uint32_t XorFinder::xor_two(Xor const* x1_p, Xor const* x2_p, uint32_t& clash_var) {
+    SLOW_DEBUG_DO(for(const auto& s: seen) assert(s == 0));
     tmp_vars_xor_two.clear();
     if (x1_p->size() > x2_p->size()) std::swap(x1_p, x2_p);
     const Xor& x1 = *x1_p;
@@ -633,44 +634,22 @@ uint32_t XorFinder::xor_two(Xor const* x1_p, Xor const* x2_p, uint32_t& clash_va
         seen[v] = 1;
     }
 
-    uint32_t i_x2;
-    bool early_abort = false;
-    for(i_x2 = 0; i_x2 < x2.size(); i_x2++) {
-        uint32_t v = x2[i_x2];
+    for(const auto& v: x2) {
         assert(seen[v] != 2);
-        if (seen[v] == 0) {
-            tmp_vars_xor_two.push_back(v);
-        } else {
+        if (seen[v] == 0) tmp_vars_xor_two.push_back(v);
+        else {
             clash_var = v;
-            if (clash_num > 0 &&
-                clash_num != i_x2 //not equivalent by chance
-            ) {
-                //early abort, it's never gonna be good
-                clash_num++;
-                early_abort = true;
-                break;
-            }
             clash_num++;
         }
         seen[v] = 2;
     }
 
-    if (!early_abort) {
-        #ifdef SLOW_DEBUG
-        uint32_t other_clash = 0;
-        #endif
-        for(uint32_t v: x1) {
-            if (seen[v] != 2) tmp_vars_xor_two.push_back(v);
-            else SLOW_DEBUG_DO(other_clash++);
-            seen[v] = 0;
-        }
-        SLOW_DEBUG_DO(assert(other_clash == clash_num));
-    } else {
-        for(uint32_t v: x1) seen[v] = 0;
+    for(const auto& v: x1) {
+        if (seen[v] != 2) tmp_vars_xor_two.push_back(v);
+        seen[v] = 0;
     }
 
-    for(uint32_t i = 0; i < i_x2; i++) seen[x2[i]] = 0;
-    SLOW_DEBUG_DO(for(uint32_t v: x1) assert(seen[v] == 0));
+    for(const auto& v: x2) seen[v] = 0;
     return clash_num;
 }
 

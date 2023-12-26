@@ -45,7 +45,6 @@ class MatrixFinder {
 
         //NOTE "simplify_xors" should always be true except during testing
         bool find_matrices(bool& matrix_created);
-        set<uint32_t> clash_vars;
 
     private:
         uint32_t setup_matrices_attach_remaining_cls();
