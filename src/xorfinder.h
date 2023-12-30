@@ -177,7 +177,7 @@ public:
         uint32_t maxsize = numeric_limits<uint32_t>::min();
     };
 
-    bool find_xors();
+    bool find_xors(const bool insert_var);
     const Stats& get_stats() const;
     size_t mem_used() const;
     void grab_mem();

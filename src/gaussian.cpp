@@ -315,7 +315,7 @@ bool EGaussian::full_init(bool& created) {
         if (solver->trail_size() == trail_before) break;
     }
     SLOW_DEBUG_DO(check_watchlist_sanity());
-    verb_print(2, "c [gauss] initialised matrix " << matrix_no);
+    verb_print(2, "[gauss] initialized matrix " << matrix_no);
 
     xor_reasons.resize(num_rows);
     uint32_t num_64b = num_cols/64+(bool)(num_cols%64);

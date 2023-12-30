@@ -110,6 +110,7 @@ class Solver : public Searcher
         vector<Lit> probe_inter_tmp;
         lbool probe_outside(Lit l, uint32_t& min_props);
         void set_max_confl(uint64_t max_confl);
+        void changed_sampling_vars();
 
         //frat for SAT problems
         void add_empty_cl_to_frat();
@@ -320,6 +321,7 @@ class Solver : public Searcher
         void add_assumption(const Lit assump);
         void check_assigns_for_assumptions() const;
         bool check_assumptions_contradict_foced_assignment() const;
+        void uneliminate_sampling_set();
 
         //Deleting clauses
         void free_cl(Clause* cl, bool also_remove_clid = true);
@@ -506,7 +508,7 @@ class Solver : public Searcher
 
         /////////////////////
         // Clauses
-        bool addClauseHelper(vector<Lit>& ps);
+        bool add_clause_helper(vector<Lit>& ps);
         bool add_clause_outer(vector<Lit>& ps, bool red = false);
 
         /////////////////

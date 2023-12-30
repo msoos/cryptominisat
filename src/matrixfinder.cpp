@@ -91,13 +91,13 @@ inline bool MatrixFinder::belong_same_matrix(const Xor& x) {
 // Puts XORs from xorclauses into matrices. Matrices are created but not initialized
 // Detaches XORs that have been put into matrices
 // Returns SAT/UNSAT
-bool MatrixFinder::find_matrices(bool& matrix_created)
+bool MatrixFinder::find_matrices(const bool do_insert_var, bool& matrix_created)
 {
     assert(solver->decisionLevel() == 0);
     assert(solver->ok);
     assert(solver->gmatrices.empty());
 
-    solver->detach_clear_xorclauses();
+    solver->detach_clear_xorclauses(do_insert_var);
     matrix_created = true;
 
     table.clear();

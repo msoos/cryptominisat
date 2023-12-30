@@ -2228,7 +2228,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                )
             {
                 XorFinder finder(this, solver);
-                finder.find_xors(); // beware can set UNSAT flag (ok = false)
+                finder.find_xors(false); // beware can set UNSAT flag (ok = false)
                 for(const auto& x: solver->xorclauses_orig) for(const auto& v: x) xorclauses_vars[v] = 1;
                 runStats.xorTime += finder.get_stats().findTime;
                 solver->xorclauses = solver->xorclauses_orig;
@@ -2308,8 +2308,8 @@ bool OccSimplifier::setup() {
 
     if (!solver->clauseCleaner->remove_and_clean_all()) return false;
     solver->unset_clash_decision_vars();
-    solver->clear_gauss_matrices();
-    solver->detach_clear_xorclauses();
+    solver->clear_gauss_matrices(false, false);
+    solver->detach_clear_xorclauses(false);
     for(const auto& x: solver->xorclauses_orig) for(const auto& v: x) xorclauses_vars[v] = 1;
 
     //Setup

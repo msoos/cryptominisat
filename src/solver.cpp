@@ -650,11 +650,8 @@ void Solver::attach_bin_clause(
     , [[maybe_unused]] const bool checkUnassignedFirst
 ) {
     //Update stats
-    if (red) {
-        binTri.redBins++;
-    } else {
-        binTri.irredBins++;
-    }
+    if (red) binTri.redBins++;
+    else binTri.irredBins++;
 
     //Call Solver's function for heavy-lifting
     PropEngine::attach_bin_clause(lit1, lit2, red, ID, checkUnassignedFirst);
@@ -688,11 +685,8 @@ void Solver::detach_modified_clause(
 }
 
 //Takes OUTSIDE variables and makes them INTERNAL, replaces them, etc.
-bool Solver::addClauseHelper(vector<Lit>& ps)
-{
-    //If already UNSAT, just return
-    if (!ok)
-        return false;
+bool Solver::add_clause_helper(vector<Lit>& ps) {
+    if (!ok) return false;
 
     //Sanity checks
     assert(decisionLevel() == 0);
@@ -707,36 +701,24 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
     for (Lit& lit: ps) {
         //Check for too large variable number
         if (lit.var() >= nVarsOuter()) {
-            std::cerr
-            << "ERROR: Variable " << lit.var() + 1
-            << " inserted, but max var is "
-            << nVarsOuter()
-            << endl;
+            std::cerr << "ERROR: Variable " << lit.var() + 1
+            << " inserted, but max var is " << nVarsOuter() << endl;
             std::exit(-1);
         }
 
         //Undo var replacement
         if (!fresh_solver) {
             const Lit updated_lit = varReplacer->get_lit_replaced_with_outer(lit);
-            if (conf.verbosity >= 12
-                && lit != updated_lit
-            ) {
-                cout
-                << "EqLit updating outer lit " << lit
-                << " to outer lit " << updated_lit
-                << endl;
-            }
+            if (conf.verbosity >= 12 && lit != updated_lit)
+                cout << "EqLit updating outer lit " << lit << " to outer lit " << updated_lit << endl;
             lit = updated_lit;
 
             //Map outer to inter, and add re-variable if need be
-            if (map_outer_to_inter(lit).var() >= nVars()) {
-                new_var(false, lit.var(), false);
-            }
+            if (map_outer_to_inter(lit).var() >= nVars()) new_var(false, lit.var(), false);
         }
     }
 
-    if (!fresh_solver)
-        renumber_outer_to_inter_lits(ps);
+    if (!fresh_solver) renumber_outer_to_inter_lits(ps);
 
     #ifdef SLOW_DEBUG
     //Check renumberer
@@ -747,18 +729,15 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
     #endif
 
     //Uneliminate vars
-    if (!fresh_solver && (get_num_vars_elimed() > 0)) {
-        for (const Lit lit: ps) {
-            if (varData[lit.var()].removed == Removed::clashed) {
-                if (clear_gauss_matrices()) return false;
-                assert(varData[lit.var()].removed == Removed::none);
-            }
+    if (!fresh_solver
+            && (get_num_vars_elimed() != 0 || xorclauses.size() != xorclauses_orig.size()) ) {
+        for (const Lit& lit: ps) {
+            if (varData[lit.var()].removed == Removed::clashed && !clear_gauss_matrices(true, false))
+                return false;
+            if (varData[lit.var()].removed == Removed::elimed && !occsimplifier->uneliminate(lit.var()))
+                return false;
 
-            if (conf.perform_occur_based_simp
-                && varData[lit.var()].removed == Removed::elimed
-            ) {
-                if (!occsimplifier->uneliminate(lit.var())) return false;
-            }
+            assert(varData[lit.var()].removed == Removed::none);
         }
     }
 
@@ -784,10 +763,8 @@ bool Solver::add_clause_outer_copylits(const vector<Lit>& lits)
 bool Solver::add_clause_outer(vector<Lit>& ps, bool red)
 {
     if (conf.perform_occur_based_simp && occsimplifier->getAnythingHasBeenElimed()) {
-        std::cerr
-        << "ERROR: Cannot add new clauses to the system if blocking was"
-        << " enabled. Turn it off from conf.doBlockClauses"
-        << endl;
+        std::cerr << "ERROR: Cannot add new clauses to the system if blocking was"
+        << " enabled. Turn it off from conf.doBlockClauses" << endl;
         std::exit(-1);
     }
 
@@ -796,12 +773,10 @@ bool Solver::add_clause_outer(vector<Lit>& ps, bool red)
     *frat << origcl << clstats.ID << ps << fin;
     if (red) clstats.which_red_array = 2;
 
-    #ifdef VERBOSE_DEBUG
-    cout << "Adding clause " << ps << endl;
-    #endif //VERBOSE_DEBUG
+    VERBOSE_PRINT("Adding clause " << ps);
     const size_t origTrailSize = trail.size();
 
-    if (!addClauseHelper(ps)) {
+    if (!add_clause_helper(ps)) {
         *frat << del << clstats.ID << ps << fin;
         return false;
     }
@@ -970,7 +945,7 @@ bool Solver::renumber_variables(bool must_renumber)
     if (nVars() == 0) return okay();
     if (!must_renumber && calc_renumber_saving() < 0.2) return okay();
     unset_clash_decision_vars();
-    if (!clear_gauss_matrices()) return false;
+    if (!clear_gauss_matrices(false, false)) return false;
 
     double myTime = cpuTime();
     if (!clauseCleaner->remove_and_clean_all()) return false;
@@ -1092,9 +1067,7 @@ void Solver::save_on_var_memory(const uint32_t newNumVars)
 void Solver::set_assumptions()
 {
     assert(assumptions.empty());
-    #ifdef SLOW_DEBUG
-    for(const auto& x: varData) { assert(x.assumption == l_Undef); }
-    #endif
+    SLOW_DEBUG_DO(for(const auto& x: varData) assert(x.assumption == l_Undef));
 
     conflict.clear();
     if (get_num_bva_vars() > 0) {
@@ -1103,7 +1076,7 @@ void Solver::set_assumptions()
     } else {
         inter_assumptions_tmp = outside_assumptions;
     }
-    addClauseHelper(inter_assumptions_tmp);
+    add_clause_helper(inter_assumptions_tmp);
     assert(inter_assumptions_tmp.size() == outside_assumptions.size());
 
     assumptions.resize(inter_assumptions_tmp.size());
@@ -1119,6 +1092,15 @@ void Solver::set_assumptions()
     }
 
     fill_assumptions_set();
+}
+
+void Solver::uneliminate_sampling_set() {
+    if (!conf.sampling_vars) return;
+    assert(get_num_bva_vars() == 0 && "There is no OUTSIDE etc. here");
+
+    vector<Lit> tmp;
+    for(const auto& v: *conf.sampling_vars) tmp.push_back(Lit(v, false));
+    add_clause_helper(tmp);
 }
 
 void Solver::add_assumption(const Lit assump)
@@ -1260,7 +1242,7 @@ bool Solver::check_xor_clause_satisfied_model(const Xor& x) const {
 void Solver::extend_model_to_xorclauses_orig() {
     double myTime = cpuTime();
 
-/* #ifdef SLOW_DEBUG */
+#ifdef SLOW_DEBUG
     check_all_clause_attached();
     bool all_good = true;
     for(uint32_t v = 0; v < nVars(); v++) {
@@ -1274,7 +1256,7 @@ void Solver::extend_model_to_xorclauses_orig() {
     for(const auto& gj: gmatrices) for(const auto& x: gj->xorclauses)
         all_good &= check_xor_clause_satisfied_model(x);
     assert(all_good);
-/* #endif */
+#endif
 
     uint32_t set_var = 0;
     bool more_vars_unset = true;
@@ -1305,7 +1287,7 @@ void Solver::extend_model_to_xorclauses_orig() {
         }
     }
 
-    /* #ifdef SLOW_DEBUG */
+    #ifdef SLOW_DEBUG
     uint32_t at = 0;
     for(const auto& xs: {xorclauses, xorclauses_orig}) {for(const auto& x: xs) {
         bool rhs = false;
@@ -1322,17 +1304,11 @@ void Solver::extend_model_to_xorclauses_orig() {
             assert(false);
         }
     } at++; }
-    /* #endif */
+    #endif
 
-    if (conf.verbosity >= 1) {
-        cout
-        << "c [gauss] extended XOR clash vars."
-        << " set: " << set_var
-        << " double-undef: " << more_vars_unset
-        << " iters: " << iter
-        << conf.print_times(cpuTime() - myTime)
-        << endl;
-    }
+    verb_print(1, "[gauss] extended XOR clash vars."
+        << " set: " << set_var << " double-undef: " << more_vars_unset
+        << " iters: " << iter << conf.print_times(cpuTime() - myTime));
 }
 
 void Solver::extend_solution(const bool only_sampling_solution) {
@@ -1475,14 +1451,9 @@ void Solver::check_and_upd_config_parameters()
         #endif
     }
 
-    #ifdef SLOW_DEBUG
-    if (conf.sampling_vars)
-    {
-        for(uint32_t v: *conf.sampling_vars) {
-            assert(v < nVarsOutside());
-        }
+    if (conf.sampling_vars) {
+        SLOW_DEBUG_DO(for(uint32_t v: *conf.sampling_vars) assert(v < nVarsOutside()));
     }
-    #endif
 
     if (conf.blocking_restart_trail_hist_length == 0) {
         std::cerr << "ERROR: Blocking restart length must be at least 0" << endl;
@@ -1507,6 +1478,7 @@ lbool Solver::simplify_problem_outside(const string* strategy)
     conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
     solveStats.num_simplify_this_solve_call = 0;
     set_assumptions();
+    uneliminate_sampling_set();
 
     lbool status = l_Undef;
     if (!ok) {
@@ -1542,6 +1514,7 @@ void Solver::reset_for_solving() {
     polarity_strategy_change = 0;
     increasing_phase_size = conf.restart_first;
     set_assumptions();
+    uneliminate_sampling_set();
     #ifdef SLOW_DEBUG
     if (ok) {
         assert(check_order_heap_sanity());
@@ -2200,7 +2173,7 @@ lbool Solver::simplify_problem(const bool startup, const string& strategy) {
     lbool ret = l_Undef;
     clear_order_heap();
     unset_clash_decision_vars();
-    if (!clear_gauss_matrices()) return l_False;
+    if (!clear_gauss_matrices(false, false)) return l_False;
 
     if (ret == l_Undef) ret = execute_inprocess_strategy(startup, strategy);
     assert(ret != l_True);
@@ -2896,13 +2869,9 @@ void Solver::check_implicit_propagated() const
     }
 }
 
-size_t Solver::get_num_vars_elimed() const
-{
-    if (conf.perform_occur_based_simp) {
-        return occsimplifier->get_num_elimed_vars();
-    } else {
-        return 0;
-    }
+size_t Solver::get_num_vars_elimed() const {
+    if (conf.perform_occur_based_simp) return occsimplifier->get_num_elimed_vars();
+    else return 0;
 }
 
 void Solver::free_unused_watches()
@@ -3000,7 +2969,7 @@ bool Solver::add_xor_clause_outside(const vector<uint32_t>& vars, bool rhs)
     SLOW_DEBUG_DO(check_too_large_variable_number(lits));
 
     back_number_from_outside_to_outer(lits);
-    addClauseHelper(back_number_from_outside_to_outer_tmp);
+    add_clause_helper(back_number_from_outside_to_outer_tmp);
     add_xor_clause_inter(back_number_from_outside_to_outer_tmp, rhs, true, false);
 
     return okay();
@@ -3024,7 +2993,7 @@ bool Solver::add_bnn_clause_outside(
         lits2.push_back(out);
     }
     back_number_from_outside_to_outer(lits2);
-    addClauseHelper(back_number_from_outside_to_outer_tmp);
+    add_clause_helper(back_number_from_outside_to_outer_tmp);
     if (out != lit_Undef) {
         out = back_number_from_outside_to_outer_tmp.back();
         back_number_from_outside_to_outer_tmp.pop_back();
@@ -3429,6 +3398,7 @@ void Solver::detach_clash_vars_clauses() {
                 continue;
             }
             detachClause(c);
+            free_cl(&c);
         }
         cls.resize(j);
     }
@@ -3448,7 +3418,7 @@ void Solver::detach_clash_vars_clauses() {
                 ws[j++] = ws[i];
                 continue;
             }
-            litStats.redLits--;
+            if (l > w.lit2()) binTri.redBins--;
         }
         ws.resize(j);
     }
@@ -3466,11 +3436,11 @@ bool Solver::find_and_init_all_matrices() {
         return true;
     }
     verb_print(1, "[find&init matx] performing matrix init");
-    if (!clear_gauss_matrices()) return false; //attaches XORs actually
+    if (!clear_gauss_matrices(true, false)) return false; //attaches XORs actually
 
     MatrixFinder mfinder(solver);
     bool matrix_created;
-    ok = mfinder.find_matrices(matrix_created); //runs xor_together_xors, sets clash vars
+    ok = mfinder.find_matrices(true, matrix_created); //runs xor_together_xors, sets clash vars
     if (!ok) return false;
     if (!init_all_matrices()) return false;
 
@@ -3715,7 +3685,7 @@ bool Solver::implied_by(const std::vector<Lit>& lits,
     }
 
     implied_by_tmp_lits = lits;
-    if (!addClauseHelper(implied_by_tmp_lits)) {
+    if (!add_clause_helper(implied_by_tmp_lits)) {
         return false;
     }
 
@@ -3753,9 +3723,7 @@ bool Solver::implied_by(const std::vector<Lit>& lits,
     cancelUntil<false, true>(0);
 
     //Map to outer
-    for(auto& l: out_implied) {
-        l = map_inter_to_outer(l);
-    }
+    for(auto& l: out_implied) l = map_inter_to_outer(l);
     varReplacer->extend_pop_queue(out_implied);
     return true;
 }
@@ -3800,11 +3768,13 @@ bool Solver::no_irred_nonxor_contains_clash_vars() {
         for(uint32_t v: x.clash_vars) seen[v] = 1;
 
     for(const auto& l: assumptions) {
+        assert(get_num_bva_vars() == 0);
         const Lit p = map_outer_to_inter(l.lit_outer);
         if (seen[p.var()] == 1) {
             //We cannot have a clash variable that's an assumption
             //it would enqueue the assumption variable but it's a clash
             //var and that's not supposed to be in the trail at all.
+            cout << "ERROR: assumption var that is clash: " << p << endl;
             ret = false;
             break;
         }
@@ -3826,23 +3796,21 @@ bool Solver::no_irred_nonxor_contains_clash_vars() {
         if (num_clash_vars == 0) continue;
 
         //non-full XORs or other non-XOR clause
-        if (conf.verbosity >= 3) {
-            cout << "c CL with clash: " << *cl
-            << " red: " << cl->red()
-            << " num_clash_vars: " << num_clash_vars
-            << " size: " << cl->size()
-            << endl;
-            for(const Lit l: *cl) {
-                if (seen[l.var()] == 1) {
-                    cout << "c clash lit: " << l
-                    << " value: " << value(l) << endl;
-                }
+        cout << "ERROR. CL with clash: " << *cl
+        << " red: " << cl->red()
+        << " num_clash_vars: " << num_clash_vars
+        << " size: " << cl->size()
+        << endl;
+        for(const Lit l: *cl) {
+            if (seen[l.var()] == 1) {
+                cout << "c clash lit: " << l
+                << " value: " << value(l) << endl;
             }
-            for(const Lit l: *cl) {
-                if (seen[l.var()] == 0) {
-                    cout << "c not clash: " << l
-                    << " value: " << value(l) << endl;
-                }
+        }
+        for(const Lit l: *cl) {
+            if (seen[l.var()] == 0) {
+                cout << "c not clash: " << l
+                << " value: " << value(l) << endl;
             }
         }
         ret = false;
@@ -3854,8 +3822,7 @@ bool Solver::no_irred_nonxor_contains_clash_vars() {
         for(const auto& w: ws) {
             if (w.isBin() && !w.red()) {
                 if (seen[l.var()]==1 || seen[w.lit2().var()]==1) {
-                    if (conf.verbosity >= 3)
-                        cout << "c BIN with clash: " << l << " " << w.lit2() << endl;
+                    cout << "ERROR. BIN with clash: " << l << " " << w.lit2() << endl;
                     ret = false;
                     break;
                 }
@@ -4133,7 +4100,7 @@ pair<lbool, vector<lbool>> Solver::extend_minimized_model(const vector<lbool>& m
 bool Solver::minimize_clause(vector<Lit>& cl) {
     assert(get_num_bva_vars() == 0);
 
-    addClauseHelper(cl);
+    add_clause_helper(cl);
     new_decision_level();
     uint32_t i = 0;
     uint32_t j = 0;

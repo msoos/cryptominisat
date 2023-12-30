@@ -94,7 +94,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     next_sls = 44000.0*conf.global_next_multiplier;
 }
 
-Searcher::~Searcher() { clear_gauss_matrices(true); }
+Searcher::~Searcher() { clear_gauss_matrices(false, true); }
 
 void Searcher::new_var(
     const bool bva,
@@ -3516,8 +3516,7 @@ inline bool Searcher::check_order_heap_sanity() {
     }
 
     vector<uint32_t> tmp;
-    for(size_t i = 0; i < nVars(); i++)
-    {
+    for(size_t i = 0; i < nVars(); i++) {
         if (varData[i].removed == Removed::none && value(i) == l_Undef) {
             tmp.push_back(i);
             check_var_in_branch_strategy(i, branch::vsids);
@@ -3532,8 +3531,7 @@ inline bool Searcher::check_order_heap_sanity() {
     return true;
 }
 
-// clear xorclauses
-bool Searcher::detach_clear_xorclauses() {
+bool Searcher::detach_clear_xorclauses(const bool do_insert_var) {
     if (frat->enabled()) {
         frat->flush();
         TBUDDY_DO(free_bdds(xorclauses));
@@ -3541,6 +3539,17 @@ bool Searcher::detach_clear_xorclauses() {
     for(auto& gw: solver->gwatches) gw.clear();
     xorclauses.clear();
     xorclauses = xorclauses_orig;
+    SLOW_DEBUG_DO(for(const auto& x: xorclauses_orig) assert(x.clash_vars.empty()));
+    for(uint32_t v = 0; v < nVars(); v++) {
+        if (varData[v].removed == Removed::clashed) {
+            varData[v].removed = Removed::none;
+            if (do_insert_var) {
+                vmtf_init_enqueue(v);
+                insert_var_order(v, branch::vsids);
+                insert_var_order(v, branch::rand);
+            }
+        }
+    }
     return okay();
 }
 
@@ -3575,7 +3584,7 @@ bool Searcher::attach_xorclauses() {
 // Moves XORs from matrixes back to xorclauses, and attaches them.
 // Deletes all matrices.
 // TODO: this does NOT add back clash variables
-bool Searcher::clear_gauss_matrices(const bool destruct) {
+bool Searcher::clear_gauss_matrices(const bool do_insert_var, const bool destruct) {
     TBUDDY_DO(if (!destruct && frat->enabled()) for(auto& g: gmatrices) g->finalize_frat());
 
     xorclauses_updated = true;
@@ -3600,7 +3609,7 @@ bool Searcher::clear_gauss_matrices(const bool destruct) {
         }
         #endif
     }
-    detach_clear_xorclauses();
+    detach_clear_xorclauses(do_insert_var);
     if (!destruct) attach_xorclauses();
     return okay();
 }

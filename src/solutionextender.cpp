@@ -26,6 +26,7 @@ THE SOFTWARE.
 #include "solvertypesmini.h"
 #include "varreplacer.h"
 #include "occsimplifier.h"
+#include "gaussian.h"
 
 //#define VERBOSE_DEBUG_SOLUTIONEXTENDER
 
@@ -57,12 +58,13 @@ void SolutionExtender::extend() {
     }
     #endif
 
-    for(const auto& x: solver->xorclauses_orig) {
-        for(auto v: x) {
-            v = solver->map_inter_to_outer(v);
-            assert(solver->varData[v].removed == Removed::none);
-            assert(solver->model_value(v) != l_Undef);
-        }
+    for(const auto& x: solver->xorclauses_orig) for(auto v: x) {
+        v = solver->map_inter_to_outer(v);
+        assert(solver->model_value(v) != l_Undef);
+    }
+    for(const auto& gj: solver->gmatrices) for(const auto& x: gj->xorclauses) for(auto v: x) {
+        v = solver->map_inter_to_outer(v);
+        assert(solver->model_value(v) != l_Undef);
     }
 
     //Extend variables already set

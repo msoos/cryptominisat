@@ -24,6 +24,7 @@ THE SOFTWARE.
 #include <algorithm>
 #include <random>
 
+#include "constants.h"
 #include "distillerbin.h"
 #include "clausecleaner.h"
 #include "time_mem.h"
@@ -54,17 +55,13 @@ bool DistillerBin::distill()
     runStats.clear();
     *solver->frat << __PRETTY_FUNCTION__ << " start\n";
 
-    if (!distill_bin_cls_all(1.0)) {
-        goto end;
-    }
+    if (!distill_bin_cls_all(1.0)) goto end;
 
 end:
     globalStats += runStats;
     if (solver->conf.verbosity) {
-        if (solver->conf.verbosity >= 3)
-            runStats.print(solver->nVars());
-        else
-            runStats.print_short(solver);
+        if (solver->conf.verbosity >= 3) runStats.print(solver->nVars());
+        else runStats.print_short(solver);
     }
     runStats.clear();
     *solver->frat << __PRETTY_FUNCTION__ << " end\n";
@@ -72,10 +69,8 @@ end:
     return solver->okay();
 }
 
-
-bool DistillerBin::distill_bin_cls_all(
-    double time_mult
-) {
+// returns solver->okay()
+bool DistillerBin::distill_bin_cls_all( double time_mult) {
     assert(solver->ok);
     if (time_mult == 0.0) return solver->okay();
     verb_print(6, "Doing distillation branch for long clauses");
@@ -112,9 +107,7 @@ bool DistillerBin::distill_bin_cls_all(
     std::shuffle(todo.begin(), todo.end(), std::default_random_engine(solver->mtrand.randInt()));
     for(const auto& lit: todo) {
         time_out = go_through_bins(lit);
-        if (time_out || !solver->okay()) {
-            break;
-        }
+        if (time_out || !solver->okay()) break;
     }
 
     const double time_used = cpuTime() - myTime;
@@ -161,11 +154,7 @@ bool DistillerBin::go_through_bins(
         if ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps >= maxNumProps
             || solver->must_interrupt_asap()
         ) {
-            if (solver->conf.verbosity >= 3) {
-                cout
-                << "c Need to finish distillation -- ran out of prop (=allocated time)"
-                << endl;
-            }
+            verb_print(3, "Need to finish distillation -- ran out of prop (=allocated time)");
             runStats.timeOut++;
             return true;
         }

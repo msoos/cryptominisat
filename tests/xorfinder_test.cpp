@@ -57,7 +57,7 @@ TEST_F(xor_finder, find_none)
     occsimp->setup();
     XorFinder finder(occsimp, s);
     finder.grab_mem();
-    finder.find_xors();
+    finder.find_xors(false);
     EXPECT_EQ(s->xorclauses.size(), 0U);
 }
 
@@ -70,7 +70,7 @@ TEST_F(xor_finder, find_tri_1)
 
     occsimp->setup();
     XorFinder finder(occsimp, s);
-    finder.find_xors();
+    finder.find_xors(false);
     check_xors_contains(s->xorclauses, "1, 2, 3 = 1");
 }
 
@@ -83,7 +83,7 @@ TEST_F(xor_finder, find_tri_2)
 
     occsimp->setup();
     XorFinder finder(occsimp, s);
-    finder.find_xors();
+    finder.find_xors(false);
     check_xors_eq(s->xorclauses, "1, 2, 3 = 0");
 }
 
@@ -101,7 +101,7 @@ TEST_F(xor_finder, find_tri_3)
 
     occsimp->setup();
     XorFinder finder(occsimp, s);
-    finder.find_xors();
+    finder.find_xors(false);
     check_xors_contains(s->xorclauses, "1, 2, 3 = 0");
     check_xors_contains(s->xorclauses, "1, 2, 3 = 1");
 }
@@ -121,7 +121,7 @@ TEST_F(xor_finder, find_4_1)
 
     occsimp->setup();
     XorFinder finder(occsimp, s);
-    finder.find_xors();
+    finder.find_xors(false);
     check_xors_eq(s->xorclauses, "1, 2, 3, 4 = 0;");
 }
 
@@ -138,7 +138,7 @@ TEST_F(xor_finder, find_4_4)
 
     occsimp->setup();
     XorFinder finder(occsimp, s);
-    finder.find_xors();
+    finder.find_xors(false);
     check_xors_eq(s->xorclauses, "1, 2, 3, 4 = 1");
 }
 
@@ -160,7 +160,7 @@ TEST_F(xor_finder, find_4_2)
 
     occsimp->setup();
     XorFinder finder(occsimp, s);
-    finder.find_xors();
+    finder.find_xors(false);
     check_xors_eq(s->xorclauses, "1, 2, 3, 4 = 0;");
 }
 
@@ -178,7 +178,7 @@ TEST_F(xor_finder, find_4_3)
 
     occsimp->setup();
     XorFinder finder(occsimp, s);
-    finder.find_xors();
+    finder.find_xors(false);
     check_xors_eq(s->xorclauses, "1, 2, 3, 4 = 0;");
 }
 
@@ -211,7 +211,7 @@ TEST_F(xor_finder, find_5_2)
 
     occsimp->setup();
     XorFinder finder(occsimp, s);
-    finder.find_xors();
+    finder.find_xors(false);
     check_xors_eq(s->xorclauses, "1, 2, 3, 4, 5 = 1;");
 }*/
 
@@ -238,7 +238,7 @@ TEST_F(xor_finder, find_4_5)
 
     occsimp->setup();
     XorFinder finder(occsimp, s);
-    finder.find_xors();
+    finder.find_xors(false);
     check_xors_eq(s->xorclauses, "1, 2, 3, 4 = 1; 1, 2, 3, 4 = 0");
 }
 /***
@@ -273,7 +273,7 @@ TEST_F(xor_finder, find_5_1)
 
     occsimp->setup();
     XorFinder finder(occsimp, s);
-    finder.find_xors();
+    finder.find_xors(false);
     check_xors_eq(s->xorclauses, "1, 2, 3, 4, 5 = 1;");
 }
 
@@ -316,7 +316,7 @@ TEST_F(xor_finder, find_5_1)
 
     occsimp->setup();
     XorFinder finder(occsimp, s);
-    finder.find_xors();
+    finder.find_xors(false);
     check_xors_eq(s->xorclauses, "1, 7, 3, 4, 5, 9 = 0;");
 }
 
@@ -357,7 +357,7 @@ TEST_F(xor_finder, find_6_1)
 
     occsimp->setup();
     XorFinder finder(occsimp, s);
-    finder.find_xors();
+    finder.find_xors(false);
     check_xors_eq(s->xorclauses, "6, 7, 3, 4, 5, 9 = 1;");
 }*/
 

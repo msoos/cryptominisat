@@ -129,7 +129,7 @@ void XorFinder::clean_equivalent_xors(vector<Xor>& txors) {
 // Detaches & clears xorclauses, sets it to xorclauses_orig
 // Finds the XORs based on long clauses, and adds them to xorclauses_orig
 // does NOT detach or delete the corresponding clauses
-bool XorFinder::find_xors() {
+bool XorFinder::find_xors(const bool do_insert_var) {
     assert(solver->gmatrices.empty());
     const auto orig_num_xors = solver->xorclauses_orig.size();
 
@@ -142,7 +142,7 @@ bool XorFinder::find_xors() {
                 << " as the current number was lower than the cutting number");
         solver->conf.maxXorToFind = solver->conf.xor_var_per_cut + 2;
     }
-    if (!solver->detach_clear_xorclauses()) return false;
+    if (!solver->detach_clear_xorclauses(do_insert_var)) return false;
 
     double myTime = cpuTime();
     const int64_t orig_xor_find_time_limit =
@@ -554,7 +554,8 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors) {
     }
 
     //Clear
-    for(const Lit l: toClear) occ_cnt[l.var()] = 0; toClear.clear();
+    for(const Lit l: toClear) occ_cnt[l.var()] = 0;
+    toClear.clear();
     for(const auto& x: to_clear_2) seen2[x] = 0;
 
     solver->clean_occur_from_idx_types_only_smudged();

@@ -142,8 +142,8 @@ class Searcher : public HyperEngine
 
         //Gauss
         bool attach_xorclauses();
-        bool detach_clear_xorclauses();
-        bool clear_gauss_matrices(const bool destruct = false);
+        bool detach_clear_xorclauses(const bool do_insert_var);
+        bool clear_gauss_matrices(const bool do_insert_var, const bool destruct);
         void print_matrix_stats();
         void check_need_gauss_jordan_disable();
 
@@ -195,8 +195,7 @@ class Searcher : public HyperEngine
         void rebuildOrderHeap();
         void rebuildOrderHeapVMTF(vector<uint32_t>& vs);
         void print_order_heap();
-        void clear_order_heap()
-        {
+        void clear_order_heap() {
             order_heap_vsids.clear();
             order_heap_rand.clear();
         }
@@ -487,18 +486,13 @@ inline void Searcher::insert_var_order(const uint32_t x)
 
 inline void Searcher::insert_var_order(const uint32_t var, const branch type)
 {
-    #ifdef SLOW_DEUG
-    assert(varData[x].removed == Removed::none
-        && "All variables should be decision vars unless removed");
-    #endif
+    SLOW_DEBUG_DO(assert(varData[var].removed == Removed::none
+        && "All variables should be decision vars unless removed"));
 
     switch(type) {
         case branch::vsids:
-            if (!order_heap_vsids.inHeap(var)) {
-                order_heap_vsids.insert(var);
-            }
+            if (!order_heap_vsids.inHeap(var)) order_heap_vsids.insert(var);
             break;
-
         case branch::vmtf:
             // For VMTF we need to update the 'queue.unassigned' pointer in case this
             // variables sits after the variable to which 'queue.unassigned' currently
@@ -508,15 +502,10 @@ inline void Searcher::insert_var_order(const uint32_t var, const branch type)
                 << " vmtf_queue.vmtf_bumped: " << vmtf_queue.vmtf_bumped
                 << " vmtf_btab[var]: " << vmtf_btab[var]);
 
-            if (vmtf_queue.vmtf_bumped < vmtf_btab[var]) {
-                vmtf_update_queue_unassigned(var);
-            }
+            if (vmtf_queue.vmtf_bumped < vmtf_btab[var]) vmtf_update_queue_unassigned(var);
             break;
-
         case branch::rand:
-            if (!order_heap_rand.inHeap(var)) {
-                order_heap_rand.insert(var);
-            }
+            if (!order_heap_rand.inHeap(var)) order_heap_rand.insert(var);
             break;
         default:
             assert(false);
