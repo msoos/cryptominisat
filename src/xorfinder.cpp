@@ -385,14 +385,21 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors) {
     }
     this_xors.resize(j);
 
-    //Don't XOR together over the sampling vars
+    //Don't XOR together over the sampling vars, assumptions,
     //or variables that are in regular clauses
     vector<uint32_t> to_clear_2;
+    for(const auto& a: solver->assumptions) {
+        uint32_t int_var = solver->map_outer_to_inter(a.lit_outer).var();
+        if (int_var < solver->nVars()) {
+            if (!seen2[int_var]) {
+                seen2[int_var] = 1;
+                to_clear_2.push_back(int_var);
+            }
+        }
+    }
     if (solver->conf.sampling_vars) {
-        for(uint32_t outside_var: *solver->conf.sampling_vars) {
-            uint32_t outer_var = solver->map_to_with_bva(outside_var);
-            outer_var = solver->varReplacer->get_var_replaced_with_outer(outer_var);
-            uint32_t int_var = solver->map_outer_to_inter(outer_var);
+        for(const auto& v: *solver->conf.sampling_vars) {
+            uint32_t int_var = solver->map_outer_to_inter(v);
             if (int_var < solver->nVars()) {
                 if (!seen2[int_var]) {
                     seen2[int_var] = 1;

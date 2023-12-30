@@ -2571,8 +2571,7 @@ lbool Searcher::solve(const uint64_t _max_confls) {
                 || full_probe_if_needed() == l_False
                 || !distill_bins_if_needed()
                 || !sub_str_with_bin_if_needed()
-                || !str_impl_with_impl_if_needed()
-                || !intree_if_needed())
+                || !str_impl_with_impl_if_needed())
         ) {
             status = l_False;
             goto end;
