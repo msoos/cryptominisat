@@ -55,7 +55,6 @@ class ClauseCleaner;
 class SolutionExtender;
 class Solver;
 class SubsumeStrengthen;
-class BVA;
 class GateFinder;
 
 struct ElimedClauses {
@@ -223,7 +222,6 @@ public:
     void save_on_var_memory();
     bool uneliminate(const uint32_t var);
     size_t mem_used() const;
-    size_t mem_used_bva() const;
     uint32_t dump_elimed_clauses(std::ostream* outfile) const;
     bool get_elimed_clause_at(uint32_t& at,uint32_t& at2, vector<Lit>& out) const;
     void subs_with_resolvent_clauses();
@@ -312,8 +310,6 @@ public:
 private:
     friend class SubsumeStrengthen;
     SubsumeStrengthen* sub_str;
-    friend class BVA;
-    BVA* bva;
 
     bool startup = false;
     bool backward_sub_str();

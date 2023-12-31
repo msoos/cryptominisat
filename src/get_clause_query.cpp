@@ -77,11 +77,6 @@ void GetClauseQuery::start_getting_small_clauses(
         }
         release_assert(solver->get_num_bva_vars() == 0);
     }
-    if (bva_vars) {
-        outer_to_without_bva_map = solver->build_outer_to_without_bva_map_extended();
-    } else {
-        outer_to_without_bva_map = solver->build_outer_to_without_bva_map();
-    }
     tmp_cl.clear();
 }
 
@@ -151,7 +146,7 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
                 tmp_cl = solver->clause_outer_numbered(tmp_cl);
             }
             if (bva_vars || all_vars_outside(tmp_cl)) {
-                map_without_bva(tmp_cl);
+                solver->map_inter_to_outer(tmp_cl);
                 out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
                 if (!all_in_one_go) {
                     units_at++;
@@ -181,7 +176,7 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
                     tmp_cl = solver->clause_outer_numbered(tmp_cl);
                 }
                 if (bva_vars || all_vars_outside(tmp_cl)) {
-                    map_without_bva(tmp_cl);
+                    solver->map_inter_to_outer(tmp_cl);
                     out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
                     if (!all_in_one_go) {
                         watched_at_sub++;
@@ -206,7 +201,7 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
             tmp_cl.push_back(l);
             tmp_cl.push_back(~l2);
             if (bva_vars || all_vars_outside(tmp_cl)) {
-                map_without_bva(tmp_cl);
+                solver->map_inter_to_outer(tmp_cl);
                 out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
                 if (!all_in_one_go) {
                     varreplace_at++;
@@ -230,7 +225,7 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
                     if (!simplified) tmp_cl = solver->clause_outer_numbered(*cl);
                     else {tmp_cl.clear(); for(const auto& l: *cl) tmp_cl.push_back(l);}
                     if (bva_vars || all_vars_outside(tmp_cl)) {
-                        map_without_bva(tmp_cl);
+                        solver->map_inter_to_outer(tmp_cl);
                         out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
                         if (!all_in_one_go) {
                             at_lev[lev]++;
@@ -254,7 +249,7 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
                     for(const auto& l: *cl) tmp_cl.push_back(l);
                 }
                 if (bva_vars || all_vars_outside(tmp_cl)) {
-                    map_without_bva(tmp_cl);
+                    solver->map_inter_to_outer(tmp_cl);
                     out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
                     if (!all_in_one_go) {
                         at++;
@@ -272,7 +267,7 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
         while (ret && solver->occsimplifier && !simplified) {
             ret = solver->occsimplifier->get_elimed_clause_at(elimed_at, elimed_at2, tmp_cl);
             if (ret && all_vars_outside(tmp_cl)) {
-                map_without_bva(tmp_cl);
+                solver->map_inter_to_outer(tmp_cl);
                 out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
                 if (!all_in_one_go) {
                     return true;
@@ -291,7 +286,7 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
                 tmp_cl.push_back(Lit(v, false));
                 tmp_cl.push_back(Lit(v, true));
                 if (bva_vars || all_vars_outside(tmp_cl)) {
-                    map_without_bva(tmp_cl);
+                    solver->map_inter_to_outer(tmp_cl);
                     out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
                     if (!all_in_one_go) {
                         undef_at++;
@@ -316,16 +311,8 @@ void GetClauseQuery::end_getting_small_clauses()
 
 bool GetClauseQuery::all_vars_outside(const vector<Lit>& cl) const
 {
-    for(const auto& l: cl) {
-        if (solver->varData[solver->map_outer_to_inter(l.var())].is_bva)
-            return false;
-    }
-    return true;
-}
+    for(const auto& l: cl) if (solver->varData[solver->map_outer_to_inter(l.var())].is_bva)
+        return false;
 
-void GetClauseQuery::map_without_bva(vector<Lit>& cl)
-{
-    for(auto& l: cl) {
-        l = Lit(outer_to_without_bva_map[l.var()], l.sign());
-    }
+    return true;
 }

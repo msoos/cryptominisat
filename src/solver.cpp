@@ -930,7 +930,6 @@ bool Solver::renumber_variables(bool must_renumber)
     assert(okay());
     assert(decisionLevel() == 0);
     SLOW_DEBUG_DO(for(const auto& x: xorclauses) for(const auto& v: x) assert(v < nVars()));
-    SLOW_DEBUG_DO(for(const auto& x: xorclauses_orig) for(const auto& v: x) assert(v < nVars()));
 
     if (nVars() == 0) return okay();
     if (!must_renumber && calc_renumber_saving() < 0.2) return okay();
@@ -984,7 +983,6 @@ bool Solver::renumber_variables(bool must_renumber)
     if (conf.doSaveMem) save_on_var_memory(numEffectiveVars);
 
     SLOW_DEBUG_DO(for(const auto& x: xorclauses) for(const auto& v: x.vars) assert(v < nVars()));
-    SLOW_DEBUG_DO(for(const auto& x: xorclauses_orig) for(const auto& v: x.vars) assert(v < nVars()));
 
     //NOTE order_heap is now wrong, but that's OK, it will be restored from
     //backed up activities and then rebuilt at the start of Searcher
@@ -1059,25 +1057,15 @@ void Solver::set_assumptions()
     SLOW_DEBUG_DO(for(const auto& x: varData) assert(x.assumption == l_Undef));
 
     conflict.clear();
-    if (get_num_bva_vars() > 0) {
-        back_number_from_outside_to_outer(outside_assumptions);
-        inter_assumptions_tmp = back_number_from_outside_to_outer_tmp;
-    } else {
-        inter_assumptions_tmp = outside_assumptions;
-    }
+    inter_assumptions_tmp = outer_assumptions;
     add_clause_helper(inter_assumptions_tmp);
-    assert(inter_assumptions_tmp.size() == outside_assumptions.size());
+    assert(inter_assumptions_tmp.size() == outer_assumptions.size());
 
     assumptions.resize(inter_assumptions_tmp.size());
     for(size_t i = 0; i < inter_assumptions_tmp.size(); i++) {
-        Lit outside_lit = lit_Undef;
         const Lit inter_lit = inter_assumptions_tmp[i];
-        if (i < outside_assumptions.size()) {
-            outside_lit = outside_assumptions[i];
-        }
-
         const Lit outer_lit = map_inter_to_outer(inter_lit);
-        assumptions[i] = AssumptionPair(outer_lit, outside_lit);
+        assumptions[i] = AssumptionPair(outer_lit);
     }
 
     fill_assumptions_set();
@@ -1085,7 +1073,6 @@ void Solver::set_assumptions()
 
 void Solver::uneliminate_sampling_set() {
     if (!conf.sampling_vars) return;
-    assert(get_num_bva_vars() == 0 && "There is no OUTSIDE etc. here");
 
     vector<Lit> tmp;
     for(const auto& v: *conf.sampling_vars) tmp.push_back(Lit(v, false));
@@ -1099,37 +1086,27 @@ void Solver::add_assumption(const Lit assump)
     assert(value(assump) == l_Undef);
 
     Lit outer_lit = map_inter_to_outer(assump);
-    assumptions.push_back(AssumptionPair(outer_lit, lit_Undef));
+    assumptions.push_back(AssumptionPair(outer_lit));
     varData[assump.var()].assumption = assump.sign() ? l_False : l_True;
 }
 
 void Solver::check_model_for_assumptions() const
 {
     for(const AssumptionPair& lit_pair: assumptions) {
-        const Lit outside_lit = lit_pair.lit_orig_outside;
-        if (outside_lit.var() == var_Undef) {
-            //This is an assumption that is a BVA variable
-            //Currently, this can only be BreakID
-            continue;
-        }
-        assert(outside_lit.var() < model.size());
+        const Lit outer_lit = lit_pair.lit_outer;
+        assert(outer_lit.var() < model.size());
 
-        if (model_value(outside_lit) == l_Undef) {
-            std::cerr
-            << "ERROR, lit " << outside_lit
-            << " was in the assumptions, but it wasn't set at all!"
+        if (model_value(outer_lit) == l_Undef) {
+            cout << "ERROR, lit " << outer_lit << " was in the assumptions, but it wasn't set at all!"
             << endl;
         }
-        assert(model_value(outside_lit) != l_Undef);
+        assert(model_value(outer_lit) != l_Undef);
 
-        if (model_value(outside_lit) != l_True) {
-            std::cerr
-            << "ERROR, lit " << outside_lit
-            << " was in the assumptions, but it was set to: "
-            << model_value(outside_lit)
-            << endl;
+        if (model_value(outer_lit) != l_True) {
+            cout << "ERROR, lit " << outer_lit << " was in the assumptions, but it was set to: "
+            << model_value(outer_lit) << endl;
         }
-        assert(model_value(outside_lit) == l_True);
+        assert(model_value(outer_lit) == l_True);
     }
 }
 
@@ -1234,16 +1211,13 @@ void Solver::extend_solution(const bool only_sampling_solution) {
     #ifdef SLOW_DEBUG
     //Check that sampling vars are all assigned
     if (conf.sampling_vars) {
-        for(uint32_t outside_var: *conf.sampling_vars) {
-            uint32_t outer_var = map_to_with_bva(outside_var);
+        for(uint32_t outer_var: *conf.sampling_vars) {
             outer_var = varReplacer->get_var_replaced_with_outer(outer_var);
             uint32_t int_var = map_outer_to_inter(outer_var);
 
             assert(varData[int_var].removed == Removed::none);
-
-            if (int_var < nVars() && varData[int_var].removed == Removed::none) {
+            if (int_var < nVars() && varData[int_var].removed == Removed::none)
                 assert(model[int_var] != l_Undef);
-            }
         }
     }
     #endif
@@ -1254,14 +1228,7 @@ void Solver::extend_solution(const bool only_sampling_solution) {
     if (!only_sampling_solution) {
         SolutionExtender extender(this, occsimplifier);
         extender.extend();
-    } else {
-        varReplacer->extend_model_already_set();
-    }
-
-    //map back without BVA
-    if (get_num_bva_vars() != 0) {
-        model = map_back_vars_to_without_bva(model);
-    }
+    } else varReplacer->extend_model_already_set();
 
     if (only_sampling_solution && conf.sampling_vars) {
         for(uint32_t var: *conf.sampling_vars) {
@@ -1281,13 +1248,7 @@ void Solver::extend_solution(const bool only_sampling_solution) {
     }
 
     check_model_for_assumptions();
-    if (sqlStats) {
-        sqlStats->time_passed_min(
-            this
-            , "extend solution"
-            , cpuTime()-myTime
-        );
-    }
+    if (sqlStats) sqlStats->time_passed_min( this , "extend solution" , cpuTime()-myTime);
 }
 
 void Solver::set_up_sql_writer()
@@ -1368,7 +1329,7 @@ void Solver::check_and_upd_config_parameters()
     }
 
     if (conf.sampling_vars) {
-        SLOW_DEBUG_DO(for(uint32_t v: *conf.sampling_vars) assert(v < nVarsOutside()));
+        SLOW_DEBUG_DO(for(uint32_t v: *conf.sampling_vars) assert(v < nVarsOuter()));
     }
 
     if (conf.blocking_restart_trail_hist_length == 0) {
@@ -1402,7 +1363,6 @@ lbool Solver::simplify_problem_outside(const string* strategy)
         goto end;
     }
     check_and_upd_config_parameters();
-    datasync->rebuild_bva_map();
     USE_BREAKID_DO(if (breakid) breakid->start_new_solving());
 
     //ignore "no simplify" if explicitly called
@@ -1449,7 +1409,6 @@ void Solver::reset_for_solving() {
     conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
     solveStats.num_simplify_this_solve_call = 0;
     verb_print(6, __func__ << " called");
-    datasync->rebuild_bva_map();
 }
 
 void my_bddinthandler(int e)
@@ -1505,7 +1464,7 @@ lbool Solver::solve_with_assumptions(
         }
         #endif
     }
-    move_to_outside_assumps(_assumptions);
+    move_to_outer_assumps(_assumptions);
     reset_for_solving();
 
     //Check if adding the clauses caused UNSAT
@@ -1692,13 +1651,6 @@ void Solver::dump_memory_stats_to_sql()
             , "occsimplifier"
             , my_time
             , occsimplifier->mem_used()/(1024*1024)
-        );
-
-        sqlStats->mem_used(
-            this
-            , "bva"
-            , my_time
-            , occsimplifier->mem_used_bva()/(1024*1024)
         );
     }
 
@@ -2079,7 +2031,8 @@ lbool Solver::simplify_problem(const bool startup, const string& strategy) {
     DEBUG_IMPLICIT_STATS_DO(check_stats());
     DEBUG_ATTACH_MORE_DO(find_all_attached());
     DEBUG_ATTACH_MORE_DO(check_all_clause_attached());
-    DEBUG_ATTACH_MORE_DO(assert(check_order_heap_sanity()));
+    DEBUG_ATTACH_MORE_DO(check_implicit_propagated());
+    SLOW_DEBUG_DO(assert(check_order_heap_sanity()));
     DEBUG_MARKED_CLAUSE_DO(assert(no_marked_clauses()));
 
     if (solveStats.num_simplify_this_solve_call >= conf.max_num_simplify_per_solve_call) {
@@ -2102,8 +2055,7 @@ lbool Solver::simplify_problem(const bool startup, const string& strategy) {
             conf.global_timeout_multiplier,
             conf.orig_global_timeout_multiplier*conf.global_multiplier_multiplier_max
         );
-    if (conf.verbosity)
-        cout << "c global_timeout_multiplier: " << std::setprecision(4) <<  conf.global_timeout_multiplier << endl;
+    verb_print(1, "global_timeout_multiplier: " << std::setprecision(4) <<  conf.global_timeout_multiplier);
 
     solveStats.num_simplify++;
     solveStats.num_simplify_this_solve_call++;
@@ -2113,15 +2065,16 @@ lbool Solver::simplify_problem(const bool startup, const string& strategy) {
     if (ret == l_False) return l_False;
 
     assert(ret == l_Undef);
-    check_stats();
-    check_implicit_propagated();
+    DEBUG_IMPLICIT_STATS_DO(check_stats());
+    DEBUG_ATTACH_MORE_DO(check_implicit_propagated());
+    DEBUG_ATTACH_MORE_DO(check_all_clause_attached());
+    DEBUG_ATTACH_MORE_DO(check_wrong_attach());
+
     //NOTE:
     // we have to rebuild HERE, or we'd rebuild every time solve()
     // is called, which is called form the outside, sometimes 1000x
     // in one second
     rebuildOrderHeap();
-    DEBUG_ATTACH_MORE_DO(check_all_clause_attached());
-    DEBUG_ATTACH_MORE_DO(check_wrong_attach());
 
     return ret;
 }
@@ -2345,7 +2298,7 @@ size_t Solver::mem_used() const
 {
     size_t mem = 0;
     mem += Searcher::mem_used();
-    mem += outside_assumptions.capacity()*sizeof(Lit);
+    mem += outer_assumptions.capacity()*sizeof(Lit);
 
     return mem;
 }
@@ -2513,19 +2466,15 @@ vector<Lit> Solver::get_zero_assigned_lits(const bool backnumber,
             //Update to higher-up
             lit = varReplacer->get_lit_replaced_with(lit);
             if (varData[lit.var()].is_bva == false) {
-                if (backnumber) {
-                    lits.push_back(map_inter_to_outer(lit));
-                } else {
-                    lits.push_back(lit);
-                }
+                if (backnumber) lits.push_back(map_inter_to_outer(lit));
+                else lits.push_back(lit);
 
             }
 
             //Everything it repaces has also been set
             const vector<uint32_t> vars = varReplacer->get_vars_replacing(lit.var());
             for(const uint32_t var: vars) {
-                if (varData[var].is_bva)
-                    continue;
+                if (varData[var].is_bva) continue;
 
                 Lit tmp_lit = Lit(var, false);
                 assert(varReplacer->get_lit_replaced_with(tmp_lit).var() == lit.var());
@@ -2534,11 +2483,8 @@ vector<Lit> Solver::get_zero_assigned_lits(const bool backnumber,
                 }
                 assert(lit == varReplacer->get_lit_replaced_with(tmp_lit));
 
-                if (backnumber) {
-                    lits.push_back(map_inter_to_outer(tmp_lit));
-                } else {
-                    lits.push_back(tmp_lit);
-                }
+                if (backnumber) lits.push_back(map_inter_to_outer(tmp_lit));
+                else lits.push_back(tmp_lit);
             }
         }
     }
@@ -2548,15 +2494,6 @@ vector<Lit> Solver::get_zero_assigned_lits(const bool backnumber,
     std::sort(lits.begin(), lits.end());
     vector<Lit>::iterator it = std::unique (lits.begin(), lits.end());
     lits.resize( std::distance(lits.begin(),it) );
-
-    //Update to outer without BVA
-    if (backnumber) {
-        vector<uint32_t> my_map = build_outer_to_without_bva_map();
-        updateLitsMap(lits, my_map);
-        for(const Lit lit: lits) {
-            assert(lit.var() < nVarsOutside());
-        }
-    }
 
     return lits;
 }
@@ -2732,6 +2669,49 @@ void Solver::print_watch_list(watch_subarray_const ws, const Lit lit) const
     cout << "FIN" << endl;
 }
 
+
+void Solver::check_clause_propagated(const Xor& x) const {
+    uint32_t num_undef = 0;
+    uint32_t num_false = 0;
+    for(const auto& v: x) {
+        if (value(v) == l_True) return;
+        if (value(v) == l_Undef) num_undef++;
+        if (value(v) == l_False) num_false++;
+        if (num_undef > 1) return;
+    }
+
+    assert(num_undef == 1);
+    assert(num_false == x.size()-1);
+    cout << "ERROR: xor clause " << x << " should have propagated already!" << endl;
+    assert(false);
+    exit(-1);
+}
+
+void Solver::check_clause_propagated(const ClOffset& offs) const {
+    Clause& c = *cl_alloc.ptr(offs);
+    uint32_t num_undef = 0;
+    uint32_t num_false = 0;
+    for(const auto& l: c) {
+        if (value(l) == l_True) return;
+        if (value(l) == l_Undef) num_undef++;
+        if (value(l) == l_False) num_false++;
+        if (num_undef > 1) return;
+    }
+
+    assert(num_undef == 1);
+    assert(num_false == c.size()-1);
+    cout << "ERROR: clause " << c << " should have propagated already!" << endl;
+    assert(false);
+    exit(-1);
+}
+
+void Solver::check_all_clause_propagated() const {
+    check_implicit_propagated();
+    for(const auto& c: longIrredCls) check_clause_propagated(c);
+    for(const auto& cs: longRedCls) for(const auto& c: cs) check_clause_propagated(c);
+    for(const auto& x: xorclauses) check_clause_propagated(x);
+}
+
 void Solver::check_implicit_propagated() const
 {
     const double myTime = cpuTime();
@@ -2872,8 +2852,8 @@ bool Solver::add_clause_outside(const vector<Lit>& lits, bool red)
     if (!ok) return false;
 
     SLOW_DEBUG_DO(check_too_large_variable_number(lits)); //we check for this during back-numbering
-    back_number_from_outside_to_outer(lits);
-    return add_clause_outer(back_number_from_outside_to_outer_tmp, red);
+    vector<Lit> tmp(lits);
+    return add_clause_outer(tmp, red);
 }
 
 bool Solver::add_xor_clause_outside(const vector<uint32_t>& vars, bool rhs)
@@ -2883,39 +2863,22 @@ bool Solver::add_xor_clause_outside(const vector<uint32_t>& vars, bool rhs)
     for(size_t i = 0; i < vars.size(); i++) lits[i] = Lit(vars[i], false);
     SLOW_DEBUG_DO(check_too_large_variable_number(lits));
 
-    back_number_from_outside_to_outer(lits);
-    add_clause_helper(back_number_from_outside_to_outer_tmp);
-    add_xor_clause_inter(back_number_from_outside_to_outer_tmp, rhs, true, false);
+    vector<Lit> tmp(lits);
+    add_clause_helper(tmp);
+    add_xor_clause_inter(tmp, rhs, true, false);
 
     return okay();
 }
 
-bool Solver::add_bnn_clause_outside(
-    const vector<Lit>& lits,
-    const int32_t cutoff,
-    Lit out)
-{
-    if (!ok) {
-        return false;
-    }
-
-    #ifdef SLOW_DEBUG //we check for this during back-numbering
-    check_too_large_variable_number(lits);
-    #endif
+bool Solver::add_bnn_clause_outside( const vector<Lit>& lits, const int32_t cutoff, Lit out) {
+    if (!ok) return false;
+    SLOW_DEBUG_DO(check_too_large_variable_number(lits));
 
     vector<Lit> lits2(lits);
-    if (out != lit_Undef) {
-        lits2.push_back(out);
-    }
-    back_number_from_outside_to_outer(lits2);
-    add_clause_helper(back_number_from_outside_to_outer_tmp);
-    if (out != lit_Undef) {
-        out = back_number_from_outside_to_outer_tmp.back();
-        back_number_from_outside_to_outer_tmp.pop_back();
-    }
-
-    add_bnn_clause_inter(
-        back_number_from_outside_to_outer_tmp, cutoff, out);
+    add_clause_helper(lits2);
+    out = map_outer_to_inter(out);
+    out = varReplacer->get_lit_replaced_with(out);
+    add_bnn_clause_inter(lits2, cutoff, out);
 
     return ok;
 }
@@ -2923,16 +2886,13 @@ bool Solver::add_bnn_clause_outside(
 void Solver::check_too_large_variable_number(const vector<Lit>& lits) const
 {
     for (const Lit lit: lits) {
-        if (lit.var() >= nVarsOutside()) {
+        if (lit.var() >= nVarsOuter()) {
             std::cerr
-            << "ERROR: Variable " << lit.var() + 1
-            << " inserted, but max var is "
-            << nVarsOutside()
-            << endl;
+            << "ERROR: Variable " << lit.var() + 1 << " inserted, but max var is " << nVarsOuter() << endl;
             assert(false);
             std::exit(-1);
         }
-        release_assert(lit.var() < nVarsOutside()
+        release_assert(lit.var() < nVarsOuter()
         && "Clause inserted, but variable inside has not been declared with PropEngine::new_var() !");
 
         if (lit.var() >= var_Undef) {
@@ -2944,32 +2904,13 @@ void Solver::check_too_large_variable_number(const vector<Lit>& lits) const
     }
 }
 
-void Solver::bva_changed()
-{
-    datasync->rebuild_bva_map();
-}
-
 vector<pair<Lit, Lit> > Solver::get_all_binary_xors() const
 {
     vector<pair<Lit, Lit> > bin_xors = varReplacer->get_all_binary_xors_outer();
 
-    //Update to outer without BVA
     vector<pair<Lit, Lit> > ret;
-    const vector<uint32_t> my_map = build_outer_to_without_bva_map();
     for(std::pair<Lit, Lit> p: bin_xors) {
-        if (p.first.var() < my_map.size()
-            && p.second.var() < my_map.size()
-        ) {
-            ret.push_back(std::make_pair(
-                getUpdatedLit(p.first, my_map)
-                , getUpdatedLit(p.second, my_map)
-            ));
-        }
-    }
-
-    for(const auto& val: ret) {
-        assert(val.first.var() < nVarsOutside());
-        assert(val.second.var() < nVarsOutside());
+        if (!varData[p.first.var()].is_bva && !varData[p.second.var()].is_bva) ret.push_back(p);
     }
 
     return ret;
@@ -3266,16 +3207,8 @@ vector<Xor> Solver::get_recovered_xors() {
 
 void Solver::renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors_ret)
 {
-    const vector<uint32_t> outer_to_without_bva_map = build_outer_to_without_bva_map();
-
-    if (conf.verbosity >= 5) {
-        cout << "XORs before outside numbering:" << endl;
-        for(auto& x: xors) {
-            cout << x << endl;
-        }
-    }
-
     for(auto& x: xors) {
+        verb_print(5, "XOR before outer numbering: " << x);
         bool OK = true;
         for(const auto v: x.get_vars()) {
             if (varData[v].is_bva) {
@@ -3283,14 +3216,9 @@ void Solver::renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors
                 break;
             }
         }
-        if (!OK) {
-            continue;
-        }
+        if (!OK) continue;
 
         vector<uint32_t> t = xor_outer_numbered(x.get_vars());
-        for(auto& v: t) {
-            v = outer_to_without_bva_map[v];
-        }
         xors_ret.push_back(Xor(t, x.rhs));
     }
 }
@@ -3526,36 +3454,18 @@ vector<double> Solver::get_vsids_scores() const
         scores_outer[outer] = scores[i];
     }
 
-    //Map to outside
-    if (get_num_bva_vars() != 0) {
-        scores_outer = map_back_vars_to_without_bva(scores_outer);
-    }
     return scores_outer;
 }
 
 bool Solver::implied_by(const std::vector<Lit>& lits,
                                   std::vector<Lit>& out_implied)
 {
-    if (get_num_bva_vars() != 0) {
-        cout << "ERROR: get_num_bva_vars(): " << get_num_bva_vars() << endl;
-        assert(false && "ERROR: BVA is currently not allowed at implied_by(), please turn it off");
-        //out_implied = map_back_vars_to_without_bva(out_implied);
-        exit(-1);
-    }
-//     if (solver->occsimplifier->get_num_elimed_vars() > 0) {
-//         assert(false && "ERROR, you must not have any eliminated variables when calling implied_by -- otherwise, we cannot guarantee all implied variables are found");
-//         exit(-1);
-//     }
 
     out_implied.clear();
-    if (!okay()) {
-        return false;
-    }
+    if (!okay()) return false;
 
     implied_by_tmp_lits = lits;
-    if (!add_clause_helper(implied_by_tmp_lits)) {
-        return false;
-    }
+    if (!add_clause_helper(implied_by_tmp_lits)) return false;
 
     assert(decisionLevel() == 0);
     for(Lit p: implied_by_tmp_lits) {
@@ -3569,9 +3479,7 @@ bool Solver::implied_by(const std::vector<Lit>& lits,
         }
     }
 
-    if (decisionLevel() == 0) {
-        return true;
-    }
+    if (decisionLevel() == 0) return true;
 
     PropBy x = propagate<true>();
     if (!x.isNULL()) {

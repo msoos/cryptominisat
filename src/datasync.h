@@ -47,7 +47,6 @@ class DataSync
         void new_vars(const size_t n);
         bool syncData();
         void save_on_var_memory();
-        void rebuild_bva_map();
         void updateVars(
            const vector<uint32_t>& outerToInter
             , const vector<uint32_t>& interToOuter
@@ -64,7 +63,6 @@ class DataSync
 
     private:
         void extend_bins_if_needed();
-        Lit map_outer_to_outside(Lit lit) const;
         bool shareUnitData();
         bool shareBinData();
         bool syncBinFromOthers();
@@ -73,7 +71,6 @@ class DataSync
         void clear_set_binary_values();
         bool add_bin_to_threads(const Lit lit1, const Lit lit2);
         void signal_new_bin_clause(Lit lit1, Lit lit2);
-        void rebuild_bva_map_if_needed();
 
         int thread_id = -1;
 
@@ -114,19 +111,11 @@ class DataSync
         uint32_t numCalls = 0;
         vector<uint32_t>& seen;
         vector<Lit>& toClear;
-        vector<uint32_t> outer_to_without_bva_map;
-        bool must_rebuild_bva_map = false;
 };
 
 inline const DataSync::Stats& DataSync::get_stats() const
 {
     return stats;
-}
-
-inline Lit DataSync::map_outer_to_outside(const Lit lit) const
-{
-    return Lit(outer_to_without_bva_map[lit.var()], lit.sign());
-
 }
 
 inline bool DataSync::enabled()

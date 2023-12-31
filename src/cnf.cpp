@@ -62,11 +62,7 @@ void CNF::new_var(
 
         swapVars(nVarsOuter()-1);
         varData[nVars()-1].is_bva = bva;
-        if (bva) {
-            num_bva_vars ++;
-        } else {
-            outer_to_with_bva_map.push_back(nVarsOuter() - 1);
-        }
+        if (bva) num_bva_vars++;
     } else {
         //Old var, re-inserted
         assert(orig_outer < nVarsOuter());
@@ -83,9 +79,7 @@ void CNF::new_var(
         swapVars(z);
     }
 
-    #ifdef SLOW_DEBUG
-    test_reflectivity_of_renumbering();
-    #endif
+    SLOW_DEBUG_DO(test_reflectivity_of_renumbering());
 }
 
 void CNF::new_vars(const size_t n)
@@ -105,9 +99,6 @@ void CNF::new_vars(const size_t n)
     size_t outer_at = outerToInterMain.size();
     outerToInterMain.insert(outerToInterMain.end(), n, 0);
 
-    size_t outer_to_with_bva_at = outer_to_with_bva_map.size();
-    outer_to_with_bva_map.insert(outer_to_with_bva_map.end(), n, 0);
-
     for(int i = n-1; i >= 0; i--) {
         const uint32_t minVar = nVars()-i-1;
         const uint32_t maxVar = nVarsOuter()-i-1;
@@ -123,7 +114,6 @@ void CNF::new_vars(const size_t n)
 
         swapVars(nVarsOuter()-i-1, i);
         varData[nVars()-i-1].is_bva = false;
-        outer_to_with_bva_map[outer_to_with_bva_at++] = nVarsOuter()-i-1;
     }
 
     #ifdef SLOW_DEBUG
@@ -351,45 +341,7 @@ size_t CNF::mem_used_renumberer() const
     size_t mem = 0;
     mem += interToOuterMain.capacity()*sizeof(uint32_t);
     mem += outerToInterMain.capacity()*sizeof(uint32_t);
-    mem += outer_to_with_bva_map.capacity()*sizeof(uint32_t);
     return mem;
-}
-
-vector<uint32_t> CNF::build_outer_to_without_bva_map() const
-{
-    vector<uint32_t> ret;
-    size_t at = 0;
-    for(size_t i = 0; i < nVarsOuter(); i++) {
-        if (!varData[map_outer_to_inter(i)].is_bva) {
-            ret.push_back(at);
-            at++;
-        } else {
-            ret.push_back(var_Undef);
-        }
-    }
-
-    return ret;
-}
-
-// ONLY used during getting clauses for external uses. NOT sane
-vector<uint32_t> CNF::build_outer_to_without_bva_map_extended() const
-{
-    assert(nVarsOutside() <= nVarsOuter());
-    vector<uint32_t> ret;
-    size_t at = 0;
-    uint32_t extra_map = nVarsOutside();
-    for(size_t i = 0; i < nVarsOuter(); i++) {
-        if (!varData[map_outer_to_inter(i)].is_bva) {
-            ret.push_back(at);
-            at++;
-        } else {
-            ret.push_back(extra_map);
-            extra_map++;
-        }
-    }
-    assert(extra_map == nVarsOuter());
-
-    return ret;
 }
 
 size_t CNF::mem_used() const
@@ -746,7 +698,6 @@ void CNF::add_frat(FILE* os) {
 
 vector<uint32_t> CNF::get_outside_lit_incidence()
 {
-    assert(get_num_bva_vars() == 0);
     vector<uint32_t> inc;
     inc.resize(nVars()*2, 0);
     if (!okay()) return inc;
@@ -778,18 +729,12 @@ vector<uint32_t> CNF::get_outside_lit_incidence()
         inc_outer[outer.toInt()] = inc[i];
     }
 
-    //Map to outside
-    if (get_num_bva_vars() != 0) {
-        inc_outer = map_back_lits_to_without_bva(inc_outer);
-    }
     return inc_outer;
 }
 
 vector<uint32_t> CNF::get_outside_var_incidence()
 {
-    assert(get_num_bva_vars() == 0);
     assert(okay());
-
 
     vector<uint32_t> inc;
     inc.resize(nVarsOuter(), 0);
@@ -820,10 +765,6 @@ vector<uint32_t> CNF::get_outside_var_incidence()
         inc_outer[outer] = inc[i];
     }
 
-    //Map to outside
-    if (get_num_bva_vars() != 0) {
-        inc_outer = map_back_vars_to_without_bva(inc_outer);
-    }
     return inc_outer;
 }
 
@@ -864,10 +805,6 @@ vector<uint32_t> CNF::get_outside_var_incidence_also_red()
         inc_outer[outer] = inc[i];
     }
 
-    //Map to outside
-    if (get_num_bva_vars() != 0) {
-        inc_outer = map_back_vars_to_without_bva(inc_outer);
-    }
     return inc_outer;
 }
 

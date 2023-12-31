@@ -55,23 +55,17 @@ void ClauseCleaner::clean_binary_implicit(
             (*solver->frat) << del << i->get_ID() << lit << i->lit2() << fin;
         }
 
-        if (i->red()) {
-            impl_data.remLBin++;
-        } else {
-            impl_data.remNonLBin++;
-        }
+        if (i->red()) impl_data.remLBin++;
+        else impl_data.remNonLBin++;
     } else {
-        #ifdef SLOW_DEBUG
-        if (solver->value(i->lit2()) != l_Undef
-            || solver->value(lit) != l_Undef
+        if (solver->value(i->lit2()) != l_Undef || solver->value(lit) != l_Undef
         ) {
-            cout << "ERROR binary during cleaning has non-l-Undef "
+            cout << "ERROR binary during cleaning has non-l_Undef "
             << " Bin clause: " << lit << " " << i->lit2() << endl
             << " values: " << solver->value(lit)
             << " " << solver->value(i->lit2())
             << endl;
         }
-        #endif
 
         assert(solver->value(i->lit2()) == l_Undef);
         assert(solver->value(lit) == l_Undef);

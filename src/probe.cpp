@@ -230,13 +230,9 @@ lbool Solver::probe_inter(const Lit l, uint32_t& min_props)
 lbool Solver::probe_outside(Lit l, uint32_t& min_props)
 {
     assert(decisionLevel() == 0);
-    assert(l.var() < nVarsOutside());
+    assert(l.var() < nVarsOuter());
+    if (!ok) return l_False;
 
-    if (!ok) {
-        return l_False;
-    }
-
-    l = map_to_with_bva(l);
     l = varReplacer->get_lit_replaced_with_outer(l);
     l = map_outer_to_inter(l);
     if (varData[l.var()].removed != Removed::none) {
@@ -249,4 +245,3 @@ lbool Solver::probe_outside(Lit l, uint32_t& min_props)
 
     return probe_inter<false>(l, min_props);
 }
-

@@ -82,7 +82,7 @@ void DataSync::new_var(const bool bva)
         syncFinish.push_back(0);
         syncFinish.push_back(0);
     }
-    assert(solver->nVarsOutside()*2 == syncFinish.size());
+    assert(solver->nVarsOuter()*2 == syncFinish.size());
 }
 
 void DataSync::new_vars(size_t n)
@@ -91,30 +91,17 @@ void DataSync::new_vars(size_t n)
         return;
 
     syncFinish.insert(syncFinish.end(), 2*n, 0);
-    assert(solver->nVarsOutside()*2 == syncFinish.size());
+    assert(solver->nVarsOuter()*2 == syncFinish.size());
 }
 
 void DataSync::save_on_var_memory()
 {
 }
 
-void DataSync::rebuild_bva_map()
-{
-    must_rebuild_bva_map = true;
-}
-
 void DataSync::updateVars(
     [[maybe_unused]] const vector<uint32_t>&  outerToInter
     , [[maybe_unused]] const vector<uint32_t>& interToOuter
 ) {
-}
-
-inline void DataSync::rebuild_bva_map_if_needed()
-{
-    if (must_rebuild_bva_map) {
-        outer_to_without_bva_map = solver->build_outer_to_without_bva_map();
-        must_rebuild_bva_map = false;
-    }
 }
 
 bool DataSync::syncData()
@@ -128,7 +115,6 @@ bool DataSync::syncData()
 
     assert(sharedData != NULL);
     assert(solver->decisionLevel() == 0);
-    rebuild_bva_map_if_needed();
 
     //SEND data
     bool ok;
@@ -194,14 +180,13 @@ bool DataSync::shareUnitData()
     uint32_t thisSentUnitData = 0;
 
     SharedData& shared = *sharedData;
-    if (shared.value.size() < solver->nVarsOutside()) {
+    if (shared.value.size() < solver->nVarsOuter()) {
         shared.value.insert(
             shared.value.end(),
-            solver->nVarsOutside()-shared.value.size(), l_Undef);
+            solver->nVarsOuter()-shared.value.size(), l_Undef);
     }
-    for (uint32_t var = 0; var < solver->nVarsOutside(); var++) {
+    for (uint32_t var = 0; var < solver->nVarsOuter(); var++) {
         Lit thisLit = Lit(var, false);
-        thisLit = solver->map_to_with_bva(thisLit);
         thisLit = solver->varReplacer->get_lit_replaced_with_outer(thisLit);
         thisLit = solver->map_outer_to_inter(thisLit);
         const lbool thisVal = solver->value(thisLit);
@@ -271,7 +256,6 @@ bool DataSync::syncBinFromOthers()
         }
 
         Lit lit1 = Lit::toLit(wsLit);
-        lit1 = solver->map_to_with_bva(lit1);
         lit1 = solver->varReplacer->get_lit_replaced_with_outer(lit1);
         lit1 = solver->map_outer_to_inter(lit1);
         if (solver->varData[lit1.var()].removed != Removed::none
@@ -315,7 +299,6 @@ bool DataSync::syncBinFromOthers(
     vector<Lit> lits(2);
     for (uint32_t i = finished; i < bins.size(); i++) {
         Lit otherLit = bins[i];
-        otherLit = solver->map_to_with_bva(otherLit);
         otherLit = solver->varReplacer->get_lit_replaced_with_outer(otherLit);
         otherLit = solver->map_outer_to_inter(otherLit);
         if (solver->varData[otherLit.var()].removed != Removed::none
@@ -376,9 +359,8 @@ bool DataSync::add_bin_to_threads(Lit lit1, Lit lit2)
 
 void DataSync::clear_set_binary_values()
 {
-    for(size_t i = 0; i < solver->nVarsOutside()*2; i++) {
+    for(size_t i = 0; i < solver->nVarsOuter()*2; i++) {
         Lit lit1 = Lit::toLit(i);
-        lit1 = solver->map_to_with_bva(lit1);
         lit1 = solver->varReplacer->get_lit_replaced_with_outer(lit1);
         lit1 = solver->map_outer_to_inter(lit1);
         if (solver->value(lit1) != l_Undef) {
@@ -389,11 +371,11 @@ void DataSync::clear_set_binary_values()
 
 void DataSync::extend_bins_if_needed()
 {
-    assert(sharedData->bins.size() <= (solver->nVarsOutside())*2);
-    if (sharedData->bins.size() == (solver->nVarsOutside())*2)
+    assert(sharedData->bins.size() <= (solver->nVarsOuter())*2);
+    if (sharedData->bins.size() == (solver->nVarsOuter())*2)
         return;
 
-    sharedData->bins.resize(solver->nVarsOutside()*2);
+    sharedData->bins.resize(solver->nVarsOuter()*2);
 }
 
 bool DataSync::shareBinData()
@@ -422,28 +404,14 @@ bool DataSync::shareBinData()
 
 void DataSync::signal_new_bin_clause(Lit lit1, Lit lit2)
 {
-    if (!enabled()) {
-        return;
-    }
-
-    if (must_rebuild_bva_map) {
-        outer_to_without_bva_map = solver->build_outer_to_without_bva_map();
-        must_rebuild_bva_map = false;
-    }
-
-    if (solver->varData[lit1.var()].is_bva)
-        return;
-    if (solver->varData[lit2.var()].is_bva)
-        return;
+    if (!enabled()) return;
+    if (solver->varData[lit1.var()].is_bva) return;
+    if (solver->varData[lit2.var()].is_bva) return;
 
     lit1 = solver->map_inter_to_outer(lit1);
-    lit1 = map_outer_to_outside(lit1);
     lit2 = solver->map_inter_to_outer(lit2);
-    lit2 = map_outer_to_outside(lit2);
 
-    if (lit1.toInt() > lit2.toInt()) {
-        std::swap(lit1, lit2);
-    }
+    if (lit1.toInt() > lit2.toInt()) std::swap(lit1, lit2);
     newBinClauses.push_back(std::make_pair(lit1, lit2));
 }
 

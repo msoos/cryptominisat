@@ -163,6 +163,7 @@ class Searcher : public HyperEngine
             vector<Lit>& out_learnt,
             bool True_confl
         );
+        template<class T> void print_clause(const string& str, const T& cl) const;
 
         #ifdef STATS_NEEDED
         void dump_restart_sql(rst_dat_type type, int64_t clauseID = -1);
@@ -296,7 +297,6 @@ class Searcher : public HyperEngine
             const bool enqueue,
             const uint64_t ID);
         void  print_learning_debug_info(const int32_t ID) const;
-        void  print_learnt_clause() const;
         template<bool inprocess>
         void add_lits_to_learnt(const PropBy confl, const Lit p, uint32_t nDecisionLevel);
         template<bool inprocess>
@@ -634,6 +634,13 @@ inline void Searcher::vsids_bump_var_act(const uint32_t var)
     }
 
     SLOW_DEBUG_DO(if (rescaled) assert(order_heap_vsids.heap_property()));
+}
+
+template<class T> void Searcher::print_clause(const string& str, const T& cl) const
+{
+    cout << "c " << str << " clause: " ;
+    for(const Lit& l: cl) cout << l << ": " << value(l) << " ";
+    cout << endl;
 }
 
 } //end namespace

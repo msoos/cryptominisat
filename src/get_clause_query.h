@@ -71,7 +71,6 @@ private:
 
     vector<uint32_t> outer_to_without_bva_map;
     bool all_vars_outside(const vector<Lit>& cl) const;
-    void map_without_bva(vector<Lit>& cl);
     vector<Lit> tmp_cl;
 };
 }

@@ -258,8 +258,7 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
 
             uint32_t tot_sampling_vars  = 0;
             uint32_t sampling_var_inside_matrix = 0;
-            for(uint32_t outside_var: *solver->conf.sampling_vars) {
-                uint32_t outer_var = solver->map_to_with_bva(outside_var);
+            for(uint32_t outer_var: *solver->conf.sampling_vars) {
                 outer_var = solver->varReplacer->get_var_replaced_with_outer(outer_var);
                 uint32_t int_var = solver->map_outer_to_inter(outer_var);
                 tot_sampling_vars++;

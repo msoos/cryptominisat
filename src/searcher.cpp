@@ -1178,27 +1178,18 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
 
 void Searcher::update_assump_conflict_to_orig_outside(vector<Lit>& out_conflict)
 {
-    if (assumptions.empty()) {
-        return;
-    }
+    if (assumptions.empty()) return;
 
     vector<AssumptionPair> inter_assumptions;
     for(const auto& ass: assumptions) {
         inter_assumptions.push_back(
-            AssumptionPair(map_outer_to_inter(ass.lit_outer), ass.lit_orig_outside));
+            AssumptionPair(map_outer_to_inter(ass.lit_outer)));
     }
 
     std::sort(inter_assumptions.begin(), inter_assumptions.end());
     std::sort(out_conflict.begin(), out_conflict.end());
     assert(out_conflict.size() <= assumptions.size());
     //They now are in the order where we can go through them linearly
-
-    /*cout << "out_conflict: " << out_conflict << endl;
-    cout << "assumptions: ";
-    for(AssumptionPair p: assumptions) {
-        cout << "inter: " << p.lit_inter << " , outer: " << p.lit_orig_outside << " , ";
-    }
-    cout << endl;*/
 
     uint32_t at_assump = 0;
     uint32_t j = 0;
@@ -1208,19 +1199,21 @@ void Searcher::update_assump_conflict_to_orig_outside(vector<Lit>& out_conflict)
         //lit_outer is actually INTER here, because we updated above
         while(lit != ~inter_assumptions[at_assump].lit_outer) {
             at_assump++;
-            assert(at_assump < inter_assumptions.size() && "final conflict contains literals that are not from the assumptions!");
+            assert(at_assump < inter_assumptions.size()
+                    && "final conflict contains literals that are not from the assumptions!");
         }
         assert(lit == ~inter_assumptions[at_assump].lit_outer);
 
         //in case of symmetry breaking, we can be in trouble
         //then, the orig_outside is actually lit_Undef
         //in these cases, the symmetry breaking literal needs to be taken out
-        if (inter_assumptions[at_assump].lit_orig_outside != lit_Undef) {
+        if (!varData[inter_assumptions[at_assump].lit_outer.var()].is_bva) {
             //Update to correct outside lit
-            out_conflict[j++] = ~inter_assumptions[at_assump].lit_orig_outside;
+            out_conflict[j++] = ~inter_assumptions[at_assump].lit_outer;
         }
     }
     out_conflict.resize(j);
+    map_inter_to_outer(out_conflict);
 }
 
 void Searcher::check_blocking_restart()
@@ -1531,19 +1524,6 @@ void Searcher::print_learning_debug_info(const int32_t ID) const
     << endl;
 }
 
-void Searcher::print_learnt_clause() const
-{
-    if (conf.verbosity >= 6) {
-        cout
-        << "c learnt clause: "
-        ;
-        for(Lit l: learnt_clause) {
-            cout << l << ": " << value(l) << " ";
-        }
-        cout << endl;
-    }
-}
-
 #ifdef STATS_NEEDED_BRANCH
 void Searcher::dump_var_for_learnt_cl(const uint32_t v,
                                       const uint64_t clid,
@@ -1839,7 +1819,7 @@ bool Searcher::handle_conflict(PropBy confl)
 
     uint32_t connects_num_communities = 0;
     STATS_DO(connects_num_communities = calc_connects_num_communities(learnt_clause));
-    print_learnt_clause();
+    if (conf.verbosity >= 6) print_clause("learnt", learnt_clause);
 
     update_history_stats(backtrack_level, glue, connects_num_communities);
     uint32_t old_decision_level = decisionLevel();
@@ -1905,7 +1885,7 @@ bool Searcher::handle_conflict(PropBy confl)
         std::swap(decision_clause[0], decision_clause[i]);
 
         learnt_clause = decision_clause;
-        print_learnt_clause();
+        if (conf.verbosity >= 6) print_clause("learnt", learnt_clause);
         cl = handle_last_confl(
             learnt_clause.size(), // glue is the number of decisions, i.e. the size of decision clause
             old_decision_level,
@@ -3496,8 +3476,7 @@ ConflictData Searcher::find_conflict_level(PropBy& pb) {
 
 inline bool Searcher::check_order_heap_sanity() {
     if (conf.sampling_vars) {
-        for(uint32_t outside_var: *conf.sampling_vars) {
-            uint32_t outer_var = map_to_with_bva(outside_var);
+        for(uint32_t outer_var: *conf.sampling_vars) {
             outer_var = solver->varReplacer->get_var_replaced_with_outer(outer_var);
             uint32_t int_var = map_outer_to_inter(outer_var);
 

@@ -53,7 +53,6 @@ THE SOFTWARE.
 #include "datasync.h"
 #include "xorfinder.h"
 #include "gatefinder.h"
-#include "bva.h"
 #include "trim.h"
 extern "C" {
 #include "picosat/picosat.h"
@@ -96,7 +95,6 @@ OccSimplifier::OccSimplifier(Solver* _solver):
     , anythingHasBeenElimed(false)
     , elimedMapBuilt(false)
 {
-    bva = new BVA(solver, this);
     sub_str = new SubsumeStrengthen(this, solver);
 
     tmp_bin_cl.resize(2);
@@ -104,7 +102,6 @@ OccSimplifier::OccSimplifier(Solver* _solver):
 
 OccSimplifier::~OccSimplifier()
 {
-    delete bva;
     delete sub_str;
     delete gateFinder;
 }
@@ -328,17 +325,11 @@ void OccSimplifier::unlink_clause(
     }
     cl.setRemoved();
 
-    if (cl.red()) {
-        solver->litStats.redLits -= cl.size();
-    } else {
-        solver->litStats.irredLits -= cl.size();
-    }
+    if (cl.red()) solver->litStats.redLits -= cl.size();
+    else solver->litStats.irredLits -= cl.size();
 
-    if (!only_set_is_removed) {
-        solver->free_cl(&cl);
-    } else {
-        cl_to_free_later.push_back(offset);
-    }
+    if (!only_set_is_removed) solver->free_cl(&cl);
+    else cl_to_free_later.push_back(offset);
 }
 
 bool OccSimplifier::clean_clause(
@@ -384,11 +375,8 @@ bool OccSimplifier::clean_clause(
     cl.recalc_abst_if_needed();
 
     //Update lits stat
-    if (cl.red()) {
-        solver->litStats.redLits -= i-j;
-    } else {
-        solver->litStats.irredLits -= i-j;
-    }
+    if (cl.red()) solver->litStats.redLits -= i-j;
+    else solver->litStats.irredLits -= i-j;
 
     if (satisfied) {
         (*solver->frat) << findelay;
@@ -396,10 +384,8 @@ bool OccSimplifier::clean_clause(
         return true;
     }
 
-    if (solver->conf.verbosity >= 6) {
-        cout << "-> Clause became after cleaning:" << cl << endl;
-    }
 
+    verb_print(6, "-> Clause became after cleaning:" << cl);
     if (i-j > 0) {
         INC_ID(cl);
         (*solver->frat) << add << cl << fin << findelay;
@@ -436,9 +422,7 @@ bool OccSimplifier::clean_clause(
             if (i-j > 0) {
                 cl.setStrenghtened();
                 cl.recalc_abst_if_needed();
-                if (!cl.red()) {
-                    added_long_cl.push_back(offset);
-                }
+                if (!cl.red()) added_long_cl.push_back(offset);
             }
             return true;
     }
@@ -927,9 +911,7 @@ bool OccSimplifier::clear_vars_from_cls_that_have_been_set()
     for(ClOffset offs: cls_to_clean_tmp) {
         Clause* cl = solver->cl_alloc.ptr(offs);
         if (!cl->getRemoved() && !cl->freed()) {
-            if (!clean_clause(offs, true)) {
-                return false;
-            }
+            if (!clean_clause(offs, true)) return false;
         }
     }
 
@@ -2084,10 +2066,10 @@ bool OccSimplifier::lit_rem_with_or_gates()
             }
             if (found < gate.lits.size()) continue;
             assert(found == gate.lits.size());
-//             cout << "Gate LHS matches clause: " << *cl << " gate: " << gate << endl;
+            VERBOSE_PRINT("Gate LHS matches clause: " << *cl << " gate: " << gate);
 
             if (contains_inv_rhs) {
-//                 cout << "Removing cl: " << *cl << endl;
+                VERBOSE_PRINT("Removing cl: " << *cl);
                 unlink_clause(off, true, false, true);
                 removed++;
                 continue;
@@ -2095,7 +2077,8 @@ bool OccSimplifier::lit_rem_with_or_gates()
             shortened++;
             (*solver->frat) << deldelay << *cl << fin;
 
-//             cout << "Shortening cl: " << *cl << endl;
+            VERBOSE_PRINT("Shortening cl: " << *cl);
+            solver->print_clause("shortening", *cl);
             for(auto const& l: gate.lits) {
                 solver->watches.smudge(l);
                 removeWCl(solver->watches[l], off);
@@ -2120,15 +2103,9 @@ bool OccSimplifier::lit_rem_with_or_gates()
             std::sort(cl->begin(), cl->end());
             INC_ID(*cl);
             (*solver->frat) << add << *cl << fin << findelay;
-//             cout << "Shortened cl: " << *cl << endl;
-
-            if (cl->size() == 2) {
-                n_occurs[(*cl)[0].toInt()]++;
-                n_occurs[(*cl)[1].toInt()]++;
-                solver->attach_bin_clause((*cl)[0], (*cl)[1], false, cl->stats.ID, false);
-                unlink_clause(off, false, false, true);
-//                 cout << "Became bin." << endl;
-            }
+            VERBOSE_PRINT("Shortened cl: " << *cl);
+            solver->print_clause("shortened", *cl);
+            if (!clean_clause(off, true)) goto end;
         }
         for(auto const& l: gate.lits) seen[l.toInt()] = 0;
     }
@@ -2138,27 +2115,20 @@ bool OccSimplifier::lit_rem_with_or_gates()
     solver->clean_occur_from_removed_clauses_only_smudged();
     free_clauses_to_free();
 
-    SLOW_DEBUG_DO(check_n_occur());
-    SLOW_DEBUG_DO(check_clauses_lits_ordered());
+    if (solver->okay()) {
+        SLOW_DEBUG_DO(check_n_occur());
+        SLOW_DEBUG_DO(check_clauses_lits_ordered());
+    }
 
-    //Update global stats
     const double time_used = cpuTime() - myTime;
-    //const bool time_out = (*limit_to_decrease <= 0);
     verb_print(1, "[occ-gate-based-lit-rem]"
         << " lit-rem: " << shortened
         << " cl-rem: " << removed
         << solver->conf.print_times(time_used, false));
 
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed_min(
-            solver
-            , "occ-gate-based-lit-rem"
-            , time_used
-        );
-    }
+    if (solver->sqlStats)
+        solver->sqlStats->time_passed_min( solver , "occ-gate-based-lit-rem" , time_used);
 
-    assert(solver->okay());
-    assert(solver->prop_at_head());
     return solver->okay();
 }
 
@@ -2193,6 +2163,8 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             assert(solver->red_stats_extra[cl->stats.extra_pos].introduced_at_conflict != 0);
         }
         #endif
+        solver->check_implicit_propagated();
+        solver->check_all_clause_propagated();
         solver->check_implicit_stats(true);
         solver->check_assumptions_sanity();
         check_no_marked_clauses();
@@ -2251,20 +2223,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         } else if (token == "occ-cl-rem-with-orgates") {
             cl_rem_with_or_gates();
         } else if (token == "occ-bva") {
-            if (solver->conf.do_bva && false) { //TODO due to IDs, this is BROKEN
-                assert(false && "due to clause IDs this is broken");
-                if (solver->conf.verbosity) {
-                    cout << "c [occ-bva] global numcalls: " << globalStats.numCalls << endl;
-                }
-                if ((globalStats.numCalls % solver->conf.bva_every_n) == (solver->conf.bva_every_n-1)) {
-                    if (!bva->bounded_var_addition()) {
-                        continue;
-                    }
-                    added_irred_bin.clear();
-                    added_cl_to_var.clear();
-                    added_long_cl.clear();
-                }
-            }
+            // nothing, ignore BVA
         } else if (token == "occ-resolv-subs") {
             subs_with_resolvent_clauses();
         } else if (token == "") {
@@ -2286,6 +2245,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
 bool OccSimplifier::setup() {
     *solver->frat << __PRETTY_FUNCTION__ << " start\n";
     assert(solver->okay());
+    assert(solver->prop_at_head());
     assert(toClear.empty());
     added_long_cl.clear();
     added_irred_bin.clear();
@@ -2295,6 +2255,7 @@ bool OccSimplifier::setup() {
     xorclauses_vars.clear();
     xorclauses_vars.resize(solver->nVars(), 0);
     DEBUG_ATTACH_MORE_DO(solver->check_all_clause_attached());
+    DEBUG_ATTACH_MORE_DO(solver->check_all_clause_propagated());
     DEBUG_ATTACH_MORE_DO(solver->check_wrong_attach());
 
     //If too many clauses, don't do it
@@ -2342,8 +2303,7 @@ bool OccSimplifier::simplify(const bool _startup, const std::string& schedule) {
         // sampling vars should not be eliminated
         assert(!solver->fast_backw.fast_backw_on);
         sampling_vars_occsimp.resize(solver->nVars(), false);
-        for(uint32_t outside_var: *solver->conf.sampling_vars) {
-            uint32_t outer_var = solver->map_to_with_bva(outside_var);
+        for(uint32_t outer_var: *solver->conf.sampling_vars) {
             outer_var = solver->varReplacer->get_var_replaced_with_outer(outer_var);
             uint32_t int_var = solver->map_outer_to_inter(outer_var);
             if (int_var < solver->nVars()) {
@@ -2361,9 +2321,7 @@ bool OccSimplifier::simplify(const bool _startup, const std::string& schedule) {
             sampling_vars_occsimp[p.var()] = true;
 
             //Deal with indicators: var, var + orig_num_vars
-            if (var == var_Undef) {
-                continue;
-            }
+            if (var == var_Undef) continue;
             uint32_t var2 = var + solver->fast_backw.orig_num_vars;
             var = solver->varReplacer->get_var_replaced_with_outer(var);
             var = solver->map_outer_to_inter(var);
@@ -3002,7 +2960,7 @@ void OccSimplifier::buildElimedMap()
     elimedMapBuilt = true;
 }
 
-void OccSimplifier::finishUp( size_t origTrailSize) {
+void OccSimplifier::finishUp(size_t origTrailSize) {
     runStats.zeroDepthAssings = solver->trail_size() - origTrailSize;
     const double myTime = cpuTime();
 
@@ -3045,6 +3003,7 @@ void OccSimplifier::finishUp( size_t origTrailSize) {
         solver->check_wrong_attach();
         solver->check_stats();
         solver->check_implicit_propagated();
+        solver->check_all_clause_propagated();
         #endif
     }
 
@@ -5241,14 +5200,6 @@ size_t OccSimplifier::mem_used() const
     return b;
 }
 
-size_t OccSimplifier::mem_used_bva() const
-{
-    if (bva)
-        return bva->mem_used();
-    else
-        return 0;
-}
-
 void OccSimplifier::link_in_clause(Clause& cl)
 {
     assert(!cl.stats.marked_clause);
@@ -5277,8 +5228,7 @@ double OccSimplifier::Stats::total_time(OccSimplifier* occs) const
         + finalCleanupTime
         + occs->sub_str->get_stats().subsumeTime
         + occs->sub_str->get_stats().strengthenTime
-        + occs->bvestats_global.timeUsed
-        + occs->bva->get_stats().time_used;
+        + occs->bvestats_global.timeUsed;
 }
 
 void OccSimplifier::Stats::clear()

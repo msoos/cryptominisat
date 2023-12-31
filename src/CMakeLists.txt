@@ -128,7 +128,6 @@ set(cryptoms_lib_files
     subsumeimplicit.cpp
     datasync.cpp
     reducedb.cpp
-    bva.cpp
     intree.cpp
     searchstats.cpp
     xorfinder.cpp

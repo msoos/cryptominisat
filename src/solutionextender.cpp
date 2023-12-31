@@ -48,7 +48,6 @@ void SolutionExtender::extend() {
             //decomposed's solution has beed added already, it SHOULD be set
             //but everything else is NOT OK
             solver->varData[v_inter].removed != Removed::none
-            && solver->varData[v_inter].removed != Removed::clashed
         ) {
             if (solver->model[i] != l_Undef)
                 cout << "ERROR: variable " << i + 1 << " set even though it's removed: "

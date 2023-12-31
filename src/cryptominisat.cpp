@@ -591,7 +591,6 @@ DLL_PUBLIC void SATSolver::set_no_equivalent_lit_replacement()
 
 DLL_PUBLIC void SATSolver::set_no_bva()
 {
-    set_bva(0);
 }
 
 DLL_PUBLIC void SATSolver::set_simplify(const bool simp)
@@ -1008,7 +1007,7 @@ DLL_PUBLIC const std::vector<Lit>& SATSolver::get_conflict() const
 
 DLL_PUBLIC uint32_t SATSolver::nVars() const
 {
-    return data->solvers[0]->nVarsOutside() + data->vars_to_add;
+    return data->solvers[0]->nVarsOuter() + data->vars_to_add;
 }
 
 DLL_PUBLIC void SATSolver::new_var()
@@ -1606,16 +1605,7 @@ DLL_PUBLIC void SATSolver::set_distill(int val)
 
 DLL_PUBLIC void SATSolver::set_bva(int val)
 {
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
-        s.conf.do_bva = val;
-
-        //Cannot have BVA on thread 0 when MPI is turned on
-        if (s.conf.do_bva && s.conf.is_mpi && i == 0) {
-            cout << "ERROR, cannot have MPI + BVA" << endl;
-            exit(-1);
-        }
-    }
+    assert(val == 0 && "BVA no longer supported");
 }
 
 DLL_PUBLIC void SATSolver::set_polarity_mode(CMSat::PolarityMode mode)

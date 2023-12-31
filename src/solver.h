@@ -166,13 +166,15 @@ class Solver : public Searcher
         void add_in_partial_solving_stats();
         bool check_xor_clause_satisfied_model(const Xor& x) const;
         void check_implicit_stats(const bool onlypairs = false) const;
+        void check_implicit_propagated() const;
+        void check_all_clause_propagated() const;
+        void check_clause_propagated(const ClOffset& offs) const;
+        void check_clause_propagated(const Xor& x) const;
         void check_stats(const bool allowFreed = false) const;
         void reset_vsids();
         bool minimize_clause(vector<Lit>& cl);
 
         //Checks
-        void check_implicit_propagated() const;
-        bool find_with_watchlist_a_or_b(Lit a, Lit b, int64_t* limit) const;
 
         //Systems that are used to accompilsh the tasks
         ClauseCleaner*         clauseCleaner = NULL;
@@ -219,7 +221,6 @@ class Solver : public Searcher
             const bool insert_varorder = true
         ) override;
         void new_vars(const size_t n) override;
-        void bva_changed();
 
         //Attaching-detaching clauses
         void attachClause(
@@ -404,45 +405,12 @@ class Solver : public Searcher
         void check_and_upd_config_parameters();
         vector<uint32_t> tmp_xor_clash_vars;
         void check_xor_cut_config_sanity() const;
+        void move_to_outer_assumps(const vector<Lit>* assumps);
+        vector<Lit> outer_assumptions;
         void handle_found_solution(const lbool status, const bool only_indep_solution);
         unsigned num_bits_set(const size_t x, const unsigned max_size) const;
         void check_too_large_variable_number(const vector<Lit>& lits) const;
-
         lbool simplify_problem_outside(const string* strategy = NULL);
-        void move_to_outside_assumps(const vector<Lit>* assumps);
-        vector<Lit> back_number_from_outside_to_outer_tmp;
-        void back_number_from_outside_to_outer(const vector<Lit>& lits)
-        {
-            back_number_from_outside_to_outer_tmp.clear();
-            for (const Lit lit: lits) {
-                assert(lit.var() < nVarsOutside());
-                if (get_num_bva_vars() > 0 || !fresh_solver) {
-                    back_number_from_outside_to_outer_tmp.push_back(map_to_with_bva(lit));
-                    assert(back_number_from_outside_to_outer_tmp.back().var() < nVarsOuter());
-                } else {
-                    back_number_from_outside_to_outer_tmp.push_back(lit);
-                }
-            }
-        }
-        vector<Lit> outside_assumptions;
-        Lit back_number_from_outside_to_outer(const Lit lit)
-        {
-            assert(lit.var() < nVarsOutside());
-            if (get_num_bva_vars() > 0 || !fresh_solver) {
-                Lit ret = map_to_with_bva(lit);
-                assert(ret.var() < nVarsOuter());
-                return ret;
-            } else {
-                return lit;
-            }
-        }
-
-        uint32_t back_number_from_outside_to_outer(const uint32_t var)
-        {
-            Lit lit = Lit(var, false);
-            return back_number_from_outside_to_outer(lit).var();
-        }
-
 
         //Stats printing
         void print_norm_stats(
@@ -563,28 +531,22 @@ inline vector<uint32_t> Solver::xor_outer_numbered(const T& cl) const
     return tmpXor;
 }
 
-inline void Solver::move_to_outside_assumps(const vector<Lit>* assumps)
+inline void Solver::move_to_outer_assumps(const vector<Lit>* assumps)
 {
-
     if (assumps) {
-        #ifdef SLOW_DEBUG
-        outside_assumptions.clear();
+        outer_assumptions.clear();
         for(const Lit lit: *assumps) {
-            if (lit.var() >= nVarsOutside()) {
-                std::cerr << "ERROR: Assumption variable " << (lit.var()+1)
-                << " is too large, you never"
-                << " inserted that variable into the solver. Exiting."
+            if (lit.var() >= nVarsOuter()) {
+                cout << "ERROR: Assumption variable " << (lit.var()+1)
+                << " is too large, you never inserted that variable into the solver. Exiting."
                 << endl;
+                assert(false);
                 exit(-1);
             }
-            outside_assumptions.push_back(lit);
+            outer_assumptions.push_back(lit);
         }
-        #else
-        outside_assumptions.resize(assumps->size());
-        std::copy(assumps->begin(), assumps->end(), outside_assumptions.begin());
-        #endif
     } else {
-        outside_assumptions.clear();
+        outer_assumptions.clear();
     }
 }
 
@@ -593,30 +555,8 @@ inline lbool Solver::simplify_with_assumptions(
     const string* strategy
 ) {
     fresh_solver = false;
-    move_to_outside_assumps(_assumptions);
+    move_to_outer_assumps(_assumptions);
     return simplify_problem_outside(strategy);
-}
-
-inline bool Solver::find_with_watchlist_a_or_b(Lit a, Lit b, int64_t* limit) const
-{
-    if (watches[a].size() > watches[b].size()) {
-        std::swap(a,b);
-    }
-
-    watch_subarray_const ws = watches[a];
-    *limit -= ws.size();
-    for (const Watched w: ws) {
-        if (!w.isBin())
-            continue;
-
-        if (!w.red()
-            && w.lit2() == b
-        ) {
-            return true;
-        }
-    }
-
-    return false;
 }
 
 inline const vector<lbool>& Solver::get_model() const
@@ -689,7 +629,6 @@ inline void Solver::free_cl(
 
 inline bool Solver::removed_var_ext(uint32_t var) const
 {
-    assert(get_num_bva_vars() == 0);
     var = map_outer_to_inter(var);
     return value(var) != l_Undef || varData[var].removed != Removed::none;
 }

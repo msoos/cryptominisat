@@ -53,18 +53,11 @@ struct AssumptionPair {
     AssumptionPair()
     {}
 
-    AssumptionPair(const Lit _outer, const Lit _outside):
-        lit_outer(_outer)
-        , lit_orig_outside(_outside)
-    {
-    }
-
+    AssumptionPair(const Lit _outer): lit_outer(_outer) {}
     Lit lit_outer;
-    Lit lit_orig_outside; //not outer, but outside(!)
 
     bool operator==(const AssumptionPair& other) const {
-        return other.lit_outer == lit_outer &&
-        other.lit_orig_outside == lit_orig_outside;
+        return other.lit_outer == lit_outer;
     }
 
     bool operator<(const AssumptionPair& other) const
@@ -311,44 +304,15 @@ public:
     }
     void renumber_outer_to_inter_lits(vector<Lit>& ps) const;
 
-    uint32_t nVarsOutside() const
-    {
-        #ifdef DEBUG_SLOW
-        assert(outer_to_with_bva_map.size() == nVarsOuter() - num_bva_vars);
-        #endif
-        return nVarsOuter() - num_bva_vars;
-    }
 
-    Lit map_to_with_bva(const Lit lit) const
-    {
-        return Lit(outer_to_with_bva_map.at(lit.var()), lit.sign());
-    }
 
-    uint32_t map_to_with_bva(const uint32_t var) const
-    {
-        return outer_to_with_bva_map.at(var);
-    }
-
-    size_t nVars() const
-    {
-        return minNumVars;
-    }
-
-    size_t nVarsOuter() const
-    {
-        return assigns.size();
-    }
-
-    size_t get_num_bva_vars() const
-    {
-        return num_bva_vars;
-    }
+    size_t get_num_bva_vars() const { return num_bva_vars; }
+    size_t nVars() const { return minNumVars; }
+    size_t nVarsOuter() const { return assigns.size(); }
     vector<uint32_t> get_outside_var_incidence();
     vector<uint32_t> get_outside_lit_incidence();
     vector<uint32_t> get_outside_var_incidence_also_red();
 
-    vector<uint32_t> build_outer_to_without_bva_map() const;
-    vector<uint32_t> build_outer_to_without_bva_map_extended() const;
     void clean_occur_from_removed_clauses();
     void clean_occur_from_removed_clauses_only_smudged();
     void clean_occur_from_idx_types_only_smudged();
@@ -407,11 +371,6 @@ protected:
         const bool insert_varorder = true);
     virtual void new_vars(const size_t n);
     void test_reflectivity_of_renumbering() const;
-
-    template<class T>
-    vector<T> map_back_vars_to_without_bva(const vector<T>& val) const;
-    template<class T>
-    vector<T> map_back_lits_to_without_bva(const vector<T>& val) const;
     vector<lbool> assigns;
 
     vector<uint32_t> outerToInterMain;
@@ -422,9 +381,7 @@ private:
     void enlarge_minimal_datastructs(size_t n = 1);
     void enlarge_nonminimial_datastructs(size_t n = 1);
     void swapVars(const uint32_t which, const int off_by = 0);
-
     size_t num_bva_vars = 0;
-    vector<uint32_t> outer_to_with_bva_map;
 };
 
 template<class Function>
@@ -744,38 +701,6 @@ void CNF::clean_xor_vars_no_prop(T& ps, bool& rhs)
         ps.resize(ps.size() - (i - j));
         //TODO tbdd ?
     }
-}
-
-template<class T>
-vector<T> CNF::map_back_lits_to_without_bva(const vector<T>& val) const
-{
-    vector<T> ret;
-    assert(val.size() == nVarsOuter()*2);
-    ret.reserve(nVarsOutside()*2);
-    for(size_t i = 0; i < nVarsOuter()*2; i++) {
-        Lit l = Lit::toLit(i);
-        if (!varData[map_outer_to_inter(l).var()].is_bva) {
-            ret.push_back(val[i]);
-        }
-    }
-    assert(ret.size() == nVarsOutside()*2);
-    return ret;
-}
-
-
-template<class T>
-vector<T> CNF::map_back_vars_to_without_bva(const vector<T>& val) const
-{
-    vector<T> ret;
-    assert(val.size() == nVarsOuter());
-    ret.reserve(nVarsOutside());
-    for(size_t i = 0; i < nVarsOuter(); i++) {
-        if (!varData[map_outer_to_inter(i)].is_bva) {
-            ret.push_back(val[i]);
-        }
-    }
-    assert(ret.size() == nVarsOutside());
-    return ret;
 }
 
 inline bool CNF::satisfied(const ClOffset& off) const
