@@ -43,11 +43,11 @@ namespace CMSat {
 class Xor {
 public:
     Xor() {}
-    explicit Xor(const vector<uint32_t>& cl, const bool _rhs, const vector<uint32_t>& _clash_vars):
-        rhs(_rhs)
-        , clash_vars(_clash_vars)
-    {
+    explicit Xor(const vector<uint32_t>& cl, const bool _rhs): rhs(_rhs) {
         for (const auto& l: cl) vars.push_back(l);
+    }
+    explicit Xor(const vector<Lit>& cl, const bool _rhs): rhs(_rhs) {
+        for (const auto& l: cl) vars.push_back(l.var());
     }
     bool trivial() const { return size() == 0 && rhs == false; }
 
@@ -64,25 +64,6 @@ public:
     }
 #endif
 
-    template<typename T>
-    explicit Xor(const T& cl, const bool _rhs, const vector<uint32_t>& _clash_vars):
-        rhs(_rhs)
-        , clash_vars(_clash_vars)
-    {
-        for (uint32_t i = 0; i < cl.size(); i++) {
-            vars.push_back(cl[i].var());
-        }
-    }
-
-    template<typename T>
-    explicit Xor(const T& cl, const bool _rhs, const uint32_t clash_var):
-        rhs(_rhs)
-    {
-        clash_vars.push_back(clash_var);
-        for (uint32_t i = 0; i < cl.size(); i++) {
-            vars.push_back(cl[i]);
-        }
-    }
     ~Xor() {}
 
     vector<uint32_t>::const_iterator begin() const { return vars.begin(); }
@@ -116,26 +97,12 @@ public:
     bool empty() const
     {
         if (!vars.empty()) return false;
-        if (!clash_vars.empty()) return false;
         if (rhs != true) return false;
         return true;
     }
 
-    void merge_clashing_vars(const Xor& other, vector<uint32_t>& seen) {
-        for(const auto& v: clash_vars) seen[v] = 1;
-        for(const auto& v: other.clash_vars) {
-            if (!seen[v]) {
-                seen[v] = 1;
-                clash_vars.push_back(v);
-            }
-        }
-        for(const auto& v: clash_vars) seen[v] = 0;
-    }
-
-
     bool rhs = false;
     uint8_t propagating_watch = 0;
-    vector<uint32_t> clash_vars;
     vector<uint32_t> vars;
     vector<Lit> reason_cl;
     uint32_t watched[2] = {0,0};
@@ -153,7 +120,6 @@ inline std::ostream& operator<<(std::ostream& os, const Xor& x)
     }
     os << " =  " << std::boolalpha << x.rhs << std::noboolalpha;
 
-    os << " -- clash vars: "; for(const auto& c: x.clash_vars) os << c+1 << ", ";
     if (x.watched[0] < x.size() && x.watched[1] < x.size()) {
         os << " -- watch vars: "; for(const auto& at: {0, 1}) os << x[x.watched[at]]+1 << ", ";
     }

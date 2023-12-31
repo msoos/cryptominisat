@@ -267,39 +267,6 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
             at++;
         }
 
-        // Orig XOR clauses
-        // We blast them into 2**(size-1) clauses
-        while(xor_at < solver->xorclauses_orig.size()) {
-            Xor& x = solver->xorclauses_orig[xor_at];
-            assert(x.size() <= 9); // otherwise its translation will be very big
-            if (xor_val_at == 0 && (x.rhs ^ (x.size()%2))) xor_val_at = 1;
-            tmp_cl.clear();
-            if (x.size() <= max_len) {
-                tmp_cl.clear();
-                for(const auto& l: x) tmp_cl.push_back(Lit(l, false));
-                if (!simplified) tmp_cl = solver->clause_outer_numbered(tmp_cl);
-                if (bva_vars || all_vars_outside(tmp_cl)) {
-                    map_without_bva(tmp_cl);
-                    out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
-                    for(uint32_t i = 0; i < tmp_cl.size(); i++) out[i] ^= xor_val_at & (1<<i);
-
-                    if (!all_in_one_go) {
-                        if (xor_val_at+2 >= std::pow(2, x.size())) {
-                            xor_at++;
-                            xor_val_at = 0;
-                        } else xor_val_at += 2;
-                        return true;
-                    } else {
-                        out.push_back(lit_Undef);
-                    }
-                }
-            }
-            if (xor_val_at+2 >= std::pow(2, x.size())) {
-                xor_at++;
-                xor_val_at = 0;
-            } else xor_val_at+=2;
-        }
-
         //Elimed clauses (already in OUTER notation)
         bool ret = true;
         while (ret && solver->occsimplifier && !simplified) {

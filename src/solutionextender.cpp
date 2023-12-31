@@ -58,7 +58,7 @@ void SolutionExtender::extend() {
     }
     #endif
 
-    for(const auto& x: solver->xorclauses_orig) for(auto v: x) {
+    for(const auto& x: solver->xorclauses) for(auto v: x) {
         v = solver->map_inter_to_outer(v);
         assert(solver->model_value(v) != l_Undef);
     }

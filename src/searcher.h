@@ -142,8 +142,7 @@ class Searcher : public HyperEngine
 
         //Gauss
         bool attach_xorclauses();
-        bool detach_clear_xorclauses(const bool do_insert_var);
-        bool clear_gauss_matrices(const bool do_insert_var, const bool destruct);
+        bool clear_gauss_matrices(const bool destruct);
         void print_matrix_stats();
         void check_need_gauss_jordan_disable();
 

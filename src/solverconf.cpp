@@ -167,7 +167,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , max_glue_cutoff_gluehistltlimited(50)
 
         //Chono BT
-        , diff_declev_for_chrono (20)
+        , diff_declev_for_chrono (-1)
 
         //decision-based clause generation. These values have been validated
         //see 8099966.wlm01

@@ -42,9 +42,7 @@ class MatrixFinder {
 
     public:
         MatrixFinder(Solver* solver);
-
-        //NOTE "simplify_xors" should always be true except during testing
-        bool find_matrices(const bool insert_var, bool& matrix_created);
+        bool find_matrices(bool& matrix_created);
 
     private:
         uint32_t setup_matrices_attach_remaining_cls();

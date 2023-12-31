@@ -65,7 +65,7 @@ TEST_F(gauss, min_rows)
     s->xorclauses_updated = true;
     s->xorclauses = xs;
 
-    mf->find_matrices(false, can_detach);
+    mf->find_matrices(can_detach);
 
     EXPECT_EQ(s->gmatrices.size(), 1);
 }
@@ -79,7 +79,7 @@ TEST_F(gauss, min_rows_2)
     s->xorclauses_updated = true;
     s->xorclauses = xs;
 
-    mf->find_matrices(false, can_detach);
+    mf->find_matrices(can_detach);
 
     EXPECT_EQ(s->gmatrices.size(), 0);
 }
@@ -95,7 +95,7 @@ TEST_F(gauss, separate_1)
     s->xorclauses_updated = true;
     s->xorclauses = xs;
 
-    mf->find_matrices(false, can_detach);
+    mf->find_matrices(can_detach);
     cout << "s->gmatrices.size(): " << s->gmatrices.size() << endl;
 
     EXPECT_EQ(s->gmatrices.size(), 2);
@@ -115,7 +115,7 @@ TEST_F(gauss, separate_2)
     s->xorclauses_updated = true;
     s->xorclauses = xs;
 
-    mf->find_matrices(false, can_detach);
+    mf->find_matrices(can_detach);
 
     EXPECT_EQ(s->gmatrices.size(), 2);
 }
@@ -138,7 +138,7 @@ TEST_F(gauss, separate_3)
     s->xorclauses_updated = true;
     s->xorclauses = xs;
 
-    mf->find_matrices(false, can_detach);
+    mf->find_matrices(can_detach);
 
     EXPECT_EQ(s->gmatrices.size(), 3);
 }

@@ -177,11 +177,10 @@ public:
         uint32_t maxsize = numeric_limits<uint32_t>::min();
     };
 
-    bool find_xors(const bool insert_var);
+    bool find_xors();
     const Stats& get_stats() const;
     size_t mem_used() const;
     void grab_mem();
-    bool xor_together_xors(vector<Xor>& xors);
     void clean_equivalent_xors(vector<Xor>& txors);
 
 private:

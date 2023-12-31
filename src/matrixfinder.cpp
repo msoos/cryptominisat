@@ -91,13 +91,14 @@ inline bool MatrixFinder::belong_same_matrix(const Xor& x) {
 // Puts XORs from xorclauses into matrices. Matrices are created but not initialized
 // Detaches XORs that have been put into matrices
 // Returns SAT/UNSAT
-bool MatrixFinder::find_matrices(const bool do_insert_var, bool& matrix_created)
+bool MatrixFinder::find_matrices(bool& matrix_created)
 {
     assert(solver->decisionLevel() == 0);
     assert(solver->ok);
     assert(solver->gmatrices.empty());
 
-    solver->detach_clear_xorclauses(do_insert_var);
+    for(auto& gw: solver->gwatches) gw.clear();
+    solver->remove_and_clean_all();
     matrix_created = true;
 
     table.clear();
@@ -110,11 +111,7 @@ bool MatrixFinder::find_matrices(const bool do_insert_var, bool& matrix_created)
     solver->clauseCleaner->clean_xor_clauses(solver->xorclauses, false);
 
     finder.grab_mem();
-    if (!finder.xor_together_xors(solver->xorclauses)) return false;
     set<uint32_t> clash_vars;
-    for(const auto& x: solver->xorclauses) clash_vars.insert(x.clash_vars.begin(), x.clash_vars.end());
-    solver->set_clash_decision_vars(clash_vars);
-
     if (solver->xorclauses.size() < solver->conf.gaussconf.min_gauss_xor_clauses) {
         matrix_created = false;
         verb_print(4, "[matrix] too few xor clauses for GJ: " << solver->xorclauses.size());

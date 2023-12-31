@@ -248,7 +248,6 @@ bool VarReplacer::perform_replace() {
     assert(solver->gmatrices.empty() && "Cannot replace vars inside GJ elim");
     for(auto& gw: solver->gwatches) gw.clear();
     if (!replace_xor_clauses(solver->xorclauses)) goto end;
-    if (!replace_xor_clauses(solver->xorclauses_orig)) goto end;
     solver->attach_xorclauses();
 
     //While replacing the clauses
@@ -306,18 +305,6 @@ void VarReplacer::delete_frat_cls()
 
 // Returns FALSE if the XOR needs to be removed
 bool VarReplacer::replace_one_xor_clause(Xor& x) {
-    uint32_t j = 0;
-    for(uint32_t i = 0; i < x.clash_vars.size(); i++) {
-        uint32_t v = x.clash_vars[i];
-        uint32_t upd = get_var_replaced_with_fast(v);
-        if (!solver->seen[upd]) {
-            solver->seen[upd] = 1;
-            x.clash_vars[j++] = upd;
-        }
-    }
-    x.clash_vars.resize(j);
-    for(auto& v: x.clash_vars) solver->seen[v] = 0;
-
     for(uint32_t& v: x) {
         assert(v < solver->nVars());
 
@@ -1040,10 +1027,8 @@ bool VarReplacer::add_xor_as_bins(const BinaryXor& bin_xor)
     return true;
 }
 
-bool VarReplacer::replace_if_enough_is_found(const size_t limit, uint64_t* bogoprops_given, bool *replaced)
-{
-    if (replaced)
-        *replaced = false;
+bool VarReplacer::replace_if_enough_is_found(const size_t limit, uint64_t* bogoprops_given, bool *replaced) {
+    if (replaced) *replaced = false;
 
     scc_finder->performSCC(bogoprops_given);
     if (scc_finder->get_num_binxors_found() < limit) {

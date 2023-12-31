@@ -187,7 +187,6 @@ public:
     // NOTE: XORs that are currently in matrixes are not in xorclauses.
     //       they may be different from xorclauses_orig
     vector<Xor> xorclauses;
-    vector<Xor> xorclauses_orig;
     void print_xors(const vector<Xor>& xors);
 
     // variables that have been removed due to them being ONLY in XORs

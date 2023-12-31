@@ -444,11 +444,6 @@ bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached
     size_t j = 0;
     uint32_t orig[2] = {x[x.watched[0]], x[x.watched[1]]};
     VERBOSE_PRINT("Trying to clean XOR: " << x);
-    for(size_t size = x.clash_vars.size(); i < size; i++) {
-        const auto& v = x.clash_vars[i];
-        if (solver->value(v) == l_Undef) x.clash_vars[j++] = v;
-    }
-    x.clash_vars.resize(j);
 
     i = 0;
     j = 0;
@@ -501,8 +496,7 @@ bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached
     }
 }
 
-bool ClauseCleaner::clean_all_xor_clauses()
-{
+bool ClauseCleaner::clean_all_xor_clauses() {
     assert(solver->okay());
     assert(solver->decisionLevel() == 0);
 
@@ -510,7 +504,6 @@ bool ClauseCleaner::clean_all_xor_clauses()
     while(last_trail != solver->trail_size()) {
         last_trail = solver->trail_size();
         if (!clean_xor_clauses(solver->xorclauses, true)) return false;
-        if (!clean_xor_clauses(solver->xorclauses_orig, false)) return false;
         solver->ok = solver->propagate<false>().isNULL();
     }
     return solver->okay();

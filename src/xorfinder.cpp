@@ -104,7 +104,6 @@ void XorFinder::clean_equivalent_xors(vector<Xor>& txors) {
         ++i;
         for(vector<Xor>::iterator end = txors.end(); i != end; ++i) {
             if (j->vars == i->vars && j->rhs == i->rhs) {
-                j->merge_clashing_vars(*i, seen);
                 if (solver->frat->enabled()) {
                     verb_print(5, "Cleaning equivalent XOR at: " << (i - txors.begin()) << " xor: " << *i);
                     TBUDDY_DO(solver->frat->flush());
@@ -129,9 +128,9 @@ void XorFinder::clean_equivalent_xors(vector<Xor>& txors) {
 // Detaches & clears xorclauses, sets it to xorclauses_orig
 // Finds the XORs based on long clauses, and adds them to xorclauses_orig
 // does NOT detach or delete the corresponding clauses
-bool XorFinder::find_xors(const bool do_insert_var) {
+bool XorFinder::find_xors() {
     assert(solver->gmatrices.empty());
-    const auto orig_num_xors = solver->xorclauses_orig.size();
+    const auto orig_num_xors = solver->xorclauses.size();
 
     runStats.clear();
     runStats.numCalls = 1;
@@ -142,7 +141,9 @@ bool XorFinder::find_xors(const bool do_insert_var) {
                 << " as the current number was lower than the cutting number");
         solver->conf.maxXorToFind = solver->conf.xor_var_per_cut + 2;
     }
-    if (!solver->detach_clear_xorclauses(do_insert_var)) return false;
+
+    for(auto& gw: solver->gwatches) gw.clear();
+    if (!solver->okay()) return false;
 
     double myTime = cpuTime();
     const int64_t orig_xor_find_time_limit =
@@ -156,8 +157,8 @@ bool XorFinder::find_xors(const bool do_insert_var) {
     DEBUG_MARKED_CLAUSE_DO(assert(solver->no_marked_clauses()));
 
     find_xors_based_on_long_clauses();
-    assert(orig_num_xors + runStats.foundXors == solver->xorclauses_orig.size());
-    clean_equivalent_xors(solver->xorclauses_orig);
+    assert(orig_num_xors + runStats.foundXors == solver->xorclauses.size());
+    clean_equivalent_xors(solver->xorclauses);
 
     // Need to do this due to XORs encoding new info
     //    see NOTE in cnf.h
@@ -175,7 +176,7 @@ bool XorFinder::find_xors(const bool do_insert_var) {
     const double time_remain = float_div(xor_find_time_limit, orig_xor_find_time_limit);
     runStats.findTime = cpuTime() - myTime;
     runStats.time_outs += time_out;
-    solver->print_xors(solver->xorclauses_orig);
+    solver->print_xors(solver->xorclauses);
 
     if (solver->conf.verbosity) runStats.print_short(solver, time_remain);
     globalStats += runStats;
@@ -230,7 +231,7 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
 
     if (poss_xor.foundAll()) {
         std::sort(lits.begin(), lits.end());
-        Xor found_xor(lits, poss_xor.getRHS(), vector<uint32_t>());
+        Xor found_xor(lits, poss_xor.getRHS());
         SLOW_DEBUG_DO(for(Lit lit: lits) assert(solver->varData[lit.var()].removed == Removed::none));
 
         add_found_xor(found_xor);
@@ -246,7 +247,7 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
 
 void XorFinder::add_found_xor(const Xor& found_xor)
 {
-    solver->xorclauses_orig.push_back(found_xor);
+    solver->xorclauses.push_back(found_xor);
     runStats.foundXors++;
     runStats.sumSizeXors += found_xor.size();
     runStats.maxsize = std::max<uint32_t>(runStats.maxsize, found_xor.size());
@@ -343,274 +344,6 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
         }
         end:;
     }
-}
-
-// It manipulates this_xors ONLY. It assumes those XORs are
-// detached.
-bool XorFinder::xor_together_xors(vector<Xor>& this_xors) {
-    grab_mem();
-    if (this_xors.empty()) return solver->okay();
-    SLOW_DEBUG_DO(for(auto x: occ_cnt) assert(x == 0););
-    SLOW_DEBUG_DO(solver->check_no_idx_in_watchlist());
-
-    if (solver->conf.verbosity >= 5) {
-        cout << "c XOR-ing together XORs. Starting with: " << endl;
-        for(const auto& x: this_xors) cout << "c XOR before xor-ing together: " << x << endl;
-    }
-
-    assert(solver->okay());
-    assert(solver->decisionLevel() == 0);
-    assert(solver->watches.get_smudged_list().empty());
-    const size_t origsize = this_xors.size();
-
-    uint32_t xored = 0;
-    const double myTime = cpuTime();
-    assert(toClear.empty());
-
-    //Link in xors into watchlist
-    size_t j = 0;
-    for(size_t i = 0; i < this_xors.size(); i++) {
-        const Xor& x = this_xors[i];
-        if (x.trivial()) continue;
-        for(uint32_t v: x) {
-            if (occ_cnt[v] == 0) toClear.push_back(Lit(v, false));
-            occ_cnt[v]++;
-
-            Lit l(v, false);
-            assert(solver->watches.size() > l.toInt());
-            solver->watches[l].push(Watched(j, WatchType::watch_idx_t));
-            solver->watches.smudge(l);
-        }
-        this_xors[j++] = x;
-    }
-    this_xors.resize(j);
-
-    //Don't XOR together over the sampling vars, assumptions,
-    //or variables that are in regular clauses
-    vector<uint32_t> to_clear_2;
-    for(const auto& a: solver->assumptions) {
-        uint32_t int_var = solver->map_outer_to_inter(a.lit_outer).var();
-        if (int_var < solver->nVars()) {
-            if (!seen2[int_var]) {
-                seen2[int_var] = 1;
-                to_clear_2.push_back(int_var);
-            }
-        }
-    }
-    if (solver->conf.sampling_vars) {
-        for(const auto& v: *solver->conf.sampling_vars) {
-            uint32_t int_var = solver->map_outer_to_inter(v);
-            if (int_var < solver->nVars()) {
-                if (!seen2[int_var]) {
-                    seen2[int_var] = 1;
-                    to_clear_2.push_back(int_var);
-                }
-            }
-        }
-    }
-    for(const auto& ws: solver->watches) {
-        for(const auto& w: ws) {
-            if (w.isBin() && !w.red()) {
-                uint32_t v = w.lit2().var();
-                if (!seen2[v]) {
-                    seen2[v] = 1;
-                    to_clear_2.push_back(v);
-                }
-            }
-        }
-    }
-    for(const auto& offs: solver->longIrredCls) {
-        Clause* cl = solver->cl_alloc.ptr(offs);
-        assert(!cl->red());
-        for(Lit l: *cl) {
-            if (!seen2[l.var()]) {
-                seen2[l.var()] = 1;
-                to_clear_2.push_back(l.var());
-            }
-        }
-    }
-
-    //until fixedpoint
-    bool changed = true;
-    while(changed) {
-        changed = false;
-        interesting.clear();
-        for(const Lit l: toClear) {
-            if (occ_cnt[l.var()] == 2 && !seen2[l.var()]) interesting.push_back(l.var());
-        }
-
-        while(!interesting.empty()) {
-            #ifdef SLOW_DEBUG
-            {
-                vector<uint32_t> check;
-                check.resize(solver->nVars(), 0);
-                for(Xor& x: this_xors) for(const uint32_t& v: x) check[v]++;
-                for(size_t i = 0; i < solver->nVars(); i++) assert(check[i] == occ_cnt[i]);
-            }
-            #endif
-
-            //Pop and check if it can be XOR-ed together
-            const uint32_t v = interesting.back(); interesting.pop_back();
-            if (occ_cnt[v] != 2) continue;
-
-            size_t idxes[2] = {0,0}; // init only to silence warning
-            unsigned at = 0;
-            size_t i2 = 0;
-            watch_subarray ws = solver->watches[Lit(v, false)];
-
-            //Remove the 2 indexes from the watchlist
-            for(size_t i = 0; i < ws.size(); i++) {
-                const Watched& w = ws[i];
-                if (!w.isIdx()) ws[i2++] = ws[i];
-                else {
-                    assert(w.get_idx() < this_xors.size());
-                    if (this_xors[w.get_idx()].size() >= 2) {
-                        assert(at < 2);
-                        idxes[at] = w.get_idx();
-                        at++;
-                    }
-                }
-            }
-            assert(idxes[0] != idxes[1]);
-            assert(at == 2);
-            ws.resize(i2);
-
-            Xor& x0 = this_xors.at(idxes[0]);
-            Xor& x1 = this_xors.at(idxes[1]);
-            uint32_t clash_var;
-            uint32_t clash_num = xor_two(&x0, &x1, clash_var);
-            VERBOSE_PRINT("x1: " << x0 << " -- at idx: " << idxes[0]);
-            VERBOSE_PRINT("x2: " << x1 << " -- at idx: " << idxes[1]);
-
-            //If they are equivalent
-            if (x0.size() == x1.size()
-                && x0.rhs == x1.rhs
-                && clash_num == x0.size()
-            ) {
-                x1.merge_clashing_vars(x0, seen); //Update clash values & detached values
-                VERBOSE_PRINT("equivalent. After merge: " << x1 <<  " -- at idx: " << idxes[1]);
-
-                //Equivalent, so delete one
-                if (solver->frat->enabled()) {
-                    TBUDDY_DO(solver->frat->flush());
-                    TBUDDY_DO(delete x0.bdd);
-                }
-                x0 = Xor();
-
-                //Re-attach the other, remove the occur of the one we deleted
-                solver->watches[Lit(v, false)].push(Watched(idxes[1], WatchType::watch_idx_t));
-
-                for(uint32_t v2: x1) {
-                    Lit l(v2, false);
-                    assert(occ_cnt[l.var()] >= 2);
-                    occ_cnt[l.var()]--;
-                    if (occ_cnt[l.var()] == 2 && !seen2[l.var()]) interesting.push_back(l.var());
-                }
-            } else if (clash_num > 1) {
-                //add back to ws, can't do much
-                VERBOSE_PRINT("more than one clash");
-                ws.push(Watched(idxes[0], WatchType::watch_idx_t));
-                ws.push(Watched(idxes[1], WatchType::watch_idx_t));
-                continue;
-            } else {
-                occ_cnt[v] -= 2;
-                assert(occ_cnt[v] == 0);
-
-                Xor x_new(tmp_vars_xor_two, x0.rhs ^ x1.rhs, clash_var);
-                x_new.merge_clashing_vars(x0, seen);
-                x_new.merge_clashing_vars(x1, seen);
-                #ifdef USE_TBUDDY
-                if (solver->frat->enabled()) {
-                    solver->frat->flush();
-                    tbdd::xor_set xs;
-                    xs.add(*x0.create_bdd_xor());
-                    xs.add(*x1.create_bdd_xor());
-                    x_new.bdd = xs.sum();
-                }
-                #endif
-                VERBOSE_PRINT("clashed on var: " << clash_var+1 <<
-                    " final: " << x_new <<  " -- at idx: " << this_xors.size());
-
-                changed = true;
-                this_xors.push_back(x_new);
-                for(const uint32_t& v2: x_new) {
-                    Lit l(v2, false);
-                    solver->watches[l].push(Watched(this_xors.size()-1, WatchType::watch_idx_t));
-                    assert(occ_cnt[l.var()] >= 1);
-                    if (occ_cnt[l.var()] == 2 && !seen2[l.var()]) interesting.push_back(l.var());
-                }
-                if (solver->frat->enabled()) {
-                    TBUDDY_DO(solver->frat->flush());
-                    TBUDDY_DO(delete this_xors[idxes[0]].bdd);
-                    TBUDDY_DO(delete this_xors[idxes[1]].bdd);
-                }
-                this_xors.at(idxes[0]) = Xor();
-                this_xors.at(idxes[1]) = Xor();
-                xored++;
-            }
-        }
-    }
-
-    if (solver->conf.verbosity >= 5) {
-        cout << "c Finished XOR-ing together XORs. " << endl;
-        size_t at = 0;
-        for(const auto& x: this_xors) {
-            cout << "c XOR after xor-ing together: " << x << " -- at idx: " << at << endl;
-            at++;
-        }
-    }
-
-    //Clear
-    for(const Lit l: toClear) occ_cnt[l.var()] = 0;
-    toClear.clear();
-    for(const auto& x: to_clear_2) seen2[x] = 0;
-
-    solver->clean_occur_from_idx_types_only_smudged();
-    clean_xors_from_empty(this_xors);
-    double recur_time = cpuTime() - myTime;
-    if (solver->conf.verbosity) {
-        cout
-        << "c [xor-together] xored together: " << xored
-        << " orig xors: " << origsize
-        << " new xors: " << this_xors.size()
-        << solver->conf.print_times(recur_time)
-        << endl;
-    }
-
-
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed_min(
-            solver
-            , "xor-xor-together"
-            , recur_time
-        );
-    }
-
-    #if defined(SLOW_DEBUG) || defined(XOR_DEBUG)
-    //Make sure none is 2.
-    assert(toClear.empty());
-    for(const Xor& x: this_xors) {
-        for(uint32_t v: x) {
-            if (occ_cnt[v] == 0) {
-                toClear.push_back(Lit(v, false));
-            }
-
-            //Don't roll around
-            occ_cnt[v]++;
-        }
-    }
-
-    for(const Lit c: toClear) {
-        /*This is now possible because we don't XOR them together
-        in case they clash on more than 1 variable */
-        //assert(occ_cnt[c.var()] != 2);
-
-        occ_cnt[c.var()] = 0;
-    }
-    toClear.clear();
-    #endif
-
-    return solver->okay();
 }
 
 void XorFinder::clean_xors_from_empty(vector<Xor>& thisxors)

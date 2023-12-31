@@ -2228,10 +2228,9 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                )
             {
                 XorFinder finder(this, solver);
-                finder.find_xors(false); // beware can set UNSAT flag (ok = false)
-                for(const auto& x: solver->xorclauses_orig) for(const auto& v: x) xorclauses_vars[v] = 1;
+                finder.find_xors(); // beware can set UNSAT flag (ok = false)
+                for(const auto& x: solver->xorclauses) for(const auto& v: x) xorclauses_vars[v] = 1;
                 runStats.xorTime += finder.get_stats().findTime;
-                solver->xorclauses = solver->xorclauses_orig;
             }
         } else if (token == "occ-lit-rem") {
             all_occ_based_lit_rem();
@@ -2307,10 +2306,10 @@ bool OccSimplifier::setup() {
     }
 
     if (!solver->clauseCleaner->remove_and_clean_all()) return false;
-    solver->unset_clash_decision_vars();
-    solver->clear_gauss_matrices(false, false);
-    solver->detach_clear_xorclauses(false);
-    for(const auto& x: solver->xorclauses_orig) for(const auto& v: x) xorclauses_vars[v] = 1;
+    solver->clear_gauss_matrices(false);
+    for(auto& gw: solver->gwatches) gw.clear();
+    solver->remove_and_clean_all();
+    for(const auto& x: solver->xorclauses) for(const auto& v: x) xorclauses_vars[v] = 1;
 
     //Setup
     clause_lits_added = 0;

@@ -69,7 +69,7 @@ static inline std::string &trim(std::string &s) {
         return ltrim(rtrim(s));
 }
 
-long int str_to_long_int(string& token)
+inline long int str_to_long_int(string& token)
 {
     string trimmed = trim(token);
     size_t endptr;
@@ -81,7 +81,7 @@ long int str_to_long_int(string& token)
     return i;
 }
 
-Lit str_to_lit(const std::string& str)
+inline Lit str_to_lit(const std::string& str)
 {
     string mycopy = str;
     long int i = str_to_long_int(mycopy);
@@ -90,7 +90,7 @@ Lit str_to_lit(const std::string& str)
     return lit;
 }
 
-vector<Lit> str_to_cl(const string& data, bool sort = true)
+inline vector<Lit> str_to_cl(const string& data, bool sort = true)
 {
     vector<string> tokens;
     stringstream ss(data);
@@ -120,7 +120,7 @@ vector<Lit> str_to_cl(const string& data, bool sort = true)
     return ret;
 }
 
-vector<uint32_t> str_to_vars(const string& data)
+inline vector<uint32_t> str_to_vars(const string& data)
 {
     vector<Lit> lits = str_to_cl(data);
     vector<uint32_t> vars;
@@ -131,7 +131,7 @@ vector<uint32_t> str_to_vars(const string& data)
     return vars;
 }
 
-vector<Xor> str_to_xors(const string& data)
+inline vector<Xor> str_to_xors(const string& data)
 {
     vector<Xor> ret;
     stringstream ss(data);
@@ -143,7 +143,6 @@ vector<Xor> str_to_xors(const string& data)
         int at = 0;
         bool rhs = false;
         vector<uint32_t> vars;
-        vector<uint32_t> clashes;
         while (getline(ss2,token2, '='))
         {
             //cout << "Token is: " << token2 << endl;
@@ -160,10 +159,8 @@ vector<Xor> str_to_xors(const string& data)
                         long r = str_to_long_int(token3);
                         assert(r >= 0 && r <= 1);
                         rhs = r;
-                    } else if (at2 == 1) {
-                        clashes = str_to_vars(token3);
                     }
-                    assert(at2 < 2 && "We can have only at most one 'c' sign in an XOR");
+                    assert(at2 < 1 && "We can have NO 'c' sign in an XOR");
                     at2++;
                 }
             }
@@ -172,13 +169,13 @@ vector<Xor> str_to_xors(const string& data)
         }
 
         assert(at == 2 && "You forgot the =0/1 from the XOR");
-        ret.push_back(Xor(vars, rhs, clashes));
+        ret.push_back(Xor(vars, rhs));
     }
 
     return ret;
 }
 
-vector<vector<Lit> > str_to_vecs(const string& data)
+inline vector<vector<Lit> > str_to_vecs(const string& data)
 {
     vector<vector<Lit> > ret;
     stringstream ss(data);
@@ -191,7 +188,7 @@ vector<vector<Lit> > str_to_vecs(const string& data)
     return ret;
 }
 
-void add_cls(vector<vector<Lit> >& ret,
+inline void add_cls(vector<vector<Lit> >& ret,
              const Solver* s,
              const vector<ClOffset>& offsets)
 {
@@ -206,7 +203,7 @@ void add_cls(vector<vector<Lit> >& ret,
     }
 }
 
-void add_impl_cls(
+inline void add_impl_cls(
     vector<vector<Lit> >& ret,
     const Solver* s,
     const bool add_irred,
@@ -228,7 +225,7 @@ void add_impl_cls(
     }
 }
 
-vector<vector<Lit> > get_irred_cls(const Solver* s)
+inline vector<vector<Lit> > get_irred_cls(const Solver* s)
 {
     vector<vector<Lit> > ret;
     add_cls(ret, s, s->longIrredCls);
@@ -238,7 +235,7 @@ vector<vector<Lit> > get_irred_cls(const Solver* s)
 }
 
 
-vector<vector<Lit> > get_red_cls(const Solver* s)
+inline vector<vector<Lit> > get_red_cls(const Solver* s)
 {
     vector<vector<Lit> > ret;
     add_cls(ret, s, s->longRedCls[0]);
@@ -266,7 +263,7 @@ struct VecVecSorter
     }
 };
 
-void check_fuzzy_equal(
+inline void check_fuzzy_equal(
     vector<vector<Lit> >& cls_expected,
     vector<vector<Lit> >& cls_actual)
 {
@@ -284,7 +281,7 @@ void check_fuzzy_equal(
     EXPECT_EQ(cls_expected, cls_actual);
 }
 
-string print(const vector<vector<Lit> >& cls)
+inline string print(const vector<vector<Lit> >& cls)
 {
     std::stringstream ss;
     for(const auto& cl: cls) {
@@ -293,7 +290,7 @@ string print(const vector<vector<Lit> >& cls)
     return ss.str();
 }
 
-void check_irred_cls_eq(const Solver* s, const string& data)
+inline void check_irred_cls_eq(const Solver* s, const string& data)
 {
     vector<vector<Lit> > cls_expected = str_to_vecs(data);
     vector<vector<Lit> > cls = get_irred_cls(s);
@@ -301,7 +298,7 @@ void check_irred_cls_eq(const Solver* s, const string& data)
     check_fuzzy_equal(cls_expected, cls);
 }
 
-void check_red_cls_eq(const Solver* s, const string& data)
+inline void check_red_cls_eq(const Solver* s, const string& data)
 {
     vector<vector<Lit> > cls_expected = str_to_vecs(data);
     vector<vector<Lit> > cls = get_red_cls(s);
@@ -309,7 +306,7 @@ void check_red_cls_eq(const Solver* s, const string& data)
     check_fuzzy_equal(cls_expected, cls);
 }
 
-void check_irred_cls_contains(const Solver* s, const string& data)
+inline void check_irred_cls_contains(const Solver* s, const string& data)
 {
     vector<Lit> looking_for = str_to_cl(data);
     vector<vector<Lit> > cls = get_irred_cls(s);
@@ -333,8 +330,7 @@ void check_irred_cls_contains(const Solver* s, const string& data)
     EXPECT_TRUE(found_cl);
 }
 
-
-void check_red_cls_contains(const Solver* s, const string& data)
+inline void check_red_cls_contains(const Solver* s, const string& data)
 {
     vector<Lit> looking_for = str_to_cl(data);
     vector<vector<Lit> > cls = get_red_cls(s);
@@ -358,7 +354,7 @@ void check_red_cls_contains(const Solver* s, const string& data)
     EXPECT_TRUE(found_cl);
 }
 
-unsigned get_num_red_cls_contains(const Solver* s, const string& data)
+inline unsigned get_num_red_cls_contains(const Solver* s, const string& data)
 {
     unsigned found_cl = 0;
     vector<Lit> looking_for = str_to_cl(data);
@@ -373,8 +369,7 @@ unsigned get_num_red_cls_contains(const Solver* s, const string& data)
     return found_cl;
 }
 
-
-void check_irred_cls_doesnt_contain(const Solver* s, const string& data)
+inline void check_irred_cls_doesnt_contain(const Solver* s, const string& data)
 {
     vector<Lit> not_inside = str_to_cl(data);
     vector<vector<Lit> > cls = get_irred_cls(s);
@@ -393,7 +388,7 @@ void check_irred_cls_doesnt_contain(const Solver* s, const string& data)
     EXPECT_TRUE(not_found_cl);
 }
 
-void check_red_cls_doesnt_contain(const Solver* s, const string& data)
+inline void check_red_cls_doesnt_contain(const Solver* s, const string& data)
 {
     vector<Lit> not_inside = str_to_cl(data);
     vector<vector<Lit> > cls = get_red_cls(s);
@@ -412,7 +407,7 @@ void check_red_cls_doesnt_contain(const Solver* s, const string& data)
     EXPECT_TRUE(not_found_cl);
 }
 
-void print_model(const SATSolver&s)
+inline void print_model(const SATSolver&s)
 {
     assert(s.okay());
     for(size_t i = 0; i < s.nVars(); i++) {
@@ -420,7 +415,7 @@ void print_model(const SATSolver&s)
     }
 }
 
-void check_set_lits(const Solver* s, const std::string& data)
+inline void check_set_lits(const Solver* s, const std::string& data)
 {
     vector<Lit> lits = str_to_cl(data);
     std::sort(lits.begin(), lits.end());
@@ -451,14 +446,12 @@ struct XorSorter
     }
 };
 
-
-void sort_xor(Xor& x)
+inline void sort_xor(Xor& x)
 {
     std::sort(x.vars.begin(), x.vars.end());
-    std::sort(x.clash_vars.begin(), x.clash_vars.end());
 }
 
-void check_xors_eq(const vector<Xor>& got_data, const std::string& expected)
+inline void check_xors_eq(const vector<Xor>& got_data, const std::string& expected)
 {
     XorSorter xorsort;
 
@@ -478,11 +471,10 @@ void check_xors_eq(const vector<Xor>& got_data, const std::string& expected)
     for(size_t i = 0; i < expected_sorted.size(); i++) {
         EXPECT_EQ(expected_sorted[i].vars, got_data_sorted[i].vars);
         EXPECT_EQ(expected_sorted[i].rhs, got_data_sorted[i].rhs);
-        EXPECT_EQ(expected_sorted[i].clash_vars, got_data_sorted[i].clash_vars);
     }
 }
 
-void check_xors_contains(const vector<Xor>& got_data, const std::string& expected)
+inline void check_xors_contains(const vector<Xor>& got_data, const std::string& expected)
 {
     vector<Xor> expected_sorted = str_to_xors(expected);
     assert(expected_sorted.size() == 1);
@@ -496,10 +488,7 @@ void check_xors_contains(const vector<Xor>& got_data, const std::string& expecte
 
     bool found = false;
     for(const Xor& x: got_data_sorted) {
-        if (x.vars == expectedX.vars &&
-            x.rhs == expectedX.rhs &&
-            x.clash_vars == expectedX.clash_vars
-        ) {
+        if (x.vars == expectedX.vars && x.rhs == expectedX.rhs) {
             found = true;
             break;
         }
@@ -507,14 +496,14 @@ void check_xors_contains(const vector<Xor>& got_data, const std::string& expecte
     EXPECT_TRUE(found);
 }
 
-void check_zero_assigned_lits_eq(Solver* s, const string& data)
+inline void check_zero_assigned_lits_eq(Solver* s, const string& data)
 {
     vector<Lit> lits_exp = str_to_cl(data);
     vector<Lit> lits_act = s->get_zero_assigned_lits();
     EXPECT_EQ(lits_act, lits_exp);
 }
 
-void check_zero_assigned_lits_contains(Solver* s, const string& data)
+inline void check_zero_assigned_lits_contains(Solver* s, const string& data)
 {
     vector<Lit> lits_exp = str_to_cl(data);
     vector<Lit> lits_act = s->get_zero_assigned_lits();
@@ -532,7 +521,7 @@ void check_zero_assigned_lits_contains(Solver* s, const string& data)
     }
 }
 
-bool clause_satisfied(const string& data, vector<lbool>& solution)
+inline bool clause_satisfied(const string& data, vector<lbool>& solution)
 {
     vector<Lit> lits = str_to_cl(data);
     for(Lit l: lits) {
@@ -546,7 +535,7 @@ bool clause_satisfied(const string& data, vector<lbool>& solution)
     return false;
 }
 
-uint32_t count_num_undef_in_solution(const Solver* s)
+inline uint32_t count_num_undef_in_solution(const Solver* s)
 {
     uint32_t num = 0;
     for(size_t i = 0; i < s->nVarsOuter(); i++) {
@@ -573,13 +562,13 @@ void split(const std::string &s, char delim, Out result) {
     }
 }
 
-std::vector<std::string> split(const std::string &s, char delim) {
+inline std::vector<std::string> split(const std::string &s, char delim) {
     std::vector<std::string> elems;
     split(s, delim, std::back_inserter(elems));
     return elems;
 }
 
-cnfdata cnf_file_read(std::string fname)
+inline cnfdata cnf_file_read(std::string fname)
 {
     cnfdata cnfdat;
 
@@ -623,7 +612,7 @@ cnfdata cnf_file_read(std::string fname)
     return cnfdat;
 }
 
-bool cl_eq(const vector<Lit>& lits1, const vector<Lit>& lits2)
+inline bool cl_eq(const vector<Lit>& lits1, const vector<Lit>& lits2)
 {
     if (lits1.size() != lits2.size())
         return false;
@@ -642,7 +631,7 @@ bool cl_eq(const vector<Lit>& lits1, const vector<Lit>& lits2)
     return true;
 }
 
-bool cl_exists(const vector<vector<Lit> >& cls, const vector<Lit>& cl) {
+inline bool cl_exists(const vector<vector<Lit> >& cls, const vector<Lit>& cl) {
     for(const vector<Lit>& cli: cls) {
         if (cl_eq(cli, cl)) {
             return true;

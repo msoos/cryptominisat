@@ -294,7 +294,6 @@ class Solver : public Searcher
         vector<OrGate> get_recovered_or_gates();
         vector<ITEGate> get_recovered_ite_gates();
         vector<pair<Lit, Lit> > get_all_binary_xors() const;
-        vector<Xor> get_recovered_xors(const bool xor_together_xors);
         vector<uint32_t> remove_definable_by_irreg_gate(const vector<uint32_t>& vars);
         void clean_sampl_and_get_empties(
             vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars);
@@ -304,12 +303,8 @@ class Solver : public Searcher
         vector<Lit> get_toplevel_units_internal(bool outer_numbering) const;
 
         // Gauss-Jordan
+        vector<Xor> get_recovered_xors();
         bool init_all_matrices();
-        bool no_irred_nonxor_contains_clash_vars();
-        void detach_clash_vars_clauses();
-        bool assump_contains_xor_clash();
-        void set_clash_decision_vars(const set<uint32_t>& clash_vars);
-        void unset_clash_decision_vars();
         bool find_and_init_all_matrices();
         void detach_clauses_in_xors();
         vector<Lit> tmp_repr;
@@ -465,7 +460,6 @@ class Solver : public Searcher
         void check_minimization_effectiveness(lbool status);
         void check_recursive_minimization_effectiveness(const lbool status);
         void extend_solution(const bool only_indep_solution);
-        void extend_model_to_xorclauses_orig();
         void check_too_many_in_tier0();
         bool adjusted_glue_cutoff_if_too_many = false;
 
