@@ -85,37 +85,23 @@ CompleteDetachReatacher::ClausesStay CompleteDetachReatacher::clearWatchNotBinNo
     return stay;
 }
 
-bool CompleteDetachReatacher::reattachLongs(bool removeStatsFirst)
-{
-    if (solver->conf.verbosity >= 6) {
-        cout << "Cleaning and reattaching clauses" << endl;
-    }
-
+bool CompleteDetachReatacher::reattachLongs(bool removeStatsFirst) {
+    verb_print(6, "Cleaning and reattaching clauses");
     cleanAndAttachClauses(solver->longIrredCls, removeStatsFirst);
-    for(auto& lredcls: solver->longRedCls) {
-        cleanAndAttachClauses(lredcls, removeStatsFirst);
-    }
+    for(auto& lredcls: solver->longRedCls) cleanAndAttachClauses(lredcls, removeStatsFirst);
     solver->clauseCleaner->clean_implicit_clauses();
     assert(!solver->frat->something_delayed());
 
-    if (solver->ok) {
-        solver->ok = (solver->propagate<true>().isNULL());
-    }
-
+    if (solver->okay()) solver->ok = (solver->propagate<true>().isNULL());
+    solver->attach_xorclauses();
     return solver->okay();
 }
 
-void CompleteDetachReatacher::attachClauses(
-    vector<ClOffset>& cs
-) {
+void CompleteDetachReatacher::attachClauses( vector<ClOffset>& cs) {
     for (ClOffset offs: cs) {
         Clause* cl = solver->cl_alloc.ptr(offs);
         bool satisfied = false;
-        for(Lit lit: *cl) {
-            if (solver->value(lit) == l_True) {
-                satisfied = true;
-            }
-        }
+        for(Lit lit: *cl) if (solver->value(lit) == l_True) satisfied = true;
         if (!satisfied) {
             assert(solver->value((*cl)[0]) == l_Undef);
             assert(solver->value((*cl)[1]) == l_Undef);

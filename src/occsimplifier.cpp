@@ -2269,7 +2269,6 @@ bool OccSimplifier::setup() {
     if (!solver->clauseCleaner->remove_and_clean_all()) return false;
     solver->clear_gauss_matrices(false);
     for(auto& gw: solver->gwatches) gw.clear();
-    solver->remove_and_clean_all();
     for(const auto& x: solver->xorclauses) for(const auto& v: x) xorclauses_vars[v] = 1;
 
     //Setup
@@ -2791,9 +2790,7 @@ bool OccSimplifier::fill_occur() {
     uint64_t memUsage = calc_mem_usage_of_occur(solver->longIrredCls);
     print_mem_usage_of_occur(memUsage);
     if (memUsage > solver->conf.maxOccurIrredMB*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult) {
-        if (solver->conf.verbosity) {
-            cout << "c [occ] Memory usage of occur is too high, unlinking and skipping occur" << endl;
-        }
+        verb_print(1, "[occ] Memory usage of occur is too high, unlinking and skipping occur");
         CompleteDetachReatacher detRet(solver);
         detRet.reattachLongs(true);
         return false;
