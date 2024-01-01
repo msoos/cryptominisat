@@ -35,7 +35,7 @@ THE SOFTWARE.
 #include <cstddef>
 #include <cmath>
 #include <ratio>
-
+#include <utility>
 
 #include "sqlstats.h"
 #include "datasync.h"
@@ -1176,14 +1176,14 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
     out_conflict = learnt_clause;
 }
 
-void Searcher::update_assump_conflict_to_orig_outside(vector<Lit>& out_conflict)
-{
+void Searcher::update_assump_conflict_to_orig_outer(vector<Lit>& out_conflict) {
     if (assumptions.empty()) return;
 
-    vector<AssumptionPair> inter_assumptions;
-    for(const auto& ass: assumptions) {
-        inter_assumptions.push_back(
-            AssumptionPair(map_outer_to_inter(ass.lit_outer)));
+    vector<pair<Lit,Lit>> inter_assumptions;
+    for(const Lit p: assumptions) {
+        Lit p2 = solver->varReplacer->get_lit_replaced_with_outer(p);
+        p2 = solver->map_outer_to_inter(p2);
+        inter_assumptions.push_back(std::make_pair(p, p2));
     }
 
     std::sort(inter_assumptions.begin(), inter_assumptions.end());
@@ -1195,25 +1195,22 @@ void Searcher::update_assump_conflict_to_orig_outside(vector<Lit>& out_conflict)
     uint32_t j = 0;
     for(size_t i = 0; i < out_conflict.size(); i++) {
         Lit lit = out_conflict[i];
-
-        //lit_outer is actually INTER here, because we updated above
-        while(lit != ~inter_assumptions[at_assump].lit_outer) {
+        while(lit != ~inter_assumptions[at_assump].second) {
             at_assump++;
             assert(at_assump < inter_assumptions.size()
                     && "final conflict contains literals that are not from the assumptions!");
         }
-        assert(lit == ~inter_assumptions[at_assump].lit_outer);
+        assert(lit == ~inter_assumptions[at_assump].second);
 
         //in case of symmetry breaking, we can be in trouble
         //then, the orig_outside is actually lit_Undef
         //in these cases, the symmetry breaking literal needs to be taken out
-        if (!varData[inter_assumptions[at_assump].lit_outer.var()].is_bva) {
+        if (!varData[inter_assumptions[at_assump].second.var()].is_bva) {
             //Update to correct outside lit
-            out_conflict[j++] = ~inter_assumptions[at_assump].lit_outer;
+            out_conflict[j++] = ~inter_assumptions[at_assump].first;
         }
     }
     out_conflict.resize(j);
-    map_inter_to_outer(out_conflict);
 }
 
 void Searcher::check_blocking_restart()
@@ -1376,18 +1373,14 @@ void Searcher::dump_search_sql(const double myTime)
          (through simplification)
 */
 template<bool inprocess>
-lbool Searcher::new_decision()
-{
-#ifdef SLOW_DEBUG
-    assert(solver->prop_at_head());
-#endif
+lbool Searcher::new_decision() {
+    SLOW_DEBUG_DO(assert(solver->prop_at_head()));
     Lit next = lit_Undef;
     while (decisionLevel() < assumptions.size()) {
-        // Perform user provided assumption:
-        const Lit p = map_outer_to_inter(assumptions[decisionLevel()].lit_outer);
-        #ifdef SLOW_DEBUG
-        assert(varData[p.var()].removed == Removed::none);
-        #endif
+        Lit p = solver->assumptions[solver->decisionLevel()];
+        p = solver->varReplacer->get_lit_replaced_with_outer(p);
+        p = solver->map_outer_to_inter(p);
+        SLOW_DEBUG_DO(assert(varData[p.var()].removed == Removed::none));
 
         if (value(p) == l_True) {
             // Dummy decision level:
@@ -3089,30 +3082,22 @@ size_t Searcher::mem_used() const
 
 void Searcher::fill_assumptions_set()
 {
-    #ifdef SLOW_DEBUG
-    for(auto x: varData) {
-        assert(x.assumption == l_Undef);
-    }
-    #endif
-
-    for(const AssumptionPair lit_pair: assumptions) {
-        const Lit lit = map_outer_to_inter(lit_pair.lit_outer);
-        varData[lit.var()].assumption = lit.sign() ? l_False : l_True;
+    SLOW_DEBUG_DO(for(auto x: varData) assert(x.assumption == l_Undef));
+    for(Lit p: assumptions) {
+        p = solver->varReplacer->get_lit_replaced_with_outer(p);
+        p = solver->map_outer_to_inter(p);
+        // NOTE: this MAY set the same variable TWICE to different values!
+        varData[p.var()].assumption = p.sign() ? l_False : l_True;
     }
 }
 
-void Searcher::unfill_assumptions_set()
-{
-    for(const AssumptionPair lit_pair: assumptions) {
-        const Lit lit = map_outer_to_inter(lit_pair.lit_outer);
-        varData[lit.var()].assumption = l_Undef;
+void Searcher::unfill_assumptions_set() {
+    for(Lit p: assumptions) {
+        p = solver->varReplacer->get_lit_replaced_with_outer(p);
+        p = solver->map_outer_to_inter(p);
+        varData[p.var()].assumption = l_Undef;
     }
-
-    #ifdef SLOW_DEBUG
-    for(auto x: varData) {
-        assert(x.assumption == l_Undef);
-    }
-    #endif
+    SLOW_DEBUG_DO( for(auto x: varData) assert(x.assumption == l_Undef));
 }
 
 void Searcher::vsids_decay_var_act()
@@ -3502,6 +3487,7 @@ inline bool Searcher::check_order_heap_sanity() {
         }
     }
     check_all_in_vmtf_branch_strategy(tmp);
+    order_heap_vsids.run_check([=] (uint32_t v) { assert(varData[v].removed == Removed::none); });
 
     assert(order_heap_vsids.heap_property());
     assert(order_heap_rand.heap_property());
@@ -3577,17 +3563,15 @@ void Searcher::print_matrix_stats() {
     for(EGaussian* g: gmatrices) if (g) g->print_matrix_stats(conf.verbosity);
 }
 
-void Searcher::check_assumptions_sanity()
-{
-    for(AssumptionPair& lit_pair: assumptions) {
-        Lit inter_lit = map_outer_to_inter(lit_pair.lit_outer);
-        assert(inter_lit.var() < varData.size());
-        assert(varData[inter_lit.var()].removed == Removed::none);
-        if (varData[inter_lit.var()].assumption == l_Undef) {
-            cout << "Assump " << inter_lit << " has .assumption : "
-            << varData[inter_lit.var()].assumption << endl;
-        }
-        assert(varData[inter_lit.var()].assumption != l_Undef);
+void Searcher::check_assumptions_sanity() {
+    for(Lit p: assumptions) {
+        p = solver->varReplacer->get_lit_replaced_with_outer(p);
+        p = solver->map_outer_to_inter(p);
+        assert(p.var() < varData.size());
+        assert(varData[p.var()].removed == Removed::none);
+        if (varData[p.var()].assumption == l_Undef)
+            cout << "ERROR: Assump " << p << " has .assumption : " << varData[p.var()].assumption << endl;
+        assert(varData[p.var()].assumption != l_Undef);
     }
 }
 

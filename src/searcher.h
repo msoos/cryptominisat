@@ -111,11 +111,8 @@ class Searcher : public HyperEngine
         std::pair<size_t, size_t> remove_useless_bins(bool except_marked = false);
 
         ///Returns l_Undef if not inside, l_True/l_False otherwise
-        lbool var_inside_assumptions(const uint32_t var) const
-        {
-            #ifdef SLOW_DEBUG
-            assert(var < nVars());
-            #endif
+        lbool var_inside_assumptions(const uint32_t var) const {
+            SLOW_DEBUG_DO(assert(var < nVars()));
             return varData[var].assumption;
         }
         lbool lit_inside_assumptions(const Lit lit) const
@@ -154,6 +151,7 @@ class Searcher : public HyperEngine
         //assumptions
         void check_assumptions_sanity();
         void unfill_assumptions_set();
+        void fill_assumptions_set();
         bool check_order_heap_sanity();
 
         template<bool inprocess>
@@ -269,8 +267,7 @@ class Searcher : public HyperEngine
         void add_in_partial_solving_stats();
 
 
-        void fill_assumptions_set();
-        void update_assump_conflict_to_orig_outside(vector<Lit>& out_conflict);
+        void update_assump_conflict_to_orig_outer(vector<Lit>& out_conflict);
 
         /////////////////////
         // Learning

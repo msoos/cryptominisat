@@ -264,7 +264,7 @@ bool Solver::sort_and_clean_clause(
         } else if (value(ps[i]) != l_False && ps[i] != p) {
             ps[j++] = p = ps[i];
 
-            if (!fresh_solver && varData[p.var()].removed != Removed::none) {
+            if (varData[p.var()].removed != Removed::none) {
                 cout << "ERROR: clause " << origCl << " contains literal "
                 << p << " whose variable has been removed (removal type: "
                 << removed_type_to_string(varData[p.var()].removed)
@@ -439,7 +439,7 @@ void Solver::sort_and_clean_bnn(BNN& bnn)
         } else {
             bnn[j++] = p = bnn[i];
 
-            if (!fresh_solver && varData[p.var()].removed != Removed::none) {
+            if (varData[p.var()].removed != Removed::none) {
                 cout << "ERROR: BNN " << bnn << " contains literal "
                 << p << " whose variable has been removed (removal type: "
                 << removed_type_to_string(varData[p.var()].removed)
@@ -706,18 +706,15 @@ bool Solver::add_clause_helper(vector<Lit>& ps) {
         }
 
         //Undo var replacement
-        if (!fresh_solver) {
-            const Lit updated_lit = varReplacer->get_lit_replaced_with_outer(lit);
-            if (conf.verbosity >= 12 && lit != updated_lit)
-                cout << "EqLit updating outer lit " << lit << " to outer lit " << updated_lit << endl;
-            lit = updated_lit;
+        const Lit updated_lit = varReplacer->get_lit_replaced_with_outer(lit);
+        if (conf.verbosity >= 12 && lit != updated_lit)
+            cout << "EqLit updating outer lit " << lit << " to outer lit " << updated_lit << endl;
+        lit = updated_lit;
 
-            //Map outer to inter, and add re-variable if need be
-            if (map_outer_to_inter(lit).var() >= nVars()) new_var(false, lit.var(), false);
-        }
+        //Map outer to inter, and add re-variable if need be
+        if (map_outer_to_inter(lit).var() >= nVars()) new_var(false, lit.var(), false);
     }
-
-    if (!fresh_solver) renumber_outer_to_inter_lits(ps);
+    renumber_outer_to_inter_lits(ps);
 
     #ifdef SLOW_DEBUG
     //Check renumberer
@@ -728,7 +725,7 @@ bool Solver::add_clause_helper(vector<Lit>& ps) {
     #endif
 
     //Uneliminate vars
-    if (!fresh_solver && get_num_vars_elimed() != 0) {
+    if (get_num_vars_elimed() != 0) {
         for (const Lit& lit: ps) {
             if (varData[lit.var()].removed == Removed::elimed && !occsimplifier->uneliminate(lit.var()))
                 return false;
@@ -1051,23 +1048,13 @@ void Solver::save_on_var_memory(const uint32_t newNumVars)
     //print_mem_stats();
 }
 
-void Solver::set_assumptions()
-{
-    assert(assumptions.empty());
+void Solver::set_assumptions() {
     SLOW_DEBUG_DO(for(const auto& x: varData) assert(x.assumption == l_Undef));
-
     conflict.clear();
-    inter_assumptions_tmp = outer_assumptions;
-    add_clause_helper(inter_assumptions_tmp);
-    assert(inter_assumptions_tmp.size() == outer_assumptions.size());
 
-    assumptions.resize(inter_assumptions_tmp.size());
-    for(size_t i = 0; i < inter_assumptions_tmp.size(); i++) {
-        const Lit inter_lit = inter_assumptions_tmp[i];
-        const Lit outer_lit = map_inter_to_outer(inter_lit);
-        assumptions[i] = AssumptionPair(outer_lit);
-    }
-
+    vector<Lit> tmp;
+    tmp = assumptions;
+    add_clause_helper(tmp); // unelimininates, sanity checks
     fill_assumptions_set();
 }
 
@@ -1086,27 +1073,23 @@ void Solver::add_assumption(const Lit assump)
     assert(value(assump) == l_Undef);
 
     Lit outer_lit = map_inter_to_outer(assump);
-    assumptions.push_back(AssumptionPair(outer_lit));
+    assumptions.push_back(outer_lit);
     varData[assump.var()].assumption = assump.sign() ? l_False : l_True;
 }
 
-void Solver::check_model_for_assumptions() const
-{
-    for(const AssumptionPair& lit_pair: assumptions) {
-        const Lit outer_lit = lit_pair.lit_outer;
-        assert(outer_lit.var() < model.size());
+void Solver::check_model_for_assumptions() const {
+    for(Lit p: assumptions) {
+        assert(p.var() < model.size());
 
-        if (model_value(outer_lit) == l_Undef) {
-            cout << "ERROR, lit " << outer_lit << " was in the assumptions, but it wasn't set at all!"
-            << endl;
-        }
-        assert(model_value(outer_lit) != l_Undef);
+        if (model_value(p) == l_Undef)
+            cout << "ERROR, lit " << p << " is in assumptions, but it wasn't set" << endl;
+        assert(model_value(p) != l_Undef);
 
-        if (model_value(outer_lit) != l_True) {
-            cout << "ERROR, lit " << outer_lit << " was in the assumptions, but it was set to: "
-            << model_value(outer_lit) << endl;
+        if (model_value(p) != l_True) {
+            cout << "ERROR, lit " << p << " is in assumptions, but it was set to: "
+            << model_value(p) << endl;
         }
-        assert(model_value(outer_lit) == l_True);
+        assert(model_value(p) == l_True);
     }
 }
 
@@ -1386,7 +1369,6 @@ lbool Solver::simplify_problem_outside(const string* strategy)
 void Solver::reset_for_solving() {
     longest_trail_ever_best = 0;
     longest_trail_ever_inv = 0;
-    fresh_solver = false;
     polarity_strategy_change = 0;
     increasing_phase_size = conf.restart_first;
     set_assumptions();
@@ -1464,7 +1446,7 @@ lbool Solver::solve_with_assumptions(
         }
         #endif
     }
-    move_to_outer_assumps(_assumptions);
+    copy_assumptions(_assumptions);
     reset_for_solving();
 
     //Check if adding the clauses caused UNSAT
@@ -1718,7 +1700,6 @@ lbool Solver::iterate_until_solved() {
             status = l_False;
             goto end;
         }
-        detach_clauses_in_xors();
         status = Searcher::solve(num_confl);
 
         //Check for effectiveness
@@ -1799,11 +1780,10 @@ void Solver::handle_found_solution(const lbool status, const bool only_sampling_
         DEBUG_ATTACH_MORE_DO(check_all_clause_attached());
     } else if (status == l_False) {
         cancelUntil(0);
-
         for(const Lit lit: conflict) {
             if (value(lit) == l_Undef) assert(var_inside_assumptions(lit.var()) != l_Undef);
         }
-        if (conf.conf_needed) update_assump_conflict_to_orig_outside(conflict);
+        if (conf.conf_needed) update_assump_conflict_to_orig_outer(conflict);
     }
 
     USE_BREAKID_DO( if (breakid) breakid->finished_solving());
@@ -2298,7 +2278,7 @@ size_t Solver::mem_used() const
 {
     size_t mem = 0;
     mem += Searcher::mem_used();
-    mem += outer_assumptions.capacity()*sizeof(Lit);
+    mem += assumptions.capacity()*sizeof(Lit);
 
     return mem;
 }
@@ -2916,40 +2896,6 @@ vector<pair<Lit, Lit> > Solver::get_all_binary_xors() const
     return ret;
 }
 
-void Solver::update_assumptions_after_varreplace()
-{
-    #ifdef SLOW_DEBUG
-    for(AssumptionPair& lit_pair: assumptions) {
-        const Lit inter_lit = map_outer_to_inter(lit_pair.lit_outer);
-        assert(inter_lit.var() < varData.size());
-        if (varData[inter_lit.var()].assumption == l_Undef) {
-            cout << "Assump " << inter_lit << " has .assumption : "
-            << varData[inter_lit.var()].assumption << endl;
-        }
-        assert(varData[inter_lit.var()].assumption != l_Undef);
-    }
-    #endif
-
-    //Update assumptions
-    for(AssumptionPair& lit_pair: assumptions) {
-        const Lit orig = lit_pair.lit_outer;
-        lit_pair.lit_outer = varReplacer->get_lit_replaced_with_outer(orig);
-
-        //remove old from set + add new to set
-        if (orig != lit_pair.lit_outer) {
-            const Lit old_inter_lit = map_outer_to_inter(orig);
-            const Lit new_inter_lit = map_outer_to_inter(lit_pair.lit_outer);
-            varData[old_inter_lit.var()].assumption = l_Undef;
-            varData[new_inter_lit.var()].assumption =
-                new_inter_lit.sign() ? l_False: l_True;
-        }
-    }
-
-    #ifdef SLOW_DEBUG
-    check_assumptions_sanity();
-    #endif
-}
-
 //TODO later, this can be removed, get_num_free_vars() is MUCH cheaper to
 //compute but may have some bugs here-and-there
 uint32_t Solver::num_active_vars() const
@@ -3235,9 +3181,10 @@ bool Solver::find_and_init_all_matrices() {
         }
         return true;
     }
-    verb_print(1, "[find&init matx] performing matrix init");
     if (!clear_gauss_matrices(false)) return false; //attaches XORs actually
+    detach_clauses_in_xors();
 
+    verb_print(1, "[find&init matx] performing matrix init");
     MatrixFinder mfinder(solver);
     bool matrix_created;
     ok = mfinder.find_matrices(matrix_created);
@@ -3365,27 +3312,24 @@ void Solver::add_empty_cl_to_frat()
 //     frat->flush();
 }
 
-void Solver::check_assigns_for_assumptions() const
-{
-    for (const auto& ass: assumptions) {
-        const Lit inter = map_outer_to_inter(ass.lit_outer);
-        if (value(inter) != l_True) {
-            cout << "ERROR: Internal assumption " << inter
-            << " is not set to l_True, it's set to: " << value(inter)
-            << endl;
-            assert(lit_inside_assumptions(inter) == l_True);
+void Solver::check_assigns_for_assumptions() const {
+    for (Lit p: assumptions) {
+        p = solver->varReplacer->get_lit_replaced_with_outer(p);
+        p = solver->map_outer_to_inter(p);
+        if (value(p) != l_True) {
+            cout << "ERROR: Internal assumption " << p
+            << " is not set to l_True, it's set to: " << value(p) << endl;
+            assert(lit_inside_assumptions(p) == l_True);
         }
-        assert(value(inter) == l_True);
+        assert(value(p) == l_True);
     }
 }
 
-bool Solver::check_assumptions_contradict_foced_assignment() const
-{
-    for (auto& ass: assumptions) {
-        const Lit inter = map_outer_to_inter(ass.lit_outer);
-        if (value(inter) == l_False) {
-            return true;
-        }
+bool Solver::check_assumptions_contradict_foced_assignment() const {
+    for (Lit p: assumptions) {
+        p = solver->varReplacer->get_lit_replaced_with_outer(p);
+        p = solver->map_outer_to_inter(p);
+        if (value(p) == l_False) return true;
     }
     return false;
 }

@@ -25,9 +25,9 @@ THE SOFTWARE.
 #include "solver.h"
 #include "sqlstats.h"
 #include "time_mem.h"
+#include "varreplacer.h"
 
 using namespace CMSat;
-
 
 Lucky::Lucky(Solver* _solver) :
     solver(_solver)
@@ -158,8 +158,9 @@ bool CMSat::Lucky::enqueue_and_prop_assumptions()
 {
     assert(solver->decisionLevel() == 0);
     while (solver->decisionLevel() < solver->assumptions.size()) {
-        const Lit p = solver->map_outer_to_inter(
-            solver->assumptions[solver->decisionLevel()].lit_outer);
+        Lit p = solver->assumptions[solver->decisionLevel()];
+        p = solver->varReplacer->get_lit_replaced_with_outer(p);
+        p = solver->map_outer_to_inter(p);
 
         if (solver->value(p) == l_True) {
             // Dummy decision level:

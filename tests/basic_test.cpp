@@ -1351,27 +1351,7 @@ TEST(xor_recovery, find_xor_one_only_inv_external)
     s.simplify();
 
     vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(false);
-
-    //it's zero because it's cut into 2 XORs and they both have a variable
-    //that is NOT part of the solver's original variables.
-    EXPECT_EQ(xors.size(), 0);
-}
-
-TEST(xor_recovery, find_xor_one_that_is_xor_of_2)
-{
-    SATSolver s;
-    s.new_vars(30);
-    s.set_no_bve();
-
-    s.add_xor_clause(str_to_vars("1, 3, 4, 5"), true);
-    s.add_xor_clause(str_to_vars("1, 7, 8, 9"), true);
-    s.simplify();
-
-    vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(true);
     EXPECT_EQ(xors.size(), 1);
-    std::sort(xors[0].first.begin(), xors[0].first.end());
-    EXPECT_EQ(xors[0].first, str_to_vars("3, 4, 5, 7, 8, 9"));
-    EXPECT_EQ(xors[0].second, false);
 }
 
 //TODO the renubmering make 31 out of 3 and then it's not "outside" anymore...

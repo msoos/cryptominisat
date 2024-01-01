@@ -200,7 +200,6 @@ class Solver : public Searcher
         void set_decision_var(const uint32_t var);
         bool fully_enqueue_these(const vector<Lit>& toEnqueue);
         bool fully_enqueue_this(const Lit lit_ID);
-        void update_assumptions_after_varreplace();
 
         //State load/unload
         string serialize_solution_reconstruction_data() const;
@@ -313,7 +312,6 @@ class Solver : public Searcher
 
         //assumptions
         void set_assumptions();
-        vector<Lit> inter_assumptions_tmp; //used by set_assumptions() ONLY
         void add_assumption(const Lit assump);
         void check_assigns_for_assumptions() const;
         bool check_assumptions_contradict_foced_assignment() const;
@@ -331,7 +329,6 @@ class Solver : public Searcher
 
         //Helper
         void renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors_ret);
-        void testing_set_solver_not_fresh();
         bool full_probe(const bool bin_only);
 
         int PICOLIT(const Lit x) { return ((((int)(x).var()+1)) * ((x).sign() ? -1:1)); }
@@ -405,8 +402,7 @@ class Solver : public Searcher
         void check_and_upd_config_parameters();
         vector<uint32_t> tmp_xor_clash_vars;
         void check_xor_cut_config_sanity() const;
-        void move_to_outer_assumps(const vector<Lit>* assumps);
-        vector<Lit> outer_assumptions;
+        void copy_assumptions(const vector<Lit>* assumps);
         void handle_found_solution(const lbool status, const bool only_indep_solution);
         unsigned num_bits_set(const size_t x, const unsigned max_size) const;
         void check_too_large_variable_number(const vector<Lit>& lits) const;
@@ -531,10 +527,9 @@ inline vector<uint32_t> Solver::xor_outer_numbered(const T& cl) const
     return tmpXor;
 }
 
-inline void Solver::move_to_outer_assumps(const vector<Lit>* assumps)
-{
+inline void Solver::copy_assumptions(const vector<Lit>* assumps) {
+    assumptions.clear();
     if (assumps) {
-        outer_assumptions.clear();
         for(const Lit lit: *assumps) {
             if (lit.var() >= nVarsOuter()) {
                 cout << "ERROR: Assumption variable " << (lit.var()+1)
@@ -543,10 +538,8 @@ inline void Solver::move_to_outer_assumps(const vector<Lit>* assumps)
                 assert(false);
                 exit(-1);
             }
-            outer_assumptions.push_back(lit);
+            assumptions.push_back(lit);
         }
-    } else {
-        outer_assumptions.clear();
     }
 }
 
@@ -554,8 +547,7 @@ inline lbool Solver::simplify_with_assumptions(
     const vector<Lit>* _assumptions,
     const string* strategy
 ) {
-    fresh_solver = false;
-    move_to_outer_assumps(_assumptions);
+    copy_assumptions(_assumptions);
     return simplify_problem_outside(strategy);
 }
 
@@ -590,11 +582,6 @@ inline lbool Solver::model_value (const Lit p) const
 inline lbool Solver::model_value (const uint32_t p) const
 {
     return model[p];
-}
-
-inline void Solver::testing_set_solver_not_fresh()
-{
-    fresh_solver = false;
 }
 
 inline void Solver::free_cl(

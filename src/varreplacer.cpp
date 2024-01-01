@@ -223,6 +223,7 @@ bool VarReplacer::perform_replace() {
     if (!solver->clauseCleaner->remove_and_clean_all()) return false;
     DEBUG_ATTACH_MORE_DO(solver->check_all_clause_attached());
     if (solver->conf.verbosity >= 5) printReplaceStats();
+    solver->unfill_assumptions_set();
 
     update_all_vardata();
     check_no_replaced_var_set();
@@ -256,7 +257,6 @@ bool VarReplacer::perform_replace() {
     //* We shouldn't because then non-dominators would end up in the 'trail'
     if (!enqueueDelayedEnqueue()) goto end;
 
-    solver->update_assumptions_after_varreplace();
     USE_BREAKID_DO(if (solver->breakid) solver->breakid->update_var_after_varreplace());
 
 end:
@@ -291,6 +291,7 @@ end:
         checkUnsetSanity();
     }
     delete_frat_cls();
+    solver->fill_assumptions_set();
 
     return solver->okay();
 }

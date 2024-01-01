@@ -37,13 +37,9 @@ struct varreplace : public ::testing::Test {
         SolverConf conf;
         s = new Solver(&conf, &must_inter);
         s->new_vars(20);
-        s->testing_set_solver_not_fresh();
         repl = s->varReplacer;
     }
-    ~varreplace()
-    {
-        delete s;
-    }
+    ~varreplace() { delete s; }
     Solver* s = NULL;
     VarReplacer* repl = NULL;
     std::atomic<bool> must_inter;

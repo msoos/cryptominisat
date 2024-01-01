@@ -94,8 +94,9 @@ struct ColSorter {
     explicit ColSorter(Solver* _solver) :
         solver(_solver)
     {
-        for(const auto& ass: solver->assumptions) {
-            Lit p = solver->map_outer_to_inter(ass.lit_outer);
+        for(auto p: solver->assumptions) {
+            p = solver->varReplacer->get_lit_replaced_with_outer(p);
+            p = solver->map_outer_to_inter(p);
             if (p.var() < solver->nVars()) {
                 assert(solver->seen.size() > p.var());
                 solver->seen[p.var()] = 1;
@@ -103,13 +104,11 @@ struct ColSorter {
         }
     }
 
-    void finishup()
-    {
-        for(const auto& ass: solver->assumptions) {
-            Lit p = solver->map_outer_to_inter(ass.lit_outer);
-            if (p.var() < solver->nVars()) {
-                solver->seen[p.var()] = 0;
-            }
+    void finishup() {
+        for(Lit p: solver->assumptions) {
+            p = solver->varReplacer->get_lit_replaced_with_outer(p);
+            p = solver->map_outer_to_inter(p);
+            if (p.var() < solver->nVars()) solver->seen[p.var()] = 0;
         }
     }
 
@@ -183,7 +182,6 @@ void EGaussian::select_columnorder() {
         << endl;
     }
     #endif
-
 
     col_to_var.clear();
     for (uint32_t v : vars_needed) {

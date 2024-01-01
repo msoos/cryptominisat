@@ -49,24 +49,6 @@ namespace CMSat {
 
 class ClauseAllocator;
 
-struct AssumptionPair {
-    AssumptionPair()
-    {}
-
-    AssumptionPair(const Lit _outer): lit_outer(_outer) {}
-    Lit lit_outer;
-
-    bool operator==(const AssumptionPair& other) const {
-        return other.lit_outer == lit_outer;
-    }
-
-    bool operator<(const AssumptionPair& other) const
-    {
-        //Yes, we need reverse in terms of inverseness
-        return ~lit_outer < ~other.lit_outer;
-    }
-};
-
 struct BinTriStats
 {
     uint64_t irredBins = 0;
@@ -150,7 +132,7 @@ public:
     //once, in case one has been replaced with the other. So if var 1 =  var 2
     //and var 1 was set to TRUE and var 2 to be FALSE, then we'll have var 1
     //insided this array twice, once it needs to be set to TRUE and once FALSE
-    vector<AssumptionPair> assumptions;
+    vector<Lit> assumptions;
 
     //frat
     Drat* frat;
@@ -158,9 +140,6 @@ public:
 
     //Clauses
     vector<ClOffset> longIrredCls;
-
-    //if the solver object only saw add_clause and new_var(s)
-    bool fresh_solver = true;
 
     /**
     level 0 = never remove

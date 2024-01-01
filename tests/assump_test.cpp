@@ -24,6 +24,7 @@ THE SOFTWARE.
 
 #include "cryptominisat5/cryptominisat.h"
 #include "src/solverconf.h"
+#include "test_helper.h"
 #include <vector>
 #include <algorithm>
 using std::vector;
@@ -188,8 +189,9 @@ TEST_F(assump_interf, only_assump)
     s->new_var();
     s->new_var();
 
-    assumps.push_back(Lit(1, true));
+    assumps.push_back(Lit(0, true));
     assumps.push_back(Lit(1, false));
+    s->add_clause(str_to_cl("1, -2"));
 
     lbool ret = s->solve(&assumps);
     EXPECT_EQ( ret, l_False);
@@ -198,8 +200,8 @@ TEST_F(assump_interf, only_assump)
 
     vector<Lit> tmp = s->get_conflict();
     std::sort(tmp.begin(), tmp.end());
-    EXPECT_EQ( tmp[0] , Lit(1, false) );
-    EXPECT_EQ( tmp[1], Lit(1, true) );
+    EXPECT_EQ( tmp[0], Lit(0, false));
+    EXPECT_EQ( tmp[1], Lit(1, true));
 
     ret = s->solve(NULL);
     EXPECT_EQ( ret, l_True );
