@@ -350,8 +350,9 @@ private:
 
     //Time Limits
     uint64_t clause_lits_added;
-    int64_t  strengthening_time_limit;              ///<Max. number self-subsuming resolution tries to do this run
-    int64_t  subsumption_time_limit;              ///<Max. number backward-subsumption tries to do this run
+    int64_t  strengthening_time_limit;
+    int64_t  gate_based_litrem_time_limit;
+    int64_t  subsumption_time_limit;
     int64_t  norm_varelim_time_limit;
     int64_t  empty_varelim_time_limit;
     int64_t  varelim_num_limit;

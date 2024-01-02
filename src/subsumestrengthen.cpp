@@ -385,34 +385,22 @@ void inline SubsumeStrengthen::fill_sub_str(
 ) {
     Lit litSub;
     uint32_t num_bin_found = 0;
-    watch_subarray_const cs = solver->watches[lit];
+    const auto& cs = solver->watches[lit];
 
     //Do subsume only for the moment
     //TODO strengthening
     Lit bin_other_lit = lit_Undef;
     if (cl.size() == 2) {
-        if (lit == (cl[0]^inverted)) {
-            bin_other_lit = cl[1];
-        } else if (lit == (cl[1]^inverted)) {
-            bin_other_lit = cl[0];
-        }
+        if (lit == (cl[0]^inverted)) bin_other_lit = cl[1];
+        else if (lit == (cl[1]^inverted)) bin_other_lit = cl[0];
     }
 
     *simplifier->limit_to_decrease -= (long)cs.size()*2+ 40;
     for (const auto& w: cs) {
         if (w.isBin()) {
-            if (cl.size() > 2) {
-                continue;
-            }
-
-            if (w.red()) {
-                //let's ignore
-                continue;
-            }
-
-            if (w.lit2() != bin_other_lit) {
-                continue;
-            }
+            if (cl.size() > 2) continue;
+            if (w.red()) continue;
+            if (w.lit2() != bin_other_lit) continue;
 
             if (inverted) {
                 out_subsumed.push_back(OccurClause(lit, w));
@@ -420,9 +408,7 @@ void inline SubsumeStrengthen::fill_sub_str(
             } else {
                 //Don't delete ourselves
                 num_bin_found++;
-                if (num_bin_found <= 1) {
-                    continue;
-                }
+                if (num_bin_found <= 1) continue;
                 out_subsumed.push_back(OccurClause(lit, w));
                 out_lits.push_back(lit_Undef);
             }
@@ -430,19 +416,11 @@ void inline SubsumeStrengthen::fill_sub_str(
         }
 
         assert(w.isClause());
-        if (w.get_offset() == offset
-            || !subsetAbst(abs, w.getAbst())
-        ) {
-            continue;
-        }
+        if (w.get_offset() == offset || !subsetAbst(abs, w.getAbst())) continue;
 
         ClOffset offset2 = w.get_offset();
         const Clause& cl2 = *solver->cl_alloc.ptr(offset2);
-        if (cl2.getRemoved()
-            || cl.size() > cl2.size())
-        {
-            continue;
-        }
+        if (cl2.getRemoved() || cl.size() > cl2.size()) continue;
 
         *simplifier->limit_to_decrease -= (long)((cl.size() + cl2.size())/4);
         litSub = subset1(cl, cl2);
@@ -484,17 +462,11 @@ void SubsumeStrengthen::find_subsumed_and_strengthened(
     , vector<Lit>& out_lits
 )
 {
-    #ifdef VERBOSE_DEBUG
-    cout << "find_subsumed_and_strengthened: " << cl << endl;
-    #endif
-
+    VERBOSE_PRINT("find_subsumed_and_strengthened: " << cl);
     Lit minLit = lit_Undef;
     uint32_t bestSize = numeric_limits<uint32_t>::max();
     for (uint32_t i = 0; i < cl.size(); i++){
-        uint32_t newSize =
-            solver->watches[cl[i]].size()
-                + solver->watches[~cl[i]].size();
-
+        uint32_t newSize = solver->watches[cl[i]].size() + solver->watches[~cl[i]].size();
         if (newSize < bestSize) {
             minLit = cl[i];
             bestSize = newSize;
@@ -777,8 +749,7 @@ size_t SubsumeStrengthen::mem_used() const
 
 void SubsumeStrengthen::remove_binary_cl(const OccurClause& cl)
 {
-    solver->detach_bin_clause(
-        cl.lit, cl.ws.lit2(), cl.ws.red(), cl.ws.get_ID());
+    solver->detach_bin_clause(cl.lit, cl.ws.lit2(), cl.ws.red(), cl.ws.get_ID());
     (*solver->frat) << del << cl.ws.get_ID() << cl.lit << cl.ws.lit2() << fin;
     if (!cl.ws.red()) {
         simplifier->n_occurs[cl.lit.toInt()]--;
@@ -826,9 +797,7 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
                 } else if (val == l_Undef) {
                     solver->enqueue<false>(subsLits[j]);
                     solver->ok = solver->propagate_occur<false>(simplifier->limit_to_decrease);
-                    if (!solver->okay()) {
-                        return false;
-                    }
+                    if (!solver->okay()) return false;
                 }
                 //this binary is definitely satisfied
                 solver->detach_bin_clause(
@@ -868,12 +837,11 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
             ret_sub_str.str++;
 
             //If we are waaay over time, just exit
-            if (*simplifier->limit_to_decrease < -20LL*1000LL*1000LL)
-                break;
+            if (*simplifier->limit_to_decrease < -20LL*1000LL*1000LL) break;
         }
     }
     runStats.sub1 += ret_sub_str;
-    return true;
+    return solver->okay();
 }
 
 //Implicit input here is ALWAYS irred

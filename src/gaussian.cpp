@@ -33,6 +33,7 @@ THE SOFTWARE.
 #include <set>
 #include <iterator>
 
+#include "constants.h"
 #include "gaussian.h"
 #include "clause.h"
 #include "clausecleaner.h"
@@ -213,7 +214,7 @@ void EGaussian::select_columnorder() {
 }
 
 void EGaussian::fill_matrix() {
-    assert(solver->trail_size() == solver->qhead);
+    assert(solver->prop_at_head());
     var_to_col.clear();
 
     // decide which variable in matrix column and the number of rows
@@ -268,6 +269,7 @@ void EGaussian::clear_gwatches(const uint32_t var)
 bool EGaussian::full_init(bool& created) {
     assert(solver->okay());
     assert(solver->decisionLevel() == 0);
+    assert(solver->prop_at_head());
     assert(initialized == false);
     *solver->frat << __PRETTY_FUNCTION__ << " start\n";
     created = true;
@@ -276,6 +278,7 @@ bool EGaussian::full_init(bool& created) {
     while (true) {
         trail_before = solver->trail_size();
         solver->clauseCleaner->clean_xor_clauses(xorclauses, false);
+        if (!solver->okay()) return false;
 
         fill_matrix();
         before_init_density = get_density();
@@ -295,11 +298,10 @@ bool EGaussian::full_init(bool& created) {
                 break;
             case gret::prop:
                 assert(solver->decisionLevel() == 0);
+                assert(solver->okay());
                 solver->ok = solver->propagate<false>().isNULL();
-                if (!solver->ok) {
-                    if (solver->conf.verbosity >= 5) {
-                        cout << "c eliminate & adjust matrix during init lead to UNSAT" << endl;
-                    }
+                if (!solver->okay()) {
+                    verb_print(5, "eliminate & adjust matrix during init lead to UNSAT");
                     return false;
                 }
                 break;

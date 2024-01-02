@@ -433,7 +433,7 @@ struct ClauseSizeSorter
 
 inline bool CNF::redundant(const Watched& ws) const
 {
-    return (   (ws.isBin() && ws.red())
+    return ((ws.isBin() && ws.red())
             || (ws.isClause() && cl_alloc.ptr(ws.get_offset())->red())
     );
 }

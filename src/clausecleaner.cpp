@@ -503,6 +503,7 @@ bool ClauseCleaner::clean_all_xor_clauses() {
     return solver->okay();
 }
 
+// Returns okay(), it can lead to UNSAT
 bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors, const bool attached) {
     assert(solver->ok);
     VERBOSE_DEBUG_DO(for(Xor& x : xors) cout << "Cleaning XOR: " << x << endl);

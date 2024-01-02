@@ -807,8 +807,7 @@ bool OccSimplifier::sub_str_with_added_long_and_bin(const bool verbose)
     assert(solver->okay());
     assert(solver->prop_at_head());
 
-    while (!added_long_cl.empty() || !added_irred_bin.empty())
-    {
+    while (!added_long_cl.empty() || !added_irred_bin.empty()) {
         if (!sub_str->handle_added_long_cl(verbose)) return false;
         assert(solver->okay());
         assert(solver->prop_at_head());
@@ -1509,10 +1508,10 @@ vector<OrGate> OccSimplifier::recover_or_gates()
     gateFinder->find_all();
     or_gates = gateFinder->get_gates();
     gateFinder->cleanup();
-
-    solver->conf.maxOccurRedMB = backup;
     delete gateFinder;
     gateFinder = NULL;
+
+    solver->conf.maxOccurRedMB = backup;
     finishUp(origTrailSize);
     return or_gates;
 }
@@ -1907,6 +1906,7 @@ bool OccSimplifier::cl_rem_with_or_gates()
     gateFinder->cleanup();
     delete gateFinder;
     gateFinder = NULL;
+    limit_to_decrease = &gate_based_litrem_time_limit;
 
     uint64_t removed = 0;
 
@@ -1998,8 +1998,7 @@ bool OccSimplifier::cl_rem_with_or_gates()
 }
 
 // Checks that both inputs l1 & l2 are in the Clause. If so, replaces it with the RHS
-bool OccSimplifier::lit_rem_with_or_gates()
-{
+bool OccSimplifier::lit_rem_with_or_gates() {
     assert(solver->okay());
     assert(solver->prop_at_head());
     assert(added_irred_bin.empty());
@@ -2012,6 +2011,7 @@ bool OccSimplifier::lit_rem_with_or_gates()
     gateFinder->cleanup();
     delete gateFinder;
     gateFinder = NULL;
+    limit_to_decrease = &gate_based_litrem_time_limit;
 
     // we can't have 2 definitions of the same gate with different RHS
     // Otherwise, we have a V b = c  --> i.e. a V b V -c exists
@@ -2097,15 +2097,18 @@ bool OccSimplifier::lit_rem_with_or_gates()
                 n_occurs[gate.rhs.toInt()]++;
                 elim_calc_need_update.touch(gate.rhs);
                 solver->litStats.irredLits++;
+                std::sort(cl->begin(), cl->end());
             } else {
                 cl->reCalcAbstraction();
             }
-            std::sort(cl->begin(), cl->end());
             INC_ID(*cl);
             (*solver->frat) << add << *cl << fin << findelay;
             VERBOSE_PRINT("Shortened cl: " << *cl);
             solver->print_clause("shortened", *cl);
-            if (!clean_clause(off, true)) goto end;
+            if (!clean_clause(off, true)) {
+                for(auto const& l: gate.lits) seen[l.toInt()] = 0;
+                goto end;
+            }
         }
         for(auto const& l: gate.lits) seen[l.toInt()] = 0;
     }
@@ -2276,11 +2279,10 @@ bool OccSimplifier::setup() {
     runStats.clear();
     runStats.numCalls++;
     clauses.clear();
-    set_limits(); //to calculate strengthening_time_limit
+    set_limits();
     limit_to_decrease = &strengthening_time_limit;
     if (!fill_occur_and_print_stats()) return false;
 
-    set_limits();
     return solver->okay();
 }
 
@@ -3070,6 +3072,7 @@ void OccSimplifier::set_limits()
         *solver->conf.global_timeout_multiplier;
     strengthening_time_limit   = 200LL*1000LL*solver->conf.strengthening_time_limitM
         *solver->conf.global_timeout_multiplier;
+    gate_based_litrem_time_limit = strengthening_time_limit;
     norm_varelim_time_limit    = 4ULL*1000LL*1000LL*solver->conf.varelim_time_limitM
         *solver->conf.global_timeout_multiplier;
     empty_varelim_time_limit   = 200LL*1000LL*solver->conf.empty_varelim_time_limitM
@@ -5346,10 +5349,7 @@ bool OccSimplifier::remove_literal(
     bool only_set_is_removed)
 {
     Clause& cl = *solver->cl_alloc.ptr(offset);
-    #ifdef VERBOSE_DEBUG
-    cout << "-> Strenghtening clause :" << cl;
-    cout << " with lit: " << toRemoveLit << endl;
-    #endif
+    VERBOSE_PRINT("-> Strenghtening clause :" << cl << " with lit: " << toRemoveLit);
 
     *limit_to_decrease -= 5;
 
@@ -5367,10 +5367,8 @@ bool OccSimplifier::remove_literal(
     }
 
     removeWCl(solver->watches[toRemoveLit], offset);
-    if (cl.red())
-        solver->litStats.redLits--;
-    else
-        solver->litStats.irredLits--;
+    if (cl.red()) solver->litStats.redLits--;
+    else solver->litStats.irredLits--;
 
     return clean_clause(offset, only_set_is_removed);
 }

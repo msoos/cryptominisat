@@ -1186,10 +1186,17 @@ void Searcher::update_assump_conflict_to_orig_outer(vector<Lit>& out_conflict) {
         inter_assumptions.push_back(std::make_pair(p, p2));
     }
 
-    std::sort(inter_assumptions.begin(), inter_assumptions.end());
+    std::sort(inter_assumptions.begin(), inter_assumptions.end(),
+            [](const pair<Lit,Lit>& a, const pair<Lit,Lit>& b){return a.second<b.second;});
+
     std::sort(out_conflict.begin(), out_conflict.end());
     assert(out_conflict.size() <= assumptions.size());
     //They now are in the order where we can go through them linearly
+#ifdef VERBOSE_DEBUG
+    cout << "doing conflict reconstruction." << endl;
+    for(const auto& a: inter_assumptions) cout << "ass:" << a.first << " " << a.second << endl;
+    cout << "out confl:" << out_conflict << endl;
+#endif
 
     uint32_t at_assump = 0;
     uint32_t j = 0;
@@ -3564,14 +3571,21 @@ void Searcher::print_matrix_stats() {
 }
 
 void Searcher::check_assumptions_sanity() {
+    set<uint32_t> ass_set;
     for(Lit p: assumptions) {
         p = solver->varReplacer->get_lit_replaced_with_outer(p);
         p = solver->map_outer_to_inter(p);
+        ass_set.insert(p.var());
         assert(p.var() < varData.size());
         assert(varData[p.var()].removed == Removed::none);
         if (varData[p.var()].assumption == l_Undef)
             cout << "ERROR: Assump " << p << " has .assumption : " << varData[p.var()].assumption << endl;
         assert(varData[p.var()].assumption != l_Undef);
+    }
+    // check that no other var has .assumption set
+    for(uint32_t v = 0; v < nVars(); v++) {
+        if (!ass_set.count(v)) assert(varData[v].assumption == l_Undef);
+        else assert(varData[v].assumption != l_Undef);
     }
 }
 

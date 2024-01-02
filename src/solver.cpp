@@ -1056,6 +1056,7 @@ void Solver::set_assumptions() {
     tmp = assumptions;
     add_clause_helper(tmp); // unelimininates, sanity checks
     fill_assumptions_set();
+    SLOW_DEBUG_DO(check_assumptions_sanity());
 }
 
 void Solver::uneliminate_sampling_set() {
@@ -2014,6 +2015,7 @@ lbool Solver::simplify_problem(const bool startup, const string& strategy) {
     DEBUG_ATTACH_MORE_DO(check_implicit_propagated());
     SLOW_DEBUG_DO(assert(check_order_heap_sanity()));
     DEBUG_MARKED_CLAUSE_DO(assert(no_marked_clauses()));
+    SLOW_DEBUG_DO(check_assumptions_sanity());
 
     if (solveStats.num_simplify_this_solve_call >= conf.max_num_simplify_per_solve_call) {
         return l_Undef;
@@ -3016,24 +3018,19 @@ void Solver::check_implicit_stats(const bool onlypairs) const
         ; ++it, wsLit++
     ) {
         watch_subarray_const ws = *it;
-        for(const Watched* it2 = ws.begin(), *end2 = ws.end()
-            ; it2 != end2
-            ; it2++
-        ) {
-            if (it2->isBin()) {
+        for(const auto& w: ws) {
+            if (w.isBin()) {
                 #ifdef DEBUG_IMPLICIT_PAIRS_TRIPLETS
                 Lit lits[2];
                 lits[0] = Lit::toLit(wsLit);
-                lits[1] = it2->lit2();
+                lits[1] = w.lit2();
                 std::sort(lits, lits + 2);
-                findWatchedOfBin(watches, lits[0], lits[1], it2->red(), it2->get_ID());
-                findWatchedOfBin(watches, lits[1], lits[0], it2->red(), it2->get_ID());
+                findWatchedOfBin(watches, lits[0], lits[1], w.red(), w.get_ID());
+                findWatchedOfBin(watches, lits[1], lits[0], w.red(), w.get_ID());
                 #endif
 
-                if (it2->red())
-                    thisNumRedBins++;
-                else
-                    thisNumIrredBins++;
+                if (w.red()) thisNumRedBins++;
+                else thisNumIrredBins++;
 
                 continue;
             }

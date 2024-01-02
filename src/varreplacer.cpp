@@ -210,7 +210,7 @@ void VarReplacer::update_all_vardata()
 }
 
 bool VarReplacer::perform_replace() {
-    assert(solver->ok);
+    assert(solver->okay());
     checkUnsetSanity();
     *solver->frat << __PRETTY_FUNCTION__ << " start\n";
 
@@ -223,7 +223,6 @@ bool VarReplacer::perform_replace() {
     if (!solver->clauseCleaner->remove_and_clean_all()) return false;
     DEBUG_ATTACH_MORE_DO(solver->check_all_clause_attached());
     if (solver->conf.verbosity >= 5) printReplaceStats();
-    solver->unfill_assumptions_set();
 
     update_all_vardata();
     check_no_replaced_var_set();
@@ -291,7 +290,6 @@ end:
         checkUnsetSanity();
     }
     delete_frat_cls();
-    solver->fill_assumptions_set();
 
     return solver->okay();
 }
@@ -1036,34 +1034,31 @@ bool VarReplacer::replace_if_enough_is_found(const size_t limit, uint64_t* bogop
         scc_finder->clear_binxors();
         return solver->okay();
     }
-
     assert(solver->gmatrices.empty());
     assert(solver->gqueuedata.empty());
-
-    if (replaced)
-        *replaced = true;
+    solver->unfill_assumptions_set();
+    if (replaced) *replaced = true;
 
     const set<BinaryXor>& xors_found = scc_finder->get_binxors();
     for(BinaryXor bin_xor: xors_found) {
-        if (!add_xor_as_bins(bin_xor)) return false;
+        if (!add_xor_as_bins(bin_xor)) goto end;
 
         if (solver->value(bin_xor.vars[0]) == l_Undef
             && solver->value(bin_xor.vars[1]) == l_Undef
         ) {
             replace(bin_xor.vars[0], bin_xor.vars[1], bin_xor.rhs);
-            if (!solver->okay()) {
-                return false;
-            }
+            if (!solver->okay()) goto end;
         }
     }
 
-    const bool ret = perform_replace();
-    if (bogoprops_given) {
-        *bogoprops_given += runStats.bogoprops;
-    }
+    perform_replace();
+end:
+    if (bogoprops_given) *bogoprops_given += runStats.bogoprops;
     scc_finder->clear_binxors();
+    solver->fill_assumptions_set();
+    SLOW_DEBUG_DO(solver->check_assumptions_sanity());
 
-    return ret;
+    return solver->okay();
 }
 
 size_t VarReplacer::mem_used() const
