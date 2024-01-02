@@ -179,6 +179,7 @@ set (MY_TESTS
     solver_test
     cardfinder_test
     ternary_resolve_test
+    gate_test
     implied_by_test
     lucky_test
     definability_test

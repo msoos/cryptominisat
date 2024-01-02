@@ -2011,6 +2011,7 @@ bool OccSimplifier::lit_rem_with_or_gates() {
     gateFinder->cleanup();
     delete gateFinder;
     gateFinder = NULL;
+    auto old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &gate_based_litrem_time_limit;
 
     // we can't have 2 definitions of the same gate with different RHS
@@ -2077,8 +2078,7 @@ bool OccSimplifier::lit_rem_with_or_gates() {
             shortened++;
             (*solver->frat) << deldelay << *cl << fin;
 
-            VERBOSE_PRINT("Shortening cl: " << *cl);
-            solver->print_clause("shortening", *cl);
+            VERBOSE_DEBUG_DO(solver->print_clause("shortening", *cl));
             for(auto const& l: gate.lits) {
                 solver->watches.smudge(l);
                 removeWCl(solver->watches[l], off);
@@ -2103,8 +2103,7 @@ bool OccSimplifier::lit_rem_with_or_gates() {
             }
             INC_ID(*cl);
             (*solver->frat) << add << *cl << fin << findelay;
-            VERBOSE_PRINT("Shortened cl: " << *cl);
-            solver->print_clause("shortened", *cl);
+            VERBOSE_DEBUG_DO(solver->print_clause("shortened", *cl));
             if (!clean_clause(off, true)) {
                 for(auto const& l: gate.lits) seen[l.toInt()] = 0;
                 goto end;
@@ -2128,6 +2127,8 @@ bool OccSimplifier::lit_rem_with_or_gates() {
         << " lit-rem: " << shortened
         << " cl-rem: " << removed
         << solver->conf.print_times(time_used, false));
+    assert(limit_to_decrease == &gate_based_litrem_time_limit);
+    limit_to_decrease = old_limit_to_decrease;
 
     if (solver->sqlStats)
         solver->sqlStats->time_passed_min( solver , "occ-gate-based-lit-rem" , time_used);
@@ -2389,14 +2390,11 @@ bool OccSimplifier::ternary_res()
             && *limit_to_decrease > 0
             && ternary_res_cls_limit > 0
         ) {
-            if (!perform_ternary(cl, offs, sub1_ret))
-                goto end;
+            if (!perform_ternary(cl, offs, sub1_ret)) goto end;
         }
     }
 
-    if (!sub_str_with_added_long_and_bin(false)) {
-        goto end;
-    }
+    if (!sub_str_with_added_long_and_bin(false)) goto end;
     assert(added_long_cl.empty());
 
     end:
@@ -2439,9 +2437,7 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
 
     cl->is_ternary_resolved = 1;
     *limit_to_decrease -= 3;
-    for(const Lit l: *cl) {
-        seen[l.toInt()] = 1;
-    }
+    for(const Lit l: *cl) seen[l.toInt()] = 1;
 
     size_t largest = 0;
     Lit dont_check = lit_Undef;
@@ -2455,17 +2451,13 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
 
     assert(cl_to_add_ternary.empty());
     for(const Lit l: *cl) {
-        if (l == dont_check) {
-            continue;
-        }
+        if (l == dont_check) continue;
         check_ternary_cl(cl, offs, solver->watches[l]);
         check_ternary_cl(cl, offs, solver->watches[~l]);
     }
 
     //clean up
-    for(const Lit l: *cl) {
-        seen[l.toInt()] = 0;
-    }
+    for(const Lit l: *cl) seen[l.toInt()] = 0;
 
     //Add new ternary resolvents
     for(const Tri& newcl: cl_to_add_ternary) {

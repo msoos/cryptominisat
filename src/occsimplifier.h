@@ -229,6 +229,8 @@ public:
     void delete_component_unconnected_to_assumps(); //for arjun
     void strengthen_dummy_with_bins(const bool avoid_redundant);
     void blocked_clause_elim();
+    bool lit_rem_with_or_gates();
+    bool cl_rem_with_or_gates();
 
     //UnElimination
     void print_elimed_clauses_reverse() const;
@@ -458,8 +460,6 @@ private:
     bool        can_eliminate_var(const uint32_t var) const;
     bool        mark_and_push_to_added_long_cl_cls_containing(const Lit lit);
     bool        simulate_frw_sub_str_with_added_cl_to_var();
-    bool        lit_rem_with_or_gates();
-    bool        cl_rem_with_or_gates();
 
 
     TouchList   elim_calc_need_update;
