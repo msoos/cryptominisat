@@ -2283,6 +2283,8 @@ bool OccSimplifier::setup() {
     set_limits();
     limit_to_decrease = &strengthening_time_limit;
     if (!fill_occur_and_print_stats()) return false;
+    set_limits(); // some limits depend on the number of clauses linked in, so we need
+                  // to recalculate
 
     return solver->okay();
 }
@@ -2390,6 +2392,7 @@ bool OccSimplifier::ternary_res()
             && *limit_to_decrease > 0
             && ternary_res_cls_limit > 0
         ) {
+            VERBOSE_DEBUG_DO(solver->print_clause("performing tri with", *cl));
             if (!perform_ternary(cl, offs, sub1_ret)) goto end;
         }
     }
