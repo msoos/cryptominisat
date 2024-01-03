@@ -78,7 +78,7 @@ class solution_parser:
         thisDebugLibPart = 0
 
         for line in f:
-            line = line.rstrip()
+            line = str(line.rstrip())
 
             # skip empty lines
             if len(line) == 0:
@@ -165,7 +165,6 @@ class solution_parser:
         if otherSolverUNSAT is True:
             print("ERROR; The other solver did NOT find a solution with the partial solution given")
             exit(-1)
-            return False
 
         print("OK, other solver found a solution using the partial solution")
 
@@ -200,7 +199,7 @@ class solution_parser:
 
         # extract output from the other solver
         print("Checking other solver output...")
-        otherSolverUNSAT, otherSolverSolution, _ = self.parse_solution_from_output(
+        otherSolverUNSAT, _, _ = self.parse_solution_from_output(
             consoleOutput2.split("\n"))
 
         # check if the other solver agrees with us
@@ -268,6 +267,7 @@ class solution_parser:
         vlinefound = False
         solution = {}
         conflict = None
+        unsat = False
 
         # parse in solution
         for line in output_lines:
@@ -335,7 +335,7 @@ class solution_parser:
                     unsat is False and vlinefound is False))):
             print("Probably timeout, since no solution  printed. Could, of course, be segfault/assert fault, etc.")
             print("Making it look like an UNSAT, so no checks!")
-            return (True, [])
+            return True, [], None
 
         if (satunsatfound is False):
             print("Error: Cannot find if SAT or UNSAT. Maybe didn't finish running?")
@@ -507,7 +507,6 @@ class solution_parser:
         #print("Orig clause in DIMACS: ", lits)
         print("Error: clause '%s' not satisfied." % line.strip())
         raise NameError("Error: clause '%s' not satisfied." % line)
-        return False
 
     @staticmethod
     def _check_xor_clause(line, solution):

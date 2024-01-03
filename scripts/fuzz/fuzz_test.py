@@ -296,7 +296,6 @@ class Tester:
             cmd += "--breakidtime %d " % random.choice([10000]*5+[1])
 
         if options.gauss:
-            sls = 0
             cmd += "--autodisablegauss %s " % random.choice([0]*15+[1])
 
             # "Maximum number of matrixes to treat.")
@@ -428,27 +427,19 @@ class Tester:
         out_fname = unique_file("out", ".out")
 
         if self.num_threads == 1:
-            time_limit = partial(setlimits, options.maxtime)
-        else:
-            time_limit = None
+            partial(setlimits, options.maxtime)
 
         myalarm = "./doalarm -t real %d "% options.maxtime
         toexec = myalarm + command + " 1>" + out_fname + " 2> " + err_fname
         print("Executing: " + toexec)
         retcode = os.system(toexec)
 
-        # print time limit after child startup
-        #if options.verbose:
-            #print("CPU limit of parent (pid %d) after startup of child: %s secs" %
-                  #(os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)))
-
         # Get solver output
         consoleOutput = ""
         with open(out_fname, "r") as f:
             for line in f:
                 consoleOutput += line
-        #retcode = p.returncode
-        #err_file.close()
+        errline = ""
         with open(err_fname, "r") as err_file:
             found_something = False
             for line in err_file:
