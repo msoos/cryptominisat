@@ -2450,6 +2450,8 @@ bool Searcher::intree_if_needed()
 {
     assert(okay());
     assert(decisionLevel() == 0);
+    if (!xorclauses.empty() || !gmatrices.empty()) return okay();
+
     bool ret = okay();
 
     if (!bnns.empty()) conf.do_hyperbin_and_transred = false;

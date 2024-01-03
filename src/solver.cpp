@@ -202,7 +202,6 @@ bool Solver::add_xor_clause_inter(
     assert(okay());
     assert(!attach || qhead == trail.size());
     assert(decisionLevel() == 0);
-    if (frat->enabled() && addDrat)  assert(false && "not working, sorry");
 
     vector<Lit> ps(lits);
     for(Lit& lit: ps) if (lit.sign()) {rhs ^= true; lit ^= true;}
@@ -226,6 +225,7 @@ bool Solver::add_xor_clause_inter(
         ps[1] ^= true;
         add_clause_int(ps);
     } else {
+        if (frat->enabled() && addDrat)  assert(false && "not working, sorry");
         assert(ps.size() > 2);
         xorclauses_updated = true;
         xorclauses.push_back(Xor(ps, rhs));

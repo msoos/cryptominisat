@@ -33,22 +33,23 @@ import resource
 from functools import partial
 
 
-def unique_file(fname_begin, fname_end=".cnf"):
-        counter = 1
-        while 1:
-            fname = "out/" + fname_begin + '_' + str(counter) + fname_end
-            try:
-                fd = os.open(
-                    fname, os.O_CREAT | os.O_EXCL, stat.S_IREAD | stat.S_IWRITE)
-                os.fdopen(fd).close()
-                return fname
-            except OSError:
-                pass
+def unique_file(fname_begin, fname_end=".cnf") -> str:
+    counter = 1
+    while 1:
+        fname = "out/" + fname_begin + '_' + str(counter) + fname_end
+        try:
+            fd = os.open(
+                fname, os.O_CREAT | os.O_EXCL, stat.S_IREAD | stat.S_IWRITE)
+            os.fdopen(fd).close()
+            return fname
+        except OSError:
+            pass
 
-            counter += 1
-            if counter > 300:
-                print("Cannot create unique_file, last try was: %s" % fname)
-                exit(-1)
+        counter += 1
+        if counter > 300:
+            print("Cannot create unique_file, last try was: %s" % fname)
+            exit(-1)
+    exit(-1)
 
 
 def setlimits(maxtime):

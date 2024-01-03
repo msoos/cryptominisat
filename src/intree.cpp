@@ -21,6 +21,7 @@ THE SOFTWARE.
 ***********************************************/
 
 #include "intree.h"
+#include "constants.h"
 #include "solver.h"
 #include "varreplacer.h"
 #include "clausecleaner.h"
@@ -54,13 +55,9 @@ bool InTree::replace_until_fixedpoint(bool& aborted)
     uint32_t this_replace = solver->varReplacer->get_num_replaced_vars();
     while(last_replace != this_replace && !aborted) {
         last_replace = this_replace;
-        if (!solver->clauseCleaner->remove_and_clean_all()) {
-            return false;
-        }
+        if (!solver->clauseCleaner->remove_and_clean_all()) return false;
         bool OK = solver->varReplacer->replace_if_enough_is_found(0, &bogoprops);
-        if (!OK) {
-            return false;
-        }
+        if (!OK) return false;
 
         if (solver->varReplacer->get_scc_depth_warning_triggered()) {
             aborted = true;
@@ -139,10 +136,8 @@ bool InTree::intree_probe() {
     *solver->frat << __PRETTY_FUNCTION__ << " start\n";
 
     if (!solver->conf.doFindAndReplaceEqLits) {
-        if (solver->conf.verbosity) {
-            cout << "c [intree] SCC is not allowed, intree cannot work this way, aborting" << endl;
-        }
-        return solver->okay();
+      verb_print(1, "[intree] SCC is not allowed, intree cannot work this way, aborting");
+      return solver->okay();
     }
 
     bool aborted = false;
@@ -159,14 +154,12 @@ bool InTree::intree_probe() {
     }
 
     double myTime = cpuTime();
-    bogoprops_to_use =
-        solver->conf.intree_time_limitM*1000ULL*1000ULL
+    bogoprops_to_use = solver->conf.intree_time_limitM*1000ULL*1000ULL
         *solver->conf.global_timeout_multiplier;
     bogoprops_to_use = (double)bogoprops_to_use * std::pow((double)(numCalls+1), 0.3);
     start_bogoprops = solver->propStats.bogoProps;
 
     fill_roots();
-    //randomize_roots
     std::shuffle(roots.begin(), roots.end(), solver->mtrand);
 
     //Let's enqueue all ~root -s.
@@ -174,9 +167,7 @@ bool InTree::intree_probe() {
 
     //clear seen
     for(QueueElem elem: queue) {
-        if (elem.propagated != lit_Undef) {
-            seen[elem.propagated.toInt()] = 0;
-        }
+        if (elem.propagated != lit_Undef) seen[elem.propagated.toInt()] = 0;
     }
     const size_t orig_num_free_vars = solver->get_num_free_vars();
 
@@ -198,13 +189,7 @@ bool InTree::intree_probe() {
         << solver->conf.print_times(time_used,  time_out, time_remain));
 
     if (solver->sqlStats) {
-        solver->sqlStats->time_passed(
-            solver
-            , "intree"
-            , time_used
-            , time_out
-            , time_remain
-        );
+        solver->sqlStats->time_passed( solver , "intree" , time_used , time_out , time_remain);
     }
 
     *solver->frat << __PRETTY_FUNCTION__ << " end\n";

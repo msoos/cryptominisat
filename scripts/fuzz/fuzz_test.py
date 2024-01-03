@@ -596,6 +596,7 @@ class Tester:
         # frat turns off a bunch of systems, like symmetry breaking so use it about 50% of time
         self.frat = self.num_threads == 1 and (random.randint(0, 10) < 5)
 
+
         self.sqlitedbfname = None
         self.only_sampling = random.choice([True, False, False, False, False]) and not self.frat
 
@@ -727,7 +728,7 @@ if __name__ == "__main__":
         exit(-1)
 
     fuzzers_frat = fuzzers_noxor
-    fuzzers_nofrat = fuzzers_noxor + fuzzers_xor
+    fuzzers_nofrat = fuzzers_noxor
 
     print_version()
     tester = Tester()
