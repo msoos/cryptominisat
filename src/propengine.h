@@ -491,12 +491,7 @@ inline PropResult PropEngine::handle_normal_prop_fail(
     cout << "Conflict from cl: " << c << endl;
     #endif
 
-    //Update stats
-    #ifdef STATS_NEEDED
-    if (!inprocess && c.red()) {
-        red_stats_extra[c.stats.extra_pos].conflicts_made++;
-    }
-    #endif
+    STATS_DO(if (!inprocess && c.red()) red_stats_extra[c.stats.extra_pos].conflicts_made++);
 
     qhead = trail.size();
     return PROP_FAIL;

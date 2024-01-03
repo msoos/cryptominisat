@@ -734,12 +734,8 @@ PropBy PropEngine::propagate_any_order()
             // propagate binary clause
             if (likely(i->isBin())) {
                 *j++ = *i;
-                if (!red_also && i->red()) {
-                    continue;
-                }
-                if (distill_use && i->bin_cl_marked()) {
-                    continue;
-                }
+                if (!red_also && i->red()) continue;
+                if (distill_use && i->bin_cl_marked()) continue;
                 prop_bin_cl<inprocess>(i, p, confl, currLevel);
                 continue;
             }
@@ -747,8 +743,7 @@ PropBy PropEngine::propagate_any_order()
             // propagate BNN constraint
             if (i->isBNN()) {
                 *j++ = *i;
-                const lbool val = bnn_prop(
-                    i->get_bnn(), currLevel, p, i->get_bnn_prop_t());
+                const lbool val = bnn_prop(i->get_bnn(), currLevel, p, i->get_bnn_prop_t());
                 if (val == l_False) confl = PropBy(i->get_bnn(), nullptr);
                 continue;
             }
