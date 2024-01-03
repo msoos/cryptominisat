@@ -97,9 +97,7 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen, bool& finished)
         if (varData[var].removed != Removed::none) continue;
         var_order.push_back(var);
     }
-    std::mt19937 g;
-    g.seed(mtrand.randInt());
-    std::shuffle(var_order.begin(), var_order.end(), g);
+    std::shuffle(var_order.begin(), var_order.end(), mtrand);
 
     int64_t orig_max_props = orig_max_confl*1000LL;
     if (orig_max_props < orig_max_confl) orig_max_props = orig_max_confl;
