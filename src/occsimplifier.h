@@ -210,7 +210,7 @@ public:
     uint32_t add_cls_to_picosat_definable(const Lit wsLit);
     PicoSAT* picosat = NULL;
     int lit_to_picolit(const Lit l);
-    uint32_t picolits_added = 0;
+    uint64_t picolits_added = 0;
     vector<int> var_to_picovar;
     vector<uint32_t> picovars_used;
     vector<std::pair<ClOffset, ClOffset>> equiv_subformula_cls;

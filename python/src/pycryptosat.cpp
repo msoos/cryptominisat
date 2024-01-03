@@ -551,13 +551,6 @@ static PyObject* nb_vars(Solver *self)
 
 }
 
-/*
-static PyObject* nb_clauses(Solver *self)
-{
-    // Private attribute => need to make a public method
-    return PyInt_FromLong(self->cmsat->data->solvers.size());
-}*/
-
 static int parse_assumption_lits(PyObject* assumptions, SATSolver* cmsat, std::vector<Lit>& assumption_lits)
 {
     PyObject *iterator = PyObject_GetIter(assumptions);
@@ -896,6 +889,8 @@ MODULE_INIT_FUNC(pycryptosat)
 
     // Add the version string so users know what version of CryptoMiniSat
     // they're using.
+#if defined(_MSC_VER)
+#else
     if (PyModule_AddStringConstant(m, "__version__", CMS_FULL_VERSION) == -1) {
         Py_DECREF(m);
         return NULL;
@@ -904,6 +899,8 @@ MODULE_INIT_FUNC(pycryptosat)
         Py_DECREF(m);
         return NULL;
     }
+#endif
+
 
     // Add the Solver type.
     Py_INCREF(&pycryptosat_SolverType);

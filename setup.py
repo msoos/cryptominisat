@@ -25,11 +25,11 @@
 
 import sys
 import os
-import platform
 from setuptools import Extension, setup
 import sysconfig
 import toml
 import pathlib
+from sys import platform
 
 def _parse_toml(pyproject_path):
     pyproject_text = pyproject_path.read_text()
@@ -47,6 +47,15 @@ picosatlib = ('picosatlib', {
 
 
 def gen_modules(version):
+
+    if platform == "win32" or platform == "cygwin":
+        extra_compile_args_val = ['-I../', '-Isrc/', '/std:c++17', "/DCMS_FULL_VERSION=\""+version+"\""]
+        define_macros_val = [("TRACE", "")]
+
+    else:
+        extra_compile_args_val = ['-I../', '-Isrc/', '-std=c++17']
+        define_macros_val = [("TRACE", ""), ("CMS_FULL_VERSION", "\""+version+"\"")]
+
     modules = Extension(
         name = "pycryptosat",
         include_dirs = ["src/"],
@@ -93,8 +102,8 @@ def gen_modules(version):
                    "src/xorfinder.cpp",
                    "src/oracle/oracle.cpp",
                ],
-        extra_compile_args = ['-I../', '-Isrc/', '-std=c++17'],
-        define_macros=[("TRACE", ""), ("CMS_FULL_VERSION", "\""+version+"\"")],
+        extra_compile_args = extra_compile_args_val,
+        define_macros=define_macros_val,
         language = "c++",
     )
     return modules

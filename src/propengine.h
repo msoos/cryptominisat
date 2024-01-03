@@ -42,6 +42,9 @@ THE SOFTWARE.
 #include "cnf.h"
 #include "watchalgos.h"
 #include "gqueuedata.h"
+#include <random>
+
+using std::mt19937_64;
 
 namespace CMSat {
 
@@ -158,13 +161,13 @@ struct RandHeap
         return true;
     }
 
-    uint32_t get_random_element(MTRand& mtrand)
+    uint32_t get_random_element(mt19937_64& mtrand)
     {
         if (vars.empty()) {
             return var_Undef;
         }
 
-        uint32_t which = mtrand.randInt(vars.size()-1);
+        uint32_t which = rnd_uint(mtrand, vars.size()-1);
         uint32_t picked = vars[which];
         std::swap(vars[which], vars[vars.size()-1]);
         vars.pop_back();

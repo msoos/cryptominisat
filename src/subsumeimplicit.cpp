@@ -137,7 +137,7 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats, std::string calle
     }
 
     //Randomize starting point
-    const size_t rnd_start = solver->mtrand.randInt(solver->watches.size()-1);
+    const size_t rnd_start = rnd_uint(solver->mtrand, solver->watches.size()-1);
     size_t numDone = 0;
     for (;numDone < solver->watches.size() && timeAvailable > 0 && !solver->must_interrupt_asap()
          ;numDone++

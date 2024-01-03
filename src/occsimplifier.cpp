@@ -35,7 +35,6 @@ THE SOFTWARE.
 #include <cmath>
 #include <functional>
 
-#include "popcnt.h"
 #include "occsimplifier.h"
 #include "clause.h"
 #include "solver.h"
@@ -709,7 +708,7 @@ void OccSimplifier::eliminate_empty_resolvent_vars()
     assert(solver->watches.get_smudged_list().empty());
     if (solver->nVars() == 0) goto end;
 
-    for(size_t var = solver->mtrand.randInt(solver->nVars()-1), num = 0
+    for(size_t var = rnd_uint(solver->mtrand,solver->nVars()-1), num = 0
         ; num < solver->nVars() && *limit_to_decrease > 0
         ; var = (var + 1) % solver->nVars(), num++
     ) {
@@ -2379,7 +2378,7 @@ bool OccSimplifier::ternary_res()
     Sub1Ret sub1_ret;
 
     //NOTE: the "clauses" here will change in size as we add resolvents
-    size_t at = solver->mtrand.randInt(clauses.size()-1);
+    size_t at = rnd_uint(solver->mtrand, clauses.size()-1);
     for(size_t i = 0; i < clauses.size(); i++) {
         ClOffset offs = clauses[(at+i) % clauses.size()];
         Clause * cl = solver->cl_alloc.ptr(offs);
@@ -3319,9 +3318,9 @@ bool OccSimplifier::find_irreg_gate(
     , vec<Watched>& out_b
 ) {
     // Too expensive
-    if (turned_off_irreg_gate || picolits_added > 200*1000) {
+    if (turned_off_irreg_gate || picolits_added > (double)solver->conf.global_timeout_multiplier * (double)solver->conf.picosat_gate_limitK * (double)1000) {
         if (solver->conf.verbosity && !turned_off_irreg_gate) {
-            cout << "c [occ-bve] turning off picosat-based irreg gate detection" << endl;
+            cout << "c [occ-bve] turning off picosat-based irreg gate detection, added lits: " << print_value_kilo_mega(picolits_added) << endl;
         }
         turned_off_irreg_gate = true;
         return false;

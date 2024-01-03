@@ -105,8 +105,6 @@ private:
         , const cl_abst_type abs
     );
 
-    void randomise_clauses_order();
-
     template<class T>
     uint32_t find_smallest_watchlist_for_clause(const T& ps) const;
 

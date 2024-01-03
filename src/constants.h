@@ -20,19 +20,25 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef __CONSTANTS_H__
-#define __CONSTANTS_H__
+#pragma once
 
 #include <cstdint>
 #include <cstdlib>
 #include <stdio.h>
 #include <limits>
+#include <random>
+
+#define unif_uint_dist(x,y) std::uniform_int_distribution<> x(0, y)
+inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum) {
+    unif_uint_dist(u, maximum);
+    return u(mtrand);
+}
 
 // #define VERBOSE_DEBUG
 // #define VERBOSE_DEBUG_FULLPROP
 // #define DEBUG_DEPTH
 // #define SLOW_DEBUG
-//#define DEBUG_ATTACH_FULL
+// #define DEBUG_ATTACH_FULL
 
 #ifndef NDEBUG
 //#define FAST_DEBUG
@@ -59,6 +65,12 @@ THE SOFTWARE.
 #endif
 
 #if defined(_MSC_VER)
+#define cmsat_prefetch(x) (void)(x)
+#else
+#define cmsat_prefetch(x) __builtin_prefetch(x)
+#endif
+
+#if defined(_MSC_VER)
 #include "cms_windows_includes.h"
 #define release_assert(a) \
     do { \
@@ -80,12 +92,6 @@ THE SOFTWARE.
             abort(); \
         } \
     } while (0)
-#endif
-
-#if !defined(__GNUC__) && !defined(__clang__)
-#define cmsat_prefetch(x) (void)(x)
-#else
-#define cmsat_prefetch(x) __builtin_prefetch(x)
 #endif
 
 //We shift stuff around in Watched, so not all of 32 bits are useable.
@@ -196,17 +202,6 @@ THE SOFTWARE.
 #define VERBOSE_DEBUG_RECONSTRUCT
 #endif
 
-//Thanks to Axel Kemper for the definitions below
-#ifdef _MSC_VER
-#pragma warning(disable : 4244)  //  C4244 : 'Argument': Konvertierung von 'const uint64_t' in 'double', möglicher Datenverlust
-#pragma warning(disable : 4267)  //  C4267 : 'return': Konvertierung von 'size_t' nach 'uint32_t', Datenverlust möglich
-#pragma warning(disable : 4302)  //  C4302 : truncation
-#pragma warning(disable : 4311)  //  C4311 : pointer truncation
-#pragma warning(disable : 4800)  //  C4800 : 'const uint32_t' : Variable wird auf booleschen Wert('True' oder 'False') gesetzt(Auswirkungen auf Leistungsverhalten möglich)
-#pragma warning(disable : 4805)  //  C4805 : '==' : unsichere Kombination von Typ 'unsigned short' mit Typ 'bool' in einer Operation
-#endif
-
-
 #ifdef __GNUC__
     #define likely(x) __builtin_expect((x), 1)
     #define unlikely(x) __builtin_expect((x), 0)
@@ -221,6 +216,3 @@ THE SOFTWARE.
 #else
 #define DEBUG_MARKED_CLAUSE_DO(x) do {} while (0)
 #endif
-
-
-#endif //__CONSTANTS_H__

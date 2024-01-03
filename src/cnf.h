@@ -24,6 +24,7 @@ THE SOFTWARE.
 
 #include <atomic>
 #include <limits>
+#include <random>
 
 #include "constants.h"
 #include "vardata.h"
@@ -44,6 +45,7 @@ THE SOFTWARE.
 #ifdef ARJUN_SERIALIZE
 #include <boost/serialization/vector.hpp>
 #endif
+
 
 namespace CMSat {
 
@@ -80,6 +82,7 @@ public:
         if (_conf != NULL) {
             conf = *_conf;
         }
+        mtrand.seed(conf.origSeed);
         frat = new Drat;
         assert(_must_interrupt_inter != NULL);
         must_interrupt_inter = _must_interrupt_inter;
@@ -94,6 +97,7 @@ public:
 
     ClauseAllocator cl_alloc;
     SolverConf conf;
+    std::mt19937_64 mtrand;
 
     bool ok = true; //If FALSE, state of CNF is UNSAT
 

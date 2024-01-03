@@ -22,6 +22,7 @@ THE SOFTWARE.
 
 #include "distillerlong.h"
 #include "clausecleaner.h"
+#include "constants.h"
 #include "time_mem.h"
 #include "solver.h"
 #include "watchalgos.h"
@@ -282,10 +283,9 @@ bool DistillerLong::distill_long_cls_all(
             exit(-1);
             #endif
         } else if (solver->conf.distill_sort == 4) {
-            bool randomly_sort = solver->mtrand.randInt(solver->conf.distill_rand_shuffle_order_every_n) == 0;
+            bool randomly_sort = rnd_uint(solver->mtrand, solver->conf.distill_rand_shuffle_order_every_n) == 0;
             if (randomly_sort) {
-                std::mt19937 gen(solver->mtrand.randInt());
-                std::shuffle(offs.begin(), offs.end(), gen);
+                std::shuffle(offs.begin(), offs.end(), solver->mtrand);
             } else {
                 std::sort(offs.begin(),
                     offs.end(),

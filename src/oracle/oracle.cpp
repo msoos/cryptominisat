@@ -21,11 +21,11 @@
 // OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "oracle.h"
+#include "constants.h"
 
 #include <set>
 #include <queue>
 #include <iostream>
-
 #include "utils.h"
 using std::cout;
 using std::endl;
@@ -102,7 +102,7 @@ void Oracle::ResizeClauseDb() {
         num_used_red_cls = 0;
 		for (size_t i = 0; i < cla_info.size(); i++) {
             if (i+1 < cla_info.size()) {
-                __builtin_prefetch(clauses.data() + cla_info[i+1].pt);
+                cmsat_prefetch(clauses.data() + cla_info[i+1].pt);
             }
 			stats.mems++;
 			Lit impll = 0;
@@ -342,7 +342,7 @@ void Oracle::Assign(Lit dec, size_t reason_clause, int level) {
     oclv("Assigning " << v << " to: " << IsPos(dec) << " at level: " << level << " reason: " << reason_clause);
 	decided.push_back(v);
 	prop_q.push_back(Neg(dec));
-    __builtin_prefetch(watches[Neg(dec)].data());
+    cmsat_prefetch(watches[Neg(dec)].data());
 }
 
 void Oracle::UnDecide(int level) {

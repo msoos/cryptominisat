@@ -47,7 +47,7 @@ bool StrImplWImpl::str_impl_w_impl()
         return solver->okay();
 
     //Randomize starting point
-    size_t upI = solver->mtrand.randInt(solver->watches.size()-1);
+    size_t upI = rnd_uint(solver->mtrand, solver->watches.size()-1);
     size_t numDone = 0;
     for (; numDone < solver->watches.size() && timeAvailable > 0
         ; upI = (upI +1) % solver->watches.size(), numDone++

@@ -1,4 +1,4 @@
-#include "config.h"
+#include "pico_config.h"
 
 const char *
 picosat_version (void)

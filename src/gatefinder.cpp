@@ -123,7 +123,7 @@ void GateFinder::find_or_gates()
     if (solver->nVars() < 1)
         return;
 
-    const size_t offs = solver->mtrand.randInt(solver->nVars()*2-1);
+    const size_t offs = rnd_uint(solver->mtrand, solver->nVars()*2-1);
     for(size_t i = 0
         ; i < solver->nVars()*2
             && *simplifier->limit_to_decrease > 0

@@ -74,7 +74,6 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
             , _solver
             , _must_interrupt_inter
         )
-        , mtrand(conf.origSeed)
         , solver(_solver)
         , cla_inc(1)
 {
@@ -2394,9 +2393,10 @@ void Searcher::setup_polarity_strategy()
 
     if ((polarity_strategy_at % 8) == 0) {
         for(auto& v: varData) {
-            v.best_polarity = mtrand.randInt(1);
-            v.stable_polarity = mtrand.randInt(1);
-            v.saved_polarity = mtrand.randInt(1);
+            unif_uint_dist(u, 1);
+            v.best_polarity = u(mtrand);
+            v.stable_polarity = u(mtrand);
+            v.saved_polarity = u(mtrand);
         }
     }
 
