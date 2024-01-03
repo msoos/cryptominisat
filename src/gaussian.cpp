@@ -870,9 +870,6 @@ bool EGaussian::find_truths(
                 // store the eliminate variable & row
                 gqd.new_resp_var = new_resp_var;
                 gqd.new_resp_row = row_n;
-                if (solver->gmatrices.size() == 1) {
-                    assert(solver->gwatches[gqd.new_resp_var].size() == 1);
-                }
                 gqd.do_eliminate = true;
                 return true;
             } else {

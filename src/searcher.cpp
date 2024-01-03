@@ -1186,8 +1186,11 @@ void Searcher::update_assump_conflict_to_orig_outer(vector<Lit>& out_conflict) {
         inter_assumptions.push_back(std::make_pair(p, p2));
     }
 
+    // Notice that we need to sort by the internal lit but since we are looking for the
+    // opposite of the lit in out_conflict, we need to sort by the negated literal for things
+    // to line up
     std::sort(inter_assumptions.begin(), inter_assumptions.end(),
-            [](const pair<Lit,Lit>& a, const pair<Lit,Lit>& b){return a.second<b.second;});
+            [](const pair<Lit,Lit>& a, const pair<Lit,Lit>& b){return (~a.second)<(~b.second);});
 
     std::sort(out_conflict.begin(), out_conflict.end());
     assert(out_conflict.size() <= assumptions.size());
@@ -1215,6 +1218,7 @@ void Searcher::update_assump_conflict_to_orig_outer(vector<Lit>& out_conflict) {
         if (!varData[inter_assumptions[at_assump].second.var()].is_bva) {
             //Update to correct outside lit
             out_conflict[j++] = ~inter_assumptions[at_assump].first;
+            VERBOSE_PRINT("settled on lit for conflict: " << ~inter_assumptions[at_assump].first);
         }
     }
     out_conflict.resize(j);
