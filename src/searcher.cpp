@@ -3559,15 +3559,6 @@ bool Searcher::clear_gauss_matrices(const bool destruct) {
     gmatrices.clear();
     gqueuedata.clear();
     if (!destruct) {
-        #ifdef USE_TBUDDY
-        for(const auto& x: xorclauses_orig) {
-            x.bdd = NULL;
-            frat->flush();
-            if (frat->enabled()) solver->xorclauses.back().create_bdd_xor();
-        }
-        #endif
-    }
-    if (!destruct) {
         for(auto& gw: solver->gwatches) gw.clear();
         attach_xorclauses();
         solver->remove_and_clean_all();

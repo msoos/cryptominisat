@@ -310,7 +310,6 @@ bool VarReplacer::replace_one_xor_clause(Xor& x) {
         Lit l = Lit(v, false);
         if (get_lit_replaced_with_fast(l) != l) {
             const Lit l2 = get_lit_replaced_with_fast(l);
-            #ifdef USE_TBUDDY
             if (solver->frat->enabled()) {
                 solver->frat->flush();
                 ilist bin = ilist_new(2);
@@ -326,7 +325,6 @@ bool VarReplacer::replace_one_xor_clause(Xor& x) {
                 delete x.bdd;
                 x.bdd = new_bdd;
             }
-            #endif
             x.rhs ^= l2.sign();
             v = l2.var();
             runStats.replacedLits++;
@@ -359,8 +357,8 @@ bool VarReplacer::replace_xor_clauses(vector<Xor>& xors) {
         if (replace_one_xor_clause(x)) {
             xors[j++] = xors[i];
         } else {
-            TBUDDY_DO(delete x.bdd);
-            TBUDDY_DO(x.bdd = NULL);
+            delete x.bdd;
+            x.bdd = NULL;
         }
     }
     xors.resize(j);

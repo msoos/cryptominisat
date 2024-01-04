@@ -31,9 +31,6 @@ THE SOFTWARE.
 
 #include <limits>
 #include <iostream>
-#ifdef USE_TBUDDY
-#include <pseudoboolean.h>
-#endif
 //#define XOR_DEBUG
 
 using namespace CMSat;
@@ -50,11 +47,9 @@ XorFinder::XorFinder(OccSimplifier* _occsimplifier, Solver* _solver) :
     tmp_vars_xor_two.reserve(2000);
 }
 
-// Adds found XOR clauses to solver->xorclauses_orig
+// Adds found XOR clauses to solver->xorclauses
 void XorFinder::find_xors_based_on_long_clauses() {
-    /* #ifdef DEBUG_MARKED_CLAUSE */
-    assert(solver->no_marked_clauses());
-    /* #endif */
+    DEBUG_MARKED_CLAUSE_DO(assert(solver->no_marked_clauses()));
 
     vector<Lit> lits;
     for (const auto & offset: occsimplifier->clauses) {
@@ -106,8 +101,8 @@ void XorFinder::clean_equivalent_xors(vector<Xor>& txors) {
             if (j->vars == i->vars && j->rhs == i->rhs) {
                 if (solver->frat->enabled()) {
                     verb_print(5, "Cleaning equivalent XOR at: " << (i - txors.begin()) << " xor: " << *i);
-                    TBUDDY_DO(solver->frat->flush());
-                    TBUDDY_DO(delete i->bdd);
+                    solver->frat->flush();
+                    delete i->bdd;
                 }
             } else {
                 j++;
@@ -125,8 +120,7 @@ void XorFinder::clean_equivalent_xors(vector<Xor>& txors) {
     }
 }
 
-// Detaches & clears xorclauses, sets it to xorclauses_orig
-// Finds the XORs based on long clauses, and adds them to xorclauses_orig
+// Finds the XORs based on long clauses, and adds them to xorclauses
 // does NOT detach or delete the corresponding clauses
 bool XorFinder::find_xors() {
     assert(solver->gmatrices.empty());
@@ -162,8 +156,8 @@ bool XorFinder::find_xors() {
 
     // Need to do this due to XORs encoding new info
     //    see NOTE in cnf.h
-    TBUDDY_DO(solver->frat->flush());
-    TBUDDY_DO(for(auto& x: solver->xorclauses_orig) if (solver->frat->enabled()) x.create_bdd_xor());
+    solver->frat->flush();
+    for(auto& x: solver->xorclauses) if (solver->frat->enabled()) x.create_bdd_xor();
 
     //Cleanup
     for(ClOffset offset: occsimplifier->clauses) {
@@ -352,8 +346,8 @@ void XorFinder::clean_xors_from_empty(vector<Xor>& thisxors)
     for(size_t i = 0;i < thisxors.size(); i++) {
         Xor& x = thisxors[i];
         if (x.trivial()) {
-            TBUDDY_DO(solver->frat->flush());
-            TBUDDY_DO(delete x.bdd);
+            solver->frat->flush();
+            delete x.bdd;
         } else {
             verb_print(4, "xor after clean: " << thisxors[i]);
             thisxors[j++] = thisxors[i];

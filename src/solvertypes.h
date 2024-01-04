@@ -475,9 +475,7 @@ template<typename T>
 inline vector<Lit> vars_to_lits(const T& vars)
 {
     vector<Lit> ret;
-    for(uint32_t var: vars) {
-        ret.push_back(Lit(var, false));
-    }
+    for(uint32_t var: vars) ret.push_back(Lit(var, false));
     return ret;
 }
 

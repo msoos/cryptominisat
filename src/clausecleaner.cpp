@@ -25,6 +25,7 @@ THE SOFTWARE.
 #include "solver.h"
 #include "sqlstats.h"
 #include "solvertypesmini.h"
+#include "xor.h"
 
 using namespace CMSat;
 
@@ -242,11 +243,8 @@ void ClauseCleaner::clean_clauses_inter(vector<ClOffset>& cs)
             solver->watches.smudge(origLit1);
             solver->watches.smudge(origLit2);
             cl.setRemoved();
-            if (red) {
-                solver->litStats.redLits -= origSize;
-            } else {
-                solver->litStats.irredLits -= origSize;
-            }
+            if (red) solver->litStats.redLits -= origSize;
+            else solver->litStats.irredLits -= origSize;
             delayed_free.push_back(off);
         } else {
             *ss++ = *s;
@@ -431,7 +429,7 @@ bool ClauseCleaner::remove_and_clean_all() {
 bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached) {
     // they encode information (see NOTE in cnf.h) so they MUST be in BDDs
     //      otherwise FRAT will fail
-    TBUDDY_DO(if (solver->frat->enabled()) assert(x.bdd));
+    if (solver->frat->enabled()) assert(x.XID != xid_none);
 
     bool rhs = x.rhs;
     size_t i = 0;
@@ -450,9 +448,7 @@ bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached
         x.rhs = rhs;
         x.resize(j);
         if (x.size() <= 2) {
-            solver->frat->flush();
-            TBUDDY_DO(delete x.bdd);
-            TBUDDY_DO(x.bdd = NULL);
+            *solver->frat << delx << x.XID << fin;
             if (attached) {
                 removeWXCl(solver->gwatches, orig[0], at);
                 removeWXCl(solver->gwatches, orig[1], at);

@@ -34,6 +34,11 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum) {
     return u(mtrand);
 }
 
+
+#if defined(STATS_NEEDED)
+#define LARGE_OFFSETS
+#endif
+
 // #define VERBOSE_DEBUG
 // #define VERBOSE_DEBUG_FULLPROP
 // #define DEBUG_DEPTH
@@ -98,7 +103,6 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum) {
 //for STATS we have 64b values in the Clauses, so they must be aligned to 64
 
 #if defined(STATS_NEEDED)
-#define LARGE_OFFSETS
 #define STATS_DO(x) do {x;} while (0)
 #define INC_ID(cl) \
     do { \
@@ -108,10 +112,8 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum) {
     } while (0)
 #else
 #define STATS_DO(x) do {} while (0)
-#define INC_ID(cl) \
-    do { \
-        (cl).stats.ID = ++solver->clauseID; \
-    } while (0)
+#define INC_ID(cl) do { (cl).stats.ID = ++solver->clauseID; } while (0)
+#define INC_XID(cl) do { (cl).XID = ++solver->clauseXID; } while (0)
 #endif
 
 #if defined(LARGE_OFFSETS)

@@ -230,7 +230,6 @@ bool Solver::add_xor_clause_inter(
         xorclauses_updated = true;
         xorclauses.push_back(Xor(ps, rhs));
         TBUDDY_DO(if (frat->enabled()) xorclauses.back().create_bdd_xor());
-        TBUDDY_DO(if (frat->enabled()) xorclauses_orig.back().create_bdd_xor());
         attach_xor_clause(xorclauses.size()-1);
     }
     return okay();
@@ -1527,9 +1526,7 @@ void Solver::write_final_frat_clauses()
     TBUDDY_DO(for(auto& g: gmatrices) g->finalize_frat());
 
     *frat << "free bdds begin\n";
-    TBUDDY_DO(solver->free_bdds(solver->xorclauses_orig));
     TBUDDY_DO(solver->free_bdds(solver->xorclauses));
-    TBUDDY_DO(solver->free_bdds(solver->xorclauses_unused));
 
 
     *frat << "tbdd_done() next\n";

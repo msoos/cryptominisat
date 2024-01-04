@@ -25,18 +25,16 @@ THE SOFTWARE.
 #include "solvertypes.h"
 
 #include <cstdint>
+#include <limits>
 #include <vector>
 #include <set>
 #include <iostream>
 #include <algorithm>
-#ifdef USE_TBUDDY
-#include <pseudoboolean.h>
-namespace tbdd = trustbdd;
-#endif
 
 using std::vector;
 using std::set;
 
+constexpr int32_t xid_none = std::numeric_limits<int32_t>::max();
 
 namespace CMSat {
 
@@ -47,23 +45,12 @@ public:
         for (const auto& l: cl) vars.push_back(l);
     }
     explicit Xor(const vector<Lit>& cl, const bool _rhs): rhs(_rhs) {
-        for (const auto& l: cl) vars.push_back(l.var());
+        for (const auto& l: cl) {
+            assert(l.sign() == false);
+            vars.push_back(l.var());
+        };
     }
     bool trivial() const { return size() == 0 && rhs == false; }
-
-#ifdef USE_TBUDDY
-    tbdd::xor_constraint* create_bdd_xor()
-    {
-        if (bdd == NULL) {
-            ilist l = ilist_new(vars.size());
-            ilist_resize(l, vars.size());
-            for (uint32_t i = 0; i < vars.size(); i++) l[i] = vars[i]+1;
-            bdd = new tbdd::xor_constraint(l, rhs);
-        }
-        return bdd;
-    }
-#endif
-
     ~Xor() {}
 
     vector<uint32_t>::const_iterator begin() const { return vars.begin(); }
@@ -107,9 +94,7 @@ public:
     vector<Lit> reason_cl;
     uint32_t watched[2] = {0,0};
     uint32_t in_matrix = 1000;
-    #ifdef USE_TBUDDY
-    tbdd::xor_constraint* bdd = NULL;
-    #endif
+    int32_t XID = xid_none;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Xor& x)

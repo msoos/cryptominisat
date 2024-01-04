@@ -161,7 +161,6 @@ public:
     // xorclause_orig -- definitive XORs, not XOR'ed together, never attached.
     //
     // NOTE: XORs that are currently in matrixes are not in xorclauses.
-    //       they may be different from xorclauses_orig
     vector<Xor> xorclauses;
     void print_xors(const vector<Xor>& xors);
 
@@ -177,6 +176,7 @@ public:
     BinTriStats binTri;
     LitStats litStats;
     int32_t clauseID = 0;
+    int32_t clauseXID = 0;
     int64_t restartID = 1;
     SQLStats* sqlStats = NULL;
 
@@ -187,52 +187,20 @@ public:
     vector<Lit>      toClear;
     uint64_t MYFLAG = 1;
 
-    uint32_t level(Lit l) const
-    {
-        return varData[l.var()].level;
-    }
-
-    bool okay() const
-    {
-        assert(!
-        (!ok && frat->enabled() && unsat_cl_ID == 0 && unsat_cl_ID != -1) && "If in UNSAT state, and we have FRAT, we MUST already know the unsat_cl_ID or it must be -1, i.e. known by tbuddy");
+    bool okay() const {
+        assert(!(!ok && frat->enabled() && unsat_cl_ID == 0 && unsat_cl_ID != -1) &&
+               "If in UNSAT state, and we have FRAT, we MUST already know the unsat_cl_ID or it "
+               "must be -1, i.e. known by tbuddy");
         return ok;
     }
-
-    lbool value (const uint32_t x) const
-    {
-        return assigns[x];
-    }
-
-    lbool value (const Lit p) const
-    {
-        return assigns[p.var()] ^ p.sign();
-    }
-
-    bool must_interrupt_asap() const
-    {
-        return must_interrupt_inter->load(std::memory_order_relaxed);
-    }
-
-    void set_must_interrupt_asap()
-    {
-        must_interrupt_inter->store(true, std::memory_order_relaxed);
-    }
-
-    void unset_must_interrupt_asap()
-    {
-        must_interrupt_inter->store(false, std::memory_order_relaxed);
-    }
-
-    std::atomic<bool>* get_must_interrupt_inter_asap_ptr()
-    {
-        return must_interrupt_inter;
-    }
-
-    const vector<BNN*>& get_bnns() const
-    {
-        return bnns;
-    }
+    auto level(Lit l) const { return varData[l.var()].level; }
+    lbool value (const uint32_t x) const { return assigns[x]; }
+    lbool value (const Lit p) const { return assigns[p.var()] ^ p.sign(); }
+    bool must_interrupt_asap() const { return must_interrupt_inter->load(std::memory_order_relaxed); }
+    void set_must_interrupt_asap() { must_interrupt_inter->store(true, std::memory_order_relaxed); }
+    void unset_must_interrupt_asap() { must_interrupt_inter->store(false, std::memory_order_relaxed); }
+    std::atomic<bool>* get_must_interrupt_inter_asap_ptr() { return must_interrupt_inter; }
+    const vector<BNN*>& get_bnns() const { return bnns; }
 
     bool check_bnn_sane(BNN& bnn);
     bool clause_locked(const Clause& c, const ClOffset offset) const;

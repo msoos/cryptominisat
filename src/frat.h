@@ -48,84 +48,27 @@ using std::vector;
 
 namespace CMSat {
 
-enum DratFlag{fin, deldelay, del, findelay, add, origcl, chain, finalcl, reloc};
+enum DratFlag{fin, deldelay, deldelayx, del, delx, findelay, add, addx, origcl, origclx, chain, finalcl, reloc};
 
 class Drat
 {
 public:
-    Drat()
-    {
-    }
-
-    virtual ~Drat()
-    {
-    }
-
-    virtual bool enabled()
-    {
-        return false;
-    }
-
-    virtual void set_sumconflicts_ptr(uint64_t*)
-    {
-    }
-
-    virtual void set_sqlstats_ptr(SQLStats*)
-    {
-    }
-
-    virtual void forget_delay()
-    {
-    }
-
-    virtual bool get_conf_id() {
-        return false;
-    }
-
-    virtual bool something_delayed()
-    {
-        return false;
-    }
-
-    virtual Drat& operator<<(const int32_t)
-    {
-        return *this;
-    }
-
-    virtual Drat& operator<<(const Lit)
-    {
-        return *this;
-    }
-
-    virtual Drat& operator<<(const Clause&)
-    {
-        return *this;
-    }
-
-    virtual Drat& operator<<(const vector<Lit>&)
-    {
-        return *this;
-    }
-
-    virtual Drat& operator<<(const char*)
-    {
-        return *this;
-    }
-
-    virtual Drat& operator<<(const DratFlag)
-    {
-        return *this;
-    }
-
-    virtual void setFile(FILE*)
-    {
-    }
-
-    virtual FILE* getFile()
-    {
-        return NULL;
-    }
-
+    Drat() { }
+    virtual ~Drat() { }
+    virtual bool enabled() { return false; }
+    virtual void set_sumconflicts_ptr(uint64_t*) { }
+    virtual void set_sqlstats_ptr(SQLStats*) { }
+    virtual void forget_delay() { }
+    virtual bool get_conf_id() { return false; }
+    virtual bool something_delayed() { return false; }
+    virtual Drat& operator<<(const int32_t) { return *this; }
+    virtual Drat& operator<<(const Lit) { return *this; }
+    virtual Drat& operator<<(const Clause&) { return *this; }
+    virtual Drat& operator<<(const vector<Lit>&) { return *this; }
+    virtual Drat& operator<<(const char*) { return *this; }
+    virtual Drat& operator<<(const DratFlag) { return *this; }
+    virtual void setFile(FILE*) { }
+    virtual FILE* getFile() { return NULL; }
     virtual void flush();
 
     int buf_len;
@@ -251,33 +194,23 @@ public:
         return *this;
     }
 
+    inline void buf_add(unsigned char x) { *buf_ptr+=x; buf_len++; }
+    inline void del_add(unsigned char x) { *del_ptr+=x; del_len++; }
+    inline void del_nonbin_move() { if (!binfrat) del_add(' '); }
+    inline void buf_nonbin_move() { if (!binfrat) buf_add(' '); }
     Drat& operator<<(const DratFlag flag) override
     {
         switch (flag)
         {
             case DratFlag::fin:
                 if (must_delete_next) {
-                    if (binfrat) {
-                        *del_ptr++ = 0;
-                        del_len++;
-                    } else {
-                        *del_ptr++ = '0';
-                        *del_ptr++ = '\n';
-                        del_len+=2;
-                    }
+                    if (binfrat) del_add(0);
+                    else { del_add('0'); del_add('\n'); }
                     delete_filled = true;
                 } else {
-                    if (binfrat) {
-                        *buf_ptr++ = 0;
-                        buf_len++;
-                    } else {
-                        *buf_ptr++ = '0';
-                        *buf_ptr++ = '\n';
-                        buf_len+=2;
-                    }
-                    if (buf_len > 1048576) {
-                        binDRUP_flush();
-                    }
+                    if (binfrat) buf_add(0);
+                    else { buf_add('0'); buf_add('\n');}
+                    if (buf_len > 1048576) { binDRUP_flush(); }
                     if (adding && sqlStats) sqlStats->set_id_confl(cl_id, *sumConflicts);
                     FRAT_PRINT("c set_id_confl (%d, %lld), adding: %d\n", cl_id, *sumConflicts, adding);
                 }
@@ -289,12 +222,20 @@ public:
                 adding = false;
                 assert(!delete_filled);
                 forget_delay();
-                *del_ptr++ = 'd';
-                del_len++;
-                if (!binfrat)  {
-                    *del_ptr++ = ' ';
-                    del_len++;
-                }
+                del_add('d');
+                del_nonbin_move();
+                delete_filled = false;
+                must_delete_next = true;
+                break;
+
+            case DratFlag::deldelayx:
+                adding = false;
+                assert(!delete_filled);
+                forget_delay();
+                del_add('d');
+                del_add(' ');
+                del_add('x');
+                del_nonbin_move();
                 delete_filled = false;
                 must_delete_next = true;
                 break;
@@ -304,78 +245,75 @@ public:
                 memcpy(buf_ptr, del_buf, del_len);
                 buf_len += del_len;
                 buf_ptr += del_len;
-                if (buf_len > 1048576) {
-                    binDRUP_flush();
-                }
-
+                if (buf_len > 1048576) { binDRUP_flush(); }
                 forget_delay();
                 break;
 
             case DratFlag::add:
                 adding = true;
                 cl_id = 0;
-                *buf_ptr++ = 'a';
-                buf_len++;
-                if (!binfrat) {
-                    *buf_ptr++ = ' ';
-                    buf_len++;
-                }
+                buf_add('a');
+                buf_nonbin_move();
+                break;
+
+            case DratFlag::addx:
+                adding = true;
+                cl_id = 0;
+                buf_add('a');
+                buf_add(' ');
+                buf_add('x');
+                buf_nonbin_move();
                 break;
 
             case DratFlag::chain:
                 if (!binfrat) {
-                    *buf_ptr++ = '0';
-                    *buf_ptr++ = ' ';
-                    *buf_ptr++ = 'l';
-                    *buf_ptr++ = ' ';
-                    buf_len+=4;
+                    buf_add('0');
+                    buf_add(' ');
+                    buf_add('l');
+                    buf_add(' ');
                 }
                 break;
-
             case DratFlag::del:
                 adding = false;
-                *buf_ptr++ = 'd';
-                buf_len++;
-                if (!binfrat) {
-                    *buf_ptr++ = ' ';
-                    buf_len++;
-                }
+                buf_add('d');
+                buf_nonbin_move();
                 break;
-
+            case DratFlag::delx:
+                adding = false;
+                buf_add('d');
+                buf_add(' ');
+                buf_add('x');
+                buf_nonbin_move();
+                break;
             case DratFlag::reloc:
                 adding = false;
                 forget_delay();
-                *buf_ptr++ = 'r';
-                buf_len++;
-                if (!binfrat) {
-                    *buf_ptr++ = ' ';
-                    buf_len++;
-                }
+                buf_add('r');
+                buf_nonbin_move();
                 break;
 
             case DratFlag::finalcl:
                 adding = false;
                 forget_delay();
-                *buf_ptr++ = 'f';
-                buf_len++;
-                if (!binfrat) {
-                    *buf_ptr++ = ' ';
-                    buf_len++;
-                }
+                buf_add('f');
+                buf_nonbin_move();
                 break;
 
             case DratFlag::origcl:
                 adding = false;
                 forget_delay();
-                *buf_ptr++ = 'o';
-                buf_len++;
-                if (!binfrat) {
-                    *buf_ptr++ = ' ';
-                    buf_len++;
-                }
-
+                buf_add('o');
+                buf_nonbin_move();
                 break;
 
+            case DratFlag::origclx:
+                adding = false;
+                forget_delay();
+                buf_add('o');
+                buf_add(' ');
+                buf_add('x');
+                buf_nonbin_move();
+                break;
         }
 
         return *this;
@@ -431,10 +369,7 @@ private:
     {
         if (adding && cl_id == 0) cl_id = id;
         if (binfrat) {
-            for(unsigned i = 0; i < 6; i++) {
-                *buf_ptr++ = (id>>(8*i))&0xff;
-                buf_len++;
-            }
+            for(unsigned i = 0; i < 6; i++) buf_add((id>>(8*i))&0xff);
         } else {
             uint32_t num = sprintf((char*)buf_ptr, "%d ", id);
             buf_ptr+=num;
@@ -445,10 +380,7 @@ private:
     void byteDRUPdID(const int32_t id)
     {
         if (binfrat) {
-            for(unsigned i = 0; i < 6; i++) {
-                *del_ptr++ = (id>>(8*i))&0xff;
-                del_len++;
-            }
+            for(unsigned i = 0; i < 6; i++) del_add((id>>(8*i))&0xff);
         } else {
             uint32_t num = sprintf((char*)del_ptr, "%d ", id);
             del_ptr+=num;
@@ -463,16 +395,14 @@ private:
         if (binfrat) {
             unsigned int u = 2 * (v + 1) + l.sign();
             do {
-                *del_ptr++ = (u & 0x7f) | 0x80;
-                del_len++;
+                del_add((u & 0x7f) | 0x80);
                 u = u >> 7;
             } while (u);
 
             // End marker of this unsigned number
             *(del_ptr - 1) &= 0x7f;
         } else {
-            uint32_t num = sprintf(
-                (char*)del_ptr, "%s%d ", (l.sign() ? "-": ""), l.var()+1);
+            uint32_t num = sprintf((char*)del_ptr, "%s%d ", (l.sign() ? "-": ""), l.var()+1);
             del_ptr+=num;
             del_len+=num;
         }
