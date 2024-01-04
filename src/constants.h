@@ -113,7 +113,7 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum) {
 #else
 #define STATS_DO(x) do {} while (0)
 #define INC_ID(cl) do { (cl).stats.ID = ++solver->clauseID; } while (0)
-#define INC_XID(cl) do { (cl).XID = ++solver->clauseXID; } while (0)
+#define INC_XID(x) do { (x).XID = ++solver->clauseXID; } while (0)
 #endif
 
 #if defined(LARGE_OFFSETS)

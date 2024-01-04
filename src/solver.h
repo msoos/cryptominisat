@@ -211,7 +211,7 @@ class Solver : public Searcher
             const vector< Lit >& lits
             , bool rhs
             , bool attach
-            , bool addDrat
+            , int32_t XID
         );
         void new_var(
             const bool bva = false,
@@ -550,38 +550,16 @@ inline lbool Solver::simplify_with_assumptions(
     return simplify_problem_outside(strategy);
 }
 
-inline const vector<lbool>& Solver::get_model() const
-{
-    return model;
-}
-
-inline const vector<Lit>& Solver::get_final_conflict() const
-{
-    return conflict;
-}
-
-inline void Solver::setConf(const SolverConf& _conf)
-{
-    conf = _conf;
-}
-
-inline bool Solver::prop_at_head() const
-{
-    return qhead == trail.size();
-}
-
-inline lbool Solver::model_value (const Lit p) const
-{
-    if (model[p.var()] == l_Undef)
-        return l_Undef;
-
+inline const vector<lbool>& Solver::get_model() const { return model; }
+inline const vector<Lit>& Solver::get_final_conflict() const { return conflict; }
+inline void Solver::setConf(const SolverConf& _conf) { conf = _conf; }
+inline bool Solver::prop_at_head() const { return qhead == trail.size(); }
+inline lbool Solver::model_value (const Lit p) const {
+    if (model[p.var()] == l_Undef) return l_Undef;
     return model[p.var()] ^ p.sign();
 }
 
-inline lbool Solver::model_value (const uint32_t p) const
-{
-    return model[p];
-}
+inline lbool Solver::model_value (const uint32_t p) const { return model[p]; }
 
 inline void Solver::free_cl(
     Clause* cl,

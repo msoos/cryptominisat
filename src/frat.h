@@ -20,16 +20,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef __FRAT_H__
-#define __FRAT_H__
-
-#include "constants.h"
-#include "clause.h"
-#include "sqlstats.h"
+#pragma once
 
 #include <vector>
 #include <iostream>
 #include <stdio.h>
+
+#include "constants.h"
+#include "clause.h"
+#include "sqlstats.h"
+#include "xor.h"
+
 
 using std::vector;
 // #define DEBUG_FRAT
@@ -64,6 +65,7 @@ public:
     virtual Drat& operator<<(const int32_t) { return *this; }
     virtual Drat& operator<<(const Lit) { return *this; }
     virtual Drat& operator<<(const Clause&) { return *this; }
+    virtual Drat& operator<<(const Xor&) { return *this; }
     virtual Drat& operator<<(const vector<Lit>&) { return *this; }
     virtual Drat& operator<<(const char*) { return *this; }
     virtual Drat& operator<<(const DratFlag) { return *this; }
@@ -165,6 +167,20 @@ public:
 
     bool delete_filled = false;
     bool must_delete_next = false;
+
+
+    Drat& operator<<(const Xor& x) override
+    {
+        if (must_delete_next) {
+            byteDRUPdID(x.XID);
+            for(const uint32_t v: x) byteDRUPd(v);
+        } else {
+            byteDRUPaID(x.XID);
+            for(const uint32_t v: x) byteDRUPa(v);
+        }
+
+        return *this;
+    }
 
     Drat& operator<<(const Clause& cl) override
     {
@@ -417,5 +433,3 @@ private:
 };
 
 }
-
-#endif //__FRAT_H__

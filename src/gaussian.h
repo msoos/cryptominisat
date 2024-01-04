@@ -58,12 +58,8 @@ struct XorReason
 {
     bool must_recalc = true;
     Lit propagated = lit_Undef;
-    int32_t ID = 0;
+    int32_t XID = 0;
     vector<Lit> reason;
-    #ifdef USE_TBUDDY
-    tbdd::xor_constraint* constr = NULL;
-    ilist list = NULL;
-    #endif
 };
 
 class EGaussian {
@@ -138,19 +134,16 @@ class EGaussian {
     void prop_lit(
         const GaussQData& gqd, const uint32_t row_i, const Lit ret_lit_prop);
 
-    #ifdef USE_TBUDDY
     struct BDDCl {
-        ilist cl;
-        int32_t ID;
+        vector<int32_t> xids;
+        int32_t XID;
     };
     void xor_in_bdd(const uint32_t a, const uint32_t b);
-    tbdd::xor_constraint* bdd_create(const uint32_t row_n, const uint32_t expected_size);
-    ilist one_len_ilist = NULL;
-    ilist ilist_tmp = NULL;
+    BDDCl bdd_create(const uint32_t row_n, const uint32_t expected_size);
     void create_unit_bdd_reason(const uint32_t row_n);
     vector<BDDCl> frat_ids;
-    tbdd::xor_constraint* unsat_bdd = NULL; //set if UNSAT is from GJ
-    #endif
+    BDDCl unsat_bdd;  //set if UNSAT is from GJ */
+    bool unsat_bdd_set = false;
 
 
     ///////////////

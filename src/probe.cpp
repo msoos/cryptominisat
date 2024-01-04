@@ -203,11 +203,14 @@ lbool Solver::probe_inter(const Lit l, uint32_t& min_props)
             bp_lit = probe_inter_tmp[i];
             vector<Lit> lits(2);
             lits[0] = l;
-            lits[1] = bp_lit;
-            ok = add_xor_clause_inter(lits, false, true, true);
-            if (!ok) {
-                goto end;
+            lits[1] = ~bp_lit;
+            ok = add_clause_int(lits);
+            if (ok) {
+                lits[0]^=true;
+                lits[1]^=true;
+                ok = add_clause_int(lits);
             }
+            if (!ok) goto end;
         }
     }
 

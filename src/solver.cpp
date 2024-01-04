@@ -187,16 +187,12 @@ void Solver::set_sqlite(
     #endif
 }
 
-void Solver::set_shared_data(SharedData* shared_data)
-{
-    datasync->set_shared_data(shared_data);
-}
-
+void Solver::set_shared_data(SharedData* shared_data) { datasync->set_shared_data(shared_data); }
 bool Solver::add_xor_clause_inter(
     const vector<Lit>& lits
     , bool rhs
     , const bool attach
-    , const bool addDrat
+    , const int32_t XID
 ) {
     VERBOSE_PRINT("add_xor_clause_inter: " << lits << " rhs: " << rhs);
     assert(okay());
@@ -210,7 +206,7 @@ bool Solver::add_xor_clause_inter(
 
     if (ps.empty()) {
         if (rhs) {
-            *frat << add << ++clauseID << fin;
+            *frat << addx << clauseXID++ << fin;
             ok = false;
         }
         return okay();
@@ -218,18 +214,22 @@ bool Solver::add_xor_clause_inter(
     else if (ps.size() == 1) {
         ps[0] ^= !rhs;
         add_clause_int(ps);
+        *frat << delx << XID << fin;
     } else if (ps.size() == 2) {
         ps[0] ^= !rhs;
         add_clause_int(ps);
         ps[0] ^= true;
         ps[1] ^= true;
         add_clause_int(ps);
+        *frat << delx << XID << fin;
     } else {
-        if (frat->enabled() && addDrat)  assert(false && "not working, sorry");
         assert(ps.size() > 2);
         xorclauses_updated = true;
         xorclauses.push_back(Xor(ps, rhs));
-        TBUDDY_DO(if (frat->enabled()) xorclauses.back().create_bdd_xor());
+        Xor& x = xorclauses.back();
+        INC_XID(x);
+        *frat << addx << x << fin;
+        *frat << delx << XID << fin;
         attach_xor_clause(xorclauses.size()-1);
     }
     return okay();
@@ -2838,13 +2838,19 @@ bool Solver::add_clause_outside(const vector<Lit>& lits, bool red)
 bool Solver::add_xor_clause_outside(const vector<uint32_t>& vars, bool rhs)
 {
     if (!okay()) return false;
+    if (rhs == true && vars.empty()) return okay();
+
     vector<Lit> lits(vars.size());
     for(size_t i = 0; i < vars.size(); i++) lits[i] = Lit(vars[i], false);
+    uint32_t XID = ++clauseXID;
+    if (vars.size() > 0) lits[0] ^= !rhs;
+    *frat << XID << origclx << lits << fin;
+    if (vars.size() > 0) lits[0] ^= !rhs;
     SLOW_DEBUG_DO(check_too_large_variable_number(lits));
 
     vector<Lit> tmp(lits);
     add_clause_helper(tmp);
-    add_xor_clause_inter(tmp, rhs, true, false);
+    add_xor_clause_inter(tmp, rhs, true, XID);
 
     return okay();
 }

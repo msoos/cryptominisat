@@ -427,9 +427,8 @@ bool ClauseCleaner::remove_and_clean_all() {
 
 
 bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached) {
-    // they encode information (see NOTE in cnf.h) so they MUST be in BDDs
-    //      otherwise FRAT will fail
     if (solver->frat->enabled()) assert(x.XID != xid_none);
+    (*solver->frat) << deldelayx << x << fin;
 
     bool rhs = x.rhs;
     size_t i = 0;
@@ -447,8 +446,9 @@ bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached
     if (j < x.size()) {
         x.rhs = rhs;
         x.resize(j);
+        INC_XID(x);
+        (*solver->frat) << addx << x << fin << findelay;
         if (x.size() <= 2) {
-            *solver->frat << delx << x.XID << fin;
             if (attached) {
                 removeWXCl(solver->gwatches, orig[0], at);
                 removeWXCl(solver->gwatches, orig[1], at);
@@ -460,6 +460,9 @@ bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached
                     if (x[i3] == orig[i2]) {x.watched[i2] = i3; break;}
             }
         }
+    } else {
+        solver->frat->forget_delay();
+        return true;
     }
 
     switch(x.size()) {
@@ -475,11 +478,13 @@ bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached
             assert(solver->okay());
             solver->enqueue<true>(Lit(x[0], !x.rhs));
             solver->ok = solver->propagate<true>().isNULL();
+            (*solver->frat) << delx << x << fin;
             return false;
         }
         case 2:
             assert(solver->okay());
             solver->add_xor_clause_inter(vars_to_lits(x), x.rhs, true, true);
+            (*solver->frat) << delx << x << fin;
             return false;
         default:
             return true;

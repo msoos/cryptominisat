@@ -447,7 +447,6 @@ vector<Lit>* EGaussian::get_reason(const uint32_t row, int32_t& out_ID)
         *tmp_col2,
         xor_reasons[row].propagated);
 
-    #ifdef USE_TBUDDY
     if (solver->frat->enabled()) {
         solver->frat->flush();
         VERBOSE_PRINT("Expecting tbuddy to prove: " << tofill);
@@ -459,7 +458,6 @@ vector<Lit>* EGaussian::get_reason(const uint32_t row, int32_t& out_ID)
         out_ID = assert_clause(ilist_tmp);
         VERBOSE_PRINT("ID of asserted get_reason ID: " << out_ID);
     }
-    #endif
 
     xor_reasons[row].must_recalc = false;
     xor_reasons[row].ID = out_ID;
@@ -467,20 +465,15 @@ vector<Lit>* EGaussian::get_reason(const uint32_t row, int32_t& out_ID)
     return &tofill;
 }
 
-#ifdef USE_TBUDDY
-tbdd::xor_constraint* EGaussian::bdd_create(const uint32_t row_n, const uint32_t expected_sz)
+EGaussian::BDDCl EGaussian::bdd_create(const uint32_t row_n, const uint32_t expected_sz)
 {
     assert(solver->frat->enabled());
     *solver->frat << __PRETTY_FUNCTION__ << " start\n";
 
-    solver->frat->flush();
-    tbdd::xor_set xset;
+    vector<int32_t> xset;
     for(uint32_t i = 0; i < bdd_matrix[row_n].size(); i++) {
-        if (bdd_matrix[row_n][i]) {
-            xset.add(*xorclauses[i].create_bdd_xor());
-        }
+        if (bdd_matrix[row_n][i]) xset.push_back(xorclauses[i].XID);
     }
-    auto x = xset.sum();
     VERBOSE_DEBUG_DO(
         cout << "vars in BDD: ";
         cout <<std::flush;
@@ -488,7 +481,7 @@ tbdd::xor_constraint* EGaussian::bdd_create(const uint32_t row_n, const uint32_t
         cout << endl
     );
 
-    #ifdef SLOW_DEBUG
+    /* #ifdef SLOW_DEBUG */
     auto const& bdd_vars = x->get_variables();
     uint32_t sz = (uint32_t)ilist_length(x->get_variables());
     for(int i = 0; i < ilist_length(bdd_vars); i++) {
@@ -507,12 +500,11 @@ tbdd::xor_constraint* EGaussian::bdd_create(const uint32_t row_n, const uint32_t
     // hence we may need to check that the size of the generated XOR is zero, if not
     // we need to add the empty clause ourselves.
 
-    #endif
+    /* #endif */
 
     *solver->frat << __PRETTY_FUNCTION__ << " end\n";
     return x;
 }
-#endif
 
 gret EGaussian::init_adjust_matrix()
 {
@@ -541,9 +533,9 @@ gret EGaussian::init_adjust_matrix()
 
                 // conflict
                 if ((*rowI).rhs()) {
-                    #ifdef USE_TBUDDY
                     if (solver->frat->enabled()) {
                         unsat_bdd = bdd_create(row_i, 0);
+                        unsat_bdd_set = true;
 
                         assert(solver->unsat_cl_ID == 0);
                         if (ilist_length(unsat_bdd->get_variables()) != 0) {
@@ -551,10 +543,9 @@ gret EGaussian::init_adjust_matrix()
                             solver->unsat_cl_ID = solver->clauseID;
                         } else {
                             assert(unsat_bdd->get_phase() == 1);
-                            solver->unsat_cl_ID = -1;//solver->clauseID;
+                            solver->unsat_cl_ID = -1;
                         }
                     }
-                    #endif
                     solver->ok = false;
                     VERBOSE_PRINT("-> empty clause during init_adjust_matrix");
                     VERBOSE_PRINT("-> conflict on row: " << row_i);
@@ -572,18 +563,12 @@ gret EGaussian::init_adjust_matrix()
                 bool xorEqualFalse = !mat[row_i].rhs();
                 tmp_clause[0] = Lit(tmp_clause[0].var(), xorEqualFalse);
                 assert(solver->value(tmp_clause[0].var()) == l_Undef);
-                #ifdef USE_TBUDDY
                 if (solver->frat->enabled()) {
-                    tbdd::xor_constraint* bdd = bdd_create(row_i, 1);
-                    ilist out = ilist_new(1);
-                    ilist_resize(out, 1);
-                    out[0] = (tmp_clause[0].var()+1) * (tmp_clause[0].sign() ? -1 :1);
-                    const int32_t ID = assert_clause(out);
-                    frat_ids.push_back(BDDCl{out, ID});
+                    auto bdd = bdd_create(row_i, 1);
+                    solver->add_clause_int(tmp_clause);
+                    *solver->frat << delx << bdd.XID << bdd.lits << fin;
                     VERBOSE_PRINT("ID of this unit: " << ID << " unit is: " << tmp_clause);
-                    delete bdd;
                 }
-                #endif
 
                 solver->enqueue<false>(tmp_clause[0]);
 
@@ -606,37 +591,34 @@ gret EGaussian::init_adjust_matrix()
 
                 tmp_clause[0] = tmp_clause[0].unsign();
                 tmp_clause[1] = tmp_clause[1].unsign();
-                #ifdef USE_TBUDDY
                 if (solver->frat->enabled()) {
-                    tbdd::xor_constraint* bdd = bdd_create(row_i, 2);
-                    ilist out = ilist_new(2);
-                    ilist_resize(out, 2);
+                    auto bdd = bdd_create(row_i, 2);
+                    vector<Lit> out(2);
                     if (mat[row_i].rhs()) {
-                        out[0] = (tmp_clause[0].var()+1);
-                        out[1] = (tmp_clause[1].var()+1);
+                        out[0] = tmp_clause[0];
+                        out[1] = tmp_clause[1];
                     } else {
-                        out[0] = (tmp_clause[0].var()+1)*-1;
-                        out[1] = (tmp_clause[1].var()+1);
+                        out[0] = tmp_clause[0];
+                        out[1] = tmp_clause[1]^true;
                     }
-                    const int32_t ID = assert_clause(out);
-                    frat_ids.push_back(BDDCl{out, ID});
+                    // TODO derivation from xor to clause
+                    assert(false);
+                    solver->add_clause_int(out);
                     VERBOSE_PRINT("ID of bin XOR found (part 1): " << ID);
 
-                    ilist out2 = ilist_new(2);
-                    ilist_resize(out2, 2);
                     if (mat[row_i].rhs()) {
-                        out2[0] = (tmp_clause[0].var()+1)*-1;
-                        out2[1] = (tmp_clause[1].var()+1)*-1;
+                        out[0] = tmp_clause[0]^true;
+                        out[1] = tmp_clause[1]^true;
                     } else {
-                        out2[0] = (tmp_clause[0].var()+1);
-                        out2[1] = (tmp_clause[1].var()+1)*-1;
+                        out[0] = tmp_clause[0];
+                        out[1] = tmp_clause[1]^true;
                     }
-                    const int32_t ID2 = assert_clause(out2);
-                    frat_ids.push_back(BDDCl{out2, ID2});
+                    // TODO derivation from xor to clause
+                    assert(false);
+                    solver->add_clause_int(out);
+                    *solver->frat << delx << bdd.XID << bdd.lits << fin;
                     VERBOSE_PRINT("ID of bin XOR found (part 2): " << ID2);
-                    delete bdd;
                 }
-                #endif
 
                 solver->ok = solver->add_xor_clause_inter(tmp_clause, !xorEqualFalse, true, true);
                 release_assert(solver->ok);
