@@ -49,7 +49,7 @@ using std::vector;
 
 namespace CMSat {
 
-enum DratFlag{fin, deldelay, deldelayx, del, delx, findelay, add, addx, origcl, origclx, chain, finalcl, reloc};
+enum DratFlag{fin, deldelay, deldelayx, del, delx, findelay, add, addx, origcl, origclx, chain, finalcl, reloc, implyfromx};
 
 class Drat
 {
@@ -269,6 +269,13 @@ public:
                 adding = true;
                 cl_id = 0;
                 buf_add('a');
+                buf_nonbin_move();
+                break;
+
+            case DratFlag::implyfromx:
+                adding = true;
+                cl_id = 0;
+                buf_add('i');
                 buf_nonbin_move();
                 break;
 

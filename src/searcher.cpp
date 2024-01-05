@@ -248,6 +248,7 @@ vector<Lit>* Searcher::get_xor_reason(const PropBy& reason, int32_t& ID) {
             const auto prop = Lit(pc_var, value(pc_var) == l_False);
             assert(value(prop) == l_True);
             x.reason_cl.push_back(prop);
+            assert(false && "TODO FRAT");
         } else {
             assert(x.propagating_watch < 4);
             const auto confl_at = x.watched[x.propagating_watch-2];
@@ -256,6 +257,7 @@ vector<Lit>* Searcher::get_xor_reason(const PropBy& reason, int32_t& ID) {
             const auto confl = Lit(pc_var, value(pc_var) == l_True);
             assert(value(confl) == l_False);
             x.reason_cl.push_back(confl);
+            assert(false && "TODO FRAT");
         }
         bool rhs = false;
         for(const auto& v: x.vars) {

@@ -34,8 +34,6 @@ THE SOFTWARE.
 using std::vector;
 using std::set;
 
-constexpr int32_t xid_none = std::numeric_limits<int32_t>::max();
-
 namespace CMSat {
 
 class Xor {
@@ -94,7 +92,7 @@ public:
     vector<Lit> reason_cl;
     uint32_t watched[2] = {0,0};
     uint32_t in_matrix = 1000;
-    int32_t XID = xid_none;
+    int32_t XID = 0;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Xor& x)

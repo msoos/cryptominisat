@@ -27,8 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef ENHANCEGAUSSIAN_H
-#define ENHANCEGAUSSIAN_H
+#pragma once
 
 #include <vector>
 #include <limits>
@@ -58,7 +57,8 @@ struct XorReason
 {
     bool must_recalc = true;
     Lit propagated = lit_Undef;
-    int32_t XID = 0;
+    Xor constr;
+    int32_t ID = 0;
     vector<Lit> reason;
 };
 
@@ -122,6 +122,7 @@ class EGaussian {
     vector<XorReason> xor_reasons;
     vector<Lit> tmp_clause;
     uint32_t get_max_level(const GaussQData& gqd, const uint32_t row_n);
+    void add_clause_int_frat(const vector<Lit>& cl, const uint32_t ID);
 
     //Initialisation
     void eliminate();
@@ -134,16 +135,11 @@ class EGaussian {
     void prop_lit(
         const GaussQData& gqd, const uint32_t row_i, const Lit ret_lit_prop);
 
-    struct BDDCl {
-        vector<int32_t> xids;
-        int32_t XID;
-    };
     void xor_in_bdd(const uint32_t a, const uint32_t b);
-    BDDCl bdd_create(const uint32_t row_n, const uint32_t expected_size);
+    Xor bdd_create(const uint32_t row_n);
     void create_unit_bdd_reason(const uint32_t row_n);
-    vector<BDDCl> frat_ids;
-    BDDCl unsat_bdd;  //set if UNSAT is from GJ */
-    bool unsat_bdd_set = false;
+    vector<Xor> frat_ids;
+    Xor unsat_bdd;  //set if UNSAT is from GJ */
 
 
     ///////////////
@@ -232,22 +228,8 @@ inline double EGaussian::get_density()
     return (double)pop/(double)(num_rows*num_cols);
 }
 
-inline void EGaussian::update_matrix_no(uint32_t n)
-{
-    matrix_no = n;
-}
-
-inline uint32_t EGaussian::get_matrix_no()
-{
-    return matrix_no;
-}
-
-inline bool EGaussian::is_initialized() const
-{
-    return initialized;
-}
-
+inline void EGaussian::update_matrix_no(uint32_t n) { matrix_no = n; }
+inline uint32_t EGaussian::get_matrix_no() { return matrix_no; }
+inline bool EGaussian::is_initialized() const { return initialized; }
 
 }
-
-#endif //ENHANCEGAUSSIAN_H

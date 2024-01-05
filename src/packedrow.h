@@ -35,6 +35,7 @@ THE SOFTWARE.
 
 #include "solvertypes.h"
 #include "Vec.h"
+#include "xor.h"
 
 namespace CMSat {
 
@@ -268,6 +269,13 @@ public:
         PackedRow& cols_vals,
         PackedRow& tmp_col2,
         Lit prop
+    );
+    void get_reason_xor(
+        Xor& tmp_xor,
+        [[maybe_unused]] const vector<lbool>& assigns,
+        const vector<uint32_t>& col_to_var,
+        PackedRow& cols_vals,
+        PackedRow& tmp_col2
     );
 
     uint32_t popcnt() const;
