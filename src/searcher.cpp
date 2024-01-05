@@ -3442,8 +3442,8 @@ ConflictData Searcher::find_conflict_level(PropBy& pb) {
                 break;
             }
 
-            case PropByType::binary_t:
-            case PropByType::null_clause_t: release_assert(false);
+            default:
+                release_assert(false);
         }
 
         data.nHighestLevel = varData[lits[0].var()].level;
