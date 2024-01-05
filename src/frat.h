@@ -173,10 +173,18 @@ public:
     {
         if (must_delete_next) {
             byteDRUPdID(x.XID);
-            for(const uint32_t v: x) byteDRUPd(v);
+            for(uint32_t i = 0; i < x.size(); i++) {
+                Lit l = Lit(x[i], false);
+                if (i == 0 && !x.rhs) l ^= true;
+                byteDRUPd(l);
+            }
         } else {
             byteDRUPaID(x.XID);
-            for(const uint32_t v: x) byteDRUPa(v);
+            for(uint32_t i = 0; i < x.size(); i++) {
+                Lit l = Lit(x[i], false);
+                if (i == 0 && !x.rhs) l ^= true;
+                byteDRUPa(l);
+            }
         }
 
         return *this;

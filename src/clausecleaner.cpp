@@ -427,7 +427,7 @@ bool ClauseCleaner::remove_and_clean_all() {
 
 
 bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached) {
-    if (solver->frat->enabled()) assert(x.XID != xid_none);
+    if (solver->frat->enabled()) assert(x.XID != 0);
     (*solver->frat) << deldelayx << x << fin;
 
     bool rhs = x.rhs;

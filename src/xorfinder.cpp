@@ -101,8 +101,10 @@ void XorFinder::clean_equivalent_xors(vector<Xor>& txors) {
             if (j->vars == i->vars && j->rhs == i->rhs) {
                 if (solver->frat->enabled()) {
                     verb_print(5, "Cleaning equivalent XOR at: " << (i - txors.begin()) << " xor: " << *i);
-                    solver->frat->flush();
+                    assert(false && "TODO FRAT -- not needed for gauss if all XORs are added as XORs");
+#if 0
                     delete i->bdd;
+#endif
                 }
             } else {
                 j++;
@@ -156,8 +158,13 @@ bool XorFinder::find_xors() {
 
     // Need to do this due to XORs encoding new info
     //    see NOTE in cnf.h
-    solver->frat->flush();
-    for(auto& x: solver->xorclauses) if (solver->frat->enabled()) x.create_bdd_xor();
+    assert(false && "TODO FRAT -- not needed for gauss if all XORs are added as XORs");
+#if 0
+    for(auto& x: solver->xorclauses) {
+        if (solver->frat->enabled())
+            x.create_bdd_xor();
+    }
+#endif
 
     //Cleanup
     for(ClOffset offset: occsimplifier->clauses) {
@@ -346,8 +353,11 @@ void XorFinder::clean_xors_from_empty(vector<Xor>& thisxors)
     for(size_t i = 0;i < thisxors.size(); i++) {
         Xor& x = thisxors[i];
         if (x.trivial()) {
+            assert(false && "TODO FRAT -- not needed for gauss if all XORs are added as XORs");
+#if 0
             solver->frat->flush();
             delete x.bdd;
+#endif
         } else {
             verb_print(4, "xor after clean: " << thisxors[i]);
             thisxors[j++] = thisxors[i];

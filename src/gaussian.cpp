@@ -766,7 +766,8 @@ bool EGaussian::find_truths(
             // have to get reason if toplevel (reason will never be asked)
             if (solver->decisionLevel() == 0 && solver->frat->enabled()) {
                 VERBOSE_PRINT("-> conflict at toplevel during find_truths");
-                unsat_bdd = bdd_create(??, row_n);
+                unsat_bdd = bdd_create(row_n);
+                assert(false && "TODO FRAT");
             }
 
             if (was_resp_var) { // recover
