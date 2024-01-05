@@ -23,7 +23,7 @@ THE SOFTWARE.
 #include "solver.h"
 #include <random>
 extern "C" {
-#include "picosat/picosat.h"
+#include "mpicosat/mpicosat.h"
 }
 #include "cryptominisat.h"
 

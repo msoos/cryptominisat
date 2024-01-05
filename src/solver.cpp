@@ -81,7 +81,7 @@ THE SOFTWARE.
 #include "get_clause_query.h"
 #include "community_finder.h"
 extern "C" {
-#include "picosat/picosat.h"
+#include "mpicosat/mpicosat.h"
 }
 #include "cryptominisat.h"
 

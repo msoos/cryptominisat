@@ -29,7 +29,7 @@ IN THE SOFTWARE.
 #include <stdarg.h>
 #include <stdint.h>
 
-#include "picosat.h"
+#include "mpicosat.h"
 
 /* By default code for 'all different constraints' is disabled, since 'NADC'
  * is defined.

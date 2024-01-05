@@ -54,7 +54,7 @@ THE SOFTWARE.
 #include "gatefinder.h"
 #include "trim.h"
 extern "C" {
-#include "picosat/picosat.h"
+#include "mpicosat/mpicosat.h"
 }
 
 //#define VERBOSE_DEBUG

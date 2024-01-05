@@ -143,8 +143,8 @@ set(cryptoms_lib_files
     gaussian.cpp
     packedrow.cpp
     matrixfinder.cpp
-    picosat/picosat.c
-    picosat/version.c
+    mpicosat/mpicosat.c
+    mpicosat/version.c
     oracle/oracle.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
