@@ -111,9 +111,6 @@ class Solver : public Searcher
         void set_max_confl(uint64_t max_confl);
         void changed_sampling_vars();
 
-        //frat for SAT problems
-        void add_empty_cl_to_frat();
-
         //Querying model
         lbool model_value (const Lit p) const;  ///<Found model value for lit
         lbool model_value (const uint32_t p) const;  ///<Found model value for var
@@ -253,21 +250,22 @@ class Solver : public Searcher
 
             PropEngine::detach_bin_clause(lit1, lit2, red, ID, allow_empty_watch, allow_change_order);
         }
-        void detachClause(const Clause& c, const bool removeDrat = true);
-        void detachClause(const ClOffset offset, const bool removeDrat = true);
+        void detachClause(const Clause& c, const bool remove_frat = true);
+        void detachClause(const ClOffset offset, const bool remove_frat = true);
         void detach_modified_clause(
             const Lit lit1
             , const Lit lit2
             , const uint32_t origSize
             , const Clause* address
         );
+        void add_clause_int_frat(const vector<Lit>& cl, const uint32_t ID);
         Clause* add_clause_int(
             const vector<Lit>& lits
             , const bool red = false
             , const ClauseStats* const stats = NULL
             , const bool attach = true
             , vector<Lit>* finalLits = NULL
-            , bool addDrat = true
+            , bool addFrat = true
             , const Lit frat_first = lit_Undef
             , const bool sorted = false
             , const bool remove_frat = false

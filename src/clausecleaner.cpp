@@ -288,7 +288,7 @@ bool ClauseCleaner::clean_clause(Clause& cl)
         const auto orig_ID = cl.stats.ID;
         INC_ID(cl);
         cl.shrink(i-j);
-        (*solver->frat) << add << cl << chain << orig_ID;
+        (*solver->frat) << add << cl << fratchain << orig_ID;
         for(auto const& id: solver->chain) (*solver->frat) << id;
         (*solver->frat) << fin << findelay;
     } else {
@@ -428,7 +428,7 @@ bool ClauseCleaner::remove_and_clean_all() {
 
 bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached) {
     if (solver->frat->enabled()) assert(x.XID != 0);
-    (*solver->frat) << deldelayx << x << fin;
+    *solver->frat << deldelayx << x << fin;
 
     bool rhs = x.rhs;
     size_t i = 0;
@@ -438,16 +438,22 @@ bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached
 
     i = 0;
     j = 0;
+    solver->chain.clear();
+    solver->chain.push_back(x.XID);
     for(size_t size = x.size(); i < size; i++) {
         uint32_t var = x[i];
-        if (solver->value(var) != l_Undef) rhs ^= solver->value(var) == l_True;
+        if (solver->value(var) != l_Undef) {
+            rhs ^= solver->value(var) == l_True;
+            solver->chain.push_back(solver->unit_cl_XIDs[var]);
+        }
         else x[j++] = var;
     }
     if (j < x.size()) {
         x.rhs = rhs;
         x.resize(j);
-        INC_XID(x);
-        (*solver->frat) << addx << x << fin << findelay;
+        *solver->frat << addx << x << FratFlag::fratchain; solver->add_chain();
+        *solver->frat << fin << findelay;
+
         if (x.size() <= 2) {
             if (attached) {
                 removeWXCl(solver->gwatches, orig[0], at);
@@ -460,10 +466,7 @@ bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached
                     if (x[i3] == orig[i2]) {x.watched[i2] = i3; break;}
             }
         }
-    } else {
-        solver->frat->forget_delay();
-        return true;
-    }
+    } else solver->frat->forget_delay();
 
     switch(x.size()) {
         case 0:
@@ -474,18 +477,13 @@ bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached
                 solver->unsat_cl_ID = solver->clauseID;
             }
             return false;
-        case 1: {
+        case 1:
+        case 2:{
             assert(solver->okay());
-            solver->enqueue<true>(Lit(x[0], !x.rhs));
-            solver->ok = solver->propagate<true>().isNULL();
-            (*solver->frat) << delx << x << fin;
+            solver->add_xor_clause_inter(vars_to_lits(x), x.rhs, true, x.XID);
+            *solver->frat << delx << x << fin;
             return false;
         }
-        case 2:
-            assert(solver->okay());
-            solver->add_xor_clause_inter(vars_to_lits(x), x.rhs, true, true);
-            (*solver->frat) << delx << x << fin;
-            return false;
         default:
             return true;
     }

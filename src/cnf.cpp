@@ -131,6 +131,7 @@ void CNF::enlarge_nonminimial_datastructs(size_t n)
 {
     assigns.insert(assigns.end(), n, l_Undef);
     unit_cl_IDs.insert(unit_cl_IDs.end(), n, 0);
+    unit_cl_XIDs.insert(unit_cl_XIDs.end(), n, 0);
     varData.insert(varData.end(), n, VarData());
     depth.insert(depth.end(), n, 0);
 }
@@ -238,6 +239,7 @@ void CNF::updateVars(
     updateArray(varData, interToOuter);
     updateArray(assigns, interToOuter);
     updateArray(unit_cl_IDs, interToOuter);
+    updateArray(unit_cl_XIDs, interToOuter);
 
     updateBySwap(watches, seen, interToOuter2);
     updateBySwap(gwatches, seen, interToOuter);
@@ -690,7 +692,7 @@ bool CNF::no_marked_clauses() const
 
 void CNF::add_frat(FILE* os) {
     if (frat) delete frat;
-    frat = new DratFile<false>(interToOuterMain);
+    frat = new FratFile<false>(interToOuterMain);
     frat->setFile(os);
     frat->set_sumconflicts_ptr(&sumConflicts);
     frat->set_sqlstats_ptr(sqlStats);
@@ -916,13 +918,12 @@ void CNF::print_xors(const vector<Xor>& xors)
     }
 }
 
-#ifdef USE_TBUDDY
-void CNF::free_bdds(vector<Xor>& xors)
-{
-    frat->flush();
-    for(auto& x: xors) {
-        delete x.bdd;
-        x.bdd = NULL;
+void CNF::add_chain() {
+    if (!chain.empty()) {
+        *frat << fratchain;
+        for(auto const& id: chain) {
+            assert(id != 0);
+            *frat << id;
+        }
     }
 }
-#endif

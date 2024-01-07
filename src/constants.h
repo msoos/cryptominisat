@@ -190,13 +190,6 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum) {
 #endif
 
 
-#ifdef USE_TBUDDY
-#define TBUDDY_DO(x) \
-    do { x; } while (0)
-#else
-#define TBUDDY_DO(x)  do { } while (0)
-#endif
-
 #ifdef VERBOSE_DEBUG
 #define FAST_DEBUG
 #define DEBUG_ATTACH_FULL

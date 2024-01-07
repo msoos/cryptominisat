@@ -22,6 +22,8 @@ THE SOFTWARE.
 
 #include "varreplacer.h"
 #include "constants.h"
+#include "frat.h"
+#include "solvertypes.h"
 #include "varupdatehelper.h"
 #include "solver.h"
 #include "clausecleaner.h"
@@ -36,8 +38,10 @@ THE SOFTWARE.
 #include <iostream>
 #include <iomanip>
 #include <set>
+using std::get;
 using std::cout;
 using std::endl;
+using std::make_tuple;
 using std::make_pair;
 
 #ifdef VERBOSE_DEBUG
@@ -147,34 +151,32 @@ void VarReplacer::update_vardata(
     assert(orig_var <= solver->nVars() && replaced_with_var <= solver->nVars());
 }
 
-bool VarReplacer::enqueueDelayedEnqueue()
-{
+bool VarReplacer::enqueueDelayedEnqueue() {
     for(auto& l: delayedEnqueue) {
-        l.first = get_lit_replaced_with(l.first);
+        get<0>(l) = get_lit_replaced_with(get<0>(l));
 
         if (!solver->ok) {
             //if we are UNSAT, just delete them
-            *solver->frat << del << l.second << l.first << fin;
+            *solver->frat << del << get<1>(l) << get<0>(l) << fin;
             continue;
         }
 
-        if (solver->value(l.first) == l_Undef) {
-            solver->enqueue<false>(l.first);
-            *solver->frat << del << l.second << l.first << fin; // double unit delete
-        } else if (solver->value(l.first) == l_False) {
-            *solver->frat
-            << add << ++solver->clauseID << fin
-            << del << l.second << l.first << fin;
+        if (solver->value(get<0>(l)) == l_Undef) {
+            solver->enqueue<false>(get<0>(l));
+            // enqueue will add unit, we can delete below
+            *solver->frat << del << get<1>(l) << get<0>(l) << fin;
+        } else if (solver->value(get<0>(l)) == l_False) {
+            *solver->frat << add << ++solver->clauseID << fin;
+            *solver->frat << del << get<1>(l) << get<0>(l) << fin;
             assert(solver->unsat_cl_ID == 0);
             solver->unsat_cl_ID = solver->clauseID;
             solver->ok = false;
         } else {
             //it's already set, delete
-            *solver->frat << del << l.second << l.first << fin;
+            *solver->frat << del << get<1>(l) << get<0>(l) << fin;
         }
     }
     delayedEnqueue.clear();
-
     if (!solver->ok) return false;
 
     solver->ok = solver->propagate<false>().isNULL();
@@ -304,37 +306,46 @@ void VarReplacer::delete_frat_cls()
 
 // Returns FALSE if the XOR needs to be removed
 bool VarReplacer::replace_one_xor_clause(Xor& x) {
-    for(uint32_t& v: x) {
-        assert(v < solver->nVars());
+    bool go_again = true;
+    while(go_again) {
+        for(uint32_t i = 0; x.vars.size(); i++) {
+            uint32_t& v = x.vars[i];
+            uint32_t origv = v;
+            assert(v < solver->nVars());
+            Lit l = Lit(v, false);
+            if (get_lit_replaced_with_fast(l) != l) {
+                runStats.replacedLits++;
+                Xor* old_x = NULL;
+                if (solver->frat->enabled()) old_x = new Xor(x);
+                const Lit l2 = get_lit_replaced_with_fast(l);
+                x.rhs ^= l2.sign();
+                v = l2.var();
+                // Notice, below invalidates v, pointers, etc.
+                std::sort(x.vars.begin(), x.vars.end());
+                x.vars.erase(std::unique(x.vars.begin(), x.vars.end() ), x.vars.end());
 
-        Lit l = Lit(v, false);
-        if (get_lit_replaced_with_fast(l) != l) {
-            const Lit l2 = get_lit_replaced_with_fast(l);
-            assert(false && "TODO FRAT");
-#if 0
-            if (solver->frat->enabled()) {
-                solver->frat->flush();
-                ilist bin = ilist_new(2);
-                ilist_resize(bin, 2);
-                bin[0] = v+1;
-                bin[1] = l2.var()+1;
-                tbdd::xor_constraint* bdd2 = new tbdd::xor_constraint(bin, l2.sign());
-                tbdd::xor_set xs;
-                xs.add(*x.bdd);
-                xs.add(*bdd2);
-                const auto new_bdd = xs.sum();
-                delete bdd2;
-                delete x.bdd;
-                x.bdd = new_bdd;
+                if (solver->frat->enabled()) {
+                    vector<Lit> bin(2);
+                    bin[0] = Lit(origv, false); bin[1] = l2 ^ true;
+                    const auto ID1 = ++solver->clauseID;
+                    *solver->frat << add << ID1 << bin << fin;
+                    const auto ID2 = ++solver->clauseID;
+                    bin[0] ^= true; bin[0] ^= true;
+                    *solver->frat << add << ID2 << bin << fin;
+                    const auto bin_XID = ++solver->clauseXID;
+                    *solver->frat << implyxfromcls << bin_XID << bin << fratchain << ID1 << ID2 << fin;
+                    INC_XID(x);
+                    *solver->frat << addx << x << fratchain << old_x->XID << bin_XID << fin;
+                    *solver->frat << delx << *old_x << fin;
+                }
+                go_again = true;
+                break;
             }
-#endif
-            x.rhs ^= l2.sign();
-            v = l2.var();
-            runStats.replacedLits++;
         }
     }
 
-    solver->clean_xor_vars_no_prop(x.get_vars(), x.rhs);
+    auto ps = vars_to_lits(x.vars);
+    x.XID = solver->clean_xor_vars_no_prop(ps, x.rhs, x.XID);
     switch (x.size()) {
         case 0:
             if (x.rhs == true) solver->ok = false;
@@ -343,7 +354,7 @@ bool VarReplacer::replace_one_xor_clause(Xor& x) {
         case 1: {
             Lit l(x[0], !x.rhs);
             *solver->frat << add << ++solver->clauseID << l << fin;
-            delayedEnqueue.push_back(make_pair(l, solver->clauseID));
+            delayedEnqueue.push_back(make_tuple(l, solver->clauseID));
             return false;
             break;
         }
@@ -383,9 +394,8 @@ inline void VarReplacer::updateBin(
 
     //Two lits are the same in BIN
     if (lit1 == lit2) {
-        int32_t ID = ++solver->clauseID;
-        (*solver->frat) << add << ID << lit2 << fin;
-        delayedEnqueue.push_back(make_pair(lit2, ID));
+        *solver->frat << add << ++solver->clauseID << lit2 << fin;
+        delayedEnqueue.push_back(make_pair(lit2, solver->clauseID));
         remove = true;
     }
 
@@ -683,8 +693,7 @@ bool VarReplacer::handleUpdatedClause(
         c.setRemoved();
         solver->watches.smudge(origLit1);
         solver->watches.smudge(origLit2);
-
-        delayedEnqueue.push_back(make_pair(c[0], c.stats.ID));
+        delayedEnqueue.push_back(make_tuple(c[0], c.stats.ID));
         runStats.removedLongLits += origSize;
         return true;
     case 2:
@@ -1069,7 +1078,7 @@ size_t VarReplacer::mem_used() const
 {
     size_t b = 0;
     b += scc_finder->mem_used();
-    b += delayedEnqueue.capacity()*sizeof(Lit);
+    b += delayedEnqueue.capacity()*2*sizeof(Lit);
     b += table.capacity()*sizeof(Lit);
     for(map<uint32_t, vector<uint32_t> >::const_iterator
         it = reverseTable.begin(), end = reverseTable.end()

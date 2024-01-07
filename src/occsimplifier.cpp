@@ -292,12 +292,12 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
 
 void OccSimplifier::unlink_clause(
     const ClOffset offset
-    , bool doDrat
+    , bool do_frat
     , bool allow_empty_watch
     , bool only_set_is_removed
 ) {
     Clause& cl = *solver->cl_alloc.ptr(offset);
-    if (doDrat && (solver->frat->enabled() || solver->conf.simulate_frat)) {
+    if (do_frat && (solver->frat->enabled() || solver->conf.simulate_frat)) {
        (*solver->frat) << del << cl << fin;
     }
 
@@ -318,9 +318,7 @@ void OccSimplifier::unlink_clause(
             }
         }
     } else {
-        for (const Lit lit: cl) {
-            solver->watches.smudge(lit);
-        }
+        for (const Lit lit: cl) solver->watches.smudge(lit);
     }
     cl.setRemoved();
 
@@ -2194,14 +2192,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             }
         } else if (token == "occ-xor") {
             CHECK_N_OCCUR_DO(check_n_occur());
-            if (solver->conf.doFindXors &&
-                #ifdef USE_TBUDDY
-                true
-                #else
-                !solver->frat->enabled()
-                #endif
-               )
-            {
+            if (solver->conf.doFindXors && !solver->frat->enabled()) {
                 XorFinder finder(this, solver);
                 finder.find_xors(); // beware can set UNSAT flag (ok = false)
                 for(const auto& x: solver->xorclauses) for(const auto& v: x) xorclauses_vars[v] = 1;

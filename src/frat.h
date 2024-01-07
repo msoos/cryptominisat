@@ -49,26 +49,26 @@ using std::vector;
 
 namespace CMSat {
 
-enum DratFlag{fin, deldelay, deldelayx, del, delx, findelay, add, addx, origcl, origclx, chain, finalcl, reloc, implyfromx};
+enum FratFlag{fin, deldelay, deldelayx, del, delx, findelay, add, addx, origcl, origclx, fratchain, finalcl, finalx, reloc, implyclfromx, implyxfromcls};
 
-class Drat
+class Frat
 {
 public:
-    Drat() { }
-    virtual ~Drat() { }
+    Frat() { }
+    virtual ~Frat() { }
     virtual bool enabled() { return false; }
     virtual void set_sumconflicts_ptr(uint64_t*) { }
     virtual void set_sqlstats_ptr(SQLStats*) { }
     virtual void forget_delay() { }
     virtual bool get_conf_id() { return false; }
     virtual bool something_delayed() { return false; }
-    virtual Drat& operator<<(const int32_t) { return *this; }
-    virtual Drat& operator<<(const Lit) { return *this; }
-    virtual Drat& operator<<(const Clause&) { return *this; }
-    virtual Drat& operator<<(const Xor&) { return *this; }
-    virtual Drat& operator<<(const vector<Lit>&) { return *this; }
-    virtual Drat& operator<<(const char*) { return *this; }
-    virtual Drat& operator<<(const DratFlag) { return *this; }
+    virtual Frat& operator<<(const int32_t) { return *this; }
+    virtual Frat& operator<<(const Lit) { return *this; }
+    virtual Frat& operator<<(const Clause&) { return *this; }
+    virtual Frat& operator<<(const Xor&) { return *this; }
+    virtual Frat& operator<<(const vector<Lit>&) { return *this; }
+    virtual Frat& operator<<(const char*) { return *this; }
+    virtual Frat& operator<<(const FratFlag) { return *this; }
     virtual void setFile(FILE*) { }
     virtual FILE* getFile() { return NULL; }
     virtual void flush();
@@ -79,10 +79,10 @@ public:
 };
 
 template<bool binfrat = false>
-class DratFile: public Drat
+class FratFile: public Frat
 {
 public:
-    DratFile(vector<uint32_t>& _interToOuterMain) :
+    FratFile(vector<uint32_t>& _interToOuterMain) :
         interToOuterMain(_interToOuterMain)
     {
         drup_buf = new unsigned char[2 * 1024 * 1024];
@@ -95,7 +95,7 @@ public:
         del_len = 0;
     }
 
-    virtual ~DratFile()
+    virtual ~FratFile()
     {
         flush();
         delete[] drup_buf;
@@ -112,7 +112,7 @@ public:
         sqlStats = _sqlStats;
     }
 
-    virtual Drat& operator<<(const int32_t clauseID) override
+    virtual Frat& operator<<(const int32_t clauseID) override
     {
         if (must_delete_next) {
             byteDRUPdID(clauseID);
@@ -169,7 +169,7 @@ public:
     bool must_delete_next = false;
 
 
-    Drat& operator<<(const Xor& x) override
+    Frat& operator<<(const Xor& x) override
     {
         if (must_delete_next) {
             byteDRUPdID(x.XID);
@@ -190,7 +190,7 @@ public:
         return *this;
     }
 
-    Drat& operator<<(const Clause& cl) override
+    Frat& operator<<(const Clause& cl) override
     {
         if (must_delete_next) {
             byteDRUPdID(cl.stats.ID);
@@ -203,7 +203,7 @@ public:
         return *this;
     }
 
-    Drat& operator<<(const vector<Lit>& cl) override
+    Frat& operator<<(const vector<Lit>& cl) override
     {
         if (must_delete_next) {
             for(const Lit l: cl) {
@@ -222,11 +222,11 @@ public:
     inline void del_add(unsigned char x) { *del_ptr+=x; del_len++; }
     inline void del_nonbin_move() { if (!binfrat) del_add(' '); }
     inline void buf_nonbin_move() { if (!binfrat) buf_add(' '); }
-    Drat& operator<<(const DratFlag flag) override
+    Frat& operator<<(const FratFlag flag) override
     {
         switch (flag)
         {
-            case DratFlag::fin:
+            case FratFlag::fin:
                 if (must_delete_next) {
                     if (binfrat) del_add(0);
                     else { del_add('0'); del_add('\n'); }
@@ -242,7 +242,7 @@ public:
                 must_delete_next = false;
                 break;
 
-            case DratFlag::deldelay:
+            case FratFlag::deldelay:
                 adding = false;
                 assert(!delete_filled);
                 forget_delay();
@@ -252,7 +252,7 @@ public:
                 must_delete_next = true;
                 break;
 
-            case DratFlag::deldelayx:
+            case FratFlag::deldelayx:
                 adding = false;
                 assert(!delete_filled);
                 forget_delay();
@@ -264,7 +264,7 @@ public:
                 must_delete_next = true;
                 break;
 
-            case DratFlag::findelay:
+            case FratFlag::findelay:
                 assert(delete_filled);
                 memcpy(buf_ptr, del_buf, del_len);
                 buf_len += del_len;
@@ -273,21 +273,30 @@ public:
                 forget_delay();
                 break;
 
-            case DratFlag::add:
+            case FratFlag::add:
                 adding = true;
                 cl_id = 0;
                 buf_add('a');
                 buf_nonbin_move();
                 break;
 
-            case DratFlag::implyfromx:
+            case FratFlag::implyclfromx:
                 adding = true;
                 cl_id = 0;
                 buf_add('i');
                 buf_nonbin_move();
                 break;
 
-            case DratFlag::addx:
+            case FratFlag::implyxfromcls:
+                adding = true;
+                cl_id = 0;
+                buf_add('i');
+                buf_add(' ');
+                buf_add('x');
+                buf_nonbin_move();
+                break;
+
+            case FratFlag::addx:
                 adding = true;
                 cl_id = 0;
                 buf_add('a');
@@ -296,7 +305,7 @@ public:
                 buf_nonbin_move();
                 break;
 
-            case DratFlag::chain:
+            case FratFlag::fratchain:
                 if (!binfrat) {
                     buf_add('0');
                     buf_add(' ');
@@ -304,40 +313,49 @@ public:
                     buf_add(' ');
                 }
                 break;
-            case DratFlag::del:
+            case FratFlag::del:
                 adding = false;
                 buf_add('d');
                 buf_nonbin_move();
                 break;
-            case DratFlag::delx:
+            case FratFlag::delx:
                 adding = false;
                 buf_add('d');
                 buf_add(' ');
                 buf_add('x');
                 buf_nonbin_move();
                 break;
-            case DratFlag::reloc:
+            case FratFlag::reloc:
                 adding = false;
                 forget_delay();
                 buf_add('r');
                 buf_nonbin_move();
                 break;
 
-            case DratFlag::finalcl:
+            case FratFlag::finalcl:
                 adding = false;
                 forget_delay();
                 buf_add('f');
                 buf_nonbin_move();
                 break;
 
-            case DratFlag::origcl:
+            case FratFlag::finalx:
+                adding = false;
+                forget_delay();
+                buf_add('f');
+                buf_add(' ');
+                buf_add('x');
+                buf_nonbin_move();
+                break;
+
+            case FratFlag::origcl:
                 adding = false;
                 forget_delay();
                 buf_add('o');
                 buf_nonbin_move();
                 break;
 
-            case DratFlag::origclx:
+            case FratFlag::origclx:
                 adding = false;
                 forget_delay();
                 buf_add('o');
@@ -351,7 +369,7 @@ public:
     }
 
 private:
-    Drat& operator<<(const Lit lit) override
+    Frat& operator<<(const Lit lit) override
     {
         if (must_delete_next) {
             byteDRUPd(lit);
@@ -383,7 +401,7 @@ private:
         }
     }
 
-    virtual Drat& operator<<([[maybe_unused]] const char* str) override
+    virtual Frat& operator<<([[maybe_unused]] const char* str) override
     {
         #ifdef DEBUG_FRAT
         this->flush();

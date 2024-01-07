@@ -229,7 +229,7 @@ class VarReplacer
         bool handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2);
 
          //While replacing the implicit clauses we cannot enqeue
-        vector<std::pair<Lit, uint64_t>> delayedEnqueue;
+        vector<std::tuple<Lit, int32_t>> delayedEnqueue;
         bool update_table_and_reversetable(const Lit lit1, const Lit lit2);
         void setAllThatPointsHereTo(const uint32_t var, const Lit lit);
 

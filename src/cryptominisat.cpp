@@ -1449,11 +1449,6 @@ DLL_PUBLIC uint32_t SATSolver::get_verbosity() const
    return conf.verbosity;
 }
 
-DLL_PUBLIC void SATSolver::add_empty_cl_to_frat()
-{
-    data->solvers[data->which_solved]->add_empty_cl_to_frat();
-}
-
 DLL_PUBLIC void SATSolver::set_single_run()
 {
     if (data->num_solve_simplify_calls > 0) {

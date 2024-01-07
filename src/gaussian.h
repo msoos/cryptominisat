@@ -122,7 +122,6 @@ class EGaussian {
     vector<XorReason> xor_reasons;
     vector<Lit> tmp_clause;
     uint32_t get_max_level(const GaussQData& gqd, const uint32_t row_n);
-    void add_clause_int_frat(const vector<Lit>& cl, const uint32_t ID);
 
     //Initialisation
     void eliminate();
@@ -136,10 +135,8 @@ class EGaussian {
         const GaussQData& gqd, const uint32_t row_i, const Lit ret_lit_prop);
 
     void xor_in_bdd(const uint32_t a, const uint32_t b);
-    Xor bdd_create(const uint32_t row_n);
+    Xor xor_reason_create(const uint32_t row_n);
     void create_unit_bdd_reason(const uint32_t row_n);
-    vector<Xor> frat_ids;
-    Xor unsat_bdd;  //set if UNSAT is from GJ */
 
 
     ///////////////

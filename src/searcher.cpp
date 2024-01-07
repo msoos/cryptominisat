@@ -22,6 +22,7 @@ THE SOFTWARE.
 
 #include "searcher.h"
 #include "constants.h"
+#include "frat.h"
 #include "occsimplifier.h"
 #include "solvertypesmini.h"
 #include "time_mem.h"
@@ -241,23 +242,23 @@ vector<Lit>* Searcher::get_xor_reason(const PropBy& reason, int32_t& ID) {
         auto& x = xorclauses[reason.get_row_num()];
         x.reason_cl.clear();
         uint32_t pc_var;
-        if (x.propagating_watch < 2) {
-            const auto prop_at = x.watched[x.propagating_watch];
+        if (x.prop_confl_watch < 2) {
+            //propagation
+            const auto prop_at = x.watched[x.prop_confl_watch];
             pc_var = x.vars[prop_at];
             assert(value(pc_var) != l_Undef);
             const auto prop = Lit(pc_var, value(pc_var) == l_False);
             assert(value(prop) == l_True);
             x.reason_cl.push_back(prop);
-            assert(false && "TODO FRAT");
         } else {
-            assert(x.propagating_watch < 4);
-            const auto confl_at = x.watched[x.propagating_watch-2];
+            //conflict
+            assert(x.prop_confl_watch < 4);
+            const auto confl_at = x.watched[x.prop_confl_watch-2];
             pc_var = x.vars[confl_at];
             assert(value(pc_var) != l_Undef);
             const auto confl = Lit(pc_var, value(pc_var) == l_True);
             assert(value(confl) == l_False);
             x.reason_cl.push_back(confl);
-            assert(false && "TODO FRAT");
         }
         bool rhs = false;
         for(const auto& v: x.vars) {
@@ -281,9 +282,15 @@ vector<Lit>* Searcher::get_xor_reason(const PropBy& reason, int32_t& ID) {
         cout << "XOR Propagating? " << (int)(x.propagating_watch<2) << endl;
 #endif
 
-        if (x.propagating_watch < 2) assert(rhs == x.rhs);
-        else assert(rhs != x.rhs);
+        // Some sanity checks
+        if (x.prop_confl_watch < 2) assert(rhs == x.rhs && "It's a prop, so rhs must match");
+        else assert(rhs != x.rhs && "It's a confl, so rhs must not match");
 
+        if (frat->enabled()) {
+            if (x.reason_cl_ID != 0) *frat << del << x.reason_cl_ID << fin;
+            x.reason_cl_ID = ++clauseID;
+            *frat << implyclfromx << x.reason_cl_ID << x.reason_cl << FratFlag::fratchain << x.XID << fin;
+        }
         return &x.reason_cl;
     } else {
         return gmatrices[reason.get_matrix_num()]->get_reason(reason.get_row_num(), ID);
@@ -1488,8 +1495,12 @@ void Searcher::attach_and_enqueue_learnt_clause(
                 uint32_t v = learnt_clause[0].var();
                 if (frat->enabled()) {
                     assert(unit_cl_IDs[v] == 0);
+                    assert(unit_cl_XIDs[v] == 0);
                     assert(ID != 0);
                     unit_cl_IDs[v] = ID;
+                    const auto XID = ++clauseXID;
+                    *frat << implyxfromcls << XID << (*cl)[0] << fratchain << ID << fin;
+                    unit_cl_XIDs[v] = XID;
                 }
                 enqueue<false>(learnt_clause[0], level, PropBy(), false);
             }
@@ -1688,12 +1699,7 @@ Clause* Searcher::handle_last_confl(
 
     Clause* cl;
     ID = ++clauseID;
-    *frat << add << ID << learnt_clause;
-    if (!chain.empty()) {
-        *frat << DratFlag::chain;
-        for(auto const& c: chain) *frat << c;
-    }
-    *frat << fin;
+    *frat << add << ID << learnt_clause; add_chain(); *frat << fin;
     VERBOSE_PRINT("Chain ID created: " << ID);
 
     if (learnt_clause.size() <= 2) {
@@ -3545,7 +3551,7 @@ bool Searcher::attach_xorclauses() {
 // Deletes all matrices.
 // TODO: this does NOT add back clash variables
 bool Searcher::clear_gauss_matrices(const bool destruct) {
-    TBUDDY_DO(if (!destruct && frat->enabled()) for(auto& g: gmatrices) g->finalize_frat());
+    if (!destruct && frat->enabled()) for(auto& g: gmatrices) g->finalize_frat();
 
     xorclauses_updated = true;
     for(uint32_t i = 0; i < gqueuedata.size(); i++) {

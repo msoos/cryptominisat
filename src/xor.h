@@ -75,7 +75,6 @@ public:
     const uint32_t& operator[](const uint32_t at) const { return vars[at]; }
     uint32_t& operator[](const uint32_t at) { return vars[at]; }
     void resize(const uint32_t newsize) { vars.resize(newsize); }
-    vector<uint32_t>& get_vars() { return vars; }
     const vector<uint32_t>& get_vars() const { return vars; }
     size_t size() const { return vars.size(); }
 
@@ -87,9 +86,11 @@ public:
     }
 
     bool rhs = false;
-    uint8_t propagating_watch = 0;
+    uint8_t prop_confl_watch = 0; // which watch is propagating?
+                                  // if it's CONFL, then it's 2 + (0/1)
     vector<uint32_t> vars;
     vector<Lit> reason_cl;
+    int32_t reason_cl_ID = 0;
     uint32_t watched[2] = {0,0};
     uint32_t in_matrix = 1000;
     int32_t XID = 0;

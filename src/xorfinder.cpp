@@ -156,8 +156,6 @@ bool XorFinder::find_xors() {
     assert(orig_num_xors + runStats.foundXors == solver->xorclauses.size());
     clean_equivalent_xors(solver->xorclauses);
 
-    // Need to do this due to XORs encoding new info
-    //    see NOTE in cnf.h
     assert(false && "TODO FRAT -- not needed for gauss if all XORs are added as XORs");
 #if 0
     for(auto& x: solver->xorclauses) {

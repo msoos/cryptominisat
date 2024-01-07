@@ -188,6 +188,25 @@ void Solver::set_sqlite(
 }
 
 void Solver::set_shared_data(SharedData* shared_data) { datasync->set_shared_data(shared_data); }
+
+// Only used for unsat, unit, and binary xors during initalization
+void Solver::add_clause_int_frat(const vector<Lit>& cl, const uint32_t ID) {
+    assert(cl.size() <= 2);
+    ClauseStats stats;
+    stats.ID = ID;
+    Clause* c = solver->add_clause_int(
+            cl,
+            false, //red
+            &stats,
+            true, // attach long
+            NULL, //finalLits
+            true, //addDrat
+            lit_Undef, //frat_first
+            false, //sorted
+            true); // remove_frat -- this is what we need
+    assert(c == NULL && "Only used for unsat, unit, and binary xors");
+}
+
 bool Solver::add_xor_clause_inter(
     const vector<Lit>& lits
     , bool rhs
@@ -199,37 +218,43 @@ bool Solver::add_xor_clause_inter(
     assert(!attach || qhead == trail.size());
     assert(decisionLevel() == 0);
 
-    vector<Lit> ps(lits);
-    for(Lit& lit: ps) if (lit.sign()) {rhs ^= true; lit ^= true;}
-    clean_xor_no_prop(ps, rhs);
+    auto ps = lits;
+    auto XID2 = clean_xor_vars_no_prop(ps, rhs, XID);
+    assert(XID2 != 0);
     if (ps.size() >= (0x01UL << 28)) throw CMSat::TooLongClauseError();
 
     if (ps.empty()) {
         if (rhs) {
-            *frat << addx << clauseXID++ << fin;
+            *frat << implyclfromx << ++clauseID << fratchain << XID2 << fin;
+            unsat_cl_ID = clauseID;
             ok = false;
         }
         return okay();
     }
     else if (ps.size() == 1) {
+        vector<Lit> tmp = ps;
         ps[0] ^= !rhs;
-        add_clause_int(ps);
-        *frat << delx << XID << fin;
+        const auto ID = ++clauseID;
+        *frat << implyclfromx << ID << tmp << fratchain << XID2 << fin;
+        add_clause_int_frat(tmp, ID);
     } else if (ps.size() == 2) {
-        ps[0] ^= !rhs;
-        add_clause_int(ps);
-        ps[0] ^= true;
-        ps[1] ^= true;
-        add_clause_int(ps);
-        *frat << delx << XID << fin;
+        vector<Lit> tmp = ps;
+        tmp[0] ^= !rhs;
+        const auto ID1 = ++clauseID;
+        *frat << implyclfromx << ID1 << tmp << fratchain << XID2 << fin;
+        add_clause_int_frat(tmp, ID1);
+        tmp[0] ^= true;
+        tmp[1] ^= true;
+        const auto ID2 = ++clauseID;
+        *frat << addx << ID2 << tmp << fratchain << XID << fin;
+        add_clause_int_frat(tmp, ID2);
+        *frat << delx << XID2 << fin;
     } else {
         assert(ps.size() > 2);
         xorclauses_updated = true;
         xorclauses.push_back(Xor(ps, rhs));
         Xor& x = xorclauses.back();
-        INC_XID(x);
-        *frat << addx << x << fin;
-        *frat << delx << XID << fin;
+        x.XID = XID2;
         attach_xor_clause(xorclauses.size()-1);
     }
     return okay();
@@ -298,7 +323,7 @@ Clause* Solver::add_clause_int(
     , const ClauseStats* const cl_stats
     , const bool attach_long
     , vector<Lit>* finalLits
-    , bool addDrat
+    , bool add_frat
     , const Lit frat_first
     , const bool sorted
     , const bool remove_frat
@@ -328,7 +353,7 @@ Clause* Solver::add_clause_int(
     if (remove_frat) {
         assert(cl_stats);
         assert(frat_first == lit_Undef);
-        assert(addDrat);
+        assert(add_frat);
         ID = cl_stats->ID;
         if (ps != lits) {
             ID = ++clauseID;
@@ -337,15 +362,13 @@ Clause* Solver::add_clause_int(
         }
     } else {
         ID = ++clauseID;
-        if (addDrat) {
+        if (add_frat) {
             size_t i = 0;
             if (frat_first != lit_Undef) {
                 assert(ps.size() > 0);
                 if (frat_first != lit_Undef) {
                     for(i = 0; i < ps.size(); i++) {
-                        if (ps[i] == frat_first) {
-                            break;
-                        }
+                        if (ps[i] == frat_first) break;
                     }
                 }
                 std::swap(ps[0], ps[i]);
@@ -655,20 +678,17 @@ void Solver::attach_bin_clause(
     PropEngine::attach_bin_clause(lit1, lit2, red, ID, checkUnassignedFirst);
 }
 
-void Solver::detachClause(const Clause& cl, const bool removeDrat)
+void Solver::detachClause(const Clause& cl, const bool remove_frat)
 {
-    if (removeDrat) {
-        *frat << del << cl << fin;
-    }
-
+    if (remove_frat) *frat << del << cl << fin;
     assert(cl.size() > 2);
     detach_modified_clause(cl[0], cl[1], cl.size(), &cl);
 }
 
-void Solver::detachClause(const ClOffset offset, const bool removeDrat)
+void Solver::detachClause(const ClOffset offset, const bool remove_frat)
 {
     Clause* cl = cl_alloc.ptr(offset);
-    detachClause(*cl, removeDrat);
+    detachClause(*cl, remove_frat);
 }
 
 void Solver::detach_modified_clause(
@@ -1433,19 +1453,7 @@ lbool Solver::solve_with_assumptions(
     const vector<Lit>* _assumptions,
     const bool only_sampling_solution
 ) {
-    if (frat->enabled()) {
-        frat->set_sqlstats_ptr(sqlStats);
-        int32_t* v = new int;
-        *v = nVars()+1;
-        #ifdef USE_TBUDDY
-        if (frat->enabled()) {
-            frat->flush();
-            tbdd_init_frat(frat->getFile(), v, &clauseID);
-            tbdd_set_verbose(0);
-            bdd_error_hook(my_bddinthandler);
-        }
-        #endif
-    }
+    if (frat->enabled()) frat->set_sqlstats_ptr(sqlStats);
     copy_assumptions(_assumptions);
     reset_for_solving();
 
@@ -1523,15 +1531,13 @@ void Solver::write_final_frat_clauses()
     if (varReplacer) varReplacer->delete_frat_cls();
 
     *frat << "gmatrix finalize frat begin\n";
-    TBUDDY_DO(for(auto& g: gmatrices) g->finalize_frat());
+    for(auto& g: gmatrices) g->finalize_frat();
 
     *frat << "free bdds begin\n";
-    TBUDDY_DO(solver->free_bdds(solver->xorclauses));
-
-
-    *frat << "tbdd_done() next\n";
-    frat->flush();
-    TBUDDY_DO(tbdd_done());
+    for(const auto& x: xorclauses) {
+        if (x.reason_cl_ID != 0) *frat << finalcl << x.reason_cl_ID << fin;
+        *frat << finalx << x.XID << fin;
+    }
 
     // -1 indicates tbuddy already added the empty clause
     *frat << "empty clause next (if we found it)\n";
@@ -1543,9 +1549,11 @@ void Solver::write_final_frat_clauses()
     *frat << "finalization of unit clauses next\n";
     for(uint32_t i = 0; i < nVars(); i ++) {
         if (unit_cl_IDs[i] != 0) {
+            assert(unit_cl_XIDs[i] != 0);
             assert(value(i) != l_Undef);
             Lit l = Lit(i, value(i) == l_False);
             *frat << finalcl << unit_cl_IDs[i] << l << fin;
+            *frat << finalx << unit_cl_XIDs[i] << l << fin;
         }
     }
 
@@ -1572,7 +1580,6 @@ void Solver::write_final_frat_clauses()
         Clause* cl = cl_alloc.ptr(offs);
         *frat << finalcl << *cl << fin;
     }
-    frat->flush();
 }
 
 void Solver::dump_memory_stats_to_sql()
@@ -3298,18 +3305,6 @@ vector<uint32_t> Solver::translate_sampl_set(const vector<uint32_t>& sampl_set)
 {
     assert(get_clause_query);
     return get_clause_query->translate_sampl_set(sampl_set);
-}
-
-void Solver::add_empty_cl_to_frat()
-{
-    assert(false);
-//     *frat << add
-//     #ifdef STATS_NEEDED
-//     << 0
-//     << sumConflicts
-//     #endif
-//     << fin;
-//     frat->flush();
 }
 
 void Solver::check_assigns_for_assumptions() const {

@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include <cmath>
 
 #include "constants.h"
+#include "frat.h"
 #include "propby.h"
 #include "vmtf.h"
 
@@ -255,7 +256,6 @@ public:
 
     //Clause activities
     double max_cl_act = 0.0;
-    vector<int32_t> chain; ///< For resolution chains
 
     enum class gauss_ret {g_cont, g_nothing, g_false};
     vector<EGaussian*> gmatrices;
@@ -534,7 +534,8 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
     SLOW_DEBUG_DO(assert(varData[v].removed == Removed::none));
     if (level == 0 && frat->enabled())
     {   if (do_unit_frat) {
-            const uint32_t ID = ++clauseID;
+            const auto ID = ++clauseID;
+            const auto XID = ++clauseXID;
             chain.clear();
             if (from.getType() == PropByType::binary_t) {
                 chain.push_back(from.getID());
@@ -547,18 +548,16 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
                 // These are too difficult and not worth it
             }
 
-            *frat << add << ID << p;
-            if (!chain.empty()) {
-                *frat << DratFlag::chain;
-                for(auto const& id: chain) *frat << id;
-            }
-            *frat << fin;
+            *frat << add << ID << p; add_chain(); *frat << fin;
+            *frat << implyxfromcls << XID << p << fratchain << ID << fin;
 
-            VERBOSE_PRINT("unit " << p << " ID: " << ID);
             assert(unit_cl_IDs[v] == 0);
+            assert(unit_cl_XIDs[v] == 0);
             unit_cl_IDs[v] = ID;
+            unit_cl_XIDs[v] = XID;
         } else {
             assert(unit_cl_IDs[v] != 0);
+            assert(unit_cl_XIDs[v] != 0);
         }
     }
 

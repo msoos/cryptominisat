@@ -42,10 +42,6 @@ THE SOFTWARE.
 #include "solver.h"
 #include "time_mem.h"
 #include "varreplacer.h"
-#ifdef USE_TBUDDY
-#include "tbdd.h"
-#include "prover.h"
-#endif
 
 // #define VERBOSE_DEBUG
 // #define SLOW_DEBUG
@@ -72,23 +68,17 @@ xorclauses(_xorclauses),
 solver(_solver),
 matrix_no(_matrix_no)
 {
-    TBUDDY_DO(one_len_ilist = ilist_new(1));
-    TBUDDY_DO(ilist_resize(one_len_ilist, 1));
 }
 
 EGaussian::~EGaussian() {
     delete_gauss_watch_this_matrix();
     for(auto& x: tofree) delete[] x;
-    TBUDDY_DO(for(auto& x: xorclauses) assert(x.bdd == NULL && "GMatrix needs finalization before del"));
-    TBUDDY_DO(assert(frat_ids.empty()));
     tofree.clear();
 
     delete cols_unset;
     delete cols_vals;
     delete tmp_col;
     delete tmp_col2;
-    TBUDDY_DO(ilist_free(one_len_ilist));
-    TBUDDY_DO(ilist_free(ilist_tmp));
 }
 
 struct ColSorter {
@@ -224,7 +214,6 @@ void EGaussian::fill_matrix() {
     if (num_rows == 0 || num_cols == 0) {
         return;
     }
-    TBUDDY_DO(ilist_tmp = ilist_new(num_cols));
     mat.resize(num_rows, num_cols); // initial gaussian matrix
 
     bdd_matrix.clear();
@@ -356,14 +345,12 @@ bool EGaussian::full_init(bool& created) {
     return solver->okay();
 }
 
-#ifdef USE_TBUDDY
 void EGaussian::xor_in_bdd(const uint32_t a, const uint32_t b)
 {
     for(uint32_t i = 0; i < bdd_matrix[a].size(); i ++) {
         bdd_matrix[a][i] ^= bdd_matrix[b][i];
     }
 }
-#endif
 
 void EGaussian::eliminate() {
     PackedMatrix::iterator end_row_it = mat.begin() + num_rows;
@@ -405,7 +392,7 @@ void EGaussian::eliminate() {
                 if (k_row != rowI) {
                     if ((*k_row)[col]) {
                         (*k_row).xor_in(*rowI);
-                        if (solver->frat->enabled()) TBUDDY_DO(xor_in_bdd(k, row_i));
+                        if (solver->frat->enabled()) xor_in_bdd(k, row_i);
                     }
                 }
             }
@@ -417,8 +404,7 @@ void EGaussian::eliminate() {
     //print_matrix();
 }
 
-vector<Lit>* EGaussian::get_reason(const uint32_t row, int32_t& out_ID)
-{
+vector<Lit>* EGaussian::get_reason(const uint32_t row, int32_t& out_ID) {
     *solver->frat << __PRETTY_FUNCTION__ << " start\n";
     if (!xor_reasons[row].must_recalc) {
         out_ID = xor_reasons[row].ID;
@@ -444,9 +430,9 @@ vector<Lit>* EGaussian::get_reason(const uint32_t row, int32_t& out_ID)
 
     if (solver->frat->enabled()) {
         VERBOSE_PRINT("Expecting tbuddy to prove: " << tofill);
-        xor_reasons[row].constr = bdd_create(row);
+        xor_reasons[row].constr = xor_reason_create(row);
         out_ID = ++solver->clauseID;
-        *solver->frat << implyfromx << out_ID << tofill << chain << xor_reasons[row].constr.XID << fin;
+        *solver->frat << implyclfromx << out_ID << tofill << fratchain << xor_reasons[row].constr.XID << fin;
         *solver->frat << delx << xor_reasons[row].constr.XID << fin;
         VERBOSE_PRINT("ID of asserted get_reason ID: " << out_ID);
     }
@@ -457,7 +443,7 @@ vector<Lit>* EGaussian::get_reason(const uint32_t row, int32_t& out_ID)
     return &tofill;
 }
 
-Xor EGaussian::bdd_create(const uint32_t row_n) {
+Xor EGaussian::xor_reason_create(const uint32_t row_n) {
     bool rhs = mat[row_n].rhs();
     assert(!(rhs == false && mat[row_n].popcnt() == 0)); // trivial clause not supported here
     assert(solver->frat->enabled());
@@ -466,7 +452,7 @@ Xor EGaussian::bdd_create(const uint32_t row_n) {
     Xor bddcl;
     mat[row_n].get_reason_xor(bddcl, solver->assigns, col_to_var, *cols_vals, *tmp_col2);
     INC_XID(bddcl);
-    *solver->frat << addx << bddcl << chain;
+    *solver->frat << addx << bddcl << fratchain;
     for(uint32_t i = 0; i < bdd_matrix[row_n].size(); i++) {
         if (bdd_matrix[row_n][i]) *solver->frat << xorclauses[i].XID;
     }
@@ -480,23 +466,6 @@ Xor EGaussian::bdd_create(const uint32_t row_n) {
 
     *solver->frat << __PRETTY_FUNCTION__ << " end\n";
     return bddcl;
-}
-
-// Only used for unsat, unit, and binary xors during initalization
-void EGaussian::add_clause_int_frat(const vector<Lit>& cl, const uint32_t ID) {
-    ClauseStats stats;
-    stats.ID = ID;
-    Clause* c = solver->add_clause_int(
-            cl,
-            false, //red
-            &stats,
-            true, // attach long
-            NULL, //finalLits
-            true, //addDrat
-            lit_Undef, //frat_first
-            false, //sorted
-            true); // remove_frat -- this is what we need
-    assert(c == NULL && "Only used for unsat, unit, and binary xors");
 }
 
 gret EGaussian::init_adjust_matrix()
@@ -527,10 +496,10 @@ gret EGaussian::init_adjust_matrix()
                 // conflict
                 if ((*rowI).rhs()) {
                     if (solver->frat->enabled()) {
-                        unsat_bdd = bdd_create(row_i);
+                        auto unsat_bdd = xor_reason_create(row_i);
                         assert(solver->unsat_cl_ID == 0);
                         int32_t ID = ++solver->clauseID;
-                        *solver->frat << implyfromx << ID << chain << unsat_bdd.XID << fin;
+                        *solver->frat << implyclfromx << ID << fratchain << unsat_bdd.XID << fin;
                         *solver->frat << delx << unsat_bdd.XID << fin;
                         solver->unsat_cl_ID = ID;
                     }
@@ -552,11 +521,11 @@ gret EGaussian::init_adjust_matrix()
                 tmp_clause[0] = Lit(tmp_clause[0].var(), xorEqualFalse);
                 assert(solver->value(tmp_clause[0].var()) == l_Undef);
                 if (solver->frat->enabled()) {
-                    auto bdd = bdd_create(row_i);
+                    auto bdd = xor_reason_create(row_i);
                     int32_t ID = ++solver->clauseID;
-                    *solver->frat << implyfromx << ID << tmp_clause[0] << chain << bdd.XID << fin;
+                    *solver->frat << implyclfromx << ID << tmp_clause[0] << fratchain << bdd.XID << fin;
                     *solver->frat << delx << bdd.XID << fin;
-                    add_clause_int_frat(tmp_clause, ID);
+                    solver->add_clause_int_frat(tmp_clause, ID);
                     VERBOSE_PRINT("ID of this unit: " << bdd.ID << " unit is: " << tmp_clause);
                     *solver->frat << delx << bdd << fin;
                 }
@@ -585,10 +554,10 @@ gret EGaussian::init_adjust_matrix()
                 if (solver->frat->enabled()) {
                     vector<Lit> out = tmp_clause;
                     if (!mat[row_i].rhs()) out[1] ^= true;
-                    auto bdd = bdd_create(row_i);
+                    auto bdd = xor_reason_create(row_i);
                     int32_t ID = ++solver->clauseID;
-                    *solver->frat << implyfromx << ID << out << chain << bdd.XID << fin;
-                    add_clause_int_frat(out, ID);
+                    *solver->frat << implyclfromx << ID << out << fratchain << bdd.XID << fin;
+                    solver->add_clause_int_frat(out, ID);
                     VERBOSE_PRINT("ID of bin XOR found (part 1): " << ID);
 
                     out[0] = tmp_clause[0]^true;
@@ -596,9 +565,9 @@ gret EGaussian::init_adjust_matrix()
                     out = tmp_clause;
                     if (!mat[row_i].rhs()) out[0] ^= true;
                     int32_t ID2 = ++solver->clauseID;
-                    *solver->frat << implyfromx << ID2 << out << chain << bdd.XID << fin;
+                    *solver->frat << implyclfromx << ID2 << out << fratchain << bdd.XID << fin;
                     *solver->frat << delx << bdd.XID << fin;
-                    add_clause_int_frat(out, ID2);
+                    solver->add_clause_int_frat(out, ID2);
                     VERBOSE_PRINT("ID of bin XOR found (part 2): " << ID2);
 
                     *solver->frat << delx << bdd << fin;
@@ -766,8 +735,11 @@ bool EGaussian::find_truths(
             // have to get reason if toplevel (reason will never be asked)
             if (solver->decisionLevel() == 0 && solver->frat->enabled()) {
                 VERBOSE_PRINT("-> conflict at toplevel during find_truths");
-                unsat_bdd = bdd_create(row_n);
-                assert(false && "TODO FRAT");
+                auto unsat_bdd = xor_reason_create(row_n);
+                int32_t ID = ++solver->clauseID;
+                *solver->frat << implyclfromx << ID << fratchain << unsat_bdd.XID << fin;
+                *solver->frat << delx << unsat_bdd.XID << fin;
+                solver->unsat_cl_ID = ID;
             }
 
             if (was_resp_var) { // recover
@@ -923,7 +895,6 @@ void EGaussian::prop_lit(
     uint32_t lev;
     if (gqd.currLevel == solver->decisionLevel()) lev = gqd.currLevel;
     else lev = get_max_level(gqd, row_i);
-    #ifdef USE_TBUDDY
     if (lev == 0 && solver->frat->enabled()) {
         //we produce the reason, because we need it immediately, since it's toplevel
         int32_t out_ID;
@@ -944,7 +915,6 @@ void EGaussian::prop_lit(
         assert(num_unset == 1);
         #endif
     }
-    #endif
     solver->enqueue<false>(ret_lit_prop, lev, PropBy(matrix_no, row_i));
 }
 
@@ -980,7 +950,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
 
             assert(satisfied_xors[row_i] == 0);
             (*rowI).xor_in(*(mat.begin() + new_resp_row_n));
-            if (solver->frat->enabled()) TBUDDY_DO(xor_in_bdd(row_i, new_resp_row_n));
+            if (solver->frat->enabled()) xor_in_bdd(row_i, new_resp_row_n);
 
             elim_xored_rows++;
 
@@ -1041,14 +1011,11 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
                         gqd.confl = PropBy(matrix_no, row_i);
                         gqd.ret = gauss_res::confl;
 
-                        #ifdef USE_TBUDDY
                         // have to get reason if toplevel (reason will never be asked)
                         if (solver->decisionLevel() == 0 && solver->frat->enabled()) {
                             VERBOSE_PRINT("-> conflict at toplevel during eliminate_col");
-                            int32_t ID;
-                            get_reason(row_i, ID);
+                            get_reason(row_i, solver->unsat_cl_ID);
                         }
-                        #endif
 
                         break;
                     }
@@ -1478,54 +1445,17 @@ bool EGaussian::must_disable(GaussQData& gqd)
 void CMSat::EGaussian::move_back_xor_clauses() {
     bool ok = solver->remove_and_clean_detached_xors(xorclauses);
     for(const auto& x: xorclauses) {
-        TBUDDY_DO(assert(x.bdd == NULL && "Should have finalized matrix first"));
         solver->xorclauses.push_back(std::move(x));
         if (ok) solver->attach_xor_clause(solver->xorclauses.size()-1);
     }
 }
 
-#ifdef USE_TBUDDY
-void CMSat::EGaussian::finalize_frat()
-{
+void CMSat::EGaussian::finalize_frat() {
     assert(solver->frat->enabled());
     *solver->frat << __PRETTY_FUNCTION__ << " start\n";
-    solver->frat->flush();
-    delete unsat_bdd;
-
-    // clean frat_ids
-    auto todel = ilist_new(frat_ids.size());
-    ilist_resize(todel, frat_ids.size());
-    uint32_t i = 0;
-    for(auto const& bdd_cl: frat_ids) {
-        VERBOSE_PRINT("calling tbuddy to delete clause ID " << bdd_cl.ID);
-        todel[i] = bdd_cl.ID;
-        i++;
+    for(const auto& x: xor_reasons) {
+        assert(x.ID != 0);
+        *solver->frat << finalx << x.ID << fin;
     }
-    delete_clauses(todel);
-
-    for(auto const& bdd_cl: frat_ids) ilist_free(bdd_cl.cl);
-    frat_ids.clear();
-    ilist_free(todel);
-
-    // clean xor_reasons
-    ilist todel1 = ilist_new(xor_reasons.size());
-    ilist_resize(todel1, xor_reasons.size());
-    uint32_t at = 0;
-    for(auto const& x: xor_reasons) if (x.ID != 0) {
-        VERBOSE_PRINT("calling tbuddy to delete clause ID " << x.ID);
-        delete x.constr;
-        todel1[at++] = x.ID;
-    }
-    ilist_resize(todel1, at);
-    delete_clauses(todel1);
-    ilist_free(todel1);
-
-    // clean BDDs in xorclauses
-    for(auto& x2: xorclauses) {
-        delete x2.bdd;
-        x2.bdd = NULL;
-    }
-
     *solver->frat << __PRETTY_FUNCTION__ << " end\n";
 }
-#endif

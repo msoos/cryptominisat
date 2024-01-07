@@ -215,14 +215,14 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
                 /* cout << "propagating because of xor: " << x << endl; */
                 assert(unknown_at == x.watched[!which]);
                 enqueue<false>(Lit(x.vars[unknown_at], rhs == x.rhs), decisionLevel(), PropBy(1000, at));
-                x.propagating_watch = !which;
+                x.prop_confl_watch = !which;
                 *j++ = *i;
                 goto next;
             }
             assert(unknown == 0);
             if (rhs != x.rhs) {
                 /* cout << "conflict because of xor: " << x << endl; */
-                x.propagating_watch = 2 + which;
+                x.prop_confl_watch = 2 + which;
                 confl = PropBy(1000, at);
                 *j++ = *i;
                 i++;
