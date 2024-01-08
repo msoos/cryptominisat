@@ -376,11 +376,8 @@ bool VarReplacer::replace_xor_clauses(vector<Xor>& xors) {
     uint32_t j = 0;
     for(uint32_t i = 0; i < xors.size(); i++) {
         Xor& x = xors[i];
-        if (replace_one_xor_clause(x)) {
-            xors[j++] = xors[i];
-        } else {
-            *solver->frat << delx << x << fin;
-        }
+        if (replace_one_xor_clause(x)) xors[j++] = xors[i];
+        else *solver->frat << delx << x << fin;
     }
     xors.resize(j);
     return solver->okay();

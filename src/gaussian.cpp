@@ -429,11 +429,11 @@ vector<Lit>* EGaussian::get_reason(const uint32_t row, int32_t& out_ID) {
         xor_reasons[row].propagated);
 
     if (solver->frat->enabled()) {
-        xor_reasons[row].constr = xor_reason_create(row);
+        Xor reason = xor_reason_create(row);
         out_ID = ++solver->clauseID;
-        *solver->frat << implyclfromx << out_ID << tofill << fratchain << xor_reasons[row].constr.XID << fin;
-        *solver->frat << delx << xor_reasons[row].constr.XID << fin;
-        xor_reasons[row].constr.XID = 0;
+        assert(tofill.size() == reason.size());
+        *solver->frat << implyclfromx << out_ID << tofill << fratchain << reason.XID << fin;
+        *solver->frat << delx << reason.XID << fin;
         VERBOSE_PRINT("ID of asserted get_reason ID: " << out_ID);
     }
 
@@ -490,11 +490,11 @@ gret EGaussian::init_adjust_matrix() {
                 // conflict
                 if ((*rowI).rhs()) {
                     if (solver->frat->enabled()) {
-                        auto unsat_bdd = xor_reason_create(row_i);
+                        const auto reason = xor_reason_create(row_i);
                         assert(solver->unsat_cl_ID == 0);
-                        int32_t ID = ++solver->clauseID;
-                        *solver->frat << implyclfromx << ID << fratchain << unsat_bdd.XID << fin;
-                        *solver->frat << delx << unsat_bdd.XID << fin;
+                        const int32_t ID = ++solver->clauseID;
+                        *solver->frat << implyclfromx << ID << fratchain << reason.XID << fin;
+                        *solver->frat << delx << reason.XID << fin;
                         solver->unsat_cl_ID = ID;
                     }
                     solver->ok = false;
@@ -515,8 +515,8 @@ gret EGaussian::init_adjust_matrix() {
                 tmp_clause[0] = Lit(tmp_clause[0].var(), xorEqualFalse);
                 assert(solver->value(tmp_clause[0].var()) == l_Undef);
                 if (solver->frat->enabled()) {
-                    auto reason = xor_reason_create(row_i);
-                    int32_t ID = ++solver->clauseID;
+                    const auto reason = xor_reason_create(row_i);
+                    const int32_t ID = ++solver->clauseID;
                     *solver->frat << implyclfromx << ID << tmp_clause[0] << fratchain << reason.XID << fin;
                     *solver->frat << delx << reason << fin;
                     solver->add_clause_int_frat(tmp_clause, ID);

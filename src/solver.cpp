@@ -200,7 +200,7 @@ void Solver::add_clause_int_frat(const vector<Lit>& cl, const uint32_t ID) {
             &stats,
             true, // attach long
             NULL, //finalLits
-            true, //addDrat
+            true, //add_frat
             lit_Undef, //frat_first
             false, //sorted
             true); // remove_frat -- this is what we need
@@ -220,7 +220,6 @@ bool Solver::add_xor_clause_inter(
 
     auto ps = lits;
     auto XID2 = clean_xor_vars_no_prop(ps, rhs, XID);
-    assert(XID2 != 0);
     if (ps.size() >= (0x01UL << 28)) throw CMSat::TooLongClauseError();
 
     if (ps.empty()) {
@@ -231,8 +230,7 @@ bool Solver::add_xor_clause_inter(
             ok = false;
         } else assert(XID2 == 0); // we return 0 otherwise from clean_xor_vars_no_prop
         return okay();
-    }
-    else if (ps.size() == 1) {
+    } else if (ps.size() == 1) {
         vector<Lit> tmp = ps;
         ps[0] ^= !rhs;
         const auto ID = ++clauseID;
@@ -244,10 +242,9 @@ bool Solver::add_xor_clause_inter(
         const auto ID1 = ++clauseID;
         *frat << implyclfromx << ID1 << tmp << fratchain << XID2 << fin;
         add_clause_int_frat(tmp, ID1);
-        tmp[0] ^= true;
-        tmp[1] ^= true;
+        tmp[0] ^= true; tmp[1] ^= true;
         const auto ID2 = ++clauseID;
-        *frat << addx << ID2 << tmp << fratchain << XID << fin;
+        *frat << implyclfromx << ID2 << tmp << fratchain << XID2 << fin;
         add_clause_int_frat(tmp, ID2);
         *frat << delx << ps << XID2 << fin;
     } else {

@@ -693,13 +693,15 @@ inline int32_t CNF::clean_xor_vars_no_prop(vector<Lit>& ps, bool& rhs, int32_t X
 
     if (j < ps.size()) {
         if (j == 0 && rhs == false) {
-            // in case it's trivial, we return 0
+            // in case it's trivial, we delete & return 0
             *frat << findelay;
             return 0;
         }
         ps.resize(j);
+        if (j > 0) ps[0] ^= !rhs;
         const auto XID2 = ++clauseXID;
         *frat << addx << XID2 << ps; add_chain(); *frat << findelay;
+        if (j > 0) ps[0] ^= !rhs;
         return XID2;
     }
     frat->forget_delay();

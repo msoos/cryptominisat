@@ -57,7 +57,6 @@ struct XorReason
 {
     bool must_recalc = true;
     Lit propagated = lit_Undef;
-    Xor constr;
     int32_t ID = 0;
     vector<Lit> reason;
 };
