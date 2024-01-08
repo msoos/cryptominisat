@@ -22,6 +22,7 @@ THE SOFTWARE.
 
 #include "clausecleaner.h"
 #include "clauseallocator.h"
+#include "frat.h"
 #include "solver.h"
 #include "sqlstats.h"
 #include "solvertypesmini.h"
@@ -451,7 +452,10 @@ bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached
     if (j < x.size()) {
         x.rhs = rhs;
         x.resize(j);
-        *solver->frat << addx << x << FratFlag::fratchain; solver->add_chain();
+        if (!(j == 0 && rhs == false)) {
+            // empty satisfied XOR should simply be removed
+            *solver->frat << addx << x << FratFlag::fratchain; solver->add_chain();
+        }
         *solver->frat << fin << findelay;
 
         if (x.size() <= 2) {
@@ -473,7 +477,7 @@ bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached
             if (x.rhs == true) solver->ok = false;
             if (!solver->okay()) {
                 assert(solver->unsat_cl_ID == 0);
-                *solver->frat << add << ++solver->clauseID << fin;
+                *solver->frat << implyclfromx << ++solver->clauseID << x.XID << fin;
                 solver->unsat_cl_ID = solver->clauseID;
             }
             return false;

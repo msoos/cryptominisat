@@ -226,9 +226,10 @@ bool Solver::add_xor_clause_inter(
     if (ps.empty()) {
         if (rhs) {
             *frat << implyclfromx << ++clauseID << fratchain << XID2 << fin;
+            assert(unsat_cl_ID == 0);
             unsat_cl_ID = clauseID;
             ok = false;
-        }
+        } else assert(XID2 == 0); // we return 0 otherwise from clean_xor_vars_no_prop
         return okay();
     }
     else if (ps.size() == 1) {
@@ -248,7 +249,7 @@ bool Solver::add_xor_clause_inter(
         const auto ID2 = ++clauseID;
         *frat << addx << ID2 << tmp << fratchain << XID << fin;
         add_clause_int_frat(tmp, ID2);
-        *frat << delx << XID2 << fin;
+        *frat << delx << ps << XID2 << fin;
     } else {
         assert(ps.size() > 2);
         xorclauses_updated = true;
@@ -388,32 +389,26 @@ Clause* Solver::add_clause_int(
             unsat_cl_ID = clauseID;
             ok = false;
             if (conf.verbosity >= 6) {
-                cout
-                << "c solver received clause through addClause(): "
-                << lits
-                << " that became an empty clause at toplevel --> UNSAT"
-                << endl;
+                cout << "c solver received clause through addClause(): " << lits
+                << " that became an empty clause at toplevel --> UNSAT" << endl;
             }
             return NULL;
         case 1:
             assert(decisionLevel() == 0);
             enqueue<false>(ps[0]);
             *frat << del << ID << ps[0] << fin; // double unit delete
-            if (attach_long) {
-                ok = (propagate<true>().isNULL());
-            }
-
+            if (attach_long) ok = (propagate<true>().isNULL());
             return NULL;
         case 2:
             attach_bin_clause(ps[0], ps[1], red, ID);
             return NULL;
-
         default:
             Clause* c = cl_alloc.Clause_new(ps, sumConflicts, ID);
             c->isRed = red;
             if (cl_stats) {
                 c->stats = *cl_stats;
-                STATS_DO(if (ID != c->stats.ID && sqlStats && c->stats.is_tracked) sqlStats->update_id(c->stats.ID, ID));
+                STATS_DO(if (ID != c->stats.ID && sqlStats && c->stats.is_tracked)
+                        sqlStats->update_id(c->stats.ID, ID));
                 c->stats.ID = ID;
             }
             if (red && cl_stats == NULL) {
@@ -427,13 +422,9 @@ Clause* Solver::add_clause_int(
             if (attach_long) {
                 attachClause(*c);
             } else {
-                if (red) {
-                    litStats.redLits += ps.size();
-                } else {
-                    litStats.irredLits += ps.size();
-                }
+                if (red) litStats.redLits += ps.size();
+                else litStats.irredLits += ps.size();
             }
-
             return c;
     }
 }
@@ -1411,42 +1402,6 @@ void Solver::reset_for_solving() {
     conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
     solveStats.num_simplify_this_solve_call = 0;
     verb_print(6, __func__ << " called");
-}
-
-void my_bddinthandler(int e)
-{
-    switch(e) {
-        case -1:  cout << "ERROR reported by tbuddy: BDD_MEMORY (-1)   /* Out of memory */" << endl; break;
-        case -2:  cout << "ERROR reported by tbuddy: VAR (-2)      /* Unknown variable */" << endl; break;
-        case -3:  cout << "ERROR reported by tbuddy: RANGE (-3)    /* Variable value out of range (not in domain) */" << endl; break;
-        case -4:  cout << "ERROR reported by tbuddy: DEREF (-4)    /* Removing external reference to unknown node */" << endl; break;
-        case -5:  cout << "ERROR reported by tbuddy: RUNNING (-5)  /* Called bdd_init() twice whithout bdd_done() */" << endl; break;
-        case -6:  cout << "ERROR reported by tbuddy: FILE (-6)     /* Some file operation failed */" << endl; break;
-        case -7:  cout << "ERROR reported by tbuddy: FORMAT (-7)   /* Incorrect file format */" << endl; break;
-        case -8:  cout << "ERROR reported by tbuddy: ORDER (-8)    /* Vars. not in order for vector based functions */" << endl; break;
-        case -9:  cout << "ERROR reported by tbuddy: BREAK (-9)    /* User called break */" << endl; break;
-        case -10: cout << "ERROR reported by tbuddy: VARNUM (-10)  /* Different number of vars. for vector pair */" << endl; break;
-        case -11: cout << "ERROR reported by tbuddy: NODES (-11)   /* Tried to set max. number of nodes to be fewer than there already has been allocated */" << endl; break;
-        case -12: cout << "ERROR reported by tbuddy: BDD_OP (-12)      /* Unknown operator */" << endl; break;
-        case -13: cout << "ERROR reported by tbuddy: BDD_VARSET (-13)  /* Illegal variable set */" << endl; break;
-        case -14: cout << "ERROR reported by tbuddy: BDD_VARBLK (-14)  /* Bad variable block operation */" << endl; break;
-        case -15: cout << "ERROR reported by tbuddy: BDD_DECVNUM (-15) /* Trying to decrease the number of variables */" << endl; break;
-        case -16: cout << "ERROR reported by tbuddy: BDD_REPLACE (-16) /* Replacing to already existing variables */" << endl; break;
-        case -17: cout << "ERROR reported by tbuddy: BDD_NODENUM (-17) /* Number of nodes reached user defined maximum */" << endl; break;
-        case -18: cout << "ERROR reported by tbuddy: BDD_ILLBDD (-18)  /* Illegal bdd argument */" << endl; break;
-        case -19: cout << "ERROR reported by tbuddy: BDD_SIZE (-19)    /* Illegal size argument */" << endl; break;
-
-        case -20: cout << "ERROR reported by tbuddy: BVEC_SIZE (-20)    /* Mismatch in bitvector size */" << endl; break;
-        case -21: cout << "ERROR reported by tbuddy: BVEC_SHIFT (-21)   /* Illegal shift-left/right parameter */" << endl; break;
-        case -22: cout << "ERROR reported by tbuddy: BVEC_DIVZERO (-22) /* Division by zero */" << endl; break;
-
-
-        case -23: cout << "ERROR reported by tbuddy: ILIST_ALLOC (-23)  /* Invalid allocation for ilist */" << endl; break;
-        case -24: cout << "ERROR reported by tbuddy: TBDD_PROOF (-24)   /* Couldn't complete proof of justification */" << endl; break;
-        case -26: cout << "ERROR reported by tbuddy: BDD_ERRNUM 26 /* ?? */" << endl; break;
-    }
-
-    assert(false);
 }
 
 lbool Solver::solve_with_assumptions(

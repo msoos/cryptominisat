@@ -205,13 +205,12 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
     // Move xorclauses temporarily
     for (const Xor& x : solver->xorclauses) {
         if (x.trivial()) continue;
-        TBUDDY_DO(if (solver->frat->enabled()) assert(x.bdd));
+        if (solver->frat->enabled()) assert(x.XID != 0);
 
         //take 1st variable to check which matrix it's in.
         const uint32_t matrix = table[x[0]];
         assert(matrix < matrix_no);
 
-        //for stats
         matrix_shape[matrix].rows ++;
         matrix_shape[matrix].sum_xor_sizes += x.size();
         xorsInMatrix[matrix].push_back(x);

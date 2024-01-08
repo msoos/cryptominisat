@@ -39,9 +39,6 @@ THE SOFTWARE.
 #include "simplefile.h"
 #include "gausswatched.h"
 #include "xor.h"
-#ifdef USE_TBUDDY
-#include <pseudoboolean.h>
-#endif
 
 #ifdef ARJUN_SERIALIZE
 #include <boost/serialization/vector.hpp>
@@ -190,8 +187,7 @@ public:
 
     bool okay() const {
         assert(!(!ok && frat->enabled() && unsat_cl_ID == 0 && unsat_cl_ID != -1) &&
-               "If in UNSAT state, and we have FRAT, we MUST already know the unsat_cl_ID or it "
-               "must be -1, i.e. known by tbuddy");
+               "If in UNSAT state, and we have FRAT, we MUST already know the unsat_cl_ID");
         return ok;
     }
     auto level(Lit l) const { return varData[l.var()].level; }
@@ -283,6 +279,7 @@ public:
     bool check_xor_attached(const Xor& x, const uint32_t i) const;
     void check_wrong_attach() const;
     int32_t clean_xor_vars_no_prop(vector<Lit>& ps, bool& rhs, int32_t XID);
+    inline void clean_xor_vars_no_prop(Xor& x);
     void check_watchlist(watch_subarray_const ws) const;
     template<class T> bool satisfied(const T& cl) const;
     template<typename T> bool no_duplicate_lits(const T& lits) const;
@@ -629,6 +626,44 @@ inline bool CNF::satisfied(const ClOffset& off) const
 inline size_t CNF::get_num_long_irred_cls() const { return longIrredCls.size(); }
 inline size_t CNF::get_num_long_red_cls() const { return longRedCls.size(); }
 inline size_t CNF::get_num_long_cls() const { return longIrredCls.size() + longRedCls.size(); }
+
+inline void CNF::clean_xor_vars_no_prop(Xor& x) {
+    *frat << deldelayx << x;
+    std::sort(x.vars.begin(), x.vars.end());
+    uint32_t p;
+    uint32_t i, j;
+    chain = {x.XID};
+    for (i = j = 0, p = var_Undef; i != x.vars.size(); i++) {
+        if (x[i] == p) {
+            //same twice in XOR, removing
+            j--;
+            p = var_Undef;
+        } else if (value(x[i]) == l_Undef) {
+            //Add and remember as last one to have been added
+            x[j++] = p = x[i];
+            assert(varData[p].removed != Removed::elimed);
+        } else {
+            //modify rhs instead of adding
+            chain.push_back(unit_cl_XIDs[p]);
+            x.rhs ^= value(x[i]) == l_True;
+            p = var_Undef;
+        }
+    }
+
+    if (j < x.size()) {
+        if (j == 0 && x.rhs == false) {
+            // in case it's trivial, we set XID 0
+            *frat << findelay;
+            x.XID = 0;
+        }
+        x.resize(j);
+        const auto XID2 = ++clauseXID;
+        *frat << addx << x; add_chain(); *frat << findelay;
+        x.XID = XID2;
+    }
+    frat->forget_delay();
+}
+
 inline int32_t CNF::clean_xor_vars_no_prop(vector<Lit>& ps, bool& rhs, int32_t XID) {
     *frat << deldelay << ps;
     std::sort(ps.begin(), ps.end());
@@ -638,11 +673,14 @@ inline int32_t CNF::clean_xor_vars_no_prop(vector<Lit>& ps, bool& rhs, int32_t X
     for (i = j = 0, p = lit_Undef; i != ps.size(); i++) {
         if (ps[i].var() == p.var()) {
             //same twice in XOR, removing
+            assert(p.sign() == false); // we clean sign it below
             rhs ^= ps[i].sign() ^ p.sign();
             j--;
             p = lit_Undef;
         } else if (value(ps[i]) == l_Undef) {
             //Add and remember as last one to have been added
+            rhs ^= ps[i].sign();
+            ps[i] = ps[i].unsign();
             ps[j++] = p = ps[i];
             assert(varData[p.var()].removed != Removed::elimed);
         } else {
@@ -654,10 +692,14 @@ inline int32_t CNF::clean_xor_vars_no_prop(vector<Lit>& ps, bool& rhs, int32_t X
     }
 
     if (j < ps.size()) {
+        if (j == 0 && rhs == false) {
+            // in case it's trivial, we return 0
+            *frat << findelay;
+            return 0;
+        }
         ps.resize(j);
         const auto XID2 = ++clauseXID;
         *frat << addx << XID2 << ps; add_chain(); *frat << findelay;
-        *frat << delx << XID << fin;
         return XID2;
     }
     frat->forget_delay();

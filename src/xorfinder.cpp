@@ -345,25 +345,6 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
     }
 }
 
-void XorFinder::clean_xors_from_empty(vector<Xor>& thisxors)
-{
-    size_t j = 0;
-    for(size_t i = 0;i < thisxors.size(); i++) {
-        Xor& x = thisxors[i];
-        if (x.trivial()) {
-            assert(false && "TODO FRAT -- not needed for gauss if all XORs are added as XORs");
-#if 0
-            solver->frat->flush();
-            delete x.bdd;
-#endif
-        } else {
-            verb_print(4, "xor after clean: " << thisxors[i]);
-            thisxors[j++] = thisxors[i];
-        }
-    }
-    thisxors.resize(j);
-}
-
 uint32_t XorFinder::xor_two(Xor const* x1_p, Xor const* x2_p, uint32_t& clash_var) {
     SLOW_DEBUG_DO(for(const auto& s: seen) assert(s == 0));
     tmp_vars_xor_two.clear();

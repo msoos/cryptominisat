@@ -20,8 +20,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef _XORFINDER_H_
-#define _XORFINDER_H_
+#pragma once
+
+//#define VERBOSE_DEBUG_XOR_FINDER
 
 #include <cstdint>
 #include <vector>
@@ -39,19 +40,12 @@ using std::vector;
 using std::set;
 
 namespace CMSat {
-
-//#define VERBOSE_DEBUG_XOR_FINDER
-
 class Solver;
 class OccSimplifier;
 
-class PossibleXor
-{
+class PossibleXor {
     public:
-        PossibleXor()
-        {
-        }
-
+        PossibleXor() {}
         void setup(
             const vector<Lit>& cl
             , const ClOffset offset
@@ -89,7 +83,6 @@ class PossibleXor
             }
         }
 
-        //GET-type functions
         cl_abst_type      getAbst() const;
         uint32_t          getSize() const;
         bool              getRHS() const;
@@ -99,15 +92,8 @@ class PossibleXor
         template<class T>
         void add(const T& cl, const ClOffset offset, vector<uint32_t>& varsMissing);
 
-        const vector<ClOffset>& get_offsets() const
-        {
-            return offsets;
-        }
-
-        const vector<char>& get_fully_used() const
-        {
-            return fully_used;
-        }
+        const vector<ClOffset>& get_offsets() const { return offsets; }
+        const vector<char>& get_fully_used() const { return fully_used; }
 
     private:
         void setup_seen_rhs_foundcomb(vector<uint32_t>& seen)
@@ -188,7 +174,6 @@ private:
     void add_found_xor(const Xor& found_xor);
     void find_xors_based_on_long_clauses();
     bool xor_has_interesting_var(const Xor& x);
-    void clean_xors_from_empty(vector<Xor>& thisxors);
 
     ///xor two -- don't re-allocate memory all the time
     ///use tmp_vars_xor_two instead
@@ -369,5 +354,3 @@ inline const XorFinder::Stats& XorFinder::get_stats() const
 }
 
 } //end namespace
-
-#endif //_XORFINDER_H_

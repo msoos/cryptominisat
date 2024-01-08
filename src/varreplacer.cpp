@@ -344,11 +344,15 @@ bool VarReplacer::replace_one_xor_clause(Xor& x) {
         }
     }
 
-    auto ps = vars_to_lits(x.vars);
-    x.XID = solver->clean_xor_vars_no_prop(ps, x.rhs, x.XID);
+    solver->clean_xor_vars_no_prop(x);
     switch (x.size()) {
         case 0:
-            if (x.rhs == true) solver->ok = false;
+            if (x.rhs == true && solver->okay()) {
+                *solver->frat << implyclfromx << ++solver->clauseID << fratchain << x.XID << fin;
+                assert(solver->unsat_cl_ID == 0);
+                solver->unsat_cl_ID = x.XID;
+                solver->ok = false;
+            }
             return false;
             break;
         case 1: {
@@ -371,11 +375,7 @@ bool VarReplacer::replace_xor_clauses(vector<Xor>& xors) {
         if (replace_one_xor_clause(x)) {
             xors[j++] = xors[i];
         } else {
-            assert(false && "TODO FRAT");
-#if 0
-            delete x.bdd;
-            x.bdd = NULL;
-#endif
+            *solver->frat << delx << x << fin;
         }
     }
     xors.resize(j);

@@ -173,12 +173,6 @@ set(cryptoms_lib_link_libs
         ${cryptoms_lib_link_libs}
 )
 
-if (TBUDDY)
-    set(cryptoms_lib_link_libs
-        ${cryptoms_lib_link_libs}
-        tbuddy)
-endif()
-
 if (FINAL_PREDICTOR)
     set(cryptoms_lib_files
         ${cryptoms_lib_files}
