@@ -192,12 +192,12 @@ void Solver::set_shared_data(SharedData* shared_data) { datasync->set_shared_dat
 // Only used for unsat, unit, and binary xors during initalization
 void Solver::add_clause_int_frat(const vector<Lit>& cl, const uint32_t ID) {
     assert(cl.size() <= 2);
-    ClauseStats stats;
-    stats.ID = ID;
+    ClauseStats s;
+    s.ID = ID;
     Clause* c = solver->add_clause_int(
             cl,
             false, //red
-            &stats,
+            &s,
             true, // attach long
             NULL, //finalLits
             true, //add_frat
