@@ -102,53 +102,30 @@ public:
         delete[] del_buf;
     }
 
-    virtual void set_sumconflicts_ptr(uint64_t* _sumConflicts) override
-    {
-        sumConflicts = _sumConflicts;
-    }
-
-    virtual void set_sqlstats_ptr(SQLStats* _sqlStats) override
-    {
-        sqlStats = _sqlStats;
-    }
+    virtual void set_sumconflicts_ptr(uint64_t* _sumConflicts) override { sumConflicts = _sumConflicts; }
+    virtual void set_sqlstats_ptr(SQLStats* _sqlStats) override { sqlStats = _sqlStats; }
+    virtual void setFile(FILE* _file) override { drup_file = _file; }
+    virtual bool something_delayed() override { return delete_filled; }
+    virtual bool enabled() override { return true; }
 
     virtual Frat& operator<<(const int32_t clauseID) override
     {
-        if (must_delete_next) {
-            byteDRUPdID(clauseID);
-        } else {
-            byteDRUPaID(clauseID);
-        }
+        if (must_delete_next) byteDRUPdID(clauseID);
+        else byteDRUPaID(clauseID);
         return *this;
     }
 
-    virtual FILE* getFile() override
-    {
-        return drup_file;
-    }
+    virtual FILE* getFile() override { return drup_file; }
+    virtual void flush() override { binDRUP_flush(); }
 
-    void flush() override
-    {
-        binDRUP_flush();
-    }
-
-    void binDRUP_flush() {
+    virtual void binDRUP_flush() {
         fwrite(drup_buf, sizeof(unsigned char), buf_len, drup_file);
         buf_ptr = drup_buf;
         buf_len = 0;
     }
 
-    void setFile(FILE* _file) override
-    {
-        drup_file = _file;
-    }
 
-    bool something_delayed() override
-    {
-        return delete_filled;
-    }
-
-    void forget_delay() override
+    virtual void forget_delay() override
     {
         del_ptr = del_buf;
         del_len = 0;
@@ -156,10 +133,6 @@ public:
         delete_filled = false;
     }
 
-    bool enabled() override
-    {
-        return true;
-    }
 
     int del_len = 0;
     unsigned char* del_buf;
@@ -167,7 +140,6 @@ public:
 
     bool delete_filled = false;
     bool must_delete_next = false;
-
 
     Frat& operator<<(const Xor& x) override
     {
@@ -203,18 +175,9 @@ public:
         return *this;
     }
 
-    Frat& operator<<(const vector<Lit>& cl) override
-    {
-        if (must_delete_next) {
-            for(const Lit l: cl) {
-                byteDRUPd(l);
-            }
-        } else {
-            for(const Lit l: cl) {
-                byteDRUPa(l);
-            }
-        }
-
+    Frat& operator<<(const vector<Lit>& cl) override {
+        if (must_delete_next) for(const Lit& l: cl) byteDRUPd(l);
+        else for(const Lit& l: cl) byteDRUPa(l);
         return *this;
     }
 
@@ -313,11 +276,13 @@ public:
                     buf_add(' ');
                 }
                 break;
+
             case FratFlag::del:
                 adding = false;
                 buf_add('d');
                 buf_nonbin_move();
                 break;
+
             case FratFlag::delx:
                 adding = false;
                 buf_add('d');
@@ -325,6 +290,7 @@ public:
                 buf_add('x');
                 buf_nonbin_move();
                 break;
+
             case FratFlag::reloc:
                 adding = false;
                 forget_delay();
@@ -371,12 +337,8 @@ public:
 private:
     Frat& operator<<(const Lit lit) override
     {
-        if (must_delete_next) {
-            byteDRUPd(lit);
-        } else {
-            byteDRUPa(lit);
-        }
-
+        if (must_delete_next) byteDRUPd(lit);
+        else byteDRUPa(lit);
         return *this;
    }
 
