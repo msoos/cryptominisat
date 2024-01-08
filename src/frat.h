@@ -116,9 +116,8 @@ public:
     }
 
     virtual FILE* getFile() override { return drup_file; }
-    virtual void flush() override { binDRUP_flush(); }
-
-    virtual void binDRUP_flush() {
+    virtual void flush() override { frat_flush(); }
+    void frat_flush() {
         fwrite(drup_buf, sizeof(unsigned char), buf_len, drup_file);
         buf_ptr = drup_buf;
         buf_len = 0;
@@ -197,7 +196,7 @@ public:
                 } else {
                     if (binfrat) buf_add(0);
                     else { buf_add('0'); buf_add('\n');}
-                    if (buf_len > 1048576) { binDRUP_flush(); }
+                    if (buf_len > 1048576) { frat_flush(); }
                     if (adding && sqlStats) sqlStats->set_id_confl(cl_id, *sumConflicts);
                     FRAT_PRINT("c set_id_confl (%d, %lld), adding: %d\n", cl_id, *sumConflicts, adding);
                 }
@@ -232,7 +231,7 @@ public:
                 memcpy(buf_ptr, del_buf, del_len);
                 buf_len += del_len;
                 buf_ptr += del_len;
-                if (buf_len > 1048576) { binDRUP_flush(); }
+                if (buf_len > 1048576) { frat_flush(); }
                 forget_delay();
                 break;
 

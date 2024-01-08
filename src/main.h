@@ -45,12 +45,11 @@ class Main: public MainCommon
         Main(int argc, char** argv);
         ~Main()
         {
+            delete solver;
             if (fratf) {
                 fflush(fratf);
                 fclose(fratf);
             }
-
-            delete solver;
         }
 
         void parseCommandLine();

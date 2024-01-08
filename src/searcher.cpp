@@ -1485,8 +1485,7 @@ void Searcher::attach_and_enqueue_learnt_clause(
 {
     VERBOSE_DEBUG_DO(print_learning_debug_info(ID));
     switch (learnt_clause.size()) {
-        case 0:
-            assert(false);
+        case 0: release_assert(false);
         case 1:
             //Unit learnt
             stats.learntUnits++;
@@ -1499,7 +1498,7 @@ void Searcher::attach_and_enqueue_learnt_clause(
                     assert(ID != 0);
                     unit_cl_IDs[v] = ID;
                     const auto XID = ++clauseXID;
-                    *frat << implyxfromcls << XID << (*cl)[0] << fratchain << ID << fin;
+                    *frat << implyxfromcls << XID << learnt_clause[0] << fratchain << ID << fin;
                     unit_cl_XIDs[v] = XID;
                 }
                 enqueue<false>(learnt_clause[0], level, PropBy(), false);
