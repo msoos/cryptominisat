@@ -330,13 +330,17 @@ bool VarReplacer::replace_one_xor_clause(Xor& x) {
                     const auto ID1 = ++solver->clauseID;
                     *solver->frat << add << ID1 << bin << fin;
                     const auto ID2 = ++solver->clauseID;
-                    bin[0] ^= true; bin[0] ^= true;
+                    bin[0] ^= true; bin[1] ^= true;
                     *solver->frat << add << ID2 << bin << fin;
                     const auto bin_XID = ++solver->clauseXID;
                     *solver->frat << implyxfromcls << bin_XID << bin << fratchain << ID1 << ID2 << fin;
                     INC_XID(x);
                     *solver->frat << addx << x << fratchain << old_x->XID << bin_XID << fin;
                     *solver->frat << delx << *old_x << fin;
+                    delete old_x;
+                    *solver->frat << del << ID2 << bin << fin;
+                    bin[0] ^= true; bin[1] ^= true;
+                    *solver->frat << del << ID1 << bin << fin;
                 }
                 go_again = true;
                 break;
