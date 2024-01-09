@@ -140,7 +140,7 @@ public:
     bool delete_filled = false;
     bool must_delete_next = false;
 
-    Frat& operator<<(const Xor& x) override
+    virtual Frat& operator<<(const Xor& x) override
     {
         if (must_delete_next) {
             byteDRUPdID(x.XID);
@@ -161,7 +161,7 @@ public:
         return *this;
     }
 
-    Frat& operator<<(const Clause& cl) override
+    virtual Frat& operator<<(const Clause& cl) override
     {
         if (must_delete_next) {
             byteDRUPdID(cl.stats.ID);
@@ -174,20 +174,19 @@ public:
         return *this;
     }
 
-    Frat& operator<<(const vector<Lit>& cl) override {
+    virtual Frat& operator<<(const vector<Lit>& cl) override {
         if (must_delete_next) for(const Lit& l: cl) byteDRUPd(l);
         else for(const Lit& l: cl) byteDRUPa(l);
         return *this;
     }
 
-    inline void buf_add(unsigned char x) { *buf_ptr+=x; buf_len++; }
-    inline void del_add(unsigned char x) { *del_ptr+=x; del_len++; }
+    inline void buf_add(unsigned char x) { *buf_ptr++=x; buf_len++; }
+    inline void del_add(unsigned char x) { *del_ptr++=x; del_len++; }
     inline void del_nonbin_move() { if (!binfrat) del_add(' '); }
     inline void buf_nonbin_move() { if (!binfrat) buf_add(' '); }
-    Frat& operator<<(const FratFlag flag) override
+    virtual Frat& operator<<(const FratFlag flag) override
     {
-        switch (flag)
-        {
+        switch (flag) {
             case FratFlag::fin:
                 if (must_delete_next) {
                     if (binfrat) del_add(0);

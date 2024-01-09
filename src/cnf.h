@@ -628,7 +628,7 @@ inline size_t CNF::get_num_long_red_cls() const { return longRedCls.size(); }
 inline size_t CNF::get_num_long_cls() const { return longIrredCls.size() + longRedCls.size(); }
 
 inline void CNF::clean_xor_vars_no_prop(Xor& x) {
-    *frat << deldelayx << x;
+    *frat << deldelayx << x << fin;
     std::sort(x.vars.begin(), x.vars.end());
     uint32_t p;
     uint32_t i, j;
@@ -644,7 +644,7 @@ inline void CNF::clean_xor_vars_no_prop(Xor& x) {
             assert(varData[p].removed != Removed::elimed);
         } else {
             //modify rhs instead of adding
-            chain.push_back(unit_cl_XIDs[p]);
+            chain.push_back(unit_cl_XIDs[x[i]]);
             x.rhs ^= value(x[i]) == l_True;
             p = var_Undef;
         }
@@ -658,14 +658,14 @@ inline void CNF::clean_xor_vars_no_prop(Xor& x) {
         }
         x.resize(j);
         const auto XID2 = ++clauseXID;
-        *frat << addx << x; add_chain(); *frat << findelay;
+        *frat << addx << x; add_chain(); *frat << fin << findelay;
         x.XID = XID2;
     }
     frat->forget_delay();
 }
 
 inline int32_t CNF::clean_xor_vars_no_prop(vector<Lit>& ps, bool& rhs, int32_t XID) {
-    *frat << deldelay << ps;
+    *frat << deldelayx << XID << ps << fin;
     std::sort(ps.begin(), ps.end());
     Lit p;
     uint32_t i, j;
@@ -685,7 +685,7 @@ inline int32_t CNF::clean_xor_vars_no_prop(vector<Lit>& ps, bool& rhs, int32_t X
             assert(varData[p.var()].removed != Removed::elimed);
         } else {
             //modify rhs instead of adding
-            chain.push_back(unit_cl_XIDs[p.var()]);
+            chain.push_back(unit_cl_XIDs[ps[i].var()]);
             rhs ^= value(ps[i]) == l_True;
             p = lit_Undef;
         }
@@ -700,7 +700,7 @@ inline int32_t CNF::clean_xor_vars_no_prop(vector<Lit>& ps, bool& rhs, int32_t X
         ps.resize(j);
         if (j > 0) ps[0] ^= !rhs;
         const auto XID2 = ++clauseXID;
-        *frat << addx << XID2 << ps; add_chain(); *frat << findelay;
+        *frat << addx << XID2 << ps; add_chain(); *frat << fin << findelay;
         if (j > 0) ps[0] ^= !rhs;
         return XID2;
     }

@@ -231,22 +231,22 @@ bool Solver::add_xor_clause_inter(
         } else assert(XID2 == 0); // we return 0 otherwise from clean_xor_vars_no_prop
         return okay();
     } else if (ps.size() == 1) {
-        vector<Lit> tmp = ps;
         ps[0] ^= !rhs;
         const auto ID = ++clauseID;
-        *frat << implyclfromx << ID << tmp << fratchain << XID2 << fin;
-        add_clause_int_frat(tmp, ID);
+        *frat << implyclfromx << ID << ps << fratchain << XID2 << fin;
+        add_clause_int_frat(ps, ID);
+        *frat << delx << XID2 << ps << fin;
     } else if (ps.size() == 2) {
-        vector<Lit> tmp = ps;
-        tmp[0] ^= !rhs;
+        ps[0] ^= !rhs;
         const auto ID1 = ++clauseID;
-        *frat << implyclfromx << ID1 << tmp << fratchain << XID2 << fin;
-        add_clause_int_frat(tmp, ID1);
-        tmp[0] ^= true; tmp[1] ^= true;
+        *frat << implyclfromx << ID1 << ps << fratchain << XID2 << fin;
+        add_clause_int_frat(ps, ID1);
+        ps[0] ^= true; ps[1] ^= true;
         const auto ID2 = ++clauseID;
-        *frat << implyclfromx << ID2 << tmp << fratchain << XID2 << fin;
-        add_clause_int_frat(tmp, ID2);
-        *frat << delx << ps << XID2 << fin;
+        *frat << implyclfromx << ID2 << ps << fratchain << XID2 << fin;
+        add_clause_int_frat(ps, ID2);
+        ps[0] ^= true; ps[1] ^= true;
+        *frat << delx << XID2 << ps << fin;
     } else {
         assert(ps.size() > 2);
         xorclauses_updated = true;
@@ -2803,7 +2803,7 @@ bool Solver::add_xor_clause_outside(const vector<uint32_t>& vars, bool rhs)
     for(size_t i = 0; i < vars.size(); i++) lits[i] = Lit(vars[i], false);
     uint32_t XID = ++clauseXID;
     if (vars.size() > 0) lits[0] ^= !rhs;
-    *frat << XID << origclx << lits << fin;
+    *frat << origclx << XID << lits << fin;
     if (vars.size() > 0) lits[0] ^= !rhs;
     SLOW_DEBUG_DO(check_too_large_variable_number(lits));
 
