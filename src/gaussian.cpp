@@ -216,16 +216,16 @@ void EGaussian::fill_matrix() {
     }
     mat.resize(num_rows, num_cols); // initial gaussian matrix
 
-    bdd_matrix.clear();
+    reason_mat.clear();
     for (uint32_t row = 0; row < num_rows; row++) {
         const Xor& c = xorclauses[row];
         mat[row].set(c, var_to_col, num_cols);
         vector<char> line;
         line.resize(num_rows, 0);
         line[row] = 1;
-        bdd_matrix.push_back(line);
+        reason_mat.push_back(line);
     }
-    assert(bdd_matrix.size() == num_rows);
+    assert(reason_mat.size() == num_rows);
 
     // reset
     var_has_resp_row.clear();
@@ -347,8 +347,8 @@ bool EGaussian::full_init(bool& created) {
 
 void EGaussian::xor_in_bdd(const uint32_t a, const uint32_t b)
 {
-    for(uint32_t i = 0; i < bdd_matrix[a].size(); i ++) {
-        bdd_matrix[a][i] ^= bdd_matrix[b][i];
+    for(uint32_t i = 0; i < reason_mat[a].size(); i ++) {
+        reason_mat[a][i] ^= reason_mat[b][i];
     }
 }
 
@@ -378,7 +378,7 @@ void EGaussian::eliminate() {
             // swap row row_with_1_in_col and rowIt
             if (row_with_1_in_col != rowI) {
                 (*rowI).swapBoth(*row_with_1_in_col);
-                std::swap(bdd_matrix[row_i], bdd_matrix[row_with_1_in_col_n]);
+                std::swap(reason_mat[row_i], reason_mat[row_with_1_in_col_n]);
             }
 
             // XOR into *all* rows that have a "1" in column COL
@@ -433,7 +433,7 @@ vector<Lit>* EGaussian::get_reason(const uint32_t row, int32_t& out_ID) {
         out_ID = ++solver->clauseID;
         assert(tofill.size() == reason.size());
         *solver->frat << implyclfromx << out_ID << tofill << fratchain << reason.XID << fin;
-        *solver->frat << delx << reason.XID << fin;
+        *solver->frat << delx << reason << fin;
         VERBOSE_PRINT("ID of asserted get_reason ID: " << out_ID);
     }
 
@@ -453,8 +453,8 @@ Xor EGaussian::xor_reason_create(const uint32_t row_n) {
     mat[row_n].get_reason_xor(reason, solver->assigns, col_to_var, *cols_vals, *tmp_col2);
     INC_XID(reason);
     *solver->frat << addx << reason << fratchain;
-    for(uint32_t i = 0; i < bdd_matrix[row_n].size(); i++) {
-        if (bdd_matrix[row_n][i]) *solver->frat << xorclauses[i].XID;
+    for(uint32_t i = 0; i < reason_mat[row_n].size(); i++) {
+        if (reason_mat[row_n][i]) *solver->frat << xorclauses[i].XID;
     }
     *solver->frat << fin;
     VERBOSE_PRINT("reason XOR: " << reason);
@@ -494,7 +494,7 @@ gret EGaussian::init_adjust_matrix() {
                         assert(solver->unsat_cl_ID == 0);
                         const int32_t ID = ++solver->clauseID;
                         *solver->frat << implyclfromx << ID << fratchain << reason.XID << fin;
-                        *solver->frat << delx << reason.XID << fin;
+                        *solver->frat << delx << reason << fin;
                         solver->unsat_cl_ID = ID;
                     }
                     solver->ok = false;
@@ -540,23 +540,18 @@ gret EGaussian::init_adjust_matrix() {
             //Binary XOR (i.e. toplevel binary XOR)
             case 2: {
                 VERBOSE_PRINT("Binary XOR during init_adjust_matrix, vars: " << tmp_clause);
-                bool xorEqualFalse = !mat[row_i].rhs();
-
                 tmp_clause[0] = tmp_clause[0].unsign();
                 tmp_clause[1] = tmp_clause[1].unsign();
                 if (solver->frat->enabled()) {
-                    vector<Lit> out = tmp_clause;
-                    if (!mat[row_i].rhs()) out[1] ^= true;
                     const auto reason = xor_reason_create(row_i);
+                    vector<Lit> out = tmp_clause;
+                    out[0] ^= !mat[row_i].rhs();
                     int32_t ID = ++solver->clauseID;
                     *solver->frat << implyclfromx << ID << out << fratchain << reason.XID << fin;
                     solver->add_clause_int_frat(out, ID);
                     VERBOSE_PRINT("ID of bin XOR found (part 1): " << ID);
 
-                    out[0] = tmp_clause[0]^true;
-                    out[1] = tmp_clause[1]^true;
-                    out = tmp_clause;
-                    if (!mat[row_i].rhs()) out[0] ^= true;
+                    out[0] = out[0]^true; out[1] = out[1]^true;
                     int32_t ID2 = ++solver->clauseID;
                     *solver->frat << implyclfromx << ID2 << out << fratchain << reason.XID << fin;
                     solver->add_clause_int_frat(out, ID2);
@@ -564,7 +559,7 @@ gret EGaussian::init_adjust_matrix() {
 
                     *solver->frat << delx << reason << fin;
                 }
-                solver->ok = solver->add_xor_clause_inter(tmp_clause, !xorEqualFalse, true, true);
+                solver->ok = solver->add_xor_clause_inter(tmp_clause, mat[row_i].rhs(), true, true);
                 release_assert(solver->ok);
                 VERBOSE_PRINT("-> toplevel bin-xor on row: " << row_i << " cl2: " << tmp_clause);
 

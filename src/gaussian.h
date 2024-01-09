@@ -180,7 +180,7 @@ class EGaussian {
 
 
     PackedMatrix mat;
-    vector<vector<char>> bdd_matrix;
+    vector<vector<char>> reason_mat;
     vector<uint32_t>  var_to_col; ///var->col mapping. Index with VAR
     vector<uint32_t> col_to_var; ///col->var mapping. Index with COL
     uint32_t num_rows = 0;
