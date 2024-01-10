@@ -285,7 +285,7 @@ class Tester:
         cmd += "--presimp %d " % random.choice([1]*10+[0])
         if not options.gauss:
             cmd += "--confbtwsimp %d " % random.choice([100, 1000])
-            cmd += "--nextm %f " % random.choice([0.1, 0.01, 0.001])
+            cmd += "--nextm %f " % random.choice([0.2, 0.05, 0.01])
             cmd += "--everylev1 %d " % random.choice([122, 1222, 12222])
             cmd += "--everylev2 %d " % random.choice([133, 1333, 14444])
 
