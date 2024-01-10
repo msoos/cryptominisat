@@ -1442,8 +1442,7 @@ void CMSat::EGaussian::finalize_frat() {
     assert(solver->frat->enabled());
     frat_func_start;
     for(auto& x: xor_reasons) {
-        assert(x.ID != 0);
-        *solver->frat << finalcl << x.ID << x.reason << fin;
+        if (x.ID != 0) *solver->frat << finalcl << x.ID << x.reason << fin;
         x.ID = 0;
     }
     frat_func_end;
