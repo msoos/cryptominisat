@@ -378,7 +378,7 @@ class Solver : public Searcher
         bool oracle_vivif(bool& finished);
         bool oracle_sparsify();
         void print_cs_ordering(const vector<OracleDat>& cs) const;
-        template<bool bin_only> lbool probe_inter(const Lit l, uint32_t& min_props);
+        template<bool bin_only> bool probe_inter(const Lit l, uint32_t& min_props);
         void reset_for_solving();
         vector<Lit> add_clause_int_tmp_cl;
         lbool iterate_until_solved();

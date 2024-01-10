@@ -35,6 +35,7 @@ THE SOFTWARE.
 #include <random>
 #include <unordered_map>
 #include "constants.h"
+#include "solvertypes.h"
 #include "solvertypesmini.h"
 
 #ifdef ARJUN_SERIALIZE

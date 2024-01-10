@@ -64,10 +64,10 @@ bool Solver::full_probe(const bool bin_only)
             varData[v].removed == Removed::none)
         {
             probed++;
-            lbool ret;
+            bool ret;
             if (bin_only) ret = probe_inter<true>(l, min_props);
             else ret = probe_inter<false>(l, min_props);
-            if (ret == l_False) goto cleanup;
+            if (!ret) goto cleanup;
 
             if (conf.verbosity >= 5) {
                 const double time_remain = 1.0-float_div(
@@ -111,8 +111,7 @@ bool Solver::full_probe(const bool bin_only)
     return okay();
 }
 
-template<bool bin_only>
-lbool Solver::probe_inter(const Lit l, uint32_t& min_props)
+template<bool bin_only> bool Solver::probe_inter(const Lit l, uint32_t& min_props)
 {
     propStats.bogoProps+=2;
 
@@ -135,11 +134,8 @@ lbool Solver::probe_inter(const Lit l, uint32_t& min_props)
 
     //Check result
     if (!p.isNULL()) {
-        enqueue<true>(~l);
-        p = propagate<true>();
-        if (!p.isNULL()) {
-            ok = false;
-        }
+        vector<Lit> lits = {~l};
+        add_clause_int(lits);
         goto end;
     }
 
@@ -169,11 +165,8 @@ lbool Solver::probe_inter(const Lit l, uint32_t& min_props)
 
     //Check result
     if (!p.isNULL()) {
-        enqueue<true>(l);
-        p = propagate<true>();
-        if (!p.isNULL()) {
-            ok = false;
-        }
+        vector<Lit> lits = {l};
+        add_clause_int(lits);
         goto end;
     }
 
@@ -203,15 +196,13 @@ lbool Solver::probe_inter(const Lit l, uint32_t& min_props)
             i++;
             bp_lit = probe_inter_tmp[i];
             vector<Lit> lits(2);
-            lits[0] = l;
-            lits[1] = ~bp_lit;
-            ok = add_clause_int(lits);
-            if (ok) {
-                lits[0]^=true;
-                lits[1]^=true;
-                ok = add_clause_int(lits);
+            lits[0] = l; lits[1] = ~bp_lit;
+            add_clause_int(lits);
+            if (okay()) {
+                lits[0]^=true; lits[1]^=true;
+                add_clause_int(lits);
             }
-            if (!ok) goto end;
+            if (!okay()) goto end;
         }
     }
 
@@ -223,11 +214,9 @@ lbool Solver::probe_inter(const Lit l, uint32_t& min_props)
     }
 
     end:
-    for(auto clear_l: toClear) {
-        seen[clear_l.var()] = 0;
-    }
+    for(auto clear_l: toClear) seen[clear_l.var()] = 0;
     toClear.clear();
-    return ok ? l_Undef : l_False;
+    return okay();
 }
 
 lbool Solver::probe_outside(Lit l, uint32_t& min_props)
@@ -246,5 +235,7 @@ lbool Solver::probe_outside(Lit l, uint32_t& min_props)
         return l_Undef;
     }
 
-    return probe_inter<false>(l, min_props);
+    probe_inter<false>(l, min_props);
+    if (!okay()) return l_False;
+    return l_Undef;
 }

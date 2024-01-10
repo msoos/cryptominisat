@@ -2893,7 +2893,6 @@ inline Lit Searcher::pickBranchLit() {
         }
         if (v == var_Undef) break;
         if (varData[v].removed == Removed::replaced) {
-            //cout << "v: " << v << endl;
             vmtf_dequeue(v);
             continue;
         }
