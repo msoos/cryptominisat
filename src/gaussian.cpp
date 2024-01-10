@@ -413,7 +413,7 @@ vector<Lit>* EGaussian::get_reason(const uint32_t row, int32_t& out_ID) {
 
     // Clean up previous one
     if (solver->frat->enabled() && xor_reasons[row].ID != 0) {
-        *solver->frat << del << xor_reasons[row].ID << fin;
+        *solver->frat << del << xor_reasons[row].ID << xor_reasons[row].reason << fin;
         VERBOSE_PRINT("deleting clause ID " << xor_reasons[row].ID);
     }
 
@@ -1441,9 +1441,10 @@ void CMSat::EGaussian::move_back_xor_clauses() {
 void CMSat::EGaussian::finalize_frat() {
     assert(solver->frat->enabled());
     *solver->frat << __PRETTY_FUNCTION__ << " start\n";
-    for(const auto& x: xor_reasons) {
+    for(auto& x: xor_reasons) {
         assert(x.ID != 0);
-        *solver->frat << finalx << x.ID << fin;
+        *solver->frat << finalcl << x.ID << x.reason << fin;
+        x.ID = 0;
     }
     *solver->frat << __PRETTY_FUNCTION__ << " end\n";
 }

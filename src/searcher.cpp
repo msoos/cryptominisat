@@ -1678,6 +1678,7 @@ Clause* Searcher::handle_last_confl(
     [[maybe_unused]] const uint32_t connects_num_communities,
     int32_t& ID
 ) {
+    *frat << __PRETTY_FUNCTION__ << " begin\n";
     #ifdef STATS_NEEDED
     bool to_track = false;
     double myrnd = mtrand.randDblExc();
@@ -1698,7 +1699,11 @@ Clause* Searcher::handle_last_confl(
 
     Clause* cl;
     ID = ++clauseID;
-    if (frat->enabled()) {*frat << add << ID << learnt_clause; add_chain(); *frat << fin;}
+    if (frat->enabled()) {
+        *frat << add << ID << learnt_clause;
+        // TODO FRAT disabled, it may be wrong. add_chain(); *frat << fin;
+        *frat << fin;
+    }
 
     if (learnt_clause.size() <= 2) {
         cl = NULL;
@@ -1788,6 +1793,7 @@ Clause* Searcher::handle_last_confl(
         cl->stats.is_decision = is_decision;
     }
 
+    *frat << __PRETTY_FUNCTION__ << " end\n";
     return cl;
 }
 
