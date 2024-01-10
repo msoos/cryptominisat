@@ -210,13 +210,13 @@ TEST(xor_interface, xor_check_sat_solution)
 {
     SATSolver s;
     s.new_var();
-    s.add_xor_clause(vector<unsigned>{0U}, false);
+    s.add_xor_clause(vector<unsigned>{0U}, true);
     s.add_xor_clause(vector<unsigned>{0U}, true);
     lbool ret = s.solve();
-    EXPECT_EQ( ret, l_False);
+    EXPECT_EQ( ret, l_True);
     for(size_t i = 0;i < 10; i++) {
         ret = s.solve();
-        EXPECT_EQ( ret, l_False);
+        EXPECT_EQ( ret, l_True);
     }
     EXPECT_EQ( s.nVars(), 1u);
 }
@@ -226,13 +226,13 @@ TEST(xor_interface, xor_check_unsat_solution)
     SATSolver s;
     s.new_var();
     s.add_xor_clause(vector<uint32_t>{0U}, true);
-    s.add_xor_clause(vector<uint32_t>{0U}, true);
+    s.add_xor_clause(vector<uint32_t>{0U}, false);
     lbool ret = s.solve();
-    EXPECT_EQ( ret, l_True);
+    EXPECT_EQ( ret, l_False);
     for(size_t i = 0;i < 10; i++) {
         ret = s.solve();
-        EXPECT_EQ( ret, l_True);
-        EXPECT_EQ( s.okay(), true);
+        EXPECT_EQ( ret, l_False);
+        EXPECT_EQ( s.okay(), false);
     }
     EXPECT_EQ( s.nVars(), 1u);
 }

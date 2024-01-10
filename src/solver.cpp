@@ -2792,22 +2792,20 @@ bool Solver::add_clause_outside(const vector<Lit>& lits, bool red)
     return add_clause_outer(tmp, red);
 }
 
-bool Solver::add_xor_clause_outside(const vector<uint32_t>& vars, bool rhs)
+bool Solver::add_xor_clause_outside(const vector<uint32_t>& vars, const bool rhs)
 {
     if (!okay()) return false;
-    if (rhs == true && vars.empty()) return okay();
+    if (rhs == false && vars.empty()) return okay();
 
-    vector<Lit> lits(vars.size());
-    for(size_t i = 0; i < vars.size(); i++) lits[i] = Lit(vars[i], false);
-    uint32_t XID = ++clauseXID;
-    if (vars.size() > 0) lits[0] ^= !rhs;
+    vector<Lit> lits = vars_to_lits(vars);
+    if (!vars.empty()) lits[0] ^= !rhs;
+    const int32_t XID = ++clauseXID;
     *frat << origclx << XID << lits << fin;
-    if (vars.size() > 0) lits[0] ^= !rhs;
+    if (!vars.empty()) lits[0] ^= !rhs;
     SLOW_DEBUG_DO(check_too_large_variable_number(lits));
 
-    vector<Lit> tmp(lits);
-    add_clause_helper(tmp);
-    add_xor_clause_inter(tmp, rhs, true, XID);
+    add_clause_helper(lits);
+    add_xor_clause_inter(lits, rhs, true, XID);
 
     return okay();
 }

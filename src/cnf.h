@@ -696,6 +696,7 @@ inline int32_t CNF::clean_xor_vars_no_prop(vector<Lit>& ps, bool& rhs, int32_t X
 
     if (j < ps.size()) {
         if (j == 0 && rhs == false) {
+            ps.resize(0);
             // in case it's trivial, we delete & return 0
             *frat << findelay;
             frat_func_end_raw;
