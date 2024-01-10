@@ -1319,7 +1319,7 @@ lbool Searcher::search()
     ) {
         confl = PropBy();
         if (!solver->okay()) {
-            assert(unsat_cl_ID != 0);
+            assert(!frat->enabled() || unsat_cl_ID != 0);
             search_ret = l_False;
             goto end;
         }
@@ -1330,7 +1330,7 @@ lbool Searcher::search()
             #endif
             hist.trailDepthHistLonger.push(trail.size());
             if (!handle_conflict(confl)) {
-                assert(unsat_cl_ID != 0);
+                assert(!frat->enabled() || unsat_cl_ID != 0);
                 search_ret = l_False;
                 goto end;
             }
@@ -1341,7 +1341,7 @@ lbool Searcher::search()
             if (decisionLevel() == 0) {
                 SLOW_DEBUG_DO(for(const auto& bnn: bnns) if (bnn) assert(solver->check_bnn_sane(*bnn)););
                 if (!clean_clauses_if_needed()) {
-                    assert(unsat_cl_ID != 0);
+                    assert(!frat->enabled() || unsat_cl_ID != 0);
                     search_ret = l_False;
                     goto end;
                 }
@@ -1351,7 +1351,7 @@ lbool Searcher::search()
             if (fast_backw.fast_backw_on) dec_ret = new_decision_fast_backw();
             else dec_ret = new_decision<false>();
             if (dec_ret != l_Undef) {
-                assert(unsat_cl_ID != 0);
+                assert(!frat->enabled() || unsat_cl_ID != 0);
                 search_ret = dec_ret;
                 goto end;
             }
@@ -1362,7 +1362,7 @@ lbool Searcher::search()
     cancelUntil(0);
     confl = propagate<false>();
     if (!confl.isNULL() || !solver->datasync->syncData()) {
-        assert(unsat_cl_ID != 0);
+        assert(!frat->enabled() || unsat_cl_ID != 0);
         ok = false;
         search_ret = l_False;
         goto end;
@@ -1819,7 +1819,7 @@ bool Searcher::handle_conflict(PropBy confl)
             *frat << add << ++clauseID << fin;
             set_unsat_cl_id(clauseID);
         }
-        assert(unsat_cl_ID != 0);
+        assert(!frat->enabled() || unsat_cl_ID != 0);
         solver->ok = false;
         return false;
     }
@@ -2579,7 +2579,7 @@ lbool Searcher::solve(const uint64_t _max_confls) {
                 || !str_impl_with_impl_if_needed()
                 || !intree_if_needed())
           ) {
-            assert(unsat_cl_ID != 0);
+            assert(!frat->enabled() || unsat_cl_ID != 0);
             status = l_False;
             goto end;
         }

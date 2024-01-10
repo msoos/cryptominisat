@@ -872,8 +872,7 @@ bool PropEngine::propagate_occur(int64_t* limit_to_decrease)
 
     if (decisionLevel() == 0 && !ret) {
         *frat << add << ++clauseID << fin;
-        assert(unsat_cl_ID == 0);
-        unsat_cl_ID = clauseID;
+        set_unsat_cl_id(clauseID);
     }
 
     return ret;

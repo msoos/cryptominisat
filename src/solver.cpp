@@ -225,8 +225,7 @@ bool Solver::add_xor_clause_inter(
     if (ps.empty()) {
         if (rhs) {
             *frat << implyclfromx << ++clauseID << fratchain << XID2 << fin;
-            assert(unsat_cl_ID == 0);
-            unsat_cl_ID = clauseID;
+            set_unsat_cl_id(clauseID);
             ok = false;
         } else assert(XID2 == 0); // we return 0 otherwise from clean_xor_vars_no_prop
         return okay();
@@ -382,8 +381,7 @@ Clause* Solver::add_clause_int(
     //Handle special cases
     switch (ps.size()) {
         case 0:
-            assert(unsat_cl_ID == 0);
-            unsat_cl_ID = clauseID;
+            set_unsat_cl_id(clauseID);
             ok = false;
             if (conf.verbosity >= 6) {
                 cout << "c solver received clause through addClause(): " << lits
@@ -1494,7 +1492,7 @@ void Solver::write_final_frat_clauses()
     // -1 indicates tbuddy already added the empty clause
     *frat << "empty clause next (if we found it)\n";
     if (!okay() && unsat_cl_ID != -1) {
-        assert(unsat_cl_ID != 0);
+        assert(!frat->enabled() || unsat_cl_ID != 0);
         *frat << finalcl << unsat_cl_ID << fin;
     }
 
