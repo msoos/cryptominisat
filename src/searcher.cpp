@@ -2533,16 +2533,16 @@ lbool Searcher::distill_clauses_if_needed()
     return l_Undef;
 }
 
-lbool Searcher::full_probe_if_needed()
+bool Searcher::full_probe_if_needed()
 {
     assert(decisionLevel() == 0);
     if (conf.do_full_probe && !conf.never_stop_search && sumConflicts > next_full_probe) {
         full_probe_iter++;
-        if (!solver->full_probe(full_probe_iter % 2)) return l_False;
+        if (!solver->full_probe(full_probe_iter % 2)) return false;
         next_full_probe = sumConflicts + 20000.0*conf.global_next_multiplier;
     }
 
-    return l_Undef;
+    return okay();
 }
 
 lbool Searcher::solve(const uint64_t _max_confls) {
@@ -2572,7 +2572,7 @@ lbool Searcher::solve(const uint64_t _max_confls) {
     while(stats.conflicts < max_confl_per_search_solve_call && status == l_Undef) {
         if (!conf.never_stop_search &&
                 (distill_clauses_if_needed() == l_False
-                || full_probe_if_needed() == l_False
+                || !full_probe_if_needed()
                 || !distill_bins_if_needed()
                 || !sub_str_with_bin_if_needed()
                 || !str_impl_with_impl_if_needed()

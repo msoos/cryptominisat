@@ -229,7 +229,7 @@ class Searcher : public HyperEngine
         // Full Probe
         uint64_t next_full_probe = 0;
         uint64_t full_probe_iter = 0;
-        lbool full_probe_if_needed();
+        bool full_probe_if_needed();
 
         // sub-str with bin
         uint64_t next_sub_str_with_bin = 0;
