@@ -537,22 +537,24 @@ class Tester:
 
         # it's UNSAT, let's check with FRAT
         if fname_frat:
-            toexec = "./frat-rs elab {fname_frat} {cnf} -v"
-            toexec = toexec.format(cnf=fname, fname_frat=fname_frat)
+            fname_xlrup = unique_file("xlrup-file")
+            toexec = "./frat-rs elab {fname_frat} {cnf} {xlrup}"
+            toexec = toexec.format(cnf=fname, fname_frat=fname_frat, xlrup=fname_xlrup)
             print("Checking with FRAT.. ", toexec)
-            p = subprocess.Popen(toexec.rsplit(),
-                    stdout=subprocess.PIPE,
-                    universal_newlines=True)
-
+            p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE, universal_newlines=True)
             consoleOutput2 = p.communicate()[0]
-            diff_time = time.time() - curr_time
+
+            toexec = "./cake_xlrup {cnf} {xlrup}"
+            toexec = toexec.format(cnf=fname, xlrup=fname_xlrup)
+            p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE, universal_newlines=True)
+            consoleOutput3 = p.communicate()[0]
 
             # find verification code
             foundVerif = False
             fratLine = ""
-            for line in consoleOutput2.split('\n'):
+            for line in consoleOutput3.split('\n'):
                 if len(line) >= 8:
-                    if line[0:8] == "VERIFIED":
+                    if line[0:8] == "s VERIFIED UNSAT":
                         fratLine = line
                         foundVerif = True
 
@@ -561,7 +563,8 @@ class Tester:
                 print("verifier error! It says: %s" % consoleOutput2)
                 assert foundVerif, "Cannot find FRAT verification code!"
             else:
-                print("OK, FRAT says: %s" % fratLine)
+                os.unlink(fname_xlrup)
+                print("OK, XLRUP  says: %s" % fratLine)
 
         if options.gauss:
             if random.choice([True, True, True, True, False]):

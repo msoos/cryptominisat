@@ -44,7 +44,7 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum) {
 // #define DEBUG_DEPTH
 // #define SLOW_DEBUG
 // #define DEBUG_ATTACH_FULL
-#define DEBUG_FRAT
+/* #define DEBUG_FRAT */
 
 #ifndef NDEBUG
 //#define FAST_DEBUG
