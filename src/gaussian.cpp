@@ -260,7 +260,7 @@ bool EGaussian::full_init(bool& created) {
     assert(solver->decisionLevel() == 0);
     assert(solver->prop_at_head());
     assert(initialized == false);
-    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
+    frat_func_start;
     created = true;
 
     uint32_t trail_before;
@@ -341,7 +341,7 @@ bool EGaussian::full_init(bool& created) {
     update_cols_vals_set(true);
     SLOW_DEBUG_DO(check_invariants());
 
-    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
+    frat_func_end;
     return solver->okay();
 }
 
@@ -405,7 +405,7 @@ void EGaussian::eliminate() {
 }
 
 vector<Lit>* EGaussian::get_reason(const uint32_t row, int32_t& out_ID) {
-    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
+    frat_func_start;
     if (!xor_reasons[row].must_recalc) {
         out_ID = xor_reasons[row].ID;
         return &(xor_reasons[row].reason);
@@ -439,7 +439,7 @@ vector<Lit>* EGaussian::get_reason(const uint32_t row, int32_t& out_ID) {
 
     xor_reasons[row].must_recalc = false;
     xor_reasons[row].ID = out_ID;
-    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
+    frat_func_end;
     return &tofill;
 }
 
@@ -467,7 +467,7 @@ gret EGaussian::init_adjust_matrix() {
     assert(solver->decisionLevel() == 0);
     assert(row_to_var_non_resp.empty());
     assert(satisfied_xors.size() >= num_rows);
-    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
+    frat_func_start;
     VERBOSE_PRINT("mat[" << matrix_no << "] init adjusting matrix");
 
     PackedMatrix::iterator end = mat.begin() + num_rows;
@@ -594,7 +594,7 @@ gret EGaussian::init_adjust_matrix() {
     mat.resizeNumRows(row_i - adjust_zero);
     num_rows = row_i - adjust_zero;
 
-    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
+    frat_func_end;
     return gret::nothing_satisfied;
 }
 
@@ -1440,11 +1440,11 @@ void CMSat::EGaussian::move_back_xor_clauses() {
 
 void CMSat::EGaussian::finalize_frat() {
     assert(solver->frat->enabled());
-    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
+    frat_func_start;
     for(auto& x: xor_reasons) {
         assert(x.ID != 0);
         *solver->frat << finalcl << x.ID << x.reason << fin;
         x.ID = 0;
     }
-    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
+    frat_func_end;
 }

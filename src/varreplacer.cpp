@@ -214,7 +214,7 @@ void VarReplacer::update_all_vardata()
 bool VarReplacer::perform_replace() {
     assert(solver->okay());
     checkUnsetSanity();
-    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
+    frat_func_start;
 
     //Set up stats
     runStats.clear();
@@ -283,7 +283,7 @@ end:
             , time_used
         );
     }
-    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
+    frat_func_end;
 
     if (solver->okay()) {
         DEBUG_ATTACH_MORE_DO(solver->check_wrong_attach());

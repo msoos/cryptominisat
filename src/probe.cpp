@@ -106,7 +106,7 @@ bool Solver::full_probe(const bool bin_only)
             , time_remain
         );
     }
-    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
+    frat_func_end;
 
     return okay();
 }

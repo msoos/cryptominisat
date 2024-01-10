@@ -2237,7 +2237,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
 }
 
 bool OccSimplifier::setup() {
-    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
+    frat_func_start;
     assert(solver->okay());
     assert(solver->prop_at_head());
     assert(toClear.empty());
@@ -2947,6 +2947,7 @@ void OccSimplifier::buildElimedMap()
 void OccSimplifier::finishUp(size_t origTrailSize) {
     runStats.zeroDepthAssings = solver->trail_size() - origTrailSize;
     const double myTime = cpuTime();
+    frat_func_start;
 
     //Add back clauses to solver
     remove_all_longs_from_watches();
@@ -2978,7 +2979,6 @@ void OccSimplifier::finishUp(size_t origTrailSize) {
     }
     globalStats += runStats;
     sub_str->finishedRun();
-    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
 
     //Sanity checks
     if (solver->okay()) {
@@ -2995,6 +2995,7 @@ void OccSimplifier::finishUp(size_t origTrailSize) {
 
     //Let's just clean up ourselves a bit
     clauses.clear();
+    frat_func_end;
 }
 
 void OccSimplifier::sanityCheckElimedVars() const

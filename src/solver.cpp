@@ -3132,7 +3132,7 @@ void Solver::renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors
 // with ONLY the ones attached that are not in a matrix
 // and the matrices are created and initialized
 bool Solver::find_and_init_all_matrices() {
-    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
+    frat_func_start;
     if (!xorclauses_updated) {
         if (conf.verbosity >= 2) {
             cout << "c [find&init matx] XORs not updated-> not performing matrix init. Matrices: "
@@ -3162,7 +3162,7 @@ bool Solver::find_and_init_all_matrices() {
     #endif
 
     xorclauses_updated = false;
-    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
+    frat_func_end;
     return true;
 }
 
