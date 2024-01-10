@@ -658,7 +658,7 @@ inline void CNF::clean_xor_vars_no_prop(Xor& x) {
         }
         x.resize(j);
         const auto XID2 = ++clauseXID;
-        *frat << addx << x; add_chain(); *frat << fin << findelay;
+        if (frat->enabled()) { *frat << addx << x; add_chain(); *frat << fin << findelay;}
         x.XID = XID2;
     }
     frat->forget_delay();
@@ -700,7 +700,7 @@ inline int32_t CNF::clean_xor_vars_no_prop(vector<Lit>& ps, bool& rhs, int32_t X
         ps.resize(j);
         if (j > 0) ps[0] ^= !rhs;
         const auto XID2 = ++clauseXID;
-        *frat << addx << XID2 << ps; add_chain(); *frat << fin << findelay;
+        if (frat->enabled()) { *frat << addx << XID2 << ps; add_chain(); *frat << fin << findelay;}
         if (j > 0) ps[0] ^= !rhs;
         return XID2;
     }

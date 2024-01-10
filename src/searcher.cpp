@@ -1698,8 +1698,7 @@ Clause* Searcher::handle_last_confl(
 
     Clause* cl;
     ID = ++clauseID;
-    *frat << add << ID << learnt_clause; add_chain(); *frat << fin;
-    VERBOSE_PRINT("Chain ID created: " << ID);
+    if (frat->enabled()) {*frat << add << ID << learnt_clause; add_chain(); *frat << fin;}
 
     if (learnt_clause.size() <= 2) {
         cl = NULL;

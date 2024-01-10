@@ -156,14 +156,6 @@ bool XorFinder::find_xors() {
     assert(orig_num_xors + runStats.foundXors == solver->xorclauses.size());
     clean_equivalent_xors(solver->xorclauses);
 
-    assert(false && "TODO FRAT -- not needed for gauss if all XORs are added as XORs");
-#if 0
-    for(auto& x: solver->xorclauses) {
-        if (solver->frat->enabled())
-            x.create_bdd_xor();
-    }
-#endif
-
     //Cleanup
     for(ClOffset offset: occsimplifier->clauses) {
         Clause* cl = solver->cl_alloc.ptr(offset);
@@ -230,6 +222,7 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
 
     if (poss_xor.foundAll()) {
         std::sort(lits.begin(), lits.end());
+        for(auto& l: lits) l = l.unsign();
         Xor found_xor(lits, poss_xor.getRHS());
         SLOW_DEBUG_DO(for(Lit lit: lits) assert(solver->varData[lit.var()].removed == Removed::none));
 
@@ -239,6 +232,9 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
             ClOffset offs = poss_xor.get_offsets()[i];
             Clause* cl = solver->cl_alloc.ptr(offs);
             assert(!cl->getRemoved());
+            if (solver->frat->enabled()) {
+                assert("TODO FRAT we can use these IDs to generate the XOR from clauses");
+            }
         }
     }
     poss_xor.clear_seen(occ_cnt);
