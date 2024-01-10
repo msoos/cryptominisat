@@ -553,10 +553,9 @@ class Tester:
             foundVerif = False
             fratLine = ""
             for line in consoleOutput3.split('\n'):
-                if len(line) >= 8:
-                    if line[0:8] == "s VERIFIED UNSAT":
-                        fratLine = line
-                        foundVerif = True
+                if "s VERIFIED UNSAT" in line:
+                    fratLine = line
+                    foundVerif = True
 
             # Check whether we have found a verification code
             if foundVerif is False:

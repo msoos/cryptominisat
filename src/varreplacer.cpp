@@ -31,6 +31,7 @@ THE SOFTWARE.
 #include "clauseallocator.h"
 #include "sqlstats.h"
 #include "sccfinder.h"
+#include "watchalgos.h"
 #ifdef USE_BREAKID
 #include "cms_breakid.h"
 #endif
@@ -416,7 +417,6 @@ inline void VarReplacer::updateBin(
         return;
     }
 
-    //Drat
     if (//Changed
         (lit1 != origLit1 || lit2 != origLit2)
         //Delete&attach only once
@@ -424,11 +424,12 @@ inline void VarReplacer::updateBin(
     ) {
         //WARNING TODO beware, this make post-FRAT parsing for ML fail.
         //we need a better mechanism than reloc, or we need to teach the tool reloc
-        //solver->clauseID+1 is used and then unused immediately
-        (*solver->frat)
-        << reloc << i->get_ID() << solver->clauseID+1 << fin
-        << add << i->get_ID() << lit1 << lit2 << fin
-        << del << solver->clauseID+1 << origLit1 << origLit2 << fin;
+        const int32_t ID = ++solver->clauseID;
+        const int32_t orig_ID = i->get_ID();
+        *solver->frat<< add << ID << lit1 << lit2 << fin;
+        *solver->frat<< del << i->get_ID() << origLit1 << origLit2 << fin;
+        findWatchedOfBin(solver->watches, origLit2, origLit1, i->red(), orig_ID).set_ID(ID);
+        i->set_ID(ID);
     }
 
     if (lit1 != origLit1) {

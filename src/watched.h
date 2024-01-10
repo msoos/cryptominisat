@@ -188,6 +188,11 @@ class Watched {
             DEBUG_WATCHED_DO(assert(isBin()));
             return data2 >> 2;
         }
+        void set_ID(const int32_t ID)
+        {
+            DEBUG_WATCHED_DO(assert(isBin()));
+            data2 = (int32_t)red() | ID<<2;
+        }
 
         void setRed(const bool toSet)
         {
