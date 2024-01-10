@@ -326,6 +326,8 @@ bool VarReplacer::replace_one_xor_clause(Xor& x) {
                 /* x.vars.erase(std::unique(x.vars.begin(), x.vars.end() ), x.vars.end()); */
 
                 if (solver->frat->enabled()) {
+                    // TODO this "old_x" is a VERY inefficient way of doing this
+                    //      and so is this binary XOR reconstruction
                     vector<Lit> bin(2);
                     bin[0] = Lit(origv, false); bin[1] = l2 ^ true;
                     const auto ID1 = ++solver->clauseID;
@@ -334,6 +336,8 @@ bool VarReplacer::replace_one_xor_clause(Xor& x) {
                     bin[0] ^= true; bin[1] ^= true;
                     *solver->frat << add << ID2 << bin << fin;
                     const auto bin_XID = ++solver->clauseXID;
+                    //     Yes, "1 2 0"  && "-1 -2 0" is the same as "x 1 2 0"
+                    // And Yes, "1 -2 0" && "-1  2 0" is the same as "x 1 -2 0"
                     *solver->frat << implyxfromcls << bin_XID << bin << fratchain << ID1 << ID2 << fin;
                     INC_XID(x);
                     *solver->frat << addx << x << fratchain << old_x->XID << bin_XID << fin;
