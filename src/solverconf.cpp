@@ -247,7 +247,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , do_hyperbin_and_transred(true)
 
         //XOR
-        , doFindXors       (false)
+        , doFindXors       (true)
         , maxXorToFind     (7)
         , maxXorToFindSlow (5)
         , maxXORMatrix     (400ULL)

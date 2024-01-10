@@ -308,8 +308,9 @@ void VarReplacer::delete_frat_cls()
 bool VarReplacer::replace_one_xor_clause(Xor& x) {
     bool go_again = true;
     while(go_again) {
-        for(uint32_t i = 0; x.vars.size(); i++) {
-            uint32_t& v = x.vars[i];
+        go_again = false;
+        for(uint32_t i = 0; i < x.size(); i++) {
+            uint32_t& v = x[i];
             uint32_t origv = v;
             assert(v < solver->nVars());
             Lit l = Lit(v, false);
@@ -321,8 +322,8 @@ bool VarReplacer::replace_one_xor_clause(Xor& x) {
                 x.rhs ^= l2.sign();
                 v = l2.var();
                 // Notice, below invalidates v, pointers, etc.
-                std::sort(x.vars.begin(), x.vars.end());
-                x.vars.erase(std::unique(x.vars.begin(), x.vars.end() ), x.vars.end());
+                /* std::sort(x.vars.begin(), x.vars.end()); */
+                /* x.vars.erase(std::unique(x.vars.begin(), x.vars.end() ), x.vars.end()); */
 
                 if (solver->frat->enabled()) {
                     vector<Lit> bin(2);
@@ -354,7 +355,7 @@ bool VarReplacer::replace_one_xor_clause(Xor& x) {
             if (x.rhs == true && solver->okay()) {
                 *solver->frat << implyclfromx << ++solver->clauseID << fratchain << x.XID << fin;
                 assert(solver->unsat_cl_ID == 0);
-                solver->unsat_cl_ID = x.XID;
+                solver->unsat_cl_ID = solver->clauseID;
                 solver->ok = false;
             }
             return false;
