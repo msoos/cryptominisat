@@ -453,9 +453,10 @@ bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached
     if (j < x.size()) {
         x.rhs = rhs;
         x.resize(j);
+        x.XID = ++solver->clauseXID;
         if (!(j == 0 && rhs == false)) {
             // empty satisfied XOR should simply be removed
-            *solver->frat << addx << x << FratFlag::fratchain; solver->add_chain();
+            *solver->frat << addx << x; solver->add_chain();
         }
         *solver->frat << fin << findelay;
 
