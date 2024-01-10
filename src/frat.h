@@ -33,7 +33,6 @@ THE SOFTWARE.
 
 
 using std::vector;
-// #define DEBUG_FRAT
 
 #if 0
 #define FRAT_PRINT((...) \

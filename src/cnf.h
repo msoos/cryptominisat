@@ -628,6 +628,7 @@ inline size_t CNF::get_num_long_red_cls() const { return longRedCls.size(); }
 inline size_t CNF::get_num_long_cls() const { return longIrredCls.size() + longRedCls.size(); }
 
 inline void CNF::clean_xor_vars_no_prop(Xor& x) {
+    frat_func_start_raw;
     *frat << deldelayx << x << fin;
     std::sort(x.vars.begin(), x.vars.end());
     uint32_t p;
@@ -662,9 +663,11 @@ inline void CNF::clean_xor_vars_no_prop(Xor& x) {
         x.XID = XID2;
     }
     frat->forget_delay();
+    frat_func_end_raw;
 }
 
 inline int32_t CNF::clean_xor_vars_no_prop(vector<Lit>& ps, bool& rhs, int32_t XID) {
+    frat_func_start_raw;
     *frat << deldelayx << XID << ps << fin;
     std::sort(ps.begin(), ps.end());
     Lit p;
@@ -695,6 +698,7 @@ inline int32_t CNF::clean_xor_vars_no_prop(vector<Lit>& ps, bool& rhs, int32_t X
         if (j == 0 && rhs == false) {
             // in case it's trivial, we delete & return 0
             *frat << findelay;
+            frat_func_end_raw;
             return 0;
         }
         ps.resize(j);
@@ -702,9 +706,11 @@ inline int32_t CNF::clean_xor_vars_no_prop(vector<Lit>& ps, bool& rhs, int32_t X
         const auto XID2 = ++clauseXID;
         if (frat->enabled()) { *frat << addx << XID2 << ps; add_chain(); *frat << fin << findelay;}
         if (j > 0) ps[0] ^= !rhs;
+        frat_func_end_raw;
         return XID2;
     }
     frat->forget_delay();
+    frat_func_end_raw;
     return XID;
 }
 

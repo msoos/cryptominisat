@@ -22,6 +22,7 @@ THE SOFTWARE.
 
 #include "clausecleaner.h"
 #include "clauseallocator.h"
+#include "constants.h"
 #include "frat.h"
 #include "solver.h"
 #include "sqlstats.h"
@@ -375,7 +376,7 @@ bool ClauseCleaner::remove_and_clean_all() {
     assert(solver->okay());
     assert(solver->prop_at_head());
     assert(solver->decisionLevel() == 0);
-    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
+    frat_func_start;
 
     size_t last_trail = numeric_limits<size_t>::max();
     while(last_trail != solver->trail_size()) {
@@ -421,14 +422,14 @@ bool ClauseCleaner::remove_and_clean_all() {
     #endif
 
     verb_print(2, "[clean]" << solver->conf.print_times(cpuTime() - myTime));
-    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
-
+    frat_func_end;
     return solver->okay();
 }
 
 
 bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached) {
     if (solver->frat->enabled()) assert(x.XID != 0);
+    frat_func_start;
     *solver->frat << deldelayx << x << fin;
 
     bool rhs = x.rhs;
@@ -480,15 +481,18 @@ bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached
                 *solver->frat << implyclfromx << ++solver->clauseID << x.XID << fin;
                 solver->unsat_cl_ID = solver->clauseID;
             }
+            frat_func_end;
             return false;
         case 1:
         case 2:{
             assert(solver->okay());
             solver->add_xor_clause_inter(vars_to_lits(x), x.rhs, true, x.XID);
             *solver->frat << delx << x << fin;
+            frat_func_end;
             return false;
         }
         default:
+            frat_func_end;
             return true;
     }
 }

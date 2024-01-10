@@ -44,6 +44,7 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum) {
 // #define DEBUG_DEPTH
 // #define SLOW_DEBUG
 // #define DEBUG_ATTACH_FULL
+#define DEBUG_FRAT
 
 #ifndef NDEBUG
 //#define FAST_DEBUG
@@ -140,7 +141,18 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum) {
 //#define FRAT_DEBUG
 //#define VERBOSE_DEBUG
 
-// verbose print
+#ifdef DEBUG_FRAT
+#define frat_func_start *solver->frat << __PRETTY_FUNCTION__ << " start\n"
+#define frat_func_start_raw *frat << __PRETTY_FUNCTION__ << " start\n"
+#define frat_func_end *solver->frat << __PRETTY_FUNCTION__ << " end\n"
+#define frat_func_end_raw *frat << __PRETTY_FUNCTION__ << " end\n"
+#else
+#define frat_func_start do { } while (0)
+#define frat_func_start_raw do { } while (0)
+#define frat_func_end do { } while (0)
+#define frat_func_end_raw do { } while (0)
+#endif
+
 #ifdef VERBOSE_DEBUG
 #define VERBOSE_PRINT(x) do { std::cout << x << std::endl; } while (0)
 #define VERBOSE_DEBUG_DO(x) do { x; } while (0)

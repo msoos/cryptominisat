@@ -447,7 +447,7 @@ Xor EGaussian::xor_reason_create(const uint32_t row_n) {
     bool rhs = mat[row_n].rhs();
     assert(!(rhs == false && mat[row_n].popcnt() == 0)); // trivial clause not supported here
     assert(solver->frat->enabled());
-    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
+    frat_func_start;
 
     Xor reason;
     mat[row_n].get_reason_xor(reason, solver->assigns, col_to_var, *cols_vals, *tmp_col2);
@@ -459,7 +459,7 @@ Xor EGaussian::xor_reason_create(const uint32_t row_n) {
     *solver->frat << fin;
     VERBOSE_PRINT("reason XOR: " << reason);
 
-    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
+    frat_func_end;
     return reason;
 }
 

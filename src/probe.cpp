@@ -20,6 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
+#include "constants.h"
 #include "solver.h"
 #include <random>
 #include "varreplacer.h"
@@ -30,6 +31,7 @@ bool Solver::full_probe(const bool bin_only)
 {
     assert(okay());
     assert(decisionLevel() == 0);
+    frat_func_start;
 
     const size_t orig_num_free_vars = solver->get_num_free_vars();
     double myTime = cpuTime();
@@ -39,7 +41,6 @@ bool Solver::full_probe(const bool bin_only)
         *solver->conf.global_timeout_multiplier;
     uint64_t probed = 0;
     const auto orig_repl = varReplacer->get_num_replaced_vars();
-    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
 
     vector<uint32_t> vars;
     for(uint32_t i = 0; i < nVars(); i++) {
