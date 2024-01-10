@@ -1351,7 +1351,6 @@ lbool Searcher::search()
             if (fast_backw.fast_backw_on) dec_ret = new_decision_fast_backw();
             else dec_ret = new_decision<false>();
             if (dec_ret != l_Undef) {
-                assert(!frat->enabled() || unsat_cl_ID != 0);
                 search_ret = dec_ret;
                 goto end;
             }
