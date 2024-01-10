@@ -357,9 +357,9 @@ bool InTree::empty_failed_list()
                 return false;
             }
         } else if (solver->value(lit) == l_False) {
-            //*(solver->frat) << add << solver->clauseID++ << ~lit << fin;
-            solver->unsat_cl_ID = solver->clauseID;
-            *(solver->frat) << add << solver->clauseID++ <<fin;
+            //*(solver->frat) << add << ++solver->clauseID << ~lit << fin;
+            *solver->frat << add << ++solver->clauseID <<fin;
+            set_unsat_cl_id(solver->clauseID);
             solver->ok = false;
             return false;
         }

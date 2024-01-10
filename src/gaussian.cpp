@@ -491,11 +491,10 @@ gret EGaussian::init_adjust_matrix() {
                 if ((*rowI).rhs()) {
                     if (solver->frat->enabled()) {
                         const auto reason = xor_reason_create(row_i);
-                        assert(solver->unsat_cl_ID == 0);
                         const int32_t ID = ++solver->clauseID;
                         *solver->frat << implyclfromx << ID << fratchain << reason.XID << fin;
                         *solver->frat << delx << reason << fin;
-                        solver->unsat_cl_ID = ID;
+                        set_unsat_cl_id(ID);
                     }
                     solver->ok = false;
                     VERBOSE_PRINT("-> empty clause during init_adjust_matrix");
@@ -722,12 +721,10 @@ bool EGaussian::find_truths(
             // have to get reason if toplevel (reason will never be asked)
             if (solver->decisionLevel() == 0 && solver->frat->enabled()) {
                 VERBOSE_PRINT("-> conflict at toplevel during find_truths");
-                auto reason = xor_reason_create(row_n);
-                int32_t ID = ++solver->clauseID;
-                *solver->frat << implyclfromx << ID << fratchain << reason.XID << fin;
-                *solver->frat << delx << reason << fin;
-                assert(solver->unsat_cl_ID == 0);
-                solver->unsat_cl_ID = ID;
+                int32_t out_ID;
+                get_reason(row_n, out_ID);
+                *solver->frat << add << ++solver->clauseID << fin;
+                set_unsat_cl_id(solver->clauseID);
             }
 
             if (was_resp_var) { // recover

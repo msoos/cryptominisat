@@ -3073,13 +3073,13 @@ PropBy Searcher::propagate() {
     PropBy ret = propagate_any_order<inprocess, red_also, distill_use>();
 
     //Drat -- If declevel 0 propagation, we have to add the unitaries
-    if (decisionLevel() == 0 &&
-        (frat->enabled() || conf.simulate_frat)
-    ) {
+    if (decisionLevel() == 0 && (frat->enabled() || conf.simulate_frat)) {
         if (!ret.isNULL()) {
-            *frat << add << ++clauseID << fin;
-            assert(unsat_cl_ID == 0);
-            unsat_cl_ID = clauseID;
+            // We need this check, because apparently GJ can set unsat during prop
+            if (clauseID == 0) {
+                *frat << add << ++clauseID << fin;
+                set_unsat_cl_id(clauseID);
+            }
         }
     }
 

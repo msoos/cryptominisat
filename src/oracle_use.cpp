@@ -134,7 +134,7 @@ bool Solver::oracle_vivif(bool& finished)
             for(const auto& l: cl) tmp2.push_back(orc_to_lit(l));
             ClauseStats s;
             s.which_red_array = 2;
-            s.ID = clauseID++;
+            s.ID = ++clauseID;
             s.glue = cl.size();
             Clause* cl2 = solver->add_clause_int(tmp2, true, &s);
             if (cl2) longRedCls[2].push_back(cl_alloc.get_offset(cl2));

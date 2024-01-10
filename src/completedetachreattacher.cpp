@@ -21,6 +21,7 @@ THE SOFTWARE.
 ***********************************************/
 
 #include "completedetachreattacher.h"
+#include "constants.h"
 #include "solver.h"
 #include "sqlstats.h"
 #include "varreplacer.h"
@@ -182,8 +183,7 @@ bool CompleteDetachReatacher::clean_clause(Clause* cl)
 
     switch (ps.size()) {
         case 0:
-            assert(solver->unsat_cl_ID == 0);
-            solver->unsat_cl_ID = cl->stats.ID;
+            set_unsat_cl_id(cl->stats.ID);
             solver->ok = false;
             return false;
 

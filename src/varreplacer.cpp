@@ -168,8 +168,7 @@ bool VarReplacer::enqueueDelayedEnqueue() {
         } else if (solver->value(get<0>(l)) == l_False) {
             *solver->frat << add << ++solver->clauseID << fin;
             *solver->frat << del << get<1>(l) << get<0>(l) << fin;
-            assert(solver->unsat_cl_ID == 0);
-            solver->unsat_cl_ID = solver->clauseID;
+            set_unsat_cl_id(solver->clauseID);
             solver->ok = false;
         } else {
             //it's already set, delete
@@ -358,8 +357,7 @@ bool VarReplacer::replace_one_xor_clause(Xor& x) {
         case 0:
             if (x.rhs == true && solver->okay()) {
                 *solver->frat << implyclfromx << ++solver->clauseID << fratchain << x.XID << fin;
-                assert(solver->unsat_cl_ID == 0);
-                solver->unsat_cl_ID = solver->clauseID;
+                set_unsat_cl_id(solver->clauseID);
                 solver->ok = false;
             }
             return false;
@@ -691,8 +689,7 @@ bool VarReplacer::handleUpdatedClause(
     runStats.bogoprops += 3;
     switch(c.size()) {
     case 0:
-        assert(solver->unsat_cl_ID == 0);
-        solver->unsat_cl_ID = c.stats.ID;
+        set_unsat_cl_id(c.stats.ID);
         solver->ok = false;
         return true;
     case 1 :
@@ -846,8 +843,7 @@ bool VarReplacer::handleAlreadyReplaced(const Lit lit1, const Lit lit2)
         << del << solver->clauseID-4 << ~lit1 << lit2 << fin;
         // the UNSAT one, i.e. solver->clauseID-1 does not need to be deleted,
         //   it's automatically deleted
-        assert(solver->unsat_cl_ID == 0);
-        solver->unsat_cl_ID = solver->clauseID;
+        set_unsat_cl_id(solver->clauseID);
         solver->ok = false;
         return false;
     }
@@ -870,8 +866,7 @@ bool VarReplacer::replace_vars_already_set(
         << add << ++solver->clauseID << fin
         << del << solver->clauseID-1 << lit1 << fin
         << del << solver->clauseID-2 << ~lit1 << fin;
-        assert(solver->unsat_cl_ID == 0);
-        solver->unsat_cl_ID = solver->clauseID;
+        set_unsat_cl_id(solver->clauseID);
         solver->ok = false;
     }
 

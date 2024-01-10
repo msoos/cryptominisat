@@ -1,4 +1,5 @@
 #!/bin/bash
+set -x
 
 file=$1
 rm -f proof proof.xfrat proof-comments

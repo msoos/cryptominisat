@@ -21,6 +21,7 @@ THE SOFTWARE.
 ***********************************************/
 
 #include "clausecleaner.h"
+#include <algorithm>
 #include "clauseallocator.h"
 #include "constants.h"
 #include "frat.h"
@@ -478,9 +479,8 @@ bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached
         case 0:
             if (x.rhs == true) solver->ok = false;
             if (!solver->okay()) {
-                assert(solver->unsat_cl_ID == 0);
                 *solver->frat << implyclfromx << ++solver->clauseID << x.XID << fin;
-                solver->unsat_cl_ID = solver->clauseID;
+                set_unsat_cl_id(solver->clauseID);
             }
             frat_func_end;
             return false;
@@ -568,8 +568,7 @@ bool ClauseCleaner::full_clean(Clause& cl)
     }
 
     if (cl.size() == 0) {
-        assert(solver->unsat_cl_ID == 0);
-        solver->unsat_cl_ID = cl.stats.ID;
+        set_unsat_cl_id(cl.stats.ID);
         solver->ok = false;
         return true;
     }

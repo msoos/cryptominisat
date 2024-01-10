@@ -777,8 +777,7 @@ bool SubsumeStrengthen::backw_sub_str_with_impl(
                 if (val == l_False) {
                     (*solver->frat) << add << ID << subsLits[j] << fin;
                     (*solver->frat) << add << ++solver->clauseID << fin;
-                    assert(solver->unsat_cl_ID == 0);
-                    solver->unsat_cl_ID = solver->clauseID;
+                    set_unsat_cl_id(solver->clauseID);
                     solver->ok = false;
                     return false;
                 } else if (val == l_Undef) {
