@@ -214,6 +214,7 @@ bool Solver::add_xor_clause_inter(
     , const bool attach
     , const int32_t XID
 ) {
+    frat_func_start_raw;
     VERBOSE_PRINT("add_xor_clause_inter: " << lits << " rhs: " << rhs);
     assert(okay());
     assert(!attach || qhead == trail.size());
@@ -235,7 +236,6 @@ bool Solver::add_xor_clause_inter(
         const auto ID = ++clauseID;
         *frat << implyclfromx << ID << ps << fratchain << XID2 << fin;
         add_clause_int_frat(ps, ID);
-        *frat << delx << XID2 << ps << fin;
     } else if (ps.size() == 2) {
         ps[0] ^= !rhs;
         const auto ID1 = ++clauseID;
@@ -246,7 +246,6 @@ bool Solver::add_xor_clause_inter(
         *frat << implyclfromx << ID2 << ps << fratchain << XID2 << fin;
         add_clause_int_frat(ps, ID2);
         ps[0] ^= true; ps[1] ^= true;
-        *frat << delx << XID2 << ps << fin;
     } else {
         assert(ps.size() > 2);
         xorclauses_updated = true;
@@ -255,6 +254,7 @@ bool Solver::add_xor_clause_inter(
         x.XID = XID2;
         attach_xor_clause(xorclauses.size()-1);
     }
+    frat_func_end_raw;
     return okay();
 }
 
@@ -1495,7 +1495,7 @@ void Solver::write_final_frat_clauses()
     for(auto& x: xorclauses) {
         if (x.reason_cl_ID != 0) *frat << finalcl << x.reason_cl_ID << x.reason_cl << fin;
         x.reason_cl_ID = 0;
-        *frat << finalx << x.XID << fin;
+        if (x.XID != 0) *frat << finalx << x.XID << fin;
         x.XID = 0;
     }
 

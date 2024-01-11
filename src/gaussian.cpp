@@ -524,10 +524,9 @@ gret EGaussian::init_adjust_matrix() {
                     const int32_t ID = ++solver->clauseID;
                     *solver->frat << implyclfromx << ID << tmp_clause[0] << fratchain << reason.XID << fin;
                     *solver->frat << delx << reason << fin;
-                    solver->add_clause_int_frat(tmp_clause, ID);
-                    VERBOSE_PRINT("ID of this unit: " << bdd.ID << " unit is: " << tmp_clause);
+                    assert(solver->unit_cl_IDs[tmp_clause[0].var()] == 0);
+                    solver->unit_cl_IDs[tmp_clause[0].var()] = ID;
                 }
-
                 solver->enqueue<false>(tmp_clause[0]);
 
                 VERBOSE_PRINT("-> UNIT during adjust: " << tmp_clause[0]);
@@ -548,24 +547,27 @@ gret EGaussian::init_adjust_matrix() {
                 tmp_clause[0] = tmp_clause[0].unsign();
                 tmp_clause[1] = tmp_clause[1].unsign();
                 if (solver->frat->enabled()) {
+                    *solver->frat << "binary XOR from init_adjust matrix begin\n";
                     const auto reason = xor_reason_create(row_i);
                     vector<Lit> out = tmp_clause;
                     out[0] ^= !mat[row_i].rhs();
                     int32_t ID = ++solver->clauseID;
                     *solver->frat << implyclfromx << ID << out << fratchain << reason.XID << fin;
-                    solver->add_clause_int_frat(out, ID);
+                    solver->attach_bin_clause(out[0], out[1], false, ID);
                     VERBOSE_PRINT("ID of bin XOR found (part 1): " << ID);
 
                     out[0] = out[0]^true; out[1] = out[1]^true;
                     int32_t ID2 = ++solver->clauseID;
                     *solver->frat << implyclfromx << ID2 << out << fratchain << reason.XID << fin;
-                    solver->add_clause_int_frat(out, ID2);
+                    solver->attach_bin_clause(out[0], out[1], false, ID2);
                     VERBOSE_PRINT("ID of bin XOR found (part 2): " << ID2);
 
                     *solver->frat << delx << reason << fin;
+                    *solver->frat << "binary XOR from init_adjust matrix end\n";
+                } else {
+                    solver->ok = solver->add_xor_clause_inter(tmp_clause, !mat[row_i].rhs(), true, true);
+                    release_assert(solver->ok);
                 }
-                solver->ok = solver->add_xor_clause_inter(tmp_clause, mat[row_i].rhs(), true, true);
-                release_assert(solver->ok);
                 VERBOSE_PRINT("-> toplevel bin-xor on row: " << row_i << " cl2: " << tmp_clause);
 
                 // reset this row all zero, no need for this row

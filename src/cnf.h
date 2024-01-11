@@ -667,7 +667,10 @@ inline void CNF::clean_xor_vars_no_prop(Xor& x) {
 
 inline int32_t CNF::clean_xor_vars_no_prop(vector<Lit>& ps, bool& rhs, int32_t XID) {
     frat_func_start_raw;
+    if (!ps.empty()) ps[0] ^= !rhs;
     *frat << deldelayx << XID << ps << fin;
+    if (!ps.empty()) ps[0] ^= !rhs;
+
     std::sort(ps.begin(), ps.end());
     Lit p;
     uint32_t i, j;

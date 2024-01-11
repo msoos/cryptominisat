@@ -307,6 +307,7 @@ void VarReplacer::delete_frat_cls()
 // Returns FALSE if the XOR needs to be removed
 bool VarReplacer::replace_one_xor_clause(Xor& x) {
     frat_func_start;
+    del_xor_reason(x);
     bool go_again = true;
     while(go_again) {
         go_again = false;
@@ -343,8 +344,8 @@ bool VarReplacer::replace_one_xor_clause(Xor& x) {
                     INC_XID(x);
                     *solver->frat << addx << x << fratchain << old_x->XID << bin_XID << fin;
                     *solver->frat << delx << *old_x << fin;
-                    del_xor_reason(*old_x);
                     delete old_x;
+                    *solver->frat << delx << bin_XID << bin << fin;
                     *solver->frat << del << ID2 << bin << fin;
                     bin[0] ^= true; bin[1] ^= true;
                     *solver->frat << del << ID1 << bin << fin;

@@ -109,6 +109,7 @@ public:
 
     virtual Frat& operator<<(const int32_t clauseID) override
     {
+        assert(clauseID != 0);
         if (must_delete_next) byteDRUPdID(clauseID);
         else byteDRUPaID(clauseID);
         return *this;
