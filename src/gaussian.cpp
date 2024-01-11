@@ -1463,8 +1463,8 @@ void CMSat::EGaussian::move_back_xor_clauses() {
 
 
 void CMSat::EGaussian::delete_reasons() {
-    assert(solver->frat->enabled());
     frat_func_start;
+    if (!solver->frat->enabled()) return;
     for(auto& c: xor_reasons) {
         if (c.ID != 0) *solver->frat << del << c.ID << c.reason << fin;
         c.ID = 0;
