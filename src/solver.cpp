@@ -1478,6 +1478,9 @@ void Solver::write_final_frat_clauses()
     assert(decisionLevel() == 0);
     frat_func_start;
 
+    *frat << "vrepl finalize begin\n";
+    if (varReplacer) varReplacer->delete_frat_cls();
+
     // -1 indicates tbuddy already added the empty clause
     *frat << "empty clause next (if we found it)\n";
     if (!okay() && unsat_cl_ID != -1) {
@@ -1485,8 +1488,6 @@ void Solver::write_final_frat_clauses()
         *frat << finalcl << unsat_cl_ID << fin;
     }
 
-    *frat << "vrepl finalize begin\n";
-    if (varReplacer) varReplacer->delete_frat_cls();
 
     *frat << "gmatrix finalize frat begin\n";
     for(auto& g: gmatrices) g->finalize_frat();
