@@ -195,6 +195,7 @@ class EGaussian {
     void update_cols_vals_set(const Lit lit1);
     void create_temps();
     void free_temps();
+    vector<pair<int32_t, Lit>> del_unit_cls;
 
     //Data to free (with delete[] x)
     vector<int64_t*> tofree;

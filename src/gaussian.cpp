@@ -34,6 +34,7 @@ THE SOFTWARE.
 #include <iterator>
 
 #include "constants.h"
+#include "frat.h"
 #include "gaussian.h"
 #include "clause.h"
 #include "clausecleaner.h"
@@ -42,6 +43,8 @@ THE SOFTWARE.
 #include "solver.h"
 #include "time_mem.h"
 #include "varreplacer.h"
+
+using std::make_pair;
 
 // #define VERBOSE_DEBUG
 // #define SLOW_DEBUG
@@ -256,7 +259,6 @@ bool EGaussian::full_init(bool& created) {
     assert(initialized == false);
     frat_func_start;
     created = true;
-    create_temps();
 
     uint32_t trail_before;
     while (true) {
@@ -274,7 +276,11 @@ bool EGaussian::full_init(bool& created) {
         eliminate();
 
         // find some row already true false, and insert watch list
+        free_temps(); create_temps();
+        delete_reasons(); xor_reasons.resize(num_rows);
         gret ret = init_adjust_matrix();
+        free_temps(); create_temps();
+        delete_reasons(); xor_reasons.resize(num_rows);
 
         switch (ret) {
             case gret::confl:
@@ -301,14 +307,9 @@ bool EGaussian::full_init(bool& created) {
     SLOW_DEBUG_DO(check_watchlist_sanity());
     verb_print(2, "[gauss] initialized matrix " << matrix_no);
 
-    xor_reasons.resize(num_rows);
-    free_temps();
-    create_temps();
+    free_temps(); create_temps();
+    delete_reasons(); xor_reasons.resize(num_rows);
 
-    cols_vals->rhs() = 0;
-    cols_unset->rhs() = 0;
-    tmp_col->rhs() = 0;
-    tmp_col2->rhs() = 0;
     after_init_density = get_density();
 
     initialized = true;
@@ -323,10 +324,15 @@ void EGaussian::free_temps()
 {
     for(auto& x: tofree) delete[] x;
     tofree.clear();
+
     delete cols_unset;
+    cols_unset = NULL;
     delete cols_vals;
+    cols_vals = NULL;
     delete tmp_col;
+    tmp_col = NULL;
     delete tmp_col2;
+    tmp_col2 = NULL;
 }
 
 void EGaussian::create_temps()
@@ -349,6 +355,15 @@ void EGaussian::create_temps()
     x = new int64_t[num_64b+1];
     tofree.push_back(x);
     tmp_col2 = new PackedRow(num_64b, x);
+
+    /* cols_unset->setZero(); */
+    cols_unset->rhs() = 0;
+    /* cols_vals->setZero(); */
+    cols_vals->rhs() = 0;
+    /* tmp_col->setZero(); */
+    tmp_col->rhs() = 0;
+    /* tmp_col2->setZero(); */
+    tmp_col2->rhs() = 0;
 }
 
 void EGaussian::xor_in_bdd(const uint32_t a, const uint32_t b)
@@ -420,7 +435,6 @@ vector<Lit>* EGaussian::get_reason(const uint32_t row, int32_t& out_ID) {
     // Clean up previous one
     if (solver->frat->enabled() && xor_reasons[row].ID != 0) {
         *solver->frat << del << xor_reasons[row].ID << xor_reasons[row].reason << fin;
-        VERBOSE_PRINT("deleting clause ID " << xor_reasons[row].ID);
     }
 
     vector<Lit>& tofill = xor_reasons[row].reason;
@@ -473,6 +487,7 @@ gret EGaussian::init_adjust_matrix() {
     assert(solver->decisionLevel() == 0);
     assert(row_to_var_non_resp.empty());
     assert(satisfied_xors.size() >= num_rows);
+    delete_reasons(); xor_reasons.resize(num_rows);
     frat_func_start;
     VERBOSE_PRINT("mat[" << matrix_no << "] init adjusting matrix");
 
@@ -496,6 +511,7 @@ gret EGaussian::init_adjust_matrix() {
                 // conflict
                 if ((*rowI).rhs()) {
                     if (solver->frat->enabled()) {
+                        *solver->frat << "init_adjust_matrix conflict\n";
                         const auto reason = xor_reason_create(row_i);
                         const int32_t ID = ++solver->clauseID;
                         *solver->frat << implyclfromx << ID << fratchain << reason.XID << fin;
@@ -516,16 +532,14 @@ gret EGaussian::init_adjust_matrix() {
             case 1:
             {
                 VERBOSE_PRINT("Unit XOR during init_adjust_matrix, vars: " << tmp_clause);
-                bool xorEqualFalse = !mat[row_i].rhs();
-                tmp_clause[0] = Lit(tmp_clause[0].var(), xorEqualFalse);
+                tmp_clause[0] = Lit(tmp_clause[0].var(), !mat[row_i].rhs());
                 assert(solver->value(tmp_clause[0].var()) == l_Undef);
                 if (solver->frat->enabled()) {
                     const auto reason = xor_reason_create(row_i);
                     const int32_t ID = ++solver->clauseID;
                     *solver->frat << implyclfromx << ID << tmp_clause[0] << fratchain << reason.XID << fin;
                     *solver->frat << delx << reason << fin;
-                    assert(solver->unit_cl_IDs[tmp_clause[0].var()] == 0);
-                    solver->unit_cl_IDs[tmp_clause[0].var()] = ID;
+                    del_unit_cls.push_back(make_pair(ID, tmp_clause[0]));
                 }
                 solver->enqueue<false>(tmp_clause[0]);
 
@@ -1455,12 +1469,22 @@ void CMSat::EGaussian::delete_reasons() {
         if (c.ID != 0) *solver->frat << del << c.ID << c.reason << fin;
         c.ID = 0;
     }
+
+    for(const auto& c: del_unit_cls) {
+        *solver->frat << del << c.first << c.second << fin;
+    }
+    del_unit_cls.clear();
     frat_func_end;
 }
 
 void CMSat::EGaussian::finalize_frat() {
     assert(solver->frat->enabled());
     frat_func_start;
+    for(const auto& c: del_unit_cls) {
+        *solver->frat << finalcl << c.first << c.second << fin;
+    }
+    del_unit_cls.clear();
+
     for(auto& c: xor_reasons) {
         if (c.ID != 0) *solver->frat << finalcl << c.ID << c.reason << fin;
         c.ID = 0;
