@@ -627,7 +627,7 @@ class Tester:
 
         shuf_seed = random.randint(1, 100000)
         fname_shuffled = unique_file("fuzzTest")
-        print("calling ./shuffle.py %s %s %s" % (fname, fname_shuffled, shuf_seed))
+        print("calling ../clean.py %s %s" % (fname, fname_shuffled))
         shuffle_cnf(fname, fname_shuffled, shuf_seed)
         os.unlink(fname)
         fname = fname_shuffled
