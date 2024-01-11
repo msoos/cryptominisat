@@ -537,9 +537,15 @@ class Tester:
 
         # it's UNSAT, let's check with FRAT
         if fname_frat:
+            fname_cleanproof = unique_file("clean-proof")
+            toexec = "grep -v \"^c\" {fname_frat} > {clean}"
+            toexec = toexec.format(cnf=fname, fname_frat=fname_frat, clean=fname_cleanproof)
+            p = subprocess.Popen(toexec, stdout=subprocess.PIPE, universal_newlines=True, shell=True)
+            consoleOutputGrep = p.communicate()[0]
+
             fname_xlrup = unique_file("xlrup-file")
-            toexec = "./frat-rs elab {fname_frat} {cnf} {xlrup}"
-            toexec = toexec.format(cnf=fname, fname_frat=fname_frat, xlrup=fname_xlrup)
+            toexec = "./frat-rs elab {clean} {cnf} {xlrup}"
+            toexec = toexec.format(cnf=fname, clean=fname_cleanproof, xlrup=fname_xlrup)
             print("Checking with FRAT.. ", toexec)
             p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE, universal_newlines=True)
             consoleOutput2 = p.communicate()[0]
@@ -563,6 +569,7 @@ class Tester:
                 assert foundVerif, "Cannot find FRAT verification code!"
             else:
                 os.unlink(fname_xlrup)
+                os.unlink(fname_cleanproof)
                 print("OK, XLRUP  says: %s" % fratLine)
 
         if options.gauss:
