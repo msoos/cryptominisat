@@ -5,16 +5,34 @@ if len(sys.argv) != 3:
     print("You must give 2 arguments: input file, output file")
     exit(-1)
 
+def check_duplicate_invert(l):
+    m = list(l)
+    m2 = set()
+    for a in m:
+        a = int(a)
+        a = abs(a)
+        if abs(a) in m2:
+            print("NOTE! inverted line: ", l)
+            return False
+        m2.add(abs(a))
+
+    return True
+
+def update_maxv( maxv, line):
+    l = [abs(int(e)) for e in line]
+    return max(maxv, max(l))
+
 def shuffle_cnf(fname1, fname2):
+    lines = []
+    maxv = 0
     with open(fname1, "r") as f1:
-        headers = []
-        lines = []
         for line in f1:
             line = line.strip()
+            orig_line = str(line)
             if len(line) == 0:
                 continue
             if line[0] == 'p':
-                headers.append(line)
+                continue
             elif line[0] == 'c':
                 continue
             elif line[0] == 'x':
@@ -22,20 +40,33 @@ def shuffle_cnf(fname1, fname2):
                 line = [e.strip() for e in line.split()]
                 assert line[-1] == "0"
                 line = line[:-1] # remove 0
-                line = sorted(set(line))
-                l = "x " + " ".join([str(e) for e in line]) + " 0"
-                lines.append(l)
+                elems = len(line)
+                line = set(line)
+                if len(line) != elems:
+                    print("NOTE: duplicate line: ", orig_line)
+                ok = check_duplicate_invert(line)
+                if ok:
+                    line = sorted(line)
+                    maxv = update_maxv(maxv, line)
+                    l = "x " + " ".join([str(e) for e in line]) + " 0"
+                    lines.append(l)
             else:
                 line = [e.strip() for e in line.split()]
                 assert line[-1] == "0"
                 line = line[:-1] # remove 0
-                line = sorted(set(line))
-                l = " ".join([str(e) for e in line]) + " 0"
-                lines.append(l)
+                elems = len(line)
+                line = set(line)
+                if len(line) != elems:
+                    print("NOTE: duplicate line: ", orig_line)
+                ok = check_duplicate_invert(line)
+                if ok:
+                    line = sorted(line)
+                    maxv = update_maxv(maxv, line)
+                    l = " ".join([str(e) for e in line]) + " 0"
+                    lines.append(l)
 
     with open(fname2, "w") as f2:
-        for line in headers:
-            f2.write(line+"\n")
+        f2.write("p cnf %d %d\n" % (maxv, len(lines)))
         for line in lines:
             f2.write(line+"\n")
 
