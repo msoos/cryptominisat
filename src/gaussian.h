@@ -193,6 +193,8 @@ class EGaussian {
     PackedRow *tmp_col = NULL;
     PackedRow *tmp_col2 = NULL;
     void update_cols_vals_set(const Lit lit1);
+    void create_temps();
+    void free_temps();
 
     //Data to free (with delete[] x)
     vector<int64_t*> tofree;

@@ -72,13 +72,7 @@ matrix_no(_matrix_no)
 
 EGaussian::~EGaussian() {
     delete_gauss_watch_this_matrix();
-    for(auto& x: tofree) delete[] x;
-    tofree.clear();
-
-    delete cols_unset;
-    delete cols_vals;
-    delete tmp_col;
-    delete tmp_col2;
+    free_temps();
 }
 
 struct ColSorter {
@@ -262,6 +256,7 @@ bool EGaussian::full_init(bool& created) {
     assert(initialized == false);
     frat_func_start;
     created = true;
+    create_temps();
 
     uint32_t trail_before;
     while (true) {
@@ -307,13 +302,37 @@ bool EGaussian::full_init(bool& created) {
     verb_print(2, "[gauss] initialized matrix " << matrix_no);
 
     xor_reasons.resize(num_rows);
-    uint32_t num_64b = num_cols/64+(bool)(num_cols%64);
+    free_temps();
+    create_temps();
+
+    cols_vals->rhs() = 0;
+    cols_unset->rhs() = 0;
+    tmp_col->rhs() = 0;
+    tmp_col2->rhs() = 0;
+    after_init_density = get_density();
+
+    initialized = true;
+    update_cols_vals_set(true);
+    SLOW_DEBUG_DO(check_invariants());
+
+    frat_func_end;
+    return solver->okay();
+}
+
+void EGaussian::free_temps()
+{
     for(auto& x: tofree) delete[] x;
     tofree.clear();
     delete cols_unset;
     delete cols_vals;
     delete tmp_col;
     delete tmp_col2;
+}
+
+void EGaussian::create_temps()
+{
+    assert(tofree.empty());
+    uint32_t num_64b = num_cols/64+(bool)(num_cols%64);
 
     int64_t* x = new int64_t[num_64b+1];
     tofree.push_back(x);
@@ -330,19 +349,6 @@ bool EGaussian::full_init(bool& created) {
     x = new int64_t[num_64b+1];
     tofree.push_back(x);
     tmp_col2 = new PackedRow(num_64b, x);
-
-    cols_vals->rhs() = 0;
-    cols_unset->rhs() = 0;
-    tmp_col->rhs() = 0;
-    tmp_col2->rhs() = 0;
-    after_init_density = get_density();
-
-    initialized = true;
-    update_cols_vals_set(true);
-    SLOW_DEBUG_DO(check_invariants());
-
-    frat_func_end;
-    return solver->okay();
 }
 
 void EGaussian::xor_in_bdd(const uint32_t a, const uint32_t b)
