@@ -658,9 +658,8 @@ inline void CNF::clean_xor_vars_no_prop(Xor& x) {
             x.XID = 0;
         }
         x.resize(j);
-        const auto XID2 = ++clauseXID;
+        x.XID = ++clauseXID;
         if (frat->enabled()) { *frat << addx << x; add_chain(); *frat << fin << findelay;}
-        x.XID = XID2;
     }
     frat->forget_delay();
     frat_func_end_raw;
