@@ -26,6 +26,7 @@ with open(sys.argv[1], "r") as f:
         cls = None
         cl_xs = None
         xs = None
+        ls = None
         if line[0] == 'i':
             assert line[1] == ' '
             assert len(line) > 2
@@ -103,8 +104,9 @@ with open(sys.argv[1], "r") as f:
                 x = [l.strip() for l in x]
                 if "l" in x:
                     at = x.index("l")
-                    xids = x[at:]
+                    xids = x[at+1:]
                     xids=xids[:-1] # trailing 0
+                    xids=[int(sub_xid) for sub_xid in xids]
                     for sub_xid in xids:
                         if sub_xid not in xls_store:
                             print("orig/add of XCL has 'l' and the cl is not in the store")
@@ -112,7 +114,7 @@ with open(sys.argv[1], "r") as f:
                             print("line no: ", line_no)
                             print("line: ", orig_line)
                         assert sub_xid in xls_store
-                    ls = x[:at]
+                    x = x[:at]
                 ls = [int(l) for l in x[1:]]
                 if xid in xls_store:
                     print("ERROR, added/orig x ", id, " already in xls_store")
@@ -128,8 +130,9 @@ with open(sys.argv[1], "r") as f:
                 c = [l.strip() for l in c]
                 if "l" in c:
                     at = c.index("l")
-                    ids = c[at:]
+                    ids = c[at+1:]
                     ids=ids[:-1] # trailing 0
+                    ids=[int(sub_id) for sub_id in ids]
                     for sub_id in ids:
                         if sub_id not in cls_store:
                             print("orig/add of CL has 'l' and the cl is not in the store")
@@ -137,7 +140,7 @@ with open(sys.argv[1], "r") as f:
                             print("line no: ", line_no)
                             print("line: ", orig_line)
                         assert sub_id in cls_store
-                    ls = c[:at]
+                    c = c[:at]
                 ls = [int(l) for l in c[1:]]
                 if id in cls_store:
                     print("ERROR, added/orig CL ", id, " already in cls_store")
@@ -163,7 +166,7 @@ with open(sys.argv[1], "r") as f:
                     print("line no: ", line_no)
                     print("line: ", orig_line)
                     exit(-1)
-                assert id in xls_store
+                assert xid in xls_store
                 xls_store.pop(xid)
             else:
                 c = list(x_or_cl)
