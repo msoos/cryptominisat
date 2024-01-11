@@ -39,7 +39,7 @@ with open(sys.argv[1], "r") as f:
                 x = x[1:]  # remove id
                 x = [int(l) for l in x]
                 if xid in xls_store:
-                    print("ERROR, implied x ", xid, " already in cls. lits:", x)
+                    print("ERROR, implied x ", xid, " already in xls. lits:", x)
                     print("line no: ", line_no)
                     print("line: ", line)
                     exit(-1)
@@ -115,8 +115,8 @@ with open(sys.argv[1], "r") as f:
                     print("line no: ", line_no)
                     print("line: ", line)
                     exit(-1)
-                assert id not in xls_store
-                xls_store[id] = sorted(ls)
+                assert id not in cls_store
+                cls_store[id] = sorted(ls)
             continue
 
         if line[0] == 'd' or line[0] == 'f':
@@ -126,22 +126,22 @@ with open(sys.argv[1], "r") as f:
             assert len(x_or_cl) >= 2
             if x_or_cl[0].strip() == 'x':
                 x = x_or_cl[1:]
-                id = int(x[0])
+                xid = int(x[0])
                 x = x[1:]  # remove id
                 ls = [int(l) for l in x]
-                if id not in xls_store:
+                if xid not in xls_store:
                     print("ERROR, deleted/finalized x ", id, " not in xls_store")
                     print("line no: ", line_no)
                     print("line: ", line)
                     exit(-1)
                 assert id in xls_store
-                xls_store.pop(id)
+                xls_store.pop(xid)
             else:
                 c = list(x_or_cl)
                 id = int(c[0])
                 c = c[1:]  # remove id
                 ls = [int(l) for l in c]
-                if id in cls_store:
+                if id not in cls_store:
                     print("ERROR, deleted/finalized CL ", id, " not in cls_store")
                     print("line no: ", line_no)
                     print("line: ", line)
