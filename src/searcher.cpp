@@ -241,6 +241,10 @@ vector<Lit>* Searcher::get_xor_reason(const PropBy& reason, int32_t& ID) {
     frat_func_start;
     if (reason.get_matrix_num() == 1000) {
         auto& x = xorclauses[reason.get_row_num()];
+        if (frat->enabled()) {
+            if (x.reason_cl_ID != 0) *frat << del << x.reason_cl_ID << x.reason_cl << fin;
+            x.reason_cl_ID = 0;
+        }
         x.reason_cl.clear();
         uint32_t pc_var;
         if (x.prop_confl_watch < 2) {
@@ -288,7 +292,6 @@ vector<Lit>* Searcher::get_xor_reason(const PropBy& reason, int32_t& ID) {
         else assert(rhs != x.rhs && "It's a confl, so rhs must not match");
 
         if (frat->enabled()) {
-            if (x.reason_cl_ID != 0) *frat << del << x.reason_cl_ID << x.reason_cl << fin;
             x.reason_cl_ID = ++clauseID;
             *frat << implyclfromx << x.reason_cl_ID << x.reason_cl << FratFlag::fratchain << x.XID << fin;
         }

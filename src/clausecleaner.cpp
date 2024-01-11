@@ -525,7 +525,10 @@ bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors, const bool attached) {
             if (x.trivial()) continue;
 
             const bool keep = clean_one_xor(x, i, attached);
-            if (!keep) x = Xor();
+            if (!keep) {
+                if (x.reason_cl_ID != 0) *solver->frat << del << x.reason_cl_ID << x.reason_cl << fin;
+                Xor();
+            }
             if (!solver->okay()) return false;
         }
         solver->ok = solver->propagate<false>().isNULL();
