@@ -424,11 +424,15 @@ inline void VarReplacer::updateBin(
     ) {
         //WARNING TODO beware, this make post-FRAT parsing for ML fail.
         //we need a better mechanism than reloc, or we need to teach the tool reloc
-        const int32_t ID = ++solver->clauseID;
         const int32_t orig_ID = i->get_ID();
+        const int32_t ID = ++solver->clauseID;
+        /* cout << "orig ID: " << orig_ID << " origl1, l2: " << origLit1 << "," << origLit2 << " lit1, lit2: " << lit1 << "," << lit2 << " new ID: " << ID << endl; */
         *solver->frat<< add << ID << lit1 << lit2 << fin;
         *solver->frat<< del << i->get_ID() << origLit1 << origLit2 << fin;
-        findWatchedOfBin(solver->watches, origLit2, origLit1, i->red(), orig_ID).set_ID(ID);
+        if (origLit1 < lit1)
+            findWatchedOfBin(solver->watches, origLit2, origLit1, i->red(), orig_ID).set_ID(ID);
+        else
+            findWatchedOfBin(solver->watches, lit2, origLit1, i->red(), orig_ID).set_ID(ID);
         i->set_ID(ID);
     }
 
