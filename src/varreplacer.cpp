@@ -343,6 +343,7 @@ bool VarReplacer::replace_one_xor_clause(Xor& x) {
                     INC_XID(x);
                     *solver->frat << addx << x << fratchain << old_x->XID << bin_XID << fin;
                     *solver->frat << delx << *old_x << fin;
+                    del_xor_reason(*old_x);
                     delete old_x;
                     *solver->frat << del << ID2 << bin << fin;
                     bin[0] ^= true; bin[1] ^= true;
@@ -383,7 +384,10 @@ bool VarReplacer::replace_xor_clauses(vector<Xor>& xors) {
     for(uint32_t i = 0; i < xors.size(); i++) {
         Xor& x = xors[i];
         if (replace_one_xor_clause(x)) xors[j++] = xors[i];
-        else *solver->frat << delx << x << fin;
+        else {
+            *solver->frat << delx << x << fin;
+            del_xor_reason(x);
+        }
     }
     xors.resize(j);
     return solver->okay();

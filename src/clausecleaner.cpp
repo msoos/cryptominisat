@@ -431,6 +431,7 @@ bool ClauseCleaner::remove_and_clean_all() {
 bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached) {
     if (solver->frat->enabled()) assert(x.XID != 0);
     frat_func_start;
+    del_xor_reason(x);
     *solver->frat << deldelayx << x << fin;
 
     bool rhs = x.rhs;
@@ -490,6 +491,7 @@ bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached
             assert(solver->okay());
             solver->add_xor_clause_inter(vars_to_lits(x), x.rhs, true, x.XID);
             *solver->frat << delx << x << fin;
+            del_xor_reason(x);
             frat_func_end;
             return false;
         }
@@ -525,10 +527,7 @@ bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors, const bool attached) {
             if (x.trivial()) continue;
 
             const bool keep = clean_one_xor(x, i, attached);
-            if (!keep) {
-                if (x.reason_cl_ID != 0) *solver->frat << del << x.reason_cl_ID << x.reason_cl << fin;
-                Xor();
-            }
+            if (!keep) x = Xor();
             if (!solver->okay()) return false;
         }
         solver->ok = solver->propagate<false>().isNULL();

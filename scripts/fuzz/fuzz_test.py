@@ -594,7 +594,7 @@ class Tester:
         self.this_gauss_on = "autodisablegauss" in self.extra_opts_supported
 
         # frat turns off a bunch of systems, like symmetry breaking so use it about 50% of time
-        self.frat = self.num_threads == 1 and (random.randint(0, 10) < 5)
+        self.frat = self.num_threads == 1 and (random.randint(0, 10) < 10)
 
 
         self.sqlitedbfname = None

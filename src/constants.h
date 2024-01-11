@@ -224,6 +224,10 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum) {
 #define DEBUG_MARKED_CLAUSE_DO(x) do {} while (0)
 #endif
 
+#define del_xor_reason(x) do {\
+    if ((x).reason_cl_ID != 0) *solver->frat << del << (x).reason_cl_ID << (x).reason_cl << fin; \
+    (x).reason_cl_ID = 0; \
+    } while (0)
 
 #define set_unsat_cl_id(x) do { \
     *solver->frat << "UNSAT SET HERE" <<  __PRETTY_FUNCTION__ << "\n"; \
