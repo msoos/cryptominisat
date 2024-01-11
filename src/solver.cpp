@@ -1476,7 +1476,14 @@ void Solver::write_final_frat_clauses()
 {
     if (!frat->enabled()) return;
     assert(decisionLevel() == 0);
-    *frat << "write final start\n";
+    frat_func_start;
+
+    // -1 indicates tbuddy already added the empty clause
+    *frat << "empty clause next (if we found it)\n";
+    if (!okay() && unsat_cl_ID != -1) {
+        assert(!frat->enabled() || unsat_cl_ID != 0);
+        *frat << finalcl << unsat_cl_ID << fin;
+    }
 
     *frat << "vrepl finalize begin\n";
     if (varReplacer) varReplacer->delete_frat_cls();
@@ -1488,13 +1495,6 @@ void Solver::write_final_frat_clauses()
     for(const auto& x: xorclauses) {
         if (x.reason_cl_ID != 0) *frat << finalcl << x.reason_cl_ID << fin;
         *frat << finalx << x.XID << fin;
-    }
-
-    // -1 indicates tbuddy already added the empty clause
-    *frat << "empty clause next (if we found it)\n";
-    if (!okay() && unsat_cl_ID != -1) {
-        assert(!frat->enabled() || unsat_cl_ID != 0);
-        *frat << finalcl << unsat_cl_ID << fin;
     }
 
     *frat << "finalization of unit clauses next\n";
@@ -3793,6 +3793,7 @@ void Solver::detach_clauses_in_xors() {
             if (!cl->red() && cl->size() <= maxsize_xor &&
                     xor_hashes.count(hash_xcl(*cl)) &&
                     check_clause_represented_by_xor(*cl)) {
+                *frat << del << *cl << fin;
                 cl->setRemoved();
                 litStats.irredLits -= cl->size();
                 delayed_clause_free.push_back(offs);

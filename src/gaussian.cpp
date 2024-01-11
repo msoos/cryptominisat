@@ -1435,12 +1435,23 @@ void CMSat::EGaussian::move_back_xor_clauses() {
     }
 }
 
+
+void CMSat::EGaussian::delete_reasons() {
+    assert(solver->frat->enabled());
+    frat_func_start;
+    for(auto& c: xor_reasons) {
+        if (c.ID != 0) *solver->frat << del << c.ID << c.reason << fin;
+        c.ID = 0;
+    }
+    frat_func_end;
+}
+
 void CMSat::EGaussian::finalize_frat() {
     assert(solver->frat->enabled());
     frat_func_start;
-    for(auto& x: xor_reasons) {
-        if (x.ID != 0) *solver->frat << finalcl << x.ID << x.reason << fin;
-        x.ID = 0;
+    for(auto& c: xor_reasons) {
+        if (c.ID != 0) *solver->frat << finalcl << c.ID << c.reason << fin;
+        c.ID = 0;
     }
     frat_func_end;
 }

@@ -97,6 +97,7 @@ class EGaussian {
     void check_watchlist_sanity();
     uint32_t get_matrix_no();
     void finalize_frat();
+    void delete_reasons();
     void move_back_xor_clauses();
 
     vector<Xor> xorclauses;

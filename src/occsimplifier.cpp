@@ -2192,7 +2192,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             }
         } else if (token == "occ-xor") {
             CHECK_N_OCCUR_DO(check_n_occur());
-            if (solver->conf.doFindXors && !solver->frat->enabled()) {
+            if (solver->conf.doFindXors) {
                 XorFinder finder(this, solver);
                 finder.find_xors(); // beware can set UNSAT flag (ok = false)
                 for(const auto& x: solver->xorclauses) for(const auto& v: x) xorclauses_vars[v] = 1;

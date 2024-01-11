@@ -22,6 +22,7 @@ THE SOFTWARE.
 
 #include "xorfinder.h"
 #include "constants.h"
+#include "frat.h"
 #include "time_mem.h"
 #include "solver.h"
 #include "occsimplifier.h"
@@ -100,8 +101,6 @@ void XorFinder::clean_equivalent_xors(vector<Xor>& txors) {
         for(vector<Xor>::iterator end = txors.end(); i != end; ++i) {
             if (j->vars == i->vars && j->rhs == i->rhs) {
                 if (solver->frat->enabled()) {
-                    verb_print(5, "Cleaning equivalent XOR at: " << (i - txors.begin()) << " xor: " << *i);
-                    assert(false && "TODO FRAT -- not needed for gauss if all XORs are added as XORs");
 #if 0
                     delete i->bdd;
 #endif
@@ -154,7 +153,8 @@ bool XorFinder::find_xors() {
 
     find_xors_based_on_long_clauses();
     assert(orig_num_xors + runStats.foundXors == solver->xorclauses.size());
-    clean_equivalent_xors(solver->xorclauses);
+    // TODO FRAT
+    /* clean_equivalent_xors(solver->xorclauses); */
 
     //Cleanup
     for(ClOffset offset: occsimplifier->clauses) {
@@ -215,10 +215,10 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
     findXorMatch(solver->watches[slit], slit);
     findXorMatch(solver->watches[~slit], ~slit);
 
-    if (lits.size() <= solver->conf.maxXorToFindSlow) {
-        findXorMatch(solver->watches[slit2], slit2);
-        findXorMatch(solver->watches[~slit2], ~slit2);
-    }
+    /* if (lits.size() <= solver->conf.maxXorToFindSlow) { */
+    /*     findXorMatch(solver->watches[slit2], slit2); */
+    /*     findXorMatch(solver->watches[~slit2], ~slit2); */
+    /* } */
 
     if (poss_xor.foundAll()) {
         std::sort(lits.begin(), lits.end());
@@ -242,11 +242,25 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
 
 void XorFinder::add_found_xor(const Xor& found_xor)
 {
+    frat_func_start;
     solver->xorclauses.push_back(found_xor);
+    Xor& added = solver->xorclauses.back();
     runStats.foundXors++;
     runStats.sumSizeXors += found_xor.size();
     runStats.maxsize = std::max<uint32_t>(runStats.maxsize, found_xor.size());
     runStats.minsize = std::min<uint32_t>(runStats.minsize, found_xor.size());
+    if (solver->frat->enabled()) {
+        solver->chain.clear();
+        INC_XID(added);
+        for(const auto& off: poss_xor.get_offsets()) {
+            auto cl = *solver->cl_alloc.ptr(off);
+            assert(!cl.freed());
+            assert(!cl.getRemoved());
+            solver->chain.push_back(cl.stats.ID);
+        }
+        *solver->frat << implyxfromcls << added; solver->add_chain(); *solver->frat << fin;
+    }
+    frat_func_end;
 }
 
 void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
@@ -257,6 +271,9 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
         assert(poss_xor.getSize() > 2);
 
         if (w.isBin()) {
+            // FRAT-XOR cannot have different sized clauses for the moment
+            if (solver->frat->enabled()) continue;
+
             SLOW_DEBUG_DO(assert(occ_cnt[wlit.var()]));
             if (w.red()) continue;
             if (!occ_cnt[w.lit2().var()]) goto end;
@@ -290,6 +307,12 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
             Clause& cl = *solver->cl_alloc.ptr(offset);
             if (cl.freed() || cl.getRemoved() || cl.red()) {
                 //Clauses are ordered!!
+                break;
+            }
+
+            // FRAT cannot handle mix of sizes
+            if (solver->frat->enabled() && cl.size() != poss_xor.getSize()) {
+                //clauses are ordered!!
                 break;
             }
 

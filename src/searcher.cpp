@@ -3559,7 +3559,7 @@ bool Searcher::attach_xorclauses() {
 // Deletes all matrices.
 // TODO: this does NOT add back clash variables
 bool Searcher::clear_gauss_matrices(const bool destruct) {
-    if (!destruct && frat->enabled()) for(auto& g: gmatrices) g->finalize_frat();
+    if (!destruct && frat->enabled()) for(auto& g: gmatrices) g->delete_reasons();
 
     xorclauses_updated = true;
     for(uint32_t i = 0; i < gqueuedata.size(); i++) {
