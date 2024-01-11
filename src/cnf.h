@@ -629,6 +629,11 @@ inline size_t CNF::get_num_long_cls() const { return longIrredCls.size() + longR
 
 inline void CNF::clean_xor_vars_no_prop(Xor& x) {
     frat_func_start_raw;
+    if (x.trivial()) {
+        assert(x.XID == 0);
+        frat_func_end_raw;
+        return;
+    }
     *frat << deldelayx << x << fin;
     std::sort(x.vars.begin(), x.vars.end());
     uint32_t p;

@@ -386,7 +386,7 @@ bool VarReplacer::replace_xor_clauses(vector<Xor>& xors) {
         Xor& x = xors[i];
         if (replace_one_xor_clause(x)) xors[j++] = xors[i];
         else {
-            *solver->frat << delx << x << fin;
+            if (x.XID != 0) *solver->frat << delx << x << fin;
             del_xor_reason(x);
         }
     }
