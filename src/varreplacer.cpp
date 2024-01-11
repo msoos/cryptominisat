@@ -590,6 +590,7 @@ bool VarReplacer::replace_bnns() {
 @brief Replaces variables in long clauses
 */
 bool VarReplacer::replace_set(vector<ClOffset>& cs) {
+    frat_func_start;
     assert(!solver->frat->something_delayed());
     vector<ClOffset>::iterator i = cs.begin();
     vector<ClOffset>::iterator j = i;
@@ -636,6 +637,7 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs) {
     cs.resize(cs.size() - (i-j));
     assert(!solver->frat->something_delayed());
 
+    frat_func_end;
     return solver->okay();
 }
 

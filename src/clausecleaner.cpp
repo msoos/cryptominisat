@@ -491,7 +491,6 @@ bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached
             assert(solver->okay());
             solver->add_xor_clause_inter(vars_to_lits(x), x.rhs, true, x.XID);
             *solver->frat << delx << x << fin;
-            del_xor_reason(x);
             frat_func_end;
             return false;
         }
@@ -535,7 +534,11 @@ bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors, const bool attached) {
     if (!attached) {
         uint32_t j = 0;
         for(uint32_t i = 0; i < xors.size(); i++) {
-            if (xors[i].trivial()) continue;
+            if (xors[i].trivial()) {
+                del_xor_reason(xors[i]);
+                if (xors[i].XID != 0) *solver->frat << delx << xors[i] << fin;
+                continue;
+            }
             xors[j++] = xors[i];
         }
         xors.resize(j);

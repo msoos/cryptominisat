@@ -203,8 +203,12 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
     }
 
     // Move xorclauses temporarily
-    for (const Xor& x : solver->xorclauses) {
-        if (x.trivial()) continue;
+    for (Xor& x : solver->xorclauses) {
+        if (x.trivial()) {
+            del_xor_reason(x);
+            if (x.XID != 0) *solver->frat << delx << x << fin;
+            continue;
+        }
         if (solver->frat->enabled()) assert(x.XID != 0);
 
         //take 1st variable to check which matrix it's in.

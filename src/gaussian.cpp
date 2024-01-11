@@ -1465,9 +1465,9 @@ void CMSat::EGaussian::finalize_frat() {
     }
 
     for(auto& x: xorclauses) {
-        if (x.reason_cl_ID != 0) *solver->frat << finalcl << x.reason_cl_ID << x.reason_cl << fin;
-        x.reason_cl_ID = 0;
+        del_xor_reason(x);
         *solver->frat << finalx << x << fin;
+        x.XID = 0;
     }
     frat_func_end;
 }

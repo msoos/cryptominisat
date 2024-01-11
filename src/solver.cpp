@@ -250,7 +250,7 @@ bool Solver::add_xor_clause_inter(
     } else {
         assert(ps.size() > 2);
         xorclauses_updated = true;
-        xorclauses.push_back(Xor(ps, rhs));
+        xorclauses.emplace_back(ps, rhs);
         Xor& x = xorclauses.back();
         x.XID = XID2;
         attach_xor_clause(xorclauses.size()-1);
@@ -1492,9 +1492,11 @@ void Solver::write_final_frat_clauses()
     for(auto& g: gmatrices) g->finalize_frat();
 
     *frat << "free bdds begin\n";
-    for(const auto& x: xorclauses) {
+    for(auto& x: xorclauses) {
         if (x.reason_cl_ID != 0) *frat << finalcl << x.reason_cl_ID << x.reason_cl << fin;
+        x.reason_cl_ID = 0;
         *frat << finalx << x.XID << fin;
+        x.XID = 0;
     }
 
     *frat << "finalization of unit clauses next\n";
