@@ -102,10 +102,15 @@ with open(sys.argv[1], "r") as f:
                 x = [l.strip() for l in x]
                 if "l" in x:
                     at = x.index("l")
-                    ids = x[at:]
-                    ids=ids[:-1] # trailing 0
-                    for id in ids:
-                        assert id in cls_store
+                    xids = x[at:]
+                    xids=xids[:-1] # trailing 0
+                    for sub_xid in xids:
+                        if sub_xid not in xls_store:
+                            print("orig/add of XCL has 'l' and the cl is not in the store")
+                            print("xcl: ", xid, " missing id: ", sub_xid)
+                            print("line no: ", line_no)
+                            print("line: ", line)
+                        assert sub_xid in xls_store
                     ls = x[:at]
                 ls = [int(l) for l in x[1:]]
                 if xid in xls_store:
@@ -116,18 +121,21 @@ with open(sys.argv[1], "r") as f:
                 assert xid not in xls_store
                 xls_store[xid] = sorted(ls)
             else:
-                print(line)
-                print("xorcl: ", x_or_cl)
                 c = list(x_or_cl)
                 id = int(c[0])
                 c = c[1:]
                 c = [l.strip() for l in c]
                 if "l" in c:
                     at = c.index("l")
-                    xids = c[at:]
-                    xids=xids[:-1] # trailing 0
-                    for xid in xids:
-                        assert xid in xls_store
+                    ids = c[at:]
+                    ids=ids[:-1] # trailing 0
+                    for sub_id in ids:
+                        if sub_id not in cls_store:
+                            print("orig/add of CL has 'l' and the cl is not in the store")
+                            print("cl: ", id, " missing id: ", sub_id)
+                            print("line no: ", line_no)
+                            print("line: ", line)
+                        assert sub_id in cls_store
                     ls = c[:at]
                 ls = [int(l) for l in c[1:]]
                 if id in cls_store:
