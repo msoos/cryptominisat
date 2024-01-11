@@ -30,10 +30,27 @@ def shuffle_cnf(fname1, fname2, seed):
         lines = []
         for line in f1:
             line = line.strip()
-            if len(line) > 1 and line[0] == 'p':
+            if len(line) == 0:
+                continue
+            if line[0] == 'p':
                 headers.append(line)
+            elif line[0] == 'c':
+                continue
+            elif line[0] == 'x':
+                line = line[1:]
+                line = [e.strip() for e in line.split()]
+                assert line[-1] == "0"
+                line = line[:-1] # remove 0
+                line = sorted(set(line))
+                l = "x " + " ".join([str(e) for e in line]) + " 0"
+                lines.append(l)
             else:
-                lines.append(line)
+                line = [e.strip() for e in line.split()]
+                assert line[-1] == "0"
+                line = line[:-1] # remove 0
+                line = sorted(set(line))
+                l = " ".join([str(e) for e in line]) + " 0"
+                lines.append(l)
 
     random.shuffle(lines)
 
