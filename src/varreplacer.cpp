@@ -429,10 +429,9 @@ inline void VarReplacer::updateBin(
         /* cout << "orig ID: " << orig_ID << " origl1, l2: " << origLit1 << "," << origLit2 << " lit1, lit2: " << lit1 << "," << lit2 << " new ID: " << ID << endl; */
         *solver->frat<< add << ID << lit1 << lit2 << fin;
         *solver->frat<< del << i->get_ID() << origLit1 << origLit2 << fin;
-        if (origLit1 < lit1)
-            findWatchedOfBin(solver->watches, origLit2, origLit1, i->red(), orig_ID).set_ID(ID);
-        else
-            findWatchedOfBin(solver->watches, lit2, origLit1, i->red(), orig_ID).set_ID(ID);
+        Watched* i2 = findWatchedOfBinMaybe(solver->watches, origLit2, origLit1, i->red(), orig_ID);
+        if (i2) i2->set_ID(ID);
+        else findWatchedOfBin(solver->watches, lit2, origLit1, i->red(), orig_ID).set_ID(ID);
         i->set_ID(ID);
     }
 

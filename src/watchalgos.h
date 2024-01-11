@@ -161,6 +161,21 @@ inline Watched& findWatchedOfBin(
     return *ws.begin();
 }
 
+inline Watched* findWatchedOfBinMaybe(
+    watch_array& wsFull
+    , const Lit lit1
+    , const Lit lit2
+    , const bool red
+    , const int32_t ID
+) {
+    watch_subarray ws = wsFull[lit1];
+    for (Watched *i = ws.begin(), *end = ws.end(); i != end; i++) {
+        if (i->isBin() && i->lit2() == lit2 && i->red() == red && i->get_ID() == ID)
+            return i;
+    }
+    return NULL;
+}
+
 static inline bool findWXCl(const vec<GaussWatched>& gws, const uint32_t at) {
     for(const auto& gw: gws) if (gw.matrix_num == 1000 && gw.row_n == at) return true;
     return false;
