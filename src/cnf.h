@@ -657,14 +657,15 @@ inline void CNF::clean_xor_vars_no_prop(Xor& x) {
     }
 
     if (j < x.size()) {
+        x.resize(j);
         if (j == 0 && x.rhs == false) {
             // in case it's trivial, we set XID 0
             *frat << findelay;
             x.XID = 0;
+        } else {
+            x.XID = ++clauseXID;
+            if (frat->enabled()) { *frat << addx << x; add_chain(); *frat << fin << findelay;}
         }
-        x.resize(j);
-        x.XID = ++clauseXID;
-        if (frat->enabled()) { *frat << addx << x; add_chain(); *frat << fin << findelay;}
     }
     frat->forget_delay();
     frat_func_end_raw;
