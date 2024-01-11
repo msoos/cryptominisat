@@ -2,6 +2,9 @@
 set -x
 
 file=$1
+./clean_cnf.py "$file" "clean.cnf"
+file="clean.cnf"
+
 rm -f proof proof.xfrat proof-comments
 ./cryptominisat5 "$file" proof-comments | tee cms.out | grep "^s"
 ./final_check.py proof-comments
