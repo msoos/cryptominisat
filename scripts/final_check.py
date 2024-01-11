@@ -12,6 +12,7 @@ xls_store = {}
 line_no = 0
 with open(sys.argv[1], "r") as f:
     for line in f:
+        orig_line = str(line)
         line_no+=1
         line = line.strip()
         if len(line) == 0:
@@ -41,7 +42,7 @@ with open(sys.argv[1], "r") as f:
                 if xid in xls_store:
                     print("ERROR, implied x ", xid, " already in xls. lits:", x)
                     print("line no: ", line_no)
-                    print("line: ", line)
+                    print("line: ", orig_line)
                     exit(-1)
                 assert x[-1] == 0
                 assert xid not in xls_store
@@ -55,7 +56,7 @@ with open(sys.argv[1], "r") as f:
                     if id not in cls_store:
                         print("ERROR, clause used to imply ", xid, " id: ", id, " not in xls_store")
                         print("line no: ", line_no)
-                        print("line: ", line)
+                        print("line: ", orig_line)
                         exit(-1)
                     assert id in cls_store
                 pass
@@ -70,7 +71,7 @@ with open(sys.argv[1], "r") as f:
                 if id in cls_store:
                     print("ERROR, implied cl ", id, " already in cls_store")
                     print("line no: ", line_no)
-                    print("line: ", line)
+                    print("line: ", orig_line)
                     exit(-1)
                 cl = [int(l) for l in cl]
                 assert cl[-1] == 0
@@ -84,7 +85,7 @@ with open(sys.argv[1], "r") as f:
                 if xid not in xls_store:
                     print("ERROR, cl implied by x ", xid , " not in xls_store")
                     print("line no: ", line_no)
-                    print("line: ", line)
+                    print("line: ", orig_line)
                     exit(-1)
                 assert xid in xls_store
             continue
@@ -109,14 +110,14 @@ with open(sys.argv[1], "r") as f:
                             print("orig/add of XCL has 'l' and the cl is not in the store")
                             print("xcl: ", xid, " missing id: ", sub_xid)
                             print("line no: ", line_no)
-                            print("line: ", line)
+                            print("line: ", orig_line)
                         assert sub_xid in xls_store
                     ls = x[:at]
                 ls = [int(l) for l in x[1:]]
                 if xid in xls_store:
                     print("ERROR, added/orig x ", id, " already in xls_store")
                     print("line no: ", line_no)
-                    print("line: ", line)
+                    print("line: ", orig_line)
                     exit(-1)
                 assert xid not in xls_store
                 xls_store[xid] = sorted(ls)
@@ -134,14 +135,14 @@ with open(sys.argv[1], "r") as f:
                             print("orig/add of CL has 'l' and the cl is not in the store")
                             print("cl: ", id, " missing id: ", sub_id)
                             print("line no: ", line_no)
-                            print("line: ", line)
+                            print("line: ", orig_line)
                         assert sub_id in cls_store
                     ls = c[:at]
                 ls = [int(l) for l in c[1:]]
                 if id in cls_store:
                     print("ERROR, added/orig CL ", id, " already in cls_store")
                     print("line no: ", line_no)
-                    print("line: ", line)
+                    print("line: ", orig_line)
                     exit(-1)
                 assert id not in cls_store
                 cls_store[id] = sorted(ls)
@@ -160,7 +161,7 @@ with open(sys.argv[1], "r") as f:
                 if xid not in xls_store:
                     print("ERROR, deleted/finalized x ", id, " not in xls_store")
                     print("line no: ", line_no)
-                    print("line: ", line)
+                    print("line: ", orig_line)
                     exit(-1)
                 assert id in xls_store
                 xls_store.pop(xid)
@@ -172,7 +173,7 @@ with open(sys.argv[1], "r") as f:
                 if id not in cls_store:
                     print("ERROR, deleted/finalized CL ", id, " not in cls_store")
                     print("line no: ", line_no)
-                    print("line: ", line)
+                    print("line: ", orig_line)
                     exit(-1)
                 assert id in cls_store
                 cls_store.pop(id)
