@@ -2199,7 +2199,8 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 runStats.xorTime += finder.get_stats().findTime;
             }
         } else if (token == "occ-lit-rem") {
-            all_occ_based_lit_rem();
+            //TODO FRAT -- broken :(
+            if (!solver->frat->enabled()) all_occ_based_lit_rem();
         } else if (token == "occ-bce") {
             blocked_clause_elim();
         } else if (token == "occ-clean-implicit") {
@@ -3907,9 +3908,7 @@ bool OccSimplifier::try_remove_lit_via_occurrence_simpl(
             }
             break;
         }
-        if (val == l_Undef) {
-            solver->enqueue<true>(l);
-        }
+        if (val == l_Undef) solver->enqueue<true>(l);
     }
 
     //No conflict at decision level 0, let's propagate
@@ -4611,6 +4610,7 @@ void OccSimplifier::create_dummy_elimed_clause(const Lit lit)
 }
 
 bool OccSimplifier::occ_based_lit_rem(uint32_t var, uint32_t& removed) {
+    frat_func_start;
     assert(solver->decisionLevel() == 0);
 
     int64_t* old_limit_to_decrease = limit_to_decrease;
@@ -4645,6 +4645,7 @@ bool OccSimplifier::occ_based_lit_rem(uint32_t var, uint32_t& removed) {
 
     end:
     limit_to_decrease = old_limit_to_decrease;
+    frat_func_end;
     return solver->okay();
 }
 
@@ -4673,13 +4674,9 @@ bool OccSimplifier::all_occ_based_lit_rem()
     uint32_t removed_all = 0;
     for(const auto& v: vars) {
         uint32_t all = n_occurs[Lit(v, false).toInt()] + n_occurs[Lit(v, true).toInt()];
-        if (all == 0) {
-            continue;
-        }
+        if (all == 0) continue;
         uint32_t removed = 0;
-        if (!occ_based_lit_rem(v, removed)) {
-            goto end;
-        }
+        if (!occ_based_lit_rem(v, removed)) goto end;
         removed_all += removed;
         if (solver->conf.verbosity >= 5) {
             cout << "occ-lit-rem finished var " << v

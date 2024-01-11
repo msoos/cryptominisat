@@ -44,7 +44,7 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum) {
 // #define DEBUG_DEPTH
 // #define SLOW_DEBUG
 // #define DEBUG_ATTACH_FULL
-/* #define DEBUG_FRAT */
+#define DEBUG_FRAT
 
 #ifndef NDEBUG
 //#define FAST_DEBUG
@@ -226,6 +226,7 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum) {
 
 
 #define set_unsat_cl_id(x) do { \
+    *solver->frat << "UNSAT SET HERE" <<  __PRETTY_FUNCTION__ << "\n"; \
     assert(solver->unsat_cl_ID == 0);\
     solver->unsat_cl_ID = (x);\
     /*cout << "set unsat CL ID here to " << (x) << endl;*/\

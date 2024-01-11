@@ -1493,7 +1493,7 @@ void Solver::write_final_frat_clauses()
 
     *frat << "free bdds begin\n";
     for(const auto& x: xorclauses) {
-        if (x.reason_cl_ID != 0) *frat << finalcl << x.reason_cl_ID << fin;
+        if (x.reason_cl_ID != 0) *frat << finalcl << x.reason_cl_ID << x.reason_cl << fin;
         *frat << finalx << x.XID << fin;
     }
 
@@ -3138,7 +3138,8 @@ bool Solver::find_and_init_all_matrices() {
         return true;
     }
     if (!clear_gauss_matrices(false)) return false; //attaches XORs actually
-    detach_clauses_in_xors();
+    // TODO FRAT
+    /* detach_clauses_in_xors(); */
 
     verb_print(1, "[find&init matx] performing matrix init");
     MatrixFinder mfinder(solver);
@@ -3774,13 +3775,9 @@ void Solver::detach_clauses_in_xors() {
     vector<ClOffset> delayed_clause_free;
     for(uint32_t x = 0; x < nVars()*2; x++) {
         Lit l = Lit::toLit(x);
-        uint32_t j = 0;
         for(uint32_t i = 0; i < watches[l].size(); i++) {
             const Watched& w = watches[l][i];
-            if (w.isBin() || w.isBNN() || w.isIdx()) {
-                watches[l][j++] = w;
-                continue;
-            }
+            if (w.isBin() || w.isBNN() || w.isIdx()) continue;
 
             assert(w.isClause());
             ClOffset offs = w.get_offset();
@@ -3790,20 +3787,17 @@ void Solver::detach_clauses_in_xors() {
             if (cl->red()) goto next;
             if (cl->getRemoved()) continue;
 
-            if (!cl->red() && cl->size() <= maxsize_xor &&
+            if (cl->size() <= maxsize_xor &&
                     xor_hashes.count(hash_xcl(*cl)) &&
                     check_clause_represented_by_xor(*cl)) {
-                *frat << del << *cl << fin;
                 cl->setRemoved();
-                litStats.irredLits -= cl->size();
                 delayed_clause_free.push_back(offs);
                 deleted++;
                 continue;
             }
             next:
-            watches[l][j++] = w;
+            ;
         }
-        watches[l].resize(j);
     }
 
     if (deleted > 0) {
@@ -3811,7 +3805,8 @@ void Solver::detach_clauses_in_xors() {
         for(uint32_t i = 0; i < longIrredCls.size(); i++) {
             ClOffset offs = longIrredCls[i];
             Clause* cl = cl_alloc.ptr(offs);
-            if (!cl->getRemoved()) longIrredCls[j++] = offs;
+            if (cl->getRemoved()) detachClause(*cl);
+            else longIrredCls[j++] = offs;
         }
         longIrredCls.resize(j);
 

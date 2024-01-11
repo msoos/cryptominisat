@@ -306,6 +306,7 @@ void VarReplacer::delete_frat_cls()
 
 // Returns FALSE if the XOR needs to be removed
 bool VarReplacer::replace_one_xor_clause(Xor& x) {
+    frat_func_start;
     bool go_again = true;
     while(go_again) {
         go_again = false;
@@ -374,6 +375,7 @@ bool VarReplacer::replace_one_xor_clause(Xor& x) {
             return true;
             break;
     }
+    frat_func_end;
 }
 
 bool VarReplacer::replace_xor_clauses(vector<Xor>& xors) {

@@ -1005,7 +1005,11 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
                         // have to get reason if toplevel (reason will never be asked)
                         if (solver->decisionLevel() == 0 && solver->frat->enabled()) {
                             VERBOSE_PRINT("-> conflict at toplevel during eliminate_col");
-                            get_reason(row_i, solver->unsat_cl_ID);
+                            int32_t ID;
+                            auto reason = get_reason(row_i, ID);
+                            int32_t fin_ID = ++solver->clauseID;
+                            *solver->frat << add << fin_ID << fin;
+                            set_unsat_cl_id(fin_ID);
                         }
 
                         break;
