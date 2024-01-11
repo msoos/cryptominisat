@@ -932,6 +932,7 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
     PackedMatrix::iterator end = mat.end();
     const uint32_t new_resp_col = var_to_col[gqd.new_resp_var];
     uint32_t row_i = 0;
+    bool unsat_set = false;
 
     #ifdef VERBOSE_DEBUG
     cout
@@ -1019,13 +1020,15 @@ void EGaussian::eliminate_col(uint32_t p, GaussQData& gqd)
                         gqd.ret = gauss_res::confl;
 
                         // have to get reason if toplevel (reason will never be asked)
-                        if (solver->decisionLevel() == 0 && solver->frat->enabled()) {
+                        if (solver->decisionLevel() == 0 && solver->frat->enabled() && !unsat_set) {
                             VERBOSE_PRINT("-> conflict at toplevel during eliminate_col");
                             int32_t ID;
-                            auto reason = get_reason(row_i, ID);
+                            get_reason(row_i, ID); // needed to make below step valid
+                                                   // but we don't really need the reason
                             int32_t fin_ID = ++solver->clauseID;
                             *solver->frat << add << fin_ID << fin;
                             set_unsat_cl_id(fin_ID);
+                            unsat_set = true;
                         }
 
                         break;
