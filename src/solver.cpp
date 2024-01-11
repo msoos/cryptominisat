@@ -382,7 +382,7 @@ Clause* Solver::add_clause_int(
     //Handle special cases
     switch (ps.size()) {
         case 0:
-            set_unsat_cl_id(clauseID);
+            set_unsat_cl_id(ID);
             ok = false;
             if (conf.verbosity >= 6) {
                 cout << "c solver received clause through addClause(): " << lits

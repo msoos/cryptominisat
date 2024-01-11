@@ -3080,7 +3080,7 @@ PropBy Searcher::propagate() {
     if (decisionLevel() == 0 && (frat->enabled() || conf.simulate_frat)) {
         if (!ret.isNULL()) {
             // We need this check, because apparently GJ can set unsat during prop
-            if (clauseID == 0) {
+            if (unsat_cl_ID == 0) {
                 *frat << add << ++clauseID << fin;
                 set_unsat_cl_id(clauseID);
             }
