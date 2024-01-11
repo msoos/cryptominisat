@@ -14,6 +14,8 @@ with open(sys.argv[1], "r") as f:
     for line in f:
         orig_line = str(line)
         line_no+=1
+        if line_no % 100000 == 99999:
+            print("line: ", line_no)
         line = line.strip()
         if len(line) == 0:
             print("EMTPY LINE!!")
@@ -27,6 +29,7 @@ with open(sys.argv[1], "r") as f:
         cl_xs = None
         xs = None
         ls = None
+        id = None
         if line[0] == 'i':
             assert line[1] == ' '
             assert len(line) > 2
@@ -162,7 +165,7 @@ with open(sys.argv[1], "r") as f:
                 x = x[1:]  # remove id
                 ls = [int(l) for l in x]
                 if xid not in xls_store:
-                    print("ERROR, deleted/finalized x ", id, " not in xls_store")
+                    print("ERROR, deleted/finalized x ", xid, " not in xls_store")
                     print("line no: ", line_no)
                     print("line: ", orig_line)
                     exit(-1)
@@ -187,9 +190,15 @@ with open(sys.argv[1], "r") as f:
 
         print("cannot understand: ", line)
 
+err = False
 for id, lits in xls_store.items():
     print("ERROR, x ID: ", id, " not finalized. lits: ", lits)
+    err = True
 
 for id, lits in cls_store.items():
     print("ERROR, cl ID: ", id, " not finalized. lits: ", lits)
+    err = True
+
+if err :exit(-1)
+exit(0)
 
