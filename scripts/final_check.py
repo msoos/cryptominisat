@@ -100,5 +100,9 @@ with open(sys.argv[1], "r") as f:
                 assert id in xls
                 xls.pop(id)
 
+for id, lits in xls.items():
+    print("ERROR, x ID: ", id, " not finalized. lits: ", lits)
 
+for id, lits in cls.items():
+    print("ERROR, cl ID: ", id, " not finalized. lits: ", lits)
 
