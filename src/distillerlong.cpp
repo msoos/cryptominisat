@@ -410,23 +410,15 @@ bool DistillerLong::go_through_clauses(vector<ClOffset>& cls, bool also_remove, 
         //Time to dereference
         maxNumProps -= 5;
 
-        if (also_remove) {
-            cl.tried_to_remove = 1;
-        } else {
-            cl.distilled = 1;
-        }
+        if (also_remove) cl.tried_to_remove = 1;
+        else cl.distilled = 1;
         runStats.checkedClauses++;
         assert(cl.size() > 2);
 
         //Try to distill clause
-        ClOffset offset2 = try_distill_clause_and_return_new(
-            offset, &cl.stats
-            , also_remove, only_remove
-        );
+        ClOffset offset2 = try_distill_clause_and_return_new( offset, &cl.stats , also_remove, only_remove);
 
-        if (offset2 != CL_OFFSET_MAX) {
-            *j++ = offset2;
-        }
+        if (offset2 != CL_OFFSET_MAX) *j++ = offset2;
     }
     cls.resize(cls.size()- (i-j));
 
@@ -473,11 +465,8 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     {
         //Sort them differently once in a while, so all literals have a chance of
         //being removed
-        if (offset % 2  == 0) {
-            std::sort(cl.begin(), cl.end(), VSIDS_largest_first(solver->var_act_vsids));
-        } else {
-            std::sort(cl.begin(), cl.end(), LitCountDescSort(lit_counts));
-        }
+        if (offset % 2  == 0) std::sort(cl.begin(), cl.end(), VSIDS_largest_first(solver->var_act_vsids));
+        else std::sort(cl.begin(), cl.end(), LitCountDescSort(lit_counts));
     }
 
     for (uint32_t sz = cl.size(); i < sz; i++) {
