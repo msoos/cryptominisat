@@ -23,6 +23,7 @@ def update_maxv( maxv, line):
     return max(maxv, max(l))
 
 def shuffle_cnf(fname1, fname2):
+    comments = []
     lines = []
     maxv = 0
     with open(fname1, "r") as f1:
@@ -34,6 +35,7 @@ def shuffle_cnf(fname1, fname2):
             if line[0] == 'p':
                 continue
             elif line[0] == 'c':
+                comments.append(line)
                 continue
             elif line[0] == 'x':
                 line = line[1:]
@@ -67,6 +69,8 @@ def shuffle_cnf(fname1, fname2):
 
     with open(fname2, "w") as f2:
         f2.write("p cnf %d %d\n" % (maxv, len(lines)))
+        for line in comments:
+            f2.write(line+"\n")
         for line in lines:
             f2.write(line+"\n")
 
