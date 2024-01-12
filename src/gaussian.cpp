@@ -560,6 +560,7 @@ gret EGaussian::init_adjust_matrix() {
                 VERBOSE_PRINT("Binary XOR during init_adjust_matrix, vars: " << tmp_clause);
                 tmp_clause[0] = tmp_clause[0].unsign();
                 tmp_clause[1] = tmp_clause[1].unsign();
+                // TODO FRAT -- clean this up, no need for duplication
                 if (solver->frat->enabled()) {
                     *solver->frat << "binary XOR from init_adjust matrix begin\n";
                     const auto reason = xor_reason_create(row_i);
