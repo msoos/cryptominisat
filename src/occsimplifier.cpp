@@ -436,17 +436,14 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
 
     //Remove all lits from stats
     //we will re-attach the clause either way
-    if (cl.red()) {
-        solver->litStats.redLits -= cl.size();
-    } else {
-        solver->litStats.irredLits -= cl.size();
-    }
+    if (cl.red()) solver->litStats.redLits -= cl.size();
+    else solver->litStats.irredLits -= cl.size();
 
     Lit *i = cl.begin();
     Lit *j = i;
     for (Lit *end = cl.end(); i != end; i++) {
         if (solver->value(*i) == l_True) {
-            (*solver->frat) << findelay;
+            *solver->frat << findelay;
             return false;
         }
 
@@ -460,15 +457,17 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
     //Drat
     if (i - j > 0) {
         INC_ID(cl);
-        (*solver->frat) << add << cl << fin << findelay;
+        *solver->frat << add << cl << fin << findelay;
     } else {
         solver->frat->forget_delay();
     }
 
     switch (cl.size()) {
-        case 0:
+        case 0: {
+            set_unsat_cl_id(cl.stats.ID);
             solver->ok = false;
             return false;
+        }
 
         case 1: {
             solver->enqueue<false>(cl[0]);
@@ -660,7 +659,10 @@ void OccSimplifier::add_back_to_solver() {
             continue;
         }
 
-        if (solver->okay() && complete_clean_clause(*cl)) {
+        if (!solver->okay()) {
+            *solver->frat << del << *cl << fin;
+            solver->free_cl(cl);
+        } else if (complete_clean_clause(*cl)) {
             solver->attachClause(*cl);
             if (cl->red()) {
                 assert(cl->stats.glue > 0);
@@ -2230,10 +2232,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         CHECK_N_OCCUR_DO(check_n_occur());
     }
 
-    if (solver->okay()) {
-        assert(solver->prop_at_head());
-    }
-
+    if (solver->okay()) assert(solver->prop_at_head());
     return solver->okay();
 }
 
@@ -2910,10 +2909,7 @@ void OccSimplifier::remove_by_frat_recently_elimed_clauses(size_t origElimedSize
         return;
     }
 
-    if (solver->conf.verbosity >= 6) {
-        cout << "c Deleting elimed clauses for FRAT" << endl;
-    }
-
+    verb_print(6, "Deleting elimed clauses for FRAT$");
     uint32_t at_ID = 0;
     vector<Lit> lits;
     for(size_t i = origElimedSize; i < elimedClauses.size(); i++) {
@@ -2957,8 +2953,7 @@ void OccSimplifier::finishUp(size_t origTrailSize) {
     if (solver->okay()) {
         assert(solver->prop_at_head());
         add_back_to_solver();
-        assert(solver->okay());
-        solver->ok = solver->propagate<true>().isNULL();
+        if (solver->okay()) solver->ok = solver->propagate<true>().isNULL();
         if (solver->okay()) solver->attach_xorclauses();
         SLOW_DEBUG_DO(if (solver->okay()) solver->check_wrong_attach());
     } else {
