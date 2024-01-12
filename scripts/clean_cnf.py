@@ -12,7 +12,7 @@ def check_duplicate_invert(l):
         a = int(a)
         a = abs(a)
         if abs(a) in m2:
-            print("NOTE! inverted line: ", l)
+            # print("NOTE! inverted line: ", l)
             return False
         m2.add(abs(a))
 
@@ -45,7 +45,8 @@ def shuffle_cnf(fname1, fname2):
                 elems = len(line)
                 line = set(line)
                 if len(line) != elems:
-                    print("NOTE: duplicate line: ", orig_line)
+                    # print("NOTE: duplicate line: ", orig_line)
+                    pass
                 ok = check_duplicate_invert(line)
                 if ok:
                     line = sorted(line)
