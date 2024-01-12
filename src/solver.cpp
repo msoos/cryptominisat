@@ -702,8 +702,9 @@ bool Solver::add_clause_helper(vector<Lit>& ps) {
     for (Lit& lit: ps) {
         //Check for too large variable number
         if (lit.var() >= nVarsOuter()) {
-            std::cerr << "ERROR: Variable " << lit.var() + 1
+            cout << "ERROR: Variable " << lit.var() + 1
             << " inserted, but max var is " << nVarsOuter() << endl;
+            assert(false);
             std::exit(-1);
         }
 
@@ -3221,6 +3222,7 @@ void Solver::start_getting_small_clauses(
     const uint32_t max_len, const uint32_t max_glue, bool red, bool bva_vars,
     bool simplified)
 {
+    assert(false && "TODO XORs");
     assert(get_clause_query == NULL);
     get_clause_query = new GetClauseQuery(this);
     get_clause_query->start_getting_small_clauses(max_len, max_glue, red, bva_vars, simplified);
@@ -3229,6 +3231,7 @@ void Solver::start_getting_small_clauses(
 
 void Solver::get_all_irred_clauses(vector<Lit>& out)
 {
+    assert(false && "TODO XORs");
     assert(get_clause_query == NULL);
     get_clause_query = new GetClauseQuery(this);
     get_clause_query->get_all_irred_clauses(out);
