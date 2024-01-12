@@ -222,6 +222,7 @@ public:
     template<bool inprocess> void enqueue(const Lit p);
     void enqueue_light(const Lit p);
     void new_decision_level();
+    vector<Lit>* get_xor_reason(const PropBy& reason, int32_t& ID);
 
     /////////////////////
     // Branching
@@ -532,34 +533,6 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
     const uint32_t v = p.var();
     assert(value(v) == l_Undef);
     SLOW_DEBUG_DO(assert(varData[v].removed == Removed::none));
-    if (level == 0 && frat->enabled())
-    {   if (do_unit_frat) {
-            const auto ID = ++clauseID;
-            const auto XID = ++clauseXID;
-            chain.clear();
-            if (from.getType() == PropByType::binary_t) {
-                chain.push_back(from.getID());
-                chain.push_back(unit_cl_IDs[from.lit2().var()]);
-            } else if (from.getType() == PropByType::clause_t) {
-                Clause* cl = cl_alloc.ptr(from.get_offset());
-                chain.push_back(cl->stats.ID);
-                for(auto const& l: *cl) if (l != p) chain.push_back(unit_cl_IDs[l.var()]);
-            } else {
-                // These are too difficult and not worth it
-            }
-
-            *frat << add << ID << p; add_chain(); *frat << fin;
-            *frat << implyxfromcls << XID << p << fratchain << ID << fin;
-
-            assert(unit_cl_IDs[v] == 0);
-            assert(unit_cl_XIDs[v] == 0);
-            unit_cl_IDs[v] = ID;
-            unit_cl_XIDs[v] = XID;
-        } else {
-            assert(unit_cl_IDs[v] != 0);
-            assert(unit_cl_XIDs[v] != 0);
-        }
-    }
 
     if (!watches[~p].empty()) watches.prefetch((~p).toInt());
 
@@ -593,6 +566,41 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
     varData[v].reason = from;
     varData[v].level = level;
     varData[v].sublevel = trail.size();
+
+    if (level == 0 && frat->enabled())
+    {   if (do_unit_frat) {
+            const auto ID = ++clauseID;
+            const auto XID = ++clauseXID;
+            /* chain.clear(); */
+            if (from.getType() == PropByType::binary_t) {
+                chain.push_back(from.getID());
+                chain.push_back(unit_cl_IDs[from.lit2().var()]);
+            } else if (from.getType() == PropByType::clause_t) {
+                Clause* cl = cl_alloc.ptr(from.get_offset());
+                chain.push_back(cl->stats.ID);
+                for(auto const& l: *cl) if (l != p) chain.push_back(unit_cl_IDs[l.var()]);
+            } else {
+                // These are too difficult and not worth it
+            }
+
+            if (from.getType() == PropByType::xor_t) {
+                int32_t tmp_ID;
+                get_xor_reason(from, tmp_ID);
+            }
+
+            *frat << add << ID << p << fin;
+            *frat << implyxfromcls << XID << p << fratchain << ID << fin;
+
+            assert(unit_cl_IDs[v] == 0);
+            assert(unit_cl_XIDs[v] == 0);
+            unit_cl_IDs[v] = ID;
+            unit_cl_XIDs[v] = XID;
+        } else {
+            assert(unit_cl_IDs[v] != 0);
+            assert(unit_cl_XIDs[v] != 0);
+        }
+    }
+
     if (!inprocess) {
         #ifdef STATS_NEEDED
         if (sign) {

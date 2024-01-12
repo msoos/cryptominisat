@@ -334,12 +334,8 @@ Clause* Solver::add_clause_int(
     add_clause_int_tmp_cl = lits;
     vector<Lit>& ps = add_clause_int_tmp_cl;
     if (!sort_and_clean_clause(ps, lits, red, sorted)) {
-        if (finalLits) {
-            finalLits->clear();
-        }
-        if (remove_frat) {
-            *frat << del << cl_stats->ID << lits << fin;
-        }
+        if (finalLits) finalLits->clear();
+        if (remove_frat) *frat << del << cl_stats->ID << lits << fin;
         return NULL;
     }
     VERBOSE_PRINT("add_clause_int final clause: " << ps);

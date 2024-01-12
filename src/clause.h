@@ -591,7 +591,7 @@ inline std::ostream& operator<<(std::ostream& os, const Clause& cl)
         if (i+1 != cl.size())
             os << " ";
     }
-    cout << " -- ID: " << cl.stats.ID;
+    os << " -- ID: " << cl.stats.ID;
 
     return os;
 }

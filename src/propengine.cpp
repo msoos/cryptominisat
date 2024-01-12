@@ -214,8 +214,8 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
                 // this is the OTHER watch for sure
                 /* cout << "propagating because of xor: " << x << endl; */
                 assert(unknown_at == x.watched[!which]);
-                enqueue<false>(Lit(x.vars[unknown_at], rhs == x.rhs), decisionLevel(), PropBy(1000, at));
                 x.prop_confl_watch = !which;
+                enqueue<false>(Lit(x.vars[unknown_at], rhs == x.rhs), decisionLevel(), PropBy(1000, at));
                 *j++ = *i;
                 goto next;
             }
@@ -1073,4 +1073,71 @@ void PropEngine::vmtf_bump_queue (const uint32_t var) {
     vmtf_btab[var] = ++stats_bumped;
     VERBOSE_PRINT("vmtf moved to last element in queue the variable " << var+1 << " and vmtf_bumped to " << vmtf_btab[var]);
     if (value(var) == l_Undef) vmtf_update_queue_unassigned(var);
+}
+
+
+vector<Lit>* PropEngine::get_xor_reason(const PropBy& reason, int32_t& ID) {
+    frat_func_start;
+    if (reason.get_matrix_num() == 1000) {
+        auto& x = xorclauses[reason.get_row_num()];
+        if (frat->enabled()) {
+            if (x.reason_cl_ID != 0) *frat << del << x.reason_cl_ID << x.reason_cl << fin;
+            x.reason_cl_ID = 0;
+        }
+        x.reason_cl.clear();
+        uint32_t pc_var;
+        if (x.prop_confl_watch < 2) {
+            //propagation
+            const auto prop_at = x.watched[x.prop_confl_watch];
+            pc_var = x.vars[prop_at];
+            assert(value(pc_var) != l_Undef);
+            const auto prop = Lit(pc_var, value(pc_var) == l_False);
+            assert(value(prop) == l_True);
+            x.reason_cl.push_back(prop);
+        } else {
+            //conflict
+            assert(x.prop_confl_watch < 4);
+            const auto confl_at = x.watched[x.prop_confl_watch-2];
+            pc_var = x.vars[confl_at];
+            assert(value(pc_var) != l_Undef);
+            const auto confl = Lit(pc_var, value(pc_var) == l_True);
+            assert(value(confl) == l_False);
+            x.reason_cl.push_back(confl);
+        }
+        bool rhs = false;
+        for(const auto& v: x.vars) {
+            rhs ^= value(v) == l_True;
+            if (v == pc_var) continue;
+            assert(value(v) != l_Undef);
+            auto lit = Lit(v, value(v) == l_True);
+            assert(value(lit) == l_False);
+            x.reason_cl.push_back(lit);
+        }
+#ifdef VERBOSE_DEBUG
+        cout << "XOR Reason: " << x.reason_cl << endl;
+        for(const auto& l: x.reason_cl) {
+            cout
+            << "l: " << l
+            << " value: " << value(l)
+            << " level:" << varData[l.var()].level
+            << " type: " << removed_type_to_string(varData[l.var()].removed)
+            << endl;
+        }
+        cout << "XOR Propagating? " << (int)(x.propagating_watch<2) << endl;
+#endif
+
+        // Some sanity checks
+        if (x.prop_confl_watch < 2) assert(rhs == x.rhs && "It's a prop, so rhs must match");
+        else assert(rhs != x.rhs && "It's a confl, so rhs must not match");
+
+        if (frat->enabled()) {
+            x.reason_cl_ID = ++clauseID;
+            *frat << implyclfromx << x.reason_cl_ID << x.reason_cl << FratFlag::fratchain << x.XID << fin;
+            ID = x.reason_cl_ID;
+        }
+        return &x.reason_cl;
+    } else {
+        return gmatrices[reason.get_matrix_num()]->get_reason(reason.get_row_num(), ID);
+    }
+    frat_func_end;
 }
