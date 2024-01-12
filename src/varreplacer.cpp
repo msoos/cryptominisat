@@ -364,20 +364,23 @@ bool VarReplacer::replace_one_xor_clause(Xor& x) {
                 set_unsat_cl_id(solver->clauseID);
                 solver->ok = false;
             }
+            frat_func_end_with("zero-len");
             return false;
             break;
         case 1: {
             Lit l(x[0], !x.rhs);
-            *solver->frat << add << ++solver->clauseID << l << fin;
-            delayedEnqueue.push_back(make_tuple(l, solver->clauseID));
+            const auto ID = ++solver->clauseID;
+            *solver->frat << implyclfromx << ID << l << fratchain << x.XID << fin;
+            delayedEnqueue.push_back(make_tuple(l, ID));
+            frat_func_end_with("1-len");
             return false;
             break;
         }
         default:
+            frat_func_end_with("mult-len (2+)");
             return true;
             break;
     }
-    frat_func_end;
 }
 
 bool VarReplacer::replace_xor_clauses(vector<Xor>& xors) {

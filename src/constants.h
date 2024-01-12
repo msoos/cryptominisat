@@ -145,6 +145,7 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum) {
 #define frat_func_start *solver->frat << __PRETTY_FUNCTION__ << " start\n"
 #define frat_func_start_raw *frat << __PRETTY_FUNCTION__ << " start\n"
 #define frat_func_end *solver->frat << __PRETTY_FUNCTION__ << " end\n"
+#define frat_func_end_with(txt) *solver->frat << __PRETTY_FUNCTION__ << " --- " << txt << " end\n"
 #define frat_func_end_raw *frat << __PRETTY_FUNCTION__ << " end\n"
 #else
 #define frat_func_start do { } while (0)
