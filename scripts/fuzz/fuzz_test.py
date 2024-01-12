@@ -289,11 +289,11 @@ class Tester:
             cmd += "--everylev1 %d " % random.choice([122, 1222, 12222])
             cmd += "--everylev2 %d " % random.choice([133, 1333, 14444])
 
-        if "breakid" in self.extra_opts_supported:
-            cmd += "--breakid %d " % random.choice([1]*10+[0])
-            cmd += "--breakideveryn %d " % random.choice([1]*10+[3])
-            cmd += "--breakidcls %d " % random.choice([0, 1, 2, 3, 10]+[50]*4)
-            cmd += "--breakidtime %d " % random.choice([10000]*5+[1])
+        # if "breakid" in self.extra_opts_supported:
+        #     cmd += "--breakid %d " % random.choice([1]*10+[0])
+        #     cmd += "--breakideveryn %d " % random.choice([1]*10+[3])
+        #     cmd += "--breakidcls %d " % random.choice([0, 1, 2, 3, 10]+[50]*4)
+        #     cmd += "--breakidtime %d " % random.choice([10000]*5+[1])
 
         if options.gauss:
             cmd += "--autodisablegauss %s " % random.choice([0]*15+[1])

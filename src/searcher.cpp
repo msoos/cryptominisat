@@ -1834,6 +1834,9 @@ bool Searcher::handle_conflict(PropBy confl)
     attach_and_enqueue_learnt_clause<false>(cl, backtrack_level, true, ID);
 
     //Add decision-based clause
+    // TODO FRAT -- this is broken because the reasons because of XOR for the propagations
+    // that lead to UNSAT is not asked for. We could definitely do it by asking for
+    // all XOR reasons for the propagations that lead to UNSAT
     if (false && decision_clause.size() > 0) {
         *frat << "decision learnt clause!\n";
         chain.clear();

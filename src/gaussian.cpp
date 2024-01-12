@@ -579,8 +579,13 @@ gret EGaussian::init_adjust_matrix() {
                     *solver->frat << delx << reason << fin;
                     *solver->frat << "binary XOR from init_adjust matrix end\n";
                 } else {
-                    solver->ok = solver->add_xor_clause_inter(tmp_clause, !mat[row_i].rhs(), true, true);
-                    release_assert(solver->ok);
+                    vector<Lit> out = tmp_clause;
+                    out[0] ^= !mat[row_i].rhs();
+                    int32_t ID = ++solver->clauseID;
+                    solver->attach_bin_clause(out[0], out[1], false, ID);
+                    out[0] = out[0]^true; out[1] = out[1]^true;
+                    int32_t ID2 = ++solver->clauseID;
+                    solver->attach_bin_clause(out[0], out[1], false, ID2);
                 }
                 VERBOSE_PRINT("-> toplevel bin-xor on row: " << row_i << " cl2: " << tmp_clause);
 

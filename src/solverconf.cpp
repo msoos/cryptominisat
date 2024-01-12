@@ -218,7 +218,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , bosphorus_every_n(1)
 
         //BreakID
-        , doBreakid(true)
+        , doBreakid(false)
         , breakid_use_assump(true)
         , breakid_every_n(5)
         , breakid_vars_limit_K(300)

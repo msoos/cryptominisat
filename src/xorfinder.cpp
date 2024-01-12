@@ -101,9 +101,7 @@ void XorFinder::clean_equivalent_xors(vector<Xor>& txors) {
         for(vector<Xor>::iterator end = txors.end(); i != end; ++i) {
             if (j->vars == i->vars && j->rhs == i->rhs) {
                 if (solver->frat->enabled()) {
-#if 0
-                    delete i->bdd;
-#endif
+                    assert(false && "TODO FRAT");
                 }
             } else {
                 j++;
@@ -232,9 +230,6 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
             ClOffset offs = poss_xor.get_offsets()[i];
             Clause* cl = solver->cl_alloc.ptr(offs);
             assert(!cl->getRemoved());
-            if (solver->frat->enabled()) {
-                assert("TODO FRAT we can use these IDs to generate the XOR from clauses");
-            }
         }
     }
     poss_xor.clear_seen(occ_cnt);

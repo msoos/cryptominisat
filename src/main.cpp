@@ -1105,6 +1105,11 @@ void Main::manually_parse_some_options()
         std::exit(-1);
     }
 
+    if (conf.doBreakid == true) {
+        cout << "ERROR: BreakID broken!!" << endl;
+        exit(-1);
+    }
+
     if (vm.count("dumpresult")) {
         resultfile = new std::ofstream;
         resultfile->open(resultFilename.c_str());
