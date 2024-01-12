@@ -490,7 +490,6 @@ bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached
         case 2:{
             assert(solver->okay());
             solver->add_xor_clause_inter(vars_to_lits(x), x.rhs, true, x.XID);
-            *solver->frat << delx << x << fin;
             frat_func_end;
             return false;
         }

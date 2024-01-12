@@ -246,6 +246,7 @@ bool Solver::add_xor_clause_inter(
         *frat << implyclfromx << ID2 << ps << fratchain << XID2 << fin;
         add_clause_int_frat(ps, ID2);
         ps[0] ^= true; ps[1] ^= true;
+        *frat << delx << XID2 << fin;
     } else {
         assert(ps.size() > 2);
         xorclauses_updated = true;
