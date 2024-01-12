@@ -294,6 +294,7 @@ vector<Lit>* Searcher::get_xor_reason(const PropBy& reason, int32_t& ID) {
         if (frat->enabled()) {
             x.reason_cl_ID = ++clauseID;
             *frat << implyclfromx << x.reason_cl_ID << x.reason_cl << FratFlag::fratchain << x.XID << fin;
+            ID = x.reason_cl_ID;
         }
         return &x.reason_cl;
     } else {
@@ -1710,6 +1711,7 @@ Clause* Searcher::handle_last_confl(
     ID = ++clauseID;
     if (frat->enabled()) {
         *frat << add << ID << learnt_clause;
+        add_chain();
         // TODO FRAT disabled, it may be wrong. add_chain(); *frat << fin;
         *frat << fin;
     }
@@ -1886,6 +1888,7 @@ bool Searcher::handle_conflict(PropBy confl)
     assert(value(learnt_clause[0]) == l_Undef);
     glue = std::min<uint32_t>(glue, numeric_limits<uint32_t>::max());
     int32_t ID;
+    *frat << "normal learnt clause\n";
     Clause* cl = handle_last_confl(
         glue,
         old_decision_level,
@@ -1898,7 +1901,8 @@ bool Searcher::handle_conflict(PropBy confl)
     attach_and_enqueue_learnt_clause<false>(cl, backtrack_level, true, ID);
 
     //Add decision-based clause
-    if (decision_clause.size() > 0) {
+    if (false && decision_clause.size() > 0) {
+        *frat << "decision learnt clause!\n";
         chain.clear();
         int i = decision_clause.size();
         while(--i >= 0) {
