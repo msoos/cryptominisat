@@ -43,7 +43,7 @@ jobs:
     - name: Installing Numpy
       run: |
         pip install pip --upgrade
-        pip install numpy
+        pip install numpy lit
 
     - name: Configure CMake
       # Use a bash shell so we can use the same syntax for environment variable
