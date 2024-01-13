@@ -1627,7 +1627,7 @@ Clause* Searcher::handle_last_confl(
     *frat << __PRETTY_FUNCTION__ << " begin\n";
     #ifdef STATS_NEEDED
     bool to_track = false;
-    double myrnd = mtrand.randDblExc();
+    const double myrnd = ((double)rnd_uint(solver->mtrand,100000))/100000.0;
     //Unfortunately, we have to change the ratio data dumped as time goes on
     //or we run out of space on CNFs that take millions(!) of conflicts
     //to solve, such as e_rphp035_05.cnf
@@ -1682,7 +1682,7 @@ Clause* Searcher::handle_last_confl(
         ext_stats.connects_num_communities = connects_num_communities;
         ext_stats.orig_connects_num_communities = connects_num_communities;
         cl->stats.locked_for_data_gen =
-            mtrand.randDblExc() < conf.lock_for_data_gen_ratio;
+            (double)rnd_uint(solver->mtrand,100000)/100000.0 < conf.lock_for_data_gen_ratio;
         #endif
 
 
@@ -2017,7 +2017,7 @@ struct MyPolarData
 };
 
 #ifdef STATS_NEEDED
-inline void Searcher::dump_restart_sql(rst_dat_type type, int64_t clauseID)
+inline void Searcher::dump_restart_sql(rst_dat_type type, int64_t ID)
 {
     //don't dump twice for var
     if (type == rst_dat_type::var) {
@@ -2038,7 +2038,7 @@ inline void Searcher::dump_restart_sql(rst_dat_type type, int64_t clauseID)
         , solver
         , this
         , type
-        , (int64_t)clauseID
+        , ID
     );
 
     if (type == rst_dat_type::norm) {
@@ -3734,7 +3734,4 @@ void Searcher::find_largest_level(Lit* lits, uint32_t count, uint32_t start)
     }
 }
 
-void Searcher::set_seed(const uint32_t seed)
-{
-    mtrand.seed(seed);
-}
+void Searcher::set_seed(const uint32_t seed) { mtrand.seed(seed); }

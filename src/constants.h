@@ -114,8 +114,9 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 #else
 #define STATS_DO(x) do {} while (0)
 #define INC_ID(cl) do { (cl).stats.ID = ++solver->clauseID; } while (0)
-#define INC_XID(x) do { (x).XID = ++solver->clauseXID; } while (0)
 #endif
+// NOTE: XID's are not tracked during stats -- we must have XOR finding etc disabled
+#define INC_XID(x) do { (x).XID = ++solver->clauseXID; } while (0)
 
 #if defined(LARGE_OFFSETS)
 #define BASE_DATA_TYPE uint64_t

@@ -2193,6 +2193,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 ternary_res();
             }
         } else if (token == "occ-xor") {
+#ifndef STATS_NEEDED
             CHECK_N_OCCUR_DO(check_n_occur());
             if (solver->conf.doFindXors) {
                 XorFinder finder(this, solver);
@@ -2200,6 +2201,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 for(const auto& x: solver->xorclauses) for(const auto& v: x) xorclauses_vars[v] = 1;
                 runStats.xorTime += finder.get_stats().findTime;
             }
+#endif
         } else if (token == "occ-lit-rem") {
             //TODO FRAT -- broken UNSAT actually!! :(
             if (false) all_occ_based_lit_rem();
@@ -2470,9 +2472,9 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
         #endif
 
         #ifdef STATS_NEEDED
-        double myrnd = solver->mtrand.randDblExc();
-        if (myrnd <= solver->conf.dump_individual_cldata_ratio) {
-            //TODO mark clause for dumping
+
+        if ((double)rnd_uint(solver->mtrand,100000)/100000.0  < solver->conf.lock_for_data_gen_ratio) {
+            assert(false && "//TODO mark clause for dumping");
         }
         #endif
 
@@ -2485,10 +2487,8 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs, Sub1Ret& sub1_ret
         if (newCl) {
             #ifdef STATS_NEEDED
             newCl->stats.locked_for_data_gen =
-                solver->mtrand.randDblExc() < solver->conf.lock_for_data_gen_ratio;
-            if (newCl->stats.locked_for_data_gen) {
-                newCl->stats.which_red_array = 0;
-            }
+                (double)rnd_uint(solver->mtrand,100000)/100000.0  < solver->conf.lock_for_data_gen_ratio;
+            if (newCl->stats.locked_for_data_gen) newCl->stats.which_red_array = 0;
             #endif
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             solver->red_stats_extra.push_back(stats_extra);

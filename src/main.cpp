@@ -327,10 +327,10 @@ void Main::add_supported_options()
         .help("Find equivalent literals through SCC and replace them");
 
     #ifdef STATS_NEEDED
-    program.add_argument("--clid").
+    program.add_argument("--clid")
         .flag()
-        .action([&](const auto& a) {clause_ID_needed = true;})
-        .help("Add clause IDs to FRAT output")
+        .action([&](const auto&) {clause_ID_needed = true;})
+        .help("Add clause IDs to FRAT output");
     #endif
 
     #ifdef FINAL_PREDICTOR
@@ -435,8 +435,8 @@ void Main::add_supported_options()
 
     /* po::options_description restartOptions("Restart options"); */
     /* restartOptions.add_options() */
-    std::ostringstream s_local_glue_multiplier;
-    s_local_glue_multiplier << std::setprecision(4) << conf.local_glue_multiplier;
+    /* std::ostringstream s_local_glue_multiplier; */
+    /* s_local_glue_multiplier << std::setprecision(4) << conf.local_glue_multiplier; */
     program.add_argument("--restart")
         .default_value("auto")
         .help("{geom, glue, luby}  Restart strategy to follow.");
