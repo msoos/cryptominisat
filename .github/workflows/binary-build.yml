@@ -22,7 +22,7 @@ jobs:
         staticcompile: ['ON', 'OFF']
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4.1.1
     
     # install dependencies
     - name: Install boost & help2man for Linux
@@ -80,7 +80,7 @@ jobs:
       if: matrix.os == 'windows-2022' && matrix.staticcompile == 'ON'
       uses: actions/upload-artifact@v3
       with:
-        name: Release\cryptominisat5.exe
+        name: cryptominisat\Release\cryptominisat5.exe
         path: cryptominisat5.exe
 
     #- name: "Install CMS (unix)"
