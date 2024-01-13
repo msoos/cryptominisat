@@ -148,11 +148,11 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 #define frat_func_end_with(txt) *solver->frat << __PRETTY_FUNCTION__ << " --- " << txt << " end\n"
 #define frat_func_end_raw *frat << __PRETTY_FUNCTION__ << " end\n"
 #else
-#define frat_func_start do { } while (0)
-#define frat_func_start_raw do { } while (0)
-#define frat_func_end do { } while (0)
+#define frat_func_start() do { } while (0)
+#define frat_func_start_raw() do { } while (0)
+#define frat_func_end() do { } while (0)
 #define frat_func_end_with(x) do { } while (0)
-#define frat_func_end_raw do { } while (0)
+#define frat_func_end_raw() do { } while (0)
 #endif
 
 #ifdef VERBOSE_DEBUG

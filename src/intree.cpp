@@ -47,7 +47,7 @@ bool InTree::replace_until_fixedpoint(bool& aborted)
         *solver->conf.global_timeout_multiplier
         *0.5;
     time_limit = (double)time_limit * std::min(std::pow((double)(numCalls+1), 0.2), 3.0);
-    frat_func_start;
+    frat_func_start();
 
     aborted = false;
     uint64_t bogoprops = 0;
@@ -71,7 +71,7 @@ bool InTree::replace_until_fixedpoint(bool& aborted)
         }
     }
 
-    frat_func_end;
+    frat_func_end();
     return true;
 }
 
@@ -133,7 +133,7 @@ bool InTree::intree_probe() {
     removedIrredBin = 0;
     removedRedBin = 0;
     numCalls++;
-    frat_func_start;
+    frat_func_start();
 
     if (!solver->conf.doFindAndReplaceEqLits) {
       verb_print(1, "[intree] SCC is not allowed, intree cannot work this way, aborting");
@@ -192,7 +192,7 @@ bool InTree::intree_probe() {
         solver->sqlStats->time_passed( solver , "intree" , time_used , time_out , time_remain);
     }
 
-    frat_func_end;
+    frat_func_end();
     solver->use_depth_trick = true;
     solver->perform_transitive_reduction = true;
     return solver->okay();

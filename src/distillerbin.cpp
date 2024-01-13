@@ -53,7 +53,7 @@ bool DistillerBin::distill()
     assert(solver->ok);
     numCalls++;
     runStats.clear();
-    frat_func_start;
+    frat_func_start();
 
     if (!distill_bin_cls_all(1.0)) goto end;
 
@@ -64,7 +64,7 @@ end:
         else runStats.print_short(solver);
     }
     runStats.clear();
-    frat_func_end;
+    frat_func_end();
 
     return solver->okay();
 }
@@ -77,7 +77,7 @@ bool DistillerBin::distill_bin_cls_all( double time_mult) {
 
     double myTime = cpuTime();
     const size_t origTrailSize = solver->trail_size();
-    frat_func_start;
+    frat_func_start();
 
     //Time-limiting
     maxNumProps =
@@ -128,7 +128,7 @@ bool DistillerBin::distill_bin_cls_all( double time_mult) {
             , time_remain
         );
     }
-    frat_func_end;
+    frat_func_end();
 
     //Update stats
     runStats.time_used += time_used;

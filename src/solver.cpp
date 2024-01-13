@@ -214,7 +214,7 @@ bool Solver::add_xor_clause_inter(
     , const bool attach
     , const int32_t XID
 ) {
-    frat_func_start_raw;
+    frat_func_start_raw();
     VERBOSE_PRINT("add_xor_clause_inter: " << lits << " rhs: " << rhs);
     assert(okay());
     assert(!attach || qhead == trail.size());
@@ -255,7 +255,7 @@ bool Solver::add_xor_clause_inter(
         x.XID = XID2;
         attach_xor_clause(xorclauses.size()-1);
     }
-    frat_func_end_raw;
+    frat_func_end_raw();
     return okay();
 }
 
@@ -1473,7 +1473,7 @@ lbool Solver::solve_with_assumptions(
 void Solver::write_final_frat_clauses() {
     if (!frat->enabled()) return;
     assert(decisionLevel() == 0);
-    frat_func_start;
+    frat_func_start();
 
     if (varReplacer) varReplacer->delete_frat_cls();
 
@@ -1530,7 +1530,7 @@ void Solver::write_final_frat_clauses() {
         Clause* cl = cl_alloc.ptr(offs);
         *frat << finalcl << *cl << fin;
     }
-    frat_func_end;
+    frat_func_end();
 }
 
 void Solver::dump_memory_stats_to_sql()
@@ -3129,7 +3129,7 @@ void Solver::renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors
 // with ONLY the ones attached that are not in a matrix
 // and the matrices are created and initialized
 bool Solver::find_and_init_all_matrices() {
-    frat_func_start;
+    frat_func_start();
     if (!xorclauses_updated) {
         if (conf.verbosity >= 2) {
             cout << "c [find&init matx] XORs not updated-> not performing matrix init. Matrices: "
@@ -3160,7 +3160,7 @@ bool Solver::find_and_init_all_matrices() {
     #endif
 
     xorclauses_updated = false;
-    frat_func_end;
+    frat_func_end();
     return true;
 }
 

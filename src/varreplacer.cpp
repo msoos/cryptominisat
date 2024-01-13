@@ -214,7 +214,7 @@ void VarReplacer::update_all_vardata()
 bool VarReplacer::perform_replace() {
     assert(solver->okay());
     checkUnsetSanity();
-    frat_func_start;
+    frat_func_start();
 
     //Set up stats
     runStats.clear();
@@ -283,7 +283,7 @@ end:
             , time_used
         );
     }
-    frat_func_end;
+    frat_func_end();
 
     if (solver->okay()) {
         DEBUG_ATTACH_MORE_DO(solver->check_wrong_attach());
@@ -306,7 +306,7 @@ void VarReplacer::delete_frat_cls()
 
 // Returns FALSE if the XOR needs to be removed
 bool VarReplacer::replace_one_xor_clause(Xor& x) {
-    frat_func_start;
+    frat_func_start();
     del_xor_reason(x);
     bool go_again = true;
     while(go_again) {
@@ -594,7 +594,7 @@ bool VarReplacer::replace_bnns() {
 @brief Replaces variables in long clauses
 */
 bool VarReplacer::replace_set(vector<ClOffset>& cs) {
-    frat_func_start;
+    frat_func_start();
     assert(!solver->frat->something_delayed());
     vector<ClOffset>::iterator i = cs.begin();
     vector<ClOffset>::iterator j = i;
@@ -641,7 +641,7 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs) {
     cs.resize(cs.size() - (i-j));
     assert(!solver->frat->something_delayed());
 
-    frat_func_end;
+    frat_func_end();
     return solver->okay();
 }
 

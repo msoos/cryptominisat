@@ -377,7 +377,7 @@ bool ClauseCleaner::remove_and_clean_all() {
     assert(solver->okay());
     assert(solver->prop_at_head());
     assert(solver->decisionLevel() == 0);
-    frat_func_start;
+    frat_func_start();
 
     size_t last_trail = numeric_limits<size_t>::max();
     while(last_trail != solver->trail_size()) {
@@ -423,14 +423,14 @@ bool ClauseCleaner::remove_and_clean_all() {
     #endif
 
     verb_print(2, "[clean]" << solver->conf.print_times(cpuTime() - myTime));
-    frat_func_end;
+    frat_func_end();
     return solver->okay();
 }
 
 
 bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached) {
     if (solver->frat->enabled()) assert(x.XID != 0);
-    frat_func_start;
+    frat_func_start();
     del_xor_reason(x);
     *solver->frat << deldelayx << x << fin;
 
@@ -484,17 +484,17 @@ bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached
                 *solver->frat << implyclfromx << ++solver->clauseID << x.XID << fin;
                 set_unsat_cl_id(solver->clauseID);
             }
-            frat_func_end;
+            frat_func_end();
             return false;
         case 1:
         case 2:{
             assert(solver->okay());
             solver->add_xor_clause_inter(vars_to_lits(x), x.rhs, true, x.XID);
-            frat_func_end;
+            frat_func_end();
             return false;
         }
         default:
-            frat_func_end;
+            frat_func_end();
             return true;
     }
 }

@@ -31,7 +31,7 @@ bool Solver::full_probe(const bool bin_only)
 {
     assert(okay());
     assert(decisionLevel() == 0);
-    frat_func_start;
+    frat_func_start();
 
     const size_t orig_num_free_vars = solver->get_num_free_vars();
     double myTime = cpuTime();
@@ -106,7 +106,7 @@ bool Solver::full_probe(const bool bin_only)
             , time_remain
         );
     }
-    frat_func_end;
+    frat_func_end();
 
     return okay();
 }

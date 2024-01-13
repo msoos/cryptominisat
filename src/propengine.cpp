@@ -1077,7 +1077,7 @@ void PropEngine::vmtf_bump_queue (const uint32_t var) {
 
 
 vector<Lit>* PropEngine::get_xor_reason(const PropBy& reason, int32_t& ID) {
-    frat_func_start;
+    frat_func_start();
     if (reason.get_matrix_num() == 1000) {
         auto& x = xorclauses[reason.get_row_num()];
         if (frat->enabled()) {
@@ -1139,5 +1139,5 @@ vector<Lit>* PropEngine::get_xor_reason(const PropBy& reason, int32_t& ID) {
     } else {
         return gmatrices[reason.get_matrix_num()]->get_reason(reason.get_row_num(), ID);
     }
-    frat_func_end;
+    frat_func_end();
 }

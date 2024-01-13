@@ -257,7 +257,7 @@ bool EGaussian::full_init(bool& created) {
     assert(solver->decisionLevel() == 0);
     assert(solver->prop_at_head());
     assert(initialized == false);
-    frat_func_start;
+    frat_func_start();
     created = true;
 
     uint32_t trail_before;
@@ -316,7 +316,7 @@ bool EGaussian::full_init(bool& created) {
     update_cols_vals_set(true);
     SLOW_DEBUG_DO(check_invariants());
 
-    frat_func_end;
+    frat_func_end();
     return solver->okay();
 }
 
@@ -426,7 +426,7 @@ void EGaussian::eliminate() {
 }
 
 vector<Lit>* EGaussian::get_reason(const uint32_t row, int32_t& out_ID) {
-    frat_func_start;
+    frat_func_start();
     if (!xor_reasons[row].must_recalc) {
         out_ID = xor_reasons[row].ID;
         return &(xor_reasons[row].reason);
@@ -459,7 +459,7 @@ vector<Lit>* EGaussian::get_reason(const uint32_t row, int32_t& out_ID) {
 
     xor_reasons[row].must_recalc = false;
     xor_reasons[row].ID = out_ID;
-    frat_func_end;
+    frat_func_end();
     return &tofill;
 }
 
@@ -467,7 +467,7 @@ Xor EGaussian::xor_reason_create(const uint32_t row_n) {
     bool rhs = mat[row_n].rhs();
     assert(!(rhs == false && mat[row_n].popcnt() == 0)); // trivial clause not supported here
     assert(solver->frat->enabled());
-    frat_func_start;
+    frat_func_start();
 
     Xor reason;
     mat[row_n].get_reason_xor(reason, solver->assigns, col_to_var, *cols_vals, *tmp_col2);
@@ -479,7 +479,7 @@ Xor EGaussian::xor_reason_create(const uint32_t row_n) {
     *solver->frat << fin;
     VERBOSE_PRINT("reason XOR: " << reason);
 
-    frat_func_end;
+    frat_func_end();
     return reason;
 }
 
@@ -488,7 +488,7 @@ gret EGaussian::init_adjust_matrix() {
     assert(row_to_var_non_resp.empty());
     assert(satisfied_xors.size() >= num_rows);
     delete_reasons(); xor_reasons.resize(num_rows);
-    frat_func_start;
+    frat_func_start();
     VERBOSE_PRINT("mat[" << matrix_no << "] init adjusting matrix");
 
     PackedMatrix::iterator end = mat.begin() + num_rows;
@@ -621,7 +621,7 @@ gret EGaussian::init_adjust_matrix() {
     mat.resizeNumRows(row_i - adjust_zero);
     num_rows = row_i - adjust_zero;
 
-    frat_func_end;
+    frat_func_end();
     return gret::nothing_satisfied;
 }
 
@@ -1472,7 +1472,7 @@ void CMSat::EGaussian::move_back_xor_clauses() {
 
 
 void CMSat::EGaussian::delete_reasons() {
-    frat_func_start;
+    frat_func_start();
     if (!solver->frat->enabled()) return;
     for(auto& c: xor_reasons) {
         if (c.ID != 0) *solver->frat << del << c.ID << c.reason << fin;
@@ -1483,12 +1483,12 @@ void CMSat::EGaussian::delete_reasons() {
         *solver->frat << del << c.first << c.second << fin;
     }
     del_unit_cls.clear();
-    frat_func_end;
+    frat_func_end();
 }
 
 void CMSat::EGaussian::finalize_frat() {
     assert(solver->frat->enabled());
-    frat_func_start;
+    frat_func_start();
     for(const auto& c: del_unit_cls) {
         *solver->frat << finalcl << c.first << c.second << fin;
     }
@@ -1504,5 +1504,5 @@ void CMSat::EGaussian::finalize_frat() {
         *solver->frat << finalx << x << fin;
         x.XID = 0;
     }
-    frat_func_end;
+    frat_func_end();
 }

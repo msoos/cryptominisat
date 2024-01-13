@@ -3472,7 +3472,7 @@ inline bool Searcher::check_order_heap_sanity() {
 }
 
 bool Searcher::attach_xorclauses() {
-    frat_func_start;
+    frat_func_start();
     SLOW_DEBUG_DO(for(const auto& gw: gwatches) assert(gw.empty()));
     solver->remove_and_clean_detached_xors(xorclauses);
     if (!okay()) return okay();
@@ -3503,7 +3503,7 @@ bool Searcher::attach_xorclauses() {
         attach_xor_clause(j-1);
     }
     xorclauses.resize(j);
-    frat_func_end;
+    frat_func_end();
     return okay();
 }
 

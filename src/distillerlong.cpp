@@ -151,7 +151,7 @@ DistillerLong::DistillerLong(Solver* _solver) :
 
 bool DistillerLong::distill(const bool red, bool only_rem_cl)
 {
-    frat_func_start;
+    frat_func_start();
     assert(solver->ok);
     numCalls_red += (unsigned)red;
     numCalls_irred += (unsigned)!red;
@@ -215,7 +215,7 @@ bool DistillerLong::distill(const bool red, bool only_rem_cl)
 end:
     lit_counts.clear();
     lit_counts.shrink_to_fit();
-    frat_func_end;
+    frat_func_end();
 
     return solver->okay();
 }
@@ -231,7 +231,7 @@ bool DistillerLong::distill_long_cls_all(
     assert(solver->ok);
     if (time_mult == 0.0) return solver->okay();
     verb_print(6, "c Doing distillation branch for long clauses");
-    frat_func_start;
+    frat_func_start();
 
     double myTime = cpuTime();
     const size_t origTrailSize = solver->trail_size();
@@ -363,12 +363,12 @@ bool DistillerLong::distill_long_cls_all(
     runStats.time_used += time_used;
     runStats.zeroDepthAssigns += solver->trail_size() - origTrailSize;
 
-    frat_func_end;
+    frat_func_end();
     return solver->okay();
 }
 
 bool DistillerLong::go_through_clauses(vector<ClOffset>& cls, bool also_remove, bool only_remove) {
-    frat_func_start;
+    frat_func_start();
     bool time_out = false;
     vector<ClOffset>::iterator i, j;
     i = j = cls.begin();
@@ -416,7 +416,7 @@ bool DistillerLong::go_through_clauses(vector<ClOffset>& cls, bool also_remove, 
     }
     cls.resize(cls.size()- (i-j));
 
-    frat_func_end;
+    frat_func_end();
     return time_out;
 }
 
@@ -424,7 +424,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     ClOffset offset, const ClauseStats* const stats,
     const bool also_remove, const bool only_remove
 ) {
-    frat_func_start;
+    frat_func_start();
     assert(solver->prop_at_head());
     assert(solver->decisionLevel() == 0);
     bool True_confl = false;
@@ -510,7 +510,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
         *solver->frat << findelay;
         solver->free_cl(offset);
         runStats.clRemoved++;
-        frat_func_end;
+        frat_func_end();
         return CL_OFFSET_MAX;
     }
 
@@ -522,7 +522,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
         std::swap(*std::find(cl.begin(), cl.end(), cl_lit1), cl[0]);
         std::swap(*std::find(cl.begin(), cl.end(), cl_lit2), cl[1]);
         solver->frat->forget_delay();
-        frat_func_end;
+        frat_func_end();
         return offset;
     }
 
@@ -590,12 +590,12 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
         //This new, distilled clause has been distilled now.
         if (also_remove) cl2->tried_to_remove = 1;
         else cl2->distilled = 1;
-        frat_func_end;
+        frat_func_end();
         return solver->cl_alloc.get_offset(cl2);
     } else {
         STATS_DO(solver->stats_del_cl(offset));
         //it became a bin/unit/zero
-        frat_func_end;
+        frat_func_end();
         return CL_OFFSET_MAX;
     }
 }

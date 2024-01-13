@@ -52,7 +52,7 @@ bool DistillerLongWithImpl::distill_long_with_implicit(const bool alsoStrengthen
     assert(solver->ok);
     numCalls++;
     if (!solver->clauseCleaner->remove_and_clean_all()) goto end;
-    frat_func_start;
+    frat_func_start();
 
     runStats.redWatchBased.clear();
     runStats.irredWatchBased.clear();
@@ -86,7 +86,7 @@ end:
             runStats.print_short(solver);
     }
     runStats.clear();
-    frat_func_end;
+    frat_func_end();
 
     return solver->okay();
 }

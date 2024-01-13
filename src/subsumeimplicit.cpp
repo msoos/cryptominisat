@@ -129,7 +129,7 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats, std::string calle
         *solver->conf.global_timeout_multiplier;
     timeAvailable = orig_timeAvailable;
     runStats.clear();
-    frat_func_start;
+    frat_func_start();
 
     //For randomization, we must have at least 1
     if (solver->watches.size() == 0) {
@@ -164,7 +164,7 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats, std::string calle
             , time_remain
         );
     }
-    frat_func_end;
+    frat_func_end();
 
     if (check_stats) {
         #ifdef DEBUG_IMPLICIT_STATS

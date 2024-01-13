@@ -237,7 +237,7 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
 
 void XorFinder::add_found_xor(const Xor& found_xor)
 {
-    frat_func_start;
+    frat_func_start();
     solver->xorclauses.push_back(found_xor);
     Xor& added = solver->xorclauses.back();
     runStats.foundXors++;
@@ -255,7 +255,7 @@ void XorFinder::add_found_xor(const Xor& found_xor)
         }
         *solver->frat << implyxfromcls << added; solver->add_chain(); *solver->frat << fin;
     }
-    frat_func_end;
+    frat_func_end();
 }
 
 void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
