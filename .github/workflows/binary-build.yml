@@ -93,7 +93,3 @@ jobs:
     - name: "Install CMS (unix)"
       if: matrix.os == 'ubuntu-20.04'
       run: sudo cmake --install build --config ${{ matrix.build_type }}
-
-    - name: "Install Spix (win)"
-      if: ${{ contains(matrix.os, 'windows') }}
-      run: cmake --install build --config ${{ matrix.build_type }}
