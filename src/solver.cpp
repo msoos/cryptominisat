@@ -102,10 +102,7 @@ using std::endl;
 #include "sqlitestats.h"
 #endif
 
-//#define FRAT_DEBUG
-
 //#define DEBUG_RENUMBER
-
 //#define DEBUG_IMPLICIT_PAIRS_TRIPLETS
 
 Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter) :
@@ -115,9 +112,7 @@ Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter
     intree = new InTree(this);
 
 #ifdef USE_BREAKID
-    if (conf.doBreakid) {
-        breakid = new BreakID(this);
-    }
+    if (conf.doBreakid) breakid = new BreakID(this);
 #endif
 
     if (conf.perform_occur_based_simp) {
@@ -630,18 +625,9 @@ void Solver::attachClause(
     const Clause& cl
     , const bool checkAttach
 ) {
-    #if defined(FRAT_DEBUG)
-    if (frat) {
-        *frat << add << cl << fin;
-    }
-    #endif
-
     //Update stats
-    if (cl.red()) {
-        litStats.redLits += cl.size();
-    } else {
-        litStats.irredLits += cl.size();
-    }
+    if (cl.red()) litStats.redLits += cl.size();
+    else litStats.irredLits += cl.size();
 
     //Call Solver's function for heavy-lifting
     PropEngine::attachClause(cl, checkAttach);
@@ -1910,18 +1896,15 @@ lbool Solver::execute_inprocess_strategy(
             }
         } else if (token == "breakid") {
             if (conf.doBreakid
-                && !(frat->enabled() || conf.simulate_frat)
+                && frat->enabled()
+                && !conf.simulate_frat
                 && (solveStats.num_simplify == 0 ||
                    (solveStats.num_simplify % conf.breakid_every_n == (conf.breakid_every_n-1)))
             ) {
                 #ifdef USE_BREAKID
-                if (!breakid->doit()) {
-                    return l_False;
-                }
+                if (!breakid->doit()) return l_False;
                 #else
-                if (conf.verbosity) {
-                    cout << "c [breakid] BreakID not compiled in, skipping" << endl;
-                }
+                verb_print(1,"[breakid] BreakID not compiled in, skipping");
                 #endif
             }
         } else if (token == "bosphorus") {

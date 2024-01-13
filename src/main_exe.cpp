@@ -50,9 +50,6 @@ int main(int argc, char** argv)
     } catch (CMSat::TooLongClauseError& e) {
         std::cerr << "ERROR! Too long clause inserted" << std::endl;
         exit(-1);
-    } catch (const boost::program_options::error& ex) {
-        std::cerr << "Error: " << ex.what() << std::endl;
-        exit(-1);
     }
 
     return ret;

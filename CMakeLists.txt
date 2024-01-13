@@ -111,7 +111,6 @@ option(BUILD_SHARED_LIBS "Build the shared library" ON)
 option(STATICCOMPILE "Compile to static executable" OFF)
 if (STATICCOMPILE)
     set(BUILD_SHARED_LIBS OFF)
-    set(Boost_USE_STATIC_LIBS ON)
 #     if (IPASIR)
 #         if ( ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 #             set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -Wl,--whole-archive -ldl -lpthread -Wl,--no-whole-archive -static ")
@@ -123,7 +122,6 @@ endif()
 
 option(EMSCRIPTEN "Generate only emscripten JS" OFF)
 if (EMSCRIPTEN)
-    set(ONLY_SIMPLE ON)
     set(BUILD_SHARED_LIBS ON)
     set(NOZLIB ON)
 else()
@@ -391,7 +389,6 @@ if ((${CMAKE_SYSTEM_NAME} MATCHES "Linux") OR (${CMAKE_SYSTEM_NAME} MATCHES "Dar
             set(${VAR_TO_MODIFY} "${replacement}" CACHE STRING "Default flags for ${build_config} configuration" FORCE)
         endforeach()
     else()
-        add_definitions(-DBOOST_TEST_DYN_LINK)
         MESSAGE(STATUS "Compiling for dynamic library use")
     endif()
 endif()
@@ -434,22 +431,6 @@ MESSAGE(STATUS "PROJECT_VERSION: ${PROJECT_VERSION}")
 MESSAGE(STATUS "PROJECT_VERSION_MAJOR: ${PROJECT_VERSION_MAJOR}")
 MESSAGE(STATUS "PROJECT_VERSION_MINOR: ${PROJECT_VERSION_MINOR}")
 MESSAGE(STATUS "PROJECT_VERSION_PATCH: ${PROJECT_VERSION_PATCH}")
-
-set(boost_comps "")
-option(ARJUN_SERIALIZE "Arjun solution reconstruction" OFF)
-if (ARJUN_SERIALIZE)
-    add_definitions( -DARJUN_SERIALIZE )
-    set(boost_comps
-        ${boost_comps}
-        serialization)
-endif()
-option(ONLY_SIMPLE "Only build very simplistic executable -- no Boost needed" OFF)
-if (NOT ONLY_SIMPLE)
-    set(boost_comps
-        ${boost_comps}
-        program_options)
-endif()
-find_package( Boost 1.46.0 COMPONENTS ${boost_comps})
 
 option(FINAL_PREDICTOR "Use final predictor" OFF)
 if (FINAL_PREDICTOR)
@@ -508,7 +489,7 @@ endif()
 # ----------
 # manpage
 # ----------
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND NOT EMSCRIPTEN AND NOT ONLY_SIMPLE)
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND NOT EMSCRIPTEN)
     find_program(HELP2MAN_FOUND help2man)
     if (HELP2MAN_FOUND)
         ADD_CUSTOM_TARGET(man_cryptominisat5
@@ -675,15 +656,6 @@ if (FINAL_PREDICTOR OR STATS OR ENABLE_TESTING)
     endif()
 endif()
 
-#command-line parsing executable needs boost program-options
-if(NOT Boost_FOUND)
-    set(ONLY_SIMPLE ON)
-    set(ARJUN_SERIALIZE OFF)
-    message(STATUS "Only building executable with few command-line options because the boost program_options library were not available")
-else()
-    message(STATUS "Boost -- found at library: ${Boost_LIBRARIES}")
-endif()
-
 # -----------------------------------------------------------------------------
 # Provide an export name to be used by targets that wish to export themselves.
 # -----------------------------------------------------------------------------
@@ -751,9 +723,7 @@ endif()
 set(CRYPTOMINISAT5_TARGETS_FILENAME "cryptominisat5Targets.cmake")
 set(CRYPTOMINISAT5_CONFIG_FILENAME "cryptominisat5Config.cmake")
 set(CRYPTOMINISAT5_VERSION_FILENAME "cryptominisat5ConfigVersion.cmake")
-set(CRYPTOMINISAT5_STATIC_DEPS
-    ${SQLITE3_LIBRARIES}
-)
+set(CRYPTOMINISAT5_STATIC_DEPS ${SQLITE3_LIBRARIES})
 
 # Export targets
 set(MY_TARGETS cryptominisat5)

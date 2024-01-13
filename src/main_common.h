@@ -37,7 +37,7 @@ public:
                          std::vector<uint32_t>* only = NULL);
     void handle_frat_option();
 
-    string fratfilname;
+    string frat_fname;
     FILE* fratf = NULL;
     bool zero_exit_status = false;
     CMSat::SolverConf conf;
