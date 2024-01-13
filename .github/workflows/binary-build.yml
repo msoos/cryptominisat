@@ -80,7 +80,7 @@ jobs:
       if: matrix.os == 'windows-2022'
       uses: actions/upload-artifact@v3
       with:
-        name: cryptominisat5.exe
+        name: Release\cryptominisat5.exe
         path: cryptominisat5.exe
 
     #- name: "Install CMS (unix)"
