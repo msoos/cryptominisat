@@ -266,10 +266,7 @@ bool DistillerLong::distill_long_cls_all(
                 ClauseSizeSorterLargestFirst(solver->cl_alloc)
             );
         } else if (solver->conf.distill_sort == 2) {
-            std::sort(offs.begin(),
-                offs.end(),
-                ClauseSorterSmallGlueFirst(solver->cl_alloc)
-            );
+            std::sort(offs.begin(), offs.end(), ClauseSorterSmallGlueFirst(solver->cl_alloc));
         } else if (solver->conf.distill_sort == 3) {
             #ifdef FINAL_PREDICTOR
             if (red) {
@@ -284,15 +281,9 @@ bool DistillerLong::distill_long_cls_all(
             exit(-1);
             #endif
         } else if (solver->conf.distill_sort == 4) {
-            bool randomly_sort = rnd_uint(solver->mtrand, solver->conf.distill_rand_shuffle_order_every_n) == 0;
-            if (randomly_sort) {
-                std::shuffle(offs.begin(), offs.end(), solver->mtrand);
-            } else {
-                std::sort(offs.begin(),
-                    offs.end(),
-                    ClauseSizeSorterLargestFirst(solver->cl_alloc)
-                );
-            }
+            bool rnd_sort = rnd_uint(solver->mtrand, solver->conf.distill_rand_shuffle_order_every_n) == 0;
+            if (rnd_sort) std::shuffle(offs.begin(), offs.end(), solver->mtrand);
+            else std::sort(offs.begin(), offs.end(), ClauseSizeSorterLargestFirst(solver->cl_alloc));
         }
     }
 

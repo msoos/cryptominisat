@@ -1837,7 +1837,7 @@ bool Searcher::handle_conflict(PropBy confl)
     // TODO FRAT -- this is broken because the reasons because of XOR for the propagations
     // that lead to UNSAT is not asked for. We could definitely do it by asking for
     // all XOR reasons for the propagations that lead to UNSAT
-    if (false && decision_clause.size() > 0) {
+    if (!frat->enabled() && decision_clause.size() > 0) {
         *frat << "decision learnt clause!\n";
         chain.clear();
         int i = decision_clause.size();

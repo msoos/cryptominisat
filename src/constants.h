@@ -28,9 +28,9 @@ THE SOFTWARE.
 #include <limits>
 #include <random>
 
-#define unif_uint_dist(x,y) std::uniform_int_distribution<> x(0, y)
-inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum) {
-    unif_uint_dist(u, maximum);
+#define unif_uint_dist(x,y) std::uniform_int_distribution<uint32_t> x(0, y)
+inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusive) {
+    unif_uint_dist(u, maximum_inclusive);
     return u(mtrand);
 }
 

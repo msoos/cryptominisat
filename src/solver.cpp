@@ -1470,13 +1470,11 @@ lbool Solver::solve_with_assumptions(
     return status;
 }
 
-void Solver::write_final_frat_clauses()
-{
+void Solver::write_final_frat_clauses() {
     if (!frat->enabled()) return;
     assert(decisionLevel() == 0);
     frat_func_start;
 
-    *frat << "vrepl finalize begin\n";
     if (varReplacer) varReplacer->delete_frat_cls();
 
     // -1 indicates tbuddy already added the empty clause
@@ -1532,6 +1530,7 @@ void Solver::write_final_frat_clauses()
         Clause* cl = cl_alloc.ptr(offs);
         *frat << finalcl << *cl << fin;
     }
+    frat_func_end;
 }
 
 void Solver::dump_memory_stats_to_sql()
