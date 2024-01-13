@@ -91,7 +91,7 @@ jobs:
         path: Release\cryptominisat5.exe
 
     - name: "Install CMS (unix)"
-      if: ${{ !contains(matrix.os, 'windows') }}
+      if: matrix.os == 'ubuntu-20.04'
       run: sudo cmake --install build --config ${{ matrix.build_type }}
 
     - name: "Install Spix (win)"
