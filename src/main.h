@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include <memory>
 #include <fstream>
 
+#include "argparse.hpp"
 #include "main_common.h"
 #include "solverconf.h"
 #include "cryptominisat.h"
@@ -35,8 +36,6 @@ THE SOFTWARE.
 using std::string;
 using std::vector;
 
-#include <boost/program_options.hpp>
-namespace po = boost::program_options;
 using namespace CMSat;
 
 class Main: public MainCommon
@@ -66,21 +65,12 @@ class Main: public MainCommon
         void parse_restart_type();
         void parse_polarity_type();
         void check_num_threads_sanity(const unsigned thread_num) const;
-
-        po::positional_options_description p;
-        po::options_description all_options;
+        argparse::ArgumentParser program = argparse::ArgumentParser("cryptominisat5");
 
     protected:
         //Options
-        po::variables_map vm;
         virtual void add_supported_options();
         virtual void call_after_parse() {}
-
-        po::options_description help_options_simple;
-        po::options_description help_options_complicated;
-        po::options_description hiddenOptions;
-        po::options_description generalOptions = po::options_description("Main options");
-
         SATSolver* solver = NULL;
 
         //File reading

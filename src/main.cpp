@@ -53,15 +53,13 @@ THE SOFTWARE.
 #include "dimacsparser.h"
 #include "cryptominisat.h"
 #include "signalcode.h"
+#include "argparse.hpp"
 
-#include <boost/lexical_cast.hpp>
 using namespace CMSat;
-using boost::lexical_cast;
 
 using std::cout;
 using std::cerr;
 using std::endl;
-using boost::lexical_cast;
 using std::map;
 double wallclock_time_started = 0.0;
 
@@ -317,31 +315,26 @@ void Main::printResultFunc(
 void Main::add_supported_options()
 {
     // Declare the supported options.
-    generalOptions.add_options()
-    ("help,h", "Print simple help")
-    ("hhelp", "Print extensive help")
-    ("version,v", "Print version info")
-    ("verb", po::value(&conf.verbosity)->default_value(conf.verbosity)
-        , "[0-10] Verbosity of solver. 0 = only solution")
-    ("random,r", po::value(&conf.origSeed)->default_value(conf.origSeed)
-        , "[0..] Random seed")
-    ("threads,t", po::value(&num_threads)->default_value(1)
-        ,"Number of threads")
-    ("maxtime", po::value(&maxtime),
-        "Stop solving after this much time (s)")
-    ("maxconfl", po::value(&maxconfl),
-        "Stop solving after this many conflicts")
-    ("mult,m", po::value(&conf.orig_global_timeout_multiplier)->default_value(conf.orig_global_timeout_multiplier)
-        , "Time multiplier for all simplification cutoffs")
-    ("nextm", po::value(&conf.global_next_multiplier)->default_value(conf.global_next_multiplier)
-        , "Global multiplier when the next inprocessing should take place")
-    ("memoutmult", po::value(&conf.var_and_mem_out_mult)->default_value(conf.var_and_mem_out_mult)
-        , "Multiplier for memory-out checks on inprocessing functions. It limits things such as clause-link-in. Useful when you have limited memory but still want to do some inprocessing")
+    program.add_argument("help,h").help("Print simple help)");
+    program.add_argument("hhelp").help("Print extensive help");
+    program.add_argument("version,v").help("Print version info");
+    program.add_argument("verb")
+    .action([&](const auto& a) {conf.verbosity=a)
+    .default_value(conf.verbosity)
+    .help("[0-10] Verbosity of solver. 0 = only solution")
+
+    /* program.add_argument("random,r", po::value(&conf.origSeed)->default_value(conf.origSeed) , "[0..] Random seed") */
+    /* program.add_argument("threads,t", po::value(&num_threads)->default_value(1) ,"Number of threads") */
+    /* program.add_argument("maxtime", po::value(&maxtime), "Stop solving after this much time (s)") */
+    /* program.add_argument("maxconfl", po::value(&maxconfl), "Stop solving after this many conflicts") */
+    /* program.add_argument("mult,m", po::value(&conf.orig_global_timeout_multiplier)->default_value(conf.orig_global_timeout_multiplier) , "Time multiplier for all simplification cutoffs") */
+    /* program.add_argument("nextm", po::value(&conf.global_next_multiplier)->default_value(conf.global_next_multiplier) , "Global multiplier when the next inprocessing should take place") */
+    /* program.add_argument("memoutmult", po::value(&conf.var_and_mem_out_mult)->default_value(conf.var_and_mem_out_mult) , "Multiplier for memory-out checks on inprocessing functions. It limits things such as clause-link-in. Useful when you have limited memory but still want to do some inprocessing") */
+
     #ifdef STATS_NEEDED
     ("clid", po::bool_switch(&clause_ID_needed)
         , "Add clause IDs to FRAT output")
     #endif
-    ;
 
     #ifdef FINAL_PREDICTOR
     po::options_description predictOptions("Predict options");
@@ -910,6 +903,7 @@ string remove_last_comma_if_exists(std::string s)
 void Main::check_options_correctness()
 {
     try {
+        program.parse_args(argc, argv);
         po::store(po::command_line_parser(argc, argv).options(all_options).positional(p).run(), vm);
         if (vm.count("hhelp"))
         {
@@ -953,85 +947,92 @@ void Main::check_options_correctness()
         }
 
         po::notify(vm);
-    } catch (boost::exception_detail::clone_impl<
-        boost::exception_detail::error_info_injector<po::unknown_option> >& c
-    ) {
-        cerr
-        << "ERROR: Some option you gave was wrong. Please give '--help' to get help" << endl
-        << "       Unknown option: " << c.what() << endl;
-        std::exit(-1);
-    } catch (boost::bad_any_cast &e) {
-        std::cerr
-        << "ERROR! You probably gave a wrong argument type" << endl
-        << "       Bad cast: " << e.what()
-        << endl;
-
-        std::exit(-1);
-    } catch (boost::exception_detail::clone_impl<
-        boost::exception_detail::error_info_injector<po::invalid_option_value> >& what
-    ) {
-        cerr
-        << "ERROR: Invalid value '" << what.what() << "'" << endl
-        << "       given to option '" << what.get_option_name() << "'"
-        << endl;
-
-        std::exit(-1);
-    } catch (boost::exception_detail::clone_impl<
-        boost::exception_detail::error_info_injector<po::multiple_occurrences> >& what
-    ) {
-        cerr
-        << "ERROR: " << what.what() << " of option '"
-        << what.get_option_name() << "'"
-        << endl;
-
-        std::exit(-1);
-    } catch (boost::exception_detail::clone_impl<
-        boost::exception_detail::error_info_injector<po::required_option> >& what
-    ) {
-        cerr
-        << "ERROR: You forgot to give a required option '"
-        << what.get_option_name() << "'"
-        << endl;
-
-        std::exit(-1);
-    } catch (boost::exception_detail::clone_impl<
-        boost::exception_detail::error_info_injector<po::too_many_positional_options_error> >& what
-    ) {
-        cerr
-        << "ERROR: You gave too many positional arguments. Only at most two can be given:" << endl
-        << "       the 1st the CNF file input, and optionally, the 2nd the FRAT file output" << endl
-        << "    OR (pre-processing)  1st for the input CNF, 2nd for the simplified CNF" << endl
-        << "    OR (post-processing) 1st for the solution file" << endl
-        ;
-
-        std::exit(-1);
-    } catch (boost::exception_detail::clone_impl<
-        boost::exception_detail::error_info_injector<po::ambiguous_option> >& what
-    ) {
-        cerr
-        << "ERROR: The option you gave was not fully written and matches" << endl
-        << "       more than one option. Please give the full option name." << endl
-        << "       The option you gave: '" << what.get_option_name() << "'" <<endl
-        << "       The alternatives are: ";
-        for(size_t i = 0; i < what.alternatives().size(); i++) {
-            cout << what.alternatives()[i];
-            if (i+1 < what.alternatives().size()) {
-                cout << ", ";
-            }
-        }
-        cout << endl;
-
-        std::exit(-1);
-    } catch (boost::exception_detail::clone_impl<
-        boost::exception_detail::error_info_injector<po::invalid_command_line_syntax> >& what
-    ) {
-        cerr
-        << "ERROR: The option you gave is missing the argument or the" << endl
-        << "       argument is given with space between the equal sign." << endl
-        << "       detailed error message: " << what.what() << endl
-        ;
-        std::exit(-1);
     }
+    catch (const std::exception& err) {
+        std::cerr << err.what() << std::endl;
+        std::cerr << program;
+        return 1;
+    }
+
+    /* } catch (boost::exception_detail::clone_impl< */
+    /*     boost::exception_detail::error_info_injector<po::unknown_option> >& c */
+    /* ) { */
+    /*     cerr */
+    /*     << "ERROR: Some option you gave was wrong. Please give '--help' to get help" << endl */
+    /*     << "       Unknown option: " << c.what() << endl; */
+    /*     std::exit(-1); */
+    /* } catch (boost::bad_any_cast &e) { */
+    /*     std::cerr */
+    /*     << "ERROR! You probably gave a wrong argument type" << endl */
+    /*     << "       Bad cast: " << e.what() */
+    /*     << endl; */
+
+    /*     std::exit(-1); */
+    /* } catch (boost::exception_detail::clone_impl< */
+    /*     boost::exception_detail::error_info_injector<po::invalid_option_value> >& what */
+    /* ) { */
+    /*     cerr */
+    /*     << "ERROR: Invalid value '" << what.what() << "'" << endl */
+    /*     << "       given to option '" << what.get_option_name() << "'" */
+    /*     << endl; */
+
+    /*     std::exit(-1); */
+    /* } catch (boost::exception_detail::clone_impl< */
+    /*     boost::exception_detail::error_info_injector<po::multiple_occurrences> >& what */
+    /* ) { */
+    /*     cerr */
+    /*     << "ERROR: " << what.what() << " of option '" */
+    /*     << what.get_option_name() << "'" */
+    /*     << endl; */
+
+    /*     std::exit(-1); */
+    /* } catch (boost::exception_detail::clone_impl< */
+    /*     boost::exception_detail::error_info_injector<po::required_option> >& what */
+    /* ) { */
+    /*     cerr */
+    /*     << "ERROR: You forgot to give a required option '" */
+    /*     << what.get_option_name() << "'" */
+    /*     << endl; */
+
+    /*     std::exit(-1); */
+    /* } catch (boost::exception_detail::clone_impl< */
+    /*     boost::exception_detail::error_info_injector<po::too_many_positional_options_error> >& what */
+    /* ) { */
+    /*     cerr */
+    /*     << "ERROR: You gave too many positional arguments. Only at most two can be given:" << endl */
+    /*     << "       the 1st the CNF file input, and optionally, the 2nd the FRAT file output" << endl */
+    /*     << "    OR (pre-processing)  1st for the input CNF, 2nd for the simplified CNF" << endl */
+    /*     << "    OR (post-processing) 1st for the solution file" << endl */
+    /*     ; */
+
+    /*     std::exit(-1); */
+    /* } catch (boost::exception_detail::clone_impl< */
+    /*     boost::exception_detail::error_info_injector<po::ambiguous_option> >& what */
+    /* ) { */
+    /*     cerr */
+    /*     << "ERROR: The option you gave was not fully written and matches" << endl */
+    /*     << "       more than one option. Please give the full option name." << endl */
+    /*     << "       The option you gave: '" << what.get_option_name() << "'" <<endl */
+    /*     << "       The alternatives are: "; */
+    /*     for(size_t i = 0; i < what.alternatives().size(); i++) { */
+    /*         cout << what.alternatives()[i]; */
+    /*         if (i+1 < what.alternatives().size()) { */
+    /*             cout << ", "; */
+    /*         } */
+    /*     } */
+    /*     cout << endl; */
+
+    /*     std::exit(-1); */
+    /* } catch (boost::exception_detail::clone_impl< */
+    /*     boost::exception_detail::error_info_injector<po::invalid_command_line_syntax> >& what */
+    /* ) { */
+    /*     cerr */
+    /*     << "ERROR: The option you gave is missing the argument or the" << endl */
+    /*     << "       argument is given with space between the equal sign." << endl */
+    /*     << "       detailed error message: " << what.what() << endl */
+    /*     ; */
+    /*     std::exit(-1); */
+    /* } */
 }
 
 void Main::parse_restart_type()
