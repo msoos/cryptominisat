@@ -89,7 +89,3 @@ jobs:
       with:
         name: cryptominisat5-win64.exe
         path: Release\cryptominisat5.exe
-
-    - name: "Install CMS (unix)"
-      if: matrix.os == 'ubuntu-20.04'
-      run: sudo cmake --install build --config ${{ matrix.build_type }}
