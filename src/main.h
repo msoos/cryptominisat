@@ -109,6 +109,7 @@ class Main: public MainCommon
 
         //Files to read & write
         bool fileNamePresent;
+        string result_fname;
         string input_file;
         std::ofstream* resultfile = NULL;
 

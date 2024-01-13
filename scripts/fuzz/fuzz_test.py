@@ -414,9 +414,9 @@ class Tester:
         command += options.extra_options + " "
         command += fixed_opts + " "
         if fname is not None:
-            command += "--input %s " % fname
+            command += " %s " % fname
         if fname_frat:
-            command += " --frat %s " % fname_frat
+            command += " %s " % fname_frat
 
         if options.verbose:
             print("Executing before doalarm/pipes: %s " % command)

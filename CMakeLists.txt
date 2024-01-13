@@ -747,9 +747,7 @@ endif()
 set(CRYPTOMINISAT5_TARGETS_FILENAME "cryptominisat5Targets.cmake")
 set(CRYPTOMINISAT5_CONFIG_FILENAME "cryptominisat5Config.cmake")
 set(CRYPTOMINISAT5_VERSION_FILENAME "cryptominisat5ConfigVersion.cmake")
-set(CRYPTOMINISAT5_STATIC_DEPS
-    ${SQLITE3_LIBRARIES}
-)
+set(CRYPTOMINISAT5_STATIC_DEPS ${SQLITE3_LIBRARIES})
 
 # Export targets
 set(MY_TARGETS cryptominisat5)
