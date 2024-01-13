@@ -77,7 +77,7 @@ jobs:
         path: cryptominisat5
     
     - name: Upload Artifact - Mac
-      if: matrix.os == ' macos-13' && matrix.staticcompile == 'ON'
+      if: matrix.os == 'macos-13' && matrix.staticcompile == 'ON'
       uses: actions/upload-artifact@v3
       with:
         name: cryptominisat5-mac-amd64
@@ -90,10 +90,10 @@ jobs:
         name: cryptominisat5-win64.exe
         path: Release\cryptominisat5.exe
 
-    #- name: "Install CMS (unix)"
-    #  if: ${{ !contains(matrix.os, 'windows') }}
-    #  run: sudo cmake --install build --config ${{ matrix.build_type }}
+    - name: "Install CMS (unix)"
+      if: ${{ !contains(matrix.os, 'windows') }}
+      run: sudo cmake --install build --config ${{ matrix.build_type }}
 
-    #- name: "Install Spix (win)"
-    #  if: ${{ contains(matrix.os, 'windows') }}
-    #  run: cmake --install build --config ${{ matrix.build_type }}
+    - name: "Install Spix (win)"
+      if: ${{ contains(matrix.os, 'windows') }}
+      run: cmake --install build --config ${{ matrix.build_type }}
