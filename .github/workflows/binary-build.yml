@@ -70,10 +70,17 @@ jobs:
       run: ctest -C ${{ matrix.build_type }}
       
     - name: Upload Artifact - Linux
-      if: matrix.os != 'windows-2022' && matrix.staticcompile == 'ON'
+      if: matrix.os == 'ubuntu-20.04' && matrix.staticcompile == 'ON'
       uses: actions/upload-artifact@v3
       with:
-        name: cryptominisat5
+        name: cryptominisat5-linux-amd64
+        path: cryptominisat5
+    
+    - name: Upload Artifact - Mac
+      if: matrix.os == ' macos-13' && matrix.staticcompile == 'ON'
+      uses: actions/upload-artifact@v3
+      with:
+        name: cryptominisat5-mac-amd64
         path: cryptominisat5
 
     - name: Upload Artifact - Windows
@@ -81,7 +88,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: cryptominisat\Release\cryptominisat5.exe
-        path: cryptominisat5.exe
+        path: cryptominisat5-win64.exe
 
     #- name: "Install CMS (unix)"
     #  if: ${{ !contains(matrix.os, 'windows') }}
