@@ -3021,13 +3021,14 @@ std::pair<size_t, size_t> Searcher::remove_useless_bins(bool except_marked)
 
 template<bool inprocess, bool red_also, bool distill_use>
 PropBy Searcher::propagate() {
+    uint32_t last_trail = trail.size();
     PropBy ret = propagate_any_order<inprocess, red_also, distill_use>();
 
     //Drat -- If declevel 0 propagation, we have to add the unitaries
     if (decisionLevel() == 0 && (frat->enabled() || conf.simulate_frat)) {
         if (!ret.isNULL()) {
             int32_t ID;
-            for(size_t i = 0; i < trail.size(); i++) {
+            for(size_t i = last_trail; i < trail.size(); i++) {
                 const auto propby = varData[trail[i].lit.var()].reason;
                 if (propby.getType() == PropByType::xor_t) get_xor_reason(propby, ID);
             }
