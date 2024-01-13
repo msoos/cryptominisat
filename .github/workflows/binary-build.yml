@@ -87,8 +87,8 @@ jobs:
       if: matrix.os == 'windows-2022' && matrix.staticcompile == 'ON'
       uses: actions/upload-artifact@v3
       with:
-        name: cryptominisat\Release\cryptominisat5.exe
-        path: cryptominisat5-win64.exe
+        name: cryptominisat5-win64.exe
+        path: Release\cryptominisat5.exe
 
     #- name: "Install CMS (unix)"
     #  if: ${{ !contains(matrix.os, 'windows') }}
