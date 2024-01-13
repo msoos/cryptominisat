@@ -225,12 +225,6 @@ if (STATS)
     SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${SQLITE3_LIBRARIES})
 endif ()
 
-if (ARJUN_SERIALIZE)
-    SET(cryptoms_lib_link_libs
-        ${cryptoms_lib_link_libs}
-        Boost::serialization)
-endif()
-
 if (FINAL_PREDICTOR)
     SET(cryptoms_lib_files ${cryptoms_lib_files}
         ${CMAKE_CURRENT_BINARY_DIR}/pred_short.cpp
@@ -361,34 +355,27 @@ install(TARGETS cryptominisat5
     PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/cryptominisat5"
 )
 
-if (NOT ONLY_SIMPLE)
-    add_executable(cryptominisat5-bin
-        main.cpp
-        main_common.cpp
-        main_exe.cpp
-        signalcode.cpp
-    )
-endif()
+add_executable(cryptominisat5-bin
+    main.cpp
+    main_common.cpp
+    main_exe.cpp
+    signalcode.cpp
+)
 
 if (EMSCRIPTEN)
-    add_executable(cryptominisat5_simple-bin
+    add_executable(cryptominisat5-bin
         main_emscripten.cpp
         main_common.cpp
     )
 
-    set_target_properties(cryptominisat5_simple-bin
+    set_target_properties(cryptominisat5-bin
         PROPERTIES
-        OUTPUT_NAME cryptominisat5_simple
+        OUTPUT_NAME cryptominisat5
         LINK_FLAGS "-s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'  -s LINKABLE=1 -s EXPORT_ALL=1 --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/pre.js"
     )
 
     SET_SOURCE_FILES_PROPERTIES(main_emscripten.cpp
         PROPERTIES COMPILE_FLAGS "-s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'  -s LINKABLE=1 -s EXPORT_ALL=1"
-    )
-else()
-    add_executable(cryptominisat5_simple-bin
-        main_simple.cpp
-        main_common.cpp
     )
 endif()
 
@@ -411,20 +398,6 @@ ENDIF()
 ##########################
 ### Deal with binaries
 ##########################
-set_target_properties(cryptominisat5_simple-bin PROPERTIES
-    OUTPUT_NAME cryptominisat5_simple
-    RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
-    INSTALL_RPATH_USE_LINK_PATH TRUE
-)
-target_link_libraries(cryptominisat5_simple-bin
-    ${cryptoms_exec_link_libs}
-)
-install(TARGETS cryptominisat5_simple-bin
-    # EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
-SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5_simple")
-
 if (MPI_FOUND)
     set_target_properties(cryptominisat5_mpi-bin PROPERTIES
         OUTPUT_NAME cryptominisat5_mpi
@@ -442,21 +415,18 @@ if (MPI_FOUND)
     SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5_mpi")
 endif()
 
-if (NOT ONLY_SIMPLE)
-    set_target_properties(cryptominisat5-bin PROPERTIES
-        OUTPUT_NAME cryptominisat5
-        RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
-        INSTALL_RPATH_USE_LINK_PATH TRUE)
-    target_link_libraries(cryptominisat5-bin
-        Boost::program_options
-        ${cryptoms_exec_link_libs}
-    )
-    install(TARGETS cryptominisat5-bin
-        # EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    )
-    SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5")
-endif()
+set_target_properties(cryptominisat5-bin PROPERTIES
+    OUTPUT_NAME cryptominisat5
+    RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
+    INSTALL_RPATH_USE_LINK_PATH TRUE)
+target_link_libraries(cryptominisat5-bin
+    ${cryptoms_exec_link_libs}
+)
+install(TARGETS cryptominisat5-bin
+    # EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5")
 
 if (FEEDBACKFUZZ)
     add_executable(cms_feedback_fuzz

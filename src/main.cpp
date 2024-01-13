@@ -95,9 +95,7 @@ Main::Main(int _argc, char** _argv) :
 void Main::readInAFile(SATSolver* solver2, const string& filename)
 {
     solver2->add_sql_tag("filename", filename);
-    if (conf.verbosity) {
-        cout << "c Reading file '" << filename << "'" << endl;
-    }
+    if (conf.verbosity) cout << "c Reading file '" << filename << "'" << endl;
     #ifndef USE_ZLIB
     FILE * in = fopen(filename.c_str(), "rb");
     DimacsParser<StreamBuffer<FILE*, FN>, SATSolver> parser(solver2, &debugLib, conf.verbosity);
@@ -217,7 +215,7 @@ void Main::parseInAllFiles(SATSolver* solver2)
     const double myTime = cpuTime();
 
     //First read normal extra files
-    if (!debugLib.empty() && filesToRead.size() > 1) {
+    if (!debugLib.empty() && input_file.size() > 1) {
         cout
         << "ERROR: debugLib must be OFF"
         << " to parse in more than one file"
@@ -226,14 +224,9 @@ void Main::parseInAllFiles(SATSolver* solver2)
         std::exit(-1);
     }
 
-    for (const string& fname: filesToRead) {
-        readInAFile(solver2, fname);
-    }
-
     solver->add_sql_tag("stdin", fileNamePresent ? "False" : "True");
-    if (!fileNamePresent) {
-        readInStandardInput(solver2);
-    }
+    if (!fileNamePresent) readInStandardInput(solver2);
+    else readInAFile(solver2, input_file);
 
     if (conf.verbosity) {
         if (num_threads > 1) {
@@ -314,19 +307,29 @@ void Main::printResultFunc(
 /* clang-format off */
 void Main::add_supported_options()
 {
-    // Declare the supported options.
-    program.add_argument("help,h").help("Print simple help)");
-    program.add_argument("hhelp").help("Print extensive help");
-    program.add_argument("version,v").help("Print version info");
-    program.add_argument("verb")
-    .action([&](const auto& a) {conf.verbosity=a)
+  // Declare the supported options.
+    program.add_argument("-h", "--help")
+        .help("Print extensive help")
+        .default_value(false);
+    program.add_argument("-v", "--version")
+        .help("Print version info")
+        .flag();
+    program.add_argument("--verb")
+    .action([&](const auto& a) {conf.verbosity = std::atoi(a.c_str());})
     .default_value(conf.verbosity)
-    .help("[0-10] Verbosity of solver. 0 = only solution")
+    .help("[0-10] Verbosity of solver. 0 = only solution");
+
+
+    program.add_argument("--maxtime")
+    .help("Stop solving after this much time (s)")
+    .scan<'g', double>();
+
+    program.add_argument("--maxconfl")
+    .help("Stop solving after this many conflicts")
+    .scan<'d', uint64_t>();
 
     /* program.add_argument("random,r", po::value(&conf.origSeed)->default_value(conf.origSeed) , "[0..] Random seed") */
     /* program.add_argument("threads,t", po::value(&num_threads)->default_value(1) ,"Number of threads") */
-    /* program.add_argument("maxtime", po::value(&maxtime), "Stop solving after this much time (s)") */
-    /* program.add_argument("maxconfl", po::value(&maxconfl), "Stop solving after this many conflicts") */
     /* program.add_argument("mult,m", po::value(&conf.orig_global_timeout_multiplier)->default_value(conf.orig_global_timeout_multiplier) , "Time multiplier for all simplification cutoffs") */
     /* program.add_argument("nextm", po::value(&conf.global_next_multiplier)->default_value(conf.global_next_multiplier) , "Global multiplier when the next inprocessing should take place") */
     /* program.add_argument("memoutmult", po::value(&conf.var_and_mem_out_mult)->default_value(conf.var_and_mem_out_mult) , "Multiplier for memory-out checks on inprocessing functions. It limits things such as clause-link-in. Useful when you have limited memory but still want to do some inprocessing") */
@@ -396,11 +399,13 @@ void Main::add_supported_options()
     ;
     #endif
 
-    po::options_description polar_options("Polarity options");
-    polar_options.add_options()
-    ("polar", po::value<string>()->default_value("auto")
-        , "{true,false,rnd,auto,stable} Selects polarity mode. 'true' -> selects only positive polarity when branching. 'false' -> selects only negative polarity when branching. 'auto' -> selects last polarity used (also called 'caching')")
+
+    program.add_argument("--polar")
+    .default_value("auto")
+    .help("{true,false,rnd,auto,stable} Selects polarity mode. 'true' -> selects only positive polarity when branching. 'false' -> selects only negative polarity when branching. 'auto' -> selects last polarity used (also called 'caching')");
     ;
+
+/*
 
 
     std::ostringstream s_local_glue_multiplier;
@@ -408,8 +413,11 @@ void Main::add_supported_options()
 
     po::options_description restartOptions("Restart options");
     restartOptions.add_options()
-    ("restart", po::value<string>()
-        , "{geom, glue, luby}  Restart strategy to follow.")
+    */
+    program.add_argument("--restart")
+        .default_value("auto")
+        .help("{geom, glue, luby}  Restart strategy to follow.");
+/*
     ("rstfirst", po::value(&conf.restart_first)->default_value(conf.restart_first)
         , "The size of the base restart")
     ("gluehist", po::value(&conf.shortTermHistorySize)->default_value(conf.shortTermHistorySize)
@@ -708,8 +716,13 @@ void Main::add_supported_options()
     sqlOptions.add_options()
     ("sql", po::value(&sql)->default_value(0)
         , "Write to SQL. 0 = no SQL, 1 or 2 = sqlite")
-    ("sqlitedb", po::value(&sqlite_filename)
-        , "Where to put the SQLite database")
+*/
+    program.add_argument("--sqlitedb")
+    .action([&](const auto& a) {sqlite_filename = std::atoi(a.c_str());})
+    .default_value(conf.verbosity)
+    .help("[0-10] Verbosity of solver. 0 = only solution");
+
+    /*
     ("sqlitedboverwrite", po::value(&conf.sql_overwrite_file)->default_value(conf.sql_overwrite_file)
         , "Overwrite the SQLite database file if it exists")
     ("cldatadumpratio", po::value(&conf.dump_individual_cldata_ratio)->default_value(conf.dump_individual_cldata_ratio)
@@ -730,10 +743,10 @@ void Main::add_supported_options()
         , "Print assignment if solution is SAT")
     ("restartprint", po::value(&conf.print_restart_line_every_n_confl)->default_value(conf.print_restart_line_every_n_confl)
         , "Print restart status lines at least every N conflicts")
-    ("dumpresult", po::value(&resultFilename)
-        , "Write solution(s) to this file")
-    ;
+    */
+    program.add_argument("--dumpresult").help("Write solution(s) to this file");
 
+    /*
     po::options_description distillOptions("Distill options");
     distillOptions.add_options()
     //("noparts", "Don't find&solve subproblems with subsolvers")
@@ -810,11 +823,10 @@ void Main::add_supported_options()
     ("assump", po::value(&assump_filename)->default_value(assump_filename)
         , "Assumptions file")
 
+    */
     //these a kind of special and determine positional options' meanings
-    ("input", po::value< vector<string> >(), "file(s) to read")
-    ("frat,d", po::value(&fratfilname)
-        , "Put FRAT verification information into this file")
-    ;
+    program.add_argument("files").remaining().help("input file and FRAT output");
+        /*
 
 #ifdef USE_BOSPHORUS
     po::options_description bosph_options("Gauss options");
@@ -889,6 +901,7 @@ void Main::add_supported_options()
     .add(distillOptions)
     .add(miscOptions)
     ;
+    */
 }
 /* clang-format on */
 
@@ -904,9 +917,8 @@ void Main::check_options_correctness()
 {
     try {
         program.parse_args(argc, argv);
-        po::store(po::command_line_parser(argc, argv).options(all_options).positional(p).run(), vm);
-        if (vm.count("hhelp"))
-        {
+
+        if (program.is_used("--help")) {
             cout
             << "A universal, fast SAT solver with XOR and Gaussian Elimination support. " << endl
             << "Input "
@@ -920,7 +932,7 @@ void Main::check_options_correctness()
             cout
             << "cryptominisat5 [options] inputfile [frat-file]" << endl << endl;
 
-            cout << help_options_complicated << endl;
+            cout << program << endl;
             cout << "Normal run schedules:" << endl;
             cout << "  Default schedule: "
             << remove_last_comma_if_exists(conf.simplify_schedule_nonstartup) << endl<< endl;
@@ -929,29 +941,27 @@ void Main::check_options_correctness()
             std::exit(0);
         }
 
-        if (vm.count("help"))
-        {
-            cout
-            << "USAGE: " << argv[0] << " [options] inputfile [frat-trim-file]" << endl
+        /* if (vm.count("help")) */
+        /* { */
+        /*     cout */
+        /*     << "USAGE: " << argv[0] << " [options] inputfile [frat-trim-file]" << endl */
 
-            << " where input is "
-            #ifndef USE_ZLIB
-            << "plain"
-            #else
-            << "plain or gzipped"
-            #endif
-            << " DIMACS." << endl;
+        /*     << " where input is " */
+        /*     #ifndef USE_ZLIB */
+        /*     << "plain" */
+        /*     #else */
+        /*     << "plain or gzipped" */
+        /*     #endif */
+        /*     << " DIMACS." << endl; */
 
-            cout << help_options_simple << endl;
-            std::exit(0);
-        }
-
-        po::notify(vm);
+        /*     cout << help_options_simple << endl; */
+        /*     std::exit(0); */
+        /* } */
     }
     catch (const std::exception& err) {
         std::cerr << err.what() << std::endl;
         std::cerr << program;
-        return 1;
+        exit(-1);
     }
 
     /* } catch (boost::exception_detail::clone_impl< */
@@ -1037,31 +1047,28 @@ void Main::check_options_correctness()
 
 void Main::parse_restart_type()
 {
-    if (vm.count("restart")) {
-        string type = vm["restart"].as<string>();
-        if (type == "geom")
-            conf.restartType = Restart::geom;
-        else if (type == "luby")
-            conf.restartType = Restart::luby;
-        else if (type == "glue")
-            conf.restartType = Restart::glue;
-        else throw WrongParam("restart", "unknown restart type");
-    }
+    string type = program.get<string>("restart");
+    if (type == "geom")
+        conf.restartType = Restart::geom;
+    else if (type == "luby")
+        conf.restartType = Restart::luby;
+    else if (type == "glue")
+        conf.restartType = Restart::glue;
+    else if (type == "auto")
+        conf.restartType = Restart::automatic;
+    else throw WrongParam("restart", "unknown restart type");
 }
 
 void Main::parse_polarity_type()
 {
-    if (vm.count("polar")) {
-        string mode = vm["polar"].as<string>();
-
-        if (mode == "true") conf.polarity_mode = PolarityMode::polarmode_pos;
-        else if (mode == "false") conf.polarity_mode = PolarityMode::polarmode_neg;
-        else if (mode == "rnd") conf.polarity_mode = PolarityMode::polarmode_rnd;
-        else if (mode == "auto") conf.polarity_mode = PolarityMode::polarmode_automatic;
-        else if (mode == "stable") conf.polarity_mode = PolarityMode::polarmode_best;
-        else if (mode == "weight") conf.polarity_mode = PolarityMode::polarmode_weighted;
-        else throw WrongParam(mode, "unknown polarity-mode");
-    }
+    string mode = program.get<string>("polar");
+    if (mode == "true") conf.polarity_mode = PolarityMode::polarmode_pos;
+    else if (mode == "false") conf.polarity_mode = PolarityMode::polarmode_neg;
+    else if (mode == "rnd") conf.polarity_mode = PolarityMode::polarmode_rnd;
+    else if (mode == "auto") conf.polarity_mode = PolarityMode::polarmode_automatic;
+    else if (mode == "stable") conf.polarity_mode = PolarityMode::polarmode_best;
+    else if (mode == "weight") conf.polarity_mode = PolarityMode::polarmode_weighted;
+    else throw WrongParam(mode, "unknown polarity-mode");
 }
 
 void Main::manually_parse_some_options()
@@ -1115,15 +1122,12 @@ void Main::manually_parse_some_options()
         std::exit(-1);
     }
 
-    if (vm.count("dumpresult")) {
+    if (program.is_used("dumpresult")) {
         resultfile = new std::ofstream;
-        resultfile->open(resultFilename.c_str());
+        const auto result_fname = program.get<string>("dupresult");
+        resultfile->open(result_fname.c_str());
         if (!(*resultfile)) {
-            cout
-            << "ERROR: Couldn't open file '"
-            << resultFilename
-            << "' for writing result!"
-            << endl;
+            cout << "ERROR: Couldn't open file '" << result_fname << "' for writing result!" << endl;
             std::exit(-1);
         }
     }
@@ -1131,30 +1135,33 @@ void Main::manually_parse_some_options()
     parse_polarity_type();
     parse_restart_type();
 
-    if (vm.count("input")) {
-        filesToRead = vm["input"].as<vector<string> >();
-
-        if (!vm.count("sqlitedb")) {
-            sqlite_filename = filesToRead[0] + ".sqlite";
-        } else {
-            sqlite_filename = vm["sqlitedb"].as<string>();
+    try {
+        auto files = program.get<std::vector<std::string>>("files");
+        if (files.size() > 2) {
+            cerr << "ERROR: you can only have at most two files as positional options:"
+                "the input file and the output FRAT file" << endl;
+            exit(-1);
         }
-        fileNamePresent = true;
-    } else {
+        if (!files.empty()) {
+            input_file = files[0];
+            if (!program.is_used("sqlitedb")) sqlite_filename = input_file + ".sqlite";
+            else sqlite_filename = program.get<string>("sqlitedb");
+            fileNamePresent = true;
+        } else assert(false && "The try() should not have succeeded");
+        if (files.size() > 1 || conf.simulate_frat) {
+            if (files.size() > 1) {
+                assert(!conf.simulate_frat && "You can't have both simulation of FRAT and frat");
+                frat_fname = files[1];
+            }
+            handle_frat_option();
+        }
+    } catch (std::logic_error& e) {
         fileNamePresent = false;
     }
-
-    if (vm.count("frat") || conf.simulate_frat) {
-        handle_frat_option();
-    }
-
-    if (conf.verbosity >= 3) {
-        cout << "c Outputting solution to console" << endl;
-    }
+    if (conf.verbosity >= 3) cout << "c Outputting solution to console" << endl;
 }
 
-void Main::parseCommandLine()
-{
+void Main::parseCommandLine() {
     need_clean_exit = 0;
 
     //Reconstruct the command line so we can emit it later if needed
@@ -1166,17 +1173,15 @@ void Main::parseCommandLine()
     }
 
     add_supported_options();
-    p.add("input", 1);
-    p.add("frat", 1);
-    all_options.add(help_options_complicated);
-    all_options.add(hiddenOptions);
+    /* all_options.add(help_options_complicated); */
+    /* all_options.add(hiddenOptions); */
 
-    help_options_simple
-    .add(generalOptions)
-    ;
+    /* help_options_simple */
+    /* .add(generalOptions) */
+    /* ; */
 
     check_options_correctness();
-    if (vm.count("version")) {
+    if (program["version"] == true) {
         printVersionInfo();
         std::exit(0);
     }
@@ -1212,14 +1217,12 @@ int Main::solve()
     solver = new SATSolver((void*)&conf);
     solverToInterrupt = solver;
     if (fratf) solver->set_frat(fratf);
-    if (vm.count("maxtime")) solver->set_max_time(maxtime);
-    if (vm.count("maxconfl")) solver->set_max_confl(maxconfl);
+    if (program.is_used("maxtime")) solver->set_max_time(program.get<double>("maxtime"));
+    if (program.is_used("maxconfl")) solver->set_max_confl(program.get<uint64_t>("maxconfl"));
 
     check_num_threads_sanity(num_threads);
     solver->set_num_threads(num_threads);
-    if (sql != 0) {
-        solver->set_sqlite(sqlite_filename);
-    }
+    if (sql != 0) solver->set_sqlite(sqlite_filename);
 
     //Print command line used to execute the solver: for options and inputs
     if (conf.verbosity) {
@@ -1231,8 +1234,8 @@ int Main::solve()
     }
 
     solver->add_sql_tag("commandline", commandLine);
-    solver->add_sql_tag("verbosity", lexical_cast<string>(conf.verbosity));
-    solver->add_sql_tag("threads", lexical_cast<string>(num_threads));
+    solver->add_sql_tag("verbosity", std::to_string(conf.verbosity));
+    solver->add_sql_tag("threads", std::to_string(num_threads));
     solver->add_sql_tag("version", solver->get_version());
     solver->add_sql_tag("SHA-revision", solver->get_version_sha1());
     solver->add_sql_tag("env", solver->get_compilation_env());

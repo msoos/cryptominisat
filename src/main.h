@@ -90,7 +90,6 @@ class Main: public MainCommon
         void ban_found_solution();
 
         //Config
-        std::string resultFilename;
         std::string debugLib;
         int printResult = true;
         string commandLine;
@@ -98,7 +97,6 @@ class Main: public MainCommon
         bool dont_ban_solutions = false;
         int sql = 0;
         string sqlite_filename;
-        double maxtime;
         uint64_t maxconfl;
 
         //Sampling vars
@@ -111,7 +109,7 @@ class Main: public MainCommon
 
         //Files to read & write
         bool fileNamePresent;
-        vector<string> filesToRead;
+        string input_file;
         std::ofstream* resultfile = NULL;
 
         //Drat checker

@@ -33,11 +33,11 @@ using namespace CMSat;
 void MainCommon::handle_frat_option()
 {
     if (!conf.simulate_frat) {
-        FILE* fratfTmp = fopen(fratfilname.c_str(), "wb");
+        FILE* fratfTmp = fopen(frat_fname.c_str(), "wb");
         if (fratfTmp == NULL) {
             std::cerr
             << "ERROR: Could not open FRAT file "
-            << fratfilname
+            << frat_fname
             << " for writing"
             << endl;
 
