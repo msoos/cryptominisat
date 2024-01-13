@@ -42,7 +42,6 @@ const char* CMSat::get_compilation_env()
     "COMPILE_DEFINES = @COMPILE_DEFINES@ | "
     "STATICCOMPILE = @STATICCOMPILE@ | "
     "ONLY_SIMPLE = @ONLY_SIMPLE@ | "
-    "Boost_FOUND = @Boost_FOUND@ | "
     "STATS = @STATS@ | "
     "SQLITE3_FOUND = @SQLITE3_FOUND@ | "
     "ZLIB_FOUND = @ZLIB_FOUND@ | "
