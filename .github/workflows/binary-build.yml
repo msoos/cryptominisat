@@ -25,20 +25,9 @@ jobs:
     - uses: actions/checkout@v2
     
     # install dependencies
-    - name: Install boost
-      uses: MarkusJx/install-boost@v2.4.4
-      id: install-boost
-      with:
-        # REQUIRED: Specify the required boost version
-        # A list of supported versions can be found here:
-        # https://github.com/MarkusJx/prebuilt-boost/blob/main/versions-manifest.json
-        boost_version: 1.73.0
-        # OPTIONAL: Specify a custon install location
-        #boost_install_dir: C:\some_directory
-        # OPTIONAL: Specify a platform version
-        #platform_version: 2019
-        # OPTIONAL: Specify a toolset
-        #toolset: msvc
+    - name: Install boost & help2man for Linux
+      if: matrix.os == 'ubuntu-20.04'
+      run: sudo apt-get update && sudo apt-get install -yq libboost-dev libboost-serialization-dev libboost-program-options-dev help2man
 
     - name: Installing Numpy
       run: |
