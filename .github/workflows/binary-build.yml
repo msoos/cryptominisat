@@ -41,7 +41,7 @@ jobs:
         #toolset: msvc
     - name: Setup Python
       uses: actions/setup-python@v5.0.0
-      with:
+      #with:
         # Version range or exact version of Python or PyPy to use, using SemVer's version range syntax. Reads from .python-version if unset.
         #python-version: # optional
         # File containing the Python version to use. Example: .python-version
