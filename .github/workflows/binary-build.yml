@@ -70,14 +70,14 @@ jobs:
       run: ctest -C ${{ matrix.build_type }}
       
     - name: Upload Artifact - Linux
-      if: matrix.os != 'windows-2022'
+      if: matrix.os != 'windows-2022' && matrix.staticcompile == 'ON'
       uses: actions/upload-artifact@v3
       with:
         name: cryptominisat5
         path: cryptominisat5
 
     - name: Upload Artifact - Windows
-      if: matrix.os == 'windows-2022'
+      if: matrix.os == 'windows-2022' && matrix.staticcompile == 'ON'
       uses: actions/upload-artifact@v3
       with:
         name: Release\cryptominisat5.exe
