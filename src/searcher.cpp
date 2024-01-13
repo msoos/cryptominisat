@@ -24,6 +24,7 @@ THE SOFTWARE.
 #include "constants.h"
 #include "frat.h"
 #include "occsimplifier.h"
+#include "propby.h"
 #include "solvertypesmini.h"
 #include "time_mem.h"
 #include "solver.h"
@@ -1868,11 +1869,9 @@ bool Searcher::handle_conflict(PropBy confl)
         attach_and_enqueue_learnt_clause<false>(cl, backtrack_level, false, ID);
     }
 
-    if (branch_strategy == branch::vsids) {
-        vsids_decay_var_act();
-    }
+    if (branch_strategy == branch::vsids) vsids_decay_var_act();
     decayClauseAct<false>();
-
+    frat_func_end();
     return true;
 }
 
@@ -3019,11 +3018,18 @@ std::pair<size_t, size_t> Searcher::remove_useless_bins(bool except_marked)
 
 template<bool inprocess, bool red_also, bool distill_use>
 PropBy Searcher::propagate() {
+    uint32_t last_trail = trail.size();
     PropBy ret = propagate_any_order<inprocess, red_also, distill_use>();
 
     //Drat -- If declevel 0 propagation, we have to add the unitaries
     if (decisionLevel() == 0 && (frat->enabled() || conf.simulate_frat)) {
         if (!ret.isNULL()) {
+            int32_t ID;
+            for(size_t i = last_trail; i < trail.size(); i++) {
+                const auto propby = varData[trail[i].lit.var()].reason;
+                if (propby.getType() == PropByType::xor_t) get_xor_reason(propby, ID);
+            }
+            if (ret.getType() == PropByType::xor_t) get_xor_reason(ret, ID);
             // We need this check, because apparently GJ can set unsat during prop
             if (unsat_cl_ID == 0) {
                 *frat << add << ++clauseID << fin;

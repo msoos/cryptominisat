@@ -1135,9 +1135,11 @@ vector<Lit>* PropEngine::get_xor_reason(const PropBy& reason, int32_t& ID) {
             *frat << implyclfromx << x.reason_cl_ID << x.reason_cl << FratFlag::fratchain << x.XID << fin;
             ID = x.reason_cl_ID;
         }
+        frat_func_end();
         return &x.reason_cl;
     } else {
         return gmatrices[reason.get_matrix_num()]->get_reason(reason.get_row_num(), ID);
+        frat_func_end();
+
     }
-    frat_func_end();
 }
