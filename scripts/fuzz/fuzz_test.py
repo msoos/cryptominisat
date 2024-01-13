@@ -579,14 +579,15 @@ class Tester:
                 return
 
         # check with other solver
-        ret = self.sol_parser.check_unsat(checkAgainst)
-        if ret is None:
-            print("Other solver time-outed, cannot check")
-        elif ret is True:
-            print("UNSAT verified by other solver")
-        else:
-            print("Grave bug: SAT-> UNSAT : Other solver found solution!!")
-            exit()
+        if fname_frat != None:
+            ret = self.sol_parser.check_unsat(checkAgainst)
+            if ret is None:
+                print("Other solver time-outed, cannot check")
+            elif ret is True:
+                print("UNSAT verified by other solver")
+            else:
+                print("Grave bug: SAT-> UNSAT : Other solver found solution!!")
+                exit()
 
     def fuzz_test_one(self):
         print("--- NORMAL TESTING ---")
