@@ -103,7 +103,6 @@ class DimacsParser
 
         //Reduce temp overhead
         vector<Lit> lits;
-        vector<uint32_t> vars;
 
         size_t norm_clauses_added = 0;
         size_t xor_clauses_added = 0;
@@ -593,18 +592,7 @@ bool DimacsParser<C, S>::parse_and_add_xor_clause(C& in)
         return false;
     }
     lineNum++;
-    if (lits.empty())
-        return true;
-
-    bool rhs = true;
-    vars.clear();
-    for(Lit& lit: lits) {
-        vars.push_back(lit.var());
-        if (lit.sign()) {
-            rhs ^= true;
-        }
-    }
-    solver->add_xor_clause(vars, rhs);
+    solver->add_xor_clause(lits, true);
     xor_clauses_added++;
     return true;
 }

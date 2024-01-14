@@ -230,6 +230,7 @@ bool Solver::add_xor_clause_inter(
         ps[0] ^= !rhs;
         const auto ID = ++clauseID;
         *frat << implyclfromx << ID << ps << fratchain << XID2 << fin;
+        *frat << delx << XID2 << fin;
         add_clause_int_frat(ps, ID);
     } else if (ps.size() == 2) {
         ps[0] ^= !rhs;
@@ -2776,8 +2777,25 @@ bool Solver::add_clause_outside(const vector<Lit>& lits, bool red)
     return add_clause_outer(tmp, red);
 }
 
-bool Solver::add_xor_clause_outside(const vector<uint32_t>& vars, const bool rhs)
-{
+bool Solver::add_xor_clause_outside(const vector<Lit>& lits_out, bool rhs) {
+    frat_func_start;
+    if (!okay()) return false;
+    if (rhs == false && lits_out.empty()) return okay();
+
+    vector<Lit> lits = lits_out;
+    const int32_t XID = ++clauseXID;
+    *frat << origclx << XID << lits << fin;
+    SLOW_DEBUG_DO(check_too_large_variable_number(lits));
+
+    add_clause_helper(lits);
+    add_xor_clause_inter(lits, rhs, true, XID);
+
+    frat_func_end;
+    return okay();
+}
+
+bool Solver::add_xor_clause_outside(const vector<uint32_t>& vars, const bool rhs) {
+    frat_func_start;
     if (!okay()) return false;
     if (rhs == false && vars.empty()) return okay();
 
@@ -2791,6 +2809,7 @@ bool Solver::add_xor_clause_outside(const vector<uint32_t>& vars, const bool rhs
     add_clause_helper(lits);
     add_xor_clause_inter(lits, rhs, true, XID);
 
+    frat_func_end;
     return okay();
 }
 
@@ -3121,8 +3140,7 @@ bool Solver::find_and_init_all_matrices() {
         return true;
     }
     if (!clear_gauss_matrices(false)) return false; //attaches XORs actually
-    // TODO FRAT
-    /* detach_clauses_in_xors(); */
+    detach_clauses_in_xors();
 
     verb_print(1, "[find&init matx] performing matrix init");
     MatrixFinder mfinder(solver);

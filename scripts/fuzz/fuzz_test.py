@@ -283,11 +283,12 @@ class Tester:
             #cmd += "--gauss 0 "
 
         cmd += "--presimp %d " % random.choice([1]*10+[0])
-        if not options.gauss:
-            cmd += "--confbtwsimp %d " % random.choice([100, 1000])
-            cmd += "--nextm %f " % random.choice([0.2, 0.05, 0.01])
-            cmd += "--everylev1 %d " % random.choice([122, 1222, 12222])
-            cmd += "--everylev2 %d " % random.choice([133, 1333, 14444])
+        cmd += "--confbtwsimp %d " % random.choice([100, 1000])
+        cmd += "--nextm %f " % random.choice([0.2, 0.05, 0.01])
+        cmd += "--everylev1 %d " % random.choice([122, 1222, 12222])
+        cmd += "--everylev2 %d " % random.choice([133, 1333, 14444])
+        cmd += "--xor %d " % random.choice([0, 0, 1])
+        cmd += "--maxxormat %d " % random.choice([0, 1, 10])
 
         # if "breakid" in self.extra_opts_supported:
         #     cmd += "--breakid %d " % random.choice([1]*10+[0])
@@ -578,14 +579,15 @@ class Tester:
                 return
 
         # check with other solver
-        ret = self.sol_parser.check_unsat(checkAgainst)
-        if ret is None:
-            print("Other solver time-outed, cannot check")
-        elif ret is True:
-            print("UNSAT verified by other solver")
-        else:
-            print("Grave bug: SAT-> UNSAT : Other solver found solution!!")
-            exit()
+        if fname_frat == None:
+            ret = self.sol_parser.check_unsat(checkAgainst)
+            if ret is None:
+                print("Other solver time-outed, cannot check")
+            elif ret is True:
+                print("UNSAT verified by other solver")
+            else:
+                print("Grave bug: SAT-> UNSAT : Other solver found solution!!")
+                exit()
 
     def fuzz_test_one(self):
         print("--- NORMAL TESTING ---")
@@ -604,12 +606,8 @@ class Tester:
             self.frat = False
             self.only_sampling = True
 
-        if self.frat:
-            fuzzers = fuzzers_frat
-        elif options.gauss:
-            fuzzers = fuzzers_xor
-        else:
-            fuzzers = fuzzers_nofrat
+        fuzzers= fuzzers_noxor
+        fuzzers.extend(fuzzers_xor)
         fuzzer = random.choice(fuzzers)
 
         fname = unique_file("fuzzTest")
@@ -627,7 +625,7 @@ class Tester:
 
         shuf_seed = random.randint(1, 100000)
         fname_shuffled = unique_file("fuzzTest")
-        print("calling ../clean.py %s %s" % (fname, fname_shuffled))
+        print("calling ./clean_cnf.py %s %s %s" % (fname, fname_shuffled, shuf_seed))
         shuffle_cnf(fname, fname_shuffled, shuf_seed)
         os.unlink(fname)
         fname = fname_shuffled
@@ -726,9 +724,6 @@ if __name__ == "__main__":
     if options.valgrind_freq <= 0:
         print("Valgrind Frequency must be at least 1")
         exit(-1)
-
-    fuzzers_frat = fuzzers_noxor
-    fuzzers_nofrat = fuzzers_noxor
 
     print_version()
     tester = Tester()

@@ -481,7 +481,7 @@ bool ClauseCleaner::clean_one_xor(Xor& x, const uint32_t at, const bool attached
         case 0:
             if (x.rhs == true) {
                 solver->ok = false;
-                *solver->frat << implyclfromx << ++solver->clauseID << x.XID << fin;
+                *solver->frat << implyclfromx << ++solver->clauseID << fratchain << x.XID << fin;
                 set_unsat_cl_id(solver->clauseID);
             }
             frat_func_end();
