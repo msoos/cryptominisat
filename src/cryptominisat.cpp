@@ -445,16 +445,13 @@ struct OneThreadAddCls
     OneThreadAddCls(DataForThread& _data_for_thread, size_t _tid) :
         data_for_thread(_data_for_thread)
         , tid(_tid)
-    {
-    }
+    { }
 
-    void operator()()
-    {
+    void operator()() {
         Solver& solver = *data_for_thread.solvers[tid];
         solver.new_external_vars(data_for_thread.vars_to_add);
 
         vector<Lit> lits;
-        vector<uint32_t> vars;
         bool ret = true;
         size_t at = 0;
         const vector<Lit>& orig_lits = (*data_for_thread.lits_to_add);
@@ -472,7 +469,7 @@ struct OneThreadAddCls
                 }
                 ret = solver.add_clause_outside(lits);
             } else {
-                vars.clear();
+                lits.clear();
                 at++;
                 bool rhs = orig_lits[at].sign();
                 at++;
@@ -481,9 +478,9 @@ struct OneThreadAddCls
                     && orig_lits[at] != lit_Error
                     ; at++
                 ) {
-                    vars.push_back(orig_lits[at].var());
+                    lits.push_back(orig_lits[at]);
                 }
-                ret = solver.add_xor_clause_outside(vars, rhs);
+                ret = solver.add_xor_clause_outside(lits, rhs);
             }
         }
 
@@ -749,11 +746,33 @@ void add_xor_clause_to_log(const std::vector<unsigned>& vars, bool rhs, std::ofs
     }
 }
 
+DLL_PUBLIC bool SATSolver::add_xor_clause(const std::vector<Lit>& lits, bool rhs)
+{
+    if (data->log) { (*data->log) << "x" << lits << " 0" << endl; }
+
+    bool ret = true;
+    if (data->solvers.size() > 1) {
+        if (data->cls_lits.size() + lits.size() + 1 > CACHE_SIZE) {
+            ret = actually_add_clauses_to_threads(data);
+        }
+
+        data->cls_lits.push_back(lit_Error);
+        data->cls_lits.push_back(Lit(0, rhs));
+        for(const auto& l: lits) data->cls_lits.push_back(l);
+    } else {
+        data->solvers[0]->new_vars(data->vars_to_add);
+        data->vars_to_add = 0;
+
+        ret = data->solvers[0]->add_xor_clause_outside(lits, rhs);
+        data->cls++;
+    }
+
+    return ret;
+}
+
 DLL_PUBLIC bool SATSolver::add_xor_clause(const std::vector<unsigned>& vars, bool rhs)
 {
-    if (data->log) {
-       add_xor_clause_to_log(vars, rhs, data->log);
-    }
+    if (data->log) add_xor_clause_to_log(vars, rhs, data->log);
 
     bool ret = true;
     if (data->solvers.size() > 1) {
