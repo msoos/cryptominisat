@@ -235,6 +235,7 @@ bool Solver::add_xor_clause_inter(
         ps[0] ^= !rhs;
         const auto ID = ++clauseID;
         *frat << implyclfromx << ID << ps << fratchain << XID2 << fin;
+        *frat << delx << XID2 << fin;
         add_clause_int_frat(ps, ID);
     } else if (ps.size() == 2) {
         ps[0] ^= !rhs;
@@ -2794,8 +2795,8 @@ bool Solver::add_clause_outside(const vector<Lit>& lits, bool red)
     return add_clause_outer(tmp, red);
 }
 
-bool Solver::add_xor_clause_outside(const vector<uint32_t>& vars, const bool rhs)
-{
+bool Solver::add_xor_clause_outside(const vector<uint32_t>& vars, const bool rhs) {
+    frat_func_start;
     if (!okay()) return false;
     if (rhs == false && vars.empty()) return okay();
 
@@ -2809,6 +2810,7 @@ bool Solver::add_xor_clause_outside(const vector<uint32_t>& vars, const bool rhs
     add_clause_helper(lits);
     add_xor_clause_inter(lits, rhs, true, XID);
 
+    frat_func_end;
     return okay();
 }
 
