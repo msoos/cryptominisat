@@ -579,7 +579,7 @@ class Tester:
                 return
 
         # check with other solver
-        if fname_frat != None:
+        if fname_frat == None:
             ret = self.sol_parser.check_unsat(checkAgainst)
             if ret is None:
                 print("Other solver time-outed, cannot check")
