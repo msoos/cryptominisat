@@ -606,12 +606,8 @@ class Tester:
             self.frat = False
             self.only_sampling = True
 
-        if self.frat:
-            fuzzers = fuzzers_frat
-        elif options.gauss:
-            fuzzers = fuzzers_xor
-        else:
-            fuzzers = fuzzers_nofrat
+        fuzzers= fuzzers_noxor
+        fuzzers.extend(fuzzers_xor)
         fuzzer = random.choice(fuzzers)
 
         fname = unique_file("fuzzTest")
@@ -728,9 +724,6 @@ if __name__ == "__main__":
     if options.valgrind_freq <= 0:
         print("Valgrind Frequency must be at least 1")
         exit(-1)
-
-    fuzzers_frat = fuzzers_noxor
-    fuzzers_nofrat = fuzzers_noxor
 
     print_version()
     tester = Tester()
