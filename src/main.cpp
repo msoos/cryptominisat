@@ -339,104 +339,100 @@ void Main::add_supported_options()
     program.add_argument("--predloc")
         .action([&](const auto& a) {conf.pred_conf_location = std::atoi(a.c_str());})
          .default_value(conf.pred_conf_location)
-        .help("Directory where predictor_short.json, predictor_long.json, predictor_forever.json are")
+        .help("Directory where predictor_short.json, predictor_long.json, predictor_forever.json are");
     program.add_argument("--predtype")
         .action([&](const auto& a) {conf.predictor_type = std::atoi(a.c_str());})
         .default_value(conf.predictor_type)
-        .help("Type of predictor. Supported: py, xgb, lgbm")
+        .help("Type of predictor. Supported: py, xgb, lgbm");
     program.add_argument("--predtables")
         .action([&](const auto& a) {conf.pred_tables = std::atoi(a.c_str());})
         .default_value(conf.pred_tables)
-        .help("000 = normal for all, 111 = ancestor for all")
+        .help("000 = normal for all, 111 = ancestor for all");
     program.add_argument("--predbestfeats")
          .action([&](const auto& a) {conf.predict_best_feat_fname = a);})
          .default_value(conf.predict_best_feat_fname)
-        .help("Model python file name")
+        .help("Model python file name");
 
     //size
     program.add_argument("--predshortsize")
         .action([&](const auto& a) {conf.pred_short_size = std::atoi(a.c_str());})
         .default_value(conf.pred_short_size)
-        .help("Pred short multiplier")
+        .help("Pred short multiplier");
     program.add_argument("--predlongsize")
         .action([&](const auto& a) {conf.pred_long_size = std::atoi(a.c_str());})
         .default_value(conf.pred_long_size)
-        .help("Pred long multiplier")
+        .help("Pred long multiplier");
     program.add_argument("--predforeversize")
         .action([&](const auto& a) {conf.pred_forever_size = std::atoi(a.c_str());})
         .default_value(conf.pred_forever_size)
-        .help("Pred forever multiplier")
+        .help("Pred forever multiplier");
     program.add_argument("--predforevercutoff")
         .action([&](const auto& a) {conf.pred_forever_cutoff = std::atoi(a.c_str());})
         .default_value(conf.pred_forever_cutoff)
-        .help("If non-zero, ONLY this determines what's MOVED to or KEPT IN 'forever'.")
+        .help("If non-zero, ONLY this determines what's MOVED to or KEPT IN 'forever'.");
     program.add_argument("--predforeverpow")
         .action([&](const auto& a) {conf.pred_forever_size_pow = std::atof(a.c_str());})
         .default_value(conf.pred_forever_size_pow)
-        .help("Pred forever power to raise the conflicts to")
+        .help("Pred forever power to raise the conflicts to");
     program.add_argument("--ordertier2by")
         .action([&](const auto& a) {conf.order_tier2_by = std::atoi(a.c_str());})
         .default_value(conf.order_tier2_by)
-        .help("Order Tier 2 by Tier 2/1/0 prediction")
+        .help("Order Tier 2 by Tier 2/1/0 prediction");
 
     //move or del?
     program.add_argument("--movefromtier0")
         .action([&](const auto& a) {conf.move_from_tier0 = std::atoi(a.c_str());})
         .default_value(conf.move_from_tier0)
-        .help("Move from tier0 to tier1? If set to 0, then it's deleted instead of moved.")
+        .help("Move from tier0 to tier1? If set to 0, then it's deleted instead of moved.");
     program.add_argument("--movefromtier1")
         .action([&](const auto& a) {conf.move_from_tier1 = std::atoi(a.c_str());})
         .default_value(conf.move_from_tier1)
-        .help("Move from tier1 to tier2? If set to 0, then it's deleted instead of moved.")
+        .help("Move from tier1 to tier2? If set to 0, then it's deleted instead of moved.");
 
     //printing
     program.add_argument("--dumppreddistrib")
         .action([&](const auto& a) {conf.dump_pred_distrib = std::atoi(a.c_str());})
         .default_value(conf.dump_pred_distrib)
-        .help("Dump predict distirution to pred_distrib.csv")
+        .help("Dump predict distirution to pred_distrib.csv");
 
     //chunk
     program.add_argument("--predlongchunk")
         .action([&](const auto& a) {conf.pred_long_chunk = std::atoi(a.c_str());})
         .default_value(conf.pred_long_chunk)
-        help("Pred long chunk multiplier")
+        help("Pred long chunk multiplier");
     program.add_argument("--predforeverchunk")
         .action([&](const auto& a) {conf.pred_forever_chunk = std::atoi(a.c_str());})
         .default_value(conf.pred_forever_chunk)
-        help("Pred forever chunk multiplier")
+        help("Pred forever chunk multiplier");
     program.add_argument("--predforeverchunkmult")
         .action([&](const auto& a) {conf.pred_forever_chunk_mult = std::atof(a.c_str());})
         .default_value(conf.pred_forever_chunk_mult)
-        help("Pred forever chunk should be POW multiplied just like forever. 0/1 (i.e. true/false) option")
+        help("Pred forever chunk should be POW multiplied just like forever. 0/1 (i.e. true/false) option");
 
     //Check intervals for LONG and FOREVER
     program.add_argument("--predlongcheckn")
         .action([&](const auto& a) {conf.pred_long_check_every_n = std::atoi(a.c_str());})
         .default_value(conf.pred_long_check_every_n)
-        .help("Pred long check over limit every N")
+        .help("Pred long check over limit every N");
     program.add_argument("--predforevercheckn")
          .action([&](const auto& a) {conf.pred_forever_check_every_n = std::atoi(a.c_str());})
         .default_value(conf.pred_forever_check_every_n)
-        .help("Pred forever check over limit every N")
+        .help("Pred forever check over limit every N");
 
     // Some old stuff
     program.add_argument("--preddistillsmallgue")
         .action([&](const auto& a) {conf.pred_distill_only_smallgue = std::atoi(a.c_str());})
         .default_value(conf.pred_distill_only_smallgue)
-        .help("Only distill small glue clauses")
+        .help("Only distill small glue clauses");
 
     // Lock clauses in
     program.add_argument("--preddontmovetime")
         .action([&](const auto& a) {conf.pred_dontmove_until_timeinside = std::atoi(a.c_str());})
         .default_value(conf.pred_dontmove_until_timeinside)
-        .help("Don't move clause until it's time has passed. For lev0 and lev1 only. If 1 = half time needs to pass (e.g. if we check every 50k conflicts, it must have been in the solver for 25k or it's force-kept). If 2 = the full time is needed, in the example, 25k.")
+        .help("Don't move clause until it's time has passed. For lev0 and lev1 only. If 1 = half time needs to pass (e.g. if we check every 50k conflicts, it must have been in the solver for 25k or it's force-kept). If 2 = the full time is needed, in the example, 25k.");
     #endif
 
-
     /* po::options_description restartOptions("Restart options"); */
-    /* restartOptions.add_options() */
-    /* std::ostringstream s_local_glue_multiplier; */
-    /* s_local_glue_multiplier << std::setprecision(4) << conf.local_glue_multiplier; */
     program.add_argument("--restart")
         .default_value("auto")
         .help("{geom, glue, luby}  Restart strategy to follow.");
@@ -471,7 +467,6 @@ void Main::add_supported_options()
     s_adjust_low << std::setprecision(2) << conf.adjust_glue_if_too_many_tier0;
 
     /* po::options_description reduceDBOptions("Redundant clause options"); */
-    /* reduceDBOptions.add_options() */
     program.add_argument("--gluecut0")
         .action([&](const auto& a) {conf.glue_put_lev0_if_below_or_eq = std::atoi(a.c_str());})
         .default_value(conf.glue_put_lev0_if_below_or_eq)
@@ -505,7 +500,6 @@ void Main::add_supported_options()
         .help("Learnt clause must be used in lev1 within this timeframe or be dropped to lev2");
 
     /* po::options_description varPickOptions("Variable branching options"); */
-    /* varPickOptions.add_options() */
     program.add_argument("--branchstr")
         .action([&](const auto& a) {conf.branch_strategy_setup = a;})
         .default_value(conf.branch_strategy_setup)
@@ -520,7 +514,6 @@ void Main::add_supported_options()
         .help("Parse special comments to run solve/simplify during parsing of CNF");
 
     /* po::options_description breakid_options("Breakid options"); */
-    /* breakid_options.add_options() */
     program.add_argument("--breakid")
         .action([&](const auto& a) {conf.doBreakid = std::atoi(a.c_str());})
         .default_value(conf.doBreakid)
@@ -553,10 +546,8 @@ void Main::add_supported_options()
         .action([&](const auto& a) {conf.breakid_matrix_detect = std::atoi(a.c_str());})
         .default_value(conf.breakid_matrix_detect)
         .help("Detect matrix row interchangability");
-    ;
 
     /* po::options_description sls_options("Stochastic Local Search options"); */
-    /* sls_options.add_options() */
     program.add_argument("--sls")
         .action([&](const auto& a) {conf.doSLS = std::atoi(a.c_str());})
         .default_value(conf.doSLS)
@@ -603,7 +594,6 @@ void Main::add_supported_options()
         .help("How to calculate what variable to bump. 1 = clause-based, 2 = var-flip-based, 3 = var-score-based");
 
     /* po::options_description probeOptions("Probing options"); */
-    /* probeOptions.add_options() */
     program.add_argument("--transred")
         .action([&](const auto& a) {conf.doTransRed = std::atoi(a.c_str());})
         .default_value(conf.doTransRed)
@@ -622,7 +612,6 @@ void Main::add_supported_options()
         .help("Perform hyper-binary resolution during probing");
 
     /* po::options_description simp_schedules("Simplification schedules"); */
-    /* simp_schedules.add_options() */
     std::ostringstream ssERatio;
     ssERatio << std::setprecision(4) << conf.varElimRatioPerIter;
     std::ostringstream s_num_conflicts_of_search_inc;
@@ -669,7 +658,6 @@ void Main::add_supported_options()
         .help("Simp rounds increment by this power of N");
 
     /* po::options_description tern_res_options("Ternary resolution"); */
-    /* tern_res_options.add_options() */
     std::ostringstream tern_keep;
     tern_keep << std::setprecision(2) << conf.ternary_keep_mult;
     std::ostringstream tern_max_create;
@@ -699,7 +687,6 @@ void Main::add_supported_options()
         .help("Allow ternary resolving to generate binary clauses");
 
     /* po::options_description occ_mem_limits("Occ-based simplification memory limits"); */
-    /* occ_mem_limits.add_options() */
     program.add_argument("--occredmax")
         .action([&](const auto& a) {conf.maxRedLinkInSize = std::atoi(a.c_str());})
         .default_value(conf.maxRedLinkInSize)
@@ -715,7 +702,6 @@ void Main::add_supported_options()
     ;
 
     /* po::options_description sub_str_time_limits("Occ-based subsumption and strengthening time limits"); */
-    /* sub_str_time_limits.add_options() */
     program.add_argument("--strengthen")
         .action([&](const auto& a) {conf.do_strengthen_with_occur = std::atoi(a.c_str());})
         .default_value(conf.do_strengthen_with_occur)
@@ -747,7 +733,6 @@ void Main::add_supported_options()
     ;
 
     /* po::options_description bva_options("BVA options"); */
-    /* bva_options.add_options() */
     program.add_argument("--bva")
         .action([&](const auto& a) {conf.do_bva = std::atoi(a.c_str());})
         .default_value(conf.do_bva)
@@ -771,7 +756,6 @@ void Main::add_supported_options()
     ;
 
     /* po::options_description bve_options("BVE options"); */
-    /* bve_options.add_options() */
     program.add_argument("--varelim")
         .action([&](const auto& a) {conf.doVarElim = std::atoi(a.c_str());})
         .default_value(conf.doVarElim)
@@ -803,7 +787,6 @@ void Main::add_supported_options()
         .help("BVE should check whether resolvents subsume others and check for exact size increase");
 
     /* po::options_description xorOptions("XOR-related options"); */
-    /* xorOptions.add_options() */
     program.add_argument("--xor")
         .action([&](const auto& a) {conf.doFindXors = std::atoi(a.c_str());})
         .default_value(conf.doFindXors)
@@ -826,7 +809,6 @@ void Main::add_supported_options()
         .help("Maximum matrix size (=num elements) that we should try to echelonize");
 
     /* po::options_description gateOptions("Gate-related options"); */
-    /* gateOptions.add_options() */
     program.add_argument("--gates")
         .action([&](const auto& a) {conf.doGateFind = std::atoi(a.c_str());})
         .default_value(conf.doGateFind)
@@ -841,7 +823,6 @@ void Main::add_supported_options()
         .help("Max time in bogoprops M to find gates");
 
     /* po::options_description conflOptions("Conflict options"); */
-    /* conflOptions.add_options() */
     program.add_argument("--recur")
         .action([&](const auto& a) {conf.doRecursiveMinim = std::atoi(a.c_str());})
         .default_value(conf.doRecursiveMinim)
@@ -864,7 +845,6 @@ void Main::add_supported_options()
         .help("Create decision-based conflict clauses when the UIP clause is too large");
 
     /* po::options_description propOptions("Glue options"); */
-    /* propOptions.add_options() */
     program.add_argument("--updateglueonanalysis")
         .action([&](const auto& a) {conf.update_glues_on_analyze = std::atoi(a.c_str());})
         .default_value(conf.update_glues_on_analyze)
@@ -875,7 +855,6 @@ void Main::add_supported_options()
         .help("Maximum glue used by glue-based restart strategy when populating glue history.");
 
     /* po::options_description chrono_bt_opts("Propagation options"); */
-    /* chrono_bt_opts.add_options() */
     program.add_argument("--diffdeclevelchrono")
         .action([&](const auto& a) {conf.diff_declev_for_chrono = std::atoi(a.c_str());})
         .default_value(conf.diff_declev_for_chrono)
@@ -883,7 +862,6 @@ void Main::add_supported_options()
 
 #ifdef USE_SQLITE3
     /* po::options_description sqlOptions("SQL options"); */
-    /* sqlOptions.add_options() */
     program.add_argument("--sql")
         .action([&](const auto& a) {sql = std::atoi(a.c_str());})
         .default_value(0)
@@ -907,7 +885,6 @@ void Main::add_supported_options()
 #endif
 
     /* po::options_description printOptions("Printing options"); */
-    /* printOptions.add_options() */
     program.add_argument("--verbstat")
         .action([&](const auto& a) {conf.verbStats = std::atoi(a.c_str());})
         .default_value(conf.verbStats)
@@ -931,7 +908,6 @@ void Main::add_supported_options()
 
 
     /* po::options_description distillOptions("Distill options"); */
-    /* distillOptions.add_options() */
     program.add_argument("--distill")
         .action([&](const auto& a) {conf.do_distill_clauses = std::atoi(a.c_str());})
         .default_value(conf.do_distill_clauses)
@@ -979,7 +955,6 @@ void Main::add_supported_options()
     ;
 
     /* po::options_description mem_save_opts("Memory saving options"); */
-    /* mem_save_opts.add_options() */
     program.add_argument("--renumber")
         .action([&](const auto& a) {conf.doRenumberVars = std::atoi(a.c_str());})
         .default_value(conf.doRenumberVars)
@@ -1002,7 +977,6 @@ void Main::add_supported_options()
         .help("Consolidate watchlists fully once every N conflicts. Scheduled during simplification rounds.");
 
     /* po::options_description miscOptions("Misc options"); */
-    /* miscOptions.add_options() */
     program.add_argument("--strmaxt")
         .action([&](const auto& a) {conf.watch_based_str_time_limitM = std::atoll(a.c_str());})
         .default_value(conf.watch_based_str_time_limitM)
@@ -1064,7 +1038,6 @@ void Main::add_supported_options()
 
 #ifdef USE_BOSPHORUS
     po::options_description bosph_options("Gauss options");
-    bosph_options.add_options()
      program.add_argument("--bosph")
         .action([&](const auto& a) {conf.do_bosphorus = std::atoi(a.c_str());})
         .default_value(conf.do_bosphorus)
@@ -1073,11 +1046,9 @@ void Main::add_supported_options()
         .action([&](const auto& a) {conf.bosphorus_every_n = std::atoi(a.c_str());})
         .default_value(conf.bosphorus_every_n)
         .help("Execute bosphorus only every Nth iteration -- starting at Nth iter.");
-     ;
 #endif
 
 /*     po::options_description gaussOptions("Gauss options"); */
-/*     gaussOptions.add_options() */
      program.add_argument("--maxmatrixrows")
         .action([&](const auto& a) {conf.gaussconf.max_matrix_rows = std::atoi(a.c_str());})
         .default_value(conf.gaussconf.max_matrix_rows)
@@ -1148,109 +1119,12 @@ void Main::check_options_correctness()
             << remove_last_comma_if_exists(conf.simplify_schedule_startup) << endl << endl;
             std::exit(0);
         }
-
-        /* if (vm.count("help")) */
-        /* { */
-        /*     cout */
-        /*     << "USAGE: " << argv[0] << " [options] inputfile [frat-trim-file]" << endl */
-
-        /*     << " where input is " */
-        /*     #ifndef USE_ZLIB */
-        /*     << "plain" */
-        /*     #else */
-        /*     << "plain or gzipped" */
-        /*     #endif */
-        /*     << " DIMACS." << endl; */
-
-        /*     cout << help_options_simple << endl; */
-        /*     std::exit(0); */
-        /* } */
     }
     catch (const std::exception& err) {
         std::cerr << err.what() << std::endl;
         std::cerr << program;
         exit(-1);
     }
-
-    /* } catch (boost::exception_detail::clone_impl< */
-    /*     boost::exception_detail::error_info_injector<po::unknown_option> >& c */
-    /* ) { */
-    /*     cerr */
-    /*     << "ERROR: Some option you gave was wrong. Please give '--help' to get help" << endl */
-    /*     << "       Unknown option: " << c.what() << endl; */
-    /*     std::exit(-1); */
-    /* } catch (boost::bad_any_cast &e) { */
-    /*     std::cerr */
-    /*     << "ERROR! You probably gave a wrong argument type" << endl */
-    /*     << "       Bad cast: " << e.what() */
-    /*     << endl; */
-
-    /*     std::exit(-1); */
-    /* } catch (boost::exception_detail::clone_impl< */
-    /*     boost::exception_detail::error_info_injector<po::invalid_option_value> >& what */
-    /* ) { */
-    /*     cerr */
-    /*     << "ERROR: Invalid value '" << what.what() << "'" << endl */
-    /*     << "       given to option '" << what.get_option_name() << "'" */
-    /*     << endl; */
-
-    /*     std::exit(-1); */
-    /* } catch (boost::exception_detail::clone_impl< */
-    /*     boost::exception_detail::error_info_injector<po::multiple_occurrences> >& what */
-    /* ) { */
-    /*     cerr */
-    /*     << "ERROR: " << what.what() << " of option '" */
-    /*     << what.get_option_name() << "'" */
-    /*     << endl; */
-
-    /*     std::exit(-1); */
-    /* } catch (boost::exception_detail::clone_impl< */
-    /*     boost::exception_detail::error_info_injector<po::required_option> >& what */
-    /* ) { */
-    /*     cerr */
-    /*     << "ERROR: You forgot to give a required option '" */
-    /*     << what.get_option_name() << "'" */
-    /*     << endl; */
-
-    /*     std::exit(-1); */
-    /* } catch (boost::exception_detail::clone_impl< */
-    /*     boost::exception_detail::error_info_injector<po::too_many_positional_options_error> >& what */
-    /* ) { */
-    /*     cerr */
-    /*     << "ERROR: You gave too many positional arguments. Only at most two can be given:" << endl */
-    /*     << "       the 1st the CNF file input, and optionally, the 2nd the FRAT file output" << endl */
-    /*     << "    OR (pre-processing)  1st for the input CNF, 2nd for the simplified CNF" << endl */
-    /*     << "    OR (post-processing) 1st for the solution file" << endl */
-    /*     ; */
-
-    /*     std::exit(-1); */
-    /* } catch (boost::exception_detail::clone_impl< */
-    /*     boost::exception_detail::error_info_injector<po::ambiguous_option> >& what */
-    /* ) { */
-    /*     cerr */
-    /*     << "ERROR: The option you gave was not fully written and matches" << endl */
-    /*     << "       more than one option. Please give the full option name." << endl */
-    /*     << "       The option you gave: '" << what.get_option_name() << "'" <<endl */
-    /*     << "       The alternatives are: "; */
-    /*     for(size_t i = 0; i < what.alternatives().size(); i++) { */
-    /*         cout << what.alternatives()[i]; */
-    /*         if (i+1 < what.alternatives().size()) { */
-    /*             cout << ", "; */
-    /*         } */
-    /*     } */
-    /*     cout << endl; */
-
-    /*     std::exit(-1); */
-    /* } catch (boost::exception_detail::clone_impl< */
-    /*     boost::exception_detail::error_info_injector<po::invalid_command_line_syntax> >& what */
-    /* ) { */
-    /*     cerr */
-    /*     << "ERROR: The option you gave is missing the argument or the" << endl */
-    /*     << "       argument is given with space between the equal sign." << endl */
-    /*     << "       detailed error message: " << what.what() << endl */
-    /*     ; */
-    /*     std::exit(-1); */
-    /* } */
 }
 
 void Main::parse_restart_type()
