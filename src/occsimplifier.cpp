@@ -2244,7 +2244,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 runStats.xorTime += finder.get_stats().findTime;
             }
         } else if (token == "occ-lit-rem") {
-            all_occ_based_lit_rem();
+            if (!solver->frat->enabled()) all_occ_based_lit_rem();
         } else if (token == "occ-bce") {
             blocked_clause_elim();
         } else if (token == "occ-clean-implicit") {
