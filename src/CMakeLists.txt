@@ -20,6 +20,7 @@
 
 include_directories( ${PROJECT_SOURCE_DIR} )
 include_directories( ${BOSPHORUS_INCLUDE_DIRS} )
+include_directories( ${TBUDDY_INCLUDE_DIRS} )
 include_directories( ${LOUVAIN_COMMUNITIES_INCLUDE_DIRS} )
 include_directories( SYSTEM ${MPI_INCLUDE_PATH} )
 
@@ -171,10 +172,8 @@ set(cryptoms_lib_link_libs
         ${cryptoms_lib_link_libs}
 )
 
-if (TBUDDY)
-    set(cryptoms_lib_link_libs
-        ${cryptoms_lib_link_libs}
-        tbuddy)
+if (tbuddy_FOUND)
+    set(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} tbuddy)
 endif()
 
 if (FINAL_PREDICTOR)
