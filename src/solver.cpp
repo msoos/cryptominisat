@@ -3215,38 +3215,22 @@ bool Solver::init_all_matrices() {
     }
     gqueuedata.resize(j);
     gmatrices.resize(j);
-
     return okay();
 }
 
-void Solver::start_getting_small_clauses(
-    const uint32_t max_len, const uint32_t max_glue, bool red, bool bva_vars,
-    bool simplified)
-{
-    assert(false && "TODO XORs");
+void Solver::start_getting_constraints( bool red, bool simplified,
+        uint32_t max_len, uint32_t max_glue) {
     assert(get_clause_query == NULL);
     get_clause_query = new GetClauseQuery(this);
-    get_clause_query->start_getting_small_clauses(max_len, max_glue, red, bva_vars, simplified);
-
+    get_clause_query->start_getting_constraints(red, simplified, max_len, max_glue);
 }
 
-void Solver::get_all_irred_clauses(vector<Lit>& out)
-{
-    assert(false && "TODO XORs");
-    assert(get_clause_query == NULL);
-    get_clause_query = new GetClauseQuery(this);
-    get_clause_query->get_all_irred_clauses(out);
-    delete get_clause_query;
-    get_clause_query = NULL;
-}
-
-bool Solver::get_next_small_clause(vector<Lit>& out, bool all_in_one)
-{
+bool Solver::get_next_constraint(std::vector<Lit>& ret, bool& is_xor, bool& rhs) {
     assert(get_clause_query);
-    return get_clause_query->get_next_small_clause(out, all_in_one);
+    return get_clause_query->get_next_small_clause(ret, is_xor, rhs);
 }
 
-void Solver::end_getting_small_clauses()
+void Solver::end_getting_constraints()
 {
     assert(get_clause_query);
     get_clause_query->end_getting_small_clauses();

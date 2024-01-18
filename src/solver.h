@@ -126,12 +126,13 @@ class Solver : public Searcher
         );
 
         //get clauses
-        void start_getting_small_clauses(
-            uint32_t max_len, uint32_t max_glue, bool red = true,
-            bool bva_vars = false, bool simplified = false);
-        bool get_next_small_clause(std::vector<Lit>& out, bool all_in_one = false);
-        void end_getting_small_clauses();
-        void get_all_irred_clauses(vector<Lit>& out);
+        void start_getting_constraints(
+               bool red = true, // only redundant, otherwise only irred
+               bool simplified = false,
+               uint32_t max_len = std::numeric_limits<uint32_t>::max(),
+               uint32_t max_glue = std::numeric_limits<uint32_t>::max());
+        bool get_next_constraint(std::vector<Lit>& ret, bool& is_xor, bool& rhs);
+        void end_getting_constraints();
         vector<uint32_t> translate_sampl_set(const vector<uint32_t>& sampl_set);
 
         //Version

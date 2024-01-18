@@ -248,7 +248,7 @@ namespace CMSat {
         //////////////////////
         //Below must be done in-order. Multi-threading not allowed.
         void start_getting_constraints(
-               bool only_red = true, // only redundant, otherwise only irred
+               bool red = true, // only redundant, otherwise only irred
                bool simplified = false,
                uint32_t max_len = std::numeric_limits<uint32_t>::max(),
                uint32_t max_glue = std::numeric_limits<uint32_t>::max());

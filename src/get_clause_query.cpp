@@ -33,14 +33,8 @@ GetClauseQuery::GetClauseQuery(Solver* _solver) :
     solver(_solver)
 {}
 
-void GetClauseQuery::start_getting_small_clauses(
-    const uint32_t _max_len, const uint32_t _max_glue, bool _red,
-    bool _bva_vars, bool _simplified)
-{
-    if (!outer_to_without_bva_map.empty()) {
-        std::cerr << "ERROR: You forgot to call end_getting_small_clauses() last time!" <<endl;
-        exit(-1);
-    }
+void GetClauseQuery::start_getting_constraints(bool _red, bool _simplified,
+    uint32_t _max_len, uint32_t _max_glue) {
 
     assert(at == numeric_limits<uint32_t>::max());
     assert(watched_at == numeric_limits<uint32_t>::max());
@@ -67,10 +61,8 @@ void GetClauseQuery::start_getting_small_clauses(
     elimed_at = 0;
     elimed_at2 = 0;
     undef_at = 0;
-    bva_vars = _bva_vars;
     simplified = _simplified;
     if (simplified) {
-        bva_vars = true;
         if (solver->get_num_bva_vars() != 0) {
             cout << "ERRROR! You must not have BVA variables for simplified CNF getting" << endl;
             exit(-1);
@@ -105,17 +97,6 @@ vector<uint32_t> GetClauseQuery::translate_sampl_set(
     } else {
         return sampl_set;
     }
-}
-
-void GetClauseQuery::get_all_irred_clauses(vector<Lit>& out)
-{
-    start_getting_small_clauses(
-        numeric_limits<uint32_t>::max(),
-        numeric_limits<uint32_t>::max(),
-        false);
-    bool ret = get_next_small_clause(out, true);
-    assert(ret == false); //we must get all clauses, so nothing left
-    end_getting_small_clauses();
 }
 
 bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
