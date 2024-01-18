@@ -57,6 +57,7 @@ add_subdirectory(${GTEST_PREFIX} gtest)
 set(GTEST_BOTH_LIBRARIES gtest gtest_main)
 
 include_directories(${GTEST_PREFIX}/include)
+include_directories( ${TBUDDY_INCLUDE_DIRS} )
 add_definitions( -DCMS_TESTING_ENABLED )
 
 # Add handy macros/functions
@@ -90,12 +91,17 @@ include_directories(
     ${PROJECT_BINARY_DIR}/include
 )
 
+set(cryptoms_lib_link_libs cryptominisat5)
+if (tbuddy_FOUND)
+    set(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} tbuddy)
+endif()
+
 # README test
 add_executable(readme_test
     readme_test.cpp
 )
 target_link_libraries(readme_test
-    cryptominisat5
+    cryptoms_lib_link_libs
 )
 add_test (
     NAME readme_test
@@ -109,7 +115,7 @@ if (NOT SANITIZE)
         c_test.c
     )
     target_link_libraries(c_test
-        cryptominisat5
+        cryptoms_lib_link_libs
     )
     add_test (
         NAME c_test
@@ -123,7 +129,7 @@ add_executable(multisol_test
     multisol_test.cpp
 )
 target_link_libraries(multisol_test
-    cryptominisat5
+    cryptoms_lib_link_libs
 )
 add_test (
     NAME multisol_test
@@ -193,7 +199,7 @@ foreach(F ${MY_TESTS})
         ${F}.cpp
     )
     target_link_libraries(${F}
-        cryptominisat5
+        cryptoms_lib_link_libs
         ${GTEST_BOTH_LIBRARIES}
     )
     add_test (
