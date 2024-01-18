@@ -247,13 +247,13 @@ namespace CMSat {
 
         //////////////////////
         //Below must be done in-order. Multi-threading not allowed.
-        void start_getting_small_clauses(uint32_t max_len, uint32_t max_glue, bool red = true, bool bva_vars = false, bool simplified = false);
-        bool get_next_small_clause(std::vector<Lit>& ret, bool all_in_one = false); //returns FALSE if no more
-        void end_getting_small_clauses();
-
-        void start_getting_clauses(bool red = false, bool simplified = true);
-        bool get_next_clause(std::vector<Lit> &ret);
-        void end_getting_clauses();
+        void start_getting_constraints(
+               bool only_red = true, // only redundant, otherwise only irred
+               bool simplified = false,
+               uint32_t max_len = std::numeric_limits<uint32_t>::max(),
+               uint32_t max_glue = std::numeric_limits<uint32_t>::max());
+        bool get_next_constraint(std::vector<Lit>& ret, bool& is_xor, bool& rhs);
+        void end_getting_constraints();
 
         uint32_t simplified_nvars();
         std::vector<uint32_t> translate_sampl_set(const std::vector<uint32_t>& sampl_set);
@@ -283,36 +283,28 @@ namespace CMSat {
     template<class T, class T2>
     void copy_solver_to_solver(T* solver, T2* solver2) {
         solver2->new_vars(solver->nVars());
-        solver->start_getting_small_clauses(
-            std::numeric_limits<uint32_t>::max(),
-            std::numeric_limits<uint32_t>::max(),
-            false);
-        std::vector<Lit> clause;
-        bool ret = true;
+        solver->start_getting_constraints(false);
+        std::vector<Lit> c; bool is_xor; bool rhs; bool ret = true;
         while (ret) {
-            ret = solver->get_next_small_clause(clause);
+            ret = solver->get_next_constraint(c, is_xor, rhs);
             if (!ret) break;
-            solver2->add_clause(clause);
+            if (is_xor) solver2->add_xor_clause(c, rhs);
+            else solver2->add_clause(c);
         }
-        solver->end_getting_small_clauses();
+        solver->end_getting_constraints();
     }
 
     template<class T, class T2>
     void copy_simp_solver_to_solver(T* solver, T2* solver2) {
         solver2->new_vars(solver->simplified_nvars());
-        solver->start_getting_small_clauses(
-            std::numeric_limits<uint32_t>::max(),
-            std::numeric_limits<uint32_t>::max(),
-            false,
-            false,
-            true); //simplified
-        std::vector<Lit> clause;
-        bool ret = true;
+        solver->start_getting_constraints(false, true);
+        std::vector<Lit> c; bool is_xor; bool rhs; bool ret = true;
         while (ret) {
-            ret = solver->get_next_small_clause(clause);
+            ret = solver->get_next_constraint(c, is_xor, rhs);
             if (!ret) break;
-            solver2->add_clause(clause);
+            if (is_xor) solver2->add_xor_clause(c, rhs);
+            else solver2->add_clause(c);
         }
-        solver->end_getting_small_clauses();
+        solver->end_getting_constraints();
     }
 }

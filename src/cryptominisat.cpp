@@ -1308,48 +1308,25 @@ DLL_PUBLIC uint64_t SATSolver::get_last_decisions()
     return get_sum_decisions() - data->previous_sum_decisions;
 }
 
-void DLL_PUBLIC SATSolver::start_getting_small_clauses(
-    uint32_t max_len,
-    uint32_t max_glue,
-    bool red,
-    bool bva_vars,
-    bool simplified)
-{
+
+void DLL_PUBLIC SATSolver::start_getting_constraints( bool only_red, bool simplified,
+        uint32_t max_len, uint32_t max_glue) {
     actually_add_clauses_to_threads(data);
     assert(data->solvers.size() >= 1);
-    data->solvers[0]->start_getting_small_clauses(max_len, max_glue, red, bva_vars, simplified);
+    data->solvers[0]->start_getting_constraints(only_red, simplified, max_len, max_glue);
 }
 
-bool DLL_PUBLIC SATSolver::get_next_small_clause(std::vector<Lit>& out, bool all_in_one)
+bool DLL_PUBLIC SATSolver::get_next_constraint(std::vector<Lit>& out, bool& is_xor, bool& rhs)
 {
     assert(data->solvers.size() >= 1);
-    return data->solvers[0]->get_next_small_clause(out, all_in_one);
+    return data->solvers[0]->get_next_constraint(out, is_xor, rhs);
 }
 
-void DLL_PUBLIC SATSolver::end_getting_small_clauses()
+void DLL_PUBLIC SATSolver::end_getting_constraints()
 {
     assert(data->solvers.size() >= 1);
-    data->solvers[0]->end_getting_small_clauses();
+    data->solvers[0]->end_getting_constraints();
 }
-
-// Helper functions with more sane names
-void DLL_PUBLIC SATSolver::start_getting_clauses(bool red, bool simplified) {
-    assert(data->solvers.size() >= 1);
-        data->solvers[0]->start_getting_small_clauses(
-            std::numeric_limits<uint32_t>::max(),
-            std::numeric_limits<uint32_t>::max(),
-            red, false, simplified);
-}
-
-bool DLL_PUBLIC SATSolver::get_next_clause(std::vector<Lit> &ret) {
-    return get_next_small_clause(ret);
-}
-
-void DLL_PUBLIC SATSolver::end_getting_clauses() {
-    return end_getting_small_clauses();
-}
-// Helper functions end
-
 
 DLL_PUBLIC vector<uint32_t> SATSolver::translate_sampl_set(
     const vector<uint32_t>& sampl_set)
