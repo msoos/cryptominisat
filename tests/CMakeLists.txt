@@ -101,7 +101,7 @@ add_executable(readme_test
     readme_test.cpp
 )
 target_link_libraries(readme_test
-    cryptoms_lib_link_libs
+    ${cryptoms_lib_link_libs}
 )
 add_test (
     NAME readme_test
@@ -115,7 +115,7 @@ if (NOT SANITIZE)
         c_test.c
     )
     target_link_libraries(c_test
-        cryptoms_lib_link_libs
+        ${cryptoms_lib_link_libs}
     )
     add_test (
         NAME c_test
@@ -129,7 +129,7 @@ add_executable(multisol_test
     multisol_test.cpp
 )
 target_link_libraries(multisol_test
-    cryptoms_lib_link_libs
+    ${cryptoms_lib_link_libs}
 )
 add_test (
     NAME multisol_test
@@ -199,7 +199,7 @@ foreach(F ${MY_TESTS})
         ${F}.cpp
     )
     target_link_libraries(${F}
-        cryptoms_lib_link_libs
+        ${cryptoms_lib_link_libs}
         ${GTEST_BOTH_LIBRARIES}
     )
     add_test (
