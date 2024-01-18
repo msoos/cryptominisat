@@ -61,6 +61,7 @@ void GetClauseQuery::start_getting_constraints(bool _red, bool _simplified,
     elimed_at = 0;
     elimed_at2 = 0;
     undef_at = 0;
+    xor_at = 0;
     simplified = _simplified;
     if (simplified) {
         if (solver->get_num_bva_vars() != 0) {
@@ -99,17 +100,14 @@ vector<uint32_t> GetClauseQuery::translate_sampl_set(
     }
 }
 
-bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
-{
+bool GetClauseQuery::get_next_constraint(std::vector<Lit>& out, bool& is_xor, bool& rhs) {
     out.clear();
+    is_xor = false;
+    rhs = true;
     if (!solver->okay()) {
         if (at == 0) {
             at++;
-            if (!all_in_one_go) {
-                return true;
-            } else {
-                out.push_back(lit_Undef);
-            }
+            out.push_back(lit_Undef);
         }
         return false;
     }
@@ -126,15 +124,11 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
             if (!simplified) {
                 tmp_cl = solver->clause_outer_numbered(tmp_cl);
             }
-            if (bva_vars || all_vars_outside(tmp_cl)) {
+            if (all_vars_outside(tmp_cl)) {
                 solver->map_inter_to_outer(tmp_cl);
                 out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
-                if (!all_in_one_go) {
-                    units_at++;
-                    return true;
-                } else {
-                    out.push_back(lit_Undef);
-                }
+                units_at++;
+                return true;
             }
         }
         units_at++;
@@ -156,15 +150,11 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
                 if (!simplified) {
                     tmp_cl = solver->clause_outer_numbered(tmp_cl);
                 }
-                if (bva_vars || all_vars_outside(tmp_cl)) {
+                if (all_vars_outside(tmp_cl)) {
                     solver->map_inter_to_outer(tmp_cl);
                     out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
-                    if (!all_in_one_go) {
-                        watched_at_sub++;
-                        return true;
-                    } else {
-                        out.push_back(lit_Undef);
-                    }
+                    watched_at_sub++;
+                    return true;
                 }
             }
             watched_at_sub++;
@@ -181,15 +171,11 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
             tmp_cl.clear();
             tmp_cl.push_back(l);
             tmp_cl.push_back(~l2);
-            if (bva_vars || all_vars_outside(tmp_cl)) {
+            if (all_vars_outside(tmp_cl)) {
                 solver->map_inter_to_outer(tmp_cl);
                 out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
-                if (!all_in_one_go) {
-                    varreplace_at++;
-                    return true;
-                } else {
-                    out.push_back(lit_Undef);
-                }
+                varreplace_at++;
+                return true;
             }
         }
         varreplace_at++;
@@ -205,93 +191,90 @@ bool GetClauseQuery::get_next_small_clause(vector<Lit>& out, bool all_in_one_go)
                 ) {
                     if (!simplified) tmp_cl = solver->clause_outer_numbered(*cl);
                     else {tmp_cl.clear(); for(const auto& l: *cl) tmp_cl.push_back(l);}
-                    if (bva_vars || all_vars_outside(tmp_cl)) {
+                    if (all_vars_outside(tmp_cl)) {
                         solver->map_inter_to_outer(tmp_cl);
                         out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
-                        if (!all_in_one_go) {
-                            at_lev[lev]++;
-                            return true;
-                        } else {
-                            out.push_back(lit_Undef);
-                        }
+                        at_lev[lev]++;
+                        return true;
                     }
                 }
                 at_lev[lev]++;
             }
-    } else {
-        //Irred long clauses
-        while(at < solver->longIrredCls.size()) {
-            const ClOffset offs = solver->longIrredCls[at];
-            const Clause* cl = solver->cl_alloc.ptr(offs);
-            if (cl->size() <= max_len) {
-                if (!simplified) tmp_cl = solver->clause_outer_numbered(*cl);
-                else {
-                    tmp_cl.clear();
-                    for(const auto& l: *cl) tmp_cl.push_back(l);
-                }
-                if (bva_vars || all_vars_outside(tmp_cl)) {
-                    solver->map_inter_to_outer(tmp_cl);
-                    out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
-                    if (!all_in_one_go) {
-                        at++;
-                        return true;
-                    } else {
-                        out.push_back(lit_Undef);
-                    }
-                }
-            }
-            at++;
-        }
+    }
 
-        //Elimed clauses (already in OUTER notation)
-        bool ret = true;
-        while (ret && solver->occsimplifier && !simplified) {
-            ret = solver->occsimplifier->get_elimed_clause_at(elimed_at, elimed_at2, tmp_cl);
-            if (ret && all_vars_outside(tmp_cl)) {
+    //Irred long clauses
+    while(at < solver->longIrredCls.size()) {
+        const ClOffset offs = solver->longIrredCls[at];
+        const Clause* cl = solver->cl_alloc.ptr(offs);
+        if (cl->size() <= max_len) {
+            if (!simplified) tmp_cl = solver->clause_outer_numbered(*cl);
+            else {
+                tmp_cl.clear();
+                for(const auto& l: *cl) tmp_cl.push_back(l);
+            }
+            if (all_vars_outside(tmp_cl)) {
                 solver->map_inter_to_outer(tmp_cl);
                 out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
-                if (!all_in_one_go) {
-                    return true;
-                } else {
-                    out.push_back(lit_Undef);
-                }
+                at++;
+                return true;
             }
         }
+        at++;
+    }
 
-        //Clauses that have a variable like a V ~a which means the variable MUST take a value
-        //These are already in OUTER notation
-        while (undef_at < solver->undef_must_set_vars.size() && !simplified) {
-            uint32_t v = undef_at;
-            if (solver->undef_must_set_vars[v]) {
-                tmp_cl.clear();
-                tmp_cl.push_back(Lit(v, false));
-                tmp_cl.push_back(Lit(v, true));
-                if (bva_vars || all_vars_outside(tmp_cl)) {
-                    solver->map_inter_to_outer(tmp_cl);
-                    out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
-                    if (!all_in_one_go) {
-                        undef_at++;
-                        return true;
-                    } else {
-                        out.push_back(lit_Undef);
-                    }
-                }
-            }
-            undef_at++;
+    //XOR clauses
+    assert(false &&  "todo");
+    /* while(at < solver->longIrredCls.size()) { */
+    /*     const ClOffset offs = solver->longIrredCls[at]; */
+    /*     const Clause* cl = solver->cl_alloc.ptr(offs); */
+    /*     if (cl->size() <= max_len) { */
+    /*         if (!simplified) tmp_cl = solver->clause_outer_numbered(*cl); */
+    /*         else { */
+    /*             tmp_cl.clear(); */
+    /*             for(const auto& l: *cl) tmp_cl.push_back(l); */
+    /*         } */
+    /*         if (all_vars_outside(tmp_cl)) { */
+    /*             solver->map_inter_to_outer(tmp_cl); */
+    /*             out.insert(out.end(), tmp_cl.begin(), tmp_cl.end()); */
+    /*             at++; */
+    /*             return true; */
+    /*         } */
+    /*     } */
+    /*     at++; */
+    /* } */
+
+    //Elimed clauses (already in OUTER notation)
+    bool ret = true;
+    while (ret && solver->occsimplifier && !simplified) {
+        ret = solver->occsimplifier->get_elimed_clause_at(elimed_at, elimed_at2, tmp_cl);
+        if (ret && all_vars_outside(tmp_cl)) {
+            solver->map_inter_to_outer(tmp_cl);
+            out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
+            return true;
         }
+    }
 
+    //Clauses that have a variable like a V ~a which means the variable MUST take a value
+    //These are already in OUTER notation
+    while (undef_at < solver->undef_must_set_vars.size() && !simplified) {
+        uint32_t v = undef_at;
+        if (solver->undef_must_set_vars[v]) {
+            tmp_cl.clear();
+            tmp_cl.push_back(Lit(v, false));
+            tmp_cl.push_back(Lit(v, true));
+            if (all_vars_outside(tmp_cl)) {
+                solver->map_inter_to_outer(tmp_cl);
+                out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
+                undef_at++;
+                return true;
+            }
+        }
+        undef_at++;
     }
     return false;
 }
 
-void GetClauseQuery::end_getting_small_clauses()
-{
-    outer_to_without_bva_map.clear();
-    outer_to_without_bva_map.shrink_to_fit();
-}
-
-bool GetClauseQuery::all_vars_outside(const vector<Lit>& cl) const
-{
+bool GetClauseQuery::all_vars_outside(const vector<Lit>& cl) const {
     for(const auto& l: cl) if (solver->varData[solver->map_outer_to_inter(l.var())].is_bva)
         return false;
 
