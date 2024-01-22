@@ -212,10 +212,10 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
     findXorMatch(solver->watches[slit], slit);
     findXorMatch(solver->watches[~slit], ~slit);
 
-    /* if (lits.size() <= solver->conf.maxXorToFindSlow) { */
-    /*     findXorMatch(solver->watches[slit2], slit2); */
-    /*     findXorMatch(solver->watches[~slit2], ~slit2); */
-    /* } */
+    if (!solver->frat->enabled() && lits.size() <= solver->conf.maxXorToFindSlow) {
+        findXorMatch(solver->watches[slit2], slit2);
+        findXorMatch(solver->watches[~slit2], ~slit2);
+    }
 
     if (poss_xor.foundAll()) {
         std::sort(lits.begin(), lits.end());

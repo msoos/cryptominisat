@@ -446,10 +446,7 @@ struct XorSorter
     }
 };
 
-inline void sort_xor(Xor& x)
-{
-    std::sort(x.vars.begin(), x.vars.end());
-}
+inline void sort_xor(Xor& x) { std::sort(x.vars.begin(), x.vars.end()); }
 
 inline void check_xors_eq(const vector<Xor>& got_data, const std::string& expected)
 {
@@ -462,13 +459,12 @@ inline void check_xors_eq(const vector<Xor>& got_data, const std::string& expect
     std::sort(expected_sorted.begin(), expected_sorted.end(), xorsort);
 
     vector<Xor> got_data_sorted = got_data;
-    for(Xor& t: got_data_sorted) {
-        sort_xor(t);
-    }
+    for(Xor& t: got_data_sorted) sort_xor(t);
 
     std::sort(got_data_sorted.begin(), got_data_sorted.end(), xorsort);
-    EXPECT_EQ(expected_sorted.size(), got_data_sorted.size());
+    ASSERT_EQ(expected_sorted.size(), got_data_sorted.size());
     for(size_t i = 0; i < expected_sorted.size(); i++) {
+        ASSERT_EQ(expected_sorted[i].vars.size(), got_data_sorted[i].vars.size());
         EXPECT_EQ(expected_sorted[i].vars, got_data_sorted[i].vars);
         EXPECT_EQ(expected_sorted[i].rhs, got_data_sorted[i].rhs);
     }
