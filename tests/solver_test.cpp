@@ -54,17 +54,17 @@ TEST_F(SolverTest, get_bin)
     s->add_clause_outside(str_to_cl(" 2,  3"));
     s->add_clause_int(str_to_cl(" 1,  2"), true);
 
-    s->start_getting_small_clauses(2, 100);
+    s->start_getting_constraints();
     vector<Lit> lits;
-    bool ret = s->get_next_small_clause(lits, false);
-    ASSERT_TRUE(ret);
+    bool is_xor, rhs;
+    bool ret = s->get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(lits, str_to_cl(" 1,  2"));
 
-    ret = s->get_next_small_clause(lits, false);
+    ret = s->get_next_constraint(lits, is_xor, rhs);
     ASSERT_FALSE(ret);
-
-    s->end_getting_small_clauses();
+    s->end_getting_constraints();
 }
 
 TEST_F(SolverTest, get_long_lev0)
@@ -80,18 +80,16 @@ TEST_F(SolverTest, get_long_lev0)
     assert(c != NULL);
     s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
 
-    s->start_getting_small_clauses(10, 100);
-    vector<Lit> lits;
-
-    bool ret = s->get_next_small_clause(lits, false);
-    ASSERT_TRUE(ret);
+    s->start_getting_constraints(true);
+    vector<Lit> lits; bool is_xor, rhs;
+    bool ret = s->get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(lits, str_to_cl(" 1,  2, 3, 4"));
 
-    ret = s->get_next_small_clause(lits, false);
+    ret = s->get_next_constraint(lits, is_xor, rhs);
     ASSERT_FALSE(ret);
-
-    s->end_getting_small_clauses();
+    s->end_getting_constraints();
 }
 
 
@@ -108,18 +106,17 @@ TEST_F(SolverTest, get_long_lev1)
     assert(c != NULL);
     s->longRedCls[1].push_back(s->cl_alloc.get_offset(c));
 
-    s->start_getting_small_clauses(10, 100);
-    vector<Lit> lits;
-
-    bool ret = s->get_next_small_clause(lits, false);
-    ASSERT_TRUE(ret);
+    s->start_getting_constraints(true);
+    vector<Lit> lits; bool is_xor, rhs;
+    bool ret = s->get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(lits, str_to_cl(" 6,  2, 3, 4"));
 
-    ret = s->get_next_small_clause(lits, false);
+    ret = s->get_next_constraint(lits, is_xor, rhs);
     ASSERT_FALSE(ret);
 
-    s->end_getting_small_clauses();
+    s->end_getting_constraints();
 }
 
 TEST_F(SolverTest, get_long_lev0_and_lev1)
@@ -140,24 +137,23 @@ TEST_F(SolverTest, get_long_lev0_and_lev1)
     assert(c != NULL);
     s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
 
-    s->start_getting_small_clauses(10, 100);
-    vector<Lit> lits;
-
+    s->start_getting_constraints(true);
+    vector<Lit> lits; bool is_xor, rhs;
     //Order is reverse because we get lev0 then lev1
-    bool ret = s->get_next_small_clause(lits, false);
-    ASSERT_TRUE(ret);
+    bool ret = s->get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(lits, str_to_cl(" 2, 4, 5, 6"));
 
-    ret = s->get_next_small_clause(lits, false);
-    ASSERT_TRUE(ret);
+    ret = s->get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(lits, str_to_cl(" 3, -4, -7"));
 
-    ret = s->get_next_small_clause(lits, false);
+    ret = s->get_next_constraint(lits, is_xor, rhs);
     ASSERT_FALSE(ret);
 
-    s->end_getting_small_clauses();
+    s->end_getting_constraints();
 }
 
 TEST_F(SolverTest, get_long_toolarge)
@@ -165,21 +161,18 @@ TEST_F(SolverTest, get_long_toolarge)
     Clause* c;
     s = new Solver(&conf, &must_inter);
     s->new_vars(30);
+
     ClauseStats stats;
     stats.glue = 5;
-
-    s->add_clause_outside(str_to_cl(" 2,  3"));
     c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true, &stats);
     assert(c != NULL);
     s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
 
-    s->start_getting_small_clauses(2, 100);
-    vector<Lit> lits;
-
-    bool ret = s->get_next_small_clause(lits, false);
+    s->start_getting_constraints(true, false, 2);
+    vector<Lit> lits; bool is_xor, rhs;
+    bool ret = s->get_next_constraint(lits, is_xor, rhs);
     ASSERT_FALSE(ret);
-
-    s->end_getting_small_clauses();
+    s->end_getting_constraints();
 }
 
 TEST_F(SolverTest, get_glue_toolarge)
@@ -195,13 +188,13 @@ TEST_F(SolverTest, get_glue_toolarge)
     assert(c != NULL);
     s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
 
-    s->start_getting_small_clauses(100, 2);
+    s->start_getting_constraints(true, false, 3);
     vector<Lit> lits;
-
-    bool ret = s->get_next_small_clause(lits, false);
+    bool is_xor, rhs;
+    bool ret = s->get_next_constraint(lits, is_xor, rhs);
     ASSERT_FALSE(ret);
 
-    s->end_getting_small_clauses();
+    s->end_getting_constraints();
 }
 
 TEST_F(SolverTest, get_bin_and_long)
@@ -219,23 +212,23 @@ TEST_F(SolverTest, get_bin_and_long)
     assert(c != NULL);
     s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
 
-    s->start_getting_small_clauses(4, 100);
+    s->start_getting_constraints(true);
     vector<Lit> lits;
-
-    bool ret = s->get_next_small_clause(lits, false);
-    ASSERT_TRUE(ret);
+    bool is_xor, rhs;
+    bool ret = s->get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(lits, str_to_cl(" 1,  5"));
 
-    ret = s->get_next_small_clause(lits, false);
-    ASSERT_TRUE(ret);
+    ret = s->get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(lits, str_to_cl(" 1,  2, 3, 4"));
 
-    ret = s->get_next_small_clause(lits, false);
+    ret = s->get_next_constraint(lits, is_xor, rhs);
     ASSERT_FALSE(ret);
 
-    s->end_getting_small_clauses();
+    s->end_getting_constraints();
 }
 
 TEST_F(SolverTest, get_irred_bin_and_long)
@@ -250,23 +243,23 @@ TEST_F(SolverTest, get_irred_bin_and_long)
     assert(c != NULL);
     s->longIrredCls.push_back(s->cl_alloc.get_offset(c));
 
-    s->start_getting_small_clauses(4, 100, false);
+    s->start_getting_constraints(false);
     vector<Lit> lits;
-
-    bool ret = s->get_next_small_clause(lits, false);
-    ASSERT_TRUE(ret);
+    bool is_xor, rhs;
+    bool ret = s->get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(str_to_cl(" 1,  5"), lits);
 
-    ret = s->get_next_small_clause(lits, false);
-    ASSERT_TRUE(ret);
+    ret = s->get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(str_to_cl(" 1,  2, 3, 4"), lits);
 
-    ret = s->get_next_small_clause(lits, false);
+    ret = s->get_next_constraint(lits, is_xor, rhs);
     ASSERT_FALSE(ret);
 
-    s->end_getting_small_clauses();
+    s->end_getting_constraints();
 }
 
 }

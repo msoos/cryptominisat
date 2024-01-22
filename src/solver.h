@@ -506,9 +506,14 @@ inline const BinTriStats& Solver::getBinTriStats() const
     return binTri;
 }
 
-template<class T>
-inline vector<Lit> Solver::clause_outer_numbered(const T& cl) const
-{
+template<> inline vector<Lit> Solver::clause_outer_numbered(const vector<uint32_t>& cl) const {
+    tmpCl.clear();
+    for(const auto& l: cl) tmpCl.push_back(Lit(map_inter_to_outer(l), false));
+
+    return tmpCl;
+}
+
+template<class T> inline vector<Lit> Solver::clause_outer_numbered(const T& cl) const {
     tmpCl.clear();
     for(const auto& l: cl) tmpCl.push_back(map_inter_to_outer(l));
 

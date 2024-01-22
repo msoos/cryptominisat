@@ -20,6 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
+#include "build/include/cryptominisat5/cryptominisat_c.h"
 #include "constants.h"
 #include "cryptominisat.h"
 #include "solver.h"
@@ -1328,6 +1329,7 @@ void DLL_PUBLIC SATSolver::end_getting_constraints()
     data->solvers[0]->end_getting_constraints();
 }
 
+
 DLL_PUBLIC vector<uint32_t> SATSolver::translate_sampl_set(
     const vector<uint32_t>& sampl_set)
 {
@@ -1635,13 +1637,6 @@ DLL_PUBLIC void SATSolver::set_max_red_linkin_size(uint32_t sz)
     }
 }
 
-DLL_PUBLIC void SATSolver::get_all_irred_clauses(std::vector<Lit>& ret)
-{
-    assert(data->solvers.size() >= 1);
-    Solver& s = *data->solvers[0];
-    s.get_all_irred_clauses(ret);
-}
-
 DLL_PUBLIC lbool SATSolver::probe(Lit l, uint32_t& min_props)
 {
     assert(data->solvers.size() >= 1);
@@ -1664,32 +1659,33 @@ DLL_PUBLIC void SATSolver::set_varelim_check_resolvent_subs(bool varelim_check_r
     }
 }
 
+void into_rhs(vector<Lit>& lits, bool rhs) {
+    assert(!(lits.empty() && rhs == false));
+    if (!rhs) lits[0] ^= true;
+}
 
 DLL_PUBLIC void SATSolver::open_file_and_dump_irred_clauses(const char* fname)
 {
-    vector<Lit> cls;
-    get_all_irred_clauses(cls);
-
+    start_getting_constraints();
     uint32_t num_cls = 0;
     int32_t max_vars = -1;
-    for(const Lit l: cls) {
-        if (l == lit_Undef) {
-            num_cls++;
-        } else {
-            if ((int32_t)l.var() > max_vars) {
-                max_vars = (int32_t)l.var();
-            }
+    vector<Lit> lits; bool is_xor; bool rhs;
+    while (true) {
+        bool ret = get_next_constraint(lits, is_xor, rhs);
+        if (!ret) break;
+        num_cls++;
+        for(const Lit l: lits) {
+            if ((int32_t)l.var() > max_vars) max_vars = (int32_t)l.var();
         }
     }
 
     std::ofstream f(fname);
     f << "p cnf " << max_vars << " " << num_cls << endl;
-    for(const Lit l: cls) {
-        if (l == lit_Undef) {
-            f << " 0" << endl;
-        } else {
-            f << l << " ";
-        }
+    while (true) {
+        bool ret = get_next_constraint(lits, is_xor, rhs);
+        if (!ret) break;
+        if (is_xor) {into_rhs(lits, rhs); f << "x " << lits << " 0\n";}
+        else f << lits << " 0\n";
     }
 }
 

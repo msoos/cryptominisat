@@ -840,11 +840,7 @@ void Solver::renumber_clauses(const vector<uint32_t>& outerToInter)
     }
 
     //Clauses' abstractions have to be re-calculated
-    xorclauses_updated = true;
-    for(Xor& x: xorclauses) {
-        updateVarsMap(x.vars, outerToInter);
-    }
-
+    for(Xor& x: xorclauses) updateVarsMap(x.vars, outerToInter);
     for(auto& bnn: bnns) {
         if (bnn == NULL) continue;
         assert(!bnn->isRemoved);
@@ -2778,7 +2774,7 @@ bool Solver::add_clause_outside(const vector<Lit>& lits, bool red)
 }
 
 bool Solver::add_xor_clause_outside(const vector<Lit>& lits_out, bool rhs) {
-    frat_func_start;
+    frat_func_start();
     if (!okay()) return false;
     if (rhs == false && lits_out.empty()) return okay();
 
@@ -2790,12 +2786,12 @@ bool Solver::add_xor_clause_outside(const vector<Lit>& lits_out, bool rhs) {
     add_clause_helper(lits);
     add_xor_clause_inter(lits, rhs, true, XID);
 
-    frat_func_end;
+    frat_func_end();
     return okay();
 }
 
 bool Solver::add_xor_clause_outside(const vector<uint32_t>& vars, const bool rhs) {
-    frat_func_start;
+    frat_func_start();
     if (!okay()) return false;
     if (rhs == false && vars.empty()) return okay();
 
@@ -2809,7 +2805,7 @@ bool Solver::add_xor_clause_outside(const vector<uint32_t>& vars, const bool rhs
     add_clause_helper(lits);
     add_xor_clause_inter(lits, rhs, true, XID);
 
-    frat_func_end;
+    frat_func_end();
     return okay();
 }
 
@@ -3218,7 +3214,7 @@ bool Solver::init_all_matrices() {
     return okay();
 }
 
-void Solver::start_getting_constraints( bool red, bool simplified,
+void Solver::start_getting_constraints(bool red, bool simplified,
         uint32_t max_len, uint32_t max_glue) {
     assert(get_clause_query == NULL);
     get_clause_query = new GetClauseQuery(this);
@@ -3227,13 +3223,13 @@ void Solver::start_getting_constraints( bool red, bool simplified,
 
 bool Solver::get_next_constraint(std::vector<Lit>& ret, bool& is_xor, bool& rhs) {
     assert(get_clause_query);
-    return get_clause_query->get_next_small_clause(ret, is_xor, rhs);
+    return get_clause_query->get_next_constraint(ret, is_xor, rhs);
 }
 
 void Solver::end_getting_constraints()
 {
     assert(get_clause_query);
-    get_clause_query->end_getting_small_clauses();
+    get_clause_query->end_getting_constraints();
     delete get_clause_query;
     get_clause_query = NULL;
 }
@@ -3460,7 +3456,10 @@ void Solver::clean_sampl_and_get_empties(
     map_inter_to_outer(empty_vars);
 }
 
-bool Solver::remove_and_clean_all() { return clauseCleaner->remove_and_clean_all(); }
+bool Solver::remove_and_clean_all() {
+    return clauseCleaner->remove_and_clean_all();
+}
+
 bool Solver::remove_and_clean_detached_xors(vector<Xor>& xors) {
     return clauseCleaner->clean_xor_clauses(xors, false);
 }
@@ -3677,19 +3676,17 @@ void Solver::copy_to_simp(SATSolver* s2)
     s2->new_vars(nVars());
     s2->set_verbosity(0);
     bool ret = true;
-    start_getting_small_clauses(
-        std::numeric_limits<uint32_t>::max(),
-        std::numeric_limits<uint32_t>::max(),
-        false,
-        false,
-        true);
-    vector<Lit> clause;
+    start_getting_constraints(false, true);
+    vector<Lit> lits;
+    bool is_xor;
+    bool rhs;
     while (ret) {
-        ret = get_next_small_clause(clause);
+        ret = get_next_constraint(lits, is_xor, rhs);
         if (!ret) break;
-        s2->add_clause(clause);
+        if (!is_xor) s2->add_clause(lits);
+        else s2->add_xor_clause(lits, rhs);
     }
-    end_getting_small_clauses();
+    end_getting_constraints();
 }
 
 void hash_uint32_t(const uint32_t v, uint32_t& hash) {

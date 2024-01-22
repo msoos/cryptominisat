@@ -248,7 +248,7 @@ namespace CMSat {
         //////////////////////
         //Below must be done in-order. Multi-threading not allowed.
         void start_getting_constraints(
-               bool red = true, // only redundant, otherwise only irred
+               bool red = false, // also redundant, otherwise only irred
                bool simplified = false,
                uint32_t max_len = std::numeric_limits<uint32_t>::max(),
                uint32_t max_glue = std::numeric_limits<uint32_t>::max());
@@ -257,7 +257,6 @@ namespace CMSat {
 
         uint32_t simplified_nvars();
         std::vector<uint32_t> translate_sampl_set(const std::vector<uint32_t>& sampl_set);
-        void get_all_irred_clauses(std::vector<Lit>& ret);
         const std::vector<BNN*>& get_bnns() const;
 
         // Solution reconstruction after minimization

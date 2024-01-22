@@ -3480,6 +3480,8 @@ inline bool Searcher::check_order_heap_sanity() {
 bool Searcher::attach_xorclauses() {
     frat_func_start();
     SLOW_DEBUG_DO(for(const auto& gw: gwatches) assert(gw.empty()));
+
+    if (!okay()) return okay();
     solver->remove_and_clean_detached_xors(xorclauses);
     if (!okay()) return okay();
 
@@ -3535,7 +3537,7 @@ bool Searcher::clear_gauss_matrices(const bool destruct) {
     if (!destruct) {
         for(auto& gw: solver->gwatches) gw.clear();
         attach_xorclauses();
-        solver->remove_and_clean_all();
+        if (okay()) solver->remove_and_clean_all();
     }
     return okay();
 }

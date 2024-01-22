@@ -20,6 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
+#include "cryptominisat_c.h"
 #include "gtest/gtest.h"
 
 #include <fstream>
@@ -918,35 +919,33 @@ TEST(get_small_clauses, mixed)
     s.add_clause(str_to_cl("10"));
     s.add_clause(str_to_cl("1, -2, -5, -6, 7"));
 
-    s.start_getting_small_clauses(10000000, 10000000, false);
-
+    s.start_getting_constraints(false);
     vector<Lit> lits;
-    bool ret;
-
-    ret = s.get_next_small_clause(lits);
-    ASSERT_TRUE(ret);
+    bool is_xor, rhs;
+    bool ret = s.get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(str_to_cl("10"), lits);
 
-    ret = s.get_next_small_clause(lits);
-    ASSERT_TRUE(ret);
+    ret = s.get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(str_to_cl(" 1,  2"), lits);
 
-    ret = s.get_next_small_clause(lits);
-    ASSERT_TRUE(ret);
+    ret = s.get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(str_to_cl(" -5,  6"), lits);
 
-    ret = s.get_next_small_clause(lits);
-    ASSERT_TRUE(ret);
+    ret = s.get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(str_to_cl("1, -2, -5, -6, 7"), lits);
 
-    ret = s.get_next_small_clause(lits);
+    ret = s.get_next_constraint(lits, is_xor, rhs);
     ASSERT_FALSE(ret);
 
-    s.end_getting_small_clauses();
+    s.end_getting_constraints();
 }
 
 TEST(get_small_clauses, scc)
@@ -962,23 +961,23 @@ TEST(get_small_clauses, scc)
     auto x = s.get_all_binary_xors();
     ASSERT_EQ(1, x.size());
 
-    s.start_getting_small_clauses(10000000, 10000000, false);
-
+    s.start_getting_constraints(true);
     vector<Lit> lits;
-    bool ret = s.get_next_small_clause(lits);
-    ASSERT_TRUE(ret);
+    bool is_xor, rhs;
+    bool ret = s.get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(str_to_cl(" 5,  -6"), lits);
 
-    ret = s.get_next_small_clause(lits);
-    ASSERT_TRUE(ret);
+    ret = s.get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(str_to_cl(" -5,  6"), lits);
 
-    ret = s.get_next_small_clause(lits);
+    ret = s.get_next_constraint(lits, is_xor, rhs);
     ASSERT_FALSE(ret);
 
-    s.end_getting_small_clauses();
+    s.end_getting_constraints();
 }
 
 TEST(get_small_clauses, units)
@@ -989,23 +988,23 @@ TEST(get_small_clauses, units)
     s.add_clause(str_to_cl("-6"));
     s.simplify();
 
-    s.start_getting_small_clauses(10000000, 10000000, false);
-
+    s.start_getting_constraints(true);
     vector<Lit> lits;
-    bool ret = s.get_next_small_clause(lits);
-    ASSERT_TRUE(ret);
+    bool is_xor, rhs;
+    bool ret = s.get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(str_to_cl(" 5"), lits);
 
-    ret = s.get_next_small_clause(lits);
-    ASSERT_TRUE(ret);
+    ret = s.get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(str_to_cl("-6"), lits);
 
-    ret = s.get_next_small_clause(lits);
+    ret = s.get_next_constraint(lits, is_xor, rhs);
     ASSERT_FALSE(ret);
 
-    s.end_getting_small_clauses();
+    s.end_getting_constraints();
 }
 
 TEST(get_small_clauses, unsat)
@@ -1016,17 +1015,17 @@ TEST(get_small_clauses, unsat)
     s.add_clause(str_to_cl("-5"));
     s.simplify();
 
-    s.start_getting_small_clauses(10000000, 10000000, false);
-
+    s.start_getting_constraints(true);
     vector<Lit> lits;
-    bool ret = s.get_next_small_clause(lits);
-    ASSERT_TRUE(ret);
-    ASSERT_EQ(str_to_cl(""), lits);
+    bool is_xor, rhs;
+    bool ret = s.get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
+    ASSERT_TRUE(lits.empty());
 
-    ret = s.get_next_small_clause(lits);
+    ret = s.get_next_constraint(lits, is_xor, rhs);
     ASSERT_FALSE(ret);
 
-    s.end_getting_small_clauses();
+    s.end_getting_constraints();
 }
 
 TEST(get_small_clauses, unsat_all)
@@ -1038,7 +1037,7 @@ TEST(get_small_clauses, unsat_all)
     s.simplify();
 
     vector<Lit> lits;
-    s.get_all_irred_clauses(lits);
+    get_all_irred_clauses(s, lits);
     ASSERT_EQ(str_to_cl("U"), lits);
 }
 
@@ -1050,7 +1049,7 @@ TEST(get_small_clauses, undef)
     s.simplify();
 
     vector<Lit> lits;
-    s.get_all_irred_clauses(lits);
+    get_all_irred_clauses(s, lits);
     ASSERT_EQ(str_to_cl("5, -5, U"), lits);
 }
 
@@ -1062,23 +1061,23 @@ TEST(get_small_clauses, bve)
     s.add_clause(str_to_cl("7, 8"));
     s.simplify();
 
-    s.start_getting_small_clauses(10000000, 10000000, false);
-
+    s.start_getting_constraints();
     vector<Lit> lits;
-    bool ret = s.get_next_small_clause(lits);
-    ASSERT_TRUE(ret);
+    bool is_xor, rhs;
+    bool ret = s.get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(str_to_cl(" 5, 6"), lits);
 
-    ret = s.get_next_small_clause(lits);
-    ASSERT_TRUE(ret);
+    ret = s.get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(str_to_cl("7, 8"), lits);
 
-    ret = s.get_next_small_clause(lits);
+    ret = s.get_next_constraint(lits, is_xor, rhs);
     ASSERT_FALSE(ret);
 
-    s.end_getting_small_clauses();
+    s.end_getting_constraints();
 }
 
 TEST(get_small_clauses, full)
@@ -1090,7 +1089,7 @@ TEST(get_small_clauses, full)
     s.simplify();
 
     vector<Lit> lits;
-    s.get_all_irred_clauses(lits);
+    get_all_irred_clauses(s, lits);
     ASSERT_EQ(6, lits.size());
 }
 
@@ -1103,7 +1102,7 @@ TEST(get_small_clauses, full_bins)
     s.simplify();
 
     vector<Lit> lits;
-    s.get_all_irred_clauses(lits);
+    get_all_irred_clauses(s, lits);
 
     vector<Lit> cl;
     uint32_t found = 0;
@@ -1133,7 +1132,7 @@ TEST(get_small_clauses, full_units)
     s.simplify();
 
     vector<Lit> lits;
-    s.get_all_irred_clauses(lits);
+    get_all_irred_clauses(s, lits);
     ASSERT_EQ(str_to_cl("5, U, 7, U", false), lits);
 }
 
@@ -1149,24 +1148,24 @@ TEST(get_small_clauses, unit)
     s.simplify();
     auto x = s.get_zero_assigned_lits();
     ASSERT_EQ(2, x.size());
-
-    s.start_getting_small_clauses(10000000, 10000000, false);
+    s.start_getting_constraints(true);
 
     vector<Lit> lits;
-    bool ret = s.get_next_small_clause(lits);
-    ASSERT_TRUE(ret);
+    bool is_xor, rhs;
+    bool ret = s.get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(str_to_cl(" 5"), lits);
 
-    ret = s.get_next_small_clause(lits);
-    ASSERT_TRUE(ret);
+    ret = s.get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(str_to_cl(" 6"), lits);
 
-    ret = s.get_next_small_clause(lits);
+    ret = s.get_next_constraint(lits, is_xor, rhs);
     ASSERT_FALSE(ret);
 
-    s.end_getting_small_clauses();
+    s.end_getting_constraints();
 }
 
 TEST(sampling, indep1)

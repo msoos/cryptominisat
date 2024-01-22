@@ -40,6 +40,7 @@ void GetClauseQuery::start_getting_constraints(bool _red, bool _simplified,
     assert(watched_at == numeric_limits<uint32_t>::max());
     assert(watched_at_sub == numeric_limits<uint32_t>::max());
     assert(max_len >= 2);
+    solver->clear_gauss_matrices(false);
 
     if (!red) {
         //We'd need to implement getting elimed clauses
@@ -107,16 +108,16 @@ bool GetClauseQuery::get_next_constraint(std::vector<Lit>& out, bool& is_xor, bo
     if (!solver->okay()) {
         if (at == 0) {
             at++;
-            out.push_back(lit_Undef);
+            return true;
         }
         return false;
     }
 
     //Adding units
-    while (!red &&(
+    while (
         (!simplified && units_at < solver->nVarsOuter()) ||
         (simplified && units_at < solver->nVars()))
-    ) {
+    {
         const uint32_t v = units_at;
         if (solver->value(v) != l_Undef) {
             tmp_cl.clear();
@@ -147,9 +148,7 @@ bool GetClauseQuery::get_next_constraint(std::vector<Lit>& out, bool& is_xor, bo
                 tmp_cl.clear();
                 tmp_cl.push_back(l);
                 tmp_cl.push_back(w.lit2());
-                if (!simplified) {
-                    tmp_cl = solver->clause_outer_numbered(tmp_cl);
-                }
+                if (!simplified) tmp_cl = solver->clause_outer_numbered(tmp_cl);
                 if (all_vars_outside(tmp_cl)) {
                     solver->map_inter_to_outer(tmp_cl);
                     out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
@@ -203,7 +202,7 @@ bool GetClauseQuery::get_next_constraint(std::vector<Lit>& out, bool& is_xor, bo
     }
 
     //Irred long clauses
-    while(at < solver->longIrredCls.size()) {
+    while(!red && at < solver->longIrredCls.size()) {
         const ClOffset offs = solver->longIrredCls[at];
         const Clause* cl = solver->cl_alloc.ptr(offs);
         if (cl->size() <= max_len) {
@@ -223,29 +222,30 @@ bool GetClauseQuery::get_next_constraint(std::vector<Lit>& out, bool& is_xor, bo
     }
 
     //XOR clauses
-    assert(false &&  "todo");
-    /* while(at < solver->longIrredCls.size()) { */
-    /*     const ClOffset offs = solver->longIrredCls[at]; */
-    /*     const Clause* cl = solver->cl_alloc.ptr(offs); */
-    /*     if (cl->size() <= max_len) { */
-    /*         if (!simplified) tmp_cl = solver->clause_outer_numbered(*cl); */
-    /*         else { */
-    /*             tmp_cl.clear(); */
-    /*             for(const auto& l: *cl) tmp_cl.push_back(l); */
-    /*         } */
-    /*         if (all_vars_outside(tmp_cl)) { */
-    /*             solver->map_inter_to_outer(tmp_cl); */
-    /*             out.insert(out.end(), tmp_cl.begin(), tmp_cl.end()); */
-    /*             at++; */
-    /*             return true; */
-    /*         } */
-    /*     } */
-    /*     at++; */
-    /* } */
+    while(!red && xor_at < solver->xorclauses.size()) {
+        const auto x = solver->xorclauses[xor_at];
+        if (x.size() <= max_len) {
+            if (!simplified) tmp_cl = solver->clause_outer_numbered(x.vars);
+            else {
+                tmp_cl.clear();
+                for(const auto& v: x.vars) tmp_cl.push_back(Lit(v, false));
+            }
+            // NOTE; we must NEVER return the trivial XOR
+            if (!x.trivial() && all_vars_outside(tmp_cl)) {
+                solver->map_inter_to_outer(tmp_cl);
+                out.insert(out.end(), tmp_cl.begin(), tmp_cl.end());
+                is_xor = true;
+                rhs = x.rhs;
+                xor_at++;
+                return true;
+            }
+        }
+        xor_at++;
+    }
 
     //Elimed clauses (already in OUTER notation)
     bool ret = true;
-    while (ret && solver->occsimplifier && !simplified) {
+    while (!red && ret && solver->occsimplifier && !simplified) {
         ret = solver->occsimplifier->get_elimed_clause_at(elimed_at, elimed_at2, tmp_cl);
         if (ret && all_vars_outside(tmp_cl)) {
             solver->map_inter_to_outer(tmp_cl);
@@ -256,7 +256,7 @@ bool GetClauseQuery::get_next_constraint(std::vector<Lit>& out, bool& is_xor, bo
 
     //Clauses that have a variable like a V ~a which means the variable MUST take a value
     //These are already in OUTER notation
-    while (undef_at < solver->undef_must_set_vars.size() && !simplified) {
+    while (!red && undef_at < solver->undef_must_set_vars.size() && !simplified) {
         uint32_t v = undef_at;
         if (solver->undef_must_set_vars[v]) {
             tmp_cl.clear();
@@ -280,3 +280,5 @@ bool GetClauseQuery::all_vars_outside(const vector<Lit>& cl) const {
 
     return true;
 }
+
+void GetClauseQuery::end_getting_constraints() {}

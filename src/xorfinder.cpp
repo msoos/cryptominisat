@@ -179,7 +179,6 @@ bool XorFinder::find_xors() {
             , time_remain
         );
     }
-    solver->xorclauses_updated = true;
     return solver->okay();
 }
 
@@ -244,6 +243,7 @@ void XorFinder::add_found_xor(const Xor& found_xor)
     runStats.sumSizeXors += found_xor.size();
     runStats.maxsize = std::max<uint32_t>(runStats.maxsize, found_xor.size());
     runStats.minsize = std::min<uint32_t>(runStats.minsize, found_xor.size());
+    solver->xorclauses_updated = true;
     if (solver->frat->enabled()) {
         solver->chain.clear();
         INC_XID(added);

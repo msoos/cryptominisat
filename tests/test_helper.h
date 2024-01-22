@@ -646,6 +646,21 @@ bool find_lit(const T& where, const string& lit) {
     return std::find(where.begin(), where.end(), l) != where.end();
 }
 
+inline void get_all_irred_clauses(SATSolver&s, std::vector<Lit>& lits) {
+    lits.clear();
+    s.start_getting_constraints();
+    vector<Lit> lits2;
+    bool is_xor, rhs;
+    while(true) {
+        bool ret = s.get_next_constraint(lits2, is_xor, rhs);
+        if (!ret) break;
+        assert(!is_xor && "does not work with xors");
+        ASSERT_TRUE(rhs && "non-xor must have RHS true");
+        lits.insert(lits.end(), lits2.begin(), lits2.end());
+        lits.push_back(lit_Undef);
+    }
+}
+
 // string print(const vector<Lit>& dat) {
 //     std::stringstream m;
 //     for(size_t i = 0; i < dat.size();) {

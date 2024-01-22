@@ -57,7 +57,7 @@ TEST_F(F, convert_to_string)
 
     std::stringstream ss;
     ss << cl;
-    EXPECT_EQ( ss.str(), "1 2 3");
+    EXPECT_EQ( ss.str(), "1 2 3 -- ID: 1");
     free(tmp);
 }
 
@@ -71,7 +71,7 @@ TEST_F(F, convert_to_string2)
 
     std::stringstream ss;
     ss << cl;
-    EXPECT_EQ( ss.str(), "1 -2 3");
+    EXPECT_EQ( ss.str(), "1 -2 3 -- ID: 1");
     free(tmp);
 }
 
