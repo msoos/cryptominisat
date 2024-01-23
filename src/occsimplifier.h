@@ -314,6 +314,7 @@ private:
     SubsumeStrengthen* sub_str;
     friend class BVA;
     BVA* bva;
+    void check_cls_sanity();
 
     bool startup = false;
     bool backward_sub_str();
