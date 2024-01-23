@@ -60,7 +60,7 @@ using std::endl;
 #define MAXSIZE ((1ULL << (EFFECTIVELY_USEABLE_BITS))-1)
 
 ClauseAllocator::ClauseAllocator() :
-    dataStart(NULL)
+    dataStart(nullptr)
     , size(0)
     , capacity(0)
     , currentlyUsedSize(0)
@@ -126,7 +126,7 @@ void* ClauseAllocator::allocEnough(
         );
 
         //Realloc failed?
-        if (new_dataStart == NULL) {
+        if (new_dataStart == nullptr) {
             std::cerr
             << "ERROR: while reallocating clause space"
             << endl;

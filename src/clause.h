@@ -28,7 +28,7 @@ THE SOFTWARE.
 #include <cstdint>
 #include <vector>
 #include <sys/types.h>
-#include <string.h>
+#include <cstring>
 #include <limits>
 
 #include "solverconf.h"
@@ -53,9 +53,9 @@ For A to subsume B, everything that is in A MUST be in B. So, if (A & ~B)
 contains even one bit, it means that A contains something that B doesn't. So
 A may be a subset of B only if (A & ~B) == 0
 */
-inline bool subsetAbst(const cl_abst_type A, const cl_abst_type B)
+inline bool subsetAbst(const cl_abst_type a, const cl_abst_type b)
 {
-    return ((A & ~B) == 0);
+    return ((a & ~b) == 0);
 }
 
 template <class T>

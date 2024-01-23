@@ -57,7 +57,7 @@ struct VarData
     double weight = 0.5;
     #endif
 
-    //Reason this got propagated. NULL means decision/toplevel
+    //Reason this got propagated. nullptr means decision/toplevel
     PropBy reason = PropBy();
 
     lbool assumption = l_Undef;

@@ -60,7 +60,7 @@ static inline double real_time_sec() {
 
 static inline long realTimeMicros() {
     struct timeval tv;
-    gettimeofday(&tv, NULL);
+    gettimeofday(&tv, nullptr);
     return 1000000 * tv.tv_sec + tv.tv_usec;
 }
 
@@ -98,7 +98,7 @@ static inline double cpuTimeTotal(void)
 // size and resident set size, and return the results in KB.
 //
 // On failure, returns 0.0, 0.0
-static inline uint64_t memUsedTotal(double& vm_usage, std::string* max_mem_usage = NULL)
+static inline uint64_t memUsedTotal(double& vm_usage, std::string* max_mem_usage = nullptr)
 {
    //double& vm_usage
    using std::ios_base;
@@ -167,7 +167,7 @@ static inline uint64_t memUsedTotal(double& vm_usage, std::string* max_mem_usage
    vm_usage     = vsize;
    double resident_set = (double)rss * (double)page_size_kb;
 
-   if (max_mem_usage != NULL) {
+   if (max_mem_usage != nullptr) {
        //NOTE: we could query the MAXIMUM resident size using
        //   /proc/self/status
        //   as it contains: * VmHWM: Peak resident set size ("high water mark").
@@ -192,7 +192,7 @@ static inline uint64_t memUsedTotal(double& vm_usage, std::string* max_mem_usage
 }
 #elif defined(__FreeBSD__)
 #include <sys/types.h>
-inline uint64_t memUsedTotal(double& vm_usage, std::string* max_mem_usage = NULL)
+inline uint64_t memUsedTotal(double& vm_usage, std::string* max_mem_usage = nullptr)
 {
     vm_usage = 0;
 
@@ -201,7 +201,7 @@ inline uint64_t memUsedTotal(double& vm_usage, std::string* max_mem_usage = NULL
     return ru.ru_maxrss*1024;
 }
 #else //Windows
-static inline size_t memUsedTotal(double& vm_usage, std::string* max_mem_usage = NULL)
+static inline size_t memUsedTotal(double& vm_usage, std::string* max_mem_usage = nullptr)
 {
     vm_usage = 0;
     return 0;

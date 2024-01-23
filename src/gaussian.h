@@ -188,10 +188,10 @@ class EGaussian {
     uint32_t num_cols = 0;
 
     //quick lookup
-    PackedRow *cols_vals = NULL;
-    PackedRow *cols_unset = NULL;
-    PackedRow *tmp_col = NULL;
-    PackedRow *tmp_col2 = NULL;
+    PackedRow *cols_vals = nullptr;
+    PackedRow *cols_unset = nullptr;
+    PackedRow *tmp_col = nullptr;
+    PackedRow *tmp_col2 = nullptr;
     void update_cols_vals_set(const Lit lit1);
     void create_temps();
     void free_temps();

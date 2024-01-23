@@ -133,7 +133,7 @@ template<bool bin_only> bool Solver::probe_inter(const Lit l, uint32_t& min_prop
     cancelUntil_light();
 
     //Check result
-    if (!p.isNULL()) {
+    if (!p.isnullptr()) {
         vector<Lit> lits = {~l};
         add_clause_int(lits);
         goto end;
@@ -164,7 +164,7 @@ template<bool bin_only> bool Solver::probe_inter(const Lit l, uint32_t& min_prop
     cancelUntil_light();
 
     //Check result
-    if (!p.isNULL()) {
+    if (!p.isnullptr()) {
         vector<Lit> lits = {l};
         add_clause_int(lits);
         goto end;
@@ -187,7 +187,7 @@ template<bool bin_only> bool Solver::probe_inter(const Lit l, uint32_t& min_prop
         } else {
             //First we must propagate all the enqueued facts
             p = propagate<true>();
-            if (!p.isNULL()) {
+            if (!p.isnullptr()) {
                 ok = false;
                 goto end;
             }
@@ -208,7 +208,7 @@ template<bool bin_only> bool Solver::probe_inter(const Lit l, uint32_t& min_prop
 
     //Propagate all enqueued facts due to bprop
     p = propagate<true>();
-    if (!p.isNULL()) {
+    if (!p.isnullptr()) {
         ok = false;
         goto end;
     }

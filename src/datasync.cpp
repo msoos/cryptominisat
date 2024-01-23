@@ -44,7 +44,7 @@ void DataSync::finish_up_mpi()
 {
     #ifdef USE_MPI
     if (mpiSendData) {
-        //mpiSendData is only non-NULL when MPI is on and it's the 0 thread
+        //mpiSendData is only non-nullptr when MPI is on and it's the 0 thread
         assert(solver->conf.is_mpi);
         assert(solver->conf.thread_num == 0);
 
@@ -59,7 +59,7 @@ void DataSync::finish_up_mpi()
             assert(err == MPI_SUCCESS);
         }*/
         delete[] mpiSendData;
-        mpiSendData = NULL;
+        mpiSendData = nullptr;
     }
     #endif
 }
@@ -113,7 +113,7 @@ bool DataSync::syncData()
     }
     numCalls++;
 
-    assert(sharedData != NULL);
+    assert(sharedData != nullptr);
     assert(solver->decisionLevel() == 0);
 
     //SEND data
@@ -124,7 +124,7 @@ bool DataSync::syncData()
     if (!ok) {
         return false;
     }
-    solver->ok = solver->propagate<false>().isNULL();
+    solver->ok = solver->propagate<false>().isnullptr();
     if (!solver->ok) {
         return false;
     }
@@ -251,7 +251,7 @@ void CMSat::DataSync::signal_new_long_clause(const vector<Lit>& cl)
 bool DataSync::syncBinFromOthers()
 {
     for (uint32_t wsLit = 0; wsLit < sharedData->bins.size(); wsLit++) {
-        if (sharedData->bins[wsLit].data == NULL) {
+        if (sharedData->bins[wsLit].data == nullptr) {
             continue;
         }
 
@@ -313,7 +313,7 @@ bool DataSync::syncBinFromOthers(
             lits[1] = otherLit;
 
             //Don't add FRAT: it would add to the thread data, too
-            solver->add_clause_int(lits, true, NULL, true, NULL, false);
+            solver->add_clause_int(lits, true, nullptr, true, nullptr, false);
             if (!solver->okay()) {
                 goto end;
             }
@@ -342,7 +342,7 @@ void DataSync::syncBinToOthers()
 bool DataSync::add_bin_to_threads(Lit lit1, Lit lit2)
 {
     assert(lit1 < lit2);
-    if (sharedData->bins[lit1.toInt()].data == NULL) {
+    if (sharedData->bins[lit1.toInt()].data == nullptr) {
         return false;
     }
 
@@ -426,7 +426,7 @@ void DataSync::set_up_for_mpi()
         err = MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
         assert(err == MPI_SUCCESS);
         release_assert(mpiRank != 0);
-        assert(sharedData != NULL);
+        assert(sharedData != nullptr);
     }
 }
 
@@ -522,7 +522,7 @@ bool DataSync::mpi_recv_from_others()
             goto end;
         }
     }
-    solver->ok = solver->propagate<false>().isNULL();
+    solver->ok = solver->propagate<false>().isnullptr();
     if (!solver->ok) {
         goto end;
     }
@@ -559,7 +559,7 @@ void DataSync::mpi_send_to_others()
     int err;
 
     //We still are sending data, let's do that first
-    if (mpiSendData != NULL) {
+    if (mpiSendData != nullptr) {
         #ifdef VERBOSE_DEBUG_MPI_SENDRCV
         std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
         " Still sending data, waiting now." << std::endl;
@@ -573,7 +573,7 @@ void DataSync::mpi_send_to_others()
             err = MPI_Wait(&sendReq, &status);
             assert(err == MPI_SUCCESS);*/
             delete[] mpiSendData;
-            mpiSendData = NULL;
+            mpiSendData = nullptr;
         /*} else {
             return;
         }*/
@@ -600,7 +600,7 @@ void DataSync::mpi_send_to_others()
     for(uint32_t wsLit = 0; wsLit < solver->nVarsOutside()*2; wsLit++) {
         //Lit lit1 = ~Lit::toLit(wsLit);
         assert(syncMPIFinish.size() > wsLit);
-        if (sharedData->bins[wsLit].data == NULL) {
+        if (sharedData->bins[wsLit].data == nullptr) {
             data.push_back(0);
             continue;
         }
@@ -672,7 +672,7 @@ bool DataSync::mpi_get_unit(
     }
 
     solver->enqueue<false>(litToEnqueue);
-    solver->ok = solver->propagate<false>().isNULL();
+    solver->ok = solver->propagate<false>().isnullptr();
     if (!solver->ok) {
         return false;
     }

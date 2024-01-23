@@ -107,7 +107,7 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
     matrix_no = 0;
     double myTime = cpuTime();
 
-    XorFinder finder(NULL, solver);
+    XorFinder finder(nullptr, solver);
     solver->clauseCleaner->clean_xor_clauses(solver->xorclauses, false);
 
     finder.grab_mem();
@@ -119,7 +119,7 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
         return solver->attach_xorclauses();
     }
     if (solver->xorclauses.size() > solver->conf.gaussconf.max_gauss_xor_clauses
-        && solver->conf.sampling_vars != NULL
+        && solver->conf.sampling_vars != nullptr
     ) {
         matrix_created = false;
         verb_print(1,

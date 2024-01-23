@@ -320,7 +320,7 @@ bool InTree::handle_lit_popped_from_queue(
             ok = (ret == lit_Undef);
             timeout = check_timeout_due_to_hyperbin();
         } else {
-            ok = solver->propagate<true>().isNULL();
+            ok = solver->propagate<true>().isnullptr();
         }
 
         if (!ok && !timeout) {
@@ -352,7 +352,7 @@ bool InTree::empty_failed_list()
 
         if (solver->value(lit) == l_Undef) {
             solver->enqueue<true>(lit);
-            solver->ok = solver->propagate<true>().isNULL();
+            solver->ok = solver->propagate<true>().isnullptr();
             if (!solver->ok) {
                 return false;
             }

@@ -46,8 +46,8 @@ namespace CMSat {
         // or through a thread, etc. This gives you the possiblity to abort
         // the solver any time you like, depending on some external factor
         // such as time, or your own code's inner workings.
-        SATSolver(void* config = NULL
-        , std::atomic<bool>* interrupt_asap = NULL
+        SATSolver(void* config = nullptr
+        , std::atomic<bool>* interrupt_asap = nullptr
         );
         ~SATSolver();
 
@@ -75,7 +75,7 @@ namespace CMSat {
         ////////////////////////////
 
         lbool solve(const std::vector<Lit>* assumptions = 0, bool only_indep_solution = false); //solve the problem, optionally with assumptions. If only_indep_solution is set, only the independent variables set with set_independent_vars() are returned in the solution
-        lbool simplify(const std::vector<Lit>* assumptions = NULL, const std::string* strategy = NULL); //simplify the problem, optionally with assumptions
+        lbool simplify(const std::vector<Lit>* assumptions = nullptr, const std::string* strategy = nullptr); //simplify the problem, optionally with assumptions
         const std::vector<lbool>& get_model() const; //get model that satisfies the problem. Only makes sense if previous solve()/simplify() call was l_True
         const std::vector<Lit>& get_conflict() const; //get conflict in terms of the assumptions given in case the previous call to solve() was l_False
         bool okay() const; //the problem is still solveable, i.e. the empty clause hasn't been derived

@@ -353,7 +353,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , gatefinder_time_limitM(200)
 
         //Sampling
-        , sampling_vars(NULL)
+        , sampling_vars(nullptr)
 
         //Timeouts
         , global_next_multiplier(1.0)

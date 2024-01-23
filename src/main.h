@@ -70,7 +70,7 @@ class Main: public MainCommon
         //Options
         virtual void add_supported_options();
         virtual void call_after_parse() {}
-        SATSolver* solver = NULL;
+        SATSolver* solver = nullptr;
 
         //File reading
         void readInAFile(SATSolver* solver2, const string& filename);
@@ -110,7 +110,7 @@ class Main: public MainCommon
         bool fileNamePresent;
         string result_fname;
         string input_file;
-        std::ofstream* resultfile = NULL;
+        std::ofstream* resultfile = nullptr;
 
         //Drat checker
         bool clause_ID_needed = false;

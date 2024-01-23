@@ -61,7 +61,7 @@ struct Elem
 struct Mem
 {
     uint32_t alloc = 0;
-    Watched* base_ptr = NULL;
+    Watched* base_ptr = nullptr;
     uint32_t next_space_offset = 0;
 };
 
@@ -181,7 +181,7 @@ struct watch_array
         new_mem.alloc = std::max<size_t>(3*last_alloc, WATCH_MIN_SIZE_ONE_ALLOC_LATER);
         new_mem.alloc = std::min<size_t>(3*last_alloc, WATCH_MAX_SIZE_ONE_ALLOC);
         new_mem.base_ptr = (Watched*)malloc(new_mem.alloc*sizeof(Watched));
-        assert(new_mem.base_ptr != NULL);
+        assert(new_mem.base_ptr != nullptr);
         mems.push_back(new_mem);
         return mems.size()-1;
     }

@@ -53,7 +53,7 @@ namespace CMSat {
         explicit CMSatPrivateData(std::atomic<bool>* _must_interrupt)
         {
             must_interrupt = _must_interrupt;
-            if (must_interrupt == NULL) {
+            if (must_interrupt == nullptr) {
                 must_interrupt = new std::atomic<bool>(false);
                 must_interrupt_needs_delete = true;
             }
@@ -75,7 +75,7 @@ namespace CMSat {
 
         //Mult-threaded data
         vector<Solver*> solvers;
-        SharedData *shared_data = NULL;
+        SharedData *shared_data = nullptr;
         int which_solved = 0;
         std::atomic<bool>* must_interrupt;
         bool must_interrupt_needs_delete = false;
@@ -83,7 +83,7 @@ namespace CMSat {
         bool okay = true;
 
         ///????
-        std::ofstream* log = NULL;
+        std::ofstream* log = nullptr;
         int sql = 0;
         double timeout = numeric_limits<double>::max();
         bool interrupted = false;
@@ -110,7 +110,7 @@ namespace CMSat {
 
 struct DataForThread
 {
-    explicit DataForThread(CMSatPrivateData* data, const vector<Lit>* _assumptions = NULL) :
+    explicit DataForThread(CMSatPrivateData* data, const vector<Lit>* _assumptions = nullptr) :
         solvers(data->solvers)
         , cpu_times(data->cpu_times)
         , lits_to_add(&(data->cls_lits))
@@ -904,7 +904,7 @@ lbool calc(
     Todo todo,
     CMSatPrivateData *data,
     bool only_sampling_solution = false,
-    const string* strategy = NULL
+    const string* strategy = nullptr
 ) {
     //Sanity check
     if (data->solvers.size() > 1 && data->sql > 0) {
@@ -1518,7 +1518,7 @@ DLL_PUBLIC lbool SATSolver::find_fast_backw(FastBackwData fast_backw)
     data->solvers[0]->fast_backw = fast_backw;
     bool backup_doVarElim = data->solvers[0]->conf.doVarElim;
     data->solvers[0]->conf.doVarElim = true;
-    const auto ret = solve(NULL, true);
+    const auto ret = solve(nullptr, true);
     data->solvers[0]->fast_backw = FastBackwData();
     data->solvers[0]->conf.doVarElim = backup_doVarElim;
 
@@ -1834,7 +1834,7 @@ DLL_PUBLIC std::string SATSolver::serialize_solution_reconstruction_data() const
 DLL_PUBLIC void* SATSolver::create_extend_solution_setup(std::string& dat)
 {
     std::atomic<bool>* must_inter = new std::atomic<bool>;
-    Solver* solver = new CMSat::Solver(NULL, must_inter);
+    Solver* solver = new CMSat::Solver(nullptr, must_inter);
     solver->create_from_solution_reconstruction_data(dat);
 
    return (void*)solver;

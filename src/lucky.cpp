@@ -138,7 +138,7 @@ bool CMSat::Lucky::search_fwd_sat(bool polar)
         Lit lit = Lit(i, !polar);
         solver->enqueue<true>(lit);
         auto p = solver->propagate<true>();
-        if (!p.isNULL()) {
+        if (!p.isnullptr()) {
             solver->cancelUntil<false, true>(0);
             return false;
         }
@@ -174,7 +174,7 @@ bool CMSat::Lucky::enqueue_and_prop_assumptions()
             solver->new_decision_level();
             solver->enqueue<true>(p);
             auto prop = solver->propagate<true>();
-            if (!prop.isNULL()) {
+            if (!prop.isnullptr()) {
                 solver->cancelUntil<false, true>(0);
                 return false;
             }
@@ -202,7 +202,7 @@ bool CMSat::Lucky::search_backw_sat(bool polar)
         Lit lit = Lit(i, !polar);
         solver->enqueue<true>(lit);
         auto p = solver->propagate<true>();
-        if (!p.isNULL()) {
+        if (!p.isnullptr()) {
             solver->cancelUntil<false, true>(0);
             return false;
         }
@@ -248,7 +248,7 @@ bool CMSat::Lucky::horn_sat(bool polar)
         solver->new_decision_level();
         solver->enqueue<true>(to_set);
         auto p = solver->propagate<true>();
-        if (!p.isNULL()) {
+        if (!p.isnullptr()) {
             solver->cancelUntil<false, true>(0);
             return false;
         }
@@ -275,7 +275,7 @@ bool CMSat::Lucky::horn_sat(bool polar)
                 solver->new_decision_level();
                 solver->enqueue<true>(lit);
                 auto p = solver->propagate<true>();
-                if (!p.isNULL()) {
+                if (!p.isnullptr()) {
                     solver->cancelUntil<false, true>(0);
                     return false;
                 }
@@ -310,7 +310,7 @@ bool CMSat::Lucky::horn_sat(bool polar)
                 solver->new_decision_level();
                 solver->enqueue<true>(x);
                 auto p = solver->propagate<true>();
-                if (!p.isNULL()) {
+                if (!p.isnullptr()) {
                     solver->cancelUntil<false, true>(0);
                     return false;
                 }

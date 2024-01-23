@@ -50,13 +50,13 @@ class SharedData
             #endif
             : data(std::move(other.data))
             {
-                other.data = NULL;
+                other.data = nullptr;
             }
             ~Spec() { clear(); }
-            vector<Lit>* data = NULL;
+            vector<Lit>* data = nullptr;
             void clear() {
                 delete data;
-                data = NULL;
+                data = nullptr;
             }
         };
 

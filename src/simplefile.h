@@ -86,7 +86,7 @@ public:
     }
 
 private:
-    std::ofstream* outf = NULL;
+    std::ofstream* outf = nullptr;
     //vector<char> buffer;
 
     void put(const void* ptr, size_t num)
@@ -160,7 +160,7 @@ public:
     }
 
 private:
-    std::ifstream* inf = NULL;
+    std::ifstream* inf = nullptr;
 
     void get_raw(void* ptr, size_t num, size_t elem_sz)
     {

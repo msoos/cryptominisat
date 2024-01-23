@@ -1061,7 +1061,7 @@ void ReduceDB::handle_predictors()
         << endl;
     }
     num_times_pred_called++;
-    if (predictors == NULL) {
+    if (predictors == nullptr) {
         if (solver->conf.predictor_type == "xgb") {
             predictors = new ClPredictorsXGB;
         } else if (solver->conf.predictor_type == "lgbm") {

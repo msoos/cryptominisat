@@ -208,7 +208,7 @@ bool DistillerBin::try_distill_bin(
     solver->enqueue<true>(~lit1);
     confl = solver->propagate<true, false, true>();
 
-    if (confl.isNULL()) {
+    if (confl.isnullptr()) {
         if (solver->value(lit2) == l_True) {
             //clause can be removed
             confl = PropBy(ClOffset(0));
@@ -228,7 +228,7 @@ bool DistillerBin::try_distill_bin(
         }
     }
 
-    if (!confl.isNULL()) {
+    if (!confl.isnullptr()) {
         solver->cancelUntil<false, true>(0);
         solver->detach_bin_clause(lit1, lit2, false, w.get_ID());
         (*solver->frat) << del << w.get_ID() << lit1 << lit2 << fin;

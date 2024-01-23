@@ -289,7 +289,7 @@ bool EGaussian::full_init(bool& created) {
             case gret::prop:
                 assert(solver->decisionLevel() == 0);
                 assert(solver->okay());
-                solver->ok = solver->propagate<false>().isNULL();
+                solver->ok = solver->propagate<false>().isnullptr();
                 if (!solver->okay()) {
                     verb_print(5, "eliminate & adjust matrix during init lead to UNSAT");
                     return false;
@@ -326,13 +326,13 @@ void EGaussian::free_temps()
     tofree.clear();
 
     delete cols_unset;
-    cols_unset = NULL;
+    cols_unset = nullptr;
     delete cols_vals;
-    cols_vals = NULL;
+    cols_vals = nullptr;
     delete tmp_col;
-    tmp_col = NULL;
+    tmp_col = nullptr;
     delete tmp_col2;
-    tmp_col2 = NULL;
+    tmp_col2 = nullptr;
 }
 
 void EGaussian::create_temps()

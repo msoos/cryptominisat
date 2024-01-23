@@ -218,7 +218,7 @@ bool BreakID::doit()
     reattacher.detach_nonbins();
     remove_duplicates();
     double myTime = cpuTime();
-    assert(breakid == NULL);
+    assert(breakid == nullptr);
     breakid = new BID::BreakID;
     breakid->set_verbosity(0);
     breakid->set_useMatrixDetection(solver->conf.breakid_matrix_detect);
@@ -229,7 +229,7 @@ bool BreakID::doit()
     // We can fail adding clauses if they are UNSAT under the current assumptions
     if (!add_clauses()) {
         delete breakid;
-        breakid = NULL;
+        breakid = nullptr;
 
         bool ok = reattacher.reattachLongs();
         assert(ok);
@@ -279,7 +279,7 @@ bool BreakID::doit()
     }
 
     delete breakid;
-    breakid = NULL;
+    breakid = nullptr;
 
     return solver->okay();
 }
@@ -420,13 +420,13 @@ void BreakID::break_symms_in_cms()
         }
         Clause* newcl = solver->add_clause_int(*cl2
             , false //redundant
-            , NULL //stats
+            , nullptr //stats
             , true //attach
-            , NULL //return simplified
+            , nullptr //return simplified
             , true
             , Lit(symm_var, false)
         );
-        if (newcl != NULL) {
+        if (newcl != nullptr) {
             ClOffset offset = solver->cl_alloc.get_offset(newcl);
             solver->longIrredCls.push_back(offset);
         }

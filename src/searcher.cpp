@@ -229,7 +229,7 @@ inline void Searcher::recursiveConfClauseMin()
 
     size_t i, j;
     for (i = j = 1; i < learnt_clause.size(); i++) {
-        if (varData[learnt_clause[i].var()].reason.isNULL()
+        if (varData[learnt_clause[i].var()].reason.isnullptr()
             || !litRedundant(learnt_clause[i], abstract_level)
         ) {
             learnt_clause[j++] = learnt_clause[i];
@@ -245,7 +245,7 @@ void Searcher::normalClMinim()
     for (i = j = 1; i < learnt_clause.size(); i++) {
         const PropBy& reason = varData[learnt_clause[i].var()].reason;
         size_t size;
-        Lit *lits = NULL;
+        Lit *lits = nullptr;
         int32_t ID;
         PropByType type = reason.getType();
         if (type == null_clause_t) {
@@ -390,7 +390,7 @@ void Searcher::add_lits_to_learnt(
     VERBOSE_DEBUG_DO(debug_print_resolving_clause(confl));
     sumAntecedents++;
 
-    Lit* lits = NULL;
+    Lit* lits = nullptr;
     size_t size = 0;
     int32_t ID;
     switch (confl.getType()) {
@@ -737,7 +737,7 @@ void Searcher::simple_create_learnt_clause(
             }
 
             case null_clause_t:
-                assert(confl.isNULL());
+                assert(confl.isnullptr());
                 out_learnt.push_back(~p);
                 break;
         }
@@ -928,11 +928,11 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
         analyze_stack.pop();
 
         //Must have a reason
-        assert(!reason.isNULL());
+        assert(!reason.isnullptr());
 
         int32_t ID;
         size_t size;
-        Lit* lits = NULL;
+        Lit* lits = nullptr;
         switch (type) {
             case clause_t: {
                 Clause* cl = cl_alloc.ptr(reason.get_offset());
@@ -989,7 +989,7 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
             stats.recMinimCost++;
 
             if (!seen[p2.var()] && varData[p2.var()].level > 0) {
-                if (!varData[p2.var()].reason.isNULL()
+                if (!varData[p2.var()].reason.isnullptr()
                     && (abstractLevel(p2.var()) & abstract_levels) != 0
                 ) {
                     seen[p2.var()] = 1;
@@ -1071,7 +1071,7 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
         const uint32_t x = trail[i].lit.var();
         if (seen[x]) {
             const PropBy reason = varData[x].reason;
-            if (reason.isNULL()) {
+            if (reason.isnullptr()) {
                 assert(varData[x].level > 0);
                 out_conflict.push_back(~trail[i].lit);
             } else {
@@ -1257,7 +1257,7 @@ lbool Searcher::search()
     lbool search_ret = l_Undef;
 
     while (!params.needToStopSearch
-        || !confl.isNULL() //always finish the last conflict
+        || !confl.isnullptr() //always finish the last conflict
     ) {
         confl = PropBy();
         if (!solver->okay()) {
@@ -1265,8 +1265,8 @@ lbool Searcher::search()
             search_ret = l_False;
             goto end;
         }
-        if (confl.isNULL()) confl = propagate<false>();
-        if (!confl.isNULL()) {
+        if (confl.isnullptr()) confl = propagate<false>();
+        if (!confl.isnullptr()) {
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             hist.trailDepthHist.push(trail.size());
             #endif
@@ -1302,7 +1302,7 @@ lbool Searcher::search()
 
     cancelUntil(0);
     confl = propagate<false>();
-    if (!confl.isNULL() || !solver->datasync->syncData()) {
+    if (!confl.isnullptr() || !solver->datasync->syncData()) {
         assert(!frat->enabled() || unsat_cl_ID != 0);
         ok = false;
         search_ret = l_False;
@@ -1652,7 +1652,7 @@ Clause* Searcher::handle_last_confl(
     }
 
     if (learnt_clause.size() <= 2) {
-        cl = NULL;
+        cl = nullptr;
     } else {
         cl = cl_alloc.Clause_new(learnt_clause
             , sumConflicts
@@ -2767,7 +2767,7 @@ void Searcher::finish_up_solve(const lbool status) {
 
         //due to chrono BT we need to propagate once more
         PropBy confl = propagate<false>();
-        assert(confl.isNULL());
+        assert(confl.isnullptr());
         assert(solver->prop_at_head());
         SLOW_DEBUG_DO(print_solution_varreplace_status());
     } else if (status == l_False) {
@@ -2778,7 +2778,7 @@ void Searcher::finish_up_solve(const lbool status) {
         if (okay()) {
             //due to chrono BT we need to propagate once more
             PropBy confl = propagate<false>();
-            assert(confl.isNULL());
+            assert(confl.isnullptr());
         }
     } else if (status == l_Undef) {
         assert(decisionLevel() == 0);
@@ -3023,7 +3023,7 @@ PropBy Searcher::propagate() {
 
     //Drat -- If declevel 0 propagation, we have to add the unitaries
     if (decisionLevel() == 0 && (frat->enabled() || conf.simulate_frat)) {
-        if (!ret.isNULL()) {
+        if (!ret.isnullptr()) {
             int32_t ID;
             for(size_t i = last_trail; i < trail.size(); i++) {
                 const auto propby = varData[trail[i].lit.var()].reason;
@@ -3382,7 +3382,7 @@ ConflictData Searcher::find_conflict_level(PropBy& pb) {
             failBinLit = back;
         }
     } else {
-        Lit* lits = NULL;
+        Lit* lits = nullptr;
         uint32_t size = 0;
         int32_t ID;
         switch(pb.getType()) {

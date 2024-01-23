@@ -269,7 +269,7 @@ ClOffset DistillerLitRem::try_distill_clause_and_return_new(
     solver->cancelUntil<false, true>(0);
 
      //Couldn't remove literal
-    if (confl.isNULL()) {
+    if (confl.isnullptr()) {
         return offset;
     }
 
@@ -282,7 +282,7 @@ ClOffset DistillerLitRem::try_distill_clause_and_return_new(
     }
 //     cout
 //     << "Failed"
-//     << " confl.isNULL(): " << confl.isNULL()
+//     << " confl.isnullptr(): " << confl.isnullptr()
 //     << " i: " << i
 //     << " at: " << at
 //     << " cl before: " << cl
@@ -305,7 +305,7 @@ ClOffset DistillerLitRem::try_distill_clause_and_return_new(
     (*solver->frat) << findelay;
     assert(solver->trail_size() == origTrailSize);
 
-    if (cl2 != NULL) {
+    if (cl2 != nullptr) {
         return solver->cl_alloc.get_offset(cl2);
     } else {
         #ifdef STATS_NEEDED

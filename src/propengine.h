@@ -623,7 +623,7 @@ PropBy PropEngine::propagate_light()
     PropBy confl;
     VERBOSE_PRINT("propagate_light started");
 
-    while (qhead < trail.size() && confl.isNULL()) {
+    while (qhead < trail.size() && confl.isnullptr()) {
         const Lit p = trail[qhead].lit;
         watch_subarray ws = watches[~p];
 
@@ -632,7 +632,7 @@ PropBy PropEngine::propagate_light()
         Watched* end = ws.end();
         propStats.bogoProps += ws.size()/4 + 1;
         for (; i != end; i++) {
-            if (bin_only && !confl.isNULL()) break;
+            if (bin_only && !confl.isnullptr()) break;
 
             // propagate binary clause
             if (i->isBin()) {

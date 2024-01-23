@@ -93,7 +93,7 @@ bool CompleteDetachReatacher::reattachLongs(bool removeStatsFirst) {
     solver->clauseCleaner->clean_implicit_clauses();
     assert(!solver->frat->something_delayed());
 
-    if (solver->okay()) solver->ok = (solver->propagate<true>().isNULL());
+    if (solver->okay()) solver->ok = (solver->propagate<true>().isnullptr());
     solver->attach_xorclauses();
     return solver->okay();
 }

@@ -108,7 +108,7 @@ using std::endl;
 Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter) :
     Searcher(_conf, this, _must_interrupt_inter)
 {
-    sqlStats = NULL;
+    sqlStats = nullptr;
     intree = new InTree(this);
 
 #ifdef USE_BREAKID
@@ -131,7 +131,7 @@ Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter
     if (conf.doStrSubImplicit) {
         subsumeImplicit = new SubsumeImplicit(this);
     }
-    datasync = new DataSync(this, NULL);
+    datasync = new DataSync(this, nullptr);
     Searcher::solver = this;
     reduceDB = new ReduceDB(this);
 
@@ -195,12 +195,12 @@ void Solver::add_clause_int_frat(const vector<Lit>& cl, const uint32_t ID) {
             false, //red
             &s,
             true, // attach long
-            NULL, //finalLits
+            nullptr, //finalLits
             true, //add_frat
             lit_Undef, //frat_first
             false, //sorted
             true); // remove_frat -- this is what we need
-    assert(c == NULL && "Only used for unsat, unit, and binary xors");
+    assert(c == nullptr && "Only used for unsat, unit, and binary xors");
 }
 
 bool Solver::add_xor_clause_inter(
@@ -333,7 +333,7 @@ Clause* Solver::add_clause_int(
     if (!sort_and_clean_clause(ps, lits, red, sorted)) {
         if (finalLits) finalLits->clear();
         if (remove_frat) *frat << del << cl_stats->ID << lits << fin;
-        return NULL;
+        return nullptr;
     }
     VERBOSE_PRINT("add_clause_int final clause: " << ps);
 
@@ -381,16 +381,16 @@ Clause* Solver::add_clause_int(
                 cout << "c solver received clause through addClause(): " << lits
                 << " that became an empty clause at toplevel --> UNSAT" << endl;
             }
-            return NULL;
+            return nullptr;
         case 1:
             assert(decisionLevel() == 0);
             enqueue<false>(ps[0]);
             *frat << del << ID << ps[0] << fin; // double unit delete
-            if (attach_long) ok = (propagate<true>().isNULL());
-            return NULL;
+            if (attach_long) ok = (propagate<true>().isnullptr());
+            return nullptr;
         case 2:
             attach_bin_clause(ps[0], ps[1], red, ID);
-            return NULL;
+            return nullptr;
         default:
             Clause* c = cl_alloc.Clause_new(ps, sumConflicts, ID);
             c->isRed = red;
@@ -400,7 +400,7 @@ Clause* Solver::add_clause_int(
                         sqlStats->update_id(c->stats.ID, ID));
                 c->stats.ID = ID;
             }
-            if (red && cl_stats == NULL) {
+            if (red && cl_stats == nullptr) {
                 assert(false && "does this happen at all? should it happen??");
                 #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
                 //TODO red_stats_extra setup: glue, size, introduced_at_conflict
@@ -500,7 +500,7 @@ bool Solver::bnn_to_cnf(BNN& bnn)
         lits.insert(lits.end(), bnn.begin(), bnn.end());
         Clause* cl = add_clause_int(lits);
         assert(ok);
-        if (cl != NULL) {
+        if (cl != nullptr) {
             longIrredCls.push_back(cl_alloc.get_offset(cl));
         }
         return true;
@@ -511,7 +511,7 @@ bool Solver::bnn_to_cnf(BNN& bnn)
         lits.insert(lits.end(), bnn.begin(), bnn.end());
         lits.push_back(~bnn.out);
         Clause* cl = add_clause_int(lits);
-        if (cl != NULL) {
+        if (cl != nullptr) {
             longIrredCls.push_back(cl_alloc.get_offset(cl));
         }
         for(Lit l: bnn) {
@@ -519,7 +519,7 @@ bool Solver::bnn_to_cnf(BNN& bnn)
             lits.push_back(~l);
             lits.push_back(bnn.out);
             Clause* cl2 = add_clause_int(lits);
-            assert(cl2 == NULL);
+            assert(cl2 == nullptr);
         }
         return true;
     }
@@ -531,7 +531,7 @@ bool Solver::bnn_to_cnf(BNN& bnn)
         }
         lits.push_back(bnn.out);
         Clause* cl = add_clause_int(lits);
-        if (cl != NULL) {
+        if (cl != nullptr) {
             longIrredCls.push_back(cl_alloc.get_offset(cl));
         }
         for(const Lit& l: bnn) {
@@ -539,7 +539,7 @@ bool Solver::bnn_to_cnf(BNN& bnn)
             lits.push_back(l);
             lits.push_back(~bnn.out);
             Clause* cl2 = add_clause_int(lits);
-            assert(cl2 == NULL);
+            assert(cl2 == nullptr);
         }
         return true;
     }
@@ -574,7 +574,7 @@ bool Solver::bnn_to_cnf(BNN& bnn)
                     lits.push_back(~bnn.out ^ (bool)rev);
                 }
                 Clause* cl2 = add_clause_int(lits);
-                if (cl2 != NULL)
+                if (cl2 != nullptr)
                     longIrredCls.push_back(cl_alloc.get_offset(cl2));
             }
         }
@@ -606,20 +606,20 @@ void Solver::add_bnn_clause_inter(
             return;
         }
         free(bnn);
-        bnn = NULL;
+        bnn = nullptr;
     }
 
-    if (bnn != NULL) {
+    if (bnn != nullptr) {
         assert(check_bnn_sane(*bnn));
         if (bnn_to_cnf(*bnn)) {
             free(bnn);
-            bnn = NULL;
+            bnn = nullptr;
         } else {
             bnns.push_back(bnn);
             attach_bnn(bnns.size()-1);
         }
     }
-    ok = propagate<true>().isNULL();
+    ok = propagate<true>().isnullptr();
 }
 
 void Solver::attachClause(
@@ -772,14 +772,14 @@ bool Solver::add_clause_outer(vector<Lit>& ps, bool red)
         , red //redundant?
         , &clstats
         , true //yes, attach
-        , NULL
+        , nullptr
         , true //add frat?
         , lit_Undef
         , true //sorted
         , true //remove old clause from proof if we changed it
     );
 
-    if (cl != NULL) {
+    if (cl != nullptr) {
         ClOffset offset = cl_alloc.get_offset(cl);
         if (!red) longIrredCls.push_back(offset);
         else longRedCls[2].push_back(offset);
@@ -842,7 +842,7 @@ void Solver::renumber_clauses(const vector<uint32_t>& outerToInter)
     //Clauses' abstractions have to be re-calculated
     for(Xor& x: xorclauses) updateVarsMap(x.vars, outerToInter);
     for(auto& bnn: bnns) {
-        if (bnn == NULL) continue;
+        if (bnn == nullptr) continue;
         assert(!bnn->isRemoved);
         updateLitsMap(*bnn, outerToInter);
         if (!bnn->set) bnn->out = getUpdatedLit(bnn->out, outerToInter);
@@ -872,13 +872,9 @@ size_t Solver::calculate_interToOuter_and_outerToInter(
     }
 
     //Fill the rest with variables that have been removed/eliminated/set
-    for(vector<uint32_t>::const_iterator
-        it = useless.begin(), end = useless.end()
-        ; it != end
-        ; ++it
-    ) {
-        outerToInter[*it] = at;
-        interToOuter[at] = *it;
+    for(const auto useles : useless) {
+        outerToInter[useles] = at;
+        interToOuter[at] = useles;
         at++;
     }
     assert(at == nVars());
@@ -1437,7 +1433,7 @@ lbool Solver::solve_with_assumptions(
     set_must_interrupt_asap();
     assert(decisionLevel()== 0);
     assert(!ok || prop_at_head());
-    if (_assumptions == NULL || _assumptions->empty()) {
+    if (_assumptions == nullptr || _assumptions->empty()) {
         #ifdef USE_BREAKID
         if (assumptions.empty()) {
             verb_print(1, "[breakid] Under BreakID it's UNSAT. Assumed lit: " << breakid->get_assumed_lit());
@@ -2079,7 +2075,7 @@ void Solver::print_norm_stats(
         , stats_line_percent(varReplacer->get_scc_finder()->get_stats().cpu_time, cpu_time)
         , "% time"
     );
-    varReplacer->get_scc_finder()->get_stats().print_short(NULL);
+    varReplacer->get_scc_finder()->get_stats().print_short(nullptr);
     varReplacer->print_some_stats(cpu_time);
 
     //varReplacer->get_stats().print_short(nVars());
@@ -2328,12 +2324,8 @@ void Solver::print_clause_size_distrib()
     size_t size4 = 0;
     size_t size5 = 0;
     size_t sizeLarge = 0;
-    for(vector<ClOffset>::const_iterator
-        it = longIrredCls.begin(), end = longIrredCls.end()
-        ; it != end
-        ; ++it
-    ) {
-        Clause* cl = cl_alloc.ptr(*it);
+    for(const auto longIrredCl: longIrredCls) {
+        Clause* cl = cl_alloc.ptr(longIrredCl);
         switch(cl->size()) {
             case 0:
             case 1:
@@ -2733,7 +2725,7 @@ bool Solver::fully_enqueue_this(const Lit lit)
     if (val == l_Undef) {
         assert(varData[lit.var()].removed == Removed::none);
         enqueue<false>(lit);
-        ok = propagate<true>().isNULL();
+        ok = propagate<true>().isnullptr();
 
         if (!ok) {
             return false;
@@ -3179,14 +3171,14 @@ bool Solver::init_all_matrices() {
             if (conf.verbosity > 5) {
                 cout << "DELETED matrix" << endl;
             }
-            g = NULL;
+            g = nullptr;
         }
     }
 
     uint32_t j = 0;
     bool modified = false;
     for (uint32_t i = 0; i < gqueuedata.size(); i++) {
-        if (gmatrices[i] != NULL) {
+        if (gmatrices[i] != nullptr) {
             gmatrices[j] = gmatrices[i];
             gmatrices[j]->update_matrix_no(j);
             gqueuedata[j] = gqueuedata[i];
@@ -3215,7 +3207,7 @@ bool Solver::init_all_matrices() {
 
 void Solver::start_getting_constraints(bool red, bool simplified,
         uint32_t max_len, uint32_t max_glue) {
-    assert(get_clause_query == NULL);
+    assert(get_clause_query == nullptr);
     get_clause_query = new GetClauseQuery(this);
     get_clause_query->start_getting_constraints(red, simplified, max_len, max_glue);
 }
@@ -3230,7 +3222,7 @@ void Solver::end_getting_constraints()
     assert(get_clause_query);
     get_clause_query->end_getting_constraints();
     delete get_clause_query;
-    get_clause_query = NULL;
+    get_clause_query = nullptr;
 }
 
 vector<uint32_t> Solver::translate_sampl_set(const vector<uint32_t>& sampl_set)
@@ -3353,7 +3345,7 @@ bool Solver::implied_by(const std::vector<Lit>& lits,
     if (decisionLevel() == 0) return true;
 
     PropBy x = propagate<true>();
-    if (!x.isNULL()) {
+    if (!x.isnullptr()) {
         //UNSAT due to prop
         cancelUntil<false, true>(0);
         return false;
@@ -3653,7 +3645,7 @@ bool Solver::minimize_clause(vector<Lit>& cl) {
             enqueue<true>(~lit);
             cl[j++] = cl[i];
             confl = solver->propagate<true, true, true>();
-            if (!confl.isNULL()) break;
+            if (!confl.isnullptr()) break;
         } else if (val == l_False) {
         } else {
             assert(val == l_True);
@@ -3666,7 +3658,7 @@ bool Solver::minimize_clause(vector<Lit>& cl) {
     cancelUntil<false, true>(0);
     map_inter_to_outer(cl);
 
-    bool can_be_removed = !confl.isNULL();
+    bool can_be_removed = !confl.isnullptr();
     return can_be_removed;
 }
 

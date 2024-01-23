@@ -48,11 +48,11 @@ CheckOptions:
 - key: modernize-use-auto.MinTypeNameLength
   value: '10'
 - key: readability-identifier-naming.ClassCase
-  value: 'CamelCase'
+  value: 'lower_case'
 - key: readability-identifier-naming.EnumCase
-  value: 'CamelCase'
+  value: 'lower_case'
 - key: readability-identifier-naming.EnumConstantCase
-  value: 'CamelCase'
+  value: 'lower_case'
 # Ignore GoogleTest function macros.
 - key: readability-identifier-naming.FunctionIgnoredRegexp
   # To have the regex chomped correctly fence all items with `|` (other than first/last)

@@ -173,7 +173,7 @@ inline Watched* findWatchedOfBinMaybe(
         if (i->isBin() && i->lit2() == lit2 && i->red() == red && i->get_ID() == ID)
             return i;
     }
-    return NULL;
+    return nullptr;
 }
 
 static inline bool findWXCl(const vec<GaussWatched>& gws, const uint32_t at) {

@@ -254,7 +254,7 @@ bool DistillerLongWithImpl::remove_or_shrink_clause(Clause& cl, ClOffset& offset
     timeAvailable -= (long)lits.size()*2 + 50;
     ClauseStats backup_stats(cl.stats);
     Clause* c2 = solver->add_clause_int(lits, cl.red(), &backup_stats);
-    if (c2 != NULL) {
+    if (c2 != nullptr) {
         solver->detachClause(offset);
         // new clause will inherit this clause's ID
         // so let's set this to 0, this way, when we free() it, it won't be
@@ -278,7 +278,7 @@ uint64_t DistillerLongWithImpl::calc_time_available(
     , const bool red
 ) const {
     //If it hasn't been to successful until now, don't do it so much
-    const Stats::WatchBased* stats = NULL;
+    const Stats::WatchBased* stats = nullptr;
     if (red) {
         stats = &(globalStats.redWatchBased);
     } else {

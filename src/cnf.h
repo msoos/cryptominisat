@@ -77,12 +77,12 @@ public:
 
     CNF(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter)
     {
-        if (_conf != NULL) {
+        if (_conf != nullptr) {
             conf = *_conf;
         }
         mtrand.seed(conf.origSeed);
         frat = new Frat;
-        assert(_must_interrupt_inter != NULL);
+        assert(_must_interrupt_inter != nullptr);
         must_interrupt_inter = _must_interrupt_inter;
         longRedCls.resize(3);
         longRedClsSizes.resize(3, 0);
@@ -176,7 +176,7 @@ public:
     int32_t clauseID = 0;
     int32_t clauseXID = 0;
     int64_t restartID = 1;
-    SQLStats* sqlStats = NULL;
+    SQLStats* sqlStats = nullptr;
 
     //Temporaries
     vector<uint32_t> seen;

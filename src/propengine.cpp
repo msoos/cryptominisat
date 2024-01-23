@@ -674,7 +674,7 @@ bool PropEngine::prop_long_cl_any_order(
 
 void CMSat::PropEngine::reverse_one_bnn(uint32_t idx, BNNPropType t) {
     BNN* const bnn= bnns[idx];
-    SLOW_DEBUG_DO(assert(bnn != NULL));
+    SLOW_DEBUG_DO(assert(bnn != nullptr));
     switch(t) {
         case bnn_neg_t:
             bnn->ts--;
@@ -716,7 +716,7 @@ PropBy PropEngine::propagate_any_order()
     PropBy confl;
     VERBOSE_PRINT("propagate_any_order started");
 
-    while (qhead < trail.size() && confl.isNULL()) {
+    while (qhead < trail.size() && confl.isnullptr()) {
         const Lit p = trail[qhead].lit;     // 'p' is enqueued fact to propagate.
         varData[p.var()].propagated = true;
         watch_subarray ws = watches[~p];
@@ -760,13 +760,13 @@ PropBy PropEngine::propagate_any_order()
         VERBOSE_PRINT("prop went through watchlist of " << p);
 
         //distillation would need to generate TBDD proofs to simplify clauses with GJ
-        if (confl.isNULL() && !distill_use) confl = gauss_jordan_elim(p, currLevel);
+        if (confl.isnullptr() && !distill_use) confl = gauss_jordan_elim(p, currLevel);
 
         qhead++;
     }
 
     #ifdef SLOW_DEBUG
-    if (confl.isNULL() && !distill_use) {
+    if (confl.isnullptr() && !distill_use) {
         for (size_t g = 0; g < gqueuedata.size(); g++) {
             if (gqueuedata[g].disabled) continue;
             gmatrices[g]->check_invariants();
@@ -775,7 +775,7 @@ PropBy PropEngine::propagate_any_order()
     #endif
 
 // For BNN debugging
-//     if (confl.isNULL()) {
+//     if (confl.isnullptr()) {
 //         for(uint32_t idx = 0; idx < bnns.size(); idx++) {
 //             auto& bnn = bnns[idx];
 //             if (!bnn) continue;

@@ -84,7 +84,7 @@ private:
     vector<ClOffset> dedup_cls;
 
     Solver* solver;
-    BID::BreakID* breakid = NULL;
+    BID::BreakID* breakid = nullptr;
 };
 
 }

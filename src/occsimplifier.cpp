@@ -90,7 +90,7 @@ OccSimplifier::OccSimplifier(Solver* _solver):
     , seen2(solver->seen2)
     , toClear(solver->toClear)
     , velim_order(VarOrderLt(varElimComplexity))
-    , gateFinder(NULL)
+    , gateFinder(nullptr)
     , anythingHasBeenElimed(false)
     , elimedMapBuilt(false)
 {
@@ -178,7 +178,7 @@ uint32_t OccSimplifier::dump_elimed_clauses(std::ostream* outfile) const
                 continue;
             }
             Lit l = elimed.at(i, eClsLits);
-            if (outfile != NULL) {
+            if (outfile != nullptr) {
                 if (l == lit_Undef) {
                     *outfile
                     << " 0"
@@ -1511,7 +1511,7 @@ vector<OrGate> OccSimplifier::recover_or_gates()
     solver->conf.maxOccurRedMB = 0;
     if (!setup()) {
         delete gateFinder;
-        gateFinder = NULL;
+        gateFinder = nullptr;
         return or_gates;
     }
 
@@ -1519,7 +1519,7 @@ vector<OrGate> OccSimplifier::recover_or_gates()
     or_gates = gateFinder->get_gates();
     gateFinder->cleanup();
     delete gateFinder;
-    gateFinder = NULL;
+    gateFinder = nullptr;
 
     solver->conf.maxOccurRedMB = backup;
     finishUp(origTrailSize);
@@ -1618,7 +1618,7 @@ bool OccSimplifier::elim_var_by_str(uint32_t var, const vector<pair<ClOffset, Cl
         for(auto const& lit: *cl) {
             if (lit.var() != var) dummy.push_back(lit);
         }
-        if (!full_add_clause(dummy, weaken_dummy, NULL, false)) goto end;
+        if (!full_add_clause(dummy, weaken_dummy, nullptr, false)) goto end;
         unlink_clause(p.first);
         unlink_clause(p.second);
     }
@@ -1661,7 +1661,7 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(const vector<uint
     double backup = solver->conf.maxOccurRedMB;
     solver->conf.maxOccurRedMB = 0;
     if (!setup()) return vars;
-    assert(picosat == NULL);
+    assert(picosat == nullptr);
 
     uint32_t unsat = 0;
     uint32_t picosat_ran = 0;
@@ -1707,7 +1707,7 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(const vector<uint
             continue;
         }
 
-        if (picosat == NULL) {
+        if (picosat == nullptr) {
             picosat = picosat_init();
         }
 
@@ -1732,11 +1732,11 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(const vector<uint
             ret.push_back(v);
         }
         picosat_reset(picosat);
-        picosat = NULL;
+        picosat = nullptr;
     }
     if (picosat) {
         picosat_reset(picosat);
-        picosat = NULL;
+        picosat = nullptr;
     }
     for(const uint32_t v: vars2) seen[v] = 0;
 
@@ -1822,7 +1822,7 @@ vector<ITEGate> OccSimplifier::recover_ite_gates()
     solver->conf.maxOccurRedMB = 0;
     if (!setup()) {
         delete gateFinder;
-        gateFinder = NULL;
+        gateFinder = nullptr;
         return or_gates;
     }
 
@@ -1915,7 +1915,7 @@ bool OccSimplifier::cl_rem_with_or_gates()
     auto gates = gateFinder->get_gates();
     gateFinder->cleanup();
     delete gateFinder;
-    gateFinder = NULL;
+    gateFinder = nullptr;
     limit_to_decrease = &gate_based_litrem_time_limit;
 
     uint64_t removed = 0;
@@ -2020,7 +2020,7 @@ bool OccSimplifier::lit_rem_with_or_gates() {
     auto gates = gateFinder->get_gates();
     gateFinder->cleanup();
     delete gateFinder;
-    gateFinder = NULL;
+    gateFinder = nullptr;
     auto old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &gate_based_litrem_time_limit;
 
@@ -2127,8 +2127,8 @@ bool OccSimplifier::lit_rem_with_or_gates() {
                 unlink_clause(off, false, false, true);
             } else if (cl->size() == 1) {
                 tmp_tern_res.clear(); tmp_tern_res.push_back((*cl)[0]);
-                Clause* newCl = full_add_clause(tmp_tern_res, finalLits_ternary, NULL, false);
-                assert(newCl == NULL);
+                Clause* newCl = full_add_clause(tmp_tern_res, finalLits_ternary, nullptr, false);
+                assert(newCl == nullptr);
                 unlink_clause(off, true, false, true);
             } else assert(cl->size() > 2);
         }
@@ -2978,7 +2978,7 @@ void OccSimplifier::finishUp(size_t origTrailSize) {
     if (solver->okay()) {
         assert(solver->prop_at_head());
         add_back_to_solver();
-        if (solver->okay()) solver->ok = solver->propagate<true>().isNULL();
+        if (solver->okay()) solver->ok = solver->propagate<true>().isnullptr();
         if (solver->okay()) solver->attach_xorclauses();
         SLOW_DEBUG_DO(if (solver->okay()) solver->check_wrong_attach());
     } else {
@@ -3346,7 +3346,7 @@ bool OccSimplifier::find_irreg_gate(
     out_a.clear();
     out_b.clear();
 
-    assert(picosat == NULL);
+    assert(picosat == nullptr);
     picosat = picosat_init();
     int ret = picosat_enable_trace_generation(picosat);
     assert(ret != 0 && "Traces cannot be generated in PicoSAT, wrongly configured&built");
@@ -3376,7 +3376,7 @@ bool OccSimplifier::find_irreg_gate(
         resolve_gate = true;
     }
     picosat_reset(picosat);
-    picosat = NULL;
+    picosat = nullptr;
 
     return found;
 }
@@ -3635,7 +3635,7 @@ bool OccSimplifier::find_ite_gate(
         }
         if (got_mf_v_mx && got_mg_v_x) {
             found = true;
-            if (out_a_all == NULL) {
+            if (out_a_all == nullptr) {
                 break;
             } else {
                 assert(out_a.size() == 2);
@@ -3655,7 +3655,7 @@ bool OccSimplifier::find_ite_gate(
     }
     toClear.clear();
 
-    if (found && out_a_all == NULL) {
+    if (found && out_a_all == nullptr) {
         assert(out_a.size() == 2);
         assert(out_b.size() == 2);
         std::sort(out_a.begin(), out_a.end(), sort_smallest_first(solver->cl_alloc));
@@ -4482,7 +4482,7 @@ bool OccSimplifier::add_varelim_resolvent(
     assert(solver->prop_at_head());
 
     bvestats.newClauses++;
-    Clause* newCl = NULL;
+    Clause* newCl = nullptr;
 
     if (solver->conf.verbosity >= 5) {
         cout
@@ -4507,7 +4507,7 @@ bool OccSimplifier::add_varelim_resolvent(
         return false;
     }
 
-    if (newCl != NULL) {
+    if (newCl != nullptr) {
         link_in_clause(*newCl);
         ClOffset offset = solver->cl_alloc.get_offset(newCl);
         clauses.push_back(offset);
@@ -4851,7 +4851,7 @@ bool OccSimplifier::resolve_clauses(
     , const Lit& posLit
 ) {
     //If clause has already been freed, skip
-    Clause *cl1 = NULL;
+    Clause *cl1 = nullptr;
     if (ps.isClause()) {
          cl1 = solver->cl_alloc.ptr(ps.get_offset());
         if (cl1->freed()) {
@@ -4859,7 +4859,7 @@ bool OccSimplifier::resolve_clauses(
         }
     }
 
-    Clause *cl2 = NULL;
+    Clause *cl2 = nullptr;
     if (qs.isClause()) {
          cl2 = solver->cl_alloc.ptr(qs.get_offset());
         if (cl2->freed()) {
@@ -5330,7 +5330,7 @@ Clause* OccSimplifier::full_add_clause(
         solver->ok = solver->propagate_occur<false>(limit_to_decrease);
     }
     if (!solver->okay()) {
-        return NULL;
+        return nullptr;
     }
 
     if (!newCl) {

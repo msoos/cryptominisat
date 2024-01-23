@@ -480,7 +480,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
                 //Normal propagation, on all clauses
                 confl = solver->propagate<true, true, true>();
             }
-            if (!confl.isNULL()) break;
+            if (!confl.isnullptr()) break;
         } else if (val == l_False) {
             // if we don't want to shorten, then don't remove literals
             if (only_remove) cl[j++] = cl[i];
@@ -499,10 +499,10 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     VERBOSE_PRINT("also_remove: " << also_remove
         << "red: " << red
         << "True_confl: " << True_confl
-        << "confl.isNULL(): " << confl.isNULL());
+        << "confl.isnullptr(): " << confl.isnullptr());
 
 
-    if (also_remove && !red && !True_confl && !confl.isNULL()) {
+    if (also_remove && !red && !True_confl && !confl.isnullptr()) {
         VERBOSE_PRINT("CL Removed.");
         rem:
         solver->cancelUntil<false, true>(0);
@@ -515,7 +515,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     }
 
     //Couldn't simplify the clause
-    if (j == orig_size && !True_confl && confl.isNULL()) {
+    if (j == orig_size && !True_confl && confl.isnullptr()) {
         VERBOSE_PRINT("CL Cannot be simplified.");
         cl.disabled = false;
         solver->cancelUntil<false, true>(0);
@@ -542,7 +542,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
 
     bool lits_set = false;
     //TODO BNN removed this, but needs to be fixed.
-    /*if (red && j > 1 && (!confl.isNULL() || True_confl)) {
+    /*if (red && j > 1 && (!confl.isnullptr() || True_confl)) {
         #ifdef VERBOSE_DEBUG
         cout
         << "c Distillation even more effective." << endl
@@ -586,7 +586,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     Clause *cl2 = solver->add_clause_int(lits, red, &backup_stats);
     *solver->frat << findelay;
 
-    if (cl2 != NULL) {
+    if (cl2 != nullptr) {
         //This new, distilled clause has been distilled now.
         if (also_remove) cl2->tried_to_remove = 1;
         else cl2->distilled = 1;

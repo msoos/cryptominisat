@@ -34,11 +34,11 @@ class MainCommon
 public:
     static uint32_t print_model(CMSat::SATSolver* solver,
                          std::ostream* os,
-                         std::vector<uint32_t>* only = NULL);
+                         std::vector<uint32_t>* only = nullptr);
     void handle_frat_option();
 
     string frat_fname;
-    FILE* fratf = NULL;
+    FILE* fratf = nullptr;
     bool zero_exit_status = false;
     CMSat::SolverConf conf;
     unsigned num_threads = 1;

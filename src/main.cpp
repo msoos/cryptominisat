@@ -90,7 +90,7 @@ void Main::readInAFile(SATSolver* solver2, const string& filename)
     DimacsParser<StreamBuffer<gzFile, GZ>, SATSolver> parser(solver2, &debugLib, conf.verbosity);
     #endif
 
-    if (in == NULL) {
+    if (in == nullptr) {
         std::cerr
         << "ERROR! Could not open file '"
         << filename
@@ -168,7 +168,7 @@ void Main::readInStandardInput(SATSolver* solver2)
     gzFile in = gzdopen(0, "rb"); //opens stdin, which is 0
     #endif
 
-    if (in == NULL) {
+    if (in == nullptr) {
         std::cerr << "ERROR! Could not open standard input for reading" << endl;
         std::exit(1);
     }
@@ -1378,7 +1378,7 @@ int Main::solve()
 lbool Main::multi_solutions()
 {
     if (max_nr_of_solutions == 1
-        && fratf == NULL
+        && fratf == nullptr
         && !conf.simulate_frat
         && debugLib.empty()
     ) {

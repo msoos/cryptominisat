@@ -85,8 +85,8 @@ struct SolveStats
 class Solver : public Searcher
 {
     public:
-        Solver(const SolverConf *_conf = NULL,
-               std::atomic<bool>* _must_interrupt_inter = NULL);
+        Solver(const SolverConf *_conf = nullptr,
+               std::atomic<bool>* _must_interrupt_inter = nullptr);
         virtual ~Solver() override;
 
         void add_sql_tag(const string& name, const string& val);
@@ -103,9 +103,9 @@ class Solver : public Searcher
         void set_var_weight(Lit lit, double weight);
 
         lbool solve_with_assumptions(
-            const vector<Lit>* _assumptions = NULL,
+            const vector<Lit>* _assumptions = nullptr,
             bool only_indep_solution = false);
-        lbool simplify_with_assumptions(const vector<Lit>* _assumptions = NULL, const string* strategy = NULL);
+        lbool simplify_with_assumptions(const vector<Lit>* _assumptions = nullptr, const string* strategy = nullptr);
         void  set_shared_data(SharedData* shared_data);
         vector<Lit> probe_inter_tmp;
         lbool probe_outside(Lit l, uint32_t& min_props);
@@ -175,21 +175,21 @@ class Solver : public Searcher
         //Checks
 
         //Systems that are used to accompilsh the tasks
-        ClauseCleaner*         clauseCleaner = NULL;
-        VarReplacer*           varReplacer = NULL;
-        SubsumeImplicit*       subsumeImplicit = NULL;
-        DataSync*              datasync = NULL;
-        ReduceDB*              reduceDB = NULL;
-        InTree*                intree = NULL;
-        BreakID*               breakid = NULL;
-        OccSimplifier*         occsimplifier = NULL;
-        DistillerLong*         distill_long_cls = NULL;
-        DistillerBin*          distill_bin_cls = NULL;
-        DistillerLitRem*       distill_lit_rem = NULL;
-        DistillerLongWithImpl* dist_long_with_impl = NULL;
-        StrImplWImpl* dist_impl_with_impl = NULL;
-        CardFinder*            card_finder = NULL;
-        GetClauseQuery*        get_clause_query = NULL;
+        ClauseCleaner*         clauseCleaner = nullptr;
+        VarReplacer*           varReplacer = nullptr;
+        SubsumeImplicit*       subsumeImplicit = nullptr;
+        DataSync*              datasync = nullptr;
+        ReduceDB*              reduceDB = nullptr;
+        InTree*                intree = nullptr;
+        BreakID*               breakid = nullptr;
+        OccSimplifier*         occsimplifier = nullptr;
+        DistillerLong*         distill_long_cls = nullptr;
+        DistillerBin*          distill_bin_cls = nullptr;
+        DistillerLitRem*       distill_lit_rem = nullptr;
+        DistillerLongWithImpl* dist_long_with_impl = nullptr;
+        StrImplWImpl* dist_impl_with_impl = nullptr;
+        CardFinder*            card_finder = nullptr;
+        GetClauseQuery*        get_clause_query = nullptr;
 
         SearchStats sumSearchStats;
         PropStats sumPropStats;
@@ -264,9 +264,9 @@ class Solver : public Searcher
         Clause* add_clause_int(
             const vector<Lit>& lits
             , const bool red = false
-            , const ClauseStats* const stats = NULL
+            , const ClauseStats* const stats = nullptr
             , const bool attach = true
-            , vector<Lit>* finalLits = NULL
+            , vector<Lit>* finalLits = nullptr
             , bool addFrat = true
             , const Lit frat_first = lit_Undef
             , const bool sorted = false
@@ -405,7 +405,7 @@ class Solver : public Searcher
         void handle_found_solution(const lbool status, const bool only_indep_solution);
         unsigned num_bits_set(const size_t x, const unsigned max_size) const;
         void check_too_large_variable_number(const vector<Lit>& lits) const;
-        lbool simplify_problem_outside(const string* strategy = NULL);
+        lbool simplify_problem_outside(const string* strategy = nullptr);
 
         //Stats printing
         void print_norm_stats(

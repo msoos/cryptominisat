@@ -179,7 +179,7 @@ bool VarReplacer::enqueueDelayedEnqueue() {
     delayedEnqueue.clear();
     if (!solver->ok) return false;
 
-    solver->ok = solver->propagate<false>().isNULL();
+    solver->ok = solver->propagate<false>().isnullptr();
     return solver->okay();
 }
 
@@ -318,7 +318,7 @@ bool VarReplacer::replace_one_xor_clause(Xor& x) {
             Lit l = Lit(v, false);
             if (get_lit_replaced_with_fast(l) != l) {
                 runStats.replacedLits++;
-                Xor* old_x = NULL;
+                Xor* old_x = nullptr;
                 if (solver->frat->enabled()) old_x = new Xor(x);
                 const Lit l2 = get_lit_replaced_with_fast(l);
                 x.rhs ^= l2.sign();
@@ -555,7 +555,7 @@ bool VarReplacer::replace_bnns() {
     assert(!solver->frat->something_delayed());
     for (uint32_t idx = 0; idx < solver->bnns.size(); idx++) {
         BNN* bnn = solver->bnns[idx];
-        if (bnn == NULL) {
+        if (bnn == nullptr) {
             continue;
         }
         assert(!bnn->isRemoved);
@@ -651,7 +651,7 @@ Lit* my_lit_find(Clause& cl, const Lit lit)
         if (*a == lit)
             return a;
     }
-    return NULL;
+    return nullptr;
 }
 
 /**
@@ -726,14 +726,14 @@ bool VarReplacer::handleUpdatedClause(
 
     default:
         Lit* at = my_lit_find(c, origLit1);
-        if (at != NULL) {
+        if (at != nullptr) {
             std::swap(c[0], *at);
         }
         Lit* at2 = my_lit_find(c, origLit2);
-        if (at2 != NULL) {
+        if (at2 != nullptr) {
             std::swap(c[1], *at2);
         }
-        if (at != NULL && at2 != NULL) {
+        if (at != nullptr && at2 != nullptr) {
             delayed_attach_or_free.pop_back();
             if (c.red()) {
                 solver->litStats.redLits += c.size();
@@ -904,7 +904,7 @@ bool VarReplacer::handleOneSet(
             toEnqueue = lit1 ^ (val2 == l_False);
         }
         solver->enqueue<false>(toEnqueue);
-        solver->ok = (solver->propagate<false>().isNULL());
+        solver->ok = (solver->propagate<false>().isnullptr());
     }
     return solver->okay();
 }

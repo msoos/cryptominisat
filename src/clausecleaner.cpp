@@ -366,7 +366,7 @@ void ClauseCleaner::clean_bnns_post()
     for(BNN*& bnn: solver->bnns) {
         if (bnn && bnn->isRemoved) {
             free(bnn);
-            bnn = NULL;
+            bnn = nullptr;
         }
     }
 }
@@ -382,7 +382,7 @@ bool ClauseCleaner::remove_and_clean_all() {
     size_t last_trail = numeric_limits<size_t>::max();
     while(last_trail != solver->trail_size()) {
         last_trail = solver->trail_size();
-        solver->ok = solver->propagate<false>().isNULL();
+        solver->ok = solver->propagate<false>().isnullptr();
         if (!solver->okay()) break;
         if (!clean_all_xor_clauses()) break;
 
@@ -507,7 +507,7 @@ bool ClauseCleaner::clean_all_xor_clauses() {
     while(last_trail != solver->trail_size()) {
         last_trail = solver->trail_size();
         if (!clean_xor_clauses(solver->xorclauses, true)) return false;
-        solver->ok = solver->propagate<false>().isNULL();
+        solver->ok = solver->propagate<false>().isnullptr();
     }
     return solver->okay();
 }
@@ -528,7 +528,7 @@ bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors, const bool attached) {
             if (!keep) x = Xor();
             if (!solver->okay()) return false;
         }
-        solver->ok = solver->propagate<false>().isNULL();
+        solver->ok = solver->propagate<false>().isnullptr();
     }
     if (!attached) {
         uint32_t j = 0;

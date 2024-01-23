@@ -69,12 +69,12 @@ public:
     virtual Frat& operator<<(const char*) { return *this; }
     virtual Frat& operator<<(const FratFlag) { return *this; }
     virtual void setFile(FILE*) { }
-    virtual FILE* getFile() { return NULL; }
+    virtual FILE* getFile() { return nullptr; }
     virtual void flush();
 
     int buf_len;
-    unsigned char* drup_buf = NULL;
-    unsigned char* buf_ptr = NULL;
+    unsigned char* drup_buf = nullptr;
+    unsigned char* buf_ptr = nullptr;
 };
 
 template<bool binfrat = false>
@@ -422,7 +422,7 @@ private:
     FILE* drup_file = nullptr;
     vector<uint32_t>& interToOuterMain;
     uint64_t* sumConflicts = nullptr;
-    SQLStats* sqlStats = NULL;
+    SQLStats* sqlStats = nullptr;
 };
 
 }

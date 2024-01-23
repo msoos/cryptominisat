@@ -208,7 +208,7 @@ public:
     void clean_sampl_and_get_empties(vector<uint32_t>& empty_vars, vector<uint32_t>& sampl_vars);
     bool elim_var_by_str(uint32_t var, const vector<pair<ClOffset, ClOffset>>& cls);
     uint32_t add_cls_to_picosat_definable(const Lit wsLit);
-    PicoSAT* picosat = NULL;
+    PicoSAT* picosat = nullptr;
     int lit_to_picolit(const Lit l);
     uint64_t picolits_added = 0;
     vector<int> var_to_picovar;
@@ -541,7 +541,7 @@ private:
         , watch_subarray_const b
         , vec<Watched>& out_a
         , vec<Watched>& out_b
-        , vec<Watched>* out_a_all = NULL
+        , vec<Watched>* out_a_all = nullptr
     );
     vector<Clause*> toclear_marked_cls;
     set<uint32_t> parities_found;

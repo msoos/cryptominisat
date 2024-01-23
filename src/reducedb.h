@@ -100,7 +100,7 @@ private:
     void mark_top_N_clauses_lev2(const uint64_t keep_num);
 
     #ifdef FINAL_PREDICTOR
-    ClPredictorsAbst* predictors = NULL;
+    ClPredictorsAbst* predictors = nullptr;
     uint32_t num_times_pred_called = 0;
     void update_preds_lev2();
     void pred_move_to_lev1_and_lev0();

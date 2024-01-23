@@ -83,8 +83,8 @@ class DataSync
         Stats stats;
 
         //Other systems
-        Solver* solver = NULL;
-        SharedData* sharedData = NULL;
+        Solver* solver = nullptr;
+        SharedData* sharedData = nullptr;
 
         #ifdef USE_MPI
         void set_up_for_mpi();
@@ -98,7 +98,7 @@ class DataSync
         );
         vector<uint32_t> syncMPIFinish;
         MPI_Request   sendReq;
-        uint32_t*     mpiSendData = NULL;
+        uint32_t*     mpiSendData = nullptr;
 
         int           mpiRank = 0;
         int           mpiSize = 0;
@@ -120,7 +120,7 @@ inline const DataSync::Stats& DataSync::get_stats() const
 
 inline bool DataSync::enabled()
 {
-    return sharedData != NULL;
+    return sharedData != nullptr;
 }
 
 }

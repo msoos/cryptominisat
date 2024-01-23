@@ -34,7 +34,7 @@ void MainCommon::handle_frat_option()
 {
     if (!conf.simulate_frat) {
         FILE* fratfTmp = fopen(frat_fname.c_str(), "wb");
-        if (fratfTmp == NULL) {
+        if (fratfTmp == nullptr) {
             std::cerr
             << "ERROR: Could not open FRAT file "
             << frat_fname
@@ -68,7 +68,7 @@ uint32_t MainCommon::print_model(CMSat::SATSolver* solver, std::ostream* os, std
         }
     };
 
-    if (only == NULL) {
+    if (only == nullptr) {
         for (uint32_t var = 0; var < solver->nVars(); var++) {
             fun(var);
         }
