@@ -30,7 +30,7 @@ To build and install, issue:
 ```
 sudo apt-get install build-essential cmake
 # not required but very useful
-sudo apt-get install zlib1g-dev libboost-program-options-dev libboost-serialization-dev
+sudo apt-get install zlib1g-dev
 tar xzvf cryptominisat-version.tar.gz
 cd cryptominisat-version
 mkdir build && cd build
@@ -46,7 +46,7 @@ Compiling in Mac OSX
 First, you must get Homebrew from https://brew.sh/ then:
 
 ```
-brew install cmake boost zlib
+brew install cmake
 tar xzvf cryptominisat-version.tar.gz
 cd cryptominisat-version
 mkdir build && cd build
@@ -67,14 +67,6 @@ C:\> rename cryptominisat-version cms
 C:\> cd cms
 C:\cms> mkdir build
 C:\cms> cd build
-
-C:\cms\build> [ download http://sourceforge.net/projects/boost/files/boost/1.59.0/boost_1_59_0.zip ]
-C:\cms\build> unzip boost_1_59_0.zip
-C:\cms\build> mkdir boost_1_59_0_install
-C:\cms\build> cd boost_1_59_0
-C:\cms\build\boost_1_59_0> bootstrap.bat --with-libraries=program_options
-C:\cms\build\boost_1_59_0> b2 --with-program_options address-model=64 toolset=msvc-14.0 variant=release link=static threading=multi runtime-link=static install --prefix="C:\cms\build\boost_1_59_0_install" > boost_install.out
-C:\cms\build\boost_1_59_0> cd ..
 
 C:\cms\build> git clone https://github.com/madler/zlib
 C:\cms\build> cd zlib
@@ -478,7 +470,6 @@ CMake Arguments
 The following arguments to cmake configure the generated build artifacts. To use, specify options prior to running make in a clean subdirectory: `cmake <options> ..`
 
 - `-DSTATICCOMPILE=<ON/OFF>` -- statically linked library and binary. You must build&link `BreakID` with the same `DSTATICCOMPILE=<ON/OFF>` setting as well. You can get the BreakID library from [our GitHub repository](https://github.com/meelgroup/breakid)
-- `-DUSE_GAUSS=<ON/OFF>` -- Gauss-Jordan Elimination support. On by default.
 - `-DSTATS=<ON/OFF>` -- advanced statistics (slower). Needs [louvain communities](https://github.com/meelgroup/louvain-community) installed.
 - `-DENABLE_TESTING=<ON/OFF>` -- test suite support
 - `-DMIT=<ON/OFF>` -- MIT licensed components only

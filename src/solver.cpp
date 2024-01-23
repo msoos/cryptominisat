@@ -1460,7 +1460,6 @@ void Solver::write_final_frat_clauses() {
 
     if (varReplacer) varReplacer->delete_frat_cls();
 
-    // -1 indicates tbuddy already added the empty clause
     *frat << "empty clause next (if we found it)\n";
     if (!okay() && unsat_cl_ID != -1) {
         assert(!frat->enabled() || unsat_cl_ID != 0);

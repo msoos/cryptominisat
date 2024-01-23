@@ -640,6 +640,17 @@ bool OccSimplifier::check_varelim_when_adding_back_cl(const Clause* cl) const
     return notLinkedNeedFree;
 }
 
+void OccSimplifier::check_cls_sanity() {
+    if (!solver->okay()) return;
+    for (const ClOffset offs: clauses) {
+        Clause* cl = solver->cl_alloc.ptr(offs);
+        if (cl->getRemoved() || cl->freed()) continue;
+        assert(!cl->stats.marked_clause);
+        if (cl->size() <= 2) cout << "ERROR: too short cl: " << *cl << endl;
+        assert(cl->size() > 2);
+    }
+}
+
 void OccSimplifier::add_back_to_solver() {
     solver->clean_occur_from_removed_clauses_only_smudged();
     free_clauses_to_free();
@@ -2025,6 +2036,7 @@ bool OccSimplifier::lit_rem_with_or_gates() {
     uint64_t shortened = 0;
     uint64_t removed = 0;
     for(const auto& gate: gates) {
+        if (!solver->okay()) goto end;
         if (solver->value(gate.rhs) != l_Undef) continue;
         for(auto const& l: gate.lits) seen[l.toInt()] = 1;
 
@@ -2042,6 +2054,7 @@ bool OccSimplifier::lit_rem_with_or_gates() {
 
         VERBOSE_PRINT("Checking to shorten with gate: " << gate);
         for(const auto& w: poss) {
+            if (!solver->okay()) break;
             if (w.isBin() || w. isBNN()) continue;
             assert(w.isClause());
             const auto off = w.get_offset();
@@ -2107,6 +2120,17 @@ bool OccSimplifier::lit_rem_with_or_gates() {
                 for(auto const& l: gate.lits) seen[l.toInt()] = 0;
                 goto end;
             }
+            if (cl->size() == 2) {
+                n_occurs[(*cl)[0].toInt()]++;
+                n_occurs[(*cl)[1].toInt()]++;
+                solver->attach_bin_clause((*cl)[0], (*cl)[1], false, cl->stats.ID, false);
+                unlink_clause(off, false, false, true);
+            } else if (cl->size() == 1) {
+                tmp_tern_res.clear(); tmp_tern_res.push_back((*cl)[0]);
+                Clause* newCl = full_add_clause(tmp_tern_res, finalLits_ternary, NULL, false);
+                assert(newCl == NULL);
+                unlink_clause(off, true, false, true);
+            } else assert(cl->size() > 2);
         }
         for(auto const& l: gate.lits) seen[l.toInt()] = 0;
     }
@@ -2204,7 +2228,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
 #endif
         } else if (token == "occ-lit-rem") {
             //TODO FRAT -- broken UNSAT actually!! :(
-            if (false) all_occ_based_lit_rem();
+            if (!solver->frat->enabled()) all_occ_based_lit_rem();
         } else if (token == "occ-bce") {
             blocked_clause_elim();
         } else if (token == "occ-clean-implicit") {
@@ -2232,6 +2256,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             exit(-1);
         }
         CHECK_N_OCCUR_DO(check_n_occur());
+        SLOW_DEBUG_DO(check_cls_sanity());
     }
 
     if (solver->okay()) assert(solver->prop_at_head());

@@ -312,6 +312,7 @@ public:
 private:
     friend class SubsumeStrengthen;
     SubsumeStrengthen* sub_str;
+    void check_cls_sanity();
 
     bool startup = false;
     bool backward_sub_str();
