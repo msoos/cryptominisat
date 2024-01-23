@@ -58,32 +58,16 @@ sudo make install
 Compiling in Windows
 -----
 
-You will need python installed, then for Visual Studio 2022:
-
 ```
-C:\> [ download cryptominisat-version.zip ]
-C:\> unzip cryptominisat-version.zip
-C:\> rename cryptominisat-version cms
-C:\> cd cms
-C:\cms> mkdir build
-C:\cms> cd build
-
-C:\cms\build> git clone https://github.com/madler/zlib
-C:\cms\build> cd zlib
-C:\cms\build\zlib> git checkout v1.2.8
-C:\cms\build\zlib> mkdir build
-C:\cms\build\zlib> mkdir myinstall
-C:\cms\build\zlib> cd build
-C:\cms\build\zlib\build> cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=C:\cms\build\zlib\myinstall ..
-C:\cms\build\zlib\build> msbuild /t:Build /p:Configuration=Release /p:Platform="x64" zlib.sln
-C:\cms\build\zlib\build> msbuild INSTALL.vcxproj
-C:\cms\build> cd ..\..
-
-C:\cms\build> cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=Release -DSTATICCOMPILE=ON -DZLIB_ROOT=C:\cms\build\zlib\myinstall -DBOOST_ROOT=C:\cms\build\boost_1_59_0_install ..
-C:\cms\build> cmake --build --config Release .
+C:\> [ download and unzip cryptominisat-version.zip ]
+C:\> cd cryptominisat
+C:\cryptominisat> mkdir build
+C:\cryptominisat> cd build
+C:\cryptominisat\build> cmake -G "Visual Studio 17 2022" -DCMAKE_BUILD_TYPE=Release -DSTATICCOMPILE=ON ..
+C:\cryptominisat\build> cmake --build --config Release .
 ```
 
-You now have the static binary under `C:\cms\build\Release\cryptominisat5.exe`
+You now have the static binary under `C:\cryptominisat\build\Release\cryptominisat5.exe`
 
 Command-line usage
 -----
