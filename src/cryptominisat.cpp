@@ -20,7 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#include "build/include/cryptominisat5/cryptominisat_c.h"
 #include "constants.h"
 #include "cryptominisat.h"
 #include "solver.h"
@@ -1310,22 +1309,22 @@ DLL_PUBLIC uint64_t SATSolver::get_last_decisions()
 }
 
 
-void DLL_PUBLIC SATSolver::start_getting_constraints( bool only_red, bool simplified,
+void DLL_PUBLIC SATSolver::start_getting_constraints(bool only_red, bool simplified,
         uint32_t max_len, uint32_t max_glue) {
     actually_add_clauses_to_threads(data);
-    assert(data->solvers.size() >= 1);
+    assert(!data->solvers.empty());
     data->solvers[0]->start_getting_constraints(only_red, simplified, max_len, max_glue);
 }
 
 bool DLL_PUBLIC SATSolver::get_next_constraint(std::vector<Lit>& out, bool& is_xor, bool& rhs)
 {
-    assert(data->solvers.size() >= 1);
+    assert(!data->solvers.empty());
     return data->solvers[0]->get_next_constraint(out, is_xor, rhs);
 }
 
 void DLL_PUBLIC SATSolver::end_getting_constraints()
 {
-    assert(data->solvers.size() >= 1);
+    assert(!data->solvers.empty());
     data->solvers[0]->end_getting_constraints();
 }
 
@@ -1434,11 +1433,6 @@ void DLL_PUBLIC SATSolver::set_up_for_arjun()
 
         data->solvers[i]->setConf(conf);
     }
-}
-
-DLL_PUBLIC const vector<BNN*>& SATSolver::get_bnns() const
-{
-    return data->solvers[0]->get_bnns();
 }
 
 DLL_PUBLIC uint32_t SATSolver::get_verbosity() const

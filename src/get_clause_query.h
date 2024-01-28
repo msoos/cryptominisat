@@ -41,7 +41,7 @@ class GetClauseQuery {
 public:
     GetClauseQuery(Solver* solver);
     void start_getting_constraints(
-           bool red = true,
+           bool only_red = true,
            bool simplified = false,
            uint32_t max_len = std::numeric_limits<uint32_t>::max(),
            uint32_t max_glue = std::numeric_limits<uint32_t>::max());
@@ -52,7 +52,7 @@ public:
 private:
     Solver* solver;
 
-    bool red = true;
+    bool only_red = true;
     uint32_t max_len = numeric_limits<uint32_t>::max();
     uint32_t max_glue = numeric_limits<uint32_t>::max();
     uint32_t at = numeric_limits<uint32_t>::max();

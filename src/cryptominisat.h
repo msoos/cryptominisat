@@ -257,7 +257,6 @@ namespace CMSat {
 
         uint32_t simplified_nvars();
         std::vector<uint32_t> translate_sampl_set(const std::vector<uint32_t>& sampl_set);
-        const std::vector<BNN*>& get_bnns() const;
 
         // Solution reconstruction after minimization
         std::string serialize_solution_reconstruction_data() const;
