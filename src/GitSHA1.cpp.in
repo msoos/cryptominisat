@@ -59,7 +59,6 @@ const char* CMSat::get_compilation_env()
     "BREAKID-VER = @BREAKID_VERSION_MAJOR@.@BREAKID_VERSION_MINOR@ | "
     "BOSPHORUS_LIBRARIES = @BOSPHORUS_LIBRARIES@ | "
     "BOSPH-VER = @BOSPHORUS_VERSION_MAJOR@.@BOSPHORUS_VERSION_MINOR@ | "
-    "compilation date time = " __DATE__ " " __TIME__
     ""
     ;
     return compilation_env;
