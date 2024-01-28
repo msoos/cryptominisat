@@ -72,7 +72,6 @@ using namespace CMSat;
 using std::cout;
 using std::endl;
 using std::unique;
-using std::make_pair;
 
 //#define VERBOSE_DEBUG_VARELIM
 //#define VERBOSE_DEBUG_XOR_FINDER
@@ -936,18 +935,13 @@ bool OccSimplifier::mark_and_push_to_added_long_cl_cls_containing(const Lit lit)
 {
     watch_subarray_const cs = solver->watches[lit];
     *limit_to_decrease -= (long)cs.size()*2+ 40;
-    for (const Watched *it = cs.begin(), *end = cs.end()
-        ; it != end
-        ; ++it
-    ) {
-        if (it->isClause()) {
-            ClOffset offs = it->get_offset();
+    for (const auto& off : cs) {
+        if (off.isClause()) {
+            ClOffset offs = off.get_offset();
             Clause* cl = solver->cl_alloc.ptr(offs);
 
             //Has already been removed or added to "added_long_cl"
-            if (cl->freed() || cl->get_removed() || cl->stats.marked_clause)
-                continue;
-
+            if (cl->freed() || cl->get_removed() || cl->stats.marked_clause) continue;
             cl->stats.marked_clause = 1;
             added_long_cl.push_back(offs);
         }
@@ -3012,20 +3006,11 @@ void OccSimplifier::finishUp(size_t origTrailSize) {
     frat_func_end();
 }
 
-void OccSimplifier::sanityCheckElimedVars() const
-{
+void OccSimplifier::sanityCheckElimedVars() const {
     //First, sanity-check the long clauses
-    for (vector<ClOffset>::const_iterator
-        it =  clauses.begin(), end = clauses.end()
-        ; it != end
-        ; ++it
-    ) {
-        const Clause* cl = solver->cl_alloc.ptr(*it);
-
-        //Already removed
-        if (cl->freed())
-            continue;
-
+    for (const auto& off : clauses) {
+        const Clause* cl = solver->cl_alloc.ptr(off);
+        if (cl->freed()) continue;
         for (const Lit lit: *cl) {
             if (solver->varData[lit.var()].removed == Removed::elimed) {
                 cout
@@ -3047,17 +3032,14 @@ void OccSimplifier::sanityCheckElimedVars() const
     ) {
         Lit lit = Lit::toLit(wsLit);
         watch_subarray_const ws = *it;
-        for (const Watched* it2 = ws.begin(), *end2 = ws.end()
-            ; it2 != end2
-            ; it2++
-        ) {
-            if (it2->isBin()) {
+        for (const auto& w : ws) {
+            if (w.isBin()) {
                 if (solver->varData[lit.var()].removed == Removed::elimed
-                        || solver->varData[it2->lit2().var()].removed == Removed::elimed
+                        || solver->varData[w.lit2().var()].removed == Removed::elimed
                 ) {
                     cout
                     << "Error: A var is elimed in a binary clause: "
-                    << lit << " , " << it2->lit2()
+                    << lit << " , " << w.lit2()
                     << endl;
                     std::exit(-1);
                 }
@@ -4128,10 +4110,8 @@ void OccSimplifier::get_antecedents(
     //both of gates and full_set are strictly sorted and cleaned from REDundant
     output.clear();
     uint32_t j = 0;
-    for(uint32_t i = 0; i < full_set.size(); i++) {
-        const Watched& w = full_set[i];
-        if (solver->redundant_or_removed(w))
-            continue;
+    for(const auto& w : full_set) {
+        if (solver->redundant_or_removed(w)) continue;
         if (j < gates.size()) {
             if (gates[j] == w) {
                 j++;
@@ -4164,17 +4144,12 @@ void OccSimplifier::clean_from_satisfied(vec<Watched>& in)
     for(; i < in.size(); i++) {
         const Watched& w = in[i];
         if (w.isBin()) {
-            if (solver->value(w.lit2()) == l_Undef) {
-                in[j++] = in[i];
-            }
+            if (solver->value(w.lit2()) == l_Undef) in[j++] = in[i];
             continue;
         }
 
         assert(w.isClause());
-        if (!solver->satisfied(w.get_offset())) {
-            in[j++] = in[i];
-        }
-        continue;
+        if (!solver->satisfied(w.get_offset())) in[j++] = in[i];
     }
     in.shrink(i-j);
 }

@@ -804,18 +804,10 @@ void VarReplacer::extend_pop_queue(vector<Lit>& pop)
 void VarReplacer::extend_model_already_set()
 {
     assert(solver->model.size() == solver->nVarsOuter());
-    for (auto it = reverseTable.begin() , end = reverseTable.end()
-        ; it != end
-        ; ++it
-    ) {
-        if (solver->model_value(it->first) == l_Undef) {
-            continue;
-        }
-
-        for(const uint32_t sub_var: it->second)
-        {
-            set_sub_var_during_solution_extension(it->first, sub_var);
-        }
+    for (auto& it : reverseTable) {
+        if (solver->model_value(it.first) == l_Undef) continue;
+        for(const uint32_t sub_var: it.second)
+            set_sub_var_during_solution_extension(it.first, sub_var);
     }
 }
 
@@ -1097,16 +1089,11 @@ size_t VarReplacer::mem_used() const
     b += scc_finder->mem_used();
     b += delayedEnqueue.capacity()*2*sizeof(Lit);
     b += table.capacity()*sizeof(Lit);
-    for(map<uint32_t, vector<uint32_t> >::const_iterator
-        it = reverseTable.begin(), end = reverseTable.end()
-        ; it != end
-        ; ++it
-    ) {
-        b += it->second.capacity()*sizeof(Lit);
+    for(const auto& it : reverseTable) {
+        b += it.second.capacity()*sizeof(Lit);
     }
     //TODO under-counting
     b += reverseTable.size()*(sizeof(uint32_t) + sizeof(vector<uint32_t>));
-
     return b;
 }
 

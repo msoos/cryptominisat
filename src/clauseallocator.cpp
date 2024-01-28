@@ -22,9 +22,9 @@ THE SOFTWARE.
 
 #include "clauseallocator.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <algorithm>
-#include <string.h>
+#include <cstring>
 #include <limits>
 #include <cassert>
 #include <cmath>
@@ -43,7 +43,6 @@ THE SOFTWARE.
 
 using namespace CMSat;
 
-using std::pair;
 using std::cout;
 using std::endl;
 

@@ -66,8 +66,8 @@ class CNF
 public:
     FastBackwData fast_backw;
     void save_on_var_memory();
-    void updateWatch(watch_subarray ws, const vector<uint32_t>& outer_to_inter);
-    void updateVars(
+    void update_watch(watch_subarray ws, const vector<uint32_t>& outer_to_inter);
+    void update_vars(
         const vector<uint32_t>& outer_to_inter
         , const vector<uint32_t>& inter_to_outer
         , const vector<uint32_t>& inter_to_outer2
@@ -204,11 +204,11 @@ public:
     bool redundant(const Watched& ws) const;
     bool redundant_or_removed(const Watched& ws) const;
     size_t cl_size(const Watched& ws) const;
-    string watched_to_string(Lit otherLit, const Watched& ws) const;
+    string watched_to_string(Lit other_lit, const Watched& ws) const;
     string watches_to_string(const Lit lit, watch_subarray_const ws) const;
     bool satisfied(const ClOffset& off) const;
 
-    uint64_t print_mem_used_longclauses(size_t totalMem) const;
+    uint64_t print_mem_used_longclauses(size_t total_mem) const;
     uint64_t mem_used_longclauses() const;
     template<class Function>
     void for_each_lit(
@@ -267,7 +267,7 @@ public:
     void clean_occur_from_idx(const Lit lit);
     void clear_one_occur_from_removed_clauses(watch_subarray w);
     bool no_marked_clauses() const;
-    bool normClauseIsAttached(const ClOffset offset) const;
+    bool norm_clause_is_attached(const ClOffset offset) const;
     void find_all_attached() const;
     void find_all_attached(const vector<ClOffset>& cs) const;
     bool find_clause(const ClOffset offset) const;
@@ -300,7 +300,7 @@ public:
     uint64_t count_lits(
         const vector<ClOffset>& clause_array
         , const bool red
-        , const bool allowFreed
+        , const bool allow_freed
     ) const;
 
     /** if set to TRUE, a clause has been removed during add_clause_int

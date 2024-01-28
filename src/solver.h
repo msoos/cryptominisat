@@ -158,7 +158,7 @@ class Solver : public Searcher
         size_t get_num_vars_elimed() const;
         uint32_t num_active_vars() const;
         void print_mem_stats() const;
-        uint64_t print_watch_mem_used(uint64_t totalMem) const;
+        uint64_t print_watch_mem_used(uint64_t total_mem) const;
         const SolveStats& get_solve_stats() const;
         const SearchStats& get_stats() const;
         void add_in_partial_solving_stats();

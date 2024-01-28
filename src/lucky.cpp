@@ -88,7 +88,7 @@ bool CMSat::Lucky::check_all(bool polar)
         }
     }
 
-    for(const auto off: solver->longIrredCls) {
+    for(const auto& off: solver->longIrredCls) {
         Clause* cl = solver->cl_alloc.ptr(off);
         bool ok = false;
         for(const Lit l: *cl) {
@@ -223,7 +223,7 @@ bool CMSat::Lucky::horn_sat(bool polar)
         return false;
     }
 
-    for(const auto off: solver->longIrredCls) {
+    for(const auto& off: solver->longIrredCls) {
         Clause* cl = solver->cl_alloc.ptr(off);
         bool satisfied = false;
         Lit to_set = lit_Undef;

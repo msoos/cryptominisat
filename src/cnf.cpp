@@ -24,6 +24,7 @@ THE SOFTWARE.
 
 #include <stdexcept>
 
+#include "cloffset.h"
 #include "vardata.h"
 #include "solvertypes.h"
 #include "clauseallocator.h"
@@ -193,7 +194,7 @@ void CNF::test_reflectivity_of_renumbering() const
     #endif
 }
 
-void CNF::updateWatch(
+void CNF::update_watch(
     watch_subarray ws
     , const vector<uint32_t>& outer_to_inter
 ) {
@@ -231,7 +232,7 @@ void CNF::updateWatch(
     }
 }
 
-void CNF::updateVars(
+void CNF::update_vars(
     const vector<uint32_t>& outer_to_inter
     , const vector<uint32_t>& inter_to_outer
     , const vector<uint32_t>& inter_to_outer2
@@ -243,7 +244,7 @@ void CNF::updateVars(
 
     updateBySwap(watches, seen, inter_to_outer2);
     updateBySwap(gwatches, seen, inter_to_outer);
-    for(watch_subarray w: watches) if (!w.empty()) updateWatch(w, outer_to_inter);
+    for(watch_subarray w: watches) if (!w.empty()) update_watch(w, outer_to_inter);
     updateArray(inter_to_outerMain, inter_to_outer);
 
     updateArrayMapCopy(outer_to_interMain, outer_to_inter);
@@ -260,13 +261,13 @@ uint64_t CNF::mem_used_longclauses() const
     return mem;
 }
 
-uint64_t CNF::print_mem_used_longclauses(const size_t totalMem) const
+uint64_t CNF::print_mem_used_longclauses(const size_t total_mem) const
 {
     uint64_t mem = mem_used_longclauses();
     print_stats_line("c Mem for longclauses"
         , mem/(1024UL*1024UL)
         , "MB"
-        , stats_line_percent(mem, totalMem)
+        , stats_line_percent(mem, total_mem)
         , "%"
     );
 
@@ -299,12 +300,12 @@ string CNF::watches_to_string(const Lit lit, watch_subarray_const ws) const
     return ss.str();
 }
 
-string CNF::watched_to_string(Lit otherLit, const Watched& ws) const
+string CNF::watched_to_string(Lit other_lit, const Watched& ws) const
 {
     std::stringstream ss;
     switch(ws.getType()) {
         case WatchType::watch_binary_t:
-            ss << otherLit << ", " << ws.lit2();
+            ss << other_lit << ", " << ws.lit2();
             if (ws.red()) {
                 ss << "(red)";
             }
@@ -388,10 +389,10 @@ bool CNF::check_xor_attached(const Xor& x, const uint32_t i) const {
 }
 
 void CNF::check_all_clause_attached(const vector<ClOffset>& offsets) const {
-    for (const auto& off: offsets) assert(normClauseIsAttached(off));
+    for (const auto& off: offsets) assert(norm_clause_is_attached(off));
 }
 
-bool CNF::normClauseIsAttached(const ClOffset offset) const
+bool CNF::norm_clause_is_attached(const ClOffset offset) const
 {
     bool attached = true;
     const Clause& cl = *cl_alloc.ptr(offset);
@@ -485,16 +486,16 @@ void CNF::find_all_attached() const {
 }
 
 void CNF::find_all_attached(const vector<ClOffset>& cs) const {
-    for(vector<ClOffset>::const_iterator it = cs.begin(), end = cs.end() ; it != end ; ++it) {
-        Clause& cl = *cl_alloc.ptr(*it);
-        bool ret = findWCl(watches[cl[0]], *it);
+    for(const auto& off : cs) {
+        Clause& cl = *cl_alloc.ptr(off);
+        bool ret = findWCl(watches[cl[0]], off);
         if (!ret) {
             cout << "Clause " << cl << " (red: " << cl.red() << " )";
             cout << " does NOT have its 1st watch attached!" << endl;
             assert(false); std::exit(-1);
         }
 
-        ret = findWCl(watches[cl[1]], *it);
+        ret = findWCl(watches[cl[1]], off);
         if (!ret) {
             cout << "Clause " << cl << " (red: " << cl.red() << " )";
             cout << " does NOT have its 2nd watch attached!" << endl;
@@ -506,25 +507,15 @@ void CNF::find_all_attached(const vector<ClOffset>& cs) const {
 
 bool CNF::find_clause(const ClOffset offset) const
 {
-    for (uint32_t i = 0; i < longIrredCls.size(); i++) {
-        if (longIrredCls[i] == offset)
-            return true;
-    }
-
-    for(auto& lredcls: longRedCls) {
-        for (ClOffset off: lredcls) {
-            if (off == offset)
-                return true;
-        }
-    }
-
+    for(const auto& off: longIrredCls) if (off == offset) return true;
+    for(const auto& lredcls: longRedCls) for (const auto& off: lredcls) if (off == offset) return true;
     return false;
 }
 
 void CNF::check_wrong_attach() const {
-    for(auto& lredcls: longRedCls) {
-        for (ClOffset offs: lredcls) {
-            const Clause& cl = *cl_alloc.ptr(offs);
+    for(const auto& lredcls: longRedCls) {
+        for (const auto& off: lredcls) {
+            const Clause& cl = *cl_alloc.ptr(off);
             for (uint32_t i = 0; i < cl.size(); i++) {
                 if (i > 0)
                     assert(cl[i-1].var() != cl[i].var());
@@ -586,18 +577,13 @@ void CNF::check_watchlist(watch_subarray_const ws) const {
 uint64_t CNF::count_lits(
     const vector<ClOffset>& clause_array
     , const bool red
-    , const bool allowFreed
+    , const bool allow_freed
 ) const {
     uint64_t lits = 0;
-    for(vector<ClOffset>::const_iterator
-        it = clause_array.begin(), end = clause_array.end()
-        ; it != end
-        ; ++it
-    ) {
-        const Clause& cl = *cl_alloc.ptr(*it);
-        if (cl.freed()) {
-            assert(allowFreed);
-        } else {
+    for(auto off : clause_array) {
+        const Clause& cl = *cl_alloc.ptr(off);
+        if (cl.freed()) assert(allow_freed);
+        else {
             if ((cl.red() ^ red) == false) {
                 lits += cl.size();
             }
@@ -638,16 +624,9 @@ void CNF::print_watchlist_stats() const
 
 void CNF::print_all_clauses() const
 {
-    for(vector<ClOffset>::const_iterator
-        it = longIrredCls.begin(), end = longIrredCls.end()
-        ; it != end
-        ; ++it
-    ) {
-        Clause* cl = cl_alloc.ptr(*it);
-        cout
-        << "Normal clause offs " << *it
-        << " cl: " << *cl
-        << endl;
+    for(const auto& off : longIrredCls) {
+        Clause* cl = cl_alloc.ptr(off);
+        cout << "Normal clause offs " << off << " cl: " << *cl << endl;
     }
 
 
@@ -660,14 +639,11 @@ void CNF::print_all_clauses() const
         Lit lit = Lit::toLit(wsLit);
         watch_subarray_const ws = *it;
         cout << "watches[" << lit << "]" << endl;
-        for (const Watched *it2 = ws.begin(), *end2 = ws.end()
-            ; it2 != end2
-            ; it2++
-        ) {
-            if (it2->isBin()) {
-                cout << "Binary clause part: " << lit << " , " << it2->lit2() << endl;
-            } else if (it2->isClause()) {
-                cout << "Normal clause offs " << it2->get_offset() << endl;
+        for (const auto& w : ws) {
+            if (w.isBin()) {
+                cout << "Binary clause part: " << lit << " , " << w.lit2() << endl;
+            } else if (w.isClause()) {
+                cout << "Normal clause offs " << w.get_offset() << endl;
             }
         }
     }

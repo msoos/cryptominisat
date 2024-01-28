@@ -932,7 +932,7 @@ bool Solver::renumber_variables(bool must_renumber)
     }
 
     renumber_clauses(outer_to_inter);
-    CNF::updateVars(outer_to_inter, inter_to_outer, inter_to_outer2);
+    CNF::update_vars(outer_to_inter, inter_to_outer, inter_to_outer2);
     PropEngine::updateVars(outer_to_inter, inter_to_outer);
     Searcher::updateVars(outer_to_inter, inter_to_outer);
     USE_BREAKID_DO(if (breakid) breakid->updateVars(outer_to_inter, inter_to_outer));
@@ -1498,7 +1498,7 @@ void Solver::write_final_frat_clauses() {
 
     *frat << "finalization of redundant clauses next\n";
     for(const auto& cls: longRedCls) {
-        for(const auto offs: cls) {
+        for(const auto& offs: cls) {
             Clause* cl = cl_alloc.ptr(offs);
             *frat << finalcl << *cl << fin;
         }
@@ -2449,16 +2449,9 @@ bool Solver::verify_model_long_clauses(const vector<ClOffset>& cs) const
 
     bool verificationOK = true;
 
-    for (vector<ClOffset>::const_iterator
-        it = cs.begin(), end = cs.end()
-        ; it != end
-        ; ++it
-    ) {
-        Clause& cl = *cl_alloc.ptr(*it);
-        for (uint32_t j = 0; j < cl.size(); j++)
-            if (model_value(cl[j]) == l_True)
-                goto next;
-
+    for (const auto& off : cs) {
+        Clause& cl = *cl_alloc.ptr(off);
+        for (const auto& l : cl) if (model_value(l) == l_True) goto next;
         cout << "unsatisfied clause: " << cl << endl;
         verificationOK = false;
         next:
@@ -2561,16 +2554,13 @@ const char* Solver::get_compilation_env()
 void Solver::print_watch_list(watch_subarray_const ws, const Lit lit) const
 {
     cout << "Watch[" << lit << "]: "<< endl;
-    for (const Watched *it = ws.begin(), *end = ws.end()
-        ; it != end
-        ; ++it
-    ) {
-        if (it->isClause()) {
-            Clause* cl = cl_alloc.ptr(it->get_offset());
+    for (const auto& w : ws) {
+        if (w.isClause()) {
+            Clause* cl = cl_alloc.ptr(w.get_offset());
             cout << "-> Clause: " << *cl << " red: " << cl->red();
         }
-        if (it->isBin()) {
-            cout << "-> BIN: " << lit << ", " << it->lit2() << " red: " << it->red();
+        if (w.isBin()) {
+            cout << "-> BIN: " << lit << ", " << w.lit2() << " red: " << w.red();
         }
         cout << endl;
     }
@@ -2631,27 +2621,20 @@ void Solver::check_implicit_propagated() const
     ) {
         const Lit lit = Lit::toLit(wsLit);
         watch_subarray_const ws = *it;
-        for(const Watched *it2 = ws.begin(), *end2 = ws.end()
-            ; it2 != end2
-            ; it2++
-        ) {
+        for(const auto& w : ws) {
             //Satisfied, or not implicit, skip
-            if (value(lit) == l_True
-                || it2->isClause()
-            ) {
-                continue;
-            }
+            if (value(lit) == l_True || w.isClause()) continue;
 
             const lbool val1 = value(lit);
-            const lbool val2 = value(it2->lit2());
+            const lbool val2 = value(w.lit2());
 
             //Handle binary
-            if (it2->isBin()) {
+            if (w.isBin()) {
                 if (val1 == l_False) {
                     if (val2 != l_True) {
                         cout << "not prop BIN: "
-                        << lit << ", " << it2->lit2()
-                        << " (red: " << it2->red()
+                        << lit << ", " << w.lit2()
+                        << " (red: " << w.red()
                         << endl;
                     }
                     assert(val2 == l_True);
@@ -3185,12 +3168,9 @@ bool Solver::init_all_matrices() {
 
             if (modified) {
                 for (size_t var = 0; var < nVars(); var++) {
-                    for(GaussWatched* k = gwatches[var].begin();
-                        k != gwatches[var].end();
-                        k++)
-                    {
-                        if (k->matrix_num == i) {
-                            k->matrix_num = j;
+                    for(auto& k: gwatches[var]) {
+                        if (k.matrix_num == i) {
+                            k.matrix_num = j;
                         }
                     }
                 }
@@ -3750,18 +3730,16 @@ void Solver::detach_clauses_in_xors() {
     vector<ClOffset> delayed_clause_free;
     for(uint32_t x = 0; x < nVars()*2; x++) {
         Lit l = Lit::toLit(x);
-        for(uint32_t i = 0; i < watches[l].size(); i++) {
-            const Watched& w = watches[l][i];
+        for(const auto& w : watches[l]) {
             if (w.isBin() || w.isBNN() || w.isIdx()) continue;
-
             assert(w.isClause());
             ClOffset offs = w.get_offset();
             Clause* cl = cl_alloc.ptr(offs);
             assert(!cl->freed());
+
             //We have already went through this clause, and set it to be removed/detached
             if (cl->red()) goto next;
             if (cl->get_removed()) continue;
-
             if (cl->size() <= maxsize_xor &&
                     xor_hashes.count(hash_xcl(*cl)) &&
                     check_clause_represented_by_xor(*cl)) {
