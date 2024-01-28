@@ -46,8 +46,8 @@ public:
     void finished_solving();
     void start_new_solving();
     void updateVars(
-    const vector<uint32_t>& outerToInter
-    , const vector<uint32_t>& interToOuter);
+    const vector<uint32_t>& outer_to_inter
+    , const vector<uint32_t>& inter_to_outer);
     void update_var_after_varreplace();
     Lit get_assumed_lit() const;
 

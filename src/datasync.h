@@ -48,8 +48,8 @@ class DataSync
         bool syncData();
         void save_on_var_memory();
         void updateVars(
-           const vector<uint32_t>& outerToInter
-            , const vector<uint32_t>& interToOuter
+           const vector<uint32_t>& outer_to_inter
+            , const vector<uint32_t>& inter_to_outer
         );
         void signal_new_long_clause(const vector<Lit>& clause);
 

@@ -81,8 +81,8 @@ template<bool binfrat = false>
 class FratFile: public Frat
 {
 public:
-    FratFile(vector<uint32_t>& _interToOuterMain) :
-        interToOuterMain(_interToOuterMain)
+    FratFile(vector<uint32_t>& _inter_to_outerMain) :
+        inter_to_outerMain(_inter_to_outerMain)
     {
         drup_buf = new unsigned char[2 * 1024 * 1024];
         buf_ptr = drup_buf;
@@ -343,7 +343,7 @@ private:
     void byteDRUPa(const Lit l)
     {
         uint32_t v = l.var();
-        v = interToOuterMain[v];
+        v = inter_to_outerMain[v];
         if (binfrat) {
             unsigned int u = 2 * (v + 1) + l.sign();
             do {
@@ -400,7 +400,7 @@ private:
     void byteDRUPd(Lit l)
     {
         uint32_t v = l.var();
-        v = interToOuterMain[v];
+        v = inter_to_outerMain[v];
         if (binfrat) {
             unsigned int u = 2 * (v + 1) + l.sign();
             do {
@@ -420,7 +420,7 @@ private:
     bool adding = false;
     int32_t cl_id = 0;
     FILE* drup_file = nullptr;
-    vector<uint32_t>& interToOuterMain;
+    vector<uint32_t>& inter_to_outerMain;
     uint64_t* sumConflicts = nullptr;
     SQLStats* sqlStats = nullptr;
 };

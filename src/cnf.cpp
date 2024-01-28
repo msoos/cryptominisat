@@ -51,14 +51,14 @@ void CNF::new_var(
 
         uint32_t minVar = nVars()-1;
         uint32_t maxVar = nVarsOuter()-1;
-        interToOuterMain.push_back(maxVar);
-        const uint32_t x = interToOuterMain[minVar];
-        interToOuterMain[minVar] = maxVar;
-        interToOuterMain[maxVar] = x;
+        inter_to_outerMain.push_back(maxVar);
+        const uint32_t x = inter_to_outerMain[minVar];
+        inter_to_outerMain[minVar] = maxVar;
+        inter_to_outerMain[maxVar] = x;
 
-        outerToInterMain.push_back(maxVar);
-        outerToInterMain[maxVar] = minVar;
-        outerToInterMain[x] = maxVar;
+        outer_to_interMain.push_back(maxVar);
+        outer_to_interMain[maxVar] = minVar;
+        outer_to_interMain[x] = maxVar;
 
         swapVars(nVarsOuter()-1);
         varData[nVars()-1].is_bva = bva;
@@ -68,13 +68,13 @@ void CNF::new_var(
         assert(orig_outer < nVarsOuter());
 
         const uint32_t minVar = nVars()-1;
-        uint32_t k = interToOuterMain[minVar];
-        uint32_t z = outerToInterMain[orig_outer];
-        interToOuterMain[minVar] = orig_outer;
-        interToOuterMain[z] = k;
+        uint32_t k = inter_to_outerMain[minVar];
+        uint32_t z = outer_to_interMain[orig_outer];
+        inter_to_outerMain[minVar] = orig_outer;
+        inter_to_outerMain[z] = k;
 
-        outerToInterMain[k] = z;
-        outerToInterMain[orig_outer] = minVar;
+        outer_to_interMain[k] = z;
+        outer_to_interMain[orig_outer] = minVar;
 
         swapVars(z);
     }
@@ -93,24 +93,24 @@ void CNF::new_vars(const size_t n)
     enlarge_minimal_datastructs(n);
     enlarge_nonminimial_datastructs(n);
 
-    size_t inter_at = interToOuterMain.size();
-    interToOuterMain.insert(interToOuterMain.end(), n, 0);
+    size_t inter_at = inter_to_outerMain.size();
+    inter_to_outerMain.insert(inter_to_outerMain.end(), n, 0);
 
-    size_t outer_at = outerToInterMain.size();
-    outerToInterMain.insert(outerToInterMain.end(), n, 0);
+    size_t outer_at = outer_to_interMain.size();
+    outer_to_interMain.insert(outer_to_interMain.end(), n, 0);
 
     for(int i = n-1; i >= 0; i--) {
         const uint32_t minVar = nVars()-i-1;
         const uint32_t maxVar = nVarsOuter()-i-1;
 
-        interToOuterMain[inter_at++] = maxVar;
-        const uint32_t x = interToOuterMain[minVar];
-        interToOuterMain[minVar] = maxVar;
-        interToOuterMain[maxVar] = x;
+        inter_to_outerMain[inter_at++] = maxVar;
+        const uint32_t x = inter_to_outerMain[minVar];
+        inter_to_outerMain[minVar] = maxVar;
+        inter_to_outerMain[maxVar] = x;
 
-        outerToInterMain[outer_at++] = maxVar;
-        outerToInterMain[maxVar] = minVar;
-        outerToInterMain[x] = maxVar;
+        outer_to_interMain[outer_at++] = maxVar;
+        outer_to_interMain[maxVar] = minVar;
+        outer_to_interMain[x] = maxVar;
 
         swapVars(nVarsOuter()-i-1, i);
         varData[nVars()-i-1].is_bva = false;
@@ -149,7 +149,7 @@ void CNF::save_on_var_memory()
 {
     //never resize varData --> contains info about what is replaced/etc.
     //never resize assigns --> contains 0-level assigns
-    //never resize interToOuterMain, outerToInterMain
+    //never resize inter_to_outerMain, outer_to_interMain
 
     watches.resize(nVars()*2);
     watches.consolidate();
@@ -168,25 +168,25 @@ void CNF::save_on_var_memory()
     permDiff.shrink_to_fit();
 }
 
-//Test for reflectivity of interToOuterMain & outerToInterMain
+//Test for reflectivity of inter_to_outerMain & outer_to_interMain
 void CNF::test_reflectivity_of_renumbering() const
 {
     vector<uint32_t> test(nVarsOuter());
     for(size_t i = 0; i  < nVarsOuter(); i++) {
         test[i] = i;
     }
-    updateArrayRev(test, interToOuterMain);
+    updateArrayRev(test, inter_to_outerMain);
     #ifdef DEBUG_RENUMBER
     for(size_t i = 0; i < nVarsOuter(); i++) {
         cout << i << ": "
         << std::setw(2) << test[i] << ", "
-        << std::setw(2) << outerToInterMain[i]
+        << std::setw(2) << outer_to_interMain[i]
         << endl;
     }
     #endif
 
     for(size_t i = 0; i < nVarsOuter(); i++) {
-        assert(test[i] == outerToInterMain[i]);
+        assert(test[i] == outer_to_interMain[i]);
     }
     #ifdef DEBUG_RENUMBR
     cout << "Passed test" << endl;
@@ -195,7 +195,7 @@ void CNF::test_reflectivity_of_renumbering() const
 
 void CNF::updateWatch(
     watch_subarray ws
-    , const vector<uint32_t>& outerToInter
+    , const vector<uint32_t>& outer_to_inter
 ) {
     for(Watched *it = ws.begin(), *end = ws.end()
         ; it != end
@@ -203,7 +203,7 @@ void CNF::updateWatch(
     ) {
         if (it->isBin()) {
             it->setLit2(
-                getUpdatedLit(it->lit2(), outerToInter)
+                getUpdatedLit(it->lit2(), outer_to_inter)
             );
             continue;
         }
@@ -215,7 +215,7 @@ void CNF::updateWatch(
         assert(it->isClause());
         const Clause &cl = *cl_alloc.ptr(it->get_offset());
         Lit blocked_lit = it->getBlockedLit();
-        blocked_lit = getUpdatedLit(it->getBlockedLit(), outerToInter);
+        blocked_lit = getUpdatedLit(it->getBlockedLit(), outer_to_inter);
         bool found = false;
         for(Lit lit: cl) {
             if (lit == blocked_lit) {
@@ -232,21 +232,21 @@ void CNF::updateWatch(
 }
 
 void CNF::updateVars(
-    const vector<uint32_t>& outerToInter
-    , const vector<uint32_t>& interToOuter
-    , const vector<uint32_t>& interToOuter2
+    const vector<uint32_t>& outer_to_inter
+    , const vector<uint32_t>& inter_to_outer
+    , const vector<uint32_t>& inter_to_outer2
 ) {
-    updateArray(varData, interToOuter);
-    updateArray(assigns, interToOuter);
-    updateArray(unit_cl_IDs, interToOuter);
-    updateArray(unit_cl_XIDs, interToOuter);
+    updateArray(varData, inter_to_outer);
+    updateArray(assigns, inter_to_outer);
+    updateArray(unit_cl_IDs, inter_to_outer);
+    updateArray(unit_cl_XIDs, inter_to_outer);
 
-    updateBySwap(watches, seen, interToOuter2);
-    updateBySwap(gwatches, seen, interToOuter);
-    for(watch_subarray w: watches) if (!w.empty()) updateWatch(w, outerToInter);
-    updateArray(interToOuterMain, interToOuter);
+    updateBySwap(watches, seen, inter_to_outer2);
+    updateBySwap(gwatches, seen, inter_to_outer);
+    for(watch_subarray w: watches) if (!w.empty()) updateWatch(w, outer_to_inter);
+    updateArray(inter_to_outerMain, inter_to_outer);
 
-    updateArrayMapCopy(outerToInterMain, outerToInter);
+    updateArrayMapCopy(outer_to_interMain, outer_to_inter);
 }
 
 uint64_t CNF::mem_used_longclauses() const
@@ -341,8 +341,8 @@ bool ClauseSizeSorter::operator () (const ClOffset x, const ClOffset y)
 size_t CNF::mem_used_renumberer() const
 {
     size_t mem = 0;
-    mem += interToOuterMain.capacity()*sizeof(uint32_t);
-    mem += outerToInterMain.capacity()*sizeof(uint32_t);
+    mem += inter_to_outerMain.capacity()*sizeof(uint32_t);
+    mem += outer_to_interMain.capacity()*sizeof(uint32_t);
     return mem;
 }
 
@@ -692,7 +692,7 @@ bool CNF::no_marked_clauses() const
 
 void CNF::add_frat(FILE* os) {
     if (frat) delete frat;
-    frat = new FratFile<false>(interToOuterMain);
+    frat = new FratFile<false>(inter_to_outerMain);
     frat->setFile(os);
     frat->set_sumconflicts_ptr(&sumConflicts);
     frat->set_sqlstats_ptr(sqlStats);

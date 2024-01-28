@@ -99,8 +99,8 @@ void DataSync::save_on_var_memory()
 }
 
 void DataSync::updateVars(
-    [[maybe_unused]] const vector<uint32_t>&  outerToInter
-    , [[maybe_unused]] const vector<uint32_t>& interToOuter
+    [[maybe_unused]] const vector<uint32_t>&  outer_to_inter
+    , [[maybe_unused]] const vector<uint32_t>& inter_to_outer
 ) {
 }
 

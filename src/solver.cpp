@@ -822,36 +822,36 @@ void Solver::test_renumbering() const
     assert(!problem && "We renumbered the variables in the wrong order!");
 }
 
-void Solver::renumber_clauses(const vector<uint32_t>& outerToInter)
+void Solver::renumber_clauses(const vector<uint32_t>& outer_to_inter)
 {
     //Clauses' abstractions have to be re-calculated
     for(ClOffset offs: longIrredCls) {
         Clause* cl = cl_alloc.ptr(offs);
-        updateLitsMap(*cl, outerToInter);
+        updateLitsMap(*cl, outer_to_inter);
         cl->set_strengthened();
     }
 
     for(auto& lredcls: longRedCls) {
         for(ClOffset off: lredcls) {
             Clause* cl = cl_alloc.ptr(off);
-            updateLitsMap(*cl, outerToInter);
+            updateLitsMap(*cl, outer_to_inter);
             cl->set_strengthened();
         }
     }
 
     //Clauses' abstractions have to be re-calculated
-    for(Xor& x: xorclauses) updateVarsMap(x.vars, outerToInter);
+    for(Xor& x: xorclauses) updateVarsMap(x.vars, outer_to_inter);
     for(auto& bnn: bnns) {
         if (bnn == nullptr) continue;
         assert(!bnn->isRemoved);
-        updateLitsMap(*bnn, outerToInter);
-        if (!bnn->set) bnn->out = getUpdatedLit(bnn->out, outerToInter);
+        updateLitsMap(*bnn, outer_to_inter);
+        if (!bnn->set) bnn->out = getUpdatedLit(bnn->out, outer_to_inter);
     }
 }
 
-size_t Solver::calculate_interToOuter_and_outerToInter(
-    vector<uint32_t>& outerToInter
-    , vector<uint32_t>& interToOuter
+size_t Solver::calculate_inter_to_outer_and_outer_to_inter(
+    vector<uint32_t>& outer_to_inter
+    , vector<uint32_t>& inter_to_outer
 ) {
     size_t at = 0;
     vector<uint32_t> useless;
@@ -865,24 +865,24 @@ size_t Solver::calculate_interToOuter_and_outerToInter(
             continue;
         }
 
-        outerToInter[i] = at;
-        interToOuter[at] = i;
+        outer_to_inter[i] = at;
+        inter_to_outer[at] = i;
         at++;
         numEffectiveVars++;
     }
 
     //Fill the rest with variables that have been removed/eliminated/set
     for(const auto useles : useless) {
-        outerToInter[useles] = at;
-        interToOuter[at] = useles;
+        outer_to_inter[useles] = at;
+        inter_to_outer[at] = useles;
         at++;
     }
     assert(at == nVars());
 
     //Extend to nVarsOuter() --> these are just the identity transformation
     for(size_t i = nVars(); i < nVarsOuter(); i++) {
-        outerToInter[i] = i;
-        interToOuter[i] = i;
+        outer_to_inter[i] = i;
+        inter_to_outer[i] = i;
     }
 
     return numEffectiveVars;
@@ -918,28 +918,28 @@ bool Solver::renumber_variables(bool must_renumber)
     double myTime = cpuTime();
     if (!clauseCleaner->remove_and_clean_all()) return false;
 
-    //outerToInter[10] = 0 ---> what was 10 is now 0.
-    vector<uint32_t> outerToInter(nVarsOuter());
-    vector<uint32_t> interToOuter(nVarsOuter());
+    //outer_to_inter[10] = 0 ---> what was 10 is now 0.
+    vector<uint32_t> outer_to_inter(nVarsOuter());
+    vector<uint32_t> inter_to_outer(nVarsOuter());
 
-    size_t numEffectiveVars = calculate_interToOuter_and_outerToInter(outerToInter, interToOuter);
+    size_t numEffectiveVars = calculate_inter_to_outer_and_outer_to_inter(outer_to_inter, inter_to_outer);
 
-    //Create temporary outerToInter2
-    vector<uint32_t> interToOuter2(nVarsOuter()*2);
+    //Create temporary outer_to_inter2
+    vector<uint32_t> inter_to_outer2(nVarsOuter()*2);
     for(size_t i = 0; i < nVarsOuter(); i++) {
-        interToOuter2[i*2] = interToOuter[i]*2;
-        interToOuter2[i*2+1] = interToOuter[i]*2+1;
+        inter_to_outer2[i*2] = inter_to_outer[i]*2;
+        inter_to_outer2[i*2+1] = inter_to_outer[i]*2+1;
     }
 
-    renumber_clauses(outerToInter);
-    CNF::updateVars(outerToInter, interToOuter, interToOuter2);
-    PropEngine::updateVars(outerToInter, interToOuter);
-    Searcher::updateVars(outerToInter, interToOuter);
-    USE_BREAKID_DO(if (breakid) breakid->updateVars(outerToInter, interToOuter));
+    renumber_clauses(outer_to_inter);
+    CNF::updateVars(outer_to_inter, inter_to_outer, inter_to_outer2);
+    PropEngine::updateVars(outer_to_inter, inter_to_outer);
+    Searcher::updateVars(outer_to_inter, inter_to_outer);
+    USE_BREAKID_DO(if (breakid) breakid->updateVars(outer_to_inter, inter_to_outer));
 
     //Update sub-elements' vars
-    varReplacer->updateVars(outerToInter, interToOuter);
-    datasync->updateVars(outerToInter, interToOuter);
+    varReplacer->updateVars(outer_to_inter, inter_to_outer);
+    datasync->updateVars(outer_to_inter, inter_to_outer);
 
     //Tests
     test_renumbering();
@@ -1190,7 +1190,7 @@ void Solver::extend_solution(const bool only_sampling_solution) {
     #endif
 
     const double myTime = cpuTime();
-    updateArrayRev(model, interToOuterMain);
+    updateArrayRev(model, inter_to_outerMain);
 
     if (!only_sampling_solution) {
         SolutionExtender extender(this, occsimplifier);
@@ -3550,8 +3550,8 @@ string Solver::serialize_solution_reconstruction_data() const
         uint32_t nvars = nVars();
         ar << nvars;
         ar << assigns;
-        ar << interToOuterMain;
-        ar << outerToInterMain;
+        ar << inter_to_outerMain;
+        ar << outer_to_interMain;
         ar << varData;
         ar << minNumVars;
         CNF::serialize(ar);
@@ -3571,8 +3571,8 @@ void Solver::create_from_solution_reconstruction_data(const string& data)
         ar >> nvars;
         new_vars(nvars);
         ar >> assigns;
-        ar >> interToOuterMain;
-        ar >> outerToInterMain;
+        ar >> inter_to_outerMain;
+        ar >> outer_to_interMain;
         ar >> varData;
         ar >> minNumVars;
         CNF::unserialize(ar);
@@ -3621,7 +3621,7 @@ pair<lbool, vector<lbool>> Solver::extend_minimized_model(const vector<lbool>& m
         }
     }
     model = assigns;
-    updateArrayRev(model, interToOuterMain);
+    updateArrayRev(model, inter_to_outerMain);
 
     SolutionExtender extender(this, occsimplifier);
     extender.extend();

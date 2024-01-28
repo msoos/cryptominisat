@@ -438,11 +438,11 @@ class Solver : public Searcher
         uint64_t last_full_watch_consolidate = 0;
         void save_on_var_memory(uint32_t newNumVars);
         void unSaveVarMem();
-        size_t calculate_interToOuter_and_outerToInter(
-            vector<uint32_t>& outerToInter
-            , vector<uint32_t>& interToOuter
+        size_t calculate_inter_to_outer_and_outer_to_inter(
+            vector<uint32_t>& outer_to_inter
+            , vector<uint32_t>& inter_to_outer
         );
-        void renumber_clauses(const vector<uint32_t>& outerToInter);
+        void renumber_clauses(const vector<uint32_t>& outer_to_inter);
         void test_renumbering() const;
         bool clean_xor_clauses_from_duplicate_and_set_vars();
         bool update_vars_of_xors(vector<Xor>& xors);

@@ -106,8 +106,8 @@ void VarReplacer::save_on_var_memory()
 }
 
 void VarReplacer::updateVars(
-    const std::vector< uint32_t >& /*outerToInter*/
-    , const std::vector< uint32_t >& /*interToOuter*/
+    const std::vector< uint32_t >& /*outer_to_inter*/
+    , const std::vector< uint32_t >& /*inter_to_outer*/
 ) {
     //Nothing to do, we keep OUTER in all these data structures
     //hence, it needs no update

@@ -135,16 +135,16 @@ void Searcher::save_on_var_memory()
 }
 
 void Searcher::updateVars(
-    [[maybe_unused]] const vector<uint32_t>& outerToInter
-    , const vector<uint32_t>& interToOuter
+    [[maybe_unused]] const vector<uint32_t>& outer_to_inter
+    , const vector<uint32_t>& inter_to_outer
 ) {
-    updateArray(var_act_vsids, interToOuter);
-    updateArray(vmtf_btab, interToOuter);
-    updateArray(vmtf_links, interToOuter);
+    updateArray(var_act_vsids, inter_to_outer);
+    updateArray(vmtf_btab, inter_to_outer);
+    updateArray(vmtf_links, inter_to_outer);
 
     auto upd = [&](uint32_t v) {
         if (v != numeric_limits<uint32_t>::max())
-            v = interToOuter[v];
+            v = inter_to_outer[v];
     };
 
     for(auto& l: vmtf_links) {

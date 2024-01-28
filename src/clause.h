@@ -421,8 +421,8 @@ public:
         }
     }
 
-    typedef Lit* iterator;
-    typedef const Lit* const_iterator;
+    using iterator = Lit *;
+    using const_iterator = const Lit *;
 
     uint32_t size() const { return mySize; }
     void shrink(const uint32_t i)

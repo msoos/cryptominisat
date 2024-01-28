@@ -341,8 +341,8 @@ protected:
 
     //Var selection, activity, etc.
     void updateVars(
-        const vector<uint32_t>& outerToInter
-        , const vector<uint32_t>& interToOuter
+        const vector<uint32_t>& outer_to_inter
+        , const vector<uint32_t>& inter_to_outer
     );
 
     size_t mem_used() const

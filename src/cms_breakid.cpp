@@ -40,11 +40,11 @@ BreakID::BreakID(Solver* _solver):
 }
 
 void BreakID::updateVars(
-    const vector<uint32_t>& outerToInter
-    , const vector<uint32_t>& /*interToOuter*/)
+    const vector<uint32_t>& outer_to_inter
+    , const vector<uint32_t>& /*inter_to_outer*/)
 {
     if (symm_var != var_Undef) {
-        symm_var = getUpdatedVar(symm_var, outerToInter);
+        symm_var = getUpdatedVar(symm_var, outer_to_inter);
     }
 }
 

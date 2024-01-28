@@ -84,8 +84,8 @@ class VarReplacer
 
         vector<uint32_t> get_vars_replacing(uint32_t var) const;
         void updateVars(
-            const vector<uint32_t>& outerToInter
-            , const vector<uint32_t>& interToOuter
+            const vector<uint32_t>& outer_to_inter
+            , const vector<uint32_t>& inter_to_outer
         );
 
         //Stats

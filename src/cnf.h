@@ -66,11 +66,11 @@ class CNF
 public:
     FastBackwData fast_backw;
     void save_on_var_memory();
-    void updateWatch(watch_subarray ws, const vector<uint32_t>& outerToInter);
+    void updateWatch(watch_subarray ws, const vector<uint32_t>& outer_to_inter);
     void updateVars(
-        const vector<uint32_t>& outerToInter
-        , const vector<uint32_t>& interToOuter
-        , const vector<uint32_t>& interToOuter2
+        const vector<uint32_t>& outer_to_inter
+        , const vector<uint32_t>& inter_to_outer
+        , const vector<uint32_t>& inter_to_outer2
     );
     size_t mem_used_renumberer() const;
     size_t mem_used() const;
@@ -224,31 +224,31 @@ public:
     ) const;
     uint32_t map_inter_to_outer(const uint32_t inter) const
     {
-        return interToOuterMain[inter];
+        return inter_to_outerMain[inter];
     }
     Lit map_inter_to_outer(const Lit lit) const
     {
-        return Lit(interToOuterMain[lit.var()], lit.sign());
+        return Lit(inter_to_outerMain[lit.var()], lit.sign());
     }
     uint32_t map_outer_to_inter(const uint32_t outer) const
     {
-        return outerToInterMain[outer];
+        return outer_to_interMain[outer];
     }
     void map_outer_to_inter(vector<uint32_t>& outer) const
     {
-        for(auto& v: outer) v = outerToInterMain[v];
+        for(auto& v: outer) v = outer_to_interMain[v];
     }
     void map_inter_to_outer(vector<uint32_t>& inter) const
     {
-        for(auto& v: inter) v = interToOuterMain[v];
+        for(auto& v: inter) v = inter_to_outerMain[v];
     }
     Lit map_outer_to_inter(const Lit outer) const
     {
-        return Lit(outerToInterMain[outer.var()], outer.sign());
+        return Lit(outer_to_interMain[outer.var()], outer.sign());
     }
     void map_inter_to_outer(vector<Lit>& lits) const
     {
-        updateLitsMap(lits, interToOuterMain);
+        updateLitsMap(lits, inter_to_outerMain);
     }
     void renumber_outer_to_inter_lits(vector<Lit>& ps) const;
 
@@ -322,8 +322,8 @@ protected:
     void test_reflectivity_of_renumbering() const;
     vector<lbool> assigns;
 
-    vector<uint32_t> outerToInterMain;
-    vector<uint32_t> interToOuterMain;
+    vector<uint32_t> outer_to_interMain;
+    vector<uint32_t> inter_to_outerMain;
 
 private:
     std::atomic<bool> *must_interrupt_inter; ///<Interrupt cleanly ASAP if true
