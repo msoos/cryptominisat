@@ -72,6 +72,7 @@ using namespace CMSat;
 using std::cout;
 using std::endl;
 using std::unique;
+using std::make_pair;
 
 //#define VERBOSE_DEBUG_VARELIM
 //#define VERBOSE_DEBUG_XOR_FINDER
@@ -2030,6 +2031,7 @@ bool OccSimplifier::lit_rem_with_or_gates() {
     //      and we could replace (a V b V -c) with d V -c
     //      and we could replace (a V b V -d) with c V -d
     //      which would loose the definiton of c->a V b and d-> a V b
+    for(const auto& g: gates) assert(std::is_sorted(g.lits.begin(), g.lits.end()));
     std::sort(gates.begin(), gates.end(), OrGateSorterLHS());
     gates.erase(unique(gates.begin(), gates.end(), GateLHSEq()),gates.end());
 
@@ -2120,17 +2122,6 @@ bool OccSimplifier::lit_rem_with_or_gates() {
                 for(auto const& l: gate.lits) seen[l.toInt()] = 0;
                 goto end;
             }
-            if (cl->size() == 2) {
-                n_occurs[(*cl)[0].toInt()]++;
-                n_occurs[(*cl)[1].toInt()]++;
-                solver->attach_bin_clause((*cl)[0], (*cl)[1], false, cl->stats.ID, false);
-                unlink_clause(off, false, false, true);
-            } else if (cl->size() == 1) {
-                tmp_tern_res.clear(); tmp_tern_res.push_back((*cl)[0]);
-                Clause* newCl = full_add_clause(tmp_tern_res, finalLits_ternary, nullptr, false);
-                assert(newCl == nullptr);
-                unlink_clause(off, true, false, true);
-            } else assert(cl->size() > 2);
         }
         for(auto const& l: gate.lits) seen[l.toInt()] = 0;
     }
@@ -5314,7 +5305,7 @@ void OccSimplifier::Stats::print(const size_t nVars, OccSimplifier* occs) const
 
 Clause* OccSimplifier::full_add_clause(
     const vector<Lit>& tmp_cl,
-    vector<Lit>& finalLits,
+    vector<Lit>& final_lits,
     ClauseStats* cl_stats,
     bool red)
 {
@@ -5323,7 +5314,7 @@ Clause* OccSimplifier::full_add_clause(
         , red //Is the new clause redundant?
         , cl_stats
         , false //Should clause be attached if long?
-        , &finalLits
+        , &final_lits
     );
 
     if (solver->okay()) {
@@ -5334,15 +5325,16 @@ Clause* OccSimplifier::full_add_clause(
     }
 
     if (!newCl) {
-        if (finalLits.size() == 2 && !red) {
-            n_occurs[finalLits[0].toInt()]++;
-            n_occurs[finalLits[1].toInt()]++;
-            added_irred_bin.push_back(std::make_pair(finalLits[0], finalLits[1]));
+        if (final_lits.size() == 2 && !red) {
+            n_occurs[final_lits[0].toInt()]++;
+            n_occurs[final_lits[1].toInt()]++;
+            added_irred_bin.push_back(std::make_pair(final_lits[0], final_lits[1]));
         }
     } else {
         link_in_clause(*newCl);
         ClOffset offset = solver->cl_alloc.get_offset(newCl);
         clauses.push_back(offset);
+        added_long_cl.push_back(offset);
     }
 
     return newCl;
