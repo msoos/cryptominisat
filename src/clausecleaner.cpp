@@ -245,7 +245,7 @@ void ClauseCleaner::clean_clauses_inter(vector<ClOffset>& cs)
         if (clean_clause(cl)) {
             solver->watches.smudge(origLit1);
             solver->watches.smudge(origLit2);
-            cl.setRemoved();
+            cl.set_removed();
             if (red) solver->litStats.redLits -= origSize;
             else solver->litStats.irredLits -= origSize;
             delayed_free.push_back(off);
@@ -314,7 +314,7 @@ bool ClauseCleaner::clean_clause(Clause& cl)
     #endif
 
     if (i != j) {
-        cl.setStrenghtened();
+        cl.set_strengthened();
         if (cl.size() == 2) {
             solver->attach_bin_clause(cl[0], cl[1], cl.red(), cl.stats.ID);
             return true;

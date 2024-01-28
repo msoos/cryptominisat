@@ -528,7 +528,7 @@ inline void Searcher::bump_cl_act(Clause* cl)
     if (inprocess)
         return;
 
-    assert(!cl->getRemoved());
+    assert(!cl->get_removed());
 
     double new_val = cla_inc + (double)cl->stats.activity;
     cl->stats.activity = (float)new_val;

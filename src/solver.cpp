@@ -186,10 +186,10 @@ void Solver::set_sqlite(
 void Solver::set_shared_data(SharedData* shared_data) { datasync->set_shared_data(shared_data); }
 
 // Only used for unsat, unit, and binary xors during initalization
-void Solver::add_clause_int_frat(const vector<Lit>& cl, const uint32_t ID) {
+void Solver::add_clause_int_frat(const vector<Lit>& cl, const uint32_t id) {
     assert(cl.size() <= 2);
     ClauseStats s;
-    s.ID = ID;
+    s.ID = id;
     Clause* c = solver->add_clause_int(
             cl,
             false, //red
@@ -828,14 +828,14 @@ void Solver::renumber_clauses(const vector<uint32_t>& outerToInter)
     for(ClOffset offs: longIrredCls) {
         Clause* cl = cl_alloc.ptr(offs);
         updateLitsMap(*cl, outerToInter);
-        cl->setStrenghtened();
+        cl->set_strengthened();
     }
 
     for(auto& lredcls: longRedCls) {
         for(ClOffset off: lredcls) {
             Clause* cl = cl_alloc.ptr(off);
             updateLitsMap(*cl, outerToInter);
-            cl->setStrenghtened();
+            cl->set_strengthened();
         }
     }
 
@@ -3760,12 +3760,12 @@ void Solver::detach_clauses_in_xors() {
             assert(!cl->freed());
             //We have already went through this clause, and set it to be removed/detached
             if (cl->red()) goto next;
-            if (cl->getRemoved()) continue;
+            if (cl->get_removed()) continue;
 
             if (cl->size() <= maxsize_xor &&
                     xor_hashes.count(hash_xcl(*cl)) &&
                     check_clause_represented_by_xor(*cl)) {
-                cl->setRemoved();
+                cl->set_removed();
                 delayed_clause_free.push_back(offs);
                 deleted++;
                 continue;
@@ -3780,7 +3780,7 @@ void Solver::detach_clauses_in_xors() {
         for(uint32_t i = 0; i < longIrredCls.size(); i++) {
             ClOffset offs = longIrredCls[i];
             Clause* cl = cl_alloc.ptr(offs);
-            if (cl->getRemoved()) detachClause(*cl);
+            if (cl->get_removed()) detachClause(*cl);
             else longIrredCls[j++] = offs;
         }
         longIrredCls.resize(j);

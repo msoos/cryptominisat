@@ -430,7 +430,7 @@ public:
         assert(i <= size());
         mySize -= i;
         if (i > 0)
-            setStrenghtened();
+            set_strengthened();
     }
 
     void resize (const uint32_t i)
@@ -438,7 +438,7 @@ public:
         assert(i <= size());
         if (i == size()) return;
         mySize = i;
-        setStrenghtened();
+        set_strengthened();
     }
 
     //We MUST have just strengthen-ed the clause!
@@ -458,13 +458,13 @@ public:
         return isFreed;
     }
 
-    void reCalcAbstraction()
+    void recalc_abstraction()
     {
         abst = calcAbstraction(*this);
         must_recalc_abst = false;
     }
 
-    void setStrenghtened()
+    void set_strengthened()
     {
         must_recalc_abst = true;
         //is_ternary_resolved = false; //probably not a good idea
@@ -474,7 +474,7 @@ public:
     void recalc_abst_if_needed()
     {
         if (must_recalc_abst) {
-            reCalcAbstraction();
+            recalc_abstraction();
         }
     }
 
@@ -488,7 +488,7 @@ public:
         return *(getData() + i);
     }
 
-    void makeIrred()
+    void make_irred()
     {
         assert(isRed);
         isRed = false;
@@ -497,21 +497,21 @@ public:
     void strengthen(const Lit p)
     {
         remove(*this, p);
-        setStrenghtened();
+        set_strengthened();
     }
 
     void add(const Lit p)
     {
         mySize++;
         getData()[mySize-1] = p;
-        setStrenghtened();
+        set_strengthened();
     }
 
     const Lit* begin() const
     {
         #ifdef SLOW_DEBUG
         assert(!freed());
-        assert(!getRemoved());
+        assert(!get_removed());
         #endif
         return getData();
     }
@@ -520,53 +520,21 @@ public:
     {
         #ifdef SLOW_DEBUG
         assert(!freed());
-        assert(!getRemoved());
+        assert(!get_removed());
         #endif
         return getData();
     }
 
-    const Lit* end() const
-    {
-        return getData()+size();
-    }
+    const Lit* end() const { return getData()+size(); }
+    Lit* end() { return getData()+size(); }
+    void set_removed() { isRemoved = true; }
+    bool get_removed() const { return isRemoved; }
+    void unset_removed() { isRemoved = false; }
+    void set_freed() { isFreed = true; }
 
-    Lit* end()
-    {
-        return getData()+size();
-    }
-
-    void setRemoved()
-    {
-        isRemoved = true;
-    }
-
-    bool getRemoved() const
-    {
-        return isRemoved;
-    }
-
-    void unset_removed()
-    {
-        isRemoved = false;
-    }
-
-    void setFreed()
-    {
-        isFreed = true;
-    }
-
-    bool getOccurLinked() const
-    {
-        return occurLinked;
-    }
-
-    void setOccurLinked(bool toset)
-    {
-        occurLinked = toset;
-    }
-
-    void print_extra_stats() const
-    {
+    bool get_occur_linked() const { return occurLinked; }
+    void set_occur_linked(bool toset) { occurLinked = toset; }
+    void print_extra_stats() const {
         cout
         << "Clause size " << std::setw(4) << size();
         if (red()) {

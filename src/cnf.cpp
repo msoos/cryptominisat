@@ -622,7 +622,7 @@ void CNF::print_watchlist_stats() const
                 bin_cls++;
             } else if (w.isClause()) {
                 Clause* cl = cl_alloc.ptr(w.get_offset());
-                assert(!cl->getRemoved());
+                assert(!cl->get_removed());
                 total_size_lits+=cl->size();
                 total_cls++;
             }

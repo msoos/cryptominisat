@@ -471,7 +471,7 @@ void ReduceDB::dump_sql_cl_data(
         auto& cc = solver->longRedCls[lev];
         for(const auto& offs: cc) {
             Clause* cl = solver->cl_alloc.ptr(offs);
-            assert(!cl->getRemoved());
+            assert(!cl->get_removed());
             assert(cl->red());
             assert(!cl->freed());
             if (cl->stats.locked_for_data_gen) {
@@ -841,7 +841,7 @@ void ReduceDB::clean_lev0_once_in_a_while()
                 solver->litStats.redLits -= cl->size();
 
                 *solver->frat << del << *cl << fin;
-                cl->setRemoved();
+                cl->set_removed();
                 delayed_clause_free.push_back(offset);
             }
         }
@@ -919,7 +919,7 @@ void ReduceDB::clean_lev1_once_in_a_while()
                 solver->litStats.redLits -= cl->size();
 
                 *solver->frat << del << *cl << fin;
-                cl->setRemoved();
+                cl->set_removed();
                 delayed_clause_free.push_back(offset);
             }
         }
@@ -980,7 +980,7 @@ void ReduceDB::delete_from_lev2()
             solver->litStats.redLits -= cl->size();
 
             *solver->frat << del << *cl << fin;
-            cl->setRemoved();
+            cl->set_removed();
             delayed_clause_free.push_back(offset);
         }
     }
@@ -1309,7 +1309,7 @@ void ReduceDB::remove_cl_from_lev2() {
         solver->litStats.redLits -= cl->size();
 
         *solver->frat << del << *cl << fin;
-        cl->setRemoved();
+        cl->set_removed();
         #ifdef VERBOSE_DEBUG
         cout << "REMOVING offset: " << offset << " cl->stats.last_touched_any: " << cl->stats.last_touched_any
         << " act:" << std::setprecision(9) << cl->stats.activity

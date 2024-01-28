@@ -609,7 +609,7 @@ bool PropEngine::prop_long_cl_any_order(
     Clause& c = *cl_alloc.ptr(offset);
 
     #ifdef SLOW_DEBUG
-    assert(!c.getRemoved());
+    assert(!c.get_removed());
     assert(!c.freed());
     if (!use_disable) {
         assert(!c.disabled);
@@ -895,7 +895,7 @@ template<bool inprocess>
 inline bool PropEngine::prop_long_cl_occur(const ClOffset offset) {
     const Clause& cl = *cl_alloc.ptr(offset);
     assert(!cl.freed() && "Cannot be already freed in occur");
-    if (cl.getRemoved()) return true;
+    if (cl.get_removed()) return true;
 
     Lit lastUndef = lit_Undef;
     uint32_t numUndef = 0;

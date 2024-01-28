@@ -182,7 +182,7 @@ bool BreakID::add_clauses()
     for(ClOffset offs: dedup_cls) {
         const Clause* cl = solver->cl_alloc.ptr(offs);
         assert(!cl->freed());
-        assert(!cl->getRemoved());
+        assert(!cl->get_removed());
 
         if (add_this_clause(*cl) == add_cl_ret::unsat) {
             return false;
@@ -347,7 +347,7 @@ void BreakID::remove_duplicates()
     for(ClOffset offs: solver->longIrredCls) {
         Clause* cl = solver->cl_alloc.ptr(offs);
         assert(!cl->freed());
-        assert(!cl->getRemoved());
+        assert(!cl->get_removed());
         assert(!cl->red());
         std::sort(cl->begin(), cl->end());
         cl->stats.hash_val = hash_clause(cl->getData(), cl->size());

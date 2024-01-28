@@ -48,7 +48,7 @@ SubsumeStrengthen::SubsumeStrengthen(
 Sub0Ret SubsumeStrengthen::backw_sub_with_long(const ClOffset offset)
 {
     Clause& cl = *solver->cl_alloc.ptr(offset);
-    assert(!cl.getRemoved());
+    assert(!cl.get_removed());
     assert(!cl.freed());
 
     #ifdef VERBOSE_DEBUG
@@ -64,10 +64,10 @@ Sub0Ret SubsumeStrengthen::backw_sub_with_long(const ClOffset offset)
     //If irred is subsumed by redundant, make the redundant into irred
     if (cl.red() && ret.subsumedIrred) {
         STATS_DO(solver->stats_del_cl(&cl));
-        cl.makeIrred();
+        cl.make_irred();
         solver->litStats.redLits -= cl.size();
         solver->litStats.irredLits += cl.size();
-        if (!cl.getOccurLinked()) {
+        if (!cl.get_occur_linked()) {
             simplifier->link_in_clause(cl);
         } else {
             for(const Lit l: cl) {
@@ -149,7 +149,7 @@ bool SubsumeStrengthen::backw_sub_str_with_long(
     subs.clear();
     subsLits.clear();
     Clause& cl = *solver->cl_alloc.ptr(offset);
-    assert(!cl.getRemoved());
+    assert(!cl.get_removed());
     assert(!cl.freed());
 
     if (solver->conf.verbosity >= 6)
@@ -179,10 +179,10 @@ bool SubsumeStrengthen::backw_sub_str_with_long(
                 && !cl2.red()
             ) {
                 STATS_DO(solver->stats_del_cl(&cl));
-                cl.makeIrred();
+                cl.make_irred();
                 solver->litStats.redLits -= cl.size();
                 solver->litStats.irredLits += cl.size();
-                if (!cl.getOccurLinked()) {
+                if (!cl.get_occur_linked()) {
                     simplifier->link_in_clause(cl);
                 } else {
                     for(const Lit l: cl) {
@@ -248,7 +248,7 @@ void SubsumeStrengthen::backw_sub_long_with_long()
         Clause* cl = solver->cl_alloc.ptr(offset);
 
         //Has already been removed
-        if (cl->freed() || cl->getRemoved())
+        if (cl->freed() || cl->get_removed())
             continue;
 
 
@@ -313,7 +313,7 @@ bool SubsumeStrengthen::backw_str_long_with_long()
         Clause* cl = solver->cl_alloc.ptr(offset);
 
         //Has already been removed
-        if (cl->freed() || cl->getRemoved())
+        if (cl->freed() || cl->get_removed())
             continue;
 
         if (!backw_sub_str_with_long(offset, ret)) {
@@ -407,7 +407,7 @@ void inline SubsumeStrengthen::fill_sub_str(
 
         ClOffset offset2 = w.get_offset();
         const Clause& cl2 = *solver->cl_alloc.ptr(offset2);
-        if (cl2.getRemoved() || cl.size() > cl2.size()) continue;
+        if (cl2.get_removed() || cl.size() > cl2.size()) continue;
 
         *simplifier->limit_to_decrease -= (long)((cl.size() + cl2.size())/4);
         litSub = subset1(cl, cl2);
@@ -484,7 +484,7 @@ bool SubsumeStrengthen::handle_added_long_cl(const bool verbose)
     ) {
         const ClOffset offs = simplifier->added_long_cl[i];
         Clause* cl = solver->cl_alloc.ptr(offs);
-        if (cl->freed() || cl->getRemoved()) continue;
+        if (cl->freed() || cl->get_removed()) continue;
         cl->stats.marked_clause = 0;
         if (!backw_sub_str_with_long(offs, stat)) goto end;
         if ((i&0xfff) == 0xfff && solver->must_interrupt_asap()) goto end;
@@ -495,7 +495,7 @@ bool SubsumeStrengthen::handle_added_long_cl(const bool verbose)
     for(; i < simplifier->added_long_cl.size(); i ++) {
         ClOffset off = simplifier->added_long_cl[i];
         Clause* cl = solver->cl_alloc.ptr(off);
-        if (cl->freed() || cl->getRemoved()) continue;
+        if (cl->freed() || cl->get_removed()) continue;
         cl->stats.marked_clause = 0;
     }
     simplifier->added_long_cl.clear();
@@ -695,7 +695,7 @@ template<class T> void SubsumeStrengthen::find_subsumed(
         Clause& cl2 = *solver->cl_alloc.ptr(offset2);
 
         if (ps.size() > cl2.size() ||
-            cl2.getRemoved() ||
+            cl2.get_removed() ||
             (only_irred && cl2.red()))
         {
             continue;

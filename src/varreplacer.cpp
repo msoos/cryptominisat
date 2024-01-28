@@ -609,7 +609,7 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs) {
         }
 
         Clause& c = *solver->cl_alloc.ptr(*i);
-        assert(!c.getRemoved());
+        assert(!c.get_removed());
         assert(c.size() > 2);
 
         bool changed = false;
@@ -662,7 +662,7 @@ bool VarReplacer::handleUpdatedClause(
     , const Lit origLit1
     , const Lit origLit2
 ) {
-    assert(!c.getRemoved());
+    assert(!c.get_removed());
     bool satisfied = false;
     std::sort(c.begin(), c.end());
     Lit p;
@@ -679,7 +679,7 @@ bool VarReplacer::handleUpdatedClause(
         }
     }
     c.shrink(i - j);
-    c.setStrenghtened();
+    c.set_strengthened();
 
     runStats.bogoprops += 10;
     if (c.red()) {
@@ -695,7 +695,7 @@ bool VarReplacer::handleUpdatedClause(
         c.shrink(c.size()); //needed to make clause cleaner happy
         solver->watches.smudge(origLit1);
         solver->watches.smudge(origLit2);
-        c.setRemoved();
+        c.set_removed();
         return true;
     }
 
@@ -709,14 +709,14 @@ bool VarReplacer::handleUpdatedClause(
         solver->ok = false;
         return true;
     case 1 :
-        c.setRemoved();
+        c.set_removed();
         solver->watches.smudge(origLit1);
         solver->watches.smudge(origLit2);
         delayedEnqueue.push_back(make_tuple(c[0], c.stats.ID));
         runStats.removedLongLits += origSize;
         return true;
     case 2:
-        c.setRemoved();
+        c.set_removed();
         solver->watches.smudge(origLit1);
         solver->watches.smudge(origLit2);
 
@@ -741,7 +741,7 @@ bool VarReplacer::handleUpdatedClause(
                 solver->litStats.irredLits += c.size();
             }
         } else {
-            c.setRemoved();
+            c.set_removed();
             solver->watches.smudge(origLit1);
             solver->watches.smudge(origLit2);
         }

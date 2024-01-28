@@ -416,7 +416,7 @@ inline bool CNF::redundant_or_removed(const Watched& ws) const
 
    assert(ws.isClause());
    const Clause* cl = cl_alloc.ptr(ws.get_offset());
-   return cl->red() || cl->getRemoved();
+   return cl->red() || cl->get_removed();
 }
 
 inline void CNF::clean_occur_from_removed_clauses()
@@ -496,7 +496,7 @@ inline void CNF::clear_one_occur_from_removed_clauses(watch_subarray w)
 
         assert(ws.isClause());
         Clause* cl = cl_alloc.ptr(ws.get_offset());
-        if (!cl->getRemoved()) {
+        if (!cl->get_removed()) {
             w[j++] = w[i];
         }
     }
@@ -543,7 +543,7 @@ inline void CNF::check_no_removed_or_freed_cl_in_watch() const
             }
             assert(w.isClause());
             Clause& cl = *cl_alloc.ptr(w.get_offset());
-            assert(!cl.getRemoved());
+            assert(!cl.get_removed());
             assert(!cl.freed());
         }
     }

@@ -416,7 +416,7 @@ void Searcher::add_lits_to_learnt(
         case clause_t : {
             Clause* cl = cl_alloc.ptr(confl.get_offset());
             ID = cl->stats.ID;
-            assert(!cl->getRemoved());
+            assert(!cl->get_removed());
             lits = cl->begin();
             size = cl->size();
             sumAntecedentsLits += cl->size();

@@ -28,7 +28,7 @@ THE SOFTWARE.
 #include <utility>
 #include <string>
 #include <limits>
-#include <stdio.h>
+#include <cstdio>
 #include "solvertypesmini.h"
 
 namespace CMSat {
@@ -74,7 +74,7 @@ namespace CMSat {
         // You can call solve() multiple times: incremental mode is supported!
         ////////////////////////////
 
-        lbool solve(const std::vector<Lit>* assumptions = 0, bool only_indep_solution = false); //solve the problem, optionally with assumptions. If only_indep_solution is set, only the independent variables set with set_independent_vars() are returned in the solution
+        lbool solve(const std::vector<Lit>* assumptions = nullptr, bool only_indep_solution = false); //solve the problem, optionally with assumptions. If only_indep_solution is set, only the independent variables set with set_independent_vars() are returned in the solution
         lbool simplify(const std::vector<Lit>* assumptions = nullptr, const std::string* strategy = nullptr); //simplify the problem, optionally with assumptions
         const std::vector<lbool>& get_model() const; //get model that satisfies the problem. Only makes sense if previous solve()/simplify() call was l_True
         const std::vector<Lit>& get_conflict() const; //get conflict in terms of the assumptions given in case the previous call to solve() was l_False

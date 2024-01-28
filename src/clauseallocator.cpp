@@ -177,7 +177,7 @@ of the clause. Therefore, the "currentlyUsedSizes" is an overestimation!!
 void ClauseAllocator::clauseFree(Clause* cl)
 {
     assert(!cl->freed());
-    cl->setFreed();
+    cl->set_freed();
     uint64_t est_num_cl = cl->size();
     est_num_cl = std::max(est_num_cl, (uint64_t)3); //we sometimes allow gauss to allocate 3-long clauses
     uint64_t bytes_freed = sizeof(Clause) + est_num_cl*sizeof(Lit);

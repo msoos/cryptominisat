@@ -167,7 +167,7 @@ bool CMS_ccnr::init_problem()
     for(ClOffset offs: solver->longIrredCls) {
         const Clause* cl = solver->cl_alloc.ptr(offs);
         assert(!cl->freed());
-        assert(!cl->getRemoved());
+        assert(!cl->get_removed());
 
         if (add_this_clause(*cl) == add_cl_ret::unsat) {
             return false;

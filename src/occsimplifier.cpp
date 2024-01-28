@@ -321,7 +321,7 @@ void OccSimplifier::unlink_clause(
     } else {
         for (const Lit lit: cl) solver->watches.smudge(lit);
     }
-    cl.setRemoved();
+    cl.set_removed();
 
     if (cl.red()) solver->litStats.redLits -= cl.size();
     else solver->litStats.irredLits -= cl.size();
@@ -339,7 +339,7 @@ bool OccSimplifier::clean_clause(
 
     bool satisfied = false;
     Clause& cl = *solver->cl_alloc.ptr(offset);
-    assert(!cl.getRemoved());
+    assert(!cl.get_removed());
     assert(!cl.freed());
     (*solver->frat) << deldelay << cl << fin;
 
@@ -418,7 +418,7 @@ bool OccSimplifier::clean_clause(
         }
         default:
             if (i-j > 0) {
-                cl.setStrenghtened();
+                cl.set_strengthened();
                 cl.recalc_abst_if_needed();
                 if (!cl.red()) added_long_cl.push_back(offset);
             }
@@ -599,7 +599,7 @@ OccSimplifier::LinkInData OccSimplifier::link_in_clauses(
             << " cl->size() < max_size: " << (cl->size() < max_size)
             << " link_in_lit_limit: " << link_in_lit_limit << endl;*/
             //assert(cl->red());
-            cl->setOccurLinked(false);
+            cl->set_occur_linked(false);
             link_in_data.cl_not_linked++;
             std::sort(cl->begin(), cl->end());
         }
@@ -616,13 +616,13 @@ bool OccSimplifier::check_varelim_when_adding_back_cl(const Clause* cl) const
     for (const Lit& l: *cl) {
         //The clause was too long, and wasn't linked in
         //but has been var-elimed, so remove it
-        if (!cl->getOccurLinked()
+        if (!cl->get_occur_linked()
             && solver->varData[l.var()].removed == Removed::elimed
         ) {
             notLinkedNeedFree = true;
         }
 
-        if (cl->getOccurLinked()
+        if (cl->get_occur_linked()
             && solver->varData[l.var()].removed != Removed::none
         ) {
             std::cerr
@@ -645,7 +645,7 @@ void OccSimplifier::check_cls_sanity() {
     if (!solver->okay()) return;
     for (const ClOffset offs: clauses) {
         Clause* cl = solver->cl_alloc.ptr(offs);
-        if (cl->getRemoved() || cl->freed()) continue;
+        if (cl->get_removed() || cl->freed()) continue;
         assert(!cl->stats.marked_clause);
         if (cl->size() <= 2) cout << "ERROR: too short cl: " << *cl << endl;
         assert(cl->size() > 2);
@@ -658,7 +658,7 @@ void OccSimplifier::add_back_to_solver() {
 
     for (const ClOffset offs: clauses) {
         Clause* cl = solver->cl_alloc.ptr(offs);
-        if (cl->getRemoved() || cl->freed()) continue;
+        if (cl->get_removed() || cl->freed()) continue;
         assert(!cl->stats.marked_clause);
         assert(cl->size() > 2);
 
@@ -789,7 +789,7 @@ uint32_t OccSimplifier::sum_irred_cls_longs() const
     uint32_t sum = 0;
     for (ClOffset offs: clauses) {
         Clause* cl = solver->cl_alloc.ptr(offs);
-        if (cl->freed() || cl->getRemoved() || cl->red())
+        if (cl->freed() || cl->get_removed() || cl->red())
             continue;
 
         assert(cl->size() > 2);
@@ -803,7 +803,7 @@ uint32_t OccSimplifier::sum_irred_cls_longs_lits() const
     uint32_t sum = 0;
     for (ClOffset offs: clauses) {
         Clause* cl = solver->cl_alloc.ptr(offs);
-        if (cl->freed() || cl->getRemoved() || cl->red())
+        if (cl->freed() || cl->get_removed() || cl->red())
             continue;
 
         assert(cl->size() > 2);
@@ -875,7 +875,7 @@ bool OccSimplifier::clear_vars_from_cls_that_have_been_set()
             ws[j++] = w;
             ClOffset offs = w.get_offset();
             Clause* cl = solver->cl_alloc.ptr(offs);
-            if (cl->getRemoved() || cl->freed()) {
+            if (cl->get_removed() || cl->freed()) {
                 //Satisfied and removed
                 continue;
             }
@@ -910,7 +910,7 @@ bool OccSimplifier::clear_vars_from_cls_that_have_been_set()
             assert(w.isClause());
             ClOffset offs = w.get_offset();
             Clause* cl = solver->cl_alloc.ptr(offs);
-            if (cl->getRemoved() || cl->freed()) {
+            if (cl->get_removed() || cl->freed()) {
                 continue;
             }
             cls_to_clean_tmp.push_back(offs);
@@ -920,7 +920,7 @@ bool OccSimplifier::clear_vars_from_cls_that_have_been_set()
 
     for(ClOffset offs: cls_to_clean_tmp) {
         Clause* cl = solver->cl_alloc.ptr(offs);
-        if (!cl->getRemoved() && !cl->freed()) {
+        if (!cl->get_removed() && !cl->freed()) {
             if (!clean_clause(offs, true)) return false;
         }
     }
@@ -945,7 +945,7 @@ bool OccSimplifier::mark_and_push_to_added_long_cl_cls_containing(const Lit lit)
             Clause* cl = solver->cl_alloc.ptr(offs);
 
             //Has already been removed or added to "added_long_cl"
-            if (cl->freed() || cl->getRemoved() || cl->stats.marked_clause)
+            if (cl->freed() || cl->get_removed() || cl->stats.marked_clause)
                 continue;
 
             cl->stats.marked_clause = 1;
@@ -992,7 +992,7 @@ void OccSimplifier::check_no_marked_clauses()
 {
     for(const auto& off: clauses) {
         Clause* cl = solver->cl_alloc.ptr(off);
-        if (!cl->getRemoved()) {
+        if (!cl->get_removed()) {
             assert(!cl->stats.marked_clause);
         }
     }
@@ -1056,7 +1056,7 @@ void OccSimplifier::subs_with_resolvent_clauses()
             }
             else if (pos.isClause()) {
                 const Clause *cl = solver->cl_alloc.ptr(pos.get_offset());
-                if (cl->getRemoved() || cl->red()) continue;
+                if (cl->get_removed() || cl->red()) continue;
                 ID1 = cl->stats.ID;
             } else { assert(false); }
 
@@ -1068,7 +1068,7 @@ void OccSimplifier::subs_with_resolvent_clauses()
                     ID2 = neg.get_ID();
                 } else if (neg.isClause()) {
                     const Clause *cl = solver->cl_alloc.ptr(neg.get_offset());
-                    if (cl->getRemoved() || cl->red()) continue;
+                    if (cl->get_removed() || cl->red()) continue;
                     ID2 = cl->stats.ID;
                 } else { assert(false); }
 
@@ -1466,11 +1466,11 @@ struct MyOccSorter
         const Clause* cl2 = solver->cl_alloc.ptr(w2.get_offset());
 
         //The other is at least as good, this is removed
-        if (cl1->freed() || cl1->getRemoved())
+        if (cl1->freed() || cl1->get_removed())
             return false;
 
         //The other is not removed, so it's better
-        if (cl2->freed() || cl2->getRemoved())
+        if (cl2->freed() || cl2->get_removed())
             return true;
 
         const uint32_t sz1 = cl1->size();
@@ -1489,7 +1489,7 @@ void OccSimplifier::sort_occurs_and_set_abst()
         for(Watched& w: ws) {
             if (w.isClause()) {
                 Clause* cl = solver->cl_alloc.ptr(w.get_offset());
-                if (cl->freed() || cl->getRemoved()) {
+                if (cl->freed() || cl->get_removed()) {
                     w.setElimedLit(lit_Error);
                 } else if (cl->size() >solver->conf.maxXorToFind) {
                     w.setElimedLit(lit_Undef);
@@ -1549,7 +1549,7 @@ uint32_t OccSimplifier::add_cls_to_picosat_definable(const Lit wsLit) {
     for(const auto& w: solver->watches[wsLit]) {
         if (w.isClause()) {
             Clause& cl = *solver->cl_alloc.ptr(w.get_offset());
-            assert(!cl.getRemoved());
+            assert(!cl.get_removed());
             assert(!cl.red());
             bool only_sampl = true;
             for(const auto& l: cl) {
@@ -1928,7 +1928,7 @@ bool OccSimplifier::cl_rem_with_or_gates()
         for(const auto& w: poss) {
             if (!w.isClause()) continue;
             Clause* cl1 = solver->cl_alloc.ptr(w.get_offset());
-            if (cl1->getRemoved() || cl1->red()) continue;
+            if (cl1->get_removed() || cl1->red()) continue;
             if (cl1->size() <= 3) continue; // we could mess with definition of gates
             if (cl1->stats.ID == g.ID) continue;
 
@@ -1943,8 +1943,8 @@ bool OccSimplifier::cl_rem_with_or_gates()
             for(const auto& w2: negs) {
                 if (!w2.isClause()) continue;
                 Clause* cl2 = solver->cl_alloc.ptr(w2.get_offset());
-                if (cl1->getRemoved()) continue; // COULD HAVE BEEN REMOVED BELOW
-                if (cl2->getRemoved() || cl2->red()) continue;
+                if (cl1->get_removed()) continue; // COULD HAVE BEEN REMOVED BELOW
+                if (cl2->get_removed() || cl2->red()) continue;
                 if (cl2->stats.ID == g.ID) continue;
                 if (cl2->size() != cl1->size()) continue;
                 auto myabst1 = cl1->abst | abst_var(g.lits[1].var());
@@ -2063,12 +2063,12 @@ bool OccSimplifier::lit_rem_with_or_gates() {
             Clause* cl = solver->cl_alloc.ptr(w.get_offset());
             if (cl->stats.ID == gate.ID || //the gate definition, skip
                 cl->red() || //no need, slow
-                cl->getRemoved())
+                cl->get_removed())
             {
                 continue;
             }
             assert(!cl->freed());
-            assert(cl->getOccurLinked());
+            assert(cl->get_occur_linked());
 
             //TODO check calcAbst!
             bool contains_rhs = false;
@@ -2106,14 +2106,14 @@ bool OccSimplifier::lit_rem_with_or_gates() {
             if (!contains_rhs) {
                 cl->enlarge_one();
                 (*cl)[cl->size()-1] = gate.rhs;
-                cl->reCalcAbstraction();
+                cl->recalc_abstraction();
                 solver->watches[gate.rhs].push(Watched(off, cl->abst));
                 n_occurs[gate.rhs.toInt()]++;
                 elim_calc_need_update.touch(gate.rhs);
                 solver->litStats.irredLits++;
                 std::sort(cl->begin(), cl->end());
             } else {
-                cl->reCalcAbstraction();
+                cl->recalc_abstraction();
             }
             INC_ID(*cl);
             (*solver->frat) << add << *cl << fin << findelay;
@@ -2393,7 +2393,7 @@ bool OccSimplifier::ternary_res()
         Clause * cl = solver->cl_alloc.ptr(offs);
         *limit_to_decrease -= 10;
         if (!cl->freed()
-            && !cl->getRemoved()
+            && !cl->get_removed()
             && !cl->is_ternary_resolved
             && cl->size() == 3
             && !cl->red()
@@ -2541,7 +2541,7 @@ void OccSimplifier::check_ternary_cl(Clause* cl, ClOffset offs, watch_subarray w
         Clause * cl2 = solver->cl_alloc.ptr(offs2);
         *limit_to_decrease -= 10;
         if (!cl2->freed()
-            && !cl2->getRemoved()
+            && !cl2->get_removed()
             && cl2->size() == 3
             && !cl2->red()
         ) {
@@ -2619,7 +2619,7 @@ void OccSimplifier::fill_tocheck_seen(const vec<Watched>& ws, vector<uint32_t>& 
             }
         } else if (w.isClause()) {
             const Clause& cl2 = *solver->cl_alloc.ptr(w.get_offset());
-            if (cl2.getRemoved() || cl2.red()) continue;
+            if (cl2.get_removed() || cl2.red()) continue;
             for(auto const& l: cl2) {
                 if (!seen[l.var()]) {
                     tocheck.push_back(l.var());
@@ -2672,7 +2672,7 @@ void OccSimplifier::delete_component_unconnected_to_assumps()
                 }
             } else if (w.isClause()) {
                 const Clause& cl2 = *solver->cl_alloc.ptr(w.get_offset());
-                if (cl2.getRemoved() || cl2.red()) continue;
+                if (cl2.get_removed() || cl2.red()) continue;
                 bool ok = true;
                 for(auto const&l2: cl2) {
                     if (seen[l2.var()]) {ok = false; break;}
@@ -2975,7 +2975,7 @@ void OccSimplifier::finishUp(size_t origTrailSize) {
     } else {
         for(const auto& offs: clauses) {
             Clause* cl = solver->cl_alloc.ptr(offs);
-            if (cl->getRemoved() || cl->freed()) continue;
+            if (cl->get_removed() || cl->freed()) continue;
             *solver->frat << del << *cl << fin;
             solver->free_cl(cl);
         }
@@ -3202,7 +3202,7 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(
         if (watch.isClause()) {
             const ClOffset offset = watch.get_offset();
             const Clause& cl = *solver->cl_alloc.ptr(offset);
-            if (cl.getRemoved()) {
+            if (cl.get_removed()) {
                 continue;
             }
             assert(!cl.freed());
@@ -3295,7 +3295,7 @@ void OccSimplifier::add_picosat_cls(
     for(const auto& w: ws) {
         if (w.isClause()) {
             Clause& cl = *solver->cl_alloc.ptr(w.get_offset());
-            assert(!cl.getRemoved());
+            assert(!cl.get_removed());
             assert(!cl.red());
             for(const auto& l: cl) {
                 if (l.var() != elim_lit.var())
@@ -3901,7 +3901,7 @@ bool OccSimplifier::try_remove_lit_via_occurrence_simpl(
     solver->new_decision_level();
     *limit_to_decrease -= 1;
     Clause* cl = solver->cl_alloc.ptr(occ_cl.ws.get_offset());
-    assert(!cl->getRemoved());
+    assert(!cl->get_removed());
     assert(!cl->freed());
 
     bool conflicted = false;
@@ -3948,7 +3948,7 @@ bool OccSimplifier::forward_subsume_irred(
         } else {
             assert(w.isClause());
             Clause* cl = solver->cl_alloc.ptr(w.get_offset());
-            if (cl->freed() || cl->getRemoved() || cl->red()) {
+            if (cl->freed() || cl->get_removed() || cl->red()) {
                 continue;
             }
             if (cl->size() >= size || !subsetAbst(cl->abst, abs)) {
@@ -4212,7 +4212,7 @@ void OccSimplifier::weaken(
                 /*if (w.isClause()) {
                     *limit_to_decrease -= 1;
                     const Clause& cl = *solver->cl_alloc.ptr(w.get_offset());
-                    if (cl.getRemoved() || cl.red() || cl.size() >= out.size() || cl.size() > 10) continue;
+                    if (cl.get_removed() || cl.red() || cl.size() >= out.size() || cl.size() > 10) continue;
                     uint32_t num_inside = 0;
                     bool wrong = false;
                     Lit toadd = lit_Undef;
@@ -4432,14 +4432,14 @@ void OccSimplifier::printOccur(const Lit lit) const
 
         if (w.isClause()) {
             const Clause& cl = *solver->cl_alloc.ptr(w.get_offset());
-            if (cl.getRemoved())
+            if (cl.get_removed())
                 continue;
             cout
             << "Clause--> "
             << cl
             << "(red: " << cl.red()
             << ")"
-            << "(rem: " << cl.getRemoved()
+            << "(rem: " << cl.get_removed()
             << ")"
             << endl;
         }
@@ -4640,7 +4640,7 @@ bool OccSimplifier::occ_based_lit_rem(uint32_t var, uint32_t& removed) {
 
             const ClOffset offset = w.get_offset();
             Clause* cl = solver->cl_alloc.ptr(offset);
-            if (cl->getRemoved() || cl->red()) continue;
+            if (cl->get_removed() || cl->red()) continue;
             assert(!cl->freed());
 
             if (solver->satisfied(*cl)) {
@@ -4895,7 +4895,7 @@ uint32_t OccSimplifier::calc_data_for_heuristic(const Lit lit)
 
             case WatchType::watch_clause_t: {
                 const Clause* cl = solver->cl_alloc.ptr(ws.get_offset());
-                if (!cl->getRemoved()) {
+                if (!cl->get_removed()) {
                     assert(!cl->freed() && "Inside occur, so cannot be freed");
                     ret++;
                 }
@@ -4923,7 +4923,7 @@ uint32_t OccSimplifier::calc_occ_data(const Lit lit)
 
             case WatchType::watch_clause_t: {
                 const Clause* cl = solver->cl_alloc.ptr(ws.get_offset());
-                if (!cl->getRemoved()) {
+                if (!cl->get_removed()) {
                     assert(!cl->freed() && "Inside occur, so cannot be freed");
                     ret++;
                 }
@@ -5027,7 +5027,7 @@ int OccSimplifier::check_empty_resolvent_action(
 
         if (ws.isClause()) {
             const Clause* cl = solver->cl_alloc.ptr(ws.get_offset());
-            if (cl->getRemoved()) continue;
+            if (cl->get_removed()) continue;
             assert(!cl->freed() && "If in occur then it cannot be freed");
 
             //Only irred is of relevance
@@ -5215,7 +5215,7 @@ void OccSimplifier::link_in_clause(Clause& cl)
         watch_subarray ws = solver->watches[lit];
         ws.push(Watched(offset, cl.abst));
     }
-    cl.setOccurLinked(true);
+    cl.set_occur_linked(true);
 }
 
 double OccSimplifier::Stats::total_time(OccSimplifier* occs) const
@@ -5374,7 +5374,7 @@ void OccSimplifier::check_clauses_lits_ordered() const
 {
     for (const auto & offset: clauses) {
         Clause* cl = solver->cl_alloc.ptr(offset);
-        if (cl->freed() || cl->getRemoved()) continue;
+        if (cl->freed() || cl->get_removed()) continue;
         for(uint32_t i = 1; i < cl->size(); i++) {
             if ((*cl)[i-1] >= (*cl)[i]) {
                 cout << "ERRROR cl: " << *cl << endl;
@@ -5391,7 +5391,7 @@ void OccSimplifier::blocked_clause_elim()
 {
     for(const auto& off: clauses) {
         Clause* cl = solver->cl_alloc.ptr(off);
-        if (cl->getRemoved() || cl->freed() || cl->red()) continue;
+        if (cl->get_removed() || cl->freed() || cl->red()) continue;
         for(const auto& l: *cl) seen[l.toInt()] = true;
         bool can_remove = false;
         for(const auto& l: *cl) {
@@ -5407,7 +5407,7 @@ void OccSimplifier::blocked_clause_elim()
                 assert(w.isClause() && "Index not allowed");
                 ClOffset off2 = w.get_offset();
                 Clause* cl2 = solver->cl_alloc.ptr(off2);
-                if (cl2->getRemoved() || cl2->freed() || cl2->red()) continue;
+                if (cl2->get_removed() || cl2->freed() || cl2->red()) continue;
                 bool found_blocking_lit = false;
                 for(const auto& l2: *cl2) {
                     if (l2 == ~l) continue;

@@ -60,7 +60,7 @@ void XorFinder::find_xors_based_on_long_clauses() {
         xor_find_time_limit -= 1;
 
         //Already freed
-        if (cl->freed() || cl->getRemoved() || cl->red()) continue;
+        if (cl->freed() || cl->get_removed() || cl->red()) continue;
 
         //Too large -> too expensive
         if (cl->size() > solver->conf.maxXorToFind) continue;
@@ -68,7 +68,7 @@ void XorFinder::find_xors_based_on_long_clauses() {
         //If not tried already, find an XOR with it
         if (!cl->stats.marked_clause ) {
             cl->stats.marked_clause = 1;
-            assert(!cl->getRemoved());
+            assert(!cl->get_removed());
 
             size_t needed_per_ws = 1ULL << (cl->size()-2);
             //let's allow shortened clauses
@@ -228,7 +228,7 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
         for(uint32_t i = 0; i < poss_xor.get_offsets().size() ; i++) {
             ClOffset offs = poss_xor.get_offsets()[i];
             Clause* cl = solver->cl_alloc.ptr(offs);
-            assert(!cl->getRemoved());
+            assert(!cl->get_removed());
         }
     }
     poss_xor.clear_seen(occ_cnt);
@@ -250,7 +250,7 @@ void XorFinder::add_found_xor(const Xor& found_xor)
         for(const auto& off: poss_xor.get_offsets()) {
             auto cl = *solver->cl_alloc.ptr(off);
             assert(!cl.freed());
-            assert(!cl.getRemoved());
+            assert(!cl.get_removed());
             solver->chain.push_back(cl.stats.ID);
         }
         *solver->frat << implyxfromcls << added; solver->add_chain(); *solver->frat << fin;
@@ -300,7 +300,7 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
             xor_find_time_limit -= 3;
             const ClOffset offset = w.get_offset();
             Clause& cl = *solver->cl_alloc.ptr(offset);
-            if (cl.freed() || cl.getRemoved() || cl.red()) {
+            if (cl.freed() || cl.get_removed() || cl.red()) {
                 //Clauses are ordered!!
                 break;
             }

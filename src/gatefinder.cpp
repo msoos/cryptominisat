@@ -166,7 +166,7 @@ void GateFinder::find_or_gates_in_sweep_mode(const Lit lit)
         if (!w.isClause()) continue;
         ClOffset offset = w.get_offset();
         const Clause& cl = *solver->cl_alloc.ptr(offset);
-        if (cl.red() || cl.getRemoved() || cl.size() > 5) continue;
+        if (cl.red() || cl.get_removed() || cl.size() > 5) continue;
         tmp_lhs.clear();
 
         bool ok = true;
