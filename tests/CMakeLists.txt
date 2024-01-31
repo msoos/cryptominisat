@@ -76,7 +76,7 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/utils/minisat minisat)
 
 add_sanitize_flags()
 # below is expensive tests, let's not run it
-# if (Python3_EXECUTABLE AND ZLIB_FOUND AND NOT STATS_NEEDED AND NOT ONLY_SIMPLE)
+# if (Python3_EXECUTABLE AND ZLIB_FOUND AND NOT STATS_NEEDED)
 #     add_subdirectory(${PROJECT_SOURCE_DIR}/utils/minisat_only_elim_and_subsume minisat_only_elim_and_subsume)
 #     add_subdirectory(simp-checks)
 # endif()
