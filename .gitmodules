@@ -33,3 +33,6 @@
 [submodule "utils/lingeling-ala"]
 	path = utils/lingeling-ala
 	url = https://github.com/msoos/lingeling-ala/
+[submodule "utils/gtest"]
+	path = utils/gtest
+	url = https://github.com/google/googletest
