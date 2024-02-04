@@ -47,7 +47,27 @@ struct SolverTest : public ::testing::Test {
     std::atomic<bool> must_inter;
 };
 
-TEST_F(SolverTest, get_bin)
+TEST_F(SolverTest, get_bin_red_only)
+{
+    s = new Solver(&conf, &must_inter);
+    s->new_vars(30);
+    s->add_clause_outside(str_to_cl(" 2,  3"));
+    s->add_clause_int(str_to_cl(" 1,  2"), true);
+
+    s->start_getting_constraints(true);
+    vector<Lit> lits;
+    bool is_xor, rhs;
+    bool ret = s->get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(lits, str_to_cl(" 1,  2"));
+
+    ret = s->get_next_constraint(lits, is_xor, rhs);
+    ASSERT_FALSE(ret);
+    s->end_getting_constraints();
+}
+
+TEST_F(SolverTest, get_bin_irred_only)
 {
     s = new Solver(&conf, &must_inter);
     s->new_vars(30);
@@ -60,7 +80,7 @@ TEST_F(SolverTest, get_bin)
     bool ret = s->get_next_constraint(lits, is_xor, rhs);
     ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
-    ASSERT_EQ(lits, str_to_cl(" 1,  2"));
+    ASSERT_EQ(lits, str_to_cl(" 2,  3"));
 
     ret = s->get_next_constraint(lits, is_xor, rhs);
     ASSERT_FALSE(ret);
