@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 #include <cstdint>
 #include <cstdlib>
-#include <stdio.h>
+#include <cstdio>
 #include <limits>
 #include <random>
 

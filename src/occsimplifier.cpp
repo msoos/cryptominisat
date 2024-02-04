@@ -2185,7 +2185,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
 
         token = trim(token);
         std::transform(token.begin(), token.end(), token.begin(), ::tolower);
-        if (token != "" && solver->conf.verbosity) {
+        if (!token.empty() && solver->conf.verbosity) {
             cout << "c --> Executing OCC strategy token: " << token << '\n';
             *solver->frat << __PRETTY_FUNCTION__ << " Executing OCC strategy token:" << token.c_str() << "\n";
         }
@@ -2234,7 +2234,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             // nothing, ignore BVA
         } else if (token == "occ-resolv-subs") {
             subs_with_resolvent_clauses();
-        } else if (token == "") {
+        } else if (token.empty()) {
             //nothing, ignore empty token
         } else {
              cout << "ERROR: occur strategy '" << token << "' not recognised!" << endl;
