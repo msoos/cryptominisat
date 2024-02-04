@@ -3646,7 +3646,6 @@ void Solver::copy_to_simp(SATSolver* s2)
     while (ret) {
         ret = get_next_constraint(lits, is_xor, rhs);
         if (!ret) break;
-        cout << "cl: " << lits << endl;
         if (!is_xor) s2->add_clause(lits);
         else s2->add_xor_clause(lits, rhs);
     }
