@@ -644,7 +644,7 @@ bool find_lit(const T& where, const string& lit) {
 
 inline void get_all_irred_clauses(SATSolver&s, std::vector<Lit>& lits) {
     lits.clear();
-    s.start_getting_constraints();
+    s.start_getting_constraints(false);
     vector<Lit> lits2;
     bool is_xor, rhs;
     while(true) {

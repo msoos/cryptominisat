@@ -36,7 +36,7 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen, bool& finished)
     assert(get_num_bva_vars() == 0);
     verb_print(1, "[backbone-simpl] starting backbone simplification...");
 
-    double myTime = cpuTime();
+    double my_time = cpuTime();
     Lit l;
     uint32_t undefs = 0;
     uint32_t falses = 0;
@@ -85,9 +85,9 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen, bool& finished)
             << num_seen_flipped
             << " conflicts used: " << print_value_kilo_mega(s2.get_sum_conflicts())
             << " num runs succeeded: " << num_runs
-            << " T: " << std::fixed << std::setprecision(2) << (cpuTime() - myTime));
+            << " T: " << std::fixed << std::setprecision(2) << (cpuTime() - my_time));
     }
-    myTime = cpuTime();
+    my_time = cpuTime();
 
     // random order
     vector<uint32_t> var_order;
@@ -146,7 +146,7 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen, bool& finished)
             tmp_clause.clear();
             tmp_clause.push_back(l);
             Clause* ptr = add_clause_int(tmp_clause);
-            assert(ptr == 0);
+            assert(ptr == nullptr);
             falses++;
             if (orig_max_props + 5000 > orig_max_props) orig_max_props += 5000;
             picosat_set_propagation_limit(picosat, orig_max_props);
@@ -163,7 +163,7 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen, bool& finished)
     const auto used_props = picosat_propagations(picosat);
     picosat_reset(picosat);
     uint32_t num_set = trail.size() - orig_trail_size;
-    double time_used = cpuTime() - myTime;
+    double time_used = cpuTime() - my_time;
 
     verb_print(1,
         "[backbone-simpl]"
@@ -191,7 +191,6 @@ void Solver::detach_and_free_all_irred_cls()
             assert(ws[i].isClause());
             Clause* cl = cl_alloc.ptr(ws[i].get_offset());
             if (cl->red()) ws[j++] = ws[i];
-            continue;
         }
         ws.resize(j);
     }

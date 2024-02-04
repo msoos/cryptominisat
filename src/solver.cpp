@@ -3177,11 +3177,11 @@ bool Solver::init_all_matrices() {
     return okay();
 }
 
-void Solver::start_getting_constraints(bool only_red, bool simplified,
+void Solver::start_getting_constraints(bool red, bool simplified,
         uint32_t max_len, uint32_t max_glue) {
     assert(get_clause_query == nullptr);
     get_clause_query = new GetClauseQuery(this);
-    get_clause_query->start_getting_constraints(only_red, simplified, max_len, max_glue);
+    get_clause_query->start_getting_constraints(red, simplified, max_len, max_glue);
 }
 
 bool Solver::get_next_constraint(std::vector<Lit>& ret, bool& is_xor, bool& rhs) {
@@ -3646,6 +3646,7 @@ void Solver::copy_to_simp(SATSolver* s2)
     while (ret) {
         ret = get_next_constraint(lits, is_xor, rhs);
         if (!ret) break;
+        cout << "cl: " << lits << endl;
         if (!is_xor) s2->add_clause(lits);
         else s2->add_xor_clause(lits, rhs);
     }

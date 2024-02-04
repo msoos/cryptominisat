@@ -1061,7 +1061,7 @@ TEST(get_small_clauses, bve)
     s.add_clause(str_to_cl("7, 8"));
     s.simplify();
 
-    s.start_getting_constraints();
+    s.start_getting_constraints(false);
     vector<Lit> lits;
     bool is_xor, rhs;
     bool ret = s.get_next_constraint(lits, is_xor, rhs);

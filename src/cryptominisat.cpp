@@ -539,16 +539,16 @@ DLL_PUBLIC void SATSolver::set_max_confl(uint64_t max_confl)
 
 DLL_PUBLIC void SATSolver::set_default_polarity(bool polarity)
 {
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
+    for (auto & solver : data->solvers) {
+        Solver& s = *solver;
         s.conf.polarity_mode = polarity ? PolarityMode::polarmode_pos : PolarityMode::polarmode_neg;
     }
 }
 
 DLL_PUBLIC void SATSolver::set_no_simplify()
 {
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
+    for (auto & solver : data->solvers) {
+        Solver& s = *solver;
         s.conf.doRenumberVars = false;
         s.conf.simplify_at_startup = false;
         s.conf.simplify_at_every_startup = false;
@@ -560,8 +560,8 @@ DLL_PUBLIC void SATSolver::set_no_simplify()
 
 DLL_PUBLIC void SATSolver::set_allow_otf_gauss()
 {
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
+    for (auto & solver : data->solvers) {
+        Solver& s = *solver;
         //s.conf.reconfigure_at = 0;
         //s.conf.reconfigure_val = 15;
         s.conf.doFindXors = true;
@@ -575,8 +575,8 @@ DLL_PUBLIC void SATSolver::set_allow_otf_gauss()
 
 DLL_PUBLIC void SATSolver::set_no_simplify_at_startup()
 {
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
+    for (auto & solver : data->solvers) {
+        Solver& s = *solver;
         s.conf.simplify_at_startup = false;
     }
 }
@@ -592,31 +592,31 @@ DLL_PUBLIC void SATSolver::set_no_bva()
 
 DLL_PUBLIC void SATSolver::set_simplify(const bool simp)
 {
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
+    for (auto & solver : data->solvers) {
+        Solver& s = *solver;
         s.conf.do_simplify_problem = simp;
     }
 }
 DLL_PUBLIC void SATSolver::set_picosat_gate_limitK(const uint32_t lim)
 {
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
+    for (auto & solver : data->solvers) {
+        Solver& s = *solver;
         s.conf.picosat_gate_limitK = lim;
     }
 }
 
 DLL_PUBLIC void SATSolver::set_weaken_time_limitM(const uint32_t lim)
 {
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
+    for (auto & solver : data->solvers) {
+        Solver& s = *solver;
         s.conf.weaken_time_limitM = lim;
     }
 }
 
 DLL_PUBLIC void SATSolver::set_occ_based_lit_rem_time_limitM(const uint32_t lim)
 {
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
+    for (auto & solver : data->solvers) {
+        Solver& s = *solver;
         s.conf.occ_based_lit_rem_time_limitM = lim;
     }
 }
@@ -629,8 +629,8 @@ DLL_PUBLIC double SATSolver::get_orig_global_timeout_multiplier()
 
 DLL_PUBLIC void SATSolver::set_orig_global_timeout_multiplier(const double mult)
 {
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
+    for (auto & solver : data->solvers) {
+        Solver& s = *solver;
         s.conf.orig_global_timeout_multiplier = mult;
     }
 }
@@ -638,16 +638,16 @@ DLL_PUBLIC void SATSolver::set_orig_global_timeout_multiplier(const double mult)
 
 DLL_PUBLIC void SATSolver::set_no_bve()
 {
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
+    for (auto & solver : data->solvers) {
+        Solver& s = *solver;
         s.conf.doVarElim = false;
     }
 }
 
 DLL_PUBLIC void SATSolver::set_bve(int bve)
 {
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
+    for (auto & solver : data->solvers) {
+        Solver& s = *solver;
         s.conf.doVarElim = bve;
     }
 }
@@ -655,8 +655,8 @@ DLL_PUBLIC void SATSolver::set_bve(int bve)
 
 DLL_PUBLIC void SATSolver::set_bve_too_large_resolvent(int too_large_resolvent)
 {
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
+    for (auto & solver : data->solvers) {
+        Solver& s = *solver;
         s.conf.velim_resolvent_too_large = too_large_resolvent;
     }
 }
@@ -670,8 +670,8 @@ DLL_PUBLIC void SATSolver::set_greedy_undef()
 
 DLL_PUBLIC void SATSolver::set_sampling_vars(const vector<uint32_t>* sampl_vars)
 {
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
+    for (auto & solver : data->solvers) {
+        Solver& s = *solver;
         s.conf.sampling_vars = sampl_vars;
     }
 }
@@ -679,9 +679,7 @@ DLL_PUBLIC void SATSolver::set_sampling_vars(const vector<uint32_t>* sampl_vars)
 
 DLL_PUBLIC void SATSolver::set_verbosity(unsigned verbosity)
 {
-    if (data->solvers.empty())
-        return;
-
+    if (data->solvers.empty()) return;
     Solver& s = *data->solvers[0];
     s.conf.verbosity = verbosity;
 }
@@ -731,17 +729,11 @@ DLL_PUBLIC bool SATSolver::add_clause(const vector< Lit >& lits)
 
 void add_xor_clause_to_log(const std::vector<unsigned>& vars, bool rhs, std::ofstream* file)
 {
-    if (vars.size() == 0) {
-        if (rhs) {
-            (*file) << "0" << endl;
-        }
+    if (vars.empty()) {
+        if (rhs) (*file) << "0" << endl;
     } else {
-        if (!rhs) {
-            (*file) << "-";
-        }
-        for(unsigned var: vars) {
-            (*file) << (var+1) << " ";
-        }
+        if (!rhs) (*file) << "-";
+        for(unsigned var: vars) (*file) << (var+1) << " ";
         (*file) << " 0" << endl;
     }
 }
@@ -1134,8 +1126,8 @@ DLL_PUBLIC void SATSolver::print_stats(double wallclock_time_started) const
 
 DLL_PUBLIC void SATSolver::set_find_xors(bool do_find_xors)
 {
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
+    for (auto & solver : data->solvers) {
+        Solver& s = *solver;
         s.conf.doFindXors = do_find_xors;
     }
 }
@@ -1258,8 +1250,8 @@ DLL_PUBLIC uint64_t SATSolver::get_sum_conflicts() const
 DLL_PUBLIC uint64_t SATSolver::get_sum_propagations()
 {
     uint64_t props = 0;
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
+    for (auto & solver : data->solvers) {
+        Solver& s = *solver;
         props += s.sumPropStats.propagations;
     }
     return props;
@@ -1277,8 +1269,8 @@ DLL_PUBLIC uint64_t SATSolver::get_sum_propagations() const
 DLL_PUBLIC uint64_t SATSolver::get_sum_decisions()
 {
     uint64_t dec = 0;
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
+    for (auto & solver : data->solvers) {
+        Solver& s = *solver;
         dec += s.sumSearchStats.decisions;
     }
     return dec;
@@ -1309,11 +1301,11 @@ DLL_PUBLIC uint64_t SATSolver::get_last_decisions()
 }
 
 
-void DLL_PUBLIC SATSolver::start_getting_constraints(bool only_red, bool simplified,
+void DLL_PUBLIC SATSolver::start_getting_constraints(bool red, bool simplified,
         uint32_t max_len, uint32_t max_glue) {
     actually_add_clauses_to_threads(data);
     assert(!data->solvers.empty());
-    data->solvers[0]->start_getting_constraints(only_red, simplified, max_len, max_glue);
+    data->solvers[0]->start_getting_constraints(red, simplified, max_len, max_glue);
 }
 
 bool DLL_PUBLIC SATSolver::get_next_constraint(std::vector<Lit>& out, bool& is_xor, bool& rhs)
@@ -1337,15 +1329,15 @@ DLL_PUBLIC vector<uint32_t> SATSolver::translate_sampl_set(
 
 void DLL_PUBLIC SATSolver::set_min_bva_gain(uint32_t min_bva_gain)
 {
-    for (size_t i = 0; i < data->solvers.size(); i++) {
-        data->solvers[i]->conf.min_bva_gain = min_bva_gain;
+    for (auto & solver : data->solvers) {
+        solver->conf.min_bva_gain = min_bva_gain;
     }
 }
 
 void DLL_PUBLIC SATSolver::set_up_for_sample_counter(const uint32_t fixed_restart)
 {
-    for (size_t i = 0; i < data->solvers.size(); i++) {
-        SolverConf conf = data->solvers[i]->getConf();
+    for (auto & solver : data->solvers) {
+        SolverConf conf = solver->getConf();
         conf.doSLS = false;
         conf.doBreakid = false;
         conf.restartType = Restart::fixed;
@@ -1358,14 +1350,14 @@ void DLL_PUBLIC SATSolver::set_up_for_sample_counter(const uint32_t fixed_restar
         conf.fixed_restart_num_confl = fixed_restart;
         conf.polarity_mode = CMSat::PolarityMode::polarmode_rnd;
 
-        data->solvers[i]->setConf(conf);
+        solver->setConf(conf);
     }
 }
 
 void DLL_PUBLIC SATSolver::set_up_for_scalmc()
 {
-    for (size_t i = 0; i < data->solvers.size(); i++) {
-        SolverConf conf = data->solvers[i]->getConf();
+    for (auto & solver : data->solvers) {
+        SolverConf conf = solver->getConf();
         conf.doBreakid = false;
         conf.gaussconf.max_matrix_columns = 10000000;
         conf.gaussconf.max_matrix_rows = 10000;
@@ -1398,7 +1390,7 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
         conf.do_simplify_problem = true;
         conf.diff_declev_for_chrono = -1;
         conf.do_bosphorus = false;
-        data->solvers[i]->setConf(conf);
+        solver->setConf(conf);
     }
 }
 
@@ -1660,7 +1652,7 @@ void into_rhs(vector<Lit>& lits, bool rhs) {
 
 DLL_PUBLIC void SATSolver::open_file_and_dump_irred_clauses(const char* fname)
 {
-    start_getting_constraints();
+    start_getting_constraints(false);
     uint32_t num_cls = 0;
     int32_t max_vars = -1;
     vector<Lit> lits; bool is_xor; bool rhs;

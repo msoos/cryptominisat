@@ -127,7 +127,7 @@ class Solver : public Searcher
 
         //get clauses
         void start_getting_constraints(
-               bool red = true, // only redundant, otherwise only irred
+               bool red, // only redundant, otherwise only irred
                bool simplified = false,
                uint32_t max_len = std::numeric_limits<uint32_t>::max(),
                uint32_t max_glue = std::numeric_limits<uint32_t>::max());

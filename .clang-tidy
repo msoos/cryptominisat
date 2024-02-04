@@ -93,7 +93,9 @@ CheckOptions:
 - key: readability-identifier-naming.ParameterIgnoredRegexp
   value: >-
    (^cname_ttl_$|
-   |^_.*$)
+   |^_.*$|
+   |^.*limitK$|
+   |^.*limitM$)
 - key: readability-identifier-naming.PrivateMemberCase
   value: 'lower_case'
 # - key: readability-identifier-naming.PrivateMemberSuffix
@@ -108,6 +110,11 @@ CheckOptions:
   value: 'CamelCase'
 - key: readability-identifier-naming.FunctionCase
   value: 'lower_case'
+- key: readability-identifier-naming.FunctionIgnoredRegexp
+  value: >-
+   (^.*nVars.*$|
+   |^.*limitK$|
+   |^.*limitM$)
 
 HeaderFilterRegex: '^./source/.*|^./contrib/.*|^./test/.*|^./envoy/.*'
 

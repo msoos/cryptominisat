@@ -42,7 +42,7 @@ struct SolverTest : public ::testing::Test {
     }
 
     SolverConf conf;
-    Solver* s = NULL;
+    Solver* s = nullptr;
     std::vector<uint32_t> vars;
     std::atomic<bool> must_inter;
 };
@@ -54,7 +54,7 @@ TEST_F(SolverTest, get_bin)
     s->add_clause_outside(str_to_cl(" 2,  3"));
     s->add_clause_int(str_to_cl(" 1,  2"), true);
 
-    s->start_getting_constraints();
+    s->start_getting_constraints(false);
     vector<Lit> lits;
     bool is_xor, rhs;
     bool ret = s->get_next_constraint(lits, is_xor, rhs);
@@ -77,7 +77,7 @@ TEST_F(SolverTest, get_long_lev0)
 
     s->add_clause_outside(str_to_cl(" 2,  3"));
     c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true, &stats);
-    assert(c != NULL);
+    assert(c != nullptr);
     s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
 
     s->start_getting_constraints(true);
@@ -103,7 +103,7 @@ TEST_F(SolverTest, get_long_lev1)
 
     s->add_clause_outside(str_to_cl(" 2,  3"));
     c = s->add_clause_int(str_to_cl(" 6,  2, 3, 4"), true, &stats);
-    assert(c != NULL);
+    assert(c != nullptr);
     s->longRedCls[1].push_back(s->cl_alloc.get_offset(c));
 
     s->start_getting_constraints(true);
@@ -130,11 +130,11 @@ TEST_F(SolverTest, get_long_lev0_and_lev1)
     s->add_clause_outside(str_to_cl(" 2,  3"));
 
     c = s->add_clause_int(str_to_cl(" 3, -4, -7"), true, &stats);
-    assert(c != NULL);
+    assert(c != nullptr);
     s->longRedCls[1].push_back(s->cl_alloc.get_offset(c));
 
     c = s->add_clause_int(str_to_cl(" 2, 4, 5, 6"), true, &stats);
-    assert(c != NULL);
+    assert(c != nullptr);
     s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
 
     s->start_getting_constraints(true);
@@ -165,7 +165,7 @@ TEST_F(SolverTest, get_long_toolarge)
     ClauseStats stats;
     stats.glue = 5;
     c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true, &stats);
-    assert(c != NULL);
+    assert(c != nullptr);
     s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
 
     s->start_getting_constraints(true, false, 2);
@@ -185,7 +185,7 @@ TEST_F(SolverTest, get_glue_toolarge)
 
     s->add_clause_outside(str_to_cl(" 2,  3"));
     c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true, &stats);
-    assert(c != NULL);
+    assert(c != nullptr);
     s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
 
     s->start_getting_constraints(true, false, 3);
@@ -207,9 +207,9 @@ TEST_F(SolverTest, get_bin_and_long)
     s->add_clause_outside(str_to_cl(" 2,  3"));
     Clause* c;
     c = s->add_clause_int(str_to_cl(" 1,  5 "), true);
-    assert(c == NULL);
+    assert(c == nullptr);
     c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true, &stats);
-    assert(c != NULL);
+    assert(c != nullptr);
     s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
 
     s->start_getting_constraints(true);
@@ -238,9 +238,9 @@ TEST_F(SolverTest, get_irred_bin_and_long)
 
     Clause* c;
     c = s->add_clause_int(str_to_cl(" 1,  5 "));
-    assert(c == NULL);
+    assert(c == nullptr);
     c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"));
-    assert(c != NULL);
+    assert(c != nullptr);
     s->longIrredCls.push_back(s->cl_alloc.get_offset(c));
 
     s->start_getting_constraints(false);
