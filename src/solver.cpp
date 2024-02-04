@@ -38,14 +38,6 @@ THE SOFTWARE.
 #include "solvertypes.h"
 #include "solvertypesmini.h"
 
-#ifdef ARJUN_SERIALIZE
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/archive/binary_iarchive.hpp>
-#include <boost/archive/binary_oarchive.hpp>
-#include <boost/serialization/vector.hpp>
-#endif
-
 #include "varreplacer.h"
 #include "time_mem.h"
 #include "searcher.h"

@@ -275,15 +275,7 @@ void Main::printResultFunc(
 }
 
 /* clang-format off */
-void Main::add_supported_options()
-{
-  // Declare the supported options.
-    program.add_argument("-h", "--help")
-        .help("Print extensive help")
-        .default_value(false);
-    program.add_argument("-v", "--version")
-        .help("Print version info")
-        .flag();
+void Main::add_supported_options() {
     program.add_argument("--verb")
         .action([&](const auto& a) {conf.verbosity = std::atoi(a.c_str());})
         .default_value(conf.verbosity)
