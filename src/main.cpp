@@ -454,10 +454,6 @@ void Main::add_supported_options() {
         .default_value(conf.do_blocking_restart)
         .help("Do blocking restart for glues");
 
-    std::ostringstream s_incclean;
-    std::ostringstream s_adjust_low;
-    s_adjust_low << std::setprecision(2) << conf.adjust_glue_if_too_many_tier0;
-
     /* po::options_description reduceDBOptions("Redundant clause options"); */
     program.add_argument("--gluecut0")
         .action([&](const auto& a) {conf.glue_put_lev0_if_below_or_eq = std::atoi(a.c_str());})
@@ -470,7 +466,6 @@ void Main::add_supported_options() {
     program.add_argument("--adjustglue")
         .action([&](const auto& a) {conf.adjust_glue_if_too_many_tier0 = std::atof(a.c_str());})
         .default_value(conf.adjust_glue_if_too_many_tier0)
-        //, s_adjust_low.str()
         .help("If more than this % of clauses is LOW glue (level 0) then lower the glue cutoff by 1 -- once and never again");
     program.add_argument("--everylev1")
         .action([&](const auto& a) {conf.every_lev1_reduce = std::atoi(a.c_str());})
@@ -604,10 +599,6 @@ void Main::add_supported_options() {
         .help("Perform hyper-binary resolution during probing");
 
     /* po::options_description simp_schedules("Simplification schedules"); */
-    std::ostringstream ssERatio;
-    ssERatio << std::setprecision(4) << conf.varElimRatioPerIter;
-    std::ostringstream s_num_conflicts_of_search_inc;
-    s_num_conflicts_of_search_inc << std::setprecision(4) << conf.num_conflicts_of_search_inc;
     program.add_argument("--schedsimp")
         .action([&](const auto& a) {conf.do_simplify_problem = std::atoi(a.c_str());})
         .default_value(conf.do_simplify_problem)
@@ -646,7 +637,6 @@ void Main::add_supported_options() {
     program.add_argument("--confbtwsimpinc")
         .action([&](const auto& a) {conf.num_conflicts_of_search_inc = std::atof(a.c_str());})
         .default_value(conf.num_conflicts_of_search_inc)
-        //s_num_conflicts_of_search_inc.str()
         .help("Simp rounds increment by this power of N");
 
     /* po::options_description tern_res_options("Ternary resolution"); */
@@ -665,17 +655,14 @@ void Main::add_supported_options() {
     program.add_argument("--ternkeep")
         .action([&](const auto& a) {conf.ternary_keep_mult = std::atof(a.c_str());})
         .default_value(conf.ternary_keep_mult)
-        //, tern_keep.str()
         .help("Keep ternary resolution clauses only if they are touched within this multiple of 'lev1usewithin'");
     program.add_argument("--terncreate")
         .action([&](const auto& a) {conf.ternary_max_create = std::atof(a.c_str());})
         .default_value(conf.ternary_max_create)
-        //, tern_max_create.str()
         .help("Create only this multiple (of linked in cls) ternary resolution clauses per simp run");
     program.add_argument("--ternbincreate")
         .action([&](const auto& a) {conf.allow_ternary_bin_create = std::atoi(a.c_str());})
         .default_value(conf.allow_ternary_bin_create)
-        //, tern_max_create.str()
         .help("Allow ternary resolving to generate binary clauses");
 
     /* po::options_description occ_mem_limits("Occ-based simplification memory limits"); */
