@@ -58,44 +58,20 @@ class SubsumeStrengthen;
 class GateFinder;
 
 struct ElimedClauses {
-    ElimedClauses() {}
-    explicit ElimedClauses(size_t _start, size_t _end) :
-        start(_start)
-        , end(_end)
-        , toRemove(false)
-    {}
-
-    void save_to_file(SimpleOutFile& f) const
-    {
-        f.put_uint32_t(toRemove);
-        f.put_uint64_t(start);
-        f.put_uint64_t(end);
+    ElimedClauses() = default;
+    explicit ElimedClauses(size_t _start, size_t _end) : start(_start) , end(_end) {}
+    const Lit& at(const uint64_t at, const vector<Lit>& elimed_cls_lits) const {
+        return elimed_cls_lits[start+at];
+    }
+    Lit& at(const uint64_t at, vector<Lit>& elimed_cls_lits) {
+        return elimed_cls_lits[start+at];
     }
 
-    void load_from_file(SimpleInFile& f)
-    {
-        toRemove = f.get_uint32_t();
-        start = f.get_uint64_t();
-        end = f.get_uint64_t();
-    }
-
-    const Lit& at(const uint64_t at, const vector<Lit>& eClsLits) const
-    {
-        return eClsLits[start+at];
-    }
-
-    Lit& at(const uint64_t at, vector<Lit>& eClsLits) { return eClsLits[start+at]; }
     uint64_t size() const { return end-start; }
-
-    template<class Archive> void serialize(Archive& ar, const unsigned int /*version*/) {
-        ar & start;
-        ar & end;
-        ar & toRemove;
-    }
-
     uint64_t start;
     uint64_t end;
     bool toRemove = false;
+    bool is_xor = false;
 };
 
 struct BVEStats
@@ -178,7 +154,7 @@ public:
     bool uneliminate(const uint32_t var);
     size_t mem_used() const;
     uint32_t dump_elimed_clauses(std::ostream* outfile) const;
-    bool get_elimed_clause_at(uint32_t& at,uint32_t& at2, vector<Lit>& out) const;
+    bool get_elimed_clause_at(uint32_t& at,uint32_t& at2, vector<Lit>& out, bool& is_xor) const;
     void subs_with_resolvent_clauses();
     void fill_tocheck_seen(const vec<Watched>& ws, vector<uint32_t>& tocheck);
     void delete_component_unconnected_to_assumps(); //for arjun
@@ -227,7 +203,6 @@ public:
     //validity checking
     void check_elimed_vars_are_unassigned() const;
     void check_no_marked_clauses();
-    bool getAnythingHasBeenElimed() const;
     void sanityCheckElimedVars() const;
     void printOccur(const Lit lit) const;
     void check_clauses_lits_ordered() const;
@@ -291,9 +266,6 @@ private:
         }
     };
     vector<Tri> cl_to_add_ternary;
-
-    //debug
-    bool subsetReverse(const Clause& B) const;
 
     //Persistent data
     Solver*  solver;              ///<The solver this simplifier is connected to
@@ -411,7 +383,7 @@ private:
         const Lit lit, bool add_to_block = true);
     vector<Lit> tmp_rem_lits;
     vec<Watched> tmp_rem_cls_copy;
-    void        add_clause_to_blck(const vector<Lit>& lits, const uint64_t ID);
+    void        add_clause_to_blck(const vector<Lit>& lits, const int32_t ID);
     void        set_var_as_eliminated(const uint32_t var);
     bool        can_eliminate_var(const uint32_t var) const;
     bool        mark_and_push_to_added_long_cl_cls_containing(const Lit lit);
@@ -589,14 +561,13 @@ private:
 
     /////////////////////
     //Elimed clause elimination
-    bool anythingHasBeenElimed;
-    vector<Lit> eClsLits;
-    vector<ElimedClauses> elimedClauses; ///<maps var(outer!!) to postion in elimedClauses
+    vector<Lit> elimed_cls_lits;
+    vector<ElimedClauses> elimed_cls; ///<maps var(outer!!) to postion in elimedClauses
     vector<uint32_t> blk_var_to_cls;
     vector<int32_t> newly_elimed_cls_IDs; // temporary storage for newly elimed cls' IDs
-    bool elimedMapBuilt;
-    void buildElimedMap();
-    void cleanElimedClauses();
+    bool elimed_map_built;
+    void build_elimed_map();
+    void clean_elimed_cls();
     bool can_remove_elimed_clauses = false;
 
     ///Stats from this run
@@ -609,20 +580,6 @@ private:
 inline const OccSimplifier::Stats& OccSimplifier::get_stats() const
 {
     return globalStats;
-}
-
-inline bool OccSimplifier::getAnythingHasBeenElimed() const
-{
-    return anythingHasBeenElimed;
-}
-
-inline bool OccSimplifier::subsetReverse(const Clause& B) const
-{
-    for (uint32_t i = 0; i != B.size(); i++) {
-        if (!seen[B[i].toInt()])
-            return false;
-    }
-    return true;
 }
 
 inline const SubsumeStrengthen* OccSimplifier::get_sub_str() const

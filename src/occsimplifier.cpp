@@ -91,8 +91,7 @@ OccSimplifier::OccSimplifier(Solver* _solver):
     , toClear(solver->toClear)
     , velim_order(VarOrderLt(varElimComplexity))
     , gateFinder(nullptr)
-    , anythingHasBeenElimed(false)
-    , elimedMapBuilt(false)
+    , elimed_map_built(false)
 {
     sub_str = new SubsumeStrengthen(this, solver);
 
@@ -125,30 +124,30 @@ void OccSimplifier::save_on_var_memory()
 {
     clauses.clear();
     clauses.shrink_to_fit();
-    eClsLits.shrink_to_fit();
+    elimed_cls_lits.shrink_to_fit();
 
     cl_to_free_later.shrink_to_fit();
 
     elim_calc_need_update.shrink_to_fit();
-    elimedClauses.shrink_to_fit();
+    elimed_cls.shrink_to_fit();
 }
 
 void OccSimplifier::print_elimed_clauses_reverse() const
 {
     for(vector<ElimedClauses>::const_reverse_iterator
-        it = elimedClauses.rbegin(), end = elimedClauses.rend()
+        it = elimed_cls.rbegin(), end = elimed_cls.rend()
         ; it != end
         ; ++it
     ) {
         size_t at = 1;
         vector<Lit> lits;
         while(at < it->size()) {
-            Lit l = it->at(at, eClsLits);
+            Lit l = it->at(at, elimed_cls_lits);
             if (l == lit_Undef) {
                 cout
                 << "elimed clause (internal number):";
                 for(size_t i = 0; i < it->size(); i++) {
-                    cout << it->at(i, eClsLits) << " ";
+                    cout << it->at(i, elimed_cls_lits) << " ";
                 }
                 cout << endl;
                 lits.clear();
@@ -159,7 +158,7 @@ void OccSimplifier::print_elimed_clauses_reverse() const
         }
 
         cout
-        << "dummy elimed clause for var (internal number) " << it->at(0, eClsLits).var()
+        << "dummy elimed clause for var (internal number) " << it->at(0, elimed_cls_lits).var()
         << endl;
 
     }
@@ -168,13 +167,13 @@ void OccSimplifier::print_elimed_clauses_reverse() const
 uint32_t OccSimplifier::dump_elimed_clauses(std::ostream* outfile) const
 {
     uint32_t num_cls = 0;
-    for (ElimedClauses elimed: elimedClauses) {
+    for (ElimedClauses elimed: elimed_cls) {
         if (elimed.toRemove) continue;
         for (size_t i = 0; i < elimed.size(); i++) {
             //It's elimed on this variable
             if (i == 0) continue;
 
-            Lit l = elimed.at(i, eClsLits);
+            Lit l = elimed.at(i, elimed_cls_lits);
             if (outfile != nullptr) {
                 if (l == lit_Undef) *outfile << " 0" << endl;
                 else *outfile << l << " ";
@@ -185,11 +184,11 @@ uint32_t OccSimplifier::dump_elimed_clauses(std::ostream* outfile) const
     return num_cls;
 }
 
-bool OccSimplifier::get_elimed_clause_at(uint32_t& at,uint32_t& at2, vector<Lit>& out) const
-{
+bool OccSimplifier::get_elimed_clause_at(uint32_t& at,uint32_t& at2,
+        vector<Lit>& out, bool& is_xor) const {
     out.clear();
-    while(at < elimedClauses.size()) {
-        const auto& elimed = elimedClauses[at];
+    while(at < elimed_cls.size()) {
+        const auto& elimed = elimed_cls[at];
         if (elimed.toRemove) {
             at++;
             continue;
@@ -201,7 +200,7 @@ bool OccSimplifier::get_elimed_clause_at(uint32_t& at,uint32_t& at2, vector<Lit>
                 at2++;
                 continue;
             }
-            Lit l = elimed.at(at2, eClsLits);
+            Lit l = elimed.at(at2, elimed_cls_lits);
             if (l == lit_Undef) {
                 at2++;
                 return true;
@@ -234,19 +233,19 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
 
     //go through in reverse order
     vector<Lit> lits;
-    for (long int i = (int)elimedClauses.size()-1; i >= 0; i--) {
-        ElimedClauses* it = &elimedClauses[i];
+    for (long int i = (int)elimed_cls.size()-1; i >= 0; i--) {
+        ElimedClauses* it = &elimed_cls[i];
         if (it->toRemove) {
             continue;
         }
 
-        Lit elimedOn = solver->varReplacer->get_lit_replaced_with_outer(it->at(0, eClsLits));
+        Lit elimedOn = solver->varReplacer->get_lit_replaced_with_outer(it->at(0, elimed_cls_lits));
         size_t at = 1;
         bool satisfied = false;
         lits.clear();
         while(at < it->size()) {
             //built clause, reached marker, "lits" is now valid
-            if (it->at(at, eClsLits) == lit_Undef) {
+            if (it->at(at, elimed_cls_lits) == lit_Undef) {
                 if (!satisfied) {
                     [[maybe_unused]] bool var_set = extender->addClause(lits, elimedOn.var());
 
@@ -261,7 +260,7 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
 
             //Building clause, "lits" is not yet valid
             } else if (!satisfied) {
-                Lit l = it->at(at, eClsLits);
+                Lit l = it->at(at, elimed_cls_lits);
                 l = solver->varReplacer->get_lit_replaced_with_outer(l);
                 lits.push_back(l);
 
@@ -275,7 +274,7 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
         extender->dummyElimed(elimedOn.var());
     }
     if (solver->conf.verbosity >= 2) {
-        cout << "c [extend] Extended " << elimedClauses.size() << " var-elim clauses" << endl;
+        cout << "c [extend] Extended " << elimed_cls.size() << " var-elim clauses" << endl;
     }
 }
 
@@ -2290,7 +2289,7 @@ bool OccSimplifier::simplify(const bool _startup, const std::string& schedule) {
     startup = _startup;
     if (!setup()) return solver->okay();
 
-    const size_t origElimedSize = elimedClauses.size();
+    const size_t origElimedSize = elimed_cls.size();
     const size_t origTrailSize = solver->trail_size();
 
     sampling_vars_occsimp.clear();
@@ -2846,9 +2845,9 @@ bool OccSimplifier::uneliminate(uint32_t var)
     assert(solver->varData[var].removed == Removed::elimed);
     assert(solver->value(var) == l_Undef);
 
-    if (!elimedMapBuilt) {
-        cleanElimedClauses();
-        buildElimedMap();
+    if (!elimed_map_built) {
+        clean_elimed_cls();
+        build_elimed_map();
     }
 
     //Uneliminate it in theory
@@ -2867,16 +2866,16 @@ bool OccSimplifier::uneliminate(uint32_t var)
     //NOTE: Need to eliminate in theory first to avoid infinite loops
 
     //Mark for removal from elimed list
-    elimedClauses[at_elimed_cls].toRemove = true;
+    elimed_cls[at_elimed_cls].toRemove = true;
     can_remove_elimed_clauses = true;
-    assert(elimedClauses[at_elimed_cls].at(0, eClsLits).var() == var);
+    assert(elimed_cls[at_elimed_cls].at(0, elimed_cls_lits).var() == var);
 
     //Re-insert into Solver
     #ifdef VERBOSE_DEBUG_RECONSTRUCT
     cout
     << "Uneliminating cl ";
     for(size_t i=0; i< elimedClauses[at_elimed_cls].size(); i++){
-        cout << elimedClauses[at_elimed_cls].at(i, eClsLits) << " ";
+        cout << elimedClauses[at_elimed_cls].at(i, elimed_cls_lits) << " ";
     }
     cout << " on var " << var+1
     << endl;
@@ -2884,8 +2883,8 @@ bool OccSimplifier::uneliminate(uint32_t var)
 
     vector<Lit> lits;
     size_t bat = 1;
-    while(bat < elimedClauses[at_elimed_cls].size()) {
-        Lit l = elimedClauses[at_elimed_cls].at(bat, eClsLits);
+    while(bat < elimed_cls[at_elimed_cls].size()) {
+        Lit l = elimed_cls[at_elimed_cls].at(bat, elimed_cls_lits);
         if (l == lit_Undef) {
             solver->add_clause_outer_copylits(lits);
             if (!solver->okay()) {
@@ -2911,11 +2910,11 @@ void OccSimplifier::remove_by_frat_recently_elimed_clauses(size_t origElimedSize
     verb_print(6, "Deleting elimed clauses for FRAT$");
     uint32_t at_ID = 0;
     vector<Lit> lits;
-    for(size_t i = origElimedSize; i < elimedClauses.size(); i++) {
+    for(size_t i = origElimedSize; i < elimed_cls.size(); i++) {
         lits.clear();
         size_t at = 1;
-        while(at < elimedClauses[i].size()) {
-            const Lit l = elimedClauses[i].at(at, eClsLits);
+        while(at < elimed_cls[i].size()) {
+            const Lit l = elimed_cls[i].at(at, elimed_cls_lits);
             if (l == lit_Undef) {
                 const int32_t ID = newly_elimed_cls_IDs[at_ID++];
                 (*solver->frat) << del << ID << lits << fin;
@@ -2929,17 +2928,17 @@ void OccSimplifier::remove_by_frat_recently_elimed_clauses(size_t origElimedSize
     newly_elimed_cls_IDs.clear();
 }
 
-void OccSimplifier::buildElimedMap()
+void OccSimplifier::build_elimed_map()
 {
     blk_var_to_cls.clear();
     blk_var_to_cls.resize(solver->nVarsOuter(), numeric_limits<uint32_t>::max());
-    for(size_t i = 0; i < elimedClauses.size(); i++) {
-        const ElimedClauses& elimed = elimedClauses[i];
-        uint32_t elimedon = elimed.at(0, eClsLits).var();
+    for(size_t i = 0; i < elimed_cls.size(); i++) {
+        const ElimedClauses& elimed = elimed_cls[i];
+        uint32_t elimedon = elimed.at(0, elimed_cls_lits).var();
         assert(elimedon < blk_var_to_cls.size());
         blk_var_to_cls[elimedon] = i;
     }
-    elimedMapBuilt = true;
+    elimed_map_built = true;
 }
 
 void OccSimplifier::finishUp(size_t origTrailSize) {
@@ -3098,68 +3097,62 @@ void OccSimplifier::set_limits()
 //     varelim_sub_str_limit    = numeric_limits<int64_t>::max();
 }
 
-void OccSimplifier::cleanElimedClauses()
+void OccSimplifier::clean_elimed_cls()
 {
     assert(solver->decisionLevel() == 0);
-    vector<ElimedClauses>::iterator i = elimedClauses.begin();
-    vector<ElimedClauses>::iterator j = elimedClauses.begin();
+    vector<ElimedClauses>::iterator i = elimed_cls.begin();
+    vector<ElimedClauses>::iterator j = elimed_cls.begin();
 
-    uint64_t i_eClsLits = 0;
-    uint64_t j_eClsLits = 0;
+    uint64_t i_lits = 0;
+    uint64_t j_lits = 0;
     for (vector<ElimedClauses>::iterator
-        end = elimedClauses.end()
+        end = elimed_cls.end()
         ; i != end
         ; ++i
     ) {
-        const uint32_t elimedOn = solver->map_outer_to_inter(i->at(0, eClsLits).var());
-        if (solver->varData[elimedOn].removed == Removed::elimed
-            && solver->value(elimedOn) != l_Undef
+        const uint32_t elimed_on = solver->map_outer_to_inter(i->at(0, elimed_cls_lits).var());
+        if (solver->varData[elimed_on].removed == Removed::elimed
+            && solver->value(elimed_on) != l_Undef
         ) {
-            std::cerr
-            << "ERROR: var " << Lit(elimedOn, false) << " elimed,"
-            << " value: " << solver->value(elimedOn)
-            << endl;
-            assert(false);
-            std::exit(-1);
+            cerr << "ERROR: var " << Lit(elimed_on, false) << " elimed,"
+            << " value: " << solver->value(elimed_on) << endl;
+            assert(false); exit(-1);
         }
 
         if (i->toRemove) {
-            elimedMapBuilt = false;
-            i_eClsLits += i->size();
-            assert(i_eClsLits == i->end);
+            elimed_map_built = false;
+            i_lits += i->size();
+            assert(i_lits == i->end);
             i->start = numeric_limits<uint64_t>::max();
             i->end = numeric_limits<uint64_t>::max();
         } else {
-            assert(solver->varData[elimedOn].removed == Removed::elimed);
+            assert(solver->varData[elimed_on].removed == Removed::elimed);
 
             //beware we might change this
             const size_t sz = i->size();
 
             //don't copy if we don't need to
-            if (!elimedMapBuilt) {
+            if (!elimed_map_built) {
                 for(size_t x = 0; x < sz; x++) {
-                    eClsLits[j_eClsLits++] = eClsLits[i_eClsLits++];
+                    elimed_cls_lits[j_lits++] = elimed_cls_lits[i_lits++];
                 }
             } else {
-                i_eClsLits += sz;
-                j_eClsLits += sz;
+                i_lits += sz;
+                j_lits += sz;
             }
-            assert(i_eClsLits == i->end);
-            i->start = j_eClsLits-sz;
-            i->end   = j_eClsLits;
+            assert(i_lits == i->end);
+            i->start = j_lits-sz;
+            i->end   = j_lits;
             *j++ = *i;
         }
     }
-    eClsLits.resize(j_eClsLits);
-    elimedClauses.resize(elimedClauses.size()-(i-j));
+    elimed_cls_lits.resize(j_lits);
+    elimed_cls.resize(elimed_cls.size()-(i-j));
     can_remove_elimed_clauses = false;
 }
 
-void OccSimplifier::rem_cls_from_watch_due_to_varelim(
-    const Lit lit
-    , bool add_to_block
-) {
-    elimedMapBuilt = false;
+void OccSimplifier::rem_cls_from_watch_due_to_varelim(const Lit lit , bool add_to_block) {
+    elimed_map_built = false;
 
     //Copy&clear i.e. MOVE
     solver->watches[lit].moveTo(tmp_rem_cls_copy);
@@ -3173,9 +3166,7 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(
         if (watch.isClause()) {
             const ClOffset offset = watch.get_offset();
             const Clause& cl = *solver->cl_alloc.ptr(offset);
-            if (cl.get_removed()) {
-                continue;
-            }
+            if (cl.get_removed()) continue;
             assert(!cl.freed());
 
             //Put clause into elimed status
@@ -3209,9 +3200,7 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(
             lits[0] = lit;
             lits[1] = watch.lit2();
             if (!watch.red()) {
-                if (add_to_block) {
-                    add_clause_to_blck(lits, watch.get_ID());
-                }
+                if (add_to_block) add_clause_to_blck(lits, watch.get_ID());
                 n_occurs[lits[0].toInt()]--;
                 n_occurs[lits[1].toInt()]--;
                 removed_cl_with_var.touch(lits[0]);
@@ -3241,8 +3230,7 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(
     }
 }
 
-void OccSimplifier::add_clause_to_blck(const vector<Lit>& lits, const uint64_t ID)
-{
+void OccSimplifier::add_clause_to_blck(const vector<Lit>& lits, const int32_t ID) {
     for(const Lit& l: lits) {
         removed_cl_with_var.touch(l.var());
         elim_calc_need_update.touch(l.var());
@@ -3250,11 +3238,9 @@ void OccSimplifier::add_clause_to_blck(const vector<Lit>& lits, const uint64_t I
 
     vector<Lit> lits_outer = lits;
     solver->map_inter_to_outer(lits_outer);
-    for(Lit l: lits_outer) {
-        eClsLits.push_back(l);
-    }
-    eClsLits.push_back(lit_Undef);
-    elimedClauses.back().end = eClsLits.size();
+    for(Lit l: lits_outer) elimed_cls_lits.push_back(l);
+    elimed_cls_lits.push_back(lit_Undef);
+    elimed_cls.back().end = elimed_cls_lits.size();
     newly_elimed_cls_IDs.push_back(ID);
 }
 
@@ -4579,11 +4565,9 @@ void OccSimplifier::set_var_as_eliminated(const uint32_t var)
 
 void OccSimplifier::create_dummy_elimed_clause(const Lit lit)
 {
-    eClsLits.push_back(solver->map_inter_to_outer(lit));
-    elimedClauses.push_back(
-        ElimedClauses(eClsLits.size()-1, eClsLits.size())
-    );
-    elimedMapBuilt = false;
+    elimed_cls_lits.push_back(solver->map_inter_to_outer(lit));
+    elimed_cls.push_back(ElimedClauses(elimed_cls_lits.size()-1, elimed_cls_lits.size()));
+    elimed_map_built = false;
 }
 
 bool OccSimplifier::occ_based_lit_rem(uint32_t var, uint32_t& removed) {
@@ -5148,8 +5132,8 @@ size_t OccSimplifier::mem_used() const
     b += dummy.capacity()*sizeof(char);
     b += added_long_cl.capacity()*sizeof(ClOffset);
     b += sub_str->mem_used();
-    b += elimedClauses.capacity()*sizeof(ElimedClauses);
-    b += eClsLits.capacity()*sizeof(Lit);
+    b += elimed_cls.capacity()*sizeof(ElimedClauses);
+    b += elimed_cls_lits.capacity()*sizeof(Lit);
     b += blk_var_to_cls.size()*sizeof(uint32_t);
     b += velim_order.mem_used();
     b += varElimComplexity.capacity()*sizeof(int)*2;

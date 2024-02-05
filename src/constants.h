@@ -25,8 +25,12 @@ THE SOFTWARE.
 #include <cstdint>
 #include <cstdlib>
 #include <cstdio>
+#include <iostream>
 #include <limits>
 #include <random>
+
+using std::cerr;
+using std::exit;
 
 #define unif_uint_dist(x,y) std::uniform_int_distribution<uint32_t> x(0, y)
 inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusive) {

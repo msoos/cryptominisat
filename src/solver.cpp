@@ -734,16 +734,9 @@ bool Solver::add_clause_outer_copylits(const vector<Lit>& lits)
     return Solver::add_clause_outer(ps);
 }
 
-// Takes OUTER (NOT *outside*) variables
 // Input is ORIGINAL clause.
 bool Solver::add_clause_outer(vector<Lit>& ps, bool red)
 {
-    if (conf.perform_occur_based_simp && occsimplifier->getAnythingHasBeenElimed()) {
-        std::cerr << "ERROR: Cannot add new clauses to the system if blocking was"
-        << " enabled. Turn it off from conf.doBlockClauses" << endl;
-        std::exit(-1);
-    }
-
     ClauseStats clstats;
     clstats.ID = ++clauseID;
     *frat << origcl << clstats.ID << ps << fin;

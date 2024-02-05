@@ -234,7 +234,7 @@ bool GetClauseQuery::get_next_constraint(std::vector<Lit>& out, bool& is_xor, bo
     //These are already in OUTER notation
     bool ret = true;
     while (!red && ret && solver->occsimplifier && !simplified) {
-        ret = solver->occsimplifier->get_elimed_clause_at(elimed_at, elimed_at2, out);
+        ret = solver->occsimplifier->get_elimed_clause_at(elimed_at, elimed_at2, out, is_xor);
         if (ret && all_vars_outside(out)) {
             return true;
         }
