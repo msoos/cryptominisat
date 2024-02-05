@@ -1069,9 +1069,7 @@ void Solver::check_recursive_minimization_effectiveness(const lbool status)
         && conf.doRecursiveMinim
         && srch_stats.recMinLitRem + srch_stats.litsRedNonMin > 100000
     ) {
-        double remPercent =
-            float_div(srch_stats.recMinLitRem, srch_stats.litsRedNonMin)*100.0;
-
+        double remPercent = float_div(srch_stats.recMinLitRem, srch_stats.litsRedNonMin)*100.0;
         double costPerGained = float_div(srch_stats.recMinimCost, remPercent);
         if (costPerGained > 200ULL*1000ULL*1000ULL) {
             conf.doRecursiveMinim = false;
@@ -1756,7 +1754,7 @@ lbool Solver::execute_inprocess_strategy(
         }
         if (okay()) SLOW_DEBUG_DO(check_wrong_attach());
 
-        if (token.substr(0,3) != "occ" && token != "")
+        if (token.substr(0,3) != "occ" && !token.empty())
             verb_print(1, "--> Executing strategy token: " << token);
 
         if (token == "scc-vrepl") {
