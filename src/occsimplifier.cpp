@@ -169,28 +169,17 @@ uint32_t OccSimplifier::dump_elimed_clauses(std::ostream* outfile) const
 {
     uint32_t num_cls = 0;
     for (ElimedClauses elimed: elimedClauses) {
-        if (elimed.toRemove)
-            continue;
-
+        if (elimed.toRemove) continue;
         for (size_t i = 0; i < elimed.size(); i++) {
             //It's elimed on this variable
-            if (i == 0) {
-                continue;
-            }
+            if (i == 0) continue;
+
             Lit l = elimed.at(i, eClsLits);
             if (outfile != nullptr) {
-                if (l == lit_Undef) {
-                    *outfile
-                    << " 0"
-                    << endl;
-                } else {
-                    *outfile
-                    << l << " ";
-                }
+                if (l == lit_Undef) *outfile << " 0" << endl;
+                else *outfile << l << " ";
             }
-            if (l == lit_Undef) {
-                num_cls++;
-            }
+            if (l == lit_Undef) num_cls++;
         }
     }
     return num_cls;

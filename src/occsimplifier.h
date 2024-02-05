@@ -58,9 +58,7 @@ class SubsumeStrengthen;
 class GateFinder;
 
 struct ElimedClauses {
-    ElimedClauses()
-    {}
-
+    ElimedClauses() {}
     explicit ElimedClauses(size_t _start, size_t _end) :
         start(_start)
         , end(_end)
@@ -86,18 +84,10 @@ struct ElimedClauses {
         return eClsLits[start+at];
     }
 
-    Lit& at(const uint64_t at, vector<Lit>& eClsLits)
-    {
-        return eClsLits[start+at];
-    }
+    Lit& at(const uint64_t at, vector<Lit>& eClsLits) { return eClsLits[start+at]; }
+    uint64_t size() const { return end-start; }
 
-    uint64_t size() const {
-        return end-start;
-    }
-
-    template<class Archive>
-    void serialize(Archive& ar, const unsigned int /*version*/)
-    {
+    template<class Archive> void serialize(Archive& ar, const unsigned int /*version*/) {
         ar & start;
         ar & end;
         ar & toRemove;
@@ -126,61 +116,26 @@ struct BVEStats
 
     BVEStats& operator+=(const BVEStats& other);
 
-    void print_short() const
-    {
-        //About elimination
-        cout
-        << "c [occ-bve]"
-        << " elimed: " << numVarsElimed
-        << " gatefind timeout: " << gatefind_timeouts
-        << endl;
-
-        cout
-        << "c [occ-bve]"
-        << " cl-new: " << newClauses
-        << " tried: " << triedToElimVars
-        << " tested: " << testedToElimVars
-        << endl;
-
-        cout
-        << "c [occ-bve]"
-        << " subs: "  << subsumedByVE
-        << endl;
+    void print_short() const {
+        cout << "c [occ-bve]" << " elimed: " << numVarsElimed
+            << " gatefind timeout: " << gatefind_timeouts << endl;
+        cout << "c [occ-bve]" << " cl-new: " << newClauses << " tried: " << triedToElimVars
+            << " tested: " << testedToElimVars << endl;
+        cout << "c [occ-bve]" << " subs: "  << subsumedByVE << endl;
     }
 
-    void print() const
-    {
-        print_stats_line("c timeouted"
-            , stats_line_percent(varElimTimeOut, numCalls)
-            , "% called"
-        );
-        print_stats_line("c v-elimed"
-            , numVarsElimed
-            , "% vars"
-        );
-
-        print_stats_line("c cl-new"
-            , newClauses
-        );
-
-        print_stats_line("c tried to elim"
-            , triedToElimVars
-        );
-
-        print_stats_line("c cl-elim-bin"
-            , clauses_elimed_bin);
-
-        print_stats_line("c cl-elim-long"
-            , clauses_elimed_long);
-
+    void print() const {
+        print_stats_line("c timeouted" , stats_line_percent(varElimTimeOut, numCalls) , "% called");
+        print_stats_line("c v-elimed" , numVarsElimed , "% vars");
+        print_stats_line("c cl-new" , newClauses);
+        print_stats_line("c tried to elim" , triedToElimVars);
+        print_stats_line("c cl-elim-bin" , clauses_elimed_bin);
+        print_stats_line("c cl-elim-long" , clauses_elimed_long);
         print_stats_line("c cl-elim-avg-s",
             ((double)clauses_elimed_sumsize
             /(double)(clauses_elimed_bin + clauses_elimed_long))
         );
-
-        print_stats_line("c v-elim-sub"
-            , subsumedByVE
-        );
+        print_stats_line("c v-elim-sub" , subsumedByVE);
     }
     void clear() {
         BVEStats tmp;
