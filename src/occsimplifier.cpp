@@ -50,6 +50,7 @@ THE SOFTWARE.
 #include "subsumeimplicit.h"
 #include "sqlstats.h"
 #include "datasync.h"
+#include "watched.h"
 #include "xorfinder.h"
 #include "gatefinder.h"
 #include "trim.h"
@@ -691,6 +692,122 @@ void OccSimplifier::remove_all_longs_from_watches() {
     }
 }
 
+bool OccSimplifier::only_red_and_idx_occ(const Lit l) const {
+    const auto should_be = n_occurs[l.toInt()];
+    uint32_t val = 0;
+    for(const auto& w: solver->watches[l]) {
+        if (w.isIdx()) continue;
+        else if (w.isBin()) {
+            if (!w.red()) val++;
+        } else if (w.isClause()) {
+            auto off = w.get_offset();
+            const auto cl = solver->cl_alloc.ptr(off);
+            if (cl->get_removed()) continue;
+            if (!cl->red()) val++;
+        } else {
+            assert(false);
+        }
+    }
+    assert(should_be == val);
+    return val == 0;
+}
+
+
+void OccSimplifier::eliminate_xor_vars()
+{
+    assert(added_long_cl.empty());
+    assert(solver->okay());
+    assert(solver->prop_at_head());
+    assert(added_irred_bin.empty());
+
+    double my_time = cpuTime();
+    const int64_t orig_xor_varelim_time_limit = xor_varelim_time_limit;
+    auto old_limit_to_decrease = limit_to_decrease;
+    limit_to_decrease = &xor_varelim_time_limit;
+    assert(cl_to_free_later.empty());
+    assert(solver->watches.get_smudged_list().empty());
+    uint32_t elimed = 0;
+    vector<Lit> lits;
+
+    vector<uint64_t> incid(solver->nVars(), 0);
+    vector<char> deleted(solver->xorclauses.size(), false);
+    set<uint32_t> to_elim;
+    set<uint32_t> xvars;
+    for(uint32_t i = 0; i < solver->xorclauses.size(); i++) {
+        const auto& x = solver->xorclauses[i];
+        for(const auto& v: x) {
+            (*limit_to_decrease)--;
+            incid[xorclauses_vars[v]]++;
+            xvars.insert(v);
+            solver->watches[Lit(v, false)].push(Watched(i, WatchType::watch_idx_t));
+            solver->watches.smudge(Lit(v, false));
+        }
+    }
+    for(const auto& v: xvars)
+        if (incid[v] == 1 && can_eliminate_var(v, true)
+                && only_red_and_idx_occ(Lit(v, false)) && only_red_and_idx_occ(Lit(v, true)))
+            to_elim.insert(v);
+
+    while(!to_elim.empty()) {
+        const auto var = *to_elim.begin();
+        to_elim.erase(var);
+        if (!can_eliminate_var(var, true)) continue;
+        const Lit lit = Lit(var, false);
+
+        //find xor
+        Xor* x = nullptr;
+        uint32_t at;
+        for(const auto& w: solver->watches[lit]) {
+            (*limit_to_decrease)--;
+            if (!w.isIdx()) continue;
+            if (deleted[w.get_idx()]) continue;
+            assert(x == nullptr);
+            x = &solver->xorclauses[w.get_idx()];
+            at = w.get_idx();
+        }
+        assert(x != nullptr);
+        assert(!x->trivial());
+        assert(!x->vars.empty());
+
+        create_dummy_elimed_clause(lit, true);
+        elimed++;
+        if (x->reason_cl_ID != 0) *solver->frat << del << x->reason_cl_ID <<  x->reason_cl << fin;
+        lits.clear();
+        for(const auto& v: *x) lits.push_back(Lit(v, false));
+        lits[0] ^= !x->rhs;
+        add_clause_to_blck(lits, x->XID);
+        set_var_as_eliminated(var);
+        for(const auto& v: x->vars) {
+            (*limit_to_decrease)--;
+            assert(incid[xorclauses_vars[v]] > 0);
+            incid[xorclauses_vars[v]]--;
+            if (incid[v] == 1 && can_eliminate_var(v, true)
+                    && only_red_and_idx_occ(Lit(v, false)) && only_red_and_idx_occ(Lit(v, true)))
+                to_elim.insert(v);
+            if (incid[v] == 0) xorclauses_vars[v] = 0;
+        }
+        deleted[at] = 1;
+        rem_cls_from_watch_due_to_varelim(lit);
+        rem_cls_from_watch_due_to_varelim(~lit);
+    }
+    solver->clean_occur_from_idx_types_only_smudged();
+
+    // Remove the XOR clauses that have been marked deleted
+    auto xs = solver->xorclauses;
+    uint32_t j = 0;
+    for(uint32_t i = 0; i < xs.size(); i++) if (!deleted[i]) xs[j++] = xs[i];
+    xs.resize(j);
+
+    const double time_used = cpuTime() - my_time;
+    const bool time_out = (*limit_to_decrease <= 0);
+    const double time_remain =  float_div(*limit_to_decrease, orig_xor_varelim_time_limit);
+    verb_print(1,"[occ-xor-bve] elimed: " << elimed << solver->conf.print_times(time_used, time_out));
+    if (solver->sqlStats)
+        solver->sqlStats->time_passed( solver , "xor-bve" , time_used , time_out , time_remain);
+    limit_to_decrease = old_limit_to_decrease;
+    assert(solver->okay());
+}
+
 void OccSimplifier::eliminate_empty_resolvent_vars()
 {
     assert(added_long_cl.empty());
@@ -748,7 +865,7 @@ void OccSimplifier::eliminate_empty_resolvent_vars()
     limit_to_decrease = old_limit_to_decrease;
 }
 
-bool OccSimplifier::can_eliminate_var(const uint32_t var) const
+bool OccSimplifier::can_eliminate_var(const uint32_t var, bool ignore_xor) const
 {
     #ifdef SLOW_DEBUG
     if (solver->conf.sampling_vars) {
@@ -761,7 +878,7 @@ bool OccSimplifier::can_eliminate_var(const uint32_t var) const
     if (solver->value(var) != l_Undef ||
         solver->varData[var].removed != Removed::none ||
         solver->var_inside_assumptions(var) != l_Undef ||
-        xorclauses_vars[var] ||
+        (!ignore_xor && xorclauses_vars[var]) ||
         ((solver->conf.sampling_vars || solver->fast_backw.fast_backw_on) &&
             sampling_vars_occsimp[var])
     ) {
@@ -2213,6 +2330,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             if (solver->conf.doVarElim) {
                 if (solver->conf.do_empty_varelim) eliminate_empty_resolvent_vars();
                 if (solver->conf.do_full_varelim) if (!eliminate_vars()) continue;
+                if (solver->conf.do_full_varelim) eliminate_xor_vars();
             }
         } else if (token == "occ-rem-with-orgates") {
             lit_rem_with_or_gates();
@@ -2853,19 +2971,18 @@ bool OccSimplifier::uneliminate(uint32_t var)
     //Uneliminate it in theory
     bvestats_global.numVarsElimed--;
     solver->varData[var].removed = Removed::none;
-//     cout << " solver->set_decision_var called with var: " << var << endl;
     solver->set_decision_var(var);
 
     //Find if variable is really needed to be eliminated
     var = solver->map_inter_to_outer(var);
     uint32_t at_elimed_cls = blk_var_to_cls[var];
-    if (at_elimed_cls == numeric_limits<uint32_t>::max())
-        return solver->okay();
+    if (at_elimed_cls == numeric_limits<uint32_t>::max()) return solver->okay();
 
     //Eliminate it in practice
     //NOTE: Need to eliminate in theory first to avoid infinite loops
 
     //Mark for removal from elimed list
+    const bool is_xor = elimed_cls[at_elimed_cls].is_xor;
     elimed_cls[at_elimed_cls].toRemove = true;
     can_remove_elimed_clauses = true;
     assert(elimed_cls[at_elimed_cls].at(0, elimed_cls_lits).var() == var);
@@ -2886,10 +3003,9 @@ bool OccSimplifier::uneliminate(uint32_t var)
     while(bat < elimed_cls[at_elimed_cls].size()) {
         Lit l = elimed_cls[at_elimed_cls].at(bat, elimed_cls_lits);
         if (l == lit_Undef) {
-            solver->add_clause_outer_copylits(lits);
-            if (!solver->okay()) {
-                return false;
-            }
+            if (is_xor) solver->add_xor_clause_outside(lits, true);
+            else solver->add_clause_outside(lits);
+            if (!solver->okay()) return false;
             lits.clear();
         } else {
             lits.push_back(l);
@@ -2916,8 +3032,9 @@ void OccSimplifier::remove_by_frat_recently_elimed_clauses(size_t origElimedSize
         while(at < elimed_cls[i].size()) {
             const Lit l = elimed_cls[i].at(at, elimed_cls_lits);
             if (l == lit_Undef) {
-                const int32_t ID = newly_elimed_cls_IDs[at_ID++];
-                (*solver->frat) << del << ID << lits << fin;
+                const int32_t id = newly_elimed_cls_IDs[at_ID++];
+                if (elimed_cls[i].is_xor) *solver->frat << delx << id << lits << fin;
+                else *solver->frat << del << id << lits << fin;
                 lits.clear();
             } else {
                 lits.push_back(solver->map_outer_to_inter(l));
@@ -3044,6 +3161,8 @@ void OccSimplifier::set_limits()
         *solver->conf.global_timeout_multiplier;
     gate_based_litrem_time_limit = strengthening_time_limit;
     norm_varelim_time_limit    = 4ULL*1000LL*1000LL*solver->conf.varelim_time_limitM
+        *solver->conf.global_timeout_multiplier;
+    xor_varelim_time_limit    = 1000LL*1000LL*solver->conf.varelim_time_limitM
         *solver->conf.global_timeout_multiplier;
     empty_varelim_time_limit   = 200LL*1000LL*solver->conf.empty_varelim_time_limitM
         *solver->conf.global_timeout_multiplier;
@@ -3218,7 +3337,7 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(const Lit lit , bool add_t
             *limit_to_decrease -= (long)solver->watches[lits[1]].size()/4;
             solver->detach_bin_clause(lits[0], lits[1], red, watch.get_ID(), true, true);
         } else {
-            assert(false);
+            // IDX for XOR elimination
         }
 
         if (solver->conf.verbosity >= 3 && !lits.empty()) {
@@ -3230,7 +3349,7 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(const Lit lit , bool add_t
     }
 }
 
-void OccSimplifier::add_clause_to_blck(const vector<Lit>& lits, const int32_t ID) {
+void OccSimplifier::add_clause_to_blck(const vector<Lit>& lits, const int32_t id) {
     for(const Lit& l: lits) {
         removed_cl_with_var.touch(l.var());
         elim_calc_need_update.touch(l.var());
@@ -3241,7 +3360,7 @@ void OccSimplifier::add_clause_to_blck(const vector<Lit>& lits, const int32_t ID
     for(Lit l: lits_outer) elimed_cls_lits.push_back(l);
     elimed_cls_lits.push_back(lit_Undef);
     elimed_cls.back().end = elimed_cls_lits.size();
-    newly_elimed_cls_IDs.push_back(ID);
+    newly_elimed_cls_IDs.push_back(id);
 }
 
 void OccSimplifier::add_picosat_cls(
@@ -4563,10 +4682,10 @@ void OccSimplifier::set_var_as_eliminated(const uint32_t var)
     bvestats_global.numVarsElimed++;
 }
 
-void OccSimplifier::create_dummy_elimed_clause(const Lit lit)
+void OccSimplifier::create_dummy_elimed_clause(const Lit lit, bool is_xor)
 {
     elimed_cls_lits.push_back(solver->map_inter_to_outer(lit));
-    elimed_cls.push_back(ElimedClauses(elimed_cls_lits.size()-1, elimed_cls_lits.size()));
+    elimed_cls.push_back(ElimedClauses(elimed_cls_lits.size()-1, elimed_cls_lits.size(), is_xor));
     elimed_map_built = false;
 }
 

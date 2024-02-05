@@ -728,13 +728,7 @@ bool Solver::add_clause_helper(vector<Lit>& ps) {
     return true;
 }
 
-bool Solver::add_clause_outer_copylits(const vector<Lit>& lits)
-{
-    vector<Lit> ps = lits;
-    return Solver::add_clause_outer(ps);
-}
 
-// Input is ORIGINAL clause.
 bool Solver::add_clause_outer(vector<Lit>& ps, bool red)
 {
     ClauseStats clstats;

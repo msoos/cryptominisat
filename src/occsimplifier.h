@@ -59,7 +59,8 @@ class GateFinder;
 
 struct ElimedClauses {
     ElimedClauses() = default;
-    explicit ElimedClauses(size_t _start, size_t _end) : start(_start) , end(_end) {}
+    explicit ElimedClauses(size_t _start, size_t _end, bool _is_xor):
+        start(_start) , end(_end),  is_xor(_is_xor) {}
     const Lit& at(const uint64_t at, const vector<Lit>& elimed_cls_lits) const {
         return elimed_cls_lits[start+at];
     }
@@ -284,6 +285,7 @@ private:
     int64_t  gate_based_litrem_time_limit;
     int64_t  subsumption_time_limit;
     int64_t  norm_varelim_time_limit;
+    int64_t  xor_varelim_time_limit;
     int64_t  empty_varelim_time_limit;
     int64_t  varelim_num_limit;
     int64_t  varelim_sub_str_limit;
@@ -385,7 +387,7 @@ private:
     vec<Watched> tmp_rem_cls_copy;
     void        add_clause_to_blck(const vector<Lit>& lits, const int32_t ID);
     void        set_var_as_eliminated(const uint32_t var);
-    bool        can_eliminate_var(const uint32_t var) const;
+    bool        can_eliminate_var(const uint32_t var, const bool ignore_xor = false) const;
     bool        mark_and_push_to_added_long_cl_cls_containing(const Lit lit);
     bool        simulate_frw_sub_str_with_added_cl_to_var();
 
@@ -430,7 +432,7 @@ private:
     void clean_from_red_or_removed(
         const vec<Watched>& in,
         vec<Watched>& out);
-    void        create_dummy_elimed_clause(const Lit lit);
+    void  create_dummy_elimed_clause(const Lit lit, bool is_xor = false);
     vector<OccurClause> tmp_subs;
     bool        test_elim_and_fill_resolvents(uint32_t var);
     void        get_gate(Lit elim_lit, watch_subarray_const poss, watch_subarray_const negs);
@@ -553,6 +555,8 @@ private:
     );
     bool eliminate_vars();
     void eliminate_empty_resolvent_vars();
+    void eliminate_xor_vars();
+    bool only_red_and_idx_occ(const Lit l) const;
 
     /////////////////////
     //Helpers

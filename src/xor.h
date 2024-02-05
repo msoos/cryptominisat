@@ -38,7 +38,7 @@ namespace CMSat {
 
 class Xor {
 public:
-    Xor() {}
+    Xor() = default;
     explicit Xor(const vector<uint32_t>& cl, const bool _rhs): rhs(_rhs) {
         for (const auto& l: cl) vars.push_back(l);
     }
@@ -49,7 +49,7 @@ public:
         };
     }
     bool trivial() const { return size() == 0 && rhs == false; }
-    ~Xor() {}
+    ~Xor() = default;
 
     vector<uint32_t>::const_iterator begin() const { return vars.begin(); }
     vector<uint32_t>::const_iterator end() const { return vars.end(); }
@@ -77,13 +77,6 @@ public:
     void resize(const uint32_t newsize) { vars.resize(newsize); }
     const vector<uint32_t>& get_vars() const { return vars; }
     size_t size() const { return vars.size(); }
-
-    bool empty() const
-    {
-        if (!vars.empty()) return false;
-        if (rhs != true) return false;
-        return true;
-    }
 
     bool rhs = false;
     uint8_t prop_confl_watch = 0; // which watch is propagating?

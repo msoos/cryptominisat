@@ -205,7 +205,6 @@ class Solver : public Searcher
         pair<lbool, vector<lbool>> extend_minimized_model(const vector<lbool>& m);
 
         // Clauses
-        bool add_clause_outer_copylits(const vector<Lit>& ps);
         bool add_xor_clause_inter(
             const vector< Lit >& lits
             , bool rhs
