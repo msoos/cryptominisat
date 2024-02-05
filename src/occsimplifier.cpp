@@ -638,6 +638,8 @@ void OccSimplifier::check_cls_sanity() {
         if (cl->size() <= 2) cout << "ERROR: too short cl: " << *cl << endl;
         assert(cl->size() > 2);
     }
+    for(const auto& x: solver->xorclauses)
+        for(const auto& v: x) assert(solver->varData[v].removed == Removed::none);
 }
 
 void OccSimplifier::add_back_to_solver() {
@@ -730,29 +732,31 @@ void OccSimplifier::eliminate_xor_vars()
     vector<Lit> lits;
 
     vector<uint64_t> incid(solver->nVars(), 0);
-    vector<char> deleted(solver->xorclauses.size(), false);
+    vector<char> deleted(solver->xorclauses.size(), 0);
     set<uint32_t> to_elim;
     set<uint32_t> xvars;
     for(uint32_t i = 0; i < solver->xorclauses.size(); i++) {
         const auto& x = solver->xorclauses[i];
+        *limit_to_decrease -= x.size();
         for(const auto& v: x) {
-            (*limit_to_decrease)--;
-            incid[xorclauses_vars[v]]++;
+            incid[v]++;
             xvars.insert(v);
             solver->watches[Lit(v, false)].push(Watched(i, WatchType::watch_idx_t));
             solver->watches.smudge(Lit(v, false));
         }
     }
-    for(const auto& v: xvars)
+    for(const auto& v: xvars) {
         if (incid[v] == 1 && can_eliminate_var(v, true)
                 && only_red_and_idx_occ(Lit(v, false)) && only_red_and_idx_occ(Lit(v, true)))
             to_elim.insert(v);
+    }
 
     while(!to_elim.empty()) {
         const auto var = *to_elim.begin();
         to_elim.erase(var);
         if (!can_eliminate_var(var, true)) continue;
         const Lit lit = Lit(var, false);
+        verb_print(3, "xor-bve eliminating var: " << lit);
 
         //find xor
         Xor* x = nullptr;
@@ -779,8 +783,8 @@ void OccSimplifier::eliminate_xor_vars()
         set_var_as_eliminated(var);
         for(const auto& v: x->vars) {
             (*limit_to_decrease)--;
-            assert(incid[xorclauses_vars[v]] > 0);
-            incid[xorclauses_vars[v]]--;
+            assert(incid[v] > 0);
+            incid[v]--;
             if (incid[v] == 1 && can_eliminate_var(v, true)
                     && only_red_and_idx_occ(Lit(v, false)) && only_red_and_idx_occ(Lit(v, true)))
                 to_elim.insert(v);
@@ -793,10 +797,13 @@ void OccSimplifier::eliminate_xor_vars()
     solver->clean_occur_from_idx_types_only_smudged();
 
     // Remove the XOR clauses that have been marked deleted
-    auto xs = solver->xorclauses;
+    auto& xs = solver->xorclauses;
     uint32_t j = 0;
     for(uint32_t i = 0; i < xs.size(); i++) if (!deleted[i]) xs[j++] = xs[i];
     xs.resize(j);
+    SLOW_DEBUG_DO(for(const auto& x: xs) {
+        for(const auto& v: x) assert(solver->varData[v].removed == Removed::none);
+    });
 
     const double time_used = cpuTime() - my_time;
     const bool time_out = (*limit_to_decrease <= 0);
@@ -1622,7 +1629,7 @@ vector<OrGate> OccSimplifier::recover_or_gates()
     gateFinder = nullptr;
 
     solver->conf.maxOccurRedMB = backup;
-    finishUp(origTrailSize);
+    finish_up(origTrailSize);
     return or_gates;
 }
 
@@ -1846,7 +1853,7 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(const vector<uint
                << " empty-res: " << equiv_subformula);
 
     solver->conf.maxOccurRedMB = backup;
-    finishUp(origTrailSize);
+    finish_up(origTrailSize);
     return ret;
 }
 
@@ -1909,7 +1916,7 @@ void OccSimplifier::clean_sampl_and_get_empties(
         << " empty_occ: " << empty_occ << solver->conf.print_times(time_used));
 
     solver->conf.maxOccurRedMB = backup;
-    finishUp(origTrailSize);
+    finish_up(origTrailSize);
 }
 
 vector<ITEGate> OccSimplifier::recover_ite_gates()
@@ -1976,7 +1983,7 @@ vector<ITEGate> OccSimplifier::recover_ite_gates()
     }
 
     solver->conf.maxOccurRedMB = backup;
-    finishUp(origTrailSize);
+    finish_up(origTrailSize);
     return or_gates;
 }
 
@@ -2467,7 +2474,7 @@ bool OccSimplifier::simplify(const bool _startup, const std::string& schedule) {
     execute_simplifier_strategy(schedule);
 
     remove_by_frat_recently_elimed_clauses(origElimedSize);
-    finishUp(origTrailSize);
+    finish_up(origTrailSize);
 
     return solver->okay();
 }
@@ -3058,7 +3065,7 @@ void OccSimplifier::build_elimed_map()
     elimed_map_built = true;
 }
 
-void OccSimplifier::finishUp(size_t origTrailSize) {
+void OccSimplifier::finish_up(size_t origTrailSize) {
     runStats.zeroDepthAssings = solver->trail_size() - origTrailSize;
     const double my_time = cpuTime();
     frat_func_start();

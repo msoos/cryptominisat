@@ -3486,8 +3486,8 @@ bool Searcher::attach_xorclauses() {
     if (!okay()) return okay();
 
     uint32_t j = 0;
-    for(uint32_t i = 0; i < xorclauses.size(); i ++) {
-        Xor& x = xorclauses[i];
+    for(auto &x : xorclauses) {
+        SLOW_DEBUG_DO(for(const auto& v: xorclauses[i]) assert(varData[v].removed == Removed::none));
         if (x.trivial()) {
             assert(x.reason_cl_ID == 0);
             continue;
@@ -3495,19 +3495,19 @@ bool Searcher::attach_xorclauses() {
         if (x.size() == 2) {
             vector<Lit> lits = vars_to_lits(x.vars);
             lits[0] ^= !x.rhs;
-            const auto ID1 = ++clauseID;
-            *frat << implyclfromx << ID1 << lits << fratchain << x.XID << fin;
-            solver->add_clause_int_frat(lits, ID1);
+            const auto i_d1 = ++clauseID;
+            *frat << implyclfromx << i_d1 << lits << fratchain << x.XID << fin;
+            solver->add_clause_int_frat(lits, i_d1);
             if (!okay()) return false;
             lits[0] ^= true; lits[1] ^= true;
-            const auto ID2 = ++clauseID;
-            *frat << implyclfromx << ID2 << lits << fratchain << x.XID << fin;
-            solver->add_clause_int_frat(lits, ID2);
+            const auto i_d2 = ++clauseID;
+            *frat << implyclfromx << i_d2 << lits << fratchain << x.XID << fin;
+            solver->add_clause_int_frat(lits, i_d2);
             if (!okay()) return false;
             continue;
         }
         assert(x.size() > 2);
-        xorclauses[j++] = xorclauses[i];
+        xorclauses[j++] = x;
         attach_xor_clause(j-1);
     }
     xorclauses.resize(j);

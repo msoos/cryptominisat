@@ -58,7 +58,7 @@ TEST_F(ternary_resolv, do_1)
 
     occsimp->setup();
     occsimp->ternary_res();
-    occsimp->finishUp(0);
+    occsimp->finish_up(0);
     check_red_cls_contains(s, "1, 3, 4");
 }
 
@@ -70,7 +70,7 @@ TEST_F(ternary_resolv, do_2)
 
     occsimp->setup();
     occsimp->ternary_res();
-    occsimp->finishUp(0);
+    occsimp->finish_up(0);
     check_red_cls_contains(s, "1, 3, 4");
     check_red_cls_contains(s, "1, 2, 5");
 }
@@ -86,7 +86,7 @@ TEST_F(ternary_resolv, do_2_v2)
 
     occsimp->setup();
     occsimp->ternary_res();
-    occsimp->finishUp(0);
+    occsimp->finish_up(0);
     check_red_cls_contains(s, "1, 3, 4");
     check_red_cls_contains(s, "10, 30, 40");
 }
@@ -98,7 +98,7 @@ TEST_F(ternary_resolv, do_1_v2)
 
     occsimp->setup();
     occsimp->ternary_res();
-    occsimp->finishUp(0);
+    occsimp->finish_up(0);
     check_red_cls_contains(s, "-1, 3, 4");
 }
 
@@ -109,7 +109,7 @@ TEST_F(ternary_resolv, do_1_v3)
 
     occsimp->setup();
     occsimp->ternary_res();
-    occsimp->finishUp(0);
+    occsimp->finish_up(0);
     check_red_cls_contains(s, "-1, 3, -4");
 }
 
@@ -120,7 +120,7 @@ TEST_F(ternary_resolv, do_1_v4)
 
     occsimp->setup();
     occsimp->ternary_res();
-    occsimp->finishUp(0);
+    occsimp->finish_up(0);
     check_red_cls_contains(s, "-1, -3, -4");
 }
 
@@ -133,7 +133,7 @@ TEST_F(ternary_resolv, only_one_v1)
     occsimp->ternary_res();
     occsimp->ternary_res();
     occsimp->ternary_res();
-    occsimp->finishUp(0);
+    occsimp->finish_up(0);
     EXPECT_EQ(get_num_red_cls_contains(s, "1, 3, 4"), 1);
 }
 

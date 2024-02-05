@@ -55,7 +55,7 @@ TEST_F(gate_test, do_1)
 
     occsimp->setup();
     occsimp->lit_rem_with_or_gates();
-    occsimp->finishUp(0);
+    occsimp->finish_up(0);
     check_irred_cls_contains(s, "1, 4, 5");
 }
 
@@ -69,7 +69,7 @@ TEST_F(gate_test, do_2)
 
     occsimp->setup();
     occsimp->lit_rem_with_or_gates();
-    occsimp->finishUp(0);
+    occsimp->finish_up(0);
     check_irred_cls_contains(s, "1, 4, 5");
     check_irred_cls_contains(s, "1, 7, 6");
 }
@@ -84,7 +84,7 @@ TEST_F(gate_test, do_3)
 
     occsimp->setup();
     occsimp->lit_rem_with_or_gates();
-    occsimp->finishUp(0);
+    occsimp->finish_up(0);
     check_irred_cls_contains(s, "1, 4, 5");
     check_irred_cls_contains(s, "1, 6");
 }

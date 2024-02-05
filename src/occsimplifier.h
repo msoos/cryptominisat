@@ -228,7 +228,7 @@ public:
 
     //Setup and teardown. Should be private, but testing needs it to be public
     bool setup();
-    void finishUp(size_t origTrailSize);
+    void finish_up(size_t origTrailSize);
 
     //Ternary resolution. Should be private but testing needs it to be public
     bool ternary_res();
