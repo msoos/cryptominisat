@@ -79,7 +79,7 @@ class Searcher : public HyperEngine
         #ifdef STATS_NEEDED_BRANCH
         void check_calc_vardist_features(bool force = false);
         #endif
-        void dump_search_loop_stats(double myTime);
+        void dump_search_loop_stats(double my_time);
         bool must_abort(lbool status);
         PropBy insert_gpu_clause(Lit* lits, uint32_t count);
         uint64_t luby_loop_num = 0;
@@ -415,7 +415,7 @@ class Searcher : public HyperEngine
         template<bool inprocess> void decayClauseAct();
 
         //SQL
-        void dump_search_sql(const double myTime);
+        void dump_search_sql(const double my_time);
         void set_clause_data(
             Clause* cl
             , const uint32_t glue

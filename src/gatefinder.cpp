@@ -70,7 +70,7 @@ void GateFinder::find_or_gates_and_update_stats()
 {
     assert(solver->ok);
 
-    double myTime = cpuTime();
+    double my_time = cpuTime();
     const int64_t orig_numMaxGateFinder =
         solver->conf.gatefinder_time_limitM*100LL*1000LL
         *solver->conf.global_timeout_multiplier;
@@ -81,7 +81,7 @@ void GateFinder::find_or_gates_and_update_stats()
     runStats.gatesSize += 2*orGates.size();
     runStats.num+=orGates.size();
 
-    const double time_used = cpuTime() - myTime;
+    const double time_used = cpuTime() - my_time;
     const bool time_out = (numMaxGateFinder <= 0);
     const double time_remain = float_div(numMaxGateFinder, orig_numMaxGateFinder);
     runStats.findGateTime = time_used;

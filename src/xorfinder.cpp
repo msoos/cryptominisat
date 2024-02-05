@@ -138,7 +138,7 @@ bool XorFinder::find_xors() {
     for(auto& gw: solver->gwatches) gw.clear();
     if (!solver->okay()) return false;
 
-    double myTime = cpuTime();
+    double my_time = cpuTime();
     const int64_t orig_xor_find_time_limit =
         1000LL*1000LL*solver->conf.xor_finder_time_limitM
         *solver->conf.global_timeout_multiplier;
@@ -146,7 +146,7 @@ bool XorFinder::find_xors() {
     xor_find_time_limit = orig_xor_find_time_limit;
 
     occsimplifier->sort_occurs_and_set_abst();
-    verb_print(1, "[occ-xor] sort occur list T: " << (cpuTime()-myTime));
+    verb_print(1, "[occ-xor] sort occur list T: " << (cpuTime()-my_time));
     DEBUG_MARKED_CLAUSE_DO(assert(solver->no_marked_clauses()));
 
     find_xors_based_on_long_clauses();
@@ -163,7 +163,7 @@ bool XorFinder::find_xors() {
     //Print stats
     const bool time_out = (xor_find_time_limit < 0);
     const double time_remain = float_div(xor_find_time_limit, orig_xor_find_time_limit);
-    runStats.findTime = cpuTime() - myTime;
+    runStats.findTime = cpuTime() - my_time;
     runStats.time_outs += time_out;
     solver->print_xors(solver->xorclauses);
 
@@ -174,7 +174,7 @@ bool XorFinder::find_xors() {
         solver->sqlStats->time_passed(
             solver
             , "xor-find"
-            , cpuTime() - myTime
+            , cpuTime() - my_time
             , time_out
             , time_remain
         );

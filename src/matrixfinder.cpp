@@ -105,7 +105,7 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
     table.resize(solver->nVars(), var_Undef);
     reverseTable.clear();
     matrix_no = 0;
-    double myTime = cpuTime();
+    double my_time = cpuTime();
 
     XorFinder finder(nullptr, solver);
     solver->clauseCleaner->clean_xor_clauses(solver->xorclauses, false);
@@ -176,7 +176,7 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
     uint32_t numMatrixes = setup_matrices_attach_remaining_cls();
 
     const bool time_out =  false;
-    const double time_used = cpuTime() - myTime;
+    const double time_used = cpuTime() - my_time;
     verb_print(1, "[matrix] Using " << numMatrixes
         << " matrices recovered from " << solver->xorclauses.size() << " xors"
         << solver->conf.print_times(time_used, time_out));

@@ -222,7 +222,7 @@ void SubsumeStrengthen::backw_sub_long_with_long()
     if (simplifier->clauses.empty())
         return;
 
-    double myTime = cpuTime();
+    double my_time = cpuTime();
     size_t wenThrough = 0;
     Sub0Ret sub0ret;
     const int64_t orig_limit = simplifier->subsumption_time_limit;
@@ -256,7 +256,7 @@ void SubsumeStrengthen::backw_sub_long_with_long()
         sub0ret += backw_sub_with_long(offset);
     }
 
-    const double time_used = cpuTime() - myTime;
+    const double time_used = cpuTime() - my_time;
     const bool time_out = (*simplifier->limit_to_decrease <= 0);
     const double time_remain = float_div(*simplifier->limit_to_decrease, orig_limit);
     if (solver->conf.verbosity) {
@@ -281,14 +281,14 @@ void SubsumeStrengthen::backw_sub_long_with_long()
 
     //Update time used
     runStats.sub0 += sub0ret;
-    runStats.subsumeTime += cpuTime() - myTime;
+    runStats.subsumeTime += cpuTime() - my_time;
 }
 
 bool SubsumeStrengthen::backw_str_long_with_long()
 {
     assert(solver->ok);
 
-    double myTime = cpuTime();
+    double my_time = cpuTime();
     size_t wenThrough = 0;
     const int64_t orig_limit = *simplifier->limit_to_decrease;
     Sub1Ret ret;
@@ -322,7 +322,7 @@ bool SubsumeStrengthen::backw_str_long_with_long()
 
     }
 
-    const double time_used = cpuTime() - myTime;
+    const double time_used = cpuTime() - my_time;
     const bool time_out = *simplifier->limit_to_decrease <= 0;
     const double time_remain = float_div(*simplifier->limit_to_decrease, orig_limit);
 
@@ -350,7 +350,7 @@ bool SubsumeStrengthen::backw_str_long_with_long()
 
     //Update time used
     runStats.sub1 += ret;
-    runStats.strengthenTime += cpuTime() - myTime;
+    runStats.strengthenTime += cpuTime() - my_time;
 
     return solver->okay();
 }
@@ -927,7 +927,7 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins()
     //Stats
     int64_t orig_time_limit = *simplifier->limit_to_decrease;
     const size_t origTrailSize = solver->trail_size();
-    double myTime = cpuTime();
+    double my_time = cpuTime();
     subsumedBin = 0;
     strBin = 0;
 
@@ -946,7 +946,7 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins()
         }
     }
 
-    const double time_used = cpuTime() - myTime;
+    const double time_used = cpuTime() - my_time;
     const bool time_out = *simplifier->limit_to_decrease <= 0;
     const double time_remain = float_div(*simplifier->limit_to_decrease, orig_time_limit);
     if (solver->conf.verbosity) {

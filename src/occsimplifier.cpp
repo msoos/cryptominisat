@@ -699,7 +699,7 @@ void OccSimplifier::eliminate_empty_resolvent_vars()
     assert(added_irred_bin.empty());
 
     uint32_t var_elimed = 0;
-    double myTime = cpuTime();
+    double my_time = cpuTime();
     const int64_t orig_empty_varelim_time_limit = empty_varelim_time_limit;
     auto old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &empty_varelim_time_limit;
@@ -727,7 +727,7 @@ void OccSimplifier::eliminate_empty_resolvent_vars()
     solver->clean_occur_from_removed_clauses_only_smudged();
     free_clauses_to_free();
 
-    const double time_used = cpuTime() - myTime;
+    const double time_used = cpuTime() - my_time;
     const bool time_out = (*limit_to_decrease <= 0);
     const double time_remain =  float_div(*limit_to_decrease, orig_empty_varelim_time_limit);
     if (solver->conf.verbosity) {
@@ -1016,7 +1016,7 @@ void OccSimplifier::subs_with_resolvent_clauses()
 {
     assert(solver->okay());
     assert(solver->prop_at_head());
-    double myTime = cpuTime();
+    double my_time = cpuTime();
     uint64_t removed = 0;
     uint64_t resolvents_checked = 0;
     auto old_limit_to_decrease = limit_to_decrease;
@@ -1102,7 +1102,7 @@ void OccSimplifier::subs_with_resolvent_clauses()
     free_clauses_to_free();
     verb_print(1, "[occ-resolv-subs] removed: " << removed
         << " checked: " << resolvents_checked
-        << " T: " << (cpuTime()-myTime));
+        << " T: " << (cpuTime()-my_time));
     limit_to_decrease = old_limit_to_decrease;
 }
 
@@ -1119,7 +1119,7 @@ bool OccSimplifier::eliminate_vars()
     turned_off_irreg_gate = false;
 
     //Set-up
-    double myTime = cpuTime();
+    double my_time = cpuTime();
     size_t vars_elimed = 0;
     size_t wenThrough = 0;
     time_spent_on_calc_otf_update = 0;
@@ -1345,7 +1345,7 @@ end:
     free_clauses_to_free();
 
     assert(solver->watches.get_smudged_list().empty());
-    const double time_used = cpuTime() - myTime;
+    const double time_used = cpuTime() - my_time;
     const bool time_out = (*limit_to_decrease <= 0);
     const double time_remain = float_div(*limit_to_decrease, orig_norm_varelim_time_limit);
 
@@ -1373,7 +1373,7 @@ end:
     limit_to_decrease = old_limit_to_decrease;
 
     bvestats.varElimTimeOut += time_out;
-    bvestats.timeUsed = cpuTime() - myTime;
+    bvestats.timeUsed = cpuTime() - my_time;
     bvestats_global += bvestats;
 
     return solver->okay();
@@ -1390,11 +1390,11 @@ void OccSimplifier::free_clauses_to_free()
 
 bool OccSimplifier::fill_occur_and_print_stats()
 {
-    double myTime = cpuTime();
+    double my_time = cpuTime();
     remove_all_longs_from_watches();
     if (!fill_occur()) return false;
     sanityCheckElimedVars();
-    const double linkInTime = cpuTime() - myTime;
+    const double linkInTime = cpuTime() - my_time;
     runStats.linkInTime += linkInTime;
     if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(
@@ -1745,7 +1745,7 @@ void OccSimplifier::clean_sampl_and_get_empties(
     startup = false;
     const double backup = solver->conf.maxOccurRedMB;
     solver->conf.maxOccurRedMB = 0;
-    const double myTime = cpuTime();
+    const double my_time = cpuTime();
 
     set<uint32_t> empty_vars_set;
 
@@ -1787,7 +1787,7 @@ void OccSimplifier::clean_sampl_and_get_empties(
     for(auto const& v: empty_vars_set) empty_vars.push_back(v);
 
     end:
-    double time_used = cpuTime() - myTime;
+    double time_used = cpuTime() - my_time;
     verb_print(1, "[cms-equiv-sub] equiv_subformula: " << mirror
         << " empty_occ: " << empty_occ << solver->conf.print_times(time_used));
 
@@ -1892,7 +1892,7 @@ bool OccSimplifier::cl_rem_with_or_gates()
     assert(added_irred_bin.empty());
     assert(added_long_cl.empty());
 
-    double myTime = cpuTime();
+    double my_time = cpuTime();
     gateFinder = new GateFinder(this, solver);
     gateFinder->find_all();
     auto gates = gateFinder->get_gates();
@@ -1972,9 +1972,9 @@ bool OccSimplifier::cl_rem_with_or_gates()
     SLOW_DEBUG_DO(check_clauses_lits_ordered());
 
     //Update global stats
-    const double time_used = cpuTime() - myTime;
+    const double time_used = cpuTime() - my_time;
     //const bool time_out = (*limit_to_decrease <= 0);
-    verb_print(1, "[occ-cl-rem-gates] removed: " << removed << " T: " << cpuTime()-myTime);
+    verb_print(1, "[occ-cl-rem-gates] removed: " << removed << " T: " << cpuTime()-my_time);
 
 
     if (solver->sqlStats) {
@@ -1997,7 +1997,7 @@ bool OccSimplifier::lit_rem_with_or_gates() {
     assert(added_irred_bin.empty());
     assert(added_long_cl.empty());
 
-    double myTime = cpuTime();
+    double my_time = cpuTime();
     gateFinder = new GateFinder(this, solver);
     gateFinder->find_all();
     auto gates = gateFinder->get_gates();
@@ -2118,7 +2118,7 @@ bool OccSimplifier::lit_rem_with_or_gates() {
         SLOW_DEBUG_DO(check_clauses_lits_ordered());
     }
 
-    const double time_used = cpuTime() - myTime;
+    const double time_used = cpuTime() - my_time;
     verb_print(1, "[occ-gate-based-lit-rem]"
         << " lit-rem: " << shortened
         << " cl-rem: " << removed
@@ -2362,7 +2362,7 @@ bool OccSimplifier::ternary_res()
     assert(cl_to_free_later.empty());
     if (clauses.empty()) return solver->okay();
 
-    double myTime = cpuTime();
+    double my_time = cpuTime();
     int64_t orig_ternary_res_time_limit = ternary_res_time_limit;
     auto old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &ternary_res_time_limit;
@@ -2392,7 +2392,7 @@ bool OccSimplifier::ternary_res()
 
     end:
     //Update global stats
-    const double time_used = cpuTime() - myTime;
+    const double time_used = cpuTime() - my_time;
     const bool time_out = (*limit_to_decrease <= 0);
     const double time_remain =  float_div(*limit_to_decrease, orig_ternary_res_time_limit);
     if (solver->conf.verbosity) {
@@ -2943,7 +2943,7 @@ void OccSimplifier::build_elimed_map()
 
 void OccSimplifier::finishUp(size_t origTrailSize) {
     runStats.zeroDepthAssings = solver->trail_size() - origTrailSize;
-    const double myTime = cpuTime();
+    const double my_time = cpuTime();
     frat_func_start();
 
     //Add back clauses to solver
@@ -2964,7 +2964,7 @@ void OccSimplifier::finishUp(size_t origTrailSize) {
     }
 
     //Update global stats
-    const double time_used = cpuTime() - myTime;
+    const double time_used = cpuTime() - my_time;
     runStats.finalCleanupTime += time_used;
     if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(
@@ -4615,7 +4615,7 @@ bool OccSimplifier::all_occ_based_lit_rem()
     assert(solver->okay());
     assert(solver->prop_at_head());
 
-    double myTime = cpuTime();
+    double my_time = cpuTime();
     //TODO this is not being used, bogoprops is not checked here
     auto old_limit_to_decrease = limit_to_decrease;
     limit_to_decrease = &occ_based_lit_rem_time_limit;
@@ -4659,7 +4659,7 @@ bool OccSimplifier::all_occ_based_lit_rem()
         solver->check_implicit_propagated();
     }
 
-    double time_used = cpuTime() - myTime;
+    double time_used = cpuTime() - my_time;
     if (solver->conf.verbosity) {
         cout
         << "c [occ-lit-rem] Occ Lit Rem: " << removed_all

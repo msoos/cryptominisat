@@ -233,7 +233,7 @@ bool DistillerLong::distill_long_cls_all(
     verb_print(6, "c Doing distillation branch for long clauses");
     frat_func_start();
 
-    double myTime = cpuTime();
+    double my_time = cpuTime();
     const size_t origTrailSize = solver->trail_size();
 
     //Time-limiting
@@ -332,7 +332,7 @@ bool DistillerLong::distill_long_cls_all(
     //Add back the prioritized clauses
     for(const auto off: todo) offs.push_back(off);
 
-    const double time_used = cpuTime() - myTime;
+    const double time_used = cpuTime() - my_time;
     const double time_remain = float_div(
         maxNumProps - ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps),
         orig_maxNumProps);

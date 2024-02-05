@@ -64,7 +64,7 @@ void CMSBosphorus::add_clauses()
 
 bool CMSBosphorus::doit()
 {
-    double myTime = cpuTime();
+    double my_time = cpuTime();
     uint32_t maxiters = 1;
 
     bosph = new Bosph::Bosphorus;
@@ -116,7 +116,7 @@ bool CMSBosphorus::doit()
     bosph->delete_dimacs(dimacs);
 
     // Finish up
-    double time_used = cpuTime() - myTime;
+    double time_used = cpuTime() - my_time;
     if (solver->conf.verbosity) {
         cout << "c [bosph] finished "
         << solver->conf.print_times(time_used)

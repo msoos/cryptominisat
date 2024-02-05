@@ -40,7 +40,7 @@ bool StrImplWImpl::str_impl_w_impl()
         solver->conf.distill_implicit_with_implicit_time_limitM*1000LL*1000LL
         *solver->conf.global_timeout_multiplier;
     const int64_t orig_time = timeAvailable;
-    double myTime = cpuTime();
+    double my_time = cpuTime();
 
     //Cannot handle empty
     if (solver->watches.size() == 0)
@@ -78,7 +78,7 @@ end:
     if (solver->conf.verbosity) {
         str_impl_data.print(
             solver->trail_size() - origTrailSize
-            , cpuTime() - myTime
+            , cpuTime() - my_time
             , timeAvailable
             , orig_time
             , solver

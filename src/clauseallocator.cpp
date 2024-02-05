@@ -264,7 +264,7 @@ void ClauseAllocator::consolidate(
         }
         return;
     }
-    const double myTime = cpuTime();
+    const double my_time = cpuTime();
 
     //Pointers that will be moved along
     BASE_DATA_TYPE * const newDataStart = (BASE_DATA_TYPE*)malloc(currentlyUsedSize*sizeof(BASE_DATA_TYPE));
@@ -312,7 +312,7 @@ void ClauseAllocator::consolidate(
     free(dataStart);
     dataStart = newDataStart;
 
-    const double time_used = cpuTime() - myTime;
+    const double time_used = cpuTime() - my_time;
     if (solver->conf.verbosity >= 2
         || (lower_verb && solver->conf.verbosity)
     ) {

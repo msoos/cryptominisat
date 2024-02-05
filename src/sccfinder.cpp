@@ -46,7 +46,7 @@ bool SCCFinder::performSCC(uint64_t* bogoprops_given)
     runStats.clear();
     runStats.numCalls = 1;
     depth_warning_issued = false;
-    const double myTime = cpuTime();
+    const double my_time = cpuTime();
 
     globalIndex = 0;
     index.clear();
@@ -73,7 +73,7 @@ bool SCCFinder::performSCC(uint64_t* bogoprops_given)
     }
 
     //Update & print stats
-    runStats.cpu_time = cpuTime() - myTime;
+    runStats.cpu_time = cpuTime() - my_time;
     runStats.foundXorsNew = binxors.size();
     if (solver->conf.verbosity) {
         if (solver->conf.verbosity >= 3)

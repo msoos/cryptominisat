@@ -190,8 +190,8 @@ void Main::readInStandardInput(SATSolver* solver2)
 
 void Main::parseInAllFiles(SATSolver* solver2)
 {
-    const double myTimeTotal = cpuTimeTotal();
-    const double myTime = cpuTime();
+    const double my_timeTotal = cpuTimeTotal();
+    const double my_time = cpuTime();
 
     //First read normal extra files
     solver->add_sql_tag("stdin", fileNamePresent ? "False" : "True");
@@ -203,13 +203,13 @@ void Main::parseInAllFiles(SATSolver* solver2)
             cout
             << "c Sum parsing time among all threads (wall time will differ): "
             << std::fixed << std::setprecision(2)
-            << (cpuTimeTotal() - myTimeTotal)
+            << (cpuTimeTotal() - my_timeTotal)
             << " s" << endl;
         } else {
             cout
             << "c Parsing time: "
             << std::fixed << std::setprecision(2)
-            << (cpuTime() - myTime)
+            << (cpuTime() - my_time)
             << " s" << endl;
         }
     }

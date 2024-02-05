@@ -84,7 +84,7 @@ bool Solver::oracle_vivif(bool& finished)
     execute_inprocess_strategy(false, "must-renumber");
     if (!okay()) return okay();
     if (nVars() < 10) return okay();
-    double myTime = cpuTime();
+    double my_time = cpuTime();
 
     auto clauses = get_irred_cls_for_oracle();
     detach_and_free_all_irred_cls();
@@ -147,7 +147,7 @@ bool Solver::oracle_vivif(bool& finished)
             << " cache-added: " << oracle.getStats().cache_added
             << " learnt-units: " << oracle.getStats().learned_units
             << " finished (vivif or backbone): " << finished
-            << " T: " << std::setprecision(2) << (cpuTime()-myTime));
+            << " T: " << std::setprecision(2) << (cpuTime()-my_time));
     return solver->okay();
 }
 
@@ -267,7 +267,7 @@ bool Solver::oracle_sparsify()
     if (!okay()) return okay();
     if (nVars() < 10) return okay();
 
-    double myTime = cpuTime();
+    double my_time = cpuTime();
     uint32_t removed = 0;
     uint32_t removed_bin = 0;
     auto cs = order_clauses_for_oracle();
@@ -297,7 +297,7 @@ bool Solver::oracle_sparsify()
         tmp.push_back(orclit(Lit(nVars()+i, false)));
         oracle.AddClause(tmp, false);
     }
-    const double build_time = cpuTime() - myTime;
+    const double build_time = cpuTime() - my_time;
 
     // Set all assumptions to FALSE, i.e. all clauses are active
     for (uint32_t i = 0; i < tot_cls; i++) {
@@ -310,7 +310,7 @@ bool Solver::oracle_sparsify()
         if ((10*i)/(tot_cls) != last_printed) {
             verb_print(1, "[oracle-sparsify] done with " << ((10*i)/(tot_cls))*10 << " %"
                 << " oracle mems: " << print_value_kilo_mega(oracle.getStats().mems)
-                << " T: " << (cpuTime()-myTime));
+                << " T: " << (cpuTime()-my_time));
             last_printed = (10*i)/(tot_cls);
         }
 
@@ -419,7 +419,7 @@ bool Solver::oracle_sparsify()
         << " cache-used: " << oracle.getStats().cache_useful
         << " cache-added: " << oracle.getStats().cache_added
         << " learnt-units: " << oracle.getStats().learned_units
-        << " T: " << (cpuTime()-myTime) << " buildT: " << build_time);
+        << " T: " << (cpuTime()-my_time) << " buildT: " << build_time);
 
     return solver->okay();
 }

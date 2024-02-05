@@ -75,7 +75,7 @@ bool DistillerBin::distill_bin_cls_all( double time_mult) {
     if (time_mult == 0.0) return solver->okay();
     verb_print(6, "Doing distillation branch for long clauses");
 
-    double myTime = cpuTime();
+    double my_time = cpuTime();
     const size_t origTrailSize = solver->trail_size();
     frat_func_start();
 
@@ -110,7 +110,7 @@ bool DistillerBin::distill_bin_cls_all( double time_mult) {
         if (time_out || !solver->okay()) break;
     }
 
-    const double time_used = cpuTime() - myTime;
+    const double time_used = cpuTime() - my_time;
     const double time_remain = float_div(
         maxNumProps - ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps),
         orig_maxNumProps);

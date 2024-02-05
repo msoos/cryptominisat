@@ -219,7 +219,7 @@ bool VarReplacer::perform_replace() {
     //Set up stats
     runStats.clear();
     runStats.numCalls = 1;
-    const double myTime = cpuTime();
+    const double my_time = cpuTime();
     const size_t origTrailSize = solver->trail_size();
 
     if (!solver->clauseCleaner->remove_and_clean_all()) return false;
@@ -266,7 +266,7 @@ end:
     assert(solver->prop_at_head() || !solver->ok);
 
     //Update stats
-    const double time_used = cpuTime() - myTime;
+    const double time_used = cpuTime() - my_time;
     runStats.zeroDepthAssigns += solver->trail_size() - origTrailSize;
     runStats.cpu_time = time_used;
     globalStats += runStats;

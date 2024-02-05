@@ -311,7 +311,7 @@ bool DistillerLongWithImpl::sub_str_all_cl_with_watch(
     assert(solver->ok);
 
     //Stats
-    double myTime = cpuTime();
+    double my_time = cpuTime();
 
     const int64_t orig_time_available = calc_time_available(alsoStrengthen, red);
     timeAvailable = orig_time_available;
@@ -361,7 +361,7 @@ bool DistillerLongWithImpl::sub_str_all_cl_with_watch(
 
     dump_stats_for_sub_str_all_cl_with_watch(red
         , alsoStrengthen
-        , myTime
+        , my_time
         , orig_time_available
     );
 
@@ -371,11 +371,11 @@ bool DistillerLongWithImpl::sub_str_all_cl_with_watch(
 void DistillerLongWithImpl::dump_stats_for_sub_str_all_cl_with_watch(
     bool red
     , bool alsoStrengthen
-    , double myTime
+    , double my_time
     , double orig_time_available
 ) {
     //Set stats
-    const double time_used = cpuTime() - myTime;
+    const double time_used = cpuTime() - my_time;
     const bool time_out = timeAvailable < 0;
     const double time_remain = float_div(timeAvailable, orig_time_available);
     tmpStats.numClSubsumed += watch_based_data.get_cl_subsumed();

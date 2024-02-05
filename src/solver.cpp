@@ -900,7 +900,7 @@ bool Solver::renumber_variables(bool must_renumber)
     if (!must_renumber && calc_renumber_saving() < 0.2) return okay();
     if (!clear_gauss_matrices(false)) return false;
 
-    double myTime = cpuTime();
+    double my_time = cpuTime();
     if (!clauseCleaner->remove_and_clean_all()) return false;
 
     //outer_to_inter[10] = 0 ---> what was 10 is now 0.
@@ -931,7 +931,7 @@ bool Solver::renumber_variables(bool must_renumber)
     test_reflectivity_of_renumbering();
 
     //Print results
-    const double time_used = cpuTime() - myTime;
+    const double time_used = cpuTime() - my_time;
     if (conf.verbosity) {
         cout
         << "c [renumber]"
@@ -995,7 +995,7 @@ void Solver::save_on_var_memory(const uint32_t newNumVars)
 {
     //print_mem_stats();
 
-    const double myTime = cpuTime();
+    const double my_time = cpuTime();
     minNumVars = newNumVars;
     Searcher::save_on_var_memory();
 
@@ -1005,7 +1005,7 @@ void Solver::save_on_var_memory(const uint32_t newNumVars)
     }
     datasync->save_on_var_memory();
 
-    const double time_used = cpuTime() - myTime;
+    const double time_used = cpuTime() - my_time;
     if (sqlStats) {
         sqlStats->time_passed_min(
             this
@@ -1174,7 +1174,7 @@ void Solver::extend_solution(const bool only_sampling_solution) {
     }
     #endif
 
-    const double myTime = cpuTime();
+    const double my_time = cpuTime();
     updateArrayRev(model, inter_to_outerMain);
 
     if (!only_sampling_solution) {
@@ -1200,7 +1200,7 @@ void Solver::extend_solution(const bool only_sampling_solution) {
     }
 
     check_model_for_assumptions();
-    if (sqlStats) sqlStats->time_passed_min( this , "extend solution" , cpuTime()-myTime);
+    if (sqlStats) sqlStats->time_passed_min( this , "extend solution" , cpuTime()-my_time);
 }
 
 void Solver::set_up_sql_writer()
@@ -2597,7 +2597,7 @@ void Solver::check_all_clause_propagated() const {
 
 void Solver::check_implicit_propagated() const
 {
-    const double myTime = cpuTime();
+    const double my_time = cpuTime();
     size_t wsLit = 0;
     for(watch_array::const_iterator
         it = watches.begin(), end = watches.end()
@@ -2630,7 +2630,7 @@ void Solver::check_implicit_propagated() const
             }
         }
     }
-    const double time_used = cpuTime() - myTime;
+    const double time_used = cpuTime() - my_time;
     if (sqlStats) {
         sqlStats->time_passed_min(
             this
@@ -2921,7 +2921,7 @@ void Solver::check_implicit_stats(const bool onlypairs) const
     #ifdef NDEBUG
     return;
     #endif
-    const double myTime = cpuTime();
+    const double my_time = cpuTime();
 
     //Check number of red & irred binary clauses
     uint64_t thisNumRedBins = 0;
@@ -2981,7 +2981,7 @@ void Solver::check_implicit_stats(const bool onlypairs) const
 
     end:
 
-    const double time_used = cpuTime() - myTime;
+    const double time_used = cpuTime() - my_time;
     if (sqlStats) {
         sqlStats->time_passed_min(
             this
@@ -3000,7 +3000,7 @@ void Solver::check_stats(const bool allowFreed) const
 
     check_implicit_stats();
 
-    const double myTime = cpuTime();
+    const double my_time = cpuTime();
     uint64_t numLitsIrred = count_lits(longIrredCls, false, allowFreed);
     if (numLitsIrred != litStats.irredLits) {
         std::cerr << "ERROR: " << endl
@@ -3020,7 +3020,7 @@ void Solver::check_stats(const bool allowFreed) const
     assert(numLitsRed == litStats.redLits);
     assert(numLitsIrred == litStats.irredLits);
 
-    const double time_used = cpuTime() - myTime;
+    const double time_used = cpuTime() - my_time;
     if (sqlStats) {
         sqlStats->time_passed_min(
             this
@@ -3693,7 +3693,7 @@ bool Solver::check_clause_represented_by_xor(const Clause& cl) {
 
 // Detaches clauses that are the XORs
 void Solver::detach_clauses_in_xors() {
-    double myTime = cpuTime();
+    double my_time = cpuTime();
     SLOW_DEBUG_DO(check_no_idx_in_watchlist());
 
     // Setup
@@ -3759,7 +3759,7 @@ void Solver::detach_clauses_in_xors() {
     verb_print(1, "[gauss] clauses deleted that are represented by XORs: " << deleted
         << " xorclauses: " << xorclauses.size()
         << " GJ matrices: " << gmatrices.size()
-        << conf.print_times(cpuTime() - myTime));
+        << conf.print_times(cpuTime() - my_time));
 }
 
 

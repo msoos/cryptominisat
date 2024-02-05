@@ -1243,7 +1243,7 @@ lbool Searcher::search()
     check_no_duplicate_lits_anywhere();
     check_order_heap_sanity();
     #endif
-    const double myTime = cpuTime();
+    const double my_time = cpuTime();
 
     //Stats reset & update
     stats.numRestarts++;
@@ -1316,17 +1316,17 @@ lbool Searcher::search()
 
     end:
     print_restart_stat();
-    dump_search_loop_stats(myTime);
+    dump_search_loop_stats(my_time);
     return search_ret;
 }
 
-void Searcher::dump_search_sql(const double myTime)
+void Searcher::dump_search_sql(const double my_time)
 {
     if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(
             solver
             , "search"
-            , cpuTime()-myTime
+            , cpuTime()-my_time
         );
     }
 }
@@ -2279,7 +2279,7 @@ void Searcher::setup_branch_strategy()
         << " descr: " << select[which].descr);
 }
 
-inline void Searcher::dump_search_loop_stats(double myTime)
+inline void Searcher::dump_search_loop_stats(double my_time)
 {
     #if defined(STATS_NEEDED)
     check_calc_satzilla_features();
@@ -2289,7 +2289,7 @@ inline void Searcher::dump_search_loop_stats(double myTime)
     #endif
 
     print_restart_header();
-    dump_search_sql(myTime);
+    dump_search_sql(my_time);
     if (conf.verbosity && conf.print_all_restarts) {
         print_restart_stat_line();
     }
