@@ -269,7 +269,7 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
             }
             at++;
         }
-        extender->dummyElimed(elimed_on.var());
+        extender->dummy_elimed(elimed_on.var());
     }
     if (solver->conf.verbosity >= 2) {
         cout << "c [extend] Extended " << elimed_cls.size() << " var-elim clauses" << endl;

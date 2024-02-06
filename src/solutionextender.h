@@ -43,7 +43,7 @@ class SolutionExtender
         void extend();
         bool add_cl(const vector<Lit>& lits, const uint32_t elimed_on);
         bool add_xor_cl(const vector<Lit>& lits, const uint32_t elimed_on);
-        void dummyElimed(const uint32_t elimedOn);
+        void dummy_elimed(const uint32_t elimed_on);
 
     private:
         Solver* solver;

@@ -91,7 +91,7 @@ inline bool SolutionExtender::xor_satisfied(const vector< Lit >& lits) const {
 }
 
 //called with _outer_ variable in "elimedOn"
-void SolutionExtender::dummyElimed(const uint32_t elimedOn)
+void SolutionExtender::dummy_elimed(const uint32_t elimed_on)
 {
     #ifdef VERBOSE_DEBUG_SOLUTIONEXTENDER
     cout << "dummy elimed lit (outer) " << elimedOn + 1 << endl;
@@ -103,13 +103,13 @@ void SolutionExtender::dummyElimed(const uint32_t elimedOn)
     #endif
 
     //Elimed clauses set its value already
-    if (solver->model_value(elimedOn) != l_Undef) return;
+    if (solver->model_value(elimed_on) != l_Undef) return;
 
-    solver->model[elimedOn] = l_False;
+    solver->model[elimed_on] = l_False;
 
     //If var is replacing something else, it MUST be set.
-    if (solver->varReplacer->var_is_replacing(elimedOn)) {
-        solver->varReplacer->extend_model(elimedOn);
+    if (solver->varReplacer->var_is_replacing(elimed_on)) {
+        solver->varReplacer->extend_model(elimed_on);
     }
 }
 
