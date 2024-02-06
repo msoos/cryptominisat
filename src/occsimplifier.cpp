@@ -536,25 +536,18 @@ void OccSimplifier::print_mem_usage_of_occur(uint64_t memUsage) const
 
 void OccSimplifier::print_linkin_data(const LinkInData link_in_data) const
 {
-    if (solver->conf.verbosity < 2)
-        return;
+    if (solver->conf.verbosity < 2) return;
 
     double val;
-    if (link_in_data.cl_linked + link_in_data.cl_not_linked == 0) {
-        val = 0;
-    } else {
-        val = float_div(link_in_data.cl_not_linked, link_in_data.cl_linked+link_in_data.cl_not_linked)*100.0;
+    if (link_in_data.cl_linked + link_in_data.cl_not_linked == 0) val = 0;
+    else {
+        val = float_div(link_in_data.cl_not_linked,
+                link_in_data.cl_linked+link_in_data.cl_not_linked)*100.0;
     }
 
-    cout
-    << "c [occ] Not linked in "
-    << link_in_data.cl_not_linked << "/"
-    << (link_in_data.cl_linked + link_in_data.cl_not_linked)
-    << " ("
-    << std::setprecision(2) << std::fixed
-    << val
-    << " %)"
-    << endl;
+    cout << "c [occ] Not linked in "
+    << link_in_data.cl_not_linked << "/" << (link_in_data.cl_linked + link_in_data.cl_not_linked)
+    << " (" << std::setprecision(2) << std::fixed << val << " %)" << endl;
 }
 
 
