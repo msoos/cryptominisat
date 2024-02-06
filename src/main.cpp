@@ -778,10 +778,6 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.xor_finder_time_limitM = std::atoll(a.c_str());})
         .default_value(conf.xor_finder_time_limitM)
         .help("Time limit for finding XORs");
-    program.add_argument("--varsperxorcut")
-        .action([&](const auto& a) {conf.xor_var_per_cut = std::atoi(a.c_str());})
-        .default_value(conf.xor_var_per_cut)
-        .help("Number of _real_ variables per XOR when cutting them. So 2 will have XORs of size 4 because 1 = connecting to previous, 1 = connecting to next, 2 in the midde. If the XOR is 4 long, it will be just one 4-long XOR, no connectors");
     program.add_argument("--maxxormat")
         .action([&](const auto& a) {conf.maxXORMatrix = std::atoll(a.c_str());})
         .default_value(conf.maxXORMatrix)

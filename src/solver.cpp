@@ -1211,18 +1211,8 @@ void Solver::set_up_sql_writer()
 
 void Solver::check_xor_cut_config_sanity() const
 {
-    if (conf.xor_var_per_cut < 1) {
-        std::cerr << "ERROR: Too low cutting number: " << conf.xor_var_per_cut << ". Needs to be at least 1." << endl;
-        exit(-1);
-    }
-
     if (MAX_XOR_RECOVER_SIZE < 4) {
         std::cerr << "ERROR: MAX_XOR_RECOVER_SIZE  must be at least 4. It's currently: " << MAX_XOR_RECOVER_SIZE << endl;
-        exit(-1);
-    }
-
-    if (conf.xor_var_per_cut+2 > MAX_XOR_RECOVER_SIZE) {
-        std::cerr << "ERROR: Too high cutting number, we will not be able to recover cut XORs due to MAX_XOR_RECOVER_SIZE only being " << MAX_XOR_RECOVER_SIZE << endl;
         exit(-1);
     }
 }

@@ -353,12 +353,12 @@ class Searcher : public HyperEngine
 
             void clear()
             {
-                needToStopSearch = false;
-                conflictsDoneThisRestart = 0;
+                must_stop = false;
+                confl_this_rst = 0;
             }
 
-            bool needToStopSearch;
-            uint64_t conflictsDoneThisRestart;
+            bool must_stop;
+            uint64_t confl_this_rst;
             uint64_t max_confl_to_do;
             Restart rest_type = Restart::never;
         };

@@ -25,6 +25,7 @@ THE SOFTWARE.
 #include "solver.h"
 #include "frat.h"
 #include "shareddata.h"
+#include "solvertypesmini.h"
 
 #include <fstream>
 #include <cstdint>
@@ -569,7 +570,7 @@ DLL_PUBLIC void SATSolver::set_allow_otf_gauss()
         s.conf.gaussconf.max_matrix_columns = 10000000;
         s.conf.gaussconf.max_matrix_rows = 10000;
         s.conf.gaussconf.autodisable = false;
-        s.conf.allow_elim_xor_vars = false;
+        s.conf.allow_elim_xor_vars = true;
     }
 }
 
@@ -1371,7 +1372,6 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
 //         conf.polar_stable_every_n = 100000; //i.e. never
         uint32_t xor_cut = 4;
         assert(xor_cut >= 3);
-        conf.xor_var_per_cut = xor_cut-2;
 
         //Distill
         conf.distill_sort = 4;
@@ -1379,18 +1379,15 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
         conf.distill_red_tier0_ratio = 0.7;
         conf.distill_red_tier1_ratio = 0.07;
 
-
-
-
         conf.simplify_at_startup = 1;
         conf.varElimRatioPerIter = 1;
-//         conf.restartType = Restart::luby;
-        //conf.polarity_mode = CMSat::PolarityMode::polarmode_stable;
+        /* conf.restartType = Restart::geom; */
 //         conf.branch_strategy_setup = "vsids1";
         conf.bva_every_n = 1;
         conf.do_simplify_problem = true;
         conf.diff_declev_for_chrono = -1;
         conf.do_bosphorus = false;
+        /* conf.polarity_mode = CMSat::PolarityMode::polarmode_saved; */
         solver->setConf(conf);
     }
 }

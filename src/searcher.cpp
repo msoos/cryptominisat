@@ -1181,7 +1181,7 @@ void Searcher::check_blocking_restart()
         && hist.glueHist.isvalid()
         && hist.trailDepthHistLonger.isvalid()
         && decisionLevel() > 0
-        && trail_lim.size() > 0
+        && !trail_lim.empty()
         && trail.size() > hist.trailDepthHistLonger.avg()*conf.blocking_restart_multip
     ) {
         hist.glueHist.clear();
@@ -1256,7 +1256,7 @@ lbool Searcher::search()
     PropBy confl;
     lbool search_ret = l_Undef;
 
-    while (!params.needToStopSearch
+    while (!params.must_stop
         || !confl.isnullptr() //always finish the last conflict
     ) {
         confl = PropBy();
@@ -1298,7 +1298,7 @@ lbool Searcher::search()
             }
         }
     }
-    max_confl_this_restart -= (int64_t)params.conflictsDoneThisRestart;
+    max_confl_this_restart -= (int64_t)params.confl_this_rst;
 
     cancelUntil(0);
     confl = propagate<false>();
@@ -1749,13 +1749,12 @@ bool Searcher::handle_conflict(PropBy confl)
     hist.num_conflicts_this_restart++;
     sumConflicts++;
     for(uint32_t i = 0; i < longRedCls.size(); i++)  longRedClsSizes[i] += longRedCls[i].size();
-    params.conflictsDoneThisRestart++;
+    params.confl_this_rst++;
 
     ConflictData data = find_conflict_level(confl);
     if (data.nHighestLevel == 0) {
-        if (conf.verbosity >= 10) {
-            cout << "c find_conflict_level() gives 0, so UNSAT for whole formula. decLevel: " << decisionLevel() << endl;
-        }
+        verb_print(10, "find_conflict_level() gives 0, so UNSAT for whole formula. "
+                "decLevel: " << decisionLevel());
         if (unsat_cl_ID == 0) {
             *frat << add << ++clauseID << fin;
             set_unsat_cl_id(clauseID);
@@ -2670,18 +2669,13 @@ inline void Searcher::print_local_restart_budget()
     }
 }
 
-void Searcher::check_need_restart()
-{
+void Searcher::check_need_restart() {
+    //It's expensive to check the time all the time
     if ((stats.conflicts & 0xff) == 0xff) {
-        //It's expensive to check the time all the time
-        if (cpuTime() > conf.maxTime) {
-            params.needToStopSearch = true;
-        }
-
+        if (cpuTime() > conf.maxTime) params.must_stop = true;
         if (must_interrupt_asap())  {
-            if (conf.verbosity >= 3)
-                cout << "c must_interrupt_asap() is set, restartig as soon as possible!" << endl;
-            params.needToStopSearch = true;
+            verb_print(3, "must_interrupt_asap() is set, restartig as soon as possible!");
+            params.must_stop = true;
         }
     }
 
@@ -2689,32 +2683,21 @@ void Searcher::check_need_restart()
     if (params.rest_type == Restart::glue) {
         check_blocking_restart();
         if (hist.glueHist.isvalid()
-            && conf.local_glue_multiplier * hist.glueHist.avg() > hist.glueHistLTLimited.avg()
-        ) {
-            params.needToStopSearch = true;
+            && conf.local_glue_multiplier * hist.glueHist.avg() > hist.glueHistLTLimited.avg()) {
+            params.must_stop = true;
         }
     }
 
     //respect restart phase's limit
-    if ((int64_t)params.conflictsDoneThisRestart > max_confl_this_restart) {
-        params.needToStopSearch = true;
-    }
+    if ((int64_t)params.confl_this_rst > max_confl_this_restart) params.must_stop = true;
 
     //respect Searcher's limit
-    if (params.conflictsDoneThisRestart > params.max_confl_to_do) {
-        if (conf.verbosity >= 3) {
-            cout
-            << "c Over limit of conflicts for this restart"
-            << " -- restarting as soon as possible!" << endl;
-        }
-        params.needToStopSearch = true;
+    if (params.confl_this_rst > params.max_confl_to_do) {
+        verb_print(3, "Over limit of confl for this restart, restarting asap");
+        params.must_stop = true;
     }
 
-    #ifdef VERBOSE_DEBUG
-    if (params.needToStopSearch) {
-        cout << "c needToStopSearch set" << endl;
-    }
-    #endif
+    VERBOSE_DEBUG_DO(if (params.needToStopSearch) cout << "c needToStopSearch set" << endl);
 }
 
 void Searcher::print_solution_varreplace_status() const

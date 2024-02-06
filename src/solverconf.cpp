@@ -254,7 +254,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , maxXORMatrix     (400ULL)
         , xor_finder_time_limitM(400)
         , allow_elim_xor_vars(1)
-        , xor_var_per_cut(2)
 
         //Cardinality
         , doFindCard(0)
