@@ -2337,7 +2337,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             if (solver->conf.doVarElim) {
                 if (solver->conf.do_empty_varelim) eliminate_empty_resolvent_vars();
                 if (solver->conf.do_full_varelim) if (!eliminate_vars()) continue;
-                if (solver->conf.do_full_varelim) eliminate_xor_vars();
+                if (solver->conf.do_xor_varelim) eliminate_xor_vars();
             }
         } else if (token == "occ-rem-with-orgates") {
             lit_rem_with_or_gates();

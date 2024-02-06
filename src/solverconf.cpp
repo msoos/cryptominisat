@@ -186,6 +186,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , varelim_cutoff_too_many_clauses(2000)
         , do_empty_varelim (true)
         , do_full_varelim(true)
+        , do_xor_varelim(true)
         , empty_varelim_time_limitM(300LL)
         , varelim_time_limitM(750)
         , varelim_sub_str_limitM(600)

@@ -341,6 +341,7 @@ class DLL_PUBLIC SolverConf
         uint64_t varelim_cutoff_too_many_clauses;
         int      do_empty_varelim;
         int      do_full_varelim;
+        int      do_xor_varelim;
         long long empty_varelim_time_limitM;
         long long varelim_time_limitM;
         long long varelim_sub_str_limitM;
