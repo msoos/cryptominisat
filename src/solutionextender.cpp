@@ -84,6 +84,12 @@ inline bool SolutionExtender::satisfied(const vector< Lit >& lits) const {
     return false;
 }
 
+inline bool SolutionExtender::xor_satisfied(const vector< Lit >& lits) const {
+    bool rhs = false;
+    for(const Lit lit: lits) rhs ^= solver->model_value(lit) == l_True;
+    return rhs == true;
+}
+
 //called with _outer_ variable in "elimedOn"
 void SolutionExtender::dummyElimed(const uint32_t elimedOn)
 {
@@ -107,8 +113,7 @@ void SolutionExtender::dummyElimed(const uint32_t elimedOn)
     }
 }
 
-bool SolutionExtender::addClause(const vector<Lit>& lits, const uint32_t elimedOn)
-{
+void SolutionExtender::set_pre_checks(const vector<Lit>& lits, const uint32_t elimed_on) {
     #ifdef VERBOSE_DEBUG_SOLUTIONEXTENDER
     cout << "outer clause: " << lits << endl;
     #endif
@@ -119,44 +124,19 @@ bool SolutionExtender::addClause(const vector<Lit>& lits, const uint32_t elimedO
     assert(contains_var(lits, elimedOn));
     #endif
 
-    //Try to extend through setting variables that have been elimed but
-    //were not required to be set until now
-    /*for(Lit l: lits) {
-        if (solver->model_value(l) == l_Undef
-            && var_has_been_elimed[l.var()]
-        ) {
-            solver->model[l.var()] = l.sign() ? l_False : l_True;
-            solver->varReplacer->extend_model(l.var());
-            return false;
-        }
-    }*/
-
-    //Try to set var that hasn't been set
-//     for(Lit l: lits) {
-//         uint32_t v_inter = solver->map_outer_to_inter(l.var());
-//         if (solver->model_value(l) == l_Undef
-//             && solver->varData[v_inter].removed == Removed::none
-//         ) {
-//             solver->model[l.var()] = l.sign() ? l_False : l_True;
-//             solver->varReplacer->extend_model(l.var());
-//             return false;
-//         }
-//     }
-
     if (solver->conf.verbosity >= 10) {
         for(Lit lit: lits) {
             Lit lit_inter = solver->map_outer_to_inter(lit);
-            cout
-            << lit << ": " << solver->model_value(lit)
+            cout << lit << ": " << solver->model_value(lit)
             << "(elim: " << removed_type_to_string(solver->varData[lit_inter.var()].removed) << ")"
             << ", ";
         }
-        cout << "elimed on: " <<  elimedOn+1 << endl;
+        cout << "elimed on: " <<  elimed_on+1 << endl;
     }
 
-    if (solver->model_value(elimedOn) != l_Undef) {
-        cout << "ERROR: Model value for var " << elimedOn+1 << " is "
-        << solver->model_value(elimedOn)
+    if (solver->model_value(elimed_on) != l_Undef) {
+        cout << "ERROR: Model value for var " << elimed_on+1 << " is "
+        << solver->model_value(elimed_on)
         << " but that doesn't satisfy a v-elim clause on the stack!"
         << " clause is: " << lits
         << endl;
@@ -168,34 +148,50 @@ bool SolutionExtender::addClause(const vector<Lit>& lits, const uint32_t elimedO
             << endl;
         }
     }
-    assert(solver->model_value(elimedOn) == l_Undef);
+    assert(solver->model_value(elimed_on) == l_Undef);
+}
 
-    //satisfy this one clause
+bool SolutionExtender::add_xor_cl(const vector<Lit>& lits, const uint32_t elimed_on)
+{
+    Lit actual_lit = lit_Undef;
+    bool rhs = false;
+    for(Lit l: lits) {
+        lbool model_value = solver-> model_value(l);
+        if (l.var() == elimed_on) actual_lit = l;
+        else {
+            assert(model_value != l_Undef);
+            rhs ^= solver->model_value(l) == l_True;
+        }
+    }
+    assert(actual_lit != lit_Undef);
+    lbool val = boolToLBool(!rhs);
+    solver->model[elimed_on] = val;
+
+    verb_print(10,"Extending VELIM cls (xor). -- setting model for var "
+        << elimed_on + 1 << " to " << solver->model[elimed_on]);
+    solver->varReplacer->extend_model(elimed_on);
+
+    assert(xor_satisfied(lits));
+    return true;
+}
+
+bool SolutionExtender::add_cl(const vector<Lit>& lits, const uint32_t elimed_on)
+{
     Lit actual_lit = lit_Undef;
     for(Lit l: lits) {
         lbool model_value = solver-> model_value(l);
         assert(model_value != l_True);
-        if (l.var() == elimedOn) {
-            actual_lit = l;
-        } else {
-            if (model_value == l_Undef) {
-            } else {
-                assert(model_value == l_False);
-            }
-        }
+        if (l.var() == elimed_on) actual_lit = l;
+        else if (model_value != l_Undef) assert(model_value == l_False);
     }
     assert(actual_lit != lit_Undef);
     lbool val = actual_lit.sign() ? l_False : l_True;
-    solver->model[elimedOn] = val;
+    solver->model[elimed_on] = val;
 
-    if (solver->conf.verbosity >= 10) {
-        cout << "Extending VELIM cls. -- setting model for var "
-        << elimedOn + 1 << " to " << solver->model[elimedOn] << endl;
-    }
-    solver->varReplacer->extend_model(elimedOn);
+    verb_print(10,"Extending VELIM cls (norm cl). -- setting model for var "
+        << elimed_on + 1 << " to " << solver->model[elimed_on]);
+    solver->varReplacer->extend_model(elimed_on);
 
     assert(satisfied(lits));
-
-    //it's been set now
     return true;
 }

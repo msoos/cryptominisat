@@ -194,6 +194,7 @@ bool OccSimplifier::get_elimed_clause_at(uint32_t& at,uint32_t& at2,
             at++;
             continue;
         }
+        is_xor = elimed.is_xor;
 
         while(at2 <  elimed.size()) {
             //It's elimed on this variable
@@ -205,10 +206,7 @@ bool OccSimplifier::get_elimed_clause_at(uint32_t& at,uint32_t& at2,
             if (l == lit_Undef) {
                 at2++;
                 return true;
-                //nothing, return?
-            } else {
-                out.push_back(l);
-            }
+            } else out.push_back(l);
             at2++;
         }
         at2 = 0;
@@ -236,11 +234,9 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
     vector<Lit> lits;
     for (long int i = (int)elimed_cls.size()-1; i >= 0; i--) {
         ElimedClauses* it = &elimed_cls[i];
-        if (it->toRemove) {
-            continue;
-        }
+        if (it->toRemove) continue;
 
-        Lit elimedOn = solver->varReplacer->get_lit_replaced_with_outer(it->at(0, elimed_cls_lits));
+        Lit elimed_on = solver->varReplacer->get_lit_replaced_with_outer(it->at(0, elimed_cls_lits));
         size_t at = 1;
         bool satisfied = false;
         lits.clear();
@@ -248,7 +244,10 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
             //built clause, reached marker, "lits" is now valid
             if (it->at(at, elimed_cls_lits) == lit_Undef) {
                 if (!satisfied) {
-                    [[maybe_unused]] bool var_set = extender->addClause(lits, elimedOn.var());
+                    [[maybe_unused]] bool var_set;
+                    if (!it->is_xor) var_set = extender->add_cl(lits, elimed_on.var());
+                    else var_set =extender->add_xor_cl(lits, elimed_on.var());
+
 
                     #ifndef DEBUG_VARELIM
                     //all should be satisfied in fact
@@ -266,13 +265,11 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
                 lits.push_back(l);
 
                 //Elimed clause can be skipped, it's satisfied
-                if (solver->model_value(l) == l_True) {
-                    satisfied = true;
-                }
+                if (!it->is_xor && solver->model_value(l) == l_True) satisfied = true;
             }
             at++;
         }
-        extender->dummyElimed(elimedOn.var());
+        extender->dummyElimed(elimed_on.var());
     }
     if (solver->conf.verbosity >= 2) {
         cout << "c [extend] Extended " << elimed_cls.size() << " var-elim clauses" << endl;
