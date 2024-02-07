@@ -58,7 +58,7 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen, bool& finished)
         s2.set_max_confl(remaining_confls);
         uint32_t num_runs = 0;
         auto s2_ret = s2.solve();
-        remaining_confls -= (s2.get_sum_conflicts() - last_num_conflicts);
+        remaining_confls -= s2.get_sum_conflicts() - last_num_conflicts;
         if (s2_ret == l_True) {
             old_model = s2.get_model();
             s2.set_up_for_sample_counter(100);
@@ -66,7 +66,7 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen, bool& finished)
                 last_num_conflicts = s2.get_sum_conflicts();
                 s2.set_max_confl(remaining_confls);
                 s2_ret = s2.solve();
-                remaining_confls -= (s2.get_sum_conflicts() - last_num_conflicts);
+                remaining_confls -= s2.get_sum_conflicts() - last_num_conflicts;
                 if (s2_ret == l_Undef) break;
                 num_runs++;
                 const auto& this_model = s2.get_model();
