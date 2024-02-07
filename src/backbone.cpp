@@ -154,6 +154,7 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen, bool& finished)
         } else {
             assert(ret == PICOSAT_UNKNOWN);
             undefs++;
+            goto end;
         }
     }
     if (undefs==0) finished = true;
