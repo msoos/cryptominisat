@@ -574,34 +574,8 @@ endif()
 # -----------------------------------------------------------------------------
 # MIT option
 # -----------------------------------------------------------------------------
-option(NOBOSPHORUS "Don't use Bosphorus" ON)
-option(REQUIRE_BOSPHORUS "Must use Bosphorus" OFF)
 option(MIT "Build with only MIT licensed components" OFF)
-if (MIT)
-    set(NOBOSPHORUS ON)
-    if(REQUIRE_BOSPHORUS)
-        message(FATAL_ERROR "Cannot have both MIT and REQUIRE_BOSPHORUS at the same time")
-    endif()
-endif()
-
-# -----------------------------------------------------------------------------
-# Look for Boshphorus
-# -----------------------------------------------------------------------------
-if (NOT NOBOSPHORUS)
-    find_package(bosphorus)
-    if (NOT BOSPHORUS_LIBRARIES)
-        if (REQUIRE_BOSPHORUS)
-            message(FATAL_ERROR "Bosphorus NOT found, but it was required with REQUIRE_BOSPHORUS")
-        else()
-            message(WARNING "Bosphorus NOT found")
-        endif()
-    else()
-        message(STATUS "Bosphorus -- found version ${BOSPHORUS_VERSION_MAJOR}.${BOSPHORUS_VERSION_MINOR}")
-        message(STATUS "Bosphorus -- libraries: ${BOSPHORUS_LIBRARIES}")
-        message(STATUS "Bosphorus -- include dirs: ${BOSPHORUS_INCLUDE_DIRS}")
-        add_definitions( -DUSE_BOSPHORUS)
-    endif()
-endif()
+# NOTE: everything is MIT, bosphorus is now disabled
 
 # -----------------------------------------------------------------------------
 # Look for BreakID
