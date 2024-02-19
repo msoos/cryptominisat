@@ -1200,8 +1200,6 @@ DLL_PUBLIC void SATSolver::set_idrup(FILE* os)
         std::cerr << "ERROR: IDRUP cannot be set after variables have been added" << endl;
         exit(-1);
     }
-    std::cout << "set idrup\n";
-
     data->solvers[0]->conf.doBreakid = false;
     data->solvers[0]->add_idrup(os);
     data->solvers[0]->conf.do_hyperbin_and_transred = true;

@@ -553,7 +553,7 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
             }
 
             *frat << add << ID << p;
-            if (!chain.empty()) {
+            if (!chain.empty() && !frat->incremental()) {
                 *frat << DratFlag::chain;
                 for(auto const& id: chain) *frat << id;
             }

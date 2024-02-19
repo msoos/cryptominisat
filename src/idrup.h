@@ -83,16 +83,6 @@ public:
         sqlStats = _sqlStats;
     }
 
-    virtual Drat& operator<<(const int32_t clauseID) override
-    {
-        if (must_delete_next) {
-            byteDRUPdID(clauseID);
-        } else {
-            byteDRUPaID(clauseID);
-        }
-        return *this;
-    }
-
     virtual FILE* getFile() override
     {
         return drup_file;
@@ -272,13 +262,6 @@ public:
                 break;
 
             case DratFlag::chain:
-                if (!binidrup) {
-                    *buf_ptr++ = '0';
-                    *buf_ptr++ = ' ';
-                    *buf_ptr++ = 'l';
-                    *buf_ptr++ = ' ';
-                    buf_len+=4;
-                }
                 break;
 
             case DratFlag::del:
@@ -303,15 +286,9 @@ public:
                 break;
 
             case DratFlag::finalcl:
-                adding = false;
-                forget_delay();
-                *buf_ptr++ = 'f';
-                buf_len++;
-                if (!binidrup) {
-                    *buf_ptr++ = ' ';
-                    buf_len++;
-                }
-                break;
+
+	      assert (false);
+              break;
 
             case DratFlag::origcl:
                 adding = false;
@@ -434,18 +411,12 @@ private:
     {
     }
 
-    void byteDRUPdID(const int32_t id)
+    void byteDRUPdID(const int32_t)
     {
-        if (binidrup) {
-            for(unsigned i = 0; i < 6; i++) {
-                *del_ptr++ = (id>>(8*i))&0xff;
-                del_len++;
-            }
-        } else {
-            uint32_t num = sprintf((char*)del_ptr, "%d ", id);
-            del_ptr+=num;
-            del_len+=num;
-        }
+    }
+    virtual Drat& operator<<(const int32_t)
+    {
+        return *this;
     }
 
     void byteDRUPd(Lit l)

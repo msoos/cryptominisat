@@ -783,8 +783,7 @@ void CNF::add_frat(FILE* os) {
 }
 
 void CNF::add_idrup(FILE* os) {
-  if (frat) delete frat;
-  std::cout << "setting idrup file\n";
+    if (frat) delete frat;
     frat = new IdrupFile<false>(interToOuterMain);
     frat->setFile(os);
     frat->set_sumconflicts_ptr(&sumConflicts);

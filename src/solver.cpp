@@ -908,10 +908,7 @@ bool Solver::add_clause_outer(vector<Lit>& ps, bool red)
 
     ClauseStats clstats;
     clstats.ID = ++clauseID;
-    if (!frat->incremental())
-      *frat << origcl << clstats.ID << ps << fin;
-    else
-      *frat << origcl << ps << fin;
+    *frat << origcl << clstats.ID << ps << fin;
     if (red) clstats.which_red_array = 2;
 
     #ifdef VERBOSE_DEBUG
@@ -920,10 +917,7 @@ bool Solver::add_clause_outer(vector<Lit>& ps, bool red)
     const size_t origTrailSize = trail.size();
 
     if (!addClauseHelper(ps)) {
-      if (!frat->incremental())
-        *frat << del << clstats.ID << ps << fin;
-      else 
-        *frat << del << ps << fin;
+      *frat << del << clstats.ID << ps << fin;
       return false;
     }
 
@@ -3126,7 +3120,11 @@ void Solver::add_in_partial_solving_stats()
 
 bool Solver::add_clause_outside(const vector<Lit>& lits, bool red)
 {
-    if (!ok) return false;
+    if (!ok) {
+      if (frat->incremental())
+	*frat << origcl << lits << fin;
+      return false;
+    };
 
     SLOW_DEBUG_DO(check_too_large_variable_number(lits)); //we check for this during back-numbering
     back_number_from_outside_to_outer(lits);
@@ -5635,7 +5633,7 @@ void Solver::conclude_idrup (lbool result)
       *frat << unsatisfiable;
       *frat << unsatcore;
       for (auto x: get_final_conflict()) {
-	*frat << x;
+	*frat << ~x;
       }
       *frat << fin;
     }
