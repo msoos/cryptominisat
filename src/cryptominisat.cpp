@@ -973,6 +973,7 @@ lbool calc(
         }
         data->okay = data->solvers[0]->okay();
         data->cpu_times[0] = cpuTime();
+	data->solvers[0]->conclude_idrup(ret);
         return ret;
     }
 

@@ -171,6 +171,35 @@ public:
         return *this;
     }
 
+    Drat& operator<<(const DratOutcome o) override
+    {
+        uint32_t num;
+	switch(o) {
+	    case unsatisfiable:
+	      this->flush();
+	      num = sprintf((char*)buf_ptr, "s UNSATISFIABLE\n");
+	      buf_ptr+=num;
+	      buf_len+=num;
+	      this->flush();
+	      break;
+	    case satisfiable:
+	      this->flush();
+	      num = sprintf((char*)buf_ptr, "s SATISFIABLE\n");
+	      buf_ptr+=num;
+	      buf_len+=num;
+	      this->flush();
+	      break;
+	    case unknown:
+	      this->flush();
+	      num = sprintf((char*)buf_ptr, "s UNKNOWN\n");
+	      buf_ptr+=num;
+	      buf_len+=num;
+	      this->flush();
+	      break;
+	}
+        return *this;
+    }
+
     Drat& operator<<(const DratFlag flag) override
     {
         switch (flag)
@@ -234,7 +263,7 @@ public:
             case DratFlag::add:
                 adding = true;
                 cl_id = 0;
-                *buf_ptr++ = 'a';
+                *buf_ptr++ = 'l';
                 buf_len++;
                 if (!binidrup) {
                     *buf_ptr++ = ' ';
@@ -287,7 +316,7 @@ public:
             case DratFlag::origcl:
                 adding = false;
                 forget_delay();
-                *buf_ptr++ = 'o';
+                *buf_ptr++ = 'i';
                 buf_len++;
                 if (!binidrup) {
                     *buf_ptr++ = ' ';
@@ -310,6 +339,39 @@ public:
                 adding = false;
                 forget_delay();
                 *buf_ptr++ = 'r';
+                buf_len++;
+                if (!binidrup) {
+                    *buf_ptr++ = ' ';
+                    buf_len++;
+                }
+
+                break;
+            case DratFlag::assump:
+                adding = false;
+                forget_delay();
+                *buf_ptr++ = 'q';
+                buf_len++;
+                if (!binidrup) {
+                    *buf_ptr++ = ' ';
+                    buf_len++;
+                }
+
+                break;
+            case DratFlag::modelF:
+                adding = false;
+                forget_delay();
+                *buf_ptr++ = 'm';
+                buf_len++;
+                if (!binidrup) {
+                    *buf_ptr++ = ' ';
+                    buf_len++;
+                }
+
+                break;
+            case DratFlag::unsatcore:
+                adding = false;
+                forget_delay();
+                *buf_ptr++ = 'u';
                 buf_len++;
                 if (!binidrup) {
                     *buf_ptr++ = ' ';
@@ -368,19 +430,8 @@ private:
         return *this;
     }
 
-    void byteDRUPaID(const int32_t id)
+    void byteDRUPaID(const int32_t)
     {
-        if (adding && cl_id == 0) cl_id = id;
-        if (binidrup) {
-            for(unsigned i = 0; i < 6; i++) {
-                *buf_ptr++ = (id>>(8*i))&0xff;
-                buf_len++;
-            }
-        } else {
-            uint32_t num = sprintf((char*)buf_ptr, "%d ", id);
-            buf_ptr+=num;
-            buf_len+=num;
-        }
     }
 
     void byteDRUPdID(const int32_t id)

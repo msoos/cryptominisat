@@ -215,11 +215,12 @@ bool Solver::add_xor_clause_inter(
     if (ps.size() >= (0x01UL << 28)) throw CMSat::TooLongClauseError();
 
     if (ps.empty()) {
-        if (rhs) {
-            *frat << add << ++clauseID << fin;
-            ok = false;
-        }
-        return ok;
+      if (rhs) {
+	++clauseID;
+	*frat << add << clauseID << fin;
+	ok = false;
+      }
+      return ok;
     }
 
     ps[0] ^= rhs;
@@ -420,7 +421,7 @@ Clause* Solver::add_clause_int(
             finalLits->clear();
         }
         if (remove_frat) {
-            *frat << del << cl_stats->ID << lits << fin;
+	  *frat << del << cl_stats->ID << lits << fin;
         }
         return NULL;
     }
@@ -437,8 +438,8 @@ Clause* Solver::add_clause_int(
         ID = cl_stats->ID;
         if (ps != lits) {
             ID = ++clauseID;
-            *frat << add << ID << ps << fin;
-            *frat << del << cl_stats->ID << lits << fin;
+	      *frat << add << ID << ps << fin;
+	      *frat << del << cl_stats->ID << lits << fin;
         }
     } else {
         ID = ++clauseID;
@@ -456,7 +457,7 @@ Clause* Solver::add_clause_int(
                 std::swap(ps[0], ps[i]);
             }
 
-            *frat << add << ID << ps << fin;
+	    *frat << add << ID << ps << fin;
             if (frat_first != lit_Undef) {
                 std::swap(ps[0], ps[i]);
             }
@@ -888,7 +889,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
 bool Solver::add_clause_outer_copylits(const vector<Lit>& lits)
 {
     if (frat && frat->incremental())
-      *frat << restorecl << lits;
+      *frat << restorecl << lits << fin;
     vector<Lit> ps = lits;
     return Solver::add_clause_outer(ps);
 }
@@ -907,7 +908,10 @@ bool Solver::add_clause_outer(vector<Lit>& ps, bool red)
 
     ClauseStats clstats;
     clstats.ID = ++clauseID;
-    *frat << origcl << clstats.ID << ps << fin;
+    if (!frat->incremental())
+      *frat << origcl << clstats.ID << ps << fin;
+    else
+      *frat << origcl << ps << fin;
     if (red) clstats.which_red_array = 2;
 
     #ifdef VERBOSE_DEBUG
@@ -916,8 +920,11 @@ bool Solver::add_clause_outer(vector<Lit>& ps, bool red)
     const size_t origTrailSize = trail.size();
 
     if (!addClauseHelper(ps)) {
+      if (!frat->incremental())
         *frat << del << clstats.ID << ps << fin;
-        return false;
+      else 
+        *frat << del << ps << fin;
+      return false;
     }
 
     std::sort(ps.begin(), ps.end());
@@ -1681,6 +1688,9 @@ lbool Solver::solve_with_assumptions(
         }
         #endif
     }
+    if (frat->incremental()) {
+      *frat << assump << *_assumptions << fin;
+    }
     move_to_outside_assumps(_assumptions);
     reset_for_solving();
 
@@ -1754,6 +1764,7 @@ lbool Solver::solve_with_assumptions(
 void Solver::write_final_frat_clauses()
 {
     if (!frat->enabled()) return;
+    if (frat->incremental()) return;
     assert(decisionLevel() == 0);
     *frat << "write final start\n";
 
@@ -5607,6 +5618,29 @@ void Solver::detach_and_free_all_irred_cls()
     longIrredCls.clear();
     litStats.irredLits = 0;
     cl_alloc.consolidate(this, true);
+}
+
+void Solver::conclude_idrup (lbool result)
+{
+    if (result == l_True) {
+      *frat << satisfiable;
+      *frat << modelF;
+      for (size_t cmVar = 0; cmVar < nVars(); ++cmVar) {
+	lbool value = model_value(cmVar);
+	*frat << Lit(cmVar, value != l_True);
+      }
+      *frat << fin;
+    }
+    else if (result == l_False) {
+      *frat << unsatisfiable;
+      *frat << unsatcore;
+      for (auto x: get_final_conflict()) {
+	*frat << x;
+      }
+      *frat << fin;
+    }
+    else
+      *frat << unknown;
 }
 
 #ifdef STATS_NEEDED

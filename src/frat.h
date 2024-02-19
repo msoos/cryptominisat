@@ -48,7 +48,9 @@ using std::vector;
 
 namespace CMSat {
 
-enum DratFlag{fin, deldelay, del, findelay, add, origcl, chain, finalcl, reloc, weakencl, restorecl};
+enum DratFlag{fin, deldelay, del, findelay, add, origcl, chain, finalcl, reloc, weakencl, restorecl, assump, unsatcore, modelF};
+
+enum DratOutcome{satisfiable, unsatisfiable, unknown};
 
 class Drat
 {
@@ -118,6 +120,11 @@ public:
     }
 
     virtual Drat& operator<<(const DratFlag)
+    {
+        return *this;
+    }
+
+    virtual Drat& operator<<(const DratOutcome)
     {
         return *this;
     }

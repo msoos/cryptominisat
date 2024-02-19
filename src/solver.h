@@ -112,6 +112,7 @@ class Solver : public Searcher
 
         //frat for SAT problems
         void add_empty_cl_to_frat();
+        void conclude_idrup (lbool);
 
         //Querying model
         lbool model_value (const Lit p) const;  ///<Found model value for lit
