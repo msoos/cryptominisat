@@ -32,8 +32,8 @@ THE SOFTWARE.
 namespace CMSat {
 using std::vector;
 
-typedef vec<Watched>& watch_subarray;
-typedef const vec<Watched>& watch_subarray_const;
+using watch_subarray = vec<Watched> &;
+using watch_subarray_const = const vec<Watched> &;
 
 class watch_array
 {

@@ -773,27 +773,24 @@ void Solver::test_renumbering() const
 {
     //Check if we renumbered the variables in the order such as to make
     //the unknown ones first and the known/eliminated ones second
-    bool uninteresting = false;
+    bool uninteresting_seen = false;
     bool problem = false;
     for(size_t i = 0; i < nVars(); i++) {
-        //cout << "val[" << i << "]: " << value(i);
-
-        if (value(i)  != l_Undef)
-            uninteresting = true;
-
+        /* cout << "val[" << i << "]: " << value(i); */
         if (varData[i].removed == Removed::elimed
             || varData[i].removed == Removed::replaced
+            || value(i) != l_Undef
         ) {
-            uninteresting = true;
-            //cout << " removed" << endl;
+            uninteresting_seen = true;
+            /* cout << " set/removed" << endl; */
         } else {
-            //cout << " non-removed" << endl;
+            /* cout << " non-removed" << endl; */
         }
 
         if (value(i) == l_Undef
             && varData[i].removed != Removed::elimed
             && varData[i].removed != Removed::replaced
-            && uninteresting
+            && uninteresting_seen
         ) {
             problem = true;
         }
@@ -832,31 +829,44 @@ size_t Solver::calculate_inter_to_outer_and_outer_to_inter(
     vector<uint32_t>& outer_to_inter
     , vector<uint32_t>& inter_to_outer
 ) {
-    size_t at = 0;
-    vector<uint32_t> useless;
-    size_t numEffectiveVars = 0;
+    static constexpr uint32_t none = std::numeric_limits<uint32_t>::max();
+    vector<uint32_t> fin(nVars(), none);
+    uint32_t at = 0;
+    for(uint32_t b = 0; b < 2; b++)
+    for(uint32_t i = 0; i < nVars(); i++) {
+        Lit l(i, b);
+        for(const auto& ws: watches[l]) {
+            if (ws.isBin() && !ws.red()) {
+                if (fin[l.var()] == none) fin[l.var()] = at++;
+            }
+        }
+    }
+    for(const auto& off: longIrredCls) {
+        Clause& cl = *cl_alloc.ptr(off);
+        for(const auto& l: cl) {
+            if (fin[l.var()] == none) fin[l.var()] = at++;
+        }
+    }
+
+    size_t num_effective_vars = 0;
     for(size_t i = 0; i < nVars(); i++) {
         if (value(i) != l_Undef
             || varData[i].removed == Removed::elimed
             || varData[i].removed == Removed::replaced
         ) {
-            useless.push_back(i);
-            continue;
+        } else {
+            if (fin[i] == none) fin[i] = at++;
+            num_effective_vars++;
         }
-
-        outer_to_inter[i] = at;
-        inter_to_outer[at] = i;
-        at++;
-        numEffectiveVars++;
     }
+    assert(at == num_effective_vars);
+    for(size_t i = 0; i < nVars(); i++) if (fin[i] == none) fin[i] = at++;
 
-    //Fill the rest with variables that have been removed/eliminated/set
-    for(const auto useles : useless) {
-        outer_to_inter[useles] = at;
-        inter_to_outer[at] = useles;
-        at++;
+
+    for(size_t i = 0; i < nVars(); i++) {
+        outer_to_inter[i] = fin[i];
+        inter_to_outer[fin[i]] = i;
     }
-    assert(at == nVars());
 
     //Extend to nVarsOuter() --> these are just the identity transformation
     for(size_t i = nVars(); i < nVarsOuter(); i++) {
@@ -864,7 +874,7 @@ size_t Solver::calculate_inter_to_outer_and_outer_to_inter(
         inter_to_outer[i] = i;
     }
 
-    return numEffectiveVars;
+    return num_effective_vars;
 }
 
 double Solver::calc_renumber_saving()
