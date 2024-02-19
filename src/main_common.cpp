@@ -47,6 +47,23 @@ void MainCommon::handle_frat_option()
     }
 }
 
+void MainCommon::handle_idrup_option()
+{
+    if (conf.simulate_idrup) {
+        FILE* idrupfTmp = fopen(idrup_fname.c_str(), "w");
+        if (idrupfTmp == NULL) {
+            std::cerr
+            << "ERROR: Could not open IDRUP file "
+            << idrup_fname
+            << " for writing"
+            << endl;
+
+            std::exit(-1);
+        }
+        idrupf = idrupfTmp;
+    }
+}
+
 uint32_t MainCommon::print_model(CMSat::SATSolver* solver, std::ostream* os, std::vector<uint32_t>* only)
 {
     *os << "v ";

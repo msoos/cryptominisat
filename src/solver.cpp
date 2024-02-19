@@ -70,6 +70,7 @@ THE SOFTWARE.
 #include "gaussian.h"
 #include "sqlstats.h"
 #include "frat.h"
+#include "idrup.h"
 #include "xorfinder.h"
 #include "cardfinder.h"
 #include "sls.h"
@@ -886,6 +887,8 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
 
 bool Solver::add_clause_outer_copylits(const vector<Lit>& lits)
 {
+    if (frat && frat->incremental())
+      *frat << restorecl << lits;
     vector<Lit> ps = lits;
     return Solver::add_clause_outer(ps);
 }

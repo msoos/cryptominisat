@@ -3046,7 +3046,7 @@ void OccSimplifier::remove_by_frat_recently_elimed_clauses(size_t origElimedSize
             const Lit l = elimedClauses[i].at(at, eClsLits);
             if (l == lit_Undef) {
                 const int32_t ID = newly_elimed_cls_IDs[at_ID++];
-                (*solver->frat) << del << ID << lits << fin;
+                (*solver->frat) << weakencl << ID << lits << fin;
                 lits.clear();
             } else {
                 lits.push_back(solver->map_outer_to_inter(l));

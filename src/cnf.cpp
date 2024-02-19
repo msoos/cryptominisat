@@ -782,6 +782,15 @@ void CNF::add_frat(FILE* os) {
     frat->set_sqlstats_ptr(sqlStats);
 }
 
+void CNF::add_idrup(FILE* os) {
+  if (frat) delete frat;
+  std::cout << "setting idrup file\n";
+    frat = new IdrupFile<false>(interToOuterMain);
+    frat->setFile(os);
+    frat->set_sumconflicts_ptr(&sumConflicts);
+    frat->set_sqlstats_ptr(sqlStats);
+}
+
 vector<uint32_t> CNF::get_outside_lit_incidence()
 {
     assert(get_num_bva_vars() == 0);

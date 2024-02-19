@@ -55,6 +55,12 @@ struct MySolver {
 
 extern "C" {
 
+  DLL_PUBLIC void  ipasir_trace_proof (void * solver, FILE *f)
+  {
+    
+    MySolver* s = (MySolver*)solver;
+    s->solver->set_idrup(f);
+  }
 DLL_PUBLIC const char * ipasir_signature ()
 {
     static char tmp[200];

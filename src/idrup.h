@@ -20,11 +20,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef __FRAT_H__
-#define __FRAT_H__
+#ifndef __IDRUP_H__
+#define __IDRUP_H__
 
 #include "constants.h"
 #include "clause.h"
+#include "frat.h"
 #include "sqlstats.h"
 
 #include <vector>
@@ -32,117 +33,27 @@ THE SOFTWARE.
 #include <stdio.h>
 
 using std::vector;
-// #define DEBUG_FRAT
+// #define DEBUG_IDRUP
 
 #if 0
-#define FRAT_PRINT((...) \
+#define IDRUP_PRINT((...) \
     do { \
         const uint32_t tmp_num = sprintf((char*)buf_ptr, __VA_ARGS__); \
         buf_ptr+=tmp_num; \
         buf_len+=tmp_num; \
     } while (0)
 #else
-#define FRAT_PRINT(...) do {} while (0)
+#define IDRUP_PRINT(...) do {} while (0)
 #endif
 
 
 namespace CMSat {
 
-enum DratFlag{fin, deldelay, del, findelay, add, origcl, chain, finalcl, reloc, weakencl, restorecl};
-
-class Drat
+template<bool binidrup = false>
+class IdrupFile: public Drat
 {
 public:
-    Drat()
-    {
-    }
-
-    virtual ~Drat()
-    {
-    }
-
-    virtual bool enabled()
-    {
-        return false;
-    }
-
-    virtual bool incremental()
-    {
-        return false;
-    }
-  
-    virtual void set_sumconflicts_ptr(uint64_t*)
-    {
-    }
-
-    virtual void set_sqlstats_ptr(SQLStats*)
-    {
-    }
-
-    virtual void forget_delay()
-    {
-    }
-
-    virtual bool get_conf_id() {
-        return false;
-    }
-
-    virtual bool something_delayed()
-    {
-        return false;
-    }
-
-    virtual Drat& operator<<(const int32_t)
-    {
-        return *this;
-    }
-
-    virtual Drat& operator<<(const Lit)
-    {
-        return *this;
-    }
-
-    virtual Drat& operator<<(const Clause&)
-    {
-        return *this;
-    }
-
-    virtual Drat& operator<<(const vector<Lit>&)
-    {
-        return *this;
-    }
-
-    virtual Drat& operator<<(const char*)
-    {
-        return *this;
-    }
-
-    virtual Drat& operator<<(const DratFlag)
-    {
-        return *this;
-    }
-
-    virtual void setFile(FILE*)
-    {
-    }
-
-    virtual FILE* getFile()
-    {
-        return NULL;
-    }
-
-    virtual void flush();
-
-    int buf_len;
-    unsigned char* drup_buf = NULL;
-    unsigned char* buf_ptr = NULL;
-};
-
-template<bool binfrat = false>
-class DratFile: public Drat
-{
-public:
-    DratFile(vector<uint32_t>& _interToOuterMain) :
+    IdrupFile(vector<uint32_t>& _interToOuterMain) :
         interToOuterMain(_interToOuterMain)
     {
         drup_buf = new unsigned char[2 * 1024 * 1024];
@@ -155,7 +66,7 @@ public:
         del_len = 0;
     }
 
-    virtual ~DratFile()
+    virtual ~IdrupFile()
     {
         flush();
         delete[] drup_buf;
@@ -221,6 +132,10 @@ public:
         return true;
     }
 
+    bool incremental() override
+    {
+        return true;
+    }
     int del_len = 0;
     unsigned char* del_buf;
     unsigned char* del_ptr;
@@ -262,7 +177,7 @@ public:
         {
             case DratFlag::fin:
                 if (must_delete_next) {
-                    if (binfrat) {
+                    if (binidrup) {
                         *del_ptr++ = 0;
                         del_len++;
                     } else {
@@ -272,7 +187,7 @@ public:
                     }
                     delete_filled = true;
                 } else {
-                    if (binfrat) {
+                    if (binidrup) {
                         *buf_ptr++ = 0;
                         buf_len++;
                     } else {
@@ -284,7 +199,7 @@ public:
                         binDRUP_flush();
                     }
                     if (adding && sqlStats) sqlStats->set_id_confl(cl_id, *sumConflicts);
-                    FRAT_PRINT("c set_id_confl (%d, %lld), adding: %d\n", cl_id, *sumConflicts, adding);
+                    IDRUP_PRINT("c set_id_confl (%d, %lld), adding: %d\n", cl_id, *sumConflicts, adding);
                 }
                 cl_id = 0;
                 must_delete_next = false;
@@ -296,7 +211,7 @@ public:
                 forget_delay();
                 *del_ptr++ = 'd';
                 del_len++;
-                if (!binfrat)  {
+                if (!binidrup)  {
                     *del_ptr++ = ' ';
                     del_len++;
                 }
@@ -321,14 +236,14 @@ public:
                 cl_id = 0;
                 *buf_ptr++ = 'a';
                 buf_len++;
-                if (!binfrat) {
+                if (!binidrup) {
                     *buf_ptr++ = ' ';
                     buf_len++;
                 }
                 break;
 
             case DratFlag::chain:
-                if (!binfrat) {
+                if (!binidrup) {
                     *buf_ptr++ = '0';
                     *buf_ptr++ = ' ';
                     *buf_ptr++ = 'l';
@@ -337,12 +252,11 @@ public:
                 }
                 break;
 
-            case DratFlag::weakencl:
             case DratFlag::del:
                 adding = false;
                 *buf_ptr++ = 'd';
                 buf_len++;
-                if (!binfrat) {
+                if (!binidrup) {
                     *buf_ptr++ = ' ';
                     buf_len++;
                 }
@@ -353,7 +267,7 @@ public:
                 forget_delay();
                 *buf_ptr++ = 'r';
                 buf_len++;
-                if (!binfrat) {
+                if (!binidrup) {
                     *buf_ptr++ = ' ';
                     buf_len++;
                 }
@@ -364,7 +278,7 @@ public:
                 forget_delay();
                 *buf_ptr++ = 'f';
                 buf_len++;
-                if (!binfrat) {
+                if (!binidrup) {
                     *buf_ptr++ = ' ';
                     buf_len++;
                 }
@@ -375,16 +289,34 @@ public:
                 forget_delay();
                 *buf_ptr++ = 'o';
                 buf_len++;
-                if (!binfrat) {
+                if (!binidrup) {
                     *buf_ptr++ = ' ';
                     buf_len++;
                 }
 
-              break;
+                break;
+            case DratFlag::weakencl:
+                adding = false;
+                forget_delay();
+                *buf_ptr++ = 'w';
+                buf_len++;
+                if (!binidrup) {
+                    *buf_ptr++ = ' ';
+                    buf_len++;
+                }
 
-          default:
-	    __builtin_unreachable();
-            break;
+                break;
+            case DratFlag::restorecl:
+                adding = false;
+                forget_delay();
+                *buf_ptr++ = 'r';
+                buf_len++;
+                if (!binidrup) {
+                    *buf_ptr++ = ' ';
+                    buf_len++;
+                }
+
+                break;
         }
 
         return *this;
@@ -406,7 +338,7 @@ private:
     {
         uint32_t v = l.var();
         v = interToOuterMain[v];
-        if (binfrat) {
+        if (binidrup) {
             unsigned int u = 2 * (v + 1) + l.sign();
             do {
                 *buf_ptr++ = (u & 0x7f) | 0x80;
@@ -425,7 +357,7 @@ private:
 
     virtual Drat& operator<<([[maybe_unused]] const char* str) override
     {
-        #ifdef DEBUG_FRAT
+        #ifdef DEBUG_IDRUP
         this->flush();
         uint32_t num = sprintf((char*)buf_ptr, "c %s", str);
         buf_ptr+=num;
@@ -439,7 +371,7 @@ private:
     void byteDRUPaID(const int32_t id)
     {
         if (adding && cl_id == 0) cl_id = id;
-        if (binfrat) {
+        if (binidrup) {
             for(unsigned i = 0; i < 6; i++) {
                 *buf_ptr++ = (id>>(8*i))&0xff;
                 buf_len++;
@@ -453,7 +385,7 @@ private:
 
     void byteDRUPdID(const int32_t id)
     {
-        if (binfrat) {
+        if (binidrup) {
             for(unsigned i = 0; i < 6; i++) {
                 *del_ptr++ = (id>>(8*i))&0xff;
                 del_len++;
@@ -469,7 +401,7 @@ private:
     {
         uint32_t v = l.var();
         v = interToOuterMain[v];
-        if (binfrat) {
+        if (binidrup) {
             unsigned int u = 2 * (v + 1) + l.sign();
             do {
                 *del_ptr++ = (u & 0x7f) | 0x80;
@@ -497,4 +429,4 @@ private:
 
 }
 
-#endif //__FRAT_H__
+#endif //__IDRUP_H__

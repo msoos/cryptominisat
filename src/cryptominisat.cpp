@@ -1189,6 +1189,23 @@ DLL_PUBLIC void SATSolver::set_frat(FILE* os)
     data->solvers[0]->conf.do_hyperbin_and_transred = true;
 }
 
+DLL_PUBLIC void SATSolver::set_idrup(FILE* os)
+{
+    if (data->solvers.size() > 1) {
+        std::cerr << "ERROR: IDRUP cannot be used in multi-threaded mode" << endl;
+        exit(-1);
+    }
+    if (nVars() > 0) {
+        std::cerr << "ERROR: IDRUP cannot be set after variables have been added" << endl;
+        exit(-1);
+    }
+    std::cout << "set idrup\n";
+
+    data->solvers[0]->conf.doBreakid = false;
+    data->solvers[0]->add_idrup(os);
+    data->solvers[0]->conf.do_hyperbin_and_transred = true;
+}
+
 DLL_PUBLIC void SATSolver::interrupt_asap()
 {
     data->must_interrupt->store(true, std::memory_order_relaxed);
