@@ -461,6 +461,7 @@ inline void VarReplacer::updateBin(
         (lit1 != origLit1 || lit2 != origLit2)
         //Delete&attach only once
         && (origLit1 < origLit2)
+	&& !solver->frat->incremental()
     ) {
         //WARNING TODO beware, this make post-FRAT parsing for ML fail.
         //we need a better mechanism than reloc, or we need to teach the tool reloc

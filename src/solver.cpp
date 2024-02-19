@@ -888,15 +888,15 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
 
 bool Solver::add_clause_outer_copylits(const vector<Lit>& lits)
 {
-    if (frat && frat->incremental())
+    if (frat && frat->incremental() && !lits.empty())
       *frat << restorecl << lits << fin;
     vector<Lit> ps = lits;
-    return Solver::add_clause_outer(ps);
+    return Solver::add_clause_outer(ps, false, true);
 }
 
 // Takes OUTER (NOT *outside*) variables
 // Input is ORIGINAL clause.
-bool Solver::add_clause_outer(vector<Lit>& ps, bool red)
+bool Solver::add_clause_outer(vector<Lit>& ps, bool red, bool restore)
 {
     if (conf.perform_occur_based_simp && occsimplifier->getAnythingHasBeenElimed()) {
         std::cerr
@@ -908,7 +908,8 @@ bool Solver::add_clause_outer(vector<Lit>& ps, bool red)
 
     ClauseStats clstats;
     clstats.ID = ++clauseID;
-    *frat << origcl << clstats.ID << ps << fin;
+    if (!restore)
+      *frat << origcl << clstats.ID << ps << fin;
     if (red) clstats.which_red_array = 2;
 
     #ifdef VERBOSE_DEBUG

@@ -99,6 +99,8 @@ void ipasir_assume (void * solver, int lit);
  */
 int ipasir_solve (void * solver);
 
+int ipasir_simplify (void * solver);
+
 /**
  * Get the truth value of the given literal in the found satisfying
  * assignment. Return 'lit' if True, '-lit' if False, and 0 if not important.

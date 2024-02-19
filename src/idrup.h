@@ -135,6 +135,7 @@ public:
 
     Drat& operator<<(const Clause& cl) override
     {
+        if (cl.size() == 0) abort();
         if (must_delete_next) {
             byteDRUPdID(cl.stats.ID);
             for(const Lit l: cl) byteDRUPd(l);
@@ -275,18 +276,10 @@ public:
                 break;
 
             case DratFlag::reloc:
-                adding = false;
-                forget_delay();
-                *buf_ptr++ = 'r';
-                buf_len++;
-                if (!binidrup) {
-                    *buf_ptr++ = ' ';
-                    buf_len++;
-                }
-                break;
+	      assert (false);
+	      break;
 
             case DratFlag::finalcl:
-
 	      assert (false);
               break;
 
