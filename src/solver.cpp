@@ -457,7 +457,7 @@ Clause* Solver::add_clause_int(
                 std::swap(ps[0], ps[i]);
             }
 
-	    *frat << add << ID << ps << fin;
+	    *frat << "adding internal\n" << add << ID << ps << fin;
             if (frat_first != lit_Undef) {
                 std::swap(ps[0], ps[i]);
             }
@@ -925,7 +925,7 @@ bool Solver::add_clause_outer(vector<Lit>& ps, const vector<Lit>& outer_ps, bool
       return false;
     }
 
-    if (frat->incremental()) // import the "inner version with duplicates removed"
+    if (!fresh_solver && frat->incremental()) // import the "inner version with duplicates removed"
       *frat << "learning renumbered\n" << add << clstats.ID << ps << fin;
 
     std::sort(ps.begin(), ps.end());
@@ -939,9 +939,17 @@ bool Solver::add_clause_outer(vector<Lit>& ps, const vector<Lit>& outer_ps, bool
         , true //add frat?
         , lit_Undef
         , true //sorted
-        , true //remove old clause from proof if we changed it
+        , !frat->incremental() //remove old clause from proof if we changed it
     );
 
+    if (!fresh_solver && frat->incremental()) {// del the "inner version with duplicates removed"
+      if (cl) {
+	*frat << "learning renumbered clause\n" << add << *cl << fin;
+      }
+      *frat << "deleting old\n" << del << clstats.ID << ps << fin;
+      if (!restore)
+	*frat << "deleting old i\n" << del << clstats.ID << outer_ps << fin;
+    }
 //    if (frat->incremental())
 //      *frat << "delete renumbered\n" <<del << clstats.ID << ps << fin;
     if (cl != NULL) {
