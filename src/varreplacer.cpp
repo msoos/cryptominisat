@@ -338,9 +338,10 @@ end:
 
 void VarReplacer::delete_frat_cls()
 {
-    for(const auto& f: bins_for_frat) {
-        *solver->frat << del << std::get<0>(f) << std::get<1>(f) << std::get<2>(f) << fin;
-    }
+    if (!solver->frat->incremental()) // for incremental we need to keep the reason for equivalences
+      for(const auto& f: bins_for_frat) {
+	  *solver->frat << del << std::get<0>(f) << std::get<1>(f) << std::get<2>(f) << fin;
+      }
     bins_for_frat.clear();
 }
 
