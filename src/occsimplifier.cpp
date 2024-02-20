@@ -353,6 +353,7 @@ bool OccSimplifier::clean_clause(
     Clause& cl = *solver->cl_alloc.ptr(offset);
     assert(!cl.getRemoved());
     assert(!cl.freed());
+
     (*solver->frat) << deldelay << cl << fin;
 
     Lit* i = cl.begin();
@@ -691,6 +692,7 @@ void OccSimplifier::add_back_to_solver()
                 solver->litStats.irredLits -= cl->size();
             }
             *solver->frat << del << *cl << fin;
+
             solver->free_cl(cl);
             continue;
         }
@@ -3332,7 +3334,7 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(
 
                     lits.resize(cl.size());
                     std::copy(cl.begin(), cl.end(), lits.begin());
-                    add_clause_to_blck(lits, cl.stats.ID);
+		    add_clause_to_blck(lits, cl.stats.ID);
                 } else {
                     red = true;
                 }
@@ -3367,20 +3369,21 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(
             } else {
                 //If redundant, delayed elimed-based FRAT deletion will not work
                 //so delete explicitly
-                (*solver->frat) << del << watch.get_ID() << lits[0] << lits[1] << fin;
+	      (*solver->frat) << del << watch.get_ID() << lits[0] << lits[1] << fin;
             }
 
             //Remove
             //*limit_to_decrease -= (long)solver->watches[lits[0]].size()/4; //This is zero
             *limit_to_decrease -= (long)solver->watches[lits[1]].size()/4;
             solver->detach_bin_clause(lits[0], lits[1], red, watch.get_ID(), true, true);
+
         } else {
             assert(false);
         }
 
         if (solver->conf.verbosity >= 3 && !lits.empty()) {
             cout
-            << "Eliminated clause " << lits << " (red: " << red << ")"
+	      << "Eliminated clause " << lits << " (red: " << red << ")"
             << " on var " << lit.var()+1
             << endl;
         }

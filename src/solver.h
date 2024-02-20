@@ -506,7 +506,7 @@ class Solver : public Searcher
         /////////////////////
         // Clauses
         bool addClauseHelper(vector<Lit>& ps);
-        bool add_clause_outer(vector<Lit>& ps, bool red = false, bool restore = false);
+        bool add_clause_outer(vector<Lit>& ps, const vector<Lit>& outer_ps, bool red = false, bool restore = false);
 
         /////////////////
         // Debug

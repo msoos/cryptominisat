@@ -133,9 +133,21 @@ public:
     bool delete_filled = false;
     bool must_delete_next = false;
 
+    virtual Drat& operator<<(const int32_t) override
+    {
+#if 0 // clauseID
+        if (must_delete_next) {
+            byteDRUPdID(clauseID);
+        } else {
+            byteDRUPaID(clauseID);
+        }
+#endif
+        return *this;
+    }
+
     Drat& operator<<(const Clause& cl) override
     {
-        if (cl.size() == 0) abort();
+        if (skipnextclause) return *this;
         if (must_delete_next) {
             byteDRUPdID(cl.stats.ID);
             for(const Lit l: cl) byteDRUPd(l);
@@ -147,9 +159,9 @@ public:
         return *this;
     }
 
-    Drat& operator<<(const vector<Lit>& cl) override
-    {
-        if (must_delete_next) {
+    Drat& operator<<(const vector<Lit>& cl) override {
+      if (skipnextclause) return *this;
+      if (must_delete_next) {
             for(const Lit l: cl) {
                 byteDRUPd(l);
             }
@@ -193,9 +205,13 @@ public:
 
     Drat& operator<<(const DratFlag flag) override
     {
+        const bool old = skipnextclause;
+        skipnextclause = false;
+
         switch (flag)
         {
             case DratFlag::fin:
+                if (old) break;
                 if (must_delete_next) {
                     if (binidrup) {
                         *del_ptr++ = 0;
@@ -276,7 +292,15 @@ public:
                 break;
 
             case DratFlag::reloc:
-	      assert (false);
+  	        skipnextclause = true;
+                // adding = false;
+                // forget_delay();
+                // *buf_ptr++ = 'r';
+                // buf_len++;
+                // if (!binidrup) {
+                //     *buf_ptr++ = ' ';
+                //     buf_len++;
+                // }
 	      break;
 
             case DratFlag::finalcl:
@@ -357,6 +381,7 @@ public:
 private:
     Drat& operator<<(const Lit lit) override
     {
+        if (skipnextclause) return *this;
         if (must_delete_next) {
             byteDRUPd(lit);
         } else {
@@ -389,27 +414,50 @@ private:
 
     virtual Drat& operator<<([[maybe_unused]] const char* str) override
     {
-        #ifdef DEBUG_IDRUP
+      //        #ifdef DEBUG_IDRUP
         this->flush();
         uint32_t num = sprintf((char*)buf_ptr, "c %s", str);
         buf_ptr+=num;
         buf_len+=num;
         this->flush();
-        #endif
+	//        #endif
 
         return *this;
     }
 
+
+
     void byteDRUPaID(const int32_t)
     {
+#if 0
+        if (adding && cl_id == 0) cl_id = id;
+        if (binidrup) {
+            for(unsigned i = 0; i < 6; i++) {
+                *buf_ptr++ = (id>>(8*i))&0xff;
+                buf_len++;
+            }
+        } else {
+            uint32_t num = sprintf((char*)buf_ptr, "%d ", id);
+            buf_ptr+=num;
+            buf_len+=num;
+        }
+#endif
     }
 
     void byteDRUPdID(const int32_t)
     {
-    }
-    virtual Drat& operator<<(const int32_t)
-    {
-        return *this;
+#if 0
+        if (binidrup) {
+            for(unsigned i = 0; i < 6; i++) {
+                *del_ptr++ = (id>>(8*i))&0xff;
+                del_len++;
+            }
+        } else {
+            uint32_t num = sprintf((char*)del_ptr, "%d ", id);
+            del_ptr+=num;
+            del_len+=num;
+        }
+#endif
     }
 
     void byteDRUPd(Lit l)
@@ -440,6 +488,7 @@ private:
     vector<uint32_t>& interToOuterMain;
     uint64_t* sumConflicts = nullptr;
     SQLStats* sqlStats = NULL;
+    bool skipnextclause = false;
 };
 
 }

@@ -891,12 +891,12 @@ bool Solver::add_clause_outer_copylits(const vector<Lit>& lits)
     if (frat && frat->incremental() && !lits.empty())
       *frat << restorecl << lits << fin;
     vector<Lit> ps = lits;
-    return Solver::add_clause_outer(ps, false, true);
+    return Solver::add_clause_outer(ps, ps, false, true);
 }
 
 // Takes OUTER (NOT *outside*) variables
 // Input is ORIGINAL clause.
-bool Solver::add_clause_outer(vector<Lit>& ps, bool red, bool restore)
+bool Solver::add_clause_outer(vector<Lit>& ps, const vector<Lit>& outer_ps, bool red, bool restore)
 {
     if (conf.perform_occur_based_simp && occsimplifier->getAnythingHasBeenElimed()) {
         std::cerr
@@ -918,9 +918,15 @@ bool Solver::add_clause_outer(vector<Lit>& ps, bool red, bool restore)
     const size_t origTrailSize = trail.size();
 
     if (!addClauseHelper(ps)) {
-      *frat << del << clstats.ID << ps << fin;
+      std::cout << "deleting " << clstats.ID  <<"\n";
+      // we need to delete the outer version of the clause, as we have already merged
+      // equivalent literals in ps
+      *frat << "immedialtly del\n" << del << clstats.ID << outer_ps << fin;
       return false;
     }
+
+    if (frat->incremental()) // import the "inner version with duplicates removed"
+      *frat << "learning renumbered\n" << add << clstats.ID << ps << fin;
 
     std::sort(ps.begin(), ps.end());
     if (red) assert(!frat->enabled() && "Cannot have both FRAT and adding of redundant clauses");
@@ -936,6 +942,8 @@ bool Solver::add_clause_outer(vector<Lit>& ps, bool red, bool restore)
         , true //remove old clause from proof if we changed it
     );
 
+//    if (frat->incremental())
+//      *frat << "delete renumbered\n" <<del << clstats.ID << ps << fin;
     if (cl != NULL) {
         ClOffset offset = cl_alloc.get_offset(cl);
         if (!red) longIrredCls.push_back(offset);
@@ -3129,7 +3137,7 @@ bool Solver::add_clause_outside(const vector<Lit>& lits, bool red)
 
     SLOW_DEBUG_DO(check_too_large_variable_number(lits)); //we check for this during back-numbering
     back_number_from_outside_to_outer(lits);
-    return add_clause_outer(back_number_from_outside_to_outer_tmp, red);
+    return add_clause_outer(back_number_from_outside_to_outer_tmp, lits, red);
 }
 
 bool Solver::full_probe(const bool bin_only)
