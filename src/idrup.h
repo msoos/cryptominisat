@@ -91,11 +91,11 @@ public:
     void flush() override
     {
       binDRUP_flush();
-      flushing = false;
     }
 
     void binDRUP_flush() {
         fwrite(drup_buf, sizeof(unsigned char), buf_len, drup_file);
+        fflush (drup_file);
         buf_ptr = drup_buf;
         buf_len = 0;
     }
@@ -240,8 +240,8 @@ public:
                 }
                 cl_id = 0;
                 must_delete_next = false;
-  	        if (flushing)
-		  this->flush();
+  	            if (flushing)
+		                this->flush(), --flushing;
                 break;
 
             case DratFlag::deldelay:
@@ -344,7 +344,8 @@ public:
 
                 break;
             case DratFlag::assump:
-                adding = false;
+                this->flush();
+                adding = false, flushing = 2;
                 forget_delay();
                 *buf_ptr++ = 'q';
                 buf_len++;
@@ -355,7 +356,8 @@ public:
 
                 break;
             case DratFlag::modelF:
-                adding = false, flushing = true;
+                this->flush();
+                adding = false, flushing = 2;
                 forget_delay();
                 *buf_ptr++ = 'm';
                 buf_len++;
@@ -366,7 +368,8 @@ public:
 
                 break;
             case DratFlag::unsatcore:
-                adding = false, flushing = true;
+                this->flush();
+                adding = false, flushing = 2;
                 forget_delay();
                 *buf_ptr++ = 'u';
                 buf_len++;
@@ -485,7 +488,8 @@ private:
         }
     }
 
-    bool adding = false, flushing = false;
+    bool adding = false;
+    int flushing = 0;
     int32_t cl_id = 0;
     FILE* drup_file = nullptr;
     vector<uint32_t>& interToOuterMain;
