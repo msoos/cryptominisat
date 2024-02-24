@@ -417,13 +417,13 @@ private:
 
     virtual Drat& operator<<([[maybe_unused]] const char* str) override
     {
-      //        #ifdef DEBUG_IDRUP
+#ifdef DEBUG_IDRUP
         this->flush();
         uint32_t num = sprintf((char*)buf_ptr, "c %s", str);
         buf_ptr+=num;
         buf_len+=num;
         this->flush();
-	//        #endif
+#endif
 
         return *this;
     }
