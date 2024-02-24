@@ -451,7 +451,7 @@ inline void VarReplacer::updateBin(
 
         //Drat -- Delete only once
         if (origLit1 < origLit2) {
-            (*solver->frat) << del << i->get_ID() << origLit1 << origLit2 << fin;
+            (*solver->frat) << "updateBin del\n" << del << i->get_ID() << origLit1 << origLit2 << fin;
         }
 
         return;
@@ -975,8 +975,8 @@ bool VarReplacer::replace(
     int32_t ID = ++solver->clauseID;
     int32_t ID2 = ++solver->clauseID;
     (*solver->frat)
-    << add << ID << ~lit1 << lit2 << fin
-    << add << ID2 << lit1 << ~lit2 << fin;
+    << "equivalence learning\n" << add << ID << ~lit1 << lit2 << fin
+    << "equivalence learning\n" << add << ID2 << lit1 << ~lit2 << fin;
     bins_for_frat.push_back(std::tuple<int32_t, Lit, Lit>{ID, ~lit1, lit2});
     bins_for_frat.push_back(std::tuple<int32_t, Lit, Lit>{ID2, lit1, ~lit2});
 
