@@ -52,6 +52,7 @@ namespace CMSat {
 template<bool binidrup = false>
 class IdrupFile: public Drat
 {
+  const int flush_bound = 32768; // original value: 1048576;
 public:
     IdrupFile(vector<uint32_t>& _interToOuterMain) :
         interToOuterMain(_interToOuterMain)
@@ -232,7 +233,7 @@ public:
                         *buf_ptr++ = '\n';
                         buf_len+=2;
                     }
-                    if (buf_len > 1048576) {
+                    if (buf_len > flush_bound) {
                         binDRUP_flush();
                     }
                     if (adding && sqlStats) sqlStats->set_id_confl(cl_id, *sumConflicts);
@@ -263,7 +264,7 @@ public:
                 memcpy(buf_ptr, del_buf, del_len);
                 buf_len += del_len;
                 buf_ptr += del_len;
-                if (buf_len > 1048576) {
+                if (buf_len > flush_bound) {
                     binDRUP_flush();
                 }
 
