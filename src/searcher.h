@@ -188,7 +188,7 @@ class Searcher : public HyperEngine
         void check_all_in_vmtf_branch_strategy(const vector<uint32_t>& vars);
         uint32_t branch_strategy_change = 0;
         uint32_t branch_strategy_at = 0;
-        void setup_branch_strategy(bool first_time);
+        void setup_branch_strategy();
         void rebuildOrderHeap();
         void rebuildOrderHeapVMTF(vector<uint32_t>& vs);
         void print_order_heap();

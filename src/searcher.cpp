@@ -2204,7 +2204,7 @@ struct branch_type_total{
     string descr_short;
 };
 
-void Searcher::setup_branch_strategy(bool first_time)
+void Searcher::setup_branch_strategy()
 {
     if (sumConflicts < branch_strategy_change) return;
     branch_strategy_change += 5000;
@@ -2266,12 +2266,10 @@ void Searcher::setup_branch_strategy(bool first_time)
 
     uint32_t which = branch_strategy_at % select.size();
     const auto old_branch_strategy = branch_strategy;
-    if (branch_strategy != select[which].branch || first_time) {
-        branch_strategy = select[which].branch;
-        branch_strategy_str = select[which].descr;
-        branch_strategy_str_short = select[which].descr_short;
-        setup_restart_strategy(true);
-    }
+    branch_strategy = select[which].branch;
+    branch_strategy_str = select[which].descr;
+    branch_strategy_str_short = select[which].descr_short;
+    setup_restart_strategy(true);
 
     verb_print(1, "[branch]"
         <<  " adjusting to: " << branch_type_to_string(branch_strategy)
@@ -2505,7 +2503,7 @@ lbool Searcher::solve(const uint64_t _max_confls) {
     resetStats();
     lbool status = l_Undef;
 
-    setup_branch_strategy(true);
+    setup_branch_strategy();
     setup_restart_strategy(false);
     setup_polarity_strategy();
     STATS_DO(check_calc_satzilla_features(true));
@@ -2535,7 +2533,7 @@ lbool Searcher::solve(const uint64_t _max_confls) {
         params.max_confl_to_do = max_confl_per_search_solve_call-stats.conflicts;
         status = search();
         if (status == l_Undef) {
-            setup_branch_strategy(false);
+            setup_branch_strategy();
             setup_restart_strategy(false);
             setup_polarity_strategy();
             adjust_restart_strategy_cutoffs();
