@@ -833,14 +833,14 @@ size_t Solver::calculate_inter_to_outer_and_outer_to_inter(
     vector<uint32_t> fin(nVars(), none);
     uint32_t at = 0;
     for(uint32_t b = 0; b < 2; b++)
-    for(uint32_t i = 0; i < nVars(); i++) {
-        Lit l(i, b);
-        for(const auto& ws: watches[l]) {
-            if (ws.isBin() && !ws.red()) {
-                if (fin[l.var()] == none) fin[l.var()] = at++;
+        for(uint32_t i = 0; i < nVars(); i++) {
+            Lit l(i, b);
+            for(const auto& ws: watches[l]) {
+                if (ws.isBin() && !ws.red()) {
+                    if (fin[l.var()] == none) fin[l.var()] = at++;
+                }
             }
         }
-    }
     for(const auto& off: longIrredCls) {
         Clause& cl = *cl_alloc.ptr(off);
         for(const auto& l: cl) {
