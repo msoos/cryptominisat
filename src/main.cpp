@@ -1455,7 +1455,6 @@ int Main::solve()
     solver = new SATSolver((void*)&conf);
     solverToInterrupt = solver;
     if (fratf) solver->set_frat(fratf);
-    std::cout << "starting solving with " << idrupf << "\n";
     if (idrupf) solver->set_idrup(idrupf);
     if (program.is_used("maxtime")) solver->set_max_time(program.get<double>("maxtime"));
     if (program.is_used("maxconfl")) solver->set_max_confl(program.get<uint64_t>("maxconfl"));

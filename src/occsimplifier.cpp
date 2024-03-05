@@ -3383,7 +3383,7 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(
 
         if (solver->conf.verbosity >= 3 && !lits.empty()) {
             cout
-	      << "Eliminated clause " << lits << " (red: " << red << ")"
+            << "Eliminated clause " << lits << " (red: " << red << ")"
             << " on var " << lit.var()+1
             << endl;
         }

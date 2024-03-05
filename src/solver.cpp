@@ -950,8 +950,7 @@ bool Solver::add_clause_outer(vector<Lit>& ps, const vector<Lit>& outer_ps, bool
       if (!restore)
 	*frat << "deleting old i\n" << del << clstats.ID << outer_ps << fin;
     }
-//    if (frat->incremental())
-//      *frat << "delete renumbered\n" <<del << clstats.ID << ps << fin;
+
     if (cl != NULL) {
         ClOffset offset = cl_alloc.get_offset(cl);
         if (!red) longIrredCls.push_back(offset);
