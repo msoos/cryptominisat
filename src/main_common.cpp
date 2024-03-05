@@ -49,7 +49,7 @@ void MainCommon::handle_frat_option()
 
 void MainCommon::handle_idrup_option()
 {
-    if (conf.simulate_idrup) {
+    if (conf.idrup) {
         FILE* idrupfTmp = fopen(idrup_fname.c_str(), "w");
         if (idrupfTmp == NULL) {
             std::cerr

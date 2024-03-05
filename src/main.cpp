@@ -1054,8 +1054,8 @@ void Main::add_supported_options()
         .default_value(conf.simulate_frat)
         .help("Simulate FRAT");
     program.add_argument("--idrup")
-        .action([&](const auto& a) {conf.simulate_idrup = std::atoi(a.c_str());})
-        .default_value(conf.simulate_idrup)
+        .action([&](const auto& a) {conf.idrup = std::atoi(a.c_str());})
+        .default_value(conf.idrup)
         .help("idrup");
     program.add_argument("--sampling")
         .action([&](const auto& a) {sampling_vars_str = a;})
@@ -1378,14 +1378,14 @@ void Main::manually_parse_some_options()
 #endif
             fileNamePresent = true;
         } else assert(false && "The try() should not have succeeded");
-        if ((files.size() > 1 || conf.simulate_frat) && !conf.simulate_idrup) {
+        if ((files.size() > 1 || conf.simulate_frat) && !conf.idrup) {
             if (files.size() > 1) {
                 assert(!conf.simulate_frat && "You can't have both simulation of FRAT and frat");
                 frat_fname = files[1];
             }
             handle_frat_option();
         } else {
-            if (files.size() > 1 && conf.simulate_idrup) {
+            if (files.size() > 1 && conf.idrup) {
 //                assert(!conf.simulate_idrup && "You can't have both simulation of IDRUP and idrup");
                 idrup_fname = files[1];
             }
