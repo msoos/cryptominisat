@@ -1386,12 +1386,9 @@ void Main::manually_parse_some_options()
             handle_frat_option();
         } else {
             if (files.size() > 1 && conf.idrup) {
-//                assert(!conf.simulate_idrup && "You can't have both simulation of IDRUP and idrup");
                 idrup_fname = files[1];
             }
-	    std::cout << "idrup =" << idrup_fname << "from" << files[0] <<"\n";
             handle_idrup_option();
-	    std::cout << "idrupf =" << idrupf <<"\n";
         }
     } catch (std::logic_error& e) {
         fileNamePresent = false;

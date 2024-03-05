@@ -305,8 +305,8 @@ bool ClauseCleaner::clean_clause(Clause& cl)
         INC_ID(cl);
         cl.shrink(i-j);
         (*solver->frat) << add << cl;
-	(*solver->frat) << chain << orig_ID;
-	for(auto const& id: solver->chain) (*solver->frat) << id;
+        (*solver->frat) << chain << orig_ID;
+        for(auto const& id: solver->chain) (*solver->frat) << id;
         (*solver->frat) << fin << findelay;
     } else {
         solver->frat->forget_delay();
