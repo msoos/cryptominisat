@@ -112,6 +112,7 @@ class Solver : public Searcher
 
         //frat for SAT problems
         void add_empty_cl_to_frat();
+        void conclude_idrup (lbool);
 
         //Querying model
         lbool model_value (const Lit p) const;  ///<Found model value for lit
@@ -505,7 +506,7 @@ class Solver : public Searcher
         /////////////////////
         // Clauses
         bool addClauseHelper(vector<Lit>& ps);
-        bool add_clause_outer(vector<Lit>& ps, bool red = false);
+        bool add_clause_outer(vector<Lit>& ps, const vector<Lit>& outer_ps, bool red = false, bool restore = false);
 
         /////////////////
         // Debug
@@ -596,6 +597,9 @@ inline lbool Solver::simplify_with_assumptions(
     const vector<Lit>* _assumptions,
     const string* strategy
 ) {
+    if (frat->incremental()) {
+      *frat << assump << *_assumptions << fin;
+    }
     fresh_solver = false;
     move_to_outside_assumps(_assumptions);
     return simplify_problem_outside(strategy);

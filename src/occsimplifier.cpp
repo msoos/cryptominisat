@@ -353,6 +353,7 @@ bool OccSimplifier::clean_clause(
     Clause& cl = *solver->cl_alloc.ptr(offset);
     assert(!cl.getRemoved());
     assert(!cl.freed());
+
     (*solver->frat) << deldelay << cl << fin;
 
     Lit* i = cl.begin();
@@ -691,6 +692,7 @@ void OccSimplifier::add_back_to_solver()
                 solver->litStats.irredLits -= cl->size();
             }
             *solver->frat << del << *cl << fin;
+
             solver->free_cl(cl);
             continue;
         }
@@ -3046,7 +3048,7 @@ void OccSimplifier::remove_by_frat_recently_elimed_clauses(size_t origElimedSize
             const Lit l = elimedClauses[i].at(at, eClsLits);
             if (l == lit_Undef) {
                 const int32_t ID = newly_elimed_cls_IDs[at_ID++];
-                (*solver->frat) << del << ID << lits << fin;
+                (*solver->frat) << weakencl << ID << lits << fin;
                 lits.clear();
             } else {
                 lits.push_back(solver->map_outer_to_inter(l));
@@ -3332,7 +3334,7 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(
 
                     lits.resize(cl.size());
                     std::copy(cl.begin(), cl.end(), lits.begin());
-                    add_clause_to_blck(lits, cl.stats.ID);
+		    add_clause_to_blck(lits, cl.stats.ID);
                 } else {
                     red = true;
                 }
@@ -3367,13 +3369,14 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(
             } else {
                 //If redundant, delayed elimed-based FRAT deletion will not work
                 //so delete explicitly
-                (*solver->frat) << del << watch.get_ID() << lits[0] << lits[1] << fin;
+	      (*solver->frat) << del << watch.get_ID() << lits[0] << lits[1] << fin;
             }
 
             //Remove
             //*limit_to_decrease -= (long)solver->watches[lits[0]].size()/4; //This is zero
             *limit_to_decrease -= (long)solver->watches[lits[1]].size()/4;
             solver->detach_bin_clause(lits[0], lits[1], red, watch.get_ID(), true, true);
+
         } else {
             assert(false);
         }

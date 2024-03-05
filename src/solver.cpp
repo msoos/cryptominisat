@@ -70,6 +70,7 @@ THE SOFTWARE.
 #include "gaussian.h"
 #include "sqlstats.h"
 #include "frat.h"
+#include "idrup.h"
 #include "xorfinder.h"
 #include "cardfinder.h"
 #include "sls.h"
@@ -214,11 +215,12 @@ bool Solver::add_xor_clause_inter(
     if (ps.size() >= (0x01UL << 28)) throw CMSat::TooLongClauseError();
 
     if (ps.empty()) {
-        if (rhs) {
-            *frat << add << ++clauseID << fin;
-            ok = false;
-        }
-        return ok;
+      if (rhs) {
+	++clauseID;
+	*frat << add << clauseID << fin;
+	ok = false;
+      }
+      return ok;
     }
 
     ps[0] ^= rhs;
@@ -419,7 +421,7 @@ Clause* Solver::add_clause_int(
             finalLits->clear();
         }
         if (remove_frat) {
-            *frat << del << cl_stats->ID << lits << fin;
+	  *frat << del << cl_stats->ID << lits << fin;
         }
         return NULL;
     }
@@ -436,8 +438,8 @@ Clause* Solver::add_clause_int(
         ID = cl_stats->ID;
         if (ps != lits) {
             ID = ++clauseID;
-            *frat << add << ID << ps << fin;
-            *frat << del << cl_stats->ID << lits << fin;
+	      *frat << add << ID << ps << fin;
+	      *frat << del << cl_stats->ID << lits << fin;
         }
     } else {
         ID = ++clauseID;
@@ -455,7 +457,7 @@ Clause* Solver::add_clause_int(
                 std::swap(ps[0], ps[i]);
             }
 
-            *frat << add << ID << ps << fin;
+	    *frat << "adding internal\n" << add << ID << ps << fin;
             if (frat_first != lit_Undef) {
                 std::swap(ps[0], ps[i]);
             }
@@ -886,13 +888,15 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
 
 bool Solver::add_clause_outer_copylits(const vector<Lit>& lits)
 {
+    if (frat && frat->incremental() && !lits.empty())
+      *frat << restorecl << lits << fin;
     vector<Lit> ps = lits;
-    return Solver::add_clause_outer(ps);
+    return Solver::add_clause_outer(ps, ps, false, true);
 }
 
 // Takes OUTER (NOT *outside*) variables
 // Input is ORIGINAL clause.
-bool Solver::add_clause_outer(vector<Lit>& ps, bool red)
+bool Solver::add_clause_outer(vector<Lit>& ps, const vector<Lit>& outer_ps, bool red, bool restore)
 {
     if (conf.perform_occur_based_simp && occsimplifier->getAnythingHasBeenElimed()) {
         std::cerr
@@ -904,7 +908,8 @@ bool Solver::add_clause_outer(vector<Lit>& ps, bool red)
 
     ClauseStats clstats;
     clstats.ID = ++clauseID;
-    *frat << origcl << clstats.ID << ps << fin;
+    if (!restore)
+      *frat << origcl << clstats.ID << ps << fin;
     if (red) clstats.which_red_array = 2;
 
     #ifdef VERBOSE_DEBUG
@@ -913,9 +918,15 @@ bool Solver::add_clause_outer(vector<Lit>& ps, bool red)
     const size_t origTrailSize = trail.size();
 
     if (!addClauseHelper(ps)) {
-        *frat << del << clstats.ID << ps << fin;
-        return false;
+      std::cout << "deleting " << clstats.ID  <<"\n";
+      // we need to delete the outer version of the clause, as we have already merged
+      // equivalent literals in ps
+      *frat << "immedialtly del\n" << del << clstats.ID << outer_ps << fin;
+      return false;
     }
+
+    if (!fresh_solver && frat->incremental()) // import the "inner version with duplicates removed"
+      *frat << "learning renumbered\n" << add << clstats.ID << ps << fin;
 
     std::sort(ps.begin(), ps.end());
     if (red) assert(!frat->enabled() && "Cannot have both FRAT and adding of redundant clauses");
@@ -928,8 +939,17 @@ bool Solver::add_clause_outer(vector<Lit>& ps, bool red)
         , true //add frat?
         , lit_Undef
         , true //sorted
-        , true //remove old clause from proof if we changed it
+        , !frat->incremental() //remove old clause from proof if we changed it
     );
+
+    if (!fresh_solver && frat->incremental()) {// del the "inner version with duplicates removed"
+      if (cl) {
+	*frat << "learning renumbered clause\n" << add << *cl << fin;
+      }
+      *frat << "deleting old\n" << del << clstats.ID << ps << fin;
+      if (!restore)
+	*frat << "deleting old i\n" << del << clstats.ID << outer_ps << fin;
+    }
 
     if (cl != NULL) {
         ClOffset offset = cl_alloc.get_offset(cl);
@@ -1678,6 +1698,9 @@ lbool Solver::solve_with_assumptions(
         }
         #endif
     }
+    if (frat->incremental()) {
+      *frat << assump << *_assumptions << fin;
+    }
     move_to_outside_assumps(_assumptions);
     reset_for_solving();
 
@@ -1751,6 +1774,7 @@ lbool Solver::solve_with_assumptions(
 void Solver::write_final_frat_clauses()
 {
     if (!frat->enabled()) return;
+    if (frat->incremental()) return;
     assert(decisionLevel() == 0);
     *frat << "write final start\n";
 
@@ -3112,11 +3136,15 @@ void Solver::add_in_partial_solving_stats()
 
 bool Solver::add_clause_outside(const vector<Lit>& lits, bool red)
 {
-    if (!ok) return false;
+    if (!ok) {
+      if (frat->incremental())
+	*frat << origcl << lits << fin;
+      return false;
+    };
 
     SLOW_DEBUG_DO(check_too_large_variable_number(lits)); //we check for this during back-numbering
     back_number_from_outside_to_outer(lits);
-    return add_clause_outer(back_number_from_outside_to_outer_tmp, red);
+    return add_clause_outer(back_number_from_outside_to_outer_tmp, lits, red);
 }
 
 bool Solver::full_probe(const bool bin_only)
@@ -5604,6 +5632,29 @@ void Solver::detach_and_free_all_irred_cls()
     longIrredCls.clear();
     litStats.irredLits = 0;
     cl_alloc.consolidate(this, true);
+}
+
+void Solver::conclude_idrup (lbool result)
+{
+    if (result == l_True) {
+      *frat << satisfiable;
+      *frat << modelF;
+      for (size_t cmVar = 0; cmVar < nVars(); ++cmVar) {
+	lbool value = model_value(cmVar);
+	*frat << Lit(cmVar, value != l_True);
+      }
+      *frat << fin;
+    }
+    else if (result == l_False) {
+      *frat << unsatisfiable;
+      *frat << unsatcore;
+      for (auto x: get_final_conflict()) {
+	*frat << ~x;
+      }
+      *frat << fin;
+    }
+    else
+      *frat << unknown;
 }
 
 #ifdef STATS_NEEDED

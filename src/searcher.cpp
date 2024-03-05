@@ -1689,7 +1689,7 @@ Clause* Searcher::handle_last_confl(
     Clause* cl;
     ID = ++clauseID;
     *frat << add << ID << learnt_clause;
-    if (!chain.empty()) {
+    if (!chain.empty() && !frat->incremental()) {
         *frat << DratFlag::chain;
         for(auto const& c: chain) *frat << c;
     }
