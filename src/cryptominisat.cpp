@@ -1445,11 +1445,12 @@ DLL_PUBLIC void SATSolver::set_single_run()
     }
 }
 
-DLL_PUBLIC void SATSolver::set_var_weight(Lit lit, double weight)
+DLL_PUBLIC void SATSolver::set_lit_weight(Lit lit, double weight)
 {
     actually_add_clauses_to_threads(data);
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
+        assert(!lit.sign() && "TODO non-equal weights");
         s.set_var_weight(lit, weight);
     }
 }

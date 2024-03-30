@@ -67,7 +67,7 @@ namespace CMSat {
             signed cutoff,
             Lit out = lit_Undef
         );
-        void set_var_weight(Lit lit, double weight);
+        void set_lit_weight(Lit lit, double weight);
 
         ////////////////////////////
         // Solving and simplifying
