@@ -32,8 +32,6 @@ THE SOFTWARE.
 #include <iostream>
 #include <iomanip>
 #include <vector>
-#include <fstream>
-#include <complex>
 #include <cassert>
 
 using std::vector;
@@ -54,6 +52,7 @@ class DimacsParser
             uint32_t offset_vars = 0);
         uint64_t max_var = numeric_limits<uint64_t>::max();
         vector<uint32_t> sampling_vars;
+        vector<uint32_t> optional_sampling_vars;
         bool sampling_vars_found = false;
         vector<double> weights;
         uint32_t must_mult_exp2 = 0;
@@ -80,7 +79,7 @@ class DimacsParser
         void write_solution_to_debuglib_file(const lbool ret) const;
         #endif
 
-        bool parseIndependentSet(C& in);
+        bool parseIndependentSet(C& in, vector<uint32_t>& lst);
         std::string get_debuglib_fname() const;
 
 
@@ -477,9 +476,7 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
         }
     } else if (str == "ind") {
         sampling_vars_found = true;
-        if (!parseIndependentSet(in)) {
-            return false;
-        }
+        if (!parseIndependentSet(in, sampling_vars)) return false;
     } else if (str == "p") {
         in.skipWhitespace();
         std::string str2;
@@ -487,7 +484,10 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
         if (str2 == "show") {
             in.skipWhitespace();
             sampling_vars_found = true;
-            if (!parseIndependentSet(in)) { return false; }
+            if (!parseIndependentSet(in, sampling_vars)) { return false; }
+        } else if (str2 == "optshow") {
+            in.skipWhitespace();
+            if (!parseIndependentSet(in, optional_sampling_vars)) { return false; }
         } else {
             cout << "ERROR, 'c p' followed by unknown text: '" << str2 << "'" << endl;
             exit(-1);
@@ -702,18 +702,13 @@ bool DimacsParser<C, S>::parse_DIMACS(
 }
 
 template <class C, class S>
-bool DimacsParser<C, S>::parseIndependentSet(C& in)
-{
+bool DimacsParser<C, S>::parseIndependentSet(C& in, vector<uint32_t>& lst) {
     int32_t parsed_lit;
     for (;;) {
-        if (!in.parseInt(parsed_lit, lineNum)) {
-            return false;
-        }
-        if (parsed_lit == 0) {
-            break;
-        }
+        if (!in.parseInt(parsed_lit, lineNum)) return false;
+        if (parsed_lit == 0) break;
         uint32_t var = std::abs(parsed_lit) - 1;
-        sampling_vars.push_back(var);
+        lst.push_back(var);
     }
     return true;
 }
