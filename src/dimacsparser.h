@@ -421,17 +421,6 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
         }
     } else
     #endif
-    if (str == "p") {
-        in.skipWhitespace();
-        std::string str2;
-        in.parseString(str2);
-        if (str2 == "weight") {
-            if (!parseWeight(in)) return false;
-        } else {
-            cerr << "ERROR, 'c p' followed by unknown text: '" << str2 << "'" << endl;
-            exit(-1);
-        }
-    }
     if (str == "red") {
         in.skipWhitespace();
         lits.clear();
@@ -482,7 +471,9 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
         in.skipWhitespace();
         std::string str2;
         in.parseString(str2);
-        if (str2 == "show") {
+        if (str2 == "weight") {
+            if (!parseWeight(in)) return false;
+        } else if (str2 == "show") {
             in.skipWhitespace();
             sampling_vars_found = true;
             if (!parseIndependentSet(in, sampling_vars)) { return false; }
