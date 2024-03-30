@@ -268,11 +268,11 @@ endif()
 
 # indicate that we depend on pthread, and compile in the actual library
 target_link_libraries(cryptominisat5
+    LINK_PUBLIC ${cadical}
+    LINK_PUBLIC ${cadiback}
     LINK_PUBLIC ${cryptoms_lib_link_libs}
     LINK_PUBLIC ${LOUVAIN_COMMUNITIES_LIBRARIES}
     LINK_PUBLIC ${CMAKE_THREAD_LIBS_INIT}
-    LINK_PUBLIC ${CMAKE_SOURCE_DIR}/../cadiback/libcadiback.a
-    LINK_PUBLIC ${CMAKE_SOURCE_DIR}/../cadical/build/libcadical.a
 )
 
 if (NOT WIN32)
@@ -417,6 +417,7 @@ set_target_properties(cryptominisat5-bin PROPERTIES
     OUTPUT_NAME cryptominisat5
     RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
     INSTALL_RPATH_USE_LINK_PATH TRUE)
+
 target_link_libraries(cryptominisat5-bin
     ${cryptoms_exec_link_libs}
 )

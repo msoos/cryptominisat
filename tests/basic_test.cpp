@@ -813,8 +813,8 @@ TEST(propagate, trivial_1)
     vector<Lit> lits = s.get_zero_assigned_lits();
     vector<Lit>::iterator it;
     it = std::find(lits.begin(), lits.end(), Lit(0, true));
-    EXPECT_NE(it, lits.end());
     EXPECT_EQ(lits.size(), 1);
+    EXPECT_TRUE(it != lits.end());
 }
 
 TEST(propagate, trivial_2)
@@ -827,9 +827,9 @@ TEST(propagate, trivial_2)
     vector<Lit> lits = s.get_zero_assigned_lits();
     vector<Lit>::iterator it;
     it = std::find(lits.begin(), lits.end(), Lit(0, true));
-    EXPECT_NE(it, lits.end());
+    EXPECT_TRUE(it != lits.end());
     it = std::find(lits.begin(), lits.end(), Lit(1, true));
-    EXPECT_NE(it, lits.end());
+    EXPECT_TRUE(it != lits.end());
 
     EXPECT_EQ(lits.size(), 2);
 }
@@ -844,9 +844,9 @@ TEST(propagate, prop_1)
     vector<Lit> lits = s.get_zero_assigned_lits();
     vector<Lit>::iterator it;
     it = std::find(lits.begin(), lits.end(), Lit(0, true));
-    EXPECT_NE(it, lits.end());
+    EXPECT_TRUE(it != lits.end());
     it = std::find(lits.begin(), lits.end(), Lit(1, false));
-    EXPECT_NE(it, lits.end());
+    EXPECT_TRUE(it != lits.end());
 
     EXPECT_EQ(lits.size(), 2);
 }
@@ -861,9 +861,10 @@ TEST(propagate, prop_1_alter)
     vector<Lit> lits = s.get_zero_assigned_lits();
     vector<Lit>::iterator it;
     it = std::find(lits.begin(), lits.end(), Lit(0, true));
-    EXPECT_NE(it, lits.end());
+    EXPECT_TRUE(it != lits.end());
     it = std::find(lits.begin(), lits.end(), Lit(1, false));
-    EXPECT_NE(it, lits.end());
+    EXPECT_TRUE(it != lits.end());
+
     EXPECT_EQ(lits.size(), 2);
 }
 
@@ -880,9 +881,9 @@ TEST(propagate, prop_many)
     for(unsigned i = 0; i < 10; i++) {
         vector<Lit>::iterator it;
         it = std::find(lits.begin(), lits.end(), Lit(i*2, false));
-        EXPECT_NE(it, lits.end());
+        EXPECT_TRUE(it != lits.end());
         it = std::find(lits.begin(), lits.end(), Lit(i*2+1, true));
-        EXPECT_NE(it, lits.end());
+        EXPECT_TRUE(it != lits.end());
     }
 
     EXPECT_EQ(lits.size(), 10*2);
