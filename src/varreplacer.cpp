@@ -80,8 +80,7 @@ void VarReplacer::check_no_replaced_var_set() const
 {
     for(uint32_t var = 0; var < solver->nVarsOuter(); var++) {
         if (solver->value(var) != l_Undef) {
-            if (solver->varData[var].removed != Removed::none)
-            {
+            if (solver->varData[var].removed != Removed::none) {
                 cout << "ERROR: var " << var + 1 << " has removed: "
                 << removed_type_to_string(solver->varData[var].removed)
                 << " but is set to " << solver->value(var) << endl;
@@ -125,10 +124,7 @@ void VarReplacer::printReplaceStats() const
     }
 }
 
-void VarReplacer::update_vardata(
-    const Lit orig
-    , const Lit replaced_with
-) {
+void VarReplacer::update_vardata( const Lit orig , const Lit replaced_with) {
     uint32_t orig_var = orig.var();
     uint32_t replaced_with_var = replaced_with.var();
 
@@ -140,9 +136,7 @@ void VarReplacer::update_vardata(
     }
 
     //Has already been handled previously, just skip
-    if (solver->varData[orig_var].removed == Removed::replaced) {
-        return;
-    }
+    if (solver->varData[orig_var].removed == Removed::replaced) return;
 
     //Okay, so unset decision, and set the other one decision
     assert(orig_var != replaced_with_var);
@@ -194,8 +188,7 @@ void VarReplacer::attach_delayed_attach() {
     delayed_attach_or_free.clear();
 }
 
-void VarReplacer::update_all_vardata()
-{
+void VarReplacer::update_all_vardata() {
     uint32_t var = 0;
     for (vector<Lit>::const_iterator
         it = table.begin(); it != table.end()
@@ -590,9 +583,6 @@ bool VarReplacer::replace_bnns() {
     return solver->okay();
 }
 
-/**
-@brief Replaces variables in long clauses
-*/
 bool VarReplacer::replace_set(vector<ClOffset>& cs) {
     frat_func_start();
     assert(!solver->frat->something_delayed());
@@ -826,7 +816,7 @@ void VarReplacer::extend_model_all() {
 void VarReplacer::replaceChecks(const uint32_t var1, const uint32_t var2) const
 {
 
-    assert(solver->ok);
+    assert(solver->okay());
     assert(solver->decisionLevel() == 0);
     assert(solver->value(var1) == l_Undef);
     assert(solver->value(var2) == l_Undef);
@@ -901,15 +891,7 @@ bool VarReplacer::handleOneSet(
     return solver->okay();
 }
 
-/**
-@brief Replaces two two lits with one another
-*/
-bool VarReplacer::replace(
-    uint32_t var1
-    , uint32_t var2
-    , const bool xor_is_true
-)
-{
+bool VarReplacer::replace( uint32_t var1 , uint32_t var2 , const bool xor_is_true) {
     #ifdef VERBOSE_DEBUG
     cout
     << "replace() called with var " <<  Lit(var1, false)

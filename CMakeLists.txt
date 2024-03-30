@@ -551,9 +551,9 @@ if (HAVE__FPU_SETCW)
     message(STATUS "Found FPU code for yalsat: fpu_control.h, _FPU_SINGLE, _FPU_DOUBLE")
 endif()
 
-option(WEIGHTED_SAMPLING "Allow for weighted sampling" OFF)
-if (WEIGHTED_SAMPLING)
-    add_definitions( -DWEIGHTED_SAMPLING )
+option(WEIGHTED "Allow for weighted sampling" OFF)
+if (WEIGHTED)
+    add_definitions( -DWEIGHTED )
 endif()
 
 
@@ -593,7 +593,7 @@ if (NOT NOBREAKID)
         add_definitions(-DUSE_BREAKID)
     endif()
 endif()
-
+find_package(GMP REQUIRED)
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)

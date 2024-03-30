@@ -26,17 +26,11 @@ THE SOFTWARE.
 #include <vector>
 #include <utility>
 #include <tuple>
-#ifdef ARJUN_SERIALIZE
-#include <boost/serialization/vector.hpp>
-#include <boost/serialization/map.hpp>
-#endif
 
-#include "constants.h"
 #include "solvertypes.h"
 #include "clause.h"
 #include "xor.h"
 #include "watcharray.h"
-#include "simplefile.h"
 
 namespace CMSat {
 

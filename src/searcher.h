@@ -20,17 +20,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef __SEARCHER_H__
-#define __SEARCHER_H__
-
-#include <array>
+#pragma once
 
 #include "constants.h"
 #include "propengine.h"
 #include "solvertypes.h"
 #include "time_mem.h"
 #include "hyperengine.h"
-#include "simplefile.h"
 #include "searchstats.h"
 #include "searchhist.h"
 
@@ -640,5 +636,3 @@ template<class T> void Searcher::print_clause(const string& str, const T& cl) co
 }
 
 } //end namespace
-
-#endif //__SEARCHER_H__

@@ -20,8 +20,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
+#include "build/include/cryptominisat5/cryptominisat_c.h"
 #include "constants.h"
 #include "cryptominisat.h"
+#include "cryptominisat_c.h"
 #include "solver.h"
 #include "frat.h"
 #include "shareddata.h"
@@ -29,6 +31,7 @@ THE SOFTWARE.
 
 #include <fstream>
 #include <cstdint>
+#include <iomanip>
 #include <limits>
 #include <thread>
 #include <mutex>
@@ -864,7 +867,7 @@ struct OneThreadCalc
         data_for_thread.cpu_times[tid] = cpuTime();
         if (print_thread_start_and_finish) {
             data_for_thread.update_mutex->lock();
-            ios::fmtflags f(cout.flags());
+            std::ios::fmtflags f(cout.flags());
             cout << "c Finished thread " << tid << " with result: " << ret
             << " T-diff: " << std::fixed << std::setprecision(2)
             << (data_for_thread.cpu_times[tid]-start_time)
@@ -1448,10 +1451,9 @@ DLL_PUBLIC void SATSolver::set_single_run()
 DLL_PUBLIC void SATSolver::set_lit_weight(Lit lit, double weight)
 {
     actually_add_clauses_to_threads(data);
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
-        assert(!lit.sign() && "TODO non-equal weights");
-        s.set_var_weight(lit, weight);
+    for (auto & solver : data->solvers) {
+        Solver& s = *solver;
+        s.set_lit_weight(lit, weight);
     }
 }
 
@@ -1491,10 +1493,10 @@ DLL_PUBLIC std::vector<uint32_t> SATSolver::remove_definable_by_irreg_gate(const
     return data->solvers[0]->remove_definable_by_irreg_gate(vars);
 }
 
-DLL_PUBLIC void SATSolver::clean_sampl_and_get_empties(
+DLL_PUBLIC void SATSolver::get_empties(
     std::vector<uint32_t>& sampl_vars, std::vector<uint32_t>& empty_vars)
 {
-    return data->solvers[0]->clean_sampl_and_get_empties(sampl_vars, empty_vars);
+    return data->solvers[0]->get_empties(sampl_vars, empty_vars);
 }
 
 DLL_PUBLIC lbool SATSolver::find_fast_backw(FastBackwData fast_backw)
@@ -1809,36 +1811,6 @@ DLL_PUBLIC void SATSolver::set_seed(const uint32_t seed)
     }
 }
 
-#ifdef ARJUN_SERIALIZE
-DLL_PUBLIC std::string SATSolver::serialize_solution_reconstruction_data() const
-{
-    Solver& s = *data->solvers[0];
-    return s.serialize_solution_reconstruction_data();
-}
-
-DLL_PUBLIC void* SATSolver::create_extend_solution_setup(std::string& dat)
-{
-    std::atomic<bool>* must_inter = new std::atomic<bool>;
-    Solver* solver = new CMSat::Solver(nullptr, must_inter);
-    solver->create_from_solution_reconstruction_data(dat);
-
-   return (void*)solver;
-}
-
-DLL_PUBLIC pair<lbool, vector<lbool>> SATSolver::extend_solution(void* s, const vector<lbool>& simp_sol)
-{
-    CMSat::Solver* solver = (CMSat::Solver*)s;
-    return solver->extend_minimized_model(simp_sol);
-}
-
-DLL_PUBLIC void SATSolver::delete_extend_solution_setup(void* s)
-{
-    CMSat::Solver* solver = (CMSat::Solver*)s;
-    delete solver->get_must_interrupt_inter_asap_ptr();
-    delete solver;
-}
-#endif
-
 DLL_PUBLIC bool SATSolver::minimize_clause(std::vector<Lit>& cl)
 {
     Solver& s = *data->solvers[0];
@@ -1847,11 +1819,11 @@ DLL_PUBLIC bool SATSolver::minimize_clause(std::vector<Lit>& cl)
 }
 
 
-DLL_PUBLIC bool SATSolver::backbone_simpl(int64_t max_confl, bool cmsgen, bool& finished)
+DLL_PUBLIC bool SATSolver::backbone_simpl(int64_t max_confl, bool& finished)
 {
     Solver& s = *data->solvers[0];
     actually_add_clauses_to_threads(data);
-    return s.backbone_simpl(max_confl, cmsgen, finished);
+    return s.backbone_simpl(max_confl, finished);
 }
 
 DLL_PUBLIC bool SATSolver::removed_var(uint32_t var) const{
@@ -1870,3 +1842,33 @@ DLL_PUBLIC void SATSolver::set_oracle_removed_is_learnt(bool val) {
     Solver& s = *data->solvers[0];
     s.conf.oracle_removed_is_learnt = val;
 }
+
+// Weight stuff
+DLL_PUBLIC bool SATSolver::get_weighted() const {
+    const Solver& s = *data->solvers[0];
+    return s.get_weighted();
+}
+
+DLL_PUBLIC void SATSolver::set_weighted(const bool weighted) {
+    Solver& s = *data->solvers[0];
+    s.set_weighted(weighted);
+}
+
+DLL_PUBLIC void SATSolver::set_multiplier_weight(const mpz_class mult) {
+    Solver& s = *data->solvers[0];
+    s.set_multiplier_weight(mult);
+}
+
+DLL_PUBLIC mpz_class SATSolver::get_multiplier_weight() const {
+    Solver& s = *data->solvers[0];
+    return s.get_multiplier_weight();
+}
+
+#ifdef WEIGHTED
+DLL_PUBLIC void SATSolver::get_weights(std::map<Lit, double>& weights,
+        const std::vector<uint32_t>& sampl_vars,
+        const std::vector<uint32_t>& orig_sampl_vars) const {
+    const Solver& s = *data->solvers[0];
+    s.get_weights(weights, sampl_vars, orig_sampl_vars);
+}
+#endif

@@ -104,44 +104,44 @@ void Main::readInAFile(SATSolver* solver2, const string& filename)
         exit(-1);
     }
 
-    if (!sampling_vars_str.empty() && !parser.sampling_vars.empty()) {
+    if (!sampl_vars_str.empty() && !parser.sampl_vars.empty()) {
         cerr << "ERROR! Sampling vars set in console but also in CNF." << endl;
         exit(-1);
     }
 
-    if (!sampling_vars_str.empty()) {
-        assert(sampling_vars.empty());
+    if (!sampl_vars_str.empty()) {
+        assert(sampl_vars.empty());
 
-        std::stringstream ss(sampling_vars_str);
+        std::stringstream ss(sampl_vars_str);
         uint32_t i;
         while (ss >> i) {
             const uint32_t var = i-1;
-            sampling_vars.push_back(var);
+            sampl_vars.push_back(var);
             if (ss.peek() == ',' || ss.peek() == ' ') ss.ignore();
         }
     } else {
-        sampling_vars.swap(parser.sampling_vars);
+        sampl_vars.swap(parser.sampl_vars);
     }
 
-    if (sampling_vars.empty()) {
-        if (only_sampling_solution) {
+    if (sampl_vars.empty()) {
+        if (only_sampl_solution) {
             cout << "ERROR: only sampling vars are requested in the solution, but no sampling vars have been set!" << endl;
             exit(-1);
         }
     } else {
-        solver2->set_sampling_vars(&sampling_vars);
-        if (sampling_vars.size() > 100) {
+        solver2->set_sampling_vars(&sampl_vars);
+        if (sampl_vars.size() > 100) {
             cout
             << "c Sampling var set contains over 100 variables, not displaying"
             << endl;
         } else {
             if (conf.verbosity) {
                 cout << "c Sampling vars set (total num: "
-                << sampling_vars.size() << " ) : ";
-                for(size_t i = 0; i < sampling_vars.size(); i++) {
-                    const uint32_t v = sampling_vars[i];
+                << sampl_vars.size() << " ) : ";
+                for(size_t i = 0; i < sampl_vars.size(); i++) {
+                    const uint32_t v = sampl_vars[i];
                     cout << v+1;
-                    if (i+1 != sampling_vars.size())
+                    if (i+1 != sampl_vars.size())
                         cout << ",";
                 }
                 cout << endl;
@@ -249,23 +249,23 @@ void Main::printResultFunc(
                 }
             };
 
-            if (sampling_vars.empty() || !only_sampling_solution) {
+            if (sampl_vars.empty() || !only_sampl_solution) {
                 for (uint32_t var = 0; var < solver->nVars(); var++) {
                     fun(var);
                 }
 
             } else {
-                for (uint32_t var: sampling_vars) {
+                for (uint32_t var: sampl_vars) {
                     fun(var);
                 }
             }
             *os << "0" << endl;
         } else {
             uint32_t num_undef;
-            if (sampling_vars.empty() || !only_sampling_solution) {
+            if (sampl_vars.empty() || !only_sampl_solution) {
                 num_undef = print_model(solver, os);
             } else {
-                num_undef = print_model(solver, os, &sampling_vars);
+                num_undef = print_model(solver, os, &sampl_vars);
             }
             if (num_undef && !toFile && conf.verbosity) {
                 cout << "c NOTE: " << num_undef << " variables are NOT set." << endl;
@@ -999,12 +999,12 @@ void Main::add_supported_options() {
         .default_value(conf.simulate_frat)
         .help("Simulate FRAT");
     program.add_argument("--sampling")
-        .action([&](const auto& a) {sampling_vars_str = a;})
-        .default_value(sampling_vars_str)
+        .action([&](const auto& a) {sampl_vars_str = a;})
+        .default_value(sampl_vars_str)
         .help("Sampling vars, separated by comma");
     program.add_argument("--onlysampling")
         .flag()
-        .action([&](const auto&) {only_sampling_solution = true;})
+        .action([&](const auto&) {only_sampl_solution = true;})
         .help("Print and ban(!) solutions' vars only in 'c ind' or as --sampling '...'");
     program.add_argument("--assump")
         .action([&](const auto& a) {assump_filename = a;})
@@ -1363,7 +1363,7 @@ lbool Main::multi_solutions()
     unsigned long current_nr_of_solutions = 0;
     lbool ret = l_True;
     while(current_nr_of_solutions < max_nr_of_solutions && ret == l_True) {
-        ret = solver->solve(&assumps, only_sampling_solution);
+        ret = solver->solve(&assumps, only_sampl_solution);
         current_nr_of_solutions++;
 
         if (ret == l_True && current_nr_of_solutions < max_nr_of_solutions) {
@@ -1390,7 +1390,7 @@ lbool Main::multi_solutions()
 void Main::ban_found_solution()
 {
     vector<Lit> lits;
-    if (sampling_vars.empty()) {
+    if (sampl_vars.empty()) {
         //all of the solution
         for (uint32_t var = 0; var < solver->nVars(); var++) {
             if (solver->get_model()[var] != l_Undef) {
@@ -1398,7 +1398,7 @@ void Main::ban_found_solution()
             }
         }
     } else {
-      for (const uint32_t var: sampling_vars) {
+      for (const uint32_t var: sampl_vars) {
           if (solver->get_model()[var] != l_Undef) {
               lits.push_back( Lit(var, (solver->get_model()[var] == l_True)? true : false) );
           }

@@ -133,7 +133,9 @@ void CNF::enlarge_nonminimial_datastructs(size_t n)
     assigns.insert(assigns.end(), n, l_Undef);
     unit_cl_IDs.insert(unit_cl_IDs.end(), n, 0);
     unit_cl_XIDs.insert(unit_cl_XIDs.end(), n, 0);
-    varData.insert(varData.end(), n, VarData());
+    for(uint32_t i = 0; i < n; i++) {
+        varData.push_back(VarData(varData.size()));
+    }
     depth.insert(depth.end(), n, 0);
 }
 

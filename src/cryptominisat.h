@@ -24,8 +24,9 @@ THE SOFTWARE.
 
 #include <atomic>
 #include <vector>
-#include <iostream>
+#include <map>
 #include <utility>
+#include <gmpxx.h>
 #include <string>
 #include <limits>
 #include <cstdio>
@@ -222,7 +223,7 @@ namespace CMSat {
         std::vector<OrGate> get_recovered_or_gates();
         std::vector<ITEGate> get_recovered_ite_gates();
         std::vector<uint32_t> remove_definable_by_irreg_gate(const std::vector<uint32_t>& vars);
-        void clean_sampl_and_get_empties(std::vector<uint32_t>& sampl_vars, std::vector<uint32_t>& empty_vars);
+        void get_empties(std::vector<uint32_t>& sampl_vars, std::vector<uint32_t>& empty_vars);
         std::vector<uint32_t> get_var_incidence();
         std::vector<uint32_t> get_lit_incidence();
         std::vector<uint32_t> get_var_incidence_also_red();
@@ -231,7 +232,7 @@ namespace CMSat {
         lbool find_fast_backw(FastBackwData fast_backw);
         void remove_and_clean_all();
         lbool probe(Lit l, uint32_t& min_props);
-        bool backbone_simpl(int64_t max_confl, bool cmsgen, bool& finished);
+        bool backbone_simpl(int64_t max_confl, bool& finished);
 
         //Given a set of literals to enqueue, returns:
         // 1) Whether they imply UNSAT. If "false": UNSAT
@@ -268,6 +269,16 @@ namespace CMSat {
         // Backwards compatibility, implemented using the above "small clauses" functions
         void open_file_and_dump_irred_clauses(const char* fname);
         bool removed_var(uint32_t var) const;
+
+#ifdef WEIGHTED
+        void get_weights(std::map<Lit, mpz_class>& weights,
+            const std::vector<uint32_t>& sampl_vars,
+            const std::vector<uint32_t>& orig_sampl_vars) const;
+#endif
+        bool get_weighted() const;
+        void set_weighted(const bool);
+        void set_multiplier_weight(const mpz_class mult);
+        mpz_class get_multiplier_weight() const;
 
     private:
 

@@ -24,24 +24,15 @@ THE SOFTWARE.
 
 #include <map>
 #include <vector>
-#include <list>
 #include <set>
-#include <queue>
 #include <map>
-#include <iomanip>
-#include <fstream>
-#ifdef ARJUN_SERIALIZE
-#include <boost/serialization/vector.hpp>
-#endif
 
 #include "clause.h"
 #include "solvertypes.h"
 #include "heap.h"
 #include "touchlist.h"
-#include "varupdatehelper.h"
 #include "watched.h"
 #include "watcharray.h"
-#include "simplefile.h"
 struct PicoSAT;
 
 namespace CMSat {
@@ -137,7 +128,7 @@ public:
 
     // definable vars
     vector<uint32_t> remove_definable_by_irreg_gate(const vector<uint32_t>& vars);
-    void clean_sampl_and_get_empties(vector<uint32_t>& empty_vars, vector<uint32_t>& sampl_vars);
+    void get_empties(vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars);
     bool elim_var_by_str(uint32_t var, const vector<pair<ClOffset, ClOffset>>& cls);
     uint32_t add_cls_to_picosat_definable(const Lit wsLit);
     PicoSAT* picosat = nullptr;

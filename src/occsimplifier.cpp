@@ -73,6 +73,7 @@ using namespace CMSat;
 using std::cout;
 using std::endl;
 using std::unique;
+using std::make_pair;
 
 //#define VERBOSE_DEBUG_VARELIM
 //#define VERBOSE_DEBUG_XOR_FINDER
@@ -1847,12 +1848,9 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(const vector<uint
     return ret;
 }
 
-void OccSimplifier::clean_sampl_and_get_empties(
-    vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars)
-{
+void OccSimplifier::get_empties(vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars) {
     assert(solver->okay());
     assert(solver->prop_at_head());
-    release_assert(empty_vars.empty());
     if (!setup()) return;
 
     auto origTrailSize = solver->trail_size();
@@ -1861,49 +1859,39 @@ void OccSimplifier::clean_sampl_and_get_empties(
     solver->conf.maxOccurRedMB = 0;
     const double my_time = cpuTime();
 
-    set<uint32_t> empty_vars_set;
-
     // Clean up sampl_vars from replaced and set variables
-    set<uint32_t> sampl_vars_set;
-    for(uint32_t& v: sampl_vars) {
-        v = solver->varReplacer->get_var_replaced_with(v);
-        auto rem_val = solver->varData[v].removed;
+    vector<std::pair<uint32_t, uint32_t> > sampl_var_pairs;
+    for(const uint32_t& v: sampl_vars) {
+        uint32_t v2 = solver->varReplacer->get_var_replaced_with_outer(v);
+        v2 = solver->map_outer_to_inter(v2);
+        auto rem_val = solver->varData[v2].removed;
         assert(rem_val == Removed::none);
-        if (solver->value(v) != l_Undef) continue;
-        assert(v < solver->nVars());
-        sampl_vars_set.insert(v);
+        sampl_var_pairs.push_back(make_pair(v2, v));
     }
 
     // Find empties
-    uint32_t mirror = 0;
     uint32_t empty_occ = 0;
-    for(auto& v: sampl_vars_set) {
-        if (!solver->okay()) goto end;
-        const Lit l = Lit(v, false);
+    sampl_vars.clear();
+    if (!solver->okay()) goto end;
 
+    for(auto& p: sampl_var_pairs) {
+        const Lit l = Lit(p.first, false);
         uint32_t irred_and_red = solver->watches[l].size() + solver->watches[~l].size();
-        if (irred_and_red == 0 || (solver->zero_irred_cls(l) && solver->zero_irred_cls(~l))) {
+        if (solver->value(p.first) == l_Undef &&
+                (irred_and_red == 0 || (solver->zero_irred_cls(l) && solver->zero_irred_cls(~l)))) {
+            assert(p.first < solver->nVars());
             empty_occ++;
-            empty_vars_set.insert(v);
+            empty_vars.push_back(p.second);
             elim_var_by_str(l.var(), {});
             assert(solver->watches[l].empty() && solver->watches[~l].empty());
-            continue;
+        } else {
+            sampl_vars.push_back(p.second);
         }
     }
 
-    // Replace what we were given with cleaned + empty removed
-    sampl_vars.clear();
-    for(auto const& v: sampl_vars_set) {
-        if (empty_vars_set.find(v) == empty_vars_set.end())
-            sampl_vars.push_back(v);
-    }
-    empty_vars.clear();
-    for(auto const& v: empty_vars_set) empty_vars.push_back(v);
-
     end:
     double time_used = cpuTime() - my_time;
-    verb_print(1, "[cms-equiv-sub] equiv_subformula: " << mirror
-        << " empty_occ: " << empty_occ << solver->conf.print_times(time_used));
+    verb_print(1, "[empty] empty_occ: " << empty_occ << solver->conf.print_times(time_used));
 
     solver->conf.maxOccurRedMB = backup;
     finish_up(origTrailSize);

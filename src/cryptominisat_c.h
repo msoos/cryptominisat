@@ -20,7 +20,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#pragma once
+#ifndef CRYPTOMINISAT_C_H
+#define CRYPTOMINISAT_C_H
+
 #include <stddef.h>
 #include <stdint.h>
 
@@ -87,4 +89,6 @@ CMS_DLL_PUBLIC void cmsat_set_max_time(SATSolver* self, double max_time) NOEXCEP
 
 #ifdef __cplusplus
 } // end extern c
+#endif
+
 #endif

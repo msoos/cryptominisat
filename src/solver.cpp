@@ -22,6 +22,7 @@ THE SOFTWARE.
 
 #include "solver.h"
 
+#include <cstdint>
 #include <fstream>
 #include <cmath>
 #include <fcntl.h>
@@ -1766,12 +1767,12 @@ lbool Solver::execute_inprocess_strategy(
             if (nVars() > 10) oracle_vivif(finished);
         } else if (token == "oracle-sparsify") {
             bool finished = false;
-            backbone_simpl(30LL*1000LL, true, finished);
+            backbone_simpl(30LL*1000LL, finished);
             if (nVars() > 10) { if (finished) oracle_sparsify();
             }
         } else if (token == "backbone") {
             bool finished = false;
-            backbone_simpl(30LL*1000LL, true, finished);
+            backbone_simpl(30LL*1000LL, finished);
         } else if (token == "must-scc-vrepl") {
             if (conf.doFindAndReplaceEqLits) {
                 varReplacer->replace_if_enough_is_found();
@@ -2794,10 +2795,9 @@ void Solver::check_too_large_variable_number(const vector<Lit>& lits) const
     }
 }
 
-vector<pair<Lit, Lit> > Solver::get_all_binary_xors() const
-{
+// [replaced, replaced_with]
+vector<pair<Lit, Lit> > Solver::get_all_binary_xors() const {
     vector<pair<Lit, Lit> > bin_xors = varReplacer->get_all_binary_xors_outer();
-
     vector<pair<Lit, Lit> > ret;
     for(std::pair<Lit, Lit> p: bin_xors) {
         if (!varData[p.first.var()].is_bva && !varData[p.second.var()].is_bva) ret.push_back(p);
@@ -3182,8 +3182,7 @@ void Solver::end_getting_constraints()
     get_clause_query = nullptr;
 }
 
-vector<uint32_t> Solver::translate_sampl_set(const vector<uint32_t>& sampl_set)
-{
+vector<uint32_t> Solver::translate_sampl_set(const vector<uint32_t>& sampl_set) {
     assert(get_clause_query);
     return get_clause_query->translate_sampl_set(sampl_set);
 }
@@ -3210,55 +3209,19 @@ bool Solver::check_assumptions_contradict_foced_assignment() const {
     return false;
 }
 
-void Solver::set_var_weight(
-#ifdef WEIGHTED_SAMPLING
-const Lit lit, const double weight
-#else
-const Lit, const double
-#endif
-) {
-    #ifdef WEIGHTED_SAMPLING
-    //cout << "set weight called lit: " << lit << " w: " << weight << endl;
+void Solver::set_lit_weight([[maybe_unused]] const Lit lit, [[maybe_unused]] const double weight) {
     assert(lit.var() < nVars());
-    if (weights_given.size() < nVars()) {
-        weights_given.resize(nVars(), GivenW());
-    }
+    #ifdef WEIGHTED
+    if (!lit.sign()) varData[lit.var()].pos_weight = weight;
+    else varData[lit.var()].neg_weight = weight;
 
-    if ((weights_given[lit.var()].pos && !lit.sign())
-        || (weights_given[lit.var()].neg && lit.sign())
-    ) {
-        cout << "ERROR: Giving weights twice for literal: " << lit << endl;
-        exit(-1);
-        return;
-    }
-
-    if (!weights_given[lit.var()].neg && !lit.sign()) {
-        weights_given[lit.var()].pos = true;
-        varData[lit.var()].weight = weight;
-        return;
-    }
-
-    if (!weights_given[lit.var()].pos && lit.sign()) {
-        weights_given[lit.var()].neg = true;
-        varData[lit.var()].weight = weight;
-        return;
-    }
-
-    if (!lit.sign()) {
-        //this is the pos
-        weights_given[lit.var()].pos = true;
-        double neg = varData[lit.var()].weight;
-        double pos = weight;
-        varData[lit.var()].weight = pos/(pos + neg);
-    } else {
-        //this is the neg
-        weights_given[lit.var()].neg = true;
-        double neg = weight;
-        double pos = varData[lit.var()].weight;
-        varData[lit.var()].weight = pos/(pos + neg);
+    if (!varData[lit.var()].weight_set) {
+        varData[lit.var()].weight_set = true;
+        if (!lit.sign()) varData[lit.var()].neg_weight = 1.0-weight;
+        else varData[lit.var()].neg_weight = 1.0-weight;
     }
     #else
-    cout << "ERROR: set_var_weight() only supported if you compile with -DWEIGHTED_SAMPLING=ON" << endl;
+    cout << "ERROR: set_lit_weight only supported if you compile with -DWEIGHTED=ON" << endl;
     exit(-1);
     #endif
 }
@@ -3389,19 +3352,12 @@ vector<uint32_t> Solver::remove_definable_by_irreg_gate(const vector<uint32_t>& 
     return occsimplifier->remove_definable_by_irreg_gate(vars);
 }
 
-void Solver::clean_sampl_and_get_empties(
-    vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars)
+void Solver::get_empties(vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars)
 {
     if (!okay()) return;
     assert(get_num_bva_vars() == 0);
-    map_outer_to_inter(sampl_vars);
-    map_outer_to_inter(empty_vars);
-    for(const auto& v: empty_vars) sampl_vars.push_back(v);
-    empty_vars.clear();
 
-    occsimplifier->clean_sampl_and_get_empties(sampl_vars, empty_vars);
-    map_inter_to_outer(sampl_vars);
-    map_inter_to_outer(empty_vars);
+    occsimplifier->get_empties(sampl_vars, empty_vars);
 }
 
 bool Solver::remove_and_clean_all() {
@@ -3754,6 +3710,46 @@ void Solver::detach_clauses_in_xors() {
         << conf.print_times(cpuTime() - my_time));
 }
 
+/* // This needs to be an AIG actually, with an order of what to calculate first. */
+/* void Solver::get_var_map(vector<Lit>& var_map, map<uint32_t, bool>& var_set) const { */
+
+#ifdef WEIGHTED
+void Solver::get_weights(map<Lit,double>& weights,
+        const vector<uint32_t>& sampl_vars,
+        const vector<uint32_t>& orig_sampl_vars) const {
+    assert(get_weighted());
+
+    auto orig_sampl_vars_int = orig_sampl_vars;
+    map_outer_to_inter(orig_sampl_vars_int);
+    set<uint32_t> orig_sampl_set_int(orig_sampl_vars_int.begin(), orig_sampl_vars_int.end());
+
+    auto sampl_vars_int = sampl_vars;
+    map_outer_to_inter(sampl_vars_int);
+
+    for(const uint32_t& var: sampl_vars_int) {
+        Lit l = Lit(var, false);
+        assert(var < nVars());
+        mpz_class pos_weight = varData[var].pos_weight;
+        mpz_class neg_weight = varData[var].neg_weight;
+
+        // get all variables var is replacing
+        auto vars = varReplacer->get_vars_replacing(var);
+        for(auto v: vars) {
+            if (orig_sampl_set_int.count(v) == 0) continue;
+            assert(var == varReplacer->get_lit_replaced_with(Lit(v, false)).var());
+            if (varReplacer->get_lit_replaced_with(Lit(v, false)) == Lit(var, false)) {
+                pos_weight += varData[v].pos_weight;
+                neg_weight += varData[v].neg_weight;
+            } else {
+                pos_weight += varData[v].neg_weight;
+                neg_weight += varData[v].pos_weight;
+            }
+        }
+        weights[map_inter_to_outer(l)] = pos_weight;
+        weights[map_inter_to_outer(~l)] = neg_weight;
+    }
+}
+#endif
 
 #ifdef STATS_NEEDED
 void Solver::dump_clauses_at_finishup_as_last()

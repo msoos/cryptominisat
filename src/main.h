@@ -99,9 +99,9 @@ class Main: public MainCommon
         uint64_t maxconfl;
 
         //Sampling vars
-        vector<uint32_t> sampling_vars;
-        std::string sampling_vars_str = "";
-        bool only_sampling_solution = false;
+        vector<uint32_t> sampl_vars;
+        std::string sampl_vars_str = "";
+        bool only_sampl_solution = false;
         std::string assump_filename;
         vector<Lit> assumps;
 

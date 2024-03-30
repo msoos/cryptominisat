@@ -100,7 +100,10 @@ class Solver : public Searcher
             const vector<Lit>& lits,
             const int32_t cutoff,
             Lit out);
-        void set_var_weight(Lit lit, double weight);
+        void set_lit_weight(Lit lit, double weight);
+        void get_weights(map<Lit,double>& weights,
+                const vector<uint32_t>& sampling_vars,
+                const vector<uint32_t>& orig_sampl_vars) const;
 
         lbool solve_with_assumptions(
             const vector<Lit>* _assumptions = nullptr,
@@ -293,8 +296,7 @@ class Solver : public Searcher
         vector<ITEGate> get_recovered_ite_gates();
         vector<pair<Lit, Lit> > get_all_binary_xors() const;
         vector<uint32_t> remove_definable_by_irreg_gate(const vector<uint32_t>& vars);
-        void clean_sampl_and_get_empties(
-            vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars);
+        void get_empties(vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars);
 
         bool remove_and_clean_all();
         bool remove_and_clean_detached_xors(vector<Xor>& xors);
@@ -332,8 +334,7 @@ class Solver : public Searcher
         int PICOLIT(const Lit x) { return ((((int)(x).var()+1)) * ((x).sign() ? -1:1)); }
         PicoSAT* build_picosat();
         void copy_to_simp(SATSolver* s2);
-        bool backbone_simpl(int64_t max_confl, bool cmsgen, bool& finished);
-        bool backbone_simpl_old(int64_t max_confl, bool cmsgen, bool& finished);
+        bool backbone_simpl(int64_t max_confl, bool& finished);
         bool removed_var_ext(uint32_t var) const;
 
     private:
@@ -456,12 +457,7 @@ class Solver : public Searcher
 
         /////////////////////
         // Data
-        size_t               zeroLevAssignsByCNF = 0;
-        struct GivenW {
-            bool pos = false;
-            bool neg = false;
-        };
-        vector<GivenW> weights_given;
+        size_t zeroLevAssignsByCNF = 0;
 
         /////////////////////
         // Clauses

@@ -80,7 +80,7 @@ bool Solver::oracle_vivif(bool& finished)
     assert(solver->okay());
     finished = false;
 
-    backbone_simpl(300LL*1000LL, true, finished);
+    backbone_simpl(300LL*1000LL, finished);
     execute_inprocess_strategy(false, "must-renumber");
     if (!okay()) return okay();
     if (nVars() < 10) return okay();

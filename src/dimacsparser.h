@@ -34,6 +34,7 @@ THE SOFTWARE.
 #include <iomanip>
 #include <vector>
 #include <cassert>
+#include <gmpxx.h>
 
 using std::vector;
 using std::cerr;
@@ -54,11 +55,10 @@ class DimacsParser
             const bool strict_header,
             uint32_t offset_vars = 0);
         uint64_t max_var = numeric_limits<uint64_t>::max();
-        vector<uint32_t> sampling_vars;
-        vector<uint32_t> optional_sampling_vars;
-        bool sampling_vars_found = false;
+        vector<uint32_t> sampl_vars;
+        vector<uint32_t> opt_sampl_vars;
+        bool sampl_vars_found = false;
         map<int32_t, double> weights;
-        uint32_t must_mult_exp2 = 0;
         const std::string dimacs_spec = "http://www.satcompetition.org/2009/format-benchmarks2009.html";
         const std::string please_read_dimacs = "\nPlease read DIMACS specification at http://www.satcompetition.org/2009/format-benchmarks2009.html";
 
@@ -233,25 +233,20 @@ bool DimacsParser<C, S>::match(C& in, const char* str)
 
 template<class C, class S>
 bool DimacsParser<C, S>::parseWeight(C& in) {
-        if (match(in, "p weight ")) {
-        int32_t slit;
-        double weight;
-        if (in.parseInt(slit, lineNum) && in.parseDouble(weight, lineNum)) {
-            if (slit == 0) {
-                cerr << "ERROR: Cannot define weight of literal 0!" << endl;
-                exit(-1);
-            }
-            uint32_t var = std::abs(slit)-1;
-            bool sign = slit < 0;
-            Lit lit = Lit(var, sign);
-            solver->set_lit_weight(lit, weight);
-            return true;
-        } else {
-            cerr << "ERROR: weight is incorrect on line " << lineNum << endl;
+    int32_t slit;
+    double weight;
+    if (in.parseInt(slit, lineNum) && in.parseDouble(weight, lineNum)) {
+        if (slit == 0) {
+            cerr << "ERROR: Cannot define weight of literal 0!" << endl;
             exit(-1);
         }
+        uint32_t var = std::abs(slit)-1;
+        bool sign = slit < 0;
+        Lit lit = Lit(var, sign);
+        solver->set_lit_weight(lit, weight);
+        return true;
     } else {
-        cerr << "ERROR: weight is not given on line " << lineNum << endl;
+        cerr << "ERROR: weight is incorrect on line " << lineNum << endl;
         exit(-1);
     }
     return true;
@@ -442,12 +437,8 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
             return false;
         }
         in.skipWhitespace();
-        assert(*in == '2');++in;
-        assert(*in == '*');++in;
-        assert(*in == '*');++in;
-        if (!in.parseInt(must_mult_exp2, lineNum)) {
-            return false;
-        }
+        in.parseString(str2);
+        solver->set_multiplier_weight(mpz_class(str2.c_str(), 10));
     }
     if (!debugLib.empty() && str == "Solver::new_var()") {
         solver->new_var();
@@ -465,21 +456,22 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
             cout << "c Parsed Solver::new_vars( " << n << " )" << endl;
         }
     } else if (str == "ind") {
-        sampling_vars_found = true;
-        if (!parseIndependentSet(in, sampling_vars)) return false;
+        sampl_vars_found = true;
+        if (!parseIndependentSet(in, sampl_vars)) return false;
     } else if (str == "p") {
         in.skipWhitespace();
         std::string str2;
         in.parseString(str2);
         if (str2 == "weight") {
+            solver->set_weighted(true);
             if (!parseWeight(in)) return false;
         } else if (str2 == "show") {
             in.skipWhitespace();
-            sampling_vars_found = true;
-            if (!parseIndependentSet(in, sampling_vars)) { return false; }
+            sampl_vars_found = true;
+            if (!parseIndependentSet(in, sampl_vars)) { return false; }
         } else if (str2 == "optshow") {
             in.skipWhitespace();
-            if (!parseIndependentSet(in, optional_sampling_vars)) { return false; }
+            if (!parseIndependentSet(in, opt_sampl_vars)) { return false; }
         } else {
             cerr << "ERROR, 'c p' followed by unknown text: '" << str2 << "'" << endl;
             exit(-1);
