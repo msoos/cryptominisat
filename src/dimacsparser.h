@@ -244,7 +244,8 @@ bool DimacsParser<C, S>::parseWeight(C& in) {
             uint32_t var = std::abs(slit)-1;
             bool sign = slit < 0;
             Lit lit = Lit(var, sign);
-            solver->set_lit_weight(lit, weight);
+            /* solver->set_lit_weight(lit, weight); */
+            assert(false && "This is not implemented yet");
             return true;
         } else {
             cerr << "ERROR: weight is incorrect on line " << lineNum << endl;
