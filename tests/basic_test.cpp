@@ -1180,7 +1180,7 @@ TEST(sampling, indep1)
     s.add_clause(str_to_cl("-5, 6"));
 
     vector<uint32_t> x{4U};
-    s.set_sampling_vars(&x);
+    s.set_sampl_vars(x);
 
     lbool ret = s.solve(NULL, true);
     EXPECT_EQ(ret, l_True);
@@ -1206,7 +1206,7 @@ TEST(sampling, indep2)
     s.add_clause(str_to_cl("-5, 6"));
 
     vector<uint32_t> x = str_to_vars("1, 2, 3, 4, 5, 6");
-    s.set_sampling_vars(&x);
+    s.set_sampl_vars(x);
 
     lbool ret = s.solve(NULL, true);
     EXPECT_EQ(ret, l_True);

@@ -80,9 +80,7 @@ public:
 
     CNF(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter)
     {
-        if (_conf != nullptr) {
-            conf = *_conf;
-        }
+        if (_conf != nullptr) conf = *_conf;
         mtrand.seed(conf.origSeed);
         frat = new Frat;
         assert(_must_interrupt_inter != nullptr);

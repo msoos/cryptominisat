@@ -352,9 +352,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doGateFind       (false)
         , gatefinder_time_limitM(200)
 
-        //Sampling
-        , sampling_vars(nullptr)
-
         //Timeouts
         , global_next_multiplier(1.0)
         , orig_global_timeout_multiplier(3.0)

@@ -119,7 +119,7 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
         return solver->attach_xorclauses();
     }
     if (solver->xorclauses.size() > solver->conf.gaussconf.max_gauss_xor_clauses
-        && solver->conf.sampling_vars != nullptr
+        && solver->conf.sampling_vars_set
     ) {
         matrix_created = false;
         verb_print(1,
@@ -186,8 +186,8 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
 }
 
 uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
-    if (solver->conf.sampling_vars) {
-        uint32_t size_at_least = (double)solver->conf.sampling_vars->size()*3;
+    if (solver->conf.sampling_vars_set) {
+        uint32_t size_at_least = (double)solver->conf.sampling_vars.size()*3;
         if (solver->conf.gaussconf.max_matrix_rows < size_at_least) {
             solver->conf.gaussconf.max_matrix_rows = size_at_least;
             verb_print(1,"c [matrix] incrementing max number of rows to " << size_at_least);
@@ -255,13 +255,13 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
         //calculate sampling var ratio
         //for statistics ONLY
         double ratio_sampling = 0.0;
-        if (solver->conf.sampling_vars) {
+        if (solver->conf.sampling_vars_set) {
             //'seen' with what is in Matrix
             for(uint32_t int_var: reverseTable[i]) solver->seen[int_var] = 1;
 
             uint32_t tot_sampling_vars  = 0;
             uint32_t sampling_var_inside_matrix = 0;
-            for(uint32_t outer_var: *solver->conf.sampling_vars) {
+            for(uint32_t outer_var: solver->conf.sampling_vars) {
                 outer_var = solver->varReplacer->get_var_replaced_with_outer(outer_var);
                 uint32_t int_var = solver->map_outer_to_inter(outer_var);
                 tot_sampling_vars++;
@@ -287,7 +287,7 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
 
         if (m.rows > solver->conf.gaussconf.min_matrix_rows) {
             //Override in case sampling vars ratio is high
-            if (solver->conf.sampling_vars) {
+            if (solver->conf.sampling_vars_set) {
                 verb_print(2, "[matrix] ratio_sampling: " << ratio_sampling);
                 if (ratio_sampling >= 0.6) { //TODO Magic constant
                     verb_print(1, "[matrix] sampling ratio good -> set usage to YES");
@@ -333,7 +333,7 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
             << std::setw(5) << std::fixed << std::setprecision(4) << m.density
             << "  xorlen avg: "
             << std::setw(5) << std::fixed << std::setprecision(2)  << avg;
-            if (solver->conf.sampling_vars) {
+            if (solver->conf.sampling_vars_set) {
                 cout << "  perc of sampl vars: "
                 << std::setw(5) << std::fixed << std::setprecision(3)
                 << ratio_sampling*100.0 << " %";

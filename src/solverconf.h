@@ -493,7 +493,10 @@ class DLL_PUBLIC SolverConf
         GaussConf gaussconf;
 
         //Sampling
-        const std::vector<uint32_t>* sampling_vars;
+        std::vector<uint32_t> sampling_vars;
+        bool sampling_vars_set = false;
+        std::vector<uint32_t> opt_sampling_vars;
+        bool opt_sampling_vars_set = false;
 
         //Timeouts
         double global_next_multiplier;

@@ -109,7 +109,7 @@ OccSimplifier::~OccSimplifier()
 void OccSimplifier::new_var(const uint32_t /*orig_outer*/)
 {
     n_occurs.insert(n_occurs.end(), 2, 0);
-    if (solver->conf.sampling_vars) {
+    if (solver->conf.sampling_vars_set) {
         sampling_vars_occsimp.insert(sampling_vars_occsimp.end(), 1, 0);
     }
 }
@@ -117,7 +117,7 @@ void OccSimplifier::new_var(const uint32_t /*orig_outer*/)
 void OccSimplifier::new_vars(size_t n)
 {
     n_occurs.insert(n_occurs.end(), n*2ULL, 0);
-    if (solver->conf.sampling_vars) {
+    if (solver->conf.sampling_vars_set) {
         sampling_vars_occsimp.insert(sampling_vars_occsimp.end(), n, 0);
     }
 }
@@ -866,7 +866,7 @@ void OccSimplifier::eliminate_empty_resolvent_vars()
 bool OccSimplifier::can_eliminate_var(const uint32_t var, bool ignore_xor) const
 {
     #ifdef SLOW_DEBUG
-    if (solver->conf.sampling_vars) {
+    if (solver->conf.sampling_vars_set) {
         assert(var < solver->nVars());
         assert(var < sampling_vars_occsimp.size());
     }
@@ -877,7 +877,7 @@ bool OccSimplifier::can_eliminate_var(const uint32_t var, bool ignore_xor) const
         solver->varData[var].removed != Removed::none ||
         solver->var_inside_assumptions(var) != l_Undef ||
         (!ignore_xor && xorclauses_vars[var]) ||
-        ((solver->conf.sampling_vars || solver->fast_backw.fast_backw_on) &&
+        ((solver->conf.sampling_vars_set || solver->fast_backw.fast_backw_on) &&
             sampling_vars_occsimp[var])
     ) {
         return false;
@@ -2396,11 +2396,11 @@ bool OccSimplifier::simplify(const bool _startup, const std::string& schedule) {
     const size_t origTrailSize = solver->trail_size();
 
     sampling_vars_occsimp.clear();
-    if (solver->conf.sampling_vars) {
+    if (solver->conf.sampling_vars_set) {
         // sampling vars should not be eliminated
         assert(!solver->fast_backw.fast_backw_on);
         sampling_vars_occsimp.resize(solver->nVars(), false);
-        for(uint32_t outer_var: *solver->conf.sampling_vars) {
+        for(uint32_t outer_var: solver->conf.sampling_vars) {
             outer_var = solver->varReplacer->get_var_replaced_with_outer(outer_var);
             uint32_t int_var = solver->map_outer_to_inter(outer_var);
             if (int_var < solver->nVars()) {

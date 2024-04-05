@@ -133,7 +133,6 @@ namespace CMSat {
         void set_bve(int bve);
         void set_bve_too_large_resolvent(int too_large_resolvent);
         void set_greedy_undef(); //Try to set variables to l_Undef in solution
-        void set_sampling_vars(const std::vector<uint32_t>* sampl_vars);
         void set_timeout_all_calls(double secs); //max timeout on all subsequent solve() or simplify
         void set_up_for_scalmc(); //used to set the solver up for ScalMC configuration
         void set_up_for_arjun();
@@ -279,6 +278,12 @@ namespace CMSat {
         void set_weighted(const bool);
         void set_multiplier_weight(const mpz_class mult);
         mpz_class get_multiplier_weight() const;
+        const std::vector<uint32_t>& get_sampl_vars() const;
+        void set_sampl_vars(const std::vector<uint32_t>& vars);
+        bool get_sampl_vars_set() const;
+        const std::vector<uint32_t>& get_opt_sampl_vars() const;
+        void set_opt_sampl_vars(const std::vector<uint32_t>& vars);
+        bool get_opt_sampl_vars_set() const;
 
     private:
 

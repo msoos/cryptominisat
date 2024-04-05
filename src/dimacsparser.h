@@ -55,9 +55,6 @@ class DimacsParser
             const bool strict_header,
             uint32_t offset_vars = 0);
         uint64_t max_var = numeric_limits<uint64_t>::max();
-        vector<uint32_t> sampl_vars;
-        vector<uint32_t> opt_sampl_vars;
-        bool sampl_vars_found = false;
         map<int32_t, double> weights;
         const std::string dimacs_spec = "http://www.satcompetition.org/2009/format-benchmarks2009.html";
         const std::string please_read_dimacs = "\nPlease read DIMACS specification at http://www.satcompetition.org/2009/format-benchmarks2009.html";
@@ -456,8 +453,9 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
             cout << "c Parsed Solver::new_vars( " << n << " )" << endl;
         }
     } else if (str == "ind") {
-        sampl_vars_found = true;
+        vector<uint32_t> sampl_vars;
         if (!parseIndependentSet(in, sampl_vars)) return false;
+        solver->set_sampl_vars(sampl_vars);
     } else if (str == "p") {
         in.skipWhitespace();
         std::string str2;
@@ -467,11 +465,14 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
             if (!parseWeight(in)) return false;
         } else if (str2 == "show") {
             in.skipWhitespace();
-            sampl_vars_found = true;
+            vector<uint32_t> sampl_vars;
             if (!parseIndependentSet(in, sampl_vars)) { return false; }
+            solver->set_sampl_vars(sampl_vars);
         } else if (str2 == "optshow") {
             in.skipWhitespace();
+            vector<uint32_t> opt_sampl_vars;
             if (!parseIndependentSet(in, opt_sampl_vars)) { return false; }
+            solver->set_opt_sampl_vars(opt_sampl_vars);
         } else {
             cerr << "ERROR, 'c p' followed by unknown text: '" << str2 << "'" << endl;
             exit(-1);

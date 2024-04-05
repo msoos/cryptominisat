@@ -3425,8 +3425,8 @@ ConflictData Searcher::find_conflict_level(PropBy& pb) {
 }
 
 inline bool Searcher::check_order_heap_sanity() {
-    if (conf.sampling_vars) {
-        for(uint32_t outer_var: *conf.sampling_vars) {
+    if (conf.sampling_vars_set) {
+        for(uint32_t outer_var: conf.sampling_vars) {
             outer_var = solver->varReplacer->get_var_replaced_with_outer(outer_var);
             uint32_t int_var = map_outer_to_inter(outer_var);
 

@@ -672,15 +672,6 @@ DLL_PUBLIC void SATSolver::set_greedy_undef()
     exit(-1);
 }
 
-DLL_PUBLIC void SATSolver::set_sampling_vars(const vector<uint32_t>* sampl_vars)
-{
-    for (auto & solver : data->solvers) {
-        Solver& s = *solver;
-        s.conf.sampling_vars = sampl_vars;
-    }
-}
-
-
 DLL_PUBLIC void SATSolver::set_verbosity(unsigned verbosity)
 {
     if (data->solvers.empty()) return;
@@ -1863,6 +1854,41 @@ DLL_PUBLIC mpz_class SATSolver::get_multiplier_weight() const {
     Solver& s = *data->solvers[0];
     return s.get_multiplier_weight();
 }
+
+DLL_PUBLIC const std::vector<uint32_t>& SATSolver::get_sampl_vars() const {
+    Solver& s = *data->solvers[0];
+    if (!s.conf.sampling_vars_set) throw std::runtime_error("Sampling vars not set");
+    return s.conf.sampling_vars;
+}
+
+DLL_PUBLIC void SATSolver::set_sampl_vars(const std::vector<uint32_t>& vars) {
+    Solver& s = *data->solvers[0];
+    s.conf.sampling_vars_set = true;
+    s.conf.sampling_vars = vars;
+}
+
+DLL_PUBLIC bool SATSolver::get_sampl_vars_set() const {
+    Solver& s = *data->solvers[0];
+    return s.conf.sampling_vars_set;
+}
+
+DLL_PUBLIC void SATSolver::set_opt_sampl_vars(const std::vector<uint32_t>& vars) {
+    Solver& s = *data->solvers[0];
+    s.conf.opt_sampling_vars_set = true;
+    s.conf.opt_sampling_vars = vars;
+}
+
+DLL_PUBLIC const std::vector<uint32_t>& SATSolver::get_opt_sampl_vars() const {
+    Solver& s = *data->solvers[0];
+    if (!s.conf.opt_sampling_vars_set) throw std::runtime_error("Sampling vars not set");
+    return s.conf.opt_sampling_vars;
+}
+
+DLL_PUBLIC bool SATSolver::get_opt_sampl_vars_set() const {
+    Solver& s = *data->solvers[0];
+    return s.conf.opt_sampling_vars_set;
+}
+
 
 #ifdef WEIGHTED
 DLL_PUBLIC void SATSolver::get_weights(std::map<Lit, double>& weights,

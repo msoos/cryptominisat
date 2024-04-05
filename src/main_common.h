@@ -34,7 +34,7 @@ class MainCommon
 public:
     static uint32_t print_model(CMSat::SATSolver* solver,
                          std::ostream* os,
-                         std::vector<uint32_t>* only = nullptr);
+                         const std::vector<uint32_t>* only = nullptr);
     void handle_frat_option();
 
     string frat_fname;

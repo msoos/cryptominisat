@@ -104,53 +104,6 @@ void Main::readInAFile(SATSolver* solver2, const string& filename)
         exit(-1);
     }
 
-    if (!sampl_vars_str.empty() && !parser.sampl_vars.empty()) {
-        cerr << "ERROR! Sampling vars set in console but also in CNF." << endl;
-        exit(-1);
-    }
-
-    if (!sampl_vars_str.empty()) {
-        assert(sampl_vars.empty());
-
-        std::stringstream ss(sampl_vars_str);
-        uint32_t i;
-        while (ss >> i) {
-            const uint32_t var = i-1;
-            sampl_vars.push_back(var);
-            if (ss.peek() == ',' || ss.peek() == ' ') ss.ignore();
-        }
-    } else {
-        sampl_vars.swap(parser.sampl_vars);
-    }
-
-    if (sampl_vars.empty()) {
-        if (only_sampl_solution) {
-            cout << "ERROR: only sampling vars are requested in the solution, but no sampling vars have been set!" << endl;
-            exit(-1);
-        }
-    } else {
-        solver2->set_sampling_vars(&sampl_vars);
-        if (sampl_vars.size() > 100) {
-            cout
-            << "c Sampling var set contains over 100 variables, not displaying"
-            << endl;
-        } else {
-            if (conf.verbosity) {
-                cout << "c Sampling vars set (total num: "
-                << sampl_vars.size() << " ) : ";
-                for(size_t i = 0; i < sampl_vars.size(); i++) {
-                    const uint32_t v = sampl_vars[i];
-                    cout << v+1;
-                    if (i+1 != sampl_vars.size())
-                        cout << ",";
-                }
-                cout << endl;
-            }
-        }
-    }
-
-    call_after_parse();
-
     #ifndef USE_ZLIB
         fclose(in);
     #else
@@ -249,23 +202,23 @@ void Main::printResultFunc(
                 }
             };
 
-            if (sampl_vars.empty() || !only_sampl_solution) {
+            if (!solver->get_sampl_vars_set() || !only_sampl_solution) {
                 for (uint32_t var = 0; var < solver->nVars(); var++) {
                     fun(var);
                 }
 
             } else {
-                for (uint32_t var: sampl_vars) {
+                for (uint32_t var: solver->get_sampl_vars()) {
                     fun(var);
                 }
             }
             *os << "0" << endl;
         } else {
             uint32_t num_undef;
-            if (sampl_vars.empty() || !only_sampl_solution) {
+            if (!solver->get_sampl_vars_set() || !only_sampl_solution) {
                 num_undef = print_model(solver, os);
             } else {
-                num_undef = print_model(solver, os, &sampl_vars);
+                num_undef = print_model(solver, os, &solver->get_sampl_vars());
             }
             if (num_undef && !toFile && conf.verbosity) {
                 cout << "c NOTE: " << num_undef << " variables are NOT set." << endl;
@@ -998,10 +951,6 @@ void Main::add_supported_options() {
         .action([&](const auto& a) {conf.simulate_frat = std::atoi(a.c_str());})
         .default_value(conf.simulate_frat)
         .help("Simulate FRAT");
-    program.add_argument("--sampling")
-        .action([&](const auto& a) {sampl_vars_str = a;})
-        .default_value(sampl_vars_str)
-        .help("Sampling vars, separated by comma");
     program.add_argument("--onlysampling")
         .flag()
         .action([&](const auto&) {only_sampl_solution = true;})
@@ -1229,13 +1178,6 @@ void Main::parseCommandLine() {
     }
 
     add_supported_options();
-    /* all_options.add(help_options_complicated); */
-    /* all_options.add(hiddenOptions); */
-
-    /* help_options_simple */
-    /* .add(generalOptions) */
-    /* ; */
-
     check_options_correctness();
     if (program["version"] == true) {
         printVersionInfo();
@@ -1387,10 +1329,9 @@ lbool Main::multi_solutions()
     return ret;
 }
 
-void Main::ban_found_solution()
-{
+void Main::ban_found_solution() {
     vector<Lit> lits;
-    if (sampl_vars.empty()) {
+    if (solver->get_sampl_vars_set()) {
         //all of the solution
         for (uint32_t var = 0; var < solver->nVars(); var++) {
             if (solver->get_model()[var] != l_Undef) {
@@ -1398,7 +1339,7 @@ void Main::ban_found_solution()
             }
         }
     } else {
-      for (const uint32_t var: sampl_vars) {
+      for (const uint32_t var: solver->get_sampl_vars()) {
           if (solver->get_model()[var] != l_Undef) {
               lits.push_back( Lit(var, (solver->get_model()[var] == l_True)? true : false) );
           }

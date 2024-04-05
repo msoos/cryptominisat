@@ -69,7 +69,6 @@ class Main: public MainCommon
     protected:
         //Options
         virtual void add_supported_options();
-        virtual void call_after_parse() {}
         SATSolver* solver = nullptr;
 
         //File reading
@@ -99,8 +98,6 @@ class Main: public MainCommon
         uint64_t maxconfl;
 
         //Sampling vars
-        vector<uint32_t> sampl_vars;
-        std::string sampl_vars_str = "";
         bool only_sampl_solution = false;
         std::string assump_filename;
         vector<Lit> assumps;

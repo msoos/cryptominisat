@@ -1033,10 +1033,10 @@ void Solver::set_assumptions() {
 }
 
 void Solver::uneliminate_sampling_set() {
-    if (!conf.sampling_vars) return;
+    if (!conf.sampling_vars_set) return;
 
     vector<Lit> tmp;
-    for(const auto& v: *conf.sampling_vars) tmp.push_back(Lit(v, false));
+    for(const auto& v: conf.sampling_vars) tmp.push_back(Lit(v, false));
     add_clause_helper(tmp);
 }
 
@@ -1165,8 +1165,8 @@ void Solver::extend_solution(const bool only_sampling_solution) {
 
     #ifdef SLOW_DEBUG
     //Check that sampling vars are all assigned
-    if (conf.sampling_vars) {
-        for(uint32_t outer_var: *conf.sampling_vars) {
+    if (conf.sampling_vars_set) {
+        for(uint32_t outer_var: conf.sampling_vars) {
             outer_var = varReplacer->get_var_replaced_with_outer(outer_var);
             uint32_t int_var = map_outer_to_inter(outer_var);
 
@@ -1185,8 +1185,8 @@ void Solver::extend_solution(const bool only_sampling_solution) {
         extender.extend();
     } else varReplacer->extend_model_already_set();
 
-    if (only_sampling_solution && conf.sampling_vars) {
-        for(uint32_t var: *conf.sampling_vars) {
+    if (only_sampling_solution && conf.sampling_vars_set) {
+        for(uint32_t var: conf.sampling_vars) {
             if (model[var] == l_Undef) {
                 cout << "ERROR: variable " << var+1 << " is set as sampling but is unset!" << endl;
                 cout << "NOTE: var " << var + 1 << " has removed value: "
@@ -1273,8 +1273,8 @@ void Solver::check_and_upd_config_parameters()
         #endif
     }
 
-    if (conf.sampling_vars) {
-        SLOW_DEBUG_DO(for(uint32_t v: *conf.sampling_vars) assert(v < nVarsOuter()));
+    if (conf.sampling_vars_set) {
+        SLOW_DEBUG_DO(for(uint32_t v: conf.sampling_vars) assert(v < nVarsOuter()));
     }
 
     if (conf.blocking_restart_trail_hist_length == 0) {
