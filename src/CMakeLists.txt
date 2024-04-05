@@ -268,12 +268,12 @@ endif()
 
 # indicate that we depend on pthread, and compile in the actual library
 target_link_libraries(cryptominisat5
-    LINK_PUBLIC ${cadical}
-    LINK_PUBLIC ${cadiback}
     LINK_PUBLIC ${cryptoms_lib_link_libs}
     LINK_PUBLIC ${LOUVAIN_COMMUNITIES_LIBRARIES}
     LINK_PUBLIC ${CMAKE_THREAD_LIBS_INIT}
     LINK_PUBLIC ${GMP_LIBRARIES}
+    LINK_PUBLIC ${cadiback}
+    LINK_PUBLIC ${cadical}
 )
 
 if (NOT WIN32)
