@@ -176,7 +176,7 @@ class TestDump(unittest.TestCase):
 
         self.solver.start_getting_small_clauses(4, max_glue=10)
         x = self.solver.get_next_small_clause()
-        self.assertNotEquals(x, None)
+        self.assertNotEqual(x, None)
         self.solver.end_getting_small_clauses()
 
 
