@@ -23,7 +23,7 @@ jobs:
         staticcompile: ['ON', 'OFF']
 
     steps:
-    - uses: actions/checkout@v4.1.1
+
     
     # install dependencies
     - name: Install boost & help2man for Linux
@@ -62,7 +62,12 @@ jobs:
        ./configure
        make -j8
        cd ..
-    
+       
+    - run: | 
+       mkdir cryptominisat
+       cd cryotominisat
+  
+    - uses: actions/checkout@v4.1.1        
     - name: Add git submodules for Linux only (not needed for non-testing)
       if: matrix.os == 'ubuntu-20.04'
       run: git submodule update --init
