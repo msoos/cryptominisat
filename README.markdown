@@ -29,8 +29,24 @@ To build and install, issue:
 
 ```
 sudo apt-get install build-essential cmake
+
 # not required but very useful
 sudo apt-get install zlib1g-dev
+
+git clone https://github.com/meelgroup/cadical
+git checkout mate-only-libraries-1.8.0
+cd cadical
+./configure
+make
+cd ..
+
+git clone https://github.com/meelgroup/cadiback
+git checkout mate
+cd cadiback
+./configure
+make
+cd ..
+
 tar xzvf cryptominisat-version.tar.gz
 cd cryptominisat-version
 mkdir build && cd build
