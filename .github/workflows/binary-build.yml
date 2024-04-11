@@ -65,7 +65,7 @@ jobs:
        
     - run: | 
        mkdir cryptominisat
-       cd cryotominisat
+       cd cryptominisat
   
     - uses: actions/checkout@v4.1.1        
     - name: Add git submodules for Linux only (not needed for non-testing)
