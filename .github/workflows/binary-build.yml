@@ -33,6 +33,34 @@ jobs:
       run: |
         pip install pip --upgrade
         pip install numpy lit
+
+    - name: Checkout Cadical
+      uses: actions/checkout@v2
+      with:
+        repository: meelgroup/cadical
+        ref: mate-only-libraries-1.8.0
+        path: cadical
+        
+    - name: Build Cadical
+      run: |
+       cd cadical
+       ./configure
+       make -j8
+       cd ..
+
+    - name: Checkout Cadiback
+      uses: actions/checkout@v2
+      with:
+        repository: meelgroup/cadiback
+        ref: mate
+        path: cadiback
+        
+    - name: Build Cadiback
+      run: |
+       cd cadiback
+       ./configure
+       make -j8
+       cd ..
     
     - name: Add git submodules for Linux only (not needed for non-testing)
       if: matrix.os == 'ubuntu-20.04'
