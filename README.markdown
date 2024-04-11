@@ -34,15 +34,15 @@ sudo apt-get install build-essential cmake
 sudo apt-get install zlib1g-dev
 
 git clone https://github.com/meelgroup/cadical
-git checkout mate-only-libraries-1.8.0
 cd cadical
+git checkout mate-only-libraries-1.8.0
 ./configure
 make
 cd ..
 
 git clone https://github.com/meelgroup/cadiback
-git checkout mate
 cd cadiback
+git checkout mate
 ./configure
 make
 cd ..
