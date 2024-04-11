@@ -29,7 +29,11 @@ jobs:
     - name: Install boost & help2man for Linux
       if: matrix.os == 'ubuntu-20.04'
       run: sudo apt-get update && sudo apt-get install -yq libboost-dev libboost-serialization-dev libboost-program-options-dev help2man libgmp-dev
-
+      
+    - name: Install gmp for Mac
+      if: matrix.os == 'macos-13'
+      run: HOMEBREW_NO_AUTO_UPDATE=1 brew install cmake gmp
+      
     - name: Installing Numpy
       run: |
         pip install pip --upgrade
