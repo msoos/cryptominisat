@@ -1541,7 +1541,7 @@ void Searcher::dump_sql_clause_data(
         , antec_data
         , old_decision_level
         , trail.size()
-        , params.conflictsDoneThisRestart
+        , params.confl_this_rst
         , (int)params.rest_type
         , hist
         , is_decision
