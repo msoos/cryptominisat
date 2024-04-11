@@ -116,7 +116,6 @@ jobs:
         path: cryptominisat/cryptominisat5
     
     - name: Upload Artifact - Mac
-      working-directory: cryptominisat
       if: matrix.os == 'macos-13' && matrix.staticcompile == 'ON'
       uses: actions/upload-artifact@v3
       with:
