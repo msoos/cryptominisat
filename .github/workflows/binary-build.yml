@@ -28,7 +28,7 @@ jobs:
     # install dependencies
     - name: Install boost & help2man for Linux
       if: matrix.os == 'ubuntu-20.04'
-      run: sudo apt-get update && sudo apt-get install -yq libboost-dev libboost-serialization-dev libboost-program-options-dev help2man
+      run: sudo apt-get update && sudo apt-get install -yq libboost-dev libboost-serialization-dev libboost-program-options-dev help2man libgmp-dev
 
     - name: Installing Numpy
       run: |
