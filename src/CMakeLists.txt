@@ -46,6 +46,7 @@ add_sanitize_flags()
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/../cadiback)
 
 if (ENABLE_TESTING)
     add_definitions( -DCMS_TESTING_ENABLED )

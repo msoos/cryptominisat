@@ -21,7 +21,7 @@ THE SOFTWARE.
 ***********************************************/
 
 #include "solver.h"
-#include "../../cadiback/cadiback.h"
+#include "cadiback.h"
 
 using namespace CMSat;
 
