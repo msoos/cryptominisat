@@ -102,7 +102,15 @@ jobs:
       # and build directories, but this is only available with CMake 3.13 and higher.  
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
       run: |
+        pwd
+        echo "end pwd"
         cd cryptominisat
+        pwd
+        echo "end pwd"
+        ls
+        echo "end list"
+        ls ../
+        echo "end list"
         cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DENABLE_TESTING=OFF -DSTATICCOMPILE=${{ matrix.staticcompile }}
 
     - name: Build
