@@ -34,8 +34,8 @@ jobs:
       if: matrix.os == 'macos-13'
       run: | 
         HOMEBREW_NO_AUTO_UPDATE=1 brew install cmake
-        wget https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz
-        tar xvd gmp-6.3.0.tar.xz
+        wget https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz
+        tar xf gmp-6.3.0.tar.xz
         cd gmp-6.3.0
         ./configure --enable-static -enable-cxx --enable-shared
         make -j8
