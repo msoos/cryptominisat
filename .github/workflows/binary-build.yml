@@ -32,7 +32,10 @@ jobs:
       
     - name: Install gmp for Mac
       if: matrix.os == 'macos-13'
-      run: HOMEBREW_NO_AUTO_UPDATE=1 brew install cmake gmp
+      run: | 
+        HOMEBREW_NO_AUTO_UPDATE=1 brew install cmake
+        HOMEBREW_NO_AUTO_UPDATE=1 brew install gmp
+        HOMEBREW_NO_AUTO_UPDATE=1 brew install gmpxx
       
     - name: Installing Numpy
       run: |
