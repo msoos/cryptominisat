@@ -67,19 +67,14 @@ jobs:
       uses: actions/checkout@v4.1.1        
       with:
         path: cryptominisat
-
-    - name: cwd
-      run: | 
-        cd cryptominisat
-        pwd
-        ls
-        ls ../
   
     - name: Add git submodules for Linux only (not needed for non-testing)
+      working-directory: cryptominisat
       if: matrix.os == 'ubuntu-20.04'
       run: git submodule update --init
 
     - name: Configure CMake for linux
+      working-directory: cryptominisat
       if: matrix.os == 'ubuntu-20.04'
       # Use a bash shell so we can use the same syntax for environment variable
       # access regardless of the host operating system
@@ -90,6 +85,7 @@ jobs:
       run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DENABLE_TESTING=ON  -DSTATICCOMPILE=${{ matrix.staticcompile }}
     
     - name: Configure CMake for non-linux
+      working-directory: cryptominisat
       if: matrix.os != 'ubuntu-20.04'
       # Use a bash shell so we can use the same syntax for environment variable
       # access regardless of the host operating system
@@ -100,11 +96,13 @@ jobs:
       run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DENABLE_TESTING=OFF -DSTATICCOMPILE=${{ matrix.staticcompile }}
 
     - name: Build
+      working-directory: cryptominisat
       #working-directory: ${{runner.workspace}}/build
       # Execute the build.  You can specify a specific target with "--target <NAME>"
       run: cmake --build . --config ${{ matrix.build_type }}
 
     - name: Test
+      working-directory: cryptominisat
       #working-directory: ${{runner.workspace}}/build
       # Execute tests defined by the CMake configuration.  
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
@@ -113,20 +111,21 @@ jobs:
     - name: Upload Artifact - Linux
       if: matrix.os == 'ubuntu-20.04' && matrix.staticcompile == 'ON'
       uses: actions/upload-artifact@v3
-      with:
+      with:     
         name: cryptominisat5-linux-amd64
-        path: cryptominisat5
+        path: cryptominisat/cryptominisat5
     
     - name: Upload Artifact - Mac
+      working-directory: cryptominisat
       if: matrix.os == 'macos-13' && matrix.staticcompile == 'ON'
       uses: actions/upload-artifact@v3
       with:
         name: cryptominisat5-mac-amd64
-        path: cryptominisat5
+        path: cryptominisat/cryptominisat5
 
     - name: Upload Artifact - Windows
       if: matrix.os == 'windows-2022' && matrix.staticcompile == 'ON'
       uses: actions/upload-artifact@v3
       with:
         name: cryptominisat5-win64.exe
-        path: Release\cryptominisat5.exe
+        path: cryptominisat\Release\cryptominisat5.exe
