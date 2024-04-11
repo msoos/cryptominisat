@@ -44,12 +44,11 @@ class Main: public MainCommon
         Main(int argc, char** argv);
         ~Main()
         {
+            delete solver;
             if (fratf) {
                 fflush(fratf);
                 fclose(fratf);
             }
-
-            delete solver;
         }
 
         void parseCommandLine();
@@ -70,8 +69,7 @@ class Main: public MainCommon
     protected:
         //Options
         virtual void add_supported_options();
-        virtual void call_after_parse() {}
-        SATSolver* solver = NULL;
+        SATSolver* solver = nullptr;
 
         //File reading
         void readInAFile(SATSolver* solver2, const string& filename);
@@ -100,9 +98,7 @@ class Main: public MainCommon
         uint64_t maxconfl;
 
         //Sampling vars
-        vector<uint32_t> sampling_vars;
-        std::string sampling_vars_str = "";
-        bool only_sampling_solution = false;
+        bool only_sampl_solution = false;
         std::string assump_filename;
         vector<Lit> assumps;
 
@@ -111,7 +107,7 @@ class Main: public MainCommon
         bool fileNamePresent;
         string result_fname;
         string input_file;
-        std::ofstream* resultfile = NULL;
+        std::ofstream* resultfile = nullptr;
 
         //Drat checker
         bool clause_ID_needed = false;

@@ -27,8 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef ENHANCEGAUSSIAN_H
-#define ENHANCEGAUSSIAN_H
+#pragma once
 
 #include <vector>
 #include <limits>
@@ -60,10 +59,6 @@ struct XorReason
     Lit propagated = lit_Undef;
     int32_t ID = 0;
     vector<Lit> reason;
-    #ifdef USE_TBUDDY
-    tbdd::xor_constraint* constr = NULL;
-    ilist list = NULL;
-    #endif
 };
 
 class EGaussian {
@@ -102,6 +97,7 @@ class EGaussian {
     void check_watchlist_sanity();
     uint32_t get_matrix_no();
     void finalize_frat();
+    void delete_reasons();
     void move_back_xor_clauses();
 
     vector<Xor> xorclauses;
@@ -138,19 +134,9 @@ class EGaussian {
     void prop_lit(
         const GaussQData& gqd, const uint32_t row_i, const Lit ret_lit_prop);
 
-    #ifdef USE_TBUDDY
-    struct BDDCl {
-        ilist cl;
-        int32_t ID;
-    };
     void xor_in_bdd(const uint32_t a, const uint32_t b);
-    tbdd::xor_constraint* bdd_create(const uint32_t row_n, const uint32_t expected_size);
-    ilist one_len_ilist = NULL;
-    ilist ilist_tmp = NULL;
+    Xor xor_reason_create(const uint32_t row_n);
     void create_unit_bdd_reason(const uint32_t row_n);
-    vector<BDDCl> frat_ids;
-    tbdd::xor_constraint* unsat_bdd = NULL; //set if UNSAT is from GJ
-    #endif
 
 
     ///////////////
@@ -195,18 +181,21 @@ class EGaussian {
 
 
     PackedMatrix mat;
-    vector<vector<char>> bdd_matrix;
+    vector<vector<char>> reason_mat;
     vector<uint32_t>  var_to_col; ///var->col mapping. Index with VAR
     vector<uint32_t> col_to_var; ///col->var mapping. Index with COL
     uint32_t num_rows = 0;
     uint32_t num_cols = 0;
 
     //quick lookup
-    PackedRow *cols_vals = NULL;
-    PackedRow *cols_unset = NULL;
-    PackedRow *tmp_col = NULL;
-    PackedRow *tmp_col2 = NULL;
+    PackedRow *cols_vals = nullptr;
+    PackedRow *cols_unset = nullptr;
+    PackedRow *tmp_col = nullptr;
+    PackedRow *tmp_col2 = nullptr;
     void update_cols_vals_set(const Lit lit1);
+    void create_temps();
+    void free_temps();
+    vector<pair<int32_t, Lit>> del_unit_cls;
 
     //Data to free (with delete[] x)
     vector<int64_t*> tofree;
@@ -239,22 +228,8 @@ inline double EGaussian::get_density()
     return (double)pop/(double)(num_rows*num_cols);
 }
 
-inline void EGaussian::update_matrix_no(uint32_t n)
-{
-    matrix_no = n;
-}
-
-inline uint32_t EGaussian::get_matrix_no()
-{
-    return matrix_no;
-}
-
-inline bool EGaussian::is_initialized() const
-{
-    return initialized;
-}
-
+inline void EGaussian::update_matrix_no(uint32_t n) { matrix_no = n; }
+inline uint32_t EGaussian::get_matrix_no() { return matrix_no; }
+inline bool EGaussian::is_initialized() const { return initialized; }
 
 }
-
-#endif //ENHANCEGAUSSIAN_H

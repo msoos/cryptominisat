@@ -24,20 +24,55 @@ THE SOFTWARE.
 
 #include <cstdint>
 #include <cstdlib>
-#include <stdio.h>
+#include <cstdio>
+#include <iostream>
 #include <limits>
 #include <random>
 
-#define unif_uint_dist(x,y) std::uniform_int_distribution<> x(0, y)
-inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum) {
-    unif_uint_dist(u, maximum);
+using std::cerr;
+using std::exit;
+
+#define unif_uint_dist(x,y) std::uniform_int_distribution<uint32_t> x(0, y)
+inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusive) {
+    unif_uint_dist(u, maximum_inclusive);
     return u(mtrand);
 }
+
+
+#if defined(STATS_NEEDED)
+#define LARGE_OFFSETS
+#endif
 
 // #define VERBOSE_DEBUG
 // #define VERBOSE_DEBUG_FULLPROP
 // #define DEBUG_DEPTH
 // #define SLOW_DEBUG
+// #define DEBUG_ATTACH_FULL
+/* #define DEBUG_FRAT */
+
+#ifndef NDEBUG
+//#define FAST_DEBUG
+#endif
+
+#ifdef SLOW_DEBUG
+#define FAST_DEBUG
+#define DEBUG_PROPAGATEFROM
+#define ENQUEUE_DEBUG
+#define DEBUG_ATTACH_MORE
+#define DEBUG_IMPLICIT_PAIRS_TRIPLETS
+#define DEBUG_IMPLICIT_STATS
+#define DEBUG_GAUSS
+#define XOR_DEBUG
+#endif
+
+#ifdef FAST_DEBUG
+#define DEBUG_VARELIM
+#define DEBUG_WATCHED
+#define DEBUG_ATTACH
+#define DEBUG_REPLACER
+#define DEBUG_MARKED_CLAUSE
+#define CHECK_N_OCCUR
+#endif
 
 #if defined(_MSC_VER)
 #define cmsat_prefetch(x) (void)(x)
@@ -73,7 +108,6 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum) {
 //for STATS we have 64b values in the Clauses, so they must be aligned to 64
 
 #if defined(STATS_NEEDED)
-#define LARGE_OFFSETS
 #define STATS_DO(x) do {x;} while (0)
 #define INC_ID(cl) \
     do { \
@@ -83,11 +117,10 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum) {
     } while (0)
 #else
 #define STATS_DO(x) do {} while (0)
-#define INC_ID(cl) \
-    do { \
-        (cl).stats.ID = ++solver->clauseID; \
-    } while (0)
+#define INC_ID(cl) do { (cl).stats.ID = ++solver->clauseID; } while (0)
 #endif
+// NOTE: XID's are not tracked during stats -- we must have XOR finding etc disabled
+#define INC_XID(x) do { (x).XID = ++solver->clauseXID; } while (0)
 
 #if defined(LARGE_OFFSETS)
 #define BASE_DATA_TYPE uint64_t
@@ -113,47 +146,68 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum) {
 //#define FRAT_DEBUG
 //#define VERBOSE_DEBUG
 
-// verbose print
+#ifdef DEBUG_FRAT
+#define frat_func_start *solver->frat << __PRETTY_FUNCTION__ << " start\n"
+#define frat_func_start_raw *frat << __PRETTY_FUNCTION__ << " start\n"
+#define frat_func_end *solver->frat << __PRETTY_FUNCTION__ << " end\n"
+#define frat_func_end_with(txt) *solver->frat << __PRETTY_FUNCTION__ << " --- " << txt << " end\n"
+#define frat_func_end_raw *frat << __PRETTY_FUNCTION__ << " end\n"
+#else
+#define frat_func_start() do { } while (0)
+#define frat_func_start_raw() do { } while (0)
+#define frat_func_end() do { } while (0)
+#define frat_func_end_with(x) do { } while (0)
+#define frat_func_end_raw() do { } while (0)
+#endif
+
 #ifdef VERBOSE_DEBUG
-#define VERBOSE_PRINT(x) \
-    do { std::cout << x << std::endl; } while (0)
+#define VERBOSE_PRINT(x) do { std::cout << x << std::endl; } while (0)
 #define VERBOSE_DEBUG_DO(x) do { x; } while (0)
 #else
 #define VERBOSE_PRINT(x) do { } while (0)
 #define VERBOSE_DEBUG_DO(x) do { } while (0)
 #endif
-/////
 
-// slow debug
+#ifdef USE_BREAKID
+#define USE_BREAKID_DO(x) do { x; } while (0)
+#else
+#define USE_BREAKID_DO(x) do { } while (0)
+#endif
+
 #ifdef SLOW_DEBUG
-#define SLOW_DEBUG_DO(x) \
-    do { x; } while (0)
+#define SLOW_DEBUG_DO(x) do { x; } while (0)
 #else
 #define SLOW_DEBUG_DO(x) do { } while (0)
 #endif
-/////
 
-// verb_print
+#ifdef DEBUG_ATTACH_MORE
+#define DEBUG_ATTACH_MORE_DO(x) do { x; } while (0)
+#else
+#define DEBUG_ATTACH_MORE_DO(x) do { } while (0)
+#endif
+
+
 #define verb_print(a, x) \
     do { if (solver->conf.verbosity >= a) {std::cout << "c " << x << std::endl;} } while (0)
-/////
 
-// debug watched
 #ifdef DEBUG_WATCHED
-#define DEBUG_WATCHED_DO(x) \
-    do { x; } while (0)
+#define DEBUG_WATCHED_DO(x) do { x; } while (0)
 #else
 #define DEBUG_WATCHED_DO(x) do { } while (0)
 #endif
 
-
-// tbuddy
-#ifdef USE_TBUDDY
-#define TBUDDY_DO(x) \
-    do { x; } while (0)
+#ifdef CHECK_N_OCCUR
+#define CHECK_N_OCCUR_DO(x) do { x; } while (0)
 #else
-#define TBUDDY_DO(x)  do { } while (0)
+#define CHECK_N_OCCUR_DO(x) do { } while (0)
 #endif
+
+#ifdef DEBUG_IMPLICIT_STATS
+#define DEBUG_IMPLICIT_STATS_DO(x) do { x; } while (0)
+#else
+#define DEBUG_IMPLICIT_STATS_DO(x) do { } while (0)
+#endif
+
 
 #ifdef VERBOSE_DEBUG
 #define FAST_DEBUG
@@ -170,32 +224,22 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum) {
     #define unlikely(x) x
 #endif
 
-///////////////////
-// Silent Debug
-///////////////////
 
-#ifndef NDEBUG
-//#define FAST_DEBUG
+#ifdef DEBUG_MARKED_CLAUSE
+#define DEBUG_MARKED_CLAUSE_DO(x) do {x;} while (0)
+#else
+#define DEBUG_MARKED_CLAUSE_DO(x) do {} while (0)
 #endif
 
-#ifdef SLOW_DEBUG
-#define FAST_DEBUG
-#define DEBUG_PROPAGATEFROM
-#define ENQUEUE_DEBUG
-#define DEBUG_ATTACH_MORE
-#define DEBUG_IMPLICIT_PAIRS_TRIPLETS
-#define DEBUG_IMPLICIT_STATS
-#define DEBUG_GAUSS
-#define XOR_DEBUG
-#endif
+#define del_xor_reason(x) do {\
+    if ((x).reason_cl_ID != 0) *solver->frat << del << (x).reason_cl_ID << (x).reason_cl << fin; \
+    (x).reason_cl_ID = 0; \
+    } while (0)
 
-#ifdef FAST_DEBUG
-#define DEBUG_VARELIM
-#define DEBUG_WATCHED
-#define DEBUG_ATTACH
-#define DEBUG_REPLACER
-#define DEBUG_MARKED_CLAUSE
-#define CHECK_N_OCCUR
-#endif
-
-//#define DEBUG_ATTACH_FULL
+#define set_unsat_cl_id(x) do { \
+    *solver->frat << "UNSAT SET HERE" <<  __PRETTY_FUNCTION__ << "\n"; \
+    assert(solver->unsat_cl_ID == 0);\
+    solver->unsat_cl_ID = (x);\
+    /*cout << "set unsat CL ID here to " << (x) << endl;*/\
+    /*assert(false);*/\
+    } while (0)

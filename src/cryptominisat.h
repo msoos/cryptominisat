@@ -24,11 +24,12 @@ THE SOFTWARE.
 
 #include <atomic>
 #include <vector>
-#include <iostream>
+#include <map>
 #include <utility>
+#include <gmpxx.h>
 #include <string>
 #include <limits>
-#include <stdio.h>
+#include <cstdio>
 #include "solvertypesmini.h"
 
 namespace CMSat {
@@ -46,8 +47,8 @@ namespace CMSat {
         // or through a thread, etc. This gives you the possiblity to abort
         // the solver any time you like, depending on some external factor
         // such as time, or your own code's inner workings.
-        SATSolver(void* config = NULL
-        , std::atomic<bool>* interrupt_asap = NULL
+        SATSolver(void* config = nullptr
+        , std::atomic<bool>* interrupt_asap = nullptr
         );
         ~SATSolver();
 
@@ -61,20 +62,21 @@ namespace CMSat {
         bool add_clause(const std::vector<Lit>& lits);
         bool add_red_clause(const std::vector<Lit>& lits);
         bool add_xor_clause(const std::vector<unsigned>& vars, bool rhs);
+        bool add_xor_clause(const std::vector<Lit>& lits, bool rhs = true);
         bool add_bnn_clause(
             const std::vector<Lit>& lits,
             signed cutoff,
             Lit out = lit_Undef
         );
-        void set_var_weight(Lit lit, double weight);
+        void set_lit_weight(Lit lit, double weight);
 
         ////////////////////////////
         // Solving and simplifying
         // You can call solve() multiple times: incremental mode is supported!
         ////////////////////////////
 
-        lbool solve(const std::vector<Lit>* assumptions = 0, bool only_indep_solution = false); //solve the problem, optionally with assumptions. If only_indep_solution is set, only the independent variables set with set_independent_vars() are returned in the solution
-        lbool simplify(const std::vector<Lit>* assumptions = NULL, const std::string* strategy = NULL); //simplify the problem, optionally with assumptions
+        lbool solve(const std::vector<Lit>* assumptions = nullptr, bool only_indep_solution = false); //solve the problem, optionally with assumptions. If only_indep_solution is set, only the independent variables set with set_independent_vars() are returned in the solution
+        lbool simplify(const std::vector<Lit>* assumptions = nullptr, const std::string* strategy = nullptr); //simplify the problem, optionally with assumptions
         const std::vector<lbool>& get_model() const; //get model that satisfies the problem. Only makes sense if previous solve()/simplify() call was l_True
         const std::vector<Lit>& get_conflict() const; //get conflict in terms of the assumptions given in case the previous call to solve() was l_False
         bool okay() const; //the problem is still solveable, i.e. the empty clause hasn't been derived
@@ -120,7 +122,6 @@ namespace CMSat {
         void set_max_confl(uint64_t max_confl);
         void set_verbosity(unsigned verbosity = 0); //default is 0, silent
         uint32_t get_verbosity() const;
-        void set_verbosity_detach_warning(bool verb); //default is 0, silent
         void set_default_polarity(bool polarity); //default polarity when branching for all vars
         void set_polarity_mode(CMSat::PolarityMode mode); //set polarity type
         CMSat::PolarityMode get_polarity_mode() const;
@@ -132,7 +133,6 @@ namespace CMSat {
         void set_bve(int bve);
         void set_bve_too_large_resolvent(int too_large_resolvent);
         void set_greedy_undef(); //Try to set variables to l_Undef in solution
-        void set_sampling_vars(const std::vector<uint32_t>* sampl_vars);
         void set_timeout_all_calls(double secs); //max timeout on all subsequent solve() or simplify
         void set_up_for_scalmc(); //used to set the solver up for ScalMC configuration
         void set_up_for_arjun();
@@ -147,7 +147,6 @@ namespace CMSat {
         void set_distill(int val);
         void reset_vsids();
         void set_no_confl_needed(); //assumptions-based conflict will NOT be calculated for next solve run
-        void set_xor_detach(bool val);
         void set_simplify(const bool simp);
         void set_find_xors(bool do_find_xors);
         void set_min_bva_gain(uint32_t min_bva_gain);
@@ -206,7 +205,6 @@ namespace CMSat {
 
         void print_stats(double wallclock_time_started = 0) const; //print solving stats. Call after solve()/simplify()
         void set_frat(FILE* os); //set frat to ostream, e.g. stdout or a file
-        void add_empty_cl_to_frat(); // allows to treat SAT as UNSAT and perform learning
         void interrupt_asap(); //call this asynchronously, and the solver will try to cleanly abort asap
         void add_in_partial_solving_stats(); //used only by Ctrl+C handler. Ignore.
 
@@ -224,7 +222,7 @@ namespace CMSat {
         std::vector<OrGate> get_recovered_or_gates();
         std::vector<ITEGate> get_recovered_ite_gates();
         std::vector<uint32_t> remove_definable_by_irreg_gate(const std::vector<uint32_t>& vars);
-        void clean_sampl_and_get_empties(std::vector<uint32_t>& sampl_vars, std::vector<uint32_t>& empty_vars);
+        void get_empties(std::vector<uint32_t>& sampl_vars, std::vector<uint32_t>& empty_vars);
         std::vector<uint32_t> get_var_incidence();
         std::vector<uint32_t> get_lit_incidence();
         std::vector<uint32_t> get_var_incidence_also_red();
@@ -233,7 +231,7 @@ namespace CMSat {
         lbool find_fast_backw(FastBackwData fast_backw);
         void remove_and_clean_all();
         lbool probe(Lit l, uint32_t& min_props);
-        bool backbone_simpl(int64_t max_confl, bool cmsgen, bool& finished);
+        bool backbone_simpl(int64_t max_confl, bool& finished);
 
         //Given a set of literals to enqueue, returns:
         // 1) Whether they imply UNSAT. If "false": UNSAT
@@ -249,18 +247,16 @@ namespace CMSat {
 
         //////////////////////
         //Below must be done in-order. Multi-threading not allowed.
-        void start_getting_small_clauses(uint32_t max_len, uint32_t max_glue, bool red = true, bool bva_vars = false, bool simplified = false);
-        bool get_next_small_clause(std::vector<Lit>& ret, bool all_in_one = false); //returns FALSE if no more
-        void end_getting_small_clauses();
-
-        void start_getting_clauses(bool red = false, bool simplified = true);
-        bool get_next_clause(std::vector<Lit> &ret);
-        void end_getting_clauses();
+        void start_getting_constraints(
+               bool red, // only redundant, otherwise only irred
+               bool simplified = false,
+               uint32_t max_len = std::numeric_limits<uint32_t>::max(),
+               uint32_t max_glue = std::numeric_limits<uint32_t>::max());
+        bool get_next_constraint(std::vector<Lit>& ret, bool& is_xor, bool& rhs);
+        void end_getting_constraints();
 
         uint32_t simplified_nvars();
         std::vector<uint32_t> translate_sampl_set(const std::vector<uint32_t>& sampl_set);
-        void get_all_irred_clauses(std::vector<Lit>& ret);
-        const std::vector<BNN*>& get_bnns() const;
 
         // Solution reconstruction after minimization
         std::string serialize_solution_reconstruction_data() const;
@@ -272,6 +268,22 @@ namespace CMSat {
         // Backwards compatibility, implemented using the above "small clauses" functions
         void open_file_and_dump_irred_clauses(const char* fname);
         bool removed_var(uint32_t var) const;
+
+#ifdef WEIGHTED
+        void get_weights(std::map<Lit, mpz_class>& weights,
+            const std::vector<uint32_t>& sampl_vars,
+            const std::vector<uint32_t>& orig_sampl_vars) const;
+#endif
+        bool get_weighted() const;
+        void set_weighted(const bool);
+        void set_multiplier_weight(const mpz_class mult);
+        mpz_class get_multiplier_weight() const;
+        const std::vector<uint32_t>& get_sampl_vars() const;
+        void set_sampl_vars(const std::vector<uint32_t>& vars);
+        bool get_sampl_vars_set() const;
+        const std::vector<uint32_t>& get_opt_sampl_vars() const;
+        void set_opt_sampl_vars(const std::vector<uint32_t>& vars);
+        bool get_opt_sampl_vars_set() const;
 
     private:
 
@@ -285,36 +297,28 @@ namespace CMSat {
     template<class T, class T2>
     void copy_solver_to_solver(T* solver, T2* solver2) {
         solver2->new_vars(solver->nVars());
-        solver->start_getting_small_clauses(
-            std::numeric_limits<uint32_t>::max(),
-            std::numeric_limits<uint32_t>::max(),
-            false);
-        std::vector<Lit> clause;
-        bool ret = true;
+        solver->start_getting_constraints(false);
+        std::vector<Lit> c; bool is_xor; bool rhs; bool ret = true;
         while (ret) {
-            ret = solver->get_next_small_clause(clause);
+            ret = solver->get_next_constraint(c, is_xor, rhs);
             if (!ret) break;
-            solver2->add_clause(clause);
+            if (is_xor) solver2->add_xor_clause(c, rhs);
+            else solver2->add_clause(c);
         }
-        solver->end_getting_small_clauses();
+        solver->end_getting_constraints();
     }
 
     template<class T, class T2>
     void copy_simp_solver_to_solver(T* solver, T2* solver2) {
         solver2->new_vars(solver->simplified_nvars());
-        solver->start_getting_small_clauses(
-            std::numeric_limits<uint32_t>::max(),
-            std::numeric_limits<uint32_t>::max(),
-            false,
-            false,
-            true); //simplified
-        std::vector<Lit> clause;
-        bool ret = true;
+        solver->start_getting_constraints(false, true);
+        std::vector<Lit> c; bool is_xor; bool rhs; bool ret = true;
         while (ret) {
-            ret = solver->get_next_small_clause(clause);
+            ret = solver->get_next_constraint(c, is_xor, rhs);
             if (!ret) break;
-            solver2->add_clause(clause);
+            if (is_xor) solver2->add_xor_clause(c, rhs);
+            else solver2->add_clause(c);
         }
-        solver->end_getting_small_clauses();
+        solver->end_getting_constraints();
     }
 }

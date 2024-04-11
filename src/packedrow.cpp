@@ -28,7 +28,6 @@ THE SOFTWARE.
 ***********************************************/
 
 #include "packedrow.h"
-
 // #define VERBOSE_DEBUG
 // #define SLOW_DEBUG
 
@@ -85,6 +84,38 @@ uint32_t PackedRow::find_watchVar(
     return popcnt;
 }
 
+void PackedRow::get_reason_xor(
+    Xor& tmp_xor,
+    [[maybe_unused]] const vector<lbool>& assigns,
+    const vector<uint32_t>& col_to_var,
+    PackedRow& cols_vals,
+    PackedRow& tmp_col2
+) {
+    tmp_col2.set_and(*this, cols_vals);
+    for (int i = 0; i < size; i++) if (mp[i]) {
+        int64_t tmp = mp[i];
+        unsigned long at;
+        at = scan_fwd_64b(tmp);
+        int extra = 0;
+        while (at != 0) {
+            uint32_t col = extra + at-1 + i*64;
+            SLOW_DEBUG_DO(assert(this->operator[](col) == 1));
+            const uint32_t var = col_to_var[col];
+            tmp_xor.vars.push_back(var);
+
+            extra += at;
+            if (extra == 64) break;
+
+            tmp >>= at;
+            at = scan_fwd_64b(tmp);
+        }
+    }
+    tmp_xor.rhs = rhs();
+
+    SLOW_DEBUG_DO(for(uint32_t i = 1; i < tmp_clause.size(); i++)
+            assert(assigns[tmp_xor[i]] != l_Undef));
+}
+
 void PackedRow::get_reason(
     vector<Lit>& tmp_clause,
     [[maybe_unused]] const vector<lbool>& assigns,
@@ -101,9 +132,7 @@ void PackedRow::get_reason(
         int extra = 0;
         while (at != 0) {
             uint32_t col = extra + at-1 + i*64;
-            #ifdef SLOW_DEBUG
-            assert(this->operator[](col) == 1);
-            #endif
+            SLOW_DEBUG_DO(assert(this->operator[](col) == 1));
             const uint32_t var = col_to_var[col];
             if (var == prop.var()) {
                 tmp_clause.push_back(prop);
@@ -114,8 +143,7 @@ void PackedRow::get_reason(
             }
 
             extra += at;
-            if (extra == 64)
-                break;
+            if (extra == 64) break;
 
             tmp >>= at;
             at = scan_fwd_64b(tmp);

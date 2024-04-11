@@ -20,17 +20,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef __SEARCHER_H__
-#define __SEARCHER_H__
-
-#include <array>
+#pragma once
 
 #include "constants.h"
 #include "propengine.h"
 #include "solvertypes.h"
 #include "time_mem.h"
 #include "hyperengine.h"
-#include "simplefile.h"
 #include "searchstats.h"
 #include "searchhist.h"
 
@@ -79,7 +75,7 @@ class Searcher : public HyperEngine
         #ifdef STATS_NEEDED_BRANCH
         void check_calc_vardist_features(bool force = false);
         #endif
-        void dump_search_loop_stats(double myTime);
+        void dump_search_loop_stats(double my_time);
         bool must_abort(lbool status);
         PropBy insert_gpu_clause(Lit* lits, uint32_t count);
         uint64_t luby_loop_num = 0;
@@ -110,11 +106,8 @@ class Searcher : public HyperEngine
         std::pair<size_t, size_t> remove_useless_bins(bool except_marked = false);
 
         ///Returns l_Undef if not inside, l_True/l_False otherwise
-        lbool var_inside_assumptions(const uint32_t var) const
-        {
-            #ifdef SLOW_DEBUG
-            assert(var < nVars());
-            #endif
+        lbool var_inside_assumptions(const uint32_t var) const {
+            SLOW_DEBUG_DO(assert(var < nVars()));
             return varData[var].assumption;
         }
         lbool lit_inside_assumptions(const Lit lit) const
@@ -140,7 +133,8 @@ class Searcher : public HyperEngine
         void consolidate_watches(const bool full);
 
         //Gauss
-        bool clear_gauss_matrices(const bool destruct = false);
+        bool attach_xorclauses();
+        bool clear_gauss_matrices(const bool destruct);
         void print_matrix_stats();
         void check_need_gauss_jordan_disable();
 
@@ -152,6 +146,7 @@ class Searcher : public HyperEngine
         //assumptions
         void check_assumptions_sanity();
         void unfill_assumptions_set();
+        void fill_assumptions_set();
         bool check_order_heap_sanity();
 
         template<bool inprocess>
@@ -161,6 +156,7 @@ class Searcher : public HyperEngine
             vector<Lit>& out_learnt,
             bool True_confl
         );
+        template<class T> void print_clause(const string& str, const T& cl) const;
 
         #ifdef STATS_NEEDED
         void dump_restart_sql(rst_dat_type type, int64_t clauseID = -1);
@@ -192,8 +188,7 @@ class Searcher : public HyperEngine
         void rebuildOrderHeap();
         void rebuildOrderHeapVMTF(vector<uint32_t>& vs);
         void print_order_heap();
-        void clear_order_heap()
-        {
+        void clear_order_heap() {
             order_heap_vsids.clear();
             order_heap_rand.clear();
         }
@@ -230,7 +225,7 @@ class Searcher : public HyperEngine
         // Full Probe
         uint64_t next_full_probe = 0;
         uint64_t full_probe_iter = 0;
-        lbool full_probe_if_needed();
+        bool full_probe_if_needed();
 
         // sub-str with bin
         uint64_t next_sub_str_with_bin = 0;
@@ -259,16 +254,15 @@ class Searcher : public HyperEngine
         void new_vars(const size_t n) override;
         void save_on_var_memory();
         void updateVars(
-            const vector<uint32_t>& outerToInter
-            , const vector<uint32_t>& interToOuter
+            const vector<uint32_t>& outer_to_inter
+            , const vector<uint32_t>& inter_to_outer
         );
 
         //Misc
         void add_in_partial_solving_stats();
 
 
-        void fill_assumptions_set();
-        void update_assump_conflict_to_orig_outside(vector<Lit>& out_conflict);
+        void update_assump_conflict_to_orig_outer(vector<Lit>& out_conflict);
 
         /////////////////////
         // Learning
@@ -295,7 +289,6 @@ class Searcher : public HyperEngine
             const bool enqueue,
             const uint64_t ID);
         void  print_learning_debug_info(const int32_t ID) const;
-        void  print_learnt_clause() const;
         template<bool inprocess>
         void add_lits_to_learnt(const PropBy confl, const Lit p, uint32_t nDecisionLevel);
         template<bool inprocess>
@@ -356,12 +349,12 @@ class Searcher : public HyperEngine
 
             void clear()
             {
-                needToStopSearch = false;
-                conflictsDoneThisRestart = 0;
+                must_stop = false;
+                confl_this_rst = 0;
             }
 
-            bool needToStopSearch;
-            uint64_t conflictsDoneThisRestart;
+            bool must_stop;
+            uint64_t confl_this_rst;
             uint64_t max_confl_to_do;
             Restart rest_type = Restart::never;
         };
@@ -418,7 +411,7 @@ class Searcher : public HyperEngine
         template<bool inprocess> void decayClauseAct();
 
         //SQL
-        void dump_search_sql(const double myTime);
+        void dump_search_sql(const double my_time);
         void set_clause_data(
             Clause* cl
             , const uint32_t glue
@@ -483,18 +476,13 @@ inline void Searcher::insert_var_order(const uint32_t x)
 
 inline void Searcher::insert_var_order(const uint32_t var, const branch type)
 {
-    #ifdef SLOW_DEUG
-    assert(varData[x].removed == Removed::none
-        && "All variables should be decision vars unless removed");
-    #endif
+    SLOW_DEBUG_DO(assert(varData[var].removed == Removed::none
+        && "All variables should be decision vars unless removed"));
 
     switch(type) {
         case branch::vsids:
-            if (!order_heap_vsids.inHeap(var)) {
-                order_heap_vsids.insert(var);
-            }
+            if (!order_heap_vsids.inHeap(var)) order_heap_vsids.insert(var);
             break;
-
         case branch::vmtf:
             // For VMTF we need to update the 'queue.unassigned' pointer in case this
             // variables sits after the variable to which 'queue.unassigned' currently
@@ -504,15 +492,10 @@ inline void Searcher::insert_var_order(const uint32_t var, const branch type)
                 << " vmtf_queue.vmtf_bumped: " << vmtf_queue.vmtf_bumped
                 << " vmtf_btab[var]: " << vmtf_btab[var]);
 
-            if (vmtf_queue.vmtf_bumped < vmtf_btab[var]) {
-                vmtf_update_queue_unassigned(var);
-            }
+            if (vmtf_queue.vmtf_bumped < vmtf_btab[var]) vmtf_update_queue_unassigned(var);
             break;
-
         case branch::rand:
-            if (!order_heap_rand.inHeap(var)) {
-                order_heap_rand.insert(var);
-            }
+            if (!order_heap_rand.inHeap(var)) order_heap_rand.insert(var);
             break;
         default:
             assert(false);
@@ -541,7 +524,7 @@ inline void Searcher::bump_cl_act(Clause* cl)
     if (inprocess)
         return;
 
-    assert(!cl->getRemoved());
+    assert(!cl->get_removed());
 
     double new_val = cla_inc + (double)cl->stats.activity;
     cl->stats.activity = (float)new_val;
@@ -645,6 +628,11 @@ inline void Searcher::vsids_bump_var_act(const uint32_t var)
     SLOW_DEBUG_DO(if (rescaled) assert(order_heap_vsids.heap_property()));
 }
 
-} //end namespace
+template<class T> void Searcher::print_clause(const string& str, const T& cl) const
+{
+    cout << "c " << str << " clause: " ;
+    for(const Lit& l: cl) cout << l << ": " << value(l) << " ";
+    cout << endl;
+}
 
-#endif //__SEARCHER_H__
+} //end namespace

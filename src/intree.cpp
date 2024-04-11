@@ -21,6 +21,7 @@ THE SOFTWARE.
 ***********************************************/
 
 #include "intree.h"
+#include "constants.h"
 #include "solver.h"
 #include "varreplacer.h"
 #include "clausecleaner.h"
@@ -46,7 +47,7 @@ bool InTree::replace_until_fixedpoint(bool& aborted)
         *solver->conf.global_timeout_multiplier
         *0.5;
     time_limit = (double)time_limit * std::min(std::pow((double)(numCalls+1), 0.2), 3.0);
-    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
+    frat_func_start();
 
     aborted = false;
     uint64_t bogoprops = 0;
@@ -54,13 +55,9 @@ bool InTree::replace_until_fixedpoint(bool& aborted)
     uint32_t this_replace = solver->varReplacer->get_num_replaced_vars();
     while(last_replace != this_replace && !aborted) {
         last_replace = this_replace;
-        if (!solver->clauseCleaner->remove_and_clean_all()) {
-            return false;
-        }
+        if (!solver->clauseCleaner->remove_and_clean_all()) return false;
         bool OK = solver->varReplacer->replace_if_enough_is_found(0, &bogoprops);
-        if (!OK) {
-            return false;
-        }
+        if (!OK) return false;
 
         if (solver->varReplacer->get_scc_depth_warning_triggered()) {
             aborted = true;
@@ -74,7 +71,7 @@ bool InTree::replace_until_fixedpoint(bool& aborted)
         }
     }
 
-    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
+    frat_func_end();
     return true;
 }
 
@@ -126,8 +123,7 @@ void InTree::fill_roots()
     }
 }
 
-bool InTree::intree_probe()
-{
+bool InTree::intree_probe() {
     assert(solver->okay());
     queue.clear();
     reset_reason_stack.clear();
@@ -137,13 +133,11 @@ bool InTree::intree_probe()
     removedIrredBin = 0;
     removedRedBin = 0;
     numCalls++;
-    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
+    frat_func_start();
 
     if (!solver->conf.doFindAndReplaceEqLits) {
-        if (solver->conf.verbosity) {
-            cout << "c [intree] SCC is not allowed, intree cannot work this way, aborting" << endl;
-        }
-        return solver->okay();
+      verb_print(1, "[intree] SCC is not allowed, intree cannot work this way, aborting");
+      return solver->okay();
     }
 
     bool aborted = false;
@@ -159,15 +153,13 @@ bool InTree::intree_probe()
         return true;
     }
 
-    double myTime = cpuTime();
-    bogoprops_to_use =
-        solver->conf.intree_time_limitM*1000ULL*1000ULL
+    double my_time = cpuTime();
+    bogoprops_to_use = solver->conf.intree_time_limitM*1000ULL*1000ULL
         *solver->conf.global_timeout_multiplier;
     bogoprops_to_use = (double)bogoprops_to_use * std::pow((double)(numCalls+1), 0.3);
     start_bogoprops = solver->propStats.bogoProps;
 
     fill_roots();
-    //randomize_roots
     std::shuffle(roots.begin(), roots.end(), solver->mtrand);
 
     //Let's enqueue all ~root -s.
@@ -175,16 +167,14 @@ bool InTree::intree_probe()
 
     //clear seen
     for(QueueElem elem: queue) {
-        if (elem.propagated != lit_Undef) {
-            seen[elem.propagated.toInt()] = 0;
-        }
+        if (elem.propagated != lit_Undef) seen[elem.propagated.toInt()] = 0;
     }
     const size_t orig_num_free_vars = solver->get_num_free_vars();
 
     tree_look();
     unmark_all_bins();
 
-    const double time_used = cpuTime() - myTime;
+    const double time_used = cpuTime() - my_time;
     const double time_remain = float_div(
         (int64_t)solver->propStats.bogoProps-start_bogoprops, bogoprops_to_use);
     const bool time_out = ((int64_t)solver->propStats.bogoProps > start_bogoprops + bogoprops_to_use);
@@ -199,16 +189,10 @@ bool InTree::intree_probe()
         << solver->conf.print_times(time_used,  time_out, time_remain));
 
     if (solver->sqlStats) {
-        solver->sqlStats->time_passed(
-            solver
-            , "intree"
-            , time_used
-            , time_out
-            , time_remain
-        );
+        solver->sqlStats->time_passed( solver , "intree" , time_used , time_out , time_remain);
     }
 
-    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
+    frat_func_end();
     solver->use_depth_trick = true;
     solver->perform_transitive_reduction = true;
     return solver->okay();
@@ -336,7 +320,7 @@ bool InTree::handle_lit_popped_from_queue(
             ok = (ret == lit_Undef);
             timeout = check_timeout_due_to_hyperbin();
         } else {
-            ok = solver->propagate<true>().isNULL();
+            ok = solver->propagate<true>().isnullptr();
         }
 
         if (!ok && !timeout) {
@@ -368,14 +352,14 @@ bool InTree::empty_failed_list()
 
         if (solver->value(lit) == l_Undef) {
             solver->enqueue<true>(lit);
-            solver->ok = solver->propagate<true>().isNULL();
+            solver->ok = solver->propagate<true>().isnullptr();
             if (!solver->ok) {
                 return false;
             }
         } else if (solver->value(lit) == l_False) {
-            //*(solver->frat) << add << solver->clauseID++ << ~lit << fin;
-            solver->unsat_cl_ID = solver->clauseID;
-            *(solver->frat) << add << solver->clauseID++ <<fin;
+            //*(solver->frat) << add << ++solver->clauseID << ~lit << fin;
+            *solver->frat << add << ++solver->clauseID <<fin;
+            set_unsat_cl_id(solver->clauseID);
             solver->ok = false;
             return false;
         }

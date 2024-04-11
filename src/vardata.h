@@ -20,15 +20,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef __VARDATA_H__
-#define __VARDATA_H__
+#pragma once
 
 #include <limits>
-#ifdef ARJUN_SERIALIZE
-#include <boost/serialization/split_member.hpp>
-#endif
-
-#include "constants.h"
 #include "propby.h"
 #include "avgcalc.h"
 
@@ -39,25 +33,30 @@ namespace CMSat
 
 struct VarData
 {
-    VarData()
-    {
+    VarData([[maybe_unused]] uint32_t num) {
         is_bva = 0;
         occ_simp_tried = 0;
         saved_polarity = false;
         stable_polarity = false;
         best_polarity = false;
         inv_polarity = false;
+#ifdef WEIGHTED
+        orig_varnum = num;
+#endif
     }
 
     ///contains the decision level at which the assignment was made.
     uint32_t level = numeric_limits<uint32_t>::max();
     uint32_t sublevel = numeric_limits<uint32_t>::max();
 
-    #ifdef WEIGHTED_SAMPLING
-    double weight = 0.5;
+    #ifdef WEIGHTED
+    uint32_t orig_varnum = std::numeric_limits<uint32_t>::max();
+    bool weight_set = false;
+    mpz_class pos_weight = 1.0;
+    mpz_class neg_weight = 1.0;
     #endif
 
-    //Reason this got propagated. NULL means decision/toplevel
+    //Reason this got propagated. nullptr means decision/toplevel
     PropBy reason = PropBy();
 
     lbool assumption = l_Undef;
@@ -77,66 +76,6 @@ struct VarData
     #if defined(STATS_NEEDED)
     uint32_t community_num = numeric_limits<uint32_t>::max();
     #endif
-
-    template<class Archive>
-    void save(Archive& ar, const unsigned int /*version*/) const {
-        ar << level;
-        ar << sublevel;
-        #ifdef WEIGHTED_SAMPLING
-        ar << weight;
-        #endif
-        ar << reason;
-        ar << assumption;
-        ar << removed;
-
-        //bitfield
-        const bool my_stable_polarity = stable_polarity;
-        const bool my_saved_polarity  = saved_polarity;
-        const bool my_best_polarity   = best_polarity;
-        const bool my_inv_polarity    = inv_polarity;
-        const bool my_is_bva          = is_bva;
-        const bool my_occ_simp_tried  = occ_simp_tried;
-        ar << my_stable_polarity;
-        ar << my_saved_polarity;
-        ar << my_best_polarity;
-        ar << my_inv_polarity;
-        ar << my_is_bva;
-        ar << my_occ_simp_tried;
-
-        #if defined(STATS_NEEDED)
-        ar << community_num;
-        #endif
-        ar << propagated;
-    }
-
-    template<class Archive>
-    void load(Archive& ar, const unsigned int /*version*/) {
-        ar >> level;
-        ar >> sublevel;
-        #ifdef WEIGHTED_SAMPLING
-        ar >> weight;
-        #endif
-        ar >> reason;
-        ar >> assumption;
-        ar >> removed;
-
-        //bitfield
-        bool bit;
-        ar >> bit; stable_polarity = bit;
-        ar >> bit; saved_polarity = bit;
-        ar >> bit; best_polarity = bit;
-        ar >> bit; inv_polarity = bit;
-        ar >> bit; is_bva = bit;
-        ar >> bit; occ_simp_tried = bit;
-
-        #if defined(STATS_NEEDED)
-        ar >> community_num;
-        #endif
-        ar >> propagated;
-    }
-#ifdef ARJUN_SERIALIZE
-    BOOST_SERIALIZATION_SPLIT_MEMBER()
-#endif
 
     #if defined(STATS_NEEDED_BRANCH) || defined(FINAL_PREDICTOR_BRANCH)
     uint32_t set = 0;
@@ -190,5 +129,3 @@ struct VarData
 };
 
 }
-
-#endif //__VARDATA_H__

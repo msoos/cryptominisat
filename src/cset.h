@@ -38,8 +38,8 @@ Used in OccSimplifier to put into a set all clauses that need to be treated
 */
 class CSet {
     vector<uint32_t>       where;  ///<Map clause ID to position in 'which'.
-    vector<ClOffset>   which;  ///< List of clauses (for fast iteration). May contain 'Clause_NULL'.
-    vector<uint32_t>       free;   ///<List of positions holding 'Clause_NULL'.
+    vector<ClOffset>   which;  ///< List of clauses (for fast iteration). May contain 'Clause_nullptr'.
+    vector<uint32_t>       free;   ///<List of positions holding 'Clause_nullptr'.
 
     public:
         //ClauseSimp& operator [] (uint32_t index) { return which[index]; }

@@ -446,7 +446,7 @@ Configuring a build for a minimal binary&library
 The following configures the system to build a bare minimal binary&library. It needs a compiler, but nothing much else:
 
 ```
-cmake -DONLY_SIMPLE=ON -DNOZLIB=ON -DSTATS=OFF -DENABLE_TESTING=OFF .
+cmake -DNOZLIB=ON -DSTATS=OFF -DENABLE_TESTING=OFF .
 ```
 
 CMake Arguments
@@ -459,7 +459,6 @@ The following arguments to cmake configure the generated build artifacts. To use
 - `-DMIT=<ON/OFF>` -- MIT licensed components only
 - `-DNOMPI=<ON/OFF>` -- without MPI support
 - `-DNOZLIB=<ON/OFF>` -- no gzip DIMACS input support
-- `-DONLY_SIMPLE=<ON/OFF>` -- only the simple binary is built
 - `-DLARGEMEM=<ON/OFF>` -- more memory available for clauses (but slower on most problems)
 - `-DIPASIR=<ON/OFF>` -- Build `libipasircryptominisat.so` for [IPASIR](https://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/IPASIR____IPASIR) interface support
 

@@ -272,7 +272,7 @@ int picosat_pop (PicoSAT *);
  * added or generated in closed contexts.  This function is called
  * internally if enough units are learned or after a certain number of
  * contexts have been closed.  This number is fixed at compile time
- * and defined as MAXCILS in 'picosat.c'.
+ * and defined as MAXCILS in 'mpicosat.c'.
  *
  * Note that learned clauses which only involve outer contexts are kept.
  */

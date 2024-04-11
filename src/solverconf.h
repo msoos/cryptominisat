@@ -306,7 +306,6 @@ class DLL_PUBLIC SolverConf
 
         //Verbosity
         int  verbosity;  ///<Verbosity level 0-2: normal  3+ extreme
-        int  xor_detach_verb; ///to debug XOR detach issues
 
         int  doPrintGateDot; ///< Print DOT file of gates
         int  print_full_restart_stat;
@@ -342,6 +341,7 @@ class DLL_PUBLIC SolverConf
         uint64_t varelim_cutoff_too_many_clauses;
         int      do_empty_varelim;
         int      do_full_varelim;
+        int      do_xor_varelim;
         long long empty_varelim_time_limitM;
         long long varelim_time_limitM;
         long long varelim_sub_str_limitM;
@@ -408,8 +408,6 @@ class DLL_PUBLIC SolverConf
         uint64_t maxXORMatrix;
         uint64_t xor_finder_time_limitM;
         int      allow_elim_xor_vars;
-        unsigned xor_var_per_cut;
-        int      force_preserve_xors;
 
         //Cardinality
         int      doFindCard;
@@ -493,11 +491,12 @@ class DLL_PUBLIC SolverConf
 
         //Gauss
         GaussConf gaussconf;
-        bool xor_detach_reattach;
-        bool force_use_all_matrixes;
 
         //Sampling
-        const std::vector<uint32_t>* sampling_vars;
+        std::vector<uint32_t> sampling_vars;
+        bool sampling_vars_set = false;
+        std::vector<uint32_t> opt_sampling_vars;
+        bool opt_sampling_vars_set = false;
 
         //Timeouts
         double global_next_multiplier;

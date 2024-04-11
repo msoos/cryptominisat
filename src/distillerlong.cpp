@@ -151,11 +151,11 @@ DistillerLong::DistillerLong(Solver* _solver) :
 
 bool DistillerLong::distill(const bool red, bool only_rem_cl)
 {
+    frat_func_start();
     assert(solver->ok);
     numCalls_red += (unsigned)red;
     numCalls_irred += (unsigned)!red;
     runStats.clear();
-    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
 
     if (!red) {
         if (!distill_long_cls_all(
@@ -215,7 +215,7 @@ bool DistillerLong::distill(const bool red, bool only_rem_cl)
 end:
     lit_counts.clear();
     lit_counts.shrink_to_fit();
-    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
+    frat_func_end();
 
     return solver->okay();
 }
@@ -231,8 +231,9 @@ bool DistillerLong::distill_long_cls_all(
     assert(solver->ok);
     if (time_mult == 0.0) return solver->okay();
     verb_print(6, "c Doing distillation branch for long clauses");
+    frat_func_start();
 
-    double myTime = cpuTime();
+    double my_time = cpuTime();
     const size_t origTrailSize = solver->trail_size();
 
     //Time-limiting
@@ -265,10 +266,7 @@ bool DistillerLong::distill_long_cls_all(
                 ClauseSizeSorterLargestFirst(solver->cl_alloc)
             );
         } else if (solver->conf.distill_sort == 2) {
-            std::sort(offs.begin(),
-                offs.end(),
-                ClauseSorterSmallGlueFirst(solver->cl_alloc)
-            );
+            std::sort(offs.begin(), offs.end(), ClauseSorterSmallGlueFirst(solver->cl_alloc));
         } else if (solver->conf.distill_sort == 3) {
             #ifdef FINAL_PREDICTOR
             if (red) {
@@ -283,15 +281,9 @@ bool DistillerLong::distill_long_cls_all(
             exit(-1);
             #endif
         } else if (solver->conf.distill_sort == 4) {
-            bool randomly_sort = rnd_uint(solver->mtrand, solver->conf.distill_rand_shuffle_order_every_n) == 0;
-            if (randomly_sort) {
-                std::shuffle(offs.begin(), offs.end(), solver->mtrand);
-            } else {
-                std::sort(offs.begin(),
-                    offs.end(),
-                    ClauseSizeSorterLargestFirst(solver->cl_alloc)
-                );
-            }
+            bool rnd_sort = rnd_uint(solver->mtrand, solver->conf.distill_rand_shuffle_order_every_n) == 0;
+            if (rnd_sort) std::shuffle(offs.begin(), offs.end(), solver->mtrand);
+            else std::sort(offs.begin(), offs.end(), ClauseSizeSorterLargestFirst(solver->cl_alloc));
         }
     }
 
@@ -340,7 +332,7 @@ bool DistillerLong::distill_long_cls_all(
     //Add back the prioritized clauses
     for(const auto off: todo) offs.push_back(off);
 
-    const double time_used = cpuTime() - myTime;
+    const double time_used = cpuTime() - my_time;
     const double time_remain = float_div(
         maxNumProps - ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps),
         orig_maxNumProps);
@@ -371,14 +363,12 @@ bool DistillerLong::distill_long_cls_all(
     runStats.time_used += time_used;
     runStats.zeroDepthAssigns += solver->trail_size() - origTrailSize;
 
+    frat_func_end();
     return solver->okay();
 }
 
-bool DistillerLong::go_through_clauses(
-    vector<ClOffset>& cls,
-    bool also_remove, bool only_remove
-
-) {
+bool DistillerLong::go_through_clauses(vector<ClOffset>& cls, bool also_remove, bool only_remove) {
+    frat_func_start();
     bool time_out = false;
     vector<ClOffset>::iterator i, j;
     i = j = cls.begin();
@@ -411,55 +401,22 @@ bool DistillerLong::go_through_clauses(
             time_out = true;
         }
 
-        //check XOR
-        if (cl.used_in_xor() &&
-            solver->conf.force_preserve_xors
-        ) {
-            *j++ = *i;
-            VERBOSE_PRINT("Skipping offset for XOR " << *i);
-            continue;
-        }
-
         //Time to dereference
         maxNumProps -= 5;
 
-        //If we already tried this clause, then move to next
-        if (cl._xor_is_detached ||
-
-            //If it's a redundant that's not very good, let's not distill it
-            (
-                #ifdef FINAL_PREDICTOR
-                solver->conf.pred_distill_only_smallgue &&
-                #else
-                false &&
-                #endif
-                cl.red() &&
-                cl.stats.glue > 3) //TODO I don't like this at all for FINAL_PREDICTOR !!!!
-        ) {
-            *j++ = *i;
-            VERBOSE_PRINT("Skipping offset " << *i);
-            continue;
-        }
-        if (also_remove) {
-            cl.tried_to_remove = 1;
-        } else {
-            cl.distilled = 1;
-        }
+        if (also_remove) cl.tried_to_remove = 1;
+        else cl.distilled = 1;
         runStats.checkedClauses++;
         assert(cl.size() > 2);
 
         //Try to distill clause
-        ClOffset offset2 = try_distill_clause_and_return_new(
-            offset, &cl.stats
-            , also_remove, only_remove
-        );
+        ClOffset offset2 = try_distill_clause_and_return_new( offset, &cl.stats , also_remove, only_remove);
 
-        if (offset2 != CL_OFFSET_MAX) {
-            *j++ = offset2;
-        }
+        if (offset2 != CL_OFFSET_MAX) *j++ = offset2;
     }
     cls.resize(cls.size()- (i-j));
 
+    frat_func_end();
     return time_out;
 }
 
@@ -467,6 +424,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     ClOffset offset, const ClauseStats* const stats,
     const bool also_remove, const bool only_remove
 ) {
+    frat_func_start();
     assert(solver->prop_at_head());
     assert(solver->decisionLevel() == 0);
     bool True_confl = false;
@@ -486,12 +444,8 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     uint32_t i = 0;
     uint32_t j = 0;
     for (uint32_t sz = cl.size(); i < sz; i++) {
-        if (solver->value(cl[i]) == l_True) {
-            goto rem;
-        }
-        if (solver->value(cl[i]) == l_Undef) {
-            cl[j++] = cl[i];
-        }
+        if (solver->value(cl[i]) == l_True) goto rem;
+        if (solver->value(cl[i]) == l_Undef) cl[j++] = cl[i];
     }
     cl.resize(j);
     assert(cl.size() > 1); //this must have already been propagated
@@ -500,7 +454,6 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     i = 0;
     j = 0;
 
-
     // Sort them differently once in a while, so all literals have a chance of
     // being removed
     if (solver->conf.distill_sort == 4 &&
@@ -508,11 +461,8 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     {
         //Sort them differently once in a while, so all literals have a chance of
         //being removed
-        if (offset % 2  == 0) {
-            std::sort(cl.begin(), cl.end(), VSIDS_largest_first(solver->var_act_vsids));
-        } else {
-            std::sort(cl.begin(), cl.end(), LitCountDescSort(lit_counts));
-        }
+        if (offset % 2  == 0) std::sort(cl.begin(), cl.end(), VSIDS_largest_first(solver->var_act_vsids));
+        else std::sort(cl.begin(), cl.end(), LitCountDescSort(lit_counts));
     }
 
     for (uint32_t sz = cl.size(); i < sz; i++) {
@@ -530,9 +480,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
                 //Normal propagation, on all clauses
                 confl = solver->propagate<true, true, true>();
             }
-            if (!confl.isNULL()) {
-                break;
-            }
+            if (!confl.isnullptr()) break;
         } else if (val == l_False) {
             // if we don't want to shorten, then don't remove literals
             if (only_remove) cl[j++] = cl[i];
@@ -551,30 +499,30 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     VERBOSE_PRINT("also_remove: " << also_remove
         << "red: " << red
         << "True_confl: " << True_confl
-        << "confl.isNULL(): " << confl.isNULL());
+        << "confl.isnullptr(): " << confl.isnullptr());
 
 
-    if (also_remove && !red && !True_confl && !confl.isNULL()) {
+    if (also_remove && !red && !True_confl && !confl.isnullptr()) {
         VERBOSE_PRINT("CL Removed.");
         rem:
         solver->cancelUntil<false, true>(0);
         solver->detach_modified_clause(cl_lit1, cl_lit2, orig_size, &cl);
-        (*solver->frat) << findelay;
+        *solver->frat << findelay;
         solver->free_cl(offset);
         runStats.clRemoved++;
+        frat_func_end();
         return CL_OFFSET_MAX;
     }
 
     //Couldn't simplify the clause
-    if (j == orig_size && !True_confl && confl.isNULL()) {
-        #ifdef VERBOSE_DEBUG
-        cout << "CL Cannot be simplified." << endl;
-        #endif
+    if (j == orig_size && !True_confl && confl.isnullptr()) {
+        VERBOSE_PRINT("CL Cannot be simplified.");
         cl.disabled = false;
         solver->cancelUntil<false, true>(0);
         std::swap(*std::find(cl.begin(), cl.end(), cl_lit1), cl[0]);
         std::swap(*std::find(cl.begin(), cl.end(), cl_lit2), cl[1]);
         solver->frat->forget_delay();
+        frat_func_end();
         return offset;
     }
 
@@ -594,7 +542,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
 
     bool lits_set = false;
     //TODO BNN removed this, but needs to be fixed.
-    /*if (red && j > 1 && (!confl.isNULL() || True_confl)) {
+    /*if (red && j > 1 && (!confl.isnullptr() || True_confl)) {
         #ifdef VERBOSE_DEBUG
         cout
         << "c Distillation even more effective." << endl
@@ -614,6 +562,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
             lits_set = true;
         }
     }*/
+
     solver->cancelUntil<false, true>(0);
     solver->detach_modified_clause(cl_lit1, cl_lit2, orig_size, &cl);
     runStats.numLitsRem += orig_size - cl.size();
@@ -631,20 +580,22 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     // so let's set this to 0, this way, when we free() it, it won't be
     // deleted as per cl_last_in_solver
     solver->free_cl(offset, false);
+    std::stringstream ss2;
+    ss2 << lits;
+    *solver->frat << " new smaller cl: " << ss2.str().c_str() << "\n";
     Clause *cl2 = solver->add_clause_int(lits, red, &backup_stats);
     *solver->frat << findelay;
 
-    if (cl2 != NULL) {
+    if (cl2 != nullptr) {
         //This new, distilled clause has been distilled now.
-        if (also_remove) {
-            cl2->tried_to_remove = 1;
-        } else {
-            cl2->distilled = 1;
-        }
+        if (also_remove) cl2->tried_to_remove = 1;
+        else cl2->distilled = 1;
+        frat_func_end();
         return solver->cl_alloc.get_offset(cl2);
     } else {
         STATS_DO(solver->stats_del_cl(offset));
         //it became a bin/unit/zero
+        frat_func_end();
         return CL_OFFSET_MAX;
     }
 }

@@ -45,7 +45,7 @@ public:
     void subsume_implicit(bool check_stats = true, std::string caller = std::string());
     uint32_t subsume_at_watch(const uint32_t at,
                               int64_t *timeAvail,
-                              TouchList* touched = NULL);
+                              TouchList* touched = nullptr);
 
     struct Stats {
         void clear()
@@ -79,7 +79,7 @@ private:
     void clear()
     {
         lastLit2 = lit_Undef;
-        lastBin = NULL;
+        lastBin = nullptr;
         lastRed = false;
     }
 
@@ -89,7 +89,7 @@ private:
         , Watched* i
         , Watched*& j
         , int64_t* timeAvail
-        , TouchList* touched = NULL
+        , TouchList* touched = nullptr
     );
 };
 

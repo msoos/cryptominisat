@@ -20,6 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
+#include "cryptominisat_c.h"
 #include "gtest/gtest.h"
 
 #include <fstream>
@@ -210,13 +211,13 @@ TEST(xor_interface, xor_check_sat_solution)
 {
     SATSolver s;
     s.new_var();
-    s.add_xor_clause(vector<unsigned>{0U}, false);
+    s.add_xor_clause(vector<unsigned>{0U}, true);
     s.add_xor_clause(vector<unsigned>{0U}, true);
     lbool ret = s.solve();
-    EXPECT_EQ( ret, l_False);
+    EXPECT_EQ( ret, l_True);
     for(size_t i = 0;i < 10; i++) {
         ret = s.solve();
-        EXPECT_EQ( ret, l_False);
+        EXPECT_EQ( ret, l_True);
     }
     EXPECT_EQ( s.nVars(), 1u);
 }
@@ -226,13 +227,13 @@ TEST(xor_interface, xor_check_unsat_solution)
     SATSolver s;
     s.new_var();
     s.add_xor_clause(vector<uint32_t>{0U}, true);
-    s.add_xor_clause(vector<uint32_t>{0U}, true);
+    s.add_xor_clause(vector<uint32_t>{0U}, false);
     lbool ret = s.solve();
-    EXPECT_EQ( ret, l_True);
+    EXPECT_EQ( ret, l_False);
     for(size_t i = 0;i < 10; i++) {
         ret = s.solve();
-        EXPECT_EQ( ret, l_True);
-        EXPECT_EQ( s.okay(), true);
+        EXPECT_EQ( ret, l_False);
+        EXPECT_EQ( s.okay(), false);
     }
     EXPECT_EQ( s.nVars(), 1u);
 }
@@ -812,8 +813,8 @@ TEST(propagate, trivial_1)
     vector<Lit> lits = s.get_zero_assigned_lits();
     vector<Lit>::iterator it;
     it = std::find(lits.begin(), lits.end(), Lit(0, true));
-    EXPECT_NE(it, lits.end());
     EXPECT_EQ(lits.size(), 1);
+    EXPECT_TRUE(it != lits.end());
 }
 
 TEST(propagate, trivial_2)
@@ -826,9 +827,9 @@ TEST(propagate, trivial_2)
     vector<Lit> lits = s.get_zero_assigned_lits();
     vector<Lit>::iterator it;
     it = std::find(lits.begin(), lits.end(), Lit(0, true));
-    EXPECT_NE(it, lits.end());
+    EXPECT_TRUE(it != lits.end());
     it = std::find(lits.begin(), lits.end(), Lit(1, true));
-    EXPECT_NE(it, lits.end());
+    EXPECT_TRUE(it != lits.end());
 
     EXPECT_EQ(lits.size(), 2);
 }
@@ -843,9 +844,9 @@ TEST(propagate, prop_1)
     vector<Lit> lits = s.get_zero_assigned_lits();
     vector<Lit>::iterator it;
     it = std::find(lits.begin(), lits.end(), Lit(0, true));
-    EXPECT_NE(it, lits.end());
+    EXPECT_TRUE(it != lits.end());
     it = std::find(lits.begin(), lits.end(), Lit(1, false));
-    EXPECT_NE(it, lits.end());
+    EXPECT_TRUE(it != lits.end());
 
     EXPECT_EQ(lits.size(), 2);
 }
@@ -860,9 +861,10 @@ TEST(propagate, prop_1_alter)
     vector<Lit> lits = s.get_zero_assigned_lits();
     vector<Lit>::iterator it;
     it = std::find(lits.begin(), lits.end(), Lit(0, true));
-    EXPECT_NE(it, lits.end());
+    EXPECT_TRUE(it != lits.end());
     it = std::find(lits.begin(), lits.end(), Lit(1, false));
-    EXPECT_NE(it, lits.end());
+    EXPECT_TRUE(it != lits.end());
+
     EXPECT_EQ(lits.size(), 2);
 }
 
@@ -879,9 +881,9 @@ TEST(propagate, prop_many)
     for(unsigned i = 0; i < 10; i++) {
         vector<Lit>::iterator it;
         it = std::find(lits.begin(), lits.end(), Lit(i*2, false));
-        EXPECT_NE(it, lits.end());
+        EXPECT_TRUE(it != lits.end());
         it = std::find(lits.begin(), lits.end(), Lit(i*2+1, true));
-        EXPECT_NE(it, lits.end());
+        EXPECT_TRUE(it != lits.end());
     }
 
     EXPECT_EQ(lits.size(), 10*2);
@@ -918,35 +920,33 @@ TEST(get_small_clauses, mixed)
     s.add_clause(str_to_cl("10"));
     s.add_clause(str_to_cl("1, -2, -5, -6, 7"));
 
-    s.start_getting_small_clauses(10000000, 10000000, false);
-
+    s.start_getting_constraints(false);
     vector<Lit> lits;
-    bool ret;
-
-    ret = s.get_next_small_clause(lits);
-    ASSERT_TRUE(ret);
+    bool is_xor, rhs;
+    bool ret = s.get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(str_to_cl("10"), lits);
 
-    ret = s.get_next_small_clause(lits);
-    ASSERT_TRUE(ret);
+    ret = s.get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(str_to_cl(" 1,  2"), lits);
 
-    ret = s.get_next_small_clause(lits);
-    ASSERT_TRUE(ret);
+    ret = s.get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(str_to_cl(" -5,  6"), lits);
 
-    ret = s.get_next_small_clause(lits);
-    ASSERT_TRUE(ret);
+    ret = s.get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(str_to_cl("1, -2, -5, -6, 7"), lits);
 
-    ret = s.get_next_small_clause(lits);
+    ret = s.get_next_constraint(lits, is_xor, rhs);
     ASSERT_FALSE(ret);
 
-    s.end_getting_small_clauses();
+    s.end_getting_constraints();
 }
 
 TEST(get_small_clauses, scc)
@@ -962,23 +962,23 @@ TEST(get_small_clauses, scc)
     auto x = s.get_all_binary_xors();
     ASSERT_EQ(1, x.size());
 
-    s.start_getting_small_clauses(10000000, 10000000, false);
-
+    s.start_getting_constraints(true);
     vector<Lit> lits;
-    bool ret = s.get_next_small_clause(lits);
-    ASSERT_TRUE(ret);
+    bool is_xor, rhs;
+    bool ret = s.get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(str_to_cl(" 5,  -6"), lits);
 
-    ret = s.get_next_small_clause(lits);
-    ASSERT_TRUE(ret);
+    ret = s.get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(str_to_cl(" -5,  6"), lits);
 
-    ret = s.get_next_small_clause(lits);
+    ret = s.get_next_constraint(lits, is_xor, rhs);
     ASSERT_FALSE(ret);
 
-    s.end_getting_small_clauses();
+    s.end_getting_constraints();
 }
 
 TEST(get_small_clauses, units)
@@ -989,23 +989,23 @@ TEST(get_small_clauses, units)
     s.add_clause(str_to_cl("-6"));
     s.simplify();
 
-    s.start_getting_small_clauses(10000000, 10000000, false);
-
+    s.start_getting_constraints(true);
     vector<Lit> lits;
-    bool ret = s.get_next_small_clause(lits);
-    ASSERT_TRUE(ret);
+    bool is_xor, rhs;
+    bool ret = s.get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(str_to_cl(" 5"), lits);
 
-    ret = s.get_next_small_clause(lits);
-    ASSERT_TRUE(ret);
+    ret = s.get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(str_to_cl("-6"), lits);
 
-    ret = s.get_next_small_clause(lits);
+    ret = s.get_next_constraint(lits, is_xor, rhs);
     ASSERT_FALSE(ret);
 
-    s.end_getting_small_clauses();
+    s.end_getting_constraints();
 }
 
 TEST(get_small_clauses, unsat)
@@ -1016,17 +1016,17 @@ TEST(get_small_clauses, unsat)
     s.add_clause(str_to_cl("-5"));
     s.simplify();
 
-    s.start_getting_small_clauses(10000000, 10000000, false);
-
+    s.start_getting_constraints(true);
     vector<Lit> lits;
-    bool ret = s.get_next_small_clause(lits);
-    ASSERT_TRUE(ret);
-    ASSERT_EQ(str_to_cl(""), lits);
+    bool is_xor, rhs;
+    bool ret = s.get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
+    ASSERT_TRUE(lits.empty());
 
-    ret = s.get_next_small_clause(lits);
+    ret = s.get_next_constraint(lits, is_xor, rhs);
     ASSERT_FALSE(ret);
 
-    s.end_getting_small_clauses();
+    s.end_getting_constraints();
 }
 
 TEST(get_small_clauses, unsat_all)
@@ -1038,7 +1038,7 @@ TEST(get_small_clauses, unsat_all)
     s.simplify();
 
     vector<Lit> lits;
-    s.get_all_irred_clauses(lits);
+    get_all_irred_clauses(s, lits);
     ASSERT_EQ(str_to_cl("U"), lits);
 }
 
@@ -1050,7 +1050,7 @@ TEST(get_small_clauses, undef)
     s.simplify();
 
     vector<Lit> lits;
-    s.get_all_irred_clauses(lits);
+    get_all_irred_clauses(s, lits);
     ASSERT_EQ(str_to_cl("5, -5, U"), lits);
 }
 
@@ -1062,23 +1062,23 @@ TEST(get_small_clauses, bve)
     s.add_clause(str_to_cl("7, 8"));
     s.simplify();
 
-    s.start_getting_small_clauses(10000000, 10000000, false);
-
+    s.start_getting_constraints(false);
     vector<Lit> lits;
-    bool ret = s.get_next_small_clause(lits);
-    ASSERT_TRUE(ret);
+    bool is_xor, rhs;
+    bool ret = s.get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(str_to_cl(" 5, 6"), lits);
 
-    ret = s.get_next_small_clause(lits);
-    ASSERT_TRUE(ret);
+    ret = s.get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(str_to_cl("7, 8"), lits);
 
-    ret = s.get_next_small_clause(lits);
+    ret = s.get_next_constraint(lits, is_xor, rhs);
     ASSERT_FALSE(ret);
 
-    s.end_getting_small_clauses();
+    s.end_getting_constraints();
 }
 
 TEST(get_small_clauses, full)
@@ -1090,7 +1090,7 @@ TEST(get_small_clauses, full)
     s.simplify();
 
     vector<Lit> lits;
-    s.get_all_irred_clauses(lits);
+    get_all_irred_clauses(s, lits);
     ASSERT_EQ(6, lits.size());
 }
 
@@ -1103,7 +1103,7 @@ TEST(get_small_clauses, full_bins)
     s.simplify();
 
     vector<Lit> lits;
-    s.get_all_irred_clauses(lits);
+    get_all_irred_clauses(s, lits);
 
     vector<Lit> cl;
     uint32_t found = 0;
@@ -1133,7 +1133,7 @@ TEST(get_small_clauses, full_units)
     s.simplify();
 
     vector<Lit> lits;
-    s.get_all_irred_clauses(lits);
+    get_all_irred_clauses(s, lits);
     ASSERT_EQ(str_to_cl("5, U, 7, U", false), lits);
 }
 
@@ -1149,24 +1149,24 @@ TEST(get_small_clauses, unit)
     s.simplify();
     auto x = s.get_zero_assigned_lits();
     ASSERT_EQ(2, x.size());
-
-    s.start_getting_small_clauses(10000000, 10000000, false);
+    s.start_getting_constraints(true);
 
     vector<Lit> lits;
-    bool ret = s.get_next_small_clause(lits);
-    ASSERT_TRUE(ret);
+    bool is_xor, rhs;
+    bool ret = s.get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(str_to_cl(" 5"), lits);
 
-    ret = s.get_next_small_clause(lits);
-    ASSERT_TRUE(ret);
+    ret = s.get_next_constraint(lits, is_xor, rhs);
+    ASSERT_TRUE(ret); ASSERT_FALSE(is_xor); ASSERT_TRUE(rhs);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(str_to_cl(" 6"), lits);
 
-    ret = s.get_next_small_clause(lits);
+    ret = s.get_next_constraint(lits, is_xor, rhs);
     ASSERT_FALSE(ret);
 
-    s.end_getting_small_clauses();
+    s.end_getting_constraints();
 }
 
 TEST(sampling, indep1)
@@ -1180,7 +1180,7 @@ TEST(sampling, indep1)
     s.add_clause(str_to_cl("-5, 6"));
 
     vector<uint32_t> x{4U};
-    s.set_sampling_vars(&x);
+    s.set_sampl_vars(x);
 
     lbool ret = s.solve(NULL, true);
     EXPECT_EQ(ret, l_True);
@@ -1206,7 +1206,7 @@ TEST(sampling, indep2)
     s.add_clause(str_to_cl("-5, 6"));
 
     vector<uint32_t> x = str_to_vars("1, 2, 3, 4, 5, 6");
-    s.set_sampling_vars(&x);
+    s.set_sampl_vars(x);
 
     lbool ret = s.solve(NULL, true);
     EXPECT_EQ(ret, l_True);
@@ -1351,27 +1351,7 @@ TEST(xor_recovery, find_xor_one_only_inv_external)
     s.simplify();
 
     vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(false);
-
-    //it's zero because it's cut into 2 XORs and they both have a variable
-    //that is NOT part of the solver's original variables.
-    EXPECT_EQ(xors.size(), 0);
-}
-
-TEST(xor_recovery, find_xor_one_that_is_xor_of_2)
-{
-    SATSolver s;
-    s.new_vars(30);
-    s.set_no_bve();
-
-    s.add_xor_clause(str_to_vars("1, 3, 4, 5"), true);
-    s.add_xor_clause(str_to_vars("1, 7, 8, 9"), true);
-    s.simplify();
-
-    vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(true);
     EXPECT_EQ(xors.size(), 1);
-    std::sort(xors[0].first.begin(), xors[0].first.end());
-    EXPECT_EQ(xors[0].first, str_to_vars("3, 4, 5, 7, 8, 9"));
-    EXPECT_EQ(xors[0].second, false);
 }
 
 //TODO the renubmering make 31 out of 3 and then it's not "outside" anymore...

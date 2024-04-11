@@ -85,8 +85,8 @@ struct SolveStats
 class Solver : public Searcher
 {
     public:
-        Solver(const SolverConf *_conf = NULL,
-               std::atomic<bool>* _must_interrupt_inter = NULL);
+        Solver(const SolverConf *_conf = nullptr,
+               std::atomic<bool>* _must_interrupt_inter = nullptr);
         virtual ~Solver() override;
 
         void add_sql_tag(const string& name, const string& val);
@@ -94,24 +94,26 @@ class Solver : public Searcher
         void new_external_var();
         void new_external_vars(size_t n);
         bool add_clause_outside(const vector<Lit>& lits, bool red = false);
-        bool add_xor_clause_outside(const vector<uint32_t>& vars, bool rhs);
+        bool add_xor_clause_outside(const vector<uint32_t>& vars, const bool rhs);
+        bool add_xor_clause_outside(const vector<Lit>& lits_out, bool rhs);
         bool add_bnn_clause_outside(
             const vector<Lit>& lits,
             const int32_t cutoff,
             Lit out);
-        void set_var_weight(Lit lit, double weight);
+        void set_lit_weight(Lit lit, double weight);
+        void get_weights(map<Lit,double>& weights,
+                const vector<uint32_t>& sampling_vars,
+                const vector<uint32_t>& orig_sampl_vars) const;
 
         lbool solve_with_assumptions(
-            const vector<Lit>* _assumptions = NULL,
+            const vector<Lit>* _assumptions = nullptr,
             bool only_indep_solution = false);
-        lbool simplify_with_assumptions(const vector<Lit>* _assumptions = NULL, const string* strategy = NULL);
+        lbool simplify_with_assumptions(const vector<Lit>* _assumptions = nullptr, const string* strategy = nullptr);
         void  set_shared_data(SharedData* shared_data);
         vector<Lit> probe_inter_tmp;
         lbool probe_outside(Lit l, uint32_t& min_props);
         void set_max_confl(uint64_t max_confl);
-
-        //frat for SAT problems
-        void add_empty_cl_to_frat();
+        void changed_sampling_vars();
 
         //Querying model
         lbool model_value (const Lit p) const;  ///<Found model value for lit
@@ -127,12 +129,13 @@ class Solver : public Searcher
         );
 
         //get clauses
-        void start_getting_small_clauses(
-            uint32_t max_len, uint32_t max_glue, bool red = true,
-            bool bva_vars = false, bool simplified = false);
-        bool get_next_small_clause(std::vector<Lit>& out, bool all_in_one = false);
-        void end_getting_small_clauses();
-        void get_all_irred_clauses(vector<Lit>& out);
+        void start_getting_constraints(
+               bool red, // only redundant, otherwise only irred
+               bool simplified = false,
+               uint32_t max_len = std::numeric_limits<uint32_t>::max(),
+               uint32_t max_glue = std::numeric_limits<uint32_t>::max());
+        bool get_next_constraint(std::vector<Lit>& ret, bool& is_xor, bool& rhs);
+        void end_getting_constraints();
         vector<uint32_t> translate_sampl_set(const vector<uint32_t>& sampl_set);
 
         //Version
@@ -158,35 +161,38 @@ class Solver : public Searcher
         size_t get_num_vars_elimed() const;
         uint32_t num_active_vars() const;
         void print_mem_stats() const;
-        uint64_t print_watch_mem_used(uint64_t totalMem) const;
+        uint64_t print_watch_mem_used(uint64_t total_mem) const;
         const SolveStats& get_solve_stats() const;
         const SearchStats& get_stats() const;
         void add_in_partial_solving_stats();
+        bool check_xor_clause_satisfied_model(const Xor& x) const;
         void check_implicit_stats(const bool onlypairs = false) const;
+        void check_implicit_propagated() const;
+        void check_all_clause_propagated() const;
+        void check_clause_propagated(const ClOffset& offs) const;
+        void check_clause_propagated(const Xor& x) const;
         void check_stats(const bool allowFreed = false) const;
         void reset_vsids();
         bool minimize_clause(vector<Lit>& cl);
 
         //Checks
-        void check_implicit_propagated() const;
-        bool find_with_watchlist_a_or_b(Lit a, Lit b, int64_t* limit) const;
 
         //Systems that are used to accompilsh the tasks
-        ClauseCleaner*         clauseCleaner = NULL;
-        VarReplacer*           varReplacer = NULL;
-        SubsumeImplicit*       subsumeImplicit = NULL;
-        DataSync*              datasync = NULL;
-        ReduceDB*              reduceDB = NULL;
-        InTree*                intree = NULL;
-        BreakID*               breakid = NULL;
-        OccSimplifier*         occsimplifier = NULL;
-        DistillerLong*         distill_long_cls = NULL;
-        DistillerBin*          distill_bin_cls = NULL;
-        DistillerLitRem*       distill_lit_rem = NULL;
-        DistillerLongWithImpl* dist_long_with_impl = NULL;
-        StrImplWImpl* dist_impl_with_impl = NULL;
-        CardFinder*            card_finder = NULL;
-        GetClauseQuery*        get_clause_query = NULL;
+        ClauseCleaner*         clauseCleaner = nullptr;
+        VarReplacer*           varReplacer = nullptr;
+        SubsumeImplicit*       subsumeImplicit = nullptr;
+        DataSync*              datasync = nullptr;
+        ReduceDB*              reduceDB = nullptr;
+        InTree*                intree = nullptr;
+        BreakID*               breakid = nullptr;
+        OccSimplifier*         occsimplifier = nullptr;
+        DistillerLong*         distill_long_cls = nullptr;
+        DistillerBin*          distill_bin_cls = nullptr;
+        DistillerLitRem*       distill_lit_rem = nullptr;
+        DistillerLongWithImpl* dist_long_with_impl = nullptr;
+        StrImplWImpl* dist_impl_with_impl = nullptr;
+        CardFinder*            card_finder = nullptr;
+        GetClauseQuery*        get_clause_query = nullptr;
 
         SearchStats sumSearchStats;
         PropStats sumPropStats;
@@ -195,7 +201,6 @@ class Solver : public Searcher
         void set_decision_var(const uint32_t var);
         bool fully_enqueue_these(const vector<Lit>& toEnqueue);
         bool fully_enqueue_this(const Lit lit_ID);
-        void update_assumptions_after_varreplace();
 
         //State load/unload
         string serialize_solution_reconstruction_data() const;
@@ -203,13 +208,11 @@ class Solver : public Searcher
         pair<lbool, vector<lbool>> extend_minimized_model(const vector<lbool>& m);
 
         // Clauses
-        bool add_clause_outer_copylits(const vector<Lit>& ps);
         bool add_xor_clause_inter(
             const vector< Lit >& lits
             , bool rhs
             , bool attach
-            , bool addDrat = true
-            , bool red = false
+            , int32_t XID
         );
         void new_var(
             const bool bva = false,
@@ -217,7 +220,6 @@ class Solver : public Searcher
             const bool insert_varorder = true
         ) override;
         void new_vars(const size_t n) override;
-        void bva_changed();
 
         //Attaching-detaching clauses
         void attachClause(
@@ -229,8 +231,6 @@ class Solver : public Searcher
             #endif
         );
         void attach_bnn(const uint32_t bnn_idx);
-        lbool bnn_eval(BNN& bnn);
-        bool bnn_to_cnf(BNN& bnn);
         void attach_bin_clause(
             const Lit lit1
             , const Lit lit2
@@ -254,21 +254,22 @@ class Solver : public Searcher
 
             PropEngine::detach_bin_clause(lit1, lit2, red, ID, allow_empty_watch, allow_change_order);
         }
-        void detachClause(const Clause& c, const bool removeDrat = true);
-        void detachClause(const ClOffset offset, const bool removeDrat = true);
+        void detachClause(const Clause& c, const bool remove_frat = true);
+        void detachClause(const ClOffset offset, const bool remove_frat = true);
         void detach_modified_clause(
             const Lit lit1
             , const Lit lit2
             , const uint32_t origSize
             , const Clause* address
         );
+        void add_clause_int_frat(const vector<Lit>& cl, const uint32_t ID);
         Clause* add_clause_int(
             const vector<Lit>& lits
             , const bool red = false
-            , const ClauseStats* const stats = NULL
+            , const ClauseStats* const stats = nullptr
             , const bool attach = true
-            , vector<Lit>* finalLits = NULL
-            , bool addDrat = true
+            , vector<Lit>* finalLits = nullptr
+            , bool addFrat = true
             , const Lit frat_first = lit_Undef
             , const bool sorted = false
             , const bool remove_frat = false
@@ -279,6 +280,8 @@ class Solver : public Searcher
             Lit out
         );
 
+        lbool bnn_eval(BNN& bnn);
+        bool bnn_to_cnf(BNN& bnn);
         template<class T> vector<Lit> clause_outer_numbered(const T& cl) const;
         template<class T> vector<uint32_t> xor_outer_numbered(const T& cl) const;
         size_t mem_used() const;
@@ -292,33 +295,27 @@ class Solver : public Searcher
         vector<OrGate> get_recovered_or_gates();
         vector<ITEGate> get_recovered_ite_gates();
         vector<pair<Lit, Lit> > get_all_binary_xors() const;
-        vector<Xor> get_recovered_xors(const bool xor_together_xors);
         vector<uint32_t> remove_definable_by_irreg_gate(const vector<uint32_t>& vars);
-        void clean_sampl_and_get_empties(
-            vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars);
+        void get_empties(vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars);
 
         bool remove_and_clean_all();
+        bool remove_and_clean_detached_xors(vector<Xor>& xors);
         vector<Lit> get_toplevel_units_internal(bool outer_numbering) const;
 
         // Gauss-Jordan
+        vector<Xor> get_recovered_xors();
         bool init_all_matrices();
-        void detach_xor_clauses(
-            const set<uint32_t>& clash_vars_unused
-        );
-        bool fully_undo_xor_detach();
-        bool no_irred_nonxor_contains_clash_vars();
-        bool assump_contains_xor_clash();
-        void extend_model_to_detached_xors();
-        void unset_clash_decision_vars(const vector<Xor>& xors);
-        void set_clash_decision_vars();
         bool find_and_init_all_matrices();
+        void detach_clauses_in_xors();
+        vector<Lit> tmp_repr;
+        bool check_clause_represented_by_xor(const Clause& cl);
 
         //assumptions
         void set_assumptions();
-        vector<Lit> inter_assumptions_tmp; //used by set_assumptions() ONLY
         void add_assumption(const Lit assump);
         void check_assigns_for_assumptions() const;
         bool check_assumptions_contradict_foced_assignment() const;
+        void uneliminate_sampling_set();
 
         //Deleting clauses
         void free_cl(Clause* cl, bool also_remove_clid = true);
@@ -332,11 +329,12 @@ class Solver : public Searcher
 
         //Helper
         void renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors_ret);
-        void testing_set_solver_not_fresh();
         bool full_probe(const bool bin_only);
+
+        int PICOLIT(const Lit x) { return ((((int)(x).var()+1)) * ((x).sign() ? -1:1)); }
         PicoSAT* build_picosat();
         void copy_to_simp(SATSolver* s2);
-        bool backbone_simpl(int64_t max_confl, bool cmsgen, bool& finished);
+        bool backbone_simpl(int64_t max_confl, bool& finished);
         bool removed_var_ext(uint32_t var) const;
 
     private:
@@ -383,7 +381,7 @@ class Solver : public Searcher
         bool oracle_vivif(bool& finished);
         bool oracle_sparsify();
         void print_cs_ordering(const vector<OracleDat>& cs) const;
-        template<bool bin_only> lbool probe_inter(const Lit l, uint32_t& min_props);
+        template<bool bin_only> bool probe_inter(const Lit l, uint32_t& min_props);
         void reset_for_solving();
         vector<Lit> add_clause_int_tmp_cl;
         lbool iterate_until_solved();
@@ -404,47 +402,11 @@ class Solver : public Searcher
         void check_and_upd_config_parameters();
         vector<uint32_t> tmp_xor_clash_vars;
         void check_xor_cut_config_sanity() const;
+        void copy_assumptions(const vector<Lit>* assumps);
         void handle_found_solution(const lbool status, const bool only_indep_solution);
-        void add_every_combination_xor(const vector<Lit>& lits, bool attach, const bool addDrat, const bool red);
-        void add_xor_clause_inter_cleaned_cut(const vector<Lit>& lits, bool attach, bool addDrat, const bool red);
         unsigned num_bits_set(const size_t x, const unsigned max_size) const;
         void check_too_large_variable_number(const vector<Lit>& lits) const;
-
-        lbool simplify_problem_outside(const string* strategy = NULL);
-        void move_to_outside_assumps(const vector<Lit>* assumps);
-        vector<Lit> back_number_from_outside_to_outer_tmp;
-        void back_number_from_outside_to_outer(const vector<Lit>& lits)
-        {
-            back_number_from_outside_to_outer_tmp.clear();
-            for (const Lit lit: lits) {
-                assert(lit.var() < nVarsOutside());
-                if (get_num_bva_vars() > 0 || !fresh_solver) {
-                    back_number_from_outside_to_outer_tmp.push_back(map_to_with_bva(lit));
-                    assert(back_number_from_outside_to_outer_tmp.back().var() < nVarsOuter());
-                } else {
-                    back_number_from_outside_to_outer_tmp.push_back(lit);
-                }
-            }
-        }
-        vector<Lit> outside_assumptions;
-        Lit back_number_from_outside_to_outer(const Lit lit)
-        {
-            assert(lit.var() < nVarsOutside());
-            if (get_num_bva_vars() > 0 || !fresh_solver) {
-                Lit ret = map_to_with_bva(lit);
-                assert(ret.var() < nVarsOuter());
-                return ret;
-            } else {
-                return lit;
-            }
-        }
-
-        uint32_t back_number_from_outside_to_outer(const uint32_t var)
-        {
-            Lit lit = Lit(var, false);
-            return back_number_from_outside_to_outer(lit).var();
-        }
-
+        lbool simplify_problem_outside(const string* strategy = nullptr);
 
         //Stats printing
         void print_norm_stats(
@@ -477,11 +439,11 @@ class Solver : public Searcher
         uint64_t last_full_watch_consolidate = 0;
         void save_on_var_memory(uint32_t newNumVars);
         void unSaveVarMem();
-        size_t calculate_interToOuter_and_outerToInter(
-            vector<uint32_t>& outerToInter
-            , vector<uint32_t>& interToOuter
+        size_t calculate_inter_to_outer_and_outer_to_inter(
+            vector<uint32_t>& outer_to_inter
+            , vector<uint32_t>& inter_to_outer
         );
-        void renumber_clauses(const vector<uint32_t>& outerToInter);
+        void renumber_clauses(const vector<uint32_t>& outer_to_inter);
         void test_renumbering() const;
         bool clean_xor_clauses_from_duplicate_and_set_vars();
         bool update_vars_of_xors(vector<Xor>& xors);
@@ -495,16 +457,11 @@ class Solver : public Searcher
 
         /////////////////////
         // Data
-        size_t               zeroLevAssignsByCNF = 0;
-        struct GivenW {
-            bool pos = false;
-            bool neg = false;
-        };
-        vector<GivenW> weights_given;
+        size_t zeroLevAssignsByCNF = 0;
 
         /////////////////////
         // Clauses
-        bool addClauseHelper(vector<Lit>& ps);
+        bool add_clause_helper(vector<Lit>& ps);
         bool add_clause_outer(vector<Lit>& ps, bool red = false);
 
         /////////////////
@@ -545,13 +502,16 @@ inline const BinTriStats& Solver::getBinTriStats() const
     return binTri;
 }
 
-template<class T>
-inline vector<Lit> Solver::clause_outer_numbered(const T& cl) const
-{
+template<> inline vector<Lit> Solver::clause_outer_numbered(const vector<uint32_t>& cl) const {
     tmpCl.clear();
-    for(size_t i = 0; i < cl.size(); i++) {
-        tmpCl.push_back(map_inter_to_outer(cl[i]));
-    }
+    for(const auto& l: cl) tmpCl.push_back(Lit(map_inter_to_outer(l), false));
+
+    return tmpCl;
+}
+
+template<class T> inline vector<Lit> Solver::clause_outer_numbered(const T& cl) const {
+    tmpCl.clear();
+    for(const auto& l: cl) tmpCl.push_back(map_inter_to_outer(l));
 
     return tmpCl;
 }
@@ -567,28 +527,19 @@ inline vector<uint32_t> Solver::xor_outer_numbered(const T& cl) const
     return tmpXor;
 }
 
-inline void Solver::move_to_outside_assumps(const vector<Lit>* assumps)
-{
-
+inline void Solver::copy_assumptions(const vector<Lit>* assumps) {
+    assumptions.clear();
     if (assumps) {
-        #ifdef SLOW_DEBUG
-        outside_assumptions.clear();
         for(const Lit lit: *assumps) {
-            if (lit.var() >= nVarsOutside()) {
-                std::cerr << "ERROR: Assumption variable " << (lit.var()+1)
-                << " is too large, you never"
-                << " inserted that variable into the solver. Exiting."
+            if (lit.var() >= nVarsOuter()) {
+                cout << "ERROR: Assumption variable " << (lit.var()+1)
+                << " is too large, you never inserted that variable into the solver. Exiting."
                 << endl;
+                assert(false);
                 exit(-1);
             }
-            outside_assumptions.push_back(lit);
+            assumptions.push_back(lit);
         }
-        #else
-        outside_assumptions.resize(assumps->size());
-        std::copy(assumps->begin(), assumps->end(), outside_assumptions.begin());
-        #endif
-    } else {
-        outside_assumptions.clear();
     }
 }
 
@@ -596,70 +547,20 @@ inline lbool Solver::simplify_with_assumptions(
     const vector<Lit>* _assumptions,
     const string* strategy
 ) {
-    fresh_solver = false;
-    move_to_outside_assumps(_assumptions);
+    copy_assumptions(_assumptions);
     return simplify_problem_outside(strategy);
 }
 
-inline bool Solver::find_with_watchlist_a_or_b(Lit a, Lit b, int64_t* limit) const
-{
-    if (watches[a].size() > watches[b].size()) {
-        std::swap(a,b);
-    }
-
-    watch_subarray_const ws = watches[a];
-    *limit -= ws.size();
-    for (const Watched w: ws) {
-        if (!w.isBin())
-            continue;
-
-        if (!w.red()
-            && w.lit2() == b
-        ) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-inline const vector<lbool>& Solver::get_model() const
-{
-    return model;
-}
-
-inline const vector<Lit>& Solver::get_final_conflict() const
-{
-    return conflict;
-}
-
-inline void Solver::setConf(const SolverConf& _conf)
-{
-    conf = _conf;
-}
-
-inline bool Solver::prop_at_head() const
-{
-    return qhead == trail.size();
-}
-
-inline lbool Solver::model_value (const Lit p) const
-{
-    if (model[p.var()] == l_Undef)
-        return l_Undef;
-
+inline const vector<lbool>& Solver::get_model() const { return model; }
+inline const vector<Lit>& Solver::get_final_conflict() const { return conflict; }
+inline void Solver::setConf(const SolverConf& _conf) { conf = _conf; }
+inline bool Solver::prop_at_head() const { return qhead == trail.size(); }
+inline lbool Solver::model_value (const Lit p) const {
+    if (model[p.var()] == l_Undef) return l_Undef;
     return model[p.var()] ^ p.sign();
 }
 
-inline lbool Solver::model_value (const uint32_t p) const
-{
-    return model[p];
-}
-
-inline void Solver::testing_set_solver_not_fresh()
-{
-    fresh_solver = false;
-}
+inline lbool Solver::model_value (const uint32_t p) const { return model[p]; }
 
 inline void Solver::free_cl(
     Clause* cl,
@@ -693,7 +594,6 @@ inline void Solver::free_cl(
 
 inline bool Solver::removed_var_ext(uint32_t var) const
 {
-    assert(get_num_bva_vars() == 0);
     var = map_outer_to_inter(var);
     return value(var) != l_Undef || varData[var].removed != Removed::none;
 }

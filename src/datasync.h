@@ -47,25 +47,13 @@ class DataSync
         void new_vars(const size_t n);
         bool syncData();
         void save_on_var_memory();
-        void rebuild_bva_map();
         void updateVars(
-           const vector<uint32_t>& outerToInter
-            , const vector<uint32_t>& interToOuter
+           const vector<uint32_t>& outer_to_inter
+            , const vector<uint32_t>& inter_to_outer
         );
         void signal_new_long_clause(const vector<Lit>& clause);
 
-        #ifdef USE_GPU
-        vector<Lit> clause_tmp;
-        vector<Lit> trail_tmp;
-        void unsetFromGpu(uint32_t level);
-        void trySendAssignmentToGpu();
-        PropBy pop_clauses();
-        uint32_t signalled_gpu_long_cls = 0;
-        uint32_t popped_clause = 0;
-        #endif
-
-        struct Stats
-        {
+        struct Stats {
             uint32_t sentUnitData = 0;
             uint32_t recvUnitData = 0;
             uint32_t sentBinData = 0;
@@ -75,7 +63,6 @@ class DataSync
 
     private:
         void extend_bins_if_needed();
-        Lit map_outer_to_outside(Lit lit) const;
         bool shareUnitData();
         bool shareBinData();
         bool syncBinFromOthers();
@@ -84,12 +71,7 @@ class DataSync
         void clear_set_binary_values();
         bool add_bin_to_threads(const Lit lit1, const Lit lit2);
         void signal_new_bin_clause(Lit lit1, Lit lit2);
-        void rebuild_bva_map_if_needed();
 
-
-        #ifdef USE_GPU
-        uint32_t trailCopiedUntil = 0;
-        #endif
         int thread_id = -1;
 
         //stuff to sync
@@ -101,10 +83,9 @@ class DataSync
         Stats stats;
 
         //Other systems
-        Solver* solver = NULL;
-        SharedData* sharedData = NULL;
+        Solver* solver = nullptr;
+        SharedData* sharedData = nullptr;
 
-        //MPI
         #ifdef USE_MPI
         void set_up_for_mpi();
         bool mpi_recv_from_others();
@@ -117,7 +98,7 @@ class DataSync
         );
         vector<uint32_t> syncMPIFinish;
         MPI_Request   sendReq;
-        uint32_t*     mpiSendData = NULL;
+        uint32_t*     mpiSendData = nullptr;
 
         int           mpiRank = 0;
         int           mpiSize = 0;
@@ -126,13 +107,10 @@ class DataSync
         uint32_t      mpiSentBinData = 0;
         #endif
 
-
         //misc
         uint32_t numCalls = 0;
         vector<uint32_t>& seen;
         vector<Lit>& toClear;
-        vector<uint32_t> outer_to_without_bva_map;
-        bool must_rebuild_bva_map = false;
 };
 
 inline const DataSync::Stats& DataSync::get_stats() const
@@ -140,15 +118,9 @@ inline const DataSync::Stats& DataSync::get_stats() const
     return stats;
 }
 
-inline Lit DataSync::map_outer_to_outside(const Lit lit) const
-{
-    return Lit(outer_to_without_bva_map[lit.var()], lit.sign());
-
-}
-
 inline bool DataSync::enabled()
 {
-    return sharedData != NULL;
+    return sharedData != nullptr;
 }
 
 }

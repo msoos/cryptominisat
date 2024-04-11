@@ -20,11 +20,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef __WATCHALGOS_H__
-#define __WATCHALGOS_H__
+#pragma once
 
 #include "watched.h"
 #include "watcharray.h"
+#include "gausswatched.h"
 #include "clauseallocator.h"
 
 namespace CMSat {
@@ -161,18 +161,38 @@ inline Watched& findWatchedOfBin(
     return *ws.begin();
 }
 
-static inline void removeWXCl(watch_array& wsFull
-    , const Lit lit
-    , const ClOffset offs
+inline Watched* findWatchedOfBinMaybe(
+    watch_array& wsFull
+    , const Lit lit1
+    , const Lit lit2
+    , const bool red
+    , const int32_t ID
 ) {
-    watch_subarray ws = wsFull[lit];
-    Watched *i = ws.begin(), *end = ws.end();
-    for (; i != end && (!i->isClause() || i->get_offset() != offs); i++);
+    watch_subarray ws = wsFull[lit1];
+    for (Watched *i = ws.begin(), *end = ws.end(); i != end; i++) {
+        if (i->isBin() && i->lit2() == lit2 && i->red() == red && i->get_ID() == ID)
+            return i;
+    }
+    return nullptr;
+}
+
+static inline bool findWXCl(const vec<GaussWatched>& gws, const uint32_t at) {
+    for(const auto& gw: gws) if (gw.matrix_num == 1000 && gw.row_n == at) return true;
+    return false;
+}
+
+static inline void removeWXCl(vec<vec<GaussWatched>>& wsFull
+    , const uint32_t var
+    , const uint32_t at
+) {
+    auto& gws = wsFull[var];
+    auto i = gws.begin(), end = gws.end();
+    for (; i != end && !(i->matrix_num == 1000 && i->row_n == at); i++);
     assert(i != end);
-    Watched *j = i;
+    auto j = i;
     i++;
     for (; i != end; j++, i++) *j = *i;
-    ws.shrink_(1);
+    gws.shrink_(1);
 }
 
 
@@ -193,6 +213,3 @@ static inline void removeWBNN(watch_array& wsFull
 
 
 } //end namespace
-
-
-#endif //__WATCHALGOS_H__

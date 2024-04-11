@@ -23,22 +23,24 @@ THE SOFTWARE.
 
 #pragma once
 
-#include <string.h>
+#include <cstring>
 #include "streambuffer.h"
 #include "solvertypesmini.h"
 #include <cstdlib>
 #include <cmath>
+#include <map>
 #include <sstream>
 #include <iostream>
 #include <iomanip>
 #include <vector>
-#include <fstream>
-#include <complex>
 #include <cassert>
+#include <gmpxx.h>
 
 using std::vector;
+using std::cerr;
 using std::cout;
 using std::endl;
+using std::map;
 
 namespace CMSat {
 
@@ -53,10 +55,7 @@ class DimacsParser
             const bool strict_header,
             uint32_t offset_vars = 0);
         uint64_t max_var = numeric_limits<uint64_t>::max();
-        vector<uint32_t> sampling_vars;
-        bool sampling_vars_found = false;
-        vector<double> weights;
-        uint32_t must_mult_exp2 = 0;
+        map<int32_t, double> weights;
         const std::string dimacs_spec = "http://www.satcompetition.org/2009/format-benchmarks2009.html";
         const std::string please_read_dimacs = "\nPlease read DIMACS specification at http://www.satcompetition.org/2009/format-benchmarks2009.html";
 
@@ -80,9 +79,8 @@ class DimacsParser
         void write_solution_to_debuglib_file(const lbool ret) const;
         #endif
 
-        bool parseIndependentSet(C& in);
+        bool parseIndependentSet(C& in, vector<uint32_t>& lst);
         std::string get_debuglib_fname() const;
-
 
         S* solver;
         std::string debugLib;
@@ -103,7 +101,6 @@ class DimacsParser
 
         //Reduce temp overhead
         vector<Lit> lits;
-        vector<uint32_t> vars;
 
         size_t norm_clauses_added = 0;
         size_t xor_clauses_added = 0;
@@ -231,41 +228,26 @@ bool DimacsParser<C, S>::match(C& in, const char* str)
     return true;
 }
 
-#ifdef DEBUG_DIMACSPARSER_CMS
 template<class C, class S>
-bool DimacsParser<C, S>::parseWeight(C& in)
-{
-    if (match(in, "w ")) {
-        int32_t slit;
-        double weight;
-        if (in.parseInt(slit, lineNum)
-            && in.parseDouble(weight, lineNum)
-        ) {
-            if (slit == 0) {
-                cout << "ERROR: Cannot define weight of literal 0!" << endl;
-                exit(-1);
-            }
-            uint32_t var = std::abs(slit)-1;
-            bool sign = slit < 0;
-            Lit lit = Lit(var, sign);
-            solver->set_var_weight(lit, weight);
-            //cout << "lit: " << lit << " weight: " << std::setprecision(12) << weight << endl;
-            if (weight < 0) {
-                cout << "ERROR: while definint weight, variable " << var+1 << " has is negative weight: " << weight << " -- line " << lineNum << endl;
-                exit(-1);
-            }
-            return true;
-        } else {
-            cout << "ERROR: weight is incorrect on line " << lineNum << endl;
+bool DimacsParser<C, S>::parseWeight(C& in) {
+    int32_t slit;
+    double weight;
+    if (in.parseInt(slit, lineNum) && in.parseDouble(weight, lineNum)) {
+        if (slit == 0) {
+            cerr << "ERROR: Cannot define weight of literal 0!" << endl;
             exit(-1);
         }
+        uint32_t var = std::abs(slit)-1;
+        bool sign = slit < 0;
+        Lit lit = Lit(var, sign);
+        solver->set_lit_weight(lit, weight);
+        return true;
     } else {
-        cout << "ERROR: weight is not given on line " << lineNum << endl;
+        cerr << "ERROR: weight is incorrect on line " << lineNum << endl;
         exit(-1);
     }
     return true;
 }
-#endif
 
 template<class C, class S>
 bool DimacsParser<C, S>::parse_header(C& in)
@@ -442,29 +424,23 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
         in.skipWhitespace();
         in.parseString(str2);
         if (str2 != "MULTIPLY") {
-            cout << "ERROR: expected 'MULTIPLY' after 'MUST'" << endl;
+            cerr << "ERROR: expected 'MULTIPLY' after 'MUST'" << endl;
             return false;
         }
         in.skipWhitespace();
         in.parseString(str2);
         if (str2 != "BY") {
-            cout << "ERROR: expected 'BY' after 'MUST MULTIPLY'" << endl;
+            cerr << "ERROR: expected 'BY' after 'MUST MULTIPLY'" << endl;
             return false;
         }
         in.skipWhitespace();
-        assert(*in == '2');++in;
-        assert(*in == '*');++in;
-        assert(*in == '*');++in;
-        if (!in.parseInt(must_mult_exp2, lineNum)) {
-            return false;
-        }
+        in.parseString(str2);
+        solver->set_multiplier_weight(mpz_class(str2.c_str(), 10));
     }
     if (!debugLib.empty() && str == "Solver::new_var()") {
         solver->new_var();
 
-        if (verbosity >= 6) {
-            cout << "c Parsed Solver::new_var()" << endl;
-        }
+        if (verbosity >= 6) cout << "c Parsed Solver::new_var()" << endl;
     } else if (!debugLib.empty() && str == "Solver::new_vars(") {
         in.skipWhitespace();
         int n;
@@ -477,24 +453,32 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
             cout << "c Parsed Solver::new_vars( " << n << " )" << endl;
         }
     } else if (str == "ind") {
-        sampling_vars_found = true;
-        if (!parseIndependentSet(in)) {
-            return false;
-        }
+        vector<uint32_t> sampl_vars;
+        if (!parseIndependentSet(in, sampl_vars)) return false;
+        solver->set_sampl_vars(sampl_vars);
     } else if (str == "p") {
         in.skipWhitespace();
         std::string str2;
         in.parseString(str2);
-        if (str2 == "show") {
+        if (str2 == "weight") {
+            solver->set_weighted(true);
+            if (!parseWeight(in)) return false;
+        } else if (str2 == "show") {
             in.skipWhitespace();
-            sampling_vars_found = true;
-            if (!parseIndependentSet(in)) { return false; }
+            vector<uint32_t> sampl_vars;
+            if (!parseIndependentSet(in, sampl_vars)) { return false; }
+            solver->set_sampl_vars(sampl_vars);
+        } else if (str2 == "optshow") {
+            in.skipWhitespace();
+            vector<uint32_t> opt_sampl_vars;
+            if (!parseIndependentSet(in, opt_sampl_vars)) { return false; }
+            solver->set_opt_sampl_vars(opt_sampl_vars);
         } else {
-            cout << "ERROR, 'c p' followed by unknown text: '" << str2 << "'" << endl;
+            cerr << "ERROR, 'c p' followed by unknown text: '" << str2 << "'" << endl;
             exit(-1);
         }
     } else {
-        if (verbosity >= 6) {
+        if (verbosity >= 30) {
             cout
             << "didn't understand in CNF file comment line:"
             << "'c " << str << "'"
@@ -593,18 +577,7 @@ bool DimacsParser<C, S>::parse_and_add_xor_clause(C& in)
         return false;
     }
     lineNum++;
-    if (lits.empty())
-        return true;
-
-    bool rhs = true;
-    vars.clear();
-    for(Lit& lit: lits) {
-        vars.push_back(lit.var());
-        if (lit.sign()) {
-            rhs ^= true;
-        }
-    }
-    solver->add_xor_clause(vars, rhs);
+    solver->add_xor_clause(lits, true);
     xor_clauses_added++;
     return true;
 }
@@ -626,28 +599,14 @@ bool DimacsParser<C, S>::parse_DIMACS_main(C& in)
             in.skipLine();
             lineNum++;
             break;
-
-        #ifdef DEBUG_DIMACSPARSER_CMS
-        case 'w':
-            if (!parseWeight(in)) {
-                return false;
-            }
-            in.skipLine();
-            lineNum++;
-            break;
-        #endif
         case 'c':
             ++in;
             in.parseString(str);
-            if (!parseComments(in, str)) {
-                return false;
-            }
+            if (!parseComments(in, str)) return false;
             break;
         case 'x':
             ++in;
-            if (!parse_and_add_xor_clause(in)) {
-                return false;
-            }
+            if (!parse_and_add_xor_clause(in)) return false;
             break;
         case 'b':
             #ifdef ENABLE_BNN
@@ -656,13 +615,13 @@ bool DimacsParser<C, S>::parse_DIMACS_main(C& in)
                 return false;
             }
             #else
-            std::cout << "ERROR: BNN encounered but not enabled in parsing. Exiting." << endl;
+            cerr << "ERROR: BNN encounered but not enabled in parsing. Exiting." << endl;
             exit(-1);
             #endif
             break;
         case '\n':
             if (verbosity) {
-                std::cout
+                cout
                 << "c WARNING: Empty line at line number " << lineNum+1
                 << " -- this is not part of the DIMACS specifications ("
                 << dimacs_spec << "). Ignoring."
@@ -714,18 +673,13 @@ bool DimacsParser<C, S>::parse_DIMACS(
 }
 
 template <class C, class S>
-bool DimacsParser<C, S>::parseIndependentSet(C& in)
-{
+bool DimacsParser<C, S>::parseIndependentSet(C& in, vector<uint32_t>& lst) {
     int32_t parsed_lit;
     for (;;) {
-        if (!in.parseInt(parsed_lit, lineNum)) {
-            return false;
-        }
-        if (parsed_lit == 0) {
-            break;
-        }
+        if (!in.parseInt(parsed_lit, lineNum)) return false;
+        if (parsed_lit == 0) break;
         uint32_t var = std::abs(parsed_lit) - 1;
-        sampling_vars.push_back(var);
+        lst.push_back(var);
     }
     return true;
 }

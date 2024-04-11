@@ -92,7 +92,7 @@ bool DistillerLitRem::go_through_clauses(
     vector<ClOffset>& cls,
     uint32_t at
 ) {
-    double myTime = cpuTime();
+    double my_time = cpuTime();
     bool time_out = false;
     vector<ClOffset>::iterator i, j;
     i = j = cls.begin();
@@ -128,31 +128,8 @@ bool DistillerLitRem::go_through_clauses(
             continue;
         }
 
-        if (cl.used_in_xor() &&
-            solver->conf.force_preserve_xors
-        ) {
-            *j++ = *i;
-            continue;
-        }
-
         //Time to dereference
         maxNumProps -= 5;
-
-        if (cl._xor_is_detached
-
-            //If it's a redundant that's not very good, let's not distill it
-            || (
-#ifdef FINAL_PREDICTOR
-                solver->conf.pred_distill_only_smallgue &&
-#else
-                false &&
-#endif
-                cl.red() &&
-                cl.stats.glue > 3)
-        ) {
-            *j++ = *i;
-            continue;
-        }
         runStats.checkedClauses++;
         assert(cl.size() > 2);
 
@@ -180,7 +157,7 @@ bool DistillerLitRem::go_through_clauses(
     }
     cls.resize(cls.size()- (i-j));
 
-    runStats.time_used += cpuTime() - myTime;
+    runStats.time_used += cpuTime() - my_time;
     return time_out;
 }
 
@@ -292,7 +269,7 @@ ClOffset DistillerLitRem::try_distill_clause_and_return_new(
     solver->cancelUntil<false, true>(0);
 
      //Couldn't remove literal
-    if (confl.isNULL()) {
+    if (confl.isnullptr()) {
         return offset;
     }
 
@@ -305,7 +282,7 @@ ClOffset DistillerLitRem::try_distill_clause_and_return_new(
     }
 //     cout
 //     << "Failed"
-//     << " confl.isNULL(): " << confl.isNULL()
+//     << " confl.isnullptr(): " << confl.isnullptr()
 //     << " i: " << i
 //     << " at: " << at
 //     << " cl before: " << cl
@@ -328,7 +305,7 @@ ClOffset DistillerLitRem::try_distill_clause_and_return_new(
     (*solver->frat) << findelay;
     assert(solver->trail_size() == origTrailSize);
 
-    if (cl2 != NULL) {
+    if (cl2 != nullptr) {
         return solver->cl_alloc.get_offset(cl2);
     } else {
         #ifdef STATS_NEEDED

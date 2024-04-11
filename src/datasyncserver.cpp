@@ -161,7 +161,7 @@ void DataSyncServer::get_bin(const Lit lit1, const Lit lit2)
 
 void DataSyncServer::finish_data_send()
 {
-    if (sendData == NULL) {
+    if (sendData == nullptr) {
         assert(send_requests_finished == true);
         return;
     }
@@ -216,7 +216,7 @@ void DataSyncServer::finish_data_send()
     }
     send_requests_finished = true;
     delete[] sendData;
-    sendData = NULL;
+    sendData = nullptr;
 }
 
 void DataSyncServer::sendDataToAll()
@@ -338,7 +338,7 @@ bool DataSyncServer::check_interrupt_and_forward_to_all()
 //         #endif
 
         err = MPI_Isend(
-            NULL, // buf is actually empty that we send
+            nullptr, // buf is actually empty that we send
             0, // sending 0 bytes
             MPI_UNSIGNED,
             i, // send to "i" target

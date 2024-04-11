@@ -59,7 +59,7 @@ private:
     void init_for_round();
     bool init_problem();
     lbool deal_with_solution(int res, const uint32_t num_sls_called);
-    CCNR::ls_solver* ls_s = NULL;
+    CCNR::ls_solver* ls_s = nullptr;
     uint32_t cl_num = 0;
 
     enum class add_cl_ret {added_cl, skipped_cl, unsat};

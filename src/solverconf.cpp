@@ -151,7 +151,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Verbosity
         , verbosity        (0)
-        , xor_detach_verb  (0)
         , doPrintGateDot   (false)
         , print_full_restart_stat   (false)
         , print_all_restarts (false)
@@ -187,6 +186,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , varelim_cutoff_too_many_clauses(2000)
         , do_empty_varelim (true)
         , do_full_varelim(true)
+        , do_xor_varelim(true)
         , empty_varelim_time_limitM(300LL)
         , varelim_time_limitM(750)
         , varelim_sub_str_limitM(600)
@@ -219,7 +219,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , bosphorus_every_n(1)
 
         //BreakID
-        , doBreakid(true)
+        , doBreakid(false)
         , breakid_use_assump(true)
         , breakid_every_n(5)
         , breakid_vars_limit_K(300)
@@ -230,7 +230,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , breakid_matrix_detect(true)
 
         //Bounded variable addition
-        , do_bva(true)
+        , do_bva(false)
         , min_bva_gain(16)
         , bva_limit_per_call(250000)
         , bva_also_twolit_diff(true)
@@ -254,8 +254,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , maxXORMatrix     (400ULL)
         , xor_finder_time_limitM(400)
         , allow_elim_xor_vars(1)
-        , xor_var_per_cut(2)
-        , force_preserve_xors(true)
 
         //Cardinality
         , doFindCard(0)
@@ -353,13 +351,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Gates
         , doGateFind       (false)
         , gatefinder_time_limitM(200)
-
-        //Gauss
-        , xor_detach_reattach(false)
-        , force_use_all_matrixes(false)
-
-        //Sampling
-        , sampling_vars(NULL)
 
         //Timeouts
         , global_next_multiplier(1.0)

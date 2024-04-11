@@ -64,7 +64,7 @@ void CMSBosphorus::add_clauses()
 
 bool CMSBosphorus::doit()
 {
-    double myTime = cpuTime();
+    double my_time = cpuTime();
     uint32_t maxiters = 1;
 
     bosph = new Bosph::Bosphorus;
@@ -75,12 +75,12 @@ bool CMSBosphorus::doit()
     auto orig_anf = bosph->copy_anf_no_replacer(anf);
 
     //simplify, etc.
-    bosph->simplify(anf, NULL, maxiters);
+    bosph->simplify(anf, nullptr, maxiters);
     bosph->add_trivial_learnt_from_anf_to_learnt(anf, orig_anf);
     bosph->delete_anf(orig_anf);
     bosph->deduplicate();
 
-    auto cnf = bosph->cnf_from_anf_and_cnf(NULL, anf);
+    auto cnf = bosph->cnf_from_anf_and_cnf(nullptr, anf);
     auto cls = bosph->get_clauses(cnf);
     vector<Lit> lits;
     for(auto x: cls) {
@@ -116,7 +116,7 @@ bool CMSBosphorus::doit()
     bosph->delete_dimacs(dimacs);
 
     // Finish up
-    double time_used = cpuTime() - myTime;
+    double time_used = cpuTime() - my_time;
     if (solver->conf.verbosity) {
         cout << "c [bosph] finished "
         << solver->conf.print_times(time_used)

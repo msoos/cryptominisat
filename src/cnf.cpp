@@ -24,6 +24,7 @@ THE SOFTWARE.
 
 #include <stdexcept>
 
+#include "cloffset.h"
 #include "vardata.h"
 #include "solvertypes.h"
 #include "clauseallocator.h"
@@ -51,41 +52,35 @@ void CNF::new_var(
 
         uint32_t minVar = nVars()-1;
         uint32_t maxVar = nVarsOuter()-1;
-        interToOuterMain.push_back(maxVar);
-        const uint32_t x = interToOuterMain[minVar];
-        interToOuterMain[minVar] = maxVar;
-        interToOuterMain[maxVar] = x;
+        inter_to_outerMain.push_back(maxVar);
+        const uint32_t x = inter_to_outerMain[minVar];
+        inter_to_outerMain[minVar] = maxVar;
+        inter_to_outerMain[maxVar] = x;
 
-        outerToInterMain.push_back(maxVar);
-        outerToInterMain[maxVar] = minVar;
-        outerToInterMain[x] = maxVar;
+        outer_to_interMain.push_back(maxVar);
+        outer_to_interMain[maxVar] = minVar;
+        outer_to_interMain[x] = maxVar;
 
         swapVars(nVarsOuter()-1);
         varData[nVars()-1].is_bva = bva;
-        if (bva) {
-            num_bva_vars ++;
-        } else {
-            outer_to_with_bva_map.push_back(nVarsOuter() - 1);
-        }
+        if (bva) num_bva_vars++;
     } else {
         //Old var, re-inserted
         assert(orig_outer < nVarsOuter());
 
         const uint32_t minVar = nVars()-1;
-        uint32_t k = interToOuterMain[minVar];
-        uint32_t z = outerToInterMain[orig_outer];
-        interToOuterMain[minVar] = orig_outer;
-        interToOuterMain[z] = k;
+        uint32_t k = inter_to_outerMain[minVar];
+        uint32_t z = outer_to_interMain[orig_outer];
+        inter_to_outerMain[minVar] = orig_outer;
+        inter_to_outerMain[z] = k;
 
-        outerToInterMain[k] = z;
-        outerToInterMain[orig_outer] = minVar;
+        outer_to_interMain[k] = z;
+        outer_to_interMain[orig_outer] = minVar;
 
         swapVars(z);
     }
 
-    #ifdef SLOW_DEBUG
-    test_reflectivity_of_renumbering();
-    #endif
+    SLOW_DEBUG_DO(test_reflectivity_of_renumbering());
 }
 
 void CNF::new_vars(const size_t n)
@@ -99,31 +94,27 @@ void CNF::new_vars(const size_t n)
     enlarge_minimal_datastructs(n);
     enlarge_nonminimial_datastructs(n);
 
-    size_t inter_at = interToOuterMain.size();
-    interToOuterMain.insert(interToOuterMain.end(), n, 0);
+    size_t inter_at = inter_to_outerMain.size();
+    inter_to_outerMain.insert(inter_to_outerMain.end(), n, 0);
 
-    size_t outer_at = outerToInterMain.size();
-    outerToInterMain.insert(outerToInterMain.end(), n, 0);
-
-    size_t outer_to_with_bva_at = outer_to_with_bva_map.size();
-    outer_to_with_bva_map.insert(outer_to_with_bva_map.end(), n, 0);
+    size_t outer_at = outer_to_interMain.size();
+    outer_to_interMain.insert(outer_to_interMain.end(), n, 0);
 
     for(int i = n-1; i >= 0; i--) {
         const uint32_t minVar = nVars()-i-1;
         const uint32_t maxVar = nVarsOuter()-i-1;
 
-        interToOuterMain[inter_at++] = maxVar;
-        const uint32_t x = interToOuterMain[minVar];
-        interToOuterMain[minVar] = maxVar;
-        interToOuterMain[maxVar] = x;
+        inter_to_outerMain[inter_at++] = maxVar;
+        const uint32_t x = inter_to_outerMain[minVar];
+        inter_to_outerMain[minVar] = maxVar;
+        inter_to_outerMain[maxVar] = x;
 
-        outerToInterMain[outer_at++] = maxVar;
-        outerToInterMain[maxVar] = minVar;
-        outerToInterMain[x] = maxVar;
+        outer_to_interMain[outer_at++] = maxVar;
+        outer_to_interMain[maxVar] = minVar;
+        outer_to_interMain[x] = maxVar;
 
         swapVars(nVarsOuter()-i-1, i);
         varData[nVars()-i-1].is_bva = false;
-        outer_to_with_bva_map[outer_to_with_bva_at++] = nVarsOuter()-i-1;
     }
 
     #ifdef SLOW_DEBUG
@@ -141,14 +132,17 @@ void CNF::enlarge_nonminimial_datastructs(size_t n)
 {
     assigns.insert(assigns.end(), n, l_Undef);
     unit_cl_IDs.insert(unit_cl_IDs.end(), n, 0);
-    varData.insert(varData.end(), n, VarData());
+    unit_cl_XIDs.insert(unit_cl_XIDs.end(), n, 0);
+    for(uint32_t i = 0; i < n; i++) {
+        varData.push_back(VarData(varData.size()));
+    }
     depth.insert(depth.end(), n, 0);
 }
 
 void CNF::enlarge_minimal_datastructs(size_t n)
 {
     watches.insert(2*n);
-    gwatches.insert(2*n);
+    gwatches.insert(n);
     seen.insert(seen.end(), 2*n, 0);
     seen2.insert(seen2.end(), 2*n, 0);
     permDiff.insert(permDiff.end(), 2*n, 0);
@@ -158,11 +152,11 @@ void CNF::save_on_var_memory()
 {
     //never resize varData --> contains info about what is replaced/etc.
     //never resize assigns --> contains 0-level assigns
-    //never resize interToOuterMain, outerToInterMain
+    //never resize inter_to_outerMain, outer_to_interMain
 
     watches.resize(nVars()*2);
     watches.consolidate();
-    gwatches.resize(nVars()*2);
+    gwatches.resize(nVars());
 
     for(auto& l: longRedCls) {
         l.shrink_to_fit();
@@ -177,34 +171,34 @@ void CNF::save_on_var_memory()
     permDiff.shrink_to_fit();
 }
 
-//Test for reflectivity of interToOuterMain & outerToInterMain
+//Test for reflectivity of inter_to_outerMain & outer_to_interMain
 void CNF::test_reflectivity_of_renumbering() const
 {
     vector<uint32_t> test(nVarsOuter());
     for(size_t i = 0; i  < nVarsOuter(); i++) {
         test[i] = i;
     }
-    updateArrayRev(test, interToOuterMain);
+    updateArrayRev(test, inter_to_outerMain);
     #ifdef DEBUG_RENUMBER
     for(size_t i = 0; i < nVarsOuter(); i++) {
         cout << i << ": "
         << std::setw(2) << test[i] << ", "
-        << std::setw(2) << outerToInterMain[i]
+        << std::setw(2) << outer_to_interMain[i]
         << endl;
     }
     #endif
 
     for(size_t i = 0; i < nVarsOuter(); i++) {
-        assert(test[i] == outerToInterMain[i]);
+        assert(test[i] == outer_to_interMain[i]);
     }
     #ifdef DEBUG_RENUMBR
     cout << "Passed test" << endl;
     #endif
 }
 
-inline void CNF::updateWatch(
+void CNF::update_watch(
     watch_subarray ws
-    , const vector<uint32_t>& outerToInter
+    , const vector<uint32_t>& outer_to_inter
 ) {
     for(Watched *it = ws.begin(), *end = ws.end()
         ; it != end
@@ -212,7 +206,7 @@ inline void CNF::updateWatch(
     ) {
         if (it->isBin()) {
             it->setLit2(
-                getUpdatedLit(it->lit2(), outerToInter)
+                getUpdatedLit(it->lit2(), outer_to_inter)
             );
             continue;
         }
@@ -224,7 +218,7 @@ inline void CNF::updateWatch(
         assert(it->isClause());
         const Clause &cl = *cl_alloc.ptr(it->get_offset());
         Lit blocked_lit = it->getBlockedLit();
-        blocked_lit = getUpdatedLit(it->getBlockedLit(), outerToInter);
+        blocked_lit = getUpdatedLit(it->getBlockedLit(), outer_to_inter);
         bool found = false;
         for(Lit lit: cl) {
             if (lit == blocked_lit) {
@@ -240,23 +234,22 @@ inline void CNF::updateWatch(
     }
 }
 
-void CNF::updateVars(
-    const vector<uint32_t>& outerToInter
-    , const vector<uint32_t>& interToOuter
-    , const vector<uint32_t>& interToOuter2
+void CNF::update_vars(
+    const vector<uint32_t>& outer_to_inter
+    , const vector<uint32_t>& inter_to_outer
+    , const vector<uint32_t>& inter_to_outer2
 ) {
-    updateArray(varData, interToOuter);
-    updateArray(assigns, interToOuter);
-    updateArray(unit_cl_IDs, interToOuter);
-    updateBySwap(watches, seen, interToOuter2);
+    updateArray(varData, inter_to_outer);
+    updateArray(assigns, inter_to_outer);
+    updateArray(unit_cl_IDs, inter_to_outer);
+    updateArray(unit_cl_XIDs, inter_to_outer);
 
-    for(watch_subarray w: watches) {
-        if (!w.empty())
-            updateWatch(w, outerToInter);
-    }
+    updateBySwap(watches, seen, inter_to_outer2);
+    updateBySwap(gwatches, seen, inter_to_outer);
+    for(watch_subarray w: watches) if (!w.empty()) update_watch(w, outer_to_inter);
+    updateArray(inter_to_outerMain, inter_to_outer);
 
-    updateArray(interToOuterMain, interToOuter);
-    updateArrayMapCopy(outerToInterMain, outerToInter);
+    updateArrayMapCopy(outer_to_interMain, outer_to_inter);
 }
 
 uint64_t CNF::mem_used_longclauses() const
@@ -270,13 +263,13 @@ uint64_t CNF::mem_used_longclauses() const
     return mem;
 }
 
-uint64_t CNF::print_mem_used_longclauses(const size_t totalMem) const
+uint64_t CNF::print_mem_used_longclauses(const size_t total_mem) const
 {
     uint64_t mem = mem_used_longclauses();
     print_stats_line("c Mem for longclauses"
         , mem/(1024UL*1024UL)
         , "MB"
-        , stats_line_percent(mem, totalMem)
+        , stats_line_percent(mem, total_mem)
         , "%"
     );
 
@@ -309,12 +302,12 @@ string CNF::watches_to_string(const Lit lit, watch_subarray_const ws) const
     return ss.str();
 }
 
-string CNF::watched_to_string(Lit otherLit, const Watched& ws) const
+string CNF::watched_to_string(Lit other_lit, const Watched& ws) const
 {
     std::stringstream ss;
     switch(ws.getType()) {
         case WatchType::watch_binary_t:
-            ss << otherLit << ", " << ws.lit2();
+            ss << other_lit << ", " << ws.lit2();
             if (ws.red()) {
                 ss << "(red)";
             }
@@ -351,47 +344,9 @@ bool ClauseSizeSorter::operator () (const ClOffset x, const ClOffset y)
 size_t CNF::mem_used_renumberer() const
 {
     size_t mem = 0;
-    mem += interToOuterMain.capacity()*sizeof(uint32_t);
-    mem += outerToInterMain.capacity()*sizeof(uint32_t);
-    mem += outer_to_with_bva_map.capacity()*sizeof(uint32_t);
+    mem += inter_to_outerMain.capacity()*sizeof(uint32_t);
+    mem += outer_to_interMain.capacity()*sizeof(uint32_t);
     return mem;
-}
-
-vector<uint32_t> CNF::build_outer_to_without_bva_map() const
-{
-    vector<uint32_t> ret;
-    size_t at = 0;
-    for(size_t i = 0; i < nVarsOuter(); i++) {
-        if (!varData[map_outer_to_inter(i)].is_bva) {
-            ret.push_back(at);
-            at++;
-        } else {
-            ret.push_back(var_Undef);
-        }
-    }
-
-    return ret;
-}
-
-// ONLY used during getting clauses for external uses. NOT sane
-vector<uint32_t> CNF::build_outer_to_without_bva_map_extended() const
-{
-    assert(nVarsOutside() <= nVarsOuter());
-    vector<uint32_t> ret;
-    size_t at = 0;
-    uint32_t extra_map = nVarsOutside();
-    for(size_t i = 0; i < nVarsOuter(); i++) {
-        if (!varData[map_outer_to_inter(i)].is_bva) {
-            ret.push_back(at);
-            at++;
-        } else {
-            ret.push_back(extra_map);
-            extra_map++;
-        }
-    }
-    assert(extra_map == nVarsOuter());
-
-    return ret;
 }
 
 size_t CNF::mem_used() const
@@ -406,26 +361,40 @@ size_t CNF::mem_used() const
     return mem;
 }
 
-void CNF::test_all_clause_attached() const
-{
-    test_all_clause_attached(longIrredCls);
-    for(const vector<ClOffset>& l: longRedCls) {
-        test_all_clause_attached(l);
-    }
+void CNF::check_all_clause_attached() const {
+    check_all_clause_attached(longIrredCls);
+    for(const vector<ClOffset>& l: longRedCls) check_all_clause_attached(l);
+    check_all_xorclause_attached();
 }
 
-void CNF::test_all_clause_attached(const vector<ClOffset>& offsets) const
-{
-    for (vector<ClOffset>::const_iterator
-        it = offsets.begin(), end = offsets.end()
-        ; it != end
-        ; ++it
-    ) {
-        assert(normClauseIsAttached(*it));
-    }
+void CNF::check_no_idx_in_watchlist() const {
+    for(const auto& ws: watches) for(const auto& w: ws) assert(!w.isIdx());
 }
 
-bool CNF::normClauseIsAttached(const ClOffset offset) const
+void CNF::check_all_xorclause_attached() const {
+    bool ret = true;
+    for(uint32_t i = 0; i < xorclauses.size(); i++) ret &= check_xor_attached(xorclauses[i], i);
+    assert(ret);
+}
+
+bool CNF::check_xor_attached(const Xor& x, const uint32_t i) const {
+    if (x.trivial()) return true;
+    bool attached = true;
+    for(const int wi: {0, 1}) {
+        auto v = x[x.watched[wi]];
+        auto val = findWXCl(gwatches[v], i);
+        attached &= val;
+        if (!val) cout << "Not attached var " << x[x.watched[wi]]+1 << endl;
+    }
+    if (!attached) cout << "XOR clause:" << x << " not (fully) attached" << endl;
+    return attached;
+}
+
+void CNF::check_all_clause_attached(const vector<ClOffset>& offsets) const {
+    for (const auto& off: offsets) assert(norm_clause_is_attached(off));
+}
+
+bool CNF::norm_clause_is_attached(const ClOffset offset) const
 {
     bool attached = true;
     const Clause& cl = *cl_alloc.ptr(offset);
@@ -433,19 +402,6 @@ bool CNF::normClauseIsAttached(const ClOffset offset) const
 
     attached &= findWCl(watches[cl[0]], offset);
     attached &= findWCl(watches[cl[1]], offset);
-
-    if (detached_xor_clauses && cl._xor_is_detached) {
-        //We expect this NOT to be attached, actually.
-        if (attached) {
-            cout
-            << "Failed. XOR-representing clause is NOT supposed to be attached"
-            << " clause: " << cl
-            << " _xor_is_detached: " << cl._xor_is_detached
-            << " detached_xor_clauses: " << detached_xor_clauses
-            << endl;
-        }
-        return !attached;
-    }
 
     bool satcl = satisfied(cl);
     uint32_t num_false2 = 0;
@@ -478,14 +434,13 @@ bool CNF::normClauseIsAttached(const ClOffset offset) const
     return attached;
 }
 
-void CNF::find_all_attach() const
-{
+/// Makes sure all that is attached is actually a clause in one of the DBs
+void CNF::find_all_attached() const {
     for (size_t i = 0; i < watches.size(); i++) {
         const Lit lit = Lit::toLit(i);
         for (uint32_t i2 = 0; i2 < watches[lit].size(); i2++) {
             const Watched& w = watches[lit][i2];
-            if (!w.isClause())
-                continue;
+            if (!w.isClause()) continue;
 
             //Get clause
             Clause* cl = cl_alloc.ptr(w.get_offset());
@@ -501,86 +456,52 @@ void CNF::find_all_attach() const
             }
 
             //Assert watch correctness
-            if ((*cl)[0] != lit
-                && (*cl)[1] != lit
-            ) {
-                std::cerr
-                << "ERROR! Clause " << (*cl)
-                << " not attached?"
-                << endl;
-
-                assert(false);
-                std::exit(-1);
+            if ((*cl)[0] != lit && (*cl)[1] != lit) {
+                std::cerr << "ERROR! Clause " << (*cl) << " not attached?" << endl;
+                assert(false); std::exit(-1);
             }
 
             //Clause in one of the lists
             if (!find_clause(w.get_offset())) {
-                std::cerr
-                << "ERROR! did not find clause " << *cl
-                << endl;
-
-                assert(false);
-                std::exit(1);
+                std::cerr << "ERROR! did not find clause " << *cl << endl;
+                assert(false); std::exit(1);
             }
         }
     }
 
-    find_all_attach(longIrredCls);
-    for(auto& lredcls: longRedCls) {
-        find_all_attach(lredcls);
+    for(size_t var = 0; var < gwatches.size(); var++) {
+        for(const auto& w: gwatches[var]) {
+            if (w.matrix_num < 1000) {
+                /* assert(gmatrices.size() > w.matrix_num); */
+            } else {
+                assert(w.row_n < xorclauses.size());
+                const Xor& x = xorclauses[w.row_n];
+                assert(!x.trivial());
+                assert(x.watched[0] < x.size());
+                assert(x.watched[1] < x.size());
+                uint32_t v0 = x[x.watched[0]];
+                uint32_t v1 = x[x.watched[1]];
+                assert(var == v0 || var == v1);
+            }
+        }
     }
 }
 
-void CNF::find_all_attach(const vector<ClOffset>& cs) const
-{
-    for(vector<ClOffset>::const_iterator
-        it = cs.begin(), end = cs.end()
-        ; it != end
-        ; ++it
-    ) {
-        Clause& cl = *cl_alloc.ptr(*it);
-        bool should_be_attached = true;
-        if (detached_xor_clauses && cl._xor_is_detached) {
-            should_be_attached = false;
-        }
-        bool ret = findWCl(watches[cl[0]], *it);
-        if (ret != should_be_attached) {
-            cout
-            << "Clause " << cl
-            << " (red: " << cl.red()
-            << " used in xor: " << cl.used_in_xor()
-            << " detached xor: " << cl._xor_is_detached
-            << " should be attached: " << should_be_attached
-            << " )";
-            if (ret) {
-                cout << " doesn't have its 1st watch attached!";
-            } else {
-                cout << " HAS its 1st watch attached (but it should NOT)!";
-            }
-            cout << endl;
-
-            assert(false);
-            std::exit(-1);
+void CNF::find_all_attached(const vector<ClOffset>& cs) const {
+    for(const auto& off : cs) {
+        Clause& cl = *cl_alloc.ptr(off);
+        bool ret = findWCl(watches[cl[0]], off);
+        if (!ret) {
+            cout << "Clause " << cl << " (red: " << cl.red() << " )";
+            cout << " does NOT have its 1st watch attached!" << endl;
+            assert(false); std::exit(-1);
         }
 
-        ret = findWCl(watches[cl[1]], *it);
-        if (ret != should_be_attached) {
-            cout
-            << "Clause " << cl
-            << " (red: " << cl.red()
-            << " used in xor: " << cl.used_in_xor()
-            << " detached xor: " << cl._xor_is_detached
-            << " should be attached: " << should_be_attached
-            << " )";
-            if (ret) {
-                cout << " doesn't have its 2nd watch attached!";
-            } else {
-                cout << " HAS its 2nd watch attached (but it should NOT)!";
-            }
-            cout << endl;
-
-            assert(false);
-            std::exit(-1);
+        ret = findWCl(watches[cl[1]], off);
+        if (!ret) {
+            cout << "Clause " << cl << " (red: " << cl.red() << " )";
+            cout << " does NOT have its 2nd watch attached!" << endl;
+            assert(false); std::exit(-1);
         }
     }
 }
@@ -588,45 +509,39 @@ void CNF::find_all_attach(const vector<ClOffset>& cs) const
 
 bool CNF::find_clause(const ClOffset offset) const
 {
-    for (uint32_t i = 0; i < longIrredCls.size(); i++) {
-        if (longIrredCls[i] == offset)
-            return true;
-    }
-
-    for(auto& lredcls: longRedCls) {
-        for (ClOffset off: lredcls) {
-            if (off == offset)
-                return true;
-        }
-    }
-
+    for(const auto& off: longIrredCls) if (off == offset) return true;
+    for(const auto& lredcls: longRedCls) for (const auto& off: lredcls) if (off == offset) return true;
     return false;
 }
 
-void CNF::check_wrong_attach() const
-{
-#ifdef SLOW_DEBUG
-    for(auto& lredcls: longRedCls) {
-        for (ClOffset offs: lredcls) {
-            const Clause& cl = *cl_alloc.ptr(offs);
+void CNF::check_wrong_attach() const {
+    for(const auto& lredcls: longRedCls) {
+        for (const auto& off: lredcls) {
+            const Clause& cl = *cl_alloc.ptr(off);
             for (uint32_t i = 0; i < cl.size(); i++) {
                 if (i > 0)
                     assert(cl[i-1].var() != cl[i].var());
             }
         }
     }
-    for(watch_subarray_const ws: watches) {
-        check_watchlist(ws);
+    for(watch_subarray_const ws: watches) check_watchlist(ws);
+    for(uint32_t i = 0; i < xorclauses.size(); i++) {
+        const Xor& x = xorclauses[i];
+        if (x.trivial()) continue;
+        for(int at: {0,1}) {
+            assert(x.watched[at] < x.size());
+            bool found = false;
+            const uint32_t v = x[x.watched[at]];
+            for(const auto& w: gwatches[v]) if (w.matrix_num ==  1000 && w.row_n == i) {found=true;break;}
+            if (!found) cout << "ERROR. var " << v+1 << " not in watch for XOR: " << x << endl;
+            assert(found);
+        }
     }
-#endif
 }
 
-void CNF::check_watchlist(watch_subarray_const ws) const
-{
+void CNF::check_watchlist(watch_subarray_const ws) const {
     for(const Watched& w: ws) {
-        if (!w.isClause()) {
-            continue;
-        }
+        if (!w.isClause()) continue;
 
         const ClOffset offs = w.get_offset();
         const Clause& c = *cl_alloc.ptr(offs);
@@ -664,18 +579,13 @@ void CNF::check_watchlist(watch_subarray_const ws) const
 uint64_t CNF::count_lits(
     const vector<ClOffset>& clause_array
     , const bool red
-    , const bool allowFreed
+    , const bool allow_freed
 ) const {
     uint64_t lits = 0;
-    for(vector<ClOffset>::const_iterator
-        it = clause_array.begin(), end = clause_array.end()
-        ; it != end
-        ; ++it
-    ) {
-        const Clause& cl = *cl_alloc.ptr(*it);
-        if (cl.freed()) {
-            assert(allowFreed);
-        } else {
+    for(auto off : clause_array) {
+        const Clause& cl = *cl_alloc.ptr(off);
+        if (cl.freed()) assert(allow_freed);
+        else {
             if ((cl.red() ^ red) == false) {
                 lits += cl.size();
             }
@@ -691,8 +601,6 @@ void CNF::print_watchlist_stats() const
     uint64_t total_size_lits = 0;
     uint64_t total_cls = 0;
     uint64_t bin_cls = 0;
-    uint64_t used_in_xor = 0;
-    uint64_t used_in_xor_full = 0;
     for(auto const& ws: watches) {
         for(auto const& w: ws) {
             total_size+=1;
@@ -702,9 +610,7 @@ void CNF::print_watchlist_stats() const
                 bin_cls++;
             } else if (w.isClause()) {
                 Clause* cl = cl_alloc.ptr(w.get_offset());
-                assert(!cl->getRemoved());
-                used_in_xor+=cl->used_in_xor();
-                used_in_xor_full+=cl->used_in_xor_full();
+                assert(!cl->get_removed());
                 total_size_lits+=cl->size();
                 total_cls++;
             }
@@ -714,24 +620,15 @@ void CNF::print_watchlist_stats() const
     cout << " Avg cl size: " << float_div(total_size_lits, total_cls);
     cout << " Cls: " << total_cls;
     cout << " Total WS size: " << total_size;
-    cout << " used_in_xor: " << used_in_xor;
-    cout << " used_in_xor_full: " << used_in_xor_full;
     cout << " bin cl: " << bin_cls;
     cout << endl;
 }
 
 void CNF::print_all_clauses() const
 {
-    for(vector<ClOffset>::const_iterator
-        it = longIrredCls.begin(), end = longIrredCls.end()
-        ; it != end
-        ; ++it
-    ) {
-        Clause* cl = cl_alloc.ptr(*it);
-        cout
-        << "Normal clause offs " << *it
-        << " cl: " << *cl
-        << endl;
+    for(const auto& off : longIrredCls) {
+        Clause* cl = cl_alloc.ptr(off);
+        cout << "Normal clause offs " << off << " cl: " << *cl << endl;
     }
 
 
@@ -744,14 +641,11 @@ void CNF::print_all_clauses() const
         Lit lit = Lit::toLit(wsLit);
         watch_subarray_const ws = *it;
         cout << "watches[" << lit << "]" << endl;
-        for (const Watched *it2 = ws.begin(), *end2 = ws.end()
-            ; it2 != end2
-            ; it2++
-        ) {
-            if (it2->isBin()) {
-                cout << "Binary clause part: " << lit << " , " << it2->lit2() << endl;
-            } else if (it2->isClause()) {
-                cout << "Normal clause offs " << it2->get_offset() << endl;
+        for (const auto& w : ws) {
+            if (w.isBin()) {
+                cout << "Binary clause part: " << lit << " , " << w.lit2() << endl;
+            } else if (w.isClause()) {
+                cout << "Normal clause offs " << w.get_offset() << endl;
             }
         }
     }
@@ -776,7 +670,7 @@ bool CNF::no_marked_clauses() const
 
 void CNF::add_frat(FILE* os) {
     if (frat) delete frat;
-    frat = new DratFile<false>(interToOuterMain);
+    frat = new FratFile<false>(inter_to_outerMain);
     frat->setFile(os);
     frat->set_sumconflicts_ptr(&sumConflicts);
     frat->set_sqlstats_ptr(sqlStats);
@@ -784,7 +678,6 @@ void CNF::add_frat(FILE* os) {
 
 vector<uint32_t> CNF::get_outside_lit_incidence()
 {
-    assert(get_num_bva_vars() == 0);
     vector<uint32_t> inc;
     inc.resize(nVars()*2, 0);
     if (!okay()) return inc;
@@ -816,18 +709,12 @@ vector<uint32_t> CNF::get_outside_lit_incidence()
         inc_outer[outer.toInt()] = inc[i];
     }
 
-    //Map to outside
-    if (get_num_bva_vars() != 0) {
-        inc_outer = map_back_lits_to_without_bva(inc_outer);
-    }
     return inc_outer;
 }
 
 vector<uint32_t> CNF::get_outside_var_incidence()
 {
-    assert(get_num_bva_vars() == 0);
     assert(okay());
-
 
     vector<uint32_t> inc;
     inc.resize(nVarsOuter(), 0);
@@ -858,10 +745,6 @@ vector<uint32_t> CNF::get_outside_var_incidence()
         inc_outer[outer] = inc[i];
     }
 
-    //Map to outside
-    if (get_num_bva_vars() != 0) {
-        inc_outer = map_back_vars_to_without_bva(inc_outer);
-    }
     return inc_outer;
 }
 
@@ -902,10 +785,6 @@ vector<uint32_t> CNF::get_outside_var_incidence_also_red()
         inc_outer[outer] = inc[i];
     }
 
-    //Map to outside
-    if (get_num_bva_vars() != 0) {
-        inc_outer = map_back_vars_to_without_bva(inc_outer);
-    }
     return inc_outer;
 }
 
@@ -1008,13 +887,21 @@ bool CNF::zero_irred_cls(const CMSat::Lit lit) const
     return true;
 }
 
-#ifdef USE_TBUDDY
-void CNF::free_bdds(vector<Xor>& xors)
+void CNF::print_xors(const vector<Xor>& xors)
 {
-    frat->flush();
-    for(auto& x: xors) {
-        delete x.bdd;
-        x.bdd = NULL;
+    if (conf.verbosity >= 5) {
+        cout << "c Orig XORs: " << endl;
+        for(auto const& x: xors) cout << "c " << x << endl;
+        cout << "c -> Total: " << xors.size() << " xors" << endl;
     }
 }
-#endif
+
+void CNF::add_chain() {
+    if (frat->enabled() && !chain.empty()) {
+        *frat << fratchain;
+        for(auto const& id: chain) {
+            assert(id != 0);
+            *frat << id;
+        }
+    }
+}

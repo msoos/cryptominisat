@@ -105,7 +105,7 @@ vector<string> SQLiteStats::get_columns(const char* tablename)
     q << "pragma table_info(" << tablename << ");";
 
     sqlite3_stmt *stmt;
-    if (sqlite3_prepare_v2(db, q.str().c_str(), -1, &stmt, NULL)) {
+    if (sqlite3_prepare_v2(db, q.str().c_str(), -1, &stmt, nullptr)) {
         cerr << "ERROR: Couln't create table structure for SQLite: "
         << sqlite3_errmsg(db)
         << endl;
@@ -124,7 +124,7 @@ vector<string> SQLiteStats::get_columns(const char* tablename)
 
 void SQLiteStats::del_prepared_stmt(sqlite3_stmt* stmt)
 {
-    if (stmt == NULL) {
+    if (stmt == nullptr) {
         return;
     }
 
@@ -174,7 +174,7 @@ bool SQLiteStats::setup(const Solver* solver)
     }
 
     //TODO check if data is in any table
-    if (sqlite3_exec(db, cmsat_tablestructure_sql, NULL, NULL, NULL)) {
+    if (sqlite3_exec(db, cmsat_tablestructure_sql, nullptr, nullptr, nullptr)) {
         cerr << "ERROR: Couln't create table structure for SQLite: "
         << sqlite3_errmsg(db)
         << endl;
@@ -230,13 +230,13 @@ bool SQLiteStats::connectServer(const Solver* solver)
         return false;
     }
 
-    if (sqlite3_exec(db, "PRAGMA synchronous = OFF", NULL, NULL, NULL)) {
+    if (sqlite3_exec(db, "PRAGMA synchronous = OFF", nullptr, nullptr, nullptr)) {
         cerr << "ERROR: Problem setting pragma synchronous = OFF to SQLite DB" << endl;
         cerr << "c " << sqlite3_errmsg(db) << endl;
         std::exit(-1);
     }
 
-    if (sqlite3_exec(db, "PRAGMA journal_mode = MEMORY", NULL, NULL, NULL)) {
+    if (sqlite3_exec(db, "PRAGMA journal_mode = MEMORY", nullptr, nullptr, nullptr)) {
         cerr << "ERROR: Problem setting pragma journal_mode = MEMORY to SQLite DB" << endl;
         cerr << "c " << sqlite3_errmsg(db) << endl;
         std::exit(-1);
@@ -252,7 +252,7 @@ bool SQLiteStats::connectServer(const Solver* solver)
 
 void SQLiteStats::begin_transaction()
 {
-    if (sqlite3_exec(db, "BEGIN TRANSACTION", NULL, NULL, NULL)) {
+    if (sqlite3_exec(db, "BEGIN TRANSACTION", nullptr, nullptr, nullptr)) {
         cerr << "ERROR: Beginning SQLITE transaction" << endl;
         cerr << "c " << sqlite3_errmsg(db) << endl;
         std::exit(-1);
@@ -261,7 +261,7 @@ void SQLiteStats::begin_transaction()
 
 void SQLiteStats::end_transaction()
 {
-    if (sqlite3_exec(db, "END TRANSACTION", NULL, NULL, NULL)) {
+    if (sqlite3_exec(db, "END TRANSACTION", nullptr, nullptr, nullptr)) {
         cerr << "ERROR: Beginning SQLITE transaction" << endl;
         cerr << "c " << sqlite3_errmsg(db) << endl;
         std::exit(-1);
@@ -273,12 +273,12 @@ bool SQLiteStats::add_solverrun(const Solver* solver)
     std::stringstream ss;
     ss
     << "INSERT INTO solverRun (`runtime`, `gitrev`) values ("
-    << time(NULL)
+    << time(nullptr)
     << ", '" << solver->get_version_sha1() << "'"
     << ");";
 
     //Inserting element into solverruns to get unique ID
-    const int rc = sqlite3_exec(db, ss.str().c_str(), NULL, NULL, NULL);
+    const int rc = sqlite3_exec(db, ss.str().c_str(), nullptr, nullptr, nullptr);
     if (rc) {
         if (solver->getConf().verbosity >= 6) {
             cerr << "c ERROR Couldn't insert into table 'solverruns'" << endl;
@@ -301,7 +301,7 @@ void SQLiteStats::add_tag(const std::pair<string, string>& tag)
     << ");";
 
     //Inserting element into solverruns to get unique ID
-    if (sqlite3_exec(db, ss.str().c_str(), NULL, NULL, NULL)) {
+    if (sqlite3_exec(db, ss.str().c_str(), nullptr, nullptr, nullptr)) {
         cerr << "SQLite: ERROR Couldn't insert into table 'tags'" << endl;
         assert(false);
         std::exit(-1);
@@ -316,7 +316,7 @@ void SQLiteStats::addStartupData()
     << "datetime('now')"
     << ");";
 
-    if (sqlite3_exec(db, ss.str().c_str(), NULL, NULL, NULL)) {
+    if (sqlite3_exec(db, ss.str().c_str(), nullptr, nullptr, nullptr)) {
         cerr << "ERROR Couldn't insert into table 'startup' : "
         << sqlite3_errmsg(db) << endl;
 
@@ -333,7 +333,7 @@ void SQLiteStats::finishup(const lbool status)
     << "'" << status << "'"
     << ");";
 
-    if (sqlite3_exec(db, ss.str().c_str(), NULL, NULL, NULL)) {
+    if (sqlite3_exec(db, ss.str().c_str(), nullptr, nullptr, nullptr)) {
         cerr << "ERROR Couldn't insert into table 'finishup'" << endl;
         std::exit(-1);
     }
@@ -361,7 +361,7 @@ void SQLiteStats::run_sqlite_step(
     const char* name,
     const uint32_t bindAt)
 {
-    if (name != NULL) {
+    if (name != nullptr) {
         assert(query_to_size.find(name) != query_to_size.end());
         //SQLite numbers them from 1, so it's off-by-one
         assert(query_to_size[name]+1 == bindAt);
@@ -414,7 +414,7 @@ void SQLiteStats::init(const char* name, sqlite3_stmt** stmt, uint32_t num)
     ss << ";";
 
     //Prepare the statement
-    if (sqlite3_prepare(db, ss.str().c_str(), -1, stmt, NULL)) {
+    if (sqlite3_prepare(db, ss.str().c_str(), -1, stmt, nullptr)) {
         cerr << "ERROR in sqlite_stmt_prepare(), INSERT failed"
         << endl
         << sqlite3_errmsg(db)
@@ -437,7 +437,7 @@ void SQLiteStats::mem_used(
     sqlite3_bind_int64(stmtMemUsed, bindAt++, solver->sumConflicts);
     sqlite3_bind_double(stmtMemUsed, bindAt++, given_time);
     //memory stats
-    sqlite3_bind_text(stmtMemUsed, bindAt++, name.c_str(), -1, NULL);
+    sqlite3_bind_text(stmtMemUsed, bindAt++, name.c_str(), -1, nullptr);
     sqlite3_bind_int(stmtMemUsed, bindAt++, mem_used_mb);
 
     run_sqlite_step(stmtMemUsed, "memused", bindAt);
@@ -455,7 +455,7 @@ void SQLiteStats::time_passed(
     sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->get_solve_stats().num_simplify);
     sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->sumConflicts);
     sqlite3_bind_double(stmtTimePassed, bindAt++, cpuTime());
-    sqlite3_bind_text(stmtTimePassed, bindAt++, name.c_str(), -1, NULL);
+    sqlite3_bind_text(stmtTimePassed, bindAt++, name.c_str(), -1, nullptr);
     sqlite3_bind_double(stmtTimePassed, bindAt++, time_passed);
     sqlite3_bind_int(stmtTimePassed, bindAt++, time_out);
     sqlite3_bind_double(stmtTimePassed, bindAt++, percent_time_remain);
@@ -472,7 +472,7 @@ void SQLiteStats::time_passed_min(
     sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->get_solve_stats().num_simplify);
     sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->sumConflicts);
     sqlite3_bind_double(stmtTimePassed, bindAt++, cpuTime());
-    sqlite3_bind_text(stmtTimePassed, bindAt++, name.c_str(), -1, NULL);
+    sqlite3_bind_text(stmtTimePassed, bindAt++, name.c_str(), -1, nullptr);
     sqlite3_bind_double(stmtTimePassed, bindAt++, time_passed);
     sqlite3_bind_null(stmtTimePassed, bindAt++);
     sqlite3_bind_null(stmtTimePassed, bindAt++);
@@ -488,7 +488,7 @@ void SQLiteStats::dump_id_confl_cache()
             sqlite3_bind_int64(stmt_set_id_confl_1000, bindAt++, elem.first);
             sqlite3_bind_int64(stmt_set_id_confl_1000, bindAt++, elem.second);
         }
-        run_sqlite_step(stmt_set_id_confl_1000, NULL, 0);
+        run_sqlite_step(stmt_set_id_confl_1000, nullptr, 0);
     } else {
         for(auto const& elem: id_conf_cache) {
             int bindAt = 1;
@@ -807,7 +807,7 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int64(stmtReduceDB, bindAt++, last_touched_any_diff);
     sqlite3_bind_double(stmtReduceDB, bindAt++, (double)cl->stats.activity/(double)solver->get_cla_inc());
     sqlite3_bind_int(stmtReduceDB, bindAt++, locked);
-    sqlite3_bind_int(stmtReduceDB, bindAt++, cl->used_in_xor());
+    sqlite3_bind_int(stmtReduceDB, bindAt++, false); // used in XOR -- nope
     if (cl->stats.is_ternary_resolvent) {
         sqlite3_bind_null(stmtReduceDB, bindAt++);
     } else {

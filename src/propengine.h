@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include <cmath>
 
 #include "constants.h"
+#include "frat.h"
 #include "propby.h"
 #include "vmtf.h"
 
@@ -211,8 +212,7 @@ public:
         return trail[at].lit;
     }
 
-    template<bool inprocess>
-    bool propagate_occur(int64_t* limit_to_decrease);
+    template<bool inprocess> bool propagate_occur(int64_t* limit_to_decrease);
     void reverse_prop(const Lit l);
     void reverse_one_bnn(uint32_t idx, BNNPropType t);
     PropStats propStats;
@@ -222,6 +222,7 @@ public:
     template<bool inprocess> void enqueue(const Lit p);
     void enqueue_light(const Lit p);
     void new_decision_level();
+    vector<Lit>* get_xor_reason(const PropBy& reason, int32_t& ID);
 
     /////////////////////
     // Branching
@@ -256,7 +257,6 @@ public:
 
     //Clause activities
     double max_cl_act = 0.0;
-    vector<int32_t> chain; ///< For resolution chains
 
     enum class gauss_ret {g_cont, g_nothing, g_false};
     vector<EGaussian*> gmatrices;
@@ -295,6 +295,7 @@ protected:
         const Clause& c
         , const bool checkAttach = true
     );
+    void attach_xor_clause(uint32_t at);
 
     void detach_bin_clause(
         Lit lit1
@@ -340,8 +341,8 @@ protected:
 
     //Var selection, activity, etc.
     void updateVars(
-        const vector<uint32_t>& outerToInter
-        , const vector<uint32_t>& interToOuter
+        const vector<uint32_t>& outer_to_inter
+        , const vector<uint32_t>& inter_to_outer
     );
 
     size_t mem_used() const
@@ -494,12 +495,7 @@ inline PropResult PropEngine::handle_normal_prop_fail(
     cout << "Conflict from cl: " << c << endl;
     #endif
 
-    //Update stats
-    #ifdef STATS_NEEDED
-    if (!inprocess && c.red()) {
-        red_stats_extra[c.stats.extra_pos].conflicts_made++;
-    }
-    #endif
+    STATS_DO(if (!inprocess && c.red()) red_stats_extra[c.stats.extra_pos].conflicts_made++);
 
     qhead = trail.size();
     return PROP_FAIL;
@@ -537,35 +533,6 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
     const uint32_t v = p.var();
     assert(value(v) == l_Undef);
     SLOW_DEBUG_DO(assert(varData[v].removed == Removed::none));
-    if (level == 0 && frat->enabled())
-    {   if (do_unit_frat) {
-            const uint32_t ID = ++clauseID;
-            chain.clear();
-            if (from.getType() == PropByType::binary_t) {
-                chain.push_back(from.getID());
-                chain.push_back(unit_cl_IDs[from.lit2().var()]);
-            } else if (from.getType() == PropByType::clause_t) {
-                Clause* cl = cl_alloc.ptr(from.get_offset());
-                chain.push_back(cl->stats.ID);
-                for(auto const& l: *cl) if (l != p) chain.push_back(unit_cl_IDs[l.var()]);
-            } else {
-                // These are too difficult and not worth it
-            }
-
-            *frat << add << ID << p;
-            if (!chain.empty()) {
-                *frat << DratFlag::chain;
-                for(auto const& id: chain) *frat << id;
-            }
-            *frat << fin;
-
-            VERBOSE_PRINT("unit " << p << " ID: " << ID);
-            assert(unit_cl_IDs[v] == 0);
-            unit_cl_IDs[v] = ID;
-        } else {
-            assert(unit_cl_IDs[v] != 0);
-        }
-    }
 
     if (!watches[~p].empty()) watches.prefetch((~p).toInt());
 
@@ -599,6 +566,41 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from, b
     varData[v].reason = from;
     varData[v].level = level;
     varData[v].sublevel = trail.size();
+
+    if (level == 0 && frat->enabled())
+    {   if (do_unit_frat) {
+            const auto ID = ++clauseID;
+            const auto XID = ++clauseXID;
+            /* chain.clear(); */
+            if (from.getType() == PropByType::binary_t) {
+                chain.push_back(from.getID());
+                chain.push_back(unit_cl_IDs[from.lit2().var()]);
+            } else if (from.getType() == PropByType::clause_t) {
+                Clause* cl = cl_alloc.ptr(from.get_offset());
+                chain.push_back(cl->stats.ID);
+                for(auto const& l: *cl) if (l != p) chain.push_back(unit_cl_IDs[l.var()]);
+            } else {
+                // These are too difficult and not worth it
+            }
+
+            if (from.getType() == PropByType::xor_t) {
+                int32_t tmp_ID;
+                get_xor_reason(from, tmp_ID);
+            }
+
+            *frat << add << ID << p << fin;
+            *frat << implyxfromcls << XID << p << fratchain << ID << fin;
+
+            assert(unit_cl_IDs[v] == 0);
+            assert(unit_cl_XIDs[v] == 0);
+            unit_cl_IDs[v] = ID;
+            unit_cl_XIDs[v] = XID;
+        } else {
+            assert(unit_cl_IDs[v] != 0);
+            assert(unit_cl_XIDs[v] != 0);
+        }
+    }
+
     if (!inprocess) {
         #ifdef STATS_NEEDED
         if (sign) {
@@ -621,7 +623,7 @@ PropBy PropEngine::propagate_light()
     PropBy confl;
     VERBOSE_PRINT("propagate_light started");
 
-    while (qhead < trail.size() && confl.isNULL()) {
+    while (qhead < trail.size() && confl.isnullptr()) {
         const Lit p = trail[qhead].lit;
         watch_subarray ws = watches[~p];
 
@@ -630,18 +632,14 @@ PropBy PropEngine::propagate_light()
         Watched* end = ws.end();
         propStats.bogoProps += ws.size()/4 + 1;
         for (; i != end; i++) {
-            if (bin_only && !confl.isNULL()) break;
+            if (bin_only && !confl.isnullptr()) break;
 
             // propagate binary clause
             if (i->isBin()) {
                 if (!bin_only) *j++ = *i;
-
                 const lbool val = value(i->lit2());
-                if (val == l_Undef) {
-                    enqueue_light(i->lit2());
-                } else if (val == l_False) {
-                    confl = PropBy(~p, i->red(), i->get_ID());
-                }
+                if (val == l_Undef) enqueue_light(i->lit2());
+                else if (val == l_False) confl = PropBy(~p, i->red(), i->get_ID());
                 continue;
             }
 

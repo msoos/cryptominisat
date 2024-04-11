@@ -38,7 +38,7 @@ using std::endl;
 
 using namespace CMSat;
 
-SATSolver* solver = NULL;
+SATSolver* solver = nullptr;
 DLL_PUBLIC void printVersionInfo()
 {
     cout << "c CryptoMiniSat version " << solver->get_version() << endl;
@@ -60,7 +60,7 @@ DLL_PUBLIC int start_solve(const char* input)
         printVersionInfo();
     }
 
-    DimacsParser<StreamBuffer<const char*, CH>, SATSolver> parser(solver, NULL, conf.verbosity);
+    DimacsParser<StreamBuffer<const char*, CH>, SATSolver> parser(solver, nullptr, conf.verbosity);
     if (!parser.parse_DIMACS(input, false)) {
         exit(-1);
     }
