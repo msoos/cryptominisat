@@ -56,35 +56,6 @@ sudo make install
 sudo ldconfig
 ```
 
-Compiling in Mac OSX
------
-
-First, you must get Homebrew from https://brew.sh/ then:
-
-```
-brew install cmake
-tar xzvf cryptominisat-version.tar.gz
-cd cryptominisat-version
-mkdir build && cd build
-cmake ..
-make
-sudo make install
-```
-
-Compiling in Windows
------
-
-```
-C:\> [ download and unzip cryptominisat-version.zip ]
-C:\> cd cryptominisat
-C:\cryptominisat> mkdir build
-C:\cryptominisat> cd build
-C:\cryptominisat\build> cmake -G "Visual Studio 17 2022" -DCMAKE_BUILD_TYPE=Release -DSTATICCOMPILE=ON ..
-C:\cryptominisat\build> cmake --build --config Release .
-```
-
-You now have the static binary under `C:\cryptominisat\build\Release\cryptominisat5.exe`
-
 Command-line usage
 -----
 
