@@ -39,11 +39,6 @@ THE SOFTWARE.
 #include "gausswatched.h"
 #include "xor.h"
 
-#ifdef ARJUN_SERIALIZE
-#include <boost/serialization/vector.hpp>
-#endif
-
-
 namespace CMSat {
 
 class ClauseAllocator;
