@@ -294,15 +294,7 @@ You can see an example project using CryptoMiniSat in Rust [here](https://github
 Preprocessing
 -----
 If you wish to use CryptoMiniSat as a preprocessor, we encourage you
-to try out our model counting preprocessing framework
-(Arjun)[https://www.github.com/meelgroup/arjun]. Arjun was conceived to
-minimize input formulas for model counting, but it can also be used for
-non-model-counting purposes. However, it cannot produce a solution to the
-original CNF given a solution to the simplified CNF. This current limitation
-will eventually be lifted for Arjun.
-
-Please see the README of Arjun for more details. The basic usage of Arjun is:
-`./arjun --renumber 0 original.cnf simplified.cnf`
+to try out our model counting preprocessor, (Arjun)[https://www.github.com/meelgroup/arjun].
 
 Gauss-Jordan elimination
 -----
