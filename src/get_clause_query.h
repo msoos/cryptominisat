@@ -24,11 +24,7 @@ THE SOFTWARE.
 
 #include "constants.h"
 #include <vector>
-#include <string>
 #include <limits>
-#include <algorithm>
-
-#include "constants.h"
 #include "solvertypes.h"
 
 using std::numeric_limits;
@@ -47,7 +43,8 @@ public:
            uint32_t max_glue = std::numeric_limits<uint32_t>::max());
     bool get_next_constraint(std::vector<Lit>& ret, bool& is_xor, bool& rhs);
     void end_getting_constraints();
-    vector<uint32_t> translate_sampl_set(const vector<uint32_t>& sampl_set);
+    vector<uint32_t> translate_sampl_set(
+            const vector<uint32_t>& sampl_set, bool also_removed);
 
 private:
     Solver* solver;

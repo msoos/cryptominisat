@@ -1316,9 +1316,9 @@ void DLL_PUBLIC SATSolver::end_getting_constraints()
 
 
 DLL_PUBLIC vector<uint32_t> SATSolver::translate_sampl_set(
-    const vector<uint32_t>& sampl_set)
+    const vector<uint32_t>& sampl_set, bool also_removed)
 {
-    return data->solvers[0]->translate_sampl_set(sampl_set);
+    return data->solvers[0]->translate_sampl_set(sampl_set, also_removed);
 }
 
 void DLL_PUBLIC SATSolver::set_min_bva_gain(uint32_t min_bva_gain)

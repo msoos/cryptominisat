@@ -256,7 +256,8 @@ namespace CMSat {
         void end_getting_constraints();
 
         uint32_t simplified_nvars();
-        std::vector<uint32_t> translate_sampl_set(const std::vector<uint32_t>& sampl_set);
+        std::vector<uint32_t> translate_sampl_set(
+                const std::vector<uint32_t>& sampl_set, bool also_removed);
 
         // Solution reconstruction after minimization
         std::string serialize_solution_reconstruction_data() const;
