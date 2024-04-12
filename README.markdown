@@ -448,30 +448,6 @@ The following arguments to cmake configure the generated build artifacts. To use
 - `-DLARGEMEM=<ON/OFF>` -- more memory available for clauses (but slower on most problems)
 - `-DIPASIR=<ON/OFF>` -- Build `libipasircryptominisat.so` for [IPASIR](https://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/IPASIR____IPASIR) interface support
 
-Getting learnt clauses
------
-As an experimental feature, you can get the learnt clauses from the system with the following code, where `lits` is filled with learnt clauses every time `get_next_small_clause` is called. The example below will eventually return all clauses of size 4 or less. You can call `end_getting_small_clauses` at any time.
-
-```
-SATSolver s;
-//fill the solver, run solve, etc.
-
-//Get all clauses of size 4 or less
-
-s->start_getting_small_clauses(4);
-
-vector<Lit> lits;
-bool ret = true;
-while (ret) {
-    bool ret = s->get_next_small_clause(lits);
-    if (ret) {
-        //deal with clause in "lits"
-        add_to_my_db(lits);
-    }
-}
-s->end_getting_small_clauses();
-```
-
 C usage
 -----
 See src/cryptominisat_c.h.in for details. This is an experimental feature.
