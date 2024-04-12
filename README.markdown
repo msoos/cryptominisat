@@ -294,7 +294,7 @@ You can see an example project using CryptoMiniSat in Rust [here](https://github
 Preprocessing
 -----
 If you wish to use CryptoMiniSat as a preprocessor, we encourage you
-to try out our model counting preprocessor, (Arjun)[https://www.github.com/meelgroup/arjun].
+to try out our model counting preprocessor, [Arjun](https://www.github.com/meelgroup/arjun).
 
 Gauss-Jordan elimination
 -----
