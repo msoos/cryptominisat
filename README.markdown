@@ -420,14 +420,6 @@ sqlite> select count() from sum_cl_use;
 94507
 ```
 
-Configuring a build for a minimal binary&library
------
-The following configures the system to build a bare minimal binary&library. It needs a compiler, but nothing much else:
-
-```
-cmake -DNOZLIB=ON -DSTATS=OFF -DENABLE_TESTING=OFF .
-```
-
 CMake Arguments
 -----
 The following arguments to cmake configure the generated build artifacts. To use, specify options prior to running make in a clean subdirectory: `cmake <options> ..`
