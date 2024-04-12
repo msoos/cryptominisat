@@ -57,7 +57,7 @@ jobs:
     - name: Build Cadical
       run: |
        cd cadical
-       ./configure
+       CXX=c++ ./configure
        make -j8
        cd ..
 
@@ -71,7 +71,7 @@ jobs:
     - name: Build Cadiback
       run: |
        cd cadiback
-       ./configure
+       CXX=c++ ./configure
        make -j8
        cd ..
        
