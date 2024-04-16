@@ -56,35 +56,6 @@ sudo make install
 sudo ldconfig
 ```
 
-Compiling in Mac OSX
------
-
-First, you must get Homebrew from https://brew.sh/ then:
-
-```
-brew install cmake
-tar xzvf cryptominisat-version.tar.gz
-cd cryptominisat-version
-mkdir build && cd build
-cmake ..
-make
-sudo make install
-```
-
-Compiling in Windows
------
-
-```
-C:\> [ download and unzip cryptominisat-version.zip ]
-C:\> cd cryptominisat
-C:\cryptominisat> mkdir build
-C:\cryptominisat> cd build
-C:\cryptominisat\build> cmake -G "Visual Studio 17 2022" -DCMAKE_BUILD_TYPE=Release -DSTATICCOMPILE=ON ..
-C:\cryptominisat\build> cmake --build --config Release .
-```
-
-You now have the static binary under `C:\cryptominisat\build\Release\cryptominisat5.exe`
-
 Command-line usage
 -----
 
@@ -323,15 +294,7 @@ You can see an example project using CryptoMiniSat in Rust [here](https://github
 Preprocessing
 -----
 If you wish to use CryptoMiniSat as a preprocessor, we encourage you
-to try out our model counting preprocessing framework
-(Arjun)[https://www.github.com/meelgroup/arjun]. Arjun was conceived to
-minimize input formulas for model counting, but it can also be used for
-non-model-counting purposes. However, it cannot produce a solution to the
-original CNF given a solution to the simplified CNF. This current limitation
-will eventually be lifted for Arjun.
-
-Please see the README of Arjun for more details. The basic usage of Arjun is:
-`./arjun --renumber 0 original.cnf simplified.cnf`
+to try out our model counting preprocessor, [Arjun](https://www.github.com/meelgroup/arjun).
 
 Gauss-Jordan elimination
 -----
@@ -457,50 +420,17 @@ sqlite> select count() from sum_cl_use;
 94507
 ```
 
-Configuring a build for a minimal binary&library
------
-The following configures the system to build a bare minimal binary&library. It needs a compiler, but nothing much else:
-
-```
-cmake -DNOZLIB=ON -DSTATS=OFF -DENABLE_TESTING=OFF .
-```
-
 CMake Arguments
 -----
 The following arguments to cmake configure the generated build artifacts. To use, specify options prior to running make in a clean subdirectory: `cmake <options> ..`
 
-- `-DSTATICCOMPILE=<ON/OFF>` -- statically linked library and binary. You must build&link `BreakID` with the same `DSTATICCOMPILE=<ON/OFF>` setting as well. You can get the BreakID library from [our GitHub repository](https://github.com/meelgroup/breakid)
+- `-DSTATICCOMPILE=<ON/OFF>` -- statically linked library and binary.
 - `-DSTATS=<ON/OFF>` -- advanced statistics (slower). Needs [louvain communities](https://github.com/meelgroup/louvain-community) installed.
 - `-DENABLE_TESTING=<ON/OFF>` -- test suite support
-- `-DMIT=<ON/OFF>` -- MIT licensed components only
 - `-DNOMPI=<ON/OFF>` -- without MPI support
 - `-DNOZLIB=<ON/OFF>` -- no gzip DIMACS input support
 - `-DLARGEMEM=<ON/OFF>` -- more memory available for clauses (but slower on most problems)
 - `-DIPASIR=<ON/OFF>` -- Build `libipasircryptominisat.so` for [IPASIR](https://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index-seo.php/IPASIR____IPASIR) interface support
-
-Getting learnt clauses
------
-As an experimental feature, you can get the learnt clauses from the system with the following code, where `lits` is filled with learnt clauses every time `get_next_small_clause` is called. The example below will eventually return all clauses of size 4 or less. You can call `end_getting_small_clauses` at any time.
-
-```
-SATSolver s;
-//fill the solver, run solve, etc.
-
-//Get all clauses of size 4 or less
-
-s->start_getting_small_clauses(4);
-
-vector<Lit> lits;
-bool ret = true;
-while (ret) {
-    bool ret = s->get_next_small_clause(lits);
-    if (ret) {
-        //deal with clause in "lits"
-        add_to_my_db(lits);
-    }
-}
-s->end_getting_small_clauses();
-```
 
 C usage
 -----
