@@ -5439,8 +5439,12 @@ void OccSimplifier::check_clauses_lits_ordered() const
 // Removes blocked clauses and **completely forgets them**
 //    So there is no way to reconstruct the solution
 //    Can be useful to simplify a problem
-void OccSimplifier::blocked_clause_elim()
-{
+void OccSimplifier::blocked_clause_elim() {
+    if (!solver->okay()) return;
+    assert(solver->decisionLevel() == 0);
+    assert(solver->okay());
+    assert(cl_to_free_later.empty());
+
     for(const auto& off: clauses) {
         Clause* cl = solver->cl_alloc.ptr(off);
         if (cl->get_removed() || cl->freed() || cl->red()) continue;
@@ -5470,8 +5474,14 @@ void OccSimplifier::blocked_clause_elim()
             if (all_blocking) { can_remove = true; break; }
         }
         for(const auto& l: *cl) seen[l.toInt()] = 0;
+        auto old_stats = cl->stats;
+        old_stats.which_red_array = 2;
         if (!can_remove) continue;
+        vector<Lit> tmp(cl->begin(), cl->end());
         unlink_clause(off);
+
+        // Add back as redundant
+        full_add_clause(tmp, weaken_dummy, &old_stats, true);
     }
 }
 
