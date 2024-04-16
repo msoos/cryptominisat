@@ -1321,6 +1321,12 @@ DLL_PUBLIC vector<uint32_t> SATSolver::translate_sampl_set(
     return data->solvers[0]->translate_sampl_set(sampl_set, also_removed);
 }
 
+
+DLL_PUBLIC void SATSolver::reverse_bce() {
+    return data->solvers[0]->reverse_bce();
+
+}
+
 void DLL_PUBLIC SATSolver::set_min_bva_gain(uint32_t min_bva_gain)
 {
     for (auto & solver : data->solvers) {

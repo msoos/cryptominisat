@@ -5474,3 +5474,106 @@ void OccSimplifier::blocked_clause_elim()
         unlink_clause(off);
     }
 }
+
+void OccSimplifier::reverse_blocked_clause_elim() {
+    auto orig_trail_size = solver->trail_size();
+    if (!setup()) return;
+    assert(solver->conf.sampling_vars_set);
+
+    assert(!solver->fast_backw.fast_backw_on);
+    sampling_vars_occsimp.clear();
+    sampling_vars_occsimp.resize(solver->nVars(), false);
+    for(uint32_t outer_var: solver->conf.sampling_vars) {
+        outer_var = solver->varReplacer->get_var_replaced_with_outer(outer_var);
+        uint32_t int_var = solver->map_outer_to_inter(outer_var);
+        if (int_var < solver->nVars()) {
+            sampling_vars_occsimp[int_var] = true;
+        }
+    }
+    verb_print(2, "[rev-bce] sampl set: " << solver->conf.sampling_vars.size());
+
+    uint32_t works = 0;
+    for(uint32_t v = 0; v < solver->nVars(); v++) {
+        if (sampling_vars_occsimp[v]) continue;
+        Lit lit(v, false);
+        bool bad = false;
+        /* cout << "rev-bce checking lit: " << lit << endl; */
+        for(const auto& w: solver->watches[lit]) {
+            if (bad) break;
+            if (w.isBin()) {
+                if (w.red()) continue;
+                Lit l2 = w.lit2();
+                /* cout << lit << " " << l2 << endl; */
+                if (!sampling_vars_occsimp[l2.var()]) {
+                    /* cout << "bad." << endl; */
+                    bad=true; break;}
+            }
+            if (w.isClause()) {
+                Clause* cl = solver->cl_alloc.ptr(w.get_offset());
+                if (cl->get_removed() || cl->freed() || cl->red()) continue;
+                /* cout << *cl << endl; */
+                for(const auto& l2: *cl) {
+                    if (l2.var() == v) continue;
+                    if (!sampling_vars_occsimp[l2.var()]) {
+                        /* cout << "bad:" << l2 << endl; */
+                        bad=true; break;}
+                }
+            }
+        }
+        if (bad) continue;
+        for(const auto& w: solver->watches[~lit]) {
+            if (bad) break;
+            if (w.isBin()) {
+                if (w.red()) continue;
+                Lit l2 = w.lit2();
+                /* cout << lit << " " << l2 << endl; */
+                if (!sampling_vars_occsimp[l2.var()]) {
+                    /* cout << "bad:" << l2 << endl; */
+                    bad=true; break;}
+            }
+            if (w.isClause()) {
+                Clause* cl = solver->cl_alloc.ptr(w.get_offset());
+                if (cl->get_removed() || cl->freed() || cl->red()) continue;
+                /* cout << *cl << endl; */
+                for(const auto& l2: *cl) {
+                    if (l2.var() == v) continue;
+                    if (!sampling_vars_occsimp[l2.var()]) {
+                        /* cout << "bad:" << l2 << endl; */
+                        bad=true; break;}
+                }
+            }
+        }
+        if (bad) continue;
+
+        works++;
+        cout << "works for var: " << lit << endl;
+        for(const auto& w: solver->watches[lit]) {
+            if (w.isBin()) {
+                if (w.red()) continue;
+                Lit l2 = w.lit2();
+                cout << lit << " " << l2 << endl;
+            }
+            if (w.isClause()) {
+                Clause* cl = solver->cl_alloc.ptr(w.get_offset());
+                if (cl->get_removed() || cl->freed() || cl->red()) continue;
+                cout << *cl << endl;
+            }
+        }
+        for(const auto& w: solver->watches[~lit]) {
+            if (w.isBin()) {
+                if (w.red()) continue;
+                Lit l2 = w.lit2();
+                cout << lit << " " << l2 << endl;
+            }
+            if (w.isClause()) {
+                Clause* cl = solver->cl_alloc.ptr(w.get_offset());
+                if (cl->get_removed() || cl->freed() || cl->red()) continue;
+                cout << *cl << endl;
+            }
+        }
+        cout << "--" << endl;
+    }
+    verb_print(1, "[rev-bce] works: " << works);
+
+    finish_up(orig_trail_size);
+}

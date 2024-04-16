@@ -3711,6 +3711,21 @@ void Solver::detach_clauses_in_xors() {
         << conf.print_times(cpuTime() - my_time));
 }
 
+bool Solver::removed_var_ext(uint32_t var) const {
+
+    var = varReplacer->get_var_replaced_with_outer(var);
+    var = map_outer_to_inter(var);
+    if (value(var) != l_Undef) return true;
+    if (varData[var].removed != Removed::none) return true;
+    return false;
+}
+
+void Solver::reverse_bce() {
+    assert(okay());
+    occsimplifier->reverse_blocked_clause_elim();
+}
+
+
 /* // This needs to be an AIG actually, with an order of what to calculate first. */
 /* void Solver::get_var_map(vector<Lit>& var_map, map<uint32_t, bool>& var_set) const { */
 

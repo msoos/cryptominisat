@@ -138,6 +138,7 @@ class Solver : public Searcher
         void end_getting_constraints();
         vector<uint32_t> translate_sampl_set(
                 const vector<uint32_t>& sampl_set, bool also_removed);
+        void reverse_bce();
 
         //Version
         static const char* get_version_tag();
@@ -591,12 +592,6 @@ inline void Solver::free_cl(
     }
     #endif
     cl_alloc.clauseFree(offs);
-}
-
-inline bool Solver::removed_var_ext(uint32_t var) const
-{
-    var = map_outer_to_inter(var);
-    return value(var) != l_Undef || varData[var].removed != Removed::none;
 }
 
 } //end namespace
