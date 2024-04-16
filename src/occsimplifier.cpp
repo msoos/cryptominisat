@@ -5445,7 +5445,8 @@ void OccSimplifier::blocked_clause_elim() {
     assert(solver->okay());
     assert(cl_to_free_later.empty());
 
-    for(const auto& off: clauses) {
+    for(uint32_t i = 0; i < clauses.size(); i++) {
+        const ClOffset off = clauses[i];
         Clause* cl = solver->cl_alloc.ptr(off);
         if (cl->get_removed() || cl->freed() || cl->red()) continue;
         for(const auto& l: *cl) seen[l.toInt()] = true;
