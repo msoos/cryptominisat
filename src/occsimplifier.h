@@ -151,7 +151,6 @@ public:
     void fill_tocheck_seen(const vec<Watched>& ws, vector<uint32_t>& tocheck);
     void delete_component_unconnected_to_assumps(); //for arjun
     void strengthen_dummy_with_bins(const bool avoid_redundant);
-    void blocked_clause_elim();
     void reverse_blocked_clause_elim();
     bool lit_rem_with_or_gates();
     bool cl_rem_with_or_gates();

@@ -2304,8 +2304,6 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         } else if (token == "occ-lit-rem") {
             //TODO FRAT -- broken UNSAT actually!! :(
             if (!solver->frat->enabled()) all_occ_based_lit_rem();
-        } else if (token == "occ-bce") {
-            blocked_clause_elim();
         } else if (token == "occ-clean-implicit") {
             //BUG TODO
             //solver->clauseCleaner->clean_implicit_clauses();
@@ -5433,56 +5431,6 @@ void OccSimplifier::check_clauses_lits_ordered() const
                 assert(false);
             }
         }
-    }
-}
-
-// Removes blocked clauses and **completely forgets them**
-//    So there is no way to reconstruct the solution
-//    Can be useful to simplify a problem
-void OccSimplifier::blocked_clause_elim() {
-    if (!solver->okay()) return;
-    assert(solver->decisionLevel() == 0);
-    assert(solver->okay());
-    assert(cl_to_free_later.empty());
-
-    for(uint32_t i = 0; i < clauses.size(); i++) {
-        const ClOffset off = clauses[i];
-        Clause* cl = solver->cl_alloc.ptr(off);
-        if (cl->get_removed() || cl->freed() || cl->red()) continue;
-        for(const auto& l: *cl) seen[l.toInt()] = true;
-        bool can_remove = false;
-        for(const auto& l: *cl) {
-            if (solver->var_inside_assumptions(l.var()) != l_Undef) continue;
-            bool all_blocking = true;
-            for(const auto& w: solver->watches[~l]) {
-                assert(!w.isBNN() && "TODO");
-                if (w.isBin()) {
-                    if (w.red()) continue;
-                    if (seen[(~w.lit2()).toInt()]) continue;
-                    all_blocking = false; break;
-                }
-                assert(w.isClause() && "Index not allowed");
-                ClOffset off2 = w.get_offset();
-                Clause* cl2 = solver->cl_alloc.ptr(off2);
-                if (cl2->get_removed() || cl2->freed() || cl2->red()) continue;
-                bool found_blocking_lit = false;
-                for(const auto& l2: *cl2) {
-                    if (l2 == ~l) continue;
-                    if (seen[(~l2).toInt()]) {found_blocking_lit = true; break;}
-                }
-                if (!found_blocking_lit) {all_blocking = false; break;}
-            }
-            if (all_blocking) { can_remove = true; break; }
-        }
-        for(const auto& l: *cl) seen[l.toInt()] = 0;
-        auto old_stats = cl->stats;
-        old_stats.which_red_array = 2;
-        if (!can_remove) continue;
-        vector<Lit> tmp(cl->begin(), cl->end());
-        unlink_clause(off);
-
-        // Add back as redundant
-        full_add_clause(tmp, weaken_dummy, &old_stats, true);
     }
 }
 
