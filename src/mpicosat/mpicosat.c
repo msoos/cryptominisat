@@ -2277,18 +2277,11 @@ write_rup_header (PS * ps, FILE * file)
 }
 
 void alloc_enough(struct TraceData* dat) {
-    if (dat->data == 0) {
-        dat->data = malloc(1024);
-        assert(dat->data != 0);
-        dat->capacity = 1024;
-        dat->size = 0;
-    }
     if (dat->capacity == dat->size) {
-        int32_t toalloc = dat->capacity*2;
-        int* ret = realloc(dat->data, toalloc);
+        int* ret = realloc(dat->data, dat->capacity*2*sizeof(int));
         assert(ret != 0);
         dat->data = ret;
-        dat->capacity = toalloc;
+        dat->capacity *= 2;
     }
 }
 
@@ -6211,8 +6204,7 @@ trace_lits_dat (PS * ps, Cls * c, struct TraceData* dat)
   assert (c);
   assert (c->core);
 
-  for (p = c->lits; p < eol; p++)
-      write_one(dat, LIT2INT (*p));
+  for (p = c->lits; p < eol; p++) write_one(dat, LIT2INT (*p));
   write_one(dat, 0);
 }
 
