@@ -27,7 +27,7 @@ import sys
 import os
 from setuptools import Extension, setup
 import sysconfig
-import toml
+import tomli as toml
 import pathlib
 from sys import platform
 
