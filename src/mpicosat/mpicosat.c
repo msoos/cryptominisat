@@ -36,10 +36,8 @@ IN THE SOFTWARE.
  */
 #define NADC
 
-/* By default we enable failed literals, since 'NFL' is undefined.
- *
+/* By default we enable failed literals, since 'NFL' is undefined.*/
 #define NFL
- */
 
 /* By default we 'detach satisfied (large) clauses', e.g. NDSC undefined.
  *
