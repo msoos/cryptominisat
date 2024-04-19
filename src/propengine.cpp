@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include <iomanip>
 #include <algorithm>
 
+#include "constants.h"
 #include "solver.h"
 #include "clauseallocator.h"
 #include "clause.h"
@@ -123,6 +124,20 @@ void PropEngine::attachClause(
     watches[c[1]].push(Watched(offset, blocked_lit));
 }
 
+void PropEngine::attach_xor_clause(uint32_t at) {
+    Xor& x = xorclauses[at];
+    assert(x.size() > 2);
+    DEBUG_ATTACH_MORE_DO(for (const auto& v: x) assert(varData[v].removed == Removed::none));
+
+    assert(value(x[0]) == l_Undef);
+    assert(value(x[1]) == l_Undef);
+    auto w = GaussWatched::plain_xor(at);
+    gwatches[x[0]].push(w);
+    gwatches[x[1]].push(w);
+    x.watched[0] = 0;
+    x.watched[1] = 1;
+}
+
 /**
 @brief Detaches a (potentially) modified clause
 
@@ -144,8 +159,11 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
 {
     VERBOSE_PRINT("PropEngine::gauss_jordan_elim called, declev: "
         << decisionLevel() << " lit to prop: " << p);
+    const uint32_t pv = p.var();
 
-    if (gmatrices.empty()) return PropBy();
+    if (gmatrices.empty() && xorclauses.empty()) return PropBy();
+
+    // reset gqueuedata and update set vars in gmatrices
     for(uint32_t i = 0; i < gqueuedata.size(); i++) {
         if (gqueuedata[i].disabled || !gmatrices[i]->is_initialized()) continue;
         gqueuedata[i].reset();
@@ -153,41 +171,95 @@ PropBy PropEngine::gauss_jordan_elim(const Lit p, const uint32_t currLevel)
     }
 
     bool confl_in_gauss = false;
-    assert(gwatches.size() > p.var());
-    vec<GaussWatched>& ws = gwatches[p.var()];
+    assert(gwatches.size() > pv);
+    vec<GaussWatched>& ws = gwatches[pv];
     GaussWatched* i = ws.begin();
     GaussWatched* j = i;
     const GaussWatched* end = ws.end();
 
+    PropBy confl;
     for (; i != end; i++) {
-        if (gqueuedata[i->matrix_num].disabled || !gmatrices[i->matrix_num]->is_initialized())
-            continue; //remove watch and continue
+        if (i->matrix_num == 1000) {
+            const uint32_t at = i->row_n;
+            auto& x = xorclauses[at];
+            bool which; // which watch is this
+            SLOW_DEBUG_DO(assert(!x.trivial()));
+            SLOW_DEBUG_DO(assert(x.watched[0] < x.size()));
+            SLOW_DEBUG_DO(assert(x.watched[1] < x.size()));
+            if (pv == x[x.watched[0]]) which = 0;
+            else {which = 1;
+                if (x[x.watched[1]] != pv) {
+                    cout << "ERROR. Going through pv: " << pv+1 << " xor: " << x << endl;
+                }
+                assert(x[x.watched[1]] == pv);}
 
-        gqueuedata[i->matrix_num].new_resp_var = numeric_limits<uint32_t>::max();
-        gqueuedata[i->matrix_num].new_resp_row = numeric_limits<uint32_t>::max();
-        gqueuedata[i->matrix_num].do_eliminate = false;
-        gqueuedata[i->matrix_num].currLevel = currLevel;
-
-        if (gmatrices[i->matrix_num]->find_truths(
-            i, j, p.var(), i->row_n, gqueuedata[i->matrix_num])
-        ) {
-            continue;
+            uint32_t unknown = 0;
+            uint32_t unknown_at = 0;
+            bool rhs = false;
+            for(uint32_t i2 = 0; i2 < x.size(); i2++) {
+                if (solver->value(x[i2]) == l_Undef) {
+                    unknown ++; unknown_at = i2;
+                    if (i2 != x.watched[!which]) {
+                        // it's not the other watch. So we can update current
+                        // watch to this
+                        gwatches[x[i2]].push(GaussWatched::plain_xor(at));
+                        x.watched[which] = i2;
+                        /* cout << "found new watch for xor: " << x << endl; */
+                        goto next;
+                    }
+                } else rhs ^= solver->value(x[i2]) == l_True;
+            }
+            assert(unknown < 2);
+            if (unknown == 1) {
+                // this is the OTHER watch for sure
+                /* cout << "propagating because of xor: " << x << endl; */
+                assert(unknown_at == x.watched[!which]);
+                x.prop_confl_watch = !which;
+                enqueue<false>(Lit(x.vars[unknown_at], rhs == x.rhs), decisionLevel(), PropBy(1000, at));
+                *j++ = *i;
+                goto next;
+            }
+            assert(unknown == 0);
+            if (rhs != x.rhs) {
+                /* cout << "conflict because of xor: " << x << endl; */
+                x.prop_confl_watch = 2 + which;
+                confl = PropBy(1000, at);
+                *j++ = *i;
+                i++;
+                break;
+            } else {
+                /* cout << "satisfied xor: " << x << endl; */
+                *j++ = *i;
+            }
         } else {
-            confl_in_gauss = true;
-            i++;
-            break;
+            SLOW_DEBUG_DO(assert(i->matrix_num < gmatrices.size()));
+            if (!gmatrices[i->matrix_num]->is_initialized()) continue; //remove watch and continue
+            gqueuedata[i->matrix_num].new_resp_var = numeric_limits<uint32_t>::max();
+            gqueuedata[i->matrix_num].new_resp_row = numeric_limits<uint32_t>::max();
+            gqueuedata[i->matrix_num].do_eliminate = false;
+            gqueuedata[i->matrix_num].currLevel = currLevel;
+
+            if (gmatrices[i->matrix_num]->find_truths( i, j, pv, i->row_n, gqueuedata[i->matrix_num])) {
+                continue;
+            } else {
+                confl_in_gauss = true;
+                i++;
+                break;
+            }
         }
+        next:;
     }
 
     for (; i != end; i++) *j++ = *i;
     ws.shrink(i-j);
+    if (confl != PropBy()) return confl;
 
     for (size_t g = 0; g < gqueuedata.size(); g++) {
         if (gqueuedata[g].disabled || !gmatrices[g]->is_initialized())
             continue;
 
         if (gqueuedata[g].do_eliminate) {
-            gmatrices[g]->eliminate_col(p.var(), gqueuedata[g]);
+            gmatrices[g]->eliminate_col(pv, gqueuedata[g]);
             confl_in_gauss |= (gqueuedata[g].ret == gauss_res::confl);
         }
     }
@@ -532,14 +604,12 @@ bool PropEngine::prop_long_cl_any_order(
         *j++ = *i;
         return true;
     }
-    if (inprocess) {
-        propStats.bogoProps += 4;
-    }
+    if (inprocess) propStats.bogoProps += 4;
     const ClOffset offset = i->get_offset();
     Clause& c = *cl_alloc.ptr(offset);
 
     #ifdef SLOW_DEBUG
-    assert(!c.getRemoved());
+    assert(!c.get_removed());
     assert(!c.freed());
     if (!use_disable) {
         assert(!c.disabled);
@@ -556,9 +626,8 @@ bool PropEngine::prop_long_cl_any_order(
         return true;
     }
 
-    if (prop_normal_helper<inprocess>(c, offset, j, p) == PROP_NOTHING) {
+    if (prop_normal_helper<inprocess>(c, offset, j, p) == PROP_NOTHING)
         return true;
-    }
 
     // Did not find watch -- clause is unit under assignment:
     *j++ = *i;
@@ -605,7 +674,7 @@ bool PropEngine::prop_long_cl_any_order(
 
 void CMSat::PropEngine::reverse_one_bnn(uint32_t idx, BNNPropType t) {
     BNN* const bnn= bnns[idx];
-    SLOW_DEBUG_DO(assert(bnn != NULL));
+    SLOW_DEBUG_DO(assert(bnn != nullptr));
     switch(t) {
         case bnn_neg_t:
             bnn->ts--;
@@ -647,7 +716,7 @@ PropBy PropEngine::propagate_any_order()
     PropBy confl;
     VERBOSE_PRINT("propagate_any_order started");
 
-    while (qhead < trail.size() && confl.isNULL()) {
+    while (qhead < trail.size() && confl.isnullptr()) {
         const Lit p = trail[qhead].lit;     // 'p' is enqueued fact to propagate.
         varData[p.var()].propagated = true;
         watch_subarray ws = watches[~p];
@@ -665,12 +734,8 @@ PropBy PropEngine::propagate_any_order()
             // propagate binary clause
             if (likely(i->isBin())) {
                 *j++ = *i;
-                if (!red_also && i->red()) {
-                    continue;
-                }
-                if (distill_use && i->bin_cl_marked()) {
-                    continue;
-                }
+                if (!red_also && i->red()) continue;
+                if (distill_use && i->bin_cl_marked()) continue;
                 prop_bin_cl<inprocess>(i, p, confl, currLevel);
                 continue;
             }
@@ -678,8 +743,7 @@ PropBy PropEngine::propagate_any_order()
             // propagate BNN constraint
             if (i->isBNN()) {
                 *j++ = *i;
-                const lbool val = bnn_prop(
-                    i->get_bnn(), currLevel, p, i->get_bnn_prop_t());
+                const lbool val = bnn_prop(i->get_bnn(), currLevel, p, i->get_bnn_prop_t());
                 if (val == l_False) confl = PropBy(i->get_bnn(), nullptr);
                 continue;
             }
@@ -696,15 +760,13 @@ PropBy PropEngine::propagate_any_order()
         VERBOSE_PRINT("prop went through watchlist of " << p);
 
         //distillation would need to generate TBDD proofs to simplify clauses with GJ
-        if (confl.isNULL() && !distill_use) {
-            confl = gauss_jordan_elim(p, currLevel);
-        }
+        if (confl.isnullptr() && !distill_use) confl = gauss_jordan_elim(p, currLevel);
 
         qhead++;
     }
 
     #ifdef SLOW_DEBUG
-    if (confl.isNULL() && !distill_use) {
+    if (confl.isnullptr() && !distill_use) {
         for (size_t g = 0; g < gqueuedata.size(); g++) {
             if (gqueuedata[g].disabled) continue;
             gmatrices[g]->check_invariants();
@@ -713,7 +775,7 @@ PropBy PropEngine::propagate_any_order()
     #endif
 
 // For BNN debugging
-//     if (confl.isNULL()) {
+//     if (confl.isnullptr()) {
 //         for(uint32_t idx = 0; idx < bnns.size(); idx++) {
 //             auto& bnn = bnns[idx];
 //             if (!bnn) continue;
@@ -765,13 +827,11 @@ void PropEngine::printWatchList(const Lit lit) const
 }
 
 void PropEngine::updateVars(
-    [[maybe_unused]] const vector<uint32_t>& outerToInter,
-    [[maybe_unused]] const vector<uint32_t>& interToOuter
+    [[maybe_unused]] const vector<uint32_t>& outer_to_inter,
+    [[maybe_unused]] const vector<uint32_t>& inter_to_outer
 ) {
     //Trail is NOT correct, only its length is correct
-    for(Trail& t: trail) {
-        t.lit = lit_Undef;
-    }
+    for(Trail& t: trail) t.lit = lit_Undef;
 }
 
 void PropEngine::print_trail()
@@ -799,26 +859,20 @@ bool PropEngine::propagate_occur(int64_t* limit_to_decrease)
 
         //Go through each occur
         *limit_to_decrease -= 1;
-        for (const Watched* it = ws.begin(), *end = ws.end()
-            ; it != end
-            ; ++it
-        ) {
-            if (it->isClause()) {
+        for (const auto& w: ws) {
+            if (w.isClause()) {
                 *limit_to_decrease -= 1;
-                if (!prop_long_cl_occur<inprocess>(it->get_offset())) ret = false;
+                if (!prop_long_cl_occur<inprocess>(w.get_offset())) ret = false;
             }
-            if (it->isBin()) {
-                if (!prop_bin_cl_occur<inprocess>(*it)) ret = false;
-            }
-            assert(!it->isBNN());
+            if (w.isBin()) if (!prop_bin_cl_occur<inprocess>(w)) ret = false;
+            assert(!w.isBNN());
         }
     }
     assert(gmatrices.empty());
 
     if (decisionLevel() == 0 && !ret) {
         *frat << add << ++clauseID << fin;
-        assert(unsat_cl_ID == 0);
-        unsat_cl_ID = clauseID;
+        set_unsat_cl_id(clauseID);
     }
 
     return ret;
@@ -838,13 +892,10 @@ inline bool PropEngine::prop_bin_cl_occur(
 }
 
 template<bool inprocess>
-inline bool PropEngine::prop_long_cl_occur(
-    const ClOffset offset)
-{
+inline bool PropEngine::prop_long_cl_occur(const ClOffset offset) {
     const Clause& cl = *cl_alloc.ptr(offset);
     assert(!cl.freed() && "Cannot be already freed in occur");
-    if (cl.getRemoved())
-        return true;
+    if (cl.get_removed()) return true;
 
     Lit lastUndef = lit_Undef;
     uint32_t numUndef = 0;
@@ -861,19 +912,11 @@ inline bool PropEngine::prop_long_cl_occur(
             lastUndef = lit;
         }
     }
-    if (satcl)
-        return true;
-
-    //Problem is UNSAT
-    if (numUndef == 0) {
-        return false;
-    }
-
-    if (numUndef > 1)
-        return true;
+    if (satcl) return true;
+    if (numUndef == 0) return false; //Problem is UNSAT
+    if (numUndef > 1) return true;
 
     enqueue<inprocess>(lastUndef);
-
     return true;
 }
 
@@ -1030,4 +1073,73 @@ void PropEngine::vmtf_bump_queue (const uint32_t var) {
     vmtf_btab[var] = ++stats_bumped;
     VERBOSE_PRINT("vmtf moved to last element in queue the variable " << var+1 << " and vmtf_bumped to " << vmtf_btab[var]);
     if (value(var) == l_Undef) vmtf_update_queue_unassigned(var);
+}
+
+
+vector<Lit>* PropEngine::get_xor_reason(const PropBy& reason, int32_t& ID) {
+    frat_func_start();
+    if (reason.get_matrix_num() == 1000) {
+        auto& x = xorclauses[reason.get_row_num()];
+        if (frat->enabled()) {
+            if (x.reason_cl_ID != 0) *frat << del << x.reason_cl_ID << x.reason_cl << fin;
+            x.reason_cl_ID = 0;
+        }
+        x.reason_cl.clear();
+        uint32_t pc_var;
+        if (x.prop_confl_watch < 2) {
+            //propagation
+            const auto prop_at = x.watched[x.prop_confl_watch];
+            pc_var = x.vars[prop_at];
+            assert(value(pc_var) != l_Undef);
+            const auto prop = Lit(pc_var, value(pc_var) == l_False);
+            assert(value(prop) == l_True);
+            x.reason_cl.push_back(prop);
+        } else {
+            //conflict
+            assert(x.prop_confl_watch < 4);
+            const auto confl_at = x.watched[x.prop_confl_watch-2];
+            pc_var = x.vars[confl_at];
+            assert(value(pc_var) != l_Undef);
+            const auto confl = Lit(pc_var, value(pc_var) == l_True);
+            assert(value(confl) == l_False);
+            x.reason_cl.push_back(confl);
+        }
+        bool rhs = false;
+        for(const auto& v: x.vars) {
+            rhs ^= value(v) == l_True;
+            if (v == pc_var) continue;
+            assert(value(v) != l_Undef);
+            auto lit = Lit(v, value(v) == l_True);
+            assert(value(lit) == l_False);
+            x.reason_cl.push_back(lit);
+        }
+#ifdef VERBOSE_DEBUG
+        cout << "XOR Reason: " << x.reason_cl << endl;
+        for(const auto& l: x.reason_cl) {
+            cout
+            << "l: " << l
+            << " value: " << value(l)
+            << " level:" << varData[l.var()].level
+            << " type: " << removed_type_to_string(varData[l.var()].removed)
+            << endl;
+        }
+        cout << "XOR Propagating? " << (int)(x.propagating_watch<2) << endl;
+#endif
+
+        // Some sanity checks
+        if (x.prop_confl_watch < 2) assert(rhs == x.rhs && "It's a prop, so rhs must match");
+        else assert(rhs != x.rhs && "It's a confl, so rhs must not match");
+
+        if (frat->enabled()) {
+            x.reason_cl_ID = ++clauseID;
+            *frat << implyclfromx << x.reason_cl_ID << x.reason_cl << FratFlag::fratchain << x.XID << fin;
+            ID = x.reason_cl_ID;
+        }
+        frat_func_end();
+        return &x.reason_cl;
+    } else {
+        return gmatrices[reason.get_matrix_num()]->get_reason(reason.get_row_num(), ID);
+        frat_func_end();
+
+    }
 }

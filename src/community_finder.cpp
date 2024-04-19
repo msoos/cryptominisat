@@ -54,7 +54,7 @@ void CMSat::CommunityFinder::compute()
         return;
     }
 
-    double myTime = cpuTime();
+    double my_time = cpuTime();
     map<pair<uint32_t, uint32_t>, long double> edges;
 
     //Binary clauses
@@ -137,7 +137,7 @@ void CMSat::CommunityFinder::compute()
     }
 
 
-    double time_passed = cpuTime() - myTime;
+    double time_passed = cpuTime() - my_time;
     if (solver->conf.verbosity) {
         cout << "c [louvain] Louvain communities found. T: "
         << std::fixed << std::setprecision(2)

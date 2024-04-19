@@ -52,7 +52,7 @@ bool DistillerLongWithImpl::distill_long_with_implicit(const bool alsoStrengthen
     assert(solver->ok);
     numCalls++;
     if (!solver->clauseCleaner->remove_and_clean_all()) goto end;
-    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
+    frat_func_start();
 
     runStats.redWatchBased.clear();
     runStats.irredWatchBased.clear();
@@ -86,7 +86,7 @@ end:
             runStats.print_short(solver);
     }
     runStats.clear();
-    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
+    frat_func_end();
 
     return solver->okay();
 }
@@ -254,7 +254,7 @@ bool DistillerLongWithImpl::remove_or_shrink_clause(Clause& cl, ClOffset& offset
     timeAvailable -= (long)lits.size()*2 + 50;
     ClauseStats backup_stats(cl.stats);
     Clause* c2 = solver->add_clause_int(lits, cl.red(), &backup_stats);
-    if (c2 != NULL) {
+    if (c2 != nullptr) {
         solver->detachClause(offset);
         // new clause will inherit this clause's ID
         // so let's set this to 0, this way, when we free() it, it won't be
@@ -278,7 +278,7 @@ uint64_t DistillerLongWithImpl::calc_time_available(
     , const bool red
 ) const {
     //If it hasn't been to successful until now, don't do it so much
-    const Stats::WatchBased* stats = NULL;
+    const Stats::WatchBased* stats = nullptr;
     if (red) {
         stats = &(globalStats.redWatchBased);
     } else {
@@ -311,7 +311,7 @@ bool DistillerLongWithImpl::sub_str_all_cl_with_watch(
     assert(solver->ok);
 
     //Stats
-    double myTime = cpuTime();
+    double my_time = cpuTime();
 
     const int64_t orig_time_available = calc_time_available(alsoStrengthen, red);
     timeAvailable = orig_time_available;
@@ -329,7 +329,6 @@ bool DistillerLongWithImpl::sub_str_all_cl_with_watch(
     size_t i = 0;
     size_t j = i;
     ClOffset offset;
-    Clause* cl;
     const size_t end = clauses.size();
     for (
         ; i < end
@@ -345,17 +344,7 @@ bool DistillerLongWithImpl::sub_str_all_cl_with_watch(
 
         //Check status
         offset = clauses[i];
-        if (need_to_finish) {
-            goto copy;
-        }
-
-        cl = solver->cl_alloc.ptr(offset);
-        if (cl->used_in_xor() &&
-            solver->conf.force_preserve_xors)
-        {
-            goto copy;
-        }
-
+        if (need_to_finish) goto copy;
         if (sub_str_cl_with_watch(offset, alsoStrengthen)) {
             solver->detachClause(offset);
             solver->free_cl(offset);
@@ -372,7 +361,7 @@ bool DistillerLongWithImpl::sub_str_all_cl_with_watch(
 
     dump_stats_for_sub_str_all_cl_with_watch(red
         , alsoStrengthen
-        , myTime
+        , my_time
         , orig_time_available
     );
 
@@ -382,11 +371,11 @@ bool DistillerLongWithImpl::sub_str_all_cl_with_watch(
 void DistillerLongWithImpl::dump_stats_for_sub_str_all_cl_with_watch(
     bool red
     , bool alsoStrengthen
-    , double myTime
+    , double my_time
     , double orig_time_available
 ) {
     //Set stats
-    const double time_used = cpuTime() - myTime;
+    const double time_used = cpuTime() - my_time;
     const bool time_out = timeAvailable < 0;
     const double time_remain = float_div(timeAvailable, orig_time_available);
     tmpStats.numClSubsumed += watch_based_data.get_cl_subsumed();

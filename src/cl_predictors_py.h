@@ -89,11 +89,11 @@ public:
 
 private:
     double* out_result[3];
-    PyObject *pDict = NULL;
-    PyObject *pFunc = NULL;
+    PyObject *pDict = nullptr;
+    PyObject *pFunc = nullptr;
     PyObject *pRet[3];
-    PyObject *pArray = NULL;
-    PyObject *pArgs = NULL;
+    PyObject *pArray = nullptr;
+    PyObject *pArgs = nullptr;
     PyArrayObject* ret_data[3];
     PyObject* pModule;
 };

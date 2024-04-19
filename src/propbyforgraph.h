@@ -45,7 +45,7 @@ class PropByForGraph
         ) :
             type(10)
             , isize(0)
-            , clause(NULL)
+            , clause(nullptr)
         {
             if (orig.getType() == binary_t) {
                 lits[0] = otherLit;
@@ -54,10 +54,10 @@ class PropByForGraph
                 isize = 2;
             }
             if (orig.isClause()) {
-                if (orig.isNULL()) {
+                if (orig.isnullptr()) {
                     type = 0;
                     isize = 0;
-                    clause = NULL;
+                    clause = nullptr;
                     return;
                 }
                 clause = alloc.ptr(orig.get_offset());
@@ -68,7 +68,7 @@ class PropByForGraph
 
         PropByForGraph() :
             type(0)
-            , clause(NULL)
+            , clause(nullptr)
         {}
 
         PropByForGraph(const PropByForGraph& other) :
@@ -94,9 +94,9 @@ class PropByForGraph
             return isize;
         }
 
-        bool isNULL() const
+        bool isnullptr() const
         {
-            return type == 0 && clause == NULL;
+            return type == 0 && clause == nullptr;
         }
 
         bool isClause() const
@@ -123,7 +123,7 @@ class PropByForGraph
         {
             switch (type) {
                 case 0:
-                    assert(clause != NULL);
+                    assert(clause != nullptr);
                     return (*clause)[i];
 
                 default :
@@ -140,7 +140,7 @@ inline std::ostream& operator<<(
     if (propByFull.isBin()) {
         os << propByFull[0] << " " << propByFull[1];
     } else if (propByFull.isClause()) {
-        if (propByFull.isNULL()) os << "null clause";
+        if (propByFull.isnullptr()) os << "null clause";
         else os << *propByFull.getClause();
     }
     return os;

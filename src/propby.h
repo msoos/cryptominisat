@@ -53,7 +53,7 @@ class PropBy
         uint32_t red_step:bitsize_red_step;
         uint32_t data1:bitsize_data1;
         uint32_t type:bitsize_type;
-        //0: clause, NULL
+        //0: clause, nullptr
         //1: clause, non-null
         //2: binary
         //3: xor
@@ -165,7 +165,7 @@ class PropBy
         {
             //HACK: if we are doing seamless hyper-bin and transitive reduction
             //then if we are at toplevel, .getAncestor()
-            //must work, and return lit_Undef, but at the same time, .isNULL()
+            //must work, and return lit_Undef, but at the same time, .isnullptr()
             //must also work, for conflict generation. So this is a hack to
             //achieve that. What an awful hack.
             if (lit == ~lit_Undef)
@@ -293,7 +293,7 @@ class PropBy
 #endif
         }
 
-        bool isNULL() const
+        bool isnullptr() const
         {
             return type == null_clause_t;
         }
@@ -325,7 +325,7 @@ inline std::ostream& operator<<(std::ostream& os, const PropBy& pb)
             break;
 
         case null_clause_t:
-            os << " NULL";
+            os << " nullptr";
             break;
 
         case bnn_t:

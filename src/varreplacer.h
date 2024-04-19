@@ -26,17 +26,11 @@ THE SOFTWARE.
 #include <vector>
 #include <utility>
 #include <tuple>
-#ifdef ARJUN_SERIALIZE
-#include <boost/serialization/vector.hpp>
-#include <boost/serialization/map.hpp>
-#endif
 
-#include "constants.h"
 #include "solvertypes.h"
 #include "clause.h"
 #include "xor.h"
 #include "watcharray.h"
-#include "simplefile.h"
 
 namespace CMSat {
 
@@ -59,13 +53,14 @@ class VarReplacer
         void new_var(const uint32_t orig_outer);
         void new_vars(const size_t n);
         void save_on_var_memory();
-        bool replace_if_enough_is_found(const size_t limit = 0, uint64_t* bogoprops = NULL, bool* replaced = NULL);
-        uint32_t print_equivalent_literals(bool outer_numbering, std::ostream *os = NULL) const;
+        bool replace_if_enough_is_found(const size_t limit = 0, uint64_t* bogoprops = nullptr
+                , bool* replaced = nullptr);
+        uint32_t print_equivalent_literals(bool outer_numbering, std::ostream *os = nullptr) const;
         void print_some_stats(const double global_cpu_time) const;
         const SCCFinder* get_scc_finder() const;
 
         void extend_model_already_set();
-        void extend_model_set_undef();
+        void extend_model_all();
         void extend_model(const uint32_t var);
         void extend_pop_queue(vector<Lit>& pop);
 
@@ -83,8 +78,8 @@ class VarReplacer
 
         vector<uint32_t> get_vars_replacing(uint32_t var) const;
         void updateVars(
-            const vector<uint32_t>& outerToInter
-            , const vector<uint32_t>& interToOuter
+            const vector<uint32_t>& outer_to_inter
+            , const vector<uint32_t>& inter_to_outer
         );
 
         //Stats
@@ -228,7 +223,7 @@ class VarReplacer
         bool handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2);
 
          //While replacing the implicit clauses we cannot enqeue
-        vector<std::pair<Lit, uint64_t>> delayedEnqueue;
+        vector<std::tuple<Lit, int32_t>> delayedEnqueue;
         bool update_table_and_reversetable(const Lit lit1, const Lit lit2);
         void setAllThatPointsHereTo(const uint32_t var, const Lit lit);
 

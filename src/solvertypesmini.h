@@ -114,9 +114,7 @@ inline std::ostream& operator<<(std::ostream& co, const std::vector<Lit>& lits)
 {
     for (uint32_t i = 0; i < lits.size(); i++) {
         co << lits[i];
-
-        if (i != lits.size()-1)
-            co << " ";
+        if (i != lits.size()-1) co << " ";
     }
 
     return co;
@@ -264,14 +262,14 @@ enum class PolarityMode {
 enum class rst_dat_type {norm, var, cl};
 
 struct FastBackwData {
-    std::vector<Lit>* _assumptions = NULL;
-    std::vector<uint32_t>* indic_to_var  = NULL;
+    std::vector<Lit>* _assumptions = nullptr;
+    std::vector<uint32_t>* indic_to_var  = nullptr;
     uint32_t orig_num_vars = 0;
-    std::vector<uint32_t>* non_indep_vars = NULL;
-    std::vector<uint32_t>* indep_vars = NULL;
+    std::vector<uint32_t>* non_indep_vars = nullptr;
+    std::vector<uint32_t>* indep_vars = nullptr;
     bool fast_backw_on = false;
-    uint32_t* test_var = NULL;
-    uint32_t* test_indic = NULL;
+    uint32_t* test_var = nullptr;
+    uint32_t* test_indic = nullptr;
     uint32_t max_confl = 500;
     uint32_t cur_max_confl = 0;
     uint32_t indep_because_ran_out_of_confl = 0;

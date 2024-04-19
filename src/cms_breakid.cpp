@@ -40,11 +40,11 @@ BreakID::BreakID(Solver* _solver):
 }
 
 void BreakID::updateVars(
-    const vector<uint32_t>& outerToInter
-    , const vector<uint32_t>& /*interToOuter*/)
+    const vector<uint32_t>& outer_to_inter
+    , const vector<uint32_t>& /*inter_to_outer*/)
 {
     if (symm_var != var_Undef) {
-        symm_var = getUpdatedVar(symm_var, outerToInter);
+        symm_var = getUpdatedVar(symm_var, outer_to_inter);
     }
 }
 
@@ -182,7 +182,7 @@ bool BreakID::add_clauses()
     for(ClOffset offs: dedup_cls) {
         const Clause* cl = solver->cl_alloc.ptr(offs);
         assert(!cl->freed());
-        assert(!cl->getRemoved());
+        assert(!cl->get_removed());
 
         if (add_this_clause(*cl) == add_cl_ret::unsat) {
             return false;
@@ -217,8 +217,8 @@ bool BreakID::doit()
     CompleteDetachReatacher reattacher(solver);
     reattacher.detach_nonbins();
     remove_duplicates();
-    double myTime = cpuTime();
-    assert(breakid == NULL);
+    double my_time = cpuTime();
+    assert(breakid == nullptr);
     breakid = new BID::BreakID;
     breakid->set_verbosity(0);
     breakid->set_useMatrixDetection(solver->conf.breakid_matrix_detect);
@@ -229,7 +229,7 @@ bool BreakID::doit()
     // We can fail adding clauses if they are UNSAT under the current assumptions
     if (!add_clauses()) {
         delete breakid;
-        breakid = NULL;
+        breakid = nullptr;
 
         bool ok = reattacher.reattachLongs();
         assert(ok);
@@ -259,7 +259,7 @@ bool BreakID::doit()
     //get_outer_permutations();
 
     // Finish up
-    double time_used = cpuTime() - myTime;
+    double time_used = cpuTime() - my_time;
     int64_t remain = breakid->get_steps_remain();
     bool time_out = remain <= 0;
     double time_remain = float_div(remain, set_time_lim);
@@ -279,7 +279,7 @@ bool BreakID::doit()
     }
 
     delete breakid;
-    breakid = NULL;
+    breakid = nullptr;
 
     return solver->okay();
 }
@@ -341,13 +341,13 @@ bool BreakID::check_limits()
 
 void BreakID::remove_duplicates()
 {
-    double myTime = cpuTime();
+    double my_time = cpuTime();
     dedup_cls.clear();
 
     for(ClOffset offs: solver->longIrredCls) {
         Clause* cl = solver->cl_alloc.ptr(offs);
         assert(!cl->freed());
-        assert(!cl->getRemoved());
+        assert(!cl->get_removed());
         assert(!cl->red());
         std::sort(cl->begin(), cl->end());
         cl->stats.hash_val = hash_clause(cl->getData(), cl->size());
@@ -374,7 +374,7 @@ void BreakID::remove_duplicates()
         dedup_cls.resize(prev-dedup_cls.begin());
     }
 
-    double time_used = cpuTime() - myTime;
+    double time_used = cpuTime() - my_time;
     if (solver->conf.verbosity >= 1) {
         cout << "c [breakid] tmp-rem-dup cls"
         << " dupl: " << print_value_kilo_mega(old_size-dedup_cls.size(), false)
@@ -420,13 +420,13 @@ void BreakID::break_symms_in_cms()
         }
         Clause* newcl = solver->add_clause_int(*cl2
             , false //redundant
-            , NULL //stats
+            , nullptr //stats
             , true //attach
-            , NULL //return simplified
+            , nullptr //return simplified
             , true
             , Lit(symm_var, false)
         );
-        if (newcl != NULL) {
+        if (newcl != nullptr) {
             ClOffset offset = solver->cl_alloc.get_offset(newcl);
             solver->longIrredCls.push_back(offset);
         }

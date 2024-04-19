@@ -20,9 +20,9 @@
 
 include_directories( ${PROJECT_SOURCE_DIR} )
 include_directories( ${BOSPHORUS_INCLUDE_DIRS} )
-include_directories( ${TBUDDY_INCLUDE_DIRS} )
 include_directories( ${LOUVAIN_COMMUNITIES_INCLUDE_DIRS} )
 include_directories( SYSTEM ${MPI_INCLUDE_PATH} )
+include_directories( SYSTEM ${GMP_INCLUDE_DIR} )
 
 if (NOT WIN32)
     add_cxx_flag_if_supported("-Wno-bitfield-constant-conversion")
@@ -103,6 +103,9 @@ add_definitions( -DTRACE )
 
 set(cryptoms_lib_files
     cnf.cpp
+    probe.cpp
+    oracle_use.cpp
+    backbone.cpp
     frat.cpp
     propengine.cpp
     varreplacer.cpp
@@ -126,7 +129,6 @@ set(cryptoms_lib_files
     subsumeimplicit.cpp
     datasync.cpp
     reducedb.cpp
-    bva.cpp
     intree.cpp
     searchstats.cpp
     xorfinder.cpp
@@ -142,8 +144,8 @@ set(cryptoms_lib_files
     gaussian.cpp
     packedrow.cpp
     matrixfinder.cpp
-    picosat/picosat.c
-    picosat/version.c
+    mpicosat/mpicosat.c
+    mpicosat/version.c
     oracle/oracle.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
@@ -171,10 +173,6 @@ set(cryptoms_lib_link_libs "")
 set(cryptoms_lib_link_libs
         ${cryptoms_lib_link_libs}
 )
-
-if (tbuddy_FOUND)
-    set(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} tbuddy)
-endif()
 
 if (FINAL_PREDICTOR)
     set(cryptoms_lib_files
@@ -274,6 +272,9 @@ target_link_libraries(cryptominisat5
     LINK_PUBLIC ${cryptoms_lib_link_libs}
     LINK_PUBLIC ${LOUVAIN_COMMUNITIES_LIBRARIES}
     LINK_PUBLIC ${CMAKE_THREAD_LIBS_INIT}
+    LINK_PUBLIC ${GMP_LIBRARIES}
+    LINK_PUBLIC ${cadiback}
+    LINK_PUBLIC ${cadical}
 )
 
 if (NOT WIN32)
@@ -418,6 +419,7 @@ set_target_properties(cryptominisat5-bin PROPERTIES
     OUTPUT_NAME cryptominisat5
     RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
     INSTALL_RPATH_USE_LINK_PATH TRUE)
+
 target_link_libraries(cryptominisat5-bin
     ${cryptoms_exec_link_libs}
 )

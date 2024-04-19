@@ -24,24 +24,15 @@ THE SOFTWARE.
 
 #include <map>
 #include <vector>
-#include <list>
 #include <set>
-#include <queue>
 #include <map>
-#include <iomanip>
-#include <fstream>
-#ifdef ARJUN_SERIALIZE
-#include <boost/serialization/vector.hpp>
-#endif
 
 #include "clause.h"
 #include "solvertypes.h"
 #include "heap.h"
 #include "touchlist.h"
-#include "varupdatehelper.h"
 #include "watched.h"
 #include "watcharray.h"
-#include "simplefile.h"
 struct PicoSAT;
 
 namespace CMSat {
@@ -55,58 +46,24 @@ class ClauseCleaner;
 class SolutionExtender;
 class Solver;
 class SubsumeStrengthen;
-class BVA;
 class GateFinder;
 
 struct ElimedClauses {
-    ElimedClauses()
-    {}
-
-    explicit ElimedClauses(size_t _start, size_t _end) :
-        start(_start)
-        , end(_end)
-        , toRemove(false)
-    {}
-
-    void save_to_file(SimpleOutFile& f) const
-    {
-        f.put_uint32_t(toRemove);
-        f.put_uint64_t(start);
-        f.put_uint64_t(end);
+    ElimedClauses() = default;
+    explicit ElimedClauses(size_t _start, size_t _end, bool _is_xor):
+        start(_start) , end(_end),  is_xor(_is_xor) {}
+    const Lit& at(const uint64_t at, const vector<Lit>& elimed_cls_lits) const {
+        return elimed_cls_lits[start+at];
+    }
+    Lit& at(const uint64_t at, vector<Lit>& elimed_cls_lits) {
+        return elimed_cls_lits[start+at];
     }
 
-    void load_from_file(SimpleInFile& f)
-    {
-        toRemove = f.get_uint32_t();
-        start = f.get_uint64_t();
-        end = f.get_uint64_t();
-    }
-
-    const Lit& at(const uint64_t at, const vector<Lit>& eClsLits) const
-    {
-        return eClsLits[start+at];
-    }
-
-    Lit& at(const uint64_t at, vector<Lit>& eClsLits)
-    {
-        return eClsLits[start+at];
-    }
-
-    uint64_t size() const {
-        return end-start;
-    }
-
-    template<class Archive>
-    void serialize(Archive& ar, const unsigned int /*version*/)
-    {
-        ar & start;
-        ar & end;
-        ar & toRemove;
-    }
-
+    uint64_t size() const { return end-start; }
     uint64_t start;
     uint64_t end;
     bool toRemove = false;
+    bool is_xor = false;
 };
 
 struct BVEStats
@@ -127,61 +84,26 @@ struct BVEStats
 
     BVEStats& operator+=(const BVEStats& other);
 
-    void print_short() const
-    {
-        //About elimination
-        cout
-        << "c [occ-bve]"
-        << " elimed: " << numVarsElimed
-        << " gatefind timeout: " << gatefind_timeouts
-        << endl;
-
-        cout
-        << "c [occ-bve]"
-        << " cl-new: " << newClauses
-        << " tried: " << triedToElimVars
-        << " tested: " << testedToElimVars
-        << endl;
-
-        cout
-        << "c [occ-bve]"
-        << " subs: "  << subsumedByVE
-        << endl;
+    void print_short() const {
+        cout << "c [occ-bve]" << " elimed: " << numVarsElimed
+            << " gatefind timeout: " << gatefind_timeouts << endl;
+        cout << "c [occ-bve]" << " cl-new: " << newClauses << " tried: " << triedToElimVars
+            << " tested: " << testedToElimVars << endl;
+        cout << "c [occ-bve]" << " subs: "  << subsumedByVE << endl;
     }
 
-    void print() const
-    {
-        print_stats_line("c timeouted"
-            , stats_line_percent(varElimTimeOut, numCalls)
-            , "% called"
-        );
-        print_stats_line("c v-elimed"
-            , numVarsElimed
-            , "% vars"
-        );
-
-        print_stats_line("c cl-new"
-            , newClauses
-        );
-
-        print_stats_line("c tried to elim"
-            , triedToElimVars
-        );
-
-        print_stats_line("c cl-elim-bin"
-            , clauses_elimed_bin);
-
-        print_stats_line("c cl-elim-long"
-            , clauses_elimed_long);
-
+    void print() const {
+        print_stats_line("c timeouted" , stats_line_percent(varElimTimeOut, numCalls) , "% called");
+        print_stats_line("c v-elimed" , numVarsElimed , "% vars");
+        print_stats_line("c cl-new" , newClauses);
+        print_stats_line("c tried to elim" , triedToElimVars);
+        print_stats_line("c cl-elim-bin" , clauses_elimed_bin);
+        print_stats_line("c cl-elim-long" , clauses_elimed_long);
         print_stats_line("c cl-elim-avg-s",
             ((double)clauses_elimed_sumsize
             /(double)(clauses_elimed_bin + clauses_elimed_long))
         );
-
-        print_stats_line("c v-elim-sub"
-            , subsumedByVE
-        );
+        print_stats_line("c v-elim-sub" , subsumedByVE);
     }
     void clear() {
         BVEStats tmp;
@@ -206,10 +128,10 @@ public:
 
     // definable vars
     vector<uint32_t> remove_definable_by_irreg_gate(const vector<uint32_t>& vars);
-    void clean_sampl_and_get_empties(vector<uint32_t>& empty_vars, vector<uint32_t>& sampl_vars);
+    void get_empties(vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars);
     bool elim_var_by_str(uint32_t var, const vector<pair<ClOffset, ClOffset>>& cls);
     uint32_t add_cls_to_picosat_definable(const Lit wsLit);
-    PicoSAT* picosat = NULL;
+    PicoSAT* picosat = nullptr;
     int lit_to_picolit(const Lit l);
     uint64_t picolits_added = 0;
     vector<int> var_to_picovar;
@@ -223,14 +145,15 @@ public:
     void save_on_var_memory();
     bool uneliminate(const uint32_t var);
     size_t mem_used() const;
-    size_t mem_used_bva() const;
     uint32_t dump_elimed_clauses(std::ostream* outfile) const;
-    bool get_elimed_clause_at(uint32_t& at,uint32_t& at2, vector<Lit>& out) const;
+    bool get_elimed_clause_at(uint32_t& at,uint32_t& at2, vector<Lit>& out, bool& is_xor) const;
     void subs_with_resolvent_clauses();
     void fill_tocheck_seen(const vec<Watched>& ws, vector<uint32_t>& tocheck);
     void delete_component_unconnected_to_assumps(); //for arjun
     void strengthen_dummy_with_bins(const bool avoid_redundant);
     void blocked_clause_elim();
+    bool lit_rem_with_or_gates();
+    bool cl_rem_with_or_gates();
 
     //UnElimination
     void print_elimed_clauses_reverse() const;
@@ -272,7 +195,6 @@ public:
     //validity checking
     void check_elimed_vars_are_unassigned() const;
     void check_no_marked_clauses();
-    bool getAnythingHasBeenElimed() const;
     void sanityCheckElimedVars() const;
     void printOccur(const Lit lit) const;
     void check_clauses_lits_ordered() const;
@@ -297,7 +219,7 @@ public:
 
     //Setup and teardown. Should be private, but testing needs it to be public
     bool setup();
-    void finishUp(size_t origTrailSize);
+    void finish_up(size_t origTrailSize);
 
     //Ternary resolution. Should be private but testing needs it to be public
     bool ternary_res();
@@ -312,8 +234,6 @@ public:
 private:
     friend class SubsumeStrengthen;
     SubsumeStrengthen* sub_str;
-    friend class BVA;
-    BVA* bva;
     void check_cls_sanity();
 
     bool startup = false;
@@ -339,24 +259,24 @@ private:
     };
     vector<Tri> cl_to_add_ternary;
 
-    //debug
-    bool subsetReverse(const Clause& B) const;
-
     //Persistent data
     Solver*  solver;              ///<The solver this simplifier is connected to
     vector<uint32_t>& seen;
     vector<uint8_t>& seen2;
     vector<Lit>& toClear;
     vector<bool> sampling_vars_occsimp;
+    vector<bool> xorclauses_vars;
 
     //Temporaries
     vector<Lit>     dummy;       ///<Used by merge()
 
     //Time Limits
     uint64_t clause_lits_added;
-    int64_t  strengthening_time_limit;              ///<Max. number self-subsuming resolution tries to do this run
-    int64_t  subsumption_time_limit;              ///<Max. number backward-subsumption tries to do this run
+    int64_t  strengthening_time_limit;
+    int64_t  gate_based_litrem_time_limit;
+    int64_t  subsumption_time_limit;
     int64_t  norm_varelim_time_limit;
+    int64_t  xor_varelim_time_limit;
     int64_t  empty_varelim_time_limit;
     int64_t  varelim_num_limit;
     int64_t  varelim_sub_str_limit;
@@ -456,13 +376,11 @@ private:
         const Lit lit, bool add_to_block = true);
     vector<Lit> tmp_rem_lits;
     vec<Watched> tmp_rem_cls_copy;
-    void        add_clause_to_blck(const vector<Lit>& lits, const uint64_t ID);
+    void        add_clause_to_blck(const vector<Lit>& lits, const int32_t ID);
     void        set_var_as_eliminated(const uint32_t var);
-    bool        can_eliminate_var(const uint32_t var) const;
+    bool        can_eliminate_var(const uint32_t var, const bool ignore_xor = false) const;
     bool        mark_and_push_to_added_long_cl_cls_containing(const Lit lit);
     bool        simulate_frw_sub_str_with_added_cl_to_var();
-    bool        lit_rem_with_or_gates();
-    bool        cl_rem_with_or_gates();
 
 
     TouchList   elim_calc_need_update;
@@ -505,7 +423,7 @@ private:
     void clean_from_red_or_removed(
         const vec<Watched>& in,
         vec<Watched>& out);
-    void        create_dummy_elimed_clause(const Lit lit);
+    void  create_dummy_elimed_clause(const Lit lit, bool is_xor = false);
     vector<OccurClause> tmp_subs;
     bool        test_elim_and_fill_resolvents(uint32_t var);
     void        get_gate(Lit elim_lit, watch_subarray_const poss, watch_subarray_const negs);
@@ -543,12 +461,12 @@ private:
         , watch_subarray_const b
         , vec<Watched>& out_a
         , vec<Watched>& out_b
-        , vec<Watched>* out_a_all = NULL
+        , vec<Watched>* out_a_all = nullptr
     );
     vector<Clause*> toclear_marked_cls;
     set<uint32_t> parities_found;
     void        print_var_eliminate_stat(Lit lit) const;
-    bool        add_varelim_resolvent(vector<Lit>& finalLits, const ClauseStats& stats, bool is_xor);
+    bool        add_varelim_resolvent(vector<Lit>& finalLits, const ClauseStats& stats);
     void        update_varelim_complexity_heap();
     void        print_var_elim_complexity_stats(const uint32_t var) const;
 
@@ -558,34 +476,22 @@ private:
     bool        occ_based_lit_rem(uint32_t var, uint32_t& removed);
     bool        all_occ_based_lit_rem();
 
-    struct ResolventData {
-        ResolventData()
-        {}
-
-        ResolventData(const ClauseStats& cls, const bool _is_xor) :
-            stats(cls),
-            is_xor(_is_xor)
-        {}
-
-        ClauseStats stats;
-        bool is_xor;
-    };
 
     struct Resolvents {
         uint32_t at = 0;
         vector<vector<Lit>> resolvents_lits;
-        vector<ResolventData> resolvents_stats;
+        vector<ClauseStats> resolvents_stats;
         void clear() {
             at = 0;
         }
-        void add_resolvent(const vector<Lit>& res, const ClauseStats& stats, bool is_xor) {
+        void add_resolvent(const vector<Lit>& res, const ClauseStats& stats) {
             if (resolvents_lits.size() < at+1) {
                 resolvents_lits.resize(at+1);
                 resolvents_stats.resize(at+1);
             }
 
             resolvents_lits[at] = res;
-            resolvents_stats[at] = ResolventData(stats, is_xor);
+            resolvents_stats[at] = stats;
             at++;
         }
         vector<Lit>& back_lits() {
@@ -594,11 +500,7 @@ private:
         }
         const ClauseStats& back_stats() const {
             assert(at > 0);
-            return resolvents_stats[at-1].stats;
-        }
-        bool back_xor() const {
-            assert(at > 0);
-            return resolvents_stats[at-1].is_xor;
+            return resolvents_stats[at-1];
         }
         void pop() {
             at--;
@@ -644,6 +546,8 @@ private:
     );
     bool eliminate_vars();
     void eliminate_empty_resolvent_vars();
+    void eliminate_xor_vars();
+    bool only_red_and_idx_occ(const Lit l) const;
 
     /////////////////////
     //Helpers
@@ -652,14 +556,13 @@ private:
 
     /////////////////////
     //Elimed clause elimination
-    bool anythingHasBeenElimed;
-    vector<Lit> eClsLits;
-    vector<ElimedClauses> elimedClauses; ///<maps var(outer!!) to postion in elimedClauses
+    vector<Lit> elimed_cls_lits;
+    vector<ElimedClauses> elimed_cls; ///<maps var(outer!!) to postion in elimedClauses
     vector<uint32_t> blk_var_to_cls;
     vector<int32_t> newly_elimed_cls_IDs; // temporary storage for newly elimed cls' IDs
-    bool elimedMapBuilt;
-    void buildElimedMap();
-    void cleanElimedClauses();
+    bool elimed_map_built;
+    void build_elimed_map();
+    void clean_elimed_cls();
     bool can_remove_elimed_clauses = false;
 
     ///Stats from this run
@@ -672,20 +575,6 @@ private:
 inline const OccSimplifier::Stats& OccSimplifier::get_stats() const
 {
     return globalStats;
-}
-
-inline bool OccSimplifier::getAnythingHasBeenElimed() const
-{
-    return anythingHasBeenElimed;
-}
-
-inline bool OccSimplifier::subsetReverse(const Clause& B) const
-{
-    for (uint32_t i = 0; i != B.size(); i++) {
-        if (!seen[B[i].toInt()])
-            return false;
-    }
-    return true;
 }
 
 inline const SubsumeStrengthen* OccSimplifier::get_sub_str() const

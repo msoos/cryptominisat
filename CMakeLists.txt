@@ -120,28 +120,6 @@ if (STATICCOMPILE)
 #     endif()
 endif()
 
-option(GPU "Use GPU based setup" OFF)
-if (GPU)
-    add_definitions( -DUSE_GPU )
-    enable_language( CUDA )
-endif()
-
-option(NOTBUDDY "Disable the use of tbuddy, even if installed" OFF)
-option(FORCETBUDDY "For the use of tbuddy" OFF)
-if (NOT NOTBUDDY)
-    find_package(tbuddy CONFIG)
-    if (tbuddy_FOUND)
-        MESSAGE(STATUS "OK, found tbuddy: ${TBUDDY}")
-        add_definitions(-DUSE_TBUDDY)
-    else()
-        MESSAGE(STATUS "tbuddy not found, not compiling with tbuddy-based GJ FRAT proofs")
-    endif()
-endif()
-
-if (FORCETBUDDY AND NOT tbuddy_FOUND)
-    MESSAGE(FATAL_ERROR "tbuddy was required but not found. Please install tbuddy.")
-endif ()
-
 option(EMSCRIPTEN "Generate only emscripten JS" OFF)
 if (EMSCRIPTEN)
     set(BUILD_SHARED_LIBS ON)
@@ -242,10 +220,8 @@ if (NOT MSVC)
     #NOTE: out-satrace19-8373595 has confirmed that O3+flto only hurts compared to O2
     #      on gcc version 7.3.0
     add_compile_options("$<$<CONFIG:RELWITHDEBINFO>:-O2>")
-
     add_compile_options("$<$<CONFIG:RELEASE>:-O2>")
     add_compile_options("$<$<CONFIG:RELEASE>:-g0>")
-
     add_compile_options("$<$<CONFIG:DEBUG>:-O0>")
 
     if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -558,6 +534,16 @@ if (NOT NOZLIB AND NOT ((NOT BUILD_SHARED_LIBS) AND WIN32))
 endif()
 
 
+find_library(cadiback
+    PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../cadiback/
+    NAMES cadiback
+    REQUIRED)
+find_library(cadical
+    PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../cadical/build/
+    NAMES cadical
+    REQUIRED)
+
+
 include(CheckFloatPrecision)
 check_float_precision()
 if (HAVE__FPU_SETCW)
@@ -565,9 +551,9 @@ if (HAVE__FPU_SETCW)
     message(STATUS "Found FPU code for yalsat: fpu_control.h, _FPU_SINGLE, _FPU_DOUBLE")
 endif()
 
-option(WEIGHTED_SAMPLING "Allow for weighted sampling" OFF)
-if (WEIGHTED_SAMPLING)
-    add_definitions( -DWEIGHTED_SAMPLING )
+option(WEIGHTED "Allow for weighted sampling" OFF)
+if (WEIGHTED)
+    add_definitions( -DWEIGHTED )
 endif()
 
 
@@ -607,7 +593,7 @@ if (NOT NOBREAKID)
         add_definitions(-DUSE_BREAKID)
     endif()
 endif()
-
+find_package(GMP REQUIRED)
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)

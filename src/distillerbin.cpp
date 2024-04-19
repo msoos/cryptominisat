@@ -24,6 +24,7 @@ THE SOFTWARE.
 #include <algorithm>
 #include <random>
 
+#include "constants.h"
 #include "distillerbin.h"
 #include "clausecleaner.h"
 #include "time_mem.h"
@@ -52,37 +53,31 @@ bool DistillerBin::distill()
     assert(solver->ok);
     numCalls++;
     runStats.clear();
-    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
+    frat_func_start();
 
-    if (!distill_bin_cls_all(1.0)) {
-        goto end;
-    }
+    if (!distill_bin_cls_all(1.0)) goto end;
 
 end:
     globalStats += runStats;
     if (solver->conf.verbosity) {
-        if (solver->conf.verbosity >= 3)
-            runStats.print(solver->nVars());
-        else
-            runStats.print_short(solver);
+        if (solver->conf.verbosity >= 3) runStats.print(solver->nVars());
+        else runStats.print_short(solver);
     }
     runStats.clear();
-    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
+    frat_func_end();
 
     return solver->okay();
 }
 
-
-bool DistillerBin::distill_bin_cls_all(
-    double time_mult
-) {
+// returns solver->okay()
+bool DistillerBin::distill_bin_cls_all( double time_mult) {
     assert(solver->ok);
     if (time_mult == 0.0) return solver->okay();
     verb_print(6, "Doing distillation branch for long clauses");
 
-    double myTime = cpuTime();
+    double my_time = cpuTime();
     const size_t origTrailSize = solver->trail_size();
-    *solver->frat << __PRETTY_FUNCTION__ << " start\n";
+    frat_func_start();
 
     //Time-limiting
     maxNumProps =
@@ -112,12 +107,10 @@ bool DistillerBin::distill_bin_cls_all(
     std::shuffle(todo.begin(), todo.end(), solver->mtrand);
     for(const auto& lit: todo) {
         time_out = go_through_bins(lit);
-        if (time_out || !solver->okay()) {
-            break;
-        }
+        if (time_out || !solver->okay()) break;
     }
 
-    const double time_used = cpuTime() - myTime;
+    const double time_used = cpuTime() - my_time;
     const double time_remain = float_div(
         maxNumProps - ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps),
         orig_maxNumProps);
@@ -135,7 +128,7 @@ bool DistillerBin::distill_bin_cls_all(
             , time_remain
         );
     }
-    *solver->frat << __PRETTY_FUNCTION__ << " end\n";
+    frat_func_end();
 
     //Update stats
     runStats.time_used += time_used;
@@ -161,11 +154,7 @@ bool DistillerBin::go_through_bins(
         if ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps >= maxNumProps
             || solver->must_interrupt_asap()
         ) {
-            if (solver->conf.verbosity >= 3) {
-                cout
-                << "c Need to finish distillation -- ran out of prop (=allocated time)"
-                << endl;
-            }
+            verb_print(3, "Need to finish distillation -- ran out of prop (=allocated time)");
             runStats.timeOut++;
             return true;
         }
@@ -219,7 +208,7 @@ bool DistillerBin::try_distill_bin(
     solver->enqueue<true>(~lit1);
     confl = solver->propagate<true, false, true>();
 
-    if (confl.isNULL()) {
+    if (confl.isnullptr()) {
         if (solver->value(lit2) == l_True) {
             //clause can be removed
             confl = PropBy(ClOffset(0));
@@ -239,7 +228,7 @@ bool DistillerBin::try_distill_bin(
         }
     }
 
-    if (!confl.isNULL()) {
+    if (!confl.isnullptr()) {
         solver->cancelUntil<false, true>(0);
         solver->detach_bin_clause(lit1, lit2, false, w.get_ID());
         (*solver->frat) << del << w.get_ID() << lit1 << lit2 << fin;

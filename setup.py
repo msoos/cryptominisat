@@ -27,7 +27,7 @@ import sys
 import os
 from setuptools import Extension, setup
 import sysconfig
-import toml
+import tomli as toml
 import pathlib
 from sys import platform
 
@@ -38,11 +38,11 @@ def _parse_toml(pyproject_path):
 
 picosatlib = ('picosatlib', {
     'sources': [
-               "src/picosat/picosat.c",
-               "src/picosat/version.c"],
+               "src/mpicosat/mpicosat.c",
+               "src/mpicosat/version.c"],
     'language' : "c",
     'define_macros' : [("TRACE", "ON")],
-    'include_dirs' : ["src/picosat/"]
+    'include_dirs' : ["src/mpicosat/"]
     })
 
 

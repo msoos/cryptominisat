@@ -108,7 +108,7 @@ class DistillerLongWithImpl {
         void dump_stats_for_sub_str_all_cl_with_watch(
             bool red
             , bool alsoStrengthen
-            , double myTime
+            , double my_time
             , double orig_time_available
         );
 

@@ -26,7 +26,7 @@ news for release 959 since 953
 
 * '--plain' and 'picosat_set_plain' to disable failed literal probing
 
-* new '#define PICOSAT_REENTRANT_API' in 'picosat.h'
+* new '#define PICOSAT_REENTRANT_API' in 'mpicosat.h'
 
 * added manager so no more global variables
   (allows multiple instances, requires manager object)

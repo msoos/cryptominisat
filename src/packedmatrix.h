@@ -42,7 +42,7 @@ class PackedMatrix
 {
 public:
     PackedMatrix() :
-        mp(NULL)
+        mp(nullptr)
         , numRows(0)
         , numCols(0)
     {

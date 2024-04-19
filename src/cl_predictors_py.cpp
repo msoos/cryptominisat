@@ -124,7 +124,7 @@ int ClPredictorsPy::set_up_input(
 ClPredictorsPy::ClPredictorsPy()
 {
     for(uint32_t i=0; i < 3; i++) {
-        ret_data[i] = NULL;
+        ret_data[i] = nullptr;
     }
 }
 
@@ -158,7 +158,7 @@ int ClPredictorsPy::load_models(const std::string& short_fname,
     PyObject* pName = PyUnicode_FromString("ml_module");
     pModule = PyImport_Import(pName);
     Py_DECREF(pName);
-    if (pModule == NULL) {
+    if (pModule == nullptr) {
         PyErr_Print();
         cout << "ERROR: Failed to load ml_module from the same place as \"" + best_feats_fname + "\"!" << endl;
         exit(-1);
@@ -173,7 +173,7 @@ int ClPredictorsPy::load_models(const std::string& short_fname,
     pArgs = PyTuple_New(1);
     PyTuple_SetItem(pArgs, 0, PyUnicode_FromString(best_feats_fname.c_str()));
     PyObject* ret = PyObject_CallObject(set_up_features, pArgs);
-    if (ret == NULL) {
+    if (ret == nullptr) {
         PyErr_Print();
         cout << "ERROR: Failed to set up features!" << endl;
         exit(-1);
@@ -190,7 +190,7 @@ int ClPredictorsPy::load_models(const std::string& short_fname,
     PyTuple_SetItem(pArgs, 1, PyUnicode_FromString(long_fname.c_str()));
     PyTuple_SetItem(pArgs, 2, PyUnicode_FromString(forever_fname.c_str()));
     ret = PyObject_CallObject(load_models, pArgs);
-    if (ret == NULL) {
+    if (ret == nullptr) {
         PyErr_Print();
         cout << "ERROR: Failed to load models !" << endl;
         exit(-1);
@@ -223,7 +223,7 @@ void ClPredictorsPy::predict_all(
     dims[0] = num;
     dims[1] = NUM_RAW_FEATS;
     pArray = PyArray_SimpleNewFromData(2, dims, NPY_FLOAT, data);
-    assert(pArray != NULL);
+    assert(pArray != nullptr);
 
     // Tuple to hold the arguments to the method
     pArgs = PyTuple_New(1);
@@ -232,7 +232,7 @@ void ClPredictorsPy::predict_all(
     // Call the function with the arguments
     PyObject* pResult = PyObject_CallObject(pFunc, pArgs);
     Py_DECREF(pArgs);
-    if(pResult == NULL) {
+    if(pResult == nullptr) {
         PyErr_Print();
         cout << "Calling the add method failed" << endl;
         exit(-1);
@@ -272,15 +272,15 @@ void ClPredictorsPy::get_prediction_at(ClauseStatsExtra& extdata, const uint32_t
 void CMSat::ClPredictorsPy::finish_all_predict()
 {
     //Free previous result
-    if (ret_data[0] != NULL) {
+    if (ret_data[0] != nullptr) {
         for(uint32_t i=0; i < 3; i++) {
 //             assert(pRet[i]);
 //             Py_DECREF(pRet[i]);
-//             pRet[i] = NULL;
+//             pRet[i] = nullptr;
 
             assert(ret_data[i]);
             Py_DECREF(ret_data[i]);
-            ret_data[i] = NULL;
+            ret_data[i] = nullptr;
         }
     }
 }

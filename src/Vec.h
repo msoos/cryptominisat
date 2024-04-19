@@ -86,12 +86,12 @@ private:
 
 public:
     // Constructors:
-    vec()                       : data(NULL) , sz(0)   , cap(0)    { }
-    explicit vec(uint32_t size)      : data(NULL) , sz(0)   , cap(0)
+    vec()                       : data(nullptr) , sz(0)   , cap(0)    { }
+    explicit vec(uint32_t size)      : data(nullptr) , sz(0)   , cap(0)
     {
         growTo(size);
     }
-    vec(uint32_t size, const T& pad) : data(NULL) , sz(0)   , cap(0)
+    vec(uint32_t size, const T& pad) : data(nullptr) , sz(0)   , cap(0)
     {
         growTo(size, pad);
     }
@@ -191,7 +191,7 @@ public:
         dest.data = data;
         dest.sz = sz;
         dest.cap = cap;
-        data = NULL;
+        data = nullptr;
         sz = 0;
         cap = 0;
     }
@@ -225,7 +225,7 @@ public:
         if (sz == 0) {
             free(data);
             cap = 0;
-            data = NULL;
+            data = nullptr;
             return;
         }
 
@@ -265,7 +265,7 @@ void vec<T>::capacity(int32_t min_cap)
     }
     cap = new_size;
 
-    if (((data = (T*)::realloc(data, cap * sizeof(T))) == NULL) && errno == ENOMEM) {
+    if (((data = (T*)::realloc(data, cap * sizeof(T))) == nullptr) && errno == ENOMEM) {
         throw std::bad_alloc();
     }
 }
@@ -302,13 +302,13 @@ void vec<T>::growTo(uint32_t size)
 template<class T>
 void vec<T>::clear(bool dealloc)
 {
-    if (data != NULL) {
+    if (data != nullptr) {
         for (uint32_t i = 0; i < sz; i++) {
             data[i].~T();
         }
         sz = 0;
         if (dealloc) {
-            free(data), data = NULL, cap = 0;
+            free(data), data = nullptr, cap = 0;
         }
     }
 }
@@ -316,10 +316,10 @@ void vec<T>::clear(bool dealloc)
 template<>
 inline void vec<Watched>::clear(bool dealloc)
 {
-    if (data != NULL) {
+    if (data != nullptr) {
         sz = 0;
         if (dealloc) {
-            free(data), data = NULL, cap = 0;
+            free(data), data = nullptr, cap = 0;
         }
     }
 }

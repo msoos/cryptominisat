@@ -58,7 +58,7 @@ class DataSyncServer {
         std::vector<lbool> value;
         std::vector<Lit> clauses_array;
 
-        uint32_t *sendData = NULL;
+        uint32_t *sendData = nullptr;
         bool send_requests_finished = true;
 
         std::vector<MPI_Request> sendRequests;

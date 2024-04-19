@@ -42,13 +42,10 @@ class MatrixFinder {
 
     public:
         MatrixFinder(Solver* solver);
-
-        //NOTE "simplify_xors" should always be true except during testing
-        bool find_matrices(bool& can_detach);
-        set<uint32_t> clash_vars_unused;
+        bool find_matrices(bool& matrix_created);
 
     private:
-        uint32_t setMatrixes();
+        uint32_t setup_matrices_attach_remaining_cls();
         struct MatrixShape
         {
             MatrixShape(uint32_t matrix_num) :

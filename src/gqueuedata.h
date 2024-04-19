@@ -20,8 +20,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef GQUEUEDATA_H__
-#define GQUEUEDATA_H__
+#pragma once
+
+#include <cstdint>
+#include "propby.h"
 
 namespace CMSat {
 
@@ -37,7 +39,8 @@ struct GaussQData {
     uint32_t num_props = 0;  // total gauss propogation time for DPLL
     uint32_t num_conflicts = 0;   // total gauss conflict    time for DPLL
     uint32_t engaus_disable_checks = 0;
-    bool disabled = false;     // decide to do gaussian elimination
+    bool disabled = false;  // Can be disabled. In this case, all xor constraints
+                            // are reattached as plain XOR constraints
 
     void reset()
     {
@@ -47,5 +50,3 @@ struct GaussQData {
 };
 
 }
-
-#endif

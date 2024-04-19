@@ -24,9 +24,6 @@ THE SOFTWARE.
 #define SHARED_DATA_H
 
 #include "solvertypesmini.h"
-#ifdef USE_GPU
-#include "gpuShareLib/GpuClauseSharer.h"
-#endif
 
 #include <vector>
 #include <mutex>
@@ -39,60 +36,32 @@ namespace CMSat {
 class SharedData
 {
     public:
-        SharedData(const uint32_t _num_threads) :
-            num_threads(_num_threads)
-        {
-            #ifdef USE_GPU
-            csOpts.verbosity = 0;
-            gpuClauseSharer = GpuShare::makeGpuClauseSharerPtr(csOpts);
-            #endif
-            cur_thread_id.store(0);
-        }
-
-        ~SharedData()
-        {
-            #ifdef USE_GPU
-            delete gpuClauseSharer;
-            #endif
-        }
+        SharedData(const uint32_t _num_threads) : num_threads(_num_threads) { cur_thread_id.store(0); }
+        ~SharedData() {}
 
         struct Spec {
-            Spec() :
-                data(new vector<Lit>)
-            {}
-
+            Spec() : data(new vector<Lit>) {}
             Spec(const Spec&) = delete;
             Spec& operator=(const Spec&) = delete;
-            
+
             Spec(Spec&& other)
             #ifndef _MSC_VER
             noexcept
             #endif
-            :
-                data(std::move(other.data))
+            : data(std::move(other.data))
             {
-                other.data = NULL;
+                other.data = nullptr;
             }
-            ~Spec() {
-                clear();
-            }
-            vector<Lit>* data = NULL;
-
-            void clear()
-            {
+            ~Spec() { clear(); }
+            vector<Lit>* data = nullptr;
+            void clear() {
                 delete data;
-                data = NULL;
+                data = nullptr;
             }
         };
 
-        #ifdef USE_GPU
-        GpuShare::GpuClauseSharerOptions csOpts;
-        GpuShare::GpuClauseSharer* gpuClauseSharer = NULL;
-        #else
         vector<Spec> bins;
         std::mutex bin_mutex;
-        #endif
-
         vector<lbool> value;
         std::mutex unit_mutex;
         std::atomic<int> cur_thread_id;
@@ -102,7 +71,6 @@ class SharedData
         {
             size_t mem = 0;
             mem += value.capacity()*sizeof(lbool);
-            #ifndef USE_GPU
             mem += bins.capacity()*sizeof(Spec);
             for(size_t i = 0; i < bins.size(); i++) {
                 if (bins[i].data) {
@@ -110,7 +78,6 @@ class SharedData
                     mem += sizeof(vector<Lit>);
                 }
             }
-            #endif
             return mem;
         }
 };

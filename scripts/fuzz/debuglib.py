@@ -22,26 +22,110 @@ from __future__ import with_statement  # Required in 2.5
 from __future__ import print_function
 import random
 
+
 def shuffle_cnf(fname1, fname2, seed):
-    random.seed(int(seed))
+    random.seed(seed)
 
-    with open(fname1, "r") as f1:
-        headers = []
+    def check_duplicate_invert(l):
+        m = list(l)
+        m2 = set()
+        for a in m:
+            a = int(a)
+            a = abs(a)
+            if abs(a) in m2:
+                # print("NOTE! inverted line: ", l)
+                return False
+            m2.add(abs(a))
+
+        return True
+
+
+    def update_maxv( maxv, line):
+        l = [abs(int(e)) for e in line]
+        return max(maxv, max(l))
+
+
+    def randomly_drop_elem(line: list[str]):
+        l = len(line)
+        if l <= 1:
+            return line
+        if random.randint(0,1000) == 0:
+            drop = random.randint(0, l-1)
+            del line[drop]
+        return line
+
+
+    def actual_work(fname1, fname2):
+        comments = []
         lines = []
-        for line in f1:
-            line = line.strip()
-            if len(line) > 1 and line[0] == 'p':
-                headers.append(line)
-            else:
-                lines.append(line)
+        maxv = 0
+        maxv_orig = None
+        with open(fname1, "r") as f1:
+            for line in f1:
+                line = line.strip()
+                orig_line = str(line)
+                if len(line) == 0:
+                    continue
+                if line[0] == 'p':
+                    maxv_orig = int(line.split()[2])
+                    continue
+                elif line[0] == 'c':
+                    comments.append(line)
+                    continue
+                elif line[0] == 'x':
+                    line = line[1:]
+                    line = [e.strip() for e in line.split()]
+                    assert line[-1] == "0"
+                    line = line[:-1] # remove 0
+                    orig_elems = list(line)
+                    elems = len(line)
+                    line = list(set(line))
+                    if len(line) != elems:
+                        # print("NOTE: duplicate in line: ", orig_line)
+                        pass
+                    else:
+                        line = list(orig_elems)
+                    ok = check_duplicate_invert(line)
+                    if ok:
+                        if seed != 0: random.shuffle(line)
+                        maxv = update_maxv(maxv, line)
+                        if seed != 0: line = randomly_drop_elem(line)
+                        l = "x " + " ".join([str(e) for e in line]) + " 0"
+                        lines.append(l)
+                else:
+                    line = [e.strip() for e in line.split()]
+                    assert line[-1] == "0"
+                    line = line[:-1] # remove 0
+                    orig_elems = list(line)
+                    elems = len(line)
+                    line = list(set(line))
+                    if len(line) != elems:
+                        #print("NOTE: duplicate line: ", orig_line)
+                        pass
+                    else:
+                        line = list(orig_elems)
+                    ok = check_duplicate_invert(line)
+                    if ok:
+                        if seed != 0: random.shuffle(line)
+                        maxv = update_maxv(maxv, line)
+                        if seed != 0: line = randomly_drop_elem(line)
+                        l = " ".join([str(e) for e in line]) + " 0"
+                        lines.append(l)
 
-    random.shuffle(lines)
+        assert maxv_orig is not None
 
-    with open(fname2, "w") as f2:
-        for line in headers:
-            f2.write(line+"\n")
-        for line in lines:
-            f2.write(line+"\n")
+        if seed != 0:
+            random.shuffle(lines)
+
+        with open(fname2, "w") as f2:
+            f2.write("p cnf %d %d\n" % (max(maxv, maxv_orig), len(lines)))
+            for line in comments:
+                f2.write(line+"\n")
+            for line in lines:
+                f2.write(line+"\n")
+
+    actual_work(fname1, fname2)
+
 
 def get_max_var_from_clause(line):
     maxvar = 0

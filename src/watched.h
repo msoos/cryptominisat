@@ -86,7 +86,7 @@ class Watched {
             , type(static_cast<int>(t))
             , data2(bnn_p_t)
         {
-            DEBUG_WATCHED_DO(assert(t == watch_bnn_t));
+            DEBUG_WATCHED_DO(assert(t == WatchType::watch_bnn_t));
         }
 
         Watched() :
@@ -107,11 +107,11 @@ class Watched {
         }
 
         /**
-        @brief To update the blocked literal of a >3-long normal clause
+        @brief To update the blocked literal of a long normal clause
         */
         void setElimedLit(const Lit blockedLit)
         {
-            DEBUG_WATCHED_DO(assert(type == watch_clause_t));
+            DEBUG_WATCHED_DO(assert(type == static_cast<int>(WatchType::watch_clause_t)));
             data1 = blockedLit.toInt();
         }
 
@@ -187,6 +187,11 @@ class Watched {
         {
             DEBUG_WATCHED_DO(assert(isBin()));
             return data2 >> 2;
+        }
+        void set_ID(const int32_t ID)
+        {
+            DEBUG_WATCHED_DO(assert(isBin()));
+            data2 = (int32_t)red() | ID<<2;
         }
 
         void setRed(const bool toSet)

@@ -101,6 +101,7 @@ public:
         std::cout << std::endl;
     }
 
+    template<class T> void run_check(T fun) { for(auto x: heap) fun(x); }
     uint32_t  size      ()          const
     {
         return heap.size();

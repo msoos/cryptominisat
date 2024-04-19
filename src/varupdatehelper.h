@@ -20,12 +20,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef __VARUPDATE_HELPER_H__
-#define __VARUPDATE_HELPER_H__
+#pragma once
 
 #include "solvertypes.h"
 #include <iostream>
+#include <limits>
 #include <set>
+
+using std::numeric_limits;
 
 namespace CMSat {
 
@@ -104,6 +106,8 @@ inline uint32_t getUpdatedVarMaxToMax(uint32_t toUpdate, const vector< uint32_t 
 template<typename T, typename T2>
 inline void updateBySwap(T& toUpdate, T2& seen, const vector< uint32_t >& mapper)
 {
+    assert(toUpdate.size() <= mapper.size());
+    assert(toUpdate.size() <= seen.size());
     for(size_t i = 0; i < toUpdate.size(); i++) {
         if (seen.at(i)) {
             //Already updated, skip
@@ -118,7 +122,7 @@ inline void updateBySwap(T& toUpdate, T2& seen, const vector< uint32_t >& mapper
             assert(seen.at(swapwith) == 0);
             //std::cout << "Swapping " << var << " with " << swapwith << std::endl;
             using std::swap;
-            swap(toUpdate.at(var), toUpdate.at(swapwith));
+            swap(toUpdate[var], toUpdate[swapwith]);
             seen.at(swapwith) = 1;
             var = swapwith;
 
@@ -138,5 +142,3 @@ inline void updateBySwap(T& toUpdate, T2& seen, const vector< uint32_t >& mapper
 }
 
 } //end namespace
-
-#endif //__VARUPDATE_HELPER_H__

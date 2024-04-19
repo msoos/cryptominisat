@@ -194,27 +194,27 @@ private:
     void writeQuestionMarks(size_t num, std::stringstream& ss);
     void initReduceDBSTMT();
 
-    sqlite3_stmt *stmtTimePassed = NULL;
-    sqlite3_stmt *stmtMemUsed = NULL;
-    sqlite3_stmt *stmtReduceDB = NULL;
-    sqlite3_stmt *stmtReduceDB_common = NULL;
-    sqlite3_stmt *stmtRst = NULL;
-    sqlite3_stmt *stmtVarRst = NULL;
-    sqlite3_stmt *stmtClRst = NULL;
-    sqlite3_stmt *stmtFeat = NULL;
-    sqlite3_stmt *stmt_clause_stats = NULL;
-    sqlite3_stmt *stmt_delete_cl = NULL;
-    sqlite3_stmt *stmt_update_id = NULL;
-    sqlite3_stmt *stmt_set_id_confl = NULL;
-    sqlite3_stmt *stmt_set_id_confl_1000 = NULL;
-    sqlite3_stmt *stmt_var_data_fintime = NULL;
-    sqlite3_stmt *stmt_var_data_picktime = NULL;
-    sqlite3_stmt *stmt_dec_var_clid = NULL;
-    sqlite3_stmt *stmt_var_dist = NULL;
+    sqlite3_stmt *stmtTimePassed = nullptr;
+    sqlite3_stmt *stmtMemUsed = nullptr;
+    sqlite3_stmt *stmtReduceDB = nullptr;
+    sqlite3_stmt *stmtReduceDB_common = nullptr;
+    sqlite3_stmt *stmtRst = nullptr;
+    sqlite3_stmt *stmtVarRst = nullptr;
+    sqlite3_stmt *stmtClRst = nullptr;
+    sqlite3_stmt *stmtFeat = nullptr;
+    sqlite3_stmt *stmt_clause_stats = nullptr;
+    sqlite3_stmt *stmt_delete_cl = nullptr;
+    sqlite3_stmt *stmt_update_id = nullptr;
+    sqlite3_stmt *stmt_set_id_confl = nullptr;
+    sqlite3_stmt *stmt_set_id_confl_1000 = nullptr;
+    sqlite3_stmt *stmt_var_data_fintime = nullptr;
+    sqlite3_stmt *stmt_var_data_picktime = nullptr;
+    sqlite3_stmt *stmt_dec_var_clid = nullptr;
+    sqlite3_stmt *stmt_var_dist = nullptr;
 
     std::map<string, uint32_t> query_to_size;
 
-    sqlite3 *db = NULL;
+    sqlite3 *db = nullptr;
     bool setup_ok = false;
     const string filename;
 };

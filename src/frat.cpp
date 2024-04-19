@@ -21,5 +21,5 @@ THE SOFTWARE.
 #include "frat.h"
 
 namespace CMSat {
-    void Drat::flush() {}
+    void Frat::flush() {}
 }

@@ -44,7 +44,7 @@ void DataSync::finish_up_mpi()
 {
     #ifdef USE_MPI
     if (mpiSendData) {
-        //mpiSendData is only non-NULL when MPI is on and it's the 0 thread
+        //mpiSendData is only non-nullptr when MPI is on and it's the 0 thread
         assert(solver->conf.is_mpi);
         assert(solver->conf.thread_num == 0);
 
@@ -59,7 +59,7 @@ void DataSync::finish_up_mpi()
             assert(err == MPI_SUCCESS);
         }*/
         delete[] mpiSendData;
-        mpiSendData = NULL;
+        mpiSendData = nullptr;
     }
     #endif
 }
@@ -82,7 +82,7 @@ void DataSync::new_var(const bool bva)
         syncFinish.push_back(0);
         syncFinish.push_back(0);
     }
-    assert(solver->nVarsOutside()*2 == syncFinish.size());
+    assert(solver->nVarsOuter()*2 == syncFinish.size());
 }
 
 void DataSync::new_vars(size_t n)
@@ -91,30 +91,17 @@ void DataSync::new_vars(size_t n)
         return;
 
     syncFinish.insert(syncFinish.end(), 2*n, 0);
-    assert(solver->nVarsOutside()*2 == syncFinish.size());
+    assert(solver->nVarsOuter()*2 == syncFinish.size());
 }
 
 void DataSync::save_on_var_memory()
 {
 }
 
-void DataSync::rebuild_bva_map()
-{
-    must_rebuild_bva_map = true;
-}
-
 void DataSync::updateVars(
-    const vector<uint32_t>& /*outerToInter*/
-    , const vector<uint32_t>& /*interToOuter*/
+    [[maybe_unused]] const vector<uint32_t>&  outer_to_inter
+    , [[maybe_unused]] const vector<uint32_t>& inter_to_outer
 ) {
-}
-
-inline void DataSync::rebuild_bva_map_if_needed()
-{
-    if (must_rebuild_bva_map) {
-        outer_to_without_bva_map = solver->build_outer_to_without_bva_map();
-        must_rebuild_bva_map = false;
-    }
 }
 
 bool DataSync::syncData()
@@ -126,9 +113,8 @@ bool DataSync::syncData()
     }
     numCalls++;
 
-    assert(sharedData != NULL);
+    assert(sharedData != nullptr);
     assert(solver->decisionLevel() == 0);
-    rebuild_bva_map_if_needed();
 
     //SEND data
     bool ok;
@@ -138,7 +124,7 @@ bool DataSync::syncData()
     if (!ok) {
         return false;
     }
-    solver->ok = solver->propagate<false>().isNULL();
+    solver->ok = solver->propagate<false>().isnullptr();
     if (!solver->ok) {
         return false;
     }
@@ -194,14 +180,13 @@ bool DataSync::shareUnitData()
     uint32_t thisSentUnitData = 0;
 
     SharedData& shared = *sharedData;
-    if (shared.value.size() < solver->nVarsOutside()) {
+    if (shared.value.size() < solver->nVarsOuter()) {
         shared.value.insert(
             shared.value.end(),
-            solver->nVarsOutside()-shared.value.size(), l_Undef);
+            solver->nVarsOuter()-shared.value.size(), l_Undef);
     }
-    for (uint32_t var = 0; var < solver->nVarsOutside(); var++) {
+    for (uint32_t var = 0; var < solver->nVarsOuter(); var++) {
         Lit thisLit = Lit(var, false);
-        thisLit = solver->map_to_with_bva(thisLit);
         thisLit = solver->varReplacer->get_lit_replaced_with_outer(thisLit);
         thisLit = solver->map_outer_to_inter(thisLit);
         const lbool thisVal = solver->value(thisLit);
@@ -258,180 +243,19 @@ bool DataSync::shareUnitData()
 
 void CMSat::DataSync::signal_new_long_clause(const vector<Lit>& cl)
 {
-    if (!enabled()) {
-        return;
-    }
+    if (!enabled()) return;
     assert(thread_id != -1);
-    //cout << "thread ID: " << thread_id << endl;
-
-    #ifdef USE_GPU
-    rebuild_bva_map_if_needed();
-
-    //Don't signal clauses with BVA variables
-    clause_tmp.clear();
-    for(Lit lit: cl) {
-        if (solver->varData[lit.var()].is_bva) {
-            return;
-        }
-        lit = solver->map_inter_to_outer(lit);
-        lit = map_outer_to_outside(lit);
-        clause_tmp.push_back(lit);
-    }
-
-    signalled_gpu_long_cls++;
-    sharedData->gpuClauseSharer->addClause(thread_id, (int*)clause_tmp.data(), clause_tmp.size());
-    #else
-    if (cl.size() == 2) {
-        signal_new_bin_clause(cl[0], cl[1]);
-    }
-    #endif
+    if (cl.size() == 2) signal_new_bin_clause(cl[0], cl[1]);
 }
 
-#ifdef USE_GPU
-void DataSync::unsetFromGpu(uint32_t level) {
-    if (!enabled()) {
-        return;
-    }
-    rebuild_bva_map_if_needed();
-
-    trail_tmp.clear();
-    //assert(trailCopiedUntil < solver->trail.size());
-    for(int i = ((int)solver->trail.size())-1; i >= (int)solver->trail_lim[level]; i--) {
-        Lit lit = solver->trail_at(i);
-        if (lit == lit_Undef) {
-            //This can happen because variables set at level 0
-            //     are cleared from the trail and set to lit_Undef
-            continue;
-        }
-        //cout << "lit: " << lit << endl;
-        if (solver->varData[lit.var()].is_bva) {
-            continue;
-        }
-        lit = solver->map_inter_to_outer(lit);
-        lit = map_outer_to_outside(lit);
-        trail_tmp.push_back(lit);
-    }
-
-    if (!trail_tmp.empty()) {
-        sharedData->gpuClauseSharer->unsetSolverValues(
-            thread_id,
-            (int*)trail_tmp.data(),
-            trail_tmp.size());
-    }
-    trailCopiedUntil = solver->trail_lim[level];
-}
-
-void DataSync::trySendAssignmentToGpu() {
-    if (!enabled()) {
-        return;
-    }
-    rebuild_bva_map_if_needed();
-
-    uint32_t sendUntil = solver->trail_size();
-    if (sendUntil == 0) {
-        return;
-    }
-    if (trailCopiedUntil >= sendUntil) {
-        return;
-    }
-
-//     if (thread_id == 0) {
-//         cout
-//         << "Set from point " << solver->trail_lim[level]
-//         << " count: " << sendUntil - trailCopiedUntil
-//         << " level: " << level
-//         << endl;
-//     }
-
-    trail_tmp.clear();
-    for(uint32_t i = trailCopiedUntil; i < sendUntil; i++) {
-        Lit lit = solver->trail_at(i);
-        if (lit == lit_Undef) {
-            //This can happen because variables set at level 0
-            //     are cleared from the trail and set to lit_Undef
-            continue;
-        }
-        if (solver->varData[lit.var()].is_bva) {
-            continue;
-        }
-        lit = solver->map_inter_to_outer(lit);
-        lit = map_outer_to_outside(lit);
-        trail_tmp.push_back(lit);
-    }
-
-    bool success = sharedData->gpuClauseSharer->trySetSolverValues(
-        thread_id,
-        (int*)trail_tmp.data(),
-        trail_tmp.size());
-
-
-    if (success) {
-        trailCopiedUntil = sendUntil-1;
-        sharedData->gpuClauseSharer->trySendAssignment(thread_id);
-    }
-}
-
-PropBy CMSat::DataSync::pop_clauses()
-{
-    if (!enabled()) {
-        return PropBy();
-    }
-    assert(thread_id != -1);
-    //cout << "thread ID: " << thread_id << endl;
-
-    //cout << "Trying to pop." << thread_id << endl;
-    int* litsAsInt;
-    int count;
-    long gpuClauseId;
-    int decisionLevelAtConflict = -1;
-    PropBy by = PropBy();
-
-    while (sharedData->gpuClauseSharer->popReportedClause(
-        thread_id, litsAsInt, count, gpuClauseId))
-    {
-        popped_clause++;
-//         if ((popped_clause & 0xfff) == 0xfff) {
-//             cout << "popped_clause: " << popped_clause
-//             << " thread id: " << thread_id
-//             << endl;
-//         }
-
-        Lit *lits = (Lit*) litsAsInt;
-        for(int i = 0; i < count; i ++) {
-            lits[i] = solver->map_to_with_bva(lits[i]);
-            lits[i] = solver->varReplacer->get_lit_replaced_with_outer(lits[i]);
-            lits[i] = solver->map_outer_to_inter(lits[i]);
-        }
-
-        by = solver->insert_gpu_clause(lits, count);
-        if (!solver->okay()) {
-            return PropBy();
-        }
-        if (!by.isNULL()) {
-            decisionLevelAtConflict = solver->decisionLevel();
-        }
-    }
-
-    if ((int)solver->decisionLevel() == decisionLevelAtConflict) {
-        return by;
-    }
-    return PropBy();
-}
-#endif
-
-////////////////////////////////////////
-// Non-GPU
-////////////////////////////////////////
-#ifndef USE_GPU
 bool DataSync::syncBinFromOthers()
 {
     for (uint32_t wsLit = 0; wsLit < sharedData->bins.size(); wsLit++) {
-        if (sharedData->bins[wsLit].data == NULL) {
+        if (sharedData->bins[wsLit].data == nullptr) {
             continue;
         }
 
         Lit lit1 = Lit::toLit(wsLit);
-        lit1 = solver->map_to_with_bva(lit1);
         lit1 = solver->varReplacer->get_lit_replaced_with_outer(lit1);
         lit1 = solver->map_outer_to_inter(lit1);
         if (solver->varData[lit1.var()].removed != Removed::none
@@ -475,7 +299,6 @@ bool DataSync::syncBinFromOthers(
     vector<Lit> lits(2);
     for (uint32_t i = finished; i < bins.size(); i++) {
         Lit otherLit = bins[i];
-        otherLit = solver->map_to_with_bva(otherLit);
         otherLit = solver->varReplacer->get_lit_replaced_with_outer(otherLit);
         otherLit = solver->map_outer_to_inter(otherLit);
         if (solver->varData[otherLit.var()].removed != Removed::none
@@ -490,7 +313,7 @@ bool DataSync::syncBinFromOthers(
             lits[1] = otherLit;
 
             //Don't add FRAT: it would add to the thread data, too
-            solver->add_clause_int(lits, true, NULL, true, NULL, false);
+            solver->add_clause_int(lits, true, nullptr, true, nullptr, false);
             if (!solver->okay()) {
                 goto end;
             }
@@ -519,7 +342,7 @@ void DataSync::syncBinToOthers()
 bool DataSync::add_bin_to_threads(Lit lit1, Lit lit2)
 {
     assert(lit1 < lit2);
-    if (sharedData->bins[lit1.toInt()].data == NULL) {
+    if (sharedData->bins[lit1.toInt()].data == nullptr) {
         return false;
     }
 
@@ -536,9 +359,8 @@ bool DataSync::add_bin_to_threads(Lit lit1, Lit lit2)
 
 void DataSync::clear_set_binary_values()
 {
-    for(size_t i = 0; i < solver->nVarsOutside()*2; i++) {
+    for(size_t i = 0; i < solver->nVarsOuter()*2; i++) {
         Lit lit1 = Lit::toLit(i);
-        lit1 = solver->map_to_with_bva(lit1);
         lit1 = solver->varReplacer->get_lit_replaced_with_outer(lit1);
         lit1 = solver->map_outer_to_inter(lit1);
         if (solver->value(lit1) != l_Undef) {
@@ -549,11 +371,11 @@ void DataSync::clear_set_binary_values()
 
 void DataSync::extend_bins_if_needed()
 {
-    assert(sharedData->bins.size() <= (solver->nVarsOutside())*2);
-    if (sharedData->bins.size() == (solver->nVarsOutside())*2)
+    assert(sharedData->bins.size() <= (solver->nVarsOuter())*2);
+    if (sharedData->bins.size() == (solver->nVarsOuter())*2)
         return;
 
-    sharedData->bins.resize(solver->nVarsOutside()*2);
+    sharedData->bins.resize(solver->nVarsOuter()*2);
 }
 
 bool DataSync::shareBinData()
@@ -582,35 +404,17 @@ bool DataSync::shareBinData()
 
 void DataSync::signal_new_bin_clause(Lit lit1, Lit lit2)
 {
-    if (!enabled()) {
-        return;
-    }
-
-    if (must_rebuild_bva_map) {
-        outer_to_without_bva_map = solver->build_outer_to_without_bva_map();
-        must_rebuild_bva_map = false;
-    }
-
-    if (solver->varData[lit1.var()].is_bva)
-        return;
-    if (solver->varData[lit2.var()].is_bva)
-        return;
+    if (!enabled()) return;
+    if (solver->varData[lit1.var()].is_bva) return;
+    if (solver->varData[lit2.var()].is_bva) return;
 
     lit1 = solver->map_inter_to_outer(lit1);
-    lit1 = map_outer_to_outside(lit1);
     lit2 = solver->map_inter_to_outer(lit2);
-    lit2 = map_outer_to_outside(lit2);
 
-    if (lit1.toInt() > lit2.toInt()) {
-        std::swap(lit1, lit2);
-    }
+    if (lit1.toInt() > lit2.toInt()) std::swap(lit1, lit2);
     newBinClauses.push_back(std::make_pair(lit1, lit2));
 }
-#endif
 
-///////////////////////////////////////
-// MPI
-///////////////////////////////////////
 #ifdef USE_MPI
 void DataSync::set_up_for_mpi()
 {
@@ -622,7 +426,7 @@ void DataSync::set_up_for_mpi()
         err = MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
         assert(err == MPI_SUCCESS);
         release_assert(mpiRank != 0);
-        assert(sharedData != NULL);
+        assert(sharedData != nullptr);
     }
 }
 
@@ -718,7 +522,7 @@ bool DataSync::mpi_recv_from_others()
             goto end;
         }
     }
-    solver->ok = solver->propagate<false>().isNULL();
+    solver->ok = solver->propagate<false>().isnullptr();
     if (!solver->ok) {
         goto end;
     }
@@ -755,7 +559,7 @@ void DataSync::mpi_send_to_others()
     int err;
 
     //We still are sending data, let's do that first
-    if (mpiSendData != NULL) {
+    if (mpiSendData != nullptr) {
         #ifdef VERBOSE_DEBUG_MPI_SENDRCV
         std::cout << "-->> MPI " << mpiRank << " thread " << thread_id <<
         " Still sending data, waiting now." << std::endl;
@@ -769,7 +573,7 @@ void DataSync::mpi_send_to_others()
             err = MPI_Wait(&sendReq, &status);
             assert(err == MPI_SUCCESS);*/
             delete[] mpiSendData;
-            mpiSendData = NULL;
+            mpiSendData = nullptr;
         /*} else {
             return;
         }*/
@@ -796,7 +600,7 @@ void DataSync::mpi_send_to_others()
     for(uint32_t wsLit = 0; wsLit < solver->nVarsOutside()*2; wsLit++) {
         //Lit lit1 = ~Lit::toLit(wsLit);
         assert(syncMPIFinish.size() > wsLit);
-        if (sharedData->bins[wsLit].data == NULL) {
+        if (sharedData->bins[wsLit].data == nullptr) {
             data.push_back(0);
             continue;
         }
@@ -868,7 +672,7 @@ bool DataSync::mpi_get_unit(
     }
 
     solver->enqueue<false>(litToEnqueue);
-    solver->ok = solver->propagate<false>().isNULL();
+    solver->ok = solver->propagate<false>().isnullptr();
     if (!solver->ok) {
         return false;
     }

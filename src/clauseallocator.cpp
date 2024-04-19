@@ -22,9 +22,9 @@ THE SOFTWARE.
 
 #include "clauseallocator.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <algorithm>
-#include <string.h>
+#include <cstring>
 #include <limits>
 #include <cassert>
 #include <cmath>
@@ -43,7 +43,6 @@ THE SOFTWARE.
 
 using namespace CMSat;
 
-using std::pair;
 using std::cout;
 using std::endl;
 
@@ -60,7 +59,7 @@ using std::endl;
 #define MAXSIZE ((1ULL << (EFFECTIVELY_USEABLE_BITS))-1)
 
 ClauseAllocator::ClauseAllocator() :
-    dataStart(NULL)
+    dataStart(nullptr)
     , size(0)
     , capacity(0)
     , currentlyUsedSize(0)
@@ -126,7 +125,7 @@ void* ClauseAllocator::allocEnough(
         );
 
         //Realloc failed?
-        if (new_dataStart == NULL) {
+        if (new_dataStart == nullptr) {
             std::cerr
             << "ERROR: while reallocating clause space"
             << endl;
@@ -177,7 +176,7 @@ of the clause. Therefore, the "currentlyUsedSizes" is an overestimation!!
 void ClauseAllocator::clauseFree(Clause* cl)
 {
     assert(!cl->freed());
-    cl->setFreed();
+    cl->set_freed();
     uint64_t est_num_cl = cl->size();
     est_num_cl = std::max(est_num_cl, (uint64_t)3); //we sometimes allow gauss to allocate 3-long clauses
     uint64_t bytes_freed = sizeof(Clause) + est_num_cl*sizeof(Lit);
@@ -265,7 +264,7 @@ void ClauseAllocator::consolidate(
         }
         return;
     }
-    const double myTime = cpuTime();
+    const double my_time = cpuTime();
 
     //Pointers that will be moved along
     BASE_DATA_TYPE * const newDataStart = (BASE_DATA_TYPE*)malloc(currentlyUsedSize*sizeof(BASE_DATA_TYPE));
@@ -282,7 +281,6 @@ void ClauseAllocator::consolidate(
     for(auto& lredcls: solver->longRedCls) {
         update_offsets(lredcls, newDataStart, new_ptr);
     }
-    update_offsets(solver->detached_xor_repr_cls, newDataStart, new_ptr);
 
     //Fix up propBy
     for (size_t i = 0; i < solver->nVars(); i++) {
@@ -314,7 +312,7 @@ void ClauseAllocator::consolidate(
     free(dataStart);
     dataStart = newDataStart;
 
-    const double time_used = cpuTime() - myTime;
+    const double time_used = cpuTime() - my_time;
     if (solver->conf.verbosity >= 2
         || (lower_verb && solver->conf.verbosity)
     ) {
@@ -348,8 +346,6 @@ void ClauseAllocator::update_offsets(
     for(ClOffset& offs: offsets) {
         Clause* old = ptr(offs);
         if (!old->reloced) {
-            assert(old->used_in_xor() && old->used_in_xor_full());
-            assert(old->_xor_is_detached);
             offs = move_cl(newDataStart, new_ptr, old);
         } else {
             offs = (*old)[0].toInt();

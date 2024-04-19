@@ -164,8 +164,8 @@ int main(int argc, char** argv)
 
         CMSat::DataSyncServer server;
         gzFile in = gzopen(filename.c_str(), "rb");
-        DimacsParser<StreamBuffer<gzFile, GZ>, CMSat::DataSyncServer> parser(&server, NULL, 0);
-        if (in == NULL) {
+        DimacsParser<StreamBuffer<gzFile, GZ>, CMSat::DataSyncServer> parser(&server, nullptr, 0);
+        if (in == nullptr) {
             std::cerr
             << "ERROR! Could not open file '"
             << filename

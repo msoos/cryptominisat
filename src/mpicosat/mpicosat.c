@@ -29,7 +29,7 @@ IN THE SOFTWARE.
 #include <stdarg.h>
 #include <stdint.h>
 
-#include "picosat.h"
+#include "mpicosat.h"
 
 /* By default code for 'all different constraints' is disabled, since 'NADC'
  * is defined.
@@ -1940,7 +1940,7 @@ fixvar (PS * ps, Var * v)
 {
   Rnk * r;
 
-  assert (VAR2LIT (v) != UNDEF);
+  assert (VAR2LIT (v)->val != UNDEF);
   assert (!v->level);
 
   ps->fixed++;

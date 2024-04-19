@@ -255,7 +255,7 @@ class Tester:
         sched_opts += "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
         sched_opts += "sub-cls-with-bin,"
         sched_opts += "str-impl, sub-str-cls-with-bin, distill-cls, scc-vrepl,"
-        sched_opts += "occ-backw-sub-str, occ-backw-sub, occ-xor, occ-clean-implicit, occ-bve, occ-bva,"
+        sched_opts += "occ-backw-sub-str, occ-backw-sub, occ-xor, occ-clean-implicit, occ-bve,"
         sched_opts += "renumber, must-renumber,"
         sched_opts += "card-find, breakid,"
         sched_opts += "occ-lit-rem, distill-bins, occ-resolv-subs,occ-rem-with-orgates"
@@ -283,20 +283,20 @@ class Tester:
             #cmd += "--gauss 0 "
 
         cmd += "--presimp %d " % random.choice([1]*10+[0])
-        if not options.gauss:
-            cmd += "--confbtwsimp %d " % random.choice([100, 1000])
-            cmd += "--nextm %f " % random.choice([0.1, 0.01, 0.001])
-            cmd += "--everylev1 %d " % random.choice([122, 1222, 12222])
-            cmd += "--everylev2 %d " % random.choice([133, 1333, 14444])
+        cmd += "--confbtwsimp %d " % random.choice([100, 1000])
+        cmd += "--nextm %f " % random.choice([0.2, 0.05, 0.01])
+        cmd += "--everylev1 %d " % random.choice([122, 1222, 12222])
+        cmd += "--everylev2 %d " % random.choice([133, 1333, 14444])
+        cmd += "--xor %d " % random.choice([0, 0, 1])
+        cmd += "--maxxormat %d " % random.choice([0, 1, 10])
 
-        if "breakid" in self.extra_opts_supported:
-            cmd += "--breakid %d " % random.choice([1]*10+[0])
-            cmd += "--breakideveryn %d " % random.choice([1]*10+[3])
-            cmd += "--breakidcls %d " % random.choice([0, 1, 2, 3, 10]+[50]*4)
-            cmd += "--breakidtime %d " % random.choice([10000]*5+[1])
+        # if "breakid" in self.extra_opts_supported:
+        #     cmd += "--breakid %d " % random.choice([1]*10+[0])
+        #     cmd += "--breakideveryn %d " % random.choice([1]*10+[3])
+        #     cmd += "--breakidcls %d " % random.choice([0, 1, 2, 3, 10]+[50]*4)
+        #     cmd += "--breakidtime %d " % random.choice([10000]*5+[1])
 
         if options.gauss:
-            sls = 0
             cmd += "--autodisablegauss %s " % random.choice([0]*15+[1])
 
             # "Maximum number of matrixes to treat.")
@@ -313,7 +313,6 @@ class Tester:
 
         cmd += "--mustrenumber %d " % random.choice([0, 1])
         cmd += "--diffdeclevelchrono %d " % random.choice([1, random.randint(1, 1000), -1])
-        cmd += "--bva %d " % random.choice([1, 1, 1, 0])
         cmd += "--bvaeveryn %d " % random.choice([1, random.randint(1, 20)])
 
         if self.only_sampling:
@@ -331,7 +330,6 @@ class Tester:
             cmd += "--varelimover %d " % random.gammavariate(1, 20)
             cmd += "--memoutmult %0.12f " % random.gammavariate(0.05, 10)
             cmd += "--verb %d " % random.choice([0, 0, 0, 0, 1, 2])
-            cmd += "--detachxor %d " % random.choice([0, 1, 1, 1, 1])
             cmd += "--restart %s " % random.choice(
                 ["geom", "glue", "luby"])
             cmd += "--adjustglue %f " % random.choice([0, 0.5, 0.7, 1.0])
@@ -430,27 +428,19 @@ class Tester:
         out_fname = unique_file("out", ".out")
 
         if self.num_threads == 1:
-            time_limit = partial(setlimits, options.maxtime)
-        else:
-            time_limit = None
+            partial(setlimits, options.maxtime)
 
         myalarm = "./doalarm -t real %d "% options.maxtime
         toexec = myalarm + command + " 1>" + out_fname + " 2> " + err_fname
         print("Executing: " + toexec)
         retcode = os.system(toexec)
 
-        # print time limit after child startup
-        #if options.verbose:
-            #print("CPU limit of parent (pid %d) after startup of child: %s secs" %
-                  #(os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)))
-
         # Get solver output
         consoleOutput = ""
         with open(out_fname, "r") as f:
             for line in f:
                 consoleOutput += line
-        #retcode = p.returncode
-        #err_file.close()
+        errline = ""
         with open(err_fname, "r") as err_file:
             found_something = False
             for line in err_file:
@@ -548,31 +538,40 @@ class Tester:
 
         # it's UNSAT, let's check with FRAT
         if fname_frat:
-            toexec = "./frat-rs elab {fname_frat} {cnf} -v"
-            toexec = toexec.format(cnf=fname, fname_frat=fname_frat)
-            print("Checking with FRAT.. ", toexec)
-            p = subprocess.Popen(toexec.rsplit(),
-                    stdout=subprocess.PIPE,
-                    universal_newlines=True)
+            fname_cleanproof = unique_file("clean-proof")
+            toexec = "grep -v \"^c\" {fname_frat} > {clean}"
+            toexec = toexec.format(cnf=fname, fname_frat=fname_frat, clean=fname_cleanproof)
+            p = subprocess.Popen(toexec, stdout=subprocess.PIPE, universal_newlines=True, shell=True)
+            consoleOutputGrep = p.communicate()[0]
 
+            fname_xlrup = unique_file("xlrup-file")
+            toexec = "./frat-rs elab {clean} {cnf} {xlrup}"
+            toexec = toexec.format(cnf=fname, clean=fname_cleanproof, xlrup=fname_xlrup)
+            print("Checking with FRAT.. ", toexec)
+            p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE, universal_newlines=True)
             consoleOutput2 = p.communicate()[0]
-            diff_time = time.time() - curr_time
+
+            toexec = "./cake_xlrup {cnf} {xlrup}"
+            toexec = toexec.format(cnf=fname, xlrup=fname_xlrup)
+            p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE, universal_newlines=True)
+            consoleOutput3 = p.communicate()[0]
 
             # find verification code
             foundVerif = False
             fratLine = ""
-            for line in consoleOutput2.split('\n'):
-                if len(line) >= 8:
-                    if line[0:8] == "VERIFIED":
-                        fratLine = line
-                        foundVerif = True
+            for line in consoleOutput3.split('\n'):
+                if "s VERIFIED UNSAT" in line:
+                    fratLine = line
+                    foundVerif = True
 
             # Check whether we have found a verification code
             if foundVerif is False:
                 print("verifier error! It says: %s" % consoleOutput2)
                 assert foundVerif, "Cannot find FRAT verification code!"
             else:
-                print("OK, FRAT says: %s" % fratLine)
+                os.unlink(fname_xlrup)
+                os.unlink(fname_cleanproof)
+                print("OK, XLRUP  says: %s" % fratLine)
 
         if options.gauss:
             if random.choice([True, True, True, True, False]):
@@ -580,14 +579,15 @@ class Tester:
                 return
 
         # check with other solver
-        ret = self.sol_parser.check_unsat(checkAgainst)
-        if ret is None:
-            print("Other solver time-outed, cannot check")
-        elif ret is True:
-            print("UNSAT verified by other solver")
-        else:
-            print("Grave bug: SAT-> UNSAT : Other solver found solution!!")
-            exit()
+        if fname_frat == None:
+            ret = self.sol_parser.check_unsat(checkAgainst)
+            if ret is None:
+                print("Other solver time-outed, cannot check")
+            elif ret is True:
+                print("UNSAT verified by other solver")
+            else:
+                print("Grave bug: SAT-> UNSAT : Other solver found solution!!")
+                exit()
 
     def fuzz_test_one(self):
         print("--- NORMAL TESTING ---")
@@ -596,7 +596,8 @@ class Tester:
         self.this_gauss_on = "autodisablegauss" in self.extra_opts_supported
 
         # frat turns off a bunch of systems, like symmetry breaking so use it about 50% of time
-        self.frat = self.num_threads == 1 and (random.randint(0, 10) < 5)
+        self.frat = self.num_threads == 1 and (random.randint(0, 10) < 10)
+
 
         self.sqlitedbfname = None
         self.only_sampling = random.choice([True, False, False, False, False]) and not self.frat
@@ -605,12 +606,8 @@ class Tester:
             self.frat = False
             self.only_sampling = True
 
-        if self.frat:
-            fuzzers = fuzzers_frat
-        elif options.gauss:
-            fuzzers = fuzzers_xor
-        else:
-            fuzzers = fuzzers_nofrat
+        fuzzers= fuzzers_noxor
+        fuzzers.extend(fuzzers_xor)
         fuzzer = random.choice(fuzzers)
 
         fname = unique_file("fuzzTest")
@@ -628,7 +625,7 @@ class Tester:
 
         shuf_seed = random.randint(1, 100000)
         fname_shuffled = unique_file("fuzzTest")
-        print("calling ./shuffle.py %s %s %s" % (fname, fname_shuffled, shuf_seed))
+        print("calling ./clean_cnf.py %s %s %s" % (fname, fname_shuffled, shuf_seed))
         shuffle_cnf(fname, fname_shuffled, shuf_seed)
         os.unlink(fname)
         fname = fname_shuffled
@@ -725,9 +722,6 @@ if __name__ == "__main__":
     if options.valgrind_freq <= 0:
         print("Valgrind Frequency must be at least 1")
         exit(-1)
-
-    fuzzers_frat = fuzzers_noxor
-    fuzzers_nofrat = fuzzers_noxor + fuzzers_xor
 
     print_version()
     tester = Tester()
