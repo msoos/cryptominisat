@@ -33,7 +33,7 @@ THE SOFTWARE.
 #include <stdio.h>
 
 using std::vector;
-// #define DEBUG_IDRUP
+#define DEBUG_IDRUP
 
 #if 0
 #define IDRUP_PRINT((...) \
@@ -366,7 +366,6 @@ public:
                     *buf_ptr++ = ' ';
                     buf_len++;
                 }
-
                 break;
             case FratFlag::unsatcore:
                 this->flush();
@@ -379,7 +378,11 @@ public:
                     buf_len++;
                 }
 
-                break;
+              break;
+	    case FratFlag::implyclfromx:
+	    case FratFlag::implyxfromcls:
+  	      skipnextclause = true;
+    	      break;
           default:
 	    __builtin_unreachable();
             break;

@@ -342,8 +342,8 @@ Clause* Solver::add_clause_int(
         ID = cl_stats->ID;
         if (ps != lits) {
             ID = ++clauseID;
-	      *frat << add << ID << ps << fin;
-	      *frat << del << cl_stats->ID << lits << fin;
+	    *frat << "remove add_clause_int" << add << ID << ps << fin;
+	    *frat << "remove add_clause_int" << del << cl_stats->ID << lits << fin;
         }
     } else {
         ID = ++clauseID;
@@ -2708,7 +2708,7 @@ bool Solver::fully_enqueue_this(const Lit lit)
             return false;
         }
     } else if (val == l_False) {
-        *frat << add << ++clauseID << fin;
+        *frat << "fully enqueue this" << add << ++clauseID << fin;
         ok = false;
         return false;
     }

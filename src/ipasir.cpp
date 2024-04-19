@@ -265,4 +265,36 @@ DLL_PUBLIC void ipasir_set_learn (void * /*solver*/, void * /*state*/, int /*max
     //this is complicated
 }
 
+DLL_PUBLIC int ipasir_simplify (void * solver)
+{
+    MySolver* s = (MySolver*)solver;
+
+    //Cleanup last_conflict
+    for(auto x: s->last_conflict) {
+        s->conflict_cl_map[x.toInt()] = 0;
+    }
+    s->last_conflict.clear();
+
+    //solve
+    lbool ret = s->solver->simplify(&(s->assumptions), nullptr);
+    s->assumptions.clear();
+
+    if (ret == l_True) {
+        return 10;
+    }
+    if (ret == l_False) {
+        s->conflict_cl_map.resize(s->solver->nVars()*2, 0);
+        s->last_conflict = s->solver->get_conflict();
+        for(auto x: s->last_conflict) {
+            s->conflict_cl_map[x.toInt()] = 1;
+        }
+        return 20;
+    }
+    if (ret == l_Undef) {
+        return 0;
+    }
+    assert(false);
+    exit(-1);
+}
+
 }
