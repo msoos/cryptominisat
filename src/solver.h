@@ -543,7 +543,7 @@ inline void Solver::copy_assumptions(const vector<Lit>* assumps) {
             }
             assumptions.push_back(lit);
         }
-        if (frat->incremental()) { *frat << assump << *_assumptions << fin; }
+        if (frat->incremental()) { *frat << assump << *assumps << fin; }
     }
 }
 

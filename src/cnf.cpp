@@ -678,7 +678,7 @@ void CNF::add_frat(FILE* os) {
 
 void CNF::add_idrup(FILE* os) {
     if (frat) delete frat;
-    frat = new IdrupFile<false>(interToOuterMain);
+    frat = new IdrupFile<false>(inter_to_outerMain);
     frat->setFile(os);
     frat->set_sumconflicts_ptr(&sumConflicts);
     frat->set_sqlstats_ptr(sqlStats);

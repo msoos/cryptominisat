@@ -50,7 +50,7 @@ using std::vector;
 namespace CMSat {
 
 template<bool binidrup = false>
-class IdrupFile: public Drat
+class IdrupFile: public Frat
 {
   const int flush_bound = 32768; // original value: 1048576;
 public:
@@ -135,7 +135,7 @@ public:
     bool delete_filled = false;
     bool must_delete_next = false;
 
-    virtual Drat& operator<<(const int32_t) override
+    virtual Frat& operator<<(const int32_t) override
     {
 #if 0 // clauseID
         if (must_delete_next) {
@@ -147,7 +147,7 @@ public:
         return *this;
     }
 
-    Drat& operator<<(const Clause& cl) override
+    Frat& operator<<(const Clause& cl) override
     {
         if (skipnextclause) return *this;
         if (must_delete_next) {
@@ -161,7 +161,7 @@ public:
         return *this;
     }
 
-    Drat& operator<<(const vector<Lit>& cl) override {
+    Frat& operator<<(const vector<Lit>& cl) override {
       if (skipnextclause) return *this;
       if (must_delete_next) {
             for(const Lit l: cl) {
@@ -176,7 +176,7 @@ public:
         return *this;
     }
 
-    Drat& operator<<(const DratOutcome o) override
+    Frat& operator<<(const FratOutcome o) override
     {
         uint32_t num;
 	switch(o) {
@@ -205,14 +205,14 @@ public:
         return *this;
     }
 
-    Drat& operator<<(const DratFlag flag) override
+    Frat& operator<<(const FratFlag flag) override
     {
         const bool old = skipnextclause;
         skipnextclause = false;
 
         switch (flag)
         {
-            case DratFlag::fin:
+            case FratFlag::fin:
                 if (old) break;
                 if (must_delete_next) {
                     if (binidrup) {
@@ -245,7 +245,7 @@ public:
 		                this->flush(), --flushing;
                 break;
 
-            case DratFlag::deldelay:
+            case FratFlag::deldelay:
                 adding = false;
                 assert(!delete_filled);
                 forget_delay();
@@ -259,7 +259,7 @@ public:
                 must_delete_next = true;
                 break;
 
-            case DratFlag::findelay:
+            case FratFlag::findelay:
                 assert(delete_filled);
                 memcpy(buf_ptr, del_buf, del_len);
                 buf_len += del_len;
@@ -271,7 +271,7 @@ public:
                 forget_delay();
                 break;
 
-            case DratFlag::add:
+            case FratFlag::add:
                 adding = true;
                 cl_id = 0;
                 *buf_ptr++ = 'l';
@@ -282,10 +282,10 @@ public:
                 }
                 break;
 
-            case DratFlag::chain:
+            case FratFlag::fratchain:
                 break;
 
-            case DratFlag::del:
+            case FratFlag::del:
                 adding = false;
                 *buf_ptr++ = 'd';
                 buf_len++;
@@ -295,7 +295,7 @@ public:
                 }
                 break;
 
-            case DratFlag::reloc:
+            case FratFlag::reloc:
   	        skipnextclause = true;
                 // adding = false;
                 // forget_delay();
@@ -307,11 +307,11 @@ public:
                 // }
 	      break;
 
-            case DratFlag::finalcl:
+            case FratFlag::finalcl:
 	      assert (false);
               break;
 
-            case DratFlag::origcl:
+            case FratFlag::origcl:
                 adding = false;
                 forget_delay();
                 *buf_ptr++ = 'i';
@@ -322,7 +322,7 @@ public:
                 }
 
                 break;
-            case DratFlag::weakencl:
+            case FratFlag::weakencl:
                 adding = false;
                 forget_delay();
                 *buf_ptr++ = 'w';
@@ -333,7 +333,7 @@ public:
                 }
 
                 break;
-            case DratFlag::restorecl:
+            case FratFlag::restorecl:
                 adding = false;
                 forget_delay();
                 *buf_ptr++ = 'r';
@@ -344,7 +344,7 @@ public:
                 }
 
                 break;
-            case DratFlag::assump:
+            case FratFlag::assump:
                 this->flush();
                 adding = false, flushing = 2;
                 forget_delay();
@@ -356,7 +356,7 @@ public:
                 }
 
                 break;
-            case DratFlag::modelF:
+            case FratFlag::modelF:
                 this->flush();
                 adding = false, flushing = 2;
                 forget_delay();
@@ -368,7 +368,7 @@ public:
                 }
 
                 break;
-            case DratFlag::unsatcore:
+            case FratFlag::unsatcore:
                 this->flush();
                 adding = false, flushing = 2;
                 forget_delay();
@@ -380,13 +380,16 @@ public:
                 }
 
                 break;
+          default:
+	    __builtin_unreachable();
+            break;
         }
 
         return *this;
     }
 
 private:
-    Drat& operator<<(const Lit lit) override
+    Frat& operator<<(const Lit lit) override
     {
         if (skipnextclause) return *this;
         if (must_delete_next) {
@@ -419,7 +422,7 @@ private:
         }
     }
 
-    virtual Drat& operator<<([[maybe_unused]] const char* str) override
+    virtual Frat& operator<<([[maybe_unused]] const char* str) override
     {
 #ifdef DEBUG_IDRUP
         this->flush();
