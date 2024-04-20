@@ -2991,7 +2991,7 @@ bool OccSimplifier::uneliminate(uint32_t var)
         Lit l = elimed_cls[at_elimed_cls].at(bat, elimed_cls_lits);
         if (l == lit_Undef) {
             if (is_xor) solver->add_xor_clause_outside(lits, true);
-            else solver->add_clause_outside(lits);
+            else solver->add_clause_outside(lits, false, true);
             if (!solver->okay()) return false;
             lits.clear();
         } else {

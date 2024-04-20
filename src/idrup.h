@@ -379,13 +379,17 @@ public:
                 }
 
               break;
+	    case FratFlag::deldelayx:
+	    case FratFlag::delx:
+	    case FratFlag::finalx:
 	    case FratFlag::implyclfromx:
 	    case FratFlag::implyxfromcls:
+	    case FratFlag::origclx:
   	      skipnextclause = true;
     	      break;
-          default:
-	    __builtin_unreachable();
-            break;
+            default:
+	      __builtin_unreachable();
+              break;
         }
 
         return *this;

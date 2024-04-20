@@ -737,7 +737,7 @@ bool Solver::add_clause_outer(vector<Lit>& ps, const vector<Lit>& outer_ps, bool
     ClauseStats clstats;
     clstats.ID = ++clauseID;
     if (!restore)
-      *frat << origcl << clstats.ID << ps << fin;
+      *frat << "add_clause_outer\n" << origcl << clstats.ID << outer_ps << fin;
     if (red) clstats.which_red_array = 2;
 
     VERBOSE_PRINT("Adding clause " << ps);
@@ -2732,17 +2732,19 @@ void Solver::add_in_partial_solving_stats()
     sumPropStats += propStats;
 }
 
-bool Solver::add_clause_outside(const vector<Lit>& lits, bool red)
+bool Solver::add_clause_outside(const vector<Lit>& lits, bool red, bool restore)
 {
     if (!ok) {
       if (frat->incremental())
-	*frat << origcl << lits << fin;
+	*frat << "new outside" << origcl << lits << fin;
       return false;
     };
 
+    if (restore && frat->incremental())
+      *frat << restorecl << lits << fin;
     SLOW_DEBUG_DO(check_too_large_variable_number(lits)); //we check for this during back-numbering
     vector<Lit> tmp(lits);
-    return add_clause_outer(tmp, lits, red);
+    return add_clause_outer(tmp, lits, red, restore);
 }
 
 bool Solver::add_xor_clause_outside(const vector<Lit>& lits_out, bool rhs) {
@@ -2752,7 +2754,7 @@ bool Solver::add_xor_clause_outside(const vector<Lit>& lits_out, bool rhs) {
 
     vector<Lit> lits = lits_out;
     const int32_t XID = ++clauseXID;
-    *frat << origclx << XID << lits << fin;
+    *frat << "add original xor\n" << origclx << XID << lits << fin;
     SLOW_DEBUG_DO(check_too_large_variable_number(lits));
 
     add_clause_helper(lits);
@@ -2770,7 +2772,7 @@ bool Solver::add_xor_clause_outside(const vector<uint32_t>& vars, const bool rhs
     vector<Lit> lits = vars_to_lits(vars);
     if (!vars.empty()) lits[0] ^= !rhs;
     const int32_t XID = ++clauseXID;
-    *frat << origclx << XID << lits << fin;
+    *frat << "add outside xor clause\n" << origclx << XID << lits << fin;
     if (!vars.empty()) lits[0] ^= !rhs;
     SLOW_DEBUG_DO(check_too_large_variable_number(lits));
 
