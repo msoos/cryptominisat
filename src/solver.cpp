@@ -3712,8 +3712,6 @@ void Solver::detach_clauses_in_xors() {
 }
 
 bool Solver::removed_var_ext(uint32_t var) const {
-
-    var = varReplacer->get_var_replaced_with_outer(var);
     var = map_outer_to_inter(var);
     if (value(var) != l_Undef) return true;
     if (varData[var].removed != Removed::none) return true;

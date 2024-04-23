@@ -1821,7 +1821,7 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(const vector<uint
             continue;
         }
 
-        int picoret = picosat_sat(picosat, 100);
+        int picoret = picosat_sat(picosat, solver->conf.picosat_confl_limit);
         picosat_ran++;
         if (picoret == PICOSAT_UNSATISFIABLE) {
             unsat++;

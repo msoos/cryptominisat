@@ -350,6 +350,7 @@ class DLL_PUBLIC SolverConf
         int var_linkin_limit_MB;
         int varelim_gate_find_limit;
         int picosat_gate_limitK;
+        int picosat_confl_limit;
         int varelim_check_resolvent_subs;
 
         //Subs, str limits for simplifier

@@ -606,6 +606,13 @@ DLL_PUBLIC void SATSolver::set_picosat_gate_limitK(const uint32_t lim)
         s.conf.picosat_gate_limitK = lim;
     }
 }
+DLL_PUBLIC void SATSolver::set_picosat_confl_limit(const uint32_t lim)
+{
+    for (auto & solver : data->solvers) {
+        Solver& s = *solver;
+        s.conf.picosat_confl_limit = lim;
+    }
+}
 
 DLL_PUBLIC void SATSolver::set_weaken_time_limitM(const uint32_t lim)
 {
