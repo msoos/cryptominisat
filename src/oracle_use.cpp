@@ -74,13 +74,10 @@ vector<vector<int>> Solver::get_irred_cls_for_oracle() const
     return clauses;
 }
 
-bool Solver::oracle_vivif(bool& finished)
+bool Solver::oracle_vivif()
 {
     assert(!frat->enabled());
     assert(solver->okay());
-    finished = false;
-
-    backbone_simpl(300LL*1000LL, finished);
     execute_inprocess_strategy(false, "must-renumber");
     if (!okay()) return okay();
     if (nVars() < 10) return okay();
@@ -116,7 +113,6 @@ bool Solver::oracle_vivif(bool& finished)
             }
         }
     }
-    finished |= true;
 
     end:
     vector<Lit> tmp2;
@@ -142,11 +138,10 @@ bool Solver::oracle_vivif(bool& finished)
         }
     }
 
-    verb_print(1, "[oracle-vivif] finished: " << finished
+    verb_print(1, "[oracle-vivif]"
             << " cache-used: " << oracle.getStats().cache_useful
             << " cache-added: " << oracle.getStats().cache_added
             << " learnt-units: " << oracle.getStats().learned_units
-            << " finished (vivif or backbone): " << finished
             << " T: " << std::setprecision(2) << (cpuTime()-my_time));
     return solver->okay();
 }
