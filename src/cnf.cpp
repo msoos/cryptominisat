@@ -687,7 +687,7 @@ vector<uint32_t> CNF::get_outside_lit_incidence()
         for(const auto& x: watches[l]) {
             if (x.isBin() &&
                 !x.red() &&
-                l.var() < x.lit2().var()) //don't count twice
+                l < x.lit2()) //don't count twice
             {
                 inc[x.lit2().toInt()]++;
                 inc[l.toInt()]++;
