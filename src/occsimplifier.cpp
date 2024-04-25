@@ -1429,9 +1429,9 @@ bool OccSimplifier::eliminate_vars()
         n_cls_last = n_cls_now;
         n_vars_last = n_vars_now;
 
-        if ((int)grow == solver->conf.min_bva_gain) break;
-        if (grow == 0) grow = 8;
-        else grow *= 2;
+        if ((int)grow >= solver->conf.min_bva_gain) break;
+        if (grow == 0) grow = 3;
+        else grow *= 1.5;
         grow = std::min<uint32_t>(grow, solver->conf.min_bva_gain);
         assert(solver->prop_at_head());
         assert(added_long_cl.empty());
