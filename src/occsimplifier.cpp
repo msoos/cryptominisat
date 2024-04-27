@@ -1848,7 +1848,7 @@ vector<uint32_t> OccSimplifier::remove_definable_by_irreg_gate(const vector<uint
     return ret;
 }
 
-void OccSimplifier::get_empties(vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars) {
+void OccSimplifier::clean_sampl_get_empties(vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars) {
     assert(solver->okay());
     assert(solver->prop_at_head());
     if (!setup()) return;

@@ -1495,10 +1495,10 @@ DLL_PUBLIC std::vector<uint32_t> SATSolver::remove_definable_by_irreg_gate(const
     return data->solvers[0]->remove_definable_by_irreg_gate(vars);
 }
 
-DLL_PUBLIC void SATSolver::get_empties(
+DLL_PUBLIC void SATSolver::clean_sampl_get_empties(
     std::vector<uint32_t>& sampl_vars, std::vector<uint32_t>& empty_vars)
 {
-    return data->solvers[0]->get_empties(sampl_vars, empty_vars);
+    return data->solvers[0]->clean_sampl_get_empties(sampl_vars, empty_vars);
 }
 
 DLL_PUBLIC lbool SATSolver::find_fast_backw(FastBackwData fast_backw)

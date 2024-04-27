@@ -3349,12 +3349,12 @@ vector<uint32_t> Solver::remove_definable_by_irreg_gate(const vector<uint32_t>& 
     return occsimplifier->remove_definable_by_irreg_gate(vars);
 }
 
-void Solver::get_empties(vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars)
+void Solver::clean_sampl_get_empties(vector<uint32_t>& sampl_vars, vector<uint32_t>& empty_vars)
 {
     if (!okay()) return;
     assert(get_num_bva_vars() == 0);
 
-    occsimplifier->get_empties(sampl_vars, empty_vars);
+    occsimplifier->clean_sampl_get_empties(sampl_vars, empty_vars);
 }
 
 bool Solver::remove_and_clean_all() {
