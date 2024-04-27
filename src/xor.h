@@ -46,7 +46,7 @@ public:
         for (const auto& l: cl) {
             assert(l.sign() == false);
             vars.push_back(l.var());
-        };
+        }
     }
     bool trivial() const { return size() == 0 && rhs == false; }
     ~Xor() = default;

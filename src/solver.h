@@ -44,7 +44,7 @@ THE SOFTWARE.
 #define ORACLE_DAT_SIZE 4
 
 namespace CMSat {
-    struct SATSolver;
+    class SATSolver;
 }
 using std::vector;
 using std::pair;
