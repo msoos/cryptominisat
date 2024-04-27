@@ -1860,13 +1860,15 @@ void OccSimplifier::get_empties(vector<uint32_t>& sampl_vars, vector<uint32_t>& 
     const double my_time = cpuTime();
 
     // Clean up sampl_vars from replaced and set variables
-    vector<std::pair<uint32_t, uint32_t> > sampl_var_pairs;
+    map<uint32_t, uint32_t> sampl_var_pairs;
     for(const uint32_t& v: sampl_vars) {
         uint32_t v2 = solver->varReplacer->get_var_replaced_with_outer(v);
         v2 = solver->map_outer_to_inter(v2);
+        if (solver->value(v2) != l_Undef) continue;
+        if (sampl_var_pairs.count(v2)) continue;
         auto rem_val = solver->varData[v2].removed;
         assert(rem_val == Removed::none);
-        sampl_var_pairs.push_back(make_pair(v2, v));
+        sampl_var_pairs[v2] = v;
     }
 
     // Find empties
