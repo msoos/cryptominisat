@@ -54,11 +54,7 @@ ls_solver::ls_solver(const bool aspiration)
 /**********************************build instance*******************************/
 bool ls_solver::make_space()
 {
-    if (0 == _num_vars || 0 == _num_clauses) {
-        cout << "c [ccnr] The formula size is zero."
-        "You may have forgotten to read the formula." << endl;
-        return false;
-    }
+    if (0 == _num_vars || 0 == _num_clauses) return false;
     _vars.resize(_num_vars+1);
     _clauses.resize(_num_clauses+1);
     _solution.resize(_num_vars+1);
@@ -97,6 +93,7 @@ void ls_solver::build_neighborhood()
 bool ls_solver::local_search(
     const vector<bool> *init_solution
     , long long int _mems_limit
+    , const char* prefix
 ) {
     bool result = false;
     _random_gen.seed(_random_seed);
@@ -130,7 +127,7 @@ bool ls_solver::local_search(
             if (_verbosity &&
                 (_best_found_cost == 0 || (_step & 0x3ffff) == 0x3ffff)
             ) {
-                cout << "c [ccnr] tries: "
+                cout << prefix << "[ccnr] tries: "
                 << t << " steps: " << _step
                 << " best found: " << _best_found_cost
                 << endl;

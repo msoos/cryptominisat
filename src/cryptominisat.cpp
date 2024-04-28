@@ -1618,6 +1618,14 @@ DLL_PUBLIC void SATSolver::set_full_bve_iter_ratio(double val)
     }
 }
 
+DLL_PUBLIC void SATSolver::set_prefix(const char* prefix)
+{
+    for (auto & solver : data->solvers) {
+        Solver& s = *solver;
+        s.conf.prefix = prefix;
+    }
+}
+
 DLL_PUBLIC void SATSolver::set_max_red_linkin_size(uint32_t sz)
 {
     for (size_t i = 0; i < data->solvers.size(); ++i) {

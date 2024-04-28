@@ -114,11 +114,8 @@ bool DistillerBin::distill_bin_cls_all( double time_mult) {
     const double time_remain = float_div(
         maxNumProps - ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps),
         orig_maxNumProps);
-    if (solver->conf.verbosity >= 2) {
-        cout << "c [distill-bin] cls"
-        << " tried: " << runStats.checkedClauses << "/" << potential_size
-        << endl;
-    }
+        verb_print(2, "[distill-bin] cls" << " tried: "
+                << runStats.checkedClauses << "/" << potential_size);
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
@@ -264,17 +261,15 @@ DistillerBin::Stats& DistillerBin::Stats::operator+=(const Stats& other)
     return *this;
 }
 
-void DistillerBin::Stats::print_short(const Solver* _solver) const
+void DistillerBin::Stats::print_short(const Solver* solver) const
 {
-    cout
-    << "c [distill-bin]"
+    verb_print(1, "[distill-bin]"
     << " useful: "<< numClShorten+clRemoved
     << "/" << checkedClauses << "/" << potentialClauses
     << " lits-rem: " << numLitsRem
     << " cl-rem: " << clRemoved
     << " 0-depth-assigns: " << zeroDepthAssigns
-    << _solver->conf.print_times(time_used, timeOut)
-    << endl;
+    << solver->conf.print_times(time_used, timeOut));
 }
 
 void DistillerBin::Stats::print(const size_t nVars) const

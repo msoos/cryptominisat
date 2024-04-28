@@ -1975,7 +1975,7 @@ void Searcher::print_restart_stat_line() const
 
 void Searcher::print_restart_stats_base() const
 {
-    cout << "c rst "
+    cout << solver->conf.prefix << "rst "
          << " " << std::setw(4) << restart_type_to_short_string(params.rest_type)
          << " " << std::setw(4) << polarity_mode_to_short_string(polarity_mode)
          << " " << std::setw(4) << branch_strategy_str_short
@@ -3081,14 +3081,9 @@ void Searcher::consolidate_watches(const bool full)
         watches.consolidate();
     }
     double time_used = cpuTime() - t;
-
-    if (conf.verbosity) {
-        cout
-        << "c [consolidate] "
-        << (full ? "full" : "mini")
-        << conf.print_times(time_used)
-        << endl;
-    }
+    verb_print(1, "[consolidate] "
+    << (full ? "full" : "mini")
+    << conf.print_times(time_used));
 
     std::stringstream ss;
     ss << "consolidate " << (full ? "full" : "mini") << " watches";

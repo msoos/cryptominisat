@@ -94,6 +94,7 @@ class ls_solver
     bool local_search(
         const vector<bool> *init_solution = 0
         , long long int _mems_limit = 100*1000*1000
+        , const char* prefix = "c "
     );
     void print_solution(bool need_verify = 0);
     void simple_print();

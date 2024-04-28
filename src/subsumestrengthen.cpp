@@ -259,16 +259,12 @@ void SubsumeStrengthen::backw_sub_long_with_long()
     const double time_used = cpuTime() - my_time;
     const bool time_out = (*simplifier->limit_to_decrease <= 0);
     const double time_remain = float_div(*simplifier->limit_to_decrease, orig_limit);
-    if (solver->conf.verbosity) {
-        cout
-        << "c [occ-backw-sub-long-w-long] rem cl: " << sub0ret.numSubsumed
-        << " tried: " << wenThrough << "/" << simplifier->clauses.size()
-        << " (" << std::setprecision(1) << std::fixed
-        << stats_line_percent(wenThrough, simplifier->clauses.size())
-        << "%)"
-        << solver->conf.print_times(time_used, time_out, time_remain)
-        << endl;
-    }
+    verb_print(1, "[occ-backw-sub-long-w-long] rem cl: " << sub0ret.numSubsumed
+    << " tried: " << wenThrough << "/" << simplifier->clauses.size()
+    << " (" << std::setprecision(1) << std::fixed
+    << stats_line_percent(wenThrough, simplifier->clauses.size())
+    << "%)"
+    << solver->conf.print_times(time_used, time_out, time_remain));
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
@@ -326,18 +322,14 @@ bool SubsumeStrengthen::backw_str_long_with_long()
     const bool time_out = *simplifier->limit_to_decrease <= 0;
     const double time_remain = float_div(*simplifier->limit_to_decrease, orig_limit);
 
-    if (solver->conf.verbosity) {
-        cout
-        << "c [occ-backw-sub-str-long-w-long]"
-        << " sub: " << ret.sub
-        << " str: " << ret.str
-        << " tried: " << wenThrough << "/" << simplifier->clauses.size()
-        << " ("
-        << stats_line_percent(wenThrough, simplifier->clauses.size())
-        << ") "
-        << solver->conf.print_times(time_used, time_out, time_remain)
-        << endl;
-    }
+    verb_print(1, "[occ-backw-sub-str-long-w-long]"
+    << " sub: " << ret.sub
+    << " str: " << ret.str
+    << " tried: " << wenThrough << "/" << simplifier->clauses.size()
+    << " ("
+    << stats_line_percent(wenThrough, simplifier->clauses.size())
+    << ") "
+    << solver->conf.print_times(time_used, time_out, time_remain));
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
@@ -949,16 +941,12 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins()
     const double time_used = cpuTime() - my_time;
     const bool time_out = *simplifier->limit_to_decrease <= 0;
     const double time_remain = float_div(*simplifier->limit_to_decrease, orig_time_limit);
-    if (solver->conf.verbosity) {
-        cout
-        << "c [occ-backw-sub-str-long-w-bins]"
+    verb_print(1, "[occ-backw-sub-str-long-w-bins]"
         << " subs: " << subsumedBin
         << " str: " << strBin
         << " tried: " << tried_bin_tri
         << " 0-depth ass: " << solver->trail_size() - origTrailSize
-        << solver->conf.print_times(time_used, time_out, time_remain)
-        << endl;
-    }
+        << solver->conf.print_times(time_used, time_out, time_remain));
 
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(

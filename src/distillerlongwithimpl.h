@@ -119,7 +119,7 @@ class DistillerLongWithImpl {
             void clear();
             size_t get_cl_subsumed() const;
             size_t get_lits_rem() const;
-            void print() const;
+            void print(const char* prefix) const;
         };
         WatchBasedData watch_based_data;
         bool isSubsumed;

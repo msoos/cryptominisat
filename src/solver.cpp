@@ -937,12 +937,7 @@ bool Solver::renumber_variables(bool must_renumber)
 
     //Print results
     const double time_used = cpuTime() - my_time;
-    if (conf.verbosity) {
-        cout
-        << "c [renumber]"
-        << conf.print_times(time_used)
-        << endl;
-    }
+    verb_print(1, "[renumber]" << conf.print_times(time_used));
     if (sqlStats) {
         sqlStats->time_passed_min(
             solver
@@ -1970,10 +1965,7 @@ void CMSat::Solver::print_stats(
     const double cpu_time_total,
     const double wallclock_time_started) const
 {
-    if (conf.verbStats >= 1) {
-        cout << "c ------- FINAL TOTAL SEARCH STATS ---------" << endl;
-    }
-
+    verb_print(1, "------- FINAL TOTAL SEARCH STATS ---------");
     if (conf.do_print_times) {
         print_stats_line("c UIP search time"
             , sumSearchStats.cpu_time
@@ -2041,7 +2033,7 @@ void Solver::print_norm_stats(
                 , stats_line_percent(occsimplifier->get_stats().total_time(occsimplifier) ,cpu_time)
                 , "% time"
             );
-        occsimplifier->get_stats().print_extra_times();
+        occsimplifier->get_stats().print_extra_times(conf.prefix.c_str());
         occsimplifier->get_sub_str()->get_stats().print_short(this);
     }
     print_stats_line("c SCC time"
@@ -2049,7 +2041,7 @@ void Solver::print_norm_stats(
         , stats_line_percent(varReplacer->get_scc_finder()->get_stats().cpu_time, cpu_time)
         , "% time"
     );
-    varReplacer->get_scc_finder()->get_stats().print_short(nullptr);
+    varReplacer->get_scc_finder()->get_stats().print_short(this);
     varReplacer->print_some_stats(cpu_time);
 
     //varReplacer->get_stats().print_short(nVars());
@@ -2162,7 +2154,7 @@ void Solver::print_full_stats(
 uint64_t Solver::print_watch_mem_used(const uint64_t rss_mem_used) const
 {
     size_t alloc = watches.mem_used_alloc();
-    print_stats_line("c Mem for watch alloc"
+    print_stats_line(solver->conf.prefix + "Mem for watch alloc"
         , alloc/(1024UL*1024UL)
         , "MB"
         , stats_line_percent(alloc, rss_mem_used)
@@ -2170,7 +2162,7 @@ uint64_t Solver::print_watch_mem_used(const uint64_t rss_mem_used) const
     );
 
     size_t array = watches.mem_used_array();
-    print_stats_line("c Mem for watch array"
+    print_stats_line(solver->conf.prefix + "Mem for watch array"
         , array/(1024UL*1024UL)
         , "MB"
         , stats_line_percent(array, rss_mem_used)

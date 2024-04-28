@@ -312,7 +312,7 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
             }
             if (solver->conf.verbosity && unused_matrix_printed < 10) {
                 if (m.rows >= solver->conf.gaussconf.min_matrix_rows || solver->conf.verbosity >= 2)
-                cout << "c [matrix] UNused matrix   ";
+                cout << solver->conf.prefix << "[matrix] UNused matrix   ";
             }
             unusedMatrix++;
         }
@@ -343,9 +343,9 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
     }
     solver->attach_xorclauses();
 
-    if (solver->conf.verbosity && unusedMatrix > 0) {
-        cout << "c [matrix] unused matrices: " << unusedMatrix
-        <<  " of which too few rows: " << too_few_rows_matrix << endl;
+    if (unusedMatrix > 0) {
+        verb_print(1, "[matrix] unused matrices: " << unusedMatrix
+            <<  " of which too few rows: " << too_few_rows_matrix);
     }
     return realMatrixNum;
 }

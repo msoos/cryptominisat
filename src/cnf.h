@@ -292,7 +292,6 @@ public:
     size_t get_num_long_irred_cls() const;
     size_t get_num_long_red_cls() const;
     void print_all_clauses() const;
-    void print_watchlist_stats() const;
     bool zero_irred_cls(const Lit lit) const;
     template<class T> void clean_xor_no_prop(T& ps, bool& rhs);
     uint64_t count_lits(

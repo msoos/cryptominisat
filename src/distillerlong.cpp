@@ -337,7 +337,7 @@ bool DistillerLong::distill_long_cls_all(
         maxNumProps - ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps),
         orig_maxNumProps);
     if (solver->conf.verbosity >= 1) {
-        cout << "c [distill-long";
+        cout << solver->conf.prefix << "[distill-long";
         if (red) {
             cout << "-red" << red_lev << "]";
         } else {

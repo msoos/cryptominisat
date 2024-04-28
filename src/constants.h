@@ -188,7 +188,7 @@ inline uint32_t rnd_uint(std::mt19937_64& mtrand, const uint32_t maximum_inclusi
 
 
 #define verb_print(a, x) \
-    do { if (solver->conf.verbosity >= a) {std::cout << "c " << x << std::endl;} } while (0)
+    do { if (solver->conf.verbosity >= a) {std::cout << solver->conf.prefix << x << std::endl;} } while (0)
 
 #ifdef DEBUG_WATCHED
 #define DEBUG_WATCHED_DO(x) do { x; } while (0)

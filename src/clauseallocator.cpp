@@ -257,11 +257,8 @@ void ClauseAllocator::consolidate(
     if (!force
         && (float_div(currentlyUsedSize, size) > 0.8 || currentlyUsedSize < (100ULL*1000ULL))
     ) {
-        if (solver->conf.verbosity >= 3
-            || (lower_verb && solver->conf.verbosity)
-        ) {
-            cout << "c Not consolidating memory." << endl;
-        }
+        if (solver->conf.verbosity >= 3 || lower_verb)
+            verb_print(1, "Not consolidating memory.");
         return;
     }
     const double my_time = cpuTime();
@@ -321,7 +318,7 @@ void ClauseAllocator::consolidate(
             //yes, it can be 0 (only binary clauses, for example)
             log_2_size = std::log2(size);
         }
-        cout << "c [mem] consolidate ";
+        cout << solver->conf.prefix << "[mem] consolidate ";
         cout << " old-sz: " << print_value_kilo_mega(old_size*sizeof(BASE_DATA_TYPE))
         << " new-sz: " << print_value_kilo_mega(size*sizeof(BASE_DATA_TYPE))
         << " new bits offs: " << std::fixed << std::setprecision(2) << log_2_size;

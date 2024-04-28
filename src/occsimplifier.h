@@ -166,7 +166,7 @@ public:
     struct Stats
     {
         void print(const size_t nVars, OccSimplifier* occs) const;
-        void print_extra_times() const;
+        void print_extra_times(const char* prefix) const;
         Stats& operator+=(const Stats& other);
         void clear();
         double total_time(OccSimplifier* occs) const;

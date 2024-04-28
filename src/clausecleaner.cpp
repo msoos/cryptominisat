@@ -99,9 +99,7 @@ void ClauseCleaner::clean_implicit_watchlist(
 
 void ClauseCleaner::clean_implicit_clauses()
 {
-    if (solver->conf.verbosity > 15) {
-        cout << "c cleaning implicit clauses" << endl;
-    }
+    verb_print(15, "cleaning implicit clauses");
 
     assert(solver->decisionLevel() == 0);
     impl_data = ImplicitData();
@@ -133,9 +131,7 @@ void ClauseCleaner::clean_implicit_clauses()
 
 //return True if it's to be removed.
 bool ClauseCleaner::clean_bnn(BNN& bnn, uint32_t bnn_idx) {
-    if (solver->conf.verbosity > 15) {
-        cout << "Cleaning BNN: " << bnn << endl;
-    }
+    verb_print(15,"Cleaning BNN: " << bnn);
 
     uint32_t i = 0;
     uint32_t j = 0;
@@ -193,10 +189,7 @@ void ClauseCleaner::clean_bnns_inter(vector<BNN*>& bnns)
 {
     assert(solver->decisionLevel() == 0);
     assert(solver->prop_at_head());
-
-    if (solver->conf.verbosity > 15) {
-        cout << "Cleaning BNNs" << endl;
-    }
+    verb_print(15, "Cleaning BNNs");
 
     for (uint32_t i = 0; i < bnns.size() && solver->okay(); i++) {
         BNN* bnn = solver->bnns[i];

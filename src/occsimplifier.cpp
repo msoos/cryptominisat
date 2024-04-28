@@ -272,9 +272,7 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
         }
         extender->dummy_elimed(elimed_on.var());
     }
-    if (solver->conf.verbosity >= 2) {
-        cout << "c [extend] Extended " << elimed_cls.size() << " var-elim clauses" << endl;
-    }
+    verb_print(2, "[extend] Extended " << elimed_cls.size() << " var-elim clauses");
 }
 
 void OccSimplifier::unlink_clause(
@@ -546,9 +544,9 @@ void OccSimplifier::print_linkin_data(const LinkInData link_in_data) const
                 link_in_data.cl_linked+link_in_data.cl_not_linked)*100.0;
     }
 
-    cout << "c [occ] Not linked in "
+    verb_print(1, "[occ] Not linked in "
     << link_in_data.cl_not_linked << "/" << (link_in_data.cl_linked + link_in_data.cl_not_linked)
-    << " (" << std::setprecision(2) << std::fixed << val << " %)" << endl;
+    << " (" << std::setprecision(2) << std::fixed << val << " %)");
 }
 
 
@@ -845,12 +843,8 @@ void OccSimplifier::eliminate_empty_resolvent_vars()
     const double time_used = cpuTime() - my_time;
     const bool time_out = (*limit_to_decrease <= 0);
     const double time_remain =  float_div(*limit_to_decrease, orig_empty_varelim_time_limit);
-    if (solver->conf.verbosity) {
-        cout
-        << "c [occ-empty-res] Empty resolvent elimed: " << var_elimed
-        << solver->conf.print_times(time_used, time_out)
-        << endl;
-    }
+    verb_print(1, "[occ-empty-res] Empty resolvent elimed: " << var_elimed
+        << solver->conf.print_times(time_used, time_out));
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
@@ -1279,14 +1273,12 @@ bool OccSimplifier::eliminate_vars()
         && varelim_linkin_limit_bytes > 0
         && *limit_to_decrease > 0
     ) {
-        if (solver->conf.verbosity >= 2) {
-            cout << "c x n vars       : " << solver->get_num_free_vars() << endl;
-            #ifdef DEBUG_VARELIM
-            cout << "c x cls long     : " << sum_irred_cls_longs() << endl;
-            cout << "c x cls bin      : " << solver->binTri.irredBins << endl;
-            cout << "c x long cls lits: " << sum_irred_cls_longs_lits() << endl;
-            #endif
-        }
+        verb_print(2, "x n vars       : " << solver->get_num_free_vars());
+        #ifdef DEBUG_VARELIM
+        verb_print(2, "x cls long     : " << sum_irred_cls_longs());
+        verb_print(2, "x cls bin      : " << solver->binTri.irredBins);
+        verb_print(2, "x long cls lits: " << sum_irred_cls_longs_lits());
+        #endif
 
         last_elimed = 0;
         limit_to_decrease = &norm_varelim_time_limit;
@@ -1350,10 +1342,8 @@ bool OccSimplifier::eliminate_vars()
 
             solver->clean_occur_from_removed_clauses_only_smudged();
 
-            if (solver->conf.verbosity >= 2) {
-                cout <<"c size of added_cl_to_var    : " << added_cl_to_var.getTouchedList().size() << endl;
-                cout <<"c size of removed_cl_with_var: " << removed_cl_with_var.getTouchedList().size() << endl;
-            }
+            verb_print(2, "size of added_cl_to_var    : " << added_cl_to_var.getTouchedList().size());
+            verb_print(2, "size of removed_cl_with_var: " << removed_cl_with_var.getTouchedList().size());
 
             if (!simulate_frw_sub_str_with_added_cl_to_var()) goto end;
 
@@ -1364,15 +1354,13 @@ bool OccSimplifier::eliminate_vars()
                 velim_order.update(var);
             }
 
-            if (solver->conf.verbosity >= 2) {
-                cout << "c x n vars       : " << solver->get_num_free_vars() << endl;
-                #ifdef DEBUG_VARELIM
-                cout << "c x cls long     : " << sum_irred_cls_longs() << endl;
-                cout << "c x cls bin      : " << solver->binTri.irredBins << endl;
-                cout << "c x long cls lits: " << sum_irred_cls_longs_lits() << endl;
-                #endif
-                cout << "c another run ?"<< endl;
-            }
+            verb_print(2, "x n vars       : " << solver->get_num_free_vars());
+            #ifdef DEBUG_VARELIM
+            verb_print(2, "x cls long     : " << sum_irred_cls_longs());
+            verb_print(2, "x cls bin      : " << solver->binTri.irredBins);
+            verb_print(2, "x long cls lits: " << sum_irred_cls_longs_lits());
+            #endif
+            verb_print(2, "another run ?");
         }
         #ifdef DEBUG_VARELIM
         if (solver->conf.verbosity >= 2) {
@@ -1401,26 +1389,23 @@ bool OccSimplifier::eliminate_vars()
         if (n_vars_now != 0) {
             var_dec_rate = (double)n_vars_last / n_vars_now;
         }
-        if (solver->conf.verbosity) {
-            cout << "c [occ-bve] iter v-elim " << last_elimed << endl;
-            cout << "c cl_inc_rate=" << cl_inc_rate
-            << ", var_dec_rate=" << var_dec_rate
-            << " (grow=" << grow << ")" << endl;
+        verb_print(1, "[occ-bve] iter v-elim " << last_elimed);
+        verb_print(1, "cl_inc_rate=" << cl_inc_rate
+        << ", var_dec_rate=" << var_dec_rate
+        << " (grow=" << grow << ")");
 
-            cout << "c Reduced to " << solver->get_num_free_vars() << " vars"
-            << ", " << sum_irred_cls_longs() + solver->binTri.irredBins
-            << " cls (grow=" << grow << ")" << endl;
+        verb_print(1, "Reduced to " << solver->get_num_free_vars() << " vars"
+        << ", " << sum_irred_cls_longs() + solver->binTri.irredBins
+        << " cls (grow=" << grow << ")");
 
-            if (varelim_num_limit < 0
-                || varelim_linkin_limit_bytes < 0
-                || *limit_to_decrease < 0
-            ) {
-                cout << "c [occ-bve] stopped varelim due to outage. "
-                << " varelim_num_limit: " << print_value_kilo_mega(varelim_num_limit)
-                << " varelim_linkin_limit_bytes: " << print_value_kilo_mega(varelim_linkin_limit_bytes)
-                << " *limit_to_decrease: " << print_value_kilo_mega(*limit_to_decrease)
-                << endl;
-            }
+        if (varelim_num_limit < 0
+            || varelim_linkin_limit_bytes < 0
+            || *limit_to_decrease < 0
+        ) {
+            verb_print(1, "[occ-bve] stopped varelim due to outage. "
+            << " varelim_num_limit: " << print_value_kilo_mega(varelim_num_limit)
+            << " varelim_linkin_limit_bytes: " << print_value_kilo_mega(varelim_linkin_limit_bytes)
+            << " *limit_to_decrease: " << print_value_kilo_mega(*limit_to_decrease));
         }
 
         if (n_cls_now > n_cls_init || cl_inc_rate > (var_dec_rate)) {
@@ -1438,14 +1423,12 @@ bool OccSimplifier::eliminate_vars()
         assert(added_irred_bin.empty());
     }
 
-    if (solver->conf.verbosity) {
-        cout << "c x n vars       : " << solver->get_num_free_vars() << endl;
-        #ifdef DEBUG_VARELIM
-        cout << "c x cls long     : " << sum_irred_cls_longs() << endl;
-        cout << "c x cls bin      : " << solver->binTri.irredBins << endl;
-        cout << "c x long cls lits: " << sum_irred_cls_longs_lits() << endl;
-        #endif
-    }
+    verb_print(1, "x n vars       : " << solver->get_num_free_vars());
+    #ifdef DEBUG_VARELIM
+    verb_print(1, "x cls long     : " << sum_irred_cls_longs());
+    verb_print(1, "x cls bin      : " << solver->binTri.irredBins);
+    verb_print(1, "x long cls lits: " << sum_irred_cls_longs_lits());
+    #endif
 
 end:
     if (solver->okay()) {
@@ -1473,7 +1456,7 @@ end:
         if (solver->conf.verbosity >= 3)
             runStats.print(solver->nVarsOuter(), this);
         else
-            runStats.print_extra_times();
+            runStats.print_extra_times(solver->conf.prefix.c_str());
     }
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
@@ -2278,7 +2261,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         token = trim(token);
         std::transform(token.begin(), token.end(), token.begin(), ::tolower);
         if (!token.empty() && solver->conf.verbosity) {
-            cout << "c --> Executing OCC strategy token: " << token << '\n';
+            verb_print(1, "Executing OCC strategy token: " << token);
             *solver->frat << __PRETTY_FUNCTION__ << " Executing OCC strategy token:" << token.c_str() << "\n";
         }
 
@@ -2498,16 +2481,12 @@ bool OccSimplifier::ternary_res()
     const double time_used = cpuTime() - my_time;
     const bool time_out = (*limit_to_decrease <= 0);
     const double time_remain =  float_div(*limit_to_decrease, orig_ternary_res_time_limit);
-    if (solver->conf.verbosity) {
-        cout
-        << "c [occ-ternary-res] Ternary"
-        << " res-tri: " << runStats.ternary_added_tri
-        << " res-bin: " << runStats.ternary_added_bin
-        << " sub: " << sub1_ret.sub
-        << " str: " << sub1_ret.str
-        << solver->conf.print_times(time_used, time_out, time_remain)
-        << endl;
-    }
+    verb_print(1, "[occ-ternary-res] Ternary"
+    << " res-tri: " << runStats.ternary_added_tri
+    << " res-bin: " << runStats.ternary_added_bin
+    << " sub: " << sub1_ret.sub
+    << " str: " << sub1_ret.str
+    << solver->conf.print_times(time_used, time_out, time_remain));
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
@@ -2891,10 +2870,8 @@ bool OccSimplifier::fill_occur() {
         , numeric_limits<int64_t>::max()
     );
     solver->longIrredCls.clear();
-    if (solver->conf.verbosity) {
-        cout << "c [occ] Linked in IRRED BIN by default: " << solver->binTri.irredBins << endl;
-        cout << "c [occ] Linked in RED   BIN by default: " << solver->binTri.redBins << endl;
-    }
+    verb_print(1, "[occ] Linked in IRRED BIN by default: " << solver->binTri.irredBins);
+    verb_print(1, "[occ] Linked in RED   BIN by default: " << solver->binTri.redBins);
     print_linkin_data(link_in_data_irred);
 
     //Add redundant to occur
@@ -3386,8 +3363,8 @@ bool OccSimplifier::find_irreg_gate(
 ) {
     // Too expensive
     if (turned_off_irreg_gate || picolits_added > (double)solver->conf.global_timeout_multiplier * (double)solver->conf.picosat_gate_limitK * (double)1000) {
-        if (solver->conf.verbosity && !turned_off_irreg_gate) {
-            cout << "c [occ-bve] turning off picosat-based irreg gate detection, added lits: " << print_value_kilo_mega(picolits_added) << endl;
+        if (!turned_off_irreg_gate) {
+            verb_print(1, "[occ-bve] turning off picosat-based irreg gate detection, added lits: " << print_value_kilo_mega(picolits_added));
         }
         turned_off_irreg_gate = true;
         return false;
@@ -5318,15 +5295,14 @@ BVEStats& BVEStats::operator+=(const BVEStats& other)
     return *this;
 }
 
-void OccSimplifier::Stats::print_extra_times() const
+void OccSimplifier::Stats::print_extra_times(const char* prefix) const
 {
-
-    cout
-    << "c [occur] " << linkInTime+finalCleanupTime << " is overhead"
+    cout << prefix
+    << "[occur] " << linkInTime+finalCleanupTime << " is overhead"
     << endl;
 
-    cout
-    << "c [occur] link-in T: " << linkInTime
+    cout << prefix
+    << "[occur] link-in T: " << linkInTime
     << " cleanup T: " << finalCleanupTime
     << endl;
 }

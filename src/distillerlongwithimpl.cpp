@@ -390,11 +390,9 @@ void DistillerLongWithImpl::dump_stats_for_sub_str_all_cl_with_watch(
         if (solver->conf.verbosity >= 10) {
             cout << "red:" << red << " alsostrenghten:" << alsoStrengthen << endl;
         }
-        watch_based_data.print();
-
-        cout << "c [distill-with-bin-ext]"
-        << solver->conf.print_times(time_used, time_out, time_remain)
-        << endl;
+        watch_based_data.print(solver->conf.prefix.c_str());
+        verb_print(1, "[distill-with-bin-ext]"
+                << solver->conf.print_times(time_used, time_out, time_remain));
     }
     if (solver->sqlStats) {
         std::stringstream ss;
@@ -429,10 +427,9 @@ size_t DistillerLongWithImpl::WatchBasedData::get_lits_rem() const
     return remLitBin;
 }
 
-void DistillerLongWithImpl::WatchBasedData::print() const
+void DistillerLongWithImpl::WatchBasedData::print(const char* prefix) const
 {
-    cout
-    << "c [distill-with-bin-ext] bin-based"
+    cout << prefix << "[distill-with-bin-ext] bin-based"
     << " lit-rem: " << remLitBin
     << " cl-sub: " << subBin
     << endl;
@@ -464,17 +461,16 @@ void DistillerLongWithImpl::Stats::print() const
 
 
 void DistillerLongWithImpl::Stats::WatchBased::print_short(
-    const string& type, const Solver* _solver) const
+    const string& type, const Solver* solver) const
 {
-    cout << "c [distill] watch-based "
+    verb_print(1, "[distill] watch-based "
     << std::setw(5) << type
     << "-- "
     << " cl tried " << std::setw(8) << triedCls
     << " cl-sh " << std::setw(5) << shrinked
     << " cl-rem " << std::setw(4) << numClSubsumed
     << " lit-rem " << std::setw(6) << numLitsRem
-    << _solver->conf.print_times(cpu_time, ranOutOfTime)
-    << endl;
+    << solver->conf.print_times(cpu_time, ranOutOfTime));
 }
 
 void DistillerLongWithImpl::Stats::WatchBased::print() const

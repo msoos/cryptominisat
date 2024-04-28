@@ -93,7 +93,7 @@ class SCCFinder {
                 cout << "c ----- SCC STATS END --------" << endl;
             }
 
-            void print_short(Solver* solver) const;
+            void print_short(const Solver* solver) const;
         };
 
         const Stats& get_stats() const;

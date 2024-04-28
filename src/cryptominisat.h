@@ -163,6 +163,7 @@ namespace CMSat {
         void set_oracle_removed_is_learnt(bool val);
         double get_orig_global_timeout_multiplier();
         bool minimize_clause(std::vector<Lit>& cl);
+        void set_prefix(const char* prefix);
 
         ////////////////////////////
         // Predictive system tuning

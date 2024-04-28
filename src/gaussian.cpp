@@ -138,12 +138,12 @@ void EGaussian::select_columnorder() {
     }
 
     if (vars_needed.size() >= numeric_limits<uint32_t>::max() / 2 - 1) {
-        cout << "c Matrix has too many rows, exiting select_columnorder" << endl;
+        verb_print(1, "Matrix has too many rows, exiting select_columnorder");
         assert(false);
         exit(-1);
     }
     if (xorclauses.size() >= numeric_limits<uint32_t>::max() / 2 - 1) {
-        cout << "c Matrix has too many rows, exiting select_columnorder" << endl;
+        verb_print(1, "Matrix has too many rows, exiting select_columnorder");
         assert(false);
         exit(-1);
     }
@@ -1447,13 +1447,12 @@ bool EGaussian::must_disable(GaussQData& gqd)
             if (solver->conf.verbosity) {
                 const double perc =
                     stats_line_percent(useful, egcalled);
-                cout << "c [g  <" <<  matrix_no <<  "] Disabling GJ-elim in this round. "
+                verb_print(1, "[g  <" <<  matrix_no <<  "] Disabling GJ-elim in this round. "
                 " Usefulness was: "
                 << std::setprecision(4) << std::fixed << perc
                 <<  "%"
                 << std::setprecision(2)
-                << "  over " << egcalled << " calls"
-                << endl;
+                << "  over " << egcalled << " calls");
             }
             return true;
         }

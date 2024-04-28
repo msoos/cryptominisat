@@ -521,6 +521,7 @@ class DLL_PUBLIC SolverConf
         unsigned origSeed;
         int      simulate_frat;
         int      conf_needed = true;
+        string   prefix;
 };
 
 } //end namespace

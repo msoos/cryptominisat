@@ -595,35 +595,6 @@ uint64_t CNF::count_lits(
     return lits;
 }
 
-void CNF::print_watchlist_stats() const
-{
-    uint64_t total_size = 0;
-    uint64_t total_size_lits = 0;
-    uint64_t total_cls = 0;
-    uint64_t bin_cls = 0;
-    for(auto const& ws: watches) {
-        for(auto const& w: ws) {
-            total_size+=1;
-            if (w.isBin()) {
-                total_size_lits+=2;
-                total_cls++;
-                bin_cls++;
-            } else if (w.isClause()) {
-                Clause* cl = cl_alloc.ptr(w.get_offset());
-                assert(!cl->get_removed());
-                total_size_lits+=cl->size();
-                total_cls++;
-            }
-        }
-    }
-    cout << "c [watchlist] avg watchlist size: " << float_div(total_size, watches.size());
-    cout << " Avg cl size: " << float_div(total_size_lits, total_cls);
-    cout << " Cls: " << total_cls;
-    cout << " Total WS size: " << total_size;
-    cout << " bin cl: " << bin_cls;
-    cout << endl;
-}
-
 void CNF::print_all_clauses() const
 {
     for(const auto& off : longIrredCls) {
