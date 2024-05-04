@@ -1861,6 +1861,7 @@ DLL_PUBLIC const std::vector<uint32_t>& SATSolver::get_sampl_vars() const {
 
 DLL_PUBLIC void SATSolver::set_sampl_vars(const std::vector<uint32_t>& vars) {
     Solver& s = *data->solvers[0];
+    if (s.conf.sampling_vars_set) throw std::runtime_error("Sampling vars already set");
     s.conf.sampling_vars_set = true;
     s.conf.sampling_vars = vars;
 }
@@ -1872,6 +1873,7 @@ DLL_PUBLIC bool SATSolver::get_sampl_vars_set() const {
 
 DLL_PUBLIC void SATSolver::set_opt_sampl_vars(const std::vector<uint32_t>& vars) {
     Solver& s = *data->solvers[0];
+    if (s.conf.opt_sampling_vars_set) throw std::runtime_error("Opt sampling vars already set");
     s.conf.opt_sampling_vars_set = true;
     s.conf.opt_sampling_vars = vars;
 }
