@@ -5429,7 +5429,7 @@ void OccSimplifier::check_clauses_lits_ordered() const
         if (cl->freed() || cl->get_removed()) continue;
         for(uint32_t i = 1; i < cl->size(); i++) {
             if ((*cl)[i-1] >= (*cl)[i]) {
-                cout << "ERRROR cl: " << *cl << endl;
+                cout << "ERROR cl: " << *cl << endl;
                 assert(false);
             }
         }
