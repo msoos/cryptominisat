@@ -345,7 +345,7 @@ bool Solver::oracle_sparsify()
             }
         }
 
-        if (oracle.getStats().mems > 900LL*1000LL*1000LL) {
+        if (oracle.getStats().mems > 1400LL*1000LL*1000LL) {
             verb_print(1, "[oracle-sparsify] too many mems in oracle, aborting");
             goto fin;
         }
