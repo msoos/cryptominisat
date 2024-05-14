@@ -29,6 +29,7 @@ THE SOFTWARE.
 
 #include <fstream>
 #include <cstdint>
+#include <gmpxx.h>
 #include <iomanip>
 #include <limits>
 #include <thread>
@@ -1450,7 +1451,7 @@ DLL_PUBLIC void SATSolver::set_single_run()
     }
 }
 
-DLL_PUBLIC void SATSolver::set_lit_weight(Lit lit, double weight)
+DLL_PUBLIC void SATSolver::set_lit_weight(Lit lit, mpq_class weight)
 {
     actually_add_clauses_to_threads(data);
     for (auto & solver : data->solvers) {
@@ -1864,12 +1865,12 @@ DLL_PUBLIC void SATSolver::set_weighted(const bool weighted) {
     s.set_weighted(weighted);
 }
 
-DLL_PUBLIC void SATSolver::set_multiplier_weight(const mpz_class mult) {
+DLL_PUBLIC void SATSolver::set_multiplier_weight(const mpq_class mult) {
     Solver& s = *data->solvers[0];
     s.set_multiplier_weight(mult);
 }
 
-DLL_PUBLIC mpz_class SATSolver::get_multiplier_weight() const {
+DLL_PUBLIC mpq_class SATSolver::get_multiplier_weight() const {
     Solver& s = *data->solvers[0];
     return s.get_multiplier_weight();
 }
@@ -1908,12 +1909,9 @@ DLL_PUBLIC bool SATSolver::get_opt_sampl_vars_set() const {
     return s.conf.opt_sampling_vars_set;
 }
 
-
-#ifdef WEIGHTED
-DLL_PUBLIC void SATSolver::get_weights(std::map<Lit, double>& weights,
+DLL_PUBLIC void SATSolver::get_weights(std::map<Lit, mpq_class>& weights,
         const std::vector<uint32_t>& sampl_vars,
         const std::vector<uint32_t>& orig_sampl_vars) const {
     const Solver& s = *data->solvers[0];
     s.get_weights(weights, sampl_vars, orig_sampl_vars);
 }
-#endif

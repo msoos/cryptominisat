@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include <cmath>
 #include <fcntl.h>
 #include <functional>
+#include <gmpxx.h>
 #include <limits>
 #include <string>
 #include <algorithm>
@@ -3198,9 +3199,8 @@ bool Solver::check_assumptions_contradict_foced_assignment() const {
     return false;
 }
 
-void Solver::set_lit_weight([[maybe_unused]] const Lit lit, [[maybe_unused]] const double weight) {
+void Solver::set_lit_weight(const Lit lit, const mpq_class& weight) {
     assert(lit.var() < nVars());
-    #ifdef WEIGHTED
     if (!lit.sign()) varData[lit.var()].pos_weight = weight;
     else varData[lit.var()].neg_weight = weight;
 
@@ -3209,10 +3209,6 @@ void Solver::set_lit_weight([[maybe_unused]] const Lit lit, [[maybe_unused]] con
         if (!lit.sign()) varData[lit.var()].neg_weight = 1.0-weight;
         else varData[lit.var()].neg_weight = 1.0-weight;
     }
-    #else
-    cout << "ERROR: set_lit_weight only supported if you compile with -DWEIGHTED=ON" << endl;
-    exit(-1);
-    #endif
 }
 
 vector<double> Solver::get_vsids_scores() const
@@ -3715,8 +3711,7 @@ void Solver::reverse_bce() {
 /* // This needs to be an AIG actually, with an order of what to calculate first. */
 /* void Solver::get_var_map(vector<Lit>& var_map, map<uint32_t, bool>& var_set) const { */
 
-#ifdef WEIGHTED
-void Solver::get_weights(map<Lit,double>& weights,
+void Solver::get_weights(map<Lit,mpq_class>& weights,
         const vector<uint32_t>& sampl_vars,
         const vector<uint32_t>& orig_sampl_vars) const {
     assert(get_weighted());
@@ -3731,8 +3726,8 @@ void Solver::get_weights(map<Lit,double>& weights,
     for(const uint32_t& var: sampl_vars_int) {
         Lit l = Lit(var, false);
         assert(var < nVars());
-        mpz_class pos_weight = varData[var].pos_weight;
-        mpz_class neg_weight = varData[var].neg_weight;
+        mpq_class pos_weight = varData[var].pos_weight;
+        mpq_class neg_weight = varData[var].neg_weight;
 
         // get all variables var is replacing
         auto vars = varReplacer->get_vars_replacing(var);
@@ -3751,7 +3746,6 @@ void Solver::get_weights(map<Lit,double>& weights,
         weights[map_inter_to_outer(~l)] = neg_weight;
     }
 }
-#endif
 
 #ifdef STATS_NEEDED
 void Solver::dump_clauses_at_finishup_as_last()

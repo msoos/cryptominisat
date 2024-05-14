@@ -70,8 +70,9 @@ public:
     size_t mem_used() const;
     bool get_weighted() const { return weighted; }
     void set_weighted(const bool w) { weighted = w; }
-    void set_multiplier_weight(const mpz_class mult) { multiplier_weight = mult; }
-    mpz_class get_multiplier_weight() const { return multiplier_weight; }
+    void set_multiplier_weight(const mpq_class mult) {
+        multiplier_weight = mult; }
+    mpq_class get_multiplier_weight() const { return multiplier_weight; }
 
     CNF(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter)
     {
@@ -174,7 +175,7 @@ public:
     int64_t restartID = 1;
     SQLStats* sqlStats = nullptr;
     bool weighted = false;
-    mpz_class multiplier_weight = 1;
+    mpq_class multiplier_weight = 1;
 
     //Temporaries
     vector<uint32_t> seen;

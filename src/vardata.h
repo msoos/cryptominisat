@@ -23,6 +23,7 @@ THE SOFTWARE.
 #pragma once
 
 #include <limits>
+#include <gmpxx.h>
 #include "propby.h"
 #include "avgcalc.h"
 
@@ -40,21 +41,17 @@ struct VarData
         stable_polarity = false;
         best_polarity = false;
         inv_polarity = false;
-#ifdef WEIGHTED
         orig_varnum = num;
-#endif
     }
 
     ///contains the decision level at which the assignment was made.
     uint32_t level = numeric_limits<uint32_t>::max();
     uint32_t sublevel = numeric_limits<uint32_t>::max();
 
-    #ifdef WEIGHTED
     uint32_t orig_varnum = std::numeric_limits<uint32_t>::max();
     bool weight_set = false;
-    mpz_class pos_weight = 1.0;
-    mpz_class neg_weight = 1.0;
-    #endif
+    mpq_class pos_weight = 1.0;
+    mpq_class neg_weight = 1.0;
 
     //Reason this got propagated. nullptr means decision/toplevel
     PropBy reason = PropBy();

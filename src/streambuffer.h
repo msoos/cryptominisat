@@ -19,7 +19,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #pragma once
 
-#include <stdio.h>
+#include <cstdio>
+#include <gmpxx.h>
 #include <iostream>
 #include <iomanip>
 #include <limits>
@@ -157,22 +158,23 @@ public:
         exit(-1);
     }
 
-    inline bool parseDouble(double& ret, size_t lineNum)
+    inline bool parseDouble(mpq_class& ret, size_t lineNum)
     {
-        int32_t head;
-        bool rc = parseInt(head, lineNum);
-        if (!rc) {
-            return false;
-        }
+        mpq_class head;
+        bool rc = parseInt<mpq_class>(head, lineNum);
+        if (!rc) return false;
         if (value() == '.') {
             advance();
-            int64_t tail;
-            rc = parseInt<int64_t>(tail, lineNum);
-            if (!rc) {
-                return false;
-            }
-            uint32_t num_10s = std::floor(std::log10(tail));
-            ret = head + tail/std::pow(10, num_10s+1);
+            mpz_class tail;
+            rc = parseInt<mpz_class>(tail, lineNum);
+            if (!rc) return false;
+            size_t n = mpz_sizeinbase(tail.get_mpz_t(), 10);
+            mpz_class ten(10);
+            mpz_ui_pow_ui(ten.get_mpz_t(), 10, n);
+            mpq_class tenq(ten);
+            mpq_class tailq(tail);
+            ret = head + tailq/tenq;
+            std::cout << "ret = " << ret << std::endl;
         } else {
             ret = head;
         }
@@ -180,7 +182,7 @@ public:
     }
 
     template<class T=int32_t>
-    inline bool parseInt(T& ret, size_t lineNum, bool allow_eol = false)
+    inline bool parseInt(T& ret, size_t lineNum)
     {
         T val = 0;
         T mult = 1;
@@ -193,10 +195,6 @@ public:
         }
 
         char c = value();
-        if (allow_eol && c == '\n') {
-            ret = numeric_limits<T>::max();
-            return true;
-        }
         if (c < '0' || c > '9') {
             std::cerr
             << "PARSE ERROR! Unexpected char (dec: '" << c << ")"

@@ -552,12 +552,6 @@ if (HAVE__FPU_SETCW)
     message(STATUS "Found FPU code for yalsat: fpu_control.h, _FPU_SINGLE, _FPU_DOUBLE")
 endif()
 
-option(WEIGHTED "Allow for weighted sampling" OFF)
-if (WEIGHTED)
-    add_definitions( -DWEIGHTED )
-endif()
-
-
 # -----------------------------------------------------------------------------
 # MIT option
 # -----------------------------------------------------------------------------

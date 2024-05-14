@@ -231,7 +231,7 @@ bool DimacsParser<C, S>::match(C& in, const char* str)
 template<class C, class S>
 bool DimacsParser<C, S>::parseWeight(C& in) {
     int32_t slit;
-    double weight;
+    mpq_class weight;
     if (in.parseInt(slit, lineNum) && in.parseDouble(weight, lineNum)) {
         if (slit == 0) {
             cerr << "ERROR: Cannot define weight of literal 0!" << endl;
@@ -435,7 +435,7 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
         }
         in.skipWhitespace();
         in.parseString(str2);
-        solver->set_multiplier_weight(mpz_class(str2.c_str(), 10));
+        solver->set_multiplier_weight(mpq_class(str2.c_str()));
     }
     if (!debugLib.empty() && str == "Solver::new_var()") {
         solver->new_var();
@@ -444,14 +444,11 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
     } else if (!debugLib.empty() && str == "Solver::new_vars(") {
         in.skipWhitespace();
         int n;
-        if (!in.parseInt(n, lineNum)) {
-            return false;
-        }
+        if (!in.parseInt(n, lineNum)) return false;
         solver->new_vars(n);
 
-        if (verbosity >= 6) {
+        if (verbosity >= 6)
             cout << "c Parsed Solver::new_vars( " << n << " )" << endl;
-        }
     } else if (str == "ind") {
         vector<uint32_t> sampl_vars;
         if (!parseIndependentSet(in, sampl_vars)) return false;

@@ -23,6 +23,7 @@ THE SOFTWARE.
 #pragma once
 
 #include "constants.h"
+#include <gmpxx.h>
 #include <vector>
 #include <fstream>
 #include <iostream>
@@ -100,8 +101,8 @@ class Solver : public Searcher
             const vector<Lit>& lits,
             const int32_t cutoff,
             Lit out);
-        void set_lit_weight(Lit lit, double weight);
-        void get_weights(map<Lit,double>& weights,
+        void set_lit_weight(Lit lit, const mpq_class& weight);
+        void get_weights(map<Lit,mpq_class>& weights,
                 const vector<uint32_t>& sampling_vars,
                 const vector<uint32_t>& orig_sampl_vars) const;
 
