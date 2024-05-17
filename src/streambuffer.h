@@ -174,7 +174,6 @@ public:
             mpq_class tenq(ten);
             mpq_class tailq(tail);
             ret = head + tailq/tenq;
-            std::cout << "ret = " << ret << std::endl;
         } else {
             ret = head;
         }
