@@ -166,11 +166,12 @@ public:
         if (value() == '.') {
             advance();
             mpz_class tail;
-            rc = parseInt<mpz_class>(tail, lineNum);
+            int len = 0;
+            rc = parseInt<mpz_class>(tail, lineNum, &len);
             if (!rc) return false;
-            size_t n = mpz_sizeinbase(tail.get_mpz_t(), 10);
+            std::cout << "head: << " << head << " tail: " << tail << std::endl;
             mpz_class ten(10);
-            mpz_ui_pow_ui(ten.get_mpz_t(), 10, n);
+            mpz_ui_pow_ui(ten.get_mpz_t(), 10, len);
             mpq_class tenq(ten);
             mpq_class tailq(tail);
             ret = head + tailq/tenq;
@@ -181,7 +182,7 @@ public:
     }
 
     template<class T=int32_t>
-    inline bool parseInt(T& ret, size_t lineNum)
+    inline bool parseInt(T& ret, size_t lineNum, int* len = nullptr)
     {
         T val = 0;
         T mult = 1;
@@ -204,6 +205,7 @@ public:
         }
 
         while (c >= '0' && c <= '9') {
+            if (len) (*len)++;
             T val2 = val*10 + (c - '0');
             if (val2 < val) {
                 std::cerr << "PARSE ERROR! At line " << lineNum
