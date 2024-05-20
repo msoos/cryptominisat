@@ -169,7 +169,6 @@ public:
             int len = 0;
             rc = parseInt<mpz_class>(tail, lineNum, &len);
             if (!rc) return false;
-            std::cout << "head: << " << head << " tail: " << tail << std::endl;
             mpz_class ten(10);
             mpz_ui_pow_ui(ten.get_mpz_t(), 10, len);
             mpq_class tenq(ten);
