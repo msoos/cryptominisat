@@ -21,6 +21,7 @@ THE SOFTWARE.
 ***********************************************/
 
 #include "solver.h"
+#include "solvertypesmini.h"
 extern "C" {
 #include "mpicosat/mpicosat.h"
 }
@@ -29,7 +30,7 @@ extern "C" {
 
 using namespace CMSat;
 
-bool Solver::backbone_simpl(int64_t orig_max_confl, bool& finished)
+bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen, bool& finished)
 {
     vector<int> cnf;
     /* for(uint32_t i = 0; i < nVars(); i++) picosat_inc_max_var(picosat); */
@@ -119,7 +120,7 @@ bool Solver::backbone_simpl_old(int64_t orig_max_confl, bool cmsgen, bool& finis
         copy_to_simp(&s2);
 
         uint64_t last_num_conflicts = 0;
-        int64_t remaining_confls = orig_max_confl/10;
+        int64_t remaining_confls = orig_max_confl;
         s2.set_max_confl(remaining_confls);
         uint32_t num_runs = 0;
         auto s2_ret = s2.solve();
@@ -164,70 +165,77 @@ bool Solver::backbone_simpl_old(int64_t orig_max_confl, bool cmsgen, bool& finis
     }
     std::shuffle(var_order.begin(), var_order.end(), mtrand);
 
-    int64_t orig_max_props = orig_max_confl*1000LL;
-    if (orig_max_props < orig_max_confl) orig_max_props = orig_max_confl;
-    vector<int> old_model2(nVars(), 0);
-    PicoSAT* picosat = build_picosat();
-    picosat_set_propagation_limit(picosat, orig_max_props);
-    auto ret = picosat_sat(picosat, -1);
-    if (ret == PICOSAT_UNKNOWN || ret == PICOSAT_UNSATISFIABLE) goto end;
-    if (ret == PICOSAT_SATISFIABLE) {
+    vector<lbool> old_model2(nVars(), l_Undef);
+    vector<Lit> assumps;
+    SATSolver* s = new SATSolver();
+
+        s->new_vars(nVarsOuter());
+        start_getting_constraints(false);
+        std::vector<Lit> c; bool is_xor; bool rhs; bool ret2 = true;
+        while (ret2) {
+            ret2 = get_next_constraint(c, is_xor, rhs);
+            if (!ret2) break;
+            if (is_xor) s->add_xor_clause(c, rhs);
+            else s->add_clause(c);
+        }
+        end_getting_constraints();
+
+    s->set_max_confl(orig_max_confl*20);
+    auto ret = s->solve();
+    if (ret == l_Undef || ret == l_False) goto end;
+    if (ret == l_True) {
         for(uint32_t i = 0; i < nVars(); i++) {
-            old_model2[i] = picosat_deref(picosat, i+1);
+            assert(s->get_model()[i] != l_Undef);
+            old_model2[i] = s->get_model()[i];
         }
     }
 
+    verb_print(1, "[backbone-simpl] candidates: " << var_order.size());
     for(const auto& var: var_order) {
         if (seen_flipped[var]) continue;
         if (value(var) != l_Undef) continue;
         if (varData[var].removed != Removed::none) continue;
 
-        l = Lit(var, old_model2[var]==-1);
-        auto top_val = picosat_deref_toplevel(picosat, l.var()+1);
-        if (top_val != 0) {
-            if (l.sign()) assert(top_val == -1);
-            else assert(top_val == 1);
-            goto next;
-        }
+        l = Lit(var, old_model2[var]==l_False);
 
         //There is definitely a solution with "l". Let's see if ~l fails.
-        picosat_assume(picosat, PICOLIT(~l));
-        ret = picosat_sat(picosat, -1);
+        assumps.clear();
+        assumps.push_back(~l);
+        s->set_max_confl(orig_max_confl*2);
+        ret = s->solve(&assumps);
+        verb_print(1, "ret: " << ret << " confl: " << s->get_sum_conflicts() << " max: " << orig_max_confl);
         tried++;
 
-        if (ret == PICOSAT_SATISFIABLE) {
+        if (ret == l_True) {
             for(uint32_t i2 = 0; i2 < nVars(); i2++) {
-                auto val = picosat_deref(picosat, i2+1);
+                auto val = s->get_model()[i2];
                 if (seen_flipped[i2] ||
-                        value(i2) != l_Undef || val == 0 ||
+                        value(i2) != l_Undef || val == l_Undef ||
                         varData[i2].removed != Removed::none) continue;
                 if (val != old_model2[i2]) {
                     seen_flipped[i2] = 1;
+                    /* cout << "seen flipped: " << i2 << endl; */
                     num_seen_flipped++;
                 }
             }
-        } else if (ret == PICOSAT_UNSATISFIABLE) {
-            next:
+        } else if (ret == l_False) {
             tmp_clause.clear();
             tmp_clause.push_back(l);
             Clause* ptr = add_clause_int(tmp_clause);
             assert(ptr == nullptr);
+            s->add_clause(tmp_clause);
             falses++;
-            if (orig_max_props + 5000 > orig_max_props) orig_max_props += 5000;
-            picosat_set_propagation_limit(picosat, orig_max_props);
             if (!okay()) goto end;
         } else {
-            assert(ret == PICOSAT_UNKNOWN);
+            assert(ret == l_Undef);
             undefs++;
-            goto end;
         }
     }
     if (undefs==0) finished = true;
     assert(okay());
 
     end:
-    const auto used_props = picosat_propagations(picosat);
-    picosat_reset(picosat);
+    delete s;
     uint32_t num_set = trail.size() - orig_trail_size;
     double time_used = cpuTime() - my_time;
 
@@ -238,7 +246,6 @@ bool Solver::backbone_simpl_old(int64_t orig_max_confl, bool cmsgen, bool& finis
         << " undefs: " << undefs
         << " tried: "  << tried
         << " set: " << num_set
-        << " props used: " << print_value_kilo_mega(used_props)
         << " T: " << std::setprecision(2) << time_used);
 
     return okay();

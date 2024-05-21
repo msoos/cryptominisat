@@ -6456,7 +6456,6 @@ write_trace_dat (PS * ps, struct TraceData* dat, int fmt)
 	}
   }
 #else
-  (void) file;
   (void) fmt;
   (void) ps;
 #endif
@@ -6685,7 +6684,6 @@ check_trace_support_and_execute_dat (PS * ps,
   f (ps, dat, fmt);
   leave (ps);
 #else
-  (void) file;
   (void) fmt;
   (void) f;
   ABORT ("compiled without trace support");
