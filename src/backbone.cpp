@@ -55,8 +55,8 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen, bool& finished)
         }
     }
     vector<int> ret;
-    int sat = CadiBack::doit(cnf, conf.verbosity, ret);
-    if (sat) {
+    int res = CadiBack::doit(cnf, conf.verbosity, ret);
+    if (res == 10) {
         vector<Lit> tmp;
         for(const auto& l: ret) {
             if (l == 0) continue;
@@ -65,11 +65,14 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen, bool& finished)
             if (varData[lit.var()].removed != Removed::none) continue;
             tmp.clear();
             tmp.push_back(lit);
+            if (!okay()) break;
             add_clause_int(tmp);
         }
         finished = true;
+    } else {
+        ok = false;
     }
-    return sat != 20;
+    return res == 10;
 }
 
 void Solver::detach_and_free_all_irred_cls()
