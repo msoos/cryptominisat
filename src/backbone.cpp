@@ -54,6 +54,11 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen, bool& finished)
             cnf.push_back(0);
         }
     }
+    for(uint32_t i = 0; i < nVars(); i++) {
+        if (value(i) == l_Undef) continue;
+        cnf.push_back(PICOLIT(Lit(i, value(i) == l_False)));
+        cnf.push_back(0);
+    }
     vector<int> ret;
     int res = CadiBack::doit(cnf, conf.verbosity, ret);
     if (res == 10) {
