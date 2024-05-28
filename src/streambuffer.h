@@ -174,6 +174,13 @@ public:
             mpq_class tenq(ten);
             mpq_class tailq(tail);
             ret = head + tailq/tenq;
+        } else if (value() == '/') {
+            advance();
+            mpq_class tail;
+            int len = 0;
+            rc = parseInt<mpq_class>(tail, lineNum, &len);
+            if (!rc) return false;
+            ret = head/tail;
         } else {
             ret = head;
         }
