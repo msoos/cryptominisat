@@ -104,7 +104,7 @@ class Solver : public Searcher
         void set_lit_weight(Lit lit, const mpq_class& weight);
         void get_weights(map<Lit,mpq_class>& weights,
                 const vector<uint32_t>& sampling_vars,
-                const vector<uint32_t>& orig_sampl_vars) const;
+                const vector<uint32_t>& opt_sampl_vars) const;
 
         lbool solve_with_assumptions(
             const vector<Lit>* _assumptions = nullptr,
@@ -139,6 +139,7 @@ class Solver : public Searcher
         void end_getting_constraints();
         vector<uint32_t> translate_sampl_set(
                 const vector<uint32_t>& sampl_set, bool also_removed);
+        map<Lit, mpq_class> translate_weights(const map<Lit, mpq_class>& ws);
         void reverse_bce();
 
         //Version

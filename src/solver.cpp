@@ -3177,6 +3177,18 @@ vector<uint32_t> Solver::translate_sampl_set(
     return get_clause_query->translate_sampl_set(sampl_set, also_removed);
 }
 
+
+map<Lit, mpq_class> Solver::translate_weights(const map<Lit, mpq_class>& ws) {
+    assert(get_clause_query);
+    map<Lit, mpq_class> ret;
+    for(const auto&w : ws) {
+        Lit l = w.first;
+        Lit l2 = map_outer_to_inter(l);
+        ret[l2] = w.second;
+    }
+    return ret;
+}
+
 void Solver::check_assigns_for_assumptions() const {
     for (Lit p: assumptions) {
         p = solver->varReplacer->get_lit_replaced_with_outer(p);
@@ -3713,33 +3725,31 @@ void Solver::reverse_bce() {
 
 void Solver::get_weights(map<Lit,mpq_class>& weights,
         const vector<uint32_t>& sampl_vars,
-        const vector<uint32_t>& orig_sampl_vars) const {
+        const vector<uint32_t>& opt_sampl_vars) const {
     assert(get_weighted());
+    assert(weights.empty());
 
-    auto orig_sampl_vars_int = orig_sampl_vars;
-    map_outer_to_inter(orig_sampl_vars_int);
-    set<uint32_t> orig_sampl_set_int(orig_sampl_vars_int.begin(), orig_sampl_vars_int.end());
+    auto opt_sampl_vars_int = opt_sampl_vars;
+    map_outer_to_inter(opt_sampl_vars_int);
+    set<uint32_t> orig_opt_sampl_set_int(opt_sampl_vars_int.begin(), opt_sampl_vars_int.end());
 
-    auto sampl_vars_int = sampl_vars;
-    map_outer_to_inter(sampl_vars_int);
-
-    for(const uint32_t& var: sampl_vars_int) {
+    for(const uint32_t& var: opt_sampl_vars_int) {
         Lit l = Lit(var, false);
-        assert(var < nVars());
-        mpq_class pos_weight = varData[var].pos_weight;
-        mpq_class neg_weight = varData[var].neg_weight;
+        if (var >= nVars()) continue;
+        auto pos_weight = varData[var].pos_weight;
+        auto neg_weight = varData[var].neg_weight;
 
         // get all variables var is replacing
         auto vars = varReplacer->get_vars_replacing(var);
         for(auto v: vars) {
-            if (orig_sampl_set_int.count(v) == 0) continue;
+            if (orig_opt_sampl_set_int.count(v) == 0) continue;
             assert(var == varReplacer->get_lit_replaced_with(Lit(v, false)).var());
             if (varReplacer->get_lit_replaced_with(Lit(v, false)) == Lit(var, false)) {
-                pos_weight += varData[v].pos_weight;
-                neg_weight += varData[v].neg_weight;
+                pos_weight *= varData[v].pos_weight;
+                neg_weight *= varData[v].neg_weight;
             } else {
-                pos_weight += varData[v].neg_weight;
-                neg_weight += varData[v].pos_weight;
+                pos_weight *= varData[v].neg_weight;
+                neg_weight *= varData[v].pos_weight;
             }
         }
         weights[map_inter_to_outer(l)] = pos_weight;

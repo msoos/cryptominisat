@@ -1328,6 +1328,10 @@ DLL_PUBLIC vector<uint32_t> SATSolver::translate_sampl_set(
     return data->solvers[0]->translate_sampl_set(sampl_set, also_removed);
 }
 
+DLL_PUBLIC std::map<Lit, mpq_class> SATSolver::translate_weights(const std::map<Lit, mpq_class>& ws)
+{
+    return data->solvers[0]->translate_weights(ws);
+}
 
 DLL_PUBLIC void SATSolver::reverse_bce() {
     return data->solvers[0]->reverse_bce();

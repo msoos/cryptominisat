@@ -453,6 +453,12 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
         vector<uint32_t> sampl_vars;
         if (!parseIndependentSet(in, sampl_vars)) return false;
         solver->set_sampl_vars(sampl_vars);
+    } else if (str == "t") {
+        in.skipWhitespace();
+        std::string str2;
+        in.parseString(str2);
+        if (str2 == "wmc" || str2 == "wpmc")
+            solver->set_weighted(true);
     } else if (str == "p") {
         in.skipWhitespace();
         std::string str2;

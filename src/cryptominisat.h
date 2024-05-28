@@ -260,6 +260,7 @@ namespace CMSat {
         uint32_t simplified_nvars();
         std::vector<uint32_t> translate_sampl_set(
                 const std::vector<uint32_t>& sampl_set, bool also_removed);
+        std::map<Lit, mpq_class> translate_weights(const std::map<Lit, mpq_class>& ws);
         void reverse_bce();
 
         // Solution reconstruction after minimization
@@ -275,7 +276,7 @@ namespace CMSat {
 
         void get_weights(std::map<Lit, mpq_class>& weights,
             const std::vector<uint32_t>& sampl_vars,
-            const std::vector<uint32_t>& orig_sampl_vars) const;
+            const std::vector<uint32_t>& opt_sampl_vars) const;
         bool get_weighted() const;
         void set_weighted(const bool);
         void set_multiplier_weight(const mpq_class mult);
