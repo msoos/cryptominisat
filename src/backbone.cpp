@@ -50,7 +50,7 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool& finished)
         }
     }
     vector<int> ret;
-    int sat = CadiBack::doit(cnf, ret);
+    int sat = CadiBack::doit(cnf, conf.verbosity, ret);
     if (sat) {
         vector<Lit> tmp;
         for(const auto& l: ret) {
