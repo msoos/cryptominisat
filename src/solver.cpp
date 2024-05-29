@@ -3731,7 +3731,7 @@ void Solver::get_weights(map<Lit,mpq_class>& weights,
 
     auto opt_sampl_vars_int = opt_sampl_vars;
     map_outer_to_inter(opt_sampl_vars_int);
-    set<uint32_t> orig_opt_sampl_set_int(opt_sampl_vars_int.begin(), opt_sampl_vars_int.end());
+    set<uint32_t> opt_sampl_set_int(opt_sampl_vars_int.begin(), opt_sampl_vars_int.end());
 
     for(const uint32_t& var: opt_sampl_vars_int) {
         Lit l = Lit(var, false);
@@ -3742,7 +3742,9 @@ void Solver::get_weights(map<Lit,mpq_class>& weights,
         // get all variables var is replacing
         auto vars = varReplacer->get_vars_replacing(var);
         for(auto v: vars) {
-            if (orig_opt_sampl_set_int.count(v) == 0) continue;
+            /* cout << "var: " << map_inter_to_outer(var)+1 << " is replacing: " */
+            /*     << map_inter_to_outer(v)+1 << endl; */
+            if (!opt_sampl_set_int.count(v)) continue;
             assert(var == varReplacer->get_lit_replaced_with(Lit(v, false)).var());
             if (varReplacer->get_lit_replaced_with(Lit(v, false)) == Lit(var, false)) {
                 pos_weight *= varData[v].pos_weight;
