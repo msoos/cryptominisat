@@ -3735,7 +3735,6 @@ void Solver::get_weights(map<Lit,mpq_class>& weights,
 
     for(const uint32_t& var: opt_sampl_vars_int) {
         Lit l = Lit(var, false);
-        if (var >= nVars()) continue;
         auto pos_weight = varData[var].pos_weight;
         auto neg_weight = varData[var].neg_weight;
 
