@@ -3178,17 +3178,6 @@ vector<uint32_t> Solver::translate_sampl_set(
 }
 
 
-map<Lit, mpq_class> Solver::translate_weights(const map<Lit, mpq_class>& ws) {
-    assert(get_clause_query);
-    map<Lit, mpq_class> ret;
-    for(const auto&w : ws) {
-        Lit l = w.first;
-        Lit l2 = map_outer_to_inter(l);
-        ret[l2] = w.second;
-    }
-    return ret;
-}
-
 void Solver::check_assigns_for_assumptions() const {
     for (Lit p: assumptions) {
         p = solver->varReplacer->get_lit_replaced_with_outer(p);
@@ -3731,7 +3720,11 @@ void Solver::get_weights(map<Lit,mpq_class>& weights,
 
     auto opt_sampl_vars_int = opt_sampl_vars;
     map_outer_to_inter(opt_sampl_vars_int);
-    set<uint32_t> opt_sampl_set_int(opt_sampl_vars_int.begin(), opt_sampl_vars_int.end());
+    set<uint32_t> opt_sampl_set_int;
+    for (const auto& v: opt_sampl_vars_int) {
+        auto v2 = varReplacer->get_lit_replaced_with_outer(Lit(v, false)).var();
+        opt_sampl_set_int.insert(v2);
+    }
 
     for(const uint32_t& var: opt_sampl_vars_int) {
         Lit l = Lit(var, false);
@@ -3740,23 +3733,36 @@ void Solver::get_weights(map<Lit,mpq_class>& weights,
 
         // get all variables var is replacing
         auto vars = varReplacer->get_vars_replacing(var);
-        for(auto v: vars) {
-            /* cout << "var: " << map_inter_to_outer(var)+1 << " is replacing: " */
-            /*     << map_inter_to_outer(v)+1 << endl; */
-            if (!opt_sampl_set_int.count(v)) continue;
-            assert(var == varReplacer->get_lit_replaced_with(Lit(v, false)).var());
-            if (varReplacer->get_lit_replaced_with(Lit(v, false)) == Lit(var, false)) {
-                pos_weight *= varData[v].pos_weight;
-                neg_weight *= varData[v].neg_weight;
+        for(auto replaced_v: vars) {
+            cout << "CMS var: " << map_inter_to_outer(var)+1 << " is replacing: "
+                << map_inter_to_outer(replaced_v)+1 << endl;
+            if (!opt_sampl_set_int.count(replaced_v)) continue;
+            assert(var == varReplacer->get_lit_replaced_with(Lit(replaced_v, false)).var());
+            if (varReplacer->get_lit_replaced_with(Lit(replaced_v, false)) == Lit(var, false)) {
+                pos_weight *= varData[replaced_v].pos_weight;
+                neg_weight *= varData[replaced_v].neg_weight;
             } else {
-                pos_weight *= varData[v].neg_weight;
-                neg_weight *= varData[v].pos_weight;
+                pos_weight *= varData[replaced_v].neg_weight;
+                neg_weight *= varData[replaced_v].pos_weight;
             }
         }
         weights[map_inter_to_outer(l)] = pos_weight;
         weights[map_inter_to_outer(~l)] = neg_weight;
     }
 }
+
+map<Lit, mpq_class> Solver::translate_weights(const map<Lit, mpq_class>& ws) {
+    assert(get_clause_query);
+    map<Lit, mpq_class> ret;
+    for(const auto&w : ws) {
+        Lit l = w.first;
+        l = varReplacer->get_lit_replaced_with_outer(l);
+        l = map_outer_to_inter(l);
+        ret[l] = w.second;
+    }
+    return ret;
+}
+
 
 #ifdef STATS_NEEDED
 void Solver::dump_clauses_at_finishup_as_last()
