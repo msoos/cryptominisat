@@ -3734,8 +3734,8 @@ void Solver::get_weights(map<Lit,mpq_class>& weights,
         // get all variables var is replacing
         auto vars = varReplacer->get_vars_replacing(var);
         for(auto replaced_v: vars) {
-            cout << "CMS var: " << map_inter_to_outer(var)+1 << " is replacing: "
-                << map_inter_to_outer(replaced_v)+1 << endl;
+            /* cout << "CMS var: " << map_inter_to_outer(var)+1 << " is replacing: " */
+            /*     << map_inter_to_outer(replaced_v)+1 << endl; */
             if (!opt_sampl_set_int.count(replaced_v)) continue;
             assert(var == varReplacer->get_lit_replaced_with(Lit(replaced_v, false)).var());
             if (varReplacer->get_lit_replaced_with(Lit(replaced_v, false)) == Lit(var, false)) {
