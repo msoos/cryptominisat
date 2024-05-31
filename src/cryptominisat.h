@@ -26,10 +26,10 @@ THE SOFTWARE.
 #include <vector>
 #include <map>
 #include <utility>
-#include <gmpxx.h>
 #include <string>
 #include <limits>
 #include <cstdio>
+#include <gmpxx.h>
 #include "solvertypesmini.h"
 
 namespace CMSat {
@@ -68,7 +68,7 @@ namespace CMSat {
             signed cutoff,
             Lit out = lit_Undef
         );
-        void set_lit_weight(Lit lit, mpq_class weight);
+        template<class T> void set_lit_weight(Lit lit, const T&) {}
 
         ////////////////////////////
         // Solving and simplifying
@@ -274,13 +274,9 @@ namespace CMSat {
         void open_file_and_dump_irred_clauses(const char* fname);
         bool removed_var(uint32_t var) const;
 
-        void get_weights(std::map<Lit, mpq_class>& weights,
-            const std::vector<uint32_t>& sampl_vars,
-            const std::vector<uint32_t>& opt_sampl_vars) const;
-        bool get_weighted() const;
-        void set_weighted(const bool);
-        void set_multiplier_weight(const mpq_class mult);
-        mpq_class get_multiplier_weight() const;
+        bool get_weighted() const {return false;}
+        void set_weighted(const bool) {}
+        template<class T> void set_multiplier_weight(const T&) {}
         const std::vector<uint32_t>& get_sampl_vars() const;
         void set_sampl_vars(const std::vector<uint32_t>& vars);
         bool get_sampl_vars_set() const;

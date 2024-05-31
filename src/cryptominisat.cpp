@@ -29,7 +29,6 @@ THE SOFTWARE.
 
 #include <fstream>
 #include <cstdint>
-#include <gmpxx.h>
 #include <iomanip>
 #include <limits>
 #include <thread>
@@ -1455,15 +1454,6 @@ DLL_PUBLIC void SATSolver::set_single_run()
     }
 }
 
-DLL_PUBLIC void SATSolver::set_lit_weight(Lit lit, mpq_class weight)
-{
-    actually_add_clauses_to_threads(data);
-    for (auto & solver : data->solvers) {
-        Solver& s = *solver;
-        s.set_lit_weight(lit, weight);
-    }
-}
-
 DLL_PUBLIC std::vector<uint32_t> SATSolver::get_lit_incidence()
 {
     actually_add_clauses_to_threads(data);
@@ -1858,27 +1848,6 @@ DLL_PUBLIC void SATSolver::set_oracle_removed_is_learnt(bool val) {
     s.conf.oracle_removed_is_learnt = val;
 }
 
-// Weight stuff
-DLL_PUBLIC bool SATSolver::get_weighted() const {
-    const Solver& s = *data->solvers[0];
-    return s.get_weighted();
-}
-
-DLL_PUBLIC void SATSolver::set_weighted(const bool weighted) {
-    Solver& s = *data->solvers[0];
-    s.set_weighted(weighted);
-}
-
-DLL_PUBLIC void SATSolver::set_multiplier_weight(const mpq_class mult) {
-    Solver& s = *data->solvers[0];
-    s.set_multiplier_weight(mult);
-}
-
-DLL_PUBLIC mpq_class SATSolver::get_multiplier_weight() const {
-    Solver& s = *data->solvers[0];
-    return s.get_multiplier_weight();
-}
-
 DLL_PUBLIC const std::vector<uint32_t>& SATSolver::get_sampl_vars() const {
     Solver& s = *data->solvers[0];
     if (!s.conf.sampling_vars_set) throw std::runtime_error("Sampling vars not set");
@@ -1911,11 +1880,4 @@ DLL_PUBLIC const std::vector<uint32_t>& SATSolver::get_opt_sampl_vars() const {
 DLL_PUBLIC bool SATSolver::get_opt_sampl_vars_set() const {
     Solver& s = *data->solvers[0];
     return s.conf.opt_sampling_vars_set;
-}
-
-DLL_PUBLIC void SATSolver::get_weights(std::map<Lit, mpq_class>& weights,
-        const std::vector<uint32_t>& sampl_vars,
-        const std::vector<uint32_t>& orig_sampl_vars) const {
-    const Solver& s = *data->solvers[0];
-    s.get_weights(weights, sampl_vars, orig_sampl_vars);
 }

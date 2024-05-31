@@ -34,7 +34,6 @@ THE SOFTWARE.
 #include <iomanip>
 #include <vector>
 #include <cassert>
-#include <gmpxx.h>
 
 using std::vector;
 using std::cerr;

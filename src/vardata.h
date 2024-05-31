@@ -23,7 +23,6 @@ THE SOFTWARE.
 #pragma once
 
 #include <limits>
-#include <gmpxx.h>
 #include "propby.h"
 #include "avgcalc.h"
 
@@ -49,9 +48,6 @@ struct VarData
     uint32_t sublevel = numeric_limits<uint32_t>::max();
 
     uint32_t orig_varnum = std::numeric_limits<uint32_t>::max();
-    bool weight_set = false;
-    mpq_class pos_weight = 1.0;
-    mpq_class neg_weight = 1.0;
 
     //Reason this got propagated. nullptr means decision/toplevel
     PropBy reason = PropBy();
