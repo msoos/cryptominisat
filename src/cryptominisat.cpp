@@ -1072,32 +1072,32 @@ DLL_PUBLIC const char* SATSolver::get_compilation_env()
     return Solver::get_compilation_env();
 }
 
-DLL_PUBLIC std::string SATSolver::get_text_version_info()
+DLL_PUBLIC std::string SATSolver::get_text_version_info(const char* prefix)
 {
     std::stringstream ss;
-    ss << "c CryptoMiniSat version " << get_version() << endl;
-    ss << "c CMS Copyright (C) 2009-2020 Authors of CryptoMiniSat, see AUTHORS file" << endl;
-    ss << "c CMS SHA revision " << get_version_sha1() << endl;
-    ss << "c Using VMTF code by Armin Biere from CaDiCaL" << endl;
-    ss << "c Using Yalsat by Armin Biere, see Balint et al. Improving implementation of SLS solvers [...], SAT'14" << endl;
-    ss << "c Using WalkSAT by Henry Kautz, see Kautz and Selman Pushing the envelope: planning, propositional logic, and stochastic search, AAAI'96," << endl;
+    ss << prefix << "CryptoMiniSat version " << get_version() << endl;
+    ss << prefix << "CMS Copyright (C) 2009-2020 Authors of CryptoMiniSat, see AUTHORS file" << endl;
+    ss << prefix << "CMS SHA revision " << get_version_sha1() << endl;
+    ss << prefix << "Using VMTF code by Armin Biere from CaDiCaL" << endl;
+    ss << prefix << "Using Yalsat by Armin Biere, see Balint et al. Improving implementation of SLS solvers [...], SAT'14" << endl;
+    ss << prefix << "Using WalkSAT by Henry Kautz, see Kautz and Selman Pushing the envelope: planning, propositional logic, and stochastic search, AAAI'96," << endl;
     #ifdef USE_BREAKID
-    ss << "c Using BreakID by Devriendt, Bogaerts, Bruynooghe and Denecker" << endl;
-    ss << "c Using Bliss graph automorphism library (under LGPL) by Tommi Junttila" << endl;
-    ss << "c CMS is GPL licensed due to Bliss being linked. Build without Bliss to get MIT version" << endl;
+    ss << prefix << "Using BreakID by Devriendt, Bogaerts, Bruynooghe and Denecker" << endl;
+    ss << prefix << "Using Bliss graph automorphism library (under LGPL) by Tommi Junttila" << endl;
+    ss << prefix << "CMS is GPL licensed due to Bliss being linked. Build without Bliss to get MIT version" << endl;
     #else
-    ss << "c CMS is MIT licensed" << endl;
+    ss << prefix << "CMS is MIT licensed" << endl;
     #endif
 
-    ss << "c Using code from 'When Boolean Satisfiability Meets Gauss-E. in a Simplex Way'" << endl;
-    ss << "c       by C.-S. Han and J.-H. Roland Jiang in CAV 2012. Fixes by M. Soos" << endl;
-    ss << "c Using CCAnr from 'CCAnr: A Conf. Checking Based Local Search Solver [...]'" << endl;
-    ss << "c       by Shaowei Cai, Chuan Luo, and Kaile Su, SAT 2015" << endl;
-    ss << "c CMS compilation env " << get_compilation_env() << endl;
+    ss << prefix << "Using code from 'When Boolean Satisfiability Meets Gauss-E. in a Simplex Way'" << endl;
+    ss << prefix << "      by C.-S. Han and J.-H. Roland Jiang in CAV 2012. Fixes by M. Soos" << endl;
+    ss << prefix << "Using CCAnr from 'CCAnr: A Conf. Checking Based Local Search Solver [...]'" << endl;
+    ss << prefix << "      by Shaowei Cai, Chuan Luo, and Kaile Su, SAT 2015" << endl;
+    ss << prefix << "CMS compilation env " << get_compilation_env() << endl;
     #ifdef __GNUC__
-    ss << "c CMS compiled with gcc version " << __VERSION__ << endl;
+    ss << prefix << "CMS compiled with gcc version " << __VERSION__ << endl;
     #else
-    ss << "c CMS compiled with non-gcc compiler" << endl;
+    ss << prefix << "CMS compiled with non-gcc compiler" << endl;
     #endif
 
     return ss.str();
