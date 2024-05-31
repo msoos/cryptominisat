@@ -298,7 +298,7 @@ void OccSimplifier::unlink_clause(
     if (!only_set_is_removed) {
         for (const Lit lit: cl) {
             if (!(allow_empty_watch && solver->watches[lit].empty())) {
-                *limit_to_decrease -= 2*(long)solver->watches[lit].size();
+                /* *limit_to_decrease -= 2*(long)solver->watches[lit].size(); */
                 removeWCl(solver->watches[lit], offset);
             }
         }
@@ -1867,6 +1867,7 @@ void OccSimplifier::clean_sampl_get_empties(vector<uint32_t>& sampl_vars, vector
             assert(p.first < solver->nVars());
             empty_occ++;
             empty_vars.push_back(p.second);
+            verb_print(1, "[w-debug] empty_occ: " << p.second+1 << " int var: " << p.first+1);
             elim_var_by_str(l.var(), {});
             assert(solver->watches[l].empty() && solver->watches[~l].empty());
         } else {

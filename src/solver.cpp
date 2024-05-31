@@ -3200,15 +3200,19 @@ bool Solver::check_assumptions_contradict_foced_assignment() const {
     return false;
 }
 
-void Solver::set_lit_weight(const Lit lit, const mpq_class& weight) {
-    assert(lit.var() < nVars());
-    if (!lit.sign()) varData[lit.var()].pos_weight = weight;
-    else varData[lit.var()].neg_weight = weight;
+void Solver::set_lit_weight(const Lit outer_lit, const mpq_class& weight) {
+    Lit l = varReplacer->get_lit_replaced_with_outer(outer_lit);
+    assert(l == outer_lit && "We can't have replacer run before setting weights");
+    l = map_outer_to_inter(l);
+    assert(l == outer_lit && "We can't have renumberer running before setting weights");
+    assert(l.var() < nVars());
+    if (!l.sign()) varData[l.var()].pos_weight = weight;
+    else varData[l.var()].neg_weight = weight;
 
-    if (!varData[lit.var()].weight_set) {
-        varData[lit.var()].weight_set = true;
-        if (!lit.sign()) varData[lit.var()].neg_weight = 1.0-weight;
-        else varData[lit.var()].neg_weight = 1.0-weight;
+    if (!varData[l.var()].weight_set) {
+        varData[l.var()].weight_set = true;
+        if (!l.sign()) varData[l.var()].neg_weight = 1.0-weight;
+        else varData[l.var()].neg_weight = 1.0-weight;
     }
 }
 
@@ -3718,13 +3722,21 @@ void Solver::get_weights(map<Lit,mpq_class>& weights,
     assert(get_weighted());
     assert(weights.empty());
 
+
+    for(const auto& v: opt_sampl_vars)
+        cout << "[w-debug] CMS get_weights outer sampl_var: " << v+1 << endl;;
+
     vector<uint32_t> opt_sampl_vars_int;
     for(const auto& v: opt_sampl_vars) {
         opt_sampl_vars_int.push_back(
                 varReplacer->get_var_replaced_with_outer(v));
     }
+    for(const auto& v: opt_sampl_vars_int)
+        cout << "[w-debug] CMS get_weights outer/replaced opt sampl_var: " << v+1 << endl;;
     map_outer_to_inter(opt_sampl_vars_int);
     set<uint32_t> opt_sampl_set_int(opt_sampl_vars_int.begin(), opt_sampl_vars_int.end());
+    for(const auto& v: opt_sampl_vars_int)
+        cout << "[w-debug] CMS get_weights inter opt sampl_var: " << v+1 << endl;;
 
     for(const uint32_t& var: opt_sampl_set_int) {
         Lit l = Lit(var, false);
@@ -3734,8 +3746,8 @@ void Solver::get_weights(map<Lit,mpq_class>& weights,
         // get all variables var is replacing
         auto vars = varReplacer->get_vars_replacing(var);
         for(auto replaced_v: vars) {
-            /* cout << "CMS var: " << map_inter_to_outer(var)+1 << " is replacing: " */
-            /*     << map_inter_to_outer(replaced_v)+1 << endl; */
+            cout << "w-debug CMS var: " << map_inter_to_outer(var)+1 << " is replacing: "
+                << map_inter_to_outer(replaced_v)+1 << endl;
             assert(var == varReplacer->get_lit_replaced_with(Lit(replaced_v, false)).var());
             if (varReplacer->get_lit_replaced_with(Lit(replaced_v, false)) == Lit(var, false)) {
                 pos_weight *= varData[replaced_v].pos_weight;
@@ -3746,9 +3758,9 @@ void Solver::get_weights(map<Lit,mpq_class>& weights,
             }
         }
         if (varData[var].removed != Removed::none) {
-            /* cout << "[w-debug] CMS outer var: " << map_inter_to_outer(var)+1 << " is removed: " << removed_type_to_string(varData[var].removed) << endl; */
+            cout << "[w-debug] CMS outer var: " << map_inter_to_outer(var)+1 << " is removed: " << removed_type_to_string(varData[var].removed) << endl;
         }
-        /* cout << "[w-debug] CMS inter var: " << l << " pos_weight: " << pos_weight << " neg_weight: " << neg_weight << endl; */
+        cout << "[w-debug] CMS inter var: " << l << " pos_weight: " << pos_weight << " neg_weight: " << neg_weight << endl;
         weights[map_inter_to_outer(l)] = pos_weight;
         weights[map_inter_to_outer(~l)] = neg_weight;
     }
