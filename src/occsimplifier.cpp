@@ -1867,7 +1867,7 @@ void OccSimplifier::clean_sampl_get_empties(vector<uint32_t>& sampl_vars, vector
             assert(p.first < solver->nVars());
             empty_occ++;
             empty_vars.push_back(p.second);
-            verb_print(1, "[w-debug] empty_occ: " << p.second+1 << " int var: " << p.first+1);
+            verb_print(5, "[w-debug] empty_occ: " << p.second+1 << " int var: " << p.first+1);
             elim_var_by_str(l.var(), {});
             assert(solver->watches[l].empty() && solver->watches[~l].empty());
         } else {
