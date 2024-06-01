@@ -456,7 +456,7 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
         in.skipWhitespace();
         std::string str2;
         in.parseString(str2);
-        if (str2 == "wmc" || str2 == "wpmc")
+        if (str2 == "wmc" || str2 == "wpmc" || str2 == "pwmc")
             solver->set_weighted(true);
     } else if (str == "p") {
         in.skipWhitespace();
