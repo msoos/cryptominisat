@@ -22,6 +22,9 @@ THE SOFTWARE.
 
 #include "solver.h"
 #include "oracle/oracle.h"
+#include "subsumeimplicit.h"
+#include "distillerlongwithimpl.h"
+#include "occsimplifier.h"
 
 using namespace CMSat;
 
@@ -258,7 +261,14 @@ vector<Solver::OracleDat> Solver::order_clauses_for_oracle() const
 bool Solver::oracle_sparsify()
 {
     assert(!frat->enabled());
-    execute_inprocess_strategy(false, "sub-impl, occ-backw-sub, must-renumber");
+    /* execute_inprocess_strategy(false, "sub-impl, sub-cls-with-bin, occ-backw-sub, must-renumber"); */
+    conf.global_timeout_multiplier *=5;
+    subsumeImplicit->subsume_implicit();
+    if (!dist_long_with_impl->distill_long_with_implicit(false)) return false;
+    if (!occsimplifier->simplify(false, "occ-backw-sub")) return false;
+    if (!renumber_variables(true)) return false;
+    conf.global_timeout_multiplier /=5;
+
     if (!okay()) return okay();
     if (nVars() < 10) return okay();
 
