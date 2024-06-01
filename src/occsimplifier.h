@@ -276,6 +276,7 @@ private:
     int64_t  gate_based_litrem_time_limit;
     int64_t  subsumption_time_limit;
     int64_t  norm_varelim_time_limit;
+    int64_t  resolvent_sub_time_limit;
     int64_t  xor_varelim_time_limit;
     int64_t  empty_varelim_time_limit;
     int64_t  varelim_num_limit;

@@ -21,6 +21,7 @@ THE SOFTWARE.
 ***********************************************/
 
 #include "subsumestrengthen.h"
+#include "constants.h"
 #include "occsimplifier.h"
 #include "solver.h"
 #include "watchalgos.h"
@@ -496,15 +497,12 @@ bool SubsumeStrengthen::handle_added_long_cl(const bool verbose)
         const bool time_out =  *simplifier->limit_to_decrease <= 0;
         const double time_used = cpuTime() - start_time;
         const double time_remain = float_div(*simplifier->limit_to_decrease, orig_limit);
-        if (solver->conf.verbosity) {
-            cout
-            << "c [occ-backw-sub-str-w-added-long] "
+        verb_print(1,
+            "[occ-backw-sub-str-w-added-long] "
             << " sub: " << stat.sub
             << " str: " << stat.str
             << " 0-depth ass: " << solver->trail_size() - origTrailSize
-            << solver->conf.print_times(time_used, time_out, time_remain)
-            << endl;
-        }
+            << solver->conf.print_times(time_used, time_out, time_remain));
         if (solver->sqlStats) {
             solver->sqlStats->time_passed(
                 solver

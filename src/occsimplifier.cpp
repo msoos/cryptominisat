@@ -1129,7 +1129,7 @@ void OccSimplifier::subs_with_resolvent_clauses()
     uint64_t removed = 0;
     uint64_t resolvents_checked = 0;
     auto old_limit_to_decrease = limit_to_decrease;
-    limit_to_decrease = &norm_varelim_time_limit;
+    limit_to_decrease = &resolvent_sub_time_limit;
 
     for(uint32_t var = 0; var < solver->nVars(); var++) {
         if (solver->value(var) != l_Undef || solver->varData[var].removed != Removed::none) continue;
@@ -1173,7 +1173,6 @@ void OccSimplifier::subs_with_resolvent_clauses()
                     // just skip.
                     continue;
                 }
-                if (*limit_to_decrease < -10LL*1000LL) return;
 //                 if (dummy.size() > 10) continue; //likely not useful
 
                 resolvents_checked++;
@@ -3124,6 +3123,8 @@ void OccSimplifier::set_limits()
         *solver->conf.global_timeout_multiplier;
     gate_based_litrem_time_limit = strengthening_time_limit;
     norm_varelim_time_limit    = 4ULL*1000LL*1000LL*solver->conf.varelim_time_limitM
+        *solver->conf.global_timeout_multiplier;
+    resolvent_sub_time_limit    = 1000LL*1000LL*solver->conf.varelim_time_limitM
         *solver->conf.global_timeout_multiplier;
     xor_varelim_time_limit    = 1000LL*1000LL*solver->conf.varelim_time_limitM
         *solver->conf.global_timeout_multiplier;
