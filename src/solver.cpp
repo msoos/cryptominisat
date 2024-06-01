@@ -1074,23 +1074,17 @@ void Solver::check_recursive_minimization_effectiveness(const lbool status)
         double costPerGained = float_div(srch_stats.recMinimCost, remPercent);
         if (costPerGained > 200ULL*1000ULL*1000ULL) {
             conf.doRecursiveMinim = false;
-            if (conf.verbosity) {
-                cout
-                << "c recursive minimization too costly: "
+            verb_print(1,
+                "recursive minimization too costly: "
                 << std::fixed << std::setprecision(0) << (costPerGained/1000.0)
                 << "Kcost/(% lits removed) --> disabling"
-                << std::setprecision(2)
-                << endl;
-            }
+                << std::setprecision(2));
         } else {
-            if (conf.verbosity) {
-                cout
-                << "c recursive minimization cost OK: "
+            verb_print(1,
+                "ecursive minimization cost OK: "
                 << std::fixed << std::setprecision(0) << (costPerGained/1000.0)
                 << "Kcost/(% lits removed)"
-                << std::setprecision(2)
-                << endl;
-            }
+                << std::setprecision(2));
         }
     }
 }

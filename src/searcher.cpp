@@ -2657,7 +2657,7 @@ void Searcher::adjust_restart_strategy_cutoffs()
 inline void Searcher::print_local_restart_budget()
 {
     if (conf.verbosity >= 2 || conf.print_all_restarts) {
-        cout << "c [restart] at confl " << solver->sumConflicts << " -- "
+        cout << conf.prefix << "[restart] at confl " << solver->sumConflicts << " -- "
         << " local restart type: "
         << std::left << std::setw(10) << getNameOfRestartType(params.rest_type)
         << " budget: " << std::setw(9) << max_confl_this_restart
