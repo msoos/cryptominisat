@@ -793,6 +793,7 @@ void OccSimplifier::eliminate_xor_vars()
     SLOW_DEBUG_DO(for(const auto& x: xs) {
         for(const auto& v: x) assert(solver->varData[v].removed == Removed::none);
     });
+    free_clauses_to_free();
 
     const double time_used = cpuTime() - my_time;
     const bool time_out = (*limit_to_decrease <= 0);
