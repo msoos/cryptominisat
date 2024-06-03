@@ -185,6 +185,14 @@ bool MatrixFinder::find_matrices(bool& matrix_created)
     return solver->okay();
 }
 
+static double safe_div(double a, double b) {
+    if (b == 0) {
+        assert(a == 0);
+        return 0;
+    }
+    return a/b;
+}
+
 uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
     if (solver->conf.sampling_vars_set) {
         uint32_t size_at_least = (double)solver->conf.sampling_vars.size()*3;
@@ -276,7 +284,7 @@ uint32_t MatrixFinder::setup_matrices_attach_remaining_cls() {
 
             //Clear 'seen'
             for(uint32_t int_var: reverseTable[i]) solver->seen[int_var] = 0;
-            ratio_sampling = (double)sampling_var_inside_matrix/(double)tot_sampling_vars;
+            ratio_sampling = safe_div(sampling_var_inside_matrix, tot_sampling_vars);
         }
 
         //Over the max number of matrixes
