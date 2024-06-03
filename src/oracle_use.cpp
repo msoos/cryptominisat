@@ -25,6 +25,8 @@ THE SOFTWARE.
 #include "subsumeimplicit.h"
 #include "distillerlongwithimpl.h"
 #include "occsimplifier.h"
+#include "varreplacer.h"
+#include "distillerbin.h"
 
 using namespace CMSat;
 
@@ -262,12 +264,14 @@ bool Solver::oracle_sparsify()
 {
     assert(!frat->enabled());
     /* execute_inprocess_strategy(false, "sub-impl, sub-cls-with-bin, occ-backw-sub, must-renumber"); */
-    conf.global_timeout_multiplier *=5;
+    conf.global_timeout_multiplier *=10;
+    if (!distill_bin_cls->distill()) return false;
+    if (!varReplacer->replace_if_enough_is_found()) return false;
     subsumeImplicit->subsume_implicit();
     if (!dist_long_with_impl->distill_long_with_implicit(false)) return false;
     if (!occsimplifier->simplify(false, "occ-backw-sub")) return false;
     if (!renumber_variables(true)) return false;
-    conf.global_timeout_multiplier /=5;
+    conf.global_timeout_multiplier /=10;
 
     if (!okay()) return okay();
     if (nVars() < 10) return okay();
@@ -355,7 +359,7 @@ bool Solver::oracle_sparsify()
             }
         }
 
-        if (oracle.getStats().mems > 1400LL*1000LL*1000LL) {
+        if (oracle.getStats().mems > 2500LL*1000LL*1000LL) {
             verb_print(1, "[oracle-sparsify] too many mems in oracle, aborting");
             goto fin;
         }

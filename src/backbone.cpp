@@ -30,7 +30,7 @@ extern "C" {
 
 using namespace CMSat;
 
-bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen, bool& finished)
+bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen, bool& backbone_done)
 {
     vector<int> cnf;
     /* for(uint32_t i = 0; i < nVars(); i++) picosat_inc_max_var(picosat); */
@@ -73,7 +73,7 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen, bool& finished)
             if (!okay()) break;
             add_clause_int(tmp);
         }
-        finished = true;
+        backbone_done = true;
     } else {
         ok = false;
     }
