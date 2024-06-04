@@ -485,6 +485,7 @@ class DLL_PUBLIC SolverConf
         int      doStrSubImplicit;
         long long  subsume_implicit_time_limitM;
         long long  distill_implicit_with_implicit_time_limitM;
+        int do_subs_with_resolvent_clauses;
 
         //Gates
         int doGateFind; ///< Find OR gates

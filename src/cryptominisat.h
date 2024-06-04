@@ -164,6 +164,7 @@ namespace CMSat {
         double get_orig_global_timeout_multiplier();
         bool minimize_clause(std::vector<Lit>& cl);
         void set_prefix(const char* prefix);
+        void set_do_subs_with_resolvent_clauses(int subs);
 
         ////////////////////////////
         // Predictive system tuning

@@ -539,6 +539,12 @@ DLL_PUBLIC void SATSolver::set_max_confl(uint64_t max_confl)
   }
 }
 
+DLL_PUBLIC void SATSolver::set_do_subs_with_resolvent_clauses(int subs) {
+  for (Solver* s : data->solvers) {
+      s->conf.do_subs_with_resolvent_clauses = subs;
+  }
+}
+
 DLL_PUBLIC void SATSolver::set_default_polarity(bool polarity)
 {
     for (auto & solver : data->solvers) {

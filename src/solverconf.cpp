@@ -348,6 +348,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doStrSubImplicit (true)
         , subsume_implicit_time_limitM(100LL)
         , distill_implicit_with_implicit_time_limitM(200LL)
+        , do_subs_with_resolvent_clauses(true)
 
         //Gates
         , doGateFind       (false)

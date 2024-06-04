@@ -1124,6 +1124,7 @@ void OccSimplifier::strengthen_dummy_with_bins(const bool avoid_redundant)
 
 void OccSimplifier::subs_with_resolvent_clauses()
 {
+    if (!solver->conf.do_subs_with_resolvent_clauses) return;
     assert(solver->okay());
     assert(solver->prop_at_head());
     double my_time = cpuTime();
