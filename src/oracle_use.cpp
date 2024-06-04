@@ -377,6 +377,7 @@ bool Solver::oracle_sparsify(bool fast)
     }
 
     fin:
+    if (fast) conf.oracle_removed_is_learnt = true;
     uint32_t bin_red_added = 0;
     uint32_t bin_irred_removed = 0;
     for(auto& ws: watches) {

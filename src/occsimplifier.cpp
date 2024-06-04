@@ -1130,14 +1130,14 @@ void OccSimplifier::subs_with_resolvent_clauses()
     uint64_t removed = 0;
     uint64_t resolvents_checked = 0;
     auto old_limit_to_decrease = limit_to_decrease;
-    limit_to_decrease = &resolvent_sub_time_limit;
-    vector<uint32_t> vars;
+    limit_to_decrease = &norm_varelim_time_limit;
+    /* vector<uint32_t> vars; */
     for(uint32_t var = 0; var < solver->nVars(); var++) {
-        vars.push_back(var);
-    }
-    std::shuffle(vars.begin(), vars.end(), solver->mtrand);
+        /* vars.push_back(var); */
+    /* } */
+    /* std::shuffle(vars.begin(), vars.end(), solver->mtrand); */
 
-    for(const auto& var: vars) {
+    /* for(const auto& var: vars) { */
         if (solver->value(var) != l_Undef || solver->varData[var].removed != Removed::none) continue;
 
         const Lit lit(var, false);
