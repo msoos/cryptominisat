@@ -267,16 +267,18 @@ vector<Solver::OracleDat> Solver::order_clauses_for_oracle() const
 bool Solver::oracle_sparsify(bool fast)
 {
     assert(!frat->enabled());
-    conf.global_timeout_multiplier *=10;
-    /* if (!varReplacer->replace_if_enough_is_found()) return false; */
-    /* if (!dist_long_with_impl->distill_long_with_implicit(false)) return false; */
-    /* if (!occsimplifier->simplify(false, ", occ-rem-with-orgates, occ-resolv-subs, occ-ternary-res, occ-backw-sub")) return false; */
-    /* if (!occsimplifier->simplify(false, ", occ-ternary-res, occ-backw-sub")) return false; */
-    if (!occsimplifier->simplify(false, ", occ-backw-sub")) return false;
-    subsumeImplicit->subsume_implicit();
-    /* if (!distill_bin_cls->distill()) return false; */
-    if (!renumber_variables(true)) return false;
-    conf.global_timeout_multiplier /=10;
+    execute_inprocess_strategy(false, "sub-impl, occ-backw-sub, must-renumber");
+    if (!okay()) return false;
+    /*      conf.global_timeout_multiplier *=10; */
+    /*      if (!varReplacer->replace_if_enough_is_found()) return false; */
+    /*      if (!dist_long_with_impl->distill_long_with_implicit(false)) return false; */
+    /*      if (!occsimplifier->simplify(false, ", occ-rem-with-orgates, occ-resolv-subs, occ-ternary-res, occ-backw-sub")) return false; */
+    /*      if (!occsimplifier->simplify(false, ", occ-ternary-res, occ-backw-sub")) return false; */
+    /* subsumeImplicit->subsume_implicit(); */
+    /* if (!occsimplifier->simplify(false, ", occ-backw-sub")) return false; */
+    /*      if (!distill_bin_cls->distill()) return false; */
+    /* if (!renumber_variables(true)) return false; */
+    /*      conf.global_timeout_multiplier /=10; */
 
     if (!okay()) return okay();
     if (nVars() < 10) return okay();
