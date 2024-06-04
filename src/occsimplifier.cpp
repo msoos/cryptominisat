@@ -1130,7 +1130,7 @@ void OccSimplifier::subs_with_resolvent_clauses()
     uint64_t removed = 0;
     uint64_t resolvents_checked = 0;
     auto old_limit_to_decrease = limit_to_decrease;
-    limit_to_decrease = &norm_varelim_time_limit;
+    limit_to_decrease = &resolvent_sub_time_limit;
     /* vector<uint32_t> vars; */
     for(uint32_t var = 0; var < solver->nVars(); var++) {
         /* vars.push_back(var); */
