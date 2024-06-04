@@ -760,28 +760,30 @@ void OccSimplifier::eliminate_xor_vars()
             x = &solver->xorclauses[w.get_idx()];
             at = w.get_idx();
         }
-        assert(x != nullptr);
-        assert(!x->trivial());
-        assert(!x->vars.empty());
-
-        create_dummy_elimed_clause(lit, true);
         elimed++;
-        if (x->reason_cl_ID != 0) *solver->frat << del << x->reason_cl_ID <<  x->reason_cl << fin;
-        lits.clear();
-        for(const auto& v: *x) lits.push_back(Lit(v, false));
-        lits[0] ^= !x->rhs;
-        add_clause_to_blck(lits, x->XID);
-        set_var_as_eliminated(var);
-        for(const auto& v: x->vars) {
-            (*limit_to_decrease)--;
-            assert(incid[v] > 0);
-            incid[v]--;
-            if (incid[v] == 1 && can_eliminate_var(v, true)
-                    && only_red_and_idx_occ(Lit(v, false)) && only_red_and_idx_occ(Lit(v, true)))
-                to_elim.insert(v);
-            if (incid[v] == 0) xorclauses_vars[v] = 0;
+        if (x != nullptr) {
+            assert(x != nullptr);
+            assert(!x->trivial());
+            assert(!x->vars.empty());
+
+            create_dummy_elimed_clause(lit, true);
+            if (x->reason_cl_ID != 0) *solver->frat << del << x->reason_cl_ID <<  x->reason_cl << fin;
+            lits.clear();
+            for(const auto& v: *x) lits.push_back(Lit(v, false));
+            lits[0] ^= !x->rhs;
+            add_clause_to_blck(lits, x->XID);
+            set_var_as_eliminated(var);
+            for(const auto& v: x->vars) {
+                (*limit_to_decrease)--;
+                assert(incid[v] > 0);
+                incid[v]--;
+                if (incid[v] == 1 && can_eliminate_var(v, true)
+                        && only_red_and_idx_occ(Lit(v, false)) && only_red_and_idx_occ(Lit(v, true)))
+                    to_elim.insert(v);
+                if (incid[v] == 0) xorclauses_vars[v] = 0;
+            }
+            deleted[at] = 1;
         }
-        deleted[at] = 1;
         rem_cls_from_watch_due_to_varelim(lit);
         rem_cls_from_watch_due_to_varelim(~lit);
     }
