@@ -271,6 +271,7 @@ bool Solver::oracle_sparsify(bool fast)
     /* if (!varReplacer->replace_if_enough_is_found()) return false; */
     /* if (!dist_long_with_impl->distill_long_with_implicit(false)) return false; */
     /* if (!occsimplifier->simplify(false, ", occ-rem-with-orgates, occ-resolv-subs, occ-ternary-res, occ-backw-sub")) return false; */
+    /* if (!occsimplifier->simplify(false, ", occ-ternary-res, occ-backw-sub")) return false; */
     if (!occsimplifier->simplify(false, ", occ-backw-sub")) return false;
     subsumeImplicit->subsume_implicit();
     /* if (!distill_bin_cls->distill()) return false; */
