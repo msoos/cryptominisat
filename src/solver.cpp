@@ -1753,6 +1753,8 @@ lbool Solver::execute_inprocess_strategy(
             }
         } else if (token == "oracle-vivif") {
             if (nVars() > 10) oracle_vivif();
+        } else if (token == "oracle-vivif-fast") {
+            if (nVars() > 10) oracle_vivif(true);
         } else if (token == "oracle-sparsify") {
             if (nVars() > 10) { oracle_sparsify();
             }

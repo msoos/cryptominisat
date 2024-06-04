@@ -79,7 +79,7 @@ vector<vector<int>> Solver::get_irred_cls_for_oracle() const
     return clauses;
 }
 
-bool Solver::oracle_vivif()
+bool Solver::oracle_vivif(bool fast)
 {
     assert(!frat->enabled());
     assert(solver->okay());
@@ -96,10 +96,14 @@ bool Solver::oracle_vivif()
     bool sat = false;
     for (int i = 0; i < (int)clauses.size(); i++) {
         for (int j = 0; j < (int)clauses[i].size(); j++) {
-            if (oracle.getStats().mems > 1600LL*1000LL*1000LL) goto end;
+            int64_t mems = 1600LL*1000LL*1000LL;
+            if (fast) mems /= 3;
+            if (oracle.getStats().mems > mems) goto end;
             auto assump = negate(clauses[i]);
             swapdel(assump, j);
-            auto ret = oracle.Solve(assump, true, 500LL*1000LL*1000LL);
+            int64_t mems2 =  500LL*1000LL*1000LL;
+            if (fast) mems2 /= 3;
+            auto ret = oracle.Solve(assump, true,mems2);
             if (ret.isUnknown()) {
                 goto end;
             }
@@ -263,13 +267,13 @@ vector<Solver::OracleDat> Solver::order_clauses_for_oracle() const
 bool Solver::oracle_sparsify(bool fast)
 {
     assert(!frat->enabled());
-    /* execute_inprocess_strategy(false, "sub-impl, sub-cls-with-bin, occ-backw-sub, must-renumber"); */
     conf.global_timeout_multiplier *=10;
-    if (!varReplacer->replace_if_enough_is_found()) return false;
-    if (!dist_long_with_impl->distill_long_with_implicit(false)) return false;
-    if (!occsimplifier->simplify(false, ", occ-rem-with-orgates, occ-resolv-subs, occ-ternary-res, occ-backw-sub, occ-backw-sub-str, ")) return false;
+    /* if (!varReplacer->replace_if_enough_is_found()) return false; */
+    /* if (!dist_long_with_impl->distill_long_with_implicit(false)) return false; */
+    /* if (!occsimplifier->simplify(false, ", occ-rem-with-orgates, occ-resolv-subs, occ-ternary-res, occ-backw-sub")) return false; */
+    if (!occsimplifier->simplify(false, ", occ-backw-sub")) return false;
     subsumeImplicit->subsume_implicit();
-    if (!distill_bin_cls->distill()) return false;
+    /* if (!distill_bin_cls->distill()) return false; */
     if (!renumber_variables(true)) return false;
     conf.global_timeout_multiplier /=10;
 
@@ -362,7 +366,7 @@ bool Solver::oracle_sparsify(bool fast)
         }
 
         int64_t mems2 = 2500LL*1000LL*1000LL;
-        if (fast) mems2/3;
+        if (fast) mems2 /= 3;
         if (oracle.getStats().mems > mems2) {
             verb_print(1, "[oracle-sparsify] too many mems in oracle, aborting");
             goto fin;
