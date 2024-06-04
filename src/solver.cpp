@@ -1756,6 +1756,9 @@ lbool Solver::execute_inprocess_strategy(
         } else if (token == "oracle-sparsify") {
             if (nVars() > 10) { oracle_sparsify();
             }
+        } else if (token == "oracle-sparsify-fast") {
+            if (nVars() > 10) { oracle_sparsify(true);
+            }
         } else if (token == "backbone") {
             bool finished = false;
             backbone_simpl(30LL*1000LL, true, finished);

@@ -379,7 +379,7 @@ class Solver : public Searcher
         void dump_cls_oracle(const string fname, const vector<OracleDat>& cs);
         bool find_equivs();
         bool oracle_vivif();
-        bool oracle_sparsify();
+        bool oracle_sparsify(bool fast = false);
         void print_cs_ordering(const vector<OracleDat>& cs) const;
         template<bool bin_only> bool probe_inter(const Lit l, uint32_t& min_props);
         void reset_for_solving();
