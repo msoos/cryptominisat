@@ -1139,8 +1139,9 @@ void OccSimplifier::subs_with_resolvent_clauses()
 
     /* for(const auto& var: vars) { */
         if (solver->value(var) != l_Undef || solver->varData[var].removed != Removed::none) continue;
-
         const Lit lit(var, false);
+        if (solver->watches[lit].empty() || solver->watches[~lit].empty()) continue;
+
         const auto& tmp_poss = solver->watches[lit];
         const auto& tmp_negs = solver->watches[~lit];
         int32_t ID1;
