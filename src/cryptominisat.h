@@ -277,6 +277,7 @@ namespace CMSat {
 
         bool get_weighted() const {return false;}
         void set_weighted(const bool) {}
+        void set_projected(const bool) {}
         template<class T> void set_multiplier_weight(const T&) {}
         const std::vector<uint32_t>& get_sampl_vars() const;
         void set_sampl_vars(const std::vector<uint32_t>& vars);

@@ -458,6 +458,8 @@ bool DimacsParser<C, S>::parseComments(C& in, const std::string& str)
         in.parseString(str2);
         if (str2 == "wmc" || str2 == "wpmc" || str2 == "pwmc")
             solver->set_weighted(true);
+        if (str2 == "pmc" || str2 == "wpmc" || str2 == "pwmc")
+            solver->set_projected(true);
     } else if (str == "p") {
         in.skipWhitespace();
         std::string str2;
