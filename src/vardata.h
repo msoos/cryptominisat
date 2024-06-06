@@ -62,7 +62,7 @@ struct VarData
     uint8_t inv_polarity:1;
     uint8_t is_bva:1;
     uint8_t occ_simp_tried:1;
-    bool propagated = false;
+    uint8_t propagated:1 = false;
 
     #if defined(STATS_NEEDED)
     uint32_t community_num = numeric_limits<uint32_t>::max();
