@@ -1748,13 +1748,21 @@ lbool Solver::execute_inprocess_strategy(
                     std::floor((double)get_num_free_vars()*0.001));
             }
         } else if (token == "oracle-vivif-sparsify") {
-            if (nVars() > 10 && oracle_vivif()) {
+            bool finished = false;
+            if (nVars() > 10 && oracle_vivif(false, finished)) {
                 oracle_sparsify();
             }
+        } else if (token == "oracle-vivif-sparsify-mustfinish") {
+            bool finished = false;
+            if (nVars() > 10 && oracle_vivif(false, finished)) {
+                if (finished) oracle_sparsify();
+            }
         } else if (token == "oracle-vivif") {
-            if (nVars() > 10) oracle_vivif();
+            bool finished = false;
+            if (nVars() > 10) oracle_vivif(false, finished);
         } else if (token == "oracle-vivif-fast") {
-            if (nVars() > 10) oracle_vivif(true);
+            bool finished = false;
+            if (nVars() > 10) oracle_vivif(true, finished);
         } else if (token == "oracle-sparsify") {
             if (nVars() > 10) { oracle_sparsify();
             }

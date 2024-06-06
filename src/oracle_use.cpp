@@ -79,7 +79,7 @@ vector<vector<int>> Solver::get_irred_cls_for_oracle() const
     return clauses;
 }
 
-bool Solver::oracle_vivif(bool fast)
+bool Solver::oracle_vivif(bool fast, bool& finished)
 {
     assert(!frat->enabled());
     assert(solver->okay());
@@ -94,17 +94,22 @@ bool Solver::oracle_vivif(bool fast)
     sspp::oracle::Oracle oracle(nVars(), clauses, {});
     oracle.SetVerbosity(conf.verbosity);
     bool sat = false;
+    bool early_aborted = false;
     for (int i = 0; i < (int)clauses.size(); i++) {
         for (int j = 0; j < (int)clauses[i].size(); j++) {
             int64_t mems = 1600LL*1000LL*1000LL;
             if (fast) mems /= 3;
-            if (oracle.getStats().mems > mems) goto end;
+            if (oracle.getStats().mems > mems) {
+                early_aborted = true;
+                goto end;
+            }
             auto assump = negate(clauses[i]);
             swapdel(assump, j);
             int64_t mems2 =  500LL*1000LL*1000LL;
             if (fast) mems2 /= 3;
             auto ret = oracle.Solve(assump, true,mems2);
             if (ret.isUnknown()) {
+                early_aborted = true;
                 goto end;
             }
             if (ret.isFalse()) {
@@ -124,6 +129,7 @@ bool Solver::oracle_vivif(bool fast)
     }
 
     end:
+    if (!early_aborted) finished = true;
     vector<Lit> tmp2;
     for(const auto& cl: clauses) {
         tmp2.clear();
