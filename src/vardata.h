@@ -40,14 +40,12 @@ struct VarData
         stable_polarity = false;
         best_polarity = false;
         inv_polarity = false;
-        orig_varnum = num;
     }
 
     ///contains the decision level at which the assignment was made.
     uint32_t level = numeric_limits<uint32_t>::max();
     uint32_t sublevel = numeric_limits<uint32_t>::max();
 
-    uint32_t orig_varnum = std::numeric_limits<uint32_t>::max();
 
     //Reason this got propagated. nullptr means decision/toplevel
     PropBy reason = PropBy();
