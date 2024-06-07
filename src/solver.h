@@ -333,7 +333,7 @@ class Solver : public Searcher
         int PICOLIT(const Lit x) { return ((((int)(x).var()+1)) * ((x).sign() ? -1:1)); }
         PicoSAT* build_picosat();
         void copy_to_simp(SATSolver* s2);
-        bool backbone_simpl(int64_t max_confl, bool cmsgen, bool& finished);
+        bool backbone_simpl(int64_t max_confl, bool cmsgen, double maxtime, bool& finished);
         bool backbone_simpl_old(int64_t orig_max_confl, bool cmsgen, bool& finished);
         bool removed_var_ext(uint32_t var) const;
 

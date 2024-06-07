@@ -1769,9 +1769,12 @@ lbool Solver::execute_inprocess_strategy(
         } else if (token == "oracle-sparsify-fast") {
             if (nVars() > 10) { oracle_sparsify(true);
             }
-        } else if (token == "backbone") {
-            bool finished = false;
-            backbone_simpl(30LL*1000LL, true, finished);
+        /* } else if (token == "backbone") { */
+        /*     bool finished = false; */
+        /*     backbone_simpl(30LL*1000LL, true, finished); */
+        /* } else if (token == "backbone-old") { */
+        /*     bool finished = false; */
+        /*     backbone_simpl_old(30LL*1000LL, true, finished); */
         } else if (token == "must-scc-vrepl") {
             if (conf.doFindAndReplaceEqLits) {
                 varReplacer->replace_if_enough_is_found();
