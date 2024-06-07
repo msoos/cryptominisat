@@ -79,7 +79,7 @@ vector<vector<int>> Solver::get_irred_cls_for_oracle() const
     return clauses;
 }
 
-bool Solver::oracle_vivif(bool fast, bool& finished)
+bool Solver::oracle_vivif(int fast, bool& finished)
 {
     assert(!frat->enabled());
     assert(solver->okay());
@@ -98,7 +98,7 @@ bool Solver::oracle_vivif(bool fast, bool& finished)
     for (int i = 0; i < (int)clauses.size(); i++) {
         for (int j = 0; j < (int)clauses[i].size(); j++) {
             int64_t mems = 1600LL*1000LL*1000LL;
-            if (fast) mems /= 3;
+            if (fast > 0) mems /= (3*fast);
             if (oracle.getStats().mems > mems) {
                 early_aborted = true;
                 goto end;
@@ -106,7 +106,7 @@ bool Solver::oracle_vivif(bool fast, bool& finished)
             auto assump = negate(clauses[i]);
             swapdel(assump, j);
             int64_t mems2 =  500LL*1000LL*1000LL;
-            if (fast) mems2 /= 3;
+            if (fast > 0) mems2 /= (3*fast);
             auto ret = oracle.Solve(assump, true,mems2);
             if (ret.isUnknown()) {
                 early_aborted = true;

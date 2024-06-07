@@ -1749,20 +1749,23 @@ lbool Solver::execute_inprocess_strategy(
             }
         } else if (token == "oracle-vivif-sparsify") {
             bool finished = false;
-            if (nVars() > 10 && oracle_vivif(false, finished)) {
+            if (nVars() > 10 && oracle_vivif(0, finished)) {
                 oracle_sparsify();
             }
         } else if (token == "oracle-vivif-sparsify-mustfinish") {
             bool finished = false;
-            if (nVars() > 10 && oracle_vivif(false, finished)) {
+            if (nVars() > 10 && oracle_vivif(0, finished)) {
                 if (finished) oracle_sparsify();
             }
         } else if (token == "oracle-vivif") {
             bool finished = false;
-            if (nVars() > 10) oracle_vivif(false, finished);
+            if (nVars() > 10) oracle_vivif(0, finished);
         } else if (token == "oracle-vivif-fast") {
             bool finished = false;
-            if (nVars() > 10) oracle_vivif(true, finished);
+            if (nVars() > 10) oracle_vivif(1, finished);
+        } else if (token == "oracle-vivif-veryfast") {
+            bool finished = false;
+            if (nVars() > 10) oracle_vivif(2, finished);
         } else if (token == "oracle-sparsify") {
             if (nVars() > 10) { oracle_sparsify();
             }
