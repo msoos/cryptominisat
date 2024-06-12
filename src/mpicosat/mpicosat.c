@@ -8148,7 +8148,7 @@ picosat_stats (PS * ps)
 #else
 #include <sys/time.h>
 #include <sys/resource.h>
-#include <sys/unistd.h>
+#include <unistd.h>
 #endif
 
 double
