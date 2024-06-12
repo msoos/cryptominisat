@@ -3715,6 +3715,7 @@ map<Lit, mpq_class> Solver::translate_weights(const map<Lit, mpq_class>& ws) {
     map<Lit, mpq_class> ret;
     for(const auto&w : ws) {
         Lit l = w.first;
+        assert(l.var() < nVarsOuter());
         l = varReplacer->get_lit_replaced_with_outer(l);
         l = map_outer_to_inter(l);
         if (value(l) != l_Undef) continue;
