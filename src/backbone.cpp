@@ -22,15 +22,12 @@ THE SOFTWARE.
 
 #include "solver.h"
 #include "solvertypesmini.h"
-extern "C" {
-#include "mpicosat/mpicosat.h"
-}
 #include "cryptominisat.h"
 #include "../cadiback/cadiback.h"
 
 using namespace CMSat;
 
-bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen, bool& backbone_done)
+bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/, bool& backbone_done)
 {
     vector<int> cnf;
     /* for(uint32_t i = 0; i < nVars(); i++) picosat_inc_max_var(picosat); */

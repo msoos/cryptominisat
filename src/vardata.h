@@ -64,6 +64,8 @@ struct VarData
     uint8_t occ_simp_tried:1;
     uint8_t propagated:1 = false;
 
+    float weight = 1.0;
+
     #if defined(STATS_NEEDED)
     uint32_t community_num = numeric_limits<uint32_t>::max();
     #endif

@@ -68,7 +68,16 @@ namespace CMSat {
             signed cutoff,
             Lit out = lit_Undef
         );
-        template<class T> void set_lit_weight(Lit lit, const T&) {}
+
+        // Special. Must be between 0 and 1, inclusive. Sets the weight of the
+        // literal, and the negation of it to 1.0-weight. Used ONLY when polarmode
+        // is set to PolarityMode::polarmode_weighted.
+        template<typename T>
+        void set_lit_weight(const Lit lit, const T& val) {
+            static constexpr bool is_float = (std::is_same<T, float>::value ||
+                    std::is_same<T, double>::value);
+            if constexpr (is_float) set_lit_weight_internal(lit, val);
+        }
 
         ////////////////////////////
         // Solving and simplifying
@@ -287,6 +296,7 @@ namespace CMSat {
         bool get_opt_sampl_vars_set() const;
 
     private:
+        void set_lit_weight_internal(const Lit lit, double val);
 
         ////////////////////////////
         // Do not bother with this, it's private
