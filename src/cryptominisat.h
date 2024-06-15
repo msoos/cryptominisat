@@ -161,6 +161,7 @@ namespace CMSat {
         void set_orig_global_timeout_multiplier(const double mult);
         void set_oracle_get_learnts(bool val);
         void set_oracle_removed_is_learnt(bool val);
+        void set_oracle_find_bins(bool val);
         double get_orig_global_timeout_multiplier();
         bool minimize_clause(std::vector<Lit>& cl);
         void set_prefix(const char* prefix);

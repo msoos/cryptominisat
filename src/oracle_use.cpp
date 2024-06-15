@@ -81,6 +81,10 @@ vector<vector<int>> Solver::get_irred_cls_for_oracle() const
 
 bool Solver::oracle_vivif(int fast, bool& finished)
 {
+    using sspp::PosLit;
+    using sspp::NegLit;
+    using sspp::oracle::TriState;
+
     assert(!frat->enabled());
     assert(solver->okay());
     execute_inprocess_strategy(false, "must-renumber");
@@ -95,6 +99,8 @@ bool Solver::oracle_vivif(int fast, bool& finished)
     oracle.SetVerbosity(conf.verbosity);
     bool sat = false;
     bool early_aborted = false;
+    uint32_t bin_added = 0;
+    uint32_t equiv_added = 0;
     for (int i = 0; i < (int)clauses.size(); i++) {
         for (int j = 0; j < (int)clauses[i].size(); j++) {
             int64_t mems = 1600LL*1000LL*1000LL;
@@ -128,6 +134,62 @@ bool Solver::oracle_vivif(int fast, bool& finished)
         }
     }
 
+    // Do equiv check
+    if (conf.oracle_find_bins && nVars() < 10ULL*1000ULL) {
+        oracle.reset_mems();
+        vector<vector<char>> pg(nVars());
+        for (uint32_t v = 0; v < nVars(); v++) pg[v].resize(nVars(), false);
+        for (const auto& clause : clauses) {
+            for (auto l1 : clause) {
+                for (auto l2 : clause) {
+                    uint32_t v1 = orc_to_lit(l1).var();
+                    uint32_t v2 = orc_to_lit(l2).var();
+                    if (v1 < v2) pg[v1][v2] = true;
+                }
+            }
+        }
+        for (uint32_t v1 = 0; v1 < nVars() ; v1++) {
+            for (uint32_t v2 = v1+1; v2 < nVars(); v2++) {
+                if (!pg[v1][v2]) continue;
+                if (oracle.getStats().mems > 20LL*1000LL*1000LL) {
+                    early_aborted = true;
+                    goto end;
+                }
+                TriState ret;
+                TriState ret2;
+                ret = oracle.Solve({orclit(Lit(v1, false)), orclit(Lit(v2, false))}, true, 1000ULL*1000ULL);
+                if (ret.isUnknown()) goto end;
+                if (ret.isTrue()) goto next;
+                add_clause_int({Lit(v1, true), Lit(v2, true)}, true);
+                bin_added++;
+
+                ret2 = oracle.Solve({orclit(Lit(v1, true)), orclit(Lit(v2, true))}, true, 1000ULL*1000ULL);
+                if (ret2.isUnknown()) goto end;
+                if (ret2.isTrue()) goto next;
+                assert(ret.isFalse() && ret2.isFalse());
+                add_clause_int({Lit(v1, false), Lit(v2, false)}, true);
+                bin_added++;
+                equiv_added++;
+                continue;
+
+                next:
+                ret = oracle.Solve({orclit(Lit(v1, true)), orclit(Lit(v2, false))}, true, 1000ULL*1000ULL);
+                if (ret.isUnknown()) goto end;
+                if (ret.isTrue()) continue;
+                add_clause_int({Lit(v1, false), Lit(v2, true)}, true);
+                bin_added++;
+
+                ret2 = oracle.Solve({orclit(Lit(v1, false)), orclit(Lit(v2, true))}, true, 1000ULL*1000ULL);
+                if (ret2.isUnknown()) goto end;
+                if (ret2.isTrue()) continue;
+                assert(ret.isFalse() && ret2.isFalse());
+                add_clause_int({Lit(v1, true), Lit(v2, false)}, true);
+                bin_added++;
+                equiv_added++;
+            }
+        }
+    }
+
     end:
     if (!early_aborted) finished = true;
     vector<Lit> tmp2;
@@ -152,8 +214,11 @@ bool Solver::oracle_vivif(int fast, bool& finished)
             if (!okay()) return false;
         }
     }
-
+    execute_inprocess_strategy(false, "must-scc-vrepl");
+    if (!okay()) return okay();
     verb_print(1, "[oracle-vivif]"
+            << " bin-added: " << bin_added
+            << " equiv-added: " << equiv_added
             << " cache-used: " << oracle.getStats().cache_useful
             << " cache-added: " << oracle.getStats().cache_added
             << " learnt-units: " << oracle.getStats().learned_units

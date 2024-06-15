@@ -517,6 +517,7 @@ class DLL_PUBLIC SolverConf
         // Oracle
         int oracle_get_learnts; // get oracle learnt clauses
         int oracle_removed_is_learnt; // clauses removed by Oracle should be learnt
+        int oracle_find_bins;
 
         //Misc
         unsigned origSeed;
