@@ -23,11 +23,13 @@ THE SOFTWARE.
 #include "solver.h"
 #include "solvertypesmini.h"
 #include "cryptominisat.h"
+#include "varreplacer.h"
 #include "../cadiback/cadiback.h"
 
 using namespace CMSat;
 
-bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/, bool& backbone_done)
+bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen,
+        const vector<uint32_t>& only_over, bool& backbone_done)
 {
     vector<int> cnf;
     /* for(uint32_t i = 0; i < nVars(); i++) picosat_inc_max_var(picosat); */
@@ -56,8 +58,28 @@ bool Solver::backbone_simpl(int64_t /*orig_max_confl*/, bool /*cmsgen*/, bool& b
         cnf.push_back(PICOLIT(Lit(i, value(i) == l_False)));
         cnf.push_back(0);
     }
+
+    vector<int> drop_cands;
+    if (!only_over.empty()) {
+        set<int> only_over_int;
+        for(const auto& v: only_over) {
+            Lit l = Lit(v, false);
+            l = varReplacer->get_lit_replaced_with_outer(l);
+            l = map_outer_to_inter(l);
+            if (l.var() >= nVars()) continue;
+            only_over_int.insert(l.var());
+        }
+
+        for(uint32_t i = 0; i < nVars(); i++) {
+            if (value(i) != l_Undef) continue;
+            if (varData[i].removed != Removed::none) continue;
+            if (only_over_int.count(i)) continue;
+            drop_cands.push_back(i+1);
+        }
+    }
+
     vector<int> ret;
-    int res = CadiBack::doit(cnf, conf.verbosity, ret);
+    int res = CadiBack::doit(cnf, conf.verbosity, drop_cands, ret);
     if (res == 10) {
         vector<Lit> tmp;
         for(const auto& l: ret) {

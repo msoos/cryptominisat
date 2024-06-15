@@ -170,6 +170,7 @@ namespace CMSat {
         void set_orig_global_timeout_multiplier(const double mult);
         void set_oracle_get_learnts(bool val);
         void set_oracle_removed_is_learnt(bool val);
+        void set_oracle_find_bins(bool val);
         double get_orig_global_timeout_multiplier();
         bool minimize_clause(std::vector<Lit>& cl);
         void set_prefix(const char* prefix);
@@ -243,7 +244,7 @@ namespace CMSat {
         lbool find_fast_backw(FastBackwData fast_backw);
         void remove_and_clean_all();
         lbool probe(Lit l, uint32_t& min_props);
-        bool backbone_simpl(int64_t max_confl, bool& finished);
+        bool backbone_simpl(int64_t max_confl, const std::vector<uint32_t>& only_over, bool& finished);
 
         //Given a set of literals to enqueue, returns:
         // 1) Whether they imply UNSAT. If "false": UNSAT

@@ -1838,11 +1838,11 @@ DLL_PUBLIC bool SATSolver::minimize_clause(std::vector<Lit>& cl)
 }
 
 
-DLL_PUBLIC bool SATSolver::backbone_simpl(int64_t max_confl, bool& finished)
+DLL_PUBLIC bool SATSolver::backbone_simpl(int64_t max_confl, const std::vector<uint32_t>& only_over, bool& finished)
 {
     Solver& s = *data->solvers[0];
     actually_add_clauses_to_threads(data);
-    return s.backbone_simpl(max_confl, true, finished);
+    return s.backbone_simpl(max_confl, true, only_over, finished);
 }
 
 DLL_PUBLIC bool SATSolver::removed_var(uint32_t var) const{
@@ -1855,6 +1855,11 @@ DLL_PUBLIC bool SATSolver::removed_var(uint32_t var) const{
 DLL_PUBLIC void SATSolver::set_oracle_get_learnts(bool val) {
     Solver& s = *data->solvers[0];
     s.conf.oracle_get_learnts = val;
+}
+
+DLL_PUBLIC void SATSolver::set_oracle_find_bins(bool val) {
+    Solver& s = *data->solvers[0];
+    s.conf.oracle_find_bins = val;
 }
 
 DLL_PUBLIC void SATSolver::set_oracle_removed_is_learnt(bool val) {

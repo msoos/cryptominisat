@@ -110,6 +110,7 @@ class Oracle {
   int CurLevel() const;
   int LitVal(Lit lit) const;
   const Stats& getStats() const {return stats;}
+  void reset_mems() {stats.mems = 0;}
 
  private:
     uint32_t verb = 0;
