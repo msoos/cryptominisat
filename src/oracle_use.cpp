@@ -151,7 +151,7 @@ bool Solver::oracle_vivif(int fast, bool& finished)
         for (uint32_t v1 = 0; v1 < nVars() ; v1++) {
             for (uint32_t v2 = v1+1; v2 < nVars(); v2++) {
                 if (!pg[v1][v2]) continue;
-                if (oracle.getStats().mems > 20LL*1000LL*1000LL) {
+                if (oracle.getStats().mems > (int64_t)conf.oracle_find_bins*20LL*1000LL*1000LL) {
                     early_aborted = true;
                     goto end;
                 }

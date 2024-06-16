@@ -371,7 +371,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         // Oracle
         , oracle_get_learnts(false) // get oracle learnt clauses
         , oracle_removed_is_learnt(false) // clauses removed by Oracle should be learnt
-        , oracle_find_bins(false)
+        , oracle_find_bins(0)
 
         //misc
         , origSeed(0)
