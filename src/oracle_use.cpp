@@ -157,17 +157,22 @@ bool Solver::oracle_vivif(int fast, bool& finished)
                 }
                 TriState ret;
                 TriState ret2;
+                Clause* clptr;
                 ret = oracle.Solve({orclit(Lit(v1, false)), orclit(Lit(v2, false))}, true, 1000ULL*1000ULL);
                 if (ret.isUnknown()) goto end;
                 if (ret.isTrue()) goto next;
-                add_clause_int({Lit(v1, true), Lit(v2, true)}, true);
+                clptr = add_clause_int({Lit(v1, true), Lit(v2, true)}, true);
+                assert(!clptr);
+                if (!okay()) return false;
                 bin_added++;
 
                 ret2 = oracle.Solve({orclit(Lit(v1, true)), orclit(Lit(v2, true))}, true, 1000ULL*1000ULL);
                 if (ret2.isUnknown()) goto end;
                 if (ret2.isTrue()) goto next;
                 assert(ret.isFalse() && ret2.isFalse());
-                add_clause_int({Lit(v1, false), Lit(v2, false)}, true);
+                clptr = add_clause_int({Lit(v1, false), Lit(v2, false)}, true);
+                assert(!clptr);
+                if (!okay()) return false;
                 bin_added++;
                 equiv_added++;
                 continue;
@@ -176,14 +181,18 @@ bool Solver::oracle_vivif(int fast, bool& finished)
                 ret = oracle.Solve({orclit(Lit(v1, true)), orclit(Lit(v2, false))}, true, 1000ULL*1000ULL);
                 if (ret.isUnknown()) goto end;
                 if (ret.isTrue()) continue;
-                add_clause_int({Lit(v1, false), Lit(v2, true)}, true);
+                clptr = add_clause_int({Lit(v1, false), Lit(v2, true)}, true);
+                assert(!clptr);
+                if (!okay()) return false;
                 bin_added++;
 
                 ret2 = oracle.Solve({orclit(Lit(v1, false)), orclit(Lit(v2, true))}, true, 1000ULL*1000ULL);
                 if (ret2.isUnknown()) goto end;
                 if (ret2.isTrue()) continue;
                 assert(ret.isFalse() && ret2.isFalse());
-                add_clause_int({Lit(v1, true), Lit(v2, false)}, true);
+                clptr = add_clause_int({Lit(v1, true), Lit(v2, false)}, true);
+                assert(!clptr);
+                if (!okay()) return false;
                 bin_added++;
                 equiv_added++;
             }
