@@ -318,6 +318,8 @@ if (NOT WIN32)
         #NOTE: out-satrace19-8373595 has confirmed that O3+flto only hurts compared to O2
         #      on gcc version 7.3.0
         #add_cxx_flag_if_supported("-flto")
+        add_cxx_flag_if_supported("-msse4.2")
+        add_cxx_flag_if_supported("-mpopcnt")
     else()
         add_cxx_flag_if_supported("-Wall")
         add_cxx_flag_if_supported("-Wextra")
