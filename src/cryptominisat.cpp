@@ -1857,7 +1857,7 @@ DLL_PUBLIC void SATSolver::set_oracle_get_learnts(bool val) {
     s.conf.oracle_get_learnts = val;
 }
 
-DLL_PUBLIC void SATSolver::set_oracle_find_bins(bool val) {
+DLL_PUBLIC void SATSolver::set_oracle_find_bins(int val) {
     Solver& s = *data->solvers[0];
     s.conf.oracle_find_bins = val;
 }

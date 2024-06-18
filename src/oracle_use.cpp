@@ -22,6 +22,7 @@ THE SOFTWARE.
 
 #include "solver.h"
 #include "oracle/oracle.h"
+#include "solvertypesmini.h"
 #include "subsumeimplicit.h"
 #include "distillerlongwithimpl.h"
 #include "occsimplifier.h"
@@ -87,7 +88,10 @@ bool Solver::oracle_vivif(int fast, bool& finished)
 
     assert(!frat->enabled());
     assert(solver->okay());
-    execute_inprocess_strategy(false, "must-renumber");
+    subsumeImplicit->subsume_implicit();
+    /* bool ret = dist_long_with_impl->distill_long_with_implicit(false); */
+    /* if (!ret) return false; */
+    execute_inprocess_strategy(false, "distill-litrem, must-scc-vrepl, must-renumber");
     if (!okay()) return okay();
     if (nVars() < 10) return okay();
     double my_time = cpuTime();
@@ -101,18 +105,18 @@ bool Solver::oracle_vivif(int fast, bool& finished)
     bool early_aborted = false;
     uint32_t bin_added = 0;
     uint32_t equiv_added = 0;
+    int64_t mems = conf.global_timeout_multiplier * 540LL*1000LL*1000LL;
+    if (fast > 0) mems /= (3*fast);
+    int64_t mems2 =  conf.global_timeout_multiplier*160LL*1000LL*1000LL;
+    if (fast > 0) mems2 /= (3*fast);
     for (int i = 0; i < (int)clauses.size(); i++) {
         for (int j = 0; j < (int)clauses[i].size(); j++) {
-            int64_t mems = 1600LL*1000LL*1000LL;
-            if (fast > 0) mems /= (3*fast);
             if (oracle.getStats().mems > mems) {
                 early_aborted = true;
                 goto end;
             }
             auto assump = negate(clauses[i]);
             swapdel(assump, j);
-            int64_t mems2 =  500LL*1000LL*1000LL;
-            if (fast > 0) mems2 /= (3*fast);
             auto ret = oracle.Solve(assump, true,mems2);
             if (ret.isUnknown()) {
                 early_aborted = true;
@@ -135,7 +139,7 @@ bool Solver::oracle_vivif(int fast, bool& finished)
     }
 
     // Do equiv check
-    if (conf.oracle_find_bins && nVars() < 10ULL*1000ULL) {
+    if (conf.oracle_find_bins && nVars() < conf.global_timeout_multiplier*3ULL*1000ULL) {
         oracle.reset_mems();
         vector<vector<char>> pg(nVars());
         for (uint32_t v = 0; v < nVars(); v++) pg[v].resize(nVars(), false);
@@ -148,44 +152,62 @@ bool Solver::oracle_vivif(int fast, bool& finished)
                 }
             }
         }
-        for (uint32_t v1 = 0; v1 < nVars() ; v1++) {
-            for (uint32_t v2 = v1+1; v2 < nVars(); v2++) {
-                if (!pg[v1][v2]) continue;
-                if (oracle.getStats().mems > 20LL*1000LL*1000LL) {
-                    early_aborted = true;
-                    goto end;
+        const int64_t mems_each = conf.global_timeout_multiplier*
+            conf.oracle_find_bins*300ULL*1000ULL;
+        int64_t mems_total = (int64_t)conf.global_timeout_multiplier*
+            conf.oracle_find_bins*3LL*1000LL*1000LL;
+        for(uint32_t run = 0; run < 2; run++) {
+            // do more in case we have time left
+            if (run == 1) mems_total/=3;
+            verb_print(1, "[oracle-bin] doing equiv check run: " << run);
+            for (uint32_t v1 = 0; v1 < nVars() ; v1++) {
+                for (uint32_t v2 = v1+1; v2 < nVars(); v2++) {
+                    if (varData[v1].removed != Removed::none || varData[v2].removed != Removed::none) continue;
+                    if (value(v1) != l_Undef || value(v2) != l_Undef) continue;
+                    if (run == 0 && !pg[v1][v2]) continue;
+                    if (run == 1 && pg[v1][v2]) continue;
+                    if (oracle.getStats().mems > mems_total) goto end;
+                    TriState ret;
+                    TriState ret2;
+                    Clause* clptr;
+                    ret = oracle.Solve({orclit(Lit(v1, false)), orclit(Lit(v2, false))}, true, mems_each);
+                    if (ret.isUnknown()) goto end;
+                    if (ret.isTrue()) goto next;
+                    clptr = add_clause_int({Lit(v1, true), Lit(v2, true)}, true);
+                    assert(!clptr);
+                    if (!okay()) return false;
+                    bin_added++;
+
+                    ret2 = oracle.Solve({orclit(Lit(v1, true)), orclit(Lit(v2, true))}, true, mems_each);
+                    if (ret2.isUnknown()) goto end;
+                    if (ret2.isTrue()) goto next;
+                    assert(ret.isFalse() && ret2.isFalse());
+                    clptr = add_clause_int({Lit(v1, false), Lit(v2, false)}, true);
+                    assert(!clptr);
+                    if (!okay()) return false;
+                    bin_added++;
+                    equiv_added++;
+                    continue;
+
+                    next:
+                    ret = oracle.Solve({orclit(Lit(v1, true)), orclit(Lit(v2, false))}, true, mems_each);
+                    if (ret.isUnknown()) goto end;
+                    if (ret.isTrue()) continue;
+                    clptr = add_clause_int({Lit(v1, false), Lit(v2, true)}, true);
+                    assert(!clptr);
+                    if (!okay()) return false;
+                    bin_added++;
+
+                    ret2 = oracle.Solve({orclit(Lit(v1, false)), orclit(Lit(v2, true))}, true, mems_each);
+                    if (ret2.isUnknown()) goto end;
+                    if (ret2.isTrue()) continue;
+                    assert(ret.isFalse() && ret2.isFalse());
+                    clptr = add_clause_int({Lit(v1, true), Lit(v2, false)}, true);
+                    assert(!clptr);
+                    if (!okay()) return false;
+                    bin_added++;
+                    equiv_added++;
                 }
-                TriState ret;
-                TriState ret2;
-                ret = oracle.Solve({orclit(Lit(v1, false)), orclit(Lit(v2, false))}, true, 1000ULL*1000ULL);
-                if (ret.isUnknown()) goto end;
-                if (ret.isTrue()) goto next;
-                add_clause_int({Lit(v1, true), Lit(v2, true)}, true);
-                bin_added++;
-
-                ret2 = oracle.Solve({orclit(Lit(v1, true)), orclit(Lit(v2, true))}, true, 1000ULL*1000ULL);
-                if (ret2.isUnknown()) goto end;
-                if (ret2.isTrue()) goto next;
-                assert(ret.isFalse() && ret2.isFalse());
-                add_clause_int({Lit(v1, false), Lit(v2, false)}, true);
-                bin_added++;
-                equiv_added++;
-                continue;
-
-                next:
-                ret = oracle.Solve({orclit(Lit(v1, true)), orclit(Lit(v2, false))}, true, 1000ULL*1000ULL);
-                if (ret.isUnknown()) goto end;
-                if (ret.isTrue()) continue;
-                add_clause_int({Lit(v1, false), Lit(v2, true)}, true);
-                bin_added++;
-
-                ret2 = oracle.Solve({orclit(Lit(v1, false)), orclit(Lit(v2, true))}, true, 1000ULL*1000ULL);
-                if (ret2.isUnknown()) goto end;
-                if (ret2.isTrue()) continue;
-                assert(ret.isFalse() && ret2.isFalse());
-                add_clause_int({Lit(v1, true), Lit(v2, false)}, true);
-                bin_added++;
-                equiv_added++;
             }
         }
     }
@@ -392,6 +414,10 @@ bool Solver::oracle_sparsify(bool fast)
     }
 
     // Now try to remove clauses one-by-one
+    int64_t mems = conf.global_timeout_multiplier*200LL*1000LL*1000LL;
+    if (fast) mems /= 3;
+    int64_t mems2 = conf.global_timeout_multiplier*1000LL*1000LL*1000LL;
+    if (fast) mems2 /= 3;
     uint32_t last_printed = 0;
     for (uint32_t i = 0; i < tot_cls; i++) {
         if ((10*i)/(tot_cls) != last_printed) {
@@ -413,8 +439,6 @@ bool Solver::oracle_sparsify(bool fast)
             tmp.push_back(orclit(~(c.bin.l2)));
         }
 
-        int64_t mems = 600LL*1000LL*1000LL;
-        if (fast) mems /= 3;
         auto ret = oracle.Solve(tmp, false, mems);
         if (ret.isUnknown()) { /*out of time*/ goto fin; }
 
@@ -439,8 +463,6 @@ bool Solver::oracle_sparsify(bool fast)
             }
         }
 
-        int64_t mems2 = 2500LL*1000LL*1000LL;
-        if (fast) mems2 /= 3;
         if (oracle.getStats().mems > mems2) {
             verb_print(1, "[oracle-sparsify] too many mems in oracle, aborting");
             goto fin;

@@ -314,6 +314,8 @@ if (NOT WIN32)
     add_link_options("-fPIE")
     #add_cxx_flag_if_supported("-mtune=native")
 
+    add_cxx_flag_if_supported("-msse4.2")
+    add_cxx_flag_if_supported("-mpopcnt")
     if(CMAKE_BUILD_TYPE STREQUAL "Release")
         #NOTE: out-satrace19-8373595 has confirmed that O3+flto only hurts compared to O2
         #      on gcc version 7.3.0
@@ -339,8 +341,6 @@ if (NOT WIN32)
         add_cxx_flag_if_supported("-Wunreachable-code")
         add_cxx_flag_if_supported("-g")
         add_cxx_flag_if_supported("-Wno-class-memaccess")
-        add_cxx_flag_if_supported("-mpopcnt")
-        add_cxx_flag_if_supported("-msse4.2")
         add_cxx_flag_if_supported("-Wextra-semi-stmt")
         add_cxx_flag_if_supported("-Wnoweak-vtables")
         add_cxx_flag_if_supported("-ggdb3")
