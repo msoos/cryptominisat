@@ -88,7 +88,10 @@ bool Solver::oracle_vivif(int fast, bool& finished)
 
     assert(!frat->enabled());
     assert(solver->okay());
-    execute_inprocess_strategy(false, "sub-impl, sub-cls-with-bin, must-scc-vrepl, must-renumber");
+    subsumeImplicit->subsume_implicit();
+    /* bool ret = dist_long_with_impl->distill_long_with_implicit(false); */
+    /* if (!ret) return false; */
+    execute_inprocess_strategy(false, "distill-litrem, must-scc-vrepl, must-renumber");
     if (!okay()) return okay();
     if (nVars() < 10) return okay();
     double my_time = cpuTime();
