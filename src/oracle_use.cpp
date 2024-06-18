@@ -22,6 +22,7 @@ THE SOFTWARE.
 
 #include "solver.h"
 #include "oracle/oracle.h"
+#include "solvertypesmini.h"
 #include "subsumeimplicit.h"
 #include "distillerlongwithimpl.h"
 #include "occsimplifier.h"
@@ -87,7 +88,7 @@ bool Solver::oracle_vivif(int fast, bool& finished)
 
     assert(!frat->enabled());
     assert(solver->okay());
-    execute_inprocess_strategy(false, "must-renumber");
+    execute_inprocess_strategy(false, "sub-impl, sub-cls-with-bin, must-scc-vrepl, must-renumber");
     if (!okay()) return okay();
     if (nVars() < 10) return okay();
     double my_time = cpuTime();
@@ -156,6 +157,8 @@ bool Solver::oracle_vivif(int fast, bool& finished)
             verb_print(1, "[oracle-bin] doing equiv check run: " << run);
             for (uint32_t v1 = 0; v1 < nVars() ; v1++) {
                 for (uint32_t v2 = v1+1; v2 < nVars(); v2++) {
+                    if (varData[v1].removed != Removed::none || varData[v2].removed != Removed::none) continue;
+                    if (value(v1) != l_Undef || value(v2) != l_Undef) continue;
                     if (run == 0 && !pg[v1][v2]) continue;
                     if (run == 1 && pg[v1][v2]) continue;
                     if (oracle.getStats().mems > mems_total) goto end;
