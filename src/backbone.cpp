@@ -122,7 +122,6 @@ bool Solver::backbone_simpl(int64_t orig_max_confl, bool cmsgen,
                 continue;
             }
             const Lit lit = Lit(abs(l)-1, l < 0);
-            cout << "lit: " << lit << endl;
             if (varData[lit.var()].removed != Removed::none) {ignore = true; continue;}
             if (value(lit.var()) != l_Undef) {ignore = true; continue;}
             tmp.push_back(lit);
